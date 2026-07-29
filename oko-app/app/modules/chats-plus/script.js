@@ -1232,6 +1232,63 @@ function cpMgSave(){
   cpDecorateConvAccess();
 }
 
+/* ---- шапка чата: кнопки звонков (правка Даниэля 29.07) ----
+   Личные 1-на-1: убираем аудио- и видеокнопки — навязчиво и не по делу.
+   Группы / супергруппы / каналы: одна кнопка «Начать созвон» (конференция как Zoom),
+   видна только владельцу/админу. Всем остальным — ничего в шапке. */
+function cpDecorateCallButtons(){
+  const head = document.querySelector('#convBody .conv-head'); if(!head) return;
+  const c = (typeof currentChat!=='undefined') ? currentChat : null;
+  const kind = (c && c.kind) || 'direct';
+  const isDirect = (kind === 'direct') || kind === 'saved' || c && c.cpSaved;
+  const canHostCall = !isDirect && (c && (c.managed || cpCanManage && cpCanManage()));
+
+  head.querySelectorAll('.ch-call').forEach(b=>{
+    /* «Начать созвон» — наша кнопка (не трогаем) */
+    if(b.classList.contains('cp-call-host') || b.classList.contains('cp-more-btn')) return;
+    b.style.display = 'none';
+  });
+
+  let hostBtn = head.querySelector('.cp-call-host');
+  if(canHostCall){
+    if(!hostBtn){
+      hostBtn = document.createElement('button');
+      hostBtn.className = 'ch-call cp-call-host';
+      hostBtn.title = 'Начать созвон';
+      hostBtn.setAttribute('aria-label', 'Начать созвон');
+      hostBtn.innerHTML = I('phone');
+      hostBtn.onclick = ()=>cpStartConference();
+      /* вставляем перед ⋮-меню, если оно есть, чтобы порядок был опрятный */
+      const more = head.querySelector('#cpMoreBtn');
+      if(more) head.insertBefore(hostBtn, more); else head.appendChild(hostBtn);
+    }
+    hostBtn.style.display = '';
+  } else if(hostBtn){
+    hostBtn.remove();
+  }
+}
+
+/* конференц-созвон · Zoom-like: используем существующий call-overlay из ядра,
+   но переопределяем заголовок под «конференция». Реальный WebRTC подключается позже. */
+function cpStartConference(){
+  const c = (typeof currentChat!=='undefined') ? currentChat : null;
+  if(!c) return;
+  const memN = (typeof c.members==='number' ? c.members : (Array.isArray(c.members)?c.members.length:0)) || 1;
+  const tier = (typeof okoTier==='function') ? okoTier() : 'FREE';
+  const cap = tier==='FREE' ? 20 : tier==='START' ? 50 : 200;
+  if(typeof showPopup==='function'){
+    showPopup({ico:'phone', title:'Начать созвон',
+      body:`Создать групповой созвон в «${cpEsc(c.name)}»? Работает как Zoom: до <b>${cap}</b> участников (тариф ${tier}). Микрофон и камера можно отключать, участников — модерировать.<br><br><small style="color:var(--dim)">В комнате: mute/unmute, вкл/выкл камера, вход по ссылке, запись — на PRO.</small>`,
+      actions:[
+        {label:'Начать', onclick:()=>{
+          if(typeof startCall==='function') startCall(false);
+          else if(typeof toast==='function') toast('Созвон стартует…');
+        }},
+        {label:'Отмена', ghost:true}
+      ]});
+  } else if(typeof startCall==='function') startCall(false);
+}
+
 /* ---- патчи: гейт входа + перерисовка списка ---- */
 if(typeof openConv === 'function'){
   const _cpPrevOpenConv3 = openConv;
@@ -1240,6 +1297,7 @@ if(typeof openConv === 'function'){
     if(c && cpChatLocked(c)){ cpPaywall(c); return; }
     _cpPrevOpenConv3.apply(this, arguments);
     cpDecorateConvAccess();
+    cpDecorateCallButtons();
   };
 }
 if(typeof renderChatList === 'function'){
@@ -1254,7 +1312,7 @@ if(typeof closeConv === 'function'){
 (function cpInit3(){
   cpSeedChats();
   if(typeof renderChatList==='function') renderChatList(((document.getElementById('chatSearch')||{}).value)||'');
-  if(typeof currentChat!=='undefined' && currentChat) cpDecorateConvAccess();
+  if(typeof currentChat!=='undefined' && currentChat){ cpDecorateConvAccess(); cpDecorateCallButtons(); }
 })();
 
 /* =======================================================================
@@ -1619,26 +1677,120 @@ if(typeof msgHtml === 'function'){
   };
 }
 
-/* ================= 21. LONG-PRESS ФЛОАТ-ПАЛИТРА РЕАКЦИЙ ================= */
+/* ================= 21. LONG-PRESS ФЛОАТ-ПАЛИТРА РЕАКЦИЙ (Telegram-style) =================
+   Позиционируем ВСЕГДА относительно сообщения (центр по X — центр сообщения; по Y —
+   строго над сообщением, а если сверху нет места — под ним). Никакой «висящей в
+   воздухе» плашки — палитра прицеплена к пузырю. При long-press на мобиле:
+     • touchstart → таймер 380 мс → показать палитру (contextmenu не всегда прилетает
+       на iOS/Android, поэтому дублируем);
+     • не отпуская, палец водится над кнопкой → та подсвечивается;
+     • touchend над кнопкой → мгновенно применить реакцию;
+     • touchend вне палитры → палитра остаётся, тап-снаружи закрывает (как в TG).
+*/
 const CP_QUICK_REACTS = ['heart','fire','star','thumb','laugh','sad'];
 const CP_RP_COLOR = {fire:'#ff7a1a', heart:'#ff3b6b', star:'#ffc522', thumb:'#9aff00', laugh:'#ffd23a', sad:'#7ab8ff', crown:'#ffc522'};
-let cpPalette = null, cpJustLp = false;
+let cpPalette = null, cpJustLp = false, cpLpTimer = null, cpLpStart = null;
+
 function cpInitLongPress(){
   const el = cpMsgsEl(); if(!el || el._cpLp) return; el._cpLp = true;
+
+  /* десктоп/системный long-press → contextmenu */
   el.addEventListener('contextmenu', e=>{
     const msg = e.target.closest('.msg');
     if(!msg || msg.classList.contains('sys') || msg.classList.contains('typing')) return;
     e.preventDefault();
-    cpJustLp = true; setTimeout(()=>{ cpJustLp = false; }, 700);
     const idx = Array.prototype.indexOf.call(el.children, msg);
     if(idx < 0) return;
+    cpJustLp = true; setTimeout(()=>{ cpJustLp = false; }, 700);
     if(navigator.vibrate) try{ navigator.vibrate(18); }catch(_){}
-    cpShowReactPalette(msg, idx, e.clientX, e.clientY);
+    cpShowReactPalette(msg, idx);
   });
+
+  /* мобильный long-press: пусть touch-цикл сам решит — с TG-стайл drag-to-pick */
+  el.addEventListener('touchstart', e=>{
+    if(e.touches.length !== 1) return;
+    const msg = e.target.closest('.msg');
+    if(!msg || msg.classList.contains('sys') || msg.classList.contains('typing')) return;
+    /* игнор если это интерактив внутри пузыря (аудио-волна, кнопка) */
+    if(e.target.closest('button, a, input, textarea, .wave, .pp, .cp-lsw-ic')) return;
+    const idx = Array.prototype.indexOf.call(el.children, msg);
+    if(idx < 0) return;
+    cpLpStart = {x:e.touches[0].clientX, y:e.touches[0].clientY, msg, idx, moved:false};
+    if(cpLpTimer) clearTimeout(cpLpTimer);
+    cpLpTimer = setTimeout(()=>{
+      cpLpTimer = null;
+      if(!cpLpStart || cpLpStart.moved) return;
+      cpJustLp = true; setTimeout(()=>{ cpJustLp = false; }, 700);
+      if(navigator.vibrate) try{ navigator.vibrate(18); }catch(_){}
+      cpShowReactPalette(cpLpStart.msg, cpLpStart.idx);
+    }, 380);
+  }, {passive:true});
+
+  el.addEventListener('touchmove', e=>{
+    if(!cpLpStart) return;
+    const t = e.touches[0];
+    const dx = t.clientX - cpLpStart.x, dy = t.clientY - cpLpStart.y;
+    if(Math.abs(dx) > 10 || Math.abs(dy) > 10){
+      cpLpStart.moved = true;
+      if(cpLpTimer && !cpPalette){ clearTimeout(cpLpTimer); cpLpTimer = null; }
+    }
+    /* если палитра открыта и палец над её кнопкой — подсвечиваем */
+    if(cpPalette){
+      e.preventDefault();
+      cpPaletteHover(t.clientX, t.clientY);
+    }
+  }, {passive:false});
+
+  const endTouch = e=>{
+    if(cpLpTimer){ clearTimeout(cpLpTimer); cpLpTimer = null; }
+    if(cpPalette){
+      /* drag-to-pick: если палец завершил жест на кнопке — применяем реакцию */
+      const t = (e.changedTouches && e.changedTouches[0]);
+      if(t){
+        const el2 = document.elementFromPoint(t.clientX, t.clientY);
+        const btn = el2 && el2.closest && el2.closest('.cp-rp-btn, .cp-rp-more');
+        if(btn && cpPalette.el.contains(btn)){
+          cpPickReactBtn(btn);
+          cpLpStart = null;
+          return;
+        }
+      }
+      /* иначе — палитра остаётся, закроется по тапу вне */
+    }
+    cpLpStart = null;
+  };
+  el.addEventListener('touchend', endTouch, {passive:true});
+  el.addEventListener('touchcancel', endTouch, {passive:true});
+
+  /* закрывать палитру при скролле ленты — чтобы не «зависала в воздухе» */
+  el.addEventListener('scroll', ()=>{ if(cpPalette) cpHideReactPalette(); }, {passive:true});
 }
-function cpShowReactPalette(msg, idx, x, y){
+
+function cpPaletteHover(cx, cy){
+  const p = cpPalette && cpPalette.el; if(!p) return;
+  const el = document.elementFromPoint(cx, cy);
+  const btn = el && el.closest && el.closest('.cp-rp-btn, .cp-rp-more');
+  p.querySelectorAll('.cp-rp-btn.hot, .cp-rp-more.hot').forEach(b=>b.classList.remove('hot'));
+  if(btn && p.contains(btn)) btn.classList.add('hot');
+}
+
+function cpPickReactBtn(btn){
+  if(!cpPalette) return;
+  const idx = cpPalette.idx;
+  if(btn.classList.contains('cp-rp-more')){
+    cpHideReactPalette();
+    if(typeof openMsgMenu==='function') openMsgMenu(idx);
+    return;
+  }
+  const rKey = btn.dataset.r;
+  cpFlyReaction(btn, rKey);
+  if(navigator.vibrate) try{ navigator.vibrate(12); }catch(_){}
+  if(typeof pickReact==='function') pickReact(idx, rKey);
+  setTimeout(cpHideReactPalette, 200);
+}
+
+function cpShowReactPalette(msg, idx){
   cpHideReactPalette();
-  const r = msg.getBoundingClientRect();
   const p = document.createElement('div');
   p.className = 'cp-react-palette';
   p.innerHTML = CP_QUICK_REACTS.map((rr,i)=>
@@ -1646,36 +1798,52 @@ function cpShowReactPalette(msg, idx, x, y){
   ).join('') + `<button class="cp-rp-more" style="--cp-i:${CP_QUICK_REACTS.length}" title="Ещё реакции">${I('more')}</button>`;
   document.body.appendChild(p);
   cpPalette = {el:p, msg, idx};
-  requestAnimationFrame(()=>{
+
+  /* позиция ВСЕГДА привязана к сообщению */
+  const place = ()=>{
+    const r = msg.getBoundingClientRect();
     const pw = p.offsetWidth, ph = p.offsetHeight;
-    const cx = (typeof x==='number' && x) ? x : (r.left + r.width/2);
+    /* центрируем горизонтально по центру сообщения, а не по пальцу */
+    let cx = r.left + r.width/2;
+    /* небольшой уклон к «моему» краю (входящие → влево, исходящие → вправо) */
+    const isOut = msg.classList.contains('out');
+    if(isOut) cx = r.right - Math.min(r.width, pw)/2 + 8;
+    else       cx = r.left  + Math.min(r.width, pw)/2 - 8;
     let left = Math.max(10, Math.min(window.innerWidth - pw - 10, cx - pw/2));
-    let top = r.top - ph - 12;
+    /* по вертикали: над пузырём с отступом 10px; если сверху < 70px — под ним */
+    let top = r.top - ph - 10;
     let below = false;
-    if(top < 60){ top = Math.min(window.innerHeight - ph - 10, r.bottom + 12); below = true; }
-    p.style.left = left + 'px'; p.style.top = top + 'px';
-    if(below) p.classList.add('cp-rp-below');
-    p.classList.add('on');
-  });
+    if(top < 70){ top = Math.min(window.innerHeight - ph - 14, r.bottom + 10); below = true; }
+    p.style.left = left + 'px';
+    p.style.top  = top  + 'px';
+    p.classList.toggle('cp-rp-below', below);
+  };
+  requestAnimationFrame(()=>{ place(); p.classList.add('on'); });
+
+  /* click остаётся для мыши/тап-в-один-тап */
   p.addEventListener('click', ev=>{
     const btn = ev.target.closest('.cp-rp-btn, .cp-rp-more'); if(!btn) return;
     ev.stopPropagation();
-    if(btn.classList.contains('cp-rp-more')){
-      cpHideReactPalette();
-      if(typeof openMsgMenu==='function') openMsgMenu(idx);
-      return;
-    }
-    const rKey = btn.dataset.r;
-    cpFlyReaction(btn, rKey);
-    if(navigator.vibrate) try{ navigator.vibrate(12); }catch(_){}
-    if(typeof pickReact==='function') pickReact(idx, rKey);
-    setTimeout(cpHideReactPalette, 220);
+    cpPickReactBtn(btn);
   });
+
+  /* закрытие тапом вне палитры (и вне исходного пузыря — чтобы повторный тап
+     по тому же пузырю не мешал drag-to-pick) */
   setTimeout(()=>{
-    const off = e2=>{ if(!p.contains(e2.target)){ cpHideReactPalette(); document.removeEventListener('pointerdown', off, true); } };
+    const off = e2=>{
+      if(p.contains(e2.target)) return;
+      cpHideReactPalette();
+      document.removeEventListener('pointerdown', off, true);
+    };
     document.addEventListener('pointerdown', off, true);
     p._cpOff = off;
   }, 0);
+  /* при ресайзе/повороте — перепозиционировать */
+  const onResize = ()=>{ if(cpPalette) place(); };
+  window.addEventListener('resize', onResize);
+  window.addEventListener('orientationchange', onResize);
+  p._cpResize = onResize;
+
   if(typeof nvPush==='function') nvPush('cp:pal', ()=>cpHideReactPalette(true));
 }
 function cpHideReactPalette(fromNav){
@@ -1683,7 +1851,11 @@ function cpHideReactPalette(fromNav){
   const p = cpPalette.el; cpPalette = null;
   p.classList.remove('on');
   if(p._cpOff) try{ document.removeEventListener('pointerdown', p._cpOff, true); }catch(_){}
-  setTimeout(()=>{ try{ p.remove(); }catch(_){} }, 240);
+  if(p._cpResize){
+    try{ window.removeEventListener('resize', p._cpResize); }catch(_){}
+    try{ window.removeEventListener('orientationchange', p._cpResize); }catch(_){}
+  }
+  setTimeout(()=>{ try{ p.remove(); }catch(_){} }, 220);
   if(!fromNav && typeof nvPop==='function') nvPop('cp:pal');
 }
 function cpFlyReaction(btn, rKey){

@@ -1,11 +1,13 @@
-<!-- ===== LEGAL: fullscreen-вьюха юридических документов (по образцу searchView) ===== -->
-<div id="legalView">
+<!-- ===== LEGAL: fullscreen-вьюха юридических документов =====
+     Два состояния: .hub (сетка карточек-документов) и .doc (открытая страница). -->
+<div id="legalView" class="hub">
   <div class="sv-head">
-    <button class="ep-cancel" onclick="closeLegalDoc()"><svg class="i"><use href="#i-back"/></svg></button>
+    <button class="ep-cancel" onclick="closeLegalDoc()" aria-label="Закрыть"><svg class="i"><use href="#i-back"/></svg></button>
+    <button class="lg-back" onclick="lgBackToHub()" type="button"><svg class="i"><use href="#i-back"/></svg>к списку</button>
     <b id="lgHeadTitle">Документы OKO</b>
     <div class="lg-langs">
-      <button class="lg-lang" id="lgLangRu" onclick="lgSetLang('ru')">RU</button>
-      <button class="lg-lang" id="lgLangEn" onclick="lgSetLang('en')">EN</button>
+      <button class="lg-lang" id="lgLangRu" onclick="lgSetLang('ru')" type="button">RU</button>
+      <button class="lg-lang" id="lgLangEn" onclick="lgSetLang('en')" type="button">EN</button>
     </div>
   </div>
   <div class="lg-tabs" id="lgTabs"></div>

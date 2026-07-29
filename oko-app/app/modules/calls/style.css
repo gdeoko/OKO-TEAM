@@ -1,0 +1,376 @@
+/* ===== CALLS: стили двух движков (личный + групповая конференция) =====
+   Префикс cl-. Обе темы. SVG-иконки только (никаких эмодзи).
+   Бренд: чёрный/лайм #9AFF00, Bebas Neue + Montserrat. */
+
+/* -------- общие переменные модуля -------- */
+:root{
+  --cl-lime:#9AFF00;
+  --cl-lime-glow: 0 0 12px rgba(154,255,0,.5);
+  --cl-panel-dark:rgba(12,14,10,.86);
+  --cl-panel-light:rgba(240,245,232,.94);
+  --cl-tile-dark:#0e1408;
+  --cl-tile-light:#e9efdd;
+  --cl-btn-dark:rgba(255,255,255,.11);
+  --cl-btn-dark-on:rgba(154,255,0,.22);
+  --cl-btn-light:rgba(20,30,5,.09);
+  --cl-btn-light-on:rgba(120,200,0,.20);
+  --cl-red:#ff3b30;
+}
+
+/* -------- иконки -------- */
+.cl-i{width:24px;height:24px;fill:none;stroke:currentColor;stroke-width:5;stroke-linecap:round;stroke-linejoin:round;display:block;pointer-events:none}
+#cl-i-hangup, #cl-i-crown, #cl-i-spk{stroke:none}
+#cl-conf .cl-i, #cl-personal .cl-i{color:inherit}
+
+/* ================= ЛИЧНЫЙ ЗВОНОК ================= */
+#cl-personal{
+  position:fixed;inset:0;z-index:98;
+  display:none;overflow:hidden;color:#fff;
+  background:
+    radial-gradient(140% 90% at 50% 0%,rgba(154,255,0,.18),transparent 60%),
+    radial-gradient(120% 100% at 50% 100%,rgba(154,255,0,.08),transparent 70%),
+    #04070a;
+  padding:calc(56px + env(safe-area-inset-top)) 20px calc(28px + env(safe-area-inset-bottom));
+  flex-direction:column;align-items:center;justify-content:space-between;
+  animation:cl-fade .28s ease-out;
+}
+#cl-personal.on{display:flex}
+.cl-pers-bg{
+  position:absolute;inset:0;pointer-events:none;
+  background:radial-gradient(60% 40% at 50% 30%,rgba(154,255,0,.14),transparent 70%);
+  opacity:.9;
+}
+#cl-personal.video .cl-pers-bg{opacity:.55}
+#cl-personal .cl-pers-min{position:absolute;left:14px;top:calc(14px + env(safe-area-inset-top));z-index:5;color:#fff}
+.cl-pers-remote{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;display:none;background:#000}
+#cl-personal.video-remote .cl-pers-remote{display:block}
+#cl-personal.video-remote .cl-halo{opacity:.15}
+
+.cl-pers-head{position:relative;z-index:2;display:flex;flex-direction:column;align-items:center;gap:16px;margin-top:14px;text-align:center;pointer-events:none}
+.cl-halo{position:relative;width:180px;height:180px;display:flex;align-items:center;justify-content:center;transition:opacity .3s}
+.cl-ring{position:absolute;inset:0;border-radius:50%;border:2px solid var(--cl-lime);opacity:0;pointer-events:none}
+.cl-ring-1{animation:cl-ripple 2.4s cubic-bezier(.2,.7,.3,1) infinite}
+.cl-ring-2{animation:cl-ripple 2.4s cubic-bezier(.2,.7,.3,1) .8s infinite}
+.cl-ring-3{animation:cl-ripple 2.4s cubic-bezier(.2,.7,.3,1) 1.6s infinite}
+@keyframes cl-ripple{
+  0%  {transform:scale(.85);opacity:.85;border-width:2.5px}
+  60% {opacity:.35}
+  100%{transform:scale(1.75);opacity:0;border-width:1px}
+}
+.cl-pers-ava{
+  position:relative;z-index:1;width:130px;height:130px;border-radius:50%;
+  background:linear-gradient(160deg,#1c2a10,#0a0f04);border:2px solid rgba(154,255,0,.35);
+  display:flex;align-items:center;justify-content:center;
+  font-family:var(--font-display, "Bebas Neue"),sans-serif;font-size:56px;letter-spacing:.05em;color:var(--cl-lime);
+  box-shadow:var(--cl-lime-glow),inset 0 0 24px rgba(154,255,0,.12);
+  overflow:hidden;
+}
+.cl-pers-ava img{width:100%;height:100%;object-fit:cover;border-radius:50%}
+.cl-pers-name{font-family:var(--font-display, "Bebas Neue"),sans-serif;font-size:30px;letter-spacing:.06em;line-height:1}
+.cl-pers-status{font-size:13px;letter-spacing:.03em;color:#c8d0bd;min-height:18px}
+#cl-personal.talking .cl-pers-status{color:var(--cl-lime)}
+
+.cl-pip{
+  position:absolute;right:14px;top:calc(72px + env(safe-area-inset-top));
+  width:96px;height:130px;border-radius:14px;overflow:hidden;
+  background:#000;border:1.5px solid rgba(154,255,0,.35);
+  box-shadow:0 8px 24px rgba(0,0,0,.5), 0 0 0 1px rgba(255,255,255,.04) inset;
+  z-index:4;display:flex;align-items:center;justify-content:center;
+}
+.cl-pip-vid{width:100%;height:100%;object-fit:cover;transform:scaleX(-1)}
+.cl-pip-fallback{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;padding:8px;font-size:10.5px;line-height:1.25;text-align:center;color:#c8d0bd;background:linear-gradient(160deg,#111,#050505);}
+.cl-pip:not(.has-video) .cl-pip-vid{display:none}
+.cl-pip.has-video .cl-pip-fallback{display:none}
+
+/* ================= КОНФЕРЕНЦИЯ (Zoom-like) ================= */
+#cl-conf{
+  position:fixed;inset:0;z-index:98;
+  display:none;overflow:hidden;
+  color:#fff;background:radial-gradient(120% 80% at 50% -10%,#12240a,#000 70%),#000;
+  padding:calc(52px + env(safe-area-inset-top)) 0 calc(20px + env(safe-area-inset-bottom));
+  flex-direction:column;
+  animation:cl-fade .25s ease-out;
+}
+#cl-conf.on{display:flex}
+:root[data-theme="light"] #cl-conf{color:#f4f8ec;background:radial-gradient(120% 80% at 50% -10%,#182c0b,#03080b 75%),#03080b}
+
+.cl-conf-top{
+  position:absolute;top:0;left:0;right:0;z-index:5;
+  display:flex;align-items:center;gap:12px;
+  padding:calc(12px + env(safe-area-inset-top)) 16px 12px;
+  background:linear-gradient(180deg,rgba(0,0,0,.55),transparent);
+}
+.cl-conf-title{flex:1;min-width:0;text-align:center;line-height:1.15}
+.cl-conf-title b{display:block;font-family:var(--font-display, "Bebas Neue"),sans-serif;font-size:20px;letter-spacing:.08em}
+.cl-conf-title small{display:flex;align-items:center;justify-content:center;gap:6px;font-size:11.5px;color:#c8d0bd}
+.cl-live{width:8px;height:8px;border-radius:50%;background:var(--cl-lime);box-shadow:0 0 6px var(--cl-lime);animation:cl-blink 1.4s infinite}
+.cl-dot-sep{display:inline-block;width:3px;height:3px;border-radius:50%;background:currentColor;opacity:.5}
+
+.cl-top-btn{
+  width:38px;height:38px;border-radius:50%;
+  display:flex;align-items:center;justify-content:center;
+  background:rgba(255,255,255,.09);color:#fff;flex-shrink:0;
+  transition:background .15s,transform .1s;
+}
+.cl-top-btn:active{transform:scale(.9)}
+.cl-top-btn .cl-i{width:20px;height:20px}
+
+/* Сетка тайлов */
+.cl-conf-stage{
+  flex:1;overflow-y:auto;overflow-x:hidden;padding:14px 12px 120px;
+  display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));
+  gap:8px;align-content:start;-webkit-overflow-scrolling:touch;
+}
+.cl-conf-stage.dense{grid-template-columns:repeat(auto-fit,minmax(90px,1fr))}
+.cl-conf-stage.speaker{display:block;padding:14px 12px 200px}
+.cl-conf-stage.speaker .cl-tile{aspect-ratio:auto}
+.cl-conf-stage.speaker .cl-tile.pinned{width:100%;height:calc(100vh - 300px);margin-bottom:8px}
+.cl-conf-stage.speaker .cl-strip{
+  position:fixed;left:0;right:0;bottom:112px;padding:6px 10px;
+  display:flex;gap:6px;overflow-x:auto;-webkit-overflow-scrolling:touch;
+  background:linear-gradient(180deg,transparent,rgba(0,0,0,.4));
+}
+.cl-conf-stage.speaker .cl-strip .cl-tile{width:96px;height:72px;flex-shrink:0;aspect-ratio:auto}
+
+.cl-tile{
+  position:relative;aspect-ratio:4/3;border-radius:14px;overflow:hidden;
+  background:var(--cl-tile-dark);border:1.5px solid rgba(255,255,255,.05);
+  display:flex;align-items:center;justify-content:center;
+  transition:border-color .18s,box-shadow .18s;cursor:pointer;
+}
+:root[data-theme="light"] .cl-tile{background:var(--cl-tile-light);border-color:rgba(20,30,5,.1)}
+.cl-tile.speaking{border-color:var(--cl-lime);box-shadow:0 0 0 2px rgba(154,255,0,.35), 0 0 18px rgba(154,255,0,.25)}
+.cl-tile video{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;background:#000}
+.cl-tile-ava{
+  width:56%;max-width:110px;aspect-ratio:1;border-radius:50%;
+  background:linear-gradient(160deg,#20330f,#0a0f04);color:var(--cl-lime);
+  display:flex;align-items:center;justify-content:center;
+  font-family:var(--font-display, "Bebas Neue"),sans-serif;font-size:36px;letter-spacing:.05em;
+  border:1.5px solid rgba(154,255,0,.25);overflow:hidden;
+}
+.cl-tile-ava img{width:100%;height:100%;object-fit:cover;border-radius:50%}
+.cl-tile-name{
+  position:absolute;left:6px;bottom:6px;display:flex;align-items:center;gap:5px;
+  padding:3px 8px 3px 6px;border-radius:6px;background:rgba(0,0,0,.55);backdrop-filter:blur(6px);
+  font-size:11px;font-weight:600;letter-spacing:.02em;max-width:calc(100% - 44px);
+  overflow:hidden;text-overflow:ellipsis;white-space:nowrap;
+}
+.cl-tile-name .cl-role{width:12px;height:12px;flex-shrink:0;color:var(--cl-lime)}
+.cl-tile-flag{
+  position:absolute;right:6px;bottom:6px;display:flex;gap:4px;
+}
+.cl-tile-flag span{
+  width:22px;height:22px;border-radius:50%;background:rgba(0,0,0,.55);backdrop-filter:blur(6px);
+  display:flex;align-items:center;justify-content:center;color:#fff;
+}
+.cl-tile-flag span.on{background:rgba(154,255,0,.85);color:#000}
+.cl-tile-flag span.muted{background:var(--cl-red);color:#fff}
+.cl-tile-flag .cl-i{width:12px;height:12px;stroke-width:6}
+.cl-tile-hand{
+  position:absolute;left:6px;top:6px;width:24px;height:24px;border-radius:50%;
+  background:var(--cl-lime);color:#000;display:flex;align-items:center;justify-content:center;
+  box-shadow:var(--cl-lime-glow);animation:cl-hand 1.6s ease-in-out infinite;
+}
+.cl-tile-hand .cl-i{width:14px;height:14px;stroke:#000;stroke-width:5}
+@keyframes cl-hand{0%,100%{transform:rotate(-8deg)}50%{transform:rotate(8deg)}}
+
+.cl-wave{display:inline-flex;align-items:end;gap:1.5px;height:11px}
+.cl-wave i{display:block;width:2px;background:currentColor;border-radius:1px;animation:cl-wv 0.9s ease-in-out infinite}
+.cl-wave i:nth-child(1){height:35%;animation-delay:0s}
+.cl-wave i:nth-child(2){height:75%;animation-delay:.12s}
+.cl-wave i:nth-child(3){height:100%;animation-delay:.24s}
+.cl-wave i:nth-child(4){height:60%;animation-delay:.36s}
+.cl-wave i:nth-child(5){height:40%;animation-delay:.48s}
+@keyframes cl-wv{0%,100%{transform:scaleY(.35)}50%{transform:scaleY(1)}}
+
+/* Нижний бар */
+.cl-conf-bar, .cl-pers-bar{
+  position:absolute;left:0;right:0;bottom:0;z-index:5;
+  display:flex;justify-content:center;align-items:center;flex-wrap:wrap;gap:10px;
+  padding:14px 16px calc(14px + env(safe-area-inset-bottom));
+  background:linear-gradient(0deg,rgba(0,0,0,.55),transparent);
+}
+.cl-pers-bar{gap:16px}
+.cl-btn{
+  position:relative;width:56px;height:56px;border-radius:50%;
+  display:flex;align-items:center;justify-content:center;color:#fff;
+  background:var(--cl-btn-dark);
+  transition:transform .11s,background .18s,color .18s,box-shadow .2s;
+  -webkit-tap-highlight-color:transparent;
+}
+.cl-pers-bar .cl-btn{width:64px;height:64px}
+.cl-pers-bar .cl-btn.cl-pers-end{width:72px;height:72px}
+:root[data-theme="light"] .cl-btn{background:var(--cl-btn-light);color:#e8f4d0}
+:root[data-theme="light"] #cl-personal .cl-btn, :root[data-theme="light"] #cl-conf .cl-btn{background:rgba(255,255,255,.14);color:#fff}
+.cl-btn .cl-i{width:24px;height:24px}
+.cl-btn:active{transform:scale(.9)}
+.cl-btn.on{background:var(--cl-lime);color:#000;box-shadow:var(--cl-lime-glow)}
+.cl-btn.off{background:rgba(255,255,255,.94);color:#000}
+.cl-btn.cl-btn-end{
+  background:var(--cl-red);color:#fff;
+  box-shadow:0 6px 22px rgba(255,59,48,.55), 0 0 0 4px rgba(255,59,48,.15);
+}
+.cl-btn.cl-btn-end:active{transform:scale(.92)}
+.cl-btn.cl-btn-gear{background:rgba(255,255,255,.07)}
+.cl-btn-badge{
+  position:absolute;top:-3px;right:-3px;min-width:18px;height:18px;padding:0 5px;
+  border-radius:9px;background:var(--cl-lime);color:#000;
+  font-size:10.5px;font-weight:800;display:flex;align-items:center;justify-content:center;
+  border:2px solid #000;line-height:1;
+}
+.cl-btn-badge:empty{display:none}
+
+/* Панель участников (правая шторка) */
+.cl-side{
+  position:absolute;top:0;right:0;bottom:0;width:min(340px,86vw);z-index:6;
+  transform:translateX(100%);transition:transform .28s cubic-bezier(.3,1,.4,1);
+  background:var(--cl-panel-dark);backdrop-filter:blur(18px);
+  border-left:1px solid rgba(255,255,255,.08);
+  display:flex;flex-direction:column;color:#fff;
+  padding-top:env(safe-area-inset-top);
+}
+:root[data-theme="light"] .cl-side{background:var(--cl-panel-light);color:#101a02;border-left-color:rgba(20,30,5,.1)}
+.cl-side.on{transform:none}
+.cl-side-head{display:flex;align-items:center;gap:10px;padding:14px 14px 10px}
+.cl-side-head b{flex:1;font-family:var(--font-display, "Bebas Neue"),sans-serif;font-size:20px;letter-spacing:.08em}
+.cl-side-body{flex:1;overflow-y:auto;padding:4px 8px 14px}
+.cl-prow{
+  display:flex;align-items:center;gap:10px;padding:9px 8px;border-radius:12px;
+  transition:background .15s;width:100%;text-align:left;color:inherit;
+}
+.cl-prow:hover, .cl-prow:active{background:rgba(154,255,0,.1)}
+.cl-prow .cl-pava{
+  width:38px;height:38px;border-radius:50%;flex-shrink:0;
+  background:linear-gradient(160deg,#20330f,#0a0f04);color:var(--cl-lime);
+  display:flex;align-items:center;justify-content:center;
+  font-family:var(--font-display, "Bebas Neue"),sans-serif;font-size:16px;letter-spacing:.04em;
+}
+.cl-prow .cl-pbody{flex:1;min-width:0}
+.cl-prow .cl-pbody b{display:block;font-size:13.5px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.cl-prow .cl-pbody small{display:flex;align-items:center;gap:4px;font-size:11px;color:#9ca690}
+:root[data-theme="light"] .cl-prow .cl-pbody small{color:#556047}
+.cl-prow .cl-pflag{display:flex;gap:5px}
+.cl-prow .cl-pflag span{
+  width:26px;height:26px;border-radius:50%;background:rgba(255,255,255,.08);color:#fff;
+  display:flex;align-items:center;justify-content:center;
+}
+:root[data-theme="light"] .cl-prow .cl-pflag span{background:rgba(20,30,5,.09);color:#101a02}
+.cl-prow .cl-pflag span.on{background:var(--cl-lime);color:#000}
+.cl-prow .cl-pflag span.muted{background:var(--cl-red);color:#fff}
+.cl-prow .cl-pflag .cl-i{width:13px;height:13px;stroke-width:6}
+
+/* Контекстное меню (участник) */
+.cl-menu{
+  position:absolute;z-index:9;display:none;
+  min-width:220px;background:var(--cl-panel-dark);backdrop-filter:blur(18px);
+  border:1px solid rgba(255,255,255,.08);border-radius:14px;overflow:hidden;
+  box-shadow:0 20px 50px rgba(0,0,0,.55);
+  animation:cl-fade .16s ease-out;
+}
+:root[data-theme="light"] .cl-menu{background:var(--cl-panel-light);color:#101a02;border-color:rgba(20,30,5,.12)}
+.cl-menu.on{display:block}
+.cl-menu-item{
+  display:flex;align-items:center;gap:10px;width:100%;padding:11px 14px;color:#fff;
+  font-size:14px;text-align:left;transition:background .12s;
+}
+:root[data-theme="light"] .cl-menu-item{color:#101a02}
+.cl-menu-item:hover, .cl-menu-item:active{background:rgba(154,255,0,.14)}
+.cl-menu-item.danger{color:var(--cl-red)}
+.cl-menu-item .cl-i{width:18px;height:18px;stroke-width:5;flex-shrink:0}
+.cl-menu-hd{padding:10px 14px 6px;font-size:11px;letter-spacing:.06em;text-transform:uppercase;color:#9ca690;font-weight:700}
+:root[data-theme="light"] .cl-menu-hd{color:#556047}
+.cl-menu-sep{height:1px;background:rgba(255,255,255,.08);margin:4px 0}
+:root[data-theme="light"] .cl-menu-sep{background:rgba(20,30,5,.1)}
+
+/* Настройки владельца — sheet */
+.cl-sheet{
+  position:absolute;left:0;right:0;bottom:0;z-index:7;max-height:80vh;
+  transform:translateY(100%);transition:transform .28s cubic-bezier(.3,1,.4,1);
+  background:var(--cl-panel-dark);backdrop-filter:blur(18px);color:#fff;
+  border-radius:20px 20px 0 0;border-top:1px solid rgba(255,255,255,.08);
+  display:flex;flex-direction:column;padding-bottom:env(safe-area-inset-bottom);
+}
+:root[data-theme="light"] .cl-sheet{background:var(--cl-panel-light);color:#101a02;border-top-color:rgba(20,30,5,.1)}
+.cl-sheet.on{transform:none}
+.cl-sheet::before{content:'';display:block;width:40px;height:4px;border-radius:2px;background:rgba(255,255,255,.2);margin:8px auto 4px}
+:root[data-theme="light"] .cl-sheet::before{background:rgba(20,30,5,.2)}
+.cl-sheet-head{display:flex;align-items:center;gap:10px;padding:6px 14px 8px}
+.cl-sheet-head b{flex:1;font-family:var(--font-display, "Bebas Neue"),sans-serif;font-size:20px;letter-spacing:.08em}
+.cl-sheet-body{overflow-y:auto;padding:4px 14px 14px}
+.cl-toggle{
+  display:flex;align-items:center;gap:12px;padding:11px 4px;width:100%;
+  border-bottom:1px solid rgba(255,255,255,.06);color:inherit;text-align:left;
+}
+:root[data-theme="light"] .cl-toggle{border-bottom-color:rgba(20,30,5,.08)}
+.cl-toggle:last-child{border-bottom:0}
+.cl-toggle b{flex:1;font-size:14px;font-weight:600}
+.cl-toggle small{display:block;font-size:11.5px;color:#9ca690;font-weight:400;margin-top:2px}
+:root[data-theme="light"] .cl-toggle small{color:#556047}
+.cl-sw{
+  width:42px;height:24px;border-radius:12px;background:rgba(255,255,255,.15);position:relative;flex-shrink:0;
+  transition:background .18s;
+}
+.cl-sw i{position:absolute;left:3px;top:3px;width:18px;height:18px;border-radius:50%;background:#fff;transition:left .18s}
+.cl-sw.on{background:var(--cl-lime);box-shadow:var(--cl-lime-glow)}
+.cl-sw.on i{left:21px;background:#000}
+
+/* Летящие реакции */
+.cl-reactions{position:absolute;left:0;right:0;bottom:100px;z-index:6;pointer-events:none;height:200px}
+.cl-react-fly{
+  position:absolute;bottom:0;font-size:30px;color:var(--cl-lime);
+  animation:cl-fly 2.4s ease-out forwards;
+}
+@keyframes cl-fly{
+  0%{transform:translate(0,0) scale(.4);opacity:0}
+  20%{opacity:1;transform:translate(var(--tx,0),-40px) scale(1)}
+  100%{transform:translate(calc(var(--tx,0) * 1.6),-200px) scale(.6);opacity:0}
+}
+
+/* Мини-плашка (свёрнутый звонок) */
+.cl-pill{
+  position:fixed;left:12px;bottom:calc(72px + env(safe-area-inset-bottom));z-index:80;
+  display:none;align-items:center;gap:10px;padding:8px 14px 8px 10px;
+  background:var(--cl-lime);color:#000;border-radius:99px;
+  box-shadow:0 8px 24px rgba(0,0,0,.35), var(--cl-lime-glow);
+  animation:cl-fade .2s ease-out;
+}
+.cl-pill.on{display:inline-flex}
+.cl-pill-dot{width:8px;height:8px;border-radius:50%;background:#000;animation:cl-blink 1.4s infinite}
+.cl-pill-tx{display:flex;flex-direction:column;line-height:1.1;text-align:left}
+.cl-pill-tx b{font-size:13px;font-weight:700}
+.cl-pill-tx small{font-size:10.5px;opacity:.7;font-weight:600}
+
+/* Кнопка «Начать созвон» в шапке группы/канала */
+.cl-conv-start{
+  display:inline-flex;align-items:center;gap:6px;padding:6px 12px 6px 10px;border-radius:99px;
+  background:var(--cl-lime);color:#000;font-weight:700;font-size:11.5px;letter-spacing:.03em;
+  text-transform:uppercase;flex-shrink:0;
+  box-shadow:0 3px 12px rgba(154,255,0,.35);
+  transition:transform .12s,box-shadow .2s;
+}
+.cl-conv-start:active{transform:scale(.94)}
+.cl-conv-start .cl-i{width:16px;height:16px;color:#000;stroke:#000;stroke-width:6}
+.cl-conv-start .cl-live{background:#000;box-shadow:none;width:6px;height:6px}
+
+/* Тост-уведомления */
+.cl-toast{
+  position:fixed;left:50%;bottom:calc(112px + env(safe-area-inset-bottom));transform:translateX(-50%);
+  background:rgba(12,14,10,.92);color:#fff;padding:10px 16px;border-radius:99px;
+  font-size:13px;z-index:99;pointer-events:none;
+  border:1px solid rgba(154,255,0,.25);box-shadow:0 8px 22px rgba(0,0,0,.5);
+  animation:cl-toast 2.6s ease-out forwards;
+}
+@keyframes cl-toast{
+  0%{opacity:0;transform:translate(-50%,10px)}
+  10%,80%{opacity:1;transform:translate(-50%,0)}
+  100%{opacity:0;transform:translate(-50%,-10px)}
+}
+
+/* Утилиты */
+@keyframes cl-fade{from{opacity:0;transform:scale(.98)}to{opacity:1;transform:none}}
+@keyframes cl-blink{0%,100%{opacity:1}50%{opacity:.3}}
+
+@media(prefers-reduced-motion:reduce){
+  .cl-ring, .cl-wave i, .cl-live, .cl-pill-dot, .cl-tile-hand{animation:none !important}
+  .cl-react-fly{animation-duration:.3s !important}
+}

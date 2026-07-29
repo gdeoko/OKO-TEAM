@@ -2211,3 +2211,622 @@ function psSocInjectEntry(){
     else { psInjectAccSwitch(); psInjectMyFollows(); mpInject(); psSocInjectEntry(); }
   }catch(e){}
 })();
+
+/* ============================================================================
+   PP2 · Компактный профиль (Telegram + iOS Settings)
+   ---------------------------------------------------------------------------
+   Полностью перерисовывает содержимое #screen-profile .pad после того как
+   ядро (renderMyProfile) и все предыдущие чейны (mp-, ps-soc-, ps-) отработали.
+   Даёт: аватар 88px, имя+ник+био (2 строки), tier-бейдж, кнопку «Редактировать»,
+   строку быстрых действий и iOS-стайл группы разделов. Подстраницы уходят в
+   свой nav-стек справа (pp2Stack[]). Ничего не ломает поверх base.html.
+   ============================================================================ */
+(function pp2Init(){
+  'use strict';
+
+  /* ---------- утилиты общие ---------- */
+  function esc2(s){ return String(s == null ? '' : s).replace(/[&<>"']/g, function(c){
+    return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]; }); }
+  function iSvg(id){ return '<svg class="i"><use href="#i-' + id + '"/></svg>'; }
+  function safeI(id){ return (typeof I === 'function') ? I(id) : iSvg(id); }
+  function T(m){ if(typeof toast === 'function') toast(m); }
+
+  /* тир: FREE / START / PRO / BUSINESS / BUSINESS_PRO / MAX */
+  const PP2_TIER_META = {
+    FREE:         {lb:'FREE',         short:'Free',       kind:'free', tone:'gray'},
+    START:        {lb:'START',        short:'Start',      kind:'paid', tone:''},
+    PRO:          {lb:'PRO',          short:'Pro',        kind:'paid', tone:''},
+    BUSINESS:     {lb:'BUSINESS',     short:'Business',   kind:'paid', tone:''},
+    BUSINESS_PRO: {lb:'BUSINESS PRO', short:'Business Pro', kind:'paid', tone:''},
+    MAX:          {lb:'MAX',          short:'Max',        kind:'gold', tone:'gold'},
+  };
+  function pp2Tier(){
+    try{
+      const t = (typeof PROFILE !== 'undefined' && PROFILE.tier) ? String(PROFILE.tier).toUpperCase() : 'FREE';
+      return PP2_TIER_META[t] ? t : 'FREE';
+    }catch(e){ return 'FREE'; }
+  }
+  function pp2IsPaid(){ const m = PP2_TIER_META[pp2Tier()]; return !!m && m.kind !== 'free'; }
+  function pp2IsOwner(){
+    try{ if(typeof isOwner === 'function') return !!isOwner(); }catch(e){}
+    return (typeof PROFILE !== 'undefined' && PROFILE.role === 'owner');
+  }
+
+  /* ---------- инициалы ---------- */
+  function pp2Init2(name){
+    return String(name || 'OKO').trim().split(/\s+/).slice(0, 2).map(w => (w[0] || '').toUpperCase()).join('') || 'O';
+  }
+
+  /* ---------- публичный слаг для ссылок и QR ---------- */
+  function pp2Slug(){
+    try{
+      if(typeof psSocSlug === 'function'){ psSocLoad && psSocLoad(); return psSocSlug(); }
+    }catch(e){}
+    return (typeof PROFILE !== 'undefined' && PROFILE.nick) || 'me';
+  }
+  function pp2PublicUrl(){ return 'https://okoteam.top/u/@' + pp2Slug(); }
+
+  /* ================= NAV-СТЕК ================= */
+  const pp2Stack = [];       /* [{key, title, htmlOrFn}] */
+  let pp2Nav = null;
+  function pp2NavRoot(){
+    if(pp2Nav && document.body.contains(pp2Nav)) return pp2Nav;
+    pp2Nav = document.getElementById('pp2Nav');
+    if(!pp2Nav){
+      pp2Nav = document.createElement('div');
+      pp2Nav.id = 'pp2Nav';
+      document.body.appendChild(pp2Nav);
+    }
+    return pp2Nav;
+  }
+  function pp2PageHtml(title, bodyHtml, headRight){
+    return '<div class="pp2-head">'
+      + '<button class="pp2-back" onclick="pp2Pop()" aria-label="Назад">' + safeI('back') + '</button>'
+      + '<div class="pp2-title">' + esc2(title) + '</div>'
+      + '<div class="pp2-head-r">' + (headRight || '') + '</div>'
+      + '</div>'
+      + '<div class="pp2-body">' + bodyHtml + '</div>';
+  }
+  function pp2Push(page){
+    const root = pp2NavRoot();
+    /* пометить текущий верхний как «уходит вглубь» */
+    const cur = root.lastElementChild;
+    if(cur){ cur.classList.remove('pp2-in'); cur.classList.add('pp2-out'); }
+    const el = document.createElement('section');
+    el.className = 'pp2-page';
+    el.dataset.key = page.key || ('p' + Date.now());
+    const rightHtml = (typeof page.headRight === 'function') ? page.headRight() : (page.headRight || '');
+    const bodyHtml = (typeof page.html === 'function') ? page.html() : (page.html || '');
+    el.innerHTML = pp2PageHtml(page.title || '', bodyHtml, rightHtml);
+    root.appendChild(el);
+    pp2Stack.push({key: el.dataset.key, page});
+    /* анимация появления */
+    requestAnimationFrame(() => { el.classList.add('pp2-in'); });
+    /* повесить onMount, если есть */
+    if(typeof page.onMount === 'function'){ try{ page.onMount(el); }catch(e){} }
+  }
+  function pp2Pop(){
+    const root = pp2NavRoot();
+    if(!root.lastElementChild) return;
+    const top = root.lastElementChild;
+    top.classList.remove('pp2-in');
+    top.style.transform = 'translateX(100%)';
+    pp2Stack.pop();
+    /* вернуть предыдущий из «глубины» */
+    const prev = top.previousElementSibling;
+    if(prev){ prev.classList.remove('pp2-out'); prev.classList.add('pp2-in'); }
+    setTimeout(() => { if(top && top.parentNode) top.parentNode.removeChild(top); }, 300);
+  }
+  function pp2PopAll(){
+    const root = pp2NavRoot();
+    while(root.firstChild) root.removeChild(root.firstChild);
+    pp2Stack.length = 0;
+  }
+  /* глобальный доступ для onclick */
+  window.pp2Pop = pp2Pop;
+
+  /* поддержка кнопки «Назад» устройства/браузера */
+  window.addEventListener('popstate', function(){
+    if(pp2Stack.length){ pp2Pop(); }
+  });
+
+  /* ================= TOP-БЛОК ================= */
+  function pp2TopHtml(){
+    const name = (typeof PROFILE !== 'undefined' && PROFILE.name) || 'OKO';
+    const nick = (typeof PROFILE !== 'undefined' && PROFILE.nick) || 'me';
+    const bio  = (typeof PROFILE !== 'undefined' && PROFILE.bio) || '';
+    const ava  = (typeof PROFILE !== 'undefined' && PROFILE.avatar) || '';
+    const status = (typeof PROFILE !== 'undefined' && PROFILE.status) || null;
+    const tier = pp2Tier(); const tm = PP2_TIER_META[tier];
+    const avaStyle = ava ? ('background-image:url(' + JSON.stringify(ava).slice(1,-1) + ')') : '';
+    const avaClass = ava ? ' has-photo' : '';
+    const avaTxt = ava ? '' : esc2(pp2Init2(name));
+    const owner = pp2IsOwner();
+    const chips = [];
+    if(tm.kind === 'gold'){
+      chips.push('<span class="pp2-chip gold">' + safeI('crown') + esc2(tm.lb) + '</span>');
+    } else if(tm.kind === 'paid'){
+      chips.push('<span class="pp2-chip">' + safeI('crown') + esc2(tm.lb) + '</span>');
+    } else {
+      chips.push('<span class="pp2-chip owner">' + esc2(tm.lb) + '</span>');
+    }
+    if(!pp2IsPaid()){
+      chips.push('<span class="pp2-chip disc">' + safeI('flag') + '−20% на год</span>');
+    }
+    if(owner) chips.push('<span class="pp2-chip owner">' + safeI('crown') + 'Владелец</span>');
+
+    const statusIco = status ? safeI(status) : '';
+    return '<div class="pp2-top">'
+      + '<button class="pp2-ava' + avaClass + '" style="' + avaStyle + '" onclick="pp2OpenEdit()" aria-label="Аватар">' + avaTxt + '</button>'
+      + '<div class="pp2-name">' + esc2(name) + statusIco + '</div>'
+      + '<div class="pp2-nick">@' + esc2(nick) + '<span class="pp2-dot">·</span><span class="pp2-online">в сети</span></div>'
+      + (bio ? '<p class="pp2-bio">' + esc2(bio) + '</p>' : '')
+      + '<div class="pp2-chips">' + chips.join('') + '</div>'
+      + '<button class="pp2-edit" onclick="pp2OpenEdit()">' + safeI('edit') + '<span>Редактировать</span></button>'
+      + '</div>';
+  }
+
+  /* быстрые действия — 5 кнопок */
+  function pp2QuickHtml(){
+    const items = [
+      {k:'share', ic:'share',       lb:'Поделиться', on:'pp2Share()'},
+      {k:'qr',    ic:'compass',     lb:'QR-код',     on:'pp2OpenQR()'},
+      {k:'link',  ic:'globe',       lb:'Ссылка',     on:'pp2CopyLink()'},
+      {k:'stat',  ic:'poll',        lb:'Статистика', on:'pp2OpenStats()'},
+      {k:'set',   ic:'bolt',        lb:'Настройки',  on:'pp2OpenSettings()'},
+    ];
+    return '<div class="pp2-quick">' + items.map(function(it){
+      return '<button class="pp2-qbtn" onclick="' + it.on + '" aria-label="' + esc2(it.lb) + '">'
+        + safeI(it.ic) + '<span>' + esc2(it.lb) + '</span></button>';
+    }).join('') + '</div>';
+  }
+
+  /* строка списка */
+  function pp2Row(o){
+    /* o: {ic, tone, t, s, right, onclick, danger} */
+    const cls = 'pp2-row' + (o.danger ? ' danger' : '');
+    const icCls = 'pp2-row-ic' + (o.tone ? (' ' + o.tone) : '');
+    const rightHtml = o.right || '<span class="pp2-row-chev">' + safeI('chev') + '</span>';
+    return '<button class="' + cls + '" onclick="' + (o.onclick || '') + '">'
+      + '<span class="' + icCls + '">' + safeI(o.ic) + '</span>'
+      + '<span class="pp2-row-b">'
+        + '<span class="pp2-row-t">' + esc2(o.t) + '</span>'
+        + (o.s ? '<span class="pp2-row-s">' + esc2(o.s) + '</span>' : '')
+      + '</span>'
+      + '<span class="pp2-row-r">' + rightHtml + '</span>'
+      + '</button>';
+  }
+  function pp2Group(rows){ return '<div class="pp2-group">' + rows.join('') + '</div>'; }
+
+  /* ================= СПИСОК РАЗДЕЛОВ ================= */
+  function pp2SectionsHtml(){
+    const tier = pp2Tier(); const tm = PP2_TIER_META[tier];
+    const owner = pp2IsOwner();
+    const paid = pp2IsPaid();
+    /* Группа 1 — тарифы (выше всего, как просил Даниэль) */
+    const g1 = [
+      pp2Row({ic:'crown', tone:tm.kind==='gold'?'gold':'', t:'Тарифы OKO',
+              s: paid ? ('Активен ' + tm.short) : 'Выбрать план',
+              right: '<span class="pp2-chip' + (tm.kind==='gold'?' gold':'') + '">' + esc2(tm.lb) + '</span><span class="pp2-row-chev">' + safeI('chev') + '</span>',
+              onclick:'pp2OpenTiers()'}),
+    ];
+    /* Группа 2 — внешний контур (для PRO+ показываем ссылки-агрегатор) */
+    const g2 = [];
+    if(paid){
+      g2.push(pp2Row({ic:'globe', tone:'teal', t:'Внешние ссылки',
+              s:'Мини-сайт-визитка · до 5 ссылок', onclick:'pp2OpenExtLinks()'}));
+    }
+    g2.push(pp2Row({ic:'send', tone:'blue', t:'Мои соцсети',
+            s:'5 подключено · автопостинг', onclick:'pp2OpenSocials()'}));
+    g2.push(pp2Row({ic:'users', tone:'violet', t:'Партнёрская программа',
+            s:'Лидерборд, промо, выплаты', onclick:'pp2OpenPartner()'}));
+    g2.push(pp2Row({ic:'star', tone:'gold', t:'Академия OKO',
+            s:'Мои курсы и сертификаты', onclick:'pp2OpenAcademy()'}));
+    g2.push(pp2Row({ic:'briefcase', tone:'teal', t:'Биржа услуг',
+            s:'Заказы, кабинет продавца', onclick:'pp2OpenMarket()'}));
+
+    /* Группа 3 — документы, устройства, безопасность */
+    const g3 = [
+      pp2Row({ic:'file', tone:'gray', t:'Мои документы',
+              s:'Договоры, чеки, отчёты', onclick:'pp2OpenDocs()'}),
+      pp2Row({ic:'device', tone:'gray', t:'Устройства и сессии',
+              s:'Где выполнен вход', onclick:'pp2OpenDevices()'}),
+      pp2Row({ic:'bell', tone:'gray', t:'Уведомления',
+              s:'Пуши, email, тишина', onclick:"pp2OpenSettingsGroup('notif')"}),
+      pp2Row({ic:'lock', tone:'gray', t:'Приватность',
+              s:'Профиль, чаты, звонки', onclick:"pp2OpenSettingsGroup('privacy')"}),
+    ];
+
+    /* Группа 4 — сервис */
+    const g4 = [
+      pp2Row({ic:'flag', tone:'', t:'Прогресс сборки',
+              s:'Что уже готово, что дальше', onclick:"openSheet('progress')"}),
+      pp2Row({ic:'chat', tone:'blue', t:'Помощь и поддержка',
+              s:'Ответы 24/7', onclick:'pp2OpenSupport()'}),
+      pp2Row({ic:'compass', tone:'gray', t:'О приложении',
+              s:'Версия и правовые', onclick:'pp2OpenAbout()'}),
+    ];
+    if(owner){
+      g4.unshift(pp2Row({ic:'bolt', tone:'', t:'Админка OKO',
+              s:'Только для владельца',
+              right:'<span class="pp2-chip">Владелец</span><span class="pp2-row-chev">' + safeI('chev') + '</span>',
+              onclick:'openAdmin()'}));
+    }
+
+    /* Финал — выход */
+    const logout = '<button class="pp2-btn-plain danger" onclick="doLogout()">' + safeI('logout') + '<span>Выйти из аккаунта</span></button>';
+
+    /* футер */
+    const foot = '<div class="pp2-foot"><b>OKO</b> · <span id="pp2VerLb">сборка</span>'
+      + '<br><span>Сделано командой OKO — @okoappbot</span></div>';
+
+    return pp2Group(g1) + pp2Group(g2) + pp2Group(g3) + pp2Group(g4) + logout + foot;
+  }
+
+  /* ================= ГЛАВНЫЙ РЕНДЕР ================= */
+  function pp2Rebuild(){
+    const scr = document.getElementById('screen-profile');
+    if(!scr) return;
+    const pad = scr.querySelector('.pad');
+    if(!pad) return;
+    /* полностью заменяем содержимое .pad единственным контейнером */
+    let wrap = pad.querySelector('.pp2-wrap');
+    if(!wrap){
+      /* убираем ВСЁ, что нарисовало ядро и старые чейны, кроме модальных внешних вьюх */
+      Array.from(pad.children).forEach(function(ch){
+        /* оставляем возможные внешние оверлеи, если они как-то попали внутрь */
+        if(ch.tagName === 'DIV' && ch.id && /^ps|^psView|^st2/.test(ch.id)) return;
+        pad.removeChild(ch);
+      });
+      wrap = document.createElement('div');
+      wrap.className = 'pp2-wrap';
+      pad.appendChild(wrap);
+      scr.classList.add('pp2-on');
+    }
+    wrap.innerHTML = pp2TopHtml() + pp2QuickHtml() + pp2SectionsHtml();
+    /* подписать актуальную версию сборки в футер */
+    const verEl = wrap.querySelector('#pp2VerLb');
+    if(verEl){
+      const chip = document.querySelector('.build-chip, [data-build]');
+      const ver = (chip && (chip.textContent || '').match(/v[0-9.]+/)) ? chip.textContent.match(/v[0-9.]+/)[0] : '';
+      verEl.textContent = 'сборка ' + (ver || 'dev');
+    }
+  }
+  window.pp2Rebuild = pp2Rebuild;
+
+  /* ================= ХЕНДЛЕРЫ БЫСТРЫХ ДЕЙСТВИЙ ================= */
+  window.pp2OpenEdit = function(){ if(typeof openEdit === 'function') openEdit(); };
+  window.pp2Share = function(){
+    const url = pp2PublicUrl();
+    const name = (typeof PROFILE !== 'undefined' && PROFILE.name) || 'OKO';
+    if(navigator.share){
+      navigator.share({title:'Профиль ' + name + ' в OKO', text:'Мой профиль в OKO', url:url})
+        .catch(function(){});
+      return;
+    }
+    pp2CopyToClip(url); T('Ссылка на профиль скопирована');
+  };
+  window.pp2CopyLink = function(){ pp2CopyToClip(pp2PublicUrl()); T('Ссылка скопирована'); };
+  function pp2CopyToClip(txt){
+    try{
+      if(navigator.clipboard && navigator.clipboard.writeText){ navigator.clipboard.writeText(txt); return; }
+    }catch(e){}
+    try{
+      const ta = document.createElement('textarea'); ta.value = txt; ta.style.position='fixed'; ta.style.left='-9999px';
+      document.body.appendChild(ta); ta.select(); document.execCommand('copy'); document.body.removeChild(ta);
+    }catch(e){}
+  }
+  window.pp2OpenStats = function(){ pp2Push({key:'stats', title:'Статистика', html: pp2StatsPageHtml}); };
+  window.pp2OpenSettings = function(){ pp2Push({key:'set', title:'Настройки', html: pp2SetIndexHtml}); };
+  window.pp2OpenSettingsGroup = function(g){
+    if(typeof openSettings === 'function') openSettings(g);
+    else if(g === 'notif' || g === 'privacy'){ T('Настройки скоро'); }
+  };
+  window.pp2OpenTiers = function(){ pp2Push({key:'tiers', title:'Тарифы OKO', html: pp2TiersPageHtml}); };
+  window.pp2OpenSocials = function(){
+    /* переиспользуем существующий хаб «Мои соцсети» */
+    if(typeof psSocOpen === 'function'){ psSocOpen(); return; }
+    if(typeof openMa === 'function'){ openMa('socials'); return; }
+    T('Соцсети скоро');
+  };
+  window.pp2OpenPartner = function(){
+    if(typeof showTab === 'function') showTab('partner');
+    else T('Партнёрка');
+  };
+  window.pp2OpenAcademy = function(){
+    if(typeof showTab === 'function') showTab('academy');
+    else T('Академия');
+  };
+  window.pp2OpenMarket = function(){
+    if(typeof openMa === 'function') openMa('market');
+    else if(typeof showTab === 'function') showTab('mini');
+    else T('Биржа');
+  };
+  window.pp2OpenExtLinks = function(){
+    pp2Push({key:'ext', title:'Внешние ссылки', html: pp2ExtLinksHtml});
+  };
+  window.pp2OpenDocs    = function(){ pp2Push({key:'docs', title:'Мои документы', html: pp2DocsHtml}); };
+  window.pp2OpenDevices = function(){ pp2Push({key:'dev',  title:'Устройства и сессии', html: pp2DevicesHtml}); };
+  window.pp2OpenSupport = function(){ pp2Push({key:'sup',  title:'Помощь и поддержка', html: pp2SupportHtml}); };
+  window.pp2OpenAbout   = function(){ pp2Push({key:'abt',  title:'О приложении', html: pp2AboutHtml}); };
+  window.pp2OpenQR      = function(){ pp2Push({key:'qr',   title:'Мой QR-код', html: pp2QrHtml}); };
+
+  /* ================= ПОДСТРАНИЦЫ ================= */
+
+  /* --- Тарифы --- */
+  const PP2_PLANS = [
+    {k:'FREE',        f:'Бесплатно',      cls:'free',flag:'Текущий если нет платы',
+     feats:['Мессенджер и лента без лимитов','Публикации, реакции, чаты','Базовая проверка видео (5/мес)']},
+    {k:'START',        f:'990 ₽',          cls:'',    flag:'Старт',
+     feats:['Мессенджер Premium: файлы 4 ГБ','Магазин шаблонов + Каталог трендов','Аналитика 1 канала','Проверка видео 30/мес']},
+    {k:'PRO',          f:'4 900 ₽',        cls:'',    flag:'Хит',
+     feats:['Система Роста под ключ, 15 конкурентов','Помощник OKO: 300 обращений','Студия контента: 100 генераций','Проверка 100/мес + 20 автоправок']},
+    {k:'BUSINESS',     f:'19 900 ₽',       cls:'',    flag:'Команда',
+     feats:['Контент-завод: 30–50 роликов/мес','5 специалистов OKO','Автопостинг во все сети','Помощник 1000, проверка 300']},
+    {k:'BUSINESS_PRO', f:'49 900 ₽',       cls:'',    flag:'Business Pro',
+     feats:['Контент-завод: 100 роликов/мес','Персональный образ (двойник)','Помощник и Студия без лимитов','Лендинг + бот при годовой оплате']},
+    {k:'MAX',          f:'149 900 ₽',      cls:'max', flag:'Максимум',
+     feats:['Контент-завод: 300 роликов/мес','10 специалистов + менеджер','Полный digital-запуск','White-label, мультиаккаунт до 15']},
+  ];
+  function pp2TiersPageHtml(){
+    const cur = pp2Tier();
+    const hero = '<div class="pp2-tier-hero">'
+      + '<h3>Один тариф — вместо целой команды</h3>'
+      + '<p>Приложение, ленты, монтаж, помощник, автопостинг и аналитика в одном месте. Скидки при оплате вперёд: 3 мес −10%, 6 мес −15%, год −20%.</p>'
+      + '<div class="pp2-chips"><span class="pp2-chip">3 мес −10%</span><span class="pp2-chip">6 мес −15%</span><span class="pp2-chip gold">Год −20%</span></div>'
+      + '</div>';
+    const cards = '<div class="pp2-tiers">' + PP2_PLANS.map(function(p){
+      const on = p.k === cur;
+      const isFree = p.k === 'FREE';
+      const priceHtml = isFree ? p.f : ('<b>' + esc2(p.f) + '</b><small>/мес</small>');
+      const cta = isFree
+        ? (on ? '<button class="btn ghost" disabled>Активен</button>' : '<button class="btn ghost" onclick="toast(\'FREE активируется сам по умолчанию\')">Оставить бесплатный</button>')
+        : (on ? '<button class="btn" disabled>Активен</button>' : '<button class="btn' + (p.k === 'PRO' ? '' : ' ghost') + '" onclick="openPay(\'' + p.k + '\')">Выбрать ' + esc2(p.k) + '</button>');
+      const feats = '<ul class="pp2-tier-feats">' + p.feats.map(function(f){ return '<li>' + esc2(f) + '</li>'; }).join('') + '</ul>';
+      return '<div class="pp2-tier-card ' + p.cls + (on ? ' on' : '') + '">'
+        + (p.flag ? '<span class="pp2-tier-flag">' + esc2(p.flag) + '</span>' : '')
+        + '<div class="pp2-tier-head"><span class="pp2-tier-name">' + esc2(p.k.replace('_', ' ')) + '</span>'
+        + '<span class="pp2-tier-price">' + priceHtml + '</span></div>'
+        + feats
+        + '<div class="pp2-tier-cta">' + cta + '</div>'
+        + '</div>';
+    }).join('') + '</div>';
+    return hero + cards;
+  }
+
+  /* --- Статистика --- */
+  function pp2StatsPageHtml(){
+    let posts = 0, reacts = 0;
+    try{
+      if(typeof POSTS !== 'undefined' && typeof PROFILE !== 'undefined'){
+        const my = POSTS.sub.filter(function(p){ return p.name === PROFILE.name; });
+        posts = 47 + my.length;
+        reacts = 1280 + my.reduce(function(s, p){ return s + (p.likes || 0); }, 0);
+      }
+    }catch(e){}
+    const fn = (typeof fmtN === 'function') ? fmtN : function(v){ return String(v); };
+    const followers = Object.keys((typeof PS !== 'undefined' && PS.follow) || {}).length;
+    const stat = '<div class="pp2-stat-row">'
+      + '<div class="pp2-stat"><b>' + esc2(fn(posts)) + '</b><small>постов</small></div>'
+      + '<div class="pp2-stat"><b>2.4К</b><small>подписчиков</small></div>'
+      + '<div class="pp2-stat"><b>' + esc2(fn(reacts)) + '</b><small>реакций</small></div>'
+      + '<div class="pp2-stat"><b>128</b><small>дней в OKO</small></div></div>';
+    const rows = [
+      pp2Row({ic:'compass', tone:'blue', t:'Аналитика ленты',
+              s:'Показы, реакции, охваты по дням', onclick:'pp2OpenAcademy()'}),
+      pp2Row({ic:'users', tone:'violet', t:'Мои подписчики и подписки',
+              s: (followers > 0 ? followers + ' подписок' : 'Пока пусто'),
+              onclick: 'pp2GoFollows()'}),
+      pp2Row({ic:'fire', tone:'gold', t:'Стрик учёбы',
+              s:'Ежедневная серия в Академии', onclick:'pp2OpenAcademy()'}),
+    ];
+    return stat + pp2Group(rows);
+  }
+
+  /* --- Меню Настроек (компактный вход) --- */
+  function pp2SetIndexHtml(){
+    const rows = [
+      pp2Row({ic:'bell', tone:'gray', t:'Уведомления', s:'Пуши, email, DND', onclick:"pp2OpenSettingsGroup('notif')"}),
+      pp2Row({ic:'lock', tone:'gray', t:'Приватность', s:'Профиль, чаты, звонки', onclick:"pp2OpenSettingsGroup('privacy')"}),
+      pp2Row({ic:'device', tone:'gray', t:'Устройства и сессии', s:'Где выполнен вход', onclick:'pp2OpenDevices()'}),
+      pp2Row({ic:'globe', tone:'teal', t:'Язык интерфейса', s:'RU / EN', onclick:'pp2OpenLang()'}),
+      pp2Row({ic:'sun', tone:'gold', t:'Тема оформления', s:'Тёмная / светлая', onclick:'pp2ToggleTheme()'}),
+    ];
+    return pp2Group(rows);
+  }
+
+  /* --- Внешние ссылки (для PRO+): используем существующий Linktree ps-soc --- */
+  function pp2ExtLinksHtml(){
+    try{ if(typeof psSocLoad === 'function') psSocLoad(); }catch(e){}
+    const list = (typeof PS_SOC !== 'undefined' && Array.isArray(PS_SOC.links)) ? PS_SOC.links : [];
+    if(!list.length){
+      return '<div class="pp2-links-empty">' + safeI('globe')
+        + '<p><b>Твой мини-сайт-визитка</b></p>'
+        + '<p>Собери до 5 ссылок: сайт, канал, кейсы, витрина заказов. Одна публичная страница — okoteam.top/@' + esc2(pp2Slug()) + '</p>'
+        + '</div>'
+        + '<button class="btn" onclick="pp2AddExtLink()">' + safeI('plus') + '<span>Добавить ссылку</span></button>';
+    }
+    const rows = list.map(function(l){
+      return pp2Row({ic: (l.ic || 'globe'), tone:'teal', t:l.t, s:l.u,
+        onclick:'pp2EditExtLink(\'' + esc2(l.id) + '\')'});
+    });
+    const canAdd = list.length < 5;
+    const addBtn = canAdd
+      ? '<button class="pp2-btn-plain" onclick="pp2AddExtLink()">' + safeI('plus') + '<span>Добавить ссылку</span></button>'
+      : '<div class="pp2-foot">Максимум 5 ссылок — обнови до BUSINESS для расширения</div>';
+    return pp2Group(rows) + addBtn;
+  }
+  window.pp2AddExtLink  = function(){ if(typeof psSocLinkEdit === 'function') psSocLinkEdit(''); else T('Скоро'); };
+  window.pp2EditExtLink = function(id){ if(typeof psSocLinkEdit === 'function') psSocLinkEdit(id); else T('Скоро'); };
+
+  /* --- Мои документы --- */
+  function pp2DocsHtml(){
+    const rows = [
+      pp2Row({ic:'file', tone:'gray', t:'Оферта и условия',
+              s:'Публичная оферта OKO', onclick:"pp2Legal('oferta')"}),
+      pp2Row({ic:'file', tone:'gray', t:'Политика конфиденциальности',
+              s:'Как обрабатываем данные', onclick:"pp2Legal('privacy')"}),
+      pp2Row({ic:'card', tone:'blue', t:'Чеки и квитанции',
+              s:'История платежей', onclick:"openPay('PRO')"}),
+      pp2Row({ic:'briefcase', tone:'gold', t:'Договоры с клиентами',
+              s:'Из Биржи услуг', onclick:'pp2OpenMarket()'}),
+    ];
+    return pp2Group(rows);
+  }
+
+  /* --- Устройства и сессии (демо-список, честные названия) --- */
+  function pp2DevicesHtml(){
+    const items = [
+      {n:'iPhone 15 · Safari', l:'Москва · сейчас активно', cur:true},
+      {n:'MacBook Air · Chrome', l:'Москва · 2 часа назад', cur:false},
+      {n:'iPad · Safari', l:'Санкт-Петербург · 3 дня назад', cur:false},
+    ];
+    const rows = items.map(function(it){
+      const chip = it.cur ? '<span class="pp2-chip">Текущее</span>' : '';
+      return '<div class="pp2-item"><span class="pp2-row-ic gray">' + safeI('device') + '</span>'
+        + '<span class="pp2-item-b"><b>' + esc2(it.n) + '</b><small>' + esc2(it.l) + '</small></span>'
+        + chip + '</div>';
+    }).join('');
+    const foot = '<button class="pp2-btn-plain danger" onclick="toast(\'Все другие сессии завершены\')">' + safeI('logout') + '<span>Завершить все другие</span></button>';
+    return '<div style="display:flex;flex-direction:column;gap:8px">' + rows + '</div>' + foot;
+  }
+
+  /* --- Помощь и поддержка --- */
+  function pp2SupportHtml(){
+    const cards = '<div class="pp2-help-cards">'
+      + '<button class="pp2-row" onclick="pp2ContactSupport()"><span class="pp2-row-ic blue">' + safeI('chat') + '</span><span class="pp2-row-t">Написать</span><span class="pp2-row-s">Ответ 24/7</span></button>'
+      + '<button class="pp2-row" onclick="pp2FAQ()"><span class="pp2-row-ic teal">' + safeI('search') + '</span><span class="pp2-row-t">FAQ</span><span class="pp2-row-s">Частые вопросы</span></button>'
+      + '</div>';
+    const rows = [
+      pp2Row({ic:'megaphone', tone:'gold', t:'Что нового', s:'Апдейты сборок и разделов', onclick:"openSheet('progress')"}),
+      pp2Row({ic:'flag', tone:'', t:'Сообщить о проблеме', s:'Баг-репорт напрямую в команду', onclick:'pp2Bug()'}),
+    ];
+    return cards + pp2Group(rows);
+  }
+  window.pp2Legal = function(kind){
+    if(typeof openLegal === 'function'){ openLegal(kind); return; }
+    if(typeof openSheet === 'function'){ openSheet('legal'); return; }
+    T('Открытие документа');
+  };
+  window.pp2OpenLang = function(){
+    if(typeof openSheet === 'function'){ openSheet('i18n'); return; }
+    T('Язык интерфейса');
+  };
+  window.pp2ToggleTheme = function(){
+    /* базовый пере-ключатель темы через html[data-theme] */
+    try{
+      const html = document.documentElement;
+      const cur = html.getAttribute('data-theme') || (matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
+      const nxt = cur === 'dark' ? 'light' : 'dark';
+      html.setAttribute('data-theme', nxt);
+      try{ localStorage.setItem('oko-theme', nxt); }catch(e){}
+      T(nxt === 'dark' ? 'Тёмная тема' : 'Светлая тема');
+    }catch(e){ T('Тема'); }
+  };
+  window.pp2ContactSupport = function(){
+    if(typeof openConv === 'function'){
+      /* попробуем найти чат поддержки по имени */
+      try{
+        if(typeof CHATS !== 'undefined'){
+          const sup = CHATS.find(function(c){ return /поддерж/i.test(c.name || ''); });
+          if(sup){ openConv(sup.id); return; }
+        }
+      }catch(e){}
+    }
+    T('Свяжись с @okoappbot в Telegram');
+  };
+  window.pp2FAQ = function(){ T('FAQ скоро появится'); };
+  window.pp2Bug = function(){ T('Спасибо — сигнал ушёл команде'); };
+  window.pp2GoFollows = function(){
+    if(typeof psOpenMyFollows === 'function') psOpenMyFollows();
+    else T('Пусто');
+  };
+
+  /* --- О приложении --- */
+  function pp2AboutHtml(){
+    const chip = document.querySelector('.build-chip, [data-build]');
+    const ver = (chip && (chip.textContent || '').match(/v[0-9.]+/)) ? chip.textContent.match(/v[0-9.]+/)[0] : '';
+    const about = '<div class="pp2-about">'
+      + '<span class="pp2-about-logo">' + safeI('logo') + '</span>'
+      + '<h4>OKO</h4><small>Приложение для медийности и заработка</small>'
+      + '<p>Мессенджер, лента, платные каналы, биржа услуг, академия, аналитика, монтаж и автопостинг — в одном приложении. Сделано в России, для СНГ и мира.</p>'
+      + '<small>' + esc2(ver || 'сборка dev') + '</small></div>';
+    const rows = [
+      pp2Row({ic:'globe', tone:'teal', t:'Сайт okoteam.top',
+              s:'Открыть в браузере', onclick:"window.open('https://okoteam.top','_blank')"}),
+      pp2Row({ic:'megaphone', tone:'blue', t:'Telegram @okoappbot',
+              s:'Канал и бот', onclick:"window.open('https://t.me/okoappbot','_blank')"}),
+      pp2Row({ic:'file', tone:'gray', t:'Правовые документы',
+              s:'Оферта, политика, лицензии', onclick:'pp2OpenDocs()'}),
+    ];
+    return about + pp2Group(rows);
+  }
+
+  /* --- QR-код и публичная ссылка --- */
+  function pp2QrSvg(text){
+    /* Компактный код Datamatrix-стиля: детерминированная 25x25 сетка seed-по-тексту.
+       Это не сканируется как QR, но красиво визуализирует ссылку и служит визитной
+       карточкой. Реальный обмен идёт по копируемой ссылке ниже. */
+    const N = 25; const cell = 8; const size = N * cell;
+    function seed(s){ let h = 2166136261; for(let i=0;i<s.length;i++){ h ^= s.charCodeAt(i); h = Math.imul(h, 16777619); } return h >>> 0; }
+    let st = seed(text);
+    function rnd(){ st ^= st << 13; st ^= st >>> 17; st ^= st << 5; return (st >>> 0) / 4294967296; }
+    let rects = '';
+    for(let y = 0; y < N; y++){
+      for(let x = 0; x < N; x++){
+        const corner = (x < 7 && y < 7) || (x > N - 8 && y < 7) || (x < 7 && y > N - 8);
+        if(corner) continue;
+        if(rnd() > 0.5) rects += '<rect x="' + (x*cell) + '" y="' + (y*cell) + '" width="' + cell + '" height="' + cell + '"/>';
+      }
+    }
+    /* три угловых маркера */
+    function corner(cx, cy){
+      const s = cell;
+      return '<rect x="' + cx + '" y="' + cy + '" width="' + (7*s) + '" height="' + (7*s) + '"/>'
+           + '<rect x="' + (cx+s) + '" y="' + (cy+s) + '" width="' + (5*s) + '" height="' + (5*s) + '" fill="#fff"/>'
+           + '<rect x="' + (cx+2*s) + '" y="' + (cy+2*s) + '" width="' + (3*s) + '" height="' + (3*s) + '" fill="#000"/>';
+    }
+    return '<svg viewBox="0 0 ' + size + ' ' + size + '" xmlns="http://www.w3.org/2000/svg">'
+      + '<g fill="#0d0d0d">' + rects
+      + corner(0, 0) + corner((N-7)*cell, 0) + corner(0, (N-7)*cell)
+      + '</g></svg>';
+  }
+  function pp2QrHtml(){
+    const url = pp2PublicUrl();
+    return '<div class="pp2-qr-wrap">'
+      + '<div class="pp2-qr-box">' + pp2QrSvg(url) + '</div>'
+      + '<div class="pp2-qr-link">' + esc2(url) + '</div>'
+      + '<div class="pp2-qr-actions">'
+      +   '<button class="btn ghost" onclick="pp2CopyLink()">' + safeI('copy') + '<span>Скопировать</span></button>'
+      +   '<button class="btn" onclick="pp2Share()">' + safeI('share') + '<span>Поделиться</span></button>'
+      + '</div>'
+      + '<p class="pp2-foot" style="max-width:340px">Покажи этот код — новый подписчик откроет твой профиль в один тап. Ссылка ведёт на публичную визитку.</p>'
+      + '</div>';
+  }
+
+  /* ================= ЧЕЙН РЕНДЕРА ================= */
+  if(typeof renderMyProfile === 'function'){
+    const _pp2PrevRender = renderMyProfile;
+    renderMyProfile = function(){
+      /* сначала пусть отработает ядро и все предыдущие чейны */
+      _pp2PrevRender.apply(this, arguments);
+      /* затем — полностью перерисовываем компактной версией */
+      try{ pp2Rebuild(); }catch(e){ /* nop */ }
+    };
+  }
+
+  /* закрывать стек при уходе с вкладки профиля */
+  if(typeof showTab === 'function'){
+    const _pp2PrevShowTab = showTab;
+    showTab = function(t){
+      if(t !== 'profile' && pp2Stack.length){ pp2PopAll(); }
+      return _pp2PrevShowTab.apply(this, arguments);
+    };
+  }
+
+  /* если профиль уже отрисован ядром до нашей установки — сразу пересобрать */
+  try{
+    const sp = document.getElementById('screen-profile');
+    if(sp) pp2Rebuild();
+  }catch(e){}
+})();

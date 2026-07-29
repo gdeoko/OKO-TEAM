@@ -1,0 +1,208 @@
+<!-- ===== CALLS: два движка звонков (личный + групповая конференция) =====
+     Все SVG — свои новые (defs ниже, стиль stroke:5-6, rounded, минималистично).
+     Обе темы, префикс cl-. -->
+
+<svg width="0" height="0" style="position:absolute;pointer-events:none" aria-hidden="true">
+  <defs>
+    <!-- Микрофон (капсула + дуга) -->
+    <symbol id="cl-i-mic" viewBox="0 0 64 64">
+      <rect x="24" y="8" width="16" height="30" rx="8" fill="none" stroke="currentColor" stroke-width="5"/>
+      <path d="M14 30v3c0 10 8 18 18 18s18-8 18-18v-3" fill="none" stroke="currentColor" stroke-width="5" stroke-linecap="round"/>
+      <line x1="32" y1="51" x2="32" y2="58" stroke="currentColor" stroke-width="5" stroke-linecap="round"/>
+    </symbol>
+    <!-- Микрофон OFF (та же капсула + слэш) -->
+    <symbol id="cl-i-mic-off" viewBox="0 0 64 64">
+      <rect x="24" y="8" width="16" height="30" rx="8" fill="none" stroke="currentColor" stroke-width="5"/>
+      <path d="M14 30v3c0 10 8 18 18 18s18-8 18-18v-3" fill="none" stroke="currentColor" stroke-width="5" stroke-linecap="round"/>
+      <line x1="32" y1="51" x2="32" y2="58" stroke="currentColor" stroke-width="5" stroke-linecap="round"/>
+      <line x1="10" y1="10" x2="54" y2="54" stroke="currentColor" stroke-width="6" stroke-linecap="round"/>
+    </symbol>
+    <!-- Камера (объектив + носик) -->
+    <symbol id="cl-i-cam" viewBox="0 0 64 64">
+      <rect x="6" y="18" width="36" height="28" rx="6" fill="none" stroke="currentColor" stroke-width="5"/>
+      <path d="M42 28l16-8v24l-16-8z" fill="none" stroke="currentColor" stroke-width="5" stroke-linejoin="round"/>
+    </symbol>
+    <!-- Камера OFF -->
+    <symbol id="cl-i-cam-off" viewBox="0 0 64 64">
+      <rect x="6" y="18" width="36" height="28" rx="6" fill="none" stroke="currentColor" stroke-width="5"/>
+      <path d="M42 28l16-8v24l-16-8z" fill="none" stroke="currentColor" stroke-width="5" stroke-linejoin="round"/>
+      <line x1="10" y1="10" x2="54" y2="54" stroke="currentColor" stroke-width="6" stroke-linecap="round"/>
+    </symbol>
+    <!-- Динамик (громкий) -->
+    <symbol id="cl-i-spk" viewBox="0 0 64 64">
+      <path d="M8 24h10l14-12v40L18 40H8z" fill="currentColor"/>
+      <path d="M40 22c4 3 6 6 6 10s-2 7-6 10" fill="none" stroke="currentColor" stroke-width="5" stroke-linecap="round"/>
+      <path d="M48 14c8 5 10 11 10 18s-2 13-10 18" fill="none" stroke="currentColor" stroke-width="5" stroke-linecap="round"/>
+    </symbol>
+    <!-- Динамик выкл -->
+    <symbol id="cl-i-spk-off" viewBox="0 0 64 64">
+      <path d="M8 24h10l14-12v40L18 40H8z" fill="currentColor"/>
+      <line x1="40" y1="22" x2="58" y2="42" stroke="currentColor" stroke-width="5" stroke-linecap="round"/>
+      <line x1="58" y1="22" x2="40" y2="42" stroke="currentColor" stroke-width="5" stroke-linecap="round"/>
+    </symbol>
+    <!-- Трубка (положить, для end-кнопки — свою повернём в CSS) -->
+    <symbol id="cl-i-hangup" viewBox="0 0 64 64">
+      <path d="M12 34c8-10 32-10 40 0l-5 6c-2 2-5 3-8 2l-4-2c-1-1-2-2-2-4v-4c-4-1-8-1-12 0v4c0 2-1 3-2 4l-4 2c-3 1-6 0-8-2z" fill="currentColor"/>
+    </symbol>
+    <!-- Демо экрана (стрелка вверх из монитора) -->
+    <symbol id="cl-i-share" viewBox="0 0 64 64">
+      <rect x="6" y="12" width="52" height="34" rx="4" fill="none" stroke="currentColor" stroke-width="5"/>
+      <path d="M32 40V22M24 30l8-8 8 8" fill="none" stroke="currentColor" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"/>
+      <line x1="22" y1="54" x2="42" y2="54" stroke="currentColor" stroke-width="5" stroke-linecap="round"/>
+    </symbol>
+    <!-- Развернуть камеру (flip) -->
+    <symbol id="cl-i-flip" viewBox="0 0 64 64">
+      <path d="M12 26a20 20 0 0 1 34-8M52 38a20 20 0 0 1-34 8" fill="none" stroke="currentColor" stroke-width="5" stroke-linecap="round"/>
+      <path d="M46 12v10h-10M18 52V42h10" fill="none" stroke="currentColor" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"/>
+    </symbol>
+    <!-- Участники -->
+    <symbol id="cl-i-users" viewBox="0 0 64 64">
+      <circle cx="24" cy="22" r="8" fill="none" stroke="currentColor" stroke-width="5"/>
+      <path d="M8 52c0-9 7-16 16-16s16 7 16 16" fill="none" stroke="currentColor" stroke-width="5" stroke-linecap="round"/>
+      <circle cx="46" cy="26" r="6" fill="none" stroke="currentColor" stroke-width="5"/>
+      <path d="M46 38c6 0 10 4 12 10" fill="none" stroke="currentColor" stroke-width="5" stroke-linecap="round"/>
+    </symbol>
+    <!-- Чат -->
+    <symbol id="cl-i-chat" viewBox="0 0 64 64">
+      <path d="M8 20a6 6 0 0 1 6-6h36a6 6 0 0 1 6 6v20a6 6 0 0 1-6 6H26L14 56V46a6 6 0 0 1-6-6z" fill="none" stroke="currentColor" stroke-width="5" stroke-linejoin="round"/>
+    </symbol>
+    <!-- Реакция (сердце) -->
+    <symbol id="cl-i-heart" viewBox="0 0 64 64">
+      <path d="M32 54S8 40 8 22c0-7 6-12 12-12 5 0 9 3 12 8 3-5 7-8 12-8 6 0 12 5 12 12 0 18-24 32-24 32z" fill="none" stroke="currentColor" stroke-width="5" stroke-linejoin="round"/>
+    </symbol>
+    <!-- Шестерёнка -->
+    <symbol id="cl-i-gear" viewBox="0 0 64 64">
+      <circle cx="32" cy="32" r="8" fill="none" stroke="currentColor" stroke-width="5"/>
+      <path d="M32 6v8M32 50v8M6 32h8M50 32h8M13 13l6 6M45 45l6 6M13 51l6-6M45 19l6-6" stroke="currentColor" stroke-width="5" stroke-linecap="round"/>
+    </symbol>
+    <!-- Три точки (меню) -->
+    <symbol id="cl-i-more" viewBox="0 0 64 64">
+      <circle cx="16" cy="32" r="4" fill="currentColor"/>
+      <circle cx="32" cy="32" r="4" fill="currentColor"/>
+      <circle cx="48" cy="32" r="4" fill="currentColor"/>
+    </symbol>
+    <!-- Крест -->
+    <symbol id="cl-i-x" viewBox="0 0 64 64">
+      <line x1="14" y1="14" x2="50" y2="50" stroke="currentColor" stroke-width="6" stroke-linecap="round"/>
+      <line x1="50" y1="14" x2="14" y2="50" stroke="currentColor" stroke-width="6" stroke-linecap="round"/>
+    </symbol>
+    <!-- Назад -->
+    <symbol id="cl-i-back" viewBox="0 0 64 64">
+      <path d="M40 12L20 32l20 20" fill="none" stroke="currentColor" stroke-width="6" stroke-linecap="round" stroke-linejoin="round"/>
+    </symbol>
+    <!-- Щит (админ) -->
+    <symbol id="cl-i-shield" viewBox="0 0 64 64">
+      <path d="M32 6l22 8v18c0 14-10 24-22 26-12-2-22-12-22-26V14z" fill="none" stroke="currentColor" stroke-width="5" stroke-linejoin="round"/>
+    </symbol>
+    <!-- Корона (владелец) -->
+    <symbol id="cl-i-crown" viewBox="0 0 64 64">
+      <path d="M8 20l10 24h28l10-24-14 10L32 14 20 30z" fill="currentColor"/>
+    </symbol>
+    <!-- Waveform (говорит) -->
+    <symbol id="cl-i-wave" viewBox="0 0 64 64">
+      <line x1="10" y1="26" x2="10" y2="38" stroke="currentColor" stroke-width="4" stroke-linecap="round"/>
+      <line x1="20" y1="20" x2="20" y2="44" stroke="currentColor" stroke-width="4" stroke-linecap="round"/>
+      <line x1="32" y1="12" x2="32" y2="52" stroke="currentColor" stroke-width="4" stroke-linecap="round"/>
+      <line x1="44" y1="20" x2="44" y2="44" stroke="currentColor" stroke-width="4" stroke-linecap="round"/>
+      <line x1="54" y1="26" x2="54" y2="38" stroke="currentColor" stroke-width="4" stroke-linecap="round"/>
+    </symbol>
+    <!-- Свернуть -->
+    <symbol id="cl-i-min" viewBox="0 0 64 64">
+      <path d="M12 22l20 20 20-20" fill="none" stroke="currentColor" stroke-width="6" stroke-linecap="round" stroke-linejoin="round"/>
+    </symbol>
+    <!-- Рука (поднять) -->
+    <symbol id="cl-i-hand" viewBox="0 0 64 64">
+      <path d="M18 14v18M28 8v24M38 12v20M48 22v14c0 12-8 20-18 20s-16-6-18-14l-6-14c-1-3 1-6 4-6s5 2 6 5l4 6" fill="none" stroke="currentColor" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"/>
+    </symbol>
+  </defs>
+</svg>
+
+<!-- ============= 1. Групповая конференция (Zoom-like) ============= -->
+<div id="cl-conf" role="dialog" aria-modal="true" aria-hidden="true">
+  <div class="cl-conf-top">
+    <button class="cl-top-btn" id="cl-conf-min" title="Свернуть"><svg class="cl-i"><use href="#cl-i-min"/></svg></button>
+    <div class="cl-conf-title">
+      <b id="cl-conf-name">Общий созвон</b>
+      <small id="cl-conf-meta"><i class="cl-live"></i><span id="cl-conf-count">0</span> в звонке<span class="cl-dot-sep"></span><span id="cl-conf-time">00:00</span></small>
+    </div>
+    <button class="cl-top-btn" id="cl-conf-more" title="Меню"><svg class="cl-i"><use href="#cl-i-more"/></svg></button>
+  </div>
+
+  <div class="cl-conf-stage" id="cl-conf-stage"></div>
+
+  <div class="cl-conf-bar">
+    <button class="cl-btn" id="cl-conf-mic" title="Микрофон"><svg class="cl-i"><use href="#cl-i-mic"/></svg></button>
+    <button class="cl-btn" id="cl-conf-cam" title="Камера"><svg class="cl-i"><use href="#cl-i-cam-off"/></svg></button>
+    <button class="cl-btn" id="cl-conf-share" title="Демо экрана"><svg class="cl-i"><use href="#cl-i-share"/></svg></button>
+    <button class="cl-btn" id="cl-conf-react" title="Реакция"><svg class="cl-i"><use href="#cl-i-heart"/></svg></button>
+    <button class="cl-btn" id="cl-conf-part" title="Участники"><svg class="cl-i"><use href="#cl-i-users"/></svg><i class="cl-btn-badge" id="cl-conf-partn"></i></button>
+    <button class="cl-btn" id="cl-conf-chat" title="Чат"><svg class="cl-i"><use href="#cl-i-chat"/></svg></button>
+    <button class="cl-btn cl-btn-gear" id="cl-conf-gear" title="Настройки"><svg class="cl-i"><use href="#cl-i-gear"/></svg></button>
+    <button class="cl-btn cl-btn-end" id="cl-conf-end" title="Покинуть"><svg class="cl-i"><use href="#cl-i-hangup"/></svg></button>
+  </div>
+
+  <!-- Панель участников (выезжает справа) -->
+  <div class="cl-side" id="cl-conf-side" aria-hidden="true">
+    <div class="cl-side-head">
+      <b>Участники</b>
+      <button class="cl-top-btn" id="cl-side-close"><svg class="cl-i"><use href="#cl-i-x"/></svg></button>
+    </div>
+    <div class="cl-side-body" id="cl-side-body"></div>
+  </div>
+
+  <!-- Меню владельца по участнику -->
+  <div class="cl-menu" id="cl-conf-menu" role="menu" aria-hidden="true"></div>
+
+  <!-- Настройки владельца -->
+  <div class="cl-sheet" id="cl-conf-settings" aria-hidden="true">
+    <div class="cl-sheet-head">
+      <b>Настройки созвона</b>
+      <button class="cl-top-btn" id="cl-settings-close"><svg class="cl-i"><use href="#cl-i-x"/></svg></button>
+    </div>
+    <div class="cl-sheet-body" id="cl-settings-body"></div>
+  </div>
+
+  <!-- Всплывающая реакция -->
+  <div class="cl-reactions" id="cl-conf-reactions" aria-hidden="true"></div>
+</div>
+
+<!-- ============= 2. Личный звонок (аудио/видео) ============= -->
+<div id="cl-personal" role="dialog" aria-modal="true" aria-hidden="true">
+  <div class="cl-pers-bg" id="cl-pers-bg"></div>
+
+  <button class="cl-top-btn cl-pers-min" id="cl-pers-min" title="Свернуть"><svg class="cl-i"><use href="#cl-i-min"/></svg></button>
+
+  <!-- видеопоток собеседника (fullscreen) -->
+  <video class="cl-pers-remote" id="cl-pers-remote" playsinline autoplay muted></video>
+
+  <div class="cl-pers-head">
+    <div class="cl-halo">
+      <span class="cl-ring cl-ring-1"></span>
+      <span class="cl-ring cl-ring-2"></span>
+      <span class="cl-ring cl-ring-3"></span>
+      <div class="cl-pers-ava" id="cl-pers-ava">O</div>
+    </div>
+    <div class="cl-pers-name" id="cl-pers-name">Собеседник</div>
+    <div class="cl-pers-status" id="cl-pers-status">вызов…</div>
+  </div>
+
+  <!-- PIP: моё видео -->
+  <div class="cl-pip" id="cl-pers-pip" hidden>
+    <video class="cl-pip-vid" id="cl-pers-self" playsinline autoplay muted></video>
+    <div class="cl-pip-fallback" id="cl-pers-self-fb">Разреши доступ к камере</div>
+  </div>
+
+  <div class="cl-pers-bar">
+    <button class="cl-btn" id="cl-pers-mic" title="Микрофон"><svg class="cl-i"><use href="#cl-i-mic"/></svg></button>
+    <button class="cl-btn" id="cl-pers-spk" title="Динамик"><svg class="cl-i"><use href="#cl-i-spk"/></svg></button>
+    <button class="cl-btn" id="cl-pers-cam" title="Камера"><svg class="cl-i"><use href="#cl-i-cam"/></svg></button>
+    <button class="cl-btn" id="cl-pers-flip" title="Развернуть камеру"><svg class="cl-i"><use href="#cl-i-flip"/></svg></button>
+    <button class="cl-btn cl-btn-end cl-pers-end" id="cl-pers-end" title="Завершить"><svg class="cl-i"><use href="#cl-i-hangup"/></svg></button>
+  </div>
+</div>
+
+<!-- Мини-плашка свёрнутого звонка -->
+<button class="cl-pill" id="cl-pill" aria-hidden="true">
+  <span class="cl-pill-dot"></span>
+  <span class="cl-pill-tx"><b id="cl-pill-name">Звонок</b><small id="cl-pill-time">00:00</small></span>
+</button>

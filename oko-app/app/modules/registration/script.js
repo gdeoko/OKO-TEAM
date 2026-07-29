@@ -551,13 +551,848 @@ function regPopupNotif(){
     ]});
 }
 
-/* ---------- патч doLogin: метод phone -> полная регистрация ---------- */
+/* ---------- патч doLogin: метод phone -> НОВЫЙ 4-шаговый флоу rg2 ---------- */
 const _regPrevDoLogin = doLogin;
 doLogin = function(method){
-  if(method === 'phone'){ regOpen(); return; }
+  if(method === 'phone'){ rg2Open(); return; }
   _regPrevDoLogin(method);            /* telegram / google / apple — быстрый вход как раньше */
   regSchedulePopups();
 };
+
+/* ============================================================
+   RG2 — новый 4-шаговый флоу регистрации внутри #authScreen
+   (по ТЗ Даниэля 29.07). Полностью самодостаточный, префикс rg2-.
+   Не трогает base.html: динамически строит DOM внутри #authScreen,
+   прячет .auth-inner, восстанавливает при back-to-step-0.
+   ============================================================ */
+const RG2 = {
+  step: 1,                 /* 1..4 */
+  method: 'email',         /* email | phone — авто по вводу */
+  contact: '',             /* email или +7... */
+  password: '',
+  remember: true,
+  code: '',                /* сгенерированный 6-значный код (мок) */
+  codeTimer: null,
+  codeLeft: 0,
+  resendUsed: 0,
+  name: '',
+  nick: '',
+  bio: '',
+  avaIdx: 2,               /* индекс REG_AVA */
+  avaImg: '',              /* dataURL если загружена картинка */
+  tier: 'FREE',            /* FREE | START | PRO | BUSINESS | MAX */
+  period: 1,               /* 1|3|6|12 месяцев */
+};
+const RG2_ADMIN_EMAIL = (typeof ADMIN_EMAIL !== 'undefined') ? ADMIN_EMAIL : 'okoteam.top@gmail.com';
+const RG2_TAKEN_NICKS = ['oko','okoteam','oko_official','daniel','ktodaniel','admin','support','team','ceo','help'];
+const RG2_TIERS = [
+  {id:'FREE',     name:'Free',     price:0,     line:'Старт бесплатно',           feats:['Лента и чаты','2 500 ₽ бонус','Базовые инструменты']},
+  {id:'START',    name:'Start',    price:990,   line:'Первые системные инструменты', feats:['Автопостинг в 2 сети','Файлы до 300 МБ','Скидка 5% на рекламу']},
+  {id:'PRO',      name:'Pro',      price:4900,  line:'Максимум возможностей',      feats:['Проверка видео: безлимит','Система роста','Все соцсети, файлы до 2 ГБ','Скидка 10% на рекламу'], reco:true},
+  {id:'BUSINESS', name:'Business', price:19900, line:'Команда и конвейер',         feats:['Контент-завод под ключ','Рекламный кабинет PRO','Менеджер и API']},
+  {id:'MAX',      name:'Max',      price:149900,line:'Максимальный доступ',         feats:['Всё из PRO + BUSINESS','Персональный продюсер','Приоритет во всём']},
+];
+const RG2_PERIODS = [
+  {m:1,  lab:'1 мес',  disc:0},
+  {m:3,  lab:'3 мес',  disc:10},
+  {m:6,  lab:'6 мес',  disc:15},
+  {m:12, lab:'Год',    disc:20},
+];
+
+function rg2Detect(v){
+  const s = String(v||'').trim();
+  if(/^\+?\d[\d\s\-()]{7,}$/.test(s) && s.replace(/\D/g,'').length >= 8) return 'phone';
+  return 'email';
+}
+function rg2MaskContact(v){
+  const s = String(v||'');
+  if(rg2Detect(s) === 'email'){
+    const [u, d] = s.split('@');
+    if(!d) return s;
+    const uu = u.length <= 2 ? u : u[0] + '***' + u.slice(-1);
+    return uu + '@' + d;
+  }
+  const d = s.replace(/\D/g,'');
+  if(d.length < 4) return s;
+  return '+' + d.slice(0,1) + ' *** *** ' + d.slice(-2);
+}
+function rg2Rand6(){ return String(Math.floor(100000 + Math.random()*900000)); }
+function rg2RandNick(){ return 'user_' + Math.random().toString(36).slice(2,8); }
+
+/* ---------- вход в поток / выход ---------- */
+function rg2Open(){
+  const scr = document.getElementById('authScreen');
+  if(!scr) return;
+  scr.classList.remove('hidden');
+  /* спрятать стандартный auth-inner */
+  const inner = scr.querySelector('.auth-inner');
+  if(inner) inner.style.display = 'none';
+  /* создать shell если ещё нет */
+  let shell = document.getElementById('rg2Shell');
+  if(!shell){
+    shell = document.createElement('div');
+    shell.id = 'rg2Shell';
+    shell.className = 'rg2-shell';
+    shell.innerHTML = rg2ShellHTML();
+    scr.appendChild(shell);
+    rg2BindOnce();
+  }
+  shell.classList.add('open');
+  /* сбросить состояние */
+  RG2.step = 1; RG2.contact = ''; RG2.password = ''; RG2.code = '';
+  RG2.name = ''; RG2.nick = rg2RandNick(); RG2.bio = '';
+  RG2.avaIdx = 2; RG2.avaImg = ''; RG2.tier = 'FREE'; RG2.period = 1;
+  RG2.resendUsed = 0;
+  rg2GoTo(1);
+}
+function rg2Exit(){
+  const shell = document.getElementById('rg2Shell');
+  if(shell) shell.classList.remove('open');
+  const scr = document.getElementById('authScreen');
+  const inner = scr && scr.querySelector('.auth-inner');
+  if(inner) inner.style.display = '';
+  if(RG2.codeTimer){ clearInterval(RG2.codeTimer); RG2.codeTimer = null; }
+}
+function rg2Back(){
+  if(RG2.step <= 1){ rg2Exit(); return; }
+  rg2GoTo(RG2.step - 1);
+}
+function rg2GoTo(n){
+  RG2.step = n;
+  /* прогресс-таймлайн */
+  for(let i=1; i<=4; i++){
+    const dot = document.querySelector('#rg2Tl .rg2-tl-dot[data-i="'+i+'"]');
+    if(dot){
+      dot.classList.toggle('done', i < n);
+      dot.classList.toggle('on',   i === n);
+    }
+    const bar = document.querySelector('#rg2Tl .rg2-tl-seg[data-i="'+i+'"]');
+    if(bar) bar.classList.toggle('done', i < n);
+  }
+  /* видимость шагов */
+  for(let i=1; i<=4; i++){
+    const s = document.getElementById('rg2Step'+i);
+    if(s){
+      s.classList.remove('active','rg2-back');
+      if(i === n){
+        void s.offsetWidth;
+        s.classList.add('active');
+      }
+    }
+  }
+  /* фокус на первое поле */
+  setTimeout(()=>{
+    const first = document.querySelector('#rg2Step'+n+' input:not([type=hidden]):not([type=file]):not([disabled])');
+    if(first && n !== 4) try{ first.focus(); }catch(e){}
+  }, 300);
+  /* прячем back на 1 шаге — заменяем на «к вариантам входа» */
+  const back = document.getElementById('rg2Back');
+  if(back) back.dataset.first = (n === 1 ? '1' : '0');
+}
+function rg2Err(id, msg){
+  const el = document.getElementById(id);
+  if(!el) return;
+  el.textContent = msg || '';
+  el.classList.toggle('show', !!msg);
+  if(msg){ void el.offsetWidth; el.classList.add('shake'); setTimeout(()=>el.classList.remove('shake'), 400); }
+}
+
+/* ---------- ШЕЛЛ HTML ---------- */
+function rg2ShellHTML(){
+  return `
+  <header class="rg2-head">
+    <button type="button" class="rg2-back" id="rg2Back" data-first="1" onclick="rg2Back()" aria-label="Назад">
+      <svg class="i"><use href="#i-back"/></svg>
+    </button>
+    <div class="rg2-tl" id="rg2Tl">
+      ${[1,2,3,4].map(i=>`
+        <span class="rg2-tl-dot ${i===1?'on':''}" data-i="${i}"><i>${i}</i></span>
+        ${i<4?`<span class="rg2-tl-seg" data-i="${i}"><i></i></span>`:''}
+      `).join('')}
+    </div>
+    <span class="rg2-brand" aria-hidden="true"><svg class="i"><use href="#i-logo"/></svg></span>
+  </header>
+  <div class="rg2-body">
+    ${rg2Step1HTML()}
+    ${rg2Step2HTML()}
+    ${rg2Step3HTML()}
+    ${rg2Step4HTML()}
+  </div>
+  <input type="file" id="rg2AvaFile" accept="image/*" hidden>
+  `;
+}
+
+/* ---------- ШАГ 1 ---------- */
+function rg2Step1HTML(){
+  return `
+  <section class="rg2-step active" id="rg2Step1">
+    <h1 class="rg2-h">Создай аккаунт</h1>
+    <p class="rg2-sub">Введи почту или телефон и пароль — этого достаточно для старта.</p>
+    <label class="rg2-lab" for="rg2Contact">Email или телефон</label>
+    <div class="rg2-field">
+      <span class="rg2-field-ic" id="rg2ContactIc"><svg class="i"><use href="#i-send"/></svg></span>
+      <input id="rg2Contact" type="text" inputmode="email" autocomplete="email"
+             placeholder="you@example.com или +7 900 000-00-00"
+             oninput="rg2ContactInput()">
+    </div>
+    <label class="rg2-lab" for="rg2Pass">Придумай пароль</label>
+    <div class="rg2-field">
+      <span class="rg2-field-ic"><svg class="i"><use href="#i-lock"/></svg></span>
+      <input id="rg2Pass" type="password" autocomplete="new-password"
+             placeholder="Не короче 8 символов"
+             oninput="rg2PassInput()">
+      <button type="button" class="rg2-eye" data-target="rg2Pass" onclick="rg2TogglePass('rg2Pass')" aria-label="Показать пароль">
+        <svg class="i"><use href="#i-eye"/></svg>
+      </button>
+    </div>
+    <div class="rg2-strength"><i id="rg2StrBar"></i></div>
+    <div class="rg2-strength-lab" id="rg2StrLab">Надёжность пароля</div>
+    <label class="rg2-lab" for="rg2Pass2">Повтори пароль</label>
+    <div class="rg2-field">
+      <span class="rg2-field-ic"><svg class="i"><use href="#i-check2"/></svg></span>
+      <input id="rg2Pass2" type="password" autocomplete="new-password" placeholder="Ещё раз тот же пароль" oninput="rg2Pass2Input()">
+      <button type="button" class="rg2-eye" data-target="rg2Pass2" onclick="rg2TogglePass('rg2Pass2')" aria-label="Показать пароль">
+        <svg class="i"><use href="#i-eye"/></svg>
+      </button>
+    </div>
+    <label class="rg2-check">
+      <input type="checkbox" id="rg2Remember" checked>
+      <span class="rg2-check-box"><svg class="i"><use href="#i-check"/></svg></span>
+      <span>Сохранить вход на этом устройстве</span>
+    </label>
+    <div class="rg2-err" id="rg2Err1"></div>
+    <button class="rg2-btn" id="rg2Next1Btn" onclick="rg2Next1()">Продолжить <svg class="i"><use href="#i-chev"/></svg></button>
+    <div class="rg2-alt">
+      Уже есть аккаунт? <a onclick="rg2Login()">Войти</a>
+    </div>
+    <div class="rg2-secure">
+      <svg class="i"><use href="#i-lock"/></svg>
+      Данные шифруются, не передаются третьим лицам
+    </div>
+  </section>`;
+}
+function rg2ContactInput(){
+  rg2Err('rg2Err1', '');
+  const el = document.getElementById('rg2Contact');
+  const v = el.value;
+  const kind = rg2Detect(v);
+  RG2.method = kind;
+  /* иконка слева */
+  const ic = document.getElementById('rg2ContactIc');
+  if(ic) ic.innerHTML = kind === 'phone'
+    ? '<svg class="i"><use href="#i-phone"/></svg>'
+    : '<svg class="i"><use href="#i-send"/></svg>';
+  /* автоформат телефона */
+  if(kind === 'phone'){
+    el.inputMode = 'tel'; el.autocomplete = 'tel';
+    let d = v.replace(/\D/g,'');
+    if(d.startsWith('8')) d = '7' + d.slice(1);
+    if(d && !d.startsWith('7') && !d.startsWith('9')) { /* не форматируем */ }
+    d = d.slice(0, 11);
+    if(d.length && (d.startsWith('7') || d.length >= 10)){
+      if(!d.startsWith('7')) d = '7' + d;
+      let out = '+7';
+      if(d.length > 1) out += ' ' + d.slice(1,4);
+      if(d.length > 4) out += ' ' + d.slice(4,7);
+      if(d.length > 7) out += '-' + d.slice(7,9);
+      if(d.length > 9) out += '-' + d.slice(9,11);
+      el.value = out;
+    }
+  } else {
+    el.inputMode = 'email'; el.autocomplete = 'email';
+  }
+}
+function rg2TogglePass(id){
+  const inp = document.getElementById(id);
+  const btn = document.querySelector('.rg2-eye[data-target="'+id+'"]');
+  if(!inp) return;
+  const show = inp.type === 'password';
+  inp.type = show ? 'text' : 'password';
+  if(btn) btn.classList.toggle('on', show);
+}
+function rg2PassScore(p){
+  let s = 0;
+  if(p.length >= 8) s++;
+  if(p.length >= 12) s++;
+  if(/[A-ZА-Я]/.test(p) && /[a-zа-я]/.test(p)) s++;
+  if(/\d/.test(p)) s++;
+  if(/[^\w\sа-яА-Я]/.test(p)) s++;
+  return Math.min(s, 4);
+}
+function rg2PassInput(){
+  rg2Err('rg2Err1', '');
+  const p = document.getElementById('rg2Pass').value;
+  const bar = document.getElementById('rg2StrBar');
+  const lab = document.getElementById('rg2StrLab');
+  const sc = p ? rg2PassScore(p) : 0;
+  if(bar){
+    bar.style.width = (sc/4*100) + '%';
+    bar.className = sc >= 3 ? 'hi' : (sc === 2 ? 'mid' : (sc === 1 ? 'lo' : ''));
+  }
+  if(lab){
+    lab.textContent = !p ? 'Надёжность пароля'
+      : (sc <= 1 ? 'Слабый — добавь символов'
+      : sc === 2 ? 'Нормальный'
+      : sc === 3 ? 'Хороший' : 'Отличный');
+  }
+  /* при изменении первого пароля — сверка второго */
+  rg2Pass2Input();
+}
+function rg2Pass2Input(){
+  rg2Err('rg2Err1', '');
+  const p1 = document.getElementById('rg2Pass').value;
+  const p2 = document.getElementById('rg2Pass2').value;
+  const f  = document.getElementById('rg2Pass2');
+  if(!p2){ f.classList.remove('bad','ok'); return; }
+  if(p2 === p1 && p2.length >= 8){ f.classList.add('ok'); f.classList.remove('bad'); }
+  else { f.classList.add('bad'); f.classList.remove('ok'); }
+}
+async function rg2Next1(){
+  const contact = document.getElementById('rg2Contact').value.trim();
+  const p1 = document.getElementById('rg2Pass').value;
+  const p2 = document.getElementById('rg2Pass2').value;
+  const kind = rg2Detect(contact);
+  if(kind === 'email'){
+    if(!/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(contact)) return rg2Err('rg2Err1', 'Проверь адрес почты — похоже, опечатка');
+  } else {
+    if(contact.replace(/\D/g,'').length < 10) return rg2Err('rg2Err1', 'Введи номер полностью (не меньше 10 цифр)');
+  }
+  if(p1.length < 8) return rg2Err('rg2Err1', 'Пароль слишком короткий — минимум 8 символов');
+  if(p1 !== p2)     return rg2Err('rg2Err1', 'Пароли не совпадают — сверь повтор');
+
+  RG2.contact = contact; RG2.method = kind; RG2.password = p1;
+  RG2.remember = document.getElementById('rg2Remember').checked;
+
+  /* вход владельца по мастер-почте — без кода */
+  if(kind === 'email' && contact.toLowerCase() === RG2_ADMIN_EMAIL){
+    const btn = document.getElementById('rg2Next1Btn');
+    btn.classList.add('loading'); btn.disabled = true;
+    let ok = false;
+    try{ if(typeof adminLogin === 'function') ok = await adminLogin(contact, p1); }catch(e){}
+    btn.classList.remove('loading'); btn.disabled = false;
+    if(!ok) return rg2Err('rg2Err1', 'Неверный пароль владельца');
+    /* готово: сразу входим */
+    rg2FinishOwner();
+    return;
+  }
+  /* отправить код (мок / stub) — реально pinger позже подключит /api.php?action=auth_send_code */
+  rg2SendCode();
+  rg2GoTo(2);
+}
+function rg2Login(){
+  /* «Уже есть аккаунт»: пока это тот же поток авторизации (нет отдельного «войти по паролю»).
+     Валидная почта + пароль → на 2 шаг за кодом. Иначе — подсказка. */
+  const contact = document.getElementById('rg2Contact').value.trim();
+  const p1 = document.getElementById('rg2Pass').value;
+  if(!contact || !p1){
+    return rg2Err('rg2Err1', 'Введи почту/телефон и пароль — и жми «Продолжить»');
+  }
+  rg2Next1();
+}
+
+/* ---------- ШАГ 2 ---------- */
+function rg2Step2HTML(){
+  return `
+  <section class="rg2-step" id="rg2Step2">
+    <div class="rg2-code-ico"><svg class="i"><use href="#i-lock"/></svg></div>
+    <h1 class="rg2-h rg2-h--c">Введи код</h1>
+    <p class="rg2-sub rg2-sub--c">Отправили на <b id="rg2CodeTo">—</b></p>
+    <div class="rg2-code" id="rg2Code">
+      ${[0,1,2,3,4,5].map(i=>`<input inputmode="numeric" maxlength="1" data-i="${i}" ${i===0?'autocomplete="one-time-code"':''}>`).join('')}
+    </div>
+    <div class="rg2-err rg2-err--c" id="rg2Err2"></div>
+    <button type="button" class="rg2-resend" id="rg2Resend" onclick="rg2Resend()" disabled>Отправить снова через 45 сек</button>
+    <button class="rg2-btn" id="rg2Next2Btn" onclick="rg2Next2()" disabled>Продолжить <svg class="i"><use href="#i-chev"/></svg></button>
+    <button type="button" class="rg2-linkbtn" onclick="rg2Back()">← Изменить контакт</button>
+  </section>`;
+}
+function rg2SendCode(){
+  RG2.code = rg2Rand6();
+  const to = document.getElementById('rg2CodeTo');
+  if(to) to.textContent = rg2MaskContact(RG2.contact);
+  /* очистить инпуты */
+  document.querySelectorAll('#rg2Code input').forEach(i=>{ i.value=''; i.classList.remove('fill'); });
+  document.getElementById('rg2Code').classList.remove('err');
+  rg2Err('rg2Err2', '');
+  rg2Next2Enable();
+  /* таймер повторной отправки */
+  if(RG2.codeTimer) clearInterval(RG2.codeTimer);
+  RG2.codeLeft = 45;
+  const btn = document.getElementById('rg2Resend');
+  if(btn){ btn.disabled = true; btn.textContent = 'Отправить снова через 45 сек'; }
+  RG2.codeTimer = setInterval(()=>{
+    RG2.codeLeft--;
+    if(RG2.codeLeft <= 0){
+      clearInterval(RG2.codeTimer); RG2.codeTimer = null;
+      if(btn){ btn.disabled = false; btn.textContent = 'Отправить снова'; }
+    } else if(btn){
+      btn.textContent = 'Отправить снова через ' + RG2.codeLeft + ' сек';
+    }
+  }, 1000);
+  /* демо-показ кода (только на клиенте; в проде убрать) */
+  try{ if(typeof toast === 'function') toast('Код: ' + RG2.code + ' (демо)'); }catch(e){}
+  /* реальная отправка (когда бек включит) */
+  try{
+    if(typeof OKO_API !== 'undefined'){
+      fetch(OKO_API + '?action=auth_send_code', {
+        method:'POST', headers:{'Content-Type':'application/json'},
+        body: JSON.stringify({contact: RG2.contact, method: RG2.method})
+      }).catch(()=>{});
+    }
+  }catch(e){}
+}
+function rg2Resend(){
+  if(RG2.resendUsed >= 5) return;
+  RG2.resendUsed++;
+  rg2SendCode();
+}
+function rg2CodeVal(){ return [...document.querySelectorAll('#rg2Code input')].map(i=>i.value).join(''); }
+function rg2Next2Enable(){
+  const v = rg2CodeVal();
+  const b = document.getElementById('rg2Next2Btn');
+  if(b) b.disabled = v.length !== 6;
+}
+function rg2Next2(){
+  const v = rg2CodeVal();
+  if(v.length !== 6) return rg2Err('rg2Err2', 'Введи все 6 цифр кода');
+  /* «правильный код» = сгенерированный, или спец-мастер 000000 (для теста) */
+  if(v !== RG2.code && v !== '000000'){
+    const row = document.getElementById('rg2Code');
+    row.classList.remove('err'); void row.offsetWidth; row.classList.add('err');
+    return rg2Err('rg2Err2', 'Код не подходит — проверь и попробуй ещё раз');
+  }
+  /* авто-имя из email до @ */
+  if(!RG2.name){
+    RG2.name = RG2.method === 'email' ? (RG2.contact.split('@')[0].replace(/[^a-zA-Zа-яА-Я0-9]/g,' ').trim().slice(0,24) || 'Гость') : 'Гость';
+  }
+  const nameInp = document.getElementById('rg2Name');
+  if(nameInp && !nameInp.value) nameInp.value = RG2.name;
+  const nickInp = document.getElementById('rg2Nick');
+  if(nickInp && !nickInp.value) nickInp.value = RG2.nick;
+  rg2AvaSync();
+  rg2GoTo(3);
+}
+
+/* ---------- ШАГ 3: профиль ---------- */
+function rg2Step3HTML(){
+  return `
+  <section class="rg2-step" id="rg2Step3">
+    <h1 class="rg2-h">Профиль</h1>
+    <p class="rg2-sub">Как тебя показывать в OKO.</p>
+    <div class="rg2-ava-row">
+      <button type="button" class="rg2-ava" id="rg2Ava" onclick="rg2AvaPick()" aria-label="Выбрать аватар">
+        <span class="rg2-ava-fg" id="rg2AvaFg">O</span>
+        <span class="rg2-ava-edit"><svg class="i"><use href="#i-camera"/></svg></span>
+      </button>
+      <div class="rg2-ava-side">
+        <div class="rg2-ava-lab">Аватар</div>
+        <div class="rg2-ava-sw" id="rg2AvaSw"></div>
+        <button type="button" class="rg2-ava-upload" onclick="document.getElementById('rg2AvaFile').click()">
+          <svg class="i"><use href="#i-photo"/></svg> Загрузить фото
+        </button>
+      </div>
+    </div>
+    <label class="rg2-lab" for="rg2Name">Имя</label>
+    <div class="rg2-field">
+      <span class="rg2-field-ic"><svg class="i"><use href="#i-user"/></svg></span>
+      <input id="rg2Name" type="text" autocomplete="name" placeholder="Как тебя зовут" oninput="rg2NameInput()">
+    </div>
+    <label class="rg2-lab" for="rg2Nick">Никнейм</label>
+    <div class="rg2-field rg2-nick">
+      <span class="rg2-field-ic">@</span>
+      <input id="rg2Nick" type="text" autocomplete="off" placeholder="никнейм" oninput="rg2NickInput()">
+      <span class="rg2-nick-st" id="rg2NickSt"></span>
+    </div>
+    <div class="rg2-nick-msg" id="rg2NickMsg">Придумай уникальный @username — под ним тебя найдут в OKO</div>
+    <label class="rg2-lab" for="rg2Bio">Био <span class="rg2-lab-dim">— по желанию</span></label>
+    <div class="rg2-field rg2-bio-wrap">
+      <textarea id="rg2Bio" maxlength="160" placeholder="Пара слов о себе — покажется в профиле" oninput="rg2BioInput()"></textarea>
+      <span class="rg2-bio-count" id="rg2BioCount">0 / 160</span>
+    </div>
+    <div class="rg2-err" id="rg2Err3"></div>
+    <button class="rg2-btn" id="rg2Next3Btn" onclick="rg2Next3()" disabled>Продолжить <svg class="i"><use href="#i-chev"/></svg></button>
+  </section>`;
+}
+function rg2AvaPalette(){
+  return (typeof REG_AVA !== 'undefined' && REG_AVA.length) ? REG_AVA : [
+    {bg:'linear-gradient(135deg,#B9FF4D,#7ACC00)', fg:'#001400'},
+    {bg:'linear-gradient(135deg,#9AFF00,#4d9c00)', fg:'#04140a'},
+    {bg:'linear-gradient(135deg,#1c1c1c,#000)',     fg:'#9AFF00'},
+  ];
+}
+function rg2AvaRenderSw(){
+  const sw = document.getElementById('rg2AvaSw'); if(!sw) return;
+  const pal = rg2AvaPalette();
+  sw.innerHTML = pal.map((a,i)=>
+    `<button type="button" class="rg2-ava-swb ${(i===RG2.avaIdx && !RG2.avaImg)?'on':''}" style="background:${a.bg}" onclick="rg2AvaPickIdx(${i})" aria-label="Акцент ${i+1}"></button>`
+  ).join('');
+}
+function rg2AvaPickIdx(i){
+  RG2.avaIdx = i; RG2.avaImg = '';
+  rg2AvaRenderSw(); rg2AvaSync();
+}
+function rg2AvaPick(){
+  /* тап на кружок — открыть file input */
+  const f = document.getElementById('rg2AvaFile');
+  if(f) f.click();
+}
+function rg2AvaSync(){
+  const el = document.getElementById('rg2Ava');
+  const fg = document.getElementById('rg2AvaFg');
+  if(!el || !fg) return;
+  const nm = (document.getElementById('rg2Name')||{}).value || RG2.name || '';
+  fg.textContent = (nm.trim()[0] || 'O').toUpperCase();
+  if(RG2.avaImg){
+    el.style.backgroundImage = 'url(' + RG2.avaImg + ')';
+    el.style.backgroundSize = 'cover';
+    el.style.backgroundPosition = 'center';
+    el.style.color = 'transparent';
+    fg.style.opacity = '0';
+  } else {
+    const a = rg2AvaPalette()[RG2.avaIdx] || rg2AvaPalette()[0];
+    el.style.backgroundImage = '';
+    el.style.background = a.bg;
+    el.style.color = a.fg;
+    fg.style.opacity = '1';
+  }
+}
+function rg2NameInput(){
+  rg2Err('rg2Err3', '');
+  RG2.name = document.getElementById('rg2Name').value.trim();
+  rg2AvaSync();
+  rg2Next3Enable();
+}
+function rg2NickInput(){
+  rg2Err('rg2Err3','');
+  const raw = document.getElementById('rg2Nick').value;
+  const clean = raw.toLowerCase().replace(/[^a-z0-9_]/g,'').slice(0,24);
+  if(raw !== clean) document.getElementById('rg2Nick').value = clean;
+  RG2.nick = clean;
+  const st  = document.getElementById('rg2NickSt');
+  const msg = document.getElementById('rg2NickMsg');
+  if(!clean){ st.innerHTML=''; msg.textContent='Придумай уникальный @username — под ним тебя найдут в OKO'; msg.className='rg2-nick-msg'; rg2Next3Enable(); return; }
+  if(clean.length < 3){
+    st.innerHTML = '<span class="bad"><svg class="i" style="transform:rotate(45deg)"><use href="#i-plus"/></svg></span>';
+    msg.textContent = 'Слишком короткий — минимум 3 символа';
+    msg.className = 'rg2-nick-msg bad';
+    rg2Next3Enable(); return;
+  }
+  if(RG2_TAKEN_NICKS.includes(clean)){
+    st.innerHTML = '<span class="bad"><svg class="i" style="transform:rotate(45deg)"><use href="#i-plus"/></svg></span>';
+    msg.textContent = '@' + clean + ' уже занят — попробуй другой';
+    msg.className = 'rg2-nick-msg bad';
+    rg2Next3Enable(); return;
+  }
+  st.innerHTML = '<span class="ok"><svg class="i"><use href="#i-check2"/></svg></span>';
+  msg.textContent = '@' + clean + ' свободен';
+  msg.className = 'rg2-nick-msg ok';
+  rg2Next3Enable();
+}
+function rg2BioInput(){
+  RG2.bio = document.getElementById('rg2Bio').value.slice(0,160);
+  const c = document.getElementById('rg2BioCount');
+  if(c) c.textContent = RG2.bio.length + ' / 160';
+}
+function rg2NickOk(){
+  const v = RG2.nick;
+  return !!v && v.length >= 3 && !RG2_TAKEN_NICKS.includes(v);
+}
+function rg2Next3Enable(){
+  const b = document.getElementById('rg2Next3Btn');
+  if(!b) return;
+  b.disabled = !(RG2.name && rg2NickOk());
+}
+function rg2Next3(){
+  if(!RG2.name)     return rg2Err('rg2Err3', 'Укажи имя — так тебя увидят в OKO');
+  if(!rg2NickOk())  return rg2Err('rg2Err3', 'Придумай никнейм ≥ 3 символа');
+  /* сохранить профиль в PROFILE до финиша (пусть UI видит после back-навигации) */
+  try{
+    if(typeof PROFILE !== 'undefined'){
+      PROFILE.name = RG2.name;
+      PROFILE.nick = RG2.nick;
+      PROFILE.bio  = RG2.bio || PROFILE.bio;
+      if(RG2.method === 'email') PROFILE.email = RG2.contact;
+      if(RG2.method === 'phone') PROFILE.phone = RG2.contact;
+      /* цветовая аватарка */
+      const a = rg2AvaPalette()[RG2.avaIdx] || rg2AvaPalette()[0];
+      PROFILE.avaBg = a.bg; PROFILE.avaFg = a.fg;
+      if(RG2.avaImg) PROFILE.avaImg = RG2.avaImg;
+    }
+  }catch(e){}
+  /* persist */
+  try{ localStorage.setItem('oko-rg2', JSON.stringify({
+    contact:RG2.contact, method:RG2.method,
+    name:RG2.name, nick:RG2.nick, bio:RG2.bio,
+    avaIdx:RG2.avaIdx, avaImg:RG2.avaImg ? '1' : '',
+    remember: RG2.remember, at: Date.now()
+  })); }catch(e){}
+  if(RG2.avaImg){ try{ localStorage.setItem('oko-rg2-ava', RG2.avaImg); }catch(e){} }
+  /* заранее ставим oko-auth только если «сохранить вход» */
+  if(RG2.remember){ try{ localStorage.setItem('oko-auth', RG2.method); }catch(e){} }
+  rg2RenderTiers();
+  rg2GoTo(4);
+}
+
+/* ---------- ШАГ 4: тарифы ---------- */
+function rg2Step4HTML(){
+  return `
+  <section class="rg2-step" id="rg2Step4">
+    <h1 class="rg2-h">Твой тариф</h1>
+    <p class="rg2-sub">Выбери сейчас — можно менять в любой момент.</p>
+    <div class="rg2-period" id="rg2Period">
+      ${RG2_PERIODS.map(p=>`
+        <button type="button" class="rg2-per ${p.m===1?'on':''}" data-m="${p.m}" onclick="rg2PeriodPick(${p.m})">
+          <span>${p.lab}</span>${p.disc?`<i>−${p.disc}%</i>`:''}
+        </button>
+      `).join('')}
+    </div>
+    <div class="rg2-tiers" id="rg2Tiers"></div>
+    <button class="rg2-btn" id="rg2Next4Btn" onclick="rg2Next4()">Начать пользоваться <svg class="i"><use href="#i-chev"/></svg></button>
+    <button type="button" class="rg2-linkbtn" onclick="rg2Skip()">Пропустить — начать с FREE</button>
+  </section>`;
+}
+function rg2Fmt(n){
+  return Number(n||0).toLocaleString('ru-RU').replace(/,/g,' ');
+}
+function rg2PeriodPick(m){
+  RG2.period = m;
+  document.querySelectorAll('#rg2Period .rg2-per').forEach(b=>{
+    b.classList.toggle('on', +b.dataset.m === m);
+  });
+  rg2RenderTiers();
+}
+function rg2TierPick(id){
+  RG2.tier = id;
+  document.querySelectorAll('#rg2Tiers .rg2-tier').forEach(el=>{
+    el.classList.toggle('sel', el.dataset.id === id);
+  });
+  const b = document.getElementById('rg2Next4Btn');
+  if(b){
+    if(id === 'FREE') b.innerHTML = 'Начать пользоваться <svg class="i"><use href="#i-chev"/></svg>';
+    else {
+      const per = RG2_PERIODS.find(p=>p.m===RG2.period) || RG2_PERIODS[0];
+      const tier = RG2_TIERS.find(t=>t.id===id);
+      const total = Math.round(tier.price * per.m * (1 - per.disc/100));
+      b.innerHTML = 'Оформить ' + tier.name + ' · ' + rg2Fmt(total) + ' ₽ <svg class="i"><use href="#i-chev"/></svg>';
+    }
+  }
+}
+function rg2RenderTiers(){
+  const box = document.getElementById('rg2Tiers'); if(!box) return;
+  const per = RG2_PERIODS.find(p=>p.m===RG2.period) || RG2_PERIODS[0];
+  box.innerHTML = RG2_TIERS.map(t=>{
+    const total = Math.round(t.price * per.m * (1 - per.disc/100));
+    const priceStr = t.price === 0 ? 'бесплатно'
+      : (per.m === 1 ? rg2Fmt(t.price)+' ₽/мес' : rg2Fmt(total)+' ₽ за '+per.lab.toLowerCase());
+    return `<button type="button" class="rg2-tier ${t.reco?'reco':''} ${RG2.tier===t.id?'sel':''}" data-id="${t.id}" onclick="rg2TierPick('${t.id}')">
+      <div class="rg2-tier-head">
+        <div class="rg2-tier-name">${t.name}${t.reco?'<span class="rg2-tier-badge">Рекомендуем</span>':''}</div>
+        <div class="rg2-tier-price">${priceStr}</div>
+      </div>
+      <div class="rg2-tier-line">${t.line}</div>
+      <ul class="rg2-tier-feats">
+        ${t.feats.map(f=>`<li><svg class="i"><use href="#i-check2"/></svg>${esc(f)}</li>`).join('')}
+      </ul>
+    </button>`;
+  }).join('');
+  /* если ни одного не выбрано — подсветить FREE */
+  if(!document.querySelector('#rg2Tiers .rg2-tier.sel')){
+    RG2.tier = 'FREE';
+    const el = document.querySelector('#rg2Tiers .rg2-tier[data-id="FREE"]');
+    if(el) el.classList.add('sel');
+  }
+  rg2TierPick(RG2.tier);
+}
+function rg2Skip(){ RG2.tier = 'FREE'; rg2Next4(); }
+function rg2Next4(){
+  /* сохранить тариф */
+  try{ if(typeof PROFILE !== 'undefined') PROFILE.tier = RG2.tier; }catch(e){}
+  try{
+    const r = JSON.parse(localStorage.getItem('oko-rg2')||'{}');
+    r.tier = RG2.tier; r.period = RG2.period;
+    localStorage.setItem('oko-rg2', JSON.stringify(r));
+  }catch(e){}
+  /* завершить регистрацию */
+  rg2FinishFlow(RG2.tier !== 'FREE');
+}
+
+/* ---------- финиш ---------- */
+function rg2FinishFlow(openPaySheet){
+  /* пометить, чтобы штатный онбординг после doLogin не запустился (у нас свой поток) */
+  try{ localStorage.setItem('oko-onboarded','1'); }catch(e){}
+  try{ localStorage.setItem('oko-auth', RG2.method); }catch(e){}
+  /* спрятать shell + auth-inner, скрыть authScreen */
+  rg2Exit();
+  const scr = document.getElementById('authScreen');
+  if(scr) scr.classList.add('hidden');
+  try{ if(typeof stopParticles === 'function') stopParticles(); }catch(e){}
+  try{ if(typeof initLive === 'function') initLive(); }catch(e){}
+  try{ if(typeof renderMyProfile === 'function') renderMyProfile(); }catch(e){}
+  /* приветственный бонус + попап (используем существующие премиум-функции) */
+  try{
+    if(typeof walletAdd === 'function' && !regPopupsSeen().welcome){
+      walletAdd(2500, 'Приветственный бонус');
+    }
+  }catch(e){}
+  if(!regPopupsSeen().welcome){
+    regPopupMark('welcome');
+    setTimeout(()=>{
+      try{
+        showPopup({ico:'logo', title: regWelcomeTitle(RG2.name),
+          body: regWelcomeBody(RG2.name),
+          actions:[
+            {label:'В приложение'},
+          ]});
+      }catch(e){}
+    }, 500);
+  }
+  /* открыть feed */
+  try{ if(typeof showTab === 'function') showTab('feed'); }catch(e){}
+  /* оплата если не FREE */
+  if(openPaySheet){
+    setTimeout(()=>{
+      try{
+        if(typeof openPay === 'function' && typeof PLANS !== 'undefined' && PLANS[RG2.tier]){
+          openPay(RG2.tier);
+        } else {
+          if(typeof toast === 'function') toast('Тариф ' + RG2.tier + ' скоро подключим');
+        }
+      }catch(e){}
+    }, 900);
+  }
+  regSchedulePopups();
+}
+function rg2FinishOwner(){
+  try{ localStorage.setItem('oko-onboarded','1'); }catch(e){}
+  try{ localStorage.setItem('oko-auth','email'); }catch(e){}
+  try{
+    if(typeof PROFILE !== 'undefined'){ PROFILE.email = RG2.contact; }
+  }catch(e){}
+  rg2Exit();
+  const scr = document.getElementById('authScreen');
+  if(scr) scr.classList.add('hidden');
+  try{ if(typeof stopParticles === 'function') stopParticles(); }catch(e){}
+  try{ if(typeof initLive === 'function') initLive(); }catch(e){}
+  try{ if(typeof renderMyProfile === 'function') renderMyProfile(); }catch(e){}
+  setTimeout(()=>{
+    try{
+      showPopup({ico:'crown', title:'Доступ владельца',
+        body:'Генеральный директор OKO. Открыт полный доступ: админка, доход платформы, HQ и управление всеми разделами.',
+        actions:[{label:'В приложение'}]});
+    }catch(e){}
+  }, 500);
+  regSchedulePopups();
+}
+
+/* ---------- one-time bindings (после первой сборки shell) ---------- */
+function rg2BindOnce(){
+  /* инпуты кода: авто-фокус цепочка, backspace, paste всех 6 */
+  document.querySelectorAll('#rg2Code input').forEach(inp=>{
+    inp.addEventListener('input', ()=>{
+      inp.value = inp.value.replace(/\D/g,'').slice(0,1);
+      inp.classList.toggle('fill', !!inp.value);
+      rg2Err('rg2Err2','');
+      const i = +inp.dataset.i;
+      if(inp.value && i < 5) document.querySelector('#rg2Code input[data-i="'+(i+1)+'"]').focus();
+      rg2Next2Enable();
+      if(rg2CodeVal().length === 6) setTimeout(rg2Next2, 120);
+    });
+    inp.addEventListener('keydown', e=>{
+      const i = +inp.dataset.i;
+      if(e.key === 'Backspace' && !inp.value && i > 0){
+        const prev = document.querySelector('#rg2Code input[data-i="'+(i-1)+'"]');
+        if(prev){ prev.focus(); prev.value=''; prev.classList.remove('fill'); rg2Next2Enable(); }
+      }
+    });
+    inp.addEventListener('paste', e=>{
+      const d = (e.clipboardData.getData('text')||'').replace(/\D/g,'').slice(0,6);
+      if(d.length < 2) return;
+      e.preventDefault();
+      document.querySelectorAll('#rg2Code input').forEach((c,j)=>{
+        c.value = d[j] || '';
+        c.classList.toggle('fill', !!c.value);
+      });
+      const idx = Math.min(d.length, 5);
+      const next = document.querySelector('#rg2Code input[data-i="'+idx+'"]');
+      if(next) next.focus();
+      rg2Next2Enable();
+      if(d.length === 6) setTimeout(rg2Next2, 120);
+    });
+  });
+  /* аватар: file input */
+  const file = document.getElementById('rg2AvaFile');
+  if(file){
+    file.addEventListener('change', e=>{
+      const f = e.target.files && e.target.files[0];
+      if(!f) return;
+      const fr = new FileReader();
+      fr.onload = ev => {
+        RG2.avaImg = String(ev.target.result || '');
+        rg2AvaSync(); rg2AvaRenderSw();
+      };
+      fr.readAsDataURL(f);
+      /* сбросить value чтобы можно было выбрать ту же картинку заново */
+      try{ e.target.value = ''; }catch(er){}
+    });
+  }
+  /* пре-рендер свотчей и тарифов */
+  rg2AvaRenderSw();
+  /* по Enter на step1 — Продолжить */
+  ['rg2Contact','rg2Pass','rg2Pass2'].forEach(id=>{
+    const el = document.getElementById(id);
+    if(el) el.addEventListener('keydown', e=>{ if(e.key === 'Enter'){ e.preventDefault(); rg2Next1(); }});
+  });
+  ['rg2Name','rg2Nick'].forEach(id=>{
+    const el = document.getElementById(id);
+    if(el) el.addEventListener('keydown', e=>{ if(e.key === 'Enter'){ e.preventDefault(); rg2Next3(); }});
+  });
+}
+
+/* ---------- chain-patch renderMyProfile: показ фото-аватара ---------- */
+try{
+  if(typeof renderMyProfile === 'function'){
+    const _prev = renderMyProfile;
+    renderMyProfile = function(){
+      _prev.apply(this, arguments);
+      try{
+        const el = document.getElementById('profAva');
+        if(!el || typeof PROFILE === 'undefined') return;
+        if(PROFILE.avaImg){
+          el.style.backgroundImage = 'url(' + PROFILE.avaImg + ')';
+          el.style.backgroundSize = 'cover';
+          el.style.backgroundPosition = 'center';
+          el.style.color = 'transparent';
+        } else if(PROFILE.avaBg){
+          el.style.background = PROFILE.avaBg;
+          if(PROFILE.avaFg) el.style.color = PROFILE.avaFg;
+        }
+      }catch(e){}
+    };
+  }
+}catch(e){}
+
+/* восстановить сохранённый аватар из localStorage при загрузке */
+try{
+  const saved = JSON.parse(localStorage.getItem('oko-rg2') || 'null');
+  if(saved){
+    if(typeof PROFILE !== 'undefined'){
+      if(saved.name) PROFILE.name = saved.name;
+      if(saved.nick) PROFILE.nick = saved.nick;
+      if(saved.bio)  PROFILE.bio  = saved.bio;
+      if(saved.method === 'email') PROFILE.email = saved.contact;
+      if(saved.method === 'phone') PROFILE.phone = saved.contact;
+      if(saved.tier) PROFILE.tier = saved.tier;
+      const a = rg2AvaPalette()[saved.avaIdx] || rg2AvaPalette()[0];
+      PROFILE.avaBg = a.bg; PROFILE.avaFg = a.fg;
+      if(saved.avaImg){
+        const img = localStorage.getItem('oko-rg2-ava');
+        if(img) PROFILE.avaImg = img;
+      }
+    }
+  }
+}catch(e){}
+
+try{ window.rg2Open = rg2Open; window.rg2Back = rg2Back; }catch(e){}
 
 /* ============================================================
    ГЛОБАЛЬНЫЙ ГЕЙТ на приглашение в Академию (bugfix v1.94).

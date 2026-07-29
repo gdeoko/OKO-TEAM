@@ -743,3 +743,174 @@ body.ps-over-soc #sheetOverlay.open{z-index:67}
 .ps-soc-empty-body svg.i{width:34px;height:34px;color:var(--accent);opacity:.55;display:block;margin:0 auto 8px}
 .ps-soc-inline-ic{display:inline-flex;align-items:center;justify-content:center;width:18px;height:18px;border-radius:5px;vertical-align:-4px;margin-right:2px}
 .ps-soc-inline-ic svg.i{width:11px;height:11px;color:#fff}
+
+/* ================================================================
+   PP2 · Компактный профиль (Telegram + iOS Settings)
+   ---------------------------------------------------------------
+   Полностью переопределяет содержимое #screen-profile .pad после
+   ядра renderMyProfile и старых чейнов (mp-, ps-soc-). Никаких
+   эмодзи — только SVG (#i-*). Обе темы. Свой nav-стек подстраниц.
+   ================================================================ */
+
+/* убираем всё, что рисуют предыдущие чейны в шапке своего профиля */
+#screen-profile .pad .mp-cover-wrap,
+#screen-profile .pad .mp-status-row,
+#screen-profile .pad .mp-show-wrap,
+#screen-profile .pad .mp-spark-wrap,
+#screen-profile .pad .mp-streak-wrap,
+#screen-profile .pad .ps-soc-entry-wrap,
+#screen-profile .pad .ps-myfollows,
+#screen-profile #st2MyCover{display:none!important}
+
+/* контейнер компактного профиля — единственный визуальный ребёнок .pad */
+#screen-profile.pp2-on>.pad{padding:0}
+.pp2-wrap{padding:14px 16px calc(28px + env(safe-area-inset-bottom));display:flex;flex-direction:column;gap:14px;max-width:640px;margin:0 auto;width:100%}
+
+/* ---------- top-block: аватар + имя + био ---------- */
+.pp2-top{display:flex;flex-direction:column;align-items:center;text-align:center;gap:8px;padding:14px 8px 6px}
+.pp2-ava{width:88px;height:88px;border-radius:50%;background:var(--lime-dim);color:var(--accent);display:flex;align-items:center;justify-content:center;font-weight:800;font-size:34px;letter-spacing:-.02em;background-size:cover;background-position:center;border:2px solid var(--bg);box-shadow:0 6px 22px rgba(0,0,0,.35);position:relative;flex-shrink:0}
+:root[data-theme="light"] .pp2-ava{box-shadow:0 6px 18px rgba(60,90,10,.14)}
+.pp2-ava.has-photo{color:transparent}
+.pp2-name{font-family:var(--font-display),Bebas Neue,Impact,sans-serif;font-size:30px;line-height:1;letter-spacing:.01em;font-weight:700;color:var(--text);margin-top:4px;display:inline-flex;align-items:center;gap:6px;flex-wrap:wrap;justify-content:center}
+.pp2-name svg.i{width:18px;height:18px;color:var(--accent)}
+.pp2-nick{font-size:13px;color:var(--dim);margin-top:-2px}
+.pp2-nick .pp2-online{color:#3ddc5a;font-weight:600}
+.pp2-nick .pp2-dot{opacity:.5;margin:0 5px}
+.pp2-bio{font-size:13.5px;line-height:1.5;color:var(--text);opacity:.9;max-width:440px;margin:6px auto 0;
+  display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;text-overflow:ellipsis}
+.pp2-chips{display:flex;flex-wrap:wrap;gap:6px;justify-content:center;margin-top:4px}
+.pp2-chip{display:inline-flex;align-items:center;gap:5px;font-size:10.5px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--accent);background:var(--lime-dim);border-radius:99px;padding:5px 11px;line-height:1}
+.pp2-chip svg.i{width:11px;height:11px}
+.pp2-chip.gold{background:linear-gradient(135deg,rgba(255,208,64,.22),rgba(255,170,0,.10));color:#f5c53a;border:1px solid rgba(255,200,60,.28)}
+.pp2-chip.owner{background:transparent;border:1px solid var(--border);color:var(--dim)}
+.pp2-chip.disc{background:transparent;border:1px dashed var(--border);color:var(--text)}
+.pp2-edit{margin:8px auto 0;display:inline-flex;align-items:center;gap:7px;padding:8px 18px;border-radius:99px;border:1px solid var(--border);background:var(--surface);color:var(--text);font-size:13px;font-weight:600;cursor:pointer;transition:border-color .18s,transform .12s,background .18s}
+.pp2-edit:hover{border-color:var(--accent);color:var(--accent)}
+.pp2-edit:active{transform:scale(.97)}
+.pp2-edit svg.i{width:13px;height:13px}
+
+/* ---------- быстрые действия (Telegram-style row) ---------- */
+.pp2-quick{display:grid;grid-template-columns:repeat(5,1fr);gap:6px;margin:2px 0 4px}
+.pp2-qbtn{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;padding:12px 4px;background:var(--surface);border:1px solid var(--border);border-radius:14px;color:var(--text);font-size:10.5px;font-weight:600;cursor:pointer;transition:transform .12s,border-color .18s,background .18s;min-height:64px;position:relative;overflow:hidden}
+.pp2-qbtn:hover{border-color:var(--accent);color:var(--accent)}
+.pp2-qbtn:active{transform:scale(.96)}
+.pp2-qbtn svg.i{width:20px;height:20px;color:var(--accent)}
+.pp2-qbtn span{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:100%}
+@media(max-width:360px){.pp2-qbtn{font-size:10px;padding:11px 3px;min-height:58px}.pp2-qbtn svg.i{width:18px;height:18px}}
+
+/* ---------- iOS-style list-group ---------- */
+.pp2-group{background:var(--surface);border:1px solid var(--border);border-radius:14px;overflow:hidden;margin:0}
+.pp2-group-h{font-size:11px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;color:var(--dim);padding:6px 14px 6px;margin:0}
+.pp2-row{display:flex;align-items:center;gap:12px;width:100%;padding:12px 14px;background:transparent;color:var(--text);font-size:14.5px;font-weight:500;text-align:left;cursor:pointer;border:0;border-bottom:1px solid var(--border);transition:background .12s}
+.pp2-row:last-child{border-bottom:0}
+.pp2-row:hover{background:var(--raised)}
+.pp2-row:active{background:var(--lime-dim)}
+.pp2-row-ic{width:30px;height:30px;border-radius:8px;background:var(--lime-dim);color:var(--accent);display:inline-flex;align-items:center;justify-content:center;flex-shrink:0}
+.pp2-row-ic svg.i{width:16px;height:16px}
+.pp2-row-ic.blue{background:rgba(64,158,255,.15);color:#4aa3ff}
+.pp2-row-ic.pink{background:rgba(255,86,145,.14);color:#ff6b9a}
+.pp2-row-ic.gold{background:rgba(255,196,64,.18);color:#f5c53a}
+.pp2-row-ic.violet{background:rgba(148,110,255,.16);color:#a488ff}
+.pp2-row-ic.teal{background:rgba(45,200,180,.16);color:#3fd4bf}
+.pp2-row-ic.gray{background:var(--raised);color:var(--dim)}
+.pp2-row-ic.danger{background:rgba(255,90,90,.14);color:#ff6b6b}
+.pp2-row-b{flex:1;min-width:0;display:flex;flex-direction:column;gap:2px}
+.pp2-row-t{font-size:14.5px;font-weight:600;color:var(--text);line-height:1.2;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.pp2-row-s{font-size:11.5px;color:var(--dim);line-height:1.3;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.pp2-row-r{display:inline-flex;align-items:center;gap:8px;flex-shrink:0}
+.pp2-row-r .pp2-chip{font-size:9.5px;padding:4px 8px}
+.pp2-row-chev{color:var(--dim);display:inline-flex}
+.pp2-row-chev svg.i{width:14px;height:14px}
+.pp2-row.danger .pp2-row-t{color:#ff6b6b}
+
+/* ---------- отдельная кнопка (типа «Выйти») ---------- */
+.pp2-btn-plain{display:flex;align-items:center;justify-content:center;gap:10px;width:100%;padding:14px;background:var(--surface);border:1px solid var(--border);border-radius:14px;color:var(--text);font-size:14.5px;font-weight:700;cursor:pointer;transition:border-color .18s,color .18s}
+.pp2-btn-plain.danger{color:#ff6b6b}
+.pp2-btn-plain.danger:hover{border-color:#ff6b6b}
+.pp2-btn-plain svg.i{width:17px;height:17px}
+
+/* ---------- футер с версией и подписью ---------- */
+.pp2-foot{text-align:center;padding:14px 0 4px;color:var(--dim);font-size:11px;line-height:1.55}
+.pp2-foot b{color:var(--text);font-weight:700}
+.pp2-foot a{color:var(--accent)}
+
+/* ================================================================
+   NAV-стек: полноэкранные подстраницы (slide-in справа)
+   ================================================================ */
+#pp2Nav{position:fixed;inset:0;z-index:67;pointer-events:none}
+.pp2-page{position:absolute;inset:0;background:var(--bg);display:flex;flex-direction:column;transform:translateX(100%);transition:transform .28s cubic-bezier(.3,1,.4,1);max-width:1280px;margin:0 auto;padding-left:env(safe-area-inset-left);padding-right:env(safe-area-inset-right);pointer-events:auto;overflow:hidden}
+.pp2-page.pp2-in{transform:none}
+.pp2-page.pp2-out{transform:translateX(-24%);opacity:.6;filter:brightness(.7)}
+@media(prefers-reduced-motion:reduce){.pp2-page{transition:none}}
+.pp2-head{display:flex;align-items:center;gap:10px;padding:14px 16px;padding-top:max(14px,env(safe-area-inset-top));border-bottom:1px solid var(--border);flex-shrink:0;background:var(--bg);position:sticky;top:0;z-index:2}
+.pp2-back{width:32px;height:32px;display:inline-flex;align-items:center;justify-content:center;background:transparent;border:0;color:var(--text);cursor:pointer;padding:0;border-radius:50%;transition:background .15s}
+.pp2-back:hover{background:var(--raised)}
+.pp2-back svg.i{width:20px;height:20px}
+.pp2-title{flex:1;font-size:16px;font-weight:700;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.pp2-head-r{display:inline-flex;gap:6px;flex-shrink:0}
+.pp2-head-r button{width:32px;height:32px;display:inline-flex;align-items:center;justify-content:center;background:transparent;border:0;color:var(--dim);cursor:pointer;border-radius:50%;transition:color .15s,background .15s}
+.pp2-head-r button:hover{color:var(--accent);background:var(--raised)}
+.pp2-head-r button svg.i{width:18px;height:18px}
+.pp2-body{flex:1;overflow-y:auto;padding:16px;display:flex;flex-direction:column;gap:14px;max-width:640px;width:100%;margin:0 auto}
+
+/* ---------- подстраница «Тарифы OKO» ---------- */
+.pp2-tier-hero{background:var(--surface);border:1px solid var(--border);border-radius:16px;padding:16px 18px;display:flex;flex-direction:column;gap:6px}
+.pp2-tier-hero h3{font-size:20px;font-weight:700;color:var(--text);margin:0}
+.pp2-tier-hero p{font-size:12.5px;color:var(--dim);line-height:1.5;margin:0}
+.pp2-tier-hero .pp2-chips{justify-content:flex-start;margin-top:6px}
+.pp2-tiers{display:flex;flex-direction:column;gap:10px}
+.pp2-tier-card{background:var(--surface);border:1px solid var(--border);border-radius:16px;padding:14px 16px;display:flex;flex-direction:column;gap:8px;position:relative;overflow:hidden;transition:border-color .18s,transform .12s;cursor:pointer}
+.pp2-tier-card:hover{border-color:var(--accent);transform:translateY(-1px)}
+.pp2-tier-card.on{border-color:var(--accent);background:linear-gradient(180deg,var(--lime-dim),var(--surface))}
+.pp2-tier-card .pp2-tier-flag{position:absolute;top:10px;right:12px;font-size:9.5px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;color:#000;background:var(--lime);padding:3px 8px;border-radius:99px}
+.pp2-tier-card.free .pp2-tier-flag{background:var(--raised);color:var(--dim)}
+.pp2-tier-card.max .pp2-tier-flag{background:linear-gradient(135deg,#ffd664,#ff9800);color:#1a1200}
+.pp2-tier-head{display:flex;align-items:baseline;gap:10px;flex-wrap:wrap}
+.pp2-tier-name{font-family:var(--font-display),Bebas Neue,Impact,sans-serif;font-size:24px;letter-spacing:.02em;color:var(--text);line-height:1;font-weight:700}
+.pp2-tier-price{font-size:14px;color:var(--accent);font-weight:700}
+.pp2-tier-price small{color:var(--dim);font-weight:500;font-size:11px;margin-left:2px}
+.pp2-tier-feats{margin:0;padding:0;list-style:none;display:flex;flex-direction:column;gap:5px}
+.pp2-tier-feats li{font-size:12.5px;color:var(--text);opacity:.86;line-height:1.4;padding-left:18px;position:relative}
+.pp2-tier-feats li::before{content:"";position:absolute;left:2px;top:8px;width:8px;height:8px;border-radius:50%;background:var(--lime-dim);border:1.5px solid var(--accent)}
+.pp2-tier-cta{margin-top:6px}
+.pp2-tier-cta .btn{padding:11px 14px;font-size:13px}
+
+/* ---------- подстраница «Внешние ссылки» ---------- */
+.pp2-links-empty{padding:24px 12px;text-align:center;color:var(--dim);font-size:12.5px;line-height:1.55}
+.pp2-links-empty svg.i{width:34px;height:34px;color:var(--accent);opacity:.55;display:block;margin:0 auto 8px}
+
+/* ---------- подстраница «QR / Ссылка» ---------- */
+.pp2-qr-wrap{display:flex;flex-direction:column;align-items:center;gap:14px;padding:8px}
+.pp2-qr-box{width:220px;height:220px;background:#fff;border-radius:22px;padding:14px;display:flex;align-items:center;justify-content:center;box-shadow:0 12px 34px rgba(0,0,0,.18)}
+:root[data-theme="light"] .pp2-qr-box{box-shadow:0 12px 30px rgba(60,90,10,.12);border:1px solid var(--border)}
+.pp2-qr-box svg{width:100%;height:100%;display:block}
+.pp2-qr-link{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:10px 14px;font-size:13.5px;font-weight:600;color:var(--text);word-break:break-all;text-align:center;width:100%;max-width:360px}
+.pp2-qr-actions{display:flex;gap:8px;width:100%;max-width:360px}
+.pp2-qr-actions .btn{flex:1;padding:12px 10px;font-size:13px}
+
+/* ---------- подстраница «Устройства» / служебные списки ---------- */
+.pp2-item{display:flex;align-items:center;gap:12px;padding:12px 14px;background:var(--surface);border:1px solid var(--border);border-radius:12px}
+.pp2-item .pp2-row-ic{margin-right:2px}
+.pp2-item-b{flex:1;min-width:0}
+.pp2-item-b b{display:block;font-size:13.5px;font-weight:700;color:var(--text)}
+.pp2-item-b small{display:block;font-size:11.5px;color:var(--dim);margin-top:2px}
+.pp2-item .pp2-chip{margin-left:auto}
+
+.pp2-help-cards{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.pp2-help-cards .pp2-row{border-radius:14px;border:1px solid var(--border);flex-direction:column;align-items:flex-start;gap:6px;padding:14px}
+.pp2-help-cards .pp2-row-ic{margin-bottom:2px}
+
+/* ---------- статистика профиля (компактно) ---------- */
+.pp2-stat-row{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:12px}
+.pp2-stat{display:flex;flex-direction:column;align-items:center;gap:3px}
+.pp2-stat b{font-family:var(--font-display),Bebas Neue,Impact,sans-serif;font-size:20px;color:var(--text);letter-spacing:.02em;line-height:1}
+.pp2-stat small{font-size:10.5px;color:var(--dim);text-transform:uppercase;letter-spacing:.05em;text-align:center;line-height:1.2}
+
+/* «О приложении» — красивая карточка */
+.pp2-about{background:var(--surface);border:1px solid var(--border);border-radius:16px;padding:20px 18px;display:flex;flex-direction:column;align-items:center;gap:8px;text-align:center}
+.pp2-about-logo{width:56px;height:56px;border-radius:16px;background:var(--lime-dim);color:var(--accent);display:inline-flex;align-items:center;justify-content:center}
+.pp2-about-logo svg.i{width:34px;height:34px}
+.pp2-about h4{font-family:var(--font-display),Bebas Neue,Impact,sans-serif;font-size:26px;color:var(--text);letter-spacing:.03em;margin:0}
+.pp2-about small{color:var(--dim);font-size:11.5px}
+.pp2-about p{font-size:12.5px;color:var(--dim);line-height:1.55;margin:6px 0 0}
+

@@ -1,4 +1,4 @@
-<!-- КОШЕЛЁК: пополнение, вывод, ПИН-код, обмен, отправка, приём, автопополнение, цель, Face-ID -->
+<!-- КОШЕЛЁК: bottom-sheets: пополнение, вывод, ПИН-код, обмен-старый, отправка, приём, автопополнение, цель, Face-ID -->
 <div class="sheet" id="sheet-walTopup"><div id="walTopupView"></div></div>
 <div class="sheet" id="sheet-walWithdraw"><div id="walWdView"></div></div>
 <div class="sheet" id="sheet-walPin"><div id="walPinView"></div></div>
@@ -11,7 +11,7 @@
 <div class="sheet" id="sheet-walBio"><div id="walBioView"></div></div>
 <div class="sheet" id="sheet-walCurDetail"><div id="walCurDetailView"></div></div>
 
-<!-- КОШЕЛЁК: выписка по счёту (fullscreen-документ) -->
+<!-- КОШЕЛЁК: выписка (fullscreen-документ) — как и раньше -->
 <div class="wal-stmt" id="walStmt">
   <div class="wal-stmt-bar">
     <button class="wal-stmt-nav" onclick="walCloseStatement()" aria-label="Назад"><svg class="i"><use href="#i-back"/></svg></button>
@@ -20,4 +20,252 @@
   </div>
   <div class="wal-stmt-scroll"><div class="wal-stmt-paper" id="walStmtPaper"></div></div>
   <div class="wal-stmt-foot"><button class="btn" onclick="walDownloadStatement()"><svg class="i"><use href="#i-dl"/></svg> Скачать выписку (.txt)</button></div>
+</div>
+
+<!-- =============================================================
+     w2 SUBPAGES: fullscreen подстраницы кошелька (Сбер-стиль).
+     Каждая — .w2-page (скрыта), в верху .w2-bar с «назад», ниже .w2-body (скролл).
+     ============================================================= -->
+
+<!-- Мои счета (валюты) -->
+<div class="w2-page" id="w2p-accounts">
+  <div class="w2-bar">
+    <button class="w2-bar-nav" onclick="w2Close('accounts')" aria-label="Назад"><svg class="i"><use href="#i-back"/></svg></button>
+    <span class="w2-bar-t">Мои счета</span>
+    <span class="w2-bar-sp"></span>
+  </div>
+  <div class="w2-body">
+    <div class="w2-card wal-hero mini">
+      <div class="w2-card-lbl">Всего эквивалент</div>
+      <div class="wal-balance" id="walTotalEq">0 <b>₽</b></div>
+      <div class="w2-card-foot">
+        <span class="w2-card-acc-full" id="walAccNumAcc">OKO-00000000</span>
+      </div>
+    </div>
+    <p class="w2-section-h">Валютные счета</p>
+    <div id="walAccList" class="w2-acc-list"></div>
+    <p class="w2-crypto-plate" id="walCryptoPlate"></p>
+  </div>
+</div>
+
+<!-- Переводы -->
+<div class="w2-page" id="w2p-transfers">
+  <div class="w2-bar">
+    <button class="w2-bar-nav" onclick="w2Close('transfers')" aria-label="Назад"><svg class="i"><use href="#i-back"/></svg></button>
+    <span class="w2-bar-t">Переводы</span>
+    <span class="w2-bar-sp"></span>
+  </div>
+  <div class="w2-body">
+    <p class="w2-section-h">Куда переводим</p>
+    <button class="w2-menu-r solo" onclick="w2Close('transfers');walOpenSend()">
+      <span class="w2-menu-ic"><svg class="i"><use href="#i-send"/></svg></span>
+      <span class="w2-menu-t"><b>Внутри OKO по нику</b><em>Мгновенно, без комиссии</em></span>
+      <svg class="i w2-menu-ch"><use href="#i-chev"/></svg>
+    </button>
+    <button class="w2-menu-r solo" onclick="w2Close('transfers');walOpenWithdraw()">
+      <span class="w2-menu-ic"><svg class="i"><use href="#i-card"/></svg></span>
+      <span class="w2-menu-t"><b>На карту РФ, СБП</b><em>Комиссия 2%, поступление 1–3 дня</em></span>
+      <svg class="i w2-menu-ch"><use href="#i-chev"/></svg>
+    </button>
+    <button class="w2-menu-r solo" onclick="w2TransferCrypto()">
+      <span class="w2-menu-ic"><svg class="i"><use href="#i-ton"/></svg></span>
+      <span class="w2-menu-t"><b>На крипто-адрес (TON / USDT)</b><em id="w2TransferCryptoSub">Требуется внешний кошелёк</em></span>
+      <svg class="i w2-menu-ch"><use href="#i-chev"/></svg>
+    </button>
+    <p class="w2-section-h">Недавние получатели</p>
+    <div id="w2Recent" class="w2-recent"></div>
+  </div>
+</div>
+
+<!-- Обмен валют (fullscreen с полем ввода) -->
+<div class="w2-page" id="w2p-exchange">
+  <div class="w2-bar">
+    <button class="w2-bar-nav" onclick="w2Close('exchange')" aria-label="Назад"><svg class="i"><use href="#i-back"/></svg></button>
+    <span class="w2-bar-t">Обмен валют</span>
+    <span class="w2-bar-sp"></span>
+  </div>
+  <div class="w2-body">
+    <div id="w2ExView"></div>
+  </div>
+</div>
+
+<!-- Автоплатежи / подписки -->
+<div class="w2-page" id="w2p-autopay">
+  <div class="w2-bar">
+    <button class="w2-bar-nav" onclick="w2Close('autopay')" aria-label="Назад"><svg class="i"><use href="#i-back"/></svg></button>
+    <span class="w2-bar-t">Автоплатежи и подписки</span>
+    <span class="w2-bar-sp"></span>
+  </div>
+  <div class="w2-body">
+    <p class="w2-section-h">Подписка PRO</p>
+    <div class="card wal-auto" id="walAutoCard" onclick="walToggleAutopay()" role="button">
+      <div class="wal-auto-ic"><svg class="i"><use href="#i-crown"/></svg></div>
+      <div class="wal-auto-b">
+        <b>Автопродление PRO</b>
+        <span id="walAutoSub">Выключено</span>
+      </div>
+      <span class="switch" id="walAutoSw"><i></i></span>
+    </div>
+    <p class="w2-section-h">Автопополнение счёта</p>
+    <div class="card wal-autor" id="walAutoRules"></div>
+    <p class="w2-section-h">Ближайшие списания</p>
+    <div class="card wal-plan" id="walPlanned"></div>
+  </div>
+</div>
+
+<!-- Финансовые цели -->
+<div class="w2-page" id="w2p-goals">
+  <div class="w2-bar">
+    <button class="w2-bar-nav" onclick="w2Close('goals')" aria-label="Назад"><svg class="i"><use href="#i-back"/></svg></button>
+    <span class="w2-bar-t">Финансовые цели</span>
+    <span class="w2-bar-sp"></span>
+  </div>
+  <div class="w2-body">
+    <div class="wal-goals" id="walGoals"></div>
+  </div>
+</div>
+
+<!-- Аналитика -->
+<div class="w2-page" id="w2p-analytics">
+  <div class="w2-bar">
+    <button class="w2-bar-nav" onclick="w2Close('analytics')" aria-label="Назад"><svg class="i"><use href="#i-back"/></svg></button>
+    <span class="w2-bar-t">Аналитика</span>
+    <span class="w2-bar-sp"></span>
+  </div>
+  <div class="w2-body">
+    <p class="w2-section-h">График баланса</p>
+    <div class="card w2-chart-card">
+      <div class="wal-chart-h">
+        <div class="wal-chart-period" id="walChartPeriod">
+          <button data-cp="7" onclick="walSetChartPeriod(7)">7 дней</button>
+          <button class="on" data-cp="30" onclick="walSetChartPeriod(30)">30 дней</button>
+        </div>
+        <span class="wal-delta in" id="walDelta"></span>
+      </div>
+      <canvas id="walChart" class="wal-chart" height="66"></canvas>
+      <div class="wal-avg" id="walAvg"></div>
+    </div>
+    <p class="w2-section-h">Статистика · 30 дней</p>
+    <div class="wal-stats" id="walStats"></div>
+    <p class="w2-section-h">Топ-3 источника дохода</p>
+    <div class="card wal-topinc" id="walTopInc"></div>
+    <p class="w2-section-h">Расходы по категориям</p>
+    <div class="card wal-pie-wrap" id="walPie"></div>
+    <div class="wal-cats" id="walCats" style="margin-top:12px"></div>
+  </div>
+</div>
+
+<!-- QR-приём -->
+<div class="w2-page" id="w2p-receive">
+  <div class="w2-bar">
+    <button class="w2-bar-nav" onclick="w2Close('receive')" aria-label="Назад"><svg class="i"><use href="#i-back"/></svg></button>
+    <span class="w2-bar-t">Приём платежа</span>
+    <span class="w2-bar-sp"></span>
+  </div>
+  <div class="w2-body">
+    <div id="w2RecvHost"></div>
+  </div>
+</div>
+
+<!-- История и выписка -->
+<div class="w2-page" id="w2p-history">
+  <div class="w2-bar">
+    <button class="w2-bar-nav" onclick="w2Close('history')" aria-label="Назад"><svg class="i"><use href="#i-back"/></svg></button>
+    <span class="w2-bar-t">История операций</span>
+    <div class="wal-hist-acts">
+      <button class="wal-stmt-btn" onclick="walDownloadCSV()" aria-label="Скачать CSV"><svg class="i"><use href="#i-dl"/></svg>CSV</button>
+      <button class="wal-stmt-btn" onclick="walOpenStatement()" aria-label="Открыть выписку"><svg class="i"><use href="#i-file"/></svg>PDF</button>
+    </div>
+  </div>
+  <div class="w2-body">
+    <div class="wal-search-wrap">
+      <svg class="i wal-search-ic"><use href="#i-search"/></svg>
+      <input id="walSearch" class="wal-search" type="search" inputmode="search" autocomplete="off" placeholder="Поиск по операциям" oninput="walSetSearch(this.value)">
+    </div>
+    <div class="wal-period" id="walPeriod">
+      <button class="on" data-p="all" onclick="walSetPeriod('all')">Всё время</button>
+      <button data-p="7" onclick="walSetPeriod('7')">7 дней</button>
+      <button data-p="30" onclick="walSetPeriod('30')">30 дней</button>
+      <button data-p="90" onclick="walSetPeriod('90')">90 дней</button>
+    </div>
+    <div class="wal-filters" id="walFilters">
+      <button class="on" data-f="all" onclick="walSetFilter('all')">Все</button>
+      <button data-f="in" onclick="walSetFilter('in')">Доход</button>
+      <button data-f="out" onclick="walSetFilter('out')">Расход</button>
+      <button data-f="part" onclick="walSetFilter('part')">Партнёрка</button>
+      <button data-f="games" onclick="walSetFilter('games')">Игры</button>
+    </div>
+    <div class="card" style="padding:4px 14px" id="walLedger"></div>
+    <div style="height:14px"></div>
+  </div>
+</div>
+
+<!-- Безопасность -->
+<div class="w2-page" id="w2p-security">
+  <div class="w2-bar">
+    <button class="w2-bar-nav" onclick="w2Close('security')" aria-label="Назад"><svg class="i"><use href="#i-back"/></svg></button>
+    <span class="w2-bar-t">Безопасность</span>
+    <span class="w2-bar-sp"></span>
+  </div>
+  <div class="w2-body">
+    <p class="w2-section-h">Уровень защиты</p>
+    <div class="card wal-safety" id="walSafety" onclick="walSafetyTips()" role="button" tabindex="0"></div>
+    <p class="w2-section-h">Настройки безопасности</p>
+    <div class="card wal-sec" style="padding:2px 14px">
+      <div class="wal-sec-row">
+        <div class="wal-sec-ic"><svg class="i"><use href="#i-card"/></svg></div>
+        <div class="wal-sec-b">
+          <b>Суточный лимит вывода</b>
+          <span id="walSecWdSub">0 ₽ за сегодня</span>
+          <div class="wal-limit-bar"><i id="walSecWdBar"></i></div>
+        </div>
+      </div>
+      <div class="wal-sec-row">
+        <div class="wal-sec-ic"><svg class="i"><use href="#i-check"/></svg></div>
+        <div class="wal-sec-b">
+          <b>Покупки без подтверждения</b>
+          <span>До 5 000 ₽ мгновенно, выше — с подтверждением операции</span>
+        </div>
+      </div>
+      <div class="wal-sec-row tap" onclick="walTogglePin()" role="button">
+        <div class="wal-sec-ic"><svg class="i"><use href="#i-lock"/></svg></div>
+        <div class="wal-sec-b">
+          <b>ПИН-код на вывод</b>
+          <span id="walPinSub">Выключен, включи для защиты вывода</span>
+        </div>
+        <span class="switch" id="walPinSw"><i></i></span>
+      </div>
+      <div class="wal-sec-row tap" onclick="walToggleBio()" role="button">
+        <div class="wal-sec-ic"><svg class="i"><use href="#i-fingerprint"/></svg></div>
+        <div class="wal-sec-b">
+          <b>Вход по отпечатку / Face-ID</b>
+          <span id="walBioSub">Выключен, быстрая разблокировка кошелька</span>
+        </div>
+        <span class="switch" id="walBioSw"><i></i></span>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Помощь -->
+<div class="w2-page" id="w2p-help">
+  <div class="w2-bar">
+    <button class="w2-bar-nav" onclick="w2Close('help')" aria-label="Назад"><svg class="i"><use href="#i-back"/></svg></button>
+    <span class="w2-bar-t">Помощь и лимиты</span>
+    <span class="w2-bar-sp"></span>
+  </div>
+  <div class="w2-body">
+    <div class="card w2-faq">
+      <p class="w2-faq-q">Откуда берётся крипта в кошельке?</p>
+      <p class="w2-faq-a">Реальные USDT и TON приходят и уходят только через подключённый внешний кошелёк (Tonkeeper, TON Wallet, MyTonWallet). Внутри OKO — только отображение баланса и заявки на пополнение.</p>
+      <p class="w2-faq-q">Что такое XP?</p>
+      <p class="w2-faq-a">XP — это очки OKO, а не валюта. Их нельзя вывести и обменять на рубли. Тратятся в Играх, Академии и на бонусы приложения.</p>
+      <p class="w2-faq-q">Как работает обмен валют?</p>
+      <p class="w2-faq-a">Курс — внутренний OKO Team, обновляется несколько раз в сутки. Комиссия обмена 1% уже включена. Внешние торги — через биржи и Tonkeeper, туда OKO не подключён.</p>
+      <p class="w2-faq-q">Какие лимиты?</p>
+      <p class="w2-faq-a">Тариф FREE — <b>50 000 ₽ / сутки</b> на вывод. START — 100 000, PRO — 300 000, BUSINESS — 1 000 000. Покупки до 5 000 ₽ — без подтверждения.</p>
+      <p class="w2-faq-q">Куда писать, если что-то пошло не так?</p>
+      <p class="w2-faq-a">Техподдержка OKO — <b>@okohelp</b> в Telegram. Ответим в течение рабочего дня.</p>
+    </div>
+  </div>
 </div>

@@ -207,7 +207,7 @@ function chNormalize(c){
 }
 function chGated(c){ return !!c && (c.kind==='course' || c.access==='closed' || (c.price||0)>0); }
 function chPaid(c){ return (c.price||0)>0; }
-function chKindLabel(c){ return c.kind==='course'?'Курс':c.kind==='club'?'Клуб':'Канал'; }
+function chKindLabel(c){ return c.kind==='course'?'Курс':c.kind==='club'?'Клуб':c.kind==='sgroup'?'Супергруппа':c.kind==='chat'?'Чат':'Канал'; }
 function chPriceUnit(c){ return c.kind==='course'?'':'/мес'; }
 function chIsSubbed(c){ return chIsMine(c) || !!CH.sub[c.id] || !chGated(c); }
 /* краткая подпись типа: «Закрытый · Платно 299 ₽/мес» */
@@ -487,6 +487,7 @@ function chRender(){
   switch(top.page){
     case 'list':    out = chPageList(); break;
     case 'create':  out = chPageCreate(); break;
+    case 'catalog': out = chPageCatalog(); break;
     case 'channel': out = chPageChannel(top.arg); break;
     case 'lesson':  out = chPageLesson(top.arg); break;
     case 'compose': out = chPageCompose(top.arg); break;
@@ -553,12 +554,124 @@ function chPageList(){
   return {title:'Каналы', html};
 }
 
-/* ================= СТРАНИЦА: СОЗДАНИЕ ================= */
-const chDraft = {kind:'channel', access:'open', name:'', desc:'', price:0, bg:0, chatBg:null, icon:'megaphone', useIcon:false};
+/* ================= СТРАНИЦА: КАТАЛОГ ПЛАТНЫХ КАНАЛОВ/КЛУБОВ/КУРСОВ =================
+   Полноэкранная витрина только закрытого/платного контента. Фильтры: ниша, цена,
+   формат, сортировка. Правка Даниэля 29.07 — «список с фильтрами по всем закрытым
+   платным каналам/клубам/курсам». Данные — из CH.disc + CH.mine (не свои). */
+const CH_NICHES = [
+  {k:'all',  name:'Все'},
+  {k:'smm',  name:'SMM и трафик'},
+  {k:'biz',  name:'Бизнес и продажи'},
+  {k:'psy',  name:'Психология'},
+  {k:'des',  name:'Дизайн и AI'},
+  {k:'fin',  name:'Финансы'},
+  {k:'edu',  name:'Образование'},
+  {k:'life', name:'Стиль жизни'},
+];
+function chNiche(c){
+  if(c.niche) return c.niche;
+  const s = ((c.name||'')+' '+(c.desc||'')).toLowerCase();
+  if(/(smm|reels|traffic|трафик|блог|инстаг|тикток|аудит|видео|reels)/.test(s)) return 'smm';
+  if(/(бизнес|продаж|деньг|доход|запуск|воронк|прибыл|роста|инсайд)/.test(s)) return 'biz';
+  if(/(психолог|отношен|самооценк|терап|тревог|эмоц)/.test(s)) return 'psy';
+  if(/(дизайн|нейро|midjourney|ai|обложк|интерфейс|figma|graphic)/.test(s)) return 'des';
+  if(/(финанс|инвест|акции|крипт|бюджет|ipo|фондов)/.test(s)) return 'fin';
+  if(/(курс|учеб|обучен|уроки|школ|мастер|python|программ)/.test(s)) return 'edu';
+  return 'life';
+}
+/* мок-рейтинг: стабильный по id, чтобы одна и та же карточка всегда 4.6/4.8/… */
+function chRating(c){
+  const s = String(c.id||c.name||''); let h=0; for(let i=0;i<s.length;i++) h=(h*33+s.charCodeAt(i))|0;
+  return (40 + Math.abs(h)%15) / 10;  // 4.0 … 5.4 → нормируем
+}
+function chRatingN(c){ const r = chRating(c); return Math.min(5, +r.toFixed(1)); }
+
+const CH_CAT = {niche:'all', price:'any', kind:'any', sort:'top'};
+function chPageCatalog(){
+  const all = ((CH.disc||[]).concat((CH.mine||[]).filter(c=>false)))  /* только чужие */
+    .filter(c=>chGated(c));   /* только закрытое/платное — как просил Даниэль */
+  const priceMax = {any:Infinity, '500':500, '1000':1000, '2500':2500, '5000':5000};
+  const list = all.filter(c=>{
+    if(CH_CAT.niche!=='all' && chNiche(c)!==CH_CAT.niche) return false;
+    if(CH_CAT.kind!=='any' && (c.kind||'channel')!==CH_CAT.kind) return false;
+    const pm = priceMax[CH_CAT.price] ?? Infinity;
+    if((c.price||0) > pm) return false;
+    return true;
+  }).sort((a,b)=>{
+    if(CH_CAT.sort==='new')   return (b.subs||0)*0.1 - (a.subs||0)*0.1 + (Math.random()-0.5);  // мок: без даты — рандом
+    if(CH_CAT.sort==='cheap') return (a.price||0) - (b.price||0);
+    if(CH_CAT.sort==='rating')return chRating(b)  - chRating(a);
+    return (b.subs||0) - (a.subs||0);  // top
+  });
+
+  const niches = CH_NICHES.map(n=>`<button class="ch-cat-chip ${CH_CAT.niche===n.k?'on':''}" onclick="chCatSet('niche','${n.k}')">${chEsc(n.name)}</button>`).join('');
+  const prices = [['any','Любая'],['500','до 500 ₽'],['1000','до 1000 ₽'],['2500','до 2500 ₽'],['5000','до 5000 ₽']]
+    .map(([k,l])=>`<button class="ch-cat-chip ${CH_CAT.price===k?'on':''}" onclick="chCatSet('price','${k}')">${l}</button>`).join('');
+  const kinds = [['any','Все'],['channel','Каналы'],['club','Клубы'],['course','Курсы']]
+    .map(([k,l])=>`<button class="ch-cat-chip ${CH_CAT.kind===k?'on':''}" onclick="chCatSet('kind','${k}')">${l}</button>`).join('');
+  const sorts = [['top','Топ'],['new','Новые'],['cheap','Дешевле'],['rating','Рейтинг']]
+    .map(([k,l])=>`<button class="ch-cat-chip ${CH_CAT.sort===k?'on':''}" onclick="chCatSet('sort','${k}')">${l}</button>`).join('');
+
+  const cards = list.map(c=>{
+    const paid = chPaid(c);
+    const priceHtml = paid
+      ? `<span class="ch-catx-price">${c.price} ₽${chPriceUnit(c)}</span>`
+      : `<span class="ch-catx-price free">Бесплатно</span>`;
+    const rating = chRatingN(c);
+    const stars = `<span class="ch-catx-star">${chI('star')}${rating.toFixed(1)}</span>`;
+    const kindTag = c.kind==='course'?'Курс':c.kind==='club'?'Клуб':'Канал';
+    return `<button class="ch-catx-card" onclick="chGo('channel','${c.id}')">
+      <div class="ch-catx-hero" style="background:${CH_BGS[c.bg||0]}">
+        <span class="ch-catx-kind">${chI(c.kind==='course'?'circle-play':c.kind==='club'?'crown':'megaphone')}${kindTag}</span>
+        ${priceHtml}
+      </div>
+      <div class="ch-catx-body">
+        <div class="ch-catx-name">${chEsc(c.name)}${chBadge(c)}</div>
+        <div class="ch-catx-sub">${chEsc(c.owner||'@'+chNick(c))}</div>
+        <div class="ch-catx-meta">${stars}<span>${chI('users')}${chFmtN(c.subs||0)}</span></div>
+      </div>
+    </button>`;
+  }).join('');
+
+  const empty = list.length ? '' : `<div class="ch-empty">По фильтрам ничего не нашлось. Сбрось фильтры и попробуй снова.</div>`;
+  const html = `
+    <div class="ch-cat-hint">${chI('bookmark')} Каталог платных каналов, клубов и курсов OKO. Комиссия платформы 10% — авторы получают остальное.</div>
+    <div class="ch-cat-filter">
+      <div class="ch-cat-lab">Ниша</div>
+      <div class="ch-cat-chips">${niches}</div>
+      <div class="ch-cat-lab">Цена</div>
+      <div class="ch-cat-chips">${prices}</div>
+      <div class="ch-cat-lab">Формат</div>
+      <div class="ch-cat-chips">${kinds}</div>
+      <div class="ch-cat-lab">Сортировка</div>
+      <div class="ch-cat-chips">${sorts}</div>
+    </div>
+    <div class="ch-cat-count">${list.length} ${list.length%10===1&&list.length%100!==11?'канал':'каналов'}</div>
+    <div class="ch-catx-grid">${cards}</div>
+    ${empty}`;
+  return {title:'Каталог', html};
+}
+window.chCatSet = function(k,v){ CH_CAT[k]=v; chRender(); };
+
+/* ================= СТРАНИЦА: СОЗДАНИЕ (правки Даниэля 29.07) =================
+   Единый мастер: чат / супергруппа / канал / клуб / курс. TG-parity: ава+обложка
+   можно грузить с устройства прямо в создании, PRO-фичи (ссылка на сайт, галочка
+   верификации, кастомный фон чата) размечены значком PRO и открываются с START+. */
+const chDraft = {
+  kind:'channel', access:'open', name:'', desc:'',
+  price:0, bg:0, chatBg:null, chatBgUrl:null,
+  icon:'megaphone', useIcon:false,
+  cover:null, avatar:null,
+  website:'', verified:false
+};
+function chIsPro(){ try{ return (typeof okoIsPremium==='function') && okoIsPremium(); }catch(e){ return false; } }
+function chFreeBgs(){ return CH_BGS.slice(0,5); }  /* FREE — только 5 стандартных */
+function chAllowedBgs(){ return chIsPro() ? CH_BGS : chFreeBgs(); }
 function chPageCreate(){
   const d = chDraft;
   const kinds = [
-    ['channel','megaphone','Канал','Лента постов для аудитории — как в Telegram/Instagram.'],
+    ['channel','megaphone','Канал','Лента постов для аудитории. Пишет только админ, юзеры — в комментарии, если админ разрешил.'],
+    ['sgroup','users','Супергруппа','Как в Telegram: до 200 000 участников, темы, роли, модерация.'],
     ['club','crown','Клуб','Закрытое комьюнити по подписке: посты, чат и бонусы участникам.'],
     ['course','circle-play','Видео-курс','Уроки с прогрессом. Продажа за фикс-цену, доступ навсегда.'],
   ];
@@ -566,6 +679,9 @@ function chPageCreate(){
   const lockPaid = d.kind==='course';     // курс всегда платный
   const paid = (d.price||0)>0;
   const kl = chKindLabel(d).toLowerCase();
+  const pro = chIsPro();
+  const bgs = chAllowedBgs();
+  const proTag = pro ? '' : ' <span class="ch-pro-tag" title="PRO">PRO</span>';
   const html = `
     <div class="ch-sec-h">${chI('bolt')} Что создаём</div>
     <div class="ch-type-grid">${kinds.map(([t,ic,tt,ds])=>`
@@ -604,30 +720,71 @@ function chPageCreate(){
       <div class="ch-owner-note">Ты получишь <b id="chNetHint">${chNet(d.price)} ₽</b> с каждой продажи, OKO удержит комиссию 10%.</div>
     </div>
 
-    <label class="ch-lab">Значок</label>
+    <label class="ch-lab">Аватар</label>
+    <div class="ch-avatar-row">
+      <div class="ch-avatar-prev" style="${d.avatar?('background-image:url('+d.avatar+');background-size:cover;background-position:center'):chAvGradStyle(d.bg)}">
+        ${!d.avatar ? (d.useIcon?chI(d.icon):chEsc((d.name[0]||'A').toUpperCase())) : ''}
+      </div>
+      <div class="ch-avatar-actions">
+        <button class="ch-photo-btn" onclick="chDraftPickAvatar()">${chI('camera')} ${d.avatar?'Сменить фото':'Загрузить фото'}</button>
+        ${d.avatar?`<button class="ch-photo-btn del" onclick="chDraftClearAvatar()" title="Убрать">${chI('trash')}</button>`:''}
+      </div>
+    </div>
+
+    <label class="ch-lab">Значок <span style="font-weight:400;color:var(--dim)">— если без фото</span></label>
     <div class="ch-letter-row" id="chIconRow">
       <button class="ch-lt ${!d.useIcon?'on':''}" onclick="chDraft.useIcon=false;chRender()" title="Первая буква названия"><span style="font:800 18px/1 var(--font-display);color:var(--lime)">A</span></button>
       ${CH_ICONS.map(ic=>`<button class="ch-lt ${d.useIcon&&d.icon===ic?'on':''}" onclick="chDraft.useIcon=true;chDraft.icon='${ic}';chRender()">${chI(ic)}</button>`).join('')}
     </div>
 
-    <label class="ch-lab">Обложка / фон</label>
-    <div class="ch-appear-prev" id="chBgPrev" style="background:${CH_BGS[d.bg]}">
-      <div class="ch-ap-ava" style="${chAvGradStyle(d.bg)}">${d.useIcon?chI(d.icon):chEsc((d.name[0]||'K').toUpperCase())}</div>
-      <div class="ch-ap-name">${chEsc(d.name||'Новый канал')}</div>
+    <label class="ch-lab">Фон обложки</label>
+    <div class="ch-appear-prev" id="chBgPrev" style="${d.cover?('background:linear-gradient(180deg,rgba(0,0,0,.15),rgba(0,0,0,.5)),url('+d.cover+');background-size:cover;background-position:center'):('background:'+CH_BGS[d.bg])}">
+      <div class="ch-ap-ava" style="${d.avatar?('background-image:url('+d.avatar+');background-size:cover;background-position:center'):chAvGradStyle(d.bg)}">${d.avatar?'':(d.useIcon?chI(d.icon):chEsc((d.name[0]||'K').toUpperCase()))}</div>
+      <div class="ch-ap-name">${chEsc(d.name||'Новый '+kl)}</div>
     </div>
-    <div class="ch-swatches">${CH_BGS.map((g,i)=>`<div class="ch-sw ${d.bg===i?'on':''}" style="background:${g}" onclick="chDraft.bg=${i};chRender()"></div>`).join('')}</div>
+    <div class="ch-cover-actions">
+      <button class="ch-photo-btn" onclick="chDraftPickCover()">${chI('photo')} ${d.cover?'Сменить обложку':'Загрузить обложку'}</button>
+      ${d.cover?`<button class="ch-photo-btn del" onclick="chDraftClearCover()" title="Убрать">${chI('trash')}</button>`:''}
+    </div>
+    <div class="ch-swatches">${bgs.map((g,i)=>`<div class="ch-sw ${d.bg===i?'on':''}" style="background:${g}" onclick="chDraft.bg=${i};chRender()"></div>`).join('')}</div>
+    ${!pro?`<div class="ch-owner-note">Показаны 5 стандартных фонов. Дополнительные фоны — на тарифе <b>START+</b>.</div>`:''}
 
-    <label class="ch-lab">Фон чата <span style="font-weight:400;color:var(--dim)">— за постами канала</span></label>
+    <label class="ch-lab">Фон чата ${!pro?proTag:''}<span style="font-weight:400;color:var(--dim)"> — за лентой сообщений</span></label>
     <div class="ch-swatches">
-      <div class="ch-sw ch-sw-none ${d.chatBg==null?'on':''}" onclick="chDraft.chatBg=null;chRender()" title="Без фона">${chI('check2')}</div>
-      ${CH_BGS.map((g,i)=>`<div class="ch-sw ${d.chatBg===i?'on':''}" style="background:${g}" onclick="chDraft.chatBg=${i};chRender()"></div>`).join('')}
+      <div class="ch-sw ch-sw-none ${d.chatBg==null && !d.chatBgUrl?'on':''}" onclick="chDraft.chatBg=null;chDraft.chatBgUrl=null;chRender()" title="Без фона">${chI('check2')}</div>
+      ${bgs.map((g,i)=>`<div class="ch-sw ${d.chatBg===i && !d.chatBgUrl?'on':''}" style="background:${g}" onclick="chDraft.chatBg=${i};chDraft.chatBgUrl=null;chRender()"></div>`).join('')}
+      ${d.chatBgUrl?`<div class="ch-sw on" style="background-image:url(${d.chatBgUrl});background-size:cover" title="Свой фон">${chI('check2')}</div>`:''}
     </div>
+    ${pro?`<button class="ch-photo-btn ch-mt-6" onclick="chDraftPickChatBg()">${chI('photo')} ${d.chatBgUrl?'Сменить свой фон':'Свой фон из файла'}</button>`:`<div class="ch-owner-note">Загрузка собственного фона чата доступна на тарифе <b>START+</b>.</div>`}
+
+    <label class="ch-lab">Ссылка на сайт ${proTag}<span style="font-weight:400;color:var(--dim)"> — кнопка в шапке канала</span></label>
+    <input class="ch-input" id="chDSite" ${pro?'':'disabled'} placeholder="https://okoteam.top" value="${chEsc(d.website||'')}" oninput="chDraft.website=this.value.trim()">
+
+    <label class="ch-check-row"><input type="checkbox" ${d.verified?'checked':''} ${pro?'':'disabled'} onchange="chDraft.verified=this.checked;chRender()">
+      <span>Заявка на верификацию ${proTag}<small>Синяя галочка — модерация OKO проверит канал вручную</small></span>
+    </label>
+
+    ${d.kind==='sgroup' || d.kind==='chat' ? `<div class="ch-owner-note">${chI('users')} При росте свыше <b>1000 участников</b> потребуется тариф <b>START+</b>. Платные каналы этим ограничением не связаны.</div>`:''}
 
     <div style="height:18px"></div>
     <button class="btn" id="chCreateBtn" onclick="chCreateChannel()" ${d.name.trim()?'':'disabled style="opacity:.5"'}>${chI('plus')} Создать ${kl}</button>
     <div style="height:10px"></div>`;
   return {title:'Новый '+kl, html};
 }
+
+/* --- пикеры для черновика --- */
+window.chDraftPickAvatar = function(){
+  chPickFile(f=>chReadImage(f, 512, 0.82, url=>{ chDraft.avatar=url; chDraft.useIcon=false; chRender(); }));
+};
+window.chDraftClearAvatar = function(){ chDraft.avatar=null; chRender(); };
+window.chDraftPickCover = function(){
+  chPickFile(f=>chReadImage(f, 1200, 0.72, url=>{ chDraft.cover=url; chRender(); }));
+};
+window.chDraftClearCover = function(){ chDraft.cover=null; chRender(); };
+window.chDraftPickChatBg = function(){
+  if(!chIsPro()){ toast('Свой фон — на тарифе START+'); return; }
+  chPickFile(f=>chReadImage(f, 1200, 0.72, url=>{ chDraft.chatBgUrl=url; chDraft.chatBg=null; chRender(); }));
+};
 function chPriceChips(){
   const opts = chDraft.kind==='course' ? [490,990,1490,2900] : [99,199,299,499];
   return opts.map(p=>`<button class="${chDraft.price===p?'on':''}" onclick="chDraft.price=${p};chSyncPriceChips();chSyncPriceInput()">${p} ₽</button>`).join('');
@@ -636,6 +793,8 @@ function chNet(p){ return Math.round((p||0)*(1-CH_FEE)); }
 window.chPickKind = function(k){
   chDraft.kind = k;
   if(k==='channel'){ chDraft.access='open'; }
+  else if(k==='chat'){ chDraft.access='open'; chDraft.price=0; }
+  else if(k==='sgroup'){ chDraft.access='open'; chDraft.price=0; }
   else if(k==='club'){ chDraft.access='closed'; if(!chDraft.price) chDraft.price=299; }
   else if(k==='course'){ chDraft.access='closed'; if(!chDraft.price || chDraft.price<490) chDraft.price=990; }
   chRender();
@@ -661,20 +820,35 @@ window.chCreateChannel = function(){
   const d = chDraft, name = d.name.trim();
   if(!name){ toast('Введите название'); return; }
   CH.seq = (CH.seq||0)+1;
+  const isChatLike = (d.kind==='chat' || d.kind==='sgroup');
   const c = chNormalize({
-    id:'ch-my-'+CH.seq, name, nick:chSlug(name), desc:d.desc.trim()||'Добро пожаловать!',
-    icon: d.useIcon ? d.icon : null, bg:d.bg, chatBg:(d.chatBg==null?null:d.chatBg), cover:null, avatar:null,
+    id:'ch-my-'+CH.seq, name, nick:chSlug(name), desc:d.desc.trim()||(isChatLike?'Добро пожаловать в чат!':'Добро пожаловать!'),
+    icon: d.useIcon ? d.icon : null, bg:d.bg,
+    chatBg:(d.chatBg==null?null:d.chatBg), chatBgUrl:(d.chatBgUrl||null),
+    cover:d.cover||null, avatar:d.avatar||null,
     kind:d.kind, access:d.access, price:(d.price||0),
-    verified:false, subs:1, reactions:true, discussions:d.kind!=='course',
+    website:d.website||'', verifyRequested:!!d.verified, verified:false,
+    subs:1, reactions:true, discussions:d.kind!=='course',
+    /* для чата/супергруппы юзеры пишут всегда; для канала — только админы */
+    whoPost: (d.kind==='chat' || d.kind==='sgroup') ? 'subs' : 'admins',
+    /* для канала админ может вкл/выкл комментарии; по умолчанию — вкл */
+    commentsOn: (d.kind==='channel') ? true : undefined,
     admins:[], gross:0, members:[{name:PROFILE.name, nick:PROFILE.nick, joined:'сейчас'}], black:[],
-    posts:[{txt:'Канал создан. Первый пост задаёт тон — расскажи, что будет полезного для подписчиков.', likes:0, views:1, when:'сейчас'}],
+    posts:[{
+      txt: isChatLike
+        ? 'Чат создан. Пригласи первых участников и задай тон общения.'
+        : 'Канал создан. Первый пост задаёт тон — расскажи, что будет полезного для подписчиков.',
+      likes:0, views:1, when:'сейчас'
+    }],
     lessons: d.kind==='course' ? [{id:'l1', title:'Вводный урок', dur:'5:00'}] : undefined,
   });
   CH.mine.unshift(c);
   chSave();
-  chMirrorToChats(c);  // канал появляется и в мессенджере (реальный, как в TG)
+  chMirrorToChats(c);  // канал/чат появляется в мессенджере
   // сброс черновика
-  chDraft.kind='channel'; chDraft.access='open'; chDraft.name=''; chDraft.desc=''; chDraft.price=0; chDraft.bg=0; chDraft.chatBg=null; chDraft.useIcon=false; chDraft.icon='megaphone';
+  chDraft.kind='channel'; chDraft.access='open'; chDraft.name=''; chDraft.desc=''; chDraft.price=0;
+  chDraft.bg=0; chDraft.chatBg=null; chDraft.chatBgUrl=null; chDraft.useIcon=false; chDraft.icon='megaphone';
+  chDraft.cover=null; chDraft.avatar=null; chDraft.website=''; chDraft.verified=false;
   const kl = chKindLabel(c).toLowerCase();
   if(typeof showPopup==='function'){
     showPopup({ico:'check', title:chKindLabel(c)+' создан',
@@ -683,16 +857,24 @@ window.chCreateChannel = function(){
   } else { chNav=[{page:'list'}]; chGo('channel',c.id); }
 };
 
-/* канал → запись в CHATS (мессенджер), чтобы он был «настоящим» */
+/* канал/чат/супергруппа → запись в CHATS (мессенджер), чтобы был «настоящим».
+   kind в CHATS: направляем канал/клуб/курс как 'channel' (лента постов), чат — 'direct'
+   (личный по функциональности, но с managed=true), супергруппу — 'group'.
+   Для юзера чат и канал выглядят одинаково — разница в правах: в канале пишет только
+   админ (writeAll=false), в чате/супергруппе пишут все (writeAll=true). */
 function chMirrorToChats(c){
   if(typeof CHATS==='undefined') return;
   if(CHATS.some(x=>x.chId===c.id)) return;
+  const chatsKind = c.kind==='sgroup' ? 'group' : c.kind==='chat' ? 'group' : 'channel';
+  const kIcon    = c.kind==='sgroup' ? 'users' : c.kind==='chat' ? 'users' : 'megaphone';
+  const writeAll = (c.kind==='chat' || c.kind==='sgroup');
   CHATS.unshift({
-    id:'chan_'+c.id, chId:c.id, name:c.name, kind:'channel', managed:true, writeAll:false,
-    ava:(c.name[0]||'K').toUpperCase(), avaIcon: c.icon||null, kindIcon:'megaphone',
-    subs:chFmtN(c.subs||0), nick:c.nick, preview:c.kind==='course'?'Видео-курс':c.kind==='club'?'Закрытый клуб':chPaid(c)?'Платный канал':c.access==='closed'?'Закрытый канал':'Канал создан',
+    id:'chan_'+c.id, chId:c.id, name:c.name, kind:chatsKind, managed:true, writeAll:writeAll,
+    ava:(c.name[0]||'K').toUpperCase(), avaIcon: c.icon||null, avaImg:c.avatar||null, kindIcon:kIcon,
+    subs:chFmtN(c.subs||0), nick:c.nick,
+    preview: c.kind==='course'?'Видео-курс':c.kind==='club'?'Закрытый клуб':c.kind==='sgroup'?'Супергруппа':c.kind==='chat'?'Чат создан':chPaid(c)?'Платный канал':c.access==='closed'?'Закрытый канал':'Канал создан',
     time:(typeof nowT==='function'?nowT():'сейчас'), unread:0, online:false,
-    msgs:[{kind:'sys', body:`Канал «${c.name}» — открой в разделе «Мои каналы» для управления`}],
+    msgs:[{kind:'sys', body:`${chKindLabel(c)} «${c.name}» — открой в «Мои каналы» для управления`}],
     openChannel:c.id
   });
   if(typeof renderChatList==='function') try{ renderChatList(); }catch(e){}
@@ -1750,18 +1932,48 @@ function chInsertProfileRow(){
 }
 function chUpdateProwCount(){ const el=document.getElementById('chProwCount'); if(el) el.textContent = CH.mine.length; }
 
-/* 2) перехват создания канала из меню «+ » в чатах: pickChatKind('channel') → наш мастер */
+/* 2) перехват создания канала/чата/супергруппы из меню «+» в чатах:
+      pickChatKind('channel'|'chat'|'sgroup'|'group') → единый мастер chPageCreate */
 if(typeof pickChatKind==='function'){
   const _prevPickChatKind = pickChatKind;
   pickChatKind = function(kind){
-    if(kind==='channel'){
+    if(kind==='channel' || kind==='sgroup' || kind==='chat' || kind==='group'){
       if(typeof closeSheet==='function') closeSheet();
+      const target = kind==='group' ? 'sgroup' : kind;   // старую «Группу» тянем в супергруппу
+      chDraft.kind = target;
+      chPickKind(target);
       chOpen('create');
       return;
     }
     return _prevPickChatKind.apply(this, arguments);
   };
 }
+
+/* 2b) заменяем содержимое sheet-new-chat: теперь 3 варианта — Чат / Канал / Супергруппа */
+function chPatchNewChatSheet(){
+  const sheet = document.getElementById('sheet-new-chat'); if(!sheet) return;
+  if(sheet.dataset.chPatched === '1') return;
+  const heading = sheet.querySelector('h3');
+  const form = sheet.querySelector('#newChatForm');
+  const items = [
+    {kind:'chat',    ic:'users',     t:'Чат',         s:'Общение группой. Пишут все участники, до 200 на FREE.'},
+    {kind:'sgroup',  ic:'crown',     t:'Супергруппа', s:'До 200 000 участников, роли, темы, модерация — как в Telegram.'},
+    {kind:'channel', ic:'megaphone', t:'Канал',       s:'Лента постов, пишет только админ. Юзеры — в комментариях.'},
+    {kind:'direct',  ic:'user',      t:'Личный чат',  s:'Диалог один на один.'}
+  ];
+  const btnsHtml = items.map(it=>`
+    <button class="sheet-item" onclick="pickChatKind('${it.kind}')">
+      <svg class="i"><use href="#i-${it.ic}"/></svg>
+      <span>${it.t}<small>${it.s}</small></span>
+    </button>`).join('');
+  /* убираем старые кнопки, подставляем новые перед формой */
+  const old = sheet.querySelectorAll('.sheet-item'); old.forEach(b=>b.remove());
+  if(form) sheet.insertBefore(document.createRange().createContextualFragment(btnsHtml), form);
+  else sheet.insertAdjacentHTML('beforeend', btnsHtml);
+  if(heading) heading.textContent = 'Создать';
+  sheet.dataset.chPatched = '1';
+}
+try{ chPatchNewChatSheet(); }catch(e){}
 
 /* 3) открытие канала-зеркала из списка чатов → наша вьюха */
 if(typeof openConv==='function'){
@@ -1777,6 +1989,22 @@ if(typeof openConv==='function'){
 if(typeof renderMyProfile==='function'){
   const _prevRMPch = renderMyProfile;
   renderMyProfile = function(){ _prevRMPch.apply(this, arguments); chInsertProfileRow(); chUpdateProwCount(); };
+}
+
+/* 3b) чип «Каталог» первым в фильтрах чатов — открывает витрину платного контента */
+function chInsertCatalogChip(){
+  const folders = document.getElementById('folders'); if(!folders) return;
+  if(folders.querySelector('.ch-cat-open-chip')) return;
+  const b = document.createElement('button');
+  b.className = 'ch-cat-open-chip';
+  b.innerHTML = chI('star') + '<span>Каталог</span>';
+  b.title = 'Каталог платных каналов, клубов и курсов';
+  b.addEventListener('click', e=>{ e.preventDefault(); chOpen('catalog'); });
+  folders.insertBefore(b, folders.firstChild);
+}
+if(typeof renderFolders==='function'){
+  const _prevRF = renderFolders;
+  renderFolders = function(){ _prevRF.apply(this, arguments); try{ chInsertCatalogChip(); }catch(e){} };
 }
 
 /* 4) посты каналов в ленте рекомендаций: помечаем источником-каналом + открываем канал по тапу.

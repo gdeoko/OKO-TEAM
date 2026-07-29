@@ -11,18 +11,27 @@ var PW_ASSET = {
 (function(){
   'use strict';
 
-  /* ---- иерархия тарифов (FREE < START < PRO < BUSINESS < MAX) ---- */
-  var PW_RANK = {FREE:0, START:1, PRO:2, BUSINESS:3, MAX:4};
-  var PW_ORDER = ['START','PRO','BUSINESS','MAX'];
+  /* ---- иерархия тарифов (FREE < START < PRO < BUSINESS < BUSINESS_PRO < MAX) ---- */
+  var PW_RANK = {FREE:0, START:1, PRO:2, BUSINESS:3, BUSINESS_PRO:4, 'BUSINESS PRO':4, MAX:5};
+  var PW_ORDER = ['FREE','START','PRO','BUSINESS','BUSINESS_PRO','MAX'];
+  /* нормализация имени тарифа (PROFILE.tier может быть "BUSINESS PRO" с пробелом) */
+  function pwNorm(t){ return String(t||'').replace(/\s+/g,'_').toUpperCase(); }
+  /* красивое имя тарифа для UI (обратно из ключа) */
+  function pwLabel(t){ return t==='BUSINESS_PRO' ? 'BUSINESS PRO' : t; }
   function pwCurRank(){
     if(typeof isOwner==='function' && isOwner()) return 99;
-    var t = (typeof PROFILE!=='undefined' && PROFILE.tier ? String(PROFILE.tier).toUpperCase() : 'FREE');
+    var t = (typeof PROFILE!=='undefined' && PROFILE.tier ? pwNorm(PROFILE.tier) : 'FREE');
     return PW_RANK[t] != null ? PW_RANK[t] : 0;
   }
+  function pwCurTier(){
+    if(typeof PROFILE==='undefined') return 'FREE';
+    var t = pwNorm(PROFILE.tier||'FREE');
+    return PW_RANK[t]!=null ? t : 'FREE';
+  }
 
-  /* ---- цены/мес (fallback если PLANS нет), спец-годовая цена ---- */
-  var PW_MO = {START:990, PRO:4900, BUSINESS:19900, BUSINESS_PRO:49900, MAX:149900};
-  var PW_YR = {MAX:259200};   // MAX год = −20% (27000×12×0.8) — единая скидка со всеми тарифами, лестница не инвертируется
+  /* ---- цены/мес (fallback если PLANS нет), FREE = 0 ---- */
+  var PW_MO = {FREE:0, START:990, PRO:4900, BUSINESS:19900, BUSINESS_PRO:49900, MAX:149900};
+  var PW_YR = {};   /* спец-годовых цен нет: скидка периода применяется единообразно */
   function pwMonthly(tier){
     if(typeof PLANS!=='undefined' && PLANS[tier] && PLANS[tier].mo) return PLANS[tier].mo;
     return PW_MO[tier] || 0;
@@ -32,58 +41,80 @@ var PW_ASSET = {
     return Number(n||0).toLocaleString('ru-RU').replace(/,/g,' ') + ' ₽';
   }
 
-  /* прописать MAX в ядро, чтобы openPay('MAX')/doPay работали корректно */
+  /* прописать все тарифы в ядро, чтобы openPay(...)/doPay работали корректно */
   try{
-    if(typeof PLANS!=='undefined' && !PLANS.MAX){ PLANS.MAX = {name:'MAX', mo:PW_MO.MAX}; }
+    if(typeof PLANS!=='undefined'){
+      if(!PLANS.MAX) PLANS.MAX = {name:'MAX', mo:PW_MO.MAX};
+      if(!PLANS.BUSINESS_PRO) PLANS.BUSINESS_PRO = {name:'BUSINESS PRO', mo:PW_MO.BUSINESS_PRO};
+      if(!PLANS.FREE) PLANS.FREE = {name:'FREE', mo:0};
+    }
   }catch(e){}
 
   /* ---- выгоды по тарифам для продающего попапа (БЕЗ партнёрки — она отдельно) ---- */
   var PW_BENEFITS = {
+    FREE: [
+      {t:'Мессенджер и лента', s:'общение, каналы, сторис — базовая социальная сеть'},
+      {t:'До 3 подписок', s:'подписывайся на каналы и людей без лимита времени'},
+      {t:'Файлы до 100 МБ', s:'загружай ролики и документы в чат'},
+      {t:'Голосовые до 5 минут', s:'общайся без ограничений в диалогах'}
+    ],
     START: [
-      {t:'Проверка видео 15/мес', s:'Разбор хука, рисков и трендов командой OKO'},
-      {t:'Автопостинг в 2 сети', s:'VK и Telegram в один клик'},
-      {t:'Файлы до 300 МБ', s:'ролики без лишних сжатий'},
-      {t:'Скидка 5% на рекламу', s:'дешевле продвигать посты'}
+      {t:'Premium-мессенджер 4 ГБ', s:'файлы до 4 ГБ, транскрипция голосовых, стикеры'},
+      {t:'Магазин шаблонов', s:'готовые сценарии, обложки и структуры Reels'},
+      {t:'Аналитика 1 канал', s:'разбор охватов, аудитории и роста подписок'},
+      {t:'30 проверок видео/мес', s:'команда OKO смотрит хук, риски и тренды'}
     ],
     PRO: [
-      {t:'Проверка видео: безлимит', s:'сколько угодно роликов и доп.проверок'},
-      {t:'Система роста', s:'персональная стратегия и план на 30 дней'},
-      {t:'Все соцсети, файлы до 2 ГБ', s:'автопостинг вплоть до 4K'},
-      {t:'Скидка 10% + приоритет-поддержка', s:'дешевле реклама, быстрее ответы'}
+      {t:'Всё из START', s:'Premium-мессенджер, магазин шаблонов, аналитика'},
+      {t:'Система Роста', s:'персональная стратегия и план на 30 дней'},
+      {t:'Автопостинг VK + Telegram', s:'публикация в один клик по расписанию'},
+      {t:'Все соцсети и реклама −10%', s:'подключай Instagram, TikTok, YouTube'}
     ],
     BUSINESS: [
-      {t:'Контент-завод под ключ', s:'конвейер роликов автоматически'},
-      {t:'Рекламный кабинет PRO', s:'ЦА, ставки, модерация, статистика'},
-      {t:'Менеджер и API', s:'персональный менеджер и интеграции'},
-      {t:'Скидка 20% на рекламу', s:'масштабируй трафик дешевле'}
+      {t:'Контент-завод 30 роликов/мес', s:'производство видео на конвейере'},
+      {t:'Академия премиум', s:'закрытые курсы, менторы, разборы'},
+      {t:'Белый лейбл', s:'публикуй под своим брендом без пометок OKO'},
+      {t:'Реклама −20%', s:'самое выгодное продвижение в кабинете'}
+    ],
+    BUSINESS_PRO: [
+      {t:'Контент-завод 100 роликов/мес', s:'три ролика в день без пауз'},
+      {t:'Голос-клон и студия', s:'озвучка твоим голосом, редактор шоу'},
+      {t:'API OKO', s:'интеграции с CRM, сайтом, автоматизации'},
+      {t:'Команда до 5 мест', s:'общий штаб, роли и распределение задач'}
     ],
     MAX: [
-      {t:'Контент-завод: 30 видео/мес', s:'дальше — оплата за видео, поток без пауз'},
-      {t:'Система роста + команда', s:'до 5 мест сотрудников, общий штаб'},
-      {t:'Рекламный кабинет PRO + − 30%', s:'самая низкая цена продвижения'},
-      {t:'Поддержка 24/7 и API', s:'выделенная линия и интеграции'}
+      {t:'Контент-завод 500 роликов/мес', s:'полностью автоматический медиа-поток'},
+      {t:'Higgsfield-безлимит', s:'генерация видео и картинок без квот'},
+      {t:'Личный ассистент', s:'выделенный менеджер и команда 24/7'},
+      {t:'Бренд-агентство', s:'логотип, гайдлайн, лендинг, боты — под ключ'}
     ]
   };
 
-  /* ---- краткие фичи для карточек тарифов ---- */
+  /* ---- краткие фичи для карточек тарифов (4 маркерами) ---- */
   var PW_CARD_FEATS = {
-    START:    ['Проверка видео 15/мес','Автопостинг: VK + Telegram','Файлы до 300 МБ','Реклама − 5%'],
-    PRO:      ['Проверка видео: безлимит','Система роста','Все соцсети, файлы до 2 ГБ','Реклама − 10% + приоритет'],
-    BUSINESS: ['Всё из PRO','Контент-завод под ключ','Рекламный кабинет PRO','Менеджер, API, реклама − 20%'],
-    MAX:      ['Всё из BUSINESS','Контент-завод: 30 видео/мес','Команда до 5 мест','Поддержка 24/7, реклама − 30%']
+    FREE:         ['Мессенджер и лента','До 3 подписок','Файлы до 100 МБ','Голосовые до 5 мин'],
+    START:        ['Premium-мессенджер 4 ГБ','Магазин шаблонов','Аналитика 1 канал','30 проверок видео/мес'],
+    PRO:          ['Всё из START','Система Роста + автопостинг','Все соцсети','Реклама −10%'],
+    BUSINESS:     ['Контент-завод 30 роликов/мес','Академия премиум','Белый лейбл','Реклама −20%'],
+    BUSINESS_PRO: ['100 роликов/мес','Голос-клон и студия','API','Команда до 5 мест'],
+    MAX:          ['500 роликов/мес','Higgsfield-безлимит','Личный ассистент','Бренд-агентство под ключ']
   };
   var PW_TAG = {
+    FREE:'Базовая социальная сеть',
     START:'Старт медийности',
     PRO:'Выбор большинства',
     BUSINESS:'Бизнес и команда',
-    MAX:'Контент-завод + команда'
+    BUSINESS_PRO:'Студия и API',
+    MAX:'Продакшн-агентство'
   };
   /* короткий ценностный подзаголовок для продающего попапа */
   var PW_SELL_SUB = {
+    FREE:'Общайся, читай ленту и подписывайся — навсегда бесплатно.',
     START:'Первые шаги в медийности, без лишних лимитов.',
-    PRO:'Система роста и безлимит, выбор большинства авторов.',
-    BUSINESS:'Конвейер контента и рекламный кабинет PRO.',
-    MAX:'Контент-завод 30 видео/мес, команда и максимум системы.'
+    PRO:'Система Роста, автопостинг и все соцсети — выбор большинства.',
+    BUSINESS:'Контент-завод, академия премиум и белый лейбл.',
+    BUSINESS_PRO:'100 роликов в месяц, голос-клон, API и командная работа.',
+    MAX:'500 роликов в месяц, Higgsfield-безлимит и бренд-агентство.'
   };
   /* что заменяет тариф (внешний рыночный якорь цены — честное «обычно от X/мес») */
   var PW_REPLACES = {
@@ -145,10 +176,8 @@ var PW_ASSET = {
     pwClose();
     var el = document.createElement('div');
     el.id = 'pwPop';
-    var useVid = tier==='PRO';
-    var media = useVid
-      ? '<video class="pw-hero-media" autoplay muted loop playsinline poster="'+PW_ASSET.pro+'"><source src="'+PW_ASSET.paywallVid+'" type="video/webm"></video>'
-      : '<img class="pw-hero-img" src="'+pwBg(tier)+'" alt="">';
+    /* фон — CSS-анимация тарифа, без видео */
+    var media = pwBgFor(tier);
     var infoHtml = '<div class="pw-info">'+ info.map(function(c){ return pwRing(c[0], c[1], c[2]); }).join('') +'</div>';
     var priceLine = (tier==='MAX')
       ? ('<div class="pw-p-v">'+pwRub(mo)+'<small> /мес</small></div>')
@@ -488,178 +517,238 @@ var PW_ASSET = {
       '</div></div>';
   }
 
+  /* =================== АНИМИРОВАННЫЕ CSS-ФОНЫ ТАРИФОВ (без видео) =================== */
+  /* SVG для каждого фона — вшиты; анимируются через CSS (transform/opacity, GPU) */
+  var PW_BG_MARKUP = {
+    FREE: '<div class="pw-tbg pw-tbg-free"><span class="pw-bub"></span><span class="pw-bub"></span><span class="pw-bub"></span></div>',
+    START: '<div class="pw-tbg pw-tbg-start">'+
+      '<svg viewBox="0 0 200 100" preserveAspectRatio="xMidYMid slice" aria-hidden="true">'+
+        '<path class="pw-trail" d="M-10 92 Q 60 82 100 55 T 220 8"/>'+
+        '<g class="pw-rocket">'+
+          '<path d="M-3.5 -7 L3.5 -7 L3.5 3 L0 8 L-3.5 3 Z" fill="#9AFF00"/>'+
+          '<circle cx="0" cy="-2.5" r="1.5" fill="#0a0a0a"/>'+
+          '<path d="M-3.5 3 L-6 8 L0 5 L6 8 L3.5 3 Z" fill="rgba(154,255,0,.55)"/>'+
+        '</g>'+
+      '</svg>'+
+      '<span class="pw-spark"></span>'+
+    '</div>',
+    PRO: '<div class="pw-tbg pw-tbg-pro">'+
+      '<div class="pw-gear pw-gear-a">'+ pwGearSvg() +'</div>'+
+      '<div class="pw-gear pw-gear-b">'+ pwGearSvg() +'</div>'+
+      '<div class="pw-gear pw-gear-c">'+ pwGearSvg() +'</div>'+
+    '</div>',
+    BUSINESS: '<div class="pw-tbg pw-tbg-biz">'+
+      '<svg viewBox="0 0 200 100" preserveAspectRatio="none" aria-hidden="true">'+
+        '<rect class="pw-bar" x="24" y="66" width="14" height="30" rx="2"/>'+
+        '<rect class="pw-bar" x="56" y="54" width="14" height="42" rx="2"/>'+
+        '<rect class="pw-bar" x="88" y="42" width="14" height="54" rx="2"/>'+
+        '<rect class="pw-bar" x="120" y="28" width="14" height="68" rx="2"/>'+
+        '<rect class="pw-bar" x="152" y="16" width="14" height="80" rx="2"/>'+
+        '<circle class="pw-dot" cx="31" cy="66" r="2.5"/>'+
+        '<circle class="pw-dot" cx="63" cy="54" r="2.5"/>'+
+        '<circle class="pw-dot" cx="95" cy="42" r="2.5"/>'+
+        '<circle class="pw-dot" cx="127" cy="28" r="2.5"/>'+
+        '<polyline class="pw-line" points="12,80 44,68 76,50 108,36 140,22 176,10"/>'+
+      '</svg>'+
+    '</div>',
+    BUSINESS_PRO: '<div class="pw-tbg pw-tbg-bizpro">'+
+      '<span class="pw-ray"></span>'+
+      '<span class="pw-orb pw-orb-a"></span>'+
+      '<span class="pw-orb pw-orb-b"></span>'+
+      '<span class="pw-orb pw-orb-c"></span>'+
+    '</div>',
+    MAX: '<div class="pw-tbg pw-tbg-max"><div class="pw-stars"></div><div class="pw-stars b"></div><span class="pw-comet"></span></div>'
+  };
+  function pwGearSvg(){
+    /* один SVG-cog, шестерёнка (10 зубцов + отверстие) */
+    return '<svg viewBox="-20 -20 40 40" aria-hidden="true">'+
+      '<path fill="currentColor" d="M0 -18 L3.4 -17.5 L4.6 -13.7 L8.5 -13.5 L11.5 -10.5 L15.2 -12 L17.5 -9 L15.8 -5.5 L18 -2.7 L18 3.4 L15 5 L15 9 L11 11 L10 15 L6 15 L4 18 L-4 18 L-6 15 L-10 15 L-11 11 L-15 9 L-15 5 L-18 3.4 L-18 -2.7 L-15.8 -5.5 L-17.5 -9 L-15.2 -12 L-11.5 -10.5 L-8.5 -13.5 L-4.6 -13.7 L-3.4 -17.5 Z"/>'+
+      '<circle cx="0" cy="0" r="5.5" fill="rgba(10,10,10,.65)"/>'+
+    '</svg>';
+  }
+  function pwBgFor(tier){ return PW_BG_MARKUP[tier] || PW_BG_MARKUP.PRO; }
+  window.pwBgFor = pwBgFor;
+
+  /* ================= КОМПАКТ-КАРТОЧКА + СУБСТРАНИЦА ДЕТАЛЕЙ =================== */
+  window.pwSelectTier = function(tier){
+    tier = pwNorm(tier);
+    if(typeof payState==='undefined') return;
+    if(PW_RANK[tier]==null || tier==='FREE') return; /* FREE — не оплачивается */
+    payState.plan = tier;
+    if(typeof renderPay==='function') renderPay();
+  };
+  window.pwOpenDetails = function(tier){
+    tier = pwNorm(tier);
+    var view = document.getElementById('payView');
+    if(!view) return;
+    var det = view.querySelector('.pw-details');
+    if(!det){ det = document.createElement('div'); det.className='pw-details'; view.appendChild(det); }
+    var mo = pwMonthly(tier);
+    var bens = PW_BENEFITS[tier] || PW_BENEFITS.PRO;
+    var cur = pwCurTier();
+    var isCur = cur===tier;
+    var canBuy = tier!=='FREE';
+    det.innerHTML =
+      '<div class="pw-det-top">'+
+        '<button class="pw-det-back" onclick="pwCloseDetails()" aria-label="Назад">'+I('chev')+'</button>'+
+        '<h3>'+pwLabel(tier)+'</h3>'+
+      '</div>'+
+      '<div class="pw-det-hero">'+ pwBgFor(tier) +'</div>'+
+      '<div class="dim" style="font-size:12.5px;margin:-4px 0 10px">'+esc(PW_TAG[tier]||'')+'</div>'+
+      '<div class="pw-det-price"><b>'+pwRub(mo)+'</b><span>/мес</span>'+
+        (mo>0?'<em>≈ '+pwRub(Math.max(1,Math.round(mo/30)))+'/день</em>':'<em>навсегда бесплатно</em>')+
+      '</div>'+
+      '<ul class="pw-det-feats">'+ bens.map(function(b){
+        return '<li><span class="pw-df-ic">'+I('check2')+'</span><div><b>'+esc(b.t)+'</b><small>'+esc(b.s)+'</small></div></li>';
+      }).join('') +'</ul>'+
+      (canBuy
+        ? '<button class="btn pw-shine" onclick="pwSelectTier(\''+tier+'\');pwCloseDetails()"'+(isCur?' disabled':'')+'>'+I(isCur?'check':'crown')+' '+(isCur?'Твой тариф':'Выбрать '+pwLabel(tier))+'</button>'
+        : '<button class="btn ghost" onclick="pwCloseDetails()">Понятно</button>')+
+      '<p class="dim" style="font-size:11px;text-align:center;margin-top:9px">Отключишь в 1 клик · спишется ровно как показано</p>';
+    requestAnimationFrame(function(){ det.classList.add('on'); });
+  };
+  window.pwCloseDetails = function(){
+    var view = document.getElementById('payView');
+    if(!view) return;
+    var det = view.querySelector('.pw-details');
+    if(det){ det.classList.remove('on'); setTimeout(function(){ if(det.parentNode) det.remove(); }, 340); }
+  };
+
   function pwRenderPay(){
     var view = document.getElementById('payView');
     if(!view) return;
     if(typeof payState==='undefined' || typeof PAY_PERIODS==='undefined'){
       if(_pwPrevRenderPay) return _pwPrevRenderPay(); return;
     }
-    if(!payState.plan || PW_RANK[payState.plan]==null) payState.plan = 'PRO';
+    /* нормализуем текущий план (может прийти 'BUSINESS PRO') */
+    var normed = pwNorm(payState.plan);
+    if(PW_RANK[normed]==null || normed==='FREE') normed = 'PRO';
+    payState.plan = normed;
     var sel = payState.plan;
     var per = PAY_PERIODS.find(function(x){return x[0]===payState.period;}) || PAY_PERIODS[PAY_PERIODS.length-1];
     var disc = per[2];
+    var cur = pwCurTier();
 
+    /* СВАЙПЕР ТАРИФОВ */
     var tiersHtml = PW_ORDER.map(function(tier){
       var mo = pwMonthly(tier);
       var isPro = tier==='PRO';
       var isMax = tier==='MAX';
+      var isFree = tier==='FREE';
       var on = sel===tier;
-      var perDay = Math.max(1, Math.round(mo/30));
-      var media = isPro
-        ? '<video class="pw-tier-vid" autoplay muted loop playsinline poster="'+PW_ASSET.pro+'"><source src="'+PW_ASSET.paywallVid+'" type="video/webm"></video>'
-        : '<img class="pw-tier-im" src="'+pwBg(tier)+'" alt="">';
-      var flag = isPro ? '<span class="pw-flag">Флагман</span>'
+      var isCur = cur===tier;
+      var perDay = mo>0 ? Math.max(1, Math.round(mo/30)) : 0;
+      var flag = isPro ? '<span class="pw-flag">Хит</span>'
                : isMax ? '<span class="pw-flag pw-flag-max">MAX</span>' : '';
+      var curBadge = isCur ? '<span class="pw-tier-cur-badge">Сейчас</span>' : '';
+      var priceLine = mo>0
+        ? '<div class="pw-tier-price"><b>'+pwRub(mo)+'</b><span>/мес</span><span class="pw-per">'+pwRub(perDay)+'/день</span></div>'
+        : '<div class="pw-tier-price"><b>0 ₽</b><span>/навсегда</span><span class="pw-per">без карты</span></div>';
+      var btn;
+      if(isCur) btn = '<button class="pw-tier-btn is-current" disabled>'+I('check2')+' Твой тариф</button>';
+      else if(isFree) btn = '<button class="pw-tier-btn ghost" onclick="event.stopPropagation();pwOpenDetails(\''+tier+'\')">'+I('eye')+' Подробнее</button>';
+      else btn = '<button class="pw-tier-btn" onclick="event.stopPropagation();pwSelectTier(\''+tier+'\')">'+I(on?'check':'crown')+' '+(on?'Выбран':'Выбрать')+'</button>';
       return ''+
-      '<div class="pw-tier'+(on?' on':'')+(isMax?' pw-tier-max':'')+(isPro?' pw-tier-rec':'')+'" onclick="pwSelectTier(\''+tier+'\')">'+
-        '<div class="pw-tier-bg">'+ media + flag +
-          '<span class="pw-tier-sel">'+I('check2')+'</span>'+
-          '<div class="pw-tier-cap"><div class="n">'+tier+'</div><div class="s">'+(PW_TAG[tier]||'')+'</div></div>'+
+      '<div class="pw-tier'+(on?' on':'')+(isMax?' pw-tier-max':'')+(isPro?' pw-tier-rec':'')+'" onclick="pwOpenDetails(\''+tier+'\')">'+
+        '<div class="pw-tier-bg">'+ pwBgFor(tier) + flag + curBadge +
+          '<div class="pw-tier-cap"><div class="n">'+pwLabel(tier)+'</div><div class="s">'+esc(PW_TAG[tier]||'')+'</div></div>'+
         '</div>'+
-        '<div class="pw-tier-price"><b>'+pwRub(mo)+'</b><span>/мес</span><span class="pw-perday">'+pwRub(perDay)+'/день</span></div>'+
+        priceLine +
         '<ul class="pw-tier-feats">'+ (PW_CARD_FEATS[tier]||[]).map(function(f){
-          return '<li>'+I('check2')+'<span>'+f+'</span></li>';
+          return '<li>'+I('check2')+'<span>'+esc(f)+'</span></li>';
         }).join('') +'</ul>'+
-        '<button class="pw-tier-more" onclick="event.stopPropagation();pwOpenSell(\''+tier+'\')">'+I('eye')+' Что входит</button>'+
+        btn +
       '</div>';
     }).join('');
 
-    var periodsHtml = PAY_PERIODS.map(function(p){
-      var m=p[0], l=p[1], d=p[2];
-      return '<button class="pay-per'+(payState.period===m?' on':'')+'" onclick="payState.period='+m+';renderPay()">'+
-        '<span>'+l+'</span>'+(d?'<i class="pay-disc">−'+d+'%</i>':'')+'</button>';
-    }).join('');
+    /* Скидочные чипы периодов (3 мес / 6 мес / год + вариант 1 мес) */
+    var discRow = '<div class="pw-disc-row">'+ PAY_PERIODS.map(function(p){
+      return '<button class="chip'+(payState.period===p[0]?' on':'')+'" onclick="payState.period='+p[0]+';renderPay()">'+
+        p[1]+ (p[2]?'<i>−'+p[2]+'%</i>':'') +'</button>';
+    }).join('') +'</div>';
 
-    /* цена выбранного (MAX/год — спец-цена) */
-    var full, total;
-    if(sel==='MAX' && payState.period===12){
-      full = pwMonthly('MAX')*12; total = PW_YR.MAX;
-    } else {
-      full = pwMonthly(sel) * per[0];
-      total = Math.round(full * (1 - disc/100));
-    }
+    /* цена выбранного */
+    var full = pwMonthly(sel) * per[0];
+    var total = Math.round(full * (1 - disc/100));
     var effDisc = full>0 ? Math.round((1 - total/full)*100) : 0;
 
-    /* ---- ценностное обрамление: экономия, цена/день, ROI ---- */
-    var save = Math.max(0, full - total);
-    var periodDays = Math.max(30, per[0]*30);
-    var perDayTotal = Math.max(1, Math.round(total/periodDays));
-    var valueHtml = '<div class="pw-value">'+
-      (save>0 ? '<div class="pw-value-i"><span>'+I('check2')+'</span>Экономия '+pwRub(save)+' против помесячной оплаты</div>' : '')+
-      '<div class="pw-value-i"><span>'+I('bolt')+'</span>Это ≈ '+pwRub(perDayTotal)+' в день</div>'+
-      '<div class="pw-value-i"><span>'+I('money')+'</span>Окупается с 1–2 продаж по партнёрской ссылке — дальше только в плюс — дальше только в плюс</div>'+
-    '</div>';
-    var countHtml = (payState.period===12) ? pwCountHtml() : '';
+    /* Индекс выбранной карточки — для точек-индикаторов */
+    var selIdx = PW_ORDER.indexOf(sel);
+    var dotsHtml = '<div class="pw-dots">'+ PW_ORDER.map(function(_,i){
+      return '<span class="'+(i===selIdx?'on':'')+'"></span>';
+    }).join('') +'</div>';
 
-    /* ---- ценностный якорь: сколько стоило бы то же самое «вручную» ---- */
-    var rep = PW_REPLACES[sel] || PW_REPLACES.PRO;
-    var months = Math.max(1, per[0]);
-    var perMonthEq = Math.max(1, Math.round(total/months));
-    var timesX = Math.max(2, Math.round(rep.cost/perMonthEq));
-    var anchorHtml =
-      '<div class="pw-anchor">'+
-        '<div class="pw-anchor-l">'+
-          '<div class="pw-anchor-k">'+I('users')+' Заменяет <b>'+esc(rep.who)+'</b></div>'+
-          '<div class="pw-anchor-cmp"><s>обычно от '+pwRub(rep.cost)+'/мес</s>'+
-            'с OKO — <b>'+pwRub(perMonthEq)+'/мес</b></div>'+
-        '</div>'+
-        '<div class="pw-anchor-x"><b>×'+timesX+'</b><i>дешевле</i></div>'+
-      '</div>';
-
-    var live = pwLiveNumbers();
-    var liveHtml = '<div class="pw-live">'+live.map(function(c){
-      return '<div class="pw-live-cell"><div class="v">'+c.v+'</div><div class="l">'+c.l+'</div></div>';
-    }).join('')+'</div>';
+    var methodsHtml = (typeof PAY_METHODS!=='undefined'?PAY_METHODS:[['card','Карта РФ','card']]).map(function(pm){
+      return '<button class="pay-m'+(payState.method===pm[0]?' on':'')+'" onclick="payState.method=\''+pm[0]+'\';renderPay()">'+I(pm[2])+'<span>'+pm[1]+'</span></button>';
+    }).join('');
 
     var cmpHtml = '';
     if(pwCmpOpen){
       cmpHtml =
-      '<div class="pw-cmp-hint">'+I('chev')+' листай вправо: BUSINESS, MAX</div>'+
+      '<div class="pw-cmp-hint">'+I('chev')+' листай вправо: BUSINESS PRO, MAX</div>'+
       '<div class="pw-cmp-wrap"><table class="pw-cmp">'+
-        '<thead><tr><th></th><th>FREE</th><th>START</th><th class="pw-c-pro">PRO<i class="pw-c-tag">хит</i></th><th>BUSINESS</th><th class="pw-c-max">MAX</th></tr></thead>'+
+        '<thead><tr><th></th><th>FREE</th><th>START</th><th class="pw-c-pro">PRO<i class="pw-c-tag">хит</i></th><th>BUSINESS</th><th>B. PRO</th><th class="pw-c-max">MAX</th></tr></thead>'+
         '<tbody>'+ PW_CMP_ROWS.map(function(r){
           return '<tr><th>'+r.k+'</th>'+
-            pwCmpCell(r.vals[0],false)+pwCmpCell(r.vals[1],false)+pwCmpCell(r.vals[2],true)+pwCmpCell(r.vals[3],false)+pwCmpCell(r.vals[4],false)+
+            r.vals.map(function(v,idx){ return pwCmpCell(v, idx===2); }).join('')+
           '</tr>';
         }).join('') +'</tbody>'+
       '</table></div>';
     }
 
-    /* партнёрка и реклама — отдельными блоками (не входят в тариф) */
-    var partnerHtml =
-      '<div class="pw-partner">'+
-        '<div class="pw-partner-h"><span class="pw-partner-ic">'+I('users')+'</span>'+
-          '<div><b>Партнёрская программа</b><small>Отдельно от тарифа — доступна всем, даже на FREE</small></div></div>'+
-        '<div class="pw-partner-rows">'+
-          '<div class="pw-pr"><b>15%</b><span>с каждой продажи по твоей ссылке</span></div>'+
-          '<div class="pw-pr"><b>+5%</b><span>с дохода приглашённого партнёра</span></div>'+
-          '<div class="pw-pr pw-pr-max"><b>до 20%</b><span>максимальная суммарная комиссия</span></div>'+
-        '</div>'+
-        '<div class="pw-pr-eg">'+I('money')+' Пример: друг оформил PRO 4 890 ₽ → <b>+734 ₽</b> тебе на счёт</div>'+
-        pwShareKitHtml()+
-        '<button class="pw-partner-cta" onclick="pwPartnerInfo()">'+I('rocket')+' Как это работает</button>'+
-      '</div>';
-
-    var adsHtml =
-      '<div class="pw-ads-note">'+
-        '<span class="pw-ads-ic">'+I('megaphone')+'</span>'+
-        '<div><b>Реклама — на любом тарифе</b>'+
-          '<small>Доступна даже на FREE. Чем выше тариф — тем дешевле продвижение: до −30% на MAX.</small></div>'+
-      '</div>';
-
     view.innerHTML =
-      '<div class="pw-pay-head"><h3>Тарифы OKO</h3><p>Выбери уровень: один тариф заменяет целую команду, доступ открывается сразу</p></div>'+
-      liveHtml +
-      pwTickerHtml() +
-      '<div class="pw-tiers">'+ tiersHtml +'</div>'+
-      '<button class="pw-cmp-toggle'+(pwCmpOpen?' on':'')+'" onclick="pwToggleCmp(this)">'+I('poll')+' Сравнить тарифы '+I('chev')+'</button>'+
+      '<div class="pw-pay-head"><h3>Тарифы OKO</h3><p>Свайпни, чтобы выбрать — активация мгновенно</p></div>'+
+      discRow +
+      '<div class="pw-swiper-wrap"><div class="pw-swiper" id="pwSwiper">'+ tiersHtml +'</div></div>'+
+      dotsHtml +
+      '<button class="pw-cmp-toggle'+(pwCmpOpen?' on':'')+'" onclick="pwToggleCmp(this)">'+I('poll')+' Сравнить все тарифы '+I('chev')+'</button>'+
       cmpHtml +
-      adsHtml +
-      partnerHtml +
-      '<p style="font-weight:700;font-size:13px;margin:2px 0 8px">Период оплаты</p>'+
-      '<div class="pay-periods">'+ periodsHtml +'</div>'+
-      countHtml +
-      anchorHtml +
-      '<div class="pay-total"><div><div class="dim" style="font-size:12px">К оплате · '+sel+'</div>'+
-        '<div class="pay-sum">'+pwRub(total)+'</div></div>'+
+      '<div class="pay-total"><div><div class="dim" style="font-size:12px">К оплате · '+pwLabel(sel)+' · '+per[1]+'</div>'+
+        '<div class="pay-sum" id="pwSum">'+pwRub(total)+'</div></div>'+
         (effDisc>0?'<div class="pay-old">'+pwRub(full)+'</div>':'')+'</div>'+
-      valueHtml +
       '<p style="font-weight:600;font-size:13px;margin:14px 0 8px">Способ оплаты</p>'+
-      '<div class="pay-methods">'+ (typeof PAY_METHODS!=='undefined'?PAY_METHODS:[['card','Карта РФ','card']]).map(function(pm){
-        return '<button class="pay-m'+(payState.method===pm[0]?' on':'')+'" onclick="payState.method=\''+pm[0]+'\';renderPay()">'+I(pm[2])+'<span>'+pm[1]+'</span></button>';
-      }).join('') +'</div>'+
+      '<div class="pay-methods">'+ methodsHtml +'</div>'+
       '<div style="height:16px"></div>'+
       '<button class="btn pw-shine" onclick="doPay()">'+I('lock')+' Оплатить '+pwRub(total)+'</button>'+
       '<div class="pw-guar-band">'+I('check')+' Отключишь в 1 клик · спишется ровно как показано · данные остаются с тобой</div>'+
       pwFaqHtml() +
       '<p class="dim" style="font-size:11px;text-align:center;margin-top:12px">Безопасная оплата. Автопродление можно отключить в любой момент.</p>';
 
-    /* реальный тик обратного отсчёта — только для годового периода */
-    if(payState.period===12){ pwStartCountdown(); }
-    else if(pwCountTimer){ try{ clearInterval(pwCountTimer); }catch(e){} pwCountTimer=0; }
+    /* прокрутить свайпер к выбранной карточке + синхронизировать точки при скролле */
+    requestAnimationFrame(function(){
+      var sw = document.getElementById('pwSwiper');
+      if(!sw) return;
+      var cards = sw.querySelectorAll('.pw-tier');
+      var target = cards[selIdx];
+      if(target){
+        var left = target.offsetLeft - (sw.clientWidth - target.clientWidth)/2;
+        sw.scrollTo({left:Math.max(0,left), behavior:'instant' in sw ? 'instant' : 'auto'});
+      }
+      /* индикаторы точек следуют за скроллом */
+      var dots = view.querySelectorAll('.pw-dots span');
+      var onScroll = function(){
+        var mid = sw.scrollLeft + sw.clientWidth/2;
+        var closest = 0, best = Infinity;
+        cards.forEach(function(c,i){
+          var cm = c.offsetLeft + c.clientWidth/2;
+          var d = Math.abs(cm-mid);
+          if(d<best){ best=d; closest=i; }
+        });
+        dots.forEach(function(d,i){ d.classList.toggle('on', i===closest); });
+      };
+      sw.addEventListener('scroll', onScroll, {passive:true});
+    });
+
+    /* тик обратного отсчёта не нужен в новой версии */
+    if(pwCountTimer){ try{ clearInterval(pwCountTimer); }catch(e){} pwCountTimer=0; }
   }
 
   if(_pwPrevRenderPay){
     renderPay = pwRenderPay;
   }
 
-  /* ФИКС ДЕНЕГ (B1): годовой MAX списывается по спец-цене PW_YR.MAX (как в витрине),
-     а НЕ full×0.8. Раньше витрина показывала 90 000 ₽, а payPrice()/кошелёк списывали
-     27 000×12×0.8 = 259 200 ₽. Оборачиваем ядровой payPrice единственным источником правды. */
-  if(typeof payPrice==='function'){
-    var _pwPrevPayPrice = payPrice;
-    payPrice = function(){
-      try{
-        if(typeof payState!=='undefined' && payState && payState.plan==='MAX' && payState.period===12){
-          var full = pwMonthly('MAX')*12;
-          var total = PW_YR.MAX;
-          var disc = full>0 ? Math.round((1 - total/full)*100) : 0;
-          return {full:full, total:total, disc:disc, mo:12};
-        }
-      }catch(e){}
-      return _pwPrevPayPrice.apply(this, arguments);
-    };
-  }
+  /* Спец-годовых цен больше нет — скидка периода PAY_PERIODS применяется ко всем тарифам единообразно.
+     Ядровой payPrice() остаётся источником правды. */
 
   /* =================== САМОИНИЦИАЛИЗАЦИЯ =================== */
   function pwInit(){

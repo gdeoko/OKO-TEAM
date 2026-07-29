@@ -205,39 +205,36 @@ const FA_POOL = [
     {a:'TR', n:'TON Radar', t:'Лев, разбор стейкинга уже в работе — выйдет на неделе', likes:9}]);
 })();
 
-/* ================= 2. СКОРИНГ (chain поверх ядра) ================= */
+/* ================= 2. СКОРИНГ (Instagram-like: engagement + time-decay) =================
+   Формула по ТЗ Даниэля от 29.07:
+     score = watch*3 + like*2 + comment*3 + share*5 + save*4 − hide*10
+   × time-decay множитель exp(-age_hours / 24).
+   Плюс лёгкая персонализация: интересы регистрации, аффинность автора,
+   накопленные сигналы по теме. Реклама снимается из общего ранжирования — её
+   позицию задаёт inject-слот каждые 6-7 постов (см. faDecorate). */
 const _faPrevFeedScore = feedScore;
 feedScore = function(p){
-  let s = _faPrevFeedScore(p);              /* базовый скор ядра (лайки/комменты/репосты/просмотры) */
-  if(p.promoted) s -= 1e6;                  /* снимаем «всегда топ-1»: позицию рекламы задаёт вставка */
+  const cmts   = Array.isArray(p.comments) ? p.comments.length : 0;
+  const shares = p.reposts || 0;
+  const likes  = p.likes || 0;
+  const watch  = faMediaSec(p.media || '');       /* прокси удержания: длительность ролика */
+  const saveB  = p.saved ? 4 : 0;                  /* булев сейв → +4 (в модели нет счётчика сейвов) */
+  let s = watch*3 + likes*2 + cmts*3 + shares*5 + saveB;
+
+  /* time-decay: полураспад ≈ сутки, как в Instagram */
+  s *= Math.exp(-faAgeH(p) / 24);
 
   const ints = faInterests();
+  if(p.topic && ints.has(p.topic)) s += 65;                              /* интерес из регистрации */
+  s += Math.min(FA.signals[p.topic]||0, 14) * 4;                         /* накопленный интерес к теме */
+  s += Math.min(FA.authors[p.name]||0, 20) * 3;                          /* аффинность автора */
+  if(p.topic && (FA.signals[p.topic]||0) < -1) s -= 30;                  /* «hide-подобный» штраф темы */
 
-  /* 1. СВЕЖЕСТЬ — экспоненциальный декей ~2 суток (свежее ранжируется выше) */
-  s *= 0.35 + 0.65 * Math.exp(-faAgeH(p) / 42);
+  /* реклама вне ранжирования — позицию задаёт inject-слот */
+  if(p.promoted) s -= 1e6;
 
-  /* 2. СОВПАДЕНИЕ ИНТЕРЕСОВ — сид из регистрации, сильный буст */
-  if(p.topic && ints.has(p.topic)) s += 430;
-
-  /* 3. ВОВЛЕЧЁННОСТЬ НА ПРОСМОТР (engagement rate) — качество, а не только объём */
-  const er = faReactions(p) / Math.max(p.views||1, 1);
-  s += Math.min(er, 0.22) * 2300;
-
-  /* 4. СКОРОСТЬ НАБОРА (engagement velocity) — реакций в час, ядро тренда/виральности */
-  s += Math.min(faVelocity(p), 220) * 2.4;
-
-  /* 5. ПОХОЖЕ НА ЛАЙКНУТОЕ — накопленный интерес к теме (персонализация) */
-  s += Math.min(FA.signals[p.topic]||0, 14) * 34;
-
-  /* 6. АФФИННОСТЬ АВТОРА — кого ты реально читаешь/лайкаешь/комментируешь */
-  s += Math.min(FA.authors[p.name]||0, 20) * 20;
-
-  /* 7. WATCH-TIME ПРОКСИ — видео с длительностью удерживают дольше (лёгкий буст под охват) */
-  if(p.media) s += Math.min(faMediaSec(p.media)/60, 3) * 26 * Math.min((p.views||0)/12000, 1.4);
-
-  if(p.promoted) s += 90;                   /* реклама чуть выше органики */
-  s += (faRand(p.id) - 0.5) * 90;           /* сессионный шум — лента «дышит», детерминирован по seed+id */
-  s -= (p.faPage||0) * 1e4;                 /* подгруженные партии — ниже (стабильный порядок) */
+  s += (faRand(p.id) - 0.5) * 8;             /* сессионный шум — лента «дышит», стабильный порядок */
+  s -= (p.faPage||0) * 1e4;                  /* подгруженные партии — ниже */
   return s;
 };
 
@@ -387,14 +384,15 @@ function faDecorate(){
   const ads = [], org = [];
   arts.forEach(a=>{ const p = postById(faIdOf(a)); if(p && p.promoted) ads.push(a); else org.push({el:a, name:(p && p.name)||''}); });
 
-  /* диверсификация органики (без 3 подряд одного автора), затем вставка рекламы каждые 4-5 позиций.
+  /* диверсификация органики: не более 2 подряд одного автора (TikTok-diversity).
+     Затем вставка рекламы каждые 6-7 позиций (по ТЗ Даниэля 29.07).
      appendChild перемещает существующие узлы — это точечная перестановка, а не пересборка ленты. */
   let seq = faDiversify(org);
-  if(ads.length && arts.length > 3){
-    let pos = 2;
+  if(ads.length && arts.length > 4){
+    let pos = 5;                                    /* первый рекламный слот — после 5 органики */
     ads.forEach((ad,i)=>{
       seq.splice(Math.min(pos, seq.length), 0, ad);
-      pos += 5 + (faRand(9100 + i) < 0.5 ? 0 : 1);
+      pos += 6 + (faRand(9100 + i) < 0.5 ? 0 : 1); /* каждые 6-7 слотов = «Реклама» */
     });
   }
   seq.forEach(el=>list.appendChild(el));
@@ -1858,21 +1856,17 @@ function faInterstitials(){
       const pid = faIdOf(a); const p = pid != null ? postById(pid) : null;
       return p && !p.promoted;   /* реклама в счётчик не идёт (это уже прерывание) */
     });
-    if(posts.length < 5) return;
-    /* блоки по 5: после 5-го — сторис, после 10-го — каналы, после 15-го — сторис, … */
+    if(posts.length < 8) return;
+    /* Сторис-баблы убраны 29.07 (сторис теперь в ленте как обычные посты).
+       Оставлена лишь одна врезка «Каналы, которые тебе понравятся» — через
+       каждые 12 органических постов. */
     let injected = 0;
-    const maxInject = 3;
-    for(let i = 4; i < posts.length && injected < maxInject; i += 5){
+    const maxInject = 2;
+    for(let i = 11; i < posts.length && injected < maxInject; i += 12){
       const anchor = posts[i]; if(!anchor || !anchor.parentNode) continue;
-      const html = (injected % 2 === 0) ? faStoryChipsHTML() : faChannelChipsHTML();
-      if(!html){
-        /* альтернативный тип, если первый пуст */
-        const alt = (injected % 2 === 0) ? faChannelChipsHTML() : faStoryChipsHTML();
-        if(!alt) continue;
-        anchor.insertAdjacentHTML('afterend', alt);
-      } else {
-        anchor.insertAdjacentHTML('afterend', html);
-      }
+      const html = faChannelChipsHTML();
+      if(!html) continue;
+      anchor.insertAdjacentHTML('afterend', html);
       injected++;
     }
   }catch(e){}
@@ -1888,91 +1882,13 @@ try{
 }catch(e){}
 
 /* ============================================================================
-   13. CATCH-UP CHIP — «Ты пропустил X постов» при возврате к ленте
-   Сохраняем момент ухода из ленты, при возврате считаем «сколько нового набежало»
-   (модельные посты, сгенерированные в фоновом счётчике FA.newPosts + бонус за
-   долгое отсутствие). Тап — плавный скролл наверх + faRefresh.
+   13. CATCH-UP CHIP — УБРАНА по правке Даниэля 29.07 (излишний UX).
+   Функции оставлены как no-op, чтобы старые вызовы не падали.
    ============================================================================ */
 FA.away = { at:0, count:0 };
-function faCatchUpShow(count){
-  try{
-    if(!count || count < 1) return;
-    let chip = document.getElementById('faCatchUp');
-    if(!chip){
-      chip = document.createElement('button');
-      chip.id = 'faCatchUp';
-      chip.type = 'button';
-      chip.className = 'fa-catchup';
-      chip.setAttribute('aria-live','polite');
-      chip.addEventListener('click', function(){
-        try{
-          chip.classList.remove('show');
-          setTimeout(function(){ try{ chip.remove(); }catch(e){} }, 260);
-          const m = document.querySelector('main');
-          if(m) m.scrollTo({top:0, behavior:'smooth'});
-          if(typeof faRefresh === 'function') faRefresh();
-        }catch(e){}
-      });
-      document.body.appendChild(chip);
-    }
-    const word = faPlural(count, 'пост', 'поста', 'постов');
-    chip.innerHTML = '<span class="fa-cu-dot"></span>' +
-      '<span>Ты пропустил <b class="fa-cu-n">' + count + '</b> ' + word + '</span>' +
-      I('fa-up');
-    requestAnimationFrame(function(){ try{ chip.classList.add('show'); }catch(e){} });
-    /* авто-исчезновение через 8 секунд, если пользователь не отреагировал */
-    if(FA._cuTimer) clearTimeout(FA._cuTimer);
-    FA._cuTimer = setTimeout(function(){
-      try{ chip.classList.remove('show'); setTimeout(function(){ try{ chip.remove(); }catch(e){} }, 280); }catch(e){}
-    }, 8000);
-  }catch(e){}
-}
-function faCatchUpCheck(){
-  try{
-    const feed = document.getElementById('screen-feed');
-    if(!feed || !feed.classList.contains('active')) return;
-    const now = Date.now();
-    if(!FA.away.at) return;
-    const away = now - FA.away.at;
-    if(away < 25000){ FA.away.at = 0; return; }   /* < 25 сек — не «пропустил» */
-    /* формируем «пропущенное»: сколько накопилось в FA.newPosts + бонус за время */
-    const bonusPerMin = Math.floor(away / 60000);
-    const total = Math.min(24, Math.max(1, (FA.newPosts || 0) + Math.max(1, bonusPerMin * 2)));
-    FA.newPosts = 0;
-    FA.away.at = 0;
-    /* показываем только на вкладке «Рекомендации», где алгоритм подмешает новое */
-    const kindOk = (typeof curFeedKind === 'undefined') || curFeedKind === 'rec';
-    if(!kindOk) return;
-    faCatchUpShow(total);
-  }catch(e){}
-}
-function faCatchUpMark(){
-  try{
-    const feed = document.getElementById('screen-feed');
-    if(feed && feed.classList.contains('active')) FA.away.at = Date.now();
-  }catch(e){}
-}
-try{
-  document.addEventListener('visibilitychange', function(){
-    try{
-      if(document.hidden) faCatchUpMark();
-      else setTimeout(faCatchUpCheck, 220);
-    }catch(e){}
-  });
-  /* уход с вкладки ленты (showTab) — тоже событие «отсутствия» */
-  if(typeof showTab === 'function'){
-    const _prevShowTabCU = showTab;
-    showTab = function(t){
-      try{
-        const feed = document.getElementById('screen-feed');
-        if(feed && feed.classList.contains('active') && t !== 'feed') faCatchUpMark();
-      }catch(e){}
-      const r = _prevShowTabCU.apply(this, arguments);
-      try{ if(t === 'feed') setTimeout(faCatchUpCheck, 260); }catch(e){}
-      return r;
-    };
-  }
-}catch(e){}
+function faCatchUpShow(){ /* removed 29.07 */ }
+function faCatchUpCheck(){ /* removed 29.07 */ }
+function faCatchUpMark(){ /* removed 29.07 */ }
 
 /* ============================================================================
    14. БЫСТРЫЕ РЕАКЦИИ ЛАЙКА — вылетающие бренд-стикеры (TG/Instagram)
@@ -1981,62 +1897,12 @@ try{
    поворотом и исчезают. Только transform/opacity, без reflow. Не срабатывает
    при снятии лайка (только при постановке). Работает и в ленте, и в клипах.
    ============================================================================ */
+/* Иконки для «толпы» реакций в reels (использует раздел 15) — сам «фейерверк» на
+   лайке в ленте убран по правке Даниэля 29.07: остаётся только tap-heart. */
 const FA_QR_ICONS = ['heart','fire','star','bolt','fa-dot'];
-function faQuickReact(anchorEl){
-  try{
-    if(!anchorEl) return;
-    /* уважение к prefers-reduced-motion — не спамим анимациями */
-    if(window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
-    const r = anchorEl.getBoundingClientRect();
-    const layer = document.createElement('div');
-    layer.className = 'fa-qr-layer';
-    layer.style.left = Math.round(r.left + r.width/2) + 'px';
-    layer.style.top  = Math.round(r.top  + r.height/2) + 'px';
-    const n = 5;
-    for(let i = 0; i < n; i++){
-      const s = document.createElement('span');
-      s.className = 'fa-qr fa-qr-' + FA_QR_ICONS[i % FA_QR_ICONS.length];
-      /* веер −70°…+70° влево/вправо, случайная дальность/поворот в CSS-переменных */
-      const dx = Math.round((i - (n-1)/2) * 26 + (Math.random()*10 - 5));
-      const dy = -60 - Math.round(Math.random() * 60);
-      const rot = Math.round(Math.random() * 44 - 22);
-      const dur = 720 + Math.round(Math.random() * 220);
-      s.style.setProperty('--qx', dx + 'px');
-      s.style.setProperty('--qy', dy + 'px');
-      s.style.setProperty('--qr', rot + 'deg');
-      s.style.animationDuration = dur + 'ms';
-      s.style.animationDelay = (i * 20) + 'ms';
-      s.innerHTML = FA_QR_ICONS[i % FA_QR_ICONS.length] === 'fa-dot'
-        ? '<span class="fa-qr-dot"></span>'
-        : I(FA_QR_ICONS[i % FA_QR_ICONS.length]);
-      layer.appendChild(s);
-    }
-    document.body.appendChild(layer);
-    setTimeout(function(){ try{ layer.remove(); }catch(e){} }, 1200);
-  }catch(e){}
-}
-/* Chain likePost: после базового toggle — если пост стал liked, пускаем «фейерверк»
-   у соответствующей кнопки лайка в ленте или в клипе. */
-try{
-  if(typeof likePost === 'function'){
-    const _prevLikeQR = likePost;
-    likePost = function(id){
-      const p = postById(id);
-      const was = p ? !!p.liked : false;
-      _prevLikeQR.apply(this, arguments);
-      try{
-        if(p && p.liked && !was){
-          /* пробуем найти кнопку в ленте, если нет — в клипе */
-          const card = (typeof feedCardEl === 'function') ? feedCardEl(id) : null;
-          const feedBtn = card && card.querySelector('.act-like');
-          const reelBtn = document.querySelector('#farTrack .far-slide[data-pid="' + id + '"] .far-like');
-          const anchor = (FAR && FAR.open && reelBtn) ? reelBtn : feedBtn;
-          if(anchor) faQuickReact(anchor);
-        }
-      }catch(e){}
-    };
-  }
-}catch(e){}
+/* faQuickReact — no-op (веерные квик-реакции убраны). Оставлено как заглушка,
+   чтобы старые вызовы не падали. */
+function faQuickReact(){ /* removed by 29.07: only tap-heart остаётся */ }
 
 /* ============================================================================
    15. REELS — «ТОЛПА» ПЛАВАЮЩИХ РЕАКЦИЙ (Instagram Live style)
@@ -2238,20 +2104,16 @@ function faFYouPool(){
   out.sort(function(a,b){ return faFYouScore(b) - faFYouScore(a); });
   return out;
 }
+/* Третья вкладка «Для тебя» убрана 29.07 по правке Даниэля:
+   осталось ровно два таба — «Рекомендации» и «Подписки». «Рекомендации» и есть
+   алгоритмическая лента как в TikTok, отдельного For You больше нет.
+   Если старая вкладка уже была впрыснута — удаляем. */
 function faInjectFYouTab(){
   try{
     const tabs = document.querySelector('#screen-feed .feed-tabs');
-    if(!tabs || tabs.querySelector('.fa-tab-fyou')) return;
-    /* вставляем между «Подписки» и «Рекомендации» — первая кнопка остаётся Подписки
-       (важно: createPost делает .feed-tabs button.click() → должно попасть на Подписки) */
-    const btn = document.createElement('button');
-    btn.type = 'button';
-    btn.className = 'fa-tab-fyou';
-    btn.textContent = 'Для тебя';
-    btn.setAttribute('onclick', "feedTab(this,'fyou')");
-    const first = tabs.querySelector('button');
-    if(first && first.nextSibling) tabs.insertBefore(btn, first.nextSibling);
-    else tabs.appendChild(btn);
+    if(!tabs) return;
+    const old = tabs.querySelector('.fa-tab-fyou');
+    if(old) old.remove();
   }catch(e){}
 }
 /* лёгкая шапка для «Для тебя» — без длинного пояснения, чтобы отличалось от «Рекомендаций» */
@@ -2315,6 +2177,146 @@ try{
       document.addEventListener('DOMContentLoaded', function(){ try{ faInjectFYouTab(); }catch(e){} }, {once:true});
     }else{
       faInjectFYouTab();
+    }
+  }catch(e){}
+})();
+
+/* ============================================================================
+   19. TIKTOK-PARITY (правки Даниэля 29.07):
+     – Табы: только «Рекомендации» + «Подписки», по умолчанию всегда Рекомендации.
+     – Порядок кнопок реордерится, чтобы Рекомендации шли первыми (без правки base).
+     – При каждом заходе на вкладку ленты — переоткрываем «Рекомендации» и
+       переранжируем ленту (feed-order refresh).
+     – Единый пул: сторис из STORIES впрыскиваются в ленту как обычные посты.
+   ============================================================================ */
+
+/* Сторис-как-посты: добавляем демо-сторис в POSTS.rec/sub. Так они попадают
+   в общий алгоритмический ранкинг вместе с реалми, промо и текстовыми постами.
+   Помечаем isStory, чтобы decorator показал маленький чип «История». */
+function faSeedStoriesAsPosts(){
+  try{
+    if(typeof STORIES === 'undefined' || !Array.isArray(STORIES)) return;
+    if(typeof POSTS === 'undefined') return;
+    const now = Date.now();
+    STORIES.forEach(function(st, i){
+      if(!st || st.add) return;                                /* «Твоя» — не пост */
+      const id = 770100 + i;
+      if(POSTS.rec.some(function(p){ return p.id === id; })) return;
+      const ava = st.avaIcon ? 'ИС' : (st.ava || (st.name ? st.name[0] : 'И'));
+      const post = {
+        id: id, ava: ava, name: st.name || 'История', sub: 'история · сегодня',
+        body: st.text || 'Новая история от ' + (st.name || 'канала'),
+        media: null, likes: 40 + Math.floor(faRand(id) * 320),
+        views: 800 + Math.floor(faRand(id + 3) * 8400),
+        reposts: 3 + Math.floor(faRand(id + 5) * 26),
+        liked: false, saved: false, reposted: false, comments: [],
+        ts: now - (2 + Math.floor(faRand(id + 7) * 8)) * 36e5,   /* 2–10 ч назад */
+        topic: 'content', isStory: true, storyIndex: i
+      };
+      POSTS.rec.push(post);
+      /* сторис от «OKO» также кладём в Подписки — это как «Официальный канал» */
+      if(/OKO/i.test(st.name || '') && !POSTS.sub.some(function(p){ return p.id === id; })){
+        POSTS.sub.push(post);
+      }
+    });
+  }catch(e){}
+}
+try{ faSeedStoriesAsPosts(); }catch(e){}
+
+/* Мини-чип «История» на карточку сторис-поста + клик по всей карточке → openStory.
+   Ставим ПОСЛЕ базового renderFeed, чтобы не переписывать разметку ядра. */
+function faDecorateStoryPosts(){
+  try{
+    const list = document.getElementById('feedList'); if(!list) return;
+    list.querySelectorAll('article.post').forEach(function(art){
+      const pid = faIdOf(art); if(pid == null) return;
+      const p = postById(pid);
+      if(!p || !p.isStory || art.dataset.faStory === '1') return;
+      art.dataset.faStory = '1';
+      const nameEl = art.querySelector('.head .name');
+      if(nameEl && !nameEl.querySelector('.fa-story-chip')){
+        nameEl.insertAdjacentHTML('beforeend',
+          ' <span class="chip fa-story-chip">' + I('bolt') + '<span>История</span></span>');
+      }
+      /* клик по телу поста (не по кнопкам) открывает вьювер сторис */
+      art.addEventListener('click', function(e){
+        if(e.target.closest('button,a,input,textarea,.acts,.post-more,.fa-why,.fa-more-btn')) return;
+        if(typeof openStory === 'function' && typeof p.storyIndex === 'number'){
+          e.preventDefault(); openStory(p.storyIndex);
+        }
+      });
+    });
+  }catch(e){}
+}
+try{
+  if(typeof renderFeed === 'function'){
+    const _prevRFStory = renderFeed;
+    renderFeed = function(){
+      const r = _prevRFStory.apply(this, arguments);
+      try{ faDecorateStoryPosts(); }catch(e){}
+      return r;
+    };
+  }
+}catch(e){}
+
+/* Реордер табов: «Рекомендации» — первой кнопкой, «Подписки» — второй.
+   Форс-выбор «Рекомендации» при любом заходе на экран ленты (TikTok-по-умолчанию). */
+function faReorderTabs(){
+  try{
+    const tabs = document.querySelector('#screen-feed .feed-tabs');
+    if(!tabs || tabs.dataset.faReordered === '1') return;
+    const btns = [...tabs.querySelectorAll('button')];
+    const subBtn = btns.find(function(b){ return /'sub'/.test(b.getAttribute('onclick') || ''); });
+    const recBtn = btns.find(function(b){ return /'rec'/.test(b.getAttribute('onclick') || ''); });
+    if(!subBtn || !recBtn) return;
+    /* убираем возможные For You и лишние */
+    btns.forEach(function(b){ if(b !== subBtn && b !== recBtn) b.remove(); });
+    /* Рекомендации первой */
+    tabs.appendChild(recBtn);
+    tabs.appendChild(subBtn);
+    tabs.dataset.faReordered = '1';
+  }catch(e){}
+}
+function faForceRec(){
+  try{
+    faReorderTabs();
+    const tabs = document.querySelector('#screen-feed .feed-tabs');
+    if(!tabs) return;
+    const recBtn = [...tabs.querySelectorAll('button')].find(function(b){
+      return /'rec'/.test(b.getAttribute('onclick') || '');
+    });
+    if(!recBtn || typeof feedTab !== 'function') return;
+    /* новый seed → переранжирование ленты (feed-order обновляется при каждом заходе) */
+    FA.seed = (Math.random() * 4294967295) >>> 0;
+    FA.now = Date.now();
+    feedTab(recBtn, 'rec');
+  }catch(e){}
+}
+try{
+  /* при переключении на экран ленты — форсим Рекомендации */
+  if(typeof showTab === 'function'){
+    const _prevShowTabRec = showTab;
+    showTab = function(t){
+      const r = _prevShowTabRec.apply(this, arguments);
+      try{ if(t === 'feed') setTimeout(faForceRec, 20); }catch(e){}
+      return r;
+    };
+  }
+}catch(e){}
+/* при первом бут-рендере лента может быть уже открыта на Подписках — перевключим */
+(function faDefaultRecBoot(){
+  try{
+    const kick = function(){
+      try{ faReorderTabs(); }catch(e){}
+      const feed = document.getElementById('screen-feed');
+      if(feed && feed.classList.contains('active')) faForceRec();
+    };
+    if(document.readyState === 'loading'){
+      document.addEventListener('DOMContentLoaded', kick, {once:true});
+    }else{
+      /* модули грузятся уже после renderFeed('sub') из ядра — переключаем
+         сразу же на «Рекомендации» тем же тиком, чтобы не было flash Sub → Rec */
+      kick();
     }
   }catch(e){}
 })();

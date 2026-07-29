@@ -555,3 +555,261 @@
 .reg-ava-sw.on{transform:scale(1.08)}
 .reg-ava-sw.on::after{content:'';position:absolute;inset:-4px;border-radius:50%;border:2px solid var(--text)}
 :root[data-theme="light"] .reg-ava-sw.on::after{border-color:var(--accent)}
+
+/* ============================================================
+   RG2 — новый 4-шаговый регистрационный флоу внутри #authScreen.
+   Полностью автономный, префикс rg2-. Живёт как оверлей над
+   auth-inner (её мы скрываем на время потока).
+   ============================================================ */
+.rg2-shell{position:absolute;inset:0;z-index:5;display:none;flex-direction:column;
+  background:var(--bg);color:var(--text);
+  opacity:0;transform:translateY(12px);transition:opacity .28s ease,transform .28s ease}
+.rg2-shell.open{display:flex;opacity:1;transform:none}
+:root[data-theme="light"] .rg2-shell{background:var(--bg)}
+/* живой брендовый фон */
+.rg2-shell::before{content:'';position:absolute;inset:0;z-index:0;pointer-events:none;
+  background:
+    radial-gradient(680px 520px at 82% -8%, rgba(154,255,0,.15), transparent 62%),
+    radial-gradient(560px 460px at -12% 108%, rgba(154,255,0,.1), transparent 60%);
+  animation:rg2Ambient 18s ease-in-out infinite alternate}
+.rg2-shell::after{content:'';position:absolute;inset:0;z-index:0;pointer-events:none;opacity:.45;
+  background-image:radial-gradient(rgba(154,255,0,.10) 1px, transparent 1.4px);background-size:26px 26px;
+  -webkit-mask-image:radial-gradient(120% 90% at 50% 0%, #000 8%, transparent 62%);
+  mask-image:radial-gradient(120% 90% at 50% 0%, #000 8%, transparent 62%);
+  animation:rg2Grid 24s linear infinite}
+:root[data-theme="light"] .rg2-shell::before{
+  background:
+    radial-gradient(680px 520px at 82% -8%, rgba(122,204,0,.18), transparent 62%),
+    radial-gradient(560px 460px at -12% 108%, rgba(122,204,0,.12), transparent 60%)}
+:root[data-theme="light"] .rg2-shell::after{opacity:.4;background-image:radial-gradient(rgba(122,204,0,.14) 1px, transparent 1.4px)}
+@keyframes rg2Ambient{0%{transform:translate3d(0,0,0) scale(1)}100%{transform:translate3d(-2.5%,1.8%,0) scale(1.07)}}
+@keyframes rg2Grid{to{background-position:26px 26px}}
+@media(prefers-reduced-motion:reduce){.rg2-shell,.rg2-shell::before,.rg2-shell::after{transition:none;animation:none}}
+
+/* --- шапка + прогресс-таймлайн (4 точки) --- */
+.rg2-head{position:relative;z-index:1;display:flex;align-items:center;gap:12px;
+  padding:14px 16px;padding-top:max(14px,env(safe-area-inset-top));flex-shrink:0}
+.rg2-back{width:38px;height:38px;flex-shrink:0;display:flex;align-items:center;justify-content:center;
+  border-radius:12px;background:var(--surface);border:1px solid var(--border);color:var(--text);
+  cursor:pointer;transition:background .18s,transform .12s}
+.rg2-back:hover{background:var(--raised)}
+.rg2-back:active{transform:scale(.94)}
+.rg2-back .i{width:18px;height:18px}
+.rg2-back[data-first="1"] .i{opacity:.8}
+.rg2-brand{width:38px;height:38px;flex-shrink:0;display:flex;align-items:center;justify-content:center;
+  color:var(--accent);opacity:.85}
+.rg2-brand .i{width:24px;height:24px}
+.rg2-tl{flex:1;display:flex;align-items:center;gap:6px;min-width:0}
+.rg2-tl-dot{width:26px;height:26px;flex-shrink:0;border-radius:50%;background:var(--surface);
+  border:1.5px solid var(--border);display:flex;align-items:center;justify-content:center;
+  font-family:var(--font-display);font-size:13px;color:var(--dim);letter-spacing:.02em;
+  transition:background .25s,color .25s,border-color .25s,transform .25s}
+.rg2-tl-dot i{font-style:normal}
+.rg2-tl-dot.on{background:var(--lime);color:#000;border-color:var(--lime);
+  box-shadow:0 0 0 4px var(--lime-dim);transform:scale(1.08)}
+.rg2-tl-dot.done{background:var(--lime);color:#000;border-color:var(--lime)}
+.rg2-tl-seg{flex:1;height:2px;background:var(--border);border-radius:2px;overflow:hidden;min-width:12px}
+.rg2-tl-seg i{display:block;height:100%;width:0;background:linear-gradient(90deg,#B9FF4D,var(--lime));
+  transition:width .35s cubic-bezier(.3,1,.4,1)}
+.rg2-tl-seg.done i{width:100%}
+
+/* --- тело: скролл, центрирование, ограничение ширины --- */
+.rg2-body{position:relative;z-index:1;flex:1;overflow-y:auto;
+  padding:14px 20px calc(28px + env(safe-area-inset-bottom));
+  max-width:520px;width:100%;margin:0 auto}
+.rg2-step{display:none;animation:rg2In .34s cubic-bezier(.22,1,.32,1)}
+.rg2-step.active{display:block}
+@keyframes rg2In{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}
+@media(prefers-reduced-motion:reduce){.rg2-step{animation:none}}
+
+/* --- типографика --- */
+.rg2-h{font-family:var(--font-display);font-weight:400;font-size:34px;line-height:1.05;
+  letter-spacing:.02em;margin:6px 0 8px;color:var(--text);
+  background:linear-gradient(92deg,var(--text) 66%,var(--accent));
+  -webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent}
+:root[data-theme="light"] .rg2-h{background:linear-gradient(92deg,var(--text) 72%,#5aa300);
+  -webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent}
+.rg2-h--c{text-align:center;margin-top:0}
+.rg2-sub{color:var(--dim);font-size:13.5px;line-height:1.5;margin:0 0 18px}
+.rg2-sub--c{text-align:center;margin-bottom:22px}
+.rg2-sub b{color:var(--text);font-weight:700}
+.rg2-lab{display:block;font-size:11.5px;font-weight:700;letter-spacing:.05em;text-transform:uppercase;
+  color:var(--dim);margin:16px 4px 6px}
+.rg2-lab-dim{color:var(--dim);text-transform:none;letter-spacing:0;font-weight:500;opacity:.7;font-size:11px}
+
+/* --- поле с иконкой + инпут --- */
+.rg2-field{position:relative;display:flex;align-items:center;gap:8px;
+  background:var(--surface);border:1px solid var(--border);border-radius:var(--r-md);
+  padding:0 8px 0 12px;transition:border-color .18s,box-shadow .18s}
+.rg2-field:focus-within{border-color:var(--lime);box-shadow:0 0 0 3px var(--lime-dim)}
+.rg2-field-ic{flex-shrink:0;width:20px;display:flex;align-items:center;justify-content:center;
+  color:var(--dim);font-weight:700;font-size:15px;line-height:1}
+.rg2-field-ic .i{width:18px;height:18px}
+.rg2-field:focus-within .rg2-field-ic{color:var(--accent)}
+.rg2-field input,.rg2-field textarea{flex:1;min-width:0;background:none;border:0;outline:none;
+  padding:14px 4px;font-size:15px;color:var(--text);font-family:inherit;box-shadow:none}
+.rg2-field input::placeholder,.rg2-field textarea::placeholder{color:var(--dim);opacity:.7}
+.rg2-field input.ok{color:var(--text)}
+.rg2-field input.bad{color:var(--danger)}
+.rg2-eye{flex-shrink:0;width:36px;height:36px;display:flex;align-items:center;justify-content:center;
+  color:var(--dim);border-radius:10px;cursor:pointer;transition:color .18s,background .18s}
+.rg2-eye:hover{color:var(--accent);background:var(--raised)}
+.rg2-eye.on{color:var(--accent)}
+.rg2-eye .i{width:19px;height:19px}
+
+/* --- надёжность пароля --- */
+.rg2-strength{height:4px;background:var(--border);border-radius:2px;margin:10px 0 0;overflow:hidden}
+.rg2-strength i{display:block;height:100%;width:0;border-radius:2px;background:var(--danger);
+  transition:width .3s ease,background .3s ease}
+.rg2-strength i.lo{background:#ff7043}
+.rg2-strength i.mid{background:#ffb020}
+.rg2-strength i.hi{background:var(--lime);box-shadow:var(--glow)}
+.rg2-strength-lab{font-size:11px;color:var(--dim);margin:6px 2px 0}
+
+/* --- чекбокс «сохранить вход» --- */
+.rg2-check{display:flex;align-items:flex-start;gap:11px;margin:18px 0 6px;cursor:pointer;
+  font-size:13px;line-height:1.4;color:var(--dim)}
+.rg2-check input{display:none}
+.rg2-check-box{width:22px;height:22px;flex-shrink:0;border-radius:7px;border:1.5px solid var(--border);
+  background:var(--surface);display:flex;align-items:center;justify-content:center;margin-top:0;
+  transition:background .18s,border-color .18s}
+.rg2-check-box .i{width:13px;height:13px;color:#000;opacity:0;transform:scale(.4);transition:opacity .18s,transform .18s}
+.rg2-check input:checked + .rg2-check-box{background:var(--lime);border-color:var(--lime);box-shadow:var(--glow)}
+.rg2-check input:checked + .rg2-check-box .i{opacity:1;transform:scale(1)}
+
+/* --- ошибки --- */
+.rg2-err{color:var(--danger);font-size:12.5px;font-weight:600;min-height:18px;
+  margin:12px 0 0;opacity:0;transition:opacity .2s}
+.rg2-err.show{opacity:1}
+.rg2-err.shake{animation:rg2Shake .35s ease}
+.rg2-err--c{text-align:center}
+@keyframes rg2Shake{0%,100%{transform:none}20%,60%{transform:translateX(-5px)}40%,80%{transform:translateX(5px)}}
+
+/* --- кнопки --- */
+.rg2-btn{width:100%;display:inline-flex;align-items:center;justify-content:center;gap:8px;
+  margin-top:14px;padding:15px 18px;font-family:var(--font-display);font-weight:400;font-size:18px;
+  letter-spacing:.05em;color:#000;background:var(--lime);border:0;border-radius:var(--r-md);
+  cursor:pointer;box-shadow:0 12px 34px -12px rgba(154,255,0,.6);
+  transition:transform .12s,box-shadow .18s,opacity .18s}
+.rg2-btn:hover{transform:translateY(-1px);box-shadow:0 14px 38px -12px rgba(154,255,0,.7)}
+.rg2-btn:active{transform:scale(.98)}
+.rg2-btn:disabled{opacity:.4;pointer-events:none;box-shadow:none}
+.rg2-btn.loading{opacity:.7;pointer-events:none}
+.rg2-btn .i{width:16px;height:16px;transition:transform .18s}
+.rg2-btn:not(:disabled):hover .i{transform:translateX(3px)}
+.rg2-linkbtn{display:block;width:100%;margin-top:12px;padding:10px;background:none;border:0;
+  color:var(--accent);font-size:13.5px;font-weight:600;cursor:pointer;text-align:center}
+.rg2-linkbtn:hover{text-decoration:underline;text-underline-offset:2px}
+.rg2-alt{text-align:center;font-size:13px;color:var(--dim);margin-top:14px}
+.rg2-alt a{color:var(--accent);font-weight:700;cursor:pointer;text-decoration:underline;text-underline-offset:2px}
+.rg2-secure{display:flex;align-items:center;justify-content:center;gap:7px;color:var(--dim);
+  font-size:11.5px;margin-top:16px}
+.rg2-secure .i{width:14px;height:14px;color:var(--accent)}
+
+/* ============ ШАГ 2: код ============ */
+.rg2-code-ico{width:66px;height:66px;border-radius:50%;background:var(--lime-dim);
+  display:flex;align-items:center;justify-content:center;margin:8px auto 18px;position:relative;
+  animation:rg2Pulse 2.2s ease infinite}
+.rg2-code-ico::after{content:'';position:absolute;inset:0;border-radius:50%;
+  border:1.5px solid rgba(154,255,0,.4);animation:rg2Ring 2.2s ease-out infinite}
+.rg2-code-ico .i{width:28px;height:28px;color:var(--accent)}
+@keyframes rg2Pulse{0%,100%{box-shadow:0 0 0 0 var(--lime-dim)}50%{box-shadow:0 0 0 14px rgba(154,255,0,0)}}
+@keyframes rg2Ring{0%{transform:scale(1);opacity:.7}100%{transform:scale(1.7);opacity:0}}
+@media(prefers-reduced-motion:reduce){.rg2-code-ico,.rg2-code-ico::after{animation:none}}
+.rg2-code{display:flex;gap:9px;justify-content:center;margin:8px 0 4px}
+.rg2-code input{width:46px;height:56px;text-align:center;font-family:var(--font-display);
+  font-size:26px;font-weight:400;color:var(--text);letter-spacing:.02em;padding:0;
+  background:var(--surface);border:1px solid var(--border);border-radius:var(--r-md);
+  outline:none;transition:border-color .18s,box-shadow .18s,transform .2s}
+.rg2-code input:focus{border-color:var(--lime);box-shadow:0 0 0 3px var(--lime-dim);caret-color:var(--lime)}
+.rg2-code input.fill{border-color:var(--lime);box-shadow:0 0 0 3px var(--lime-dim);
+  animation:rg2CodePop .22s cubic-bezier(.3,1.4,.4,1)}
+@keyframes rg2CodePop{0%{transform:scale(.86)}60%{transform:scale(1.08)}100%{transform:scale(1)}}
+.rg2-code.err input{border-color:var(--danger);animation:rg2Shake .35s ease}
+.rg2-resend{display:block;margin:14px auto 6px;padding:8px 14px;background:none;border:0;
+  color:var(--accent);font-size:13px;font-weight:600;border-radius:99px;cursor:pointer;
+  transition:opacity .2s,background .18s}
+.rg2-resend:disabled{color:var(--dim);opacity:.75;cursor:default}
+.rg2-resend:not(:disabled):hover{background:var(--raised)}
+@media(max-width:380px){.rg2-code input{width:40px;height:50px;font-size:22px}}
+
+/* ============ ШАГ 3: профиль ============ */
+.rg2-ava-row{display:flex;align-items:center;gap:16px;margin:6px 0 4px}
+.rg2-ava{position:relative;width:82px;height:82px;flex-shrink:0;border-radius:50%;
+  display:flex;align-items:center;justify-content:center;background-size:cover;background-position:center;
+  border:0;cursor:pointer;overflow:visible;background-clip:padding-box;
+  box-shadow:0 10px 30px -12px rgba(154,255,0,.55);transition:transform .15s,box-shadow .18s}
+.rg2-ava:hover{transform:scale(1.03)}
+.rg2-ava:active{transform:scale(.97)}
+.rg2-ava::after{content:'';position:absolute;inset:-5px;border-radius:50%;border:1.5px solid rgba(154,255,0,.35);
+  animation:rg2Halo 2.4s ease-out infinite}
+@keyframes rg2Halo{0%{transform:scale(1);opacity:.55}100%{transform:scale(1.22);opacity:0}}
+@media(prefers-reduced-motion:reduce){.rg2-ava::after{animation:none;opacity:.4}}
+.rg2-ava-fg{font-family:var(--font-display);font-size:36px;letter-spacing:.02em;color:#000;line-height:1;
+  transition:opacity .2s;pointer-events:none}
+.rg2-ava-edit{position:absolute;right:-2px;bottom:-2px;width:28px;height:28px;border-radius:50%;
+  background:var(--lime);color:#000;display:flex;align-items:center;justify-content:center;
+  border:3px solid var(--bg);box-shadow:0 4px 12px rgba(0,0,0,.35)}
+.rg2-ava-edit .i{width:14px;height:14px}
+.rg2-ava-side{flex:1;min-width:0}
+.rg2-ava-lab{font-size:11.5px;font-weight:700;letter-spacing:.05em;text-transform:uppercase;color:var(--dim);margin-bottom:8px}
+.rg2-ava-sw{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:10px}
+.rg2-ava-swb{width:26px;height:26px;flex-shrink:0;border-radius:50%;border:0;cursor:pointer;position:relative;
+  transition:transform .14s}
+.rg2-ava-swb:active{transform:scale(.9)}
+.rg2-ava-swb.on{transform:scale(1.08)}
+.rg2-ava-swb.on::after{content:'';position:absolute;inset:-4px;border-radius:50%;border:2px solid var(--text)}
+:root[data-theme="light"] .rg2-ava-swb.on::after{border-color:var(--accent)}
+.rg2-ava-upload{display:inline-flex;align-items:center;gap:6px;padding:8px 12px;background:var(--surface);
+  border:1px solid var(--border);border-radius:10px;color:var(--text);font-size:12.5px;font-weight:600;
+  cursor:pointer;transition:background .18s,border-color .18s}
+.rg2-ava-upload:hover{background:var(--raised);border-color:var(--lime)}
+.rg2-ava-upload .i{width:14px;height:14px;color:var(--accent)}
+
+.rg2-nick .rg2-field-ic{color:var(--dim)}
+.rg2-nick-st{margin-left:auto;display:flex;align-items:center;padding-right:6px}
+.rg2-nick-st .i{width:17px;height:17px}
+.rg2-nick-st .ok{color:var(--accent)}
+.rg2-nick-st .bad{color:var(--danger)}
+.rg2-nick-msg{font-size:11.5px;font-weight:600;min-height:16px;margin:6px 4px 0;color:var(--dim)}
+.rg2-nick-msg.ok{color:var(--accent)}
+.rg2-nick-msg.bad{color:var(--danger)}
+
+.rg2-bio-wrap{position:relative;padding-right:12px}
+.rg2-bio-wrap textarea{min-height:74px;resize:none;line-height:1.4;padding-top:12px;padding-bottom:12px}
+.rg2-bio-count{position:absolute;right:12px;bottom:8px;font-size:10.5px;color:var(--dim);
+  background:var(--surface);padding:2px 6px;border-radius:6px;pointer-events:none}
+
+/* ============ ШАГ 4: тарифы ============ */
+.rg2-period{display:flex;gap:4px;background:var(--surface);border:1px solid var(--border);
+  border-radius:var(--r-md);padding:4px;margin-bottom:14px}
+.rg2-per{flex:1;display:flex;flex-direction:column;align-items:center;gap:1px;padding:8px 4px;
+  background:none;border:0;border-radius:10px;color:var(--dim);font-size:12.5px;font-weight:600;
+  cursor:pointer;transition:background .18s,color .18s,transform .12s}
+.rg2-per span{white-space:nowrap}
+.rg2-per i{font-style:normal;font-size:9.5px;font-weight:700;color:var(--accent);
+  background:var(--lime-dim);padding:1px 6px;border-radius:99px;margin-top:2px}
+.rg2-per:active{transform:scale(.96)}
+.rg2-per.on{background:var(--lime);color:#000;box-shadow:var(--glow)}
+.rg2-per.on i{background:rgba(0,0,0,.15);color:#000}
+
+.rg2-tiers{display:flex;flex-direction:column;gap:10px;margin:6px 0 14px}
+.rg2-tier{position:relative;text-align:left;background:var(--surface);border:1.5px solid var(--border);
+  border-radius:var(--r-md);padding:14px 15px;cursor:pointer;overflow:hidden;
+  transition:border-color .2s,background .2s,transform .12s,box-shadow .2s}
+.rg2-tier:hover{border-color:var(--lime);transform:translateY(-1px)}
+.rg2-tier.sel{border-color:var(--lime);background:linear-gradient(135deg,var(--lime-dim),var(--surface) 60%);
+  box-shadow:0 12px 30px -14px rgba(154,255,0,.5)}
+.rg2-tier.reco{border-color:rgba(154,255,0,.5);animation:rg2Bounce 2.4s ease-in-out 1.2s 2}
+@keyframes rg2Bounce{0%,100%{transform:none}30%{transform:translateY(-4px)}60%{transform:none}}
+@media(prefers-reduced-motion:reduce){.rg2-tier.reco{animation:none}}
+.rg2-tier-head{display:flex;align-items:baseline;justify-content:space-between;gap:12px;margin-bottom:2px}
+.rg2-tier-name{display:inline-flex;align-items:center;gap:8px;font-family:var(--font-display);font-size:22px;
+  letter-spacing:.04em;color:var(--text)}
+.rg2-tier-badge{font-family:var(--font-body);font-size:9.5px;font-weight:700;text-transform:uppercase;
+  letter-spacing:.06em;color:#000;background:var(--lime);border-radius:99px;padding:3px 8px;line-height:1}
+.rg2-tier-price{font-family:var(--font-display);font-size:16px;color:var(--accent);letter-spacing:.02em;white-space:nowrap}
+.rg2-tier-line{font-size:12.5px;color:var(--dim);margin-bottom:8px}
+.rg2-tier-feats{list-style:none;padding:0;margin:0;display:flex;flex-direction:column;gap:5px}
+.rg2-tier-feats li{display:flex;align-items:flex-start;gap:8px;font-size:12.5px;line-height:1.4;color:var(--text)}
+.rg2-tier-feats .i{width:14px;height:14px;flex-shrink:0;margin-top:3px;color:var(--accent)}

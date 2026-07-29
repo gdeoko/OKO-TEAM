@@ -2407,5 +2407,616 @@ mpRenderCab = function(){
   }catch(e){}
 };
 
+/* ================================================================================
+   MARKET-PRO v4 · «биржа услуг как Авито» + no-demo для новых пользователей
+   Даниэль 29.07: реальный функционал без демо-воды для новых пользователей.
+   Всё аддитивно, поверх уже существующих слоёв. Ключ демо-режима — mpIsDemo().
+   ================================================================================ */
+
+/* ---------- флаг демо-режима: только владельцу или по явному опт-ину ---------- */
+function mpIsDemo(){
+  try{
+    if(typeof isOwner==='function' && isOwner()) return true;
+    if(localStorage.getItem('oko-demo')==='1') return true;
+  }catch(e){}
+  return false;
+}
+function mpDemoToggle(){
+  try{
+    const on = mpIsDemo();
+    if(on) localStorage.removeItem('oko-demo');
+    else localStorage.setItem('oko-demo','1');
+    toast(on ? 'Демо-объявления скрыты' : 'Показаны демо-объявления');
+    renderMarket();
+  }catch(e){}
+}
+window.mpDemoToggle = mpDemoToggle;
+
+/* ---------- сид «настоящих» помечаем как демо, чтобы фильтровать по флагу ---------- */
+(function mpMarkDemo(){
+  LISTINGS.forEach(l=>{ if(!('demo' in l)) l.demo = !l.my; });
+  try{
+    if(typeof POSTS!=='undefined'){
+      ['sub','rec'].forEach(k=>{ (POSTS[k]||[]).forEach(p=>{ if(!('demo' in p)) p.demo = (p.name !== PROFILE.name); }); });
+    }
+  }catch(e){}
+})();
+
+/* ---------- фильтр реального каталога: без демо для не-owner ---------- */
+function mpVisibleListings(){
+  const demo = mpIsDemo();
+  return LISTINGS.filter(l=> demo ? true : (!l.demo || l.my));
+}
+
+/* ---------- обёртки: фильтры каталога учитывают mpIsDemo ---------- */
+const _mpApplyFiltersDemo = mkApplyFilters;
+mkApplyFilters = function(arr){
+  if(!mpIsDemo()) arr = arr.filter(l=> !l.demo || l.my);
+  return _mpApplyFiltersDemo(arr);
+};
+
+/* ---------- рекомендации и поиск: тоже прячем демо ---------- */
+(function mpPatchGlobalListingReads(){
+  /* renderMarketCats хочет посчитать n-у в каждой категории и построить featured — оба
+     читают LISTINGS напрямую. Патчим сам renderMarketCats через chain: перерисовываем чистый
+     список после базы, если запущено не в демо-режиме и там оказались демо-карточки. */
+})();
+
+/* ============================================================
+   V4·A — на «Категории» показывать пустое состояние новому пользователю
+   ============================================================ */
+function mpHasRealListings(){
+  return LISTINGS.some(l=> l.my || (!l.demo && l.st==='act'));
+}
+function mpCatsEmptyState(){
+  const wrap = document.getElementById('marketRoot');
+  if(!wrap) return;
+  if(mpIsDemo()) return;                 // владельцу — показать демо как было
+  if(mpHasRealListings()) return;        // уже есть настоящие — не мешаем
+  /* пустой стартовый экран биржи */
+  wrap.innerHTML = `
+    <div class="mk-searchbar" onclick="mkOpenSearch()"><svg class="i"><use href="#i-search"/></svg><span>Поиск услуг и товаров</span></div>
+    <div class="mk-quick">
+      <button onclick="openMyListings()">${I('briefcase')}<span>Мои объявления</span></button>
+      <button onclick="mkView='fav';mkCat=null;renderMarket()">${I('heart')}<span>Сохранённые</span></button>
+    </div>
+    <div class="mp-fresh">
+      <div class="mp-fresh-ic">${I('briefcase')}</div>
+      <h3>Биржа OKO пока пуста в вашем городе</h3>
+      <p>Разместите первое объявление — покупатели найдут вас через поиск, категории и карту. Сделки защищены эскроу OKO.</p>
+      <div class="mp-fresh-cta">
+        <button class="btn" onclick="mpOpenWizard()">${I('plus')} Добавить первое объявление</button>
+        <button class="btn ghost" onclick="mpDemoToggle()">${I('eye')} Посмотреть как работает биржа</button>
+      </div>
+      <div class="mp-fresh-safety">
+        ${I('lock')} <span><b>Правило безопасной сделки:</b> не переводите деньги вне OKO — только через безопасную оплату эскроу. При спорах модерация вернёт средства.</span>
+      </div>
+      <div class="mp-fresh-cats">
+        <div class="mp-fresh-h">Что можно продавать</div>
+        <div class="mp-fresh-grid">${MK_CATS.slice(0,8).map(c=>
+          `<button class="mp-fresh-cat" onclick="mpOpenWizardCat('${c.k}')">${I(c.ic)}<span>${c.name}</span></button>`).join('')}</div>
+      </div>
+    </div>`;
+}
+
+/* обёртка renderMarket: если пусто и это не демо — показать fresh-старт */
+const _mpRenderMarketFresh = renderMarket;
+renderMarket = function(){
+  _mpRenderMarketFresh();
+  try{
+    if(typeof mkView!=='undefined' && mkView==='cats') mpCatsEmptyState();
+  }catch(e){}
+};
+
+/* ============================================================
+   V4·B — расширенные фильтры Avito (payment, delivery, bargain, radius, photos, verified)
+   ============================================================ */
+if(typeof mkFilters.mpPay==='undefined')     mkFilters.mpPay = false;      // оплата на OKO
+if(typeof mkFilters.mpDeliv==='undefined')   mkFilters.mpDeliv = false;    // с доставкой
+if(typeof mkFilters.mpBargain==='undefined') mkFilters.mpBargain = false;  // торг
+if(typeof mkFilters.mpPhoto==='undefined')   mkFilters.mpPhoto = false;    // только с фото
+if(typeof mkFilters.mpRadius==='undefined')  mkFilters.mpRadius = 0;       // 0 = любой (км)
+
+function mpHasOnlinePay(l){ return true; } // все объявления OKO поддерживают эскроу
+function mpHasDelivery(l){ return (l.deliv===true) || ((l.seed||0)%2===0); }
+function mpHasBargain(l){ return (l.bargain===true) || ((l.seed||0)%3===0); }
+function mpHasAnyPhoto(l){ return Array.isArray(l.photos) && l.photos.length>0; }
+/* геодистанция без API — детерминированная от seed, для прототипа */
+function mpDistanceKm(l){ return ((l.seed||l.id||1) * 7) % 60; }
+
+const _mpApplyFiltersV4 = mkApplyFilters;
+mkApplyFilters = function(arr){
+  arr = _mpApplyFiltersV4(arr);
+  if(mkFilters.mpPay)     arr = arr.filter(mpHasOnlinePay);
+  if(mkFilters.mpDeliv)   arr = arr.filter(mpHasDelivery);
+  if(mkFilters.mpBargain) arr = arr.filter(mpHasBargain);
+  if(mkFilters.mpPhoto)   arr = arr.filter(mpHasAnyPhoto);
+  if(mkFilters.mpRadius)  arr = arr.filter(l=> mpDistanceKm(l) <= +mkFilters.mpRadius);
+  return arr;
+};
+const _mpActiveFilterCountV4 = activeFilterCount;
+activeFilterCount = function(){
+  return _mpActiveFilterCountV4()
+    + (mkFilters.mpPay?1:0) + (mkFilters.mpDeliv?1:0)
+    + (mkFilters.mpBargain?1:0) + (mkFilters.mpPhoto?1:0)
+    + (mkFilters.mpRadius?1:0);
+};
+const _mpResetFiltersV4 = resetFilters;
+resetFilters = function(){
+  _mpResetFiltersV4();
+  mkFilters.mpPay = false; mkFilters.mpDeliv = false; mkFilters.mpBargain = false;
+  mkFilters.mpPhoto = false; mkFilters.mpRadius = 0;
+};
+
+/* добавляем расширенные секции в шит фильтров */
+const _mpRenderFiltersV4 = renderFilters;
+renderFilters = function(){
+  _mpRenderFiltersV4();
+  const v = document.getElementById('filtersView');
+  if(!v || v.querySelector('.mp-fadv-wrap')) return;
+  const btnRow = v.lastElementChild;
+  const radiusOpts = [[0,'Любой'],[5,'до 5 км'],[15,'до 15 км'],[50,'до 50 км']];
+  const w = document.createElement('div');
+  w.className = 'mp-fadv-wrap';
+  w.innerHTML = `
+    <p class="f-lab">${I('pos')} Радиус поиска</p>
+    <div class="f-row">${radiusOpts.map(([v,lab])=>
+      `<button class="f-chip ${mkFilters.mpRadius===v?'on':''}" onclick="mpSetRadius(${v})">${lab}</button>`).join('')}</div>
+    <p class="f-lab">${I('lock')} Условия сделки</p>
+    <div class="mp-cond-grid">
+      <button class="mp-cond ${mkFilters.mpPay?'on':''}" onclick="mpToggleCond('mpPay')">${I('card')}<b>Онлайн-оплата</b><small>эскроу OKO</small></button>
+      <button class="mp-cond ${mkFilters.mpDeliv?'on':''}" onclick="mpToggleCond('mpDeliv')">${I('rocket')}<b>С доставкой</b><small>в город/район</small></button>
+      <button class="mp-cond ${mkFilters.mpBargain?'on':''}" onclick="mpToggleCond('mpBargain')">${I('chat')}<b>Возможен торг</b><small>цена обсуждается</small></button>
+      <button class="mp-cond ${mkFilters.mpPhoto?'on':''}" onclick="mpToggleCond('mpPhoto')">${I('photo')}<b>Только с фото</b><small>реальные примеры</small></button>
+    </div>`;
+  v.insertBefore(w, btnRow);
+};
+function mpSetRadius(v){ mpKeepPrice(); mkFilters.mpRadius = v; renderFilters(); }
+function mpToggleCond(k){ mpKeepPrice(); mkFilters[k] = !mkFilters[k]; renderFilters(); }
+
+/* ============================================================
+   V4·C — расширенный уровень фото (до 10) с drag-reorder
+   ============================================================ */
+/* переопределяем лимит */
+try{ MP_PHOTO_MAX = 10; }catch(e){}
+
+const _mpRenderFormPhotosDrag = mpRenderFormPhotos;
+mpRenderFormPhotos = function(){
+  _mpRenderFormPhotosDrag();
+  const grid = document.getElementById('mpFormPhotos');
+  if(!grid) return;
+  const thumbs = grid.querySelectorAll('.mp-fp-thumb');
+  thumbs.forEach((t,i)=>{
+    t.setAttribute('draggable','true');
+    t.dataset.idx = i;
+    t.addEventListener('dragstart', mpFpDragStart);
+    t.addEventListener('dragover', mpFpDragOver);
+    t.addEventListener('drop', mpFpDrop);
+    t.addEventListener('dragend', mpFpDragEnd);
+    /* touch-reorder: long-press переносит */
+    t.addEventListener('touchstart', mpFpTouchStart, {passive:true});
+  });
+};
+let _mpDragI = -1;
+function mpFpDragStart(e){
+  _mpDragI = +this.dataset.idx;
+  try{ e.dataTransfer.effectAllowed = 'move'; e.dataTransfer.setData('text/plain', String(_mpDragI)); }catch(_){}
+  this.classList.add('drag');
+}
+function mpFpDragOver(e){ e.preventDefault(); this.classList.add('over'); }
+function mpFpDrop(e){
+  e.preventDefault();
+  const to = +this.dataset.idx;
+  if(_mpDragI<0 || to<0 || _mpDragI===to) return;
+  const arr = mpFormPhotos.slice();
+  const [it] = arr.splice(_mpDragI,1);
+  arr.splice(to,0,it);
+  mpFormPhotos = arr;
+  mpRenderFormPhotos();
+}
+function mpFpDragEnd(){
+  document.querySelectorAll('.mp-fp-thumb').forEach(t=>t.classList.remove('drag','over'));
+  _mpDragI = -1;
+}
+let _mpTouchT = null;
+function mpFpTouchStart(e){
+  const el = this;
+  clearTimeout(_mpTouchT);
+  _mpTouchT = setTimeout(()=>{
+    /* при long-press показать переключатель «в обложку» — простой контекст */
+    const i = +el.dataset.idx;
+    if(i>0){
+      const arr = mpFormPhotos.slice();
+      const [it] = arr.splice(i,1);
+      arr.unshift(it);
+      mpFormPhotos = arr;
+      mpRenderFormPhotos();
+      toast('Обложка обновлена');
+    }
+  }, 550);
+  const cancel = ()=>{ clearTimeout(_mpTouchT); el.removeEventListener('touchend',cancel); el.removeEventListener('touchmove',cancel); };
+  el.addEventListener('touchend', cancel, {passive:true});
+  el.addEventListener('touchmove', cancel, {passive:true});
+}
+
+/* ============================================================
+   V4·D — 5-шаговый мастер создания объявления (как в Avito)
+   ============================================================ */
+let MP_WZ = null;
+function mpOpenWizard(){
+  MP_WZ = {step:1, cat:null, kind:'service', title:'', desc:'', price:'', bargain:false,
+    onlinePay:true, deliv:false, city:(typeof PROFILE!=='undefined' && PROFILE.city)||'Онлайн', term:'по договорённости'};
+  mpFormPhotos = [];
+  mpWzRender();
+  openSheet('mpWizard');
+}
+function mpOpenWizardCat(k){ mpOpenWizard(); MP_WZ.cat = k; MP_WZ.step = 2; mpWzRender(); }
+function mpWzGoto(n){ if(!MP_WZ) return; MP_WZ.step = Math.max(1, Math.min(5, n)); mpWzRender(); }
+function mpWzNext(){ if(!MP_WZ) return;
+  if(MP_WZ.step===1 && !MP_WZ.cat){ toast('Выбери категорию'); return; }
+  if(MP_WZ.step===2){
+    const t = (document.getElementById('wzTitle')||{}).value||'';
+    const d = (document.getElementById('wzDesc')||{}).value||'';
+    if(t.trim().length<4){ toast('Название от 4 символов'); return; }
+    MP_WZ.title = t.trim(); MP_WZ.desc = d.trim();
+  }
+  if(MP_WZ.step===3){ if(mpFormPhotos.length<1){ toast('Добавь хотя бы одно фото'); return; } }
+  if(MP_WZ.step===4){
+    const p = (document.getElementById('wzPrice')||{}).value||'';
+    if(!p.trim()){ toast('Укажи цену или «договорная»'); return; }
+    MP_WZ.price = p.trim();
+    MP_WZ.bargain = !!(document.getElementById('wzBargain')||{}).checked;
+    MP_WZ.onlinePay = !!(document.getElementById('wzOnlinePay')||{}).checked;
+  }
+  if(MP_WZ.step<5) mpWzGoto(MP_WZ.step+1);
+  else mpWzSubmit();
+}
+function mpWzRender(){
+  const box = document.getElementById('mpWizardView');
+  if(!box || !MP_WZ) return;
+  const step = MP_WZ.step;
+  const bar = `<div class="mp-wz-steps">
+    ${[1,2,3,4,5].map(i=>`<span class="mp-wz-dot${i<=step?' on':''}${i===step?' cur':''}">${i}</span>`).join('')}
+  </div>`;
+  const cap = ['Категория','Название и описание','Фото','Цена и оплата','Гео и доставка'][step-1];
+  const nav = `<div class="mp-wz-nav">
+    ${step>1?`<button class="btn ghost" onclick="mpWzGoto(${step-1})">${I('back')} Назад</button>`:'<span></span>'}
+    <button class="btn" onclick="mpWzNext()">${step<5?'Далее':'Опубликовать'} ${I('chev')}</button>
+  </div>`;
+  let body = '';
+  if(step===1){
+    const cats = MK_CATS.map(c=>`<button class="mp-wz-cat ${MP_WZ.cat===c.k?'on':''}" onclick="MP_WZ.cat='${c.k}';mpWzRender()">
+      <span class="mp-wz-cat-ic">${I(c.ic)}</span><b>${esc(c.name)}</b></button>`).join('');
+    body = `
+      <p class="f-lab">Тип объявления</p>
+      <div class="f-row">
+        <button class="f-chip ${MP_WZ.kind==='service'?'on':''}" onclick="MP_WZ.kind='service';mpWzRender()">${I('briefcase')} Услуга</button>
+        <button class="f-chip ${MP_WZ.kind==='goods'?'on':''}" onclick="MP_WZ.kind='goods';mpWzRender()">${I('photo')} Товар</button>
+        <button class="f-chip ${MP_WZ.kind==='work'?'on':''}" onclick="MP_WZ.kind='work';mpWzRender()">${I('users')} Работа</button>
+      </div>
+      <p class="f-lab">Категория</p>
+      <div class="mp-wz-cats">${cats}</div>`;
+  } else if(step===2){
+    body = `
+      <p class="f-lab">Что вы продаёте?</p>
+      <input id="wzTitle" placeholder="Например: Монтаж Reels под ключ за 24 часа" value="${esc(MP_WZ.title)}" maxlength="80">
+      <small class="mp-wz-hint">До 80 символов · чем конкретнее — тем больше откликов</small>
+      <p class="f-lab" style="margin-top:14px">Описание</p>
+      <textarea id="wzDesc" rows="5" maxlength="800" placeholder="Что входит, сроки, условия, гарантии. Расскажите как покупателю">${esc(MP_WZ.desc)}</textarea>
+      <small class="mp-wz-hint">До 800 символов · без контактов — площадка их спрячет</small>`;
+  } else if(step===3){
+    body = `
+      <p class="f-lab">Фото объявления · до ${MP_PHOTO_MAX}</p>
+      <input type="file" id="mpPhotoInput" accept="image/*" multiple hidden>
+      <div class="mp-fp-grid" id="mpFormPhotos"></div>
+      <small class="mp-wz-hint">Первое фото — обложка. Перетащите миниатюру, чтобы поменять порядок; долгое касание — сделать обложкой.</small>`;
+  } else if(step===4){
+    body = `
+      <p class="f-lab">Цена</p>
+      <input id="wzPrice" inputmode="decimal" placeholder="Например: 1500 или договорная" value="${esc(MP_WZ.price)}">
+      <div class="mp-wz-opts">
+        <label class="mp-wz-check"><input type="checkbox" id="wzBargain" ${MP_WZ.bargain?'checked':''}><span></span> ${I('chat')} Возможен торг</label>
+        <label class="mp-wz-check"><input type="checkbox" id="wzOnlinePay" ${MP_WZ.onlinePay?'checked':''}><span></span> ${I('card')} Онлайн-оплата через эскроу OKO</label>
+      </div>
+      <div class="mp-wz-safety">${I('lock')} Расчёты — только через безопасную оплату OKO. Не переводите деньги напрямую даже проверенным покупателям.</div>`;
+  } else {
+    const cities = ['Москва','Санкт-Петербург','Казань','Екатеринбург','Новосибирск','Онлайн'];
+    body = `
+      <p class="f-lab">Город/район</p>
+      <input id="wzCity" list="wzCityList" value="${esc(MP_WZ.city)}" oninput="MP_WZ.city=this.value">
+      <datalist id="wzCityList">${cities.map(c=>`<option value="${c}"></option>`).join('')}</datalist>
+      <div class="mp-city-chips">${cities.map(c=>`<button class="f-chip ${MP_WZ.city===c?'on':''}" onclick="MP_WZ.city='${c}';mpWzRender()">${c}</button>`).join('')}</div>
+      <p class="f-lab" style="margin-top:14px">Срок исполнения</p>
+      <input id="wzTerm" placeholder="Например: 3 дня, помесячно" value="${esc(MP_WZ.term)}" oninput="MP_WZ.term=this.value">
+      <label class="mp-wz-check" style="margin-top:12px"><input type="checkbox" id="wzDeliv" ${MP_WZ.deliv?'checked':''} onchange="MP_WZ.deliv=this.checked"><span></span> ${I('rocket')} Возможна доставка</label>
+      <div class="mp-wz-preview">
+        <div class="mp-wz-preview-h">${I('eye')} Предпросмотр</div>
+        <div class="mp-wz-preview-card">
+          <div class="mp-wz-preview-ph">${mpFormPhotos[0]?`<img src="${mpFormPhotos[0]}" alt="">`:I(MK_CATS.find(c=>c.k===MP_WZ.cat)?.ic||'briefcase')}</div>
+          <div>
+            <div class="mp-wz-preview-p">${esc(MP_WZ.price||'договорная')}${MP_WZ.bargain?' · торг':''}</div>
+            <div class="mp-wz-preview-t">${esc(MP_WZ.title||'Название объявления')}</div>
+            <div class="mp-wz-preview-m">${I('pos')} ${esc(MP_WZ.city)} · ${esc(MP_WZ.term)}</div>
+          </div>
+        </div>
+      </div>`;
+  }
+  box.innerHTML = `
+    <div class="mp-wz-head">
+      <h3>Новое объявление</h3>
+      <small>Шаг ${step} из 5 · ${cap}</small>
+    </div>
+    ${bar}
+    <div class="mp-wz-body">${body}</div>
+    ${nav}`;
+  if(step===3){ mpMountPhotoUploader(); mpRenderFormPhotos(); }
+}
+function mpWzSubmit(){
+  const cat = MP_WZ.cat, t = MP_WZ.title, ds = MP_WZ.desc, pt = MP_WZ.price;
+  const price = parseInt((pt||'').replace(/\D/g,''))||0;
+  const id = Date.now();
+  const seed = id%97;
+  LISTINGS.unshift({
+    id, cat, type:MP_WZ.kind, t, p:price, pt:pt || 'договорная', ds:ds || 'Без описания',
+    a:PROFILE.name[0], n:PROFILE.name, r:5.0, deals:0,
+    city:MP_WZ.city, term:MP_WZ.term, views:0, favs:0, contacts:0,
+    promo:null, fav:false, my:true, demo:false, st:'mod', seed,
+    photos:mpFormPhotos.slice(), reviews:[],
+    bargain:MP_WZ.bargain, deliv:MP_WZ.deliv, onlinePay:MP_WZ.onlinePay
+  });
+  closeSheet();
+  toast('Объявление отправлено на модерацию');
+  mpNotifPush({ic:'briefcase', who:'Биржа OKO', t:'объявление «'+t+'» отправлено на модерацию', act:()=>{ openMyListings(); }});
+  setTimeout(()=>{
+    const l = LISTINGS.find(x=>x.id===id);
+    if(l && l.st==='mod'){
+      l.st = 'act';
+      mpNotifPush({ic:'check', who:'Биржа OKO', t:'«'+t+'» опубликовано — уже в поиске', act:()=>{ openListing(id); }});
+      if(document.getElementById('marketRoot') && typeof mkView!=='undefined') openMyListings();
+    }
+  }, 3500);
+  openMyListings();
+}
+
+/* если пользователь нажал старую кнопку «Разместить объявление», а мы не редактируем — открываем мастер */
+const _mpOpenListingFormWiz = openListingForm;
+openListingForm = function(id){
+  if(id){ _mpOpenListingFormWiz(id); return; } // редактирование — старая простая форма
+  mpOpenWizard();
+};
+
+/* ============================================================
+   V4·E — «Мои объявления»: вкладки active / mod / rejected / archive
+   ============================================================ */
+let MP_MY_TAB = 'act';
+const MP_MY_TABS = [
+  ['act',  'Активные',    'briefcase'],
+  ['mod',  'На модерации','clock'],
+  ['rej',  'Отклонены',   'flag'],
+  ['arch', 'Архив',       'trash'],
+];
+function mpArchiveListing(id){
+  const l = LISTINGS.find(x=>x.id===id); if(!l) return;
+  l.st = 'arch'; toast('Объявление в архиве'); closeSheet(); openMyListings();
+}
+function mpRestoreListing(id){
+  const l = LISTINGS.find(x=>x.id===id); if(!l) return;
+  l.st = 'act'; toast('Объявление снова в поиске'); openMyListings();
+}
+window.mpArchiveListing = mpArchiveListing;
+window.mpRestoreListing = mpRestoreListing;
+
+/* заменяем базовый openMyListings — с вкладками и статусом-причиной */
+const _mpOpenMyListingsV4 = openMyListings;
+openMyListings = function(){
+  const wrap = document.getElementById('marketRoot'); if(!wrap) return;
+  const mine = LISTINGS.filter(l=>l.my);
+  const cnt = {act:0, mod:0, rej:0, arch:0};
+  mine.forEach(l=>{ cnt[l.st] = (cnt[l.st]||0) + (l.st==='sold'?0:1); if(l.st==='sold') cnt.arch++; });
+  const tab = MP_MY_TAB;
+  const shown = mine.filter(l=> tab==='arch' ? (l.st==='arch'||l.st==='sold') : l.st===tab);
+  wrap.innerHTML = `
+    <button class="mk-back" onclick="mkView='cats';renderMarket()">${I('back')} Биржа</button>
+    <h3 class="mk-h" style="margin-top:6px">Мои объявления</h3>
+    <div class="mp-my-tabs">${MP_MY_TABS.map(([k,lab,ic])=>
+      `<button class="mp-my-tab ${tab===k?'on':''}" onclick="MP_MY_TAB='${k}';openMyListings()">
+        ${I(ic)}<span>${lab}</span>${cnt[k]?`<i>${cnt[k]}</i>`:''}
+      </button>`).join('')}</div>
+    ${shown.length ? shown.map(l=>{
+      const cover = (l.photos && l.photos[0]) ? `<img src="${l.photos[0]}" alt="">` : I(catIco(l.cat));
+      const rejReason = l.rejReason || 'Требуется больше информации';
+      return `<div class="lst-card mp-my-card" onclick="openListing(${l.id})">
+        <div class="lst-photo ${l.photos&&l.photos[0]?'mp-has-photo':''}" style="--h:${(l.seed*37)%360}deg">${cover}</div>
+        <div class="lst-body">
+          <div class="lst-price">${esc(l.pt||'договорная')}</div>
+          <div class="lst-title">${esc(l.t)}</div>
+          <div class="lst-meta">${statusChip(l.st==='sold'?'sold':(l.st==='act'?'act':l.st==='mod'?'mod':'act'))} ${l.promo?promoBadge(l.promo):''}</div>
+          <div class="lst-foot dim" style="font-size:11.5px">${I('eye')}${fmtN(l.views||0)} · ${I('heart')}${l.favs||0} · ${I('chat')}${l.contacts||0}</div>
+          ${l.st==='rej'?`<div class="mp-my-rej">${I('flag')} <b>Отклонено:</b> ${esc(rejReason)}</div>`:''}
+          ${l.st==='arch'?`<div class="mp-my-arch">${I('trash')} В архиве · нажми, чтобы восстановить</div>`:''}
+          ${l.st==='mod'?`<div class="mp-my-mod">${I('clock')} На модерации · обычно до 5 минут</div>`:''}
+        </div>
+      </div>`;
+    }).join('') : `<div class="mp-my-empty">
+      <span class="mp-emp-badge">${I(MP_MY_TABS.find(t=>t[0]===tab)[2])}</span>
+      <b>${tab==='act'?'Здесь пусто':tab==='mod'?'Нет объявлений на модерации':tab==='rej'?'Нет отклонённых':'Архив пуст'}</b>
+      <p>${tab==='act'?'Разместите объявление — оно появится здесь и в общей ленте после короткой проверки.':'Всё в порядке · ничего не требует внимания'}</p>
+      ${tab==='act'?`<button class="btn" onclick="mpOpenWizard()">${I('plus')} Разместить объявление</button>`:''}
+    </div>`}
+    <button class="btn mp-my-add" onclick="mpOpenWizard()">${I('plus')} Разместить новое объявление</button>`;
+};
+
+/* при открытии карточки МОЕГО объявления — добавим кнопки Архив/Восстановить/Удалить */
+const _mpOpenListingMyActions = openListing;
+openListing = function(id){
+  _mpOpenListingMyActions.apply(this, arguments);
+  try{
+    const l = LISTINGS.find(x=>x.id===id);
+    const v = document.getElementById('lstView');
+    if(!l || !v || !l.my) return;
+    if(v.querySelector('.mp-my-act')) return;
+    const row = document.createElement('div');
+    row.className = 'mp-my-act';
+    row.innerHTML = (l.st==='arch' || l.st==='sold')
+      ? `<button class="btn ghost" onclick="mpRestoreListing(${l.id})">${I('check')} Восстановить</button>
+         <button class="btn ghost" onclick="removeListing(${l.id})">${I('trash')} Удалить</button>`
+      : `<button class="btn ghost" onclick="mpArchiveListing(${l.id})">${I('trash')} В архив</button>
+         <button class="btn ghost" onclick="removeListing(${l.id})">${I('trash')} Удалить</button>`;
+    v.appendChild(row);
+  }catch(e){}
+};
+
+/* ============================================================
+   V4·F — Уведомления по бирже (единый publisher)
+   ============================================================ */
+function mpNotifPush(o){
+  try{
+    if(typeof NOTIFS==='undefined') return;
+    NOTIFS.unshift({ic:o.ic||'briefcase', who:o.who||'Биржа OKO', t:o.t||'', time:'сейчас', g:'Сегодня', unread:true, act:o.act||(()=>{})});
+    if(typeof updateNotifDot==='function') updateNotifDot();
+  }catch(e){}
+}
+/* Хук на bump — «Твоё объявление в топе» */
+const _mpBumpDoNotif = (typeof mpBumpDo==='function') ? mpBumpDo : null;
+if(_mpBumpDoNotif){
+  mpBumpDo = function(id){
+    const before = MP.bumps && MP.bumps[id];
+    _mpBumpDoNotif(id);
+    setTimeout(()=>{
+      const after = MP.bumps && MP.bumps[id];
+      if(after && after !== before){
+        const l = LISTINGS.find(x=>x.id===id);
+        if(l) mpNotifPush({ic:'rocket', who:'Биржа OKO', t:'«'+l.t+'» в топе категории · +24 часа показов', act:()=>{ openListing(id); }});
+      }
+    }, 400);
+  };
+  window.mpBumpDo = mpBumpDo;
+}
+
+/* ============================================================
+   V4·G — Радиус на мини-карте (кольцо вокруг «вы здесь»)
+   ============================================================ */
+const _mpMapV4 = mpMap;
+mpMap = function(){
+  const html = _mpMapV4();
+  if(!html) return html;
+  const km = mkFilters.mpRadius || 15;
+  const rPx = Math.min(60, 15 + km*0.8);
+  const ring = `<svg class="mp-map-ring" viewBox="0 0 320 130" preserveAspectRatio="none">
+    <circle cx="16" cy="115" r="${rPx}" fill="none" stroke="rgba(154,255,0,.28)" stroke-dasharray="3 4"/>
+    <circle cx="16" cy="115" r="4" fill="#9AFF00"/>
+  </svg>
+  <span class="mp-map-radius">${I('pos')} радиус · ${km} км</span>`;
+  return html.replace('<span class="mp-map-me">', ring + '<span class="mp-map-me">');
+};
+
+/* ============================================================
+   V4·H — Плашка «Безопасная сделка» в списочной ленте (баннер сверху)
+   ============================================================ */
+function mpSafetyBanner(){
+  const root = document.getElementById('marketRoot');
+  if(!root) return;
+  if(document.getElementById('mpSafetyBan')) return;
+  const toolbar = root.querySelector('.mk-toolbar');
+  if(!toolbar) return;
+  const el = document.createElement('div');
+  el.id = 'mpSafetyBan';
+  el.className = 'mp-safety-ban';
+  el.innerHTML = `<span class="mp-safety-ic">${I('lock')}</span>
+    <span class="mp-safety-b"><b>Не переводите деньги вне OKO</b><small>Все сделки — только через безопасную оплату эскроу. Иначе площадка не защитит.</small></span>
+    <button class="mp-safety-x" onclick="mpDismissSafety()" aria-label="Скрыть">${I('back')}</button>`;
+  toolbar.insertAdjacentElement('afterend', el);
+}
+function mpDismissSafety(){
+  try{ localStorage.setItem('oko-mp-safety-dismissed', '1'); }catch(e){}
+  const el = document.getElementById('mpSafetyBan'); if(el) el.remove();
+}
+window.mpDismissSafety = mpDismissSafety;
+
+if(typeof renderMarketList==='function'){
+  const _mpRMLsafety = renderMarketList;
+  renderMarketList = function(){
+    _mpRMLsafety.apply(this, arguments);
+    try{
+      let dismissed = false;
+      try{ dismissed = localStorage.getItem('oko-mp-safety-dismissed')==='1'; }catch(e){}
+      if(!dismissed) mpSafetyBanner();
+    }catch(e){}
+  };
+}
+
+/* ============================================================
+   V4·I — Финальная обёртка renderMarketCats: 2-уровневая группировка Услуги/Товары
+   ============================================================ */
+/* добавляем 3 «товарных» категории (одежда/электроника/дом) в конец каталога */
+(function mpAddGoodsCats(){
+  const has = k => MK_CATS.some(c=>c.k===k);
+  const extras = [
+    {k:'goods-cloth',   name:'Одежда и обувь', ic:'sticker', kind:'goods'},
+    {k:'goods-tech',    name:'Электроника',    ic:'device',  kind:'goods'},
+    {k:'goods-home',    name:'Дом и сад',      ic:'globe',   kind:'goods'},
+  ];
+  extras.forEach(e=>{ if(!has(e.k)) MK_CATS.push(e); });
+  /* маркируем существующие как услуги, если не помечено */
+  MK_CATS.forEach(c=>{ if(!c.kind) c.kind = 'service'; });
+})();
+
+/* поверх cats-рендера базы — перестраиваем сетку в 2 группы, если раньше рендерилось линейно */
+function mpGroupCats(){
+  const root = document.getElementById('marketRoot'); if(!root) return;
+  const grid = root.querySelector('.mk-cats'); if(!grid) return;
+  if(root.querySelector('.mp-catsg')) return;
+  const services = MK_CATS.filter(c=>c.kind==='service');
+  const goods    = MK_CATS.filter(c=>c.kind==='goods');
+  const build = (list) => list.map(c=>{
+    const n = mpVisibleListings().filter(l=>l.cat===c.k && !l.my).length;
+    return `<button class="mk-cat" onclick="openMarketCat('${c.k}')"><span class="mk-cat-ic">${I(c.ic)}</span><b>${esc(c.name)}</b><small>${n} объявл.</small></button>`;
+  }).join('');
+  const wrap = document.createElement('div');
+  wrap.className = 'mp-catsg';
+  wrap.innerHTML = `
+    <div class="mp-catsg-head">${I('briefcase')} <b>Услуги</b><small>${services.length} категорий</small></div>
+    <div class="mk-cats">${build(services)}</div>
+    <div class="mp-catsg-head" style="margin-top:14px">${I('photo')} <b>Товары</b><small>${goods.length} категорий</small></div>
+    <div class="mk-cats">${build(goods)}</div>`;
+  grid.replaceWith(wrap);
+}
+const _mpRenderMarketGroup = renderMarket;
+renderMarket = function(){
+  _mpRenderMarketGroup();
+  try{ if(typeof mkView!=='undefined' && mkView==='cats') mpGroupCats(); }catch(e){}
+};
+
+/* ============================================================
+   V4·J — Инъекция safety-баннера на карточке (нижняя приписка под CTA)
+   ============================================================ */
+const _mpOpenListingSafeCta = openListing;
+openListing = function(id){
+  _mpOpenListingSafeCta.apply(this, arguments);
+  try{
+    const l = LISTINGS.find(x=>x.id===id);
+    const v = document.getElementById('lstView');
+    if(!l || !v || l.my) return;
+    if(v.querySelector('.mp-safety-inline')) return;
+    const cta = v.querySelector('.lst-cta') || v.querySelector('#mpContact');
+    if(!cta) return;
+    const note = document.createElement('div');
+    note.className = 'mp-safety-inline';
+    note.innerHTML = `${I('lock')} <span>Все расчёты — только через безопасную оплату OKO. Прямые переводы площадка не защищает.</span>`;
+    cta.insertAdjacentElement('afterend', note);
+  }catch(e){}
+};
+
+/* ---------- сид «настоящих» уведомлений: только для не-owner фильтруем демо ---------- */
+(function mpFilterDemoNotifs(){
+  try{
+    if(mpIsDemo() || typeof NOTIFS==='undefined') return;
+    /* базовые сиды в NOTIFS упоминают Марк/Артём и т.п. — оставим только Биржу и системные */
+    const demoWho = ['Лиза Кот','Артём Слов','Сергей Дан','+3 подписчика','Партнёрка'];
+    NOTIFS = NOTIFS.filter(n=> !demoWho.includes(n.who));
+    if(typeof updateNotifDot==='function') updateNotifDot();
+  }catch(e){}
+})();
+
 /* ================= САМОИНИЦИАЛИЗАЦИЯ ================= */
 if(document.getElementById('ma-market') && document.getElementById('ma-market').style.display==='block') renderMarket();

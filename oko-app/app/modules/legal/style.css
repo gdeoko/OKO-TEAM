@@ -1,4 +1,9 @@
-/* ===== LEGAL (lg-): юридические документы OKO — RU/EN, подпись + печать ===== */
+/* ===== LEGAL (lg-): юридические документы OKO — RU/EN, подпись + печать =====
+   Организация:
+     legalView.hub  → главный экран Legal: сетка карточек-документов (2 колонки).
+     legalView.doc  → подстраница выбранного документа (шапка/оглавление/секции/подпись).
+   Оба состояния переключаются классом на #legalView. */
+
 #legalView{position:fixed;inset:0;z-index:76;background:var(--bg);display:flex;flex-direction:column;transform:translateX(100%);transition:transform .3s cubic-bezier(.3,1,.4,1);max-width:1280px;margin:0 auto}
 #legalView.open{transform:none}
 @media(prefers-reduced-motion:reduce){#legalView{transition:none}}
@@ -9,27 +14,73 @@
 .lg-lang:hover{color:var(--accent);border-color:var(--accent)}
 .lg-lang.on{background:var(--lime);border-color:var(--lime);color:#000;box-shadow:var(--glow)}
 
-/* табы документов */
+/* компактный «назад к списку документов», показывается только в режиме doc */
+.lg-back{display:none;flex-shrink:0;align-items:center;gap:6px;font-size:12px;font-weight:700;letter-spacing:.04em;padding:6px 12px 6px 8px;border-radius:99px;border:1px solid var(--border);background:var(--raised);color:var(--dim);cursor:pointer;transition:all .18s}
+.lg-back svg.i{width:14px;height:14px}
+.lg-back:hover{color:var(--accent);border-color:var(--accent);background:var(--lime-dim)}
+#legalView.doc .lg-back{display:inline-flex}
+#legalView.hub .lg-back{display:none}
+
+/* видимость языковых кнопок — показываем и в hub, и в doc (документы двуязычные) */
+#legalView .lg-langs{display:flex}
+
+/* =========================================================================
+   HUB: сетка карточек «Документов OKO» — 2 колонки на мобиле, 3 на планшете
+   ========================================================================= */
+.lg-hub{max-width:840px;margin:0 auto;padding:6px 2px 40px;animation:lgIn .35s ease}
+.lg-hub-intro{margin:6px 4px 22px}
+.lg-hub-intro h2{font-family:var(--font-display);font-size:clamp(22px,6vw,28px);line-height:1.05;letter-spacing:.05em;margin-bottom:6px}
+.lg-hub-intro p{font-size:13px;color:var(--dim);line-height:1.55;max-width:620px}
+.lg-hub-intro .lg-hub-op{font-size:12px;color:var(--dim);margin-top:10px;padding:10px 14px;border-radius:var(--r-md);background:var(--surface);border:1px solid var(--border);line-height:1.6;overflow-wrap:anywhere}
+.lg-hub-intro .lg-hub-op b{color:var(--text);font-weight:700}
+
+.lg-hub-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
+@media(min-width:720px){.lg-hub-grid{grid-template-columns:repeat(3,minmax(0,1fr));gap:14px}}
+
+.lg-card{display:flex;flex-direction:column;align-items:flex-start;gap:10px;padding:16px 14px 14px;border-radius:var(--r-md);border:1px solid var(--border);background:var(--raised);color:var(--text);text-align:left;cursor:pointer;transition:all .2s;position:relative;overflow:hidden;min-height:150px}
+.lg-card::after{content:'';position:absolute;left:0;right:0;bottom:0;height:2px;background:linear-gradient(90deg,transparent,var(--lime),transparent);opacity:0;transition:opacity .2s}
+.lg-card:hover{border-color:var(--accent);background:var(--lime-dim);transform:translateY(-2px)}
+.lg-card:hover::after{opacity:1}
+.lg-card-ico{width:38px;height:38px;border-radius:10px;background:var(--surface);border:1px solid var(--border);display:flex;align-items:center;justify-content:center;color:var(--accent);flex-shrink:0;transition:all .2s}
+.lg-card:hover .lg-card-ico{background:var(--lime);color:#000;border-color:var(--lime);box-shadow:var(--glow)}
+.lg-card-ico svg.i{width:20px;height:20px}
+.lg-card-t{font-family:var(--font-display);font-size:15px;line-height:1.15;letter-spacing:.05em;color:var(--text);overflow-wrap:break-word;-webkit-hyphens:auto;hyphens:auto;word-break:break-word}
+.lg-card-s{font-size:11px;color:var(--dim);letter-spacing:.02em;line-height:1.4;margin-top:auto}
+.lg-card-ver{position:absolute;top:12px;right:12px;font-size:9.5px;font-weight:800;letter-spacing:.08em;color:var(--accent);background:var(--lime-dim);border:1px solid var(--accent);padding:2px 7px;border-radius:99px;text-transform:uppercase}
+
+/* =========================================================================
+   DOC: одна юр-страница. Полотно 720px, ровные отступы, чистая шапка-cover.
+   ========================================================================= */
+
+/* в режиме hub — прячем табы (нужны только когда открыт документ) */
 .lg-tabs{display:flex;gap:7px;overflow-x:auto;padding:11px 16px;border-bottom:1px solid var(--border);flex-shrink:0;-webkit-overflow-scrolling:touch;scrollbar-width:none}
 .lg-tabs::-webkit-scrollbar{display:none}
-.lg-tab{flex-shrink:0;display:inline-flex;align-items:center;gap:7px;font-size:12.5px;font-weight:600;padding:7px 14px;border-radius:99px;border:1px solid var(--border);background:var(--raised);color:var(--dim);white-space:nowrap;transition:all .18s}
+#legalView.hub .lg-tabs{display:none}
+.lg-tab{flex-shrink:0;display:inline-flex;align-items:center;gap:7px;font-size:12.5px;font-weight:600;padding:7px 14px;border-radius:99px;border:1px solid var(--border);background:var(--raised);color:var(--dim);white-space:nowrap;transition:all .18s;cursor:pointer}
 .lg-tab svg.i{width:14px;height:14px}
 .lg-tab:hover{color:var(--accent)}
 .lg-tab.on{background:var(--lime-dim);border-color:var(--accent);color:var(--accent)}
 
 /* полотно документа */
-.lg-doc{max-width:720px;margin:0 auto;line-height:1.65;font-size:13.5px;padding-bottom:30px;animation:lgIn .35s ease}
+.lg-doc{max-width:720px;margin:0 auto;line-height:1.65;font-size:13.5px;padding:0 2px 30px;animation:lgIn .35s ease}
 @keyframes lgIn{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}
 @media(prefers-reduced-motion:reduce){.lg-doc{animation:none}}
-.lg-doc-head{display:flex;gap:16px;align-items:flex-start;border-bottom:2px solid var(--accent);padding-bottom:18px;margin-bottom:22px}
-/* текстовая колонка шапки: min-width:0 позволяет длинным заголовкам переноситься, а не рвать вёрстку */
+
+/* Официальная обложка документа: полноценный cover с гербом/лого, названием,
+   мета-строками и градиентной подложкой — вместо ранее «пустого чёрного поля». */
+.lg-doc-head{position:relative;display:flex;gap:18px;align-items:flex-start;padding:22px 22px 20px;margin:2px 0 22px;border-radius:var(--r-md);border:1px solid var(--border);background:linear-gradient(140deg,var(--surface) 0%,var(--raised) 100%);overflow:hidden;isolation:isolate}
+.lg-doc-head::before{content:'';position:absolute;left:0;top:0;bottom:0;width:4px;background:linear-gradient(180deg,var(--lime),var(--accent));box-shadow:0 0 14px rgba(154,255,0,.55);border-radius:4px 0 0 4px}
+:root[data-theme="light"] .lg-doc-head::before{box-shadow:none}
+.lg-doc-head::after{content:'';position:absolute;right:-40px;bottom:-40px;width:180px;height:180px;background:radial-gradient(circle,var(--lime-dim) 0%,transparent 65%);opacity:.6;pointer-events:none;z-index:-1}
 .lg-doc-head>div{min-width:0;flex:1}
-.lg-doc-logo{width:46px;height:46px;color:var(--accent);flex-shrink:0;filter:drop-shadow(0 0 8px rgba(154,255,0,.35))}
+.lg-doc-logo{width:52px;height:52px;color:var(--accent);flex-shrink:0;filter:drop-shadow(0 0 8px rgba(154,255,0,.35))}
 :root[data-theme="light"] .lg-doc-logo{filter:none}
-/* заголовок документа: адаптивный кегль + аккуратный перенос длинных слов («конфиденциальности») */
-.lg-doc-head h1{font-family:var(--font-display);font-size:clamp(24px,6.8vw,30px);line-height:1.04;letter-spacing:.04em;margin-bottom:6px;overflow-wrap:break-word;word-break:break-word;-webkit-hyphens:auto;hyphens:auto}
-.lg-doc-meta{font-size:11.5px;color:var(--dim);margin-top:3px;letter-spacing:.02em;overflow-wrap:break-word}
+/* заголовок документа: адаптивный кегль + аккуратный перенос длинных слов */
+.lg-doc-head h1{font-family:var(--font-display);font-size:clamp(22px,6.4vw,30px);line-height:1.04;letter-spacing:.04em;margin:0 0 6px;overflow-wrap:break-word;word-break:break-word;-webkit-hyphens:auto;hyphens:auto;color:var(--text)}
+.lg-doc-meta{font-size:11.5px;color:var(--dim);margin-top:3px;letter-spacing:.02em;overflow-wrap:break-word;line-height:1.5}
 .lg-doc-meta b{color:var(--text);font-weight:700}
+.lg-updated{display:inline-flex;align-items:center;gap:6px;margin-top:10px;padding:4px 10px;border-radius:99px;background:var(--lime-dim);border:1px solid var(--accent);color:var(--accent);font-size:10.5px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;white-space:nowrap}
+.lg-updated svg.i{width:11px;height:11px}
 
 /* оглавление / якоря */
 .lg-toc{background:var(--surface);border:1px solid var(--border);border-radius:var(--r-md);padding:14px 16px 16px;margin-bottom:26px;position:relative;overflow:hidden}
@@ -37,14 +88,12 @@
 .lg-toc-h{display:flex;align-items:center;gap:8px;margin-bottom:10px}
 .lg-toc-h svg.i{width:15px;height:15px;color:var(--accent)}
 .lg-toc-h b{font-family:var(--font-display);font-size:16px;letter-spacing:.08em;color:var(--text)}
-.lg-toc ol{list-style:none;display:flex;flex-direction:column;gap:2px;counter-reset:none}
-/* align-items:flex-start — номер держится у первой строки, когда пункт переносится на 2 строки */
+.lg-toc ol{list-style:none;display:flex;flex-direction:column;gap:2px;counter-reset:none;margin:0;padding:0}
 .lg-toc-a{display:flex;align-items:flex-start;gap:11px;width:100%;text-align:left;padding:7px 8px;border-radius:var(--r-sm);background:none;border:none;color:var(--dim);font-size:13px;font-weight:600;line-height:1.35;transition:background .15s,color .15s;cursor:pointer}
-.lg-toc-a>span:last-child{padding-top:2px}
+.lg-toc-a>span:last-child{padding-top:2px;overflow-wrap:break-word;word-break:break-word;min-width:0;flex:1}
 .lg-toc-a:hover{background:var(--raised);color:var(--accent)}
 .lg-toc-n{flex-shrink:0;width:22px;height:22px;border-radius:50%;background:var(--raised);border:1px solid var(--border);display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:800;color:var(--accent);transition:all .15s}
 .lg-toc-a:hover .lg-toc-n{background:var(--lime);border-color:var(--lime);color:#000;box-shadow:var(--glow)}
-/* активный пункт оглавления (scroll-spy) — подсветка текущей секции при прокрутке */
 .lg-toc-a.on{color:var(--accent);background:var(--lime-dim)}
 .lg-toc-a.on .lg-toc-n{background:var(--lime);border-color:var(--lime);color:#000;box-shadow:var(--glow)}
 
@@ -53,21 +102,21 @@
 .lg-sec.lg-flash{animation:lgFlash .9s ease}
 @keyframes lgFlash{0%{background:var(--lime-dim);box-shadow:0 0 0 8px var(--lime-dim)}100%{background:transparent;box-shadow:0 0 0 8px transparent}}
 @media(prefers-reduced-motion:reduce){.lg-sec.lg-flash{animation:none}}
-.lg-sec h2{position:relative;display:flex;align-items:baseline;gap:7px;font-family:var(--font-display);font-size:20px;letter-spacing:.06em;color:var(--accent);margin-bottom:8px}
+.lg-sec h2{position:relative;display:flex;align-items:baseline;gap:7px;font-family:var(--font-display);font-size:20px;letter-spacing:.06em;color:var(--accent);margin:0 0 8px;flex-wrap:wrap}
 .lg-sec-n{color:var(--accent);opacity:.6;flex-shrink:0}
 .lg-sec-top{margin-left:auto;flex-shrink:0;width:26px;height:26px;border-radius:50%;border:1px solid var(--border);background:var(--raised);color:var(--dim);display:inline-flex;align-items:center;justify-content:center;transform:rotate(-90deg);transition:all .16s;cursor:pointer;opacity:.55}
 .lg-sec-top svg.i{width:13px;height:13px}
 .lg-sec-top:hover{color:var(--accent);border-color:var(--accent);opacity:1}
-.lg-sec p{margin-bottom:9px;color:var(--text)}
+.lg-sec p{margin:0 0 9px;color:var(--text);overflow-wrap:break-word;word-break:break-word;-webkit-hyphens:auto;hyphens:auto}
 .lg-sec p:last-child{margin-bottom:0}
 .lg-sec b{font-weight:700}
-.lg-sec ul{list-style:none;margin:4px 0 10px;display:flex;flex-direction:column;gap:6px}
-.lg-sec li{position:relative;padding-left:18px;color:var(--text)}
+.lg-sec ul{list-style:none;margin:4px 0 10px;padding:0;display:flex;flex-direction:column;gap:6px}
+.lg-sec li{position:relative;padding-left:18px;color:var(--text);overflow-wrap:break-word;word-break:break-word;-webkit-hyphens:auto;hyphens:auto}
 .lg-sec li::before{content:'';position:absolute;left:2px;top:9px;width:6px;height:6px;border-radius:50%;background:var(--lime)}
 
-/* таблица тарифов */
-.lg-table{width:100%;border-collapse:collapse;font-size:12.5px;margin:8px 0 10px}
-/* колонки «состав» получают максимум места; тариф/цена — компактные; перенос длинных слов — защита от overflow */
+/* таблица тарифов — с горизонтальным скроллом в узкой колонке */
+.lg-table-wrap{overflow-x:auto;-webkit-overflow-scrolling:touch;margin:8px 0 10px;border-radius:var(--r-sm);border:1px solid var(--border)}
+.lg-table{width:100%;border-collapse:collapse;font-size:12.5px;min-width:520px}
 .lg-table td,.lg-table th{overflow-wrap:break-word;word-break:break-word}
 .lg-table th:first-child,.lg-table td:first-child{width:22%}
 .lg-table th:nth-child(2),.lg-table td:nth-child(2){width:18%}
@@ -77,43 +126,40 @@
 .lg-note{font-size:11.5px;color:var(--dim)}
 
 /* реквизиты */
-.lg-req{background:var(--surface);border:1px solid var(--border);border-radius:var(--r-md);padding:14px 16px;font-size:12.5px;color:var(--dim);line-height:1.7;margin-top:26px}
+.lg-req{background:var(--surface);border:1px solid var(--border);border-radius:var(--r-md);padding:14px 16px;font-size:12.5px;color:var(--dim);line-height:1.7;margin-top:26px;overflow-wrap:anywhere}
 .lg-req b{color:var(--text)}
 .lg-req-h{font-family:var(--font-display);font-size:14px;letter-spacing:.08em;color:var(--accent);margin-bottom:7px}
 
 /* блок печати и подписи (базовый .doc-sign-block — в core-ext) */
-/* «заверено»: пунктирный разделитель отделяет реквизиты от печати/подписи — премиальный официальный вид */
-.lg-doc .doc-sign-block{padding:22px 2px 0;margin-top:26px;border-top:1px dashed var(--border)}
-.lg-seal{flex-shrink:0}
-:root:not([data-theme="light"]) .lg-seal{filter:brightness(1.85) saturate(.85)}
-.lg-sig-wrap{display:flex;flex-direction:column;min-width:200px}
-.lg-sig-line{height:1px;background:var(--dim);opacity:.6;margin-top:-8px}
-.lg-sig-cap{font-size:11px;color:var(--dim);margin-top:5px;letter-spacing:.02em}
+.lg-doc .doc-sign-block{padding:22px 4px 0;margin-top:26px;border-top:1px dashed var(--border);display:flex;gap:24px;align-items:flex-end;flex-wrap:wrap}
+.lg-seal{flex-shrink:0;width:150px;height:150px;display:flex;align-items:center;justify-content:center}
+.lg-seal img{width:100%;height:100%;object-fit:contain}
+:root:not([data-theme="light"]) .lg-seal img{filter:brightness(1.6) contrast(1.05) saturate(1.05)}
+.lg-sig-wrap{display:flex;flex-direction:column;min-width:220px;flex:1}
+.lg-sig-line{height:1px;background:var(--dim);opacity:.6;margin-top:-6px}
+.lg-sig-cap{font-size:11px;color:var(--dim);margin-top:5px;letter-spacing:.02em;overflow-wrap:break-word}
 
 /* кликабельные ссылки на экране входа */
 .lg-a{color:var(--accent);text-decoration:underline;text-underline-offset:2px;cursor:pointer;transition:opacity .15s}
 .lg-a:hover{opacity:.75}
 
-/* ===== v1.84: премиум-обвязка документа (progress, updated, actions, consent, print) ===== */
-
-/* тонкая полоса прогресса чтения — фиксирована к верхнему краю полотна документа */
+/* прогресс чтения — тонкая полоса под шапкой */
 .lg-progress{position:sticky;top:0;left:0;right:0;height:2px;background:transparent;z-index:5;margin:-1px 0 12px;pointer-events:none}
 .lg-progress>span{display:block;height:100%;width:0%;background:linear-gradient(90deg,var(--lime),var(--accent));box-shadow:0 0 6px rgba(154,255,0,.55);transition:width .12s linear;border-radius:0 2px 2px 0}
 :root[data-theme="light"] .lg-progress>span{box-shadow:none}
 
-/* «обновлено N» — компактный чип в шапке документа */
-.lg-updated{display:inline-flex;align-items:center;gap:6px;margin-top:8px;padding:4px 10px;border-radius:99px;background:var(--lime-dim);border:1px solid var(--accent);color:var(--accent);font-size:11px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;white-space:nowrap}
-.lg-updated svg.i{width:11px;height:11px}
-
-/* панель действий: скачать HTML, поделиться ссылкой */
+/* панель действий */
 .lg-actions{display:flex;flex-wrap:wrap;gap:8px;margin:-6px 0 22px}
 .lg-actions button{display:inline-flex;align-items:center;gap:7px;padding:8px 14px;border-radius:99px;border:1px solid var(--border);background:var(--raised);color:var(--text);font-size:12.5px;font-weight:700;letter-spacing:.02em;white-space:nowrap;cursor:pointer;transition:all .18s}
 .lg-actions button svg.i{width:14px;height:14px;flex-shrink:0}
 .lg-actions button:hover{color:var(--accent);border-color:var(--accent);background:var(--lime-dim)}
 .lg-actions button.on{background:var(--lime);border-color:var(--lime);color:#000;box-shadow:var(--glow)}
 .lg-actions button.on svg.i{color:#000}
+.lg-actions .lg-btn-pdf{background:var(--lime);border-color:var(--lime);color:#000;box-shadow:var(--glow)}
+.lg-actions .lg-btn-pdf:hover{background:var(--accent);border-color:var(--accent);color:#000}
+.lg-actions .lg-btn-pdf svg.i{color:#000}
 
-/* блок согласия: галка «прочитано, согласен» — сохраняется в localStorage */
+/* блок согласия: галка «прочитано, согласен» */
 .lg-consent{margin-top:22px;padding:14px 16px;border-radius:var(--r-md);border:1px solid var(--border);background:var(--surface);display:flex;align-items:flex-start;gap:12px;cursor:pointer;transition:all .18s;user-select:none}
 .lg-consent:hover{border-color:var(--accent);background:var(--lime-dim)}
 .lg-consent.on{border-color:var(--lime);background:var(--lime-dim);box-shadow:0 0 0 1px var(--lime) inset}
@@ -127,16 +173,24 @@
 .lg-consent-s{font-size:11.5px;color:var(--dim);margin-top:3px;letter-spacing:.02em}
 .lg-consent.on .lg-consent-t{color:var(--accent)}
 
-/* ===== ПЕЧАТЬ: чистый белый лист, шапка с лого OKO, скрытая обвязка ===== */
+/* ===== договор-акт по сделке (авто-заполненный при покупке) ===== */
+.lg-deal-facts{display:grid;grid-template-columns:auto 1fr;gap:8px 14px;background:var(--surface);border:1px solid var(--border);border-radius:var(--r-md);padding:14px 16px;font-size:12.5px;color:var(--text);margin:6px 0 18px}
+.lg-deal-facts dt{color:var(--dim);letter-spacing:.02em}
+.lg-deal-facts dd{margin:0;font-weight:700;overflow-wrap:break-word;word-break:break-word}
+.lg-deal-facts dd b{color:var(--accent)}
+
+/* ===== ПЕЧАТЬ (browser Save-as-PDF): чистый белый лист, шапка с лого, скрытая обвязка ===== */
 @media print{
   html,body{background:#fff!important;color:#000!important}
   body>*{visibility:hidden}
   #legalView, #legalView *{visibility:visible}
   #legalView{position:static;transform:none;max-width:none;display:block}
-  .sv-head,.lg-tabs,.lg-langs,.lg-actions,.lg-consent,.lg-progress,.lg-sec-top,.lg-toc-a{visibility:hidden;height:0;padding:0;margin:0;border:0}
-  .sv-body{overflow:visible;height:auto}
+  .sv-head,.lg-tabs,.lg-langs,.lg-back,.lg-actions,.lg-consent,.lg-progress,.lg-sec-top,.lg-toc-a{visibility:hidden;height:0;padding:0;margin:0;border:0}
+  .lg-hub{visibility:hidden;height:0}
+  .sv-body{overflow:visible;height:auto;padding:0}
   .lg-doc{max-width:none;padding:0;font-size:11pt;color:#000;animation:none}
-  .lg-doc-head{border-color:#000}
+  .lg-doc-head{background:#fff!important;border:1px solid #000;color:#000;padding:14px 16px}
+  .lg-doc-head::before,.lg-doc-head::after{display:none}
   .lg-doc-head h1{font-size:22pt;color:#000}
   .lg-doc-logo{color:#000;filter:none}
   .lg-doc-meta{color:#333}
@@ -145,12 +199,17 @@
   .lg-sec{break-inside:avoid-page}
   .lg-sec p, .lg-sec li{color:#000}
   .lg-sec li::before{background:#000}
+  .lg-table-wrap{border-color:#000;overflow:visible}
+  .lg-table{min-width:0}
   .lg-table th{background:#eee;color:#000}
   .lg-table th, .lg-table td{border-color:#000;color:#000}
   .lg-req{background:transparent;border-color:#000;color:#000}
   .lg-req-h{color:#000}
   .doc-sign-block{border-top-color:#000}
+  .lg-seal img{filter:none!important}
   .lg-sig-cap{color:#000}
-  /* шапка на каждой странице при печати */
+  .lg-deal-facts{background:transparent;border-color:#000;color:#000}
+  .lg-deal-facts dt{color:#333}
+  .lg-deal-facts dd b{color:#000}
   @page{margin:16mm 14mm 14mm 14mm}
 }
