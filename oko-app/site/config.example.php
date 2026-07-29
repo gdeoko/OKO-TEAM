@@ -36,4 +36,12 @@ return [
     'vapid_private' => 'PUT_ON_VPS',
     'vapid_subject' => 'mailto:okoteam.top@gmail.com',
     'site_url' => 'https://okoteam.top',
+    // Аналитика фронта: три сервиса, единый вызов window.okoTrack(event, props).
+    // Реальные ID/ключи только на VPS. Build.py вписывает плейсхолдеры в index.html,
+    // а сервер должен подменить YOUR_YMK_ID / YOUR_AMPLITUDE_API_KEY / YOUR_SENTRY_DSN
+    // на реальные значения при отдаче (или заинжектить <script> с window.OKO_ANALYTICS
+    // перед основным аналитическим блоком).
+    'ymk_id'         => 'PUT_ON_VPS',   // Yandex Metrika counter ID (число)
+    'amplitude_key'  => 'PUT_ON_VPS',   // Amplitude API key
+    'sentry_dsn'     => 'PUT_ON_VPS',   // Sentry DSN (https://...@sentry.io/...)
 ];

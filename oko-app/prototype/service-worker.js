@@ -14,6 +14,8 @@ const RUNTIME_CACHE = `oko-runtime-${VERSION}`;
 const CORE_ASSETS = [
   '/',
   '/index.html',
+  '/app.js',            /* split-bundle: модульный JS (defer) */
+  '/app.css',           /* split-bundle: модульный CSS (non-blocking) */
   '/offline.html',
   '/oko-manifest.json',
   '/oko-icon-192.png',
