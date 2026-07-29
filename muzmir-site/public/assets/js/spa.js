@@ -124,8 +124,15 @@
     if (a.hasAttribute('data-no-spa')) return;
     var href = a.getAttribute('href');
     if (!isInternal(href)) return;
+    var dest = new URL(href, location.href);
+    // Уже на этой странице (тот же path+search, без хэша) — не перезагружаем, просто скроллим вверх
+    if (dest.pathname === location.pathname && dest.search === location.search && !dest.hash) {
+      e.preventDefault();
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+      return;
+    }
     e.preventDefault();
-    navigate(new URL(href, location.href).pathname + new URL(href, location.href).search, true);
+    navigate(dest.pathname + dest.search + dest.hash, true);
   }, false);
 
   window.addEventListener('popstate', function () {

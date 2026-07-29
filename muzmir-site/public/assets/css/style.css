@@ -1553,3 +1553,142 @@ a.notif-item:hover{transform:translateY(-2px);box-shadow:0 10px 22px rgba(201,16
 .theme-preview--light{background:linear-gradient(180deg,#fffcf5,#f3e9d0);color:#b8923a;border:1px solid #e7ddc7}
 .theme-preview--dark{background:linear-gradient(180deg,#181017,#0e0b0f);color:#e8c25a;border:1px solid rgba(232,194,90,.25)}
 
+
+/* ══════════════════════════════════════════════════════════════════════════
+   APP-РЕЖИМ v3 — финальный авторитетный слой (перекрывает всё выше).
+   Приложение: фикс-шапка + фикс-меню + ЕДИНЫЙ фикс-фон + прозрачные секции,
+   без подвала, компактный hero, ровные карточки.
+   ══════════════════════════════════════════════════════════════════════════ */
+
+/* --- Шапка приложения: лого + название + иконки (поиск, уведомления) --- */
+.app-header .container{display:flex;align-items:center;justify-content:space-between;gap:10px;
+  max-width:900px;min-height:46px;padding-top:0;padding-bottom:0}
+.app-header .brand{display:flex;align-items:center;gap:9px;text-decoration:none;min-width:0}
+.app-header .brand img{width:38px;height:38px;flex:none;border-radius:9px;
+  filter:drop-shadow(0 2px 6px rgba(201,168,76,.28))}
+.app-header .brand span{font-family:var(--ff-display);font-weight:800;font-size:.98rem;line-height:1;
+  color:var(--text);white-space:nowrap}
+.app-header-actions{display:flex;align-items:center;gap:8px;flex:none}
+.app-icon-btn{position:relative;display:inline-flex;align-items:center;justify-content:center;
+  width:40px;height:40px;border-radius:11px;background:var(--gold-soft);color:var(--gold-ink);
+  border:1px solid var(--glass-brd);text-decoration:none;
+  transition:transform .16s cubic-bezier(.2,.8,.2,1),box-shadow .2s,border-color .2s}
+.app-icon-btn svg{width:21px;height:21px}
+.app-icon-btn:active{transform:scale(.92)}
+.app-icon-btn:hover{border-color:var(--gold);box-shadow:0 4px 12px rgba(201,168,76,.22)}
+[data-theme="dark"] .app-icon-btn{background:color-mix(in srgb,var(--gold-soft) 26%,transparent);color:var(--gold)}
+.app-icon-badge{position:absolute;top:-3px;right:-3px;min-width:16px;height:16px;padding:0 4px;
+  background:#e63946;color:#fff;border-radius:999px;font-size:.6rem;font-weight:800;line-height:16px;text-align:center;
+  border:1.5px solid var(--bg);box-shadow:0 2px 6px rgba(230,57,70,.5)}
+/* Старые остатки шапки-сайта — гасим */
+.topbar,.nav,.nav-actions,.theme-toggle,.burger,.nav-cta-mobile,.footer{display:none !important}
+
+/* --- ЕДИНЫЙ фиксированный анимационный фон на ВСЁм приложении --- */
+.app-bg{position:fixed;inset:0;z-index:-3;pointer-events:none;overflow:hidden;
+  background:linear-gradient(180deg,var(--bg) 0%,var(--bg-2,#f6ecd4) 100%)}
+[data-theme="dark"] .app-bg{background:linear-gradient(180deg,#0e0b0f 0%,#181017 100%)}
+/* Слой 1: мягкая золотая «аврора» — медленный дрейф, стоит на месте */
+.app-bg::before{content:"";position:absolute;inset:-14%;
+  background:
+    radial-gradient(42% 40% at 18% 16%,rgba(232,194,90,.30),transparent 62%),
+    radial-gradient(38% 40% at 84% 24%,rgba(139,111,31,.24),transparent 64%),
+    radial-gradient(52% 44% at 52% 92%,rgba(201,168,76,.22),transparent 66%);
+  filter:blur(42px);opacity:.9;will-change:transform;
+  animation:appbgAurora 34s ease-in-out infinite alternate}
+[data-theme="dark"] .app-bg::before{opacity:.5}
+/* Слой 2: плывущие ноты — бесконечный диагональный дрейф */
+.app-bg::after{content:"";position:absolute;inset:-40%;opacity:.05;
+  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='150' height='150' viewBox='0 0 150 150'%3E%3Cg fill='none' stroke='%23c9a84c' stroke-width='1.6'%3E%3Cpath d='M30 96V54l20-4v42'/%3E%3Ccircle cx='26' cy='98' r='6'/%3E%3Ccircle cx='46' cy='90' r='6'/%3E%3Cpath d='M104 116V64l16-3v46'/%3E%3Ccircle cx='100' cy='118' r='5'/%3E%3Ccircle cx='116' cy='110' r='5'/%3E%3C/g%3E%3C/svg%3E");
+  background-size:170px 170px;will-change:transform;
+  animation:appbgNotes 70s linear infinite}
+[data-theme="dark"] .app-bg::after{opacity:.07}
+@keyframes appbgAurora{
+  0%{transform:translate3d(-2%,-2%,0) scale(1)}
+  50%{transform:translate3d(2%,3%,0) scale(1.06)}
+  100%{transform:translate3d(-1%,-3%,0) scale(1.08)}}
+@keyframes appbgNotes{0%{transform:translate3d(0,0,0)}100%{transform:translate3d(-170px,-170px,0)}}
+@media(prefers-reduced-motion:reduce){.app-bg::before,.app-bg::after{animation:none}}
+/* Отключаем старые фоны (bg-fx / body::before / body::after / hero::before-after) */
+.bg-fx{display:none !important}
+body::before,body::after{display:none !important}
+
+/* --- Все секции ПРОЗРАЧНЫЕ (единый фон просвечивает, никаких полос) --- */
+.section,.section--parchment,.section--tint,.section--navy,.section--dark,
+.hero,.comp-banner,.galx-hero,.auth-page{background:transparent !important}
+.section::before,.section::after,.hero::before,.hero::after{display:none !important}
+.section{padding:18px 0 !important}
+.section:first-of-type{padding-top:8px !important}
+
+/* --- Компактный hero: всё влезает в один экран --- */
+.hero .container{display:flex;flex-direction:column;align-items:center;text-align:center;gap:10px !important;
+  padding-top:8px !important;padding-bottom:8px !important}
+.hero .hero-media{order:0;margin:0 auto}
+.hero-logo,.hero-media img.hero-logo{width:min(128px,34vw) !important;height:auto !important;animation:none !important;
+  filter:drop-shadow(0 10px 26px rgba(201,168,76,.35)) !important}
+.hero-ring,.hero-media::before,.hero-media::after,.hero-glow,.hero-notes,.hero-eq{display:none !important}
+.hero .eyebrow{margin:0 0 2px !important;font-size:.82rem !important}
+.hero h1{font-size:clamp(1.4rem,6vw,2rem) !important;line-height:1.06 !important;margin:0 0 4px !important}
+.hero .lead{font-size:.86rem !important;line-height:1.42 !important;margin:0 0 10px !important;
+  max-width:520px;color:var(--muted)}
+.hero-cta{display:flex;flex-direction:column;gap:8px;width:100%;max-width:400px;margin:0 auto !important}
+.hero-cta .btn{width:100%;min-height:50px !important}
+.hero-trust{display:flex;flex-wrap:wrap;justify-content:center;gap:6px !important;margin:10px auto 0 !important;max-width:460px}
+.hero-trust li{padding:5px 10px !important;font-size:.68rem !important}
+@media(min-width:721px){
+  .hero .container{flex-direction:row;text-align:left;gap:26px !important}
+  .hero-logo{width:min(200px,26vw) !important}
+  .hero-cta,.hero-trust{margin-left:0 !important;margin-right:0 !important}
+  .hero-cta{flex-direction:row}
+}
+
+/* --- Анимационный разделитель между hero и «Действующие конкурсы» --- */
+.mz-divider{display:flex;align-items:center;justify-content:center;gap:12px;margin:6px auto 14px;max-width:340px;padding:0 20px}
+.mz-divider::before,.mz-divider::after{content:"";flex:1;height:1px;
+  background:linear-gradient(90deg,transparent,var(--gold),transparent)}
+.mz-divider i{width:9px;height:9px;transform:rotate(45deg);background:var(--grad-gold);border-radius:2px;
+  box-shadow:0 0 12px var(--gold);animation:mzDivPulse 2.6s ease-in-out infinite}
+@keyframes mzDivPulse{0%,100%{opacity:.6;transform:rotate(45deg) scale(1)}50%{opacity:1;transform:rotate(45deg) scale(1.25)}}
+@media(prefers-reduced-motion:reduce){.mz-divider i{animation:none}}
+
+/* --- /menu: ровные карточки без кривых переносов слов --- */
+.menu-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+@media(min-width:560px){.menu-grid{grid-template-columns:repeat(3,1fr)}}
+@media(min-width:840px){.menu-grid{grid-template-columns:repeat(4,1fr)}}
+.menu-tile{display:flex;flex-direction:column;align-items:flex-start;gap:10px;
+  padding:14px 12px;border-radius:16px;min-height:96px;
+  background:color-mix(in srgb,var(--panel-solid,#fff) 80%,transparent);border:1px solid var(--line);
+  color:var(--text);text-decoration:none;box-shadow:0 4px 14px rgba(139,111,31,.08);
+  backdrop-filter:blur(8px);transition:transform .2s cubic-bezier(.2,.8,.2,1),box-shadow .22s,border-color .22s;
+  opacity:0;transform:translateY(12px);animation:menuTileIn .42s cubic-bezier(.2,.85,.25,1) forwards;
+  animation-delay:calc(var(--i,0)*22ms);position:relative;overflow:hidden}
+[data-theme="dark"] .menu-tile{background:color-mix(in srgb,#231b18 78%,transparent);border-color:rgba(232,194,90,.16)}
+.menu-tile-ic{flex:none;width:40px;height:40px;border-radius:11px;display:flex;align-items:center;justify-content:center;
+  background:var(--grad-gold);color:var(--gold-fg);box-shadow:0 5px 12px rgba(201,168,76,.28)}
+.menu-tile-ic svg{width:20px;height:20px}
+.menu-tile-lbl{flex:1;font-weight:700;font-size:.86rem;line-height:1.2;
+  word-break:normal;overflow-wrap:normal;hyphens:none;display:flex;align-items:center}
+.menu-tile-arr{position:absolute;top:14px;right:12px;width:14px;height:14px;color:var(--gold);opacity:.5}
+@media(hover:hover){.menu-tile:hover{transform:translateY(-3px);border-color:var(--gold);box-shadow:0 12px 26px rgba(201,168,76,.22)}}
+@media(hover:none){.menu-tile:active{transform:scale(.97)}}
+
+/* --- Header: компенсация фикс-шапки на десктопе тоже --- */
+@media(min-width:901px){
+  html body{padding-top:60px !important}
+}
+
+/* --- Никаких «резиновых» перерисовок фона при скролле (стабильность) --- */
+html{background:var(--bg)}
+[data-theme="dark"] html{background:#0e0b0f}
+
+/* --- /menu: поиск + заголовок --- */
+.menu-page{padding:14px 0 30px !important}
+.menu-head{text-align:center;margin-bottom:14px}
+.menu-head h1{font-family:var(--ff-display);font-size:clamp(1.7rem,6vw,2.3rem);line-height:1.05;margin:2px 0 4px;
+  background:var(--grad-gold);-webkit-background-clip:text;background-clip:text;color:transparent}
+.menu-head .menu-sub{color:var(--muted);margin:0;font-size:.88rem}
+.menu-search{display:flex;align-items:center;gap:10px;padding:11px 14px;margin:0 0 14px;border-radius:14px;
+  background:var(--panel);border:1px solid var(--glass-brd);box-shadow:0 4px 12px rgba(139,111,31,.06)}
+.menu-search svg{width:20px;height:20px;color:var(--gold-ink);flex:none}
+.menu-search input{flex:1;border:none;background:none;outline:none;font:inherit;font-size:1rem;color:var(--text);min-height:24px;padding:0;box-shadow:none}
+.menu-search input::placeholder{color:var(--muted)}
+.menu-empty{grid-column:1/-1;text-align:center;color:var(--muted);padding:30px 10px}

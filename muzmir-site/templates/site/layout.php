@@ -24,7 +24,7 @@ if ($u && is_file(BASE_PATH . '/core/notifications.php')) {
 ?><!doctype html>
 <html lang="ru"<?= $inTg ? ' class="in-tg"' : '' ?>>
 <head>
-<script>document.documentElement.className+=' js';document.documentElement.dataset.theme='light';try{var t=localStorage.getItem('muzmir-theme');if(t==='dark')document.documentElement.dataset.theme='dark';}catch(e){}<?php if (!empty($u['music_off'])): ?>window.MZ_MUSIC_OFF=true;<?php endif; ?></script>
+<script>document.documentElement.className+=' js';document.documentElement.dataset.theme='light';try{if(!localStorage.getItem('mz-theme-reset-v3')){localStorage.setItem('muzmir-theme','light');localStorage.setItem('mz-theme-reset-v3','1');}var t=localStorage.getItem('muzmir-theme');if(t==='dark')document.documentElement.dataset.theme='dark';}catch(e){}<?php if (!empty($u['music_off'])): ?>window.MZ_MUSIC_OFF=true;<?php endif; ?></script>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <?php
@@ -91,49 +91,45 @@ html body,html.in-tg body{
   contain:none !important;
 }
 html body main{padding-bottom:calc(24px + env(safe-area-inset-bottom)) !important}
-.header{padding-top:env(safe-area-inset-top,0);padding-left:env(safe-area-inset-left,0);padding-right:env(safe-area-inset-right,0)}
+/* CRITICAL: шапка ВСЕГДА закреплена сверху и НЕПРОЗРАЧНА (контент не просвечивает под ней). */
+html body header.app-header{
+  position:fixed !important;
+  top:0 !important; left:0 !important; right:0 !important;
+  z-index:2147482000 !important;
+  background:var(--bg,#fffcf5) !important;
+  border-bottom:1px solid var(--line,rgba(0,0,0,.08)) !important;
+  box-shadow:0 2px 14px rgba(20,16,6,.06) !important;
+  backdrop-filter:none !important;
+  padding-top:calc(6px + env(safe-area-inset-top,0)) !important;
+  padding-bottom:6px !important;
+  padding-left:env(safe-area-inset-left,0) !important;
+  padding-right:env(safe-area-inset-right,0) !important;
+  transform:none !important;
+}
+[data-theme="dark"] html body header.app-header,
+html[data-theme="dark"] body header.app-header{background:#141019 !important;border-bottom-color:rgba(232,194,90,.14) !important}
+/* Отступ сверху под фиксированную шапку */
+html body{padding-top:calc(58px + env(safe-area-inset-top,0)) !important}
 </style>
 </head>
 <body<?= $u ? ' class="is-auth"' : '' ?>>
-<div class="bg-fx" aria-hidden="true"></div>
-<div class="topbar"><div class="container">
-  <a href="tel:<?= h(cfgv('org_phone_raw')) ?>"><?= h(cfgv('org_phone')) ?></a>
-  <span><?= h(cfgv('org_reg')) ?></span>
-</div></div>
+<div class="app-bg" aria-hidden="true"></div>
 
-<header class="header"><div class="container">
+<header class="header app-header"><div class="container">
   <a class="brand" href="<?= url('/') ?>">
-    <img src="<?= asset('img/logo_muzmir_256.png') ?>" alt="Логотип КЦ «Музыкальный Мир»" width="44" height="44">
+    <img src="<?= asset('img/logo_muzmir_256.png') ?>" alt="Логотип КЦ «Музыкальный Мир»" width="40" height="40">
     <span>Музыкальный<br>Мир</span>
   </a>
-  <nav class="nav" id="nav">
-    <?php foreach ($nav as $href => $label): ?>
-      <a href="<?= url($href) ?>" class="<?= $active === $href ? 'active' : '' ?>"><?= h($label) ?></a>
-    <?php endforeach; ?>
-    <div class="nav-cta-mobile">
-      <?php if ($u): ?>
-        <a class="btn btn--ghost" href="<?= url('/cabinet') ?>">Профиль</a>
-        <?php if (user_can('moderator')): ?><a class="btn btn--primary" href="<?= url('/admin') ?>">Панель управления</a><?php endif; ?>
-      <?php else: ?>
-        <a class="btn btn--ghost" href="<?= url('/login') ?>">Вход</a>
-        <a class="btn btn--primary" href="<?= url('/apply') ?>">Подать заявку</a>
-      <?php endif; ?>
-    </div>
-  </nav>
-  <div class="nav-actions">
-    <button class="theme-toggle" id="themeToggle" aria-label="Сменить тему" title="Сменить тему">
-      <svg class="icon-moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"/></svg>
-    </button>
-    <?php if ($u): ?>
-      <a class="btn btn--ghost" href="<?= url('/cabinet') ?>">Профиль</a>
-      <?php if (user_can('moderator')): ?><a class="btn btn--primary" href="<?= url('/admin') ?>">Админка</a><?php endif; ?>
-    <?php else: ?>
-      <a class="btn btn--ghost" href="<?= url('/login') ?>">Вход</a>
-      <a class="btn btn--primary" href="<?= url('/apply') ?>">Подать заявку</a>
-    <?php endif; ?>
-    <a class="burger" href="<?= url('/menu') ?>" aria-label="Меню" title="Меню">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M3 6h18M3 12h18M3 18h18"/></svg>
+  <div class="app-header-actions">
+    <a class="app-icon-btn" href="<?= url('/menu') ?>#menuSearch" aria-label="Поиск по разделам" title="Поиск">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/></svg>
     </a>
+    <?php if ($u): ?>
+      <a class="app-icon-btn" href="<?= url('/notifications') ?>" aria-label="Уведомления" title="Уведомления">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8a6 6 0 0 0-12 0c0 7-3 9-3 9h18s-3-2-3-9M13.7 21a2 2 0 0 1-3.4 0"/></svg>
+        <?php if ($unreadNotif > 0): ?><span class="app-icon-badge"><?= $unreadNotif > 9 ? '9+' : (int)$unreadNotif ?></span><?php endif; ?>
+      </a>
+    <?php endif; ?>
   </div>
 </div></header>
 
@@ -144,63 +140,17 @@ html body main{padding-bottom:calc(24px + env(safe-area-inset-bottom)) !importan
 <?= $content ?>
 </main>
 
-<footer class="footer"><div class="container">
-  <div class="footer-grid">
-    <div class="footer-brand">
-      <img src="<?= asset('img/logo_muzmir_256.png') ?>" alt="Логотип" width="56" height="56">
-      <p><?= h(cfgv('org_full')) ?></p>
-      <p style="opacity:.7;font-size:.85rem"><?= h(cfgv('org_reg')) ?></p>
-    </div>
-    <div>
-      <h4>Разделы</h4>
-      <ul>
-        <?php foreach (['/competitions'=>'Конкурсы','/apply'=>'Подать заявку','/awards'=>'Награды','/order-awards'=>'Заказ наград','/concerts'=>'Концерты','/blog'=>'Блог','/about'=>'О нас'] as $hr=>$lb): ?>
-          <li><a href="<?= url($hr) ?>"><?= h($lb) ?></a></li>
-        <?php endforeach; ?>
-      </ul>
-    </div>
-    <div>
-      <h4>Информация</h4>
-      <ul>
-        <li><a href="<?= url('/goals') ?>">Цели и задачи</a></li>
-        <li><a href="<?= url('/ministry-support') ?>">Поддержка министерства</a></li>
-        <li><a href="<?= url('/faq') ?>">Вопросы и ответы</a></li>
-        <li><a href="<?= url('/reviews') ?>">Отзывы</a></li>
-        <li><a href="<?= url('/agreement') ?>">Пользовательское соглашение</a></li>
-        <li><a href="<?= url('/privacy') ?>">Политика конфиденциальности</a></li>
-      </ul>
-    </div>
-    <div>
-      <h4>Контакты</h4>
-      <ul>
-        <li><?= h(cfgv('org_address')) ?></li>
-        <li><a href="tel:<?= h(cfgv('org_phone_raw')) ?>"><?= h(cfgv('org_phone')) ?></a></li>
-        <li><a href="mailto:<?= h(cfgv('org_email')) ?>"><?= h(cfgv('org_email')) ?></a></li>
-        <li><?= h(cfgv('org_hours')) ?></li>
-        <li><a href="<?= h(cfgv('org_vk')) ?>" target="_blank" rel="noopener">ВКонтакте</a> · <a href="<?= h(cfgv('org_tg_channel')) ?>" target="_blank" rel="noopener">Telegram</a></li>
-      </ul>
-    </div>
-  </div>
-  <div class="footer-partners">
-    <?php foreach ($partners as [$img,$alt,$link]): ?>
-      <a href="<?= h($link) ?>" target="_blank" rel="noopener" title="<?= h($alt) ?>"><img src="<?= asset('img/'.$img.'.webp') ?>" alt="<?= h($alt) ?>" loading="lazy"></a>
-    <?php endforeach; ?>
-  </div>
-  <div class="footer-bottom">
-    <span>© <?= h(cfgv('year')) ?> <?= h(cfgv('org_full')) ?></span>
-    <span>При информационной поддержке Министерств культуры и образования субъектов Российской Федерации</span>
-  </div>
-</div></footer>
+<?php /* Footer убран — приложение без подвала, вся навигация в нижнем меню и /menu */ ?>
 
 <nav class="appnav" aria-label="Нижняя навигация">
   <div class="appnav-inner">
     <span class="appnav-ind" aria-hidden="true"></span>
     <a href="<?= url('/') ?>" class="<?= $active==='/'?'active':'' ?>">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M3 11l9-8 9 8"/><path d="M5 10v10h14V10"/></svg>Главная</a>
-    <a href="<?= url('/competitions') ?>" class="<?= $active==='/competitions'?'active':'' ?>">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M3 10h18M8 2v4M16 2v4"/><circle cx="12" cy="15" r="2.4"/></svg>Афиша</a>
+    <a href="<?= url('/menu') ?>" class="<?= $active==='/menu'?'active':'' ?>">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/></svg>Меню</a>
     <a href="<?= url('/apply') ?>" class="appnav-cta<?= $active==='/apply'?' active':'' ?>" aria-label="Подать заявку">
-      <span class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M12 5v14M5 12h14"/></svg></span>Подать заявку</a>
+      <span class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M12 5v14M5 12h14"/></svg></span>Заявка</a>
     <a href="<?= url('/awards') ?>" class="<?= $active==='/awards'?'active':'' ?>">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M8 21h8M12 17v4M7 4h10v5a5 5 0 0 1-10 0z"/><path d="M17 5h3v2a3 3 0 0 1-3 3M7 5H4v2a3 3 0 0 0 3 3"/></svg>Награды</a>
     <a href="<?= url($u ? '/cabinet' : '/login') ?>" class="<?= in_array($active,['/cabinet','/login','/register','/notifications'])?'active':'' ?>">

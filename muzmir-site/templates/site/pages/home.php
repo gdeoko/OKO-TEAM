@@ -148,52 +148,14 @@ ob_start(); ?>
 </section>
 <?php endif; ?>
 
-<!-- Компактная плашка 4 KPI (одна строка чипов) -->
-<section class="section stats-strip" style="padding:14px 0 6px">
-  <div class="container">
-    <div class="stats-chips">
-      <?php foreach ($infographic as $k): ?>
-        <div class="stats-chip reveal">
-          <b><?= number_format((int)$k['val'], 0, '.', ' ') ?><?= h($k['suf']) ?></b>
-          <span><?= h($k['label']) ?></span>
-        </div>
-      <?php endforeach; ?>
-    </div>
-  </div>
-</section>
+<!-- Анимационный разделитель -->
+<div class="mz-divider" aria-hidden="true"><i></i></div>
 
-<?php if ($reviews): ?>
-<!-- Отзывы-тикер (compact swipe/scroll) -->
-<section class="section rev-strip" style="padding:14px 0 6px">
+<section class="section">
   <div class="container">
-    <div class="section-head reveal" style="text-align:left;margin-bottom:12px">
-      <p class="eyebrow eyebrow--script" style="margin:0">Отзывы участников</p>
-    </div>
-    <div class="rev-track">
-      <?php foreach ($reviews as $r): ?>
-        <div class="rev-item reveal">
-          <div class="rev-stars">
-            <?php for ($i=0;$i<5;$i++): ?>
-              <svg viewBox="0 0 24 24" fill="<?= $i < (int)($r['rating'] ?? 5) ? 'currentColor':'none' ?>" stroke="currentColor" stroke-width="1.5"><path d="M12 2l3 7h7l-5.5 4 2 7L12 16l-6.5 4 2-7L2 9h7z"/></svg>
-            <?php endfor; ?>
-          </div>
-          <p><?= h(mb_strimwidth((string)$r['text'], 0, 240, '…')) ?></p>
-          <b><?= h($r['author'] ?? $r['author_name'] ?? 'Участник') ?></b>
-          <?php if (!empty($r['city'])): ?><small><?= h($r['city']) ?></small><?php endif; ?>
-        </div>
-      <?php endforeach; ?>
-    </div>
-  </div>
-</section>
-<?php endif; ?>
-
-<section class="section section--parchment">
-  <div class="container">
-    <div class="section-head reveal">
+    <div class="section-head reveal" style="margin-bottom:14px">
       <p class="eyebrow eyebrow--script">Приём открыт</p>
       <h2>Действующие конкурсы</h2>
-      <div class="gold-rule"></div>
-      <p>Выберите конкурс и подайте заявку. Оценивает компетентное жюри, результаты приходят на Вашу почту в течение 5 рабочих дней.</p>
     </div>
     <?php if ($comps): ?>
     <div class="grid grid-3">

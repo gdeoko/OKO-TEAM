@@ -39,9 +39,14 @@ ob_start(); ?>
       <p class="menu-sub">Все разделы КЦ «Музыкальный Мир»</p>
     </div>
 
-    <div class="menu-grid">
+    <div class="menu-search" id="menuSearch">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/></svg>
+      <input type="search" id="menuSearchInput" placeholder="Поиск раздела…" autocomplete="off" aria-label="Поиск раздела">
+    </div>
+
+    <div class="menu-grid" id="menuGrid">
       <?php foreach ($SECTIONS as $i => [$href, $label, $path]): ?>
-        <a class="menu-tile" href="<?= url($href) ?>" style="--i:<?= $i ?>">
+        <a class="menu-tile" href="<?= url($href) ?>" style="--i:<?= $i ?>" data-label="<?= h(mb_strtolower($label)) ?>">
           <span class="menu-tile-ic">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><?= $path ?></svg>
           </span>
@@ -49,7 +54,23 @@ ob_start(); ?>
           <svg class="menu-tile-arr" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 6l6 6-6 6"/></svg>
         </a>
       <?php endforeach; ?>
+      <p class="menu-empty" id="menuEmpty" hidden>Ничего не найдено</p>
     </div>
+    <script>
+    (function(){
+      var inp=document.getElementById('menuSearchInput'); if(!inp)return;
+      var grid=document.getElementById('menuGrid'), empty=document.getElementById('menuEmpty');
+      inp.addEventListener('input',function(){
+        var q=inp.value.trim().toLowerCase(); var vis=0;
+        grid.querySelectorAll('.menu-tile').forEach(function(t){
+          var ok=!q||(t.getAttribute('data-label')||'').indexOf(q)>-1;
+          t.style.display=ok?'':'none'; if(ok)vis++;
+        });
+        if(empty)empty.hidden=vis>0;
+      });
+      if(location.hash==='#menuSearch')setTimeout(function(){inp.focus();},300);
+    })();
+    </script>
 
     <div class="menu-actions">
       <button type="button" class="btn btn--primary btn--block btn--lg" data-share data-share-title="КЦ «Музыкальный Мир» — конкурсы культуры и искусства" data-share-url="<?= h(url('/')) ?>">
