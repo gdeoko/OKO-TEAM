@@ -64,18 +64,24 @@
 - nginx vhost: `/etc/nginx/sites-enabled/okoteam` (правки — только через `nginx -t` + reload, бэкапы в /root/okoteam.vhost.bak*). Контрол-эндпоинт — отдельный vhost `okoagents`, его не трогать (это lifeline).
 - Секреты сайта в `oko-app/site/config.example.php` (заглушки); реальный `config.php` на VPS. Платежи сайта — **Lava.top** (ссылки в config).
 
-## Публичная ссылка (зеркало прогресса)
-https://true-journey-418.higgsfield.app
+## ПУБЛИКАЦИЯ И ЗЕРКАЛА (обновлено 29.07)
 
-Как обновлять (после каждого значимого изменения прототипа):
-1. Источник правды — `oko-app/prototype/index.html` (самодостаточный файл).
-2. Higgsfield website_id: `5426760c-49ec-46c4-b3ff-b22a6dd598a5`.
-   `mcp__Higgsfield__website_repo_access` → клонировать репо сайта →
-   скопировать прототип в `app/src/oko-prototype.html` → commit+push →
-   `mcp__Higgsfield__deploy_website` env=production. Таймаут 60с не ошибка —
-   деплой доходит, проверять curl'ом по маркеру версии.
-3. Версия — чип «сборка vX.Y» в шапке прототипа, поднимать при каждом деплое.
-4. В прототипе есть экран «Прогресс сборки» (PROGRESS в JS) — обновлять статусы этапов.
+**Higgsfield-зеркало ОТКЛЮЧЕНО навсегда** (правка Даниэля 29.07:
+«зеркало убери, Higgsfield нам больше не нужен»). НЕ ЗАПУСКАТЬ
+`mcp__Higgsfield__deploy_website` и НЕ пушить в hfsite/site.
+
+**Единственный прод**: https://okoteam.top (VPS Timeweb, cron-deploy
+`/root/oko-deploy.sh` каждые 3 минуты копирует `oko-app/prototype/`
+и `oko-app/site/*` из ветки `claude/new-session-w2ptqy`).
+
+**Роуты на VPS**:
+- `/` — приложение OKO (index.html)
+- `/admin` — админка Даниэля (PHP-page)
+- `/ai-team` — 3D-штаб OKO (nginx-alias на hq.html)
+- `/anketa`, `/resume` — PHP-страницы сайта
+- `/api.php?action=...` — backend
+
+Версия — чип «сборка vX.Y» в шапке прототипа, поднимать при каждом деплое.
 
 ## Инфраструктура (подключено и проверено)
 - Supabase: проект `tkjewndtlzhnmqwmrnil`, база 28 таблиц развёрнута.
