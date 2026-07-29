@@ -773,15 +773,18 @@ function adsRenderPresets(){
 }
 function adsApplyPreset(k){
   const p = ADS_PRESETS.find(x=>x.k===k); if(!p) return;
+  const goal = ({post:'views', channel:'subs', listing:'sales', banner:'installs'})[p.fmt] || 'sales';
   const fake = {name:p.title, text:p.text, cta:p.cta, link:'', fmt:p.fmt, model:p.model, bid:p.bid,
+    goal,
     sex:p.sex, geo:p.geo, cities:[], interests:p.interests, ages:p.ages, devs:p.devs||[], times:p.times||[],
+    ageMin:18, ageMax:45, weekdays:[1,2,3,4,5,6,0], hourFrom:0, hourTo:24,
     budget:p.budget, pace:0, ab:null, media:null};
   adsEditId = 0;
   const st = document.getElementById('adsSheetTitle'); if(st) st.textContent = 'Новая кампания · '+p.name;
+  openSheet('ads-create');
   adsPrefillFromCamp(fake);
   adsSyncLaunchBtn();
-  adsStep(1);
-  openSheet('ads-create');
+  adsGotoStep(1);
   toast('Шаблон «'+p.name+'» применён. Проверьте поля и запустите.');
 }
 
@@ -829,9 +832,10 @@ function adsCalcSet(v){
 function adsCalcLaunch(){
   adsOpenCreate();
   setTimeout(()=>{
-    adsStep(4);
+    adsGotoStep(4);   /* прыгаем сразу к бюджету, минуя валидацию креатива */
     const bi = document.getElementById('adsInpBudget');
     if(bi){ bi.value = adsCalcBudget; adsCalcForecast(); }
+    const bs = document.getElementById('adsBudgetSlider'); if(bs) bs.value = Math.min(100000, adsCalcBudget);
     document.querySelectorAll('#adsStep4 .ads-chip').forEach(b=>b.classList.remove('on'));
   }, 30);
 }
@@ -994,15 +998,32 @@ function adsBoostPosts(){
   if(typeof POSTS==='undefined' || !Array.isArray(POSTS.rec)) return [];
   return POSTS.rec.filter(p=>!p.promoted && !p.sponsored && p.name===PROFILE.name).slice(0,6);
 }
-function adsBoostPredict(b, days){
+function adsBoostPredict(daily, days){
   const cpm = 28*(1-adsDisc());
-  const imps = Math.round(b/cpm*1000);
-  return {imps, days};
+  const imps = Math.round(daily*days/cpm*1000);
+  return {imps, days, total: daily*days};
 }
 function adsBoostPost(){
   const posts = adsBoostPosts();
   ADS_BOOST = {budget:300, days:3, postId: posts[0] ? posts[0].id : 0};
   showPopup({ico:'rocket', title:'Продвинуть пост',
+    body: adsBoostBody(posts),
+    actions:[
+      {label:'Отмена', ghost:true},
+      {label:'Продвинуть', onclick:()=>adsBoostConfirm()}
+    ]});
+}
+
+/* быстрый буст конкретного поста из ленты (одна кнопка): 100 ₽ / 3 дня, дальше — конфиг */
+function adsBoostFromFeed(postId){
+  let posts = adsBoostPosts();
+  /* если конкретный пост не попал в список (уже промо / чужой) — добавим его первым */
+  if(!posts.some(p=>p.id===postId) && typeof POSTS!=='undefined'){
+    const p = (POSTS.rec||[]).find(x=>x.id===postId);
+    if(p) posts = [p].concat(posts);
+  }
+  ADS_BOOST = {budget:100, days:3, postId};
+  showPopup({ico:'rocket', title:'Продвинуть за 100 ₽/день',
     body: adsBoostBody(posts),
     actions:[
       {label:'Отмена', ghost:true},
@@ -1022,7 +1043,7 @@ function adsBoostBody(posts){
     <div>
       <div class="ads-lbl" style="margin:0 0 8px">Бюджет</div>
       <div class="ads-chips" style="margin:0">
-        ${[300,500,1000,2000].map(v=>`<button class="ads-chip ${ADS_BOOST.budget===v?'on':''}" onclick="adsBoostSet('budget',${v})">${v} ₽</button>`).join('')}
+        ${[100,300,500,1000,2000].map(v=>`<button class="ads-chip ${ADS_BOOST.budget===v?'on':''}" onclick="adsBoostSet('budget',${v})">${v} ₽/день</button>`).join('')}
       </div>
     </div>
     <div>
@@ -1031,12 +1052,16 @@ function adsBoostBody(posts){
         ${[3,7,14].map(v=>`<button class="ads-chip ${ADS_BOOST.days===v?'on':''}" onclick="adsBoostSet('days',${v})">${v} дн.</button>`).join('')}
       </div>
     </div>
-    <div class="ads-boost-sum">Ожидаемый охват <b>${fmtN(pred.imps)}</b> показов за <b>${pred.days}</b> дн.</div>
+    <div class="ads-boost-sum">Ожидаемый охват <b>${fmtN(pred.imps)}</b> показов за <b>${pred.days}</b> дн. · списание <b>${fmtN(pred.total)} ₽</b></div>
   </div>`;
 }
 function adsBoostRerender(){
   /* самое простое и надёжное — перерисовать всю модалку с текущим ADS_BOOST */
-  const posts = adsBoostPosts();
+  let posts = adsBoostPosts();
+  if(ADS_BOOST && ADS_BOOST.postId && !posts.some(p=>p.id===ADS_BOOST.postId) && typeof POSTS!=='undefined'){
+    const p = (POSTS.rec||[]).find(x=>x.id===ADS_BOOST.postId);
+    if(p) posts = [p].concat(posts);
+  }
   showPopup({ico:'rocket', title:'Продвинуть пост',
     body: adsBoostBody(posts),
     actions:[
@@ -1047,10 +1072,15 @@ function adsBoostRerender(){
 function adsBoostPick(id){ ADS_BOOST.postId = id; adsBoostRerender(); }
 function adsBoostSet(k, v){ ADS_BOOST[k] = v; adsBoostRerender(); }
 function adsBoostConfirm(){
-  const posts = adsBoostPosts();
+  let posts = adsBoostPosts();
+  if(ADS_BOOST && ADS_BOOST.postId && !posts.some(p=>p.id===ADS_BOOST.postId) && typeof POSTS!=='undefined'){
+    const p = (POSTS.rec||[]).find(x=>x.id===ADS_BOOST.postId);
+    if(p) posts = [p].concat(posts);
+  }
   const post = posts.find(p=>p.id===ADS_BOOST.postId) || posts[0];
   if(!post){ toast('Сначала опубликуйте пост в ленте'); closePopup(); return; }
-  const budget = ADS_BOOST.budget, days = ADS_BOOST.days;
+  const daily = ADS_BOOST.budget, days = ADS_BOOST.days;
+  const budget = daily * days;   /* трактуем чипы как «₽ в сутки», списываем × дней */
   if(!walletCharge(budget, 'Boost поста')) return;
   okoEarn(budget, 'Рекламный кабинет');
   const name = 'Boost: '+((post.body||'').replace(/<[^>]+>/g,' ').replace(/\s+/g,' ').trim().slice(0,32) || 'ваш пост');
@@ -1148,6 +1178,98 @@ function adsLaunchLabel(){
 function adsSyncLaunchBtn(){
   const b = document.getElementById('adsLaunchBtn'); if(!b) return;
   const s = b.querySelector('span'); if(s) s.textContent = adsLaunchLabel();
+}
+
+/* --- шаг 5: сводный предпросмотр перед запуском --- */
+function adsRenderReview(){
+  const box = document.getElementById('adsReview'); if(!box) return;
+  const title = (document.getElementById('adsInpTitle')||{}).value?.trim() || 'Заголовок объявления';
+  const text  = (document.getElementById('adsInpText') ||{}).value?.trim() || 'Текст объявления';
+  const link  = (document.getElementById('adsInpLink') ||{}).value?.trim() || '';
+  const budget= parseInt((document.getElementById('adsInpBudget')||{}).value,10) || 0;
+  const bid   = parseInt((document.getElementById('adsInpBid')||{}).value,10) || adsRecBid();
+  const g = ADS_GOALS[adsDraft.goal] || ADS_GOALS.sales;
+  const f = ADS_FORMATS[adsDraft.fmt] || ADS_FORMATS.post;
+  const mn = adsDraft.ageMin||18, mx = adsDraft.ageMax||45;
+  const hf = adsDraft.hourFrom||0, ht = adsDraft.hourTo||24;
+  const wd = Array.isArray(adsDraft.weekdays) ? adsDraft.weekdays : [1,2,3,4,5,6,0];
+  const wdNames = ['вс','пн','вт','ср','чт','пт','сб'];
+  const wdSel = wd.length===7 ? 'вся неделя' : wd.slice().sort((a,b)=>((a||7)-(b||7))).map(v=>wdNames[v]).join(', ');
+  const ints = adsPicked('adsIntChips');
+  const disc = adsDisc();
+  const cpm = (adsDraft.model==='CPC') ? bid*0.022*1000*(1-disc) : bid*(1-disc);
+  const imps = cpm ? Math.round(budget/cpm*1000) : 0;
+  const clicks = Math.round(imps * (adsDraft.model==='CPC' ? Math.max(.008, 0.022) : 0.022));
+  const startTxt = adsDraft.start==='sched'
+    ? (function(){ const raw = (document.getElementById('adsSchedAt')||{}).value;
+        if(!raw) return 'запланировано';
+        const d = new Date(raw);
+        return d.toLocaleDateString('ru-RU',{day:'2-digit',month:'short'})+' '+d.toLocaleTimeString('ru-RU',{hour:'2-digit',minute:'2-digit'}); })()
+    : 'сразу после модерации';
+  const iphonePrev = adsPreviewCardHtml(title, text, adsDraft.cta || 'Подробнее', adsDraft.media, f.tag);
+  box.innerHTML = `
+    <div class="ads-rv-h"><span class="ads-rv-ic">${I('eye')}</span><div><b>Проверьте кампанию перед запуском</b><small>После запуска можно менять бюджет и креатив, аудитория фиксируется на 24 часа</small></div></div>
+
+    <div class="ads-rv-sec">
+      <div class="ads-rv-t">${I(g.ico)}Цель и формат</div>
+      <div class="ads-rv-kv"><span>Цель</span><b>${esc(g.l)}</b></div>
+      <div class="ads-rv-kv"><span>Формат</span><b>${esc(f.l)}</b></div>
+      <div class="ads-rv-kv"><span>Кнопка</span><b>${esc(adsDraft.cta || 'Подробнее')}</b></div>
+    </div>
+
+    <div class="ads-rv-sec">
+      <div class="ads-rv-t">${I('users')}Аудитория</div>
+      <div class="ads-rv-kv"><span>Пол</span><b>${adsDraft.sex==='m'?'мужской':adsDraft.sex==='f'?'женский':'любой'}</b></div>
+      <div class="ads-rv-kv"><span>Возраст</span><b>${mn}–${mx>=65?'65+':mx}</b></div>
+      <div class="ads-rv-kv"><span>Гео</span><b>${esc(adsDraft.geo)}${adsDraft.cities.length?' · '+adsDraft.cities.slice(0,3).join(', ')+(adsDraft.cities.length>3?' +'+(adsDraft.cities.length-3):''):''}</b></div>
+      <div class="ads-rv-kv"><span>Интересы</span><b>${ints.length ? esc(ints.join(', ')) : 'широкие'}</b></div>
+      ${adsDraft.lal ? `<div class="ads-rv-kv"><span>Look-alike</span><b class="acc">включён · +40% охват</b></div>` : ''}
+      <div class="ads-rv-kv"><span>Охват</span><b class="acc">${fmtN(adsDraft.reach||0)} чел.</b></div>
+    </div>
+
+    <div class="ads-rv-sec">
+      <div class="ads-rv-t">${I('photo')}Как увидят</div>
+      <div class="ads-iphone sm">
+        <div class="ads-iphone-notch"></div>
+        <div class="ads-iphone-scr">
+          <div class="ads-iphone-topbar"><span>9:41</span><i><svg class="i"><use href="#i-eye"/></svg>OKO</i></div>
+          <div class="ads-preview">${iphonePrev}</div>
+        </div>
+        <div class="ads-iphone-home"></div>
+      </div>
+      ${link ? `<div class="ads-rv-link">${I('bolt')}Переход: <span>${esc(link)}</span></div>` : ''}
+      ${adsDraft.ab ? `<div class="ads-rv-ab">${I('poll')}A/B тест: <span>«${esc((document.getElementById('adsInpTitleB')||{}).value?.trim() || 'вариант B')}»</span></div>` : ''}
+    </div>
+
+    <div class="ads-rv-sec">
+      <div class="ads-rv-t">${I('money')}Бюджет и график</div>
+      <div class="ads-rv-kv"><span>Модель</span><b>${adsDraft.model} · ${bid} ₽</b></div>
+      <div class="ads-rv-kv"><span>Бюджет</span><b>${fmtN(budget)} ₽</b></div>
+      <div class="ads-rv-kv"><span>Дни</span><b>${esc(wdSel)}</b></div>
+      <div class="ads-rv-kv"><span>Окно</span><b>${(hf<10?'0':'')+hf}:00–${(ht<10?'0':'')+ht}:00</b></div>
+      <div class="ads-rv-kv"><span>Старт</span><b>${esc(startTxt)}</b></div>
+      ${disc>0 ? `<div class="ads-rv-kv"><span>Скидка тарифа</span><b class="acc">−${Math.round(disc*100)}%</b></div>` : ''}
+    </div>
+
+    <div class="ads-rv-forecast">
+      <div class="ads-rv-fc"><b>${fmtN(imps)}</b><span>показов</span></div>
+      <div class="ads-rv-fc"><b>${fmtN(clicks)}</b><span>кликов</span></div>
+      <div class="ads-rv-fc"><b>${fmtN(budget)}<i>₽</i></b><span>списание</span></div>
+    </div>
+    <div class="ads-balance">На лицевом счёте: <b>${fmtMoney(WALLET.balance)}</b>${budget>WALLET.balance?' — не хватает, пополни кошелёк':''}</div>
+  `;
+}
+
+/* общий рендер preview-карточки (используем и в шаге 3, и в шаге 5) */
+function adsPreviewCardHtml(title, text, cta, media, tag){
+  return `<div class="ads-prev-card">
+      <div class="ads-prev-top"><span class="ads-prev-ava">${(PROFILE.name[0]||'O').toUpperCase()}</span>
+        <div><b>${esc(PROFILE.name)}</b><small>${esc(tag||'спонсировано')}</small></div></div>
+      <div class="ads-prev-title">${esc(title)}</div>
+      <div class="ads-prev-text">${esc(text)}</div>
+      ${adsMediaHtml(media, 'ads-prev-media')}
+      <button class="ads-prev-cta">${esc(cta)} ${I('chev')}</button>
+    </div>`;
 }
 
 /* ---------- медиа креатива (фото / картинка / видео) ---------- */
@@ -1664,21 +1786,13 @@ function adsShowAuds(){
     actions:[{label:'Закрыть'}]});
 }
 
-/* --- превью объявления --- */
+/* --- превью объявления (внутри iPhone-рамки) --- */
 function adsRenderPreview(){
   const box = document.getElementById('adsPreview'); if(!box) return;
-  const title = (document.getElementById('adsInpTitle').value.trim()) || 'Заголовок объявления';
-  const text  = (document.getElementById('adsInpText').value.trim()) || 'Текст объявления появится здесь по мере ввода.';
-  const f = ADS_FORMATS[adsDraft.fmt];
-  box.innerHTML = `<div class="ads-prev-label">${I('eye')}Как увидят в ленте</div>
-    <div class="ads-prev-card">
-      <div class="ads-prev-top"><span class="ads-prev-ava">${(PROFILE.name[0]||'O').toUpperCase()}</span>
-        <div><b>${esc(PROFILE.name)}</b><small>${esc(f.tag)}</small></div></div>
-      <div class="ads-prev-title">${esc(title)}</div>
-      <div class="ads-prev-text">${esc(text)}</div>
-      ${adsMediaHtml(adsDraft.media, 'ads-prev-media')}
-      <button class="ads-prev-cta">${esc(adsDraft.cta)} ${I('chev')}</button>
-    </div>`;
+  const title = ((document.getElementById('adsInpTitle')||{}).value||'').trim() || 'Заголовок объявления';
+  const text  = ((document.getElementById('adsInpText') ||{}).value||'').trim() || 'Текст объявления появится здесь по мере ввода.';
+  const f = ADS_FORMATS[adsDraft.fmt] || ADS_FORMATS.post;
+  box.innerHTML = adsPreviewCardHtml(title, text, adsDraft.cta || 'Подробнее', adsDraft.media, f.tag);
 }
 
 /* живой прогноз охвата */
@@ -1692,24 +1806,39 @@ function adsCalcReach(){
     base = adsDraft.cities.reduce((s,c)=>s+(map[c]||0)*1e6, 0);
   }
   const sexK = adsDraft.sex==='m' ? .49 : adsDraft.sex==='f' ? .51 : 1;
-  const intShares = {'нейросети':.055,'бизнес':.09,'контент':.08,'маркетинг':.07,'игры':.11,'крипта':.045,'образование':.1,'финансы':.06};
-  const ageShares = {'18-24':.21,'25-34':.31,'35-44':.24,'45+':.24};
+  const intShares = {
+    'нейросети':.055,'бизнес':.09,'контент':.08,'маркетинг':.07,'дизайн':.06,'игры':.11,'крипта':.045,
+    'образование':.10,'финансы':.06,'инвестиции':.045,'спорт':.09,'фитнес':.07,'здоровье':.08,
+    'красота':.09,'мода':.09,'путешествия':.08,'авто':.07,'кулинария':.10,'рестораны':.06,
+    'музыка':.11,'кино':.09,'книги':.05,'родители':.07,'недвижимость':.05
+  };
   const devShares = {'ios':.28,'android':.66,'desktop':.3};
-  const timeShares = {'morning':.22,'day':.3,'evening':.34,'night':.14};
-  const ints = adsPicked('adsIntChips'), ages = adsPicked('adsAgeChips');
-  const devs = adsPicked('adsDevChips'), times = adsPicked('adsTimeChips');
-  const intK = ints.length ? Math.min(.4, ints.reduce((s,v)=>s+(intShares[v]||0),0)) : .5;
-  const ageK = ages.length ? ages.reduce((s,v)=>s+(ageShares[v]||0),0) : 1;
+  const ints = adsPicked('adsIntChips') || [];
+  adsDraft.interests = ints;
+  const devs = adsPicked('adsDevChips') || [];
+  const intK = ints.length ? Math.min(.4, ints.reduce((s,v)=>s+(intShares[v]||0.04),0)) : .5;
+  /* возраст: линейно от диапазона возрастной пирамиды 14..65+ */
+  const mn = adsDraft.ageMin||18, mx = adsDraft.ageMax||45;
+  const ageK = Math.max(0.08, Math.min(1, (mx-mn+1)/(65-14+1)));
   const devK = devs.length ? Math.min(1, devs.reduce((s,v)=>s+(devShares[v]||0),0)) : 1;
-  const timeK = times.length ? Math.min(1, times.reduce((s,v)=>s+(timeShares[v]||0),0)) : 1;
-  const target = Math.max(0, Math.round(base * sexK * intK * ageK * devK * timeK));
+  /* окно показа: доля суток → доля охвата */
+  const hf = adsDraft.hourFrom||0, ht = adsDraft.hourTo||24;
+  const hourK = Math.max(0.1, (ht-hf)/24);
+  /* дни недели: доля активных суток */
+  const wd = Array.isArray(adsDraft.weekdays) ? adsDraft.weekdays.length : 7;
+  const wdK = Math.max(0.14, wd/7);
+  /* look-alike расширяет доступный пул на 40% */
+  const lalK = adsDraft.lal ? 1.4 : 1;
+  const target = Math.max(0, Math.round(base * sexK * intK * ageK * devK * hourK * wdK * lalK));
   adsDraft.reach = target;
   const sub = document.getElementById('adsReachS');
   if(sub){
     const bits = [];
     bits.push(adsDraft.sex==='m'?'муж':adsDraft.sex==='f'?'жен':'любой пол');
+    bits.push(mn+'–'+(mx>=65?'65+':mx)+' лет');
     bits.push(adsDraft.cities.length ? adsDraft.cities.length+' город(а)' : adsDraft.geo);
     bits.push(ints.length? ints.length+' интерес(а)' : 'широкие интересы');
+    if(adsDraft.lal) bits.push('look-alike');
     sub.textContent = bits.join(' · ');
   }
   const bar = document.getElementById('adsReachBar');
@@ -1822,6 +1951,7 @@ function adsLaunch(){
   const ctrEst = 0.022 + (bid/adsRecBid()-1)*0.006;
   const camp = {
     id: ADS.seq++, name, text, cta: adsDraft.cta, link: link || '',
+    goal: adsDraft.goal || 'sales',
     fmt: adsDraft.fmt, model: adsDraft.model, bid, ctrEst: Math.max(.008, ctrEst),
     cvr: +(0.16 + Math.random()*0.18).toFixed(3),
     aov: (ADS_FORMATS[adsDraft.fmt] && ADS_FORMATS[adsDraft.fmt].aov) || 690,
@@ -1829,8 +1959,12 @@ function adsLaunch(){
     disc: adsDisc(), pace: adsDraft.pace||0, dailyCap: adsDraft.pace>0 ? Math.max(1,Math.round(budget/adsDraft.pace)) : 0,
     spentToday: 0, spentDay: adsDayKey(),
     sex: adsDraft.sex, geo: adsDraft.geo, cities: [...adsDraft.cities],
-    interests: adsPicked('adsIntChips'), ages: adsPicked('adsAgeChips'),
-    devs: adsPicked('adsDevChips'), times: adsPicked('adsTimeChips'),
+    interests: adsPicked('adsIntChips'),
+    ageMin: adsDraft.ageMin||18, ageMax: adsDraft.ageMax||45, ages: [],
+    devs: adsPicked('adsDevChips'), times: [],
+    weekdays: Array.isArray(adsDraft.weekdays) ? [...adsDraft.weekdays] : [1,2,3,4,5,6,0],
+    hourFrom: adsDraft.hourFrom||0, hourTo: adsDraft.hourTo||24,
+    lal: !!adsDraft.lal, lalFrom: adsDraft.lalFrom||0,
     media: adsDraft.media ? Object.assign({}, adsDraft.media) : null,
     budget, spent: 0, imps: 0, clicks: 0, status: sched ? 'sched' : 'mod', startTs,
     hist: [], created: Date.now(),
@@ -1867,12 +2001,17 @@ function adsSaveEdit(){
   else if(d < 0){ walletAdd(-d, 'Возврат: бюджет кампании уменьшен — '+name); adsBill(d, name, 'Возврат бюджета'); }
   /* применяем поля креатива и таргетинга */
   c.name = name; c.text = text; c.cta = adsDraft.cta; c.link = link || '';
+  c.goal = adsDraft.goal || c.goal || 'sales';
   c.fmt = adsDraft.fmt; c.model = adsDraft.model; c.bid = bid;
   c.aov = (ADS_FORMATS[adsDraft.fmt] && ADS_FORMATS[adsDraft.fmt].aov) || c.aov || 690;
   c.ctrEst = Math.max(.008, 0.022 + (bid/adsRecBid()-1)*0.006);
   c.sex = adsDraft.sex; c.geo = adsDraft.geo; c.cities = [...adsDraft.cities];
-  c.interests = adsPicked('adsIntChips'); c.ages = adsPicked('adsAgeChips');
-  c.devs = adsPicked('adsDevChips'); c.times = adsPicked('adsTimeChips');
+  c.interests = adsPicked('adsIntChips');
+  c.ageMin = adsDraft.ageMin||18; c.ageMax = adsDraft.ageMax||45; c.ages = [];
+  c.devs = adsPicked('adsDevChips'); c.times = [];
+  c.weekdays = Array.isArray(adsDraft.weekdays) ? [...adsDraft.weekdays] : [1,2,3,4,5,6,0];
+  c.hourFrom = adsDraft.hourFrom||0; c.hourTo = adsDraft.hourTo||24;
+  c.lal = !!adsDraft.lal; c.lalFrom = adsDraft.lalFrom||0;
   c.budget = budget;
   c.pace = adsDraft.pace||0; c.dailyCap = c.pace>0 ? Math.max(1,Math.round(budget/c.pace)) : 0;
   if(adsDraft.media !== c.media){
@@ -2015,12 +2154,19 @@ function adsDelete(id){
 function adsPrefillFromCamp(c){
   adsRevokeDraftMedia();
   adsDraft = {
+    goal: ADS_GOALS[c.goal] ? c.goal : ({post:'views',channel:'subs',listing:'sales',banner:'installs'}[c.fmt]||'sales'),
     fmt: ADS_FORMATS[c.fmt] ? c.fmt : 'post',
     model: c.model || (ADS_FORMATS[c.fmt]||ADS_FORMATS.post).model,
     cta: c.cta || 'Подробнее',
     sex: c.sex || 'any',
-    geo: ADS_CITIES[c.geo] || c.geo==='Весь мир' ? c.geo : 'РФ',
+    geo: (ADS_CITIES[c.geo] || c.geo==='Весь мир') ? c.geo : 'РФ',
     cities: Array.isArray(c.cities) ? [...c.cities] : [],
+    interests: Array.isArray(c.interests) ? [...c.interests] : [],
+    devs: Array.isArray(c.devs) ? [...c.devs] : [],
+    ageMin: c.ageMin||18, ageMax: c.ageMax||45,
+    lal: !!c.lal, lalFrom: c.lalFrom||0,
+    weekdays: Array.isArray(c.weekdays) ? [...c.weekdays] : [1,2,3,4,5,6,0],
+    hourFrom: c.hourFrom||0, hourTo: c.hourTo||24,
     ab: !!c.ab, reach: 0,
     pace: c.pace||0, start: 'now', startAt: 0,
     media: c.media ? Object.assign({}, c.media) : null
@@ -2043,10 +2189,14 @@ function adsPrefillFromCamp(c){
   single('adsGeoChips', adsDraft.geo);
   /* множественные наборы */
   const multi = (box,arr)=>document.querySelectorAll('#'+box+' .ads-chip').forEach(b=>b.classList.toggle('on', (arr||[]).includes(b.dataset.v)));
-  multi('adsIntChips',  c.interests);
-  multi('adsAgeChips',  c.ages);
   multi('adsDevChips',  c.devs);
-  multi('adsTimeChips', c.times);
+  /* возраст, часы, недели, слайдер бюджета */
+  const amn = document.getElementById('adsAgeMin'); if(amn) amn.value = adsDraft.ageMin;
+  const amx = document.getElementById('adsAgeMax'); if(amx) amx.value = adsDraft.ageMax;
+  const hf  = document.getElementById('adsHourFrom'); if(hf) hf.value = adsDraft.hourFrom;
+  const ht  = document.getElementById('adsHourTo');   if(ht) ht.value = adsDraft.hourTo;
+  const bs  = document.getElementById('adsBudgetSlider');
+  if(bs) bs.value = Math.max(500, Math.min(100000, c.budget||1000));
   /* модель, ставка, бюджет — прописываем так, чтобы adsSyncModelUI не перетёр */
   const bidInp = document.getElementById('adsInpBid');
   if(bidInp){ bidInp.value = c.bid || adsRecBid(); bidInp.dataset.model = adsDraft.model; }
@@ -2054,10 +2204,16 @@ function adsPrefillFromCamp(c){
   document.querySelectorAll('#adsStep4 .ads-chip').forEach(b=>b.classList.toggle('on', b.textContent.replace(/\s|₽/g,'')===String(c.budget)));
   document.querySelectorAll('#adsModelChips .ads-model-b').forEach(b=>b.classList.toggle('on', b.dataset.v===adsDraft.model));
   /* рендеры зависимых блоков */
+  adsRenderGoals();
   adsRenderFmts();
   adsRenderCities();
   adsRenderSaved();
+  adsRenderInterests();
+  adsRenderLal();
+  adsRenderWeek();
   adsRenderMediaZone();
+  adsRenderPostPicker();
+  adsAgeInput(true); adsHourInput(true);
   adsSyncModelUI();
 }
 function adsDuplicate(id){
@@ -2078,7 +2234,7 @@ function adsEdit(id){
   const st = document.getElementById('adsSheetTitle'); if(st) st.textContent = 'Редактирование';
   adsPrefillFromCamp(c);
   adsSyncLaunchBtn();
-  adsStep(2);   /* сразу к креативу — таргетинг/бюджет уже проставлены */
+  adsStep(3);   /* сразу к креативу — цель/аудитория/бюджет уже проставлены */
   openSheet('ads-create');
   toast('Редактирование «'+c.name+'»');
 }
@@ -2131,6 +2287,13 @@ function adsTick(){
     const dk = adsDayKey();
     if(c.spentDay!==dk){ c.spentDay = dk; c.spentToday = 0; }
     if(c.dailyCap>0 && c.spentToday>=c.dailyCap) return;   /* на сегодня открутка исчерпана */
+    /* окно расписания: дни недели + часы (если заданы) */
+    const now = new Date();
+    const wd = Array.isArray(c.weekdays) ? c.weekdays : [1,2,3,4,5,6,0];
+    if(!wd.includes(now.getDay())) return;
+    const h = now.getHours();
+    const hf = c.hourFrom||0, ht = c.hourTo||24;
+    if(h < hf || h >= ht) return;
     changed = true;
     const dImps = 70 + Math.floor(Math.random()*180);
     let dClicks;
@@ -2170,6 +2333,16 @@ showTab = function(t){
   _prevShowTabAds(t);
   if(t==='ads'){ adsSummaryReset(); adsRender(); }
 };
+
+/* быстрый буст поста из feed-post меню: перехватываем базовый openPromotePost и
+   отправляем в модалку рекламного кабинета — с чипами 100/300/500/1000/2000 ₽ в сутки */
+if(typeof window.openPromotePost === 'function'){
+  const _prevOpenPromotePost = window.openPromotePost;
+  window.openPromotePost = function(id){
+    try{ adsBoostFromFeed(id); }
+    catch(e){ _prevOpenPromotePost(id); }
+  };
+}
 
 /* ---------- самоинициализация ---------- */
 adsLoad();

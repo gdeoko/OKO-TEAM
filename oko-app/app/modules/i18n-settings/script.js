@@ -9,11 +9,11 @@ function stSave(){ try{ localStorage.setItem('oko-i18n-settings', JSON.stringify
 /* ---------- словарь хрома (регистрация в i18n-ядре) ---------- */
 regT({
   /* вкладки нижней навигации */
-  'st.nav.feed':    {ru:'Лента',        en:'Feed'},
-  'st.nav.chats':   {ru:'Чаты',         en:'Chats'},
-  'st.nav.mini':    {ru:'Мини-аппы',    en:'Hub'},
-  'st.nav.wallet':  {ru:'Кошелёк',      en:'Wallet'},
-  'st.nav.profile': {ru:'Профиль',      en:'Profile'},
+  'st.nav.feed':    {ru:'Лента',        en:'Feed',        kk:'Лента'},
+  'st.nav.chats':   {ru:'Чаты',         en:'Chats',       kk:'Чаттар'},
+  'st.nav.mini':    {ru:'Мини-аппы',    en:'Hub',         kk:'Хаб'},
+  'st.nav.wallet':  {ru:'Кошелёк',      en:'Wallet',      kk:'Әмиян'},
+  'st.nav.profile': {ru:'Профиль',      en:'Profile',     kk:'Профиль'},
   /* заголовки экранов (TITLES) */
   'st.title.feed':    {ru:'Лента',       en:'Feed'},
   'st.title.chats':   {ru:'Чаты',        en:'Chats'},
@@ -55,8 +55,9 @@ regT({
   'st.sheet.title':   {ru:'Язык · Language',       en:'Language'},
   'st.sheet.note':    {ru:'Интерфейс переключается мгновенно. Контент пользователей остаётся на языке оригинала — включи авто-перевод чатов в профиле.',
                        en:'The interface switches instantly. User content stays in its original language — enable chat auto-translation in your profile.'},
-  'st.opt.ruSub':     {ru:'Основной язык OKO',     en:'Default OKO language'},
-  'st.opt.enSub':     {ru:'Интерфейс на английском', en:'English interface'},
+  'st.opt.ruSub':     {ru:'Основной язык OKO',     en:'Default OKO language',   kk:'OKO негізгі тілі'},
+  'st.opt.enSub':     {ru:'Интерфейс на английском', en:'English interface',    kk:'Ағылшын интерфейс'},
+  'st.opt.kkSub':     {ru:'Қазақша интерфейс',     en:'Kazakh interface',       kk:'Қазақ тіліндегі интерфейс'},
   'st.badge':         {ru:'Переведено · OKO',   en:'Translated · OKO'},
   'st.toast.autoOn':  {ru:'Авто-перевод включён — входящие переводит OKO', en:'Auto-translation on — incoming messages translated by OKO'},
   'st.toast.autoOff': {ru:'Авто-перевод выключен', en:'Auto-translation off'},
@@ -150,8 +151,9 @@ function stRenderLangList(){
   if(!box) return;
   const L = (typeof LANG === 'string') ? LANG : 'ru';
   box.innerHTML = [
-    ['ru','Русский','РУ','st.opt.ruSub'],
-    ['en','English','EN','st.opt.enSub']
+    ['ru','Русский', 'РУ',  'st.opt.ruSub'],
+    ['en','English', 'EN',  'st.opt.enSub'],
+    ['kk','Қазақша', 'ҚАЗ', 'st.opt.kkSub']
   ].map(([code,label,tag,sub])=>`
     <button class="sheet-item st-lang-opt ${L===code?'on':''}" onclick="stPickLang('${code}')">
       <span class="st-lang-tag">${tag}</span>

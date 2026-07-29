@@ -13,12 +13,13 @@
 .acd-filters-empty{padding:22px 12px;text-align:center;color:var(--dim);font-size:13px;line-height:1.5;border:1px dashed var(--border);border-radius:var(--r-md);margin-top:6px}
 
 /* --- 1. ЛЕНИВАЯ ЗАГРУЗКА БЛОКОВ (свёрнутые головы с чевроном) --- */
-.acd-block-toggle{position:absolute;top:12px;right:12px;width:26px;height:26px;border-radius:50%;background:var(--surface);border:1px solid var(--border);display:flex;align-items:center;justify-content:center;transition:transform .28s cubic-bezier(.3,1,.4,1),background .18s;color:var(--accent);cursor:pointer;padding:0;flex-shrink:0}
+.acd-block-toggle{margin-left:6px;width:28px;height:28px;border-radius:50%;background:var(--surface);border:1px solid var(--border);display:inline-flex;align-items:center;justify-content:center;transition:background .18s;color:var(--accent);cursor:pointer;padding:0;flex-shrink:0}
 .acd-block-toggle svg.i{width:12px;height:12px;transform:rotate(90deg);transition:transform .28s cubic-bezier(.3,1,.4,1)}
 .ac-block.acd-open .acd-block-toggle svg.i{transform:rotate(-90deg)}
 .ac-block.acd-collapsed .acd-block-body{display:none}
-.ac-block .ac-block-head{position:relative;cursor:pointer;user-select:none;transition:background .15s;border-radius:8px}
+.ac-block .ac-block-head{cursor:pointer;user-select:none;transition:background .15s;border-radius:8px}
 .ac-block .ac-block-head:hover{background:var(--lime-dim)}
+.ac-block .ac-block-head:hover .acd-block-toggle{border-color:var(--accent)}
 .acd-block-body{animation:acdSlide .3s ease both}
 @keyframes acdSlide{0%{opacity:0;transform:translateY(-4px)}100%{opacity:1;transform:translateY(0)}}
 

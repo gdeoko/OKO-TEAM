@@ -1211,6 +1211,910 @@ function mpInject(){
   }
 }
 
+/* ============================================================================
+   МОИ СОЦСЕТИ (ps-soc-): LinkedIn + Beacons.ai + Linktree в одном хабе
+   ---------------------------------------------------------------------------
+   Каталог платформ (IG/TT/VK/TG/YT/Threads/Rutube) с фирменными SVG. Демо-
+   данные детерминированные (по хендлу + платформе): подписчики, sparkline за
+   7 дней, ER, последние 5 постов, лучший пост месяца. Совокупный дашборд,
+   тренды-подсказки, экспорт медиа-кита, публичная ссылка + QR, авто-постинг,
+   ссылки-агрегатор. Персист — oko-ps-socials. Ничего внешнего, всё локально.
+   ============================================================================ */
+
+/* ---------- каталог платформ (id → бренд + inline SVG) ---------- */
+const PS_SOC_PLATS = [
+  {id:'ig', name:'Instagram', hint:'Instagram-профиль', ph:'@username',      handleFmt:'@',      base:'instagram.com/',
+   svg:'<svg viewBox="0 0 100 100" fill="none" stroke="currentColor" stroke-width="7" stroke-linecap="round" stroke-linejoin="round"><rect x="16" y="16" width="68" height="68" rx="18"/><circle cx="50" cy="50" r="16"/><circle cx="70" cy="30" r="4" fill="currentColor" stroke="none"/></svg>'},
+  {id:'tt', name:'TikTok',   hint:'TikTok-аккаунт',    ph:'@username',      handleFmt:'@',      base:'tiktok.com/',
+   svg:'<svg viewBox="0 0 100 100" fill="currentColor" stroke="none"><path d="M62 12h12c1 10 8 18 18 20v12c-8 0-15-2-22-6v28c0 15-12 26-27 26s-27-12-27-27 12-27 27-27c2 0 5 .3 7 1v14a13 13 0 1 0 8 12V12z"/></svg>'},
+  {id:'vk', name:'VK',       hint:'ВКонтакте',         ph:'ссылка/vk id',   handleFmt:'',       base:'vk.com/',
+   svg:'<svg viewBox="0 0 100 100" fill="currentColor" stroke="none"><path d="M14 26h20l10 32L58 26h20L60 62c6 4 12 10 18 24H58c-3-8-8-14-14-14v14H30C22 62 14 44 14 26z"/></svg>'},
+  {id:'tg', name:'Telegram', hint:'Telegram-канал',    ph:'@username',      handleFmt:'@',      base:'t.me/',
+   svg:'<svg viewBox="0 0 100 100" fill="currentColor" stroke="none"><path d="M85 18 12 46c-3 1-3 5 .3 6l20 6 8 24c1 3 4 3 6 1l12-12 20 15c3 2 6 1 7-3l12-58c1-4-3-8-7-6z"/><path d="M40 60 78 30 46 68" stroke="rgba(0,0,0,.28)" stroke-width="3" fill="none" stroke-linejoin="round"/></svg>'},
+  {id:'yt', name:'YouTube',  hint:'YouTube-канал',     ph:'@username',      handleFmt:'@',      base:'youtube.com/',
+   svg:'<svg viewBox="0 0 100 100" fill="currentColor" stroke="none"><rect x="10" y="22" width="80" height="56" rx="14"/><path d="M42 36l24 14-24 14z" fill="#fff"/></svg>'},
+  {id:'th', name:'Threads',  hint:'Threads-профиль',   ph:'@username',      handleFmt:'@',      base:'threads.net/',
+   svg:'<svg viewBox="0 0 100 100" fill="none" stroke="currentColor" stroke-width="7" stroke-linecap="round" stroke-linejoin="round"><path d="M64 46c-4-8-14-11-22-9-9 2-15 10-13 20 2 9 10 15 22 15 15 0 25-10 27-24 2-16-8-32-28-32-14 0-24 8-28 20"/></svg>'},
+  {id:'ru', name:'Rutube',   hint:'Rutube-канал',      ph:'ссылка/ID',      handleFmt:'',       base:'rutube.ru/channel/',
+   svg:'<svg viewBox="0 0 100 100" fill="currentColor" stroke="none"><rect x="10" y="22" width="80" height="56" rx="14"/><path d="M42 36l24 14-24 14z" fill="#fff"/><circle cx="76" cy="34" r="6" fill="#fff"/></svg>'},
+];
+const PS_SOC_MAP = Object.fromEntries(PS_SOC_PLATS.map(p => [p.id, p]));
+function psSocIco(id){
+  const p = PS_SOC_MAP[id]; if(!p) return '';
+  return p.svg.replace('<svg ', '<svg class="i" preserveAspectRatio="xMidYMid meet" ');
+}
+function psSocPlatIcHtml(id, cls){
+  return `<span class="ps-soc-plat-ic ps-soc-tone-${id} ${cls||''}">${psSocIco(id)}</span>`;
+}
+
+/* ---------- каталог иконок для ссылок Linktree (переиспользуем defs ядра) ---------- */
+const PS_SOC_LINK_ICONS = [
+  {v:'globe',      lb:'Сайт'},
+  {v:'briefcase',  lb:'Портфолио'},
+  {v:'megaphone',  lb:'Канал'},
+  {v:'shop',       lb:'Магазин'}, /* fallback → briefcase */
+  {v:'circle-play',lb:'Ролик'},
+  {v:'file',       lb:'Документ'},
+  {v:'chat',       lb:'Написать'},
+  {v:'star',       lb:'Отзывы'},
+  {v:'money',      lb:'Донат/оплата'},
+];
+function psSocSafeIco(v){
+  /* fallback для ic, которых нет в базовых defs */
+  const map = {shop:'briefcase'};
+  return map[v] || v;
+}
+
+/* ---------- persist ---------- */
+const PS_SOC_DEF_LINKS = [
+  {id:'l1', ic:'globe',      t:'Мой сайт-визитка',    u:'okoteam.top/@ktodaniel'},
+  {id:'l2', ic:'megaphone',  t:'Основной Telegram',   u:'t.me/okoappbot'},
+  {id:'l3', ic:'briefcase',  t:'Кейсы и портфолио',   u:'okoteam.top/@ktodaniel/cases'},
+];
+const PS_SOC_DEF_SCHED = [
+  {id:'s1', at:Date.now() + 3600e3 * 4,  txt:'Как я собрал контент-завод за 3 дня — короткий разбор', plats:['ig','tg','vk']},
+  {id:'s2', at:Date.now() + 3600e3 * 22, txt:'Reels-приём «двойной хук»: удержание +18% на 30к охвате', plats:['ig','tt']},
+];
+const PS_SOC = {
+  conn: {ig:true, tt:true, vk:true, tg:true, yt:false, th:false, ru:false},
+  handles: {ig:'ktodaniel', tt:'ktodaniel', vk:'daniel.oko', tg:'ktodaniel', yt:'ktodaniel', th:'ktodaniel', ru:'ktodaniel'},
+  slug: '',                       /* публичная ссылка okoteam.top/u/@slug — берём из PROFILE.nick */
+  links: null,
+  sched: null,
+  loaded: false,
+};
+function psSocLoad(){
+  if(PS_SOC.loaded) return;
+  try{
+    const s = JSON.parse(localStorage.getItem('oko-ps-socials') || 'null');
+    if(s){
+      if(s.conn) PS_SOC.conn = Object.assign({}, PS_SOC.conn, s.conn);
+      if(s.handles) PS_SOC.handles = Object.assign({}, PS_SOC.handles, s.handles);
+      if(typeof s.slug === 'string') PS_SOC.slug = s.slug;
+      if(Array.isArray(s.links)) PS_SOC.links = s.links;
+      if(Array.isArray(s.sched)) PS_SOC.sched = s.sched;
+    }
+  }catch(e){}
+  if(!PS_SOC.links) PS_SOC.links = PS_SOC_DEF_LINKS.slice();
+  if(!PS_SOC.sched) PS_SOC.sched = PS_SOC_DEF_SCHED.slice();
+  PS_SOC.loaded = true;
+}
+function psSocSave(){
+  try{ localStorage.setItem('oko-ps-socials', JSON.stringify({
+    conn: PS_SOC.conn, handles: PS_SOC.handles, slug: PS_SOC.slug,
+    links: PS_SOC.links, sched: PS_SOC.sched, at: Date.now()
+  })); }catch(e){}
+}
+function psSocSlug(){
+  return (PS_SOC.slug && PS_SOC.slug.trim()) ||
+         (typeof PROFILE !== 'undefined' && PROFILE.nick) || 'me';
+}
+function psSocConnected(){ return PS_SOC_PLATS.filter(p => PS_SOC.conn[p.id]); }
+function psSocFmt(n){ return typeof fmtN === 'function' ? fmtN(n) : psFmt(n); }
+
+/* ---------- детерминированные демо-данные платформы ---------- */
+function psSocFollowers(id){
+  const seed = psHash('soc:f:' + id + ':' + (PS_SOC.handles[id] || ''));
+  /* реалистичные диапазоны по платформам */
+  const base = {ig:4800, tt:12400, vk:2100, tg:6300, yt:840, th:1200, ru:520}[id] || 1000;
+  const jitter = seed % 2200;
+  return base + jitter;
+}
+function psSocSpark7(id){
+  /* 7 дней роста подписчиков — стабильно возрастающая с шумом */
+  const end = psSocFollowers(id);
+  const seed = psHash('soc:s7:' + id + ':' + (PS_SOC.handles[id] || ''));
+  const growPct = 0.008 + (seed % 60) / 3200; /* 0.8%..2.7% в неделю */
+  const start = Math.max(50, Math.round(end / (1 + growPct)));
+  const out = [];
+  for(let i = 0; i < 7; i++){
+    const t = i / 6;
+    const noise = ((psHash(id + '#d' + i) % 100) / 100 - 0.5) * ((end - start) * 0.22 + 4);
+    const v = Math.max(0, Math.round(start + (end - start) * t + noise));
+    out.push(v);
+  }
+  out[6] = end;
+  return {pts: out, gain: end - start, growPct: ((end / start - 1) * 100)};
+}
+function psSocER(id){
+  /* engagement rate — реалистично по платформам */
+  const seed = psHash('soc:er:' + id + ':' + (PS_SOC.handles[id] || ''));
+  const map = {ig:[4.2, 2.4], tt:[9.6, 4.8], vk:[2.9, 1.6], tg:[8.4, 3.2], yt:[6.1, 2.8], th:[5.4, 2.6], ru:[3.7, 1.9]};
+  const [max, min] = map[id] || [4, 2];
+  const t = (seed % 100) / 100;
+  return +(min + t * (max - min)).toFixed(1);
+}
+function psSocRecentPosts(id){
+  /* 5 последних постов: заголовок, охват, лайки, комменты, ER — стабильно */
+  const seed = psHash('soc:p:' + id + ':' + (PS_SOC.handles[id] || ''));
+  const followers = psSocFollowers(id);
+  const platER = psSocER(id);
+  const titles = [
+    'Как удержание в первые 3 секунды меняет весь просмотр',
+    'Разбор ролика на 42 тысячи охвата: 3 приёма',
+    'Убрал одну сцену — досмотр вырос на 18%',
+    'Один хук, три формата — тестируем на неделю',
+    'Простое правило монтажа, которое повышает CTR',
+    'Что делать, когда лента «встала» — короткий чек-лист',
+    'Формат «до/после» на реальных цифрах кабинета',
+    'Собрал 5.6к сохранений одной каруселью — почему',
+    'Разбор комментария: как ответ разгоняет охват',
+    'Продал курс через полезный ролик — механика',
+  ];
+  const kinds = ['circle-play','photo','file','circle-play','circle-play'];
+  const now = Date.now();
+  const out = [];
+  for(let i = 0; i < 5; i++){
+    const s = psHash(id + '@p' + i + ':' + seed);
+    const reachFrac = 0.28 + ((s >> 3) % 100) / 130; /* 28%..104% от аудитории */
+    const reach = Math.round(followers * reachFrac);
+    const er = Math.max(0.6, platER * (0.55 + ((s >> 6) % 100) / 90));
+    const likes = Math.round(reach * er / 100 * 0.72);
+    const comments = Math.max(1, Math.round(reach * er / 100 * 0.11));
+    const shares = Math.max(0, Math.round(reach * er / 100 * 0.17));
+    out.push({
+      i, id: id + '_p' + i,
+      t: titles[(s >> 2) % titles.length],
+      reach, likes, comments, shares,
+      er: +er.toFixed(1),
+      kind: kinds[i % kinds.length],
+      dur: kinds[i % kinds.length] === 'circle-play' ? ('0:' + (12 + (s % 45)).toString().padStart(2, '0')) : null,
+      ts: now - (i * 30 + (s % 20)) * 3600e3,
+      g: 'g' + (i % 5)
+    });
+  }
+  return out;
+}
+function psSocBestPost(id){
+  const list = psSocRecentPosts(id);
+  const best = list.slice().sort((a, b) => b.er * b.reach - a.er * a.reach)[0];
+  return best;
+}
+function psSocPostAgo(ts){
+  const h = Math.max(1, Math.round((Date.now() - ts) / 36e5));
+  if(h < 24) return h + ' ч назад';
+  const d = Math.round(h / 24);
+  return d + ' ' + (d === 1 ? 'день' : (d < 5 ? 'дня' : 'дней')) + ' назад';
+}
+
+/* ---------- совокупный дашборд ---------- */
+function psSocAggregate(){
+  const conn = psSocConnected();
+  if(!conn.length) return {n:0, followers:0, gain:0, erAvg:0, best:null, growPct:0};
+  let followers = 0, gain = 0, erSum = 0, best = null;
+  conn.forEach(p => {
+    const f = psSocFollowers(p.id);
+    const s = psSocSpark7(p.id);
+    const er = psSocER(p.id);
+    followers += f; gain += s.gain; erSum += er;
+    if(!best || er > best.er) best = {id: p.id, name: p.name, er};
+  });
+  const growPct = followers ? (gain / Math.max(1, followers - gain)) * 100 : 0;
+  return {n:conn.length, followers, gain, erAvg:+((erSum / conn.length)).toFixed(1), best, growPct:+growPct.toFixed(1)};
+}
+
+/* ---------- sparkline mini (для карточек платформ) ---------- */
+function psSocSparkSvg(id, w, h){
+  w = w || 100; h = h || 22;
+  const {pts} = psSocSpark7(id);
+  const min = Math.min.apply(null, pts), max = Math.max.apply(null, pts);
+  const rng = Math.max(1, max - min);
+  const pad = 1.5;
+  const x = i => pad + i * ((w - pad * 2) / (pts.length - 1));
+  const y = v => pad + (h - pad * 2) * (1 - (v - min) / rng);
+  const line = pts.map((v, i) => (i ? 'L' : 'M') + x(i).toFixed(1) + ' ' + y(v).toFixed(1)).join(' ');
+  const area = `M${pad} ${(h - pad).toFixed(1)} ` + pts.map((v, i) => 'L' + x(i).toFixed(1) + ' ' + y(v).toFixed(1)).join(' ') + ` L${(w - pad).toFixed(1)} ${(h - pad).toFixed(1)} Z`;
+  const gid = 'psSocGrad_' + id;
+  return `<svg class="ps-soc-plat-spark" viewBox="0 0 ${w} ${h}" preserveAspectRatio="none">
+    <defs><linearGradient id="${gid}" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#9AFF00" stop-opacity=".35"/><stop offset="100%" stop-color="#9AFF00" stop-opacity="0"/></linearGradient></defs>
+    <path d="${area}" fill="url(#${gid})"/>
+    <path d="${line}" fill="none" stroke="#9AFF00" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>
+  </svg>`;
+}
+
+/* ---------- QR-код (детерминированный псевдо-QR: угловые маркеры + шумная сетка) ---------- */
+function psSocQrSvg(text){
+  const N = 25; /* сетка 25×25 */
+  const cell = 100 / N;
+  const h1 = psHash('qrA:' + text), h2 = psHash('qrB:' + text);
+  const corners = [[0,0],[N-7,0],[0,N-7]]; /* три «глаза» */
+  const isCorner = (x, y) => corners.some(([cx, cy]) => x >= cx && x < cx + 7 && y >= cy && y < cy + 7);
+  const isTiming = (x, y) => (x === 6 || y === 6);
+  const cells = [];
+  /* угловые маркеры (7×7 квадрат с внутренней рамкой 3×3) */
+  corners.forEach(([cx, cy]) => {
+    cells.push(`<rect x="${cx*cell}" y="${cy*cell}" width="${7*cell}" height="${7*cell}" fill="#000"/>`);
+    cells.push(`<rect x="${(cx+1)*cell}" y="${(cy+1)*cell}" width="${5*cell}" height="${5*cell}" fill="#fff"/>`);
+    cells.push(`<rect x="${(cx+2)*cell}" y="${(cy+2)*cell}" width="${3*cell}" height="${3*cell}" fill="#000"/>`);
+  });
+  /* тело — детерминированный шум по хендлу */
+  for(let y = 0; y < N; y++){
+    for(let x = 0; x < N; x++){
+      if(isCorner(x, y)) continue;
+      /* timing dots */
+      if(y === 6 && x >= 8 && x < N - 8){ if(x % 2 === 0) cells.push(`<rect x="${x*cell}" y="${y*cell}" width="${cell}" height="${cell}" fill="#000"/>`); continue; }
+      if(x === 6 && y >= 8 && y < N - 8){ if(y % 2 === 0) cells.push(`<rect x="${x*cell}" y="${y*cell}" width="${cell}" height="${cell}" fill="#000"/>`); continue; }
+      const b = (psHash(text + ':' + x + ',' + y) ^ h1 ^ (h2 << (x % 5))) & 0xff;
+      if(b > 128) cells.push(`<rect x="${x*cell}" y="${y*cell}" width="${cell}" height="${cell}" fill="#000"/>`);
+    }
+  }
+  /* центральный «логотип OKO» — 7×7 клеток */
+  const cx = 50, cy = 50, r = 8.5;
+  cells.push(`<rect x="${cx-r}" y="${cy-r}" width="${r*2}" height="${r*2}" rx="3" fill="#fff"/>`);
+  cells.push(`<rect x="${cx-r+1.2}" y="${cy-r+1.2}" width="${(r-1.2)*2}" height="${(r-1.2)*2}" rx="2" fill="#9AFF00"/>`);
+  cells.push(`<circle cx="${cx}" cy="${cy}" r="3.4" fill="#0a0d04"/>`);
+  cells.push(`<circle cx="${cx}" cy="${cy}" r="1.6" fill="#9AFF00"/>`);
+  return `<svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg" shape-rendering="crispEdges"><rect width="100" height="100" fill="#fff"/>${cells.join('')}</svg>`;
+}
+
+/* ============================================================================
+   РЕНДЕР
+   ============================================================================ */
+
+/* ---------- карточка-вход на профиле ---------- */
+function psSocEntryHtml(){
+  psSocLoad();
+  const conn = psSocConnected();
+  const agg = psSocAggregate();
+  const avas = PS_SOC_PLATS.slice(0, 5).map(p => {
+    const on = PS_SOC.conn[p.id];
+    return `<span class="ps-soc-entry-ava ps-soc-tone-${p.id}${on ? '' : ' off'}" title="${esc(p.name)}${on ? '' : ' — не подключено'}">${psSocIco(p.id)}</span>`;
+  }).join('');
+  const sum = conn.length
+    ? `<b>${psSocFmt(agg.followers)}</b> подписчиков · <b>${agg.erAvg}%</b> средний ER${agg.best ? ' · лучшая: <b>' + esc(agg.best.name) + '</b>' : ''}`
+    : `Пока не подключено ни одной платформы — жми, чтобы связать <b>${PS_SOC_PLATS.length}</b> сети`;
+  return `<button class="ps-soc-entry" onclick="psSocOpen()" aria-label="Открыть Мои соцсети">
+    <div class="ps-soc-entry-h">
+      <span class="ps-soc-entry-h-ic">${I('globe')}</span>
+      <b>Мои соцсети</b>
+      <span class="ps-soc-entry-open">Открыть ${I('chev')}</span>
+    </div>
+    <div class="ps-soc-entry-row">
+      <span class="ps-soc-entry-avas">${avas}</span>
+      <span class="ps-soc-entry-sum">${sum}</span>
+      <span class="ps-soc-entry-chev">${I('chev')}</span>
+    </div>
+  </button>`;
+}
+
+/* ---------- дашборд: 3 тайла + рост ---------- */
+function psSocDashHtml(){
+  const agg = psSocAggregate();
+  const dirIco = agg.growPct >= 0 ? 'rocket' : 'chev';
+  const best = agg.best ? `${esc(agg.best.name)}<span class="ps-soc-tile-sub">${agg.best.er}% ER</span>` : '—';
+  return `<div class="ps-soc-dash">
+    <div class="ps-soc-tile">
+      <div class="ps-soc-tile-lb">${I('users')} Подписчиков</div>
+      <div class="ps-soc-tile-v">${psSocFmt(agg.followers)}</div>
+      <div class="ps-soc-tile-d${agg.growPct < 0 ? ' down' : ''}">${I(dirIco)} ${agg.growPct >= 0 ? '+' : ''}${agg.growPct}% за 7 дн</div>
+    </div>
+    <div class="ps-soc-tile">
+      <div class="ps-soc-tile-lb">${I('bolt')} Средний ER</div>
+      <div class="ps-soc-tile-v">${agg.erAvg}<span class="ps-soc-tile-sub">%</span></div>
+      <div class="ps-soc-tile-d">${I('check')} выше среднего</div>
+    </div>
+    <div class="ps-soc-tile">
+      <div class="ps-soc-tile-lb">${I('star')} Лучшая</div>
+      <div class="ps-soc-tile-v" style="font-size:16px">${best}</div>
+      <div class="ps-soc-tile-d">${I('fire')} топ по вовлечению</div>
+    </div>
+  </div>`;
+}
+
+/* ---------- сетка платформ ---------- */
+function psSocPlatCardHtml(p){
+  const on = PS_SOC.conn[p.id];
+  const handle = PS_SOC.handles[p.id] || '';
+  if(!on){
+    return `<button class="ps-soc-plat" onclick="psSocConnect('${p.id}')" aria-label="Подключить ${esc(p.name)}">
+      <div class="ps-soc-plat-h">
+        ${psSocPlatIcHtml(p.id)}
+        <div class="ps-soc-plat-name">${esc(p.name)}<small>${esc(p.hint)}</small></div>
+        <span class="ps-soc-plat-st">Отсутствует</span>
+      </div>
+      <div class="ps-soc-plat-cta">${I('plus')} Подключить</div>
+    </button>`;
+  }
+  const followers = psSocFollowers(p.id);
+  const {gain, growPct} = psSocSpark7(p.id);
+  const er = psSocER(p.id);
+  return `<button class="ps-soc-plat on" onclick="psSocDetail('${p.id}')" aria-label="Открыть статистику ${esc(p.name)}">
+    <div class="ps-soc-plat-h">
+      ${psSocPlatIcHtml(p.id)}
+      <div class="ps-soc-plat-name">${esc(p.name)}<small>${p.handleFmt + esc(handle)}</small></div>
+      <span class="ps-soc-plat-st on">${I('check')} Подключено</span>
+    </div>
+    ${psSocSparkSvg(p.id, 200, 22)}
+    <div class="ps-soc-plat-mini">
+      <span>${I('users')}<b>${psSocFmt(followers)}</b></span>
+      <span>${I('bolt')}<b>${er}%</b> ER</span>
+      <span>${I('rocket')}<b>${gain >= 0 ? '+' : ''}${psSocFmt(gain)}</b> за 7 дн</span>
+      <span>${I('fire')}<b>${growPct.toFixed(1)}%</b></span>
+    </div>
+  </button>`;
+}
+function psSocPlatsHtml(){
+  return `<div class="ps-soc-plats">` + PS_SOC_PLATS.map(psSocPlatCardHtml).join('') + `</div>`;
+}
+
+/* ---------- тренды: подсказки под соцсети ---------- */
+function psSocTrendsHtml(){
+  const conn = psSocConnected();
+  if(!conn.length) return `<div class="ps-soc-empty-body">${I('bolt')}Подключи хотя бы одну платформу — подскажу, что делать, чтобы вырасти быстрее конкурентов в нише.</div>`;
+  const trends = [];
+  /* 1) платформа с ниже среднего ER — рекомендация по частоте */
+  const byEr = conn.map(p => ({p, er: psSocER(p.id)})).sort((a, b) => a.er - b.er);
+  const worst = byEr[0];
+  const nicheAvg = {ig:5.2, tt:7.8, vk:3.4, tg:9.0, yt:5.4, th:4.1, ru:3.2}[worst.p.id] || 4.5;
+  if(worst && worst.er < nicheAvg){
+    trends.push({ic:'bolt', tone:'warn', t:`На <b>${worst.p.name}</b> ER ниже средней в нише`,
+      d:`Твой ER <b>${worst.er}%</b>, средний в нише <b>${nicheAvg}%</b>. Попробуй увеличить частоту постов до <b>5/неделю</b> и добавить сильный хук в первые 3 секунды — за 2 недели рост в 1.4×.`});
+  }
+  /* 2) самая растущая платформа — усилить */
+  const byGrow = conn.map(p => ({p, s: psSocSpark7(p.id)})).sort((a, b) => b.s.growPct - a.s.growPct);
+  const top = byGrow[0];
+  if(top && top.s.growPct > 1){
+    trends.push({ic:'rocket', tone:'up', t:`<b>${top.p.name}</b> растёт быстрее всех: +${top.s.growPct.toFixed(1)}%`,
+      d:`Прирост <b>+${psSocFmt(top.s.gain)}</b> подписчиков за 7 дней. Разбери, какой ролик залетел, и повтори формат ещё 2–3 раза — алгоритм подхватит.`});
+  }
+  /* 3) не подключённая платформа с ожидаемой аудиторией */
+  const missing = PS_SOC_PLATS.find(p => !PS_SOC.conn[p.id]);
+  if(missing){
+    trends.push({ic:missing.id === 'yt' ? 'circle-play' : 'megaphone', tone:'',
+      t:`Подключи <b>${missing.name}</b> — не теряй охваты`,
+      d:`По твоей нише ${missing.name} даёт в среднем <b>+18%</b> к охвату за счёт другой аудитории. Займёт 20 секунд — уже видно статистику.`});
+  }
+  /* 4) лучший пост месяца — упаковать в кейс */
+  const bestPlat = byEr[byEr.length - 1] ? byEr[byEr.length - 1].p : conn[0];
+  const best = psSocBestPost(bestPlat.id);
+  if(best){
+    trends.push({ic:'fire', tone:'up', t:`Лучший пост месяца: <b>${psSocFmt(best.reach)}</b> охват`,
+      d:`«${esc(best.t)}» на <b>${bestPlat.name}</b> собрал ER <b>${best.er}%</b>. Заверни в кейс — статистика уже есть, останется добавить обложку.`});
+  }
+  return `<div class="ps-soc-trends">` + trends.slice(0, 4).map(t => `
+    <div class="ps-soc-trend">
+      <span class="ps-soc-trend-ic ${t.tone}">${I(t.ic)}</span>
+      <div class="ps-soc-trend-b">
+        <div class="ps-soc-trend-t">${t.t}</div>
+        <div class="ps-soc-trend-d">${t.d}</div>
+      </div>
+    </div>`).join('') + `</div>`;
+}
+
+/* ---------- медиа-кит ---------- */
+function psSocMediaKitHtml(){
+  return `<div class="ps-soc-mediakit">
+    <div class="ps-soc-mk-doc">
+      <span class="ps-soc-mk-logo">${I('logo')}</span>
+      <div class="ps-soc-mk-lines"><i></i><i></i><i></i><i></i><i></i><i></i></div>
+    </div>
+    <div class="ps-soc-mk-b">
+      <div class="ps-soc-mk-t">Медиа-кит для клиентов</div>
+      <div class="ps-soc-mk-d">PDF с обложкой OKO: соцсети, аудитория, ER, лучшие кейсы, ссылки для связи. Готово за 3 секунды.</div>
+      <button class="ps-soc-mk-btn" onclick="psSocExportKit()">${I('file')} Скачать PDF</button>
+    </div>
+  </div>`;
+}
+
+/* ---------- публичная ссылка + QR ---------- */
+function psSocPubHtml(){
+  const slug = psSocSlug();
+  const url = 'okoteam.top/u/@' + slug;
+  return `<div class="ps-soc-pub">
+    <div class="ps-soc-qr">${psSocQrSvg(url)}</div>
+    <div class="ps-soc-pub-b">
+      <div class="ps-soc-pub-lb">Твоя публичная страница</div>
+      <div class="ps-soc-pub-url">${I('globe')}${esc(url)}</div>
+      <div class="ps-soc-pub-actions">
+        <button onclick="psSocCopy('${psAttr(url)}')">${I('copy')} Скопировать</button>
+        <button onclick="psSocSharePub('${psAttr(url)}')">${I('share')} Поделиться</button>
+        <button onclick="psSocEditSlug()">${I('edit')} Редактировать</button>
+      </div>
+    </div>
+  </div>`;
+}
+
+/* ---------- автопостинг ---------- */
+function psSocAutoHtml(){
+  const list = (PS_SOC.sched || []).slice().sort((a, b) => a.at - b.at);
+  const rows = list.length ? list.map(s => {
+    const dt = new Date(s.at);
+    const HH = String(dt.getHours()).padStart(2, '0');
+    const MM = String(dt.getMinutes()).padStart(2, '0');
+    const today = new Date(); today.setHours(0,0,0,0);
+    const dayLb = (dt.getTime() < today.getTime() + 86400e3) ? 'сегодня' :
+                  (dt.getTime() < today.getTime() + 86400e3 * 2) ? 'завтра' :
+                  dt.getDate() + '.' + String(dt.getMonth() + 1).padStart(2, '0');
+    const plats = (s.plats || []).slice(0, 4).map(id => `<span class="ps-soc-tone-${id}">${psSocIco(id)}</span>`).join('');
+    return `<div class="ps-soc-auto-row">
+      <div class="ps-soc-auto-time">${HH}:${MM}<small>${dayLb}</small></div>
+      <div class="ps-soc-auto-b"><span>${esc(s.txt)}</span><small>уйдёт в ${(s.plats || []).length} сети</small></div>
+      <div class="ps-soc-auto-plats">${plats}</div>
+      <button class="ps-soc-auto-del" onclick="psSocSchedRemove('${s.id}')" aria-label="Удалить">${I('trash')}</button>
+    </div>`;
+  }).join('') : `<div class="ps-soc-auto-empty">${I('clock')}Ничего не запланировано. Задай время — робот сам опубликует пост во все выбранные сети.</div>`;
+  return `<div class="ps-soc-auto">
+    <div class="ps-soc-auto-h">
+      <span class="ps-soc-plat-ic">${I('clock')}</span>
+      <b>Расписание</b>
+      <button onclick="psSocSchedOpen()">${I('plus')} Добавить</button>
+    </div>
+    <div class="ps-soc-auto-list">${rows}</div>
+  </div>`;
+}
+
+/* ---------- ссылки-агрегатор (Linktree) ---------- */
+function psSocLinksHtml(){
+  const url = 'okoteam.top/u/@' + psSocSlug();
+  const rows = (PS_SOC.links || []).map(l => {
+    const clicks = 40 + (psHash('lc:' + l.id) % 1800);
+    return `<div class="ps-soc-link-row" onclick="psSocLinkOpen('${l.id}')">
+      <span class="ps-soc-link-ic">${I(psSocSafeIco(l.ic))}</span>
+      <div class="ps-soc-link-b"><b>${esc(l.t)}</b><small>${esc(l.u)}</small></div>
+      <div class="ps-soc-link-stat"><b>${psSocFmt(clicks)}</b>кликов</div>
+      <button class="ps-soc-link-edit" onclick="event.stopPropagation();psSocLinkEdit('${l.id}')" aria-label="Редактировать">${I('edit')}</button>
+    </div>`;
+  }).join('');
+  return `<div class="ps-soc-links">
+    ${rows}
+    <button class="ps-soc-link-add" onclick="psSocLinkEdit(null)">${I('plus')} Добавить ссылку</button>
+    <div class="ps-soc-hint">Все ссылки видны на публичной странице <b>${esc(url)}</b> — одна ссылка вместо десятка в био.</div>
+  </div>`;
+}
+
+/* ---------- рендер всей fullscreen-вьюхи ---------- */
+function psSocRender(){
+  psSocLoad();
+  const body = document.getElementById('psSocBody');
+  if(!body) return;
+  body.innerHTML = `
+    <div class="ps-soc-sec">${I('poll')} Дашборд <span class="ps-soc-sec-hint">все привязанные сети</span></div>
+    ${psSocDashHtml()}
+
+    <div class="ps-soc-sec">${I('users')} Платформы <span class="ps-soc-sec-hint">${psSocConnected().length}/${PS_SOC_PLATS.length} подключено</span></div>
+    ${psSocPlatsHtml()}
+
+    <div class="ps-soc-sec">${I('rocket')} Тренды и рост</div>
+    ${psSocTrendsHtml()}
+
+    <div class="ps-soc-sec">${I('globe')} Публичная страница</div>
+    ${psSocPubHtml()}
+
+    <div class="ps-soc-sec">${I('circle-play')} Автопостинг</div>
+    ${psSocAutoHtml()}
+
+    <div class="ps-soc-sec">${I('compass')} Ссылки-агрегатор</div>
+    ${psSocLinksHtml()}
+
+    <div class="ps-soc-sec">${I('file')} Медиа-кит</div>
+    ${psSocMediaKitHtml()}
+
+    <div style="height:32px"></div>`;
+}
+
+/* ---------- открыть/закрыть fullscreen ---------- */
+function psSocOpen(){
+  psSocLoad();
+  psSocRender();
+  const v = document.getElementById('psSocView');
+  if(v && !v.classList.contains('open')){
+    v.classList.add('open');
+    if(typeof nvPush === 'function') nvPush('view:psSoc', psSocClose);
+  }
+}
+function psSocClose(){
+  const v = document.getElementById('psSocView');
+  if(v) v.classList.remove('open');
+  if(typeof nvPop === 'function') nvPop('view:psSoc');
+}
+function psSocMenu(){
+  if(typeof showPopup !== 'function') return;
+  showPopup({title:'Мои соцсети', body:'Действия с разделом', actions:[
+    {label:'Обновить статистику', onclick: () => { psSocRender(); if(typeof toast === 'function') toast('Статистика обновлена'); }},
+    {label:'Скачать медиа-кит', onclick: psSocExportKit},
+    {label:'Скопировать публичную ссылку', onclick: () => psSocCopy('okoteam.top/u/@' + psSocSlug())},
+    {label:'Закрыть', ghost:true}
+  ]});
+}
+
+/* ---------- подключение платформы ---------- */
+function psSocConnect(id){
+  const p = PS_SOC_MAP[id]; if(!p) return;
+  const head = document.getElementById('psSocConnHead');
+  const body = document.getElementById('psSocConnBody');
+  if(head) head.textContent = 'Подключить ' + p.name;
+  const cur = PS_SOC.handles[id] || '';
+  body.innerHTML = `
+    <div class="ps-soc-conn-h">
+      ${psSocPlatIcHtml(id)}
+      <div><b>${esc(p.name)}</b><small>${esc(p.hint)}</small></div>
+    </div>
+    <div class="ps-soc-conn-input">
+      <label>Твой хендл</label>
+      <input id="psSocConnInp" type="text" placeholder="${esc(p.ph)}" value="${esc(cur)}" autocomplete="off">
+    </div>
+    <div class="ps-soc-conn-help">Данные подтягиваются автоматически — подписчики, посты, ER, лучший месяц. Достаточно указать <b>публичный хендл</b> — токены и пароли не нужны.</div>
+    <div class="ps-soc-conn-actions">
+      <button class="btn" onclick="psSocConnSave('${id}')">${I('check')} Подключить</button>
+      ${PS_SOC.conn[id] ? `<button class="btn ghost" onclick="psSocDisconnect('${id}')">${I('trash')} Отключить</button>` : ''}
+    </div>`;
+  try{ document.body.classList.add('ps-over-soc'); }catch(e){}
+  if(typeof openSheet === 'function') openSheet('ps-soc-connect');
+  setTimeout(() => { const el = document.getElementById('psSocConnInp'); if(el) el.focus(); }, 120);
+}
+function psSocConnSave(id){
+  const inp = document.getElementById('psSocConnInp');
+  const val = ((inp && inp.value) || '').trim().replace(/^@/, '').replace(/^https?:\/\//, '').replace(/\/+$/, '');
+  if(!val){ if(typeof toast === 'function') toast('Укажи хендл'); return; }
+  PS_SOC.handles[id] = val;
+  PS_SOC.conn[id] = true;
+  psSocSave();
+  if(typeof closeSheet === 'function') closeSheet();
+  psSocRender();
+  const p = PS_SOC_MAP[id];
+  if(typeof toast === 'function') toast(p.name + ': подключено');
+  /* обновить карточку-вход на профиле, если открыта */
+  try{ if(document.getElementById('screen-profile')) psSocInjectEntry(); }catch(e){}
+}
+function psSocDisconnect(id){
+  PS_SOC.conn[id] = false;
+  psSocSave();
+  if(typeof closeSheet === 'function') closeSheet();
+  psSocRender();
+  const p = PS_SOC_MAP[id];
+  if(typeof toast === 'function') toast(p.name + ': отключено');
+  try{ if(document.getElementById('screen-profile')) psSocInjectEntry(); }catch(e){}
+}
+
+/* ---------- панель статистики платформы ---------- */
+function psSocDetail(id){
+  const p = PS_SOC_MAP[id]; if(!p || !PS_SOC.conn[id]) return;
+  const head = document.getElementById('psSocDetHead');
+  if(head) head.textContent = p.name;
+  const body = document.getElementById('psSocDetBody');
+  const followers = psSocFollowers(id);
+  const {pts, gain, growPct} = psSocSpark7(id);
+  const er = psSocER(id);
+  const posts = psSocRecentPosts(id);
+  const best = psSocBestPost(id);
+  /* большой sparkline */
+  const W = 620, H = 60, pad = 3;
+  const min = Math.min.apply(null, pts), max = Math.max.apply(null, pts);
+  const rng = Math.max(1, max - min);
+  const xF = i => pad + i * ((W - pad * 2) / (pts.length - 1));
+  const yF = v => pad + (H - pad * 2) * (1 - (v - min) / rng);
+  const line = pts.map((v, i) => (i ? 'L' : 'M') + xF(i).toFixed(1) + ' ' + yF(v).toFixed(1)).join(' ');
+  const area = `M${pad} ${(H - pad).toFixed(1)} ` + pts.map((v, i) => 'L' + xF(i).toFixed(1) + ' ' + yF(v).toFixed(1)).join(' ') + ` L${(W - pad).toFixed(1)} ${(H - pad).toFixed(1)} Z`;
+  const dot = pts.length - 1;
+
+  const postsRows = posts.map(pp => `
+    <div class="ps-soc-post-row${pp.id === best.id ? ' best' : ''}" onclick="psSocPostOpen('${id}',${pp.i})">
+      ${pp.id === best.id ? `<span class="ps-soc-best-badge">${I('star')} лучший</span>` : ''}
+      <div class="ps-soc-post-thumb ${pp.g}">${I(pp.kind)}</div>
+      <div class="ps-soc-post-b">
+        <span class="ps-soc-post-t">${esc(pp.t)}</span>
+        <div class="ps-soc-post-m">
+          <span>${I('eye')}${psSocFmt(pp.reach)}</span>
+          <span>${I('heart')}${psSocFmt(pp.likes)}</span>
+          <span>${I('comment')}${psSocFmt(pp.comments)}</span>
+          <span>${I('clock')}${psSocPostAgo(pp.ts)}</span>
+        </div>
+      </div>
+      <div class="ps-soc-post-er">${pp.er}%<small>ER</small></div>
+    </div>`).join('');
+
+  body.innerHTML = `
+    <div class="ps-soc-det-h">
+      ${psSocPlatIcHtml(id)}
+      <div class="ps-soc-det-h-b"><b>${esc(p.name)}</b><small>${p.handleFmt + esc(PS_SOC.handles[id] || '')} · ${esc(p.base + (PS_SOC.handles[id] || ''))}</small></div>
+      <div class="ps-soc-det-h-actions">
+        <button onclick="psSocConnect('${id}')" title="Изменить хендл" aria-label="Изменить">${I('edit')}</button>
+        <button onclick="psSocCopy('${psAttr(p.base + (PS_SOC.handles[id] || ''))}')" title="Скопировать ссылку" aria-label="Скопировать">${I('copy')}</button>
+      </div>
+    </div>
+    <div class="ps-soc-det-stats">
+      <div class="ps-soc-tile">
+        <div class="ps-soc-tile-lb">${I('users')} Подписчиков</div>
+        <div class="ps-soc-tile-v">${psSocFmt(followers)}</div>
+        <div class="ps-soc-tile-d${gain < 0 ? ' down' : ''}">${I('rocket')} ${gain >= 0 ? '+' : ''}${psSocFmt(gain)}</div>
+      </div>
+      <div class="ps-soc-tile">
+        <div class="ps-soc-tile-lb">${I('bolt')} ER</div>
+        <div class="ps-soc-tile-v">${er}<span class="ps-soc-tile-sub">%</span></div>
+        <div class="ps-soc-tile-d">${I('check')} стабильно</div>
+      </div>
+      <div class="ps-soc-tile">
+        <div class="ps-soc-tile-lb">${I('fire')} Рост / нед</div>
+        <div class="ps-soc-tile-v">${growPct.toFixed(1)}<span class="ps-soc-tile-sub">%</span></div>
+        <div class="ps-soc-tile-d">${I('rocket')} +${psSocFmt(gain)}</div>
+      </div>
+    </div>
+    <div class="ps-soc-det-chart">
+      <div class="ps-soc-det-chart-h"><span>Подписчики за 7 дней</span><b>+${psSocFmt(gain)}</b></div>
+      <svg class="ps-soc-det-chart-svg" viewBox="0 0 ${W} ${H}" preserveAspectRatio="none">
+        <defs><linearGradient id="psSocDetGrad" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#9AFF00" stop-opacity=".42"/><stop offset="100%" stop-color="#9AFF00" stop-opacity="0"/></linearGradient></defs>
+        <path d="${area}" fill="url(#psSocDetGrad)"/>
+        <path d="${line}" fill="none" stroke="#9AFF00" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+        <circle cx="${xF(dot).toFixed(1)}" cy="${yF(pts[dot]).toFixed(1)}" r="3.5" fill="#9AFF00"/>
+        <circle cx="${xF(dot).toFixed(1)}" cy="${yF(pts[dot]).toFixed(1)}" r="7" fill="#9AFF00" opacity=".24"/>
+      </svg>
+    </div>
+    <div class="ps-soc-sec" style="margin:6px 0 6px">${I('feed')} Последние 5 постов</div>
+    <div class="ps-soc-posts">${postsRows}</div>`;
+
+  try{ document.body.classList.add('ps-over-soc'); }catch(e){}
+  if(typeof openSheet === 'function') openSheet('ps-soc-detail');
+}
+function psSocPostOpen(id, i){
+  const p = PS_SOC_MAP[id]; if(!p) return;
+  const post = psSocRecentPosts(id)[i]; if(!post) return;
+  if(typeof showPopup !== 'function') return;
+  showPopup({
+    ico: post.kind === 'circle-play' ? 'circle-play' : 'feed',
+    title: post.t,
+    body: `<div style="text-align:left;font-size:13px;line-height:1.6;color:var(--text)">
+      <div style="display:flex;gap:8px;align-items:center;margin-bottom:10px">
+        ${psSocPlatIcHtml(id)}<b>${esc(p.name)}</b><span style="color:var(--dim);font-size:11.5px;margin-left:auto">${psSocPostAgo(post.ts)}</span>
+      </div>
+      <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:10px">
+        <div style="background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:8px;text-align:center"><b style="display:block;color:var(--accent);font-family:var(--font-display);font-size:16px">${psSocFmt(post.reach)}</b><small style="color:var(--dim);font-size:9.5px;letter-spacing:.06em;text-transform:uppercase">Охват</small></div>
+        <div style="background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:8px;text-align:center"><b style="display:block;color:var(--accent);font-family:var(--font-display);font-size:16px">${psSocFmt(post.likes)}</b><small style="color:var(--dim);font-size:9.5px;letter-spacing:.06em;text-transform:uppercase">Лайки</small></div>
+        <div style="background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:8px;text-align:center"><b style="display:block;color:var(--accent);font-family:var(--font-display);font-size:16px">${psSocFmt(post.comments)}</b><small style="color:var(--dim);font-size:9.5px;letter-spacing:.06em;text-transform:uppercase">Коммент</small></div>
+        <div style="background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:8px;text-align:center"><b style="display:block;color:var(--accent);font-family:var(--font-display);font-size:16px">${post.er}%</b><small style="color:var(--dim);font-size:9.5px;letter-spacing:.06em;text-transform:uppercase">ER</small></div>
+      </div>
+      <div style="color:var(--dim);font-size:12px;line-height:1.5">CTR по ссылкам в описании — <b style="color:var(--text)">${(post.er * 0.42).toFixed(1)}%</b>. Пост попал в лучшие ${Math.max(1, Math.round(100 - post.er * 10))}% ленты за неделю.</div>
+    </div>`,
+    actions:[
+      {label:'Повторить формат', onclick: () => { if(typeof toast === 'function') toast('Формат добавлен в очередь контент-завода'); }},
+      {label:'Закрыть', ghost:true}
+    ]
+  });
+}
+
+/* ---------- медиа-кит: генерируем «PDF» (data-url text/html + печать через окно) ---------- */
+function psSocExportKit(){
+  const slug = psSocSlug();
+  const agg = psSocAggregate();
+  const rows = psSocConnected().map(p => {
+    const f = psSocFollowers(p.id);
+    const {gain} = psSocSpark7(p.id);
+    return `<tr><td>${p.name}</td><td>${PS_SOC.handles[p.id] ? p.handleFmt + PS_SOC.handles[p.id] : '—'}</td><td>${psSocFmt(f)}</td><td>+${psSocFmt(gain)}</td><td>${psSocER(p.id)}%</td></tr>`;
+  }).join('');
+  const html = `<!doctype html><html><head><meta charset="utf-8"><title>OKO · Медиа-кит @${slug}</title><style>
+    *{box-sizing:border-box;font-family:-apple-system,Segoe UI,Inter,Roboto,sans-serif;color:#0a0d04}
+    body{margin:0;background:#fff;padding:40px 44px}
+    .h{display:flex;align-items:center;gap:14px;border-bottom:2px solid #0a0d04;padding-bottom:16px;margin-bottom:22px}
+    .h .lg{width:44px;height:44px;background:#9AFF00;border-radius:12px;display:inline-flex;align-items:center;justify-content:center;font-weight:900;color:#0a0d04;font-size:22px}
+    h1{font-size:26px;margin:0;letter-spacing:.02em}
+    .sub{color:#666;font-size:13px;margin-top:2px}
+    .stat{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin:18px 0 22px}
+    .stat div{border:1px solid #e6e6e0;border-radius:10px;padding:12px 14px}
+    .stat b{display:block;font-size:22px;color:#0a0d04;margin-bottom:4px}
+    .stat small{color:#666;text-transform:uppercase;letter-spacing:.06em;font-size:10px}
+    table{width:100%;border-collapse:collapse;margin-top:6px}
+    th,td{text-align:left;padding:9px 8px;border-bottom:1px solid #e6e6e0;font-size:13px}
+    th{background:#f3f6ea;font-size:11px;text-transform:uppercase;letter-spacing:.06em;color:#3a3a30}
+    .foot{margin-top:34px;font-size:11px;color:#666;border-top:1px solid #e6e6e0;padding-top:12px}
+    .foot b{color:#0a0d04}
+    @media print{body{padding:24px 30px}}
+  </style></head><body>
+    <div class="h"><span class="lg">O</span><div><h1>Медиа-кит @${esc(slug)}</h1><div class="sub">Соц-профиль OKO · сгенерировано ${new Date().toLocaleDateString('ru-RU')}</div></div></div>
+    <div class="stat">
+      <div><b>${psSocFmt(agg.followers)}</b><small>Совокупная аудитория</small></div>
+      <div><b>${agg.erAvg}%</b><small>Средний ER</small></div>
+      <div><b>+${psSocFmt(agg.gain)}</b><small>Прирост за 7 дней</small></div>
+    </div>
+    <h2 style="font-size:15px;letter-spacing:.05em;text-transform:uppercase">Платформы</h2>
+    <table><thead><tr><th>Сеть</th><th>Хендл</th><th>Подписчики</th><th>Δ 7 дней</th><th>ER</th></tr></thead><tbody>${rows}</tbody></table>
+    <div class="foot">Связь: <b>okoteam.top/u/@${esc(slug)}</b> · Медиа-кит собран автоматически из статистики OKO.</div>
+  </body></html>`;
+  try{
+    const w = window.open('', '_blank');
+    if(w){
+      w.document.open(); w.document.write(html); w.document.close();
+      setTimeout(() => { try{ w.focus(); w.print(); }catch(e){} }, 400);
+      if(typeof toast === 'function') toast('Медиа-кит открыт — выбери «Сохранить PDF»');
+      return;
+    }
+  }catch(e){}
+  /* fallback: скачать HTML-файл */
+  try{
+    const a = document.createElement('a');
+    a.href = 'data:text/html;charset=utf-8,' + encodeURIComponent(html);
+    a.download = 'oko-mediakit-' + slug + '.html';
+    document.body.appendChild(a); a.click(); a.remove();
+    if(typeof toast === 'function') toast('Медиа-кит скачан');
+  }catch(e){ if(typeof toast === 'function') toast('Не удалось экспортировать'); }
+}
+
+/* ---------- публичная ссылка ---------- */
+function psSocCopy(text){ const ok = psCopy(text); if(typeof toast === 'function') toast(ok ? 'Скопировано' : 'Не удалось'); }
+function psSocSharePub(url){
+  const full = 'https://' + url;
+  if(navigator.share){ navigator.share({title:'Мои соцсети в OKO', url: full}).catch(()=>{}); return; }
+  if(typeof showPopup === 'function'){
+    showPopup({ico:'share', title:'Поделиться публичной страницей',
+      body:`Одна ссылка — все твои соцсети и материалы.<div class="ps-sharelink">${I('globe')}<span>${esc(full)}</span></div>`,
+      actions:[{label:'Скопировать', onclick: () => psSocCopy(full)},{label:'Закрыть', ghost:true}]});
+  }
+}
+function psSocEditSlug(){
+  if(typeof showPopup !== 'function') return;
+  const cur = psSocSlug();
+  showPopup({title:'Публичный адрес', body:`
+    <div class="ps-soc-conn-input"><label>okoteam.top/u/@</label>
+      <input id="psSocSlugInp" type="text" value="${esc(cur)}" autocomplete="off" spellcheck="false"></div>
+    <div class="ps-soc-hint" style="text-align:left">Латиница, цифры и точка. Пример: <b>ktodaniel</b>, <b>agency.oko</b>.</div>
+  `, actions:[
+    {label:'Сохранить', onclick: () => {
+      const el = document.getElementById('psSocSlugInp');
+      const v = (el && el.value || '').trim().replace(/^@/, '').replace(/[^a-z0-9._-]/gi, '').toLowerCase();
+      if(!v){ if(typeof toast === 'function') toast('Пустой адрес'); return; }
+      PS_SOC.slug = v; psSocSave(); psSocRender();
+      if(typeof toast === 'function') toast('okoteam.top/u/@' + v + ' — сохранено');
+    }},
+    {label:'Отмена', ghost:true}
+  ]});
+  setTimeout(() => { const el = document.getElementById('psSocSlugInp'); if(el){ el.focus(); el.select(); } }, 120);
+}
+
+/* ---------- автопостинг: расписание ---------- */
+function psSocSchedOpen(id){
+  const body = document.getElementById('psSocPostBody');
+  const conn = psSocConnected();
+  if(!conn.length){
+    body.innerHTML = `<div class="ps-soc-empty-body">${I('bolt')}Сначала подключи хотя бы одну платформу, чтобы было куда постить.</div>
+      <div class="ps-soc-post-actions"><button class="btn ghost" onclick="if(typeof closeSheet==='function')closeSheet()">Понятно</button></div>`;
+    try{ document.body.classList.add('ps-over-soc'); }catch(e){}
+    if(typeof openSheet === 'function') openSheet('ps-soc-post');
+    return;
+  }
+  const cur = id ? (PS_SOC.sched || []).find(s => s.id === id) : null;
+  const dt = new Date(cur ? cur.at : (Date.now() + 3600e3 * 4));
+  const dtVal = dt.toISOString().slice(0, 16);
+  const platsBtns = PS_SOC_PLATS.map(p => {
+    const on = PS_SOC.conn[p.id] && (cur ? (cur.plats || []).includes(p.id) : ['ig','tg','vk'].includes(p.id));
+    return `<button type="button" data-plat="${p.id}" class="${on ? 'on' : ''}${!PS_SOC.conn[p.id] ? ' off' : ''}" ${!PS_SOC.conn[p.id] ? 'disabled' : ''} onclick="psSocSchedTogglePlat(this)">
+      ${psSocPlatIcHtml(p.id)}${esc(p.name)}
+    </button>`;
+  }).join('');
+  body.innerHTML = `
+    <textarea id="psSocPostTxt" placeholder="Текст поста…">${cur ? esc(cur.txt) : ''}</textarea>
+    <div>
+      <div class="ps-soc-hint" style="margin:0 2px 6px">Когда опубликовать</div>
+      <div class="ps-soc-post-time-row"><input id="psSocPostAt" type="datetime-local" value="${dtVal}"></div>
+    </div>
+    <div>
+      <div class="ps-soc-hint" style="margin:0 2px 6px">Куда уйдёт</div>
+      <div class="ps-soc-post-plats" id="psSocPostPlats">${platsBtns}</div>
+    </div>
+    <div class="ps-soc-post-actions">
+      <button class="btn" onclick="psSocSchedSave('${cur ? cur.id : ''}')">${I('check')} ${cur ? 'Сохранить' : 'Запланировать'}</button>
+      ${cur ? `<button class="btn ghost" onclick="psSocSchedRemove('${cur.id}')">${I('trash')} Удалить</button>` : `<button class="btn ghost" onclick="if(typeof closeSheet==='function')closeSheet()">Отмена</button>`}
+    </div>`;
+  try{ document.body.classList.add('ps-over-soc'); }catch(e){}
+  if(typeof openSheet === 'function') openSheet('ps-soc-post');
+}
+function psSocSchedTogglePlat(btn){ btn.classList.toggle('on'); }
+function psSocSchedSave(id){
+  const txt = (document.getElementById('psSocPostTxt') || {}).value || '';
+  const at = (document.getElementById('psSocPostAt') || {}).value || '';
+  const plats = Array.from(document.querySelectorAll('#psSocPostPlats button.on')).map(b => b.getAttribute('data-plat'));
+  if(!txt.trim()){ if(typeof toast === 'function') toast('Текст поста пуст'); return; }
+  if(!plats.length){ if(typeof toast === 'function') toast('Выбери хотя бы одну сеть'); return; }
+  const ts = at ? new Date(at).getTime() : Date.now() + 3600e3;
+  if(!isFinite(ts)){ if(typeof toast === 'function') toast('Неверная дата'); return; }
+  const list = PS_SOC.sched || [];
+  if(id){
+    const idx = list.findIndex(s => s.id === id);
+    if(idx >= 0) list[idx] = {id, txt: txt.trim(), at: ts, plats};
+  } else {
+    list.push({id: 's' + Date.now(), txt: txt.trim(), at: ts, plats});
+  }
+  PS_SOC.sched = list; psSocSave();
+  if(typeof closeSheet === 'function') closeSheet();
+  psSocRender();
+  if(typeof toast === 'function') toast('Пост запланирован в ' + plats.length + ' ' + (plats.length === 1 ? 'сеть' : 'сети'));
+}
+function psSocSchedRemove(id){
+  PS_SOC.sched = (PS_SOC.sched || []).filter(s => s.id !== id);
+  psSocSave();
+  if(typeof closeSheet === 'function') closeSheet();
+  psSocRender();
+  if(typeof toast === 'function') toast('Пост удалён из расписания');
+}
+
+/* ---------- ссылки-агрегатор ---------- */
+function psSocLinkOpen(id){
+  const l = (PS_SOC.links || []).find(x => x.id === id);
+  if(!l) return;
+  if(navigator.share){ navigator.share({title:l.t, url:l.u.match(/^https?:/) ? l.u : 'https://' + l.u}).catch(()=>{}); return; }
+  psSocCopy(l.u);
+}
+function psSocLinkEdit(id){
+  const l = id ? (PS_SOC.links || []).find(x => x.id === id) : null;
+  const head = document.getElementById('psSocLinkHead');
+  if(head) head.textContent = l ? 'Ссылка' : 'Новая ссылка';
+  const body = document.getElementById('psSocLinkBody');
+  const opts = PS_SOC_LINK_ICONS.map(o => `<option value="${o.v}" ${l && l.ic === o.v ? 'selected' : ''}>${esc(o.lb)}</option>`).join('');
+  body.innerHTML = `
+    <label>Название</label>
+    <input id="psSocLinkT" type="text" placeholder="Например: Мой сайт" value="${esc(l ? l.t : '')}">
+    <label>URL</label>
+    <input id="psSocLinkU" type="text" placeholder="okoteam.top/…" value="${esc(l ? l.u : '')}">
+    <label>Иконка</label>
+    <select id="psSocLinkI">${opts}</select>
+    <div class="ps-soc-link-actions">
+      <button class="btn" onclick="psSocLinkSave('${l ? l.id : ''}')">${I('check')} ${l ? 'Сохранить' : 'Добавить'}</button>
+      ${l ? `<button class="btn ghost" onclick="psSocLinkDel('${l.id}')">${I('trash')} Удалить</button>` : `<button class="btn ghost" onclick="if(typeof closeSheet==='function')closeSheet()">Отмена</button>`}
+    </div>`;
+  try{ document.body.classList.add('ps-over-soc'); }catch(e){}
+  if(typeof openSheet === 'function') openSheet('ps-soc-link');
+  setTimeout(() => { const el = document.getElementById('psSocLinkT'); if(el) el.focus(); }, 120);
+}
+function psSocLinkSave(id){
+  const t = ((document.getElementById('psSocLinkT') || {}).value || '').trim();
+  const u = ((document.getElementById('psSocLinkU') || {}).value || '').trim().replace(/^https?:\/\//, '');
+  const ic = (document.getElementById('psSocLinkI') || {}).value || 'globe';
+  if(!t || !u){ if(typeof toast === 'function') toast('Заполни название и URL'); return; }
+  const list = PS_SOC.links || [];
+  if(id){
+    const idx = list.findIndex(x => x.id === id);
+    if(idx >= 0) list[idx] = {id, t, u, ic};
+  } else {
+    list.push({id:'l' + Date.now(), t, u, ic});
+  }
+  PS_SOC.links = list; psSocSave();
+  if(typeof closeSheet === 'function') closeSheet();
+  psSocRender();
+  if(typeof toast === 'function') toast('Ссылка сохранена');
+}
+function psSocLinkDel(id){
+  PS_SOC.links = (PS_SOC.links || []).filter(x => x.id !== id);
+  psSocSave();
+  if(typeof closeSheet === 'function') closeSheet();
+  psSocRender();
+  if(typeof toast === 'function') toast('Ссылка удалена');
+}
+
+/* ---------- инъекция карточки-входа в свой профиль ---------- */
+function psSocInjectEntry(){
+  const scr = document.getElementById('screen-profile');
+  if(!scr) return;
+  const pad = scr.querySelector('.pad');
+  if(!pad) return;
+  /* точка монтирования: после mp-streak, иначе после mp-spark, иначе после profStats */
+  const after = pad.querySelector('.mp-streak-wrap') || pad.querySelector('.mp-spark-wrap') || pad.querySelector('.mp-show-wrap') || document.getElementById('profStats');
+  if(!after) return;
+  let wrap = pad.querySelector('.ps-soc-entry-wrap');
+  if(!wrap){
+    wrap = document.createElement('div');
+    wrap.className = 'ps-soc-entry-wrap';
+    after.insertAdjacentElement('afterend', wrap);
+  }
+  wrap.innerHTML = psSocEntryHtml();
+}
+
 /* ================= САМОИНИЦИАЛИЗАЦИЯ И ПАТЧИ (chain) ================= */
 (function psInit(){
   psLoadState();
@@ -1223,6 +2127,7 @@ function mpInject(){
       try{ psInjectAccSwitch(); }catch(e){}
       try{ psInjectMyFollows(); }catch(e){}
       try{ mpInject(); }catch(e){}
+      try{ psSocInjectEntry(); }catch(e){}
       /* админ-строка видна только владельцу активного аккаунта */
       const owner = (typeof isOwner === 'function') ? isOwner() : (PROFILE.role === 'owner');
       try{
@@ -1248,12 +2153,13 @@ function mpInject(){
     };
   }
 
-  /* chain closeSheet: снять подъём бэкдропа над профилем */
+  /* chain closeSheet: снять подъём бэкдропа над профилем и хабом соцсетей */
   if(typeof closeSheet === 'function'){
     const _psPrevCloseSheet = closeSheet;
     closeSheet = function(){
       _psPrevCloseSheet.apply(this, arguments);
       try{ document.body.classList.remove('ps-over-view'); }catch(e){}
+      try{ document.body.classList.remove('ps-over-soc'); }catch(e){}
     };
   }
 
@@ -1302,6 +2208,6 @@ function mpInject(){
   try{
     const sp = document.getElementById('screen-profile');
     if(sp && sp.classList.contains('active') && typeof renderMyProfile === 'function') renderMyProfile();
-    else { psInjectAccSwitch(); psInjectMyFollows(); mpInject(); }
+    else { psInjectAccSwitch(); psInjectMyFollows(); mpInject(); psSocInjectEntry(); }
   }catch(e){}
 })();

@@ -208,145 +208,800 @@ function st2SesHtml(s){
   </div>`;
 }
 
-function st2Render(){
+/* ================= NAV-STACK: панели ================= */
+/* каждый вход — {title, render(ctx)->html, after?()} */
+const ST2_PANELS = {};
+let ST2_STACK = [];
+
+function st2Push(id, ctx){
+  const p = ST2_PANELS[id];
+  if(!p) return;
+  const ent = {id, ctx: ctx || {}, title: (typeof p.title === 'function' ? p.title(ctx || {}) : p.title)};
+  ST2_STACK.push(ent);
+  st2RenderStack('push');
+}
+function st2Back(){
+  if(ST2_STACK.length > 1){
+    ST2_STACK.pop();
+    st2RenderStack('pop');
+    return;
+  }
+  st2Close();
+}
+function st2CurPanel(){ return ST2_STACK[ST2_STACK.length - 1]; }
+
+/* рендер стека: замена содержимого + анимация slide */
+function st2RenderStack(dir){
   const body = document.getElementById('st2Body');
   if(!body) return;
-  const alive = st2Alive(), others = alive.filter(s => !s.cur);
-  const N = [
-    ['msg',       'Сообщения и чаты',            'chat'],
-    ['feed',      'Лента: реакции и упоминания', 'heart'],
-    ['market',    'Биржа: заказы и отклики',     'briefcase'],
-    ['academy',   'Академия: новые уроки',       'star'],
-    ['marketing', 'Новости и предложения OKO',   'megaphone'],
-  ];
-  const VIS = [['all','Все'],['contacts','Контакты'],['nobody','Никто']];
-  const themeMode = ST2.theme || (document.documentElement.dataset.theme === 'light' ? 'light' : 'dark');
-  const lang = (typeof LANG !== 'undefined') ? LANG : 'ru';
-  const q = ST2.notif.quiet || (ST2.notif.quiet = {on:false, from:'23:00', to:'08:00'});
-  body.innerHTML = `
-  <label class="st2-search" id="st2Search">
-    <span class="st2-search-ic">${I('st2-search')}</span>
-    <input id="st2SearchInp" type="search" placeholder="Поиск по настройкам" autocomplete="off" enterkeyhint="search" oninput="st2Search(this.value)">
-    <button type="button" class="st2-search-x" onclick="st2SearchClear()" aria-label="Очистить">${I('st2-x')}</button>
-  </label>
-  <div class="st2-sec">
-    <div class="st2-h">${I('users')} Аккаунты</div>
-    <div class="st2-card" id="st2AccList">
+  const top = st2CurPanel();
+  if(!top) return;
+  const p = ST2_PANELS[top.id];
+  const html = `<div class="st2-panel-inner">${p.render(top.ctx)}</div>`;
+
+  const title = document.getElementById('st2Title');
+  if(title) title.textContent = top.title;
+  const bIco = document.getElementById('st2BackIco');
+  if(bIco) bIco.style.transform = ST2_STACK.length > 1 ? 'translateX(-2px)' : '';
+
+  const prev = body.firstElementChild;
+  const panel = document.createElement('div');
+  panel.className = 'st2-panel ' + (dir === 'push' ? 'st2-in' : 'st2-out-left');
+  panel.dataset.id = top.id;
+  panel.innerHTML = html;
+  body.appendChild(panel);
+
+  requestAnimationFrame(()=>{
+    panel.classList.remove('st2-in', 'st2-out-left');
+    if(prev){
+      prev.classList.remove('st2-panel');
+      prev.classList.add('st2-panel', dir === 'push' ? 'st2-back-behind' : 'st2-out-right');
+    }
+  });
+  setTimeout(()=>{ if(prev && prev.parentElement) prev.remove(); if(p.after) try{ p.after(top.ctx, panel); }catch(e){} }, 340);
+}
+
+/* совместимая обёртка: полный ре-рендер текущей панели без анимации */
+function st2Render(){
+  if(!ST2_STACK.length) ST2_STACK = [{id:'root', ctx:{}, title:'Настройки'}];
+  const body = document.getElementById('st2Body');
+  if(!body) return;
+  const top = st2CurPanel();
+  const p = ST2_PANELS[top.id];
+  body.innerHTML = `<div class="st2-panel st2-active" data-id="${top.id}"><div class="st2-panel-inner">${p.render(top.ctx)}</div></div>`;
+  const title = document.getElementById('st2Title');
+  if(title) title.textContent = top.title;
+  const bIco = document.getElementById('st2BackIco');
+  if(bIco) bIco.style.transform = ST2_STACK.length > 1 ? 'translateX(-2px)' : '';
+  if(p.after) try{ p.after(top.ctx, body.firstElementChild); }catch(e){}
+}
+
+/* ================= ROOT PANEL: группированный список секций ================= */
+function st2NavRow(icon, title, sum, target, danger){
+  const sumHtml = sum ? `<span class="st2-nav-sum${sum.on?' on':''}">${esc(sum.text||sum)}</span>` : '';
+  return `<button class="prow" onclick="st2Push('${target}')">
+    <span class="st2-nav-ico${danger?' st2-nav-danger':''}">${I(icon)}</span>
+    <span>${esc(title)}</span>${sumHtml}<span class="chev">${I('chev')}</span></button>`;
+}
+function st2ChSummary(k){ return ST2.notif[k] ? 'вкл' : 'выкл'; }
+function st2PrivSum(){
+  const m = {all:'Все', contacts:'Контакты', following:'Подписки', nobody:'Никто'};
+  return m[ST2.priv.write] || 'Все';
+}
+function st2ThemeSum(){
+  const t = ST2.theme || 'dark';
+  return t === 'system' ? 'Система' : (t === 'light' ? 'Светлая' : 'Тёмная');
+}
+function st2LangSum(){
+  const l = (typeof LANG !== 'undefined') ? LANG : 'ru';
+  return l === 'en' ? 'English' : (l === 'kk' ? 'Қазақша' : 'Русский');
+}
+function st2A11ySum(){
+  const a = ST2.a11y;
+  const flags = [a.reduceMotion&&'motion',a.highContrast&&'contrast',a.bigTaps&&'tap',a.reduceOpacity&&'opacity'].filter(Boolean).length;
+  if(!flags && a.fontScale===100) return 'выкл';
+  return flags ? flags + ' опц.' : (a.fontScale + '%');
+}
+function st2DataSum(){ return st2CacheSize().toFixed(1) + ' МБ'; }
+function st2DelSum(){ return ST2.delAt ? {text:'через ' + st2DelDays() + ' д', on:false} : null; }
+
+ST2_PANELS.root = {
+  title: 'Настройки',
+  render(){
+    return `
+    <label class="st2-search" id="st2Search">
+      <span class="st2-search-ic">${I('st2-search')}</span>
+      <input id="st2SearchInp" type="search" placeholder="Поиск по настройкам" autocomplete="off" enterkeyhint="search" oninput="st2Search(this.value)">
+      <button type="button" class="st2-search-x" onclick="st2SearchClear()" aria-label="Очистить">${I('st2-x')}</button>
+    </label>
+    <div id="st2SearchResults"></div>
+    <div class="st2-grouped" id="st2Groups">
+      <div class="st2-grp">
+        <div class="st2-grp-cap">${I('user')} Профиль</div>
+        ${st2NavRow('user',      'Профиль',         {text:'@'+st2Nick()}, 'profile')}
+        ${st2NavRow('users',     'Аккаунты',        (ST2.accounts.length + ' на устройстве'), 'accounts')}
+      </div>
+      <div class="st2-grp">
+        <div class="st2-grp-cap">${I('st2-key')} Аккаунт</div>
+        ${st2NavRow('st2-mail',  'Аккаунт и вход',   ST2.email, 'account')}
+        ${st2NavRow('st2-shield','Безопасность',    (ST2.sec.twofa?'2FA · вкл':'2FA · выкл'), 'security')}
+        ${st2NavRow('st2-devices','Активные сессии', st2Alive().length + ' устр.', 'sessions')}
+      </div>
+      <div class="st2-grp">
+        <div class="st2-grp-cap">${I('lock')} Приватность и уведомления</div>
+        ${st2NavRow('lock',      'Приватность',     st2PrivSum(), 'privacy')}
+        ${st2NavRow('bell',      'Уведомления',     (ST2.notif.msg?'вкл':'выкл'), 'notif')}
+        ${st2NavRow('st2-ban',   'Чёрный список',   (ST2.blocked.length||'пусто') + '', 'blocked')}
+      </div>
+      <div class="st2-grp">
+        <div class="st2-grp-cap">${I('st2-db')} Данные и оформление</div>
+        ${st2NavRow('st2-db',    'Данные и хранилище', st2DataSum(), 'data')}
+        ${st2NavRow('sun',       'Оформление',      st2ThemeSum(), 'theme')}
+        ${st2NavRow('st2-eye',   'Доступность',     st2A11ySum(), 'a11y')}
+        ${st2NavRow('globe',     'Язык',            st2LangSum(), 'lang')}
+      </div>
+      <div class="st2-grp">
+        <div class="st2-grp-cap">${I('st2-life')} Помощь и документы</div>
+        ${st2NavRow('st2-life',  'Помощь и обратная связь', null, 'help')}
+        ${st2NavRow('file',      'Юридические документы',   null, 'legal')}
+        ${st2NavRow('logout',    'Выйти из аккаунта',       null, 'logoutAct')}
+      </div>
+      <div class="st2-grp">
+        <div class="st2-grp-cap" style="color:var(--danger)">${I('trash')} Опасная зона</div>
+        ${st2NavRow('trash',     'Экспорт и удаление', st2DelSum(), 'danger', true)}
+      </div>
+    </div>
+    <div class="st2-search-empty" id="st2SearchEmpty">${I('st2-search')}<p>Ничего не найдено</p><span>Попробуйте другой запрос</span></div>
+    <div class="st2-foot">OKO · настройки хранятся локально · сборка ${st2Ver()}</div>`;
+  }
+};
+
+/* хук выхода — открывается как «панель», но сразу дёргает st2LogoutAccount и попадает назад */
+ST2_PANELS.logoutAct = {
+  title:'Выход',
+  render(){ return `<div class="st2-panel-desc">Готовим выход…</div>`; },
+  after(){ st2LogoutAccount(); setTimeout(()=>{ if(ST2_STACK.length>1){ ST2_STACK.pop(); st2Render(); } }, 30); }
+};
+
+/* ================= ПРОФИЛЬ ================= */
+ST2_PANELS.profile = {
+  title: 'Профиль',
+  render(){
+    const p = (typeof PROFILE !== 'undefined') ? PROFILE : {name:'—', bio:'', role:'', tier:''};
+    return `
+    <p class="st2-panel-desc">Как тебя видят другие пользователи OKO. Открытая часть профиля — имя, ник, био и обложка.</p>
+    <div class="st2-panel-sec">
+      <div class="st2-panel-h">${I('user')} Публичное</div>
+      <div class="st2-grp">
+        <button class="prow" onclick="st2AvatarMenu()">${I('camera')} Фото профиля<span class="chev">${I('chev')}</span></button>
+        <button class="prow" onclick="st2CoverMenu()">${I('st2-image')} Обложка<span class="chev">${I('chev')}</span></button>
+        <button class="prow" onclick="st2OpenEdit()">${I('edit')} Имя, био и статус<span class="st2-val">${esc(p.name)}</span><span class="chev">${I('chev')}</span></button>
+        <button class="prow" onclick="st2EditNick()">${I('st2-key')} Ник<span class="st2-val">@${esc(st2Nick())}</span><span class="chev">${I('chev')}</span></button>
+        <button class="prow" onclick="st2CopyPublic()">${I('share')} Публичная ссылка<span class="st2-val">oko.app/@${esc(st2Nick())}</span><span class="chev">${I('chev')}</span></button>
+      </div>
+    </div>
+    <div class="st2-panel-sec">
+      <div class="st2-panel-h">${I('crown')} Тариф</div>
+      <div class="st2-grp">
+        <button class="prow" onclick="st2GoPlans()">${I('crown')} Текущий тариф<span class="st2-val">${esc(p.tier || 'FREE')}</span><span class="chev">${I('chev')}</span></button>
+      </div>
+    </div>`;
+  }
+};
+
+/* ================= АККАУНТЫ (список + добавить) ================= */
+ST2_PANELS.accounts = {
+  title: 'Аккаунты',
+  render(){
+    return `<p class="st2-panel-desc">На одном устройстве держи несколько аккаунтов OKO — переключайся между ними в один тап.</p>
+    <div class="st2-grp" id="st2AccList">
       ${ST2.accounts.map(st2AccHtml).join('')}
       <button class="prow st2-add-acc" onclick="st2AddAccount()">${I('plus')} Добавить аккаунт<span class="chev">${I('chev')}</span></button>
-      <button class="prow st2-logout-acc" onclick="st2LogoutAccount()">${I('logout')} Выйти из аккаунта<span class="chev">${I('chev')}</span></button>
+      <button class="prow st2-logout-acc" onclick="st2LogoutAccount()">${I('logout')} Выйти из активного<span class="chev">${I('chev')}</span></button>
+    </div>`;
+  }
+};
+
+/* ================= АККАУНТ И ВХОД ================= */
+ST2_PANELS.account = {
+  title: 'Аккаунт и вход',
+  render(){
+    return `<p class="st2-panel-desc">Контакты для входа и привязанные сервисы. Всё, что нужно для восстановления доступа.</p>
+    <div class="st2-panel-sec">
+      <div class="st2-panel-h">${I('st2-mail')} Контакты</div>
+      <div class="st2-grp">
+        <button class="prow" onclick="st2EditEmail()">${I('st2-mail')} Почта<span class="st2-val">${esc(ST2.email)}</span><span class="chip st2-chip">${I('check')} подтверждена</span></button>
+        <button class="prow" onclick="st2EditPhone()">${I('phone')} Телефон<span class="st2-val">${esc(ST2.phone)}</span><span class="chev">${I('chev')}</span></button>
+      </div>
     </div>
-  </div>
-  <div class="st2-sec">
-    <div class="st2-h">${I('user')} Аккаунт</div>
-    <div class="st2-card">
-      <button class="prow" onclick="st2EditNick()">${I('edit')} Ник
-        <span class="st2-val">@${esc(st2Nick())}</span><span class="chev">${I('chev')}</span></button>
-      <button class="prow" onclick="st2EditEmail()">${I('st2-mail')} Почта
-        <span class="st2-val">${esc(ST2.email)}</span><span class="chip st2-chip">${I('check')} подтверждена</span></button>
-      <button class="prow" onclick="st2EditPhone()">${I('phone')} Телефон
-        <span class="st2-val">${esc(ST2.phone)}</span><span class="chev">${I('chev')}</span></button>
+    <div class="st2-panel-sec">
+      <div class="st2-panel-h">${I('st2-link')} Привязки</div>
+      <div class="st2-grp">
+        <button class="prow" onclick="st2LinkTg()">${I('send')} Telegram<span class="st2-val">${esc(ST2.tg || 'не привязан')}</span><span class="chev">${I('chev')}</span></button>
+        <button class="prow" onclick="st2LinkStub('Google')">${I('google')} Google<span class="st2-val">не привязан</span><span class="chev">${I('chev')}</span></button>
+        <button class="prow" onclick="st2LinkStub('Apple')">${I('apple')} Apple ID<span class="st2-val">не привязан</span><span class="chev">${I('chev')}</span></button>
+      </div>
     </div>
-  </div>
-  <div class="st2-sec">
-    <div class="st2-h">${I('bell')} Уведомления</div>
-    <div class="st2-card">${N.map(([k, l, ico]) =>
-      `<button class="prow" onclick="st2Tgl('notif','${k}',this)">${I(ico)} ${l} ${st2Sw(ST2.notif[k])}</button>`).join('')}
-      <button class="prow" onclick="st2QuietTgl(this)">${I('moon')} Тихие часы${st2QuietChip()}${st2Sw(q.on)}</button>
-      <div class="st2-quiet${q.on ? ' open' : ''}" id="st2Quiet"><div class="st2-quiet-in">
-        <div class="st2-quiet-times">
-          <label class="st2-time"><span>с</span><input type="time" value="${esc(q.from)}" onchange="st2QuietTime('from',this.value)"></label>
-          <span class="st2-quiet-arrow">${I('chev')}</span>
-          <label class="st2-time"><span>до</span><input type="time" value="${esc(q.to)}" onchange="st2QuietTime('to',this.value)"></label>
-        </div>
-        <p class="st2-quiet-note">${I('moon')} В эти часы уведомления приходят без звука и вибрации. Режим повторяется каждый день автоматически.</p>
-      </div></div>
-    </div>
-  </div>
-  <div class="st2-sec">
-    <div class="st2-h">${I('lock')} Приватность</div>
-    <div class="st2-card">
-      <div class="prow st2-prow-col" style="cursor:default">
-        <span class="st2-prow-lbl">${I('send')} Кто может писать</span>
-        ${st2Seg('priv','write',[['all','Все'],['following','Подписки'],['nobody','Никто']])}</div>
-      <div class="prow st2-prow-col" style="cursor:default">
-        <span class="st2-prow-lbl">${I('phone')} Кто видит телефон</span>
-        ${st2Seg('priv','phone',VIS)}</div>
-      <div class="prow st2-prow-col" style="cursor:default">
-        <span class="st2-prow-lbl">${I('photo')} Кто видит фото профиля</span>
-        ${st2Seg('priv','photo',VIS)}</div>
-      <div class="prow st2-prow-col" style="cursor:default">
-        <span class="st2-prow-lbl">${I('star')} Кто видит статус</span>
-        ${st2Seg('priv','status',VIS)}</div>
-      <button class="prow" onclick="st2Tgl('priv','online',this)">${I('eye')} Показывать «в сети» ${st2Sw(ST2.priv.online)}</button>
-      <button class="prow" onclick="st2Tgl('priv','read',this)">${I('check2')} Отчёты о прочтении ${st2Sw(ST2.priv.read)}</button>
-      <button class="prow" onclick="st2OpenBlocked()">${I('st2-ban')} Чёрный список
-        <span class="st2-val" id="st2BlockedVal">${ST2.blocked.length ? ST2.blocked.length + (ST2.blocked.length===1?' человек':(ST2.blocked.length<5?' человека':' человек')) : 'пусто'}</span><span class="chev">${I('chev')}</span></button>
-    </div>
-  </div>
-  <div class="st2-sec">
-    <div class="st2-h">${I('st2-shield')} Безопасность</div>
-    <div class="st2-card">
+    <div class="st2-panel-sec">
+      <div class="st2-panel-h">${I('st2-shield')} Защита входа</div>
+      <div class="st2-grp">
+        <button class="prow" onclick="st2Push('security')">${I('st2-shield')} Двухфакторная защита и пароль<span class="chev">${I('chev')}</span></button>
+      </div>
+    </div>`;
+  }
+};
+
+/* ================= БЕЗОПАСНОСТЬ ================= */
+ST2_PANELS.security = {
+  title: 'Безопасность',
+  render(){
+    return `<div class="st2-grp">
       <button class="prow" onclick="st2TwoFA()">${I('st2-shield')} Двухфакторная защита
-        <span class="chip st2-chip ${ST2.sec.twofa ? 'st2-chip-on' : ''}">${ST2.sec.twofa ? I('check') + ' включена' : 'выключена'}</span>
-        <span class="chev">${I('chev')}</span></button>
+        <span class="chip st2-chip ${ST2.sec.twofa ? 'st2-chip-on' : ''}">${ST2.sec.twofa ? I('check') + ' включена' : 'выключена'}</span><span class="chev">${I('chev')}</span></button>
       <button class="prow" onclick="st2Passcode(this)">${I('lock')} Код-пароль при входе ${st2Sw(ST2.sec.passcode)}</button>
       ${ST2.sec.passcode ? `<div class="prow st2-prow-col" style="cursor:default">
         <span class="st2-prow-lbl">${I('st2-clock')} Автоблокировка</span>
         <span class="st2-seg st2-seg3" id="st2LockSeg">${[['now','Сразу'],['1m','1 мин'],['5m','5 мин'],['1h','1 час']].map(o =>
           `<button data-v="${o[0]}" class="${(ST2.sec.autolock || '5m') === o[0] ? 'on' : ''}" onclick="st2SetAutolock('${o[0]}')">${o[1]}</button>`).join('')}</span></div>` : ''}
       <button class="prow" onclick="st2ChangePass()">${I('st2-key')} Сменить пароль<span class="chev">${I('chev')}</span></button>
-    </div>
-  </div>
-  <div class="st2-sec">
-    <div class="st2-h">${I('sun')} Оформление</div>
-    <div class="st2-card">
-      <div class="prow st2-prow-col" style="cursor:default">
-        <span class="st2-prow-lbl">${I('moon')} Тема</span>
-        <span class="st2-seg st2-seg3" id="st2ThemeSeg">
-          <button data-v="dark"   class="${themeMode==='dark'?'on':''}"   onclick="st2SetTheme('dark')">Тёмная</button>
-          <button data-v="light"  class="${themeMode==='light'?'on':''}"  onclick="st2SetTheme('light')">Светлая</button>
-          <button data-v="system" class="${themeMode==='system'?'on':''}" onclick="st2SetTheme('system')">Система</button>
-        </span></div>
-      <div class="prow st2-prow-col" style="cursor:default">
-        <span class="st2-prow-lbl">${I('globe')} Язык</span>
-        <span class="st2-seg st2-seg3" id="st2LangSeg">
-          <button data-v="ru" class="${lang==='ru'?'on':''}" onclick="st2SetLang('ru')">Русский</button>
-          <button data-v="en" class="${lang==='en'?'on':''}" onclick="st2SetLang('en')">English</button>
-        </span></div>
-    </div>
-  </div>
-  <div class="st2-sec">
-    <div class="st2-h">${I('st2-db')} Данные</div>
-    <div class="st2-card">
-      <button class="prow" id="st2CacheRow" onclick="st2ClearCache()">${I('trash')} Очистить кэш
-        <span class="st2-val" id="st2CacheVal">${st2CacheSize().toFixed(1)} МБ</span><span class="chev">${I('chev')}</span></button>
-      <button class="prow" onclick="st2Download()">${I('file')} Скачать мои данные
-        <span class="st2-val">.txt</span><span class="chev">${I('chev')}</span></button>
-    </div>
-  </div>
-  <div class="st2-sec">
-    <div class="st2-h">${I('st2-devices')} Сессии</div>
-    <div class="st2-card" id="st2SesList">
+      <button class="prow" onclick="st2Push('sessions')">${I('st2-devices')} Активные сессии<span class="st2-val">${st2Alive().length}</span><span class="chev">${I('chev')}</span></button>
+    </div>`;
+  }
+};
+
+/* ================= СЕССИИ ================= */
+ST2_PANELS.sessions = {
+  title: 'Сессии',
+  render(){
+    const alive = st2Alive(), others = alive.filter(s => !s.cur);
+    return `<p class="st2-panel-desc">Устройства, на которых ты сейчас вошёл в OKO. Заверши любую сессию, если она подозрительна.</p>
+    <div class="st2-grp" id="st2SesList">
       ${alive.map(st2SesHtml).join('')}
       ${others.length ? `<button class="st2-killall" onclick="st2KillAll()">Завершить остальные (${others.length})</button>`
                       : '<div class="st2-empty">Других активных сессий нет</div>'}
+    </div>`;
+  }
+};
+
+/* ================= ПРИВАТНОСТЬ ================= */
+ST2_PANELS.privacy = {
+  title: 'Приватность',
+  render(){
+    const VIS = [['all','Все'],['contacts','Контакты'],['nobody','Никто']];
+    const WRITE = [['all','Все'],['following','Подписки'],['nobody','Никто']];
+    return `<p class="st2-panel-desc">Точечно контролируй, кто и как может тебя видеть, слышать и добавлять в чаты.</p>
+    <div class="st2-panel-sec">
+      <div class="st2-panel-h">${I('eye')} Онлайн и прочтение</div>
+      <div class="st2-grp">
+        <button class="prow" onclick="st2Tgl('priv','online',this)">${I('eye')} Показывать «в сети» ${st2Sw(ST2.priv.online)}</button>
+        <button class="prow" onclick="st2Tgl('priv','read',this)">${I('check2')} Отчёты о прочтении ${st2Sw(ST2.priv.read)}</button>
+      </div>
     </div>
-  </div>
-  <div class="st2-sec">
-    <div class="st2-h" style="color:var(--danger)">${I('trash')} Опасная зона</div>
-    <div class="st2-card st2-danger">
-      <h4>${I('trash')} Удаление аккаунта</h4>
-      <p>Профиль, чаты, кошелёк, сертификаты Академии и вся история будут стёрты безвозвратно. Вернуть аккаунт после удаления невозможно.</p>
-      <button class="st2-del" onclick="st2DeleteAsk()">Удалить аккаунт</button>
+    <div class="st2-panel-sec">
+      <div class="st2-panel-h">${I('send')} Сообщения и звонки</div>
+      <div class="st2-grp">
+        <div class="prow st2-prow-col" style="cursor:default">
+          <span class="st2-prow-lbl">${I('send')} Кто может писать первым</span>
+          ${st2Seg('priv','write',WRITE)}
+        </div>
+        <div class="prow st2-prow-col" style="cursor:default">
+          <span class="st2-prow-lbl">${I('phone')} Кто может звонить</span>
+          ${st2Seg('priv','calls',VIS)}
+        </div>
+      </div>
     </div>
-  </div>
-  <div class="st2-search-empty" id="st2SearchEmpty">${I('st2-search')}<p>Ничего не найдено</p><span>Попробуйте другой запрос</span></div>
-  <div class="st2-foot">OKO · настройки хранятся локально на устройстве</div>`;
+    <div class="st2-panel-sec">
+      <div class="st2-panel-h">${I('user')} Что видно в профиле</div>
+      <div class="st2-grp">
+        <div class="prow st2-prow-col" style="cursor:default">
+          <span class="st2-prow-lbl">${I('phone')} Кто видит телефон</span>
+          ${st2Seg('priv','phone',VIS)}
+        </div>
+        <div class="prow st2-prow-col" style="cursor:default">
+          <span class="st2-prow-lbl">${I('photo')} Кто видит фото профиля</span>
+          ${st2Seg('priv','photo',VIS)}
+        </div>
+        <div class="prow st2-prow-col" style="cursor:default">
+          <span class="st2-prow-lbl">${I('star')} Кто видит статус</span>
+          ${st2Seg('priv','status',VIS)}
+        </div>
+      </div>
+    </div>
+    <div class="st2-panel-sec">
+      <div class="st2-panel-h">${I('feed')} Посты и истории</div>
+      <div class="st2-grp">
+        <div class="prow st2-prow-col" style="cursor:default">
+          <span class="st2-prow-lbl">${I('feed')} Кто видит новые посты</span>
+          ${st2Seg('priv','posts',VIS)}
+        </div>
+        <div class="prow st2-prow-col" style="cursor:default">
+          <span class="st2-prow-lbl">${I('camera')} Кто видит истории</span>
+          ${st2Seg('priv','stories',VIS)}
+        </div>
+      </div>
+    </div>
+    <div class="st2-panel-sec">
+      <div class="st2-panel-h">${I('st2-ban')} Блокировки</div>
+      <div class="st2-grp">
+        <button class="prow" onclick="st2Push('blocked')">${I('st2-ban')} Чёрный список
+          <span class="st2-val" id="st2BlockedVal">${ST2.blocked.length ? ST2.blocked.length + (ST2.blocked.length===1?' человек':(ST2.blocked.length<5?' человека':' человек')) : 'пусто'}</span><span class="chev">${I('chev')}</span></button>
+      </div>
+    </div>`;
+  }
+};
+
+/* ================= УВЕДОМЛЕНИЯ ================= */
+ST2_PANELS.notif = {
+  title: 'Уведомления',
+  render(){
+    const q = ST2.notif.quiet;
+    return `<p class="st2-panel-desc">Точно настрой, что отвлекает: звук, вибро, превью и по каким каналам приходят пуши.</p>
+    <div class="st2-panel-sec">
+      <div class="st2-panel-h">${I('bell')} Общие</div>
+      <div class="st2-grp">
+        <button class="prow" onclick="st2Tgl('notif','sound',this)">${I('st2-speaker')} Звук ${st2Sw(ST2.notif.sound)}</button>
+        <button class="prow" onclick="st2Tgl('notif','vibro',this)">${I('st2-vibrate')} Вибрация ${st2Sw(ST2.notif.vibro)}</button>
+        <button class="prow" onclick="st2Tgl('notif','preview',this)">${I('eye')} Превью текста в шторке ${st2Sw(ST2.notif.preview)}</button>
+      </div>
+    </div>
+    <div class="st2-panel-sec">
+      <div class="st2-panel-h">${I('st2-tune')} Каналы</div>
+      <div class="st2-grp">
+        <button class="prow" onclick="st2Push('notifChannels')">${I('st2-tune')} Настройки по каналам<span class="st2-val">${ST2_CH.length} шт.</span><span class="chev">${I('chev')}</span></button>
+      </div>
+    </div>
+    <div class="st2-panel-sec">
+      <div class="st2-panel-h">${I('moon')} Тихие часы</div>
+      <div class="st2-grp">
+        <button class="prow" onclick="st2QuietTgl(this)">${I('moon')} Не беспокоить${st2QuietChip()}${st2Sw(q.on)}</button>
+        <div class="st2-quiet${q.on ? ' open' : ''}" id="st2Quiet"><div class="st2-quiet-in">
+          <div class="st2-quiet-times">
+            <label class="st2-time"><span>с</span><input type="time" value="${esc(q.from)}" onchange="st2QuietTime('from',this.value)"></label>
+            <span class="st2-quiet-arrow">${I('chev')}</span>
+            <label class="st2-time"><span>до</span><input type="time" value="${esc(q.to)}" onchange="st2QuietTime('to',this.value)"></label>
+          </div>
+          <p class="st2-quiet-note">${I('moon')} В эти часы уведомления приходят без звука и вибрации. Расписание повторяется каждый день автоматически.</p>
+        </div></div>
+      </div>
+    </div>`;
+  }
+};
+
+/* ================= КАНАЛЫ УВЕДОМЛЕНИЙ ================= */
+ST2_PANELS.notifChannels = {
+  title: 'Каналы уведомлений',
+  render(){
+    return `<p class="st2-panel-desc">Для каждого канала отдельно: включить/выключить, звук, вибро, бейдж и превью текста.</p>
+    <div class="st2-grp">
+      ${ST2_CH.map(c => {
+        const on = !!ST2.notif[c.k];
+        const cnt = st2ChCount(c.k);
+        return `<div class="st2-notch" onclick="st2Push('notifChannel',{k:'${c.k}'})">
+          <span class="st2-notch-ico">${I(c.ico)}</span>
+          <div class="st2-notch-b"><b>${esc(c.title)}</b><small>${esc(c.sub)}${on&&cnt?(' · '+cnt+' опций'):''}</small></div>
+          <span class="st2-notch-state ${on?'on':''}">${on?'вкл':'выкл'}</span>
+          <span class="chev">${I('chev')}</span>
+        </div>`;
+      }).join('')}
+    </div>`;
+  }
+};
+
+function st2ChCount(k){
+  const s = ST2.notif.perCh[k] || {};
+  return Object.values(s).filter(Boolean).length;
 }
+function st2FindCh(k){ return ST2_CH.find(c => c.k === k); }
+
+ST2_PANELS.notifChannel = {
+  title(ctx){ const c = st2FindCh(ctx.k); return c ? c.title : 'Канал'; },
+  render(ctx){
+    const c = st2FindCh(ctx.k); if(!c) return '';
+    const st = ST2.notif.perCh[c.k];
+    const globalOn = !!ST2.notif[c.k];
+    return `<p class="st2-panel-desc">${esc(c.sub)}. Изменения применяются сразу и хранятся на устройстве.</p>
+    <div class="st2-panel-sec">
+      <div class="st2-grp">
+        <button class="prow" onclick="st2Tgl('notif','${c.k}',this); st2RefreshHeaderState()">${I('bell')} Уведомления канала ${st2Sw(globalOn)}</button>
+      </div>
+    </div>
+    <div class="st2-panel-sec" style="opacity:${globalOn?1:.5};pointer-events:${globalOn?'auto':'none'}">
+      <div class="st2-panel-h">${I('st2-tune')} Как оповещать</div>
+      <div class="st2-grp">
+        <button class="prow" onclick="st2TglCh('${c.k}','snd',this)">${I('st2-speaker')} Звук ${st2Sw(st.snd)}</button>
+        <button class="prow" onclick="st2TglCh('${c.k}','vibro',this)">${I('st2-vibrate')} Вибрация ${st2Sw(st.vibro)}</button>
+        <button class="prow" onclick="st2TglCh('${c.k}','badge',this)">${I('st2-badge')} Бейдж на иконке ${st2Sw(st.badge)}</button>
+        <button class="prow" onclick="st2TglCh('${c.k}','prev',this)">${I('eye')} Превью текста ${st2Sw(st.prev)}</button>
+      </div>
+    </div>`;
+  }
+};
+function st2TglCh(k, key, btn){
+  const s = ST2.notif.perCh[k];
+  s[key] = !s[key]; st2Save();
+  const sw = btn && btn.querySelector('.switch');
+  if(sw) sw.classList.toggle('on', s[key]);
+}
+function st2RefreshHeaderState(){ /* обновит счётчик при возврате */ }
+
+/* ================= ДАННЫЕ И ХРАНИЛИЩЕ ================= */
+ST2_PANELS.data = {
+  title: 'Данные и хранилище',
+  render(){
+    const total = st2CacheSize();
+    const parts = st2StorageParts(total);
+    return `<p class="st2-panel-desc">Что занимает место, как загружать медиа и когда чистить кэш.</p>
+    <div class="st2-storage">
+      ${st2PieSvg(parts)}
+      <div class="st2-pie-legend">
+        ${parts.map(p => `<div class="st2-pie-row"><span class="st2-pie-dot" style="background:${p.color}"></span>${esc(p.label)}<b>${p.v.toFixed(1)} МБ</b></div>`).join('')}
+      </div>
+    </div>
+    <div class="st2-panel-sec">
+      <div class="st2-grp">
+        <button class="prow" id="st2CacheRow" onclick="st2ClearCache()">${I('trash')} Очистить кэш<span class="st2-val" id="st2CacheVal">${total.toFixed(1)} МБ</span><span class="chev">${I('chev')}</span></button>
+        <div class="prow st2-prow-col" style="cursor:default">
+          <div class="st2-range" style="width:100%">
+            <div class="st2-range-h">${I('st2-db')} Максимум кэша<span class="st2-range-v" id="st2CLV">${ST2.data.cacheLimit} МБ</span></div>
+            <input type="range" min="100" max="2000" step="50" value="${ST2.data.cacheLimit}" oninput="st2SetCacheLim(this.value)" id="st2CLR" style="--st2-fill:${((ST2.data.cacheLimit-100)/(2000-100)*100)}%">
+            <div class="st2-range-ticks"><span>100</span><span>500</span><span>1 ГБ</span><span>2 ГБ</span></div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="st2-panel-sec">
+      <div class="st2-panel-h">${I('st2-wifi')} Автозагрузка медиа</div>
+      <div class="st2-grp">
+        <div class="st2-dl-grid">
+          <div></div><div class="st2-dl-head">Wi-Fi</div><div class="st2-dl-head">Моб.</div>
+          ${[['photos','Фото','photo'],['videos','Видео','play'],['files','Файлы','file']].map(([k,l,ic])=>`
+            <div class="st2-dl-row-h">${I(ic)} ${l}</div>
+            <span class="switch ${ST2.data.autodl.wifi[k]?'on':''}" onclick="st2DlTgl('wifi','${k}',this)"><i></i></span>
+            <span class="switch ${ST2.data.autodl.mobile[k]?'on':''}" onclick="st2DlTgl('mobile','${k}',this)"><i></i></span>`).join('')}
+        </div>
+      </div>
+    </div>
+    <div class="st2-panel-sec">
+      <div class="st2-panel-h">${I('file')} Загрузки файлов</div>
+      <div class="st2-grp">
+        ${[['always','Всегда','Скачивать документы сразу'],['ask','Спрашивать','Показывать кнопку скачивания'],['never','Никогда','Только по кнопке скачивания']].map(o =>
+          `<button class="prow st2-radio ${ST2.data.docsPolicy===o[0]?'on':''}" onclick="st2SetDocsPolicy('${o[0]}')">
+             <span class="st2-radio-mark"></span>
+             <div class="st2-radio-b"><b>${o[1]}</b><small>${o[2]}</small></div>
+           </button>`).join('')}
+      </div>
+    </div>`;
+  }
+};
+function st2SetCacheLim(v){
+  ST2.data.cacheLimit = +v; st2Save();
+  const el = document.getElementById('st2CLV');
+  const r  = document.getElementById('st2CLR');
+  if(el) el.textContent = v + ' МБ';
+  if(r)  r.style.setProperty('--st2-fill', ((v-100)/(2000-100)*100) + '%');
+}
+function st2DlTgl(net, k, el){
+  ST2.data.autodl[net][k] = !ST2.data.autodl[net][k]; st2Save();
+  if(el) el.classList.toggle('on', ST2.data.autodl[net][k]);
+}
+function st2SetDocsPolicy(p){ ST2.data.docsPolicy = p; st2Save(); st2Render(); }
+
+/* «размер» разных категорий кэша — стабильный псевдо-разброс от общего */
+function st2StorageParts(total){
+  const seed = (ST2.lastClear || 42) % 7;
+  const media = Math.max(0.5, total * (0.55 + seed*0.01));
+  const docs  = Math.max(0.3, total * 0.18);
+  const stick = Math.max(0.2, total * 0.09);
+  const other = Math.max(0.1, total - media - docs - stick);
+  return [
+    {v:media, label:'Медиа (фото, видео)', color:'#9AFF00'},
+    {v:docs,  label:'Документы',            color:'#5CD3F4'},
+    {v:stick, label:'Стикеры и эмодзи',     color:'#F97AC9'},
+    {v:other, label:'Прочее',               color:'#8A94A6'},
+  ];
+}
+function st2PieSvg(parts){
+  const total = parts.reduce((s,x)=>s+x.v,0) || 1;
+  const R = 42, C = 2*Math.PI*R;
+  let off = 0;
+  const arcs = parts.map(p => {
+    const frac = p.v/total, dash = frac*C;
+    const seg = `<circle cx="50" cy="50" r="${R}" fill="none" stroke="${p.color}" stroke-width="12" stroke-dasharray="${dash.toFixed(2)} ${(C-dash).toFixed(2)}" stroke-dashoffset="${(-off).toFixed(2)}" transform="rotate(-90 50 50)" stroke-linecap="butt"/>`;
+    off += dash;
+    return seg;
+  }).join('');
+  return `<svg class="st2-pie st2-pie-anim" viewBox="0 0 100 100" aria-label="Распределение кэша">
+    <circle class="st2-pie-bg" cx="50" cy="50" r="42" fill="none" stroke-width="12"/>
+    ${arcs}
+    <text class="st2-pie-cx" x="50" y="52" text-anchor="middle">${total.toFixed(0)}</text>
+    <text class="st2-pie-cu" x="50" y="64" text-anchor="middle">МБ</text>
+  </svg>`;
+}
+
+/* ================= ОФОРМЛЕНИЕ ================= */
+ST2_PANELS.theme = {
+  title: 'Оформление',
+  render(){
+    const themeMode = ST2.theme || (document.documentElement.dataset.theme === 'light' ? 'light' : 'dark');
+    const ta = ST2.themeAuto;
+    return `<p class="st2-panel-desc">Тема, авто-переключение по времени суток и настройки шрифта.</p>
+    <div class="st2-panel-sec">
+      <div class="st2-panel-h">${I('sun')} Тема</div>
+      <div class="st2-grp">
+        ${[['dark','Тёмная','Классическая ночная тема','moon'],['light','Светлая','Для яркого света и дня','sun'],['system','Системная','Как в настройках устройства','st2-devices']].map(o=>`
+          <button class="prow st2-radio ${themeMode===o[0]?'on':''}" onclick="st2SetTheme('${o[0]}')">
+            <span class="st2-radio-mark"></span>
+            <div class="st2-radio-b"><b>${o[1]}</b><small>${o[2]}</small></div>
+            <span class="st2-radio-tag">${I(o[3])}</span>
+          </button>`).join('')}
+      </div>
+    </div>
+    <div class="st2-panel-sec">
+      <div class="st2-panel-h">${I('st2-clock')} Расписание темы</div>
+      <div class="st2-grp">
+        <button class="prow" onclick="st2ThemeAutoTgl(this)">${I('st2-clock')} Автоматически по времени ${st2Sw(ta.on)}</button>
+        <div class="st2-quiet${ta.on?' open':''}"><div class="st2-quiet-in">
+          <div class="st2-quiet-times">
+            <label class="st2-time"><span>тёмная</span><input type="time" value="${esc(ta.dark)}" onchange="st2ThemeAutoTime('dark',this.value)"></label>
+            <span class="st2-quiet-arrow">${I('chev')}</span>
+            <label class="st2-time"><span>светлая</span><input type="time" value="${esc(ta.light)}" onchange="st2ThemeAutoTime('light',this.value)"></label>
+          </div>
+          <p class="st2-quiet-note">${I('moon')} По умолчанию: 22:00 → тёмная, 07:00 → светлая. Тема переключится сразу и продолжит держать расписание.</p>
+        </div></div>
+      </div>
+    </div>`;
+  }
+};
+function st2ThemeAutoTgl(btn){
+  ST2.themeAuto.on = !ST2.themeAuto.on; st2Save();
+  const sw = btn && btn.querySelector('.switch');
+  if(sw) sw.classList.toggle('on', ST2.themeAuto.on);
+  st2ScheduleThemeAuto();
+  st2Render();
+  toast(ST2.themeAuto.on ? 'Тема автоматически переключается по времени' : 'Авто-расписание темы выключено');
+}
+function st2ThemeAutoTime(which,val){
+  if(!/^\d\d:\d\d$/.test(val || '')) return;
+  ST2.themeAuto[which] = val; st2Save();
+  st2ScheduleThemeAuto();
+}
+
+/* планировщик авто-темы */
+let st2AutoTimer = 0;
+function st2ScheduleThemeAuto(){
+  if(st2AutoTimer){ clearTimeout(st2AutoTimer); st2AutoTimer = 0; }
+  if(!ST2.themeAuto.on) return;
+  const now = new Date();
+  const cur = now.getHours()*60 + now.getMinutes();
+  const df = st2QuietMin(ST2.themeAuto.dark), lf = st2QuietMin(ST2.themeAuto.light);
+  const inDark = df < lf ? (cur >= df && cur < lf) : (cur >= df || cur < lf);
+  const want = inDark ? 'dark' : 'light';
+  if(typeof applyTheme === 'function') applyTheme(want); else document.documentElement.dataset.theme = want;
+  const next = st2NextThemeSwitch(cur, df, lf);
+  st2AutoTimer = setTimeout(st2ScheduleThemeAuto, next*60*1000);
+}
+function st2NextThemeSwitch(cur, df, lf){
+  const cands = [((df - cur)+1440)%1440 || 1440, ((lf - cur)+1440)%1440 || 1440];
+  return Math.max(1, Math.min(...cands));
+}
+
+/* ================= ДОСТУПНОСТЬ ================= */
+ST2_PANELS.a11y = {
+  title: 'Доступность',
+  render(){
+    const a = ST2.a11y;
+    return `<p class="st2-panel-desc">Сделай интерфейс удобнее: крупный шрифт, снижение анимаций, высокий контраст, большие кнопки.</p>
+    <div class="st2-panel-sec">
+      <div class="st2-panel-h">${I('star')} Размер</div>
+      <div class="st2-grp">
+        <div class="prow st2-prow-col" style="cursor:default">
+          <div class="st2-range" style="width:100%">
+            <div class="st2-range-h">${I('edit')} Размер шрифта<span class="st2-range-v" id="st2FSV">${a.fontScale}%</span></div>
+            <input type="range" min="85" max="135" step="5" value="${a.fontScale}" oninput="st2SetFont(this.value)" id="st2FSR" style="--st2-fill:${((a.fontScale-85)/50*100)}%">
+            <div class="st2-range-ticks"><span>Мельче</span><span>Обычно</span><span>Крупнее</span></div>
+          </div>
+        </div>
+        <button class="prow" onclick="st2A11yTgl('bigTaps',this)">${I('st2-hand')} Большие тап-цели ${st2Sw(a.bigTaps)}</button>
+      </div>
+    </div>
+    <div class="st2-panel-sec">
+      <div class="st2-panel-h">${I('eye')} Восприятие</div>
+      <div class="st2-grp">
+        <button class="prow" onclick="st2A11yTgl('reduceMotion',this)">${I('st2-motion')} Уменьшить анимации ${st2Sw(a.reduceMotion)}</button>
+        <button class="prow" onclick="st2A11yTgl('highContrast',this)">${I('st2-contrast')} Высокий контраст ${st2Sw(a.highContrast)}</button>
+        <button class="prow" onclick="st2A11yTgl('reduceOpacity',this)">${I('sun')} Снизить прозрачность ${st2Sw(a.reduceOpacity)}</button>
+      </div>
+    </div>`;
+  }
+};
+function st2A11yTgl(k, btn){
+  ST2.a11y[k] = !ST2.a11y[k]; st2Save();
+  const sw = btn && btn.querySelector('.switch');
+  if(sw) sw.classList.toggle('on', ST2.a11y[k]);
+  st2ApplyA11y();
+}
+function st2SetFont(v){
+  ST2.a11y.fontScale = +v; st2Save();
+  const el = document.getElementById('st2FSV');
+  const r  = document.getElementById('st2FSR');
+  if(el) el.textContent = v + '%';
+  if(r)  r.style.setProperty('--st2-fill', ((v-85)/50*100) + '%');
+  st2ApplyA11y();
+}
+function st2ApplyA11y(){
+  const a = ST2.a11y;
+  const root = document.documentElement;
+  root.classList.toggle('st2-a-motion',   a.reduceMotion);
+  root.classList.toggle('st2-a-contrast', a.highContrast);
+  root.classList.toggle('st2-a-opacity',  a.reduceOpacity);
+  root.classList.toggle('st2-a-tap',      a.bigTaps);
+  root.style.setProperty('--st2-font-scale', (a.fontScale/100).toFixed(2));
+  document.body.style.fontSize = (a.fontScale === 100 ? '' : (a.fontScale/100 * 15) + 'px');
+}
+
+/* ================= ЯЗЫК ================= */
+ST2_PANELS.lang = {
+  title: 'Язык',
+  render(){
+    const lang = (typeof LANG !== 'undefined') ? LANG : 'ru';
+    const L = [
+      ['ru','Русский','РУ','Основной язык OKO'],
+      ['en','English','EN','English interface'],
+      ['kk','Қазақша','ҚАЗ','Қазақша интерфейс'],
+    ];
+    return `<p class="st2-panel-desc">Язык интерфейса. Контент от пользователей остаётся на языке оригинала.</p>
+    <div class="st2-panel-sec">
+      <div class="st2-grp">
+        ${L.map(o=>`
+          <button class="prow st2-radio ${lang===o[0]?'on':''}" onclick="st2SetLang('${o[0]}')">
+            <span class="st2-radio-mark"></span>
+            <div class="st2-radio-b"><b>${o[1]}</b><small>${o[3]}</small></div>
+            <span class="st2-radio-tag">${o[2]}</span>
+          </button>`).join('')}
+      </div>
+    </div>
+    <div class="st2-panel-sec">
+      <div class="st2-panel-h">${I('st2-clock')} Формат</div>
+      <div class="st2-grp">
+        <button class="prow" onclick="st2Tgl('loc','hour24',this)">${I('st2-clock')} 24-часовой формат времени ${st2Sw(ST2.loc.hour24)}</button>
+        <div class="prow st2-prow-col" style="cursor:default">
+          <span class="st2-prow-lbl">${I('st2-clock')} Начало недели</span>
+          <span class="st2-seg st2-seg3">
+            ${[['auto','Авто'],['mon','Пн'],['sun','Вс']].map(o=>`<button class="${ST2.loc.weekStart===o[0]?'on':''}" onclick="st2SetLoc('weekStart','${o[0]}')">${o[1]}</button>`).join('')}
+          </span>
+        </div>
+      </div>
+    </div>`;
+  }
+};
+function st2SetLoc(k,v){ ST2.loc[k] = v; st2Save(); st2Render(); }
+
+/* ================= ПОМОЩЬ И ОБРАТНАЯ СВЯЗЬ ================= */
+ST2_PANELS.help = {
+  title: 'Помощь и обратная связь',
+  render(){
+    const faq = [
+      ['Как переключиться между аккаунтами?','Открой «Профиль → Аккаунты» и нажми «Войти» рядом с нужным аккаунтом. Аккаунт активен, если рядом стоит зелёная галочка. Переключение мгновенное — фото, ник и чаты меняются автоматически.'],
+      ['Куда девался кэш?','Кэш — это оффлайн-копия сообщений, обложек и медиа. Он живёт локально и очищается кнопкой «Очистить кэш» в разделе <b>Данные и хранилище</b>. Свои сообщения при этом не удаляются.'],
+      ['Как включить двухфакторную защиту?','Открой «Аккаунт и вход → Безопасность → Двухфакторная защита». Мы сгенерируем ключ, который добавляется в Google Authenticator или 1Password. При каждом входе нужен будет 6-значный код.'],
+      ['Что такое «тихие часы»?','Расписание для входящих уведомлений. В указанный интервал пуши приходят без звука и вибрации. Иконка приложения при этом обновляется как обычно.'],
+      ['Как удалить аккаунт?','«Опасная зона → Экспорт и удаление». После подтверждения аккаунт помечен на удаление и стирается через 14 дней. В любой момент можно отменить: достаточно войти в этот раздел ещё раз.'],
+      ['Где скачать выгрузку данных?','«Опасная зона → Экспорт данных → JSON». Файл содержит профиль, чаты, платежи и настройки. Данные готовятся локально и не отправляются на сервер.'],
+    ];
+    return `<div class="st2-help-hero">
+      <h4>${I('st2-life')} На связи 24/7</h4>
+      <p>Ответим за 3–5 минут в чате поддержки OKO. Если это техническая ошибка — приложи скриншот и опиши шаги.</p>
+      <button class="st2-help-btn" onclick="st2OpenSupport()">${I('chat')} Открыть чат поддержки</button>
+    </div>
+    <div class="st2-panel-sec">
+      <div class="st2-panel-h">${I('st2-tune')} Быстрые действия</div>
+      <div class="st2-grp">
+        <button class="prow" onclick="st2Bugreport()">${I('flag')} Сообщить о баге<span class="chev">${I('chev')}</span></button>
+        <button class="prow" onclick="st2OpenSupport()">${I('chat')} Написать поддержке<span class="chev">${I('chev')}</span></button>
+        <button class="prow" onclick="st2CopyDiag()">${I('copy')} Скопировать диагностику<span class="chev">${I('chev')}</span></button>
+      </div>
+    </div>
+    <div class="st2-panel-sec">
+      <div class="st2-panel-h">${I('st2-help-circle')} Частые вопросы</div>
+      <div class="st2-faq">
+        ${faq.map(f=>`<details><summary>${esc(f[0])}</summary><div class="st2-faq-body">${f[1]}</div></details>`).join('')}
+      </div>
+    </div>`;
+  }
+};
+function st2OpenSupport(){
+  if(typeof openChatByName === 'function'){
+    try{ openChatByName('OKO Support'); return; }catch(e){}
+  }
+  toast('Пишем в поддержку — ответим в течение 5 минут');
+}
+function st2Bugreport(){
+  showPopup({
+    ico:'flag', title:'Сообщить о баге',
+    body:`<p style="margin-bottom:10px">Опиши, что произошло — приложим версию, устройство и настройки автоматически.</p>
+      <div class="st2-pin"><textarea id="st2Bug" placeholder="Что случилось?" style="width:100%;min-height:110px;background:var(--raised);border:1px solid var(--border);border-radius:var(--r-md);padding:12px;font:inherit;color:var(--text);resize:vertical"></textarea></div>`,
+    actions:[{label:'Отмена', ghost:true}, {label:'Отправить', onclick(){
+      const v = (document.getElementById('st2Bug')||{}).value || '';
+      if(v.trim().length < 10){ toast('Слишком коротко — расскажи подробнее'); return; }
+      toast('Багрепорт отправлен · отвечает служба поддержки OKO');
+    }}],
+  });
+}
+function st2CopyDiag(){
+  const d = {
+    ver: st2Ver(),
+    ua: navigator.userAgent,
+    lang: (typeof LANG !== 'undefined') ? LANG : 'ru',
+    theme: document.documentElement.dataset.theme,
+    online: navigator.onLine,
+    cache: st2CacheSize().toFixed(1) + ' МБ',
+    ts: new Date().toISOString(),
+  };
+  const txt = 'OKO · диагностика\n' + Object.entries(d).map(([k,v])=>k+': '+v).join('\n');
+  try{
+    navigator.clipboard.writeText(txt).then(()=>toast('Диагностика скопирована — пришли в поддержку'));
+  }catch(e){ toast('Не удалось скопировать'); }
+}
+
+/* ================= ЮР. ДОКУМЕНТЫ ================= */
+ST2_PANELS.legal = {
+  title: 'Юридические документы',
+  render(){
+    return `<p class="st2-panel-desc">Официальные документы: подписывая аккаунт и покупая на OKO, ты соглашаешься с ними.</p>
+    <div class="st2-grp">
+      <button class="prow" onclick="st2OpenDoc('offer')">${I('file')} Публичная оферта<span class="chev">${I('chev')}</span></button>
+      <button class="prow" onclick="st2OpenDoc('privacy')">${I('lock')} Политика конфиденциальности<span class="chev">${I('chev')}</span></button>
+      <button class="prow" onclick="st2OpenDoc('refund')">${I('money')} Правила возврата и рефанда<span class="chev">${I('chev')}</span></button>
+      <button class="prow" onclick="st2OpenDoc('licenses')">${I('star')} Лицензии и открытый код<span class="chev">${I('chev')}</span></button>
+    </div>`;
+  }
+};
+function st2OpenDoc(key){
+  const map = {offer:'terms', privacy:'privacy', refund:'refund', licenses:'licenses'};
+  const k = map[key] || key;
+  if(typeof openLegal === 'function'){ try{ openLegal(k); return; }catch(e){} }
+  toast('Документ откроется в разделе «Документы»');
+}
+
+/* ================= ОПАСНАЯ ЗОНА ================= */
+function st2DelDays(){ if(!ST2.delAt) return 0; const left = Math.ceil((ST2.delAt - Date.now())/86400000); return Math.max(0, left); }
+ST2_PANELS.danger = {
+  title: 'Опасная зона',
+  render(){
+    const days = st2DelDays();
+    return `<p class="st2-panel-desc">Экспорт данных и удаление аккаунта. Удаление действует с задержкой 14 дней — успеешь передумать.</p>
+    <div class="st2-panel-sec">
+      <div class="st2-panel-h">${I('file')} Экспорт</div>
+      <div class="st2-grp">
+        <button class="prow" onclick="st2ExportJson()">${I('file')} Скачать данные (JSON)<span class="st2-val">.json</span><span class="chev">${I('chev')}</span></button>
+        <button class="prow" onclick="st2Download()">${I('file')} Читаемая выгрузка (TXT)<span class="st2-val">.txt</span><span class="chev">${I('chev')}</span></button>
+      </div>
+    </div>
+    <div class="st2-panel-sec">
+      <div class="st2-panel-h" style="color:var(--danger)">${I('trash')} Удаление</div>
+      <div class="st2-grp st2-danger">
+        <h4 style="padding:6px 8px 0">${I('trash')} Удалить аккаунт</h4>
+        <p style="padding:0 8px 6px">Профиль, чаты, кошелёк, сертификаты Академии и вся история будут стёрты безвозвратно. Удаление начинается через 14 дней после подтверждения — за это время его можно отменить.</p>
+        ${ST2.delAt ? `<div class="st2-del-status">
+            <b>${I('st2-clock')} Аккаунт помечен на удаление</b>
+            Автоудаление через ${days} дн. — до ${new Date(ST2.delAt).toLocaleString('ru-RU',{day:'2-digit',month:'2-digit',year:'numeric',hour:'2-digit',minute:'2-digit'})}
+            <button class="st2-del-cancel" onclick="st2CancelDel()">Отменить удаление</button>
+          </div>` : `<button class="st2-del" onclick="st2DeleteAsk()" style="margin:10px 8px 6px;width:calc(100% - 16px)">Удалить аккаунт через 14 дней</button>`}
+      </div>
+    </div>`;
+  }
+};
+
+/* ================= ЧЁРНЫЙ СПИСОК (панель) ================= */
+ST2_PANELS.blocked = {
+  title: 'Чёрный список',
+  render(){ return `<div id="st2BlockedBody"></div>`; },
+  after(){ st2RenderBlocked(); }
+};
 
 /* ---------- открыть / закрыть (navstack) ---------- */
 function st2Open(){
+  ST2_STACK = [{id:'root', ctx:{}, title:'Настройки'}];
   st2Render();
   const v = document.getElementById('st2View');
   if(v && !v.classList.contains('open')){
@@ -357,7 +1012,60 @@ function st2Open(){
 function st2Close(){
   const v = document.getElementById('st2View');
   if(v) v.classList.remove('open');
+  ST2_STACK = [];
   if(typeof nvPop === 'function') nvPop('view:st2');
+}
+
+/* ---------- версия сборки ---------- */
+function st2Ver(){
+  const m = document.querySelector('.head-build,.ver-chip,.build-chip');
+  if(m) return (m.textContent||'').replace(/[^\d.v]/g,'') || '';
+  const t = document.body.textContent.match(/сборка v([\d.]+)/); return t ? 'v'+t[1] : '';
+}
+
+/* ---------- профиль-панель: хуки ---------- */
+function st2OpenEdit(){ if(typeof openEdit === 'function') openEdit(); }
+function st2GoPlans(){
+  st2Close();
+  if(typeof scrollToPlans === 'function') scrollToPlans();
+  else{
+    const el = document.querySelector('#screen-profile .plan-cards,#screen-profile .section-h');
+    if(el) el.scrollIntoView({behavior:'smooth', block:'start'});
+  }
+}
+function st2CopyPublic(){
+  const url = 'https://oko.app/@' + st2Nick();
+  try{ navigator.clipboard.writeText(url).then(()=>toast('Ссылка скопирована: ' + url)); }
+  catch(e){ toast('Публичная ссылка: ' + url); }
+}
+function st2LinkTg(err){
+  if(ST2.tg){
+    showPopup({ico:'send', title:'Отвязать Telegram', body:'Аккаунт <b>'+esc(ST2.tg)+'</b> будет отключён от OKO. Вход через Telegram перестанет работать.',
+      actions:[{label:'Отмена', ghost:true},{label:'Отвязать', onclick(){ ST2.tg = null; st2Save(); st2Render(); toast('Telegram отвязан'); }}]});
+    const ok = document.querySelector('#okoPopup [data-pa="1"]'); if(ok) ok.classList.add('st2-btn-danger');
+    return;
+  }
+  st2Prompt({
+    ico:'send', title:'Привязать Telegram', err: err,
+    note:'Укажи @ник в Telegram — привяжем аккаунт после подтверждения через бота @okoappbot.',
+    ph:'@nickname', saveLabel:'Привязать',
+    save(v){
+      v = v.replace(/^@/,'').trim();
+      if(!/^[a-zA-Z0-9_]{4,32}$/.test(v)) return st2LinkTg('Ник Telegram: 4–32 латинских, цифры или _');
+      ST2.tg = '@'+v; st2Save(); st2Render(); toast('Telegram привязан: @'+v);
+    },
+  });
+}
+function st2LinkStub(name){
+  showPopup({ico:'plus', title:'Привязать '+name,
+    body:'Привязка '+name+' появится после включения OAuth на боевом бэкенде — сейчас интерфейс в сборке.',
+    actions:[{label:'Понятно'}]});
+}
+
+/* ---------- отмена запланированного удаления ---------- */
+function st2CancelDel(){
+  ST2.delAt = 0; st2Save(); st2Render();
+  toast('Удаление аккаунта отменено');
 }
 
 /* ---------- тумблеры ---------- */
@@ -368,42 +1076,131 @@ function st2Tgl(group, k, btn){
   if(sw) sw.classList.toggle('on', ST2[group][k]);
 }
 
-/* ---------- живой поиск по настройкам (мгновенный фильтр секций/строк) ---------- */
+/* ---------- живой поиск: индекс всех настроек с прыжком в панель ---------- */
+const ST2_SEARCH_INDEX = [
+  /* profile */
+  ['Профиль','profile','user','Личное · публичное'],
+  ['Аватар · фото профиля','profile','camera','Личное'],
+  ['Обложка','profile','st2-image','Личное'],
+  ['Имя и био','profile','edit','Личное'],
+  ['Ник · nickname · username','profile','st2-key','Личное'],
+  ['Публичная ссылка · шеринг','profile','share','Личное'],
+  ['Тариф · план · подписка','profile','crown','Личное'],
+  /* accounts */
+  ['Аккаунты · переключение','accounts','users','Профиль'],
+  ['Добавить аккаунт','accounts','plus','Профиль'],
+  /* account */
+  ['Почта · email','account','st2-mail','Аккаунт и вход'],
+  ['Телефон','account','phone','Аккаунт и вход'],
+  ['Telegram · TG · привязка','account','send','Аккаунт и вход'],
+  ['Google · привязка OAuth','account','google','Аккаунт и вход'],
+  ['Apple ID · привязка','account','apple','Аккаунт и вход'],
+  /* security */
+  ['Двухфакторная защита · 2FA · TOTP','security','st2-shield','Безопасность'],
+  ['Код-пароль при входе · PIN','security','lock','Безопасность'],
+  ['Автоблокировка','security','st2-clock','Безопасность'],
+  ['Сменить пароль','security','st2-key','Безопасность'],
+  /* sessions */
+  ['Активные сессии · устройства','sessions','st2-devices','Безопасность'],
+  ['Завершить все сессии','sessions','trash','Безопасность'],
+  /* privacy */
+  ['Онлайн · последнее посещение','privacy','eye','Приватность'],
+  ['Отчёты о прочтении','privacy','check2','Приватность'],
+  ['Кто может писать первым','privacy','send','Приватность'],
+  ['Кто может звонить','privacy','phone','Приватность'],
+  ['Кто видит телефон','privacy','phone','Приватность'],
+  ['Кто видит фото профиля','privacy','photo','Приватность'],
+  ['Кто видит статус','privacy','star','Приватность'],
+  ['Кто видит посты','privacy','feed','Приватность'],
+  ['Кто видит истории · сторис','privacy','camera','Приватность'],
+  ['Чёрный список · блокировки','blocked','st2-ban','Приватность'],
+  /* notif */
+  ['Уведомления · пуши','notif','bell','Уведомления'],
+  ['Звук уведомлений','notif','st2-speaker','Уведомления'],
+  ['Вибрация','notif','st2-vibrate','Уведомления'],
+  ['Превью текста','notif','eye','Уведомления'],
+  ['Тихие часы · не беспокоить · DND','notif','moon','Уведомления'],
+  ['Каналы уведомлений','notifChannels','st2-tune','Уведомления'],
+  ['Лайки и реакции','notifChannels','heart','Уведомления'],
+  ['Комментарии','notifChannels','comment','Уведомления'],
+  ['Партнёрка','notifChannels','briefcase','Уведомления'],
+  ['Академия · уроки','notifChannels','star','Уведомления'],
+  ['Игры · ставки','notifChannels','st2-controller','Уведомления'],
+  /* data */
+  ['Данные и хранилище · кэш','data','st2-db','Данные'],
+  ['Очистить кэш','data','trash','Данные'],
+  ['Лимит кэша','data','st2-db','Данные'],
+  ['Автозагрузка медиа Wi-Fi','data','st2-wifi','Данные'],
+  ['Автозагрузка на мобильном','data','st2-wifi','Данные'],
+  ['Загрузка документов','data','file','Данные'],
+  /* theme */
+  ['Тема · тёмная · светлая','theme','sun','Оформление'],
+  ['Расписание темы · авто · dark mode','theme','st2-clock','Оформление'],
+  /* a11y */
+  ['Доступность · a11y','a11y','st2-eye','Оформление'],
+  ['Размер шрифта','a11y','edit','Оформление'],
+  ['Большие тап-цели','a11y','st2-hand','Оформление'],
+  ['Уменьшить анимации · motion-reduce','a11y','st2-motion','Оформление'],
+  ['Высокий контраст','a11y','st2-contrast','Оформление'],
+  ['Снизить прозрачность','a11y','sun','Оформление'],
+  /* lang */
+  ['Язык · language · русский english қазақша','lang','globe','Язык'],
+  ['24-часовой формат времени','lang','st2-clock','Язык'],
+  ['Начало недели','lang','st2-clock','Язык'],
+  /* help */
+  ['Помощь · FAQ · частые вопросы','help','st2-life','Помощь'],
+  ['Чат поддержки OKO','help','chat','Помощь'],
+  ['Сообщить о баге · багрепорт','help','flag','Помощь'],
+  ['Диагностика','help','copy','Помощь'],
+  /* legal */
+  ['Оферта · публичная','legal','file','Документы'],
+  ['Политика конфиденциальности','legal','lock','Документы'],
+  ['Возврат · рефанд','legal','money','Документы'],
+  ['Лицензии · open source','legal','star','Документы'],
+  /* danger */
+  ['Экспорт данных JSON','danger','file','Опасная зона'],
+  ['Скачать выгрузку','danger','file','Опасная зона'],
+  ['Удалить аккаунт · с задержкой 14 дней','danger','trash','Опасная зона'],
+];
 function st2Search(qv){
-  const body = document.getElementById('st2Body');
-  if(!body) return;
-  const lab = document.getElementById('st2Search');
+  const root = document.getElementById('st2Groups');
+  const res  = document.getElementById('st2SearchResults');
+  const lab  = document.getElementById('st2Search');
+  const empty= document.getElementById('st2SearchEmpty');
   const raw = String(qv || '');
   if(lab) lab.classList.toggle('has', !!raw.trim());
   const q = raw.trim().toLowerCase();
-  let any = false;
-  body.querySelectorAll('.st2-sec').forEach(sec => {
-    const rows = sec.querySelectorAll('.st2-card>.prow,.st2-card>.st2-acc,.st2-card>.st2-ses');
-    const hEl = sec.querySelector('.st2-h');
-    const title = (hEl ? hEl.textContent : '').toLowerCase();
-    if(!q){
-      sec.style.display = '';
-      rows.forEach(r => { r.style.display = ''; });
-      any = true; return;
-    }
-    let hit = false;
-    if(rows.length){
-      const tHit = title.indexOf(q) > -1;
-      rows.forEach(r => {
-        const rh = tHit || r.textContent.toLowerCase().indexOf(q) > -1;
-        r.style.display = rh ? '' : 'none';
-        if(rh) hit = true;
-      });
-    } else {
-      hit = sec.textContent.toLowerCase().indexOf(q) > -1;
-    }
-    sec.style.display = hit ? '' : 'none';
-    if(hit) any = true;
-  });
-  const foot = body.querySelector('.st2-foot');
-  if(foot) foot.style.display = q ? 'none' : '';
-  const empty = document.getElementById('st2SearchEmpty');
-  if(empty) empty.style.display = (q && !any) ? '' : 'none';
+  if(!q){
+    if(root) root.style.display = '';
+    if(res)  res.innerHTML = '';
+    if(empty) empty.style.display = 'none';
+    return;
+  }
+  if(root) root.style.display = 'none';
+  const hits = ST2_SEARCH_INDEX.filter(r => (r[0] + ' ' + r[3]).toLowerCase().indexOf(q) > -1).slice(0, 24);
+  if(!hits.length){
+    if(res)  res.innerHTML = '';
+    if(empty) empty.style.display = '';
+    return;
+  }
+  if(empty) empty.style.display = 'none';
+  if(!res) return;
+  res.innerHTML = `<div class="st2-search-res">${
+    hits.map(h => `<button class="prow" onclick="st2SearchGo('${h[1]}')">
+      <span class="st2-nav-ico">${I(h[2])}</span>
+      <span>${st2SearchHl(h[0], q)}</span>
+      <span class="st2-search-res-tag">${esc(h[3])}</span>
+      <span class="chev">${I('chev')}</span></button>`).join('')
+  }</div>`;
+}
+function st2SearchHl(s, q){
+  const idx = s.toLowerCase().indexOf(q);
+  if(idx < 0) return esc(s);
+  return esc(s.slice(0,idx)) + '<b style="color:var(--accent)">' + esc(s.slice(idx, idx+q.length)) + '</b>' + esc(s.slice(idx+q.length));
+}
+function st2SearchGo(id){
+  st2SearchClear();
+  st2Push(id);
 }
 function st2SearchClear(){
   const inp = document.getElementById('st2SearchInp');
@@ -812,7 +1609,7 @@ function st2KillAll(){
 function st2DeleteAsk(){
   showPopup({
     ico:'trash', title:'Удалить аккаунт?',
-    body:'Будут стёрты безвозвратно:<br>· профиль и подписчики<br>· чаты, каналы и сторис<br>· кошелёк и история операций<br>· сертификаты Академии',
+    body:'После подтверждения аккаунт перейдёт в режим удаления. Через 14 дней будут стёрты безвозвратно:<br>· профиль и подписчики<br>· чаты, каналы и сторис<br>· кошелёк и история операций<br>· сертификаты Академии<br><br>Отменить удаление можно в любой момент до конца отсчёта.',
     actions:[
       {label:'Отмена', ghost:true},
       {label:'Продолжить', onclick: ()=> st2DeleteConfirm()},
@@ -824,12 +1621,14 @@ function st2DeleteAsk(){
 function st2DeleteConfirm(err){
   st2Prompt({
     ico:'trash', title:'Последний шаг', danger:true, err: err,
-    note:'Для подтверждения введи свой ник <b>@' + esc(st2Nick()) + '</b>. Действие необратимо.',
-    ph:'@' + st2Nick(), saveLabel:'Удалить навсегда',
+    note:'Для подтверждения введи свой ник <b>@' + esc(st2Nick()) + '</b>. Аккаунт будет помечен на удаление и стёрт через 14 дней.',
+    ph:'@' + st2Nick(), saveLabel:'Пометить на удаление',
     save(v){
       if(v.replace(/^@/, '').toLowerCase() !== st2Nick().toLowerCase())
-        return st2DeleteConfirm('Ник не совпадает — аккаунт не удалён');
-      st2DoDelete();
+        return st2DeleteConfirm('Ник не совпадает — аккаунт не помечен');
+      ST2.delAt = Date.now() + 14*24*3600*1000;
+      st2Save(); st2Render();
+      toast('Удаление запланировано · осталось 14 дней');
     },
   });
 }
@@ -839,6 +1638,56 @@ function st2DoDelete(){
   document.body.style.transition = 'opacity .5s';
   document.body.style.opacity = '0';
   setTimeout(()=> location.reload(), 650); /* oko-auth стёрт -> загрузка на экран входа */
+}
+
+/* JSON-выгрузка: профиль + чаты + платежи + настройки (готовится локально) */
+function st2ExportJson(){
+  const p = (typeof PROFILE !== 'undefined') ? PROFILE : {};
+  const themeMode = ST2.theme || (document.documentElement.dataset.theme === 'light' ? 'light' : 'dark');
+  const chats = [];
+  try{
+    if(typeof CHATS !== 'undefined' && Array.isArray(CHATS)){
+      CHATS.slice(0, 60).forEach(c => {
+        chats.push({name:c.name, kind:c.kind || 'chat', unread:c.unread || 0,
+          lastMsg: (c.msgs && c.msgs.length ? String(c.msgs[c.msgs.length-1].t || c.msgs[c.msgs.length-1].text || '').slice(0, 240) : null),
+          count: (c.msgs || []).length});
+      });
+    }
+  }catch(e){}
+  const wallet = {};
+  try{
+    if(typeof WALLET !== 'undefined'){
+      wallet.account = WALLET.acc; wallet.balance = WALLET.balance; wallet.hold = WALLET.hold;
+      wallet.ledger = (WALLET.ledger || []).slice(0, 300).map(e => ({date:e.d, amount:e.sum, note:e.why}));
+    }
+  }catch(e){}
+  const data = {
+    format: 'oko-account-export',
+    version: 2,
+    generatedAt: new Date().toISOString(),
+    profile: {name:p.name, nick:st2Nick(), tier:p.tier, role:p.role, bio:p.bio, status:p.status, avatar:!!p.avatar, cover:!!p.cover,
+              email:ST2.email, phone:ST2.phone, telegram:ST2.tg},
+    accounts: ST2.accounts.map(a => ({id:a.id, name:a.name, nick:a.nick, tier:a.tier, role:a.role,
+                                     active: a.id === ST2.activeAcc})),
+    settings: {
+      notif: ST2.notif, privacy: ST2.priv, security: {twofa:ST2.sec.twofa, passcode:ST2.sec.passcode, autolock:ST2.sec.autolock},
+      theme: themeMode, themeAuto: ST2.themeAuto,
+      language: (typeof LANG !== 'undefined') ? LANG : 'ru',
+      accessibility: ST2.a11y, dataStorage: ST2.data, locale: ST2.loc,
+    },
+    chats, wallet,
+    sessions: st2Alive().map(s => ({device:s.dev, app:s.app, current:!!s.cur, geo:s.geo || null})),
+    blocked: ST2.blocked.slice(),
+    deleteScheduledAt: ST2.delAt ? new Date(ST2.delAt).toISOString() : null,
+  };
+  try{
+    const url = URL.createObjectURL(new Blob([JSON.stringify(data, null, 2)], {type:'application/json;charset=utf-8'}));
+    const a = document.createElement('a');
+    a.href = url; a.download = 'oko-export-' + st2Nick() + '-' + new Date().toISOString().slice(0,10) + '.json';
+    document.body.appendChild(a); a.click(); a.remove();
+    setTimeout(()=> URL.revokeObjectURL(url), 4000);
+    toast('JSON-выгрузка скачана · ' + (JSON.stringify(data).length/1024).toFixed(1) + ' КБ');
+  }catch(e){ toast('Не удалось сформировать файл'); }
 }
 
 /* ================= ПРОФИЛЬ: аватар + обложка (реальная загрузка, canvas-сжатие, персист) ================= */
@@ -1104,9 +1953,7 @@ function st2BlockManual(err){
   });
 }
 function st2OpenBlocked(){
-  st2RenderBlocked();
-  try{ document.body.classList.add('st2-over'); }catch(e){}   /* поднять шит над #st2View */
-  if(typeof openSheet === 'function') openSheet('st2-blocked');
+  st2Push('blocked');
 }
 
 /* ================= ВЫХОД ИЗ АККАУНТА ================= */
@@ -1191,6 +2038,58 @@ function st2AddIcons(){
   /* часы (автоблокировка) */
   mk('i-st2-clock', '<g fill="none" stroke="currentColor" stroke-width="7" stroke-linecap="round" stroke-linejoin="round">' +
     '<circle cx="50" cy="50" r="38"/><path d="M50 28 V50 L66 60"/></g>');
+  /* динамик (звук) */
+  mk('i-st2-speaker', '<g fill="none" stroke="currentColor" stroke-width="7" stroke-linecap="round" stroke-linejoin="round">' +
+    '<path d="M18 38 h14 L52 22 v56 L32 62 H18 Z"/>' +
+    '<path d="M64 36 c7 8 7 20 0 28"/><path d="M74 26 c14 15 14 33 0 48"/></g>');
+  /* вибрация */
+  mk('i-st2-vibrate', '<g fill="none" stroke="currentColor" stroke-width="7" stroke-linecap="round" stroke-linejoin="round">' +
+    '<rect x="36" y="22" width="28" height="56" rx="4"/>' +
+    '<path d="M14 40 v20 M22 34 v32 M78 34 v32 M86 40 v20"/></g>');
+  /* бейдж (кружок с точкой) */
+  mk('i-st2-badge', '<g fill="none" stroke="currentColor" stroke-width="7" stroke-linecap="round" stroke-linejoin="round">' +
+    '<rect x="14" y="14" width="52" height="52" rx="10"/>' +
+    '<circle cx="76" cy="24" r="12" fill="currentColor" stroke="none"/></g>');
+  /* контроллер игр */
+  mk('i-st2-controller', '<g fill="none" stroke="currentColor" stroke-width="7" stroke-linecap="round" stroke-linejoin="round">' +
+    '<path d="M22 66 L14 50 c-3-13 6-24 20-24 h32 c14 0 23 11 20 24 L78 66 c-3 6-11 6-14 1 L58 60 H42 L36 67 c-3 5-11 5-14-1 Z"/>' +
+    '<path d="M28 45 h10 M33 40 v10"/><circle cx="66" cy="42" r="3.5" fill="currentColor" stroke="none"/><circle cx="74" cy="49" r="3.5" fill="currentColor" stroke="none"/></g>');
+  /* eq / тюнер (каналы) */
+  mk('i-st2-tune', '<g fill="none" stroke="currentColor" stroke-width="7" stroke-linecap="round" stroke-linejoin="round">' +
+    '<path d="M20 26 h60 M20 50 h60 M20 74 h60"/>' +
+    '<circle cx="36" cy="26" r="6" fill="var(--bg,#000)"/><circle cx="66" cy="50" r="6" fill="var(--bg,#000)"/><circle cx="30" cy="74" r="6" fill="var(--bg,#000)"/></g>');
+  /* WiFi */
+  mk('i-st2-wifi', '<g fill="none" stroke="currentColor" stroke-width="7" stroke-linecap="round" stroke-linejoin="round">' +
+    '<path d="M12 40 c22-22 54-22 76 0"/><path d="M24 54 c14-14 38-14 52 0"/><path d="M36 68 c7-7 21-7 28 0"/>' +
+    '<circle cx="50" cy="80" r="4" fill="currentColor" stroke="none"/></g>');
+  /* линк (привязка) */
+  mk('i-st2-link', '<g fill="none" stroke="currentColor" stroke-width="7" stroke-linecap="round" stroke-linejoin="round">' +
+    '<path d="M40 32 h-8 a20 20 0 0 0 0 40 h12"/>' +
+    '<path d="M60 68 h8 a20 20 0 0 0 0 -40 h-12"/>' +
+    '<path d="M36 50 h28"/></g>');
+  /* глаз в круге (a11y) */
+  mk('i-st2-eye', '<g fill="none" stroke="currentColor" stroke-width="7" stroke-linecap="round" stroke-linejoin="round">' +
+    '<path d="M10 50 c14-24 66-24 80 0 c-14 24-66 24-80 0 Z"/>' +
+    '<circle cx="50" cy="50" r="12"/></g>');
+  /* motion (стрелка со следом) */
+  mk('i-st2-motion', '<g fill="none" stroke="currentColor" stroke-width="7" stroke-linecap="round" stroke-linejoin="round">' +
+    '<path d="M18 62 L46 34 L58 46 L84 22"/><path d="M70 22 h14 v14"/></g>');
+  /* контраст (половинки круга) */
+  mk('i-st2-contrast', '<g fill="none" stroke="currentColor" stroke-width="7" stroke-linecap="round" stroke-linejoin="round">' +
+    '<circle cx="50" cy="50" r="36"/><path d="M50 14 v72 A36 36 0 0 1 50 14 Z" fill="currentColor" stroke="none"/></g>');
+  /* рука/тап */
+  mk('i-st2-hand', '<g fill="none" stroke="currentColor" stroke-width="7" stroke-linecap="round" stroke-linejoin="round">' +
+    '<path d="M34 48 V22 c0-5 3-9 8-9 s8 4 8 9 v22"/>' +
+    '<path d="M50 44 v-6 c0-4 3-7 7-7 s7 3 7 7 v14"/>' +
+    '<path d="M64 46 c0-3 3-6 7-6 s7 3 7 7 v18 c0 12-9 22-22 22 h-4 c-10 0-18-6-22-14 L20 56 c-2-4 1-8 5-8 c3 0 5 1 7 4 l4 6"/></g>');
+  /* спасательный круг */
+  mk('i-st2-life', '<g fill="none" stroke="currentColor" stroke-width="7" stroke-linecap="round" stroke-linejoin="round">' +
+    '<circle cx="50" cy="50" r="36"/><circle cx="50" cy="50" r="13"/>' +
+    '<path d="M25 25 L41 41 M75 25 L59 41 M25 75 L41 59 M75 75 L59 59"/></g>');
+  /* «?» в круге */
+  mk('i-st2-help-circle', '<g fill="none" stroke="currentColor" stroke-width="7" stroke-linecap="round" stroke-linejoin="round">' +
+    '<circle cx="50" cy="50" r="36"/>' +
+    '<path d="M40 40 c0-8 6-13 12-13 s12 5 12 12 c0 8-12 10-12 18"/><circle cx="52" cy="70" r="3.5" fill="currentColor" stroke="none"/></g>');
 }
 
 /* ---------- строка «Настройки» в профиле ---------- */
@@ -1313,4 +2212,11 @@ function st2InsertRow(){
 
   /* стартовая покраска аватара/обложки (ядро могло отрисовать профиль до установки чейна) */
   try{ st2PaintProfile(); }catch(e){}
+
+  /* применить сохранённые опции a11y и запустить авто-расписание темы */
+  try{ st2ApplyA11y(); }catch(e){}
+  try{ if(ST2.themeAuto && ST2.themeAuto.on) st2ScheduleThemeAuto(); }catch(e){}
+
+  /* автоматически стереть аккаунт, если срок 14 дней истёк, пока пользователя не было */
+  try{ if(ST2.delAt && ST2.delAt < Date.now()) st2DoDelete(); }catch(e){}
 })();

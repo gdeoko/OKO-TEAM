@@ -385,3 +385,14 @@ body.st2-over #sheetOverlay.open{z-index:67}
 .st2-panel-sec{margin-bottom:22px}
 .st2-panel-sec:last-child{margin-bottom:0}
 
+/* ================= A11Y: применение флагов к корню ================= */
+:root.st2-a-motion *,:root.st2-a-motion *::before,:root.st2-a-motion *::after{animation-duration:.001ms!important;transition-duration:.001ms!important;animation-iteration-count:1!important}
+:root.st2-a-contrast{--dim:#c9d2df;--border:#3d4757}
+:root[data-theme="light"].st2-a-contrast{--dim:#212936;--border:#7f8ea3;--text:#000}
+:root.st2-a-opacity{--glass-opacity:1}
+:root.st2-a-opacity .glass,:root.st2-a-opacity [class*="blur"]{backdrop-filter:none!important;-webkit-backdrop-filter:none!important}
+:root.st2-a-tap .prow{min-height:56px}
+:root.st2-a-tap .switch{transform:scale(1.15)}
+:root.st2-a-tap button,:root.st2-a-tap .chip{min-height:40px}
+
+

@@ -1628,12 +1628,17 @@ function hqRisksBlock(){
 
 /* ---------- 8.8 быстрые действия: расширенный набор ---------- */
 function hqQuickPro(){
+  const proN = HQ_TIERS.find(t=>t.k==='PRO').count;
   showPopup({ico:'megaphone', title:'Рассылка всем PRO',
-    body:`<div class="hq-mail"><textarea id="hqMailBody" rows="5" placeholder="Текст письма для 78 подписчиков PRO">Привет! Мы обновили Reels-машину и добавили инфографику. Загляни — новая вкладка «Библиотека переходов» уже доступна.</textarea><small>Пойдёт по всем ${HQ_TIERS.find(t=>t.k==='PRO').count} активным PRO. Push + e-mail + внутренняя лента.</small></div>`,
-    actions:[
-      {label:'Отправить всем PRO', onclick:()=>toast('Рассылка запущена: '+HQ_TIERS.find(t=>t.k==='PRO').count+' PRO · push + e-mail')},
-      {label:'Отмена', ghost:true}
-    ]});
+    body:`<div class="hq-mail"><textarea id="hqMailBody" rows="5" placeholder="Текст письма для ${proN} подписчиков PRO">Привет! Мы обновили Reels-машину и добавили инфографику. Загляни — новая вкладка «Библиотека переходов» уже доступна.</textarea><small>Пойдёт по всем ${proN} активным PRO. Push + e-mail + внутренняя лента.</small><button class="btn" style="margin-top:10px;width:100%" onclick="hqMailDoSend()">Отправить всем PRO</button></div>`,
+    actions:[{label:'Отмена', ghost:true}]});
+}
+function hqMailDoSend(){
+  const t = (document.getElementById('hqMailBody')||{}).value || '';
+  const proN = HQ_TIERS.find(x=>x.k==='PRO').count;
+  if(!t.trim()){ toast('Введи текст письма'); return; }
+  closePopup();
+  toast('Рассылка запущена: '+proN+' PRO · push + e-mail · '+t.length+' симв.');
 }
 function hqQuickTriage(){
   const q = (typeof ADMIN!=='undefined' && ADMIN.agents) ? ADMIN.agents.filter((a,i)=>a.esc && !HQ_STATE.escDone[i]).length : 0;
@@ -1646,17 +1651,18 @@ function hqQuickTriage(){
 }
 function hqQuickBan(){
   showPopup({ico:'lock', title:'Забанить пользователя',
-    body:`<div class="hq-mail"><input id="hqBanNick" placeholder="@ник или имя" style="width:100%;background:var(--raised);border:1px solid var(--border);border-radius:var(--r-sm);padding:12px 14px;color:var(--text);font-size:14px;outline:none"><small>Полный список — во вкладке «Пользователи». Здесь бан по нику одной кнопкой.</small></div>`,
-    actions:[
-      {label:'Забанить', onclick:()=>{
-        const v = (document.getElementById('hqBanNick')||{}).value || '';
-        const q = v.replace('@','').toLowerCase();
-        const idx = ADMIN.users.findIndex(u=> (u.n+' '+u.h).toLowerCase().indexOf(q)>=0);
-        if(idx<0){ toast('Пользователь «'+v+'» не найден'); return; }
-        hqUserBan(idx);
-      }},
-      {label:'Отмена', ghost:true}
-    ]});
+    body:`<div class="hq-mail"><input id="hqBanNick" placeholder="@ник или имя" onkeydown="if(event.key==='Enter')hqBanDoRun()" style="width:100%;background:var(--raised);border:1px solid var(--border);border-radius:var(--r-sm);padding:12px 14px;color:var(--text);font-size:14px;outline:none"><small>Полный список — во вкладке «Пользователи». Здесь бан по нику одной кнопкой.</small><button class="btn" style="margin-top:10px;width:100%" onclick="hqBanDoRun()">Забанить</button></div>`,
+    actions:[{label:'Отмена', ghost:true}]});
+  setTimeout(()=>{ const e=document.getElementById('hqBanNick'); if(e) e.focus(); }, 60);
+}
+function hqBanDoRun(){
+  const v = (document.getElementById('hqBanNick')||{}).value || '';
+  if(!v.trim()){ toast('Введи @ник или имя'); return; }
+  const q = v.replace('@','').toLowerCase();
+  const idx = ADMIN.users.findIndex(u=> (u.n+' '+u.h).toLowerCase().indexOf(q)>=0);
+  if(idx<0){ toast('Пользователь «'+v+'» не найден в базе'); return; }
+  closePopup();
+  hqUserBan(idx);
 }
 function hqQuickRefund(){
   const waits = ADMIN.pay.map((p,i)=>({p,i,st:hqPaySt(i)})).filter(x=>x.st==='ok');
@@ -2002,7 +2008,7 @@ function hqExportPdf(){
 
     <div class="foot">OKO · штаб владельца · документ сформирован автоматически.
       Для сохранения в PDF: в диалоге печати выбери «Сохранить как PDF».</div>
-    <script>window.addEventListener('load',()=>setTimeout(()=>window.print(),500));</script>
+    <scr`+`ipt>window.addEventListener('load',()=>setTimeout(()=>window.print(),500));</scr`+`ipt>
     </body></html>`;
   const w = window.open('', '_blank');
   if(!w){ toast('Разреши всплывающие окна для экспорта PDF'); return; }
