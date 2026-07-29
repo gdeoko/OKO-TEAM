@@ -113,6 +113,7 @@ $icons = [
   'dl'      => $icon('<path d="M12 3v12M7 11l5 4 5-4M4 21h16"/>'),
   'mail'    => $icon('<rect x="3" y="5" width="18" height="14" rx="2"/><path d="m3 7 9 6 9-6"/>'),
   'stats'   => $icon('<path d="M4 20V10M10 20V4M16 20v-6M22 20H2"/>'),
+  'achievements' => $icon('<circle cx="12" cy="8" r="6"/><path d="M8.2 13.9 7 22l5-3 5 3-1.2-8.1"/>'),
   'theme'   => $icon('<circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M2 12h2M20 12h2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/>'),
 ];
 $badgeMap = ['success'=>'open','error'=>'closed','warning'=>'judging','info'=>'intl'];
@@ -133,10 +134,47 @@ $sections = [
   ['apps','Мои заявки'],
   ['diplomas','Мои дипломы'],
   ['awards','Награды и заказы'],
+  ['achievements','Достижения'],
   ['stats','Статистика'],
   ['settings','Настройки'],
 ];
 if ($isTeacher) { $sections[] = ['students','Мои ученики']; $sections[] = ['ref','Реферальная программа']; }
+
+/* --- Достижения (медали за прогресс, по образцу OKO app) --- */
+$countApps    = count($apps);
+$countDiplomas = count($diplomas);
+$countGP = 0; $countL1 = 0;
+foreach ($apps as $a) {
+    $r = mb_strtolower((string)($a['result'] ?? ''));
+    if (str_contains($r, 'гран')) $countGP++;
+    elseif (str_contains($r, 'i степ') || str_contains($r, '1 степ')) $countL1++;
+}
+$achievements = [
+  ['id'=>'first_step',  'title'=>'Первый шаг',        'desc'=>'Первая заявка на конкурс',            'done'=> $countApps >= 1,  'ic'=>'star'],
+  ['id'=>'first_prize', 'title'=>'Первая награда',    'desc'=>'Первый диплом получен',               'done'=> $countDiplomas >= 1, 'ic'=>'medal'],
+  ['id'=>'active_5',    'title'=>'Активный участник', 'desc'=>'5 заявок на конкурсы',                'done'=> $countApps >= 5,  'ic'=>'flame'],
+  ['id'=>'active_10',   'title'=>'Постоянный участник','desc'=>'10 заявок на конкурсы',              'done'=> $countApps >= 10, 'ic'=>'flame'],
+  ['id'=>'top_1',       'title'=>'Лауреат I',         'desc'=>'Диплом Лауреата I степени',           'done'=> $countL1 >= 1,    'ic'=>'trophy'],
+  ['id'=>'grand_prix',  'title'=>'Гран-При',          'desc'=>'Абсолютная победа',                   'done'=> $countGP >= 1,    'ic'=>'crown'],
+  ['id'=>'legend',      'title'=>'Легенда',           'desc'=>'3+ Гран-При на конкурсах центра',     'done'=> $countGP >= 3,    'ic'=>'crown'],
+  ['id'=>'reg',         'title'=>'Регистрация',       'desc'=>'Аккаунт создан — Добро пожаловать!', 'done'=> true,             'ic'=>'star'],
+];
+$achDoneCount = 0; foreach ($achievements as $a) if ($a['done']) $achDoneCount++;
+
+// Уровень участника (grow by number of апробаций + weighted results)
+$levelPoints = $countApps * 5 + $countDiplomas * 10 + $countGP * 50 + $countL1 * 30;
+$level = min(20, 1 + intdiv($levelPoints, 100));
+$nextLevelAt = $level * 100;
+$prevLevelAt = ($level - 1) * 100;
+$levelPct = max(0, min(100, ($levelPoints - $prevLevelAt) * 100 / max(1, $nextLevelAt - $prevLevelAt)));
+
+$achIcons = [
+  'star'   => '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2l3 7h7l-5.5 4 2 7L12 16l-6.5 4 2-7L2 9h7z"/></svg>',
+  'medal'  => '<svg viewBox="0 0 24 24" fill="currentColor"><circle cx="12" cy="14" r="7"/><path d="M8 2h8l-2 6H10z" opacity=".8"/></svg>',
+  'flame'  => '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2s6 4 6 10a6 6 0 0 1-12 0c0-3 2-4 2-4s0 2 2 3c0-3 1-5 2-6 0-1 0-2 0-3z"/></svg>',
+  'trophy' => '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M6 4h12v4a6 6 0 0 1-12 0zM4 6h2v2a3 3 0 0 1-2 0zm14 0h2v2a3 3 0 0 1-2 0zM9 15h6v3H9z"/><rect x="7" y="18" width="10" height="3" rx="1"/></svg>',
+  'crown'  => '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M2 8l4 5 6-9 6 9 4-5v10H2z"/></svg>',
+];
 
 /* --- Данные для панели «Статистика» (мини-аналитика по заявкам) --- */
 $byMonth = [];
@@ -437,6 +475,50 @@ ob_start(); ?>
               </div>
             </div>
           <?php endforeach; endif; ?>
+        </div>
+
+        <!-- Достижения (OKO-style) -->
+        <div class="cab-panel" id="tab-achievements" role="tabpanel">
+          <h2>Достижения</h2>
+
+          <div class="cab-card cab-level">
+            <div class="cab-level-head">
+              <div>
+                <p class="eyebrow" style="margin:0">Уровень участника</p>
+                <b class="cab-level-num">Уровень <?= (int)$level ?></b>
+              </div>
+              <div class="cab-level-count"><?= (int)$achDoneCount ?> / <?= count($achievements) ?> открыто</div>
+            </div>
+            <div class="cab-level-bar"><i style="width:<?= (int)$levelPct ?>%"></i></div>
+            <div class="cab-level-hint">
+              <?php if ($level < 20): ?>
+                До уровня <?= (int)$level + 1 ?>: <?= max(0, $nextLevelAt - $levelPoints) ?> очков (за заявку +5, диплом +10, Лауреат I +30, Гран-При +50)
+              <?php else: ?>
+                Максимальный уровень — Легенда центра.
+              <?php endif; ?>
+            </div>
+          </div>
+
+          <div class="ach-grid">
+            <?php foreach ($achievements as $ach): ?>
+              <div class="ach-tile<?= $ach['done'] ? ' done' : '' ?>">
+                <div class="ach-ic"><?= $achIcons[$ach['ic']] ?? $achIcons['star'] ?></div>
+                <div class="ach-body">
+                  <b><?= h($ach['title']) ?></b>
+                  <span><?= h($ach['desc']) ?></span>
+                </div>
+                <?php if ($ach['done']): ?>
+                  <span class="ach-check" aria-label="Открыто">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"/></svg>
+                  </span>
+                <?php else: ?>
+                  <span class="ach-lock" aria-label="Закрыто">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="10" width="16" height="10" rx="2"/><path d="M8 10V7a4 4 0 0 1 8 0v3"/></svg>
+                  </span>
+                <?php endif; ?>
+              </div>
+            <?php endforeach; ?>
+          </div>
         </div>
 
         <!-- Статистика -->
