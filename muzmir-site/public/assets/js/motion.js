@@ -37,6 +37,98 @@
     muts.forEach(function(m){ m.addedNodes && m.addedNodes.forEach(function(n){ if (n.nodeType===1) bindReveal(n); }); });
   }).observe(document.body, {childList:true, subtree:true});
 
+  /* ---------- Share: Web Share API + fallback popup с VK/TG/WhatsApp/Copy ---------- */
+  function shareFallback(title, url){
+    // Показать всплывашку с вариантами
+    if (document.getElementById('mzSharePop')) return;
+    var enc = encodeURIComponent;
+    var txt = enc(title || document.title);
+    var link = enc(url);
+    var host = document.createElement('div');
+    host.id = 'mzSharePop'; host.className = 'mz-fun on';
+    host.innerHTML =
+      '<div class="mz-fun-card" style="max-width:340px">' +
+        '<button type="button" class="mz-fun-x" data-close aria-label="Закрыть">' +
+          '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg>' +
+        '</button>' +
+        '<div class="mz-fun-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><path d="M8.6 13.5l6.8 4M15.4 6.5l-6.8 4"/></svg></div>' +
+        '<h3>Поделиться</h3>' +
+        '<p>' + (title||'') + '</p>' +
+        '<div class="share-panel" style="margin-top:6px">' +
+          '<a class="share-btn share-btn--vk" target="_blank" rel="noopener" href="https://vk.com/share.php?url=' + link + '&title=' + txt + '">' +
+            '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M13.2 17.4c-5.5 0-8.9-3.8-9-10.1h2.8c.1 4.6 2.2 6.6 3.8 7V7.3h2.6v4c1.6-.2 3.3-2 3.9-4h2.6c-.5 2.5-2.2 4.3-3.4 5 1.2.6 3.2 2.2 3.9 5.1h-2.9c-.6-1.9-2.1-3.4-4.1-3.6v3.6h-.2z"/></svg>ВКонтакте</a>' +
+          '<a class="share-btn share-btn--tg" target="_blank" rel="noopener" href="https://t.me/share/url?url=' + link + '&text=' + txt + '">' +
+            '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M22 4L2 12l6 2 2 6 4-4 6 4z"/></svg>Telegram</a>' +
+          '<a class="share-btn share-btn--wa" target="_blank" rel="noopener" href="https://wa.me/?text=' + txt + '%20' + link + '">' +
+            '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M20 3.5C18 1.5 15.2.4 12.3.4 6.8.4 2.3 4.9 2.3 10.4c0 1.8.5 3.5 1.3 5L2.2 20l4.9-1.3c1.4.8 3 1.2 4.7 1.2h.4c5.5 0 10-4.5 10-10 0-2.7-1-5.2-2.9-7.1zm-7.7 15.4c-1.4 0-2.9-.4-4.1-1.1l-.3-.2-3 .8.8-2.9-.2-.3c-.8-1.2-1.2-2.7-1.2-4.1 0-4.4 3.6-8 8-8 2.2 0 4.2.9 5.7 2.4s2.3 3.5 2.3 5.7c0 4.3-3.6 7.7-8 7.7z"/></svg>WhatsApp</a>' +
+          '<button type="button" class="share-btn share-btn--copy" data-copy>' +
+            '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15V5a2 2 0 0 1 2-2h10"/></svg>Копировать</button>' +
+        '</div>' +
+      '</div>';
+    document.body.appendChild(host);
+    host.addEventListener('click', function(e){
+      if (e.target.closest('[data-close]') || e.target === host) { host.remove(); return; }
+      if (e.target.closest('[data-copy]')) {
+        navigator.clipboard && navigator.clipboard.writeText(url).then(function(){
+          e.target.closest('[data-copy]').textContent = 'Скопировано';
+        });
+      }
+    });
+  }
+  function shareTrigger(btn){
+    var title = btn.getAttribute('data-share-title') || document.title;
+    var url = btn.getAttribute('data-share-url') || location.href;
+    // Абсолютный URL
+    try { url = new URL(url, location.origin).href; } catch(e){}
+    if (navigator.share) {
+      navigator.share({title: title, url: url}).catch(function(){ shareFallback(title, url); });
+    } else {
+      shareFallback(title, url);
+    }
+  }
+  document.addEventListener('click', function(e){
+    var b = e.target.closest && e.target.closest('[data-share]');
+    if (b) { e.preventDefault(); shareTrigger(b); }
+  });
+
+  /* ---------- Countdown: живой обратный отсчёт до атрибута data-deadline ---------- */
+  function bindCountdown(root){
+    (root||document).querySelectorAll('[data-deadline]:not([data-cd-bound])').forEach(function(el){
+      el.setAttribute('data-cd-bound','1');
+      var target = new Date(el.getAttribute('data-deadline'));
+      if (isNaN(target.getTime())) return;
+      // Рендерим структуру раз
+      el.innerHTML =
+        '<span class="mz-cd-unit"><b class="d">0</b><small>дн</small></span>' +
+        '<span class="mz-cd-sep">:</span>' +
+        '<span class="mz-cd-unit"><b class="h">00</b><small>ч</small></span>' +
+        '<span class="mz-cd-sep">:</span>' +
+        '<span class="mz-cd-unit"><b class="m">00</b><small>мин</small></span>' +
+        '<span class="mz-cd-sep">:</span>' +
+        '<span class="mz-cd-unit"><b class="s">00</b><small>сек</small></span>';
+      function pad(n){ return n<10 ? '0'+n : ''+n; }
+      function tick(){
+        var d = Math.max(0, (target - new Date()) / 1000);
+        var days = Math.floor(d/86400);
+        var hours = Math.floor((d%86400)/3600);
+        var mins = Math.floor((d%3600)/60);
+        var secs = Math.floor(d%60);
+        el.querySelector('.d').textContent = days;
+        el.querySelector('.h').textContent = pad(hours);
+        el.querySelector('.m').textContent = pad(mins);
+        el.querySelector('.s').textContent = pad(secs);
+        el.classList.toggle('is-hot', days <= 3);
+        if (d <= 0) el.classList.add('is-done');
+      }
+      tick();
+      var iv = setInterval(tick, 1000);
+      // Останавливаем при переходе (SPA)
+      document.addEventListener('mz-spa-navigate', function once(){ clearInterval(iv); document.removeEventListener('mz-spa-navigate', once); });
+    });
+  }
+  bindCountdown(document);
+  document.addEventListener('mz-spa-navigate', function(){ bindCountdown(document); });
+
   /* ---------- Онбординг: 3 экрана при первом визите ---------- */
   var LS = 'mz-onb-done';
   var done = false; try { done = localStorage.getItem(LS) === '1'; } catch(e){}

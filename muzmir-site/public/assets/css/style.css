@@ -1279,6 +1279,61 @@ body.mz-kbd-open .chat-fab{opacity:0!important;pointer-events:none!important}
 /* Спрятать старые декоративные span (если где-то остались) — стилизуем через SVG */
 .burger span{display:none !important}
 
+/* ══ Компактная плашка 4 KPI на главной (одна строка чипов) ══ */
+.stats-strip .stats-chips{display:grid;grid-template-columns:repeat(2,1fr);gap:10px}
+@media(min-width:640px){.stats-strip .stats-chips{grid-template-columns:repeat(4,1fr)}}
+.stats-chip{position:relative;text-align:center;padding:14px 10px;border-radius:14px;
+  background:linear-gradient(180deg,var(--glass),transparent);border:1px solid var(--glass-brd);
+  box-shadow:0 4px 12px rgba(139,111,31,.08);transition:transform .22s cubic-bezier(.2,.8,.2,1),box-shadow .22s;
+  backdrop-filter:blur(10px);overflow:hidden}
+.stats-chip::before{content:"";position:absolute;left:20%;right:20%;top:0;height:2px;background:var(--grad-gold);opacity:.7}
+@media(hover:hover){.stats-chip:hover{transform:translateY(-3px);box-shadow:0 10px 22px rgba(201,168,76,.2)}}
+.stats-chip b{display:block;font-family:var(--ff-display);font-size:clamp(1.15rem,4vw,1.6rem);line-height:1;
+  background:var(--grad-gold);-webkit-background-clip:text;background-clip:text;color:transparent}
+.stats-chip span{display:block;color:var(--muted);font-size:.72rem;letter-spacing:.03em;margin-top:6px;line-height:1.25}
+
+/* ══ Отзывы-тикер (горизонтальный swipe) ══ */
+.rev-track{display:flex;gap:12px;overflow-x:auto;overflow-y:hidden;padding:4px 4px 12px;-webkit-overflow-scrolling:touch;scroll-snap-type:x mandatory;scrollbar-width:none}
+.rev-track::-webkit-scrollbar{display:none}
+.rev-item{flex:0 0 min(320px,88vw);scroll-snap-align:start;padding:16px;border-radius:16px;
+  background:var(--panel);border:1px solid var(--glass-brd);box-shadow:0 6px 16px rgba(139,111,31,.1);
+  backdrop-filter:blur(10px)}
+.rev-item .rev-stars{display:flex;gap:2px;color:var(--gold);margin-bottom:8px}
+.rev-item .rev-stars svg{width:14px;height:14px}
+.rev-item p{font-size:.9rem;line-height:1.5;color:var(--text);margin:0 0 12px;
+  display:-webkit-box;-webkit-line-clamp:4;-webkit-box-orient:vertical;overflow:hidden}
+.rev-item b{display:block;font-family:var(--ff-serif);font-size:.94rem;color:var(--gold-ink)}
+.rev-item small{display:block;color:var(--muted);font-size:.76rem;margin-top:2px}
+
+/* ══ Share-панель на карточках ══ */
+.share-panel{display:flex;flex-wrap:wrap;gap:8px;justify-content:center;margin-top:14px}
+.share-btn{display:inline-flex;align-items:center;gap:6px;padding:8px 14px;border-radius:999px;
+  background:var(--gold-soft);color:var(--gold-ink);border:1px solid var(--glass-brd);
+  text-decoration:none;font-weight:700;font-size:.82rem;transition:transform .18s,box-shadow .2s,border-color .2s;cursor:pointer}
+.share-btn svg{width:16px;height:16px}
+.share-btn:hover{border-color:var(--gold);box-shadow:0 4px 12px rgba(201,168,76,.22)}
+.share-btn:active{transform:scale(.96)}
+.share-btn--vk{background:#0077FF;color:#fff;border-color:#0077FF}
+.share-btn--vk:hover{background:#005ecc;border-color:#005ecc}
+.share-btn--tg{background:#26a5e4;color:#fff;border-color:#26a5e4}
+.share-btn--tg:hover{background:#0f8ac9;border-color:#0f8ac9}
+.share-btn--wa{background:#25d366;color:#fff;border-color:#25d366}
+.share-btn--wa:hover{background:#128c47;border-color:#128c47}
+.share-btn--copy{background:var(--panel);color:var(--text)}
+
+/* ══ Countdown-таймер до дедлайна ══ */
+.mz-countdown{display:inline-flex;gap:6px;align-items:center;padding:8px 14px;border-radius:12px;
+  background:var(--gold-soft);border:1px solid var(--glass-brd);font-weight:700;color:var(--gold-ink)}
+.mz-cd-unit{display:inline-flex;flex-direction:column;align-items:center;line-height:1;min-width:34px}
+.mz-cd-unit b{font-family:var(--ff-display);font-size:1.05rem;background:var(--grad-gold);-webkit-background-clip:text;background-clip:text;color:transparent}
+.mz-cd-unit small{font-size:.6rem;color:var(--muted);letter-spacing:.06em;text-transform:uppercase;margin-top:2px}
+.mz-cd-sep{color:var(--muted);opacity:.5;margin:0 2px}
+.mz-countdown.is-hot{background:linear-gradient(135deg,#ffb74d,#f57c00);color:#fff;border-color:transparent;
+  animation:cdPulse 1.4s ease-in-out infinite}
+.mz-countdown.is-hot .mz-cd-unit b{background:none;-webkit-text-fill-color:#fff}
+@keyframes cdPulse{0%,100%{box-shadow:0 0 0 0 rgba(245,124,0,.5)}70%{box-shadow:0 0 0 10px rgba(245,124,0,0)}}
+@media(prefers-reduced-motion:reduce){.mz-countdown.is-hot{animation:none}}
+
 /* Quick-actions widget (главная, авторизованный/дедлайн) */
 .qa-grid{display:grid;grid-template-columns:1fr;gap:11px}
 @media(min-width:720px){.qa-grid{grid-template-columns:repeat(3,1fr)}}
