@@ -1,52 +1,6 @@
-/* ============ WOW-EYE · интерактивный стеклянный глаз OKO (экран входа) ============ */
-/* Прячем старый логотип со «кривым» свечением/морганием — заменяем своим ровным глазом.
-   Слои .auth-logo (blur+drop-shadow+logoBreath/logoBlink) больше не участвуют. */
-#authScreen .auth-logo{display:none!important}
-
-/* Контейнер занимает ровно место прежнего лого (132×132), держит вертикальную раскладку.
-   overflow:visible — halo/свечение (2D-фолбэк ~224px, three ~236px) свободно выходит за знак. */
-#we-wrap{
-  position:relative;
-  width:132px;height:132px;
-  flex:0 0 auto;
-  margin:0 auto;
-  display:block;
-  overflow:visible;
-  perspective:680px;
-  transform-style:preserve-3d;
-  pointer-events:none;          /* не перехватывает тапы по кнопкам */
-  opacity:0;
-  animation:we-in .9s .15s cubic-bezier(.2,1.15,.3,1) forwards;
-}
-
-/* WebGL-холст реального 3D-глаза (three.js). Центрирован по центру знака → glow симметричен. */
-#we-gl{
-  position:absolute;left:50%;top:50%;
-  transform:translate(-50%,-50%);
-  pointer-events:none;
-  -webkit-backface-visibility:hidden;backface-visibility:hidden;
-}
-@keyframes we-in{from{opacity:0;transform:scale(.6)}to{opacity:1;transform:none}}
-
-/* Холст крупнее контейнера, чтобы ровный ореол свободно выходил за пределы знака.
-   Центрирован ИДЕАЛЬНО по центру глаза → свечение симметрично по определению. */
-#we-canvas{
-  position:absolute;
-  left:50%;top:50%;
-  width:224px;height:224px;
-  transform:translate(-50%,-50%);
-  transform-origin:50% 50%;
-  will-change:transform;
-  pointer-events:none;
-  -webkit-backface-visibility:hidden;backface-visibility:hidden;
-}
-
-/* Светлая тема: экран входа всё равно чёрный (#authScreen{background:#000}),
-   но подстрахуем читаемость глаза лёгким контуром. */
-:root[data-theme="light"] #we-wrap{filter:none}
-
-/* reduced-motion: без «влёта», статичный красивый глаз (логика в JS не запускает rAF). */
-@media(prefers-reduced-motion:reduce){
-  #we-wrap{animation:none;opacity:1;transform:none}
-  #we-canvas{transform:translate(-50%,-50%)!important}
-}
+/* wow-eye ОТКЛЮЧЁН по правке Даниэля от 29.07:
+   canvas-фолбэк рисовал упрощённый круг-глаз с зрачком, что после
+   загрузки выглядело как «капля». Теперь на экране входа показываем
+   мастер-PNG oko-logo-master.png (эталон бренда с запечённым halo,
+   тот же файл на договорах и КП). Скрытие .auth-logo убрано. */
+#we-wrap{display:none!important}
