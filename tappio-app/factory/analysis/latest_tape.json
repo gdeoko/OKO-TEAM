@@ -5,7 +5,17 @@
  "code": "MEASURE",
  "top": [
   {
-   "views": 1014296,
+   "views": 1541155,
+   "likes": 32086,
+   "comments": 807,
+   "channel": "WoodWorkWeb",
+   "followers": 676000,
+   "dur": 403,
+   "id": "TOve6oVPKVw",
+   "title": "5 Quick Measuring Hacks - Woodworking Tips and Tricks"
+  },
+  {
+   "views": 1014332,
    "likes": 2281,
    "comments": 219,
    "channel": "laanlabs",
@@ -15,27 +25,17 @@
    "title": "Air Measure App Demo - Augmented reality tape measure"
   },
   {
-   "views": 672164,
-   "likes": 2453,
-   "comments": 64,
-   "channel": "XFix",
-   "followers": 623000,
-   "dur": 77,
-   "id": "RRm50e0QyUE",
-   "title": "Measure App for Android better than iPhone"
+   "views": 420456,
+   "likes": 2099,
+   "comments": 26,
+   "channel": "ContractorBhai Design Service",
+   "followers": 84400,
+   "dur": 69,
+   "id": "D7lW6Mn3TmQ",
+   "title": "\"Wardrobe Design & Cost Planner\" by ContractorBhai.com"
   },
   {
-   "views": 411060,
-   "likes": 11521,
-   "comments": 294,
-   "channel": "baixu",
-   "followers": 297000,
-   "dur": 889,
-   "id": "XCmdF2JrRgs",
-   "title": "How to Arrange Your Living Room Furniture (An Architect’s Guide!)"
-  },
-  {
-   "views": 292528,
+   "views": 292539,
    "likes": 1201,
    "comments": 62,
    "channel": "DailyZeck",
@@ -46,7 +46,7 @@
   },
   {
    "views": 198433,
-   "likes": 1194,
+   "likes": 1193,
    "comments": 98,
    "channel": "Payette Forward",
    "followers": 1810000,
@@ -55,17 +55,27 @@
    "title": "How Do I Use The iPhone Measure App? How Accurate Is It?"
   },
   {
-   "views": 191950,
-   "likes": 4382,
+   "views": 192136,
+   "likes": 4391,
    "comments": 78,
    "channel": "Sketch Design Craft",
-   "followers": 39300,
+   "followers": 39400,
    "dur": 483,
    "id": "K8BL_APoga0",
    "title": "5 apps I use to DESIGN any space - Cabin Renovation - iPad for Architects"
   },
   {
-   "views": 140164,
+   "views": 170046,
+   "likes": 1546,
+   "comments": 108,
+   "channel": "magicplan",
+   "followers": 24000,
+   "dur": 190,
+   "id": "-9mXkK1eV1s",
+   "title": "How to Get the Most Out of Your Laser Measure | magicplan"
+  },
+  {
+   "views": 140176,
    "likes": 1356,
    "comments": 90,
    "channel": "TheSketchUpEssentials",
@@ -75,39 +85,39 @@
    "title": "Creating ROOM MODELS from Phone Lidar Scans! (New App Update!)"
   },
   {
-   "views": 137343,
-   "likes": 712,
-   "comments": 0,
-   "channel": "H&M Home",
-   "followers": 32100,
-   "dur": 105,
-   "id": "Xf8ImGLeO2U",
-   "title": "Interior hacks: Rug placement guide for your living room"
+   "views": 86443,
+   "likes": 4756,
+   "comments": 346,
+   "channel": "DIYForKnuckleheads",
+   "followers": 449000,
+   "dur": 592,
+   "id": "hlLFkDlN2ok",
+   "title": "5 LIFE Changing Measuring Hacks!"
   },
   {
-   "views": 137302,
-   "likes": 4339,
-   "comments": 62,
-   "channel": "designchickee",
-   "followers": 74000,
-   "dur": 566,
-   "id": "RZYGTxcPsxY",
-   "title": "How to Arrange Furniture Like a Professional Interior Designer - Interior Design Tips"
-  },
-  {
-   "views": 135527,
-   "likes": 3495,
-   "comments": 73,
-   "channel": "Reynard Lowell",
-   "followers": 599000,
-   "dur": 1045,
-   "id": "AHefyeTUs5o",
-   "title": "How To Arrange Your Furniture (7 Layout Mistakes To Avoid)"
+   "views": 54489,
+   "likes": 502,
+   "comments": 40,
+   "channel": "drdecks",
+   "followers": 168000,
+   "dur": 404,
+   "id": "q9MgvgpZ1bM",
+   "title": "How Accurate Is The Default Measure App? || Dr Decks"
   }
  ],
  "millions_list": [
   {
-   "views": 1014296,
+   "views": 1541155,
+   "likes": 32086,
+   "comments": 807,
+   "channel": "WoodWorkWeb",
+   "followers": 676000,
+   "dur": 403,
+   "id": "TOve6oVPKVw",
+   "title": "5 Quick Measuring Hacks - Woodworking Tips and Tricks"
+  },
+  {
+   "views": 1014332,
    "likes": 2281,
    "comments": 219,
    "channel": "laanlabs",
@@ -117,21 +127,21 @@
    "title": "Air Measure App Demo - Augmented reality tape measure"
   }
  ],
- "millions": 1,
+ "millions": 2,
  "hooks": [
   "measure",
   "app",
-  "iphone",
-  "arrange",
-  "room",
-  "furniture",
   "use",
-  "interior",
-  "living",
-  "guide",
+  "measuring",
+  "hacks",
   "design",
-  "air"
+  "iphone",
+  "accurate",
+  "quick",
+  "woodworking",
+  "tips",
+  "tricks"
  ],
- "ts": "2026-07-29 12:15 UTC",
- "avg_views": 333076
+ "ts": "2026-07-29 20:12 UTC",
+ "avg_views": 411020
 }
