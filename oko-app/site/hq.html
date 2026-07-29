@@ -339,6 +339,98 @@ body.game-on #views{transition:opacity .4s}
 body.game-on #hqBack{left:14px;transform:none;bottom:auto;top:calc(64px + env(safe-area-inset-top))}
 body.game-on #hqLog{display:none}
 
+/* ============ v7: HUD игрового режима (энергия + мини-карта) ============ */
+#gameHud{position:fixed;z-index:12;right:14px;top:calc(64px + env(safe-area-inset-top));
+  display:none;flex-direction:column;gap:9px;pointer-events:none;
+  align-items:flex-end;transition:opacity .3s}
+#gameHud.show{display:flex}
+#hudEnergy{display:flex;align-items:center;gap:8px;background:rgba(10,12,16,.7);
+  border:1px solid var(--line2);border-radius:14px;padding:5px 12px 5px 9px;
+  font-family:var(--mono);font-size:9.5px;letter-spacing:.09em;color:var(--dim);
+  backdrop-filter:blur(10px);box-shadow:0 6px 22px rgba(0,0,0,.4)}
+#hudEnergy .bar{width:88px;height:5px;background:rgba(255,255,255,.09);
+  border-radius:3px;overflow:hidden;position:relative}
+#hudEnergy .bar i{display:block;height:100%;width:100%;background:linear-gradient(90deg,#7dff28,#c8ff5a);
+  box-shadow:0 0 10px rgba(154,255,0,.55);transition:width .28s ease}
+#hudEnergy.low .bar i{background:linear-gradient(90deg,#ff8c3c,#ffd166)}
+#hudEnergy.crit .bar i{background:linear-gradient(90deg,#ff4a5a,#ff9a6a)}
+#hudEnergy b{font-family:'Bebas Neue',Impact,sans-serif;font-size:13px;color:var(--lime);letter-spacing:.08em}
+#hudEnergy.low b{color:#ffd166}
+#hudEnergy.crit b{color:#ff8c8c}
+#miniMap{position:relative;width:148px;height:120px;background:rgba(6,8,12,.75);
+  border:1px solid var(--line2);border-radius:14px;padding:6px;backdrop-filter:blur(12px);
+  box-shadow:0 8px 28px rgba(0,0,0,.5), inset 0 0 0 1px rgba(154,255,0,.05);pointer-events:none}
+#miniMap canvas{display:block;width:100%;height:100%;border-radius:8px}
+#miniMap .mm-t{position:absolute;left:8px;top:-8px;background:rgba(6,8,12,.9);
+  border:1px solid var(--line2);border-radius:6px;padding:1px 6px;
+  font-family:var(--mono);font-size:8px;letter-spacing:.12em;color:var(--dim)}
+
+/* v7: контекст-кнопка "E" — оставил как есть, добавляю Q-кнопку эмоций */
+#emoteBtn{position:fixed;z-index:14;right:22px;bottom:calc(174px + env(safe-area-inset-bottom));
+  width:52px;height:52px;border-radius:50%;display:none;appearance:none;cursor:pointer;
+  font-family:'Bebas Neue',Impact,sans-serif;font-size:19px;color:var(--lime);
+  background:rgba(10,12,16,.82);border:1px solid rgba(154,255,0,.4);
+  box-shadow:0 0 18px rgba(154,255,0,.22);backdrop-filter:blur(10px);
+  touch-action:manipulation;transition:.2s}
+#emoteBtn.show{display:flex;align-items:center;justify-content:center;animation:hintIn .2s ease}
+#emoteBtn:hover,#emoteBtn.active{background:var(--lime);color:#0a0a0a;box-shadow:0 0 22px rgba(154,255,0,.55)}
+#emoteBtn:active{transform:scale(.92)}
+#emoteWheel{position:fixed;z-index:16;left:50%;top:50%;transform:translate(-50%,-50%) scale(.6);
+  width:min(340px,86vw);height:min(340px,86vw);border-radius:50%;
+  background:radial-gradient(circle at 50% 50%,rgba(10,12,16,.85),rgba(6,8,12,.65));
+  border:1px solid rgba(154,255,0,.4);backdrop-filter:blur(14px);
+  box-shadow:0 20px 60px rgba(0,0,0,.55), inset 0 0 40px rgba(154,255,0,.08);
+  opacity:0;pointer-events:none;transition:opacity .22s ease, transform .28s cubic-bezier(.3,.9,.35,1.2)}
+#emoteWheel.show{opacity:1;transform:translate(-50%,-50%) scale(1);pointer-events:auto}
+#emoteWheel .ew-c{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);
+  font-family:'Bebas Neue',Impact,sans-serif;font-size:16px;letter-spacing:.14em;color:var(--lime);
+  text-align:center;pointer-events:none}
+#emoteWheel .ew-c small{display:block;font-family:var(--mono);font-size:8px;color:var(--dim);
+  letter-spacing:.1em;margin-top:2px}
+#emoteWheel .ew{position:absolute;width:74px;height:64px;left:50%;top:50%;
+  transform-origin:center;display:flex;flex-direction:column;align-items:center;justify-content:center;
+  appearance:none;background:rgba(10,14,18,.78);border:1px solid rgba(154,255,0,.28);border-radius:14px;
+  cursor:pointer;color:#dfe6d4;font-family:var(--mono);font-size:9px;letter-spacing:.08em;
+  padding:5px 4px;transition:.2s;box-shadow:0 6px 18px rgba(0,0,0,.35)}
+#emoteWheel .ew:hover{background:rgba(154,255,0,.18);color:var(--ink);border-color:var(--lime);
+  box-shadow:0 0 20px rgba(154,255,0,.35)}
+#emoteWheel .ew svg{width:22px;height:22px;color:var(--lime);margin-bottom:3px}
+#emoteWheel .ew b{font-family:'Bebas Neue',Impact,sans-serif;font-size:11px;color:var(--lime);
+  letter-spacing:.1em;font-weight:400;line-height:1;margin-top:1px}
+
+/* v7: диалог-sheet */
+#dialogSheet{position:fixed;z-index:13;left:50%;bottom:calc(24px + env(safe-area-inset-bottom));
+  transform:translateX(-50%) translateY(30px);width:min(440px,calc(100vw - 28px));
+  background:var(--panel);border:1px solid var(--line2);border-radius:18px;padding:12px 14px 10px;
+  backdrop-filter:blur(16px);box-shadow:0 18px 60px rgba(0,0,0,.55), inset 0 0 0 1px rgba(154,255,0,.05);
+  opacity:0;pointer-events:none;transition:.35s cubic-bezier(.3,.9,.3,1)}
+#dialogSheet.show{opacity:1;transform:translateX(-50%);pointer-events:auto}
+#dialogSheet .ds-head{display:flex;align-items:baseline;gap:8px;margin-bottom:9px}
+#dialogSheet .ds-head i{width:8px;height:8px;border-radius:50%;flex:0 0 auto;box-shadow:0 0 10px currentColor}
+#dialogSheet .ds-head b{font-family:'Bebas Neue',Impact,sans-serif;font-size:15px;letter-spacing:.1em;font-weight:400;color:var(--ink)}
+#dialogSheet .ds-head small{font-family:var(--mono);font-size:9px;color:var(--dim);letter-spacing:.06em;flex:1;
+  overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+#dialogSheet .ds-x{appearance:none;border:0;background:transparent;color:var(--dim);cursor:pointer;
+  font-size:20px;line-height:1;padding:0 4px;border-radius:6px}
+#dialogSheet .ds-x:hover{color:var(--lime)}
+#dialogSheet .ds-quick{display:flex;flex-wrap:wrap;gap:6px}
+#dialogSheet .ds-quick button{appearance:none;cursor:pointer;font-family:'Montserrat',sans-serif;
+  font-size:11.5px;color:#dfe6d4;background:rgba(255,255,255,.05);border:1px solid var(--line2);
+  border-radius:11px;padding:7px 11px;transition:.2s}
+#dialogSheet .ds-quick button:hover{background:rgba(154,255,0,.15);border-color:var(--lime);color:var(--ink)}
+#dialogSheet .ds-quick button:active{transform:scale(.97)}
+
+@media (max-width:560px){
+  #gameHud{right:8px;top:calc(60px + env(safe-area-inset-top));gap:6px}
+  #miniMap{width:120px;height:98px;padding:5px}
+  #hudEnergy{padding:4px 10px 4px 7px;font-size:9px}
+  #hudEnergy .bar{width:66px}
+  #emoteBtn{right:16px;bottom:calc(158px + env(safe-area-inset-bottom));width:46px;height:46px;font-size:17px}
+  #dialogSheet{left:8px;right:8px;transform:translateY(30px);bottom:calc(80px + env(safe-area-inset-bottom));
+    width:auto;max-width:none}
+  #dialogSheet.show{transform:none}
+}
+
 @media (max-width:560px){
   .hq-title b{font-size:20px}
   #playBtn span{display:none}
@@ -542,6 +634,19 @@ body.game-on #hqFab{display:none}
 <div id="speech"></div>
 <div id="joy"><i id="joyKnob"></i></div>
 <button id="interactBtn">E</button>
+<button id="emoteBtn" title="Q — колесо эмоций">Q</button>
+
+<!-- v7: HUD (энергия + мини-карта) -->
+<div id="gameHud">
+  <div id="hudEnergy"><span>ЭНЕРГИЯ</span><span class="bar"><i></i></span><b id="hudEnergyPct">100%</b></div>
+  <div id="miniMap"><div class="mm-t">ШТАБ · КАРТА</div><canvas id="miniMapCv" width="272" height="220"></canvas></div>
+</div>
+
+<!-- v7: колесо эмоций (8 штук по кругу) -->
+<div id="emoteWheel"><div class="ew-c">ЭМОЦИИ<small>Q · 1–8 · Esc</small></div></div>
+
+<!-- v7: диалог-sheet с быстрыми ответами -->
+<div id="dialogSheet"></div>
 
 <div id="brainPanel">
   <div class="bp-head">ВТОРОЙ МОЗГ <small>ХРАНИЛИЩЕ</small><b id="bpCount">0</b></div>
@@ -621,10 +726,14 @@ body.game-on #hqFab{display:none}
 <aside id="finPanel">
   <div class="fp-head"><b>ФИН · БЫСТРЫЕ ДЕЙСТВИЯ</b>
     <button class="fp-x" id="fpX">✕</button></div>
-  <div class="fp-tabs">
-    <button class="fp-tab on" data-op="manual_confirm">РУЧН. ЗАЧИСЛЕНИЕ</button>
+  <div class="fp-tabs" style="flex-wrap:wrap">
+    <button class="fp-tab on" data-op="mark_paid">ЗАЧИСЛЕНИЕ</button>
     <button class="fp-tab" data-op="refund">ВОЗВРАТ</button>
+    <button class="fp-tab" data-op="bonus">БОНУС</button>
     <button class="fp-tab" data-op="discount">СКИДКА</button>
+    <button class="fp-tab" data-op="ban">БАН</button>
+    <button class="fp-tab" data-op="unban">РАЗБАН</button>
+    <button class="fp-tab" data-op="message">СООБЩЕНИЕ</button>
   </div>
   <div class="fp-body">
     <label>EMAIL / ID КЛИЕНТА</label>
@@ -642,6 +751,9 @@ body.game-on #hqFab{display:none}
     </div>
     <div class="fp-row" id="fpRowPct" style="display:none">
       <input id="fpPct" type="number" min="1" max="90" step="1" placeholder="%">
+    </div>
+    <div class="fp-row" id="fpRowMsg" style="display:none;flex-direction:column;gap:6px">
+      <textarea id="fpMsg" rows="3" placeholder="текст сообщения…" style="background:transparent;border:1px solid var(--line2);color:inherit;padding:8px;border-radius:8px;font-family:inherit;font-size:12px"></textarea>
     </div>
     <button id="fpDo">ВЫПОЛНИТЬ</button>
     <div class="fp-out" id="fpOut"></div>
@@ -3248,6 +3360,142 @@ function buildRobots() {
   });
 }
 
+/* ================= v7: PLAYER-MESH (полноценный скелет CEO для игрового режима) =================
+   Отдельная модель с руками, ногами, головой, коленями и локтями. В обычном режиме — скрыт.
+   В игре — показывается вместо GLB-корпуса CEO. Все конечности — обычные Object3D-«кости».      */
+let playerMesh = null;
+function buildPlayerMesh() {
+  const root = new THREE.Group();
+  root.visible = false;
+  const bodyMat = new THREE.MeshPhysicalMaterial({
+    color: '#12141a', metalness: 0.72, roughness: 0.28,
+    clearcoat: 1, clearcoatRoughness: 0.16, envMapIntensity: 1.15
+  });
+  const limeMat = new THREE.MeshStandardMaterial({
+    color: LIME, emissive: LIME, emissiveIntensity: 1.35,
+    roughness: 0.34, metalness: 0.6
+  });
+  const limeSoft = new THREE.MeshStandardMaterial({
+    color: '#63b800', emissive: LIME, emissiveIntensity: 0.55,
+    roughness: 0.45, metalness: 0.45
+  });
+  const jointMat = new THREE.MeshStandardMaterial({
+    color: '#2a2f39', roughness: 0.45, metalness: 0.85, envMapIntensity: 0.9
+  });
+
+  const skel = { root };
+
+  /* --- корпус (pelvis → spine → chest) --- */
+  const pelvis = new THREE.Group(); pelvis.position.y = 0.90; root.add(pelvis); skel.pelvis = pelvis;
+  const pelvisMesh = new THREE.Mesh(new THREE.CapsuleGeometry(0.20, 0.10, 8, 16), bodyMat);
+  pelvisMesh.rotation.z = Math.PI / 2; pelvisMesh.scale.set(1, 1.4, 0.8);
+  pelvisMesh.castShadow = true; pelvis.add(pelvisMesh);
+  const beltNeon = new THREE.Mesh(new THREE.TorusGeometry(0.24, 0.014, 6, 28), limeMat);
+  beltNeon.rotation.x = Math.PI / 2; beltNeon.position.y = -0.02; pelvis.add(beltNeon);
+
+  const spine = new THREE.Group(); spine.position.y = 0.10; pelvis.add(spine); skel.spine = spine;
+  const chest = new THREE.Group(); chest.position.y = 0.14; spine.add(chest); skel.chest = chest;
+  const torso = new THREE.Mesh(new THREE.CapsuleGeometry(0.24, 0.30, 8, 16), bodyMat);
+  torso.position.y = 0.15; torso.castShadow = true; chest.add(torso);
+  /* core-orb на груди */
+  const core = new THREE.Mesh(new THREE.SphereGeometry(0.055, 16, 12),
+    new THREE.MeshBasicMaterial({ color: '#eaffb0' }));
+  core.position.set(0, 0.16, 0.24); chest.add(core); skel.core = core;
+  const coreHalo = new THREE.Mesh(new THREE.SphereGeometry(0.11, 16, 12),
+    new THREE.MeshBasicMaterial({ color: LIME, transparent: true, opacity: 0.35, blending: THREE.AdditiveBlending, depthWrite: false }));
+  coreHalo.position.copy(core.position); chest.add(coreHalo); skel.coreHalo = coreHalo;
+  /* плечевой ярёмный воротник */
+  const yoke = new THREE.Mesh(new THREE.TorusGeometry(0.19, 0.022, 8, 24, Math.PI * 1.1), limeSoft);
+  yoke.rotation.x = Math.PI / 2; yoke.rotation.z = Math.PI - 0.55; yoke.position.y = 0.34; chest.add(yoke);
+
+  /* --- шея + голова --- */
+  const neck = new THREE.Group(); neck.position.y = 0.42; chest.add(neck); skel.neck = neck;
+  const neckMesh = new THREE.Mesh(new THREE.CylinderGeometry(0.055, 0.065, 0.08, 12), jointMat);
+  neckMesh.position.y = 0.04; neck.add(neckMesh);
+  const head = new THREE.Group(); head.position.y = 0.14; neck.add(head); skel.head = head;
+  const skull = new THREE.Mesh(new THREE.SphereGeometry(0.18, 24, 20), bodyMat);
+  skull.castShadow = true; head.add(skull);
+  /* визор — сегмент сферы, светится */
+  const visor = new THREE.Mesh(
+    new THREE.SphereGeometry(0.185, 24, 14, 0, Math.PI * 2, Math.PI * 0.36, Math.PI * 0.30),
+    new THREE.MeshStandardMaterial({ color: LIME, emissive: LIME, emissiveIntensity: 2.4, roughness: 0.2, metalness: 0.1 })
+  );
+  visor.rotation.x = 0.05; head.add(visor); skel.visor = visor;
+  /* «глаз» — точка лайма по центру визора */
+  const eye = new THREE.Mesh(new THREE.SphereGeometry(0.024, 10, 8),
+    new THREE.MeshBasicMaterial({ color: '#f6ffdc' }));
+  eye.position.set(0, 0.04, 0.185); head.add(eye); skel.eye = eye;
+  /* антенна */
+  const ant = new THREE.Mesh(new THREE.CylinderGeometry(0.008, 0.012, 0.18, 8), jointMat);
+  ant.position.set(0.06, 0.19, -0.02); ant.rotation.z = -0.12; head.add(ant);
+  const antTip = new THREE.Mesh(new THREE.SphereGeometry(0.028, 12, 10), limeMat);
+  antTip.position.set(0.08, 0.28, -0.02); head.add(antTip); skel.antTip = antTip;
+
+  /* --- рука (upper → forearm → hand), sign = -1 (L) или +1 (R) --- */
+  function makeArm(sign) {
+    const shoulder = new THREE.Group();
+    shoulder.position.set(sign * 0.32, 0.34, 0);
+    chest.add(shoulder);
+    /* сустав-плечо */
+    const shBall = new THREE.Mesh(new THREE.SphereGeometry(0.075, 14, 12), jointMat);
+    shoulder.add(shBall);
+    /* верхняя часть — цилиндр вниз */
+    const upper = new THREE.Mesh(new THREE.CylinderGeometry(0.055, 0.048, 0.28, 12), bodyMat);
+    upper.position.y = -0.14; upper.castShadow = true; shoulder.add(upper);
+    /* локоть-группа */
+    const elbow = new THREE.Group(); elbow.position.y = -0.28; shoulder.add(elbow);
+    const elBall = new THREE.Mesh(new THREE.SphereGeometry(0.058, 12, 10), jointMat);
+    elbow.add(elBall);
+    /* предплечье */
+    const forearm = new THREE.Mesh(new THREE.CylinderGeometry(0.048, 0.042, 0.26, 12), bodyMat);
+    forearm.position.y = -0.13; forearm.castShadow = true; elbow.add(forearm);
+    /* кисть */
+    const hand = new THREE.Mesh(new THREE.SphereGeometry(0.065, 14, 12), limeSoft);
+    hand.position.y = -0.28; elbow.add(hand);
+    const cuff = new THREE.Mesh(new THREE.TorusGeometry(0.058, 0.012, 6, 20), limeMat);
+    cuff.rotation.x = Math.PI / 2; cuff.position.y = -0.245; elbow.add(cuff);
+    return { shoulder, elbow, hand };
+  }
+  skel.armL = makeArm(-1);
+  skel.armR = makeArm(+1);
+
+  /* --- нога (hip → knee → foot) --- */
+  function makeLeg(sign) {
+    const hip = new THREE.Group();
+    hip.position.set(sign * 0.12, -0.02, 0);
+    pelvis.add(hip);
+    const hipBall = new THREE.Mesh(new THREE.SphereGeometry(0.078, 14, 12), jointMat);
+    hip.add(hipBall);
+    const thigh = new THREE.Mesh(new THREE.CylinderGeometry(0.075, 0.068, 0.42, 14), bodyMat);
+    thigh.position.y = -0.21; thigh.castShadow = true; hip.add(thigh);
+    const knee = new THREE.Group(); knee.position.y = -0.42; hip.add(knee);
+    const kneeBall = new THREE.Mesh(new THREE.SphereGeometry(0.062, 12, 10), jointMat);
+    knee.add(kneeBall);
+    const shin = new THREE.Mesh(new THREE.CylinderGeometry(0.062, 0.048, 0.38, 12), bodyMat);
+    shin.position.y = -0.19; shin.castShadow = true; knee.add(shin);
+    const ankle = new THREE.Group(); ankle.position.y = -0.38; knee.add(ankle);
+    const foot = new THREE.Mesh(new THREE.BoxGeometry(0.12, 0.055, 0.24), bodyMat);
+    foot.position.set(0, -0.03, 0.05); foot.castShadow = true; ankle.add(foot);
+    const footNeon = new THREE.Mesh(new THREE.BoxGeometry(0.11, 0.006, 0.21), limeMat);
+    footNeon.position.set(0, -0.058, 0.05); ankle.add(footNeon);
+    return { hip, knee, ankle };
+  }
+  skel.legL = makeLeg(-1);
+  skel.legR = makeLeg(+1);
+
+  /* блоб-тень: используется существующий instanced blobs (обновляется в pushRigMatrices) */
+  scene.add(root);
+  return skel;
+}
+
+/* v7: базовые «позы» — все локальные углы, чтобы updateGamePose плавно интерполировал.
+   pose(target, walk, sit, sitDeep, lie...) */
+function setLimb(node, rx, ry, rz, k) {
+  if (rx !== null) node.rotation.x += (rx - node.rotation.x) * k;
+  if (ry !== null) node.rotation.y += (ry - node.rotation.y) * k;
+  if (rz !== null) node.rotation.z += (rz - node.rotation.z) * k;
+}
+
 /* ================= GLB-КОРПУСА ВЛАДЕЛЬЦА (ленивая подгрузка) =================
    10 фотореалистичных роботов из /models/. Классификация по акценту текстуры.
    Капсулы-плейсхолдеры тают, GLB проявляется (кроссфейд). */
@@ -3934,13 +4182,31 @@ function updateStretches(t) {
 const IS_TOUCH = ('ontouchstart' in window) || Q.get('touch') === '1';
 const game = {
   on: false, pos: new THREE.Vector3(), vel: new THREE.Vector3(),
-  bodyYaw: 0, yawVel: 0, _lastCamYaw: 0, speed: 0, stepPhase: 0,
+  bodyYaw: 0, headYaw: 0, headPitch: 0, yawVel: 0, _lastCamYaw: 0,
+  speed: 0, stepPhase: 0, breatheT: 0, wantYaw: 0,
   camYaw: 0, camPitch: 0.42, camDist: 3.6,
   camPos: new THREE.Vector3(), camTgt: new THREE.Vector3(0, 1.4, 0),
   keys: {}, joy: { x: 0, y: 0 },
   target: null, watch: false,
-  respect: new Map(), speechT: 0, speechI: -1
+  respect: new Map(), speechT: 0, speechI: -1,
+  /* v7: расширенное состояние гендиректора */
+  energy: 100,            /* 0..100, тратится на бег/эмоуты, восстанавливается сидя/лёжа */
+  emote: null, emoteT: 0, /* активная эмоция и оставшееся время */
+  sitting: false, chairPos: null,   /* сидим ли + локальная точка кресла */
+  dialogI: -1, dialogTurn: 0        /* сюжет-диалог: индекс собеседника + шаг */
 };
+/* v7: эмоции — { продолжительность, разрешает ли ходьбу, стоимость энергии, лейбл } */
+const EMOTES = [
+  { id:'wave',    t:2.2, label:'Помахать',  cost:2 },
+  { id:'bow',     t:2.0, label:'Поклон',    cost:1 },
+  { id:'clap',    t:2.4, label:'Аплодисменты', cost:2 },
+  { id:'laugh',   t:2.6, label:'Смех',      cost:2 },
+  { id:'dance',   t:3.4, label:'Танец',     cost:6 },
+  { id:'thumbup', t:1.8, label:'Класс',     cost:1 },
+  { id:'bored',   t:2.4, label:'Скучаю',    cost:0 },
+  { id:'lie',     t:4.0, label:'Прилечь',   cost:-8 }   /* восстанавливает энергию */
+];
+const EMOTE_MOVE = { thumbup: true };   /* какие эмоуты не блокируют ходьбу */
 const SPEAK = {
   sales:    ['Лид @stomat_pro тёплый — дожимаю, КП уже у него.', 'Сегодня 12 касаний по базе, два горячих лида.'],
   editor:   ['Рендер урока на 72%, субтитры легли в такт.', 'Цветокор ролика MedCraft закончу к вечеру.'],
@@ -4005,6 +4271,13 @@ function enterGame() {
   CEO_TOUR.state = 'office'; CEO_TOUR.timer = 1e9;   /* авто-обход CEO выключен в игре */
   ceoSync.on = false; ceoSync.i = -1;
   r.gameCtl = true; r.standPos = null; r._moving = false; r.mode = 'walk';
+  /* v7: капсульный CEO прячется, GLB тоже — рулим playerMesh */
+  r.glbFade = 1; if (r.glb) r.glb.visible = false;
+  if (playerMesh) {
+    playerMesh.root.position.copy(r.root.position);
+    playerMesh.root.rotation.y = r.root.rotation.y;
+    playerMesh.root.visible = true;
+  }
   game.pos.set(r.root.position.x, groundY(r.root.position.x, r.root.position.z), r.root.position.z);
   resolveCollider(game.pos, 0.45);
   game.vel.set(0, 0, 0); game.speed = 0;
@@ -4013,14 +4286,21 @@ function enterGame() {
   game.camPitch = 0.42; game.yawVel = 0;
   game.camDist = (innerWidth / innerHeight < 0.8) ? 4.8 : 3.6;   /* портрет — камера дальше */
   game.watch = false; game.respect.clear();
+  /* v7: сброс расширенного состояния */
+  game.energy = 100; game.emote = null; game.emoteT = 0;
+  game.sitting = false; game.chairPos = null;
+  game.headYaw = 0; game.headPitch = 0; game.stepPhase = 0;
+  game.dialogI = -1; game.dialogTurn = 0;
   game.camTgt.set(game.pos.x, game.pos.y + 1.32, game.pos.z);
   placeGameCam(1);
   orbit.enabled = false;
   if (IS_TOUCH) joyEl.classList.add('show');
   document.getElementById('hqBack').classList.add('show');
+  const hud = document.getElementById('gameHud'); if (hud) hud.classList.add('show');
+  const emb = document.getElementById('emoteBtn'); if (emb) emb.classList.add('show');
   gameToast(IS_TOUCH
-    ? 'Вы — гендиректор. Джойстик — движение, свайп справа — камера, кнопка E — действие'
-    : 'Вы — гендиректор. WASD — движение, мышь — камера, Shift — быстрее, E — действие, Esc — выход');
+    ? 'Вы — гендиректор. Джойстик — движение, свайп справа — камера, E — действие, Q — эмоции'
+    : 'Вы — гендиректор. WASD — движение, мышь — камера, Shift — быстрее, E — действие, Q — эмоции, Esc — выход');
   pushLog('ceo', 'владелец взял прямое управление · режим гендиректора');
 }
 function exitGame() {
@@ -4033,11 +4313,18 @@ function exitGame() {
   if (r) {
     r.gameCtl = false; r.mode = 'sit'; r.standPos = null; r.standYaw = undefined; r._moving = false;
     r.root.position.copy(r.home); r.root.rotation.y = r.yawHome;
+    if (r.glb) r.glb.visible = true;      /* v7: возвращаем фото-корпус */
   }
+  /* v7: скрываем скелет */
+  if (playerMesh) playerMesh.root.visible = false;
+  closeEmoteWheel(); closeDialog();
   CEO_TOUR.state = 'office'; CEO_TOUR.timer = 26 + Math.random() * 20;
   joyEl.classList.remove('show'); interactBtn.classList.remove('show');
   gameHintEl.classList.remove('show'); speechEl.classList.remove('show');
+  const hud = document.getElementById('gameHud'); if (hud) hud.classList.remove('show');
+  const emb = document.getElementById('emoteBtn'); if (emb) emb.classList.remove('show');
   game.watch = false; game.speechI = -1; game.speechT = 0;
+  game.emote = null; game.emoteT = 0; game.sitting = false; game.chairPos = null;
   document.getElementById('hqBack').classList.remove('show');
   /* орбиту синхронизируем с текущей камерой — выход без рывка */
   const dx = camera.position.x, dy = camera.position.y - 1.5, dz = camera.position.z;
@@ -4052,29 +4339,189 @@ function exitGame() {
   pushLog('ceo', 'владелец вернулся к обзору · CEO снова на автопилоте');
 }
 
-/* поза управляемого робота (вызывается из updateRig) */
+/* v7: поза управляемого CEO — теперь ведём playerMesh с полноценным скелетом.
+   Старый instanced-риг усохнут (visibility в pushRigMatrices через r.gameCtl-фейд),
+   а фотореалистичный GLB скрыт целиком, чтобы не двоился. */
 function updateGamePose(r, t, dt) {
+  /* сам rig делаем невидимым: устанавливаем фейд в 1 (капсулы = ZERO_M в pushRigMatrices)
+     и GLB прячем. Позу — обновляем через playerMesh. */
   r.root.position.copy(game.pos);
   r.root.rotation.y = game.bodyYaw;
   r._moving = game.speed > 0.25;
+  /* спрятать капсульный рид, оставить root — на всякий случай */
+  r.glbFade = 1;
+  if (r.glb) r.glb.visible = false;
+
+  if (!playerMesh) return;
+  const pm = playerMesh; pm.root.visible = true;
+  pm.root.position.copy(game.pos);
+  pm.root.rotation.y = game.bodyYaw;
+
+  const k = 1 - Math.exp(-dt * 12);         /* сглаживание позы */
+  const kSlow = 1 - Math.exp(-dt * 5);
+  const stepFreq = game.speed > 3.6 ? 8.4 : (game.speed > 1.3 ? 6.6 : 5.4);
+  game.stepPhase += dt * stepFreq * (0.35 + Math.min(game.speed, 4.6) * 0.42);
   const step = game.stepPhase;
-  if (r._moving) {
-    r.body.position.y = 0.62 + Math.abs(Math.sin(step)) * 0.045;
-    r.body.rotation.z = Math.sin(step) * 0.045;
-    r.body.rotation.x = 0.05;
-    r.shL.rotation.x = Math.sin(step) * 0.42; r.shR.rotation.x = -Math.sin(step) * 0.42;
-    r.shL.rotation.z = 0.1; r.shR.rotation.z = -0.1;
-    r.legL.rotation.x = -Math.sin(step) * 0.55; r.legR.rotation.x = Math.sin(step) * 0.55;
+
+  /* эмоуты: приоритетнее ходьбы (кроме EMOTE_MOVE) */
+  if (game.emote && !EMOTE_MOVE[game.emote]) {
+    applyEmotePose(pm, t, dt, k, kSlow, step);
+  } else if (game.sitting) {
+    applySitPose(pm, t, dt, k, kSlow);
+  } else if (r._moving) {
+    applyWalkPose(pm, t, dt, k, step);
   } else {
-    r.body.position.y = 0.62 + Math.sin(t * 1.6) * 0.012;
-    r.body.rotation.x = 0.02; r.body.rotation.z = 0;
-    r.shL.rotation.x = -0.32; r.shR.rotation.x = -0.32;
-    r.shL.rotation.z = 0.14; r.shR.rotation.z = -0.14;
-    r.legL.rotation.x = 0; r.legR.rotation.x = 0;
+    applyIdlePose(pm, t, dt, k, kSlow);
   }
-  r.legL.position.y = 0.62; r.legR.position.y = 0.62;
-  r.legL.scale.setScalar(1); r.legR.scale.setScalar(1);
-  r.head.rotation.y = 0; r.head.rotation.x = 0;
+
+  /* голова: плавный поворот в направлении камеры (задержка) — как у живого человека */
+  const dyH = ((game.camYaw - game.bodyYaw + Math.PI * 3) % (Math.PI * 2)) - Math.PI;
+  game.headYaw += (THREE.MathUtils.clamp(dyH, -0.9, 0.9) - game.headYaw) * kSlow;
+  game.headPitch += ((game.camPitch - 0.42) * -0.45 - game.headPitch) * kSlow;
+  setLimb(pm.head, game.headPitch, game.headYaw, 0, 1);
+
+  /* «взгляд» — глаз чуть выравнивается на цель */
+  const en = game.energy;
+  const eyeC = en > 55 ? '#f6ffdc' : (en > 25 ? '#ffe37a' : '#ff9a6a');
+  pm.eye.material.color.set(eyeC);
+  /* пульс визора и core в такт */
+  pm.visor.material.emissiveIntensity = 2.0 + Math.sin(t * 4 + game.speed) * 0.5;
+  pm.core.scale.setScalar(1 + Math.sin(t * 2.4) * 0.12);
+  pm.coreHalo.material.opacity = 0.28 + Math.sin(t * 2.4) * 0.09;
+  pm.antTip.scale.setScalar(1 + Math.max(0, Math.sin(t * 3.2)) * 0.6);
+}
+
+/* --- поза: ходьба (upper + lower ноги качаются с изгибом колена, локти — противофаза) --- */
+function applyWalkPose(pm, t, dt, k, step) {
+  const sn = Math.sin(step), cs = Math.cos(step);
+  /* корпус: bounce и лёгкое покачивание */
+  pm.pelvis.position.y += (0.90 + Math.abs(sn) * 0.045 - pm.pelvis.position.y) * k;
+  setLimb(pm.pelvis, 0.06, 0, sn * 0.045, k);
+  setLimb(pm.spine, -0.02, sn * 0.06, 0, k);
+  setLimb(pm.chest, 0.02, -sn * 0.05, 0, k);
+  /* руки: противофаза ногам, локти сгибаются на возврате */
+  setLimb(pm.armL.shoulder, sn * 0.85, 0, 0.14 + Math.abs(sn) * 0.05, k);
+  setLimb(pm.armR.shoulder, -sn * 0.85, 0, -0.14 - Math.abs(sn) * 0.05, k);
+  setLimb(pm.armL.elbow, -Math.max(0, -sn) * 0.7 - 0.2, 0, 0, k);
+  setLimb(pm.armR.elbow, -Math.max(0, sn) * 0.7 - 0.2, 0, 0, k);
+  /* ноги: бедро качается ±0.55, колено сгибается при подъёме */
+  setLimb(pm.legL.hip, -sn * 0.55, 0, 0, k);
+  setLimb(pm.legR.hip, sn * 0.55, 0, 0, k);
+  setLimb(pm.legL.knee, Math.max(0, sn) * 0.9, 0, 0, k);
+  setLimb(pm.legR.knee, Math.max(0, -sn) * 0.9, 0, 0, k);
+  setLimb(pm.legL.ankle, -Math.max(0, sn) * 0.35, 0, 0, k);
+  setLimb(pm.legR.ankle, -Math.max(0, -sn) * 0.35, 0, 0, k);
+}
+
+/* --- поза: покой (лёгкое дыхание, руки чуть в стороны, ноги прямые) --- */
+function applyIdlePose(pm, t, dt, k, kSlow) {
+  game.breatheT += dt;
+  const br = Math.sin(t * 1.5) * 0.02;
+  pm.pelvis.position.y += (0.90 + br * 0.5 - pm.pelvis.position.y) * kSlow;
+  setLimb(pm.pelvis, 0.01, Math.sin(t * 0.6) * 0.02, 0, kSlow);
+  setLimb(pm.spine, 0, 0, 0, kSlow);
+  setLimb(pm.chest, br * 0.4, Math.sin(t * 0.7) * 0.03, 0, kSlow);
+  /* руки чуть от корпуса, локти лёгкий сгиб */
+  setLimb(pm.armL.shoulder, -0.10, 0, 0.28 + br * 0.4, kSlow);
+  setLimb(pm.armR.shoulder, -0.10, 0, -0.28 - br * 0.4, kSlow);
+  setLimb(pm.armL.elbow, -0.30 + Math.sin(t * 1.2) * 0.04, 0, 0, kSlow);
+  setLimb(pm.armR.elbow, -0.30 + Math.sin(t * 1.2 + 0.5) * 0.04, 0, 0, kSlow);
+  /* ноги в 0 */
+  setLimb(pm.legL.hip, 0, 0, 0, kSlow); setLimb(pm.legR.hip, 0, 0, 0, kSlow);
+  setLimb(pm.legL.knee, 0.03, 0, 0, kSlow); setLimb(pm.legR.knee, 0.03, 0, 0, kSlow);
+  setLimb(pm.legL.ankle, 0, 0, 0, kSlow); setLimb(pm.legR.ankle, 0, 0, 0, kSlow);
+}
+
+/* --- поза: сидит (колени и бёдра согнуты, спина расслаблена) --- */
+function applySitPose(pm, t, dt, k, kSlow) {
+  const br = Math.sin(t * 1.1) * 0.02;
+  const targetY = (game.chairPos ? game.chairPos.seatY : 0.58);
+  pm.pelvis.position.y += (targetY + br * 0.3 - pm.pelvis.position.y) * kSlow;
+  setLimb(pm.pelvis, 0.02, 0, 0, kSlow);
+  setLimb(pm.spine, -0.05, 0, 0, kSlow);
+  setLimb(pm.chest, -0.02, Math.sin(t * 0.9) * 0.03, 0, kSlow);
+  /* руки лежат на коленях: плечи вперёд, локти согнуты вниз-вперёд */
+  setLimb(pm.armL.shoulder, 0.55, 0, 0.30, kSlow);
+  setLimb(pm.armR.shoulder, 0.55, 0, -0.30, kSlow);
+  setLimb(pm.armL.elbow, -1.05, 0, 0, kSlow);
+  setLimb(pm.armR.elbow, -1.05, 0, 0, kSlow);
+  /* ноги: бёдра ~90°, колени ~90° вниз */
+  setLimb(pm.legL.hip, Math.PI / 2 - 0.05, 0.02, 0, kSlow);
+  setLimb(pm.legR.hip, Math.PI / 2 - 0.05, -0.02, 0, kSlow);
+  setLimb(pm.legL.knee, -Math.PI / 2 + 0.1, 0, 0, kSlow);
+  setLimb(pm.legR.knee, -Math.PI / 2 + 0.1, 0, 0, kSlow);
+  setLimb(pm.legL.ankle, 0.1, 0, 0, kSlow);
+  setLimb(pm.legR.ankle, 0.1, 0, 0, kSlow);
+}
+
+/* --- поза: активный эмоут (короткая срежиссированная сценка) --- */
+function applyEmotePose(pm, t, dt, k, kSlow, step) {
+  const em = game.emote, tm = t * 1;
+  /* базовые кадры idle-скелета — потом накладываем поверх нужные движения */
+  applyIdlePose(pm, t, dt, kSlow, kSlow);
+
+  if (em === 'wave') {
+    setLimb(pm.armR.shoulder, -2.2, 0, -0.35, k);
+    setLimb(pm.armR.elbow, -0.5 + Math.sin(tm * 8) * 0.5, 0, 0, k);
+    setLimb(pm.head, 0.05, Math.sin(tm * 3) * 0.15, 0, k);
+  } else if (em === 'bow') {
+    setLimb(pm.chest, 0.55, 0, 0, kSlow);
+    setLimb(pm.spine, 0.4, 0, 0, kSlow);
+    setLimb(pm.head, 0.4, 0, 0, kSlow);
+    setLimb(pm.armL.shoulder, 0.15, 0, 0.5, k);
+    setLimb(pm.armR.shoulder, 0.15, 0, -0.5, k);
+  } else if (em === 'clap') {
+    const cs = Math.sin(tm * 12);
+    setLimb(pm.armL.shoulder, -0.9, 0, 0.9 - Math.abs(cs) * 0.3, k);
+    setLimb(pm.armR.shoulder, -0.9, 0, -0.9 + Math.abs(cs) * 0.3, k);
+    setLimb(pm.armL.elbow, -1.4, 0, 0, k);
+    setLimb(pm.armR.elbow, -1.4, 0, 0, k);
+  } else if (em === 'laugh') {
+    setLimb(pm.chest, 0.05 + Math.sin(tm * 10) * 0.08, 0, 0, k);
+    setLimb(pm.head, 0.2 + Math.sin(tm * 9) * 0.08, 0, 0, k);
+    setLimb(pm.armL.shoulder, -0.4, 0, 0.4, k);
+    setLimb(pm.armR.shoulder, -0.4, 0, -0.4, k);
+    setLimb(pm.armL.elbow, -1.7, 0, 0, k);
+    setLimb(pm.armR.elbow, -1.7, 0, 0, k);
+  } else if (em === 'dance') {
+    const dp = tm * 5;
+    setLimb(pm.pelvis, Math.sin(dp) * 0.06, Math.sin(dp * 0.7) * 0.15, Math.sin(dp) * 0.09, k);
+    pm.pelvis.position.y += (0.9 + Math.abs(Math.sin(dp * 2)) * 0.06 - pm.pelvis.position.y) * k;
+    setLimb(pm.chest, 0, Math.sin(dp) * 0.2, Math.sin(dp * 1.3) * 0.1, k);
+    setLimb(pm.armL.shoulder, -1.2 + Math.sin(dp) * 0.4, 0, 0.6, k);
+    setLimb(pm.armR.shoulder, -1.2 - Math.sin(dp) * 0.4, 0, -0.6, k);
+    setLimb(pm.armL.elbow, -0.9 + Math.sin(dp * 2) * 0.3, 0, 0, k);
+    setLimb(pm.armR.elbow, -0.9 - Math.sin(dp * 2) * 0.3, 0, 0, k);
+    setLimb(pm.legL.hip, Math.sin(dp) * 0.35, 0, 0, k);
+    setLimb(pm.legR.hip, -Math.sin(dp) * 0.35, 0, 0, k);
+    setLimb(pm.legL.knee, Math.max(0, Math.sin(dp)) * 0.4, 0, 0, k);
+    setLimb(pm.legR.knee, Math.max(0, -Math.sin(dp)) * 0.4, 0, 0, k);
+  } else if (em === 'thumbup') {
+    setLimb(pm.armR.shoulder, -1.35, 0, -0.35, k);
+    setLimb(pm.armR.elbow, -1.3, 0, 0, k);
+    setLimb(pm.armL.shoulder, -0.10, 0, 0.28, k);
+  } else if (em === 'bored') {
+    setLimb(pm.chest, -0.02, 0, 0.05, kSlow);
+    setLimb(pm.head, -0.15, Math.sin(tm * 0.6) * 0.35, 0.06, kSlow);
+    setLimb(pm.armL.shoulder, 0.7, 0, 0.6, kSlow);
+    setLimb(pm.armR.shoulder, -0.10, 0, -0.28, kSlow);
+    setLimb(pm.armL.elbow, -1.9, 0, 0, kSlow);
+  } else if (em === 'lie') {
+    /* лежит на спине — весь корпус наклонён */
+    pm.pelvis.position.y += (0.22 - pm.pelvis.position.y) * kSlow;
+    setLimb(pm.pelvis, -1.3, 0, 0, kSlow);   /* корпус ложится */
+    setLimb(pm.spine, -0.05, 0, 0, kSlow);
+    setLimb(pm.chest, Math.sin(tm * 0.9) * 0.02, 0, 0, kSlow);
+    setLimb(pm.head, -0.4, 0, 0, kSlow);
+    setLimb(pm.armL.shoulder, -0.3, 0, 0.9, kSlow);
+    setLimb(pm.armR.shoulder, -0.3, 0, -0.9, kSlow);
+    setLimb(pm.armL.elbow, -0.4, 0, 0, kSlow);
+    setLimb(pm.armR.elbow, -0.4, 0, 0, kSlow);
+    setLimb(pm.legL.hip, 0, 0, 0, kSlow);
+    setLimb(pm.legR.hip, 0, 0, 0, kSlow);
+    setLimb(pm.legL.knee, 0.05, 0, 0, kSlow);
+    setLimb(pm.legR.knee, 0.05, 0, 0, kSlow);
+  }
 }
 
 function gameInputVec(out) {
@@ -4091,8 +4538,27 @@ function gameInputVec(out) {
 }
 
 const _sv = new THREE.Vector3();
+/* v7: точки интереса — стул/кресло CEO, стол-касса. Дистанция 2.0м. */
+const POI_CACHE = null;
+function getPOIs() {
+  const y = DESKS.ceo.yaw, dx = Math.sin(y), dz = Math.cos(y);
+  const chairX = DESKS.ceo.p[0] - dx * 0.42;
+  const chairZ = DESKS.ceo.p[1] - dz * 0.42;
+  const deskCX = DESKS.ceo.p[0] + dx * 1.05;
+  const deskCZ = DESKS.ceo.p[1] + dz * 1.05;
+  return [
+    { kind: 'chair', label: game.sitting ? 'Встать' : 'Сесть в кресло',
+      x: chairX, y: CEO_ROOM.podium + 1.5, z: chairZ,
+      hitX: chairX, hitZ: chairZ, hitR: 1.4,
+      seatX: chairX, seatZ: chairZ, seatYaw: y, seatY: 0.58 },
+    { kind: 'cash', label: 'Открыть кассу дня',
+      x: deskCX, y: CEO_ROOM.podium + 1.4, z: deskCZ,
+      hitX: deskCX, hitZ: deskCZ, hitR: 1.7 }
+  ];
+}
 function updateGameTargets() {
   let target = null;
+  /* 1) ближайший бот в радиусе 1.6м */
   let best = 1.6 * 1.6, bi = -1;
   for (const o of rigs) {
     if (o.a.id === 'ceo') continue;
@@ -4105,12 +4571,26 @@ function updateGameTargets() {
     const o = rigs[bi];
     const p = (o.botPos && o.glbFade > 0.5) ? o.botPos : o.root.position;
     target = { kind: 'bot', i: bi, label: 'Поговорить', x: p.x, y: o.root.position.y + BOT_H + 0.28, z: p.z };
-  } else if (Math.hypot(game.pos.x, game.pos.z) < 4.4) {
-    const l = Math.hypot(game.pos.x, game.pos.z) || 1;
-    target = { kind: 'brain', label: 'Хранилище', x: game.pos.x / l * 2.4, y: 1.5, z: game.pos.z / l * 2.4 };
   } else {
-    const dx = game.pos.x + 4.9, dz = game.pos.z + 14.15;
-    if (dx * dx + dz * dz < 2.6 * 2.6) target = { kind: 'tv', label: game.watch ? 'Выйти из кадра' : 'Смотреть', x: -6.4, y: 3.0, z: -14.15 };
+    /* 2) POI (кресло/касса/…): фиксированные точки с радиусом */
+    const pois = getPOIs();
+    let bpoi = null, bd = Infinity;
+    for (const p of pois) {
+      const d = Math.hypot(p.hitX - game.pos.x, p.hitZ - game.pos.z);
+      if (d < p.hitR && d < bd) { bd = d; bpoi = p; }
+    }
+    if (bpoi) target = bpoi;
+    else if (Math.hypot(game.pos.x, game.pos.z) < 4.4) {
+      /* 3) центральный мозг */
+      const l = Math.hypot(game.pos.x, game.pos.z) || 1;
+      target = { kind: 'brain', label: 'Открыть мозг', x: game.pos.x / l * 2.4, y: 1.5, z: game.pos.z / l * 2.4 };
+    } else {
+      /* 4) ТВ переговорки */
+      const dx = game.pos.x + 4.9, dz = game.pos.z + 14.15;
+      if (dx * dx + dz * dz < 2.6 * 2.6) {
+        target = { kind: 'tv', label: game.watch ? 'Выйти из кадра' : 'Смотреть ТВ', x: -6.4, y: 3.0, z: -14.15 };
+      }
+    }
   }
   game.target = target;
   if (target) {
@@ -4130,9 +4610,10 @@ function updateGameTargets() {
 
 function gameInteract() {
   const tg = game.target; if (!tg || !game.on) return;
+  /* если сидим — сначала встать (кроме взаимодействия с креслом) */
+  if (game.sitting && tg.kind !== 'chair') { standUp(); return; }
   if (tg.kind === 'bot') {
     const o = rigs[tg.i];
-    openCard(tg.i);
     /* робот поворачивается к владельцу и «говорит» */
     const wy = Math.atan2(game.pos.x - o.root.position.x, game.pos.z - o.root.position.z);
     if (o.mode === 'sit') {
@@ -4140,23 +4621,112 @@ function gameInteract() {
       while (dy > Math.PI) dy -= Math.PI * 2;
       while (dy < -Math.PI) dy += Math.PI * 2;
       o.lookYawT = THREE.MathUtils.clamp(dy, -1.2, 1.2);
-      o.lookTimer = 4.5;
+      o.lookTimer = 6.5;
     } else {
-      o.pauseT = 4.2;   /* волкер останавливается и разворачивается */
+      o.pauseT = 6.2;   /* волкер останавливается и разворачивается */
     }
     const lines = SPEAK[o.a.id] || SPEAK.assist;
-    game.speechI = tg.i; game.speechT = 4.4;
+    game.speechI = tg.i; game.speechT = 5.4;
     speechEl.innerHTML = '<b style="color:' + o.a.c + '">' + escHtml(o.a.role.toUpperCase()) + '</b>' +
       escHtml(lines[Math.floor(Math.random() * lines.length)]);
     speechEl.classList.add('show');
-    game.respect.set(tg.i, 4.5);
+    game.respect.set(tg.i, 5.5);
+    /* v7: открываем диалог с быстрыми ответами */
+    openDialog(tg.i);
   } else if (tg.kind === 'brain') {
     document.getElementById('brainPanel').classList.add('exp');
     if (!IS_TOUCH) document.getElementById('bpSearch').focus();
     gameToast('Второй мозг открыт: введите запрос — материалы подсветятся цветом отдела');
+    /* CEO делает жест «читает» — короткий bow */
+    triggerEmote('bow');
   } else if (tg.kind === 'tv') {
     game.watch = !game.watch;
+    if (game.watch) gameToast('Смотрим ТВ переговорки. Esc или движение — выйти из кадра.');
+  } else if (tg.kind === 'chair') {
+    if (game.sitting) standUp();
+    else sitDown(tg);
+  } else if (tg.kind === 'cash') {
+    /* открываем «кассу дня» — используем CEO_dash данные */
+    const s = window.__HQ && window.__HQ.getCEOStats && window.__HQ.getCEOStats();
+    const cash = s && s.mrr ? (s.mrr / 30).toFixed(0) : '—';
+    gameToast('Касса дня: ' + cash + ' ₽ · чек читает CFO. Lava — ok, расхождений нет.');
+    triggerEmote('thumbup');
+    pushLog('ceo', 'открыл кассу дня · сверка Lava чистая');
   }
+}
+
+/* v7: сесть в кресло/встать */
+function sitDown(chairPOI) {
+  game.sitting = true; game.chairPos = chairPOI;
+  /* доводим позицию к сиденью и разворот к столу */
+  game.pos.x = chairPOI.seatX; game.pos.z = chairPOI.seatZ;
+  game.bodyYaw = chairPOI.seatYaw;
+  game.vel.set(0, 0, 0); game.speed = 0;
+  gameToast('Сидим. E — встать, ЛКМ — крутить обзор, Q — эмоции.');
+  pushLog('ceo', 'сел в кресло · обзор кабинета');
+}
+function standUp() {
+  game.sitting = false; game.chairPos = null;
+  gameToast('Встали. Пошли работать.');
+}
+
+/* v7: диалоговый sheet с быстрыми ответами */
+const DIALOG_QUICK = [
+  { txt: 'Статус задач?', reply: (o) => (SPEAK[o.a.id] || SPEAK.assist)[0] },
+  { txt: 'Что залетело?', reply: () => 'Ролик про «5 ошибок» — 480К просмотров, CTR 12,4%.' },
+  { txt: 'Что мешает?',   reply: (o) => 'Дай ещё +20 постов из мозга — упрёмся в контент к пятнице.' },
+  { txt: 'Красавчик',     reply: () => 'Служу штабу OKO!' }
+];
+const dialogEl = document.getElementById('dialogSheet');
+function openDialog(i) {
+  if (!dialogEl) return;
+  game.dialogI = i;
+  const o = rigs[i];
+  dialogEl.innerHTML =
+    '<div class="ds-head"><i style="background:' + o.a.c + '"></i>' +
+      '<b>' + escHtml(o.a.role.toUpperCase()) + '</b>' +
+      '<small>' + escHtml(o.a.nature) + '</small>' +
+      '<button class="ds-x" id="dsX">×</button></div>' +
+    '<div class="ds-quick">' +
+      DIALOG_QUICK.map((q, k) =>
+        '<button data-qi="' + k + '">' + escHtml(q.txt) + '</button>').join('') +
+    '</div>';
+  dialogEl.classList.add('show');
+  document.getElementById('dsX').onclick = closeDialog;
+  dialogEl.querySelectorAll('button[data-qi]').forEach(b => {
+    b.onclick = () => {
+      const k = +b.dataset.qi, q = DIALOG_QUICK[k];
+      const reply = typeof q.reply === 'function' ? q.reply(o) : q.reply;
+      speechEl.innerHTML = '<b style="color:' + o.a.c + '">' + escHtml(o.a.role.toUpperCase()) + '</b>' +
+        escHtml(reply);
+      speechEl.classList.add('show');
+      game.speechI = i; game.speechT = 5.4;
+      game.respect.set(i, 6);
+      if (k === 3) triggerEmote('thumbup');
+    };
+  });
+}
+function closeDialog() {
+  if (!dialogEl) return;
+  dialogEl.classList.remove('show'); game.dialogI = -1;
+}
+
+/* v7: эмоуты */
+function triggerEmote(id) {
+  const em = EMOTES.find(e => e.id === id); if (!em) return;
+  game.emote = id; game.emoteT = em.t;
+  game.energy = THREE.MathUtils.clamp(game.energy - em.cost, 0, 100);
+  const emb = document.getElementById('emoteBtn');
+  if (emb) emb.classList.add('active');
+  closeEmoteWheel();
+}
+function openEmoteWheel() {
+  const wh = document.getElementById('emoteWheel'); if (!wh) return;
+  wh.classList.add('show');
+}
+function closeEmoteWheel() {
+  const wh = document.getElementById('emoteWheel');
+  if (wh) wh.classList.remove('show');
 }
 
 function updateRespect(dt) {
@@ -4197,11 +4767,39 @@ function updateGame(t, dt) {
   if (!game.on) return;
   const r = playerRig(); if (!r) return;
   gameInputVec(_v3b);
-  const moving = _v3b.lengthSq() > 0.003;
+  const moving = _v3b.lengthSq() > 0.003 && !game.sitting;
   if (moving && game.watch) game.watch = false;
-  const spd = (game.keys.ShiftLeft || game.keys.ShiftRight) ? 4.6 : 2.5;
+  /* v7: если сидим и пробуют идти — встать */
+  if (game.sitting && moving) standUp();
+  /* v7: таймер эмоута */
+  if (game.emoteT > 0) {
+    game.emoteT -= dt;
+    if (game.emoteT <= 0) {
+      game.emote = null; game.emoteT = 0;
+      const emb = document.getElementById('emoteBtn'); if (emb) emb.classList.remove('active');
+    }
+  }
+  /* v7: энергия. Бег -18/сек, ходьба -5/сек, покой +6/сек, сидя +14/сек, лёжа +26/сек */
+  const lying = game.emote === 'lie';
+  const sit = game.sitting;
+  const spr = (game.keys.ShiftLeft || game.keys.ShiftRight);
+  let ed = 0;
+  if (lying) ed = 26;
+  else if (sit) ed = 14;
+  else if (game.speed > 3.3) ed = -18;
+  else if (game.speed > 0.5) ed = -5;
+  else ed = 6;
+  game.energy = THREE.MathUtils.clamp(game.energy + ed * dt, 0, 100);
+  updateHud();
+  /* v7: скорость учитывает сидячее/эмоут-состояние + низкую энергию */
+  const sprint = (game.keys.ShiftLeft || game.keys.ShiftRight);
+  const energyK = game.energy > 15 ? 1 : (0.35 + game.energy / 25);
+  let spd = (sprint ? 4.6 : 2.5) * energyK;
+  if (game.sitting || (game.emote && !EMOTE_MOVE[game.emote])) spd = 0;
   const fx = Math.sin(game.camYaw), fz = Math.cos(game.camYaw);
-  const rx = Math.cos(game.camYaw), rz = -Math.sin(game.camYaw);
+  /* v7 FIX: forward × up (правая тройка Three.js) → right = (-cos, 0, sin).
+     Раньше знаки были инвертированы — «влево» уводило вправо и наоборот. */
+  const rx = -Math.cos(game.camYaw), rz = Math.sin(game.camYaw);
   const tvx = (fx * _v3b.z + rx * _v3b.x) * spd;
   const tvz = (fz * _v3b.z + rz * _v3b.x) * spd;
   /* velocity + lerp — плавно, без рывков */
@@ -4212,17 +4810,19 @@ function updateGame(t, dt) {
   game.pos.x += game.vel.x * dt;
   game.pos.z += game.vel.z * dt;
   /* мягкое столкновение с роботами (круг r=0.45 против r=0.4) */
-  for (const o of rigs) {
-    if (o === r) continue;
-    const dx = game.pos.x - o.root.position.x, dz = game.pos.z - o.root.position.z;
-    const d2 = dx * dx + dz * dz, rr = 0.85;
-    if (d2 < rr * rr && d2 > 1e-6) {
-      const d = Math.sqrt(d2);
-      game.pos.x = o.root.position.x + dx / d * rr;
-      game.pos.z = o.root.position.z + dz / d * rr;
+  if (!game.sitting) {
+    for (const o of rigs) {
+      if (o === r) continue;
+      const dx = game.pos.x - o.root.position.x, dz = game.pos.z - o.root.position.z;
+      const d2 = dx * dx + dz * dz, rr = 0.85;
+      if (d2 < rr * rr && d2 > 1e-6) {
+        const d = Math.sqrt(d2);
+        game.pos.x = o.root.position.x + dx / d * rr;
+        game.pos.z = o.root.position.z + dz / d * rr;
+      }
     }
+    resolveCollider(game.pos, 0.45);
   }
-  resolveCollider(game.pos, 0.45);
   const gy = groundY(game.pos.x, game.pos.z);
   game.pos.y += (gy - game.pos.y) * Math.min(1, dt * 9);
   /* корпус доворачивается в направлении движения */
@@ -4259,10 +4859,32 @@ addEventListener('keydown', e => {
     return;
   }
   if (game.on) {
-    if (/^(Key[WASDE]|Arrow(Up|Down|Left|Right)|Shift(Left|Right))$/.test(e.code)) e.preventDefault();
+    if (/^(Key[WASDEQFT]|Arrow(Up|Down|Left|Right)|Shift(Left|Right)|Space)$/.test(e.code)) e.preventDefault();
     game.keys[e.code] = true;
     if (e.code === 'KeyE' || e.code === 'Enter') gameInteract();
-    if (e.key === 'Escape') { if (game.watch) game.watch = false; else exitGame(); }
+    /* v7: Q — колесо эмоций, T — talk (открыть диалог если есть цель-бот) */
+    if (e.code === 'KeyQ') {
+      const wh = document.getElementById('emoteWheel');
+      if (wh && wh.classList.contains('show')) closeEmoteWheel();
+      else openEmoteWheel();
+    }
+    if (e.code === 'KeyT' && game.target && game.target.kind === 'bot') gameInteract();
+    if (e.code === 'KeyF' && game.target && game.target.kind === 'chair') gameInteract();
+    /* цифры 1..8 быстрые эмоуты когда колесо открыто */
+    if (/^Digit[1-8]$/.test(e.code)) {
+      const wh = document.getElementById('emoteWheel');
+      if (wh && wh.classList.contains('show')) {
+        triggerEmote(EMOTES[+e.code.slice(-1) - 1].id);
+      }
+    }
+    if (e.key === 'Escape') {
+      const wh = document.getElementById('emoteWheel');
+      if (wh && wh.classList.contains('show')) { closeEmoteWheel(); return; }
+      if (game.dialogI >= 0) { closeDialog(); return; }
+      if (game.sitting) { standUp(); return; }
+      if (game.watch) game.watch = false;
+      else exitGame();
+    }
   }
 });
 addEventListener('keyup', e => { game.keys[e.code] = false; });
@@ -4291,6 +4913,99 @@ addEventListener('blur', () => { game.keys = {}; game.joy.x = game.joy.y = 0; })
 })();
 interactBtn.addEventListener('click', gameInteract);
 document.getElementById('playBtn').addEventListener('click', () => game.on ? exitGame() : enterGame());
+
+/* v7: колесо эмоций — раскладываем 8 кнопок по кругу */
+(function buildEmoteWheel() {
+  const wh = document.getElementById('emoteWheel'); if (!wh) return;
+  const icons = {
+    wave:    '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 11V6a2 2 0 0 0-4 0v5"/><path d="M14 10V4a2 2 0 0 0-4 0v9"/><path d="M10 10.5V6a2 2 0 0 0-4 0v9c0 4 2 6 5 6h2c3 0 5-3 5-6v-3"/></svg>',
+    bow:     '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="5" r="2.5"/><path d="M6 20l4-8h4l4 8"/></svg>',
+    clap:    '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M7 3l3 3M17 3l-3 3M12 4v3"/><rect x="4" y="9" width="7" height="12" rx="2"/><rect x="13" y="9" width="7" height="12" rx="2"/></svg>',
+    laugh:   '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M8 14s1.5 3 4 3 4-3 4-3"/><path d="M8 9l2 2M16 9l-2 2"/></svg>',
+    dance:   '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="4" r="2"/><path d="M12 6v6M9 10l3 2 3-2M12 12l-3 5M12 12l3 5M9 20l3-3 3 3"/></svg>',
+    thumbup: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M7 22V11l5-8s1.5.5 1.5 2.5V10h5.5s2 0 1.5 2l-1.5 8s-.5 2-3 2H7z"/></svg>',
+    bored:   '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M8 14h8"/><path d="M9 9h.01M15 9h.01"/></svg>',
+    lie:     '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 17h14a2 2 0 0 0 2-2V9h4v10"/><circle cx="6" cy="10" r="2"/><path d="M2 21h20"/></svg>'
+  };
+  EMOTES.forEach((em, i) => {
+    const btn = document.createElement('button');
+    btn.className = 'ew';
+    const angle = (i / EMOTES.length) * Math.PI * 2 - Math.PI / 2;
+    const r = 108;
+    btn.style.transform = 'translate(calc(-50% + ' + (Math.cos(angle) * r) + 'px), calc(-50% + ' + (Math.sin(angle) * r) + 'px))';
+    btn.innerHTML = (icons[em.id] || '') + '<b>' + em.label + '</b>';
+    btn.title = em.label + ' · клавиша ' + (i + 1);
+    btn.onclick = () => triggerEmote(em.id);
+    wh.appendChild(btn);
+  });
+  /* клик по фону колеса — закрыть */
+  wh.addEventListener('click', e => { if (e.target === wh) closeEmoteWheel(); });
+})();
+document.getElementById('emoteBtn').addEventListener('click', () => {
+  const wh = document.getElementById('emoteWheel');
+  if (wh && wh.classList.contains('show')) closeEmoteWheel(); else openEmoteWheel();
+});
+
+/* v7: HUD (энергия + мини-карта) — обновление */
+const hudEnergyEl = document.getElementById('hudEnergy');
+const hudEnergyBar = hudEnergyEl ? hudEnergyEl.querySelector('.bar i') : null;
+const hudEnergyPct = document.getElementById('hudEnergyPct');
+const miniMapCv = document.getElementById('miniMapCv');
+const miniMapCtx = miniMapCv ? miniMapCv.getContext('2d') : null;
+let hudFrame = 0;
+function updateHud() {
+  hudFrame++;
+  if (!hudEnergyEl) return;
+  const e = Math.round(game.energy);
+  if (hudEnergyBar) hudEnergyBar.style.width = e + '%';
+  if (hudEnergyPct) hudEnergyPct.textContent = e + '%';
+  hudEnergyEl.classList.toggle('low', e < 45 && e >= 20);
+  hudEnergyEl.classList.toggle('crit', e < 20);
+  /* мини-карта — раз в 4 кадра */
+  if (miniMapCtx && (hudFrame & 3) === 0) drawMiniMap();
+}
+function drawMiniMap() {
+  const c = miniMapCtx, W = miniMapCv.width, H = miniMapCv.height;
+  const mx = W / 2, mz = H / 2;
+  const scaleX = (W - 12) / RW;    /* RW = 46 */
+  const scaleZ = (H - 12) / RD;    /* RD = 34 */
+  c.clearRect(0, 0, W, H);
+  /* фон */
+  c.fillStyle = '#08090c'; c.fillRect(0, 0, W, H);
+  /* внешний контур штаба */
+  c.strokeStyle = 'rgba(154,255,0,.32)'; c.lineWidth = 1.5;
+  c.strokeRect(mx - HX * scaleX, mz - HZ * scaleZ, HX * 2 * scaleX, HZ * 2 * scaleZ);
+  /* кабинет CEO — угол */
+  c.strokeStyle = 'rgba(154,255,0,.16)'; c.lineWidth = 1;
+  c.strokeRect(mx + CEO_ROOM.x1 * scaleX, mz + CEO_ROOM.z1 * scaleZ,
+    (CEO_ROOM.x2 - CEO_ROOM.x1) * scaleX, (CEO_ROOM.z2 - CEO_ROOM.z1) * scaleZ);
+  /* мозг — центр */
+  c.fillStyle = 'rgba(154,255,0,.5)';
+  c.beginPath(); c.arc(mx, mz, 5, 0, Math.PI * 2); c.fill();
+  /* агенты (кроме CEO) */
+  for (const o of rigs) {
+    if (o.a.id === 'ceo') continue;
+    const p = (o.botPos && o.glbFade > 0.5) ? o.botPos : o.root.position;
+    c.fillStyle = o.a.c;
+    c.beginPath(); c.arc(mx + p.x * scaleX, mz + p.z * scaleZ, 3, 0, Math.PI * 2); c.fill();
+  }
+  /* CEO — большая точка с треугольником-направлением */
+  const px = mx + game.pos.x * scaleX, pz = mz + game.pos.z * scaleZ;
+  const y = game.bodyYaw;
+  c.fillStyle = '#c8ff5a';
+  c.beginPath();
+  c.moveTo(px + Math.sin(y) * 9, pz + Math.cos(y) * 9);
+  c.lineTo(px + Math.sin(y + 2.5) * 5, pz + Math.cos(y + 2.5) * 5);
+  c.lineTo(px + Math.sin(y - 2.5) * 5, pz + Math.cos(y - 2.5) * 5);
+  c.closePath(); c.fill();
+  c.strokeStyle = LIME; c.lineWidth = 1.5; c.stroke();
+  /* конус обзора камеры */
+  const cy = game.camYaw;
+  c.strokeStyle = 'rgba(154,255,0,.28)'; c.lineWidth = 1;
+  c.beginPath(); c.moveTo(px, pz);
+  c.arc(px, pz, 22, Math.PI / 2 - cy - 0.5, Math.PI / 2 - cy + 0.5);
+  c.closePath(); c.stroke();
+}
 
 /* ================= ГОЛОГРАММА: анимация =================
    v6: моргание убрано. Медленное величавое вращение + лёгкое дыхание масштаба. */
@@ -4510,31 +5225,43 @@ function runIntro() {
 
 /* управление орбитой + v6: жёсткий click-guard.
    Клик засчитывается ТОЛЬКО если: перемещение < 6px, длительность < 350мс,
-   не мультитач, не идёт orbit-драг. Иначе — это вращение мира, пики игнорируются. */
+   не мультитач, не идёт orbit-драг. Иначе — это вращение мира, пики игнорируются.
+   v7: в игре разрешаем ЛЮБОЙ pointer крутить камеру (не только primary) —
+   тогда на мобайле джойстик (primary) и right-swipe (secondary) работают одновременно. */
 const ptr = { down: false, x0: 0, y0: 0, t0: 0, moved: 0, multi: false, dragging: false };
+const camDrags = new Map();   /* v7: pointerId -> {x,y} для independent-камера в игре */
 (function bindOrbit() {
   let px = 0, py = 0, pinch0 = 0;
   canvas.addEventListener('pointerdown', e => {
+    if (game.on) {
+      /* в игре: любой pointer, кроме джойстика, вращает follow-камеру */
+      camDrags.set(e.pointerId, { x: e.clientX, y: e.clientY });
+    }
     if (e.isPrimary) {
       ptr.down = true; ptr.multi = false; ptr.dragging = false;
       ptr.x0 = px = e.clientX; ptr.y0 = py = e.clientY;
       ptr.t0 = performance.now(); ptr.moved = 0;
     } else ptr.multi = true;
   });
-  addEventListener('pointerup', e => { if (e.isPrimary) ptr.down = false; });
-  addEventListener('pointercancel', () => { ptr.down = false; ptr.multi = true; });
+  const endDrag = e => { camDrags.delete(e.pointerId); if (e.isPrimary) ptr.down = false; };
+  addEventListener('pointerup', endDrag);
+  addEventListener('pointercancel', e => { camDrags.delete(e.pointerId); ptr.down = false; ptr.multi = true; });
   addEventListener('pointermove', e => {
+    /* v7: камера в игре — отдельный трек по pointerId (работает с джойстиком одновременно) */
+    if (game.on && camDrags.has(e.pointerId)) {
+      const st = camDrags.get(e.pointerId);
+      const dxg = e.clientX - st.x, dyg = e.clientY - st.y;
+      st.x = e.clientX; st.y = e.clientY;
+      game.camYaw -= dxg * 0.0062;
+      game.camPitch = THREE.MathUtils.clamp(game.camPitch + dyg * 0.004, 0.06, 1.05);
+    }
     if (!ptr.down || !e.isPrimary) return;
     const dx = e.clientX - px, dy = e.clientY - py;
     px = e.clientX; py = e.clientY;
     ptr.moved += Math.abs(dx) + Math.abs(dy);
     if (ptr.moved > 6) ptr.dragging = true;
     if (ptr.multi) return;
-    if (game.on) {           /* v6: в игре драг вращает follow-камеру */
-      game.camYaw -= dx * 0.0062;
-      game.camPitch = THREE.MathUtils.clamp(game.camPitch + dy * 0.004, 0.06, 1.05);
-      return;
-    }
+    if (game.on) return;     /* v7: игровая камера рулится через camDrags выше */
     if (!orbit.enabled) return;
     orbit.theta -= dx * 0.0052;
     orbit.phi -= dy * 0.0038;
@@ -5199,6 +5926,7 @@ async function start() {
   }
   buildWalkPaths();
   buildRobots();
+  playerMesh = buildPlayerMesh();   /* v7: скелет CEO для игрового режима */
   buildAttributes();
   buildRings();
   buildBrain();
@@ -5423,16 +6151,17 @@ function voiceInit(){
 /* ================= 4) ФИН-СТОЛ: админ-действия ================= */
 const finPanel = el('finPanel'), fpOut = el('fpOut'), fpTarget = el('fpTarget'),
       fpProduct = el('fpProduct'), fpAmount = el('fpAmount'), fpPct = el('fpPct'),
-      fpRowProd = el('fpRowProd'), fpRowPct = el('fpRowPct');
-let fpOp = 'manual_confirm';
+      fpRowProd = el('fpRowProd'), fpRowPct = el('fpRowPct'), fpRowMsg = el('fpRowMsg'), fpMsg = el('fpMsg');
+let fpOp = 'mark_paid';
 
 document.querySelectorAll('.fp-tab').forEach(b => {
   b.addEventListener('click', () => {
     document.querySelectorAll('.fp-tab').forEach(x=>x.classList.remove('on'));
     b.classList.add('on');
     fpOp = b.dataset.op;
-    fpRowProd.style.display = (fpOp==='manual_confirm') ? 'flex' : 'none';
+    fpRowProd.style.display = (fpOp==='mark_paid' || fpOp==='refund' || fpOp==='bonus') ? 'flex' : 'none';
     fpRowPct.style.display  = (fpOp==='discount') ? 'flex' : 'none';
+    if (fpRowMsg) fpRowMsg.style.display = (fpOp==='message') ? 'flex' : 'none';
     fpOut.textContent = ''; fpOut.classList.remove('err');
   });
 });
@@ -5467,24 +6196,31 @@ el('fpDo').addEventListener('click', async () => {
   const payload = { op: fpOp };
   if (isId) payload.client_id = parseInt(target.replace('#',''), 10);
   else payload.email = target;
-  if (fpOp === 'manual_confirm'){
+  if (fpOp === 'mark_paid'){
     payload.product = fpProduct.value;
     payload.amount = (fpAmount.value||'').trim();
   }
+  if (fpOp === 'refund' || fpOp === 'bonus'){
+    payload.amount = parseInt((fpAmount.value||'0').replace(/\D/g,''), 10) || 0;
+  }
   if (fpOp === 'discount'){
     payload.pct = parseInt(fpPct.value||'10', 10);
+  }
+  if (fpOp === 'message'){
+    payload.text = (fpMsg && fpMsg.value||'').trim();
+    if (!payload.text){ fpOut.classList.add('err'); fpOut.textContent = 'нужен текст сообщения'; return; }
   }
   const key = adminKey(); if (!key) return;
   payload.key = key;
   fpOut.classList.remove('err'); fpOut.textContent = 'выполняю…';
   try{
-    const r = await fetch(API + '?action=hq_admin_action', {
+    const r = await fetch(API + '?action=admin_action', {
       method: 'POST', headers: {'Content-Type':'application/json','X-Admin-Key':key},
       body: JSON.stringify(payload)
     });
     const j = await r.json();
     if (j && j.ok){
-      fpOut.textContent = 'готово · ' + JSON.stringify(j);
+      fpOut.textContent = 'готово · ' + (j.tx_id || j.op || 'ok');
       if (window.__HQ.pushLog) window.__HQ.pushLog('ceo', 'ФИН · '+fpOp+' · '+target);
       toast('фин: '+fpOp+' выполнено');
       pollMetrics(); pollFeed();
@@ -5557,6 +6293,34 @@ function closeClients(){ clientsPanel.classList.remove('open'); cpDetail.classLi
 el('cpX').addEventListener('click', closeClients);
 el('fabCli').addEventListener('click', () => clientsPanel.classList.contains('open') ? closeClients() : openClients());
 
+/* ================= 5b) AGENTS: тянем реальные статусы из /api.php?action=agent_status
+    и раскладываем в 3D-роботов через window.__HQ.setAgentTask(id,task,st).
+    Плюс — эмиссия событий в hqLog при смене состояния. ================= */
+const AGENT_STATE = {};
+const AGENT_ST_MAP = { work:'work', idle:'idle', think:'think', wait:'wait', busy:'work' };
+async function pollAgents(){
+  try{
+    const j = await fetchJSON(API + '?action=agent_status&_=' + Date.now());
+    if (!j || !j.agents) return;
+    for (const a of j.agents){
+      const id = a.agent_name; if (!id) continue;
+      const st = AGENT_ST_MAP[a.status] || 'idle';
+      const prev = AGENT_STATE[id];
+      if (!prev || prev.task !== a.task || prev.status !== a.status){
+        if (window.__HQ && window.__HQ.setAgentTask) window.__HQ.setAgentTask(id, a.task || '', st);
+        // событие в ленту при переходе idle→work
+        if (prev && prev.status !== a.status && a.status === 'work' && window.__HQ.pushLog){
+          window.__HQ.pushLog(id === 'sales' ? 'sales' : id === 'editor' ? 'editor' : id === 'designer' ? 'designer' : id === 'support' ? 'support' : id === 'factory' ? 'factory' : 'ceo',
+            (a.task || 'работа началась'));
+        }
+        AGENT_STATE[id] = { task: a.task, status: a.status, progress: a.progress };
+      } else {
+        AGENT_STATE[id].progress = a.progress;
+      }
+    }
+  }catch(e){}
+}
+
 /* ================= 6) DEMO-РЕЖИМ: mock-данные ================= */
 function demoBootstrap(){
   document.body.classList.add('demo');
@@ -5617,14 +6381,16 @@ whenReady(() => {
   if (DEMO){
     demoBootstrap();
   } else {
-    pollMetrics(); pollFeed();
+    pollMetrics(); pollFeed(); pollAgents();
     const metricsMs = mobileTune() ? 30000 : 15000;
     const feedMs    = mobileTune() ? 20000 : 12000;
+    const agentsMs  = mobileTune() ? 30000 : 15000;
     setInterval(pollMetrics, metricsMs);
     setInterval(pollFeed, feedMs);
+    setInterval(pollAgents, agentsMs);
     /* при возврате на вкладку — обновим сразу */
     document.addEventListener('visibilitychange', () => {
-      if (!document.hidden) { pollMetrics(); pollFeed(); }
+      if (!document.hidden) { pollMetrics(); pollFeed(); pollAgents(); }
     });
   }
   /* задаём начальные счётчики */
@@ -5632,7 +6398,7 @@ whenReady(() => {
 });
 
 /* публично для внешних вызовов */
-window.__HQ_LIVE = { pollMetrics, pollFeed, openFin, openClients, voiceCmd };
+window.__HQ_LIVE = { pollMetrics, pollFeed, pollAgents, openFin, openClients, voiceCmd };
 })();
 </script>
 </body>
