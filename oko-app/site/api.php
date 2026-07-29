@@ -415,7 +415,281 @@ case 'socials_link':
         [$email,$platform,$handle,$tok]);
     out(['ok'=>true,'linked'=>$platform.':'.$handle]);
 
+// ═════════════════════════════════════════════════════════════════
+// L9 — Кошелёк OKO: P2P-переводы между юзерами через SQLite
+// Таблицы: wallet_accounts (email UNIQUE, balance, hold), wallet_ledger (from,to,amount,direction,tx_id).
+// Операции: wallet_balance / wallet_transfer / wallet_history / wallet_topup.
+// Комиссия OKO 1% с отправителя пишется отдельной строкой direction='fee'.
+// ═════════════════════════════════════════════════════════════════
+case 'wallet_balance':
+    $email = strtolower(trim($_GET['email'] ?? ($body['email'] ?? '')));
+    if(!$email) fail('no email');
+    wallet_ensure_account($email);
+    $a = db_one("SELECT balance, hold FROM wallet_accounts WHERE client_email=?", [$email]);
+    out(['ok'=>true, 'email'=>$email, 'balance'=>(int)$a['balance'], 'hold'=>(int)$a['hold'], 'currency'=>'RUB']);
+
+case 'wallet_transfer':
+    $from = strtolower(trim($body['from_email'] ?? ''));
+    if(!$from) fail('no from_email');
+    // rate limit: не более 5 переводов в минуту на пользователя+IP
+    rate_limit('wtx_'.md5($from), 5, 60);
+    $tokey   = trim($body['to_nick_or_email'] ?? '');
+    $amount  = (int)round((float)($body['amount'] ?? 0));
+    $comment = mb_substr(trim((string)($body['comment'] ?? '')), 0, 140);
+    if(!$tokey)      fail('no recipient');
+    if($amount <= 0) fail('amount must be > 0');
+    if($amount > 10000000) fail('amount too big');
+    // resolve recipient email
+    $to = null;
+    if(strpos($tokey,'@') !== false && strpos($tokey,'.') !== false){
+        $to = strtolower($tokey);
+    } else {
+        $nick = ltrim($tokey, '@');
+        $r = db_one("SELECT email FROM clients WHERE (lower(tg)=lower(?) OR lower(name)=lower(?)) AND email IS NOT NULL AND email!='' LIMIT 1",[$nick,$nick]);
+        if($r && !empty($r['email'])) $to = strtolower($r['email']);
+    }
+    if(!$to)         fail('recipient not found', 404);
+    if($to === $from) fail('cannot transfer to yourself');
+    $fee  = (int)floor($amount * 0.01);          // 1% комиссия OKO
+    $need = $amount + $fee;
+    wallet_ensure_account($from);
+    wallet_ensure_account($to);
+    $pdo = db();
+    $pdo->beginTransaction();
+    try {
+        $bal = (int)$pdo->query("SELECT balance FROM wallet_accounts WHERE client_email=".$pdo->quote($from))->fetchColumn();
+        if($bal < $need){ $pdo->rollBack(); fail('insufficient funds: balance '.$bal.' < required '.$need); }
+        $tx   = 'TX-'.strtoupper(bin2hex(random_bytes(6)));
+        $now  = now();
+        $pdo->prepare("UPDATE wallet_accounts SET balance=balance-?, updated_at=? WHERE client_email=?")->execute([$need,   $now, $from]);
+        $pdo->prepare("UPDATE wallet_accounts SET balance=balance+?, updated_at=? WHERE client_email=?")->execute([$amount, $now, $to]);
+        $ins = $pdo->prepare("INSERT INTO wallet_ledger (from_email,to_email,amount,direction,comment,tx_id,status,created_at) VALUES (?,?,?,?,?,?,?,?)");
+        $ins->execute([$from, $to,  $amount, 'send',    $comment,           $tx, 'ok', $now]);
+        $ins->execute([$from, $to,  $amount, 'receive', $comment,           $tx, 'ok', $now]);
+        if($fee > 0)
+        $ins->execute([$from, 'oko',$fee,    'fee',     'Комиссия OKO 1%',  $tx, 'ok', $now]);
+        $pdo->commit();
+    } catch(Throwable $e){
+        try{ $pdo->rollBack(); }catch(Throwable $e2){}
+        fail('tx error: '.$e->getMessage(), 500);
+    }
+    $newBal = (int)db_val("SELECT balance FROM wallet_accounts WHERE client_email=?", [$from]);
+    // уведомление получателю в Telegram, если у него привязан tg-id
+    $rc = db_one("SELECT name, tg, tg_user_id FROM clients WHERE lower(email)=? LIMIT 1", [$to]);
+    if($rc && !empty($rc['tg_user_id']))
+        tg_send((string)$rc['tg_user_id'], "💸 <b>Пришло ".number_format($amount,0,'.',' ')." ₽</b>\n\nОт: <code>".htmlspecialchars($from)."</code>".($comment?"\n\n«".htmlspecialchars($comment)."»":''));
+    out(['ok'=>true, 'tx_id'=>$tx, 'amount'=>$amount, 'fee'=>$fee, 'total'=>$need, 'balance'=>$newBal, 'to'=>$to]);
+
+case 'wallet_history':
+    $email = strtolower(trim($_GET['email'] ?? ''));
+    $limit = min(200, max(1, (int)($_GET['limit'] ?? 50)));
+    if(!$email) fail('no email');
+    wallet_ensure_account($email);
+    // отдаём все касающиеся юзера строки (send/fee исходящие + receive входящие + topup зачисления)
+    $rows = db_all("SELECT id, from_email, to_email, amount, direction, comment, tx_id, status, created_at
+        FROM wallet_ledger
+        WHERE (from_email=? AND direction IN ('send','fee','topup_charge'))
+           OR (to_email=?   AND direction IN ('receive','topup'))
+        ORDER BY id DESC LIMIT ".$limit, [$email, $email]);
+    out(['ok'=>true, 'email'=>$email, 'items'=>$rows]);
+
+case 'wallet_topup':
+    rate_limit('wallet_topup', 20, 60);
+    $email  = strtolower(trim($body['email'] ?? ''));
+    $amount = (int)round((float)($body['amount'] ?? 0));
+    $method = trim($body['method'] ?? 'card');
+    if(!$email)      fail('no email');
+    if($amount <= 0) fail('amount must be > 0');
+    wallet_ensure_account($email);
+    $lavaKey = (string)($C['lava_api_key'] ?? '');
+    $url = '';
+    // Lava.top динамический счёт (если ключ есть)
+    if($lavaKey){
+        $orderId = 'oko-wallet-'.time().'-'.substr(md5($email.$amount),0,6);
+        $ch = curl_init('https://api.lava.top/business/invoice');
+        curl_setopt_array($ch,[
+            CURLOPT_POST=>true,
+            CURLOPT_POSTFIELDS=>json_encode([
+                'sum'=>$amount, 'orderId'=>$orderId, 'currency'=>'RUB',
+                'buyerEmail'=>$email, 'comment'=>'OKO WALLET · пополнение счёта',
+                'hookUrl'=>($C['site_url']??'https://okoteam.top').'/api.php?action=lava_webhook',
+            ], JSON_UNESCAPED_UNICODE),
+            CURLOPT_HTTPHEADER=>['Content-Type: application/json','X-Api-Key: '.$lavaKey],
+            CURLOPT_RETURNTRANSFER=>true, CURLOPT_TIMEOUT=>10, CURLOPT_CONNECTTIMEOUT=>5,
+        ]);
+        $raw = curl_exec($ch); $code=curl_getinfo($ch,CURLINFO_HTTP_CODE); curl_close($ch);
+        if($code>=200 && $code<300 && $raw){
+            $j = json_decode($raw, true) ?: [];
+            $url = $j['url'] ?? ($j['paymentUrl'] ?? ($j['data']['url'] ?? ''));
+        }
+    }
+    // fallback: готовый product-URL
+    if(!$url) $url = (string)($C['lava']['sistema'] ?? 'https://app.lava.top');
+    db_exec("CREATE TABLE IF NOT EXISTS wallet_topup_requests (id INTEGER PRIMARY KEY AUTOINCREMENT, email TEXT, amount INTEGER, method TEXT, url TEXT, status TEXT DEFAULT 'pending', created_at TEXT DEFAULT (datetime('now','localtime')))");
+    db_insert("INSERT INTO wallet_topup_requests (email,amount,method,url) VALUES (?,?,?,?)", [$email,$amount,$method,$url]);
+    out(['ok'=>true, 'url'=>$url, 'amount'=>$amount, 'method'=>$method]);
+
+// ── Web Push (VAPID) ────────────────────────────────────────────
+// Таблица подписок создаётся лениво при первом обращении.
+case 'push_subscribe':
+    rate_limit('push_sub',30,60);
+    push_ensure_table();
+    $sub   = $body['subscription'] ?? null;
+    $email = trim(strtolower($body['email'] ?? ''));
+    $ua    = substr((string)($body['ua'] ?? ($_SERVER['HTTP_USER_AGENT'] ?? '')), 0, 512);
+    if(!is_array($sub) || empty($sub['endpoint']) || empty($sub['keys']['p256dh']) || empty($sub['keys']['auth'])){
+        fail('bad subscription');
+    }
+    $endpoint = (string)$sub['endpoint'];
+    $p256dh   = (string)$sub['keys']['p256dh'];
+    $auth     = (string)$sub['keys']['auth'];
+    if(strlen($endpoint) > 2048) fail('endpoint too long');
+    // upsert по endpoint
+    $ex = db_one("SELECT id FROM push_subs WHERE endpoint=?", [$endpoint]);
+    if($ex){
+        db_exec("UPDATE push_subs SET client_email=COALESCE(NULLIF(?,''),client_email),
+                 p256dh=?, auth=?, ua=?, updated_at=? WHERE id=?",
+                [$email, $p256dh, $auth, $ua, now(), $ex['id']]);
+    } else {
+        db_insert("INSERT INTO push_subs (client_email,endpoint,p256dh,auth,ua,created_at,updated_at)
+                   VALUES (?,?,?,?,?,?,?)",
+                [$email, $endpoint, $p256dh, $auth, $ua, now(), now()]);
+    }
+    out(['ok'=>true,'stored'=>true]);
+
+case 'push_unsubscribe':
+    rate_limit('push_unsub',30,60);
+    push_ensure_table();
+    $endpoint = trim((string)($body['endpoint'] ?? ''));
+    if($endpoint === '') fail('bad endpoint');
+    $n = db_exec("DELETE FROM push_subs WHERE endpoint=?", [$endpoint]);
+    out(['ok'=>true,'deleted'=>$n]);
+
+case 'push_send':
+    require_admin();
+    rate_limit('push_send',20,60);
+    push_ensure_table();
+    $C = cfg();
+    if(empty($C['vapid_public']) || empty($C['vapid_private']) ||
+       $C['vapid_public']==='PUT_ON_VPS' || $C['vapid_private']==='PUT_ON_VPS'){
+        fail('VAPID keys not configured on VPS (config.php: vapid_public / vapid_private)', 501);
+    }
+    // TODO: полноценная отправка — composer require minishlink/web-push, затем
+    //   require __DIR__.'/vendor/autoload.php';
+    //   use Minishlink\WebPush\WebPush; use Minishlink\WebPush\Subscription;
+    //   $wp = new WebPush(['VAPID'=>['subject'=>$C['vapid_subject'],'publicKey'=>$C['vapid_public'],'privateKey'=>$C['vapid_private']]]);
+    //   foreach($subs as $s) $wp->queueNotification(Subscription::create([...]), json_encode($payload));
+    //   foreach($wp->flush() as $r) if(!$r->isSuccess() && $r->isSubscriptionExpired()) delete($r->getEndpoint());
+    fail('push_send not implemented — install minishlink/web-push on VPS to enable', 501);
+
 case 'health': out(['ok'=>true,'db'=>'sqlite','clients'=>(int)db_val("SELECT COUNT(*) FROM clients"),'v'=>4]);
+
+// ── HQ (3D-штаб): публичные метрики без PII, только агрегаты ──
+case 'hq_metrics_live':
+    $revSql="COALESCE(SUM(CAST(REPLACE(REPLACE(REPLACE(amount,' ',''),'₽',''),'руб','') AS REAL)),0)";
+    $today=(int)db_val("SELECT COUNT(*) FROM clients WHERE date(created_at)=date('now','localtime')");
+    $paysToday=(int)db_val("SELECT COUNT(*) FROM payments WHERE date(created_at)=date('now','localtime')");
+    $revToday=(float)db_val("SELECT $revSql FROM payments WHERE date(created_at)=date('now','localtime')");
+    $rev30=(float)db_val("SELECT $revSql FROM payments WHERE date(created_at)>=date('now','-30 day','localtime')");
+    $totalClients=(int)db_val("SELECT COUNT(*) FROM clients");
+    $paidClients=(int)db_val("SELECT COUNT(*) FROM clients WHERE paid=1");
+    $dau=(int)db_val("SELECT COUNT(DISTINCT ip) FROM visits WHERE date(created_at)=date('now','localtime')");
+    // ряд 14д (для стен-графиков)
+    $series=[];
+    for($i=13;$i>=0;$i--){ $d=date('Y-m-d', strtotime("-$i day"));
+        $series[]=['d'=>date('d.m',strtotime($d)),
+            'leads'=>(int)db_val("SELECT COUNT(*) FROM clients WHERE date(created_at)=?",[$d]),
+            'rev'=>(float)db_val("SELECT $revSql FROM payments WHERE date(created_at)=?",[$d]),
+            'dau'=>(int)db_val("SELECT COUNT(DISTINCT ip) FROM visits WHERE date(created_at)=?",[$d])];
+    }
+    out(['ok'=>true,'ts'=>time(),
+        'mrr'=>round($rev30),'rev_today'=>round($revToday),
+        'leads_today'=>$today,'pays_today'=>$paysToday,
+        'clients_total'=>$totalClients,'clients_paid'=>$paidClients,
+        'conversion'=>$totalClients?round($paidClients*100/$totalClients,1):0,
+        'dau'=>$dau,'series'=>$series]);
+
+// ── HQ live-feed: последние события команды, анонимизированные ──
+case 'hq_feed_live':
+    $anon=function($s){$s=trim((string)$s);if(!$s) return '—';$m=mb_substr($s,0,1); $n=mb_strlen($s); return $m.str_repeat('*',max(1,min(4,$n-1)));};
+    $anonEmail=function($e){if(!$e||strpos($e,'@')===false) return '';list($a,$b)=explode('@',$e,2); return mb_substr($a,0,2).'***@'.$b;};
+    $items=[];
+    // новые лиды
+    foreach(db_all("SELECT id,name,niche,created_at,paid,paid_product FROM clients ORDER BY id DESC LIMIT 30") as $r){
+        $items[]=['t'=>$r['created_at'],'id'=>'sales',
+            'msg'=>($r['paid']?'клиент купил · '.($r['paid_product']?:'PRO'):'новый лид · '.($r['niche']?:'без ниши'))
+                .' · '.$anon($r['name'])];
+    }
+    // оплаты
+    foreach(db_all("SELECT client_id,name,product,amount,created_at,manual FROM payments ORDER BY id DESC LIMIT 20") as $r){
+        $items[]=['t'=>$r['created_at'],'id'=>'ceo',
+            'msg'=>'оплата · '.($r['product']?:'—').' · '.($r['amount']?:'—').' · '.$anon($r['name']).($r['manual']?' (вручную)':'')];
+    }
+    // сделки
+    foreach(db_all("SELECT d.status,d.product,d.amount,d.created_at,c.name FROM deals d LEFT JOIN clients c ON c.id=d.client_id ORDER BY d.id DESC LIMIT 15") as $r){
+        $items[]=['t'=>$r['created_at'],'id'=>'sales',
+            'msg'=>'сделка '.($r['status']?:'').' · '.($r['product']?:'—').' · '.$anon($r['name'])];
+    }
+    // отклики агентов/подрядчиков
+    foreach(db_all("SELECT r.status,r.created_at,c.name FROM responses r LEFT JOIN clients c ON c.id=r.client_id ORDER BY r.id DESC LIMIT 10") as $r){
+        $items[]=['t'=>$r['created_at'],'id'=>'support','msg'=>'отклик · '.($r['status']?:'—').' · '.$anon($r['name'])];
+    }
+    // сортировка по времени
+    usort($items, function($a,$b){return strcmp($b['t'],$a['t']);});
+    $items=array_slice($items,0,25);
+    out(['ok'=>true,'ts'=>time(),'items'=>$items]);
+
+// ── HQ топ-30 клиентов для комнаты клиентов (публично, без email/tg/note) ──
+case 'hq_clients_top':
+    $rows=db_all("SELECT id,name,niche,status,paid,paid_product,created_at FROM clients ORDER BY paid DESC, id DESC LIMIT 30");
+    $out=[];
+    foreach($rows as $r){
+        $n=trim((string)$r['name']); if($n===''||$n==='Лид') $n='Клиент #'.$r['id'];
+        // инициалы для аватара
+        $parts=preg_split('/\s+/', $n); $ini='';
+        foreach($parts as $p){ $ini.=mb_substr($p,0,1); if(mb_strlen($ini)>=2) break; }
+        $out[]=['id'=>(int)$r['id'],'name'=>$n,'ini'=>mb_strtoupper($ini?:'K'),
+            'niche'=>$r['niche']?:'','status'=>$r['status']?:'lead',
+            'paid'=>(int)$r['paid'],'product'=>$r['paid_product']?:'','ts'=>$r['created_at']];
+    }
+    out(['ok'=>true,'items'=>$out]);
+
+// ── HQ admin-действие: возврат / ручное зачисление / скидка / смена статуса ──
+case 'hq_admin_action':
+    require_admin();
+    $op=(string)($body['op']??'');
+    $email=(string)($body['email']??'');
+    $cid=(int)($body['client_id']??0);
+    if($cid && !$email){ $c=db_one("SELECT email FROM clients WHERE id=?",[$cid]); if($c) $email=(string)$c['email']; }
+    if($op==='refund'){
+        if(!$email) fail('email required');
+        db_exec("UPDATE clients SET paid=0,status='refund' WHERE email=?",[$email]);
+        db_insert("INSERT INTO deals (client_id,product,amount,status,created_at,closed_at) VALUES (?,?,?,?,?,?)",
+            [$cid,'refund',0,'refunded',now(),now()]);
+        tg_send($C['daniel_tg'],"↩️ <b>Возврат</b>\n$email");
+        out(['ok'=>true,'op'=>'refund','email'=>$email]);
+    }
+    if($op==='manual_confirm'){
+        $product=(string)($body['product']??'sistema');
+        $amount=(string)($body['amount']??'');
+        if(!$email) fail('email required');
+        mark_paid($email,$product,$amount,true);
+        out(['ok'=>true,'op'=>'manual_confirm','email'=>$email]);
+    }
+    if($op==='discount'){
+        if(!$cid) fail('client_id required');
+        $pct=(int)($body['pct']??10);
+        db_exec("UPDATE clients SET note=COALESCE(note,'')||' | скидка '||?||'% выдана '||? WHERE id=?",[$pct,now(),$cid]);
+        tg_send($C['daniel_tg'],"🎟 <b>Скидка выдана</b>\n$email · $pct%");
+        out(['ok'=>true,'op'=>'discount','client_id'=>$cid,'pct'=>$pct]);
+    }
+    if($op==='set_status'){
+        if(!$cid) fail('client_id required');
+        $st=(string)($body['status']??'dialog');
+        db_exec("UPDATE clients SET status=? WHERE id=?",[$st,$cid]);
+        out(['ok'=>true,'op'=>'set_status','client_id'=>$cid,'status'=>$st]);
+    }
+    fail('unknown op');
 
 default: fail('unknown action',404);
 }
@@ -438,6 +712,44 @@ function agent_resolve_client(array $b){
         return client_upsert(['name'=>$b['name']??'Лид','email'=>$b['email']??'','tg'=>$b['tg']??'','niche'=>$b['niche']??'','status'=>'dialog','source'=>'agent']);
     }
     return null;
+}
+function wallet_ensure_account($email){
+    static $schemaReady = false;
+    if(!$schemaReady){
+        db_exec("CREATE TABLE IF NOT EXISTS wallet_accounts (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            client_email TEXT UNIQUE NOT NULL,
+            balance INTEGER NOT NULL DEFAULT 0,
+            hold INTEGER NOT NULL DEFAULT 0,
+            updated_at TEXT DEFAULT (datetime('now','localtime')))");
+        db_exec("CREATE TABLE IF NOT EXISTS wallet_ledger (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            from_email TEXT, to_email TEXT,
+            amount INTEGER NOT NULL,
+            direction TEXT NOT NULL,
+            comment TEXT, tx_id TEXT,
+            status TEXT DEFAULT 'ok',
+            created_at TEXT DEFAULT (datetime('now','localtime')))");
+        db_exec("CREATE INDEX IF NOT EXISTS idx_wal_led_from ON wallet_ledger(from_email)");
+        db_exec("CREATE INDEX IF NOT EXISTS idx_wal_led_to   ON wallet_ledger(to_email)");
+        $schemaReady = true;
+    }
+    db_exec("INSERT OR IGNORE INTO wallet_accounts (client_email,balance,hold,updated_at) VALUES (?,0,0,?)",[$email, now()]);
+}
+// Web Push подписки: создаём таблицу лениво (без миграций).
+function push_ensure_table(){
+    static $ready = false; if($ready) return;
+    db_exec("CREATE TABLE IF NOT EXISTS push_subs (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        client_email TEXT,
+        endpoint TEXT UNIQUE NOT NULL,
+        p256dh TEXT NOT NULL,
+        auth TEXT NOT NULL,
+        ua TEXT,
+        created_at TEXT DEFAULT (datetime('now','localtime')),
+        updated_at TEXT)");
+    db_exec("CREATE INDEX IF NOT EXISTS idx_push_email ON push_subs(client_email)");
+    $ready = true;
 }
 function daily_summary(){
     $C=cfg(); $today=date('Y-m-d');

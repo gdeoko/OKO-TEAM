@@ -374,6 +374,127 @@ body.game-on #hqLog{display:none}
   .bp-head{font-size:13px;margin-bottom:6px}
 }
 
+/* ============ v6.1: WebGL-fallback ============ */
+#noWebGL{position:fixed;inset:0;z-index:60;display:none;flex-direction:column;align-items:center;
+  justify-content:center;background:#06070a;color:var(--ink);text-align:center;padding:24px}
+#noWebGL img{width:100px;height:100px;filter:drop-shadow(0 0 24px rgba(154,255,0,.6));margin-bottom:14px}
+#noWebGL h1{font-family:'Bebas Neue',Impact,sans-serif;font-weight:400;font-size:38px;letter-spacing:.1em;margin-bottom:8px}
+#noWebGL h1 span{color:var(--lime)}
+#noWebGL p{font-family:var(--mono);font-size:11.5px;color:var(--dim);letter-spacing:.06em;line-height:1.7;max-width:340px;margin-bottom:20px}
+#noWebGL .nw-back{font-family:'Bebas Neue',Impact,sans-serif;font-size:15px;letter-spacing:.14em;
+  color:#0a0a0a;background:var(--lime);padding:10px 22px 8px;border-radius:22px;text-decoration:none;
+  box-shadow:0 0 22px rgba(154,255,0,.4)}
+
+/* ============ v6.1: демо-баннер ============ */
+#demoBanner{position:fixed;z-index:14;left:50%;transform:translateX(-50%);
+  top:calc(60px + env(safe-area-inset-top));display:none;align-items:center;gap:10px;
+  background:linear-gradient(90deg,rgba(255,90,90,.14),rgba(154,255,0,.14));
+  border:1px solid rgba(255,90,90,.35);border-radius:16px;padding:6px 14px;backdrop-filter:blur(10px)}
+#demoBanner b{font-family:'Bebas Neue',Impact,sans-serif;font-size:14px;color:#ff9a9a;letter-spacing:.1em}
+#demoBanner span{font-family:var(--mono);font-size:9px;color:var(--dim);letter-spacing:.06em}
+body.demo #demoBanner{display:flex}
+body.demo #fpDo{opacity:.4;pointer-events:none}
+
+/* ============ v6.1: голосовое управление ============ */
+#voiceBtn{position:fixed;z-index:11;right:12px;bottom:calc(58px + env(safe-area-inset-bottom));
+  display:none;align-items:center;gap:6px;appearance:none;cursor:pointer;
+  font-family:'Bebas Neue',Impact,sans-serif;font-size:14px;letter-spacing:.1em;
+  color:var(--lime);border:1px solid var(--line);border-radius:20px;padding:7px 12px 6px;
+  background:rgba(154,255,0,.07);backdrop-filter:blur(8px);transition:.2s}
+#voiceBtn.avail{display:flex}
+#voiceBtn:hover{background:rgba(154,255,0,.16)}
+#voiceBtn.rec{background:#ff5a5a;color:#fff;border-color:#ff5a5a;box-shadow:0 0 16px rgba(255,90,90,.5);animation:vpulse 1.1s infinite}
+@keyframes vpulse{0%,100%{box-shadow:0 0 14px rgba(255,90,90,.5)}50%{box-shadow:0 0 26px rgba(255,90,90,.9)}}
+#voiceHud{position:fixed;z-index:11;right:12px;bottom:calc(102px + env(safe-area-inset-bottom));
+  display:none;align-items:center;gap:8px;background:rgba(10,12,16,.92);border:1px solid var(--line);
+  border-left:2px solid var(--lime);border-radius:12px;padding:8px 12px;max-width:260px;backdrop-filter:blur(10px)}
+#voiceHud.show{display:flex;animation:llin .3s}
+#voiceHud i{width:8px;height:8px;border-radius:50%;background:#ff5a5a;animation:pulse 1s infinite;flex:0 0 auto}
+#voiceHud b{font-family:'Montserrat',sans-serif;font-weight:600;font-size:12px;color:#dfe6d4;line-height:1.35}
+
+/* ============ v6.1: FAB для доступа к панелям ============ */
+#hqFab{position:fixed;z-index:11;right:12px;bottom:calc(152px + env(safe-area-inset-bottom));
+  display:flex;flex-direction:column;gap:8px}
+#hqFab button{appearance:none;cursor:pointer;border:1px solid var(--line2);
+  background:rgba(10,12,16,.86);color:var(--lime);width:38px;height:38px;border-radius:11px;
+  display:flex;align-items:center;justify-content:center;backdrop-filter:blur(8px);transition:.2s}
+#hqFab button:hover{border-color:var(--line);background:rgba(154,255,0,.1)}
+body.game-on #hqFab{display:none}
+
+/* ============ v6.1: панель финансов ============ */
+#finPanel{position:fixed;z-index:14;top:calc(60px + env(safe-area-inset-top));right:12px;
+  width:min(340px,calc(100vw - 24px));background:var(--panel);border:1px solid var(--line2);
+  border-radius:18px;padding:14px;backdrop-filter:blur(18px);
+  transform:translateX(calc(100% + 30px));transition:transform .35s cubic-bezier(.3,.9,.3,1);
+  box-shadow:0 18px 60px rgba(0,0,0,.55), inset 0 0 0 1px rgba(154,255,0,.05)}
+#finPanel.open{transform:none}
+.fp-head{display:flex;align-items:center;gap:8px;margin-bottom:10px}
+.fp-head b{font-family:'Bebas Neue',Impact,sans-serif;font-weight:400;font-size:17px;letter-spacing:.1em;color:var(--lime);flex:1}
+.fp-x{appearance:none;border:1px solid var(--line2);background:transparent;color:var(--dim);
+  width:28px;height:28px;border-radius:9px;cursor:pointer;font-size:13px}
+.fp-tabs{display:flex;gap:5px;margin-bottom:10px}
+.fp-tab{flex:1;appearance:none;border:1px solid var(--line2);background:transparent;color:var(--dim);
+  font-family:var(--mono);font-size:9px;letter-spacing:.06em;padding:6px 4px;border-radius:9px;cursor:pointer;transition:.2s}
+.fp-tab.on{background:rgba(154,255,0,.14);border-color:var(--line);color:var(--lime)}
+.fp-body label{display:block;font-family:var(--mono);font-size:9px;color:var(--dim);letter-spacing:.1em;margin-bottom:5px}
+.fp-body input,.fp-body select{width:100%;appearance:none;border:1px solid var(--line2);border-radius:10px;
+  background:rgba(0,0,0,.35);color:var(--ink);font-family:'Montserrat',sans-serif;font-size:12px;
+  padding:9px 11px;outline:none;transition:border-color .2s;margin-bottom:8px}
+.fp-body input:focus,.fp-body select:focus{border-color:var(--line)}
+.fp-row{display:flex;gap:6px}
+.fp-row select,.fp-row input{margin-bottom:8px}
+#fpDo{width:100%;appearance:none;border:0;cursor:pointer;background:var(--lime);color:#0a0a0a;
+  font-family:'Bebas Neue',Impact,sans-serif;font-size:16px;letter-spacing:.1em;padding:11px 0 9px;
+  border-radius:11px;box-shadow:0 0 14px rgba(154,255,0,.3);transition:.2s}
+#fpDo:active{transform:scale(.98)}
+.fp-out{min-height:16px;margin-top:8px;font-family:var(--mono);font-size:10px;color:var(--lime);letter-spacing:.04em;line-height:1.4}
+.fp-out.err{color:#ff7a7a}
+.fp-hint{margin-top:8px;font-family:var(--mono);font-size:8.5px;color:#5b6472;letter-spacing:.06em;line-height:1.5}
+
+/* ============ v6.1: панель клиентов ============ */
+#clientsPanel{position:fixed;z-index:14;top:calc(60px + env(safe-area-inset-top));right:12px;
+  width:min(360px,calc(100vw - 24px));max-height:calc(100vh - 130px);
+  background:var(--panel);border:1px solid var(--line2);border-radius:18px;padding:14px;
+  backdrop-filter:blur(18px);display:flex;flex-direction:column;
+  transform:translateX(calc(100% + 30px));transition:transform .35s cubic-bezier(.3,.9,.3,1);
+  box-shadow:0 18px 60px rgba(0,0,0,.55), inset 0 0 0 1px rgba(154,255,0,.05)}
+#clientsPanel.open{transform:none}
+.cp-head{display:flex;align-items:center;gap:8px;margin-bottom:10px}
+.cp-head b{font-family:'Bebas Neue',Impact,sans-serif;font-weight:400;font-size:17px;letter-spacing:.1em;color:var(--lime);flex:0 0 auto}
+.cp-head span{font-family:var(--mono);font-size:9.5px;color:var(--dim);letter-spacing:.08em;flex:1}
+.cp-x{appearance:none;border:1px solid var(--line2);background:transparent;color:var(--dim);
+  width:28px;height:28px;border-radius:9px;cursor:pointer;font-size:13px}
+.cp-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(64px,1fr));gap:8px;overflow-y:auto;padding-right:2px}
+.cp-cell{cursor:pointer;text-align:center;padding:6px 3px;border-radius:11px;border:1px solid var(--line2);
+  background:rgba(255,255,255,.02);transition:.2s}
+.cp-cell:hover{border-color:var(--line);background:rgba(154,255,0,.08)}
+.cp-cell.paid{border-color:rgba(154,255,0,.35)}
+.cp-av{width:36px;height:36px;border-radius:50%;margin:0 auto 4px;display:flex;align-items:center;
+  justify-content:center;background:linear-gradient(135deg,#1a2028,#2a343f);font-family:'Bebas Neue',Impact,sans-serif;
+  font-size:14px;color:var(--ink);border:1px solid var(--line2)}
+.cp-cell.paid .cp-av{background:linear-gradient(135deg,#2a3a1a,#3a5222);color:var(--lime);border-color:var(--line)}
+.cp-nm{font-size:9.5px;color:var(--ink);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;line-height:1.15}
+.cp-st{font-family:var(--mono);font-size:7.5px;color:var(--dim);letter-spacing:.04em;margin-top:2px}
+.cp-detail{margin-top:10px;border-top:1px solid var(--line2);padding-top:10px;font-size:11px;color:#cdd5c2;display:none}
+.cp-detail.show{display:block}
+.cp-detail .cd-n{font-family:'Bebas Neue',Impact,sans-serif;font-size:17px;letter-spacing:.06em;color:var(--ink);margin-bottom:4px}
+.cp-detail .cd-r{display:grid;grid-template-columns:auto 1fr;gap:3px 10px;font-size:10px;margin-top:6px}
+.cp-detail .cd-r small{font-family:var(--mono);color:var(--dim);letter-spacing:.08em}
+.cp-detail .cd-b{display:flex;gap:6px;margin-top:8px}
+.cp-detail .cd-b button{flex:1;appearance:none;border:1px solid var(--line2);background:transparent;color:var(--lime);
+  font-family:var(--mono);font-size:9px;letter-spacing:.06em;padding:6px 4px;border-radius:9px;cursor:pointer;transition:.2s}
+.cp-detail .cd-b button:hover{border-color:var(--line);background:rgba(154,255,0,.08)}
+
+@media (max-width:560px){
+  #voiceBtn{right:8px;bottom:calc(58px + env(safe-area-inset-bottom))}
+  #voiceHud{right:8px;bottom:calc(102px + env(safe-area-inset-bottom));left:8px;max-width:none}
+  #hqFab{right:8px;bottom:calc(150px + env(safe-area-inset-bottom))}
+  #finPanel,#clientsPanel{top:calc(64px + env(safe-area-inset-top));right:8px;left:8px;width:auto}
+  #demoBanner{top:calc(54px + env(safe-area-inset-top));font-size:10px}
+  #demoBanner b{font-size:11px}
+  #demoBanner span{display:none}
+}
+
 </style>
 <script type="importmap">
 {"imports":{"three":"/js/vendor/three.module.min.js","three/addons/":"/js/vendor/jsm/"}}
@@ -388,7 +509,7 @@ body.game-on #hqLog{display:none}
 <header id="hqTop">
   <img class="hq-logo" data-logo alt="OKO">
   <div class="hq-title"><b>OKO <span class="lime">HQ</span></b><b style="font-size:18px;color:var(--dim)">· ШТАБ</b></div>
-  <span class="chip build">сборка v6.0 · игровой режим</span>
+  <span class="chip build">сборка v6.1 · live-метрики + голос</span>
   <span class="sp"></span>
   <button id="playBtn" title="Я — гендиректор · игровой режим">
     <svg viewBox="0 0 24 24" width="14" height="14" fill="currentColor" stroke="none"><path d="M7 4.5v15l13-7.5z"/></svg>
@@ -475,6 +596,74 @@ body.game-on #hqLog{display:none}
   </div>
 </div>
 
+<!-- v6.1: WebGL-fallback (десктоп-only заглушка) -->
+<div id="noWebGL">
+  <img data-logo alt="">
+  <h1>ШТАБ <span>OKO</span></h1>
+  <p>3D-штаб работает только там, где браузер поддерживает WebGL.<br>
+  Открой на десктопе (Chrome/Safari/Firefox) или в iOS Safari 15+.</p>
+  <a class="nw-back" href="/">← НА САЙТ</a>
+</div>
+
+<!-- v6.1: демо-баннер -->
+<div id="demoBanner">
+  <b>ПУБЛИЧНОЕ ДЕМО</b><span>read-only · все данные обезличены · админ-функции отключены</span>
+</div>
+
+<!-- v6.1: голосовое управление -->
+<button id="voiceBtn" title="Голос · клавиша V">
+  <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2"/><path d="M12 19v4"/><path d="M8 23h8"/></svg>
+  <span>ГОЛОС</span>
+</button>
+<div id="voiceHud"><i></i><b id="voiceHudTxt">…</b></div>
+
+<!-- v6.1: панель финансов (клик на стол финансов → быстрые действия) -->
+<aside id="finPanel">
+  <div class="fp-head"><b>ФИН · БЫСТРЫЕ ДЕЙСТВИЯ</b>
+    <button class="fp-x" id="fpX">✕</button></div>
+  <div class="fp-tabs">
+    <button class="fp-tab on" data-op="manual_confirm">РУЧН. ЗАЧИСЛЕНИЕ</button>
+    <button class="fp-tab" data-op="refund">ВОЗВРАТ</button>
+    <button class="fp-tab" data-op="discount">СКИДКА</button>
+  </div>
+  <div class="fp-body">
+    <label>EMAIL / ID КЛИЕНТА</label>
+    <input id="fpTarget" type="text" placeholder="email или #ID">
+    <div class="fp-row" id="fpRowProd">
+      <select id="fpProduct">
+        <option value="sistema">СИСТЕМА OKO</option>
+        <option value="zavod">Контент-завод</option>
+        <option value="consult">Консультация</option>
+        <option value="web">Сайты / Боты</option>
+        <option value="voronka">Воронка</option>
+        <option value="club">OKO CLUB</option>
+      </select>
+      <input id="fpAmount" type="text" placeholder="сумма ₽">
+    </div>
+    <div class="fp-row" id="fpRowPct" style="display:none">
+      <input id="fpPct" type="number" min="1" max="90" step="1" placeholder="%">
+    </div>
+    <button id="fpDo">ВЫПОЛНИТЬ</button>
+    <div class="fp-out" id="fpOut"></div>
+    <div class="fp-hint">админ-ключ хранится в localStorage.<br>если ключа нет — попросит один раз при первом действии.</div>
+  </div>
+</aside>
+
+<!-- v6.1: комната клиентов — топ-30 -->
+<aside id="clientsPanel">
+  <div class="cp-head"><b>КЛИЕНТЫ · ТОП-30</b>
+    <span id="cpCount">…</span>
+    <button class="cp-x" id="cpX">✕</button></div>
+  <div class="cp-grid" id="cpGrid">загрузка…</div>
+  <div class="cp-detail" id="cpDetail"></div>
+</aside>
+
+<!-- v6.1: FAB — открыть Фин/Клиенты (мобильный доступ) -->
+<div id="hqFab">
+  <button id="fabFin" title="Фин-стол · F"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 1v22"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg></button>
+  <button id="fabCli" title="Клиенты · K"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg></button>
+</div>
+
 <script>
 /* ЛОГО (один экземпляр base64 на страницу) + ЗАМОК SHA-256 */
 (function(){
@@ -540,7 +729,28 @@ async function hashInput(s){
 }
 var lockEl=document.getElementById('lock');
 function unlock(){ lockEl.classList.add('hide'); setTimeout(function(){lockEl.style.display='none';},600); }
+/* v6.1: WebGL-детект. Нет WebGL — красивая заглушка, движок не грузим. */
+(function webglGuard(){
+  try{
+    var c=document.createElement('canvas');
+    var gl=c.getContext('webgl2')||c.getContext('webgl')||c.getContext('experimental-webgl');
+    if(!gl){
+      var f=document.getElementById('noWebGL');
+      if(f){ f.style.display='flex'; }
+      var boot=document.getElementById('boot'); if(boot) boot.style.display='none';
+      lockEl.style.display='none';
+      var g=document.getElementById('gl'); if(g) g.style.display='none';
+      /* блокируем последующий модуль three.js */
+      window.__NOGL=true;
+    }
+  }catch(e){}
+})();
+/* v6.1: публичный демо-режим ?demo=1 — пропускаем замок */
+var URLQ=new URLSearchParams(location.search);
+var IS_DEMO=URLQ.get('demo')==='1';
 (function initLock(){
+  if(window.__NOGL) return;
+  if(IS_DEMO){ document.body.classList.add('demo'); lockEl.style.display='none'; return; }
   var saved=null; try{ saved=localStorage.getItem(AUTH_KEY); }catch(e){}
   if(saved===HASH){ lockEl.style.display='none'; return; }
   var inp=document.getElementById('lkPass'), btn=document.getElementById('lkBtn'),
@@ -573,6 +783,7 @@ function unlock(){ lockEl.classList.add('hide'); setTimeout(function(){lockEl.st
    three r160 (vendor-модули) + gsap. Бренд: #0a0a0a + #9AFF00.
    HDR-пайплайн: linear scene -> UnrealBloom -> ACES + sRGB.
    ============================================================ */
+if (window.__NOGL) { throw new Error('WebGL unsupported, showing fallback'); }
 import * as THREE from 'three';
 import { EffectComposer } from 'three/addons/postprocessing/EffectComposer.js';
 import { RenderPass } from 'three/addons/postprocessing/RenderPass.js';
@@ -4874,9 +5085,28 @@ function animate() {
 }
 let frameN = 0;
 
-/* debug API для скриншотов */
+/* debug API для скриншотов + v6.1: хуки для live-фидов, голоса, админки */
 window.__HQ = {
   scene, ready: false, botsReady: false,
+  /* v6.1: экспорт внутренностей для внешнего скрипта live-метрик */
+  AGENTS, ST_LABEL, ST_COLOR,
+  pushLog: (id, msg) => pushLog(id, msg),
+  setDashSeries: (revArr, leadsArr) => {
+    if (revArr && revArr.length) { dashData.rev = revArr.slice(); }
+    if (leadsArr && leadsArr.length) { dashData.leads = leadsArr.slice(); }
+  },
+  setCEOStats: (o) => { if (o) window.__HQ._ceoStats = o; },
+  getCEOStats: () => window.__HQ._ceoStats || null,
+  tickerPush: (m) => { tickerMsgs.push(m); while (tickerMsgs.length > 8) tickerMsgs.shift(); },
+  chatCommand: t => { chatOpen(true); chatCommand(t); },
+  flyToRobot: i => flyToRobot(i),
+  goView: (v, d) => goView(v, d),
+  agentIdxById: id => AGENTS.findIndex(a => a.id === id),
+  setAgentTask: (id, task, st) => {
+    const i = AGENTS.findIndex(a => a.id === id); if (i < 0) return;
+    if (task) AGENTS[i].task = task; if (st && ST_LABEL[st]) AGENTS[i].st = st;
+    if (cardI === i) openCard(i);
+  },
   botsN: () => botsLoaded,
   cam: (th, ph, r, x, y, z) => {
     orbit.follow = -1;
@@ -4982,6 +5212,9 @@ async function start() {
   animate();
   await new Promise(r => setTimeout(r, SHOT ? 60 : 500));
   document.getElementById('boot').classList.add('hide');
+  /* v6.1: сигнал готовности для внешнего live-скрипта */
+  window.__HQ.ready = true;
+  document.dispatchEvent(new CustomEvent('oko-hq-ready'));
 
   if (SHOT) {
     introDone = true;
@@ -5005,6 +5238,402 @@ async function start() {
 }
 start();
 
+</script>
+
+<!-- ============================================================
+     v6.1: LIVE-СЛОЙ (метрики, лента, голос, админ, клиенты)
+     Живёт вне three.js-модуля; общается через window.__HQ.*
+     ============================================================ -->
+<script>
+(function LIVE(){
+'use strict';
+if (window.__NOGL) return;   /* fallback уже показан */
+
+const URLQ = new URLSearchParams(location.search);
+const DEMO = URLQ.get('demo') === '1';
+const API  = '/api.php';
+const ADMIN_KEY_LS = 'oko-hq-admin-key';
+const NARROW = matchMedia('(max-width:560px)').matches;
+
+/* -------- утилиты -------- */
+function el(id){ return document.getElementById(id); }
+function esc(s){ return String(s==null?'':s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c])); }
+function toast(msg){
+  const t = el('hqToast'); if(!t) return;
+  t.textContent = msg; t.classList.add('show');
+  clearTimeout(toast._t); toast._t = setTimeout(()=>t.classList.remove('show'), 2600);
+}
+async function fetchJSON(url, opts){
+  const r = await fetch(url, opts||{});
+  if (!r.ok) throw new Error('HTTP '+r.status);
+  return r.json();
+}
+
+/* ждём готовности three-сцены */
+function whenReady(cb){
+  if (window.__HQ && window.__HQ.ready) return cb();
+  document.addEventListener('oko-hq-ready', cb, { once: true });
+  /* страховка на случай, если событие потерялось */
+  const t = setInterval(()=>{
+    if (window.__HQ && window.__HQ.ready){ clearInterval(t); cb(); }
+  }, 300);
+  setTimeout(()=>clearInterval(t), 60000);
+}
+
+/* ================= 1) LIVE-МЕТРИКИ → стена + монитор CEO ================= */
+const CTX = { series: null, feedSeen: new Set(), lastMrr: 0, lastPays: 0, lastLeads: 0 };
+
+function updateStatsHeader(m){
+  const HQ = window.__HQ; if (!HQ) return;
+  const workN = (HQ.AGENTS||[]).filter(a=>a.st==='work').length;
+  const b = { agents: HQ.AGENTS.length, work: workN, tasks: (m && m.leads_today != null) ? m.leads_today + m.pays_today*3 : 0 };
+  const a = el('stAgents'), w = el('stWork'), t = el('stTasks');
+  if (a) a.textContent = b.agents;
+  if (w) w.textContent = b.work;
+  if (t && b.tasks) t.textContent = b.tasks;
+}
+
+async function pollMetrics(){
+  try{
+    const j = await fetchJSON(API + '?action=hq_metrics_live&_=' + Date.now());
+    if (!j || j.ok === false) return;
+    /* стена: 14 точек ряда → массивы длиной 48 (интерполяция) */
+    const rev  = expandSeries(j.series.map(s=>+s.rev),  48, 40);
+    const lds  = expandSeries(j.series.map(s=>+s.leads),48, 20);
+    if (window.__HQ.setDashSeries) window.__HQ.setDashSeries(rev, lds);
+    /* монитор CEO — сохраняем и используем при обновлении */
+    if (window.__HQ.setCEOStats) window.__HQ.setCEOStats({
+      revToday: j.rev_today, leadsToday: j.leads_today, paysToday: j.pays_today,
+      mrr: j.mrr, dau: j.dau, conv: j.conversion,
+      clientsTotal: j.clients_total, clientsPaid: j.clients_paid
+    });
+    updateStatsHeader(j);
+    /* уведомления о новых оплатах/лидах */
+    if (CTX.lastPays && j.pays_today > CTX.lastPays){
+      toast('+ оплата · сегодня ' + j.pays_today);
+      if (window.__HQ.pushLog) window.__HQ.pushLog('ceo','новая оплата · всего сегодня '+j.pays_today);
+    }
+    if (CTX.lastLeads && j.leads_today > CTX.lastLeads){
+      toast('+ лид · сегодня ' + j.leads_today);
+      if (window.__HQ.pushLog) window.__HQ.pushLog('sales','новый лид · всего сегодня '+j.leads_today);
+    }
+    CTX.lastPays = j.pays_today; CTX.lastLeads = j.leads_today; CTX.lastMrr = j.mrr;
+  }catch(e){ /* сеть/оффлайн — молча остаёмся на mock */ }
+}
+function expandSeries(arr, n, base){
+  if (!arr || !arr.length) return null;
+  const out = new Array(n);
+  for (let i=0;i<n;i++){
+    const t = i / (n-1) * (arr.length - 1);
+    const a = Math.floor(t), b = Math.min(arr.length-1, a+1), k = t - a;
+    const v = arr[a] * (1-k) + arr[b] * k;
+    out[i] = Math.max(0, base + v * 0.6 + (Math.random()-0.5)*4);
+  }
+  return out;
+}
+
+/* ================= 2) LIVE-ЛЕНТА команды → hqLog + бегущая строка ================= */
+const FEED_ROLE_MAP = { sales:'sales', ceo:'ceo', support:'support', factory:'factory', editor:'editor', designer:'designer' };
+async function pollFeed(){
+  try{
+    const j = await fetchJSON(API + '?action=hq_feed_live&_=' + Date.now());
+    if (!j || !j.items) return;
+    /* от старых к новым, дубли по строке */
+    const items = j.items.slice().reverse();
+    for (const it of items){
+      const key = it.t + '::' + it.msg;
+      if (CTX.feedSeen.has(key)) continue;
+      CTX.feedSeen.add(key);
+      const id = FEED_ROLE_MAP[it.id] || 'ceo';
+      if (window.__HQ.pushLog) window.__HQ.pushLog(id, it.msg);
+    }
+    /* ограничим память */
+    if (CTX.feedSeen.size > 300){
+      CTX.feedSeen = new Set(Array.from(CTX.feedSeen).slice(-200));
+    }
+  }catch(e){}
+}
+
+/* ================= 3) ГОЛОСОВОЕ УПРАВЛЕНИЕ (WebSpeech) ================= */
+const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+const voiceBtn = el('voiceBtn'), voiceHud = el('voiceHud'), voiceTxt = el('voiceHudTxt');
+let sr = null, recActive = false;
+
+function voiceCmd(text){
+  const t = String(text||'').toLowerCase().trim();
+  if (!t) return;
+  voiceTxt.textContent = t; voiceHud.classList.add('show');
+  clearTimeout(voiceCmd._t); voiceCmd._t = setTimeout(()=>voiceHud.classList.remove('show'), 3600);
+
+  /* команды камеры */
+  const views = [
+    {re:/мозг|хранилищ|документ/i, cmd:()=>window.__HQ.goView('holo',1.4)},
+    {re:/отдел|команд[ау]/i,       cmd:()=>window.__HQ.goView('dept',1.4)},
+    {re:/переговор|тв|митинг|meeting/i, cmd:()=>window.__HQ.goView('meet',1.4)},
+    {re:/ceo|гендир|шеф/i,          cmd:()=>window.__HQ.goView('ceo',1.4)},
+    {re:/обзор|общий вид/i,         cmd:()=>window.__HQ.goView('overview',1.4)},
+    {re:/играть|игра|управлять/i,   cmd:()=>{ const b=el('playBtn'); if(b) b.click(); }}
+  ];
+  for (const v of views) if (v.re.test(t)) { v.cmd(); toast('камера: '+t); return; }
+
+  /* показать метрику */
+  if (/mrr|мрр|выручк/i.test(t)){
+    const s = window.__HQ.getCEOStats && window.__HQ.getCEOStats();
+    if (s) toast('MRR: '+Math.round(s.mrr).toLocaleString('ru-RU')+' ₽ · сегодня '+Math.round(s.revToday)+' ₽');
+    window.__HQ.goView('ceo', 1.2); return;
+  }
+  if (/лид/i.test(t)){
+    const s = window.__HQ.getCEOStats && window.__HQ.getCEOStats();
+    if (s) toast('Лидов сегодня: '+s.leadsToday+' · всего клиентов: '+s.clientsTotal);
+    return;
+  }
+  if (/клиент/i.test(t)){ openClients(); return; }
+  if (/фин|возврат|скидк/i.test(t)){ openFin(); return; }
+  if (/чат|команд/i.test(t)){ window.__HQ.chatCommand(''); return; }
+  if (/закр|отмен|стоп/i.test(t)){
+    closeFin(); closeClients(); voiceHud.classList.remove('show'); return;
+  }
+  /* иначе — прокинем в командный чат */
+  window.__HQ.chatCommand(text);
+}
+
+function voiceInit(){
+  if (!SR){ return; }
+  voiceBtn.classList.add('avail');
+  sr = new SR();
+  sr.lang = 'ru-RU'; sr.interimResults = false; sr.maxAlternatives = 1;
+  sr.onresult = ev => {
+    const r = ev.results && ev.results[ev.results.length-1];
+    if (r && r[0]) voiceCmd(r[0].transcript);
+  };
+  sr.onstart = () => { recActive = true; voiceBtn.classList.add('rec'); voiceTxt.textContent = 'слушаю…'; voiceHud.classList.add('show'); };
+  sr.onend = () => { recActive = false; voiceBtn.classList.remove('rec'); };
+  sr.onerror = e => { recActive = false; voiceBtn.classList.remove('rec'); if (e && e.error !== 'no-speech') toast('голос: '+e.error); };
+  voiceBtn.addEventListener('click', () => {
+    if (recActive){ try{ sr.stop(); }catch(e){} return; }
+    try{ sr.start(); }catch(e){ toast('микрофон недоступен'); }
+  });
+  addEventListener('keydown', e => {
+    const tag = (e.target && e.target.tagName) || '';
+    if (tag === 'INPUT' || tag === 'TEXTAREA') return;
+    if (e.key === 'v' || e.key === 'V' || e.key === 'м' || e.key === 'М') voiceBtn.click();
+  });
+}
+
+/* ================= 4) ФИН-СТОЛ: админ-действия ================= */
+const finPanel = el('finPanel'), fpOut = el('fpOut'), fpTarget = el('fpTarget'),
+      fpProduct = el('fpProduct'), fpAmount = el('fpAmount'), fpPct = el('fpPct'),
+      fpRowProd = el('fpRowProd'), fpRowPct = el('fpRowPct');
+let fpOp = 'manual_confirm';
+
+document.querySelectorAll('.fp-tab').forEach(b => {
+  b.addEventListener('click', () => {
+    document.querySelectorAll('.fp-tab').forEach(x=>x.classList.remove('on'));
+    b.classList.add('on');
+    fpOp = b.dataset.op;
+    fpRowProd.style.display = (fpOp==='manual_confirm') ? 'flex' : 'none';
+    fpRowPct.style.display  = (fpOp==='discount') ? 'flex' : 'none';
+    fpOut.textContent = ''; fpOut.classList.remove('err');
+  });
+});
+function openFin(){
+  closeClients();
+  window.__HQ.goView && window.__HQ.goView('ceo', 1.1);
+  finPanel.classList.add('open');
+}
+function closeFin(){ finPanel.classList.remove('open'); }
+el('fpX').addEventListener('click', closeFin);
+el('fabFin').addEventListener('click', () => finPanel.classList.contains('open') ? closeFin() : openFin());
+addEventListener('keydown', e => {
+  const tag = (e.target && e.target.tagName) || '';
+  if (tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT') return;
+  if (e.key === 'f' || e.key === 'F' || e.key === 'а' || e.key === 'А') { e.preventDefault(); openFin(); }
+  if (e.key === 'k' || e.key === 'K' || e.key === 'л' || e.key === 'Л') { e.preventDefault(); openClients(); }
+  if (e.key === 'Escape'){ closeFin(); closeClients(); }
+});
+function adminKey(){
+  let k = null; try{ k = localStorage.getItem(ADMIN_KEY_LS); }catch(e){}
+  if (!k){
+    k = prompt('Админ-ключ (спрошу один раз, сохраню локально):', '');
+    if (k){ try{ localStorage.setItem(ADMIN_KEY_LS, k); }catch(e){} }
+  }
+  return k;
+}
+el('fpDo').addEventListener('click', async () => {
+  if (DEMO){ fpOut.classList.add('err'); fpOut.textContent = 'демо-режим · действия отключены'; return; }
+  const target = (fpTarget.value||'').trim();
+  if (!target){ fpOut.classList.add('err'); fpOut.textContent = 'укажи email или #ID'; return; }
+  const isId = /^#?\d+$/.test(target);
+  const payload = { op: fpOp };
+  if (isId) payload.client_id = parseInt(target.replace('#',''), 10);
+  else payload.email = target;
+  if (fpOp === 'manual_confirm'){
+    payload.product = fpProduct.value;
+    payload.amount = (fpAmount.value||'').trim();
+  }
+  if (fpOp === 'discount'){
+    payload.pct = parseInt(fpPct.value||'10', 10);
+  }
+  const key = adminKey(); if (!key) return;
+  payload.key = key;
+  fpOut.classList.remove('err'); fpOut.textContent = 'выполняю…';
+  try{
+    const r = await fetch(API + '?action=hq_admin_action', {
+      method: 'POST', headers: {'Content-Type':'application/json','X-Admin-Key':key},
+      body: JSON.stringify(payload)
+    });
+    const j = await r.json();
+    if (j && j.ok){
+      fpOut.textContent = 'готово · ' + JSON.stringify(j);
+      if (window.__HQ.pushLog) window.__HQ.pushLog('ceo', 'ФИН · '+fpOp+' · '+target);
+      toast('фин: '+fpOp+' выполнено');
+      pollMetrics(); pollFeed();
+    } else {
+      fpOut.classList.add('err');
+      fpOut.textContent = 'ошибка · ' + (j && j.error || r.status);
+    }
+  }catch(e){
+    fpOut.classList.add('err');
+    fpOut.textContent = 'сеть/сервер: ' + e.message;
+  }
+});
+
+/* ================= 5) КОМНАТА КЛИЕНТОВ: топ-30 ================= */
+const clientsPanel = el('clientsPanel'), cpGrid = el('cpGrid'),
+      cpCount = el('cpCount'), cpDetail = el('cpDetail');
+let clientsCache = null;
+
+async function loadClients(){
+  try{
+    const j = await fetchJSON(API + '?action=hq_clients_top&_=' + Date.now());
+    if (j && j.ok){ clientsCache = j.items || []; renderClients(); }
+  }catch(e){ cpGrid.textContent = 'сервер недоступен'; }
+}
+function renderClients(){
+  if (!clientsCache || !clientsCache.length){ cpGrid.textContent = 'пусто'; cpCount.textContent = ''; return; }
+  cpCount.textContent = clientsCache.length + ' · оплаченных ' + clientsCache.filter(c=>c.paid).length;
+  cpGrid.innerHTML = clientsCache.map((c,i) => `
+    <div class="cp-cell ${c.paid?'paid':''}" data-i="${i}" title="${esc(c.name)}">
+      <div class="cp-av">${esc(c.ini)}</div>
+      <div class="cp-nm">${esc(c.name)}</div>
+      <div class="cp-st">${esc(c.paid?'PAID':(c.status||'lead').toUpperCase())}</div>
+    </div>`).join('');
+  cpGrid.querySelectorAll('.cp-cell').forEach(el => {
+    el.addEventListener('click', () => showClient(parseInt(el.dataset.i, 10)));
+  });
+}
+function showClient(i){
+  const c = clientsCache && clientsCache[i]; if (!c) return;
+  cpDetail.classList.add('show');
+  cpDetail.innerHTML = `
+    <div class="cd-n">${esc(c.name)}</div>
+    <div class="cd-r">
+      <small>СТАТУС</small><span>${esc((c.status||'lead').toUpperCase())}${c.paid?' · PAID':''}</span>
+      <small>НИША</small><span>${esc(c.niche||'—')}</span>
+      <small>ПРОДУКТ</small><span>${esc(c.product||'—')}</span>
+      <small>С</small><span>${esc((c.ts||'').replace('T',' ').slice(0,16))}</span>
+    </div>
+    <div class="cd-b">
+      <button data-a="fly">В ЧАТ ШТАБА</button>
+      <button data-a="fin">ФИН → ID ${c.id}</button>
+      <button data-a="chat">СПРОСИТЬ SALES</button>
+    </div>`;
+  cpDetail.querySelector('[data-a="fly"]').onclick = () => {
+    window.__HQ.chatCommand('карточка клиента #'+c.id+' — что по нему?');
+  };
+  cpDetail.querySelector('[data-a="fin"]').onclick = () => {
+    openFin(); fpTarget.value = '#'+c.id;
+  };
+  cpDetail.querySelector('[data-a="chat"]').onclick = () => {
+    window.__HQ.chatCommand('проверь клиента '+c.name+' — где мы застряли?');
+  };
+}
+function openClients(){
+  closeFin();
+  clientsPanel.classList.add('open');
+  if (!clientsCache) loadClients();
+}
+function closeClients(){ clientsPanel.classList.remove('open'); cpDetail.classList.remove('show'); }
+el('cpX').addEventListener('click', closeClients);
+el('fabCli').addEventListener('click', () => clientsPanel.classList.contains('open') ? closeClients() : openClients());
+
+/* ================= 6) DEMO-РЕЖИМ: mock-данные ================= */
+function demoBootstrap(){
+  document.body.classList.add('demo');
+  const HQ = window.__HQ;
+  /* mock ленты */
+  const mockFeed = [
+    ['sales', 'партнёр А**** привёл 3 клиента · сегодня'],
+    ['ceo',   'оплата · СИСТЕМА OKO · 47 000 ₽ · Кл****'],
+    ['factory','автопост · ролик 12 ушёл в очередь на 18:00'],
+    ['designer','обложка урока 7 готова · 2 варианта в мозг'],
+    ['support','тикет закрыт · возврат оформлен в 15 мин'],
+    ['sales', 'новый лид · онлайн-курс · Ир****'],
+    ['ceo',   'MRR за месяц: 1 240 000 ₽ · +12% к прошлому']
+  ];
+  let mi = 0;
+  const tick = () => {
+    if (!HQ || !HQ.pushLog) return;
+    const [id, msg] = mockFeed[mi++ % mockFeed.length];
+    HQ.pushLog(id, msg);
+  };
+  setTimeout(tick, 1200);
+  setInterval(tick, 6500);
+  /* mock метрик */
+  const mockSeries = new Array(14).fill(0).map((_,i)=>({
+    d: '', rev: 30 + Math.sin(i*0.7)*8 + Math.random()*10,
+    leads: 12 + Math.cos(i*0.9)*5 + Math.random()*4, dau: 40 + Math.random()*15
+  }));
+  const rev = expandSeries(mockSeries.map(s=>s.rev),  48, 40);
+  const lds = expandSeries(mockSeries.map(s=>s.leads),48, 20);
+  if (HQ.setDashSeries) HQ.setDashSeries(rev, lds);
+  if (HQ.setCEOStats) HQ.setCEOStats({
+    revToday: 47000, leadsToday: 8, paysToday: 3, mrr: 1240000, dau: 62, conversion: 18,
+    clientsTotal: 214, clientsPaid: 39
+  });
+  /* mock клиентов */
+  clientsCache = new Array(24).fill(0).map((_,i)=>({
+    id: 100+i, name: 'Клиент #'+(100+i), ini: 'К'+String.fromCharCode(1040+(i%20)),
+    niche: ['онлайн-школа','экспертный блог','агентство','инфопродукт','локальный бизнес'][i%5],
+    status: ['lead','dialog','deal','deal','lead'][i%5],
+    paid: i%3 === 0 ? 1 : 0,
+    product: i%3===0 ? 'СИСТЕМА OKO' : '',
+    ts: '2026-07-'+String(20+(i%9)).padStart(2,'0')+'T14:00'
+  }));
+  renderClients();
+}
+
+/* ================= 7) FPS-подстраховка на мобилках ================= */
+function mobileTune(){
+  if (!NARROW) return;
+  /* уменьшаем частоту опросов на мобилках → экономим батарею */
+  return true;
+}
+
+/* ================= СТАРТ ================= */
+whenReady(() => {
+  voiceInit();
+  /* стартовые опросы */
+  if (DEMO){
+    demoBootstrap();
+  } else {
+    pollMetrics(); pollFeed();
+    const metricsMs = mobileTune() ? 30000 : 15000;
+    const feedMs    = mobileTune() ? 20000 : 12000;
+    setInterval(pollMetrics, metricsMs);
+    setInterval(pollFeed, feedMs);
+    /* при возврате на вкладку — обновим сразу */
+    document.addEventListener('visibilitychange', () => {
+      if (!document.hidden) { pollMetrics(); pollFeed(); }
+    });
+  }
+  /* задаём начальные счётчики */
+  updateStatsHeader({leads_today:0, pays_today:0});
+});
+
+/* публично для внешних вызовов */
+window.__HQ_LIVE = { pollMetrics, pollFeed, openFin, openClients, voiceCmd };
+})();
 </script>
 </body>
 </html>

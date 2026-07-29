@@ -849,3 +849,766 @@ var PW_ASSET = {
   }
 
 })();
+
+/* ============================================================
+   PAYWALL EXTRAS (pw- / bnd-): free-trial PRO, cross-sell,
+   bundles, micro-subs, LTV report, 14-day guarantee
+   ============================================================ */
+(function pwExtras(){
+  'use strict';
+
+  /* ---------- утилиты ---------- */
+  function fmt(n){ return Number(n||0).toLocaleString('ru-RU').replace(/,/g,' ') + ' ₽'; }
+  function num(n){ return Number(n||0).toLocaleString('ru-RU').replace(/,/g,' '); }
+  function _esc(t){ var d=document.createElement('div'); d.textContent=String(t==null?'':t); return d.innerHTML; }
+  function ico(n){ return '<svg class="i"><use href="#i-'+n+'"/></svg>'; }
+  function _toast(m){ if(typeof toast==='function') toast(m); }
+  function normTier(t){ return String(t||'').replace(/\s+/g,'_').toUpperCase(); }
+  function curTier(){
+    if(typeof PROFILE==='undefined') return 'FREE';
+    return normTier(PROFILE.tier||'FREE');
+  }
+
+  /* =========================================================
+     1) FREE-TRIAL PRO НА 7 ДНЕЙ
+     ========================================================= */
+  var TRIAL_KEY      = 'oko-pw-trial-v1';
+  var TRIAL_OFFERED  = 'oko-pw-trial-offered-v1';
+  var TRIAL_MS       = 7*24*3600*1000;
+  var TRIAL_RENEW    = 3430;   /* -30% от 4900 = 3430 */
+  var TRIAL_NOTIFY_H = 24;     /* показать «продлить со скидкой» за N часов до конца */
+
+  function trialGet(){ try{ return JSON.parse(localStorage.getItem(TRIAL_KEY)||'null'); }catch(e){ return null; } }
+  function trialSet(o){ try{ localStorage.setItem(TRIAL_KEY, JSON.stringify(o)); }catch(e){} }
+  function trialClear(){ try{ localStorage.removeItem(TRIAL_KEY); }catch(e){} }
+  function trialWasOffered(){ try{ return localStorage.getItem(TRIAL_OFFERED)==='1'; }catch(e){ return false; } }
+  function trialMarkOffered(){ try{ localStorage.setItem(TRIAL_OFFERED, '1'); }catch(e){} }
+
+  window.pwTrialGet = trialGet;
+  window.pwTrialActive = function(){
+    var t = trialGet(); return !!(t && t.until && t.until > Date.now());
+  };
+  window.pwTrialMsLeft = function(){
+    var t = trialGet(); return (t && t.until) ? Math.max(0, t.until - Date.now()) : 0;
+  };
+  window.pwTrialDaysLeft = function(){
+    return Math.ceil(window.pwTrialMsLeft() / (24*3600*1000));
+  };
+
+  /* Проверка на каждом заходе: если trial истёк — auto-downgrade */
+  function trialCheckExpired(){
+    var t = trialGet();
+    if(!t || !t.until) return;
+    if(t.until > Date.now()) return;
+    /* trial истёк */
+    var paidUpgrade = !!t.paidUpgrade;
+    var order = {FREE:0, START:1, PRO:2, BUSINESS:3, BUSINESS_PRO:4, MAX:5};
+    var cur = curTier();
+    var isPro = cur === 'PRO';
+    var wasFromTrial = (isPro && t.trialTier === 'PRO' && !paidUpgrade);
+    trialClear();
+    if(wasFromTrial && typeof PROFILE !== 'undefined'){
+      PROFILE.tier = t.prevTier || 'FREE';
+      try{ if(typeof renderMyProfile==='function') renderMyProfile(); }catch(e){}
+      setTimeout(function(){
+        _toast('Пробный PRO закончился. Продли за 4 900 ₽ или продолжи в FREE.');
+      }, 800);
+    }
+  }
+  window.pwTrialCheck = trialCheckExpired;
+
+  /* активация trial: PROFILE.tier -> PRO, trialUntil = now + 7d */
+  function trialActivate(){
+    var prev = curTier();
+    if(prev === 'FREE' || prev === 'START'){
+      /* сохраняем предыдущий уровень чтоб корректно откатить */
+    } else {
+      /* если уже PRO+ — trial не нужен */
+      return false;
+    }
+    var until = Date.now() + TRIAL_MS;
+    trialSet({until: until, started: Date.now(), prevTier: prev, trialTier: 'PRO'});
+    if(typeof PROFILE !== 'undefined') PROFILE.tier = 'PRO';
+    try{ if(typeof renderMyProfile==='function') renderMyProfile(); }catch(e){}
+    _toast('Пробный PRO активирован на 7 дней');
+    return true;
+  }
+  window.pwTrialActivate = trialActivate;
+
+  /* Экран «Забери 7 дней PRO бесплатно» */
+  function trialCanOffer(){
+    if(trialWasOffered()) return false;
+    if(window.pwTrialActive()) return false;
+    var c = curTier();
+    return (c === 'FREE' || c === 'START');
+  }
+  function trialShow(onClose){
+    trialMarkOffered();
+    var el = document.createElement('div');
+    el.className = 'pw-modal';
+    el.id = 'pwTrialSheet';
+    el.innerHTML =
+      '<div class="pw-modal-card pw-trial">'+
+        '<button class="pw-modal-x" aria-label="Закрыть">'+ico('plus')+'</button>'+
+        '<div class="pw-trial-hero">'+
+          '<div class="pw-trial-ray"></div>'+
+          '<div class="pw-trial-badge">'+ico('crown')+'</div>'+
+          '<div class="pw-trial-days"><b>7</b><span>дней</span></div>'+
+          '<div class="pw-trial-h1">PRO бесплатно</div>'+
+          '<div class="pw-trial-sub">Забери 7 дней тарифа PRO без карты и оплаты</div>'+
+        '</div>'+
+        '<div class="pw-trial-body">'+
+          '<ul class="pw-trial-list">'+
+            '<li>'+ico('check2')+'<span><b>Система Роста</b> — стратегия и план на 30 дней</span></li>'+
+            '<li>'+ico('check2')+'<span><b>Автопостинг</b> во все соцсети из одного окна</span></li>'+
+            '<li>'+ico('check2')+'<span><b>Проверка видео без лимита</b> и файлы до 2 ГБ</span></li>'+
+            '<li>'+ico('check2')+'<span><b>Скидка −10%</b> на рекламный кабинет</span></li>'+
+          '</ul>'+
+          '<div class="pw-trial-note">'+ico('lock')+' Карта не нужна — через 7 дней аккаунт автоматически вернётся в FREE, без списаний</div>'+
+          '<button class="btn pw-shine pw-trial-cta">'+ico('crown')+' Забрать 7 дней PRO</button>'+
+          '<button class="btn ghost pw-trial-skip">Пропустить</button>'+
+        '</div>'+
+      '</div>';
+    document.body.appendChild(el);
+    requestAnimationFrame(function(){ el.classList.add('on'); });
+    function done(activated){
+      el.classList.remove('on');
+      setTimeout(function(){ if(el.parentNode) el.remove(); }, 220);
+      if(typeof onClose === 'function') onClose(!!activated);
+    }
+    el.addEventListener('click', function(e){ if(e.target===el) done(false); });
+    el.querySelector('.pw-modal-x').onclick = function(){ done(false); };
+    el.querySelector('.pw-trial-skip').onclick = function(){ done(false); };
+    el.querySelector('.pw-trial-cta').onclick = function(){
+      trialActivate();
+      done(true);
+    };
+  }
+  window.pwTrialShow = trialShow;
+
+  /* Патчим rg2Next4 — вставляем trial-экран, когда пользователь выбрал FREE в регистрации */
+  function patchRg2(){
+    if(typeof rg2Next4 !== 'function') return;
+    if(rg2Next4.__pwTrialPatched) return;
+    var _prev = rg2Next4;
+    rg2Next4 = function(){
+      var pickedFree = (typeof RG2 !== 'undefined') && (!RG2.tier || RG2.tier === 'FREE');
+      if(pickedFree && trialCanOffer()){
+        trialShow(function(){
+          _prev();
+        });
+        return;
+      }
+      return _prev.apply(this, arguments);
+    };
+    rg2Next4.__pwTrialPatched = true;
+  }
+
+  /* Патчим rg2Skip тоже */
+  function patchRg2Skip(){
+    if(typeof rg2Skip !== 'function') return;
+    if(rg2Skip.__pwTrialPatched) return;
+    var _prev = rg2Skip;
+    rg2Skip = function(){
+      if(trialCanOffer()){
+        trialShow(function(){
+          _prev();
+        });
+        return;
+      }
+      return _prev.apply(this, arguments);
+    };
+    rg2Skip.__pwTrialPatched = true;
+  }
+
+  /* «Продли сейчас −30%» — попап, вызывается за 24ч до истечения */
+  function trialRenewOffer(){
+    if(typeof showPopup !== 'function') return;
+    showPopup({
+      ico:'crown',
+      title:'Пробный PRO заканчивается',
+      body:
+        '<p style="font-size:13.5px;line-height:1.55;color:var(--dim);margin-bottom:12px">'+
+          'Тебе доступна <b>скидка −30%</b> на первый месяц PRO. '+
+          'Оформи сейчас, чтобы не потерять Систему Роста, автопостинг и безлимит.'+
+        '</p>'+
+        '<div class="pw-trial-renew-box">'+
+          '<div class="pw-trial-renew-old">4 900 ₽</div>'+
+          '<div class="pw-trial-renew-new"><b>'+num(TRIAL_RENEW)+' ₽</b><span>первый месяц</span></div>'+
+          '<div class="pw-trial-renew-tag">−30%</div>'+
+        '</div>',
+      actions:[
+        {label:'Продлить со скидкой', onclick:function(){
+          try{
+            if(typeof payState !== 'undefined'){
+              payState.plan = 'PRO';
+              payState.period = 1;
+              payState._trialRenew = true;
+            }
+            if(typeof openPay === 'function') openPay('PRO');
+          }catch(e){}
+        }},
+        {label:'Позже', ghost:true},
+      ]
+    });
+  }
+  window.pwTrialRenewOffer = trialRenewOffer;
+
+  /* Показать renew-offer один раз за 24ч до конца */
+  var RENEW_SHOWN_KEY = 'oko-pw-trial-renew-shown-v1';
+  function trialMaybeRenew(){
+    var t = trialGet();
+    if(!t || !t.until) return;
+    var msLeft = t.until - Date.now();
+    if(msLeft <= 0) return;
+    if(msLeft > TRIAL_NOTIFY_H*3600*1000) return;
+    try{ if(localStorage.getItem(RENEW_SHOWN_KEY)==='1') return; }catch(e){}
+    try{ localStorage.setItem(RENEW_SHOWN_KEY, '1'); }catch(e){}
+    setTimeout(trialRenewOffer, 2500);
+  }
+
+  /* Индикатор «PRO trial: осталось X дней» в профиле — добавляем в pw-prof-band */
+  function trialInjectBadge(){
+    if(!window.pwTrialActive()) return;
+    var band = document.getElementById('pwProfBand');
+    if(!band) return;
+    if(band.querySelector('.pw-trial-badge-inline')) return;
+    var days = window.pwTrialDaysLeft();
+    var chip = document.createElement('span');
+    chip.className = 'pw-trial-badge-inline';
+    chip.innerHTML = ico('bolt') + '<span>Trial PRO · '+days+' дн</span>';
+    var tx = band.querySelector('.pw-prof-tx');
+    if(tx) tx.appendChild(chip);
+  }
+
+  /* =========================================================
+     2) CROSS-SELL НА CHECKOUT
+     ========================================================= */
+  var CROSSSELL = {
+    /* тариф-который-оплатили → апселл */
+    PRO: {
+      title:'Возьми ещё Систему Роста',
+      sub:'Для тех, кто хочет не просто автопостинг, а результат за 30 дней',
+      icon:'rocket',
+      old: 1990,
+      price: 990,
+      save: 50,
+      pill: 'экономия 50%',
+      cta: 'Добавить Систему Роста · 990 ₽/мес',
+      bullets:[
+        'Персональный план на 30 дней с целями и метриками',
+        'Разбор 15 конкурентов и слепые зоны рынка',
+        'Еженедельная проверка результатов и корректировки',
+      ],
+    },
+    BUSINESS: {
+      title:'Добавь Контент-завод',
+      sub:'Три ролика в день без монтажёра — производство на конвейере',
+      icon:'bolt',
+      old: 49900,
+      price: 25000,
+      save: 50,
+      pill: 'первый месяц −50%',
+      cta: 'Добавить Контент-завод · 25 000 ₽',
+      bullets:[
+        '100 роликов в месяц: сценарий, монтаж, озвучка, субтитры',
+        'Формат под VK Clips, TikTok, Reels, Shorts, YT-Long',
+        'Отчёт по охватам и точкам роста каждую неделю',
+      ],
+    },
+    BUSINESS_PRO: {
+      title:'Апгрейд до MAX на месяц',
+      sub:'500 роликов, Higgsfield безлимит, бренд-агентство под ключ',
+      icon:'crown',
+      old: 149900,
+      price: 99900,
+      save: 33,
+      pill: '−33% в первый месяц',
+      cta: 'Апгрейд MAX · 99 900 ₽ за 1 мес',
+      bullets:[
+        'Контент-завод 500 роликов вместо 100',
+        'Higgsfield безлимит + личный менеджер',
+        'Пакет «Бренд-агентство» — сайт, лендинг, боты',
+      ],
+    },
+  };
+
+  function showCrossSell(paidTier){
+    var t = normTier(paidTier);
+    var offer = CROSSSELL[t];
+    if(!offer) return;
+    var el = document.createElement('div');
+    el.className = 'pw-modal';
+    el.id = 'pwCross';
+    el.innerHTML =
+      '<div class="pw-modal-card pw-cross">'+
+        '<button class="pw-modal-x" aria-label="Закрыть">'+ico('plus')+'</button>'+
+        '<div class="pw-cross-top">'+
+          '<div class="pw-cross-ic">'+ico(offer.icon)+'</div>'+
+          '<div class="pw-cross-pill">'+_esc(offer.pill)+'</div>'+
+        '</div>'+
+        '<h3 class="pw-cross-h">'+_esc(offer.title)+'</h3>'+
+        '<p class="pw-cross-sub">'+_esc(offer.sub)+'</p>'+
+        '<ul class="pw-cross-list">'+ offer.bullets.map(function(b){
+          return '<li>'+ico('check2')+'<span>'+_esc(b)+'</span></li>';
+        }).join('') +'</ul>'+
+        '<div class="pw-cross-price">'+
+          '<div class="pw-cross-old">'+num(offer.old)+' ₽</div>'+
+          '<div class="pw-cross-new">'+num(offer.price)+' ₽</div>'+
+          '<div class="pw-cross-save">−'+offer.save+'%</div>'+
+        '</div>'+
+        '<button class="btn pw-shine pw-cross-cta">'+_esc(offer.cta)+'</button>'+
+        '<button class="btn ghost pw-cross-skip">Не сейчас</button>'+
+      '</div>';
+    document.body.appendChild(el);
+    requestAnimationFrame(function(){ el.classList.add('on'); });
+    function done(){
+      el.classList.remove('on');
+      setTimeout(function(){ if(el.parentNode) el.remove(); }, 220);
+    }
+    el.addEventListener('click', function(e){ if(e.target===el) done(); });
+    el.querySelector('.pw-modal-x').onclick = done;
+    el.querySelector('.pw-cross-skip').onclick = done;
+    el.querySelector('.pw-cross-cta').onclick = function(){
+      done();
+      _toast('Добавка «'+offer.title+'» подключена. Спасибо!');
+      try{
+        var bal = parseInt(localStorage.getItem('oko-pw-crosssell-count')||'0',10)||0;
+        localStorage.setItem('oko-pw-crosssell-count', String(bal+1));
+        localStorage.setItem('oko-pw-crosssell-last', String(offer.price));
+      }catch(e){}
+    };
+  }
+  window.pwShowCrossSell = showCrossSell;
+
+  /* Патчим doPay — после успешной оплаты (~2000ms) показываем cross-sell */
+  function patchDoPay(){
+    if(typeof doPay !== 'function') return;
+    if(doPay.__pwCrossPatched) return;
+    var _prev = doPay;
+    doPay = function(){
+      var picked = (typeof payState !== 'undefined') ? normTier(payState.plan) : '';
+      var r = _prev.apply(this, arguments);
+      /* реальная оплата — trial больше не «активен от нас», не даунгрейдим */
+      setTimeout(function(){
+        var t = trialGet();
+        if(t){
+          /* пометим trial как «переросший в реальную оплату» — не будем откатывать tier */
+          t.paidUpgrade = true;
+          trialSet(t);
+        }
+      }, 1800);
+      if(CROSSSELL[picked]){
+        setTimeout(function(){
+          /* показываем cross-sell после успешной оплаты (симуляция ~1600ms) */
+          if(document.getElementById('sheet-pay') && document.getElementById('sheet-pay').classList.contains('open')){
+            showCrossSell(picked);
+          }
+        }, 2200);
+      }
+      return r;
+    };
+    doPay.__pwCrossPatched = true;
+  }
+
+  /* =========================================================
+     3) BUNDLE (комбо-пакеты) — отдельный экран/попап
+     ========================================================= */
+  var BUNDLES = [
+    {
+      id:'all',
+      name:'Всё OKO',
+      tag:'Максимальный комбо',
+      icon:'crown',
+      old: 4900 + 990 + 990 + 590 + 990,   /* PRO + Академия + Аналитика + Партнёрка + Реклама */
+      priceNote:'−40%',
+      discount: 40,
+      bullets:[
+        'PRO (Система Роста, автопостинг, все соцсети)',
+        'Академия премиум · все курсы и разборы',
+        'Аналитика соцсетей · 10 каналов',
+        'Партнёрка Pro · промо-материалы и приоритет',
+        'Рекламный кабинет Pro · без комиссий OKO',
+      ],
+    },
+    {
+      id:'start',
+      name:'Стартовый пакет',
+      tag:'Начни с сильной базы',
+      icon:'rocket',
+      old: 3990,
+      price: 2490,
+      priceNote:'−38%',
+      discount: 38,
+      bullets:[
+        'START тариф (Premium-мессенджер, 30 проверок)',
+        'Академия премиум с сертификатом',
+        'Магазин шаблонов + Каталог трендов',
+      ],
+    },
+    {
+      id:'pro',
+      name:'Про пакет',
+      tag:'Всё для быстрого роста',
+      icon:'bolt',
+      old: 4900 + 490 + 990,     /* PRO + Партнёрка Pro + Реклама Pro */
+      priceNote:'−35%',
+      discount: 35,
+      bullets:[
+        'PRO тариф (Система Роста + автопостинг)',
+        'Партнёрка Pro (промо, приоритет, повышенный %)',
+        'Рекламный кабинет Pro (без комиссий OKO)',
+      ],
+    },
+    {
+      id:'biz',
+      name:'Бизнес пакет',
+      tag:'Команда и производство',
+      icon:'users',
+      old: 19900 + 25000,        /* BUSINESS + Контент-завод 30 роликов */
+      priceNote:'−30%',
+      discount: 30,
+      bullets:[
+        'BUSINESS тариф (белый лейбл, академия премиум)',
+        'Контент-завод · 30 роликов в месяц под ключ',
+        '3 команды-места и общий штаб задач',
+      ],
+    },
+  ];
+  function bundleFinalPrice(b){
+    if(b.price != null) return b.price;
+    return Math.round(b.old * (1 - b.discount/100));
+  }
+  BUNDLES.forEach(function(b){ b.price = bundleFinalPrice(b); });
+
+  function bundlesHtml(){
+    return '<div class="bnd-list">'+
+      BUNDLES.map(function(b){
+        return '<div class="bnd-card">'+
+          '<div class="bnd-card-top">'+
+            '<div class="bnd-card-ic">'+ico(b.icon)+'</div>'+
+            '<div class="bnd-card-tag">'+_esc(b.tag)+'</div>'+
+            '<div class="bnd-card-disc">'+b.priceNote+'</div>'+
+          '</div>'+
+          '<h4 class="bnd-card-h">'+_esc(b.name)+'</h4>'+
+          '<ul class="bnd-card-list">'+ b.bullets.map(function(x){
+            return '<li>'+ico('check2')+'<span>'+_esc(x)+'</span></li>';
+          }).join('') +'</ul>'+
+          '<div class="bnd-card-price">'+
+            '<div class="bnd-old">'+num(b.old)+' ₽</div>'+
+            '<div class="bnd-new"><b>'+num(b.price)+'</b><span> ₽/мес</span></div>'+
+          '</div>'+
+          '<button class="btn pw-shine bnd-cta" onclick="bndTakePack(\''+b.id+'\')">'+ico('crown')+' Взять пакет</button>'+
+        '</div>';
+      }).join('') +
+    '</div>';
+  }
+
+  function openBundles(){
+    var el = document.createElement('div');
+    el.className = 'pw-modal';
+    el.id = 'bndSheet';
+    el.innerHTML =
+      '<div class="pw-modal-card bnd-sheet">'+
+        '<button class="pw-modal-x" aria-label="Закрыть">'+ico('plus')+'</button>'+
+        '<div class="bnd-head">'+
+          '<div class="bnd-head-k">'+ico('gift')+' Комбо-пакеты</div>'+
+          '<h2>Экономь до 40% · возьми всё сразу</h2>'+
+          '<p>Собери свой набор из тарифа и продуктов OKO — выгоднее, чем брать по отдельности.</p>'+
+        '</div>'+
+        bundlesHtml()+
+        '<p class="bnd-note">'+ico('lock')+' Отключишь в 1 клик · безопасная оплата · гарантия возврата 14 дней</p>'+
+      '</div>';
+    document.body.appendChild(el);
+    requestAnimationFrame(function(){ el.classList.add('on'); });
+    function done(){
+      el.classList.remove('on');
+      setTimeout(function(){ if(el.parentNode) el.remove(); }, 220);
+    }
+    el.addEventListener('click', function(e){ if(e.target===el) done(); });
+    el.querySelector('.pw-modal-x').onclick = done;
+  }
+  window.bndOpenBundles = openBundles;
+
+  window.bndTakePack = function(id){
+    var b = BUNDLES.filter(function(x){return x.id===id})[0];
+    if(!b) return;
+    /* закрываем bundle-модалку */
+    var el = document.getElementById('bndSheet');
+    if(el){ el.classList.remove('on'); setTimeout(function(){ if(el.parentNode) el.remove(); }, 220); }
+    _toast('Пакет «'+b.name+'» оформлен · '+num(b.price)+' ₽/мес');
+    /* сохранить факт покупки пакета */
+    try{
+      localStorage.setItem('oko-bnd-active', id);
+      localStorage.setItem('oko-bnd-active-at', String(Date.now()));
+    }catch(e){}
+    /* если это Про/Бизнес — поднять tier */
+    if(id === 'pro' && typeof PROFILE !== 'undefined') PROFILE.tier = 'PRO';
+    if(id === 'biz' && typeof PROFILE !== 'undefined') PROFILE.tier = 'BUSINESS';
+    if(id === 'all' && typeof PROFILE !== 'undefined') PROFILE.tier = 'PRO';
+    try{ if(typeof renderMyProfile==='function') renderMyProfile(); }catch(e){}
+  };
+
+  /* =========================================================
+     4) МИКРО-ПОДПИСКИ (для тех, кому не нужен весь Business)
+     ========================================================= */
+  var MICROSUBS = [
+    {id:'academy',  ic:'flag',      name:'Только Академия',              price: 990, sub:'Доступ ко всем курсам, разборы, сертификаты', bullets:['Все курсы Академии OKO','Живые разборы и уроки','Сертификат по итогу']},
+    {id:'analytics',ic:'poll',      name:'Только Аналитика соцсетей',    price: 590, sub:'10 каналов · охваты, аудитория, рост подписок', bullets:['10 каналов на 1 подписку','Динамика охватов и роста','Сравнение с конкурентами']},
+    {id:'partner',  ic:'users',     name:'Только Партнёрка Pro',         price: 490, sub:'Промо-материалы, приоритетные выплаты, повышенный %', bullets:['Готовые баннеры, тексты, Reels-скрипты','Выплаты за 6-12 часов','+2% к базовому проценту']},
+    {id:'ads',      ic:'megaphone', name:'Только Реклама Pro',           price: 990, sub:'Рекламный кабинет без комиссий OKO', bullets:['0% комиссии OKO на пополнения','Расширенные ставки и ЦА','Приоритетная модерация']},
+  ];
+
+  function microHtml(){
+    return '<div class="bnd-micro-list">'+
+      MICROSUBS.map(function(m){
+        return '<div class="bnd-micro-card">'+
+          '<div class="bnd-micro-ic">'+ico(m.ic)+'</div>'+
+          '<div class="bnd-micro-body">'+
+            '<div class="bnd-micro-h">'+_esc(m.name)+'</div>'+
+            '<div class="bnd-micro-sub">'+_esc(m.sub)+'</div>'+
+            '<ul class="bnd-micro-feats">'+ m.bullets.map(function(x){
+              return '<li>'+ico('check2')+'<span>'+_esc(x)+'</span></li>';
+            }).join('') +'</ul>'+
+          '</div>'+
+          '<div class="bnd-micro-price">'+
+            '<b>'+num(m.price)+'</b><span>₽/мес</span>'+
+            '<button class="btn bnd-micro-cta" onclick="bndTakeMicro(\''+m.id+'\')">'+ico('crown')+' Взять</button>'+
+          '</div>'+
+        '</div>';
+      }).join('') +
+    '</div>';
+  }
+
+  function openMicroSubs(){
+    var el = document.createElement('div');
+    el.className = 'pw-modal';
+    el.id = 'bndMicro';
+    el.innerHTML =
+      '<div class="pw-modal-card bnd-sheet">'+
+        '<button class="pw-modal-x" aria-label="Закрыть">'+ico('plus')+'</button>'+
+        '<div class="bnd-head">'+
+          '<div class="bnd-head-k">'+ico('bolt')+' Микро-подписки</div>'+
+          '<h2>Возьми только то, что нужно</h2>'+
+          '<p>Не хочется весь Business? Подключи один продукт OKO отдельно — от 490 ₽/мес.</p>'+
+        '</div>'+
+        microHtml()+
+        '<p class="bnd-note">'+ico('lock')+' Отключишь в 1 клик · без карты не спишем · гарантия возврата 14 дней</p>'+
+      '</div>';
+    document.body.appendChild(el);
+    requestAnimationFrame(function(){ el.classList.add('on'); });
+    function done(){
+      el.classList.remove('on');
+      setTimeout(function(){ if(el.parentNode) el.remove(); }, 220);
+    }
+    el.addEventListener('click', function(e){ if(e.target===el) done(); });
+    el.querySelector('.pw-modal-x').onclick = done;
+  }
+  window.bndOpenMicroSubs = openMicroSubs;
+  window.bndTakeMicro = function(id){
+    var m = MICROSUBS.filter(function(x){return x.id===id})[0];
+    if(!m) return;
+    var el = document.getElementById('bndMicro');
+    if(el){ el.classList.remove('on'); setTimeout(function(){ if(el.parentNode) el.remove(); }, 220); }
+    _toast('Микро-подписка «'+m.name+'» оформлена · '+num(m.price)+' ₽/мес');
+    try{
+      var raw = localStorage.getItem('oko-bnd-micro')||'[]';
+      var arr = JSON.parse(raw); if(!Array.isArray(arr)) arr = [];
+      if(arr.indexOf(id) < 0) arr.push(id);
+      localStorage.setItem('oko-bnd-micro', JSON.stringify(arr));
+    }catch(e){}
+  };
+
+  /* =========================================================
+     5) LTV-ОТЧЁТ В ПРОФИЛЕ (сколько сэкономил на OKO за месяц)
+     ========================================================= */
+  function ltvNumbers(){
+    /* стабильный псевдо-рандом от месяца, чтобы цифры не прыгали внутри дня */
+    var d = new Date();
+    var seed = d.getFullYear()*100 + d.getMonth();
+    var t = curTier();
+    /* базовая экономия зависит от тарифа */
+    var basis = {FREE:8000, START:18000, PRO:62000, BUSINESS:184000, BUSINESS_PRO:340000, MAX:820000}[t] || 20000;
+    var jitter = (seed % 17) / 100;
+    var total = Math.round(basis * (1 + jitter));
+    var hours = Math.round(total / 1800);        /* усреднённая цена часа копирайта/дизайна ≈ 1800₽ */
+    var toolsSaved = Math.round(total * 0.42);   /* доля «на инструментах» */
+    var timeSaved  = Math.round(total * 0.58);   /* доля «на времени» */
+    return {total: total, hours: hours, toolsSaved: toolsSaved, timeSaved: timeSaved};
+  }
+
+  function ltvWidgetHtml(){
+    var n = ltvNumbers();
+    return '<div class="pw-ltv card" id="pwLtv">'+
+      '<div class="pw-ltv-head">'+
+        '<div class="pw-ltv-ic">'+ico('bolt')+'</div>'+
+        '<div class="pw-ltv-cap"><b>Ты сэкономил на OKO за месяц</b><small>сумма ниже — против классических инструментов и подрядчиков</small></div>'+
+      '</div>'+
+      '<div class="pw-ltv-big">'+num(n.total)+' ₽</div>'+
+      '<div class="pw-ltv-hours">'+ico('clock')+' ≈ '+num(n.hours)+' ч свободного времени</div>'+
+      '<div class="pw-ltv-split">'+
+        '<div class="pw-ltv-cell">'+
+          '<div class="pw-ltv-c-l">На инструментах</div>'+
+          '<div class="pw-ltv-c-v">'+num(n.toolsSaved)+' ₽</div>'+
+          '<div class="pw-ltv-bar"><i style="width:42%"></i></div>'+
+        '</div>'+
+        '<div class="pw-ltv-cell">'+
+          '<div class="pw-ltv-c-l">На времени</div>'+
+          '<div class="pw-ltv-c-v">'+num(n.timeSaved)+' ₽</div>'+
+          '<div class="pw-ltv-bar"><i style="width:58%"></i></div>'+
+        '</div>'+
+      '</div>'+
+      '<button class="btn ghost pw-ltv-share" onclick="pwLtvShare()">'+ico('send')+' Поделиться результатом</button>'+
+    '</div>';
+  }
+
+  window.pwLtvShare = function(){
+    var n = ltvNumbers();
+    var txt = 'Я сэкономил '+num(n.total)+' ₽ на OKO за месяц · ≈ '+num(n.hours)+' часов свободного времени. Одно приложение вместо десяти. okoteam.top';
+    try{
+      if(navigator.share){
+        navigator.share({title:'OKO — сэкономил '+num(n.total)+' ₽', text:txt, url:'https://okoteam.top'});
+        return;
+      }
+    }catch(e){}
+    try{ if(navigator.clipboard) navigator.clipboard.writeText(txt); }catch(e){}
+    _toast('Текст скопирован — поделись в соцсети');
+  };
+
+  function ltvInject(){
+    var scr = document.getElementById('screen-profile');
+    if(!scr) return;
+    if(scr.querySelector('#pwLtv')) return;
+    var pad = scr.querySelector('.pad');
+    if(!pad) return;
+    /* вставляем перед section-h «Тарифы» либо перед pw-prof-band, или в конец */
+    var anchor = pad.querySelector('#pwProfBand') || pad.querySelector('.section-h') || null;
+    var wrap = document.createElement('div');
+    wrap.innerHTML = ltvWidgetHtml();
+    var node = wrap.firstElementChild;
+    if(anchor && anchor.parentNode === pad){
+      pad.insertBefore(node, anchor);
+    } else {
+      pad.appendChild(node);
+    }
+  }
+
+  /* Также добавим кнопки «Комбо-пакеты» и «Микро-подписки» рядом с LTV */
+  function bundlesEntryInject(){
+    var scr = document.getElementById('screen-profile');
+    if(!scr) return;
+    if(scr.querySelector('#bndEntry')) return;
+    var pad = scr.querySelector('.pad');
+    if(!pad) return;
+    var anchor = pad.querySelector('#pwLtv') || pad.querySelector('#pwProfBand') || null;
+    var wrap = document.createElement('div');
+    wrap.id = 'bndEntry';
+    wrap.className = 'bnd-entry';
+    wrap.innerHTML =
+      '<button class="bnd-entry-btn" onclick="bndOpenBundles()">'+
+        '<span class="bnd-entry-ic">'+ico('gift')+'</span>'+
+        '<span class="bnd-entry-tx"><b>Комбо-пакеты</b><small>Всё OKO, Стартовый, Про, Бизнес — до −40%</small></span>'+
+        '<span class="bnd-entry-chev">'+ico('chev')+'</span>'+
+      '</button>'+
+      '<button class="bnd-entry-btn" onclick="bndOpenMicroSubs()">'+
+        '<span class="bnd-entry-ic bnd-entry-ic-alt">'+ico('bolt')+'</span>'+
+        '<span class="bnd-entry-tx"><b>Микро-подписки</b><small>Только один продукт OKO · от 490 ₽/мес</small></span>'+
+        '<span class="bnd-entry-chev">'+ico('chev')+'</span>'+
+      '</button>';
+    if(anchor && anchor.parentNode === pad){
+      /* вставляем сразу после anchor */
+      if(anchor.nextSibling) pad.insertBefore(wrap, anchor.nextSibling);
+      else pad.appendChild(wrap);
+    } else {
+      pad.appendChild(wrap);
+    }
+  }
+
+  /* =========================================================
+     6) ГАРАНТИЯ 14 ДНЕЙ — плашка на checkout (sheet-pay)
+     ========================================================= */
+  function injectGuarantee(){
+    var view = document.getElementById('payView');
+    if(!view) return;
+    if(view.querySelector('.pw-14d-guar')) return;
+    var band = document.createElement('div');
+    band.className = 'pw-14d-guar';
+    band.innerHTML =
+      '<div class="pw-14d-ic">'+ico('check2')+'</div>'+
+      '<div class="pw-14d-tx"><b>Гарантия возврата 14 дней</b>'+
+        '<small>Не понравилось? Вернём деньги без вопросов в течение 14 дней.</small></div>';
+    /* вставляем над кнопкой Оплатить */
+    var payBtn = view.querySelector('button.btn');
+    var target = null;
+    /* найти финальную кнопку "Оплатить" */
+    Array.prototype.forEach.call(view.querySelectorAll('button.btn'), function(b){
+      if(/Оплатить/i.test(b.textContent||'')) target = b;
+    });
+    if(target && target.parentNode){
+      target.parentNode.insertBefore(band, target);
+    } else if(payBtn && payBtn.parentNode){
+      payBtn.parentNode.insertBefore(band, payBtn);
+    } else {
+      view.appendChild(band);
+    }
+  }
+
+  /* Патчим renderPay — после каждого рендера подсовываем плашку */
+  function patchRenderPay(){
+    if(typeof renderPay !== 'function') return;
+    if(renderPay.__pwGuarPatched) return;
+    var _prev = renderPay;
+    renderPay = function(){
+      var r = _prev.apply(this, arguments);
+      try{ injectGuarantee(); }catch(e){}
+      return r;
+    };
+    renderPay.__pwGuarPatched = true;
+  }
+
+  /* Также патчим renderMyProfile → инжектим LTV + entry + trial-бейдж */
+  function patchRenderMyProfile(){
+    if(typeof renderMyProfile !== 'function') return;
+    if(renderMyProfile.__pwExtrasPatched) return;
+    var _prev = renderMyProfile;
+    renderMyProfile = function(){
+      var r = _prev.apply(this, arguments);
+      try{ ltvInject(); }catch(e){}
+      try{ bundlesEntryInject(); }catch(e){}
+      try{ trialInjectBadge(); }catch(e){}
+      return r;
+    };
+    renderMyProfile.__pwExtrasPatched = true;
+  }
+
+  /* =========================================================
+     ИНИЦИАЛИЗАЦИЯ
+     ========================================================= */
+  function initExtras(){
+    trialCheckExpired();
+    patchRg2();
+    patchRg2Skip();
+    patchDoPay();
+    patchRenderPay();
+    patchRenderMyProfile();
+    trialMaybeRenew();
+    /* если профиль уже отрисован — вставим виджеты сразу */
+    setTimeout(function(){
+      try{ ltvInject(); }catch(e){}
+      try{ bundlesEntryInject(); }catch(e){}
+      try{ trialInjectBadge(); }catch(e){}
+    }, 400);
+  }
+  if(document.readyState==='loading') document.addEventListener('DOMContentLoaded', initExtras);
+  else initExtras();
+  /* повторная попытка — на случай если модули (registration, base) подгрузили функции позже */
+  setTimeout(initExtras, 900);
+  setTimeout(initExtras, 2400);
+
+  /* также перепроверяем trial каждую минуту (если юзер сидит долго — авто-даунгрейд сработает) */
+  setInterval(function(){
+    trialCheckExpired();
+    trialMaybeRenew();
+  }, 60*1000);
+
+})();

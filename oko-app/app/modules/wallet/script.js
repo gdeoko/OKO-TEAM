@@ -2448,6 +2448,423 @@ function w2RenderReceive(){
   setTimeout(walDrawRecvQR, 60);
 }
 
+/* =========================================================================
+   w2- REAL P2P: реальные внутренние переводы через backend api.php.
+   - WALLET.owner_email = PROFILE.email (ключ везде)
+   - GET wallet_balance при открытии экрана
+   - POST wallet_transfer с 1% комиссией OKO
+   - GET wallet_history — реальная выписка
+   - POST wallet_topup — Lava.top ссылка
+   - IndexedDB очередь оффлайн, автоотправка при онлайне
+   - PIN обязателен для сумм > 10 000 ₽ (реальная проверка перед fetch)
+   - Rate limit 5 tx/min на бэке; на клиенте — понятное сообщение
+   - Событие window «oko:wallet:receive» для notifs-plus
+   ========================================================================= */
+(function w2WalletRealInit(){
+  const API   = (typeof OKO_API !== 'undefined' && OKO_API) ? OKO_API : 'https://okoteam.top/api.php';
+  const FEE   = 0.01;
+  const PIN_T = 10000; // порог PIN
+  const w2SecureTxt = 'Через OKO Bank · комиссия 1%';
+
+  function w2OwnerEmail(){
+    try{
+      if(typeof PROFILE === 'undefined') return '';
+      return String(PROFILE.email || '').trim().toLowerCase();
+    }catch(e){ return ''; }
+  }
+  window.w2WalletOwnerEmail = w2OwnerEmail;
+
+  /* ---------- IndexedDB очередь оффлайн-переводов ---------- */
+  const IDB_NAME = 'oko-wallet-queue-v1', IDB_STORE = 'txq';
+  function w2Idb(){
+    return new Promise((res)=>{
+      try{
+        const rq = indexedDB.open(IDB_NAME, 1);
+        rq.onupgradeneeded = e => {
+          const db = e.target.result;
+          if(!db.objectStoreNames.contains(IDB_STORE))
+            db.createObjectStore(IDB_STORE, {keyPath:'id', autoIncrement:true});
+        };
+        rq.onsuccess = e => res(e.target.result);
+        rq.onerror   = ()=> res(null);
+      }catch(e){ res(null); }
+    });
+  }
+  async function w2QueuePush(tx){
+    const db = await w2Idb(); if(!db) return false;
+    return new Promise(res => {
+      try{
+        const t = db.transaction(IDB_STORE, 'readwrite');
+        t.objectStore(IDB_STORE).add(Object.assign({at: Date.now()}, tx));
+        t.oncomplete = ()=>res(true); t.onerror = ()=>res(false);
+      }catch(e){ res(false); }
+    });
+  }
+  async function w2QueueAll(){
+    const db = await w2Idb(); if(!db) return [];
+    return new Promise(res => {
+      try{
+        const t = db.transaction(IDB_STORE, 'readonly');
+        const rq = t.objectStore(IDB_STORE).getAll();
+        rq.onsuccess = ()=>res(rq.result || []); rq.onerror = ()=>res([]);
+      }catch(e){ res([]); }
+    });
+  }
+  async function w2QueueDel(id){
+    const db = await w2Idb(); if(!db) return;
+    return new Promise(res => {
+      try{
+        const t = db.transaction(IDB_STORE, 'readwrite');
+        t.objectStore(IDB_STORE).delete(id);
+        t.oncomplete = res; t.onerror = res;
+      }catch(e){ res(); }
+    });
+  }
+
+  /* ---------- API-обёртки ---------- */
+  async function w2Fetch(url, opts){
+    const ctrl = new AbortController();
+    const to = setTimeout(()=>ctrl.abort(), 15000);
+    try{
+      const r = await fetch(url, Object.assign({signal:ctrl.signal}, opts||{}));
+      clearTimeout(to);
+      let j;
+      try{ j = await r.json(); }catch(e){ j = {ok:false, error:'bad response'}; }
+      if(r.status === 429) { const err = new Error(j.error||'Слишком часто'); err.code=429; throw err; }
+      if(!j || !j.ok) throw new Error((j && j.error) || ('HTTP '+r.status));
+      return j;
+    } catch(e){ clearTimeout(to); throw e; }
+  }
+  async function w2ApiBalance(email){
+    return w2Fetch(API+'?action=wallet_balance&email='+encodeURIComponent(email));
+  }
+  async function w2ApiTransfer(from, to, amount, comment){
+    return w2Fetch(API+'?action=wallet_transfer', {
+      method:'POST', headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({from_email: from, to_nick_or_email: to, amount, comment: comment||''})
+    });
+  }
+  async function w2ApiHistory(email, limit){
+    return w2Fetch(API+'?action=wallet_history&email='+encodeURIComponent(email)+'&limit='+(limit||50));
+  }
+  async function w2ApiTopup(email, amount, method){
+    return w2Fetch(API+'?action=wallet_topup', {
+      method:'POST', headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({email, amount, method})
+    });
+  }
+  window.w2Api = {balance:w2ApiBalance, transfer:w2ApiTransfer, history:w2ApiHistory, topup:w2ApiTopup};
+
+  /* ---------- Слияние истории бэка в локальный леджер (без дублей по tx_id+dir) ---------- */
+  function w2MergeHistory(items){
+    if(!Array.isArray(items) || !items.length) return;
+    const seen = new Set();
+    (WALLET.ledger||[]).forEach(o => { if(o.tx_id) seen.add(o.tx_id + ':' + (o.dir || o.direction || o.t)); });
+    const add = [];
+    items.forEach(it => {
+      const key = it.tx_id + ':' + it.direction;
+      if(seen.has(key)) return;
+      seen.add(key);
+      const at = Date.parse((it.created_at||'').replace(' ','T')) || Date.now();
+      const amt = Number(it.amount) || 0;
+      if(it.direction === 'receive'){
+        add.push({t:'+', sum: amt, why: 'Перевод от '+it.from_email + (it.comment?' («'+it.comment+'»)':''), at, tx_id: it.tx_id, dir:'receive'});
+      } else if(it.direction === 'send'){
+        add.push({t:'-', sum: amt, why: 'Перевод @'+it.to_email + (it.comment?' («'+it.comment+'»)':''), at, tx_id: it.tx_id, dir:'send'});
+      } else if(it.direction === 'fee'){
+        add.push({t:'-', sum: amt, why: 'Комиссия OKO 1%', at, tx_id: it.tx_id, dir:'fee'});
+      } else if(it.direction === 'topup'){
+        add.push({t:'+', sum: amt, why: 'Пополнение · '+(it.comment||'Lava.top'), at, tx_id: it.tx_id, dir:'topup'});
+      }
+    });
+    if(add.length){
+      WALLET.ledger = add.concat(WALLET.ledger||[]);
+      WALLET.ledger.sort((a,b)=>b.at-a.at);
+      walletSave();
+    }
+  }
+
+  /* ---------- Синхронизация локального WALLET с бэком (skeleton-friendly) ---------- */
+  let w2SyncBusy = false, w2LastSyncAt = 0, w2LastBal = null;
+  async function w2Sync(force){
+    const email = w2OwnerEmail();
+    if(!email) return;
+    if(w2SyncBusy) return;
+    if(!force && Date.now() - w2LastSyncAt < 4000) return;
+    w2SyncBusy = true;
+    try{
+      const j = await w2ApiBalance(email);
+      const prev = WALLET.balance;
+      WALLET.balance    = j.balance;
+      WALLET.hold       = j.hold || 0;
+      WALLET.owner_email = email;
+      walletSave();
+      // событие получения средств (для notifs-plus и live-нотифа)
+      if(w2LastBal !== null && j.balance > w2LastBal){
+        const diff = j.balance - w2LastBal;
+        try{ window.dispatchEvent(new CustomEvent('oko:wallet:receive', {detail:{amount:diff, balance:j.balance, email}})); }catch(e){}
+        try{ walLiveNotify({who:'OKO Bank', title:'Пришло '+fmtMoney(diff), sub:'На лицевой счёт', sum:'+ '+fmtMoney(diff)}); }catch(e){}
+        try{ walFlash('in'); }catch(e){}
+        if(typeof NOTIFS !== 'undefined' && Array.isArray(NOTIFS)){
+          NOTIFS.unshift({ic:'money', who:'OKO Bank', t:'Пришло '+fmtMoney(diff)+' на счёт', time:'только что', g:'Сегодня', unread:true, act:()=>{ if(typeof showTab==='function') showTab('wallet'); }});
+          if(typeof updateNotifDot === 'function') updateNotifDot();
+        }
+      }
+      w2LastBal = j.balance;
+      try{
+        const h = await w2ApiHistory(email, 50);
+        if(h) w2MergeHistory(h.items);
+      }catch(e){}
+      try{ walletNotifyRender(); walUpdateChips(); }catch(e){}
+      w2LastSyncAt = Date.now();
+    } catch(e){
+      /* offline / api down — тихо, следующий тик попробует */
+    } finally { w2SyncBusy = false; }
+  }
+  window.w2WalletSync = w2Sync;
+
+  /* ---------- Skeleton (заглушка на время fetch) ---------- */
+  function w2ShowSkeleton(){
+    const bal = document.getElementById('walBalance');
+    if(bal && !bal.dataset.w2sk){
+      bal.dataset.w2sk = '1';
+      bal.style.opacity = '0.65';
+      setTimeout(()=>{ bal.style.opacity = ''; delete bal.dataset.w2sk; }, 900);
+    }
+  }
+
+  /* ---------- Перехват renderWallet: фоновый sync ---------- */
+  const _prevRenderWallet = window.renderWallet || renderWallet;
+  window.renderWallet = function(){
+    _prevRenderWallet();
+    if(w2OwnerEmail()){ w2ShowSkeleton(); w2Sync(); }
+  };
+  try{ renderWallet = window.renderWallet; }catch(e){}
+
+  /* ---------- Перехват walDoSend: реальный POST /wallet_transfer ---------- */
+  const _prevWalDoSend = window.walDoSend;
+  window.walDoSend = function(){
+    const s = walSendState;
+    if(!s.to){ toast('Укажи ник получателя'); return; }
+    if(!s.sum || s.sum <= 0){ toast('Укажи сумму перевода'); return; }
+    // считаем комиссию 1% — сумма+комиссия ≤ баланс
+    const fee   = Math.floor(s.sum * FEE);
+    const total = s.sum + fee;
+    if(total > WALLET.balance){
+      toast('Не хватает: нужно '+fmtMoney(total)+' (сумма+комиссия 1%)');
+      return;
+    }
+    // PIN обязателен на суммы > PIN_T
+    if(s.sum > PIN_T){
+      if(!WAL_X.pin){
+        showPopup({ico:'lock', title:'Нужен ПИН-код',
+          body:'Для перевода на сумму больше <b>'+fmtMoney(PIN_T)+'</b> нужно установить ПИН-код в разделе «Безопасность».',
+          actions:[
+            {label:'Настроить ПИН', onclick:()=>{ closeSheet(); w2Open('security'); setTimeout(walTogglePin, 350); }},
+            {label:'Отмена', ghost:true},
+          ]});
+        return;
+      }
+      walPinOpen('confirm', 'walSendView', ()=>{ openSheet('walSend'); w2DoRealSend(); });
+      return;
+    }
+    w2DoRealSend();
+  };
+
+  async function w2DoRealSend(){
+    const s = walSendState;
+    const email = w2OwnerEmail();
+    const v = document.getElementById('walSendView');
+    if(v) v.innerHTML = '<div style="text-align:center;padding:22px 0"><div class="spin"></div><p style="font-weight:700;margin-top:14px">Отправляем…</p><p class="dim" style="font-size:12px;margin-top:5px">'+w2SecureTxt+'</p></div>';
+    // офлайн или гость без email → очередь
+    if(!email){
+      if(v) v.innerHTML = '<div class="wal-ok-wrap"><div class="wal-ok" style="background:rgba(255,184,74,0.2);color:#FFB84A">'+I('lock')+'</div>'
+        +'<p style="font-weight:800;font-size:19px;margin-top:14px">Нужен email</p>'
+        +'<p class="dim" style="font-size:13px;margin-top:6px">Заверши регистрацию (добавь email), чтобы отправлять реальные P2P-переводы.</p>'
+        +'<div style="height:16px"></div>'
+        +'<button class="btn" onclick="closeSheet()">Хорошо</button></div>';
+      return;
+    }
+    if(!navigator.onLine){
+      await w2QueuePush({from:email, to:s.to, amount:s.sum, comment:s.note});
+      if(v) v.innerHTML = '<div class="wal-ok-wrap"><div class="wal-ok" style="background:rgba(255,184,74,0.2);color:#FFB84A">'+I('clock')+'</div>'
+        +'<p style="font-weight:800;font-size:19px;margin-top:14px">В очереди</p>'
+        +'<p class="dim" style="font-size:13px;margin-top:6px">Нет сети — отправим, как только появится соединение.</p>'
+        +'<div style="height:16px"></div>'
+        +'<button class="btn" onclick="closeSheet()">Хорошо</button></div>';
+      toast('Перевод в очереди — отправим при онлайне');
+      return;
+    }
+    try{
+      const r = await w2ApiTransfer(email, s.to, s.sum, s.note);
+      const why = 'Перевод @'+s.to + (s.note?' («'+s.note+'»)':'');
+      WALLET.balance = r.balance;
+      // локальная запись — с tx_id, чтобы не задублить при следующем sync
+      WALLET.ledger.unshift({t:'-', sum: r.amount, why, at: Date.now(), tx_id: r.tx_id, dir:'send'});
+      if(r.fee > 0){
+        WALLET.ledger.unshift({t:'-', sum: r.fee, why:'Комиссия OKO 1% · '+r.tx_id, at: Date.now(), tx_id: r.tx_id, dir:'fee'});
+      }
+      walletSave();
+      if(v) v.innerHTML = '<div class="wal-ok-wrap"><div class="wal-ok">'+I('check')+'</div>'
+        +'<p style="font-weight:800;font-size:19px;margin-top:14px">− '+fmtMoney(r.amount + (r.fee||0))+'</p>'
+        +'<p class="dim" style="font-size:13px;margin-top:6px">Перевод @'+esc(s.to)+' доставлен.<br>Комиссия OKO: <b>'+fmtMoney(r.fee||0)+'</b><br>Осталось: <b>'+fmtMoney(WALLET.balance)+'</b></p>'
+        +'<div style="font-size:11px;color:var(--dim);margin-top:8px">TX '+esc(r.tx_id)+'</div>'
+        +'<div style="height:16px"></div>'
+        +'<button class="btn" onclick="closeSheet()">Готово</button></div>';
+      renderWallet(); walFlash('out');
+      toast('Отправлено @'+s.to+': '+fmtMoney(r.amount));
+    } catch(e){
+      const msg = String((e && e.message) || e);
+      if(/recipient not found/i.test(msg))       toast('Получатель не найден в OKO');
+      else if(/insufficient/i.test(msg))         toast('Недостаточно средств на счёте');
+      else if(/cannot transfer to yourself/i.test(msg)) toast('Нельзя перевести самому себе');
+      else if(e && e.code === 429)               toast('Лимит: не более 5 переводов в минуту');
+      else if(!navigator.onLine){
+        await w2QueuePush({from:email, to:s.to, amount:s.sum, comment:s.note});
+        toast('Сеть пропала — перевод в очереди');
+      } else                                     toast('Ошибка перевода: '+msg);
+      walRenderSend();
+    }
+  }
+
+  /* ---------- Показ комиссии под кнопкой «Отправить» (пере-рендер-safe) ---------- */
+  const _prevWalSyncSendBtn = window.walSyncSendBtn;
+  window.walSyncSendBtn = function(){
+    if(_prevWalSyncSendBtn) _prevWalSyncSendBtn();
+    const s = walSendState;
+    const view = document.getElementById('walSendView'); if(!view) return;
+    let box = document.getElementById('w2SendFee');
+    if(!box){
+      const btn = document.getElementById('walSendBtn');
+      const btnWrap = btn ? btn.closest('button') : null;
+      const anchor = btnWrap || (view.querySelector('.btn'));
+      if(anchor && anchor.parentElement){
+        box = document.createElement('div');
+        box.id = 'w2SendFee';
+        box.style.cssText = 'font-size:12px;color:var(--dim);text-align:center;margin-top:6px;line-height:1.55;padding:0 6px';
+        anchor.parentElement.insertBefore(box, anchor.nextSibling);
+      }
+    }
+    if(box){
+      if(s.sum > 0){
+        const fee   = Math.floor(s.sum * FEE);
+        const total = s.sum + fee;
+        box.innerHTML =
+          'К зачислению получателю: <b style="color:var(--accent)">'+fmtMoney(s.sum)+'</b><br>'+
+          'Комиссия OKO 1%: <b>'+fmtMoney(fee)+'</b><br>'+
+          'Всего спишется: <b>'+fmtMoney(total)+'</b>' +
+          (s.sum > PIN_T ? '<br><span style="color:#FFB84A">При отправке потребуется ПИН-код</span>' : '');
+      } else box.innerHTML = '';
+    }
+  };
+
+  /* ---------- Guest warning: если открыл «Отправить» без email — предупредим ---------- */
+  const _prevWalOpenSend = window.walOpenSend;
+  window.walOpenSend = function(prefill){
+    _prevWalOpenSend(prefill);
+    if(!w2OwnerEmail()){
+      setTimeout(()=>{
+        const v = document.getElementById('walSendView');
+        if(!v || document.getElementById('w2SendGuestWarn')) return;
+        const warn = document.createElement('div');
+        warn.id = 'w2SendGuestWarn';
+        warn.style.cssText = 'background:rgba(255,184,74,0.12);border:1px solid rgba(255,184,74,0.35);border-radius:12px;padding:10px 12px;margin-bottom:10px;font-size:12.5px;color:#FFB84A';
+        warn.innerHTML = 'Реальные P2P-переводы работают после добавления email в профиль. Гостям — только UI-демо.';
+        v.insertBefore(warn, v.firstChild);
+      }, 40);
+    }
+  };
+
+  /* ---------- Оффлайн очередь: авто-flush при онлайне ---------- */
+  async function w2FlushQueue(){
+    const email = w2OwnerEmail(); if(!email || !navigator.onLine) return;
+    const q = await w2QueueAll();
+    for(const tx of q){
+      try{
+        const r = await w2ApiTransfer(email, tx.to, tx.amount, tx.comment||'');
+        await w2QueueDel(tx.id);
+        toast('Отправлено из очереди: '+tx.to+' · '+fmtMoney(tx.amount));
+      } catch(e){ break; /* следующий раз повторим */ }
+    }
+    w2Sync(true);
+  }
+  window.addEventListener('online', w2FlushQueue);
+  setTimeout(w2FlushQueue, 3000);
+
+  /* ---------- Перехват walDoTopup: реальный Lava.top для card/lava ---------- */
+  const _prevWalDoTopup = window.walDoTopup;
+  window.walDoTopup = async function(){
+    const email = w2OwnerEmail();
+    const s = walTopupState;
+    // если гость или не банковский метод — старая мок-логика (usdt/ton — реквизиты)
+    if(!email || (s.method !== 'card' && s.method !== 'lava')){
+      return _prevWalDoTopup();
+    }
+    if(!s.sum || s.sum <= 0){ toast('Укажи сумму пополнения'); return; }
+    const v = document.getElementById('walTopupView');
+    if(v) v.innerHTML = '<div style="text-align:center;padding:22px 0"><div class="spin"></div><p style="font-weight:700;margin-top:14px">Открываем Lava.top…</p></div>';
+    try{
+      const r = await w2ApiTopup(email, s.sum, s.method);
+      if(r && r.url){
+        if(v) v.innerHTML = '<div class="wal-ok-wrap"><div class="wal-ok" style="background:linear-gradient(135deg,#9AFF00,#7ECBEB);color:#000">'+I('bolt')+'</div>'
+          +'<p style="font-weight:800;font-size:19px;margin-top:14px">Счёт создан</p>'
+          +'<p class="dim" style="font-size:13px;margin-top:6px">Оплата откроется на Lava.top. После оплаты баланс обновится автоматически.</p>'
+          +'<div style="height:16px"></div>'
+          +'<a class="btn" href="'+r.url+'" target="_blank" rel="noopener" style="text-decoration:none">Открыть Lava.top на '+fmtMoney(r.amount)+'</a>'
+          +'<div style="height:8px"></div>'
+          +'<button class="btn ghost" onclick="closeSheet()">Позже</button></div>';
+        try{ window.open(r.url, '_blank', 'noopener'); }catch(e){}
+        return;
+      }
+    } catch(e){ /* fallback */ }
+    return _prevWalDoTopup();
+  };
+
+  /* ---------- PIN для вывода > 10 000: если PIN не установлен — требуем настроить ---------- */
+  const _prevWalDoWithdraw = window.walDoWithdraw;
+  window.walDoWithdraw = function(){
+    const s = walWdState;
+    if(s.sum > PIN_T && !WAL_X.pin){
+      showPopup({ico:'lock', title:'Нужен ПИН-код',
+        body:'Для вывода на сумму больше <b>'+fmtMoney(PIN_T)+'</b> нужно установить ПИН-код в разделе «Безопасность».',
+        actions:[
+          {label:'Настроить ПИН', onclick:()=>{ closeSheet(); w2Open('security'); setTimeout(walTogglePin, 350); }},
+          {label:'Отмена', ghost:true},
+        ]});
+      return;
+    }
+    return _prevWalDoWithdraw();
+  };
+
+  /* ---------- «Повторить перевод» на карточке транзакции ---------- */
+  const _prevWalRenderTx = window.walRenderTx;
+  window.walRenderTx = function(op){
+    _prevWalRenderTx(op);
+    // если это исходящий перевод — добавим кнопку «Повторить»
+    try{
+      const cat = walCat(op.why);
+      if(cat !== 'Переводы' || op.t !== '-') return;
+      const acts = document.querySelector('#walTxView .wal-tx-acts');
+      if(!acts || document.getElementById('w2RepeatBtn')) return;
+      // достаём ник из описания
+      const m = op.why.match(/@([A-Za-z0-9_.\-]+)/);
+      const nick = m ? m[1] : '';
+      if(!nick) return;
+      const btn = document.createElement('button');
+      btn.id = 'w2RepeatBtn'; btn.className = 'prim';
+      btn.innerHTML = '<svg class="i"><use href="#i-send"/></svg>Повторить';
+      btn.onclick = ()=>{ closeSheet(); setTimeout(()=>{ walOpenSend(nick); walSendState.sum = op.sum; walRenderSend(); }, 120); };
+      acts.insertBefore(btn, acts.firstChild);
+    }catch(e){}
+  };
+
+  /* ---------- Периодический poll: балансно-безопасно, только когда таб виден ---------- */
+  setInterval(()=>{ if(!document.hidden && w2OwnerEmail()) w2Sync(); }, 25000);
+
+  /* ---------- Первичный sync при загрузке (даёт email — сразу тянем реальные цифры) ---------- */
+  if(w2OwnerEmail()) setTimeout(()=>w2Sync(true), 800);
+})();
+
 /* ---------- самоинициализация ---------- */
 regTitle('wallet', 'Кошелёк');
 walInsertChips();

@@ -263,3 +263,61 @@
 
 /* Sparkline точки — вид ховер-подсказки */
 .pp-hero-spark .spot{fill:var(--lime);filter:drop-shadow(0 0 6px rgba(154,255,0,.6))}
+
+/* ============================================================
+   REFERRAL SQUARED — цели «приведи N клиентов → бонус»
+   ============================================================ */
+.pp-goals{padding:14px 14px 12px;margin-top:12px;background:var(--surface);
+  border:1px solid var(--border);border-radius:16px;position:relative;overflow:hidden}
+.pp-goals::before{content:'';position:absolute;inset:auto -25% -70% -25%;height:180px;
+  background:radial-gradient(ellipse at 50% 50%, rgba(154,255,0,.14) 0%, transparent 60%);pointer-events:none}
+.pp-goals-h{display:flex;gap:12px;align-items:flex-start;position:relative;margin-bottom:8px}
+.pp-goals-title{display:flex;gap:10px;align-items:flex-start;flex:1;min-width:0}
+.pp-goals-title-ic{width:36px;height:36px;border-radius:11px;background:var(--lime-dim);color:var(--accent);
+  display:flex;align-items:center;justify-content:center;flex:none}
+.pp-goals-title-ic svg.i{width:16px;height:16px}
+.pp-goals-title b{display:block;font-size:14px;font-weight:800;color:var(--text)}
+.pp-goals-title small{display:block;font-size:11.5px;color:var(--dim);margin-top:2px;line-height:1.4}
+.pp-goals-count{text-align:right;flex:none}
+.pp-goals-count b{font-family:var(--font-display,'Bebas Neue',sans-serif);font-size:28px;color:var(--accent);line-height:1;letter-spacing:.01em}
+.pp-goals-count span{display:block;font-size:10.5px;color:var(--dim);margin-top:1px;font-weight:600}
+.pp-goals-overall{position:relative;height:6px;border-radius:99px;background:var(--border);overflow:hidden;margin-bottom:12px}
+.pp-goals-overall i{display:block;height:100%;background:linear-gradient(90deg,var(--lime) 0%,#c4ff5c 100%);border-radius:99px;transition:width .8s ease}
+.pp-goals-list{display:flex;flex-direction:column;gap:10px;position:relative}
+.pp-goal{background:var(--raised);border:1px solid var(--border);border-radius:12px;padding:10px 12px;transition:border-color .2s}
+.pp-goal.done{border-color:var(--lime);background:linear-gradient(180deg,rgba(154,255,0,.08) 0%,var(--raised) 100%)}
+.pp-goal-row{display:grid;grid-template-columns:32px 1fr auto;gap:10px;align-items:center;margin-bottom:8px}
+.pp-goal-ic{width:32px;height:32px;border-radius:9px;background:var(--surface);border:1px solid var(--border);
+  color:var(--accent);display:flex;align-items:center;justify-content:center}
+.pp-goal-ic svg.i{width:15px;height:15px}
+.pp-goal.done .pp-goal-ic{background:var(--lime);color:#0a0a0a;border-color:var(--lime)}
+.pp-goal-body{min-width:0}
+.pp-goal-h{font-size:13px;color:var(--text);font-weight:600;line-height:1.3}
+.pp-goal-h b{color:var(--accent);font-weight:800}
+.pp-goal-r{margin-top:3px}
+.pp-goal-tag{display:inline-block;font-size:10.5px;font-weight:800;letter-spacing:.03em;
+  background:var(--lime-dim);color:var(--accent);border-radius:99px;padding:2px 8px}
+.pp-goal-count{text-align:right}
+.pp-goal-count b{font-family:var(--font-display,'Bebas Neue',sans-serif);font-size:20px;color:var(--text);line-height:1}
+.pp-goal-count span{display:block;font-size:10.5px;color:var(--dim);margin-top:1px}
+.pp-goal.done .pp-goal-count b{color:var(--accent)}
+.pp-goal-bar{height:5px;border-radius:99px;background:var(--border);overflow:hidden;margin-bottom:6px}
+.pp-goal-bar i{display:block;height:100%;background:linear-gradient(90deg,var(--lime) 0%,#c4ff5c 100%);border-radius:99px;transition:width .8s ease}
+.pp-goal-status{font-size:11.5px;line-height:1.4}
+.pp-goal-left{color:var(--dim)}
+.pp-goal-left b{color:var(--accent);font-weight:800}
+.pp-goal-done{color:var(--accent);font-weight:700;display:inline-flex;align-items:center;gap:5px}
+.pp-goal-done svg.i{width:12px;height:12px}
+.pp-goals-actions{margin-top:12px;position:relative}
+.pp-goals-actions .btn{width:100%;font-size:12.5px;padding:10px 12px}
+.pp-goals-actions .btn svg.i{width:12px;height:12px}
+
+/* Награда — попап после достижения */
+.pp-goal-reward-box{display:flex;gap:10px;align-items:center;padding:10px 12px;background:var(--lime-dim);
+  border:1px solid var(--lime);border-radius:12px;margin-top:6px}
+.pp-goal-reward-ic{width:36px;height:36px;border-radius:10px;background:var(--lime);color:#0a0a0a;
+  display:flex;align-items:center;justify-content:center;flex:none}
+.pp-goal-reward-ic svg.i{width:16px;height:16px}
+.pp-goal-reward-tx b{display:block;font-size:13.5px;font-weight:800;color:var(--accent)}
+.pp-goal-reward-tx small{display:block;font-size:11px;color:var(--dim);margin-top:2px}
+

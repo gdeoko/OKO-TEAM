@@ -594,3 +594,205 @@
 .pw-disc-row .chip.on{background:var(--lime-dim);border-color:var(--lime);color:var(--accent)}
 .pw-disc-row .chip i{font-style:normal;color:var(--accent);font-weight:800;margin-left:4px}
 
+/* ============================================================
+   PAYWALL EXTRAS: универсальная модалка + trial + cross-sell +
+   bundles + micro-subs + LTV + 14-day guarantee
+   ============================================================ */
+
+/* ------- Универсальная модалка (bottom-sheet + center на десктопе) ------- */
+.pw-modal{position:fixed;inset:0;z-index:120;display:flex;align-items:flex-end;justify-content:center;
+  background:rgba(0,0,0,.66);backdrop-filter:blur(4px);opacity:0;transition:opacity .22s ease}
+@media(min-width:560px){.pw-modal{align-items:center}}
+.pw-modal.on{opacity:1}
+.pw-modal-card{position:relative;width:100%;max-width:460px;background:var(--surface);
+  border:1px solid var(--border);border-radius:var(--r-lg) var(--r-lg) 0 0;overflow:hidden;
+  box-shadow:0 -20px 70px rgba(0,0,0,.6);max-height:94dvh;overflow-y:auto;
+  transform:translateY(40px);transition:transform .32s cubic-bezier(.25,1,.4,1)}
+@media(min-width:560px){.pw-modal-card{border-radius:var(--r-lg);transform:scale(.96)}}
+.pw-modal.on .pw-modal-card{transform:translateY(0)}
+@media(min-width:560px){.pw-modal.on .pw-modal-card{transform:scale(1)}}
+.pw-modal-x{position:absolute;top:12px;right:12px;z-index:5;width:34px;height:34px;border-radius:50%;
+  background:rgba(0,0,0,.42);backdrop-filter:blur(6px);display:flex;align-items:center;justify-content:center;
+  color:#fff;transition:transform .15s,background .2s}
+.pw-modal-x svg{width:16px;height:16px;transform:rotate(45deg)}
+.pw-modal-x:active{transform:scale(.9)}
+:root[data-theme="light"] .pw-modal-x{background:rgba(0,0,0,.55)}
+
+/* ------- FREE-TRIAL PRO ------- */
+.pw-trial{padding:0}
+.pw-trial-hero{position:relative;padding:28px 20px 22px;text-align:center;overflow:hidden;
+  background:linear-gradient(160deg,#0a0a0a 0%,#1a2810 55%,#0a0a0a 100%)}
+.pw-trial-ray{position:absolute;inset:auto -20% -60% -20%;height:220%;
+  background:radial-gradient(ellipse at 50% 50%, rgba(154,255,0,.28) 0%, transparent 55%);pointer-events:none;
+  animation:pwTrialPulse 4.5s ease-in-out infinite alternate}
+@keyframes pwTrialPulse{from{transform:scale(.9);opacity:.65}to{transform:scale(1.1);opacity:1}}
+.pw-trial-badge{position:relative;width:60px;height:60px;margin:0 auto 12px;border-radius:50%;
+  display:flex;align-items:center;justify-content:center;
+  background:rgba(0,0,0,.42);border:2px solid var(--lime);box-shadow:0 0 32px rgba(154,255,0,.4)}
+.pw-trial-badge svg{width:28px;height:28px;color:var(--lime)}
+.pw-trial-days{position:relative;display:inline-flex;align-items:baseline;gap:8px;margin-bottom:6px}
+.pw-trial-days b{font-family:var(--font-display,'Bebas Neue',sans-serif);font-size:82px;line-height:.9;
+  color:var(--lime);letter-spacing:.02em;text-shadow:0 0 24px rgba(154,255,0,.5)}
+.pw-trial-days span{font-size:16px;font-weight:800;color:#fff;letter-spacing:.06em;text-transform:uppercase}
+.pw-trial-h1{position:relative;font-family:var(--font-display,'Bebas Neue',sans-serif);font-size:36px;
+  color:#fff;letter-spacing:.02em;line-height:1;margin-bottom:6px}
+:root[data-theme="light"] .pw-trial-hero{background:linear-gradient(160deg,#0f1608 0%,#1b2810 55%,#0f1608 100%)}
+.pw-trial-sub{position:relative;font-size:13.5px;color:rgba(255,255,255,.72);line-height:1.45;
+  max-width:340px;margin:0 auto}
+.pw-trial-body{padding:16px 18px calc(18px + env(safe-area-inset-bottom))}
+.pw-trial-list{list-style:none;padding:0;margin:0 0 14px;display:flex;flex-direction:column;gap:10px}
+.pw-trial-list li{display:flex;gap:10px;align-items:flex-start;font-size:13.5px;line-height:1.45;color:var(--dim)}
+.pw-trial-list li b{color:var(--text)}
+.pw-trial-list li svg{width:16px;height:16px;color:var(--lime);flex:none;margin-top:2px}
+.pw-trial-note{display:flex;gap:8px;align-items:flex-start;font-size:11.5px;color:var(--dim);
+  background:var(--raised);border:1px solid var(--border);border-radius:10px;padding:9px 11px;margin-bottom:12px;line-height:1.45}
+.pw-trial-note svg{width:13px;height:13px;color:var(--accent);flex:none;margin-top:1px}
+.pw-trial-cta{margin-bottom:8px}
+.pw-trial-skip{opacity:.7}
+
+/* индикатор Trial PRO в pw-prof-band */
+.pw-trial-badge-inline{display:inline-flex;align-items:center;gap:4px;margin-left:6px;
+  background:var(--lime-dim);color:var(--accent);border:1px solid var(--lime);
+  border-radius:99px;padding:2px 8px;font-size:10.5px;font-weight:800;letter-spacing:.04em}
+.pw-trial-badge-inline svg{width:10px;height:10px;color:var(--accent)}
+
+/* «Продли со скидкой» — цена в попапе */
+.pw-trial-renew-box{position:relative;display:flex;align-items:center;gap:12px;padding:14px 16px;
+  background:var(--raised);border:1px solid var(--border);border-radius:14px;margin-bottom:6px}
+.pw-trial-renew-old{font-size:14px;color:var(--dim);text-decoration:line-through}
+.pw-trial-renew-new b{font-size:26px;color:var(--accent);font-weight:800;letter-spacing:-.01em}
+.pw-trial-renew-new span{display:block;font-size:11px;color:var(--dim);margin-top:1px}
+.pw-trial-renew-tag{margin-left:auto;background:var(--lime);color:#0a0a0a;font-size:12px;font-weight:800;
+  border-radius:99px;padding:4px 10px;letter-spacing:.03em}
+
+/* ------- CROSS-SELL ------- */
+.pw-cross{padding:22px 18px calc(18px + env(safe-area-inset-bottom))}
+.pw-cross-top{display:flex;align-items:center;gap:10px;margin-bottom:10px}
+.pw-cross-ic{width:44px;height:44px;border-radius:12px;display:flex;align-items:center;justify-content:center;
+  background:var(--lime-dim);color:var(--accent)}
+.pw-cross-ic svg{width:20px;height:20px}
+.pw-cross-pill{margin-left:auto;background:var(--lime);color:#0a0a0a;font-size:11px;font-weight:800;
+  border-radius:99px;padding:5px 10px;letter-spacing:.03em}
+.pw-cross-h{font-family:var(--font-display,'Bebas Neue',sans-serif);font-size:26px;line-height:1;
+  letter-spacing:.01em;margin:4px 0 4px}
+.pw-cross-sub{font-size:13.5px;color:var(--dim);line-height:1.5;margin-bottom:12px}
+.pw-cross-list{list-style:none;padding:0;margin:0 0 14px;display:flex;flex-direction:column;gap:8px}
+.pw-cross-list li{display:flex;gap:9px;align-items:flex-start;font-size:13px;line-height:1.45;color:var(--text)}
+.pw-cross-list li svg{width:14px;height:14px;color:var(--accent);flex:none;margin-top:3px}
+.pw-cross-price{display:flex;align-items:baseline;gap:10px;padding:12px 14px;background:var(--raised);
+  border:1px solid var(--border);border-radius:14px;margin-bottom:12px}
+.pw-cross-old{font-size:15px;color:var(--dim);text-decoration:line-through}
+.pw-cross-new{font-size:28px;font-weight:800;color:var(--accent);letter-spacing:-.01em}
+.pw-cross-save{margin-left:auto;background:var(--lime-dim);color:var(--accent);font-size:12px;font-weight:800;
+  border-radius:99px;padding:4px 10px;border:1px solid var(--lime)}
+.pw-cross-cta{margin-bottom:8px}
+
+/* ------- BUNDLES / MICRO-SUBS ------- */
+.bnd-sheet{padding:22px 18px calc(20px + env(safe-area-inset-bottom))}
+.bnd-head{margin-bottom:14px;padding-right:36px}
+.bnd-head-k{font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:var(--accent);font-weight:800;
+  display:flex;align-items:center;gap:6px}
+.bnd-head-k svg{width:12px;height:12px}
+.bnd-head h2{font-family:var(--font-display,'Bebas Neue',sans-serif);font-size:26px;line-height:1;
+  letter-spacing:.01em;margin:6px 0 4px}
+.bnd-head p{font-size:13px;color:var(--dim);line-height:1.5}
+.bnd-list{display:flex;flex-direction:column;gap:12px}
+.bnd-card{position:relative;background:var(--raised);border:1px solid var(--border);border-radius:16px;
+  padding:14px 14px 12px;overflow:hidden}
+.bnd-card::before{content:'';position:absolute;inset:auto -30% -60% -30%;height:120px;
+  background:radial-gradient(ellipse at 50% 50%, rgba(154,255,0,.14) 0%, transparent 60%);pointer-events:none}
+.bnd-card-top{display:flex;align-items:center;gap:8px;margin-bottom:8px;position:relative}
+.bnd-card-ic{width:34px;height:34px;border-radius:10px;background:var(--lime-dim);color:var(--accent);
+  display:flex;align-items:center;justify-content:center}
+.bnd-card-ic svg{width:16px;height:16px}
+.bnd-card-tag{font-size:11px;color:var(--dim);font-weight:700;letter-spacing:.03em}
+.bnd-card-disc{margin-left:auto;background:var(--lime);color:#0a0a0a;font-size:11px;font-weight:800;
+  border-radius:99px;padding:4px 9px;letter-spacing:.03em}
+.bnd-card-h{font-family:var(--font-display,'Bebas Neue',sans-serif);font-size:24px;line-height:1;
+  letter-spacing:.01em;margin:2px 0 8px;position:relative}
+.bnd-card-list{list-style:none;padding:0;margin:0 0 12px;display:flex;flex-direction:column;gap:6px;position:relative}
+.bnd-card-list li{display:flex;gap:8px;align-items:flex-start;font-size:12.5px;color:var(--text);line-height:1.4}
+.bnd-card-list li svg{width:12px;height:12px;color:var(--accent);flex:none;margin-top:3px}
+.bnd-card-price{display:flex;align-items:baseline;gap:8px;padding:10px 12px;background:var(--surface);
+  border:1px solid var(--border);border-radius:12px;margin-bottom:10px;position:relative}
+.bnd-old{font-size:13px;color:var(--dim);text-decoration:line-through}
+.bnd-new{margin-left:auto}
+.bnd-new b{font-size:22px;font-weight:800;color:var(--accent);letter-spacing:-.01em}
+.bnd-new span{font-size:11px;color:var(--dim);margin-left:2px}
+.bnd-cta{position:relative}
+.bnd-note{margin-top:14px;font-size:11.5px;color:var(--dim);text-align:center;
+  display:flex;gap:6px;align-items:center;justify-content:center}
+.bnd-note svg{width:12px;height:12px;color:var(--accent)}
+
+/* Микро-подписки — компакт-строка */
+.bnd-micro-list{display:flex;flex-direction:column;gap:10px}
+.bnd-micro-card{display:grid;grid-template-columns:40px 1fr auto;gap:10px;align-items:flex-start;
+  background:var(--raised);border:1px solid var(--border);border-radius:14px;padding:12px}
+.bnd-micro-ic{width:40px;height:40px;border-radius:10px;background:var(--lime-dim);color:var(--accent);
+  display:flex;align-items:center;justify-content:center}
+.bnd-micro-ic svg{width:18px;height:18px}
+.bnd-micro-body{min-width:0}
+.bnd-micro-h{font-size:14px;font-weight:800;color:var(--text)}
+.bnd-micro-sub{font-size:12px;color:var(--dim);margin-top:1px;line-height:1.4}
+.bnd-micro-feats{list-style:none;padding:0;margin:8px 0 0;display:flex;flex-direction:column;gap:4px}
+.bnd-micro-feats li{display:flex;gap:6px;align-items:flex-start;font-size:11.5px;color:var(--dim);line-height:1.35}
+.bnd-micro-feats li svg{width:10px;height:10px;color:var(--accent);flex:none;margin-top:3px}
+.bnd-micro-price{text-align:right;display:flex;flex-direction:column;align-items:flex-end;gap:6px}
+.bnd-micro-price b{font-family:var(--font-display,'Bebas Neue',sans-serif);font-size:24px;color:var(--accent);line-height:1;letter-spacing:.01em}
+.bnd-micro-price span{font-size:10.5px;color:var(--dim);margin-top:-3px}
+.bnd-micro-cta{padding:8px 12px;font-size:12px;white-space:nowrap;min-width:104px}
+.bnd-micro-cta svg{width:11px;height:11px}
+
+/* Entry-кнопки в профиле (Комбо-пакеты / Микро-подписки) */
+.bnd-entry{display:flex;flex-direction:column;gap:8px;margin:10px 0 6px}
+.bnd-entry-btn{display:grid;grid-template-columns:40px 1fr 18px;gap:12px;align-items:center;
+  background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:11px 13px;
+  cursor:pointer;text-align:left;transition:border-color .18s,transform .12s,background .18s}
+.bnd-entry-btn:active{transform:scale(.99)}
+.bnd-entry-btn:hover{border-color:var(--lime);background:var(--raised)}
+.bnd-entry-ic{width:40px;height:40px;border-radius:12px;background:var(--lime-dim);color:var(--accent);
+  display:flex;align-items:center;justify-content:center}
+.bnd-entry-ic-alt{background:linear-gradient(135deg,#9AFF00 0%,#7bcf00 100%);color:#0a0a0a}
+.bnd-entry-ic svg{width:18px;height:18px}
+.bnd-entry-tx{min-width:0}
+.bnd-entry-tx b{display:block;font-size:14px;font-weight:800;color:var(--text)}
+.bnd-entry-tx small{display:block;font-size:11.5px;color:var(--dim);margin-top:2px;line-height:1.4}
+.bnd-entry-chev{color:var(--dim);display:flex;align-items:center;justify-content:center}
+.bnd-entry-chev svg{width:14px;height:14px;transform:rotate(-90deg)}
+
+/* ------- LTV report card ------- */
+.pw-ltv{margin:14px 0 6px;padding:16px 16px 14px;background:var(--surface);border:1px solid var(--border);
+  border-radius:16px;position:relative;overflow:hidden}
+.pw-ltv::before{content:'';position:absolute;inset:auto -20% -60% -20%;height:180px;
+  background:radial-gradient(ellipse at 30% 50%, rgba(154,255,0,.18) 0%, transparent 60%);pointer-events:none}
+.pw-ltv-head{display:flex;gap:11px;align-items:flex-start;margin-bottom:8px;position:relative}
+.pw-ltv-ic{width:38px;height:38px;border-radius:11px;background:var(--lime-dim);color:var(--accent);
+  display:flex;align-items:center;justify-content:center;flex:none}
+.pw-ltv-ic svg{width:18px;height:18px}
+.pw-ltv-cap b{display:block;font-size:14px;font-weight:800;color:var(--text)}
+.pw-ltv-cap small{display:block;font-size:11.5px;color:var(--dim);margin-top:2px;line-height:1.4}
+.pw-ltv-big{font-family:var(--font-display,'Bebas Neue',sans-serif);font-size:46px;line-height:1;
+  letter-spacing:.01em;color:var(--accent);margin:8px 0 6px;position:relative;
+  text-shadow:0 2px 20px rgba(154,255,0,.35)}
+.pw-ltv-hours{font-size:12px;color:var(--dim);display:flex;align-items:center;gap:5px;margin-bottom:12px;position:relative}
+.pw-ltv-hours svg{width:12px;height:12px;color:var(--accent)}
+.pw-ltv-split{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:10px;position:relative}
+.pw-ltv-cell{background:var(--raised);border:1px solid var(--border);border-radius:12px;padding:10px 11px}
+.pw-ltv-c-l{font-size:10.5px;color:var(--dim);font-weight:700;letter-spacing:.03em;text-transform:uppercase}
+.pw-ltv-c-v{font-size:17px;font-weight:800;color:var(--text);letter-spacing:-.01em;margin:3px 0 6px}
+.pw-ltv-bar{height:5px;border-radius:99px;background:var(--border);overflow:hidden}
+.pw-ltv-bar i{display:block;height:100%;background:linear-gradient(90deg,var(--lime) 0%,#c4ff5c 100%);
+  border-radius:99px;transition:width .8s ease}
+.pw-ltv-share{position:relative;padding:9px 12px;font-size:12.5px;width:100%}
+.pw-ltv-share svg{width:12px;height:12px}
+
+/* ------- 14-day guarantee banner на checkout ------- */
+.pw-14d-guar{display:flex;gap:10px;align-items:flex-start;background:var(--lime-dim);
+  border:1px solid var(--lime);border-radius:12px;padding:10px 12px;margin:12px 0 10px}
+.pw-14d-ic{width:26px;height:26px;border-radius:8px;background:var(--lime);color:#0a0a0a;
+  display:flex;align-items:center;justify-content:center;flex:none}
+.pw-14d-ic svg{width:13px;height:13px}
+.pw-14d-tx b{display:block;font-size:13px;color:var(--accent);font-weight:800}
+.pw-14d-tx small{display:block;font-size:11.5px;color:var(--dim);margin-top:2px;line-height:1.4}
+:root[data-theme="light"] .pw-14d-guar{background:rgba(154,255,0,.12)}
+

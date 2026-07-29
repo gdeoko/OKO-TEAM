@@ -163,3 +163,60 @@ async function broadcastToClients(msg){
   const list = await self.clients.matchAll({ includeUncontrolled: true, type: 'window' });
   list.forEach(c => { try { c.postMessage(msg); } catch (e) {} });
 }
+
+/* ---------- Web Push: показ уведомления (VAPID) ---------- */
+self.addEventListener('push', event => {
+  let data = {};
+  try {
+    if (event.data) {
+      const txt = event.data.text();
+      try { data = JSON.parse(txt); }
+      catch (e) { data = { title: 'OKO', body: txt }; }
+    }
+  } catch (e) { data = {}; }
+
+  const title = data.title || 'OKO';
+  const opts = {
+    body:    data.body || '',
+    icon:    data.icon    || '/oko-icon-512.png',
+    badge:   data.badge   || '/oko-icon-192.png',
+    image:   data.image   || undefined,
+    tag:     data.tag     || 'oko',
+    renotify: data.renotify != null ? !!data.renotify : true,
+    requireInteraction: !!data.requireInteraction,
+    silent:   !!data.silent,
+    vibrate:  data.vibrate  || [80, 40, 80],
+    actions:  Array.isArray(data.actions) ? data.actions : [],
+    data: {
+      url:    data.url    || '/',
+      cat:    data.cat    || null,
+      pushId: data.pushId || null
+    }
+  };
+  event.waitUntil(self.registration.showNotification(title, opts));
+});
+
+/* Клик по уведомлению — фокус на уже открытую вкладку OKO или открытие новой */
+self.addEventListener('notificationclick', event => {
+  event.notification.close();
+  const targetUrl = (event.notification.data && event.notification.data.url) || '/';
+  event.waitUntil((async () => {
+    const list = await self.clients.matchAll({ type: 'window', includeUncontrolled: true });
+    for (const c of list) {
+      try {
+        const u = new URL(c.url);
+        if (u.origin === self.location.origin) {
+          await c.focus();
+          try { c.postMessage({ type: 'oko-push-click', url: targetUrl, action: event.action || '', data: event.notification.data || {} }); } catch (e) {}
+          return;
+        }
+      } catch (e) {}
+    }
+    try { await self.clients.openWindow(targetUrl); } catch (e) {}
+  })());
+});
+
+/* iOS/Safari шлёт pushsubscriptionchange — просим страницу пере-подписаться */
+self.addEventListener('pushsubscriptionchange', event => {
+  event.waitUntil(broadcastToClients({ type: 'oko-push-resubscribe' }));
+});

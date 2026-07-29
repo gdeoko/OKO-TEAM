@@ -1148,3 +1148,218 @@
   setTimeout(()=>{ ppRender(); renderPromoGrid(); }, 100);
   setTimeout(()=>{ ppRender(); renderPromoGrid(); }, 600);
 })();
+
+/* ============================================================
+   REFERRAL SQUARED (pp-goals) — Приведи N клиентов PRO → бонус
+   ============================================================ */
+(function referralSquared(){
+  'use strict';
+
+  function ico(n){ return '<svg class="i"><use href="#i-'+n+'"/></svg>'; }
+  function esc(t){ var d=document.createElement('div'); d.textContent=String(t==null?'':t); return d.innerHTML; }
+  function _toast(m){ if(typeof toast==='function') toast(m); }
+
+  var GOALS_KEY   = 'oko-pp-goals-v1';
+  var CLAIM_KEY   = 'oko-pp-goals-claimed-v1';
+  var COUNT_KEY   = 'oko-pp-goals-count-v1';
+
+  var GOALS = [
+    {
+      id:'g3',
+      need: 3,
+      reward: '+3 месяца PRO бесплатно',
+      short: '+3 мес PRO',
+      icon: 'crown',
+      body: 'Приведи 3 клиентов на тариф PRO и получи <b>3 месяца PRO бесплатно</b>.',
+      afterTier: null,      /* не апгрейдит tier, только продлевает */
+      grantMonths: 3,
+    },
+    {
+      id:'g10',
+      need: 10,
+      reward: 'PRO навсегда',
+      short: 'PRO навсегда',
+      icon: 'bolt',
+      body: 'Приведи 10 клиентов на PRO — <b>PRO становится твоим навсегда</b>. Никаких списаний.',
+      afterTier: 'PRO',
+      grantMonths: 0,
+    },
+    {
+      id:'g30',
+      need: 30,
+      reward: 'BUSINESS навсегда',
+      short: 'BUSINESS навсегда',
+      icon: 'rocket',
+      body: 'Приведи 30 клиентов на PRO — получаешь <b>BUSINESS навсегда</b> с контент-заводом, академией премиум и белым лейблом.',
+      afterTier: 'BUSINESS',
+      grantMonths: 0,
+    },
+  ];
+
+  /* --- state --- */
+  function loadCount(){
+    /* число приведённых на PRO. в live-версии — из партнёрского бэка */
+    try{
+      var v = parseInt(localStorage.getItem(COUNT_KEY)||'',10);
+      if(!isNaN(v) && v>=0) return v;
+    }catch(e){}
+    /* демо-значение — 4 клиента, чтобы был виден прогресс к 10 */
+    return 4;
+  }
+  function saveCount(n){ try{ localStorage.setItem(COUNT_KEY, String(n)); }catch(e){} }
+  function loadClaimed(){
+    try{ return JSON.parse(localStorage.getItem(CLAIM_KEY)||'[]')||[]; }catch(e){ return []; }
+  }
+  function saveClaimed(arr){ try{ localStorage.setItem(CLAIM_KEY, JSON.stringify(arr)); }catch(e){} }
+
+  window.ppGoalsGetCount = loadCount;
+  window.ppGoalsSetCount = function(n){
+    n = Math.max(0, parseInt(n,10)||0);
+    saveCount(n);
+    autoClaim();
+    render();
+  };
+
+  /* Автозачисление при достижении — вызывается при каждом заходе и при изменении count */
+  function autoClaim(){
+    var count = loadCount();
+    var claimed = loadClaimed();
+    GOALS.forEach(function(g){
+      if(count >= g.need && claimed.indexOf(g.id) < 0){
+        claimed.push(g.id);
+        applyGoalReward(g);
+      }
+    });
+    saveClaimed(claimed);
+  }
+
+  function applyGoalReward(g){
+    /* поднимаем tier если нужно */
+    if(g.afterTier && typeof PROFILE !== 'undefined'){
+      var order = ['FREE','START','PRO','BUSINESS','BUSINESS_PRO','MAX'];
+      var cur = String(PROFILE.tier||'FREE').replace(/\s+/g,'_').toUpperCase();
+      var iCur = order.indexOf(cur); if(iCur<0) iCur = 0;
+      var iNew = order.indexOf(g.afterTier);
+      if(iNew > iCur){
+        PROFILE.tier = g.afterTier === 'BUSINESS' ? 'BUSINESS' : (g.afterTier === 'PRO' ? 'PRO' : g.afterTier);
+      }
+      try{ localStorage.setItem('oko-pp-goal-perma-'+g.id, '1'); }catch(e){}
+    }
+    if(g.grantMonths > 0){
+      /* «+N месяцев PRO» — записываем срок, PROFILE.tier временно PRO */
+      try{
+        var raw = localStorage.getItem('oko-pp-goal-months-pro')||'0';
+        var ms = parseInt(raw,10)||0;
+        ms += g.grantMonths * 30 * 24 * 3600 * 1000;
+        var until = Math.max(Date.now(), ms > 1e12 ? ms : (Date.now() + g.grantMonths*30*24*3600*1000));
+        localStorage.setItem('oko-pp-goal-months-pro', String(until));
+      }catch(e){}
+      if(typeof PROFILE !== 'undefined'){
+        var cur = String(PROFILE.tier||'FREE').replace(/\s+/g,'_').toUpperCase();
+        if(cur === 'FREE' || cur === 'START') PROFILE.tier = 'PRO';
+      }
+    }
+    try{ if(typeof renderMyProfile==='function') renderMyProfile(); }catch(e){}
+    setTimeout(function(){
+      if(typeof showPopup === 'function'){
+        showPopup({
+          ico: g.icon,
+          title: 'Награда за партнёрство',
+          body: '<p style="font-size:13.5px;line-height:1.55;margin-bottom:8px">Ты выполнил цель <b>«приведи '+g.need+' клиентов на PRO»</b>.</p>'+
+                '<div class="pp-goal-reward-box">'+
+                  '<div class="pp-goal-reward-ic">'+ico(g.icon)+'</div>'+
+                  '<div class="pp-goal-reward-tx"><b>'+esc(g.reward)+'</b><small>зачислено автоматически</small></div>'+
+                '</div>',
+          actions:[{label:'Отлично'}],
+        });
+      } else {
+        _toast('Награда: '+g.reward);
+      }
+    }, 500);
+  }
+
+  /* --- рендер блока целей внутри партнёрского экрана --- */
+  function goalsHtml(){
+    var count = loadCount();
+    var claimed = loadClaimed();
+    var totalNeed = GOALS[GOALS.length-1].need;
+    var overallPct = Math.min(100, Math.round(count/totalNeed*100));
+    return '<div class="pp-goals-h">'+
+        '<div class="pp-goals-title"><span class="pp-goals-title-ic">'+ico('rocket')+'</span>'+
+          '<div><b>Реферальные цели</b><small>Приводи клиентов на PRO — получай тариф в подарок</small></div>'+
+        '</div>'+
+        '<div class="pp-goals-count"><b>'+count+'</b><span>/ '+totalNeed+' клиентов на PRO</span></div>'+
+      '</div>'+
+      '<div class="pp-goals-overall"><i style="width:'+overallPct+'%"></i></div>'+
+      '<div class="pp-goals-list">'+
+        GOALS.map(function(g){
+          var done = claimed.indexOf(g.id) >= 0 || count >= g.need;
+          var pct = Math.min(100, Math.round(count/g.need*100));
+          var left = Math.max(0, g.need - count);
+          return '<div class="pp-goal '+(done?'done':'')+'">'+
+            '<div class="pp-goal-row">'+
+              '<div class="pp-goal-ic">'+ico(g.icon)+'</div>'+
+              '<div class="pp-goal-body">'+
+                '<div class="pp-goal-h">Приведи <b>'+g.need+'</b> клиентов PRO</div>'+
+                '<div class="pp-goal-r"><span class="pp-goal-tag">'+esc(g.short)+'</span></div>'+
+              '</div>'+
+              '<div class="pp-goal-count"><b>'+Math.min(count,g.need)+'</b><span>/'+g.need+'</span></div>'+
+            '</div>'+
+            '<div class="pp-goal-bar"><i style="width:'+pct+'%"></i></div>'+
+            '<div class="pp-goal-status">'+
+              (done ? '<span class="pp-goal-done">'+ico('check2')+' Зачислено — '+esc(g.reward)+'</span>'
+                    : '<span class="pp-goal-left">Ещё <b>'+left+'</b> · до '+esc(g.reward)+'</span>')+
+            '</div>'+
+          '</div>';
+        }).join('') +
+      '</div>'+
+      '<div class="pp-goals-actions">'+
+        '<button class="btn ghost pp-goals-share" onclick="ppCopyRef()">'+ico('copy')+' Скопировать реф-ссылку и начать</button>'+
+      '</div>';
+  }
+
+  function render(){
+    var scr = document.getElementById('screen-partner');
+    if(!scr) return;
+    var pad = scr.querySelector('.pad');
+    if(!pad) return;
+    autoClaim();
+    var host = document.getElementById('ppGoals');
+    if(!host){
+      host = document.createElement('div');
+      host.id = 'ppGoals';
+      host.className = 'card pp-goals';
+      /* вставляем сразу после ladder-блока (уровни партнёра) */
+      var ladder = document.getElementById('ppLadder');
+      if(ladder && ladder.parentNode){
+        if(ladder.nextSibling) ladder.parentNode.insertBefore(host, ladder.nextSibling);
+        else ladder.parentNode.appendChild(host);
+      } else {
+        pad.appendChild(host);
+      }
+    }
+    host.innerHTML = goalsHtml();
+  }
+  window.ppGoalsRender = render;
+
+  /* --- инициализация --- */
+  function init(){
+    autoClaim();
+    render();
+  }
+  if(document.readyState==='loading') document.addEventListener('DOMContentLoaded', init);
+  else init();
+  setTimeout(init, 800);
+  setTimeout(init, 2000);
+
+  /* Патчим showTab, чтобы render'ить при переходе на partner */
+  var _showTab = window.showTab;
+  if(typeof _showTab === 'function' && !_showTab.__ppGoalsPatched){
+    window.showTab = function(t){
+      var r = _showTab.apply(this, arguments);
+      if(t === 'partner') setTimeout(render, 60);
+      return r;
+    };
+    window.showTab.__ppGoalsPatched = true;
+  }
+})();

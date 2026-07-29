@@ -968,6 +968,319 @@
   }, 60000);
 
   /* ================================================================
+     WEB PUSH (VAPID) — реальные браузер-native уведомления от OKO.
+     Экспортируем 3 функции в window: npAskPushPermission / npSubscribeToPush /
+     npUnsubscribeFromPush. Стейт хранится в localStorage (npPush).
+  ================================================================ */
+  var NP_PUSH_LS = 'oko-np-push-v1';
+  var NP_PUSH_PROMPT_SESSIONS = 3;         /* показать плашку после N активных сессий */
+  var NP_PUSH_SESSION_MIN_MS = 45 * 1000;  /* «активная сессия» = ≥ 45 сек фокуса */
+  var NP_PUSH_API_BASE = '';               /* '' → относительный /api.php (тот же хост); при желании — 'https://okoteam.top' */
+  /* Публичный VAPID-ключ приложения OKO. Приватный ключ живёт только на VPS в config.php. */
+  var NP_VAPID_PUBLIC = 'BEH8Gaj3aU85U-h9rrMVv07KU7-sWP1BoWQd-fvu-Oc6zJWx-pTuumELO-_AsGab26NI9Qk1dk_-dwjXt7s8Zhg';
+
+  function npPushState(){
+    try{
+      var raw = JSON.parse(localStorage.getItem(NP_PUSH_LS));
+      if(!raw || typeof raw!=='object') raw = {};
+      raw.sessions   = raw.sessions   || 0;    /* число «активных» сессий */
+      raw.asked      = !!raw.asked;            /* уже показывали красивую плашку */
+      raw.declined   = !!raw.declined;         /* нажал «Позже» — не давить */
+      raw.subscribed = !!raw.subscribed;       /* подписка отправлена на сервер */
+      raw.endpoint   = raw.endpoint || '';
+      return raw;
+    }catch(e){ return {sessions:0,asked:false,declined:false,subscribed:false,endpoint:''}; }
+  }
+  function npPushSave(s){ try{ localStorage.setItem(NP_PUSH_LS, JSON.stringify(s)); }catch(e){} }
+
+  function npPushSupported(){
+    return typeof window!=='undefined' && 'serviceWorker' in navigator &&
+           'PushManager' in window && 'Notification' in window &&
+           location.protocol === 'https:';
+  }
+
+  /* Base64URL → Uint8Array (VAPID applicationServerKey) */
+  function npB64UrlToU8(s){
+    var pad = '='.repeat((4 - s.length % 4) % 4);
+    var base = (s + pad).replace(/-/g,'+').replace(/_/g,'/');
+    var raw = atob(base); var u8 = new Uint8Array(raw.length);
+    for(var i=0;i<raw.length;i++) u8[i] = raw.charCodeAt(i);
+    return u8;
+  }
+  /* ArrayBuffer → base64 (для отправки подписки на сервер) */
+  function npAbToB64(buf){
+    if(!buf) return '';
+    var bytes = new Uint8Array(buf), s = '';
+    for(var i=0;i<bytes.length;i++) s += String.fromCharCode(bytes[i]);
+    return btoa(s);
+  }
+
+  function npGetEmail(){
+    /* попытаемся достать email пользователя, чтобы бэкенд знал, кому слать */
+    try{
+      if(typeof RG2 !== 'undefined' && RG2.contact && /@/.test(RG2.contact)) return RG2.contact;
+      var a = localStorage.getItem('oko-auth-contact');
+      if(a && /@/.test(a)) return a;
+    }catch(e){}
+    return '';
+  }
+
+  function npApi(action, payload){
+    var url = (NP_PUSH_API_BASE || '') + '/api.php?action=' + encodeURIComponent(action);
+    return fetch(url, {
+      method: 'POST',
+      headers: {'Content-Type':'application/json'},
+      credentials: 'omit',
+      body: JSON.stringify(payload||{})
+    }).then(function(r){ return r.json().catch(function(){ return {ok:false}; }); });
+  }
+
+  /* Показать красивую плашку «Разреши уведомления от OKO».
+     Обёртка над showPopup из core-ext (см. showPopup в base). */
+  window.npAskPushPermission = function(force){
+    var s = npPushState();
+    if(!npPushSupported()) return;
+    if(!force && (s.asked || s.subscribed)) return;
+    if(!force && s.declined) return;
+    if(typeof Notification==='undefined') return;
+    if(Notification.permission === 'granted'){ npSubscribeToPush(); return; }
+    if(Notification.permission === 'denied'){ s.declined = true; npPushSave(s); return; }
+    if(typeof showPopup !== 'function') return;
+
+    s.asked = true; npPushSave(s);
+    showPopup({
+      ico: 'bell',
+      title: 'Не пропусти лидов и сообщения',
+      body:
+        '<div style="text-align:left;font-size:13.5px;line-height:1.55">'+
+        'Разреши OKO присылать уведомления прямо в браузер:'+
+        '<div style="margin:12px 0;display:flex;flex-direction:column;gap:6px;color:var(--dim);font-size:12.5px">'+
+          '<div><svg class="i" style="width:14px;height:14px;color:var(--accent);vertical-align:-2px"><use href="#i-money"/></svg>&nbsp; Новый лид или оплата'+ ' — сразу узнаешь</div>'+
+          '<div><svg class="i" style="width:14px;height:14px;color:var(--accent);vertical-align:-2px"><use href="#i-chat"/></svg>&nbsp; Ответ клиента в чате</div>'+
+          '<div><svg class="i" style="width:14px;height:14px;color:var(--accent);vertical-align:-2px"><use href="#i-star"/></svg>&nbsp; Ролик залетел или урок открыт</div>'+
+        '</div>'+
+        '<small style="color:var(--dim)">В любой момент выключишь в настройках уведомлений.</small>'+
+        '</div>',
+      actions: [
+        { label: 'Разрешить', onclick: function(){
+            Notification.requestPermission().then(function(perm){
+              if(perm === 'granted'){ npSubscribeToPush(); }
+              else { var ss = npPushState(); ss.declined = true; npPushSave(ss); _toast('Уведомления не разрешены'); }
+            });
+          } },
+        { label: 'Позже', ghost: true, onclick: function(){
+            var ss = npPushState(); ss.declined = true; npPushSave(ss);
+          } }
+      ]
+    });
+  };
+
+  /* Оформить web-push-подписку и отправить на бэкенд. */
+  window.npSubscribeToPush = function(){
+    if(!npPushSupported()) return Promise.resolve({ok:false, error:'unsupported'});
+    if(Notification.permission !== 'granted'){
+      return Notification.requestPermission().then(function(p){
+        if(p !== 'granted') return {ok:false, error:'denied'};
+        return doSubscribe();
+      });
+    }
+    return doSubscribe();
+    function doSubscribe(){
+      return navigator.serviceWorker.ready.then(function(reg){
+        return reg.pushManager.getSubscription().then(function(existing){
+          if(existing) return existing;
+          return reg.pushManager.subscribe({
+            userVisibleOnly: true,
+            applicationServerKey: npB64UrlToU8(NP_VAPID_PUBLIC)
+          });
+        });
+      }).then(function(sub){
+        var j = sub.toJSON ? sub.toJSON() : {
+          endpoint: sub.endpoint,
+          keys: {
+            p256dh: npAbToB64(sub.getKey && sub.getKey('p256dh')),
+            auth:   npAbToB64(sub.getKey && sub.getKey('auth'))
+          }
+        };
+        return npApi('push_subscribe', {
+          subscription: j,
+          email: npGetEmail(),
+          ua: navigator.userAgent || ''
+        }).then(function(res){
+          var s = npPushState();
+          s.subscribed = !!(res && res.ok);
+          s.endpoint = j.endpoint || '';
+          npPushSave(s);
+          if(s.subscribed){
+            _toast('Уведомления OKO включены');
+            syncSettingsUI();
+          }
+          return res;
+        });
+      }).catch(function(e){
+        _toast('Не удалось подключить push');
+        return {ok:false, error:String(e&&e.message||e)};
+      });
+    }
+  };
+
+  /* Отключить web-push (у браузера + на сервере). */
+  window.npUnsubscribeFromPush = function(){
+    if(!npPushSupported()) return Promise.resolve({ok:true});
+    return navigator.serviceWorker.ready.then(function(reg){
+      return reg.pushManager.getSubscription().then(function(sub){
+        if(!sub) return {ok:true};
+        var ep = sub.endpoint;
+        return sub.unsubscribe().then(function(){
+          return npApi('push_unsubscribe', { endpoint: ep, email: npGetEmail() });
+        }).then(function(res){
+          var s = npPushState();
+          s.subscribed = false; s.endpoint = '';
+          npPushSave(s);
+          _toast('Push-уведомления выключены');
+          syncSettingsUI();
+          return res || {ok:true};
+        });
+      });
+    }).catch(function(){ return {ok:false}; });
+  };
+
+  /* Слушаем клики по push-уведомлениям и pushsubscriptionchange из SW */
+  if('serviceWorker' in navigator){
+    navigator.serviceWorker.addEventListener('message', function(ev){
+      var d = ev.data || {};
+      if(d.type === 'oko-push-click'){
+        try{
+          var url = d.url || '/';
+          if(url && url !== '/' && typeof showTab === 'function'){
+            /* url может быть локальным маршрутом вида '/#tab=chats' — просто фокус, страница сама разберётся */
+            if(/#tab=/.test(url)){ var t = url.split('tab=')[1]||''; if(t) showTab(t); }
+          }
+        }catch(e){}
+      }
+      if(d.type === 'oko-push-resubscribe'){
+        var s = npPushState();
+        if(s.subscribed) { try{ window.npSubscribeToPush(); }catch(e){} }
+      }
+    });
+  }
+
+  /* Учёт активных сессий: +1 после NP_PUSH_SESSION_MIN_MS в фокусе,
+     через 3 сессии — показываем плашку. */
+  (function trackSessions(){
+    var s = npPushState();
+    if(!npPushSupported()) return;
+    if(s.asked || s.subscribed || s.declined) return;
+
+    var counted = false, timer = null;
+    function start(){
+      if(counted || document.visibilityState==='hidden') return;
+      timer = setTimeout(function(){
+        counted = true;
+        var ss = npPushState();
+        ss.sessions = (ss.sessions||0) + 1;
+        npPushSave(ss);
+        if(ss.sessions >= NP_PUSH_PROMPT_SESSIONS){
+          /* небольшая задержка, чтобы плашка не перебивала стартовые попапы */
+          setTimeout(function(){ try{ window.npAskPushPermission(false); }catch(e){} }, 6000);
+        }
+      }, NP_PUSH_SESSION_MIN_MS);
+    }
+    function stop(){ if(timer){ clearTimeout(timer); timer = null; } }
+    document.addEventListener('visibilitychange', function(){
+      if(document.visibilityState==='hidden') stop();
+      else start();
+    });
+    start();
+  })();
+
+  /* Автоподхват тумблера в панели настроек уведомлений: если пользователь
+     разрешил push раньше (Notification.permission === 'granted'), но подписки
+     нет (например, VAPID-ключ обновился) — попробуем восстановить тихо. */
+  if(npPushSupported() && Notification.permission === 'granted'){
+    setTimeout(function(){
+      var s = npPushState();
+      if(!s.subscribed){ try{ window.npSubscribeToPush(); }catch(e){} }
+    }, 3000);
+  }
+
+  /* ================================================================
+     ТУМБЛЕР «Push-уведомления OKO» в панели настроек модуля.
+     Врезаем в конец .np-toggles после первой отрисовки настроек.
+  ================================================================ */
+  var _ensureSettings = ensureSettings;
+  ensureSettings = function(){
+    _ensureSettings();
+    var box = document.querySelector('.np-settings'); if(!box) return;
+    if(box.querySelector('.np-push-row')) { syncPushRow(); return; }
+    var toggles = box.querySelector('.np-toggles'); if(!toggles) return;
+
+    var support = npPushSupported();
+    var perm = (typeof Notification !== 'undefined') ? Notification.permission : 'default';
+    var s = npPushState();
+    var on = s.subscribed && perm === 'granted';
+
+    var row = document.createElement('div');
+    row.className = 'np-toggle np-push-row';
+    row.innerHTML =
+      '<div class="np-toggle-l">'+
+        '<svg class="i"><use href="#i-bell"/></svg>'+
+        '<div class="np-toggle-t">'+
+          '<b>Push-уведомления OKO</b>'+
+          '<small class="np-push-sub">'+ pushSubText(support, perm, on) +'</small>'+
+        '</div>'+
+      '</div>'+
+      '<div class="np-sw '+(on?'on':'')+'" role="switch" aria-checked="'+on+'"></div>';
+
+    /* Тумблер: on → subscribe, off → unsubscribe */
+    row.querySelector('.np-sw').addEventListener('click', function(){
+      if(!npPushSupported()){ _toast('Твой браузер не поддерживает push'); return; }
+      var perm2 = Notification.permission;
+      var st = npPushState();
+      var isOn = st.subscribed && perm2 === 'granted';
+      if(isOn){
+        window.npUnsubscribeFromPush();
+      } else {
+        if(perm2 === 'denied'){
+          _toast('Push заблокирован в настройках браузера — включи вручную');
+          return;
+        }
+        if(perm2 === 'default'){
+          /* красивая плашка, force=true — игнорим "declined/asked" */
+          window.npAskPushPermission(true);
+        } else {
+          window.npSubscribeToPush();
+        }
+      }
+    });
+
+    toggles.appendChild(row);
+    syncPushRow();
+  };
+
+  function pushSubText(support, perm, on){
+    if(!support) return 'Не поддерживается этим браузером';
+    if(perm === 'denied') return 'Заблокировано в настройках браузера';
+    if(on) return 'Придут даже если приложение закрыто';
+    if(perm === 'granted') return 'Разрешены, но подписка не создана';
+    return 'Лиды, оплаты, чаты — прямо на экран';
+  }
+  function syncPushRow(){
+    var row = document.querySelector('.np-push-row'); if(!row) return;
+    var support = npPushSupported();
+    var perm = (typeof Notification !== 'undefined') ? Notification.permission : 'default';
+    var s = npPushState();
+    var on = s.subscribed && perm === 'granted';
+    var sw = row.querySelector('.np-sw');
+    if(sw){
+      sw.classList.toggle('on', on);
+      sw.setAttribute('aria-checked', on ? 'true' : 'false');
+    }
+    var sub = row.querySelector('.np-push-sub');
+    if(sub) sub.textContent = pushSubText(support, perm, on);
+  }
+
+  /* ================================================================
      СТАРТ
   ================================================================ */
   ensureIds();
