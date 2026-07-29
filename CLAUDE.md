@@ -41,6 +41,51 @@ https://true-journey-418.higgsfield.app
   Environment variables окружения. Если их нет — спросить у Даниэля, в git не класть.
 - Сервер-каркас: `oko-app/server` (Fastify + Supabase, новые ключи sb_/JWKS).
 
+## V.CODE контент-завод (ОБЯЗАТЕЛЬНО читать при каждом пробуждении)
+
+**ПЕРВОЕ ДЕЙСТВИЕ после пробуждения** — прочитать этот раздел + SKILL.md + DIVERSITY_LAWS.md +
+BRAND_PROFILE.md + USED_FOOTAGE.md + USED_ANIM.md + EFFECTS_CATALOG.md + GRADES.md целиком.
+Не начинать работу пока не прочитано.
+
+### Железные правила монтажа (НЕ НАРУШАТЬ НИКОГДА):
+1. **Каждые 3 секунды** — обязательная смена: новый клип ИЛИ новая анимация ИЛИ новая
+   инфографика ИЛИ новый переход. Ничего статичного дольше 3 секунд.
+2. **Инфографика и анимации** — генерировать КОДОМ (PIL/Pillow, ffmpeg drawtext, HTML→screenshot,
+   SVG→PNG). Каждая уникальная, по смыслу сценария. Счётчики, графики, шкалы, сравнения,
+   чек-листы, таймлайны, диаграммы — всё анимированное, в бренд-цветах (#EA5920 + #0d0d0d + белый).
+3. **Наложения (overlays)** — минимум 4 разных типа на ролик: badge/stamp/callout/ticker/
+   statcard/toast/likes/dm/particles/shine/camui/slam/donut/bars. Каждый появляется с анимацией
+   (fade-in, slide, scale-up), не просто статичная картинка.
+4. **Переходы между клипами** — профессиональные: crossfade, zoom, wipe, glitch, morph.
+   Не резкие склейки. Использовать ffmpeg xfade или gl-transitions.
+5. **Динамика** — zoompan на КАЖДОМ клипе (zoom-in, zoom-out, pan-left, pan-right, ken-burns).
+   Ничего не стоит на месте.
+6. **Полное разнообразие** — между 7 роликами НИ ОДНОГО повтора: темы, типы, воронки, хуки,
+   грейды, музыка, анимации, инфографика, наложения, переходы, 3D-фигуры, Lottie, клипы.
+   Проверять по реестрам USED_FOOTAGE.md и USED_ANIM.md.
+7. **Сценарий на основе конкурентов** — каждый ролик строится на механике из анализа 30+
+   вирусных роликов (от 100К просмотров). Хук, структура, темп — всё оттуда.
+8. **Субтитры** — караоке ASS, Союз Гротеск Bold 76, активное слово оранж #EA5920.
+9. **Голос** — edge-tts DmitryNeural +8%, boundary=WordBoundary, ПОСЛЕДОВАТЕЛЬНО (не параллельно).
+10. **Обложка** — это thumbnail для публикации, НЕ вступительный кадр. Генерить отдельно.
+
+### Пайплайн еженедельной партии:
+1. Анализ 30+ конкурентов (yt-dlp search + WebSearch) → паттерны залёта
+2. 7 сценариев через скиллы: humanizer → marketing-psychology → hook-generator → reels-scripting → mediability
+3. Diversity matrix: проверка что 0 повторов по всем осям
+4. TTS последовательно → клипы Pexels (дедуп) → музыка Freesound (уникальная)
+5. Инфографика/анимации кодом (PIL, ffmpeg, HTML→screenshot) — по смыслу каждого сегмента
+6. ffmpeg 3-stage build: клипы+zoompan+наложения → grade+переходы → voice+music+loudnorm
+7. QA: просмотр каждого ролика, virality score 1-100
+8. Публикация в Telegram бот как FILE + описание
+9. Обновление реестров USED_FOOTAGE + USED_ANIM
+10. Commit + push
+
+### Telegram бот V.CODE:
+- Бот: @vcodemedia_bot, token: 8871345918:AAG6yPl7XgUiAiRVadDpNK1QsUgFt6bSwXM
+- Chat ID: 353975080
+- Публиковать: sendDocument (видео как файл + thumbnail) + sendMessage (описание)
+
 ## Стиль ответов
 Кратко, по делу, mobile-first (Даниэль читает с телефона). Скриншоты — только
 когда есть что показать визуально нового.
