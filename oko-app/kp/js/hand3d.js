@@ -30,11 +30,14 @@ export function buildHand3D(){
   core.position.set(.04,.120,0); HAND.add(core);
   const coreRing=new THREE.Mesh(new THREE.TorusGeometry(.105,.018,10,30),PLATE);
   coreRing.rotation.x=Math.PI/2; coreRing.position.set(.04,.123,0); HAND.add(coreRing);
-  // РАССЕЯННОЕ свечение из центра ладони (мягкое, с «туманом», без прожектора)
-  const CG=new THREE.Mesh(new THREE.SphereGeometry(.30,22,16),new THREE.MeshBasicMaterial({color:0x9AFF00,transparent:true,opacity:.16,blending:THREE.AdditiveBlending,depthWrite:false}));
-  CG.scale.set(1.1,.7,1.1); CG.position.set(.04,.16,0); HAND.add(CG);
-  const CG2=new THREE.Mesh(new THREE.SphereGeometry(.5,20,14),new THREE.MeshBasicMaterial({color:0x9AFF00,transparent:true,opacity:.06,blending:THREE.AdditiveBlending,depthWrite:false}));
-  CG2.scale.set(1,.55,1); CG2.position.set(.04,.28,0); HAND.add(CG2);   // туман над ладонью
+  // РАССЕЯННЫЙ свет как от лампочки, ровно по ЦЕНТРУ ладони + мягкая дымка (радиальные спрайты — всегда к камере, круглые и мягкие)
+  function radialTex(inner){var cv=document.createElement('canvas');cv.width=cv.height=128;var g=cv.getContext('2d');
+    var rg=g.createRadialGradient(64,64,0,64,64,64);
+    rg.addColorStop(0,'rgba(226,255,150,'+inner+')');rg.addColorStop(.32,'rgba(154,255,0,'+(inner*0.55).toFixed(2)+')');rg.addColorStop(1,'rgba(154,255,0,0)');
+    g.fillStyle=rg;g.fillRect(0,0,128,128);return new THREE.CanvasTexture(cv);}
+  function glowSprite(size,op,tex){var sp=new THREE.Sprite(new THREE.SpriteMaterial({map:tex,transparent:true,opacity:op,blending:THREE.AdditiveBlending,depthWrite:false}));sp.scale.set(size,size,1);return sp;}
+  var CG=glowSprite(.62,.5,radialTex(1.0)); CG.position.set(.04,.15,.06); HAND.add(CG);          // лампочка
+  var CG2=glowSprite(1.35,.14,radialTex(0.6)); CG2.position.set(.04,.24,.05); HAND.add(CG2);       // дымка/туман
   HAND.userData.coreGlow=CG; HAND.userData.fog=CG2;
   // костяшки-гребень
   const ridge=new THREE.Mesh(new THREE.CapsuleGeometry(.075,.40,8,18),JOINT);

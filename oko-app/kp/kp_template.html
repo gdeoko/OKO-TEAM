@@ -672,51 +672,58 @@ document.body.classList.add('booting');
   }
   requestAnimationFrame(draw);
 })();
-/* ЗВУК: ambient всегда играет, плавное появление/затухание, SFX-библиотека */
+/* ЗВУК: красивая фоновая музыка + глубокие мягкие SFX. АВТОЗАПУСК: muted-autoplay сразу,
+   снятие мьюта с плавным появлением на первом же касании/скролле (обход политики браузеров). */
 (function(){
-  var A={},amb=null,ctx=null,started=false,masterVol=0.34;
-  function mk(name,vol){var a=new Audio('kp-media/snd/'+name+'.mp3');a.preload='auto';a.volume=vol;return a;}
+  var mus=null,started=false,unmuted=false,masterVol=0.40;
+  function mk(name,vol){var a=new Audio('kp-media/snd/'+name+'.mp3');a.preload='auto';a.volume=vol;a.setAttribute('playsinline','');return a;}
   var pool={};
   function sfx(name,vol){
-    if(!started)return;
     pool[name]=pool[name]||[];
     var a=pool[name].find(function(x){return x.paused||x.ended;});
     if(!a){a=mk(name,vol);pool[name].push(a);if(pool[name].length>4)pool[name].shift();}
     try{a.currentTime=0;a.volume=vol;a.play().catch(function(){});}catch(e){}
   }
   window.__sfx=function(kind){
-    if(kind==='click')sfx('click',0.34);
-    else if(kind==='woosh')sfx('whoosh',0.26);
+    if(!unmuted)return;
+    if(kind==='click')sfx('click',0.30);
+    else if(kind==='woosh')sfx('whoosh',0.34);
     else if(kind==='open')sfx('open',0.30);
-    else if(kind==='switch')sfx('switch',0.28);
+    else if(kind==='switch')sfx('switch',0.26);
     else if(kind==='enter')sfx('enter',0.5);
   };
   function fade(el,to,ms){var from=el.volume,t0=performance.now();
     (function step(){var k=Math.min(1,(performance.now()-t0)/ms);el.volume=from+(to-from)*k;
       if(k<1)requestAnimationFrame(step);else if(to===0)try{el.pause();}catch(e){}})();}
-  var armed=false,kicked=false;
-  function mkAmb(){ if(amb)return amb;
-    amb=new Audio('kp-media/snd/ambient.mp3');amb.loop=true;amb.volume=0;amb.preload='auto';
-    amb.setAttribute('playsinline','');amb.crossOrigin='anonymous';return amb;}
-  function tryPlay(){ mkAmb();
-    return amb.play().then(function(){started=true;fade(amb,masterVol,2600);
-      if(!kicked){kicked=true;setTimeout(function(){window.__sfx('enter');},260);} return true;})
-      .catch(function(){return false;});}
-  function armGesture(){ if(armed)return; armed=true;
-    var evs=['pointerdown','touchstart','touchend','keydown','wheel','click','scroll'];
-    function on(){ tryPlay().then(function(ok){ if(ok)evs.forEach(function(e){removeEventListener(e,on,true);}); }); }
-    evs.forEach(function(e){addEventListener(e,on,{capture:true,passive:true});});}
+  function makeMus(){ if(mus)return mus;
+    mus=new Audio('kp-media/snd/music.mp3'); mus.loop=true; mus.preload='auto';
+    mus.setAttribute('playsinline',''); mus.muted=true; mus.volume=0; return mus; }
+  function autoplay(){ makeMus();
+    // 1) пробуем сразу — muted-autoplay разрешён почти везде, звук технически «включён»
+    mus.play().then(function(){started=true;}).catch(function(){started=false;});
+  }
+  var armed=false;
+  function unmute(){ if(unmuted)return; makeMus();
+    var go=function(){ mus.muted=false; if(mus.paused){mus.play().catch(function(){});}
+      unmuted=true; started=true; fade(mus,masterVol,2200); setTimeout(function(){window.__sfx('enter');},200); };
+    if(started){go();} else { mus.play().then(go).catch(function(){go();}); }
+  }
+  function arm(){ if(armed)return; armed=true;
+    var evs=['pointerdown','touchstart','touchend','keydown','wheel','click','scroll','mousemove'];
+    function on(){ unmute(); evs.forEach(function(e){removeEventListener(e,on,true);}); }
+    evs.forEach(function(e){addEventListener(e,on,{capture:true,passive:true});});
+  }
+  autoplay(); arm();
   window.__audio={
-    state:function(){return amb?{playing:!amb.paused,vol:+amb.volume.toFixed(3),loop:amb.loop,armed:armed,src:(amb.currentSrc||'').split('/').pop()}:{playing:false,armed:armed};},
-    start:function(){ tryPlay().then(function(ok){ if(!ok)armGesture(); }); }
+    state:function(){return mus?{playing:!mus.paused,muted:mus.muted,vol:+mus.volume.toFixed(3),unmuted:unmuted,src:(mus.currentSrc||'').split('/').pop()}:{playing:false};},
+    start:function(){ autoplay(); arm(); }   // на всякий случай форсируем ещё раз
   };
-  // затухание при уходе со вкладки, плавное появление при возврате
   document.addEventListener('visibilitychange',function(){
-    if(!amb||!started)return;
-    if(document.hidden){fade(amb,0,600);}
-    else{try{amb.play().catch(function(){});}catch(e){} fade(amb,masterVol,1400);}
+    if(!mus)return;
+    if(document.hidden){fade(mus,0,600);}
+    else if(unmuted){try{mus.play().catch(function(){});}catch(e){} fade(mus,masterVol,1400);}
   });
-  addEventListener('pagehide',function(){if(amb)fade(amb,0,300);});
+  addEventListener('pagehide',function(){if(mus)fade(mus,0,300);});
 })();
 /* NAV */
 var nav=document.getElementById('nav'),pb=document.getElementById('pb');

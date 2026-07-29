@@ -1,6 +1,6 @@
 import * as THREE from 'three';
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
-import { buildHand3D, poseHand } from './hand3d.js?v=97';
+import { buildHand3D, poseHand } from './hand3d.js?v=98';
 // DOM-synced WebGL: eye(GLB) + hand/woman as scroll-scrubbed sprite sheets.
 // Figures are treated as part of the background: precise scroll-tied position + tiny breathing only.
 export function initHolo(){
@@ -64,12 +64,13 @@ export function initHolo(){
         metalness:.28, roughness:.34, normalMap:nm, side:THREE.DoubleSide });
       o.material.needsUpdate=true; } });
     const b=new THREE.Box3().setFromObject(eyeMesh);const c=b.getCenter(new THREE.Vector3());const s=b.getSize(new THREE.Vector3());const m=Math.max(s.x,s.y,s.z)||1;eyeMesh.position.sub(c);eyeMesh.userData.norm=1/m;const grp=new THREE.Group();grp.add(eyeMesh);
-    // СТЕКЛЯННАЯ ОБВОДКА ПО КОНТУРУ САМОЙ ФИГУРЫ ГЛАЗА (не сфера): чистое прозрачное стекло + свечение по силуэту
-    let glassMat;try{glassMat=new THREE.MeshPhysicalMaterial({color:0xF3FFE2,metalness:0,roughness:.04,transmission:.96,thickness:.2,transparent:true,opacity:.5,clearcoat:1,clearcoatRoughness:.04,ior:1.42,side:THREE.DoubleSide,depthWrite:false});}catch(e){glassMat=new THREE.MeshBasicMaterial({color:0xEFFFD6,transparent:true,opacity:.16,depthWrite:false});}
-    const eyeGlass=eyeMesh.clone(true); eyeGlass.traverse(function(o){if(o.isMesh)o.material=glassMat;}); eyeGlass.scale.multiplyScalar(1.045); grp.add(eyeGlass);
-    const eyeRim=eyeMesh.clone(true); const rimMat=new THREE.MeshBasicMaterial({color:0xB6FF3A,transparent:true,opacity:.22,blending:THREE.AdditiveBlending,side:THREE.BackSide,depthWrite:false});
-    eyeRim.traverse(function(o){if(o.isMesh)o.material=rimMat;}); eyeRim.scale.multiplyScalar(1.11); grp.add(eyeRim);
-    eyeMesh.userData.rim=rimMat;
+    // ЧИСТАЯ СТЕКЛЯННАЯ ОБВОДКА ПО КОНТУРУ: Fresnel — светится только по силуэту фигуры, ровно и красиво
+    const fresMat=new THREE.ShaderMaterial({transparent:true,depthWrite:false,blending:THREE.AdditiveBlending,side:THREE.DoubleSide,
+      uniforms:{uC:{value:new THREE.Color(0xEAFFC2)},uP:{value:3.4},uI:{value:1.15}},
+      vertexShader:'varying vec3 vN;varying vec3 vE;void main(){vec4 mv=modelViewMatrix*vec4(position,1.0);vE=normalize(-mv.xyz);vN=normalize(normalMatrix*normal);gl_Position=projectionMatrix*mv;}',
+      fragmentShader:'uniform vec3 uC;uniform float uP;uniform float uI;varying vec3 vN;varying vec3 vE;void main(){float f=pow(1.0-abs(dot(normalize(vN),normalize(vE))),uP);gl_FragColor=vec4(uC*uI*f,f*0.9);}'});
+    const eyeRim=eyeMesh.clone(true); eyeRim.traverse(function(o){if(o.isMesh)o.material=fresMat;}); eyeRim.scale.multiplyScalar(1.02); grp.add(eyeRim);
+    eyeMesh.userData.rim=fresMat;
     scene.add(grp);eyeMesh.userData.grp=grp;eyeReady();},undefined,()=>{eyeReady();}); }
   else eyeReady();
 
@@ -89,9 +90,10 @@ export function initHolo(){
   // ---- РОБОТ ГАРАНТИЙ: настоящий 3D GLB, полный скелет + процедурное «дыхание» (руки/ноги/голова) ----
   let robot=null,robotNorm=1,robotBones={};const robotAnchor=document.getElementById('guarRobot');
   const BONEN=['Head','neck','Spine','Spine01','Spine02','Hips','LeftArm','RightArm','LeftForeArm','RightForeArm','LeftShoulder','RightShoulder','LeftUpLeg','RightUpLeg','LeftLeg','RightLeg'];
-  if(robotAnchor){ new GLTFLoader().load('assets/robot.glb?v=2',function(g){ robot=g.scene;
+  if(robotAnchor){ new GLTFLoader().load('assets/robot.glb?v=3',function(g){ robot=g.scene;
     robot.traverse(function(o){ if(o.isMesh&&o.material){ const t=o.material.map||o.material.emissiveMap||null;
-      o.material=new THREE.MeshStandardMaterial({map:t,color:new THREE.Color(0xffffff),emissive:new THREE.Color(0x9AFF00),emissiveMap:t,emissiveIntensity:.4,metalness:.42,roughness:.44});
+      // ЯРКИЙ корпус (светлый металл) + лаймовые светящиеся акценты — робот хорошо виден
+      o.material=new THREE.MeshStandardMaterial({color:new THREE.Color(0xE2EEDC),emissive:new THREE.Color(0x9AFF00),emissiveMap:t,emissiveIntensity:.85,metalness:.5,roughness:.42});
       o.material.needsUpdate=true; o.frustumCulled=false; }
       if(BONEN.indexOf(o.name)>=0){ robotBones[o.name]=o; o.userData.baseQ=o.quaternion.clone(); } });
     const b=new THREE.Box3().setFromObject(robot);const c=b.getCenter(new THREE.Vector3());const s=b.getSize(new THREE.Vector3());
@@ -120,22 +122,23 @@ export function initHolo(){
         grp.position.set(P.x+ptr.x*P.w*0.06, P.y+Math.sin(time*1.0)*4 - ptr.y*P.h*0.05, 0);
         const sc=Math.min(P.w,P.h)*eyeMesh.userData.norm*0.9*(0.42+0.58*be);grp.scale.setScalar(sc);
         eyeMesh.rotation.y=ptr.x*1.05+Math.sin(time/2.8)*0.08+(1-be)*1.4;eyeMesh.rotation.x=ptr.y*0.75+Math.cos(time/3.2)*0.04;
-        if(eyeMesh.userData.rim){eyeMesh.userData.rim.opacity=.16+Math.sin(time*1.5)*.08;}
+        if(eyeMesh.userData.rim&&eyeMesh.userData.rim.uniforms){eyeMesh.userData.rim.uniforms.uI.value=1.05+Math.sin(time*1.4)*0.28;}
         window.__eyeRotY=eyeMesh.rotation.y;}
       else grp.visible=false;}
     // РОБОТ 3D (гарантии)
     if(robot&&robotAnchor){const r=robotAnchor.getBoundingClientRect();const P=rectPos(r);const grp=robot.userData.grp;grp.visible=P.vis;
       if(P.vis){const sc=Math.min(P.w,P.h)*robotNorm*0.82;grp.scale.setScalar(sc);
-        // ПРИВЯЗАН к позиции: без дрейфа, только «дыхание» скелета на месте
-        grp.position.set(P.x, P.y+Math.sin(time*1.0)*P.h*0.012, 0);
-        robot.rotation.y=ptr.x*0.4+Math.sin(time*0.5)*0.10;
-        // живой idle: дыхание корпуса + покачивание головы/рук/ног
-        boneIdle('Spine','x',0.03,1.1,0);   boneIdle('Spine02','x',0.025,1.1,0.3);
-        boneIdle('Head','x',0.05,0.9,0.4);  boneIdle('Head','y',0.06,0.6,1.2);
-        boneIdle('neck','x',0.03,0.9,0.4);
-        boneIdle('LeftArm','z',0.07,0.85,0);   boneIdle('RightArm','z',0.07,0.85,Math.PI);
-        boneIdle('LeftForeArm','z',0.05,0.9,0.6); boneIdle('RightForeArm','z',0.05,0.9,Math.PI+0.6);
-        boneIdle('LeftUpLeg','x',0.03,0.7,0);  boneIdle('RightUpLeg','x',0.03,0.7,Math.PI);
+        // ПРИВЯЗАН к позиции: без дрейфа. Заметное живое движение на месте (шаг+дыхание)
+        grp.position.set(P.x, P.y+Math.abs(Math.sin(time*1.3))*P.h*0.022, 0);
+        robot.rotation.y=ptr.x*0.45+Math.sin(time*0.6)*0.16;
+        // живой idle: корпус дышит/шагает, голова вертится, руки-ноги качаются
+        boneIdle('Spine','x',0.05,1.3,0);   boneIdle('Spine02','x',0.045,1.3,0.3);
+        boneIdle('Head','x',0.09,1.0,0.4);  boneIdle('Head','y',0.13,0.7,1.2);
+        boneIdle('neck','x',0.05,1.0,0.4);
+        boneIdle('LeftArm','z',0.16,1.3,0);   boneIdle('RightArm','z',0.16,1.3,Math.PI);
+        boneIdle('LeftForeArm','z',0.11,1.35,0.6); boneIdle('RightForeArm','z',0.11,1.35,Math.PI+0.6);
+        boneIdle('LeftUpLeg','x',0.10,1.3,0);  boneIdle('RightUpLeg','x',0.10,1.3,Math.PI);
+        boneIdle('LeftLeg','x',0.07,1.3,0.5);  boneIdle('RightLeg','x',0.07,1.3,Math.PI+0.5);
       }}
     // SPRITE FIGURES — part of background: scroll-tied frame + position, tiny breath, no springy motion
     for(const f of figs){const r=f.anchor.getBoundingClientRect();const P=rectPos(r);f.grp.visible=P.vis;if(!P.vis)continue;
