@@ -129,6 +129,44 @@
   bindCountdown(document);
   document.addEventListener('mz-spa-navigate', function(){ bindCountdown(document); });
 
+  /* ---------- PWA install prompt (Chrome/Edge/Samsung) ---------- */
+  (function(){
+    var deferred = null;
+    window.addEventListener('beforeinstallprompt', function(e){
+      e.preventDefault(); deferred = e;
+      // Не показываем на служебных страницах и в TG (там свой install)
+      if (document.documentElement.classList.contains('in-tg')) return;
+      if (/^\/(admin|api|login|register|apply|cabinet)/.test(location.pathname)) return;
+      // Раз в неделю максимум
+      try {
+        var last = parseInt(localStorage.getItem('mz-pwa-shown')||'0', 10);
+        if (Date.now() - last < 7*86400*1000) return;
+      } catch(e){}
+      setTimeout(function(){
+        if (!deferred) return;
+        var bar = document.createElement('div'); bar.className = 'mz-pwa-bar';
+        bar.innerHTML =
+          '<div class="mz-pwa-inner">' +
+            '<div class="mz-pwa-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><rect x="6" y="2" width="12" height="20" rx="2"/><path d="M11 18h2"/></svg></div>' +
+            '<div class="mz-pwa-body"><b>Установить приложение</b><span>Быстрый доступ с главного экрана</span></div>' +
+            '<button type="button" class="btn btn--primary btn--sm" data-pwa-yes>Установить</button>' +
+            '<button type="button" class="mz-pwa-x" data-pwa-no aria-label="Закрыть"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg></button>' +
+          '</div>';
+        document.body.appendChild(bar);
+        requestAnimationFrame(function(){ bar.classList.add('on'); });
+        bar.querySelector('[data-pwa-yes]').addEventListener('click', function(){
+          deferred.prompt();
+          deferred.userChoice.then(function(){ deferred = null; bar.remove(); });
+          try{ localStorage.setItem('mz-pwa-shown', String(Date.now())); }catch(e){}
+        });
+        bar.querySelector('[data-pwa-no]').addEventListener('click', function(){
+          bar.classList.remove('on'); setTimeout(function(){bar.remove();}, 260);
+          try{ localStorage.setItem('mz-pwa-shown', String(Date.now())); }catch(e){}
+        });
+      }, 8000);
+    });
+  })();
+
   /* ---------- Онбординг: 3 экрана при первом визите ---------- */
   var LS = 'mz-onb-done';
   var done = false; try { done = localStorage.getItem(LS) === '1'; } catch(e){}
