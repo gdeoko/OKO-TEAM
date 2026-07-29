@@ -7,7 +7,7 @@ $preselect = input('competition', '');
 // повторно ничего вводить не нужно. Трофей ограничивается аттестационным результатом.
 $pf = ['full_name'=>'','age_category'=>'','nomination'=>'','teacher'=>'','act_title'=>'','email'=>'','phone'=>''];
 $fromApp = null; $appResultLock = '';
-$appId = (int) input('app', 0);
+$appId = (int) input('app', '');
 if ($appId && ($cu = current_user())) {
     $a = one("SELECT a.*, c.slug AS comp_slug, c.name AS comp_name FROM applications a
               LEFT JOIN competitions c ON c.id=a.competition_id
