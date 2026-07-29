@@ -1301,18 +1301,16 @@ label.f-lab{display:block}
 #authScreen.hidden{opacity:0;visibility:hidden;pointer-events:none}
 #authCanvas{position:absolute;inset:0;width:100%;height:100%}
 .auth-inner{position:relative;z-index:2;display:flex;flex-direction:column;align-items:center;width:100%;max-width:360px}
-/* OKO мастер-знак: крупный, объёмный, с рассеянным лайм-свечением как в hero-блоке /kp.
-   Halo — три слоя radial-gradient (внешний ambient + средний spread + внутренний core),
-   пульсируют независимо через logoAura. Моргания века (scaleY 0.08) НЕТ — оно ломает
-   форму знака во время скриншотов и на медленных устройствах. */
-.auth-logo-wrap{position:relative;width:224px;height:224px;display:flex;align-items:center;justify-content:center;isolation:isolate;animation:logoWrapIn 900ms .1s cubic-bezier(.2,1.2,.3,1) both}
-.auth-logo-wrap::before{content:'';position:absolute;inset:-40%;background:radial-gradient(circle at 50% 50%,rgba(154,255,0,.42) 0%,rgba(154,255,0,.18) 22%,rgba(154,255,0,.06) 42%,transparent 68%);filter:blur(18px);z-index:-2;animation:logoAura 5.2s ease-in-out infinite;pointer-events:none}
-.auth-logo-wrap::after{content:'';position:absolute;inset:-8%;background:radial-gradient(circle at 50% 44%,rgba(210,255,132,.28) 0%,transparent 55%);z-index:-1;animation:logoAura2 4.1s ease-in-out infinite 300ms;pointer-events:none}
-.auth-logo{width:100%;height:100%;object-fit:contain;filter:drop-shadow(0 0 14px rgba(154,255,0,.55)) drop-shadow(0 0 32px rgba(154,255,0,.28));animation:logoBreath 5s ease-in-out infinite}
-@keyframes logoWrapIn{from{opacity:0;transform:scale(.72)}to{opacity:1;transform:scale(1)}}
-@keyframes logoAura{0%,100%{opacity:.72;transform:scale(1)}50%{opacity:1;transform:scale(1.08)}}
-@keyframes logoAura2{0%,100%{opacity:.55;transform:scale(1.04)}50%{opacity:.85;transform:scale(1.14)}}
-@keyframes logoBreath{0%,100%{filter:drop-shadow(0 0 14px rgba(154,255,0,.55)) drop-shadow(0 0 32px rgba(154,255,0,.28))}50%{filter:drop-shadow(0 0 22px rgba(154,255,0,.75)) drop-shadow(0 0 52px rgba(154,255,0,.42))}}
+/* OKO мастер-знак: файл oko-logo-master.png уже содержит запечённое
+   рассеянное лайм-halo (эталон бренда 1024×1024). Дополнительная CSS-
+   аура — только для дыхания, не для формы. Размер wrap подгоняем так,
+   чтобы halo мастера легло красиво (280 px = чтобы бровь была толстой). */
+.auth-logo-wrap{position:relative;width:280px;height:280px;display:flex;align-items:center;justify-content:center;isolation:isolate;margin-top:-8px;animation:logoWrapIn 900ms .1s cubic-bezier(.2,1.2,.3,1) both}
+.auth-logo-wrap::before{content:'';position:absolute;inset:-30%;background:radial-gradient(circle at 50% 50%,rgba(154,255,0,.28) 0%,rgba(154,255,0,.08) 30%,transparent 60%);filter:blur(24px);z-index:-1;animation:logoAura 5.2s ease-in-out infinite;pointer-events:none}
+.auth-logo{width:100%;height:100%;object-fit:contain;animation:logoBreath 5s ease-in-out infinite}
+@keyframes logoWrapIn{from{opacity:0;transform:scale(.78)}to{opacity:1;transform:scale(1)}}
+@keyframes logoAura{0%,100%{opacity:.7;transform:scale(1)}50%{opacity:1;transform:scale(1.12)}}
+@keyframes logoBreath{0%,100%{transform:scale(1);filter:none}50%{transform:scale(1.03);filter:drop-shadow(0 0 12px rgba(154,255,0,.35))}}
 .auth-word{font-family:var(--font-display);font-size:64px;letter-spacing:.22em;color:#fff;line-height:1;margin:18px 0 6px;text-indent:.22em;opacity:0;animation:authUp .6s 1.1s ease forwards}
 .auth-tag{color:#9b9b9b;font-size:13.5px;text-align:center;line-height:1.5;max-width:280px;opacity:0;animation:authUp .6s 1.3s ease forwards}
 .auth-btns{width:100%;display:flex;flex-direction:column;gap:10px;margin-top:34px;opacity:0;animation:authUp .6s 1.5s ease forwards}
@@ -11473,14 +11471,13 @@ html.wm-on .screen.active.wm-tab-in-left{
 <section id="authScreen">
   <canvas id="authCanvas"></canvas>
   <div class="auth-inner">
-<!-- OKO мастер-знак с рассеянным лайм-halo (radial-gradient ×2 через
-     ::before/::after wrap'а) и breathing-анимацией — как в hero-блоке
-     okoteam.top/kp, но программно (без WebGL и внешних GLB, чтобы
-     работало мгновенно на любом устройстве без блокирующего сетевого
-     ожидания). Мастер-PNG 512×512 из brand/png — эталон знака. -->
+<!-- OKO мастер-знак: файл oko-logo-master.png уже содержит НАСТОЯЩЕЕ
+     рассеянное лайм-halo вокруг знака (эталон из brand/, 1024×1024).
+     Именно этот файл живёт на договорах, визитках, сайтах. Дополнительно
+     оборачиваем в wrap для breathing-анимации. -->
 <div class="auth-logo-wrap">
-  <img class="auth-logo" alt="OKO" src="oko-logo-512.png"
-    onerror="this.onerror=null;this.src='https://okoteam.top/oko-logo-256.png'">
+  <img class="auth-logo" alt="OKO" src="oko-logo-master.png"
+    onerror="this.onerror=null;this.src='https://okoteam.top/oko-logo-master.png'">
 </div>
     <div class="auth-word">OKO</div>
     <div class="auth-tag">Медийность, контент, маркетинг и бизнес в одном приложении</div>
