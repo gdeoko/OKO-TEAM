@@ -30,5 +30,10 @@ return [
     'gemini_keys' => ['PUT_ON_VPS'],
     'gemini_base'  => 'https://gemini-proxy.okoteam.workers.dev',
     'gemini_model' => 'gemini-flash-latest',
+    // Web Push (VAPID) — уведомления браузер-native. Реальные ключи только на VPS.
+    // Сгенерировать: npx web-push generate-vapid-keys --json
+    'vapid_public'  => 'PUT_ON_VPS',
+    'vapid_private' => 'PUT_ON_VPS',
+    'vapid_subject' => 'mailto:okoteam.top@gmail.com',
     'site_url' => 'https://okoteam.top',
 ];
