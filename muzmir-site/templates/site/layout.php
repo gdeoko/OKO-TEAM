@@ -15,6 +15,12 @@ $partners = [
 $u = current_user();
 // Контекст Telegram Mini App: ?tg=1 (кнопка бота) или кука сессии (держит контекст на всех страницах).
 $inTg = isset($_GET['tg']) || !empty($_COOKIE['mz_tg']);
+// Кол-во непрочитанных уведомлений — бейдж в нижнем меню
+$unreadNotif = 0;
+if ($u && is_file(BASE_PATH . '/core/notifications.php')) {
+    require_once BASE_PATH . '/core/notifications.php';
+    $unreadNotif = notify_unread_count((int) $u['id']);
+}
 ?><!doctype html>
 <html lang="ru"<?= $inTg ? ' class="in-tg"' : '' ?>>
 <head>
@@ -125,7 +131,9 @@ html body main{padding-bottom:calc(24px + env(safe-area-inset-bottom)) !importan
       <a class="btn btn--ghost" href="<?= url('/login') ?>">Вход</a>
       <a class="btn btn--primary" href="<?= url('/apply') ?>">Подать заявку</a>
     <?php endif; ?>
-    <a class="burger" href="<?= url('/menu') ?>" aria-label="Меню" title="Меню"><span></span><span></span><span></span></a>
+    <a class="burger" href="<?= url('/menu') ?>" aria-label="Меню" title="Меню">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M3 6h18M3 12h18M3 18h18"/></svg>
+    </a>
   </div>
 </div></header>
 
@@ -195,8 +203,10 @@ html body main{padding-bottom:calc(24px + env(safe-area-inset-bottom)) !importan
       <span class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M12 5v14M5 12h14"/></svg></span>Подать заявку</a>
     <a href="<?= url('/awards') ?>" class="<?= $active==='/awards'?'active':'' ?>">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M8 21h8M12 17v4M7 4h10v5a5 5 0 0 1-10 0z"/><path d="M17 5h3v2a3 3 0 0 1-3 3M7 5H4v2a3 3 0 0 0 3 3"/></svg>Награды</a>
-    <a href="<?= url($u ? '/cabinet' : '/login') ?>" class="<?= in_array($active,['/cabinet','/login','/register'])?'active':'' ?>">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0 1 16 0"/></svg><?= $u?'Профиль':'Вход' ?></a>
+    <a href="<?= url($u ? '/cabinet' : '/login') ?>" class="<?= in_array($active,['/cabinet','/login','/register','/notifications'])?'active':'' ?>">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0 1 16 0"/></svg><?= $u?'Профиль':'Вход' ?>
+      <?php if ($unreadNotif > 0): ?><span class="appnav-badge" title="Непрочитанных уведомлений: <?= (int)$unreadNotif ?>"><?= $unreadNotif > 99 ? '99+' : (int)$unreadNotif ?></span><?php endif; ?>
+    </a>
   </div>
 </nav>
 

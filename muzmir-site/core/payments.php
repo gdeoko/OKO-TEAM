@@ -125,6 +125,18 @@ function payment_apply_status(string $paymentId, string $status, array $obj = []
 
     $amount = $pay['amount'] ?? ($obj['amount']['value'] ?? '');
 
+    // In-app уведомление пользователю об оплате
+    if ($appId && is_file(__DIR__ . '/notifications.php')) {
+        require_once __DIR__ . '/notifications.php';
+        $usr = one("SELECT user_id FROM applications WHERE id=?", [(int) $appId]);
+        $uidNotif = (int) ($usr['user_id'] ?? 0);
+        if ($uidNotif > 0) {
+            $bodyMsg = 'Спасибо! Мы получили оргвзнос ' . (int)($pay['amount'] ?? 0) . ' ₽.';
+            if (count($batchIds) > 1) $bodyMsg .= ' Оплачено ' . count($batchIds) . ' заявок одним чеком.';
+            notify_user($uidNotif, 'Оплата получена', $bodyMsg, '/cabinet#apps', 'pay');
+        }
+    }
+
     // Письмо об успешной оплате (в очередь — воркер разошлёт).
     if ($email !== '' && function_exists('mail_queue')) {
         $html = function_exists('mail_template')

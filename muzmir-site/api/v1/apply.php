@@ -307,6 +307,17 @@ if (function_exists('tg_notify_admin')) {
     );
 }
 
+// --- in-app уведомление пользователю ---
+if ($uid && is_file(BASE_PATH . '/core/notifications.php')) {
+    require_once BASE_PATH . '/core/notifications.php';
+    $title = count($numbers) > 1
+        ? 'Заявки приняты (' . count($numbers) . ')'
+        : 'Заявка ' . $number . ' принята';
+    $body  = count($comps) > 1 ? 'Конкурсы: ' . $compsList : $compsList;
+    if ($confirmationUrl) $body .= ' · Оплатите оргвзнос по ссылке.';
+    notify_user($uid, $title, $body, $confirmationUrl ?: url('/cabinet#apps'), 'diploma');
+}
+
 $resp = ['ok' => true, 'number' => $number, 'numbers' => $numbers, 'batch' => count($numbers) > 1];
 if ($priceInfo !== null) $resp['price'] = $priceInfo;
 if ($payment !== null) {

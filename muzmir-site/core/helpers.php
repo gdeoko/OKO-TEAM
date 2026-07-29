@@ -117,6 +117,26 @@ function ru_date(?string $d): string {
     return (int)date('j', $ts) . ' ' . $months[(int)date('n', $ts)] . ' ' . date('Y', $ts);
 }
 
+/** Относительное время: «5 минут назад», «вчера», «3 дня назад», иначе дата. */
+function ru_relative_time(?string $d): string {
+    if (!$d) return '';
+    $ts = strtotime($d); if (!$ts) return '';
+    $diff = time() - $ts;
+    if ($diff < 60)      return 'только что';
+    if ($diff < 3600)    { $n = (int)($diff / 60);   $forms = ['минуту','минуты','минут'];  return $n . ' ' . _ru_plural($n, $forms) . ' назад'; }
+    if ($diff < 86400)   { $n = (int)($diff / 3600); $forms = ['час','часа','часов'];       return $n . ' ' . _ru_plural($n, $forms) . ' назад'; }
+    if ($diff < 172800)  return 'вчера в ' . date('H:i', $ts);
+    if ($diff < 604800)  { $n = (int)($diff / 86400); $forms = ['день','дня','дней'];       return $n . ' ' . _ru_plural($n, $forms) . ' назад'; }
+    return ru_date($d);
+}
+function _ru_plural(int $n, array $f): string {
+    $n = abs($n) % 100; $n1 = $n % 10;
+    if ($n > 10 && $n < 20) return $f[2];
+    if ($n1 > 1 && $n1 < 5) return $f[1];
+    if ($n1 == 1) return $f[0];
+    return $f[2];
+}
+
 /** Логотип как base64 data-URI (для писем, дипломов, PDF). */
 function logo_data_uri(): string {
     static $u = null;
