@@ -1002,7 +1002,7 @@ function mpSetCity(city){ mpKeepPrice(); mkFilters.city = city; renderFilters();
    рендер на карточках/в детальной, свайп-галерея в карточке. Всё в памяти сессии (LISTINGS
    не персистится в базе — это ок, лишнего в localStorage не пишем). Патчи: openListingForm,
    saveListing, lstPhoto, openListing (галерея). */
-const MP_PHOTO_MAX = 6, MP_PHOTO_DIM = 1100;
+let MP_PHOTO_MAX = 10, MP_PHOTO_DIM = 1100; /* v4: Avito-parity — до 10 фото */
 let mpFormPhotos = [];
 
 /* уменьшаем картинку до MP_PHOTO_DIM по большей стороне -> лёгкий jpeg dataURL */
@@ -2434,12 +2434,19 @@ window.mpDemoToggle = mpDemoToggle;
 
 /* ---------- сид «настоящих» помечаем как демо, чтобы фильтровать по флагу ---------- */
 (function mpMarkDemo(){
-  LISTINGS.forEach(l=>{ if(!('demo' in l)) l.demo = !l.my; });
+  /* сидовые «мои» объявления Даниэля (901/902/903) — это ТОЖЕ демо для нового юзера.
+     Помечаем демо всё, что было в LISTINGS до создания реального объявления. */
+  const seedMyIds = new Set([901, 902, 903]);
+  LISTINGS.forEach(l=>{ if(!('demo' in l)) l.demo = !l.my || seedMyIds.has(l.id); });
   try{
     if(typeof POSTS!=='undefined'){
       ['sub','rec'].forEach(k=>{ (POSTS[k]||[]).forEach(p=>{ if(!('demo' in p)) p.demo = (p.name !== PROFILE.name); }); });
     }
   }catch(e){}
+  /* для НЕ-owner юзера снимаем `my`-флаг с демо-«моих» — чтобы «Мои объявления» были реально пустыми */
+  if(!mpIsDemo()){
+    LISTINGS.forEach(l=>{ if(l.demo && seedMyIds.has(l.id)) l.my = false; });
+  }
 })();
 
 /* ---------- фильтр реального каталога: без демо для не-owner ---------- */
@@ -2577,9 +2584,6 @@ function mpToggleCond(k){ mpKeepPrice(); mkFilters[k] = !mkFilters[k]; renderFil
 /* ============================================================
    V4·C — расширенный уровень фото (до 10) с drag-reorder
    ============================================================ */
-/* переопределяем лимит */
-try{ MP_PHOTO_MAX = 10; }catch(e){}
-
 const _mpRenderFormPhotosDrag = mpRenderFormPhotos;
 mpRenderFormPhotos = function(){
   _mpRenderFormPhotosDrag();
