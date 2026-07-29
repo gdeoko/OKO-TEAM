@@ -17,15 +17,10 @@
 <style>
 #holo-canvas{position:fixed;inset:0;z-index:4;width:100%;height:100%;pointer-events:none}
 /* ЖИВОЙ фон: canvas-сетка квадратов с волной подсветки (лёгкий 2D, без WebGL) */
-#cubes-bg{position:fixed;inset:0;z-index:-3;pointer-events:none;background:#050505}
-#cubes-bg::after{content:'';position:absolute;inset:-20%;z-index:1;pointer-events:none;
-  background:radial-gradient(38% 32% at 22% 18%,rgba(154,255,0,.10),transparent 60%),radial-gradient(42% 36% at 82% 78%,rgba(120,220,10,.09),transparent 62%);
-  filter:blur(30px);animation:aurora 18s ease-in-out infinite alternate;mix-blend-mode:screen}
-@keyframes aurora{0%{transform:translate3d(-4%,-2%,0) scale(1)}50%{transform:translate3d(3%,3%,0) scale(1.12)}100%{transform:translate3d(-2%,4%,0) scale(1.04)}}
-#gridCanvas{position:absolute;inset:0;width:100%;height:100%;display:block;
-  -webkit-mask-image:radial-gradient(ellipse 82% 74% at 50% 44%,#000 22%,rgba(0,0,0,.6) 60%,transparent 92%);
-  mask-image:radial-gradient(ellipse 82% 74% at 50% 44%,#000 22%,rgba(0,0,0,.6) 60%,transparent 92%)}
-#bg-glows{position:fixed;inset:0;z-index:-2;pointer-events:none;overflow:hidden}
+#cubes-bg{position:fixed;inset:0;z-index:-3;pointer-events:none;background:#03060b}
+#gridCanvas{position:absolute;inset:0;width:100%;height:100%;display:block}
+body.booting #cubes-bg{z-index:9988}   /* показываем живой космос на экране загрузки */
+#bg-glows{display:none}
 #bg-glows i{position:absolute;border-radius:50%;filter:blur(90px);will-change:transform,opacity}
 #bg-glows .g1{width:60vmin;height:60vmin;left:-10vmin;top:5vmin;background:radial-gradient(circle,rgba(154,255,0,.18),transparent 70%);animation:glDrift1 22s ease-in-out infinite alternate}
 #bg-glows .g2{width:70vmin;height:70vmin;right:-15vmin;top:35vmin;background:radial-gradient(circle,rgba(154,255,0,.12),transparent 70%);animation:glDrift2 28s ease-in-out infinite alternate}
@@ -44,7 +39,7 @@ a{text-decoration:none;color:inherit}img,video{max-width:100%;display:block}
 html.lenis,html.lenis body{height:auto}.lenis.lenis-smooth{scroll-behavior:auto!important}.lenis.lenis-stopped{overflow:hidden}
 /* PRELOADER — 3D-лого сразу */
 /* ЗАПУСК: 3D-глаз сразу виден, под ним прогресс, затем кнопка ВОЙТИ */
-#preloader{position:fixed;inset:0;z-index:9990;background:radial-gradient(ellipse 70% 60% at 50% 44%,#0a0f07,#050505 70%);display:flex;flex-direction:column;align-items:center;justify-content:flex-end;padding-bottom:15vh;gap:16px;transition:opacity .9s ease,visibility .9s}
+#preloader{position:fixed;inset:0;z-index:9990;background:radial-gradient(ellipse 90% 70% at 50% 42%,rgba(4,8,12,.12),rgba(3,6,11,.55) 78%,rgba(2,4,9,.78));display:flex;flex-direction:column;align-items:center;justify-content:flex-end;padding-bottom:15vh;gap:16px;transition:opacity .9s ease,visibility .9s}
 #preloader.done{opacity:0;visibility:hidden;pointer-events:none}
 body.booting{overflow:hidden}
 body.booting #holo-canvas{z-index:9995}
@@ -77,27 +72,37 @@ body.booting #holo-canvas{z-index:9995}
 .pl-bar2 i{position:absolute;left:0;top:0;height:100%;width:0;background:linear-gradient(90deg,#5FBF00,var(--lime));box-shadow:0 0 16px var(--lime)}
 .pl-lbl{font-family:'Unbounded',sans-serif;font-weight:700;font-size:11px;letter-spacing:3px;color:var(--w3);text-transform:uppercase;transition:opacity .4s}
 .pl-lbl b{color:var(--lime)}
-/* Кнопка запуска (гарантирует жест → звук включается на 100%) */
-.pl-start{opacity:0;pointer-events:none;transform:translateY(14px) scale(.96);transition:opacity .5s ease,transform .5s cubic-bezier(.16,1,.3,1);
-  display:inline-flex;align-items:center;gap:12px;background:var(--lime);color:#0a0f07;
-  font-family:'Unbounded',sans-serif;font-weight:700;font-size:15px;letter-spacing:2px;text-transform:uppercase;
-  padding:19px 46px;border:none;border-radius:100px;cursor:pointer;-webkit-tap-highlight-color:transparent;
-  box-shadow:0 12px 44px rgba(154,255,0,.34);animation:plPulse 1.9s ease-in-out infinite}
-.pl-start.show{opacity:1;pointer-events:auto;transform:none}
-.pl-start svg{width:17px;height:17px;fill:#0a0f07;display:block}
-.pl-start:active{transform:scale(.95)}
-@keyframes plPulse{0%,100%{box-shadow:0 0 0 0 rgba(154,255,0,.42),0 12px 44px rgba(154,255,0,.3)}50%{box-shadow:0 0 0 18px rgba(154,255,0,0),0 14px 54px rgba(154,255,0,.5)}}
+/* Кнопка START — круглая, вращающееся неоновое кольцо + пульс + плавающая. Гарантирует жест → звук на 100%. */
+.pl-start{position:relative;width:156px;height:156px;border-radius:50%;border:none;background:transparent;cursor:pointer;
+  opacity:0;pointer-events:none;transform:translateY(18px) scale(.86);transition:opacity .6s ease,transform .6s cubic-bezier(.16,1,.3,1);
+  -webkit-tap-highlight-color:transparent;display:grid;place-items:center;isolation:isolate;margin-top:6px}
+.pl-start.show{opacity:1;pointer-events:auto;transform:none;animation:stFloat 3.4s ease-in-out infinite}
+.pl-start::before{content:'';position:absolute;inset:-2px;border-radius:50%;padding:3px;z-index:-1;
+  background:conic-gradient(from 0deg,#9AFF00,#c9ff7a,#2E5E00,#0a0f07,#6FC400,#9AFF00);
+  -webkit-mask:linear-gradient(#000 0 0) content-box,linear-gradient(#000 0 0);-webkit-mask-composite:xor;mask-composite:exclude;
+  animation:stSpin 3.4s linear infinite;filter:drop-shadow(0 0 16px rgba(154,255,0,.65))}
+.pl-start::after{content:'';position:absolute;inset:0;border-radius:50%;z-index:-2;animation:stPulse 2.1s ease-out infinite}
+.pl-start .core{position:absolute;inset:7px;border-radius:50%;background:radial-gradient(circle at 50% 32%,#0f1a0c,#05080c 78%);
+  border:1px solid rgba(154,255,0,.28);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;
+  box-shadow:inset 0 0 26px rgba(154,255,0,.20),inset 0 2px 10px rgba(255,255,255,.06)}
+.pl-start .core svg{width:20px;height:20px;fill:var(--lime);filter:drop-shadow(0 0 7px rgba(154,255,0,.85))}
+.pl-start .core b{font-family:'Unbounded',sans-serif;font-weight:700;font-size:19px;letter-spacing:5px;color:var(--lime);
+  text-transform:uppercase;text-shadow:0 0 18px rgba(154,255,0,.75);padding-left:5px}
+.pl-start:active{transform:scale(.93)}
+@keyframes stSpin{to{transform:rotate(360deg)}}
+@keyframes stPulse{0%{box-shadow:0 0 0 0 rgba(154,255,0,.5),0 0 40px rgba(154,255,0,.35)}70%{box-shadow:0 0 0 30px rgba(154,255,0,0),0 0 40px rgba(154,255,0,.35)}100%{box-shadow:0 0 0 0 rgba(154,255,0,0),0 0 40px rgba(154,255,0,.3)}}
+@keyframes stFloat{0%,100%{translate:0 0}50%{translate:0 -8px}}
 .pl-flash{position:fixed;inset:0;background:radial-gradient(circle at 50% 42%,rgba(210,255,140,.95),rgba(154,255,0,.42) 30%,transparent 62%);opacity:0;pointer-events:none;z-index:9996}
 /* каскад появления hero после входа */
 .hero-badge,.hero-title,.hero-stats,.hero-btns,.scroll-hint{transition:opacity .8s cubic-bezier(.16,1,.3,1),transform .8s cubic-bezier(.16,1,.3,1)}
 body.booting .hero-badge,body.booting .hero-title,body.booting .hero-stats,body.booting .hero-btns,body.booting .scroll-hint{opacity:0;transform:translateY(26px)}
 /* BACKGROUND — видео-квадратики (лёгкое) + спираль ДНК + свечения */
 #bgv{position:fixed;inset:0;z-index:-3;width:100%;height:100%;object-fit:cover;opacity:.5;pointer-events:none}
-#bg-grid{position:fixed;inset:0;z-index:-4;pointer-events:none;background:repeating-linear-gradient(0deg,transparent 0 39px,rgba(154,255,0,.03) 39px 40px),repeating-linear-gradient(90deg,transparent 0 39px,rgba(154,255,0,.03) 39px 40px),var(--bg);background-size:40px 40px}
-#bg-overlay{position:fixed;inset:0;z-index:-2;pointer-events:none;background:radial-gradient(120% 100% at 50% 0%,rgba(5,5,5,.25),rgba(5,5,5,.72) 72%,rgba(5,5,5,.92))}
+#bg-grid{display:none}
+#bg-overlay{position:fixed;inset:0;z-index:-2;pointer-events:none;background:radial-gradient(130% 110% at 50% 8%,rgba(3,6,11,0),rgba(3,6,11,.30) 72%,rgba(3,6,11,.55))}
 #dna{position:fixed;top:0;right:2vw;width:150px;height:100vh;z-index:-1;pointer-events:none;opacity:.5;mix-blend-mode:screen}
 #dna video{width:100%;height:100%;object-fit:cover;filter:invert(1) hue-rotate(60deg) saturate(2) brightness(1.1);-webkit-mask-image:linear-gradient(180deg,transparent,#000 12%,#000 88%,transparent);mask-image:linear-gradient(180deg,transparent,#000 12%,#000 88%,transparent)}
-#glow-bg{position:fixed;inset:0;z-index:-2;pointer-events:none;overflow:hidden}
+#glow-bg{display:none}
 #glow-bg span{position:absolute;border-radius:50%;filter:blur(90px);opacity:.45;will-change:transform}
 #glow-bg .g1{width:52vw;height:52vw;right:-16vw;top:-20vw;background:radial-gradient(circle,rgba(154,255,0,.13),transparent 65%);animation:drift1 26s ease-in-out infinite alternate}
 #glow-bg .g2{width:42vw;height:42vw;left:-14vw;top:40vh;background:radial-gradient(circle,rgba(60,140,10,.12),transparent 65%);animation:drift2 32s ease-in-out infinite alternate}
@@ -391,7 +396,7 @@ details.tier-detail[open] .tier-detail-h .ar{transform:rotate(90deg)}
 <body>
 <!-- ФОНОВАЯ МУЗЫКА: настоящий DOM-элемент <audio> (надёжно играет на мобильных, в отличие от new Audio()) -->
 <audio id="bgm" loop preload="auto" playsinline>
-  <source src="kp-media/snd/music.mp3?v=6" type="audio/mpeg">
+  <source src="kp-media/snd/music.mp3?v=7" type="audio/mpeg">
 </audio>
 <!-- PRELOADER (3D-лого сразу) -->
 <div id="preloader">
@@ -400,7 +405,7 @@ details.tier-detail[open] .tier-detail-h .ar{transform:rotate(90deg)}
     <div class="pl-brand" id="plBrand">О<span>К</span>О</div>
     <div class="pl-bar2"><i id="plFill"></i></div>
     <div class="pl-lbl" id="plLbl">ЗАГРУЗКА СИСТЕМЫ · <b id="plPct">0%</b></div>
-    <button class="pl-start" id="plStart" type="button" aria-label="Запустить"><svg viewBox="0 0 24 24"><path d="M7 5v14l12-7z"/></svg>ЗАПУСТИТЬ</button>
+    <button class="pl-start" id="plStart" type="button" aria-label="START"><span class="core"><svg viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg><b>START</b></span></button>
   </div>
 </div>
 <div class="pl-flash" id="plFlash"></div>
@@ -652,21 +657,29 @@ document.body.classList.add('booting');
   var t0=performance.now(),DUR=2200,ready=window.__eyeReady||false;
   addEventListener('eye-ready',function(){ready=true;});
   // Показываем кнопку «ЗАПУСТИТЬ», когда всё загружено. Пока не нажали — сайт за прелоадером (гарантия жеста).
+  var bar=document.querySelector('.pl-bar2');
   function showStart(){ if(shown||entered)return; shown=true;
     if(brand)brand.classList.remove('glitch');
     if(fill)fill.style.width='100%'; if(pct)pct.textContent='100%';
     if(lbl){lbl.style.opacity='0';setTimeout(function(){lbl.style.display='none';},400);}
+    if(bar){bar.style.transition='opacity .4s';bar.style.opacity='0';setTimeout(function(){bar.style.display='none';},420);}
     if(startBtn)startBtn.classList.add('show');
   }
-  // Вход по нажатию кнопки — это НАСТОЯЩИЙ жест пользователя, поэтому музыка гарантированно играет (100%).
+  // Вход по кнопке START = НАСТОЯЩИЙ жест → музыка гарантированно на 100%. + гиперпрыжок через космос.
   function finish(){ if(entered)return; entered=true;
     if(window.__audio)window.__audio.start();   // синхронно в обработчике клика → play() разрешён
+    if(window.__cosmosWarp)window.__cosmosWarp();   // ГИПЕРПРЫЖОК: звёзды вытягиваются в лучи
     if(brand)brand.classList.remove('glitch');
-    if(flash){flash.style.transition='opacity .16s ease';flash.style.opacity='1';setTimeout(function(){flash.style.transition='opacity .9s ease';flash.style.opacity='0';},170);}
-    try{scrollTo(0,0);}catch(e){}
-    pl.classList.add('done'); document.body.classList.remove('booting'); start();
-    var seq=['.hero .hero-badge','.hero .hero-title','.hero .hero-stats','.hero .hero-btns','.hero .scroll-hint'];
-    seq.forEach(function(sel,i){var el=document.querySelector(sel);if(!el)return;setTimeout(function(){el.style.opacity='1';el.style.transform='none';},260+i*120);});
+    // прячем UI загрузки, космос остаётся и разгоняется
+    if(startBtn){startBtn.style.transition='opacity .3s,transform .5s';startBtn.style.opacity='0';startBtn.style.transform='scale(1.5)';startBtn.style.pointerEvents='none';}
+    if(brand){brand.style.transition='opacity .35s';brand.style.opacity='0';}
+    setTimeout(function(){
+      if(flash){flash.style.transition='opacity .18s ease';flash.style.opacity='1';setTimeout(function(){flash.style.transition='opacity 1s ease';flash.style.opacity='0';},180);}
+      try{scrollTo(0,0);}catch(e){}
+      pl.classList.add('done'); document.body.classList.remove('booting'); start();
+      var seq=['.hero .hero-badge','.hero .hero-title','.hero .hero-stats','.hero .hero-btns','.hero .scroll-hint'];
+      seq.forEach(function(sel,i){var el=document.querySelector(sel);if(!el)return;setTimeout(function(){el.style.opacity='1';el.style.transform='none';},300+i*120);});
+    },780);   // даём гиперпрыжку разогнаться до вспышки
   }
   if(startBtn){ startBtn.addEventListener('click',finish); startBtn.addEventListener('touchend',function(e){e.preventDefault();finish();},{passive:false}); }
   (function tick(){var e=performance.now()-t0; var p=Math.min(1,e/DUR); if(!ready)p=Math.min(p,0.92);
@@ -675,52 +688,101 @@ document.body.classList.add('booting');
     if(p>=1){showStart();return;} requestAnimationFrame(tick);})();
   setTimeout(showStart,4600);   // фолбэк: кнопка появится даже если что-то не догрузилось
 })();
-/* ЖИВАЯ СЕТКА КВАДРАТОВ (canvas 2D): дрейф + бегущая волна подсветки + отклик на курсор */
+/* ЖИВОЙ КОСМОС (canvas 2D): дрейфующая туманность + параллакс-звёзды + Млечный путь + кометы + гиперпрыжок при СТАРТ.
+   Полностью процедурный, весит ноль — быстро на любом соединении, реально движется. Бренд-зелёный космос. */
 (function(){
   var cv=document.getElementById('gridCanvas');if(!cv)return;
-  var ctx=cv.getContext('2d',{alpha:true}),W=0,Hh=0,dpr=Math.min(devicePixelRatio||1,1.6);
-  var CELL=64, mx=-9999,my=-9999, t0=performance.now();
-  function size(){W=innerWidth;Hh=innerHeight;cv.width=Math.round(W*dpr);cv.height=Math.round(Hh*dpr);
-    cv.style.width=W+'px';cv.style.height=Hh+'px';ctx.setTransform(dpr,0,0,dpr,0,0);
-    CELL = W<760 ? 46 : 64;}
+  var ctx=cv.getContext('2d',{alpha:false}),W=0,H=0,dpr=Math.min(devicePixelRatio||1,2);
+  var t0=performance.now(),scrollY0=0,mx=0.5,my=0.5,warp=0,warpDir=1;
+  window.__cosmosWarp=function(){ if(warp<=0){warp=0.001;warpDir=1;} };   // запуск гиперпрыжка (импульс 0→1→0)
+  function rnd(a,b){return a+Math.random()*(b-a);}
+  var STAR=[],NEB=[],MW=[],COM=[],cx0,cy0;
+  function build(){
+    var mob=W<760; cx0=W*0.5; cy0=H*0.42;
+    STAR=[];
+    [ {n:mob?110:180,sp:1.6,r:[.4,.9],a:[.22,.55]},
+      {n:mob?70:110, sp:5,  r:[.7,1.4],a:[.4,.8]},
+      {n:mob?38:60,  sp:12, r:[1.0,2.0],a:[.6,1]} ].forEach(function(c){
+      var arr=[];for(var i=0;i<c.n;i++)arr.push({x:Math.random(),y:Math.random(),r:rnd(c.r[0],c.r[1]),a:rnd(c.a[0],c.a[1]),tw:Math.random()*6.28,ts:rnd(.5,2)});
+      STAR.push({sp:c.sp,s:arr});
+    });
+    var cols=[[154,255,0],[110,196,0],[40,150,80],[30,120,120],[90,200,40]];
+    NEB=[];for(var k=0;k<5;k++)NEB.push({x:rnd(0.05,0.95),y:rnd(0,0.7),sz:rnd(.55,1.15),c:cols[k%cols.length],ph:Math.random()*6.28,dr:rnd(.03,.09),op:rnd(.05,.13)});
+    MW=[];for(var m=0;m<(mob?70:120);m++)MW.push({u:Math.random(),o:rnd(-.05,.05),r:rnd(.4,1.2),a:rnd(.2,.65),tw:Math.random()*6.28});
+    COM=[];
+  }
+  function size(){W=innerWidth;H=innerHeight;cv.width=Math.round(W*dpr);cv.height=Math.round(H*dpr);cv.style.width=W+'px';cv.style.height=H+'px';ctx.setTransform(dpr,0,0,dpr,0,0);build();}
   size();addEventListener('resize',size);
-  addEventListener('pointermove',function(e){mx=e.clientX;my=e.clientY;},{passive:true});
-  addEventListener('touchmove',function(e){if(e.touches[0]){mx=e.touches[0].clientX;my=e.touches[0].clientY;}},{passive:true});
-  addEventListener('pointerleave',function(){mx=my=-9999;});
-  var scrollY0=0;addEventListener('scroll',function(){scrollY0=window.scrollY||0;},{passive:true});
+  addEventListener('pointermove',function(e){mx=e.clientX/innerWidth;my=e.clientY/innerHeight;},{passive:true});
+  addEventListener('touchmove',function(e){if(e.touches[0]){mx=e.touches[0].clientX/innerWidth;my=e.touches[0].clientY/innerHeight;}},{passive:true});
+  addEventListener('scroll',function(){scrollY0=window.scrollY||0;},{passive:true});
+  var cometT=3;
   function draw(now){
     requestAnimationFrame(draw);
-    var t=(now-t0)/1000;
-    ctx.clearRect(0,0,W,Hh);
-    var ox=((t*7)%CELL), oy=((t*5 + scrollY0*0.06)%CELL);
-    var cols=Math.ceil(W/CELL)+2, rows=Math.ceil(Hh/CELL)+2;
-    // бегущая диагональная волна
-    var wavePos=(t*0.16)%2.4-0.6;
-    for(var i=0;i<cols;i++){
-      for(var j=0;j<rows;j++){
-        var x=i*CELL-ox, y=j*CELL-oy;
-        var nx=(x+CELL/2)/W, ny=(y+CELL/2)/Hh;
-        var d=(nx*0.6+ny*0.6);                       // диагональная координата
-        var w=Math.exp(-Math.pow((d-wavePos)/0.16,2));// гауссова волна
-        // отклик на курсор
-        var dx=(x+CELL/2)-mx, dy=(y+CELL/2)-my;
-        var pd=Math.sqrt(dx*dx+dy*dy);
-        var pr=Math.exp(-Math.pow(pd/190,2));
-        var glow=Math.min(1, w*0.85 + pr*0.9);
-        var base=0.055 + 0.02*Math.sin(t*0.6 + i*0.35 + j*0.28);
-        var a=base + glow*0.55;
-        // квадрат (контур)
-        ctx.strokeStyle='rgba(154,255,0,'+a.toFixed(3)+')';
-        ctx.lineWidth= glow>0.35 ? 1.4 : 1;
-        var pad = glow*3.0;
-        ctx.strokeRect(x+2+pad*0.5, y+2+pad*0.5, CELL-4-pad, CELL-4-pad);
-        // заливка у ярких
-        if(glow>0.22){
-          ctx.fillStyle='rgba(154,255,0,'+(glow*0.075).toFixed(3)+')';
-          ctx.fillRect(x+2+pad*0.5, y+2+pad*0.5, CELL-4-pad, CELL-4-pad);
+    var t=(now-t0)/1000,dt=Math.min(.05,(now-(draw._l||now))/1000);draw._l=now;
+    var acc=1+warp*7;                                   // ускорение при гиперпрыжке
+    // фон — глубокий космос (не чёрный): зелёно-сине-чёрный радиальный градиент
+    var g=ctx.createRadialGradient(W*0.5,H*0.34,0,W*0.5,H*0.42,Math.max(W,H)*0.95);
+    g.addColorStop(0,'#0c1712');g.addColorStop(.45,'#070f0c');g.addColorStop(1,'#03060b');
+    ctx.globalCompositeOperation='source-over';ctx.fillStyle=g;ctx.fillRect(0,0,W,H);
+    ctx.globalCompositeOperation='lighter';
+    // Млечный путь — мягкая диагональная полоса
+    ctx.save();ctx.translate(W*0.5,H*0.4);ctx.rotate(-0.62);
+    var mwg=ctx.createLinearGradient(0,-H*0.5,0,H*0.5);
+    mwg.addColorStop(0,'rgba(60,150,70,0)');mwg.addColorStop(.5,'rgba(120,220,90,'+(0.05+0.015*Math.sin(t*0.4))+')');mwg.addColorStop(1,'rgba(60,150,70,0)');
+    ctx.fillStyle=mwg;ctx.fillRect(-W,-H*0.16,W*2,H*0.32);ctx.restore();
+    // туманности (дрейф + пульс)
+    NEB.forEach(function(nb){
+      var pulse=0.65+0.35*Math.sin(t*0.25+nb.ph);
+      var X=(nb.x+Math.sin(t*nb.dr+nb.ph)*0.05)*W, Y=(nb.y+Math.cos(t*nb.dr*0.8+nb.ph)*0.04)*H-scrollY0*0.03;
+      var R=nb.sz*Math.min(W,H)*0.85, o=nb.op*pulse, c=nb.c;
+      var rg=ctx.createRadialGradient(X,Y,0,X,Y,R);
+      rg.addColorStop(0,'rgba('+c[0]+','+c[1]+','+c[2]+','+o.toFixed(3)+')');
+      rg.addColorStop(.4,'rgba('+c[0]+','+c[1]+','+c[2]+','+(o*0.35).toFixed(3)+')');
+      rg.addColorStop(1,'rgba('+c[0]+','+c[1]+','+c[2]+',0)');
+      ctx.fillStyle=rg;ctx.beginPath();ctx.arc(X,Y,R,0,6.2832);ctx.fill();
+    });
+    // Млечный путь — плотные слабые звёзды вдоль полосы
+    var a0={x:W*0.08,y:H*0.16},a1={x:W*0.96,y:H*0.74};
+    MW.forEach(function(s){
+      var bx=a0.x+(a1.x-a0.x)*s.u, by=a0.y+(a1.y-a0.y)*s.u;
+      var nx=-(a1.y-a0.y),ny=(a1.x-a0.x),ln=Math.hypot(nx,ny);nx/=ln;ny/=ln;
+      var X=bx+nx*s.o*H, Y=by+ny*s.o*H, tw=0.6+0.4*Math.sin(t*1.2+s.tw);
+      ctx.fillStyle='rgba(190,255,170,'+(s.a*tw*0.7).toFixed(3)+')';
+      ctx.beginPath();ctx.arc(X,Y,s.r,0,6.2832);ctx.fill();
+    });
+    // звёзды — параллакс-слои (+ гиперпрыжок: вытягиваются в лучи от центра)
+    var px=(mx-0.5),py=(my-0.5);
+    STAR.forEach(function(L){
+      for(var i=0;i<L.s.length;i++){var s=L.s[i];
+        var X=(((s.x+t*L.sp*0.0009*acc)%1)*W)+px*L.sp*1.4;
+        var Y=(((s.y+t*L.sp*0.0004*acc+scrollY0*0.00006*L.sp)%1)*H)+py*L.sp*1.4;
+        var tw=0.55+0.45*Math.sin(t*s.ts+s.tw);
+        if(warp>0.02){
+          var dx=X-cx0,dy=Y-cy0,len=Math.hypot(dx,dy)||1;
+          var str=warp*L.sp*3.2;
+          ctx.strokeStyle='rgba(200,255,180,'+(s.a*tw).toFixed(3)+')';
+          ctx.lineWidth=s.r*(1+warp*1.5);ctx.beginPath();
+          ctx.moveTo(X,Y);ctx.lineTo(X+dx/len*str,Y+dy/len*str);ctx.stroke();
+        }else{
+          ctx.fillStyle='rgba(200,255,180,'+(s.a*tw).toFixed(3)+')';
+          ctx.beginPath();ctx.arc(X,Y,s.r,0,6.2832);ctx.fill();
         }
       }
-    }
+    });
+    // кометы (изредка)
+    cometT-=dt;
+    if(cometT<=0 && warp<=0){cometT=rnd(6,12);var fromL=Math.random()<.5;
+      COM.push({x:fromL?-0.05:1.05,y:rnd(0.05,0.5),vx:(fromL?1:-1)*rnd(.28,.42),vy:rnd(.12,.22),life:0});}
+    for(var ci=COM.length-1;ci>=0;ci--){var c=COM[ci];c.life+=dt;c.x+=c.vx*dt;c.y+=c.vy*dt;
+      var X=c.x*W,Y=c.y*H,tx=X-c.vx*W*0.34,ty=Y-c.vy*H*0.34;
+      var cg=ctx.createLinearGradient(X,Y,tx,ty);
+      cg.addColorStop(0,'rgba(210,255,180,.9)');cg.addColorStop(.4,'rgba(154,255,0,.35)');cg.addColorStop(1,'rgba(154,255,0,0)');
+      ctx.strokeStyle=cg;ctx.lineWidth=2.2;ctx.lineCap='round';ctx.beginPath();ctx.moveTo(X,Y);ctx.lineTo(tx,ty);ctx.stroke();
+      ctx.fillStyle='rgba(230,255,200,.95)';ctx.beginPath();ctx.arc(X,Y,2.2,0,6.2832);ctx.fill();
+      if(c.x<-0.15||c.x>1.15||c.y>1.15)COM.splice(ci,1);}
+    if(warp>0){ warp+=warpDir*dt*1.7; if(warp>=1){warp=1;warpDir=-1;} else if(warpDir<0&&warp<=0){warp=0;warpDir=1;} }
+    ctx.globalCompositeOperation='source-over';
   }
   requestAnimationFrame(draw);
 })();
@@ -732,7 +794,7 @@ document.body.classList.add('booting');
   var mus=null, masterVol=1.0, confirmed=false, fadeRAF=0;
   function makeMus(){ if(mus)return mus;
     mus=document.getElementById('bgm');   // настоящий DOM <audio> — надёжно играет на мобильных
-    if(!mus){ mus=new Audio('kp-media/snd/music.mp3?v=6'); document.body.appendChild(mus); }
+    if(!mus){ mus=new Audio('kp-media/snd/music.mp3?v=7'); document.body.appendChild(mus); }
     mus.loop=true; mus.preload='auto'; mus.setAttribute('playsinline',''); mus.volume=0; return mus; }
   function fadeTo(to,ms){ makeMus(); if(fadeRAF)cancelAnimationFrame(fadeRAF);
     var from=mus.volume, t0=performance.now();
