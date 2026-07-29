@@ -1691,18 +1691,22 @@ try{
    «Показать полностью» плавно раскрывает содержимое (grid-rows animation, без
    JS-высот). Раскрытое состояние помнится в объекте поста (session-only) →
    пересборка ленты не «схлопывает» уже прочитанное.
+   Проверка ПО РЕАЛЬНОЙ ВЫСОТЕ: кнопка появляется, только если DOM реально обрезал
+   текст (scrollHeight > clientHeight). Никаких кнопок на коротких 2-строчных постах.
    ============================================================================ */
-const FA_CLIP_MIN = 220;  /* минимум символов, при котором подрезаем тело */
+const FA_CLIP_MIN = 90;   /* нижний порог по символам — минимум чтобы вообще рассматривать пост как «длинный» */
 
 function faExpandDecorate(){
   try{
     const list = document.getElementById('feedList'); if(!list) return;
+    const pending = [];
     list.querySelectorAll('article.post .body').forEach(function(body){
       try{
         if(body._faClipped) return;
         const art = body.closest('article.post'); if(!art) return;
         const pid = faIdOf(art); if(pid == null) return;
         const p = postById(pid); if(!p || !p.body) return;
+        /* дешёвый short-circuit: если тело короткое — точно ничего не подрежется */
         if(String(p.body).length < FA_CLIP_MIN) return;
         body._faClipped = 1;
         const openCls = p._faOpen ? ' fa-open' : '';
@@ -1719,8 +1723,37 @@ function faExpandDecorate(){
             '<span class="fa-more-t">' + (p._faOpen ? 'Свернуть' : 'Показать полностью') + '</span>' +
             I('chev') +
           '</button>';
+        pending.push({body:body, pid:pid});
       }catch(e){}
     });
+    /* после вставки — проверяем РЕАЛЬНУЮ высоту .fa-body-inner: если контент
+       вообще не переполнил box (короткий пост в 2 строки), разворачиваем клип
+       обратно и убираем кнопку. Так «Показать полностью» больше не мозолит глаза
+       на коротких карточках. */
+    if(pending.length){
+      const check = function(){
+        pending.forEach(function(x){
+          try{
+            const body = x.body; if(!body) return;
+            const clip  = body.querySelector('.fa-body-clip'); if(!clip) return;
+            const inner = clip.querySelector('.fa-body-inner'); if(!inner) return;
+            /* если раскрыто пользователем — тестировать нечего */
+            if(clip.classList.contains('fa-open')) return;
+            const overflow = inner.scrollHeight - inner.clientHeight;
+            if(overflow > 2) return;   /* реально обрезано → кнопка нужна */
+            /* контент влез — разворачиваем DOM обратно, чтобы не было кнопки */
+            const innerHTML = inner.innerHTML;
+            const btn = body.querySelector(':scope > .fa-more-btn');
+            if(btn) btn.remove();
+            body.classList.remove('fa-body-wrap');
+            body.innerHTML = innerHTML;
+          }catch(e){}
+        });
+      };
+      /* два прохода: сразу и в rAF — верстка может подгрузить шрифт и высота изменится */
+      check();
+      if(typeof requestAnimationFrame === 'function') requestAnimationFrame(check);
+    }
   }catch(e){}
 }
 function faToggleBody(btn, pid){
@@ -2107,14 +2140,181 @@ try{
         'Свежие истории':'Fresh stories','Каналы, которые тебе понравятся':'Channels you may like',
         'Канал':'Channel','Курс':'Course','Клуб':'Club','Бесплатно':'Free',
         'Ты пропустил':'You missed','пост':'post','поста':'posts','постов':'posts',
+        'Для тебя':'For you','Подобрано алгоритмом OKO':'Curated by the OKO algorithm',
       };
       for(const k in add) if(!(k in ST_DICT)) ST_DICT[k] = add[k];
     }
+    try{ faInjectFYouTab(); }catch(e){}
     /* если лента уже видна — обогатим её сразу (первый рендер выполнился до нас) */
     const feed = document.getElementById('screen-feed');
     if(feed && feed.classList.contains('active')){
       try{ faExpandDecorate(); }catch(e){}
       try{ if(curFeedKind === 'rec') faInterstitials(); }catch(e){}
+      try{ if(curFeedKind === 'fyou') faDecorateFYou(); }catch(e){}
+    }
+  }catch(e){}
+})();
+
+/* ============================================================================
+   17. ЧИСТЫЙ ВИДЕО-ПОСТЕР (fix v1.94)
+   Ядро рисует над кадром большую букву-аватар автора + первые 46 символов тела.
+   На посте «Академия OKO открыта» это давало «OKO» в надписи и «O» в кружке-аватара
+   одновременно с текстом описания под медиа → визуальный дубль. Решение:
+   переопределяем renderPostMedia в пользу чистого постера в стиле Instagram/TikTok
+   (градиент + большая play-кнопка + бейдж длительности), без текстовых оверлеев,
+   которые дублируют тело поста. Для видео с известной темой — маленький бренд-чип
+   в углу вместо буквы (SVG-иконка темы). Карусель (N/M) — тоже без буквы/текста.
+   ============================================================================ */
+const FA_TOPIC_ICON = {ai:'bolt', content:'camera', business:'briefcase',
+  marketing:'compass', games:'star', crypto:'fire'};
+try{
+  if(typeof renderPostMedia === 'function' && typeof POST_MEDIA_PALETTES !== 'undefined'){
+    const _faPrevRenderPostMedia = renderPostMedia;
+    renderPostMedia = function(p){
+      try{
+        if(!p || !p.media) return '';
+        const isCarousel = /^\d+\/\d+$/.test(p.media);
+        const pals = POST_MEDIA_PALETTES;
+        const idx = ((p.id||0) % pals.length + pals.length) % pals.length;
+        const pal = pals[idx];
+        const c1 = pal[0], c2 = pal[1], ac = pal[2];
+        const topicIco = (p.topic && FA_TOPIC_ICON[p.topic]) ? FA_TOPIC_ICON[p.topic] : null;
+        const chip = topicIco ? '<span class="fa-media-topic" style="color:'+ac+'">'+I(topicIco)+'</span>' : '';
+        if(isCarousel){
+          return '<div class="media media-car fa-media-clean" style="background:linear-gradient(140deg,'+c1+','+c2+' 65%);color:'+ac+'">'+
+            chip+
+            '<span class="media-tag">'+I('photo')+'<span>'+p.media+'</span></span>'+
+          '</div>';
+        }
+        return '<div class="media media-vid fa-media-clean" style="background:linear-gradient(140deg,'+c1+','+c2+' 65%);color:'+ac+'">'+
+          chip+
+          '<span class="media-play"><svg class="i"><use href="#i-circle-play"/></svg></span>'+
+          '<span class="media-time">'+esc(p.media)+'</span>'+
+        '</div>';
+      }catch(e){
+        try{ return _faPrevRenderPostMedia(p); }catch(_){ return ''; }
+      }
+    };
+  }
+}catch(e){}
+
+/* ============================================================================
+   18. ВКЛАДКА «ДЛЯ ТЕБЯ» (For You) — алгоритмическая лента в стиле TikTok
+   Простая формула: engagement = likes*2 + comments*3 + watch-time (сек длительности
+   видео как прокси удержания) + reposts*2, помноженное на буст свежести (экспо-декей
+   с полураспадом ~1 сутки). Малые бонусы: тема из твоих сигналов + аффинность автора.
+   Небольшой детерминированный шум по seed сессии — лента «дышит», но стабильна между
+   ре-рендерами. Пул — объединение POSTS.rec и POSTS.sub (дедуп), скрытые исключаются.
+   Реклама в For You ниже — как в TikTok, где нативные видео важнее промо.
+   Табу «Подписки/Рекомендации» из base.html не трогаем: инжектим третью кнопку
+   «Для тебя» в .feed-tabs между ними (первая кнопка остаётся «Подписки» — чтобы
+   не сломать document.querySelector('.feed-tabs button').click() в createPost).
+   ============================================================================ */
+function faFYouScore(p){
+  const cmts = Array.isArray(p.comments) ? p.comments.length : 0;
+  const eng  = (p.likes||0)*2 + cmts*3 + (p.reposts||0)*2 + faMediaSec(p.media||'');
+  const fresh = Math.exp(-faAgeH(p) / 24);       /* полураспад ~1 сутки */
+  let s = eng * (0.55 + 1.35 * fresh);
+  /* лёгкая персонализация: сигналы по теме и аффинность автора */
+  if(p.topic) s += Math.min(FA.signals[p.topic]||0, 12) * 22;
+  s += Math.min(FA.authors[p.name]||0, 18) * 14;
+  /* детерминированный шум для разнообразия — стабилен между ре-рендерами */
+  s += (faRand((p.id||0) + 7777) - 0.5) * 55;
+  if(p.promoted) s -= 400;                       /* реклама в For You тише */
+  return s;
+}
+function faFYouPool(){
+  const hidden = faLoadHidden();
+  const seen = {}, out = [];
+  const push = function(arr){
+    if(!Array.isArray(arr)) return;
+    arr.forEach(function(p){
+      if(!p || seen[p.id]) return;
+      if(hidden && hidden.has(+p.id)) return;
+      seen[p.id] = 1; out.push(p);
+    });
+  };
+  if(typeof POSTS !== 'undefined'){ push(POSTS.rec); push(POSTS.sub); }
+  out.sort(function(a,b){ return faFYouScore(b) - faFYouScore(a); });
+  return out;
+}
+function faInjectFYouTab(){
+  try{
+    const tabs = document.querySelector('#screen-feed .feed-tabs');
+    if(!tabs || tabs.querySelector('.fa-tab-fyou')) return;
+    /* вставляем между «Подписки» и «Рекомендации» — первая кнопка остаётся Подписки
+       (важно: createPost делает .feed-tabs button.click() → должно попасть на Подписки) */
+    const btn = document.createElement('button');
+    btn.type = 'button';
+    btn.className = 'fa-tab-fyou';
+    btn.textContent = 'Для тебя';
+    btn.setAttribute('onclick', "feedTab(this,'fyou')");
+    const first = tabs.querySelector('button');
+    if(first && first.nextSibling) tabs.insertBefore(btn, first.nextSibling);
+    else tabs.appendChild(btn);
+  }catch(e){}
+}
+/* лёгкая шапка для «Для тебя» — без длинного пояснения, чтобы отличалось от «Рекомендаций» */
+function faDecorateFYou(){
+  try{
+    const list = document.getElementById('feedList'); if(!list) return;
+    if(curFeedKind !== 'fyou') return;
+    /* убрать длинную текстовую врезку ядра */
+    const baseNote = list.querySelector(':scope > div:not([class])');
+    if(baseNote) baseNote.remove();
+    if(!list.querySelector('.fa-head.fa-head-fyou')){
+      list.insertAdjacentHTML('afterbegin',
+        '<div class="fa-head fa-head-fyou">'+
+          '<div class="fa-bar">'+
+            '<div class="fa-bar-l">'+
+              '<span class="fa-dot"></span>'+
+              '<span class="fa-title">Для тебя</span>'+
+            '</div>'+
+            '<button class="fa-refresh" type="button" onclick="faRefreshFYou()">'+I('fa-refresh')+'<span>Обновить</span></button>'+
+          '</div>'+
+          '<div class="fa-explain fa-open"><p>Подобрано алгоритмом OKO: вовлечённость + свежесть — как в TikTok. Реагируй на посты, чтобы уточнить.</p></div>'+
+        '</div>');
+    }
+    /* verified galochka и время публикации — обе вкладки уже покрыты faStampTimes/faSeenMark
+       в основной цепочке renderFeed. Ничего больше не декорируем — For You умышленно
+       чище рекомендаций (никаких «почему показано»-чипов, лента как ролик за роликом). */
+  }catch(e){}
+}
+function faRefreshFYou(){
+  try{
+    FA.seed = (Math.random() * 4294967295) >>> 0;
+    FA.now = Date.now();
+    if(typeof POSTS !== 'undefined') POSTS.fyou = faFYouPool();
+    renderFeed('fyou');
+    const list = document.getElementById('feedList');
+    if(list){ list.classList.remove('fa-anim'); void list.offsetWidth; list.classList.add('fa-anim');
+      setTimeout(function(){ list.classList.remove('fa-anim'); }, 900); }
+    const m = document.querySelector('main'); if(m) m.scrollTo({top:0, behavior:'smooth'});
+    if(typeof toast === 'function') toast('Лента обновлена');
+  }catch(e){}
+}
+/* доцеп к renderFeed: перед делегированием базовому — заполняем POSTS.fyou, после — вешаем декоратор */
+try{
+  if(typeof renderFeed === 'function'){
+    const _prevRFfyou = renderFeed;
+    renderFeed = function(kind){
+      kind = kind || (typeof curFeedKind !== 'undefined' ? curFeedKind : 'sub');
+      if(kind === 'fyou' && typeof POSTS !== 'undefined'){
+        POSTS.fyou = faFYouPool();
+      }
+      const r = _prevRFfyou.apply(this, arguments);
+      try{ if(kind === 'fyou') faDecorateFYou(); }catch(e){}
+      return r;
+    };
+  }
+}catch(e){}
+/* инжектим таб как можно раньше — если DOM ещё не готов, ждём */
+(function faFYouEarlyBoot(){
+  try{
+    if(document.readyState === 'loading'){
+      document.addEventListener('DOMContentLoaded', function(){ try{ faInjectFYouTab(); }catch(e){} }, {once:true});
+    }else{
+      faInjectFYouTab();
     }
   }catch(e){}
 })();

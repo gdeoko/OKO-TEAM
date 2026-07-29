@@ -22,6 +22,7 @@ ORDER = [
     'academy-content', # академия: контент-пак уроков (window.AC_PACK) — ДО academy
     'academy-enrich',  # академия: обогащение уроков (window.AC_ENRICH) — ДО academy
     'academy',         # академия: уроки, тесты, сертификаты
+    'academy-plus',    # академия+: ленивые блоки, таймлайн, XP, заметки, комменты, рек-система, RU/EN, скорость, фильтры
     'ads',             # рекламный кабинет
     'legal',           # юр-документы RU/EN
     'verify-stickers', # верификация + стикеры/TON-эмодзи

@@ -1,15 +1,9 @@
 <!-- ===== SETTINGS-PLUS: fullscreen-вьюха «Настройки» (st2-) ===== -->
 <div id="st2View">
   <div class="sv-head">
-    <button class="ep-cancel" onclick="st2Close()" aria-label="Назад"><svg class="i"><use href="#i-back"/></svg></button>
-    <b>Настройки</b>
+    <button class="ep-cancel" id="st2Back" onclick="st2Back()" aria-label="Назад"><svg class="i" id="st2BackIco"><use href="#i-back"/></svg></button>
+    <b id="st2Title">Настройки</b>
     <span style="width:24px"></span>
   </div>
   <div class="sv-body" id="st2Body"></div>
-</div>
-
-<!-- ===== SETTINGS-PLUS: чёрный список / блокировки ===== -->
-<div class="sheet" id="sheet-st2-blocked">
-  <h3>Чёрный список</h3>
-  <div class="st2-bl-body" id="st2BlockedBody"></div>
 </div>

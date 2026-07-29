@@ -28,3 +28,37 @@
     <span>Добавить аккаунт</span>
   </button>
 </div>
+
+<!-- ===== PROFILE-SOCIAL: «Мои соцсети» — fullscreen-хаб (LinkedIn + Beacons + Linktree) ===== -->
+<div id="psSocView">
+  <div class="sv-head">
+    <button class="ep-cancel" onclick="psSocClose()"><svg class="i"><use href="#i-back"/></svg></button>
+    <b>Мои соцсети</b>
+    <button class="ps-more-btn" onclick="psSocMenu()" aria-label="Ещё"><svg class="i"><use href="#i-more"/></svg></button>
+  </div>
+  <div class="sv-body" id="psSocBody"></div>
+</div>
+
+<!-- ===== PROFILE-SOCIAL: подключение/редактирование хендла платформы ===== -->
+<div class="sheet" id="sheet-ps-soc-connect">
+  <h3 id="psSocConnHead">Подключить</h3>
+  <div class="ps-soc-conn-body" id="psSocConnBody"></div>
+</div>
+
+<!-- ===== PROFILE-SOCIAL: панель статистики платформы ===== -->
+<div class="sheet" id="sheet-ps-soc-detail">
+  <h3 id="psSocDetHead">Платформа</h3>
+  <div class="ps-soc-det-body" id="psSocDetBody"></div>
+</div>
+
+<!-- ===== PROFILE-SOCIAL: расписание автопостинга ===== -->
+<div class="sheet" id="sheet-ps-soc-post">
+  <h3>Запланировать пост</h3>
+  <div class="ps-soc-post-body" id="psSocPostBody"></div>
+</div>
+
+<!-- ===== PROFILE-SOCIAL: редактор ссылки (Linktree) ===== -->
+<div class="sheet" id="sheet-ps-soc-link">
+  <h3 id="psSocLinkHead">Ссылка</h3>
+  <div class="ps-soc-link-body" id="psSocLinkBody"></div>
+</div>

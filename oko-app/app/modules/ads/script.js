@@ -36,6 +36,37 @@ const ADS_FORMATS = {
   listing: {l:'Объявление Биржи',        ico:'briefcase', model:'CPC', cpm:30, cpc:11, tag:'Биржа · реклама',    aov:1490, desc:'Товар или услуга с Биржи OKO — показ горячей аудитории в ленте и поиске'},
   banner:  {l:'Баннер',                  ico:'photo',     model:'CPM', cpm:22, cpc:7,  tag:'баннер',             aov:690,  desc:'Широкий баннер в шапке ленты и тематических разделов — максимальный охват'},
 };
+
+/* цели кампаний: под каждую подбирается формат по умолчанию, оптимизация и KPI-подсказка */
+const ADS_GOALS = {
+  sales: {
+    l:'Продажи', ico:'money', fmt:'listing', model:'CPC', cta:'Купить', kpi:'заказы',
+    desc:'Показ горячим сегментам. Оптимизация на клик и оплату, ставка выше — приоритет в аукционе.',
+    ctrHint:'2.5–4.5%', roasHint:'×2–×5'},
+  leads: {
+    l:'Заявки', ico:'briefcase', fmt:'listing', model:'CPC', cta:'Оставить заявку', kpi:'лиды',
+    desc:'Форма или мессенджер. Оптимизация на переход в форму, сглаженная открутка бюджета.',
+    ctrHint:'1.8–3.2%', roasHint:'CPA ~150–450 ₽'},
+  subs: {
+    l:'Подписчики', ico:'users', fmt:'channel', model:'CPC', cta:'Подписаться', kpi:'подписки',
+    desc:'Карточка канала. Оптимизация на подписку, look-alike по вашей аудитории включён по умолчанию.',
+    ctrHint:'3.0–6.0%', roasHint:'CPI ~12–35 ₽'},
+  views: {
+    l:'Просмотры видео', ico:'circle-play', fmt:'post', model:'CPM', cta:'Смотреть', kpi:'просмотры',
+    desc:'Автовоспроизведение в ленте. Оптимизация на досмотры до 3 сек, широкая аудитория.',
+    ctrHint:'0.7–1.4%', roasHint:'CPV ~0.6–1.2 ₽'},
+  installs: {
+    l:'Установки приложения', ico:'phone', fmt:'banner', model:'CPM', cta:'Установить', kpi:'установки',
+    desc:'Баннер в шапке + пост в ленте. Оптимизация на клик к магазину, отсечка ботов и повторов.',
+    ctrHint:'1.5–3.0%', roasHint:'CPI ~40–120 ₽'}
+};
+
+/* интересы: развёрнутый набор чипов как в VK/TikTok Ads Manager */
+const ADS_INTERESTS = [
+  'бизнес','маркетинг','дизайн','контент','нейросети','образование','финансы','инвестиции',
+  'крипта','игры','спорт','фитнес','здоровье','красота','мода','путешествия','авто',
+  'кулинария','рестораны','музыка','кино','книги','родители','недвижимость'
+];
 const ADS_MODELS = {
   CPM: {unit:'₽ / 1000 показов', min:12, rec:1, max:3.2},   /* rec/max — множители к базовому cpm формата */
   CPC: {unit:'₽ / клик',         min:3,  rec:1, max:2.8}
@@ -134,12 +165,27 @@ function adsMigrate(){
   if(!Array.isArray(ADS.auds)) ADS.auds = [];
   ADS.camps.forEach(c=>{
     if(!c.fmt) c.fmt = 'post';
+    if(!c.goal) c.goal = ({post:'views', channel:'subs', listing:'sales', banner:'installs'})[c.fmt] || 'views';
     if(!c.model) c.model = ADS_FORMATS[c.fmt]?.model || 'CPM';
     if(!c.bid) c.bid = ADS_FORMATS[c.fmt]?.[c.model==='CPC'?'cpc':'cpm'] || 28;
     if(!c.sex) c.sex = 'any';
     if(!Array.isArray(c.cities)) c.cities = [];
     if(!Array.isArray(c.devs)) c.devs = [];
     if(!Array.isArray(c.times)) c.times = [];
+    if(!Array.isArray(c.weekdays)) c.weekdays = [1,2,3,4,5,6,0];   /* пн-вс, 0=вс */
+    if(c.hourFrom==null) c.hourFrom = 0;
+    if(c.hourTo==null) c.hourTo = 24;
+    if(c.ageMin==null){
+      /* мигрируем со старых age-чипов, если есть */
+      const ages = Array.isArray(c.ages) ? c.ages : [];
+      const map = {'18-24':[18,24], '25-34':[25,34], '35-44':[35,44], '45+':[45,65]};
+      let mn=65, mx=18;
+      ages.forEach(a=>{ const p=map[a]; if(p){ mn=Math.min(mn,p[0]); mx=Math.max(mx,p[1]); } });
+      c.ageMin = mn<mx ? mn : 18; c.ageMax = mn<mx ? mx : 45;
+    }
+    if(c.ageMax==null) c.ageMax = Math.max(c.ageMin+5, 45);
+    if(!Array.isArray(c.ages)) c.ages = [];   /* legacy — оставляем для обратной совместимости */
+    if(c.lal==null) c.lal = false;
     if(!Array.isArray(c.days) || c.days.length!==7) adsSeedDays(c);
     if(c.disc==null) c.disc = 0;                 /* скидка тарифа, зафиксированная при запуске */
     if(c.pace==null) c.pace = 0;                 /* дней равномерной открутки (0 = максимум) */
@@ -308,8 +354,12 @@ function adsAudLine(c){
   parts.push(c.sex==='m'?'муж':c.sex==='f'?'жен':'любой пол');
   parts.push(c.geo);
   if(c.cities && c.cities.length) parts.push(c.cities.slice(0,2).join(', ')+(c.cities.length>2?' +'+(c.cities.length-2):''));
-  if(c.ages && c.ages.length) parts.push(c.ages.join('/'));
+  if(c.ageMin!=null && c.ageMax!=null){
+    const mx = c.ageMax>=65 ? '65+' : c.ageMax;
+    parts.push(c.ageMin+'–'+mx);
+  } else if(c.ages && c.ages.length) parts.push(c.ages.join('/'));
   if(c.devs && c.devs.length) parts.push(c.devs.map(d=>({ios:'iOS',android:'Android',desktop:'ПК'}[d]||d)).join('/'));
+  if(c.lal) parts.push('look-alike');
   return parts.join(' · ');
 }
 function adsStatsBlock(c){
@@ -325,7 +375,73 @@ function adsStatsBlock(c){
     <div class="ads-stats-sub" data-m="sub7">${adsSub7(c)}</div>
     ${adsFunnel(c)}
     ${adsRoasStrip(c)}
+    ${adsBreakdown(c)}
     ${c.ab ? `<div class="ads-ab" data-m="ab">${adsAbInner(c)}</div>` : ''}
+  </div>`;
+}
+
+/* ---------- разбивка показов по устройствам / полу / гео ---------- */
+/* распределения — фиксированные хэш-производные от id кампании: одна и та же кампания
+   всегда даёт одну и ту же разбивку, но у разных кампаний она разная (реалистично) */
+function adsHash(id, salt){
+  let h = 2166136261 ^ (id*97) ^ (salt*131);
+  h = Math.imul(h ^ (h>>>15), 2246822507);
+  h = Math.imul(h ^ (h>>>13), 3266489909);
+  return ((h ^ (h>>>16))>>>0) / 4294967295;
+}
+function adsBreakdownData(c){
+  const total = c.imps || 0;
+  /* устройства: если выбраны — только они, иначе все три с базовыми долями */
+  const dfSel = (c.devs && c.devs.length) ? c.devs : ['ios','android','desktop'];
+  const dBase = {ios:.34, android:.53, desktop:.13};
+  let ds = dfSel.map(k=>({k, l:({ios:'iOS',android:'Android',desktop:'ПК'}[k]||k), w: dBase[k] * (0.85+adsHash(c.id, dfSel.indexOf(k)+7)*.3)}));
+  const dSum = ds.reduce((s,x)=>s+x.w,0)||1; ds.forEach(x=>x.pct = x.w/dSum);
+  /* пол: если выбран конкретный — 100%, иначе балансируется хэшем ~48-52 */
+  let sx;
+  if(c.sex==='m') sx = [{k:'m', l:'Мужчины', pct:1}];
+  else if(c.sex==='f') sx = [{k:'f', l:'Женщины', pct:1}];
+  else { const m = 0.44 + adsHash(c.id, 21)*0.14; sx = [{k:'m',l:'Мужчины',pct:m},{k:'f',l:'Женщины',pct:1-m}]; }
+  /* гео: по выбранным городам, либо по гео-региону с топ-3 */
+  let gs = [];
+  if(c.cities && c.cities.length){
+    const cw = c.cities.map((n,i)=>({l:n, w: 1/(i+1) * (0.85+adsHash(c.id, i+41)*.3)}));
+    const s = cw.reduce((a,x)=>a+x.w,0)||1; cw.forEach(x=>x.pct = x.w/s);
+    gs = cw.slice(0,3);
+  }else{
+    const list = ADS_CITIES[c.geo] || ADS_CITIES['РФ'];
+    const top = list.slice(0,3).map(([n,r],i)=>({l:n, w:r*(0.9+adsHash(c.id, i+13)*.2)}));
+    const rest = list.slice(3).reduce((s,[,r])=>s+r,0);
+    const s = top.reduce((a,x)=>a+x.w,0) + rest || 1;
+    gs = top.map(x=>({l:x.l, pct:x.w/s}));
+    gs.push({l:'другие', pct: rest/s});
+  }
+  return {ds, sx, gs, total};
+}
+function adsBreakdown(c){
+  if(!c.imps){
+    return `<div class="ads-brk"><div class="ads-brk-h">${I('poll')}Разбивка аудитории</div>
+      <div class="ads-brk-empty">Появится после первых показов.</div></div>`;
+  }
+  const d = adsBreakdownData(c);
+  const row = (l, pct, val, tone)=>`<div class="ads-brk-row">
+    <span class="ads-brk-l">${esc(l)}</span>
+    <div class="ads-brk-bar"><i style="width:${Math.max(3, pct*100)}%" class="${tone||''}"></i></div>
+    <span class="ads-brk-v">${(pct*100).toFixed(0)}%<em>${fmtN(Math.round((val||d.total)*pct))}</em></span>
+  </div>`;
+  return `<div class="ads-brk">
+    <div class="ads-brk-h">${I('poll')}Разбивка показов</div>
+    <div class="ads-brk-sec">
+      <div class="ads-brk-t">Устройства</div>
+      ${d.ds.map(x=>row(x.l, x.pct)).join('')}
+    </div>
+    <div class="ads-brk-sec">
+      <div class="ads-brk-t">Пол</div>
+      ${d.sx.map(x=>row(x.l, x.pct, null, x.k)).join('')}
+    </div>
+    <div class="ads-brk-sec">
+      <div class="ads-brk-t">География</div>
+      ${d.gs.map(x=>row(x.l, x.pct)).join('')}
+    </div>
   </div>`;
 }
 
@@ -721,6 +837,75 @@ function adsCalcLaunch(){
 }
 
 /* ================================================================
+   ТОП-3 креатива по CTR: карточка на главном экране с ранжированием
+   активных и завершённых кампаний. Клик — раскрывает статистику.
+   ================================================================ */
+function adsRenderTop3(){
+  const box = document.getElementById('adsTop3'); if(!box) return;
+  const eligible = ADS.camps.filter(c=>(c.status==='act' || c.status==='done') && c.imps>=800);
+  if(eligible.length < 2){ box.innerHTML = ''; box.className = 'ads-top3'; return; }
+  const list = eligible.slice().sort((a,b)=>adsCtr(b)-adsCtr(a)).slice(0,3);
+  const maxCtr = Math.max(...list.map(adsCtr), .01);
+  box.className = 'ads-top3 card';
+  box.innerHTML = `
+    <div class="ads-top3-h">${I('crown')}Топ-3 креатива по CTR<small>ранжирование по кликам на показ</small></div>
+    ${list.map((c,i)=>{
+      const ctr = adsCtr(c);
+      const w = Math.max(6, ctr/maxCtr*100);
+      const fmt = (ADS_FORMATS[c.fmt]||ADS_FORMATS.post);
+      return `<button class="ads-top3-row rank${i+1}" onclick="adsScrollToCamp(${c.id})">
+        <span class="ads-top3-rank">${i+1}</span>
+        <div class="ads-top3-mid">
+          <div class="ads-top3-t"><b>${esc(c.name)}</b><em>${I(fmt.ico)}${esc(fmt.l)}</em></div>
+          <div class="ads-top3-bar"><i style="width:${w}%"></i></div>
+        </div>
+        <div class="ads-top3-num"><b>${ctr.toFixed(2)}%</b><span>${fmtN(c.imps)} пок.</span></div>
+      </button>`;
+    }).join('')}`;
+}
+function adsScrollToCamp(id){
+  if(!adsOpenStats.has(id)) adsOpenStats.add(id);
+  adsRenderList();
+  requestAnimationFrame(()=>{
+    const el = document.querySelector(`.ads-camp[data-cid="${id}"]`);
+    if(el) el.scrollIntoView({behavior:'smooth', block:'center'});
+  });
+}
+
+/* ================================================================
+   ПРОМО-РЕКОМЕНДАЦИИ: сканируем ленту пользователя и предлагаем
+   бустануть посты с растущим CTR. Одна карточка = одно предложение.
+   ================================================================ */
+function adsRenderPromoRecs(){
+  const box = document.getElementById('adsPromoRecs'); if(!box) return;
+  if(typeof POSTS==='undefined' || !Array.isArray(POSTS.rec)){ box.innerHTML=''; return; }
+  const mine = POSTS.rec.filter(p=>!p.promoted && !p.sponsored && p.name===PROFILE.name && (p.views||0)>=120);
+  if(!mine.length){ box.innerHTML=''; return; }
+  /* «синтетический CTR»: лайки+репосты к показам, ограничиваем 8% для реалистичности */
+  const scored = mine.map(p=>{
+    const eng = (p.likes||0) + (p.reposts||0)*3;
+    const raw = eng/Math.max(50, p.views||100);
+    const ctr = Math.min(0.08, raw * (0.6 + adsHash(p.id, 3)*0.9));
+    return {p, ctr, uplift: Math.round((ctr*100 - 1.4)*22)};   /* +40% при CTR ~3.2% */
+  }).filter(x=>x.uplift>=20).sort((a,b)=>b.uplift-a.uplift).slice(0,1);
+  if(!scored.length){ box.innerHTML=''; return; }
+  const x = scored[0];
+  const short = (x.p.body||'').replace(/<[^>]+>/g,' ').replace(/\s+/g,' ').trim().slice(0,54);
+  const budget = 500;
+  const cpm = 28 * (1 - adsDisc());
+  const extra = Math.round(budget/cpm*1000);
+  box.innerHTML = `
+    <div class="ads-promo-rec">
+      <span class="ads-promo-ic">${I('fire')}</span>
+      <div class="ads-promo-mid">
+        <b>Пост «${esc(short||'ваш пост')}» набирает +${x.uplift}% CTR</b>
+        <p>Запусти рекламу на ${fmtN(budget)} ₽ — прогноз ещё <em>${fmtN(extra)}</em> показов целевой аудитории.</p>
+      </div>
+      <button class="ads-promo-btn" onclick="adsBoostFromFeed(${x.p.id})">Продвинуть${I('chev')}</button>
+    </div>`;
+}
+
+/* ================================================================
    LIVE-ПОДСКАЗКИ: анализ последних 6 замеров активных кампаний
    (около 30 минут работы live-тика). Показывает одну лучшую идею.
    ================================================================ */
@@ -888,7 +1073,7 @@ function adsBoostConfirm(){
   setTimeout(()=>adsModerate(camp.id), 2400);
 }
 
-function adsRender(){ adsRenderTier(); adsRenderSummary(); adsRenderList(); adsRenderPresets(); adsRenderCalc(); adsRenderLiveTip(); }
+function adsRender(){ adsRenderTier(); adsRenderSummary(); adsRenderList(); adsRenderPresets(); adsRenderCalc(); adsRenderLiveTip(); adsRenderPromoRecs(); adsRenderTop3(); }
 
 function adsTickUI(){
   adsRenderSummary();
@@ -918,9 +1103,23 @@ function adsTickUI(){
 let adsDraft = {};
 let adsEditId = 0;   /* 0 — создание новой; иначе id редактируемой кампании */
 function adsDraftReset(){
-  adsDraft = {fmt:'post', model:'CPM', cta:'Подробнее', sex:'any', geo:'РФ', cities:[],
-    ab:false, reach:0, media:null, pace:0, start:'now', startAt:0};
+  adsDraft = {
+    goal:'sales', fmt:'listing', model:'CPC', cta:'Купить',
+    sex:'any', geo:'РФ', cities:[], interests:[], devs:[],
+    ageMin:18, ageMax:45, lal:false, lalFrom:0,
+    weekdays:[1,2,3,4,5,6,0], hourFrom:0, hourTo:24,
+    ab:false, reach:0, media:null, pace:0, start:'now', startAt:0
+  };
 }
+
+/* заголовки шагов вверху sheet-а */
+const ADS_STEP_TITLES = {
+  1: {t:'Шаг 1 · Цель',       s:'Что должна принести реклама'},
+  2: {t:'Шаг 2 · Аудитория',  s:'Кому показать объявление'},
+  3: {t:'Шаг 3 · Креатив',    s:'Заголовок, текст, медиа и кнопка'},
+  4: {t:'Шаг 4 · Бюджет',     s:'Ставка, дневной лимит и график показа'},
+  5: {t:'Шаг 5 · Запуск',     s:'Проверка и старт кампании'}
+};
 /* темп открутки: 0 — максимум, N — равномерно за N дней (дневной лимит = бюджет/N) */
 function adsPickPace(btn){
   document.querySelectorAll('#adsPaceChips .ads-chip').forEach(b=>b.classList.remove('on'));
@@ -1076,19 +1275,64 @@ function adsOpenCreate(){
   const sa = document.getElementById('adsSchedAt'); if(sa){ sa.style.display='none'; sa.value=''; }
   const abChip = document.getElementById('adsAbChip'); if(abChip) abChip.classList.remove('on');
   const abInp = document.getElementById('adsInpTitleB'); if(abInp) abInp.style.display = 'none';
-  document.querySelectorAll('#adsCtaChips .ads-chip').forEach((b,i)=>b.classList.toggle('on', i===0));
+  document.querySelectorAll('#adsCtaChips .ads-chip').forEach((b,i)=>b.classList.toggle('on', b.dataset.v===adsDraft.cta));
   document.querySelectorAll('#adsSexChips .ads-chip').forEach((b,i)=>b.classList.toggle('on', i===0));
   document.querySelectorAll('#adsGeoChips .ads-chip').forEach((b,i)=>b.classList.toggle('on', i===0));
-  document.querySelectorAll('#adsIntChips .ads-chip, #adsDevChips .ads-chip, #adsTimeChips .ads-chip').forEach(b=>b.classList.remove('on'));
-  document.querySelectorAll('#adsAgeChips .ads-chip').forEach(b=>b.classList.toggle('on', b.dataset.v==='25-34'));
+  document.querySelectorAll('#adsDevChips .ads-chip').forEach(b=>b.classList.remove('on'));
   const bi = document.getElementById('adsInpBudget'); if(bi) bi.value = '1000';
+  const bs = document.getElementById('adsBudgetSlider'); if(bs) bs.value = '1000';
+  const amn = document.getElementById('adsAgeMin'); if(amn) amn.value = adsDraft.ageMin;
+  const amx = document.getElementById('adsAgeMax'); if(amx) amx.value = adsDraft.ageMax;
+  const hf = document.getElementById('adsHourFrom'); if(hf) hf.value = adsDraft.hourFrom;
+  const ht = document.getElementById('adsHourTo');   if(ht) ht.value = adsDraft.hourTo;
+  adsRenderGoals();
   adsRenderFmts();
   adsRenderCities();
   adsRenderSaved();
+  adsRenderInterests();
+  adsRenderLal();
+  adsRenderWeek();
   adsRenderMediaZone();
+  adsRenderPostPicker();
   adsSyncModelUI();
   adsSyncLaunchBtn();
   adsStep(1); openSheet('ads-create');
+}
+
+/* ---------- шаг 1: цели ---------- */
+function adsRenderGoals(){
+  const box = document.getElementById('adsGoalGrid'); if(!box) return;
+  box.innerHTML = Object.entries(ADS_GOALS).map(([k,g])=>`
+    <button class="ads-goal ${adsDraft.goal===k?'on':''}" data-v="${k}" onclick="adsPickGoal('${k}')">
+      <span class="ads-goal-ic">${I(g.ico)}</span>
+      <span class="ads-goal-l">${esc(g.l)}</span>
+      <span class="ads-goal-k">${esc(g.kpi)}</span>
+    </button>`).join('');
+  adsRenderGoalDetail();
+}
+function adsRenderGoalDetail(){
+  const box = document.getElementById('adsGoalDetail'); if(!box) return;
+  const g = ADS_GOALS[adsDraft.goal] || ADS_GOALS.sales;
+  box.innerHTML = `<div class="ads-goal-info">
+    <div class="ads-goal-info-h"><span class="ads-goal-info-ic">${I(g.ico)}</span><b>${esc(g.l)}</b></div>
+    <p>${esc(g.desc)}</p>
+    <div class="ads-goal-info-kpi">
+      <span>${I('bolt')}CTR ~ <b>${esc(g.ctrHint)}</b></span>
+      <span>${I('money')}${esc(g.roasHint)}</span>
+    </div>
+  </div>`;
+}
+function adsPickGoal(k){
+  const g = ADS_GOALS[k]; if(!g) return;
+  adsDraft.goal = k;
+  adsDraft.fmt = g.fmt;
+  adsDraft.model = g.model;
+  adsDraft.cta = g.cta;
+  /* синхронизируем CTA-чипы */
+  document.querySelectorAll('#adsCtaChips .ads-chip').forEach(b=>b.classList.toggle('on', b.dataset.v===g.cta));
+  adsRenderGoals();
+  adsRenderFmts();
+  adsSyncModelUI();
 }
 
 /* --- формат --- */
@@ -1113,20 +1357,34 @@ function adsPickFmt(k){
 }
 
 function adsStep(n){
-  if(n>2){
-    const title = document.getElementById('adsInpTitle').value.trim();
-    const text  = document.getElementById('adsInpText').value.trim();
-    if(!title){ toast('Добавь заголовок объявления'); return; }
-    if(!text){ toast('Добавь текст объявления'); return; }
-    if(adsDraft.ab && !document.getElementById('adsInpTitleB').value.trim()){
-      toast('Добавь вариант B заголовка или выключи A/B тест'); return;
+  /* валидация: покидая креатив (шаг 3) — обязательны заголовок и текст, при A/B — вариант B */
+  if(n>3){
+    const title = (document.getElementById('adsInpTitle')||{}).value?.trim() || '';
+    const text  = (document.getElementById('adsInpText')||{}).value?.trim() || '';
+    if(!title){ toast('Добавь заголовок объявления'); adsGotoStep(3); return; }
+    if(!text){ toast('Добавь текст объявления'); adsGotoStep(3); return; }
+    if(adsDraft.ab && !(document.getElementById('adsInpTitleB')||{}).value?.trim()){
+      toast('Добавь вариант B заголовка или выключи A/B тест'); adsGotoStep(3); return;
     }
   }
-  for(let i=1;i<=4;i++){ const s = document.getElementById('adsStep'+i); if(s) s.style.display = (i===n?'block':'none'); }
+  /* валидация: покидая бюджет (шаг 4) — минимум 100 ₽ */
+  if(n>4){
+    const b = parseInt((document.getElementById('adsInpBudget')||{}).value, 10) || 0;
+    if(b<100){ toast('Минимальный бюджет — 100 ₽'); adsGotoStep(4); return; }
+  }
+  adsGotoStep(n);
+}
+function adsGotoStep(n){
+  for(let i=1;i<=5;i++){ const s = document.getElementById('adsStep'+i); if(s) s.style.display = (i===n?'block':'none'); }
   document.querySelectorAll('#adsSteps i').forEach((d,i)=>d.classList.toggle('on', i<n));
-  if(n===2) adsRenderPreview();
-  if(n===3) adsCalcReach();
-  if(n===4){ adsSyncModelUI(); adsCalcForecast(); }
+  const hd = document.getElementById('adsStepHd');
+  if(hd && ADS_STEP_TITLES[n]) hd.innerHTML = `<b>${ADS_STEP_TITLES[n].t}</b><small>${ADS_STEP_TITLES[n].s}</small>`;
+  if(n===1){ adsRenderGoals(); adsRenderFmts(); }
+  if(n===2){ adsRenderInterests(); adsRenderLal(); adsAgeInput(true); adsCalcReach(); }
+  if(n===3){ adsRenderPostPicker(); adsRenderPreview(); adsRenderMediaZone(); }
+  if(n===4){ adsRenderWeek(); adsHourInput(true); adsSyncModelUI(); adsCalcForecast(); adsBudgetSliderSync(); }
+  if(n===5){ adsRenderReview(); }
+  adsSyncLaunchBtn();
   const sh = document.getElementById('sheet-ads-create'); if(sh) sh.scrollTop = 0;
 }
 

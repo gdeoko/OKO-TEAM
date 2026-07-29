@@ -76,3 +76,127 @@
   .tr-hole::after{animation:none}
   .tr-body{animation-duration:.01ms}
 }
+
+/* ===== TOUR STORIES (ts-) — Instagram-like сторис Даниэля, первый заход ===== */
+#trStories{position:fixed;inset:0;z-index:70;display:flex;flex-direction:column;
+  background:#0a0f04;opacity:0;transition:opacity .32s ease;overscroll-behavior:contain;
+  -webkit-tap-highlight-color:transparent;color:#f4fff2}
+#trStories.ts-on{opacity:1}
+
+/* --- полоски-прогресс сверху (5 сегментов, живая заполняется по времени) --- */
+.ts-bars{position:absolute;top:calc(env(safe-area-inset-top,0px) + 10px);left:12px;right:12px;
+  display:flex;gap:5px;z-index:3;pointer-events:none}
+.ts-bar{flex:1;height:3px;border-radius:3px;background:rgba(255,255,255,.22);overflow:hidden}
+.ts-bar > i{display:block;height:100%;width:0%;background:#fff;border-radius:3px}
+.ts-bar.done > i{width:100%}
+.ts-bar.live > i{box-shadow:0 0 8px rgba(255,255,255,.55)}
+#trStories.ts-paused .ts-bar.live > i{filter:brightness(.85)}
+
+/* --- шапка: автор + крест --- */
+.ts-head{position:absolute;top:calc(env(safe-area-inset-top,0px) + 22px);left:14px;right:14px;
+  display:flex;align-items:center;gap:10px;z-index:3}
+.ts-author{display:flex;align-items:center;gap:10px;min-width:0}
+.ts-ava{width:34px;height:34px;border-radius:50%;background:var(--lime,#9AFF00);
+  display:flex;align-items:center;justify-content:center;color:#001400;
+  box-shadow:0 0 0 2px rgba(255,255,255,.18),0 6px 18px rgba(154,255,0,.35)}
+.ts-ava svg.i{width:18px;height:18px}
+.ts-author-b{min-width:0;line-height:1.15}
+.ts-author-b b{font-size:13.5px;font-weight:800;letter-spacing:.01em;color:#fff}
+.ts-author-b small{display:block;font-size:11px;color:rgba(255,255,255,.7);
+  overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:60vw}
+.ts-close{margin-left:auto;width:36px;height:36px;border-radius:50%;border:none;
+  background:rgba(255,255,255,.08);color:#fff;cursor:pointer;display:flex;
+  align-items:center;justify-content:center;transition:background .2s,transform .1s}
+.ts-close:hover{background:rgba(255,255,255,.18)}
+.ts-close:active{transform:scale(.94)}
+.ts-close svg.i{width:14px;height:14px}
+
+/* --- сцена и слайд --- */
+.ts-stage{position:absolute;inset:0;overflow:hidden;isolation:isolate}
+.ts-tone-lime{background:radial-gradient(120% 80% at 15% 20%,#3b6f00 0%,#1a2d05 55%,#050803 100%)}
+.ts-tone-dark{background:radial-gradient(120% 80% at 85% 20%,#0f150b 0%,#050603 55%,#000 100%)}
+.ts-slide{position:absolute;inset:0;display:flex;flex-direction:column;justify-content:flex-end;
+  padding:0 24px calc(env(safe-area-inset-bottom,0px) + 128px);
+  animation:tsIn .5s cubic-bezier(.3,.9,.3,1) both}
+@keyframes tsIn{from{opacity:0;transform:scale(.985)}to{opacity:1;transform:none}}
+
+/* тонкая грид-сетка на фоне, характерный OKO-паттерн */
+.ts-grid{position:absolute;inset:0;pointer-events:none;opacity:.14;
+  background-image:linear-gradient(rgba(154,255,0,.6) 1px,transparent 1px),
+                    linear-gradient(90deg,rgba(154,255,0,.6) 1px,transparent 1px);
+  background-size:56px 56px;mask-image:radial-gradient(65% 60% at 50% 42%,#000 0%,transparent 90%)}
+.ts-tone-dark .ts-grid{opacity:.08}
+
+/* лаймовое сияние-глаз в центре-сверху */
+.ts-halo{position:absolute;left:50%;top:22%;width:520px;height:520px;transform:translate(-50%,-50%);
+  background:radial-gradient(closest-side,rgba(154,255,0,.55),rgba(154,255,0,.08) 55%,transparent 72%);
+  filter:blur(4px);pointer-events:none;
+  animation:tsHalo 6.4s ease-in-out infinite}
+@keyframes tsHalo{0%,100%{opacity:.85;transform:translate(-50%,-50%) scale(1)}
+                   50%{opacity:1;transform:translate(-50%,-50%) scale(1.06)}}
+.ts-tone-dark .ts-halo{opacity:.55;background:radial-gradient(closest-side,rgba(154,255,0,.35),transparent 70%)}
+
+/* большая брендовая иконка над контентом */
+.ts-ico-big{position:absolute;left:50%;top:calc(env(safe-area-inset-top,0px) + 92px);
+  transform:translateX(-50%);width:96px;height:96px;border-radius:28px;
+  background:linear-gradient(135deg,#9AFF00,#4d9c00);color:#001400;
+  display:flex;align-items:center;justify-content:center;
+  box-shadow:0 20px 60px rgba(154,255,0,.35),inset 0 0 0 1px rgba(255,255,255,.25);
+  animation:tsIcoPop .7s cubic-bezier(.3,1.3,.4,1) both}
+.ts-ico-big svg.i{width:52px;height:52px}
+.ts-tone-dark .ts-ico-big{background:linear-gradient(135deg,#151b0f,#0a0e07);color:#9AFF00;
+  box-shadow:0 20px 60px rgba(0,0,0,.5),inset 0 0 0 1px rgba(154,255,0,.35)}
+@keyframes tsIcoPop{from{opacity:0;transform:translateX(-50%) translateY(14px) scale(.9)}
+                     to{opacity:1;transform:translateX(-50%) translateY(0) scale(1)}}
+
+.ts-content{position:relative;z-index:2;text-align:left}
+.ts-tag{display:inline-flex;align-items:center;padding:5px 10px;border-radius:999px;
+  background:rgba(154,255,0,.16);color:#c6ff5e;font-size:10.5px;font-weight:800;
+  letter-spacing:.16em;text-transform:uppercase;margin-bottom:12px}
+.ts-title{font-family:var(--font-display,'Bebas Neue',Impact,sans-serif);
+  font-size:38px;line-height:1.02;letter-spacing:.015em;margin:0 0 12px;color:#fff;
+  text-shadow:0 8px 30px rgba(0,0,0,.6)}
+.ts-text{font-size:14.5px;line-height:1.55;color:rgba(255,255,255,.86);margin:0;
+  max-width:34ch}
+
+.ts-foot{position:absolute;left:24px;right:24px;
+  bottom:calc(env(safe-area-inset-bottom,0px) + 78px);
+  display:flex;align-items:center;gap:8px;color:rgba(255,255,255,.6);
+  font-size:11.5px;z-index:2}
+.ts-dot{width:5px;height:5px;border-radius:50%;background:var(--lime,#9AFF00);
+  box-shadow:0 0 8px var(--lime,#9AFF00)}
+
+/* невидимые «зоны» для тапов: левая — назад, правая — вперёд */
+.ts-nav{position:absolute;inset:0;display:flex;z-index:2}
+.ts-hit{flex:1;background:none;border:none;cursor:pointer;-webkit-tap-highlight-color:transparent}
+.ts-hit-l{flex:0 0 32%}
+.ts-hit-r{flex:1}
+
+/* CTA внизу — «Пропустить сторис» / «Начать тур по OKO» */
+.ts-cta{position:absolute;left:0;right:0;bottom:0;
+  padding:14px 20px calc(env(safe-area-inset-bottom,0px) + 18px);
+  z-index:4;
+  background:linear-gradient(to top,rgba(0,0,0,.55),transparent);
+  pointer-events:none}
+.ts-cta .btn{pointer-events:auto;width:100%;height:48px;border-radius:14px;
+  font-size:14px;font-weight:800;letter-spacing:.02em;
+  background:#fff;color:#0a0f04;border:none;cursor:pointer;
+  box-shadow:0 12px 30px rgba(0,0,0,.35);transition:transform .12s,background .2s}
+.ts-cta .btn:hover{background:#eaffbf}
+.ts-cta .btn:active{transform:scale(.98)}
+
+/* --- светлая тема (для консистентности, если пользователь переключил): более мягкий фон --- */
+:root[data-theme="light"] #trStories{background:#111a08}
+
+/* --- планшет / широкий экран --- */
+@media (min-width:640px){
+  .ts-slide{padding-left:8%;padding-right:8%}
+  .ts-title{font-size:46px;max-width:20ch}
+  .ts-text{font-size:15.5px;max-width:38ch}
+}
+
+@media (prefers-reduced-motion:reduce){
+  .ts-slide,.ts-ico-big{animation-duration:.01ms}
+  .ts-halo{animation:none}
+  .ts-bar > i{transition:none !important}
+}

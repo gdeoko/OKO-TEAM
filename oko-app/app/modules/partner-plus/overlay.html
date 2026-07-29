@@ -1,3 +1,15 @@
 <!-- ===== PARTNER-PLUS: bottom sheets ===== -->
 <div class="sheet" id="sheet-pp-qr"><div id="ppQrView"></div></div>
 <div class="sheet" id="sheet-pp-promo"><div id="ppPromoView" class="pp-promo-view"></div></div>
+<div class="sheet" id="sheet-pp-payout"><div id="ppPayoutView"></div></div>
+<div class="sheet" id="sheet-pp-welcome"><div id="ppWelcomeView"></div></div>
+
+<!-- live-уведомление партнёрки (плашка появляется сверху) -->
+<div class="pp-live" id="ppLive" role="status" aria-live="polite">
+  <div class="pp-live-ico"><svg class="i"><use href="#i-money"/></svg></div>
+  <div class="pp-live-body">
+    <div class="pp-live-t" id="ppLiveT"></div>
+    <div class="pp-live-s" id="ppLiveS"></div>
+  </div>
+  <button class="pp-live-x" type="button" onclick="ppHideLive()" aria-label="Закрыть">&times;</button>
+</div>
