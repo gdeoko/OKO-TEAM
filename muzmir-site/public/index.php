@@ -153,6 +153,7 @@ if (preg_match('#^/blog/([a-z0-9\-]+)$#', $route, $m)) serve('blog', ['slug' => 
 $map = [
     '/' => 'home',
     '/welcome' => 'home',
+    '/menu' => 'menu',
     '/competitions' => 'competitions',
     '/apply' => 'apply',
     '/goals' => 'page_goals',

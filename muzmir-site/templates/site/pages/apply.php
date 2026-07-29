@@ -291,21 +291,14 @@ ob_start(); ?>
             <div class="hint">Регистр поправится автоматически.</div>
             <div class="err-msg">Укажите ФИО участника.</div>
           </div>
-          <div class="grid-2c">
-            <div class="field" data-when="solo">
-              <label for="birth_date">Дата рождения</label>
-              <input type="date" id="birth_date" name="birth_date" max="<?= date('Y-m-d') ?>">
-              <div class="err-msg">Укажите дату рождения.</div>
-            </div>
-            <div class="field">
-              <label for="age_category">Возрастная категория</label>
-              <select id="age_category" name="age_category" required>
-                <option value="">Выберите категорию</option>
-                <?php foreach ($ages as $a): ?><option value="<?= h($a) ?>"><?= h($a) ?></option><?php endforeach; ?>
-              </select>
-              <div class="hint" data-age-hint></div>
-              <div class="err-msg">Выберите возрастную категорию.</div>
-            </div>
+          <div class="field">
+            <label for="age_category">Возрастная категория</label>
+            <select id="age_category" name="age_category" required>
+              <option value="">Выберите категорию</option>
+              <?php foreach ($ages as $a): ?><option value="<?= h($a) ?>"><?= h($a) ?></option><?php endforeach; ?>
+            </select>
+            <div class="hint" data-age-hint></div>
+            <div class="err-msg">Выберите возрастную категорию.</div>
           </div>
           <div class="astep-nav">
             <button type="button" class="btn btn--ghost back" data-back aria-label="Назад">Назад</button>

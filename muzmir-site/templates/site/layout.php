@@ -18,7 +18,7 @@ $inTg = isset($_GET['tg']) || !empty($_COOKIE['mz_tg']);
 ?><!doctype html>
 <html lang="ru"<?= $inTg ? ' class="in-tg"' : '' ?>>
 <head>
-<script>document.documentElement.className+=' js';try{document.documentElement.dataset.theme=localStorage.getItem('muzmir-theme')||'light';}catch(e){document.documentElement.dataset.theme='light';}</script>
+<script>document.documentElement.className+=' js';document.documentElement.dataset.theme='light';try{var t=localStorage.getItem('muzmir-theme');if(t==='dark')document.documentElement.dataset.theme='dark';}catch(e){}</script>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <?php
@@ -106,10 +106,10 @@ html body main{padding-bottom:calc(24px + env(safe-area-inset-bottom)) !importan
     <?php endforeach; ?>
     <div class="nav-cta-mobile">
       <?php if ($u): ?>
-        <a class="btn btn--ghost" href="<?= url('/cabinet') ?>">Кабинет</a>
+        <a class="btn btn--ghost" href="<?= url('/cabinet') ?>">Профиль</a>
         <?php if (user_can('moderator')): ?><a class="btn btn--primary" href="<?= url('/admin') ?>">Панель управления</a><?php endif; ?>
       <?php else: ?>
-        <button type="button" class="btn btn--ghost" data-auth-open aria-haspopup="dialog" aria-controls="authModal">Войти</button>
+        <a class="btn btn--ghost" href="<?= url('/login') ?>">Вход</a>
         <a class="btn btn--primary" href="<?= url('/apply') ?>">Подать заявку</a>
       <?php endif; ?>
     </div>
@@ -119,13 +119,13 @@ html body main{padding-bottom:calc(24px + env(safe-area-inset-bottom)) !importan
       <svg class="icon-moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"/></svg>
     </button>
     <?php if ($u): ?>
-      <a class="btn btn--ghost" href="<?= url('/cabinet') ?>">Кабинет</a>
+      <a class="btn btn--ghost" href="<?= url('/cabinet') ?>">Профиль</a>
       <?php if (user_can('moderator')): ?><a class="btn btn--primary" href="<?= url('/admin') ?>">Админка</a><?php endif; ?>
     <?php else: ?>
-      <button type="button" class="btn btn--ghost" data-auth-open aria-haspopup="dialog" aria-controls="authModal">Войти</button>
+      <a class="btn btn--ghost" href="<?= url('/login') ?>">Вход</a>
       <a class="btn btn--primary" href="<?= url('/apply') ?>">Подать заявку</a>
     <?php endif; ?>
-    <button class="burger" id="burger" aria-label="Меню" aria-controls="nav" aria-expanded="false"><span></span><span></span><span></span></button>
+    <a class="burger" href="<?= url('/menu') ?>" aria-label="Меню" title="Меню"><span></span><span></span><span></span></a>
   </div>
 </div></header>
 
@@ -189,87 +189,22 @@ html body main{padding-bottom:calc(24px + env(safe-area-inset-bottom)) !importan
     <span class="appnav-ind" aria-hidden="true"></span>
     <a href="<?= url('/') ?>" class="<?= $active==='/'?'active':'' ?>">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M3 11l9-8 9 8"/><path d="M5 10v10h14V10"/></svg>Главная</a>
+    <a href="<?= url('/competitions') ?>" class="<?= $active==='/competitions'?'active':'' ?>">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M3 10h18M8 2v4M16 2v4"/><circle cx="12" cy="15" r="2.4"/></svg>Афиша</a>
+    <a href="<?= url('/apply') ?>" class="appnav-cta<?= $active==='/apply'?' active':'' ?>" aria-label="Подать заявку">
+      <span class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M12 5v14M5 12h14"/></svg></span>Подать заявку</a>
     <a href="<?= url('/awards') ?>" class="<?= $active==='/awards'?'active':'' ?>">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><circle cx="12" cy="8" r="6"/><path d="M8.2 13.9 7 22l5-3 5 3-1.2-8.1"/></svg>Награды</a>
-    <a href="<?= url('/competitions') ?>" class="appnav-cta" aria-label="Конкурсы и подача заявки">
-      <span class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M8 21h8M12 17v4M7 4h10v5a5 5 0 0 1-10 0z"/><path d="M17 5h3v2a3 3 0 0 1-3 3M7 5H4v2a3 3 0 0 0 3 3"/></svg></span>Конкурсы</a>
-    <a href="#" data-sections-open class="<?= in_array($active,['/concerts','/about','/faq','/contacts','/reviews','/ministry-support','/blog','/gala','/calendar','/club','/goals'])?'active':'' ?>" aria-label="Все разделы сайта">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/></svg>Разделы</a>
-    <a href="<?= url($u ? '/cabinet' : '/login') ?>" class="<?= in_array($active,['/cabinet','/login'])?'active':'' ?>">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0 1 16 0"/></svg><?= $u?'Кабинет':'Вход' ?></a>
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M8 21h8M12 17v4M7 4h10v5a5 5 0 0 1-10 0z"/><path d="M17 5h3v2a3 3 0 0 1-3 3M7 5H4v2a3 3 0 0 0 3 3"/></svg>Награды</a>
+    <a href="<?= url($u ? '/cabinet' : '/login') ?>" class="<?= in_array($active,['/cabinet','/login','/register'])?'active':'' ?>">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0 1 16 0"/></svg><?= $u?'Профиль':'Вход' ?></a>
   </div>
 </nav>
-<?php require BASE_PATH . '/templates/site/partials/sections_menu.php'; ?>
 
 <button class="chat-fab" id="chatFab" aria-label="Поддержка">
   <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 11.5a8.38 8.38 0 0 1-8.5 8.5 8.5 8.5 0 0 1-3.8-.9L3 21l1.9-5.7A8.5 8.5 0 1 1 21 11.5z"/></svg>
 </button>
 
-<?php if (!$u): ?>
-<div class="auth-modal" id="authModal" hidden role="dialog" aria-modal="true" aria-labelledby="authTitle">
-  <div class="auth-overlay" data-auth-close></div>
-  <div class="auth-card" role="document">
-    <button type="button" class="auth-close" data-auth-close aria-label="Закрыть">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 6l12 12M18 6L6 18"/></svg>
-    </button>
-    <div class="auth-head">
-      <img src="<?= asset('img/logo_muzmir_256.png') ?>" alt="" width="48" height="48">
-      <h2 id="authTitle">Вход в личный кабинет</h2>
-      <p>Войдите удобным способом - мы сохраним Ваши заявки и награды.</p>
-    </div>
-
-    <div class="auth-social">
-      <a class="auth-btn auth-btn--vk" href="<?= url('/api/v1/oauth_vk.php') ?>" rel="nofollow">
-        <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12.8 16.9c-5.4 0-8.9-3.8-9-10h2.8c.1 4.5 2.1 6.4 3.6 6.8V6.9h2.6v3.9c1.5-.2 3-1.9 3.6-3.9h2.6c-.4 2.4-2 4.1-3.2 4.8 1.2.6 3 2.1 3.7 4.2h-2.9c-.5-1.6-1.9-2.9-3.8-3.1v3.1h-.6z"/></svg>
-        <span>Войти через ВКонтакте</span>
-      </a>
-      <a class="auth-btn auth-btn--max" href="<?= url('/api/v1/oauth_max.php') ?>" rel="nofollow">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M4 19V6l8 6 8-6v13"/></svg>
-        <span>Войти через MAX</span>
-      </a>
-    </div>
-
-    <div class="auth-sep"><span>или</span></div>
-
-    <div class="auth-methods">
-      <button type="button" class="auth-btn auth-btn--email" data-auth-method="email" aria-expanded="false" aria-controls="authFormEmail">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="M3 7l9 6 9-6"/></svg>
-        <span>Почта</span>
-      </button>
-      <button type="button" class="auth-btn auth-btn--phone" data-auth-method="phone" aria-expanded="false" aria-controls="authFormPhone">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M5 4h4l2 5-2.5 1.5a11 11 0 0 0 5 5L20 13l2 4v3a1 1 0 0 1-1 1A17 17 0 0 1 4 5a1 1 0 0 1 1-1z"/></svg>
-        <span>Телефон</span>
-      </button>
-    </div>
-
-    <form class="auth-form" id="authFormEmail" method="post" action="<?= url('/login') ?>" hidden>
-      <div class="field">
-        <input type="email" name="email" id="authEmail" placeholder=" " autocomplete="email" required>
-        <label for="authEmail">Электронная почта</label>
-      </div>
-      <div class="field">
-        <input type="password" name="password" id="authPass" placeholder=" " autocomplete="current-password" required>
-        <label for="authPass">Пароль</label>
-      </div>
-      <button type="submit" class="btn btn--primary btn--block">Войти</button>
-    </form>
-
-    <form class="auth-form" id="authFormPhone" method="post" action="<?= url('/login/phone') ?>" hidden>
-      <div class="field">
-        <input type="tel" name="phone" id="authPhone" placeholder=" " autocomplete="tel" inputmode="tel" required>
-        <label for="authPhone">Номер телефона</label>
-      </div>
-      <div class="field auth-otp" hidden>
-        <input type="text" name="code" id="authOtp" placeholder=" " inputmode="numeric" autocomplete="one-time-code" maxlength="6">
-        <label for="authOtp">Код из сообщения</label>
-      </div>
-      <button type="submit" class="btn btn--primary btn--block">Получить код</button>
-    </form>
-
-    <p class="auth-note">Нажимая кнопку, Вы принимаете <a href="<?= url('/agreement') ?>">пользовательское соглашение</a> и <a href="<?= url('/privacy') ?>">политику конфиденциальности</a>.</p>
-  </div>
-</div>
-<?php endif; ?>
+<?php /* auth-modal удалён — теперь /login отдельная страница с тем же анимационным фоном */ ?>
 
 <?php
   // JSON-LD: организация (глобально) из cfgv().
@@ -342,6 +277,80 @@ if('serviceWorker' in navigator){
   window.addEventListener('load', reassert);
   document.addEventListener('mz-spa-navigate', reassert);
 })();
+
+// Клавиатура: при фокусе на input/textarea — прячем appnav (не поднимается с клавиатурой)
+(function(){
+  var kbSel = 'input:not([type=checkbox]):not([type=radio]):not([type=file]):not([type=submit]):not([type=button]),textarea,[contenteditable="true"]';
+  function onFocusIn(e){ if(e.target && e.target.matches && e.target.matches(kbSel)){ document.body.classList.add('mz-kbd-open'); } }
+  function onFocusOut(e){
+    setTimeout(function(){
+      var a=document.activeElement;
+      if(!a || !a.matches || !a.matches(kbSel)) document.body.classList.remove('mz-kbd-open');
+    }, 60);
+  }
+  document.addEventListener('focusin', onFocusIn);
+  document.addEventListener('focusout', onFocusOut);
+  // Дублируем через visualViewport (Android/iOS)
+  if(window.visualViewport){
+    var vv = window.visualViewport;
+    vv.addEventListener('resize', function(){
+      var kbUp = (window.innerHeight - vv.height) > 140;
+      document.body.classList.toggle('mz-kbd-open', kbUp);
+    });
+  }
+})();
+
+// Авто +7 для телефона: любое поле type=tel или name=phone стартует с +7, ввод только цифр
+(function(){
+  function fmtRu(v){
+    var d = v.replace(/\D/g,'');
+    if(d.length>0 && d[0]==='8') d = '7' + d.slice(1);
+    if(d.length>0 && d[0]!=='7') d = '7' + d;
+    d = d.slice(0,11);
+    var r = '+7';
+    if(d.length>1) r += ' ('+d.slice(1,4);
+    if(d.length>=5) r += ') '+d.slice(4,7);
+    if(d.length>=8) r += '-'+d.slice(7,9);
+    if(d.length>=10) r += '-'+d.slice(9,11);
+    return r;
+  }
+  function bind(el){
+    if(!el || el.dataset.tel7) return; el.dataset.tel7='1';
+    el.setAttribute('inputmode','tel');
+    if(!el.value) el.value = '+7 (';
+    el.addEventListener('focus', function(){ if(!el.value || el.value.length<3) el.value='+7 ('; });
+    el.addEventListener('input', function(){ el.value = fmtRu(el.value); });
+    el.addEventListener('blur', function(){ if(el.value==='+7' || el.value==='+7 (' ) el.value=''; });
+    el.addEventListener('keydown', function(e){
+      if(e.key==='Backspace' && (el.value.length<=4)){ e.preventDefault(); el.value=''; }
+    });
+  }
+  function scan(root){
+    var els = (root||document).querySelectorAll('input[type=tel],input[name=phone],input[name*=phone i],input[data-tel]');
+    els.forEach(bind);
+  }
+  scan(document);
+  document.addEventListener('mz-spa-navigate', function(){ scan(document); });
+  new MutationObserver(function(muts){ muts.forEach(function(m){ if(m.addedNodes){ m.addedNodes.forEach(function(n){ if(n.nodeType===1) scan(n); }); } }); }).observe(document.body,{childList:true,subtree:true});
+})();
+
+// Валидации live: email, url — красная рамка при невалидном значении
+(function(){
+  function validEmail(v){ return /^[a-z0-9._%+\-]+@[a-z0-9.\-]+\.[a-z]{2,}$/i.test(v.trim()); }
+  function validUrl(v){ try{ var u=new URL(v.trim().startsWith('http')?v.trim():'https://'+v.trim()); return !!u.hostname && u.hostname.indexOf('.')>0; }catch(e){return false;} }
+  function mark(el, ok){ el.classList.toggle('is-invalid', !ok && el.value.trim()!==''); }
+  function bind(el){
+    if(el.dataset.vlBound) return; el.dataset.vlBound='1';
+    var kind = (el.type==='email'||/mail/i.test(el.name)) ? 'email'
+             : (el.type==='url' ||/(url|link|ссыл)/i.test(el.name)) ? 'url' : '';
+    if(!kind) return;
+    el.addEventListener('blur', function(){ mark(el, kind==='email' ? validEmail(el.value) : validUrl(el.value)); });
+    el.addEventListener('input', function(){ if(el.classList.contains('is-invalid')) mark(el, kind==='email' ? validEmail(el.value) : validUrl(el.value)); });
+  }
+  function scan(root){ (root||document).querySelectorAll('input').forEach(bind); }
+  scan(document);
+  document.addEventListener('mz-spa-navigate', function(){ scan(document); });
+})();
 </script>
 <script src="<?= asset('js/app.js') ?>" defer></script>
 <script src="<?= asset('js/music.js') ?>" defer></script>
@@ -355,8 +364,8 @@ if('serviceWorker' in navigator){
   function init(){
     var tg = window.Telegram && window.Telegram.WebApp; if(!tg) return;
     try{ tg.ready(); tg.expand && tg.expand(); }catch(e){}
-    try{ if(tg.colorScheme){ document.documentElement.dataset.theme = tg.colorScheme; localStorage.setItem('muzmir-theme', tg.colorScheme);} }catch(e){}
-    try{ tg.onEvent && tg.onEvent('themeChanged', function(){ document.documentElement.dataset.theme = tg.colorScheme; }); }catch(e){}
+    // Тема — светлая по умолчанию всегда (не подхватываем TG dark-scheme).
+    try{ if(!localStorage.getItem('muzmir-theme')){ document.documentElement.dataset.theme='light'; localStorage.setItem('muzmir-theme','light'); } }catch(e){}
     // Кнопка «назад» Telegram
     try{ if(tg.BackButton){ if(location.pathname!=='/' ) tg.BackButton.show(); else tg.BackButton.hide();
       tg.BackButton.onClick(function(){ if(history.length>1) history.back(); else { location.href='/?tg=1'; } }); } }catch(e){}

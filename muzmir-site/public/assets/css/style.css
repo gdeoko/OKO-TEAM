@@ -1178,3 +1178,53 @@ main{transition:opacity .22s ease}
 .page-hero h1{font-family:var(--ff-display);font-size:clamp(1.6rem,5.8vw,2.4rem);line-height:1.06;margin:0 0 .25em}
 .page-hero p{color:var(--muted);font-size:.94rem;margin:0}
 
+/* ══════════════════════════════ /menu — отдельная страница ══════════════════════════════ */
+.menu-page{padding:22px 0 36px}
+.menu-head{text-align:center;margin-bottom:22px}
+.menu-head .eyebrow{margin-bottom:2px}
+.menu-head h1{font-family:var(--ff-display);font-size:clamp(1.9rem,6vw,2.6rem);line-height:1.05;margin:0 0 4px;
+  background:linear-gradient(135deg,#b8923a,#8a6d1f 60%,#c9a84c);-webkit-background-clip:text;background-clip:text;color:transparent}
+.menu-head .menu-sub{color:var(--muted);margin:0;font-size:.94rem}
+.menu-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:11px}
+@media(min-width:720px){.menu-grid{grid-template-columns:repeat(3,1fr)}}
+@media(min-width:1100px){.menu-grid{grid-template-columns:repeat(4,1fr)}}
+.menu-tile{position:relative;display:flex;align-items:center;gap:12px;padding:14px;border-radius:16px;
+  background:color-mix(in srgb,var(--panel-solid,#fff) 82%,transparent);border:1px solid var(--line);
+  color:var(--text);text-decoration:none;font-weight:700;font-size:.9rem;line-height:1.16;
+  box-shadow:0 4px 14px rgba(139,111,31,.08);backdrop-filter:blur(10px);
+  transition:transform .2s cubic-bezier(.2,.8,.2,1),box-shadow .22s,border-color .22s;
+  opacity:0;transform:translateY(12px);animation:menuTileIn .42s cubic-bezier(.2,.85,.25,1) forwards;animation-delay:calc(var(--i,0)*22ms)}
+@keyframes menuTileIn{to{opacity:1;transform:none}}
+[data-theme="dark"] .menu-tile{background:color-mix(in srgb,#231b18 82%,transparent);border-color:rgba(232,194,90,.18)}
+.menu-tile-ic{flex:none;width:44px;height:44px;border-radius:13px;display:flex;align-items:center;justify-content:center;
+  background:var(--grad-gold);color:var(--gold-fg);box-shadow:0 6px 14px rgba(201,168,76,.32)}
+.menu-tile-ic svg{width:22px;height:22px}
+.menu-tile-lbl{flex:1;min-width:0;word-break:break-word}
+.menu-tile-arr{flex:none;width:16px;height:16px;color:var(--gold);opacity:.55}
+@media(hover:hover){.menu-tile:hover{transform:translateY(-3px);border-color:var(--gold);box-shadow:0 14px 30px rgba(201,168,76,.24)}}
+@media(hover:none){.menu-tile:active{transform:scale(.98)}}
+@media(prefers-reduced-motion:reduce){.menu-tile{animation:none;opacity:1;transform:none}}
+
+/* ══ Live-валидация: красная рамка на невалидном поле ══ */
+input.is-invalid,textarea.is-invalid{border-color:#e63946 !important;box-shadow:0 0 0 3px rgba(230,57,70,.14) !important}
+input.is-invalid:focus,textarea.is-invalid:focus{border-color:#e63946 !important;box-shadow:0 0 0 3px rgba(230,57,70,.22) !important}
+
+/* ══ Клавиатура не поднимает нижнее меню — визуально прячем при фокусе на input ══ */
+body.mz-kbd-open .appnav{transform:translateY(140%)!important;transition:transform .18s ease!important;pointer-events:none!important}
+body.mz-kbd-open .chat-fab{opacity:0!important;pointer-events:none!important}
+
+/* ══ Скролл-производительность на мобиле: убираем всю анимацию фона на моб (лаги) ══ */
+@media(max-width:900px){
+  body::before{animation:none !important; filter:blur(28px) !important; opacity:.7 !important}
+  body::after{animation:none !important; opacity:.02 !important}
+  /* h1/h2 shimmer — оффать на моб */
+  h1,h2,.stat b{animation:none !important;background-size:100% 100% !important}
+}
+
+/* ══ Header — на моб делаем реально fixed чтобы не «прыгал» при скролле ══ */
+@media(max-width:900px){
+  .header{position:fixed !important;top:0;left:0;right:0;z-index:80 !important;padding-top:calc(4px + env(safe-area-inset-top)) !important;padding-bottom:4px !important}
+  body{padding-top:64px !important} /* компенсация fixed-header */
+  .topbar{display:none !important}  /* топ-бар с реквизитами скрываем на моб — экономим место */
+}
+
