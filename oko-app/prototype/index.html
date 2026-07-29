@@ -39404,6 +39404,7 @@ function acProfileInject(){
   window.apdFullClose = function(){
     const f = document.getElementById('apdFull');
     if(f){ f.classList.remove('open'); setTimeout(()=>{ f.innerHTML=''; }, 260); }
+    try{ if(typeof nvPop === 'function') nvPop('acdFull'); }catch(e){}
   };
   function apdFullOpen(titleObj, bodyHtml){
     const f = apdFullEnsure();
@@ -39415,6 +39416,11 @@ function acProfileInject(){
       </div>
       <div class="acd-full-body" id="apdFullBody">${bodyHtml}</div>`;
     requestAnimationFrame(()=>f.classList.add('open'));
+    // регистрация в navstack (кнопка Назад TG/браузера/Escape закроют слой)
+    try{ if(typeof nvPush === 'function') nvPush('acdFull', ()=>{
+      const el = document.getElementById('apdFull');
+      if(el){ el.classList.remove('open'); setTimeout(()=>{ el.innerHTML=''; }, 260); }
+    }); }catch(e){}
   }
   function apdFullSetBody(html){
     const b = document.getElementById('apdFullBody');
