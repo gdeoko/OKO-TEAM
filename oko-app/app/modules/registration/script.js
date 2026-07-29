@@ -347,7 +347,7 @@ function regFinish(){
     regPopupMark('welcome');
     try{ if(typeof walletAdd === 'function') walletAdd(2500, 'Приветственный бонус'); }catch(e){}
     setTimeout(()=>{
-      showPopup({ico:'logo', title:'Добро пожаловать в OKO',
+      showPopup({ico:'logo', title: regWelcomeTitle(name),
         body: regWelcomeBody(name),
         actions:[
           {label:'Забрать бонус', onclick:()=>{ if(document.getElementById('screen-wallet') && typeof showTab === 'function') showTab('wallet'); else toast('2 500 ₽ зачислены на лицевой счёт'); }},
@@ -362,14 +362,111 @@ function regFinish(){
 function regFeatRow(ico, txt){
   return `<div class="reg-pop-feat">${I(ico)}<span>${txt}</span></div>`;
 }
+
+/* --- реферальная ссылка: захват из URL / хранение / чтение --- */
+function regRefCapture(){
+  try{
+    const q = new URLSearchParams(location.search);
+    const r = (q.get('ref') || q.get('start') || '').trim().slice(0, 40);
+    if(r && /^[a-z0-9_\-]{2,40}$/i.test(r)){
+      localStorage.setItem('oko-ref', r.toLowerCase());
+    }
+  }catch(e){}
+}
+function regRefGet(){
+  try{ return (localStorage.getItem('oko-ref') || '').trim(); }catch(e){ return ''; }
+}
+
+/* --- lettering: буквы имени появляются одна за другой (--i задаёт задержку) --- */
+function regNameLet(name){
+  const src = String(name || '').trim().slice(0, 24);
+  if(!src) return '';
+  let out = '';
+  for(let i = 0; i < src.length; i++){
+    const ch = src[i];
+    if(ch === ' '){ out += '<span class="reg-let sp"> </span>'; continue; }
+    out += `<span class="reg-let" style="--i:${i}">${esc(ch)}</span>`;
+  }
+  return `<span class="reg-hello-name">${out}</span>`;
+}
+
+/* --- заголовок welcome с персональным приветствием и lettering --- */
+function regWelcomeTitle(name){
+  const nm = String(name || '').trim();
+  if(!nm) return 'Добро пожаловать в OKO';
+  return `<span class="reg-hello">Добро пожаловать,<br>${regNameLet(nm)}</span>`;
+}
+
+/* --- быстрые действия: 4 карточки первого клика (заголовки без переноса) --- */
+function regQuickActions(){
+  const items = [
+    {act:'video',   ico:'camera',   t:'Первое видео',   s:'Собери ролик за 3 минуты'},
+    {act:'roulette',ico:'gm-gift',  t:'Рулетка',        s:'Крути ежедневный бонус'},
+    {act:'invite',  ico:'user',     t:'Пригласи друга', s:'Плюс 2 бонуса вам обоим'},
+    {act:'lesson',  ico:'star',     t:'Первый урок',    s:'Академия с сертификатом'},
+  ];
+  return `<div class="reg-pop-qa">
+    ${items.map((x, i) => `
+      <button type="button" class="reg-qa" style="--i:${i}" onclick="regGo('${x.act}')">
+        <span class="reg-qa-ico">${I(x.ico)}</span>
+        <span class="reg-qa-txt">
+          <b class="reg-qa-t">${x.t}</b>
+          <span class="reg-qa-s">${x.s}</span>
+        </span>
+        <span class="reg-qa-arr">${I('chev')}</span>
+      </button>`).join('')}
+  </div>`;
+}
+
+/* --- реф-нотис: показать, что пригласивший получит бонус после оплаты тарифа --- */
+function regRefNotice(){
+  const ref = regRefGet();
+  if(!ref) return '';
+  return `<div class="reg-pop-ref">
+    <span class="reg-pop-ref-ico">${I('heart')}</span>
+    <div class="reg-pop-ref-txt">
+      Привет! Твой пригласивший <b>@${esc(ref)}</b> получит бонус, когда ты оформишь тариф OKO.
+    </div>
+  </div>`;
+}
+
+/* --- переход из quick-action: закрыть попап и открыть нужный раздел --- */
+function regGo(kind){
+  try{ if(typeof closePopup === 'function') closePopup(); }catch(e){}
+  setTimeout(()=>{
+    try{
+      if(kind === 'video'){
+        if(typeof showTab === 'function') showTab('mini');
+        if(typeof toast === 'function') toast('Открыл мини-аппы — тапни «Реклама» или «Академия», чтобы собрать первое видео');
+      } else if(kind === 'roulette'){
+        if(typeof showTab === 'function') showTab('games');
+      } else if(kind === 'invite'){
+        if(typeof showTab === 'function'){
+          if(document.getElementById('screen-partner')) showTab('partner');
+          else showTab('profile');
+        }
+      } else if(kind === 'lesson'){
+        if(typeof showTab === 'function'){
+          if(document.getElementById('screen-academy')) showTab('academy');
+          else showTab('mini');
+        }
+      }
+    }catch(e){}
+  }, 120);
+}
+try{ window.regGo = regGo; window.regRefGet = regRefGet; }catch(e){}
+
 function regWelcomeBody(name){
   return `<div class="reg-pop">
-    <p class="reg-pop-lead">Аккаунт создан, <b>${esc(name)}</b>. Ты в OKO — экосистеме, где контент, бизнес и заработок в одном месте.</p>
+    ${regRefNotice()}
+    <p class="reg-pop-lead">Аккаунт создан. Ты в OKO — экосистеме, где контент, бизнес и заработок в одном месте.</p>
     <div class="reg-pop-bonus">
       <span class="reg-pop-bonus-ico">${I('money')}</span>
       <div><b>2 500 ₽</b><small>уже на лицевом счёте</small></div>
       <span class="reg-pop-bonus-tag">Подарок</span>
     </div>
+    <div class="reg-pop-qa-lab">С чего начать</div>
+    ${regQuickActions()}
     <div class="reg-pop-feats">
       ${regFeatRow('rocket','Продвижение постов и каналов')}
       ${regFeatRow('briefcase','Биржа заказов и услуг')}
@@ -582,6 +679,9 @@ if(typeof renderOb === 'function'){
 
 /* ---------- самоинициализация ---------- */
 (function regInit(){
+  /* реф-параметр в URL — сразу же в localStorage, чтобы welcome его увидел */
+  regRefCapture();
+
   /* ввод кода: автофокус-цепочка, backspace, вставка всего кода разом */
   document.querySelectorAll('#regCodeRow input').forEach(inp=>{
     inp.addEventListener('input', ()=>{

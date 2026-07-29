@@ -1635,6 +1635,74 @@ main>.screen{position:relative;z-index:1}
 .reg-pop-lead{color:var(--dim);font-size:13px;line-height:1.55;text-align:center;margin:-4px 0 14px}
 .reg-pop-lead b{color:var(--text);font-weight:700}
 
+/* --- персональное приветствие: буквы имени появляются по очереди --- */
+#okoPopup h3:has(.reg-hello){font-family:var(--font-display);font-size:26px;line-height:1.06;letter-spacing:.01em;
+  margin-bottom:12px;text-align:center}
+.reg-hello{display:inline-block}
+.reg-hello-name{display:inline-block;background:linear-gradient(96deg,var(--text) 40%,var(--accent));
+  -webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;
+  filter:drop-shadow(0 4px 18px rgba(154,255,0,.22))}
+:root[data-theme="light"] .reg-hello-name{background:linear-gradient(96deg,var(--text) 50%,#4d9000);
+  -webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;filter:none}
+.reg-let{display:inline-block;opacity:0;transform:translateY(14px) scale(.9);
+  animation:regLet .55s cubic-bezier(.2,1.2,.3,1) forwards;animation-delay:calc(var(--i,0) * 55ms + 120ms)}
+.reg-let.sp{width:.35em}
+@keyframes regLet{to{opacity:1;transform:none}}
+@media(prefers-reduced-motion:reduce){
+  .reg-let{opacity:1;transform:none;animation:none}
+}
+
+/* --- реф-нотис: тёплая плашка «твой пригласивший получит бонус» --- */
+.reg-pop-ref{display:flex;align-items:flex-start;gap:10px;padding:11px 13px;border-radius:var(--r-md);
+  background:linear-gradient(135deg,rgba(154,255,0,.10),rgba(154,255,0,.02));
+  border:1px solid rgba(154,255,0,.24);margin:-2px 0 12px;
+  animation:regFadeUp .5s .1s cubic-bezier(.2,1,.3,1) both}
+.reg-pop-ref-ico{width:26px;height:26px;border-radius:8px;flex-shrink:0;display:flex;align-items:center;justify-content:center;
+  background:var(--lime);color:#000;margin-top:1px}
+.reg-pop-ref-ico svg.i{width:14px;height:14px}
+.reg-pop-ref-txt{font-size:12.5px;line-height:1.5;color:var(--text)}
+.reg-pop-ref-txt b{color:var(--accent);font-weight:700}
+
+/* --- быстрые действия: сетка 2x2 из карточек с каскадным появлением --- */
+.reg-pop-qa-lab{font-size:10.5px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--dim);
+  margin:14px 2px 8px}
+.reg-pop-qa{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:14px}
+.reg-qa{display:flex;align-items:center;gap:9px;padding:11px 11px;background:var(--surface);
+  border:1px solid var(--border);border-radius:var(--r-md);text-align:left;color:var(--text);
+  cursor:pointer;overflow:hidden;position:relative;min-width:0;
+  transition:border-color .18s,background .18s,transform .15s cubic-bezier(.2,1.2,.3,1),box-shadow .18s;
+  opacity:0;transform:translateY(14px);
+  animation:regFadeUp .5s cubic-bezier(.2,1,.3,1) forwards;
+  animation-delay:calc(var(--i,0) * 90ms + 220ms)}
+.reg-qa:hover{border-color:var(--lime);background:var(--raised);transform:translateY(-1px);
+  box-shadow:0 10px 24px -14px rgba(154,255,0,.55)}
+.reg-qa:active{transform:scale(.97)}
+.reg-qa-ico{width:34px;height:34px;border-radius:11px;flex-shrink:0;display:flex;align-items:center;justify-content:center;
+  background:var(--lime-dim);color:var(--accent);border:1px solid rgba(154,255,0,.24);
+  transition:background .18s,color .18s}
+.reg-qa:hover .reg-qa-ico{background:var(--lime);color:#000;border-color:var(--lime)}
+.reg-qa-ico svg.i{width:17px;height:17px}
+.reg-qa-txt{flex:1;min-width:0;display:flex;flex-direction:column;gap:1px;line-height:1.15}
+.reg-qa-t{display:block;font-size:12.5px;font-weight:700;color:var(--text);
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.reg-qa-s{display:block;font-size:10.5px;font-weight:500;color:var(--dim);
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.reg-qa-arr{flex-shrink:0;color:var(--dim);opacity:.65;transition:transform .2s,color .18s,opacity .18s}
+.reg-qa-arr svg.i{width:13px;height:13px}
+.reg-qa:hover .reg-qa-arr{color:var(--accent);opacity:1;transform:translateX(2px)}
+
+@keyframes regFadeUp{to{opacity:1;transform:none}}
+@media(prefers-reduced-motion:reduce){
+  .reg-pop-ref,.reg-qa{animation:none;opacity:1;transform:none}
+  .reg-qa:hover{transform:none}
+}
+
+/* компактно на очень узких экранах — карточки в один столбец, чтобы текст не подрезался */
+@media(max-width:340px){
+  .reg-pop-qa{grid-template-columns:1fr}
+  .reg-qa-s{white-space:normal}
+}
+
 /* бонус-плашка welcome */
 .reg-pop-bonus{display:flex;align-items:center;gap:12px;padding:13px 14px;border-radius:var(--r-md);
   background:linear-gradient(135deg,var(--lime-dim),rgba(154,255,0,.04));
@@ -9831,7 +9899,7 @@ nav#tabs>button.active svg.i{
   </div>
 </div>
 <div class="sheet" id="sheet-progress" style="max-height:78vh;overflow-y:auto">
-  <h3>Прогресс сборки OKO <span class="chip" style="font-size:10px;vertical-align:3px">сборка v1.80</span></h3>
+  <h3>Прогресс сборки OKO <span class="chip" style="font-size:10px;vertical-align:3px">сборка v1.81</span></h3>
   <p class="dim" style="font-size:12px;margin:-6px 0 10px">Запуск: 15 июля 2026. Обновляется с каждым этапом.</p>
   <div id="progressList"></div>
 </div>
@@ -15466,7 +15534,7 @@ function regFinish(){
     regPopupMark('welcome');
     try{ if(typeof walletAdd === 'function') walletAdd(2500, 'Приветственный бонус'); }catch(e){}
     setTimeout(()=>{
-      showPopup({ico:'logo', title:'Добро пожаловать в OKO',
+      showPopup({ico:'logo', title: regWelcomeTitle(name),
         body: regWelcomeBody(name),
         actions:[
           {label:'Забрать бонус', onclick:()=>{ if(document.getElementById('screen-wallet') && typeof showTab === 'function') showTab('wallet'); else toast('2 500 ₽ зачислены на лицевой счёт'); }},
@@ -15481,14 +15549,111 @@ function regFinish(){
 function regFeatRow(ico, txt){
   return `<div class="reg-pop-feat">${I(ico)}<span>${txt}</span></div>`;
 }
+
+/* --- реферальная ссылка: захват из URL / хранение / чтение --- */
+function regRefCapture(){
+  try{
+    const q = new URLSearchParams(location.search);
+    const r = (q.get('ref') || q.get('start') || '').trim().slice(0, 40);
+    if(r && /^[a-z0-9_\-]{2,40}$/i.test(r)){
+      localStorage.setItem('oko-ref', r.toLowerCase());
+    }
+  }catch(e){}
+}
+function regRefGet(){
+  try{ return (localStorage.getItem('oko-ref') || '').trim(); }catch(e){ return ''; }
+}
+
+/* --- lettering: буквы имени появляются одна за другой (--i задаёт задержку) --- */
+function regNameLet(name){
+  const src = String(name || '').trim().slice(0, 24);
+  if(!src) return '';
+  let out = '';
+  for(let i = 0; i < src.length; i++){
+    const ch = src[i];
+    if(ch === ' '){ out += '<span class="reg-let sp"> </span>'; continue; }
+    out += `<span class="reg-let" style="--i:${i}">${esc(ch)}</span>`;
+  }
+  return `<span class="reg-hello-name">${out}</span>`;
+}
+
+/* --- заголовок welcome с персональным приветствием и lettering --- */
+function regWelcomeTitle(name){
+  const nm = String(name || '').trim();
+  if(!nm) return 'Добро пожаловать в OKO';
+  return `<span class="reg-hello">Добро пожаловать,<br>${regNameLet(nm)}</span>`;
+}
+
+/* --- быстрые действия: 4 карточки первого клика (заголовки без переноса) --- */
+function regQuickActions(){
+  const items = [
+    {act:'video',   ico:'camera',   t:'Первое видео',   s:'Собери ролик за 3 минуты'},
+    {act:'roulette',ico:'gm-gift',  t:'Рулетка',        s:'Крути ежедневный бонус'},
+    {act:'invite',  ico:'user',     t:'Пригласи друга', s:'Плюс 2 бонуса вам обоим'},
+    {act:'lesson',  ico:'star',     t:'Первый урок',    s:'Академия с сертификатом'},
+  ];
+  return `<div class="reg-pop-qa">
+    ${items.map((x, i) => `
+      <button type="button" class="reg-qa" style="--i:${i}" onclick="regGo('${x.act}')">
+        <span class="reg-qa-ico">${I(x.ico)}</span>
+        <span class="reg-qa-txt">
+          <b class="reg-qa-t">${x.t}</b>
+          <span class="reg-qa-s">${x.s}</span>
+        </span>
+        <span class="reg-qa-arr">${I('chev')}</span>
+      </button>`).join('')}
+  </div>`;
+}
+
+/* --- реф-нотис: показать, что пригласивший получит бонус после оплаты тарифа --- */
+function regRefNotice(){
+  const ref = regRefGet();
+  if(!ref) return '';
+  return `<div class="reg-pop-ref">
+    <span class="reg-pop-ref-ico">${I('heart')}</span>
+    <div class="reg-pop-ref-txt">
+      Привет! Твой пригласивший <b>@${esc(ref)}</b> получит бонус, когда ты оформишь тариф OKO.
+    </div>
+  </div>`;
+}
+
+/* --- переход из quick-action: закрыть попап и открыть нужный раздел --- */
+function regGo(kind){
+  try{ if(typeof closePopup === 'function') closePopup(); }catch(e){}
+  setTimeout(()=>{
+    try{
+      if(kind === 'video'){
+        if(typeof showTab === 'function') showTab('mini');
+        if(typeof toast === 'function') toast('Открыл мини-аппы — тапни «Реклама» или «Академия», чтобы собрать первое видео');
+      } else if(kind === 'roulette'){
+        if(typeof showTab === 'function') showTab('games');
+      } else if(kind === 'invite'){
+        if(typeof showTab === 'function'){
+          if(document.getElementById('screen-partner')) showTab('partner');
+          else showTab('profile');
+        }
+      } else if(kind === 'lesson'){
+        if(typeof showTab === 'function'){
+          if(document.getElementById('screen-academy')) showTab('academy');
+          else showTab('mini');
+        }
+      }
+    }catch(e){}
+  }, 120);
+}
+try{ window.regGo = regGo; window.regRefGet = regRefGet; }catch(e){}
+
 function regWelcomeBody(name){
   return `<div class="reg-pop">
-    <p class="reg-pop-lead">Аккаунт создан, <b>${esc(name)}</b>. Ты в OKO — экосистеме, где контент, бизнес и заработок в одном месте.</p>
+    ${regRefNotice()}
+    <p class="reg-pop-lead">Аккаунт создан. Ты в OKO — экосистеме, где контент, бизнес и заработок в одном месте.</p>
     <div class="reg-pop-bonus">
       <span class="reg-pop-bonus-ico">${I('money')}</span>
       <div><b>2 500 ₽</b><small>уже на лицевом счёте</small></div>
       <span class="reg-pop-bonus-tag">Подарок</span>
     </div>
+    <div class="reg-pop-qa-lab">С чего начать</div>
+    ${regQuickActions()}
     <div class="reg-pop-feats">
       ${regFeatRow('rocket','Продвижение постов и каналов')}
       ${regFeatRow('briefcase','Биржа заказов и услуг')}
@@ -15701,6 +15866,9 @@ if(typeof renderOb === 'function'){
 
 /* ---------- самоинициализация ---------- */
 (function regInit(){
+  /* реф-параметр в URL — сразу же в localStorage, чтобы welcome его увидел */
+  regRefCapture();
+
   /* ввод кода: автофокус-цепочка, backspace, вставка всего кода разом */
   document.querySelectorAll('#regCodeRow input').forEach(inp=>{
     inp.addEventListener('input', ()=>{
