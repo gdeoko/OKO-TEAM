@@ -196,8 +196,8 @@ ob_start(); ?>
       <?php else: ?>
         <a class="btn btn--ghost btn--lg" href="<?= url('/competitions') ?>">Другие конкурсы</a>
       <?php endif; ?>
-      <?php if (!empty($c['regulation_pdf'])): ?>
-        <a class="btn btn--ghost btn--lg" href="<?= h($c['regulation_pdf']) ?>" target="_blank" rel="noopener"><?= $ic['pdf'] ?> Скачать положение (PDF)</a>
+      <?php if (true): // Всегда доступно: если нет — генератор соберёт по эталону при первом запросе. ?>
+        <a class="btn btn--ghost btn--lg" href="<?= url('/competition/' . $c['slug'] . '/regulation.pdf') ?>" target="_blank" rel="noopener"><?= $ic['pdf'] ?> Скачать положение (PDF)</a>
       <?php endif; ?>
       <button class="btn btn--ghost btn--lg" type="button" data-share data-share-title="<?= h($c['name']) ?>" data-share-url="<?= h(url('/competition/' . $c['slug'])) ?>"><?= $ic['share'] ?> Поделиться</button>
     </div>

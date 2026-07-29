@@ -1,0 +1,155 @@
+<?php
+/**
+ * CRON: отправка электронных дипломов участникам.
+ * Логика:
+ *  - Короткие конкурсы (results_mode=email): каждый диплом должен уйти на почту через 3-5 раб.дней
+ *    после проставления результата (jury_graded_at). Отправка в рабочее время МСК с 9:00 до 18:00,
+ *    интервал 1 мин между письмами. В выходные - сдвиг на понедельник 9:00.
+ *  - Длинные (results_mode=list): результаты публикуются 28 числа месяца пакетом (пост в ВК/сайт/email списком).
+ *
+ * Планирование хранится в diplomas.scheduled_at. Cron ежеминутно проверяет и шлёт.
+ */
+declare(strict_types=1);
+define('BASE_PATH', dirname(__DIR__));
+$CFG = require BASE_PATH . '/config.php';
+$GLOBALS['CFG'] = $CFG;
+require_once BASE_PATH . '/core/db.php';
+require_once BASE_PATH . '/core/data.php';
+require_once BASE_PATH . '/core/helpers.php';
+require_once BASE_PATH . '/core/mailer.php';
+require_once BASE_PATH . '/core/telegram.php';
+require_once BASE_PATH . '/core/pdf_diploma.php';
+db();
+
+// 1) Убеждаемся что колонка scheduled_at есть.
+try { db()->exec("ALTER TABLE diplomas ADD COLUMN scheduled_at TEXT"); } catch (\Throwable $e) {}
+
+date_default_timezone_set('Europe/Moscow');
+$now = new DateTime('now');
+
+// 2) Планируем отправку у новоаттестованных заявок (jury_graded_at установлен, но диплом ещё не спланирован).
+$fresh = all("SELECT a.id, a.number, a.competition_id, a.result, a.email, a.created_at,
+                     c.results_mode, c.results_date
+              FROM applications a
+              JOIN competitions c ON c.id = a.competition_id
+              WHERE a.result IS NOT NULL AND a.result <> ''
+                AND NOT EXISTS (SELECT 1 FROM diplomas d WHERE d.application_id = a.id)");
+foreach ($fresh as $a) {
+    $comp = one("SELECT * FROM competitions WHERE id=?", [$a['competition_id']]);
+    if (!$comp) continue;
+    // 2а. Генерируем PDF основного диплома (если функция готова)
+    $pdfPath = null;
+    if (function_exists('pdf_diploma')) {
+        try { $pdfPath = pdf_diploma((array)$a, 'main'); } catch (\Throwable $e) { $pdfPath = null; }
+    }
+    // 2б. Планируем отправку
+    $sched = _plan_send_at($now, (string)($comp['results_mode'] ?? 'email'), (string)($comp['results_date'] ?? ''));
+    insert('diplomas', [
+        'number'         => diploma_make_number((string)$a['number'], 'main'),
+        'application_id' => (int)$a['id'],
+        'type'           => 'main',
+        'result'         => (string)$a['result'],
+        'pdf_path'       => $pdfPath ?: '',
+        'lang'           => 'ru',
+        'scheduled_at'   => $sched->format('Y-m-d H:i:s'),
+    ]);
+    // 2в. Оригинал (без подписи/печати) сразу летит в бот заказа (t.me/zakaznagrad) — админ отправит почтой.
+    _send_original_to_orders_bot((array)$a, (array)$comp);
+}
+
+// 3) Шлём то, что подошло по расписанию (окно ±60 сек), интервал 1 мин между заявками.
+$dueList = all("SELECT d.*, a.email, a.full_name, a.number AS app_number, c.name AS comp_name
+                FROM diplomas d
+                JOIN applications a ON a.id = d.application_id
+                JOIN competitions c ON c.id = a.competition_id
+                WHERE d.sent_at IS NULL
+                  AND d.scheduled_at IS NOT NULL
+                  AND d.scheduled_at <= ?
+                ORDER BY d.scheduled_at ASC
+                LIMIT 30", [$now->format('Y-m-d H:i:s')]);
+
+$sentThisTick = 0;
+foreach ($dueList as $d) {
+    if ($sentThisTick >= 1) break; // ровно один в минуту
+    $to = (string)$d['email']; if ($to === '' || !filter_var($to, FILTER_VALIDATE_EMAIL)) continue;
+
+    $subject = 'Ваш диплом конкурса «' . $d['comp_name'] . '» - № ' . $d['number'];
+    $html = _diploma_email_html((array)$d);
+    $atts = [];
+    if (!empty($d['pdf_path']) && is_file($d['pdf_path'])) {
+        $atts[] = ['path' => (string)$d['pdf_path'], 'name' => 'diploma_' . $d['number'] . '.pdf'];
+    }
+    $ok = false;
+    if (function_exists('mail_send')) {
+        $ok = (bool) mail_send($to, $subject, $html, ['attachments' => $atts]);
+    }
+    if ($ok) {
+        update('diplomas', ['sent_at' => $now->format('Y-m-d H:i:s')], 'id=:id', ['id' => (int)$d['id']]);
+        $sentThisTick++;
+    } else {
+        // сдвигаем ещё на 5 минут (retry)
+        update('diplomas', ['scheduled_at' => (clone $now)->modify('+5 minutes')->format('Y-m-d H:i:s')], 'id=:id', ['id' => (int)$d['id']]);
+    }
+}
+
+fwrite(STDERR, "send_diplomas: planned=" . count($fresh) . " sent_now=$sentThisTick pending=" . max(0, count($dueList) - $sentThisTick) . "\n");
+
+// ================= helpers =================
+
+/** Планирование даты отправки в зависимости от режима + рабочего окна МСК 9:00-18:00, пн-пт. */
+function _plan_send_at(DateTimeInterface $now, string $mode, string $resultsDate): DateTime {
+    if ($mode === 'list' && $resultsDate) {
+        // Длинный — пакетная рассылка в дату публикации в 09:05 МСК
+        try { return new DateTime($resultsDate . ' 09:05'); } catch (\Throwable $e) {}
+    }
+    // Короткий — минимум 3 раб.дня, максимум 5, дальше сдвиг к 9:00 МСК буднего дня.
+    $t = new DateTime($now->format('Y-m-d H:i:s'));
+    $t->modify('+3 weekdays');
+    $t->setTime(9, (int)round(rand(0, 55))); // 9:00-9:55 разлёт, чтобы не в одну минуту
+    // если попали на субботу/воскресенье — сдвиг на понедельник
+    $wd = (int)$t->format('w'); // 0=вс, 6=сб
+    if ($wd === 6) $t->modify('+2 days')->setTime(9, (int)round(rand(0, 55)));
+    if ($wd === 0) $t->modify('+1 day')->setTime(9, (int)round(rand(0, 55)));
+    return $t;
+}
+
+/** HTML-письмо с прикреплённым дипломом (кратко, брендово). */
+function _diploma_email_html(array $d): string {
+    $comp = htmlspecialchars((string)($d['comp_name'] ?? 'конкурса'), ENT_QUOTES, 'UTF-8');
+    $name = htmlspecialchars((string)($d['full_name'] ?? ''), ENT_QUOTES, 'UTF-8');
+    $num  = htmlspecialchars((string)($d['number'] ?? ''), ENT_QUOTES, 'UTF-8');
+    $res  = htmlspecialchars((string)($d['result'] ?? ''), ENT_QUOTES, 'UTF-8');
+    $orderUrl = htmlspecialchars(base_url() . '/order-awards?app=' . (int)$d['application_id'], ENT_QUOTES, 'UTF-8');
+    return <<<HTML
+<div style="font-family:'Segoe UI',Arial,sans-serif;max-width:640px;margin:0 auto;background:#FFFCF5;color:#1B2340;padding:32px;border-radius:16px;border:1px solid #eee6d2">
+  <h1 style="font-family:'Playfair Display',Georgia,serif;color:#8B6F1F;margin:0 0 16px;font-size:26px">Диплом конкурса «{$comp}»</h1>
+  <p>Уважаем{$name}!</p>
+  <p>По итогам аттестации Оргкомитета Вам присуждено звание: <b style="color:#8B6F1F">{$res}</b>.</p>
+  <p>Номер диплома: <b>{$num}</b>. Электронная версия диплома во вложении.</p>
+  <p>Оригинал диплома, кубок, статуэтку, медаль и благодарности педагогам можно заказать почтой в личном кабинете —
+    <a href="{$orderUrl}" style="color:#8B6F1F;font-weight:600">оформить заказ наградного материала</a>.</p>
+  <p style="margin-top:22px;color:#6a6353;font-size:.9em">Культурный центр «Музыкальный Мир» - при информационной поддержке Министерства культуры и образования субъектов РФ.</p>
+</div>
+HTML;
+}
+
+/** Отправка оригинала (без подписи/печати) + заявки + адреса в бот заказа (t.me/zakaznagrad) через нашего бота. */
+function _send_original_to_orders_bot(array $a, array $comp): void {
+    $ordersChat = (string) cfgv('tg_orders_chat', '');
+    if ($ordersChat === '') return; // не сконфигурировано - тихо пропускаем
+    if (!function_exists('pdf_diploma')) return;
+    // Генерируем «чистую» версию (без подписи и печати)
+    $clean = null;
+    try { $clean = pdf_diploma($a, 'main_clean'); } catch (\Throwable $e) { $clean = null; }
+    $line = "Заказ оригинала — Заявка № {$a['number']}\n"
+          . "Конкурс: {$comp['name']}\n"
+          . "Участник: {$a['full_name']}\n"
+          . "Результат: {$a['result']}\n"
+          . "Адрес: " . ($a['address'] ?: '(не указан — уточнить)') . "\n"
+          . "E-mail: {$a['email']}\nТелефон: {$a['phone']}";
+    if ($clean && is_file($clean) && function_exists('tg_send_photo')) {
+        tg_send_photo($ordersChat, $clean, ['caption' => $line]);
+    } elseif (function_exists('tg_send')) {
+        tg_send($ordersChat, $line);
+    }
+}

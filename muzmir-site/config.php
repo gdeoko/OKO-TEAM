@@ -73,6 +73,9 @@ return [
     'tg_bot_token'   => cfg('MUZMIR_TG_BOT_TOKEN', ''),
     'tg_bot_user'    => cfg('MUZMIR_TG_BOT_USER', 'kc_muz_mir_bot'),
     'tg_admin_chat'  => cfg('MUZMIR_TG_ADMIN_CHAT', ''),
+    // Отдельный chat/канал для заявок на оригиналы наградного материала (t.me/zakaznagrad).
+    // Требования: наш бот @kc_muz_mir_bot добавлен в этот чат/канал администратором.
+    'tg_orders_chat' => cfg('MUZMIR_TG_ORDERS_CHAT', '@zakaznagrad'),
 
     // OAuth (вход через соцсети) — секреты только из окружения/local
     'vk_client_id'         => cfg('MUZMIR_VK_CLIENT_ID', ''),

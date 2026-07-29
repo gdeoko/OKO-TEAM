@@ -104,6 +104,41 @@ function serve(string $file, array $vars = []): void {
 if ($route === '/verify') serve('verify', ['number' => '']);
 if (preg_match('#^/verify/([A-Za-zА-Яа-я0-9\-]+)$#u', $route, $m)) serve('verify', ['number' => $m[1]]);
 if (preg_match('#^/competition/([a-z0-9\-]+)$#', $route, $m)) serve('competition', ['slug' => $m[1]]);
+// Скачивание PDF-положения конкурса (генерирует по эталону при первом запросе).
+if (preg_match('#^/competition/([a-z0-9\-]+)/regulation\.pdf$#', $route, $m)) {
+    $c = one("SELECT * FROM competitions WHERE slug=?", [$m[1]]);
+    if ($c) {
+        require_once BASE_PATH . '/core/pdf_regulation.php';
+        try {
+            $path = !empty($c['regulation_pdf']) && is_file($c['regulation_pdf'])
+                ? $c['regulation_pdf']
+                : pdf_regulation((array)$c);
+            if (empty($c['regulation_pdf']) && is_file($path)) {
+                update('competitions', ['regulation_pdf' => $path], 'id=:wid', ['wid' => (int)$c['id']]);
+            }
+            header('Content-Type: application/pdf');
+            header('Content-Disposition: inline; filename="Polozhenie_' . $c['slug'] . '.pdf"');
+            readfile($path);
+            exit;
+        } catch (\Throwable $e) {
+            http_response_code(500);
+            echo 'Не удалось сформировать положение: ' . htmlspecialchars($e->getMessage());
+            exit;
+        }
+    }
+    http_response_code(404); echo 'Конкурс не найден'; exit;
+}
+// Скачивание PDF диплома по номеру (публично, но с логированием verify_log).
+if (preg_match('#^/diploma/([A-Za-z0-9\-]+)\.pdf$#', $route, $m)) {
+    $d = one("SELECT * FROM diplomas WHERE number=?", [$m[1]]);
+    if ($d && !empty($d['pdf_path']) && is_file($d['pdf_path'])) {
+        header('Content-Type: application/pdf');
+        header('Content-Disposition: inline; filename="Diploma_' . $d['number'] . '.pdf"');
+        readfile($d['pdf_path']);
+        exit;
+    }
+    http_response_code(404); echo 'Диплом не найден'; exit;
+}
 if (preg_match('#^/awards/([a-z0-9\-]+)$#', $route, $m)) serve('awards_competition', ['slug' => $m[1]]);
 if (preg_match('#^/artist/([a-z0-9\-]+)$#', $route, $m)) serve('artist', ['slug' => $m[1]]);
 if (preg_match('#^/pedagog/([a-z0-9\-]+)$#', $route, $m)) serve('teacher_profile', ['slug' => $m[1]]);

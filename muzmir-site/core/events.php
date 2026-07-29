@@ -65,6 +65,16 @@ function emit_event(string $type, array $data): void {
             'status'  => 'pending',
         ]);
 
+        // Параллельно — автопост в ВК-сообщество (если vk_token задан).
+        // Тихо, чтобы не ломать основной emit.
+        try {
+            if ((string)cfgv('vk_token') !== '') {
+                require_once BASE_PATH . '/core/vk.php';
+                $vkMsg = _vk_message_from_event($type, $data);
+                if ($vkMsg !== '') vk_wall_post($vkMsg);
+            }
+        } catch (\Throwable $e) { /* silent */ }
+
         $url = (string) cfgv('agent_url');
         if ($url === '') {
             update('events_log',
@@ -112,4 +122,28 @@ function emit_event(string $type, array $data): void {
             error_log('emit_event(' . $type . ') failed: ' . $e->getMessage());
         }
     }
+}
+
+/** Собирает текст поста в ВК на основе типа события сайта. */
+function _vk_message_from_event(string $type, array $data): string {
+    $c = $data['competition'] ?? [];
+    $name = trim((string)($c['name'] ?? ''));
+    $tp   = trim((string)($c['type'] ?? ''));
+    $end  = trim((string)($c['end_date'] ?? ''));
+    $url  = trim((string)($c['url'] ?? ''));
+    if ($name === '') return '';
+    switch ($type) {
+        case 'competition_open':
+            return "🎼 Открыт приём заявок в " . ($tp ? mb_strtolower($tp) . " " : "") . "многожанровый конкурс «{$name}»\n\n"
+                 . "Приём заявок до: {$end}\nПоложение, номинации, форма заявки — на сайте:\n{$url}\n\n"
+                 . "#МузыкальныйМир #Конкурсы #Культура";
+        case 'competition_closed':
+            return "🎼 Приём заявок в конкурс «{$name}» завершён.\n\n"
+                 . "Началась работа Оргкомитета и жюри. Результаты будут опубликованы в срок, указанный в положении.\n"
+                 . "Подробнее: {$url}";
+        case 'results_published':
+            return "🏆 Опубликованы результаты конкурса «{$name}».\n\n"
+                 . "Поздравляем лауреатов и дипломантов! Индивидуальные дипломы отправлены на почту участников. Список победителей: {$url}";
+    }
+    return '';
 }
