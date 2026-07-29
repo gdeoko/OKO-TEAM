@@ -176,6 +176,7 @@ $map = [
     '/verify-email' => 'verify_email',
     '/cabinet' => 'cabinet',
     '/notifications' => 'notifications',
+    '/results' => 'results_index',
     '/teacher' => 'teacher',
     '/calendar' => 'calendar',
     '/gala' => 'gala',
