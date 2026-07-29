@@ -1,0 +1,272 @@
+{
+ "id": "gtape_024",
+ "app": "tape",
+ "voice": "en-US-ChristopherNeural",
+ "rate": "+5%",
+ "grade": "teal_orange",
+ "brand": {
+  "accent": "#F4C430",
+  "accent2": "#FFE08A",
+  "code": "MEASURE",
+  "logo": "tape.png",
+  "name": "3D TAPE MEASURE"
+ },
+ "music": {
+  "queries": [
+   "epic inspiring rise",
+   "bright pop home",
+   "cheerful folk clap"
+  ]
+ },
+ "cover": {
+  "kicker": "MOVING DAY",
+  "top": "WILL THE SOFA",
+  "big": "FIT THROUGH\nTHE DOOR?",
+  "q": [
+   "picture frame hanging wall level"
+  ],
+  "ai": "work/gtape_024/cover_ai.png"
+ },
+ "segments": [
+  {
+   "id": "b1",
+   "text": "Stop scrolling. Big furniture, narrow doorway, moving day panic."
+  },
+  {
+   "id": "b2",
+   "text": "Measure the door frame with your phone first."
+  },
+  {
+   "id": "b3",
+   "text": "Then measure the sofa the same way."
+  },
+  {
+   "id": "b4",
+   "text": "The app compares both in real time."
+  },
+  {
+   "id": "b5",
+   "text": "Green means go, red means turn it sideways."
+  },
+  {
+   "id": "b6",
+   "text": "Never get stuck on the stairs again."
+  }
+ ],
+ "shots": [
+  {
+   "q": [
+    "couple planning home layout tablet"
+   ],
+   "insert": "tilt",
+   "pos": "lower"
+  },
+  {
+   "q": [
+    "hands arranging shelf wall decor"
+   ],
+   "motion": "panup"
+  },
+  {
+   "q": [
+    "blueprint floor plan on tablet desk"
+   ],
+   "insert": "diamond",
+   "pos": "upper"
+  },
+  {
+   "q": [
+    "hand pointing phone at wall measuring"
+   ],
+   "motion": "zout"
+  },
+  {
+   "q": [
+    "empty living room wooden floor sunlight"
+   ],
+   "insert": "tv",
+   "pos": "lower"
+  },
+  {
+   "q": [
+    "kitchen cabinets measuring renovation"
+   ],
+   "motion": "pandown"
+  },
+  {
+   "q": [
+    "furniture store showroom sofa"
+   ],
+   "insert": "rrect",
+   "pos": "center"
+  },
+  {
+   "q": [
+    "person measuring living room with phone ar"
+   ],
+   "motion": "panr"
+  },
+  {
+   "q": [
+    "person relaxing on couch bright apartment"
+   ],
+   "insert": "hexagon",
+   "pos": "upper"
+  },
+  {
+   "q": [
+    "hands holding phone ar app screen"
+   ],
+   "motion": "panl"
+  },
+  {
+   "q": [
+    "closet organizer measuring wardrobe"
+   ],
+   "insert": "circle",
+   "pos": "lower"
+  },
+  {
+   "q": [
+    "measuring tape metal bending closeup"
+   ],
+   "motion": "zin"
+  },
+  {
+   "q": [
+    "carpenter measuring wood workshop"
+   ],
+   "insert": "phone",
+   "pos": "upper"
+  }
+ ],
+ "overlays": [
+  {
+   "at": 0.06,
+   "dur": 2.22,
+   "type": "kicker",
+   "text": "NO TAPE"
+  },
+  {
+   "at": 0.107,
+   "dur": 1.92,
+   "type": "lowerthird",
+   "title": "EXPORT A PDF",
+   "sub": "sizes in one tap"
+  },
+  {
+   "at": 0.176,
+   "dur": 2.32,
+   "type": "ticker",
+   "to": 10,
+   "suffix": "s",
+   "label": "PER MEASURE",
+   "pos": "lower"
+  },
+  {
+   "at": 0.315,
+   "dur": 2.11,
+   "type": "chips",
+   "items": [
+    "ROOMS",
+    "WALLS",
+    "DOORS",
+    "FURNITURE"
+   ],
+   "pos": "upper"
+  },
+  {
+   "at": 0.352,
+   "dur": 2.6,
+   "type": "checklist",
+   "items": [
+    "Measure the door",
+    "Measure the sofa",
+    "Compare sizes",
+    "Move it in"
+   ],
+   "pos": "center"
+  },
+  {
+   "at": 0.377,
+   "dur": 2.39,
+   "type": "kinetic",
+   "top": "MEASURE",
+   "big": "ANY ROOM"
+  },
+  {
+   "at": 0.385,
+   "dur": 1.88,
+   "type": "bars",
+   "title": "TAPE VS PHONE ERROR",
+   "unit": "%",
+   "items": [
+    [
+     "Metal tape",
+     12
+    ],
+    [
+     "Phone AR",
+     3
+    ]
+   ],
+   "pos": "center"
+  },
+  {
+   "at": 0.563,
+   "dur": 1.64,
+   "type": "callout",
+   "text": "NO TAPE, NO HELPER",
+   "pos": "center"
+  },
+  {
+   "at": 0.82,
+   "dur": 1.76,
+   "type": "gauge",
+   "to": 1,
+   "max": 10,
+   "suffix": "",
+   "label": "PEOPLE NEEDED",
+   "pos": "center"
+  },
+  {
+   "at": 0.894,
+   "dur": 2.23,
+   "type": "stat_count",
+   "to": 1,
+   "suffix": "",
+   "label": "PERSON NEEDED",
+   "pos": "center"
+  }
+ ],
+ "cta": {
+  "text": "Get it now — comment MEASURE and I'll send the link. Link in bio.",
+  "code": "MEASURE"
+ },
+ "caption": "Moving day panic? Measure the doorway, measure the sofa, let the app compare. Green means go, red means turn it sideways. Comment MEASURE for the app. #diy #homedecor #interiordesign #measure #movingtips #renter #apartmenttherapy #furniture #floorplanner #measure #iphone 👉 Comment MEASURE for the link — link in bio.",
+ "yt_title": "Few People Know About This Tape #shorts",
+ "trend_keys": [
+  "furniture",
+  "floorplanner",
+  "measure",
+  "iphone",
+  "app",
+  "plan",
+  "few",
+  "tape"
+ ],
+ "content_type": "sales",
+ "comp_angle": {
+  "title": "Few People Know About This Tape Measure Feature! Hidden Features of Tape Measure",
+  "views": 46636933,
+  "channel": "The Maker"
+ },
+ "virality": {
+  "score": 92,
+  "notes": [
+   "angle<-46636k",
+   "hook_boosted"
+  ],
+  "hook": "Stop scrolling. Big furniture, narrow doorway, moving day panic."
+ }
+}
