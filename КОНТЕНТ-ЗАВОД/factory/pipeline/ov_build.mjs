@@ -11,8 +11,8 @@ const GOLD="#E6B877", NAVY="#12202E", CREAM="#FAF8F5", TERRA="#E08A6E", BLUE="#8
 const PAL={GOLD,NAVY,CREAM,TERRA,BLUE,SAGE};
 const col=x=>PAL[x]||x;
 const esc=s=>String(s).replace(/ /g,'&nbsp;');
-// тёмная подложка-скрим (полупрозрачная — кадр просвечивает, но текст читается)
-const SCRIM='linear-gradient(135deg,rgba(14,22,32,.72),rgba(20,32,46,.66))';
+// тёмная подложка-плашка (почти непрозрачная — текст читается на ЛЮБОМ кадре, профи-стиль)
+const SCRIM='linear-gradient(135deg,rgba(9,15,23,.90),rgba(15,25,37,.86))';
 const panel=(top,h,extra='')=>`position:absolute;left:70px;top:${top}px;width:940px;height:${h}px;`+
   `background:${SCRIM};border-radius:40px;box-shadow:0 22px 60px rgba(0,0,0,.55);border:1.5px solid rgba(230,184,119,.28);${extra}`;
 
