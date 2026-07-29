@@ -63,11 +63,20 @@ for ci,ch in enumerate(chords):
     steps=[0.0,2.0,4.0,6.0]; notes=[ch[2],ch[3],ch[2]*1.5,ch[3]]
     for st,nf in zip(steps,notes):
         s=int(st*SR); b=bell(nf,barlen-st,0.16); arp[s:s+len(b)]+=b[:len(arp)-s]
-    seg=seg+arp*0.7
+    # мягкая пентатоника-лид (колокольчик) — красивая ведущая линия
+    lead=np.zeros(int(barlen*SR))
+    penta=[ch[2]*1.0,ch[3]*1.0,ch[2]*1.5,ch[3]*1.25,ch[2]*2.0]
+    lseq=[(0.0,penta[0]),(1.5,penta[1]),(3.0,penta[2]),(4.5,penta[3]),(6.0,penta[4]),(7.0,penta[1])]
+    for st,nf in lseq:
+        sidx=int(st*SR); b=bell(nf,barlen-st,0.14); lead[sidx:sidx+len(b)]+=b[:len(lead)-sidx]
+    seg=seg+arp*0.6+lead*0.8
     music=np.concatenate([music,seg])
 # «частоты»: очень мягкая воздушная подложка + лёгкий low-shelf тёплый
-air=0.06*np.sin(2*np.pi*0.3*np.arange(len(music))/SR)*np.sin(2*np.pi*70*np.arange(len(music))/SR)
-music=music+air
+tt=np.arange(len(music))/SR
+air=0.06*np.sin(2*np.pi*0.3*tt)*np.sin(2*np.pi*70*tt)
+# «частоты»: мягкий низкий пульс ~1.1 Гц на 58 Гц (подсознательная вовлечённость, не назойливо)
+pulse=0.05*(0.5+0.5*np.sin(2*np.pi*1.1*tt))*np.sin(2*np.pi*58*tt)
+music=music+air+pulse
 music=music/(np.max(np.abs(music))+1e-9)*0.85
 music=reverb(music,2.4,0.30)
 # бесшовный луп: кроссфейд 3с
@@ -96,11 +105,11 @@ y=0.0; out=np.zeros(n)
 for i in range(n):
     a=np.exp(-2*np.pi*cutlfo[i]/SR); y=a*y+(1-a)*noise[i]; out[i]=y
 env=np.sin(np.pi*t/t[-1])**1.6
-whoosh=out*env*3.0 + 0.3*np.sin(2*np.pi*80*t)*env
+whoosh=out*env*2.2 + 0.35*np.sin(2*np.pi*70*t)*env
 save_sfx('whoosh',whoosh)
 # CLICK — мягкий низкий бульк
 n=int(0.14*SR); t=np.arange(n)/SR; env=np.exp(-t*22)
-click=(np.sin(2*np.pi*520*t)+0.5*np.sin(2*np.pi*260*t))*env
+click=(0.7*np.sin(2*np.pi*420*t)+0.4*np.sin(2*np.pi*210*t))*env
 save_sfx('click',click)
 # OPEN — тёплый восходящий
 n=int(0.4*SR); t=np.arange(n)/SR; env=np.exp(-t*6)

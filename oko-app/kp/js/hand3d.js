@@ -75,9 +75,9 @@ export function buildHand3D(){
   finger([.305,.240,.178],R,[.47,.055,.062], -.02,  .03);   // безымянный
   finger([.245,.190,.150],[.056,.049,.042],[.44,.035,.185],-.24,.10); // мизинец
   // большой палец
-  const thumb=finger([.235,.180,.140],[.076,.066,.055],[.16,-.02,-.30],0,0);
-  // большой палец — с БОКОВОГО края ладони, отведён в сторону-к зрителю и чуть вниз (не сквозь ладонь, не вверх пеньком)
-  thumb.rotation.set(0.25,-1.15,-0.40);
+  const thumb=finger([.225,.175,.135],[.074,.064,.054],[.05,.055,-.24],0,0);
+  // большой палец — на верхне-боковом крае ладони, направлен вверх-наружу (🫴), не сквозь и не вниз
+  thumb.rotation.set(0.0,0.92,0.38);
   thumb.userData.isThumb=true;
 
   HAND.userData={fingers,thumb,SKIN,JOINT,PLATE,coreGlow:CG,fog:CG2};
@@ -93,8 +93,8 @@ export function poseHand(hand,open,t){
     if(f.userData.isThumb){
       // большой палец: мягко разгибается вверх-наружу, НАД ладонью (без прохода сквозь неё)
       var ts=s;
-      f.userData.chain.forEach((g,i)=>{ g.rotation.z=(0.12-i*0.03)-(0.10)*ts; });
-      f.rotation.set(0.25,-1.15-0.12*ts,-0.40-0.06*ts);
+      f.userData.chain.forEach((g,i)=>{ g.rotation.z=(0.18-i*0.03)-(0.12)*ts; });
+      f.rotation.set(0.0,0.92+0.06*ts,0.38+0.10*ts);
       return;
     }
     const ph=idx*0.6;
@@ -108,6 +108,6 @@ export function poseHand(hand,open,t){
     f.rotation.y=f.userData.fanY*ss*0.6;
   });
   // рассеянное свечение/туман ярче по мере раскрытия
-  if(hand.userData.coreGlow){var g=hand.userData.coreGlow;g.material.opacity=0.08+0.20*s+Math.sin(t*2.0)*0.02*s;}
-  if(hand.userData.fog){hand.userData.fog.material.opacity=0.02+0.09*s;}
+  if(hand.userData.coreGlow){var g=hand.userData.coreGlow;g.material.opacity=0.14+0.30*s+Math.sin(t*2.0)*0.03*s;}
+  if(hand.userData.fog){hand.userData.fog.material.opacity=0.05+0.15*s;}
 }

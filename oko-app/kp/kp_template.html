@@ -63,6 +63,23 @@ body.booting #holo-canvas{z-index:9995}
 .pl-enter.show{opacity:1;transform:none;pointer-events:auto;animation:entpulse 2.6s ease-in-out infinite}
 .pl-enter:hover{transform:translateY(-2px) scale(1.03)}
 @keyframes entpulse{0%,100%{box-shadow:0 0 34px rgba(154,255,0,.45),0 10px 30px -8px rgba(0,0,0,.8)}50%{box-shadow:0 0 54px rgba(154,255,0,.7),0 10px 30px -8px rgba(0,0,0,.8)}}
+/* КИНЕМАТОГРАФИЧНЫЙ HUD ЗАГРУЗКИ вокруг 3D-глаза */
+.pl-hud{position:absolute;width:300px;height:300px;pointer-events:none;opacity:0;animation:plIn .8s ease .1s forwards}
+.pl-hud svg{display:block;overflow:visible}
+.pl-hud .rng{fill:none}
+.pl-hud .rng.d{stroke:rgba(154,255,0,.4);stroke-width:1.5;stroke-dasharray:3 9;transform-origin:150px 150px;animation:plRot 9s linear infinite}
+.pl-hud .rng.d2{stroke:rgba(154,255,0,.24);stroke-width:1.5;stroke-dasharray:2 16;transform-origin:150px 150px;animation:plRot 15s linear infinite reverse}
+.pl-hud .rng.b{stroke:rgba(154,255,0,.12);stroke-width:1}
+.pl-hud .prog{fill:none;stroke:var(--lime);stroke-width:3;stroke-linecap:round;filter:drop-shadow(0 0 6px var(--lime));transform:rotate(-90deg);transform-origin:150px 150px}
+@keyframes plRot{to{transform:rotate(360deg)}}
+.pl-pct{position:absolute;left:50%;bottom:-6px;transform:translateX(-50%);font-family:'Unbounded',sans-serif;font-weight:800;font-size:12px;letter-spacing:2px;color:var(--lime);text-shadow:0 0 10px rgba(154,255,0,.6)}
+.pl-brand{font-family:'Unbounded',sans-serif;font-weight:900;font-size:clamp(30px,7vw,54px);letter-spacing:2px;color:#fff;position:relative;line-height:1}
+.pl-brand span{color:var(--lime)}
+.pl-brand.glitch::before,.pl-brand.glitch::after{content:'ОКО';position:absolute;left:0;top:0;width:100%}
+.pl-brand.glitch::before{color:#9AFF00;transform:translate(2px,-1px);opacity:.75;clip-path:inset(0 0 55% 0);animation:plGl .18s steps(2) infinite}
+.pl-brand.glitch::after{color:#12E6FF;transform:translate(-2px,1px);opacity:.5;clip-path:inset(52% 0 0 0);animation:plGl .22s steps(2) infinite reverse}
+@keyframes plGl{50%{transform:translate(-2px,1px)}}
+.pl-flash{position:fixed;inset:0;background:radial-gradient(circle at 50% 42%,rgba(210,255,140,.95),rgba(154,255,0,.42) 30%,transparent 62%);opacity:0;pointer-events:none;z-index:9996}
 /* каскад появления hero после входа */
 .hero-badge,.hero-title,.hero-stats,.hero-btns,.scroll-hint{transition:opacity .8s cubic-bezier(.16,1,.3,1),transform .8s cubic-bezier(.16,1,.3,1)}
 body.booting .hero-badge,body.booting .hero-title,body.booting .hero-stats,body.booting .hero-btns,body.booting .scroll-hint{opacity:0;transform:translateY(26px)}
@@ -365,7 +382,20 @@ details.tier-detail[open] .tier-detail-h .ar{transform:rotate(90deg)}
 </head>
 <body>
 <!-- PRELOADER (3D-лого сразу) -->
-<div id="preloader"><div class="pl-core"><div class="pl-ring"></div><div class="pl-word">О<span>К</span>О</div><div class="pl-sub">экосистема роста</div></div></div>
+<div id="preloader">
+  <div class="pl-hud" id="plHud">
+    <svg width="300" height="300" viewBox="0 0 300 300">
+      <circle class="rng d" cx="150" cy="150" r="132"/>
+      <circle class="rng d2" cx="150" cy="150" r="112"/>
+      <circle class="rng b" cx="150" cy="150" r="146"/>
+      <circle class="prog" id="plProg" cx="150" cy="150" r="146"/>
+    </svg>
+    <div class="pl-pct" id="plPct">0%</div>
+  </div>
+  <div class="pl-brand" id="plBrand">О<span>К</span>О</div>
+  <div class="pl-sub">ЭКОСИСТЕМА РОСТА · ЗАПУСК СИСТЕМЫ</div>
+</div>
+<div class="pl-flash" id="plFlash"></div>
 <!-- BACKGROUND -->
 <div id="cubes-bg"><canvas id="gridCanvas"></canvas></div>
 <div id="bg-glows"><i class="g1"></i><i class="g2"></i><i class="g3"></i></div>
@@ -607,21 +637,32 @@ if(gsap&&ST)gsap.registerPlugin(ST);
 try{if('scrollRestoration' in history)history.scrollRestoration='manual';}catch(e){}
 try{scrollTo(0,0);}catch(e){}
 document.body.classList.add('booting');
-(function(){var pl=document.getElementById('preloader'),entered=false;
-  function enter(){if(entered)return;entered=true;
+(function(){
+  var pl=document.getElementById('preloader'),hud=document.getElementById('plHud'),prog=document.getElementById('plProg'),
+      pct=document.getElementById('plPct'),brand=document.getElementById('plBrand'),flash=document.getElementById('plFlash'),entered=false;
+  var C=2*Math.PI*146; if(prog){prog.style.strokeDasharray=C;prog.style.strokeDashoffset=C;}
+  function placeHud(){var ew=document.getElementById('eyeWrap');if(!ew||!hud)return;var r=ew.getBoundingClientRect();
+    var s=Math.min(1,(r.width)/300*1.15); hud.style.transform='scale('+s.toFixed(3)+')';
+    hud.style.left=(r.left+r.width/2-150)+'px'; hud.style.top=(r.top+r.height/2-150)+'px';}
+  placeHud(); addEventListener('resize',placeHud);
+  var t0=performance.now(),DUR=2100,ready=window.__eyeReady||false;
+  addEventListener('eye-ready',function(){ready=true;});
+  function finish(){ if(entered)return; entered=true;
+    if(brand)brand.classList.remove('glitch');
+    if(flash){flash.style.transition='opacity .16s ease';flash.style.opacity='1';setTimeout(function(){flash.style.transition='opacity .85s ease';flash.style.opacity='0';},170);}
+    if(window.__audio)window.__audio.start();
+    if(window.__sfx)window.__sfx('enter');
     try{scrollTo(0,0);}catch(e){}
-    if(window.__audio)window.__audio.start();       // звук стартует сам (с фолбэком на первый жест)
-    pl.classList.add('done');
-    document.body.classList.remove('booting');
-    start();
+    pl.classList.add('done'); document.body.classList.remove('booting'); start();
     var seq=['.hero .hero-badge','.hero .hero-title','.hero .hero-stats','.hero .hero-btns','.hero .scroll-hint'];
-    seq.forEach(function(sel,i){var el=document.querySelector(sel);if(!el)return;
-      setTimeout(function(){el.style.opacity='1';el.style.transform='none';},180+i*110);});
-    setTimeout(function(){document.querySelectorAll('#heroClone .hero-badge,#heroClone .hero-title,#heroClone .hero-stats,#heroClone .hero-btns,#heroClone .scroll-hint').forEach(function(e){e.style.opacity='1';e.style.transform='none';});},360);
+    seq.forEach(function(sel,i){var el=document.querySelector(sel);if(!el)return;setTimeout(function(){el.style.opacity='1';el.style.transform='none';},240+i*120);});
   }
-  addEventListener('eye-ready',function(){setTimeout(enter,220);});
-  if(window.__eyeReady)setTimeout(enter,220);
-  setTimeout(enter,2600);   // не ждём дольше — сайт всегда стартует сам
+  (function tick(){var e=performance.now()-t0; var p=Math.min(1,e/DUR); if(!ready)p=Math.min(p,0.9);
+    if(prog)prog.style.strokeDashoffset=C*(1-p); if(pct)pct.textContent=Math.round(p*100)+'%';
+    placeHud();
+    if(e>1100&&brand&&!brand.classList.contains('glitch'))brand.classList.add('glitch');
+    if(p>=1){finish();return;} requestAnimationFrame(tick);})();
+  setTimeout(finish,4200);   // страховка: сайт всегда стартует
 })();
 /* ЖИВАЯ СЕТКА КВАДРАТОВ (canvas 2D): дрейф + бегущая волна подсветки + отклик на курсор */
 (function(){
@@ -676,7 +717,7 @@ document.body.classList.add('booting');
    снятие мьюта с плавным появлением на первом же касании/скролле (обход политики браузеров). */
 (function(){
   var mus=null,started=false,unmuted=false,masterVol=0.40;
-  function mk(name,vol){var a=new Audio('kp-media/snd/'+name+'.mp3');a.preload='auto';a.volume=vol;a.setAttribute('playsinline','');return a;}
+  function mk(name,vol){var a=new Audio('kp-media/snd/'+name+'.mp3?v=2');a.preload='auto';a.volume=vol;a.setAttribute('playsinline','');return a;}
   var pool={};
   function sfx(name,vol){
     pool[name]=pool[name]||[];
@@ -696,7 +737,7 @@ document.body.classList.add('booting');
     (function step(){var k=Math.min(1,(performance.now()-t0)/ms);el.volume=from+(to-from)*k;
       if(k<1)requestAnimationFrame(step);else if(to===0)try{el.pause();}catch(e){}})();}
   function makeMus(){ if(mus)return mus;
-    mus=new Audio('kp-media/snd/music.mp3'); mus.loop=true; mus.preload='auto';
+    mus=new Audio('kp-media/snd/music.mp3?v=2'); mus.loop=true; mus.preload='auto';
     mus.setAttribute('playsinline',''); mus.muted=true; mus.volume=0; return mus; }
   function autoplay(){ makeMus();
     // 1) пробуем сразу — muted-autoplay разрешён почти везде, звук технически «включён»
@@ -830,7 +871,7 @@ function buildTariffs(){
     c.style.transform='translate(-50%,0) translateX('+tx+'%) translateZ('+tz+'px) rotateY('+ry+'deg) scale('+sc+')';
     c.style.opacity=op;c.style.zIndex=String(100-Math.round(a*10));c.style.pointerEvents=a<.5?'auto':'none';});}
   (function raf(){pos+=(target-pos)*.2;if(Math.abs(target-pos)<0.004)pos=target;tilt+=(0-tilt)*.1;layout();requestAnimationFrame(raf);})();
-  function setI(i){target=Math.max(0,Math.min(N-1,i));document.querySelectorAll('#tcarNav .tcar-dot').forEach(function(d,di){d.classList.toggle('on',di===target);});}
+  function setI(i){var pv=target;target=Math.max(0,Math.min(N-1,i));if(target!==pv&&window.__sfx)window.__sfx('switch');document.querySelectorAll('#tcarNav .tcar-dot').forEach(function(d,di){d.classList.toggle('on',di===target);});}
   document.querySelectorAll('#tcarNav .tcar-dot').forEach(function(d){d.addEventListener('click',function(){setI(+d.dataset.i);});});
   /* drag anywhere on the card; distinguish click from swipe */
   var moved=0,sy=0,dir=0,swiped=0;
@@ -927,8 +968,11 @@ function buildLoop(){
 (function(){
   document.querySelectorAll('section').forEach(function(sec){ST.create({trigger:sec,start:'top 58%',once:false,
     onEnter:function(){if(window.__sfx)window.__sfx('woosh');},onEnterBack:function(){if(window.__sfx)window.__sfx('woosh');}});});
-  document.addEventListener('click',function(e){var el=e.target.closest('a.btn,button.btn,.tcar-dot,.faq-q,summary');
-    if(el&&window.__sfx)window.__sfx('click');},{capture:true});
+  document.addEventListener('click',function(e){if(!window.__sfx)return;
+    if(e.target.closest('.tli-q,summary,.faq-q,details')) window.__sfx('open');       // раскрытие
+    else if(e.target.closest('.tcar-dot,.adt-dot,.guar-dot')) window.__sfx('switch');  // переключение
+    else if(e.target.closest('a.btn,button.btn,.magnetic')) window.__sfx('click');     // кнопки
+  },{capture:true});
 })();
 /* ---- MODALS / helpers ---- */
 window.openPay=function(){document.getElementById('payModal').classList.add('open');};
@@ -940,7 +984,7 @@ window.playVoice=function(btn){var a=btn.parentElement.parentElement.querySelect
 })();
 </script>
 <script type="module">
-import { initHolo } from './js/holo.js?v=91';
+import { initHolo } from './js/holo.js?v=101';
 function go(){ try{ initHolo(); }catch(e){ console.log('holo',e); } }
 if(document.readyState==='complete') setTimeout(go,200); else window.addEventListener('load',()=>setTimeout(go,200));
 </script>
