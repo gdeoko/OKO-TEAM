@@ -75,9 +75,9 @@ export function buildHand3D(){
   finger([.305,.240,.178],R,[.47,.055,.062], -.02,  .03);   // безымянный
   finger([.245,.190,.150],[.056,.049,.042],[.44,.035,.185],-.24,.10); // мизинец
   // большой палец
-  const thumb=finger([.235,.185,.140],[.072,.063,.053],[-.02,-.06,-.235],-.30,0);
-  // большой палец ВСЕГДА сбоку у основания ладони — задаём стабильную базовую ориентацию (без переброса)
-  thumb.rotation.set(0,-0.60,-0.55);
+  const thumb=finger([.235,.180,.140],[.076,.066,.055],[.16,-.02,-.30],0,0);
+  // большой палец — с БОКОВОГО края ладони, отведён в сторону-к зрителю и чуть вниз (не сквозь ладонь, не вверх пеньком)
+  thumb.rotation.set(0.25,-1.15,-0.40);
   thumb.userData.isThumb=true;
 
   HAND.userData={fingers,thumb,SKIN,JOINT,PLATE,coreGlow:CG,fog:CG2};
@@ -91,10 +91,10 @@ export function poseHand(hand,open,t){
   const FIST=[1.30,1.46,1.16], OPEN=[0.16,0.22,0.28];
   hand.userData.fingers.forEach((f,idx)=>{
     if(f.userData.isThumb){
-      // большой палец: только слегка отгибается, НЕ перебрасывается на другую сторону
+      // большой палец: мягко разгибается вверх-наружу, НАД ладонью (без прохода сквозь неё)
       var ts=s;
-      f.userData.chain.forEach((g,i)=>{ g.rotation.z=(0.95-i*0.06)-(0.45)*ts; });
-      f.rotation.set(0,-0.60-0.18*ts,-0.55+0.10*ts);
+      f.userData.chain.forEach((g,i)=>{ g.rotation.z=(0.12-i*0.03)-(0.10)*ts; });
+      f.rotation.set(0.25,-1.15-0.12*ts,-0.40-0.06*ts);
       return;
     }
     const ph=idx*0.6;

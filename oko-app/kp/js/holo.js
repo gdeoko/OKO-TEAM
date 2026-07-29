@@ -1,6 +1,7 @@
 import * as THREE from 'three';
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
-import { buildHand3D, poseHand } from './hand3d.js?v=98';
+import { RoomEnvironment } from 'three/addons/environments/RoomEnvironment.js';
+import { buildHand3D, poseHand } from './hand3d.js?v=99';
 // DOM-synced WebGL: eye(GLB) + hand/woman as scroll-scrubbed sprite sheets.
 // Figures are treated as part of the background: precise scroll-tied position + tiny breathing only.
 export function initHolo(){
@@ -30,6 +31,9 @@ export function initHolo(){
   if(typeof DeviceOrientationEvent!=='undefined' && DeviceOrientationEvent.requestPermission){
     document.addEventListener('click',function req(){DeviceOrientationEvent.requestPermission().then(function(p){if(p==='granted')bindGyro();}).catch(function(){});document.removeEventListener('click',req);},{once:true});
   } else bindGyro();
+  // ГЛЯНЦЕВЫЕ ОТРАЖЕНИЯ: PMREM-окружение (для чёткого глянца робота)
+  let ENVTEX=null; try{ renderer.toneMapping=THREE.ACESFilmicToneMapping; renderer.toneMappingExposure=1.12;
+    const pm=new THREE.PMREMGenerator(renderer); ENVTEX=pm.fromScene(new RoomEnvironment(),0.04).texture; }catch(e){}
   const clamp=(v,a,b)=>v<a?a:v>b?b:v;
   function glowTex(){const cv=document.createElement('canvas');cv.width=cv.height=256;const g=cv.getContext('2d');const rg=g.createRadialGradient(128,128,6,128,128,128);rg.addColorStop(0,'rgba(154,255,0,.34)');rg.addColorStop(.5,'rgba(120,220,10,.1)');rg.addColorStop(1,'rgba(0,0,0,0)');g.fillStyle=rg;g.fillRect(0,0,256,256);return new THREE.CanvasTexture(cv);}
   const GLOW=glowTex();
@@ -90,10 +94,10 @@ export function initHolo(){
   // ---- РОБОТ ГАРАНТИЙ: настоящий 3D GLB, полный скелет + процедурное «дыхание» (руки/ноги/голова) ----
   let robot=null,robotNorm=1,robotBones={};const robotAnchor=document.getElementById('guarRobot');
   const BONEN=['Head','neck','Spine','Spine01','Spine02','Hips','LeftArm','RightArm','LeftForeArm','RightForeArm','LeftShoulder','RightShoulder','LeftUpLeg','RightUpLeg','LeftLeg','RightLeg'];
-  if(robotAnchor){ new GLTFLoader().load('assets/robot.glb?v=3',function(g){ robot=g.scene;
-    robot.traverse(function(o){ if(o.isMesh&&o.material){ const t=o.material.map||o.material.emissiveMap||null;
-      // ЯРКИЙ корпус (светлый металл) + лаймовые светящиеся акценты — робот хорошо виден
-      o.material=new THREE.MeshStandardMaterial({color:new THREE.Color(0xE2EEDC),emissive:new THREE.Color(0x9AFF00),emissiveMap:t,emissiveIntensity:.85,metalness:.5,roughness:.42});
+  if(robotAnchor){ new GLTFLoader().load('assets/robot.glb?v=4',function(g){ robot=g.scene;
+    robot.traverse(function(o){ if(o.isMesh&&o.material){ const t=o.material.map||o.material.emissiveMap||null; const em=o.material.emissiveMap||null;
+      // ГЛЯНЦЕВЫЙ чёрный корпус + лаймовые светящиеся акценты + отражения (чётко, без пересвета/мути)
+      o.material=new THREE.MeshStandardMaterial({map:t,color:new THREE.Color(0xffffff),emissive:new THREE.Color(0x9AFF00),emissiveMap:em,emissiveIntensity:.8,metalness:.92,roughness:.15,envMap:ENVTEX,envMapIntensity:1.35});
       o.material.needsUpdate=true; o.frustumCulled=false; }
       if(BONEN.indexOf(o.name)>=0){ robotBones[o.name]=o; o.userData.baseQ=o.quaternion.clone(); } });
     const b=new THREE.Box3().setFromObject(robot);const c=b.getCenter(new THREE.Vector3());const s=b.getSize(new THREE.Vector3());
