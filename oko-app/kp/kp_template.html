@@ -381,7 +381,7 @@ details.tier-detail[open] .tier-detail-h .ar{transform:rotate(90deg)}
 <body>
 <!-- ФОНОВАЯ МУЗЫКА: настоящий DOM-элемент <audio> (надёжно играет на мобильных, в отличие от new Audio()) -->
 <audio id="bgm" loop preload="auto" playsinline crossorigin="anonymous">
-  <source src="kp-media/snd/music.mp3?v=3" type="audio/mpeg">
+  <source src="kp-media/snd/music.mp3?v=4" type="audio/mpeg">
 </audio>
 <!-- PRELOADER (3D-лого сразу) -->
 <div id="preloader">
@@ -704,61 +704,45 @@ document.body.classList.add('booting');
   }
   requestAnimationFrame(draw);
 })();
-/* ЗВУК: красивая фоновая музыка + глубокие мягкие SFX. АВТОЗАПУСК: muted-autoplay сразу,
-   снятие мьюта с плавным появлением на первом же касании/скролле (обход политики браузеров). */
+/* ЗВУК: ТОЛЬКО фоновая музыка (SFX убраны по просьбе). Громкость 35%.
+   Пытаемся включить сразу при входе; если браузер блокирует — стартуем на первом же
+   касании/скролле и не снимаем слушатели, пока воспроизведение реально не подтвердится.
+   Плавное появление при входе и плавное затухание при уходе/сворачивании вкладки. */
 (function(){
-  var mus=null,started=false,unmuted=false,masterVol=0.55;
-  function mk(name,vol){var a=new Audio('kp-media/snd/'+name+'.mp3?v=3');a.preload='auto';a.volume=vol;a.setAttribute('playsinline','');return a;}
-  var pool={};
-  function sfx(name,vol){
-    pool[name]=pool[name]||[];
-    var a=pool[name].find(function(x){return x.paused||x.ended;});
-    if(!a){a=mk(name,vol);pool[name].push(a);if(pool[name].length>4)pool[name].shift();}
-    try{a.currentTime=0;a.volume=vol;a.play().catch(function(){});}catch(e){}
-  }
-  window.__sfx=function(kind){
-    if(!unmuted)return;
-    if(kind==='click')sfx('click',0.30);
-    else if(kind==='woosh')sfx('whoosh',0.34);
-    else if(kind==='open')sfx('open',0.30);
-    else if(kind==='switch')sfx('switch',0.26);
-    else if(kind==='enter')sfx('enter',0.5);
-  };
-  function fade(el,to,ms){var from=el.volume,t0=performance.now();
-    (function step(){var k=Math.min(1,(performance.now()-t0)/ms);el.volume=from+(to-from)*k;
-      if(k<1)requestAnimationFrame(step);else if(to===0)try{el.pause();}catch(e){}})();}
+  var mus=null, masterVol=0.35, confirmed=false, fadeRAF=0;
   function makeMus(){ if(mus)return mus;
-    mus=document.getElementById('bgm');   // НАСТОЯЩИЙ DOM <audio> — надёжно играет на iOS/Android (detached new Audio() часто молчит)
-    if(!mus){ mus=new Audio('kp-media/snd/music.mp3?v=3'); document.body.appendChild(mus); }
-    mus.loop=true; mus.preload='auto'; mus.setAttribute('playsinline',''); mus.muted=true; mus.volume=0; return mus; }
-  function autoplay(){ makeMus();
-    // 1) пробуем сразу — muted-autoplay разрешён почти везде, звук технически «включён»
-    mus.play().then(function(){started=true;}).catch(function(){started=false;});
-  }
-  var armed=false;
-  function unmute(){ if(unmuted)return; unmuted=true; makeMus();
-    // СИНХРОННО в обработчике жеста (надёжно для iOS/Android): снимаем мьют и играем сразу
-    mus.muted=false; mus.volume=0.001;
-    try{ var pr=mus.play(); if(pr&&pr.catch)pr.catch(function(){}); }catch(e){}
-    started=true; fade(mus,masterVol,1800);
-    setTimeout(function(){window.__sfx('enter');},220);
-  }
-  function arm(){ if(armed)return; armed=true;
-    var evs=['pointerdown','touchstart','touchend','keydown','wheel','click','scroll','mousemove'];
-    function on(){ unmute(); evs.forEach(function(e){removeEventListener(e,on,true);}); }
-    evs.forEach(function(e){addEventListener(e,on,{capture:true,passive:true});});
-  }
-  autoplay(); arm();
-  window.__audio={
-    state:function(){return mus?{playing:!mus.paused,muted:mus.muted,vol:+mus.volume.toFixed(3),unmuted:unmuted,src:(mus.currentSrc||'').split('/').pop()}:{playing:false};},
-    start:function(){ autoplay(); arm(); }   // на всякий случай форсируем ещё раз
-  };
+    mus=document.getElementById('bgm');   // настоящий DOM <audio> — надёжно играет на мобильных
+    if(!mus){ mus=new Audio('kp-media/snd/music.mp3?v=4'); document.body.appendChild(mus); }
+    mus.loop=true; mus.preload='auto'; mus.setAttribute('playsinline',''); mus.volume=0; return mus; }
+  function fadeTo(to,ms){ makeMus(); if(fadeRAF)cancelAnimationFrame(fadeRAF);
+    var from=mus.volume, t0=performance.now();
+    (function step(){ var k=Math.min(1,(performance.now()-t0)/ms); mus.volume=Math.max(0,Math.min(1,from+(to-from)*k));
+      if(k<1){ fadeRAF=requestAnimationFrame(step); } else if(to===0){ try{mus.pause();}catch(e){} } })(); }
+  function mutedReady(){ try{ mus.muted=true; mus.volume=0; var p=mus.play(); if(p&&p.catch)p.catch(function(){}); }catch(e){} }
+  // ЖЕСТ = разрешение гарантировано: снимаем мьют, играем и ОПТИМИСТИЧНО поднимаем громкость (не ждём промис)
+  function unmutePlay(){ makeMus(); mus.muted=false;
+    try{ var pr=mus.play(); if(pr&&pr.catch)pr.catch(function(){ mutedReady(); }); }catch(e){ mutedReady(); return false; }
+    if(!confirmed){ confirmed=true; if(mus.volume<0.01)mus.volume=0.001; fadeTo(masterVol,1500); }
+    return true; }
+  // попытка сразу при входе (без жеста): пробуем со звуком; если браузер блокирует — тихий muted-autoplay наготове
+  function tryImmediate(){ makeMus(); mus.muted=false;
+    try{ var pr=mus.play(); if(pr&&pr.then){ pr.then(function(){ if(!confirmed){confirmed=true; if(mus.volume<0.01)mus.volume=0.001; fadeTo(masterVol,1500);} }).catch(function(){ mutedReady(); }); } }catch(e){ mutedReady(); } }
+  var evs=['pointerdown','touchstart','touchend','keydown','wheel','click','scroll','mousemove'];
+  function onGesture(){ var ok=unmutePlay(); if(ok&&confirmed){ evs.forEach(function(e){removeEventListener(e,onGesture,true);}); } }
+  evs.forEach(function(e){ addEventListener(e,onGesture,{capture:true,passive:true}); });
+  makeMus(); tryImmediate();   // где браузер разрешает — музыка заиграет мгновенно при входе
+  // уход/возврат на вкладку: плавное затухание и проявление
   document.addEventListener('visibilitychange',function(){
     if(!mus)return;
-    if(document.hidden){fade(mus,0,600);}
-    else if(unmuted){try{mus.play().catch(function(){});}catch(e){} fade(mus,masterVol,1400);}
+    if(document.hidden){ fadeTo(0,700); }
+    else if(confirmed){ try{ var p=mus.play(); if(p&&p.catch)p.catch(function(){}); }catch(e){} fadeTo(masterVol,1400); }
   });
-  addEventListener('pagehide',function(){if(mus)fade(mus,0,300);});
+  addEventListener('pagehide',function(){ if(mus)fadeTo(0,300); });
+  addEventListener('blur',function(){ if(mus&&confirmed)fadeTo(masterVol*0.4,500); });
+  addEventListener('focus',function(){ if(mus&&confirmed&&!document.hidden)fadeTo(masterVol,900); });
+  window.__sfx=function(){};   // SFX отключены — оставлена только музыка
+  window.__audio={ state:function(){return mus?{playing:!mus.paused,muted:mus.muted,vol:+mus.volume.toFixed(3),confirmed:confirmed,src:(mus.currentSrc||'').split('/').pop()}:{playing:false};},
+    start:function(){ unmutePlay(); } };
 })();
 /* NAV */
 var nav=document.getElementById('nav'),pb=document.getElementById('pb');
@@ -978,7 +962,7 @@ window.playVoice=function(btn){var a=btn.parentElement.parentElement.querySelect
 })();
 </script>
 <script type="module">
-import { initHolo } from './js/holo.js?v=103';
+import { initHolo } from './js/holo.js?v=104';
 function go(){ try{ initHolo(); }catch(e){ console.log('holo',e); } }
 if(document.readyState==='complete') setTimeout(go,200); else window.addEventListener('load',()=>setTimeout(go,200));
 </script>
