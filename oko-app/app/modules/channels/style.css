@@ -577,3 +577,48 @@
 .ch-catx-meta svg.i{width:12px;height:12px}
 .ch-catx-star{color:#ffc522}
 .ch-catx-star svg.i{color:#ffc522}
+
+/* ===== «X учеников проходят сейчас» — тонкий блок под шапкой ===== */
+.ch-students-now{display:flex;align-items:center;gap:8px;margin:0 0 12px;padding:9px 12px;
+  border-radius:12px;background:var(--surface);border:1px solid var(--border);
+  color:var(--dim);font:600 12px/1.35 var(--font-body)}
+.ch-students-now svg.i{width:14px;height:14px;color:var(--lime);flex-shrink:0}
+.ch-students-now b{color:var(--text);font-weight:800}
+
+/* ===== Отзывы канала/клуба/курса ===== */
+.ch-reviews{margin-top:16px;padding-top:6px}
+.ch-rv-head{display:grid;grid-template-columns:auto 1fr;gap:14px;align-items:center;
+  padding:14px;background:var(--surface);border:1px solid var(--border);border-radius:14px;margin-bottom:12px}
+.ch-rv-num{text-align:center;padding-right:14px;border-right:1px solid var(--border)}
+.ch-rv-num b{display:block;font:800 30px/1 var(--font-display);color:var(--text)}
+.ch-rv-num small{display:inline-flex;align-items:center;gap:3px;color:#ffc522;
+  font:700 11px/1 var(--font-body);margin-top:6px}
+.ch-rv-num small svg.i{width:11px;height:11px;color:#ffc522}
+.ch-rv-bars{display:flex;flex-direction:column;gap:4px;min-width:0}
+.ch-rv-bar-row{display:grid;grid-template-columns:16px 1fr 34px;gap:8px;align-items:center;
+  font:700 11px/1 var(--font-body);color:var(--dim)}
+.ch-rv-bar-k{color:var(--text)}
+.ch-rv-bar{height:6px;background:rgba(255,255,255,.06);border-radius:99px;overflow:hidden;position:relative}
+:root:not([data-theme="dark"]) .ch-rv-bar{background:rgba(10,10,10,.06)}
+.ch-rv-bar i{display:block;height:100%;background:linear-gradient(90deg,#c8ff5e,#9AFF00);border-radius:99px}
+.ch-rv-bar-v{text-align:right}
+.ch-rv-count{grid-column:1/-1;font:700 11px/1 var(--font-body);color:var(--dim);letter-spacing:.02em}
+.ch-rv-list{display:flex;flex-direction:column;gap:10px}
+.ch-rv-item{padding:12px;background:var(--surface);border:1px solid var(--border);border-radius:12px}
+.ch-rv-h{display:grid;grid-template-columns:32px 1fr auto;gap:9px;align-items:center;margin-bottom:6px}
+.ch-rv-av{width:32px;height:32px;border-radius:50%;display:grid;place-items:center;
+  font:800 14px/1 var(--font-display);color:var(--text);
+  background:var(--av-g);color:var(--av-c)}
+:root:not([data-theme="dark"]) .ch-rv-av{background:var(--av-gl);color:var(--av-cl)}
+.ch-rv-hh{display:flex;flex-direction:column;min-width:0;gap:2px}
+.ch-rv-hh b{font:800 13px/1.15 var(--font-display);color:var(--text);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.ch-rv-hh small{font:500 11px/1 var(--font-body);color:var(--dim)}
+.ch-rv-stars{display:inline-flex;gap:2px}
+.ch-rv-stars span{color:rgba(255,255,255,.16);display:inline-flex}
+:root:not([data-theme="dark"]) .ch-rv-stars span{color:rgba(10,10,10,.16)}
+.ch-rv-stars span.on{color:#ffc522}
+.ch-rv-stars svg.i{width:12px;height:12px}
+.ch-rv-txt{font:500 13px/1.5 var(--font-body);color:var(--text)}
+
+/* ===== доп-строка отзывов в мини-карточке каталога ===== */
+.ch-catx-star small{font-size:10px}

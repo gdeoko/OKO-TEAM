@@ -19350,6 +19350,34 @@ function acProfileInject(){
     setTimeout(apdBoot, 20);
   }
 
+  /* =============================================================
+     APD_MARKET_COURSES: единый пул платных курсов маркетплейса.
+     Источник — CH.disc (kind:course), плюс встроенные курсы Академии.
+     Пользуется этой выборкой любой каталог-виджет («Курсы от авторов»),
+     без дублирования данных.
+     ============================================================= */
+  window.APD_MARKET_COURSES = function apdMarketCourses(){
+    const out = [];
+    try{
+      const src = (window.CH && Array.isArray(CH.disc)) ? CH.disc : [];
+      src.forEach(c=>{
+        if(c && c.kind==='course' && (c.price||0)>0){
+          out.push({
+            id: c.id, name: c.name, desc: c.desc,
+            author: c.owner || '', authorNick: c.ownerNick || '',
+            price: c.price, lessons: (c.lessons||[]).length,
+            students: c.subs || 0, students_now: c.students_now || 0,
+            rating: (typeof c.rating==='number') ? c.rating : null,
+            reviews: (typeof c.reviews==='number') ? c.reviews : 0,
+            reviewsList: c.reviewsList || [],
+            niche: c.niche || 'edu',
+            source: 'marketplace',
+          });
+        }
+      });
+    }catch(e){}
+    return out;
+  };
 })();
 
 /* ===== module: ads ===== */
@@ -49159,6 +49187,7 @@ function chPageChannel(id){
       : 'Бесплатное вступление — доступ откроется сразу';
     return {title:c.name, html: cover + `
       <div class="ch-desc">${chEsc(c.desc)}</div>
+      ${chStudentsLine(c)}
       <div class="ch-paywall">
         <div class="ch-pw-blur">
           ${(c.posts&&c.posts.length?c.posts:[{txt:'Закрытый материал для участников…'},{txt:'Здесь публикуются приватные разборы и бонусы.'}]).slice(0,2).map(p=>
@@ -49173,12 +49202,14 @@ function chPageChannel(id){
           <button class="btn" onclick="chSubscribe('${c.id}')">${chI(c.kind==='course'?'circle-play':paid?'card':'check')} ${ctaLabel}</button>
           <p style="font-size:11px;color:var(--dim);margin-top:9px">${note}</p>
         </div>
-      </div>`};
+      </div>
+      ${chReviewsHtml(c)}`};
   }
 
   // участник / владелец / открытый бесплатный
   let html = cover;
   html += `<div class="ch-desc">${chEsc(c.desc)}</div>`;
+  html += chStudentsLine(c);
 
   if(mine){
     html += `<div class="ch-owner-bar">
@@ -49233,9 +49264,54 @@ function chPageChannel(id){
       ? `<div class="ch-feed" style="background:${CH_BGS[c.chatBg]}">${posts}</div>`
       : posts;
   }
+  html += chReviewsHtml(c);
   html += `<div style="height:8px"></div>`;
   const tools = mine ? `<button onclick="chGo('manage','${c.id}')" title="Управление">${chI('bolt')}</button>` : '';
   return {title:c.name, html, tools};
+}
+
+/* «X учеников проходят сейчас» — только для курсов маркетплейса */
+function chStudentsLine(c){
+  if(c.kind!=='course' || !c.students_now) return '';
+  return `<div class="ch-students-now">${chI('users')}<span><b>${chFmtN(c.students_now)}</b> учеников проходят курс прямо сейчас</span></div>`;
+}
+/* Блок отзывов: реалистичный рейтинг с распределением звёзд + список 5-10 отзывов */
+function chReviewsHtml(c){
+  const list = Array.isArray(c.reviewsList) ? c.reviewsList : [];
+  const total = chReviewsN(c);
+  if(!list.length && total<=0) return '';
+  const rat = chRatingN(c);
+  // мок-распределение по звёздам от общего рейтинга (детерминированное)
+  const p5 = Math.min(96, Math.max(60, Math.round(rat*18)));
+  const p4 = Math.min(30, Math.max(3, 100 - p5 - 4));
+  const p3 = Math.max(1, Math.round((100-p5-p4)*0.55));
+  const p2 = Math.max(0, Math.round((100-p5-p4)*0.30));
+  const p1 = Math.max(0, 100-p5-p4-p3-p2);
+  const dist = [[5,p5],[4,p4],[3,p3],[2,p2],[1,p1]];
+  const bars = dist.map(([k,v])=>`
+    <div class="ch-rv-bar-row"><span class="ch-rv-bar-k">${k}</span>
+      <span class="ch-rv-bar"><i style="width:${v}%"></i></span>
+      <span class="ch-rv-bar-v">${v}%</span></div>`).join('');
+  const items = (list.length?list:[]).map(r=>{
+    const stars = [1,2,3,4,5].map(k=>`<span class="${k<=r.stars?'on':''}">${chI('star')}</span>`).join('');
+    return `<div class="ch-rv-item">
+      <div class="ch-rv-h">
+        <div class="ch-rv-av" style="${chAvSeedStyle(r.name)}">${chEsc((r.name||'?').charAt(0).toUpperCase())}</div>
+        <div class="ch-rv-hh"><b>${chEsc(r.name||'')}</b><small>${chEsc(r.when||'')}</small></div>
+        <div class="ch-rv-stars">${stars}</div>
+      </div>
+      <div class="ch-rv-txt">${chEsc(r.txt||'')}</div>
+    </div>`;
+  }).join('');
+  const kindWord = c.kind==='course' ? 'курса' : c.kind==='club' ? 'клуба' : 'канала';
+  return `<div class="ch-reviews">
+    <div class="ch-rv-head">
+      <div class="ch-rv-num"><b>${rat.toFixed(1)}</b><small>${chI('star')} из 5</small></div>
+      <div class="ch-rv-bars">${bars}</div>
+      <div class="ch-rv-count">${chFmtN(total)} отзывов ${kindWord}</div>
+    </div>
+    <div class="ch-rv-list">${items}</div>
+  </div>`;
 }
 /* ---- просмотры: считаем один раз за сессию на каждый пост, читаемый подписчиком ---- */
 const chViewed = {};   // pid -> true (в пределах сессии)
@@ -50274,21 +50350,245 @@ if(typeof renderFeed==='function'){
   renderFeed = function(){ const r=_prevRenderFeedCh.apply(this, arguments); try{ chDecorateFeed(); }catch(e){} return r; };
 }
 
-/* ================= САМОИНИЦИАЛИЗАЦИЯ ================= */
-(function chInitCat(){
-  /* доп-каталожные каналы для витрины (появляются один раз, если их ещё нет) */
-  const CAT_SEED = [
-    {id:'ch-cat-1', name:'Психология без воды', desc:'Практическая психология: самооценка, отношения, тревожность. Разборы, техники, поддержка сообщества.', icon:'star', bg:2, kind:'club', access:'closed', type:'paid', price:490, verified:true, subs:3210, reactions:true, discussions:true, owner:'Марина Ковалёва', ownerNick:'marina_psy', niche:'psy', posts:[]},
-    {id:'ch-cat-2', name:'Финансы для новичка', desc:'Инвестиции с нуля: акции, облигации, ETF. Живая аналитика и разбор портфелей подписчиков.', icon:'bolt', bg:5, kind:'channel', access:'closed', type:'paid', price:399, verified:false, subs:1840, reactions:true, discussions:true, owner:'Игорь Финансист', ownerNick:'igor_fin', niche:'fin', posts:[]},
-    {id:'ch-cat-3', name:'AI-дизайн PRO 2.0', desc:'Продвинутый курс по Midjourney, Sora, Runway и nano-banana. 12 уроков, шаблоны, промпты, живой чат авторов.', icon:'star', bg:8, kind:'course', access:'closed', type:'course', price:2490, verified:true, subs:412, reactions:true, discussions:true, owner:'Kate Design', ownerNick:'kate_ai', niche:'des', posts:[], lessons:[{id:'l1',title:'AI-workflow',dur:'8:00'},{id:'l2',title:'Midjourney базы',dur:'12:00'}]},
-    {id:'ch-cat-4', name:'Отдел продаж за 30 дней', desc:'Клуб предпринимателей: скрипты, воронки, найм менеджеров. Работаем на цифры и результат.', icon:'crown', bg:0, kind:'club', access:'closed', type:'paid', price:1490, verified:true, subs:920, reactions:true, discussions:true, owner:'Роман Гуров', ownerNick:'roman_sales', niche:'biz', posts:[]},
-    {id:'ch-cat-5', name:'Стиль жизни без спешки', desc:'Медитации, йога, режим сна. Мягкие практики для тех, кто выгорел на дедлайнах.', icon:'compass', bg:3, kind:'channel', access:'closed', type:'paid', price:299, verified:false, subs:2140, reactions:true, discussions:true, owner:'Лена Соболь', ownerNick:'lena_slow', niche:'life', posts:[]},
-    {id:'ch-cat-6', name:'Английский разговорный', desc:'Живой английский без учебников. Мини-курс из 10 уроков + чат для практики с носителями.', icon:'globe', bg:7, kind:'course', access:'closed', type:'course', price:1290, verified:true, subs:1560, reactions:true, discussions:true, owner:'Emma Speak', ownerNick:'emma_en', niche:'edu', posts:[], lessons:[{id:'l1',title:'Small talk',dur:'6:00'}]},
+/* ================= МАРКЕТПЛЕЙС OKO: живой каталог (каналы / клубы / курсы) =================
+   Дефолтная витрина, чтобы новый юзер видел «живой Amazon Marketplace», а не пустоту.
+   Всё детерминированное — рейтинги, отзывы, обложки, авторы. Никаких эмодзи, только SVG.
+   Данные добавляются один раз (по id), никогда не перетирают уже созданное юзером. */
+const CH_MARKET = (function(){
+  /* Реалистичные тексты подписных отзывов — используем детерминированно (хэш от id). */
+  const REV_TXT = [
+    'Реально полезный контент, каждую неделю что-то забираю в работу.',
+    'Подписался — окупил цену за первую неделю. Продолжу.',
+    'Живые кейсы с цифрами, а не «мотивация без конкретики».',
+    'Автор отвечает в комментариях, разбирает вопросы. Приятно.',
+    'Читаю каждый пост, много практики. Рекомендую.',
+    'После разбора связки поднял ROI на 62%.',
+    'Один пост про воронку изменил взгляд на продажи полностью.',
+    'Материал структурный, ничего лишнего, без воды.',
+    'Отписался от 20 бесплатных каналов и остался только здесь.',
+    'Тайминг публикаций удобный, темы попадают в текущие задачи.',
+    'Материалы уровня платного курса, а формат — как в блоге.',
+    'Разборы кейсов — топ. Особенно нравится, что не приукрашивают.',
+    'Скачал шаблоны из закрепа — сэкономил дней десять работы.',
+    'Ответ автора на мой вопрос в комментариях занял 20 минут.',
+    'Купил за 990 — окупил за 3 дня. Даже не задумывался.',
+    'Единственный канал, который я не проматываю.',
+    'Практика после каждого поста. Без «просто посмотрели».',
+    'Внутри клуба реально закрытая тусовка, а не рекламный чат.',
+    'Ментор реально отвечает, а не «спросите у ассистента».',
+    'Уровень выше, чем на многих платных курсах на маркетплейсах.',
+    'Прошёл первый модуль — уже начал применять на своём проекте.',
+    'Формат урок + практика + разбор — идеально зашло.',
+    'Купил в рассрочку без вопросов, доступ навсегда — жирный плюс.',
+    'В чате поддержки быстро подсказали, что делать со стопором.',
+    'Оплатил за один запуск получил больше, чем на трёх курсах до этого.'
   ];
+  const REV_NAMES = ['Мария К.','Артём В.','Настя Т.','Игорь С.','Лена П.','Роман Д.','Катя М.','Максим Р.','Ольга Н.','Кирилл З.','Полина А.','Юлия О.','Данила К.','Вера И.','Алина Ш.','Тимур А.','Соня Р.','Влад Г.','Дарья Е.','Никита П.'];
+  const REV_DATES = ['12 июл','18 июл','24 июл','25 июл','2 июн','9 июн','15 мая','3 апр','19 мая','7 июн','11 июл','20 июл','22 июл','27 июл','28 июл','5 июл','29 июн','1 июл','14 июл','9 июл'];
+  function hs(id){ let h=0; const s=String(id||''); for(let i=0;i<s.length;i++) h=(h*31+s.charCodeAt(i))|0; return Math.abs(h); }
+  function mkReviews(id, n){
+    const base = hs(id); const out=[];
+    for(let i=0;i<n;i++){
+      const k1=(base+i*17)|0, k2=(base+i*29+7)|0, k3=(base+i*13+3)|0, k4=(base+i*41+11)|0;
+      out.push({
+        name: REV_NAMES[Math.abs(k1)%REV_NAMES.length],
+        when: REV_DATES[Math.abs(k2)%REV_DATES.length],
+        stars: 4 + (Math.abs(k3)%3===0?0:1),   // 4 или 5 — 5 чаще
+        txt:  REV_TXT[Math.abs(k4)%REV_TXT.length],
+      });
+    }
+    return out;
+  }
+  function mkLessons(count, titles){
+    const out=[]; let ti=0;
+    for(let i=0;i<count;i++){
+      const t = titles[ti % titles.length];
+      const suffix = i>=titles.length ? ' — часть ' + (Math.floor(i/titles.length)+1) : '';
+      out.push({
+        id:'l'+(i+1),
+        title: t + suffix,
+        dur: (4 + ((i*7)%12)) + ':' + String(10 + ((i*17)%50)).padStart(2,'0'),
+      });
+      ti++;
+    }
+    return out;
+  }
+  /* Стабильные посты для превью-паволла (без эмодзи) */
+  function mkPosts(seeds){
+    const dt = ['1 ч','3 ч','вчера','2 дня','неделю','5 ч'];
+    return seeds.map((s,i)=>({txt:s, likes:0, views:0, when:dt[i%dt.length], media: i%3===0?'poll':i%3===1?'photo':null}));
+  }
+
+  /* ------------- 15 ПЛАТНЫХ КАНАЛОВ ------------- */
+  const CHANNELS = [
+    {id:'chm-b-1', name:'Даниэль — как поднял OKO с 0', bg:0, icon:'bolt', price:999, subs:4200, rating:4.9, reviews:312, niche:'biz', owner:'Даниэль (ktodaniel)', ownerNick:'ktodaniel', verified:true,
+     desc:'Личный канал основателя OKO: как строю продукт с нуля до российского Instagram-аналога. Цифры, ошибки, воронки роста, разборы решений — всё без прикрас, каждую неделю.',
+     seedPosts:['Полный расклад по MRR за июль: где растём, где просели, что чиню на этой неделе.','Разобрал по косточкам, почему первая версия ленты не взлетела и что переделал за три дня.','Показал команду и стек: 4 человека, ноль офиса, деплой каждые три часа.']},
+    {id:'chm-b-2', name:'Финграм для самозанятых', bg:5, icon:'star', price:490, subs:8500, rating:4.7, reviews:186, niche:'biz', owner:'Артём Соловьёв', ownerNick:'artem_finhack', verified:true,
+     desc:'Разбираем налоги, чеки в «Мой налог», банковские тарифы для самозанятых и ИП. Каждую неделю — свежий кейс из практики бухгалтера с 12-летним стажем и живые ответы в чате.',
+     seedPosts:['Новый лимит самозанятых с 2026: разбор, что поменялось на практике.','Как принимать оплаты от юрлиц в самозанятости и не залететь на переквалификацию.']},
+    {id:'chm-b-3', name:'Продажи в 2026', bg:2, icon:'crown', price:990, subs:6100, rating:4.8, reviews:224, niche:'biz', owner:'Мария Егорова', ownerNick:'egorova_sales', verified:true,
+     desc:'Скрипты, сценарии переговоров и разборы реальных сделок из B2B и высокого чека. Показываю чужие звонки с разрешения, объясняю где сделка развалилась и как её было спасти.',
+     seedPosts:['Разбор переговоров на 4,2 млн: три момента, где менеджер терял сделку.','Скрипт возврата ушедшего клиента, который в моей команде даёт 41% конверсии.']},
+
+    {id:'chm-s-1', name:'Reels на 100k без бюджета', bg:6, icon:'fire', price:1490, subs:12000, rating:4.9, reviews:401, niche:'smm', owner:'Дмитрий Куликов', ownerNick:'kulikov_reels', verified:true,
+     desc:'Ежедневно разбираю виральные Reels: почему залетело, что взять себе, как повторить на телефоне без монтажёра. Приватные шаблоны сценариев, музыка недели, разбор твоих роликов раз в неделю.',
+     seedPosts:['Формула хука, которая держит удержание выше 78% на первых трёх секундах.','Три сценария этой недели — забирай, снимай под свою нишу.']},
+    {id:'chm-s-2', name:'Instagram-нейросети', bg:8, icon:'star', price:990, subs:9200, rating:4.7, reviews:271, niche:'smm', owner:'Ксения Русакова', ownerNick:'rusakova_ig', verified:true,
+     desc:'Как современные генераторы картинок и видео экономят SMM-щику 20 часов в неделю. Тестирую новые сервисы, делюсь связками, показываю живые примеры для ленты и Reels.',
+     seedPosts:['Собрал 30 сториз про запуск за 40 минут — показываю пайплайн с исходниками.','Топ-5 сервисов для UGC-креативов, которые в 2026 действительно работают.']},
+    {id:'chm-s-3', name:'TikTok РФ 2026', bg:4, icon:'rocket', price:790, subs:15000, rating:4.6, reviews:349, niche:'smm', owner:'Максим Круглов', ownerNick:'kruglov_tt', verified:true,
+     desc:'Только про TikTok в России: серые схемы буста, работающие тренды недели, разборы аккаунтов подписчиков. Никакой воды — только цифры просмотров, средний доход с креатора и как выйти в топ FYP.',
+     seedPosts:['Новая тема FYP на этой неделе: 5 форматов, которые дают охваты уже сейчас.','Живой разбор канала подписчика — 800 → 42 000 подписчиков за 6 недель.']},
+
+    {id:'chm-d-1', name:'Figma-мастер', bg:3, icon:'star', price:1990, subs:3800, rating:4.9, reviews:158, niche:'des', owner:'Kate Design', ownerNick:'kate_figma', verified:true,
+     desc:'Продвинутая Figma: auto-layout, компоненты со свойствами, дизайн-токены, вариаблы, прототипы с сложной логикой. Пишу для тех, кто уже работает и хочет вырасти в senior.',
+     seedPosts:['Разбор дизайн-системы OKO в Figma: как устроены токены и вариаблы.','Пять паттернов auto-layout, без которых лендинг растянется через неделю.']},
+    {id:'chm-d-2', name:'Motion за 30 дней', bg:0, icon:'bolt', price:2490, subs:2200, rating:4.8, reviews:97, niche:'des', owner:'Марк Волков', ownerNick:'volkov_motion', verified:true,
+     desc:'Ежедневные разборы моушн-роликов, разложение по слоям в After Effects, готовые пресеты easing и timing. Показываю пайплайн так, чтобы через 30 дней ты собрал свой первый шоурил.',
+     seedPosts:['Ежедневный челлендж: анимируем логотип OKO за 12 минут — по шагам.','Три easing-кривые, которые превращают средний анимационный ролик в дорогой.']},
+
+    {id:'chm-p-1', name:'Мама с богом', bg:3, icon:'compass', price:490, subs:22000, rating:4.9, reviews:512, niche:'psy', owner:'Ольга Мельник', ownerNick:'melnik_mama', verified:true,
+     desc:'Тёплый канал для мам, которые устали быть идеальными. Практики самоподдержки, разговоры про выгорание, спокойствие в отношениях с детьми и с собой. Раз в неделю — прямой эфир с ответами.',
+     seedPosts:['Три предложения, которые помогают выйти из вины перед ребёнком за 5 минут.','Как договариваться с 4-леткой без крика: живой скрипт с примерами.']},
+    {id:'chm-p-2', name:'Мужская сила', bg:1, icon:'crown', price:990, subs:8100, rating:4.7, reviews:264, niche:'psy', owner:'Никита Рябов', ownerNick:'ryabov_men', verified:true,
+     desc:'Мужская психология без пикапа и «альфа-цитат». Работа с тревогой, отношения, отцовство, деньги и амбиции. Разборы кейсов подписчиков, живой чат, ежемесячные закрытые встречи в Zoom.',
+     seedPosts:['Как перестать откладывать разговор, которого боишься три месяца.','Разбор кейса подписчика: развод, дети и как выйти из вины за 3 месяца.']},
+
+    {id:'chm-f-1', name:'Инвестиции с 10k', bg:5, icon:'bolt', price:1490, subs:18000, rating:4.8, reviews:437, niche:'fin', owner:'Кирилл Ким', ownerNick:'kim_invest', verified:true,
+     desc:'Портфель с нуля с депозитом от 10 000 рублей. Показываю сделки в моём реальном ИИС, объясняю почему покупаю ту или иную бумагу, честно говорю о просадках. Без сигналов, только логика.',
+     seedPosts:['Ребалансировка портфеля на июль: что докупил и почему выхожу из ОФЗ-длинных.','Разбор годового отчёта Сбербанка: три цифры, на которые я реально смотрю.']},
+    {id:'chm-f-2', name:'Крипта 2026 без слива', bg:2, icon:'fire', price:1990, subs:6500, rating:4.6, reviews:198, niche:'fin', owner:'Роман Гуров', ownerNick:'gurov_crypto', verified:true,
+     desc:'Крипта для взрослых: on-chain аналитика, риск-менеджмент, налоги в РФ. Не даю сигналы — учу читать рынок самостоятельно. Разборы крупных ликвидаций и разбор ошибок подписчиков.',
+     seedPosts:['Разбор ликвидации на 340 млн: как читать плотности до движения.','Как в 2026 законно заплатить налог с крипты в РФ — свежая методичка.']},
+
+    {id:'chm-h-1', name:'Биохакинг за 90 дней', bg:6, icon:'compass', price:990, subs:4500, rating:4.7, reviews:141, niche:'life', owner:'Илья Морозов', ownerNick:'morozov_bio', verified:true,
+     desc:'Сон, гормоны, анализы, добавки, свет и питание — без магии и БАДов из инстаграма. Опираюсь на протоколы Гуанзо и работы Аттиа, разбираю анализы подписчиков с врачом каждую неделю.',
+     seedPosts:['Три анализа, которые дадут больше, чем полный check-up за 60 000.','Мой протокол сна за июль: как поднял глубокий сон с 42 до 91 минуты.']},
+
+    {id:'chm-e-1', name:'English C1 за 6 месяцев', bg:7, icon:'globe', price:1490, subs:11000, rating:4.8, reviews:308, niche:'edu', owner:'Sara Fox', ownerNick:'sara_english_c1', verified:true,
+     desc:'Систематический путь от B1 к C1 без школьной грамматики. Живой английский из подкастов, сериалов и рабочих созвонов. Каждый день — карточки Anki, разбор ошибок и голосовые практики в чате.',
+     seedPosts:['Топ-10 phrasal verbs, которые встречаются в 80% рабочих созвонов.','Разбор одного диалога из The Bear — фразы, интонация, культурные референсы.']},
+    {id:'chm-e-2', name:'Копирайтинг Pro', bg:8, icon:'star', price:990, subs:7200, rating:4.6, reviews:224, niche:'edu', owner:'Алина Крид', ownerNick:'krid_copy', verified:true,
+     desc:'Продающие тексты для лендингов, писем, постов. Разборы удачных и провальных страниц, шаблоны структур, тренировки на живых заказах и разбор твоих текстов раз в неделю.',
+     seedPosts:['Разбор лендинга школы английского: что убрать, чтобы конверсия выросла в 2 раза.','Пять хуков для писем прогрева, которые открывают на 34% чаще.']},
+  ];
+
+  /* ------------- 10 КЛУБОВ (супергруппы, kind:club) ------------- */
+  const CLUBS = [
+    {id:'clm-1', name:'OKO Club — предприниматели РФ', bg:0, icon:'crown', price:2990, subs:350, rating:4.9, reviews:88, niche:'biz', owner:'Даниэль (ktodaniel)', ownerNick:'oko_club', verified:true,
+     desc:'Закрытый клуб основателей: две встречи в месяц с Даниэлем и приглашёнными фаундерами, чат с быстрыми ответами, разборы твоих финансов и продукта, приватная база подрядчиков OKO. Отбор по анкете.'},
+    {id:'clm-2', name:'Мама-предпринимательница', bg:3, icon:'compass', price:990, subs:800, rating:4.8, reviews:212, niche:'biz', owner:'Ольга Мельник', ownerNick:'mama_ceo', verified:true,
+     desc:'Закрытое комьюнити для женщин, которые совмещают бизнес и детей. Совместные разборы, ежемесячные оффлайн-встречи в Москве и СПб, чат для быстрых советов, мастермайнды по бизнесу и режиму.'},
+    {id:'clm-3', name:'Крипто-трейдеры-полуночники', bg:2, icon:'fire', price:1990, subs:210, rating:4.7, reviews:76, niche:'fin', owner:'Роман Гуров', ownerNick:'crypto_owl', verified:true,
+     desc:'Ночной клуб активных трейдеров: разбор сделок в лайве после 22:00 МСК, чат с алертами по крупным ликвидациям, приватные скринеры и еженедельные разборы с ментором. Только для тех, кто торгует.'},
+    {id:'clm-4', name:'Reels-мейкеры РФ', bg:6, icon:'rocket', price:1490, subs:620, rating:4.8, reviews:181, niche:'smm', owner:'Дмитрий Куликов', ownerNick:'reels_makers_ru', verified:true,
+     desc:'Клуб контентмейкеров: банк работающих сценариев и музыки, ежемесячные съёмочные дни в Москве, разбор твоих Reels в лайве, чат для обмена идеями и коллабы между участниками.'},
+    {id:'clm-5', name:'Финансовая независимость 30-40', bg:5, icon:'star', price:2490, subs:180, rating:4.9, reviews:63, niche:'fin', owner:'Артём Соловьёв', ownerNick:'fi_club', verified:true,
+     desc:'Клуб для тех, кто планирует финансовую независимость к 45. Разбор портфелей, налоговые кейсы, стратегии диверсификации, встречи с приглашёнными управляющими и приватный чат по недвижимости.'},
+    {id:'clm-6', name:'Дизайн-CEO', bg:4, icon:'crown', price:2990, subs:95, rating:4.8, reviews:41, niche:'des', owner:'Kate Design', ownerNick:'design_ceo', verified:true,
+     desc:'Закрытая группа для арт-директоров и владельцев дизайн-студий. Разборы контрактов, обмен клиентами, ставки на рынке, наём и удержание команды. Приватные ретриты два раза в год.'},
+    {id:'clm-7', name:'Marathon 100 дней', bg:6, icon:'bolt', price:1990, subs:450, rating:4.7, reviews:129, niche:'life', owner:'Илья Морозов', ownerNick:'marathon_100', verified:true,
+     desc:'100 дней в клубе с чекапами каждый день: спорт, сон, режим, работа. Персональный трекер, ежедневный разбор в чате, вечерние созвоны, поддержка команды и штраф за пропуск дня.'},
+    {id:'clm-8', name:'Клуб холерических предпринимателей', bg:0, icon:'fire', price:2990, subs:120, rating:4.8, reviews:52, niche:'biz', owner:'Мария Егорова', ownerNick:'chol_ceo', verified:true,
+     desc:'Комьюнити для быстрых, импульсивных фаундеров, которые устали работать с медленными людьми. Разборы кейсов «горит-нужно-вчера», приватный чат подрядчиков «под завтра», встречи каждые две недели.'},
+    {id:'clm-9', name:'MBA-mom', bg:3, icon:'crown', price:2990, subs:240, rating:4.9, reviews:73, niche:'biz', owner:'Мария Егорова', ownerNick:'mba_mom', verified:true,
+     desc:'Клуб-курс для мам-руководителей: стратегия, операционка, найм, финансы своими руками. Восемь модулей за 4 месяца плюс еженедельные разборы кейсов участниц. Диплом клуба по завершении.'},
+    {id:'clm-10', name:'Psy-tribe', bg:2, icon:'compass', price:1490, subs:380, rating:4.8, reviews:104, niche:'psy', owner:'Никита Рябов', ownerNick:'psy_tribe', verified:true,
+     desc:'Закрытая группа поддержки: не терапия, а разговор с равными. Модератор-психолог, чат 24/7, еженедельные встречи по темам «отношения», «работа», «границы», «деньги». Абсолютная конфиденциальность.'},
+  ];
+
+  /* ------------- 15 КУРСОВ (kind:course) ------------- */
+  /* Пул тем для генерации уроков — по нишам */
+  const T = {
+    reels: ['Хук за 3 секунды','Сценарий по формуле AIDA','Съёмка на телефон: свет и звук','Монтаж и караоке-субтитры','Музыка под смысл','Публикация и алгоритмы','Разбор ошибок','Работа с трендами','Виральные форматы','Аналитика после публикации','Личный сериал в Reels','Работа с блогерами'],
+    ig:    ['Оформление профиля','Контент-план на месяц','Сторис, которые прогревают','Визуал и обложки','Reels в 2026','Работа с закреплённой лентой','Прямые эфиры','Директ и продажи','Реклама у блогеров','Продвижение изнутри','Аналитика на цифрах','Кейсы подписчиков'],
+    sales: ['Первый контакт','Квалификация лида','Выявление боли','Презентация ценности','Работа с возражениями','Дожим без давления','Возврат «слитых»','Апселл и кросс-селл','Скрипты в переписке','Работа с высоким чеком','Наём менеджеров','CRM и воронки'],
+    copy:  ['Формула боли-желания','Хуки и триггеры','Длинные тексты, которые читают','Продающая структура','Работа с интонацией','Тексты для сторис','Email-серия','Тексты для лендинга','Тексты для рекламы','Разбор чужих текстов','Твоя личная стилистика','Клиентское портфолио'],
+    motion:['Основы After Effects','Кёи, easing и timing','Type-in анимация','Работа со слоями','3D в Motion','Логотипы в движении','Персонажи и rig','Инфографика в движении','Звук и синхронизация','Экспорт и оптимизация','Сборка шоурила','Клиентские правки'],
+    fin:   ['Личный финансовый план','Подушка и резервы','Банки и тарифы','Кредиты и рассрочки','Налоги для физлица','Инвестиции: азы','ИИС и налоговый вычет','Диверсификация','Пассивный доход','Крупные покупки','Финансовые ошибки','Разбор своих трат'],
+    invest:['Брокер и первый счёт','Акции и облигации','Фонды и ETF','ИИС и льготы','Технический анализ','Фундаментальный анализ','Дивиденды','Ребалансировка','Риск-менеджмент','Психология инвестора','Портфель на 10 лет','Разбор твоего портфеля'],
+    en:    ['Small talk','Present Simple/Continuous','Past Simple/Continuous','Future forms','Modal verbs','Conditional 0-3','Phrasal verbs','Business email','Small talk в работе','Слушаем подкасты','Смотрим сериалы','Разговорная практика'],
+    psy:   ['Триггеры принятия решения','Социальное доказательство','Дефицит и срочность','Якорение','Формулировка предложения','Работа со страхом','Аргументация','Убеждение в переписке','Публичные выступления','Границы','Манипуляции: защита','Разбор своего кейса'],
+    smm:   ['Стратегия эксперта','Контент-матрица','Персональный бренд','Reels-серия','Сторис-воронка','Позиционирование','Оффер и цена','Продающий гид','Метрики и рост','Взаимный пиар','Кейсы клиентов','Наставничество'],
+    story: ['Драматургия за 5 минут','Персонаж и мотив','Конфликт и поворот','Живые детали','Ритм и тайминг','Финал, который остаётся','История для сториз','История в питче','Кейс как история','Личная история эксперта','Правки и редактура','Разбор чужих историй'],
+    speak: ['Голос: тон, темп, паузы','Дыхание','Проработка страха сцены','Структура выступления','Хук, тезис, финал','Работа с аудиторией','Импровизация','Сторителлинг вслух','Питч за 60 секунд','Полное 20-минутное выступление','Обратная связь','Разбор твоего видео'],
+    brand: ['Позиционирование','Целевая аудитория','Оффер и обещание','Голос и стиль','Айдентика и визуал','Точки контакта','Контент-стратегия','PR и коллаборации','Наставничество','Медиа-стратегия','Гонорар и цена','Ошибки бренда'],
+    tt:    ['Алгоритм FYP','Хук и удержание','Форматы 2026','Работа с музыкой','Съёмка на телефон','Монтаж и переходы','Аналитика','Реклама TikTok Ads','Партнёрка с креатором','Личный сериал','Разбор твоего аккаунта','Продажи через TikTok'],
+    an:    ['Продуктовые метрики','North Star','Активация','Retention и LTV','Когорты','A/B-тесты','Funnels','SQL для аналитика','BI-дашборды','Событийная модель','Аналитические ошибки','Разбор твоего продукта'],
+  };
+  const COURSES = [
+    {id:'crm-1',  name:'Reels за 30 дней с нуля до 100k', bg:6, icon:'rocket', price:4900, subs:3400, rating:4.8, reviews:412, niche:'smm', owner:'Даниэль (ktodaniel)', ownerNick:'ktodaniel', lessonsN:30, topics:T.reels},
+    {id:'crm-2',  name:'Instagram-нейросети 2026', bg:8, icon:'star', price:2990, subs:8000, rating:4.7, reviews:361, niche:'smm', owner:'Дмитрий Куликов', ownerNick:'kulikov_edu', lessonsN:22, topics:T.ig},
+    {id:'crm-3',  name:'Продажи в директе БЕЗ дожима', bg:2, icon:'crown', price:3490, subs:5200, rating:4.9, reviews:298, niche:'biz', owner:'Мария Егорова', ownerNick:'egorova_sales', lessonsN:18, topics:T.sales},
+    {id:'crm-4',  name:'Копирайтинг для соцсетей', bg:5, icon:'star', price:1990, subs:12000, rating:4.6, reviews:487, niche:'edu', owner:'Алина Крид', ownerNick:'krid_copy', lessonsN:15, topics:T.copy},
+    {id:'crm-5',  name:'Motion-графика за 45 дней', bg:0, icon:'bolt', price:6900, subs:2100, rating:4.8, reviews:189, niche:'des', owner:'Марк Волков', ownerNick:'volkov_motion', lessonsN:40, topics:T.motion},
+    {id:'crm-6',  name:'Финансовая грамотность', bg:5, icon:'bolt', price:2490, subs:15000, rating:4.7, reviews:502, niche:'fin', owner:'Артём Соловьёв', ownerNick:'solovyev_fin', lessonsN:20, topics:T.fin},
+    {id:'crm-7',  name:'Инвестиции для новичков', bg:4, icon:'star', price:3490, subs:8500, rating:4.5, reviews:376, niche:'fin', owner:'Кирилл Ким', ownerNick:'kim_invest', lessonsN:25, topics:T.invest},
+    {id:'crm-8',  name:'Английский Intensive 90д', bg:7, icon:'globe', price:4990, subs:6300, rating:4.9, reviews:428, niche:'edu', owner:'Sara Fox', ownerNick:'sara_english_c1', lessonsN:60, topics:T.en},
+    {id:'crm-9',  name:'Психология влияния', bg:2, icon:'compass', price:3990, subs:4200, rating:4.8, reviews:246, niche:'psy', owner:'Никита Рябов', ownerNick:'ryabov_men', lessonsN:30, topics:T.psy},
+    {id:'crm-10', name:'SMM для эксперта', bg:0, icon:'fire', price:5990, subs:2800, rating:4.9, reviews:214, niche:'smm', owner:'Даниэль (ktodaniel)', ownerNick:'ktodaniel', lessonsN:35, topics:T.smm},
+    {id:'crm-11', name:'Storytelling мастер', bg:3, icon:'star', price:2490, subs:6100, rating:4.7, reviews:281, niche:'edu', owner:'Ольга Мельник', ownerNick:'melnik_story', lessonsN:20, topics:T.story},
+    {id:'crm-12', name:'Ораторское искусство', bg:1, icon:'megaphone', price:3990, subs:3400, rating:4.8, reviews:198, niche:'edu', owner:'Илья Морозов', ownerNick:'morozov_speak', lessonsN:25, topics:T.speak},
+    {id:'crm-13', name:'Личный бренд эксперта', bg:0, icon:'crown', price:7900, subs:1900, rating:4.9, reviews:167, niche:'biz', owner:'Даниэль (ktodaniel)', ownerNick:'ktodaniel', lessonsN:45, topics:T.brand},
+    {id:'crm-14', name:'TikTok РФ — трафик 2026', bg:4, icon:'rocket', price:1990, subs:8900, rating:4.6, reviews:342, niche:'smm', owner:'Максим Круглов', ownerNick:'kruglov_tt', lessonsN:15, topics:T.tt},
+    {id:'crm-15', name:'Продуктовая аналитика', bg:8, icon:'star', price:5900, subs:1200, rating:4.8, reviews:96, niche:'biz', owner:'Анастасия Тарасова', ownerNick:'tarasova_pm', lessonsN:32, topics:T.an},
+  ];
+
+  /* Собираем финальный массив */
+  const all = [];
+
+  CHANNELS.forEach(c=>{
+    all.push({
+      id:c.id, name:c.name, desc:c.desc, icon:c.icon, bg:c.bg,
+      kind:'channel', access:'closed', type:'paid', price:c.price,
+      verified:!!c.verified, subs:c.subs, reactions:true, discussions:true,
+      owner:c.owner, ownerNick:c.ownerNick, niche:c.niche,
+      rating:c.rating, reviews:c.reviews,
+      reviewsList: mkReviews(c.id, Math.min(10, Math.max(5, Math.round(c.reviews/40)))),
+      posts: mkPosts(c.seedPosts || []),
+    });
+  });
+
+  CLUBS.forEach(c=>{
+    all.push({
+      id:c.id, name:c.name, desc:c.desc, icon:c.icon, bg:c.bg,
+      kind:'club', access:'closed', type:'paid', price:c.price,
+      verified:!!c.verified, subs:c.subs, reactions:true, discussions:true,
+      owner:c.owner, ownerNick:c.ownerNick, niche:c.niche,
+      rating:c.rating, reviews:c.reviews, members_count:c.subs,
+      reviewsList: mkReviews(c.id, Math.min(10, Math.max(5, Math.round(c.reviews/25)))),
+      posts: mkPosts([
+        'Расписание встреч клуба на следующие 30 дней и приватная запись прошлой встречи в закрепе.',
+        'Разбор кейса участника: полный чеклист, как проходил путь и какие цифры получились.',
+        'Новый партнёр клуба: скидка на подрядчиков и приватный доступ к базе контактов.'
+      ]),
+    });
+  });
+
+  COURSES.forEach(c=>{
+    all.push({
+      id:c.id, name:c.name,
+      desc: 'Курс «' + c.name + '» — ' + c.lessonsN + ' видео-уроков от автора ' + c.owner + '. Домашние задания и разбор твоих работ в приватном чате. Сертификат по окончанию, доступ навсегда, чат поддержки и обновления курса раз в квартал.',
+      icon:c.icon, bg:c.bg,
+      kind:'course', access:'closed', type:'course', price:c.price,
+      verified:true, subs:c.subs, reactions:true, discussions:true,
+      owner:c.owner, ownerNick:c.ownerNick, niche:c.niche,
+      rating:c.rating, reviews:c.reviews, students_now: Math.round(c.subs*0.14),
+      reviewsList: mkReviews(c.id, Math.min(10, Math.max(6, Math.round(c.reviews/50)))),
+      posts: [],
+      lessons: mkLessons(c.lessonsN, c.topics),
+    });
+  });
+
+  return all;
+})();
+
+(function chInitCat(){
   try{
     (CH.disc||[]).forEach(c=>{ if(!c.niche) c.niche = chNiche(c); });
     (CH.mine||[]).forEach(c=>{ if(!c.niche) c.niche = chNiche(c); });
-    CAT_SEED.forEach(s=>{ if(!CH.disc.some(x=>x.id===s.id)) CH.disc.push(chNormalize(s)); });
+    CH_MARKET.forEach(s=>{ if(!CH.disc.some(x=>x.id===s.id)) CH.disc.push(chNormalize(s)); });
     chSave();
   }catch(e){}
 })();

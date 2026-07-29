@@ -959,6 +959,7 @@ function chPageChannel(id){
   // участник / владелец / открытый бесплатный
   let html = cover;
   html += `<div class="ch-desc">${chEsc(c.desc)}</div>`;
+  html += chStudentsLine(c);
 
   if(mine){
     html += `<div class="ch-owner-bar">
@@ -1013,9 +1014,54 @@ function chPageChannel(id){
       ? `<div class="ch-feed" style="background:${CH_BGS[c.chatBg]}">${posts}</div>`
       : posts;
   }
+  html += chReviewsHtml(c);
   html += `<div style="height:8px"></div>`;
   const tools = mine ? `<button onclick="chGo('manage','${c.id}')" title="Управление">${chI('bolt')}</button>` : '';
   return {title:c.name, html, tools};
+}
+
+/* «X учеников проходят сейчас» — только для курсов маркетплейса */
+function chStudentsLine(c){
+  if(c.kind!=='course' || !c.students_now) return '';
+  return `<div class="ch-students-now">${chI('users')}<span><b>${chFmtN(c.students_now)}</b> учеников проходят курс прямо сейчас</span></div>`;
+}
+/* Блок отзывов: реалистичный рейтинг с распределением звёзд + список 5-10 отзывов */
+function chReviewsHtml(c){
+  const list = Array.isArray(c.reviewsList) ? c.reviewsList : [];
+  const total = chReviewsN(c);
+  if(!list.length && total<=0) return '';
+  const rat = chRatingN(c);
+  // мок-распределение по звёздам от общего рейтинга (детерминированное)
+  const p5 = Math.min(96, Math.max(60, Math.round(rat*18)));
+  const p4 = Math.min(30, Math.max(3, 100 - p5 - 4));
+  const p3 = Math.max(1, Math.round((100-p5-p4)*0.55));
+  const p2 = Math.max(0, Math.round((100-p5-p4)*0.30));
+  const p1 = Math.max(0, 100-p5-p4-p3-p2);
+  const dist = [[5,p5],[4,p4],[3,p3],[2,p2],[1,p1]];
+  const bars = dist.map(([k,v])=>`
+    <div class="ch-rv-bar-row"><span class="ch-rv-bar-k">${k}</span>
+      <span class="ch-rv-bar"><i style="width:${v}%"></i></span>
+      <span class="ch-rv-bar-v">${v}%</span></div>`).join('');
+  const items = (list.length?list:[]).map(r=>{
+    const stars = [1,2,3,4,5].map(k=>`<span class="${k<=r.stars?'on':''}">${chI('star')}</span>`).join('');
+    return `<div class="ch-rv-item">
+      <div class="ch-rv-h">
+        <div class="ch-rv-av" style="${chAvSeedStyle(r.name)}">${chEsc((r.name||'?').charAt(0).toUpperCase())}</div>
+        <div class="ch-rv-hh"><b>${chEsc(r.name||'')}</b><small>${chEsc(r.when||'')}</small></div>
+        <div class="ch-rv-stars">${stars}</div>
+      </div>
+      <div class="ch-rv-txt">${chEsc(r.txt||'')}</div>
+    </div>`;
+  }).join('');
+  const kindWord = c.kind==='course' ? 'курса' : c.kind==='club' ? 'клуба' : 'канала';
+  return `<div class="ch-reviews">
+    <div class="ch-rv-head">
+      <div class="ch-rv-num"><b>${rat.toFixed(1)}</b><small>${chI('star')} из 5</small></div>
+      <div class="ch-rv-bars">${bars}</div>
+      <div class="ch-rv-count">${chFmtN(total)} отзывов ${kindWord}</div>
+    </div>
+    <div class="ch-rv-list">${items}</div>
+  </div>`;
 }
 /* ---- просмотры: считаем один раз за сессию на каждый пост, читаемый подписчиком ---- */
 const chViewed = {};   // pid -> true (в пределах сессии)

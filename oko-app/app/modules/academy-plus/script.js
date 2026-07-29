@@ -1991,4 +1991,32 @@
     setTimeout(apdBoot, 20);
   }
 
+  /* =============================================================
+     APD_MARKET_COURSES: единый пул платных курсов маркетплейса.
+     Источник — CH.disc (kind:course), плюс встроенные курсы Академии.
+     Пользуется этой выборкой любой каталог-виджет («Курсы от авторов»),
+     без дублирования данных.
+     ============================================================= */
+  window.APD_MARKET_COURSES = function apdMarketCourses(){
+    const out = [];
+    try{
+      const src = (window.CH && Array.isArray(CH.disc)) ? CH.disc : [];
+      src.forEach(c=>{
+        if(c && c.kind==='course' && (c.price||0)>0){
+          out.push({
+            id: c.id, name: c.name, desc: c.desc,
+            author: c.owner || '', authorNick: c.ownerNick || '',
+            price: c.price, lessons: (c.lessons||[]).length,
+            students: c.subs || 0, students_now: c.students_now || 0,
+            rating: (typeof c.rating==='number') ? c.rating : null,
+            reviews: (typeof c.reviews==='number') ? c.reviews : 0,
+            reviewsList: c.reviewsList || [],
+            niche: c.niche || 'edu',
+            source: 'marketplace',
+          });
+        }
+      });
+    }catch(e){}
+    return out;
+  };
 })();
