@@ -29,7 +29,7 @@ const LG_HUB_CARDS = [
   {k:'privacy', ico:'lock',    ru:{t:'Политика конфиденциальности',      s:'Обработка и защита персональных данных'},               en:{t:'Privacy Policy',                s:'Processing and protection of personal data'}},
   {k:'terms',   ru:{t:'Пользовательское соглашение',                    s:'Правила использования платформы'},                       en:{t:'Terms of Service',              s:'Rules of using the platform'},                        ico:'file'},
   {k:'refund',  ru:{t:'Политика возврата',                              s:'Порядок возврата подписок и внутренних платежей'},       en:{t:'Refund Policy',                 s:'Refunds for subscriptions and in-app charges'},        ico:'card'},
-  {k:'license', ru:{t:'Лицензия на ПО',                                 s:'Условия использования приложения OKO'},                  en:{t:'Software Licence',              s:'Terms of use for the OKO application'},                ico:'apps'},
+  {k:'license', ru:{t:'Лицензия на ПО',                                 s:'Условия использования приложения OKO'},                  en:{t:'Software Licence',              s:'Terms of use for the OKO application'},                ico:'bolt'},
   {k:'consent', ru:{t:'Согласие на обработку ПД',                       s:'152-ФЗ: цели, сроки, отзыв согласия'},                   en:{t:'Personal-data Consent',         s:'FZ-152: purposes, terms, withdrawal'},                 ico:'check'}
 ];
 
@@ -699,7 +699,7 @@ function lgDocHtml(kind, lang){
       </div>
     </div>
     <div class="lg-actions">
-      <button type="button" class="lg-btn-pdf" onclick="lgDownloadPdf()" title="${pdfLabel}">${I('download')||I('copy')}<span>${pdfLabel}</span></button>
+      <button type="button" class="lg-btn-pdf" onclick="lgDownloadPdf()" title="${pdfLabel}">${I('file')}<span>${pdfLabel}</span></button>
       <button type="button" onclick="lgDownloadHtml()" title="${dlLabel}">${I('copy')}<span>${dlLabel}</span></button>
       <button type="button" onclick="lgShareLink()" title="${shLabel}">${I('share')}<span>${shLabel}</span></button>
     </div>
@@ -792,7 +792,7 @@ function lgDealHtml(ctx, lang){
       </div>
     </div>
     <div class="lg-actions">
-      <button type="button" class="lg-btn-pdf" onclick="lgDownloadPdf()" title="${pdfLabel}">${I('download')||I('copy')}<span>${pdfLabel}</span></button>
+      <button type="button" class="lg-btn-pdf" onclick="lgDownloadPdf()" title="${pdfLabel}">${I('file')}<span>${pdfLabel}</span></button>
       <button type="button" onclick="lgDownloadHtml()" title="${dlLabel}">${I('copy')}<span>${dlLabel}</span></button>
     </div>
     <dl class="lg-deal-facts">
