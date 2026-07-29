@@ -1,17 +1,36 @@
 /* ================= LEGAL: юридические документы OKO (префикс lg-) =================
-   Оферта / Политика конфиденциальности / Пользовательское соглашение, RU + EN.
-   Печать (sealSvg) и подпись (signatureImg) — из core-ext. openLegalDoc(kind) — публичное API. */
+   Оферта / Политика конфиденциальности / Пользовательское соглашение / Согласие на ПД /
+   Политика возврата / Лицензионное соглашение — RU + EN.
+   Публичное API:
+     openLegalHub()               — открыть главный экран Legal (карточки-документы)
+     openLegalDoc(kind)           — открыть конкретный документ (kind ∈ LG_DOCS)
+     openLegalDeal({...})         — открыть авто-заполненный договор-акт по сделке
+     closeLegalDoc()              — закрыть вьюху Legal целиком
+   Печать (sealSvg) и подпись (signatureImg) — из core-ext. */
 
 /* ---------- состояние (localStorage oko-legal) ---------- */
 const lgS = (()=>{ try{ return JSON.parse(localStorage.getItem('oko-legal'))||null; }catch(e){ return null; } })() || { lang: (typeof LANG!=='undefined'?LANG:'ru') };
 function lgSave(){ try{ localStorage.setItem('oko-legal', JSON.stringify(lgS)); }catch(e){} }
-let lgKind = 'offer'; // offer | privacy | terms | consent
+let lgKind = null;         // текущий открытый документ; null → показан hub
+let lgDealCtx = null;      // контекст авто-договора по сделке (для kind === 'deal')
 
 const LG_TABS = [
   {k:'offer',   ru:'Оферта',            en:'Offer'},
   {k:'privacy', ru:'Конфиденциальность',en:'Privacy'},
   {k:'terms',   ru:'Соглашение',        en:'Terms'},
+  {k:'refund',  ru:'Возврат',           en:'Refund'},
+  {k:'license', ru:'Лицензия ПО',       en:'Software licence'},
   {k:'consent', ru:'Согласие на ПД',    en:'Data consent'}
+];
+
+/* карточки на hub — иконка + короткое описание */
+const LG_HUB_CARDS = [
+  {k:'offer',   ico:'money',   ru:{t:'Публичная оферта',                s:'Договор возмездных услуг сервиса OKO'},                 en:{t:'Public Offer',                  s:'Paid-services agreement for the OKO service'}},
+  {k:'privacy', ico:'lock',    ru:{t:'Политика конфиденциальности',      s:'Обработка и защита персональных данных'},               en:{t:'Privacy Policy',                s:'Processing and protection of personal data'}},
+  {k:'terms',   ru:{t:'Пользовательское соглашение',                    s:'Правила использования платформы'},                       en:{t:'Terms of Service',              s:'Rules of using the platform'},                        ico:'file'},
+  {k:'refund',  ru:{t:'Политика возврата',                              s:'Порядок возврата подписок и внутренних платежей'},       en:{t:'Refund Policy',                 s:'Refunds for subscriptions and in-app charges'},        ico:'card'},
+  {k:'license', ru:{t:'Лицензия на ПО',                                 s:'Условия использования приложения OKO'},                  en:{t:'Software Licence',              s:'Terms of use for the OKO application'},                ico:'apps'},
+  {k:'consent', ru:{t:'Согласие на обработку ПД',                       s:'152-ФЗ: цели, сроки, отзыв согласия'},                   en:{t:'Personal-data Consent',         s:'FZ-152: purposes, terms, withdrawal'},                 ico:'check'}
 ];
 
 /* ---------- общие реквизиты ---------- */
@@ -60,14 +79,14 @@ ru: { title:'Публичная оферта', rev:'Редакция № 4', sec
 `<p>Оператор предоставляет Пользователю право использования Сервиса в пределах его функциональных возможностей: обмен сообщениями и звонки, публикация контента в социальной ленте, размещение и заказ услуг на Бирже, обучение в Академии, участие в играх (18+), размещение рекламы через рекламный кабинет, участие в партнёрской программе и операции по лицевому счёту.</p>
 <p>Базовый функционал предоставляется бесплатно. Расширенный функционал предоставляется по подписке согласно выбранному Тарифу.</p>`},
 {h:'Тарифы и порядок оплаты', b:
-`<table class="lg-table">
+`<div class="lg-table-wrap"><table class="lg-table">
 <tr><th>Тариф</th><th>Цена / мес*</th><th>Состав</th></tr>
 <tr><td>START</td><td>990&nbsp;₽</td><td>Мессенджер Premium (файлы до 4 ГБ, транскрипция голосовых), магазин шаблонов, каталог трендов, 30 проверок видео в месяц, активация партнёрской программы.</td></tr>
 <tr><td>PRO</td><td>4&nbsp;900&nbsp;₽</td><td>Персональная система роста, личный помощник OKO (300 обращений), студия контента (100 генераций), 100 проверок видео и 20 автоправок в месяц, аналитика 3 каналов.</td></tr>
 <tr><td>BUSINESS</td><td>19&nbsp;900&nbsp;₽</td><td>Контент-производство 30–50 роликов в месяц, команда специалистов OKO под проект, автопостинг во все привязанные соцсети, приоритетная поддержка, командные аккаунты (до 3).</td></tr>
 <tr><td>BUSINESS&nbsp;PRO</td><td>49&nbsp;900&nbsp;₽</td><td>Контент-производство 100 роликов в месяц, персональный образ (двойник голоса и лица), безлимитные помощник и студия, API-доступ, до 5 командных аккаунтов, бонус: лендинг и бот при годовой оплате.</td></tr>
 <tr><td>MAX</td><td>149&nbsp;900&nbsp;₽</td><td>Контент-производство 300 роликов в месяц, полная команда специалистов OKO с персональным менеджером, полный digital-запуск (сайт, бот, автоматизации) при годовой оплате, до 15 командных аккаунтов, white-label.</td></tr>
-</table>
+</table></div>
 <p class="lg-note">* Указана цена за месяц при оплате за год. Скидки периодов от базовой месячной цены: 3 месяца — 10%, 6 месяцев — 15%, 12 месяцев — 20%.</p>
 <p>Способы оплаты: банковские карты РФ, криптовалюта, платёжная платформа Lava.top. Цены могут указываться в долларах США; фактическое списание производится в валюте платёжного метода по курсу на дату платежа. Подписка продлевается автоматически на аналогичный период; автопродление отключается в настройках до даты списания.</p>`},
 {h:'Лицевой счёт и списания', b:
@@ -111,14 +130,14 @@ en: { title:'Public Offer Agreement', rev:'Revision No. 4', secs:[
 `<p>The Operator grants the User the right to use the Service within its functionality: messaging and calls, publishing content in the social feed, offering and ordering services on the Marketplace, learning in the Academy, participation in games (18+), placing advertising via the advertising cabinet, participation in the affiliate program, and operations on the personal account.</p>
 <p>Basic functionality is free of charge. Extended functionality is provided by subscription according to the selected Plan.</p>`},
 {h:'Plans and Payment', b:
-`<table class="lg-table">
+`<div class="lg-table-wrap"><table class="lg-table">
 <tr><th>Plan</th><th>Price / mo*</th><th>Includes</th></tr>
 <tr><td>START</td><td>990&nbsp;RUB (~$10)</td><td>Premium messenger (files up to 4 GB, voice transcription), templates marketplace, trends catalog, 30 video checks per month, affiliate program activation.</td></tr>
 <tr><td>PRO</td><td>4&nbsp;900&nbsp;RUB (~$49)</td><td>Personal growth system, OKO Personal Assistant (300 requests), Content Studio (100 generations), 100 video checks and 20 auto-fixes per month, analytics for 3 channels.</td></tr>
 <tr><td>BUSINESS</td><td>19&nbsp;900&nbsp;RUB (~$199)</td><td>Content production 30–50 videos per month, dedicated OKO specialists on your project, autoposting to all connected social networks, priority support, up to 3 team accounts.</td></tr>
 <tr><td>BUSINESS&nbsp;PRO</td><td>49&nbsp;900&nbsp;RUB (~$499)</td><td>Content production 100 videos per month, Personal Image (voice and face twin), unlimited assistant and studio, API access, up to 5 team accounts, bonus: landing page and bot with annual payment.</td></tr>
 <tr><td>MAX</td><td>149&nbsp;900&nbsp;RUB (~$1499)</td><td>Content production 300 videos per month, full OKO specialists team with a dedicated manager, complete digital launch (website, bot, automations) with annual payment, up to 15 team accounts, white-label.</td></tr>
-</table>
+</table></div>
 <p class="lg-note">* Monthly price with annual billing. Period discounts off the base monthly price: 3 months — 10%, 6 months — 15%, 12 months — 20%.</p>
 <p>Payment methods: Russian bank cards, cryptocurrency, and the Lava.top payment platform. Prices may be quoted in US dollars; the actual charge is made in the currency of the payment method at the exchange rate on the payment date. Subscriptions renew automatically for the same period; auto-renewal can be disabled in the settings before the billing date.</p>`},
 {h:'Personal Account and Charges', b:
@@ -289,8 +308,8 @@ ru: { title:'Пользовательское соглашение', rev:'Ред
 <li>Контент, нарушающий законодательство: незаконный оборот оружия, персональные данные третьих лиц без их согласия, вредоносное ПО.</li>
 <li>Контент, нарушающий интеллектуальные права третьих лиц.</li>
 </ul>`},
-{h:'ИИ-модерация и блокировки', b:
-`<p>Загружаемый контент (видео, изображения, тексты) проходит автоматическую премодерацию с использованием ИИ-моделей. При выявлении признаков нарушения контент может быть скрыт до проверки; спорные случаи эскалируются модератору-человеку.</p>
+{h:'Автомодерация и блокировки', b:
+`<p>Загружаемый контент (видео, изображения, тексты) проходит автоматическую премодерацию по внутренним правилам платформы. При выявлении признаков нарушения контент может быть скрыт до проверки; спорные случаи эскалируются модератору-человеку.</p>
 <p>Меры при нарушениях (применяются соразмерно тяжести): предупреждение, удаление контента, ограничение функций, временная блокировка, удаление аккаунта. При блокировке за грубые нарушения средства, полученные преступным путём, могут быть заморожены до выяснения обстоятельств.</p>
 <p>Пользователь вправе подать апелляцию на решение модерации через поддержку в течение 30 дней; апелляция рассматривается человеком.</p>`},
 {h:'Игры и ответственная игра (18+)', b:
@@ -342,8 +361,8 @@ en: { title:'Terms of Service', rev:'Revision No. 4', secs:[
 <li>Content violating the law: illegal arms trafficking, third parties' personal data without their consent, malware.</li>
 <li>Content infringing third-party intellectual property rights.</li>
 </ul>`},
-{h:'AI Moderation and Restrictions', b:
-`<p>Uploaded content (video, images, texts) undergoes automatic pre-moderation using AI models. If signs of a violation are detected, the content may be hidden pending review; disputed cases are escalated to a human moderator.</p>
+{h:'Auto-moderation and Restrictions', b:
+`<p>Uploaded content (video, images, texts) undergoes automatic pre-moderation according to the platform's internal rules. If signs of a violation are detected, the content may be hidden pending review; disputed cases are escalated to a human moderator.</p>
 <p>Enforcement measures (applied proportionately to severity): warning, content removal, feature restriction, temporary suspension, account deletion. In case of suspension for gross violations, funds obtained unlawfully may be frozen pending investigation.</p>
 <p>The User may appeal a moderation decision via support within 30 days; appeals are reviewed by a human.</p>`},
 {h:'Games and Responsible Play (18+)', b:
@@ -370,6 +389,158 @@ en: { title:'Terms of Service', rev:'Revision No. 4', secs:[
 `<p>The parties apply a mandatory pre-trial claim procedure: claims are sent to okoteam.top@gmail.com, with a 30-day response period. If no agreement is reached, the dispute is referred to the court at the Operator's location under the laws of the Russian Federation. For users outside Russia, arbitration in a jurisdiction agreed by the parties is possible.</p>`},
 {h:'Final Provisions', b:
 `<p>The invalidity of any individual provision of the Terms does not invalidate the remaining provisions. The Operator may update the Terms in the same manner as the Public Offer. The current revision is always available in the app under "OKO Legal".</p>`}
+]}
+},
+
+/* ============ ПОЛИТИКА ВОЗВРАТА ============ */
+refund: {
+ru: { title:'Политика возврата', rev:'Редакция № 2', secs:[
+{h:'Общие положения', b:
+`<p>Настоящая Политика возврата определяет условия и порядок возврата средств Пользователю по договору Публичной оферты Сервиса OKO. Оператор — ИП Ильясов Даниэль Альбертович (ИНН 682016634349, г. Москва, РФ; представительство: г. Дубай, ОАЭ).</p>
+<p>Политика применяется во всех операциях: подписки на тарифы, сделки Биржи, рекламный кабинет, игровой раздел, покупки в мессенджере (стикеры, каналы) и пополнения лицевого счёта. Приоритет над Политикой имеют требования действующего законодательства РФ (в т.ч. Закон «О защите прав потребителей» и ст. 32 ГК РФ).</p>`},
+{h:'Подписки на тарифы', b:
+`<p><b>«Период охлаждения».</b> В течение 14 календарных дней с момента первой оплаты подписки Пользователь вправе отказаться от неё и получить полный возврат при условии, что платный функционал фактически не использовался (не осуществлялись платные операции, не расходовались лимиты Тарифа).</p>
+<p><b>Пропорциональный возврат.</b> Если платный функционал уже использовался и на момент отказа остаётся неистёкший период, Оператор возвращает пропорциональную часть стоимости за неиспользованные полные календарные дни. Из суммы возврата вычитаются: (а) стоимость фактически потреблённых лимитов Тарифа по тарифной сетке, (б) банковская или платёжная комиссия, если её не удаётся вернуть провайдером.</p>
+<p><b>Автопродление.</b> Заявление, поданное до даты автопродления и включающее просьбу об отключении автопродления, принимается автоматически: следующее списание не производится, а уже оплаченный период не возвращается частично, если платный функционал использовался в нём.</p>`},
+{h:'Сделки Биржи услуг', b:
+`<p>Средства, заблокированные в эскроу, возвращаются Заказчику полностью, если:</p>
+<ul>
+<li>Исполнитель не приступил к работе в согласованный срок и не согласовал перенос;</li>
+<li>Стороны расторгли сделку по взаимному согласию до сдачи работы;</li>
+<li>Арбитраж Сервиса вынес решение о возврате.</li>
+</ul>
+<p>После сдачи работы Исполнителем и её принятия Заказчиком (в т.ч. автоматически по истечении 7 дней при отсутствии претензий) средства перечисляются Исполнителю и возврату не подлежат, за исключением случаев обмана, установленных арбитражем.</p>`},
+{h:'Реклама и игровой раздел', b:
+`<p>Средства, потраченные на показы рекламы, продвижение постов и ставки/покупки в игровом разделе, возврату не подлежат, поскольку услуга считается оказанной в момент фактического расхода. Исключение — техническая ошибка Сервиса, приведшая к некорректному списанию: такие списания возвращаются на лицевой счёт в полном объёме по обращению Пользователя.</p>`},
+{h:'Пополнения лицевого счёта', b:
+`<p>Пользователь вправе запросить возврат неизрасходованного остатка лицевого счёта в любой момент. Возврат производится за вычетом комиссии платёжного метода вывода (2% для банковских карт РФ, до 5% для международных методов) и налоговых удержаний, если такие применимы. Срок исполнения — до 10 рабочих дней после верификации личности заявителя.</p>`},
+{h:'Каналы, стикеры и цифровые товары', b:
+`<p>Оплаты подписок на платные каналы возвращаются в течение 24 часов с момента первой оплаты при условии, что Пользователь не открыл в канале ни одного закрытого материала. По истечении 24 часов возврат производится по решению владельца канала; Оператор в этом случае возвращает свою комиссию.</p>
+<p>Стикеры, эмодзи и иные цифровые товары возврату не подлежат после активации на аккаунте, за исключением случаев некачественного контента (нарушение авторских прав, повреждённый файл): в этом случае возврат производится в полном объёме.</p>`},
+{h:'Порядок обращения и сроки', b:
+`<p>Заявление о возврате направляется на <b>okoteam.top@gmail.com</b> с темой «Возврат» и содержит: имя Пользователя и ID в Сервисе, дату и сумму операции, идентификатор транзакции, реквизиты возврата (при выводе), краткое описание причины.</p>
+<p>Срок рассмотрения — до <b>10 рабочих дней</b>. Возврат производится тем же способом, каким был совершён платёж; в случае невозможности возврата исходным методом Оператор согласовывает альтернативный способ. Срок зачисления средств зависит от платёжного провайдера и обычно составляет от 1 до 10 рабочих дней после утверждения возврата.</p>`},
+{h:'Отказ в возврате', b:
+`<p>Оператор вправе отказать в возврате, если:</p>
+<ul>
+<li>Заявление подано с нарушением сроков, установленных настоящей Политикой;</li>
+<li>Услуга фактически оказана в полном объёме и претензии к её качеству отсутствуют;</li>
+<li>Аккаунт Пользователя заблокирован за нарушение Пользовательского соглашения (в этом случае возврат остатка средств рассматривается индивидуально);</li>
+<li>Заявление содержит недостоверные сведения или подано неуполномоченным лицом.</li>
+</ul>
+<p>Отказ в возврате может быть обжалован в порядке, предусмотренном разделом «Разрешение споров» Пользовательского соглашения.</p>`}
+]},
+en: { title:'Refund Policy', rev:'Revision No. 2', secs:[
+{h:'General Provisions', b:
+`<p>This Refund Policy sets out the conditions and procedure for refunding funds to the User under the Public Offer of the OKO Service. Operator: Sole Proprietor Ilyasov Daniel Albertovich (Taxpayer ID 682016634349, Moscow, Russian Federation; representative office: Dubai, UAE).</p>
+<p>The Policy applies to all operations: plan subscriptions, Marketplace transactions, the advertising cabinet, the games section, in-messenger purchases (stickers, channels) and personal-account top-ups. Applicable law (including the Russian Consumer Protection Law and Art. 32 of the Civil Code) prevails over this Policy.</p>`},
+{h:'Plan Subscriptions', b:
+`<p><b>Cooling-off period.</b> Within 14 calendar days of the initial subscription payment, the User may cancel and obtain a full refund provided the paid functionality has not actually been used (no paid operations were performed and no plan limits were consumed).</p>
+<p><b>Pro-rata refund.</b> If the paid functionality has already been used and an unused period remains at the moment of cancellation, the Operator refunds a pro-rata share of the price for the unused full calendar days. The refund amount is reduced by (a) the cost of the actually consumed plan limits at published rates and (b) the bank or payment fee that cannot be reversed by the provider.</p>
+<p><b>Auto-renewal.</b> A request submitted before the auto-renewal date that asks to disable auto-renewal is accepted automatically: the next charge is not made; the paid period already in effect is not partially refunded if the paid functionality was used during it.</p>`},
+{h:'Marketplace Transactions', b:
+`<p>Funds held in escrow are fully refunded to the Client if:</p>
+<ul>
+<li>the Provider has not started the work within the agreed timeframe and has not agreed to postpone;</li>
+<li>the parties have terminated the transaction by mutual consent before delivery;</li>
+<li>the Service arbitration has ruled in favour of a refund.</li>
+</ul>
+<p>Once the work is delivered by the Provider and accepted by the Client (including automatically after 7 days if no claims are raised), the funds are transferred to the Provider and are non-refundable, except for cases of proven fraud established by arbitration.</p>`},
+{h:'Advertising and Games', b:
+`<p>Funds spent on ad impressions, post promotion and bets/purchases in the games section are non-refundable, as the service is considered rendered at the moment of actual expenditure. Exception: a technical error of the Service that led to an incorrect charge — such charges are refunded to the personal account in full upon request.</p>`},
+{h:'Personal-account Top-ups', b:
+`<p>The User may request a refund of the unspent personal-account balance at any time. The refund is issued net of the withdrawal-method fee (2% for Russian bank cards, up to 5% for international methods) and applicable tax withholdings. Processing time — up to 10 business days after identity verification.</p>`},
+{h:'Channels, Stickers and Digital Goods', b:
+`<p>Subscriptions to paid channels are refunded within 24 hours of the initial payment provided the User has not opened any private content in the channel. After 24 hours the refund is at the channel owner's discretion; in that case the Operator refunds its own commission.</p>
+<p>Stickers, emoji and other digital goods are non-refundable once activated on the account, except for cases of defective content (copyright infringement, corrupted file), in which case a full refund is issued.</p>`},
+{h:'Request Procedure and Timelines', b:
+`<p>Refund requests are sent to <b>okoteam.top@gmail.com</b> with the subject "Refund" and must include: the User's name and Service ID, the date and amount of the operation, the transaction identifier, refund details (if a withdrawal is requested), and a brief description of the reason.</p>
+<p>Processing time — up to <b>10 business days</b>. The refund is issued using the same method as the original payment; where this is not possible, the Operator agrees an alternative method. The time for funds to arrive depends on the payment provider and usually ranges from 1 to 10 business days after the refund is approved.</p>`},
+{h:'Refund Denial', b:
+`<p>The Operator may deny a refund if:</p>
+<ul>
+<li>the request was submitted outside the timelines of this Policy;</li>
+<li>the service has been rendered in full and no quality complaints exist;</li>
+<li>the User's account is blocked for violation of the Terms of Service (in that case the balance refund is reviewed individually);</li>
+<li>the request contains inaccurate information or was submitted by an unauthorised person.</li>
+</ul>
+<p>A refund denial can be appealed under the "Dispute Resolution" section of the Terms of Service.</p>`}
+]}
+},
+
+/* ============ ЛИЦЕНЗИОННОЕ СОГЛАШЕНИЕ (EULA) ============ */
+license: {
+ru: { title:'Лицензионное соглашение на ПО', rev:'Редакция № 2', secs:[
+{h:'Стороны и предмет', b:
+`<p>Настоящее лицензионное соглашение (далее — <b>«Лицензия»</b>) регулирует условия использования Пользователем программного обеспечения «OKO» — мобильного и веб-приложения, включая обновления, дополнительные модули, документацию и связанные сервисы (далее — <b>«ПО»</b>).</p>
+<p>Лицензиар — ИП Ильясов Даниэль Альбертович (ИНН 682016634349, г. Москва, РФ; представительство: г. Дубай, ОАЭ). Устанавливая, копируя или иным образом используя ПО, Пользователь принимает условия Лицензии.</p>`},
+{h:'Предоставляемые права', b:
+`<p>Лицензиар предоставляет Пользователю простую (неисключительную) безвозмездную лицензию на:</p>
+<ul>
+<li>установку и запуск ПО на неограниченном числе принадлежащих Пользователю устройств;</li>
+<li>использование ПО по прямому функциональному назначению в личных и профессиональных целях;</li>
+<li>получение обновлений и патчей ПО, публикуемых Лицензиаром;</li>
+<li>использование бесплатных функций ПО без ограничений; платные функции — при активной подписке.</li>
+</ul>
+<p>Территория действия Лицензии — весь мир. Срок — на период существования соответствующей версии ПО в публичном доступе.</p>`},
+{h:'Ограничения', b:
+`<p>Пользователю запрещается:</p>
+<ul>
+<li>распространять, продавать, сдавать в аренду или сублицензировать ПО третьим лицам;</li>
+<li>декомпилировать, дизассемблировать, вносить изменения в исходный или бинарный код ПО, за исключением случаев, прямо разрешённых законом;</li>
+<li>удалять или изменять уведомления об авторских правах, товарные знаки и иные обозначения правообладателя;</li>
+<li>использовать ПО для обхода технических средств защиты, взлома или атак на инфраструктуру Сервиса и третьих лиц;</li>
+<li>создавать производные продукты, воспроизводящие существенную часть функциональности или интерфейса ПО.</li>
+</ul>`},
+{h:'Открытые компоненты (Open-source)', b:
+`<p>ПО может включать компоненты с открытым исходным кодом, распространяемые под лицензиями MIT, Apache-2.0, BSD, ISC, LGPL и иными совместимыми лицензиями. Полный перечень таких компонентов и текстов их лицензий доступен по запросу на okoteam.top@gmail.com. Права на open-source компоненты регулируются соответствующими лицензиями и не ограничиваются настоящим документом в пределах, установленных этими лицензиями.</p>`},
+{h:'Обновления и совместимость', b:
+`<p>Лицензиар вправе публиковать обновления ПО с исправлениями ошибок, улучшениями и новыми возможностями. Некоторые функции могут требовать новой версии ПО и/или совместимого оборудования. Прекращение поддержки устаревших версий не является нарушением Лицензии; актуальная версия ПО доступна для установки в официальных магазинах приложений и на сайте okoteam.top.</p>`},
+{h:'Данные и телеметрия', b:
+`<p>ПО может собирать техническую информацию (тип устройства, версия ОС, идентификатор установки, логи сбоев) для обеспечения работоспособности и улучшения качества. Обработка персональных данных производится в соответствии с Политикой конфиденциальности. Пользователь может отключить необязательную телеметрию в настройках приложения.</p>`},
+{h:'Гарантии и ответственность', b:
+`<p>ПО предоставляется <b>«как есть»</b> и <b>«как доступно»</b>. Лицензиар не гарантирует полного отсутствия ошибок, беспрерывной работы или соответствия ПО конкретным ожиданиям Пользователя. В максимально допустимой законом степени Лицензиар не несёт ответственности за косвенные, случайные или последующие убытки, включая упущенную выгоду.</p>
+<p>Совокупная ответственность Лицензиара за прямые убытки ограничена суммой платежей Пользователя за подписки за последние 3 календарных месяца.</p>`},
+{h:'Прекращение действия', b:
+`<p>Лицензия действует до её прекращения. Пользователь может прекратить Лицензию в любой момент, удалив ПО со всех устройств. Лицензиар вправе прекратить Лицензию при существенном нарушении её условий с направлением уведомления по электронной почте, привязанной к аккаунту. После прекращения Лицензии Пользователь обязан прекратить использование ПО и удалить его копии.</p>`},
+{h:'Применимое право', b:
+`<p>К настоящей Лицензии применяется законодательство Российской Федерации. Споры разрешаются в порядке, установленном Пользовательским соглашением. Недействительность отдельного положения Лицензии не влечёт недействительности остальных.</p>`}
+]},
+en: { title:'Software Licence Agreement', rev:'Revision No. 2', secs:[
+{h:'Parties and Subject', b:
+`<p>This licence agreement (the <b>"Licence"</b>) governs the terms of use of the "OKO" software — a mobile and web application, including updates, additional modules, documentation and related services (the <b>"Software"</b>).</p>
+<p>Licensor: Sole Proprietor Ilyasov Daniel Albertovich (Taxpayer ID 682016634349, Moscow, Russian Federation; representative office: Dubai, UAE). By installing, copying or otherwise using the Software, the User accepts this Licence.</p>`},
+{h:'Rights Granted', b:
+`<p>The Licensor grants the User a simple (non-exclusive) royalty-free licence to:</p>
+<ul>
+<li>install and run the Software on an unlimited number of devices owned by the User;</li>
+<li>use the Software for its intended purpose for personal and professional use;</li>
+<li>receive Software updates and patches published by the Licensor;</li>
+<li>use the free features of the Software without limits; paid features — while a subscription is active.</li>
+</ul>
+<p>Territory: worldwide. Term: for the period during which the corresponding version of the Software is publicly available.</p>`},
+{h:'Restrictions', b:
+`<p>The User is prohibited from:</p>
+<ul>
+<li>distributing, selling, renting or sublicensing the Software to third parties;</li>
+<li>decompiling, disassembling or modifying the source or binary code of the Software, except as expressly permitted by law;</li>
+<li>removing or altering copyright notices, trademarks and other markings of the rights holder;</li>
+<li>using the Software to circumvent technical protection measures or to hack or attack the Service or third-party infrastructure;</li>
+<li>creating derivative products that reproduce a substantial part of the functionality or interface of the Software.</li>
+</ul>`},
+{h:'Open-source Components', b:
+`<p>The Software may include open-source components distributed under MIT, Apache-2.0, BSD, ISC, LGPL and other compatible licences. A full list of such components and their licence texts is available upon request at okoteam.top@gmail.com. Rights to open-source components are governed by the corresponding licences and are not restricted by this document beyond the extent permitted by those licences.</p>`},
+{h:'Updates and Compatibility', b:
+`<p>The Licensor may publish Software updates with bug fixes, improvements and new features. Some features may require a new Software version and/or compatible hardware. Discontinuation of support for outdated versions is not a breach of the Licence; the current Software version is available for installation from the official app stores and at okoteam.top.</p>`},
+{h:'Data and Telemetry', b:
+`<p>The Software may collect technical information (device type, OS version, installation identifier, crash logs) to ensure operability and improve quality. Processing of personal data is carried out in accordance with the Privacy Policy. The User may opt out of optional telemetry in the app settings.</p>`},
+{h:'Warranties and Liability', b:
+`<p>The Software is provided <b>"as is"</b> and <b>"as available"</b>. The Licensor does not warrant the complete absence of errors, uninterrupted operation, or the Software's fitness for a User's specific expectations. To the maximum extent permitted by law, the Licensor is not liable for indirect, incidental or consequential damages, including lost profits.</p>
+<p>The Licensor's aggregate liability for direct damages is limited to the amount of the User's subscription payments over the last 3 calendar months.</p>`},
+{h:'Termination', b:
+`<p>The Licence remains in force until terminated. The User may terminate the Licence at any time by removing the Software from all devices. The Licensor may terminate the Licence upon a material breach of its terms by sending a notice to the e-mail linked to the account. Upon termination, the User must cease using the Software and destroy its copies.</p>`},
+{h:'Governing Law', b:
+`<p>This Licence is governed by the laws of the Russian Federation. Disputes are resolved in the manner set out in the Terms of Service. The invalidity of any individual provision of the Licence does not invalidate the remaining provisions.</p>`}
 ]}
 },
 
@@ -401,7 +572,7 @@ ru: { title:'Согласие на обработку персональных �
 </ul>`},
 {h:'Перечень действий и способы обработки', b:
 `<p>Согласие распространяется на любые действия (операции) с персональными данными: сбор, запись, систематизацию, накопление, хранение, уточнение (обновление, изменение), извлечение, использование, передачу (предоставление, доступ) в объёме, указанном в разделе 5, обезличивание, блокирование, удаление и уничтожение.</p>
-<p>Обработка осуществляется как с использованием средств автоматизации (включая ИИ-модели премодерации контента), так и без таковых. Запись, систематизация, накопление, хранение, уточнение и извлечение персональных данных граждан РФ осуществляются с использованием баз данных на территории Российской Федерации (ч. 5 ст. 18 152-ФЗ).</p>`},
+<p>Обработка осуществляется как с использованием средств автоматизации, так и без таковых. Запись, систематизация, накопление, хранение, уточнение и извлечение персональных данных граждан РФ осуществляются с использованием баз данных на территории Российской Федерации (ч. 5 ст. 18 152-ФЗ).</p>`},
 {h:'Передача третьим лицам (поручение обработки)', b:
 `<p>Субъект соглашается на поручение обработки его персональных данных в минимально необходимом объёме следующим категориям лиц, действующим по поручению Оператора и обязанным соблюдать конфиденциальность:</p>
 <ul>
@@ -444,7 +615,7 @@ en: { title:'Consent to Personal Data Processing', rev:'Revision No. 4', secs:[
 </ul>`},
 {h:'Actions and Methods of Processing', b:
 `<p>This consent covers any actions (operations) with personal data: collection, recording, systematisation, accumulation, storage, clarification (updating, modification), retrieval, use, transfer (provision, access) to the extent set out in Section 5, anonymisation, blocking, deletion and destruction.</p>
-<p>Processing is carried out both by automated means (including AI content pre-moderation models) and without them. Recording, systematisation, accumulation, storage, clarification and retrieval of personal data of Russian citizens are performed using databases located in the Russian Federation (Art. 18(5) of Law 152-FZ).</p>`},
+<p>Processing is carried out both by automated means and without them. Recording, systematisation, accumulation, storage, clarification and retrieval of personal data of Russian citizens are performed using databases located in the Russian Federation (Art. 18(5) of Law 152-FZ).</p>`},
 {h:'Transfer to Third Parties (Processing Instruction)', b:
 `<p>The Data Subject consents to instructing the processing of their personal data, to the minimum necessary extent, to the following categories of persons acting on the Operator's behalf and bound by confidentiality:</p>
 <ul>
@@ -464,7 +635,38 @@ en: { title:'Consent to Personal Data Processing', rev:'Revision No. 4', secs:[
 }
 };
 
-/* ---------- рендер ---------- */
+/* ================================================================
+   HUB — сетка карточек «Документов OKO»
+   ================================================================ */
+function lgHubHtml(lang){
+  const r = LG_REQ[lang];
+  const intro = lang==='en'
+    ? {t:'OKO Legal', s:'The full set of documents governing your use of the OKO service and platform. Available in Russian and English. Each document opens as a separate page with a table of contents, an operator seal, and a signature. Save any document as PDF via the download button.'}
+    : {t:'Документы OKO', s:'Полный набор документов, регулирующих использование сервиса и платформы OKO. Доступны на русском и английском. Каждый документ открывается отдельной страницей — с оглавлением, официальной печатью и подписью. Любой документ можно сохранить в PDF по кнопке скачивания.'};
+  const opCaption = lang==='en' ? 'Operator' : 'Оператор';
+  const cards = LG_HUB_CARDS.map(c=>{
+    const d = LG_DOCS[c.k][lang];
+    const l = c[lang];
+    return `<button class="lg-card" type="button" onclick="openLegalDoc('${c.k}')" aria-label="${l.t}">
+      <span class="lg-card-ver">${d.rev.replace('Редакция №','v').replace('Revision No.','v').trim()}</span>
+      <span class="lg-card-ico">${I(c.ico||'file')}</span>
+      <span class="lg-card-t">${l.t}</span>
+      <span class="lg-card-s">${l.s}</span>
+    </button>`;
+  }).join('');
+  return `<div class="lg-hub">
+    <div class="lg-hub-intro">
+      <h2>${intro.t}</h2>
+      <p>${intro.s}</p>
+      <div class="lg-hub-op"><b>${opCaption}:</b> ${r.op} · ${r.inn} · ${r.geo} · ${r.mail}</div>
+    </div>
+    <div class="lg-hub-grid">${cards}</div>
+  </div>`;
+}
+
+/* ================================================================
+   DOC — рендер одной юр-страницы
+   ================================================================ */
 function lgDocHtml(kind, lang){
   const d = LG_DOCS[kind][lang];
   const r = LG_REQ[lang];
@@ -474,6 +676,7 @@ function lgDocHtml(kind, lang){
   const topLabel  = lang==='en' ? 'to contents' : 'к содержанию';
   const revLabel  = lang==='en' ? d.rev + ' · effective ' + r.date : d.rev + ' · дата вступления в силу: ' + r.date;
   const updLabel  = lang==='en' ? 'Updated ' + r.date : 'Обновлено ' + r.date;
+  const pdfLabel  = lang==='en' ? 'Download PDF' : 'Скачать PDF';
   const dlLabel   = lang==='en' ? 'Download HTML' : 'Скачать HTML';
   const shLabel   = lang==='en' ? 'Share link'    : 'Поделиться ссылкой';
   const cnT       = lang==='en' ? 'I have read and I agree' : 'Прочитано, согласен';
@@ -496,11 +699,12 @@ function lgDocHtml(kind, lang){
       </div>
     </div>
     <div class="lg-actions">
+      <button type="button" class="lg-btn-pdf" onclick="lgDownloadPdf()" title="${pdfLabel}">${I('download')||I('copy')}<span>${pdfLabel}</span></button>
       <button type="button" onclick="lgDownloadHtml()" title="${dlLabel}">${I('copy')}<span>${dlLabel}</span></button>
       <button type="button" onclick="lgShareLink()" title="${shLabel}">${I('share')}<span>${shLabel}</span></button>
     </div>
     ${toc}
-    ${d.secs.map((s,i)=>`<section class="lg-sec" id="${sid(i)}"><h2><span class="lg-sec-n">${i+1}.</span> ${s.h}<button type="button" class="lg-sec-top" onclick="lgJump('lgDoc')" title="${topLabel}">${I('chev')}</button></h2>${s.b}</section>`).join('')}
+    ${d.secs.map((s,i)=>`<section class="lg-sec" id="${sid(i)}"><h2><span class="lg-sec-n">${i+1}.</span> ${s.h}<button type="button" class="lg-sec-top" onclick="lgJump('lgDoc')" title="${topLabel}" aria-label="${topLabel}">${I('chev')}</button></h2>${s.b}</section>`).join('')}
     <div class="lg-req">
       <div class="lg-req-h">${reqLabel}</div>
       <b>${r.op}</b><br>${r.brand}<br>${r.inn}<br>${r.geo}<br>E-mail: ${r.mail}
@@ -508,13 +712,13 @@ function lgDocHtml(kind, lang){
     <div class="doc-sign-block">
       <div class="lg-seal">${sealSvg(150)}</div>
       <div class="lg-sig-wrap">
-        <div class="sig">${signatureImg(150)}</div>
+        <div class="sig">${signatureImg(180)}</div>
         <div class="lg-sig-line"></div>
         <div class="lg-sig-cap">${r.sig}</div>
       </div>
     </div>
     <button type="button" class="lg-consent ${agreed?'on':''}" id="lgConsent" onclick="lgToggleAgreed()" aria-pressed="${agreed?'true':'false'}">
-      <span class="lg-consent-box">${I('check2')}</span>
+      <span class="lg-consent-box">${I('check2')||I('check')}</span>
       <span class="lg-consent-txt">
         <span class="lg-consent-t">${cnT}</span>
         <span class="lg-consent-s">${cnS}</span>
@@ -523,7 +727,97 @@ function lgDocHtml(kind, lang){
   </div>`;
 }
 
-/* ---------- v1.84: согласие «прочитано» — хранится в localStorage ---------- */
+/* ================================================================
+   DEAL — договор-акт по конкретной сделке (авто-заполнение)
+   ================================================================ */
+function lgFmtRub(n){ try{ return Number(n||0).toLocaleString('ru-RU').replace(/,/g,' '); }catch(e){ return String(n||0); } }
+function lgFmtDate(d, lang){
+  try{
+    const dt = d instanceof Date ? d : new Date(d||Date.now());
+    if(lang==='en') return dt.toLocaleDateString('en-GB',{day:'2-digit',month:'long',year:'numeric'});
+    return dt.toLocaleDateString('ru-RU',{day:'2-digit',month:'long',year:'numeric'}) + ' г.';
+  }catch(e){ return ''+d; }
+}
+function lgDealHtml(ctx, lang){
+  const r = LG_REQ[lang];
+  const en = lang==='en';
+  const buyer   = ctx.buyer || (typeof PROFILE!=='undefined' && PROFILE && PROFILE.name) || (en?'Buyer':'Покупатель');
+  const plan    = ctx.plan  || ctx.tier || 'START';
+  const period  = ctx.period || 12; // месяцев
+  const currency= ctx.currency || 'RUB';
+  const amount  = (ctx.amount != null) ? ctx.amount : 0;
+  const tx      = ctx.tx || ('OKO-' + Date.now().toString(36).toUpperCase());
+  const dt      = ctx.date || new Date();
+  const dateStr = lgFmtDate(dt, lang);
+  const method  = ctx.method || (en?'bank card':'банковская карта');
+  const title = en ? 'Deal certificate' : 'Договор-акт по сделке';
+  const subT  = en ? `Confirmation of acceptance of the OKO "${plan}" plan under the Public Offer` : `Подтверждение акцепта тарифа OKO «${plan}» по Публичной оферте`;
+  const facts = en ? [
+    ['Certificate No.', `<b>${tx}</b>`],
+    ['Date', dateStr],
+    ['Buyer', buyer],
+    ['Plan', `<b>${plan}</b>, ${period} months`],
+    ['Amount', `<b>${lgFmtRub(amount)} ${currency}</b>`],
+    ['Payment method', method]
+  ] : [
+    ['№ акта', `<b>${tx}</b>`],
+    ['Дата', dateStr],
+    ['Покупатель', buyer],
+    ['Тариф', `<b>${plan}</b>, ${period} мес.`],
+    ['Сумма', `<b>${lgFmtRub(amount)} ${currency==='RUB'?'₽':currency}</b>`],
+    ['Способ оплаты', method]
+  ];
+  const body = en ? `
+    <p>This certificate confirms that the Buyer has entered into an agreement with the Operator on the terms of the OKO Public Offer (Revision No. 4) and paid for the <b>${plan}</b> plan for a period of ${period} months. The paid functionality of the plan is activated on the Buyer's account from the date indicated above.</p>
+    <p>By making the payment, the Buyer confirms full and unconditional acceptance of the Public Offer and the Refund Policy. The right to a refund is exercised in accordance with the Refund Policy under the conditions set out therein.</p>
+    <p>The parties have no mutual claims regarding the fact of payment and activation. The certificate is generated electronically and does not require a handwritten signature of the Buyer.</p>
+  ` : `
+    <p>Настоящим Оператор подтверждает, что Покупатель заключил договор с Оператором на условиях Публичной оферты сервиса OKO (Редакция № 4) и оплатил тариф <b>${plan}</b> на срок ${period} мес. Платный функционал тарифа активирован на аккаунте Покупателя с даты, указанной выше.</p>
+    <p>Внесением оплаты Покупатель подтверждает полный и безоговорочный акцепт Публичной оферты и Политики возврата. Право на возврат осуществляется в порядке и на условиях, установленных Политикой возврата.</p>
+    <p>Стороны не имеют взаимных претензий относительно факта оплаты и активации. Акт сформирован электронно и не требует собственноручной подписи Покупателя.</p>
+  `;
+  const opLabel = en ? 'Operator' : 'Оператор';
+  const reqLabel= en ? 'Operator details' : 'Реквизиты Оператора';
+  const pdfLabel= en ? 'Download PDF' : 'Скачать PDF';
+  const dlLabel = en ? 'Download HTML' : 'Скачать HTML';
+  return `<div class="lg-doc" id="lgDoc">
+    <div class="lg-progress" aria-hidden="true"><span id="lgProgFill"></span></div>
+    <div class="lg-doc-head">
+      <svg class="lg-doc-logo"><use href="#i-logo"/></svg>
+      <div>
+        <h1>${title}</h1>
+        <div class="lg-doc-meta"><b>OKO PROJECT</b> · ${subT}</div>
+        <div class="lg-doc-meta">${opLabel}: ${r.op}, ${r.inn}</div>
+        <span class="lg-updated">${I('check')} ${dateStr}</span>
+      </div>
+    </div>
+    <div class="lg-actions">
+      <button type="button" class="lg-btn-pdf" onclick="lgDownloadPdf()" title="${pdfLabel}">${I('download')||I('copy')}<span>${pdfLabel}</span></button>
+      <button type="button" onclick="lgDownloadHtml()" title="${dlLabel}">${I('copy')}<span>${dlLabel}</span></button>
+    </div>
+    <dl class="lg-deal-facts">
+      ${facts.map(f=>`<dt>${f[0]}</dt><dd>${f[1]}</dd>`).join('')}
+    </dl>
+    <section class="lg-sec">
+      <h2><span class="lg-sec-n">1.</span> ${en?'Subject and confirmation':'Предмет и подтверждение'}</h2>
+      ${body}
+    </section>
+    <div class="lg-req">
+      <div class="lg-req-h">${reqLabel}</div>
+      <b>${r.op}</b><br>${r.brand}<br>${r.inn}<br>${r.geo}<br>E-mail: ${r.mail}
+    </div>
+    <div class="doc-sign-block">
+      <div class="lg-seal">${sealSvg(150)}</div>
+      <div class="lg-sig-wrap">
+        <div class="sig">${signatureImg(180)}</div>
+        <div class="lg-sig-line"></div>
+        <div class="lg-sig-cap">${r.sig}</div>
+      </div>
+    </div>
+  </div>`;
+}
+
+/* ---------- согласие «прочитано» — хранится в localStorage ---------- */
 function lgIsAgreed(kind){ try{ return !!(lgS.agreed && lgS.agreed[kind]); }catch(e){ return false; } }
 function lgToggleAgreed(){
   if(!lgS.agreed) lgS.agreed = {};
@@ -535,21 +829,32 @@ function lgToggleAgreed(){
   if(el){ el.classList.toggle('on', !cur); el.setAttribute('aria-pressed', (!cur).toString()); }
 }
 
-/* ---------- v1.84: скачать документ как самодостаточный HTML ---------- */
+/* ---------- Скачать PDF — окно печати браузера (Save as PDF) ---------- */
+function lgDownloadPdf(){
+  try{
+    const box = document.getElementById('lgBody');
+    if(box) box.scrollTop = 0;
+    lgToast(lgS.lang==='en' ? 'Opening print dialog' : 'Открываю окно печати');
+    setTimeout(()=>{ try{ window.print(); }catch(e){ console.warn('lgDownloadPdf', e); } }, 240);
+  }catch(e){ console.warn('lgDownloadPdf', e); }
+}
+
+/* ---------- скачать документ как самодостаточный HTML ---------- */
 function lgDownloadHtml(){
   try{
-    const d = LG_DOCS[lgKind][lgS.lang]; if(!d) return;
     const doc = document.getElementById('lgDoc');
     if(!doc) return;
-    // клон без интерактивных элементов
     const clone = doc.cloneNode(true);
     ['#lgProgFill','.lg-actions','.lg-consent','.lg-sec-top','.lg-progress'].forEach(sel=>{
       clone.querySelectorAll(sel).forEach(n=>n.remove());
     });
-    const css = 'body{font:14px/1.65 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;color:#111;background:#fff;max-width:760px;margin:32px auto;padding:0 20px}h1{font-family:Impact,Bebas Neue,sans-serif;letter-spacing:.05em;margin:0 0 6px}h2{color:#0f8b00;font-family:Impact,Bebas Neue,sans-serif;letter-spacing:.06em;margin:26px 0 6px}.lg-doc-head{border-bottom:2px solid #0f8b00;padding-bottom:16px;margin-bottom:20px;display:flex;gap:14px;align-items:flex-start}.lg-doc-logo{width:44px;height:44px;color:#0f8b00}.lg-doc-meta{font-size:11.5px;color:#555;margin-top:3px}.lg-updated{display:inline-block;margin-top:8px;padding:4px 10px;border:1px solid #0f8b00;color:#0f8b00;border-radius:99px;font-size:11px;font-weight:800;letter-spacing:.08em;text-transform:uppercase}.lg-toc{background:#f4f4f4;border-left:3px solid #0f8b00;padding:12px 14px;margin:16px 0 22px;border-radius:6px}.lg-toc ol{list-style:decimal;padding-left:22px;margin:0}.lg-toc li{margin:3px 0;font-size:12.5px;color:#333}.lg-toc-a{background:none;border:0;padding:0;text-align:left;color:#333;font:inherit;cursor:default}.lg-sec{margin-bottom:20px}.lg-sec ul{list-style:disc;padding-left:20px}.lg-table{width:100%;border-collapse:collapse;font-size:12px;margin:8px 0}.lg-table th,.lg-table td{border:1px solid #999;padding:6px 8px;text-align:left;vertical-align:top}.lg-table th{background:#eee;text-transform:uppercase;font-size:10.5px;letter-spacing:.04em;color:#0f8b00}.lg-note{font-size:11px;color:#666}.lg-req{background:#f4f4f4;border:1px solid #ddd;border-radius:6px;padding:12px 14px;font-size:12.5px;color:#333;margin-top:22px}.lg-req-h{font-family:Impact,Bebas Neue,sans-serif;letter-spacing:.08em;color:#0f8b00;margin-bottom:6px}.doc-sign-block{margin-top:24px;padding-top:16px;border-top:1px dashed #999;display:flex;gap:24px;align-items:flex-end;flex-wrap:wrap}.lg-sig-cap{font-size:11px;color:#555;margin-top:5px}.lg-sig-line{height:1px;background:#999;margin-top:-8px}';
-    const html = '<!doctype html><html lang="'+lgS.lang+'"><head><meta charset="utf-8"><title>'+d.title+' — OKO</title><meta name="viewport" content="width=device-width,initial-scale=1"><style>'+css+'</style></head><body>'+clone.outerHTML+'</body></html>';
+    const css = 'body{font:14px/1.65 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;color:#111;background:#fff;max-width:760px;margin:32px auto;padding:0 20px}h1{font-family:Impact,Bebas Neue,sans-serif;letter-spacing:.05em;margin:0 0 6px}h2{color:#0f8b00;font-family:Impact,Bebas Neue,sans-serif;letter-spacing:.06em;margin:26px 0 6px}.lg-doc-head{border:1px solid #0f8b00;background:#fafafa;padding:16px 18px;margin-bottom:22px;display:flex;gap:14px;align-items:flex-start;border-radius:8px}.lg-doc-logo{width:44px;height:44px;color:#0f8b00}.lg-doc-meta{font-size:11.5px;color:#555;margin-top:3px}.lg-updated{display:inline-block;margin-top:8px;padding:4px 10px;border:1px solid #0f8b00;color:#0f8b00;border-radius:99px;font-size:11px;font-weight:800;letter-spacing:.08em;text-transform:uppercase}.lg-toc{background:#f4f4f4;border-left:3px solid #0f8b00;padding:12px 14px;margin:16px 0 22px;border-radius:6px}.lg-toc ol{list-style:decimal;padding-left:22px;margin:0}.lg-toc li{margin:3px 0;font-size:12.5px;color:#333}.lg-toc-a{background:none;border:0;padding:0;text-align:left;color:#333;font:inherit;cursor:default}.lg-sec{margin-bottom:20px}.lg-sec ul{list-style:disc;padding-left:20px}.lg-table-wrap{overflow-x:auto;border:1px solid #999;border-radius:6px}.lg-table{width:100%;border-collapse:collapse;font-size:12px;min-width:520px}.lg-table th,.lg-table td{border:1px solid #999;padding:6px 8px;text-align:left;vertical-align:top}.lg-table th{background:#eee;text-transform:uppercase;font-size:10.5px;letter-spacing:.04em;color:#0f8b00}.lg-note{font-size:11px;color:#666}.lg-req{background:#f4f4f4;border:1px solid #ddd;border-radius:6px;padding:12px 14px;font-size:12.5px;color:#333;margin-top:22px}.lg-req-h{font-family:Impact,Bebas Neue,sans-serif;letter-spacing:.08em;color:#0f8b00;margin-bottom:6px}.doc-sign-block{margin-top:24px;padding-top:16px;border-top:1px dashed #999;display:flex;gap:24px;align-items:flex-end;flex-wrap:wrap}.lg-sig-cap{font-size:11px;color:#555;margin-top:5px}.lg-sig-line{height:1px;background:#999;margin-top:-8px}.lg-seal{width:150px;height:150px}.lg-seal img{width:100%;height:100%;object-fit:contain}.lg-deal-facts{display:grid;grid-template-columns:auto 1fr;gap:8px 14px;background:#f4f4f4;border:1px solid #ddd;border-radius:6px;padding:12px 14px;font-size:12.5px}.lg-deal-facts dt{color:#555}.lg-deal-facts dd{margin:0;font-weight:700}';
+    const isDeal = (lgKind === 'deal');
+    const title = isDeal ? (lgS.lang==='en' ? 'OKO — Deal Certificate' : 'OKO — Договор-акт по сделке') : (LG_DOCS[lgKind][lgS.lang].title + ' — OKO');
     const iso = new Date().toISOString().slice(0,10);
-    const fn = 'oko-'+lgKind+'-'+lgS.lang+'-'+iso+'.html';
+    const fnKind = isDeal ? 'deal' : lgKind;
+    const fn = 'oko-'+fnKind+'-'+lgS.lang+'-'+iso+'.html';
+    const html = '<!doctype html><html lang="'+lgS.lang+'"><head><meta charset="utf-8"><title>'+title+'</title><meta name="viewport" content="width=device-width,initial-scale=1"><style>'+css+'</style></head><body>'+clone.outerHTML+'</body></html>';
     const blob = new Blob([html], {type:'text/html;charset=utf-8'});
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
@@ -559,12 +864,12 @@ function lgDownloadHtml(){
   }catch(e){ console.warn('lgDownloadHtml', e); }
 }
 
-/* ---------- v1.84: поделиться ссылкой (navigator.share → clipboard fallback) ---------- */
+/* ---------- поделиться ссылкой ---------- */
 function lgShareLink(){
   try{
-    const slug = { offer:'oferta', privacy:'privacy', terms:'terms', consent:'consent' }[lgKind] || lgKind;
+    const slug = { offer:'oferta', privacy:'privacy', terms:'terms', consent:'consent', refund:'refund', license:'license' }[lgKind] || lgKind;
     const url  = 'https://okoteam.top/legal/' + slug;
-    const d    = LG_DOCS[lgKind][lgS.lang];
+    const d    = LG_DOCS[lgKind] && LG_DOCS[lgKind][lgS.lang];
     const title= (d && d.title) || 'OKO Legal';
     const done = ()=> lgToast(lgS.lang==='en' ? 'Link copied' : 'Ссылка скопирована');
     if(navigator.share){
@@ -574,7 +879,6 @@ function lgShareLink(){
     } else if(navigator.clipboard){
       navigator.clipboard.writeText(url).then(done).catch(()=>{});
     } else {
-      // legacy fallback
       const t = document.createElement('textarea'); t.value = url;
       document.body.appendChild(t); t.select();
       try{ document.execCommand('copy'); done(); }catch(e){}
@@ -598,7 +902,7 @@ function lgToast(msg){
   }catch(e){}
 }
 
-/* плавный скролл к секции/оглавлению внутри контейнера документа */
+/* плавный скролл к секции внутри контейнера документа */
 function lgJump(id){
   const el = document.getElementById(id);
   const box = document.getElementById('lgBody');
@@ -611,9 +915,7 @@ function lgJump(id){
   setTimeout(()=>el.classList.remove('lg-flash'), 900);
 }
 
-/* ---------- scroll-spy: подсветка активного пункта оглавления при прокрутке ----------
-   Лёгкий, пассивный, throttle через rAF — не создаёт лага и не мешает перф-слою.
-   Дополнительно двигает индикатор прогресса чтения (lgProgFill). */
+/* ---------- scroll-spy: подсветка активного пункта оглавления при прокрутке ---------- */
 let _lgSpyBound = false;
 function lgSpyUpdate(){
   try{
@@ -628,7 +930,6 @@ function lgSpyUpdate(){
       secs.forEach((s,i)=>{ if(s.getBoundingClientRect().top - bt <= 90) cur = i; });
       links.forEach((a,i)=>a.classList.toggle('on', i===cur));
     }
-    /* прогресс-бар: отношение scrollTop к максимальной прокрутке */
     const fill = document.getElementById('lgProgFill');
     if(fill){
       const max = Math.max(1, box.scrollHeight - box.clientHeight);
@@ -648,39 +949,82 @@ function lgBindSpy(){
   }, {passive:true});
 }
 
+/* ---------- рендер (hub / doc / deal) ---------- */
 function lgRender(){
+  const v = document.getElementById('legalView');
   const head = document.getElementById('lgHeadTitle');
-  if(head) head.textContent = lgS.lang==='en' ? 'OKO Legal' : 'Документы OKO';
   const ru = document.getElementById('lgLangRu'), en = document.getElementById('lgLangEn');
   if(ru) ru.classList.toggle('on', lgS.lang==='ru');
   if(en) en.classList.toggle('on', lgS.lang==='en');
   const tabs = document.getElementById('lgTabs');
-  if(tabs) tabs.innerHTML = LG_TABS.map(t0=>
-    `<button class="lg-tab ${t0.k===lgKind?'on':''}" onclick="lgGo('${t0.k}')">${I('file')} ${t0[lgS.lang]||t0.ru}</button>`).join('');
   const body = document.getElementById('lgBody');
-  if(body){ body.innerHTML = lgDocHtml(lgKind, lgS.lang); body.scrollTop = 0; }
-  /* привязать scroll-spy (единожды) и подсветить первый пункт оглавления */
+  if(!v || !body) return;
+
+  const isHub = !lgKind;
+  const isDeal = (lgKind === 'deal');
+  v.classList.toggle('hub',  isHub);
+  v.classList.toggle('doc', !isHub);
+
+  if(isHub){
+    if(head) head.textContent = lgS.lang==='en' ? 'OKO Legal' : 'Документы OKO';
+    if(tabs) tabs.innerHTML = '';
+    body.innerHTML = lgHubHtml(lgS.lang);
+    body.scrollTop = 0;
+    return;
+  }
+
+  /* режим doc / deal */
+  if(head){
+    if(isDeal){
+      head.textContent = lgS.lang==='en' ? 'Deal certificate' : 'Договор-акт';
+    } else {
+      const d = LG_DOCS[lgKind][lgS.lang];
+      head.textContent = d.title;
+    }
+  }
+  if(tabs){
+    // табы показываем только для «обычных» документов; для сделки — скрываем
+    if(isDeal){
+      tabs.innerHTML = '';
+    } else {
+      tabs.innerHTML = LG_TABS.map(t0=>
+        `<button type="button" class="lg-tab ${t0.k===lgKind?'on':''}" onclick="lgGo('${t0.k}')">${I('file')} ${t0[lgS.lang]||t0.ru}</button>`).join('');
+    }
+  }
+  body.innerHTML = isDeal ? lgDealHtml(lgDealCtx||{}, lgS.lang) : lgDocHtml(lgKind, lgS.lang);
+  body.scrollTop = 0;
   lgBindSpy(); lgSpyUpdate();
 }
 
 /* ---------- публичное API ---------- */
-function openLegalDoc(kind){
-  if(LG_DOCS[kind]) lgKind = kind;
+function openLegalHub(){
+  lgKind = null; lgDealCtx = null;
   lgRender();
-  const v = document.getElementById('legalView');
-  if(v) v.classList.add('open');
+  const v = document.getElementById('legalView'); if(v) v.classList.add('open');
+}
+function openLegalDoc(kind){
+  if(!LG_DOCS[kind]){ return openLegalHub(); }
+  lgKind = kind; lgDealCtx = null;
+  lgRender();
+  const v = document.getElementById('legalView'); if(v) v.classList.add('open');
+}
+function openLegalDeal(ctx){
+  lgKind = 'deal'; lgDealCtx = ctx || {};
+  lgRender();
+  const v = document.getElementById('legalView'); if(v) v.classList.add('open');
 }
 function closeLegalDoc(){
   const v = document.getElementById('legalView');
   if(v) v.classList.remove('open');
 }
-function lgGo(kind){ if(LG_DOCS[kind]){ lgKind = kind; lgRender(); } }
+function lgBackToHub(){ lgKind = null; lgDealCtx = null; lgRender(); }
+function lgGo(kind){ if(LG_DOCS[kind]){ lgKind = kind; lgDealCtx = null; lgRender(); } }
 function lgSetLang(l){
   if(l!=='ru' && l!=='en') return;
   lgS.lang = l; lgSave(); lgRender();
 }
 
-/* строка юр-ссылок на экране входа — на текущем языке приложения */
+/* строка юр-ссылок на экране входа */
 function lgRenderAuthLegal(l){
   const al = document.querySelector('.auth-legal');
   if(!al) return;
@@ -703,20 +1047,20 @@ function lgRenderAuthLegal(l){
       const b = document.createElement('button');
       b.className = 'prow'; b.id = 'prowLegal';
       b.innerHTML = `${I('file')} Документы OKO <span class="chev">${I('chev')}</span>`;
-      b.onclick = ()=>openLegalDoc('offer');
+      b.onclick = ()=>openLegalHub();
       logoutRow.parentNode.insertBefore(b, logoutRow);
     }
   }catch(e){}
 
   /* б) тайл в хабе «Мини-аппы» */
   if(typeof addSvcTile==='function'){
-    addSvcTile({id:'legal', label:'Документы', ico:'file', onclick:()=>openLegalDoc('offer')});
+    addSvcTile({id:'legal', label:'Документы', ico:'file', onclick:()=>openLegalHub()});
   }
 
-  /* в) кликабельные ссылки на экране входа — на текущем языке */
+  /* в) кликабельные ссылки на экране входа */
   try{ lgRenderAuthLegal(typeof LANG!=='undefined'?LANG:'ru'); }catch(e){}
 
-  /* следовать за глобальным переключением языка (если пользователь меняет язык приложения) */
+  /* следовать за глобальным переключением языка */
   if(typeof onLangChange==='function'){
     onLangChange(l=>{
       if(l==='ru'||l==='en'){
@@ -728,8 +1072,43 @@ function lgRenderAuthLegal(l){
     });
   }
 
-  /* i18n-регистрация подписей (ядро i18n) */
+  /* i18n-регистрация подписей */
   if(typeof regT==='function'){
     regT({ 'lg.docs': {ru:'Документы OKO', en:'OKO Legal'} });
   }
+
+  /* г) авто-открытие договора-акта после успешной оплаты подписки.
+     Обёртываем doPay откладывая до полной загрузки всех модулей (paywall/wallet/games тоже могут его перехватывать). */
+  setTimeout(function(){
+    try{
+      if(typeof doPay !== 'function') return;
+      const _prevDoPay = doPay;
+      window.doPay = function(){
+        const st = (typeof payState !== 'undefined') ? payState : null;
+        let plan  = 'START', period = 12, amount = 0, method = 'card';
+        try{
+          if(st){
+            plan   = st.plan   || plan;
+            period = st.period || period;
+            method = st.method || method;
+            if(typeof payPrice === 'function'){ const pp = payPrice(); if(pp && pp.total != null) amount = pp.total; }
+            if(!amount && typeof PLANS !== 'undefined' && PLANS[plan]){
+              amount = (PLANS[plan].price||0) * period;
+            }
+          }
+        }catch(e){}
+        const r = _prevDoPay.apply(this, arguments);
+        /* открываем договор после закрытия sheet «Оплата» с задержкой,
+           чтобы не мешать анимации «Оплата успешна». */
+        try{
+          setTimeout(function(){
+            const buyer = (typeof PROFILE !== 'undefined' && PROFILE && PROFILE.name) ? PROFILE.name : 'Покупатель';
+            const methodLbl = ({card:'банковская карта РФ', crypto:'криптовалюта', lava:'Lava.top'})[method] || method;
+            openLegalDeal({buyer, plan, period, amount, currency:'RUB', method:methodLbl});
+          }, 2600);
+        }catch(e){}
+        return r;
+      };
+    }catch(e){}
+  }, 1200);
 })();
