@@ -77,6 +77,7 @@ ob_start(); ?>
         <li><span class="hero-trust-ic"><?= $icons['gov'] ?></span>При поддержке Минкультуры</li>
         <li><span class="hero-trust-ic"><?= $icons['globe'] ?></span>Портал «PRO.Культура.РФ»</li>
       </ul>
+      <div class="hero-eq" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i></div>
     </div>
   </div>
 </section>

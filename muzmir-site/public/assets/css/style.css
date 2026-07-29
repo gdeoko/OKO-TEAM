@@ -162,7 +162,9 @@ p{margin:0 0 1em}
 .header.scrolled{box-shadow:var(--shadow-soft);backdrop-filter:blur(26px) saturate(1.3)}
 .header.scrolled .container{padding-top:7px;padding-bottom:7px}
 .brand{display:flex;align-items:center;gap:12px;color:var(--text)}
-.brand img{width:48px;height:48px;border-radius:50%;box-shadow:0 0 20px rgba(201,168,76,.32);border:1px solid var(--glass-brd)}
+.brand img{width:50px;height:50px;border-radius:50%;object-fit:contain;border:0;background:transparent;
+  filter:drop-shadow(0 4px 14px rgba(201,168,76,.35))}
+[data-theme="dark"] .brand img{filter:drop-shadow(0 4px 18px rgba(232,194,90,.42))}
 .brand span{font-family:var(--ff-display);font-weight:800;font-size:1.3rem;line-height:.95;letter-spacing:.01em;
   background:var(--grad-gold-text);-webkit-background-clip:text;background-clip:text;color:transparent}
 .nav{display:flex;gap:18px;align-items:center}
@@ -311,11 +313,15 @@ p{margin:0 0 1em}
 
 /* ══════════════════════════════ ПАРТНЁРЫ ══════════════════════════════ */
 .partners{display:flex;flex-wrap:wrap;gap:30px;justify-content:center;align-items:center}
-.partners img{height:66px;width:auto;opacity:.72;transition:.25s;filter:grayscale(.2)}
+.partners img{height:66px;width:auto;opacity:.85;transition:.25s;filter:grayscale(.15)}
+/* Тёмная тема: эмблемы на плашке из «пергамента» с золотой рамкой (крупнее, лого не задыхаются) */
 [data-theme="dark"] .partners img,
-[data-theme="dark"] .footer-partners img{background:rgba(255,255,255,.92);border:1px solid var(--line);border-radius:12px;padding:8px;filter:none;opacity:.96}
+[data-theme="dark"] .footer-partners img{
+  background:linear-gradient(180deg,#faf5e6,#f2ead0);
+  border:1px solid rgba(232,194,90,.35);border-radius:14px;padding:10px 14px;filter:none;opacity:1;
+  box-shadow:0 6px 18px rgba(0,0,0,.28),inset 0 1px 0 rgba(255,255,255,.6)}
 [data-theme="dark"] .partners a:hover img,
-[data-theme="dark"] .footer-partners a:hover img{opacity:1}
+[data-theme="dark"] .footer-partners a:hover img{transform:translateY(-2px);box-shadow:0 10px 24px rgba(232,194,90,.28)}
 .partners a:hover img{transform:scale(1.06);opacity:1;filter:none}
 
 /* ══════════════════════════════ КАРТОЧКА КОНКУРСА ══════════════════════════════ */
@@ -397,7 +403,10 @@ select{color:var(--text)} option{background:var(--panel-solid);color:var(--text)
 .footer ul li{margin-bottom:9px}
 .footer-bottom{border-top:1px solid var(--line);padding-top:20px;display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap;font-size:.82rem;color:var(--muted)}
 .footer-partners{display:flex;gap:16px;flex-wrap:wrap;align-items:center;margin-top:14px}
-.footer-partners img{height:40px;background:#fff;border-radius:8px;padding:5px}
+.footer-partners img{height:56px;background:linear-gradient(180deg,#fffdf6,#f7efd8);border-radius:12px;padding:9px 14px;
+  border:1px solid rgba(201,168,76,.32);box-shadow:0 4px 14px rgba(0,0,0,.12),inset 0 1px 0 rgba(255,255,255,.7);
+  transition:transform .22s cubic-bezier(.2,.8,.2,1),box-shadow .22s;object-fit:contain}
+.footer-partners a:hover img{transform:translateY(-3px);box-shadow:0 10px 24px rgba(201,168,76,.28)}
 
 /* ══════════════════════════════ FLASH / ТОСТЫ ══════════════════════════════ */
 .flash{padding:14px 18px;border-radius:var(--radius-sm);margin-bottom:14px;font-weight:600;border:1px solid var(--glass-brd);backdrop-filter:blur(8px)}
@@ -871,3 +880,87 @@ body::after{content:"";position:fixed;inset:0;z-index:0;pointer-events:none;
 @media (max-width: 640px) {
   .js .reveal { opacity: 1 !important; transform: none !important; transition: none !important; }
 }
+
+/* ══════════════════════════════ WOW: живой градиент-фон + аудио-визуализатор ══════════════════════════════ */
+/* Мягкое медленное «дыхание» — conic-gradient с блюром за hero (GPU-friendly, без keyframe layout) */
+.hero{position:relative;isolation:isolate}
+.hero::before{content:"";position:absolute;inset:-15% -10% -5%;z-index:-1;pointer-events:none;
+  background:
+    radial-gradient(60% 55% at 22% 30%,rgba(232,194,90,.42),transparent 65%),
+    radial-gradient(55% 50% at 78% 20%,rgba(139,111,31,.32),transparent 68%),
+    radial-gradient(70% 60% at 50% 90%,rgba(201,168,76,.28),transparent 70%);
+  filter:blur(30px) saturate(1.15);opacity:.85;
+  animation:wowAurora 22s ease-in-out infinite alternate}
+[data-theme="dark"] .hero::before{opacity:.55;filter:blur(38px) saturate(1.35)}
+@keyframes wowAurora{
+  0%  {transform:translate3d(-3%,-2%,0) scale(1)}
+  33% {transform:translate3d(4%,3%,0)   scale(1.06)}
+  66% {transform:translate3d(-2%,4%,0)  scale(1.02)}
+  100%{transform:translate3d(3%,-3%,0)  scale(1.08)}
+}
+/* Плавающие ноты — 3 SVG-иконки, дрейф через transform, никакого repaint */
+.hero::after{content:"";position:absolute;inset:0;z-index:-1;pointer-events:none;opacity:.14;
+  background:
+    url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 60 60'><path d='M20 8v30a7 7 0 1 1-3-6V14l25-6v26a7 7 0 1 1-3-6V10z' fill='%23C9A84C'/></svg>") 15% 20%/60px no-repeat,
+    url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 60 60'><path d='M22 6c8 4 12 12 8 22-2 6-8 10-8 10s-4-4-2-10c2-4 6-6 6-14 0-4-2-6-4-8z' fill='%238B6F1F'/></svg>") 85% 30%/48px no-repeat,
+    url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 60 60'><path d='M20 8v30a7 7 0 1 1-3-6V14l25-6v26a7 7 0 1 1-3-6V10z' fill='%23C9A84C'/></svg>") 75% 78%/40px no-repeat;
+  animation:wowNotes 18s ease-in-out infinite alternate}
+@keyframes wowNotes{
+  0%{transform:translate3d(0,0,0) rotate(-1deg)}
+  100%{transform:translate3d(-8px,-14px,0) rotate(1.5deg)}
+}
+/* Аудио-визуализатор — 12 столбцов, «дышащий» эквалайзер под hero-контентом на десктопе */
+.hero-eq{display:flex;align-items:flex-end;gap:6px;height:44px;margin:22px 0 0;opacity:.6}
+.hero-eq i{display:block;flex:1;background:var(--grad-gold);border-radius:3px;transform-origin:center bottom;
+  animation:eqBar 1.4s ease-in-out infinite alternate}
+.hero-eq i:nth-child(1){animation-delay:-.1s;height:30%}
+.hero-eq i:nth-child(2){animation-delay:-.3s;height:60%}
+.hero-eq i:nth-child(3){animation-delay:-.5s;height:80%}
+.hero-eq i:nth-child(4){animation-delay:-.2s;height:45%}
+.hero-eq i:nth-child(5){animation-delay:-.7s;height:90%}
+.hero-eq i:nth-child(6){animation-delay:-.4s;height:55%}
+.hero-eq i:nth-child(7){animation-delay:-.9s;height:70%}
+.hero-eq i:nth-child(8){animation-delay:-.6s;height:35%}
+.hero-eq i:nth-child(9){animation-delay:-.15s;height:65%}
+.hero-eq i:nth-child(10){animation-delay:-.55s;height:85%}
+.hero-eq i:nth-child(11){animation-delay:-.35s;height:50%}
+.hero-eq i:nth-child(12){animation-delay:-.75s;height:75%}
+@keyframes eqBar{0%{transform:scaleY(.35)}100%{transform:scaleY(1)}}
+@media(max-width:640px){.hero-eq{display:none}} /* моб — без экватора для экономии */
+@media(prefers-reduced-motion:reduce){
+  .hero::before,.hero::after,.hero-eq i{animation:none!important}
+}
+
+/* Shimmer на золотых заголовках (bg-clip: text уже есть — добавляем движение) */
+h1,h2,.stat b{background-size:200% 100% !important;animation:goldShimmer 8s linear infinite}
+@keyframes goldShimmer{0%{background-position:0% 50%}100%{background-position:200% 50%}}
+@media(prefers-reduced-motion:reduce){h1,h2,.stat b{animation:none}}
+
+/* Glow-подсветка карточек при hover — золотое кольцо снаружи (композитинг, без layout) */
+.card, .cab-card, .comp-card, .sm-tile { transition: transform .3s cubic-bezier(.2,.8,.2,1), box-shadow .3s, border-color .3s !important; }
+@media(hover:hover) and (min-width:641px){
+  .card:hover, .cab-card:hover, .comp-card:hover {
+    transform: translateY(-4px) !important;
+    box-shadow: 0 20px 44px -14px rgba(201,168,76,.4), 0 8px 20px rgba(27,35,64,.14) !important;
+  }
+}
+
+/* Ripple на первичной кнопке */
+.btn--primary { position: relative; overflow: hidden; }
+.btn--primary::after {
+  content:""; position:absolute; inset:0; background:radial-gradient(circle at var(--rx,50%) var(--ry,50%),rgba(255,255,255,.55) 0%,transparent 55%);
+  opacity:0; transition:opacity .45s ease-out; pointer-events:none;
+}
+.btn--primary:active::after { opacity:1; transition:opacity 0s; }
+
+/* Стрелка «пульс» у CTA — приглашает нажать */
+.btn--primary.btn--lg::before {
+  content:""; position:absolute; inset:0; border-radius:inherit; border:2px solid rgba(232,194,90,.6);
+  animation:ctaPulse 2.2s ease-out infinite; pointer-events:none;
+}
+@keyframes ctaPulse{
+  0%{transform:scale(1);opacity:.6}
+  70%{transform:scale(1.08);opacity:0}
+  100%{transform:scale(1.08);opacity:0}
+}
+@media(prefers-reduced-motion:reduce){.btn--primary.btn--lg::before{animation:none;opacity:0}}
