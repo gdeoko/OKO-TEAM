@@ -1057,3 +1057,26 @@ body::after{content:"";position:fixed;inset:0;z-index:-1;pointer-events:none;opa
 .appnav a.appnav-cta .ic{transition:transform .3s cubic-bezier(.34,1.4,.5,1),box-shadow .22s}
 .appnav a.appnav-cta:active .ic{transform:scale(.92) translateY(1px)}
 .appnav a.appnav-cta.active .ic{box-shadow:0 8px 22px rgba(201,168,76,.55),0 0 0 3px rgba(201,168,76,.25)}
+
+/* ══ Финальный фикс: Telegram Mini App + фон + hero компактность ══ */
+/* Нижнее меню ВСЕГДА видно, включая Telegram Mini App */
+.appnav{display:block!important;position:fixed!important;left:0!important;right:0!important;bottom:0!important;z-index:200!important}
+.in-tg .appnav{display:block!important;bottom:0!important}
+/* Резерв под меню на всех страницах, даже в TG */
+body{padding-bottom:calc(76px + env(safe-area-inset-bottom))!important}
+.in-tg main{padding-bottom:calc(76px + env(safe-area-inset-bottom))!important}
+/* Чат-FAB — в TG прячем принудительно */
+.in-tg .chat-fab{display:none!important}
+/* Плавающие ноты в фоне: сделал крупными и грубыми — уменьшаю до тонкого паттерна */
+body::after{background-size:90px 90px!important;opacity:.035!important}
+[data-theme="dark"] body::after{opacity:.05!important}
+/* Компактный hero в Telegram (высота экрана телефона ограничена) */
+.in-tg .hero{padding:22px 0 30px!important}
+.in-tg .hero-logo{width:min(180px,52%)!important}
+.in-tg .hero h1{font-size:clamp(1.6rem,7.5vw,2.2rem)!important;line-height:1.05!important;margin-bottom:.15em!important}
+.in-tg .hero .lead{font-size:.94rem!important;margin-bottom:14px!important}
+.in-tg .hero-trust li{padding:5px 10px!important;font-size:.75rem!important}
+.in-tg .hero-eq{display:none!important}
+.in-tg .header{background:transparent!important;border-bottom:0!important}
+/* Тёмный фон в TG — приглушаем свечения чтобы не «сжигало» глаз */
+.in-tg body::before{opacity:.4!important;filter:blur(60px) saturate(1.1)!important}
