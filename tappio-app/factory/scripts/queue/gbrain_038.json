@@ -1,0 +1,236 @@
+{
+ "id": "gbrain_038",
+ "app": "brain",
+ "voice": "en-US-BrianNeural",
+ "rate": "+4%",
+ "grade": "teal_orange",
+ "brand": {
+  "accent": "#9B5DE5",
+  "accent2": "#C9A7FF",
+  "code": "FOCUS",
+  "logo": "brain.png",
+  "name": "BRAINOVA"
+ },
+ "music": {
+  "queries": [
+   "soft piano thoughtful",
+   "gentle cinematic hope",
+   "dreamy synth focus",
+   "bright optimistic electronic"
+  ]
+ },
+ "cover": {
+  "kicker": "60-SECOND TEST",
+  "top": "WHY YOU FORGET",
+  "big": "EVERY\nNAME",
+  "q": [
+   "elderly person smiling sharp mind"
+  ]
+ },
+ "segments": [
+  {
+   "id": "b1",
+   "text": "You just met them and the name is already gone."
+  },
+  {
+   "id": "b2",
+   "text": "It is not age. It is attention and encoding."
+  },
+  {
+   "id": "b3",
+   "text": "A quick daily test shows your memory score."
+  },
+  {
+   "id": "b4",
+   "text": "Simple games train recall in five minutes."
+  },
+  {
+   "id": "b5",
+   "text": "Watch the number climb week after week."
+  },
+  {
+   "id": "b6",
+   "text": "See your brain age in sixty seconds."
+  }
+ ],
+ "shots": [
+  {
+   "q": [
+    "runner morning sunrise energy"
+   ],
+   "motion": "zout"
+  },
+  {
+   "q": [
+    "clock ticking time closeup"
+   ],
+   "insert": "circle",
+   "pos": "upper"
+  },
+  {
+   "q": [
+    "focused eyes close up concentration"
+   ],
+   "motion": "zin"
+  },
+  {
+   "q": [
+    "chess board close up thinking"
+   ],
+   "insert": "arch",
+   "pos": "center"
+  },
+  {
+   "q": [
+    "coffee cup morning desk"
+   ],
+   "motion": "panr"
+  },
+  {
+   "q": [
+    "group people names introduction"
+   ],
+   "insert": "tv",
+   "pos": "center"
+  },
+  {
+   "q": [
+    "walking park green trees"
+   ],
+   "motion": "panl"
+  },
+  {
+   "q": [
+    "woman meditating calm light"
+   ],
+   "insert": "hexagon",
+   "pos": "upper"
+  },
+  {
+   "q": [
+    "glass of water healthy morning"
+   ],
+   "motion": "pandown"
+  },
+  {
+   "q": [
+    "elderly person smiling sharp mind"
+   ],
+   "insert": "tilt",
+   "pos": "lower"
+  },
+  {
+   "q": [
+    "sticky notes wall reminders"
+   ],
+   "motion": "panup"
+  },
+  {
+   "q": [
+    "yoga breathing calm room"
+   ],
+   "insert": "rrect",
+   "pos": "center"
+  },
+  {
+   "q": [
+    "person forgetting keys frustrated"
+   ],
+   "motion": "zout"
+  },
+  {
+   "q": [
+    "person doing crossword puzzle"
+   ],
+   "insert": "phone",
+   "pos": "lower"
+  },
+  {
+   "q": [
+    "person sleeping rest night"
+   ],
+   "motion": "zin"
+  }
+ ],
+ "overlays": [
+  {
+   "at": 0.422,
+   "dur": 2.32,
+   "type": "kicker",
+   "text": "BRAIN AGE"
+  },
+  {
+   "at": 0.572,
+   "dur": 2.31,
+   "type": "bars",
+   "title": "FOCUS AFTER 14 DAYS",
+   "unit": "%",
+   "items": [
+    [
+     "Before",
+     41
+    ],
+    [
+     "After",
+     78
+    ]
+   ],
+   "pos": "center"
+  },
+  {
+   "at": 0.58,
+   "dur": 2.6,
+   "type": "checklist",
+   "items": [
+    "Hear it",
+    "Picture it",
+    "Repeat it",
+    "Recall it"
+   ],
+   "pos": "center"
+  },
+  {
+   "at": 0.66,
+   "dur": 1.76,
+   "type": "chips",
+   "items": [
+    "RECALL",
+    "REACT",
+    "SOLVE",
+    "REPEAT"
+   ],
+   "pos": "upper"
+  },
+  {
+   "at": 0.665,
+   "dur": 1.88,
+   "type": "lowerthird",
+   "title": "DAILY STREAK",
+   "sub": "compounds fast"
+  },
+  {
+   "at": 0.829,
+   "dur": 1.98,
+   "type": "kinetic",
+   "top": "FOCUS",
+   "big": "UP"
+  }
+ ],
+ "cta": {
+  "text": "Comment FOCUS for the app.",
+  "code": "FOCUS"
+ },
+ "caption": "USEFUL: Forgetting names isn't age — it's encoding. A 60-second test shows your memory score, and five-minute games train recall. Watch the number climb. Comment FOCUS for the app. #brainhealth #memory #focus #productivity #selfimprovement #mentalhealth #learning #focus #memory #binaural #brain",
+ "yt_title": "Why you forget every name #shorts",
+ "trend_keys": [
+  "focus",
+  "memory",
+  "binaural",
+  "brain",
+  "beats",
+  "test",
+  "improve",
+  "music"
+ ],
+ "content_type": "useful"
+}

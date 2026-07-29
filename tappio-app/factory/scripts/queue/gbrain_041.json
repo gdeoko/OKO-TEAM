@@ -1,0 +1,230 @@
+{
+ "id": "gbrain_041",
+ "app": "brain",
+ "voice": "en-US-BrianNeural",
+ "rate": "+7%",
+ "grade": "clean_ad",
+ "brand": {
+  "accent": "#9B5DE5",
+  "accent2": "#C9A7FF",
+  "code": "FOCUS",
+  "logo": "brain.png",
+  "name": "BRAINOVA"
+ },
+ "music": {
+  "queries": [
+   "punchy pop energy",
+   "bright optimistic electronic",
+   "warm inspiring piano electronic"
+  ]
+ },
+ "cover": {
+  "kicker": "BRAIN AGE",
+  "top": "IS YOUR MIND",
+  "big": "OLDER THAN\nYOU?",
+  "q": [
+   "memory old photos hands"
+  ]
+ },
+ "segments": [
+  {
+   "id": "b1",
+   "text": "Your brain has an age, just like your body."
+  },
+  {
+   "id": "b2",
+   "text": "Speed, memory and focus reveal the real number."
+  },
+  {
+   "id": "b3",
+   "text": "One short test estimates it in a minute."
+  },
+  {
+   "id": "b4",
+   "text": "Most people score older than they expect."
+  },
+  {
+   "id": "b5",
+   "text": "The good news: it drops with daily training."
+  },
+  {
+   "id": "b6",
+   "text": "Find your brain age today."
+  }
+ ],
+ "shots": [
+  {
+   "q": [
+    "sticky notes wall reminders"
+   ],
+   "insert": "tilt",
+   "pos": "center"
+  },
+  {
+   "q": [
+    "student studying desk lamp night"
+   ],
+   "motion": "pandown"
+  },
+  {
+   "q": [
+    "elderly person smiling sharp mind"
+   ],
+   "insert": "hexagon",
+   "pos": "upper"
+  },
+  {
+   "q": [
+    "person thinking trying to remember"
+   ],
+   "motion": "panup"
+  },
+  {
+   "q": [
+    "runner morning sunrise energy"
+   ],
+   "insert": "circle",
+   "pos": "center"
+  },
+  {
+   "q": [
+    "chess board close up thinking"
+   ],
+   "motion": "panl"
+  },
+  {
+   "q": [
+    "focused eyes close up concentration"
+   ],
+   "insert": "phone",
+   "pos": "upper"
+  },
+  {
+   "q": [
+    "person sleeping rest night"
+   ],
+   "motion": "zout"
+  },
+  {
+   "q": [
+    "light bulb idea dark"
+   ],
+   "insert": "arch",
+   "pos": "upper"
+  },
+  {
+   "q": [
+    "group people names introduction"
+   ],
+   "motion": "panr"
+  },
+  {
+   "q": [
+    "person doing crossword puzzle"
+   ],
+   "insert": "tv",
+   "pos": "upper"
+  },
+  {
+   "q": [
+    "walking park green trees"
+   ],
+   "motion": "zin"
+  },
+  {
+   "q": [
+    "memory old photos hands"
+   ],
+   "insert": "rrect",
+   "pos": "center"
+  },
+  {
+   "q": [
+    "puzzle pieces hands table"
+   ],
+   "motion": "pandown"
+  }
+ ],
+ "overlays": [
+  {
+   "at": 0.188,
+   "dur": 1.89,
+   "type": "kicker",
+   "text": "DAILY REP"
+  },
+  {
+   "at": 0.375,
+   "dur": 2.03,
+   "type": "stat_count",
+   "to": 14,
+   "suffix": "d",
+   "label": "TO SHARPER",
+   "pos": "center"
+  },
+  {
+   "at": 0.377,
+   "dur": 1.96,
+   "type": "kinetic",
+   "top": "RECALL",
+   "big": "FASTER"
+  },
+  {
+   "at": 0.524,
+   "dur": 2.16,
+   "type": "lowerthird",
+   "title": "SHORT HARD PUZZLES",
+   "sub": "reset your attention"
+  },
+  {
+   "at": 0.608,
+   "dur": 2.6,
+   "type": "checklist",
+   "items": [
+    "Hear it",
+    "Picture it",
+    "Repeat it",
+    "Recall it"
+   ],
+   "pos": "center"
+  },
+  {
+   "at": 0.653,
+   "dur": 1.76,
+   "type": "gauge",
+   "to": 78,
+   "max": 100,
+   "suffix": "%",
+   "label": "FOCUS SCORE",
+   "pos": "center"
+  },
+  {
+   "at": 0.772,
+   "dur": 1.66,
+   "type": "chips",
+   "items": [
+    "SPEED",
+    "MEMORY",
+    "FOCUS",
+    "LOGIC"
+   ],
+   "pos": "lower"
+  }
+ ],
+ "cta": {
+  "text": "Comment FOCUS for the app.",
+  "code": "FOCUS"
+ },
+ "caption": "Your brain has an age — speed, memory and focus set the number. One quick test estimates it, and daily training drops it. Most people score older than they think. Comment FOCUS for the app. #brainhealth #memory #focus #productivity #selfimprovement #mentalhealth #learning #test #binaural #focus #music",
+ "yt_title": "Is your brain older than you are? #shorts",
+ "trend_keys": [
+  "test",
+  "binaural",
+  "focus",
+  "music",
+  "brain",
+  "memory",
+  "improve",
+  "beats"
+ ],
+ "content_type": "viral"
+}

@@ -1,0 +1,242 @@
+{
+ "id": "gspy_040",
+ "app": "spy",
+ "voice": "en-US-AndrewNeural",
+ "rate": "+4%",
+ "grade": "teal_orange",
+ "brand": {
+  "accent": "#00D9FF",
+  "accent2": "#7CFCFF",
+  "code": "PRIVACY",
+  "logo": "spy.png",
+  "name": "SPY CAMERA FINDER"
+ },
+ "music": {
+  "queries": [
+   "driving electronic",
+   "cyber suspense pulse",
+   "cinematic underscore tech"
+  ]
+ },
+ "cover": {
+  "kicker": "IR GLINT",
+  "top": "THE LENS",
+  "big": "ALWAYS\nGLOWS",
+  "q": [
+   "hotel room modern interior"
+  ]
+ },
+ "segments": [
+  {
+   "id": "b1",
+   "text": "Turn off the lights. Raise your phone camera."
+  },
+  {
+   "id": "b2",
+   "text": "A hidden lens reflects infrared as a tiny bright dot."
+  },
+  {
+   "id": "b3",
+   "text": "Slowly pan across mirrors, vents and smoke detectors."
+  },
+  {
+   "id": "b4",
+   "text": "The app highlights suspicious reflections for you."
+  },
+  {
+   "id": "b5",
+   "text": "Found one? Cover it and report the listing."
+  },
+  {
+   "id": "b6",
+   "text": "Sixty seconds of scanning saves your privacy."
+  }
+ ],
+ "shots": [
+  {
+   "q": [
+    "mirror bathroom hotel"
+   ],
+   "insert": "tv",
+   "pos": "lower"
+  },
+  {
+   "q": [
+    "hand holding smartphone dark"
+   ],
+   "motion": "zin"
+  },
+  {
+   "q": [
+    "person relaxing bed phone night"
+   ],
+   "insert": "phone",
+   "pos": "upper"
+  },
+  {
+   "q": [
+    "dark bedroom lamp light"
+   ],
+   "motion": "panr"
+  },
+  {
+   "q": [
+    "reflection glass light dot"
+   ],
+   "insert": "diamond",
+   "pos": "center"
+  },
+  {
+   "q": [
+    "traveler suitcase hotel hallway"
+   ],
+   "motion": "pandown"
+  },
+  {
+   "q": [
+    "door lock hotel keycard"
+   ],
+   "insert": "circle",
+   "pos": "upper"
+  },
+  {
+   "q": [
+    "airbnb apartment cozy night"
+   ],
+   "motion": "zout"
+  },
+  {
+   "q": [
+    "usb charger plug closeup"
+   ],
+   "insert": "arch",
+   "pos": "lower"
+  },
+  {
+   "q": [
+    "air vent grille ceiling"
+   ],
+   "motion": "panl"
+  },
+  {
+   "q": [
+    "phone flashlight scanning wall"
+   ],
+   "insert": "rrect",
+   "pos": "lower"
+  },
+  {
+   "q": [
+    "bookshelf decor living room"
+   ],
+   "motion": "panup"
+  },
+  {
+   "q": [
+    "laptop screen code green"
+   ],
+   "insert": "tilt",
+   "pos": "lower"
+  },
+  {
+   "q": [
+    "power outlet wall socket closeup"
+   ],
+   "motion": "zin"
+  },
+  {
+   "q": [
+    "surveillance concept eye lens"
+   ],
+   "insert": "hexagon",
+   "pos": "lower"
+  },
+  {
+   "q": [
+    "wifi router network dark tech"
+   ],
+   "motion": "panr"
+  }
+ ],
+ "overlays": [
+  {
+   "at": 0.095,
+   "dur": 2.18,
+   "type": "kicker",
+   "text": "STAY SAFE"
+  },
+  {
+   "at": 0.34,
+   "dur": 1.86,
+   "type": "callout",
+   "text": "IR GLINT GIVES IT AWAY",
+   "pos": "center"
+  },
+  {
+   "at": 0.436,
+   "dur": 2.6,
+   "type": "checklist",
+   "items": [
+    "Smoke detector",
+    "Alarm clock",
+    "TV frame",
+    "Power outlet"
+   ],
+   "pos": "center"
+  },
+  {
+   "at": 0.452,
+   "dur": 2.32,
+   "type": "bars",
+   "title": "HIDDEN CAM REPORTS",
+   "unit": "%",
+   "items": [
+    [
+     "2019",
+     6
+    ],
+    [
+     "2024",
+     34
+    ]
+   ],
+   "pos": "center"
+  },
+  {
+   "at": 0.84,
+   "dur": 1.75,
+   "type": "kinetic",
+   "top": "LOOK",
+   "big": "CLOSER"
+  },
+  {
+   "at": 0.893,
+   "dur": 2.29,
+   "type": "chips",
+   "items": [
+    "SCAN",
+    "SWEEP",
+    "CHECK",
+    "RELAX"
+   ],
+   "pos": "upper"
+  }
+ ],
+ "cta": {
+  "text": "Comment PRIVACY for the app.",
+  "code": "PRIVACY"
+ },
+ "caption": "Lights off, camera up. A hidden lens glows in infrared. Pan across vents, mirrors and smoke detectors to catch the glint. Comment PRIVACY for the app. #privacy #airbnb #travelsafety #hiddencamera #traveltips #hotelroom #safetytips #camera #hidden #former #airbnb",
+ "yt_title": "Spot a hidden camera lens in the dark #shorts",
+ "trend_keys": [
+  "camera",
+  "hidden",
+  "former",
+  "airbnb",
+  "spy",
+  "cameras",
+  "find",
+  "hotel"
+ ],
+ "content_type": "viral"
+}

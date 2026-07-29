@@ -5,16 +5,6 @@
  "code": "MEASURE",
  "top": [
   {
-   "views": 2315392,
-   "likes": 470,
-   "comments": 13,
-   "channel": "GRYMALA",
-   "followers": 2010,
-   "dur": 42,
-   "id": "FmOfqcITb9k",
-   "title": "AR Plan 3D – Camera to Plan, Floorplanner"
-  },
-  {
    "views": 1014296,
    "likes": 2281,
    "comments": 219,
@@ -23,16 +13,6 @@
    "dur": 45,
    "id": "z7DYC_zbZCM",
    "title": "Air Measure App Demo - Augmented reality tape measure"
-  },
-  {
-   "views": 975733,
-   "likes": 1035,
-   "comments": 10,
-   "channel": "GRYMALA",
-   "followers": 2010,
-   "dur": 29,
-   "id": "xtwFdG68QIY",
-   "title": "ARuler - Measure anything with Augmented Reality and your phone"
   },
   {
    "views": 672164,
@@ -45,18 +25,8 @@
    "title": "Measure App for Android better than iPhone"
   },
   {
-   "views": 611681,
-   "likes": 21707,
-   "comments": 794,
-   "channel": "Caroline Winkler",
-   "followers": 1170000,
-   "dur": 1771,
-   "id": "2kzyoTfawGM",
-   "title": "How to pick the right furniture + decor for your home."
-  },
-  {
-   "views": 411017,
-   "likes": 11519,
+   "views": 411060,
+   "likes": 11521,
    "comments": 294,
    "channel": "baixu",
    "followers": 297000,
@@ -65,7 +35,7 @@
    "title": "How to Arrange Your Living Room Furniture (An Architect’s Guide!)"
   },
   {
-   "views": 292520,
+   "views": 292528,
    "likes": 1201,
    "comments": 62,
    "channel": "DailyZeck",
@@ -75,47 +45,67 @@
    "title": "How to Use The Measure App on iPhone"
   },
   {
-   "views": 267509,
-   "likes": 1449,
-   "comments": 197,
-   "channel": "Rob Paul",
-   "followers": 41600,
-   "dur": 210,
-   "id": "Sp6hOCZddSI",
-   "title": "How to Measure Height with a Tape Measure and no Wall"
+   "views": 198433,
+   "likes": 1194,
+   "comments": 98,
+   "channel": "Payette Forward",
+   "followers": 1810000,
+   "dur": 313,
+   "id": "RvhZ074Vs7c",
+   "title": "How Do I Use The iPhone Measure App? How Accurate Is It?"
   },
   {
-   "views": 250818,
-   "likes": 1627,
-   "comments": 124,
-   "channel": "PicTailor",
-   "followers": 326,
-   "dur": 70,
-   "id": "Z_WdWF2yAI8",
-   "title": "How To Measure Yourself Without A Tape Measure"
+   "views": 191950,
+   "likes": 4382,
+   "comments": 78,
+   "channel": "Sketch Design Craft",
+   "followers": 39300,
+   "dur": 483,
+   "id": "K8BL_APoga0",
+   "title": "5 apps I use to DESIGN any space - Cabin Renovation - iPad for Architects"
   },
   {
-   "views": 179888,
-   "likes": 209,
-   "comments": 13,
-   "channel": "GRYMALA",
-   "followers": 2010,
-   "dur": 48,
-   "id": "sbehopkAJxU",
-   "title": "AR Plan 3D – Cam to Plan, Floorplanner"
+   "views": 140164,
+   "likes": 1356,
+   "comments": 90,
+   "channel": "TheSketchUpEssentials",
+   "followers": 606000,
+   "dur": 313,
+   "id": "HplrHVqeL-8",
+   "title": "Creating ROOM MODELS from Phone Lidar Scans! (New App Update!)"
+  },
+  {
+   "views": 137343,
+   "likes": 712,
+   "comments": 0,
+   "channel": "H&M Home",
+   "followers": 32100,
+   "dur": 105,
+   "id": "Xf8ImGLeO2U",
+   "title": "Interior hacks: Rug placement guide for your living room"
+  },
+  {
+   "views": 137302,
+   "likes": 4339,
+   "comments": 62,
+   "channel": "designchickee",
+   "followers": 74000,
+   "dur": 566,
+   "id": "RZYGTxcPsxY",
+   "title": "How to Arrange Furniture Like a Professional Interior Designer - Interior Design Tips"
+  },
+  {
+   "views": 135527,
+   "likes": 3495,
+   "comments": 73,
+   "channel": "Reynard Lowell",
+   "followers": 599000,
+   "dur": 1045,
+   "id": "AHefyeTUs5o",
+   "title": "How To Arrange Your Furniture (7 Layout Mistakes To Avoid)"
   }
  ],
  "millions_list": [
-  {
-   "views": 2315392,
-   "likes": 470,
-   "comments": 13,
-   "channel": "GRYMALA",
-   "followers": 2010,
-   "dur": 42,
-   "id": "FmOfqcITb9k",
-   "title": "AR Plan 3D – Camera to Plan, Floorplanner"
-  },
   {
    "views": 1014296,
    "likes": 2281,
@@ -127,21 +117,21 @@
    "title": "Air Measure App Demo - Augmented reality tape measure"
   }
  ],
- "millions": 2,
+ "millions": 1,
  "hooks": [
   "measure",
-  "plan",
   "app",
-  "tape",
-  "floorplanner",
-  "augmented",
-  "reality",
   "iphone",
+  "arrange",
+  "room",
   "furniture",
-  "camera",
-  "air",
-  "demo"
+  "use",
+  "interior",
+  "living",
+  "guide",
+  "design",
+  "air"
  ],
- "ts": "2026-07-29 10:02 UTC",
- "avg_views": 699101
+ "ts": "2026-07-29 12:15 UTC",
+ "avg_views": 333076
 }

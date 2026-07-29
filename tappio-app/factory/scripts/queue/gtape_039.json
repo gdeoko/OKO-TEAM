@@ -1,0 +1,221 @@
+{
+ "id": "gtape_039",
+ "app": "tape",
+ "voice": "en-US-ChristopherNeural",
+ "rate": "+6%",
+ "grade": "teal_orange",
+ "brand": {
+  "accent": "#F4C430",
+  "accent2": "#FFE08A",
+  "code": "MEASURE",
+  "logo": "tape.png",
+  "name": "3D TAPE MEASURE"
+ },
+ "music": {
+  "queries": [
+   "motivational corporate",
+   "cheerful folk clap",
+   "positive corporate light groove",
+   "happy ukulele diy"
+  ]
+ },
+ "cover": {
+  "kicker": "WILL IT FIT?",
+  "top": "MEASURE ANY ROOM",
+  "big": "WITHOUT\nA TAPE",
+  "q": [
+   "dining table room measure"
+  ]
+ },
+ "segments": [
+  {
+   "id": "b1",
+   "text": "A rug, a TV, a shelf. Will it fit? Stop guessing."
+  },
+  {
+   "id": "b2",
+   "text": "Point your phone, tap two points."
+  },
+  {
+   "id": "b3",
+   "text": "The length appears right on the floor."
+  },
+  {
+   "id": "b4",
+   "text": "Width, height, area, no helper needed."
+  },
+  {
+   "id": "b5",
+   "text": "Save every wall as a project, export a PDF."
+  },
+  {
+   "id": "b6",
+   "text": "Measure any space from your couch in ten seconds."
+  }
+ ],
+ "shots": [
+  {
+   "q": [
+    "apartment tour empty rooms"
+   ],
+   "insert": "circle",
+   "pos": "lower"
+  },
+  {
+   "q": [
+    "person measuring living room with phone ar"
+   ],
+   "motion": "zout"
+  },
+  {
+   "q": [
+    "bedroom bed frame assembly"
+   ],
+   "insert": "tv",
+   "pos": "center"
+  },
+  {
+   "q": [
+    "couple planning home layout tablet"
+   ],
+   "motion": "panup"
+  },
+  {
+   "q": [
+    "furniture store showroom sofa"
+   ],
+   "insert": "hexagon",
+   "pos": "lower"
+  },
+  {
+   "q": [
+    "modern tv mounted on wall living room"
+   ],
+   "motion": "zin"
+  },
+  {
+   "q": [
+    "doorway measuring frame home"
+   ],
+   "insert": "rrect",
+   "pos": "upper"
+  },
+  {
+   "q": [
+    "garden patio outdoor measuring"
+   ],
+   "motion": "panr"
+  },
+  {
+   "q": [
+    "measuring tape metal bending closeup"
+   ],
+   "insert": "arch",
+   "pos": "center"
+  },
+  {
+   "q": [
+    "closet organizer measuring wardrobe"
+   ],
+   "motion": "panl"
+  }
+ ],
+ "overlays": [
+  {
+   "at": 0.158,
+   "dur": 1.91,
+   "type": "kicker",
+   "text": "MEASURE 101"
+  },
+  {
+   "at": 0.161,
+   "dur": 2.26,
+   "type": "lowerthird",
+   "title": "TAP TWO POINTS",
+   "sub": "length appears on the floor"
+  },
+  {
+   "at": 0.254,
+   "dur": 2.23,
+   "type": "gauge",
+   "to": 1,
+   "max": 10,
+   "suffix": "",
+   "label": "PEOPLE NEEDED",
+   "pos": "center"
+  },
+  {
+   "at": 0.362,
+   "dur": 2.33,
+   "type": "bars",
+   "title": "TIME TO MEASURE",
+   "unit": "s",
+   "items": [
+    [
+     "Tape + helper",
+     90
+    ],
+    [
+     "Phone",
+     10
+    ]
+   ],
+   "pos": "center"
+  },
+  {
+   "at": 0.391,
+   "dur": 1.69,
+   "type": "callout",
+   "text": "BUY WHAT ACTUALLY FITS",
+   "pos": "center"
+  },
+  {
+   "at": 0.672,
+   "dur": 2.15,
+   "type": "chips",
+   "items": [
+    "LENGTH",
+    "WIDTH",
+    "HEIGHT",
+    "AREA"
+   ],
+   "pos": "upper"
+  },
+  {
+   "at": 0.688,
+   "dur": 1.88,
+   "type": "kinetic",
+   "top": "MEASURE",
+   "big": "ANY ROOM"
+  },
+  {
+   "at": 0.706,
+   "dur": 2.6,
+   "type": "checklist",
+   "items": [
+    "Measure the door",
+    "Measure the sofa",
+    "Compare sizes",
+    "Move it in"
+   ],
+   "pos": "center"
+  }
+ ],
+ "cta": {
+  "text": "Get it now — comment MEASURE and I'll send the link. Link in bio.",
+  "code": "MEASURE"
+ },
+ "caption": "A rug, a TV, a shelf — will it fit? Point your phone, tap two points, and the length appears on the floor. Width, height, area — no tape, no helper. Comment MEASURE for the app. #diy #homedecor #interiordesign #measure #movingtips #renter #apartmenttherapy #reality #plan #app #measure 👉 Comment MEASURE for the link — link in bio.",
+ "yt_title": "Measure any room without a tape #shorts",
+ "trend_keys": [
+  "reality",
+  "plan",
+  "app",
+  "measure",
+  "augmented",
+  "tape",
+  "floorplanner",
+  "iphone"
+ ],
+ "content_type": "sales"
+}
