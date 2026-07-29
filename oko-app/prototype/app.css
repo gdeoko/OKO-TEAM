@@ -11232,6 +11232,11 @@ body.pwa-offline-shift header{padding-top:calc(10px + max(8px,env(safe-area-inse
 :root[data-theme="light"] .pw-shine::after{background:linear-gradient(100deg,transparent,rgba(255,255,255,.7),transparent)}
 @media(prefers-reduced-motion:reduce){.pw-shine::after{display:none}}
 
+/* Крупные суммы вроде «Оплатить 1 439 040 ₽» не должны обрезаться в узком экране.
+   Разрешаем перенос и лёгкое сжатие внутренностей — единой строкой на широких. */
+.btn.pw-shine{white-space:normal;word-break:normal;overflow-wrap:anywhere;line-height:1.2;min-width:0;max-width:100%;padding:14px 16px;text-align:center;text-overflow:ellipsis}
+.btn.pw-shine svg.i{flex:none}
+
 /* ==========================================================================
    PW 2.0 — тарифы без видео: CSS-анимации на GPU, компакт-карточки, свайпер
    ========================================================================== */
@@ -11691,10 +11696,11 @@ body.pwa-offline-shift header{padding-top:calc(10px + max(8px,env(safe-area-inse
 .pp-hero-delta.down{color:var(--danger,#ff6b6b)}
 .pp-hero-spark{position:relative;margin-top:12px;height:56px;width:100%}
 .pp-hero-spark svg{display:block;width:100%;height:100%;overflow:visible}
-.pp-hero-cta{display:grid;grid-template-columns:1fr auto auto;gap:8px;margin-top:14px;position:relative}
-.pp-hero-cta .btn{padding:12px 14px;font-size:13.5px;white-space:nowrap;width:auto}
+.pp-hero-cta{display:grid;grid-template-columns:minmax(0,1fr) auto auto;gap:6px;margin-top:14px;position:relative}
+.pp-hero-cta .btn{padding:12px 10px;font-size:13px;white-space:nowrap;width:auto;min-width:0;text-overflow:ellipsis;overflow:hidden;max-width:100%}
 .pp-hero-cta .btn.icon-only{padding:12px;min-width:44px;flex:0 0 auto}
 .pp-hero-cta .btn.icon-only svg.i{margin:0}
+@media(max-width:400px){.pp-hero-cta .btn:not(.icon-only) svg.i{margin-right:4px}}
 
 /* Микро-статы под hero */
 .pp-microstat{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;margin-top:12px;position:relative}
@@ -11781,8 +11787,8 @@ body.pwa-offline-shift header{padding-top:calc(10px + max(8px,env(safe-area-inse
 .pp-deep-tabs button.on{background:var(--lime);color:#000;border-color:var(--lime)}
 .pp-deep-tabs button .dot{width:6px;height:6px;border-radius:50%;background:var(--accent)}
 .pp-deep-tabs button.on .dot{background:#000}
-.pp-ref-actions{display:grid;grid-template-columns:1fr auto auto;gap:8px;margin-top:10px}
-.pp-ref-actions .btn{padding:11px 14px;font-size:13px;white-space:nowrap;width:auto}
+.pp-ref-actions{display:grid;grid-template-columns:minmax(0,1fr) auto auto;gap:8px;margin-top:10px}
+.pp-ref-actions .btn{padding:11px 12px;font-size:13px;white-space:nowrap;width:auto;min-width:0;text-overflow:ellipsis;overflow:hidden;max-width:100%}
 .pp-ref-actions .btn.icon-only{padding:11px 12px;min-width:44px;flex:0 0 auto}
 .pp-ref-actions .btn.icon-only svg.i{margin:0}
 .pp-ref-hint{font-size:11.5px;color:var(--dim);margin-top:8px;line-height:1.5}
@@ -11938,6 +11944,10 @@ body.pwa-offline-shift header{padding-top:calc(10px + max(8px,env(safe-area-inse
 .pp-section-h.padded{padding:0 14px 8px}
 .pp-section-h p{font-weight:700;font-size:15px;letter-spacing:-.01em;margin:0}
 .pp-section-h .chip{font-size:10.5px}
+
+/* заголовок «Партнёрская программа» + чип-процент справа: чип не должен ужиматься */
+#ppRoot > h2.section-h{gap:8px;flex-wrap:wrap}
+#ppRoot > h2.section-h > .chip{flex:0 0 auto;max-width:100%;white-space:nowrap}
 
 /* Sparkline точки — вид ховер-подсказки */
 .pp-hero-spark .spot{fill:var(--lime);filter:drop-shadow(0 0 6px rgba(154,255,0,.6))}
@@ -12663,6 +12673,9 @@ nav#tabs>button:active svg.i{transform:scale(.88)}
   border-radius:var(--r-md);
   transition:transform .12s ease,box-shadow .22s ease,filter .22s ease,background .2s;
   box-shadow:0 6px 18px rgba(154,255,0,.16);
+  /* если текст всё-таки не влезает — многоточие вместо жёсткого обреза */
+  text-overflow:ellipsis;
+  min-width:0;
 }
 .btn:hover{box-shadow:0 8px 24px rgba(154,255,0,.26);filter:brightness(1.04)}
 .btn:active{transform:scale(.97);box-shadow:0 3px 10px rgba(154,255,0,.2)}

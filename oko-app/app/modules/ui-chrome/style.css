@@ -79,6 +79,9 @@ nav#tabs>button:active svg.i{transform:scale(.88)}
   border-radius:var(--r-md);
   transition:transform .12s ease,box-shadow .22s ease,filter .22s ease,background .2s;
   box-shadow:0 6px 18px rgba(154,255,0,.16);
+  /* если текст всё-таки не влезает — многоточие вместо жёсткого обреза */
+  text-overflow:ellipsis;
+  min-width:0;
 }
 .btn:hover{box-shadow:0 8px 24px rgba(154,255,0,.26);filter:brightness(1.04)}
 .btn:active{transform:scale(.97);box-shadow:0 3px 10px rgba(154,255,0,.2)}

@@ -354,6 +354,11 @@
 :root[data-theme="light"] .pw-shine::after{background:linear-gradient(100deg,transparent,rgba(255,255,255,.7),transparent)}
 @media(prefers-reduced-motion:reduce){.pw-shine::after{display:none}}
 
+/* Крупные суммы вроде «Оплатить 1 439 040 ₽» не должны обрезаться в узком экране.
+   Разрешаем перенос и лёгкое сжатие внутренностей — единой строкой на широких. */
+.btn.pw-shine{white-space:normal;word-break:normal;overflow-wrap:anywhere;line-height:1.2;min-width:0;max-width:100%;padding:14px 16px;text-align:center;text-overflow:ellipsis}
+.btn.pw-shine svg.i{flex:none}
+
 /* ==========================================================================
    PW 2.0 — тарифы без видео: CSS-анимации на GPU, компакт-карточки, свайпер
    ========================================================================== */
