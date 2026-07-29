@@ -25,12 +25,13 @@
   "big": "WITHOUT\nHOLES",
   "q": [
    "measuring tape metal bending closeup"
-  ]
+  ],
+  "ai": "work/gtape_027/cover_ai.png"
  },
  "segments": [
   {
    "id": "b1",
-   "text": "Renting means no guessing and no wall damage."
+   "text": "Stop scrolling. Renting means no guessing and no wall damage."
   },
   {
    "id": "b2",
@@ -208,7 +209,7 @@
   "code": "MEASURE"
  },
  "caption": "Renting? Measure the wall, drop a virtual frame, line up shelves before a single nail. Shop with real sizes and keep your deposit. Comment MEASURE for the app. #diy #homedecor #interiordesign #measure #movingtips #renter #apartmenttherapy #reality #app #tips #augmented",
- "yt_title": "Decorate a rental without holes #shorts",
+ "yt_title": "How to Measure Height with a #shorts",
  "trend_keys": [
   "reality",
   "app",
@@ -219,5 +220,18 @@
   "tricks",
   "use"
  ],
- "content_type": "viral"
+ "content_type": "viral",
+ "comp_angle": {
+  "title": "How to Measure Height with a Tape Measure and no Wall",
+  "views": 267509,
+  "channel": "Rob Paul"
+ },
+ "virality": {
+  "score": 88,
+  "notes": [
+   "angle<-267k",
+   "hook_boosted"
+  ],
+  "hook": "Stop scrolling. Renting means no guessing and no wall damage."
+ }
 }

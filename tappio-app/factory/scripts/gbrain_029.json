@@ -25,12 +25,13 @@
   "big": "ANY NAME\nFOR GOOD",
   "q": [
    "brain scan mri blue"
-  ]
+  ],
+  "ai": "work/gbrain_029/cover_ai.png"
  },
  "segments": [
   {
    "id": "b1",
-   "text": "Hear the name, then say it back out loud."
+   "text": "Stop scrolling. Hear the name, then say it back out loud."
   },
   {
    "id": "b2",
@@ -213,7 +214,7 @@
   "code": "FOCUS"
  },
  "caption": "Say it back, link it to an image, repeat after ten seconds — that triple hit locks a name in. Train the habit with quick daily reps. Comment FOCUS for the app. #brainhealth #memory #focus #productivity #selfimprovement #mentalhealth #learning #concentration #brain #beats #power 👉 Comment FOCUS for the link — link in bio.",
- "yt_title": "Remember any name for good #shorts",
+ "yt_title": "Increase Brain Power Enhance Intelligence IQ #shorts",
  "trend_keys": [
   "concentration",
   "brain",
@@ -224,5 +225,18 @@
   "binaural",
   "focus"
  ],
- "content_type": "sales"
+ "content_type": "sales",
+ "comp_angle": {
+  "title": "Increase Brain Power, Enhance Intelligence, IQ to improve, Binaural Beats, Improve Memory",
+  "views": 28915204,
+  "channel": "Music for Body and Spirit - Meditation Music"
+ },
+ "virality": {
+  "score": 89,
+  "notes": [
+   "angle<-28915k",
+   "hook_boosted"
+  ],
+  "hook": "Stop scrolling. Hear the name, then say it back out loud."
+ }
 }
