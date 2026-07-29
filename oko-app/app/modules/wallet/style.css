@@ -21,11 +21,29 @@
 .wal-hold svg.i{width:14px;height:14px;color:var(--dim)}
 .wal-hold b{color:var(--text);font-weight:700}
 .wal-actions{position:relative;z-index:1;display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px}
+.wal-actions.g4{grid-template-columns:repeat(4,1fr);gap:7px}
+.wal-actions.g4 .wal-act{padding:11px 2px 9px;font-size:11.5px;gap:5px;border-radius:14px}
+.wal-actions.g4 .wal-act svg.i{width:18px;height:18px}
 .wal-act{display:flex;flex-direction:column;align-items:center;gap:6px;padding:12px 4px 10px;border-radius:var(--r-md);background:var(--lime);color:#000;font-size:12px;font-weight:700;transition:transform .12s,box-shadow .2s}
 .wal-act:active{transform:scale(.95)}
 .wal-act svg.i{width:20px;height:20px}
 .wal-act.ghost{background:transparent;color:var(--accent);border:1px solid var(--accent)}
 .wal-act:first-child{box-shadow:var(--glow)}
+/* показать/скрыть баланс */
+.wal-eye{position:absolute;top:14px;right:14px;width:32px;height:32px;border-radius:50%;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.09);color:var(--dim);display:flex;align-items:center;justify-content:center;transition:all .15s;z-index:2}
+:root[data-theme="light"] .wal-eye{background:rgba(0,0,0,.04);border-color:rgba(0,0,0,.08)}
+.wal-eye:active{transform:scale(.92)}
+.wal-eye svg.i{width:15px;height:15px}
+.wal-eye.on{color:var(--accent);background:var(--lime-dim);border-color:var(--lime)}
+.wal-balance.hidden{filter:blur(14px);opacity:.55;letter-spacing:.05em;user-select:none}
+/* переключатель периода мини-графика */
+.wal-chart-period{display:inline-flex;gap:5px;background:rgba(255,255,255,.04);border-radius:99px;padding:2px}
+:root[data-theme="light"] .wal-chart-period{background:rgba(0,0,0,.05)}
+.wal-chart-period button{padding:3px 9px;border-radius:99px;font-size:9.5px;font-weight:800;letter-spacing:.06em;color:var(--dim);text-transform:uppercase;transition:all .15s}
+.wal-chart-period button.on{background:var(--lime-dim);color:var(--accent)}
+.wal-avg{position:relative;z-index:1;display:flex;align-items:center;gap:6px;margin-top:8px;font-size:11px;color:var(--dim);font-weight:600}
+.wal-avg svg{width:13px;height:13px;color:var(--accent);flex-shrink:0}
+.wal-avg b{color:var(--accent);font-weight:800}
 
 /* график баланса 30 дней (в карточке счёта) */
 .wal-chart-wrap{position:relative;z-index:1;margin:0 0 14px}
@@ -382,3 +400,226 @@
 .wal-ton-b span{display:block;font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:11.5px;color:var(--dim);margin-top:3px}
 .wal-ton-x{flex-shrink:0;font-size:11.5px;font-weight:700;color:var(--danger);background:rgba(255,77,77,.1);border-radius:99px;padding:7px 12px;transition:transform .12s}
 .wal-ton-x:active{transform:scale(.94)}
+
+/* ===== WALLET v2: MULTI-CURRENCY / SEND / RECEIVE / EXCHANGE / GOALS ===== */
+
+/* мультивалютная лента карточек с snap-scroll */
+.wal-cur-h{display:flex;align-items:baseline;justify-content:space-between;margin:22px 0 10px;padding:0 2px}
+.wal-cur-h h2{font-family:var(--font-display);font-size:21px;letter-spacing:.03em;color:var(--text);margin:0}
+.wal-cur-h button{font-size:11.5px;font-weight:700;color:var(--accent);background:var(--lime-dim);border-radius:99px;padding:7px 13px;transition:transform .12s;display:inline-flex;align-items:center}
+.wal-cur-h button:active{transform:scale(.94)}
+.wal-cur-strip{display:flex;gap:11px;overflow-x:auto;scroll-snap-type:x mandatory;-webkit-overflow-scrolling:touch;scrollbar-width:none;padding:2px 0 8px;margin:0 -14px}
+.wal-cur-strip::-webkit-scrollbar{display:none}
+.wal-cur-strip::before,.wal-cur-strip::after{content:'';flex:0 0 3px}
+.wal-cur-card{flex:0 0 78%;max-width:288px;scroll-snap-align:center;background:linear-gradient(140deg,var(--surface),var(--raised));border:1px solid var(--border);border-radius:var(--r-md);padding:14px 15px 13px;position:relative;overflow:hidden;transition:transform .16s,border-color .18s;cursor:pointer;min-height:120px}
+.wal-cur-strip .wal-cur-card:first-of-type{margin-left:14px}
+.wal-cur-strip .wal-cur-card:last-of-type{margin-right:14px}
+.wal-cur-card:hover{border-color:var(--lime)}
+.wal-cur-card:active{transform:scale(.985)}
+.wal-cur-card.rub{background:radial-gradient(120% 140% at 92% -10%,rgba(154,255,0,.12),transparent 55%),linear-gradient(140deg,#111808,#0a0f04);border-color:rgba(154,255,0,.35);color:#e8ffe0}
+:root[data-theme="light"] .wal-cur-card.rub{background:radial-gradient(120% 140% at 92% -10%,rgba(154,255,0,.24),transparent 55%),linear-gradient(140deg,#f5faea,#eaf3d9);color:#0d110a}
+.wal-cur-card.usdt-ton,.wal-cur-card.usdt-trc{background:linear-gradient(140deg,rgba(38,161,123,.16),rgba(38,161,123,.02) 65%),var(--surface);border-color:rgba(38,161,123,.4)}
+.wal-cur-card.ton{background:linear-gradient(140deg,rgba(0,136,204,.18),rgba(0,136,204,.02) 65%),var(--surface);border-color:rgba(0,136,204,.42)}
+.wal-cur-card.xp{background:linear-gradient(140deg,rgba(154,255,0,.16),rgba(91,224,255,.06) 65%),var(--surface);border-color:rgba(154,255,0,.42)}
+.wal-cur-top{display:flex;align-items:center;gap:10px;margin-bottom:12px}
+.wal-cur-logo{width:34px;height:34px;border-radius:50%;display:flex;align-items:center;justify-content:center;flex-shrink:0;font-family:var(--font-display);font-weight:700;font-size:14px;letter-spacing:.02em}
+.wal-cur-logo svg{width:20px;height:20px}
+.wal-cur-logo.rub{background:var(--lime);color:#000}
+.wal-cur-logo.usdt-ton,.wal-cur-logo.usdt-trc{background:#26a17b;color:#fff}
+.wal-cur-logo.ton{background:var(--lime);color:#0088CC;box-shadow:0 0 12px rgba(154,255,0,.35)}
+.wal-cur-logo.xp{background:linear-gradient(135deg,#9AFF00,#5be0ff);color:#000}
+.wal-cur-name{flex:1;min-width:0}
+.wal-cur-name b{display:block;font-size:13px;font-weight:700;line-height:1.15}
+.wal-cur-name span{display:block;font-size:10px;font-weight:600;color:var(--dim);margin-top:2px;letter-spacing:.06em;text-transform:uppercase}
+.wal-cur-card.rub .wal-cur-name span{color:rgba(232,255,224,.65)}
+:root[data-theme="light"] .wal-cur-card.rub .wal-cur-name span{color:rgba(13,17,10,.6)}
+.wal-cur-bal{font-family:var(--font-display);font-size:26px;line-height:1;letter-spacing:.02em;color:var(--text);margin-bottom:5px;transition:filter .2s}
+.wal-cur-card.rub .wal-cur-bal{color:#fff;text-shadow:0 0 18px rgba(154,255,0,.35)}
+:root[data-theme="light"] .wal-cur-card.rub .wal-cur-bal{color:#0d110a;text-shadow:none}
+.wal-cur-bal.hidden{filter:blur(10px)}
+.wal-cur-eq{font-size:11px;color:var(--dim);font-weight:600;transition:filter .2s}
+.wal-cur-card.rub .wal-cur-eq{color:rgba(232,255,224,.62)}
+:root[data-theme="light"] .wal-cur-card.rub .wal-cur-eq{color:rgba(13,17,10,.6)}
+.wal-cur-eq.hidden{filter:blur(6px)}
+.wal-cur-delta{position:absolute;top:12px;right:12px;font-size:10px;font-weight:800;padding:3px 9px;border-radius:99px;letter-spacing:.02em}
+.wal-cur-delta.in{color:var(--accent);background:var(--lime-dim)}
+.wal-cur-delta.out{color:var(--danger);background:rgba(255,77,77,.12)}
+.wal-cur-dots{display:flex;justify-content:center;gap:6px;margin:-4px 0 10px}
+.wal-cur-dots i{width:6px;height:6px;border-radius:50%;background:var(--border);transition:all .25s cubic-bezier(.3,1,.4,1)}
+.wal-cur-dots i.on{background:var(--accent);width:18px;border-radius:3px;box-shadow:0 0 8px rgba(154,255,0,.55)}
+:root[data-theme="light"] .wal-cur-dots i.on{box-shadow:none}
+
+/* обмен валют */
+.wal-ex-swap{display:flex;flex-direction:column;gap:8px;margin:12px 0 6px;position:relative}
+.wal-ex-cell{padding:12px 14px 10px;background:var(--raised);border:1.4px solid var(--border);border-radius:var(--r-md);display:flex;align-items:center;gap:11px;position:relative;transition:border-color .15s}
+.wal-ex-cell.on{border-color:var(--lime)}
+.wal-ex-lbl{font-size:10px;font-weight:800;letter-spacing:.1em;text-transform:uppercase;color:var(--dim);position:absolute;top:-7px;left:14px;background:var(--bg);padding:0 6px}
+.wal-ex-cell .wal-cur-logo{width:30px;height:30px;font-size:12px}
+.wal-ex-cell .wal-cur-logo svg{width:16px;height:16px}
+.wal-ex-cell-mid{flex:1;min-width:0;display:flex;flex-direction:column;gap:3px}
+.wal-ex-cell-code{font-size:12.5px;font-weight:700;line-height:1}
+.wal-ex-cell-max{font-size:10.5px;color:var(--dim);font-weight:600}
+.wal-ex-cell input{width:110px;font-family:var(--font-display);font-size:22px;color:var(--text);background:transparent;border:none;outline:none;padding:2px 0;letter-spacing:.02em;text-align:right;flex-shrink:0}
+.wal-ex-cell input::placeholder{color:var(--dim)}
+.wal-ex-arrow{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);width:38px;height:38px;border-radius:50%;background:var(--bg);border:1.4px solid var(--lime);display:flex;align-items:center;justify-content:center;color:var(--accent);cursor:pointer;transition:transform .28s;z-index:2}
+.wal-ex-arrow:active{transform:translate(-50%,-50%) scale(.92) rotate(180deg)}
+.wal-ex-arrow svg{width:16px;height:16px}
+.wal-ex-cur-pick{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;margin:4px 0 2px}
+.wal-ex-cur-pick button{padding:9px 4px;border:1px solid var(--border);border-radius:12px;font-size:11px;font-weight:700;color:var(--text);transition:all .15s;display:flex;flex-direction:column;align-items:center;gap:5px}
+.wal-ex-cur-pick button .wal-cur-logo{width:24px;height:24px;font-size:10px}
+.wal-ex-cur-pick button .wal-cur-logo svg{width:13px;height:13px}
+.wal-ex-cur-pick button.on{border-color:var(--lime);background:var(--lime-dim);color:var(--accent)}
+.wal-ex-rate{font-size:12px;color:var(--dim);text-align:center;padding:10px 0 4px;line-height:1.5}
+.wal-ex-rate b{color:var(--text);font-weight:700}
+.wal-ex-rate em{font-style:normal;color:var(--accent);font-weight:700}
+
+/* отправка (перевод другому пользователю) */
+.wal-send-to{display:flex;align-items:center;gap:11px;padding:11px 12px;background:var(--raised);border:1px solid var(--border);border-radius:var(--r-md);margin:8px 0 12px;transition:border-color .15s}
+.wal-send-to:focus-within{border-color:var(--lime)}
+.wal-send-av{width:34px;height:34px;border-radius:50%;background:var(--lime-dim);color:var(--accent);display:flex;align-items:center;justify-content:center;font-family:var(--font-display);font-size:15px;flex-shrink:0}
+.wal-send-to input{flex:1;background:transparent;border:none;outline:none;color:var(--text);font-size:13.5px;font-weight:600;min-width:0}
+.wal-send-quick{display:flex;gap:8px;overflow-x:auto;-webkit-overflow-scrolling:touch;scrollbar-width:none;margin:0 -14px 12px;padding:2px 14px 6px}
+.wal-send-quick::-webkit-scrollbar{display:none}
+.wal-send-qi{flex-shrink:0;display:flex;flex-direction:column;align-items:center;gap:6px;padding:9px 5px 7px;min-width:70px;border-radius:12px;background:var(--surface);border:1px solid var(--border);cursor:pointer;transition:all .15s}
+.wal-send-qi:hover{border-color:var(--lime);background:var(--lime-dim)}
+.wal-send-qi:active{transform:scale(.94)}
+.wal-send-qi .wal-send-av{width:38px;height:38px;font-size:16px}
+.wal-send-qi span{font-size:10.5px;font-weight:600;color:var(--text);white-space:nowrap;max-width:62px;overflow:hidden;text-overflow:ellipsis;letter-spacing:-.01em}
+.wal-send-note{width:100%;padding:11px 14px;border:1px solid var(--border);border-radius:var(--r-md);background:var(--raised);color:var(--text);font-size:13.5px;font-weight:600;margin-bottom:12px}
+.wal-send-note::placeholder{color:var(--dim);font-weight:500}
+.wal-send-note:focus{outline:none;border-color:var(--lime);box-shadow:0 0 0 3px var(--lime-dim)}
+
+/* QR-приём (canvas) */
+.wal-recv{padding:8px 4px 4px;text-align:center;animation:fade .3s ease both}
+.wal-recv-card{background:var(--raised);border:1px solid var(--border);border-radius:var(--r-lg);padding:18px 16px 16px;margin:6px 0 12px}
+#walRecvCanvas{display:block;margin:0 auto 12px;background:#fff;padding:10px;border-radius:14px;width:210px;height:210px;box-shadow:0 6px 26px rgba(154,255,0,.18)}
+.wal-recv-sum{display:inline-flex;align-items:baseline;gap:6px;font-family:var(--font-display);font-size:26px;letter-spacing:.02em;color:var(--accent);margin:2px 0 3px}
+.wal-recv-sum small{font-size:14px;color:var(--dim);letter-spacing:0}
+.wal-recv-sub{font-size:11.5px;color:var(--dim);margin-bottom:12px;line-height:1.45}
+.wal-recv-sub b{color:var(--text);font-weight:700}
+.wal-recv-inputs{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin:0 0 10px}
+.wal-recv-inputs input{padding:10px 12px;border:1px solid var(--border);border-radius:12px;background:var(--surface);color:var(--text);font-size:13px;font-weight:600;text-align:center}
+.wal-recv-inputs input:focus{outline:none;border-color:var(--lime);box-shadow:0 0 0 3px var(--lime-dim)}
+.wal-recv-link{display:flex;align-items:center;gap:8px;background:var(--surface);border:1px dashed var(--accent);border-radius:10px;padding:10px 12px;margin-top:2px;font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:10.5px;color:var(--accent);text-align:left;cursor:pointer;transition:transform .12s;width:100%}
+.wal-recv-link:active{transform:scale(.98)}
+.wal-recv-link span{flex:1;word-break:break-all;line-height:1.4;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.wal-recv-link svg.i{width:14px;height:14px;flex-shrink:0}
+.wal-recv-share{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:12px}
+.wal-recv-share button{padding:12px 6px;border-radius:var(--r-md);font-size:12.5px;font-weight:700;transition:transform .12s;display:flex;align-items:center;justify-content:center;gap:7px}
+.wal-recv-share button svg.i{width:15px;height:15px}
+.wal-recv-share .prim{background:var(--lime);color:#000}
+.wal-recv-share .sec{background:var(--surface);border:1px solid var(--border);color:var(--text)}
+.wal-recv-share button:active{transform:scale(.96)}
+
+/* пирог расходов (SVG donut) */
+.wal-pie-wrap{display:flex;align-items:center;gap:15px;padding:16px 14px;animation:fade .3s ease both}
+.wal-pie{flex-shrink:0;width:120px;height:120px;position:relative}
+.wal-pie svg{width:100%;height:100%;transform:rotate(-90deg);overflow:visible}
+.wal-pie svg circle{transition:stroke-dasharray .8s cubic-bezier(.3,1,.4,1)}
+.wal-pie-center{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;pointer-events:none}
+.wal-pie-center b{font-family:var(--font-display);font-size:19px;line-height:1;color:var(--text);letter-spacing:.02em}
+.wal-pie-center span{font-size:9px;font-weight:700;color:var(--dim);letter-spacing:.12em;text-transform:uppercase;margin-top:5px}
+.wal-pie-list{flex:1;min-width:0;display:flex;flex-direction:column;gap:8px}
+.wal-pie-row{display:flex;align-items:center;gap:8px;font-size:12px;animation:fade .3s ease both}
+.wal-pie-dot{width:9px;height:9px;border-radius:2px;flex-shrink:0}
+.wal-pie-nm{flex:1;color:var(--text);font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.wal-pie-pct{color:var(--dim);font-weight:700;font-size:11px;flex-shrink:0}
+.wal-pie-empty{color:var(--dim);font-size:12.5px;padding:12px;text-align:center;flex:1}
+
+/* топ-3 источника дохода */
+.wal-topinc-r{display:flex;align-items:center;gap:12px;padding:12px 0;border-bottom:1px solid var(--border);animation:fade .3s ease both}
+.wal-topinc-r:last-child{border-bottom:none}
+.wal-topinc-rank{width:28px;height:28px;border-radius:50%;background:var(--lime-dim);color:var(--accent);display:flex;align-items:center;justify-content:center;font-family:var(--font-display);font-size:13px;flex-shrink:0}
+.wal-topinc-r:nth-child(2) .wal-topinc-rank{background:rgba(255,184,74,.15);color:#FFB84A}
+.wal-topinc-r:nth-child(3) .wal-topinc-rank{background:rgba(255,126,166,.15);color:#FF7EA6}
+.wal-topinc-b{flex:1;min-width:0}
+.wal-topinc-b b{display:block;font-size:13px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.wal-topinc-b span{display:block;font-size:11px;color:var(--dim);margin-top:2px}
+.wal-topinc-sum{font-size:13.5px;font-weight:800;color:var(--accent);white-space:nowrap;flex-shrink:0}
+.wal-topinc-empty{font-size:12.5px;color:var(--dim);padding:10px 0;text-align:center}
+
+/* финансовые цели */
+.wal-goals{display:flex;flex-direction:column;gap:10px;animation:fade .3s ease both}
+.wal-goal{padding:14px;cursor:pointer;transition:transform .12s,border-color .18s;position:relative;overflow:hidden}
+.wal-goal:hover{border-color:var(--lime)}
+.wal-goal:active{transform:scale(.995)}
+.wal-goal.done{background:linear-gradient(140deg,var(--lime-dim),transparent 70%)}
+.wal-goal-top{display:flex;align-items:center;gap:11px;margin-bottom:11px}
+.wal-goal-ic{width:38px;height:38px;border-radius:12px;background:var(--lime-dim);color:var(--accent);display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.wal-goal-ic svg.i{width:19px;height:19px}
+.wal-goal-b{flex:1;min-width:0}
+.wal-goal-b b{display:block;font-size:13.5px;font-weight:700;line-height:1.2}
+.wal-goal-b span{display:block;font-size:11.5px;color:var(--dim);margin-top:3px}
+.wal-goal-pct{font-family:var(--font-display);font-size:20px;color:var(--accent);letter-spacing:.02em;flex-shrink:0}
+.wal-goal-bar{height:8px;border-radius:4px;background:var(--raised);border:1px solid var(--border);overflow:hidden;position:relative}
+.wal-goal-bar i{display:block;height:100%;border-radius:4px;background:linear-gradient(90deg,color-mix(in srgb,var(--lime) 72%,#fff),var(--lime));animation:walBarIn .8s cubic-bezier(.3,1,.4,1) both;transition:width .6s cubic-bezier(.3,1,.4,1);position:relative;overflow:hidden}
+.wal-goal-bar i::after{content:'';position:absolute;inset:0;background:linear-gradient(90deg,transparent,rgba(255,255,255,.35),transparent);animation:walGoalShine 2.2s ease-in-out infinite}
+@keyframes walGoalShine{0%{transform:translateX(-100%)}60%,100%{transform:translateX(200%)}}
+@media (prefers-reduced-motion:reduce){.wal-goal-bar i::after{animation:none}}
+.wal-goal-foot{display:flex;justify-content:space-between;margin-top:9px;font-size:11.5px}
+.wal-goal-foot span{color:var(--dim);font-weight:600}
+.wal-goal-foot b{color:var(--text);font-weight:700}
+.wal-goal-add{display:flex;align-items:center;justify-content:center;gap:8px;padding:13px;border:1px dashed var(--border);border-radius:var(--r-md);color:var(--accent);font-weight:700;font-size:12.5px;background:transparent;transition:all .18s;cursor:pointer;width:100%}
+.wal-goal-add:hover{border-color:var(--lime);background:var(--lime-dim)}
+.wal-goal-add:active{transform:scale(.98)}
+.wal-goal-add svg.i{width:15px;height:15px}
+.wal-goal-form{display:flex;flex-direction:column;gap:12px;margin:8px 0}
+.wal-goal-ic-pick{display:grid;grid-template-columns:repeat(6,1fr);gap:6px;margin:4px 0 2px}
+.wal-goal-ic-pick button{aspect-ratio:1;border:1px solid var(--border);border-radius:12px;color:var(--dim);display:flex;align-items:center;justify-content:center;transition:all .15s}
+.wal-goal-ic-pick button.on{border-color:var(--lime);background:var(--lime-dim);color:var(--accent)}
+.wal-goal-ic-pick button svg.i{width:18px;height:18px}
+
+/* автопополнения */
+.wal-autor{padding:6px 14px;animation:fade .3s ease both}
+.wal-autor-r{display:flex;align-items:center;gap:12px;padding:12px 0;border-bottom:1px solid var(--border)}
+.wal-autor-r:last-of-type{border-bottom:none}
+.wal-autor-ic{width:36px;height:36px;border-radius:12px;background:var(--lime-dim);color:var(--accent);display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.wal-autor-ic svg.i{width:16px;height:16px}
+.wal-autor-b{flex:1;min-width:0}
+.wal-autor-b b{display:block;font-size:13px;font-weight:700;line-height:1.2}
+.wal-autor-b span{display:block;font-size:11px;color:var(--dim);margin-top:3px;line-height:1.4}
+.wal-autor-x{width:30px;height:30px;border-radius:10px;background:transparent;color:var(--dim);display:flex;align-items:center;justify-content:center;flex-shrink:0;transition:all .15s}
+.wal-autor-x:hover{background:rgba(255,77,77,.12);color:var(--danger)}
+.wal-autor-x svg.i{width:13px;height:13px}
+.wal-autor-add{display:flex;align-items:center;justify-content:center;gap:8px;width:100%;margin-top:10px;padding:11px;border:1px dashed var(--border);border-radius:10px;color:var(--accent);font-weight:700;font-size:12.5px;background:transparent;transition:all .18s;cursor:pointer}
+.wal-autor-add:hover{border-color:var(--lime);background:var(--lime-dim)}
+.wal-autor-add:active{transform:scale(.98)}
+.wal-autor-add svg.i{width:15px;height:15px}
+.wal-autor-empty{padding:14px 4px 10px;color:var(--dim);font-size:12.5px;text-align:center;line-height:1.5}
+.wal-autor-form{display:flex;flex-direction:column;gap:12px;margin:8px 0}
+.wal-autor-inp{padding:11px 14px;border:1px solid var(--border);border-radius:var(--r-md);background:var(--raised);color:var(--text);font-size:14px;font-weight:600;width:100%}
+.wal-autor-inp:focus{outline:none;border-color:var(--lime);box-shadow:0 0 0 3px var(--lime-dim)}
+.wal-autor-lbl{font-size:10.5px;font-weight:800;letter-spacing:.11em;text-transform:uppercase;color:var(--dim);margin-bottom:5px;display:block}
+
+/* face-id / отпечаток эмуляция */
+.wal-bio{display:flex;flex-direction:column;align-items:center;padding:14px 0 6px;animation:fade .3s ease both}
+.wal-bio-ic{width:84px;height:84px;border-radius:50%;background:radial-gradient(circle at 45% 40%,rgba(154,255,0,.35),rgba(154,255,0,.06) 70%,transparent);color:var(--accent);display:flex;align-items:center;justify-content:center;position:relative;cursor:pointer;transition:transform .18s}
+.wal-bio-ic:active{transform:scale(.94)}
+.wal-bio-ic::before{content:'';position:absolute;inset:-4px;border-radius:50%;border:2px solid var(--lime);opacity:0;animation:walRing 1.6s ease infinite}
+.wal-bio-ic svg.i{width:46px;height:46px}
+.wal-bio-h{font-size:16px;font-weight:700;margin-top:14px;letter-spacing:.01em}
+.wal-bio-s{font-size:12px;color:var(--dim);margin-top:5px;text-align:center;max-width:260px;line-height:1.45}
+.wal-bio.ok .wal-bio-ic{background:var(--lime);color:#000;box-shadow:0 0 24px rgba(154,255,0,.6)}
+.wal-bio.ok .wal-bio-ic::before{display:none}
+.wal-bio.ok .wal-bio-h{color:var(--accent)}
+.wal-bio.err .wal-bio-ic{background:rgba(255,77,77,.16);color:var(--danger);animation:walShake .4s ease}
+.wal-bio.err .wal-bio-ic::before{display:none}
+@media (prefers-reduced-motion:reduce){.wal-bio-ic::before{animation:none}}
+
+/* sticky live-уведомление о зачислении */
+.wal-live{position:fixed;left:50%;top:calc(env(safe-area-inset-top,0px) + 12px);transform:translateX(-50%);z-index:180;display:flex;align-items:center;gap:11px;background:linear-gradient(140deg,rgba(20,30,10,.96),rgba(10,15,5,.98));backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);border:1px solid rgba(154,255,0,.4);border-radius:16px;padding:11px 15px 11px 12px;color:#fff;box-shadow:0 12px 40px rgba(0,0,0,.55),0 0 40px rgba(154,255,0,.14);max-width:min(94vw,340px);animation:walLive .38s cubic-bezier(.3,1.4,.5,1) both;pointer-events:auto;cursor:pointer}
+:root[data-theme="light"] .wal-live{background:linear-gradient(140deg,#0d0d0d 0%,#151d0a 100%);border-color:rgba(154,255,0,.6);color:#fff;box-shadow:0 12px 40px rgba(0,0,0,.35),0 0 30px rgba(154,255,0,.18)}
+.wal-live.out{animation:walLiveOut .35s ease both;pointer-events:none}
+.wal-live-av{width:36px;height:36px;border-radius:50%;background:rgba(154,255,0,.18);color:var(--accent);display:flex;align-items:center;justify-content:center;font-family:var(--font-display);font-size:15px;flex-shrink:0;border:1px solid rgba(154,255,0,.5)}
+.wal-live-av svg{width:17px;height:17px}
+.wal-live-b{flex:1;min-width:0}
+.wal-live-b b{display:block;font-size:12.5px;font-weight:700;line-height:1.2;color:#fff}
+.wal-live-b span{display:block;font-size:11px;color:#c7c7c7;margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.wal-live-sum{font-family:var(--font-display);font-size:17px;color:var(--accent);letter-spacing:.02em;flex-shrink:0;text-shadow:0 0 10px rgba(154,255,0,.6)}
+.wal-live-x{width:22px;height:22px;border-radius:50%;background:rgba(255,255,255,.08);color:#fff;display:flex;align-items:center;justify-content:center;flex-shrink:0;transition:transform .12s;padding:0}
+.wal-live-x:active{transform:scale(.88)}
+.wal-live-x svg.i{width:10px;height:10px}
+@keyframes walLive{from{opacity:0;transform:translateX(-50%) translateY(-24px) scale(.92)}to{opacity:1;transform:translateX(-50%) translateY(0) scale(1)}}
+@keyframes walLiveOut{from{opacity:1;transform:translateX(-50%) translateY(0)}to{opacity:0;transform:translateX(-50%) translateY(-28px)}}
+@media (prefers-reduced-motion:reduce){.wal-live,.wal-live.out{animation:none}}
+

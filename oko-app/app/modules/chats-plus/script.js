@@ -1519,3 +1519,537 @@ function cpQuickReactFx(msg){
   if(typeof renderChatList==='function')
     renderChatList((document.getElementById('chatSearch')||{}).value || '');
 })();
+
+/* =======================================================================
+   ЧАСТЬ 6 — TG/WhatsApp+: long-press реакции с bounce, Saved Messages,
+   слэш-команды бизнеса, автоответ, отложенная отправка, скраб волны,
+   живой typing-индикатор, свайп-меню быстрых действий.
+   ======================================================================= */
+
+/* ================= РАСШИРЕНИЕ CP.persist ================= */
+if(!CP.savedIds || typeof CP.savedIds!=='object') CP.savedIds = {};
+if(!CP.away || typeof CP.away!=='object') CP.away = {on:false, text:'Сейчас не в сети. Отвечу, как только вернусь на связь.'};
+if(!Array.isArray(CP.scheduled)) CP.scheduled = [];
+if(!Array.isArray(CP.quickReplies)) CP.quickReplies = [
+  {cmd:'/prices',  label:'Прайс',       text:'Актуальный прайс:\n· Базовый — 990 ₽\n· Продвинутый — 2 490 ₽\n· PRO — 4 990 ₽\nПодробности и оплата: https://okoteam.top/prices'},
+  {cmd:'/menu',    label:'Меню услуг',  text:'Что делаем:\n· Разбор канала\n· Сценарии Reels/Shorts\n· Монтаж роликов\n· Продвижение и трафик\nКакой формат тебе интересен?'},
+  {cmd:'/hours',   label:'Часы работы', text:'Работаем пн–пт 10:00–20:00 МСК. В остальное время отвечу при первой возможности.'},
+  {cmd:'/thanks',  label:'Спасибо',     text:'Спасибо за обращение! Возьму в работу и вернусь с деталями в течение часа.'},
+  {cmd:'/link',    label:'Реквизиты',   text:'Все ссылки и контакты — https://okoteam.top'},
+  {cmd:'/address', label:'Как встретиться', text:'Работаем удалённо из Москвы. Созвон — https://meet.jit.si/oko-team'}
+];
+/* Полная сериализация — новые поля тоже персистятся. */
+cpSave = function(){
+  try{ localStorage.setItem('oko-chats-plus', JSON.stringify({
+    speed:CP.speed, recentEmoji:CP.recentEmoji.slice(0,24), recentOko:CP.recentOko.slice(0,24),
+    panelTab:CP.panelTab, access:CP.access, unlocked:CP.unlocked, drafts:CP.drafts,
+    savedIds:CP.savedIds, away:CP.away, scheduled:CP.scheduled, quickReplies:CP.quickReplies
+  })); }catch(e){}
+};
+
+/* ================= 20. SAVED MESSAGES · Избранное ================= */
+function cpBuildSavedMsgs(){
+  const base = [{kind:'sys', body:'Избранное · сохраняй сюда важные сообщения. Долгое нажатие → «В избранное».'}];
+  Object.keys(CP.savedIds).forEach(key=>{
+    const p = key.indexOf('|'); if(p<0) return;
+    const chatId = key.slice(0,p), idx = +key.slice(p+1);
+    const c = (typeof CHATS!=='undefined'?CHATS:[]).find(x=>String(x.id)===chatId); if(!c) return;
+    const m = c.msgs && c.msgs[idx]; if(!m) return;
+    base.push(Object.assign({}, m, {in:0, cpSaved:true, cpSavedFrom:{chatId, idx, name:c.name}, reacts:null}));
+  });
+  return base;
+}
+function cpSeedSaved(){
+  if(typeof CHATS==='undefined' || !Array.isArray(CHATS)) return;
+  if(CHATS.some(c=>c.id==='cp-saved')) return;
+  CHATS.unshift({
+    id:'cp-saved', ava:'★', name:'Избранное', kind:'saved', kindIcon:'bookmark',
+    nick:'saved', preview:'Твоя личная папка — сохраняй важное',
+    time:'', unread:0, online:false, cpSaved:true,
+    msgs: cpBuildSavedMsgs()
+  });
+}
+function cpSaveMessage(idx){
+  if(typeof closeMsgMenu==='function') closeMsgMenu();
+  if(typeof currentChat==='undefined' || !currentChat) return;
+  const m = currentChat.msgs[idx]; if(!m || m.kind==='sys') return;
+  if(currentChat.id==='cp-saved'){ if(typeof toast==='function') toast('Это уже избранное'); return; }
+  const key = currentChat.id + '|' + idx;
+  if(CP.savedIds[key]){ if(typeof toast==='function') toast('Уже в избранном'); return; }
+  CP.savedIds[key] = 1; cpSave();
+  const saved = (typeof CHATS!=='undefined'?CHATS:[]).find(c=>c.id==='cp-saved');
+  if(saved){
+    const clone = Object.assign({}, m, {in:0, cpSaved:true, cpSavedFrom:{chatId:currentChat.id, idx, name:currentChat.name}, reacts:null});
+    saved.msgs.push(clone);
+    saved.time = (typeof nowT==='function'?nowT():'');
+    saved.preview = 'Сохранено · ' + (typeof kindPreview==='function' ? kindPreview(clone) : (clone.body||'сообщение'));
+  }
+  if(typeof toast==='function') toast('В избранном');
+  if(typeof renderChatList==='function') renderChatList((document.getElementById('chatSearch')||{}).value||'');
+}
+/* инжектим пункт «В избранное» в контекст-меню сообщения (кроме папки Saved) */
+if(typeof openMsgMenu === 'function'){
+  const _cpPrevOpenMsgMenu2 = openMsgMenu;
+  openMsgMenu = function(idx){
+    _cpPrevOpenMsgMenu2.apply(this, arguments);
+    const actionsEl = document.getElementById('mmActions'); if(!actionsEl) return;
+    if(!currentChat || currentChat.id==='cp-saved') return;
+    if(actionsEl.querySelector('.cp-mm-fav')) return;
+    const pinBtn = [...actionsEl.children].find(b=>/Закрепить/.test(b.textContent||''));
+    const btn = document.createElement('button');
+    btn.className = 'mm-act cp-mm-fav'; btn.onclick = ()=>cpSaveMessage(idx);
+    btn.innerHTML = I('bookmark') + '<span>В избранное</span>';
+    if(pinBtn) actionsEl.insertBefore(btn, pinBtn); else actionsEl.appendChild(btn);
+  };
+}
+/* плашка «Из чата X» на сообщении в папке Saved */
+if(typeof msgHtml === 'function'){
+  const _cpPrevMsgHtml6 = msgHtml;
+  msgHtml = function(m, idx){
+    let out = _cpPrevMsgHtml6.apply(this, arguments);
+    if(m && m.cpSavedFrom && m.kind !== 'sys'){
+      const tag = `<div class="cp-saved-from">${I('bookmark')}<span>Из чата <b>${cpEsc(m.cpSavedFrom.name)}</b></span></div>`;
+      out = out.replace(/(<div class="msg[^"]*"[^>]*>)/, '$1' + tag);
+    }
+    if(m && m.cpSched && m.kind !== 'sys'){
+      const tag = `<span class="cp-sched-tag">${I('clock')}Отложено</span>`;
+      out = out.replace(/(<span class="t">)/, tag + '$1');
+    }
+    return out;
+  };
+}
+
+/* ================= 21. LONG-PRESS ФЛОАТ-ПАЛИТРА РЕАКЦИЙ ================= */
+const CP_QUICK_REACTS = ['heart','fire','star','thumb','laugh','sad'];
+const CP_RP_COLOR = {fire:'#ff7a1a', heart:'#ff3b6b', star:'#ffc522', thumb:'#9aff00', laugh:'#ffd23a', sad:'#7ab8ff', crown:'#ffc522'};
+let cpPalette = null, cpJustLp = false;
+function cpInitLongPress(){
+  const el = cpMsgsEl(); if(!el || el._cpLp) return; el._cpLp = true;
+  el.addEventListener('contextmenu', e=>{
+    const msg = e.target.closest('.msg');
+    if(!msg || msg.classList.contains('sys') || msg.classList.contains('typing')) return;
+    e.preventDefault();
+    cpJustLp = true; setTimeout(()=>{ cpJustLp = false; }, 700);
+    const idx = Array.prototype.indexOf.call(el.children, msg);
+    if(idx < 0) return;
+    if(navigator.vibrate) try{ navigator.vibrate(18); }catch(_){}
+    cpShowReactPalette(msg, idx, e.clientX, e.clientY);
+  });
+}
+function cpShowReactPalette(msg, idx, x, y){
+  cpHideReactPalette();
+  const r = msg.getBoundingClientRect();
+  const p = document.createElement('div');
+  p.className = 'cp-react-palette';
+  p.innerHTML = CP_QUICK_REACTS.map((rr,i)=>
+    `<button class="cp-rp-btn" data-r="${rr}" style="--cp-i:${i};--cp-fc:${CP_RP_COLOR[rr]||'var(--lime)'}" title="${rr}">${I(rr)}</button>`
+  ).join('') + `<button class="cp-rp-more" style="--cp-i:${CP_QUICK_REACTS.length}" title="Ещё реакции">${I('more')}</button>`;
+  document.body.appendChild(p);
+  cpPalette = {el:p, msg, idx};
+  requestAnimationFrame(()=>{
+    const pw = p.offsetWidth, ph = p.offsetHeight;
+    const cx = (typeof x==='number' && x) ? x : (r.left + r.width/2);
+    let left = Math.max(10, Math.min(window.innerWidth - pw - 10, cx - pw/2));
+    let top = r.top - ph - 12;
+    let below = false;
+    if(top < 60){ top = Math.min(window.innerHeight - ph - 10, r.bottom + 12); below = true; }
+    p.style.left = left + 'px'; p.style.top = top + 'px';
+    if(below) p.classList.add('cp-rp-below');
+    p.classList.add('on');
+  });
+  p.addEventListener('click', ev=>{
+    const btn = ev.target.closest('.cp-rp-btn, .cp-rp-more'); if(!btn) return;
+    ev.stopPropagation();
+    if(btn.classList.contains('cp-rp-more')){
+      cpHideReactPalette();
+      if(typeof openMsgMenu==='function') openMsgMenu(idx);
+      return;
+    }
+    const rKey = btn.dataset.r;
+    cpFlyReaction(btn, rKey);
+    if(navigator.vibrate) try{ navigator.vibrate(12); }catch(_){}
+    if(typeof pickReact==='function') pickReact(idx, rKey);
+    setTimeout(cpHideReactPalette, 220);
+  });
+  setTimeout(()=>{
+    const off = e2=>{ if(!p.contains(e2.target)){ cpHideReactPalette(); document.removeEventListener('pointerdown', off, true); } };
+    document.addEventListener('pointerdown', off, true);
+    p._cpOff = off;
+  }, 0);
+  if(typeof nvPush==='function') nvPush('cp:pal', ()=>cpHideReactPalette(true));
+}
+function cpHideReactPalette(fromNav){
+  if(!cpPalette) return;
+  const p = cpPalette.el; cpPalette = null;
+  p.classList.remove('on');
+  if(p._cpOff) try{ document.removeEventListener('pointerdown', p._cpOff, true); }catch(_){}
+  setTimeout(()=>{ try{ p.remove(); }catch(_){} }, 240);
+  if(!fromNav && typeof nvPop==='function') nvPop('cp:pal');
+}
+function cpFlyReaction(btn, rKey){
+  const r = btn.getBoundingClientRect();
+  const fly = document.createElement('span');
+  fly.className = 'cp-fly'; fly.innerHTML = I(rKey);
+  fly.style.left = (r.left + r.width/2) + 'px';
+  fly.style.top = (r.top + r.height/2) + 'px';
+  fly.style.setProperty('--cp-fc', CP_RP_COLOR[rKey] || 'var(--lime)');
+  document.body.appendChild(fly);
+  setTimeout(()=>{ try{ fly.remove(); }catch(_){} }, 950);
+}
+/* блок реактивной цепи: если только что был long-press — не открывать полное меню на click */
+if(typeof reactBar === 'function'){
+  const _cpPrevReactBar2 = reactBar;
+  reactBar = function(){ if(cpJustLp){ cpJustLp = false; return; } _cpPrevReactBar2.apply(this, arguments); };
+}
+
+/* ================= 22. LEFT-SWIPE · быстрое меню действий ================= */
+let cpLsw = null;
+function cpSwipeLeftInit(){
+  const el = cpMsgsEl(); if(!el || el._cpLsw) return; el._cpLsw = true;
+  el.addEventListener('touchstart', e=>{
+    if(e.touches.length!==1){ cpLsw = null; return; }
+    const msg = e.target.closest('.msg');
+    if(!msg || msg.classList.contains('sys') || msg.classList.contains('typing')){ cpLsw = null; return; }
+    cpLsw = {el:msg, x:e.touches[0].clientX, y:e.touches[0].clientY, dx:0, on:false};
+  }, {passive:true});
+  el.addEventListener('touchmove', e=>{
+    if(!cpLsw) return;
+    const dx = e.touches[0].clientX - cpLsw.x;
+    const dy = e.touches[0].clientY - cpLsw.y;
+    if(!cpLsw.on){
+      if(dx < -14 && Math.abs(dx) > Math.abs(dy)*2){
+        cpLsw.on = true;
+        cpLsw.el.classList.add('cp-lsw');
+        if(!cpLsw.el.querySelector('.cp-lsw-ic')){
+          const ic = document.createElement('span'); ic.className='cp-lsw-ic'; ic.innerHTML = I('more');
+          cpLsw.el.appendChild(ic);
+        }
+      } else if(Math.abs(dy) > 14 || dx > 14){ cpLsw = null; return; }
+    }
+    if(cpLsw && cpLsw.on){
+      e.preventDefault();
+      const d = Math.max(0, Math.min(-dx, 76));
+      cpLsw.dx = d;
+      cpLsw.el.style.transform = 'translateX(-' + d + 'px)';
+      const ic = cpLsw.el.querySelector('.cp-lsw-ic');
+      if(ic) ic.style.opacity = Math.min(1, d/40);
+      cpLsw.el.classList.toggle('cp-lsw-hit', d > 40);
+    }
+  }, {passive:false});
+  const end = ()=>{
+    if(!cpLsw) return;
+    const s = cpLsw; cpLsw = null;
+    const hit = s.on && s.dx > 40;
+    const idx = Array.prototype.indexOf.call(el.children, s.el);
+    s.el.classList.remove('cp-lsw');
+    s.el.classList.add('cp-lsw-back');
+    s.el.style.transform = '';
+    s.el.classList.remove('cp-lsw-hit');
+    setTimeout(()=>{
+      s.el.classList.remove('cp-lsw-back');
+      const ic = s.el.querySelector('.cp-lsw-ic'); if(ic) ic.remove();
+    }, 240);
+    if(hit && idx >= 0 && typeof currentChat!=='undefined' && currentChat
+       && currentChat.msgs[idx] && currentChat.msgs[idx].kind !== 'sys'){
+      if(typeof openMsgMenu==='function') openMsgMenu(idx);
+    }
+  };
+  el.addEventListener('touchend', end);
+  el.addEventListener('touchcancel', end);
+}
+
+/* ================= 23. VOICE WAVEFORM SCRUB ================= */
+function cpBindVoiceScrub(){
+  const el = cpMsgsEl(); if(!el || el._cpVs) return; el._cpVs = 1;
+  el.addEventListener('click', e=>{
+    const wave = e.target.closest('.wave'); if(!wave) return;
+    const voice = wave.closest('.voice'); if(!voice) return;
+    const pp = voice.querySelector('.pp'); const a = pp && pp._audio;
+    if(!a || !isFinite(a.duration) || !a.duration){
+      /* мок-волна без реального audio — визуальный прогресс всё равно двигаем */
+      const r = wave.getBoundingClientRect();
+      const p = Math.max(0, Math.min(1, (e.clientX - r.left) / r.width));
+      cpVoiceProg(voice, p);
+      e.stopPropagation(); return;
+    }
+    const r = wave.getBoundingClientRect();
+    const p = Math.max(0, Math.min(1, (e.clientX - r.left) / r.width));
+    try{ a.currentTime = p * a.duration; }catch(_){}
+    cpVoiceProg(voice, p);
+    if(a.paused && typeof togglePlay==='function') togglePlay(pp);
+    e.stopPropagation();
+  });
+}
+
+/* ================= 24. SLASH-COMMANDS · быстрые ответы ================= */
+let cpSlashPop = null;
+function cpBindSlash(){
+  const inp = document.getElementById('msgInput'); if(!inp || inp._cpSlash) return; inp._cpSlash = 1;
+  inp.addEventListener('input', cpUpdateSlash);
+  inp.addEventListener('focus', cpUpdateSlash);
+  inp.addEventListener('blur', ()=>setTimeout(cpCloseSlash, 180));
+  inp.addEventListener('keydown', e=>{
+    if(!cpSlashPop || !cpSlashPop.classList.contains('on')) return;
+    const items = [...cpSlashPop.querySelectorAll('.cp-sl-item')];
+    let cur = cpSlashPop.querySelector('.cp-sl-item.on');
+    const ci = items.indexOf(cur);
+    if(e.key==='ArrowDown'){ e.preventDefault(); e.stopImmediatePropagation();
+      const n = items[(ci+1) % items.length]; items.forEach(x=>x.classList.remove('on')); n && n.classList.add('on'); n && n.scrollIntoView({block:'nearest'}); }
+    else if(e.key==='ArrowUp'){ e.preventDefault(); e.stopImmediatePropagation();
+      const n = items[(ci-1+items.length) % items.length]; items.forEach(x=>x.classList.remove('on')); n && n.classList.add('on'); n && n.scrollIntoView({block:'nearest'}); }
+    else if(e.key==='Enter' || e.key==='Tab'){ e.preventDefault(); e.stopImmediatePropagation();
+      const pick = cur || items[0]; pick && pick.click(); }
+    else if(e.key==='Escape'){ e.preventDefault(); e.stopImmediatePropagation(); cpCloseSlash(); }
+  }, true);
+}
+function cpUpdateSlash(){
+  const inp = document.getElementById('msgInput'); if(!inp) return;
+  const v = inp.value || '';
+  if(!v.startsWith('/')){ cpCloseSlash(); return; }
+  const q = v.slice(1).trim().toLowerCase();
+  const matches = CP.quickReplies.filter(qr =>
+    !q || qr.cmd.slice(1).toLowerCase().startsWith(q) || qr.label.toLowerCase().includes(q));
+  if(!matches.length){ cpCloseSlash(); return; }
+  cpOpenSlash(matches);
+}
+function cpOpenSlash(items){
+  if(!cpSlashPop){
+    const p = document.createElement('div'); p.className='cp-slash'; p.id='cpSlash';
+    const composer = document.querySelector('#convBody .composer');
+    if(composer && composer.parentNode) composer.parentNode.insertBefore(p, composer);
+    else document.body.appendChild(p);
+    cpSlashPop = p;
+  }
+  cpSlashPop.innerHTML = `<div class="cp-sl-head">${I('bolt')}<span>Быстрые ответы для бизнеса</span></div>` +
+    items.map((it,i)=>
+      `<button class="cp-sl-item ${i===0?'on':''}" data-cmd="${cpEsc(it.cmd)}">
+        <span class="cp-sl-cmd">${cpEsc(it.cmd)}</span>
+        <span class="cp-sl-tx"><b>${cpEsc(it.label)}</b><small>${cpEsc(it.text.replace(/\n/g,' · ').slice(0,64))}${it.text.length>64?'…':''}</small></span>
+      </button>`).join('');
+  cpSlashPop.querySelectorAll('.cp-sl-item').forEach(b=>{
+    b.addEventListener('click', ()=>{
+      const cmd = b.dataset.cmd;
+      const it = CP.quickReplies.find(x=>x.cmd===cmd); if(!it) return;
+      const inp = document.getElementById('msgInput'); if(!inp) return;
+      inp.value = it.text;
+      try{ inp.setSelectionRange(inp.value.length, inp.value.length); }catch(_){}
+      cpCloseSlash();
+      if(typeof syncSendIcon==='function') syncSendIcon();
+      inp.focus();
+    });
+  });
+  cpSlashPop.classList.add('on');
+}
+function cpCloseSlash(){ if(cpSlashPop) cpSlashPop.classList.remove('on'); }
+function cpQuickRepliesInfo(){
+  if(typeof showPopup!=='function') return;
+  const body = `<div class="cp-qr">
+    <p class="cp-qr-hint">Начни ввод сообщения с <b>«/»</b> — покажу быстрые бизнес-ответы. Стрелки ↑↓ выбирают, Enter вставляет.</p>
+    <div class="cp-qr-list">${CP.quickReplies.map(qr=>
+      `<div class="cp-qr-item"><span class="cp-sl-cmd">${cpEsc(qr.cmd)}</span>
+        <div class="cp-qr-t"><b>${cpEsc(qr.label)}</b><small>${cpEsc(qr.text.replace(/\n/g,' · ').slice(0,120))}${qr.text.length>120?'…':''}</small></div></div>`
+    ).join('')}</div></div>`;
+  showPopup({ico:'bolt', title:'Быстрые ответы (/)', body, actions:[{label:'Понятно'}]});
+}
+
+/* ================= 25. AWAY · автоответ «не в сети» ================= */
+function cpAwayToggle(){
+  if(typeof showPopup!=='function') return;
+  const on = CP.away.on;
+  const body = `<div class="cp-aw">
+    <div class="cp-aw-row"><span>Автоответ активен</span>
+      <label class="cp-aw-sw"><input type="checkbox" ${on?'checked':''} onchange="cpAwaySet(this.checked)"><span></span></label>
+    </div>
+    <label class="cp-aw-lb">Текст автоответа</label>
+    <textarea id="cpAwText" rows="3" maxlength="300" oninput="cpAwayText(this.value)">${cpEsc(CP.away.text)}</textarea>
+    <p class="cp-aw-hint">Отправляется собеседникам при первом сообщении, пока автоответ включён. Идеально для бизнес-аккаунта.</p>
+  </div>`;
+  showPopup({ico:'clock', title:'Автоответ «не в сети»', body, actions:[{label:'Готово'}]});
+}
+window.cpAwaySet = function(v){
+  CP.away.on = !!v; cpSave(); cpPaintAwayBadge();
+  if(typeof toast==='function') toast(v ? 'Автоответ включён' : 'Автоответ выключен');
+};
+window.cpAwayText = function(v){ CP.away.text = (v||'').slice(0,300); cpSave(); };
+function cpPaintAwayBadge(){
+  const composer = document.querySelector('#convBody .composer');
+  if(!composer || !composer.parentNode) return;
+  let b = document.getElementById('cpAwayBadge');
+  if(!CP.away.on){ if(b) b.remove(); return; }
+  if(!b){
+    b = document.createElement('div'); b.id = 'cpAwayBadge'; b.className = 'cp-away-badge';
+    b.innerHTML = `${I('clock')}<span>Автоответ «не в сети» включён</span><button title="Выключить" onclick="cpAwaySet(false)">${I('plus')}</button>`;
+    composer.parentNode.insertBefore(b, composer);
+  }
+}
+
+/* ================= 26. ОТЛОЖЕННАЯ ОТПРАВКА (long-press на send) ================= */
+let cpSendHold = null;
+function cpBindScheduleHold(){
+  const sb = document.getElementById('sendBtn'); if(!sb || sb._cpSched) return; sb._cpSched = 1;
+  const cancel = ()=>{ if(cpSendHold){ clearTimeout(cpSendHold); cpSendHold = null; } };
+  sb.addEventListener('pointerdown', e=>{
+    const inp = document.getElementById('msgInput');
+    if(!inp || !inp.value.trim() || sb.classList.contains('rec')) return;
+    cancel();
+    cpSendHold = setTimeout(()=>{
+      cpSendHold = null;
+      if(navigator.vibrate) try{ navigator.vibrate(28); }catch(_){}
+      cpOpenScheduleSheet();
+    }, 620);
+  });
+  ['pointerup','pointercancel','pointerleave'].forEach(ev=>sb.addEventListener(ev, cancel));
+  sb.addEventListener('pointermove', e=>{ if(cpSendHold && (Math.abs(e.movementX||0)+Math.abs(e.movementY||0)>4)) cancel(); });
+}
+function cpFmtWhen(d){
+  const days = ['вс','пн','вт','ср','чт','пт','сб'];
+  const today = new Date(); today.setHours(0,0,0,0);
+  const dz = new Date(d); dz.setHours(0,0,0,0);
+  const diffDays = Math.round((dz-today)/86400000);
+  const hh = String(d.getHours()).padStart(2,'0'), mm = String(d.getMinutes()).padStart(2,'0');
+  const time = hh+':'+mm;
+  if(diffDays===0) return 'Сегодня в '+time;
+  if(diffDays===1) return 'Завтра в '+time;
+  if(diffDays>1 && diffDays<7) return days[d.getDay()]+' в '+time;
+  return d.getDate()+'.'+String(d.getMonth()+1).padStart(2,'0')+' в '+time;
+}
+function cpOpenScheduleSheet(){
+  const inp = document.getElementById('msgInput'); if(!inp || !inp.value.trim()) return;
+  const c = (typeof currentChat!=='undefined') ? currentChat : null; if(!c) return;
+  if(typeof showPopup!=='function'){ if(typeof toast==='function') toast('Планировщик недоступен'); return; }
+  const now = new Date();
+  const opts = [
+    {mins:15,     ic:'clock', label:'Через 15 минут'},
+    {mins:60,     ic:'clock', label:'Через час'},
+    {mins:180,    ic:'clock', label:'Через 3 часа'},
+    {mins:60*8,   ic:'clock', label:'Позже сегодня'},
+    {mins:60*24,  ic:'clock', label:'Завтра в это же время'}
+  ];
+  const preview = inp.value.trim();
+  const body = `<div class="cp-sch-preview">${cpEsc(preview.slice(0,180))}${preview.length>180?'…':''}</div>
+    <div class="cp-sch-list">${opts.map(o=>{
+      const ts = now.getTime() + o.mins*60000;
+      return `<button class="cp-sch-item" onclick="cpDoSchedule(${ts})">
+        <span class="cp-sch-ico">${I(o.ic)}</span>
+        <span class="cp-sch-t"><b>${cpEsc(o.label)}</b><small>${cpEsc(cpFmtWhen(new Date(ts)))}</small></span>
+        <span class="cp-sch-go">${I('chev')}</span>
+      </button>`;
+    }).join('')}</div>`;
+  showPopup({ico:'clock', title:'Отправить позже', body, actions:[{label:'Отмена', ghost:true}]});
+}
+window.cpDoSchedule = function(ts){
+  const inp = document.getElementById('msgInput');
+  const c = (typeof currentChat!=='undefined') ? currentChat : null;
+  if(!inp || !c || !inp.value.trim()) return;
+  const text = inp.value.trim();
+  const item = {id:'sc-'+Date.now()+'-'+Math.round(Math.random()*999), chatId:c.id, body:text, at:ts};
+  CP.scheduled.push(item); cpSave();
+  inp.value = ''; if(typeof syncSendIcon==='function') syncSendIcon();
+  if(typeof closePopup==='function') closePopup();
+  if(typeof toast==='function') toast('Отправлю ' + cpFmtWhen(new Date(ts)).toLowerCase());
+  cpArmSchedule(item);
+  cpPaintScheduledBar();
+};
+function cpArmSchedule(item){
+  const dt = Math.max(0, item.at - Date.now());
+  if(dt > 2147000000) return; /* setTimeout max ~24.8 дней — сработает при следующем запуске */
+  setTimeout(()=>cpFireSchedule(item.id), dt);
+}
+function cpFireSchedule(id){
+  const item = CP.scheduled.find(x=>x.id===id); if(!item) return;
+  CP.scheduled = CP.scheduled.filter(x=>x.id!==id); cpSave();
+  const c = (typeof CHATS!=='undefined'?CHATS:[]).find(x=>x.id===item.chatId); if(!c) return;
+  const msg = {in:0, t:(typeof nowT==='function'?nowT():''), kind:'text', body:item.body, cpSched:true};
+  if(typeof currentChat!=='undefined' && currentChat && currentChat.id===c.id){
+    if(typeof pushMsg==='function') pushMsg(msg);
+  } else {
+    c.msgs.push(msg);
+    c.preview = (typeof kindPreview==='function' ? 'Ты: '+kindPreview(msg) : 'Ты: '+msg.body);
+    c.time = msg.t;
+    c.unread = 0;
+    if(typeof renderChatList==='function') renderChatList((document.getElementById('chatSearch')||{}).value||'');
+  }
+  cpPaintScheduledBar();
+  if(typeof toast==='function') toast('Отложенное отправлено в «'+(c.name||'чат')+'»');
+}
+function cpRestoreSchedule(){
+  const now = Date.now();
+  const overdue = CP.scheduled.filter(x=>x.at <= now).slice();
+  overdue.forEach(x=>cpFireSchedule(x.id));
+  CP.scheduled.filter(x=>x.at > now).forEach(cpArmSchedule);
+}
+function cpPaintScheduledBar(){
+  const bar = document.getElementById('cpSchedBar'); if(!bar) return;
+  const c = (typeof currentChat!=='undefined')?currentChat:null;
+  if(!c){ bar.classList.remove('on'); return; }
+  const list = CP.scheduled.filter(x=>x.chatId===c.id);
+  if(!list.length){ bar.classList.remove('on'); bar.innerHTML=''; return; }
+  const next = list.slice().sort((a,b)=>a.at-b.at)[0];
+  const wordForm = list.length===1 ? 'ное сообщение' : (list.length>=2 && list.length<=4) ? 'ных сообщения' : 'ных сообщений';
+  bar.innerHTML = `<span class="cp-sch-bar-ic">${I('clock')}</span>
+    <div class="cp-sch-bar-t"><b>Отложе${wordForm[0]==='н'?'но':'ных'} ${list.length} ${wordForm}</b>
+    <small>${cpEsc(cpFmtWhen(new Date(next.at)))} · ${cpEsc(next.body.slice(0,50))}${next.body.length>50?'…':''}</small></div>
+    <button class="cp-sch-cancel" title="Отменить ближайшее" onclick="cpCancelSchedule('${next.id}')">${I('plus')}</button>`;
+  bar.classList.add('on');
+}
+window.cpCancelSchedule = function(id){
+  CP.scheduled = CP.scheduled.filter(x=>x.id!==id); cpSave();
+  cpPaintScheduledBar();
+  if(typeof toast==='function') toast('Отложенное отменено');
+};
+
+/* ================= 27. РАСШИРЕНИЕ UI · sched-bar, ⋮-меню, openConv ================= */
+if(typeof cpBuildUi === 'function'){
+  const _cpPrevBuildUi = cpBuildUi;
+  cpBuildUi = function(){
+    _cpPrevBuildUi.apply(this, arguments);
+    const pin = document.getElementById('cpPinBar'); if(!pin) return;
+    if(!document.getElementById('cpSchedBar')){
+      const sb = document.createElement('div');
+      sb.className = 'cp-schedbar'; sb.id = 'cpSchedBar';
+      pin.insertAdjacentElement('afterend', sb);
+    }
+  };
+  /* пересобрать UI, если модуль перезагружается на лету */
+  cpBuildUi();
+}
+if(typeof cpMoreItems === 'function'){
+  const _cpPrevMoreItems = cpMoreItems;
+  cpMoreItems = function(){
+    const arr = _cpPrevMoreItems.apply(this, arguments);
+    arr.push({ic:'bookmark', label:'Открыть избранное',       act:()=>{ if(typeof openConv==='function') openConv('cp-saved'); }});
+    arr.push({ic:'bolt',     label:'Быстрые ответы (/)',      act:cpQuickRepliesInfo});
+    arr.push({ic:'clock',    label:'Автоответ «не в сети»'+(CP.away.on?' · вкл':''), act:cpAwayToggle});
+    return arr;
+  };
+}
+if(typeof openConv === 'function'){
+  const _cpPrevOpenConv6 = openConv;
+  openConv = function(id){
+    _cpPrevOpenConv6.apply(this, arguments);
+    /* при открытии «Избранного» пересоберём msgs, чтобы подхватить новые сохранения */
+    if(typeof currentChat!=='undefined' && currentChat && currentChat.id==='cp-saved'){
+      currentChat.msgs = cpBuildSavedMsgs();
+      if(typeof renderMsgs==='function') renderMsgs();
+    }
+    cpPaintScheduledBar();
+    cpPaintAwayBadge();
+  };
+}
+
+/* ================= САМОИНИЦИАЛИЗАЦИЯ ================= */
+(function cpInit6(){
+  cpSeedSaved();
+  cpBindSlash();
+  cpBindScheduleHold();
+  cpBindVoiceScrub();
+  cpInitLongPress();
+  cpSwipeLeftInit();
+  cpRestoreSchedule();
+  cpPaintAwayBadge();
+  if(typeof renderChatList==='function')
+    renderChatList((document.getElementById('chatSearch')||{}).value||'');
+  if(typeof currentChat!=='undefined' && currentChat){
+    cpPaintScheduledBar();
+  }
+})();

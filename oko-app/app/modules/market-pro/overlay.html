@@ -4,3 +4,12 @@
 <!-- MARKET-PRO: отзыв после сделки и жалоба на объявление -->
 <div class="sheet" id="sheet-mpReview"><div id="mpReviewView"></div></div>
 <div class="sheet" id="sheet-mpReport"><div id="mpReportView"></div></div>
+<!-- MARKET-PRO v3: фуллскрин просмотр медиа из отзывов + сдвижной попап-подтверждение -->
+<div class="mp-mv" id="mpMediaViewer" aria-hidden="true">
+  <button class="mp-mv-x" onclick="mpMvClose()" aria-label="Закрыть"></button>
+  <button class="mp-mv-nav prev" onclick="mpMvGo(-1)" aria-label="Назад"></button>
+  <button class="mp-mv-nav next" onclick="mpMvGo(1)" aria-label="Вперёд"></button>
+  <div class="mp-mv-stage" id="mpMvStage"></div>
+  <div class="mp-mv-cap" id="mpMvCap"></div>
+  <div class="mp-mv-dots" id="mpMvDots"></div>
+</div>

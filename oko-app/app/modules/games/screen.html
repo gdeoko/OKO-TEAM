@@ -8,13 +8,14 @@
         <div class="gm-sub"><small>Крути колесо, каждая крутка даёт приз</small></div>
       </div>
       <div class="gm-head-chips">
-        <button class="gm-streak-chip" id="gmStreakChip" style="display:none" onclick="gmSelectMode('free')"><svg class="i"><use href="#i-gm-flame"/></svg><span class="gm-streak-n">0</span></button>
+        <button class="gm-streak-chip" id="gmStreakChip" style="display:none" onclick="gmStreakOpen()"><svg class="i"><use href="#i-gm-flame"/></svg><span class="gm-streak-n">0</span></button>
         <button class="gm-tk-chip" onclick="gmPrizesOpen()" title="Билеты — валюта круток. Открыть «Мои призы»"><svg class="i"><use href="#i-gm-ticket"/></svg><span class="gm-tk-val">0</span></button>
         <button class="balance-chip" onclick="showTab('wallet')"><svg class="i"><use href="#i-money"/></svg><span id="gmBalance">0 ₽</span></button>
       </div>
     </div>
 
     <div id="gmRetention"></div>
+    <div id="gmVipBanner"></div>
     <div class="gm-boost-badge" id="gmBoostBadge" style="display:none"></div>
 
     <!-- ПРИЗОВОЕ КОЛЕСО -->
@@ -34,20 +35,56 @@
     <!-- МОИ ПРИЗЫ -->
     <button class="gm-bonus-btn gm-prizes-btn" id="gmPrizesBtn" onclick="gmPrizesOpen()"></button>
 
-    <h2 class="section-h" style="margin:22px 0 12px;font-size:21px">Лидеры недели</h2>
+    <!-- ЕЖЕДНЕВНЫЙ ЧЕЛЛЕНДЖ -->
+    <div class="gm-sect-head">
+      <h2 class="section-h" style="margin:22px 0 12px;font-size:21px">Задания дня</h2>
+      <button class="gm-sect-link" onclick="gmDailyOpen()"><span id="gmDailyCount">0/3</span><svg class="i"><use href="#i-chev"/></svg></button>
+    </div>
+    <div class="gm-daily-card" id="gmDailyBlock"></div>
+
+    <!-- МИНИ-ИГРЫ -->
+    <h2 class="section-h" style="margin:22px 0 12px;font-size:21px">Мини-игры</h2>
+    <div class="gm-mini-grid" id="gmMiniGrid"></div>
+
+    <!-- BATTLE PASS -->
+    <div class="gm-sect-head">
+      <h2 class="section-h" style="margin:22px 0 12px;font-size:21px">Боевой пропуск</h2>
+      <button class="gm-sect-link" onclick="gmBpOpen()"><span id="gmBpLvlChip">Ур 1</span><svg class="i"><use href="#i-chev"/></svg></button>
+    </div>
+    <div class="gm-bp-card" id="gmBpCard"></div>
+
+    <!-- МАГАЗИН TON-ПОДАРКОВ -->
+    <div class="gm-sect-head">
+      <h2 class="section-h" style="margin:22px 0 12px;font-size:21px">Подарки TON</h2>
+      <button class="gm-sect-link" onclick="gmGiftsShopOpen()"><span>Витрина</span><svg class="i"><use href="#i-chev"/></svg></button>
+    </div>
+    <div class="gm-gift-rail" id="gmGiftRail"></div>
+    <button class="gm-bonus-btn gm-gifts-btn" onclick="gmGiftsInvOpen()" id="gmGiftsInvBtn"></button>
+
+    <!-- ЛИДЕРЫ 3 ЛИГИ -->
+    <div class="gm-sect-head">
+      <h2 class="section-h" style="margin:22px 0 12px;font-size:21px">Лидеры недели</h2>
+      <button class="gm-sect-link" onclick="gmStatsOpen()"><svg class="i"><use href="#i-gm-scales"/></svg><span>Твои шансы</span></button>
+    </div>
+    <div class="gm-lb-tabs" id="gmLbTabs"></div>
     <div class="card" style="padding:4px 14px" id="gmLb"></div>
 
+    <!-- ДОСТИЖЕНИЯ -->
     <div class="gm-ach-head">
       <h2 class="section-h" style="margin:22px 0 12px;font-size:21px">Достижения</h2>
       <span class="gm-ach-count" id="gmAchHead">0/8</span>
     </div>
+    <div class="gm-ach-filter" id="gmAchFilter"></div>
     <div class="gm-ach-grid" id="gmAch"></div>
 
     <div class="card gm-resp">
       <svg class="i"><use href="#i-lock"/></svg>
       <div class="gm-resp-b">
         <p><b>Честная механика.</b> Приз выпадает случайно по взвешенным шансам, но каждая крутка гарантированно приносит приз — «сгораний» ставки нет. Средний приз крутки показан заранее. Крути в удовольствие.</p>
-        <button class="gm-odds-open" onclick="gmOddsOpen()"><svg class="i"><use href="#i-gm-scales"/></svg>Таблица шансов</button>
+        <div class="gm-resp-actions">
+          <button class="gm-odds-open" onclick="gmOddsOpen()"><svg class="i"><use href="#i-gm-scales"/></svg>Таблица шансов</button>
+          <button class="gm-odds-open" onclick="gmStatsOpen()"><svg class="i"><use href="#i-gm-chart"/></svg>Твоя статистика</button>
+        </div>
       </div>
     </div>
     <div style="height:14px"></div>

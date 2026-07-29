@@ -1684,3 +1684,437 @@ try{
     }
   }catch(e){}
 })();
+
+/* ============================================================================
+   11. ДВОЙНОЙ ХУК — «Показать полностью» (Instagram/Twitter expandable body)
+   Длинные тела постов схлопнуты до 3 строк с fade-out градиентом. Тап на кнопку
+   «Показать полностью» плавно раскрывает содержимое (grid-rows animation, без
+   JS-высот). Раскрытое состояние помнится в объекте поста (session-only) →
+   пересборка ленты не «схлопывает» уже прочитанное.
+   ============================================================================ */
+const FA_CLIP_MIN = 220;  /* минимум символов, при котором подрезаем тело */
+
+function faExpandDecorate(){
+  try{
+    const list = document.getElementById('feedList'); if(!list) return;
+    list.querySelectorAll('article.post .body').forEach(function(body){
+      try{
+        if(body._faClipped) return;
+        const art = body.closest('article.post'); if(!art) return;
+        const pid = faIdOf(art); if(pid == null) return;
+        const p = postById(pid); if(!p || !p.body) return;
+        if(String(p.body).length < FA_CLIP_MIN) return;
+        body._faClipped = 1;
+        const openCls = p._faOpen ? ' fa-open' : '';
+        /* оборачиваем тело в контейнер-клип; текст оставляем как есть,
+           чтобы esc-логика ядра не переисполнялась */
+        const html = body.innerHTML;
+        body.classList.add('fa-body-wrap');
+        body.innerHTML =
+          '<div class="fa-body-clip' + openCls + '">' +
+            '<div class="fa-body-inner">' + html + '</div>' +
+            '<span class="fa-body-fade" aria-hidden="true"></span>' +
+          '</div>' +
+          '<button class="fa-more-btn" type="button" onclick="faToggleBody(this,' + pid + ')">' +
+            '<span class="fa-more-t">' + (p._faOpen ? 'Свернуть' : 'Показать полностью') + '</span>' +
+            I('chev') +
+          '</button>';
+      }catch(e){}
+    });
+  }catch(e){}
+}
+function faToggleBody(btn, pid){
+  try{
+    if(!btn) return;
+    const wrap = btn.previousElementSibling;
+    const p = postById(pid);
+    const open = wrap && wrap.classList.toggle('fa-open');
+    btn.classList.toggle('fa-open', !!open);
+    const t = btn.querySelector('.fa-more-t');
+    if(t) t.textContent = open ? 'Свернуть' : 'Показать полностью';
+    if(p) p._faOpen = !!open;
+  }catch(e){}
+}
+
+/* доцеп к faDecorate: клип срабатывает на обеих вкладках, поэтому запускаем
+   после _любого_ renderFeed, а не только для 'rec' */
+try{
+  if(typeof renderFeed === 'function'){
+    const _prevRFexpand = renderFeed;
+    renderFeed = function(kind){
+      const r = _prevRFexpand.apply(this, arguments);
+      try{ faExpandDecorate(); }catch(e){}
+      return r;
+    };
+  }
+}catch(e){}
+
+/* ============================================================================
+   12. СМЕШАННАЯ ЛЕНТА — сторис-баблы + рекомендованные каналы каждые 5 постов
+   После каждого блока из 5 органических карточек вставляем «врезку»:
+   1) полоска непросмотренных сторис (мини-версия storiesRow), либо
+   2) карусель рекомендованных каналов (из CH.disc, если модуль есть).
+   Врезки чередуются, чтобы лента «дышала». Всё делегируется по клику на
+   существующие обработчики (openStory / chOpen).
+   ============================================================================ */
+function faStoryChipsHTML(){
+  try{
+    if(typeof STORIES === 'undefined' || !Array.isArray(STORIES)) return '';
+    /* берём непросмотренные (без «add»-плитки Твоей истории), максимум 8 */
+    const items = STORIES
+      .map(function(st, i){ return {st:st, i:i}; })
+      .filter(function(x){ return x.st && !x.st.add && !x.st.seen; })
+      .slice(0, 8);
+    if(!items.length) return '';
+    const chips = items.map(function(x){
+      const st = x.st;
+      const face = st.avaIcon
+        ? '<span class="fai-face lime">' + I(st.avaIcon) + '</span>'
+        : st.src
+          ? '<span class="fai-face" style="background-image:url(' + esc(st.src) + ');background-size:cover"></span>'
+          : '<span class="fai-face">' + esc(String(st.ava || (st.name ? st.name[0] : '?'))) + '</span>';
+      return '<button class="fai-story" type="button" onclick="openStory(' + x.i + ')" aria-label="История ' + esc(st.name || '') + '">' +
+        '<span class="fai-ring">' + face + '</span>' +
+        '<small>' + esc((st.name || '').slice(0, 10)) + '</small>' +
+      '</button>';
+    }).join('');
+    return '<div class="fa-inter fa-inter-stories">' +
+      '<div class="fai-head">' + I('bolt') + '<b>Свежие истории</b><span class="fai-cnt">' + items.length + '</span></div>' +
+      '<div class="fai-row">' + chips + '</div>' +
+    '</div>';
+  }catch(e){ return ''; }
+}
+function faChannelChipsHTML(){
+  try{
+    if(typeof CH === 'undefined' || !CH || !Array.isArray(CH.disc)) return '';
+    /* каналы, на которые ты ещё не подписан, отсортированы по числу подписчиков */
+    const items = CH.disc
+      .filter(function(c){ return c && !(CH.sub && CH.sub[c.id]); })
+      .sort(function(a, b){ return (b.subs||0) - (a.subs||0); })
+      .slice(0, 6);
+    if(!items.length) return '';
+    const chips = items.map(function(c){
+      const price = c.type === 'paid'
+        ? '<b class="fai-price">' + Math.round(c.price||0) + ' ₽/мес</b>'
+        : c.type === 'course'
+          ? '<b class="fai-price">Курс · ' + Math.round(c.price||0) + ' ₽</b>'
+          : '<b class="fai-price fai-free">Бесплатно</b>';
+      const subs = (typeof fmtN === 'function') ? fmtN(c.subs||0) : String(c.subs||0);
+      const kindLabel = c.type === 'course' ? 'Курс' : (c.kind === 'club' ? 'Клуб' : 'Канал');
+      return '<button class="fai-ch" type="button" onclick="chOpen(\'channel\',\'' + c.id + '\')" aria-label="Открыть канал ' + esc(c.name) + '">' +
+        '<span class="fai-ch-ic">' + I(c.icon || 'megaphone') + '</span>' +
+        '<b class="fai-ch-name">' + esc(c.name) + '</b>' +
+        '<small class="fai-ch-desc">' + esc((c.desc || '').slice(0, 62)) + '…</small>' +
+        '<div class="fai-ch-meta"><span class="fai-ch-kind">' + kindLabel + '</span>' +
+          '<span class="fai-ch-subs">' + I('users') + subs + '</span>' + price + '</div>' +
+      '</button>';
+    }).join('');
+    return '<div class="fa-inter fa-inter-channels">' +
+      '<div class="fai-head">' + I('compass') + '<b>Каналы, которые тебе понравятся</b></div>' +
+      '<div class="fai-scroll">' + chips + '</div>' +
+    '</div>';
+  }catch(e){ return ''; }
+}
+function faInterstitials(){
+  try{
+    const list = document.getElementById('feedList'); if(!list) return;
+    if(curFeedKind !== 'rec') return;
+    /* сначала снимаем предыдущие врезки (при переранжировании порядок мог сдвинуться) */
+    list.querySelectorAll('.fa-inter').forEach(function(el){ el.remove(); });
+    const posts = [...list.querySelectorAll('article.post')].filter(function(a){
+      const pid = faIdOf(a); const p = pid != null ? postById(pid) : null;
+      return p && !p.promoted;   /* реклама в счётчик не идёт (это уже прерывание) */
+    });
+    if(posts.length < 5) return;
+    /* блоки по 5: после 5-го — сторис, после 10-го — каналы, после 15-го — сторис, … */
+    let injected = 0;
+    const maxInject = 3;
+    for(let i = 4; i < posts.length && injected < maxInject; i += 5){
+      const anchor = posts[i]; if(!anchor || !anchor.parentNode) continue;
+      const html = (injected % 2 === 0) ? faStoryChipsHTML() : faChannelChipsHTML();
+      if(!html){
+        /* альтернативный тип, если первый пуст */
+        const alt = (injected % 2 === 0) ? faChannelChipsHTML() : faStoryChipsHTML();
+        if(!alt) continue;
+        anchor.insertAdjacentHTML('afterend', alt);
+      } else {
+        anchor.insertAdjacentHTML('afterend', html);
+      }
+      injected++;
+    }
+  }catch(e){}
+}
+try{
+  if(typeof faDecorate === 'function'){
+    const _prevDecorateInter = faDecorate;
+    faDecorate = function(){
+      _prevDecorateInter.apply(this, arguments);
+      try{ faInterstitials(); }catch(e){}
+    };
+  }
+}catch(e){}
+
+/* ============================================================================
+   13. CATCH-UP CHIP — «Ты пропустил X постов» при возврате к ленте
+   Сохраняем момент ухода из ленты, при возврате считаем «сколько нового набежало»
+   (модельные посты, сгенерированные в фоновом счётчике FA.newPosts + бонус за
+   долгое отсутствие). Тап — плавный скролл наверх + faRefresh.
+   ============================================================================ */
+FA.away = { at:0, count:0 };
+function faCatchUpShow(count){
+  try{
+    if(!count || count < 1) return;
+    let chip = document.getElementById('faCatchUp');
+    if(!chip){
+      chip = document.createElement('button');
+      chip.id = 'faCatchUp';
+      chip.type = 'button';
+      chip.className = 'fa-catchup';
+      chip.setAttribute('aria-live','polite');
+      chip.addEventListener('click', function(){
+        try{
+          chip.classList.remove('show');
+          setTimeout(function(){ try{ chip.remove(); }catch(e){} }, 260);
+          const m = document.querySelector('main');
+          if(m) m.scrollTo({top:0, behavior:'smooth'});
+          if(typeof faRefresh === 'function') faRefresh();
+        }catch(e){}
+      });
+      document.body.appendChild(chip);
+    }
+    const word = faPlural(count, 'пост', 'поста', 'постов');
+    chip.innerHTML = '<span class="fa-cu-dot"></span>' +
+      '<span>Ты пропустил <b class="fa-cu-n">' + count + '</b> ' + word + '</span>' +
+      I('fa-up');
+    requestAnimationFrame(function(){ try{ chip.classList.add('show'); }catch(e){} });
+    /* авто-исчезновение через 8 секунд, если пользователь не отреагировал */
+    if(FA._cuTimer) clearTimeout(FA._cuTimer);
+    FA._cuTimer = setTimeout(function(){
+      try{ chip.classList.remove('show'); setTimeout(function(){ try{ chip.remove(); }catch(e){} }, 280); }catch(e){}
+    }, 8000);
+  }catch(e){}
+}
+function faCatchUpCheck(){
+  try{
+    const feed = document.getElementById('screen-feed');
+    if(!feed || !feed.classList.contains('active')) return;
+    const now = Date.now();
+    if(!FA.away.at) return;
+    const away = now - FA.away.at;
+    if(away < 25000){ FA.away.at = 0; return; }   /* < 25 сек — не «пропустил» */
+    /* формируем «пропущенное»: сколько накопилось в FA.newPosts + бонус за время */
+    const bonusPerMin = Math.floor(away / 60000);
+    const total = Math.min(24, Math.max(1, (FA.newPosts || 0) + Math.max(1, bonusPerMin * 2)));
+    FA.newPosts = 0;
+    FA.away.at = 0;
+    /* показываем только на вкладке «Рекомендации», где алгоритм подмешает новое */
+    const kindOk = (typeof curFeedKind === 'undefined') || curFeedKind === 'rec';
+    if(!kindOk) return;
+    faCatchUpShow(total);
+  }catch(e){}
+}
+function faCatchUpMark(){
+  try{
+    const feed = document.getElementById('screen-feed');
+    if(feed && feed.classList.contains('active')) FA.away.at = Date.now();
+  }catch(e){}
+}
+try{
+  document.addEventListener('visibilitychange', function(){
+    try{
+      if(document.hidden) faCatchUpMark();
+      else setTimeout(faCatchUpCheck, 220);
+    }catch(e){}
+  });
+  /* уход с вкладки ленты (showTab) — тоже событие «отсутствия» */
+  if(typeof showTab === 'function'){
+    const _prevShowTabCU = showTab;
+    showTab = function(t){
+      try{
+        const feed = document.getElementById('screen-feed');
+        if(feed && feed.classList.contains('active') && t !== 'feed') faCatchUpMark();
+      }catch(e){}
+      const r = _prevShowTabCU.apply(this, arguments);
+      try{ if(t === 'feed') setTimeout(faCatchUpCheck, 260); }catch(e){}
+      return r;
+    };
+  }
+}catch(e){}
+
+/* ============================================================================
+   14. БЫСТРЫЕ РЕАКЦИИ ЛАЙКА — вылетающие бренд-стикеры (TG/Instagram)
+   При клике «нравится» из кнопки вылетает 4-5 маленьких SVG-иконок бренда
+   (сердце, огонь, звезда, молния, лаймовая точка) — разлетаются вверх с лёгким
+   поворотом и исчезают. Только transform/opacity, без reflow. Не срабатывает
+   при снятии лайка (только при постановке). Работает и в ленте, и в клипах.
+   ============================================================================ */
+const FA_QR_ICONS = ['heart','fire','star','bolt','fa-dot'];
+function faQuickReact(anchorEl){
+  try{
+    if(!anchorEl) return;
+    /* уважение к prefers-reduced-motion — не спамим анимациями */
+    if(window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+    const r = anchorEl.getBoundingClientRect();
+    const layer = document.createElement('div');
+    layer.className = 'fa-qr-layer';
+    layer.style.left = Math.round(r.left + r.width/2) + 'px';
+    layer.style.top  = Math.round(r.top  + r.height/2) + 'px';
+    const n = 5;
+    for(let i = 0; i < n; i++){
+      const s = document.createElement('span');
+      s.className = 'fa-qr fa-qr-' + FA_QR_ICONS[i % FA_QR_ICONS.length];
+      /* веер −70°…+70° влево/вправо, случайная дальность/поворот в CSS-переменных */
+      const dx = Math.round((i - (n-1)/2) * 26 + (Math.random()*10 - 5));
+      const dy = -60 - Math.round(Math.random() * 60);
+      const rot = Math.round(Math.random() * 44 - 22);
+      const dur = 720 + Math.round(Math.random() * 220);
+      s.style.setProperty('--qx', dx + 'px');
+      s.style.setProperty('--qy', dy + 'px');
+      s.style.setProperty('--qr', rot + 'deg');
+      s.style.animationDuration = dur + 'ms';
+      s.style.animationDelay = (i * 20) + 'ms';
+      s.innerHTML = FA_QR_ICONS[i % FA_QR_ICONS.length] === 'fa-dot'
+        ? '<span class="fa-qr-dot"></span>'
+        : I(FA_QR_ICONS[i % FA_QR_ICONS.length]);
+      layer.appendChild(s);
+    }
+    document.body.appendChild(layer);
+    setTimeout(function(){ try{ layer.remove(); }catch(e){} }, 1200);
+  }catch(e){}
+}
+/* Chain likePost: после базового toggle — если пост стал liked, пускаем «фейерверк»
+   у соответствующей кнопки лайка в ленте или в клипе. */
+try{
+  if(typeof likePost === 'function'){
+    const _prevLikeQR = likePost;
+    likePost = function(id){
+      const p = postById(id);
+      const was = p ? !!p.liked : false;
+      _prevLikeQR.apply(this, arguments);
+      try{
+        if(p && p.liked && !was){
+          /* пробуем найти кнопку в ленте, если нет — в клипе */
+          const card = (typeof feedCardEl === 'function') ? feedCardEl(id) : null;
+          const feedBtn = card && card.querySelector('.act-like');
+          const reelBtn = document.querySelector('#farTrack .far-slide[data-pid="' + id + '"] .far-like');
+          const anchor = (FAR && FAR.open && reelBtn) ? reelBtn : feedBtn;
+          if(anchor) faQuickReact(anchor);
+        }
+      }catch(e){}
+    };
+  }
+}catch(e){}
+
+/* ============================================================================
+   15. REELS — «ТОЛПА» ПЛАВАЮЩИХ РЕАКЦИЙ (Instagram Live style)
+   Пока клип открыт и не на паузе — вдоль правого края слайда снизу вверх плывут
+   маленькие SVG-иконки (сердце/огонь/звезда/молния/точка) со случайными задержками
+   и амплитудами. Останавливаются на hold-паузе и на far-paused. Только transform.
+   ============================================================================ */
+FA.crowd = { timer: 0 };
+function faCrowdEmit(){
+  try{
+    if(!FAR.open || FAR.paused) return;
+    const wrap = document.getElementById('faReels');
+    if(!wrap || wrap.hidden) return;
+    if(wrap.classList.contains('far-hold')) return;
+    const slide = wrap.querySelector('.far-slide.is-active'); if(!slide) return;
+    /* базовый слой — держим один на слайд */
+    let layer = slide.querySelector('.far-crowd');
+    if(!layer){
+      layer = document.createElement('div');
+      layer.className = 'far-crowd';
+      layer.setAttribute('aria-hidden','true');
+      slide.appendChild(layer);
+    }
+    const ic = FA_QR_ICONS[Math.floor(Math.random() * FA_QR_ICONS.length)];
+    const s = document.createElement('span');
+    s.className = 'far-cr far-cr-' + ic;
+    /* амплитуда/поворот/длительность — уникальны для каждой реакции */
+    const amp = 18 + Math.round(Math.random() * 44);   /* горизонтальный «свинг», px */
+    const drift = Math.round((Math.random() - 0.5) * 40);
+    const rot = Math.round(Math.random() * 30 - 15);
+    const dur = 3200 + Math.round(Math.random() * 1600);
+    const startBottom = 8 + Math.round(Math.random() * 26);
+    s.style.setProperty('--cra', amp + 'px');
+    s.style.setProperty('--crd', drift + 'px');
+    s.style.setProperty('--crr', rot + 'deg');
+    s.style.animationDuration = dur + 'ms';
+    s.style.bottom = startBottom + 'px';
+    s.innerHTML = ic === 'fa-dot' ? '<span class="fa-qr-dot"></span>' : I(ic);
+    layer.appendChild(s);
+    setTimeout(function(){ try{ s.remove(); }catch(e){} }, dur + 100);
+  }catch(e){}
+}
+function faCrowdStart(){
+  try{
+    if(FA.crowd.timer) return;
+    /* уважение к prefers-reduced-motion — толпу не запускаем */
+    if(window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+    FA.crowd.timer = setInterval(faCrowdEmit, 620);
+  }catch(e){}
+}
+function faCrowdStop(){
+  try{
+    if(FA.crowd.timer){ clearInterval(FA.crowd.timer); FA.crowd.timer = 0; }
+    document.querySelectorAll('#faReels .far-crowd').forEach(function(el){ el.innerHTML = ''; });
+  }catch(e){}
+}
+/* цепляем к открытию/закрытию плеера, не переписывая тела функций */
+try{
+  if(typeof faReelsOpen === 'function'){
+    const _prevROpen = faReelsOpen;
+    faReelsOpen = function(){
+      const r = _prevROpen.apply(this, arguments);
+      try{ faCrowdStart(); }catch(e){}
+      return r;
+    };
+  }
+  if(typeof faReelsClose === 'function'){
+    const _prevRClose = faReelsClose;
+    faReelsClose = function(){
+      try{ faCrowdStop(); }catch(e){}
+      return _prevRClose.apply(this, arguments);
+    };
+  }
+  if(typeof faReelsSetActive === 'function'){
+    const _prevRSA = faReelsSetActive;
+    faReelsSetActive = function(){
+      const r = _prevRSA.apply(this, arguments);
+      /* при переходе на новый слайд — чистим слой старого, стартер эмитит на новый */
+      try{ document.querySelectorAll('#faReels .far-slide:not(.is-active) .far-crowd').forEach(function(el){ el.innerHTML = ''; }); }catch(e){}
+      return r;
+    };
+  }
+}catch(e){}
+
+/* ============================================================================
+   16. МЕЛКИЕ ДОПОЛНЕНИЯ ИНИЦИАЛИЗАЦИИ (иконки/i18n для новых секций)
+   ============================================================================ */
+(function faLateInit(){
+  try{
+    const defs = document.querySelector('svg defs');
+    if(defs && !document.getElementById('i-fa-dot')){
+      const s = document.createElementNS('http://www.w3.org/2000/svg','symbol');
+      s.setAttribute('id','i-fa-dot'); s.setAttribute('viewBox','0 0 100 100');
+      /* лаймовая «искра OKO» — маленький ромб-точка, читается как «реакция OKO» */
+      s.innerHTML = '<circle cx="50" cy="50" r="30" fill="currentColor"/>';
+      defs.appendChild(s);
+    }
+    if(typeof ST_DICT !== 'undefined'){
+      const add = {
+        'Показать полностью':'Show more','Свернуть':'Show less',
+        'Свежие истории':'Fresh stories','Каналы, которые тебе понравятся':'Channels you may like',
+        'Канал':'Channel','Курс':'Course','Клуб':'Club','Бесплатно':'Free',
+        'Ты пропустил':'You missed','пост':'post','поста':'posts','постов':'posts',
+      };
+      for(const k in add) if(!(k in ST_DICT)) ST_DICT[k] = add[k];
+    }
+    /* если лента уже видна — обогатим её сразу (первый рендер выполнился до нас) */
+    const feed = document.getElementById('screen-feed');
+    if(feed && feed.classList.contains('active')){
+      try{ faExpandDecorate(); }catch(e){}
+      try{ if(curFeedKind === 'rec') faInterstitials(); }catch(e){}
+    }
+  }catch(e){}
+})();

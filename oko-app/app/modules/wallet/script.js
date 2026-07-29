@@ -4,36 +4,37 @@
    Плюс: график баланса 30 дней, автопродление PRO, выписка (.txt + документ),
    реквизиты пополнения, лимиты счёта и ПИН-код на вывод. */
 
-/* ---------- иконки TON (кристалл) и «скачать» в общий defs ---------- */
+/* ---------- иконки в общий defs (TON, свап, отпечаток, USDT, XP-звезда, чек, QR, target) ---------- */
 (function walAddIcons(){
   const defs = document.querySelector('svg defs');
   if(!defs) return;
-  if(!document.getElementById('i-ton')){
+  const add = (id, vb, body)=>{
+    if(document.getElementById(id)) return;
     const s = document.createElementNS('http://www.w3.org/2000/svg','symbol');
-    s.setAttribute('id','i-ton'); s.setAttribute('viewBox','0 0 100 100');
-    s.innerHTML = '<path d="M18 20h64L50 88 18 20z" fill="none" stroke="currentColor" stroke-width="7" stroke-linecap="round" stroke-linejoin="round"/><path d="M50 20v68" fill="none" stroke="currentColor" stroke-width="7" stroke-linecap="round"/>';
+    s.setAttribute('id', id); s.setAttribute('viewBox', vb || '0 0 100 100');
+    s.innerHTML = body;
     defs.appendChild(s);
-  }
-  if(!document.getElementById('i-dl')){
-    const s = document.createElementNS('http://www.w3.org/2000/svg','symbol');
-    s.setAttribute('id','i-dl'); s.setAttribute('viewBox','0 0 100 100');
-    s.innerHTML = '<path d="M50 14v44M32 42l18 18 18-18" fill="none" stroke="currentColor" stroke-width="7" stroke-linecap="round" stroke-linejoin="round"/><path d="M20 80h60" fill="none" stroke="currentColor" stroke-width="7" stroke-linecap="round"/>';
-    defs.appendChild(s);
-  }
-  /* лупа (поиск по истории) */
-  if(!document.getElementById('i-search')){
-    const s = document.createElementNS('http://www.w3.org/2000/svg','symbol');
-    s.setAttribute('id','i-search'); s.setAttribute('viewBox','0 0 100 100');
-    s.innerHTML = '<circle cx="43" cy="43" r="27" fill="none" stroke="currentColor" stroke-width="8"/><path d="M63 63 84 84" fill="none" stroke="currentColor" stroke-width="8" stroke-linecap="round"/>';
-    defs.appendChild(s);
-  }
-  /* кубик (категория «Игры») */
-  if(!document.getElementById('i-dice')){
-    const s = document.createElementNS('http://www.w3.org/2000/svg','symbol');
-    s.setAttribute('id','i-dice'); s.setAttribute('viewBox','0 0 100 100');
-    s.innerHTML = '<rect x="20" y="20" width="60" height="60" rx="14" fill="none" stroke="currentColor" stroke-width="7"/><circle cx="37" cy="37" r="5.5" fill="currentColor"/><circle cx="63" cy="37" r="5.5" fill="currentColor"/><circle cx="50" cy="50" r="5.5" fill="currentColor"/><circle cx="37" cy="63" r="5.5" fill="currentColor"/><circle cx="63" cy="63" r="5.5" fill="currentColor"/>';
-    defs.appendChild(s);
-  }
+  };
+  add('i-ton','0 0 100 100','<path d="M18 20h64L50 88 18 20z" fill="none" stroke="currentColor" stroke-width="7" stroke-linecap="round" stroke-linejoin="round"/><path d="M50 20v68" fill="none" stroke="currentColor" stroke-width="7" stroke-linecap="round"/>');
+  add('i-dl','0 0 100 100','<path d="M50 14v44M32 42l18 18 18-18" fill="none" stroke="currentColor" stroke-width="7" stroke-linecap="round" stroke-linejoin="round"/><path d="M20 80h60" fill="none" stroke="currentColor" stroke-width="7" stroke-linecap="round"/>');
+  add('i-search','0 0 100 100','<circle cx="43" cy="43" r="27" fill="none" stroke="currentColor" stroke-width="8"/><path d="M63 63 84 84" fill="none" stroke="currentColor" stroke-width="8" stroke-linecap="round"/>');
+  add('i-dice','0 0 100 100','<rect x="20" y="20" width="60" height="60" rx="14" fill="none" stroke="currentColor" stroke-width="7"/><circle cx="37" cy="37" r="5.5" fill="currentColor"/><circle cx="63" cy="37" r="5.5" fill="currentColor"/><circle cx="50" cy="50" r="5.5" fill="currentColor"/><circle cx="37" cy="63" r="5.5" fill="currentColor"/><circle cx="63" cy="63" r="5.5" fill="currentColor"/>');
+  /* свап (двусторонняя стрелка обмена) */
+  add('i-swap','0 0 100 100','<path d="M24 34h50l-14-14M76 66H26l14 14" fill="none" stroke="currentColor" stroke-width="8" stroke-linecap="round" stroke-linejoin="round"/>');
+  /* отпечаток пальца */
+  add('i-fingerprint','0 0 100 100','<path d="M30 55c0-14 9-25 20-25s20 11 20 25c0 6-1 12-3 17M50 30c-8 0-15 8-15 25 0 6 1 12 3 17M50 42c-3 0-5 3-5 12 0 8 2 20 4 30M62 46c1 5 1 12 0 20-1 6-3 12-5 18M40 78c1 4 3 8 5 11" fill="none" stroke="currentColor" stroke-width="6" stroke-linecap="round"/>');
+  /* USDT — «$» в круге (простой логотип для чипа) */
+  add('i-usdt','0 0 100 100','<circle cx="50" cy="50" r="38" fill="none" stroke="currentColor" stroke-width="7"/><path d="M50 32v36M40 40h20a6 6 0 010 12H40a6 6 0 000 12h20" fill="none" stroke="currentColor" stroke-width="6.5" stroke-linecap="round" stroke-linejoin="round"/>');
+  /* XP-звезда (5 лучей) */
+  add('i-xp','0 0 100 100','<path d="M50 12l11 25 27 3-20 19 6 27-24-13-24 13 6-27-20-19 27-3z" fill="currentColor" stroke="currentColor" stroke-width="4" stroke-linejoin="round"/>');
+  /* цель / мишень */
+  add('i-target','0 0 100 100','<circle cx="50" cy="50" r="34" fill="none" stroke="currentColor" stroke-width="7"/><circle cx="50" cy="50" r="20" fill="none" stroke="currentColor" stroke-width="6"/><circle cx="50" cy="50" r="6" fill="currentColor"/>');
+  /* поделиться */
+  add('i-share','0 0 100 100','<circle cx="24" cy="50" r="10" fill="none" stroke="currentColor" stroke-width="7"/><circle cx="72" cy="24" r="10" fill="none" stroke="currentColor" stroke-width="7"/><circle cx="72" cy="76" r="10" fill="none" stroke="currentColor" stroke-width="7"/><path d="M33 45l30-16M33 55l30 16" fill="none" stroke="currentColor" stroke-width="7" stroke-linecap="round"/>');
+  /* QR-иконка (маленькие квадраты) */
+  add('i-qr','0 0 100 100','<rect x="12" y="12" width="26" height="26" rx="4" fill="none" stroke="currentColor" stroke-width="7"/><rect x="62" y="12" width="26" height="26" rx="4" fill="none" stroke="currentColor" stroke-width="7"/><rect x="12" y="62" width="26" height="26" rx="4" fill="none" stroke="currentColor" stroke-width="7"/><rect x="52" y="52" width="14" height="14" fill="currentColor"/><rect x="74" y="52" width="14" height="14" fill="currentColor"/><rect x="52" y="74" width="14" height="14" fill="currentColor"/></svg>');
+  /* backspace (для пин-пада, если нет) */
+  add('i-back-key','0 0 100 100','<path d="M32 20h48a10 10 0 0110 10v40a10 10 0 01-10 10H32L8 50z" fill="none" stroke="currentColor" stroke-width="7" stroke-linejoin="round"/><path d="M46 38l20 24M66 38L46 62" fill="none" stroke="currentColor" stroke-width="7" stroke-linecap="round"/>');
 })();
 
 /* ---------- демо-наполнение леджера (один раз, реалистичные операции) ---------- */
@@ -180,13 +181,19 @@ function renderWallet(){
   const scr = document.getElementById('screen-wallet');
   if(!scr) return;
   const acc = document.getElementById('walAccNum'); if(acc) acc.textContent = WALLET.acc;
+  walApplyEye();          // применить скрытый режим баланса
   walAnimateBalance();
   const hold = document.getElementById('walHold');
   if(hold){
     hold.style.display = WALLET.hold > 0 ? 'inline-flex' : 'none';
     hold.querySelector('span').innerHTML = 'В холде (эскроу): <b>' + fmtMoney(WALLET.hold) + '</b>';
   }
+  walRenderCurrencies();  // мультивалютная лента
+  walRenderGoals();       // финансовые цели
+  walRenderAutoRules();   // правила автопополнения
   walRenderStats();
+  walRenderTopInc();      // топ-3 источника дохода
+  walRenderPie();         // пирог расходов
   walRenderCats();
   walRenderLedger();
   walUpdateChips();
@@ -195,6 +202,9 @@ function renderWallet(){
   walRenderPlanned();
   walRenderSec();
   walDrawChart(true);
+  walUpdateAvg();
+  /* демо-нотификация о входящем платеже — 1 раз за сессию */
+  walMaybeDemoLive();
 }
 
 /* ---------- СТАТИСТИКА ДОХОДОВ/РАСХОДОВ за 30 дней ---------- */
@@ -261,6 +271,13 @@ function walSeries(days){
   return pts;
 }
 let walChartRAF = 0;
+let walChartDays = 30;                     // текущий период мини-графика 7 / 30
+function walSetChartPeriod(d){
+  walChartDays = Number(d) || 30;
+  document.querySelectorAll('#walChartPeriod button').forEach(b=>b.classList.toggle('on', +b.dataset.cp === walChartDays));
+  walDrawChart(true);
+  walUpdateAvg();
+}
 function walDrawChart(animate){
   const cv = document.getElementById('walChart');
   if(!cv) return;
@@ -272,7 +289,7 @@ function walDrawChart(animate){
     cv.width = Math.round(W * dpr); cv.height = Math.round(H * dpr);
     const ctx = cv.getContext('2d');
     ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-    const pts = walSeries(30), n = pts.length;
+    const pts = walSeries(walChartDays), n = pts.length;
     const min = Math.min.apply(null, pts), max = Math.max.apply(null, pts);
     const span = (max - min) || Math.max(Math.abs(max), 100) * 0.25;
     const lo = min - span * 0.12, hi = max + span * 0.12;
@@ -378,7 +395,14 @@ function walRenderLedger(){
   const periodMs = walPeriod === 'all' ? 0 : Number(walPeriod) * 864e5;
   const since = periodMs ? Date.now() - periodMs : 0;
   const list = WALLET.ledger
-    .filter(op => walFilter==='all' || (walFilter==='in' ? op.t==='+' : op.t==='-'))
+    .filter(op => {
+      if(walFilter === 'all')   return true;
+      if(walFilter === 'in')    return op.t === '+';
+      if(walFilter === 'out')   return op.t === '-';
+      if(walFilter === 'part')  return walCat(op.why) === 'Партнёрка';
+      if(walFilter === 'games') return walCat(op.why) === 'Игры';
+      return true;
+    })
     .filter(op => !since || op.at >= since)
     .filter(op => !q || (op.why + ' ' + walCat(op.why)).toLowerCase().includes(q))
     .slice().sort((a,b)=>b.at-a.at)
@@ -387,8 +411,10 @@ function walRenderLedger(){
     let emptyMsg;
     if(q) emptyMsg = 'Ничего не найдено';
     else if(since) emptyMsg = 'За выбранный период операций нет';
-    else if(walFilter==='in') emptyMsg = 'Пополнений пока нет';
-    else if(walFilter==='out') emptyMsg = 'Списаний пока нет';
+    else if(walFilter==='in')    emptyMsg = 'Пополнений пока нет';
+    else if(walFilter==='out')   emptyMsg = 'Списаний пока нет';
+    else if(walFilter==='part')  emptyMsg = 'Партнёрских начислений пока нет';
+    else if(walFilter==='games') emptyMsg = 'Игровых операций пока нет';
     else emptyMsg = 'Операций пока нет';
     box.innerHTML = `<div class="wal-empty">${I(q ? 'search' : 'file')}${emptyMsg}</div>`;
     return;
@@ -517,6 +543,9 @@ function walRenderSec(){
   const psw = document.getElementById('walPinSw'), psub = document.getElementById('walPinSub');
   if(psw) psw.classList.toggle('on', !!WAL_X.pin);
   if(psub) psub.textContent = WAL_X.pin ? 'Включён — вывод только по ПИН-коду' : 'Выключен, включи для защиты вывода';
+  const bsw = document.getElementById('walBioSw'), bsub = document.getElementById('walBioSub');
+  if(bsw) bsw.classList.toggle('on', !!WAL_X.bio);
+  if(bsub) bsub.textContent = WAL_X.bio ? 'Включён — быстрый вход по отпечатку / Face-ID' : 'Выключен, быстрая разблокировка кошелька';
 }
 function walWdUpsell(){
   const tier = walTier();
@@ -977,6 +1006,7 @@ function walRenderPlanned(){
 function walSafetyChecks(){
   return [
     {ok: !!WAL_X.pin,   name:'ПИН-код на вывод'},
+    {ok: !!WAL_X.bio,   name:'Вход по отпечатку / Face-ID'},
     {ok: !!WAL_X.twofa, name:'Двухфакторная защита входа'},
     {ok: !!WAL_X.phone, name:'Привязанный номер телефона'},
     {ok: true,          name:'Подтверждение крупных операций'},
@@ -1010,9 +1040,10 @@ function walSafetyTips(){
   let body;
   if(off.length){
     const tips = {
-      'ПИН-код на вывод':           'Включи ПИН-код в блоке «Лимиты и безопасность» ниже, любой вывод потребует 4 цифры.',
-      'Двухфакторная защита входа': 'В настройках профиля привяжи Telegram-подтверждение входа, второй фактор к паролю.',
-      'Привязанный номер телефона': 'Добавь телефон в профиле, восстановление доступа и SMS-подтверждение крупных операций.',
+      'ПИН-код на вывод':               'Включи ПИН-код в блоке «Лимиты и безопасность» ниже, любой вывод потребует 4 цифры.',
+      'Вход по отпечатку / Face-ID':    'Включи в блоке «Лимиты и безопасность» — быстрая разблокировка вместо ввода ПИН.',
+      'Двухфакторная защита входа':     'В настройках профиля привяжи Telegram-подтверждение входа, второй фактор к паролю.',
+      'Привязанный номер телефона':     'Добавь телефон в профиле, восстановление доступа и SMS-подтверждение крупных операций.',
     };
     body = '<b>Что усилить, по приоритету:</b><br>' +
       off.map((c,i)=>'<b>' + (i+1) + '.</b> ' + c.name + '<br><span style="color:var(--dim);font-size:12px">' + (tips[c.name] || 'Активировать в настройках профиля.') + '</span>').join('<br><br>') +
@@ -1167,6 +1198,783 @@ function walTxCopy(){
   const txt = 'OKO · операция ' + walOpId(op.at) + '\n' + (op.t==='+'?'+ ':'− ') + fmtMoney(op.sum) +
     '\n' + op.why + '\n' + walCat(op.why) + ' · ' + walDMYT(op.at) + '\nСчёт ' + WALLET.acc;
   walCopy(txt, 'Детали операции скопированы');
+}
+
+/* =========================================================================
+   WALLET v2: MULTI-CURRENCY, EXCHANGE, SEND, RECEIVE (QR), GOALS,
+   AUTO-TOP-UP, TOP-3 INCOME, PIE, AVG, EYE (HIDE BALANCE), FACE-ID
+   ========================================================================= */
+
+/* ---------- показать/скрыть баланс (глазик) ---------- */
+function walToggleEye(){
+  WAL_X.hidden = !WAL_X.hidden; walXSave();
+  walApplyEye();
+}
+function walApplyEye(){
+  const on = !!WAL_X.hidden;
+  const eye = document.getElementById('walEye');
+  if(eye){
+    eye.classList.toggle('on', on);
+    eye.innerHTML = on
+      ? '<svg class="i" viewBox="0 0 100 100"><path d="M14 50s12-22 36-22 36 22 36 22-12 22-36 22S14 50 14 50z" fill="none" stroke="currentColor" stroke-width="7" stroke-linejoin="round"/><path d="M14 14l72 72" stroke="currentColor" stroke-width="7" stroke-linecap="round"/></svg>'
+      : '<svg class="i"><use href="#i-eye"/></svg>';
+  }
+  const bal = document.getElementById('walBalance');
+  if(bal) bal.classList.toggle('hidden', on);
+  document.querySelectorAll('.wal-cur-bal, .wal-cur-eq').forEach(el=>el.classList.toggle('hidden', on));
+}
+
+/* ---------- КУРСЫ и валютные балансы ---------- */
+const WAL_RATES = {                          // курс к рублю (демо, фиксирован)
+  USDT_TON: 95,    // 1 USDT = 95 ₽
+  USDT_TRC: 95,    // одинаковый USDT, разные сети
+  TON:      380,   // 1 TON  = 380 ₽
+  XP:       0.5,   // 1 XP   = 0.5 ₽ (внутренние баллы)
+};
+const WAL_CUR_META = {
+  RUB:      {code:'RUB',      name:'Рубли',     sub:'Лицевой счёт',          cls:'rub',      ic:'money',   sym:'₽',    dec:0},
+  USDT_TON: {code:'USDT-TON', name:'USDT · TON', sub:'Стейбл в сети TON',    cls:'usdt-ton', ic:'usdt',    sym:'USDT', dec:2},
+  USDT_TRC: {code:'USDT-TRC', name:'USDT · TRC20',sub:'Стейбл в сети Tron',  cls:'usdt-trc', ic:'usdt',    sym:'USDT', dec:2},
+  TON:      {code:'TON',       name:'Toncoin',   sub:'Криптовалюта TON',     cls:'ton',      ic:'ton',     sym:'TON',  dec:2},
+  XP:       {code:'XP',        name:'Звёзды XP', sub:'Внутренняя валюта',    cls:'xp',       ic:'xp',      sym:'XP',   dec:0},
+};
+/* стартовые демо-балансы (сохраняются) */
+if(!WAL_X.balances){
+  WAL_X.balances = {USDT_TON: 42.15, USDT_TRC: 108.30, TON: 12.4, XP: 8420};
+  walXSave();
+}
+function walCurBal(code){ return code === 'RUB' ? WALLET.balance : (WAL_X.balances[code] || 0); }
+function walCurSet(code, v){
+  if(code === 'RUB'){ WALLET.balance = Math.max(0, v); walletSave(); return; }
+  WAL_X.balances[code] = Math.max(0, v); walXSave();
+}
+function walCurRub(code, amt){
+  if(code === 'RUB') return amt;
+  return amt * (WAL_RATES[code] || 0);
+}
+function walCurFmt(code, v){
+  const m = WAL_CUR_META[code];
+  if(!m) return String(v);
+  if(code === 'RUB') return fmtMoney(v);
+  const val = m.dec ? (Math.round(v * 100) / 100).toLocaleString('ru-RU', {minimumFractionDigits: m.dec, maximumFractionDigits: m.dec})
+                    : Math.round(v).toLocaleString('ru-RU').replace(/,/g,' ');
+  return val + ' ' + m.sym;
+}
+/* лого-круг валюты (для карточки и обмена) */
+function walCurLogoHtml(code, klass){
+  const m = WAL_CUR_META[code];
+  const inner = code === 'RUB' ? '₽' : (code === 'XP' ? I('xp') : I(m.ic));
+  return `<span class="wal-cur-logo ${m.cls} ${klass||''}">${inner}</span>`;
+}
+
+/* ---------- РЕНДЕР ЛЕНТЫ МУЛЬТИВАЛЮТНЫХ КАРТОЧЕК ---------- */
+function walRenderCurrencies(){
+  const strip = document.getElementById('walCurStrip');
+  const dots  = document.getElementById('walCurDots');
+  if(!strip || !dots) return;
+  /* показываем все валюты, кроме RUB (его уже видно в hero) */
+  const codes = ['USDT_TON','USDT_TRC','TON','XP'];
+  strip.innerHTML = codes.map(code=>{
+    const m = WAL_CUR_META[code];
+    const bal = walCurBal(code);
+    const eq  = walCurRub(code, bal);
+    /* демо-дельта за 7 дней от -3% до +6% (детерминированно от кода) */
+    let h = 2166136261;
+    for(let i = 0; i < code.length; i++){ h ^= code.charCodeAt(i); h = Math.imul(h, 16777619) >>> 0; }
+    const pct = ((h % 91) / 10) - 3;                // −3 … +6
+    const up = pct >= 0;
+    return `
+      <div class="wal-cur-card ${m.cls}" onclick="walOpenCurDetail('${code}')" role="button" tabindex="0">
+        <span class="wal-cur-delta ${up?'in':'out'}">${up?'+':'−'}${Math.abs(pct).toFixed(1)}%</span>
+        <div class="wal-cur-top">
+          ${walCurLogoHtml(code)}
+          <div class="wal-cur-name"><b>${m.name}</b><span>${m.code}</span></div>
+        </div>
+        <div class="wal-cur-bal">${walCurFmt(code, bal)}</div>
+        <div class="wal-cur-eq">≈ ${fmtMoney(eq)} · 1 ${m.sym} = ${fmtMoney(WAL_RATES[code]).replace(' ₽','')}₽</div>
+      </div>`;
+  }).join('');
+  dots.innerHTML = codes.map((_,i)=>`<i class="${i===0?'on':''}"></i>`).join('');
+  walApplyEye();
+  /* обработчик снап-скролла для точек */
+  strip.onscroll = ()=>{
+    if(walCurRAF) cancelAnimationFrame(walCurRAF);
+    walCurRAF = requestAnimationFrame(()=>{
+      const cards = strip.querySelectorAll('.wal-cur-card');
+      const cRect = strip.getBoundingClientRect();
+      const cx = cRect.left + cRect.width / 2;
+      let best = 0, bestD = Infinity;
+      cards.forEach((c,i)=>{
+        const r = c.getBoundingClientRect();
+        const d = Math.abs(r.left + r.width / 2 - cx);
+        if(d < bestD){ bestD = d; best = i; }
+      });
+      [...dots.children].forEach((d,i)=>d.classList.toggle('on', i === best));
+    });
+  };
+}
+let walCurRAF = 0;
+
+/* ---------- ДЕТАЛИ ВАЛЮТЫ (bottom-sheet) ---------- */
+function walOpenCurDetail(code){
+  const m = WAL_CUR_META[code];
+  const bal = walCurBal(code);
+  const eq  = walCurRub(code, bal);
+  document.getElementById('walCurDetailView').innerHTML = `
+    <div style="text-align:center;padding:6px 0 4px">
+      ${walCurLogoHtml(code)}
+      <h3 style="margin-top:12px">${m.name}</h3>
+      <p class="dim" style="font-size:12px;margin-top:3px">${m.sub}</p>
+      <div style="font-family:var(--font-display);font-size:36px;letter-spacing:.02em;margin:16px 0 4px;color:var(--accent)">${walCurFmt(code, bal)}</div>
+      <div style="font-size:13px;color:var(--dim)">≈ ${fmtMoney(eq)} по курсу ${fmtMoney(WAL_RATES[code]).replace(' ₽','')} ₽ за 1 ${m.sym}</div>
+    </div>
+    <div style="height:18px"></div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
+      <button class="btn" onclick="closeSheet();walOpenExchange('${code}','RUB')"><svg class="i"><use href="#i-swap"/></svg> Продать за ₽</button>
+      <button class="btn ghost" onclick="closeSheet();walOpenExchange('RUB','${code}')"><svg class="i"><use href="#i-plus"/></svg> Купить за ₽</button>
+    </div>
+    <div style="height:8px"></div>
+    <button class="btn ghost" onclick="closeSheet();walOpenReceive('${code}')"><svg class="i"><use href="#i-qr"/></svg> Принять ${m.sym}</button>`;
+  openSheet('walCurDetail');
+}
+
+/* ---------- ОБМЕН ВАЛЮТ ---------- */
+let walExState = {from:'RUB', to:'USDT_TON', amount:0, editing:'from'};
+function walOpenExchange(from, to){
+  const codes = ['RUB','USDT_TON','USDT_TRC','TON','XP'];
+  walExState.from = codes.includes(from) ? from : 'RUB';
+  walExState.to   = codes.includes(to)   ? to   : (walExState.from === 'RUB' ? 'USDT_TON' : 'RUB');
+  walExState.amount = 0; walExState.editing = 'from';
+  walRenderExchange();
+  openSheet('walExchange');
+}
+function walExRate(from, to){
+  const fRub = from === 'RUB' ? 1 : WAL_RATES[from];
+  const tRub = to   === 'RUB' ? 1 : WAL_RATES[to];
+  return fRub / tRub;
+}
+function walExOut(){
+  const s = walExState;
+  return s.amount * walExRate(s.from, s.to);
+}
+function walExFee(){ return walExOut() * 0.005; }   // 0.5% спред
+function walExFinal(){ return walExOut() - walExFee(); }
+function walRenderExchange(){
+  const s = walExState;
+  const codes = ['RUB','USDT_TON','USDT_TRC','TON','XP'];
+  const fromM = WAL_CUR_META[s.from], toM = WAL_CUR_META[s.to];
+  const outVal = walExFinal();
+  document.getElementById('walExView').innerHTML = `
+    <h3>Обмен валют</h3>
+    <p class="dim" style="font-size:12.5px;margin:-4px 0 12px">Мгновенный обмен внутри кошелька · спред 0.5%</p>
+    <div class="wal-ex-swap">
+      <div class="wal-ex-cell on">
+        <span class="wal-ex-lbl">Отдаёте</span>
+        ${walCurLogoHtml(s.from)}
+        <div class="wal-ex-cell-mid">
+          <div class="wal-ex-cell-code">${fromM.name}</div>
+          <div class="wal-ex-cell-max">Доступно: ${walCurFmt(s.from, walCurBal(s.from))}</div>
+        </div>
+        <input id="walExAmt" type="number" min="0" step="any" placeholder="0" value="${s.amount||''}"
+          oninput="walExState.amount=Math.max(0,Number(this.value)||0);walSyncExchange()">
+      </div>
+      <button class="wal-ex-arrow" onclick="walExSwap()" aria-label="Поменять местами"><svg class="i"><use href="#i-swap"/></svg></button>
+      <div class="wal-ex-cell">
+        <span class="wal-ex-lbl">Получаете</span>
+        ${walCurLogoHtml(s.to)}
+        <div class="wal-ex-cell-mid">
+          <div class="wal-ex-cell-code">${toM.name}</div>
+          <div class="wal-ex-cell-max">Курс: 1 ${fromM.sym} = ${walExRate(s.from, s.to).toFixed(6).replace(/\.?0+$/,'')} ${toM.sym}</div>
+        </div>
+        <input type="text" readonly value="${outVal ? walCurFmt(s.to, outVal).replace(' '+toM.sym,'') : ''}" placeholder="0">
+      </div>
+    </div>
+    <p style="font-weight:600;font-size:12.5px;margin:14px 0 6px">Быстрый выбор пары</p>
+    <div class="wal-ex-cur-pick">${codes.filter(c=>c!==s.from).map(c=>`
+      <button class="${s.to===c?'on':''}" onclick="walExState.to='${c}';walRenderExchange()">
+        ${walCurLogoHtml(c)}<span>${WAL_CUR_META[c].sym}</span>
+      </button>`).join('')}</div>
+    <div class="wal-ex-rate" id="walExRateBox"></div>
+    <div style="height:8px"></div>
+    <button class="btn" onclick="walDoExchange()"><svg class="i"><use href="#i-swap"/></svg> <span id="walExBtn">Обменять</span></button>
+    <p class="dim" style="font-size:11px;text-align:center;margin-top:9px">Курс фиксируется в момент обмена. Комиссия сети OKO 0.5% уже учтена.</p>`;
+  walSyncExchange();
+}
+function walSyncExchange(){
+  const s = walExState, out = walExFinal(), toM = WAL_CUR_META[s.to];
+  const box = document.getElementById('walExRateBox');
+  if(box){
+    box.innerHTML = s.amount > 0
+      ? `Отдаёте <b>${walCurFmt(s.from, s.amount)}</b> → получите <em>${walCurFmt(s.to, out)}</em><br>Курс: 1 ${WAL_CUR_META[s.from].sym} = ${walExRate(s.from, s.to).toFixed(6).replace(/\.?0+$/,'')} ${toM.sym} · спред 0.5%`
+      : 'Введи сумму, чтобы увидеть, сколько получишь';
+  }
+  const b = document.getElementById('walExBtn');
+  if(b) b.textContent = s.amount > 0 ? `Обменять ${walCurFmt(s.from, s.amount)}` : 'Обменять';
+}
+function walExSwap(){
+  const t = walExState.from; walExState.from = walExState.to; walExState.to = t;
+  walExState.amount = 0;
+  walRenderExchange();
+}
+function walDoExchange(){
+  const s = walExState;
+  if(!s.amount || s.amount <= 0){ toast('Укажи сумму обмена'); return; }
+  if(s.amount > walCurBal(s.from)){ toast('Недостаточно средств: доступно ' + walCurFmt(s.from, walCurBal(s.from))); return; }
+  const out = walExFinal();
+  const from = WAL_CUR_META[s.from], to = WAL_CUR_META[s.to];
+  const v = document.getElementById('walExView');
+  v.innerHTML = `<div style="text-align:center;padding:22px 0"><div class="spin"></div><p style="font-weight:700;margin-top:14px">Обмен…</p></div>`;
+  setTimeout(()=>{
+    /* списываем «от» */
+    if(s.from === 'RUB'){
+      walletCharge(s.amount, 'Обмен ' + from.sym + ' → ' + to.sym);
+    } else {
+      walCurSet(s.from, walCurBal(s.from) - s.amount);
+    }
+    /* начисляем «в» */
+    if(s.to === 'RUB'){
+      walletAdd(Math.round(out), 'Обмен ' + from.sym + ' → ₽');
+    } else {
+      walCurSet(s.to, walCurBal(s.to) + out);
+      /* лог операции — рубль-эквивалент, чтобы он попал в статистику */
+      WALLET.ledger.unshift({t:'-', sum: Math.round(walCurRub(s.from, s.amount) - walCurRub(s.to, out)),
+        why: 'Спред обмена ' + from.sym + ' → ' + to.sym, at: Date.now()});
+      walletSave();
+    }
+    v.innerHTML = `<div class="wal-ok-wrap">
+      <div class="wal-ok">${I('check')}</div>
+      <p style="font-weight:800;font-size:19px;margin-top:14px">${walCurFmt(s.to, out)}</p>
+      <p class="dim" style="font-size:13px;margin-top:6px">Обмен выполнен: ${walCurFmt(s.from, s.amount)} → ${walCurFmt(s.to, out)}<br>Новый баланс ${to.sym}: <b>${walCurFmt(s.to, walCurBal(s.to))}</b></p>
+      <div style="height:16px"></div>
+      <button class="btn" onclick="closeSheet()">Отлично</button></div>`;
+    renderWallet();
+    walFlash(s.to === 'RUB' ? 'in' : 'out');
+    toast('Обмен: ' + walCurFmt(s.from, s.amount) + ' → ' + walCurFmt(s.to, out));
+  }, 900);
+}
+
+/* ---------- ОТПРАВКА ДРУГОМУ ПОЛЬЗОВАТЕЛЮ ---------- */
+const WAL_CONTACTS = [
+  {nick:'markvolkov',  name:'Марк Волков'},
+  {nick:'aniasokol',   name:'Аня Соколова'},
+  {nick:'okoteam',     name:'OKO Team'},
+  {nick:'nikapro',     name:'Ника Про'},
+  {nick:'dm_studio',   name:'DM Studio'},
+  {nick:'levabass',    name:'Лёва Басс'},
+];
+let walSendState = {to:'', name:'', sum:0, note:''};
+function walOpenSend(nickPrefill){
+  walSendState = {to: nickPrefill||'', name:'', sum:0, note:''};
+  walRenderSend();
+  openSheet('walSend');
+}
+function walRenderSend(){
+  const s = walSendState;
+  const contactChip = c => `
+    <button class="wal-send-qi" onclick="walSendState.to='${c.nick}';walSendState.name='${esc(c.name)}';walRenderSend()">
+      <span class="wal-send-av">${c.name.charAt(0)}</span><span>${esc(c.name.split(' ')[0])}</span>
+    </button>`;
+  document.getElementById('walSendView').innerHTML = `
+    <h3>Отправить деньги</h3>
+    <p class="dim" style="font-size:12.5px;margin:-4px 0 12px">Перевод внутри OKO — мгновенно и без комиссии</p>
+    <div class="wal-send-to">
+      <span class="wal-send-av">${(s.name || s.to || '?').charAt(0).toUpperCase()}</span>
+      <input placeholder="Ник получателя, например ktodaniel" value="${esc(s.to)}"
+        oninput="walSendState.to=this.value.replace(/^@/,'').trim();walSyncSendBtn()">
+    </div>
+    <p style="font-weight:600;font-size:12px;margin:2px 0 6px;color:var(--dim);letter-spacing:.06em;text-transform:uppercase">Недавние</p>
+    <div class="wal-send-quick">${WAL_CONTACTS.map(contactChip).join('')}</div>
+    <input class="wal-send-note" placeholder="Комментарий, например «за монтаж»"
+      value="${esc(s.note)}" maxlength="80" oninput="walSendState.note=this.value">
+    <div class="wal-qs">${[100,500,1000,2000].map(v=>`
+      <button class="${s.sum===v?'on':''}" onclick="walSendState.sum=${v};walRenderSend()">${v>=1000?(v/1000)+'к':v}</button>`).join('')}</div>
+    <input id="walSendSum" type="number" min="1" placeholder="Сумма, ₽" value="${s.sum||''}"
+      oninput="walSendState.sum=Math.max(0,Number(this.value)||0);walSyncSendBtn()">
+    <div style="height:6px"></div>
+    <p class="dim" style="font-size:12px">Доступно: <b style="color:var(--accent)">${fmtMoney(WALLET.balance)}</b> · комиссии нет · получатель увидит перевод в чате.</p>
+    <div style="height:12px"></div>
+    <button class="btn" onclick="walDoSend()"><svg class="i"><use href="#i-send"/></svg> <span id="walSendBtn">Отправить</span></button>`;
+  walSyncSendBtn();
+}
+function walSyncSendBtn(){
+  const s = walSendState;
+  const b = document.getElementById('walSendBtn');
+  if(b) b.textContent = s.sum > 0 && s.to ? 'Отправить ' + fmtMoney(s.sum) : 'Отправить';
+}
+function walDoSend(){
+  const s = walSendState;
+  if(!s.to){ toast('Укажи ник получателя'); return; }
+  if(!s.sum || s.sum <= 0){ toast('Укажи сумму перевода'); return; }
+  if(s.sum > WALLET.balance){ toast('Недостаточно средств: доступно ' + fmtMoney(WALLET.balance)); return; }
+  const why = 'Перевод в чате · @' + s.to + (s.note ? ' («' + s.note + '»)' : '');
+  const v = document.getElementById('walSendView');
+  v.innerHTML = `<div style="text-align:center;padding:22px 0"><div class="spin"></div><p style="font-weight:700;margin-top:14px">Отправляем…</p></div>`;
+  setTimeout(()=>{
+    walletCharge(s.sum, why);
+    v.innerHTML = `<div class="wal-ok-wrap">
+      <div class="wal-ok">${I('check')}</div>
+      <p style="font-weight:800;font-size:19px;margin-top:14px">− ${fmtMoney(s.sum)}</p>
+      <p class="dim" style="font-size:13px;margin-top:6px">Перевод @${esc(s.to)} доставлен.<br>Баланс: <b>${fmtMoney(WALLET.balance)}</b></p>
+      <div style="height:16px"></div>
+      <button class="btn" onclick="closeSheet()">Готово</button></div>`;
+    renderWallet();
+    walFlash('out');
+    toast('Отправлено @' + s.to + ': ' + fmtMoney(s.sum));
+  }, 800);
+}
+
+/* ---------- QR-ПРИЁМ (canvas) ---------- */
+let walRecvState = {sum:0, note:'', code:'RUB'};
+function walOpenReceive(code){
+  walRecvState = {sum: 0, note:'', code: code || 'RUB'};
+  walRenderReceive();
+  openSheet('walReceive');
+  setTimeout(walDrawRecvQR, 40);
+}
+function walRecvLink(){
+  const s = walRecvState;
+  const base = 'https://okoteam.top/pay';
+  const p = new URLSearchParams();
+  p.set('to', WALLET.acc);
+  if(s.sum) p.set('sum', String(s.sum));
+  if(s.note) p.set('note', s.note);
+  if(s.code && s.code !== 'RUB') p.set('cur', s.code);
+  return base + '?' + p.toString();
+}
+function walRenderReceive(){
+  const s = walRecvState, m = WAL_CUR_META[s.code];
+  document.getElementById('walRecvView').innerHTML = `
+    <h3 style="margin-bottom:2px">Принять платёж</h3>
+    <p class="dim" style="font-size:12.5px;margin:-2px 0 10px">Покажи QR — плательщик отсканирует и увидит счёт${s.code!=='RUB'?' в '+m.sym:''}</p>
+    <div class="wal-recv">
+      <div class="wal-recv-card">
+        <canvas id="walRecvCanvas" width="420" height="420" aria-label="QR-код"></canvas>
+        <div class="wal-recv-sum">${s.sum ? walCurFmt(s.code, s.sum) : (s.code==='RUB'?'Любая сумма':'Любое количество '+m.sym)}</div>
+        <div class="wal-recv-sub">Счёт: <b>${WALLET.acc}</b>${s.note?'<br>«'+esc(s.note)+'»':''}</div>
+        <div class="wal-recv-inputs">
+          <input type="number" min="0" step="any" placeholder="Сумма ${m.sym}" value="${s.sum||''}"
+            oninput="walRecvState.sum=Math.max(0,Number(this.value)||0);walDrawRecvQR();walRenderReceiveText()">
+          <input placeholder="Комментарий" maxlength="40" value="${esc(s.note)}"
+            oninput="walRecvState.note=this.value;walDrawRecvQR();walRenderReceiveText()">
+        </div>
+        <button class="wal-recv-link" onclick="walCopy(walRecvLink(),'Ссылка на приём скопирована')">
+          <svg class="i"><use href="#i-copy"/></svg>
+          <span id="walRecvLink">${esc(walRecvLink())}</span>
+        </button>
+      </div>
+      <div class="wal-recv-share">
+        <button class="prim" onclick="walShareReceive()"><svg class="i"><use href="#i-share"/></svg>Поделиться</button>
+        <button class="sec" onclick="walCopy(walRecvLink(),'Ссылка скопирована')"><svg class="i"><use href="#i-copy"/></svg>Копировать</button>
+      </div>
+    </div>`;
+}
+function walRenderReceiveText(){
+  const el = document.getElementById('walRecvLink');
+  if(el) el.textContent = walRecvLink();
+  const sumEl = document.querySelector('.wal-recv-sum');
+  if(sumEl){
+    const s = walRecvState, m = WAL_CUR_META[s.code];
+    sumEl.textContent = s.sum ? walCurFmt(s.code, s.sum) : (s.code==='RUB'?'Любая сумма':'Любое количество '+m.sym);
+  }
+}
+function walDrawRecvQR(){
+  const cv = document.getElementById('walRecvCanvas'); if(!cv) return;
+  const ctx = cv.getContext('2d');
+  const W = cv.width, H = cv.height;
+  ctx.fillStyle = '#fff'; ctx.fillRect(0,0,W,H);
+  /* сеть 25x25 (генерируем «QR-подобный» узор детерминированно по ссылке) */
+  const N = 25, cell = W / N;
+  const seed = walRecvLink();
+  let h = 2166136261;
+  for(let i = 0; i < seed.length; i++){ h ^= seed.charCodeAt(i); h = Math.imul(h, 16777619) >>> 0; }
+  const rnd = ()=>{ h ^= h << 13; h >>>= 0; h ^= h >>> 17; h ^= h << 5; h >>>= 0; return h / 4294967296; };
+  const inFinder = (r,c)=> (r < 8 && c < 8) || (r < 8 && c >= N-8) || (r >= N-8 && c < 8);
+  const inAlign  = (r,c)=> (r >= 17 && r <= 21 && c >= 17 && c <= 21);
+  ctx.fillStyle = '#0a0a0a';
+  for(let r = 0; r < N; r++) for(let c = 0; c < N; c++){
+    if(inFinder(r,c) || inAlign(r,c)) continue;
+    if(r === 6 || c === 6){                       // тайминг-линии
+      if((r + c) % 2 === 0) ctx.fillRect(c*cell, r*cell, cell, cell);
+      continue;
+    }
+    if(rnd() < 0.47) ctx.fillRect(c*cell, r*cell, cell, cell);
+  }
+  /* три finder-квадрата в углах */
+  const fp = (r,c)=>{
+    ctx.fillStyle = '#0a0a0a'; ctx.fillRect(c*cell, r*cell, 7*cell, 7*cell);
+    ctx.fillStyle = '#fff';    ctx.fillRect((c+1)*cell, (r+1)*cell, 5*cell, 5*cell);
+    ctx.fillStyle = '#0a0a0a'; ctx.fillRect((c+2)*cell, (r+2)*cell, 3*cell, 3*cell);
+  };
+  fp(0,0); fp(0, N-7); fp(N-7, 0);
+  /* маленький alignment в правом-нижнем */
+  ctx.fillStyle = '#0a0a0a'; ctx.fillRect(17*cell, 17*cell, 5*cell, 5*cell);
+  ctx.fillStyle = '#fff';    ctx.fillRect(18*cell, 18*cell, 3*cell, 3*cell);
+  ctx.fillStyle = '#0a0a0a'; ctx.fillRect(19*cell, 19*cell, cell, cell);
+  /* лого OKO в центре — лайм-круг с O */
+  const cx = W/2, cy = H/2, R = W * 0.13;
+  ctx.fillStyle = '#fff'; ctx.beginPath(); ctx.arc(cx, cy, R + cell*0.7, 0, Math.PI*2); ctx.fill();
+  ctx.fillStyle = '#9AFF00'; ctx.beginPath(); ctx.arc(cx, cy, R, 0, Math.PI*2); ctx.fill();
+  ctx.fillStyle = '#000';
+  ctx.font = 'bold ' + Math.round(R * 1.05) + 'px "Bebas Neue", Impact, sans-serif';
+  ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+  ctx.fillText('O', cx, cy + R*0.06);
+}
+function walShareReceive(){
+  const link = walRecvLink();
+  const text = 'Прими платёж на OKO-счёт ' + WALLET.acc + (walRecvState.sum ? ' · ' + walCurFmt(walRecvState.code, walRecvState.sum) : '');
+  if(navigator.share){
+    navigator.share({title: 'Платёж OKO', text, url: link}).catch(()=>{});
+  } else {
+    walCopy(link, 'Ссылка на приём скопирована');
+  }
+}
+
+/* ---------- ПИРОГ РАСХОДОВ (SVG donut) ---------- */
+const WAL_PIE_COLORS = ['#9AFF00','#7ECBEB','#FFB84A','#FF7EA6','#A980FF','#4EE2B8','#FFDF5C','#FF5C5C'];
+function walRenderPie(){
+  const box = document.getElementById('walPie');
+  if(!box) return;
+  const sums = {};
+  const since = Date.now() - 30 * 864e5;
+  WALLET.ledger.forEach(op=>{ if(op.t==='-' && op.at >= since) sums[walCat(op.why)] = (sums[walCat(op.why)]||0) + op.sum; });
+  const cats = Object.entries(sums).sort((a,b)=>b[1]-a[1]);
+  if(!cats.length){
+    box.innerHTML = `<div class="wal-pie-empty">Расходов за 30 дней нет — держи баланс в плюсе.</div>`;
+    return;
+  }
+  const total = cats.reduce((s,c)=>s+c[1], 0);
+  const R = 42, C = 2 * Math.PI * R;
+  let acc = 0;
+  const arcs = cats.map(([k,v],i)=>{
+    const frac = v / total, len = C * frac;
+    const el = `<circle cx="60" cy="60" r="${R}" fill="transparent"
+      stroke="${WAL_PIE_COLORS[i%WAL_PIE_COLORS.length]}" stroke-width="16"
+      stroke-dasharray="${len} ${C - len}" stroke-dashoffset="${-acc}"
+      style="animation:walBarIn .7s cubic-bezier(.3,1,.4,1) ${i*70}ms both"/>`;
+    acc += len;
+    return el;
+  }).join('');
+  const list = cats.slice(0, 6).map(([k,v],i)=>{
+    const pct = Math.round(v / total * 100);
+    return `<div class="wal-pie-row" style="animation-delay:${i*60}ms">
+      <span class="wal-pie-dot" style="background:${WAL_PIE_COLORS[i%WAL_PIE_COLORS.length]}"></span>
+      <span class="wal-pie-nm">${esc(k)}</span>
+      <span class="wal-pie-pct">${pct||'<1'}%</span>
+    </div>`;
+  }).join('');
+  box.innerHTML = `
+    <div class="wal-pie">
+      <svg viewBox="0 0 120 120">
+        <circle cx="60" cy="60" r="${R}" fill="transparent" stroke="var(--raised)" stroke-width="16"/>
+        ${arcs}
+      </svg>
+      <div class="wal-pie-center"><b>${fmtMoney(total)}</b><span>Всего 30 дней</span></div>
+    </div>
+    <div class="wal-pie-list">${list}</div>`;
+}
+
+/* ---------- ТОП-3 ИСТОЧНИКА ДОХОДА + СРЕДНЕЕ В ДЕНЬ ---------- */
+function walRenderTopInc(){
+  const box = document.getElementById('walTopInc');
+  if(!box) return;
+  const since = Date.now() - 30 * 864e5;
+  const sums = {};
+  let totalIn = 0;
+  WALLET.ledger.forEach(op=>{
+    if(op.t !== '+' || op.at < since) return;
+    const c = walCat(op.why);
+    sums[c] = (sums[c] || 0) + op.sum;
+    totalIn += op.sum;
+  });
+  const cats = Object.entries(sums).sort((a,b)=>b[1]-a[1]).slice(0, 3);
+  if(!cats.length){
+    box.innerHTML = `<div class="wal-topinc-empty">За 30 дней доходов ещё нет — время монетизировать контент.</div>`;
+    return;
+  }
+  const avg = Math.round(totalIn / 30);
+  box.innerHTML = cats.map(([k,v],i)=>{
+    const pct = totalIn ? Math.round(v / totalIn * 100) : 0;
+    return `<div class="wal-topinc-r" style="animation-delay:${i*60}ms">
+      <span class="wal-topinc-rank">${i+1}</span>
+      <div class="wal-topinc-b">
+        <b>${esc(k)}</b><span>${pct}% от всего дохода за 30 дней</span>
+      </div>
+      <span class="wal-topinc-sum">+ ${fmtMoney(v)}</span>
+    </div>`;
+  }).join('') + `
+    <div class="wal-avg-chip">${I('users')}<span>В среднем в день:</span><b>+ ${fmtMoney(avg)}</b></div>`;
+}
+
+/* среднее в день под мини-графиком в hero */
+function walUpdateAvg(){
+  const el = document.getElementById('walAvg');
+  if(!el) return;
+  const days = walChartDays;
+  const since = Date.now() - days * 864e5;
+  let inc = 0, exp = 0;
+  WALLET.ledger.forEach(o=>{
+    if(o.at < since) return;
+    if(o.t === '+') inc += o.sum; else exp += o.sum;
+  });
+  const net = inc - exp, avg = Math.round(net / days);
+  const sign = avg >= 0 ? '+' : '−';
+  el.innerHTML = `<svg viewBox="0 0 100 100"><path d="M20 66 50 34 80 66" fill="none" stroke="currentColor" stroke-width="14" stroke-linecap="round" stroke-linejoin="round"/></svg>
+    В среднем в день: <b>${sign} ${fmtMoney(Math.abs(avg))}</b> · за ${days} дн: ${sign} ${fmtMoney(Math.abs(net))}`;
+}
+
+/* ---------- ФИНАНСОВЫЕ ЦЕЛИ ---------- */
+if(!WAL_X.goals){
+  WAL_X.goals = [
+    {id:'g_pro', name:'Копим на PRO', target: walProPrice(), saved: Math.round(walProPrice()*0.32), ic:'crown'},
+    {id:'g_camera', name:'Камера для съёмок', target: 89000, saved: 24500, ic:'photo'},
+  ];
+  walXSave();
+}
+function walRenderGoals(){
+  const box = document.getElementById('walGoals');
+  if(!box) return;
+  const items = WAL_X.goals || [];
+  box.innerHTML = items.map(g=>{
+    const pct = Math.min(100, Math.round((g.saved || 0) / (g.target || 1) * 100));
+    const done = pct >= 100;
+    return `<div class="card wal-goal ${done?'done':''}" onclick="walOpenGoal('${g.id}')" role="button">
+      <div class="wal-goal-top">
+        <div class="wal-goal-ic">${I(g.ic || 'target')}</div>
+        <div class="wal-goal-b"><b>${esc(g.name)}</b><span>${done?'Цель достигнута — забирай и трать':'Осталось накопить '+fmtMoney(Math.max(0, g.target - g.saved))}</span></div>
+        <span class="wal-goal-pct">${pct}%</span>
+      </div>
+      <div class="wal-goal-bar"><i style="width:${pct}%"></i></div>
+      <div class="wal-goal-foot">
+        <span>Собрано <b>${fmtMoney(g.saved || 0)}</b></span>
+        <span>Цель <b>${fmtMoney(g.target || 0)}</b></span>
+      </div>
+    </div>`;
+  }).join('') + `
+    <button class="wal-goal-add" onclick="walOpenGoal()"><svg class="i"><use href="#i-plus"/></svg>Добавить цель</button>`;
+}
+const WAL_GOAL_ICS = ['target','crown','rocket','photo','circle-play','bookmark','fire','globe'];
+let walGoalEdit = null;
+function walOpenGoal(id){
+  const g = id ? (WAL_X.goals||[]).find(x=>x.id===id) : {id:'g_'+Math.random().toString(36).slice(2,7), name:'', target:0, saved:0, ic:'target'};
+  walGoalEdit = Object.assign({_new: !id}, g);
+  walRenderGoal();
+  openSheet('walGoal');
+}
+function walRenderGoal(){
+  const g = walGoalEdit; if(!g) return;
+  document.getElementById('walGoalView').innerHTML = `
+    <h3>${g._new ? 'Новая цель' : 'Цель · ' + esc(g.name || 'без имени')}</h3>
+    <div class="wal-goal-form">
+      <div>
+        <span class="wal-autor-lbl">Название</span>
+        <input class="wal-autor-inp" placeholder="Копим на новую камеру" value="${esc(g.name)}"
+          oninput="walGoalEdit.name=this.value">
+      </div>
+      <div>
+        <span class="wal-autor-lbl">Цель, ₽</span>
+        <input class="wal-autor-inp" type="number" min="1" placeholder="5000" value="${g.target||''}"
+          oninput="walGoalEdit.target=Math.max(0,Number(this.value)||0)">
+      </div>
+      <div>
+        <span class="wal-autor-lbl">Уже накоплено, ₽</span>
+        <input class="wal-autor-inp" type="number" min="0" placeholder="0" value="${g.saved||''}"
+          oninput="walGoalEdit.saved=Math.max(0,Number(this.value)||0)">
+      </div>
+      <div>
+        <span class="wal-autor-lbl">Иконка</span>
+        <div class="wal-goal-ic-pick">${WAL_GOAL_ICS.map(ic=>`
+          <button class="${g.ic===ic?'on':''}" onclick="walGoalEdit.ic='${ic}';walRenderGoal()">${I(ic)}</button>`).join('')}</div>
+      </div>
+    </div>
+    <button class="btn" onclick="walSaveGoal()"><svg class="i"><use href="#i-check"/></svg> Сохранить цель</button>
+    ${g._new ? '' : `<div style="height:8px"></div>
+      <button class="btn ghost" style="color:var(--danger);border-color:var(--danger)" onclick="walDeleteGoal()"><svg class="i"><use href="#i-trash"/></svg> Удалить цель</button>`}`;
+}
+function walSaveGoal(){
+  const g = walGoalEdit; if(!g) return;
+  if(!g.name.trim()){ toast('Введи название цели'); return; }
+  if(!g.target || g.target <= 0){ toast('Укажи сумму цели'); return; }
+  const arr = WAL_X.goals || [];
+  const idx = arr.findIndex(x=>x.id===g.id);
+  const clean = {id:g.id, name:g.name.trim(), target:g.target, saved:g.saved||0, ic:g.ic||'target'};
+  if(idx < 0) arr.push(clean); else arr[idx] = clean;
+  WAL_X.goals = arr; walXSave();
+  closeSheet(); walRenderGoals();
+  toast(g._new ? 'Цель добавлена: ' + clean.name : 'Цель обновлена');
+}
+function walDeleteGoal(){
+  const g = walGoalEdit; if(!g) return;
+  WAL_X.goals = (WAL_X.goals||[]).filter(x=>x.id!==g.id); walXSave();
+  closeSheet(); walRenderGoals();
+  toast('Цель удалена');
+}
+
+/* ---------- АВТОПОПОЛНЕНИЯ (правила) ---------- */
+if(!WAL_X.autoRules){
+  WAL_X.autoRules = [
+    {id:'ar_1', below: 1000, sum: 5000, method:'card', on: true},
+  ];
+  walXSave();
+}
+function walRenderAutoRules(){
+  const box = document.getElementById('walAutoRules');
+  if(!box) return;
+  const rules = WAL_X.autoRules || [];
+  const list = rules.length ? rules.map(r=>`
+    <div class="wal-autor-r" style="opacity:${r.on?1:.55}">
+      <div class="wal-autor-ic">${I('plus')}</div>
+      <div class="wal-autor-b">
+        <b>Если баланс &lt; ${fmtMoney(r.below)}</b>
+        <span>Пополнить на <b style="color:var(--accent)">${fmtMoney(r.sum)}</b> · ${WAL_M_LABEL[r.method]||'Карта РФ'} · ${r.on?'активно':'выключено'}</span>
+      </div>
+      <button class="wal-autor-x" onclick="walToggleAutoRule('${r.id}')" aria-label="${r.on?'Выключить':'Включить'}">${I(r.on?'check':'plus')}</button>
+      <button class="wal-autor-x" onclick="walDeleteAutoRule('${r.id}')" aria-label="Удалить">${I('trash')}</button>
+    </div>`).join('') : `<div class="wal-autor-empty">Правил ещё нет. Настрой — и баланс не упадёт до нуля в самый неподходящий момент.</div>`;
+  box.innerHTML = list + `
+    <button class="wal-autor-add" onclick="walOpenAutoRule()"><svg class="i"><use href="#i-plus"/></svg>Новое правило</button>`;
+}
+function walToggleAutoRule(id){
+  const r = (WAL_X.autoRules||[]).find(x=>x.id===id); if(!r) return;
+  r.on = !r.on; walXSave(); walRenderAutoRules();
+  toast('Автопополнение ' + (r.on ? 'включено' : 'выключено'));
+}
+function walDeleteAutoRule(id){
+  WAL_X.autoRules = (WAL_X.autoRules||[]).filter(x=>x.id!==id); walXSave();
+  walRenderAutoRules(); toast('Правило удалено');
+}
+let walAutoRuleEdit = null;
+function walOpenAutoRule(){
+  walAutoRuleEdit = {id:'ar_'+Math.random().toString(36).slice(2,7), below:1000, sum:5000, method:'card', on:true};
+  walRenderAutoRule();
+  openSheet('walAutoRule');
+}
+function walRenderAutoRule(){
+  const r = walAutoRuleEdit; if(!r) return;
+  document.getElementById('walAutoRuleView').innerHTML = `
+    <h3>Новое правило автопополнения</h3>
+    <p class="dim" style="font-size:12.5px;margin:-4px 0 12px">Кошелёк сам пополнится, когда баланс упадёт ниже порога</p>
+    <div class="wal-autor-form">
+      <div>
+        <span class="wal-autor-lbl">Пополнить, если баланс меньше, ₽</span>
+        <input class="wal-autor-inp" type="number" min="0" value="${r.below}"
+          oninput="walAutoRuleEdit.below=Math.max(0,Number(this.value)||0)">
+      </div>
+      <div>
+        <span class="wal-autor-lbl">Сумма пополнения, ₽</span>
+        <input class="wal-autor-inp" type="number" min="1" value="${r.sum}"
+          oninput="walAutoRuleEdit.sum=Math.max(0,Number(this.value)||0)">
+      </div>
+      <div>
+        <span class="wal-autor-lbl">Источник пополнения</span>
+        <div class="wal-methods">${WAL_METHODS.map(([k,l,ic])=>`
+          <button class="wal-m ${r.method===k?'on':''}" onclick="walAutoRuleEdit.method='${k}';walRenderAutoRule()">${I(ic)}<span>${l}</span></button>`).join('')}</div>
+      </div>
+    </div>
+    <button class="btn" onclick="walSaveAutoRule()"><svg class="i"><use href="#i-check"/></svg> Сохранить правило</button>
+    <p class="dim" style="font-size:11px;text-align:center;margin-top:9px">Списание с карты только при срабатывании правила. Отключить в любой момент.</p>`;
+}
+function walSaveAutoRule(){
+  const r = walAutoRuleEdit; if(!r) return;
+  if(r.sum <= 0){ toast('Укажи сумму пополнения'); return; }
+  WAL_X.autoRules = (WAL_X.autoRules || []).concat([r]); walXSave();
+  closeSheet(); walRenderAutoRules();
+  toast('Правило добавлено: если < ' + fmtMoney(r.below) + ' → пополнить на ' + fmtMoney(r.sum));
+}
+/* мок реального крона: при загрузке — если баланс ниже порога любого активного
+   правила и с последнего срабатывания прошло > 30 мин — сработает.
+   На самой первой загрузке молча выставляем baseline, чтобы не удивлять пользователя. */
+(function walAutoRuleTick(){
+  if(!WAL_X.autoRuleLast){ WAL_X.autoRuleLast = Date.now(); walXSave(); return; }
+  const rules = (WAL_X.autoRules || []).filter(r=>r.on && WALLET.balance < r.below);
+  if(!rules.length) return;
+  if(Date.now() - WAL_X.autoRuleLast < 30 * 60 * 1000) return;
+  const r = rules[0];
+  walletAdd(r.sum, 'Автопополнение · правило (' + WAL_M_LABEL[r.method] + ')');
+  WAL_X.autoRuleLast = Date.now(); walXSave();
+  setTimeout(()=>toast('Автопополнение: +' + fmtMoney(r.sum) + ' — баланс был ниже ' + fmtMoney(r.below)), 500);
+})();
+
+/* ---------- FACE-ID / ОТПЕЧАТОК (эмуляция) ---------- */
+function walToggleBio(){
+  if(WAL_X.bio){
+    WAL_X.bio = false; walXSave(); walRenderSec();
+    toast('Вход по отпечатку выключен');
+  } else {
+    walOpenBio('setup');
+  }
+}
+function walOpenBio(mode, onOk){
+  document.getElementById('walBioView').innerHTML = `
+    <div class="wal-bio" id="walBioBox">
+      <div class="wal-bio-ic" onclick="walBioScan()">${I('fingerprint')}</div>
+      <div class="wal-bio-h">${mode==='setup'?'Приложи палец':'Разблокируй кошелёк'}</div>
+      <div class="wal-bio-s">${mode==='setup'?'Приложи палец к датчику, чтобы приложение запомнило отпечаток. В прод-версии — реальный Touch/Face-ID.':'Быстрый вход без ПИН-кода — приложи палец или посмотри в камеру'}</div>
+    </div>
+    <div style="height:14px"></div>
+    <button class="btn ghost" onclick="closeSheet()">Отмена</button>`;
+  window._walBioOnOk = onOk || (()=>{
+    WAL_X.bio = true; walXSave(); walRenderSec();
+    toast('Вход по отпечатку включён');
+  });
+  window._walBioMode = mode;
+  openSheet('walBio');
+}
+function walBioScan(){
+  const box = document.getElementById('walBioBox'); if(!box) return;
+  /* «сканирование» — 1.4с прогресса */
+  setTimeout(()=>{
+    /* 90% успех */
+    const ok = Math.random() > 0.1;
+    box.classList.add(ok ? 'ok' : 'err');
+    box.querySelector('.wal-bio-h').textContent = ok ? 'Готово' : 'Не распознан';
+    box.querySelector('.wal-bio-s').textContent = ok ? 'Отпечаток принят.' : 'Попробуй ещё раз — приложи палец плотно.';
+    if(ok){
+      setTimeout(()=>{ closeSheet(); if(window._walBioOnOk) window._walBioOnOk(); }, 550);
+    } else {
+      setTimeout(()=>{ box.classList.remove('err'); box.querySelector('.wal-bio-h').textContent = 'Приложи палец'; box.querySelector('.wal-bio-s').textContent = 'Ещё раз — держи палец плотно.'; }, 900);
+    }
+  }, 1400);
+}
+
+/* ---------- LIVE-УВЕДОМЛЕНИЕ О ЗАЧИСЛЕНИИ (sticky slide-in) ---------- */
+function walLiveNotify(opts){
+  const cur = document.getElementById('walLive');
+  if(cur) cur.remove();
+  const el = document.createElement('div');
+  el.id = 'walLive'; el.className = 'wal-live';
+  el.innerHTML = `
+    <span class="wal-live-av">${opts.avatar || (opts.who||'?').charAt(0).toUpperCase()}</span>
+    <div class="wal-live-b">
+      <b>${esc(opts.title || 'Поступление')}</b>
+      <span>${esc(opts.sub || '')}</span>
+    </div>
+    <span class="wal-live-sum">${opts.sum || ''}</span>
+    <button class="wal-live-x" onclick="event.stopPropagation();walLiveClose()" aria-label="Скрыть">${I('back')}</button>`;
+  el.onclick = ()=>{ walLiveClose(); if(opts.onclick) opts.onclick(); };
+  document.body.appendChild(el);
+  setTimeout(walLiveClose, opts.ttl || 5000);
+}
+function walLiveClose(){
+  const el = document.getElementById('walLive'); if(!el) return;
+  el.classList.add('out');
+  setTimeout(()=>{ if(el.parentNode) el.parentNode.removeChild(el); }, 350);
+}
+/* демо-нотификация при заходе в кошелёк — раз за сессию, зачисляет 500₽ */
+let _walDemoLiveShown = false;
+function walMaybeDemoLive(){
+  if(_walDemoLiveShown) return;
+  _walDemoLiveShown = true;
+  setTimeout(()=>{
+    walletAdd(500, 'Перевод в чате · Марк Волков');
+    walLiveNotify({
+      who:'Марк Волков',
+      title:'Пришло 500 ₽ от Марка',
+      sub:'@markvolkov · за монтаж рилса',
+      sum:'+ 500 ₽',
+      onclick:()=>{ if(typeof showTab==='function') showTab('wallet'); }
+    });
+    walFlash('in');
+  }, 1600);
 }
 
 /* ---------- ПАТЧИ денежных потоков ядра (прежнее поведение сохранено) ---------- */

@@ -1726,5 +1726,686 @@ if(typeof renderMarketList==='function'){
   };
 }
 
+/* ================================================================================
+   MARKET-PRO v3 · биржа услуг уровня Avito + Fiverr + Upwork
+   Всё аддитивно поверх базовой Биржи и уже подключённых патчей market-pro.
+   9 больших блоков (см. mpV3-заголовки ниже). Персист — тот же MP (localStorage).
+   ================================================================================ */
+
+/* ---------- ЕДИНАЯ БАЗА ДАННЫХ V3 (миграция без потерь) ---------- */
+MP.revealedTg   = MP.revealedTg   || {};       // {lid: '@nickname'} — оплаченные раскрытия TG
+MP.tgRevealCount= MP.tgRevealCount|| 0;
+MP.bumps        = MP.bumps        || {};       // {lid: expiresAt}    — активные bump'ы (24ч)
+MP.searchHist   = MP.searchHist   || [];       // ['ролики', ...]     — история поиска
+try{ mpSave(); }catch(e){}
+
+/* ---------- SVG-ЩИТ ВЕРИФИКАЦИИ (свой символ, чтобы не завязываться на i-verified размер) ---------- */
+(function mpAddShieldSymbol(){
+  const defs = document.querySelector('svg defs');
+  if(!defs || document.getElementById('i-mpshield')) return;
+  const s = document.createElementNS('http://www.w3.org/2000/svg','symbol');
+  s.setAttribute('id','i-mpshield'); s.setAttribute('viewBox','0 0 100 100');
+  s.innerHTML = '<path d="M50 8 18 22v28c0 20 14 34 32 42 18-8 32-22 32-42V22z"/>';
+  defs.appendChild(s);
+  const t = document.createElementNS('http://www.w3.org/2000/svg','symbol');
+  t.setAttribute('id','i-mptg'); t.setAttribute('viewBox','0 0 100 100');
+  t.innerHTML = '<circle cx="50" cy="50" r="42" fill="currentColor" stroke="none"/><path d="M28 51l40-17c2-1 3 0 2 2l-6 30c-1 2-2 3-4 2l-11-8-5 5c-1 1-2 1-3-1l-2-12 26-24-30 20-8-3c-2-1-2-2 1-3z" fill="#0d0d0d" stroke="none"/>';
+  defs.appendChild(t);
+})();
+
+/* ============================================================
+   A · SAFE DEAL — компактный 3-шаговый визуал на карточке
+   ============================================================ */
+const MP_SAFE_STEPS = [
+  ['card',      'Заказ',      'выбираешь услугу и оформляешь безопасно'],
+  ['lock',      'Предоплата', 'деньги замораживаются в эскроу OKO'],
+  ['check',     'Приёмка',    'работа сдана — подтверждаешь, деньги уходят исполнителю'],
+];
+function mpSafeMini(){
+  return `<div class="mp-safe" id="mpSafe" role="button" tabindex="0" onclick="mpEscInfoOpen()">
+    <div class="mp-safe-h">
+      <span class="mp-safe-ic">${I('lock')}</span>
+      <div class="mp-safe-b">
+        <b>Безопасная сделка · 3 шага</b>
+        <small>Эскроу OKO защищает деньги · возврат при спорах</small>
+      </div>
+      <span class="mp-safe-more">${I('chev')}</span>
+    </div>
+    <div class="mp-safe-line">
+      ${MP_SAFE_STEPS.map((s,i)=>`
+        <div class="mp-safe-step">
+          <span class="mp-safe-dot">${I(s[0])}</span>
+          <b>${s[1]}</b>
+          <small>${s[2]}</small>
+        </div>
+        ${i<MP_SAFE_STEPS.length-1?'<span class="mp-safe-arrow"></span>':''}
+      `).join('')}
+    </div>
+  </div>`;
+}
+
+/* ============================================================
+   B · СВЯЗАТЬСЯ: OKO-чат (главная CTA) + Показать TG (платно 100 ₽)
+   ============================================================ */
+const MP_TG_PRICE = 100;
+function mpFakeTg(l){
+  /* стабильный ник от seed */
+  const alph = 'abcdefghijklmnopqrstuvwxyz';
+  let s = ''; let n = (l.seed||1) * 9301 + 49297;
+  const nick = (l.n||'user').split(' ')[0].toLowerCase().replace(/[^a-z]/g,'');
+  const base = nick.length>2 ? nick : 'oko';
+  for(let i=0;i<4;i++){ n = (n*9301+49297) % 233280; s += alph[n%26]; }
+  return '@'+base+'_'+s;
+}
+function mpTgMasked(l){
+  const full = mpFakeTg(l);
+  return full.slice(0, Math.min(full.length, 4)) + '•••';
+}
+function mpContactBlock(l){
+  const revealed = MP.revealedTg[l.id];
+  const tgLine = revealed
+    ? `<button class="mp-tg-row revealed" onclick="mpTgCopy('${l.id}')">
+         <span class="mp-tg-ic">${I('mptg')}</span>
+         <div class="mp-tg-b"><b>${esc(revealed)}</b><small>Telegram · нажми, чтобы скопировать</small></div>
+         <span class="mp-tg-hint">${I('copy')}</span>
+       </button>`
+    : `<button class="mp-tg-row" onclick="mpTgReveal(${l.id})">
+         <span class="mp-tg-ic locked">${I('lock')}</span>
+         <div class="mp-tg-b"><b>Показать Telegram · ${mpTgMasked(l)}</b><small>Разовое раскрытие контакта продавца · ${MP_TG_PRICE} ₽ с кошелька</small></div>
+         <span class="mp-tg-price">${MP_TG_PRICE} ₽</span>
+       </button>`;
+  return `<div class="mp-contact" id="mpContact">
+    <div class="mp-strip-h">${I('chat')} Связаться с продавцом</div>
+    <button class="btn mp-contact-cta" onclick="mpChatFromContact(${l.id})">${I('chat')} Написать в OKO-чат</button>
+    <p class="mp-contact-sub">${I('lock')} Все сообщения по этому объявлению защищены эскроу · рекомендуем.</p>
+    ${tgLine}
+  </div>`;
+}
+function mpChatFromContact(id){ if(typeof contactSeller==='function') contactSeller(id); }
+function mpTgReveal(id){
+  const l = LISTINGS.find(x=>x.id===id); if(!l) return;
+  if(MP.revealedTg[id]) return; // уже открыт
+  showPopup({ico:'mptg', title:'Показать номер Telegram?',
+    body:'Разовое раскрытие контакта продавца «'+esc(l.n)+'» — <b>'+MP_TG_PRICE+' ₽</b> с кошелька OKO. Дальнейшие показы бесплатны.',
+    actions:[
+      {label:'Отмена', ghost:true, onclick:()=>closePopup()},
+      {label:'Показать за '+MP_TG_PRICE+' ₽', onclick:()=>{
+        closePopup();
+        if(!walletCharge(MP_TG_PRICE, 'Раскрытие TG · '+l.n)) return;
+        if(typeof okoEarn==='function') okoEarn(MP_TG_PRICE, 'Раскрытие TG');
+        MP.revealedTg[id] = mpFakeTg(l);
+        MP.tgRevealCount = (MP.tgRevealCount||0)+1;
+        mpSave();
+        toast('Контакт открыт: '+MP.revealedTg[id]);
+        openListing(id); // перерисовать карточку
+      }}
+    ]});
+}
+function mpTgCopy(id){
+  const nick = MP.revealedTg[id]; if(!nick) return;
+  try{ navigator.clipboard && navigator.clipboard.writeText(nick); }catch(e){}
+  toast('Скопировано: '+nick);
+}
+
+/* ============================================================
+   C · РЕЙТИНГ С ТРЕЙЛОМ — 30-дневный SVG-sparkline + «93% в срок»
+   ============================================================ */
+function mpTrendPoints(seed, n){
+  const pts = [];
+  let s = (seed || 1) >>> 0;
+  for(let i=0;i<n;i++){
+    s = (s * 1103515245 + 12345) & 0x7fffffff;
+    const base = 3.6 + Math.sin(i/3)*0.35 + Math.cos(i/7)*0.25;
+    const jit = ((s%1000)/1000 - 0.5) * 0.7;
+    let v = base + jit + (i/n)*0.7; // общий подъём
+    v = Math.max(3.0, Math.min(5.0, v));
+    pts.push(v);
+  }
+  return pts;
+}
+function mpSparkline(seed){
+  const pts = mpTrendPoints(seed, 30);
+  const W = 240, H = 44, PAD = 3;
+  const min = 3.0, max = 5.0;
+  const xs = i => PAD + i*(W-PAD*2)/(pts.length-1);
+  const ys = v => PAD + (H-PAD*2)*(1-(v-min)/(max-min));
+  const path = pts.map((v,i)=>(i?'L':'M')+xs(i).toFixed(1)+' '+ys(v).toFixed(1)).join(' ');
+  const fill = `M${xs(0)} ${H-PAD} `+ pts.map((v,i)=>'L'+xs(i).toFixed(1)+' '+ys(v).toFixed(1)).join(' ') +` L${xs(pts.length-1)} ${H-PAD} Z`;
+  const last = pts[pts.length-1], lastX = xs(pts.length-1), lastY = ys(last);
+  return `<svg class="mp-spark" viewBox="0 0 ${W} ${H}" preserveAspectRatio="none">
+    <defs><linearGradient id="mpsparkg" x1="0" x2="0" y1="0" y2="1">
+      <stop offset="0" stop-color="#9AFF00" stop-opacity=".55"/><stop offset="1" stop-color="#9AFF00" stop-opacity="0"/></linearGradient></defs>
+    <path d="${fill}" fill="url(#mpsparkg)" stroke="none"/>
+    <path d="${path}" fill="none" stroke="#9AFF00" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+    <circle cx="${lastX.toFixed(1)}" cy="${lastY.toFixed(1)}" r="3" fill="#9AFF00"/>
+  </svg>`;
+}
+function mpOnTimeRate(l){ return 88 + ((l.seed||0) % 11); } // 88..98%
+function mpRatingTrail(l){
+  const on = mpOnTimeRate(l);
+  return `<div class="mp-trail" id="mpTrail">
+    <div class="mp-trail-top">
+      <div><b>Рейтинг за 30 дней</b><small>динамика оценок клиентов</small></div>
+      <div class="mp-trail-badge">${I('check')} ${on}% сделок закрыто в срок</div>
+    </div>
+    <div class="mp-trail-graph">${mpSparkline(l.seed || l.id)}</div>
+    <div class="mp-trail-scale"><span>3.0</span><span>4.0</span><span>5.0</span></div>
+  </div>`;
+}
+
+/* ============================================================
+   D · ВЕРИФИКАЦИЯ 3 УРОВНЯ (Паспорт / Портфолио / Оплаченный кейс OKO)
+   ============================================================ */
+function mpTiers(l){
+  const passport  = mpIsVerified(l) || (l.seed||0)%3===0;
+  const portfolio = (l.reviews && l.reviews.length>=2) || (Array.isArray(l.photos) && l.photos.length>=1);
+  const okoCase   = !!l.promo || (l.deals||0)>=40 || (typeof VERIFIED!=='undefined' && VERIFIED.has(l.n));
+  return [
+    {k:'passport',  lab:'Паспорт',              hint:'Личность подтверждена',   on:passport},
+    {k:'portfolio', lab:'Портфолио',            hint:'Работы и живые отзывы',   on:portfolio},
+    {k:'okocase',   lab:'Оплаченный кейс OKO',  hint:'Проведена сделка через OKO', on:okoCase},
+  ];
+}
+function mpTiersLevel(l){ return mpTiers(l).filter(t=>t.on).length; } // 0..3
+function mpTiersBlock(l){
+  const tiers = mpTiers(l);
+  const lv = tiers.filter(t=>t.on).length;
+  return `<div class="mp-tiers" id="mpTiers">
+    <div class="mp-tiers-h">
+      <b>Верификация продавца</b>
+      <span class="mp-tiers-lv lv${lv}">${lv}/3</span>
+    </div>
+    <div class="mp-tiers-row">${tiers.map(t=>`
+      <div class="mp-tier ${t.on?'on':'off'}">
+        <span class="mp-tier-shield">
+          <svg class="mp-tier-svg"><use href="#i-mpshield"/></svg>
+          ${t.on?`<span class="mp-tier-check">${I('check')}</span>`:''}
+        </span>
+        <b>${t.lab}</b><small>${t.hint}</small>
+      </div>`).join('')}</div>
+  </div>`;
+}
+function mpTiersMini(l){ // компактный ряд щитков для списочных плашек
+  const tiers = mpTiers(l);
+  return `<span class="mp-tiers-mini">${tiers.map(t=>
+    `<span class="mp-tm ${t.on?'on':'off'}" title="${t.lab}"><svg class="mp-tier-svg"><use href="#i-mpshield"/></svg></span>`).join('')}</span>`;
+}
+
+/* ============================================================
+   E · БЫСТРЫЕ ФИЛЬТРЫ (расширение уже существующих) — 7 чипов
+   ============================================================ */
+if(typeof mkFilters.mpBudget==='undefined') mkFilters.mpBudget = false; // до 5000₽
+if(typeof mkFilters.mpToday==='undefined')  mkFilters.mpToday  = false; // сегодня
+if(typeof mkFilters.mpMyCity==='undefined') mkFilters.mpMyCity = false; // в городе
+if(typeof mkFilters.mpPhotos==='undefined') mkFilters.mpPhotos = false; // с примерами
+function mpMyCity(){ return (typeof PROFILE!=='undefined' && PROFILE.city) || 'Онлайн'; }
+function mpIsToday(l){ return ((l.seed||0)%4)===0; } // детерминированно «сегодня»
+function mpHasPhotos(l){ return (Array.isArray(l.photos) && l.photos.length>0) || (l.reviews||[]).some(r=>Array.isArray(r.pics) && r.pics.length); }
+const _mpMkApplyFiltersV3 = mkApplyFilters;
+mkApplyFilters = function(arr){
+  arr = _mpMkApplyFiltersV3(arr);
+  if(mkFilters.mpBudget) arr = arr.filter(l=>l.p<=5000);
+  if(mkFilters.mpToday)  arr = arr.filter(mpIsToday);
+  if(mkFilters.mpMyCity){ const c = mpMyCity(); arr = arr.filter(l=>l.city===c); }
+  if(mkFilters.mpPhotos) arr = arr.filter(mpHasPhotos);
+  /* сортировка bump'нутых объявлений — сверху, если активны */
+  arr = arr.slice().sort((a,b)=>{
+    const ba = mpBumpActive(a.id) ? 1 : 0, bb = mpBumpActive(b.id) ? 1 : 0;
+    return bb - ba;
+  });
+  return arr;
+};
+const _mpActiveFilterCountV3 = activeFilterCount;
+activeFilterCount = function(){
+  return _mpActiveFilterCountV3()
+    + (mkFilters.mpBudget?1:0) + (mkFilters.mpToday?1:0)
+    + (mkFilters.mpMyCity?1:0) + (mkFilters.mpPhotos?1:0);
+};
+const _mpResetFiltersV3 = resetFilters;
+resetFilters = function(){
+  _mpResetFiltersV3();
+  mkFilters.mpBudget = false; mkFilters.mpToday = false;
+  mkFilters.mpMyCity = false; mkFilters.mpPhotos = false;
+};
+/* дополняем строку quick-chips новыми — переопределяем весь inject */
+mpInjectQuickChips = function(){
+  const root = document.getElementById('marketRoot'); if(!root) return;
+  if(document.getElementById('mpQuickChips')) return;
+  const bar = root.querySelector('.mk-toolbar'); if(!bar) return;
+  const w = document.createElement('div');
+  w.id = 'mpQuickChips'; w.className = 'mp-qchips';
+  const chip = (k, ic, lab) =>
+    `<button class="mp-qc${mkFilters[k]?' on':''}" onclick="mpToggleQuick('${k}')">${I(ic)}<span>${lab}</span></button>`;
+  w.innerHTML = `<div class="mp-qc-row">
+    ${chip('mpBudget',  'money',       'до 5 000 ₽')}
+    ${chip('mpToday',   'bolt',        'Сегодня')}
+    ${chip('mpMyCity',  'pos',         'В городе')}
+    ${chip('mpPhotos',  'photo',       'С примерами')}
+    ${chip('mpOnline',  'circle-play', 'Онлайн')}
+    ${chip('mpHasRev',  'star',        'С отзывами')}
+    ${chip('mpFast',    'bolt',        'Быстрый ответ')}
+  </div>`;
+  bar.insertAdjacentElement('afterend', w);
+};
+
+/* ============================================================
+   F · МИНИ-КАРТА УСЛУГ (абстрактная SVG, без API)
+   ============================================================ */
+function mpMapListings(){
+  let arr = LISTINGS.filter(l=>!l.my && l.st==='act');
+  if(typeof mkCat!=='undefined' && mkCat) arr = arr.filter(l=>l.cat===mkCat);
+  return arr.slice(0, 12);
+}
+function mpMap(){
+  const arr = mpMapListings();
+  if(!arr.length) return '';
+  const W = 320, H = 130;
+  const pts = arr.map(l=>{
+    const s = (l.seed||l.id) >>> 0;
+    const x = 18 + ((s*13) % (W-36));
+    const y = 14 + (((s>>3)*7) % (H-28));
+    return {l, x, y};
+  });
+  const dots = pts.map(p=>{
+    const bumped = mpBumpActive(p.l.id) ? ' bumped' : '';
+    return `<g class="mp-map-pt${bumped}" onclick="event.stopPropagation();openListing(${p.l.id})">
+      <circle cx="${p.x}" cy="${p.y}" r="8" class="mp-map-halo"/>
+      <circle cx="${p.x}" cy="${p.y}" r="3.6" class="mp-map-core"/>
+      <title>${esc(p.l.t)} · ${esc(p.l.pt)}</title>
+    </g>`;
+  }).join('');
+  return `<div class="mp-mapwrap" id="mpMap">
+    <div class="mp-strip-h">${I('pos')} Мастера рядом · ${arr.length} на карте</div>
+    <div class="mp-map">
+      <svg viewBox="0 0 ${W} ${H}" preserveAspectRatio="none" class="mp-map-svg">
+        <defs><pattern id="mpMapGrid" width="20" height="20" patternUnits="userSpaceOnUse">
+          <path d="M20 0H0V20" fill="none" stroke="rgba(154,255,0,.10)" stroke-width=".6"/></pattern></defs>
+        <rect width="${W}" height="${H}" fill="url(#mpMapGrid)"/>
+        <path d="M0 40 Q60 20 120 45 T240 30 T320 55" fill="none" stroke="rgba(154,255,0,.18)" stroke-width="1"/>
+        <path d="M0 90 Q80 70 160 92 T320 88" fill="none" stroke="rgba(154,255,0,.12)" stroke-width="1"/>
+        ${dots}
+      </svg>
+      <span class="mp-map-me">${I('pos')} вы здесь</span>
+    </div>
+  </div>`;
+}
+function mpInjectMap(){
+  const root = document.getElementById('marketRoot'); if(!root) return;
+  if(document.getElementById('mpMap')) return;
+  if(typeof mkView==='undefined' || mkView!=='list') return;
+  const results = document.getElementById('mkResults'); if(!results) return;
+  const html = mpMap(); if(!html) return;
+  results.insertAdjacentHTML('beforebegin', html);
+}
+
+/* ============================================================
+   G · ОТЗЫВЫ С МЕДИА (превью фото + фуллскрин-свайп-просмотр)
+   ============================================================ */
+/* процедурный SVG-плейсхолдер вместо реальной фотки — data URI, вечно валиден */
+function mpPicSvg(seed, w, h){
+  w = w||600; h = h||600;
+  const s = (seed*1234567) >>> 0;
+  const hue1 = (s % 360), hue2 = ((s>>3) % 360);
+  const cx = 30 + (s%40), cy = 30 + ((s>>2)%40);
+  const svg = `<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100' preserveAspectRatio='xMidYMid slice' width='${w}' height='${h}'>
+    <defs><linearGradient id='g' x1='0' y1='0' x2='1' y2='1'>
+      <stop offset='0' stop-color='hsl(${hue1} 55% 22%)'/><stop offset='1' stop-color='hsl(${hue2} 60% 12%)'/></linearGradient></defs>
+    <rect width='100' height='100' fill='url(%23g)'/>
+    <circle cx='${cx}' cy='${cy}' r='${18+(s%14)}' fill='hsl(85 100% 55% / .45)'/>
+    <circle cx='${100-cx}' cy='${100-cy}' r='${10+(s%9)}' fill='hsl(${hue2} 90% 60% / .35)'/>
+    <path d='M0 ${70+(s%15)} L100 ${55+(s%20)} L100 100 L0 100 Z' fill='hsl(0 0% 6% / .55)'/>
+  </svg>`;
+  return 'data:image/svg+xml;utf8,'+svg.replace(/#/g,'%23').replace(/"/g,"'").replace(/\s+/g,' ');
+}
+/* сеем медиа в отзывы объявлений (детерминировано, один раз за сессию, не персист) */
+(function mpSeedReviewPics(){
+  LISTINGS.forEach(l=>{
+    (l.reviews||[]).forEach((r, ri)=>{
+      if(r.pics && r.pics.length) return;
+      const s = ((l.seed||l.id)*7 + ri*31) >>> 0;
+      if(s % 3 !== 0) return; // ~1/3 отзывов с медиа
+      const n = 1 + (s % 3);
+      r.pics = [];
+      for(let i=0;i<n;i++) r.pics.push(mpPicSvg(s + i*97));
+    });
+  });
+})();
+
+let MP_MV = {items:[], i:0, caption:''};
+function mpMvOpen(items, i, caption){
+  if(!items || !items.length) return;
+  MP_MV.items = items; MP_MV.i = Math.max(0, Math.min(i||0, items.length-1)); MP_MV.caption = caption||'';
+  mpMvRender();
+  const v = document.getElementById('mpMediaViewer');
+  if(!v) return;
+  v.classList.add('open'); v.setAttribute('aria-hidden','false');
+  document.addEventListener('keydown', mpMvKey);
+  mpMvBindSwipe(v);
+}
+function mpMvClose(){
+  const v = document.getElementById('mpMediaViewer'); if(!v) return;
+  v.classList.remove('open'); v.setAttribute('aria-hidden','true');
+  document.removeEventListener('keydown', mpMvKey);
+}
+function mpMvKey(e){
+  if(e.key==='Escape') mpMvClose();
+  else if(e.key==='ArrowRight') mpMvGo(1);
+  else if(e.key==='ArrowLeft')  mpMvGo(-1);
+}
+function mpMvGo(step){
+  if(!MP_MV.items.length) return;
+  MP_MV.i = (MP_MV.i + step + MP_MV.items.length) % MP_MV.items.length;
+  mpMvRender();
+}
+function mpMvRender(){
+  const stage = document.getElementById('mpMvStage'); if(!stage) return;
+  stage.innerHTML = MP_MV.items.map((u,i)=>
+    `<div class="mp-mv-slide${i===MP_MV.i?' on':''}"><img src="${u}" alt=""></div>`).join('');
+  const cap = document.getElementById('mpMvCap'); if(cap) cap.innerHTML = esc(MP_MV.caption)+' · '+(MP_MV.i+1)+' / '+MP_MV.items.length;
+  const dots = document.getElementById('mpMvDots');
+  if(dots) dots.innerHTML = MP_MV.items.map((_,i)=>`<span class="mp-mv-dot${i===MP_MV.i?' on':''}"></span>`).join('');
+  const nav = document.querySelectorAll('#mpMediaViewer .mp-mv-nav');
+  nav.forEach(b=>{ b.style.display = MP_MV.items.length>1 ? 'flex' : 'none'; });
+}
+function mpMvBindSwipe(v){
+  if(v._mpBound) return; v._mpBound = true;
+  let x0 = null;
+  v.addEventListener('touchstart', e=>{ x0 = e.touches[0].clientX; }, {passive:true});
+  v.addEventListener('touchend',   e=>{
+    if(x0===null) return;
+    const dx = (e.changedTouches[0].clientX) - x0;
+    if(Math.abs(dx)>40) mpMvGo(dx<0 ? 1 : -1);
+    x0 = null;
+  }, {passive:true});
+  v.querySelector('.mp-mv-stage').addEventListener('click', e=>{
+    /* тап по правой половине -> вперёд, по левой -> назад, кроме если по nav */
+    const r = v.getBoundingClientRect();
+    const half = r.left + r.width/2;
+    if(MP_MV.items.length>1) mpMvGo(e.clientX>half ? 1 : -1);
+  });
+}
+/* при рендере отзывов на карточке — добавляем миниатюры (аддитивно, поверх базового вывода).
+   Клик по миниатюре открывает фуллскрин через ref по (listing id + review index + pic index),
+   чтобы не тащить SVG-data-URI в onclick-атрибут (там одиночные кавычки — сломают HTML). */
+function mpOpenRvMedia(lid, ri, pi){
+  const l = LISTINGS.find(x=>x.id===lid); if(!l) return;
+  const r = (l.reviews||[])[ri]; if(!r || !r.pics) return;
+  mpMvOpen(r.pics, pi, 'Отзыв: '+r.n);
+}
+function mpDecorateReviews(id){
+  const v = document.getElementById('lstView'); if(!v) return;
+  const l = LISTINGS.find(x=>x.id===id); if(!l) return;
+  const revList = v.querySelector('.rev-list'); if(!revList) return;
+  const revs = l.reviews||[];
+  const nodes = revList.querySelectorAll('.rev');
+  nodes.forEach((node, i)=>{
+    const r = revs[i];
+    if(!r || !r.pics || !r.pics.length || node.querySelector('.mp-rvmedia')) return;
+    const strip = document.createElement('div');
+    strip.className = 'mp-rvmedia';
+    strip.innerHTML = r.pics.map((u,pi)=>
+      `<button type="button" class="mp-rvm-t" onclick="mpOpenRvMedia(${id},${i},${pi})"><img src="${u}" alt=""></button>`).join('');
+    node.appendChild(strip);
+  });
+}
+
+/* ============================================================
+   H · УМНЫЙ ПОИСК — подсказки, история, топ дня
+   ============================================================ */
+const MP_TOP_TODAY = ['Reels под ключ','Лендинг за 3 дня','Настройка таргета','Дизайн карточек','Клон голоса','SEO-статьи','3D товара','Обложки для YouTube'];
+function mpHistPush(q){
+  q = (q||'').trim(); if(q.length<2) return;
+  MP.searchHist = (MP.searchHist||[]).filter(x=>x.toLowerCase()!==q.toLowerCase());
+  MP.searchHist.unshift(q);
+  if(MP.searchHist.length>8) MP.searchHist.length = 8;
+  mpSave();
+}
+function mpHistClear(){ MP.searchHist = []; mpSave(); mpRenderSuggest(); }
+function mpSuggest(q){
+  q = (q||'').trim().toLowerCase();
+  if(!q) return [];
+  const out = [];
+  MK_CATS.forEach(c=>{ if(c.name.toLowerCase().includes(q)) out.push({kind:'cat', k:c.k, t:c.name, ic:c.ic}); });
+  LISTINGS.filter(l=>!l.my && l.st==='act').forEach(l=>{
+    const hay = (l.t+' '+l.n+' '+catName(l.cat)).toLowerCase();
+    if(hay.includes(q)) out.push({kind:'lst', id:l.id, t:l.t, sub:l.n+' · '+l.pt, ic:catIco(l.cat)});
+  });
+  return out.slice(0, 8);
+}
+function mpMountSuggest(){
+  const inp = document.getElementById('mkSearchInput'); if(!inp || inp._mpBound) return;
+  inp._mpBound = true;
+  const bar = inp.closest('.mk-searchbar'); if(!bar) return;
+  bar.classList.add('mp-searchbar-relative');
+  const drop = document.createElement('div');
+  drop.id = 'mpSuggest'; drop.className = 'mp-suggest';
+  bar.appendChild(drop);
+  inp.addEventListener('focus', mpRenderSuggest);
+  inp.addEventListener('input', mpRenderSuggest);
+  inp.addEventListener('keydown', e=>{
+    if(e.key==='Enter'){ mpHistPush(inp.value); mpRenderSuggest(); }
+    if(e.key==='Escape') mpHideSuggest();
+  });
+  document.addEventListener('click', e=>{
+    if(!bar.contains(e.target)) mpHideSuggest();
+  }, {passive:true, capture:true});
+}
+function mpHideSuggest(){ const d = document.getElementById('mpSuggest'); if(d) d.classList.remove('open'); }
+function mpRenderSuggest(){
+  const inp = document.getElementById('mkSearchInput'); const d = document.getElementById('mpSuggest');
+  if(!inp || !d) return;
+  const q = inp.value||'';
+  const sug = mpSuggest(q);
+  const hist = MP.searchHist||[];
+  if(!q.trim() && !hist.length && !MP_TOP_TODAY.length){ d.classList.remove('open'); return; }
+  let html = '';
+  if(q.trim() && sug.length){
+    html += `<div class="mp-sug-h">${I('search')} Совпадения</div>`;
+    html += sug.map(s=>s.kind==='cat'
+      ? `<button class="mp-sug-i" onclick="mpSuggestGoCat('${s.k}')"><span class="mp-sug-ic">${I(s.ic)}</span><span class="mp-sug-b"><b>${esc(s.t)}</b><small>категория</small></span></button>`
+      : `<button class="mp-sug-i" onclick="mpSuggestGoLst(${s.id})"><span class="mp-sug-ic">${I(s.ic)}</span><span class="mp-sug-b"><b>${esc(s.t)}</b><small>${esc(s.sub)}</small></span></button>`
+    ).join('');
+  }
+  if(!q.trim() && hist.length){
+    html += `<div class="mp-sug-h">${I('clock')} Недавние запросы <button class="mp-sug-x" onclick="mpHistClear()">${I('trash')} очистить</button></div>`;
+    html += hist.map(h=>
+      `<button class="mp-sug-i" onclick="mpSuggestGoQ(${JSON.stringify(h)})"><span class="mp-sug-ic">${I('clock')}</span><span class="mp-sug-b"><b>${esc(h)}</b></span></button>`).join('');
+  }
+  if(!q.trim()){
+    html += `<div class="mp-sug-h">${I('fire')} Топ запросы дня</div>`;
+    html += `<div class="mp-sug-top">${MP_TOP_TODAY.map(t=>
+      `<button class="mp-sug-chip" onclick="mpSuggestGoQ(${JSON.stringify(t)})">${esc(t)}</button>`).join('')}</div>`;
+  }
+  d.innerHTML = html;
+  d.classList.toggle('open', !!html);
+}
+function mpSuggestGoQ(q){
+  mkSearchQ = q;
+  const inp = document.getElementById('mkSearchInput'); if(inp) inp.value = q;
+  mpHistPush(q);
+  if(typeof renderMarketListSoft==='function') renderMarketListSoft();
+  mpHideSuggest();
+}
+function mpSuggestGoCat(k){
+  mpHideSuggest();
+  if(typeof openMarketCat==='function') openMarketCat(k);
+}
+function mpSuggestGoLst(id){
+  mpHideSuggest();
+  openListing(id);
+}
+
+/* ============================================================
+   I · BUMP / BOOST — «Поднять за 50 ₽ на день»
+   ============================================================ */
+const MP_BUMP_PRICE = 50, MP_BUMP_TTL = 24*3600e3;
+function mpBumpActive(id){
+  const t = MP.bumps && MP.bumps[id]; return !!(t && t>Date.now());
+}
+function mpBumpLeft(id){
+  const t = MP.bumps && MP.bumps[id]; if(!t) return '';
+  const ms = Math.max(0, t-Date.now()); const h = Math.floor(ms/3600e3);
+  return h>=1 ? h+' ч' : Math.max(1, Math.round(ms/60e3))+' мин';
+}
+function mpBumpDo(id){
+  const l = LISTINGS.find(x=>x.id===id); if(!l || !l.my) return;
+  if(mpBumpActive(id)){ toast('Уже поднято · осталось '+mpBumpLeft(id)); return; }
+  showPopup({ico:'rocket', title:'Поднять объявление?',
+    body:'«'+esc(l.t)+'» будет закреплено сверху ленты на <b>24 часа</b>. Стоимость: <b>'+MP_BUMP_PRICE+' ₽</b> с кошелька.',
+    actions:[
+      {label:'Отмена', ghost:true, onclick:()=>closePopup()},
+      {label:'Поднять за '+MP_BUMP_PRICE+' ₽', onclick:()=>{
+        closePopup();
+        if(!walletCharge(MP_BUMP_PRICE, 'Bump объявления · '+l.t)) return;
+        if(typeof okoEarn==='function') okoEarn(MP_BUMP_PRICE, 'Bump объявления');
+        MP.bumps[id] = Date.now() + MP_BUMP_TTL; mpSave();
+        toast('Поднято на 24 часа — теперь выше в ленте');
+        openListing(id);
+      }}
+    ]});
+}
+function mpBumpBadge(id){
+  return mpBumpActive(id)
+    ? `<span class="mp-bump-badge">${I('rocket')} Поднято · ${mpBumpLeft(id)}</span>`
+    : '';
+}
+function mpBumpButtonForListing(l){
+  const active = mpBumpActive(l.id);
+  return active
+    ? `<button class="mp-bump-btn active" disabled>${I('rocket')} Поднято · ещё ${mpBumpLeft(l.id)}</button>`
+    : `<button class="mp-bump-btn" onclick="mpBumpDo(${l.id})">${I('rocket')} Поднять на день · ${MP_BUMP_PRICE} ₽</button>`;
+}
+/* декор карточек списка: наклейка «Поднято» */
+function mpDecorateBumps(){
+  document.querySelectorAll('#mkResults .lst-card').forEach(card=>{
+    const id = mpIdFromCard(card); if(!id) return;
+    if(mpBumpActive(id) && !card.querySelector('.mp-bump-flag')){
+      const flag = document.createElement('span'); flag.className = 'mp-bump-flag';
+      flag.innerHTML = I('rocket')+' Поднято';
+      const photo = card.querySelector('.lst-photo');
+      (photo||card).appendChild(flag);
+      card.classList.add('mp-bumped');
+    }
+  });
+}
+
+/* ============================================================
+   ФИНАЛЬНАЯ ОБЁРТКА openListing — вкатываем все v3-блоки
+   ============================================================ */
+const _mpOpenListingV3 = openListing;
+openListing = function(id){
+  _mpOpenListingV3.apply(this, arguments);
+  try{
+    const l = LISTINGS.find(x=>x.id===id);
+    const v = document.getElementById('lstView');
+    if(!l || !v) return;
+
+    /* --- декор отзывов медиа-миниатюрами --- */
+    mpDecorateReviews(id);
+
+    if(l.my){
+      /* --- на своей карточке: контейнер владельца (bump + метрики) --- */
+      if(!document.getElementById('mpOwnerBar')){
+        const bar = document.createElement('div');
+        bar.id = 'mpOwnerBar'; bar.className = 'mp-owner-bar';
+        bar.innerHTML = `
+          <div class="mp-strip-h">${I('rocket')} Продвижение и метрики</div>
+          ${mpBumpButtonForListing(l)}
+          <div class="mp-owner-kpi">
+            <div><b>${fmtN(l.views||0)}</b><small>${I('eye')} показы</small></div>
+            <div><b>${l.contacts||0}</b><small>${I('chat')} контакты</small></div>
+            <div><b>${l.favs||0}</b><small>${I('heart')} в избранном</small></div>
+          </div>`;
+        const meta = v.querySelector('.lst-d-meta');
+        if(meta && mpBumpActive(l.id) && !meta.querySelector('.mp-bump-badge'))
+          meta.insertAdjacentHTML('beforeend', mpBumpBadge(l.id));
+        v.appendChild(bar);
+      }
+      return;
+    }
+
+    /* --- покупателю: блок «связаться» (OKO-чат + Show TG) --- */
+    if(!document.getElementById('mpContact')){
+      const cta = v.querySelector('.lst-cta');
+      const html = mpContactBlock(l);
+      if(cta){
+        cta.insertAdjacentHTML('beforebegin', html);
+        cta.style.display = 'none'; // прячем базовые кнопки — новая CTA богаче
+        const orderBtn = v.querySelector('.btn[onclick^="orderListing"]');
+        if(orderBtn) orderBtn.style.marginTop = '4px';
+      } else {
+        v.insertAdjacentHTML('beforeend', html);
+      }
+    }
+
+    /* --- 3-уровневая верификация --- */
+    if(!document.getElementById('mpTiers')){
+      const seller = v.querySelector('.seller-card');
+      const html = mpTiersBlock(l);
+      if(seller) seller.insertAdjacentHTML('afterend', html);
+      else v.insertAdjacentHTML('beforeend', html);
+    }
+
+    /* --- 30-day sparkline рейтинга --- */
+    if(!document.getElementById('mpTrail')){
+      const srv = document.getElementById('mpSrv') || document.getElementById('mpTiers');
+      const html = mpRatingTrail(l);
+      if(srv) srv.insertAdjacentHTML('afterend', html);
+      else v.insertAdjacentHTML('beforeend', html);
+    }
+
+    /* --- 3-шаговое напоминание об эскроу поверх старого mp-trust --- */
+    const old = document.getElementById('mpTrust');
+    if(old && !document.getElementById('mpSafe')){
+      old.insertAdjacentHTML('afterend', mpSafeMini());
+    }
+  }catch(e){}
+};
+
+/* ============================================================
+   ФИНАЛЬНАЯ ОБЁРТКА renderMarketList — инъекции для list-вью
+   ============================================================ */
+if(typeof renderMarketList==='function'){
+  const _mpRMLv3 = renderMarketList;
+  renderMarketList = function(){
+    _mpRMLv3.apply(this, arguments);
+    try{
+      mpInjectMap();
+      mpMountSuggest();
+      mpDecorateBumps();
+    }catch(e){}
+  };
+}
+if(typeof renderMarketListSoft==='function'){
+  const _mpRMLSv3 = renderMarketListSoft;
+  renderMarketListSoft = function(){
+    _mpRMLSv3.apply(this, arguments);
+    try{ mpDecorateBumps(); }catch(e){}
+  };
+}
+
+/* ============================================================
+   КАБИНЕТ ПРОДАВЦА — добавляем в карточки объявлений bump-кнопки
+   ============================================================ */
+const _mpRenderCabV3 = mpRenderCab;
+mpRenderCab = function(){
+  _mpRenderCabV3.apply(this, arguments);
+  try{
+    const box = document.getElementById('mpCabView'); if(!box) return;
+    const mine = LISTINGS.filter(l=>l.my);
+    /* добавляем bump-строку под каждым «мои объявления» */
+    box.querySelectorAll('.mp-lst').forEach((row, i)=>{
+      const l = mine[i]; if(!l || row.querySelector('.mp-bump-row')) return;
+      const active = mpBumpActive(l.id);
+      const bar = document.createElement('div');
+      bar.className = 'mp-bump-row';
+      bar.innerHTML = active
+        ? `<span class="mp-bump-on">${I('rocket')} Поднято · ещё ${mpBumpLeft(l.id)}</span>`
+        : `<button class="mp-bump-mini" onclick="event.stopPropagation();mpBumpDo(${l.id})">${I('rocket')} Поднять · ${MP_BUMP_PRICE} ₽</button>`;
+      row.appendChild(bar);
+    });
+  }catch(e){}
+};
+
 /* ================= САМОИНИЦИАЛИЗАЦИЯ ================= */
 if(document.getElementById('ma-market') && document.getElementById('ma-market').style.display==='block') renderMarket();

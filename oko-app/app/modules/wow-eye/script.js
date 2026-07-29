@@ -23,8 +23,13 @@
   var CANVAS_ID = 'we-canvas';
   var CSS = 224;                 // размер canvas-фолбэка (CSS px)
   var C = CSS / 2;               // 112
-  var GLB_PRIMARY = '/oko-eye.glb';
-  var GLB_FALLBACK = 'https://true-journey-418.higgsfield.app/assets/oko-eye.glb';
+  // GLB — оригинал 3D-логотипа OKO из hero-блока okoteam.top/kp.
+  // primary: относительный путь (работает и на okoteam.top, и на higgsfield-зеркале — файл
+  // публикуется рядом с index.html в prototype/oko-eye.glb).
+  // Fallback: прод-домен (единый источник правды).
+  var GLB_PRIMARY = 'oko-eye.glb';
+  var GLB_FALLBACK = 'https://okoteam.top/oko-eye.glb';
+  var GLB_FALLBACK2 = 'https://okoteam.top/kp/assets/oko-eye.glb';
   var THREE_URL = 'https://esm.sh/three@0.160.0';
   var GLTF_URL = 'https://esm.sh/three@0.160.0/examples/jsm/loaders/GLTFLoader.js';
   var ROOMENV_URL = 'https://esm.sh/three@0.160.0/examples/jsm/environments/RoomEnvironment.js';
@@ -359,9 +364,11 @@
     try {
       var loader = new GLTFLoader();
       loader.load(GLB_PRIMARY, applyEye, undefined, function () {
-        // 404/ошибка первого URL → пробуем фолбэк-URL
         try {
-          loader.load(GLB_FALLBACK, applyEye, undefined, function () { onFail(); dispose(); });
+          loader.load(GLB_FALLBACK, applyEye, undefined, function () {
+            try { loader.load(GLB_FALLBACK2, applyEye, undefined, function () { onFail(); dispose(); }); }
+            catch (e) { onFail(); dispose(); }
+          });
         } catch (e) { onFail(); dispose(); }
       });
     } catch (e) { onFail(); dispose(); }

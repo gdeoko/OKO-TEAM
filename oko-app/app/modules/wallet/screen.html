@@ -2,6 +2,7 @@
 <section class="screen" id="screen-wallet">
   <div class="pad">
     <div class="wal-hero">
+      <button class="wal-eye" id="walEye" onclick="walToggleEye()" aria-label="Показать / скрыть баланс"><svg class="i"><use href="#i-eye"/></svg></button>
       <div class="wal-acc-row">
         <span class="wal-acc-label">Лицевой счёт</span>
         <button class="wal-acc" onclick="walCopyAcc()"><span id="walAccNum">OKO-00000000</span><svg class="i"><use href="#i-copy"/></svg></button>
@@ -9,15 +10,30 @@
       <div class="wal-balance" id="walBalance">0 <b>₽</b></div>
       <div class="wal-hold" id="walHold"><svg class="i"><use href="#i-lock"/></svg><span>В холде (эскроу): <b>0 ₽</b></span></div>
       <div class="wal-chart-wrap">
-        <div class="wal-chart-h"><span>Динамика · 30 дней</span><span class="wal-delta in" id="walDelta"></span></div>
+        <div class="wal-chart-h">
+          <div class="wal-chart-period" id="walChartPeriod">
+            <button data-cp="7" onclick="walSetChartPeriod(7)">7 дней</button>
+            <button class="on" data-cp="30" onclick="walSetChartPeriod(30)">30 дней</button>
+          </div>
+          <span class="wal-delta in" id="walDelta"></span>
+        </div>
         <canvas id="walChart" class="wal-chart" height="66"></canvas>
+        <div class="wal-avg" id="walAvg"></div>
       </div>
-      <div class="wal-actions">
+      <div class="wal-actions g4">
         <button class="wal-act" onclick="walOpenTopup()"><svg class="i"><use href="#i-plus"/></svg>Пополнить</button>
         <button class="wal-act ghost" onclick="walOpenWithdraw()"><svg class="i"><use href="#i-card"/></svg>Вывести</button>
-        <button class="wal-act ghost" onclick="walScrollHistory()"><svg class="i"><use href="#i-clock"/></svg>История</button>
+        <button class="wal-act ghost" onclick="walOpenExchange()"><svg class="i"><use href="#i-swap"/></svg>Обмен</button>
+        <button class="wal-act ghost" onclick="walOpenSend()"><svg class="i"><use href="#i-send"/></svg>Отправить</button>
       </div>
     </div>
+
+    <div class="wal-cur-h">
+      <h2>Мои валюты</h2>
+      <button onclick="walOpenReceive()"><svg class="i" style="width:11px;height:11px;vertical-align:-1px;margin-right:3px"><use href="#i-plus"/></svg>Принять</button>
+    </div>
+    <div class="wal-cur-strip" id="walCurStrip"></div>
+    <div class="wal-cur-dots" id="walCurDots"></div>
 
     <div class="card wal-auto" id="walAutoCard" onclick="walToggleAutopay()" role="button">
       <div class="wal-auto-ic"><svg class="i"><use href="#i-crown"/></svg></div>
@@ -28,6 +44,12 @@
       <span class="switch" id="walAutoSw"><i></i></span>
     </div>
 
+    <h2 class="section-h" style="margin:22px 0 12px;font-size:21px">Финансовые цели</h2>
+    <div class="wal-goals" id="walGoals"></div>
+
+    <h2 class="section-h" style="margin:22px 0 12px;font-size:21px">Автопополнения</h2>
+    <div class="card wal-autor" id="walAutoRules"></div>
+
     <h2 class="section-h" style="margin:22px 0 12px;font-size:21px">Уровень безопасности</h2>
     <div class="card wal-safety" id="walSafety" onclick="walSafetyTips()" role="button" tabindex="0"></div>
 
@@ -37,9 +59,12 @@
     <h2 class="section-h" style="margin:22px 0 12px;font-size:21px">Статистика · 30 дней</h2>
     <div class="wal-stats" id="walStats"></div>
 
+    <h2 class="section-h" style="margin:22px 0 12px;font-size:21px">Топ-3 источника дохода</h2>
+    <div class="card wal-topinc" id="walTopInc"></div>
+
     <h2 class="section-h" style="margin:24px 0 12px;font-size:21px">Расходы по категориям</h2>
-    <div class="wal-cat-bar" id="walCatBar"></div>
-    <div class="wal-cats" id="walCats"></div>
+    <div class="card wal-pie-wrap" id="walPie"></div>
+    <div class="wal-cats" id="walCats" style="margin-top:12px"></div>
 
     <h2 class="section-h" style="margin:24px 0 12px;font-size:21px">Лимиты и безопасность</h2>
     <div class="card wal-sec" style="padding:2px 14px">
@@ -66,6 +91,14 @@
         </div>
         <span class="switch" id="walPinSw"><i></i></span>
       </div>
+      <div class="wal-sec-row tap" onclick="walToggleBio()" role="button">
+        <div class="wal-sec-ic"><svg class="i"><use href="#i-fingerprint"/></svg></div>
+        <div class="wal-sec-b">
+          <b>Вход по отпечатку / Face-ID</b>
+          <span id="walBioSub">Выключен, быстрая разблокировка кошелька</span>
+        </div>
+        <span class="switch" id="walBioSw"><i></i></span>
+      </div>
     </div>
 
     <div class="wal-hist-head">
@@ -87,8 +120,10 @@
     </div>
     <div class="wal-filters" id="walFilters">
       <button class="on" data-f="all" onclick="walSetFilter('all')">Все</button>
-      <button data-f="in" onclick="walSetFilter('in')">Пополнения</button>
-      <button data-f="out" onclick="walSetFilter('out')">Списания</button>
+      <button data-f="in" onclick="walSetFilter('in')">Доход</button>
+      <button data-f="out" onclick="walSetFilter('out')">Расход</button>
+      <button data-f="part" onclick="walSetFilter('part')">Партнёрка</button>
+      <button data-f="games" onclick="walSetFilter('games')">Игры</button>
     </div>
     <div class="card" style="padding:4px 14px" id="walLedger"></div>
     <div style="height:14px"></div>
