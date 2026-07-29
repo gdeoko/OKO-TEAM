@@ -919,6 +919,298 @@ function psDecorateSub(){
   });
 }
 
+/* ============================================================================
+   МОЙ ПРОФИЛЬ · «социальная витрина» (mp-): улучшения поверх renderMyProfile
+   ---------------------------------------------------------------------------
+   • Дефолт-обложка бренда OKO (градиент + логотип-водяной, full-bleed)
+   • Быстрый статус («работаю» / «открыт(а) к сотрудничеству» / «в отпуске»)
+     + мини-стикер на аватаре
+   • Витрина результатов: 3 карточки (лучшие ролики / объявления / отзывы)
+   • Sparkline роста подписчиков за 30 дней (SVG, детерминированно)
+   • Стрик учёбы (если из academy доступен acStreak)
+   Персист статуса — oko-mp; всё остальное считается из уже готовых источников.
+   ============================================================================ */
+
+const PS_MP = {
+  status: null,              /* 'work' | 'open' | 'off' | null */
+  loaded: false,
+};
+function mpLoad(){
+  if(PS_MP.loaded) return;
+  try{
+    const s = JSON.parse(localStorage.getItem('oko-mp') || 'null');
+    if(s && typeof s.status === 'string') PS_MP.status = s.status;
+  }catch(e){}
+  PS_MP.loaded = true;
+}
+function mpSave(){
+  try{ localStorage.setItem('oko-mp', JSON.stringify({status: PS_MP.status, at: Date.now()})); }catch(e){}
+}
+const PS_MP_STATUSES = {
+  work: {ic:'bolt',      lb:'Сейчас: работаю',            short:'Работаю',    tone:'ok'},
+  open: {ic:'briefcase', lb:'Открыт к сотрудничеству',    short:'Открыт(а)',  tone:'accent'},
+  off:  {ic:'moon',      lb:'В отпуске',                  short:'В отпуске',  tone:'muted'},
+};
+
+/* ---------- обложка ---------- */
+function mpCoverHtml(){
+  const name = (typeof PROFILE !== 'undefined' && PROFILE.name) ? PROFILE.name : 'OKO';
+  const v = 'v' + (psHash('mycov:' + name) % 5);
+  return `<div class="mp-cover ${v}">
+    <div class="mp-cover-grid"></div>
+    <div class="mp-cover-mark">${I('logo')}</div>
+    <div class="mp-cover-brand">OKO</div>
+  </div>`;
+}
+
+/* ---------- быстрый статус ---------- */
+function mpStatusHtml(){
+  const st = PS_MP.status && PS_MP_STATUSES[PS_MP.status];
+  if(!st) return `<button class="mp-status ghost" onclick="mpPickStatus()" aria-label="Установить статус">${I('plus')}<span>Указать статус</span></button>`;
+  return `<button class="mp-status mp-tone-${st.tone}" onclick="mpPickStatus()" aria-label="Изменить статус">
+    <span class="mp-status-ic">${I(st.ic)}</span><span>${esc(st.lb)}</span>
+  </button>`;
+}
+function mpStickerHtml(){
+  const st = PS_MP.status && PS_MP_STATUSES[PS_MP.status];
+  if(!st) return '';
+  return `<span class="mp-sticker mp-tone-${st.tone}" title="${esc(st.lb)}">${I(st.ic)}</span>`;
+}
+function mpPickStatus(){
+  if(typeof showPopup !== 'function') return;
+  const opts = [
+    {k:'work', ic:'bolt',      lb:'Работаю',                d:'Занят(а) заказами и проектами'},
+    {k:'open', ic:'briefcase', lb:'Открыт к сотрудничеству', d:'Готов брать новые задачи'},
+    {k:'off',  ic:'moon',      lb:'В отпуске',              d:'Отдых, откликаюсь медленнее'},
+  ];
+  const rows = opts.map(o =>
+    `<button class="mp-pick-row${PS_MP.status === o.k ? ' on' : ''}" onclick="mpSetStatus('${o.k}')">
+      <span class="mp-pick-ic">${I(o.ic)}</span>
+      <span class="mp-pick-b"><b>${esc(o.lb)}</b><small>${esc(o.d)}</small></span>
+      ${PS_MP.status === o.k ? `<span class="mp-pick-ok">${I('check')}</span>` : ''}
+    </button>`).join('');
+  const actions = [];
+  if(PS_MP.status) actions.push({label:'Убрать статус', ghost:true, onclick: () => mpSetStatus(null)});
+  actions.push({label:'Закрыть', ghost:true});
+  showPopup({title:'Быстрый статус', body:`<div class="mp-pick">${rows}</div>`, actions});
+}
+function mpSetStatus(k){
+  PS_MP.status = (k && PS_MP_STATUSES[k]) ? k : null;
+  mpSave();
+  if(typeof closePopup === 'function') closePopup();
+  if(typeof renderMyProfile === 'function') renderMyProfile();
+  if(typeof toast === 'function') toast(PS_MP.status ? 'Статус: ' + PS_MP_STATUSES[PS_MP.status].short : 'Статус скрыт');
+}
+
+/* ---------- витрина результатов (3 карточки) ---------- */
+function mpMyPostsStat(){
+  let cnt = 0, views = 0, likes = 0;
+  try{
+    if(typeof POSTS !== 'undefined' && typeof PROFILE !== 'undefined'){
+      [...POSTS.sub, ...POSTS.rec].forEach(p => {
+        if(p.name === PROFILE.name){ cnt++; views += (p.views || 0); likes += (p.likes || 0); }
+      });
+    }
+  }catch(e){}
+  return {cnt, views, likes};
+}
+function mpShowHtml(){
+  const nf = v => (typeof fmtN === 'function' ? fmtN(v) : String(v));
+  const my = mpMyPostsStat();
+  const hasPosts = my.cnt > 0;
+  const cards = [
+    {
+      k:'reels', ic:'circle-play', t:'Мои лучшие ролики',
+      v: hasPosts ? nf(my.views) + ' просмотров' : 'Пока пусто',
+      s: hasPosts ? my.cnt + ' ' + (my.cnt === 1 ? 'ролик' : (my.cnt < 5 ? 'ролика' : 'роликов')) : 'Опубликуй первый',
+      onclick: `mpGo('feed')`
+    },
+    {
+      k:'ads',   ic:'briefcase',   t:'Активные объявления',
+      v: 'Витрина услуг',
+      s: 'Разместить в бирже',
+      onclick: `mpGo('market')`
+    },
+    {
+      k:'rev',   ic:'star',        t:'Отзывы клиентов',
+      v: hasPosts ? '5.0 · ' + Math.max(3, Math.min(24, my.cnt * 2)) : 'Собираем',
+      s: hasPosts ? 'Средняя оценка' : 'Появятся после сделок',
+      onclick: `mpGo('reviews')`
+    },
+  ];
+  return `<div class="mp-show">` + cards.map((c, i) => `
+    <button class="mp-card fade-in" style="animation-delay:${60 + i * 55}ms" onclick="${c.onclick}" aria-label="${esc(c.t)}">
+      <span class="mp-card-ic">${I(c.ic)}</span>
+      <span class="mp-card-b">
+        <small>${esc(c.t)}</small>
+        <b>${esc(c.v)}</b>
+        <span class="mp-card-s">${esc(c.s)}</span>
+      </span>
+      <span class="mp-card-ch">${I('chev')}</span>
+    </button>`).join('') + `</div>`;
+}
+function mpGo(k){
+  if(k === 'feed' && typeof showTab === 'function'){ showTab('feed'); return; }
+  if(k === 'market' && typeof openMa === 'function'){ openMa('market'); return; }
+  if(typeof toast === 'function') toast('Раздел скоро появится');
+}
+
+/* ---------- sparkline: рост подписчиков за 30 дней ---------- */
+function mpSparkPoints(name, endValue){
+  const n = 30;
+  const h = psHash('spark:' + name);
+  const gain = 40 + (h % 160);                    /* +40..+199 за 30 дней */
+  const start = Math.max(50, endValue - gain);
+  const pts = [];
+  for(let i = 0; i < n; i++){
+    const t = i / (n - 1);
+    /* монотонный рост с лёгким шумом (детерминированный) */
+    const noise = ((psHash(name + '#' + i) % 100) / 100 - 0.5) * (gain * 0.10);
+    let v = start + (endValue - start) * (t * t * (3 - 2 * t)) + noise;
+    if(v < start) v = start;
+    if(v > endValue + 5) v = endValue + 5;
+    pts.push(v);
+  }
+  pts[n - 1] = endValue;
+  return {pts, gain};
+}
+function mpSparkHtml(){
+  const followers = 2400;                          /* соответствует «2.4к» в шапке */
+  const {pts, gain} = mpSparkPoints((typeof PROFILE !== 'undefined' && PROFILE.name) || 'me', followers);
+  const w = 300, h = 44, pad = 2;
+  const min = Math.min.apply(null, pts), max = Math.max.apply(null, pts);
+  const rng = Math.max(1, max - min);
+  const x = i => pad + i * ((w - pad * 2) / (pts.length - 1));
+  const y = v => pad + (h - pad * 2) * (1 - (v - min) / rng);
+  const line = pts.map((v, i) => (i ? 'L' : 'M') + x(i).toFixed(1) + ' ' + y(v).toFixed(1)).join(' ');
+  const area = `M${pad.toFixed(1)} ${(h - pad).toFixed(1)} ` +
+    pts.map((v, i) => 'L' + x(i).toFixed(1) + ' ' + y(v).toFixed(1)).join(' ') +
+    ` L${(w - pad).toFixed(1)} ${(h - pad).toFixed(1)} Z`;
+  const last = pts.length - 1;
+  const dotX = x(last).toFixed(1), dotY = y(pts[last]).toFixed(1);
+  const nf = v => (typeof fmtN === 'function' ? fmtN(v) : String(v));
+  return `<div class="mp-spark fade-in" aria-label="Рост подписчиков за 30 дней">
+    <div class="mp-spark-h">
+      <span class="mp-spark-lb">Рост за 30 дней</span>
+      <span class="mp-spark-v">+${nf(gain)}</span>
+    </div>
+    <svg viewBox="0 0 ${w} ${h}" preserveAspectRatio="none" class="mp-spark-svg">
+      <defs>
+        <linearGradient id="mpSparkFill" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0%" stop-color="#9AFF00" stop-opacity=".38"/>
+          <stop offset="100%" stop-color="#9AFF00" stop-opacity="0"/>
+        </linearGradient>
+      </defs>
+      <path d="${area}" fill="url(#mpSparkFill)"/>
+      <path d="${line}" fill="none" stroke="#9AFF00" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+      <circle cx="${dotX}" cy="${dotY}" r="3" fill="#9AFF00"/>
+      <circle cx="${dotX}" cy="${dotY}" r="6" fill="#9AFF00" opacity=".22"/>
+    </svg>
+  </div>`;
+}
+
+/* ---------- стрик учёбы (если Академия подключена) ---------- */
+function mpStreakDays(){
+  try{ if(typeof acStreak === 'function'){ const st = acStreak(); return (st && +st.days) || 0; } }catch(e){}
+  return 0;
+}
+function mpStreakHtml(){
+  const d = mpStreakDays();
+  if(!d) return '';
+  const word = d === 1 ? 'день' : (d < 5 ? 'дня' : 'дней');
+  const hot = d >= 3;
+  return `<button class="mp-streak${hot ? ' hot' : ''} fade-in" onclick="mpGoAcademy()" aria-label="Стрик учёбы">
+    <span class="mp-streak-ic">${I('fire')}</span>
+    <span class="mp-streak-b">
+      <b>${d} ${word} подряд в OKO</b>
+      <small>${hot ? 'Ты в огне. Не сбавляй ритм.' : 'Начало учебной серии. Возвращайся каждый день.'}</small>
+    </span>
+    <span class="mp-streak-ch">${I('chev')}</span>
+  </button>`;
+}
+function mpGoAcademy(){
+  if(typeof showTab === 'function') showTab('academy');
+  else if(typeof toast === 'function') toast('Академия');
+}
+
+/* ---------- инъекция ВСЕХ улучшений в свой профиль ---------- */
+function mpInject(){
+  mpLoad();
+  const scr = document.getElementById('screen-profile');
+  if(!scr) return;
+  const pad = scr.querySelector('.pad');
+  if(!pad) return;
+
+  /* 1) обложка — самый первый ребёнок .pad */
+  let cover = pad.querySelector('.mp-cover-wrap');
+  if(!cover){
+    cover = document.createElement('div');
+    cover.className = 'mp-cover-wrap';
+    pad.prepend(cover);
+  }
+  cover.innerHTML = mpCoverHtml();
+
+  /* 2) стикер статуса на аватар */
+  const ava = document.getElementById('profAva');
+  if(ava){
+    let sticker = ava.querySelector('.mp-sticker');
+    if(sticker) sticker.remove();
+    const html = mpStickerHtml();
+    if(html) ava.insertAdjacentHTML('beforeend', html);
+    ava.classList.add('mp-ava-plus');
+  }
+
+  /* 3) плашка статуса — под ником/тарифом */
+  const top = pad.querySelector('.profile-top');
+  if(top){
+    let stRow = pad.querySelector('.mp-status-row');
+    if(!stRow){
+      stRow = document.createElement('div');
+      stRow.className = 'mp-status-row';
+      top.insertAdjacentElement('afterend', stRow);
+    }
+    stRow.innerHTML = mpStatusHtml();
+  }
+
+  /* 4) витрина результатов — после био */
+  const bio = document.getElementById('profBio');
+  if(bio){
+    let show = pad.querySelector('.mp-show-wrap');
+    if(!show){
+      show = document.createElement('div');
+      show.className = 'mp-show-wrap';
+      bio.insertAdjacentElement('afterend', show);
+    }
+    show.innerHTML = mpShowHtml();
+  }
+
+  /* 5) sparkline — после статы */
+  const stats = document.getElementById('profStats');
+  if(stats){
+    let spark = pad.querySelector('.mp-spark-wrap');
+    if(!spark){
+      spark = document.createElement('div');
+      spark.className = 'mp-spark-wrap';
+      stats.insertAdjacentElement('afterend', spark);
+    }
+    spark.innerHTML = mpSparkHtml();
+  }
+
+  /* 6) стрик учёбы — сразу после sparkline (если есть) */
+  const sparkWrap = pad.querySelector('.mp-spark-wrap');
+  if(sparkWrap){
+    let streak = pad.querySelector('.mp-streak-wrap');
+    const html = mpStreakHtml();
+    if(!html){ if(streak) streak.remove(); return; }
+    if(!streak){
+      streak = document.createElement('div');
+      streak.className = 'mp-streak-wrap';
+      sparkWrap.insertAdjacentElement('afterend', streak);
+    }
+    streak.innerHTML = html;
+  }
+}
+
 /* ================= САМОИНИЦИАЛИЗАЦИЯ И ПАТЧИ (chain) ================= */
 (function psInit(){
   psLoadState();
@@ -930,6 +1222,7 @@ function psDecorateSub(){
       _psPrevRenderMyProfile.apply(this, arguments);
       try{ psInjectAccSwitch(); }catch(e){}
       try{ psInjectMyFollows(); }catch(e){}
+      try{ mpInject(); }catch(e){}
       /* админ-строка видна только владельцу активного аккаунта */
       const owner = (typeof isOwner === 'function') ? isOwner() : (PROFILE.role === 'owner');
       try{

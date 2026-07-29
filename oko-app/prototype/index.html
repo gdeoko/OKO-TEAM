@@ -6741,6 +6741,141 @@ body.ps-over-view #sheetOverlay.open{z-index:67}
 .ps-more-btn:active{transform:scale(.92)}
 #okoPopup .btn.ps-btn-danger{background:var(--danger);color:#fff;border-color:var(--danger)}
 
+/* ============================================================================
+   МОЙ ПРОФИЛЬ · «социальная витрина» (mp-)
+   Все инъекции живут внутри #screen-profile .pad и не трогают base.html.
+   ============================================================================ */
+
+/* ---------- ОБЛОЖКА ---------- */
+.mp-cover-wrap{margin:-18px -18px 20px}
+.mp-cover{position:relative;height:140px;overflow:hidden;isolation:isolate;border-bottom:1px solid var(--border)}
+.mp-cover::before{content:"";position:absolute;inset:0;
+  background:
+    radial-gradient(120% 130% at 18% 0%, rgba(154,255,0,.30), transparent 55%),
+    radial-gradient(90% 120% at 100% 100%, rgba(154,255,0,.18), transparent 60%),
+    linear-gradient(160deg,#0e1305 0%, #070a03 48%, #0a0d04 100%);
+}
+.mp-cover::after{content:"";position:absolute;top:-40%;left:-20%;width:70%;height:180%;
+  background:radial-gradient(closest-side, rgba(154,255,0,.34), transparent 70%);
+  filter:blur(8px);opacity:.9;animation:mpCoverDrift 10s ease-in-out infinite;
+}
+@keyframes mpCoverDrift{0%{transform:translate(0,0)}50%{transform:translate(230%,14%)}100%{transform:translate(0,0)}}
+.mp-cover-grid{position:absolute;inset:0;opacity:.5;mix-blend-mode:screen;
+  background-image:linear-gradient(rgba(154,255,0,.10) 1px,transparent 1px),linear-gradient(90deg,rgba(154,255,0,.08) 1px,transparent 1px);
+  background-size:26px 26px;
+  -webkit-mask-image:linear-gradient(180deg,#000,transparent);mask-image:linear-gradient(180deg,#000,transparent)}
+.mp-cover-mark{position:absolute;right:16px;top:14px;width:36px;height:36px;color:var(--lime);opacity:.24;filter:drop-shadow(0 0 8px rgba(154,255,0,.4))}
+.mp-cover-mark svg.i{width:100%;height:100%}
+.mp-cover-brand{position:absolute;left:18px;bottom:12px;font-family:var(--font-display);font-size:22px;letter-spacing:.28em;color:rgba(154,255,0,.22);font-weight:800;text-shadow:0 0 12px rgba(154,255,0,.35);pointer-events:none;user-select:none}
+.mp-cover.v1::before{background:radial-gradient(80% 120% at 82% 0%, rgba(154,255,0,.28), transparent 58%),conic-gradient(from 210deg at 30% 120%, rgba(154,255,0,.20), transparent 40%, transparent 70%, rgba(154,255,0,.10)),linear-gradient(150deg,#0c1205,#060803)}
+.mp-cover.v2::before{background:linear-gradient(100deg, transparent 0%, rgba(154,255,0,.26) 46%, rgba(154,255,0,.05) 54%, transparent 100%),linear-gradient(180deg,#0d1204,#070a03)}
+.mp-cover.v3::before{background:radial-gradient(60% 100% at 50% 130%, rgba(154,255,0,.30), transparent 60%),linear-gradient(180deg,#0b1004,#070a03)}
+.mp-cover.v4::before{background:radial-gradient(90% 130% at 0% 0%, rgba(154,255,0,.26), transparent 55%),radial-gradient(70% 100% at 100% 40%, rgba(154,255,0,.14), transparent 60%),linear-gradient(140deg,#0d1305,#070a03)}
+@media(prefers-reduced-motion:reduce){.mp-cover::after{animation:none}}
+:root[data-theme="light"] .mp-cover::before{background:radial-gradient(120% 130% at 18% 0%, rgba(154,255,0,.34), transparent 55%),radial-gradient(90% 120% at 100% 100%, rgba(120,210,0,.20), transparent 60%),linear-gradient(160deg,#eef7dd 0%, #e7f2d4 55%, #dcecc6 100%)}
+:root[data-theme="light"] .mp-cover.v1::before{background:radial-gradient(80% 120% at 82% 0%, rgba(154,255,0,.32), transparent 58%),conic-gradient(from 210deg at 30% 120%, rgba(120,210,0,.22), transparent 42%, transparent 70%, rgba(154,255,0,.12)),linear-gradient(150deg,#eef7dd,#e2eecb)}
+:root[data-theme="light"] .mp-cover.v2::before{background:linear-gradient(100deg, transparent 0%, rgba(154,255,0,.30) 46%, rgba(120,210,0,.06) 54%, transparent 100%),linear-gradient(180deg,#eef7dd,#e5f0cd)}
+:root[data-theme="light"] .mp-cover.v3::before{background:radial-gradient(60% 100% at 50% 130%, rgba(154,255,0,.34), transparent 60%),linear-gradient(180deg,#edf6dc,#e6f1cf)}
+:root[data-theme="light"] .mp-cover.v4::before{background:radial-gradient(90% 130% at 0% 0%, rgba(154,255,0,.30), transparent 55%),radial-gradient(70% 100% at 100% 40%, rgba(120,210,0,.16), transparent 60%),linear-gradient(140deg,#eef7dd,#e4efcb)}
+:root[data-theme="light"] .mp-cover::after{opacity:.55}
+:root[data-theme="light"] .mp-cover-grid{mix-blend-mode:multiply;opacity:.35}
+:root[data-theme="light"] .mp-cover-mark{color:#5f9e00;opacity:.35;filter:none}
+:root[data-theme="light"] .mp-cover-brand{color:rgba(70,120,0,.28);text-shadow:none}
+
+/* ---------- аватар над обложкой + стикер статуса ---------- */
+#screen-profile .profile-top{margin-top:-46px;position:relative;z-index:1}
+#screen-profile .profile-top .ava.mp-ava-plus{position:relative;border:3px solid var(--bg);box-shadow:0 6px 20px rgba(0,0,0,.45),var(--glow)}
+:root[data-theme="light"] #screen-profile .profile-top .ava.mp-ava-plus{box-shadow:0 6px 18px rgba(60,90,10,.16)}
+.mp-sticker{position:absolute;right:-3px;bottom:-3px;width:26px;height:26px;border-radius:50%;background:var(--bg);border:2.5px solid var(--bg);display:inline-flex;align-items:center;justify-content:center;box-shadow:0 3px 8px rgba(0,0,0,.35);animation:mpStickerIn .35s cubic-bezier(.3,1.4,.5,1) both}
+.mp-sticker svg.i{width:14px;height:14px}
+.mp-sticker.mp-tone-ok svg.i{color:#3ddc5a}
+.mp-sticker.mp-tone-accent svg.i{color:var(--accent)}
+.mp-sticker.mp-tone-muted svg.i{color:#a1a19a}
+.mp-sticker.mp-tone-ok{background:#0f2413}
+.mp-sticker.mp-tone-accent{background:#141b06}
+.mp-sticker.mp-tone-muted{background:#1a1a17}
+:root[data-theme="light"] .mp-sticker.mp-tone-ok{background:#e0f4dc}
+:root[data-theme="light"] .mp-sticker.mp-tone-accent{background:#eef7dd}
+:root[data-theme="light"] .mp-sticker.mp-tone-muted{background:#e9e9e6}
+@keyframes mpStickerIn{from{opacity:0;transform:scale(.4)}to{opacity:1;transform:scale(1)}}
+@media(prefers-reduced-motion:reduce){.mp-sticker{animation:none}}
+
+/* ---------- строка статуса ---------- */
+.mp-status-row{margin:10px 0 4px;display:flex}
+.mp-status{display:inline-flex;align-items:center;gap:8px;padding:8px 14px 8px 8px;border-radius:99px;background:var(--surface);border:1px solid var(--border);font-size:12.5px;font-weight:700;color:var(--text);cursor:pointer;transition:border-color .2s,transform .12s,background .2s;max-width:100%}
+.mp-status:hover{border-color:var(--accent)}
+.mp-status:active{transform:scale(.97)}
+.mp-status span{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.mp-status.ghost{color:var(--dim);border-style:dashed;padding:7px 14px 7px 10px}
+.mp-status.ghost svg.i{width:14px;height:14px;color:var(--dim)}
+.mp-status-ic{width:24px;height:24px;flex-shrink:0;border-radius:50%;display:inline-flex;align-items:center;justify-content:center;background:var(--lime-dim)}
+.mp-status-ic svg.i{width:13px;height:13px;color:var(--accent)}
+.mp-tone-ok .mp-status-ic{background:rgba(61,220,90,.16)}
+.mp-tone-ok .mp-status-ic svg.i{color:#3ddc5a}
+.mp-tone-muted .mp-status-ic{background:rgba(161,161,154,.16)}
+.mp-tone-muted .mp-status-ic svg.i{color:#a1a19a}
+
+/* пикер статуса внутри okoPopup */
+.mp-pick{display:flex;flex-direction:column;gap:6px;margin:4px 0 2px}
+.mp-pick-row{display:flex;align-items:center;gap:12px;padding:10px 12px;border-radius:var(--r-md);border:1px solid var(--border);background:var(--surface);cursor:pointer;text-align:left;transition:border-color .2s,transform .12s,background .2s}
+.mp-pick-row:hover{border-color:var(--accent)}
+.mp-pick-row:active{transform:scale(.99)}
+.mp-pick-row.on{border-color:var(--accent);background:var(--lime-dim)}
+.mp-pick-ic{width:36px;height:36px;flex-shrink:0;border-radius:50%;background:var(--raised);display:inline-flex;align-items:center;justify-content:center;color:var(--accent)}
+.mp-pick-ic svg.i{width:17px;height:17px}
+.mp-pick-b{flex:1;min-width:0;display:flex;flex-direction:column;gap:2px}
+.mp-pick-b b{font-size:13.5px;font-weight:700}
+.mp-pick-b small{font-size:11.5px;color:var(--dim);line-height:1.35}
+.mp-pick-ok{flex-shrink:0;width:24px;height:24px;border-radius:50%;background:var(--accent);color:#06210a;display:inline-flex;align-items:center;justify-content:center}
+.mp-pick-ok svg.i{width:14px;height:14px}
+
+/* ---------- витрина результатов ---------- */
+.mp-show-wrap{margin:14px 0 4px}
+.mp-show{display:grid;grid-template-columns:1fr;gap:8px}
+.mp-card{display:flex;align-items:center;gap:12px;padding:12px 14px;background:var(--surface);border:1px solid var(--border);border-radius:var(--r-md);cursor:pointer;text-align:left;transition:border-color .2s,transform .12s,background .2s;width:100%;position:relative;overflow:hidden}
+.mp-card::before{content:"";position:absolute;left:0;top:0;bottom:0;width:3px;background:linear-gradient(180deg,var(--accent),transparent);opacity:0;transition:opacity .2s}
+.mp-card:hover{border-color:var(--accent);transform:translateY(-1px)}
+.mp-card:hover::before{opacity:1}
+.mp-card:active{transform:scale(.99)}
+.mp-card-ic{width:40px;height:40px;flex-shrink:0;border-radius:12px;background:var(--lime-dim);display:inline-flex;align-items:center;justify-content:center;color:var(--accent)}
+.mp-card-ic svg.i{width:20px;height:20px}
+.mp-card-b{flex:1;min-width:0;display:flex;flex-direction:column;gap:2px}
+.mp-card-b small{font-size:11px;color:var(--dim);text-transform:uppercase;letter-spacing:.06em;font-weight:600}
+.mp-card-b b{font-size:14.5px;font-weight:800;line-height:1.15;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.mp-card-s{font-size:11.5px;color:var(--dim);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.mp-card-ch{flex-shrink:0;color:var(--dim);display:inline-flex}
+.mp-card-ch svg.i{width:15px;height:15px}
+@media(min-width:520px){.mp-show{grid-template-columns:repeat(3,1fr)}.mp-card-ch{display:none}.mp-card{flex-direction:column;align-items:flex-start;text-align:left;gap:10px}.mp-card-ic{width:36px;height:36px}}
+
+/* ---------- sparkline: рост подписчиков ---------- */
+.mp-spark-wrap{margin:8px 0 10px}
+.mp-spark{background:var(--surface);border:1px solid var(--border);border-radius:var(--r-md);padding:12px 14px 10px;transition:border-color .2s}
+.mp-spark:hover{border-color:var(--accent)}
+.mp-spark-h{display:flex;align-items:baseline;justify-content:space-between;margin-bottom:4px}
+.mp-spark-lb{font-size:11px;color:var(--dim);text-transform:uppercase;letter-spacing:.08em;font-weight:600}
+.mp-spark-v{font-family:var(--font-display);font-size:18px;color:var(--accent);letter-spacing:.02em}
+.mp-spark-svg{width:100%;height:44px;display:block}
+
+/* ---------- стрик учёбы ---------- */
+.mp-streak-wrap{margin:8px 0 12px}
+.mp-streak{display:flex;align-items:center;gap:12px;width:100%;padding:14px;background:var(--surface);border:1px solid var(--border);border-radius:var(--r-md);cursor:pointer;text-align:left;transition:border-color .2s,transform .12s,background .2s;position:relative;overflow:hidden}
+.mp-streak::before{content:"";position:absolute;inset:0;background:linear-gradient(120deg,rgba(255,120,20,.10),transparent 55%);opacity:0;transition:opacity .2s;pointer-events:none}
+.mp-streak:hover{border-color:var(--accent)}
+.mp-streak:hover::before{opacity:1}
+.mp-streak:active{transform:scale(.99)}
+.mp-streak.hot{border-color:rgba(255,140,40,.35)}
+.mp-streak.hot::before{opacity:1;background:linear-gradient(120deg,rgba(255,120,20,.14),transparent 60%),linear-gradient(300deg,rgba(154,255,0,.10),transparent 55%)}
+.mp-streak-ic{width:46px;height:46px;flex-shrink:0;border-radius:50%;background:linear-gradient(135deg,rgba(255,180,60,.24),rgba(154,255,0,.14));display:inline-flex;align-items:center;justify-content:center;color:#ffb340;box-shadow:inset 0 0 0 1px rgba(255,180,60,.28)}
+.mp-streak-ic svg.i{width:22px;height:22px;filter:drop-shadow(0 0 6px rgba(255,140,40,.5))}
+.mp-streak.hot .mp-streak-ic{animation:mpStreakPulse 2s ease-in-out infinite}
+@keyframes mpStreakPulse{0%,100%{transform:scale(1)}50%{transform:scale(1.08)}}
+@media(prefers-reduced-motion:reduce){.mp-streak.hot .mp-streak-ic{animation:none}}
+.mp-streak-b{flex:1;min-width:0;display:flex;flex-direction:column;gap:2px}
+.mp-streak-b b{font-family:var(--font-display);font-size:19px;letter-spacing:.02em;color:var(--text);line-height:1.1}
+.mp-streak-b small{font-size:11.5px;color:var(--dim);line-height:1.4}
+.mp-streak-ch{flex-shrink:0;color:var(--dim);display:inline-flex}
+.mp-streak-ch svg.i{width:16px;height:16px}
+
 /* ===== module: stories-plus ===== */
 /* ===== STORIES-PLUS (sp-): редактор сторис, просмотры, реакции, мультисторис ===== */
 
@@ -9899,7 +10034,7 @@ nav#tabs>button.active svg.i{
   </div>
 </div>
 <div class="sheet" id="sheet-progress" style="max-height:78vh;overflow-y:auto">
-  <h3>Прогресс сборки OKO <span class="chip" style="font-size:10px;vertical-align:3px">сборка v1.81</span></h3>
+  <h3>Прогресс сборки OKO <span class="chip" style="font-size:10px;vertical-align:3px">сборка v1.82</span></h3>
   <p class="dim" style="font-size:12px;margin:-6px 0 10px">Запуск: 15 июля 2026. Обновляется с каждым этапом.</p>
   <div id="progressList"></div>
 </div>
@@ -39872,6 +40007,298 @@ function psDecorateSub(){
   });
 }
 
+/* ============================================================================
+   МОЙ ПРОФИЛЬ · «социальная витрина» (mp-): улучшения поверх renderMyProfile
+   ---------------------------------------------------------------------------
+   • Дефолт-обложка бренда OKO (градиент + логотип-водяной, full-bleed)
+   • Быстрый статус («работаю» / «открыт(а) к сотрудничеству» / «в отпуске»)
+     + мини-стикер на аватаре
+   • Витрина результатов: 3 карточки (лучшие ролики / объявления / отзывы)
+   • Sparkline роста подписчиков за 30 дней (SVG, детерминированно)
+   • Стрик учёбы (если из academy доступен acStreak)
+   Персист статуса — oko-mp; всё остальное считается из уже готовых источников.
+   ============================================================================ */
+
+const PS_MP = {
+  status: null,              /* 'work' | 'open' | 'off' | null */
+  loaded: false,
+};
+function mpLoad(){
+  if(PS_MP.loaded) return;
+  try{
+    const s = JSON.parse(localStorage.getItem('oko-mp') || 'null');
+    if(s && typeof s.status === 'string') PS_MP.status = s.status;
+  }catch(e){}
+  PS_MP.loaded = true;
+}
+function mpSave(){
+  try{ localStorage.setItem('oko-mp', JSON.stringify({status: PS_MP.status, at: Date.now()})); }catch(e){}
+}
+const PS_MP_STATUSES = {
+  work: {ic:'bolt',      lb:'Сейчас: работаю',            short:'Работаю',    tone:'ok'},
+  open: {ic:'briefcase', lb:'Открыт к сотрудничеству',    short:'Открыт(а)',  tone:'accent'},
+  off:  {ic:'moon',      lb:'В отпуске',                  short:'В отпуске',  tone:'muted'},
+};
+
+/* ---------- обложка ---------- */
+function mpCoverHtml(){
+  const name = (typeof PROFILE !== 'undefined' && PROFILE.name) ? PROFILE.name : 'OKO';
+  const v = 'v' + (psHash('mycov:' + name) % 5);
+  return `<div class="mp-cover ${v}">
+    <div class="mp-cover-grid"></div>
+    <div class="mp-cover-mark">${I('logo')}</div>
+    <div class="mp-cover-brand">OKO</div>
+  </div>`;
+}
+
+/* ---------- быстрый статус ---------- */
+function mpStatusHtml(){
+  const st = PS_MP.status && PS_MP_STATUSES[PS_MP.status];
+  if(!st) return `<button class="mp-status ghost" onclick="mpPickStatus()" aria-label="Установить статус">${I('plus')}<span>Указать статус</span></button>`;
+  return `<button class="mp-status mp-tone-${st.tone}" onclick="mpPickStatus()" aria-label="Изменить статус">
+    <span class="mp-status-ic">${I(st.ic)}</span><span>${esc(st.lb)}</span>
+  </button>`;
+}
+function mpStickerHtml(){
+  const st = PS_MP.status && PS_MP_STATUSES[PS_MP.status];
+  if(!st) return '';
+  return `<span class="mp-sticker mp-tone-${st.tone}" title="${esc(st.lb)}">${I(st.ic)}</span>`;
+}
+function mpPickStatus(){
+  if(typeof showPopup !== 'function') return;
+  const opts = [
+    {k:'work', ic:'bolt',      lb:'Работаю',                d:'Занят(а) заказами и проектами'},
+    {k:'open', ic:'briefcase', lb:'Открыт к сотрудничеству', d:'Готов брать новые задачи'},
+    {k:'off',  ic:'moon',      lb:'В отпуске',              d:'Отдых, откликаюсь медленнее'},
+  ];
+  const rows = opts.map(o =>
+    `<button class="mp-pick-row${PS_MP.status === o.k ? ' on' : ''}" onclick="mpSetStatus('${o.k}')">
+      <span class="mp-pick-ic">${I(o.ic)}</span>
+      <span class="mp-pick-b"><b>${esc(o.lb)}</b><small>${esc(o.d)}</small></span>
+      ${PS_MP.status === o.k ? `<span class="mp-pick-ok">${I('check')}</span>` : ''}
+    </button>`).join('');
+  const actions = [];
+  if(PS_MP.status) actions.push({label:'Убрать статус', ghost:true, onclick: () => mpSetStatus(null)});
+  actions.push({label:'Закрыть', ghost:true});
+  showPopup({title:'Быстрый статус', body:`<div class="mp-pick">${rows}</div>`, actions});
+}
+function mpSetStatus(k){
+  PS_MP.status = (k && PS_MP_STATUSES[k]) ? k : null;
+  mpSave();
+  if(typeof closePopup === 'function') closePopup();
+  if(typeof renderMyProfile === 'function') renderMyProfile();
+  if(typeof toast === 'function') toast(PS_MP.status ? 'Статус: ' + PS_MP_STATUSES[PS_MP.status].short : 'Статус скрыт');
+}
+
+/* ---------- витрина результатов (3 карточки) ---------- */
+function mpMyPostsStat(){
+  let cnt = 0, views = 0, likes = 0;
+  try{
+    if(typeof POSTS !== 'undefined' && typeof PROFILE !== 'undefined'){
+      [...POSTS.sub, ...POSTS.rec].forEach(p => {
+        if(p.name === PROFILE.name){ cnt++; views += (p.views || 0); likes += (p.likes || 0); }
+      });
+    }
+  }catch(e){}
+  return {cnt, views, likes};
+}
+function mpShowHtml(){
+  const nf = v => (typeof fmtN === 'function' ? fmtN(v) : String(v));
+  const my = mpMyPostsStat();
+  const hasPosts = my.cnt > 0;
+  const cards = [
+    {
+      k:'reels', ic:'circle-play', t:'Мои лучшие ролики',
+      v: hasPosts ? nf(my.views) + ' просмотров' : 'Пока пусто',
+      s: hasPosts ? my.cnt + ' ' + (my.cnt === 1 ? 'ролик' : (my.cnt < 5 ? 'ролика' : 'роликов')) : 'Опубликуй первый',
+      onclick: `mpGo('feed')`
+    },
+    {
+      k:'ads',   ic:'briefcase',   t:'Активные объявления',
+      v: 'Витрина услуг',
+      s: 'Разместить в бирже',
+      onclick: `mpGo('market')`
+    },
+    {
+      k:'rev',   ic:'star',        t:'Отзывы клиентов',
+      v: hasPosts ? '5.0 · ' + Math.max(3, Math.min(24, my.cnt * 2)) : 'Собираем',
+      s: hasPosts ? 'Средняя оценка' : 'Появятся после сделок',
+      onclick: `mpGo('reviews')`
+    },
+  ];
+  return `<div class="mp-show">` + cards.map((c, i) => `
+    <button class="mp-card fade-in" style="animation-delay:${60 + i * 55}ms" onclick="${c.onclick}" aria-label="${esc(c.t)}">
+      <span class="mp-card-ic">${I(c.ic)}</span>
+      <span class="mp-card-b">
+        <small>${esc(c.t)}</small>
+        <b>${esc(c.v)}</b>
+        <span class="mp-card-s">${esc(c.s)}</span>
+      </span>
+      <span class="mp-card-ch">${I('chev')}</span>
+    </button>`).join('') + `</div>`;
+}
+function mpGo(k){
+  if(k === 'feed' && typeof showTab === 'function'){ showTab('feed'); return; }
+  if(k === 'market' && typeof openMa === 'function'){ openMa('market'); return; }
+  if(typeof toast === 'function') toast('Раздел скоро появится');
+}
+
+/* ---------- sparkline: рост подписчиков за 30 дней ---------- */
+function mpSparkPoints(name, endValue){
+  const n = 30;
+  const h = psHash('spark:' + name);
+  const gain = 40 + (h % 160);                    /* +40..+199 за 30 дней */
+  const start = Math.max(50, endValue - gain);
+  const pts = [];
+  for(let i = 0; i < n; i++){
+    const t = i / (n - 1);
+    /* монотонный рост с лёгким шумом (детерминированный) */
+    const noise = ((psHash(name + '#' + i) % 100) / 100 - 0.5) * (gain * 0.10);
+    let v = start + (endValue - start) * (t * t * (3 - 2 * t)) + noise;
+    if(v < start) v = start;
+    if(v > endValue + 5) v = endValue + 5;
+    pts.push(v);
+  }
+  pts[n - 1] = endValue;
+  return {pts, gain};
+}
+function mpSparkHtml(){
+  const followers = 2400;                          /* соответствует «2.4к» в шапке */
+  const {pts, gain} = mpSparkPoints((typeof PROFILE !== 'undefined' && PROFILE.name) || 'me', followers);
+  const w = 300, h = 44, pad = 2;
+  const min = Math.min.apply(null, pts), max = Math.max.apply(null, pts);
+  const rng = Math.max(1, max - min);
+  const x = i => pad + i * ((w - pad * 2) / (pts.length - 1));
+  const y = v => pad + (h - pad * 2) * (1 - (v - min) / rng);
+  const line = pts.map((v, i) => (i ? 'L' : 'M') + x(i).toFixed(1) + ' ' + y(v).toFixed(1)).join(' ');
+  const area = `M${pad.toFixed(1)} ${(h - pad).toFixed(1)} ` +
+    pts.map((v, i) => 'L' + x(i).toFixed(1) + ' ' + y(v).toFixed(1)).join(' ') +
+    ` L${(w - pad).toFixed(1)} ${(h - pad).toFixed(1)} Z`;
+  const last = pts.length - 1;
+  const dotX = x(last).toFixed(1), dotY = y(pts[last]).toFixed(1);
+  const nf = v => (typeof fmtN === 'function' ? fmtN(v) : String(v));
+  return `<div class="mp-spark fade-in" aria-label="Рост подписчиков за 30 дней">
+    <div class="mp-spark-h">
+      <span class="mp-spark-lb">Рост за 30 дней</span>
+      <span class="mp-spark-v">+${nf(gain)}</span>
+    </div>
+    <svg viewBox="0 0 ${w} ${h}" preserveAspectRatio="none" class="mp-spark-svg">
+      <defs>
+        <linearGradient id="mpSparkFill" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0%" stop-color="#9AFF00" stop-opacity=".38"/>
+          <stop offset="100%" stop-color="#9AFF00" stop-opacity="0"/>
+        </linearGradient>
+      </defs>
+      <path d="${area}" fill="url(#mpSparkFill)"/>
+      <path d="${line}" fill="none" stroke="#9AFF00" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+      <circle cx="${dotX}" cy="${dotY}" r="3" fill="#9AFF00"/>
+      <circle cx="${dotX}" cy="${dotY}" r="6" fill="#9AFF00" opacity=".22"/>
+    </svg>
+  </div>`;
+}
+
+/* ---------- стрик учёбы (если Академия подключена) ---------- */
+function mpStreakDays(){
+  try{ if(typeof acStreak === 'function'){ const st = acStreak(); return (st && +st.days) || 0; } }catch(e){}
+  return 0;
+}
+function mpStreakHtml(){
+  const d = mpStreakDays();
+  if(!d) return '';
+  const word = d === 1 ? 'день' : (d < 5 ? 'дня' : 'дней');
+  const hot = d >= 3;
+  return `<button class="mp-streak${hot ? ' hot' : ''} fade-in" onclick="mpGoAcademy()" aria-label="Стрик учёбы">
+    <span class="mp-streak-ic">${I('fire')}</span>
+    <span class="mp-streak-b">
+      <b>${d} ${word} подряд в OKO</b>
+      <small>${hot ? 'Ты в огне. Не сбавляй ритм.' : 'Начало учебной серии. Возвращайся каждый день.'}</small>
+    </span>
+    <span class="mp-streak-ch">${I('chev')}</span>
+  </button>`;
+}
+function mpGoAcademy(){
+  if(typeof showTab === 'function') showTab('academy');
+  else if(typeof toast === 'function') toast('Академия');
+}
+
+/* ---------- инъекция ВСЕХ улучшений в свой профиль ---------- */
+function mpInject(){
+  mpLoad();
+  const scr = document.getElementById('screen-profile');
+  if(!scr) return;
+  const pad = scr.querySelector('.pad');
+  if(!pad) return;
+
+  /* 1) обложка — самый первый ребёнок .pad */
+  let cover = pad.querySelector('.mp-cover-wrap');
+  if(!cover){
+    cover = document.createElement('div');
+    cover.className = 'mp-cover-wrap';
+    pad.prepend(cover);
+  }
+  cover.innerHTML = mpCoverHtml();
+
+  /* 2) стикер статуса на аватар */
+  const ava = document.getElementById('profAva');
+  if(ava){
+    let sticker = ava.querySelector('.mp-sticker');
+    if(sticker) sticker.remove();
+    const html = mpStickerHtml();
+    if(html) ava.insertAdjacentHTML('beforeend', html);
+    ava.classList.add('mp-ava-plus');
+  }
+
+  /* 3) плашка статуса — под ником/тарифом */
+  const top = pad.querySelector('.profile-top');
+  if(top){
+    let stRow = pad.querySelector('.mp-status-row');
+    if(!stRow){
+      stRow = document.createElement('div');
+      stRow.className = 'mp-status-row';
+      top.insertAdjacentElement('afterend', stRow);
+    }
+    stRow.innerHTML = mpStatusHtml();
+  }
+
+  /* 4) витрина результатов — после био */
+  const bio = document.getElementById('profBio');
+  if(bio){
+    let show = pad.querySelector('.mp-show-wrap');
+    if(!show){
+      show = document.createElement('div');
+      show.className = 'mp-show-wrap';
+      bio.insertAdjacentElement('afterend', show);
+    }
+    show.innerHTML = mpShowHtml();
+  }
+
+  /* 5) sparkline — после статы */
+  const stats = document.getElementById('profStats');
+  if(stats){
+    let spark = pad.querySelector('.mp-spark-wrap');
+    if(!spark){
+      spark = document.createElement('div');
+      spark.className = 'mp-spark-wrap';
+      stats.insertAdjacentElement('afterend', spark);
+    }
+    spark.innerHTML = mpSparkHtml();
+  }
+
+  /* 6) стрик учёбы — сразу после sparkline (если есть) */
+  const sparkWrap = pad.querySelector('.mp-spark-wrap');
+  if(sparkWrap){
+    let streak = pad.querySelector('.mp-streak-wrap');
+    const html = mpStreakHtml();
+    if(!html){ if(streak) streak.remove(); return; }
+    if(!streak){
+      streak = document.createElement('div');
+      streak.className = 'mp-streak-wrap';
+      sparkWrap.insertAdjacentElement('afterend', streak);
+    }
+    streak.innerHTML = html;
+  }
+}
+
 /* ================= САМОИНИЦИАЛИЗАЦИЯ И ПАТЧИ (chain) ================= */
 (function psInit(){
   psLoadState();
@@ -39883,6 +40310,7 @@ function psDecorateSub(){
       _psPrevRenderMyProfile.apply(this, arguments);
       try{ psInjectAccSwitch(); }catch(e){}
       try{ psInjectMyFollows(); }catch(e){}
+      try{ mpInject(); }catch(e){}
       /* админ-строка видна только владельцу активного аккаунта */
       const owner = (typeof isOwner === 'function') ? isOwner() : (PROFILE.role === 'owner');
       try{
