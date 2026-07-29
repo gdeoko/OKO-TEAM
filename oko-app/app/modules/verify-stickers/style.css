@@ -335,3 +335,157 @@
 .vs-gcard.vs-nft{border-color:rgba(154,255,0,.34)}
 .vs-gcard.vs-nft:hover{border-color:var(--accent);box-shadow:0 12px 26px rgba(0,0,0,.34),0 0 18px rgba(154,255,0,.34)}
 :root[data-theme="light"] .vs-gcard.vs-nft:hover{box-shadow:0 12px 24px rgba(20,40,70,.14),0 0 18px rgba(154,255,0,.28)}
+
+/* ================= УЛУЧШЕНИЯ: rarity, wishlist, note, unwrap, resend ================= */
+
+/* --- 4 уровня редкости: цвет чипа, окантовка, свечение --- */
+.vs-rar-chip{display:inline-flex;align-items:center;justify-content:center;font-size:8.5px;font-weight:800;letter-spacing:.6px;
+  padding:2px 7px;border-radius:999px;text-transform:uppercase;line-height:1.35;white-space:nowrap;font-style:normal}
+.vs-rar-chip.vs-rar-common   {color:#adb7c4;background:rgba(150,164,184,.15);border:1px solid rgba(150,164,184,.32)}
+.vs-rar-chip.vs-rar-rare     {color:#4fd0ff;background:rgba(0,152,234,.18);border:1px solid rgba(0,152,234,.42)}
+.vs-rar-chip.vs-rar-epic     {color:#d5b8ff;background:rgba(160,110,255,.18);border:1px solid rgba(160,110,255,.44)}
+.vs-rar-chip.vs-rar-legendary{color:#0a0a0a;background:linear-gradient(90deg,#c6ff70,#9AFF00);border:1px solid transparent;box-shadow:0 0 8px rgba(154,255,0,.5)}
+:root[data-theme="light"] .vs-rar-chip.vs-rar-common{color:#4a5462;background:rgba(150,164,184,.16);border-color:rgba(120,132,150,.34)}
+:root[data-theme="light"] .vs-rar-chip.vs-rar-rare{color:#0a5a92}
+:root[data-theme="light"] .vs-rar-chip.vs-rar-epic{color:#5b2ca8;background:rgba(120,70,220,.14);border-color:rgba(120,70,220,.36)}
+
+/* rarity-плашка на карточке подарка (левый верх) */
+.vs-gcard{overflow:visible}
+.vs-gcard>.vs-rar-chip{position:absolute;top:-6px;left:6px;z-index:2;font-size:8px;padding:2px 6px}
+.vs-gcard.vs-rar-rare     {border-color:rgba(0,152,234,.38)}
+.vs-gcard.vs-rar-epic     {border-color:rgba(160,110,255,.4)}
+.vs-gcard.vs-rar-legendary{border-color:rgba(154,255,0,.42)}
+.vs-gcard.vs-rar-epic:hover     {border-color:#b57cff;box-shadow:0 12px 26px rgba(0,0,0,.34),0 0 18px rgba(160,110,255,.36)}
+.vs-gcard.vs-rar-legendary:hover{border-color:var(--accent);box-shadow:0 12px 26px rgba(0,0,0,.34),0 0 20px rgba(154,255,0,.42)}
+:root[data-theme="light"] .vs-gcard.vs-rar-epic:hover     {box-shadow:0 12px 24px rgba(20,40,70,.14),0 0 18px rgba(160,110,255,.28)}
+:root[data-theme="light"] .vs-gcard.vs-rar-legendary:hover{box-shadow:0 12px 24px rgba(20,40,70,.14),0 0 20px rgba(154,255,0,.32)}
+/* внутренний ambient-свет по редкости */
+.vs-gcard.vs-rar-epic     .vs-gcard-art::after,
+.vs-gcard.vs-rar-legendary .vs-gcard-art::after,
+.vs-gcard.vs-rar-rare      .vs-gcard-art::after{content:"";position:absolute;inset:-30%;border-radius:50%;pointer-events:none;z-index:-1}
+.vs-gcard-art{position:relative;isolation:isolate}
+.vs-gcard.vs-rar-rare      .vs-gcard-art::after{background:radial-gradient(circle,rgba(0,152,234,.24),transparent 62%)}
+.vs-gcard.vs-rar-epic      .vs-gcard-art::after{background:radial-gradient(circle,rgba(160,110,255,.26),transparent 62%)}
+.vs-gcard.vs-rar-legendary .vs-gcard-art::after{background:radial-gradient(circle,rgba(154,255,0,.28),transparent 62%);animation:vs-glowmove 5s ease-in-out infinite}
+
+/* rarity-плашка в шапке карточки покупки */
+.vs-buy-rar{display:flex;justify-content:center;margin:-4px 0 8px}
+.vs-buy-art.vs-rar-legendary::after,
+.vs-buy-art.vs-rar-epic::after{content:"";position:absolute;inset:-25%;border-radius:50%;pointer-events:none;z-index:-1}
+.vs-buy-art.vs-rar-legendary::after{background:radial-gradient(circle,rgba(154,255,0,.28),transparent 62%)}
+.vs-buy-art.vs-rar-epic::after     {background:radial-gradient(circle,rgba(160,110,255,.26),transparent 62%)}
+.vs-buy-art{position:relative;isolation:isolate}
+
+/* --- сердечко-переключатель вишлиста (правый верх карточки) --- */
+.vs-wish-tog{position:absolute;top:6px;right:6px;z-index:2;width:26px;height:26px;border-radius:50%;
+  display:inline-flex;align-items:center;justify-content:center;background:rgba(8,14,22,.68);border:1px solid rgba(255,255,255,.14);
+  color:#7fb8dd;transition:transform .14s cubic-bezier(.34,1.6,.5,1),background .18s,color .18s,border-color .18s;cursor:pointer}
+.vs-wish-tog svg{width:14px;height:14px;display:block}
+.vs-wish-tog:hover{transform:scale(1.12);color:#ff6f8b;background:rgba(255,90,120,.14);border-color:rgba(255,90,120,.4)}
+.vs-wish-tog:active{transform:scale(.88)}
+.vs-wish-tog.on{color:#ff6f8b;background:rgba(255,90,120,.22);border-color:rgba(255,90,120,.5);animation:vs-pop .38s cubic-bezier(.45,1.6,.4,1)}
+:root[data-theme="light"] .vs-wish-tog{background:rgba(255,255,255,.9);border-color:rgba(0,0,0,.08);color:#8895a8}
+:root[data-theme="light"] .vs-wish-tog.on{color:#e0426b;background:rgba(255,90,120,.14);border-color:rgba(255,90,120,.36)}
+
+/* --- секция «Твой вишлист» на вкладке магазина --- */
+.vs-wish-sec{margin:0 0 14px;padding:12px 12px 10px;border-radius:var(--r-md);
+  background:linear-gradient(158deg,rgba(255,90,120,.09),rgba(0,152,234,.05));border:1px solid rgba(255,90,120,.24)}
+:root[data-theme="light"] .vs-wish-sec{background:linear-gradient(158deg,rgba(255,90,120,.09),rgba(0,152,234,.05));border-color:rgba(255,90,120,.28)}
+.vs-wish-head{display:flex;align-items:center;gap:8px;font-family:var(--font-display);letter-spacing:1.2px;font-size:13px;color:var(--text);margin-bottom:10px}
+.vs-wish-head svg{width:15px;height:15px;color:#ff6f8b;flex-shrink:0}
+.vs-wish-head i{font-style:normal;font-size:10px;font-weight:800;padding:2px 8px;border-radius:999px;background:#ff6f8b;color:#fff;letter-spacing:.5px}
+.vs-wish-head small{font-family:var(--font-body);letter-spacing:0;font-size:10.5px;font-weight:500;color:var(--dim);margin-left:auto}
+.vs-wish-row{display:flex;gap:8px;overflow-x:auto;padding-bottom:2px;scrollbar-width:none}
+.vs-wish-row::-webkit-scrollbar{display:none}
+.vs-wish-item{position:relative;flex-shrink:0;width:88px;display:flex;flex-direction:column;align-items:center;gap:3px;padding:8px 6px 7px;
+  border-radius:var(--r-sm);background:var(--surface);border:1px solid var(--border);cursor:pointer;transition:transform .16s,border-color .2s,box-shadow .2s}
+.vs-wish-item:hover{transform:translateY(-2px);border-color:#ff6f8b;box-shadow:0 6px 14px rgba(0,0,0,.28)}
+.vs-wish-item:active{transform:scale(.94)}
+.vs-wish-item b{font-size:10.5px;font-weight:700;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:100%;text-align:center}
+.vs-wish-item small{font-size:10px;font-weight:800;color:#3fb6ff;display:inline-flex;align-items:center;gap:3px}
+.vs-wish-x{position:absolute;top:-5px;right:-5px;width:18px;height:18px;border-radius:50%;display:inline-flex;align-items:center;justify-content:center;
+  background:#ff6f8b;color:#fff;font-size:10px;font-weight:900;cursor:pointer;box-shadow:0 2px 6px rgba(0,0,0,.28);transition:transform .14s}
+.vs-wish-x svg{width:9px;height:9px}
+.vs-wish-x:hover{transform:scale(1.14)}
+.vs-wish-x:active{transform:scale(.88)}
+
+/* --- кнопка «В вишлист» в карточке покупки --- */
+.vs-wish-btn{color:#ff6f8b!important;border:1px solid rgba(255,90,120,.36)!important}
+.vs-wish-btn.on{color:#0a0a0a!important;background:linear-gradient(90deg,#ff6f8b,#ff9db0)!important;border-color:transparent!important;
+  box-shadow:0 4px 14px rgba(255,90,120,.32)!important}
+.vs-wish-btn svg{color:currentColor}
+
+/* --- поле «Поздравление» в шите отправки --- */
+.vs-send-note{position:relative;padding:2px 2px 12px;border-bottom:1px solid var(--border);margin-bottom:6px}
+.vs-send-opt{opacity:.6;font-weight:500;text-transform:none;letter-spacing:0;font-size:10.5px}
+#vsSendNote{width:100%;min-height:64px;max-height:120px;resize:vertical;font-family:var(--font-body);font-size:13.5px;
+  color:var(--text);background:var(--surface);border:1.5px solid var(--border);border-radius:var(--r-md);
+  padding:10px 12px;outline:none;transition:border-color .2s,box-shadow .2s;line-height:1.4;-webkit-appearance:none}
+#vsSendNote::placeholder{color:var(--dim)}
+#vsSendNote:focus{border-color:#3fb6ff;box-shadow:0 0 0 3px rgba(0,152,234,.16)}
+.vs-send-count{text-align:right;font-size:10.5px;font-weight:600;color:var(--dim);margin-top:4px}
+
+/* --- заметка/чип-редкости внутри сообщения-подарка в чате --- */
+.vs-giftmsg{position:relative;cursor:pointer;transition:transform .18s cubic-bezier(.34,1.5,.5,1),box-shadow .22s;isolation:isolate}
+.vs-giftmsg:hover{transform:translateY(-2px);box-shadow:0 10px 22px rgba(0,0,0,.32),0 0 22px rgba(0,152,234,.28)}
+.vs-giftmsg:active{transform:scale(.98)}
+.vs-giftmsg.vs-rar-epic     {border-color:rgba(160,110,255,.5)!important;box-shadow:0 6px 18px rgba(0,0,0,.28),0 0 20px rgba(160,110,255,.22)!important}
+.vs-giftmsg.vs-rar-legendary{border-color:rgba(154,255,0,.55)!important;box-shadow:0 6px 18px rgba(0,0,0,.28),0 0 22px rgba(154,255,0,.28)!important}
+.vs-giftmsg-rar{margin-left:6px;font-size:8.5px;padding:2px 6px}
+.vs-giftmsg-note{margin-top:6px;padding:7px 10px;border-radius:12px;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.1);
+  font-size:12px;font-style:italic;color:var(--text);line-height:1.4;text-align:center;max-width:220px}
+:root[data-theme="light"] .vs-giftmsg-note{background:rgba(0,152,234,.06);border-color:rgba(0,152,234,.18)}
+.vs-giftmsg-tap{font-size:9.5px;font-weight:600;color:var(--dim);text-transform:uppercase;letter-spacing:.6px;margin-top:4px}
+.vs-giftmsg-act{margin-top:8px;display:inline-flex;align-items:center;gap:5px;padding:6px 12px;border-radius:999px;
+  font-size:11px;font-weight:700;color:#04121f;background:linear-gradient(90deg,#0098EA,#4fd0ff);border:none;cursor:pointer;
+  box-shadow:0 3px 10px rgba(0,152,234,.28);transition:transform .14s,box-shadow .18s;white-space:nowrap}
+.vs-giftmsg-act:hover{transform:translateY(-1px);box-shadow:0 6px 14px rgba(0,152,234,.4)}
+.vs-giftmsg-act:active{transform:scale(.94)}
+.vs-giftmsg-act svg{width:11px;height:11px;color:#04121f}
+
+/* --- fullscreen-overlay распаковки: confetti + карточка --- */
+.vs-uwrap{position:fixed;inset:0;z-index:60;display:flex;align-items:center;justify-content:center;padding:16px;
+  opacity:0;transition:opacity .24s ease;pointer-events:none}
+.vs-uwrap.on{opacity:1;pointer-events:auto}
+.vs-uwrap-back{position:absolute;inset:0;background:radial-gradient(circle at 50% 45%,rgba(15,30,50,.55),rgba(4,10,18,.86));backdrop-filter:blur(6px);cursor:pointer}
+:root[data-theme="light"] .vs-uwrap-back{background:radial-gradient(circle at 50% 45%,rgba(230,240,255,.7),rgba(180,210,240,.82))}
+.vs-uwrap-card{position:relative;z-index:1;width:min(360px,100%);padding:24px 22px 20px;border-radius:24px;text-align:center;
+  background:linear-gradient(158deg,#0a1a2a,#06101c 60%,#050a12);border:1px solid rgba(0,152,234,.4);
+  box-shadow:0 24px 60px rgba(0,0,0,.55),inset 0 1px 0 rgba(255,255,255,.06);
+  transform:scale(.7) translateY(20px);opacity:0;transition:transform .38s cubic-bezier(.34,1.56,.44,1),opacity .28s ease}
+.vs-uwrap.on .vs-uwrap-card{transform:scale(1) translateY(0);opacity:1}
+:root[data-theme="light"] .vs-uwrap-card{background:linear-gradient(158deg,#f4fbff,#e8f4ff 60%,#f8fcff);border-color:rgba(0,152,234,.3);
+  box-shadow:0 24px 60px rgba(20,60,110,.24),inset 0 1px 0 rgba(255,255,255,.8)}
+.vs-uwrap-card.vs-rar-epic     {border-color:rgba(160,110,255,.55);box-shadow:0 24px 60px rgba(0,0,0,.55),0 0 40px rgba(160,110,255,.32),inset 0 1px 0 rgba(255,255,255,.06)}
+.vs-uwrap-card.vs-rar-legendary{border-color:rgba(154,255,0,.55);box-shadow:0 24px 60px rgba(0,0,0,.55),0 0 44px rgba(154,255,0,.36),inset 0 1px 0 rgba(255,255,255,.06)}
+.vs-uwrap-x{position:absolute;top:12px;right:12px;width:32px;height:32px;border-radius:50%;display:flex;align-items:center;justify-content:center;
+  background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.14);color:#bfe6ff;cursor:pointer;transition:background .18s}
+.vs-uwrap-x svg{width:14px;height:14px}
+.vs-uwrap-x:hover{background:rgba(0,152,234,.22)}
+:root[data-theme="light"] .vs-uwrap-x{background:rgba(0,152,234,.1);border-color:rgba(0,152,234,.24);color:#0a5a92}
+.vs-uwrap-from{font-size:11.5px;font-weight:700;color:#7fb8dd;text-transform:uppercase;letter-spacing:.7px;margin-bottom:12px;
+  display:inline-flex;align-items:center;gap:8px;flex-wrap:wrap;justify-content:center}
+:root[data-theme="light"] .vs-uwrap-from{color:#3d78a3}
+.vs-uwrap-art{position:relative;display:inline-flex;margin:6px 0 10px;animation:vs-uwrap-in .55s cubic-bezier(.34,1.56,.44,1)}
+.vs-uwrap-art::after{content:"";position:absolute;inset:-40%;border-radius:50%;pointer-events:none;z-index:-1;
+  background:radial-gradient(circle,rgba(0,152,234,.32),transparent 62%);animation:vs-glowmove 5s ease-in-out infinite}
+.vs-uwrap-card.vs-rar-legendary .vs-uwrap-art::after{background:radial-gradient(circle,rgba(154,255,0,.34),transparent 62%)}
+.vs-uwrap-card.vs-rar-epic .vs-uwrap-art::after{background:radial-gradient(circle,rgba(160,110,255,.34),transparent 62%)}
+@keyframes vs-uwrap-in{0%{transform:scale(.4) rotate(-16deg);opacity:0}55%{opacity:1}100%{transform:scale(1) rotate(0);opacity:1}}
+.vs-uwrap-name{font-family:var(--font-display);letter-spacing:1.4px;font-size:24px;color:#fff;margin-bottom:6px}
+:root[data-theme="light"] .vs-uwrap-name{color:#062a45}
+.vs-uwrap-price{display:inline-flex;align-items:center;gap:6px;font-size:14px;font-weight:800;color:#4fd0ff}
+.vs-uwrap-note{margin-top:14px;padding:12px 14px;border-radius:14px;background:rgba(255,90,120,.08);border:1px solid rgba(255,90,120,.24);
+  color:var(--text);font-size:13px;line-height:1.45;font-style:italic;display:flex;gap:9px;align-items:flex-start;text-align:left}
+.vs-uwrap-note svg{width:15px;height:15px;color:#ff6f8b;flex-shrink:0;margin-top:2px}
+
+/* confetti: разноцветные полоски, GPU-only */
+.vs-uwrap-conf{position:absolute;inset:0;overflow:hidden;pointer-events:none;z-index:2}
+.vs-uwrap-conf i{position:absolute;top:-24px;display:block;border-radius:2px;opacity:0;
+  animation:vs-conf-fall linear forwards;will-change:transform,opacity}
+@keyframes vs-conf-fall{
+  0%{transform:translateY(0) rotate(0);opacity:0}
+  8%{opacity:1}
+  90%{opacity:1}
+  100%{transform:translateY(110vh) rotate(var(--r,540deg));opacity:0}
+}

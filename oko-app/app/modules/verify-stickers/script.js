@@ -492,6 +492,7 @@ function vsTonSave(){ try{ localStorage.setItem('oko-ton', JSON.stringify(VS_TON
   }catch(e){}
   if(!VS_TON.owned || typeof VS_TON.owned !== 'object') VS_TON.owned = {};
   if(!Array.isArray(VS_TON.tx)) VS_TON.tx = [];
+  if(!Array.isArray(VS_TON.wish)) VS_TON.wish = [];
   if(typeof VS_TON.balance !== 'number' || isNaN(VS_TON.balance)) VS_TON.balance = 0;
   if(!VS_TON.addr){
     const al = 'ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz0123456789-_';
@@ -740,7 +741,12 @@ function vsRenderTon(){
   const totalOwned = vsOwnedTotal();
   let body;
   if(VS_TON_TAB === 'shop'){
-    body = `<div class="vs-gshop">${VS_GIFTS.map(vsShopCard).join('')}</div>`;
+    const wishItems = (VS_TON.wish||[]).map(vsGiftById).filter(Boolean);
+    const wishSec = wishItems.length ? `<div class="vs-wish-sec">
+      <div class="vs-wish-head"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 21s-7-4.35-7-10a4.5 4.5 0 0 1 8-2.8A4.5 4.5 0 0 1 19 11c0 5.65-7 10-7 10z" fill="currentColor"/></svg><span>Твой вишлист</span><i>${wishItems.length}</i><small>другие увидят и подарят</small></div>
+      <div class="vs-wish-row">${wishItems.map(g=>`<div class="vs-wish-item vs-rar-${vsRarity(g)}" role="button" tabindex="0" onclick="vsOpenBuy('${g.id}')" title="${esc(g.name)}">${vsGiftSvg(g.art,40)}<b>${esc(g.name)}</b><small>${vsGemMark(10)} ${vsTonFmt(g.price)}</small><span class="vs-wish-x" onclick="event.stopPropagation();vsWishToggle('${g.id}')" role="button" aria-label="Убрать">${I('close')||'×'}</span></div>`).join('')}</div>
+    </div>` : '';
+    body = wishSec + `<div class="vs-gshop">${VS_GIFTS.map(vsShopCard).join('')}</div>`;
   } else {
     body = owned.length
       ? `<div class="vs-gshop">${owned.map(k=>vsMineCard(k, VS_TON.owned[k])).join('')}</div>`
@@ -775,19 +781,25 @@ function vsTonTab(t){ VS_TON_TAB = t; vsRenderTon(); }
 function vsShopCard(g){
   const locked = g.premium && !vsPremiumOk();
   const own = VS_TON.owned[g.id] || 0;
-  return `<button class="vs-gcard${locked?' vs-locked':''}${g.premium?' vs-nft':''}" onclick="vsOpenBuy('${g.id}')">
+  const rar = vsRarity(g);
+  const wish = vsWishHas(g.id);
+  return `<div class="vs-gcard vs-rar-${rar}${locked?' vs-locked':''}${g.premium?' vs-nft':''}" role="button" tabindex="0" onclick="vsOpenBuy('${g.id}')">
+    <span class="vs-rar-chip vs-rar-${rar}">${VS_RARITY_LABEL[rar]}</span>
+    <span class="vs-wish-tog${wish?' on':''}" onclick="event.stopPropagation();vsWishToggle('${g.id}')" role="button" aria-label="В вишлист"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 21s-7-4.35-7-10a4.5 4.5 0 0 1 8-2.8A4.5 4.5 0 0 1 19 11c0 5.65-7 10-7 10z" fill="currentColor"/></svg></span>
     <div class="vs-gcard-art">${vsGiftSvg(g.art,72)}${g.premium?`<span class="vs-nft-shine"></span>`:''}${g.premium?`<span class="vs-gcard-pro"><svg class="i"><use href="#i-crown"/></svg></span>`:''}${own?`<span class="vs-gcard-own">×${own}</span>`:''}${locked?`<span class="vs-gcard-lock"><svg class="i"><use href="#i-lock"/></svg></span>`:''}</div>
     <div class="vs-gcard-name">${esc(g.name)}</div>
     <div class="vs-gcard-price">${vsGemMark(12)} ${vsTonFmt(g.price)}</div>
-  </button>`;
+  </div>`;
 }
 function vsMineCard(id, n){
   const g = vsGiftById(id); if(!g) return '';
-  return `<button class="vs-gcard" onclick="vsOpenGift('${id}')">
+  const rar = vsRarity(g);
+  return `<div class="vs-gcard vs-rar-${rar}" role="button" tabindex="0" onclick="vsOpenGift('${id}')">
+    <span class="vs-rar-chip vs-rar-${rar}">${VS_RARITY_LABEL[rar]}</span>
     <div class="vs-gcard-art">${vsGiftSvg(g.art,72)}<span class="vs-gcard-own">×${n}</span></div>
     <div class="vs-gcard-name">${esc(g.name)}</div>
     <div class="vs-gcard-price vs-mine-send"><svg class="i"><use href="#i-send"/></svg> Отправить</div>
-  </button>`;
+  </div>`;
 }
 
 /* --- покупка --- */
@@ -799,16 +811,22 @@ function vsOpenBuy(id){
   const left = Math.max(0, g.supply - g.sold);
   const pct = Math.min(100, Math.round(g.sold*100/g.supply));
   const own = VS_TON.owned[g.id] || 0;
+  const rar = vsRarity(g);
+  const wish = vsWishHas(g.id);
+  const wishBtn = `<button class="btn ghost vs-wish-btn${wish?' on':''}" style="width:100%;margin-top:8px" onclick="vsWishToggle('${g.id}')"><svg viewBox="0 0 24 24" aria-hidden="true" width="15" height="15"><path d="M12 21s-7-4.35-7-10a4.5 4.5 0 0 1 8-2.8A4.5 4.5 0 0 1 19 11c0 5.65-7 10-7 10z" fill="currentColor"/></svg> ${wish?'В вишлисте':'В вишлист'}</button>`;
   const act = locked
     ? `<button class="btn" style="width:100%;margin-top:6px" onclick="vsGiftLock()"><svg class="i"><use href="#i-crown"/></svg> Открыть в PRO</button>`
     : `<button class="btn vs-ton" style="width:100%;margin-top:6px" onclick="vsBuyGift('${g.id}')">${vsGemMark(15)} Купить за ${vsTonFmt(g.price)} TON</button>`;
+  v.dataset.gid = g.id;
   v.innerHTML = `
-    <div class="vs-buy-art${g.premium?' vs-nft':''}">${vsGiftSvg(g.art,120)}${g.premium?`<span class="vs-nft-shine"></span>`:''}${g.premium?`<span class="vs-buy-pro"><svg class="i"><use href="#i-crown"/></svg> PRO</span>`:''}</div>
+    <div class="vs-buy-art vs-rar-${rar}${g.premium?' vs-nft':''}">${vsGiftSvg(g.art,120)}${g.premium?`<span class="vs-nft-shine"></span>`:''}${g.premium?`<span class="vs-buy-pro"><svg class="i"><use href="#i-crown"/></svg> PRO</span>`:''}</div>
+    <div class="vs-buy-rar"><span class="vs-rar-chip vs-rar-${rar}">${VS_RARITY_LABEL[rar]}</span></div>
     <h2 class="vs-buy-name">${esc(g.name)}${own?`<span class="vs-buy-owned">в коллекции ×${own}</span>`:''}</h2>
     <div class="vs-buy-price">${vsGemMark(20)}<b>${vsTonFmt(g.price)}</b> TON <small>≈ ${rub}</small></div>
     <div class="vs-buy-supply"><div class="vs-buy-sbar"><i style="width:${pct}%"></i></div><span>Выпущено ${g.sold.toLocaleString('ru-RU')} · осталось ${left.toLocaleString('ru-RU')} из ${g.supply.toLocaleString('ru-RU')}</span></div>
     <div class="vs-buy-note"><svg class="i"><use href="#i-lock"/></svg> Прототип: покупка списывает TON с локального кошелька. Настоящие NFT-подарки TON — в релизе.</div>
-    ${act}`;
+    ${act}
+    ${locked?'':wishBtn}`;
   openSheet('vs-ton-buy');
 }
 function vsGiftLock(){
@@ -892,25 +910,38 @@ function vsRenderSend(){
   const chats = (typeof CHATS !== 'undefined' ? CHATS : []).filter(c=>c && c.name && c.kind !== 'channel');
   v.innerHTML = `
     <div class="vs-send-head">${vsGiftSvg(g?g.art:'crystal',44)}<div><b>Кому подарить</b><small>${g?esc(g.name):''} · выбери чат</small></div></div>
+    <div class="vs-send-note">
+      <label class="vs-field-lbl" for="vsSendNote">Поздравление <span class="vs-send-opt">необязательно · до 120</span></label>
+      <textarea id="vsSendNote" maxlength="120" placeholder="С днём рождения, друг!" oninput="VS_SEND_NOTE=this.value;vsSendNoteCount()">${esc(VS_SEND_NOTE||'')}</textarea>
+      <div class="vs-send-count" id="vsSendCount">${(VS_SEND_NOTE||'').length} / 120</div>
+    </div>
     <div class="vs-send-list">${chats.map(c=>{
       const ava = c.avaIcon ? `<svg class="i"><use href="#i-${c.avaIcon}"/></svg>` : esc(String(c.ava||c.name[0]||'O'));
       const cid = String(c.id).replace(/[^A-Za-z0-9_-]/g,'');
       return `<button class="vs-send-row" onclick="vsSendGift('${vsSendGiftId}','${cid}')"><span class="vs-send-ava">${ava}</span><span class="vs-send-name">${esc(c.name)}</span><svg class="i vs-send-go"><use href="#i-send"/></svg></button>`;
     }).join('')}</div>`;
 }
+function vsSendNoteCount(){
+  const el = document.getElementById('vsSendCount');
+  if(el) el.textContent = ((VS_SEND_NOTE||'').length) + ' / 120';
+}
 function vsSendGift(giftId, chatId){
   const g = vsGiftById(giftId);
   if(!g || (VS_TON.owned[giftId]||0) <= 0){ toast('Подарка нет в коллекции'); return; }
   const c = (typeof CHATS !== 'undefined' ? CHATS : []).find(x=>String(x.id).replace(/[^A-Za-z0-9_-]/g,'')===String(chatId));
   if(!c){ toast('Чат не найден'); return; }
+  const note = String(VS_SEND_NOTE||'').trim().slice(0,120);
   VS_TON.owned[giftId]--; if(VS_TON.owned[giftId] <= 0) delete VS_TON.owned[giftId];
   VS_TON.tx.unshift({ t:'send', ton:0, why:'Подарок «'+g.name+'» → '+c.name, at:Date.now() });
   if(VS_TON.tx.length > 200) VS_TON.tx.length = 200;
   vsTonSave();
   const tm = (typeof nowT === 'function') ? nowT() : '';
   c.msgs = c.msgs || [];
-  c.msgs.push({ in:0, t:tm, kind:'gift', gift:giftId });
+  const msg = { in:0, t:tm, kind:'gift', gift:giftId };
+  if(note) msg.note = note;
+  c.msgs.push(msg);
   c.preview = 'Ты: Подарок · ' + g.name; c.time = tm;
+  VS_SEND_NOTE = '';
   closeSheet();
   if(typeof showTab === 'function') showTab('chats');
   if(typeof openConv === 'function') openConv(c.id);
@@ -968,7 +999,11 @@ msgHtml = function(m, idx){
     const g = vsGiftById(m.gift) || VS_GIFTS[0];
     const checks = m.in ? '' : (typeof I==='function' ? I('check2') : '');
     const time = `<span class="t">${m.t||''}${checks}</span>`;
-    return `<div class="msg gift-msg ${m.in?'in':'out'}" style="align-self:${m.in?'flex-start':'flex-end'}"><div class="vs-giftmsg">${vsGiftSvg(g.art,88)}<div class="vs-giftmsg-cap"><b>${vsGemMark(11)} Подарок</b><span>${esc(g.name)}</span></div></div>${time}</div>`;
+    const rar = vsRarity(g);
+    const noteHtml = m.note ? `<div class="vs-giftmsg-note">${esc(m.note)}</div>` : '';
+    const repeatBtn = m.in ? '' : `<button class="vs-giftmsg-act" onclick="event.stopPropagation();vsResend(${idx})"><svg class="i"><use href="#i-send"/></svg> Повторить</button>`;
+    const openHint = `<span class="vs-giftmsg-tap">${m.in?'нажми, чтобы открыть':'превью подарка'}</span>`;
+    return `<div class="msg gift-msg ${m.in?'in':'out'}" style="align-self:${m.in?'flex-start':'flex-end'}"><div class="vs-giftmsg vs-rar-${rar}" onclick="vsUnwrap(${idx})">${vsGiftSvg(g.art,88)}<div class="vs-giftmsg-cap"><b>${vsGemMark(11)} Подарок <i class="vs-giftmsg-rar vs-rar-${rar}">${VS_RARITY_LABEL[rar]}</i></b><span>${esc(g.name)}</span></div>${noteHtml}${openHint}${repeatBtn}</div>${time}</div>`;
   }
   return _prevMsgHtmlVs(m, idx);
 };
@@ -979,6 +1014,149 @@ showTab = function(t){
   _prevShowTabVs(t);
   if(t === 'ton') vsRenderTon();
 };
+
+/* ============================================================
+   6. УЛУЧШЕНИЯ TG/Steam/Discord Gifts:
+      rarity, wishlist, personal note, unwrap+sound, quick resend
+   ============================================================ */
+
+/* --- редкость: legendary=premium, epic≤6k, rare≤12k, common иначе --- */
+const VS_RARITY_LABEL = { common:'ОБЫЧНЫЙ', rare:'РЕДКИЙ', epic:'ЭПИЧЕСКИЙ', legendary:'ЛЕГЕНДАРНЫЙ' };
+function vsRarity(g){
+  if(!g) return 'common';
+  if(g.premium) return 'legendary';
+  if(g.supply <= 6000) return 'epic';
+  if(g.supply <= 12000) return 'rare';
+  return 'common';
+}
+
+/* --- вишлист (клиент отмечает желаемое, другие видят и дарят) --- */
+function vsWishHas(id){ return (VS_TON.wish||[]).indexOf(id) >= 0; }
+function vsWishToggle(id){
+  VS_TON.wish = VS_TON.wish || [];
+  const i = VS_TON.wish.indexOf(id);
+  if(i>=0){ VS_TON.wish.splice(i,1); toast('Убрано из вишлиста'); }
+  else { VS_TON.wish.unshift(id); toast('Добавлено в вишлист'); }
+  if(VS_TON.wish.length > 30) VS_TON.wish.length = 30;
+  vsTonSave();
+  const buyV = document.getElementById('vsBuyView');
+  if(buyV && buyV.dataset && buyV.dataset.gid === id) vsOpenBuy(id);
+  const scr = document.getElementById('screen-ton');
+  if(scr && scr.classList.contains('active')) vsRenderTon();
+}
+
+/* --- персональное поздравление (буфер + счётчик) --- */
+var VS_SEND_NOTE = '';
+
+/* --- Web Audio: короткий «спарк» при распаковке (без файлов, без сети) --- */
+var vsAudio = null;
+function vsAudioCtx(){
+  if(vsAudio) return vsAudio;
+  try{ vsAudio = new (window.AudioContext || window.webkitAudioContext)(); }catch(e){ vsAudio = null; }
+  return vsAudio;
+}
+function vsUnwrapSound(){
+  const a = vsAudioCtx(); if(!a) return;
+  try{ if(a.state === 'suspended') a.resume(); }catch(e){}
+  const now = a.currentTime;
+  const notes = [
+    { f: 660, t: 0.00 },
+    { f: 880, t: 0.07 },
+    { f:1175, t: 0.14 },
+    { f:1568, t: 0.22 },
+    { f:1976, t: 0.32 }
+  ];
+  notes.forEach(n=>{
+    try{
+      const o = a.createOscillator(), g = a.createGain();
+      o.type = 'triangle'; o.frequency.value = n.f;
+      g.gain.setValueAtTime(0, now + n.t);
+      g.gain.linearRampToValueAtTime(0.16, now + n.t + 0.012);
+      g.gain.exponentialRampToValueAtTime(0.0006, now + n.t + 0.28);
+      o.connect(g).connect(a.destination);
+      o.start(now + n.t); o.stop(now + n.t + 0.30);
+    }catch(e){}
+  });
+}
+
+/* --- анимация распаковки: fullscreen-overlay, confetti + звук --- */
+function vsUnwrap(idx){
+  if(typeof currentChat === 'undefined' || !currentChat || !currentChat.msgs) return;
+  const m = currentChat.msgs[idx]; if(!m || m.kind !== 'gift') return;
+  const g = vsGiftById(m.gift) || VS_GIFTS[0];
+  const rar = vsRarity(g);
+  const who = m.in ? esc(currentChat.name) : 'Тебе';
+  const noteH = m.note ? `<div class="vs-uwrap-note"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 21s-7-4.35-7-10a4.5 4.5 0 0 1 8-2.8A4.5 4.5 0 0 1 19 11c0 5.65-7 10-7 10z" fill="currentColor"/></svg><span>${esc(m.note)}</span></div>` : '';
+  vsUnwrapClose();
+  const wrap = document.createElement('div');
+  wrap.className = 'vs-uwrap';
+  wrap.innerHTML = `
+    <div class="vs-uwrap-back" onclick="vsUnwrapClose()"></div>
+    <div class="vs-uwrap-card vs-rar-${rar}">
+      <button class="vs-uwrap-x" onclick="vsUnwrapClose()" aria-label="Закрыть">${I('close')||'×'}</button>
+      <div class="vs-uwrap-from">${who} · <span class="vs-rar-chip vs-rar-${rar}">${VS_RARITY_LABEL[rar]}</span></div>
+      <div class="vs-uwrap-art">${vsGiftSvg(g.art,140)}</div>
+      <div class="vs-uwrap-name">${esc(g.name)}</div>
+      <div class="vs-uwrap-price">${vsGemMark(14)} ${vsTonFmt(g.price)} TON</div>
+      ${noteH}
+      <button class="btn vs-ton" style="width:100%;margin-top:14px" onclick="vsUnwrapClose()">Красота</button>
+    </div>`;
+  document.body.appendChild(wrap);
+  requestAnimationFrame(()=>wrap.classList.add('on'));
+  vsUnwrapConfetti(wrap);
+  vsUnwrapSound();
+}
+function vsUnwrapClose(){
+  document.querySelectorAll('.vs-uwrap').forEach(el=>{
+    el.classList.remove('on');
+    setTimeout(()=>{ try{ el.remove(); }catch(e){} }, 260);
+  });
+}
+function vsUnwrapConfetti(host){
+  const layer = document.createElement('div');
+  layer.className = 'vs-uwrap-conf';
+  const cols = ['#9AFF00','#0098EA','#4fd0ff','#c6ff70','#ffffff','#b57cff'];
+  const n = 46; let h = '';
+  for(let k=0;k<n;k++){
+    const x = (Math.random()*100).toFixed(1);
+    const dur = (1.5 + Math.random()*1.3).toFixed(2);
+    const dl = (Math.random()*0.35).toFixed(2);
+    const rot = Math.round(Math.random()*720 - 360);
+    const w = (5 + Math.random()*4).toFixed(0);
+    const hgt = (9 + Math.random()*6).toFixed(0);
+    const c = cols[k % cols.length];
+    h += `<i style="left:${x}%;width:${w}px;height:${hgt}px;background:${c};--r:${rot}deg;animation-duration:${dur}s;animation-delay:${dl}s"></i>`;
+  }
+  layer.innerHTML = h;
+  host.appendChild(layer);
+  setTimeout(()=>{ try{ layer.remove(); }catch(e){} }, 3400);
+}
+
+/* --- быстрый повтор подарка тому же получателю --- */
+function vsResend(idx){
+  if(typeof currentChat === 'undefined' || !currentChat || !currentChat.msgs) return;
+  const m = currentChat.msgs[idx]; if(!m || m.kind !== 'gift') return;
+  const g = vsGiftById(m.gift); if(!g) return;
+  const own = VS_TON.owned[g.id] || 0;
+  if(own <= 0){
+    showPopup({ ico:'plus', title:'Купить и подарить снова?',
+      body:`«${esc(g.name)}» в коллекции закончился. Купи ещё один за ${vsTonFmt(g.price)} TON и подари тому же получателю.`,
+      actions:[{label:'Купить', onclick:()=>{ if(typeof closePopup==='function') closePopup(); vsOpenBuy(g.id); }},{label:'Позже', ghost:true}] });
+    return;
+  }
+  VS_TON.owned[g.id]--; if(VS_TON.owned[g.id] <= 0) delete VS_TON.owned[g.id];
+  const c = currentChat;
+  VS_TON.tx.unshift({ t:'send', ton:0, why:'Подарок «'+g.name+'» → '+c.name+' · повтор', at:Date.now() });
+  if(VS_TON.tx.length > 200) VS_TON.tx.length = 200;
+  vsTonSave();
+  const tm = (typeof nowT === 'function') ? nowT() : '';
+  c.msgs = c.msgs || [];
+  c.msgs.push({ in:0, t:tm, kind:'gift', gift:g.id });
+  c.preview = 'Ты: Подарок · ' + g.name; c.time = tm;
+  if(typeof renderMsgs === 'function') renderMsgs();
+  if(typeof renderChatList === 'function'){ const s = document.getElementById('chatSearch'); renderChatList(s ? s.value : ''); }
+  toast('Отправлен снова');
+}
 
 /* ---------- САМОИНИЦИАЛИЗАЦИЯ ---------- */
 (function vsInit(){
