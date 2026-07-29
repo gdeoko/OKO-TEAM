@@ -1495,18 +1495,15 @@ addEventListener('DOMContentLoaded',function(){setTimeout(function(){
 <section id="authScreen">
   <canvas id="authCanvas"></canvas>
   <div class="auth-inner">
-<!-- 3D-логотип OKO — тот же GLB, что в hero-блоке okoteam.top/kp.
-     camera-orbit=`0deg 75deg` — стандартный фронт-план model-viewer,
-     поворот НЕ через camera, а через orientation (модель имеет
-     Z-up в GLB, поворачиваем на -90° по X чтобы «встать глазу»). -->
-<model-viewer class="auth-logo" src="oko-eye.glb" poster="oko-logo-256.png"
-  alt="OKO" auto-rotate camera-controls interaction-prompt="none" disable-zoom
-  exposure="1.25" shadow-intensity="0" environment-image="neutral"
-  camera-orbit="0deg 75deg 100%" field-of-view="30deg" min-camera-orbit="auto auto 100%" max-camera-orbit="auto auto 100%"
-  orientation="0 0 0" rotation-per-second="18deg" auto-rotate-delay="1500"
-  ar-status="not-presenting" reveal="auto"
-></model-viewer>
-<img class="auth-logo" alt="OKO" src="oko-logo-256.png" style="display:none" id="authLogoFallback" onerror="this.onerror=null;this.src='https://okoteam.top/oko-logo-256.png'">
+<!-- Логотип OKO на экране авторизации: официальный мастер-PNG из
+     brand/png/oko-logo-256.png (полудуга-бровь + глаз-полулуна, лайм
+     #9AFF00). Именно этот знак — эталон бренда, тот что на визитках,
+     сайтах, договорах. GLB-версия того же лого используется в 3D-штабе
+     (модуль wow-eye + hq.html), там для неё построено полное окружение
+     — rim/glass/halo/HDR-environment как в hero-блоке okoteam.top/kp. -->
+<img class="auth-logo" alt="OKO" src="oko-logo-256.png"
+  onerror="this.onerror=null;this.src='https://okoteam.top/oko-logo-256.png'">
+<img class="auth-logo" alt="OKO" src="oko-logo-256.png" style="display:none" id="authLogoFallback">
     <div class="auth-word">OKO</div>
     <div class="auth-tag">Медийность, контент, маркетинг и бизнес в одном приложении</div>
     <div class="auth-btns">
