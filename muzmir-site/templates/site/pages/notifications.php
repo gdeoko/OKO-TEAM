@@ -28,6 +28,7 @@ $iconSvgs = [
 ob_start(); ?>
 <section class="section" style="padding-top:22px">
   <div class="container" style="max-width:640px">
+    <a class="aw-back" href="<?= url('/menu') ?>"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5M11 6l-6 6 6 6"/></svg>Назад</a>
     <div class="section-head" style="text-align:left;margin-bottom:18px">
       <p class="eyebrow">Активность</p>
       <h1 style="font-family:var(--ff-display);font-size:clamp(1.6rem,5vw,2.2rem);margin:0 0 6px;

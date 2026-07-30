@@ -125,6 +125,7 @@ ob_start(); ?>
 
 <section class="section">
   <div class="container" style="max-width:820px">
+    <a class="aw-back" href="<?= url('/menu') ?>"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5M11 6l-6 6 6 6"/></svg>Назад</a>
     <div class="section-head reveal">
       <p class="eyebrow">Обратная связь</p>
       <h2>Часто задаваемые вопросы</h2>

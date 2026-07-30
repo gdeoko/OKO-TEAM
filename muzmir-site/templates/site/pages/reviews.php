@@ -1,24 +1,11 @@
 <?php
-/** Отзывы: премиум-лента опубликованных отзывов с ответами Оргкомитета + форма (для авторизованных). */
-$perPage = 6;
-$pageNo = max(1, (int) input('page', '1'));
+/** Отзывы: вертикальная лента опубликованных отзывов с ответами Оргкомитета + форма (для авторизованных). */
 $total = (int) scalar("SELECT COUNT(*) FROM reviews WHERE status='published'");
-$pagesTotal = max(1, (int) ceil($total / $perPage));
-$pageNo = min($pageNo, $pagesTotal);
-$reviews = all("SELECT * FROM reviews WHERE status='published' ORDER BY created_at DESC LIMIT ? OFFSET ?",
-    [$perPage, ($pageNo - 1) * $perPage]);
+$reviews = all("SELECT * FROM reviews WHERE status='published' ORDER BY created_at DESC");
 
 $u = current_user();
 
-/* Сводная инфографика по всем опубликованным отзывам (только чтение, выборки страницы не меняем). */
 $avgRating = $total ? round((float) scalar("SELECT AVG(rating) FROM reviews WHERE status='published'"), 1) : 0.0;
-$dist = [5 => 0, 4 => 0, 3 => 0, 2 => 0, 1 => 0];
-if ($total) {
-    foreach (all("SELECT rating, COUNT(*) AS c FROM reviews WHERE status='published' GROUP BY rating") as $dr) {
-        $rt = max(1, min(5, (int) $dr['rating']));
-        $dist[$rt] = (int) $dr['c'];
-    }
-}
 
 /* Инициалы автора для аватара-медальона. */
 $initialsOf = static function (string $name): string {
@@ -42,226 +29,148 @@ $starRow = static function (int $rating): string {
     return $out . '</span>';
 };
 
-/* Определяем международную географию по тексту отзыва (в таблице нет колонки страны). */
-$geoMap = [
-    'серб' => 'Сербия', 'serbia' => 'Сербия', 'белград' => 'Сербия',
-    'казахстан' => 'Казахстан', 'алматы' => 'Казахстан', 'астан' => 'Казахстан',
-    'беларус' => 'Беларусь', 'минск' => 'Беларусь',
-    'узбекистан' => 'Узбекистан', 'ташкент' => 'Узбекистан',
-    'киргиз' => 'Киргизия', 'кыргыз' => 'Киргизия',
-    'армени' => 'Армения', 'ереван' => 'Армения',
-    'молдов' => 'Молдова', 'украин' => 'Украина',
-];
-$geoOf = static function (array $r) use ($geoMap): string {
-    $s = mb_strtolower(($r['author'] ?? '') . ' ' . ($r['text'] ?? ''), 'UTF-8');
-    foreach ($geoMap as $key => $label) {
-        if (mb_strpos($s, $key, 0, 'UTF-8') !== false) return $label;
-    }
-    return '';
+$plural = static function (int $n): string {
+    if ($n % 10 === 1 && $n % 100 !== 11) return 'отзыв';
+    if ($n % 10 >= 2 && $n % 10 <= 4 && ($n % 100 < 10 || $n % 100 >= 20)) return 'отзыва';
+    return 'отзывов';
 };
-$hasIntl = false;
-foreach ($reviews as $r) {
-    if ($geoOf($r) !== '') { $hasIntl = true; break; }
-}
 
 ob_start(); ?>
 <style>
 .rv-stars{display:inline-flex;gap:2px;line-height:0}
 .rv-star{width:18px;height:18px;fill:var(--glass-brd)}
 .rv-star.is-on{fill:var(--gold)}
-/* Сводная инфографика */
-.rv-summary{display:grid;grid-template-columns:auto 1fr;gap:28px;align-items:center;margin-bottom:26px;position:relative;overflow:hidden}
-.rv-summary::after{content:"";position:absolute;right:-40px;top:-40px;width:180px;height:180px;border-radius:50%;background:radial-gradient(circle,var(--gold-soft),transparent 70%);pointer-events:none}
-.rv-sum-score{text-align:center;padding-right:28px;border-right:1px solid var(--line);position:relative;z-index:1}
-.rv-sum-num{font-family:var(--ff-display);font-size:3.4rem;line-height:1;font-weight:800;background:var(--grad-gold-text);-webkit-background-clip:text;background-clip:text;color:transparent}
-.rv-sum-score .rv-stars{margin:8px 0 6px}
-.rv-sum-total{font-size:.82rem;color:var(--muted)}
-.rv-sum-bars{display:flex;flex-direction:column;gap:7px;position:relative;z-index:1}
-.rv-bar-row{display:flex;align-items:center;gap:10px;font-size:.82rem}
-.rv-bar-row .lbl{display:inline-flex;align-items:center;gap:3px;color:var(--muted);min-width:38px;font-weight:700}
-.rv-bar-row .lbl svg{width:12px;height:12px;fill:var(--gold)}
-.rv-bar-track{flex:1;height:9px;border-radius:999px;background:var(--gold-soft);overflow:hidden;border:1px solid var(--glass-brd)}
-.rv-bar-fill{height:100%;border-radius:999px;background:var(--grad-gold);width:0;transition:width 1s cubic-bezier(.2,.8,.2,1)}
-.rv-bar-row .val{min-width:26px;text-align:right;color:var(--text-dim);font-weight:700;font-variant-numeric:tabular-nums}
-@media(max-width:520px){
-  .rv-summary{grid-template-columns:1fr;gap:18px;text-align:center}
-  .rv-sum-score{padding-right:0;border-right:0;border-bottom:1px solid var(--line);padding-bottom:18px}
-}
-.rv-card{display:flex;flex-direction:column;position:relative;overflow:hidden;background:linear-gradient(180deg,var(--panel),color-mix(in srgb,var(--panel-solid) 30%,transparent))}
+/* Компактная шапка раздела */
+.rv-head-bar{display:flex;align-items:baseline;justify-content:space-between;gap:12px 18px;flex-wrap:wrap;margin-bottom:18px}
+.rv-head-bar h2{margin:0;font-family:var(--ff-display);word-break:normal;hyphens:none}
+.rv-head-sub{color:var(--muted);font-size:.9rem;display:inline-flex;align-items:center;gap:8px}
+.rv-head-sub .rv-stars{transform:translateY(2px)}
+.rv-head-sub .rv-star{width:14px;height:14px}
+/* Панель сортировки */
+.rv-toolbar{display:flex;align-items:center;justify-content:flex-end;gap:8px;margin-bottom:20px}
+.rv-toolbar label{font-size:.85rem;color:var(--muted)}
+.rv-toolbar select{margin:0;padding:9px 34px 9px 14px;min-height:40px;font-size:.9rem;width:auto;border-radius:12px;
+  background:var(--glass-card);backdrop-filter:blur(18px);-webkit-backdrop-filter:blur(18px);
+  border:1px solid var(--glass-brd2);color:var(--text)}
+/* Вертикальный список */
+.rv-list{display:flex;flex-direction:column;gap:20px;max-width:760px;margin:0 auto}
+.rv-card{display:flex;flex-direction:column;position:relative;overflow:hidden;
+  background:var(--glass-card);backdrop-filter:blur(18px);-webkit-backdrop-filter:blur(18px);
+  border:1px solid var(--glass-brd2);border-radius:18px;padding:22px 24px;
+  word-break:normal;hyphens:none}
 .rv-card::after{content:"\201C";position:absolute;top:-18px;right:14px;font-family:var(--ff-display);font-size:6rem;line-height:1;color:var(--gold);opacity:.10;pointer-events:none}
-.rv-head{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;position:relative;z-index:1}
-.rv-text{font-family:var(--ff-serif);font-size:1.06rem;line-height:1.6;margin:14px 0 16px;color:var(--text);overflow-wrap:anywhere;position:relative;z-index:1}
-.rv-meta{margin-top:18px;display:flex;align-items:center;gap:12px;padding-top:14px;border-top:1px solid var(--line)}
-.rv-avatar{flex:none;width:44px;height:44px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-family:var(--ff-serif);font-weight:800;font-size:1rem;color:var(--gold-fg);background:var(--grad-gold);box-shadow:var(--shadow-soft)}
+.rv-card.rv-hidden{display:none}
+.rv-card.rv-in{animation:rvIn .45s cubic-bezier(.2,.8,.2,1)}
+@keyframes rvIn{from{opacity:0;transform:translateY(14px)}to{opacity:1;transform:none}}
+@media(prefers-reduced-motion:reduce){.rv-card.rv-in{animation:none}}
+.rv-top{display:flex;align-items:center;gap:12px;position:relative;z-index:1}
+.rv-avatar{flex:none;width:44px;height:44px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-family:var(--ff-display);font-weight:800;font-size:1rem;color:#fff;background:var(--grad-gold)}
 .rv-namewrap{min-width:0}
-.rv-author{color:var(--gold-2);font-weight:700;margin:0;overflow-wrap:anywhere}
+.rv-author{color:var(--royal);font-weight:700;margin:0;overflow-wrap:anywhere}
 [data-theme="dark"] .rv-author{color:var(--gold)}
 .rv-date{color:var(--muted);font-size:.85rem;margin:2px 0 0}
-.rv-reply{margin-top:14px;padding:14px 16px;background:var(--gold-soft);border:1px solid var(--glass-brd);border-left:3px solid var(--gold);border-radius:var(--radius-sm);position:relative;z-index:1}
-.rv-reply b{display:flex;align-items:center;gap:7px;margin-bottom:5px;font-size:.85rem;color:var(--gold-2)}
+.rv-top .rv-stars{margin-left:auto;flex:none}
+.rv-text{font-family:var(--ff-body);font-size:1.02rem;line-height:1.6;margin:14px 0 0;color:var(--text);overflow-wrap:anywhere;word-break:normal;hyphens:none;position:relative;z-index:1}
+.rv-reply{margin-top:14px;padding:14px 16px;background:color-mix(in srgb,var(--gold) 8%,transparent);border:1px solid var(--glass-brd2);border-left:3px solid var(--gold);border-radius:12px;position:relative;z-index:1}
+.rv-reply b{display:flex;align-items:center;gap:7px;margin-bottom:5px;font-size:.85rem;color:var(--royal)}
 [data-theme="dark"] .rv-reply b{color:var(--gold)}
 .rv-reply b svg{width:16px;height:16px;fill:none;stroke:currentColor;stroke-width:2;flex:none}
-.rv-reply p{margin:0;color:var(--text-dim);line-height:1.55;font-size:.94rem;overflow-wrap:anywhere}
-.rv-geo{font-size:.78rem;padding:4px 10px}
-.rv-toolbar{display:flex;flex-wrap:wrap;align-items:center;gap:10px;margin-bottom:24px}
-.rv-toolbar .rv-chips{display:flex;flex-wrap:wrap;gap:8px}
-.rv-chip{padding:8px 14px;min-height:40px;border-radius:999px;border:1.5px solid var(--glass-brd);background:var(--panel);color:var(--text-dim);font-weight:700;font-size:.88rem;cursor:pointer;display:inline-flex;align-items:center;transition:transform .18s,border-color .18s,color .18s}
-.rv-chip:active{transform:scale(.96)}
-.rv-chip.is-active{background:var(--grad-gold);color:var(--gold-fg);border-color:transparent}
-.rv-sort{margin-left:auto;display:flex;align-items:center;gap:8px}
-.rv-sort label{font-size:.85rem;color:var(--muted)}
-.rv-sort select{margin:0;padding:9px 34px 9px 14px;min-height:40px;font-size:.9rem;width:auto}
-/* Карусель отзывов (scroll-snap: свайп на мобиле, стрелки на десктопе) */
-.rv-carousel{position:relative}
-.rv-track{display:flex;gap:24px;overflow-x:auto;scroll-snap-type:x mandatory;scroll-behavior:smooth;
-  padding:4px 2px 16px;-webkit-overflow-scrolling:touch;scrollbar-width:thin;scrollbar-color:var(--gold) transparent;
-  overscroll-behavior-x:contain}
-.rv-track::-webkit-scrollbar{height:8px}
-.rv-track::-webkit-scrollbar-track{background:transparent}
-.rv-track::-webkit-scrollbar-thumb{background:var(--gold-soft);border-radius:999px;border:1px solid var(--glass-brd)}
-.rv-track>.rv-card{flex:0 0 clamp(248px,86%,340px);scroll-snap-align:start}
-@media(min-width:721px){.rv-track>.rv-card{flex-basis:calc((100% - 24px)/2)}}
-@media(min-width:1000px){.rv-track>.rv-card{flex-basis:calc((100% - 48px)/3)}}
-.rv-none{display:none;flex:1 0 100%;text-align:center;color:var(--muted);padding:26px 10px}
-#rvGrid.rv-empty .rv-none{display:block}
-.rv-arrow{position:absolute;top:50%;transform:translateY(-50%);z-index:4;width:44px;height:44px;border-radius:50%;
-  border:1.5px solid var(--glass-brd);background:var(--panel-solid);color:var(--gold-2);display:none;
-  align-items:center;justify-content:center;cursor:pointer;box-shadow:var(--shadow-soft);
-  transition:transform .18s,opacity .18s,background .18s,color .18s,border-color .18s}
-[data-theme="dark"] .rv-arrow{color:var(--gold)}
-.rv-arrow svg{width:22px;height:22px;fill:none;stroke:currentColor;stroke-width:2.2;stroke-linecap:round;stroke-linejoin:round}
-.rv-arrow--prev{left:0}
-.rv-arrow--next{right:0}
-.rv-arrow:hover{background:var(--grad-gold);color:var(--gold-fg);border-color:transparent}
-.rv-arrow:active{transform:translateY(-50%) scale(.92)}
-.rv-arrow[disabled]{opacity:.32;cursor:default;pointer-events:none}
-@media(hover:hover) and (min-width:721px){
-  .rv-carousel{padding-inline:54px}
-  .rv-arrow{display:inline-flex}
+.rv-reply p{margin:0;color:var(--muted);line-height:1.55;font-size:.94rem;overflow-wrap:anywhere;word-break:normal;hyphens:none}
+/* Кнопка «Показать ещё» */
+.rv-more-wrap{display:flex;justify-content:center;margin:26px auto 0;max-width:760px}
+.rv-more{display:inline-flex;align-items:center;gap:9px;padding:12px 26px;min-height:46px;border-radius:999px;cursor:pointer;
+  background:var(--glass-card);backdrop-filter:blur(18px);-webkit-backdrop-filter:blur(18px);
+  border:1px solid var(--glass-brd2);color:var(--text);font-weight:700;font-size:.95rem;font-family:var(--ff-body);
+  transition:transform .18s,border-color .18s,color .18s}
+.rv-more svg{width:18px;height:18px;fill:none;stroke:currentColor;stroke-width:2.2;stroke-linecap:round;stroke-linejoin:round;transition:transform .18s}
+.rv-more:hover{border-color:var(--gold);color:var(--royal)}
+[data-theme="dark"] .rv-more:hover{color:var(--gold)}
+.rv-more:hover svg{transform:translateY(2px)}
+.rv-more:active{transform:scale(.97)}
+.rv-more.rv-done{display:none}
+@media(max-width:560px){
+  .rv-toolbar{justify-content:flex-start}
+  .rv-card{padding:18px 16px}
 }
-@media(prefers-reduced-motion:reduce){.rv-track{scroll-behavior:auto}.rv-arrow{transition:none}}
 /* Каскад-звёзды в форме отзыва */
 .rv-rate{display:inline-flex;gap:6px;margin-bottom:8px}
 .rv-rate button{background:none;border:0;padding:2px;cursor:pointer;line-height:0}
 .rv-rate svg{width:30px;height:30px;fill:var(--glass-brd);transition:fill .12s,transform .12s}
 .rv-rate button:active svg{transform:scale(.9)}
-.rv-rate.on-0 button:nth-child(-n+0) svg,
 .rv-rate.on-1 button:nth-child(-n+1) svg,
 .rv-rate.on-2 button:nth-child(-n+2) svg,
 .rv-rate.on-3 button:nth-child(-n+3) svg,
 .rv-rate.on-4 button:nth-child(-n+4) svg,
 .rv-rate.on-5 button:nth-child(-n+5) svg{fill:var(--gold)}
-@media (max-width:560px){
-  .rv-sort{margin-left:0;width:100%}
-  .rv-sort select{flex:1}
-}
-.rv-pager{display:flex;justify-content:center;gap:8px;margin-top:36px;flex-wrap:wrap}
-.rv-pager a{padding:9px 16px;min-height:40px;display:inline-flex;align-items:center;border-radius:999px;border:1.5px solid var(--gold);font-weight:700;font-size:.92rem;color:var(--text)}
-.rv-pager a.active{background:var(--grad-gold);color:var(--gold-fg);border-color:transparent}
 </style>
 
 <section class="section">
   <div class="container">
-    <div class="section-head reveal">
-      <p class="eyebrow">Отзывы</p>
+    <a class="aw-back" href="<?= url('/menu') ?>"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5M11 6l-6 6 6 6"/></svg>Назад</a>
+
+    <div class="rv-head-bar reveal">
       <h2>Отзывы участников</h2>
-      <div class="gold-rule"></div>
+      <?php if ($total): ?>
+        <span class="rv-head-sub"><?= $starRow((int) round($avgRating)) ?><?= h(number_format($avgRating, 1, ',', ' ')) ?> из 5 &middot; <?= (int) $total ?> <?= $plural($total) ?></span>
+      <?php endif; ?>
     </div>
 
     <?php if (!$reviews): ?>
       <div class="card reveal" style="max-width:640px;margin:0 auto 40px;text-align:center">
-        <p style="color:var(--text-dim);margin:0">Отзывы участников пока готовятся к публикации. Будьте первым, кто поделится впечатлениями.</p>
+        <p style="color:var(--muted);margin:0">Отзывы участников пока готовятся к публикации. Будьте первым, кто поделится впечатлениями.</p>
       </div>
     <?php else: ?>
-      <div class="card rv-summary reveal">
-        <div class="rv-sum-score">
-          <div class="rv-sum-num"><?= h(number_format($avgRating, 1, ',', ' ')) ?></div>
-          <?= $starRow((int) round($avgRating)) ?>
-          <div class="rv-sum-total"><?= (int) $total ?> <?= (($total % 10 === 1 && $total % 100 !== 11) ? 'отзыв' : (($total % 10 >= 2 && $total % 10 <= 4 && ($total % 100 < 10 || $total % 100 >= 20)) ? 'отзыва' : 'отзывов')) ?></div>
-        </div>
-        <div class="rv-sum-bars">
-          <?php for ($s = 5; $s >= 1; $s--): $pct = $total ? round($dist[$s] / $total * 100) : 0; ?>
-            <div class="rv-bar-row">
-              <span class="lbl"><?= $s ?><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2.5l2.9 6.05 6.6.86-4.85 4.55 1.24 6.54L12 17.9l-5.89 3.1 1.24-6.54L2.5 9.41l6.6-.86z"/></svg></span>
-              <span class="rv-bar-track"><span class="rv-bar-fill" style="width:<?= (int) $pct ?>%"></span></span>
-              <span class="val"><?= (int) $dist[$s] ?></span>
-            </div>
-          <?php endfor; ?>
-        </div>
-      </div>
       <div class="rv-toolbar reveal">
-        <div class="rv-chips" role="group" aria-label="Фильтр отзывов">
-          <button type="button" class="rv-chip is-active" data-filter="all">Все</button>
-          <button type="button" class="rv-chip" data-filter="5">5 звёзд</button>
-          <button type="button" class="rv-chip" data-filter="4">4 и выше</button>
-          <?php if ($hasIntl): ?><button type="button" class="rv-chip" data-filter="intl">Международные</button><?php endif; ?>
-        </div>
-        <div class="rv-sort">
-          <label for="rvSort">Сортировка</label>
-          <select id="rvSort" aria-label="Сортировка отзывов">
-            <option value="new">Сначала новые</option>
-            <option value="old">Сначала старые</option>
-            <option value="rating">По оценке</option>
-          </select>
-        </div>
+        <label for="rvSort">Сортировка</label>
+        <select id="rvSort" aria-label="Сортировка отзывов">
+          <option value="new">Сначала новые</option>
+          <option value="old">Сначала старые</option>
+        </select>
       </div>
 
-      <div class="rv-carousel reveal">
-        <button type="button" class="rv-arrow rv-arrow--prev" aria-label="Предыдущие отзывы" aria-controls="rvGrid">
-          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15 5l-7 7 7 7"/></svg>
-        </button>
-        <div class="rv-track" id="rvGrid" role="region" aria-label="Лента отзывов" tabindex="0">
+      <div class="rv-list" id="rvList" aria-label="Лента отзывов">
         <?php foreach ($reviews as $i => $r):
             $rating = max(1, min(5, (int) $r['rating']));
-            $geo = $geoOf($r);
-            $ts = strtotime($r['created_at'] ?: 'now'); ?>
-          <div class="card rv-card" style="--i:<?= (int) $i ?>"
-               data-rating="<?= $rating ?>" data-ts="<?= (int) $ts ?>" data-geo="<?= $geo !== '' ? 'intl' : '' ?>">
-            <div class="rv-head">
-              <?= $starRow($rating) ?>
-              <?php if ($geo !== ''): ?><span class="badge badge--intl rv-geo"><?= h($geo) ?></span><?php endif; ?>
-            </div>
-            <p class="rv-text">«<?= h($r['text']) ?>»</p>
-            <?php $rvName = $r['author'] ?: 'Участник конкурса'; ?>
-            <div class="rv-meta">
+            $ts = strtotime($r['created_at'] ?: 'now');
+            $rvName = $r['author'] ?: 'Участник конкурса'; ?>
+          <article class="rv-card<?= $i >= 5 ? ' rv-hidden' : ' reveal' ?>" data-ts="<?= (int) $ts ?>">
+            <div class="rv-top">
               <span class="rv-avatar" role="img" aria-label="Аватар: <?= h($rvName) ?>"><?= h($initialsOf($rvName)) ?></span>
               <div class="rv-namewrap">
                 <p class="rv-author"><?= h($rvName) ?></p>
                 <p class="rv-date"><?= h(ru_date($r['created_at'])) ?></p>
               </div>
+              <?= $starRow($rating) ?>
             </div>
+            <p class="rv-text">«<?= h($r['text']) ?>»</p>
             <?php if (!empty($r['admin_reply'])): ?>
               <div class="rv-reply">
                 <b><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>Ответ Оргкомитета</b>
                 <p><?= h($r['admin_reply']) ?></p>
               </div>
             <?php endif; ?>
-          </div>
+          </article>
         <?php endforeach; ?>
-        <p class="rv-none">Среди отзывов на этой странице нет подходящих под фильтр. Сбросьте фильтр или откройте другие страницы.</p>
-        </div>
-        <button type="button" class="rv-arrow rv-arrow--next" aria-label="Следующие отзывы" aria-controls="rvGrid">
-          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 5l7 7-7 7"/></svg>
-        </button>
       </div>
 
-      <?php if ($pagesTotal > 1): ?>
-        <div class="rv-pager reveal">
-          <?php for ($p = 1; $p <= $pagesTotal; $p++): ?>
-            <a href="<?= url('/reviews?page=' . $p) ?>" class="<?= $p === $pageNo ? 'active' : '' ?>"><?= $p ?></a>
-          <?php endfor; ?>
+      <?php if (count($reviews) > 5): ?>
+        <div class="rv-more-wrap">
+          <button type="button" class="rv-more" id="rvMore">
+            Показать ещё
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M6 13l6 6 6-6"/></svg>
+          </button>
         </div>
       <?php endif; ?>
     <?php endif; ?>
   </div>
 </section>
 
-<section class="section section--parchment">
+<section class="section">
   <div class="container" style="max-width:640px">
     <div class="card reveal">
       <h3>Оставить отзыв</h3>
       <?php if (!$u): ?>
-        <p style="color:var(--text-dim)">Чтобы оставить отзыв, войдите в личный кабинет.</p>
+        <p style="color:var(--muted)">Чтобы оставить отзыв, войдите в личный кабинет.</p>
         <a class="btn btn--primary" href="<?= url('/login?next=' . urlencode('/reviews')) ?>">Войти</a>
         <a class="btn btn--ghost" href="<?= url('/register') ?>">Регистрация</a>
       <?php else: ?>
@@ -295,70 +204,43 @@ ob_start(); ?>
 <?php if ($reviews): ?>
 <script>
 (function () {
-  var grid = document.getElementById('rvGrid');
-  if (!grid) return;
-  var cards = Array.prototype.slice.call(grid.querySelectorAll('.rv-card'));
-  var chips = Array.prototype.slice.call(document.querySelectorAll('.rv-chip'));
+  var list = document.getElementById('rvList');
+  if (!list) return;
+  var cards = Array.prototype.slice.call(list.querySelectorAll('.rv-card'));
+  var moreBtn = document.getElementById('rvMore');
   var sortSel = document.getElementById('rvSort');
-  var none = grid.querySelector('.rv-none');
-  var filter = 'all';
+  var PAGE = 5;
+  var shown = Math.min(PAGE, cards.length);
 
-  function passes(c) {
-    var r = +c.getAttribute('data-rating');
-    if (filter === 'intl') return c.getAttribute('data-geo') === 'intl';
-    if (filter === '5') return r === 5;
-    if (filter === '4') return r >= 4;
-    return true;
-  }
-
-  function apply() {
+  function render(animateFrom) {
     var mode = sortSel ? sortSel.value : 'new';
     var ordered = cards.slice().sort(function (a, b) {
-      if (mode === 'rating') return (+b.getAttribute('data-rating')) - (+a.getAttribute('data-rating')) || (+b.getAttribute('data-ts')) - (+a.getAttribute('data-ts'));
-      if (mode === 'old') return (+a.getAttribute('data-ts')) - (+b.getAttribute('data-ts'));
-      return (+b.getAttribute('data-ts')) - (+a.getAttribute('data-ts'));
+      var d = (+a.getAttribute('data-ts')) - (+b.getAttribute('data-ts'));
+      return mode === 'old' ? d : -d;
     });
-    var shown = 0;
-    ordered.forEach(function (c) {
-      var vis = passes(c);
-      c.style.display = vis ? '' : 'none';
-      if (vis) grid.insertBefore(c, none);
-      if (vis) shown++;
+    ordered.forEach(function (c, i) {
+      list.appendChild(c);
+      var vis = i < shown;
+      c.classList.toggle('rv-hidden', !vis);
+      c.classList.toggle('rv-in', vis && typeof animateFrom === 'number' && i >= animateFrom);
     });
-    grid.classList.toggle('rv-empty', shown === 0);
-    grid.scrollLeft = 0;
-    updateArrows();
+    if (moreBtn) moreBtn.classList.toggle('rv-done', shown >= cards.length);
   }
 
-  /* Стрелки карусели (десктоп); свайп на мобиле - нативный scroll-snap. */
-  var prevBtn = document.querySelector('.rv-arrow--prev');
-  var nextBtn = document.querySelector('.rv-arrow--next');
-  function updateArrows() {
-    if (!prevBtn || !nextBtn) return;
-    var max = grid.scrollWidth - grid.clientWidth - 1;
-    prevBtn.disabled = grid.scrollLeft <= 1;
-    nextBtn.disabled = max <= 0 || grid.scrollLeft >= max;
-  }
-  function step() {
-    var card = grid.querySelector('.rv-card');
-    var w = card ? card.getBoundingClientRect().width + 24 : grid.clientWidth * 0.9;
-    return Math.max(w, grid.clientWidth * 0.5);
-  }
-  if (prevBtn) prevBtn.addEventListener('click', function () { grid.scrollBy({ left: -step(), behavior: 'smooth' }); });
-  if (nextBtn) nextBtn.addEventListener('click', function () { grid.scrollBy({ left: step(), behavior: 'smooth' }); });
-  grid.addEventListener('scroll', updateArrows, { passive: true });
-  window.addEventListener('resize', updateArrows);
-  updateArrows();
-
-  chips.forEach(function (c) {
-    c.addEventListener('click', function () {
-      chips.forEach(function (x) { x.classList.remove('is-active'); });
-      c.classList.add('is-active');
-      filter = c.getAttribute('data-filter');
-      apply();
+  if (moreBtn) {
+    moreBtn.addEventListener('click', function () {
+      var from = shown;
+      shown = Math.min(shown + PAGE, cards.length);
+      render(from);
     });
-  });
-  if (sortSel) sortSel.addEventListener('change', apply);
+  }
+  if (sortSel) {
+    sortSel.addEventListener('change', function () {
+      shown = Math.min(PAGE, cards.length);
+      render();
+      list.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    });
+  }
 
   /* Звёздный ввод в форме */
   var rate = document.getElementById('rvRate');

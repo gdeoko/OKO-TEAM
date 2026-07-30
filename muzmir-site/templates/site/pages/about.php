@@ -13,15 +13,15 @@ $timeline = [
     ['2023', 'Расширение линейки', 'Рост числа конкурсов и фестивалей, системная работа с педагогами и школами искусств, информационная поддержка министерств культуры и образования субъектов РФ.'],
     ['2024', 'Бесплатное участие и гала-концерты', 'Всероссийские конкурсы с бесплатным участием, отчётные онлайн гала-концерты обладателей Гран-при, освещение на портале «Про.Культура.РФ».'],
     ['2025', 'Официальная регистрация', 'Регистрация в Роскомнадзоре - свидетельство №094084 от 24.06.2025. Рекордный годовой охват аудитории, широкая федеральная и международная география.'],
-    ['2026', 'Пять лет работы', 'Свыше 95 конкурсов и мероприятий, более 30 621 заявки, участники из 85 регионов России и 10 стран мира.'],
+    ['2026', 'Масштаб сегодня', 'Свыше 1300 проведённых конкурсов и мероприятий, более 600 000 участников из 85 регионов России и 15+ стран мира.'],
 ];
 
+/* Реальные показатели центра (фиксированные значения). */
 $stats = [
-    ['5', '', 'лет работы'],
-    ['95', '+', 'конкурсов и мероприятий'],
-    ['30621', '+', 'заявок на участие'],
-    ['85', '', 'регионов России'],
-    ['10', '', 'стран мира'],
+    ['8', '', 'лет работы'],
+    ['1300', '+', 'проведённых конкурсов'],
+    ['600000', '+', 'участников'],
+    ['15', '+', 'стран мира'],
 ];
 
 /* Топ-направления по базе заявок (доля, %). */
@@ -64,6 +64,8 @@ $juryCriteria = [
 $partners = [
     ['Министерства культуры и образования субъектов РФ', 'Информационная поддержка международных и всероссийских конкурсов и фестивалей.'],
     ['Портал «Про.Культура.РФ»', 'Национальная государственная информационная система - публикация анонсов и освещение мероприятий.'],
+    ['Министерство просвещения', 'Поддержка проектов, направленных на творческое развитие детей и работу с педагогами школ искусств.'],
+    ['Союз композиторов РФ', 'Профессиональное сообщество композиторов - экспертная и творческая поддержка музыкальных номинаций.'],
     ['Роскомнадзор', 'Регуляторный партнёр. Деятельность центра зарегистрирована - свидетельство №094084 от 24.06.2025.'],
     ['Национальный фонд «ОБЕРЕГ»', 'Совместные благотворительные концерты и поддержка участников специальной военной операции.'],
     ['Студия «ZAMIS»', 'Студия звуко- и видеозаписи - медиапроизводство конкурсных и концертных материалов.'],
@@ -82,6 +84,14 @@ $svg = [
     'globe' => '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3c2.5 2.7 2.5 15.3 0 18M12 3c-2.5 2.7-2.5 15.3 0 18"/></svg>',
     'heart' => '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20s-7-4.5-9.5-9C1 8 2.5 4.5 6 4.5c2 0 3.2 1.2 4 2.3.8-1.1 2-2.3 4-2.3 3.5 0 5 3.5 3.5 6.5C19 15.5 12 20 12 20z"/></svg>',
     'check' => '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"/></svg>',
+    'mic'   => '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="2" width="6" height="12" rx="3"/><path d="M5 10a7 7 0 0 0 14 0M12 17v4M8 21h8"/></svg>',
+    'note'  => '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18V5l12-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="18" cy="16" r="3"/></svg>',
+    'dance' => '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="4" r="2"/><path d="M12 6.5V12M12 12l-3.5 8M12 12l3.5 8M6.5 8.5L12 10l5.5-2"/></svg>',
+    'quote' => '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M10 11H6a2 2 0 0 1-2-2V7a2 2 0 0 1 2-2h2a2 2 0 0 1 2 2v6c0 2.2-1.2 3.6-3 4"/><path d="M20 11h-4a2 2 0 0 1-2-2V7a2 2 0 0 1 2-2h2a2 2 0 0 1 2 2v6c0 2.2-1.2 3.6-3 4"/></svg>',
+    'mask'  => '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M4 5c2.7-1.2 5.3-1.8 8-1.8S17.3 3.8 20 5v6a8 8 0 0 1-16 0z"/><path d="M8.5 9.5h.01M15.5 9.5h.01"/><path d="M9 13.5a4 3 0 0 0 6 0"/></svg>',
+    'palette' => '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3a9 9 0 1 0 0 18h1.5a2.5 2.5 0 0 0 0-5H12a2 2 0 0 1 0-4h6a3 3 0 0 0 3-3c0-3.6-4-6-9-6z"/><path d="M7.5 10.5h.01M11.5 7h.01M16.5 10.5h.01"/></svg>',
+    'arrow' => '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M7 17L17 7M9 7h8v8"/></svg>',
+    'tie'   => '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="6.5" r="3.5"/><path d="M4.5 21c.6-4.2 3.6-7 7.5-7s6.9 2.8 7.5 7"/><path d="M12 14l-1.5 2.5L12 21l1.5-4.5z"/></svg>',
 ];
 $achIcons = ['crown', 'star', 'globe', 'heart'];
 ?>
@@ -113,27 +123,30 @@ $achIcons = ['crown', 'star', 'globe', 'heart'];
 .tl-item h3{margin:6px 0 6px;color:var(--text)}
 .tl-item p{margin:0;color:var(--text-dim);font-size:.98rem}
 
-/* Пончик (доля вокала) */
-.donut-wrap{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;text-align:center}
-.donut{position:relative;width:min(220px,60vw);aspect-ratio:1}
-.donut svg{width:100%;height:100%;transform:rotate(-90deg)}
-.donut-track{fill:none;stroke:var(--glass-brd);stroke-width:12}
-.donut-fill{fill:none;stroke:var(--gold);stroke-width:12;stroke-linecap:round;
-  filter:drop-shadow(0 0 6px rgba(232,194,90,.4))}
-.donut-center{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center}
-.donut-center b{font-family:var(--ff-display);font-size:2.6rem;line-height:1;
+/* «Что выбирают участники» - компактные стеклянные мини-карточки */
+.pick-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:14px;max-width:860px;margin:0 auto}
+.pick-card{display:flex;gap:14px;align-items:center;padding:15px 18px;border-radius:16px;
+  background:var(--glass-card);backdrop-filter:blur(18px);-webkit-backdrop-filter:blur(18px);
+  border:1px solid var(--glass-brd2);transition:transform .25s cubic-bezier(.2,.8,.2,1),border-color .25s;
+  word-break:normal;hyphens:none}
+.pick-ic{width:44px;height:44px;flex:none;border-radius:13px;display:flex;align-items:center;justify-content:center;
+  background:var(--gold-soft);border:1px solid var(--glass-brd);color:var(--gold);
+  transition:transform .25s cubic-bezier(.2,.8,.2,1)}
+.pick-ic svg{width:22px;height:22px}
+.pick-body{flex:1;min-width:0;display:grid;gap:7px}
+.pick-top{display:flex;justify-content:space-between;align-items:baseline;gap:10px;color:var(--text)}
+.pick-top span{font-weight:600;font-size:.92rem;line-height:1.25}
+.pick-top b{font-family:var(--ff-display);font-size:1.2rem;line-height:1;flex:none;white-space:nowrap;
   background:var(--grad-gold);-webkit-background-clip:text;background-clip:text;color:transparent}
-.donut-center span{color:var(--muted);font-size:.82rem;letter-spacing:.04em;text-transform:uppercase}
-
-/* Полосы направлений */
-.bars{display:grid;gap:16px}
-.bar-row{display:grid;gap:7px}
-.bar-top{display:flex;justify-content:space-between;align-items:baseline;gap:10px;color:var(--text)}
-.bar-top span{font-weight:600;font-size:.95rem}
-.bar-top b{font-family:var(--ff-display);font-size:1.15rem;color:var(--gold);white-space:nowrap;flex:none}
-.bar{position:relative;height:10px;border-radius:999px;background:var(--glass-brd);overflow:hidden}
-.bar-fill{display:block;height:100%;width:100%;border-radius:999px;background:var(--grad-gold);
-  transform:scaleX(0);transform-origin:left center;transition:transform 1.2s cubic-bezier(.2,.8,.2,1)}
+.pick-track{height:6px;border-radius:999px;background:var(--glass-brd);overflow:hidden}
+.pick-fill{display:block;height:100%;border-radius:999px;background:var(--grad-gold);
+  transform-origin:left center;animation:pickGrow 1.1s cubic-bezier(.2,.8,.2,1) .25s both}
+@keyframes pickGrow{from{transform:scaleX(0)}to{transform:scaleX(1)}}
+@media (hover:hover){
+  .pick-card:hover{transform:translateY(-3px);border-color:var(--gold)}
+  .pick-card:hover .pick-ic{transform:scale(1.08)}
+}
+@media (max-width:640px){.pick-grid{grid-template-columns:1fr}}
 
 /* KPI-достижения */
 .kpi{display:flex;gap:16px;align-items:flex-start}
@@ -155,6 +168,25 @@ $achIcons = ['crown', 'star', 'globe', 'heart'];
 .leader-card ul li{display:flex;gap:10px;align-items:flex-start;color:var(--text-dim);font-size:.95rem}
 .leader-card ul li svg{width:18px;height:18px;color:var(--gold);flex:none;margin-top:3px}
 
+/* Генеральный директор - витринная стеклянная карточка */
+.ceo-card{display:flex;gap:20px;align-items:center;max-width:640px;margin:0 auto 26px;padding:24px 26px;
+  border-radius:20px;background:var(--glass-card);backdrop-filter:blur(18px);-webkit-backdrop-filter:blur(18px);
+  border:1px solid var(--glass-brd2);position:relative;overflow:hidden;
+  transition:transform .25s cubic-bezier(.2,.8,.2,1),border-color .25s;word-break:normal;hyphens:none}
+.ceo-card::before{content:"";position:absolute;left:0;top:0;bottom:0;width:4px;background:var(--grad-gold)}
+.ceo-ava{width:72px;height:72px;flex:none;border-radius:50%;display:flex;align-items:center;justify-content:center;
+  background:var(--grad-gold);color:var(--gold-fg);box-shadow:var(--shadow-btn)}
+.ceo-ava svg{width:36px;height:36px}
+.ceo-name{font-family:var(--ff-serif);font-weight:700;font-size:1.45rem;line-height:1.15;color:var(--text)}
+.ceo-role{margin-top:4px;font-weight:800;font-size:.85rem;letter-spacing:.06em;text-transform:uppercase;
+  background:var(--grad-gold);-webkit-background-clip:text;background-clip:text;color:transparent;display:inline-block}
+.ceo-sub{margin-top:6px;color:var(--muted);font-size:.92rem;line-height:1.4}
+@media (hover:hover){.ceo-card:hover{transform:translateY(-3px);border-color:var(--gold)}}
+@media (max-width:560px){
+  .ceo-card{flex-direction:column;text-align:center;gap:14px;padding:22px 18px}
+  .ceo-card::before{left:0;right:0;top:0;bottom:auto;width:auto;height:4px}
+}
+
 /* Реквизиты - строки */
 .req-row{display:flex;gap:14px;align-items:flex-start;padding:14px 0;border-bottom:1px solid var(--line)}
 .req-row:last-child{border-bottom:0}
@@ -170,7 +202,6 @@ $achIcons = ['crown', 'star', 'globe', 'heart'];
 @media (max-width:560px){
   .tl-item{padding-left:46px}
   .tl-year{font-size:1.6rem}
-  .donut-center b{font-size:2.1rem}
 }
 
 /* Моушен-микровзаимодействия (только transform/opacity) */
@@ -181,8 +212,9 @@ $achIcons = ['crown', 'star', 'globe', 'heart'];
   .req-row:hover{transform:translateX(4px)}
 }
 @media (prefers-reduced-motion:reduce){
-  .tl-item,.req-row,.bar-fill{transition:none}
-  .tl-item:hover,.req-row:hover{transform:none}
+  .tl-item,.req-row,.pick-fill,.pick-card,.pick-ic{transition:none}
+  .pick-fill{animation:none;transform:scaleX(1)}
+  .tl-item:hover,.req-row:hover,.pick-card:hover{transform:none}
 }
 </style>
 
@@ -192,8 +224,9 @@ $achIcons = ['crown', 'star', 'globe', 'heart'];
     <a href="#intro">О центре</a>
     <a href="#history">История</a>
     <a href="#numbers">Цифры</a>
-    <a href="#leaders">Оргкомитет</a>
-    <a href="#partners">Партнёры</a>
+    <a href="#ach">Достижения</a>
+    <a href="#leaders">Руководство</a>
+    <a href="#partners">Поддержка</a>
     <a href="#pubs">СМИ</a>
     <a href="#req">Реквизиты</a>
   </div>
@@ -221,6 +254,7 @@ $achIcons = ['crown', 'star', 'globe', 'heart'];
 <!-- Интро: история + миссия -->
 <section class="section" id="intro">
   <div class="container">
+    <a class="aw-back" href="<?= url('/menu') ?>"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5M11 6l-6 6 6 6"/></svg>Назад</a>
     <div class="grid grid-2" style="align-items:start;gap:40px">
       <div class="reveal">
         <p class="eyebrow">Культурный центр</p>
@@ -277,36 +311,28 @@ $achIcons = ['crown', 'star', 'globe', 'heart'];
       <p class="eyebrow">Цифры</p>
       <h2>Центр в цифрах</h2>
       <div class="gold-rule"></div>
-      <p>Итоги пяти лет работы по базе конкурсов и заявок на участие.</p>
+      <p>Итоги многолетней работы центра: конкурсы, участники и география.</p>
     </div>
     <div class="stats reveal" style="margin-bottom:44px">
       <?php foreach ($stats as [$val, $suf, $label]): ?>
         <div class="stat"><b data-count="<?= h($val) ?>" data-suffix="<?= h($suf) ?>">0</b><span><?= h($label) ?></span></div>
       <?php endforeach; ?>
     </div>
-    <div class="grid grid-2" style="align-items:center;gap:40px">
-      <div class="card reveal">
-        <p class="eyebrow" style="margin-bottom:8px">Топ-направления</p>
-        <h3 style="margin-bottom:20px">Что выбирают участники</h3>
-        <div class="bars">
-          <?php foreach ($nominations as [$name, $pct]): ?>
-            <div class="bar-row">
-              <div class="bar-top"><span><?= h($name) ?></span><b><?= (int)$pct ?>%</b></div>
-              <div class="bar" data-value="<?= (int)$pct ?>"><span class="bar-fill"></span></div>
-            </div>
-          <?php endforeach; ?>
+    <div class="reveal" style="text-align:center;margin-bottom:22px">
+      <p class="eyebrow" style="margin-bottom:6px">Топ-направления</p>
+      <h3 style="margin:0">Что выбирают участники</h3>
+    </div>
+    <?php $pickIcons = ['mic', 'note', 'dance', 'quote', 'mask', 'palette']; ?>
+    <div class="pick-grid">
+      <?php foreach ($nominations as $ni => [$name, $pct]): ?>
+        <div class="pick-card reveal">
+          <div class="pick-ic"><?= $svg[$pickIcons[$ni] ?? 'star'] ?></div>
+          <div class="pick-body">
+            <div class="pick-top"><span><?= h($name) ?></span><b><?= (int)$pct ?>%</b></div>
+            <div class="pick-track"><span class="pick-fill" style="width:<?= (int)$pct ?>%"></span></div>
+          </div>
         </div>
-      </div>
-      <div class="card reveal donut-wrap">
-        <div class="donut" data-value="39">
-          <svg viewBox="0 0 120 120" aria-hidden="true">
-            <circle class="donut-track" cx="60" cy="60" r="52"/>
-            <circle class="donut-fill" cx="60" cy="60" r="52"/>
-          </svg>
-          <div class="donut-center"><b>39%</b><span>Вокал</span></div>
-        </div>
-        <p style="color:var(--text-dim);margin:0">Вокальное искусство - самая массовая номинация конкурсов центра.</p>
-      </div>
+      <?php endforeach; ?>
     </div>
 
     <div class="reveal" style="margin-top:44px">
@@ -318,7 +344,7 @@ $achIcons = ['crown', 'star', 'globe', 'heart'];
 </section>
 
 <!-- Достижения участников -->
-<section class="section section--parchment">
+<section class="section section--parchment" id="ach">
   <div class="container">
     <div class="section-head reveal">
       <p class="eyebrow">Признание</p>
@@ -348,6 +374,17 @@ $achIcons = ['crown', 'star', 'globe', 'heart'];
       <div class="gold-rule"></div>
       <p>Работу центра организует Оргкомитет: формирует положения конкурсов, утверждает состав жюри и следит за соблюдением правил на каждом этапе.</p>
     </div>
+
+    <!-- Генеральный директор -->
+    <div class="ceo-card reveal">
+      <div class="ceo-ava"><?= $svg['tie'] ?></div>
+      <div class="ceo-info">
+        <div class="ceo-name">Ильясов Альберт Ильясович</div>
+        <div class="ceo-role">Генеральный директор</div>
+        <div class="ceo-sub">Основатель Культурного центра «Музыкальный Мир»</div>
+      </div>
+    </div>
+
     <div class="grid grid-2">
       <?php foreach ($leaders as $li => [$name, $role, $regalia]): ?>
         <div class="card leader-card reveal">
@@ -406,8 +443,9 @@ $achIcons = ['crown', 'star', 'globe', 'heart'];
   <div class="container">
     <div class="section-head reveal">
       <p class="eyebrow">Кто с нами</p>
-      <h2>Партнёры и инфоподдержка</h2>
+      <h2>Поддержка и партнёры</h2>
       <div class="gold-rule"></div>
+      <p>Конкурсы и фестивали центра проходят при информационной поддержке министерств культуры и образования субъектов РФ, портала «Про.Культура.РФ», Союза композиторов РФ и Министерства просвещения.</p>
     </div>
     <div class="grid grid-3">
       <?php foreach ($partners as [$name, $descr]): ?>
@@ -436,50 +474,72 @@ $hostsTotal = count($byHost);
       <div class="gold-rule"></div>
       <p><?= count($pubs) ?> публикаций на <?= $hostsTotal ?> официальных источниках: Министерства культуры и образования регионов РФ, Дома культуры, детские школы искусств, порталы новостей.</p>
     </div>
-    <div class="pubs-grid reveal">
+    <div class="pub-rows reveal">
       <?php foreach (array_slice($pubs, 0, 12) as $p): ?>
-        <a class="pubs-card" href="<?= h($p['url']) ?>" target="_blank" rel="noopener nofollow">
-          <span class="pubs-host"><?= h($p['host']) ?></span>
-          <span class="pubs-src"><?= h($p['source']) ?></span>
-          <span class="pubs-title"><?= h(mb_strimwidth($p['title'], 0, 110, '…', 'UTF-8')) ?></span>
-          <span class="pubs-arrow">↗</span>
+        <a class="pub-row" href="<?= h($p['url']) ?>" target="_blank" rel="noopener nofollow">
+          <span class="pub-ic"><?= $svg['globe'] ?></span>
+          <span class="pub-txt">
+            <span class="pub-src"><?= h($p['source']) ?></span>
+            <span class="pub-host"><?= h($p['host']) ?></span>
+          </span>
+          <span class="pub-arrow"><?= $svg['arrow'] ?></span>
         </a>
       <?php endforeach; ?>
     </div>
     <?php if (count($pubs) > 12): ?>
       <details class="pubs-more reveal">
         <summary>Показать все <?= count($pubs) ?> публикаций</summary>
-        <ul class="pubs-list">
+        <div class="pub-rows" style="margin-top:22px">
           <?php foreach (array_slice($pubs, 12) as $p): ?>
-            <li><a href="<?= h($p['url']) ?>" target="_blank" rel="noopener nofollow"><b><?= h($p['source']) ?></b> — <?= h($p['host']) ?></a></li>
+            <a class="pub-row" href="<?= h($p['url']) ?>" target="_blank" rel="noopener nofollow">
+              <span class="pub-ic"><?= $svg['globe'] ?></span>
+              <span class="pub-txt">
+                <span class="pub-src"><?= h($p['source']) ?></span>
+                <span class="pub-host"><?= h($p['host']) ?></span>
+              </span>
+              <span class="pub-arrow"><?= $svg['arrow'] ?></span>
+            </a>
           <?php endforeach; ?>
-        </ul>
+        </div>
       </details>
     <?php endif; ?>
   </div>
 </section>
 <style>
-.pubs-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:14px}
-.pubs-card{position:relative;display:flex;flex-direction:column;gap:6px;padding:16px 16px 14px;text-decoration:none;
-  border:1px solid var(--line);border-radius:14px;background:var(--panel);color:var(--text);
-  transition:transform .22s cubic-bezier(.2,.8,.2,1),box-shadow .22s,border-color .22s;overflow:hidden}
-.pubs-card::before{content:"";position:absolute;left:0;top:0;bottom:0;width:3px;background:var(--grad-gold);opacity:.85}
-@media(hover:hover){.pubs-card:hover{transform:translateY(-3px);border-color:var(--gold);box-shadow:0 14px 28px rgba(201,168,76,.22)}}
-.pubs-host{font-family:var(--ff-mono,ui-monospace,monospace);font-size:.7rem;color:var(--muted);letter-spacing:.02em}
-.pubs-src{font-family:var(--ff-serif);font-weight:700;font-size:1.02rem;color:var(--gold-ink);line-height:1.15}
-[data-theme="dark"] .pubs-src{color:var(--gold)}
-.pubs-title{color:var(--text-dim);font-size:.88rem;line-height:1.35}
-.pubs-arrow{position:absolute;right:12px;top:10px;color:var(--gold);font-size:1.1rem}
+/* Публикации в СМИ - единые стеклянные строки-карточки */
+.pub-rows{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:12px}
+.pub-row{display:flex;align-items:center;gap:14px;padding:13px 16px;text-decoration:none;border-radius:16px;
+  background:var(--glass-card);backdrop-filter:blur(18px);-webkit-backdrop-filter:blur(18px);
+  border:1px solid var(--glass-brd2);color:var(--text);overflow:hidden;
+  transition:transform .22s cubic-bezier(.2,.8,.2,1),border-color .22s;word-break:normal;hyphens:none}
+.pub-ic{width:40px;height:40px;flex:none;border-radius:12px;display:flex;align-items:center;justify-content:center;
+  background:var(--gold-soft);border:1px solid var(--glass-brd);color:var(--gold)}
+.pub-ic svg{width:20px;height:20px}
+.pub-txt{flex:1;min-width:0;display:grid;gap:2px}
+.pub-src{font-family:var(--ff-serif);font-weight:700;font-size:.98rem;line-height:1.2;color:var(--text);
+  overflow:hidden;text-overflow:ellipsis;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical}
+.pub-host{font-size:.78rem;color:var(--gold-ink);letter-spacing:.02em;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+[data-theme="dark"] .pub-host{color:var(--gold)}
+.pub-arrow{flex:none;width:22px;height:22px;color:var(--gold);opacity:.75;
+  transition:transform .22s cubic-bezier(.2,.8,.2,1),opacity .22s}
+.pub-arrow svg{width:100%;height:100%}
+@media(hover:hover){
+  .pub-row:hover{transform:translateY(-3px);border-color:var(--gold)}
+  .pub-row:hover .pub-arrow{transform:translate(2px,-2px);opacity:1}
+}
 .pubs-more{margin-top:22px;text-align:center}
-.pubs-more summary{display:inline-block;cursor:pointer;padding:10px 22px;border:1px solid var(--gold);border-radius:999px;color:var(--gold-ink);font-weight:700;list-style:none}
+.pubs-more summary{display:inline-block;cursor:pointer;padding:10px 22px;border:1px solid var(--gold);border-radius:999px;
+  background:var(--glass-card);backdrop-filter:blur(18px);-webkit-backdrop-filter:blur(18px);
+  color:var(--gold-ink);font-weight:700;list-style:none;transition:transform .2s ease}
 [data-theme="dark"] .pubs-more summary{color:var(--gold)}
 .pubs-more summary::-webkit-details-marker{display:none}
-.pubs-list{list-style:none;padding:0;margin:22px auto 0;max-width:820px;columns:1;column-gap:22px}
-@media(min-width:720px){.pubs-list{columns:2}}
-.pubs-list li{margin-bottom:8px;line-height:1.35}
-.pubs-list a{color:var(--text);text-decoration:none;border-bottom:1px dashed var(--line);padding-bottom:2px}
-.pubs-list a:hover{color:var(--gold-ink);border-color:var(--gold)}
-[data-theme="dark"] .pubs-list a:hover{color:var(--gold)}
+.pubs-more[open] summary{opacity:.85}
+@media(hover:hover){.pubs-more summary:hover{transform:translateY(-2px)}}
+.pubs-more .pub-rows{text-align:left}
+@media (prefers-reduced-motion:reduce){
+  .pub-row,.pub-arrow,.pubs-more summary{transition:none}
+  .pub-row:hover{transform:none}
+}
 </style>
 <?php endif; ?>
 

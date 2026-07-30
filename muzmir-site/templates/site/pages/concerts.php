@@ -1,170 +1,143 @@
 <?php
-/** Онлайн-гала-концерты: премиум-видеогалерея (RuTube), фильтры по категориям, привязка к Про.Культура.РФ. */
-$concerts = all("SELECT * FROM concerts ORDER BY sort DESC, date DESC");
-$categories = [];
-$catCounts = [];
-foreach ($concerts as $c) {
-    if ($c['category'] !== '') {
-        $categories[$c['category']] = true;
-        $catCounts[$c['category']] = ($catCounts[$c['category']] ?? 0) + 1;
-    }
-}
-$categories = array_keys($categories);
+/** Онлайн-концерты: видеогалерея сообщества ВКонтакте (реальные записи, захардкожены). */
 
 $icoCal = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4.5" width="18" height="16" rx="2.5"/><path d="M3 9h18M8 2.5v4M16 2.5v4"/></svg>';
-
 $icoPlay = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"><path d="M8 6.5v11l9-5.5z" fill="currentColor" stroke="none"/></svg>';
-$icoSoon = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 3"/></svg>';
-$icoInfo = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 11v5"/><path d="M12 8h.01"/></svg>';
-$icoShare = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><path d="M8.6 13.5l6.8 4M15.4 6.5l-6.8 4"/></svg>';
+$icoExt  = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M14 4h6v6"/><path d="M20 4l-9 9"/><path d="M20 14v5a1.5 1.5 0 0 1-1.5 1.5h-13A1.5 1.5 0 0 1 4 19V6a1.5 1.5 0 0 1 1.5-1.5H10"/></svg>';
 
-/* Нормализация ссылки в embed-URL плеера: RuTube и VK Video (vk.com/video_ext.php, vkvideo.ru). */
-$embedUrlOf = static function (string $raw): string {
-    $raw = trim($raw);
-    if ($raw === '') return '';
-    // Уже готовый VK embed.
-    if (stripos($raw, 'video_ext.php') !== false) return $raw;
-    // VK Video: vk.com/video-123_456, vkvideo.ru/video-123_456, ?z=video-123_456 (+ необяз. hash после id).
-    if (preg_match('~(?:vk\.com|vkvideo\.ru)~i', $raw) && preg_match('~video(-?\d+)_(\d+)(?:_([0-9a-f]+))?~i', $raw, $m)) {
-        $u = 'https://vk.com/video_ext.php?oid=' . $m[1] . '&id=' . $m[2] . '&hd=2';
-        if (!empty($m[3])) $u .= '&hash=' . $m[3];
-        return $u;
-    }
-    // RuTube: уже embed.
-    if (stripos($raw, 'rutube.ru/play/embed/') !== false) return $raw;
-    // RuTube: страница видео rutube.ru/video/HASH/ или /shorts/HASH/.
-    if (preg_match('~rutube\.ru/(?:video(?:/private)?|shorts)/([0-9a-f]{32})~i', $raw, $m)) {
-        return 'https://rutube.ru/play/embed/' . $m[1];
-    }
-    return $raw;
-};
+/* Реальные видео сообщества ВКонтакте (названия очищены, даты в русском формате). */
+$videos = [
+    [
+        'title'  => 'Онлайн гала-концерт, посвящённый 9 Мая — 81-й годовщине Дня Победы',
+        'link'   => 'https://vk.com/video-211325055_456239810',
+        'player' => 'https://vkvideo.ru/video_ext.php?oid=-211325055&id=456239810&hash=d6c18acc78bc90bc&__ref=vk.api',
+        'cover'  => 'https://sun9-11.userapi.com/s/v1/ig2/MO9kpWrlacK5D2hii6-XhIzxh7mlOFxdjQ27lHC2q_MNyUJPdwkOmoy15MzrSI48mw0I1dSOhaMBM-hEwJ4PUrme.jpg?quality=95&size=1376x768',
+        'date'   => '9 мая 2026',
+    ],
+    [
+        'title'  => 'Отчётный онлайн-концерт обладателей звания Гран-при Международного многожанрового конкурса «День Победы»',
+        'link'   => 'https://vk.com/video-211325055_456239541',
+        'player' => 'https://vkvideo.ru/video_ext.php?oid=-211325055&id=456239541&hash=65036ae2f1e72690&__ref=vk.api',
+        'cover'  => 'https://sun9-69.userapi.com/s/v1/ig2/Zy-eEI4SbPJl38F5sHYNcz_8DkWUpQKp7-E2LKCbYIMVyLHWk3KHWwALsd9A-1a2UWWU8kpX0GPnQ3tc7BOGv2qf.jpg?quality=95&size=1220x687',
+        'date'   => '9 мая 2025',
+    ],
+    [
+        'title'  => 'Выступление обладателя денежного приза',
+        'link'   => 'https://vk.com/video-211325055_456239540',
+        'player' => 'https://vkvideo.ru/video_ext.php?oid=-211325055&id=456239540&hash=d31962d268a50c9a&__ref=vk.api',
+        'cover'  => 'https://sun9-66.userapi.com/s/v1/ig2/nzNScVXdTNmIwbGNy8yPP_fTrZOMJXzwC3hhFUb5fB4a7TX9JQd7wREyOp-GRHHv9MHBlddrLM7qx8kOwh7Jaaer.jpg?quality=95&size=1195x671',
+        'date'   => '30 апреля 2025',
+    ],
+    [
+        'title'  => 'Культурный центр «Музыкальный Мир» — акция «Поддержка талантливой молодёжи»',
+        'link'   => 'https://vk.com/video-211325055_456239537',
+        'player' => 'https://vkvideo.ru/video_ext.php?oid=-211325055&id=456239537&hash=7ce51ca32aafbaf5&__ref=vk.api',
+        'cover'  => 'https://iv.okcdn.ru/getVideoPreview?id=8408172792368&idx=5&type=39&tkn=LvCLLTzEEueRmV_Th6qIZszn2Vw&fn=vid_w',
+        'date'   => '25 апреля 2025',
+    ],
+    [
+        'title'  => 'Онлайн гала-концерт Всероссийского многожанрового онлайн-конкурса культуры и искусства «Слава Героям России»',
+        'link'   => 'https://vk.com/video-211325055_456239536',
+        'player' => 'https://vkvideo.ru/video_ext.php?oid=-211325055&id=456239536&hash=955b30f145e89915&__ref=vk.api',
+        'cover'  => 'https://sun9-48.userapi.com/s/v1/ig2/d6nhiC7g-WFspa-EdQ_adALPeQC6e7MjIaW0HFz3T6ta48N0h4hCv17KgNfseSc7NTpZGNOg-oEJtFd0XGUWdT7S.jpg?quality=95&size=1195x671',
+        'date'   => '25 апреля 2025',
+    ],
+    [
+        'title'  => 'Онлайн гала-концерт обладателей звания Гран-при Всероссийского конкурса «Сила Родины моей»',
+        'link'   => 'https://vk.com/video-211325055_456239519',
+        'player' => 'https://vkvideo.ru/video_ext.php?oid=-211325055&id=456239519&hash=3a0bfeec38c0c657&__ref=vk.api',
+        'cover'  => 'https://sun9-9.userapi.com/s/v1/ig2/pa_mVtvr6EEtJVTHF41GXee8yK5XLU-JU3379uR4dAuU4RC93aBWoK-3GyFyQX1-3prBfYGdzUN23SsiuhKR86ox.jpg?quality=95&size=1220x685',
+        'date'   => '19 марта 2025',
+    ],
+    [
+        'title'  => 'Всероссийский многожанровый онлайн-концерт, посвящённый участникам специальной военной операции',
+        'link'   => 'https://vk.com/video-211325055_456239499',
+        'player' => 'https://vkvideo.ru/video_ext.php?oid=-211325055&id=456239499&hash=8f577686192fa7ae&__ref=vk.api',
+        'cover'  => 'https://sun9-72.userapi.com/s/v1/ig2/z98ZYZfrVYT7YNJymlTM9u-nfkEqYyUdROAHRm4xqE3uF4I6QYtk7hBLRA87GkCeI9kKc0AykWkBCLh7g1gx2yAN.jpg?quality=95&size=2048x1152',
+        'date'   => '7 марта 2025',
+    ],
+    [
+        'title'  => 'Отчётный гала-концерт обладателей звания Гран-при Всероссийского многожанрового конкурса культуры и искусства «Священная Россия»',
+        'link'   => 'https://vk.com/video-211325055_456239496',
+        'player' => 'https://vkvideo.ru/video_ext.php?oid=-211325055&id=456239496&hash=52ef09ca5bdad305&__ref=vk.api',
+        'cover'  => 'https://sun9-38.userapi.com/s/v1/ig2/FNMdhMgzLw3UjBzpmuM2P8ya817xC1bi3l087fNNFUGvc42zjUXChwDQ88o82wJx-z7zIMXPsAtNg5JZ2NvImJC1.jpg?quality=95&size=2048x1152',
+        'date'   => '17 февраля 2025',
+    ],
+    [
+        'title'  => 'Отчётный гала-концерт обладателей звания Гран-при Международного конкурса культуры и искусства «Талант года 2024»',
+        'link'   => 'https://vk.com/video-211325055_456239495',
+        'player' => 'https://vkvideo.ru/video_ext.php?oid=-211325055&id=456239495&hash=d1bfca1d4ab01c5d&__ref=vk.api',
+        'cover'  => 'https://sun9-63.userapi.com/s/v1/ig2/YdQ6A3WrCdKJyHk-VEp2CB_xrLwpu0Su6ZcT_cVsctgoSZr68Mg4I8VvK2VlcHyUytA_bMg85O450rZeYsuncr6e.jpg?quality=95&size=1220x685',
+        'date'   => '3 января 2025',
+    ],
+];
 
 ob_start(); ?>
 <style>
-.concert-lead{max-width:720px;margin:0 auto;text-align:center}
-.concert-support{display:inline-flex;gap:10px;align-items:center;margin-top:18px;padding:10px 18px;border-radius:999px;
-  background:var(--gold-soft);border:1px solid var(--glass-brd);color:var(--text-dim);font-size:.9rem;line-height:1.35}
-.concert-support svg{width:18px;height:18px;flex:0 0 18px;color:var(--gold-ink)}
-[data-theme="dark"] .concert-support svg{color:var(--gold)}
-.concert-card{padding:0;overflow:hidden}
-.concert-embed{position:relative;width:100%;aspect-ratio:16/9;background:#0e0c10}
+.concert-grid{display:grid;grid-template-columns:1fr;gap:24px}
+@media(min-width:700px){.concert-grid{grid-template-columns:1fr 1fr}}
+.concert-card{padding:0;overflow:hidden;background:var(--glass-card);backdrop-filter:blur(18px);
+  border:1px solid var(--glass-brd2);border-radius:20px}
+.concert-embed{position:relative;width:100%;aspect-ratio:16/9;background:#0e1230;overflow:hidden;
+  border-bottom:1px solid var(--glass-brd2)}
 .concert-embed iframe{position:absolute;inset:0;width:100%;height:100%;border:0}
-.concert-facade{position:absolute;inset:0;border:0;padding:0;cursor:pointer;display:block;background-size:cover;background-position:center;
-  background-color:#0e0c10}
-.concert-facade::after{content:"";position:absolute;inset:0;background:linear-gradient(180deg,rgba(11,10,13,.05),rgba(11,10,13,.55))}
-.concert-facade .play{position:absolute;inset:0;z-index:1;display:flex;align-items:center;justify-content:center}
-.concert-facade .play span{width:64px;height:64px;border-radius:50%;display:flex;align-items:center;justify-content:center;
-  background:rgba(0,0,0,.42);border:1.5px solid rgba(255,255,255,.7);color:#fff;backdrop-filter:blur(4px);transition:transform .25s,background .25s}
+.concert-facade{position:absolute;inset:0;border:0;padding:0;cursor:pointer;display:block;background:none}
+.concert-facade img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;display:block;
+  transition:transform .6s cubic-bezier(.2,.8,.2,1)}
+@media(hover:hover){.concert-facade:hover img{transform:scale(1.06)}}
+.concert-facade::after{content:"";position:absolute;inset:0;background:linear-gradient(180deg,rgba(10,19,48,.05),rgba(10,19,48,.55))}
+.concert-facade .play{position:absolute;inset:0;z-index:2;display:flex;align-items:center;justify-content:center}
+.concert-facade .play span{position:relative;width:64px;height:64px;border-radius:50%;display:flex;align-items:center;justify-content:center;
+  background:rgba(10,19,48,.45);border:1.5px solid rgba(255,255,255,.7);color:#fff;backdrop-filter:blur(4px);
+  transition:transform .25s,background .25s,color .25s,border-color .25s}
 .concert-facade .play svg{width:30px;height:30px}
 .concert-facade:hover .play span{transform:scale(1.08);background:var(--gold);color:#1b1608;border-color:var(--gold)}
-.concert-embed-stub{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;color:rgba(255,255,255,.45)}
-.concert-facade--vk .concert-vk-note{position:absolute;left:0;right:0;bottom:10px;z-index:3;text-align:center;
-  color:#fff;font-weight:700;font-size:.82rem;text-shadow:0 2px 8px rgba(0,0,0,.6)}
-.concert-actions{display:flex;gap:8px;flex-wrap:wrap}
-.concert-actions .btn{flex:1 1 auto;min-height:42px}
-.concert-body{padding:20px}
-.concert-body h3{margin:10px 0 0}
-.concert-empty{width:74px;height:74px;margin:0 auto 20px;border-radius:50%;background:var(--gold-soft);color:var(--gold-ink);
-  border:1px solid var(--glass-brd);display:flex;align-items:center;justify-content:center}
-[data-theme="dark"] .concert-empty{color:var(--gold)}
-/* Слой обложки с мягким зумом при наведении */
-.concert-cover{position:absolute;inset:0;background-size:cover;background-position:center;transition:transform .6s cubic-bezier(.2,.8,.2,1);z-index:0}
-/* Брендовый фасад для записей без постера (вместо пустого тёмного бокса). */
-.concert-cover--brand{
-  background-image:
-    linear-gradient(180deg,rgba(11,10,13,.32),rgba(11,10,13,.68)),
-    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='120' height='120' viewBox='0 0 120 120'%3E%3Cg fill='none' stroke='%23e8c25a' stroke-width='1.4' opacity='0.14'%3E%3Cpath d='M28 78V40l20-4v34'/%3E%3Ccircle cx='24' cy='80' r='5'/%3E%3Ccircle cx='44' cy='74' r='5'/%3E%3Cpath d='M84 92V52l14-3v34'/%3E%3Ccircle cx='80' cy='94' r='4'/%3E%3Ccircle cx='94' cy='86' r='4'/%3E%3C/g%3E%3C/svg%3E"),
-    url('/assets/img/concert_hall.webp'),
-    linear-gradient(160deg,#251d0d 0%,#14110b 55%,#0e0c10 100%);
-  background-size:cover,120px 120px,cover,cover;
-  background-position:center,center,center 40%,center;
-  background-repeat:no-repeat,repeat,no-repeat,no-repeat}
-@media(hover:hover){.concert-card:hover .concert-cover{transform:scale(1.07)}}
-.concert-facade .play{z-index:2}
-.concert-facade .play span{position:relative}
-.concert-facade .play span::before{content:"";position:absolute;inset:-7px;border-radius:50%;border:1.5px solid rgba(255,255,255,.5);animation:concert-pulse 2.6s ease-out infinite}
+.concert-facade .play span::before{content:"";position:absolute;inset:-7px;border-radius:50%;
+  border:1.5px solid rgba(255,255,255,.5);animation:concert-pulse 2.6s ease-out infinite}
 @keyframes concert-pulse{0%{transform:scale(1);opacity:.7}100%{transform:scale(1.55);opacity:0}}
-@media(prefers-reduced-motion:reduce){.concert-facade .play span::before{animation:none}}
-/* Категория поверх обложки */
-.concert-tag{position:absolute;top:12px;left:12px;z-index:3;display:inline-flex;align-items:center;padding:6px 12px;border-radius:999px;
-  font-size:.74rem;font-weight:800;letter-spacing:.05em;text-transform:uppercase;color:#fff;
-  background:rgba(11,10,13,.5);border:1px solid rgba(255,255,255,.28);backdrop-filter:blur(6px)}
-.concert-body h3{overflow-wrap:anywhere}
+@media(prefers-reduced-motion:reduce){
+  .concert-facade .play span::before{animation:none}
+  .concert-facade img{transition:none}
+}
+.concert-body{padding:20px}
+.concert-body h3{margin:0;font-size:1.05rem;line-height:1.4;word-break:normal;hyphens:none;overflow-wrap:normal}
 .concert-date{display:flex;align-items:center;gap:7px;color:var(--muted);margin:10px 0 0;font-size:.9rem}
-.concert-date svg{width:15px;height:15px;flex:none;color:var(--gold-ink)}
-[data-theme="dark"] .concert-date svg{color:var(--gold)}
-/* Счётчик в фильтрах */
-.concert-filter .fc{margin-left:8px;font-size:.72rem;font-weight:800;padding:1px 7px;border-radius:999px;
-  background:var(--gold-soft);color:var(--gold-ink)}
-[data-theme="dark"] .concert-filter .fc{color:var(--gold)}
-.concert-filter.btn--primary .fc{background:rgba(26,18,6,.18);color:var(--gold-fg)}
-/* Действия под концертом */
-.concert-actions{margin-top:16px}
-.concert-actions .btn{width:100%;justify-content:center;gap:8px}
-.concert-actions .btn svg{width:16px;height:16px;flex:none}
-.concert-card{scroll-margin-top:90px}
+.concert-date svg{width:15px;height:15px;flex:none;color:var(--gold)}
+.concert-vk-link{display:inline-flex;align-items:center;gap:8px;margin-top:14px;font-size:.88rem;font-weight:700;
+  color:var(--royal);text-decoration:none;border-bottom:1px solid transparent;transition:color .2s,border-color .2s}
+.concert-vk-link svg{width:15px;height:15px;flex:none}
+.concert-vk-link:hover{color:var(--gold);border-color:var(--gold)}
+[data-theme="dark"] .concert-vk-link{color:var(--gold)}
+[data-theme="dark"] .concert-vk-link:hover{color:var(--text)}
 </style>
 
 <section class="section section--parchment">
   <div class="container">
+    <a class="aw-back" href="<?= url('/menu') ?>"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5M11 6l-6 6 6 6"/></svg>Назад</a>
     <div class="section-head reveal">
       <p class="eyebrow">Смотрите</p>
       <h2>Онлайн-концерты</h2>
-    </div>
-    <div class="concert-lead reveal">
-      <p style="color:var(--text-dim);margin:0">Записи гала-концертов, творческих вечеров и концертных программ Культурного центра «Музыкальный Мир» - лауреаты и дипломанты наших конкурсов на одной сцене.</p>
-      <div class="concert-support"><?= $icoInfo ?><span>Мероприятия проходят при информационной поддержке государственного портала «Про.Культура.РФ».</span></div>
+      <p style="color:var(--text-dim);margin:12px 0 0">Записи гала-концертов и творческих вечеров нашего культурного центра.</p>
     </div>
   </div>
 </section>
 
-<?php if ($concerts): ?>
 <section class="section">
   <div class="container">
-    <?php if ($categories): ?>
-    <div class="reveal" id="concertFilters" style="display:flex;gap:10px;flex-wrap:wrap;justify-content:center;margin-bottom:32px">
-      <button type="button" class="btn btn--primary concert-filter" data-cat="">Все<span class="fc"><?= count($concerts) ?></span></button>
-      <?php foreach ($categories as $cat): ?>
-        <button type="button" class="btn btn--ghost concert-filter" data-cat="<?= h($cat) ?>"><?= h($cat) ?><span class="fc"><?= (int) $catCounts[$cat] ?></span></button>
-      <?php endforeach; ?>
-    </div>
-    <?php endif; ?>
-
-    <div class="grid grid-3" id="concertGrid">
-      <?php foreach ($concerts as $c):
-          $embed = $embedUrlOf((string) ($c['embed_url'] ?? ''));
-          $anchor = 'concert-' . (int) ($c['id'] ?? 0);
-          $shareUrl = url('/concerts') . '#' . $anchor; ?>
-        <div class="card concert-card reveal" id="<?= h($anchor) ?>" data-cat="<?= h($c['category']) ?>">
+    <div class="concert-grid">
+      <?php foreach ($videos as $v): ?>
+        <div class="card concert-card reveal">
           <div class="concert-embed">
-            <?php if ($c['category']): ?><span class="concert-tag"><?= h($c['category']) ?></span><?php endif; ?>
-            <?php if ($embed !== ''): ?>
-              <button type="button" class="concert-facade" data-embed="<?= h($embed) ?>"
-                      aria-label="Смотреть: <?= h($c['title']) ?>">
-                <?php if ($c['cover']): ?>
-                  <span class="concert-cover" style="background-image:url('<?= h($c['cover']) ?>')"></span>
-                <?php else: ?>
-                  <span class="concert-cover concert-cover--brand" aria-hidden="true"></span>
-                <?php endif; ?>
-                <span class="play"><span><?= $icoPlay ?></span></span>
-              </button>
-            <?php else: ?>
-              <a class="concert-facade concert-facade--vk" href="<?= h(cfgv('org_vk')) ?>" target="_blank" rel="noopener" aria-label="Смотреть в сообществе ВКонтакте">
-                <span class="concert-cover concert-cover--brand" aria-hidden="true"></span>
-                <span class="play"><span><?= $icoPlay ?></span></span>
-                <span class="concert-vk-note">Смотреть в ВКонтакте</span>
-              </a>
-            <?php endif; ?>
+            <button type="button" class="concert-facade" data-player="<?= h($v['player']) ?>"
+                    aria-label="Смотреть: <?= h($v['title']) ?>">
+              <img src="<?= h($v['cover']) ?>" alt="<?= h($v['title']) ?>" loading="lazy">
+              <span class="play"><span><?= $icoPlay ?></span></span>
+            </button>
           </div>
           <div class="concert-body">
-            <h3><?= h($c['title']) ?></h3>
-            <?php if ($c['date']): ?><p class="concert-date"><?= $icoCal ?><span><?= h(ru_date($c['date'])) ?></span></p><?php endif; ?>
-            <div class="concert-actions">
-              <?php if ($embed === ''): ?>
-                <a class="btn btn--primary" href="<?= h(cfgv('org_vk')) ?>" target="_blank" rel="noopener"><?= $icoPlay ?>Смотреть в ВК</a>
-              <?php endif; ?>
-              <button class="btn btn--ghost" type="button" data-share data-share-title="<?= h($c['title']) ?>" data-share-url="<?= h($shareUrl) ?>"><?= $icoShare ?>Поделиться</button>
-            </div>
+            <h3><?= h($v['title']) ?></h3>
+            <p class="concert-date"><?= $icoCal ?><span><?= h($v['date']) ?></span></p>
+            <a class="concert-vk-link" href="<?= h($v['link']) ?>" target="_blank" rel="noopener"><?= $icoExt ?>Смотреть во ВКонтакте</a>
           </div>
         </div>
       <?php endforeach; ?>
@@ -173,55 +146,22 @@ ob_start(); ?>
 </section>
 <script>
 (function () {
-  // Фильтры по категориям.
-  var btns = Array.prototype.slice.call(document.querySelectorAll('.concert-filter'));
-  var cards = Array.prototype.slice.call(document.querySelectorAll('.concert-card'));
-  btns.forEach(function (b) {
-    b.addEventListener('click', function () {
-      btns.forEach(function (x) { x.classList.remove('btn--primary'); x.classList.add('btn--ghost'); });
-      b.classList.remove('btn--ghost'); b.classList.add('btn--primary');
-      var cat = b.getAttribute('data-cat');
-      cards.forEach(function (c) {
-        c.style.display = (!cat || c.getAttribute('data-cat') === cat) ? '' : 'none';
-      });
-    });
-  });
-  // Ленивая подгрузка плеера по клику (мобильная производительность - не грузим N iframe сразу).
+  // Ленивая подгрузка плеера по тапу на обложку: не грузим 9 iframe сразу.
   document.querySelectorAll('.concert-facade').forEach(function (fac) {
     fac.addEventListener('click', function () {
-      var url = fac.getAttribute('data-embed');
+      var url = fac.getAttribute('data-player');
       if (!url) return;
-      // Параметр автозапуска зависит от хоста: RuTube - autoStart=true, VK Video - autoplay=1.
-      var ap = /rutube\.ru/i.test(url) ? 'autoStart=true' : 'autoplay=1';
-      var glue = url.indexOf('?') === -1 ? '?' : '&';
       var ifr = document.createElement('iframe');
-      ifr.src = url + glue + ap;
+      ifr.src = url + (url.indexOf('?') === -1 ? '?' : '&') + 'autoplay=1';
       ifr.loading = 'lazy';
-      ifr.setAttribute('allow', 'autoplay; encrypted-media; fullscreen; picture-in-picture');
+      ifr.setAttribute('allow', 'autoplay; encrypted-media; fullscreen; picture-in-picture; screen-wake-lock');
       ifr.setAttribute('allowfullscreen', '');
       ifr.title = fac.getAttribute('aria-label') || '';
       fac.parentNode.replaceChild(ifr, fac);
     });
   });
-
-  // Кнопки «Поделиться» ([data-share]) обрабатываются глобально в partials/popups.php.
 })();
 </script>
-<?php else: ?>
-<section class="section">
-  <div class="container" style="text-align:center;max-width:520px">
-    <div class="reveal">
-      <div class="concert-empty"><span style="width:34px;height:34px"><?= $icoSoon ?></span></div>
-      <h2>Скоро</h2>
-      <p style="color:var(--muted)">Видеозаписи гала-концертов и творческих вечеров появятся здесь в ближайшее время. Анонсы публикуются во «ВКонтакте» и на портале «Про.Культура.РФ».</p>
-      <div style="display:flex;gap:12px;justify-content:center;flex-wrap:wrap;margin-top:6px">
-        <a class="btn btn--primary" href="<?= h(cfgv('org_vk')) ?>" target="_blank" rel="noopener">Сообщество во «ВКонтакте»</a>
-        <a class="btn btn--ghost" href="<?= url('/') ?>">На главную</a>
-      </div>
-    </div>
-  </div>
-</section>
-<?php endif; ?>
 <?php
 $content = ob_get_clean();
-render_page('Онлайн-концерты', $content, ['active' => '/concerts', 'meta' => 'Онлайн-гала-концерты КЦ «Музыкальный Мир»: видеозаписи творческих вечеров и концертных программ лауреатов конкурсов.']);
+render_page('Онлайн-концерты', $content, ['active' => '/concerts', 'meta' => 'Онлайн-концерты КЦ «Музыкальный Мир»: записи гала-концертов и творческих вечеров лауреатов конкурсов.']);

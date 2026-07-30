@@ -3,8 +3,8 @@
  * Поддержка министерства (/ministry-support).
  *
  * Премиум-галерея писем информационной поддержки министерств культуры и
- * образования субъектов РФ по регионам, с фильтром и модалкой/лайтбоксом.
- * Инфографика охвата (субъекты РФ, федеральные округа, страны). Если у письма
+ * образования субъектов РФ по регионам, с живым поиском по названию региона
+ * и модалкой/лайтбоксом. Инфографика по федеральным округам. Если у письма
  * ещё нет скан-копии (image_path пуст) — карточка показывается как достойная
  * «документ готовится к публикации», а не битая картинка. Идеальная мобилка.
  */
@@ -70,9 +70,6 @@ $regions = array_keys($seenRegions);
 sort($regions, SORT_STRING | SORT_FLAG_CASE);
 
 $subjectsCount  = count($regions);
-$districtsCount = count($byDistrict);
-$countries      = (int) setting('stat_countries', '9');
-$letterCount    = count($letters);
 
 /* Порядок округов для полос — по убыванию числа субъектов. */
 arsort($byDistrict);
@@ -92,11 +89,6 @@ ob_start(); ?>
 .ms-stats-glow::before{content:"";position:absolute;left:50%;top:-70px;width:min(700px,100%);height:340px;transform:translateX(-50%);
   background:radial-gradient(closest-side,var(--gold-soft),transparent 72%);pointer-events:none;z-index:0}
 .ms-stats-glow>*{position:relative;z-index:1}
-.stats .stat{position:relative;overflow:hidden}
-/* Блок «Охват по стране»: 4 колонки на десктопе, 2 на мобиле (без сжатия подписей) */
-.ms-stat4{grid-template-columns:repeat(4,1fr)}
-@media(max-width:640px){.ms-stat4{grid-template-columns:repeat(2,1fr)}}
-.stats .stat::after{content:"";position:absolute;left:0;right:0;bottom:0;height:2px;background:var(--grad-gold);opacity:.5}
 .partners img{filter:grayscale(.2)}
 @media(hover:hover){
   .partners img{transition:transform .28s cubic-bezier(.2,.8,.2,1),filter .28s ease}
@@ -132,32 +124,44 @@ ob_start(); ?>
   transform-origin:left center;transition:width 1.1s cubic-bezier(.16,1,.3,1)}
 .reveal.in .ms-dtrack i{width:var(--w,0%)}
 
-/* Фильтр по региону */
-.ms-filters{display:flex;gap:10px;flex-wrap:wrap;justify-content:center;margin:36px 0 28px}
-.ms-filter{padding:9px 17px;font-size:.85rem;white-space:nowrap}
-.ms-filter.active{background:var(--grad-gold);color:var(--gold-fg);border-color:transparent;box-shadow:var(--shadow-3d)}
-@media(max-width:640px){
-  .ms-filters{flex-wrap:nowrap;overflow-x:auto;justify-content:flex-start;
-    scroll-snap-type:x proximity;-webkit-overflow-scrolling:touch;
-    margin-inline:-16px;padding-inline:16px;padding-bottom:6px}
-  .ms-filters::-webkit-scrollbar{display:none}
-  .ms-filter{flex:0 0 auto;scroll-snap-align:start}
-}
-/* Совпадение с паддингом .container на самых узких экранах — без горизонтального скролла */
-@media(max-width:360px){
-  .ms-filters{margin-inline:-14px;padding-inline:14px}
-}
+/* Поиск по региону */
+.ms-search{position:relative;display:flex;align-items:center;max-width:560px;margin:36px auto 28px;
+  background:var(--glass-card);backdrop-filter:blur(18px);-webkit-backdrop-filter:blur(18px);
+  border:1px solid var(--glass-brd2);border-radius:999px;
+  transition:border-color .25s,box-shadow .25s}
+.ms-search:focus-within{border-color:var(--gold);
+  box-shadow:0 0 0 3px color-mix(in srgb,var(--gold) 22%,transparent),0 12px 32px rgba(23,48,122,.10)}
+.ms-search-ico{position:absolute;left:18px;width:19px;height:19px;color:var(--gold-2);pointer-events:none}
+.ms-search-input{width:100%;border:0;outline:0;background:transparent;color:var(--text);
+  font-family:var(--ff-body);font-size:.95rem;line-height:1.3;padding:14px 48px 14px 48px;
+  border-radius:inherit}
+.ms-search-input::placeholder{color:var(--muted);opacity:.9}
+.ms-search-clear{position:absolute;right:10px;width:32px;height:32px;border-radius:50%;border:0;
+  cursor:pointer;display:grid;place-items:center;color:var(--muted);
+  background:color-mix(in srgb,var(--gold) 10%,transparent);transition:color .2s,background .2s}
+.ms-search-clear:hover{color:var(--gold-2);background:color-mix(in srgb,var(--gold) 20%,transparent)}
+.ms-search-clear svg{width:15px;height:15px}
+.ms-search-empty{max-width:560px;margin:0 auto 26px;text-align:center;font-size:.9rem;color:var(--muted);
+  padding:16px 20px;background:var(--glass-card);backdrop-filter:blur(18px);
+  border:1px dashed var(--glass-brd2);border-radius:16px}
 
 /* Карточка письма */
 .ms-item{display:flex;flex-direction:column;padding:0;overflow:hidden;cursor:pointer;text-align:left;
+  background:var(--glass-card);backdrop-filter:blur(18px);-webkit-backdrop-filter:blur(18px);
+  border:1px solid var(--glass-brd2);border-radius:18px;
+  box-shadow:0 10px 30px rgba(23,48,122,.08);
   transition:transform .25s,box-shadow .25s,border-color .25s}
-@media(hover:hover){.ms-item:hover{transform:translateY(-5px);box-shadow:var(--shadow-3d);border-color:var(--gold-2)}
+@media(hover:hover){.ms-item:hover{transform:translateY(-5px);border-color:var(--gold-2);
+  box-shadow:0 18px 44px rgba(23,48,122,.14),0 4px 14px color-mix(in srgb,var(--gold) 24%,transparent)}
   .ms-item:hover .ms-zoom{transform:scale(1.08)}}
+.ms-item:focus-visible{outline:2px solid var(--gold);outline-offset:3px}
 .ms-zoom{transition:transform .25s}
-.ms-thumb{position:relative;aspect-ratio:4/3;background:
+.ms-thumb{position:relative;aspect-ratio:4/3;padding:14px;background:
   radial-gradient(120% 90% at 50% 0,color-mix(in srgb,var(--gold) 16%,transparent),transparent 62%),
   var(--parchment);display:grid;place-items:center;overflow:hidden;border-bottom:1px solid var(--line)}
-.ms-thumb img{width:100%;height:100%;object-fit:cover;display:block}
+.ms-thumb img{width:100%;height:100%;object-fit:cover;display:block;border-radius:10px;
+  border:1.5px solid var(--gold);
+  box-shadow:0 0 0 4px color-mix(in srgb,var(--gold) 14%,transparent),0 12px 26px rgba(139,111,31,.30)}
 .ms-doc{width:58%;max-width:150px}
 .ms-doc svg{width:100%;height:auto;display:block;filter:drop-shadow(0 10px 22px rgba(139,111,31,.28))}
 .ms-tag{position:absolute;top:12px;left:12px;font-size:.66rem;font-weight:800;letter-spacing:.05em;
@@ -168,8 +172,10 @@ ob_start(); ?>
   box-shadow:0 6px 16px rgba(139,111,31,.4)}
 .ms-zoom svg{width:16px;height:16px}
 .ms-body{padding:16px 18px 18px;display:flex;flex-direction:column;gap:6px;flex:1}
-.ms-region{font-family:var(--ff-serif);font-weight:700;font-size:1.04rem;line-height:1.2;color:var(--text)}
+.ms-region{font-family:var(--ff-serif);font-weight:700;font-size:1rem;line-height:1.25;color:var(--text);
+  word-break:normal;hyphens:none;overflow-wrap:break-word}
 .ms-title{font-size:.86rem;color:var(--muted);line-height:1.4;
+  word-break:normal;hyphens:none;overflow-wrap:break-word;
   display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
 .ms-meta{margin-top:auto;padding-top:10px;display:flex;align-items:center;gap:8px;flex-wrap:wrap}
 .ms-status{display:inline-flex;align-items:center;gap:6px;font-size:.72rem;font-weight:700}
@@ -205,10 +211,17 @@ ob_start(); ?>
 .ms-lb-close svg{width:20px;height:20px}
 
 @media(max-width:860px){.ms-cover{grid-template-columns:1fr}}
+
+/* Тёмная тема: глубже тени, мягче ореолы */
+[data-theme="dark"] .ms-item{box-shadow:0 12px 34px rgba(0,0,0,.38)}
+[data-theme="dark"] .ms-item:hover{box-shadow:0 20px 48px rgba(0,0,0,.5),0 4px 14px color-mix(in srgb,var(--gold) 20%,transparent)}
+[data-theme="dark"] .ms-search:focus-within{box-shadow:0 0 0 3px color-mix(in srgb,var(--gold) 26%,transparent),0 12px 32px rgba(0,0,0,.4)}
+[data-theme="dark"] .ms-thumb img{box-shadow:0 0 0 4px color-mix(in srgb,var(--gold) 18%,transparent),0 12px 26px rgba(0,0,0,.45)}
 </style>
 
 <section class="section">
   <div class="container">
+    <a class="aw-back" href="<?= url('/menu') ?>"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5M11 6l-6 6 6 6"/></svg>Назад</a>
     <div class="section-head reveal">
       <p class="eyebrow">Информационная поддержка</p>
       <h2>Поддержка министерства культуры и образования</h2>
@@ -236,13 +249,6 @@ ob_start(); ?>
       <p class="eyebrow">География поддержки</p>
       <h2>Охват по стране</h2>
       <div class="gold-rule"></div>
-    </div>
-
-    <div class="stats reveal ms-stat4" style="max-width:820px;margin:0 auto 40px">
-      <div class="stat"><b data-count="<?= $subjectsCount ?>">0</b><span>субъектов РФ</span></div>
-      <div class="stat"><b data-count="<?= $districtsCount ?>">0</b><span>федеральных округов</span></div>
-      <div class="stat"><b data-count="<?= $countries ?>" data-suffix="+">0</b><span>стран-участниц</span></div>
-      <div class="stat"><b data-count="4">0</b><span>института господдержки</span></div>
     </div>
 
     <?php if ($byDistrict): ?>
@@ -302,12 +308,18 @@ ob_start(); ?>
           поддержка государственных ведомств сопровождает конкурсы и фестивали Центра на постоянной основе.</p>
       </div>
     <?php else: ?>
-      <div class="ms-filters reveal">
-        <button class="btn btn--ghost ms-filter active" data-region="all" type="button">Все регионы</button>
-        <?php foreach ($regions as $r): ?>
-          <button class="btn btn--ghost ms-filter" data-region="<?= h($r) ?>" type="button"><?= h($r) ?></button>
-        <?php endforeach; ?>
+      <div class="ms-search reveal">
+        <svg class="ms-search-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+             stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3"/></svg>
+        <input class="ms-search-input" id="msSearch" type="text" inputmode="search" autocomplete="off"
+               placeholder="Поиск по региону: например, Москва" aria-label="Поиск письма по названию региона">
+        <button class="ms-search-clear" id="msSearchClear" type="button" aria-label="Очистить поиск" hidden>
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"
+               stroke-linecap="round"><path d="M18 6 6 18M6 6l12 12"/></svg>
+        </button>
       </div>
+      <p class="ms-search-empty" id="msSearchEmpty" hidden>По такому запросу писем не найдено. Попробуйте изменить название региона.</p>
 
       <div class="grid grid-4">
         <?php foreach ($letters as $l):
@@ -392,18 +404,34 @@ ob_start(); ?>
 <script>
 (function () {
   var items = Array.prototype.slice.call(document.querySelectorAll('.ms-item'));
-  var chips = Array.prototype.slice.call(document.querySelectorAll('.ms-filter'));
+  var search = document.getElementById('msSearch');
+  var searchClear = document.getElementById('msSearchClear');
+  var searchEmpty = document.getElementById('msSearchEmpty');
 
-  chips.forEach(function (c) {
-    c.addEventListener('click', function () {
-      chips.forEach(function (x) { x.classList.remove('active'); });
-      c.classList.add('active');
-      var r = c.getAttribute('data-region');
-      items.forEach(function (it) {
-        it.style.display = (r === 'all' || it.getAttribute('data-region') === r) ? '' : 'none';
-      });
+  function applyFilter() {
+    var q = (search && search.value ? search.value : '').trim().toLowerCase().replace(/ё/g, 'е');
+    var visible = 0;
+    items.forEach(function (it) {
+      var region = (it.getAttribute('data-region') || '').toLowerCase().replace(/ё/g, 'е');
+      var show = q === '' || region.indexOf(q) !== -1;
+      it.style.display = show ? '' : 'none';
+      if (show) visible++;
     });
-  });
+    if (searchEmpty) searchEmpty.hidden = !(q !== '' && visible === 0);
+    if (searchClear) searchClear.hidden = q === '';
+  }
+  if (search) {
+    search.addEventListener('input', applyFilter);
+    search.addEventListener('keydown', function (e) {
+      if (e.key === 'Escape' && search.value !== '') { search.value = ''; applyFilter(); }
+    });
+  }
+  if (searchClear) {
+    searchClear.addEventListener('click', function () {
+      if (search) { search.value = ''; search.focus(); }
+      applyFilter();
+    });
+  }
 
   var lb     = document.getElementById('msLb');
   var lbImg  = document.getElementById('msLbImg');

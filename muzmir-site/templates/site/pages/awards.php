@@ -248,16 +248,29 @@ ob_start(); ?>
     q.querySelector('[data-dec]').addEventListener('click',function(){v.textContent=Math.max(1,parseInt(v.textContent)-1);});
     q.querySelector('[data-inc]').addEventListener('click',function(){v.textContent=Math.min(20,parseInt(v.textContent)+1);});
   });
+  // Лимиты количества: основной/дополнительный диплом — максимум 1 (второй не имеет смысла);
+  // именные и благодарности — до 20 (на каждый экземпляр вводится ФИО).
+  function maxQty(item){ return /Основной диплом|Дополнительный диплом/.test(item) ? 1 : 20; }
+  function needsFio(item){ return /Именной диплом/.test(item) ? 'ФИО участника коллектива'
+                              : /Благодарность/.test(item) ? 'ФИО педагога / руководителя' : null; }
   document.querySelectorAll('.shop-card').forEach(function(card){
     card.querySelector('[data-add]').addEventListener('click',function(){
       var item=card.getAttribute('data-item');
       var kindInp=card.querySelector('input[type=radio]:checked');
       var kind=kindInp.value, price=parseInt(kindInp.getAttribute('data-price'));
       var qty=parseInt(card.querySelector('[data-val]').textContent)||1;
+      var cap=maxQty(item);
       var ex=cart.find(function(c){return c.item===item&&c.kind===kind;});
-      if(ex){ex.qty+=qty;}else{cart.push({item:item,kind:kind,price:price,qty:qty});}
-      render(); openCart();
-      if(window.toast)window.toast('Добавлено в корзину','success');
+      var cur=ex?ex.qty:0;
+      if(cur+qty>cap){
+        if(window.toast)window.toast(cap===1?'Этот диплом можно заказать только в одном экземпляре':'Максимум '+cap+' шт.','error');
+        qty=Math.max(0,cap-cur); if(!qty)return;
+      }
+      if(ex){ex.qty+=qty;}else{cart.push({item:item,kind:kind,price:price,qty:qty,fios:[]});}
+      render();
+      // Корзину НЕ открываем автоматически — только пульс кнопки и подсказка.
+      fab.classList.remove('pulse'); void fab.offsetWidth; fab.classList.add('pulse');
+      if(window.toast)window.toast('Добавлено. Корзина — внизу справа','success');
     });
   });
   function render(){
@@ -265,14 +278,28 @@ ob_start(); ?>
     cart.forEach(function(c,i){
       total+=c.price*c.qty; count+=c.qty;
       var row=document.createElement('div');row.className='shop-cart-row';
+      var cap=maxQty(c.item);
       row.innerHTML='<div class="scr-info"><b>'+c.item+'</b><span>'+(KIND_LABEL[c.kind]||c.kind)+' · '+c.price+' ₽</span></div>'+
-        '<div class="scr-qty"><button type="button" data-m>−</button><span>'+c.qty+'</span><button type="button" data-p>+</button></div>'+
+        '<div class="scr-qty"><button type="button" data-m>−</button><span>'+c.qty+'</span><button type="button" data-p'+(c.qty>=cap?' disabled':'')+'>+</button></div>'+
         '<div class="scr-sum">'+(c.price*c.qty)+' ₽</div>'+
         '<button type="button" class="scr-del" data-del aria-label="Удалить">✕</button>';
       row.querySelector('[data-m]').onclick=function(){c.qty=Math.max(1,c.qty-1);render();};
-      row.querySelector('[data-p]').onclick=function(){c.qty=Math.min(20,c.qty+1);render();};
+      row.querySelector('[data-p]').onclick=function(){c.qty=Math.min(cap,c.qty+1);render();};
       row.querySelector('[data-del]').onclick=function(){cart.splice(i,1);render();};
       itemsBox.appendChild(row);
+      // Поля ФИО: по одному на каждый экземпляр именного диплома / благодарности.
+      var lbl=needsFio(c.item);
+      if(lbl){
+        c.fios=c.fios||[];
+        for(var k=0;k<c.qty;k++){
+          var w=document.createElement('div'); w.className='scr-fio';
+          var inp=document.createElement('input');
+          inp.type='text'; inp.placeholder=lbl+(c.qty>1?' — экз. '+(k+1):'');
+          inp.value=c.fios[k]||'';
+          (function(cc,kk){ inp.addEventListener('input',function(){ cc.fios[kk]=this.value; }); })(c,k);
+          w.appendChild(inp); itemsBox.appendChild(w);
+        }
+      }
     });
     totalEl.textContent=total.toLocaleString('ru-RU')+' ₽';
     countEl.textContent=count; fab.hidden=count===0; emptyBox.hidden=count>0; form.hidden=count===0;
@@ -287,7 +314,19 @@ ob_start(); ?>
     if(!cart.length)return;
     var err=$('#orderErr'); err.hidden=true;
     var btn=$('#orderSubmit'); btn.disabled=true; btn.textContent='Создаём заказ…';
-    var items=[]; cart.forEach(function(c){for(var i=0;i<c.qty;i++)items.push({item:c.item,kind:c.kind});});
+    // ФИО обязательны для каждого экземпляра именного диплома и благодарности.
+    for(var ci=0;ci<cart.length;ci++){
+      var lbl=needsFio(cart[ci].item);
+      if(lbl){
+        for(var qi=0;qi<cart[ci].qty;qi++){
+          if(!((cart[ci].fios||[])[qi]||'').trim()){
+            err.textContent='Заполните «'+lbl+'» для каждой позиции «'+cart[ci].item+'» в корзине.';
+            err.hidden=false; var b0=$('#orderSubmit'); b0.disabled=false; b0.textContent='Оплатить'; return;
+          }
+        }
+      }
+    }
+    var items=[]; cart.forEach(function(c){for(var i=0;i<c.qty;i++){var it={item:c.item,kind:c.kind};var f=(c.fios||[])[i];if(f&&f.trim())it.fio=f.trim();items.push(it);}});
     var fd=new FormData(form); fd.set('items',JSON.stringify(items));
     fetch('<?= url('/api/v1/order') ?>',{method:'POST',credentials:'same-origin',body:fd})
       .then(function(r){return r.json();})

@@ -183,6 +183,7 @@ ob_start(); ?>
 <section class="comp-banner">
   <div class="comp-banner__bg" style="view-transition-name:comp-cover-<?= (int)$c['id'] ?><?= $coverBg !== '' ? ';background-image:url(\'' . h($coverBg) . '\')' : '' ?>"></div>
   <div class="container comp-banner__inner reveal">
+    <a class="aw-back" href="<?= url('/competitions') ?>"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5M11 6l-6 6 6 6"/></svg>Назад</a>
     <div class="comp-banner__badges">
       <span class="badge badge--<?= $statusMap[0] ?>"><?= h($statusMap[1]) ?></span>
       <span class="badge badge--intl"><?= h($typeLabel) ?></span>
@@ -213,6 +214,17 @@ ob_start(); ?>
 <section class="section">
   <div class="container">
 
+    <!-- Доп-меню: чипы-якоря по разделам страницы -->
+    <nav class="comp-quicknav reveal" aria-label="Разделы страницы">
+      <a class="comp-qchip" href="#compTabs" data-goto-tab="about">О конкурсе</a>
+      <a class="comp-qchip" href="#compTabs" data-goto-tab="program">Номинации</a>
+      <a class="comp-qchip" href="#sec-stats">Цифры</a>
+      <a class="comp-qchip" href="#compTabs" data-goto-tab="criteria">Как устроена оценка</a>
+      <a class="comp-qchip" href="#sec-goals" data-goto-tab="about" data-goto-anchor="sec-goals">Цели и задачи</a>
+      <a class="comp-qchip" href="#compTabs" data-goto-tab="participation">Награды</a>
+      <a class="comp-qchip" href="<?= url('/competition/' . $c['slug'] . '/regulation.pdf') ?>" target="_blank" rel="noopener">Положение</a>
+    </nav>
+
     <!-- Ключевые факты — инфографика -->
     <div class="comp-info reveal">
       <div class="comp-info__item">
@@ -241,17 +253,20 @@ ob_start(); ?>
       </div>
     </div>
 
-    <!-- Мини-статистика (счётчики) -->
-    <div class="comp-stats reveal">
-      <div class="comp-stat"><b data-count="<?= count($noms) ?>">0</b><span>Номинаций</span></div>
-      <div class="comp-stat"><b data-count="<?= count($ages) ?>">0</b><span>Возрастных категорий</span></div>
-      <div class="comp-stat"><b data-count="<?= count($extraDiplomas) ?>">0</b><span>Доп. дипломов</span></div>
+    <!-- Конкурс в цифрах (статичные значения) -->
+    <div class="comp-stats reveal" id="sec-stats">
+      <div class="comp-stat"><b>12+</b><span>Номинаций</span></div>
+      <div class="comp-stat"><b>7</b><span>Возрастных категорий</span></div>
+      <div class="comp-stat">
+        <b>8</b><span>Наградных званий</span>
+        <small class="comp-stat__hint">Гран-при, Лауреат I–III, Дипломант I–III, Участник</small>
+      </div>
       <div class="comp-stat">
         <div class="stat-ring" data-value="100" aria-hidden="true">
           <svg viewBox="0 0 120 120"><circle class="ring-track" cx="60" cy="60" r="52"/><circle class="ring-fill" cx="60" cy="60" r="52" transform="rotate(-90 60 60)"/></svg>
           <span class="stat-ring__num">10</span>
         </div>
-        <span>Балльная шкала оценки</span>
+        <span>Система оценки — 10-балльная</span>
       </div>
     </div>
 
@@ -270,7 +285,7 @@ ob_start(); ?>
       <!-- О конкурсе -->
       <div class="comp-panel is-active" data-panel="about">
         <p><?= nl2br(h(normalize_text($about))) ?></p>
-        <h3 style="margin-top:26px">Цели и задачи</h3>
+        <h3 style="margin-top:26px" id="sec-goals">Цели и задачи</h3>
         <ul class="comp-goals">
           <?php foreach ($goals as $g): ?>
             <li><span class="comp-goals__ic"><?= $ic['check'] ?></span><?= h($g) ?></li>
@@ -534,9 +549,21 @@ ob_start(); ?>
 .comp-banner__inner h1{color:#fff;margin-bottom:.3em}
 .comp-banner__lead{font-size:1.12rem;color:rgba(255,255,255,.92);max-width:640px;margin-bottom:24px}
 .comp-banner__cta{display:flex;flex-wrap:wrap;gap:14px}
+.comp-banner .aw-back{color:rgba(255,255,255,.92);margin-bottom:16px}
+.comp-banner .aw-back:hover{color:#fff}
 .comp-banner .badge--intl{background:rgba(255,252,245,.94);color:var(--gold-fg)}
 .comp-banner .badge--open{background:color-mix(in srgb,var(--mint) 92%,white);color:#173a1e}
 .comp-banner .badge--closed{background:rgba(255,252,245,.9);color:#8a2e2e}
+
+/* Доп-меню: чипы-якоря */
+.comp-quicknav{display:flex;gap:10px;overflow-x:auto;-webkit-overflow-scrolling:touch;scrollbar-width:none;
+  padding:4px 2px 12px;margin-bottom:18px}
+.comp-quicknav::-webkit-scrollbar{display:none}
+.comp-qchip{flex:0 0 auto;display:inline-flex;align-items:center;padding:9px 18px;border-radius:999px;
+  background:var(--glass-card);backdrop-filter:blur(18px);border:1px solid var(--glass-brd2);
+  color:var(--text);font-weight:600;font-size:.92rem;text-decoration:none;white-space:nowrap;
+  word-break:normal;hyphens:none;transition:transform .2s ease,color .2s,border-color .2s}
+.comp-qchip:hover{color:var(--gold);border-color:var(--gold);transform:translateY(-1px)}
 
 /* Ключевые факты */
 .comp-info{display:grid;grid-template-columns:repeat(3,1fr);gap:18px;margin-bottom:26px}
@@ -554,7 +581,8 @@ ob_start(); ?>
   border:1px solid var(--glass-brd);box-shadow:var(--shadow-card);backdrop-filter:blur(10px)}
 .comp-stat b{display:block;font-family:var(--ff-display);font-size:clamp(2rem,5vw,3rem);line-height:1;
   background:var(--grad-gold);-webkit-background-clip:text;background-clip:text;color:transparent}
-.comp-stat span{display:block;margin-top:8px;color:var(--muted);font-size:.86rem}
+.comp-stat span{display:block;margin-top:8px;color:var(--muted);font-size:.86rem;word-break:normal;hyphens:none}
+.comp-stat__hint{display:block;margin-top:6px;color:var(--muted);font-size:.74rem;line-height:1.45;word-break:normal;hyphens:none}
 .stat-ring{position:relative;width:96px;height:96px;margin:0 auto}
 .stat-ring svg{width:100%;height:100%;transform:rotate(0)}
 .stat-ring .ring-track{fill:none;stroke:var(--gold-soft);stroke-width:9}
@@ -687,8 +715,8 @@ ob_start(); ?>
 @media (prefers-reduced-motion:reduce){
   .comp-panel{animation:none}
   .bar-fill{transition:none}
-  .pwin,.comp-info__item,.comp-chip,.comp-banner__cta [data-share]{transition:none}
-  .pwin:hover,.comp-info__item:hover,.comp-chip:hover{transform:none}
+  .pwin,.comp-info__item,.comp-chip,.comp-qchip,.comp-banner__cta [data-share]{transition:none}
+  .pwin:hover,.comp-info__item:hover,.comp-chip:hover,.comp-qchip:hover{transform:none}
   .comp-banner__bg{view-transition-name:none!important}
 }
 
@@ -716,6 +744,24 @@ ob_start(); ?>
       var key=t.getAttribute('data-tab');
       tabs.forEach(function(x){var on=x===t;x.classList.toggle('is-active',on);x.setAttribute('aria-selected',on?'true':'false');});
       panels.forEach(function(p){p.classList.toggle('is-active',p.getAttribute('data-panel')===key);});
+    });
+  });
+
+  /* Доп-меню: чип активирует нужную вкладку и плавно скроллит к разделу */
+  var reduce = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  document.querySelectorAll('.comp-qchip').forEach(function(ch){
+    var href = ch.getAttribute('href') || '';
+    if (href.charAt(0) !== '#') return; /* внешние ссылки (Положение) не трогаем */
+    ch.addEventListener('click', function(e){
+      e.preventDefault();
+      var tabKey = ch.getAttribute('data-goto-tab');
+      if (tabKey) {
+        var tab = root.querySelector('.comp-tab[data-tab="' + tabKey + '"]');
+        if (tab) tab.click();
+      }
+      var anchorId = ch.getAttribute('data-goto-anchor') || (tabKey ? 'compTabs' : href.slice(1));
+      var target = document.getElementById(anchorId);
+      if (target) target.scrollIntoView({behavior: reduce ? 'auto' : 'smooth', block: 'start'});
     });
   });
 })();

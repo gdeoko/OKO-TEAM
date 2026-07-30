@@ -146,19 +146,20 @@ ob_start(); ?>
 .blog-lead{max-width:680px;margin:0 auto;text-align:center;color:var(--text-dim)}
 
 /* Рубрики */
-.rub-card{position:relative;display:flex;flex-direction:column;gap:12px;overflow:hidden}
+.rub-card{position:relative;display:flex;flex-direction:column;gap:9px;overflow:hidden;padding:18px}
 .rub-card::after{content:"";position:absolute;left:0;top:0;width:100%;height:3px;
   background:linear-gradient(90deg,var(--gold),transparent);opacity:0;transition:opacity .3s}
 @media(hover:hover){.rub-card:hover::after{opacity:.8}}
 .rub-idx{position:absolute;top:14px;right:16px;font-family:var(--ff-display);font-weight:800;font-size:1.4rem;
   line-height:1;color:transparent;background:var(--grad-gold-text);-webkit-background-clip:text;background-clip:text;opacity:.24}
-.rub-ic{width:54px;height:54px;flex:none;border-radius:16px;display:flex;align-items:center;justify-content:center;
+.rub-ic{width:42px;height:42px;flex:none;border-radius:13px;display:flex;align-items:center;justify-content:center;
   background:linear-gradient(150deg,var(--gold-soft),transparent);border:1px solid var(--glass-brd);color:var(--gold);
   box-shadow:inset 0 1px 0 rgba(255,255,255,.25);transition:transform .3s,box-shadow .3s}
-.rub-ic svg{width:26px;height:26px}
+.rub-ic svg{width:21px;height:21px}
 @media(hover:hover){.rub-card:hover .rub-ic{transform:scale(1.08);box-shadow:var(--shadow-glow)}}
-.rub-card h3{margin:0;color:var(--text);font-size:1.1rem;padding-right:28px}
-.rub-card p{margin:0;color:var(--text-dim);font-size:.94rem}
+.rub-card h3{margin:0;color:var(--text);font-size:1rem;padding-right:28px}
+.rub-card p{margin:0;color:var(--text-dim);font-size:.88rem;line-height:1.55}
+.rub-idx{top:12px;right:14px;font-size:1.2rem}
 
 /* Карточка статьи */
 .post-card{position:relative;display:flex;flex-direction:column;gap:12px;overflow:hidden}
@@ -198,6 +199,21 @@ ob_start(); ?>
 @keyframes blogPulse{0%{transform:scale(.85);opacity:.7}70%,100%{transform:scale(1.32);opacity:0}}
 .blog-soon svg{width:36px;height:36px}
 
+/* Кнопка «Назад» + чипы-якоря */
+.blog-top{display:flex;flex-direction:column;gap:16px;margin-bottom:8px}
+.blog-chips{display:flex;gap:10px;overflow-x:auto;padding:4px 2px 10px;-webkit-overflow-scrolling:touch;
+  scrollbar-width:none}
+.blog-chips::-webkit-scrollbar{display:none}
+.blog-chip{flex:none;display:inline-flex;align-items:center;gap:8px;padding:9px 16px;border-radius:999px;
+  background:var(--glass-card);backdrop-filter:blur(18px);border:1px solid var(--glass-brd2);
+  color:var(--text);font-size:.86rem;font-weight:600;white-space:nowrap;text-decoration:none;
+  transition:border-color .25s,box-shadow .25s,transform .25s}
+.blog-chip svg{width:15px;height:15px;color:var(--gold-2);flex:none}
+@media(hover:hover){.blog-chip:hover{border-color:var(--gold);box-shadow:var(--shadow-glow);transform:translateY(-1px)}}
+html{scroll-behavior:smooth}
+@media(prefers-reduced-motion:reduce){html{scroll-behavior:auto}}
+.blog-anchor{scroll-margin-top:90px}
+
 /* Подписка */
 .blog-sub{position:relative;text-align:center;max-width:640px;margin:0 auto;padding:38px 30px;
   border:1.5px solid var(--gold);border-radius:var(--radius);background:var(--panel);
@@ -215,6 +231,15 @@ ob_start(); ?>
 <!-- Интро -->
 <section class="section">
   <div class="container blog-intro">
+    <div class="blog-top reveal">
+      <a class="aw-back" href="<?= url('/menu') ?>"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5M11 6l-6 6 6 6"/></svg>Назад</a>
+      <nav class="blog-chips" aria-label="Разделы страницы">
+        <?php if ($posts): ?><a class="blog-chip" href="#blog-fresh"><?= $svg['bell'] ?>Свежее</a><?php endif; ?>
+        <a class="blog-chip" href="#blog-rubrics"><?= $svg['note'] ?>Рубрики</a>
+        <?php if ($hasFeed): ?><a class="blog-chip" href="#blog-feed"><?= $svg['play'] ?>Из жизни центра</a><?php endif; ?>
+        <a class="blog-chip" href="#blog-sub"><?= $svg['star'] ?>Подписка</a>
+      </nav>
+    </div>
     <div class="section-head reveal">
       <p class="eyebrow">Блог и новости</p>
       <h2>Живём искусством вместе</h2>
@@ -226,7 +251,7 @@ ob_start(); ?>
 
 <?php if ($posts): ?>
 <!-- Лента статей -->
-<section class="section section--tint">
+<section class="section section--tint blog-anchor" id="blog-fresh">
   <div class="container">
     <div class="section-head reveal">
       <p class="eyebrow">Свежее</p>
@@ -256,17 +281,13 @@ ob_start(); ?>
       <div class="blog-soon"><?= $svg['soon'] ?></div>
       <h2>Скоро здесь появятся статьи</h2>
       <p style="color:var(--text-dim)">Мы готовим блог центра: гиды по конкурсам, истории лауреатов, разборы номинаций и рассказы о композиторах. А пока — следите за новостями в нашем сообществе «ВКонтакте».</p>
-      <div style="margin-top:8px">
-        <a class="btn btn--primary" href="<?= h(cfgv('org_vk')) ?>" target="_blank" rel="noopener">Сообщество «ВКонтакте»</a>
-        <a class="btn btn--ghost" href="<?= h(cfgv('org_vk')) ?>" target="_blank" rel="noopener">Мы во ВКонтакте</a>
-      </div>
     </div>
   </div>
 </section>
 <?php endif; ?>
 
 <!-- Рубрики блога -->
-<section class="section">
+<section class="section blog-anchor" id="blog-rubrics">
   <div class="container">
     <div class="section-head reveal">
       <p class="eyebrow">О чём пишем</p>
@@ -289,7 +310,7 @@ ob_start(); ?>
 
 <?php if ($hasFeed): ?>
 <!-- Живая лента: анонсы и видео из базы -->
-<section class="section section--parchment">
+<section class="section section--parchment blog-anchor" id="blog-feed">
   <div class="container">
     <div class="section-head reveal">
       <p class="eyebrow">Прямо сейчас</p>
@@ -323,13 +344,12 @@ ob_start(); ?>
 <?php endif; ?>
 
 <!-- Подписка -->
-<section class="section section--tint">
+<section class="section section--tint blog-anchor" id="blog-sub">
   <div class="container">
     <div class="blog-sub reveal">
       <h2>Не пропустите новое</h2>
-      <p style="color:var(--text-dim);margin:14px auto 22px">Анонсы конкурсов, результаты и новые статьи - в наших официальных каналах. Подпишитесь, чтобы быть в курсе.</p>
-      <a class="btn btn--primary btn--lg" href="<?= h(cfgv('org_vk')) ?>" target="_blank" rel="noopener">«ВКонтакте»</a>
-      <a class="btn btn--ghost btn--lg" href="<?= h(cfgv('org_vk')) ?>" target="_blank" rel="noopener">Мы во ВКонтакте</a>
+      <p style="color:var(--text-dim);margin:14px auto 22px">Анонсы конкурсов, результаты и новые статьи - в нашем официальном сообществе. Подпишитесь, чтобы быть в курсе.</p>
+      <a class="btn btn--primary btn--lg" href="<?= h(cfgv('org_vk')) ?>" target="_blank" rel="noopener">Мы во ВКонтакте</a>
     </div>
   </div>
 </section>

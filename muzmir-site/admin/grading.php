@@ -15,6 +15,21 @@ function grading_embed(string $url): ?string {
     return null;
 }
 
+/* Колонки итогового оценивания (доп. диплом и комментарий жюри) — мягкая миграция. */
+foreach (['extra_diploma' => "TEXT DEFAULT ''", 'jury_comment' => "TEXT DEFAULT ''"] as $col => $def) {
+    try { q("ALTER TABLE applications ADD COLUMN $col $def"); } catch (\Throwable $e) { /* уже есть */ }
+}
+
+/** Заготовки итоговых результатов (порядок = порядок кнопок). */
+function RESULT_PRESETS(): array {
+    return ['ГРАН-ПРИ','ЛАУРЕАТ I СТЕПЕНИ','ЛАУРЕАТ II СТЕПЕНИ','ЛАУРЕАТ III СТЕПЕНИ',
+            'ДИПЛОМАНТ I СТЕПЕНИ','ДИПЛОМАНТ II СТЕПЕНИ','ДИПЛОМАНТ III СТЕПЕНИ','УЧАСТНИК КОНКУРСА'];
+}
+/** Заготовки дополнительных дипломов. */
+function EXTRA_PRESETS(): array {
+    return ['ЗА АРТИСТИЗМ','ЗА ПАТРИОТИЗМ','ЗА ОРИГИНАЛЬНОЕ ИСПОЛНЕНИЕ','ЗА ВЫРАЗИТЕЛЬНОСТЬ','ЗА ВИРТУОЗНОЕ ИСПОЛНЕНИЕ'];
+}
+
 /** Пересчёт итогового балла заявки как среднего оценок жюри. */
 function recalc_score(int $appId): void {
     $avg = scalar("SELECT AVG(score) FROM jury_grades WHERE application_id=?", [$appId]);
@@ -95,6 +110,42 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && input('do') === 'grade') {
         if ($next) admin_redirect('grading', array_filter(['id'=>$next,'competition'=>$comp,'mode'=>$mode]));
         admin_redirect('grading', array_filter(['competition'=>$comp,'mode'=>$mode]));
     }
+    admin_redirect('grading', array_filter(['id'=>$appId,'competition'=>$comp,'mode'=>$mode]));
+}
+
+/* ---------- Итоговый результат (заготовки: Гран-при/Лауреат/Дипломант/Участник) ---------- */
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && input('do') === 'grade_result') {
+    if (!csrf_check()) { flash('Сессия устарела.', 'error'); admin_redirect('grading'); }
+    $appId  = (int) input('id');
+    $result = trim(input('result'));
+    $extra  = trim(input('extra_diploma'));
+    if ($extra === '__custom__') $extra = trim(input('extra_custom'));
+    $jcomment = trim(input('jury_comment'));
+    if ($appId && in_array($result, RESULT_PRESETS(), true)) {
+        $score = null;
+        if ($result === 'ГРАН-ПРИ') {
+            // Балл нужен ТОЛЬКО для Гран-при: 9.1–10 с шагом 0.1.
+            $score = round((float) str_replace(',', '.', input('granprix_score')), 1);
+            if ($score < 9.1 || $score > 10) {
+                flash('Для Гран-при укажите балл от 9.1 до 10.', 'error');
+                admin_redirect('grading', array_filter(['id'=>$appId,'competition'=>$comp,'mode'=>$mode]));
+            }
+        }
+        update('applications', [
+            'result' => $result, 'score' => $score,
+            'extra_diploma' => $extra, 'jury_comment' => $jcomment,
+            'status' => 'graded',
+        ], 'id=:wid', ['wid' => $appId]);
+        q("UPDATE jury_assignments SET done=1 WHERE application_id=?", [$appId]);
+        audit('grade_result', 'application', $appId, ['result'=>$result,'score'=>$score,'extra'=>$extra]);
+        flash('Итог сохранён: ' . $result . ($score !== null ? ' · ' . number_format($score,1,'.','') : '') . ($extra !== '' ? ' · доп: ' . $extra : '') . '.', 'success');
+        $queue = $mode === 'mine' ? jury_assigned_queue((int)(current_user()['id'] ?? 0), $comp) : grading_queue($comp);
+        $next = null;
+        foreach ($queue as $row) { if ((int)$row['id'] > $appId && (int)$row['id'] !== $appId) { $next = (int)$row['id']; break; } }
+        if ($next) admin_redirect('grading', array_filter(['id'=>$next,'competition'=>$comp,'mode'=>$mode]));
+        admin_redirect('grading', array_filter(['competition'=>$comp,'mode'=>$mode]));
+    }
+    flash('Выберите итоговый результат из списка.', 'error');
     admin_redirect('grading', array_filter(['id'=>$appId,'competition'=>$comp,'mode'=>$mode]));
 }
 
@@ -212,8 +263,75 @@ if ($id = (int) input('id')) {
         </div>
       </div>
 
+      <div class="card" id="resultCard">
+        <h3>Итоговый результат</h3>
+        <p class="small muted">Выберите звание. Балл — только для Гран-при. Доп. диплом и комментарий — по желанию.</p>
+        <form method="post" action="<?= url('/admin/?p=grading') ?>">
+          <?= csrf_field() ?><input type="hidden" name="p" value="grading"><input type="hidden" name="do" value="grade_result">
+          <input type="hidden" name="id" value="<?= $id ?>"><input type="hidden" name="competition" value="<?= $comp ?>"><input type="hidden" name="mode" value="<?= h($mode) ?>">
+          <div class="rp-grid">
+            <?php foreach (RESULT_PRESETS() as $rp): ?>
+              <label class="rp-item<?= $a['result']===$rp?' on':'' ?>">
+                <input type="radio" name="result" value="<?= h($rp) ?>" <?= $a['result']===$rp?'checked':'' ?>>
+                <span><?= h($rp) ?></span>
+              </label>
+            <?php endforeach; ?>
+          </div>
+          <div class="field" id="gpScoreBox" style="display:<?= $a['result']==='ГРАН-ПРИ'?'block':'none' ?>;margin-top:12px">
+            <label>Балл Гран-при (9.1–10)</label>
+            <select name="granprix_score">
+              <?php for ($s=91;$s<=100;$s++): $v=number_format($s/10,1,'.',''); ?>
+                <option value="<?= $v ?>" <?= ($a['result']==='ГРАН-ПРИ' && $a['score']!==null && number_format((float)$a['score'],1,'.','')===$v)?'selected':'' ?>><?= $v ?></option>
+              <?php endfor; ?>
+            </select>
+          </div>
+          <div class="field" style="margin-top:10px">
+            <label>Дополнительный диплом (необязательно)</label>
+            <select name="extra_diploma" id="extraSel">
+              <option value="">— без дополнительного диплома —</option>
+              <?php foreach (EXTRA_PRESETS() as $ep): ?>
+                <option value="<?= h($ep) ?>" <?= ($a['extra_diploma']??'')===$ep?'selected':'' ?>><?= h($ep) ?></option>
+              <?php endforeach; ?>
+              <option value="__custom__" <?= ($a['extra_diploma']??'')!=='' && !in_array($a['extra_diploma'],EXTRA_PRESETS(),true)?'selected':'' ?>>Другое (вписать)…</option>
+            </select>
+            <input type="text" name="extra_custom" id="extraCustom" placeholder="Свой вариант, например: ЗА ЛУЧШИЙ ДЕБЮТ"
+                   value="<?= ($a['extra_diploma']??'')!=='' && !in_array($a['extra_diploma'],EXTRA_PRESETS(),true) ? h($a['extra_diploma']) : '' ?>"
+                   style="margin-top:8px;display:<?= ($a['extra_diploma']??'')!=='' && !in_array($a['extra_diploma'],EXTRA_PRESETS(),true)?'block':'none' ?>">
+          </div>
+          <div class="field" style="margin-top:10px">
+            <label>Комментарий жюри (необязательно, попадает участнику)</label>
+            <textarea name="jury_comment" placeholder="Например: яркое, эмоциональное выступление"><?= h($a['jury_comment'] ?? '') ?></textarea>
+          </div>
+          <button class="btn btn--primary" style="margin-top:8px"><?= admin_icon('check') ?>Сохранить итог и далее</button>
+          <?php if ($a['result']): ?>
+            <span class="badge badge--gold" style="margin-left:8px"><?= h($a['result']) ?><?= $a['score']!==null?' · '.h(number_format((float)$a['score'],1,'.','')):'' ?></span>
+          <?php endif; ?>
+        </form>
+        <style>
+          .rp-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+          .rp-item{display:flex;align-items:center;justify-content:center;text-align:center;padding:10px 8px;border-radius:12px;cursor:pointer;
+            border:1.5px solid var(--a-line);background:#fdfaf2;font-weight:800;font-size:.78rem;line-height:1.2;transition:border-color .15s,background .15s}
+          .rp-item input{position:absolute;opacity:0;width:0;height:0}
+          .rp-item.on,.rp-item:has(input:checked){border-color:var(--a-gold,#8B6F1F);background:#f7edd2;color:var(--a-gold,#8B6F1F)}
+          @media(max-width:640px){.rp-grid{grid-template-columns:1fr 1fr}}
+        </style>
+        <script>
+        (function(){
+          var box=document.getElementById('gpScoreBox');
+          document.querySelectorAll('.rp-item input').forEach(function(r){
+            r.addEventListener('change',function(){
+              document.querySelectorAll('.rp-item').forEach(function(l){l.classList.toggle('on',l.querySelector('input').checked);});
+              box.style.display = (r.value==='ГРАН-ПРИ') ? 'block' : 'none';
+            });
+          });
+          var sel=document.getElementById('extraSel'), cust=document.getElementById('extraCustom');
+          if(sel) sel.addEventListener('change',function(){ cust.style.display = sel.value==='__custom__' ? 'block' : 'none'; });
+        })();
+        </script>
+      </div>
+
       <div class="card">
-        <h3>Оценка</h3>
+        <h3>Балльная шкала жюри (внутренняя)</h3>
         <p class="small muted">Нажмите клавишу <kbd>1</kbd>–<kbd>9</kbd> (<kbd>0</kbd> = 10) — балл сохранится и откроется следующая заявка автоматически.</p>
         <form method="post" action="<?= url('/admin/?p=grading') ?>" id="gradeForm">
           <?= csrf_field() ?><input type="hidden" name="p" value="grading"><input type="hidden" name="do" value="grade"><input type="hidden" name="id" value="<?= $id ?>">

@@ -19,7 +19,6 @@ $SECTIONS = [
   ['/goals',           'Цели и задачи',        '<circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="4"/><circle cx="12" cy="12" r="0.6" fill="currentColor"/>'],
   ['/faq',             'Вопросы',              '<circle cx="12" cy="12" r="10"/><path d="M9.1 9a3 3 0 0 1 5.8 1c0 2-3 2.5-3 4M12 17h.01"/>'],
   ['/contacts',        'Контакты',             '<path d="M22 16.9v3a2 2 0 0 1-2.2 2 19.8 19.8 0 0 1-8.6-3.1 19.5 19.5 0 0 1-6-6A19.8 19.8 0 0 1 2.1 4.2 2 2 0 0 1 4.1 2h3a2 2 0 0 1 2 1.7c.1.9.4 1.8.7 2.7a2 2 0 0 1-.5 2.1L8.1 9.8a16 16 0 0 0 6 6l1.3-1.3a2 2 0 0 1 2.1-.5c.9.3 1.8.6 2.7.7a2 2 0 0 1 1.8 2.2z"/>'],
-  ['/club',            'ВИП-клуб',             '<path d="M12 2l2.4 7.4H22l-6 4.5 2.3 7.1L12 16.7 5.7 21l2.3-7.1-6-4.5h7.6z"/>'],
   ['/verify',          'Проверка диплома',     '<path d="M12 2 4 5v6c0 5 3.4 8.5 8 11 4.6-2.5 8-6 8-11V5z"/><path d="m9 12 2 2 4-4"/>'],
   ['/agreement',       'Соглашение',           '<path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6"/>'],
   ['/privacy',         'Конфиденциальность',   '<rect x="3" y="11" width="18" height="10" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/>'],
@@ -30,6 +29,35 @@ $SECTIONS[] = $u
 if ($u) { $SECTIONS[] = ['/logout', 'Выйти', '<path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4M16 17l5-5-5-5M21 12H9"/>']; }
 
 ob_start(); ?>
+<style>
+/* --- ВИП-плашка над сеткой разделов --- */
+.vip-banner{position:relative;overflow:hidden;display:flex;align-items:center;gap:16px;
+  width:100%;margin:0 0 18px;padding:18px 20px;border-radius:20px;text-decoration:none;color:var(--text);
+  background:var(--glass-card);backdrop-filter:blur(18px);-webkit-backdrop-filter:blur(18px);
+  border:1px solid var(--gold);
+  box-shadow:0 10px 30px rgba(199,147,34,.16),inset 0 0 0 1px rgba(199,147,34,.22);
+  transition:transform .25s ease,box-shadow .25s ease}
+.vip-banner:hover{transform:translateY(-3px);box-shadow:0 16px 38px rgba(199,147,34,.26),inset 0 0 0 1px rgba(199,147,34,.32)}
+.vip-banner::before{content:"";position:absolute;inset:0;border-radius:inherit;pointer-events:none;
+  background:radial-gradient(120% 160% at 0% 0%,rgba(199,147,34,.14),transparent 55%)}
+.vip-shine{position:absolute;top:-20%;bottom:-20%;left:-90px;width:70px;pointer-events:none;
+  background:linear-gradient(105deg,transparent,rgba(233,197,103,.38),transparent);
+  transform:skewX(-20deg);animation:vipShine 3.4s ease-in-out infinite}
+@keyframes vipShine{0%{left:-90px}55%{left:115%}100%{left:115%}}
+.vip-banner-ic{flex:none;width:52px;height:52px;border-radius:50%;display:flex;align-items:center;justify-content:center;
+  background:var(--grad-gold);color:var(--gold-fg,#fff);box-shadow:0 6px 18px rgba(199,147,34,.35)}
+.vip-banner-ic svg{width:28px;height:28px}
+.vip-banner-txt{flex:1;min-width:0;display:flex;flex-direction:column;gap:3px;word-break:normal;hyphens:none}
+.vip-banner-title{font-family:var(--ff-display);font-size:clamp(1.15rem,3.4vw,1.45rem);letter-spacing:.02em;line-height:1.15;
+  background:var(--grad-gold-text,var(--grad-gold));-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;color:var(--gold)}
+.vip-banner-sub{font-size:.85rem;color:var(--muted);line-height:1.4}
+.vip-banner-arr{flex:none;width:22px;height:22px;color:var(--gold);transition:transform .25s ease}
+.vip-banner:hover .vip-banner-arr{transform:translateX(4px)}
+[data-theme="dark"] .vip-banner{border-color:var(--gold);
+  box-shadow:0 10px 30px rgba(0,0,0,.35),inset 0 0 0 1px rgba(233,197,103,.22)}
+@media (max-width:480px){.vip-banner{padding:15px 16px;gap:12px}.vip-banner-ic{width:44px;height:44px}.vip-banner-ic svg{width:24px;height:24px}}
+@media (prefers-reduced-motion:reduce){.vip-shine{animation:none;display:none}.vip-banner,.vip-banner-arr{transition:none}}
+</style>
 <section class="section menu-page">
   <div class="container">
     <div class="menu-head">
@@ -42,6 +70,20 @@ ob_start(); ?>
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/></svg>
       <input type="search" id="menuSearchInput" placeholder="Поиск раздела…" autocomplete="off" aria-label="Поиск раздела">
     </div>
+
+    <a class="vip-banner reveal" href="<?= url('/club') ?>" aria-label="Закрытый ВИП-клуб — привилегии, скидки и закрытые конкурсы">
+      <span class="vip-shine" aria-hidden="true"></span>
+      <span class="vip-banner-ic" aria-hidden="true">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M3 8.5 7.5 12 12 5.5 16.5 12 21 8.5 19.2 18H4.8z"/><path d="M6 21h12"/>
+        </svg>
+      </span>
+      <span class="vip-banner-txt">
+        <span class="vip-banner-title">Закрытый ВИП-клуб</span>
+        <span class="vip-banner-sub">Привилегии, скидки и закрытые конкурсы для участников клуба</span>
+      </span>
+      <svg class="vip-banner-arr" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 6l6 6-6 6"/></svg>
+    </a>
 
     <div class="menu-grid" id="menuGrid">
       <?php foreach ($SECTIONS as $i => [$href, $label, $path]): ?>

@@ -215,9 +215,66 @@ $typeIcon = ['start' => $ic['bell'], 'end' => $ic['clock'], 'results' => $ic['aw
 
 require_once BASE_PATH . '/templates/site/partials/heatmap.php';
 
+/* --- Архив конкурсов по данным официального сообщества (2022-2026) --- */
+$archive = [
+    2026 => [
+        '«Сияние звёзд»', '«Атланты искусства»', '«Творческий импульс»', '«Открытая сцена»',
+        '«Мировая сцена»', '«Вершина мастерства»', '«Симфония звёзд»', '«Грани талантов»',
+        '«Живое исполнение»', '«Планета талантов»', '«Музыкальная весна»', '«Мир вдохновения»',
+        '«Вундеркинд»', '«Лига искусства»', '«Созвездие творчества»', '«Zа Родину»',
+        'Фестиваль ко Дню защитника Отечества',
+    ],
+    2025 => [
+        '«Слава Героям России»', '«Сила Родины моей»', '«Славься, Отечество»', '«Моё призвание»',
+        '«Звёздный кураж»', '«Священная Россия»', '«Магия талантов»', '«Славный путь»',
+        '«Творчество без границ»', '«Эксклюзив»', '«Звезда искусства»', '«Герои России»',
+        '«Всё ради искусства»', '«Россия — наша держава»', '«Великолепие талантов»',
+        '«Мировая легенда»', '«Наша держава»', '«Музыкальный десант»', '«Таланты Земли»',
+        '«Гармония мира»', '«Могучая Россия»', '«Зов сцены»', '«Чудеса талантов»',
+        '«Хит-парад»', '«Таланты зажигают»', '«Россия — моё достояние»', '«Всемирная слава»',
+        '«Мой клич — успех!»', '«По зову сердца»', '«На пике славы»', '«Уникальный дар»',
+        '«Звёзды на сцене»', '«Гении искусства»', '«Патриоты России»', '«Символ успеха»',
+        '«Национальная культура»', '«Звёздный форум»', '«Одарённые»', '«Край родной»',
+        '«Моя стихия»', '«Величие России»', '«Россия — Родина моя»', '«Мы — россияне»',
+        '«Сфера искусства»', '«Музыка без границ»', '«Золотая лира»',
+        'Фестиваль ко Дню города Москвы',
+    ],
+    2024 => [
+        '«Вместе»', '«На высоте»', '«Россия — это мы»', '«Музыкальная волна»',
+        '«Хрустальный голос»', '«Путь к успеху»', '«День защитника Отечества»',
+        '«Народное достояние»', '«Мы Zа Россию»', '«Моя Родина — Россия»', '«Виртуоз»',
+        '«Великая Россия»', '«Зов сердца»', '«Сила России»', '«Овация»', '«Россия-матушка»',
+        '«Великое искусство»', '«Гордость России»', '«Звёздный Олимп»',
+        '«Творческое вдохновение»', '«Культурное наследие»', '«Искусство побеждать»',
+        '«Великая страна»', '«Победа Zа нами»', '«Созвездие талантов»', '«Дар искусства»',
+    ],
+    2023 => [
+        '«День Победы»', '«Слава России»', '«Я Zа Победу»', '«Будущее России»',
+        '«Звёзды Великой Страны»', '«Одарённые талантом»', '«Лучший из лучших»',
+        '«Я Zа Родину»', '«Гордость нации»', '«Звёзды России»', '«Юные таланты»',
+        '«Профи»', '«Эврика»',
+    ],
+    2022 => [
+        '«Талант года»', '«Zа Россию»', '«Музыкальный Мир»', '«Браво»', '«Звёздный путь»',
+        'Конкурс ко Дню учителя', 'Конкурс ко Дню народного единства',
+    ],
+];
+krsort($archive);
+$archiveTotal = array_sum(array_map('count', $archive));
+$pluralComp = static function (int $n): string {
+    $n = abs($n); $t = $n % 100; $u = $n % 10;
+    if ($t >= 11 && $t <= 14) return $n . ' конкурсов';
+    if ($u === 1) return $n . ' конкурс';
+    if ($u >= 2 && $u <= 4) return $n . ' конкурса';
+    return $n . ' конкурсов';
+};
+/* Маленький лавр для строк архива */
+$ic['laurel'] = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M12 4v16"/><path d="M12 8c-2.6 0-4.4-1.7-4.4-3.6C10.2 4.4 12 5.6 12 8z"/><path d="M12 8c2.6 0 4.4-1.7 4.4-3.6C13.8 4.4 12 5.6 12 8z"/><path d="M12 13c-2.6 0-4.4-1.7-4.4-3.6 2.6 0 4.4 1.2 4.4 3.6z"/><path d="M12 13c2.6 0 4.4-1.7 4.4-3.6-2.6 0-4.4 1.2-4.4 3.6z"/><path d="M12 18c-2.6 0-4.4-1.7-4.4-3.6 2.6 0 4.4 1.2 4.4 3.6z"/><path d="M12 18c2.6 0 4.4-1.7 4.4-3.6-2.6 0-4.4 1.2-4.4 3.6z"/></svg>';
+
 ob_start(); ?>
 <section class="section section--tint calx-top">
   <div class="container">
+    <a class="aw-back" href="<?= url('/menu') ?>"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5M11 6l-6 6 6 6"/></svg>Назад</a>
     <div class="section-head reveal">
       <p class="eyebrow">Планирование участия</p>
       <h2>Календарь конкурсов</h2>
@@ -245,6 +302,15 @@ ob_start(); ?>
         <div class="stat"><b><?= (int) $kpi['results'] ?></b><span>с результатами</span></div>
       </div>
     <?php endif; ?>
+
+    <nav class="calx-anchors reveal" aria-label="Разделы страницы">
+      <?php if ($totalEvents > 0): ?>
+        <a class="calx-anchor" href="#season">Конкурсы сезона</a>
+        <a class="calx-anchor" href="#timeline">Таймлайн</a>
+      <?php endif; ?>
+      <a class="calx-anchor" href="#geo">География</a>
+      <a class="calx-anchor" href="#archive">Архив конкурсов</a>
+    </nav>
   </div>
 </section>
 
@@ -260,10 +326,10 @@ ob_start(); ?>
   </section>
 <?php else: ?>
 
-<section class="section">
+<section class="section" id="season">
   <div class="container">
     <div class="section-head reveal">
-      <p class="eyebrow"><?= $ic['flag'] ?> Статусы мероприятий</p>
+      <p class="eyebrow">Статусы мероприятий</p>
       <h2>Конкурсы и фестивали сезона</h2>
       <div class="gold-rule"></div>
     </div>
@@ -337,10 +403,10 @@ ob_start(); ?>
   </div>
 </section>
 
-<section class="section section--parchment">
+<section class="section section--parchment" id="timeline">
   <div class="container">
     <div class="section-head reveal">
-      <p class="eyebrow"><?= $ic['clock'] ?> Хронология</p>
+      <p class="eyebrow">Хронология</p>
       <h2>Таймлайн сезона</h2>
       <div class="gold-rule"></div>
       <p>Ключевые даты по месяцам: открытие приёма заявок, окончание приёма и публикация результатов.
@@ -368,16 +434,54 @@ ob_start(); ?>
 
 <?php endif; ?>
 
-<section class="section">
+<section class="section" id="geo">
   <div class="container">
     <div class="section-head reveal">
-      <p class="eyebrow"><?= $ic['map'] ?> География участников</p>
+      <p class="eyebrow">География участников</p>
       <h2>Тепловая карта регионов</h2>
       <div class="gold-rule"></div>
       <p>Распределение участников конкурсов по федеральным округам России - по числу поданных заявок.</p>
     </div>
     <div class="card reveal" style="padding:32px">
       <?= render_regions_heatmap() ?>
+    </div>
+  </div>
+</section>
+
+<section class="section section--tint" id="archive">
+  <div class="container">
+    <div class="section-head reveal">
+      <p class="eyebrow">Летопись Культурного центра</p>
+      <h2>Архив конкурсов</h2>
+      <div class="gold-rule"></div>
+      <p>Все конкурсы и фестивали, проведённые КЦ «Музыкальный Мир» с 2022 года, - по данным
+         официальной летописи сообщества. Каждый сезон - десятки проектов, тысячи участников
+         со всей России и из-за рубежа.</p>
+    </div>
+
+    <div class="arcx-total reveal">
+      <span class="arcx-total__num"><?= (int) $archiveTotal ?></span>
+      <span class="arcx-total__lbl">Проведено конкурсов<br>за 2022-<?= (int) array_key_first($archive) ?> годы</span>
+    </div>
+
+    <div class="arcx">
+      <?php foreach ($archive as $ay => $names): ?>
+        <div class="arcx-year reveal">
+          <div class="arcx-year__head">
+            <span class="arcx-year__num"><?= (int) $ay ?></span>
+            <span class="arcx-year__cnt"><?= h($pluralComp(count($names))) ?></span>
+            <span class="arcx-year__line" aria-hidden="true"></span>
+          </div>
+          <ul class="arcx-list">
+            <?php foreach ($names as $nm): ?>
+              <li class="arcx-item">
+                <span class="arcx-item__ic" aria-hidden="true"><?= $ic['laurel'] ?></span>
+                <span class="arcx-item__name"><?= h($nm) ?></span>
+              </li>
+            <?php endforeach; ?>
+          </ul>
+        </div>
+      <?php endforeach; ?>
     </div>
   </div>
 </section>
@@ -427,9 +531,8 @@ ob_start(); ?>
 .calx-meta{list-style:none;margin:0 0 18px;padding:0;display:flex;flex-direction:column;gap:10px}
 .calx-meta li{display:flex;align-items:center;gap:10px;font-size:.88rem;color:var(--text-dim)}
 .calx-meta li b{color:var(--text);font-weight:700}
-.calx-meta__ic{flex:none;width:30px;height:30px;border-radius:9px;background:var(--gold-soft);
-  display:flex;align-items:center;justify-content:center;color:var(--gold)}
-.calx-meta__ic svg{width:16px;height:16px}
+.calx-meta__ic{flex:none;width:20px;height:20px;display:flex;align-items:center;justify-content:center;color:var(--gold-2)}
+.calx-meta__ic svg{width:20px;height:20px}
 .calx-card__actions{display:flex;flex-wrap:wrap;gap:10px;margin-top:auto;align-items:flex-start}
 .cal-remind summary{cursor:pointer;list-style:none;display:inline-flex;align-items:center;gap:7px}
 .cal-remind summary::-webkit-details-marker{display:none}
@@ -484,8 +587,54 @@ ob_start(); ?>
   transform:translateX(-50%);white-space:nowrap;background:var(--text);color:var(--bg);font-size:.72rem;font-weight:700;
   padding:5px 10px;border-radius:8px;box-shadow:var(--shadow-3d);pointer-events:none;z-index:5}
 
+/* --- Компактное доп-меню (якоря на секции) --- */
+.calx-anchors{display:flex;gap:10px;flex-wrap:wrap;justify-content:center;margin-top:24px}
+.calx-anchor{padding:9px 18px;border-radius:999px;font-size:.85rem;font-weight:700;color:var(--text);
+  background:var(--glass-card);backdrop-filter:blur(18px);-webkit-backdrop-filter:blur(18px);
+  border:1px solid var(--glass-brd2);transition:transform .2s ease,border-color .2s ease,color .2s ease}
+@media(hover:hover){.calx-anchor:hover{transform:translateY(-2px);border-color:var(--gold);color:var(--gold-2)}}
+#season,#timeline,#geo,#archive{scroll-margin-top:96px}
+
+/* --- Архив конкурсов: вертикальная лента по годам --- */
+.arcx-total{display:flex;align-items:center;justify-content:center;gap:16px;margin:6px auto 34px;
+  padding:18px 28px;max-width:420px;background:var(--glass-card);backdrop-filter:blur(18px);
+  -webkit-backdrop-filter:blur(18px);border:1px solid var(--glass-brd2);border-radius:20px;
+  position:relative;overflow:hidden}
+.arcx-total::after{content:"";position:absolute;left:0;right:0;bottom:0;height:2px;background:var(--grad-gold);opacity:.6}
+.arcx-total__num{font-family:var(--ff-display);font-size:2.6rem;line-height:1;font-weight:700;
+  background:var(--grad-gold-text);-webkit-background-clip:text;background-clip:text;color:transparent}
+.arcx-total__lbl{font-size:.85rem;font-weight:700;color:var(--muted);line-height:1.35;text-align:left}
+.arcx{position:relative;max-width:980px;margin:0 auto;padding-left:24px}
+.arcx::before{content:"";position:absolute;left:7px;top:10px;bottom:10px;width:2px;
+  background:linear-gradient(180deg,var(--gold),var(--glass-brd2) 92%,transparent)}
+.arcx-year{position:relative;padding-bottom:34px}
+.arcx-year:last-child{padding-bottom:0}
+.arcx-year::before{content:"";position:absolute;left:-22px;top:10px;width:12px;height:12px;border-radius:50%;
+  background:var(--grad-gold);box-shadow:0 0 0 4px var(--glass-card),0 0 10px rgba(199,147,34,.45)}
+.arcx-year__head{display:flex;align-items:baseline;gap:14px;margin-bottom:16px}
+.arcx-year__num{font-family:var(--ff-display);font-size:2.2rem;line-height:1;font-weight:700;
+  background:var(--grad-gold-text);-webkit-background-clip:text;background-clip:text;color:transparent}
+.arcx-year__cnt{font-size:.8rem;font-weight:800;color:var(--gold-2);white-space:nowrap;
+  border:1px solid var(--glass-brd2);border-radius:999px;padding:4px 12px;background:var(--glass-card)}
+.arcx-year__line{flex:1;height:1px;background:linear-gradient(90deg,var(--glass-brd2),transparent);align-self:center}
+.arcx-list{list-style:none;margin:0;padding:0;display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:10px}
+.arcx-item{display:flex;align-items:center;gap:10px;padding:11px 14px;
+  background:var(--glass-card);backdrop-filter:blur(18px);-webkit-backdrop-filter:blur(18px);
+  border:1px solid var(--glass-brd2);border-radius:16px;
+  transition:transform .2s ease,border-color .2s ease;word-break:normal;hyphens:none}
+@media(hover:hover){.arcx-item:hover{transform:translateY(-2px);border-color:var(--gold)}}
+.arcx-item__ic{flex:none;width:18px;height:18px;color:var(--gold-2)}
+.arcx-item__ic svg{width:100%;height:100%}
+.arcx-item__name{font-size:.88rem;font-weight:600;color:var(--text);line-height:1.35}
+
 @media (max-width:960px){.calx-kpi{grid-template-columns:repeat(2,1fr)}}
-@media (max-width:640px){.calx-card__actions .btn{flex:1 1 100%}}
+@media (max-width:640px){
+  .calx-card__actions .btn{flex:1 1 100%}
+  .arcx{padding-left:20px}
+  .arcx-year::before{left:-18px;width:10px;height:10px}
+  .arcx-year__num{font-size:1.85rem}
+  .arcx-list{grid-template-columns:1fr}
+}
 @media (max-width:400px){.calx-kpi{gap:10px}.calx-kpi .stat b{font-size:1.5rem}}
 </style>
 

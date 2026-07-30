@@ -34,9 +34,53 @@ ob_start(); ?>
 .vfy-search .lbl{display:flex;align-items:center;gap:9px;font-weight:600;color:var(--text-dim);font-size:.94rem;margin-bottom:12px}
 .vfy-search .lbl svg{width:20px;height:20px;color:var(--gold-ink);flex:0 0 auto}
 .vfy-form{display:flex;gap:10px;flex-wrap:wrap}
-.vfy-form .field--float{flex:1 1 220px;margin:0}
+.vfy-form .field--float{flex:1 1 200px;margin:0}
 .vfy-form input{letter-spacing:.04em}
 .vfy-form .btn{flex:0 0 auto}
+
+/* ── Кнопка сканирования QR ────────────────────────────────── */
+.vfy-qr-btn{flex:0 0 auto;display:inline-flex;align-items:center;justify-content:center;gap:8px;
+  min-width:52px;padding:0 14px;border-radius:12px;cursor:pointer;
+  background:var(--glass-card);backdrop-filter:blur(18px);border:1px solid var(--glass-brd2);
+  color:var(--gold-ink,var(--gold));transition:transform .18s ease,box-shadow .18s ease,border-color .18s ease}
+.vfy-qr-btn svg{width:22px;height:22px}
+.vfy-qr-btn:hover{transform:translateY(-1px);border-color:var(--gold);box-shadow:0 6px 18px color-mix(in srgb,var(--gold) 22%,transparent)}
+.vfy-qr-btn:active{transform:translateY(0)}
+.vfy-qr-msg{display:none;font-size:.82rem;color:var(--wine,#7A1522);margin:10px 0 0}
+.vfy-qr-msg.show{display:flex;align-items:center;gap:7px}
+.vfy-qr-msg svg{width:16px;height:16px;flex:0 0 auto}
+[data-theme="dark"] .vfy-qr-msg{color:var(--error,#e88)}
+
+/* ── Модалка сканера ───────────────────────────────────────── */
+.qr-modal{position:fixed;inset:0;z-index:1200;display:none;align-items:center;justify-content:center;
+  padding:18px;background:color-mix(in srgb,var(--royal,#17307A) 26%,rgba(6,10,26,.62));backdrop-filter:blur(8px)}
+.qr-modal.open{display:flex;animation:qrFade .22s ease}
+@keyframes qrFade{from{opacity:0}to{opacity:1}}
+.qr-card{width:100%;max-width:440px;background:var(--glass-card);backdrop-filter:blur(18px);
+  border:1px solid var(--glass-brd2);border-radius:20px;padding:18px 18px 20px;
+  box-shadow:0 24px 70px rgba(4,8,24,.45);animation:qrPop .26s cubic-bezier(.34,1.4,.4,1)}
+@keyframes qrPop{from{transform:translateY(14px) scale(.97);opacity:0}to{transform:none;opacity:1}}
+.qr-card-head{display:flex;align-items:center;gap:10px;margin-bottom:12px}
+.qr-card-head svg.qri{width:20px;height:20px;color:var(--gold-ink,var(--gold));flex:0 0 auto}
+.qr-card-head strong{font-family:var(--ff-display);font-weight:700;font-size:1.06rem;color:var(--text);flex:1 1 auto}
+.qr-close{flex:0 0 auto;width:36px;height:36px;display:grid;place-items:center;cursor:pointer;
+  background:var(--glass-card);border:1px solid var(--glass-brd2);border-radius:10px;color:var(--muted);
+  transition:color .15s ease,border-color .15s ease}
+.qr-close:hover{color:var(--text);border-color:var(--gold)}
+.qr-close svg{width:17px;height:17px}
+.qr-view{position:relative;border-radius:14px;overflow:hidden;background:#0A1330;
+  border:1px solid var(--glass-brd2);aspect-ratio:4/3}
+.qr-view video{width:100%;height:100%;object-fit:cover;display:block}
+.qr-frame{position:absolute;inset:0;display:grid;place-items:center;pointer-events:none}
+.qr-frame svg{width:56%;max-width:210px;height:auto;color:var(--gold,#E9C567);opacity:.9;
+  filter:drop-shadow(0 0 10px color-mix(in srgb,var(--gold) 45%,transparent))}
+.qr-scanline{position:absolute;left:12%;right:12%;height:2px;border-radius:2px;
+  background:linear-gradient(90deg,transparent,var(--gold),transparent);
+  animation:qrScan 2.4s ease-in-out infinite;pointer-events:none}
+@keyframes qrScan{0%,100%{top:24%}50%{top:74%}}
+.qr-status{font-size:.86rem;color:var(--muted);margin:12px 0 0;display:flex;align-items:center;gap:8px;
+  min-height:20px;word-break:normal;hyphens:none}
+.qr-status svg{width:16px;height:16px;color:var(--gold-ink,var(--gold));flex:0 0 auto}
 .vfy-hint{font-size:.82rem;color:var(--muted);margin:12px 0 0;display:flex;align-items:center;gap:7px}
 .vfy-hint svg{width:16px;height:16px;color:var(--gold-2);flex:0 0 auto}
 
@@ -159,11 +203,15 @@ ob_start(); ?>
   .vfy-badge--ok::after{animation:none;display:none}
   .cert-shine{animation:none;display:none}
   .cert-medallion::before{animation:none}
+  .qr-modal.open,.qr-card{animation:none}
+  .qr-scanline{animation:none;top:50%}
+  .vfy-qr-btn{transition:none}
 }
 </style>
 
 <section class="section section--tint">
   <div class="container vfy">
+    <a class="aw-back" href="<?= url('/menu') ?>"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5M11 6l-6 6 6 6"/></svg>Назад</a>
     <div class="section-head reveal" style="margin-bottom:26px">
       <p class="eyebrow">Проверка подлинности</p>
       <h2>Реестр наградных документов</h2>
@@ -182,8 +230,18 @@ ob_start(); ?>
                  value="<?= h($number) ?>" aria-label="Номер диплома">
           <label for="vfyNum">Номер документа</label>
         </div>
+        <button type="button" class="vfy-qr-btn" id="vfyQrBtn" aria-label="Сканировать QR-код диплома" title="Сканировать QR-код">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <rect x="3" y="3" width="7" height="7" rx="1.4"/><rect x="14" y="3" width="7" height="7" rx="1.4"/><rect x="3" y="14" width="7" height="7" rx="1.4"/>
+            <path d="M14 14h3v3h-3zM21 14v.01M14 21v.01M17.5 21H21v-3.5"/>
+          </svg>
+        </button>
         <button type="submit" class="btn btn--primary">Проверить</button>
       </form>
+      <p class="vfy-qr-msg" id="vfyQrMsg" role="status">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><circle cx="12" cy="12" r="10"/><path d="M12 8v4M12 16h.01"/></svg>
+        Сканирование не поддерживается в этом браузере, введите номер вручную.
+      </p>
       <p class="vfy-hint">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4M12 8h.01"/></svg>
         Номер напечатан на дипломе рядом с QR-кодом.
@@ -289,17 +347,144 @@ ob_start(); ?>
   </div>
 </section>
 
+<!-- Модалка сканера QR-кода -->
+<div class="qr-modal" id="qrModal" role="dialog" aria-modal="true" aria-label="Сканирование QR-кода диплома">
+  <div class="qr-card">
+    <div class="qr-card-head">
+      <svg class="qri" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+        <rect x="3" y="3" width="7" height="7" rx="1.4"/><rect x="14" y="3" width="7" height="7" rx="1.4"/><rect x="3" y="14" width="7" height="7" rx="1.4"/>
+        <path d="M14 14h3v3h-3zM21 14v.01M14 21v.01M17.5 21H21v-3.5"/>
+      </svg>
+      <strong>Сканирование QR-кода</strong>
+      <button type="button" class="qr-close" id="qrClose" aria-label="Закрыть сканер">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><path d="M18 6 6 18M6 6l12 12"/></svg>
+      </button>
+    </div>
+    <div class="qr-view">
+      <video id="qrVideo" playsinline muted autoplay></video>
+      <div class="qr-frame" aria-hidden="true">
+        <svg viewBox="0 0 100 100" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round">
+          <path d="M8 30V14a6 6 0 0 1 6-6h16M70 8h16a6 6 0 0 1 6 6v16M92 70v16a6 6 0 0 1-6 6H70M30 92H14a6 6 0 0 1-6-6V70"/>
+        </svg>
+      </div>
+      <div class="qr-scanline" aria-hidden="true"></div>
+    </div>
+    <p class="qr-status" id="qrStatus">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4M12 8h.01"/></svg>
+      <span id="qrStatusText">Наведите камеру на QR-код диплома.</span>
+    </p>
+  </div>
+</div>
+
 <script>
 (function(){
   var base = <?= json_encode($verifyBase, JSON_UNESCAPED_SLASHES) ?>;
   var form = document.getElementById('vfyForm');
+  var input = document.getElementById('vfyNum');
   if(!form) return;
-  form.addEventListener('submit', function(e){
-    e.preventDefault();
-    var v = (document.getElementById('vfyNum').value || '').trim();
+
+  function go(v){
+    v = (v || '').trim();
     if(!v) return;
     window.location.href = base + '/' + encodeURIComponent(v);
+  }
+  form.addEventListener('submit', function(e){
+    e.preventDefault();
+    go(input.value);
   });
+
+  /* ── Сканер QR-кода ── */
+  var qrBtn = document.getElementById('vfyQrBtn');
+  var qrMsg = document.getElementById('vfyQrMsg');
+  var modal = document.getElementById('qrModal');
+  var video = document.getElementById('qrVideo');
+  var statusText = document.getElementById('qrStatusText');
+  var closeBtn = document.getElementById('qrClose');
+  if(!qrBtn || !modal) return;
+
+  var stream = null, scanning = false, detector = null;
+
+  function setStatus(t){ if(statusText) statusText.textContent = t; }
+
+  function stopScan(){
+    scanning = false;
+    if(stream){
+      try{ stream.getTracks().forEach(function(tr){ tr.stop(); }); }catch(e){}
+      stream = null;
+    }
+    try{ video.srcObject = null; }catch(e){}
+    modal.classList.remove('open');
+    document.documentElement.style.overflow = '';
+  }
+
+  // Найденный текст: если это ссылка вида .../verify/НОМЕР — берём номер,
+  // иначе подставляем текст целиком как номер.
+  function handleResult(raw){
+    raw = (raw || '').trim();
+    if(!raw) return;
+    var num = raw;
+    if(/^https?:\/\//i.test(raw) && raw.indexOf('/verify') !== -1){
+      try{
+        var path = new URL(raw).pathname;
+        var m = path.match(/\/verify\/?([^\/?#]*)/i);
+        if(m && m[1]) num = decodeURIComponent(m[1]);
+      }catch(e){}
+    }
+    stopScan();
+    if(input) input.value = num;
+    go(num);
+  }
+
+  function tick(){
+    if(!scanning || !detector) return;
+    if(video.readyState >= 2){
+      detector.detect(video).then(function(codes){
+        if(scanning && codes && codes.length && codes[0].rawValue){
+          handleResult(codes[0].rawValue);
+          return;
+        }
+        if(scanning) requestAnimationFrame(tick);
+      }).catch(function(){
+        if(scanning) setTimeout(tick, 250);
+      });
+    } else if(scanning){
+      requestAnimationFrame(tick);
+    }
+  }
+
+  function startScan(){
+    // Fallback: без BarcodeDetector обработать кадр не сможем — честно сообщаем.
+    if(!('BarcodeDetector' in window) || !navigator.mediaDevices || !navigator.mediaDevices.getUserMedia){
+      if(qrMsg) qrMsg.classList.add('show');
+      return;
+    }
+    modal.classList.add('open');
+    document.documentElement.style.overflow = 'hidden';
+    setStatus('Запрашиваем доступ к камере…');
+    navigator.mediaDevices.getUserMedia({
+      video: { facingMode: { ideal: 'environment' } }, audio: false
+    }).then(function(s){
+      stream = s;
+      video.srcObject = s;
+      return video.play().catch(function(){});
+    }).then(function(){
+      try{ detector = new BarcodeDetector({ formats: ['qr_code'] }); }
+      catch(e){ detector = new BarcodeDetector(); }
+      scanning = true;
+      setStatus('Наведите камеру на QR-код диплома.');
+      requestAnimationFrame(tick);
+    }).catch(function(){
+      setStatus('Не удалось получить доступ к камере. Разрешите доступ или введите номер вручную.');
+    });
+  }
+
+  qrBtn.addEventListener('click', startScan);
+  closeBtn.addEventListener('click', stopScan);
+  modal.addEventListener('click', function(e){ if(e.target === modal) stopScan(); });
+  document.addEventListener('keydown', function(e){
+    if(e.key === 'Escape' && modal.classList.contains('open')) stopScan();
+  });
+  window.addEventListener('pagehide', function(){ if(stream) stopScan(); });
 })();
 </script>
 <?php

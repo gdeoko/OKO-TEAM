@@ -134,7 +134,7 @@ $buyerName  = input('full_name');
 $buyerEmail = mb_strtolower(input('email'));
 $compName   = $comp['name'] ?? input('competition');
 $itemsText  = implode(', ', array_map(
-    static fn($it) => $it['item'] . ' (' . $it['kind'] . ') - ' . money((int) $it['price']),
+    static fn($it) => $it['item'] . (!empty($it['fio']) ? ' — ' . $it['fio'] : '') . ' (' . $it['kind'] . ') - ' . money((int) $it['price']),
     $normItems
 ));
 

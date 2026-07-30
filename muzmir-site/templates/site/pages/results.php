@@ -229,6 +229,7 @@ ob_start(); ?>
 
 <section class="section">
   <div class="container res-wrap">
+    <a class="aw-back" href="<?= url('/menu') ?>"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5M11 6l-6 6 6 6"/></svg>Назад</a>
     <div class="res-hero reveal">
       <p class="eyebrow"><?= h($typeLabel) ?> · Итоги</p>
       <h1><?= h($c['name']) ?></h1>

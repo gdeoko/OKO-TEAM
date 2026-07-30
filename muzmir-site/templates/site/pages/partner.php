@@ -120,6 +120,7 @@ ob_start(); ?>
 
 <section class="section section--parchment pn-hero">
   <div class="container" style="max-width:780px;text-align:center">
+    <a class="aw-back" href="<?= url('/menu') ?>"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5M11 6l-6 6 6 6"/></svg>Назад</a>
     <div class="reveal">
       <span class="ribbon"><svg viewBox="0 0 24 24" fill="none" stroke-width="1.7"><path d="m12 2 2.9 6.3 6.9.6-5.2 4.5 1.6 6.7L12 17l-6.2 3.6 1.6-6.7L2.2 8.9l6.9-.6L12 2Z"/></svg>Для блогеров и авторов</span>
       <h1 style="font-family:var(--ff-display);font-size:clamp(1.9rem,4vw,2.7rem);margin-bottom:.3em">Партнёрская программа</h1>
