@@ -45131,6 +45131,19 @@ if(typeof mpOpenPackages === 'function'){
       document.body.style.height = h + 'px';
       const app = document.getElementById('app');
       if(app) app.style.height = h + 'px';
+      /* v29 (меню «поднимается» при тапах): якорим нижнее меню СВЕРХУ на
+         вычисленной позиции. Fixed-элемент с bottom:0 ездит вместе с нижней
+         кромкой вьюпорта, когда TG-фуллскрин на Android дёргает высоту при
+         касаниях. Top-якорь от этого джиттера не зависит — меню физически
+         не может сдвинуться. Пересчёт только здесь (старт/клавиатура/поворот). */
+      try{
+        const nav = document.getElementById('tabs');
+        if(nav && window.innerWidth < 900){
+          const nh = nav.offsetHeight || 57;
+          nav.style.top = (h - nh) + 'px';
+          nav.style.bottom = 'auto';
+        }
+      }catch(_){}
     }catch(e){}
   }
   /* rAF-троттлинг: при открытии клавиатуры visualViewport шлёт десятки resize/сек —
