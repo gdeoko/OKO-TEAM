@@ -1,4 +1,4 @@
-const CACHE = 'muzmir-v30';
+const CACHE = 'muzmir-v31';
 const CORE = ['/offline.html', '/assets/img/logo_muzmir_256.png'];
 
 self.addEventListener('install', e => {

@@ -199,8 +199,8 @@ ob_start(); ?>
     totalEl.textContent=total.toLocaleString('ru-RU')+' ₽';
     countEl.textContent=count; fab.hidden=count===0; emptyBox.hidden=count>0; form.hidden=count===0;
   }
-  function openCart(){sheet.hidden=false;requestAnimationFrame(function(){sheet.classList.add('on');});}
-  function closeCart(){sheet.classList.remove('on');setTimeout(function(){sheet.hidden=true;},300);}
+  function openCart(){sheet.hidden=false;document.body.classList.add('mz-cart-open');requestAnimationFrame(function(){sheet.classList.add('on');});}
+  function closeCart(){sheet.classList.remove('on');document.body.classList.remove('mz-cart-open');setTimeout(function(){sheet.hidden=true;},300);}
   fab.addEventListener('click',openCart);
   document.querySelectorAll('[data-cart-close]').forEach(function(b){b.addEventListener('click',closeCart);});
 

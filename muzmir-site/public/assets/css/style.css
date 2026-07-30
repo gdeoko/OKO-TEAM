@@ -1812,3 +1812,7 @@ h1,h2,h3,h4,.cc-title,.card h3,.comp-card h3,.rst-body b,.menu-tile-lbl,
 /* Кнопка «Оплатить» в корзине наград всегда над нижним меню (z-index иерархия) */
 .shop-cart{z-index:1000 !important}
 .shop-cart-panel{padding-bottom:calc(28px + env(safe-area-inset-bottom)) !important}
+
+/* Когда открыта корзина наград — прячем нижнее меню (чтобы кнопка «Оплатить» была свободна) */
+body.mz-cart-open .appnav{display:none !important}
+body.mz-cart-open .shop-cart-fab{display:none !important}
