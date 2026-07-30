@@ -41,7 +41,7 @@ if ($route === '/admin' || str_starts_with($route, '/admin/')) {
 // Алиасы русских слагов старого сайта → 301 на канонические URL.
 $aliases = [
     '/obrazci'     => '/awards',           // образцы наград
-    '/oplata-sayt' => '/order-awards',     // оплата наградного материала
+    '/oplata-sayt' => '/awards',     // оплата наградного материала
     '/voprosi'     => '/faq',              // справка/вопросы
     '/konkursi'    => '/competitions',     // список конкурсов
     '/podderjka'   => '/ministry-support', // поддержка Минкультуры
@@ -49,11 +49,12 @@ $aliases = [
     '/documents'   => '/competitions',     // положения конкурсов
     '/video'       => '/concerts',         // онлайн-концерты
     '/onas'        => '/about',            // о нас
-    '/instrukciya' => '/order-awards',     // инструкция по заказу наград
+    '/instrukciya' => '/awards',     // инструкция по заказу наград
     '/zadachi'     => '/goals',            // цели/задачи центра
-    '/prays'       => '/order-awards',     // прайс наградного материала
+    '/prays'       => '/awards',     // прайс наградного материала
     '/novosti'      => '/blog',            // Блог/Новости (русский слаг)
 ];
+$aliases['/order-awards'] = '/awards';
 if (isset($aliases[$route])) { header('Location: ' . url($aliases[$route]), true, 301); exit; }
 
 // Карта сайта: статические маршруты + конкурсы по slug.

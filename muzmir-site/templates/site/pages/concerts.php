@@ -58,6 +58,10 @@ ob_start(); ?>
 .concert-facade .play svg{width:30px;height:30px}
 .concert-facade:hover .play span{transform:scale(1.08);background:var(--gold);color:#1b1608;border-color:var(--gold)}
 .concert-embed-stub{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;color:rgba(255,255,255,.45)}
+.concert-facade--vk .concert-vk-note{position:absolute;left:0;right:0;bottom:10px;z-index:3;text-align:center;
+  color:#fff;font-weight:700;font-size:.82rem;text-shadow:0 2px 8px rgba(0,0,0,.6)}
+.concert-actions{display:flex;gap:8px;flex-wrap:wrap}
+.concert-actions .btn{flex:1 1 auto;min-height:42px}
 .concert-body{padding:20px}
 .concert-body h3{margin:10px 0 0}
 .concert-empty{width:74px;height:74px;margin:0 auto 20px;border-radius:50%;background:var(--gold-soft);color:var(--gold-ink);
@@ -145,13 +149,20 @@ ob_start(); ?>
                 <span class="play"><span><?= $icoPlay ?></span></span>
               </button>
             <?php else: ?>
-              <div class="concert-embed-stub"><span style="width:40px;height:40px"><?= $icoPlay ?></span></div>
+              <a class="concert-facade concert-facade--vk" href="<?= h(cfgv('org_vk')) ?>" target="_blank" rel="noopener" aria-label="Смотреть в сообществе ВКонтакте">
+                <span class="concert-cover concert-cover--brand" aria-hidden="true"></span>
+                <span class="play"><span><?= $icoPlay ?></span></span>
+                <span class="concert-vk-note">Смотреть в ВКонтакте</span>
+              </a>
             <?php endif; ?>
           </div>
           <div class="concert-body">
             <h3><?= h($c['title']) ?></h3>
             <?php if ($c['date']): ?><p class="concert-date"><?= $icoCal ?><span><?= h(ru_date($c['date'])) ?></span></p><?php endif; ?>
             <div class="concert-actions">
+              <?php if ($embed === ''): ?>
+                <a class="btn btn--primary" href="<?= h(cfgv('org_vk')) ?>" target="_blank" rel="noopener"><?= $icoPlay ?>Смотреть в ВК</a>
+              <?php endif; ?>
               <button class="btn btn--ghost" type="button" data-share data-share-title="<?= h($c['title']) ?>" data-share-url="<?= h($shareUrl) ?>"><?= $icoShare ?>Поделиться</button>
             </div>
           </div>
