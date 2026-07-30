@@ -1,0 +1,258 @@
+{
+ "id": "gtape_060",
+ "app": "tape",
+ "voice": "en-US-ChristopherNeural",
+ "rate": "+4%",
+ "grade": "teal_orange",
+ "brand": {
+  "accent": "#F4C430",
+  "accent2": "#FFE08A",
+  "code": "MEASURE",
+  "logo": "tape.png",
+  "name": "3D TAPE MEASURE"
+ },
+ "music": {
+  "queries": [
+   "punchy pop energy",
+   "bright pop home",
+   "positive corporate light groove"
+  ]
+ },
+ "cover": {
+  "kicker": "MOVING DAY",
+  "top": "WILL THE SOFA",
+  "big": "FIT THROUGH\nTHE DOOR?",
+  "q": [
+   "hands holding phone ar app screen"
+  ]
+ },
+ "segments": [
+  {
+   "id": "b1",
+   "text": "Big furniture, narrow doorway, moving day panic."
+  },
+  {
+   "id": "b2",
+   "text": "Measure the door frame with your phone first."
+  },
+  {
+   "id": "b3",
+   "text": "Then measure the sofa the same way."
+  },
+  {
+   "id": "b4",
+   "text": "The app compares both in real time."
+  },
+  {
+   "id": "b5",
+   "text": "Green means go, red means turn it sideways."
+  },
+  {
+   "id": "b6",
+   "text": "Never get stuck on the stairs again."
+  }
+ ],
+ "shots": [
+  {
+   "q": [
+    "person relaxing on couch bright apartment"
+   ],
+   "insert": "hexagon",
+   "pos": "upper"
+  },
+  {
+   "q": [
+    "bookshelf assembly instructions floor"
+   ],
+   "motion": "pandown"
+  },
+  {
+   "q": [
+    "person measuring living room with phone ar"
+   ],
+   "insert": "tilt",
+   "pos": "center"
+  },
+  {
+   "q": [
+    "moving boxes new apartment"
+   ],
+   "motion": "panup"
+  },
+  {
+   "q": [
+    "apartment tour empty rooms"
+   ],
+   "insert": "arch",
+   "pos": "center"
+  },
+  {
+   "q": [
+    "cozy furnished living room warm light"
+   ],
+   "motion": "zout"
+  },
+  {
+   "q": [
+    "carpenter measuring wood workshop"
+   ],
+   "insert": "phone",
+   "pos": "center"
+  },
+  {
+   "q": [
+    "blueprint floor plan on tablet desk"
+   ],
+   "motion": "zin"
+  },
+  {
+   "q": [
+    "bedroom bed frame assembly"
+   ],
+   "insert": "tv",
+   "pos": "lower"
+  },
+  {
+   "q": [
+    "kitchen cabinets measuring renovation"
+   ],
+   "motion": "panl"
+  },
+  {
+   "q": [
+    "curtains window measuring home"
+   ],
+   "insert": "diamond",
+   "pos": "lower"
+  },
+  {
+   "q": [
+    "garden patio outdoor measuring"
+   ],
+   "motion": "panr"
+  },
+  {
+   "q": [
+    "dining table room measure"
+   ],
+   "insert": "rrect",
+   "pos": "upper"
+  }
+ ],
+ "overlays": [
+  {
+   "at": 0.03,
+   "dur": 2.09,
+   "type": "kicker",
+   "text": "POCKET TAPE"
+  },
+  {
+   "at": 0.099,
+   "dur": 2.26,
+   "type": "kinetic",
+   "top": "STOP",
+   "big": "GUESSING"
+  },
+  {
+   "at": 0.149,
+   "dur": 1.86,
+   "type": "callout",
+   "text": "BUY WHAT ACTUALLY FITS",
+   "pos": "center"
+  },
+  {
+   "at": 0.159,
+   "dur": 1.69,
+   "type": "bars",
+   "title": "FURNITURE RETURNS",
+   "unit": "%",
+   "items": [
+    [
+     "Guessing",
+     22
+    ],
+    [
+     "Measured",
+     4
+    ]
+   ],
+   "pos": "center"
+  },
+  {
+   "at": 0.279,
+   "dur": 2.6,
+   "type": "checklist",
+   "items": [
+    "Point the phone",
+    "Tap two points",
+    "Read the length",
+    "Save the project"
+   ],
+   "pos": "center"
+  },
+  {
+   "at": 0.344,
+   "dur": 1.81,
+   "type": "lowerthird",
+   "title": "MEASURE THE DOOR",
+   "sub": "then measure the sofa"
+  },
+  {
+   "at": 0.383,
+   "dur": 2.31,
+   "type": "stat_count",
+   "to": 10,
+   "suffix": "s",
+   "label": "PER ROOM",
+   "pos": "center"
+  },
+  {
+   "at": 0.847,
+   "dur": 1.77,
+   "type": "ticker",
+   "to": 4,
+   "suffix": "",
+   "label": "WALLS SAVED",
+   "pos": "lower"
+  },
+  {
+   "at": 0.87,
+   "dur": 2.35,
+   "type": "chips",
+   "items": [
+    "ROOMS",
+    "WALLS",
+    "DOORS",
+    "FURNITURE"
+   ],
+   "pos": "lower"
+  },
+  {
+   "at": 0.917,
+   "dur": 2.33,
+   "type": "gauge",
+   "to": 10,
+   "max": 60,
+   "suffix": "s",
+   "label": "PER MEASUREMENT",
+   "pos": "center"
+  }
+ ],
+ "cta": {
+  "text": "Comment MEASURE for the app.",
+  "code": "MEASURE"
+ },
+ "caption": "Moving day panic? Measure the doorway, measure the sofa, let the app compare. Green means go, red means turn it sideways. Comment MEASURE for the app. #diy #homedecor #interiordesign #measure #movingtips #renter #apartmenttherapy #app #interior #arrange #reality",
+ "yt_title": "Will the sofa fit through the door? #shorts",
+ "trend_keys": [
+  "app",
+  "interior",
+  "arrange",
+  "reality",
+  "augmented",
+  "iphone",
+  "measure",
+  "furniture"
+ ],
+ "content_type": "viral"
+}
