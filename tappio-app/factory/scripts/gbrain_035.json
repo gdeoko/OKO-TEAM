@@ -24,12 +24,13 @@
   "big": "14\nDAYS",
   "q": [
    "walking park green trees"
-  ]
+  ],
+  "ai": "work/gbrain_035/cover_ai.png"
  },
  "segments": [
   {
    "id": "b1",
-   "text": "Big change starts with one tiny daily rep."
+   "text": "Stop scrolling. Big change starts with one tiny daily rep."
   },
   {
    "id": "b2",
@@ -248,7 +249,7 @@
   "code": "FOCUS"
  },
  "caption": "One tiny daily rep compounds: faster reactions by day five, sharper recall by day ten, a streak that keeps you going. Fourteen days to a quicker mind. Comment FOCUS for the app. #brainhealth #memory #focus #productivity #selfimprovement #mentalhealth #learning #beats #memory #music #binaural",
- "yt_title": "Get measurably smarter in 14 days #shorts",
+ "yt_title": "Deep Focus Music For Studying Concentration #shorts",
  "trend_keys": [
   "beats",
   "memory",
@@ -259,5 +260,18 @@
   "improve",
   "can"
  ],
- "content_type": "viral"
+ "content_type": "viral",
+ "comp_angle": {
+  "title": "Deep Focus - Music For Studying, Concentration and Work",
+  "views": 31768597,
+  "channel": "Quiet Quest - Study Music"
+ },
+ "virality": {
+  "score": 92,
+  "notes": [
+   "angle<-31768k",
+   "hook_boosted"
+  ],
+  "hook": "Stop scrolling. Big change starts with one tiny daily rep."
+ }
 }
