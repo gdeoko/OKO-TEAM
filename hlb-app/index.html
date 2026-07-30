@@ -4223,7 +4223,7 @@ const ADMIN = {
     {n:'Алина Р.', h:'@alina.grow', ref:8, earn:'$96', st:'ok'},
   ],
   moder: [
-    {t:'Объявление: «Монтаж Reels под ключ»', by:'@editor_pro', kind:'Биржа'},
+    {t:'Объявление: «Монтаж Артём Бриус · канал»', by:'@editor_pro', kind:'Биржа'},
     {t:'Ролик на премодерации: фитнес-хук 15 сек', by:'@fitmax', kind:'Видео'},
     {t:'Объявление: «Таргет ВК + запуск»', by:'@target_alena', kind:'Биржа'},
   ],
@@ -8155,7 +8155,7 @@ function openListingForm(id){
     <label class="f-lab">Категория</label>
     <select id="lfCat" class="lf-sel">${cats}</select>
     <label class="f-lab">Название</label>
-    <input id="lfTitle" placeholder="Например: Монтаж Reels под ключ" value="${l?esc(l.t):''}">
+    <input id="lfTitle" placeholder="Например: Монтаж Артём Бриус · канал" value="${l?esc(l.t):''}">
     <label class="f-lab">Цена</label>
     <input id="lfPrice" placeholder="Например: от 500 ₽" value="${l?esc(l.pt):''}">
     <label class="f-lab">Описание</label>
@@ -8949,8 +8949,8 @@ nav#tabs .nav-logo span{ color:#fff !important; font-weight:900 !important }
   // ============ MINI-APPS ============
   const HLB_APPS = {
     brius_ai: { t:'BRIUS-AI',           cat:'ИИ-помощник Артёма', badge:'∞', tierLvl:1,
-      d:'Чат-двойник Артёма Бриуса на базе 1 313 приёмов Тёмыча из ХЛБ, «Огуречной империи» и разборов. Ответ голосом или текстом за 2 секунды.',
-      feats:['Помнит контекст всех твоих чатов','Голосовые ответы «в стиле Тёмыча»','Разбор ситуации по методу Артёма','Работает 24/7 без ожидания'],
+      d:'Чат-двойник Артёма Бриуса на базе 1 313 приёмов Артёма из ХЛБ, «Огуречной империи» и разборов. Ответ голосом или текстом за 2 секунды.',
+      feats:['Помнит контекст всех твоих чатов','Голосовые ответы «в стиле Артёма»','Разбор ситуации по методу Артёма','Работает 24/7 без ожидания'],
       demoT:'ДЕМО-ЧАТ', demo:'chat',
       icon:'<circle cx="12" cy="12" r="9"/><path d="M8 12h.01M12 12h.01M16 12h.01M18 5l3 3M22 3v0"/>' },
     razbor: { t:'ТЁМ, НУЖЕН СОВЕТ',    cat:'Личный разбор ситуации', badge:'24ч', tierLvl:2,
@@ -8969,8 +8969,8 @@ nav#tabs .nav-logo span{ color:#fff !important; font-weight:900 !important }
       demoT:'БЛИЖАЙШИЙ ЭФИР', demo:'efir',
       icon:'<path d="M20 5H4v14h16V5z"/><path d="M10 9l5 3-5 3V9z"/>' },
     desyatka: { t:'ДЕСЯТКИ',           cat:'Твой чат из 10 таких же', badge:'10', tierLvl:2,
-      d:'Автоматически попадаешь в закрытый чат из 10 участников на одном уровне. Модерирует бот-Тёмыч. Общие челленджи и лидерборд.',
-      feats:['Чат из 10 таких же','Модератор — бот-Тёмыч','Совместные челленджи','Награды за активность'],
+      d:'Автоматически попадаешь в закрытый чат из 10 участников на одном уровне. Модерирует AI-двойник Артёма. Общие челленджи и лидерборд.',
+      feats:['Чат из 10 таких же','Модератор — AI-двойник Артёма','Совместные челленджи','Награды за активность'],
       demoT:'ТВОЯ ДЕСЯТКА', demo:'desyatka',
       icon:'<circle cx="9" cy="9" r="3"/><circle cx="17" cy="9" r="3"/><path d="M3 20c0-3 3-5 6-5s6 2 6 5M12 20c0-3 3-5 6-5s3 1 3 1"/>' },
     sprint: { t:'СПРИНТ-ТРЕКЕР',       cat:'Дисциплина и метрики', badge:'52', tierLvl:2,
@@ -9025,11 +9025,11 @@ nav#tabs .nav-logo span{ color:#fff !important; font-weight:900 !important }
       icon:'<circle cx="12" cy="12" r="9"/><path d="M12 6v12M15 9h-4a2 2 0 000 4h2a2 2 0 010 4H9"/>' },
     grate: { t:'ДНЕВНИК БЛАГОДАРНОСТИ',cat:'Практика Артёма', badge:'2/день', tierLvl:2,
       d:'Утренние и вечерние благодарности. Артём делал этот челлендж в ХЛБ — теперь встроен в приложение с реакциями команды десятки.',
-      feats:['Утро + вечер','Реакция команды десятки','Голосовые ответы Тёмыча','Стрик и напоминания'],
+      feats:['Утро + вечер','Реакция команды десятки','Голосовые ответы Артёма','Стрик и напоминания'],
       demoT:'ЗАПИСЬ ДНЯ', demo:'grate',
       icon:'<path d="M20.8 4.6a5.5 5.5 0 00-7.8 0L12 5.7l-1-1.1a5.5 5.5 0 00-7.8 7.8l1.1 1.1L12 21l7.7-7.5 1.1-1.1a5.5 5.5 0 000-7.8z"/>' },
     sport: { t:'СПОРТ-АССИСТЕНТ',       cat:'Тело и питание', badge:'259', tierLvl:4,
-      d:'Записанные тренировки Артёма (М/Ж) + план питания. До/после — как у Тёмыча (259 тренировок в 2025).',
+      d:'Записанные тренировки Артёма (М/Ж) + план питания. До/после — как у Артёма (259 тренировок в 2025).',
       feats:['Тренировки М/Ж','План питания','До/после — трекер','Реф-видео Артёма'],
       demoT:'ТРЕНИРОВКА ДНЯ', demo:'sport',
       icon:'<path d="M6 4v16M18 4v16M4 8h4M16 8h4M4 16h4M16 16h4M8 12h8"/>' },
@@ -9160,7 +9160,7 @@ nav#tabs .nav-logo span{ color:#fff !important; font-weight:900 !important }
       body.innerHTML =
         '<div class="hlb-av-hero">'+
           '<div class="hlb-av-hero-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M8 12h.01M12 12h.01M16 12h.01"/></svg></div>'+
-          '<div><b>Brius-AI · онлайн</b><small>Отвечает в стиле Тёмыча</small></div>'+
+          '<div><b>Brius-AI · онлайн</b><small>Отвечает в стиле Артёма</small></div>'+
         '</div>'+
         '<div class="hlb-av-chips">'+
           ['Как открыть бизнес с нуля?','Что делать, если выгорел?','Как набрать аудиторию?','Как поставить цену?'].map(function(x){ return '<button class="hlb-chip" onclick="hlbBAsend(\''+x+'\')">'+x+'</button>'; }).join('')+
@@ -9264,7 +9264,7 @@ nav#tabs .nav-logo span{ color:#fff !important; font-weight:900 !important }
     // -------- Десятки --------
     desyatka: function(body){
       body.innerHTML =
-        '<div class="hlb-av-hero"><div class="hlb-av-hero-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="9" r="3"/><circle cx="17" cy="9" r="3"/><path d="M3 20c0-2.8 2.2-5 5-5s5 2.2 5 5"/></svg></div><div><b>Твоя десятка · «Огурцы»</b><small>10 участников · чат-бот Тёмыч</small></div></div>'+
+        '<div class="hlb-av-hero"><div class="hlb-av-hero-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="9" r="3"/><circle cx="17" cy="9" r="3"/><path d="M3 20c0-2.8 2.2-5 5-5s5 2.2 5 5"/></svg></div><div><b>Твоя десятка · «Огурцы»</b><small>10 участников · AI-двойник Артёма</small></div></div>'+
         '<div style="padding:0 16px 16px">'+
           '<div class="hlb-card"><b style="color:var(--hlb-orange);font-size:11px;letter-spacing:.06em">СПРИНТ НЕДЕЛИ · 30 ПОДЪЁМОВ 6:30</b><div style="color:#fff;font-family:Onest,sans-serif;font-weight:900;font-size:22px;margin-top:6px">4/10 сделали сегодня</div><div class="hlb-stat-bar" style="margin-top:10px"><div style="width:40%;background:var(--hlb-orange);box-shadow:0 0 10px var(--hlb-orange)"></div></div></div>'+
           '<div class="hlb-av-h">Лидерборд</div>'+
@@ -9535,7 +9535,7 @@ nav#tabs .nav-logo span{ color:#fff !important; font-weight:900 !important }
     if(/аудитор|подписчик|инста|тикток|рил/.test(l)) return 'Один хук в день. Хук — 2 секунды. Пример: «Никогда не думал, что скажу это, но…». 30 роликов в месяц. Через 60 дней первая тысяча. Секрет: <b>ты не постишь = ты не растёшь</b>. Всё.';
     if(/цену|цена|скольк|поставить/.test(l)) return 'Возьми <b>сумму, которую хочешь зарабатывать в месяц</b>, дели на количество клиентов, которое можешь обслужить. Это твоя цена. Не сомневайся. Дороже — легче продавать, чем дешевле.';
     if(/страх|боюсь|не уверен/.test(l)) return 'Страх — сигнал что ты на пороге чего-то важного. Действуй, пока страшно. Ждать пока станет не страшно — не будет никогда. Сделай ОДНО действие прямо сейчас. Одно. Не десять. Одно.';
-    return 'Опиши подробнее ситуацию. Где ты сейчас, куда хочешь, что мешает? Разберём по методу «Тём, нужен совет».';
+    return 'Опиши подробнее ситуацию. Где ты сейчас, куда хочешь, что мешает? Разберём по методу «Тём, нужен ответ».';
   }
   window.hlbInstrToggle = function(k){
     var checks = hlbLs('instr', {}); checks[k] = !checks[k]; hlbSet('instr', checks);
@@ -10984,6 +10984,189 @@ input[type="search"]:focus, input[type="text"]:focus {
   });
 
   log('v10 loaded');
+})();
+</script>
+
+
+<style id="hlb-v11">
+/* ============== v11 — hide broken overlays, fix double-headers ============== */
+
+/* Hide tariff-switcher inside mini-apps view */
+.hlb-apps-wrap > div:has(> button[data-t="HLB_150K"]),
+.hlb-apps-wrap > div[style*="переключатель тарифа"],
+div:has(> button[data-t="guest"]) + div[style*="переключатель"],
+[class*="tariff-switch"]:not([data-hlb-keep]) {
+  display: none !important;
+}
+
+/* BRIUS-AI: убрать двойной .hlb-av-hero (внутри mini-app view) */
+.hlb-app .hlb-av-hero ~ .hlb-av-hero,
+.hlb-app .hlb-av-top + .hlb-av-hero {
+  display: none !important;
+}
+/* Также убрать .hlb-av-top если он дубль */
+.hlb-av-top + .hlb-av-top { display: none !important; }
+
+/* Force avatar как img в prof-ava */
+#profAva, #epAva {
+  background-image: url('assets/av/artem_brius.jpg') !important;
+  background-size: cover !important;
+  background-position: center !important;
+  color: transparent !important;
+  border-radius: 50% !important;
+}
+#profAva::first-letter, #epAva::first-letter { color: transparent !important; }
+/* mask the letter text */
+#profAva, #epAva {
+  text-indent: -9999px !important;
+  overflow: hidden !important;
+}
+
+/* Wallet card: ХЛБ PAY должно читаться */
+.w2-card .w2-brand, [class*="wallet-brand"] {
+  color: #FF9500 !important;
+  font-weight: 900 !important;
+  text-shadow: 0 0 20px rgba(255,149,0,.5) !important;
+}
+</style>
+
+
+<script id="hlb-v11-js">
+(function(){
+  'use strict';
+
+  // ============== v11: FORCE PROFILE RESET ==============
+  function forceProfile(){
+    try{
+      // Wipe conflicting localStorage
+      ['oko-profile','oko-user','hlb-profile','oko-saved','okoProfile']
+        .forEach(function(k){ try{ localStorage.removeItem(k); }catch(e){} });
+
+      if(window.PROFILE){
+        PROFILE.name  = 'Артём Бриус';
+        PROFILE.nick  = 'gdebrius';
+        PROFILE.handle = '@gdebrius';
+        PROFILE.bio   = 'Основатель ХЛБ. Медиа · Контент · Деньги — в одном приложении.';
+        PROFILE.avatar = 'assets/av/artem_brius.jpg';
+        PROFILE.role  = 'owner';
+        PROFILE.tier  = 'MAX';
+        if(window.VERIFIED && VERIFIED.add) VERIFIED.add('Артём Бриус');
+      }
+
+      // Replace letter avatars with real img
+      var av = 'assets/av/artem_brius.jpg';
+      ['profAva','epAva'].forEach(function(id){
+        var el = document.getElementById(id);
+        if(el && !el.dataset.hlbV11){
+          el.dataset.hlbV11 = '1';
+          el.innerHTML = '<img src="'+av+'" alt="" style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover;border-radius:inherit;">';
+          el.style.position = 'relative';
+        }
+      });
+
+      // Also update any prof-name / prof-bio DOM
+      document.querySelectorAll('[class*="prof-name"], .prof-name, [data-prof="name"]').forEach(function(el){
+        el.textContent = 'Артём Бриус';
+      });
+      document.querySelectorAll('[class*="prof-bio"], .prof-bio, [data-prof="bio"]').forEach(function(el){
+        el.textContent = 'Основатель ХЛБ. Медиа · Контент · Деньги — в одном приложении.';
+      });
+
+      // Search bio containing "Основатель ОКО" and replace globally
+      var walker = document.createTreeWalker(document.body, NodeFilter.SHOW_TEXT, null);
+      var node, dirty=[];
+      while((node = walker.nextNode())){
+        if(node.nodeValue && node.nodeValue.indexOf('Основатель ОКО') !== -1){
+          dirty.push(node);
+        }
+      }
+      dirty.forEach(function(n){
+        n.nodeValue = n.nodeValue.replace(/Основатель ОКО/g, 'Основатель ХЛБ');
+      });
+    }catch(e){}
+  }
+
+  // ============== HIDE tariff switcher overlay in mini-apps ==============
+  function hideTariffOverlay(){
+    // Find any element containing tariff buttons and its "переключатель тарифа" hint
+    document.querySelectorAll('div').forEach(function(el){
+      var t = el.textContent || '';
+      if(t.indexOf('переключатель тарифа') !== -1 && t.length < 100){
+        el.style.display = 'none';
+      }
+    });
+    // Buttons row with Демо / 1К / 5К / ...
+    document.querySelectorAll('button[data-t="HLB_150K"]').forEach(function(btn){
+      var wrap = btn.closest('div');
+      if(wrap && wrap.querySelectorAll('button[data-t]').length >= 5){
+        wrap.style.display = 'none';
+      }
+    });
+  }
+
+  // ============== HIDE double .hlb-av-hero inside mini-apps ==============
+  function fixDoubleHeaders(){
+    document.querySelectorAll('.hlb-app').forEach(function(app){
+      var heros = app.querySelectorAll('.hlb-av-hero');
+      for(var i=1; i<heros.length; i++) heros[i].style.display = 'none';
+      var tops = app.querySelectorAll('.hlb-av-top');
+      for(var i=1; i<tops.length; i++) tops[i].style.display = 'none';
+    });
+  }
+
+  // ============== Force re-render chat list ==============
+  function forceChatReload(){
+    try{
+      if(typeof window.hlbPatchOkoChats === 'function') window.hlbPatchOkoChats();
+      if(typeof window.renderChatList === 'function') window.renderChatList('');
+      if(typeof window.initChats === 'function') window.initChats();
+    }catch(e){}
+  }
+
+  // ============== master schedule ==============
+  function runAll(){
+    forceProfile();
+    hideTariffOverlay();
+    fixDoubleHeaders();
+    forceChatReload();
+  }
+
+  if(document.readyState === 'loading'){
+    document.addEventListener('DOMContentLoaded', function(){
+      runAll();
+      setTimeout(runAll, 500);
+      setTimeout(runAll, 1500);
+      setTimeout(runAll, 3000);
+    });
+  } else {
+    runAll();
+    setTimeout(runAll, 500);
+    setTimeout(runAll, 1500);
+    setTimeout(runAll, 3000);
+  }
+
+  // MutationObserver for tab-switch re-renders
+  try{
+    var mo = new MutationObserver(function(muts){
+      var significant = false;
+      for(var i=0;i<muts.length;i++){
+        if(muts[i].type === 'childList' && muts[i].addedNodes.length > 0){
+          significant = true; break;
+        }
+      }
+      if(significant){
+        clearTimeout(window.__hlbV11Deb);
+        window.__hlbV11Deb = setTimeout(runAll, 200);
+      }
+    });
+    mo.observe(document.body, { childList: true, subtree: true });
+  }catch(e){}
+
+  // On tab click
+  document.addEventListener('click', function(e){
+    var t = e.target && e.target.closest && e.target.closest('nav#tabs button, [data-tab], nav#tabs a');
+    if(t) setTimeout(runAll, 150);
+  });
 })();
 </script>
 
