@@ -1,0 +1,237 @@
+{
+ "id": "gspy_058",
+ "app": "spy",
+ "voice": "en-US-AndrewNeural",
+ "rate": "+4%",
+ "grade": "cold_cyan",
+ "brand": {
+  "accent": "#00D9FF",
+  "accent2": "#7CFCFF",
+  "code": "PRIVACY",
+  "logo": "spy.png",
+  "name": "SPY CAMERA FINDER"
+ },
+ "music": {
+  "queries": [
+   "calm focus ambient",
+   "cyber suspense pulse",
+   "neon night synth"
+  ]
+ },
+ "cover": {
+  "kicker": "IR GLINT",
+  "top": "THE LENS",
+  "big": "ALWAYS\nGLOWS",
+  "q": [
+   "network cables server blue light"
+  ]
+ },
+ "segments": [
+  {
+   "id": "b1",
+   "text": "Turn off the lights. Raise your phone camera."
+  },
+  {
+   "id": "b2",
+   "text": "A hidden lens reflects infrared as a tiny bright dot."
+  },
+  {
+   "id": "b3",
+   "text": "Slowly pan across mirrors, vents and smoke detectors."
+  },
+  {
+   "id": "b4",
+   "text": "The app highlights suspicious reflections for you."
+  },
+  {
+   "id": "b5",
+   "text": "Found one? Cover it and report the listing."
+  },
+  {
+   "id": "b6",
+   "text": "Sixty seconds of scanning saves your privacy."
+  }
+ ],
+ "shots": [
+  {
+   "q": [
+    "air vent grille ceiling"
+   ],
+   "insert": "rrect",
+   "pos": "center"
+  },
+  {
+   "q": [
+    "desk lamp table hotel"
+   ],
+   "motion": "panl"
+  },
+  {
+   "q": [
+    "woman looking around hotel room worried"
+   ],
+   "insert": "circle",
+   "pos": "center"
+  },
+  {
+   "q": [
+    "person entering hotel room luggage"
+   ],
+   "motion": "panr"
+  },
+  {
+   "q": [
+    "laptop screen code green"
+   ],
+   "insert": "hexagon",
+   "pos": "upper"
+  },
+  {
+   "q": [
+    "dark bedroom lamp light"
+   ],
+   "motion": "zout"
+  },
+  {
+   "q": [
+    "bookshelf decor living room"
+   ],
+   "insert": "phone",
+   "pos": "lower"
+  },
+  {
+   "q": [
+    "network cables server blue light"
+   ],
+   "motion": "zin"
+  },
+  {
+   "q": [
+    "mirror bathroom hotel"
+   ],
+   "insert": "arch",
+   "pos": "lower"
+  },
+  {
+   "q": [
+    "person relaxing bed phone night"
+   ],
+   "motion": "panup"
+  },
+  {
+   "q": [
+    "hand holding smartphone dark"
+   ],
+   "insert": "diamond",
+   "pos": "upper"
+  },
+  {
+   "q": [
+    "airbnb apartment cozy night"
+   ],
+   "motion": "pandown"
+  },
+  {
+   "q": [
+    "reflection glass light dot"
+   ],
+   "insert": "tv",
+   "pos": "center"
+  },
+  {
+   "q": [
+    "smoke detector ceiling closeup"
+   ],
+   "motion": "panl"
+  }
+ ],
+ "overlays": [
+  {
+   "at": 0.055,
+   "dur": 1.67,
+   "type": "kicker",
+   "text": "WI-FI SCAN"
+  },
+  {
+   "at": 0.227,
+   "dur": 2.22,
+   "type": "lowerthird",
+   "title": "CHECK THE VENTS",
+   "sub": "line of sight to the bed"
+  },
+  {
+   "at": 0.297,
+   "dur": 1.74,
+   "type": "chips",
+   "items": [
+    "WI-FI",
+    "IR",
+    "BLUETOOTH",
+    "RF"
+   ],
+   "pos": "lower"
+  },
+  {
+   "at": 0.324,
+   "dur": 1.89,
+   "type": "gauge",
+   "to": 30,
+   "max": 60,
+   "suffix": "s",
+   "label": "FULL ROOM SWEEP",
+   "pos": "center"
+  },
+  {
+   "at": 0.349,
+   "dur": 2.35,
+   "type": "kinetic",
+   "top": "SCAN",
+   "big": "NOW"
+  },
+  {
+   "at": 0.492,
+   "dur": 2.6,
+   "type": "checklist",
+   "items": [
+    "Scan Wi-Fi",
+    "Lights off",
+    "Check vents",
+    "Unplug unknowns"
+   ],
+   "pos": "center"
+  },
+  {
+   "at": 0.625,
+   "dur": 1.94,
+   "type": "callout",
+   "text": "IR GLINT GIVES IT AWAY",
+   "pos": "center"
+  },
+  {
+   "at": 0.805,
+   "dur": 2.23,
+   "type": "stat_count",
+   "to": 5,
+   "suffix": "",
+   "label": "HIDING SPOTS",
+   "pos": "center"
+  }
+ ],
+ "cta": {
+  "text": "Comment PRIVACY for the app.",
+  "code": "PRIVACY"
+ },
+ "caption": "USEFUL: Lights off, camera up. A hidden lens glows in infrared. Pan across vents, mirrors and smoke detectors to catch the glint. Comment PRIVACY for the app. #privacy #airbnb #travelsafety #hiddencamera #traveltips #hotelroom #safetytips #look #airbnb #audio #spy",
+ "yt_title": "Spot a hidden camera lens in the dark #shorts",
+ "trend_keys": [
+  "look",
+  "airbnb",
+  "audio",
+  "spy",
+  "bugs",
+  "find",
+  "cameras",
+  "hidden"
+ ],
+ "content_type": "useful"
+}
