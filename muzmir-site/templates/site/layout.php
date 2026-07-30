@@ -192,15 +192,7 @@ html body{padding-top:0 !important}
   <svg viewBox="0 0 24 24" fill="currentColor"><path d="M13.2 17.4c-5.5 0-8.9-3.8-9-10.1h2.8c.1 4.6 2.2 6.6 3.8 7V7.3h2.6v4c1.6-.2 3.3-2 3.9-4h2.6c-.5 2.5-2.2 4.3-3.4 5 1.2.6 3.2 2.2 3.9 5.1h-2.9c-.6-1.9-2.1-3.4-4.1-3.6v3.6h-.2z"/></svg>
 </a>
 
-<!-- Радио «Классика» — видимый мини-плеер (управляет фоновой музыкой) -->
-<div class="mz-radio" id="mzRadio" data-on="0" role="button" tabindex="0" aria-label="Радио «Классика»: играть или пауза" title="Классическое радио">
-  <button class="mz-radio-btn" id="mzRadioBtn" type="button" aria-label="Играть / пауза">
-    <svg class="ic-play" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg>
-    <svg class="ic-pause" viewBox="0 0 24 24" fill="currentColor"><path d="M7 5h4v14H7zM13 5h4v14h-4z"/></svg>
-  </button>
-  <span class="mz-radio-eq" aria-hidden="true"><i></i><i></i><i></i><i></i></span>
-  <span class="mz-radio-meta"><b>Радио «Классика»</b><span id="mzRadioNow">Нажмите, чтобы включить</span></span>
-</div>
+<?php /* Фоновая музыка играет всегда (music.js), без видимого плеера. Выключить — в настройках профиля. */ ?>
 
 <?php /* auth-modal удалён — теперь /login отдельная страница с тем же анимационным фоном */ ?>
 

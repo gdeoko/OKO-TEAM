@@ -1,74 +1,31 @@
 /**
- * Фоновая классическая музыка для КЦ «Музыкальный Мир».
- * Стратегия: 1) Classic FM live-стрим (24/7, автосмена популярной классики Beethoven/Mozart/Chopin/Vivaldi/…);
- * 2) при недоступности стрима — 40 треков из archive.org (public domain) в случайном порядке;
- * 3) плавные fade in/out, ненавязчивая мини-кнопка в углу, состояние в localStorage,
- * 4) autoplay при загрузке — с уважением browser policy (если заблокировано, ждём первый клик).
+ * Фоновая классическая музыка КЦ «Музыкальный Мир» — БЕЗ видимого плеера.
+ * Играет всегда при входе. Браузеры блокируют автозапуск звука до первого касания —
+ * поэтому гарантированно стартуем на ПЕРВОМ же взаимодействии (тап/скролл/клик),
+ * вызывая play() СИНХРОННО (источник задан заранее). Выключить можно только в настройках профиля.
+ *
+ * Важно: НЕ ставим audio.crossOrigin — многие радио-стримы не отдают CORS-заголовки,
+ * и с crossOrigin='anonymous' воспроизведение молча блокируется.
  */
 (function () {
-  if (window.MzMusic) return; // защита от повторной инициализации
-  const LS_KEY = 'mz-music-on';
+  if (window.MzMusic) return;
   const SS_STREAM = 'mz-music-stream-idx';
   const SS_TRACK  = 'mz-music-track-idx';
-  const $ = (s, r) => (r || document).querySelector(s);
+  let audio, playlist = null, mode = 'stream', tries = 0, started = false;
 
-  let audio, gain, ctx, source, playlist = null, mode = 'stream', idx = 0, tries = 0, ready = false;
-  let nowTitle = '';
-  // Фоновая музыка ВКЛ по умолчанию (даже без регистрации). Выключить можно из настроек профиля.
-  // Приоритет: window.MZ_MUSIC_OFF (стамп из PHP при user.music_off=1) > localStorage флаг
-  let userWantsOn = true;
-  try {
-    if (window.MZ_MUSIC_OFF === true) userWantsOn = false;
-    if (localStorage.getItem('mz-music-off') === '1') userWantsOn = false;
-  } catch (e) {}
-
-  // Видимый мини-плеер «Радио Классика» в углу.
-  function playing() { return !!(audio && !audio.paused && audio.currentTime >= 0 && !audio.error); }
-  function updateBtn() {
-    const box = document.getElementById('mzRadio');
-    if (!box) return;
-    const on = playing();
-    box.setAttribute('data-on', on ? '1' : '0');
-    const now = document.getElementById('mzRadioNow');
-    if (now) now.textContent = on ? (nowTitle || 'Классическая музыка') : 'Нажмите, чтобы включить';
-  }
-  function curTitle() {
-    const p = playlist;
-    if (!p) return '';
-    if (mode === 'stream' && p.streams?.length) {
-      const si = Number(sessionStorage.getItem(SS_STREAM) || 0) % p.streams.length;
-      return p.streams[si].title || 'Классическое радио';
-    }
-    if (p.tracks?.length) {
-      const ti = Number(sessionStorage.getItem(SS_TRACK) || 0) % p.tracks.length;
-      const t = p.tracks[ti];
-      return t ? ((t.composer ? t.composer + ' — ' : '') + (t.title || '')) : 'Классика';
-    }
-    return '';
-  }
-
-  async function loadPlaylist() {
-    if (playlist) return playlist;
-    try {
-      const r = await fetch('/assets/music/playlist.json', { cache: 'force-cache' });
-      playlist = await r.json();
-    } catch (_) { playlist = { streams: [], tracks: [] }; }
-    // при первом старте — случайный трек, чтобы у разных пользователей был разный
-    if (!sessionStorage.getItem(SS_TRACK) && playlist.tracks?.length) {
-      sessionStorage.setItem(SS_TRACK, String(Math.floor(Math.random() * playlist.tracks.length)));
-    }
-    return playlist;
-  }
+  // Чистим возможный залипший флаг «выключено» от старого плеера (был баг с паузой).
+  try { localStorage.removeItem('mz-music-off'); } catch (e) {}
+  // Выключить музыку можно ТОЛЬКО в настройках профиля (стамп window.MZ_MUSIC_OFF из PHP).
+  let userWantsOn = window.MZ_MUSIC_OFF !== true;
 
   function ensureAudio() {
     if (audio) return;
     audio = new Audio();
-    audio.crossOrigin = 'anonymous';
     audio.preload = 'auto';
-    audio.volume = 0; // старт с 0, потом fade in
-    audio.addEventListener('canplay', () => { ready = true; nowTitle = curTitle(); fade(0.35, 1600); updateBtn(); });
-    audio.addEventListener('playing', () => { nowTitle = curTitle(); updateBtn(); });
-    audio.addEventListener('pause', updateBtn);
+    audio.volume = 0;
+    audio.setAttribute('playsinline', '');
+    audio.addEventListener('canplay', () => fade(0.32, 1600));
+    audio.addEventListener('playing', () => { started = true; });
     audio.addEventListener('ended', next);
     audio.addEventListener('error', onError);
     audio.addEventListener('stalled', onError);
@@ -77,134 +34,105 @@
   function fade(target, ms) {
     if (!audio) return;
     const from = audio.volume, delta = target - from, start = performance.now();
-    function step(t) {
+    (function step(t) {
       const p = Math.min(1, (t - start) / ms);
       audio.volume = Math.max(0, Math.min(1, from + delta * p));
       if (p < 1) requestAnimationFrame(step);
-    }
-    requestAnimationFrame(step);
+    })(performance.now());
   }
 
-  async function playCurrent() {
-    ensureAudio();
-    await loadPlaylist();
-    const p = playlist;
-    let src = '';
-    if (mode === 'stream' && p.streams?.length) {
+  function pickSrc() {
+    const p = playlist; if (!p) return '';
+    if (mode === 'stream' && p.streams && p.streams.length) {
       const si = Number(sessionStorage.getItem(SS_STREAM) || 0) % p.streams.length;
-      src = p.streams[si].url;
-    } else if (p.tracks?.length) {
+      return p.streams[si].url;
+    }
+    if (p.tracks && p.tracks.length) {
       const ti = Number(sessionStorage.getItem(SS_TRACK) || 0) % p.tracks.length;
-      src = p.tracks[ti].url;
+      return p.tracks[ti].url;
     }
-    if (!src) return;
-    audio.src = src;
-    try {
-      await audio.play();
-    } catch (_) {
-      // browser blocked autoplay — ждём клика (btn всё равно виден, кнопка сработает как gesture)
-      ready = false; updateBtn();
-    }
+    return '';
+  }
+
+  function setSrc() {
+    ensureAudio();
+    const s = pickSrc();
+    if (s && audio.src !== s) audio.src = s;
+    return s;
+  }
+
+  // Синхронный запуск (без await перед play() — иначе теряется «разрешение от касания»).
+  function play() {
+    if (!userWantsOn) return;
+    if (!setSrc()) return;
+    const pr = audio.play();
+    if (pr && pr.catch) pr.catch(function () {});
   }
 
   function onError() {
-    tries++;
-    if (tries > 6) return;
-    // stream → fallback на треки; трек → следующий
+    tries++; if (tries > 10) return;
     if (mode === 'stream') {
-      const p = playlist || { streams: [] };
-      const si = (Number(sessionStorage.getItem(SS_STREAM) || 0) + 1);
-      if (si < (p.streams?.length || 0)) {
-        sessionStorage.setItem(SS_STREAM, String(si));
-      } else {
-        mode = 'tracks';
-      }
+      const p = playlist || {};
+      const si = Number(sessionStorage.getItem(SS_STREAM) || 0) + 1;
+      if (si < ((p.streams && p.streams.length) || 0)) sessionStorage.setItem(SS_STREAM, String(si));
+      else mode = 'tracks';
     } else {
-      next();
-      return;
+      const p = playlist || { tracks: [] };
+      if (p.tracks && p.tracks.length) {
+        sessionStorage.setItem(SS_TRACK, String((Number(sessionStorage.getItem(SS_TRACK) || 0) + 1) % p.tracks.length));
+      }
     }
-    playCurrent();
+    play();
   }
 
   function next() {
-    const p = playlist || { tracks: [] };
-    if (!p.tracks?.length) return;
-    const ti = (Number(sessionStorage.getItem(SS_TRACK) || 0) + 1) % p.tracks.length;
-    sessionStorage.setItem(SS_TRACK, String(ti));
-    fade(0, 700);
-    setTimeout(() => { mode = 'tracks'; playCurrent(); }, 720);
+    if (!(playlist && playlist.tracks && playlist.tracks.length)) return;
+    mode = 'tracks';
+    sessionStorage.setItem(SS_TRACK, String((Number(sessionStorage.getItem(SS_TRACK) || 0) + 1) % playlist.tracks.length));
+    fade(0, 500);
+    setTimeout(play, 520);
   }
 
-  // Пауза/пуск по кнопке радио-плеера.
-  async function toggle() {
-    try {
-      if (playing()) {
-        fade(0, 350);
-        setTimeout(() => { if (audio) audio.pause(); updateBtn(); }, 360);
-        try { localStorage.setItem('mz-music-off', '1'); } catch (_) {}
-      } else {
-        try { localStorage.removeItem('mz-music-off'); } catch (_) {}
-        if (disarm) disarm(); // радио-плеер — единственный источник управления
-        tries = 0;
-        await playCurrent();
-        updateBtn();
-      }
-    } catch (_) { updateBtn(); }
-  }
-
-  // Первый gesture — обязательно (браузеры блокируют autoplay без user interaction).
-  // Ловим любое взаимодействие: клик, тап, скролл, клавиша, движение мыши.
-  let disarm = null;
+  // Гарантированный старт с первого взаимодействия — play() вызывается СИНХРОННО в обработчике.
   function armGesture() {
-    const events = ['pointerdown','touchstart','click','keydown','scroll','wheel','mousemove'];
-    const once = async (e) => {
-      // Тап по самому радио-плееру обрабатывает его собственный обработчик (toggle),
-      // иначе гонка: авто-старт по жесту + toggle → музыка гаснет тем же кликом.
-      if (e && e.target && e.target.closest && e.target.closest('#mzRadio')) return;
-      if (!audio || audio.paused) { try { await playCurrent(); updateBtn(); } catch (_) {} }
-      teardown();
-    };
-    function teardown(){
-      events.forEach(ev => document.removeEventListener(ev, once, true));
-      window.removeEventListener('scroll', once, true);
-      disarm = null;
+    const evs = ['pointerdown', 'touchstart', 'touchend', 'click', 'keydown', 'scroll', 'wheel', 'mousemove'];
+    function go() {
+      if (!userWantsOn) { cleanup(); return; }
+      if (!audio || audio.paused) play();
+      if (started) cleanup();
     }
-    events.forEach(ev => document.addEventListener(ev, once, true));
-    window.addEventListener('scroll', once, true);
-    disarm = teardown;
+    function cleanup() { evs.forEach(function (e) { document.removeEventListener(e, go, true); }); }
+    evs.forEach(function (e) { document.addEventListener(e, go, true); });
   }
 
-  // Клик по видимому радио-плееру = явный gesture + пауза/пуск.
-  function wireWidget() {
-    const box = document.getElementById('mzRadio');
-    if (!box || box.dataset.wired) return;
-    box.dataset.wired = '1';
-    const onTap = (e) => { e.preventDefault(); e.stopPropagation(); toggle(); };
-    box.addEventListener('click', onTap);
-    box.addEventListener('keydown', (e) => { if (e.key === 'Enter' || e.key === ' ') onTap(e); });
-    updateBtn();
-  }
-
-  function init() {
-    wireWidget();
-    // Пробуем autoplay сразу; если браузер не пустит — стартанёт при первом взаимодействии.
-    if (userWantsOn) {
-      playCurrent().then(() => { if (!ready || (audio && audio.paused)) armGesture(); updateBtn(); });
-    } else {
-      updateBtn();
+  async function init() {
+    try {
+      const r = await fetch('/assets/music/playlist.json', { cache: 'force-cache' });
+      playlist = await r.json();
+    } catch (_) { playlist = { streams: [], tracks: [] }; }
+    if (!sessionStorage.getItem(SS_TRACK) && playlist.tracks && playlist.tracks.length) {
+      sessionStorage.setItem(SS_TRACK, String(Math.floor(Math.random() * playlist.tracks.length)));
     }
-    // при смене видимости страницы — приглушаем/восстанавливаем (только если играем)
-    document.addEventListener('visibilitychange', () => {
+    ensureAudio();
+    setSrc();          // источник задан заранее — чтобы play() на жесте был синхронным
+    play();            // попытка автозапуска (может быть заблокирована)
+    armGesture();      // …тогда стартанёт на первом касании
+    document.addEventListener('visibilitychange', function () {
       if (!audio || audio.paused) return;
-      if (document.hidden) fade(0.10, 400);
-      else fade(0.35, 800);
+      fade(document.hidden ? 0.10 : 0.32, 500);
     });
-    // SPA перерисовывает <main>, но плеер вне <main>; на всякий случай перецепляем при навигации
-    document.addEventListener('mz:navigated', () => { wireWidget(); updateBtn(); });
+  }
+
+  // Для настроек профиля: включить/выключить фоновую музыку на лету.
+  function setEnabled(on) {
+    userWantsOn = !!on;
+    if (on) { tries = 0; play(); }
+    else if (audio) { fade(0, 300); setTimeout(function () { try { audio.pause(); } catch (e) {} }, 320); }
   }
 
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', init);
   else init();
 
-  window.MzMusic = { toggle, next };
+  window.MzMusic = { play: play, next: next, setEnabled: setEnabled,
+    isPlaying: function () { return !!(audio && !audio.paused && audio.currentTime > 0); } };
 })();
