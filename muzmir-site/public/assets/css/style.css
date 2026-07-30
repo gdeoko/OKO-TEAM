@@ -2183,3 +2183,71 @@ input::placeholder,textarea::placeholder{color:color-mix(in srgb,var(--muted) 80
   font-size:.78rem;font-weight:800;border-radius:10px}
 .aw-add svg{width:15px;height:15px;flex:none}
 @media(max-width:420px){.aw-add span{display:none}.aw-add{flex:0 0 42px}}
+
+/* ══════════════════════════════════════════════════════════════════════════
+   APP-РЕЖИМ v8 — 3D нижнее меню (кнопка «Заявка» без обрезаний) + фон-люкс
+   ══════════════════════════════════════════════════════════════════════════ */
+
+/* ── Нижнее меню: объёмная панель ── */
+html body nav.appnav{
+  padding-top:10px !important;
+  background:linear-gradient(180deg,
+      color-mix(in srgb, var(--bg) 66%, transparent) 0%,
+      color-mix(in srgb, var(--bg) 90%, transparent) 46%) !important;
+  border-top:1px solid rgba(255,240,190,.55) !important;
+  box-shadow:0 -1px 0 rgba(199,147,34,.35), 0 -14px 34px rgba(21,34,76,.14),
+             inset 0 1px 0 rgba(255,255,255,.55) !important}
+[data-theme="dark"] html body nav.appnav{
+  background:linear-gradient(180deg,
+      color-mix(in srgb,#0C1738 70%,transparent) 0%,
+      color-mix(in srgb,#0A1330 92%,transparent) 46%) !important;
+  border-top-color:rgba(233,197,103,.45) !important;
+  box-shadow:0 -1px 0 rgba(233,197,103,.28), 0 -16px 38px rgba(0,0,0,.55),
+             inset 0 1px 0 rgba(255,255,255,.06) !important}
+.appnav-inner{align-items:flex-end}
+.appnav a{font-size:.68rem;gap:4px;padding:5px 2px}
+.appnav a svg{width:24px;height:24px;transition:transform .22s cubic-bezier(.2,1.4,.4,1)}
+/* Активный пункт: золотая 3D-таблетка под иконкой */
+.appnav a.active svg{transform:translateY(-2px) scale(1.08);
+  filter:drop-shadow(0 3px 6px rgba(199,147,34,.55))}
+.appnav a.active::after{top:auto;bottom:-2px;width:26px;height:3.5px;
+  box-shadow:0 0 12px rgba(199,147,34,.8), 0 1px 2px rgba(120,80,10,.5)}
+/* Кнопка «Заявка» — золотая 3D-сфера, никогда не режется: подъём умеренный + запас сверху */
+.appnav a.appnav-cta .ic{
+  width:58px;height:58px;margin-top:-24px;
+  background:radial-gradient(circle at 34% 26%, #FCEFB8 0%, #EFCC6C 30%, #C79322 62%, #96660C 100%);
+  border:1.5px solid rgba(255,240,190,.85);
+  box-shadow:0 12px 26px rgba(120,80,10,.5),
+             0 3px 8px rgba(21,34,76,.3),
+             inset 0 2px 4px rgba(255,255,255,.85),
+             inset 0 -4px 9px rgba(110,74,8,.55);
+  overflow:visible}
+[data-theme="dark"] .appnav a.appnav-cta .ic{
+  border-color:rgba(255,240,190,.6);
+  box-shadow:0 12px 28px rgba(0,0,0,.6), 0 0 22px rgba(233,197,103,.28),
+             inset 0 2px 4px rgba(255,255,255,.8), inset 0 -4px 9px rgba(110,74,8,.6)}
+.appnav a.appnav-cta .ic svg{width:27px;height:27px}
+/* Ничто не обрезает сферу */
+html body nav.appnav, .appnav-inner, .appnav a.appnav-cta{overflow:visible !important;contain:none !important}
+
+/* ── Фон-люкс: лучи света + мерцание, богаче в обеих темах ── */
+.app-bg-video.on{opacity:1}
+[data-theme="dark"] .app-bg-video.on{opacity:.9}
+/* Лучи прожекторов из верха сцены */
+.app-bg .ab-rays{position:absolute;inset:-10% -20%;z-index:2;pointer-events:none;mix-blend-mode:soft-light;
+  background:
+    conic-gradient(from 178deg at 30% -8%, transparent 0 6deg, rgba(255,225,150,.5) 9deg, transparent 14deg,
+      transparent 22deg, rgba(255,225,150,.38) 26deg, transparent 31deg),
+    conic-gradient(from 175deg at 72% -8%, transparent 0 8deg, rgba(255,225,150,.42) 12deg, transparent 17deg);
+  filter:blur(14px);opacity:.55;animation:abRays 18s ease-in-out infinite alternate}
+[data-theme="dark"] .app-bg .ab-rays{opacity:.8;mix-blend-mode:screen}
+@keyframes abRays{0%{transform:translateX(-2.5%) }100%{transform:translateX(2.5%)}}
+/* Тёплое свечение по низу (рампа сцены) */
+.app-bg .ab-glow{position:absolute;left:-10%;right:-10%;bottom:-16%;height:52%;z-index:2;pointer-events:none;
+  background:radial-gradient(60% 68% at 50% 100%, rgba(231,184,75,.4), transparent 70%);
+  filter:blur(30px);animation:abGlow 9s ease-in-out infinite alternate}
+[data-theme="dark"] .app-bg .ab-glow{background:radial-gradient(60% 68% at 50% 100%, rgba(233,197,103,.34), transparent 70%)}
+@keyframes abGlow{0%{opacity:.65}100%{opacity:1}}
+/* Больше звёзд, мягче в светлой */
+.ab-stars{opacity:.35}
+@media(prefers-reduced-motion:reduce){.ab-rays,.ab-glow{animation:none}}

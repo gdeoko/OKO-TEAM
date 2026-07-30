@@ -69,6 +69,21 @@
     if (pr && pr.catch) pr.catch(function () {});
   }
 
+  // Muted-предзапуск: беззвучный autoplay разрешён почти везде — поток уже буферизуется,
+  // и на первом касании достаточно просто снять mute → звук мгновенно.
+  function mutedPrestart() {
+    if (!userWantsOn || !setSrc()) return;
+    audio.muted = true;
+    const pr = audio.play();
+    if (pr && pr.catch) pr.catch(function () {});
+  }
+  function unmuteNow() {
+    if (!audio) return;
+    audio.muted = false;
+    if (audio.paused) play();
+    fade(0.32, 1200);
+  }
+
   function onError() {
     tries++; if (tries > 10) return;
     if (mode === 'stream') {
@@ -93,13 +108,13 @@
     setTimeout(play, 520);
   }
 
-  // Гарантированный старт с первого взаимодействия — play() вызывается СИНХРОННО в обработчике.
+  // Гарантированный старт с первого взаимодействия — синхронно в обработчике жеста.
   function armGesture() {
     const evs = ['pointerdown', 'touchstart', 'touchend', 'click', 'keydown', 'scroll', 'wheel', 'mousemove'];
     function go() {
       if (!userWantsOn) { cleanup(); return; }
-      if (!audio || audio.paused) play();
-      if (started) cleanup();
+      unmuteNow();                       // снимаем mute с уже играющего потока (мгновенный звук)
+      if (started && !audio.muted) cleanup();
     }
     function cleanup() { evs.forEach(function (e) { document.removeEventListener(e, go, true); }); }
     evs.forEach(function (e) { document.addEventListener(e, go, true); });
@@ -114,12 +129,17 @@
       sessionStorage.setItem(SS_TRACK, String(Math.floor(Math.random() * playlist.tracks.length)));
     }
     ensureAudio();
-    setSrc();          // источник задан заранее — чтобы play() на жесте был синхронным
-    play();            // попытка автозапуска (может быть заблокирована)
-    armGesture();      // …тогда стартанёт на первом касании
+    setSrc();            // источник готов заранее — жест снимает mute синхронно
+    audio.muted = false;
+    play();              // 1) пробуем честный автозапуск со звуком
+    setTimeout(function () {
+      if (userWantsOn && (!audio || audio.paused)) mutedPrestart(); // 2) беззвучный предзапуск
+    }, 350);
+    armGesture();        // 3) первое касание где угодно → звук
+    // Сворачивание: плавно затухаем в ноль; возврат — плавно возвращаем.
     document.addEventListener('visibilitychange', function () {
       if (!audio || audio.paused) return;
-      fade(document.hidden ? 0.10 : 0.32, 500);
+      fade(document.hidden ? 0 : 0.32, document.hidden ? 600 : 1000);
     });
   }
 

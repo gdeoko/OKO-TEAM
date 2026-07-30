@@ -46,8 +46,8 @@ $body = preg_replace_callback('/<h3(\s[^>]*)?>(.*?)<\/h3>/is', function ($m) use
 $reqOrg    = h((string) cfgv('org_full', 'Культурный центр «Музыкальный Мир»'));
 $reqReg    = h((string) cfgv('org_reg', 'Роскомнадзор №094084 от 24.06.2025'));
 $reqAddr   = h((string) cfgv('org_address', '109240, г. Москва, ул. Солянка, д.14, стр.7'));
-$reqPhone  = h((string) cfgv('org_phone', '8 (950) 945-99-00'));
-$reqPhoneR = h((string) cfgv('org_phone_raw', '+79509459900'));
+$reqPhone  = h((string) cfgv('org_phone', '+7 (999) 504-88-99'));
+$reqPhoneR = h((string) cfgv('org_phone_raw', '+79995048899'));
 $reqEmail  = h((string) cfgv('org_email', 'kulturniy.centr.mir@mail.ru'));
 $reqDir    = 'Оргкомитет Культурного центра';
 

@@ -77,7 +77,7 @@
     document.documentElement.dataset.theme = theme;
     try { localStorage.setItem('muzmir-theme', theme); } catch (e) {}
     var m = document.querySelector('meta[name="theme-color"]');
-    if (m) m.setAttribute('content', theme === 'light' ? '#FFFCF5' : '#0b0a0d');
+    if (m) m.setAttribute('content', theme === 'light' ? '#FAF4E6' : '#0A1330');
   }
   (function initThemeDefault() {
     var saved = null;
@@ -90,40 +90,9 @@
     }
   })();
 
-  /* ---------- Переключатель темы ---------- */
-  var themeBtn = $('#themeToggle');
-  function applyThemeIcon(theme) {
-    var moon = '<svg id="themeIcon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>';
-    var sun = '<svg id="themeIcon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M6.34 17.66l-1.41 1.41M19.07 4.93l-1.41 1.41"/></svg>';
-    if (!themeBtn) return;
-    // theme=light → показать «солнце»; theme=dark → «луну»
-    themeBtn.innerHTML = theme === 'light' ? sun : moon;
-  }
-  function notifyThemeChange(theme) {
-    try { window.dispatchEvent(new CustomEvent('muzmir:theme', { detail: theme })); } catch (e) {}
-  }
-  if (themeBtn) {
-    applyThemeIcon(currentTheme());
-    themeBtn.addEventListener('click', function () {
-      var next = currentTheme() === 'light' ? 'dark' : 'light';
-      function swap() {
-        setTheme(next);
-        applyThemeIcon(next);
-        notifyThemeChange(next);
-      }
-      // Морф иконки — короткая пружина (класс задаёт CSS-агент).
-      if (!isReduced()) {
-        themeBtn.classList.remove('theme-morph');
-        void themeBtn.offsetWidth;
-        themeBtn.classList.add('theme-morph');
-      }
-      if (document.startViewTransition && !isReduced()) {
-        document.startViewTransition(swap);
-      } else {
-        swap();
-      }
-    });
-  }
+  /* ---------- Переключатель темы: ЕДИНСТВЕННЫЙ обработчик живёт в layout.php. ----------
+     Здесь его НЕ дублировать: второй listener на той же кнопке давал двойное
+     переключение (dark→сразу обратно light), из-за чего «тумблер не работал». */
 
   /* ---------- Появление секций при скролле + stagger ---------- */
   var GRID_SEL = '.stats, .grid, .grid-2, .grid-3, .grid-4, .steps, .partners, .timeline, .kpis';

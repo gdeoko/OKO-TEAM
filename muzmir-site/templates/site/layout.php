@@ -122,6 +122,8 @@ html body{padding-top:0 !important}
     <source src="<?= asset('video/bg-loop.mp4') ?>" type="video/mp4">
   </video>
   <span class="app-bg-tint"></span>
+  <span class="ab-rays"></span>
+  <span class="ab-glow"></span>
   <span class="ab-stars"></span>
   <span class="ab-fly">&#9835;</span><span class="ab-fly">&#9834;</span><span class="ab-fly">&#119070;</span><span class="ab-fly">&#9833;</span><span class="ab-fly">&#9835;</span><span class="ab-fly">&#9834;</span><span class="ab-fly">&#9836;</span><span class="ab-fly">&#9835;</span>
 </div>
@@ -280,7 +282,7 @@ if('serviceWorker' in navigator){
     if(moon) moon.style.display = dark ? 'none' : '';
     if(sun) sun.style.display = dark ? '' : 'none';
     var mtc = document.getElementById('metaThemeColor');
-    if(mtc) mtc.setAttribute('content', dark ? '#141019' : '#FFFCF5');
+    if(mtc) mtc.setAttribute('content', dark ? '#0A1330' : '#FAF4E6');
   }
   sync();
   btn.addEventListener('click', function(){
