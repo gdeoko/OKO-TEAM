@@ -34,8 +34,8 @@ if ($u && is_file(BASE_PATH . '/core/notifications.php')) {
 ?>
 <title><?= h($full_title) ?></title>
 <meta name="description" content="<?= h($meta_description) ?>">
-<meta name="theme-color" content="#FFFCF5" id="metaThemeColor">
-<script>try{if(document.documentElement.dataset.theme==='dark'){document.getElementById('metaThemeColor').setAttribute('content','#0b0a0d');}}catch(e){}</script>
+<meta name="theme-color" content="#FAF4E6" id="metaThemeColor">
+<script>try{if(document.documentElement.dataset.theme==='dark'){document.getElementById('metaThemeColor').setAttribute('content','#0A1330');}}catch(e){}</script>
 <link rel="canonical" href="<?= h($canon) ?>">
 <meta property="og:title" content="<?= h($full_title) ?>">
 <meta property="og:description" content="<?= h($meta_description) ?>">
@@ -96,10 +96,11 @@ html body header.app-header{
   position:sticky !important;
   top:0 !important;
   z-index:900 !important;
-  background:var(--bg,#fffcf5) !important;
-  border-bottom:1px solid var(--line,rgba(0,0,0,.08)) !important;
-  box-shadow:0 2px 14px rgba(20,16,6,.06) !important;
-  backdrop-filter:none !important;
+  background:color-mix(in srgb, var(--bg,#faf4e6) 78%, transparent) !important;
+  border-bottom:1px solid var(--glass-brd,rgba(180,130,28,.3)) !important;
+  box-shadow:0 4px 22px rgba(21,34,76,.08) !important;
+  backdrop-filter:blur(16px) saturate(1.35) !important;
+  -webkit-backdrop-filter:blur(16px) saturate(1.35) !important;
   margin:0 !important;
   padding-top:calc(6px + env(safe-area-inset-top,0)) !important;
   padding-bottom:6px !important;
@@ -108,13 +109,16 @@ html body header.app-header{
   transform:none !important;
 }
 [data-theme="dark"] html body header.app-header,
-html[data-theme="dark"] body header.app-header{background:#141019 !important;border-bottom-color:rgba(232,194,90,.14) !important}
+html[data-theme="dark"] body header.app-header{background:color-mix(in srgb,#0C1738 76%,transparent) !important;border-bottom-color:rgba(226,190,96,.20) !important}
 /* Никакого padding-top на body — sticky-шапка сама занимает место */
 html body{padding-top:0 !important}
 </style>
 </head>
 <body<?= $u ? ' class="is-auth"' : '' ?>>
-<div class="app-bg" aria-hidden="true"></div>
+<div class="app-bg" aria-hidden="true">
+  <span class="ab-stars"></span>
+  <span class="ab-fly">&#9835;</span><span class="ab-fly">&#9834;</span><span class="ab-fly">&#119070;</span><span class="ab-fly">&#9833;</span><span class="ab-fly">&#9835;</span><span class="ab-fly">&#9834;</span><span class="ab-fly">&#9836;</span><span class="ab-fly">&#9835;</span>
+</div>
 
 <header class="header app-header"><div class="container">
   <a class="brand" href="<?= url('/') ?>">
@@ -168,6 +172,16 @@ html body{padding-top:0 !important}
 <a class="chat-fab" id="chatFab" href="https://t.me/kc_muz_mir_bot" target="_blank" rel="noopener" aria-label="Поддержка в Telegram" title="Написать в Telegram-бот">
   <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 2 11 13M22 2l-7 20-4-9-9-4z"/></svg>
 </a>
+
+<!-- Радио «Классика» — видимый мини-плеер (управляет фоновой музыкой) -->
+<div class="mz-radio" id="mzRadio" data-on="0" role="button" tabindex="0" aria-label="Радио «Классика»: играть или пауза" title="Классическое радио">
+  <button class="mz-radio-btn" id="mzRadioBtn" type="button" aria-label="Играть / пауза">
+    <svg class="ic-play" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg>
+    <svg class="ic-pause" viewBox="0 0 24 24" fill="currentColor"><path d="M7 5h4v14H7zM13 5h4v14h-4z"/></svg>
+  </button>
+  <span class="mz-radio-eq" aria-hidden="true"><i></i><i></i><i></i><i></i></span>
+  <span class="mz-radio-meta"><b>Радио «Классика»</b><span id="mzRadioNow">Нажмите, чтобы включить</span></span>
+</div>
 
 <?php /* auth-modal удалён — теперь /login отдельная страница с тем же анимационным фоном */ ?>
 

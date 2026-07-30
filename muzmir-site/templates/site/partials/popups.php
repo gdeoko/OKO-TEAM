@@ -13,17 +13,21 @@
 <style>
 /* ── Общие слои поверх сайта ── */
 .mz-pop,.mz-cookie,.mz-install{font-family:var(--ff-body)}
-/* Cookie-баннер */
-.mz-cookie{position:fixed;left:16px;right:16px;bottom:16px;z-index:120;max-width:720px;margin:0 auto;
-  background:var(--panel,#fff);border:1px solid var(--glass-brd,#e7ddc7);border-radius:var(--radius,16px);
-  box-shadow:var(--shadow-card,0 18px 50px rgba(30,25,10,.16));padding:16px 18px;
-  display:none;grid-template-columns:1fr auto;gap:14px 18px;align-items:center;backdrop-filter:blur(10px)}
+/* Cookie-баннер — компактная плашка НАД нижним меню, не перекрывает контент/радио */
+.mz-cookie{position:fixed;left:12px;right:12px;bottom:calc(90px + env(safe-area-inset-bottom));z-index:945;max-width:600px;margin:0 auto;
+  background:color-mix(in srgb, var(--panel-solid,#fff) 88%, transparent);
+  border:1px solid var(--glass-brd,#e7ddc7);border-radius:16px;
+  box-shadow:0 14px 40px rgba(21,34,76,.18);padding:12px 14px;
+  display:none;grid-template-columns:1fr auto;gap:10px 14px;align-items:center;
+  backdrop-filter:blur(16px) saturate(1.2);-webkit-backdrop-filter:blur(16px) saturate(1.2)}
 .mz-cookie.on{display:grid;animation:mzUp .4s cubic-bezier(.2,.8,.2,1)}
-.mz-cookie p{margin:0;font-size:.9rem;line-height:1.5;color:var(--text-dim,#4a4535)}
+.mz-cookie p{margin:0;font-size:.8rem;line-height:1.4;color:var(--text-dim,#4a4535)}
 .mz-cookie a{color:var(--gold-ink,#8a6d1f);text-decoration:underline}
 [data-theme="dark"] .mz-cookie a{color:var(--gold,#e8c25a)}
-.mz-cookie .mz-cc-btn{white-space:nowrap}
-@media(max-width:560px){.mz-cookie{grid-template-columns:1fr}}
+.mz-cookie .mz-cc-btn{white-space:nowrap;min-height:40px;padding:8px 20px}
+@media(max-width:560px){.mz-cookie{grid-template-columns:1fr;bottom:calc(84px + env(safe-area-inset-bottom))}}
+/* Пока показан cookie-баннер — прячем радио-плеер (чтобы не накладывались) */
+body:has(.mz-cookie.on) .mz-radio{display:none}
 
 /* Лид-поп-ап */
 .mz-pop{position:fixed;inset:0;z-index:130;display:none;align-items:center;justify-content:center;padding:20px;

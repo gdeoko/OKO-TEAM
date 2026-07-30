@@ -13,6 +13,7 @@
   const $ = (s, r) => (r || document).querySelector(s);
 
   let audio, gain, ctx, source, playlist = null, mode = 'stream', idx = 0, tries = 0, ready = false;
+  let nowTitle = '';
   // Фоновая музыка ВКЛ по умолчанию (даже без регистрации). Выключить можно из настроек профиля.
   // Приоритет: window.MZ_MUSIC_OFF (стамп из PHP при user.music_off=1) > localStorage флаг
   let userWantsOn = true;
@@ -20,7 +21,31 @@
     if (window.MZ_MUSIC_OFF === true) userWantsOn = false;
     if (localStorage.getItem('mz-music-off') === '1') userWantsOn = false;
   } catch (e) {}
-  function updateBtn() { /* no-op — плеер без UI */ }
+
+  // Видимый мини-плеер «Радио Классика» в углу.
+  function playing() { return !!(audio && !audio.paused && audio.currentTime >= 0 && !audio.error); }
+  function updateBtn() {
+    const box = document.getElementById('mzRadio');
+    if (!box) return;
+    const on = playing();
+    box.setAttribute('data-on', on ? '1' : '0');
+    const now = document.getElementById('mzRadioNow');
+    if (now) now.textContent = on ? (nowTitle || 'Классическая музыка') : 'Нажмите, чтобы включить';
+  }
+  function curTitle() {
+    const p = playlist;
+    if (!p) return '';
+    if (mode === 'stream' && p.streams?.length) {
+      const si = Number(sessionStorage.getItem(SS_STREAM) || 0) % p.streams.length;
+      return p.streams[si].title || 'Классическое радио';
+    }
+    if (p.tracks?.length) {
+      const ti = Number(sessionStorage.getItem(SS_TRACK) || 0) % p.tracks.length;
+      const t = p.tracks[ti];
+      return t ? ((t.composer ? t.composer + ' — ' : '') + (t.title || '')) : 'Классика';
+    }
+    return '';
+  }
 
   async function loadPlaylist() {
     if (playlist) return playlist;
@@ -41,7 +66,9 @@
     audio.crossOrigin = 'anonymous';
     audio.preload = 'auto';
     audio.volume = 0; // старт с 0, потом fade in
-    audio.addEventListener('canplay', () => { ready = true; fade(0.35, 1600); updateBtn(); });
+    audio.addEventListener('canplay', () => { ready = true; nowTitle = curTitle(); fade(0.35, 1600); updateBtn(); });
+    audio.addEventListener('playing', () => { nowTitle = curTitle(); updateBtn(); });
+    audio.addEventListener('pause', updateBtn);
     audio.addEventListener('ended', next);
     audio.addEventListener('error', onError);
     audio.addEventListener('stalled', onError);
@@ -108,32 +135,72 @@
     setTimeout(() => { mode = 'tracks'; playCurrent(); }, 720);
   }
 
-  function toggle() { /* no-op */ }
+  // Пауза/пуск по кнопке радио-плеера.
+  async function toggle() {
+    try {
+      if (playing()) {
+        fade(0, 350);
+        setTimeout(() => { if (audio) audio.pause(); updateBtn(); }, 360);
+        try { localStorage.setItem('mz-music-off', '1'); } catch (_) {}
+      } else {
+        try { localStorage.removeItem('mz-music-off'); } catch (_) {}
+        if (disarm) disarm(); // радио-плеер — единственный источник управления
+        tries = 0;
+        await playCurrent();
+        updateBtn();
+      }
+    } catch (_) { updateBtn(); }
+  }
 
   // Первый gesture — обязательно (браузеры блокируют autoplay без user interaction).
   // Ловим любое взаимодействие: клик, тап, скролл, клавиша, движение мыши.
+  let disarm = null;
   function armGesture() {
     const events = ['pointerdown','touchstart','click','keydown','scroll','wheel','mousemove'];
-    const once = async () => {
-      if (!audio || audio.paused) {
-        try { await playCurrent(); } catch (_) {}
-      }
+    const once = async (e) => {
+      // Тап по самому радио-плееру обрабатывает его собственный обработчик (toggle),
+      // иначе гонка: авто-старт по жесту + toggle → музыка гаснет тем же кликом.
+      if (e && e.target && e.target.closest && e.target.closest('#mzRadio')) return;
+      if (!audio || audio.paused) { try { await playCurrent(); updateBtn(); } catch (_) {} }
+      teardown();
+    };
+    function teardown(){
       events.forEach(ev => document.removeEventListener(ev, once, true));
       window.removeEventListener('scroll', once, true);
-    };
+      disarm = null;
+    }
     events.forEach(ev => document.addEventListener(ev, once, true));
     window.addEventListener('scroll', once, true);
+    disarm = teardown;
+  }
+
+  // Клик по видимому радио-плееру = явный gesture + пауза/пуск.
+  function wireWidget() {
+    const box = document.getElementById('mzRadio');
+    if (!box || box.dataset.wired) return;
+    box.dataset.wired = '1';
+    const onTap = (e) => { e.preventDefault(); e.stopPropagation(); toggle(); };
+    box.addEventListener('click', onTap);
+    box.addEventListener('keydown', (e) => { if (e.key === 'Enter' || e.key === ' ') onTap(e); });
+    updateBtn();
   }
 
   function init() {
+    wireWidget();
     // Пробуем autoplay сразу; если браузер не пустит — стартанёт при первом взаимодействии.
-    playCurrent().then(() => { if (!ready || (audio && audio.paused)) armGesture(); });
-    // при смене видимости страницы — приглушаем/восстанавливаем
+    if (userWantsOn) {
+      playCurrent().then(() => { if (!ready || (audio && audio.paused)) armGesture(); updateBtn(); });
+    } else {
+      updateBtn();
+    }
+    // при смене видимости страницы — приглушаем/восстанавливаем (только если играем)
     document.addEventListener('visibilitychange', () => {
-      if (!audio) return;
+      if (!audio || audio.paused) return;
       if (document.hidden) fade(0.10, 400);
       else fade(0.35, 800);
     });
+    // SPA перерисовывает <main>, но плеер вне <main>; на всякий случай перецепляем при навигации
+    document.addEventListener('mz:navigated', () => { wireWidget(); updateBtn(); });
   }
 
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', init);

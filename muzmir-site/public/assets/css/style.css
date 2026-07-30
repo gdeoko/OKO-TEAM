@@ -4,25 +4,33 @@
 
 /* ══════════════════════════════ ТОКЕНЫ ══════════════════════════════ */
 :root{
-  /* СВЕТЛАЯ (база) — кремово-золотая, текст navy */
-  --bg:#FFFCF5; --bg-2:#FFF8E1; --panel:rgba(255,255,255,.72); --panel-solid:#fff; --parchment:#F9F2E4;
-  --glass:rgba(255,255,255,.66); --glass-brd:rgba(201,168,76,.28);
-  --text:#1B2340; --text-dim:#4a4636; --muted:#6a6353; --navy:#1B2340;
-  --gold:#C9A84C; --gold-2:#B8973B; --gold-deep:#8B6F1F; --gold-ink:#7a5e18; --cta:#C8A147;
-  --gold-soft:rgba(201,168,76,.12);
-  --mint:#5f9e6a; --peach:#F5C89C; --error:#C85757; --warning:#B8862E; --info:#42648C;
-  --line:rgba(139,111,31,.16);
-  /* Заливка (кнопки, объёмное золото) — светлый глянец, поверх тёмный текст */
-  --grad-gold:linear-gradient(135deg,#E6C766,#C9A84C 45%,#8B6F1F);
-  /* Текст-клип (h1/h2/brand/stat) — тёмное золото, читается на креме (WCAG AA) */
-  --grad-gold-text:linear-gradient(135deg,#A9842B,#8B6F1F 55%,#6d5416);
-  --gold-fg:#1a1206; /* цвет текста ПОВЕРХ золотой заливки */
-  --grad-hero:radial-gradient(1200px 600px at 50% -10%,rgba(201,168,76,.20),transparent 60%),linear-gradient(180deg,#FFF8E1 0%,#FFFCF5 100%);
-  --shadow-card:0 10px 34px rgba(139,111,31,.12);
-  --shadow-soft:0 4px 16px rgba(139,111,31,.10);
-  --shadow-glow:0 0 50px rgba(201,168,76,.16);
-  --shadow-btn:0 10px 26px rgba(201,168,76,.34);
-  --shadow-3d:0 24px 60px -18px rgba(139,111,31,.42),0 8px 20px rgba(27,35,64,.10);
+  /* СВЕТЛАЯ (база) — имперская классика: айвори + ЧИСТОЕ золото + королевский синий + бордо.
+     Текст — глубокий сапфирово-синий. Никакого грязного оливкового золота. */
+  --bg:#FAF4E6; --bg-2:#F1E6C9; --panel:rgba(255,255,255,.82); --panel-solid:#FFFDF7; --parchment:#F6EDD6;
+  --glass:rgba(255,255,255,.72); --glass-brd:rgba(180,130,28,.30);
+  --text:#15224C; --text-dim:#3c456e; --muted:#6a7096; --navy:#15224C;
+  /* Королевский синий (акцент с логотипа) */
+  --royal:#17307A; --royal-2:#2247A8; --royal-soft:rgba(23,48,122,.10);
+  --grad-royal:linear-gradient(135deg,#2A57C6 0%,#17307A 100%);
+  /* Бордо/винный (премиум-плашки: «денежные премии», «высшая награда») */
+  --wine:#7A1522; --wine-2:#5C0F1A; --wine-soft:rgba(122,21,34,.10);
+  --grad-wine:linear-gradient(135deg,#8E1C2C 0%,#5C0F1A 100%);
+  /* ЧИСТОЕ золото — тёплое, яркое, металлическое (не оливковое) */
+  --gold:#C79322; --gold-2:#A6740F; --gold-deep:#8A5E0C; --gold-ink:#9A6910; --cta:#C79322;
+  --gold-soft:rgba(199,147,34,.12);
+  --mint:#2f8f5b; --peach:#F5C89C; --error:#C13B44; --warning:#B8862E; --info:#2247A8;
+  --line:rgba(122,90,20,.16);
+  /* Заливка кнопок/иконок — металлический золотой глянец с ярким бликом */
+  --grad-gold:linear-gradient(135deg,#F8E7A6 0%,#E7C05A 26%,#C79322 60%,#9E6E12 100%);
+  /* Текст-клип (h1/h2/brand) — глубокое золото, читается на айвори (WCAG AA) */
+  --grad-gold-text:linear-gradient(135deg,#B27E12,#8A5E0C 55%,#6E4A08);
+  --gold-fg:#1B1533; /* тёмный navy-текст ПОВЕРХ золотой заливки */
+  --grad-hero:radial-gradient(1200px 600px at 50% -10%,rgba(199,147,34,.16),transparent 60%),linear-gradient(180deg,#F5EACF 0%,#FAF4E6 100%);
+  --shadow-card:0 12px 36px rgba(21,34,76,.10);
+  --shadow-soft:0 5px 16px rgba(21,34,76,.08);
+  --shadow-glow:0 0 50px rgba(199,147,34,.18);
+  --shadow-btn:0 10px 26px rgba(199,147,34,.34);
+  --shadow-3d:0 24px 60px -18px rgba(122,90,20,.40),0 8px 20px rgba(21,34,76,.12);
   --radius:20px; --radius-sm:14px; --radius-lg:28px; --maxw:1200px;
   --ff-display:"Playfair Display",Georgia,serif;
   --ff-serif:"Playfair Display",Georgia,serif;
@@ -34,23 +42,28 @@
   color-scheme:light;
 }
 [data-theme="dark"]{
-  /* ТЁМНАЯ (как было) — чёрный премиум, золото на чёрном */
-  --bg:#0b0a0d; --bg-2:#121016; --panel:rgba(30,26,20,.55); --panel-solid:#1a1712; --parchment:#151217;
-  --glass:rgba(28,24,18,.6); --glass-brd:rgba(201,168,76,.22);
-  --text:#F3ECDA; --text-dim:#b8ad93; --muted:#8b8069; --navy:#F3ECDA;
-  --gold:#E8C25A; --gold-2:#C9A84C; --gold-deep:#8B6F1F; --gold-ink:#E8C25A; --cta:#E8C25A;
-  --gold-soft:rgba(232,194,90,.14);
-  --mint:#8FBC94; --peach:#F5C89C; --error:#E27B7B; --warning:#E0A946; --info:#5A7A9E;
-  --line:rgba(201,168,76,.16);
-  --grad-gold:linear-gradient(135deg,#F3D57C 0%,#E8C25A 40%,#B98F2E 100%);
-  --grad-gold-text:linear-gradient(135deg,#F3D57C 0%,#E8C25A 40%,#B98F2E 100%);
-  --gold-fg:#1a1206;
-  --grad-hero:radial-gradient(1200px 600px at 50% -10%,rgba(232,194,90,.20),transparent 60%),linear-gradient(180deg,#0e0c10 0%,#0b0a0d 100%);
-  --shadow-card:0 10px 40px rgba(0,0,0,.45);
-  --shadow-soft:0 6px 20px rgba(0,0,0,.4);
-  --shadow-glow:0 0 60px rgba(232,194,90,.14);
-  --shadow-btn:0 8px 30px rgba(201,168,76,.32);
-  --shadow-3d:0 28px 70px -16px rgba(0,0,0,.7),0 10px 24px rgba(0,0,0,.5);
+  /* ТЁМНАЯ — театральный люкс: ПОЛУНОЧНЫЙ КОРОЛЕВСКИЙ СИНИЙ (не чёрный) + золото + бордо,
+     золотые звёзды. Как гала-афиши «Слава России» / «Мировая сцена». */
+  --bg:#0A1330; --bg-2:#0E1C46; --panel:rgba(16,28,66,.60); --panel-solid:#0F1D44; --parchment:#0E1A40;
+  --glass:rgba(14,26,60,.62); --glass-brd:rgba(226,190,96,.26);
+  --text:#F2E9CF; --text-dim:#c6cde6; --muted:#93a0c6; --navy:#F2E9CF;
+  --royal:#4E78E0; --royal-2:#3D63C7; --royal-soft:rgba(78,120,224,.16);
+  --grad-royal:linear-gradient(135deg,#5A82E8 0%,#2A4FB8 100%);
+  --wine:#A2263A; --wine-2:#7A1522; --wine-soft:rgba(162,38,58,.20);
+  --grad-wine:linear-gradient(135deg,#B02A40 0%,#7A1522 100%);
+  --gold:#E9C567; --gold-2:#D0A63C; --gold-deep:#A6791A; --gold-ink:#EBC85E; --cta:#E9C567;
+  --gold-soft:rgba(233,197,103,.15);
+  --mint:#6FCF97; --peach:#F5C89C; --error:#E27B7B; --warning:#E0A946; --info:#7C9BEF;
+  --line:rgba(226,190,96,.16);
+  --grad-gold:linear-gradient(135deg,#F8E6A6 0%,#E9C567 42%,#C0902E 100%);
+  --grad-gold-text:linear-gradient(135deg,#F8E6A6 0%,#E9C567 42%,#C0902E 100%);
+  --gold-fg:#12183A;
+  --grad-hero:radial-gradient(1200px 600px at 50% -10%,rgba(233,197,103,.18),transparent 60%),linear-gradient(180deg,#0C1738 0%,#0A1330 100%);
+  --shadow-card:0 14px 44px rgba(0,0,0,.5);
+  --shadow-soft:0 6px 20px rgba(0,0,0,.45);
+  --shadow-glow:0 0 60px rgba(233,197,103,.16);
+  --shadow-btn:0 8px 30px rgba(0,0,0,.45);
+  --shadow-3d:0 28px 70px -16px rgba(0,0,0,.72),0 10px 24px rgba(0,0,0,.55);
   color-scheme:dark;
 }
 
@@ -1818,37 +1831,201 @@ body.mz-cart-open .appnav{display:none !important}
 body.mz-cart-open .shop-cart-fab{display:none !important}
 
 /* ══════════════════════════════════════════════════════════════════════════
-   APP-РЕЖИМ v5 — единый ЗАМЕТНЫЙ анимационный фон + вход без белой плашки/попапа
+   APP-РЕЖИМ v6 — ИМПЕРСКАЯ КЛАССИКА. Живой анимационный фон (обе темы),
+   стеклянные шапка/меню, радио-плеер, чистое золото. Авторитетный слой.
    ══════════════════════════════════════════════════════════════════════════ */
 
-/* ПОЛНОСТЬЮ убиваем всплывающую модалку входа (создаётся динамически) */
+/* Всплывающую модалку входа держим убитой */
 .auth-modal{display:none !important}
 
-/* Единый анимационный фон — ЯРЧЕ и равномернее на всех экранах, всегда fixed */
-.app-bg::before{
-  background:
-    radial-gradient(50% 42% at 15% 12%, rgba(232,194,90,.55), transparent 60%),
-    radial-gradient(46% 42% at 85% 22%, rgba(201,168,76,.48), transparent 62%),
-    radial-gradient(52% 46% at 50% 55%, rgba(212,175,90,.40), transparent 64%),
-    radial-gradient(50% 44% at 22% 88%, rgba(232,194,90,.50), transparent 62%),
-    radial-gradient(48% 44% at 82% 90%, rgba(201,168,76,.42), transparent 64%) !important;
-  filter:blur(46px) !important;opacity:1 !important;
-  animation:appbgAurora 26s ease-in-out infinite alternate !important}
-[data-theme="dark"] .app-bg::before{opacity:.68 !important}
-.app-bg::after{opacity:.10 !important}
-[data-theme="dark"] .app-bg::after{opacity:.12 !important}
-/* база фона — тёплый кремовый градиент, чтобы аврора красиво читалась */
-.app-bg{background:linear-gradient(165deg,#fff9ec 0%,#f7ecd0 55%,#f2e4c6 100%) !important}
-[data-theme="dark"] .app-bg{background:linear-gradient(165deg,#0f0b10 0%,#171019 55%,#1d1420 100%) !important}
-/* html/body прозрачные, чтобы fixed-фон просвечивал ВЕЗДЕ (не перекрывался белым) */
+/* html/body прозрачные — единый fixed-фон просвечивает ВЕЗДЕ */
 html{background:transparent !important}
 body{background:transparent !important}
 
-/* Вход/регистрация — карточка СТЕКЛЯННАЯ (анимационный фон просвечивает, не белый блок) */
+/* ── Единый живой фон ─────────────────────────────────────────────────────
+   Светлая: тёплый айвори + мягкое золото + сапфировое сияние сверху.
+   Тёмная: полуночный королевский синий + золотые звёзды + бордовое сияние. */
+.app-bg{position:fixed !important;inset:0 !important;z-index:-3 !important;pointer-events:none;overflow:hidden;
+  background:
+    radial-gradient(120% 70% at 50% -8%, rgba(42,87,198,.10), transparent 60%),
+    linear-gradient(168deg,#FCF7EB 0%,#F6EDD5 52%,#F0E4C4 100%) !important}
+[data-theme="dark"] .app-bg{
+  background:
+    radial-gradient(120% 70% at 50% -6%, rgba(233,197,103,.14), transparent 62%),
+    radial-gradient(90% 60% at 50% 108%, rgba(122,21,34,.28), transparent 60%),
+    linear-gradient(170deg,#0C1738 0%,#0A1330 55%,#0B1024 100%) !important}
+
+/* Слой авроры — медленно дышащие золото/сапфир пятна */
+.app-bg::before{content:"" !important;position:absolute !important;inset:-16% !important;
+  background:
+    radial-gradient(44% 40% at 16% 14%, rgba(199,147,34,.40), transparent 62%),
+    radial-gradient(42% 40% at 84% 20%, rgba(42,87,198,.22), transparent 64%),
+    radial-gradient(50% 46% at 52% 60%, rgba(231,192,90,.34), transparent 64%),
+    radial-gradient(44% 42% at 22% 90%, rgba(199,147,34,.30), transparent 62%) !important;
+  filter:blur(48px) !important;opacity:.95 !important;will-change:transform;
+  animation:appbgAurora 30s ease-in-out infinite alternate !important}
+[data-theme="dark"] .app-bg::before{
+  background:
+    radial-gradient(46% 42% at 18% 14%, rgba(233,197,103,.30), transparent 62%),
+    radial-gradient(44% 42% at 84% 22%, rgba(78,120,224,.34), transparent 64%),
+    radial-gradient(52% 48% at 52% 64%, rgba(233,197,103,.20), transparent 66%),
+    radial-gradient(46% 44% at 24% 92%, rgba(162,38,58,.30), transparent 62%) !important;
+  opacity:.85 !important}
+
+/* Слой плывущих нотных тайлов — тонкий бесконечный дрейф */
+.app-bg::after{content:"" !important;position:absolute !important;inset:-40% !important;opacity:.06 !important;
+  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='170' height='170' viewBox='0 0 170 170'%3E%3Cg fill='none' stroke='%23C79322' stroke-width='1.6'%3E%3Cpath d='M34 108V58l24-5v50'/%3E%3Ccircle cx='29' cy='110' r='6.5'/%3E%3Ccircle cx='53' cy='101' r='6.5'/%3E%3Cpath d='M120 132V74l18-4v54'/%3E%3Ccircle cx='115' cy='134' r='5.5'/%3E%3Ccircle cx='133' cy='124' r='5.5'/%3E%3C/g%3E%3C/svg%3E") !important;
+  background-size:180px 180px;will-change:transform;animation:appbgNotes 80s linear infinite !important}
+[data-theme="dark"] .app-bg::after{opacity:.10 !important;
+  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='170' height='170' viewBox='0 0 170 170'%3E%3Cg fill='none' stroke='%23E9C567' stroke-width='1.6'%3E%3Cpath d='M34 108V58l24-5v50'/%3E%3Ccircle cx='29' cy='110' r='6.5'/%3E%3Ccircle cx='53' cy='101' r='6.5'/%3E%3Cpath d='M120 132V74l18-4v54'/%3E%3Ccircle cx='115' cy='134' r='5.5'/%3E%3Ccircle cx='133' cy='124' r='5.5'/%3E%3C/g%3E%3C/svg%3E") !important}
+
+/* Звёздное мерцание (ярко в тёмной, чуть заметно в светлой) */
+.ab-stars{position:absolute;inset:0;pointer-events:none;
+  background-image:
+    radial-gradient(1.4px 1.4px at 12% 18%, rgba(255,240,190,.9), transparent),
+    radial-gradient(1.2px 1.2px at 28% 42%, rgba(255,240,190,.7), transparent),
+    radial-gradient(1.6px 1.6px at 46% 12%, rgba(255,240,190,.9), transparent),
+    radial-gradient(1.2px 1.2px at 66% 28%, rgba(255,240,190,.7), transparent),
+    radial-gradient(1.5px 1.5px at 82% 16%, rgba(255,240,190,.9), transparent),
+    radial-gradient(1.2px 1.2px at 74% 52%, rgba(255,240,190,.6), transparent),
+    radial-gradient(1.4px 1.4px at 36% 66%, rgba(255,240,190,.7), transparent),
+    radial-gradient(1.3px 1.3px at 90% 62%, rgba(255,240,190,.7), transparent),
+    radial-gradient(1.5px 1.5px at 18% 78%, rgba(255,240,190,.8), transparent);
+  opacity:0;animation:abTwinkle 5.5s ease-in-out infinite}
+[data-theme="dark"] .ab-stars{opacity:.9}
+@keyframes abTwinkle{0%,100%{opacity:0}50%{opacity:.9}}
+
+/* Плывущие вверх ноты — «видео-фон» */
+.ab-fly{position:absolute;left:0;bottom:-8%;font-size:26px;line-height:1;color:var(--gold-ink);
+  opacity:0;will-change:transform,opacity;filter:drop-shadow(0 2px 6px rgba(199,147,34,.4));
+  animation:abFly linear infinite}
+[data-theme="dark"] .ab-fly{color:var(--gold);filter:drop-shadow(0 2px 10px rgba(233,197,103,.5))}
+.ab-fly:nth-child(1){left:8%;font-size:22px;animation-duration:17s;animation-delay:0s}
+.ab-fly:nth-child(2){left:22%;font-size:30px;animation-duration:22s;animation-delay:3s}
+.ab-fly:nth-child(3){left:38%;font-size:18px;animation-duration:15s;animation-delay:6s}
+.ab-fly:nth-child(4){left:52%;font-size:34px;animation-duration:25s;animation-delay:1.5s}
+.ab-fly:nth-child(5){left:66%;font-size:22px;animation-duration:19s;animation-delay:8s}
+.ab-fly:nth-child(6){left:78%;font-size:28px;animation-duration:23s;animation-delay:4s}
+.ab-fly:nth-child(7){left:90%;font-size:20px;animation-duration:16s;animation-delay:10s}
+.ab-fly:nth-child(8){left:15%;font-size:26px;animation-duration:21s;animation-delay:12s}
+@keyframes abFly{
+  0%{opacity:0;transform:translateY(0) translateX(0) rotate(-8deg)}
+  10%{opacity:.5}
+  50%{transform:translateY(-52vh) translateX(24px) rotate(8deg)}
+  90%{opacity:.5}
+  100%{opacity:0;transform:translateY(-104vh) translateX(-16px) rotate(-6deg)}}
+
+@keyframes appbgAurora{
+  0%{transform:translate3d(-2%,-2%,0) scale(1)}
+  50%{transform:translate3d(2%,3%,0) scale(1.06)}
+  100%{transform:translate3d(-1%,-3%,0) scale(1.08)}}
+@keyframes appbgNotes{0%{transform:translate3d(0,0,0)}100%{transform:translate3d(-180px,-180px,0)}}
+@media(prefers-reduced-motion:reduce){
+  .app-bg::before,.app-bg::after,.ab-fly,.ab-stars{animation:none !important}
+  .ab-fly{display:none}}
+
+/* ── Шапка приложения — стеклянная, премиальная ─────────────────────────── */
+html body header.app-header{
+  background:color-mix(in srgb, var(--bg) 78%, transparent) !important;
+  backdrop-filter:blur(16px) saturate(1.35) !important;-webkit-backdrop-filter:blur(16px) saturate(1.35) !important;
+  border-bottom:1px solid var(--glass-brd) !important;
+  box-shadow:0 4px 22px rgba(21,34,76,.08) !important}
+[data-theme="dark"] html body header.app-header,html[data-theme="dark"] body header.app-header{
+  background:color-mix(in srgb,#0C1738 76%,transparent) !important;border-bottom-color:rgba(226,190,96,.20) !important;
+  box-shadow:0 4px 24px rgba(0,0,0,.4) !important}
+.app-header .brand span{background:var(--grad-gold-text);-webkit-background-clip:text;background-clip:text;color:transparent !important;
+  letter-spacing:.01em}
+.app-header .brand img{border-radius:50%;box-shadow:0 2px 10px rgba(199,147,34,.4),0 0 0 2px rgba(199,147,34,.25)}
+.app-icon-btn{background:color-mix(in srgb,var(--gold-soft) 60%,var(--panel)) !important;
+  border:1px solid var(--glass-brd) !important;color:var(--gold-ink) !important}
+[data-theme="dark"] .app-icon-btn{background:color-mix(in srgb,var(--gold-soft) 40%,rgba(16,28,66,.6)) !important;color:var(--gold) !important}
+.app-icon-btn:hover{border-color:var(--gold) !important;box-shadow:0 4px 14px rgba(199,147,34,.28) !important}
+
+/* ── Нижнее меню — стекло + чистое золото на активном ──────────────────── */
+html body nav.appnav{
+  background:color-mix(in srgb, var(--bg) 82%, transparent) !important;
+  backdrop-filter:blur(18px) saturate(1.4) !important;-webkit-backdrop-filter:blur(18px) saturate(1.4) !important;
+  border-top:1px solid var(--glass-brd) !important;
+  box-shadow:0 -6px 26px rgba(21,34,76,.10) !important}
+[data-theme="dark"] html body nav.appnav{
+  background:color-mix(in srgb,#0C1738 80%,transparent) !important;border-top-color:rgba(226,190,96,.20) !important;
+  box-shadow:0 -6px 30px rgba(0,0,0,.5) !important}
+.appnav-inner{display:flex;align-items:flex-end;justify-content:space-around;gap:2px;max-width:560px;margin:0 auto}
+.appnav a{position:relative;display:flex;flex-direction:column;align-items:center;gap:3px;flex:1;
+  padding:4px 2px;font-size:.66rem;font-weight:700;text-decoration:none;color:var(--muted);
+  transition:color .2s,transform .16s}
+.appnav a svg{width:23px;height:23px}
+.appnav a.active{color:var(--gold-ink)}
+[data-theme="dark"] .appnav a.active{color:var(--gold)}
+.appnav a.active::after{content:"";position:absolute;top:-6px;left:50%;transform:translateX(-50%);
+  width:22px;height:3px;border-radius:999px;background:var(--grad-gold);box-shadow:0 0 10px rgba(199,147,34,.6)}
+.appnav a:active{transform:scale(.9)}
+/* Центральная кнопка «Заявка» — золотая с королевским кольцом */
+.appnav a.appnav-cta{flex:0 0 auto}
+.appnav a.appnav-cta .ic{display:flex;align-items:center;justify-content:center;width:56px;height:56px;margin-top:-20px;
+  border-radius:50%;background:var(--grad-gold);color:var(--gold-fg);
+  box-shadow:0 10px 24px rgba(199,147,34,.5),0 0 0 4px var(--bg),0 0 0 5px rgba(23,48,122,.35);
+  transition:transform .18s cubic-bezier(.2,1.4,.4,1)}
+[data-theme="dark"] .appnav a.appnav-cta .ic{box-shadow:0 10px 26px rgba(0,0,0,.5),0 0 0 4px #0C1738,0 0 0 5px rgba(78,120,224,.5)}
+.appnav a.appnav-cta .ic svg{width:26px;height:26px}
+.appnav a.appnav-cta:active .ic{transform:scale(.9)}
+.appnav a.appnav-cta.active{color:var(--gold-ink)}
+.appnav a.appnav-cta.active::after{display:none}
+
+/* ── Стеклянная карточка входа/регистрации (фон просвечивает) ──────────── */
 .auth-page,.auth-page .section,.auth-page .container{background:transparent !important}
 .auth-shell,.auth-page .card.auth-shell{
-  background:color-mix(in srgb, #fffdf8 62%, transparent) !important;
-  backdrop-filter:blur(16px) saturate(1.15) !important;-webkit-backdrop-filter:blur(16px) saturate(1.15) !important;
-  border:1px solid rgba(201,168,76,.28) !important;
-  box-shadow:0 18px 46px rgba(139,111,31,.18) !important}
-[data-theme="dark"] .auth-shell{background:color-mix(in srgb,#1c1520 64%,transparent) !important;border-color:rgba(232,194,90,.22) !important}
+  background:color-mix(in srgb, var(--panel-solid) 66%, transparent) !important;
+  backdrop-filter:blur(18px) saturate(1.2) !important;-webkit-backdrop-filter:blur(18px) saturate(1.2) !important;
+  border:1px solid var(--glass-brd) !important;
+  box-shadow:0 20px 50px rgba(21,34,76,.16) !important}
+[data-theme="dark"] .auth-shell,[data-theme="dark"] .auth-page .card.auth-shell{
+  background:color-mix(in srgb,#0F1D44 64%,transparent) !important;border-color:rgba(226,190,96,.24) !important;
+  box-shadow:0 22px 56px rgba(0,0,0,.5) !important}
+
+/* ── РАДИО-ПЛЕЕР «Классика» — видимый мини-плеер (слева над меню) ──────── */
+.mz-radio{position:fixed;left:14px;bottom:calc(92px + env(safe-area-inset-bottom));z-index:930;
+  display:flex;align-items:center;gap:9px;max-width:60vw;padding:7px 13px 7px 8px;border-radius:999px;
+  background:color-mix(in srgb, var(--panel-solid) 82%, transparent);
+  backdrop-filter:blur(16px) saturate(1.3);-webkit-backdrop-filter:blur(16px) saturate(1.3);
+  border:1px solid var(--glass-brd);box-shadow:0 10px 26px rgba(21,34,76,.18);
+  cursor:pointer;user-select:none;-webkit-tap-highlight-color:transparent;
+  transition:transform .18s cubic-bezier(.2,.8,.2,1),box-shadow .2s;animation:mzRadioIn .5s cubic-bezier(.2,1.2,.4,1) both}
+[data-theme="dark"] .mz-radio{background:color-mix(in srgb,#0F1D44 82%,transparent);border-color:rgba(226,190,96,.24);box-shadow:0 10px 28px rgba(0,0,0,.5)}
+@keyframes mzRadioIn{from{opacity:0;transform:translateY(14px)}to{opacity:1;transform:none}}
+.mz-radio:active{transform:scale(.96)}
+.mz-radio-btn{flex:none;width:38px;height:38px;border-radius:50%;border:none;cursor:pointer;
+  background:var(--grad-gold);color:var(--gold-fg);display:flex;align-items:center;justify-content:center;
+  box-shadow:0 4px 12px rgba(199,147,34,.4)}
+.mz-radio-btn svg{width:19px;height:19px}
+.mz-radio .ic-pause{display:none}
+.mz-radio[data-on="1"] .ic-play{display:none}
+.mz-radio[data-on="1"] .ic-pause{display:block}
+.mz-radio-meta{display:flex;flex-direction:column;min-width:0;line-height:1.15}
+.mz-radio-meta b{font-size:.72rem;font-weight:800;color:var(--text);white-space:nowrap}
+.mz-radio-meta span{font-size:.66rem;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:34vw}
+/* Эквалайзер — оживает при воспроизведении */
+.mz-radio-eq{display:none;align-items:flex-end;gap:2px;height:14px;margin-left:1px}
+.mz-radio[data-on="1"] .mz-radio-eq{display:inline-flex}
+.mz-radio-eq i{width:3px;background:var(--gold-ink);border-radius:2px;animation:mzEq .9s ease-in-out infinite}
+[data-theme="dark"] .mz-radio-eq i{background:var(--gold)}
+.mz-radio-eq i:nth-child(1){height:6px;animation-delay:0s}
+.mz-radio-eq i:nth-child(2){height:13px;animation-delay:.2s}
+.mz-radio-eq i:nth-child(3){height:9px;animation-delay:.4s}
+.mz-radio-eq i:nth-child(4){height:14px;animation-delay:.1s}
+@keyframes mzEq{0%,100%{transform:scaleY(.35)}50%{transform:scaleY(1)}}
+@media(prefers-reduced-motion:reduce){.mz-radio-eq i{animation:none}}
+/* Прячем радио когда открыта корзина наград (чтобы не мешало) */
+body.mz-cart-open .mz-radio{display:none !important}
+@media(max-width:380px){.mz-radio-meta{display:none}.mz-radio{padding:7px}}
+
+/* ── Плитки-иконки (меню/награды) — чистое золото + navy-иконка ────────── */
+.menu-tile-ic,.shop-ic{background:var(--grad-gold) !important;color:var(--gold-fg) !important;
+  box-shadow:0 6px 16px rgba(199,147,34,.34),inset 0 1px 0 rgba(255,255,255,.5) !important}
+.shop-tag{background:var(--wine-soft) !important;color:var(--wine) !important;font-weight:800}
+[data-theme="dark"] .shop-tag{color:#F0B9C2 !important}
+
+/* Первичные кнопки — металлическое золото, navy-текст */
+.btn--primary,.btn.btn--gold,.btn-primary{background:var(--grad-gold) !important;color:var(--gold-fg) !important;
+  border:none !important;box-shadow:var(--shadow-btn) !important;font-weight:800}
+.btn--primary:active{transform:translateY(1px)}
