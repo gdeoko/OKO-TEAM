@@ -1516,284 +1516,7 @@ button:focus-visible,a:focus-visible,input:focus-visible,textarea:focus-visible,
 
 
 
-<style id="hlb-v9">
-/* ============== ПАЛИТРА ============== */
-:root{
-  --hlb-orange:#FF9500; --hlb-orange-2:#FFA13A; --hlb-orange-3:#FFB35C;
-  --hlb-orange-glow:rgba(255,149,0,.42);
-  --hlb-black:#000; --hlb-panel:#0A0A0A; --hlb-panel-2:#101010; --hlb-panel-3:#161616;
-  --hlb-line:#1F1F1F; --hlb-line-2:#2A2A2A; --hlb-line-hi:rgba(255,149,0,.3);
-  --hlb-white:#fff; --hlb-mute:#7A7A7A; --hlb-mute-2:#4A4A4A;
-  --hlb-verified:#3B9EFF;
-  --hlb-font:'Onest', -apple-system, 'Segoe UI', system-ui, sans-serif;
-  --tg-top-inset: env(safe-area-inset-top, 0px);
-  --tg-bot-inset: env(safe-area-inset-bottom, 0px);
-}
-h1,h2,h3,.display,.section-h,.svc-h,.p-sec-h,.auth-word,.word{ font-family:var(--hlb-font)!important; letter-spacing:-.01em }
 
-/* ============== SPLASH ============== */
-#splash{ z-index:200 }
-#splash .eye{ width:140px !important; height:140px !important; display:flex !important; align-items:center; justify-content:center; color:transparent !important; filter:drop-shadow(0 0 24px rgba(255,149,0,.7)) drop-shadow(0 0 50px rgba(255,149,0,.4)) !important }
-#splash .eye svg{ width:100% !important; height:100% !important; display:block }
-#splash .eye svg image{ preserveAspectRatio:xMidYMid meet }
-#splash .word{ color:#fff !important; font-family:var(--hlb-font) !important; letter-spacing:.24em; font-weight:900 }
-
-/* Убираем возможные watermark */
-#wm-splash, .wm-splash, #wm-splash-eye, .wm-splash-word{ display:none !important }
-
-/* ============== LOGO GLOW в шапке + всём приложении ============== */
-.auth-logo{ object-fit:contain !important; filter:drop-shadow(0 0 18px rgba(255,149,0,.7)) drop-shadow(0 0 44px rgba(255,149,0,.35)) !important }
-.brand svg, .nav-logo svg{ filter:drop-shadow(0 0 6px rgba(255,149,0,.55)) !important }
-.brand svg image, .nav-logo svg image, .ma-hero-logo image, svg use[href*="i-logo"]{ preserveAspectRatio:xMidYMid meet }
-
-/* ============== TG SAFE-AREA ============== */
-header{ padding-top: max(12px, calc(env(safe-area-inset-top,0px) + 4px)) !important; min-height: calc(58px + env(safe-area-inset-top,0px)) !important }
-nav#tabs{
-  padding-bottom: calc(6px + env(safe-area-inset-bottom,0px)) !important;
-  min-height: calc(60px + env(safe-area-inset-bottom,0px)) !important;
-  max-height: calc(80px + env(safe-area-inset-bottom,0px)) !important;
-  transition: none !important;
-  transform: none !important;
-}
-nav#tabs button{ transition: color .15s ease !important; transform: none !important }
-nav#tabs button:active, nav#tabs button:hover, nav#tabs button:focus{ transform:none !important }
-nav#tabs button.active, nav#tabs button.on{ color: var(--hlb-orange) !important }
-nav#tabs .nav-logo svg *{ fill: var(--hlb-orange) !important; stroke: none !important }
-nav#tabs .nav-logo span{ color: #fff !important }
-
-/* ============== FEED tabs — видимость гарантирована ============== */
-#screen-feed{ background:#000 !important }
-.feed-tabs{
-  position:sticky !important; top:0 !important; z-index:5;
-  background:linear-gradient(180deg,#000, rgba(0,0,0,.94)) !important;
-  backdrop-filter:blur(14px);
-  padding: 14px 18px !important;
-  gap: 8px !important;
-  display:flex !important;
-}
-.feed-tabs button{
-  font-family:var(--hlb-font) !important;
-  font-weight:800 !important;
-  background:#0F0F0F !important;
-  color:#fff !important;
-  border:1px solid var(--hlb-line) !important;
-  padding: 9px 16px !important;
-  border-radius: 99px !important;
-  cursor: pointer !important;
-}
-.feed-tabs button.on{
-  background:var(--hlb-orange) !important;
-  color:#000 !important;
-  border-color: var(--hlb-orange) !important;
-  box-shadow: 0 6px 16px rgba(255,149,0,.32) !important;
-}
-#feedList{ padding-bottom: calc(96px + env(safe-area-inset-bottom,0px)) !important }
-
-/* ============== ЧАТЫ — оригинал OKO с ХЛБ данными ============== */
-.chat-list{ padding-bottom: calc(96px + env(safe-area-inset-bottom,0px)) !important }
-.ava{ font-family:var(--hlb-font) !important; font-weight:900 !important }
-
-/* ============== ТАРИФЫ 1:1 OKO дизайн ============== */
-.plans-wrap{ display:grid !important; gap:14px !important; padding:0 !important }
-.plan{
-  background:linear-gradient(180deg,#141414,#0A0A0A) !important;
-  border: 1px solid var(--hlb-line) !important;
-  border-radius: 20px !important;
-  padding: 20px 20px 18px !important;
-  position: relative !important;
-  overflow: hidden !important;
-}
-.plan.hot{ border-color: rgba(255,149,0,.4) !important; box-shadow: 0 0 0 1px rgba(255,149,0,.14) inset, 0 20px 40px rgba(255,149,0,.14) !important }
-.plan.gold{ border-color: rgba(255,149,0,.55) !important; background:linear-gradient(180deg,#1A0F00,#0A0A0A) !important; box-shadow: 0 0 40px rgba(255,149,0,.24) inset !important }
-.plan .chip.flag{ background: var(--hlb-orange) !important; color: #000 !important; font-family:var(--hlb-font) !important; font-weight:900 !important; padding:4px 10px !important; border-radius:6px !important; font-size:10.5px !important; letter-spacing:.06em !important; box-shadow: 0 4px 10px rgba(255,149,0,.4) !important; position:absolute !important; top:16px !important; right:16px !important }
-.plan.gold .chip.flag{ background: linear-gradient(135deg, #FFD84C, var(--hlb-orange)) !important }
-.plan h3{ font-family:var(--hlb-font) !important; font-weight:900 !important; color:#fff !important; font-size:22px !important; letter-spacing:-.01em !important; margin-bottom:12px !important }
-.plan .price{ display:flex !important; align-items:baseline !important; gap:6px !important; margin-bottom:14px !important }
-.plan .price b{ font-family:var(--hlb-font) !important; font-weight:900 !important; color: var(--hlb-orange) !important; font-size:32px !important; letter-spacing:-.02em !important; text-shadow: 0 0 24px rgba(255,149,0,.28); line-height:1 }
-.plan .price span{ color: var(--hlb-mute) !important; font-size:13px !important; font-weight:600 !important }
-.plan ul{ list-style:none !important; padding:0 !important; margin:0 0 14px !important }
-.plan li{ padding:6px 0 6px 22px !important; color:#E8E8E8 !important; font-size:13.5px !important; line-height:1.4 !important; font-weight:500 !important; position:relative }
-.plan li::before{ content: '' !important; position: absolute !important; left:0 !important; top:11px !important; width:12px !important; height:12px !important; background:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23FF9500' stroke-width='3' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='20 6 9 17 4 12'/%3E%3C/svg%3E") no-repeat center/contain !important }
-.plan .btn{
-  width:100% !important;
-  background: linear-gradient(135deg, var(--hlb-orange-2), var(--hlb-orange)) !important;
-  color:#000 !important;
-  font-family:var(--hlb-font) !important;
-  font-weight:900 !important;
-  border:0 !important;
-  padding:14px !important;
-  border-radius:14px !important;
-  font-size:14px !important;
-  letter-spacing:-.01em !important;
-  box-shadow: 0 10px 22px rgba(255,149,0,.28) !important;
-  cursor:pointer !important;
-}
-.plan .btn.ghost{
-  background: transparent !important;
-  color:#fff !important;
-  border: 1px solid rgba(255,149,0,.35) !important;
-  box-shadow:none !important;
-}
-.plan.gold .btn{ background: linear-gradient(135deg, #FFD84C, var(--hlb-orange)) !important; box-shadow: 0 12px 30px rgba(255,149,0,.4) !important }
-.disc-row{ display:flex !important; gap:6px !important; margin-bottom:14px !important; flex-wrap:wrap }
-.disc-row .chip{ background:#0F0F0F !important; border:1px solid var(--hlb-line) !important; color:var(--hlb-mute) !important; font-family:var(--hlb-font) !important; font-weight:700 !important; font-size:11.5px !important; padding:6px 12px !important; border-radius:99px !important }
-
-/* Скрываем мой доп-CTA в профиле, если появился */
-.hlb-prof-tariff-cta{ display:none !important }
-
-/* ============== ПРОФИЛЬ ============== */
-#profAva{ overflow:hidden !important; padding:0 !important; border:3px solid var(--hlb-orange) !important; box-shadow: 0 8px 20px rgba(255,149,0,.28) !important }
-#profAva > img{ width:100% !important; height:100% !important; object-fit:cover !important; display:block !important; border-radius:50% !important }
-.profile-top{ animation: hlbFadeUp .5s cubic-bezier(.2,1.1,.3,1) both }
-
-/* ============== КОШЕЛЁК — тёмная карта с оранжевыми акцентами (читаемо) ============== */
-#screen-wallet .w2-card{
-  background: linear-gradient(135deg, #241100 0%, #100700 60%, #0A0500 100%) !important;
-  color: #fff !important;
-  border: 1px solid rgba(255,149,0,.35) !important;
-  box-shadow: 0 20px 44px rgba(255,149,0,.22), inset 0 0 0 1px rgba(255,149,0,.08) !important;
-  position: relative !important;
-  overflow: hidden !important;
-}
-#screen-wallet .w2-card::before{
-  content:'' !important; position:absolute !important; inset:auto -30% -30% auto !important;
-  width:280px !important; height:280px !important;
-  background: radial-gradient(circle, rgba(255,149,0,.4), transparent 60%) !important;
-  filter: blur(30px) !important; pointer-events:none;
-  animation: hlbBreath 6s ease-in-out infinite;
-}
-#screen-wallet .w2-card *{ color: #fff !important; position:relative; z-index:1 }
-#screen-wallet .w2-card b, #screen-wallet .w2-card h2, #screen-wallet .w2-card h3, #screen-wallet .w2-card .w2-card-bal{
-  color: var(--hlb-orange) !important;
-  text-shadow: 0 0 20px rgba(255,149,0,.4);
-  font-weight: 900 !important;
-}
-#screen-wallet .w2-card small, #screen-wallet .w2-card em{ color: rgba(255,255,255,.62) !important }
-#screen-wallet .w2-card .chip{ background: rgba(255,149,0,.14) !important; color: var(--hlb-orange) !important; border: 1px solid rgba(255,149,0,.3) !important }
-#screen-wallet .w2-card-num, #screen-wallet .w2-card-acc-full{ color: rgba(255,255,255,.85) !important; letter-spacing: .2em !important }
-#screen-wallet .pad{ padding-bottom: calc(120px + env(safe-area-inset-bottom,0px)) !important }
-#screen-wallet .w2-menu-t b{ color:#fff !important; font-weight:800 !important }
-#screen-wallet .w2-menu-t em{ color: var(--hlb-mute) !important; font-style:normal }
-#screen-wallet .w2-xp{ background: linear-gradient(90deg, rgba(255,149,0,.16), rgba(255,149,0,.04)) !important; border-color: rgba(255,149,0,.28) !important }
-#screen-wallet .w2-xp em, #screen-wallet .w2-xp b{ color: var(--hlb-orange) !important }
-.gm-wheel-hub svg *{ fill: var(--hlb-orange) !important; stroke: none !important }
-
-/* ============== МОИ ПОЛНОЭКРАННЫЕ APP-VIEW ============== */
-.hlb-appview{
-  position: fixed !important;
-  inset: 0 !important;
-  background: #000 !important;
-  z-index: 2500 !important;
-  overflow-y: auto !important;
-  animation: hlbSlide .3s cubic-bezier(.2,1.1,.3,1) both;
-  padding-top: 0 !important;
-}
-.hlb-av-top{
-  position: sticky !important; top: 0 !important; z-index: 10 !important;
-  background: linear-gradient(180deg, #000, rgba(0,0,0,.92)) !important;
-  backdrop-filter: blur(14px) !important;
-  border-bottom: 1px solid var(--hlb-line) !important;
-  display: flex !important; align-items: center !important; gap: 12px !important;
-  padding: calc(env(safe-area-inset-top,0px) + 12px) 14px 12px !important;
-}
-.hlb-av-top .back{
-  min-width: 44px !important; min-height: 44px !important;
-  background: transparent !important; border: 0 !important; color: #fff !important;
-  display: flex !important; align-items: center !important; justify-content: center !important;
-  cursor: pointer !important; padding: 10px !important; border-radius: 12px !important;
-  position: relative !important; z-index: 11 !important;
-}
-.hlb-av-top .back:active{ background: rgba(255,149,0,.14) !important }
-.hlb-av-top .back svg{ pointer-events: none !important }
-.hlb-av-top .menu{
-  margin-left: auto !important;
-  min-width: 44px !important; min-height: 44px !important;
-  background: transparent !important; border: 0 !important; color: var(--hlb-mute) !important;
-  padding: 10px !important; cursor: pointer !important;
-}
-.hlb-av-ico{ width: 40px !important; height: 40px !important; border-radius: 12px !important; background: var(--hlb-orange) !important; color: #000 !important; display: flex !important; align-items: center !important; justify-content: center !important; flex-shrink: 0 !important; box-shadow: 0 6px 14px rgba(255,149,0,.4) !important }
-.hlb-av-ico svg{ width: 22px !important; height: 22px !important; stroke-width: 2.2 !important; color: #000 !important }
-.hlb-av-title{ flex: 1 !important; min-width: 0 !important }
-.hlb-av-title b{ color: #fff !important; font-family: var(--hlb-font) !important; font-weight: 900 !important; font-size: 15px !important; display: block !important; letter-spacing: -.01em !important }
-.hlb-av-title small{ color: var(--hlb-orange) !important; font-size: 11px !important; font-weight: 700 !important }
-.hlb-av-body{ padding: 0 0 calc(env(safe-area-inset-bottom,0px) + 32px) 0 !important }
-
-/* ============== МИНИ-АППЫ SCREEN ============== */
-#screen-mini .pad{ padding-bottom: calc(120px + env(safe-area-inset-bottom,0px)) !important }
-.hlb-hero-mini{
-  overflow: hidden !important;
-  border-radius: 20px !important;
-  padding: 22px 20px !important;
-  margin-bottom: 16px !important;
-  background: linear-gradient(180deg, #141010, #060402) !important;
-  border: 1px solid var(--hlb-line) !important;
-  position: relative;
-}
-.hlb-hero-mini::before{
-  content:''; position:absolute; inset:auto -30% -30% auto; width:220px; height:220px;
-  background: radial-gradient(circle, rgba(255,149,0,.18), transparent 62%);
-  filter: blur(24px); pointer-events:none; animation: hlbBreath 6s ease-in-out infinite;
-}
-.hlb-hero-mini h2, .hlb-hero-mini p{ position:relative; z-index:2 }
-.hlb-hero-mini h2{ color:#fff !important; font-family:var(--hlb-font) !important; font-weight:900 !important; font-size:24px !important; line-height:1.05 !important }
-.hlb-hero-mini p{ color:var(--hlb-mute) !important; font-size:13px !important; font-weight:500 !important; margin-top:9px !important }
-.hlb-hero-badge{ background: var(--hlb-orange) !important; color:#000 !important; font-weight:900 !important; padding:5px 10px !important; border-radius:6px !important; font-size:11px !important; letter-spacing:.04em !important; display:inline-block !important; margin-bottom:10px !important; position:relative; z-index:2 }
-
-/* Убираем пустые чёрные плитки и артефакты */
-.hlb-apps-2col > .hlb-app:empty, .hlb-apps-2col > *:empty{ display:none !important }
-.hlb-app-card{ min-height: auto !important }
-
-/* ============== ANIMATIONS ============== */
-@keyframes hlbBreath { 0%,100%{ transform:scale(1); filter:brightness(1) } 50%{ transform:scale(1.03); filter:brightness(1.08) } }
-@keyframes hlbFadeUp { from{ opacity:0; transform: translateY(14px) } to{ opacity:1; transform:none } }
-@keyframes hlbSlide { from{ opacity:0; transform: translateX(24px) } to{ opacity:1; transform:none } }
-@keyframes hlbGlow { 0%,100%{ box-shadow: 0 0 0 rgba(255,149,0,0) } 50%{ box-shadow: 0 0 30px rgba(255,149,0,.5) } }
-@keyframes hlbShimmer { 0%{ transform:translateX(-100%) } 100%{ transform:translateX(200%) } }
-
-/* motion — оживление ключевых блоков */
-.plan{ animation: hlbFadeUp .5s cubic-bezier(.2,1.1,.3,1) both }
-.plan:nth-child(1){ animation-delay:.02s } .plan:nth-child(2){ animation-delay:.08s }
-.plan:nth-child(3){ animation-delay:.14s } .plan:nth-child(4){ animation-delay:.20s }
-.plan:nth-child(5){ animation-delay:.26s }
-.chat-item, .post{ animation: hlbFadeUp .4s ease both }
-
-/* Убираем оригинальные лаймовые остатки — вдруг где-то ещё */
-.chip:not(.flag){ background: rgba(255,149,0,.12) !important; color: var(--hlb-orange) !important; border-color: rgba(255,149,0,.28) !important }
-.badge{ background: var(--hlb-orange) !important; color: #000 !important }
-.btn:not(.ghost){ background: linear-gradient(135deg, var(--hlb-orange-2), var(--hlb-orange)) !important; color:#000 !important }
-.btn.ghost{ border-color: var(--hlb-orange) !important; color: var(--hlb-orange) !important }
-.searchbar:focus-within{ border-color: var(--hlb-orange) !important; box-shadow: 0 0 0 2px rgba(255,149,0,.16) !important }
-.fab{ background: linear-gradient(135deg, var(--hlb-orange-2), var(--hlb-orange)) !important; color:#000 !important; box-shadow: 0 12px 30px rgba(255,149,0,.35) !important }
-
-/* Toast */
-.hlb-toast{
-  position:fixed !important;
-  left:50% !important; bottom: calc(96px + env(safe-area-inset-bottom,0px)) !important;
-  transform: translateX(-50%) !important;
-  background:#141414 !important; color:#fff !important;
-  border: 1px solid var(--hlb-line-hi) !important;
-  padding:12px 20px !important;
-  border-radius:14px !important;
-  font-family: var(--hlb-font) !important;
-  font-weight:700 !important;
-  z-index: 9999 !important;
-  box-shadow: 0 14px 32px rgba(0,0,0,.6), 0 0 20px rgba(255,149,0,.14) !important;
-  animation: hlbFadeUp .28s ease !important;
-}
-
-/* Feed cards (posts) */
-.post-card, .post{
-  background: var(--hlb-panel) !important;
-  border: 1px solid var(--hlb-line) !important;
-  border-radius: 16px !important;
-  margin: 10px 14px !important;
-  padding: 14px !important;
-}
-
-/* Общие визуальные фиксы */
-::-webkit-scrollbar{ display:none }
-* { -webkit-tap-highlight-color: transparent }
-</style>
 </head>
 <body>
 <!-- ============ SVG ICON SET (стиль бренда: жирный округлый штрих) ============ -->
@@ -10532,153 +10255,697 @@ nav#tabs .nav-logo span{ color:#fff !important; font-weight:900 !important }
 
 
 
-<script id="hlb-v9-js">
+
+
+<style id="hlb-v10">
+/* ============== ХЛБ v10 — MASTER OVERLAY ============== */
+:root {
+  --hlb-orange: #FF9500;
+  --hlb-orange-soft: rgba(255, 149, 0, .12);
+  --hlb-orange-glow: rgba(255, 149, 0, .35);
+  --hlb-bg: #0A0500;
+  --hlb-card: #14100A;
+  --hlb-card-hi: #1F1810;
+  --hlb-border: rgba(255, 149, 0, .18);
+  --hlb-text: #FFFFFF;
+  --hlb-dim: rgba(255, 255, 255, .55);
+  --tg-h: 100vh;
+}
+
+/* ============== TG WEBAPP VIEWPORT ============== */
+html, body {
+  height: var(--tg-h) !important;
+  min-height: unset !important;
+  max-height: var(--tg-h) !important;
+  overflow: hidden !important;
+  overscroll-behavior: none !important;
+  background: var(--hlb-bg) !important;
+}
+#root, .screen, main {
+  height: var(--tg-h) !important;
+  min-height: unset !important;
+  overflow-y: auto !important;
+  overscroll-behavior-y: contain !important;
+  padding-bottom: calc(env(safe-area-inset-bottom, 0px) + 84px) !important;
+  -webkit-overflow-scrolling: touch !important;
+}
+
+/* ============== SPLASH v10 — smooth 1.2s ============== */
+#splash {
+  background: radial-gradient(circle at 50% 42%, #1a1000 0%, #0A0500 65%) !important;
+  transition: opacity .6s ease-out, transform .6s ease-out !important;
+}
+#splash.gone {
+  opacity: 0 !important;
+  transform: scale(1.15) !important;
+  pointer-events: none !important;
+}
+#splash img, #splash .splash-logo, #splash [class*="logo"] {
+  width: 220px !important; height: 220px !important;
+  object-fit: contain !important;
+  filter: drop-shadow(0 0 40px rgba(255, 149, 0, .5)) drop-shadow(0 0 20px rgba(255, 149, 0, .3)) !important;
+  animation: hlbSplashPop 1.1s cubic-bezier(.34,1.56,.64,1) !important;
+}
+@keyframes hlbSplashPop {
+  0%   { transform: scale(.3) rotate(-8deg); opacity: 0; }
+  60%  { transform: scale(1.08) rotate(2deg); opacity: 1; }
+  100% { transform: scale(1) rotate(0deg); opacity: 1; }
+}
+#splash::after {
+  content: 'ХЛБ APP';
+  position: absolute; left: 50%; top: 62%;
+  transform: translateX(-50%);
+  font-family: 'Bebas Neue', 'Arial Black', sans-serif;
+  font-size: 40px; letter-spacing: 6px;
+  color: var(--hlb-orange);
+  text-shadow: 0 0 24px var(--hlb-orange-glow);
+  animation: hlbSplashText .8s .3s both;
+}
+#splash::before {
+  content: 'Медиа · Контент · Деньги';
+  position: absolute; left: 50%; top: calc(62% + 56px);
+  transform: translateX(-50%);
+  font-family: 'Montserrat', sans-serif;
+  font-size: 12px; letter-spacing: 2px;
+  color: rgba(255,255,255,.55);
+  animation: hlbSplashText .8s .5s both;
+  z-index: 5;
+}
+@keyframes hlbSplashText {
+  from { opacity: 0; transform: translateX(-50%) translateY(8px); }
+  to   { opacity: 1; transform: translateX(-50%) translateY(0); }
+}
+
+/* ============== HEADER — тост-лого 48×48 с halo ============== */
+.tv, header, .app-head, [class*="topbar"] {
+  padding-top: calc(env(safe-area-inset-top, 0px) + 8px) !important;
+  background: linear-gradient(180deg, rgba(10,5,0,.98) 0%, rgba(10,5,0,.92) 100%) !important;
+  backdrop-filter: blur(12px) saturate(180%) !important;
+  -webkit-backdrop-filter: blur(12px) saturate(180%) !important;
+  border-bottom: 1px solid var(--hlb-border) !important;
+}
+.tv img, header img[alt*="ХЛБ"], header img[alt*="лого"], .app-head img {
+  width: 44px !important; height: 44px !important;
+  border-radius: 12px !important;
+  filter: drop-shadow(0 0 12px var(--hlb-orange-glow)) !important;
+  animation: hlbLogoBreath 3s ease-in-out infinite !important;
+}
+@keyframes hlbLogoBreath {
+  0%,100% { filter: drop-shadow(0 0 12px var(--hlb-orange-glow)); }
+  50%     { filter: drop-shadow(0 0 20px var(--hlb-orange-glow)) drop-shadow(0 0 8px rgba(255,149,0,.5)); }
+}
+
+/* ============== BOTTOM NAV — freeze + smooth active ============== */
+nav#tabs {
+  position: fixed !important; bottom: 0 !important; left: 0 !important; right: 0 !important;
+  min-height: calc(60px + env(safe-area-inset-bottom, 0px)) !important;
+  max-height: calc(84px + env(safe-area-inset-bottom, 0px)) !important;
+  padding-bottom: env(safe-area-inset-bottom, 0px) !important;
+  background: linear-gradient(180deg, rgba(10,5,0,.85) 0%, rgba(10,5,0,.98) 100%) !important;
+  backdrop-filter: blur(20px) saturate(180%) !important;
+  -webkit-backdrop-filter: blur(20px) saturate(180%) !important;
+  border-top: 1px solid var(--hlb-border) !important;
+  transform: translateZ(0) !important;
+  z-index: 100 !important;
+}
+nav#tabs button, nav#tabs a {
+  transition: color .2s ease, transform .15s ease !important;
+  color: var(--hlb-dim) !important;
+}
+nav#tabs button.active, nav#tabs a.active, nav#tabs .on {
+  color: var(--hlb-orange) !important;
+  transform: translateY(-2px) !important;
+}
+nav#tabs button.active::after, nav#tabs a.active::after {
+  content: ''; position: absolute; left: 50%; bottom: 4px;
+  width: 24px; height: 2px; border-radius: 2px;
+  background: var(--hlb-orange);
+  box-shadow: 0 0 12px var(--hlb-orange-glow);
+  transform: translateX(-50%);
+  animation: hlbTabPulse 2s ease-in-out infinite;
+}
+@keyframes hlbTabPulse {
+  0%,100% { box-shadow: 0 0 12px var(--hlb-orange-glow); }
+  50%     { box-shadow: 0 0 20px var(--hlb-orange-glow), 0 0 6px rgba(255,149,0,.6); }
+}
+
+/* ============== FEED TABS — Подписки / Рекомендации fix ============== */
+.feed-tabs {
+  padding: 12px 16px 8px !important;
+  gap: 8px !important;
+  position: sticky !important; top: 0 !important;
+  background: rgba(10,5,0,.92) !important;
+  backdrop-filter: blur(12px) !important;
+  z-index: 20 !important;
+}
+.feed-tabs button {
+  position: relative !important;
+  color: var(--hlb-dim) !important;
+  background: rgba(255,255,255,.05) !important;
+  border: 1px solid var(--hlb-border) !important;
+  padding: 10px 20px !important;
+  border-radius: 99px !important;
+  font-size: 14px !important; font-weight: 600 !important;
+  transition: all .2s ease !important;
+  min-height: 40px !important;
+}
+.feed-tabs button.on, .feed-tabs button.active {
+  color: #000 !important;
+  background: var(--hlb-orange) !important;
+  border-color: var(--hlb-orange) !important;
+  box-shadow: 0 0 20px var(--hlb-orange-glow) !important;
+  z-index: 2 !important;
+}
+.feed-tabs button > *, .feed-tabs button span {
+  position: relative !important;
+  z-index: 3 !important;
+}
+
+/* ============== NOTIFICATION TOASTS — сдвинуть под хедер ============== */
+.notify, [class*="toast"], [class*="notif-top"], .app-toast, #toaster, .toast-wrap {
+  top: calc(env(safe-area-inset-top, 0px) + 68px) !important;
+  z-index: 99 !important;
+  max-width: calc(100vw - 32px) !important;
+  margin: 0 16px !important;
+  border-radius: 14px !important;
+  background: linear-gradient(135deg, #1F1810 0%, #14100A 100%) !important;
+  border: 1px solid var(--hlb-orange-glow) !important;
+  box-shadow: 0 12px 32px rgba(0,0,0,.5), 0 0 24px rgba(255,149,0,.15) !important;
+}
+
+/* ============== WALLET — CHARLIE BLACK CARD ============== */
+#screen-wallet .w2-card, .w2-card, [class*="wallet-card"] {
+  background: linear-gradient(135deg, #1a0f00 0%, #0a0500 50%, #1a1000 100%) !important;
+  color: #fff !important;
+  border: 1px solid var(--hlb-orange-glow) !important;
+  border-radius: 20px !important;
+  box-shadow:
+    0 20px 60px rgba(0,0,0,.6),
+    0 0 40px rgba(255,149,0,.15),
+    inset 0 1px 0 rgba(255,255,255,.08) !important;
+  position: relative !important;
+  overflow: hidden !important;
+  padding: 22px !important;
+  margin: 16px !important;
+}
+#screen-wallet .w2-card::before, .w2-card::before {
+  content: '';
+  position: absolute;
+  top: 0; left: -80%;
+  width: 60%; height: 100%;
+  background: linear-gradient(90deg,
+    transparent 0%,
+    rgba(255,149,0,.08) 40%,
+    rgba(255,255,255,.15) 50%,
+    rgba(255,149,0,.08) 60%,
+    transparent 100%);
+  transform: skewX(-20deg);
+  animation: hlbCardShine 5s ease-in-out infinite;
+  pointer-events: none;
+}
+@keyframes hlbCardShine {
+  0%,100% { left: -80%; }
+  50%     { left: 130%; }
+}
+.w2-card b, .w2-card h2, .w2-card h3, .w2-card .bal, .w2-card [class*="bal"] {
+  color: #fff !important;
+  text-shadow: 0 2px 12px rgba(0,0,0,.5) !important;
+  font-family: 'Bebas Neue', 'Arial Black', sans-serif !important;
+  letter-spacing: 1px !important;
+}
+.w2-card .caption, .w2-card .dim, .w2-card small {
+  color: rgba(255,255,255,.65) !important;
+  font-size: 11px !important;
+  text-transform: uppercase !important;
+  letter-spacing: 2px !important;
+}
+/* ХЛБ PAY brand */
+.w2-card [class*="brand"], .w2-card .w2-brand {
+  color: var(--hlb-orange) !important;
+  font-weight: 900 !important;
+  letter-spacing: 3px !important;
+  text-shadow: 0 0 20px var(--hlb-orange-glow) !important;
+}
+/* Number */
+.w2-card .w2-num, .w2-card [class*="num"] {
+  font-family: 'JetBrains Mono', 'Courier New', monospace !important;
+  color: rgba(255,255,255,.85) !important;
+  font-weight: 700 !important;
+  letter-spacing: 3px !important;
+  font-variant-numeric: tabular-nums !important;
+}
+/* Balance amount */
+.w2-card .w2-card-bal, .w2-card .bal-big, .w2-card-bal {
+  font-family: 'Bebas Neue', sans-serif !important;
+  font-size: 56px !important; line-height: 1 !important;
+  color: #fff !important;
+  text-shadow: 0 0 30px rgba(255,149,0,.4) !important;
+}
+/* Ruble sign — orange */
+.w2-card .rub, .w2-card [class*="rub"] {
+  color: var(--hlb-orange) !important;
+  text-shadow: 0 0 16px var(--hlb-orange-glow) !important;
+}
+
+/* ============== MINI-APPS: KILL BLACK PADDING BOTTOM ============== */
+.hlb-app, .mini-app, [id^="ma-"], [id^="miniapp-"], .app-screen, .app-view {
+  min-height: unset !important;
+  padding-bottom: calc(env(safe-area-inset-bottom, 0px) + 24px) !important;
+  background: var(--hlb-bg) !important;
+}
+.hlb-av-top, .app-view-head, [class*="app-head"] {
+  padding-top: calc(env(safe-area-inset-top, 0px) + 12px) !important;
+  padding-left: 14px !important; padding-right: 14px !important;
+  padding-bottom: 12px !important;
+  position: sticky !important; top: 0 !important;
+  z-index: 50 !important;
+  background: rgba(10,5,0,.95) !important;
+  backdrop-filter: blur(16px) !important;
+  border-bottom: 1px solid var(--hlb-border) !important;
+}
+.hlb-av-top .back, [class*="back-btn"], button[aria-label*="назад" i], button[aria-label*="back" i] {
+  min-width: 44px !important; min-height: 44px !important;
+  padding: 10px !important;
+  border-radius: 14px !important;
+  background: rgba(255,255,255,.06) !important;
+  color: #fff !important;
+  border: 1px solid var(--hlb-border) !important;
+  cursor: pointer !important;
+  display: inline-flex !important;
+  align-items: center !important; justify-content: center !important;
+  transition: all .15s ease !important;
+}
+.hlb-av-top .back:active, [class*="back-btn"]:active {
+  transform: scale(.94) !important;
+  background: var(--hlb-orange-soft) !important;
+  border-color: var(--hlb-orange) !important;
+}
+
+/* Убрать двойной хедер в BRIUS-AI и подобных */
+.hlb-app > header:not(.hlb-av-top) + .hlb-av-top,
+.mini-app .double-head { display: none !important; }
+
+/* ============== FEED POSTS ============== */
+.feed-post, .post-card, [class*="feed-item"] {
+  background: linear-gradient(180deg, #14100A 0%, #100A00 100%) !important;
+  border: 1px solid var(--hlb-border) !important;
+  border-radius: 18px !important;
+  margin: 12px 16px !important;
+  padding: 16px !important;
+  transition: transform .2s ease, box-shadow .2s ease !important;
+}
+.feed-post:active {
+  transform: scale(.99) !important;
+  box-shadow: 0 12px 32px rgba(255,149,0,.15) !important;
+}
+/* Video preview: kill brown dot, give proper play icon */
+.feed-post video, .feed-post [class*="video"], .post-video, .post-media {
+  border-radius: 14px !important;
+  background: linear-gradient(135deg, #1a1000, #14100A) !important;
+  min-height: 200px !important;
+  position: relative !important;
+}
+.feed-post [class*="play"]::after, .post-media::after {
+  content: '' !important;
+  position: absolute !important;
+  top: 50% !important; left: 50% !important;
+  width: 56px !important; height: 56px !important;
+  transform: translate(-50%, -50%) !important;
+  background: rgba(0,0,0,.6) !important;
+  border-radius: 50% !important;
+  backdrop-filter: blur(8px) !important;
+  border: 1px solid rgba(255,255,255,.2) !important;
+}
+/* Reactions: readable */
+.feed-post .reactions, .feed-post [class*="react"], .post-actions {
+  opacity: 1 !important;
+  color: rgba(255,255,255,.85) !important;
+}
+.feed-post .reactions .active, .feed-post .liked { color: var(--hlb-orange) !important; }
+
+/* "Показать полностью" pill */
+.feed-post button[class*="show"], .feed-post .expand-btn, [class*="pokazat"] {
+  background: rgba(255,149,0,.1) !important;
+  color: var(--hlb-orange) !important;
+  border: 1px solid var(--hlb-orange-glow) !important;
+  border-radius: 12px !important;
+  padding: 8px 14px !important;
+  font-weight: 600 !important;
+}
+
+/* ============== CHAT LIST — реальные каналы ХЛБ ============== */
+.chat-item, [class*="chat-row"], .chats-list li {
+  border-bottom: 1px solid rgba(255,149,0,.06) !important;
+  padding: 12px 16px !important;
+  transition: background .15s ease !important;
+}
+.chat-item:active { background: var(--hlb-orange-soft) !important; }
+.chat-item img, .chat-avatar, [class*="chat-ava"] {
+  width: 52px !important; height: 52px !important;
+  border-radius: 50% !important;
+  border: 2px solid var(--hlb-border) !important;
+  object-fit: cover !important;
+}
+.chat-item .name, .chat-item b { color: #fff !important; font-weight: 700 !important; font-size: 15px !important; }
+.chat-item .last, .chat-item .sub { color: var(--hlb-dim) !important; font-size: 13px !important; }
+.chat-item .badge, .chat-item [class*="unread"] {
+  background: var(--hlb-orange) !important;
+  color: #000 !important;
+  min-width: 22px !important; height: 22px !important;
+  border-radius: 11px !important;
+  font-weight: 800 !important; font-size: 12px !important;
+  box-shadow: 0 0 12px var(--hlb-orange-glow) !important;
+}
+
+/* ============== PROFILE ============== */
+#screen-profile .avatar, .profile-avatar, [class*="prof-ava"] {
+  border-radius: 50% !important;
+  border: 3px solid var(--hlb-orange) !important;
+  box-shadow: 0 0 24px var(--hlb-orange-glow) !important;
+  overflow: hidden !important;
+}
+
+/* ============== BUTTONS — modern rounded ============== */
+button, .btn, [role="button"] {
+  border-radius: 14px !important;
+  transition: all .15s ease !important;
+}
+button:active, .btn:active, [role="button"]:active {
+  transform: scale(.97) !important;
+}
+button.primary, .btn-primary, [class*="cta"] {
+  background: linear-gradient(180deg, #FFB84D 0%, #FF9500 100%) !important;
+  color: #000 !important;
+  font-weight: 800 !important;
+  box-shadow: 0 8px 24px rgba(255,149,0,.35) !important;
+  border: none !important;
+}
+
+/* ============== MAX WIDTH FOR WIDE SCREENS ============== */
+@media (min-width: 500px) {
+  #root, .screen, main { max-width: 480px !important; margin: 0 auto !important; }
+  nav#tabs { max-width: 480px !important; left: 50% !important; right: auto !important; transform: translateX(-50%) translateZ(0) !important; }
+}
+
+/* ============== SEARCH INPUT ============== */
+input[type="search"], input[type="text"][placeholder*="Поиск"], input[placeholder*="оиск"] {
+  background: rgba(255,255,255,.05) !important;
+  border: 1px solid var(--hlb-border) !important;
+  border-radius: 14px !important;
+  color: #fff !important;
+  padding: 12px 16px !important;
+  transition: all .2s ease !important;
+}
+input[type="search"]:focus, input[type="text"]:focus {
+  border-color: var(--hlb-orange) !important;
+  box-shadow: 0 0 0 3px rgba(255,149,0,.15) !important;
+  outline: none !important;
+}
+
+/* ============== HIDE broken/hard-to-fix elements ============== */
+/* Hide any lingering .toast-overlay from top-bar */
+[class*="wallet-toast"]:not([data-hlb-ok]) { display: none !important; }
+</style>
+
+
+<script id="hlb-v10-js">
 (function(){
-  var AV = 'assets/av';
-  // === ХЛБ CHATS полный список (только ХЛБ каналы) ===
-  var HLB_CH = [
-    {id:1, name:'Артём Бриус',           ava:'assets/av/gdebrius.jpg',       preview:'Артём: Как настроение? Расскажи, чем занимаешься.', time:'сейчас', unread:1, online:true, verified:true, kind:'direct', nick:'gdebrius'},
-    {id:2, name:'ХЛБ · Клуб Артёма',     ava:'assets/av/hlb.jpg',            preview:'Артём: Хочу сообщество по 5 000 ₽. Кто со мной?',   time:'20:04',  unread:3, verified:true, kind:'channel', kindIcon:'megaphone'},
-    {id:3, name:'Nihaodrop · Клуб',       ava:'assets/av/brius_mentor.jpg',   preview:'Влад: +9 600 ₽ на второй день. Работает!',         time:'ср',     unread:0, verified:true, kind:'channel', kindIcon:'megaphone'},
-    {id:4, name:'Команда сопровождения',  ava:'assets/av/brius_mentor.jpg',   preview:'Полина: Как прошёл первый день? Расскажи.',        time:'вчера',  unread:0, kind:'group', managed:true, kindIcon:'users'},
-    {id:5, name:'Ксения М.',              ava:'assets/av/hlb_reviews.jpg',    preview:'Кто в спринте по подъёмам? Погнали!',              time:'20:15',  unread:0, kind:'direct', nick:'ksusha', online:true}
-  ];
-  var HLB_EXTRA = [
-    {id:'artem_ch',   ava:'assets/av/artem_brius.jpg',  name:'Артём Бриус · канал', kind:'channel', kindIcon:'megaphone', verified:true, subs:'24 813', preview:'Полнейшая пересборка. Знаете, что в коробках…', time:'сегодня', unread:0, msgs:[{in:1,t:'15:32',kind:'text',body:'Полнейшая пересборка. Знаете, что в коробках склада нихаохаба?'}]},
-    {id:'brius_main', ava:'assets/av/brius.jpg',        name:'Бриус',                kind:'channel', kindIcon:'megaphone', verified:true, subs:'73 987', preview:'Финальная часть моего перформанса.',              time:'вчера',   unread:0, msgs:[{in:1,t:'19:22',kind:'text',body:'Финальная часть моего перформанса: оставил только одну реакцию клоуна.'}]},
-    {id:'hlb_rev',    ava:'assets/av/hlb_reviews.jpg',  name:'ХЛБ · отзывы',         kind:'channel', kindIcon:'megaphone',                subs:'5 892',  preview:'Мария: После ХЛБ жизнь не станет прежней.',      time:'сегодня', unread:1, msgs:[{in:1,t:'12:30',kind:'text',body:'После ХЛБ жизнь уже не станет прежней. Слушать надо каждый день.'}]},
-    {id:'kito',       ava:'assets/av/kitovarka.jpg',    name:'КИТОВАРКА',            kind:'channel', kindIcon:'megaphone',                subs:'1 438',  preview:'Товарный бизнес с Китаем 🇨🇳',                     time:'вчера',   unread:0, msgs:[{in:1,t:'—',kind:'text',body:'Не варим китов — занимаемся товарным бизнесом с Китаем.'}]}
-  ];
+  'use strict';
 
-  // === Патч чатов: подмена OKO CHATS данных ===
-  function patchChats(){
-    if(typeof CHATS === 'undefined') return;
-    HLB_CH.forEach(function(h){
-      var c = CHATS.find(function(x){ return x.id===h.id; });
-      if(!c){ return; }
-      c.name = h.name; c.ava = h.ava; c.preview = h.preview; c.time = h.time;
-      c.unread = h.unread; if(h.online) c.online = true; if(h.verified) c.verified = true;
-      if(h.kind) c.kind = h.kind; if(h.kindIcon) c.kindIcon = h.kindIcon; if(h.nick) c.nick = h.nick;
-      if(h.managed) c.managed = true;
-    });
-    HLB_EXTRA.forEach(function(x){ if(!CHATS.find(function(c){return c.id===x.id;})) CHATS.push(x); });
-    // avaHtml патч (один раз)
-    if(!window.__hlb_avapatched && typeof avaHtml==='function'){
-      var orig = avaHtml;
-      window.avaHtml = function(c){
-        if(typeof c.ava==='string' && /\.(jpg|jpeg|png|webp)$/i.test(c.ava)){
-          return '<div class="ava" style="padding:0;overflow:hidden;background:#141414;border:1px solid rgba(255,149,0,.28)"><img src="'+c.ava+'" style="width:100%;height:100%;object-fit:cover;display:block"></div>';
-        }
-        return orig(c);
-      };
-      window.__hlb_avapatched = true;
-    }
-    if(typeof renderChatList==='function') try{ renderChatList(''); }catch(e){}
-  }
+  // ============== ХЛБ v10 MASTER ==============
+  var log = function(){ /* console.log.apply(console, ['[hlb-v10]'].concat([].slice.call(arguments))); */ };
 
-  // === Патч тарифов: OKO дизайн 1:1, данные ХЛБ ===
-  var HLB_PLANS = [
-    {n:'ЗАХОДИ',        p:'1 000',    ul:['Все чаты и каналы ХЛБ (read-only)','Основной канал Артёма Бриуса','Brius-AI · 10 запросов в день','Лента, эфир-архив','1 демо-вход в любое приложение']},
-    {n:'ХЛБ CLUB',      p:'5 000',    tag:'Хит',       ul:['Пишешь во всех чатах и комментируешь основной канал','1 живой эфир в неделю','Десятки — чат из 10 таких же','Спринт-трекер · Инструкция к жизни · Дневник','Brius-AI · безлимит коротких ответов']},
-    {n:'ВСЁ + ТЁМ',     p:'20 000',                    ul:['Все 20 приложений ХЛБ разблокированы','Огуречная академия · 120+ материалов','Nihaodrop · доступ к платформе','Финансовый тренер','1 сообщение или голос Артёму в неделю']},
-    {n:'СОПРОВОЖДЕНИЕ', p:'50 000',                    ul:['Всё безлимитно','Личный созвон Артёма 30–45 мин / мес','Спорт-ассистент: тренировки и питание','Скидка 5% на Nihaohub-заказы','Ответ команды ХЛБ за 4 часа']},
-    {n:'МЕНТОР МЕС',    p:'150 000',  tag:'Максимум',  ul:['Всё безлимит + «Твой Бриус» AI','4 личных созвона с Артёмом (1/нед)','Персональный чат сопровождения','Открытие бизнеса под ключ · 30 дней','Медийный разгон 30 дней','Nihaohub Full: магазин под ключ']}
-  ];
-  function patchPlans(){
-    var wrap = document.querySelector('.plans-wrap'); if(!wrap) return;
-    var plans = wrap.querySelectorAll('.plan');
-    if(!plans.length) return;
-    plans.forEach(function(el, i){
-      var d = HLB_PLANS[i]; if(!d){ el.style.display='none'; return; }
-      el.style.display='';
-      var h = el.querySelector('h3'); if(h && h.textContent!==d.n) h.textContent = d.n;
-      var b = el.querySelector('.price b'); if(b) b.innerHTML = d.p + '&nbsp;₽';
-      var s = el.querySelector('.price span'); if(s) s.innerHTML = '&nbsp;/мес';
-      var ul = el.querySelector('ul');
-      if(ul){
-        var need = d.ul.map(function(x){return '<li>'+x+'</li>';}).join('');
-        if(ul.innerHTML.replace(/\s/g,'')!==need.replace(/\s/g,'')) ul.innerHTML = need;
-      }
-      var flag = el.querySelector('.chip.flag');
-      if(d.tag && !flag){
-        var c = document.createElement('span'); c.className='chip flag'; c.textContent = d.tag; el.insertBefore(c, el.firstChild);
-      } else if(d.tag && flag && flag.textContent!==d.tag){
-        flag.textContent = d.tag;
-      } else if(!d.tag && flag){
-        flag.remove();
-      }
-    });
-    // Убираем «Тарифы ХЛБ APP» доп-CTA если появилась
-    var extra = document.querySelectorAll('.hlb-prof-tariff-cta'); extra.forEach(function(e){ e.remove(); });
-  }
-
-  // === Патч профиля ===
-  function patchProfile(){
-    var av = document.getElementById('profAva');
-    if(av && !av.querySelector('img')){
-      av.innerHTML = '<img src="'+AV+'/gdebrius.jpg" style="width:100%;height:100%;object-fit:cover;display:block;border-radius:50%" onerror="this.style.display=\'none\'">';
-      av.style.padding = '0'; av.style.background = 'transparent';
-    }
-    var nm = document.getElementById('profName');
-    if(nm && nm.textContent!=='Артём Бриус') nm.textContent = 'Артём Бриус';
-    var nk = document.getElementById('profNick');
-    if(nk && nk.textContent!=='@gdebrius') nk.textContent = '@gdebrius';
-  }
-
-  // === Патч ленты (авторы, аватары) ===
-  function patchFeed(){
-    if(typeof POSTS !== 'undefined'){
-      var author_map = {
-        'Даниэль': 'Артём Бриус',
-        'Даниэль / рост': 'Артём Бриус',
-        'ХЛБ · Официальный': 'ХЛБ · сообщество'
-      };
-      ['sub','rec'].forEach(function(k){
-        if(!POSTS[k]) return;
-        POSTS[k].forEach(function(p){
-          if(author_map[p.name]) p.name = author_map[p.name];
-          if(p.name==='Артём Бриус' && !p.avaImg) p.avaImg = AV+'/gdebrius.jpg';
-          if(p.name==='ХЛБ · сообщество' && !p.avaImg) p.avaImg = AV+'/hlb.jpg';
-        });
-      });
-      if(typeof renderFeed==='function') try{ renderFeed(); }catch(e){}
-    }
-  }
-
-  // === Пропуск splash быстрее (если завис на 3+ сек) ===
-  setTimeout(function(){
+  // ============== SPLASH auto-hide ==============
+  function hideSplash(){
     var sp = document.getElementById('splash');
     if(sp && !sp.classList.contains('gone')){
       sp.classList.add('gone');
-      setTimeout(function(){ sp.remove(); }, 650);
+      setTimeout(function(){ try{ sp.remove(); }catch(e){} }, 650);
     }
-  }, 3000);
-
-  function tick(){
-    try{ patchChats(); }catch(e){}
-    try{ patchPlans(); }catch(e){}
-    try{ patchProfile(); }catch(e){}
-    try{ patchFeed(); }catch(e){}
   }
-  if(document.readyState==='complete' || document.readyState==='interactive'){
-    setTimeout(tick, 60);
+  setTimeout(hideSplash, 1200);
+  setTimeout(hideSplash, 2500);
+  window.addEventListener('load', function(){ setTimeout(hideSplash, 800); });
+
+  // ============== TG WebApp ==============
+  var TG = window.Telegram && window.Telegram.WebApp;
+  if(TG){
+    try{
+      TG.ready();
+      TG.expand();
+      if(TG.disableVerticalSwipes) TG.disableVerticalSwipes();
+      if(TG.setHeaderColor) TG.setHeaderColor('#0A0500');
+      if(TG.setBottomBarColor) TG.setBottomBarColor('#0A0500');
+      if(TG.setBackgroundColor) TG.setBackgroundColor('#0A0500');
+    }catch(e){}
+
+    // viewportStableHeight → --tg-h
+    function syncHeight(){
+      var h = (TG.viewportStableHeight || TG.viewportHeight || window.innerHeight) + 'px';
+      document.documentElement.style.setProperty('--tg-h', h);
+    }
+    syncHeight();
+    if(TG.onEvent) TG.onEvent('viewportChanged', syncHeight);
+    window.addEventListener('resize', syncHeight);
+
+    // Haptic feedback on all tap
+    document.addEventListener('click', function(e){
+      var el = e.target && e.target.closest && e.target.closest('button, a, [role="button"], .chat-item');
+      if(el && TG.HapticFeedback && TG.HapticFeedback.impactOccurred){
+        try{ TG.HapticFeedback.impactOccurred('light'); }catch(err){}
+      }
+    }, true);
+  }
+
+  // ============== HLB REAL CHATS ==============
+  var HLB_CHATS = [
+    { id:'brius-personal', name:'Артём Бриус', ava:'assets/av/gdebrius.jpg', sub:'Артём: Привет. Как настроение? Расскажи, чем занят.', tag:'личный ассистент', pinned:true, verified:true, time:'сейчас' },
+    { id:'hlb-club',       name:'ХЛБ',        ava:'assets/av/hlb.jpg',      sub:'Артём: Мне стыдно за всё происходящее. Хочу это исправить.', tag:'986 участников', pinned:true, verified:true, time:'08:12' },
+    { id:'brius-channel',  name:'Артём Бриус · канал', ava:'assets/av/artem_brius.jpg', sub:'Артём: Полнейшая пересборка. Знаете, что в комментариях…', tag:'24 813 подписчиков', pinned:true, verified:true, time:'вчера' },
+    { id:'brius-public',   name:'Бриус',      ava:'assets/av/brius.jpg',    sub:'Артём: Финальная часть моего перформанса. Ждите.', tag:'73 987 подписчиков', verified:true, time:'вчера' },
+    { id:'kitovarka',      name:'КИТОВАРКА',  ava:'assets/av/kitovarka.jpg', sub:'Товарный бизнес с Китаем 🇨🇳', tag:'1 438 подписчиков', verified:true, time:'2 дня' },
+    { id:'hlb-reviews',    name:'ХЛБ / отзывы', ava:'assets/av/hlb_reviews.jpg', sub:'Ваня П.: С клубом за месяц вышел в +180к.', tag:'428 сообщений', time:'2 дня' },
+    { id:'brius-mentor',   name:'briusMentor', ava:'assets/av/brius_mentor.jpg', sub:'Ментор Артёма — заявки на разбор', tag:'заявки', verified:true, time:'3 дня' },
+    { id:'brius-reviews',  name:'Бриус / отзывы', ava:'assets/av/brius_reviews.jpg', sub:'Настя К.: Спасибо за пинок, работает.', tag:'отзывы', time:'4 дня' },
+    { id:'hlb-comments',   name:'ХЛБ / комментарии', ava:'assets/av/hlb_comments.jpg', sub:'Обсуждение постов Артёма', tag:'общий чат', time:'5 дней' },
+    { id:'hlb-svyaz',      name:'ХЛБ / связь', ava:'assets/av/hlb_svyaz.jpg', sub:'Поддержка — пиши сюда', tag:'поддержка', time:'6 дней' }
+  ];
+
+  // ============== PATCH CHATS (idempotent) ==============
+  function patchChats(root){
+    root = root || document;
+    var list = root.querySelector('#screen-chats .chats-list, [data-screen="chats"] ul, .chats-list');
+    if(!list) return;
+    if(list.dataset.hlbV10 === '1') return;
+
+    // Build fresh markup
+    var pinnedHtml = '<div class="chat-section-title" style="padding:16px 16px 8px;font-size:11px;letter-spacing:2px;color:var(--hlb-orange);text-transform:uppercase;font-weight:800;">📌 Закреп</div>';
+    var openHtml   = '<div class="chat-section-title" style="padding:16px 16px 8px;font-size:11px;letter-spacing:2px;color:var(--hlb-dim);text-transform:uppercase;font-weight:800;">Открыто всем</div>';
+
+    var pinned = HLB_CHATS.filter(function(c){ return c.pinned; });
+    var open   = HLB_CHATS.filter(function(c){ return !c.pinned; });
+
+    function chatHtml(c){
+      var verifiedIcon = c.verified ? ' <svg width="14" height="14" viewBox="0 0 24 24" fill="#1DA1F2" style="vertical-align:-2px"><path d="M12 2l2.4 1.6L17 3l1 2.6L20.6 7l-.6 2.8L22 12l-2 2.2.6 2.8L18 18l-1 2.6-2.6-.6L12 22l-2.4-1.6L7 21l-1-2.6L3.4 17 4 14.2 2 12l2-2.2L3.4 7 6 6l1-2.6L9.6 4z"/><path d="M8.5 12.5l2.5 2.5 5-5" stroke="#fff" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg>' : '';
+      return (
+        '<div class="chat-item" data-chat-id="'+c.id+'" style="display:flex;gap:12px;align-items:center;padding:12px 16px;border-bottom:1px solid rgba(255,149,0,.06);cursor:pointer">' +
+          '<img class="chat-avatar" src="'+c.ava+'" alt="" style="width:52px;height:52px;border-radius:50%;object-fit:cover;border:2px solid var(--hlb-border);flex-shrink:0" onerror="this.style.background=\'linear-gradient(135deg,#FF9500,#c56d00)\';this.style.display=\'flex\';this.style.alignItems=\'center\';this.style.justifyContent=\'center\';this.innerHTML=\''+(c.name[0]||'?')+'\'">'+
+          '<div style="flex:1;min-width:0">' +
+            '<div style="display:flex;align-items:center;justify-content:space-between;gap:6px">'+
+              '<b style="color:#fff;font-weight:700;font-size:15px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">'+c.name+verifiedIcon+'</b>'+
+              '<span style="color:var(--hlb-dim);font-size:11px;flex-shrink:0">'+(c.time||'')+'</span>'+
+            '</div>'+
+            '<div style="color:var(--hlb-dim);font-size:13px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-top:2px">'+c.sub+'</div>'+
+            (c.tag ? '<div style="color:rgba(255,149,0,.6);font-size:11px;margin-top:2px">'+c.tag+'</div>' : '')+
+          '</div>'+
+        '</div>'
+      );
+    }
+
+    var html = pinnedHtml + pinned.map(chatHtml).join('') + openHtml + open.map(chatHtml).join('');
+    // Wipe and rebuild
+    list.innerHTML = html;
+    list.dataset.hlbV10 = '1';
+    log('chats patched');
+  }
+
+  // ============== PATCH PROFILE ==============
+  function patchProfile(root){
+    root = root || document;
+    // 1) Object-level (survives re-render)
+    if(window.PROFILE){
+      window.PROFILE.name   = 'Артём Бриус';
+      window.PROFILE.nick   = 'gdebrius';
+      window.PROFILE.handle = '@gdebrius';
+      window.PROFILE.bio    = 'Основатель ХЛБ. Медиа · Контент · Деньги — в одном приложении.';
+      window.PROFILE.avatar = 'assets/av/artem_brius.jpg';
+      window.PROFILE.city   = 'Москва / Дубай';
+      window.PROFILE.role   = 'owner';
+      window.PROFILE.ceo    = true;
+      if(window.VERIFIED && window.VERIFIED.add) window.VERIFIED.add('Артём Бриус');
+    }
+    // 2) DOM-level text replacements
+    var scr = root.querySelector('#screen-profile, [data-screen="profile"]');
+    if(!scr) return;
+    scr.querySelectorAll('b, h1, h2, [class*="name"], .prof-name').forEach(function(el){
+      var t = el.textContent || '';
+      if(/Даниэль\s*Ильясов|Ильясов\s*Даниэль/i.test(t)){
+        el.textContent = 'Артём Бриус';
+      }
+    });
+    scr.querySelectorAll('[class*="handle"], [class*="nick"], .prof-nick').forEach(function(el){
+      if(/@ktodaniel/i.test(el.textContent||'')) el.textContent = '@gdebrius';
+    });
+    scr.querySelectorAll('[class*="bio"], .prof-bio, p').forEach(function(el){
+      var t = el.textContent || '';
+      if(/Основатель ОКО/i.test(t)){
+        el.textContent = 'Основатель ХЛБ. Медиа · Контент · Деньги — в одном приложении.';
+      }
+      if(/Тарифы ОКО/i.test(t)){
+        el.innerHTML = el.innerHTML.replace(/Тарифы ОКО/gi, 'Тарифы ХЛБ');
+      }
+    });
+    // Avatar
+    var av = scr.querySelector('.avatar img, .prof-ava img, [class*="ava"] img');
+    if(av){
+      av.src = 'assets/av/artem_brius.jpg';
+      av.onerror = null;
+    }
+    // Letter-avatar fallback → replace with img
+    scr.querySelectorAll('.avatar, [class*="prof-ava"]').forEach(function(el){
+      if(el.textContent && /^[А-Яа-яA-Za-z]{1,2}$/.test((el.textContent||'').trim())){
+        el.innerHTML = '<img src="assets/av/artem_brius.jpg" alt="" style="width:100%;height:100%;object-fit:cover;border-radius:50%">';
+      }
+    });
+  }
+
+  // ============== PATCH FEED tab labels ==============
+  function patchFeedTabs(root){
+    root = root || document;
+    root.querySelectorAll('.feed-tabs button').forEach(function(btn){
+      // Ensure text visible
+      if(!btn.textContent.trim() && btn.classList.contains('on')){
+        // If empty active button — set proper label (guess by position)
+        var buttons = btn.parentElement.querySelectorAll('button');
+        var idx = Array.prototype.indexOf.call(buttons, btn);
+        btn.textContent = idx === 0 ? 'Подписки' : 'Рекомендации';
+      }
+      // Force color contrast on active
+      if(btn.classList.contains('on') || btn.classList.contains('active')){
+        btn.style.color = '#000';
+      } else {
+        btn.style.color = '';
+      }
+    });
+  }
+
+  // ============== PATCH WALLET CARD ==============
+  function patchWalletCard(root){
+    root = root || document;
+    var card = root.querySelector('#screen-wallet .w2-card, .w2-card');
+    if(!card) return;
+    if(card.dataset.hlbV10 === '1') return;
+
+    // Ensure number visible + properly formatted
+    var num = card.querySelector('[class*="num"], .card-num');
+    if(num){
+      // Format as 4900 5000 · ХЛБ-XXX
+      var raw = (num.textContent||'').replace(/\D/g, '');
+      if(raw.length < 8) raw = ('4900500034567890').slice(0, 16);
+      num.textContent = raw.slice(0,4) + ' ' + raw.slice(4,8) + ' ' + raw.slice(8,12) + ' ' + raw.slice(12,16);
+      num.style.fontFamily = "'JetBrains Mono', monospace";
+      num.style.letterSpacing = '3px';
+    }
+    card.dataset.hlbV10 = '1';
+  }
+
+  // ============== PATCH LETTER AVATARS in feed ==============
+  function patchFeedAvatars(root){
+    root = root || document;
+    root.querySelectorAll('.feed-post .ava, .post-card .avatar, [class*="post-ava"]').forEach(function(el){
+      var t = (el.textContent||'').trim();
+      // Only replace if it's a single-letter placeholder
+      if(el.tagName !== 'IMG' && /^[А-Яа-яA-Za-z]{1,2}$/.test(t) && !el.dataset.hlbV10){
+        el.style.background = 'linear-gradient(135deg, #FF9500, #c56d00)';
+        el.style.color = '#000';
+        el.style.fontWeight = '800';
+        el.style.display = 'flex';
+        el.style.alignItems = 'center';
+        el.style.justifyContent = 'center';
+        el.style.borderRadius = '50%';
+        el.dataset.hlbV10 = '1';
+      }
+    });
+  }
+
+  // ============== HIDE broken top-toasts (torn out above header) ==============
+  function hideBrokenToasts(root){
+    root = root || document;
+    root.querySelectorAll('[class*="toast"], .notify, [class*="notif-top"]').forEach(function(el){
+      var r = el.getBoundingClientRect();
+      // If floats above header (top < safe-area top) — reposition
+      if(r.top < 20 && !el.dataset.hlbV10){
+        el.style.top = 'calc(env(safe-area-inset-top, 0px) + 68px)';
+        el.style.zIndex = '99';
+        el.dataset.hlbV10 = '1';
+      }
+    });
+  }
+
+  // ============== MASTER TICK — throttled + debounced ==============
+  var scheduled = false;
+  function runPatches(){
+    scheduled = false;
+    try{
+      patchProfile();
+      patchFeedTabs();
+      patchWalletCard();
+      patchChats();
+      patchFeedAvatars();
+      hideBrokenToasts();
+    }catch(e){ log('patch err', e); }
+  }
+  function schedulePatches(){
+    if(scheduled) return;
+    scheduled = true;
+    (window.requestIdleCallback || window.requestAnimationFrame)(runPatches);
+  }
+
+  // Kick off once DOM ready
+  if(document.readyState === 'loading'){
+    document.addEventListener('DOMContentLoaded', function(){ schedulePatches(); setTimeout(schedulePatches, 600); });
   } else {
-    document.addEventListener('DOMContentLoaded', function(){ setTimeout(tick, 60); });
+    schedulePatches();
+    setTimeout(schedulePatches, 600);
   }
-  setInterval(tick, 1500);
+  setTimeout(schedulePatches, 1500);
+  setTimeout(schedulePatches, 3000);
 
-  // Telegram WebApp expand
-  try{
-    var tg = window.Telegram && window.Telegram.WebApp;
-    if(tg){
-      tg.ready(); tg.expand();
-      if(tg.disableVerticalSwipes) tg.disableVerticalSwipes();
-      if(tg.setHeaderColor) tg.setHeaderColor('#000');
-      if(tg.setBottomBarColor) tg.setBottomBarColor('#0A0A0A');
+  // MutationObserver — instead of setInterval
+  var mo = new MutationObserver(function(mutations){
+    var significant = false;
+    for(var i=0;i<mutations.length;i++){
+      var m = mutations[i];
+      if(m.type === 'childList' && (m.addedNodes.length > 0)){
+        significant = true; break;
+      }
     }
+    if(significant) schedulePatches();
+  });
+  try{
+    mo.observe(document.body, { childList: true, subtree: true, attributes: false, characterData: false });
   }catch(e){}
+
+  // ============== TAB CHANGE hooks (screen-* switching) ==============
+  document.addEventListener('click', function(e){
+    var t = e.target && e.target.closest && e.target.closest('nav#tabs button, nav#tabs a, [data-tab]');
+    if(t) setTimeout(schedulePatches, 100);
+  });
+
+  log('v10 loaded');
 })();
 </script>
+
 </body>
 </html>
 

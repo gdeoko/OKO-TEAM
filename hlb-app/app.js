@@ -87,7 +87,7 @@ async function adminLogin(email, pass){
   try{ localStorage.setItem('oko-owner','1'); }catch(e){}
   return true;
 }
-(function restoreOwner(){ try{ if(localStorage.getItem('oko-owner')==='1'){ PROFILE.role='owner'; PROFILE.ceo=true; VERIFIED.add(PROFILE.name); } }catch(e){} })();
+(function restoreOwner(){ try{ if(localStorage.getItem('hlb-owner')==='1'){ PROFILE.role='owner'; PROFILE.ceo=true; VERIFIED.add(PROFILE.name); } }catch(e){} })();
 
 /* ---------- ПЕЧАТЬ ОРГАНИЗАЦИИ (официальный вид, синяя) ---------- */
 const SEAL_REQ = {
