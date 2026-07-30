@@ -98,7 +98,7 @@ def enrich(item, outdir):
     try:
         r=subprocess.run(["yt-dlp","--no-warnings"]+cookie+["-J","--skip-download",item["url"]],
             capture_output=True,text=True,timeout=120)
-        m=json.loads(r.stdout or "{}")
+        m=json.loads(r.stdout or "{}") or {}
         item.update(views=m.get("view_count",item.get("views")), likes=m.get("like_count"),
             comments=m.get("comment_count"), duration=m.get("duration",item.get("duration")),
             channel=m.get("channel",item.get("channel")), followers=m.get("channel_follower_count"),
