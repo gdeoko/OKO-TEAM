@@ -2115,3 +2115,71 @@ input::placeholder,textarea::placeholder{color:color-mix(in srgb,var(--muted) 80
 
 /* Любые чисто-белые утилиты — в стекло */
 .bg-white,.is-white,.card--white{background:var(--glass-card) !important}
+
+/* ══════════════════════════════════════════════════════════════════════════
+   НАГРАДЫ v2 — выбор конкурса (широкие карточки) + сетка образцов 1:1
+   ══════════════════════════════════════════════════════════════════════════ */
+.aw-title{font-family:var(--ff-display);font-size:clamp(1.6rem,5.5vw,2.2rem);margin:2px 0 6px;line-height:1.05;
+  background:var(--grad-gold-text);-webkit-background-clip:text;background-clip:text;color:transparent}
+.aw-back{display:inline-flex;align-items:center;gap:6px;color:var(--gold-ink);font-weight:700;font-size:.86rem;
+  text-decoration:none;padding:6px 0}
+[data-theme="dark"] .aw-back{color:var(--gold)}
+.aw-back svg{width:18px;height:18px}
+
+/* --- Уровень 1: выбор конкурса --- */
+.aw-comp-list{display:flex;flex-direction:column;gap:12px}
+.aw-comp{display:grid;grid-template-columns:118px 1fr;min-height:112px;border-radius:20px;overflow:hidden;
+  text-decoration:none;color:var(--text);background:var(--glass-card);border:1px solid var(--glass-brd2);
+  -webkit-backdrop-filter:blur(18px) saturate(1.3);backdrop-filter:blur(18px) saturate(1.3);
+  box-shadow:0 14px 40px rgba(21,34,76,.15), inset 0 1px 0 var(--sheen);
+  opacity:0;transform:translateY(14px);animation:menuTileIn .5s cubic-bezier(.2,.85,.25,1) forwards;
+  animation-delay:calc(var(--i,0)*70ms);transition:transform .2s cubic-bezier(.2,.8,.2,1),box-shadow .22s,border-color .22s}
+@media(hover:hover){.aw-comp:hover{transform:translateY(-3px);border-color:var(--gold);box-shadow:0 18px 44px rgba(199,147,34,.24)}}
+.aw-comp:active{transform:scale(.99)}
+.aw-comp-cover{position:relative;min-height:112px;display:flex;align-items:flex-start;padding:10px}
+.aw-comp-scope{position:relative;z-index:2;font-size:.6rem;font-weight:800;letter-spacing:.05em;text-transform:uppercase;
+  color:#fff;background:rgba(10,18,44,.5);border:1px solid rgba(255,240,190,.4);padding:3px 8px;border-radius:999px;
+  -webkit-backdrop-filter:blur(4px);backdrop-filter:blur(4px)}
+.aw-comp-body{display:flex;flex-direction:column;justify-content:center;gap:4px;padding:12px 14px}
+.aw-comp-name{font-family:var(--ff-display);font-size:1.12rem;font-weight:700;margin:0;line-height:1.12}
+.aw-comp-sub{color:var(--muted);font-size:.78rem;margin:0}
+.aw-comp-go{display:inline-flex;align-items:center;gap:6px;margin-top:4px;align-self:flex-start;
+  font-size:.82rem;font-weight:800;color:var(--gold-fg);background:var(--grad-gold);
+  padding:7px 14px;border-radius:999px;box-shadow:0 6px 16px rgba(199,147,34,.34)}
+.aw-comp-go svg{width:16px;height:16px}
+
+/* --- Уровень 2: сетка образцов 1:1 --- */
+.aw-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+@media(min-width:640px){.aw-grid{grid-template-columns:repeat(3,1fr)}}
+.shop-card.aw-card{padding:0 !important;overflow:hidden;display:flex;flex-direction:column;border-radius:18px}
+.aw-media{position:relative;aspect-ratio:1/1;display:flex;align-items:center;justify-content:center;
+  background:linear-gradient(150deg,#17307A 0%,#24499F 44%,#C79322 108%);overflow:hidden}
+.aw-media img{width:100%;height:100%;object-fit:cover;display:block}
+.aw-media::after{content:"";position:absolute;inset:0;
+  background:radial-gradient(120% 90% at 50% 8%,rgba(255,255,255,.18),transparent 60%)}
+.aw-badge{position:absolute;top:8px;left:8px;z-index:3;font-size:.58rem;font-weight:800;letter-spacing:.04em;
+  text-transform:uppercase;color:#fff;background:var(--grad-wine);padding:4px 9px;border-radius:999px;
+  box-shadow:0 4px 10px rgba(122,21,34,.4);border:1px solid rgba(255,220,225,.35)}
+.aw-medallion{position:relative;z-index:2;width:66px;height:66px;border-radius:50%;display:flex;align-items:center;justify-content:center;
+  background:radial-gradient(circle at 34% 26%, #FCEFB8 0%, #EAC768 30%, #C9931F 64%, #99680E 100%);
+  color:#182350;border:1px solid rgba(255,240,190,.7);
+  box-shadow:0 8px 18px rgba(120,80,10,.5), inset 0 2px 3px rgba(255,255,255,.8), inset 0 -3px 7px rgba(120,80,10,.55)}
+.aw-medallion svg{width:34px;height:34px}
+.aw-info{display:flex;flex-direction:column;gap:8px;padding:11px 12px 12px}
+.aw-name{font-family:var(--ff-serif);font-size:.92rem;font-weight:700;line-height:1.15;margin:0}
+.aw-kinds{display:flex;flex-direction:column;gap:5px}
+.aw-kind{display:flex;align-items:center;gap:6px;padding:6px 8px;border-radius:9px;cursor:pointer;
+  border:1.5px solid var(--glass-brd2);background:color-mix(in srgb,var(--panel-solid) 30%,transparent);transition:border-color .16s,background .16s}
+.aw-kind input{position:absolute;opacity:0;width:0;height:0}
+.aw-kind span{flex:1;font-size:.72rem;color:var(--text);line-height:1.1}
+.aw-kind b{font-family:var(--ff-display);color:var(--gold-ink);font-size:.82rem;white-space:nowrap}
+[data-theme="dark"] .aw-kind b{color:var(--gold)}
+.aw-kind:has(input:checked){border-color:var(--gold);background:color-mix(in srgb,var(--gold-soft) 55%,transparent)}
+.aw-buy{display:flex;align-items:center;gap:8px;margin-top:2px}
+.aw-buy .qty{flex:none;border-radius:10px}
+.aw-buy .qty-btn{width:30px;height:34px;font-size:1.1rem}
+.aw-buy .qty-val{min-width:24px;font-size:.9rem}
+.aw-add{flex:1;min-height:34px !important;padding:0 8px !important;display:inline-flex;align-items:center;justify-content:center;gap:5px;
+  font-size:.78rem;font-weight:800;border-radius:10px}
+.aw-add svg{width:15px;height:15px;flex:none}
+@media(max-width:420px){.aw-add span{display:none}.aw-add{flex:0 0 42px}}

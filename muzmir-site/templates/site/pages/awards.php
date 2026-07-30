@@ -1,92 +1,157 @@
 <?php
 /**
- * Награды — мини-магазин наградной продукции с корзиной.
- * Сетка образцов (диплом/медаль/статуэтка/кубок/благодарность) → корзина с количеством →
- * выбор заявки на участие → оплата ЮKassa. Отдельная «заявка на изготовление» не нужна:
- * заказ привязывается к заявке на участие в конкурсе.
+ * Награды — 2 уровня:
+ *   1) без ?comp — витрина: заголовок «Образцы наград» + ВЫБОР КОНКУРСА (широкие карточки).
+ *   2) ?comp=<id> — сетка образцов 1:1 (фото/медальон) с количеством и корзиной → ЮKassa.
+ * Заказ привязывается к конкурсу и заявке на участие.
  */
 $u = current_user();
 
-// Прайс наградной линейки (общий шаблон competition_id IS NULL).
-$prices = all("SELECT item, kind, price FROM awards_prices WHERE competition_id IS NULL ORDER BY price DESC");
+// Открытые конкурсы для выбора.
+$comps = all("SELECT id, slug, name, type, direction, cover, end_date, nominations
+              FROM competitions WHERE status='open' ORDER BY sort, id");
 
-// Группируем по позиции: item => [kind => price]
+// Выбранный конкурс (уровень 2).
+$compId = isset($_GET['comp']) ? (int) $_GET['comp'] : 0;
+$selComp = null;
+foreach ($comps as $c) { if ((int)$c['id'] === $compId) { $selComp = $c; break; } }
+
+// Прайс: индивидуальный для конкурса, иначе общий шаблон.
 $catalog = [];
-foreach ($prices as $p) { $catalog[$p['item']][$p['kind']] = (int)$p['price']; }
+if ($selComp) {
+    $prices = all("SELECT item, kind, price FROM awards_prices WHERE competition_id=? ORDER BY price DESC", [$compId]);
+    if (!$prices) $prices = all("SELECT item, kind, price FROM awards_prices WHERE competition_id IS NULL ORDER BY price DESC");
+    foreach ($prices as $p) { $catalog[$p['item']][$p['kind']] = (int)$p['price']; }
+}
 
-// Описания + иконки товаров
 $meta = [
-  'Кубок Гран-при'        => ['ic'=>'cup',    'desc'=>'Объёмный кубок обладателю Гран-при. Премиальное исполнение, подарочная упаковка.', 'tag'=>'Высшая награда'],
-  'Статуэтка лауреата'    => ['ic'=>'trophy', 'desc'=>'Наградная статуэтка лауреата I–III степени.', 'tag'=>''],
-  'Медаль дипломанта'     => ['ic'=>'medal',  'desc'=>'Металлическая медаль на ленте с символикой центра.', 'tag'=>''],
-  'Основной диплом'       => ['ic'=>'diploma','desc'=>'Официальный диплом с результатом. Электронный — всем участникам бесплатно; оригинал — на плотной бумаге.', 'tag'=>''],
-  'Дополнительный диплом' => ['ic'=>'diploma','desc'=>'Дополнительный экземпляр — для второго педагога, концертмейстера или архива.', 'tag'=>''],
-  'Именной диплом'        => ['ic'=>'diploma','desc'=>'Индивидуальный диплом участнику коллектива с сохранённым званием.', 'tag'=>''],
-  'Благодарность'         => ['ic'=>'thanks', 'desc'=>'Именная благодарность педагогу или руководителю.', 'tag'=>''],
+  'Кубок Гран-при'        => ['ic'=>'cup',    'slug'=>'cup',      'tag'=>'Высшая награда', 'desc'=>'Объёмный кубок обладателю Гран-при. Премиальное исполнение, подарочная упаковка.'],
+  'Статуэтка лауреата'    => ['ic'=>'trophy', 'slug'=>'statuette', 'tag'=>'', 'desc'=>'Наградная статуэтка лауреата I–III степени.'],
+  'Медаль дипломанта'     => ['ic'=>'medal',  'slug'=>'medal',    'tag'=>'', 'desc'=>'Металлическая медаль на ленте с символикой центра.'],
+  'Основной диплом'       => ['ic'=>'diploma','slug'=>'diploma',  'tag'=>'', 'desc'=>'Официальный диплом с результатом. Электронный — бесплатно; оригинал — на плотной бумаге.'],
+  'Дополнительный диплом' => ['ic'=>'diploma','slug'=>'diploma2', 'tag'=>'', 'desc'=>'Дополнительный экземпляр — для второго педагога, концертмейстера или архива.'],
+  'Именной диплом'        => ['ic'=>'diploma','slug'=>'diploma-name','tag'=>'', 'desc'=>'Индивидуальный диплом участнику коллектива с сохранённым званием.'],
+  'Благодарность'         => ['ic'=>'thanks', 'slug'=>'thanks',   'tag'=>'', 'desc'=>'Именная благодарность педагогу или руководителю.'],
 ];
 $icons = [
   'cup'     => '<path d="M8 21h8M12 17v4M6 4h12v5a6 6 0 0 1-12 0V4z"/><path d="M6 6H3a3 3 0 0 0 3 5M18 6h3a3 3 0 0 1-3 5"/>',
   'trophy'  => '<path d="M8 21h8M12 17v4M7 4h10v4a5 5 0 0 1-10 0V4z"/><path d="M7 5H4a3 3 0 0 0 3 5M17 5h3a3 3 0 0 1-3 5"/>',
-  'medal'   => '<circle cx="12" cy="15" r="6"/><path d="M9 3h6l-2 6h-2z"/>',
+  'medal'   => '<circle cx="12" cy="15" r="6"/><path d="M9 3h6l-2 6h-2z"/><path d="M12 12v6"/>',
   'diploma' => '<path d="M6 2h9l3 3v17H6z"/><path d="M15 2v3h3M9 12h6M9 16h4"/>',
   'thanks'  => '<path d="M20.8 4.6c-1.7-1.7-4.4-1.7-6 0L12 7.4 9.2 4.6c-1.7-1.7-4.4-1.7-6 0-1.7 1.7-1.7 4.4 0 6L12 19l8.8-8.4c1.7-1.6 1.7-4.3 0-6z"/>',
 ];
-$kindLabel = ['original' => 'Оригинал (почтой)', 'digital' => 'Электронный'];
+$kindLabel = ['original' => 'Оригинал (почтой)', 'digital' => 'Электронный', 'club' => 'Клуб'];
+$order = ['Кубок Гран-при','Статуэтка лауреата','Медаль дипломанта','Основной диплом','Дополнительный диплом','Именной диплом','Благодарность'];
 
-// Заявки пользователя для выбора при оформлении.
+// Заявки пользователя (для оформления).
 $myApps = [];
 if ($u) {
-    $myApps = all("SELECT a.id, a.number, a.full_name, a.result, c.name AS comp_name
+    $myApps = all("SELECT a.id, a.number, a.competition_id, a.full_name, a.result, c.name AS comp_name
                    FROM applications a LEFT JOIN competitions c ON c.id=a.competition_id
                    WHERE a.user_id=? ORDER BY a.created_at DESC", [(int)$u['id']]);
 }
 
-$order = ['Кубок Гран-при','Статуэтка лауреата','Медаль дипломанта','Основной диплом','Дополнительный диплом','Именной диплом','Благодарность'];
+/** Путь к фото образца, если загружено (public/assets/img/awards/<slug>.jpg). */
+function award_photo(string $slug): ?string {
+    $rel = 'img/awards/' . $slug . '.jpg';
+    return is_file(BASE_PATH . '/public/assets/' . $rel) ? asset($rel) : null;
+}
 
 ob_start(); ?>
-<section class="section shop-page" style="padding-top:12px">
-  <div class="container" style="max-width:820px">
-    <div class="section-head reveal" style="text-align:left;margin-bottom:8px">
+
+<?php if (!$selComp): /* ═══════════ УРОВЕНЬ 1 — выбор конкурса ═══════════ */ ?>
+<section class="section aw-page" style="padding-top:12px">
+  <div class="container" style="max-width:840px">
+    <div class="section-head reveal" style="text-align:left;margin-bottom:12px">
       <p class="eyebrow eyebrow--script" style="margin:0">Наградная продукция</p>
-      <h1 style="font-family:var(--ff-display);font-size:clamp(1.6rem,5.5vw,2.2rem);margin:2px 0 4px;
-        background:var(--grad-gold);-webkit-background-clip:text;background-clip:text;color:transparent">Образцы наград</h1>
-      <p style="color:var(--muted);margin:0;font-size:.9rem">Выберите награды и количество, оформите заказ по своей заявке на участие.</p>
+      <h1 class="aw-title">Образцы наград</h1>
+      <p style="color:var(--muted);margin:0;font-size:.92rem">Выберите конкурс — покажем образцы дипломов, кубков, медалей и статуэток с ценами. Заказ оформляется по вашей заявке на участие.</p>
     </div>
 
-    <div class="shop-grid">
+    <div class="aw-comp-list">
+      <?php foreach ($comps as $i => $c):
+        $cover = trim((string)($c['cover'] ?? ''));
+        $coverUrl = $cover !== '' ? (preg_match('~^https?://~', $cover) ? $cover : asset('img/comp/'.$cover)) : '';
+        $scope = ($c['type'] === 'international') ? 'Международный' : 'Всероссийский';
+      ?>
+      <a class="aw-comp reveal" style="--i:<?= $i ?>" href="<?= url('/awards') ?>?comp=<?= (int)$c['id'] ?>">
+        <div class="aw-comp-cover comp-banner"<?= $coverUrl ? ' style="background-image:linear-gradient(90deg,rgba(10,20,50,.72),rgba(10,20,50,.15)),url(\''.h($coverUrl).'\');background-size:cover;background-position:center"' : '' ?>>
+          <span class="aw-comp-scope"><?= h($scope) ?></span>
+        </div>
+        <div class="aw-comp-body">
+          <h3 class="aw-comp-name"><?= h($c['name']) ?></h3>
+          <p class="aw-comp-sub"><?= h(mb_strimwidth((string)($c['direction'] ?: 'Многожанровый'),0,40,'…')) ?></p>
+          <span class="aw-comp-go">Выбрать награды
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
+          </span>
+        </div>
+      </a>
+      <?php endforeach; ?>
+      <?php if (!$comps): ?><p style="color:var(--muted);text-align:center">Открытых конкурсов пока нет.</p><?php endif; ?>
+    </div>
+  </div>
+</section>
+
+<?php else: /* ═══════════ УРОВЕНЬ 2 — сетка образцов 1:1 ═══════════ */
+  $scope = ($selComp['type'] === 'international') ? 'Международный' : 'Всероссийский';
+?>
+<section class="section shop-page aw-page" style="padding-top:12px">
+  <div class="container" style="max-width:840px">
+    <a class="aw-back" href="<?= url('/awards') ?>">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5M11 6l-6 6 6 6"/></svg>
+      Все конкурсы
+    </a>
+    <div class="section-head reveal" style="text-align:left;margin:6px 0 12px">
+      <p class="eyebrow eyebrow--script" style="margin:0"><?= h($scope) ?> конкурс</p>
+      <h1 class="aw-title" style="font-size:clamp(1.4rem,5vw,1.95rem)">Награды «<?= h($selComp['name']) ?>»</h1>
+      <p style="color:var(--muted);margin:0;font-size:.9rem">Электронный основной диплом — бесплатно всем участникам. Ниже — образцы и цены оригиналов с доставкой.</p>
+    </div>
+
+    <div class="aw-grid">
       <?php foreach ($order as $item):
         if (empty($catalog[$item])) continue;
-        $m = $meta[$item] ?? ['ic'=>'diploma','desc'=>'','tag'=>''];
+        $m = $meta[$item] ?? ['ic'=>'diploma','slug'=>'diploma','tag'=>'','desc'=>''];
         $kinds = $catalog[$item];
         $ic = $icons[$m['ic']] ?? $icons['diploma'];
+        $photo = award_photo($m['slug']);
+        $minPrice = min($kinds);
       ?>
-      <div class="shop-card reveal" data-item="<?= h($item) ?>">
-        <div class="shop-card-top">
-          <span class="shop-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><?= $ic ?></svg></span>
-          <?php if ($m['tag']): ?><span class="shop-tag"><?= h($m['tag']) ?></span><?php endif; ?>
+      <article class="shop-card aw-card reveal" data-item="<?= h($item) ?>">
+        <div class="aw-media<?= $photo ? ' has-photo' : '' ?>">
+          <?php if ($m['tag']): ?><span class="aw-badge"><?= h($m['tag']) ?></span><?php endif; ?>
+          <?php if ($photo): ?>
+            <img src="<?= h($photo) ?>" alt="<?= h($item) ?>" loading="lazy">
+          <?php else: ?>
+            <span class="aw-medallion"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><?= $ic ?></svg></span>
+          <?php endif; ?>
         </div>
-        <h3 class="shop-name"><?= h($item) ?></h3>
-        <p class="shop-desc"><?= h($m['desc']) ?></p>
-        <div class="shop-kinds">
-          <?php $first=true; foreach ($kinds as $kind => $price): ?>
-            <label class="shop-kind">
-              <input type="radio" name="kind_<?= md5($item) ?>" value="<?= h($kind) ?>" data-price="<?= (int)$price ?>" <?= $first?'checked':'' ?>>
-              <span><?= h($kindLabel[$kind] ?? $kind) ?></span>
-              <b><?= number_format((int)$price,0,'.',' ') ?> ₽</b>
-            </label>
-          <?php $first=false; endforeach; ?>
-        </div>
-        <div class="shop-actions">
-          <div class="qty" data-qty>
-            <button type="button" class="qty-btn" data-dec aria-label="Меньше">−</button>
-            <span class="qty-val" data-val>1</span>
-            <button type="button" class="qty-btn" data-inc aria-label="Больше">+</button>
+        <div class="aw-info">
+          <h3 class="aw-name"><?= h($item) ?></h3>
+          <div class="aw-kinds">
+            <?php $first=true; foreach ($kinds as $kind => $price): ?>
+              <label class="aw-kind">
+                <input type="radio" name="kind_<?= md5($item) ?>" value="<?= h($kind) ?>" data-price="<?= (int)$price ?>" <?= $first?'checked':'' ?>>
+                <span><?= h($kindLabel[$kind] ?? $kind) ?></span>
+                <b><?= $price>0 ? number_format((int)$price,0,'.',' ').' ₽' : 'Беспл.' ?></b>
+              </label>
+            <?php $first=false; endforeach; ?>
           </div>
-          <button type="button" class="btn btn--primary shop-add" data-add>В корзину</button>
+          <div class="aw-buy">
+            <div class="qty" data-qty>
+              <button type="button" class="qty-btn" data-dec aria-label="Меньше">−</button>
+              <span class="qty-val" data-val>1</span>
+              <button type="button" class="qty-btn" data-inc aria-label="Больше">+</button>
+            </div>
+            <button type="button" class="btn btn--primary aw-add" data-add aria-label="В корзину">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>
+              <span>В корзину</span>
+            </button>
+          </div>
         </div>
-      </div>
+      </article>
       <?php endforeach; ?>
     </div>
+    <?php if (!$catalog): ?><p style="color:var(--muted);text-align:center;margin-top:20px">Прайс наград пока не заполнен.</p><?php endif; ?>
   </div>
 </section>
 
@@ -108,21 +173,25 @@ ob_start(); ?>
 
     <form id="orderForm" class="shop-checkout" hidden>
       <?= csrf_field() ?>
+      <input type="hidden" name="competition_id" value="<?= (int)$selComp['id'] ?>">
       <div class="shop-total"><span>Итого</span><b id="cartTotal">0 ₽</b></div>
 
       <?php if ($u): ?>
-        <?php if ($myApps): ?>
+        <?php $compApps = array_values(array_filter($myApps, fn($a) => (int)$a['competition_id'] === (int)$selComp['id']));
+              $listApps = $compApps ?: $myApps; ?>
+        <?php if ($listApps): ?>
         <div class="field">
           <label for="ord_app">По какой заявке</label>
           <select id="ord_app" name="application_id" required>
             <option value="">Выберите заявку…</option>
-            <?php foreach ($myApps as $a): ?>
-              <option value="<?= (int)$a['id'] ?>"><?= h($a['number']) ?> — <?= h(mb_strimwidth((string)$a['comp_name'],0,26,'…')) ?><?= $a['result']?' ('.h($a['result']).')':'' ?></option>
+            <?php foreach ($listApps as $a): ?>
+              <option value="<?= (int)$a['id'] ?>"><?= h($a['number']) ?> — <?= h(mb_strimwidth((string)$a['comp_name'],0,24,'…')) ?><?= $a['result']?' ('.h($a['result']).')':'' ?></option>
             <?php endforeach; ?>
           </select>
+          <?php if (!$compApps): ?><div class="hint">Нет заявки на этот конкурс. <a href="<?= url('/apply') ?>?comp=<?= (int)$selComp['id'] ?>">Подать заявку</a></div><?php endif; ?>
         </div>
         <?php else: ?>
-          <p class="shop-hint">У Вас пока нет заявок. <a href="<?= url('/apply') ?>">Подайте заявку на участие</a> — затем сможете заказать награды.</p>
+          <p class="shop-hint">У Вас пока нет заявок. <a href="<?= url('/apply') ?>?comp=<?= (int)$selComp['id'] ?>">Подайте заявку на участие</a> — затем сможете заказать награды.</p>
         <?php endif; ?>
       <?php else: ?>
         <div class="field">
@@ -149,7 +218,7 @@ ob_start(); ?>
       <div class="field" id="addrField">
         <label for="ord_addr">Адрес доставки (для оригиналов)</label>
         <input type="text" id="ord_addr" name="address" placeholder="Индекс, город, улица, дом, кв.">
-        <div class="hint">Доставка оригиналов — Почтой России, оплачивается при получении.</div>
+        <div class="hint">Доставка оригиналов — Почтой России.</div>
       </div>
       <button type="submit" class="btn btn--primary btn--block btn--lg" id="orderSubmit">Оплатить</button>
       <p id="orderErr" class="shop-err" hidden></p>
@@ -164,6 +233,7 @@ ob_start(); ?>
   var $ = function(s,r){return (r||document).querySelector(s);};
   var fab=$('#cartFab'), sheet=$('#cartSheet'), itemsBox=$('#cartItems'), emptyBox=$('#cartEmpty'),
       form=$('#orderForm'), totalEl=$('#cartTotal'), countEl=$('#cartCount');
+  if(!fab) return;
 
   document.querySelectorAll('[data-qty]').forEach(function(q){
     var v=q.querySelector('[data-val]');
@@ -222,6 +292,8 @@ ob_start(); ?>
   });
 })();
 </script>
+<?php endif; ?>
 <?php
 $content = ob_get_clean();
-render_page('Образцы наград', $content, ['active' => '/awards', 'meta' => 'Наградная продукция КЦ «Музыкальный Мир»: дипломы, медали, статуэтки, кубки. Заказ по заявке на участие, оплата онлайн.']);
+$ttl = $selComp ? ('Награды «'.$selComp['name'].'»') : 'Образцы наград';
+render_page($ttl, $content, ['active' => '/awards', 'meta' => 'Наградная продукция КЦ «Музыкальный Мир»: дипломы, медали, статуэтки, кубки. Заказ по заявке на участие, оплата онлайн.']);
