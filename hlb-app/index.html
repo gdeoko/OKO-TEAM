@@ -3997,6 +3997,11 @@ const kindPreview = m => ({
 const kindIco = k => ({voice:'mic', vnote:'circle-play', file:'file', photo:'photo', poll:'poll', money:'money', sticker:'sticker'})[k];
 
 function avaHtml(c){
+  // ХЛБ-патч: если ava содержит .jpg-путь или есть avaImg — рендерим картинку
+  var img = c.avaImg || (typeof c.ava==='string' && c.ava.indexOf('/')===0 ? c.ava : null);
+  if(img){
+    return `<div class="ava" style="padding:0;overflow:hidden;background:#141414;border:1px solid rgba(255,149,0,.25)"><img src="${img}" alt="" style="width:100%;height:100%;object-fit:cover;display:block"></div>`;
+  }
   return c.avaIcon ? `<div class="ava lime">${I(c.avaIcon)}</div>` : `<div class="ava">${c.ava}</div>`;
 }
 function renderChatList(filter=''){
@@ -8517,9 +8522,9 @@ nav#tabs .nav-logo span{ color:#fff !important; font-weight:900 !important }
   animation:hlbRise .5s ease both;
 }
 .hlb-hero-mini::before{
-  content:''; position:absolute; inset:auto -30% -30% auto; width:280px; height:280px;
-  background:radial-gradient(circle,rgba(255,149,0,.5),transparent 62%);
-  filter:blur(20px); animation:hlbBreath 6s ease-in-out infinite; pointer-events:none;
+  content:''; position:absolute; inset:auto -30% -30% auto; width:220px; height:220px;
+  background:radial-gradient(circle,rgba(255,149,0,.18),transparent 62%);
+  filter:blur(24px); animation:hlbBreath 6s ease-in-out infinite; pointer-events:none;
 }
 .hlb-hero-mini::after{
   content:''; position:absolute; top:0; left:-50%; width:200%; height:1px;
@@ -8724,7 +8729,7 @@ nav#tabs .nav-logo span{ color:#fff !important; font-weight:900 !important }
 .hlb-confetti-piece{ position:fixed; top:-40px; width:9px; height:14px; z-index:10001; pointer-events:none; animation:hlbConfetti 3.2s linear forwards; border-radius:1px }
 
 /* ===== CHATS (real ХЛБ list with tier locks) ===== */
-#screen-chats .searchbar, #screen-chats > .toolbar, #screen-chats > header, #screen-chats > .chat-list, #screen-chats > .empty, #screen-chats > div:not(.hlb-chats-wrap){ display:none !important }
+/* Оригинал OKO chatlist показываем как есть */
 .hlb-chats-wrap{ padding:0 0 100px }
 .hlb-ch-head{ padding:16px 16px 8px; display:flex; align-items:center; gap:10px }
 .hlb-ch-head h2{ font-family:var(--hlb-font); font-weight:900; color:#fff; font-size:24px; letter-spacing:-.02em; flex:1 }
@@ -8859,10 +8864,11 @@ nav#tabs .nav-logo span{ color:#fff !important; font-weight:900 !important }
 .hlb-toast{ position:fixed; left:50%; bottom:100px; transform:translateX(-50%); background:#141414; color:#fff; padding:12px 20px; border-radius:14px; border:1px solid var(--hlb-line-hi); font-family:var(--hlb-font); font-weight:700; z-index:9999; font-size:13px; box-shadow:0 14px 32px rgba(0,0,0,.6), 0 0 20px rgba(255,149,0,.14); animation:hlbRise .28s ease }
 
 /* Скрытие OKO-дизайнов панельных виджетов, если конфликтуют */
-.plans-wrap, .disc-row, #hlbTariffs{ display:none !important }
-.svc-grid{ display:none !important }
+/* Тарифы OKO скрываем — заменяем нашей кнопкой «Тарифы» → полноэкранный экран */
+.plans-wrap, .disc-row, #hlbTariffs, #hlbTariffs + p{ display:none !important }
+/* Мой grid мини-аппов вместо OKO сетки */
 .ma-hero, #maGrid{ display:none !important }
-.w2-menu, .w2-card, .gm-wheel{ opacity:0; pointer-events:none; height:0; overflow:hidden }
+.svc-grid{ display:none !important }
 
 /* Оригинал OKO кошелька/профиля/биржи — показываем целиком с ребрендом.
    Скрываем только карту OKO PAY, если есть, чтобы наш hlb-w-card был сверху. */
@@ -9921,10 +9927,11 @@ nav#tabs .nav-logo span{ color:#fff !important; font-weight:900 !important }
 
   function initChats(){
     const s = document.getElementById('screen-chats'); if(!s) return;
-    Array.from(s.children).forEach(function(el){ if(!el.classList || !el.classList.contains('hlb-chats-wrap')) el.style.display='none'; });
-    let w = s.querySelector('.hlb-chats-wrap');
-    if(!w){ w = document.createElement('div'); w.className='hlb-chats-wrap'; s.appendChild(w); }
-    w.style.display='block';
+    // 1:1 OKO chat-list. Убираем свой wrap и патчим оригинальные CHATS под ХЛБ.
+    var w = s.querySelector('.hlb-chats-wrap'); if(w) w.remove();
+    Array.from(s.children).forEach(function(el){ el.style.display=''; });
+    try{ hlbPatchOkoChats(); }catch(e){ console.warn('patchChats',e); }
+    return;
     var lvl = tierLevel();
     var pinned = HLB_CHATS.filter(function(c){ return c.pinned; });
     // group by minLvl
@@ -10035,14 +10042,42 @@ nav#tabs .nav-logo span{ color:#fff !important; font-weight:900 !important }
   }
 
   // ============ PROFILE ============
+  // ==== Патч чатов OKO под каналы ХЛБ ====
+  window.hlbPatchOkoChats = function(){
+    if(typeof CHATS === 'undefined') return;
+    var patches = {
+      1: {name:'Артём Бриус', nick:'gdebrius', ava:'/hlb-app/assets/av/gdebrius.jpg', preview:'Артём: Как настроение? Расскажи, чем занимаешься.', time:'сейчас', unread:1, verified:true},
+      2: {name:'ХЛБ · Клуб Артёма', ava:'/hlb-app/assets/av/hlb.jpg', preview:'Артём: Мне стыдно за всё происходящее. Хочу сообщество по 5 000 ₽…', time:'20:04', unread:3, verified:true, subs:'986'},
+      3: {name:'Nihaodrop · Клуб', ava:'/hlb-app/assets/av/brius_mentor.jpg', preview:'Влад: +9 600 ₽ на второй день. Работает!', time:'ср', unread:0, verified:true, subs:'421'},
+      4: {name:'Команда сопровождения', ava:'/hlb-app/assets/av/brius_mentor.jpg', preview:'Полина: Как прошёл первый день? Расскажи.', time:'вчера', unread:0},
+      5: {name:'Ксения М.', nick:'ksusha', ava:null, preview:'Кто в спринте по подъёмам? Погнали!', time:'20:15', unread:0}
+    };
+    CHATS.forEach(function(c){
+      var p = patches[c.id]; if(!p) return;
+      Object.keys(p).forEach(function(k){ c[k] = p[k]; });
+    });
+    // Дополню списком чатов уровня тарифа
+    if(!window.HLB_EXTRA_CHATS_ADDED){
+      var moreChats = [
+        {id:'brius_ch', avaImg:'/hlb-app/assets/av/artem_brius.jpg', name:'Артём Бриус · канал', kind:'channel', verified:true, subs:'24 813', preview:'Артём: Полнейшая пересборка. Знаете, что в коробках склада…', time:'сегодня', unread:0,
+         msgs:[{in:1, t:'15:32', kind:'text', body:'Полнейшая пересборка. Знаете, что в этих коробках на складе нихаохаба? Дохрена всего разного.'}]},
+        {id:'brius_main', avaImg:'/hlb-app/assets/av/brius.jpg', name:'Бриус', kind:'channel', verified:true, subs:'73 987', preview:'Финальная часть моего перформанса.', time:'вчера', unread:0,
+         msgs:[{in:1, t:'19:22', kind:'text', body:'Финальная часть моего перформанса: оставил только одну реакцию клоуна. Жмите. 🤡'}]},
+        {id:'hlb_reviews', avaImg:'/hlb-app/assets/av/hlb_reviews.jpg', name:'ХЛБ · отзывы', kind:'channel', subs:'5 892', preview:'Мария: После ХЛБ жизнь уже не станет прежней.', time:'сегодня', unread:1,
+         msgs:[{in:1, t:'12:30', kind:'text', body:'После ХЛБ жизнь уже не станет прежней. Слушать надо каждый день.'}]},
+        {id:'kito', avaImg:'/hlb-app/assets/av/kitovarka.jpg', name:'КИТОВАРКА', kind:'channel', subs:'1 438', preview:'Товарный бизнес с Китаем 🇨🇳', time:'вчера', unread:0,
+         msgs:[{in:1, t:'—', kind:'text', body:'Не варим китов — занимаемся товарным бизнесом с Китаем.'}]},
+      ];
+      moreChats.forEach(function(c){ if(!CHATS.find(function(x){return x.id===c.id;})) CHATS.push(c); });
+      window.HLB_EXTRA_CHATS_ADDED = true;
+    }
+    // Ре-рендер списка чатов через OKO
+    try{ if(typeof renderChatList==='function') renderChatList(''); }catch(e){}
+  };
+
   function initProfile(){
     const s = document.getElementById('screen-profile'); if(!s) return;
-    // Показываем оригинал OKO как есть, только патчим верхнюю часть под аватар Артёма
-    var origPad = s.querySelector('.pad');
-    var w = s.querySelector('.hlb-prof-wrap');
-    // Убираем hlb-prof-wrap если он был раньше — теперь оригинал OKO целиком
-    if(w){ w.remove(); }
-    // Патчу оригинальный OKO профиль под Артёма
+    var w = s.querySelector('.hlb-prof-wrap'); if(w){ w.remove(); }
     var av = document.getElementById('profAva'); if(av && !av.querySelector('img')){
       av.innerHTML = '<img src="'+AV+'/gdebrius.jpg" alt="" style="width:100%;height:100%;object-fit:cover;border-radius:50%">';
       av.style.background = 'transparent'; av.style.padding = '0'; av.style.border = '3px solid var(--hlb-orange)';
@@ -10050,7 +10085,21 @@ nav#tabs .nav-logo span{ color:#fff !important; font-weight:900 !important }
     var nm = document.getElementById('profName'); if(nm && !nm.textContent.includes('Артём')) nm.textContent = 'Артём Бриус';
     var nk = document.getElementById('profNick'); if(nk) nk.textContent = '@gdebrius · Гуанчжоу';
     var pt = document.getElementById('profTier'); if(pt) pt.textContent = HLB_STATE.tier==='guest'?'Демо-режим':'ТАРИФ: '+TIER_NAMES[HLB_STATE.tier];
-    if(origPad) origPad.style.display='';
+    // Кнопка «Тарифы» в оригинальном профиле OKO — вставляю большую CTA-плашку сверху секции «Аккаунт»
+    var pad = s.querySelector('.pad');
+    if(pad && !pad.querySelector('.hlb-prof-tariff-cta')){
+      var cta = document.createElement('button');
+      cta.className = 'hlb-prof-tariff-cta hlb-tap';
+      cta.style.cssText = 'width:100%;display:flex;gap:14px;align-items:center;padding:16px 18px;margin:16px 0;background:linear-gradient(135deg,var(--hlb-orange-2),var(--hlb-orange));color:#000;border:0;border-radius:20px;cursor:pointer;font-family:var(--hlb-font);box-shadow:0 14px 32px rgba(255,149,0,.34);animation:hlbGlowPulse 3s ease-in-out infinite;position:relative;overflow:hidden';
+      cta.innerHTML = '<div style="width:44px;height:44px;border-radius:14px;background:rgba(0,0,0,.14);display:flex;align-items:center;justify-content:center"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2l3 7h7l-5.5 4.5L18 21l-6-4-6 4 1.5-7.5L2 9h7z"/></svg></div>'+
+        '<div style="flex:1;text-align:left"><b style="font-weight:900;font-size:16px;letter-spacing:-.01em;display:block">Тарифы ХЛБ APP</b><small style="font-weight:600;font-size:12px;opacity:.7">От 1 000 ₽ / мес · '+(HLB_STATE.tier==='guest'?'демо':TIER_NAMES[HLB_STATE.tier])+'</small></div>'+
+        '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M9 6l6 6-6 6"/></svg>';
+      cta.onclick = function(){ hlbOpenTariffs(); };
+      // вставим сверху над «Аккаунт»
+      var afterHero = pad.querySelector('.profile-top') || pad.firstChild;
+      if(afterHero && afterHero.nextSibling) pad.insertBefore(cta, afterHero.nextSibling);
+      else pad.appendChild(cta);
+    }
     return;
     var lvl = tierLevel();
     var isGuest = HLB_STATE.tier==='guest';
