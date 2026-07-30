@@ -26,7 +26,7 @@ if ($u && is_file(BASE_PATH . '/core/notifications.php')) {
 <head>
 <script>document.documentElement.className+=' js';document.documentElement.dataset.theme='light';try{if(!localStorage.getItem('mz-theme-reset-v3')){localStorage.setItem('muzmir-theme','light');localStorage.setItem('mz-theme-reset-v3','1');}var t=localStorage.getItem('muzmir-theme');if(t==='dark')document.documentElement.dataset.theme='dark';}catch(e){}<?php if (!empty($u['music_off'])): ?>window.MZ_MUSIC_OFF=true;<?php endif; ?></script>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,interactive-widget=resizes-visual">
 <?php
   $canon = rtrim(cfgv('base_url'), '/') . (parse_url($_SERVER['REQUEST_URI'] ?? '/', PHP_URL_PATH) ?: '/');
   $full_title = $title . ' — ' . cfgv('org_name');
@@ -91,15 +91,16 @@ html body,html.in-tg body{
   contain:none !important;
 }
 html body main{padding-bottom:calc(24px + env(safe-area-inset-bottom)) !important}
-/* CRITICAL: шапка ВСЕГДА закреплена сверху и НЕПРОЗРАЧНА (контент не просвечивает под ней). */
+/* CRITICAL: шапка STICKY сверху (в потоке — НЕ перекрывает контент), непрозрачная. */
 html body header.app-header{
-  position:fixed !important;
-  top:0 !important; left:0 !important; right:0 !important;
-  z-index:2147482000 !important;
+  position:sticky !important;
+  top:0 !important;
+  z-index:900 !important;
   background:var(--bg,#fffcf5) !important;
   border-bottom:1px solid var(--line,rgba(0,0,0,.08)) !important;
   box-shadow:0 2px 14px rgba(20,16,6,.06) !important;
   backdrop-filter:none !important;
+  margin:0 !important;
   padding-top:calc(6px + env(safe-area-inset-top,0)) !important;
   padding-bottom:6px !important;
   padding-left:env(safe-area-inset-left,0) !important;
@@ -108,8 +109,8 @@ html body header.app-header{
 }
 [data-theme="dark"] html body header.app-header,
 html[data-theme="dark"] body header.app-header{background:#141019 !important;border-bottom-color:rgba(232,194,90,.14) !important}
-/* Отступ сверху под фиксированную шапку */
-html body{padding-top:calc(58px + env(safe-area-inset-top,0)) !important}
+/* Никакого padding-top на body — sticky-шапка сама занимает место */
+html body{padding-top:0 !important}
 </style>
 </head>
 <body<?= $u ? ' class="is-auth"' : '' ?>>
@@ -124,6 +125,10 @@ html body{padding-top:calc(58px + env(safe-area-inset-top,0)) !important}
     <a class="app-icon-btn" href="<?= url('/menu') ?>#menuSearch" aria-label="Поиск по разделам" title="Поиск">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/></svg>
     </a>
+    <button type="button" class="app-icon-btn" id="themeToggle" aria-label="Сменить тему" title="Тёмная / светлая тема">
+      <svg class="ic-moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"/></svg>
+      <svg class="ic-sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" style="display:none"><circle cx="12" cy="12" r="4.5"/><path d="M12 2v2M12 20v2M4 12H2M22 12h-2M5 5l1.4 1.4M17.6 17.6L19 19M5 19l1.4-1.4M17.6 6.4L19 5"/></svg>
+    </button>
     <?php if ($u): ?>
       <a class="app-icon-btn" href="<?= url('/notifications') ?>" aria-label="Уведомления" title="Уведомления">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8a6 6 0 0 0-12 0c0 7-3 9-3 9h18s-3-2-3-9M13.7 21a2 2 0 0 1-3.4 0"/></svg>
@@ -238,26 +243,28 @@ if('serviceWorker' in navigator){
   document.addEventListener('mz-spa-navigate', reassert);
 })();
 
-// Клавиатура: при фокусе на input/textarea — прячем appnav (не поднимается с клавиатурой)
+// Нижнее меню ПРИБИТО к низу всегда (не прячем и не поднимаем при клавиатуре).
+// interactive-widget=resizes-visual в viewport держит fixed-элементы у низа экрана.
+
+// Переключатель темы в шапке (тёмная/светлая), сохраняется в localStorage.
 (function(){
-  var kbSel = 'input:not([type=checkbox]):not([type=radio]):not([type=file]):not([type=submit]):not([type=button]),textarea,[contenteditable="true"]';
-  function onFocusIn(e){ if(e.target && e.target.matches && e.target.matches(kbSel)){ document.body.classList.add('mz-kbd-open'); } }
-  function onFocusOut(e){
-    setTimeout(function(){
-      var a=document.activeElement;
-      if(!a || !a.matches || !a.matches(kbSel)) document.body.classList.remove('mz-kbd-open');
-    }, 60);
+  var btn = document.getElementById('themeToggle'); if(!btn) return;
+  function sync(){
+    var dark = document.documentElement.dataset.theme === 'dark';
+    var moon = btn.querySelector('.ic-moon'), sun = btn.querySelector('.ic-sun');
+    if(moon) moon.style.display = dark ? 'none' : '';
+    if(sun) sun.style.display = dark ? '' : 'none';
+    var mtc = document.getElementById('metaThemeColor');
+    if(mtc) mtc.setAttribute('content', dark ? '#141019' : '#FFFCF5');
   }
-  document.addEventListener('focusin', onFocusIn);
-  document.addEventListener('focusout', onFocusOut);
-  // Дублируем через visualViewport (Android/iOS)
-  if(window.visualViewport){
-    var vv = window.visualViewport;
-    vv.addEventListener('resize', function(){
-      var kbUp = (window.innerHeight - vv.height) > 140;
-      document.body.classList.toggle('mz-kbd-open', kbUp);
-    });
-  }
+  sync();
+  btn.addEventListener('click', function(){
+    var dark = document.documentElement.dataset.theme === 'dark';
+    var next = dark ? 'light' : 'dark';
+    document.documentElement.dataset.theme = next;
+    try{ localStorage.setItem('muzmir-theme', next); }catch(e){}
+    sync();
+  });
 })();
 
 // Авто +7 для телефона: любое поле type=tel или name=phone стартует с +7, ввод только цифр

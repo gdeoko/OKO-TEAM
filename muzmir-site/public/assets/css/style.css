@@ -1692,3 +1692,46 @@ html{background:var(--bg)}
 .menu-search input{flex:1;border:none;background:none;outline:none;font:inherit;font-size:1rem;color:var(--text);min-height:24px;padding:0;box-shadow:none}
 .menu-search input::placeholder{color:var(--muted)}
 .menu-empty{grid-column:1/-1;text-align:center;color:var(--muted);padding:30px 10px}
+
+/* ══════════════════════════════════════════════════════════════════════════
+   APP-РЕЖИМ v4 — правки по замечаниям (скриншоты 22:40-22:48)
+   ══════════════════════════════════════════════════════════════════════════ */
+
+/* 1) Нижнее меню — БЕЗ лишних золотых полос (убираем индикатор и любые ::before/::after линии) */
+.appnav-ind{display:none !important}
+.appnav .appnav-ind,.appnav::before,.appnav::after,.appnav-inner::before,.appnav-inner::after{display:none !important}
+/* Не прячем меню при клавиатуре — прибито к низу всегда */
+body.mz-kbd-open .appnav{transform:none !important;opacity:1 !important;pointer-events:auto !important}
+
+/* 2) Переносы слов — НИГДЕ не рвём слова посреди. Заголовки карточек переносятся целиком. */
+h1,h2,h3,h4,.cc-title,.card h3,.comp-card h3,.rst-body b,.menu-tile-lbl,
+.about-card h3,.ministry-card h3,.pub-item,.card b,.section-head h2{
+  word-break:normal !important;overflow-wrap:break-word !important;hyphens:none !important;-webkit-hyphens:none !important}
+
+/* 3) Страница входа/регистрации — единый анимационный фон просвечивает (без белой плашки) */
+.auth-page{background:transparent !important}
+.auth-shell,.auth-page .card{
+  background:color-mix(in srgb,var(--panel-solid,#fff) 78%,transparent) !important;
+  backdrop-filter:blur(14px) saturate(1.1) !important;-webkit-backdrop-filter:blur(14px) saturate(1.1) !important;
+  border:1px solid var(--glass-brd) !important}
+[data-theme="dark"] .auth-shell,[data-theme="dark"] .auth-page .card{
+  background:color-mix(in srgb,#1c1520 78%,transparent) !important}
+
+/* 4) Компактность заголовков карточек регионов/писем (были огромные и рвались) */
+.ministry-card h3,.about-card h3,.card--letter h3{font-size:1rem !important;line-height:1.2 !important}
+@media(max-width:520px){
+  .ministry-card h3,.about-card h3,.card--letter h3{font-size:.92rem !important}
+}
+
+/* 5) Публикации/СМИ — компактный список ссылок вместо огромных строк */
+.pub-list,.pubs-list{font-size:.86rem !important}
+.pub-item,.pubs-list li,.pubs-list a{font-size:.86rem !important;line-height:1.35 !important;word-break:break-word !important}
+.pub-item{padding:8px 0 !important}
+
+/* 6) Тема-тоггл и иконки шапки — единый вид */
+.app-icon-btn .ic-sun,.app-icon-btn .ic-moon{width:21px;height:21px}
+
+/* 7) Секции — компактнее, меньше воздуха и крупного текста */
+.section-head p{font-size:.9rem !important;line-height:1.45 !important;max-width:600px;margin-left:auto;margin-right:auto}
+.section-head h2{font-size:clamp(1.35rem,5vw,1.9rem) !important}
+.hero .lead{max-width:520px}
