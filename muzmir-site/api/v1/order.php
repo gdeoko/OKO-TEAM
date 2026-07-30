@@ -88,8 +88,18 @@ if ($clientAmount !== $serverAmount) {
 $amount = $serverAmount;
 $uid = current_user()['id'] ?? null;
 
+// application_id: напрямую, либо резолвим по номеру заявки (для гостей).
+$applicationId = (int) input('application_id', '0');
+if (!$applicationId) {
+    $appNum = trim((string) input('application_number'));
+    if ($appNum !== '') {
+        $ar = one("SELECT id FROM applications WHERE number=? LIMIT 1", [$appNum]);
+        if ($ar) $applicationId = (int) $ar['id'];
+    }
+}
+
 $orderId = insert('awards_orders', [
-    'application_id' => (int) input('application_id', '0') ?: null,
+    'application_id' => $applicationId ?: null,
     'user_id'        => $uid,
     'full_name'      => input('full_name'),
     'competition'    => $comp['name'] ?? input('competition'),
@@ -159,6 +169,7 @@ json_out([
     'ok'       => true,
     'order_id' => $orderId,
     'amount'   => $amount,
+    'confirmation_url' => $payment['confirmation_url'] ?? null,
     'payment'  => $payment ? [
         'id'               => $payment['id'],
         'status'           => $payment['status'] ?? 'pending',
