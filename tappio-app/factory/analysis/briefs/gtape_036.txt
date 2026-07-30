@@ -1,33 +1,25 @@
 АНАЛИЗ КОНКУРЕНТОВ 3D TAPE MEASURE — YouTube, ролики 1M+
-2026-07-30 04:20 UTC · ниша: 3D Tape Measure / замеры-DIY · для ролика gtape_036
+2026-07-30 04:22 UTC · ниша: 3D Tape Measure / замеры-DIY · для ролика gtape_036
 ============================================
-1. Few People Know About This Tape Measure Feature! Hidden Features of Tape Measure
-   канал: The Maker (1200K подп.)
-   46 640 567 · 282 438❤ · 3 900💬 · ER 0.61% · ⏱ 191с
-   https://youtu.be/R1sQLwLi96c
-2. AR Plan 3D – Camera to Plan, Floorplanner
+1. AR Plan 3D – Camera to Plan, Floorplanner
    канал: GRYMALA (2K подп.)
    2 315 401 · 470❤ · 13💬 · ER 0.02% · ⏱ 42с
    https://youtu.be/FmOfqcITb9k
-3. How to Read a Tape Measure - REALLY EASY
+2. How to Read a Tape Measure - REALLY EASY
    канал: Make Build Modify (209K подп.)
    1 947 215 · 42 882❤ · 2 000💬 · ER 2.3% · ⏱ 200с
    https://youtu.be/DqKIVmu6grM
-4. 5 Quick Measuring Hacks - Woodworking Tips and Tricks
-   канал: WoodWorkWeb (676K подп.)
-   1 541 158 · 32 087❤ · 807💬 · ER 2.13% · ⏱ 403с
-   https://youtu.be/TOve6oVPKVw
-5. How to read a tape measure without looking like an idiot
+3. How to read a tape measure without looking like an idiot
    канал: Stumpy Nubs (James Hamilton) (1040K подп.)
-   1 058 218 · 23 817❤ · 1 500💬 · ER 2.39% · ⏱ 263с
+   1 058 206 · 23 817❤ · 1 500💬 · ER 2.39% · ⏱ 263с
    https://youtu.be/PrchBGzC0bA
-6. Air Measure App Demo - Augmented reality tape measure
+4. Air Measure App Demo - Augmented reality tape measure
    канал: laanlabs (6.3K подп.)
    1 014 352 · 2 281❤ · 219💬 · ER 0.25% · ⏱ 45с
    https://youtu.be/z7DYC_zbZCM
 ============================================
 РАЗБОР ХУКОВ (что заходит):
-частые слова в заголовках-миллионниках: measure, tape, plan, read, few, people, know, about
+частые слова в заголовках-миллионниках: measure, tape, app, plan, read, without, augmented, reality
 паттерны: цифры/топы, конкретная боль, демонстрация, до/после, честная выгода.
-ВЫВОД для наших роликов: хук через конкретную выгоду/цифру + сильное слово ниши (measure, tape, plan) в первые 2 сек; формат демонстрация/сравнение «до-после»; плотная динамика, инфографика цифрами; CTA на кодовое слово MEASURE и ссылку. Тянуть за счёт узнаваемой боли и честного результата.
-Средние по топу: 9 086 151 просм · роликов 1M+: 6. Файл-основа ролика.
+ВЫВОД для наших роликов: хук через конкретную выгоду/цифру + сильное слово ниши (measure, tape, app) в первые 2 сек; формат демонстрация/сравнение «до-после»; плотная динамика, инфографика цифрами; CTA на кодовое слово MEASURE и ссылку. Тянуть за счёт узнаваемой боли и честного результата.
+Средние по топу: 964 624 просм · роликов 1M+: 4. Файл-основа ролика.
