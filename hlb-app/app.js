@@ -63,7 +63,7 @@ function setLang(l){
   if(!defs) return;
   const s = document.createElementNS('http://www.w3.org/2000/svg','symbol');
   s.setAttribute('id','i-verified'); s.setAttribute('viewBox','0 0 100 100');
-  s.innerHTML = '<path d="M50 6l11 9 14-2 5 13 13 5-2 14 9 11-9 11 2 14-13 5-5 13-14-2-11 9-11-9-14 2-5-13-13-5 2-14-9-11 9-11-2-14 13-5 5-13 14 2z" fill="#FF9500" stroke="none"/><path d="M32 52l12 12 24-28" fill="none" stroke="#0a0a0a" stroke-width="9" stroke-linecap="round" stroke-linejoin="round"/>';
+  s.innerHTML = '<path d="M50 6l11 9 14-2 5 13 13 5-2 14 9 11-9 11 2 14-13 5-5 13-14-2-11 9-11-9-14 2-5-13-13-5 2-14-9-11 9-11-2-14 13-5 5-13 14 2z" fill="#3B9EFF" stroke="none"/><path d="M32 52l12 12 24-28" fill="none" stroke="#ffffff" stroke-width="9" stroke-linecap="round" stroke-linejoin="round"/>';
   defs.appendChild(s);
 })();
 const VERIFIED = new Set(['Артём Бриус','ХЛБ','Команда ХЛБ','Поддержка ХЛБ']);
@@ -51661,6 +51661,12 @@ window.chCompose = chCompose; window.chLessonDraft = chLessonDraft;
       return -1;
     }
     function snapshotActiveScreen(){
+      /* v27.4 (корень двоения/«поднимается выше и выше» при кликах по меню):
+         эта функция клонировала ВЕСЬ активный экран в оверлей и анимировала его
+         150мс на каждом переключении вкладки. Клон-призрак накладывался на новый
+         экран (двоение на скрине), а при частых кликах клоны стопились → «выше и выше».
+         Отключено полностью — переключение мгновенное, как в Telegram, без клонов. */
+      return;
       if(REDUCED) return;
       var main = doc.querySelector('main');
       if(!main) return;
