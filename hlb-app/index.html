@@ -1473,7 +1473,7 @@ button:focus-visible,a:focus-visible,input:focus-visible,textarea:focus-visible,
 <!-- ============ ХЛБ LAZY BUNDLE LOADER ============ -->
 <link rel="stylesheet" href="app.css" media="print" onload="this.media='all'">
 <noscript><link rel="stylesheet" href="app.css"></noscript>
-<script defer src="app.js?v=32"></script>
+<script defer src="app.js?v=33"></script>
 <script>
 /* Обёртки над встроенными в base.html функциями — для авто-трека page_view / share.
    showTab существует в inline-скрипте base.html, поэтому оборачиваем по мере
@@ -3784,7 +3784,7 @@ const CHATS = [
    msgs:[{in:1, t:'пн', kind:'text', body:'Ученик ХЛБ вышел на 500к/мес чистыми. Скрины и путь — в посте.'}]},
   {id:7, img:'assets/av/brius_reviews.jpg', ava:'Б', name:'Бриус / отзывы', kind:'channel', managed:true, subs:'9к', writeAll:false, kindIcon:'megaphone', preview:'Новые результаты учеников — только цифры', time:'пн', unread:0, online:false,
    msgs:[{in:1, t:'пн', kind:'text', body:'Новые результаты учеников — без воды, только цифры и скрины.'}]},
-  {id:8, img:'assets/av/brius_mentor.jpg', ava:'N', name:'Nihaodrop', kind:'channel', verified:true, subs:'27к', writeAll:false, kindIcon:'megaphone', preview:'Фулфилмент и доставка из Китая', time:'вс', unread:0, online:false,
+  {id:8, img:'assets/av/nihaodrop.jpg', ava:'N', name:'Nihaodrop', kind:'channel', verified:true, subs:'27к', writeAll:false, kindIcon:'megaphone', preview:'Фулфилмент и доставка из Китая', time:'вс', unread:0, online:false,
    msgs:[{in:1, t:'вс', kind:'text', body:'Фулфилмент и доставка из Китая без посредников. Тарифы обновили — смотри закреп.'}]},
   {id:9, img:'assets/av/brius_mentor.jpg', ava:'b', name:'briusMentor', kind:'direct', nick:'briusMentor', kindIcon:null, preview:'Вопросы по наставничеству — сюда', time:'вс', unread:0, online:true,
    msgs:[{in:1, t:'вс', kind:'text', body:'Вопросы по наставничеству и клубу — сюда. Отвечаем быстро и по делу.'}]},
@@ -3969,7 +3969,7 @@ function renderChatList(filter=''){
       <div class="chat-item" onclick="openConv(${typeof c.id==='number' ? c.id : `'${c.id}'`})">
         <div class="ci-ava">${avaHtml(c)}${(c.kind==='direct' && c.online)?'<span class="ci-online" title="в сети"></span>':''}</div>
         <div class="meta">
-          <div class="row1"><span class="name">${c.cid?'<span class="live-dot" title="живой чат"></span>':''}${c.kindIcon?I(c.kindIcon):''}<span class="ci-txt">${c.name}</span>${c.verified?'<svg class="i" style="width:13px;height:13px;color:#3B9EFF;flex:0 0 auto"><use href="#i-check"/></svg>':''}</span><span class="time">${c.time}</span></div>
+          <div class="row1"><span class="name">${c.cid?'<span class="live-dot" title="живой чат"></span>':''}${c.kindIcon?I(c.kindIcon):''}<span class="ci-txt">${c.name}</span>${c.verified?'<svg class="i fill" style="width:15px;height:15px;flex:0 0 auto;vertical-align:-2px"><use href="#i-verified"/></svg>':''}</span><span class="time">${c.time}</span></div>
           <div class="row1"><span class="preview">${pi?I(pi):''}<span class="ci-txt">${emShortStrip(c.preview)}</span></span>${c.unread?`<span class="badge">${c.unread}</span>`:''}</div>
         </div>
       </div>`;
@@ -9792,7 +9792,7 @@ nav#tabs .nav-logo span{ color:#fff !important; font-weight:900 !important }
     { av:'hlb.jpg',          name:'ХЛБ · комьюнити',    verified:false,sub:'986 участников',    time:'21:15', prev:'Stas: Просыпаемся, заряжаемся отличным настроением 💪', un:5, minLvl:2, id:'community' },
     { av:'gdebrius.jpg',     name:'Твоя десятка',       verified:false,sub:'10 участников',     time:'19:40', prev:'Ксения: Кто в спринте по подъёмам? Поехали!', un:2, minLvl:2, id:'my10' },
     // 20K (ТЁМ)
-    { av:'brius_mentor.jpg', name:'Nihaodrop · клуб',   verified:true, sub:'421 участник',      time:'ср',   prev:'Влад: +9 600 ₽ на второй день. Работает!', un:0, minLvl:3, id:'drop' },
+    { av:'nihaodrop.jpg', name:'Nihaodrop · клуб',   verified:true, sub:'421 участник',      time:'ср',   prev:'Влад: +9 600 ₽ на второй день. Работает!', un:0, minLvl:3, id:'drop' },
     { av:'artem_brius.jpg',  name:'Эфиры ХЛБ',          verified:false,sub:'команда ХЛБ',       time:'—',    prev:'Ближайший эфир: 03.08 · 19:00 МСК', un:0, minLvl:3, id:'efirs' },
     // 50K (сопровождение)
     { av:'brius_mentor.jpg', name:'Команда сопровождения', verified:true, sub:'4 эксперта',    time:'—',    prev:'Полина: Как прошёл первый день? Расскажи.', un:0, minLvl:4, id:'sopr' },
@@ -10421,6 +10421,28 @@ main>.screen.active, .screen.active{ animation:none !important; }
   background: linear-gradient(180deg, rgba(0,0,0,.55), transparent) !important;
 }
 #faReels .far-topbar{ padding-top:0 !important; }
+
+/* ============================================================
+   v27.5 — НИЖНЕЕ МЕНЮ ЗАКРЕПЛЕНО (гарантия против «прыгает выше и выше»).
+   Раньше nav был flex-элементом в конце #app; при любом скачке высоты #app
+   (джиттер вьюпорта TG-фуллскрина на Android) он ездил. Теперь на мобиле nav
+   фиксирован снизу — не двигается вообще, что бы ни делала высота.
+   ============================================================ */
+@media(max-width:899px){
+  nav#tabs{ position:fixed !important; left:0; right:0; bottom:0; z-index:60 !important; }
+  main{ padding-bottom: calc(58px + var(--hlb-safe-bottom, env(safe-area-inset-bottom,0px))) !important; }
+  #app.conv-open main{ padding-bottom:0 !important; }
+}
+
+/* ---- Логотип входа/сплэша: БЕЗ filter и scale-анимаций (корень «2 чёрных
+   прямоугольника при старте»). На Android-WebView filter:drop-shadow на анимируемой
+   картинке-логотипе рендерил чёрные полосы при декодировании/трансформе. Свечение
+   остаётся от радиального градиента-подложки .auth-logo-wrap::before/::after. ---- */
+.auth-logo{ filter:none !important; animation:opacityIn .5s ease both !important; }
+.auth-logo-wrap{ animation:opacityIn .6s ease both !important; }
+#splash .eye img{ filter:none !important; }
+#splash .eye-wrap{ animation:opacityIn .45s ease both !important; }
+@keyframes opacityIn{ from{opacity:0} to{opacity:1} }
 </style>
 
 <style id="hlb-v27-perf">

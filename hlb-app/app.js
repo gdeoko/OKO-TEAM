@@ -44894,10 +44894,15 @@ document.addEventListener('keydown', function(e){
 function nvUi(){
   if(!nvTg || !nvTg.BackButton) return;
   try{
-    if(NV.length || nvTab !== 'feed') nvTg.BackButton.show();
+    /* v27.5 (правка Даниэля): на ЛЮБОМ корневом табе — крестик (закрыть приложение),
+       стрелка «назад» только внутри реальных под-экранов (NV-стек непуст).
+       Раньше на не-feed вкладках висела стрелка, которая «не закрывала». */
+    if(NV.length) nvTg.BackButton.show();
     else nvTg.BackButton.hide();
   }catch(e){}
 }
+/* синхронизатор для внешней ленивой обёртки showTab (обновить nvTab + BackButton) */
+try{ window.__nvSync = function(t){ if(typeof t === 'string') nvTab = t; try{ nvUi(); }catch(e){} }; }catch(e){}
 (function nvTgInit(n){
   const tg = window.Telegram && window.Telegram.WebApp;
   if(tg && tg.BackButton){
@@ -53546,6 +53551,9 @@ window.chCompose = chCompose; window.chLessonDraft = chLessonDraft;
       try{ var st=document.getElementById('screenTitle'); if(st && typeof TITLES!=='undefined' && TITLES[t]) st.textContent = TITLES[t]; }catch(e){}
       try{ if(typeof closeSheet==='function') closeSheet(); }catch(e){}
       try{ var mm=document.getElementById('msgMenu'); if(mm && mm.classList.contains('open') && typeof closeMsgMenu==='function') closeMsgMenu(); }catch(e){}
+      /* v27.5: синхронизировать nvTab + TG BackButton (крестик на корне) —
+         иначе после лёгкого переключения на ленте оставалась стрелка «назад». */
+      try{ if(window.__nvSync) window.__nvSync(t); }catch(e){}
     }
     window.showTab = function(t){
       var sc = document.getElementById('screen-'+t);
