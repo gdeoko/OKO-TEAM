@@ -1,20 +1,20 @@
 {
- "seq": 47,
+ "seq": 55,
  "angle_idx": {
-  "spy": 4,
-  "brain": 4,
-  "tape": 3
+  "spy": 1,
+  "brain": 6,
+  "tape": 6
  },
- "app_rr": 47,
+ "app_rr": 55,
  "shot_off": {
-  "spy": 0,
-  "brain": 4,
-  "tape": 24
+  "spy": 21,
+  "brain": 18,
+  "tape": 18
  },
  "ov_off": {
-  "spy": 48,
-  "brain": 48,
-  "tape": 45
+  "spy": 57,
+  "brain": 54,
+  "tape": 54
  },
  "ov_fp": {
   "spy": [
@@ -33,7 +33,10 @@
    "bars|callout|checklist|chips|kicker|kinetic|lowerthird|stat_count|ticker",
    "bars|callout|checklist|chips|kicker|kinetic",
    "bars|chips|gauge|kicker|kinetic|lowerthird|stat_count",
-   "bars|callout|checklist|chips|gauge|kicker|kinetic|lowerthird|stat_count|ticker"
+   "bars|callout|checklist|chips|gauge|kicker|kinetic|lowerthird|stat_count|ticker",
+   "bars|callout|chips|gauge|kicker|kinetic|ticker",
+   "bars|callout|checklist|chips|gauge|kicker|kinetic|lowerthird|stat_count|ticker",
+   "gauge|kicker|kinetic|lowerthird|stat_count|ticker"
   ],
   "brain": [
    "bars|chips|gauge|kicker|kinetic|lowerthird|stat_count",
@@ -51,7 +54,9 @@
    "bars|checklist|chips|kicker|kinetic|lowerthird",
    "checklist|chips|gauge|kicker|kinetic|lowerthird|stat_count",
    "bars|chips|gauge|kicker|kinetic|lowerthird|stat_count|ticker",
-   "bars|checklist|kicker|kinetic|lowerthird|ticker"
+   "bars|checklist|kicker|kinetic|lowerthird|ticker",
+   "bars|callout|checklist|chips|gauge|kicker|kinetic|lowerthird|stat_count|ticker",
+   "bars|checklist|chips|gauge|kicker|kinetic|stat_count|ticker"
   ],
   "tape": [
    "bars|callout|checklist|chips|gauge|kicker|kinetic|lowerthird|stat_count|ticker",
@@ -68,7 +73,10 @@
    "bars|callout|checklist|chips|gauge|kicker|kinetic|lowerthird|stat_count|ticker",
    "bars|callout|checklist|chips|gauge|kicker|kinetic|lowerthird",
    "bars|callout|chips|gauge|kicker|kinetic|lowerthird|stat_count|ticker",
-   "bars|checklist|kicker|kinetic|lowerthird|stat_count"
+   "bars|checklist|kicker|kinetic|lowerthird|stat_count",
+   "bars|callout|checklist|chips|kicker|kinetic|lowerthird|stat_count|ticker",
+   "callout|checklist|chips|gauge|kicker|kinetic|stat_count",
+   "callout|checklist|chips|kicker|kinetic|lowerthird|stat_count"
   ]
  }
 }

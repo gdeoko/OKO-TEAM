@@ -1,0 +1,238 @@
+{
+ "id": "gbrain_050",
+ "app": "brain",
+ "voice": "en-US-BrianNeural",
+ "rate": "+4%",
+ "grade": "teal_orange",
+ "brand": {
+  "accent": "#9B5DE5",
+  "accent2": "#C9A7FF",
+  "code": "FOCUS",
+  "logo": "brain.png",
+  "name": "BRAINOVA"
+ },
+ "music": {
+  "queries": [
+   "driving electronic",
+   "uplifting focus ambient",
+   "warm inspiring piano electronic"
+  ]
+ },
+ "cover": {
+  "kicker": "DOPAMINE RESET",
+  "top": "WHY YOU CAN'T",
+  "big": "SIT AND\nTHINK",
+  "q": [
+   "student studying desk lamp night"
+  ]
+ },
+ "segments": [
+  {
+   "id": "b1",
+   "text": "Endless scrolling floods your brain with noise."
+  },
+  {
+   "id": "b2",
+   "text": "Deep focus starts to feel almost painful."
+  },
+  {
+   "id": "b3",
+   "text": "The fix is short bursts of real challenge."
+  },
+  {
+   "id": "b4",
+   "text": "Puzzles reset your attention span, gently."
+  },
+  {
+   "id": "b5",
+   "text": "Each session rebuilds patience and calm."
+  },
+  {
+   "id": "b6",
+   "text": "Trade the scroll for five sharp minutes."
+  }
+ ],
+ "shots": [
+  {
+   "q": [
+    "coffee cup morning desk"
+   ],
+   "insert": "tilt",
+   "pos": "upper"
+  },
+  {
+   "q": [
+    "notebook writing pen hand"
+   ],
+   "motion": "zin"
+  },
+  {
+   "q": [
+    "neurons synapse animation blue"
+   ],
+   "insert": "tv",
+   "pos": "upper"
+  },
+  {
+   "q": [
+    "light bulb idea dark"
+   ],
+   "motion": "zout"
+  },
+  {
+   "q": [
+    "focused eyes close up concentration"
+   ],
+   "insert": "arch",
+   "pos": "center"
+  },
+  {
+   "q": [
+    "sticky notes wall reminders"
+   ],
+   "motion": "pandown"
+  },
+  {
+   "q": [
+    "brain scan mri blue"
+   ],
+   "insert": "circle",
+   "pos": "lower"
+  },
+  {
+   "q": [
+    "elderly person smiling sharp mind"
+   ],
+   "motion": "panl"
+  },
+  {
+   "q": [
+    "man reading book focused"
+   ],
+   "insert": "hexagon",
+   "pos": "upper"
+  },
+  {
+   "q": [
+    "person thinking trying to remember"
+   ],
+   "motion": "panr"
+  }
+ ],
+ "overlays": [
+  {
+   "at": 0.206,
+   "dur": 1.79,
+   "type": "kicker",
+   "text": "BRAIN AGE"
+  },
+  {
+   "at": 0.253,
+   "dur": 2.0,
+   "type": "ticker",
+   "to": 5,
+   "suffix": "min",
+   "label": "A DAY",
+   "pos": "lower"
+  },
+  {
+   "at": 0.312,
+   "dur": 1.89,
+   "type": "lowerthird",
+   "title": "FIVE MINUTES A DAY",
+   "sub": "focus grows like a muscle"
+  },
+  {
+   "at": 0.491,
+   "dur": 1.86,
+   "type": "callout",
+   "text": "IT'S ENCODING, NOT AGE",
+   "pos": "center"
+  },
+  {
+   "at": 0.75,
+   "dur": 1.99,
+   "type": "chips",
+   "items": [
+    "DAY 1",
+    "DAY 5",
+    "DAY 10",
+    "DAY 14"
+   ],
+   "pos": "lower"
+  },
+  {
+   "at": 0.758,
+   "dur": 2.39,
+   "type": "gauge",
+   "to": 5,
+   "max": 10,
+   "suffix": "min",
+   "label": "PER DAY",
+   "pos": "center"
+  },
+  {
+   "at": 0.822,
+   "dur": 1.92,
+   "type": "kinetic",
+   "top": "STAY",
+   "big": "SHARP"
+  },
+  {
+   "at": 0.832,
+   "dur": 2.07,
+   "type": "bars",
+   "title": "RECALL SPEED",
+   "unit": "%",
+   "items": [
+    [
+     "Week 1",
+     100
+    ],
+    [
+     "Week 3",
+     147
+    ]
+   ],
+   "pos": "center"
+  },
+  {
+   "at": 0.842,
+   "dur": 1.85,
+   "type": "stat_count",
+   "to": 5,
+   "suffix": "min",
+   "label": "A DAY",
+   "pos": "center"
+  },
+  {
+   "at": 0.885,
+   "dur": 2.6,
+   "type": "checklist",
+   "items": [
+    "Take the test",
+    "Play 5 min",
+    "Beat your score",
+    "Keep the streak"
+   ],
+   "pos": "center"
+  }
+ ],
+ "cta": {
+  "text": "Comment FOCUS for the app.",
+  "code": "FOCUS"
+ },
+ "caption": "Endless scrolling makes deep focus feel painful. Short bursts of real challenge reset your attention span — trade the scroll for five sharp minutes. Comment FOCUS for the app. #brainhealth #memory #focus #productivity #selfimprovement #mentalhealth #learning #focus #brain #memorize #improve",
+ "yt_title": "Why you can't sit and think anymore #shorts",
+ "trend_keys": [
+  "focus",
+  "brain",
+  "memorize",
+  "improve",
+  "secrets",
+  "hack",
+  "memory",
+  "exercises"
+ ],
+ "content_type": "viral"
+}

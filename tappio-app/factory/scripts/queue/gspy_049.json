@@ -1,0 +1,237 @@
+{
+ "id": "gspy_049",
+ "app": "spy",
+ "voice": "en-US-AndrewNeural",
+ "rate": "+7%",
+ "grade": "teal_orange",
+ "brand": {
+  "accent": "#00D9FF",
+  "accent2": "#7CFCFF",
+  "code": "PRIVACY",
+  "logo": "spy.png",
+  "name": "SPY CAMERA FINDER"
+ },
+ "music": {
+  "queries": [
+   "bright optimistic pop",
+   "dark tension electronic",
+   "cinematic underscore tech",
+   "investigative documentary underscore"
+  ]
+ },
+ "cover": {
+  "kicker": "TRUE STORY",
+  "top": "THEY FOUND",
+  "big": "A CAM IN\nTHE VENT",
+  "q": [
+   "dark bedroom lamp light"
+  ]
+ },
+ "segments": [
+  {
+   "id": "b1",
+   "text": "A traveler felt watched in a quiet rental."
+  },
+  {
+   "id": "b2",
+   "text": "She scanned the Wi-Fi and saw a strange device."
+  },
+  {
+   "id": "b3",
+   "text": "The app traced it to the air vent by the bed."
+  },
+  {
+   "id": "b4",
+   "text": "Behind the grille: a pinhole camera, recording."
+  },
+  {
+   "id": "b5",
+   "text": "One scan turned a creepy feeling into proof."
+  },
+  {
+   "id": "b6",
+   "text": "Trust the tech, not just the vibe."
+  }
+ ],
+ "shots": [
+  {
+   "q": [
+    "woman looking around hotel room worried"
+   ],
+   "insert": "arch",
+   "pos": "upper"
+  },
+  {
+   "q": [
+    "power outlet wall socket closeup"
+   ],
+   "motion": "panl"
+  },
+  {
+   "q": [
+    "usb charger plug closeup"
+   ],
+   "insert": "rrect",
+   "pos": "upper"
+  },
+  {
+   "q": [
+    "smoke detector ceiling closeup"
+   ],
+   "motion": "zin"
+  },
+  {
+   "q": [
+    "hand holding smartphone dark"
+   ],
+   "insert": "hexagon",
+   "pos": "center"
+  },
+  {
+   "q": [
+    "person relaxing bed phone night"
+   ],
+   "motion": "panr"
+  },
+  {
+   "q": [
+    "phone flashlight scanning wall"
+   ],
+   "insert": "circle",
+   "pos": "upper"
+  },
+  {
+   "q": [
+    "picture frame on wall room"
+   ],
+   "motion": "panup"
+  },
+  {
+   "q": [
+    "curtains window hotel evening"
+   ],
+   "insert": "tilt",
+   "pos": "upper"
+  },
+  {
+   "q": [
+    "mirror bathroom hotel"
+   ],
+   "motion": "zout"
+  },
+  {
+   "q": [
+    "closet wardrobe hotel room"
+   ],
+   "insert": "diamond",
+   "pos": "lower"
+  },
+  {
+   "q": [
+    "bookshelf decor living room"
+   ],
+   "motion": "pandown"
+  },
+  {
+   "q": [
+    "airbnb apartment cozy night"
+   ],
+   "insert": "phone",
+   "pos": "lower"
+  },
+  {
+   "q": [
+    "laptop screen code green"
+   ],
+   "motion": "panl"
+  }
+ ],
+ "overlays": [
+  {
+   "at": 0.082,
+   "dur": 1.62,
+   "type": "kicker",
+   "text": "LENS CHECK"
+  },
+  {
+   "at": 0.357,
+   "dur": 1.96,
+   "type": "gauge",
+   "to": 30,
+   "max": 60,
+   "suffix": "s",
+   "label": "FULL ROOM SWEEP",
+   "pos": "center"
+  },
+  {
+   "at": 0.512,
+   "dur": 1.62,
+   "type": "ticker",
+   "to": 2,
+   "suffix": "",
+   "label": "SIGNALS CHECKED",
+   "pos": "lower"
+  },
+  {
+   "at": 0.533,
+   "dur": 1.75,
+   "type": "callout",
+   "text": "IR GLINT GIVES IT AWAY",
+   "pos": "center"
+  },
+  {
+   "at": 0.826,
+   "dur": 2.3,
+   "type": "bars",
+   "title": "TIME TO SCAN",
+   "unit": "s",
+   "items": [
+    [
+     "Manual",
+     300
+    ],
+    [
+     "App",
+     30
+    ]
+   ],
+   "pos": "center"
+  },
+  {
+   "at": 0.836,
+   "dur": 2.32,
+   "type": "kinetic",
+   "top": "STAY",
+   "big": "PRIVATE"
+  },
+  {
+   "at": 0.89,
+   "dur": 2.19,
+   "type": "chips",
+   "items": [
+    "VENTS",
+    "CLOCKS",
+    "OUTLETS",
+    "TVs"
+   ],
+   "pos": "lower"
+  }
+ ],
+ "cta": {
+  "text": "Get it now — comment PRIVACY and I'll send the link. Link in bio.",
+  "code": "PRIVACY"
+ },
+ "caption": "A traveler felt watched. One Wi-Fi scan traced a strange device to the vent — a pinhole cam behind the grille. Trust the scan, not just the vibe. Comment PRIVACY for the app. #privacy #airbnb #travelsafety #hiddencamera #traveltips #hotelroom #safetytips #camera #cameras #look #hidden 👉 Comment PRIVACY for the link — link in bio.",
+ "yt_title": "She found a hidden camera in the vent #shorts",
+ "trend_keys": [
+  "camera",
+  "cameras",
+  "look",
+  "hidden",
+  "find",
+  "airbnb",
+  "former",
+  "phone"
+ ],
+ "content_type": "sales"
+}

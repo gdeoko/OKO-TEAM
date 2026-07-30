@@ -1,0 +1,237 @@
+{
+ "id": "gbrain_053",
+ "app": "brain",
+ "voice": "en-US-BrianNeural",
+ "rate": "+7%",
+ "grade": "clean_ad",
+ "brand": {
+  "accent": "#9B5DE5",
+  "accent2": "#C9A7FF",
+  "code": "FOCUS",
+  "logo": "brain.png",
+  "name": "BRAINOVA"
+ },
+ "music": {
+  "queries": [
+   "hype trap beat",
+   "calm motivational underscore",
+   "bright optimistic electronic"
+  ]
+ },
+ "cover": {
+  "kicker": "DAILY STREAK",
+  "top": "SMARTER IN",
+  "big": "14\nDAYS",
+  "q": [
+   "man reading book focused"
+  ]
+ },
+ "segments": [
+  {
+   "id": "b1",
+   "text": "Big change starts with one tiny daily rep."
+  },
+  {
+   "id": "b2",
+   "text": "Day one feels slow and a little clumsy."
+  },
+  {
+   "id": "b3",
+   "text": "By day five your reaction time drops."
+  },
+  {
+   "id": "b4",
+   "text": "By day ten recall feels sharper, easier."
+  },
+  {
+   "id": "b5",
+   "text": "Two weeks in, the streak keeps you going."
+  },
+  {
+   "id": "b6",
+   "text": "Fourteen days to a quicker mind."
+  }
+ ],
+ "shots": [
+  {
+   "q": [
+    "group people names introduction"
+   ],
+   "motion": "zin"
+  },
+  {
+   "q": [
+    "clock ticking time closeup"
+   ],
+   "insert": "diamond",
+   "pos": "center"
+  },
+  {
+   "q": [
+    "yoga breathing calm room"
+   ],
+   "motion": "zout"
+  },
+  {
+   "q": [
+    "sticky notes wall reminders"
+   ],
+   "insert": "rrect",
+   "pos": "lower"
+  },
+  {
+   "q": [
+    "chess board close up thinking"
+   ],
+   "motion": "pandown"
+  },
+  {
+   "q": [
+    "coffee cup morning desk"
+   ],
+   "insert": "circle",
+   "pos": "center"
+  },
+  {
+   "q": [
+    "person thinking trying to remember"
+   ],
+   "motion": "panl"
+  },
+  {
+   "q": [
+    "person forgetting keys frustrated"
+   ],
+   "insert": "phone",
+   "pos": "lower"
+  },
+  {
+   "q": [
+    "smartphone brain game screen"
+   ],
+   "motion": "panr"
+  },
+  {
+   "q": [
+    "man reading book focused"
+   ],
+   "insert": "hexagon",
+   "pos": "center"
+  },
+  {
+   "q": [
+    "student studying desk lamp night"
+   ],
+   "motion": "panup"
+  },
+  {
+   "q": [
+    "fish oil supplement pills"
+   ],
+   "insert": "tv",
+   "pos": "lower"
+  }
+ ],
+ "overlays": [
+  {
+   "at": 0.074,
+   "dur": 2.17,
+   "type": "kicker",
+   "text": "BRAIN AGE"
+  },
+  {
+   "at": 0.201,
+   "dur": 1.9,
+   "type": "gauge",
+   "to": 14,
+   "max": 30,
+   "suffix": "d",
+   "label": "TO SHARPER RECALL",
+   "pos": "center"
+  },
+  {
+   "at": 0.206,
+   "dur": 2.24,
+   "type": "bars",
+   "title": "DISTRACTION",
+   "unit": "%",
+   "items": [
+    [
+     "Before",
+     80
+    ],
+    [
+     "After",
+     29
+    ]
+   ],
+   "pos": "center"
+  },
+  {
+   "at": 0.291,
+   "dur": 2.6,
+   "type": "checklist",
+   "items": [
+    "Take the test",
+    "Play 5 min",
+    "Beat your score",
+    "Keep the streak"
+   ],
+   "pos": "center"
+  },
+  {
+   "at": 0.413,
+   "dur": 1.88,
+   "type": "kinetic",
+   "top": "FOCUS",
+   "big": "UP"
+  },
+  {
+   "at": 0.467,
+   "dur": 2.25,
+   "type": "ticker",
+   "to": 5,
+   "suffix": "min",
+   "label": "A DAY",
+   "pos": "lower"
+  },
+  {
+   "at": 0.481,
+   "dur": 1.6,
+   "type": "stat_count",
+   "to": 60,
+   "suffix": "s",
+   "label": "TO A SCORE",
+   "pos": "center"
+  },
+  {
+   "at": 0.743,
+   "dur": 1.95,
+   "type": "chips",
+   "items": [
+    "SPEED",
+    "MEMORY",
+    "FOCUS",
+    "LOGIC"
+   ],
+   "pos": "upper"
+  }
+ ],
+ "cta": {
+  "text": "Comment FOCUS for the app.",
+  "code": "FOCUS"
+ },
+ "caption": "One tiny daily rep compounds: faster reactions by day five, sharper recall by day ten, a streak that keeps you going. Fourteen days to a quicker mind. Comment FOCUS for the app. #brainhealth #memory #focus #productivity #selfimprovement #mentalhealth #learning #memory #memorize #improve #secrets",
+ "yt_title": "Get measurably smarter in 14 days #shorts",
+ "trend_keys": [
+  "memory",
+  "memorize",
+  "improve",
+  "secrets",
+  "brain",
+  "exercises",
+  "focus",
+  "hack"
+ ],
+ "content_type": "viral"
+}
