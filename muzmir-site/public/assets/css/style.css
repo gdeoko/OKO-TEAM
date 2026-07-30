@@ -415,7 +415,7 @@ select{color:var(--text)} option{background:var(--panel-solid);color:var(--text)
 .flash--success{background:color-mix(in srgb,var(--mint) 14%,transparent);color:var(--mint)}
 .flash--error{background:color-mix(in srgb,var(--error) 12%,transparent);color:var(--error)}
 
-.toast{position:fixed;left:50%;bottom:calc(88px + env(safe-area-inset-bottom));transform:translateX(-50%);z-index:200;
+.toast{position:fixed;left:50%;bottom:calc(88px + env(safe-area-inset-bottom));transform:translateX(-50%);z-index:950;
   max-width:min(92vw,420px);padding:14px 18px;border-radius:var(--radius-sm);font-weight:600;font-size:.94rem;color:var(--text);
   background:color-mix(in srgb,var(--panel-solid) 90%,transparent);border:1px solid var(--gold);box-shadow:var(--shadow-card),var(--shadow-glow);
   backdrop-filter:blur(16px) saturate(1.2);display:flex;align-items:center;gap:10px;animation:toastIn .32s cubic-bezier(.2,.8,.2,1)}
@@ -582,7 +582,7 @@ body>.header,body>main,body>.footer,body>.topbar{position:relative;z-index:1}
 
 /* Стекируемые, плавные тосты (JS кладёт .toast в #toastHost.toast-host) */
 .toast-host{position:fixed;left:50%;bottom:calc(88px + env(safe-area-inset-bottom));transform:translateX(-50%);
-  z-index:200;display:flex;flex-direction:column;gap:10px;align-items:center;width:min(92vw,420px);pointer-events:none}
+  z-index:950;display:flex;flex-direction:column;gap:10px;align-items:center;width:min(92vw,420px);pointer-events:none}
 .toast-host .toast{position:static;left:auto;right:auto;bottom:auto;transform:none;width:100%;max-width:100%;pointer-events:auto;
   animation:toastStackIn .32s cubic-bezier(.2,.8,.2,1)}
 .toast-host .toast.is-hiding{animation:toastStackOut .28s cubic-bezier(.4,0,1,1) forwards}
@@ -1393,7 +1393,7 @@ a.notif-item:hover{transform:translateY(-2px);box-shadow:0 10px 22px rgba(201,16
   box-shadow:0 2px 6px rgba(230,57,70,.5);border:1.5px solid var(--bg)}
 
 /* ══ PWA install prompt (нижняя плашка) ══ */
-.mz-pwa-bar{position:fixed;left:0;right:0;bottom:calc(80px + env(safe-area-inset-bottom));z-index:150;
+.mz-pwa-bar{position:fixed;left:0;right:0;bottom:calc(80px + env(safe-area-inset-bottom));z-index:910;
   padding:0 12px;pointer-events:none;transform:translateY(120%);transition:transform .38s cubic-bezier(.2,.85,.25,1)}
 .mz-pwa-bar.on{transform:none;pointer-events:auto}
 .mz-pwa-inner{max-width:520px;margin:0 auto;display:flex;align-items:center;gap:10px;padding:12px 14px;border-radius:16px;
@@ -1408,7 +1408,7 @@ a.notif-item:hover{transform:translateY(-2px);box-shadow:0 10px 22px rgba(201,16
 @media(prefers-reduced-motion:reduce){.mz-pwa-bar{transition:none}}
 
 /* ══ Онбординг ══ */
-.mz-onb{position:fixed;inset:0;z-index:500;background:rgba(20,16,6,.6);backdrop-filter:blur(12px);
+.mz-onb{position:fixed;inset:0;z-index:1100;background:rgba(20,16,6,.6);backdrop-filter:blur(12px);
   display:flex;align-items:center;justify-content:center;padding:20px;
   opacity:0;transition:opacity .32s ease;pointer-events:none}
 .mz-onb.on{opacity:1;pointer-events:auto}
@@ -1456,7 +1456,7 @@ a.notif-item:hover{transform:translateY(-2px);box-shadow:0 10px 22px rgba(201,16
 .reg-phone summary::-webkit-details-marker{display:none}
 
 /* ══ Воронка — всплывающая карточка ══ */
-.mz-fun{position:fixed;inset:0;z-index:400;display:flex;align-items:flex-end;justify-content:center;
+.mz-fun{position:fixed;inset:0;z-index:1000;display:flex;align-items:flex-end;justify-content:center;
   padding:20px;padding-bottom:calc(100px + env(safe-area-inset-bottom));
   background:rgba(20,16,6,.45);backdrop-filter:blur(6px);opacity:0;transition:opacity .28s ease;pointer-events:none}
 .mz-fun.on{opacity:1;pointer-events:auto}
@@ -1770,7 +1770,7 @@ h1,h2,h3,h4,.cc-title,.card h3,.comp-card h3,.rst-body b,.menu-tile-lbl,
 .shop-add{flex:1;min-height:40px !important}
 
 /* Плавающая корзина-кнопка */
-.shop-cart-fab{position:fixed;right:16px;bottom:calc(88px + env(safe-area-inset-bottom));z-index:120;
+.shop-cart-fab{position:fixed;right:16px;bottom:calc(88px + env(safe-area-inset-bottom));z-index:940;
   width:58px;height:58px;border-radius:50%;background:var(--grad-gold);color:var(--gold-fg);border:none;cursor:pointer;
   box-shadow:0 10px 26px rgba(201,168,76,.45);display:flex;align-items:center;justify-content:center;
   animation:cartPop .32s cubic-bezier(.2,1.5,.4,1)}
@@ -1780,7 +1780,7 @@ h1,h2,h3,h4,.cc-title,.card h3,.comp-card h3,.rst-body b,.menu-tile-lbl,
   background:#e63946;color:#fff;font-size:.72rem;font-weight:800;line-height:22px;text-align:center;border:2px solid var(--bg)}
 
 /* Панель корзины (bottom sheet) */
-.shop-cart{position:fixed;inset:0;z-index:400;display:flex;align-items:flex-end;justify-content:center}
+.shop-cart{position:fixed;inset:0;z-index:1000;display:flex;align-items:flex-end;justify-content:center}
 .shop-cart[hidden]{display:none}
 .shop-cart-backdrop{position:absolute;inset:0;background:rgba(20,16,6,.5);backdrop-filter:blur(4px);opacity:0;transition:opacity .3s}
 .shop-cart.on .shop-cart-backdrop{opacity:1}
@@ -1808,3 +1808,7 @@ h1,h2,h3,h4,.cc-title,.card h3,.comp-card h3,.rst-body b,.menu-tile-lbl,
 .shop-hint{background:var(--gold-soft);border-radius:12px;padding:12px 14px;font-size:.86rem;color:var(--text)}
 .shop-err{color:#e63946;font-weight:600;font-size:.86rem;margin-top:10px;text-align:center}
 @media(prefers-reduced-motion:reduce){.shop-cart-fab,.shop-cart-backdrop,.shop-cart-panel{animation:none;transition:none}}
+
+/* Кнопка «Оплатить» в корзине наград всегда над нижним меню (z-index иерархия) */
+.shop-cart{z-index:1000 !important}
+.shop-cart-panel{padding-bottom:calc(28px + env(safe-area-inset-bottom)) !important}

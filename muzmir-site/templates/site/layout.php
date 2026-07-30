@@ -67,7 +67,7 @@ html body nav.appnav.appnav{
   right:0 !important;
   bottom:0 !important;
   top:auto !important;
-  z-index:2147483000 !important;
+  z-index:900 !important;
   display:block !important;
   transform:none !important;
   filter:none !important;
