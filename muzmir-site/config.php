@@ -117,6 +117,9 @@ return [
     'agent_url'      => cfg('MUZMIR_AGENT_URL', ''),
     'agent_token'    => cfg('MUZMIR_AGENT_TOKEN', ''),
 
+    // Claude API - ИИ-помощник чата поддержки (api.anthropic.com). Ключ только из окружения/local.
+    'claude_api_key' => cfg('MUZMIR_CLAUDE_KEY', ''),
+
     'debug'          => (bool) cfg('MUZMIR_DEBUG', false),
     'year'           => (int) date('Y'),
 ];

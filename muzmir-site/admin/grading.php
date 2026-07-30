@@ -15,8 +15,8 @@ function grading_embed(string $url): ?string {
     return null;
 }
 
-/* Колонки итогового оценивания (доп. диплом и комментарий жюри) — мягкая миграция. */
-foreach (['extra_diploma' => "TEXT DEFAULT ''", 'jury_comment' => "TEXT DEFAULT ''"] as $col => $def) {
+/* Колонки итогового оценивания (доп. диплом, комментарий жюри, момент результата) — мягкая миграция. */
+foreach (['extra_diploma' => "TEXT DEFAULT ''", 'jury_comment' => "TEXT DEFAULT ''", 'graded_at' => "TEXT"] as $col => $def) {
     try { q("ALTER TABLE applications ADD COLUMN $col $def"); } catch (\Throwable $e) { /* уже есть */ }
 }
 
@@ -35,8 +35,11 @@ function recalc_score(int $appId): void {
     $avg = scalar("SELECT AVG(score) FROM jury_grades WHERE application_id=?", [$appId]);
     if ($avg === null) return;
     $avg = round((float)$avg, 2);
-    q("UPDATE applications SET score=?, result=?, status='graded' WHERE id=?",
-      [$avg, score_to_result($avg), $appId]);
+    // graded_at — момент ПЕРВОГО проставления результата (метка для цепочки
+    // напоминаний о заказе наград, cron/award_order_reminders.php); не сдвигаем.
+    q("UPDATE applications SET score=?, result=?, status='graded',
+              graded_at=COALESCE(NULLIF(graded_at,''), ?) WHERE id=?",
+      [$avg, score_to_result($avg), date('Y-m-d H:i:s'), $appId]);
 }
 
 /** Очередь на оценку (с учётом фильтра по конкурсу). */
@@ -136,9 +139,27 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && input('do') === 'grade_result') {
             'extra_diploma' => $extra, 'jury_comment' => $jcomment,
             'status' => 'graded',
         ], 'id=:wid', ['wid' => $appId]);
+        // Момент проставления результата — стартовая точка цепочки напоминаний
+        // о заказе наград (cron/award_order_reminders.php). Ставим один раз.
+        q("UPDATE applications SET graded_at=? WHERE id=? AND (graded_at IS NULL OR graded_at='')",
+          [date('Y-m-d H:i:s'), $appId]);
         q("UPDATE jury_assignments SET done=1 WHERE application_id=?", [$appId]);
         audit('grade_result', 'application', $appId, ['result'=>$result,'score'=>$score,'extra'=>$extra]);
         flash('Итог сохранён: ' . $result . ($score !== null ? ' · ' . number_format($score,1,'.','') : '') . ($extra !== '' ? ' · доп: ' . $extra : '') . '.', 'success');
+        // Платный конкурс — письмо с результатом уходит участнику сразу (+ in-app).
+        // Бесплатные конкурсы НЕ трогаем: рассылка результатов идёт отдельно в день итогов.
+        $isPaidComp = (int) scalar(
+            "SELECT c.is_paid FROM applications a JOIN competitions c ON c.id=a.competition_id WHERE a.id=?",
+            [$appId]
+        );
+        if ($isPaidComp === 1 && is_file(BASE_PATH . '/core/result_mail.php')) {
+            require_once BASE_PATH . '/core/result_mail.php';
+            try {
+                if (result_mail_send($appId)) {
+                    flash('Участнику отправлено письмо с результатом.', 'success');
+                }
+            } catch (\Throwable $e) { /* тихо, письмо не должно ломать сохранение итога */ }
+        }
         $queue = $mode === 'mine' ? jury_assigned_queue((int)(current_user()['id'] ?? 0), $comp) : grading_queue($comp);
         $next = null;
         foreach ($queue as $row) { if ((int)$row['id'] > $appId && (int)$row['id'] !== $appId) { $next = (int)$row['id']; break; } }

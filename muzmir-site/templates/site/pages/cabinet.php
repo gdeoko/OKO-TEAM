@@ -115,6 +115,11 @@ if ($isTeacher) {
 
 $appStatus = ['new'=>['Новая','info'],'paid'=>['Оплачена','info'],'judging'=>['На оценке','warning'],
               'graded'=>['Оценена','success'],'sent'=>['Диплом отправлен','success'],'rejected'=>['Отклонена','error']];
+// Стеклянные статус-бейджи раздела «Мои заявки и результаты»: label + цвет рамки (gold|blue|bord).
+$appBadge = ['new'=>['Подана','blue'],'paid'=>['Оплачена','gold'],'judging'=>['На оценке','bord'],
+             'graded'=>['Оценена','gold'],'sent'=>['Диплом отправлен','gold'],'rejected'=>['Отклонена','bord']];
+// Окно заказа наград: 60 дней от graded_at — только если такая колонка реально есть в БД.
+$hasGradedAt = $apps && array_key_exists('graded_at', $apps[0]);
 $orderStatus = ['new'=>['Оформлен','info'],'paid'=>['Оплачен','info'],'shipped'=>['Отправлен','warning'],'delivered'=>['Доставлен','success']];
 // Конвейер статуса заявки для инфографики-прогресса.
 $pipeline = ['new','paid','judging','graded','sent'];
@@ -289,6 +294,39 @@ ob_start(); ?>
 .cab-ttl{font-family:var(--ff-serif);font-size:1.12rem;font-weight:700;overflow-wrap:anywhere}
 .cab-meta{color:var(--muted);font-size:.9rem;margin:6px 0 0;overflow-wrap:anywhere}
 .cab-result{color:var(--gold-2);font-weight:800;margin-top:6px}
+/* --- Статус-бейджи заявок: стекло + цветная рамка (золото / синий / бордо) --- */
+.cab{--cab-bord:#8E2438}
+[data-theme="dark"] .cab{--cab-bord:#E08A9B}
+.cab-status{display:inline-flex;align-items:center;gap:7px;padding:6px 13px;border-radius:999px;white-space:nowrap;
+  font-size:.7rem;font-weight:800;letter-spacing:.06em;text-transform:uppercase;
+  background:var(--glass);backdrop-filter:blur(8px);border:1.5px solid var(--glass-brd);box-shadow:var(--shadow-soft)}
+.cab-status::before{content:"";width:7px;height:7px;border-radius:50%;flex:none;background:currentColor;box-shadow:0 0 8px currentColor}
+.cab-status--gold{color:var(--gold-ink);border-color:color-mix(in srgb,var(--gold) 55%,transparent);
+  background:linear-gradient(180deg,var(--gold-soft),transparent 80%),var(--glass)}
+.cab-status--blue{color:var(--info);border-color:color-mix(in srgb,var(--info) 45%,transparent);
+  background:linear-gradient(180deg,color-mix(in srgb,var(--info) 10%,transparent),transparent 80%),var(--glass)}
+.cab-status--bord{color:var(--cab-bord);border-color:color-mix(in srgb,var(--cab-bord) 50%,transparent);
+  background:linear-gradient(180deg,color-mix(in srgb,var(--cab-bord) 10%,transparent),transparent 80%),var(--glass)}
+/* --- Данные заявки: компактная стеклянная сетка «метка — значение» --- */
+.cab-info{display:grid;grid-template-columns:auto 1fr;gap:5px 14px;margin:12px 0 0;padding:12px 15px;
+  border-radius:var(--radius-sm);background:var(--glass);border:1px solid var(--glass-brd);
+  backdrop-filter:blur(8px);font-size:.85rem;line-height:1.4}
+.cab-info dt{color:var(--muted);white-space:nowrap;font-weight:500}
+.cab-info dd{margin:0;color:var(--text);font-weight:600;min-width:0;hyphens:none;word-break:normal;overflow-wrap:break-word}
+/* --- Результат: крупно золотом + доп. диплом + комментарий жюри --- */
+.cab-result-big{margin:16px 0 0;font-family:var(--ff-display);font-weight:800;line-height:1.12;
+  font-size:clamp(1.35rem,4.5vw,1.85rem);letter-spacing:.02em;display:inline-block;hyphens:none;word-break:normal;
+  background:var(--grad-gold-text);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;color:transparent}
+.cab-extra{margin:8px 0 0;font-size:.92rem;font-weight:700;color:var(--gold-2);hyphens:none;word-break:normal}
+.cab-extra span{color:var(--muted);font-weight:500}
+.cab-jury{margin:8px 0 0;font-size:.9rem;font-style:italic;color:var(--text-dim);hyphens:none;word-break:normal}
+.cab-order-gone{margin:12px 0 0;font-size:.85rem;color:var(--muted)}
+:root:not([data-theme="dark"]) .cab-extra{color:var(--gold-ink)}
+@media(max-width:560px){
+  .cab-info{grid-template-columns:1fr;gap:2px}
+  .cab-info dt{margin-top:7px}
+  .cab-info dt:first-child{margin-top:0}
+}
 .cab-empty{text-align:center;color:var(--muted);padding:44px 20px}
 .cab-empty svg{width:40px;height:40px;opacity:.5;margin:0 auto 12px;display:block}
 .cab-actions{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
@@ -392,7 +430,7 @@ ob_start(); ?>
 
         <!-- Мои заявки -->
         <div class="cab-panel active" id="tab-apps" role="tabpanel">
-          <h2>Мои заявки</h2>
+          <h2>Мои заявки и результаты</h2>
           <?php if (!$apps): ?>
             <div class="cab-card cab-empty">
               <?= $icons['apps'] ?>
@@ -400,24 +438,40 @@ ob_start(); ?>
               <a class="btn btn--primary" href="<?= url('/apply') ?>">Подать заявку</a>
             </div>
           <?php else: foreach ($apps as $k => $a):
-            [$sl,$st] = $appStatus[$a['status']] ?? [$a['status'],'info'];
+            [$bl,$bc] = $appBadge[$a['status']] ?? [(string)$a['status'],'blue'];
             $isRej = $a['status'] === 'rejected';
             $cur = array_search($a['status'], $pipeline, true);
             if ($cur === false) $cur = 0;
-            $pct = $isRej ? 100 : (int)round(($cur + 1) / count($pipeline) * 100); ?>
+            $pct = $isRej ? 100 : (int)round(($cur + 1) / count($pipeline) * 100);
+            // ФИО / Коллектив / Возрастная категория / Номинация / Преподаватель / Учреждение / Конкурсный номер
+            $info = [];
+            if (trim((string)($a['full_name'] ?? '')) !== '')    $info[] = ['ФИО', $a['full_name']];
+            if (trim((string)($a['group_name'] ?? '')) !== '')   $info[] = ['Коллектив', $a['group_name']];
+            if (trim((string)($a['age_category'] ?? '')) !== '') $info[] = ['Возрастная категория', $a['age_category']];
+            if (trim((string)($a['nomination'] ?? '')) !== '')   $info[] = ['Номинация', $a['nomination']];
+            if (trim((string)($a['teacher'] ?? '')) !== '')      $info[] = ['Преподаватель', $a['teacher']];
+            if (trim((string)($a['institution'] ?? '')) !== '')  $info[] = ['Учреждение', $a['institution']];
+            if (trim((string)($a['number'] ?? '')) !== '')       $info[] = ['Конкурсный номер', $a['number']];
+            // Кнопка «Заказать награды»: результат есть и не прошло 60 дней от graded_at (если колонка есть).
+            $canOrder = !empty($a['result']);
+            if ($canOrder && $hasGradedAt && trim((string)($a['graded_at'] ?? '')) !== '') {
+                $gts = strtotime((string)$a['graded_at']);
+                if ($gts !== false && (time() - $gts) > 60 * 86400) $canOrder = false;
+            } ?>
             <div class="cab-card reveal" style="--i:<?= $k ?>">
               <div class="cab-row">
                 <div style="min-width:0">
                   <span class="cab-ttl"><?= h($a['comp_name'] ?: 'Конкурс') ?></span>
-                  <p class="cab-meta">
-                    <?php if ($a['number']): ?>Заявка № <?= h($a['number']) ?> - <?php endif; ?>
-                    <?= h($a['nomination'] ?: 'Номинация не указана') ?>
-                    <?php if ($a['work_title']): ?> - «<?= h($a['work_title']) ?>»<?php endif; ?>
-                  </p>
+                  <?php if (!empty($a['work_title'])): ?><p class="cab-meta">«<?= h($a['work_title']) ?>»</p><?php endif; ?>
                   <p class="cab-meta">Подана <?= h(ru_date(substr((string)$a['created_at'],0,10))) ?></p>
                 </div>
-                <div style="text-align:right"><?= $badge($sl,$st) ?></div>
+                <div style="text-align:right"><span class="cab-status cab-status--<?= h($bc) ?>"><?= h($bl) ?></span></div>
               </div>
+              <?php if ($info): ?>
+                <dl class="cab-info">
+                  <?php foreach ($info as [$il,$iv]): ?><dt><?= h($il) ?></dt><dd><?= h($iv) ?></dd><?php endforeach; ?>
+                </dl>
+              <?php endif; ?>
               <?php if ($isRej): ?>
                 <p class="cab-reject">Заявка отклонена. Свяжитесь с нами для уточнения.</p>
               <?php else: ?>
@@ -429,12 +483,22 @@ ob_start(); ?>
                 <div class="cab-bar"><i data-w="<?= $pct ?>"></i></div>
               <?php endif; ?>
               <?php if (!empty($a['result'])): ?>
-                <p class="cab-result"><?= h($a['result']) ?></p>
-                <div style="display:flex;gap:10px;flex-wrap:wrap;margin-top:12px">
-                  <a class="btn btn--primary" href="<?= url('/order-awards?app=' . (int)$a['id']) ?>">Заказать награду</a>
-                  <span class="hint" style="align-self:center">Данные подставятся из заявки — вводить заново не нужно.</span>
-                </div>
-              <?php else: ?>
+                <div class="cab-result-big"><?= h($a['result']) ?></div>
+                <?php if (trim((string)($a['extra_diploma'] ?? '')) !== ''): ?>
+                  <p class="cab-extra"><span>Дополнительный диплом:</span> <?= h($a['extra_diploma']) ?></p>
+                <?php endif; ?>
+                <?php if (trim((string)($a['jury_comment'] ?? '')) !== ''): ?>
+                  <p class="cab-jury">Комментарий жюри: «<?= h($a['jury_comment']) ?>»</p>
+                <?php endif; ?>
+                <?php if ($canOrder): ?>
+                  <div style="display:flex;gap:10px;flex-wrap:wrap;margin-top:14px">
+                    <a class="btn btn--primary" href="<?= url('/awards') ?>?comp=<?= (int)$a['competition_id'] ?>&amp;app=<?= (int)$a['id'] ?>">Заказать награды</a>
+                    <span class="hint" style="align-self:center">Данные подставятся из заявки — вводить заново не нужно.</span>
+                  </div>
+                <?php else: ?>
+                  <p class="cab-order-gone">Срок заказа наград по этой заявке истёк (60 дней после оценки).</p>
+                <?php endif; ?>
+              <?php elseif (!$isRej): ?>
                 <p class="cab-meta" style="margin-top:10px;opacity:.85">Награды можно будет заказать после оглашения результата.</p>
               <?php endif; ?>
             </div>

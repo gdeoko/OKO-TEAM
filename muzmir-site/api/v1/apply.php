@@ -282,21 +282,22 @@ if ($paidComps) {
     }
 }
 
-// --- Письмо-подтверждение ---
+// --- Письмо-подтверждение (фирменный шаблон, по одному письму на заявку) ---
 $compsList = implode(', ', array_map(fn($c)=>$c['name'], $comps));
-$numsList  = implode(', ', $numbers);
-$subject = count($numbers) > 1
-    ? 'Заявки приняты: ' . count($numbers) . ' конкурса'
-    : 'Заявка ' . $number . ' принята - ' . $comp['name'];
-$html = '<p>Здравствуйте, ' . h($full_name) . '!</p>'
-      . '<p>' . (count($numbers) > 1 ? 'Ваши заявки' : 'Ваша заявка') . ' <b>' . h($numsList) . '</b> на '
-      . (count($comps) > 1 ? 'конкурсы' : 'конкурс') . ' «' . h($compsList) . '» принят'.(count($comps)>1?'ы':'а').'.</p>'
-      . '<p>Мы сообщим о результатах на этот адрес.</p>';
-
-if (function_exists('mail_queue')) {
+if (is_file(BASE_PATH . '/core/result_mail.php')) {
+    require_once BASE_PATH . '/core/result_mail.php';
+    foreach ($appIds as $aid) {
+        try { application_mail_send((int) $aid); } catch (\Throwable $e) { /* тихо, в mail.log */ }
+    }
+} elseif (function_exists('mail_queue')) {
+    // Фолбэк на случай отсутствия модуля фирменных писем.
+    $numsList = implode(', ', $numbers);
+    $subject  = 'Заявка №' . $number . ' принята — КЦ «Музыкальный Мир»';
+    $html = '<p>Здравствуйте, ' . h($full_name) . '!</p>'
+          . '<p>' . (count($numbers) > 1 ? 'Ваши заявки' : 'Ваша заявка') . ' <b>' . h($numsList) . '</b> на '
+          . (count($comps) > 1 ? 'конкурсы' : 'конкурс') . ' «' . h($compsList) . '» принят'.(count($comps)>1?'ы':'а').'.</p>'
+          . '<p>Мы сообщим о результатах на этот адрес.</p>';
     mail_queue($email, $full_name, $subject, $html);
-} elseif (tbl_exists('mail_queue')) {
-    insert('mail_queue', ['to_email' => $email, 'to_name' => $full_name, 'subject' => $subject, 'body' => $html]);
 }
 
 // --- уведомление админу ---
