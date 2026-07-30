@@ -10257,936 +10257,251 @@ nav#tabs .nav-logo span{ color:#fff !important; font-weight:900 !important }
 
 
 
-<style id="hlb-v10">
-/* ============== ХЛБ v10 — MASTER OVERLAY ============== */
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<style id="hlb-v23">
+/* ============================================================
+   HLB v23 — FINAL CLEAN. Zero JS loops. Pure CSS + one observer.
+   ============================================================ */
+
 :root {
   --hlb-orange: #FF9500;
-  --hlb-orange-soft: rgba(255, 149, 0, .12);
   --hlb-orange-glow: rgba(255, 149, 0, .35);
   --hlb-bg: #0A0500;
   --hlb-card: #14100A;
-  --hlb-card-hi: #1F1810;
   --hlb-border: rgba(255, 149, 0, .18);
-  --hlb-text: #FFFFFF;
-  --hlb-dim: rgba(255, 255, 255, .55);
-  --tg-h: 100vh;
+  /* TG bar clearance: safe-area + native TG buttons row */
+  --tg-top: calc(env(safe-area-inset-top, 0px) + 60px);
+  --tg-bot: calc(env(safe-area-inset-bottom, 0px) + 60px);
 }
 
-/* ============== TG WEBAPP VIEWPORT ============== */
-html, body {
-  height: var(--tg-h) !important;
-  min-height: unset !important;
-  max-height: var(--tg-h) !important;
-  overflow: hidden !important;
-  overscroll-behavior: none !important;
-  background: var(--hlb-bg) !important;
-}
-#root, .screen, main {
-  height: var(--tg-h) !important;
-  min-height: unset !important;
-  overflow-y: auto !important;
-  overscroll-behavior-y: contain !important;
-  padding-bottom: calc(env(safe-area-inset-bottom, 0px) + 84px) !important;
-  -webkit-overflow-scrolling: touch !important;
+/* ==== GLOBAL TG BAR RULE: content NEVER under TG native bar ==== */
+html, body { overscroll-behavior: none !important; background: var(--hlb-bg) !important; }
+
+/* All screens */
+.screen, #screen-feed, #screen-chats, #screen-mini, #screen-wallet, #screen-profile,
+#screen-partner, #screen-tariffs, #screen-market, #screen-academy, #screen-admin,
+.hlb-app-view, .mini-app, [id^="ma-"], .app-screen {
+  padding-top: var(--tg-top) !important;
+  padding-bottom: calc(var(--tg-bot) + 24px) !important;
 }
 
-/* ============== SPLASH v10 — smooth 1.2s ============== */
+/* All sheets, modals, popups, toasts — never above TG bar */
+.sheet, [id^="sheet-"], .modal, [class*="modal"],
+.pp2-view, .pp-welcome, #ppLive, .app-toast, [class*="toast"],
+[class*="notify"], .hlb-toast, .wal-live, [class*="wal-live"],
+[class*="pp-welcome"] {
+  top: var(--tg-top) !important;
+}
+/* Sheets that slide from bottom — allow normal position */
+.sheet.slide-up, .sheet[data-slide="up"] { top: auto !important; bottom: 0 !important; }
+
+/* Kill known auto-open modals */
+#ppLive, .wal-live, [class*="wal-live"] { display: none !important; }
+
+/* ==== SPLASH: clean single animation ==== */
 #splash {
-  background: radial-gradient(circle at 50% 42%, #1a1000 0%, #0A0500 65%) !important;
-  transition: opacity .6s ease-out, transform .6s ease-out !important;
+  background: radial-gradient(circle at 50% 40%, #1a1000 0%, #0A0500 60%) !important;
+  transition: opacity .3s ease !important;
 }
-#splash.gone {
-  opacity: 0 !important;
-  transform: scale(1.15) !important;
-  pointer-events: none !important;
-}
+#splash.gone { display: none !important; opacity: 0 !important; }
 #splash img, #splash .splash-logo, #splash [class*="logo"] {
-  width: 220px !important; height: 220px !important;
+  width: 180px !important; height: 180px !important;
   object-fit: contain !important;
-  filter: drop-shadow(0 0 40px rgba(255, 149, 0, .5)) drop-shadow(0 0 20px rgba(255, 149, 0, .3)) !important;
-  animation: hlbSplashPop 1.1s cubic-bezier(.34,1.56,.64,1) !important;
+  animation: hlbSplash .6s ease-out !important;
+  filter: drop-shadow(0 0 30px rgba(255,149,0,.4)) !important;
 }
-@keyframes hlbSplashPop {
-  0%   { transform: scale(.3) rotate(-8deg); opacity: 0; }
-  60%  { transform: scale(1.08) rotate(2deg); opacity: 1; }
-  100% { transform: scale(1) rotate(0deg); opacity: 1; }
+@keyframes hlbSplash {
+  from { transform: scale(.9); opacity: 0; }
+  to { transform: scale(1); opacity: 1; }
 }
-#splash::after {
-  content: 'ХЛБ APP';
-  position: absolute; left: 50%; top: 62%;
-  transform: translateX(-50%);
-  font-family: 'Bebas Neue', 'Arial Black', sans-serif;
-  font-size: 40px; letter-spacing: 6px;
-  color: var(--hlb-orange);
-  text-shadow: 0 0 24px var(--hlb-orange-glow);
-  animation: hlbSplashText .8s .3s both;
-}
-#splash::before {
-  content: 'Медиа · Контент · Деньги';
-  position: absolute; left: 50%; top: calc(62% + 56px);
-  transform: translateX(-50%);
-  font-family: 'Montserrat', sans-serif;
-  font-size: 12px; letter-spacing: 2px;
-  color: rgba(255,255,255,.55);
-  animation: hlbSplashText .8s .5s both;
-  z-index: 5;
-}
-@keyframes hlbSplashText {
-  from { opacity: 0; transform: translateX(-50%) translateY(8px); }
-  to   { opacity: 1; transform: translateX(-50%) translateY(0); }
-}
+/* Remove any injected ::before/::after */
+#splash::before, #splash::after { display: none !important; content: none !important; }
 
-/* ============== HEADER — тост-лого 48×48 с halo ============== */
+/* ==== HEADER (app top bar) ==== */
 .tv, header, .app-head, [class*="topbar"] {
   padding-top: calc(env(safe-area-inset-top, 0px) + 8px) !important;
-  background: linear-gradient(180deg, rgba(10,5,0,.98) 0%, rgba(10,5,0,.92) 100%) !important;
-  backdrop-filter: blur(12px) saturate(180%) !important;
-  -webkit-backdrop-filter: blur(12px) saturate(180%) !important;
+  background: rgba(10,5,0,.98) !important;
+  backdrop-filter: blur(12px) !important;
   border-bottom: 1px solid var(--hlb-border) !important;
 }
-.tv img, header img[alt*="ХЛБ"], header img[alt*="лого"], .app-head img {
-  width: 44px !important; height: 44px !important;
-  border-radius: 12px !important;
-  filter: drop-shadow(0 0 12px var(--hlb-orange-glow)) !important;
-  animation: hlbLogoBreath 3s ease-in-out infinite !important;
-}
-@keyframes hlbLogoBreath {
-  0%,100% { filter: drop-shadow(0 0 12px var(--hlb-orange-glow)); }
-  50%     { filter: drop-shadow(0 0 20px var(--hlb-orange-glow)) drop-shadow(0 0 8px rgba(255,149,0,.5)); }
-}
 
-/* ============== BOTTOM NAV — freeze + smooth active ============== */
+/* ==== BOTTOM NAV ==== */
 nav#tabs {
-  position: fixed !important; bottom: 0 !important; left: 0 !important; right: 0 !important;
-  min-height: calc(60px + env(safe-area-inset-bottom, 0px)) !important;
-  max-height: calc(84px + env(safe-area-inset-bottom, 0px)) !important;
+  position: fixed !important; left: 0 !important; right: 0 !important; bottom: 0 !important;
   padding-bottom: env(safe-area-inset-bottom, 0px) !important;
-  background: linear-gradient(180deg, rgba(10,5,0,.85) 0%, rgba(10,5,0,.98) 100%) !important;
-  backdrop-filter: blur(20px) saturate(180%) !important;
-  -webkit-backdrop-filter: blur(20px) saturate(180%) !important;
+  min-height: 60px !important;
+  background: rgba(10,5,0,.96) !important;
+  backdrop-filter: blur(20px) !important;
   border-top: 1px solid var(--hlb-border) !important;
-  transform: translateZ(0) !important;
   z-index: 100 !important;
 }
 nav#tabs button, nav#tabs a {
-  transition: color .2s ease, transform .15s ease !important;
-  color: var(--hlb-dim) !important;
+  transition: color .2s ease !important;
+  transform: none !important;
+  animation: none !important;
+  color: rgba(255,255,255,.55) !important;
 }
 nav#tabs button.active, nav#tabs a.active, nav#tabs .on {
   color: var(--hlb-orange) !important;
-  transform: translateY(-2px) !important;
-}
-nav#tabs button.active::after, nav#tabs a.active::after {
-  content: ''; position: absolute; left: 50%; bottom: 4px;
-  width: 24px; height: 2px; border-radius: 2px;
-  background: var(--hlb-orange);
-  box-shadow: 0 0 12px var(--hlb-orange-glow);
-  transform: translateX(-50%);
-  animation: hlbTabPulse 2s ease-in-out infinite;
-}
-@keyframes hlbTabPulse {
-  0%,100% { box-shadow: 0 0 12px var(--hlb-orange-glow); }
-  50%     { box-shadow: 0 0 20px var(--hlb-orange-glow), 0 0 6px rgba(255,149,0,.6); }
+  transform: none !important;
 }
 
-/* ============== FEED TABS — Подписки / Рекомендации fix ============== */
+/* ==== FEED TABS: single row, on=black on orange, off=white on transparent ==== */
+.fa-bar, .fa-head .fa-explain { display: none !important; }
 .feed-tabs {
-  padding: 12px 16px 8px !important;
-  gap: 8px !important;
-  position: sticky !important; top: 0 !important;
-  background: rgba(10,5,0,.92) !important;
-  backdrop-filter: blur(12px) !important;
-  z-index: 20 !important;
+  display: flex !important;
+  gap: 6px !important;
+  padding: 12px 14px 8px !important;
+  align-items: center !important;
+  flex-wrap: nowrap !important;
+  overflow-x: auto !important;
+  overflow-y: hidden !important;
+  scrollbar-width: none !important;
+  justify-content: flex-start !important;
 }
+.feed-tabs::-webkit-scrollbar { display: none !important; }
 .feed-tabs button {
-  position: relative !important;
-  color: var(--hlb-dim) !important;
-  background: rgba(255,255,255,.05) !important;
-  border: 1px solid var(--hlb-border) !important;
-  padding: 10px 20px !important;
+  flex: 0 0 auto !important;
+  padding: 8px 14px !important;
+  font-size: 12px !important;
+  font-weight: 700 !important;
   border-radius: 99px !important;
-  font-size: 14px !important; font-weight: 600 !important;
-  transition: all .2s ease !important;
-  min-height: 40px !important;
+  white-space: nowrap !important;
+  text-align: center !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  gap: 4px !important;
+  min-height: 34px !important;
+  line-height: 1 !important;
+  transition: background .15s ease, color .15s ease !important;
 }
 .feed-tabs button.on, .feed-tabs button.active {
-  color: #000 !important;
-  background: var(--hlb-orange) !important;
-  border-color: var(--hlb-orange) !important;
-  box-shadow: 0 0 20px var(--hlb-orange-glow) !important;
-  z-index: 2 !important;
+  background: #FF9500 !important;
+  color: #000000 !important;
+  border: 1px solid #FF9500 !important;
 }
-.feed-tabs button > *, .feed-tabs button span {
-  position: relative !important;
-  z-index: 3 !important;
+.feed-tabs button:not(.on):not(.active) {
+  background: transparent !important;
+  color: #FFFFFF !important;
+  border: 1px solid rgba(255,255,255,.2) !important;
 }
+.feed-tabs button.hlb-refresh-btn {
+  padding: 8px 9px !important;
+  min-width: 34px !important;
+  border-radius: 50% !important;
+}
+.feed-tabs button.hlb-refresh-btn span { display: none !important; }
+.feed-tabs button svg { width: 14px !important; height: 14px !important; }
 
-/* ============== NOTIFICATION TOASTS — сдвинуть под хедер ============== */
-.notify, [class*="toast"], [class*="notif-top"], .app-toast, #toaster, .toast-wrap {
-  top: calc(env(safe-area-inset-top, 0px) + 68px) !important;
-  z-index: 99 !important;
-  max-width: calc(100vw - 32px) !important;
-  margin: 0 16px !important;
-  border-radius: 14px !important;
-  background: linear-gradient(135deg, #1F1810 0%, #14100A 100%) !important;
-  border: 1px solid var(--hlb-orange-glow) !important;
-  box-shadow: 0 12px 32px rgba(0,0,0,.5), 0 0 24px rgba(255,149,0,.15) !important;
-}
-
-/* ============== WALLET — CHARLIE BLACK CARD ============== */
-#screen-wallet .w2-card, .w2-card, [class*="wallet-card"] {
-  background: linear-gradient(135deg, #1a0f00 0%, #0a0500 50%, #1a1000 100%) !important;
-  color: #fff !important;
-  border: 1px solid var(--hlb-orange-glow) !important;
+/* ==== WALLET CARD: 4:3, wider, WHITE text ==== */
+#screen-wallet .w2-card, .w2-card {
+  background: linear-gradient(135deg, #1a0f00 0%, #0a0500 50%, #241000 100%) !important;
+  border: 1px solid rgba(255,149,0,.35) !important;
   border-radius: 20px !important;
-  box-shadow:
-    0 20px 60px rgba(0,0,0,.6),
-    0 0 40px rgba(255,149,0,.15),
-    inset 0 1px 0 rgba(255,255,255,.08) !important;
+  box-shadow: 0 20px 60px rgba(0,0,0,.6), 0 0 40px rgba(255,149,0,.15) !important;
+  aspect-ratio: 4/3 !important;
+  width: calc(100% - 20px) !important;
+  margin: 12px auto !important;
+  padding: 22px !important;
   position: relative !important;
   overflow: hidden !important;
-  padding: 22px !important;
-  margin: 16px !important;
 }
-#screen-wallet .w2-card::before, .w2-card::before {
-  content: '';
-  position: absolute;
-  top: 0; left: -80%;
-  width: 60%; height: 100%;
-  background: linear-gradient(90deg,
-    transparent 0%,
-    rgba(255,149,0,.08) 40%,
-    rgba(255,255,255,.15) 50%,
-    rgba(255,149,0,.08) 60%,
-    transparent 100%);
-  transform: skewX(-20deg);
-  animation: hlbCardShine 5s ease-in-out infinite;
-  pointer-events: none;
+.w2-card, .w2-card *:not(.rub):not([class*="brand"]):not([class*="rub"]) {
+  color: #FFFFFF !important;
 }
-@keyframes hlbCardShine {
-  0%,100% { left: -80%; }
-  50%     { left: 130%; }
-}
-.w2-card b, .w2-card h2, .w2-card h3, .w2-card .bal, .w2-card [class*="bal"] {
-  color: #fff !important;
-  text-shadow: 0 2px 12px rgba(0,0,0,.5) !important;
-  font-family: 'Bebas Neue', 'Arial Black', sans-serif !important;
-  letter-spacing: 1px !important;
-}
-.w2-card .caption, .w2-card .dim, .w2-card small {
-  color: rgba(255,255,255,.65) !important;
-  font-size: 11px !important;
-  text-transform: uppercase !important;
-  letter-spacing: 2px !important;
-}
-/* ХЛБ PAY brand */
 .w2-card [class*="brand"], .w2-card .w2-brand {
-  color: var(--hlb-orange) !important;
+  color: #FFFFFF !important;
   font-weight: 900 !important;
   letter-spacing: 3px !important;
   text-shadow: 0 0 20px var(--hlb-orange-glow) !important;
 }
-/* Number */
-.w2-card .w2-num, .w2-card [class*="num"] {
+.w2-card [class*="num"] {
   font-family: 'JetBrains Mono', 'Courier New', monospace !important;
-  color: rgba(255,255,255,.85) !important;
-  font-weight: 700 !important;
   letter-spacing: 3px !important;
+  color: rgba(255,255,255,.85) !important;
   font-variant-numeric: tabular-nums !important;
 }
-/* Balance amount */
-.w2-card .w2-card-bal, .w2-card .bal-big, .w2-card-bal {
-  font-family: 'Bebas Neue', sans-serif !important;
-  font-size: 56px !important; line-height: 1 !important;
-  color: #fff !important;
-  text-shadow: 0 0 30px rgba(255,149,0,.4) !important;
-}
-/* Ruble sign — orange */
-.w2-card .rub, .w2-card [class*="rub"] {
-  color: var(--hlb-orange) !important;
-  text-shadow: 0 0 16px var(--hlb-orange-glow) !important;
-}
+.w2-card [class*="rub"], .w2-card .rub { color: var(--hlb-orange) !important; }
 
-/* ============== MINI-APPS: KILL BLACK PADDING BOTTOM ============== */
-.hlb-app, .mini-app, [id^="ma-"], [id^="miniapp-"], .app-screen, .app-view {
-  min-height: unset !important;
-  padding-bottom: calc(env(safe-area-inset-bottom, 0px) + 24px) !important;
-  background: var(--hlb-bg) !important;
-}
-.hlb-av-top, .app-view-head, [class*="app-head"] {
-  padding-top: calc(env(safe-area-inset-top, 0px) + 12px) !important;
-  padding-left: 14px !important; padding-right: 14px !important;
-  padding-bottom: 12px !important;
-  position: sticky !important; top: 0 !important;
-  z-index: 50 !important;
-  background: rgba(10,5,0,.95) !important;
-  backdrop-filter: blur(16px) !important;
-  border-bottom: 1px solid var(--hlb-border) !important;
-}
-.hlb-av-top .back, [class*="back-btn"], button[aria-label*="назад" i], button[aria-label*="back" i] {
-  min-width: 44px !important; min-height: 44px !important;
-  padding: 10px !important;
-  border-radius: 14px !important;
-  background: rgba(255,255,255,.06) !important;
-  color: #fff !important;
-  border: 1px solid var(--hlb-border) !important;
-  cursor: pointer !important;
-  display: inline-flex !important;
-  align-items: center !important; justify-content: center !important;
-  transition: all .15s ease !important;
-}
-.hlb-av-top .back:active, [class*="back-btn"]:active {
-  transform: scale(.94) !important;
-  background: var(--hlb-orange-soft) !important;
-  border-color: var(--hlb-orange) !important;
-}
-
-/* Убрать двойной хедер в BRIUS-AI и подобных */
-.hlb-app > header:not(.hlb-av-top) + .hlb-av-top,
-.mini-app .double-head { display: none !important; }
-
-/* ============== FEED POSTS ============== */
-.feed-post, .post-card, [class*="feed-item"] {
-  background: linear-gradient(180deg, #14100A 0%, #100A00 100%) !important;
-  border: 1px solid var(--hlb-border) !important;
-  border-radius: 18px !important;
-  margin: 12px 16px !important;
-  padding: 16px !important;
-  transition: transform .2s ease, box-shadow .2s ease !important;
-}
-.feed-post:active {
-  transform: scale(.99) !important;
-  box-shadow: 0 12px 32px rgba(255,149,0,.15) !important;
-}
-/* Video preview: kill brown dot, give proper play icon */
-.feed-post video, .feed-post [class*="video"], .post-video, .post-media {
-  border-radius: 14px !important;
-  background: linear-gradient(135deg, #1a1000, #14100A) !important;
-  min-height: 200px !important;
-  position: relative !important;
-}
-.feed-post [class*="play"]::after, .post-media::after {
-  content: '' !important;
-  position: absolute !important;
-  top: 50% !important; left: 50% !important;
-  width: 56px !important; height: 56px !important;
-  transform: translate(-50%, -50%) !important;
-  background: rgba(0,0,0,.6) !important;
-  border-radius: 50% !important;
-  backdrop-filter: blur(8px) !important;
-  border: 1px solid rgba(255,255,255,.2) !important;
-}
-/* Reactions: readable */
-.feed-post .reactions, .feed-post [class*="react"], .post-actions {
-  opacity: 1 !important;
-  color: rgba(255,255,255,.85) !important;
-}
-.feed-post .reactions .active, .feed-post .liked { color: var(--hlb-orange) !important; }
-
-/* "Показать полностью" pill */
-.feed-post button[class*="show"], .feed-post .expand-btn, [class*="pokazat"] {
-  background: rgba(255,149,0,.1) !important;
-  color: var(--hlb-orange) !important;
-  border: 1px solid var(--hlb-orange-glow) !important;
-  border-radius: 12px !important;
-  padding: 8px 14px !important;
-  font-weight: 600 !important;
-}
-
-/* ============== CHAT LIST — реальные каналы ХЛБ ============== */
-.chat-item, [class*="chat-row"], .chats-list li {
-  border-bottom: 1px solid rgba(255,149,0,.06) !important;
-  padding: 12px 16px !important;
-  transition: background .15s ease !important;
-}
-.chat-item:active { background: var(--hlb-orange-soft) !important; }
-.chat-item img, .chat-avatar, [class*="chat-ava"] {
-  width: 52px !important; height: 52px !important;
-  border-radius: 50% !important;
-  border: 2px solid var(--hlb-border) !important;
-  object-fit: cover !important;
-}
-.chat-item .name, .chat-item b { color: #fff !important; font-weight: 700 !important; font-size: 15px !important; }
-.chat-item .last, .chat-item .sub { color: var(--hlb-dim) !important; font-size: 13px !important; }
-.chat-item .badge, .chat-item [class*="unread"] {
-  background: var(--hlb-orange) !important;
-  color: #000 !important;
-  min-width: 22px !important; height: 22px !important;
-  border-radius: 11px !important;
-  font-weight: 800 !important; font-size: 12px !important;
-  box-shadow: 0 0 12px var(--hlb-orange-glow) !important;
-}
-
-/* ============== PROFILE ============== */
-#screen-profile .avatar, .profile-avatar, [class*="prof-ava"] {
-  border-radius: 50% !important;
-  border: 3px solid var(--hlb-orange) !important;
-  box-shadow: 0 0 24px var(--hlb-orange-glow) !important;
-  overflow: hidden !important;
-}
-
-/* ============== BUTTONS — modern rounded ============== */
-button, .btn, [role="button"] {
-  border-radius: 14px !important;
-  transition: all .15s ease !important;
-}
-button:active, .btn:active, [role="button"]:active {
-  transform: scale(.97) !important;
-}
-button.primary, .btn-primary, [class*="cta"] {
-  background: linear-gradient(180deg, #FFB84D 0%, #FF9500 100%) !important;
-  color: #000 !important;
-  font-weight: 800 !important;
-  box-shadow: 0 8px 24px rgba(255,149,0,.35) !important;
-  border: none !important;
-}
-
-/* ============== MAX WIDTH FOR WIDE SCREENS ============== */
-@media (min-width: 500px) {
-  #root, .screen, main { max-width: 480px !important; margin: 0 auto !important; }
-  nav#tabs { max-width: 480px !important; left: 50% !important; right: auto !important; transform: translateX(-50%) translateZ(0) !important; }
-}
-
-/* ============== SEARCH INPUT ============== */
-input[type="search"], input[type="text"][placeholder*="Поиск"], input[placeholder*="оиск"] {
-  background: rgba(255,255,255,.05) !important;
-  border: 1px solid var(--hlb-border) !important;
-  border-radius: 14px !important;
-  color: #fff !important;
-  padding: 12px 16px !important;
-  transition: all .2s ease !important;
-}
-input[type="search"]:focus, input[type="text"]:focus {
-  border-color: var(--hlb-orange) !important;
-  box-shadow: 0 0 0 3px rgba(255,149,0,.15) !important;
-  outline: none !important;
-}
-
-/* ============== HIDE broken/hard-to-fix elements ============== */
-/* Hide any lingering .toast-overlay from top-bar */
-[class*="wallet-toast"]:not([data-hlb-ok]) { display: none !important; }
-</style>
-
-
-<script id="hlb-v10-js">
-(function(){
-  'use strict';
-
-  // ============== ХЛБ v10 MASTER ==============
-  var log = function(){ /* console.log.apply(console, ['[hlb-v10]'].concat([].slice.call(arguments))); */ };
-
-  // ============== SPLASH auto-hide ==============
-  function hideSplash(){
-    var sp = document.getElementById('splash');
-    if(sp && !sp.classList.contains('gone')){
-      sp.classList.add('gone');
-      setTimeout(function(){ try{ sp.remove(); }catch(e){} }, 650);
-    }
-  }
-  setTimeout(hideSplash, 1200);
-  // ============== AUTO-LOGIN (TG WebApp or ?guest=1) ==============
-  function autoLogin(){
-    try{
-      var isTG = !!(window.Telegram && window.Telegram.WebApp && window.Telegram.WebApp.initData);
-      var isGuest = /[?&]guest=1/.test(location.search) || /[?&]bypass=1/.test(location.search);
-      var already = false;
-      try{ already = !!localStorage.getItem('oko-auth'); }catch(e){}
-      if(!already && (isTG || isGuest)){
-        try{ localStorage.setItem('oko-auth', isTG ? 'telegram' : 'guest'); }catch(e){}
-        try{ localStorage.setItem('oko-onboarded','1'); }catch(e){}
-        var auth = document.getElementById('authScreen');
-        if(auth) auth.classList.add('hidden');
-        var ob = document.getElementById('onboard');
-        if(ob) ob.classList.add('hidden');
-        // Kick app init
-        try{ if(typeof initLive === 'function') initLive(); }catch(e){}
-      }
-    }catch(e){}
-  }
-  autoLogin();
-  setTimeout(autoLogin, 400);
-  setTimeout(autoLogin, 1500);
-
-  // ============== TAB from URL (?tab=chats etc) ==============
-  function tabFromUrl(){
-    try{
-      var m = /[?&]tab=([a-z_-]+)/i.exec(location.search);
-      if(!m) return;
-      var t = m[1];
-      if(typeof window.showTab === 'function'){
-        setTimeout(function(){ try{ window.showTab(t); }catch(e){} }, 250);
-        setTimeout(function(){ try{ window.showTab(t); }catch(e){} }, 900);
-      }
-    }catch(e){}
-  }
-  tabFromUrl();
-  setTimeout(tabFromUrl, 1000);
-
-
-
-
-  setTimeout(hideSplash, 2500);
-  window.addEventListener('load', function(){ setTimeout(hideSplash, 800); });
-
-  // ============== TG WebApp ==============
-  var TG = window.Telegram && window.Telegram.WebApp;
-  if(TG){
-    try{
-      TG.ready();
-      TG.expand();
-      if(TG.disableVerticalSwipes) TG.disableVerticalSwipes();
-      if(TG.setHeaderColor) TG.setHeaderColor('#0A0500');
-      if(TG.setBottomBarColor) TG.setBottomBarColor('#0A0500');
-      if(TG.setBackgroundColor) TG.setBackgroundColor('#0A0500');
-    }catch(e){}
-
-    // viewportStableHeight → --tg-h
-    function syncHeight(){
-      var h = (TG.viewportStableHeight || TG.viewportHeight || window.innerHeight) + 'px';
-      document.documentElement.style.setProperty('--tg-h', h);
-    }
-    syncHeight();
-    if(TG.onEvent) TG.onEvent('viewportChanged', syncHeight);
-    window.addEventListener('resize', syncHeight);
-
-    // Haptic feedback on all tap
-    document.addEventListener('click', function(e){
-      var el = e.target && e.target.closest && e.target.closest('button, a, [role="button"], .chat-item');
-      if(el && TG.HapticFeedback && TG.HapticFeedback.impactOccurred){
-        try{ TG.HapticFeedback.impactOccurred('light'); }catch(err){}
-      }
-    }, true);
-  }
-
-  // ============== HLB REAL CHATS ==============
-  var HLB_CHATS = [
-    { id:'brius-personal', name:'Артём Бриус', ava:'assets/av/gdebrius.jpg', sub:'Артём: Привет. Как настроение? Расскажи, чем занят.', tag:'личный ассистент', pinned:true, verified:true, time:'сейчас' },
-    { id:'hlb-club',       name:'ХЛБ',        ava:'assets/av/hlb.jpg',      sub:'Артём: Мне стыдно за всё происходящее. Хочу это исправить.', tag:'986 участников', pinned:true, verified:true, time:'08:12' },
-    { id:'brius-channel',  name:'Артём Бриус · канал', ava:'assets/av/artem_brius.jpg', sub:'Артём: Полнейшая пересборка. Знаете, что в комментариях…', tag:'24 813 подписчиков', pinned:true, verified:true, time:'вчера' },
-    { id:'brius-public',   name:'Бриус',      ava:'assets/av/brius.jpg',    sub:'Артём: Финальная часть моего перформанса. Ждите.', tag:'73 987 подписчиков', verified:true, time:'вчера' },
-    { id:'kitovarka',      name:'КИТОВАРКА',  ava:'assets/av/kitovarka.jpg', sub:'Товарный бизнес с Китаем 🇨🇳', tag:'1 438 подписчиков', verified:true, time:'2 дня' },
-    { id:'hlb-reviews',    name:'ХЛБ / отзывы', ava:'assets/av/hlb_reviews.jpg', sub:'Ваня П.: С клубом за месяц вышел в +180к.', tag:'428 сообщений', time:'2 дня' },
-    { id:'brius-mentor',   name:'briusMentor', ava:'assets/av/brius_mentor.jpg', sub:'Ментор Артёма — заявки на разбор', tag:'заявки', verified:true, time:'3 дня' },
-    { id:'brius-reviews',  name:'Бриус / отзывы', ava:'assets/av/brius_reviews.jpg', sub:'Настя К.: Спасибо за пинок, работает.', tag:'отзывы', time:'4 дня' },
-    { id:'hlb-comments',   name:'ХЛБ / комментарии', ava:'assets/av/hlb_comments.jpg', sub:'Обсуждение постов Артёма', tag:'общий чат', time:'5 дней' },
-    { id:'hlb-svyaz',      name:'ХЛБ / связь', ava:'assets/av/hlb_svyaz.jpg', sub:'Поддержка — пиши сюда', tag:'поддержка', time:'6 дней' }
-  ];
-
-  // ============== PATCH CHATS (idempotent) ==============
-  function patchChats(root){
-    root = root || document;
-    var list = root.querySelector('#screen-chats .chats-list, [data-screen="chats"] ul, .chats-list');
-    if(!list) return;
-    if(list.dataset.hlbV10 === '1') return;
-
-    // Build fresh markup
-    var pinnedHtml = '<div class="chat-section-title" style="padding:16px 16px 8px;font-size:11px;letter-spacing:2px;color:var(--hlb-orange);text-transform:uppercase;font-weight:800;">📌 Закреп</div>';
-    var openHtml   = '<div class="chat-section-title" style="padding:16px 16px 8px;font-size:11px;letter-spacing:2px;color:var(--hlb-dim);text-transform:uppercase;font-weight:800;">Открыто всем</div>';
-
-    var pinned = HLB_CHATS.filter(function(c){ return c.pinned; });
-    var open   = HLB_CHATS.filter(function(c){ return !c.pinned; });
-
-    function chatHtml(c){
-      var verifiedIcon = c.verified ? ' <svg width="14" height="14" viewBox="0 0 24 24" fill="#1DA1F2" style="vertical-align:-2px"><path d="M12 2l2.4 1.6L17 3l1 2.6L20.6 7l-.6 2.8L22 12l-2 2.2.6 2.8L18 18l-1 2.6-2.6-.6L12 22l-2.4-1.6L7 21l-1-2.6L3.4 17 4 14.2 2 12l2-2.2L3.4 7 6 6l1-2.6L9.6 4z"/><path d="M8.5 12.5l2.5 2.5 5-5" stroke="#fff" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg>' : '';
-      return (
-        '<div class="chat-item" data-chat-id="'+c.id+'" style="display:flex;gap:12px;align-items:center;padding:12px 16px;border-bottom:1px solid rgba(255,149,0,.06);cursor:pointer">' +
-          '<img class="chat-avatar" src="'+c.ava+'" alt="" style="width:52px;height:52px;border-radius:50%;object-fit:cover;border:2px solid var(--hlb-border);flex-shrink:0" onerror="this.style.background=\'linear-gradient(135deg,#FF9500,#c56d00)\';this.style.display=\'flex\';this.style.alignItems=\'center\';this.style.justifyContent=\'center\';this.innerHTML=\''+(c.name[0]||'?')+'\'">'+
-          '<div style="flex:1;min-width:0">' +
-            '<div style="display:flex;align-items:center;justify-content:space-between;gap:6px">'+
-              '<b style="color:#fff;font-weight:700;font-size:15px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">'+c.name+verifiedIcon+'</b>'+
-              '<span style="color:var(--hlb-dim);font-size:11px;flex-shrink:0">'+(c.time||'')+'</span>'+
-            '</div>'+
-            '<div style="color:var(--hlb-dim);font-size:13px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-top:2px">'+c.sub+'</div>'+
-            (c.tag ? '<div style="color:rgba(255,149,0,.6);font-size:11px;margin-top:2px">'+c.tag+'</div>' : '')+
-          '</div>'+
-        '</div>'
-      );
-    }
-
-    var html = pinnedHtml + pinned.map(chatHtml).join('') + openHtml + open.map(chatHtml).join('');
-    // Wipe and rebuild
-    list.innerHTML = html;
-    list.dataset.hlbV10 = '1';
-    log('chats patched');
-  }
-
-  // ============== PATCH PROFILE ==============
-  function patchProfile(root){
-    root = root || document;
-    // 1) Object-level (survives re-render)
-    if(window.PROFILE){
-      window.PROFILE.name   = 'Артём Бриус';
-      window.PROFILE.nick   = 'gdebrius';
-      window.PROFILE.handle = '@gdebrius';
-      window.PROFILE.bio    = 'Основатель ХЛБ. Медиа · Контент · Деньги — в одном приложении.';
-      window.PROFILE.avatar = 'assets/av/artem_brius.jpg';
-      window.PROFILE.city   = 'Москва / Дубай';
-      window.PROFILE.role   = 'owner';
-      window.PROFILE.ceo    = true;
-      if(window.VERIFIED && window.VERIFIED.add) window.VERIFIED.add('Артём Бриус');
-    }
-    // 2) DOM-level text replacements
-    var scr = root.querySelector('#screen-profile, [data-screen="profile"]');
-    if(!scr) return;
-    scr.querySelectorAll('b, h1, h2, [class*="name"], .prof-name').forEach(function(el){
-      var t = el.textContent || '';
-      if(/Даниэль\s*Ильясов|Ильясов\s*Даниэль/i.test(t)){
-        el.textContent = 'Артём Бриус';
-      }
-    });
-    scr.querySelectorAll('[class*="handle"], [class*="nick"], .prof-nick').forEach(function(el){
-      if(/@ktodaniel/i.test(el.textContent||'')) el.textContent = '@gdebrius';
-    });
-    scr.querySelectorAll('[class*="bio"], .prof-bio, p').forEach(function(el){
-      var t = el.textContent || '';
-      if(/Основатель ОКО/i.test(t)){
-        el.textContent = 'Основатель ХЛБ. Медиа · Контент · Деньги — в одном приложении.';
-      }
-      if(/Тарифы ОКО/i.test(t)){
-        el.innerHTML = el.innerHTML.replace(/Тарифы ОКО/gi, 'Тарифы ХЛБ');
-      }
-    });
-    // Avatar
-    var av = scr.querySelector('.avatar img, .prof-ava img, [class*="ava"] img');
-    if(av){
-      av.src = 'assets/av/artem_brius.jpg';
-      av.onerror = null;
-    }
-    // Letter-avatar fallback → replace with img
-    scr.querySelectorAll('.avatar, [class*="prof-ava"]').forEach(function(el){
-      if(el.textContent && /^[А-Яа-яA-Za-z]{1,2}$/.test((el.textContent||'').trim())){
-        el.innerHTML = '<img src="assets/av/artem_brius.jpg" alt="" style="width:100%;height:100%;object-fit:cover;border-radius:50%">';
-      }
-    });
-  }
-
-  // ============== PATCH FEED tab labels ==============
-  function patchFeedTabs(root){
-    root = root || document;
-    root.querySelectorAll('.feed-tabs button').forEach(function(btn){
-      // Ensure text visible
-      if(!btn.textContent.trim() && btn.classList.contains('on')){
-        // If empty active button — set proper label (guess by position)
-        var buttons = btn.parentElement.querySelectorAll('button');
-        var idx = Array.prototype.indexOf.call(buttons, btn);
-        btn.textContent = idx === 0 ? 'Подписки' : 'Рекомендации';
-      }
-      // Force color contrast on active
-      if(btn.classList.contains('on') || btn.classList.contains('active')){
-        btn.style.color = '#000';
-      } else {
-        btn.style.color = '';
-      }
-    });
-  }
-
-  // ============== PATCH WALLET CARD ==============
-  function patchWalletCard(root){
-    root = root || document;
-    var card = root.querySelector('#screen-wallet .w2-card, .w2-card');
-    if(!card) return;
-    if(card.dataset.hlbV10 === '1') return;
-
-    // Ensure number visible + properly formatted
-    var num = card.querySelector('[class*="num"], .card-num');
-    if(num){
-      // Format as 4900 5000 · ХЛБ-XXX
-      var raw = (num.textContent||'').replace(/\D/g, '');
-      if(raw.length < 8) raw = ('4900500034567890').slice(0, 16);
-      num.textContent = raw.slice(0,4) + ' ' + raw.slice(4,8) + ' ' + raw.slice(8,12) + ' ' + raw.slice(12,16);
-      num.style.fontFamily = "'JetBrains Mono', monospace";
-      num.style.letterSpacing = '3px';
-    }
-    card.dataset.hlbV10 = '1';
-  }
-
-  // ============== PATCH LETTER AVATARS in feed ==============
-  function patchFeedAvatars(root){
-    root = root || document;
-    root.querySelectorAll('.feed-post .ava, .post-card .avatar, [class*="post-ava"]').forEach(function(el){
-      var t = (el.textContent||'').trim();
-      // Only replace if it's a single-letter placeholder
-      if(el.tagName !== 'IMG' && /^[А-Яа-яA-Za-z]{1,2}$/.test(t) && !el.dataset.hlbV10){
-        el.style.background = 'linear-gradient(135deg, #FF9500, #c56d00)';
-        el.style.color = '#000';
-        el.style.fontWeight = '800';
-        el.style.display = 'flex';
-        el.style.alignItems = 'center';
-        el.style.justifyContent = 'center';
-        el.style.borderRadius = '50%';
-        el.dataset.hlbV10 = '1';
-      }
-    });
-  }
-
-  // ============== HIDE broken top-toasts (torn out above header) ==============
-  function hideBrokenToasts(root){
-    root = root || document;
-    root.querySelectorAll('[class*="toast"], .notify, [class*="notif-top"]').forEach(function(el){
-      var r = el.getBoundingClientRect();
-      // If floats above header (top < safe-area top) — reposition
-      if(r.top < 20 && !el.dataset.hlbV10){
-        el.style.top = 'calc(env(safe-area-inset-top, 0px) + 68px)';
-        el.style.zIndex = '99';
-        el.dataset.hlbV10 = '1';
-      }
-    });
-  }
-
-  // ============== MASTER TICK — throttled + debounced ==============
-  var scheduled = false;
-  function runPatches(){
-    scheduled = false;
-    try{
-      patchProfile();
-      patchFeedTabs();
-      patchWalletCard();
-      patchChats();
-      patchFeedAvatars();
-      hideBrokenToasts();
-    }catch(e){ log('patch err', e); }
-  }
-  function schedulePatches(){
-    if(scheduled) return;
-    scheduled = true;
-    (window.requestIdleCallback || window.requestAnimationFrame)(runPatches);
-  }
-
-  // Kick off once DOM ready
-  if(document.readyState === 'loading'){
-    document.addEventListener('DOMContentLoaded', function(){ schedulePatches(); setTimeout(schedulePatches, 600); });
-  } else {
-    schedulePatches();
-    setTimeout(schedulePatches, 600);
-  }
-  setTimeout(schedulePatches, 1500);
-  setTimeout(schedulePatches, 3000);
-
-  // MutationObserver — instead of setInterval
-  var mo = new MutationObserver(function(mutations){
-    var significant = false;
-    for(var i=0;i<mutations.length;i++){
-      var m = mutations[i];
-      if(m.type === 'childList' && (m.addedNodes.length > 0)){
-        significant = true; break;
-      }
-    }
-    if(significant) schedulePatches();
-  });
-  try{
-    mo.observe(document.body, { childList: true, subtree: true, attributes: false, characterData: false });
-  }catch(e){}
-
-  // ============== TAB CHANGE hooks (screen-* switching) ==============
-  document.addEventListener('click', function(e){
-    var t = e.target && e.target.closest && e.target.closest('nav#tabs button, nav#tabs a, [data-tab]');
-    if(t) setTimeout(schedulePatches, 100);
-  });
-
-  log('v10 loaded');
-})();
-</script>
-
-
-<style id="hlb-v11">
-/* ============== v11 — hide broken overlays, fix double-headers ============== */
-
-/* Hide tariff-switcher inside mini-apps view */
-.hlb-apps-wrap > div:has(> button[data-t="HLB_150K"]),
-.hlb-apps-wrap > div[style*="переключатель тарифа"],
-div:has(> button[data-t="guest"]) + div[style*="переключатель"],
-[class*="tariff-switch"]:not([data-hlb-keep]) {
-  display: none !important;
-}
-
-/* BRIUS-AI: убрать двойной .hlb-av-hero (внутри mini-app view) */
-.hlb-app .hlb-av-hero ~ .hlb-av-hero,
-.hlb-app .hlb-av-top + .hlb-av-hero {
-  display: none !important;
-}
-/* Также убрать .hlb-av-top если он дубль */
-.hlb-av-top + .hlb-av-top { display: none !important; }
-
-/* Force avatar как img в prof-ava */
-#profAva, #epAva {
-  background-image: url('assets/av/artem_brius.jpg') !important;
-  background-size: cover !important;
-  background-position: center !important;
-  color: transparent !important;
-  border-radius: 50% !important;
-}
-#profAva::first-letter, #epAva::first-letter { color: transparent !important; }
-/* mask the letter text */
-#profAva, #epAva {
-  text-indent: -9999px !important;
-  overflow: hidden !important;
-}
-
-/* Wallet card: ХЛБ PAY должно читаться */
-.w2-card .w2-brand, [class*="wallet-brand"] {
-  color: #FF9500 !important;
-  font-weight: 900 !important;
-  text-shadow: 0 0 20px rgba(255,149,0,.5) !important;
-}
-</style>
-
-
-<script id="hlb-v11-js">
-(function(){
-  'use strict';
-
-  // ============== v11: FORCE PROFILE RESET ==============
-  function forceProfile(){
-    try{
-      // Wipe conflicting localStorage
-      ['oko-profile','oko-user','hlb-profile','oko-saved','okoProfile']
-        .forEach(function(k){ try{ localStorage.removeItem(k); }catch(e){} });
-
-      if(window.PROFILE){
-        PROFILE.name  = 'Артём Бриус';
-        PROFILE.nick  = 'gdebrius';
-        PROFILE.handle = '@gdebrius';
-        PROFILE.bio   = 'Основатель ХЛБ. Медиа · Контент · Деньги — в одном приложении.';
-        PROFILE.avatar = 'assets/av/artem_brius.jpg';
-        PROFILE.role  = 'owner';
-        PROFILE.tier  = 'MAX';
-        if(window.VERIFIED && VERIFIED.add) VERIFIED.add('Артём Бриус');
-      }
-
-      // Replace letter avatars with real img
-      var av = 'assets/av/artem_brius.jpg';
-      ['profAva','epAva'].forEach(function(id){
-        var el = document.getElementById(id);
-        if(el && !el.dataset.hlbV11){
-          el.dataset.hlbV11 = '1';
-          el.innerHTML = '<img src="'+av+'" alt="" style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover;border-radius:inherit;">';
-          el.style.position = 'relative';
-        }
-      });
-
-      // Also update any prof-name / prof-bio DOM
-      document.querySelectorAll('[class*="prof-name"], .prof-name, [data-prof="name"]').forEach(function(el){
-        el.textContent = 'Артём Бриус';
-      });
-      document.querySelectorAll('[class*="prof-bio"], .prof-bio, [data-prof="bio"]').forEach(function(el){
-        el.textContent = 'Основатель ХЛБ. Медиа · Контент · Деньги — в одном приложении.';
-      });
-
-      // Search bio containing "Основатель ОКО" and replace globally
-      var walker = document.createTreeWalker(document.body, NodeFilter.SHOW_TEXT, null);
-      var node, dirty=[];
-      while((node = walker.nextNode())){
-        if(node.nodeValue && node.nodeValue.indexOf('Основатель ОКО') !== -1){
-          dirty.push(node);
-        }
-      }
-      dirty.forEach(function(n){
-        n.nodeValue = n.nodeValue.replace(/Основатель ОКО/g, 'Основатель ХЛБ');
-      });
-    }catch(e){}
-  }
-
-  // ============== HIDE tariff switcher overlay in mini-apps ==============
-  function hideTariffOverlay(){
-    // Find any element containing tariff buttons and its "переключатель тарифа" hint
-    document.querySelectorAll('div').forEach(function(el){
-      var t = el.textContent || '';
-      if(t.indexOf('переключатель тарифа') !== -1 && t.length < 100){
-        el.style.display = 'none';
-      }
-    });
-    // Buttons row with Демо / 1К / 5К / ...
-    document.querySelectorAll('button[data-t="HLB_150K"]').forEach(function(btn){
-      var wrap = btn.closest('div');
-      if(wrap && wrap.querySelectorAll('button[data-t]').length >= 5){
-        wrap.style.display = 'none';
-      }
-    });
-  }
-
-  // ============== HIDE double .hlb-av-hero inside mini-apps ==============
-  function fixDoubleHeaders(){
-    document.querySelectorAll('.hlb-app').forEach(function(app){
-      var heros = app.querySelectorAll('.hlb-av-hero');
-      for(var i=1; i<heros.length; i++) heros[i].style.display = 'none';
-      var tops = app.querySelectorAll('.hlb-av-top');
-      for(var i=1; i<tops.length; i++) tops[i].style.display = 'none';
-    });
-  }
-
-  // ============== Force re-render chat list ==============
-  function forceChatReload(){
-    try{
-      if(typeof window.hlbPatchOkoChats === 'function') window.hlbPatchOkoChats();
-      if(typeof window.renderChatList === 'function') window.renderChatList('');
-      if(typeof window.initChats === 'function') window.initChats();
-    }catch(e){}
-  }
-
-  // ============== master schedule ==============
-  function runAll(){
-    forceProfile();
-    hideTariffOverlay();
-    fixDoubleHeaders();
-    forceChatReload();
-  }
-
-  if(document.readyState === 'loading'){
-    document.addEventListener('DOMContentLoaded', function(){
-      runAll();
-      setTimeout(runAll, 500);
-      setTimeout(runAll, 1500);
-      setTimeout(runAll, 3000);
-    });
-  } else {
-    runAll();
-    setTimeout(runAll, 500);
-    setTimeout(runAll, 1500);
-    setTimeout(runAll, 3000);
-  }
-
-  // MutationObserver for tab-switch re-renders
-  try{
-    var mo = new MutationObserver(function(muts){
-      var significant = false;
-      for(var i=0;i<muts.length;i++){
-        if(muts[i].type === 'childList' && muts[i].addedNodes.length > 0){
-          significant = true; break;
-        }
-      }
-      if(significant){
-        clearTimeout(window.__hlbV11Deb);
-        window.__hlbV11Deb = setTimeout(runAll, 200);
-      }
-    });
-    mo.observe(document.body, { childList: true, subtree: true });
-  }catch(e){}
-
-  // On tab click
-  document.addEventListener('click', function(e){
-    var t = e.target && e.target.closest && e.target.closest('nav#tabs button, [data-tab], nav#tabs a');
-    if(t) setTimeout(runAll, 150);
-  });
-})();
-</script>
-
-
-<style id="hlb-v12">
-/* ========== ХЛБ v12 — 10 пунктов ========== */
-:root {
-  --hlb-orange: #FF9500;
-  --hlb-orange-soft: rgba(255, 149, 0, .12);
-  --hlb-orange-glow: rgba(255, 149, 0, .35);
-  --hlb-bg: #0A0500;
-  --hlb-card: #141410;
-  --tg-top: calc(env(safe-area-inset-top, 0px) + 8px);
-  --tg-bottom: calc(env(safe-area-inset-bottom, 0px) + 12px);
-  --tg-h: 100vh;
-}
-
-/* ==================================================================
-   #1: мини-аппы 4:3 карточки
-   ================================================================== */
+/* ==== MINI-APPS 4:3 grid ==== */
 .hlb-apps-2col {
   display: grid !important;
   grid-template-columns: 1fr 1fr !important;
@@ -11196,232 +10511,134 @@ div:has(> button[data-t="guest"]) + div[style*="переключатель"],
 .hlb-app {
   aspect-ratio: 4/3 !important;
   min-height: unset !important;
-  height: auto !important;
   padding: 14px 12px 12px !important;
 }
-.hlb-app-title { font-size: 15px !important; line-height: 1.1 !important; }
+.hlb-app-title { font-size: 14px !important; line-height: 1.1 !important; }
 .hlb-app-title small { font-size: 10px !important; margin-top: 3px !important; }
-.hlb-app-icon svg { width: 90px !important; height: 90px !important; }
+.hlb-app-icon svg { width: 88px !important; height: 88px !important; }
 .hlb-app-badge {
   top: 10px !important; left: 10px !important;
   min-width: 30px !important; height: 30px !important;
   font-size: 12px !important;
 }
 
-/* ==================================================================
-   #2, #4: nav-tabs — стоп дёрганьям и re-render
-   ================================================================== */
-nav#tabs {
-  position: fixed !important; bottom: 0 !important; left: 0 !important; right: 0 !important;
-  padding-bottom: env(safe-area-inset-bottom, 0px) !important;
-  background: rgba(10,5,0,.95) !important;
-  backdrop-filter: blur(20px) !important;
-  border-top: 1px solid rgba(255,149,0,.15) !important;
-  z-index: 100 !important;
-  min-height: 60px !important;
-}
-nav#tabs button, nav#tabs a {
-  transition: color .18s ease !important;
-  transform: none !important;
-  animation: none !important;
-  color: rgba(255,255,255,.55) !important;
-}
-nav#tabs button.active, nav#tabs a.active, nav#tabs .on {
-  color: var(--hlb-orange) !important;
-  transform: none !important;
-}
-nav#tabs button::after, nav#tabs a::after {
-  display: none !important;
-}
+/* Hide tariff switcher in mini-apps */
+.hlb-apps-wrap > div:has(> button[data-t="HLB_150K"]) { display: none !important; }
 
-/* ==================================================================
-   #3: feed-tabs Рек/Подписки — читаемый текст
-   ================================================================== */
-.feed-tabs {
-  padding: 12px 16px 8px !important;
-  gap: 8px !important;
-  background: transparent !important;
-}
-.feed-tabs button {
-  color: #fff !important;
-  background: transparent !important;
-  border: 1px solid rgba(255,255,255,.15) !important;
-  padding: 10px 20px !important;
-  border-radius: 99px !important;
-  font-size: 14px !important;
-  font-weight: 700 !important;
-}
-.feed-tabs button > *,
-.feed-tabs button span {
-  color: inherit !important;
-  position: relative !important;
-  z-index: 2 !important;
-}
-.feed-tabs button.on,
-.feed-tabs button.active {
-  background: var(--hlb-orange) !important;
-  color: #000 !important;
-  border-color: var(--hlb-orange) !important;
-  box-shadow: 0 0 20px rgba(255,149,0,.35) !important;
-}
-.feed-tabs button.on > *,
-.feed-tabs button.on span,
-.feed-tabs button.active > *,
-.feed-tabs button.active span { color: #000 !important; }
-
-/* ==================================================================
-   #5: кошелёк — чёрная банковская карта, ХЛБ-палитра
-   ================================================================== */
-#screen-wallet .w2-card, .w2-card {
-  background: linear-gradient(135deg, #1a0f00 0%, #0a0500 50%, #1a1000 100%) !important;
-  color: #fff !important;
-  border: 1px solid rgba(255,149,0,.35) !important;
-  border-radius: 20px !important;
-  box-shadow: 0 20px 60px rgba(0,0,0,.6), 0 0 40px rgba(255,149,0,.15), inset 0 1px 0 rgba(255,255,255,.06) !important;
-  overflow: hidden !important;
-  position: relative !important;
-  padding: 22px !important;
-  margin: 16px !important;
-}
-.w2-card * { color: #fff !important; }
-.w2-card .w2-brand,
-.w2-card [class*="brand"],
-.w2-card b:first-child {
-  color: var(--hlb-orange) !important;
-  font-weight: 900 !important;
-  letter-spacing: 3px !important;
-  text-shadow: 0 0 20px var(--hlb-orange-glow) !important;
-}
-.w2-card [class*="rub"], .w2-card .rub { color: var(--hlb-orange) !important; }
-.w2-card [class*="num"] {
-  font-family: 'JetBrains Mono', 'Courier New', monospace !important;
-  letter-spacing: 3px !important;
-  color: rgba(255,255,255,.85) !important;
-  font-variant-numeric: tabular-nums !important;
-}
-.w2-card::before {
-  content: ''; position: absolute; top: 0; left: -80%;
-  width: 60%; height: 100%;
-  background: linear-gradient(90deg, transparent, rgba(255,255,255,.08) 50%, transparent);
-  transform: skewX(-20deg);
-  animation: hlbCardShine 5s ease-in-out infinite;
-  pointer-events: none;
-}
-@keyframes hlbCardShine {
-  0%,100% { left: -80%; }
-  50%     { left: 130%; }
-}
-
-/* ==================================================================
-   #6: профиль — убрать верхнюю плашку "Тарифы ХЛБ APP"
-   ================================================================== */
-#screen-profile .hlb-tariff-top,
-#screen-profile [class*="prof-tariff-hero"],
-#screen-profile > .hlb-tariff-hero,
-#screen-profile .prof-tariff-banner {
-  display: none !important;
-}
-/* Первая большая оранжевая CTA в профиле — target по structure */
-#screen-profile > a[href*="tariff"]:first-of-type,
-#screen-profile > button[onclick*="tariff"]:first-of-type,
-#screen-profile > div:first-child > a[href*="tariff"],
-#screen-profile .hlb-prof-tariff-top {
-  display: none !important;
-}
-
-/* аватар профиля — реальный Артём */
-#screen-profile .hlb-prof-ava,
-#screen-profile #profAva,
-.hlb-prof-ava {
-  border: 3px solid var(--hlb-orange) !important;
-  box-shadow: 0 0 24px var(--hlb-orange-glow) !important;
-  overflow: hidden !important;
-  border-radius: 50% !important;
-}
-
-/* ==================================================================
-   #8, #10: глобальная адаптация под TG для ВСЕХ экранов
-   ================================================================== */
-html, body { overscroll-behavior: none !important; }
-
-.screen, .hlb-app-view, [id^="ma-"], .mini-app {
-  padding-top: calc(env(safe-area-inset-top, 0px) + 8px) !important;
-  padding-bottom: calc(env(safe-area-inset-bottom, 0px) + 84px) !important;
-  overscroll-behavior: contain !important;
-}
-
-/* Fullscreen mini-app view — интерфейс НЕ выше TG кнопок */
-.hlb-av-top, .app-view-head, [class*="app-head"], .hlb-app-view-head {
+/* ==== MINI-APP OPEN VIEW: header sticky top ==== */
+.hlb-av-top, .app-view-head, [class*="app-head"] {
   position: sticky !important;
   top: 0 !important;
   z-index: 60 !important;
   padding-top: calc(env(safe-area-inset-top, 0px) + 10px) !important;
   padding-left: 14px !important;
   padding-right: 14px !important;
-  padding-bottom: 12px !important;
-  background: rgba(10,5,0,.95) !important;
+  padding-bottom: 10px !important;
+  background: rgba(10,5,0,.97) !important;
   backdrop-filter: blur(16px) !important;
-  border-bottom: 1px solid rgba(255,149,0,.15) !important;
+  border-bottom: 1px solid var(--hlb-border) !important;
 }
-.hlb-av-top .back, [class*="back-btn"], button[aria-label*="назад" i] {
+.hlb-av-top .back {
   min-width: 44px !important;
   min-height: 44px !important;
-  padding: 10px !important;
   border-radius: 12px !important;
-  background: rgba(255,255,255,.08) !important;
-  color: #fff !important;
-  border: 1px solid rgba(255,149,0,.2) !important;
+  background: rgba(255,255,255,.06) !important;
+  border: 1px solid var(--hlb-border) !important;
   cursor: pointer !important;
-  display: inline-flex !important;
-  align-items: center !important;
-  justify-content: center !important;
 }
-.hlb-av-top .back:active { transform: scale(.94) !important; background: rgba(255,149,0,.15) !important; }
-
-/* Убрать двойные хедеры */
-.hlb-app .hlb-av-hero ~ .hlb-av-hero,
-.hlb-app .hlb-av-top + .hlb-av-hero,
+/* Hide double headers */
+.hlb-app .hlb-av-hero ~ .hlb-av-hero { display: none !important; }
 .hlb-av-top + .hlb-av-top { display: none !important; }
 
-/* Убрать чёрную пустоту снизу в mini-apps */
-.hlb-app-view, .mini-app, [id^="ma-"] {
-  min-height: unset !important;
+/* Mini-app input bar pinned to bottom (BRIUS-AI etc) */
+.hlb-msg-input-wrap, .hlb-app-input, [class*="app-input"], .brius-ai-input,
+.hlb-app-view [class*="input-bar"] {
+  position: fixed !important;
+  left: 0 !important; right: 0 !important;
+  bottom: calc(env(safe-area-inset-bottom, 0px) + 60px) !important;
+  padding: 10px 14px !important;
+  background: rgba(10,5,0,.98) !important;
+  backdrop-filter: blur(16px) !important;
+  border-top: 1px solid var(--hlb-border) !important;
+  z-index: 55 !important;
 }
 
-/* ==================================================================
-   Скрыть переключатель тарифов "переключатель тарифа · только для демо"
-   ================================================================== */
-.hlb-apps-wrap > div:has(button[data-t="HLB_150K"]),
-[class*="tariff-switch"]:not([data-hlb-keep]) {
-  display: none !important;
-}
-/* JS backup: hide by content — see JS */
+/* ==== CHATS: clean search, unified chip colors, proper padding ==== */
+#screen-chats { padding-top: calc(var(--tg-top) + 8px) !important; padding-bottom: calc(var(--tg-bot) + 84px) !important; }
 
-/* ==================================================================
-   Splash — чистый
-   ================================================================== */
-#splash::before, #splash::after { display: none !important; }
-#splash {
-  background: radial-gradient(circle at 50% 42%, #1a1000 0%, #0A0500 65%) !important;
-  transition: opacity .5s ease !important;
+/* Search input clean */
+#chatSearch, [id*="chat-search"], .chat-search input, #screen-chats input[placeholder*="оиск"] {
+  background: rgba(255,255,255,.05) !important;
+  border: 1px solid rgba(255,255,255,.12) !important;
+  border-radius: 14px !important;
+  color: #FFFFFF !important;
+  padding: 12px 16px 12px 44px !important;
+  font-size: 14px !important;
+  height: auto !important;
+  transition: border-color .15s ease !important;
 }
-#splash img { animation: hlbLogoPop .8s cubic-bezier(.34,1.56,.64,1) !important; }
-@keyframes hlbLogoPop {
-  from { transform: scale(.5); opacity: 0; }
-  to   { transform: scale(1); opacity: 1; }
+#chatSearch:focus, .chat-search input:focus, #screen-chats input:focus {
+  border-color: var(--hlb-orange) !important;
+  outline: none !important;
 }
 
-/* Force profile avatar as background image */
-#profAva, #epAva {
+/* Filter chips (Каталог/Все/Личные/Группы) — UNIFIED */
+[class*="chat-filter"] button, [class*="chat-cat"] button,
+#screen-chats > div > button.chip, .chat-tabs button {
+  padding: 8px 16px !important;
+  border-radius: 99px !important;
+  font-size: 13px !important;
+  font-weight: 700 !important;
+  min-height: 34px !important;
+  background: transparent !important;
+  color: #FFFFFF !important;
+  border: 1px solid rgba(255,255,255,.15) !important;
+  transition: background .15s ease, color .15s ease !important;
+  background-image: none !important;
+}
+[class*="chat-filter"] button.on, [class*="chat-cat"] button.on,
+#screen-chats > div > button.chip.on, .chat-tabs button.on,
+[class*="chat-filter"] button.active, [class*="chat-cat"] button.active {
+  background: var(--hlb-orange) !important;
+  background-image: none !important;
+  color: #000000 !important;
+  border-color: var(--hlb-orange) !important;
+}
+
+/* Chat list padding — items don't cut off */
+#chatList, .chats-list, .chat-col {
+  padding-bottom: calc(var(--tg-bot) + 60px) !important;
+}
+.chat-item { padding: 12px 16px !important; }
+
+/* ==== PROFILE: remove upper tariff plate ==== */
+.hlb-prof-tariff-cta { display: none !important; }
+#screen-profile #profAva, #screen-profile .ava.lime, .profile-top .ava {
   background-image: url('assets/av/artem_brius.jpg') !important;
   background-size: cover !important;
   background-position: center !important;
   color: transparent !important;
   text-indent: -9999px !important;
+  border: 3px solid var(--hlb-orange) !important;
+  box-shadow: 0 0 24px var(--hlb-orange-glow) !important;
+  border-radius: 50% !important;
   overflow: hidden !important;
 }
+.pp2-ava, button.pp2-ava {
+  background: url('assets/av/artem_brius.jpg') center/cover no-repeat !important;
+  color: transparent !important;
+  font-size: 0 !important;
+  border: 3px solid var(--hlb-orange) !important;
+  box-shadow: 0 0 24px var(--hlb-orange-glow) !important;
+  border-radius: 22px !important;
+}
+.pp2-ava img { border-radius: inherit !important; }
 
-/* Wide screen max-width */
+/* ==== TARIFFS ORIGINAL OKO STYLE (open/render) ==== */
+#screen-tariffs.active, .plans-wrap { display: block !important; }
+.plans-wrap .plan { opacity: 1 !important; visibility: visible !important; }
+
+/* Max-width for wide screens */
 @media (min-width: 500px) {
   #root, .screen, main { max-width: 480px !important; margin: 0 auto !important; }
   nav#tabs { max-width: 480px !important; left: 50% !important; right: auto !important; transform: translateX(-50%) !important; }
@@ -11429,197 +10646,56 @@ html, body { overscroll-behavior: none !important; }
 </style>
 
 
-<script id="hlb-v12-js">
+<script id="hlb-v23-js">
 (function(){
   'use strict';
 
-  // ============== #2, #4: wrap showTab — no re-render on same tab ==============
-  function wrapShowTab(){
-    if(typeof window.showTab !== 'function') return false;
-    if(window.showTab.__hlbV12Wrapped) return true;
-    var orig = window.showTab;
-    var currentTab = null;
-    window.showTab = function(t){
-      if(t === currentTab) {
-        // just update visual — active class — but don't re-init
-        try{
-          document.querySelectorAll('nav#tabs button, nav#tabs a').forEach(function(b){
-            var d = b.getAttribute('data-t');
-            if(d === t) b.classList.add('active');
-            else b.classList.remove('active');
-          });
-        }catch(e){}
-        return;
-      }
-      currentTab = t;
-      try{ return orig.apply(this, arguments); }catch(e){}
-    };
-    window.showTab.__hlbV12Wrapped = true;
-    return true;
-  }
-  // Try wrap early and repeatedly
-  var wrapTimer = setInterval(function(){
-    if(wrapShowTab()) clearInterval(wrapTimer);
-  }, 100);
-  setTimeout(function(){ clearInterval(wrapTimer); }, 5000);
+  // ==== ZERO setInterval — everything via MutationObserver (debounced) + hooks ====
 
-  // ============== #6, #7: profile — remove top tariff plate + force Артём ==============
-  function fixProfile(){
-    try{
-      // Force PROFILE
-      ['oko-profile','oko-user','hlb-profile','oko-saved','okoProfile']
-        .forEach(function(k){ try{ localStorage.removeItem(k); }catch(e){} });
+  var HLB_CHATS = [
+    { name: 'Артём Бриус',          preview: 'Артём: Привет. Как настроение? Расскажи, чем занят.', time: 'сейчас',  ava: 'assets/av/gdebrius.jpg',      verified: true, unread: 1 },
+    { name: 'ХЛБ',                  preview: 'Артём: Мне стыдно за всё происходящее. Хочу это исправить.', time: '20:04', ava: 'assets/av/hlb.jpg',       verified: true, unread: 3 },
+    { name: 'Артём Бриус · канал',  preview: 'Артём: Полнейшая пересборка. В коробках склада…', time: 'сегодня',   ava: 'assets/av/artem_brius.jpg', verified: true, unread: 0 },
+    { name: 'Бриус',                preview: 'Артём: Финальная часть моего перформанса.',       time: 'вчера', ava: 'assets/av/brius.jpg',       verified: true, unread: 0 },
+    { name: 'КИТОВАРКА',            preview: 'Товарный бизнес с Китаем 🇨🇳',                 time: 'вчера', ava: 'assets/av/kitovarka.jpg',   verified: false, unread: 0 },
+    { name: 'ХЛБ / отзывы',         preview: 'Мария: После ХЛБ жизнь уже не станет прежней.', time: 'сегодня', ava: 'assets/av/hlb_reviews.jpg', verified: false, unread: 1 },
+    { name: 'Бриус / отзывы',       preview: 'Дмитрий: 269 подписчиков → 17 800.',            time: 'ср',    ava: 'assets/av/brius_reviews.jpg', verified: false, unread: 0 },
+    { name: 'Nihaodrop',            preview: 'Влад: +9 600 ₽ на второй день. Работает!',      time: 'ср',    ava: 'assets/av/brius_mentor.jpg', verified: true, unread: 0 },
+    { name: 'briusMentor',          preview: 'Ментор Артёма — заявки на разбор',              time: '3 д',   ava: 'assets/av/brius_mentor.jpg', verified: true, unread: 0 }
+  ];
 
-      if(window.PROFILE){
-        PROFILE.name  = 'Артём Бриус';
-        PROFILE.nick  = 'gdebrius';
-        PROFILE.bio   = 'Основатель ХЛБ. Медиа · Контент · Деньги — в одном приложении.';
-        PROFILE.avatar = 'assets/av/artem_brius.jpg';
-        PROFILE.role  = 'owner';
-        PROFILE.tier  = 'MAX';
-        if(window.VERIFIED && VERIFIED.add) VERIFIED.add('Артём Бриус');
-      }
+  function esc(t){ return String(t||'').replace(/[<>&"']/g, function(c){return {'<':'&lt;','>':'&gt;','&':'&amp;','"':'&quot;',"'":'&#39;'}[c];}); }
 
-      // Remove upper tariff plate in profile
-      var scr = document.getElementById('screen-profile');
-      if(scr){
-        // find first big orange CTA card that leads to tariffs
-        var candidates = scr.querySelectorAll('a, button, div');
-        for(var i=0; i<candidates.length; i++){
-          var el = candidates[i];
-          var txt = (el.textContent||'').trim();
-          if(!txt) continue;
-          // if the element is in first 400px of profile screen and mentions "Тарифы ХЛБ APP"
-          if(/Тарифы ХЛБ APP/i.test(txt) && el.getBoundingClientRect().top < 400){
-            // find its wrapper (parent chain)
-            var wrap = el;
-            for(var j=0; j<3; j++){
-              if(wrap.parentElement && wrap.parentElement !== scr) wrap = wrap.parentElement;
-            }
-            if(!wrap.dataset.hlbV12Hidden){
-              wrap.style.display = 'none';
-              wrap.dataset.hlbV12Hidden = '1';
-            }
-          }
-        }
-      }
-
-      // Replace letter avatar with real img
-      ['profAva','epAva'].forEach(function(id){
-        var el = document.getElementById(id);
-        if(el && !el.dataset.hlbV12Ava){
-          el.dataset.hlbV12Ava = '1';
-          el.innerHTML = '<img src="assets/av/artem_brius.jpg" alt="" style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover;border-radius:inherit">';
-          el.style.position = 'relative';
-        }
-      });
-
-      // Replace "Основатель ОКО" text with "Основатель ХЛБ"
-      var walker = document.createTreeWalker(document.body, NodeFilter.SHOW_TEXT, null);
-      var node, dirty=[];
-      while((node = walker.nextNode())){
-        if(node.nodeValue && node.nodeValue.indexOf('Основатель ОКО') !== -1){
-          dirty.push(node);
-        }
-      }
-      dirty.forEach(function(n){ n.nodeValue = n.nodeValue.replace(/Основатель ОКО/g, 'Основатель ХЛБ'); });
-    }catch(e){}
-  }
-
-  // ============== #7: tariffs — replace with HLB names/prices ==============
-  // Called on profile-tariffs subview
-  function patchTariffCards(){
-    var HLB_PLANS = [
-      { id:'HLB_1K',   name:'СТАРТ',  price:'1 000',   period:'/мес', tag:'',      features:['Все чаты и каналы ХЛБ (read-only)','Основной канал Артёма Бриуса','Brius-AI · 10 запросов в день','Лента и эфир-архив','1 демо-вход в любое приложение'] },
-      { id:'HLB_5K',   name:'КЛУБ',   price:'5 000',   period:'/мес', tag:'ХИТ',   features:['Пишешь во всех чатах ХЛБ','Общий эфир 1 раз в неделю','Десятки — чат из 10 таких же','Спринт-трекер · Инструкция · Дневник','Brius-AI · безлимит коротких ответов'] },
-      { id:'HLB_20K',  name:'PRO',    price:'20 000',  period:'/мес', tag:'',      features:['Все чаты + личные разборы Артёма','2 эфира в неделю с Артёмом','Огуречная Академия · 120+ уроков','Nihaodrop · дропшип-каталог 2000+','Brius-AI без лимитов'] },
-      { id:'HLB_50K',  name:'VIP',    price:'50 000',  period:'/мес', tag:'',      features:['Всё из PRO','Команда сопровождения 24/7','Персональный спорт-ассистент','Аудит Instagram по методу Артёма','Приоритет в очереди эфиров'] },
-      { id:'HLB_150K', name:'МЕНТОР', price:'150 000', period:'/мес', tag:'MAX',   features:['Всё из VIP','Личный ментор — Артём Бриус','Ежемесячная сессия 1:1 с Артёмом','Nihaohub — магазин под ключ','Полный доступ ко всем 20 приложениям'] }
-    ];
-
-    var scr = document.querySelector('#screen-tariffs, [data-screen="tariffs"], .hlb-tariffs, [class*="tariff-page"]');
-    if(!scr || scr.dataset.hlbV12Patched === '1') return;
-
-    // find cards inside and patch their content
-    var cards = scr.querySelectorAll('.plan, .plans-wrap .plan, [class*="tariff-card"]');
-    if(cards.length === 0) return;
-
-    cards.forEach(function(card, i){
-      var plan = HLB_PLANS[i]; if(!plan) return;
-      // update name
-      var nEl = card.querySelector('.plan-name, [class*="plan-name"], .plan-title, h3, b');
-      if(nEl) nEl.textContent = plan.name;
-      // update price
-      var pEl = card.querySelector('.plan-price, [class*="price"], .price');
-      if(pEl){
-        pEl.innerHTML = plan.price + ' <span style="color:#fff;opacity:.6;font-size:14px">₽ ' + plan.period + '</span>';
-      }
-      // update features
-      var fList = card.querySelector('.plan-features, ul, [class*="features"]');
-      if(fList){
-        fList.innerHTML = plan.features.map(function(f){
-          return '<li>' + f + '</li>';
-        }).join('');
-      }
-      // add HIT badge
-      if(plan.tag){
-        var badge = card.querySelector('.plan-tag, [class*="badge"], .chip.flag');
-        if(badge) badge.textContent = plan.tag;
-      }
-    });
-    scr.dataset.hlbV12Patched = '1';
-  }
-
-  // ============== #8, #10: hide tariff overlay in mini-apps ==============
-  function hideTariffOverlay(){
-    try{
-      document.querySelectorAll('div').forEach(function(el){
-        var t = el.textContent || '';
-        if(t.indexOf('переключатель тарифа') !== -1 && t.length < 100){
-          el.style.display = 'none';
-        }
-      });
-      document.querySelectorAll('button[data-t="HLB_150K"]').forEach(function(btn){
-        var wrap = btn.closest('div');
-        if(wrap && wrap.querySelectorAll('button[data-t]').length >= 5){
-          wrap.style.display = 'none';
-        }
-      });
-    }catch(e){}
-  }
-
-  // ============== double headers ==============
-  function fixDoubleHeaders(){
-    try{
-      document.querySelectorAll('.hlb-app, .mini-app, .hlb-app-view').forEach(function(app){
-        var heros = app.querySelectorAll('.hlb-av-hero');
-        for(var i=1; i<heros.length; i++) heros[i].style.display = 'none';
-        var tops = app.querySelectorAll('.hlb-av-top');
-        for(var i=1; i<tops.length; i++) tops[i].style.display = 'none';
-      });
-    }catch(e){}
-  }
-
-  // ============== #9: chats — force to real Artem channels ==============
-  function forceRealChats(){
-    try{
-      if(typeof window.hlbPatchOkoChats === 'function') window.hlbPatchOkoChats();
-      if(typeof window.renderChatList === 'function') window.renderChatList('');
-    }catch(e){}
-  }
-
-  // ============== splash hide ==============
+  // ==== Splash hide (one-shot) ====
   function hideSplash(){
     var sp = document.getElementById('splash');
     if(sp && !sp.classList.contains('gone')){
       sp.classList.add('gone');
-      setTimeout(function(){ try{ sp.style.display='none'; }catch(e){} }, 550);
     }
   }
-  setTimeout(hideSplash, 1200);
-  setTimeout(hideSplash, 2500);
 
-  // ============== TG WebApp adaptation ==============
+  // ==== Auto-login on guest/TG ====
+  function autoLogin(){
+    try{
+      var TG = window.Telegram && window.Telegram.WebApp;
+      var isTG = !!(TG && TG.initData);
+      var isGuest = /[?&]guest=1/.test(location.search);
+      var already = false;
+      try{ already = !!localStorage.getItem('oko-auth'); }catch(e){}
+      if(!already && (isTG || isGuest)){
+        try{ localStorage.setItem('oko-auth', isTG ? 'telegram' : 'guest'); }catch(e){}
+      }
+      // Always suppress onboarding to avoid tour/stories/pp-welcome loops
+      try{
+        ['pp-welcome-shown-v1','pp-welcome-shown','oko-onboarded','oko-tour-done','oko-tour','oko-stories-seen']
+          .forEach(function(k){ localStorage.setItem(k, '1'); });
+      }catch(e){}
+      var auth = document.getElementById('authScreen'); if(auth) auth.classList.add('hidden');
+      var ob = document.getElementById('onboard'); if(ob) ob.classList.add('hidden');
+    }catch(e){}
+  }
+
+  // ==== TG WebApp ====
   var TG = window.Telegram && window.Telegram.WebApp;
   if(TG){
     try{
@@ -11637,7 +10713,6 @@ html, body { overscroll-behavior: none !important; }
     syncH();
     if(TG.onEvent) TG.onEvent('viewportChanged', syncH);
     window.addEventListener('resize', syncH);
-    // Haptic
     document.addEventListener('click', function(e){
       var el = e.target && e.target.closest && e.target.closest('button, a, [role="button"]');
       if(el && TG.HapticFeedback && TG.HapticFeedback.impactOccurred){
@@ -11646,26 +10721,172 @@ html, body { overscroll-behavior: none !important; }
     }, true);
   }
 
-  // ============== auto-login guest + tab ==============
-  function autoLogin(){
-    try{
-      var isTG = !!(TG && TG.initData);
-      var isGuest = /[?&]guest=1/.test(location.search);
-      var already = false;
-      try{ already = !!localStorage.getItem('oko-auth'); }catch(e){}
-      if(!already && (isTG || isGuest)){
-        try{ localStorage.setItem('oko-auth', isTG ? 'telegram' : 'guest'); }catch(e){}
-        try{ localStorage.setItem('oko-onboarded','1'); }catch(e){}
-        var auth = document.getElementById('authScreen'); if(auth) auth.classList.add('hidden');
-        var ob = document.getElementById('onboard'); if(ob) ob.classList.add('hidden');
-        try{ if(typeof initLive === 'function') initLive(); }catch(e){}
+  // ==== Force PROFILE (one-shot on load and after chat renders) ====
+  function forceProfile(){
+    if(window.PROFILE){
+      PROFILE.name  = 'Артём Бриус';
+      PROFILE.nick  = 'gdebrius';
+      PROFILE.bio   = 'Основатель ХЛБ. Медиа · Контент · Деньги — в одном приложении.';
+      PROFILE.avatar = 'assets/av/artem_brius.jpg';
+      PROFILE.role  = 'owner';
+      PROFILE.tier  = 'MAX';
+      if(window.VERIFIED && VERIFIED.add) VERIFIED.add('Артём Бриус');
+    }
+    // Text walker for "Основатель ОКО"
+    try {
+      var w = document.createTreeWalker(document.body, NodeFilter.SHOW_TEXT, null);
+      var n, dirty = [];
+      while((n = w.nextNode())){
+        if(n.nodeValue && n.nodeValue.indexOf('Основатель ОКО') !== -1) dirty.push(n);
       }
+      dirty.forEach(function(nd){ nd.nodeValue = nd.nodeValue.replace(/Основатель ОКО/g, 'Основатель ХЛБ'); });
+    } catch(e){}
+    // Replace letter avatars with real image
+    ['profAva','epAva'].forEach(function(id){
+      var el = document.getElementById(id);
+      if(el && !el.dataset.hlbV23){
+        el.dataset.hlbV23 = '1';
+        el.innerHTML = '<img src="assets/av/artem_brius.jpg" alt="" style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover;border-radius:inherit">';
+        el.style.position = 'relative';
+        el.style.overflow = 'hidden';
+      }
+    });
+    document.querySelectorAll('.pp2-ava, button.pp2-ava').forEach(function(el){
+      if(!el.dataset.hlbV23){
+        el.dataset.hlbV23 = '1';
+        el.innerHTML = '<img src="assets/av/artem_brius.jpg" alt="" style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover;border-radius:inherit">';
+        el.style.position = 'relative';
+      }
+    });
+  }
+
+  // ==== Force real chats (called after renderChatList) ====
+  function patchChats(){
+    var list = document.getElementById('chatList');
+    if(!list) return;
+    var items = list.querySelectorAll('.chat-item');
+    if(!items.length) return;
+    var idx = 0;
+    items.forEach(function(el){
+      if(el.dataset.hlbV23Locked) return;
+      var t = (el.textContent||'').trim();
+      if(/Общий чат ХЛБ|Избранное/i.test(t)) return;
+      if(idx >= HLB_CHATS.length){ el.style.display = 'none'; return; }
+      var ch = HLB_CHATS[idx];
+      var verBadge = ch.verified
+        ? ' <svg width="13" height="13" viewBox="0 0 24 24" fill="#1DA1F2" style="vertical-align:-2px"><path d="M12 2l2.4 1.6L17 3l1 2.6L20.6 7l-.6 2.8L22 12l-2 2.2.6 2.8L18 18l-1 2.6-2.6-.6L12 22l-2.4-1.6L7 21l-1-2.6L3.4 17 4 14.2 2 12l2-2.2L3.4 7 6 6l1-2.6L9.6 4z"/><path d="M8.5 12.5l2.5 2.5 5-5" stroke="#fff" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg>'
+        : '';
+      var badge = ch.unread ? '<span class="badge" style="background:#FF9500;color:#000;min-width:22px;height:22px;border-radius:11px;font-weight:800;font-size:12px;display:inline-flex;align-items:center;justify-content:center;padding:0 6px">'+ch.unread+'</span>' : '';
+      el.innerHTML =
+        '<div class="ci-ava" style="width:52px;height:52px;flex-shrink:0">'+
+          '<img src="'+ch.ava+'" alt="" style="width:100%;height:100%;object-fit:cover;border-radius:50%;border:2px solid rgba(255,149,0,.2)">'+
+        '</div>'+
+        '<div class="meta" style="flex:1;min-width:0">'+
+          '<div class="row1" style="display:flex;justify-content:space-between;align-items:center;gap:6px">'+
+            '<span class="name" style="color:#fff;font-weight:700;font-size:15px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">'+esc(ch.name)+verBadge+'</span>'+
+            '<span class="time" style="color:rgba(255,255,255,.5);font-size:12px;flex-shrink:0">'+esc(ch.time)+'</span>'+
+          '</div>'+
+          '<div class="row1" style="display:flex;justify-content:space-between;align-items:center;gap:6px;margin-top:2px">'+
+            '<span class="preview" style="color:rgba(255,255,255,.55);font-size:13px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">'+esc(ch.preview)+'</span>'+
+            badge+
+          '</div>'+
+        '</div>';
+      el.style.padding = '12px 16px';
+      el.style.gap = '12px';
+      el.style.display = 'flex';
+      el.dataset.hlbV23 = String(idx);
+      el.dataset.hlbV23Locked = '1';
+      idx++;
+    });
+  }
+
+  // Hook renderChatList once
+  var _hookedChat = false;
+  function hookRenderChatList(){
+    if(_hookedChat) return true;
+    if(typeof window.renderChatList !== 'function') return false;
+    var orig = window.renderChatList;
+    window.renderChatList = function(){
+      // Clear locks so we re-patch after render
+      var list = document.getElementById('chatList');
+      if(list) list.querySelectorAll('.chat-item[data-hlb-v23-locked]').forEach(function(el){ delete el.dataset.hlbV23Locked; });
+      try{ orig.apply(this, arguments); }catch(e){}
+      requestAnimationFrame(patchChats);
+    };
+    _hookedChat = true;
+    return true;
+  }
+
+  // Feed-tabs merge Клипы + refresh (one-shot after fa-bar renders)
+  function mergeFeedControls(){
+    var feedTabs = document.querySelector('.feed-tabs');
+    if(!feedTabs) return;
+    var faClips = document.querySelector('.fa-clips');
+    var faRefresh = document.querySelector('.fa-refresh');
+    if(faClips && !feedTabs.querySelector('.hlb-clips-btn')){
+      var b = document.createElement('button');
+      b.type = 'button';
+      b.className = 'hlb-clips-btn';
+      b.setAttribute('aria-label', 'Клипы');
+      b.innerHTML = faClips.innerHTML;
+      b.onclick = function(e){ e.preventDefault(); if(window.faReelsOpenFirst) window.faReelsOpenFirst(); };
+      feedTabs.appendChild(b);
+    }
+    if(faRefresh && !feedTabs.querySelector('.hlb-refresh-btn')){
+      var r = document.createElement('button');
+      r.type = 'button';
+      r.className = 'hlb-refresh-btn';
+      r.setAttribute('aria-label', 'Обновить');
+      var svg = faRefresh.querySelector('svg');
+      r.innerHTML = svg ? svg.outerHTML : '↻';
+      r.onclick = function(e){ e.preventDefault(); if(window.faRefresh) window.faRefresh(); };
+      feedTabs.appendChild(r);
+    }
+  }
+
+  // ==== ONE MutationObserver, debounced 200ms ====
+  var moDeb;
+  function onMutation(){
+    clearTimeout(moDeb);
+    moDeb = setTimeout(function(){
+      hideSplash();
+      forceProfile();
+      hookRenderChatList();
+      patchChats();
+      mergeFeedControls();
+    }, 200);
+  }
+
+  function runAll(){
+    hideSplash();
+    autoLogin();
+    forceProfile();
+    hookRenderChatList();
+    patchChats();
+    mergeFeedControls();
+  }
+
+  if(document.readyState === 'loading'){
+    document.addEventListener('DOMContentLoaded', function(){
+      runAll();
+      requestAnimationFrame(runAll);
+      setTimeout(runAll, 400);
+      setTimeout(runAll, 1200);
+      try{
+        new MutationObserver(onMutation).observe(document.body, { childList: true, subtree: true });
+      }catch(e){}
+    });
+  } else {
+    runAll();
+    requestAnimationFrame(runAll);
+    setTimeout(runAll, 400);
+    setTimeout(runAll, 1200);
+    try{
+      new MutationObserver(onMutation).observe(document.body, { childList: true, subtree: true });
     }catch(e){}
   }
-  autoLogin();
-  setTimeout(autoLogin, 500);
-  setTimeout(autoLogin, 1500);
 
+  // Deep-link ?tab=X
   function tabFromUrl(){
     try{
       var m = /[?&]tab=([a-z_-]+)/i.exec(location.search);
@@ -11673,1216 +10894,181 @@ html, body { overscroll-behavior: none !important; }
       var t = m[1];
       if(typeof window.showTab === 'function'){
         setTimeout(function(){ try{ window.showTab(t); }catch(e){} }, 300);
-        setTimeout(function(){ try{ window.showTab(t); }catch(e){} }, 1200);
       }
     }catch(e){}
   }
   setTimeout(tabFromUrl, 800);
 
-  // ============== master runner ==============
-  function runAll(){
-    fixProfile();
-    hideTariffOverlay();
-    fixDoubleHeaders();
-    patchTariffCards();
-    forceRealChats();
-  }
-
-  if(document.readyState === 'loading'){
-    document.addEventListener('DOMContentLoaded', function(){
-      runAll();
-      setTimeout(runAll, 600);
-      setTimeout(runAll, 1500);
-    });
-  } else {
-    runAll();
-    setTimeout(runAll, 600);
-    setTimeout(runAll, 1500);
-  }
-
-  // MutationObserver (debounced)
-  try{
-    var moTimer;
-    var mo = new MutationObserver(function(){
-      clearTimeout(moTimer);
-      moTimer = setTimeout(runAll, 250);
-    });
-    mo.observe(document.body, { childList: true, subtree: true });
-  }catch(e){}
-
+  // On tab click, re-run once
   document.addEventListener('click', function(e){
-    var t = e.target && e.target.closest && e.target.closest('nav#tabs button, nav#tabs a, [data-tab]');
-    if(t) setTimeout(runAll, 200);
+    if(e.target && e.target.closest && e.target.closest('nav#tabs button, nav#tabs a')){
+      setTimeout(function(){ requestAnimationFrame(runAll); }, 150);
+    }
   });
+
+  // Kill known auto-live once
+  try{
+    if(typeof window.walMaybeDemoLive === 'function') window.walMaybeDemoLive = function(){};
+    if(typeof window.walLiveNotify === 'function') window.walLiveNotify = function(){};
+    if(typeof window.scheduleLiveNotif === 'function') window.scheduleLiveNotif = function(){};
+    if(typeof window.showLive === 'function') window.showLive = function(){};
+    window.__ppLivePlanned = true;
+  }catch(e){}
 })();
 </script>
 
 
-<style id="hlb-v13">
-/* ============== v13 ============== */
+<style id="hlb-v23-1">
+/* v23.1 micro-fixes */
 
-/* Force close pp-welcome sheet and any auto-open modals */
-#sheet-pp-welcome:not(.hlb-force-open),
-.sheet[id*="welcome"],
-.sheet[id*="onboard"] {
-  display: none !important;
-  transform: translateX(-50%) translateY(100%) !important;
-}
-/* Ensure body scroll not locked */
-body.sheet-open, body.modal-open {
-  overflow: auto !important;
-}
-
-/* Feed tabs — FORCE readable text через inline priority */
-.feed-tabs button.on,
-.feed-tabs button.active,
-.feed-tabs > button.on {
-  background: #FF9500 !important;
-  color: #000 !important;
-  border-color: #FF9500 !important;
-  font-weight: 700 !important;
+/* Feed-tab: force text visible on orange */
+.feed-tabs button.on, .feed-tabs button.active {
+  text-indent: 0 !important;
+  visibility: visible !important;
+  opacity: 1 !important;
+  color: #000000 !important;
+  overflow: visible !important;
 }
 .feed-tabs button.on *,
-.feed-tabs button.active * { color: #000 !important; }
-.feed-tabs button:not(.on):not(.active) {
+.feed-tabs button.active * {
+  color: #000000 !important;
+  visibility: visible !important;
+  opacity: 1 !important;
+}
+
+/* Chat filter chip force — override ANY lime/gradient */
+[class*="chat-filter"] button, [class*="chat-cat"] button,
+[class*="cat-chip"], .chat-tabs button, .chip {
   background: transparent !important;
-  color: #fff !important;
+  background-image: none !important;
+  color: #FFFFFF !important;
   border: 1px solid rgba(255,255,255,.15) !important;
 }
-.feed-tabs button:not(.on):not(.active) * { color: #fff !important; }
-
-/* Chat filter chips (Каталог/Все/Личные/Группы) — same fix */
-[class*="chat-filter"] button.on,
-[class*="chat-filter"] button.active,
-[class*="chat-cat"] button.on,
-.hlb-ch-search + div button.on {
+[class*="chat-filter"] button.on, [class*="chat-cat"] button.on,
+[class*="cat-chip"].on, .chat-tabs button.on, .chip.on,
+[class*="chat-filter"] button.active, [class*="chat-cat"] button.active,
+[class*="cat-chip"].active, .chat-tabs button.active, .chip.active {
   background: #FF9500 !important;
-  color: #000 !important;
-  font-weight: 700 !important;
-}
-[class*="chat-filter"] button.on *,
-[class*="chat-cat"] button.on * { color: #000 !important; }
-
-/* Toast/notify — сдвинуть под хедер */
-.toast-wrap, [class*="notify-top"], [class*="app-toast"], .app-toast {
-  top: calc(env(safe-area-inset-top, 0px) + 68px) !important;
-  z-index: 90 !important;
+  background-image: none !important;
+  color: #000000 !important;
+  border-color: #FF9500 !important;
 }
 
-/* Profile — если пустой, force visible */
-#screen-profile.active { display: block !important; }
-#screen-profile .pad { padding-top: 12px !important; }
-#screen-profile .profile-top { display: flex !important; gap: 12px !important; padding: 12px !important; align-items: center !important; }
-#screen-profile #profAva {
-  width: 76px !important; height: 76px !important;
-  background-image: url('assets/av/artem_brius.jpg') !important;
-  background-size: cover !important;
-  background-position: center !important;
-  color: transparent !important;
-  text-indent: -9999px !important;
-  border-radius: 50% !important;
-  border: 3px solid #FF9500 !important;
-  box-shadow: 0 0 24px rgba(255,149,0,.35) !important;
-  overflow: hidden !important;
+/* Wallet card content — force white and readable */
+#screen-wallet .w2-card, .w2-card {
+  aspect-ratio: 16/10 !important;
+  padding: 18px 20px !important;
 }
-</style>
-
-
-<script id="hlb-v13-js">
-(function(){
-  'use strict';
-
-  // ==== Force set pp-welcome-shown so it never auto-opens ====
-  function suppressPpWelcome(){
-    try{ localStorage.setItem('pp-welcome-shown-v1', '1'); }catch(e){}
-    try{ localStorage.setItem('pp-welcome-shown', '1'); }catch(e){}
-    // Force close if already opened
-    document.querySelectorAll('.sheet.open').forEach(function(sh){
-      sh.classList.remove('open');
-      sh.style.display = 'none';
-    });
-    var w = document.getElementById('sheet-pp-welcome');
-    if(w){
-      w.classList.remove('open');
-      w.style.display = 'none';
-      var inner = document.getElementById('ppWelcomeView');
-      if(inner) inner.innerHTML = '';
-    }
-    // scroll-lock cleanup
-    try{ document.body.classList.remove('sheet-open','modal-open'); document.body.style.overflow=''; }catch(e){}
-  }
-  suppressPpWelcome();
-  setTimeout(suppressPpWelcome, 200);
-  setTimeout(suppressPpWelcome, 700);
-  setTimeout(suppressPpWelcome, 1500);
-  setTimeout(suppressPpWelcome, 3000);
-
-  // Hook openSheet — if pp-welcome requested, block
-  if(typeof window.openSheet === 'function' && !window.openSheet.__hlbV13){
-    var _origOpen = window.openSheet;
-    window.openSheet = function(id){
-      if(id === 'pp-welcome') return;  // block
-      return _origOpen.apply(this, arguments);
-    };
-    window.openSheet.__hlbV13 = true;
-  }
-  var oshTimer = setInterval(function(){
-    if(typeof window.openSheet === 'function' && !window.openSheet.__hlbV13){
-      var _origOpen = window.openSheet;
-      window.openSheet = function(id){
-        if(id === 'pp-welcome') return;
-        return _origOpen.apply(this, arguments);
-      };
-      window.openSheet.__hlbV13 = true;
-    }
-  }, 200);
-  setTimeout(function(){ clearInterval(oshTimer); }, 5000);
-
-  // ==== Force feed-tabs text via inline style ====
-  function fixFeedTabs(){
-    document.querySelectorAll('.feed-tabs button, [class*="chat-filter"] button, [class*="chat-cat"] button').forEach(function(btn){
-      var isOn = btn.classList.contains('on') || btn.classList.contains('active');
-      if(isOn){
-        btn.style.background = '#FF9500';
-        btn.style.color = '#000';
-        btn.style.fontWeight = '700';
-        btn.style.borderColor = '#FF9500';
-      } else {
-        btn.style.background = 'transparent';
-        btn.style.color = '#fff';
-        btn.style.borderColor = 'rgba(255,255,255,.15)';
-      }
-      // ensure text child readable
-      Array.from(btn.childNodes).forEach(function(n){
-        if(n.style) n.style.color = isOn ? '#000' : '#fff';
-      });
-    });
-  }
-
-  // ==== Kill top-fixed toast notifications that torch above header ====
-  function hideStuckToasts(){
-    document.querySelectorAll('.toast-wrap, [class*="notify-top"], [class*="app-toast"], .app-toast, [class*="wallet-toast"]').forEach(function(el){
-      var r = el.getBoundingClientRect();
-      if(r.top < 20){
-        el.style.top = 'calc(env(safe-area-inset-top, 0px) + 68px)';
-        el.style.zIndex = '90';
-      }
-    });
-  }
-
-  function runAll(){
-    suppressPpWelcome();
-    fixFeedTabs();
-    hideStuckToasts();
-  }
-
-  if(document.readyState === 'loading'){
-    document.addEventListener('DOMContentLoaded', function(){
-      runAll(); setTimeout(runAll, 400); setTimeout(runAll, 1000);
-    });
-  } else {
-    runAll(); setTimeout(runAll, 400); setTimeout(runAll, 1000);
-  }
-  // debounced observer
-  try{
-    var moTimer;
-    new MutationObserver(function(){
-      clearTimeout(moTimer);
-      moTimer = setTimeout(runAll, 200);
-    }).observe(document.body, {childList: true, subtree: true});
-  }catch(e){}
-
-  document.addEventListener('click', function(e){
-    setTimeout(runAll, 150);
-  });
-})();
-</script>
-
-
-<style id="hlb-v14">
-/* v14: kill tour/stories overlays */
-.sheet:not(.hlb-force-open) { display: none !important; }
-#ts, #tsSheet, #trOverlay, #trBackdrop, #trTip,
-[class*="tr-overlay"], [class*="ts-overlay"], .tour-overlay {
-  display: none !important;
+.w2-card b, .w2-card h2, .w2-card h3,
+.w2-card [class*="brand"], .w2-card .w2-brand,
+#screen-wallet .w2-card [class*="brand"] {
+  color: #FFFFFF !important;
+  font-weight: 900 !important;
+  letter-spacing: 3px !important;
+  text-shadow: 0 0 24px rgba(255,149,0,.7), 0 0 8px rgba(255,149,0,.4) !important;
+  font-family: 'Bebas Neue', 'Arial Black', sans-serif !important;
+  font-size: 16px !important;
 }
-/* if the tour stories screen has a class */
-.tr-open, .ts-open, .tour-open, body.tour-open {
-  overflow: auto !important;
-}
-</style>
-
-
-<script id="hlb-v14-js">
-(function(){
-  'use strict';
-
-  // Set all "seen"/"done" flags so nothing auto-opens
-  function markAllSeen(){
-    var keys = [
-      'oko-tour-done','oko-tour','oko-stories-seen',
-      'pp-welcome-shown-v1','pp-welcome-shown',
-      'oko-onboarded'
-    ];
-    keys.forEach(function(k){ try{ localStorage.setItem(k,'1'); }catch(e){} });
-  }
-  markAllSeen();
-
-  // Force close every sheet and story overlay
-  function closeAllOverlays(){
-    // sheets
-    document.querySelectorAll('.sheet').forEach(function(sh){
-      sh.classList.remove('open');
-      sh.style.display = 'none';
-    });
-    // tour stories overlay
-    ['ts','tsSheet','trOverlay','trBackdrop','trTip'].forEach(function(id){
-      var el = document.getElementById(id);
-      if(el){ el.style.display='none'; el.classList.remove('open','on'); }
-    });
-    // any element with .tr-open / .ts-open class
-    document.querySelectorAll('[class*="tr-open"], [class*="ts-open"], .tour-open').forEach(function(el){
-      el.style.display = 'none';
-    });
-    // scroll unlock
-    try{
-      document.body.classList.remove('sheet-open','modal-open','tour-open');
-      document.body.style.overflow = '';
-      document.documentElement.style.overflow = '';
-    }catch(e){}
-    // set state globals
-    try{ window.trOpen = false; }catch(e){}
-    try{ if(window.TS) window.TS.open = false; }catch(e){}
-  }
-
-  // Override tour/stories functions to no-op
-  function killTour(){
-    var noop = function(){};
-    ['trMaybeAuto','trStart','trStoriesStart','trStoriesShow','trOpenAt','trOpen','trShowStep','showTour','showStories']
-      .forEach(function(fn){
-        try{ if(typeof window[fn] === 'function') window[fn] = noop; }catch(e){}
-      });
-  }
-
-  // Full sweep
-  function sweep(){
-    markAllSeen();
-    closeAllOverlays();
-    killTour();
-  }
-  sweep();
-  var t1 = setTimeout(sweep, 100);
-  var t2 = setTimeout(sweep, 500);
-  var t3 = setTimeout(sweep, 1200);
-  var t4 = setTimeout(sweep, 2200);
-  var t5 = setTimeout(sweep, 3500);
-  // Keep sweeping first 8 seconds every 700ms
-  var swi = setInterval(sweep, 700);
-  setTimeout(function(){ clearInterval(swi); }, 8000);
-
-  // Also on any click — sweep after to catch anything triggered
-  document.addEventListener('click', function(){
-    setTimeout(sweep, 100);
-  });
-})();
-</script>
-
-
-<style id="hlb-v15">
-/* v15 fixes */
-
-/* Toast reposition — force NOT above header */
-.toast-wrap, [class*="notify-top"], [class*="app-toast"], .app-toast,
-[class*="wallet-toast"], .hlb-toast-top {
-  top: calc(env(safe-area-inset-top, 0px) + 68px) !important;
-  z-index: 90 !important;
-}
-
-/* Profile — ensure it renders */
-#screen-profile.active {
-  display: block !important;
-}
-#screen-profile > * {
-  display: block !important;
-}
-#screen-profile .pad {
-  display: block !important;
-  padding: 12px !important;
-}
-#screen-profile .profile-top {
-  display: flex !important;
-  gap: 12px !important;
-  align-items: center !important;
-  padding: 12px !important;
-}
-
-/* Feed tabs — force text visible via ALL selectors */
-.feed-tabs button, .feed-tabs > button {
-  min-width: 100px !important;
-  padding: 10px 20px !important;
-  font-size: 14px !important;
-  font-weight: 700 !important;
-  border-radius: 99px !important;
-}
-.feed-tabs button.on, .feed-tabs > button.on {
-  background: #FF9500 !important;
-  color: #000 !important;
-  border: 1px solid #FF9500 !important;
-  text-shadow: none !important;
-}
-.feed-tabs button:not(.on), .feed-tabs > button:not(.on) {
-  background: transparent !important;
-  color: #fff !important;
-  border: 1px solid rgba(255,255,255,.2) !important;
-}
-</style>
-
-
-<script id="hlb-v15-js">
-(function(){
-  'use strict';
-
-  // === Force feed-tab text visible ===
-  function fixFeedTabs(){
-    var tabs = document.querySelectorAll('.feed-tabs button, .feed-tabs > button');
-    tabs.forEach(function(btn, i){
-      var isOn = btn.classList.contains('on') || btn.classList.contains('active');
-      var txt = (btn.textContent || '').trim();
-      // If empty text — restore from position
-      if (!txt) {
-        // Feed has Подписки and Рекомендации typically
-        var labels = ['Подписки', 'Рекомендации'];
-        btn.textContent = labels[i] || '';
-      }
-      // Force inline color/background
-      if (isOn) {
-        btn.style.setProperty('background', '#FF9500', 'important');
-        btn.style.setProperty('color', '#000', 'important');
-        btn.style.setProperty('font-weight', '700', 'important');
-      } else {
-        btn.style.setProperty('background', 'transparent', 'important');
-        btn.style.setProperty('color', '#fff', 'important');
-        btn.style.setProperty('border', '1px solid rgba(255,255,255,.2)', 'important');
-      }
-    });
-  }
-
-  // === Reposition stuck toasts below header ===
-  function fixToasts(){
-    document.querySelectorAll('.toast-wrap, [class*="notify-top"], [class*="app-toast"], .app-toast, [class*="wallet-toast"], .hlb-toast-top').forEach(function(el){
-      var r = el.getBoundingClientRect();
-      if (r.top < 40) {
-        el.style.setProperty('top', 'calc(env(safe-area-inset-top, 0px) + 68px)', 'important');
-        el.style.setProperty('z-index', '90', 'important');
-      }
-    });
-  }
-
-  // === Force real chats via renderChatList ===
-  function forceChats(){
-    try {
-      if (typeof window.hlbPatchOkoChats === 'function') window.hlbPatchOkoChats();
-      if (typeof window.renderChatList === 'function') {
-        window.renderChatList('');
-      }
-    } catch(e) {}
-  }
-
-  // === Ensure profile renders ===
-  function forceProfile(){
-    var scr = document.getElementById('screen-profile');
-    if (!scr) return;
-    if (scr.classList.contains('active')) {
-      scr.style.setProperty('display', 'block', 'important');
-      scr.querySelectorAll('*').forEach(function(el){
-        if (el.style.display === 'none' && el.dataset.hlbV12Hidden !== '1') {
-          // don't touch unrelated hidden stuff
-        }
-      });
-    }
-  }
-
-  function sweep(){
-    fixFeedTabs();
-    fixToasts();
-    forceChats();
-    forceProfile();
-  }
-  sweep();
-  setTimeout(sweep, 300);
-  setTimeout(sweep, 800);
-  setTimeout(sweep, 1800);
-
-  // Debounced MO
-  try {
-    var t;
-    new MutationObserver(function(){
-      clearTimeout(t);
-      t = setTimeout(sweep, 200);
-    }).observe(document.body, { childList: true, subtree: true });
-  } catch(e) {}
-  document.addEventListener('click', function(){ setTimeout(sweep, 150); });
-})();
-</script>
-
-
-<style id="hlb-v16">
-/* v16 fixes */
-
-/* Kill wallet live toast — permanent */
-#walLive, .wal-live { display: none !important; }
-
-/* Kill upper profile tariff CTA (Даниэль не хочет верхнюю плашку) */
-.hlb-prof-tariff-cta { display: none !important; }
-
-/* Force profAva as real image via ::before */
-#profAva {
-  background-image: url('assets/av/artem_brius.jpg') !important;
-  background-size: cover !important;
-  background-position: center !important;
-  color: transparent !important;
-  text-indent: -9999px !important;
-  overflow: hidden !important;
-  border-radius: 20px !important;
-  border: 3px solid var(--hlb-orange, #FF9500) !important;
-  box-shadow: 0 0 24px rgba(255,149,0,.35) !important;
-}
-/* Also .ava.lime is the class of profAva — override lime */
-.ava.lime#profAva, #profAva.ava.lime, .ava.lime {
-  background-image: url('assets/av/artem_brius.jpg') !important;
-  background-color: transparent !important;
-  background-size: cover !important;
-  background-position: center !important;
-}
-</style>
-
-
-<script id="hlb-v16-js">
-(function(){
-  'use strict';
-
-  // Kill any wallet demo notification
-  try {
-    if (typeof window.walMaybeDemoLive === 'function') {
-      window.walMaybeDemoLive = function(){};
-    }
-    if (typeof window.walLiveNotify === 'function') {
-      window.walLiveNotify = function(){};
-    }
-  } catch(e) {}
-  var interv = setInterval(function(){
-    if (typeof window.walMaybeDemoLive === 'function' && window.walMaybeDemoLive.toString().length > 5) {
-      window.walMaybeDemoLive = function(){};
-    }
-    if (typeof window.walLiveNotify === 'function' && window.walLiveNotify.toString().length > 5) {
-      window.walLiveNotify = function(){};
-    }
-  }, 100);
-  setTimeout(function(){ clearInterval(interv); }, 8000);
-
-  // Remove existing walLive element
-  function killWalLive(){
-    var el = document.getElementById('walLive');
-    if (el) { el.style.display = 'none'; el.remove(); }
-    document.querySelectorAll('.wal-live').forEach(function(e){ e.style.display='none'; e.remove(); });
-  }
-  killWalLive();
-  setInterval(killWalLive, 300);
-
-  // Kill .hlb-prof-tariff-cta (upper tariff plate in profile)
-  function killProfTariffTop(){
-    document.querySelectorAll('.hlb-prof-tariff-cta').forEach(function(el){
-      el.style.display = 'none';
-      el.remove();
-    });
-  }
-  killProfTariffTop();
-  setInterval(killProfTariffTop, 500);
-
-  // Force profAva to real image (replace innerHTML)
-  function forceAva(){
-    var el = document.getElementById('profAva');
-    if (el && el.dataset.hlbV16 !== '1') {
-      el.dataset.hlbV16 = '1';
-      el.innerHTML = '<img src="assets/av/artem_brius.jpg" alt="" style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover;border-radius:inherit;">';
-      el.style.position = 'relative';
-      el.style.overflow = 'hidden';
-      el.style.textIndent = '0';
-    }
-    var ep = document.getElementById('epAva');
-    if (ep && ep.dataset.hlbV16 !== '1') {
-      ep.dataset.hlbV16 = '1';
-      ep.innerHTML = '<img src="assets/av/artem_brius.jpg" alt="" style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover;border-radius:inherit;">';
-      ep.style.position = 'relative';
-      ep.style.overflow = 'hidden';
-    }
-  }
-  forceAva();
-  setTimeout(forceAva, 400);
-  setTimeout(forceAva, 1200);
-  setInterval(forceAva, 700);
-
-  // Force feed-tab text — remove and re-create with proper text
-  function fixFeedTabsHard(){
-    var wrap = document.querySelector('.feed-tabs');
-    if (!wrap) return;
-    var buttons = wrap.querySelectorAll('button');
-    var labels = ['Подписки', 'Рекомендации'];
-    buttons.forEach(function(btn, i){
-      var isOn = btn.classList.contains('on') || btn.classList.contains('active');
-      var t = (btn.textContent || '').trim();
-      if (!t && labels[i]) {
-        btn.textContent = labels[i];
-      }
-      if (isOn) {
-        btn.style.cssText = 'background:#FF9500 !important;color:#000 !important;border:1px solid #FF9500 !important;font-weight:700 !important;padding:10px 20px !important;border-radius:99px !important;';
-      } else {
-        btn.style.cssText = 'background:transparent !important;color:#fff !important;border:1px solid rgba(255,255,255,.2) !important;font-weight:600 !important;padding:10px 20px !important;border-radius:99px !important;';
-      }
-    });
-  }
-  fixFeedTabsHard();
-  setInterval(fixFeedTabsHard, 400);
-})();
-</script>
-
-
-<style id="hlb-v17">
-/* v17 */
-#ppLive, [id="ppLive"] { display: none !important; opacity: 0 !important; pointer-events: none !important; }
-
-/* Force profile avatar as real photo — extreme specificity */
-#screen-profile #profAva,
-#screen-profile .ava.lime,
-.profile-top .ava,
-.profile-top #profAva {
-  background: url('assets/av/artem_brius.jpg') center/cover no-repeat !important;
-  color: transparent !important;
-  font-size: 0 !important;
-  border: 3px solid #FF9500 !important;
-  box-shadow: 0 0 24px rgba(255,149,0,.35) !important;
-  border-radius: 22px !important;
-  overflow: hidden !important;
-}
-#screen-profile #profAva::before,
-.profile-top .ava::before {
-  content: '' !important;
-  position: absolute !important;
-  inset: 0 !important;
-  background: url('assets/av/artem_brius.jpg') center/cover no-repeat !important;
-}
-</style>
-
-
-<script id="hlb-v17-js">
-(function(){
-  'use strict';
-
-  // Kill ppLive scheduling + node
-  function killPpLive(){
-    try {
-      if (typeof window.scheduleLiveNotif === 'function') window.scheduleLiveNotif = function(){};
-      if (typeof window.showLive === 'function') window.showLive = function(){};
-    } catch(e) {}
-    var el = document.getElementById('ppLive');
-    if (el) {
-      el.classList.remove('on');
-      el.style.display = 'none';
-      el.style.opacity = '0';
-      el.style.pointerEvents = 'none';
-    }
-    window.__ppLivePlanned = true; // prevent re-schedule
-  }
-  killPpLive();
-  setInterval(killPpLive, 300);
-
-  // Force real avatar for profile — aggressive
-  function forceAvaHard(){
-    var el = document.getElementById('profAva');
-    if (el) {
-      if (el.querySelector('img[data-hlb-v17]')) return;
-      // Nuke content + inject img
-      el.innerHTML = '<img data-hlb-v17="1" src="assets/av/artem_brius.jpg" alt="" style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover;border-radius:inherit;z-index:2">';
-      el.style.position = 'relative';
-      el.style.overflow = 'hidden';
-      el.style.color = 'transparent';
-      el.style.fontSize = '0';
-      el.classList.remove('lime');
-    }
-    var ep = document.getElementById('epAva');
-    if (ep) {
-      if (!ep.querySelector('img[data-hlb-v17]')) {
-        ep.innerHTML = '<img data-hlb-v17="1" src="assets/av/artem_brius.jpg" alt="" style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover;border-radius:inherit;z-index:2">';
-        ep.style.position = 'relative';
-        ep.style.overflow = 'hidden';
-        ep.style.color = 'transparent';
-        ep.style.fontSize = '0';
-      }
-    }
-  }
-  forceAvaHard();
-  setInterval(forceAvaHard, 400);
-
-  // Feed-tab fix: check first button HTML
-  function fixFeedTabsV17(){
-    var wrap = document.querySelector('.feed-tabs');
-    if (!wrap) return;
-    var buttons = wrap.querySelectorAll('button');
-    if (buttons.length === 0) return;
-    // Detect which is active based on class
-    // In OKO: <button class="on" onclick="feedTab(this,'sub')">Подписки</button>
-    //         <button onclick="feedTab(this,'rec')">Рекомендации</button>
-    var labels = ['Подписки', 'Рекомендации'];
-    buttons.forEach(function(btn, i){
-      // Read what onclick says
-      var oc = btn.getAttribute('onclick') || '';
-      var label = labels[i] || '';
-      if (/sub/i.test(oc)) label = 'Подписки';
-      if (/rec/i.test(oc)) label = 'Рекомендации';
-      // Set text WITHOUT touching svg icons
-      var textNode = null;
-      Array.from(btn.childNodes).forEach(function(n){
-        if (n.nodeType === 3) textNode = n;
-      });
-      if (textNode) {
-        if (!textNode.textContent.trim()) textNode.textContent = ' ' + label;
-      } else {
-        // No text node — add one
-        btn.appendChild(document.createTextNode(' ' + label));
-      }
-      // Force clean style — no icons that could hide text
-      var isOn = btn.classList.contains('on') || btn.classList.contains('active');
-      btn.style.cssText = (
-        'background:' + (isOn ? '#FF9500' : 'transparent') + ' !important;' +
-        'color:' + (isOn ? '#000' : '#fff') + ' !important;' +
-        'border:1px solid ' + (isOn ? '#FF9500' : 'rgba(255,255,255,.2)') + ' !important;' +
-        'font-weight:700 !important;' +
-        'padding:10px 20px !important;' +
-        'border-radius:99px !important;' +
-        'font-size:14px !important;' +
-        'display:inline-flex !important;' +
-        'align-items:center !important;' +
-        'gap:6px !important;'
-      );
-      // svg color inherit
-      btn.querySelectorAll('svg').forEach(function(sv){
-        sv.style.color = 'inherit';
-        sv.style.fill = 'currentColor';
-      });
-    });
-  }
-  fixFeedTabsV17();
-  setInterval(fixFeedTabsV17, 350);
-})();
-</script>
-
-
-<style id="hlb-v18">
-/* v18 */
-
-/* Force pp2-ava as real photo (visible profile avatar) */
-.pp2-ava, button.pp2-ava {
-  background: url('assets/av/artem_brius.jpg') center/cover no-repeat !important;
-  color: transparent !important;
-  font-size: 0 !important;
-  text-indent: -9999px !important;
-  overflow: hidden !important;
-  border: 3px solid #FF9500 !important;
-  box-shadow: 0 0 24px rgba(255,149,0,.35) !important;
-  border-radius: 22px !important;
-  position: relative !important;
-}
-
-/* Feed-tabs: force text alignment + wrapping */
-.feed-tabs button {
-  text-align: center !important;
-  white-space: nowrap !important;
-  justify-content: center !important;
-  align-items: center !important;
-  line-height: 1 !important;
-}
-</style>
-
-
-<script id="hlb-v18-js">
-(function(){
-  'use strict';
-
-  // Force pp2-ava
-  function forcePp2Ava(){
-    document.querySelectorAll('.pp2-ava, button.pp2-ava').forEach(function(el){
-      if (el.dataset.hlbV18 === '1') return;
-      el.dataset.hlbV18 = '1';
-      el.innerHTML = '<img data-hlb-v18="1" src="assets/av/artem_brius.jpg" alt="" style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover;border-radius:inherit;z-index:2">';
-      el.style.color = 'transparent';
-      el.style.textIndent = '0';
-    });
-  }
-  forcePp2Ava();
-  setInterval(forcePp2Ava, 500);
-
-  // Feed-tab center + nowrap + text visible
-  function fixFeedTabText(){
-    document.querySelectorAll('.feed-tabs button').forEach(function(btn){
-      btn.style.setProperty('text-align','center','important');
-      btn.style.setProperty('white-space','nowrap','important');
-      btn.style.setProperty('justify-content','center','important');
-      btn.style.setProperty('align-items','center','important');
-      btn.style.setProperty('line-height','1','important');
-      // preserve font
-      btn.style.setProperty('font-family','system-ui,-apple-system,sans-serif','important');
-    });
-  }
-  fixFeedTabText();
-  setInterval(fixFeedTabText, 400);
-})();
-</script>
-
-
-<style id="hlb-v19">
-/* v19: unified feed-tabs row */
-
-/* Hide original fa-bar (Умная лента bar) */
-.fa-bar { display: none !important; }
-.fa-head .fa-explain { display: none !important; }
-
-/* Feed-tabs container becomes the unified row */
-#screen-feed .feed-tabs,
-.feed-tabs {
-  display: flex !important;
-  gap: 8px !important;
-  padding: 12px 14px 8px !important;
-  align-items: center !important;
-  flex-wrap: nowrap !important;
-  overflow-x: auto !important;
-  overflow-y: hidden !important;
-  scrollbar-width: none !important;
-}
-.feed-tabs::-webkit-scrollbar { display: none !important; }
-
-/* Text buttons (Подписки, Рекомендации, Клипы) */
-.feed-tabs > button {
-  flex: 0 0 auto !important;
-  padding: 8px 16px !important;
+.w2-card [class*="num"] {
+  font-family: 'JetBrains Mono', 'Courier New', monospace !important;
+  color: rgba(255,255,255,.85) !important;
   font-size: 13px !important;
-  font-weight: 700 !important;
-  border-radius: 99px !important;
+  letter-spacing: 2px !important;
   white-space: nowrap !important;
-  text-align: center !important;
+  overflow: hidden !important;
+  text-overflow: ellipsis !important;
+}
+.w2-card .w2-card-bal, .w2-card [class*="bal"] {
+  color: #FFFFFF !important;
+  font-family: 'Bebas Neue', sans-serif !important;
+  font-size: 46px !important;
   line-height: 1 !important;
-  display: inline-flex !important;
-  align-items: center !important;
-  justify-content: center !important;
-  gap: 6px !important;
-  min-height: 36px !important;
-  cursor: pointer !important;
+  text-shadow: 0 0 30px rgba(255,149,0,.4) !important;
+}
+.w2-card [class*="dim"], .w2-card small, .w2-card .caption {
+  color: rgba(255,255,255,.6) !important;
+  font-size: 11px !important;
+  text-transform: uppercase !important;
+  letter-spacing: 2px !important;
+}
+
+/* Chat list — ensure bottom items don't cut off */
+#chatList { padding-bottom: calc(env(safe-area-inset-bottom, 0px) + 120px) !important; }
+#screen-chats { padding-bottom: calc(env(safe-area-inset-bottom, 0px) + 84px) !important; }
+
+/* Extra: any pop-up notification (Академия ХЛБ etc) — under TG bar */
+[id*="lesson"], [class*="lesson-toast"], [class*="notify-pop"],
+[class*="academy-toast"], [class*="promo-toast"], .app-noti {
+  top: calc(env(safe-area-inset-top, 0px) + 60px) !important;
+  z-index: 88 !important;
+}
+</style>
+
+
+<style id="hlb-v23-2">
+/* v23.2 last polish */
+
+/* Feed chip Рекомендации — force text render */
+.feed-tabs > button {
+  overflow: visible !important;
+  text-indent: 0px !important;
+  visibility: visible !important;
+  opacity: 1 !important;
 }
 .feed-tabs > button.on {
-  background: #FF9500 !important;
   color: #000 !important;
-  border: 1px solid #FF9500 !important;
+  -webkit-text-fill-color: #000 !important;
+}
+.feed-tabs > button:not(.on):not(.hlb-refresh-btn):not(.hlb-clips-btn) {
+  color: #FFFFFF !important;
+  -webkit-text-fill-color: #FFFFFF !important;
+}
+
+/* Chat filter chips — HARDCORE override all lime gradients */
+#screen-chats [class*="chip"],
+#screen-chats button.chip,
+#screen-chats .chip,
+[class*="chat-cat"] > button,
+[class*="chat-filter"] > button,
+.chat-tabs > button {
+  background: transparent !important;
+  background-color: transparent !important;
+  background-image: none !important;
+  color: #FFFFFF !important;
+  -webkit-text-fill-color: #FFFFFF !important;
+  border: 1px solid rgba(255,255,255,.18) !important;
+  box-shadow: none !important;
+}
+#screen-chats [class*="chip"].on,
+#screen-chats button.chip.on,
+#screen-chats .chip.on,
+[class*="chat-cat"] > button.on,
+[class*="chat-filter"] > button.on,
+.chat-tabs > button.on,
+[class*="chip"].active {
+  background: #FF9500 !important;
+  background-color: #FF9500 !important;
+  background-image: none !important;
+  color: #000000 !important;
+  -webkit-text-fill-color: #000000 !important;
+  border-color: #FF9500 !important;
   box-shadow: 0 0 16px rgba(255,149,0,.35) !important;
 }
-.feed-tabs > button:not(.on) {
-  background: transparent !important;
-  color: #fff !important;
-  border: 1px solid rgba(255,255,255,.18) !important;
-}
 
-/* Клипы button: icon + label */
-.feed-tabs > button.hlb-clips-btn svg {
-  width: 14px !important; height: 14px !important;
-}
-
-/* Refresh: ICON ONLY (no text) */
-.feed-tabs > button.hlb-refresh-btn {
-  padding: 8px 10px !important;
-  min-width: 36px !important;
-  min-height: 36px !important;
-  border-radius: 50% !important;
-  margin-left: auto !important; /* push to right */
-}
-.feed-tabs > button.hlb-refresh-btn span { display: none !important; }
-.feed-tabs > button.hlb-refresh-btn svg {
-  width: 16px !important; height: 16px !important;
-}
-</style>
-
-
-<script id="hlb-v19-js">
-(function(){
-  'use strict';
-
-  // Merge fa-clips and fa-refresh into feed-tabs row
-  function mergeFeedControls(){
-    var feedTabs = document.querySelector('.feed-tabs');
-    if (!feedTabs) return;
-    // Find fa-clips and fa-refresh anywhere on page
-    var faClips = document.querySelector('.fa-clips');
-    var faRefresh = document.querySelector('.fa-refresh');
-
-    if (faClips && !feedTabs.querySelector('.hlb-clips-btn')) {
-      // Clone Клипы into feed-tabs
-      var clipsBtn = document.createElement('button');
-      clipsBtn.type = 'button';
-      clipsBtn.className = 'hlb-clips-btn';
-      clipsBtn.setAttribute('aria-label', 'Открыть клипы');
-      clipsBtn.innerHTML = faClips.innerHTML;
-      clipsBtn.onclick = function(e){
-        e.preventDefault();
-        if (typeof window.faReelsOpenFirst === 'function') window.faReelsOpenFirst();
-      };
-      feedTabs.appendChild(clipsBtn);
-    }
-
-    if (faRefresh && !feedTabs.querySelector('.hlb-refresh-btn')) {
-      // Clone Обновить as ICON ONLY
-      var refBtn = document.createElement('button');
-      refBtn.type = 'button';
-      refBtn.className = 'hlb-refresh-btn';
-      refBtn.setAttribute('aria-label', 'Обновить подборку');
-      // Take svg from faRefresh; strip text
-      var svg = faRefresh.querySelector('svg');
-      refBtn.innerHTML = svg ? svg.outerHTML : '↻';
-      refBtn.onclick = function(e){
-        e.preventDefault();
-        if (typeof window.faRefresh === 'function') window.faRefresh();
-      };
-      feedTabs.appendChild(refBtn);
-    }
-  }
-
-  mergeFeedControls();
-  setInterval(mergeFeedControls, 500);
-})();
-</script>
-
-
-<style id="hlb-v20">
-/* v20 */
-
-/* Fix feed-tabs: no margin-left:auto that pushed first button off-screen */
-.feed-tabs > button.hlb-refresh-btn {
-  margin-left: 0 !important;
-}
-
-/* Ensure scroll starts at 0 with proper padding */
-#screen-feed .feed-tabs,
-.feed-tabs {
-  scroll-snap-type: none !important;
-  scroll-behavior: auto !important;
-  padding-left: 14px !important;
-  padding-right: 14px !important;
-  justify-content: flex-start !important;
-}
-</style>
-
-
-<script id="hlb-v20-js">
-(function(){
-  'use strict';
-
-  // Force feed-tabs scrollLeft to 0 so first button not clipped
-  function fixFeedScroll(){
-    var ft = document.querySelector('.feed-tabs');
-    if (ft && ft.scrollLeft !== 0) {
-      ft.scrollLeft = 0;
-    }
-  }
-  fixFeedScroll();
-  setInterval(fixFeedScroll, 500);
-
-  // === REAL CHATS ===
-  // Real Artem Brius channels list — overwrites base CHATS entries by index
-  var REAL_CHATS = [
-    // Reserved index 0 = live chat, keep as-is
-    { name: 'Артём Бриус',           nick: 'gdebrius',   ava: 'assets/av/gdebrius.jpg',    preview: 'Артём: Привет. Как настроение?', time: 'сейчас', unread: 1, verified: true, subs: '' },
-    { name: 'ХЛБ',                   nick: 'hlbclub',    ava: 'assets/av/hlb.jpg',         preview: 'Артём: Мне стыдно за всё происходящее. Хочу это исправить.', time: '20:04', unread: 3, verified: true, subs: '986' },
-    { name: 'Артём Бриус · канал',   nick: 'gdebrius_ch',ava: 'assets/av/artem_brius.jpg', preview: 'Артём: Полнейшая пересборка. В коробках склада...', time: 'сегодня', unread: 0, verified: true, subs: '24 813' },
-    { name: 'Бриус',                 nick: 'brius',      ava: 'assets/av/brius.jpg',       preview: 'Артём: Финальная часть моего перформанса. Жмите.', time: 'вчера', unread: 0, verified: true, subs: '73 987' },
-    { name: 'КИТОВАРКА',             nick: 'kitovarka',  ava: 'assets/av/kitovarka.jpg',   preview: 'Товарный бизнес с Китаем 🇨🇳', time: 'вчера', unread: 0, verified: false, subs: '1 438' },
-    { name: 'ХЛБ / отзывы',          nick: 'hlbreviews', ava: 'assets/av/hlb_reviews.jpg', preview: 'Мария: После ХЛБ жизнь уже не станет прежней.', time: 'сегодня', unread: 1, verified: false, subs: '5 892' },
-    { name: 'Бриус / отзывы',        nick: 'briusrev',   ava: 'assets/av/brius_reviews.jpg', preview: 'Дмитрий: 269 подписчиков → 17,8 тысяч.', time: 'ср', unread: 0, verified: false, subs: '527' },
-    { name: 'Nihaodrop · клуб',      nick: 'nihaodrop',  ava: 'assets/av/brius_mentor.jpg', preview: 'Влад: +9 600 ₽ на второй день. Работает!', time: 'ср', unread: 0, verified: true, subs: '421' },
-    { name: 'briusMentor',           nick: 'briusmentor', ava: 'assets/av/brius_mentor.jpg', preview: 'Ментор Артёма — заявки на разбор', time: '3 д', unread: 0, verified: true, subs: 'заявки' }
-  ];
-
-  function overrideChatsData(){
-    try {
-      if (typeof window.CHATS === 'undefined' || !window.CHATS) return;
-      var C = window.CHATS;
-      var realIdx = 0;
-      for (var i = 0; i < C.length; i++) {
-        var c = C[i];
-        // Skip the live chat (id:'live')
-        if (c.id === 'live' || c.live) continue;
-        // Skip Избранное if any
-        if (/избранн/i.test(c.name||'')) continue;
-        // Overwrite with real Artem channel data
-        if (realIdx < REAL_CHATS.length) {
-          var real = REAL_CHATS[realIdx];
-          c.name = real.name;
-          c.nick = real.nick;
-          c.preview = real.preview;
-          c.time = real.time;
-          c.unread = real.unread;
-          c.verified = real.verified;
-          c.subs = real.subs;
-          c.avaImg = real.ava;
-          c.ava = real.ava;
-          if (c.kind !== 'channel') c.kind = 'channel';
-          realIdx++;
-        } else {
-          // Extra chats beyond our list — hide via kind 'hidden' or remove
-          c.__hlbHidden = true;
-        }
-      }
-      // Filter out hidden
-      window.CHATS = C.filter(function(c){ return !c.__hlbHidden; });
-      // Re-render
-      if (typeof window.renderChatList === 'function') window.renderChatList('');
-    } catch(e) {}
-  }
-  overrideChatsData();
-  setTimeout(overrideChatsData, 300);
-  setTimeout(overrideChatsData, 1000);
-  setTimeout(overrideChatsData, 2500);
-
-  // Also intercept renderChatList to re-apply if CHATS gets re-populated
-  var interv = setInterval(function(){
-    try {
-      if (window.CHATS && window.CHATS.some(function(c){
-        return /новости|мария егорова|иван петров|reels под ключ|клуб роста · pro|инсайды/i.test(c.name||'');
-      })) {
-        overrideChatsData();
-      }
-    } catch(e) {}
-  }, 700);
-})();
-</script>
-
-
-<style id="hlb-v21">
-/* v21 */
-
-/* Feed-tabs: fit 4 elements */
-#screen-feed .feed-tabs, .feed-tabs {
-  padding: 12px 12px 8px !important;
-  gap: 6px !important;
-}
-#screen-feed .feed-tabs > button, .feed-tabs > button {
-  padding: 7px 12px !important;
-  font-size: 12px !important;
-  font-weight: 700 !important;
-  min-height: 34px !important;
-}
-.feed-tabs > button.hlb-refresh-btn {
-  padding: 7px 9px !important;
-  min-width: 34px !important;
-  min-height: 34px !important;
-  border-radius: 50% !important;
-  flex: 0 0 auto !important;
-}
-</style>
-
-
-<script id="hlb-v21-js">
-(function(){
-  'use strict';
-
-  // Real Artem Brius channels in strict order
-  var REAL_CHANNELS = [
-    { name: 'Артём Бриус',          preview: 'Артём: Привет. Как настроение? Расскажи, чем занят.', time: 'сейчас',   ava: 'assets/av/gdebrius.jpg',      verified: true },
-    { name: 'ХЛБ',                  preview: 'Артём: Мне стыдно за всё происходящее. Хочу это исправить.', time: '20:04', ava: 'assets/av/hlb.jpg',       verified: true },
-    { name: 'Артём Бриус · канал',  preview: 'Артём: Полнейшая пересборка. В коробках склада…', time: 'сегодня',  ava: 'assets/av/artem_brius.jpg', verified: true },
-    { name: 'Бриус',                preview: 'Артём: Финальная часть моего перформанса. Жмите.', time: 'вчера', ava: 'assets/av/brius.jpg',       verified: true },
-    { name: 'КИТОВАРКА',            preview: 'Товарный бизнес с Китаем 🇨🇳',                 time: 'вчера', ava: 'assets/av/kitovarka.jpg',   verified: false },
-    { name: 'ХЛБ / отзывы',         preview: 'Мария: После ХЛБ жизнь уже не станет прежней.', time: 'сегодня', ava: 'assets/av/hlb_reviews.jpg', verified: false },
-    { name: 'Бриус / отзывы',       preview: 'Дмитрий: 269 подписчиков → 17 800.',            time: 'ср',    ava: 'assets/av/brius_reviews.jpg', verified: false },
-    { name: 'Nihaodrop',            preview: 'Влад: +9 600 ₽ на второй день. Работает!',      time: 'ср',    ava: 'assets/av/brius_mentor.jpg', verified: true },
-    { name: 'briusMentor',          preview: 'Ментор Артёма — заявки на разбор',              time: '3 д',   ava: 'assets/av/brius_mentor.jpg', verified: true }
-  ];
-
-  function esc(t){ return String(t||'').replace(/[<>&"']/g, function(c){return {'<':'&lt;','>':'&gt;','&':'&amp;','"':'&quot;',"'":'&#39;'}[c];}); }
-
-  function patchChatDom(){
-    var items = document.querySelectorAll('#chatList .chat-item, .chat-col .chat-item');
-    if (!items.length) return;
-    var idx = 0;
-    items.forEach(function(el){
-      var t = (el.textContent||'').trim();
-      // Skip Общий чат ХЛБ (live) and Избранное (favorites)
-      if (/Общий чат ХЛБ|Избранное/i.test(t)) return;
-      if (idx >= REAL_CHANNELS.length) {
-        el.style.display = 'none'; return;
-      }
-      var ch = REAL_CHANNELS[idx];
-      // Build fresh item HTML
-      var verBadge = ch.verified
-        ? '<svg width="12" height="12" viewBox="0 0 24 24" fill="#1DA1F2" style="vertical-align:-1px;margin-left:3px"><path d="M12 2l2.4 1.6L17 3l1 2.6L20.6 7l-.6 2.8L22 12l-2 2.2.6 2.8L18 18l-1 2.6-2.6-.6L12 22l-2.4-1.6L7 21l-1-2.6L3.4 17 4 14.2 2 12l2-2.2L3.4 7 6 6l1-2.6L9.6 4z"/><path d="M8.5 12.5l2.5 2.5 5-5" stroke="#fff" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg>'
-        : '';
-      el.innerHTML =
-        '<div class="ci-ava">' +
-          '<img src="' + ch.ava + '" alt="" style="width:52px;height:52px;object-fit:cover;border-radius:50%;border:2px solid rgba(255,149,0,.18);display:block">' +
-        '</div>' +
-        '<div class="meta">' +
-          '<div class="row1">' +
-            '<span class="name"><span class="ci-txt">' + esc(ch.name) + verBadge + '</span></span>' +
-            '<span class="time">' + esc(ch.time) + '</span>' +
-          '</div>' +
-          '<div class="row1">' +
-            '<span class="preview"><span class="ci-txt">' + esc(ch.preview) + '</span></span>' +
-          '</div>' +
-        '</div>';
-      el.dataset.hlbV21 = idx.toString();
-      idx++;
-    });
-  }
-
-  patchChatDom();
-  setTimeout(patchChatDom, 500);
-  setTimeout(patchChatDom, 1500);
-  setInterval(patchChatDom, 800);
-
-  // Hook click on chats tab
-  document.addEventListener('click', function(e){
-    var t = e.target && e.target.closest && e.target.closest('nav#tabs button[data-t="chats"]');
-    if (t) setTimeout(patchChatDom, 300);
-  });
-})();
-</script>
-
-
-<style id="hlb-v22">
-/* v22 */
-
-/* Feed-tabs: smaller to fit 4 elements on 390px viewport */
-#screen-feed .feed-tabs, .feed-tabs {
-  padding: 10px 10px 6px !important;
-  gap: 5px !important;
-}
-#screen-feed .feed-tabs > button, .feed-tabs > button {
-  padding: 6px 10px !important;
+/* Wallet card number: full digits, smaller font, no truncation */
+.w2-card [class*="num"], #screen-wallet .w2-card [class*="num"] {
+  font-family: 'JetBrains Mono', 'Courier New', monospace !important;
+  color: rgba(255,255,255,.85) !important;
   font-size: 11px !important;
-  font-weight: 800 !important;
-  min-height: 32px !important;
-  letter-spacing: -.01em !important;
+  letter-spacing: 2px !important;
+  white-space: nowrap !important;
+  overflow: visible !important;
+  text-overflow: unset !important;
+  max-width: 100% !important;
+  padding: 4px 8px !important;
 }
-#screen-feed .feed-tabs > button.hlb-refresh-btn,
-.feed-tabs > button.hlb-refresh-btn {
-  padding: 6px 8px !important;
-  min-width: 32px !important;
-  min-height: 32px !important;
-}
+.w2-card > * { max-width: 100% !important; }
 </style>
-
-
-<script id="hlb-v22-js">
-(function(){
-  'use strict';
-
-  var REAL_CHANNELS = [
-    { name: 'Артём Бриус',          preview: 'Артём: Привет. Как настроение? Расскажи, чем занят.', time: 'сейчас',  ava: 'assets/av/gdebrius.jpg',      verified: true, unread: 1 },
-    { name: 'ХЛБ',                  preview: 'Артём: Мне стыдно за всё происходящее. Хочу это исправить.', time: '20:04', ava: 'assets/av/hlb.jpg',       verified: true, unread: 3 },
-    { name: 'Артём Бриус · канал',  preview: 'Артём: Полнейшая пересборка. В коробках склада…', time: 'сегодня',   ava: 'assets/av/artem_brius.jpg', verified: true, unread: 0 },
-    { name: 'Бриус',                preview: 'Артём: Финальная часть моего перформанса. Жмите.', time: 'вчера', ava: 'assets/av/brius.jpg',       verified: true, unread: 0 },
-    { name: 'КИТОВАРКА',            preview: 'Товарный бизнес с Китаем 🇨🇳',                 time: 'вчера', ava: 'assets/av/kitovarka.jpg',   verified: false, unread: 0 },
-    { name: 'ХЛБ / отзывы',         preview: 'Мария: После ХЛБ жизнь уже не станет прежней.', time: 'сегодня', ava: 'assets/av/hlb_reviews.jpg', verified: false, unread: 1 },
-    { name: 'Бриус / отзывы',       preview: 'Дмитрий: 269 подписчиков → 17 800.',            time: 'ср',    ava: 'assets/av/brius_reviews.jpg', verified: false, unread: 0 },
-    { name: 'Nihaodrop',            preview: 'Влад: +9 600 ₽ на второй день. Работает!',      time: 'ср',    ava: 'assets/av/brius_mentor.jpg', verified: true, unread: 0 },
-    { name: 'briusMentor',          preview: 'Ментор Артёма — заявки на разбор',              time: '3 д',   ava: 'assets/av/brius_mentor.jpg', verified: true, unread: 0 }
-  ];
-
-  function esc(t){ return String(t||'').replace(/[<>&"']/g, function(c){return {'<':'&lt;','>':'&gt;','&':'&amp;','"':'&quot;',"'":'&#39;'}[c];}); }
-
-  function patchChatDom(){
-    var list = document.getElementById('chatList');
-    if (!list) return;
-    var items = list.querySelectorAll('.chat-item');
-    if (!items.length) return;
-    var idx = 0;
-    items.forEach(function(el){
-      var t = (el.textContent||'').trim();
-      if (/Общий чат ХЛБ|Избранное/i.test(t)) return;
-      if (idx >= REAL_CHANNELS.length) {
-        el.style.display = 'none'; return;
-      }
-      var ch = REAL_CHANNELS[idx];
-      var verBadge = ch.verified
-        ? ' <svg width="13" height="13" viewBox="0 0 24 24" fill="#1DA1F2" style="vertical-align:-2px"><path d="M12 2l2.4 1.6L17 3l1 2.6L20.6 7l-.6 2.8L22 12l-2 2.2.6 2.8L18 18l-1 2.6-2.6-.6L12 22l-2.4-1.6L7 21l-1-2.6L3.4 17 4 14.2 2 12l2-2.2L3.4 7 6 6l1-2.6L9.6 4z"/><path d="M8.5 12.5l2.5 2.5 5-5" stroke="#fff" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg>'
-        : '';
-      var badge = ch.unread ? '<span class="badge" style="background:#FF9500;color:#000;min-width:22px;height:22px;border-radius:11px;font-weight:800;font-size:12px;display:inline-flex;align-items:center;justify-content:center;padding:0 6px">'+ch.unread+'</span>' : '';
-      el.innerHTML =
-        '<div class="ci-ava" style="width:52px;height:52px;flex-shrink:0">' +
-          '<img src="' + ch.ava + '" alt="" style="width:100%;height:100%;object-fit:cover;border-radius:50%;border:2px solid rgba(255,149,0,.2)">' +
-        '</div>' +
-        '<div class="meta" style="flex:1;min-width:0">' +
-          '<div class="row1" style="display:flex;justify-content:space-between;align-items:center;gap:6px">' +
-            '<span class="name" style="color:#fff;font-weight:700;font-size:15px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">' + esc(ch.name) + verBadge + '</span>' +
-            '<span class="time" style="color:rgba(255,255,255,.5);font-size:12px;flex-shrink:0">' + esc(ch.time) + '</span>' +
-          '</div>' +
-          '<div class="row1" style="display:flex;justify-content:space-between;align-items:center;gap:6px;margin-top:2px">' +
-            '<span class="preview" style="color:rgba(255,255,255,.55);font-size:13px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">' + esc(ch.preview) + '</span>' +
-            badge +
-          '</div>' +
-        '</div>';
-      el.style.padding = '12px 16px';
-      el.style.gap = '12px';
-      el.dataset.hlbV22 = idx.toString();
-      idx++;
-    });
-  }
-
-  // Hook renderChatList to post-patch
-  function hookRender(){
-    if (typeof window.renderChatList !== 'function') return false;
-    if (window.renderChatList.__hlbV22) return true;
-    var orig = window.renderChatList;
-    window.renderChatList = function(){
-      try { orig.apply(this, arguments); } catch(e) {}
-      setTimeout(patchChatDom, 20);
-      setTimeout(patchChatDom, 200);
-    };
-    window.renderChatList.__hlbV22 = true;
-    return true;
-  }
-
-  var hookT = setInterval(function(){ if (hookRender()) clearInterval(hookT); }, 100);
-  setTimeout(function(){ clearInterval(hookT); }, 5000);
-
-  patchChatDom();
-  setTimeout(patchChatDom, 400);
-  setTimeout(patchChatDom, 1200);
-  setTimeout(patchChatDom, 2500);
-
-  // MutationObserver on #chatList
-  var mo = new MutationObserver(function(muts){
-    // Debounced
-    clearTimeout(window.__hlbV22Mo);
-    window.__hlbV22Mo = setTimeout(patchChatDom, 30);
-  });
-  function attachMo(){
-    var list = document.getElementById('chatList');
-    if (list) {
-      try { mo.observe(list, { childList: true, subtree: true }); } catch(e) {}
-      return true;
-    }
-    return false;
-  }
-  attachMo();
-  setTimeout(attachMo, 500);
-  setTimeout(attachMo, 1500);
-  setTimeout(attachMo, 3000);
-
-  document.addEventListener('click', function(e){
-    var t = e.target && e.target.closest && e.target.closest('nav#tabs button[data-t="chats"], nav#tabs button[data-t]');
-    if (t) {
-      setTimeout(patchChatDom, 200);
-      setTimeout(patchChatDom, 800);
-    }
-  });
-})();
-</script>
 
 </body>
 </html>
