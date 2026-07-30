@@ -1,0 +1,264 @@
+{
+ "id": "gbrain_056",
+ "app": "brain",
+ "voice": "en-US-BrianNeural",
+ "rate": "+4%",
+ "grade": "teal_orange",
+ "brand": {
+  "accent": "#9B5DE5",
+  "accent2": "#C9A7FF",
+  "code": "FOCUS",
+  "logo": "brain.png",
+  "name": "BRAINOVA"
+ },
+ "music": {
+  "queries": [
+   "clean corporate underscore",
+   "bright optimistic electronic",
+   "gentle cinematic hope"
+  ]
+ },
+ "cover": {
+  "kicker": "60-SECOND TEST",
+  "top": "WHY YOU FORGET",
+  "big": "EVERY\nNAME",
+  "q": [
+   "walking park green trees"
+  ]
+ },
+ "segments": [
+  {
+   "id": "b1",
+   "text": "You just met them and the name is already gone."
+  },
+  {
+   "id": "b2",
+   "text": "It is not age. It is attention and encoding."
+  },
+  {
+   "id": "b3",
+   "text": "A quick daily test shows your memory score."
+  },
+  {
+   "id": "b4",
+   "text": "Simple games train recall in five minutes."
+  },
+  {
+   "id": "b5",
+   "text": "Watch the number climb week after week."
+  },
+  {
+   "id": "b6",
+   "text": "See your brain age in sixty seconds."
+  }
+ ],
+ "shots": [
+  {
+   "q": [
+    "student studying desk lamp night"
+   ],
+   "insert": "tv",
+   "pos": "lower"
+  },
+  {
+   "q": [
+    "yoga breathing calm room"
+   ],
+   "motion": "zout"
+  },
+  {
+   "q": [
+    "person sleeping rest night"
+   ],
+   "insert": "hexagon",
+   "pos": "upper"
+  },
+  {
+   "q": [
+    "focused eyes close up concentration"
+   ],
+   "motion": "panl"
+  },
+  {
+   "q": [
+    "fish oil supplement pills"
+   ],
+   "insert": "rrect",
+   "pos": "lower"
+  },
+  {
+   "q": [
+    "brain scan mri blue"
+   ],
+   "motion": "pandown"
+  },
+  {
+   "q": [
+    "chess board close up thinking"
+   ],
+   "insert": "diamond",
+   "pos": "center"
+  },
+  {
+   "q": [
+    "notebook writing pen hand"
+   ],
+   "motion": "panup"
+  },
+  {
+   "q": [
+    "group people names introduction"
+   ],
+   "insert": "circle",
+   "pos": "center"
+  },
+  {
+   "q": [
+    "glass of water healthy morning"
+   ],
+   "motion": "zin"
+  },
+  {
+   "q": [
+    "sticky notes wall reminders"
+   ],
+   "insert": "phone",
+   "pos": "upper"
+  },
+  {
+   "q": [
+    "coffee cup morning desk"
+   ],
+   "motion": "panr"
+  },
+  {
+   "q": [
+    "neurons synapse animation blue"
+   ],
+   "insert": "tilt",
+   "pos": "lower"
+  },
+  {
+   "q": [
+    "memory old photos hands"
+   ],
+   "motion": "zout"
+  }
+ ],
+ "overlays": [
+  {
+   "at": 0.149,
+   "dur": 2.08,
+   "type": "kicker",
+   "text": "FOCUS FIX"
+  },
+  {
+   "at": 0.155,
+   "dur": 1.91,
+   "type": "bars",
+   "title": "RECALL SPEED",
+   "unit": "%",
+   "items": [
+    [
+     "Week 1",
+     100
+    ],
+    [
+     "Week 3",
+     147
+    ]
+   ],
+   "pos": "center"
+  },
+  {
+   "at": 0.162,
+   "dur": 2.1,
+   "type": "ticker",
+   "to": 5,
+   "suffix": "min",
+   "label": "A DAY",
+   "pos": "lower"
+  },
+  {
+   "at": 0.374,
+   "dur": 2.6,
+   "type": "checklist",
+   "items": [
+    "Take the test",
+    "Play 5 min",
+    "Beat your score",
+    "Keep the streak"
+   ],
+   "pos": "center"
+  },
+  {
+   "at": 0.407,
+   "dur": 1.98,
+   "type": "gauge",
+   "to": 78,
+   "max": 100,
+   "suffix": "%",
+   "label": "FOCUS SCORE",
+   "pos": "center"
+  },
+  {
+   "at": 0.456,
+   "dur": 2.22,
+   "type": "chips",
+   "items": [
+    "DAY 1",
+    "DAY 5",
+    "DAY 10",
+    "DAY 14"
+   ],
+   "pos": "upper"
+  },
+  {
+   "at": 0.681,
+   "dur": 1.64,
+   "type": "callout",
+   "text": "FOCUS IS A MUSCLE",
+   "pos": "center"
+  },
+  {
+   "at": 0.684,
+   "dur": 2.34,
+   "type": "stat_count",
+   "to": 60,
+   "suffix": "s",
+   "label": "TO A SCORE",
+   "pos": "center"
+  },
+  {
+   "at": 0.815,
+   "dur": 1.74,
+   "type": "kinetic",
+   "top": "RECALL",
+   "big": "FASTER"
+  },
+  {
+   "at": 0.861,
+   "dur": 2.22,
+   "type": "lowerthird",
+   "title": "FIVE MINUTES A DAY",
+   "sub": "focus grows like a muscle"
+  }
+ ],
+ "cta": {
+  "text": "Comment FOCUS for the app.",
+  "code": "FOCUS"
+ },
+ "caption": "USEFUL: Forgetting names isn't age — it's encoding. A 60-second test shows your memory score, and five-minute games train recall. Watch the number climb. Comment FOCUS for the app. #brainhealth #memory #focus #productivity #selfimprovement #mentalhealth #learning #waves #brain #memory #concentration",
+ "yt_title": "Why you forget every name #shorts",
+ "trend_keys": [
+  "waves",
+  "brain",
+  "memory",
+  "concentration",
+  "music",
+  "study",
+  "improve",
+  "focus"
+ ],
+ "content_type": "useful"
+}
