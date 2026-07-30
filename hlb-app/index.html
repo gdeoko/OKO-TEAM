@@ -11717,6 +11717,727 @@ html, body { overscroll-behavior: none !important; }
 })();
 </script>
 
+
+<style id="hlb-v13">
+/* ============== v13 ============== */
+
+/* Force close pp-welcome sheet and any auto-open modals */
+#sheet-pp-welcome:not(.hlb-force-open),
+.sheet[id*="welcome"],
+.sheet[id*="onboard"] {
+  display: none !important;
+  transform: translateX(-50%) translateY(100%) !important;
+}
+/* Ensure body scroll not locked */
+body.sheet-open, body.modal-open {
+  overflow: auto !important;
+}
+
+/* Feed tabs — FORCE readable text через inline priority */
+.feed-tabs button.on,
+.feed-tabs button.active,
+.feed-tabs > button.on {
+  background: #FF9500 !important;
+  color: #000 !important;
+  border-color: #FF9500 !important;
+  font-weight: 700 !important;
+}
+.feed-tabs button.on *,
+.feed-tabs button.active * { color: #000 !important; }
+.feed-tabs button:not(.on):not(.active) {
+  background: transparent !important;
+  color: #fff !important;
+  border: 1px solid rgba(255,255,255,.15) !important;
+}
+.feed-tabs button:not(.on):not(.active) * { color: #fff !important; }
+
+/* Chat filter chips (Каталог/Все/Личные/Группы) — same fix */
+[class*="chat-filter"] button.on,
+[class*="chat-filter"] button.active,
+[class*="chat-cat"] button.on,
+.hlb-ch-search + div button.on {
+  background: #FF9500 !important;
+  color: #000 !important;
+  font-weight: 700 !important;
+}
+[class*="chat-filter"] button.on *,
+[class*="chat-cat"] button.on * { color: #000 !important; }
+
+/* Toast/notify — сдвинуть под хедер */
+.toast-wrap, [class*="notify-top"], [class*="app-toast"], .app-toast {
+  top: calc(env(safe-area-inset-top, 0px) + 68px) !important;
+  z-index: 90 !important;
+}
+
+/* Profile — если пустой, force visible */
+#screen-profile.active { display: block !important; }
+#screen-profile .pad { padding-top: 12px !important; }
+#screen-profile .profile-top { display: flex !important; gap: 12px !important; padding: 12px !important; align-items: center !important; }
+#screen-profile #profAva {
+  width: 76px !important; height: 76px !important;
+  background-image: url('assets/av/artem_brius.jpg') !important;
+  background-size: cover !important;
+  background-position: center !important;
+  color: transparent !important;
+  text-indent: -9999px !important;
+  border-radius: 50% !important;
+  border: 3px solid #FF9500 !important;
+  box-shadow: 0 0 24px rgba(255,149,0,.35) !important;
+  overflow: hidden !important;
+}
+</style>
+
+
+<script id="hlb-v13-js">
+(function(){
+  'use strict';
+
+  // ==== Force set pp-welcome-shown so it never auto-opens ====
+  function suppressPpWelcome(){
+    try{ localStorage.setItem('pp-welcome-shown-v1', '1'); }catch(e){}
+    try{ localStorage.setItem('pp-welcome-shown', '1'); }catch(e){}
+    // Force close if already opened
+    document.querySelectorAll('.sheet.open').forEach(function(sh){
+      sh.classList.remove('open');
+      sh.style.display = 'none';
+    });
+    var w = document.getElementById('sheet-pp-welcome');
+    if(w){
+      w.classList.remove('open');
+      w.style.display = 'none';
+      var inner = document.getElementById('ppWelcomeView');
+      if(inner) inner.innerHTML = '';
+    }
+    // scroll-lock cleanup
+    try{ document.body.classList.remove('sheet-open','modal-open'); document.body.style.overflow=''; }catch(e){}
+  }
+  suppressPpWelcome();
+  setTimeout(suppressPpWelcome, 200);
+  setTimeout(suppressPpWelcome, 700);
+  setTimeout(suppressPpWelcome, 1500);
+  setTimeout(suppressPpWelcome, 3000);
+
+  // Hook openSheet — if pp-welcome requested, block
+  if(typeof window.openSheet === 'function' && !window.openSheet.__hlbV13){
+    var _origOpen = window.openSheet;
+    window.openSheet = function(id){
+      if(id === 'pp-welcome') return;  // block
+      return _origOpen.apply(this, arguments);
+    };
+    window.openSheet.__hlbV13 = true;
+  }
+  var oshTimer = setInterval(function(){
+    if(typeof window.openSheet === 'function' && !window.openSheet.__hlbV13){
+      var _origOpen = window.openSheet;
+      window.openSheet = function(id){
+        if(id === 'pp-welcome') return;
+        return _origOpen.apply(this, arguments);
+      };
+      window.openSheet.__hlbV13 = true;
+    }
+  }, 200);
+  setTimeout(function(){ clearInterval(oshTimer); }, 5000);
+
+  // ==== Force feed-tabs text via inline style ====
+  function fixFeedTabs(){
+    document.querySelectorAll('.feed-tabs button, [class*="chat-filter"] button, [class*="chat-cat"] button').forEach(function(btn){
+      var isOn = btn.classList.contains('on') || btn.classList.contains('active');
+      if(isOn){
+        btn.style.background = '#FF9500';
+        btn.style.color = '#000';
+        btn.style.fontWeight = '700';
+        btn.style.borderColor = '#FF9500';
+      } else {
+        btn.style.background = 'transparent';
+        btn.style.color = '#fff';
+        btn.style.borderColor = 'rgba(255,255,255,.15)';
+      }
+      // ensure text child readable
+      Array.from(btn.childNodes).forEach(function(n){
+        if(n.style) n.style.color = isOn ? '#000' : '#fff';
+      });
+    });
+  }
+
+  // ==== Kill top-fixed toast notifications that torch above header ====
+  function hideStuckToasts(){
+    document.querySelectorAll('.toast-wrap, [class*="notify-top"], [class*="app-toast"], .app-toast, [class*="wallet-toast"]').forEach(function(el){
+      var r = el.getBoundingClientRect();
+      if(r.top < 20){
+        el.style.top = 'calc(env(safe-area-inset-top, 0px) + 68px)';
+        el.style.zIndex = '90';
+      }
+    });
+  }
+
+  function runAll(){
+    suppressPpWelcome();
+    fixFeedTabs();
+    hideStuckToasts();
+  }
+
+  if(document.readyState === 'loading'){
+    document.addEventListener('DOMContentLoaded', function(){
+      runAll(); setTimeout(runAll, 400); setTimeout(runAll, 1000);
+    });
+  } else {
+    runAll(); setTimeout(runAll, 400); setTimeout(runAll, 1000);
+  }
+  // debounced observer
+  try{
+    var moTimer;
+    new MutationObserver(function(){
+      clearTimeout(moTimer);
+      moTimer = setTimeout(runAll, 200);
+    }).observe(document.body, {childList: true, subtree: true});
+  }catch(e){}
+
+  document.addEventListener('click', function(e){
+    setTimeout(runAll, 150);
+  });
+})();
+</script>
+
+
+<style id="hlb-v14">
+/* v14: kill tour/stories overlays */
+.sheet:not(.hlb-force-open) { display: none !important; }
+#ts, #tsSheet, #trOverlay, #trBackdrop, #trTip,
+[class*="tr-overlay"], [class*="ts-overlay"], .tour-overlay {
+  display: none !important;
+}
+/* if the tour stories screen has a class */
+.tr-open, .ts-open, .tour-open, body.tour-open {
+  overflow: auto !important;
+}
+</style>
+
+
+<script id="hlb-v14-js">
+(function(){
+  'use strict';
+
+  // Set all "seen"/"done" flags so nothing auto-opens
+  function markAllSeen(){
+    var keys = [
+      'oko-tour-done','oko-tour','oko-stories-seen',
+      'pp-welcome-shown-v1','pp-welcome-shown',
+      'oko-onboarded'
+    ];
+    keys.forEach(function(k){ try{ localStorage.setItem(k,'1'); }catch(e){} });
+  }
+  markAllSeen();
+
+  // Force close every sheet and story overlay
+  function closeAllOverlays(){
+    // sheets
+    document.querySelectorAll('.sheet').forEach(function(sh){
+      sh.classList.remove('open');
+      sh.style.display = 'none';
+    });
+    // tour stories overlay
+    ['ts','tsSheet','trOverlay','trBackdrop','trTip'].forEach(function(id){
+      var el = document.getElementById(id);
+      if(el){ el.style.display='none'; el.classList.remove('open','on'); }
+    });
+    // any element with .tr-open / .ts-open class
+    document.querySelectorAll('[class*="tr-open"], [class*="ts-open"], .tour-open').forEach(function(el){
+      el.style.display = 'none';
+    });
+    // scroll unlock
+    try{
+      document.body.classList.remove('sheet-open','modal-open','tour-open');
+      document.body.style.overflow = '';
+      document.documentElement.style.overflow = '';
+    }catch(e){}
+    // set state globals
+    try{ window.trOpen = false; }catch(e){}
+    try{ if(window.TS) window.TS.open = false; }catch(e){}
+  }
+
+  // Override tour/stories functions to no-op
+  function killTour(){
+    var noop = function(){};
+    ['trMaybeAuto','trStart','trStoriesStart','trStoriesShow','trOpenAt','trOpen','trShowStep','showTour','showStories']
+      .forEach(function(fn){
+        try{ if(typeof window[fn] === 'function') window[fn] = noop; }catch(e){}
+      });
+  }
+
+  // Full sweep
+  function sweep(){
+    markAllSeen();
+    closeAllOverlays();
+    killTour();
+  }
+  sweep();
+  var t1 = setTimeout(sweep, 100);
+  var t2 = setTimeout(sweep, 500);
+  var t3 = setTimeout(sweep, 1200);
+  var t4 = setTimeout(sweep, 2200);
+  var t5 = setTimeout(sweep, 3500);
+  // Keep sweeping first 8 seconds every 700ms
+  var swi = setInterval(sweep, 700);
+  setTimeout(function(){ clearInterval(swi); }, 8000);
+
+  // Also on any click — sweep after to catch anything triggered
+  document.addEventListener('click', function(){
+    setTimeout(sweep, 100);
+  });
+})();
+</script>
+
+
+<style id="hlb-v15">
+/* v15 fixes */
+
+/* Toast reposition — force NOT above header */
+.toast-wrap, [class*="notify-top"], [class*="app-toast"], .app-toast,
+[class*="wallet-toast"], .hlb-toast-top {
+  top: calc(env(safe-area-inset-top, 0px) + 68px) !important;
+  z-index: 90 !important;
+}
+
+/* Profile — ensure it renders */
+#screen-profile.active {
+  display: block !important;
+}
+#screen-profile > * {
+  display: block !important;
+}
+#screen-profile .pad {
+  display: block !important;
+  padding: 12px !important;
+}
+#screen-profile .profile-top {
+  display: flex !important;
+  gap: 12px !important;
+  align-items: center !important;
+  padding: 12px !important;
+}
+
+/* Feed tabs — force text visible via ALL selectors */
+.feed-tabs button, .feed-tabs > button {
+  min-width: 100px !important;
+  padding: 10px 20px !important;
+  font-size: 14px !important;
+  font-weight: 700 !important;
+  border-radius: 99px !important;
+}
+.feed-tabs button.on, .feed-tabs > button.on {
+  background: #FF9500 !important;
+  color: #000 !important;
+  border: 1px solid #FF9500 !important;
+  text-shadow: none !important;
+}
+.feed-tabs button:not(.on), .feed-tabs > button:not(.on) {
+  background: transparent !important;
+  color: #fff !important;
+  border: 1px solid rgba(255,255,255,.2) !important;
+}
+</style>
+
+
+<script id="hlb-v15-js">
+(function(){
+  'use strict';
+
+  // === Force feed-tab text visible ===
+  function fixFeedTabs(){
+    var tabs = document.querySelectorAll('.feed-tabs button, .feed-tabs > button');
+    tabs.forEach(function(btn, i){
+      var isOn = btn.classList.contains('on') || btn.classList.contains('active');
+      var txt = (btn.textContent || '').trim();
+      // If empty text — restore from position
+      if (!txt) {
+        // Feed has Подписки and Рекомендации typically
+        var labels = ['Подписки', 'Рекомендации'];
+        btn.textContent = labels[i] || '';
+      }
+      // Force inline color/background
+      if (isOn) {
+        btn.style.setProperty('background', '#FF9500', 'important');
+        btn.style.setProperty('color', '#000', 'important');
+        btn.style.setProperty('font-weight', '700', 'important');
+      } else {
+        btn.style.setProperty('background', 'transparent', 'important');
+        btn.style.setProperty('color', '#fff', 'important');
+        btn.style.setProperty('border', '1px solid rgba(255,255,255,.2)', 'important');
+      }
+    });
+  }
+
+  // === Reposition stuck toasts below header ===
+  function fixToasts(){
+    document.querySelectorAll('.toast-wrap, [class*="notify-top"], [class*="app-toast"], .app-toast, [class*="wallet-toast"], .hlb-toast-top').forEach(function(el){
+      var r = el.getBoundingClientRect();
+      if (r.top < 40) {
+        el.style.setProperty('top', 'calc(env(safe-area-inset-top, 0px) + 68px)', 'important');
+        el.style.setProperty('z-index', '90', 'important');
+      }
+    });
+  }
+
+  // === Force real chats via renderChatList ===
+  function forceChats(){
+    try {
+      if (typeof window.hlbPatchOkoChats === 'function') window.hlbPatchOkoChats();
+      if (typeof window.renderChatList === 'function') {
+        window.renderChatList('');
+      }
+    } catch(e) {}
+  }
+
+  // === Ensure profile renders ===
+  function forceProfile(){
+    var scr = document.getElementById('screen-profile');
+    if (!scr) return;
+    if (scr.classList.contains('active')) {
+      scr.style.setProperty('display', 'block', 'important');
+      scr.querySelectorAll('*').forEach(function(el){
+        if (el.style.display === 'none' && el.dataset.hlbV12Hidden !== '1') {
+          // don't touch unrelated hidden stuff
+        }
+      });
+    }
+  }
+
+  function sweep(){
+    fixFeedTabs();
+    fixToasts();
+    forceChats();
+    forceProfile();
+  }
+  sweep();
+  setTimeout(sweep, 300);
+  setTimeout(sweep, 800);
+  setTimeout(sweep, 1800);
+
+  // Debounced MO
+  try {
+    var t;
+    new MutationObserver(function(){
+      clearTimeout(t);
+      t = setTimeout(sweep, 200);
+    }).observe(document.body, { childList: true, subtree: true });
+  } catch(e) {}
+  document.addEventListener('click', function(){ setTimeout(sweep, 150); });
+})();
+</script>
+
+
+<style id="hlb-v16">
+/* v16 fixes */
+
+/* Kill wallet live toast — permanent */
+#walLive, .wal-live { display: none !important; }
+
+/* Kill upper profile tariff CTA (Даниэль не хочет верхнюю плашку) */
+.hlb-prof-tariff-cta { display: none !important; }
+
+/* Force profAva as real image via ::before */
+#profAva {
+  background-image: url('assets/av/artem_brius.jpg') !important;
+  background-size: cover !important;
+  background-position: center !important;
+  color: transparent !important;
+  text-indent: -9999px !important;
+  overflow: hidden !important;
+  border-radius: 20px !important;
+  border: 3px solid var(--hlb-orange, #FF9500) !important;
+  box-shadow: 0 0 24px rgba(255,149,0,.35) !important;
+}
+/* Also .ava.lime is the class of profAva — override lime */
+.ava.lime#profAva, #profAva.ava.lime, .ava.lime {
+  background-image: url('assets/av/artem_brius.jpg') !important;
+  background-color: transparent !important;
+  background-size: cover !important;
+  background-position: center !important;
+}
+</style>
+
+
+<script id="hlb-v16-js">
+(function(){
+  'use strict';
+
+  // Kill any wallet demo notification
+  try {
+    if (typeof window.walMaybeDemoLive === 'function') {
+      window.walMaybeDemoLive = function(){};
+    }
+    if (typeof window.walLiveNotify === 'function') {
+      window.walLiveNotify = function(){};
+    }
+  } catch(e) {}
+  var interv = setInterval(function(){
+    if (typeof window.walMaybeDemoLive === 'function' && window.walMaybeDemoLive.toString().length > 5) {
+      window.walMaybeDemoLive = function(){};
+    }
+    if (typeof window.walLiveNotify === 'function' && window.walLiveNotify.toString().length > 5) {
+      window.walLiveNotify = function(){};
+    }
+  }, 100);
+  setTimeout(function(){ clearInterval(interv); }, 8000);
+
+  // Remove existing walLive element
+  function killWalLive(){
+    var el = document.getElementById('walLive');
+    if (el) { el.style.display = 'none'; el.remove(); }
+    document.querySelectorAll('.wal-live').forEach(function(e){ e.style.display='none'; e.remove(); });
+  }
+  killWalLive();
+  setInterval(killWalLive, 300);
+
+  // Kill .hlb-prof-tariff-cta (upper tariff plate in profile)
+  function killProfTariffTop(){
+    document.querySelectorAll('.hlb-prof-tariff-cta').forEach(function(el){
+      el.style.display = 'none';
+      el.remove();
+    });
+  }
+  killProfTariffTop();
+  setInterval(killProfTariffTop, 500);
+
+  // Force profAva to real image (replace innerHTML)
+  function forceAva(){
+    var el = document.getElementById('profAva');
+    if (el && el.dataset.hlbV16 !== '1') {
+      el.dataset.hlbV16 = '1';
+      el.innerHTML = '<img src="assets/av/artem_brius.jpg" alt="" style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover;border-radius:inherit;">';
+      el.style.position = 'relative';
+      el.style.overflow = 'hidden';
+      el.style.textIndent = '0';
+    }
+    var ep = document.getElementById('epAva');
+    if (ep && ep.dataset.hlbV16 !== '1') {
+      ep.dataset.hlbV16 = '1';
+      ep.innerHTML = '<img src="assets/av/artem_brius.jpg" alt="" style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover;border-radius:inherit;">';
+      ep.style.position = 'relative';
+      ep.style.overflow = 'hidden';
+    }
+  }
+  forceAva();
+  setTimeout(forceAva, 400);
+  setTimeout(forceAva, 1200);
+  setInterval(forceAva, 700);
+
+  // Force feed-tab text — remove and re-create with proper text
+  function fixFeedTabsHard(){
+    var wrap = document.querySelector('.feed-tabs');
+    if (!wrap) return;
+    var buttons = wrap.querySelectorAll('button');
+    var labels = ['Подписки', 'Рекомендации'];
+    buttons.forEach(function(btn, i){
+      var isOn = btn.classList.contains('on') || btn.classList.contains('active');
+      var t = (btn.textContent || '').trim();
+      if (!t && labels[i]) {
+        btn.textContent = labels[i];
+      }
+      if (isOn) {
+        btn.style.cssText = 'background:#FF9500 !important;color:#000 !important;border:1px solid #FF9500 !important;font-weight:700 !important;padding:10px 20px !important;border-radius:99px !important;';
+      } else {
+        btn.style.cssText = 'background:transparent !important;color:#fff !important;border:1px solid rgba(255,255,255,.2) !important;font-weight:600 !important;padding:10px 20px !important;border-radius:99px !important;';
+      }
+    });
+  }
+  fixFeedTabsHard();
+  setInterval(fixFeedTabsHard, 400);
+})();
+</script>
+
+
+<style id="hlb-v17">
+/* v17 */
+#ppLive, [id="ppLive"] { display: none !important; opacity: 0 !important; pointer-events: none !important; }
+
+/* Force profile avatar as real photo — extreme specificity */
+#screen-profile #profAva,
+#screen-profile .ava.lime,
+.profile-top .ava,
+.profile-top #profAva {
+  background: url('assets/av/artem_brius.jpg') center/cover no-repeat !important;
+  color: transparent !important;
+  font-size: 0 !important;
+  border: 3px solid #FF9500 !important;
+  box-shadow: 0 0 24px rgba(255,149,0,.35) !important;
+  border-radius: 22px !important;
+  overflow: hidden !important;
+}
+#screen-profile #profAva::before,
+.profile-top .ava::before {
+  content: '' !important;
+  position: absolute !important;
+  inset: 0 !important;
+  background: url('assets/av/artem_brius.jpg') center/cover no-repeat !important;
+}
+</style>
+
+
+<script id="hlb-v17-js">
+(function(){
+  'use strict';
+
+  // Kill ppLive scheduling + node
+  function killPpLive(){
+    try {
+      if (typeof window.scheduleLiveNotif === 'function') window.scheduleLiveNotif = function(){};
+      if (typeof window.showLive === 'function') window.showLive = function(){};
+    } catch(e) {}
+    var el = document.getElementById('ppLive');
+    if (el) {
+      el.classList.remove('on');
+      el.style.display = 'none';
+      el.style.opacity = '0';
+      el.style.pointerEvents = 'none';
+    }
+    window.__ppLivePlanned = true; // prevent re-schedule
+  }
+  killPpLive();
+  setInterval(killPpLive, 300);
+
+  // Force real avatar for profile — aggressive
+  function forceAvaHard(){
+    var el = document.getElementById('profAva');
+    if (el) {
+      if (el.querySelector('img[data-hlb-v17]')) return;
+      // Nuke content + inject img
+      el.innerHTML = '<img data-hlb-v17="1" src="assets/av/artem_brius.jpg" alt="" style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover;border-radius:inherit;z-index:2">';
+      el.style.position = 'relative';
+      el.style.overflow = 'hidden';
+      el.style.color = 'transparent';
+      el.style.fontSize = '0';
+      el.classList.remove('lime');
+    }
+    var ep = document.getElementById('epAva');
+    if (ep) {
+      if (!ep.querySelector('img[data-hlb-v17]')) {
+        ep.innerHTML = '<img data-hlb-v17="1" src="assets/av/artem_brius.jpg" alt="" style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover;border-radius:inherit;z-index:2">';
+        ep.style.position = 'relative';
+        ep.style.overflow = 'hidden';
+        ep.style.color = 'transparent';
+        ep.style.fontSize = '0';
+      }
+    }
+  }
+  forceAvaHard();
+  setInterval(forceAvaHard, 400);
+
+  // Feed-tab fix: check first button HTML
+  function fixFeedTabsV17(){
+    var wrap = document.querySelector('.feed-tabs');
+    if (!wrap) return;
+    var buttons = wrap.querySelectorAll('button');
+    if (buttons.length === 0) return;
+    // Detect which is active based on class
+    // In OKO: <button class="on" onclick="feedTab(this,'sub')">Подписки</button>
+    //         <button onclick="feedTab(this,'rec')">Рекомендации</button>
+    var labels = ['Подписки', 'Рекомендации'];
+    buttons.forEach(function(btn, i){
+      // Read what onclick says
+      var oc = btn.getAttribute('onclick') || '';
+      var label = labels[i] || '';
+      if (/sub/i.test(oc)) label = 'Подписки';
+      if (/rec/i.test(oc)) label = 'Рекомендации';
+      // Set text WITHOUT touching svg icons
+      var textNode = null;
+      Array.from(btn.childNodes).forEach(function(n){
+        if (n.nodeType === 3) textNode = n;
+      });
+      if (textNode) {
+        if (!textNode.textContent.trim()) textNode.textContent = ' ' + label;
+      } else {
+        // No text node — add one
+        btn.appendChild(document.createTextNode(' ' + label));
+      }
+      // Force clean style — no icons that could hide text
+      var isOn = btn.classList.contains('on') || btn.classList.contains('active');
+      btn.style.cssText = (
+        'background:' + (isOn ? '#FF9500' : 'transparent') + ' !important;' +
+        'color:' + (isOn ? '#000' : '#fff') + ' !important;' +
+        'border:1px solid ' + (isOn ? '#FF9500' : 'rgba(255,255,255,.2)') + ' !important;' +
+        'font-weight:700 !important;' +
+        'padding:10px 20px !important;' +
+        'border-radius:99px !important;' +
+        'font-size:14px !important;' +
+        'display:inline-flex !important;' +
+        'align-items:center !important;' +
+        'gap:6px !important;'
+      );
+      // svg color inherit
+      btn.querySelectorAll('svg').forEach(function(sv){
+        sv.style.color = 'inherit';
+        sv.style.fill = 'currentColor';
+      });
+    });
+  }
+  fixFeedTabsV17();
+  setInterval(fixFeedTabsV17, 350);
+})();
+</script>
+
+
+<style id="hlb-v18">
+/* v18 */
+
+/* Force pp2-ava as real photo (visible profile avatar) */
+.pp2-ava, button.pp2-ava {
+  background: url('assets/av/artem_brius.jpg') center/cover no-repeat !important;
+  color: transparent !important;
+  font-size: 0 !important;
+  text-indent: -9999px !important;
+  overflow: hidden !important;
+  border: 3px solid #FF9500 !important;
+  box-shadow: 0 0 24px rgba(255,149,0,.35) !important;
+  border-radius: 22px !important;
+  position: relative !important;
+}
+
+/* Feed-tabs: force text alignment + wrapping */
+.feed-tabs button {
+  text-align: center !important;
+  white-space: nowrap !important;
+  justify-content: center !important;
+  align-items: center !important;
+  line-height: 1 !important;
+}
+</style>
+
+
+<script id="hlb-v18-js">
+(function(){
+  'use strict';
+
+  // Force pp2-ava
+  function forcePp2Ava(){
+    document.querySelectorAll('.pp2-ava, button.pp2-ava').forEach(function(el){
+      if (el.dataset.hlbV18 === '1') return;
+      el.dataset.hlbV18 = '1';
+      el.innerHTML = '<img data-hlb-v18="1" src="assets/av/artem_brius.jpg" alt="" style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover;border-radius:inherit;z-index:2">';
+      el.style.color = 'transparent';
+      el.style.textIndent = '0';
+    });
+  }
+  forcePp2Ava();
+  setInterval(forcePp2Ava, 500);
+
+  // Feed-tab center + nowrap + text visible
+  function fixFeedTabText(){
+    document.querySelectorAll('.feed-tabs button').forEach(function(btn){
+      btn.style.setProperty('text-align','center','important');
+      btn.style.setProperty('white-space','nowrap','important');
+      btn.style.setProperty('justify-content','center','important');
+      btn.style.setProperty('align-items','center','important');
+      btn.style.setProperty('line-height','1','important');
+      // preserve font
+      btn.style.setProperty('font-family','system-ui,-apple-system,sans-serif','important');
+    });
+  }
+  fixFeedTabText();
+  setInterval(fixFeedTabText, 400);
+})();
+</script>
+
 </body>
 </html>
 
