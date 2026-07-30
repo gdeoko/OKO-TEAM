@@ -3,6 +3,9 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, interactive-widget=resizes-content">
+<meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+<meta http-equiv="Pragma" content="no-cache">
+<meta http-equiv="Expires" content="0">
 <title>ХЛБ APP</title>
 <meta name="theme-color" content="#000000">
 <meta name="mobile-web-app-capable" content="yes">
@@ -1467,7 +1470,7 @@ button:focus-visible,a:focus-visible,input:focus-visible,textarea:focus-visible,
 <!-- ============ ХЛБ LAZY BUNDLE LOADER ============ -->
 <link rel="stylesheet" href="app.css" media="print" onload="this.media='all'">
 <noscript><link rel="stylesheet" href="app.css"></noscript>
-<script defer src="app.js?v=27"></script>
+<script defer src="app.js?v=28"></script>
 <script>
 /* Обёртки над встроенными в base.html функциями — для авто-трека page_view / share.
    showTab существует в inline-скрипте base.html, поэтому оборачиваем по мере
@@ -3173,7 +3176,7 @@ button:focus-visible,a:focus-visible,input:focus-visible,textarea:focus-visible,
       <button class="far-back" type="button" aria-label="Закрыть клипы" onclick="faReelsClose()">
         <svg class="i"><use href="#i-back"/></svg>
       </button>
-      <span class="far-heading">Клипы</span>
+      <span class="far-heading">Ролики</span>
       <span class="far-count" id="farCount" aria-hidden="true"></span>
     </div>
   </div>
@@ -10364,6 +10367,53 @@ nav#tabs .nav-logo span{ color:#fff !important; font-weight:900 !important }
 [class*="-amount"], [class*="balance"], [class*="-sum"]{
   white-space:nowrap; font-variant-numeric:tabular-nums;
 }
+</style>
+
+<style id="hlb-v27">
+/* ============================================================
+   v27 — УБРАТЬ ДЁРГАНЬЕ/ДВОЕНИЕ/«ПОДНИМАЕТСЯ» ПРИ ПЕРЕКЛЮЧЕНИИ.
+   Корень: экраны (.screen.active → screenIn) и карточки (wm-reveal)
+   проигрывают анимацию ВХОДА при КАЖДОМ переключении вкладки →
+   контент «въезжает»/двоится/дёргается. В Telegram так не бывает —
+   всё загружено и переключается мгновенно. Делаем переходы мгновенными,
+   карточки всегда видимы (без каскада появления на входе).
+   ============================================================ */
+main>.screen.active, .screen.active{ animation:none !important; }
+#app.conv-open .conv{ animation:none !important; }
+/* wm-reveal: элементы сразу видимы (не прячем в opacity:0/translate) */
+.wm-r, .wm-r.wm-in,
+.card, .stat, .plan, .svc, .chat-item, .prow, .post, .reel-card{
+  opacity:1 !important;
+  transform:none !important;
+  animation:none !important;
+}
+
+/* ---- Правило высоты TG-бара для ОСТАВШИХСЯ fullscreen-оверлеев ----
+   Подстраницы профиля (pp2) и юр-документы живут вне #app и в fullscreen
+   заезжают под нативный бар. Прижимаем контейнер вплотную под бар. */
+#pp2Nav > .pp2-page,
+#legalView{
+  padding-top: var(--hlb-safe-top, env(safe-area-inset-top,0px)) !important;
+  box-sizing: border-box !important;
+}
+/* внутренние шапки этих вьюх — тоже с учётом инсета (belt-and-suspenders) */
+.pp2-head, .lg-doc-head{
+  top: 0 !important;
+}
+
+/* ---- Мини-аппы: убрать пустую черноту снизу (контент тянется на всю высоту) ---- */
+.hlb-appview{ display:flex !important; flex-direction:column !important; }
+.hlb-av-body{ flex:1 1 auto !important; min-height:0 !important; }
+
+/* ---- РОЛИКИ = лента Shorts/TikTok, НЕ сторис ----
+   Убираем story-сегменты сверху; верхний хром не залезает на бар Telegram;
+   бесконечный вертикальный свайп (логика в app.js). */
+#faReels .far-seg{ display:none !important; }
+#faReels .far-top{
+  padding-top: calc(var(--hlb-safe-top, env(safe-area-inset-top,0px)) + 6px) !important;
+  background: linear-gradient(180deg, rgba(0,0,0,.55), transparent) !important;
+}
+#faReels .far-topbar{ padding-top:0 !important; }
 </style>
 </body>
 </html>
