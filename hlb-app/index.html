@@ -10684,6 +10684,47 @@ input[type="search"]:focus, input[type="text"]:focus {
     }
   }
   setTimeout(hideSplash, 1200);
+  // ============== AUTO-LOGIN (TG WebApp or ?guest=1) ==============
+  function autoLogin(){
+    try{
+      var isTG = !!(window.Telegram && window.Telegram.WebApp && window.Telegram.WebApp.initData);
+      var isGuest = /[?&]guest=1/.test(location.search) || /[?&]bypass=1/.test(location.search);
+      var already = false;
+      try{ already = !!localStorage.getItem('oko-auth'); }catch(e){}
+      if(!already && (isTG || isGuest)){
+        try{ localStorage.setItem('oko-auth', isTG ? 'telegram' : 'guest'); }catch(e){}
+        try{ localStorage.setItem('oko-onboarded','1'); }catch(e){}
+        var auth = document.getElementById('authScreen');
+        if(auth) auth.classList.add('hidden');
+        var ob = document.getElementById('onboard');
+        if(ob) ob.classList.add('hidden');
+        // Kick app init
+        try{ if(typeof initLive === 'function') initLive(); }catch(e){}
+      }
+    }catch(e){}
+  }
+  autoLogin();
+  setTimeout(autoLogin, 400);
+  setTimeout(autoLogin, 1500);
+
+  // ============== TAB from URL (?tab=chats etc) ==============
+  function tabFromUrl(){
+    try{
+      var m = /[?&]tab=([a-z_-]+)/i.exec(location.search);
+      if(!m) return;
+      var t = m[1];
+      if(typeof window.showTab === 'function'){
+        setTimeout(function(){ try{ window.showTab(t); }catch(e){} }, 250);
+        setTimeout(function(){ try{ window.showTab(t); }catch(e){} }, 900);
+      }
+    }catch(e){}
+  }
+  tabFromUrl();
+  setTimeout(tabFromUrl, 1000);
+
+
+
+
   setTimeout(hideSplash, 2500);
   window.addEventListener('load', function(){ setTimeout(hideSplash, 800); });
 
