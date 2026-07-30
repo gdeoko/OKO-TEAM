@@ -116,9 +116,28 @@ html body{padding-top:0 !important}
 </head>
 <body<?= $u ? ' class="is-auth"' : '' ?>>
 <div class="app-bg" aria-hidden="true">
+  <video class="app-bg-video" id="appBgVideo" autoplay muted loop playsinline preload="auto"
+         poster="<?= asset('video/bg-poster.jpg') ?>">
+    <source src="<?= asset('video/bg-loop.webm') ?>" type="video/webm">
+    <source src="<?= asset('video/bg-loop.mp4') ?>" type="video/mp4">
+  </video>
+  <span class="app-bg-tint"></span>
   <span class="ab-stars"></span>
   <span class="ab-fly">&#9835;</span><span class="ab-fly">&#9834;</span><span class="ab-fly">&#119070;</span><span class="ab-fly">&#9833;</span><span class="ab-fly">&#9835;</span><span class="ab-fly">&#9834;</span><span class="ab-fly">&#9836;</span><span class="ab-fly">&#9835;</span>
 </div>
+<script>
+/* Видео-фон: не грузим при экономии трафика / reduced-motion; мягкое появление; гарантируем autoplay */
+(function(){
+  var v=document.getElementById('appBgVideo'); if(!v) return;
+  var c=navigator.connection||{}; var save=c.saveData===true;
+  var rm=window.matchMedia&&matchMedia('(prefers-reduced-motion: reduce)').matches;
+  if(save||rm){ v.removeAttribute('autoplay'); v.remove(); return; }
+  v.addEventListener('playing',function(){ v.classList.add('on'); });
+  var tryPlay=function(){ var p=v.play&&v.play(); if(p&&p.catch) p.catch(function(){}); };
+  tryPlay();
+  ['pointerdown','touchstart','click'].forEach(function(ev){document.addEventListener(ev,function h(){tryPlay();document.removeEventListener(ev,h,true);},true);});
+})();
+</script>
 
 <header class="header app-header"><div class="container">
   <a class="brand" href="<?= url('/') ?>">

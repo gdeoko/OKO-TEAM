@@ -1855,6 +1855,26 @@ body{background:transparent !important}
     radial-gradient(90% 60% at 50% 108%, rgba(122,21,34,.28), transparent 60%),
     linear-gradient(170deg,#0C1738 0%,#0A1330 55%,#0B1024 100%) !important}
 
+/* ── ЖИВОЙ ВИДЕО-ФОН (золотое боке на синем) + тематический тинт ─────────── */
+.app-bg-video{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;z-index:1;
+  opacity:0;transition:opacity 1.4s ease;pointer-events:none}
+.app-bg-video.on{opacity:.9}
+[data-theme="dark"] .app-bg-video.on{opacity:.85}
+/* Светлая тема: screen-блендинг — тёмный фон видео исчезает, остаётся ЗОЛОТОЕ боке,
+   светящееся по кремовому. Так видео реально видно и на светлой теме. */
+:root:not([data-theme="dark"]) .app-bg-video{mix-blend-mode:screen}
+:root:not([data-theme="dark"]) .app-bg-video.on{opacity:1}
+/* Тинт под видео: задаёт тему (айвори / полночь), делает текст читаемым */
+.app-bg-tint{position:absolute;inset:0;z-index:0;pointer-events:none;
+  background:linear-gradient(168deg, #FBF5E9 0%, #F5EBD2 52%, #EFE3C2 100%)}
+[data-theme="dark"] .app-bg-tint{
+  background:linear-gradient(168deg, rgba(10,19,48,.55) 0%, rgba(12,23,56,.68) 52%, rgba(8,13,32,.8) 100%)}
+/* Старую CSS-аврору и нотные тайлы гасим — движение теперь даёт видео */
+.app-bg::before,.app-bg::after{display:none !important}
+/* Звёзды и летящие ноты — поверх видео/тинта (по DOM-порядку), z над тинтом */
+.app-bg .ab-stars{z-index:2}
+.app-bg .ab-fly{z-index:3}
+
 /* Слой авроры — медленно дышащие золото/сапфир пятна */
 .app-bg::before{content:"" !important;position:absolute !important;inset:-16% !important;
   background:
@@ -2029,3 +2049,69 @@ body.mz-cart-open .mz-radio{display:none !important}
 .btn--primary,.btn.btn--gold,.btn-primary{background:var(--grad-gold) !important;color:var(--gold-fg) !important;
   border:none !important;box-shadow:var(--shadow-btn) !important;font-weight:800}
 .btn--primary:active{transform:translateY(1px)}
+
+/* ══════════════════════════════════════════════════════════════════════════
+   APP-РЕЖИМ v7 — СТЕКЛО вместо белого, 3D-медальоны-иконки, богатые обложки.
+   Живёт поверх видео-фона. Авторитетный слой (в самом низу файла).
+   ══════════════════════════════════════════════════════════════════════════ */
+:root{ --glass-card:rgba(255,253,247,.56); --glass-brd2:rgba(180,130,28,.34); --sheen:rgba(255,255,255,.6); }
+[data-theme="dark"]{ --glass-card:rgba(15,27,62,.52); --glass-brd2:rgba(226,190,96,.30); --sheen:rgba(255,255,255,.10); }
+
+/* Карточки — матовое стекло (видео-фон мягко мерцает по краям), никакого чистого белого */
+.card,.comp-card,.menu-tile,.shop-card,.about-card,.ministry-card,.cc-card,.result-card,
+.faq-item,.quick-actions,.kpi,.kpis .kpi,.hero-stat,.stat,.auth-shell,.auth-page .card,
+.step-card,.card--letter,.pub-card,.notif-card,.setting-card,.profile-card,.cabinet-card,
+.review-card,.blog-card,.concert-card{
+  background:var(--glass-card) !important;
+  -webkit-backdrop-filter:blur(20px) saturate(1.35);backdrop-filter:blur(20px) saturate(1.35);
+  border:1px solid var(--glass-brd2) !important;
+  box-shadow:0 16px 44px rgba(21,34,76,.16), inset 0 1px 0 var(--sheen) !important}
+
+/* Поля ввода — тоже стекло, не белые */
+input:not([type=checkbox]):not([type=radio]):not([type=range]),textarea,select{
+  background:color-mix(in srgb, var(--panel-solid) 32%, transparent) !important;
+  -webkit-backdrop-filter:blur(8px);backdrop-filter:blur(8px);
+  border:1px solid var(--glass-brd2) !important;color:var(--text) !important}
+input::placeholder,textarea::placeholder{color:color-mix(in srgb,var(--muted) 80%,transparent)}
+
+/* Вторичные кнопки (были белые) — стекло + золотая обводка */
+.btn--ghost,.btn--secondary,.btn--outline,.btn--light,.btn.is-ghost,.btn-ghost{
+  background:var(--glass-card) !important;border:1px solid var(--glass-brd2) !important;
+  color:var(--text) !important;-webkit-backdrop-filter:blur(12px);backdrop-filter:blur(12px);
+  box-shadow:0 8px 22px rgba(21,34,76,.12) !important}
+
+/* 3D золотые медальоны вместо плоских квадратов-иконок */
+.menu-tile-ic,.shop-ic,.kpi-ic,.step-ic,.about-ic,.stat-ic,.setting-ic{
+  border-radius:50% !important;
+  background:radial-gradient(circle at 34% 26%, #FCEFB8 0%, #EAC768 30%, #C9931F 64%, #99680E 100%) !important;
+  color:#182350 !important;border:1px solid rgba(255,240,190,.6) !important;
+  box-shadow:0 8px 18px rgba(154,107,16,.42), inset 0 2px 3px rgba(255,255,255,.75), inset 0 -3px 7px rgba(120,80,10,.5) !important}
+.menu-tile-ic svg,.shop-ic svg,.kpi-ic svg{filter:drop-shadow(0 1px 0 rgba(255,255,255,.5))}
+/* Иконки шапки/иконки-кнопки — маленькие золотые медальоны */
+.app-icon-btn{border-radius:50% !important;
+  background:radial-gradient(circle at 34% 28%, #FBEEB6 0%, #E9C566 34%, #C79322 70%) !important;
+  color:#182350 !important;border:1px solid rgba(255,240,190,.55) !important;
+  box-shadow:0 4px 12px rgba(154,107,16,.35), inset 0 1px 2px rgba(255,255,255,.7) !important}
+[data-theme="dark"] .app-icon-btn{color:#12183A !important}
+
+/* Богатые обложки конкурсов/наград: royal→gold + большой клеф + бегущий блик */
+.comp-banner,.cc-cover,.concert-cover,.ms-cover{position:relative;overflow:hidden;
+  background:linear-gradient(135deg,#17307A 0%,#24499F 40%,#C79322 105%) !important;
+  border:1px solid rgba(255,240,190,.32) !important}
+.comp-banner::before,.cc-cover::before,.concert-cover::before,.ms-cover::before{
+  content:"\266B";position:absolute;right:-4px;bottom:-30px;font-size:135px;line-height:1;
+  color:rgba(255,244,210,.20);transform:rotate(-8deg);pointer-events:none}
+.comp-banner::after,.cc-cover::after,.concert-cover::after,.ms-cover::after{
+  content:"";position:absolute;top:0;left:-65%;width:42%;height:100%;pointer-events:none;
+  background:linear-gradient(100deg,transparent,rgba(255,255,255,.32),transparent);
+  transform:skewX(-18deg);animation:coverSheen 6s ease-in-out infinite}
+@keyframes coverSheen{0%,70%{left:-65%}100%{left:135%}}
+@media(prefers-reduced-motion:reduce){.comp-banner::after,.cc-cover::after,.concert-cover::after,.ms-cover::after{animation:none;display:none}}
+
+/* Hero-текст читаем поверх видео */
+.hero h1,.hero .lead,.section-head h2,.menu-head h1,.menu-head .menu-sub{text-shadow:0 1px 14px rgba(255,250,235,.55)}
+[data-theme="dark"] .hero h1,[data-theme="dark"] .hero .lead,[data-theme="dark"] .section-head h2,
+[data-theme="dark"] .menu-head h1,[data-theme="dark"] .menu-head .menu-sub{text-shadow:0 2px 18px rgba(0,0,0,.6)}
+
+/* Любые чисто-белые утилиты — в стекло */
+.bg-white,.is-white,.card--white{background:var(--glass-card) !important}
