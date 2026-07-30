@@ -53503,3 +53503,52 @@ window.chCompose = chCompose; window.chLessonDraft = chLessonDraft;
   };
   document.documentElement.dataset.viral = '1';
 })();
+
+/* ============================================================
+   v27.1 (правка Даниэля: «нижнее меню дёргается/лагает»).
+   Корень: десятки обёрток showTab перерисовывают экран (renderWallet,
+   renderChatList, renderMyProfile, adsRender, gmRender и т.п.) при КАЖДОМ
+   переключении вкладки → тяжёлый ре-рендер = хитч/дёрганье.
+   Как в Telegram: рендерим экран ОДИН раз (лениво при первом заходе),
+   дальше просто показываем/прячем — без перерисовки, с памятью скролла.
+   Экраны обновляются событиями (walletNotifyRender, realtime, смена тарифа),
+   а не переключением вкладки, поэтому пропуск ре-рендера безопасен.
+   ============================================================ */
+(function lazyTabSwitch(){
+  try{
+    if(typeof window.showTab !== 'function') return;
+    var _full = window.showTab;   // полная цепочка (рендерит экран один раз)
+    var _seen = {};               // какие табы уже отрисованы
+    var _scroll = {};             // память позиции скролла на вкладку
+    function scroller(){ return document.querySelector('main') || document.scrollingElement; }
+    function curTab(){ var a=document.querySelector('.screen.active'); return a ? a.id.replace('screen-','') : null; }
+    function saveScroll(){ try{ var c=curTab(), m=scroller(); if(c && m) _scroll[c]=m.scrollTop; }catch(e){} }
+    function restoreScroll(t){ try{ var m=scroller(); if(m) m.scrollTop = _scroll[t]||0; }catch(e){} }
+    function lightSwitch(t, sc){
+      var scr = document.querySelectorAll('.screen');
+      for(var i=0;i<scr.length;i++) scr[i].classList.remove('active');
+      sc.classList.add('active');
+      var nav = document.getElementById('tabs');
+      if(nav){ var bs=nav.querySelectorAll('button'); for(var j=0;j<bs.length;j++) bs[j].classList.toggle('active', bs[j].dataset.t===t); }
+      try{ var st=document.getElementById('screenTitle'); if(st && typeof TITLES!=='undefined' && TITLES[t]) st.textContent = TITLES[t]; }catch(e){}
+      try{ if(typeof closeSheet==='function') closeSheet(); }catch(e){}
+      try{ var mm=document.getElementById('msgMenu'); if(mm && mm.classList.contains('open') && typeof closeMsgMenu==='function') closeMsgMenu(); }catch(e){}
+    }
+    window.showTab = function(t){
+      var sc = document.getElementById('screen-'+t);
+      /* уже на этом табе — ничего не перерисовываем (только уборка sheet'ов) */
+      if(sc && sc.classList.contains('active')){
+        try{ if(typeof closeSheet==='function') closeSheet(); }catch(e){}
+        return;
+      }
+      saveScroll();
+      /* таб уже рендерился → лёгкое show/hide без перерисовки (нет дёрганья) */
+      if(sc && _seen[t]){ lightSwitch(t, sc); restoreScroll(t); return; }
+      /* первый заход на таб — полный рендер ОДИН раз */
+      var r = _full.apply(this, arguments);
+      if(sc) _seen[t] = 1;
+      restoreScroll(t);
+      return r;
+    };
+  }catch(e){}
+})();
