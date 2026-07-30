@@ -12752,6 +12752,138 @@ body.sheet-open, body.modal-open {
 })();
 </script>
 
+
+<style id="hlb-v22">
+/* v22 */
+
+/* Feed-tabs: smaller to fit 4 elements on 390px viewport */
+#screen-feed .feed-tabs, .feed-tabs {
+  padding: 10px 10px 6px !important;
+  gap: 5px !important;
+}
+#screen-feed .feed-tabs > button, .feed-tabs > button {
+  padding: 6px 10px !important;
+  font-size: 11px !important;
+  font-weight: 800 !important;
+  min-height: 32px !important;
+  letter-spacing: -.01em !important;
+}
+#screen-feed .feed-tabs > button.hlb-refresh-btn,
+.feed-tabs > button.hlb-refresh-btn {
+  padding: 6px 8px !important;
+  min-width: 32px !important;
+  min-height: 32px !important;
+}
+</style>
+
+
+<script id="hlb-v22-js">
+(function(){
+  'use strict';
+
+  var REAL_CHANNELS = [
+    { name: 'Артём Бриус',          preview: 'Артём: Привет. Как настроение? Расскажи, чем занят.', time: 'сейчас',  ava: 'assets/av/gdebrius.jpg',      verified: true, unread: 1 },
+    { name: 'ХЛБ',                  preview: 'Артём: Мне стыдно за всё происходящее. Хочу это исправить.', time: '20:04', ava: 'assets/av/hlb.jpg',       verified: true, unread: 3 },
+    { name: 'Артём Бриус · канал',  preview: 'Артём: Полнейшая пересборка. В коробках склада…', time: 'сегодня',   ava: 'assets/av/artem_brius.jpg', verified: true, unread: 0 },
+    { name: 'Бриус',                preview: 'Артём: Финальная часть моего перформанса. Жмите.', time: 'вчера', ava: 'assets/av/brius.jpg',       verified: true, unread: 0 },
+    { name: 'КИТОВАРКА',            preview: 'Товарный бизнес с Китаем 🇨🇳',                 time: 'вчера', ava: 'assets/av/kitovarka.jpg',   verified: false, unread: 0 },
+    { name: 'ХЛБ / отзывы',         preview: 'Мария: После ХЛБ жизнь уже не станет прежней.', time: 'сегодня', ava: 'assets/av/hlb_reviews.jpg', verified: false, unread: 1 },
+    { name: 'Бриус / отзывы',       preview: 'Дмитрий: 269 подписчиков → 17 800.',            time: 'ср',    ava: 'assets/av/brius_reviews.jpg', verified: false, unread: 0 },
+    { name: 'Nihaodrop',            preview: 'Влад: +9 600 ₽ на второй день. Работает!',      time: 'ср',    ava: 'assets/av/brius_mentor.jpg', verified: true, unread: 0 },
+    { name: 'briusMentor',          preview: 'Ментор Артёма — заявки на разбор',              time: '3 д',   ava: 'assets/av/brius_mentor.jpg', verified: true, unread: 0 }
+  ];
+
+  function esc(t){ return String(t||'').replace(/[<>&"']/g, function(c){return {'<':'&lt;','>':'&gt;','&':'&amp;','"':'&quot;',"'":'&#39;'}[c];}); }
+
+  function patchChatDom(){
+    var list = document.getElementById('chatList');
+    if (!list) return;
+    var items = list.querySelectorAll('.chat-item');
+    if (!items.length) return;
+    var idx = 0;
+    items.forEach(function(el){
+      var t = (el.textContent||'').trim();
+      if (/Общий чат ХЛБ|Избранное/i.test(t)) return;
+      if (idx >= REAL_CHANNELS.length) {
+        el.style.display = 'none'; return;
+      }
+      var ch = REAL_CHANNELS[idx];
+      var verBadge = ch.verified
+        ? ' <svg width="13" height="13" viewBox="0 0 24 24" fill="#1DA1F2" style="vertical-align:-2px"><path d="M12 2l2.4 1.6L17 3l1 2.6L20.6 7l-.6 2.8L22 12l-2 2.2.6 2.8L18 18l-1 2.6-2.6-.6L12 22l-2.4-1.6L7 21l-1-2.6L3.4 17 4 14.2 2 12l2-2.2L3.4 7 6 6l1-2.6L9.6 4z"/><path d="M8.5 12.5l2.5 2.5 5-5" stroke="#fff" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg>'
+        : '';
+      var badge = ch.unread ? '<span class="badge" style="background:#FF9500;color:#000;min-width:22px;height:22px;border-radius:11px;font-weight:800;font-size:12px;display:inline-flex;align-items:center;justify-content:center;padding:0 6px">'+ch.unread+'</span>' : '';
+      el.innerHTML =
+        '<div class="ci-ava" style="width:52px;height:52px;flex-shrink:0">' +
+          '<img src="' + ch.ava + '" alt="" style="width:100%;height:100%;object-fit:cover;border-radius:50%;border:2px solid rgba(255,149,0,.2)">' +
+        '</div>' +
+        '<div class="meta" style="flex:1;min-width:0">' +
+          '<div class="row1" style="display:flex;justify-content:space-between;align-items:center;gap:6px">' +
+            '<span class="name" style="color:#fff;font-weight:700;font-size:15px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">' + esc(ch.name) + verBadge + '</span>' +
+            '<span class="time" style="color:rgba(255,255,255,.5);font-size:12px;flex-shrink:0">' + esc(ch.time) + '</span>' +
+          '</div>' +
+          '<div class="row1" style="display:flex;justify-content:space-between;align-items:center;gap:6px;margin-top:2px">' +
+            '<span class="preview" style="color:rgba(255,255,255,.55);font-size:13px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">' + esc(ch.preview) + '</span>' +
+            badge +
+          '</div>' +
+        '</div>';
+      el.style.padding = '12px 16px';
+      el.style.gap = '12px';
+      el.dataset.hlbV22 = idx.toString();
+      idx++;
+    });
+  }
+
+  // Hook renderChatList to post-patch
+  function hookRender(){
+    if (typeof window.renderChatList !== 'function') return false;
+    if (window.renderChatList.__hlbV22) return true;
+    var orig = window.renderChatList;
+    window.renderChatList = function(){
+      try { orig.apply(this, arguments); } catch(e) {}
+      setTimeout(patchChatDom, 20);
+      setTimeout(patchChatDom, 200);
+    };
+    window.renderChatList.__hlbV22 = true;
+    return true;
+  }
+
+  var hookT = setInterval(function(){ if (hookRender()) clearInterval(hookT); }, 100);
+  setTimeout(function(){ clearInterval(hookT); }, 5000);
+
+  patchChatDom();
+  setTimeout(patchChatDom, 400);
+  setTimeout(patchChatDom, 1200);
+  setTimeout(patchChatDom, 2500);
+
+  // MutationObserver on #chatList
+  var mo = new MutationObserver(function(muts){
+    // Debounced
+    clearTimeout(window.__hlbV22Mo);
+    window.__hlbV22Mo = setTimeout(patchChatDom, 30);
+  });
+  function attachMo(){
+    var list = document.getElementById('chatList');
+    if (list) {
+      try { mo.observe(list, { childList: true, subtree: true }); } catch(e) {}
+      return true;
+    }
+    return false;
+  }
+  attachMo();
+  setTimeout(attachMo, 500);
+  setTimeout(attachMo, 1500);
+  setTimeout(attachMo, 3000);
+
+  document.addEventListener('click', function(e){
+    var t = e.target && e.target.closest && e.target.closest('nav#tabs button[data-t="chats"], nav#tabs button[data-t]');
+    if (t) {
+      setTimeout(patchChatDom, 200);
+      setTimeout(patchChatDom, 800);
+    }
+  });
+})();
+</script>
+
 </body>
 </html>
 
