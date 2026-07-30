@@ -51,10 +51,16 @@ if ($u) {
                    WHERE a.user_id=? ORDER BY a.created_at DESC", [(int)$u['id']]);
 }
 
-/** Путь к фото образца, если загружено (public/assets/img/awards/<slug>.jpg). */
-function award_photo(string $slug): ?string {
-    $rel = 'img/awards/' . $slug . '.jpg';
-    return is_file(BASE_PATH . '/public/assets/' . $rel) ? asset($rel) : null;
+/** Фото образца: сначала под конкретный конкурс (img/awards/<compId>/<slug>.jpg),
+ *  затем общий (img/awards/<slug>.jpg), иначе null (фолбэк на медальон). */
+function award_photo(string $slug, int $compId = 0): ?string {
+    $cands = [];
+    if ($compId) $cands[] = "img/awards/$compId/$slug.jpg";
+    $cands[] = "img/awards/$slug.jpg";
+    foreach ($cands as $rel) {
+        if (is_file(BASE_PATH . '/public/assets/' . $rel)) return asset($rel);
+    }
+    return null;
 }
 
 ob_start(); ?>
@@ -80,7 +86,9 @@ ob_start(); ?>
         </div>
         <div class="aw-comp-body">
           <h3 class="aw-comp-name"><?= h($c['name']) ?></h3>
-          <p class="aw-comp-sub"><?= h(mb_strimwidth((string)($c['direction'] ?: 'Многожанровый'),0,40,'…')) ?></p>
+          <?php $dirMap=['multi'=>'Многожанровый','patriotic'=>'Патриотический','vocal'=>'Вокал','instrumental'=>'Инструментальный','dance'=>'Хореография','art'=>'ИЗО и ДПИ'];
+                $dir = $dirMap[(string)$c['direction']] ?? ($c['direction'] ?: 'Многожанровый'); ?>
+          <p class="aw-comp-sub"><?= h(mb_strimwidth((string)$dir,0,40,'…')) ?></p>
           <span class="aw-comp-go">Выбрать награды
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
           </span>
@@ -113,7 +121,7 @@ ob_start(); ?>
         $m = $meta[$item] ?? ['ic'=>'diploma','slug'=>'diploma','tag'=>'','desc'=>''];
         $kinds = $catalog[$item];
         $ic = $icons[$m['ic']] ?? $icons['diploma'];
-        $photo = award_photo($m['slug']);
+        $photo = award_photo($m['slug'], (int)$selComp['id']);
         $minPrice = min($kinds);
       ?>
       <article class="shop-card aw-card reveal" data-item="<?= h($item) ?>">
