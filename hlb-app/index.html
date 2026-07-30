@@ -1470,7 +1470,7 @@ button:focus-visible,a:focus-visible,input:focus-visible,textarea:focus-visible,
 <!-- ============ ХЛБ LAZY BUNDLE LOADER ============ -->
 <link rel="stylesheet" href="app.css" media="print" onload="this.media='all'">
 <noscript><link rel="stylesheet" href="app.css"></noscript>
-<script defer src="app.js?v=29"></script>
+<script defer src="app.js?v=30"></script>
 <script>
 /* Обёртки над встроенными в base.html функциями — для авто-трека page_view / share.
    showTab существует в inline-скрипте base.html, поэтому оборачиваем по мере
@@ -10414,6 +10414,42 @@ main>.screen.active, .screen.active{ animation:none !important; }
   background: linear-gradient(180deg, rgba(0,0,0,.55), transparent) !important;
 }
 #faReels .far-topbar{ padding-top:0 !important; }
+</style>
+
+<style id="hlb-v27-perf">
+/* ============================================================
+   v27.2 — ПРОИЗВОДИТЕЛЬНОСТЬ (мобильный лаг/плавность).
+   Даниэль: «всё равно лагает». Причина — не ре-рендер (уже убран), а
+   постоянная нагрузка на композитор телефона:
+   (1) backdrop-filter: blur — 17 слоёв, каждый рекомпозится, когда за ним
+       что-то анимируется → главный убийца плавности на мобиле;
+   (2) тяжёлые бесконечные glow-анимации фоновых псевдоэлементов;
+   (3) перф-слой «пауза анимаций при скролле» стоял мёртвым (класс
+       oko-scrolling ставился в JS, но CSS его не использовал).
+   ============================================================ */
+
+/* (1) Убираем ВСЕ размытия фона. Фоны и так почти непрозрачные. */
+*, *::before, *::after{ -webkit-backdrop-filter:none !important; backdrop-filter:none !important; }
+/* делаем полагавшиеся на блюр поверхности достаточно непрозрачными */
+header{ background:#0a0500 !important; }
+:root[data-theme="light"] header{ background:#ffffff !important; }
+.sheet{ background:var(--surface) !important; }
+.hlb-modal{ background:rgba(0,0,0,.86) !important; }
+.hlb-av-top, #hlbTariffsScreen .head, .hlb-cv-top{ background:#0a0500 !important; }
+:root[data-theme="light"] .sheet{ background:var(--surface) !important; }
+
+/* (2) Оживляем перф-слой: во время скролла декоративные анимации на паузе. */
+html.oko-scrolling *, html.oko-hidden *{ animation-play-state:paused !important; }
+
+/* (3) Отключаем самые тяжёлые бесконечные glow-псевдоэлементы (крупные размытые
+   градиенты, что репейнтятся каждый кадр за контентом). Визуал не страдает —
+   свечение остаётся статикой, но композитор свободен. */
+.hlb-tar-hero::before, .hlb-prof-hero::after, .hlb-w-card::before,
+.hlb-tar-hero::after, .hlb-prof-hero::before,
+.auth-logo-wrap::before, .auth-logo-wrap::after{ animation:none !important; }
+
+/* подсказки композитору: анимируемые/скроллируемые слои — на свой слой, без layout */
+main, .screen, #faReels .far-track{ transform:translateZ(0); }
 </style>
 </body>
 </html>
