@@ -1473,7 +1473,7 @@ button:focus-visible,a:focus-visible,input:focus-visible,textarea:focus-visible,
 <!-- ============ ХЛБ LAZY BUNDLE LOADER ============ -->
 <link rel="stylesheet" href="app.css" media="print" onload="this.media='all'">
 <noscript><link rel="stylesheet" href="app.css"></noscript>
-<script defer src="app.js?v=33"></script>
+<script defer src="app.js?v=35"></script>
 <script>
 /* Обёртки над встроенными в base.html функциями — для авто-трека page_view / share.
    showTab существует в inline-скрипте base.html, поэтому оборачиваем по мере
@@ -10433,6 +10433,19 @@ main>.screen.active, .screen.active{ animation:none !important; }
   main{ padding-bottom: calc(58px + var(--hlb-safe-bottom, env(safe-area-inset-bottom,0px))) !important; }
   #app.conv-open main{ padding-bottom:0 !important; }
 }
+/* v28: полная заморозка геометрии меню — никаких transition/animation/transform
+   на самом nav (двигаться может только цвет иконок). */
+nav#tabs{ transition:none !important; animation:none !important; transform:none !important; }
+nav#tabs>button{ transform:none !important; animation:none !important; }
+
+/* v28: чистый красивый вход — крупный настоящий лого-хлеб + мягкое СТАТИЧНОЕ
+   свечение подложкой (без filter/анимаций — они давали артефакты на Android). */
+#splash .eye{ width:150px !important; height:150px !important; position:relative; }
+/* свечение: градиент гаснет ДО края элемента (58%), без border-radius —
+   иначе клип по кругу давал едва заметную кромку-«кольцо» на краю */
+#splash .eye::before{ content:''; position:absolute; inset:-60%; z-index:-1;
+  background:radial-gradient(circle, rgba(255,149,0,.30) 0%, rgba(255,149,0,.08) 40%, transparent 58%); }
+#splash .word{ animation:splashWord .5s .15s ease forwards !important; }
 
 /* ---- Логотип входа/сплэша: БЕЗ filter и scale-анимаций (корень «2 чёрных
    прямоугольника при старте»). На Android-WebView filter:drop-shadow на анимируемой

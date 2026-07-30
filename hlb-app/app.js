@@ -45149,12 +45149,24 @@ if(typeof mpOpenPackages === 'function'){
   _okoApplyVh();
   setTimeout(_okoApplyVh, 400); setTimeout(_okoApplyVh, 1500);
 
+  /* v28 (корень «меню поднимается при нажатии»): TG на Android шлёт
+     safeAreaChanged/contentSafeAreaChanged на КАЖДОЕ касание, и applySafeArea
+     пере-выставляла --hlb-safe-bottom (это высота нижнего меню!) и paddingTop #app.
+     Любой джиттер значений = меню меняет высоту = «поднимается и возвращается».
+     Замораживаем: после стартового устаканивания (3с) обновляем ТОЛЬКО при
+     крупном изменении (≥20px — поворот/другой режим), микроджиттер игнорим. */
+  let _saLast = {top:-1, bottom:-1};
+  const _saStart = Date.now();
   function applySafeArea(tg){
     try{
       const sa = tg.safeAreaInset || {top:0,bottom:0,left:0,right:0};
       const ca = tg.contentSafeAreaInset || {top:0,bottom:0,left:0,right:0};
       const top = (sa.top||0) + (ca.top||0);
       const bottom = Math.max(sa.bottom||0, 0);
+      const settling = (Date.now() - _saStart) < 3000;
+      if(!settling && _saLast.top >= 0 &&
+         Math.abs(top - _saLast.top) < 20 && Math.abs(bottom - _saLast.bottom) < 20) return;
+      _saLast = {top: top, bottom: bottom};
       const app = document.getElementById('app');
       if(app){
         app.style.paddingTop = top + 'px';
@@ -51584,6 +51596,11 @@ window.chCompose = chCompose; window.chLessonDraft = chLessonDraft;
     // 1) SPLASH-SHOT
     // ------------------------------------------------------------------
     function buildSplash(){
+      /* v28 (правка Даниэля): wm-splash УБИТ ПОЛНОСТЬЮ. Этот оверлей рисовал
+         SVG-«глаз» (радужка+зрачок+блик+эллипс) и ДВА ЧЁРНЫХ ПРЯМОУГОЛЬНИКА-«веки»
+         поверх чистого сплэша с лого-хлебом — те самые «чёрные квадраты и глаз»
+         на входе. Вход теперь: только чистый экран с настоящим лого ХЛБ. */
+      return null;
       if(REDUCED) return null;
       if(doc.getElementById('wm-splash')) return doc.getElementById('wm-splash');
       var el = doc.createElement('div');
@@ -51618,6 +51635,7 @@ window.chCompose = chCompose; window.chLessonDraft = chLessonDraft;
     }
     // Собираем и снимаем сплэш через oko:app-ready
     function initSplash(){
+      return; /* v28: wm-splash отключён (см. buildSplash) — глаз и чёрные веки на входе */
       if(REDUCED) return;
       // Вставить как можно раньше — до paint основного контента
       if(doc.body) buildSplash();
