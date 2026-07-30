@@ -34,10 +34,10 @@
   --font-body:'Montserrat', -apple-system, 'Segoe UI', sans-serif;
 }
 :root[data-theme="light"]{
-  --bg:#fff; --surface:#f7f9f4; --raised:#eef3e8; --border:#e1e8d9;
-  --lime:#FF9500; --lime-dim:rgba(255,149,0,.14); --accent:#53a800;
-  --text:#0d110a; --dim:#68715f; --danger:#d43a3a;
-  --bubble-in:#eef3e8; --bubble-in-text:#0d110a;
+  --bg:#fff; --surface:#faf7f2; --raised:#f3ede3; --border:#eae2d4;
+  --lime:#FF9500; --lime-dim:rgba(255,149,0,.14); --accent:#e07800;
+  --text:#12100c; --dim:#6e685e; --danger:#d43a3a;
+  --bubble-in:#f3ede3; --bubble-in-text:#12100c;
   --glow:none;
 }
 *{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
@@ -57,7 +57,7 @@ svg.i.fill{fill:currentColor;stroke:none}
 /* ============ APP SHELL ============ */
 #app{display:flex;flex-direction:column;height:100%;max-width:1280px;margin:0 auto}
 @supports(height:100dvh){#app{height:100dvh}}
-header{display:flex;align-items:center;gap:12px;min-height:58px;padding:10px 16px;padding-top:max(10px,env(safe-area-inset-top));border-bottom:1px solid var(--border);flex-shrink:0;background:linear-gradient(180deg,rgba(255,149,0,.035),transparent 70%),var(--bg)}
+header{display:flex;align-items:center;gap:12px;min-height:0;padding:4px 16px 8px;padding-top:calc(env(safe-area-inset-top,0px) + 4px);position:sticky;top:0;z-index:30;border-bottom:1px solid rgba(255,149,0,.18);flex-shrink:0;background:rgba(10,5,0,.98);-webkit-backdrop-filter:blur(12px);backdrop-filter:blur(12px)}
 :root[data-theme="light"] header{background:linear-gradient(180deg,rgba(255,149,0,.05),transparent 70%),var(--bg)}
 header .brand{display:flex;align-items:center;gap:9px}
 header .brand svg{width:29px;height:29px;color:var(--accent);filter:drop-shadow(0 0 5px rgba(255,149,0,.4))}
@@ -70,7 +70,7 @@ header .screen-title::before{content:'';position:absolute;left:0;top:50%;transfo
 .theme-btn:hover{color:var(--accent);background:var(--lime-dim)}
 .theme-btn:active{transform:scale(.9)}
 main{flex:1;overflow-y:auto;overflow-x:hidden;overscroll-behavior:contain;position:relative}
-nav#tabs{display:flex;border-top:1px solid var(--border);flex-shrink:0;background:var(--surface);padding-bottom:var(--hlb-safe-bottom, env(safe-area-inset-bottom))}
+nav#tabs{display:flex;border-top:1px solid var(--border);flex-shrink:0;background:var(--surface);padding-bottom:var(--hlb-safe-bottom, env(safe-area-inset-bottom, 0px))}
 nav#tabs>button{flex:1;padding:10px 4px 8px;display:flex;flex-direction:column;align-items:center;gap:4px;color:var(--dim);font-size:10.5px;letter-spacing:.02em;transition:color .18s}
 nav#tabs>button.active{color:var(--accent)}
 nav#tabs svg.i{width:21px;height:21px}
@@ -121,7 +121,7 @@ nav#tabs .nav-logo{display:none}
 /* bottom sheet */
 .sheet-overlay{position:fixed;inset:0;background:rgba(0,0,0,.55);display:none;z-index:40}
 .sheet-overlay.open{display:block;animation:fade .2s ease}
-.sheet{position:fixed;left:50%;transform:translateX(-50%) translateY(105%);bottom:0;width:100%;max-width:480px;background:var(--surface);border:1px solid var(--border);border-radius:var(--r-lg) var(--r-lg) 0 0;padding:10px 18px calc(18px + env(safe-area-inset-bottom));z-index:41;transition:transform .28s cubic-bezier(.3,1,.4,1);max-height:86dvh;overflow-y:auto}
+.sheet{position:fixed;left:50%;transform:translateX(-50%) translateY(105%);bottom:0;width:100%;max-width:480px;background:var(--surface);border:1px solid var(--border);border-radius:var(--r-lg) var(--r-lg) 0 0;padding:10px 18px calc(18px + env(safe-area-inset-bottom));z-index:41;transition:transform .28s cubic-bezier(.3,1,.4,1);max-height:min(86dvh,calc(100dvh - env(safe-area-inset-top,0px) - 8px));overflow-y:auto}
 .sheet::before{content:'';display:block;width:38px;height:4px;border-radius:2px;background:var(--border);margin:2px auto 12px}
 .sheet.open{transform:translateX(-50%) translateY(0)}
 .sheet h3{font-size:22px;margin-bottom:12px}
@@ -145,7 +145,7 @@ nav#tabs .nav-logo{display:none}
 /* индикатор «в сети» на аватаре списка чатов (как в Telegram) — только для личных онлайн-контактов */
 .ci-ava{position:relative;flex-shrink:0}
 .ci-online{position:absolute;right:1px;bottom:1px;width:13px;height:13px;border-radius:50%;background:var(--lime);border:2.5px solid var(--bg);box-shadow:0 0 6px rgba(255,149,0,.5)}
-:root[data-theme="light"] .ci-online{background:#5fbf00;box-shadow:0 0 5px rgba(95,191,0,.45)}
+:root[data-theme="light"] .ci-online{background:#e07800;box-shadow:0 0 5px rgba(224,120,0,.45)}
 .chat-item:hover{background:var(--surface)}
 .chat-item .meta{flex:1;min-width:0}
 .chat-item .row1{display:flex;justify-content:space-between;gap:8px;align-items:center}
@@ -190,8 +190,8 @@ nav#tabs .nav-logo{display:none}
 .voice-tr svg.i{width:12px;height:12px}
 .voice-transcript{margin-top:8px;padding:8px 11px;border-radius:10px;background:rgba(255,149,0,.08);border-left:2px solid var(--accent);font-size:12.5px;line-height:1.45;color:var(--text);font-style:italic;white-space:pre-wrap}
 /* video note */
-.vnote{width:136px;height:136px;border-radius:50%;background:radial-gradient(circle at 35% 30%, #2a3d10, #0c1204 70%);border:2px solid var(--lime);display:flex;align-items:center;justify-content:center;color:var(--lime);position:relative}
-:root[data-theme="light"] .vnote{background:radial-gradient(circle at 35% 30%, #dff5c2, #b9e18d 75%);color:#3c7a00;border-color:#7ACC00}
+.vnote{width:136px;height:136px;border-radius:50%;background:radial-gradient(circle at 35% 30%, #3d2a10, #120c04 70%);border:2px solid var(--lime);display:flex;align-items:center;justify-content:center;color:var(--lime);position:relative}
+:root[data-theme="light"] .vnote{background:radial-gradient(circle at 35% 30%, #ffe4c2, #ffd08d 75%);color:#a35c00;border-color:#FF9500}
 .vnote{overflow:hidden}
 .vnote video{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;border-radius:50%}
 #recPreview{width:38px;height:38px;border-radius:50%;object-fit:cover;border:2px solid var(--lime);flex-shrink:0}
@@ -206,10 +206,10 @@ nav#tabs .nav-logo{display:none}
 .filemsg b{font-size:13.5px;display:block}
 .filemsg small{font-size:11px;opacity:.65}
 /* photo */
-.photomsg{width:230px;aspect-ratio:4/3;border-radius:12px;background:linear-gradient(135deg,#1d2b08,#0b0f04 65%);border:1px solid var(--border);display:flex;align-items:center;justify-content:center;color:var(--accent);overflow:hidden}
+.photomsg{width:230px;aspect-ratio:4/3;border-radius:12px;background:linear-gradient(135deg,#2b1d08,#0f0b04 65%);border:1px solid var(--border);display:flex;align-items:center;justify-content:center;color:var(--accent);overflow:hidden}
 .photomsg img{width:100%;height:100%;object-fit:cover;display:block}
-:root[data-theme="light"] .photomsg{background:linear-gradient(135deg,#eaf6d9,#d6ecb8 65%);color:#4a8a00}
-:root[data-theme="light"] .gal-thumb{background:linear-gradient(135deg,#eaf6d9,#dcefc2) !important}
+:root[data-theme="light"] .photomsg{background:linear-gradient(135deg,#fff3e0,#ffe2b8 65%);color:#a35c00}
+:root[data-theme="light"] .gal-thumb{background:linear-gradient(135deg,#fff3e0,#ffe8c9) !important}
 .photomsg svg.i{width:34px;height:34px}
 /* composer */
 .composer{display:flex;gap:8px;padding:12px 14px;padding-bottom:calc(12px + var(--hlb-safe-bottom, env(safe-area-inset-bottom)));border-top:1px solid var(--border);flex-shrink:0;align-items:center;background:var(--surface)}
@@ -253,8 +253,10 @@ nav#tabs .nav-logo{display:none}
 
 /* ============ FEED ============ */
 .feed-tabs{display:flex;gap:8px;padding:14px 18px 4px}
-.feed-tabs button{font-size:13px;font-weight:600;color:var(--dim);padding:8px 16px;border-radius:99px;border:1px solid var(--border);transition:all .15s}
-.feed-tabs button.on{color:#000;background:var(--lime);border-color:var(--lime)}
+.feed-tabs button{font-size:13px;font-weight:600;color:#fff;padding:8px 16px;border-radius:99px;border:1px solid rgba(255,255,255,.2);background:transparent;transition:color .15s,background .15s,border-color .15s}
+.feed-tabs button.on{color:#000;background:#FF9500;border-color:#FF9500}
+:root[data-theme="light"] .feed-tabs button{color:var(--text);border-color:var(--border)}
+:root[data-theme="light"] .feed-tabs button.on{color:#000}
 .post{border-bottom:1px solid var(--border);padding:16px 18px}
 .post .head{display:flex;align-items:center;gap:10px;margin-bottom:10px}
 .post .head .ava{width:40px;height:40px;font-size:15px}
@@ -298,7 +300,7 @@ nav#tabs .nav-logo{display:none}
 .svc-h{font-size:15px;font-weight:700;margin:2px 2px 12px;letter-spacing:.01em}
 .svc-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:14px 8px;margin-bottom:6px;align-items:start}
 .svc{display:flex;flex-direction:column;align-items:center;gap:8px;background:none;border:none;padding:0;cursor:pointer}
-.svc-ic{width:100%;max-width:74px;margin:0 auto;aspect-ratio:1;border-radius:22px;position:relative;overflow:hidden;display:flex;align-items:center;justify-content:center;background:linear-gradient(155deg,#182a0b,#0b1005);border:1px solid var(--border);box-shadow:0 8px 20px rgba(0,0,0,.45);transition:transform .13s}
+.svc-ic{width:100%;max-width:74px;margin:0 auto;aspect-ratio:1;border-radius:22px;position:relative;overflow:hidden;display:flex;align-items:center;justify-content:center;background:linear-gradient(155deg,#2a1a0b,#100a05);border:1px solid var(--border);box-shadow:0 8px 20px rgba(0,0,0,.45);transition:transform .13s}
 .svc-ic::before{content:'';position:absolute;inset:0;background:radial-gradient(circle at 50% 28%,rgba(255,149,0,.28),transparent 62%)}
 .svc-ic svg.i{width:46%;height:46%;color:var(--lime);position:relative;z-index:1;filter:drop-shadow(0 2px 8px rgba(255,149,0,.4))}
 .svc:active .svc-ic{transform:scale(.93)}
@@ -320,7 +322,7 @@ nav#tabs .nav-logo{display:none}
 .ma-foot-brand svg.i{width:16px;height:16px;color:var(--accent);opacity:.9}
 :root[data-theme="light"] .ma-foot-ic.gold{background:linear-gradient(135deg,rgba(214,170,40,.2),rgba(214,170,40,.08));color:#b8901f}
 .ic-tariff::before{background:radial-gradient(circle at 50% 28%,rgba(255,149,0,.42),transparent 60%)}
-.ma-hero{position:relative;min-height:150px;border-radius:var(--r-lg);overflow:hidden;margin-bottom:16px;border:1px solid var(--border);background:repeating-linear-gradient(0deg,transparent 0 27px,rgba(255,149,0,.05) 27px 28px),repeating-linear-gradient(90deg,transparent 0 27px,rgba(255,149,0,.05) 27px 28px),radial-gradient(120% 170% at 90% -10%,rgba(255,149,0,.22),transparent 55%),linear-gradient(120deg,#0d1407,#050705);display:flex;align-items:center}
+.ma-hero{position:relative;min-height:150px;border-radius:var(--r-lg);overflow:hidden;margin-bottom:16px;border:1px solid var(--border);background:repeating-linear-gradient(0deg,transparent 0 27px,rgba(255,149,0,.05) 27px 28px),repeating-linear-gradient(90deg,transparent 0 27px,rgba(255,149,0,.05) 27px 28px),radial-gradient(120% 170% at 90% -10%,rgba(255,149,0,.22),transparent 55%),linear-gradient(120deg,#140d07,#070505);display:flex;align-items:center}
 .ma-hero::after{content:'';position:absolute;inset:0;background:linear-gradient(90deg,rgba(0,0,0,.55),transparent 58%)}
 .ma-hero-logo{position:absolute;right:14px;top:14px;width:56px;height:56px;color:var(--lime);z-index:1;pointer-events:none;filter:drop-shadow(0 0 14px rgba(255,149,0,.45));opacity:.9}
 .ma-hero-txt{position:relative;z-index:2;padding:18px 20px;padding-right:84px}
@@ -604,11 +606,11 @@ nav#tabs .nav-logo{display:none}
 .feat-s{display:flex;align-items:center;gap:4px;font-size:11px;color:var(--dim);margin-top:6px}
 .feat-s svg.i{width:12px;height:12px;color:var(--accent)}
 .feat-card .lst-promo{position:absolute;top:8px;left:8px}
-.lst-photo{aspect-ratio:16/10;width:100%;display:flex;align-items:center;justify-content:center;color:var(--accent);background:linear-gradient(135deg,hsl(var(--h,90deg) 40% 14%),#0b0f04 70%);border-bottom:1px solid var(--border)}
+.lst-photo{aspect-ratio:16/10;width:100%;display:flex;align-items:center;justify-content:center;color:var(--accent);background:linear-gradient(135deg,hsl(var(--h,32deg) 40% 14%),#0f0b04 70%);border-bottom:1px solid var(--border)}
 .lst-photo svg.i{width:34px;height:34px;opacity:.6}
 .lst-photo.big{aspect-ratio:16/9;border-radius:var(--r-md);border:1px solid var(--border);margin-bottom:12px}
 .lst-photo.big svg.i{width:56px;height:56px}
-:root[data-theme="light"] .lst-photo{background:linear-gradient(135deg,hsl(var(--h,90deg) 55% 88%),hsl(var(--h,90deg) 45% 78%) 75%)}
+:root[data-theme="light"] .lst-photo{background:linear-gradient(135deg,hsl(var(--h,32deg) 55% 88%),hsl(var(--h,32deg) 45% 78%) 75%)}
 .mk-back{display:inline-flex;align-items:center;gap:5px;color:var(--dim);font-size:13px;font-weight:600;padding:6px 0;margin-bottom:8px}
 .mk-back svg.i{width:17px;height:17px}
 .mk-toolbar{display:flex;gap:9px;margin-bottom:12px}
@@ -630,7 +632,7 @@ nav#tabs .nav-logo{display:none}
 .fav.on svg.i{fill:currentColor}
 .lst-card .fav svg.i{width:18px;height:18px}
 .lst-promo{display:inline-block;font-size:9.5px;font-weight:800;letter-spacing:.04em;border-radius:99px;padding:3px 8px}
-.lst-promo.turbo{background:linear-gradient(135deg,#B9FF4D,#7ACC00);color:#000}
+.lst-promo.turbo{background:linear-gradient(135deg,#FFB84D,#FF7A00);color:#000}
 .lst-promo.vip{background:linear-gradient(135deg,#ffd24d,#ff9a00);color:#000}
 .lst-promo.up{background:var(--lime-dim);color:var(--accent)}
 .lst-status{display:inline-block;font-size:10px;font-weight:700;letter-spacing:.05em;text-transform:uppercase;border-radius:99px;padding:3px 9px}
@@ -668,7 +670,7 @@ nav#tabs .nav-logo{display:none}
 .promo-ic{width:44px;height:44px;border-radius:12px;display:flex;align-items:center;justify-content:center;flex-shrink:0;color:#000}
 .promo-ic.up{background:var(--lime-dim);color:var(--accent)}
 .promo-ic.vip{background:linear-gradient(135deg,#ffd24d,#ff9a00)}
-.promo-ic.turbo{background:linear-gradient(135deg,#B9FF4D,#7ACC00)}
+.promo-ic.turbo{background:linear-gradient(135deg,#FFB84D,#FF7A00)}
 .promo-ic svg.i{width:22px;height:22px}
 .promo-b{flex:1;display:flex;flex-direction:column;gap:1px}
 .promo-b b{font-size:14.5px}.promo-b small{font-size:11.5px;color:var(--dim)}
@@ -780,17 +782,17 @@ label.f-lab{display:block}
 .ch-call{width:38px;height:38px;border-radius:50%;display:flex;align-items:center;justify-content:center;color:var(--accent);flex-shrink:0}
 .ch-call:active{background:var(--lime-dim)}
 .ch-call svg.i{width:20px;height:20px}
-#callScreen{position:fixed;inset:0;z-index:95;background:#000;background:radial-gradient(circle at 50% 30%,#12240a,#000 75%),#000;display:none;flex-direction:column;align-items:center;justify-content:space-between;padding:calc(60px + env(safe-area-inset-top)) 24px calc(40px + env(safe-area-inset-bottom))}
+#callScreen{position:fixed;inset:0;z-index:95;background:#000;background:radial-gradient(circle at 50% 30%,#241504,#000 75%),#000;display:none;flex-direction:column;align-items:center;justify-content:space-between;padding:calc(60px + env(safe-area-inset-top)) 24px calc(40px + env(safe-area-inset-bottom))}
 #callScreen.open{display:flex;animation:fade .3s}
-.call-bg{position:absolute;inset:0;background:linear-gradient(160deg,#1a3310,#050505 70%);opacity:0;transition:opacity .3s;z-index:-1}
-#callScreen.video .call-bg{opacity:1;background:linear-gradient(160deg,#152608,#0a0f04)}
+.call-bg{position:absolute;inset:0;background:linear-gradient(160deg,#33210a,#050505 70%);opacity:0;transition:opacity .3s;z-index:-1}
+#callScreen.video .call-bg{opacity:1;background:linear-gradient(160deg,#261708,#0f0a04)}
 .call-top{display:flex;flex-direction:column;align-items:center;gap:14px;margin-top:20px}
-.call-ava{width:120px;height:120px;border-radius:50%;background:radial-gradient(circle at 40% 35%,#2a3d10,#0c1204 70%);border:2px solid var(--lime);color:var(--lime);display:flex;align-items:center;justify-content:center;font-size:48px;font-weight:800;box-shadow:0 0 50px rgba(255,149,0,.3);animation:callPulse 2.5s ease-in-out infinite}
+.call-ava{width:120px;height:120px;border-radius:50%;background:radial-gradient(circle at 40% 35%,#3d2a10,#120c04 70%);border:2px solid var(--lime);color:var(--lime);display:flex;align-items:center;justify-content:center;font-size:48px;font-weight:800;box-shadow:0 0 50px rgba(255,149,0,.3);animation:callPulse 2.5s ease-in-out infinite}
 @keyframes callPulse{0%,100%{box-shadow:0 0 40px rgba(255,149,0,.25)}50%{box-shadow:0 0 70px rgba(255,149,0,.5)}}
 #callScreen.video .call-ava{width:96px;height:96px;font-size:36px}
 .call-name{font-size:24px;font-weight:800;color:#fff;max-width:82%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;text-align:center}
 .call-status{font-size:14px;color:rgba(255,255,255,.65)}
-.call-self{position:absolute;top:calc(20px + env(safe-area-inset-top));right:18px;width:84px;height:118px;border-radius:16px;background:linear-gradient(160deg,#1d2b08,#0b0f04);border:1px solid var(--border);display:none;align-items:center;justify-content:center;color:var(--accent);z-index:3}
+.call-self{position:absolute;top:calc(20px + env(safe-area-inset-top));right:18px;width:84px;height:118px;border-radius:16px;background:linear-gradient(160deg,#2b1d08,#0f0b04);border:1px solid var(--border);display:none;align-items:center;justify-content:center;color:var(--accent);z-index:3}
 .call-self svg.i{width:30px;height:30px;opacity:.6}
 .call-controls{display:flex;gap:18px;align-items:center}
 .call-btn{width:60px;height:60px;border-radius:50%;background:rgba(255,255,255,.12);backdrop-filter:blur(6px);display:flex;align-items:center;justify-content:center;color:#fff;transition:transform .12s,background .2s}
@@ -881,7 +883,7 @@ label.f-lab{display:block}
 .sys-day-mv{position:fixed;inset:0;z-index:200;background:rgba(0,0,0,.72);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);display:flex;align-items:flex-end;justify-content:center;animation:sysDayFadeIn .25s cubic-bezier(.25,1,.4,1) both}
 @media(min-width:640px){.sys-day-mv{align-items:center;padding:24px}}
 @keyframes sysDayFadeIn{from{opacity:0;backdrop-filter:blur(0)}to{opacity:1;backdrop-filter:blur(10px)}}
-.sys-day-sheet{width:100%;max-width:680px;max-height:92vh;background:var(--bg);border:1px solid var(--border);border-radius:24px 24px 0 0;display:flex;flex-direction:column;overflow:hidden;animation:sysDaySlideUp .35s cubic-bezier(.25,1,.4,1) both}
+.sys-day-sheet{width:100%;max-width:680px;max-height:min(92vh,calc(100dvh - env(safe-area-inset-top,0px) - 8px));background:var(--bg);border:1px solid var(--border);border-radius:24px 24px 0 0;display:flex;flex-direction:column;overflow:hidden;animation:sysDaySlideUp .35s cubic-bezier(.25,1,.4,1) both}
 @media(min-width:640px){.sys-day-sheet{border-radius:20px;max-height:82vh}}
 @keyframes sysDaySlideUp{from{transform:translateY(40px);opacity:0}to{transform:translateY(0);opacity:1}}
 .sys-day-head{display:flex;align-items:flex-start;gap:14px;padding:20px 20px 14px;border-bottom:1px solid var(--border);flex-shrink:0}
@@ -943,7 +945,7 @@ label.f-lab{display:block}
 .sys-day-btn{display:flex;align-items:center;justify-content:center;gap:6px;padding:10px 8px;border-radius:9px;border:1px solid var(--border);background:var(--raised);color:var(--text);font-size:12px;font-weight:700;cursor:pointer;transition:border-color .15s,background .15s}
 .sys-day-btn:hover{border-color:var(--accent);background:var(--lime-dim)}
 .sys-day-btn.primary{grid-column:span 2;background:var(--lime);color:#000;border-color:var(--lime);font-weight:800}
-.sys-day-btn.primary:hover{background:#c6ff5a}
+.sys-day-btn.primary:hover{background:#ffb340}
 .sys-day-btn svg.i{width:12px;height:12px}
 /* Бизнес-план: сетка блоков */
 .sys-biz-grid{display:flex;flex-direction:column;gap:7px}
@@ -1110,7 +1112,7 @@ label.f-lab{display:block}
 .adm-kpi i.up{color:var(--lime)}.adm-kpi i.down{color:#ff5f5f}
 .adm-sec-h{font-size:12px;font-weight:700;color:var(--dim);text-transform:uppercase;letter-spacing:.05em;margin:18px 2px 9px}
 .adm-row{display:flex;align-items:center;gap:11px;background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:10px 12px;margin-bottom:8px}
-.adm-ava{width:38px;height:38px;flex-shrink:0;border-radius:50%;background:radial-gradient(circle at 40% 35%,#2a3d10,#0c1204 70%);border:1px solid var(--lime);color:var(--lime);display:flex;align-items:center;justify-content:center;font-weight:700;font-size:15px}
+.adm-ava{width:38px;height:38px;flex-shrink:0;border-radius:50%;background:radial-gradient(circle at 40% 35%,#3d2a10,#120c04 70%);border:1px solid var(--lime);color:var(--lime);display:flex;align-items:center;justify-content:center;font-weight:700;font-size:15px}
 .adm-main{flex:1;min-width:0}
 .adm-main b{font-size:13.5px;font-weight:600;display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .adm-main small{font-size:11.5px;color:var(--dim)}
@@ -1262,7 +1264,7 @@ label.f-lab{display:block}
 .pay-ok{width:60px;height:60px;border-radius:50%;background:var(--lime);color:#000;display:flex;align-items:center;justify-content:center;margin:0 auto}
 .pay-ok .i{width:34px;height:34px;fill:currentColor}
 /* Онбординг */
-#onboard{position:fixed;inset:0;z-index:70;background:radial-gradient(circle at 50% 32%,#0b1204,#000 72%);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:26px;padding:32px 26px calc(30px + env(safe-area-inset-bottom));transition:opacity .4s ease}
+#onboard{position:fixed;inset:0;z-index:70;background:radial-gradient(circle at 50% 32%,#140d04,#000 72%);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:26px;padding:32px 26px calc(30px + env(safe-area-inset-bottom));transition:opacity .4s ease}
 #onboard.hidden{display:none}
 #onboard.closing{opacity:0}
 #onboard .btn{max-width:420px}
@@ -1279,7 +1281,7 @@ label.f-lab{display:block}
 .ob-dots span{width:8px;height:8px;border-radius:50%;background:var(--border);transition:all .3s}
 .ob-dots span.on{background:var(--lime);width:22px;border-radius:99px}
 @media(prefers-reduced-motion:reduce){.ob-stage{animation:none}}
-:root[data-theme="light"] #onboard{background:radial-gradient(circle at 50% 32%,#eef7e0,#fff 72%)}
+:root[data-theme="light"] #onboard{background:radial-gradient(circle at 50% 32%,#f7f0e0,#fff 72%)}
 /* Партнёрка: график */
 .chart-head{display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:12px}
 .chart-sum{font-size:22px;font-weight:800;letter-spacing:-.02em}
@@ -1307,7 +1309,7 @@ label.f-lab{display:block}
    бровь толстая, halo ощутимо разливается вокруг. */
 .auth-logo-wrap{position:relative;width:216px;height:216px;display:flex;align-items:center;justify-content:center;isolation:isolate;animation:logoWrapIn 900ms .1s cubic-bezier(.2,1.2,.3,1) both}
 .auth-logo-wrap::before{content:'';position:absolute;inset:-55%;background:radial-gradient(circle at 50% 50%,rgba(255,149,0,.45) 0%,rgba(255,149,0,.18) 25%,rgba(255,149,0,.06) 48%,transparent 72%);filter:blur(28px);z-index:-2;animation:logoAura 5.2s ease-in-out infinite;pointer-events:none;border-radius:50%}
-.auth-logo-wrap::after{content:'';position:absolute;inset:-18%;background:radial-gradient(circle at 50% 44%,rgba(210,255,132,.35) 0%,rgba(255,149,0,.1) 40%,transparent 65%);z-index:-1;animation:logoAura2 4.1s ease-in-out infinite 300ms;pointer-events:none;border-radius:50%}
+.auth-logo-wrap::after{content:'';position:absolute;inset:-18%;background:radial-gradient(circle at 50% 44%,rgba(255,214,150,.35) 0%,rgba(255,149,0,.1) 40%,transparent 65%);z-index:-1;animation:logoAura2 4.1s ease-in-out infinite 300ms;pointer-events:none;border-radius:50%}
 .auth-logo{width:100%;height:100%;object-fit:contain;filter:drop-shadow(0 0 16px rgba(255,149,0,.7)) drop-shadow(0 0 40px rgba(255,149,0,.35));animation:logoBreath 5s ease-in-out infinite}
 @keyframes logoWrapIn{from{opacity:0;transform:scale(.72)}to{opacity:1;transform:scale(1)}}
 @keyframes logoAura{0%,100%{opacity:.75;transform:scale(1)}50%{opacity:1;transform:scale(1.10)}}
@@ -1318,7 +1320,7 @@ label.f-lab{display:block}
 .auth-btns{width:100%;display:flex;flex-direction:column;gap:10px;margin-top:34px;opacity:0;animation:authUp .6s 1.5s ease forwards}
 .auth-btn{display:flex;align-items:center;justify-content:center;gap:10px;width:100%;padding:14px;border-radius:14px;font-size:14.5px;font-weight:600;transition:transform .12s,box-shadow .2s}
 .auth-btn:active{transform:scale(.97)}
-.auth-btn.tg{background:linear-gradient(135deg,#B9FF4D,#FF9500 55%,#7ACC00);color:#000;font-weight:700;box-shadow:0 8px 28px rgba(255,149,0,.28)}
+.auth-btn.tg{background:linear-gradient(135deg,#FFB340,#FF9500 55%,#E07000);color:#000;font-weight:700;box-shadow:0 8px 28px rgba(255,149,0,.28)}
 .auth-btn.alt{background:#111;border:1px solid #262626;color:#fff}
 .auth-btn.ghost{background:none;color:#9b9b9b;font-weight:500}
 .auth-btn svg.i{width:19px;height:19px}
@@ -1328,14 +1330,14 @@ label.f-lab{display:block}
 @keyframes authUp{from{opacity:0;transform:translateY(14px)}to{opacity:1;transform:none}}
 @media(prefers-reduced-motion:reduce){.auth-logo,.auth-word,.auth-tag,.auth-btns,.auth-legal{animation:none;opacity:1;transform:none;filter:none}}
 /* Splash: глаз ХЛБ просыпается и раскрывается в приложение */
-#splash{position:fixed;inset:0;z-index:80;background:radial-gradient(circle at 50% 42%,#0b1204,#000 70%);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:20px;transition:opacity .6s ease}
+#splash{position:fixed;inset:0;z-index:80;background:radial-gradient(circle at 50% 42%,#140d04,#000 70%);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:20px;transition:opacity .6s ease}
 #splash.gone{opacity:0;pointer-events:none}
-#splash .eye-wrap{animation:splashOpen 1s cubic-bezier(.2,1.1,.3,1) both}
-#splash .eye{width:120px;height:120px;color:var(--lime);filter:drop-shadow(0 0 30px rgba(255,149,0,.55));animation:splashBlink 2.4s 1s ease-in-out}
+#splash .eye-wrap{animation:splashOpen .55s cubic-bezier(.2,1,.3,1) both}
+#splash .eye{width:120px;height:120px;color:var(--lime);filter:drop-shadow(0 0 30px rgba(255,149,0,.55))}
 #splash .eye svg{width:100%;height:100%}
 #splash .word{font-family:'Bebas Neue',sans-serif;font-size:46px;letter-spacing:.24em;color:#fff;padding-left:.24em;opacity:0;transform:translateY(8px);animation:splashWord .6s .55s ease forwards}
-@keyframes splashOpen{0%{transform:scale(.4) scaleY(.08);opacity:0}55%{opacity:1}100%{transform:scale(1) scaleY(1);opacity:1}}
-@keyframes splashBlink{0%,82%,100%{transform:scaleY(1)}90%{transform:scaleY(.08)}96%{transform:scaleY(1)}}
+@keyframes splashOpen{from{transform:scale(.86);opacity:0}to{transform:scale(1);opacity:1}}
+@keyframes splashBlink{from{transform:none}to{transform:none}}
 @keyframes splashWord{to{opacity:1;transform:none}}
 @media(prefers-reduced-motion:reduce){#splash .eye-wrap,#splash .eye,#splash .word{animation:none;opacity:1;transform:none}}
 
@@ -1347,7 +1349,7 @@ main>.screen{position:relative;z-index:1}
 .screen.active{animation:screenIn .3s cubic-bezier(.3,1,.4,1)}
 @keyframes screenIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
 @media(prefers-reduced-motion:reduce){.screen.active{animation:none}}
-.btn{background:linear-gradient(135deg,#B9FF4D,#FF9500 55%,#7ACC00)}
+.btn{background:linear-gradient(135deg,#FFB340,#FF9500 55%,#E07000)}
 .btn.ghost{background:none}
 
 /* ============ СТОРИС ============ */
@@ -1355,7 +1357,7 @@ main>.screen{position:relative;z-index:1}
 .folders,.mk-feat,.adm-tabs,.prof-ach{-webkit-mask-image:linear-gradient(90deg,#000 0,#000 calc(100% - 20px),transparent);mask-image:linear-gradient(90deg,#000 0,#000 calc(100% - 20px),transparent)}
 .stories::-webkit-scrollbar{display:none}
 .story{display:flex;flex-direction:column;align-items:center;gap:6px;flex-shrink:0;cursor:pointer;width:64px}
-.story .ring{width:62px;height:62px;border-radius:50%;padding:3px;background:conic-gradient(#FF9500,#4d7a00,#FF9500)}
+.story .ring{width:62px;height:62px;border-radius:50%;padding:3px;background:conic-gradient(#FF9500,#B35F00,#FF9500)}
 .story.seen .ring{background:var(--border)}
 .story .ring .ava{width:100%;height:100%;font-size:20px;border:2px solid var(--bg)}
 .story small{font-size:10.5px;color:var(--dim);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:64px}
@@ -1584,6 +1586,7 @@ button:focus-visible,a:focus-visible,input:focus-visible,textarea:focus-visible,
     <symbol id="i-sticker" viewBox="0 0 100 100"><path d="M58 14H30a16 16 0 0 0-16 16v40a16 16 0 0 0 16 16h28l28-28V30a16 16 0 0 0-16-16z"/><path d="M58 86V66a8 8 0 0 1 8-8h20"/></symbol>
     <symbol id="i-more" viewBox="0 0 100 100"><circle cx="50" cy="24" r="7" fill="currentColor" stroke="none"/><circle cx="50" cy="50" r="7" fill="currentColor" stroke="none"/><circle cx="50" cy="76" r="7" fill="currentColor" stroke="none"/></symbol>
     <symbol id="i-rocket" viewBox="0 0 100 100"><path d="M50 12c14 8 22 24 22 42l-10 10H38l-10-10c0-18 8-34 22-42z"/><circle cx="50" cy="42" r="8"/><path d="M38 64l-12 14 16-4M62 64l12 14-16-4"/></symbol>
+    <symbol id="i-refresh" viewBox="0 0 100 100"><path d="M82 36a34 34 0 1 0 4 22"/><path d="M84 14v24H60"/></symbol>
   </defs>
 </svg>
 
@@ -1739,16 +1742,18 @@ button:focus-visible,a:focus-visible,input:focus-visible,textarea:focus-visible,
 
     <!-- ЛЕНТА -->
     <section class="screen active" id="screen-feed">
-      <!-- Сторис-раил убран по правке Даниэля от 29.07 (лента как в TikTok:
+      <!-- Сторис-раил скрыт (лента как в TikTok:
            только «Рекомендации» и «Подписки»). Сторис показываются в
            отдельных модулях stories-plus и tour, не в шапке ленты. -->
       <div class="stories" id="storiesRow" style="display:none"></div>
       <div class="feed-tabs">
         <button class="on" onclick="feedTab(this,'sub')">Подписки</button>
         <button onclick="feedTab(this,'rec')">Рекомендации</button>
+        <button onclick="if(typeof faReelsOpenFirst==='function'){faReelsOpenFirst()}else if(typeof toast==='function'){toast('Клипы загружаются')}" title="Клипы" aria-label="Клипы"><svg class="i"><use href="#i-circle-play"/></svg>Клипы</button>
+        <button class="ft-refresh" onclick="renderFeed(curFeedKind||'sub');if(typeof toast==='function')toast('Лента обновлена')" title="Обновить" aria-label="Обновить"><svg class="i"><use href="#i-refresh"/></svg></button>
       </div>
       <div id="feedList"></div>
-      <!-- Кнопка «Новый пост» убрана по правке Даниэля от 29.07 (лента только для потребления, публикация из мини-аппа) -->
+      <!-- Кнопка «Новый пост» скрыта (публикация из мини-аппа) -->
       <button class="fab" onclick="openSheet('npost')" title="Новый пост" style="display:none" aria-label="Новый пост"><svg class="i"><use href="#i-plus"/></svg></button>
     </section>
 
@@ -1777,7 +1782,7 @@ button:focus-visible,a:focus-visible,input:focus-visible,textarea:focus-visible,
             </button>
             <button class="ma-foot-card" onclick="openPay('MAX')">
               <span class="ma-foot-ic gold"><svg class="i"><use href="#i-crown"/></svg></span>
-              <span class="ma-foot-b"><b>Разблокируй всё на тарифе MAX</b><small>Контент-завод, система и команда ХЛБ</small></span>
+              <span class="ma-foot-b"><b>Разблокируй всё на тарифе МЕНТОР</b><small>Личный ментор Артём, Nihaohub и все 20 приложений</small></span>
               <svg class="i ma-foot-ch"><use href="#i-chev"/></svg>
             </button>
             <div class="ma-foot-brand"><svg class="i"><use href="#i-logo"/></svg><span>ХЛБ APP · сообщество Артёма Бриуса</span></div>
@@ -1870,7 +1875,7 @@ button:focus-visible,a:focus-visible,input:focus-visible,textarea:focus-visible,
           <p style="font-weight:600;font-size:14px">Твоя реф-ссылка</p>
           <p class="dim" style="font-size:12.5px;margin-top:4px">15% с оплат твоих клиентов (первые 6 мес, далее 5%) + 5% со второго уровня</p>
           <div class="reflink">
-            <input value="hlbapp.ru/r/daniel7x" readonly id="refInput">
+            <input value="hlbapp.ru/r/gdebrius" readonly id="refInput">
             <button class="btn sm" onclick="copyRef()"><svg class="i"><use href="#i-copy"/></svg> Копировать</button>
           </div>
         </div>
@@ -1889,13 +1894,13 @@ button:focus-visible,a:focus-visible,input:focus-visible,textarea:focus-visible,
     <section class="screen" id="screen-profile">
       <div class="pad">
         <div class="profile-top">
-          <div class="ava lime" id="profAva">Д</div>
+          <div class="ava lime" id="profAva"><img src="assets/av/artem_brius.jpg" alt="Артём Бриус" style="width:100%;height:100%;object-fit:cover;border-radius:inherit" onerror="this.parentNode.textContent='А'"></div>
           <div>
-            <h2 class="name-status" id="profName">Артём</h2>
-            <div class="u"><span id="profNick">@gdebrius</span> · <span class="chip" style="font-size:9.5px" id="profTier">MAX · владелец</span></div>
+            <h2 class="name-status" id="profName">Артём Бриус</h2>
+            <div class="u"><span id="profNick">@gdebrius</span> · <span class="chip" style="font-size:9.5px" id="profTier">МЕНТОР · владелец</span></div>
           </div>
         </div>
-        <p class="prof-bio" id="profBio"></p>
+        <p class="prof-bio" id="profBio">Основатель ХЛБ. Медийность, контент и бизнес — системно и простыми шагами.</p>
         <div class="prof-stats" id="profStats"></div>
         <div class="prof-ach" id="profAch"></div>
         <div class="p-sec-h">Аккаунт</div>
@@ -1920,35 +1925,35 @@ button:focus-visible,a:focus-visible,input:focus-visible,textarea:focus-visible,
         </div>
         <div class="plans-wrap">
           <div class="plan">
-            <h3>START</h3>
-            <div class="price"><b>990&nbsp;₽</b><span>&nbsp;/мес</span></div>
-            <ul><li>Мессенджер Premium (файлы до 4 ГБ, транскрипция голосовых)</li><li>Магазин шаблонов + Каталог трендов</li><li>Аналитика соцсетей: 1 канал</li><li>Проверка видео: 30 в месяц</li></ul>
+            <h3>СТАРТ</h3>
+            <div class="price"><b>1&nbsp;000&nbsp;₽</b><span>&nbsp;/мес</span></div>
+            <ul><li>Все чаты и каналы ХЛБ (read-only)</li><li>Основной канал Артёма</li><li>Brius-AI: 10 запросов в день</li><li>Лента + 1 демо-вход в приложение</li></ul>
             <button class="btn ghost" onclick="openPay('START')">Выбрать</button>
           </div>
           <div class="plan hot">
-            <span class="chip flag">Хит</span>
-            <h3>PRO</h3>
-            <div class="price"><b>4&nbsp;900&nbsp;₽</b><span>&nbsp;/мес</span></div>
-            <ul><li>Система Роста под ключ, 15 конкурентов</li><li>Личный помощник ХЛБ: 300 обращений</li><li>Студия контента: 100 генераций</li><li>Проверка видео 100/мес + 20 автоправок</li></ul>
+            <span class="chip flag">ХИТ</span>
+            <h3>КЛУБ</h3>
+            <div class="price"><b>5&nbsp;000&nbsp;₽</b><span>&nbsp;/мес</span></div>
+            <ul><li>Пишешь во всех чатах клуба</li><li>Общий эфир 1 раз в неделю</li><li>Десятки (чат из 10) + спринт-трекер</li><li>Brius-AI: безлимит коротких запросов</li></ul>
             <button class="btn" onclick="openPay('PRO')">Выбрать</button>
           </div>
           <div class="plan">
-            <h3>BUSINESS</h3>
-            <div class="price"><b>19&nbsp;900&nbsp;₽</b><span>&nbsp;/мес</span></div>
-            <ul><li>Контент-завод: 30–50 роликов/мес</li><li>5 специалистов ХЛБ под твой проект</li><li>Автопостинг во все сети + приоритет</li><li>Помощник 1000, проверка 300, автоправка 100</li></ul>
+            <h3>PRO</h3>
+            <div class="price"><b>20&nbsp;000&nbsp;₽</b><span>&nbsp;/мес</span></div>
+            <ul><li>Личные разборы Артёма</li><li>2 эфира в неделю</li><li>Огуречная Академия: 120+ уроков</li><li>Nihaodrop каталог 2000+ и Brius-AI без лимитов</li></ul>
             <button class="btn ghost" onclick="openPay('BUSINESS')">Выбрать</button>
           </div>
           <div class="plan">
-            <h3>BUSINESS&nbsp;PRO</h3>
-            <div class="price"><b>49&nbsp;900&nbsp;₽</b><span>&nbsp;/мес</span></div>
-            <ul><li>Контент-завод: 100 роликов/мес</li><li>Персональный образ (двойник голоса и лица)</li><li>Помощник и Студия без лимитов</li><li>Бонус: лендинг + бот при годовой оплате</li></ul>
+            <h3>VIP</h3>
+            <div class="price"><b>50&nbsp;000&nbsp;₽</b><span>&nbsp;/мес</span></div>
+            <ul><li>Всё из тарифа PRO</li><li>Команда сопровождения 24/7</li><li>Персональный спорт-ассистент</li><li>Аудит Instagram по методу Артёма</li></ul>
             <button class="btn ghost" onclick="openPay('BUSINESS_PRO')">Выбрать</button>
           </div>
           <div class="plan gold">
             <span class="chip flag">Максимум</span>
-            <h3>MAX</h3>
-            <div class="price"><b>149&nbsp;900&nbsp;₽</b><span>&nbsp;/мес</span></div>
-            <ul><li>Контент-завод: 300 роликов/мес</li><li>10 специалистов + персональный менеджер</li><li>Полный digital-запуск: сайт, бот, автоматизации</li><li>White-label, мультиаккаунт до 15 чел</li></ul>
+            <h3>МЕНТОР</h3>
+            <div class="price"><b>150&nbsp;000&nbsp;₽</b><span>&nbsp;/мес</span></div>
+            <ul><li>Личный ментор — Артём Бриус</li><li>Сессия 1:1 каждый месяц</li><li>Nihaohub магазин под ключ</li><li>Все 20 приложений без лимитов</li></ul>
             <button class="btn" onclick="openPay('MAX')">Выбрать</button>
           </div>
         </div>
@@ -2261,7 +2266,7 @@ button:focus-visible,a:focus-visible,input:focus-visible,textarea:focus-visible,
   <div class="gal-row" id="galRow"></div>
   <input type="file" id="photoInput" accept="image/*" style="display:none" onchange="onPhotoPick(event)">
   <button class="sheet-item" onclick="document.getElementById('photoInput').click()"><svg class="i"><use href="#i-photo"/></svg><span>Фото с устройства<small>Выбрать изображение и отправить</small></span></button>
-  <button class="sheet-item" onclick="attach('file')"><svg class="i"><use href="#i-file"/></svg><span>Файл<small>Free до 100 МБ · Premium от 990 ₽, до 4 ГБ</small></span></button>
+  <button class="sheet-item" onclick="attach('file')"><svg class="i"><use href="#i-file"/></svg><span>Файл<small>ГОСТЬ до 100 МБ · СТАРТ от 1 000 ₽, до 4 ГБ</small></span></button>
   <button class="sheet-item" onclick="closeSheet();openSheet('poll')"><svg class="i"><use href="#i-poll"/></svg><span>Опрос<small>Голосование в чате</small></span></button>
   <button class="sheet-item" onclick="closeSheet();openSheet('money')"><svg class="i"><use href="#i-money"/></svg><span>Перевести деньги<small>Мгновенно, без комиссии</small></span></button>
   <button class="sheet-item" onclick="closeSheet();openStickers()"><svg class="i"><use href="#i-sticker"/></svg><span>Стикеры ХЛБ<small>Фирменный набор</small></span></button>
@@ -2294,7 +2299,7 @@ button:focus-visible,a:focus-visible,input:focus-visible,textarea:focus-visible,
   </div>
   <div class="ep-body">
     <div class="ep-avawrap">
-      <div class="ava lime ep-ava" id="epAva">Д</div>
+      <div class="ava lime ep-ava" id="epAva">А</div>
       <button class="ep-avabtn" onclick="toast('Загрузка фото подключится с бэкендом')" aria-label="Кнопка"><svg class="i"><use href="#i-camera"/></svg></button>
     </div>
     <button class="ep-photolink" onclick="toast('Загрузка фото подключится с бэкендом')">Изменить фото</button>
@@ -2697,7 +2702,7 @@ button:focus-visible,a:focus-visible,input:focus-visible,textarea:focus-visible,
       <p class="w2-faq-q">Как работает обмен валют?</p>
       <p class="w2-faq-a">Курс — внутренний Команда ХЛБ, обновляется несколько раз в сутки. Комиссия обмена 1% уже включена. Внешние торги — через биржи и Tonkeeper, туда ХЛБ не подключён.</p>
       <p class="w2-faq-q">Какие лимиты?</p>
-      <p class="w2-faq-a">Тариф FREE — <b>50 000 ₽ / сутки</b> на вывод. START — 100 000, PRO — 300 000, BUSINESS — 1 000 000. Покупки до 5 000 ₽ — без подтверждения.</p>
+      <p class="w2-faq-a">Тариф ГОСТЬ — <b>50 000 ₽ / сутки</b> на вывод. СТАРТ — 100 000, КЛУБ — 300 000, PRO и выше — 1 000 000. Покупки до 5 000 ₽ — без подтверждения.</p>
       <p class="w2-faq-q">Куда писать, если что-то пошло не так?</p>
       <p class="w2-faq-a">Техподдержка ХЛБ — <b>@hlbhelp</b> в Telegram. Ответим в течение рабочего дня.</p>
     </div>
@@ -2761,7 +2766,7 @@ button:focus-visible,a:focus-visible,input:focus-visible,textarea:focus-visible,
 
 <!-- Мини-игра: три-в-ряд -->
 <div class="sheet" id="sheet-gmMatch3">
-  <h3>Лайм-плитки</h3>
+  <h3>Плитки ХЛБ</h3>
   <div id="gmMatch3Body"></div>
 </div>
 
@@ -3735,42 +3740,47 @@ const WAVE = seed => { // детерминированная волна голо
 /* kind: text | voice | vnote | file | photo */
 const LIVE_ID = '00000000-0000-0000-0000-00000000c0de';
 const CHATS = [
-  {id:'live', cid:LIVE_ID, ava:'O', name:'Общий чат ХЛБ', kind:'group', kindIcon:'globe', live:true,
+  {id:'live', cid:LIVE_ID, ava:'Х', name:'Общий чат ХЛБ', kind:'group', kindIcon:'globe', live:true,
    preview:'Настоящий чат — пиши, увидят все', time:'', unread:0, online:true, msgs:[
      {kind:'sys', body:'Это живой чат через Supabase Realtime — сообщения настоящие'},
    ]},
-  {id:1, avaIcon:'logo', name:'Поддержка ХЛБ', kind:'direct', nick:'hlbhelp', kindIcon:null, preview:'Подписка активна до 15.08', time:'12:40', unread:0, online:true,
+  {id:1, img:'assets/av/gdebrius.jpg', ava:'А', name:'Артём Бриус', kind:'direct', verified:true, nick:'gdebrius', kindIcon:null, preview:'Действие решает. Жду цифры за неделю', time:'12:40', unread:1, online:true,
    msgs:[
-     {in:1, t:'12:38', kind:'text', body:'Привет! Я поддержка ХЛБ. Отвечаю из базы знаний, деньги и возвраты — сразу к менеджеру. Кнопка «позвать менеджера» всегда рядом.'},
-     {in:0, t:'12:39', kind:'text', body:'До какого числа у меня подписка?'},
-     {in:1, t:'12:40', kind:'text', body:'Подписка PRO активна до 15.08.2026. Продление за год даст −20%. Чем ещё помочь?'},
+     {in:1, t:'12:36', kind:'text', body:'Всё просто: пока ты думаешь — рынок забирает твои деньги. Что сделал за неделю?'},
+     {in:0, t:'12:38', kind:'text', body:'Запустил первые 10 карточек, жду выкупы.'},
+     {in:1, t:'12:40', kind:'text', body:'Нормально. Действие решает. Жду цифры за неделю — факты, не отговорки.'},
    ]},
-  {id:2, cid:'00000000-0000-0000-0000-000000000002', ava:'К', name:'Клуб ХЛБ · Рост', kind:'channel', managed:true, subs:'12.4к', writeAll:false, kindIcon:'megaphone', preview:'Голосовое сообщение', time:'11:05', unread:3, online:false,
+  {id:2, img:'assets/av/hlb.jpg', ava:'Х', name:'ХЛБ', kind:'channel', verified:true, managed:true, subs:'118к', writeAll:false, kindIcon:'megaphone', preview:'Голосовое сообщение', time:'11:05', unread:3, online:false,
    msgs:[
-     {in:1, t:'10:58', kind:'text', body:'Сегодня разбор: как ролик на 40к просмотров принёс 12 заявок.'},
+     {in:1, t:'10:58', kind:'text', body:'Разбор внутри клуба: с 0 до 300к/мес на маркетплейсах за 4 месяца. Без магии — система и дисциплина.'},
      {in:1, t:'11:02', kind:'voice', dur:'0:47', seed:7},
-     {in:1, t:'11:05', kind:'vnote', dur:'0:31'},
    ]},
-  {id:3, cid:'00000000-0000-0000-0000-000000000003', ava:'З', name:'Мой контент-завод', kind:'group', managed:true, members:8, kindIcon:'bolt', preview:'отчёт-июль.pdf', time:'09:12', unread:1, online:true,
+  {id:3, img:'assets/av/artem_brius.jpg', ava:'А', name:'Артём Бриус · канал', kind:'channel', verified:true, managed:true, subs:'96к', writeAll:false, kindIcon:'megaphone', preview:'Сегодня в 20:00 эфир по выбору товара', time:'09:12', unread:1, online:false,
    msgs:[
-     {in:1, t:'08:00', kind:'text', body:'План на неделю: 5 роликов. Сценарии готовы, рендер в очереди.'},
-     {in:1, t:'09:10', kind:'photo'},
-     {in:1, t:'09:12', kind:'file', fname:'отчёт-июль.pdf', fsize:'2.4 МБ'},
+     {in:1, t:'08:50', kind:'text', body:'Мотивация — для слабых. Дисциплина бьёт мотивацию. Всегда.'},
+     {in:1, t:'09:12', kind:'text', body:'Сегодня в 20:00 эфир: как выбрать товар, который реально продаётся. Не проспи.'},
    ]},
-  {id:4, cid:'00000000-0000-0000-0000-000000000004', ava:'КМ', name:'Команда', kind:'group', managed:true, members:5, kindIcon:'users', preview:'Аня: макеты обложек в фигме', time:'вчера', unread:0, online:false,
-   msgs:[{in:1, t:'вчера', kind:'text', body:'Макеты обложек в фигме, глянь когда будет минута.'}]},
-  {id:5, cid:'00000000-0000-0000-0000-000000000005', ava:'А', name:'Ксения', kind:'direct', nick:'anya_des', kindIcon:null, preview:'Опрос', time:'вчера', unread:0, online:true,
-   msgs:[
-     {in:1, t:'вчера', kind:'text', body:'Какую обложку берём для клуба?'},
-     {in:1, t:'вчера', kind:'poll', q:'Обложка для клуба', opts:['Тёмная с глазом','Лаймовая с сеткой','Минимализм'], votes:[7,4,2], voted:0},
-   ]},
+  {id:4, img:'assets/av/brius.jpg', ava:'Б', name:'Бриус', kind:'channel', verified:true, managed:true, subs:'54к', writeAll:false, kindIcon:'megaphone', preview:'Точка входа в товарку 2026 — пост с цифрами', time:'вчера', unread:0, online:false,
+   msgs:[{in:1, t:'вчера', kind:'text', body:'Точка входа в товарку в 2026 ниже, чем ты думаешь. Пост с цифрами уже в канале.'}]},
+  {id:5, img:'assets/av/kitovarka.jpg', ava:'К', name:'КИТОВАРКА', kind:'channel', subs:'41к', writeAll:false, kindIcon:'megaphone', preview:'Товарный бизнес с Китаем', time:'вчера', unread:0, online:false,
+   msgs:[{in:1, t:'вчера', kind:'text', body:'Товарный бизнес с Китаем: свежая подборка поставщиков и цены с 1688 — уже в канале.'}]},
+  {id:6, img:'assets/av/hlb_reviews.jpg', ava:'Х', name:'ХЛБ / отзывы', kind:'channel', managed:true, subs:'12к', writeAll:false, kindIcon:'megaphone', preview:'Ученик вышел на 500к/мес — скрины внутри', time:'пн', unread:0, online:false,
+   msgs:[{in:1, t:'пн', kind:'text', body:'Ученик ХЛБ вышел на 500к/мес чистыми. Скрины и путь — в посте.'}]},
+  {id:7, img:'assets/av/brius_reviews.jpg', ava:'Б', name:'Бриус / отзывы', kind:'channel', managed:true, subs:'9к', writeAll:false, kindIcon:'megaphone', preview:'Новые результаты учеников — только цифры', time:'пн', unread:0, online:false,
+   msgs:[{in:1, t:'пн', kind:'text', body:'Новые результаты учеников — без воды, только цифры и скрины.'}]},
+  {id:8, img:'assets/av/brius_mentor.jpg', ava:'N', name:'Nihaodrop', kind:'channel', verified:true, subs:'27к', writeAll:false, kindIcon:'megaphone', preview:'Фулфилмент и доставка из Китая', time:'вс', unread:0, online:false,
+   msgs:[{in:1, t:'вс', kind:'text', body:'Фулфилмент и доставка из Китая без посредников. Тарифы обновили — смотри закреп.'}]},
+  {id:9, img:'assets/av/brius_mentor.jpg', ava:'b', name:'briusMentor', kind:'direct', nick:'briusMentor', kindIcon:null, preview:'Вопросы по наставничеству — сюда', time:'вс', unread:0, online:true,
+   msgs:[{in:1, t:'вс', kind:'text', body:'Вопросы по наставничеству и клубу — сюда. Отвечаем быстро и по делу.'}]},
+  {id:'saved', avaIcon:'bookmark', name:'Избранное', kind:'direct', nick:'saved', kindIcon:null, preview:'Твои заметки и файлы', time:'', unread:0, online:false,
+   msgs:[{kind:'sys', body:'Здесь хранятся твои сохранённые сообщения и файлы'}]},
 ];
 
 const POSTS = {
   sub:[
-    {id:101, ava:'O', name:'ХЛБ · Официальный', sub:'канал · 12.4к', body:'Обновление премодератора: теперь показываем силу хука по первым 3 секундам и риски по авторским. Проверка занимает ~40 секунд.', media:'0:32', likes:214, views:15200, liked:false, saved:false, reposts:18,
+    {id:101, ava:'Х', name:'ХЛБ', sub:'канал · 118к', body:'Обновление премодератора: теперь показываем силу хука по первым 3 секундам и риски по авторским. Проверка занимает ~40 секунд.', media:'0:32', likes:214, views:15200, liked:false, saved:false, reposts:18,
      comments:[{a:'А', n:'Артём', t:'Огонь, давно ждал проверку по хукам'},{a:'Л', n:'Лиза', t:'А по музыке авторку ловит?'}]},
-    {id:102, ava:'Д', name:'Артём Бриус / рост', sub:'канал · 8.1к', body:'Правило простое: пока конкуренты спорят про алгоритмы — ты выкладываешь 30 роликов в месяц на автомате и собираешь заявки. Система решает, не вдохновение.', media:null, likes:389, views:8400, liked:false, saved:false, reposts:44,
+    {id:102, ava:'А', name:'Артём Бриус', sub:'канал · 96к', body:'Правило простое: пока конкуренты спорят про алгоритмы — ты выкладываешь 30 роликов в месяц на автомате и собираешь заявки. Система решает, не вдохновение.', media:null, likes:389, views:8400, liked:false, saved:false, reposts:44,
      comments:[{a:'С', n:'Сергей', t:'Система > мотивация. Факт'}]},
   ],
   rec:[
@@ -3900,13 +3910,13 @@ function renderPartnerChart(days){
   document.getElementById('chartWrap').innerHTML = `
     <svg viewBox="0 0 ${W} ${H}" preserveAspectRatio="none" class="p-chart">
       <defs><linearGradient id="cgrad" x1="0" y1="0" x2="0" y2="1">
-        <stop offset="0" stop-color="var(--lime)" stop-opacity="0.35"/>
-        <stop offset="1" stop-color="var(--lime)" stop-opacity="0"/>
+        <stop offset="0" stop-color="#FF9500" stop-opacity="0.35"/>
+        <stop offset="1" stop-color="#FF9500" stop-opacity="0"/>
       </linearGradient></defs>
       <path d="${area}" fill="url(#cgrad)"/>
-      <path d="${line}" fill="none" stroke="var(--lime)" stroke-width="2.2" stroke-linejoin="round" stroke-linecap="round"/>
-      <circle cx="${lx}" cy="${ly}" r="4" fill="var(--lime)"/>
-      <circle cx="${lx}" cy="${ly}" r="8" fill="var(--lime)" opacity="0.25"/>
+      <path d="${line}" fill="none" stroke="#FF9500" stroke-width="2.2" stroke-linejoin="round" stroke-linecap="round"/>
+      <circle cx="${lx}" cy="${ly}" r="4" fill="#FF9500"/>
+      <circle cx="${lx}" cy="${ly}" r="8" fill="#FF9500" opacity="0.25"/>
       ${labs}
     </svg>`;
 }
@@ -3920,6 +3930,7 @@ const kindPreview = m => ({
 const kindIco = k => ({voice:'mic', vnote:'circle-play', file:'file', photo:'photo', poll:'poll', money:'money', sticker:'sticker'})[k];
 
 function avaHtml(c){
+  if(c.img) return `<div class="ava" style="padding:0;overflow:hidden;background:#1A1A1A"><img src="${c.img}" alt="" style="width:100%;height:100%;object-fit:cover;display:block"></div>`;
   return c.avaIcon ? `<div class="ava lime">${I(c.avaIcon)}</div>` : `<div class="ava">${c.ava}</div>`;
 }
 function renderChatList(filter=''){
@@ -3942,7 +3953,7 @@ function renderChatList(filter=''){
       <div class="chat-item" onclick="openConv(${typeof c.id==='number' ? c.id : `'${c.id}'`})">
         <div class="ci-ava">${avaHtml(c)}${(c.kind==='direct' && c.online)?'<span class="ci-online" title="в сети"></span>':''}</div>
         <div class="meta">
-          <div class="row1"><span class="name">${c.cid?'<span class="live-dot" title="живой чат"></span>':''}${c.kindIcon?I(c.kindIcon):''}<span class="ci-txt">${c.name}</span></span><span class="time">${c.time}</span></div>
+          <div class="row1"><span class="name">${c.cid?'<span class="live-dot" title="живой чат"></span>':''}${c.kindIcon?I(c.kindIcon):''}<span class="ci-txt">${c.name}</span>${c.verified?'<svg class="i" style="width:13px;height:13px;color:#FF9500;flex:0 0 auto"><use href="#i-check"/></svg>':''}</span><span class="time">${c.time}</span></div>
           <div class="row1"><span class="preview">${pi?I(pi):''}<span class="ci-txt">${c.preview}</span></span>${c.unread?`<span class="badge">${c.unread}</span>`:''}</div>
         </div>
       </div>`;
@@ -4184,12 +4195,10 @@ function renderSearch(){
 
 /* ===== Центр уведомлений ===== */
 let NOTIFS = [
-  {ic:'heart',   who:'Лиза Кот',      t:'оценила твой пост «Правило простое…»', time:'2 мин', g:'Сегодня', unread:true, act:()=>{showTab('feed')}},
-  {ic:'comment', who:'Артём Слов',    t:'прокомментировал: «Огонь, давно ждал»', time:'14 мин', g:'Сегодня', unread:true, act:()=>{showTab('feed')}},
+  {ic:'heart',   who:'ХЛБ',           t:'твой пост «Правило простое…» набирает лайки', time:'2 мин', g:'Сегодня', unread:true, act:()=>{showTab('feed')}},
   {ic:'briefcase',who:'Биржа ХЛБ',    t:'новая заявка по объявлению «Монтаж Reels»', time:'40 мин', g:'Сегодня', unread:true, act:()=>{showTab('mini');openMa('market')}},
   {ic:'users',   who:'+3 подписчика', t:'подписались на твой канал', time:'1 ч', g:'Сегодня', unread:false, act:()=>{}},
   {ic:'money',   who:'Партнёрка',     t:'начисление +$70.35 за оплату PRO', time:'3 ч', g:'Сегодня', unread:false, act:()=>{showTab('partner')}},
-  {ic:'star',    who:'Сергей Дан',    t:'поставил 5 звёзд за твою услугу', time:'вчера', g:'Ранее', unread:false, act:()=>{}},
   {ic:'rocket',  who:'ХЛБ',           t:'твой пост в топе рекомендаций — охват вырос', time:'вчера', g:'Ранее', unread:false, act:()=>{showTab('feed')}},
 ];
 function updateNotifDot(){ const n=NOTIFS.filter(x=>x.unread).length; const d=document.getElementById('notifDot'); if(d) d.style.display=n?'block':'none'; }
@@ -4223,7 +4232,7 @@ const ADMIN = {
     {n:'Алина Р.', h:'@alina.grow', ref:8, earn:'$96', st:'ok'},
   ],
   moder: [
-    {t:'Объявление: «Монтаж Артём Бриус · канал»', by:'@editor_pro', kind:'Биржа'},
+    {t:'Объявление: «Монтаж Reels под ключ»', by:'@editor_pro', kind:'Биржа'},
     {t:'Ролик на премодерации: фитнес-хук 15 сек', by:'@fitmax', kind:'Видео'},
     {t:'Объявление: «Таргет ВК + запуск»', by:'@target_alena', kind:'Биржа'},
   ],
@@ -4279,7 +4288,7 @@ function admUsers(){
     <div class="adm-row">
       <span class="adm-ava">${esc(u.n[0])}</span>
       <span class="adm-main"><b>${esc(u.n)}</b><small>${esc(u.h)} · ${esc(u.when)}</small></span>
-      <span class="adm-tag ${u.paid?'paid':'free'}">${esc(u.tier)}</span>
+      <span class="adm-tag ${u.paid?'paid':'free'}">${esc(typeof hlbTierName==='function'?hlbTierName(u.tier):u.tier)}</span>
     </div>`).join('') +
     `<div class="adm-acts"><button class="adm-btn" onclick="toast('Экспорт CSV — на бэкенде')">Экспорт CSV</button></div>`;
 }
@@ -4413,16 +4422,16 @@ function endCall(){
 
 /* ===== Фирменные стикеры ХЛБ ===== */
 const STICKERS = [
-  {ic:'logo',   label:'ХЛБ',       hue:90},
+  {ic:'logo',   label:'ХЛБ',       hue:28},
   {ic:'fire',   label:'Огонь',     hue:28},
   {ic:'heart',  label:'Люблю',     hue:340},
-  {ic:'thumb',  label:'Класс',     hue:90},
+  {ic:'thumb',  label:'Класс',     hue:28},
   {ic:'laugh',  label:'Ха-ха',     hue:50},
   {ic:'wow',    label:'Вау',       hue:200},
   {ic:'star',   label:'Топ',       hue:45},
   {ic:'crown',  label:'Босс',      hue:45},
   {ic:'rocket', label:'В космос',  hue:265},
-  {ic:'bolt',   label:'Мощь',      hue:90},
+  {ic:'bolt',   label:'Мощь',      hue:28},
   {ic:'sad',    label:'Эх',        hue:220},
   {ic:'check',  label:'Готово',    hue:120},
 ];
@@ -4477,7 +4486,7 @@ function simPick(text){
   return SIM_REPLY.def;
 }
 function simReply(chat, userText){
-  if(!chat || chat.kind!=='direct' || chat.id===1 || chat.cid) return; // не трогаем поддержку и реальные live-чаты
+  if(!chat || chat.kind!=='direct' || chat.id==='saved' || chat.cid) return; // не трогаем Избранное и реальные live-чаты
   if(chat._simPending) return; chat._simPending = true;
   const pool = simPick(userText);
   const body = pool[Math.floor(Math.random()*pool.length)];
@@ -4562,12 +4571,12 @@ function voiceTranscribe(idx){
   }, 1200);
 }
 function okoOfferPremium(reason){
-  const body = reason + '<br><br>Подключи <b>START за 990 ₽/мес</b> — файлы до 4 ГБ, голосовые без лимита, транскрипция и эксклюзивные эмодзи ХЛБ.';
+  const body = reason + '<br><br>Подключи <b>СТАРТ за 1 000 ₽/мес</b> — все чаты и каналы ХЛБ, основной канал Артёма и Brius-AI.';
   if(typeof showPopup==='function'){
     showPopup({ico:'crown', title:'Функция Premium',  body,
-      actions:[{label:'Подключить START', onclick:()=>{ closePopup&&closePopup(); openPay('START'); }}, {label:'Позже', ghost:true}]});
+      actions:[{label:'Подключить СТАРТ', onclick:()=>{ closePopup&&closePopup(); openPay('START'); }}, {label:'Позже', ghost:true}]});
   } else {
-    toast('Функция доступна с тарифа START (990 ₽/мес)');
+    toast('Функция доступна с тарифа СТАРТ (1 000 ₽/мес)');
   }
 }
 
@@ -4589,12 +4598,7 @@ function sendText(){
   pushMsg(msg);
   inp.value=''; syncSendIcon();
   if(currentChat.cid) liveSend(text);
-  if(currentChat.id===1){
-    setTimeout(showTyping, 500);
-    setTimeout(()=>{ hideTyping(); pushMsg({in:1, t:nowT(), kind:'text', body:'Принял. Если вопрос про деньги или возврат — сразу зову человека: @hlbhelp. По остальному отвечу из базы знаний.'}); }, 2100);
-  } else {
-    simReply(currentChat, text); // живой ответ демо-собеседника (1:1)
-  }
+  simReply(currentChat, text); // живой ответ демо-собеседника (1:1)
 }
 let mediaRec = null, recChunks = [], recStream = null;
 function startRec(){
@@ -4894,6 +4898,7 @@ function addComment(){
   if(cc) cc.textContent = p.comments.length; else renderFeed(curFeedKind);
 }
 function feedTab(btn, kind){
+  if(kind===curFeedKind && btn.classList.contains('on')) return; // повторный тап — без перерисовки и дёрганий
   document.querySelectorAll('.feed-tabs button').forEach(b=>b.classList.remove('on'));
   btn.classList.add('on'); renderFeed(kind);
 }
@@ -5092,9 +5097,9 @@ function anketaCheckLimit(k, v){
   if(!cap) return;
   const limit = cap[tier] != null ? cap[tier] : 0;
   if(v > limit){
-    el.innerHTML = '<span class="anketa-over">Тариф «'+tier+'» даёт до '+limit+'. Больше — доплата или апгрейд</span>';
+    el.innerHTML = '<span class="anketa-over">Тариф «'+(typeof hlbTierName==='function'?hlbTierName(tier):tier)+'» даёт до '+limit+'. Больше — доплата или апгрейд</span>';
   } else {
-    el.innerHTML = '<span class="anketa-ok">В рамках тарифа «'+tier+'»</span>';
+    el.innerHTML = '<span class="anketa-ok">В рамках тарифа «'+(typeof hlbTierName==='function'?hlbTierName(tier):tier)+'»</span>';
   }
 }
 function anketaNext(){
@@ -5374,7 +5379,7 @@ function sysDayTopic(n, a){
   const topic = arch.topics[topicIdx].replace(/{niche}/g, niche).replace(/{audience_short}/g, audShort);
   return {arch: arch.a, archIdx, topic, ffmt: arch.ffmt, code: arch.code, shoot: arch.shoot};
 }
-const SYS_SHOOT_LABEL = {live:'🎥 Живьём в кадре', ai:'🤖 Аватар HeyGen', stock:'🎬 Стоковое видео + текст'};
+const SYS_SHOOT_LABEL = {live:'Живьём в кадре', ai:'Аватар HeyGen', stock:'Стоковое видео + текст'};
 /* Персона клиента: собирается из ВСЕХ полей анкеты и подставляется в каждый шаблон.
    Возвращает: обращение (ты/вы), стиль реплик, план съёмки, ведущую платформу, гео-триггер. */
 function sysPersona(a){
@@ -5458,10 +5463,10 @@ function sysDayReelScript(topic, a, cnt, meta){
   const P = sysPersona(a);
   const g = P.geo ? ` в ${P.geo}` : '';
   const scenes = [
-    {t:'0-3 сек · ХУК (стоп-скролл)', body:`План: ${P.cameraPlan}.\nРеплика (${P.voiceStyle}): «${topic}»\nСубтитр (крупно, лайм на чёрном): ${topic.toUpperCase().slice(0,42)}\nЗвук: резкий whoosh + вступление трека.`},
+    {t:'0-3 сек · ХУК (стоп-скролл)', body:`План: ${P.cameraPlan}.\nРеплика (${P.voiceStyle}): «${topic}»\nСубтитр (крупно, оранж на чёрном): ${topic.toUpperCase().slice(0,42)}\nЗвук: резкий whoosh + вступление трека.`},
     {t:'3-15 сек · БОЛЬ + ЦИФРА', body:`План: смягчение, средний план.\nРеплика: «97% ${audShort}${g} тратят по 3 часа в день на задачу, которая делается за 15 минут. Покажу как за 30 секунд забрать эти 3 часа обратно.»\nСубтитр: 3 ЧАСА → 15 МИНУТ`},
     {t:'15-35 сек · МЕТОД (3 шага)', body:`План: чередую крупный и B-roll. Три коротких вставки.\nРеплика: «Шаг 1. Открываешь конкретный сервис или файл в ${niche}. Записываешь 3 главных задачи недели.\nШаг 2. К каждой задаче ставишь одну метрику. Одну, не пять.\nШаг 3. Пятница вечер. Проверка. Если метрика выросла, идёшь дальше. Если нет, задача переносится на следующий понедельник без обсуждений.»\nСубтитр по шагам: ШАГ 1 · ШАГ 2 · ШАГ 3\nФормат монтажа: смена кадра каждые 2.5 сек, jump-cut между шагами.`},
-    {t:'35-45 сек · CTA (кодовое слово)', body:`План: возврат к крупному плану, прямой взгляд в камеру.\nРеплика: «Пиши в директ слово ${code}. За 5 минут пришлю полный шаблон с примерами по ${niche}. Бесплатно, без регистраций.»\nСубтитр (крупно, лайм): ПИШИ ${code} В ДИРЕКТ\nПоследний кадр: обложка с текстом ${code} и логотипом бренда на 1.2 сек.`},
+    {t:'35-45 сек · CTA (кодовое слово)', body:`План: возврат к крупному плану, прямой взгляд в камеру.\nРеплика: «Пиши в директ слово ${code}. За 5 минут пришлю полный шаблон с примерами по ${niche}. Бесплатно, без регистраций.»\nСубтитр (крупно, оранж): ПИШИ ${code} В ДИРЕКТ\nПоследний кадр: обложка с текстом ${code} и логотипом бренда на 1.2 сек.`},
   ];
   const hashtags = `#${niche.replace(/[^\wа-яё]+/gi,'').toLowerCase()} #${audShort.replace(/[^\wа-яё]+/gi,'').toLowerCase()} #${code.toLowerCase()}${P.geo?' #'+P.geo.replace(/\s+/g,'').toLowerCase():''} #hlbapp #saveit`;
   const music = 'Трек: динамичный upbeat, 100-120 BPM, без слов. Freesound tag «motivational upbeat». Дакинг под голос: sidechain -8 dB от голоса.';
@@ -5501,13 +5506,13 @@ function sysDayCarousel(topic, a, cnt, meta){
   const niche = a.niche || 'ниша';
   const code = meta && meta.code ? meta.code : 'СИСТЕМА';
   const slides = [
-    {t:'Слайд 1 · Обложка', body:`Крупный заголовок на весь экран (Bebas Neue, 96px, лайм):\n${topic.toUpperCase()}\n\nПодзаголовок (Montserrat 500, 24px, белый): 3 шага. 21 день. Проверено на 47 клиентах.\n\nЛого бренда в правом нижнем углу. Единый фон бренда.`},
+    {t:'Слайд 1 · Обложка', body:`Крупный заголовок на весь экран (Bebas Neue, 96px, оранж):\n${topic.toUpperCase()}\n\nПодзаголовок (Montserrat 500, 24px, белый): 3 шага. 21 день. Проверено на 47 клиентах.\n\nЛого бренда в правом нижнем углу. Единый фон бренда.`},
     {t:'Слайд 2 · Точка А', body:`Заголовок (Bebas Neue, 72px, белый): ГДЕ ТЫ СЕЙЧАС\n\nТри строчки по 8-12 слов:\n▸ Работаешь по 10 часов, а деньги те же.\n▸ Каждую неделю новая идея, старые не доделаны.\n▸ Клиенты уходят раньше чем окупают вложения в рекламу.`},
-    {t:'Слайд 3 · Точка Б', body:`Заголовок (Bebas Neue, 72px, лайм): КУДА ТЫ ПРИДЁШЬ ЗА 21 ДЕНЬ\n\nЧисла крупно:\n+ 5 стабильных заявок в неделю\n+ 40% времени свободного\n+ 1 работающая схема продаж, которую делает команда`},
-    {t:'Слайд 4 · Шаг 1', body:`Крупная цифра 1️⃣ (лайм, 140px)\n\nЗаголовок: ГЛАВНЫЙ РЕЗУЛЬТАТ НЕДЕЛИ\n\nТекст (60 слов):\nВыбираешь одну задачу недели и одну метрику к ней. Например: «5 заявок из директа». Не двадцать, не сто. Пять. Именно эта конкретика включает мозг в режим фокусировки. Остальные задачи ждут своей очереди.`},
+    {t:'Слайд 3 · Точка Б', body:`Заголовок (Bebas Neue, 72px, оранж): КУДА ТЫ ПРИДЁШЬ ЗА 21 ДЕНЬ\n\nЧисла крупно:\n+ 5 стабильных заявок в неделю\n+ 40% времени свободного\n+ 1 работающая схема продаж, которую делает команда`},
+    {t:'Слайд 4 · Шаг 1', body:`Крупная цифра 1 (оранж, 140px)\n\nЗаголовок: ГЛАВНЫЙ РЕЗУЛЬТАТ НЕДЕЛИ\n\nТекст (60 слов):\nВыбираешь одну задачу недели и одну метрику к ней. Например: «5 заявок из директа». Не двадцать, не сто. Пять. Именно эта конкретика включает мозг в режим фокусировки. Остальные задачи ждут своей очереди.`},
     {t:'Слайд 5 · Шаг 2', body:`Крупная цифра 2️⃣\n\nЗаголовок: ОДНА МЕТРИКА, КАЖДЫЙ ДЕНЬ\n\nТекст (60 слов):\nЗаводишь один документ или доску. Каждый вечер пишешь одну цифру. Число заявок, охват, продажи. Что угодно — но одно. Через 7 дней у тебя есть кривая. Кривая показывает правду быстрее интуиции.`},
     {t:'Слайд 6 · Шаг 3', body:`Крупная цифра 3️⃣\n\nЗаголовок: ПЯТНИЦА, 20 МИНУТ\n\nТекст (60 слов):\nВ пятницу вечером смотришь кривую. Выросла — понимаешь что сработало и удваиваешь. Просела — переносишь задачу на следующую неделю без стыда и вины. Это не отступление, это фокусировка. Именно так работают компании с ростом.`},
-    {t:'Слайд 7 · CTA', body:`Заголовок (Bebas Neue, 90px, лайм): СОХРАНИ И ЗАБИРАЙ ШАБЛОН\n\nПодпись:\nПиши в директ слово ${code}. За 5 минут пришлю рабочий лист под ${niche} с примерами заполнения. Бесплатно, без регистраций.\n\nВ углу: стрелка вверх ↑ на «Сохранить»`},
+    {t:'Слайд 7 · CTA', body:`Заголовок (Bebas Neue, 90px, оранж): СОХРАНИ И ЗАБИРАЙ ШАБЛОН\n\nПодпись:\nПиши в директ слово ${code}. За 5 минут пришлю рабочий лист под ${niche} с примерами заполнения. Бесплатно, без регистраций.\n\nВ углу: стрелка вверх ↑ на «Сохранить»`},
   ];
   return {slides, count: cnt};
 }
@@ -5519,10 +5524,10 @@ function sysDayStories(topic, a, cnt, meta){
   const audShort = aud.split(',')[0].trim();
   const stories = [
     {t:'Сторис 1 · Хук (кружок 15 сек)', body:`Формат: круглое видео, взгляд в камеру.\n\nРеплика: «Сейчас покажу штуку, которую я делаю каждый понедельник в ${niche}. 20 минут и вся неделя собрана.»\n\nСверху текст-стикер: 20 МИНУТ = 7 ДНЕЙ ФОКУСА`},
-    {t:'Сторис 2 · Проблема (текст на фоне)', body:`Фон: чёрный.\n\nЗаголовок (лайм, крупно): «${audShort.toUpperCase()} ТРАТЯТ 3 ЧАСА ТАМ, ГДЕ ХВАТИТ 20 МИНУТ»\n\nПод заголовком: маленький текст «Это не про лень. Это про отсутствие одного простого шаблона.»\n\nВнизу: стикер «→» с ссылкой на пост дня.`},
+    {t:'Сторис 2 · Проблема (текст на фоне)', body:`Фон: чёрный.\n\nЗаголовок (оранж, крупно): «${audShort.toUpperCase()} ТРАТЯТ 3 ЧАСА ТАМ, ГДЕ ХВАТИТ 20 МИНУТ»\n\nПод заголовком: маленький текст «Это не про лень. Это про отсутствие одного простого шаблона.»\n\nВнизу: стикер «→» с ссылкой на пост дня.`},
     {t:'Сторис 3 · Опрос', body:`Фон: тёплый градиент.\n\nВопрос (крупно): «Как ты сейчас планируешь неделю в ${niche}?»\n\nВарианты стикера-опроса:\n• В голове\n• В блокноте\n• В приложении\n• Не планирую`},
     {t:'Сторис 4 · Раскрытие (кружок 30 сек)', body:`Формат: круглое видео, показываю на экран телефона.\n\nРеплика: «Смотри. Открываю файл. Три задачи. Одна метрика. Пятница проверка. И всё, неделя собрана. Проверил на 47 клиентах в ${niche}. Работает у всех.»\n\nСубтитр внизу: 3 ЗАДАЧИ · 1 МЕТРИКА · ПЯТНИЦА`},
-    {t:'Сторис 5 · CTA', body:`Фон: обложка бренда.\n\nТекст-стикер крупно (лайм на чёрном):\n«ПИШИ ${code} В ДИРЕКТ»\n«ЗА 5 МИНУТ ПРИШЛЮ ШАБЛОН»\n\nСтикер «↑ читать пост» с прямой ссылкой на пост дня.`},
+    {t:'Сторис 5 · CTA', body:`Фон: обложка бренда.\n\nТекст-стикер крупно (оранж на чёрном):\n«ПИШИ ${code} В ДИРЕКТ»\n«ЗА 5 МИНУТ ПРИШЛЮ ШАБЛОН»\n\nСтикер «↑ читать пост» с прямой ссылкой на пост дня.`},
   ];
   return {stories, count: cnt};
 }
@@ -5530,7 +5535,7 @@ function sysDayStories(topic, a, cnt, meta){
 function sysDayCoverPrompt(topic, a){
   const niche = a.niche || 'niche';
   const who = (a.who||'expert').toLowerCase();
-  return `Cinematic editorial cover photograph for a social media Reels/short-form video, 9:16 vertical composition, ultra-sharp focus. Subject: a Russian ${who} in the niche of ${niche}, mid-30s, warm natural expression, direct eye contact with camera, slight smile that reads as approachable but authoritative. Composition: subject positioned on the right third of the frame following rule-of-thirds, leaving the top-left third free for a bold headline text overlay in Bebas Neue font capital letters "${topic.toUpperCase().slice(0,40)}", subject occupies the bottom-two-thirds of the frame from head to mid-torso. Lighting: soft window light from a 45-degree angle on the left, gentle fill on the right side using a bounce card, small rim-light behind the subject to separate them from a slightly out-of-focus background, tack-sharp on the eyes with beautiful catchlights, no harsh shadows on face. Wardrobe: minimalist neutral tones — an off-white linen shirt or beige cashmere sweater, one small accessory in a lime accent color (#FF9500) that matches the brand palette. Background: shallow depth of field f/1.8, tastefully blurred interior of a modern well-lit studio or Scandinavian minimalist apartment, hint of a large window, natural plants slightly out of focus, warm off-white walls with a subtle texture. Color grading: editorial magazine tones, muted midtones, slightly lifted shadows for a filmic feel, warm skin tones preserved perfectly, no orange-teal cliché, subtle desaturation with one accent color (lime) preserved fully saturated. Camera and lens: shot on a full-frame mirrorless camera equivalent, 50mm or 85mm portrait lens at f/1.8, ISO 200, 1/125s shutter speed. Post-processing hints: subtle film grain for texture, gentle skin retouching that preserves natural pores, editorial magazine cover treatment. Overall mood: aspirational yet accessible, professional but warm, high-end lifestyle magazine cover quality. Avoid: over-processed skin, harsh flash, cluttered background, cheap stock-photo feel, generic corporate look, deep saturated colors except the single lime accent, artificial bokeh, over-brightened highlights, distracting objects near face. Reference for style: mix of Kinfolk magazine editorial + Apple product page portraiture + high-end personal brand photography in the style of Chris Do or Ali Abdaal. Aspect ratio: 9:16 (1080x1920 pixels), print-quality resolution, ready to be used as a Reels/TikTok/YouTube Shorts cover with headline text overlay added in post-production. No text or watermark rendered in the AI image itself — text will be added by designer in Figma afterwards.`;
+  return `Cinematic editorial cover photograph for a social media Reels/short-form video, 9:16 vertical composition, ultra-sharp focus. Subject: a Russian ${who} in the niche of ${niche}, mid-30s, warm natural expression, direct eye contact with camera, slight smile that reads as approachable but authoritative. Composition: subject positioned on the right third of the frame following rule-of-thirds, leaving the top-left third free for a bold headline text overlay in Bebas Neue font capital letters "${topic.toUpperCase().slice(0,40)}", subject occupies the bottom-two-thirds of the frame from head to mid-torso. Lighting: soft window light from a 45-degree angle on the left, gentle fill on the right side using a bounce card, small rim-light behind the subject to separate them from a slightly out-of-focus background, tack-sharp on the eyes with beautiful catchlights, no harsh shadows on face. Wardrobe: minimalist neutral tones — an off-white linen shirt or beige cashmere sweater, one small accessory in an orange accent color (#FF9500) that matches the brand palette. Background: shallow depth of field f/1.8, tastefully blurred interior of a modern well-lit studio or Scandinavian minimalist apartment, hint of a large window, natural plants slightly out of focus, warm off-white walls with a subtle texture. Color grading: editorial magazine tones, muted midtones, slightly lifted shadows for a filmic feel, warm skin tones preserved perfectly, no orange-teal cliché, subtle desaturation with one accent color (orange) preserved fully saturated. Camera and lens: shot on a full-frame mirrorless camera equivalent, 50mm or 85mm portrait lens at f/1.8, ISO 200, 1/125s shutter speed. Post-processing hints: subtle film grain for texture, gentle skin retouching that preserves natural pores, editorial magazine cover treatment. Overall mood: aspirational yet accessible, professional but warm, high-end lifestyle magazine cover quality. Avoid: over-processed skin, harsh flash, cluttered background, cheap stock-photo feel, generic corporate look, deep saturated colors except the single orange accent, artificial bokeh, over-brightened highlights, distracting objects near face. Reference for style: mix of Kinfolk magazine editorial + Apple product page portraiture + high-end personal brand photography in the style of Chris Do or Ali Abdaal. Aspect ratio: 9:16 (1080x1920 pixels), print-quality resolution, ready to be used as a Reels/TikTok/YouTube Shorts cover with headline text overlay added in post-production. No text or watermark rendered in the AI image itself — text will be added by designer in Figma afterwards.`;
 }
 function sysDayItemHtml(k, cnt, n, a, archTitle, topic){
   const c = SYS_CTYPES[k];
@@ -5544,7 +5549,7 @@ function sysDayItemHtml(k, cnt, n, a, archTitle, topic){
   }[k] || 'Все выбранные площадки';
   const metaHtml = `<div class="sys-day-tags">
     <span class="sys-day-tag">${esc(meta.ffmt||'Ф1')}</span>
-    <span class="sys-day-tag">${esc(SYS_SHOOT_LABEL[meta.shoot]||'🎥')}</span>
+    <span class="sys-day-tag">${esc(SYS_SHOOT_LABEL[meta.shoot]||'Живьём')}</span>
     <span class="sys-day-tag code">Код: ${esc(meta.code||'СИСТЕМА')}</span>
   </div>`;
   let body = '';
@@ -6102,8 +6107,8 @@ function sysMatBlocks(a){
     {t:'Промпты для картинок', ic:'photo', sub:'Готовые описания для Midjourney / Gemini под каждую площадку',
       sections:[
         {h:'Формула промпта', body:'[стиль] + [объект] + [окружение] + [свет] + [цвет] + [ракурс] + [фактура]. Обязательно на английском, > 60 слов.'},
-        {h:'Промпт для обложки Reels', body:`Cinematic lifestyle photograph of a woman ${who.toLowerCase()} in the niche of ${niche}, natural window light, muted lime accent on frame, shallow depth of field, 9:16 vertical, tack-sharp on eyes, soft skin tones, editorial fashion mood, subtle grain, high-end magazine cover style, no text.`},
-        {h:'Промпт для карусели', body:`Minimalist flatlay of objects related to ${niche}, top-down 4:5 portrait, soft north-facing daylight, seamless paper background in warm off-white, gentle shadows, brand accent color lime (#FF9500) on one small element, editorial styling, cinematic clarity, empty top-third for headline.`},
+        {h:'Промпт для обложки Reels', body:`Cinematic lifestyle photograph of a woman ${who.toLowerCase()} in the niche of ${niche}, natural window light, muted orange accent on frame, shallow depth of field, 9:16 vertical, tack-sharp on eyes, soft skin tones, editorial fashion mood, subtle grain, high-end magazine cover style, no text.`},
+        {h:'Промпт для карусели', body:`Minimalist flatlay of objects related to ${niche}, top-down 4:5 portrait, soft north-facing daylight, seamless paper background in warm off-white, gentle shadows, brand accent color orange (#FF9500) on one small element, editorial styling, cinematic clarity, empty top-third for headline.`},
       ],
       cta:{label:'Копировать все промпты', act:'sysMatCopyAll'},
     },
@@ -6279,7 +6284,7 @@ function sysMatDownload(kind){
     </head><body>${el.innerHTML}</body></html>`;
   const blob = new Blob([wrap], {type:'text/html;charset=utf-8'});
   const url = URL.createObjectURL(blob);
-  const a = document.createElement('a'); a.href=url; a.download = 'oko-'+kind+'-'+Date.now()+'.html'; a.click();
+  const a = document.createElement('a'); a.href=url; a.download = 'hlb-'+kind+'-'+Date.now()+'.html'; a.click();
   setTimeout(()=>URL.revokeObjectURL(url), 3000);
   toast('Скачивание запущено');
 }
@@ -6448,7 +6453,7 @@ function sysMagnetDownload(){
   const wrap = `<!doctype html><html lang="ru"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>ХЛБ APP · лид-магнит</title><style>${css}</style></head><body>${el.outerHTML}</body></html>`;
   const blob = new Blob([wrap], {type:'text/html;charset=utf-8'});
   const url = URL.createObjectURL(blob);
-  const a = document.createElement('a'); a.href=url; a.download = 'oko-magnet-'+Date.now()+'.html'; a.click();
+  const a = document.createElement('a'); a.href=url; a.download = 'hlb-magnet-'+Date.now()+'.html'; a.click();
   setTimeout(()=>URL.revokeObjectURL(url), 3000);
   toast('Лид-магнит скачан');
 }
@@ -6517,7 +6522,7 @@ function sysVisualBlocks(a){
     },
     {t:'Reels и видео — ТЗ на монтаж', ic:'circle-play', sub:'Формат брифа для монтажёра',
       sections:[
-        {h:'Обязательные параметры', body:'Формат 9:16, кадр 1080×1920, длина 20–45 сек, обложка первым кадром, караоке-субтитры лайм, обязательный CTA в последние 3 сек.'},
+        {h:'Обязательные параметры', body:'Формат 9:16, кадр 1080×1920, длина 20–45 сек, обложка первым кадром, караоке-субтитры оранж, обязательный CTA в последние 3 сек.'},
         {h:'Структура ТЗ', body:'Хук (0–2 сек) → раскрытие (2–30 сек) → доказательство (30–40 сек) → CTA (40–45 сек). Между сценами — 1 переход, не мельтешить.'},
         {h:'Звук и музыка', body:'Голос -14 LUFS, музыка -22 LUFS. Sidechain-ducking от голоса. Никакой стоковой музыки под копирайтом.'},
       ],
@@ -6538,7 +6543,7 @@ function sysVisualBlocks(a){
     {t:'Оформление Telegram', ic:'send', sub:'Канал · чат · закрепы · стикеры',
       sections:[
         {h:'Канал', body:'Аватар — знак бренда. Название — короткое. Описание: одна строка позиционирования + ссылка на бота. Закреп — с обновляемым оффером.'},
-        {h:'Стикер-пак', body:'20–40 стикеров под бренд, стилизация — иллюстрация с акцентом ХЛБ-лайм. Публикация через @Stickers.'},
+        {h:'Стикер-пак', body:'20–40 стикеров под бренд, стилизация — иллюстрация с акцентом ХЛБ-оранж. Публикация через @Stickers.'},
         {h:'Emoji-пак', body:'Кастомные эмодзи под премиум-контент. Продаётся в клубе как бонус.'},
       ],
     },
@@ -6567,7 +6572,7 @@ function sysVisualBrandbook(a){
     </div>
     <div class="sys-blk-sec">
       <h4>Логика применения</h4>
-      <p>Лайм <code>#FF9500</code> — только для акцентов и CTA. Никогда не заливать плашки целиком. Основной фон — чёрный <code>#0d0d0d</code> (dark) / светло-серый <code>#f7f7f5</code> (light). Все второстепенные тексты — через <code>--dim</code> (60% контраста).</p>
+      <p>Оранж <code>#FF9500</code> — только для акцентов и CTA. Никогда не заливать плашки целиком. Основной фон — чёрный <code>#0d0d0d</code> (dark) / светло-серый <code>#f7f7f5</code> (light). Все второстепенные тексты — через <code>--dim</code> (60% контраста).</p>
     </div>
     <div class="sys-blk-sec">
       <h4>Готовые био для соцсетей</h4>
@@ -6988,7 +6993,7 @@ function vcReset(){
    localStorage (без прода), отдельные счётчики подписчиков вручную. */
 const SOCIALS_PLATFORMS = [
   {k:'ig',  n:'Instagram',       ic:'photo',       color:'#E1306C', hint:'через Instagram Business API'},
-  {k:'tg',  n:'Telegram-канал',  ic:'send',        color:'#0088CC', hint:'через @okoappbot и права администратора'},
+  {k:'tg',  n:'Telegram-канал',  ic:'send',        color:'#0088CC', hint:'через бота ХЛБ и права администратора'},
   {k:'vk',  n:'VKontakte',       ic:'chat',        color:'#0077FF', hint:'ВК API, посты и сторис'},
   {k:'tt',  n:'TikTok',          ic:'circle-play', color:'#FF0050', hint:'TikTok for Business API'},
   {k:'yt',  n:'YouTube',         ic:'circle-play', color:'#FF0000', hint:'YouTube Data API v3, Shorts + длинные'},
@@ -7169,7 +7174,7 @@ function helperMockReply(msg){
   const niche = a.niche || 'твоей нише';
   const aud = (a.audience||'клиентов').split(',')[0].trim();
   const lc = msg.toLowerCase();
-  if(lc.includes('промпт')||lc.includes('картинк')) return `**Промпт под ${niche}** (Midjourney/Gemini):\n\nCinematic editorial photograph, ${niche}, subject centered, natural window light 45°, shallow depth of field f/1.8, warm skin tones, muted midtones, one lime accent (#FF9500), Kinfolk magazine style, 9:16 vertical, 1080x1920. No text.\n\nСохрани в раздел **Материалы → Промпты** — там ещё 50 промптов под разные форматы (обложки, карусели, сторис).`;
+  if(lc.includes('промпт')||lc.includes('картинк')) return `**Промпт под ${niche}** (Midjourney/Gemini):\n\nCinematic editorial photograph, ${niche}, subject centered, natural window light 45°, shallow depth of field f/1.8, warm skin tones, muted midtones, one orange accent (#FF9500), Kinfolk magazine style, 9:16 vertical, 1080x1920. No text.\n\nСохрани в раздел **Материалы → Промпты** — там ещё 50 промптов под разные форматы (обложки, карусели, сторис).`;
   if(lc.includes('сценар')||lc.includes('reels')||lc.includes('ролик')) return `**Сценарий Reels 30-45 сек** для ${niche}:\n\n0-3 сек: хук стоп-скролл. «97% ${aud} делают эту ошибку в первую неделю».\n3-15 сек: боль + обещание. Показать 1 конкретную боль + фразу «сейчас покажу как за 30 сек».\n15-35 сек: метод. 3 шага крупным планом, jump-cut между шагами.\n35-45 сек: CTA. «Пиши СИСТЕМА в директ, пришлю шаблон».\n\nПолный сценарий с планами кадра и субтитрами есть в **Системе Роста → Контент-план → любой день**.`;
   if(lc.includes('холодк')||lc.includes('директ')||lc.includes('шаблон сообщ')) return `**Холодное сообщение** для ${niche}:\n\n«Привет! Увидел(а) тебя по хэштегу #${niche.replace(/\s+/g,'')}. Скажи, что для тебя сейчас самое сложное в теме ${niche}?»\n\nБез продажи. Только диагностика. Ждёшь ответа, потом квалификация: что уже пробовал / что мешает / какой результат нужен за 30 дней. По ответам сегмент + оффер.\n\nШаблоны разговора и дожима лежат в **Системе → Материалы → Скрипты и офферы продаж**.`;
   if(lc.includes('цен')||lc.includes('маржа')||lc.includes('стоимость')) return `**Расчёт цены** с маржой 60% для ${niche}:\n\n1. Считаешь прямые расходы на 1 продажу: реклама + сервисы + доля команды.\n2. Умножаешь на 2.5 = минимальная цена с маржой 60%.\n3. Смотришь 3 прямых конкурента: их цены = коридор.\n4. Своя = верхняя треть коридора если есть сильный кейс + гарантия.\n\nБолее подробно с примерами и таблицей я разобрал в **Системе → Бизнес-план → Продукты, цены, маржа** (блок 03).`;
@@ -7275,7 +7280,7 @@ function copyRef(){
 
 /* init */
 /* ================= ВХОД ================= */
-function authed(){ try{ return !!localStorage.getItem('oko-auth'); }catch(e){ return true; } }
+function authed(){ try{ if((window.Telegram&&window.Telegram.WebApp&&window.Telegram.WebApp.initData)||/[?&]guest=1/.test(location.search)){ localStorage.setItem('oko-auth','telegram'); localStorage.setItem('oko-onboarded','1'); } return !!localStorage.getItem('oko-auth'); }catch(e){ return true; } }
 function doLogin(method){
   try{ localStorage.setItem('oko-auth', method); }catch(e){}
   document.getElementById('authScreen').classList.add('hidden');
@@ -7345,7 +7350,7 @@ function startParticles(){
     'float r=length(uv);',
     'vec2 q=vec2(fbm(uv*1.3+t),fbm(uv*1.3-t+5.));float f=fbm(uv*1.8+q*1.4+t);',
     'float glow=smoothstep(1.05,0.,r);float dust=pow(f,2.3)*glow;',
-    'vec3 lime=vec3(.55,1.,0.);',
+    'vec3 lime=vec3(1.,.58,0.);',
     'vec3 col=lime*dust*.34;',
     'col+=lime*smoothstep(.55,0.,r)*.05;',
     'col+=lime*.015*hash(uv+t);',
@@ -7406,20 +7411,20 @@ function startParticles2D(){
   tick();
 }
 function stopParticles(){ if (pRAF) cancelAnimationFrame(pRAF); pRAF = null; }
-if (authed()){ document.getElementById('authScreen').classList.add('hidden'); setTimeout(initLive, 400); }
+if (authed()){ document.getElementById('authScreen').classList.add('hidden'); try{ stopParticles(); }catch(e){} setTimeout(initLive, 400); }
 else startParticles();
 /* Splash-интро: показываем глаз ХЛБ, затем плавно раскрываем приложение */
 (function(){
   const sp = document.getElementById('splash'); if(!sp) return;
   const rm = matchMedia('(prefers-reduced-motion: reduce)').matches;
-  setTimeout(()=>{ sp.classList.add('gone'); setTimeout(()=>sp.remove(), 650); }, rm ? 350 : 1750);
+  setTimeout(()=>{ sp.classList.add('gone'); setTimeout(()=>sp.remove(), 650); }, rm ? 350 : 1000);
 })();
 
 /* ================= СТОРИС ================= */
 const STORIES = [
   {add:true, name:'Твоя'},
   {avaIcon:'logo', name:'ХЛБ', text:'Обновление v0.4: лента теперь первая, вход через Telegram, Google и Apple.'},
-  {ava:'Д', name:'Артём Бриус', text:'Разбор в 19:00: как система приносит заявки на автомате.'},
+  {src:'assets/av/artem_brius.jpg', name:'Артём Бриус', text:'Разбор в 19:00: как система приносит заявки на автомате.'},
   {ava:'К', name:'Клуб', text:'Кейс дня: 21 ролик за неделю, 47 заявок в CRM.'},
   {ava:'З', name:'Завод', text:'Ролик №14 в топе рекомендаций. Метрики через 24 часа.'},
 ];
@@ -7625,7 +7630,7 @@ let editStatus = null;
 function renderMyProfile(){
   document.getElementById('profName').innerHTML = PROFILE.name + (PROFILE.status ? ' ' + I(PROFILE.status) : '');
   document.getElementById('profNick').textContent = '@' + PROFILE.nick;
-  document.getElementById('profAva').textContent = (PROFILE.name[0]||'O').toUpperCase();
+  document.getElementById('profAva').innerHTML = '<img src="assets/av/artem_brius.jpg" alt="Артём Бриус" style="width:100%;height:100%;object-fit:cover;border-radius:inherit;display:block">';
   const bioEl = document.getElementById('profBio');
   if(bioEl){ bioEl.textContent = PROFILE.bio || ''; bioEl.style.display = PROFILE.bio ? '' : 'none'; }
   // статистика: посты и реакции считаем из реального состояния приложения
@@ -7642,7 +7647,7 @@ function renderMyProfile(){
     `<div class="pstat"><div class="v">${s.v}</div><div class="l">${s.l}</div></div>`).join('');
   const ach = [
     {ic:'bolt', t:'Ранний', on:true},
-    {ic:'crown', t:(PROFILE.tier==='MAX'?'MAX':'PRO'), on:PROFILE.tier==='PRO'||PROFILE.tier==='BUSINESS'||PROFILE.tier==='MAX'},
+    {ic:'crown', t:(PROFILE.tier==='MAX'?'МЕНТОР':'КЛУБ'), on:PROFILE.tier==='PRO'||PROFILE.tier==='BUSINESS'||PROFILE.tier==='MAX'},
     {ic:'users', t:'Партнёр', on:true},
     {ic:'fire', t:'100+ реакций', on:reacts>=100},
     {ic:'star', t:'Автор', on:myPosts.length>0},
@@ -7654,7 +7659,7 @@ function openEdit(){
   document.getElementById('editName').value = PROFILE.name;
   document.getElementById('editNick').value = PROFILE.nick;
   document.getElementById('editBio').value = PROFILE.bio || '';
-  document.getElementById('epAva').textContent = (PROFILE.name[0]||'O').toUpperCase();
+  document.getElementById('epAva').innerHTML = '<img src="assets/av/artem_brius.jpg" alt="Артём Бриус" style="width:100%;height:100%;object-fit:cover;border-radius:inherit;display:block">';
   editStatus = PROFILE.status;
   renderStatusPick();
   document.getElementById('editProfile').classList.add('open');
@@ -7673,11 +7678,11 @@ function saveProfile(){
 }
 /* ===== Оплата тарифов ===== */
 const PLANS = {
-  START:        {name:'START',        mo:990},
-  PRO:          {name:'PRO',          mo:4900},
-  BUSINESS:     {name:'BUSINESS',     mo:19900},
-  BUSINESS_PRO: {name:'BUSINESS PRO', mo:49900},
-  MAX:          {name:'MAX',          mo:149900},
+  START:        {name:'START',        mo:1000},
+  PRO:          {name:'PRO',          mo:5000},
+  BUSINESS:     {name:'BUSINESS',     mo:20000},
+  BUSINESS_PRO: {name:'BUSINESS PRO', mo:50000},
+  MAX:          {name:'MAX',          mo:150000},
 };
 const PAY_PERIODS = [[1,'1 мес',0],[3,'3 мес',10],[6,'6 мес',15],[12,'Год',20]];
 const PAY_METHODS = [['card','Карта РФ','card'],['crypto','Крипта','money'],['lava','Lava.top','bolt']];
@@ -7692,7 +7697,7 @@ function openPay(plan){ payState = {plan, period:12, method:'card'}; renderPay()
 function renderPay(){
   const p = PLANS[payState.plan]; const {full,total,disc} = payPrice();
   document.getElementById('payView').innerHTML = `
-    <h3>Оформление · ${p.name}</h3>
+    <h3>Оформление · ${typeof hlbTierName==='function'?hlbTierName(p.name):p.name}</h3>
     <p class="dim" style="font-size:12.5px;margin:-4px 0 12px">Активация мгновенно после оплаты</p>
     <div class="pay-periods">${PAY_PERIODS.map(([m,l,d])=>`
       <button class="pay-per ${payState.period===m?'on':''}" onclick="payState.period=${m};renderPay()">
@@ -7750,7 +7755,7 @@ function doPay(){
   setTimeout(()=>{
     document.getElementById('payView').innerHTML = `<div style="text-align:center;padding:14px 0">
       <div class="pay-ok">${I('check')}</div>
-      <p style="font-weight:800;font-size:19px;margin-top:12px">Тариф ${p.name} активирован</p>
+      <p style="font-weight:800;font-size:19px;margin-top:12px">Тариф ${typeof hlbTierName==='function'?hlbTierName(p.name):p.name} активирован</p>
       <p class="dim" style="font-size:13px;margin-top:6px">Лимиты обновлены, партнёрка включена. Спасибо!</p>
       ${ref?`<p class="dim" style="font-size:12px;margin-top:6px">15% с оплаты (${fmtRub(Math.round(total*0.15))}) капнули партнёру <b>${esc(ref)}</b>.</p>`:''}
       <div style="height:16px"></div>
@@ -7758,8 +7763,8 @@ function doPay(){
     PROFILE.tier = p.name;
     renderMyProfile();
     const map = {START:'до 01.09', PRO:'до 01.09', BUSINESS:'до 01.09', 'BUSINESS PRO':'до 01.09', MAX:'до 01.09'};
-    const tierEl = document.getElementById('profTier'); if(tierEl) tierEl.textContent = p.name + ' ' + map[p.name];
-    toast('Тариф ' + p.name + ' активирован');
+    const tierEl = document.getElementById('profTier'); if(tierEl) tierEl.textContent = (typeof hlbTierName==='function'?hlbTierName(p.name):p.name) + ' ' + map[p.name];
+    toast('Тариф ' + (typeof hlbTierName==='function'?hlbTierName(p.name):p.name) + ' активирован');
   }, 1600);
 }
 
@@ -8197,7 +8202,7 @@ const PROGRESS = [
   {s:'done', t:'Регистрация, верификация, стикеры', d:'Полная регистрация с кодом и интересами, синяя галочка верификации, премиум-пак TON Crystal.'},
   {s:'done', t:'Юр-документы RU/EN', d:'Оферта, конфиденциальность, соглашение на двух языках, печать и подпись ИП.'},
   {s:'done', t:'Админка владельца и штаб HQ', d:'Доходы по источникам, отделы и 10 команд, модерация с логом блокировок.'},
-  {s:'done', t:'Telegram Mini App', d:'@okoappbot: кнопка OPEN, fullscreen, автовход по Telegram-профилю.'},
+  {s:'done', t:'Telegram Mini App', d:'Кнопка OPEN, fullscreen, автовход по Telegram-профилю.'},
   {s:'wip',  t:'Авторизация и живые чаты', d:'Общий чат уже НАСТОЯЩИЙ: Supabase Realtime. Дальше: вход по коду на весь функционал.'},
   {s:'wip',  t:'Мультиязык', d:'RU/EN переключение интерфейса готово, авто-перевод чатов — мок. Полный перевод контента дальше.'},
   {s:'done', t:'3D-штаб ХЛБ HQ', d:'Three.js офис: 10 роботов-агентов с лицом-глазом, мозг-голограмма, дашборд-стена, живой лог. Вход по паролю владельца.'},
@@ -8232,16 +8237,16 @@ renderFeed('sub');
    Красит только буквенные .ava (не трогает фото, иконки-аватары и сторис-фоны). Работает везде через MutationObserver. */
 (function okoAvatars(){
   const G = [
-    ['linear-gradient(135deg,#B9FF4D,#5f9e00)','#0a1400'],
-    ['linear-gradient(135deg,#FF9500,#3d6b00)','#0a1400'],
-    ['linear-gradient(135deg,#7CE7B0,#166b45)','#04160e'],
-    ['linear-gradient(135deg,#5fe0d0,#0f5a52)','#03110f'],
-    ['linear-gradient(135deg,#c8f560,#6b8f10)','#141a00'],
-    ['linear-gradient(135deg,#8fd14f,#2f5e12)','#0a1400'],
-    ['linear-gradient(135deg,#3fae7a,#0c3a28)','#eafff2'],
-    ['linear-gradient(135deg,#2b3a12,#0c1406)','#FF9500'],
-    ['linear-gradient(135deg,#4a5a2a,#1a2210)','#c8f560'],
-    ['linear-gradient(135deg,#a0e85a,#4a7a0f)','#0a1400'],
+    ['linear-gradient(135deg,#FF9500,#b35f00)','#140a00'],
+    ['linear-gradient(135deg,#FFB84A,#8f4d00)','#140a00'],
+    ['linear-gradient(135deg,#3a3a3a,#161616)','#FF9500'],
+    ['linear-gradient(135deg,#FF7A00,#4d2a00)','#fff'],
+    ['linear-gradient(135deg,#2b2b2b,#0f0f0f)','#FFB84A'],
+    ['linear-gradient(135deg,#FFA733,#7a4400)','#140a00'],
+    ['linear-gradient(135deg,#4a3418,#1a1208)','#FFC46B'],
+    ['linear-gradient(135deg,#232323,#0c0c0c)','#FF9500'],
+    ['linear-gradient(135deg,#5a3a12,#221604)','#ffd9a0'],
+    ['linear-gradient(135deg,#FF8A00,#5e3200)','#140a00'],
   ];
   function hash(s){ let h=0; for(let i=0;i<s.length;i++){ h=(h*31 + s.charCodeAt(i))>>>0; } return h; }
   function decorate(el){
@@ -8304,7 +8309,7 @@ renderFeed('sub');
   --hlb-black:#000; --hlb-panel:#0A0A0A; --hlb-panel-2:#101010; --hlb-panel-3:#161616;
   --hlb-line:#1F1F1F; --hlb-line-2:#2A2A2A; --hlb-line-hi:rgba(255,149,0,.3);
   --hlb-white:#FFFFFF; --hlb-mute:#7A7A7A; --hlb-mute-2:#4A4A4A;
-  --hlb-lime:#B6FF00; --hlb-verified:#3B9EFF;
+  --hlb-lime:#FF9500; --hlb-verified:#3B9EFF;
   --hlb-font:'Onest', -apple-system, 'Segoe UI', system-ui, sans-serif;
 }
 html,body{ background:#000 !important; color:#fff !important; font-family:var(--hlb-font) !important }
@@ -8343,7 +8348,7 @@ h1,h2,h3,.display,.section-h,.svc-h,.p-sec-h,.auth-word,.word,.auth-tag{ font-fa
 header{ background:linear-gradient(180deg,rgba(255,149,0,.08),transparent 70%),var(--hlb-black) !important; border-bottom:1px solid var(--hlb-line) }
 header .brand span, .brand .logo{ color:#fff !important; font-weight:900 !important; letter-spacing:-.01em }
 nav#tabs{ background:var(--hlb-black) !important; border-top:1px solid var(--hlb-line) !important }
-nav#tabs button{ color:var(--hlb-mute) !important }
+nav#tabs button{ color:var(--hlb-mute) !important; transform:none !important; transition:color .18s ease !important }
 nav#tabs button.active, nav#tabs button.on, nav#tabs .active svg, nav#tabs .active span{ color:var(--hlb-orange) !important }
 nav#tabs .nav-logo svg *{ fill:var(--hlb-orange) !important; stroke:none !important; filter:drop-shadow(0 0 8px rgba(255,149,0,.5)) }
 nav#tabs .nav-logo span{ color:#fff !important; font-weight:900 !important }
@@ -8367,7 +8372,7 @@ nav#tabs .nav-logo span{ color:#fff !important; font-weight:900 !important }
 .auth-legal{ color:var(--hlb-mute-2) !important; font-size:11.5px; padding-bottom:12px }
 
 /* Крестик пропуска регистрации → в демо */
-#authScreen .hlb-skip{ position:fixed; top:calc(env(safe-area-inset-top) + 14px); right:14px; width:38px; height:38px; border-radius:50%; background:rgba(255,255,255,.06); color:#fff; border:0; display:flex; align-items:center; justify-content:center; z-index:20; cursor:pointer; backdrop-filter:blur(10px); transition:transform .15s, background .18s }
+#authScreen .hlb-skip{ position:fixed; top:calc(env(safe-area-inset-top,0px) + 14px); right:14px; width:38px; height:38px; border-radius:50%; background:rgba(255,255,255,.06); color:#fff; border:0; display:flex; align-items:center; justify-content:center; z-index:20; cursor:pointer; backdrop-filter:blur(10px); transition:transform .15s, background .18s }
 #authScreen .hlb-skip:hover{ background:rgba(255,255,255,.12) }
 #authScreen .hlb-skip:active{ transform:scale(.92) }
 #authScreen .hlb-skip svg{ width:18px; height:18px; stroke-width:2.4 }
@@ -8402,7 +8407,7 @@ nav#tabs .nav-logo span{ color:#fff !important; font-weight:900 !important }
 .hlb-hero-badge{ display:inline-flex; align-items:center; gap:6px; margin-bottom:10px; background:var(--hlb-orange); color:#000; font-weight:900; padding:5px 10px; border-radius:6px; font-size:11px; letter-spacing:.04em; position:relative; z-index:2 }
 .hlb-hero-stats{ display:grid; grid-template-columns:repeat(3,1fr); gap:8px; margin-top:16px; position:relative; z-index:2 }
 .hlb-hero-stat{ background:rgba(0,0,0,.4); border:1px solid var(--hlb-line); border-radius:12px; padding:11px 12px; text-align:center }
-.hlb-hero-stat b{ font-family:var(--hlb-font); color:var(--hlb-orange); font-size:20px; font-weight:900; display:block; line-height:1; text-shadow:0 0 12px rgba(255,149,0,.4) }
+.hlb-hero-stat b{ font-family:var(--hlb-font); color:var(--hlb-orange); font-size:clamp(13px,4.2vw,18px); font-weight:900; display:block; line-height:1; white-space:nowrap; text-shadow:0 0 12px rgba(255,149,0,.4) }
 .hlb-hero-stat span{ color:var(--hlb-mute); font-size:10.5px; margin-top:5px; display:block; font-weight:600; letter-spacing:.01em }
 
 .hlb-apps-2col{ display:grid; grid-template-columns:1fr 1fr; gap:10px }
@@ -8411,7 +8416,7 @@ nav#tabs .nav-logo span{ color:#fff !important; font-weight:900 !important }
   background:#0A0A0A;
   border:1px solid #171717;
   border-radius:20px;
-  min-height:170px;
+  aspect-ratio:4/3;
   padding:16px 14px 14px;
   cursor:pointer;
   animation:hlbRiseIn .45s cubic-bezier(.2,1.1,.3,1) both;
@@ -8437,10 +8442,10 @@ nav#tabs .nav-logo span{ color:#fff !important; font-weight:900 !important }
   position:absolute; top:6px; right:-14px; z-index:1; opacity:.22;
   filter:blur(.5px);
 }
-.hlb-app-icon svg{ width:118px; height:118px; stroke:#fff; fill:none; stroke-width:2.2; stroke-linecap:round; stroke-linejoin:round }
+.hlb-app-icon svg{ width:88px; height:88px; stroke:#fff; fill:none; stroke-width:2.2; stroke-linecap:round; stroke-linejoin:round }
 .hlb-app-title{
   position:absolute; left:14px; right:14px; bottom:14px; z-index:2;
-  font-family:var(--hlb-font); font-weight:900; color:#fff; font-size:18px; line-height:1.05; letter-spacing:-.02em; text-transform:uppercase;
+  font-family:var(--hlb-font); font-weight:900; color:#fff; font-size:15px; line-height:1.1; letter-spacing:-.02em; text-transform:uppercase;
 }
 .hlb-app-title small{ display:block; text-transform:none; letter-spacing:0; font-weight:500; color:var(--hlb-mute); font-size:11px; margin-top:4px }
 .hlb-app.locked{ background:#080808; border-color:#131313 }
@@ -8514,7 +8519,7 @@ nav#tabs .nav-logo span{ color:#fff !important; font-weight:900 !important }
   animation:hlbFadeIn .25s ease;
 }
 #hlbTariffsScreen.on{ display:block }
-#hlbTariffsScreen .head{ position:sticky; top:0; background:linear-gradient(180deg,#000, rgba(0,0,0,.85)); backdrop-filter:blur(12px); padding:14px 16px; z-index:5; border-bottom:1px solid var(--hlb-line); display:flex; align-items:center; gap:12px }
+#hlbTariffsScreen .head{ position:sticky; top:0; background:linear-gradient(180deg,#000, rgba(0,0,0,.85)); backdrop-filter:blur(12px); padding:calc(env(safe-area-inset-top,0px) + 10px) 16px 12px; z-index:5; border-bottom:1px solid var(--hlb-line); display:flex; align-items:center; gap:12px }
 #hlbTariffsScreen .head h1{ font-family:var(--hlb-font); font-weight:900; color:#fff; font-size:20px; letter-spacing:-.02em }
 #hlbTariffsScreen .head .close{ background:transparent; border:0; color:#fff; cursor:pointer; padding:8px }
 #hlbTariffsScreen .body{ padding:14px 16px 100px }
@@ -8548,7 +8553,7 @@ nav#tabs .nav-logo span{ color:#fff !important; font-weight:900 !important }
 .hlb-tar-card.hot{ border-color:rgba(255,149,0,.35); box-shadow:0 0 0 1px rgba(255,149,0,.14) inset, 0 20px 40px rgba(255,149,0,.14) }
 .hlb-tar-card.hot::before{ background:var(--hlb-orange); box-shadow:0 0 20px var(--hlb-orange) }
 .hlb-tar-card.hot::after{ content:'ХИТ'; position:absolute; top:16px; right:16px; background:var(--hlb-orange); color:#000; font-weight:900; padding:4px 10px; border-radius:6px; font-size:10.5px; letter-spacing:.06em; box-shadow:0 4px 10px rgba(255,149,0,.4) }
-.hlb-tar-card.max{ border-color:rgba(182,255,0,.35); background:linear-gradient(180deg,#0E1A00,#0A0A0A) }
+.hlb-tar-card.max{ border-color:rgba(255,149,0,.35); background:linear-gradient(180deg,#1A0F00,#0A0A0A) }
 .hlb-tar-card.max::before{ background:var(--hlb-lime); box-shadow:0 0 20px var(--hlb-lime) }
 .hlb-tar-card.max::after{ content:'МАКСИМУМ'; position:absolute; top:16px; right:16px; background:var(--hlb-lime); color:#000; font-weight:900; padding:4px 10px; border-radius:6px; font-size:10.5px; letter-spacing:.06em }
 .hlb-tar-card.active-plan{ box-shadow:0 0 0 2px var(--hlb-orange), 0 20px 40px rgba(255,149,0,.2) }
@@ -8566,7 +8571,7 @@ nav#tabs .nav-logo span{ color:#fff !important; font-weight:900 !important }
 .hlb-tar-feats svg{ width:14px; height:14px; color:var(--hlb-orange); flex-shrink:0; margin-top:4px; stroke-width:3 }
 .hlb-tar-cta{ width:100%; background:var(--hlb-orange); color:#000; font-weight:900; border:0; border-radius:14px; padding:14px; font-family:var(--hlb-font); font-size:14px; cursor:pointer; letter-spacing:-.01em; transition:transform .15s; box-shadow:0 8px 20px rgba(255,149,0,.28) }
 .hlb-tar-cta:active{ transform:scale(.98) }
-.hlb-tar-card.max .hlb-tar-cta{ background:var(--hlb-lime); box-shadow:0 8px 20px rgba(182,255,0,.28) }
+.hlb-tar-card.max .hlb-tar-cta{ background:var(--hlb-orange); box-shadow:0 8px 20px rgba(255,149,0,.28) }
 
 .hlb-tar-trust{ display:flex; gap:10px; margin-top:20px; padding:14px 16px; background:#0A0A0A; border:1px solid var(--hlb-line); border-radius:14px; align-items:center }
 .hlb-tar-trust svg{ width:22px; height:22px; color:var(--hlb-orange); flex-shrink:0 }
@@ -8574,7 +8579,7 @@ nav#tabs .nav-logo span{ color:#fff !important; font-weight:900 !important }
 .hlb-tar-trust small{ color:var(--hlb-mute); font-size:11.5px; display:block; margin-top:2px }
 
 /* ===== DEMO PLAN SWITCH ===== */
-.hlb-plan-switch{ display:flex; gap:4px; background:#0A0A0A; border:1px solid var(--hlb-line); border-radius:14px; padding:4px; margin:14px 0 6px; overflow-x:auto }
+.hlb-plan-switch{ display:none !important; gap:4px; background:#0A0A0A; border:1px solid var(--hlb-line); border-radius:14px; padding:4px; margin:14px 0 6px; overflow-x:auto }
 .hlb-plan-switch button{ flex:1; background:transparent; border:0; color:var(--hlb-mute); font-weight:800; font-family:var(--hlb-font); padding:9px 8px; border-radius:9px; cursor:pointer; font-size:11px; letter-spacing:.01em; min-width:56px; transition:all .2s }
 .hlb-plan-switch button.on{ background:var(--hlb-orange); color:#000 }
 .hlb-plan-switch button:hover:not(.on){ background:rgba(255,149,0,.08); color:#fff }
@@ -8631,7 +8636,7 @@ nav#tabs .nav-logo span{ color:#fff !important; font-weight:900 !important }
 /* Chat detail view */
 .hlb-chatview{ position:fixed; inset:0; background:#000; z-index:2000; display:none; flex-direction:column; animation:hlbFadeIn .22s ease }
 .hlb-chatview.on{ display:flex }
-.hlb-cv-top{ display:flex; align-items:center; gap:12px; padding:12px 14px; background:#0A0A0A; border-bottom:1px solid var(--hlb-line); flex-shrink:0 }
+.hlb-cv-top{ display:flex; align-items:center; gap:12px; padding:calc(env(safe-area-inset-top,0px) + 10px) 14px 12px; background:#0A0A0A; border-bottom:1px solid var(--hlb-line); flex-shrink:0 }
 .hlb-cv-top .back{ background:transparent; border:0; color:#fff; padding:8px; cursor:pointer }
 .hlb-cv-top img{ width:38px; height:38px; border-radius:50%; object-fit:cover }
 .hlb-cv-top b{ color:#fff; font-family:var(--hlb-font); font-weight:800; display:block; font-size:15px }
@@ -8690,18 +8695,18 @@ nav#tabs .nav-logo span{ color:#fff !important; font-weight:900 !important }
 .hlb-w-card{
   position:relative; overflow:hidden;
   border-radius:22px; padding:22px 20px; margin-bottom:16px;
-  background:linear-gradient(135deg,#FFA13A,#FF6B00);
-  color:#000; box-shadow:0 16px 40px rgba(255,149,0,.35);
+  background:linear-gradient(145deg,#1F1F22 0%,#101012 55%,#000 100%);
+  color:#fff; border:1px solid #2A2A2A; box-shadow:0 16px 40px rgba(0,0,0,.55);
   animation:hlbRiseIn .5s ease both;
 }
 .hlb-w-card::after{ content:''; position:absolute; inset:0; background:linear-gradient(180deg,rgba(255,255,255,.1) 0%, transparent 40%, rgba(0,0,0,.15) 100%); pointer-events:none }
-.hlb-w-card::before{ content:''; position:absolute; top:0; left:-100%; width:60%; height:100%; background:linear-gradient(90deg, transparent, rgba(255,255,255,.4), transparent); animation:hlbShimmer 4s ease-in-out infinite; pointer-events:none }
+.hlb-w-card::before{ content:''; position:absolute; top:0; left:-100%; width:60%; height:100%; background:linear-gradient(90deg, transparent, rgba(255,255,255,.12), transparent); animation:hlbShimmer 4s ease-in-out infinite; pointer-events:none }
 .hlb-w-brand{ display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:26px; position:relative; z-index:2 }
-.hlb-w-brand b{ font-family:var(--hlb-font); font-weight:900; font-size:15px; letter-spacing:-.01em }
-.hlb-w-brand .chip{ background:rgba(0,0,0,.75); color:var(--hlb-orange); padding:4px 10px; border-radius:8px; font-weight:900; font-size:10.5px; letter-spacing:.04em }
+.hlb-w-brand b{ font-family:var(--hlb-font); font-weight:900; font-size:15px; letter-spacing:-.01em; color:#fff }
+.hlb-w-brand .chip{ background:rgba(255,149,0,.12); color:var(--hlb-orange); border:1px solid rgba(255,149,0,.3); padding:4px 10px; border-radius:8px; font-weight:900; font-size:10.5px; letter-spacing:.04em }
 .hlb-w-bal{ font-family:var(--hlb-font); font-weight:900; font-size:42px; letter-spacing:-.03em; position:relative; z-index:2; line-height:1 }
-.hlb-w-bal small{ font-size:16px; opacity:.7; margin-left:4px; font-weight:700 }
-.hlb-w-num{ font-family:var(--hlb-font); font-weight:600; font-size:14px; margin-top:16px; letter-spacing:.16em; position:relative; z-index:2 }
+.hlb-w-bal small{ font-size:16px; color:var(--hlb-orange); margin-left:4px; font-weight:700 }
+.hlb-w-num{ font-family:'SF Mono','Roboto Mono',ui-monospace,Menlo,Consolas,monospace; font-weight:600; font-size:12px; margin-top:16px; letter-spacing:.16em; color:rgba(255,255,255,.85); position:relative; z-index:2 }
 
 .hlb-w-actions{ display:grid; grid-template-columns:repeat(4,1fr); gap:8px; margin-bottom:16px }
 .hlb-w-act{ background:#0A0A0A; border:1px solid var(--hlb-line); border-radius:16px; padding:14px 8px; text-align:center; cursor:pointer; color:#fff; font-family:var(--hlb-font); font-weight:700; font-size:11.5px; transition:transform .15s, border-color .2s }
@@ -8719,12 +8724,12 @@ nav#tabs .nav-logo span{ color:#fff !important; font-weight:900 !important }
 .hlb-w-tx-body b{ color:#fff; font-family:var(--hlb-font); font-weight:800; font-size:13.5px; display:block }
 .hlb-w-tx-body small{ color:var(--hlb-mute); font-size:11.5px; margin-top:2px; display:block }
 .hlb-w-tx-amt{ color:#fff; font-family:var(--hlb-font); font-weight:900; font-size:14px; flex-shrink:0 }
-.hlb-w-tx-amt.plus{ color:var(--hlb-lime); text-shadow:0 0 8px rgba(182,255,0,.35) }
+.hlb-w-tx-amt.plus{ color:var(--hlb-orange); text-shadow:0 0 8px rgba(255,149,0,.35) }
 .hlb-w-tx-amt.minus{ color:var(--hlb-mute) }
 
 /* ===== FEED (redesigned) ===== */
-#screen-feed .feed-tabs button{ font-family:var(--hlb-font) !important; font-weight:800 !important }
-#screen-feed .feed-tabs button.on{ color:var(--hlb-orange) !important; border-bottom:2px solid var(--hlb-orange) !important }
+#screen-feed .feed-tabs button{ font-family:var(--hlb-font) !important; font-weight:800 !important; background:transparent !important; color:#FFF !important; border:1px solid rgba(255,255,255,.2) !important; border-radius:12px !important; transform:none !important; transition:background .18s ease, color .18s ease, border-color .18s ease !important }
+#screen-feed .feed-tabs button.on{ background:#FF9500 !important; color:#000 !important; border-color:#FF9500 !important; border-bottom:1px solid #FF9500 !important }
 
 /* ===== TOAST ===== */
 .hlb-toast{ position:fixed; left:50%; bottom:100px; transform:translateX(-50%); background:#141414; color:#fff; padding:12px 20px; border-radius:14px; border:1px solid var(--hlb-line-hi); font-family:var(--hlb-font); font-weight:700; z-index:9999; font-size:13px; box-shadow:0 14px 32px rgba(0,0,0,.6), 0 0 20px rgba(255,149,0,.14); animation:hlbRise .28s ease }
@@ -8744,8 +8749,10 @@ nav#tabs .nav-logo span{ color:#fff !important; font-weight:900 !important }
 .chip.flag, .fab, .searchbar:focus-within{
   --lime:var(--hlb-orange); --accent:var(--hlb-orange);
 }
-#screen-wallet .w2-card{ background:linear-gradient(135deg,var(--hlb-orange-2),var(--hlb-orange)) !important; color:#000 !important; box-shadow:0 16px 40px rgba(255,149,0,.35) !important }
-#screen-wallet .w2-card-brand, #screen-wallet .w2-card-num, #screen-wallet .w2-card-bal{ color:#000 !important }
+#screen-wallet .w2-card{ background:linear-gradient(145deg,#1F1F22 0%,#101012 55%,#000 100%) !important; color:#fff !important; border:1px solid #2A2A2A !important; box-shadow:0 16px 40px rgba(0,0,0,.55) !important }
+#screen-wallet .w2-card-brand, #screen-wallet .w2-card-bal{ color:#fff !important; font-weight:900 !important }
+#screen-wallet .w2-card-num{ color:#fff !important; font-family:'SF Mono','Roboto Mono',ui-monospace,Menlo,Consolas,monospace !important; font-size:12px !important; letter-spacing:.14em !important }
+#screen-wallet .w2-card-bal small, #screen-wallet .w2-card-bal .cur, #screen-wallet .w2-card .rub{ color:#FF9500 !important; opacity:1 !important }
 #screen-wallet .w2-menu-t b{ color:#fff !important }
 #screen-wallet .w2-menu-t em{ color:var(--hlb-mute) !important }
 #screen-wallet .w2-xp{ background:linear-gradient(135deg,rgba(255,149,0,.14),rgba(255,149,0,.04)) !important; border-color:rgba(255,149,0,.3) !important }
@@ -8756,7 +8763,8 @@ nav#tabs .nav-logo span{ color:#fff !important; font-weight:900 !important }
 .plan.gold{ background:linear-gradient(180deg,#1A0F00,#0A0A0A) !important; border-color:rgba(255,149,0,.35) !important }
 .plan.hot{ box-shadow:0 20px 40px rgba(255,149,0,.14) !important }
 .chip.flag{ background:var(--hlb-orange) !important; color:#000 !important }
-.feed-tabs button.on{ color:var(--hlb-orange) !important; border-bottom-color:var(--hlb-orange) !important }
+.feed-tabs button{ background:transparent !important; color:#FFF !important; border:1px solid rgba(255,255,255,.2) !important; transform:none !important; transition:background .18s ease, color .18s ease, border-color .18s ease !important }
+.feed-tabs button.on{ background:#FF9500 !important; color:#000 !important; border-color:#FF9500 !important }
 .pric-price b, .price b{ color:#fff !important }
 .svc-ic{ background:rgba(255,149,0,.14) !important; border-color:rgba(255,149,0,.3) !important }
 .svc-ic svg{ color:var(--hlb-orange) !important }
@@ -8770,7 +8778,7 @@ nav#tabs .nav-logo span{ color:#fff !important; font-weight:900 !important }
 
 /* ==================== FULLSCREEN APP VIEW ==================== */
 .hlb-appview{ position:fixed; inset:0; background:#000; z-index:2500; overflow-y:auto; animation:hlbSlide .3s cubic-bezier(.2,1.1,.3,1) both }
-.hlb-av-top{ position:sticky; top:0; z-index:5; background:linear-gradient(180deg,#000,rgba(0,0,0,.9)); backdrop-filter:blur(12px); border-bottom:1px solid var(--hlb-line); display:flex; align-items:center; gap:12px; padding:12px 14px }
+.hlb-av-top{ position:sticky; top:0; z-index:20; background:linear-gradient(180deg,#000,rgba(0,0,0,.9)); backdrop-filter:blur(12px); border-bottom:1px solid var(--hlb-line); display:flex; align-items:center; gap:12px; padding:calc(env(safe-area-inset-top,0px) + 10px) 14px 12px }
 .hlb-av-top .back{ background:transparent; border:0; color:#fff; padding:8px; cursor:pointer }
 .hlb-av-top .menu{ background:transparent; border:0; color:var(--hlb-mute); padding:8px; cursor:pointer }
 .hlb-av-ico{ width:38px; height:38px; border-radius:12px; background:var(--hlb-orange); color:#000; display:flex; align-items:center; justify-content:center; flex-shrink:0; box-shadow:0 6px 14px rgba(255,149,0,.4) }
@@ -8797,7 +8805,7 @@ nav#tabs .nav-logo span{ color:#fff !important; font-weight:900 !important }
 .hlb-chip:active{ background:var(--hlb-orange); color:#000; transform:scale(.96) }
 
 .hlb-av-chatbox{ padding:14px 16px; min-height:200px; max-height:calc(100vh - 300px); overflow-y:auto; display:flex; flex-direction:column; gap:8px }
-.hlb-av-inp{ position:sticky; bottom:0; background:#000; padding:10px 14px; padding-bottom:calc(10px + env(safe-area-inset-bottom)); border-top:1px solid var(--hlb-line); display:flex; gap:10px }
+.hlb-av-inp{ position:fixed; left:0; right:0; bottom:calc(env(safe-area-inset-bottom,0px) + 60px); z-index:30; background:#000; padding:10px 14px; border-top:1px solid var(--hlb-line); display:flex; gap:10px }
 .hlb-av-inp input{ flex:1; background:#141414; border:1px solid var(--hlb-line); color:#fff; border-radius:20px; padding:12px 16px; font-family:var(--hlb-font); font-size:14px; outline:none }
 .hlb-av-inp button{ width:44px; height:44px; border-radius:50%; background:var(--hlb-orange); color:#000; border:0; display:flex; align-items:center; justify-content:center; cursor:pointer; flex-shrink:0; box-shadow:0 8px 18px rgba(255,149,0,.3) }
 .hlb-av-inp svg{ width:20px; height:20px; stroke-width:2.4 }
@@ -8930,6 +8938,11 @@ nav#tabs .nav-logo span{ color:#fff !important; font-weight:900 !important }
 .hlb-emoji-grid button{ background:#141414; border:1px solid var(--hlb-line); border-radius:14px; padding:14px 0; font-size:26px; cursor:pointer; transition:transform .15s }
 .hlb-emoji-grid button:active{ transform:scale(.9); background:var(--hlb-orange) }
 
+/* Профиль: аватар ВСЕГДА Артём Бриус — перекрывает аватар из localStorage в ядре */
+.pp2-ava{ background:url('assets/av/artem_brius.jpg') center/cover no-repeat #141414 !important; color:transparent !important }
+.pp2-ava img{ display:none !important }
+.hlb-prof-ava{ background:url('assets/av/artem_brius.jpg') center/cover no-repeat #141414 }
+
 </style>
 
 <script id="hlb-v3-js">
@@ -8938,13 +8951,13 @@ nav#tabs .nav-logo span{ color:#fff !important; font-weight:900 !important }
   const PH = '/hlb-app/assets/photos';
 
   // ---- Общее состояние демо: активный тариф ----
-  var HLB_STATE = { tier:'guest' /* guest, HLB_1K, HLB_5K, HLB_20K, HLB_50K, HLB_150K */ };
+  var HLB_STATE = { tier:'HLB_150K' /* демо: максимальный тариф, всё разблокировано */ };
   const TIER_LEVELS = { guest:0, HLB_1K:1, HLB_5K:2, HLB_20K:3, HLB_50K:4, HLB_150K:5 };
-  const TIER_NAMES  = { guest:'Демо-режим', HLB_1K:'ЗАХОДИ', HLB_5K:'ХЛБ CLUB', HLB_20K:'ВСЁ + ТЁМ', HLB_50K:'СОПРОВОЖДЕНИЕ', HLB_150K:'МЕНТОР МЕС' };
+  const TIER_NAMES  = { guest:'Демо-режим', HLB_1K:'СТАРТ', HLB_5K:'КЛУБ', HLB_20K:'PRO', HLB_50K:'VIP', HLB_150K:'МЕНТОР' };
 
   function tierLevel(){ return TIER_LEVELS[HLB_STATE.tier] || 0; }
   function setTier(t){ HLB_STATE.tier = t; try{ localStorage.setItem('hlb_tier',t); }catch(e){} redrawAll(); }
-  try{ var st = localStorage.getItem('hlb_tier'); if(st && TIER_LEVELS[st]!=null) HLB_STATE.tier = st; }catch(e){}
+  /* демо: тариф из localStorage не восстанавливаем — всегда стартуем с HLB_150K, чтобы всё было открыто */
 
   // ============ MINI-APPS ============
   const HLB_APPS = {
@@ -9076,15 +9089,6 @@ nav#tabs .nav-logo span{ color:#fff !important; font-weight:900 !important }
         '<div style="flex:1"><b>'+(HLB_STATE.tier==='guest'?'Демо-режим':TIER_NAMES[HLB_STATE.tier])+'</b><small>'+(HLB_STATE.tier==='guest'?'Тапни любое приложение — увидишь, что внутри':'Тариф активен · '+totalUnlocked+' из 20 приложений')+'</small></div>'+
         '<button onclick="hlbOpenTariffs()">Тарифы</button>'+
       '</div>'+
-      '<div class="hlb-plan-switch" style="margin-top:12px" data-role="demo-switch">'+
-        '<button data-t="guest" '+(HLB_STATE.tier==='guest'?'class="on"':'')+'>Демо</button>'+
-        '<button data-t="HLB_1K" '+(HLB_STATE.tier==='HLB_1K'?'class="on"':'')+'>1K</button>'+
-        '<button data-t="HLB_5K" '+(HLB_STATE.tier==='HLB_5K'?'class="on"':'')+'>5K</button>'+
-        '<button data-t="HLB_20K" '+(HLB_STATE.tier==='HLB_20K'?'class="on"':'')+'>20K</button>'+
-        '<button data-t="HLB_50K" '+(HLB_STATE.tier==='HLB_50K'?'class="on"':'')+'>50K</button>'+
-        '<button data-t="HLB_150K" '+(HLB_STATE.tier==='HLB_150K'?'class="on"':'')+'>150K</button>'+
-      '</div>'+
-      '<div style="color:#4A4A4A;font-size:10.5px;text-align:center;margin:6px 0 14px;font-weight:600;letter-spacing:.08em;text-transform:uppercase">переключатель тарифа · только для демо</div>'+
       '<div class="hlb-apps-2col">'+
         Object.keys(HLB_APPS).map(function(id,i){
           var a = HLB_APPS[id];
@@ -9104,9 +9108,7 @@ nav#tabs .nav-logo span{ color:#fff !important; font-weight:900 !important }
         '<p>Тариф «ВСЁ + ТЁМ» разблокирует 12 из 20 приложений и Brius-AI без лимитов.</p>'+
         '<button>Все тарифы →</button>'+
       '</div>';
-    w.querySelectorAll('[data-role="demo-switch"] button').forEach(function(b){
-      b.addEventListener('click', function(){ setTier(b.dataset.t); hlbToast('Тариф изменён: '+TIER_NAMES[b.dataset.t]); });
-    });
+    /* переключатель тарифов удалён из демо-рендера */
   }
 
   // ============ APP MODAL (rich + demo) ============
@@ -9165,7 +9167,7 @@ nav#tabs .nav-logo span{ color:#fff !important; font-weight:900 !important }
         '<div class="hlb-av-chips">'+
           ['Как открыть бизнес с нуля?','Что делать, если выгорел?','Как набрать аудиторию?','Как поставить цену?'].map(function(x){ return '<button class="hlb-chip" onclick="hlbBAsend(\''+x+'\')">'+x+'</button>'; }).join('')+
         '</div>'+
-        '<div class="hlb-av-chatbox" id="hlbBAbox"></div>'+
+        '<div class="hlb-av-chatbox" id="hlbBAbox" style="padding-bottom:140px"></div>'+
         '<div class="hlb-av-inp">'+
           '<input id="hlbBAinp" placeholder="Спроси у Артёма..." onkeydown="if(event.key===\'Enter\')hlbBAsend()">'+
           '<button onclick="hlbBAsend()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><path d="M22 2L11 13M22 2l-7 20-4-9-9-4 20-7z"/></svg></button>'+
@@ -9211,7 +9213,7 @@ nav#tabs .nav-logo span{ color:#fff !important; font-weight:900 !important }
         '</div>'+
         '<div style="padding:0 16px 16px">'+
           '<div class="hlb-grid2">'+
-            [['Подъёмы 6:30','r',data.r,30,'#FF9500'],['Тренировки','sport',data.sport,30,'#B6FF00'],['Книга (страниц)','book',data.book,342,'#FFA13A'],['Благодарности','gr',data.gr,60,'#FF6B00'],['Дисциплина','dis',data.dis,30,'#FFD700']].map(function(t){
+            [['Подъёмы 6:30','r',data.r,30,'#FF9500'],['Тренировки','sport',data.sport,30,'#FF9500'],['Книга (страниц)','book',data.book,342,'#FFA13A'],['Благодарности','gr',data.gr,60,'#FF6B00'],['Дисциплина','dis',data.dis,30,'#FFD700']].map(function(t){
               var pct = Math.min(100, Math.round(100*t[2]/t[3]));
               return '<div class="hlb-stat">'+
                 '<div class="hlb-stat-label">'+t[0]+'</div>'+
@@ -9286,7 +9288,7 @@ nav#tabs .nav-logo span{ color:#fff !important; font-weight:900 !important }
           '<div class="hlb-card"><b style="color:var(--hlb-orange);font-size:11px;letter-spacing:.06em">ВЫБРАННАЯ ИДЕЯ</b><div style="color:#fff;font-family:Onest,sans-serif;font-weight:900;font-size:18px;margin-top:4px;line-height:1.25">Онлайн-магазин техники из Китая через Nihaodrop</div><div style="color:var(--hlb-mute);font-size:12px;margin-top:6px">Вложения: 0 ₽ · Первый заказ: 3-й день</div></div>'+
           '<div class="hlb-av-h">Финмодель</div>'+
           '<div class="hlb-grid3">'+
-            [['30 дней','5К ₽ / нед','#FF9500'],['90 дней','80К ₽ / мес','#FFA13A'],['365 дней','350К ₽ / мес','#B6FF00']].map(function(t){
+            [['30 дней','5К ₽ / нед','#FF9500'],['90 дней','80К ₽ / мес','#FFA13A'],['365 дней','350К ₽ / мес','#FF9500']].map(function(t){
               return '<div class="hlb-card" style="text-align:center"><small style="color:var(--hlb-mute)">'+t[0]+'</small><div style="color:'+t[2]+';font-family:Onest,sans-serif;font-weight:900;font-size:16px;margin-top:6px;text-shadow:0 0 10px '+t[2]+'">'+t[1]+'</div></div>';
             }).join('')+
           '</div>'+
@@ -9304,14 +9306,14 @@ nav#tabs .nav-logo span{ color:#fff !important; font-weight:900 !important }
       var ideas = [
         {t:'Онлайн-магазин техники из Китая', d:'Дропшип через Nihaodrop', m:'маржа 40%', v:'0 ₽ вложений', c:'#FF9500'},
         {t:'Личный ТГ-канал по нише', d:'Медийка с нуля, метод Артёма', m:'+5К подписчиков/мес', v:'2К ₽ на аватар/обложку', c:'#FFA13A'},
-        {t:'Оптовый заказ Nihaohub', d:'B2B · 30 клиентов', m:'200К ₽/мес чистыми', v:'150К ₽ на первую партию', c:'#B6FF00'},
+        {t:'Оптовый заказ Nihaohub', d:'B2B · 30 клиентов', m:'200К ₽/мес чистыми', v:'150К ₽ на первую партию', c:'#FF9500'},
         {t:'Локальный сервис Avito', d:'Ремонт/уборка/сборка', m:'+30К ₽/мес доп.дохода', v:'3К ₽ на инструмент', c:'#FFD700'},
         {t:'Подкаст-эксперт в нише', d:'20 выпусков · рекламодатели', m:'50К ₽ за выпуск', v:'8К ₽ на микро-петличку', c:'#FF6B00'},
         {t:'Обучение по своей теме', d:'Онлайн-курс на своей аудитории', m:'от 15К за поток', v:'0 ₽ · только твоё время', c:'#00D26A'},
         {t:'Оффлайн-пункт выдачи', d:'Ozon/Wildberries — франшиза', m:'80К ₽ / мес чистыми', v:'250К ₽ + помещение', c:'#3B9EFF'},
         {t:'Микро-креативный продукт', d:'Стикеры / принты / деколь', m:'70% маржа', v:'5К ₽ на первую партию', c:'#FF9500'},
         {t:'Услуга под ключ для бизнесов', d:'Автоворонки в WA/TG', m:'30К за проект', v:'0 ₽ · 40 часов твоих', c:'#FFA13A'},
-        {t:'Дропшип на Wildberries', d:'FBS схема · без вложений', m:'25% маржи, объём', v:'12К ₽ на регистрацию', c:'#B6FF00'}
+        {t:'Дропшип на Wildberries', d:'FBS схема · без вложений', m:'25% маржи, объём', v:'12К ₽ на регистрацию', c:'#FF9500'}
       ];
       body.innerHTML =
         '<div class="hlb-av-hero"><div class="hlb-av-hero-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21h6M12 3a7 7 0 00-4 12.7V18h8v-2.3A7 7 0 0012 3z"/></svg></div><div><b>10 идей под тебя</b><small>На основе анкеты · выбери 1-2</small></div></div>'+
@@ -9334,7 +9336,7 @@ nav#tabs .nav-logo span{ color:#fff !important; font-weight:900 !important }
           }).join('')+
           '<div class="hlb-av-h">Статистика (за 30 дней)</div>'+
           '<div class="hlb-grid3">'+
-          [['Опубликовано','24','#FF9500'],['Просмотров','189К','#B6FF00'],['Подписчиков','+2 340','#FFA13A']].map(function(t){ return '<div class="hlb-card" style="text-align:center"><small style="color:var(--hlb-mute)">'+t[0]+'</small><div style="color:'+t[2]+';font-family:Onest,sans-serif;font-weight:900;font-size:18px;margin-top:6px">'+t[1]+'</div></div>'; }).join('')+
+          [['Опубликовано','24','#FF9500'],['Просмотров','189К','#FF9500'],['Подписчиков','+2 340','#FFA13A']].map(function(t){ return '<div class="hlb-card" style="text-align:center"><small style="color:var(--hlb-mute)">'+t[0]+'</small><div style="color:'+t[2]+';font-family:Onest,sans-serif;font-weight:900;font-size:18px;margin-top:6px">'+t[1]+'</div></div>'; }).join('')+
           '</div>'+
         '</div>';
     },
@@ -9376,7 +9378,7 @@ nav#tabs .nav-logo span{ color:#fff !important; font-weight:900 !important }
         '<div style="padding:0 16px 16px">'+
           '<div class="hlb-inp-box"><input placeholder="Найти по видео и разборам…"><button><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3-3"/></svg></button></div>'+
           '<div class="hlb-cat-grid">'+
-            [['Разборы','37','#FF9500'],['Подкасты','21','#3B9EFF'],['Курсы','5','#B6FF00'],['Книги','6','#FFD700'],['Техники','29','#FF6B00'],['Материалы','64','#FFA13A']].map(function(t){
+            [['Разборы','37','#FF9500'],['Подкасты','21','#3B9EFF'],['Курсы','5','#FF9500'],['Книги','6','#FFD700'],['Техники','29','#FF6B00'],['Материалы','64','#FFA13A']].map(function(t){
               return '<div class="hlb-cat" style="border-color:'+t[2]+'44"><div class="hlb-cat-n" style="background:'+t[2]+'">'+t[1]+'</div><b>'+t[0]+'</b></div>';
             }).join('')+
           '</div>'+
@@ -9393,7 +9395,7 @@ nav#tabs .nav-logo span{ color:#fff !important; font-weight:900 !important }
         '<div class="hlb-av-hero"><div class="hlb-av-hero-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="7" width="18" height="13" rx="2"/><path d="M8 7V5a4 4 0 018 0v2"/></svg></div><div><b>Nihaodrop · каталог</b><small>2 000+ товаров · Гуанчжоу → Москва</small></div></div>'+
         '<div style="padding:0 16px 16px">'+
           '<div class="hlb-grid2">'+
-            [['Кроссовки Nike','2 000 ₽','×4','8 000 ₽','#FF9500'],['Часы Rolex-style','14 500 $','×1.4','20 000 $','#FFD700'],['PlayStation 5','22 000 ₽','×2.7','60 000 ₽','#3B9EFF'],['Bluetooth-колонка','450 ₽','×22','9 900 ₽','#B6FF00'],['Умные часы','1 200 ₽','×4','4 800 ₽','#FF6B00'],['Электросамокат','8 500 ₽','×3.5','29 900 ₽','#FFA13A']].map(function(t){
+            [['Кроссовки Nike','2 000 ₽','×4','8 000 ₽','#FF9500'],['Часы Rolex-style','14 500 $','×1.4','20 000 $','#FFD700'],['PlayStation 5','22 000 ₽','×2.7','60 000 ₽','#3B9EFF'],['Bluetooth-колонка','450 ₽','×22','9 900 ₽','#FF9500'],['Умные часы','1 200 ₽','×4','4 800 ₽','#FF6B00'],['Электросамокат','8 500 ₽','×3.5','29 900 ₽','#FFA13A']].map(function(t){
               return '<div class="hlb-prod"><div class="hlb-prod-img" style="background:linear-gradient(135deg,'+t[4]+',#000)"></div><b>'+t[0]+'</b><small>Закуп: '+t[1]+'</small><div class="hlb-prod-p" style="color:'+t[4]+'">Продажа: '+t[3]+'</div><div class="hlb-prod-x">'+t[2]+'</div></div>';
             }).join('')+
           '</div>'+
@@ -9424,7 +9426,7 @@ nav#tabs .nav-logo span{ color:#fff !important; font-weight:900 !important }
         '<div style="padding:0 16px 16px">'+
           '<div class="hlb-w-card"><div class="hlb-w-brand"><b>Твой баланс</b><span class="chip">+18% МоМ</span></div><div class="hlb-w-bal">124 800<small> ₽</small></div><div class="hlb-w-num">Данные за июль 2026</div></div>'+
           '<div class="hlb-grid2">'+
-            [['Долг','−32 000','#7A7A7A'],['Накопления','48 000','#B6FF00'],['Доход/мес','185 000','#FF9500'],['Расход/мес','142 000','#FFA13A']].map(function(t){ return '<div class="hlb-card"><small style="color:var(--hlb-mute);font-size:11px">'+t[0]+'</small><b style="color:'+t[2]+';font-family:Onest,sans-serif;font-weight:900;font-size:18px;display:block;margin-top:4px">'+t[1]+' ₽</b></div>'; }).join('')+
+            [['Долг','−32 000','#7A7A7A'],['Накопления','48 000','#FF9500'],['Доход/мес','185 000','#FF9500'],['Расход/мес','142 000','#FFA13A']].map(function(t){ return '<div class="hlb-card"><small style="color:var(--hlb-mute);font-size:11px">'+t[0]+'</small><b style="color:'+t[2]+';font-family:Onest,sans-serif;font-weight:900;font-size:18px;display:block;margin-top:4px">'+t[1]+' ₽</b></div>'; }).join('')+
           '</div>'+
           '<div class="hlb-av-h">Инструкция выхода из долгов (12 шагов)</div>'+
           [['1','Записать все долги на бумагу','сегодня'],['2','Определить минимальный платёж по каждому','сегодня'],['3','Найти 3 источника дополнительного дохода','эта неделя'],['4','Погасить самый маленький долг полностью','этот месяц']].map(function(t){
@@ -9445,7 +9447,7 @@ nav#tabs .nav-logo span{ color:#fff !important; font-weight:900 !important }
           }).join('')+
           '<div class="hlb-av-h">Питание · сегодня</div>'+
           '<div class="hlb-grid3">'+
-          [['Б 120г','#B6FF00'],['Ж 60г','#FFD700'],['У 240г','#FF9500']].map(function(t){ return '<div class="hlb-card" style="text-align:center"><b style="color:'+t[1]+';font-family:Onest,sans-serif;font-weight:900;font-size:16px">'+t[0]+'</b></div>'; }).join('')+
+          [['Б 120г','#FF9500'],['Ж 60г','#FFD700'],['У 240г','#FF9500']].map(function(t){ return '<div class="hlb-card" style="text-align:center"><b style="color:'+t[1]+';font-family:Onest,sans-serif;font-weight:900;font-size:16px">'+t[0]+'</b></div>'; }).join('')+
           '</div>'+
         '</div>';
     },
@@ -9485,7 +9487,7 @@ nav#tabs .nav-logo span{ color:#fff !important; font-weight:900 !important }
         '<div style="padding:0 16px 16px">'+
           '<div class="hlb-card"><b style="color:var(--hlb-orange);font-size:11px">СРЕДНЕЕ ВРЕМЯ ОТВЕТА</b><div style="color:#fff;font-family:Onest,sans-serif;font-weight:900;font-size:22px;margin-top:4px">4 часа</div></div>'+
           '<div class="hlb-av-h">Твои эксперты</div>'+
-          [['Полина','психолог, MENTOR','P','online','#FF9500'],['Никита','маркетолог','N','online','#B6FF00'],['Мартин','монтажёр видео','M','offline','#FFD700'],['Ирина','психолог, наставник','I','online','#3B9EFF'],['Денис','финансист','D','offline','#FF6B00']].map(function(t){
+          [['Полина','психолог, MENTOR','P','online','#FF9500'],['Никита','маркетолог','N','online','#FF9500'],['Мартин','монтажёр видео','M','offline','#FFD700'],['Ирина','психолог, наставник','I','online','#3B9EFF'],['Денис','финансист','D','offline','#FF6B00']].map(function(t){
             return '<button class="hlb-list-item"><div class="hlb-list-ic" style="background:'+t[4]+';color:#000;font-weight:900">'+t[2]+'</div><div style="flex:1"><b>'+t[0]+'</b><small>'+t[1]+'</small></div><span style="width:8px;height:8px;border-radius:50%;background:'+(t[3]==='online'?'var(--hlb-lime)':'var(--hlb-mute-2)')+';box-shadow:0 0 6px '+(t[3]==='online'?'var(--hlb-lime)':'transparent')+'"></span></button>';
           }).join('')+
           '<div class="hlb-av-h">Открыть общий чат</div>'+
@@ -9662,11 +9664,11 @@ nav#tabs .nav-logo span{ color:#fff !important; font-weight:900 !important }
 
   // ============ TARIFFS SCREEN ============
   const HLB_TARIFFS = [
-    { id:'HLB_1K',   n:'ЗАХОДИ',        p:1000,    sub:'Смотришь. Без обязательств',   feats:['Все чаты и каналы ХЛБ (read-only)','Основной канал Артёма Бриуса','Brius-AI · 10 запросов в день','Лента, эфир-архив','1 демо-вход в любое приложение'] },
-    { id:'HLB_5K',   n:'ХЛБ CLUB',      p:5000,    hot:true, sub:'То, о чём говорит сам Артём в манифесте 29.07', feats:['Пишешь во всех чатах и комментируешь основной канал','Общий эфир 1 раз в неделю','Десятки — чат из 10 таких же','Спринт-трекер · Инструкция к жизни · Дневник','Brius-AI · безлимит коротких ответов'] },
-    { id:'HLB_20K',  n:'ВСЁ + ТЁМ',     p:20000,   sub:'Все приложения + сообщение Артёму раз в неделю', feats:['Все 20 приложений разблокированы','Огуречная академия · 120+ материалов','Nihaodrop · доступ к платформе и каталогу','Финансовый тренер','1 сообщение или голос Артёму в неделю'] },
-    { id:'HLB_50K',  n:'СОПРОВОЖДЕНИЕ', p:50000,   sub:'Живой созвон + месяц сопровождения',   feats:['Всё из ВСЁ + ТЁМ без лимитов','Личный созвон с Артёмом 30–45 мин / мес','Спорт-ассистент: тренировки и питание','Скидка 5% на Nihaohub-заказы','Чат сопровождения — ответ команды ХЛБ за 4 часа'] },
-    { id:'HLB_150K', n:'МЕНТОР МЕС',    p:150000,  max:true, sub:'Максимум внутри ХЛБ APP',    feats:['Всё безлимитно + AI «Твой Бриус»','4 личных созвона с Артёмом (1 в неделю)','Персональный чат сопровождения','Открытие бизнеса под ключ · 30 дней','Медийный разгон · контент-план и продакшн','Nihaohub Full: магазин под ключ'] }
+    { id:'HLB_1K',   n:'СТАРТ',         p:1000,    sub:'Смотришь. Без обязательств',   feats:['Все чаты и каналы ХЛБ (read-only)','Основной канал Артёма Бриуса','Brius-AI · 10 запросов в день','Лента, эфир-архив','1 демо-вход в любое приложение'] },
+    { id:'HLB_5K',   n:'КЛУБ',          p:5000,    hot:true, sub:'То, о чём говорит сам Артём в манифесте 29.07', feats:['Пишешь во всех чатах и комментируешь основной канал','Общий эфир 1 раз в неделю','Десятки — чат из 10 таких же','Спринт-трекер · Инструкция к жизни · Дневник','Brius-AI · безлимит коротких ответов'] },
+    { id:'HLB_20K',  n:'PRO',           p:20000,   sub:'Все приложения + сообщение Артёму раз в неделю', feats:['Все 20 приложений разблокированы','Огуречная академия · 120+ материалов','Nihaodrop · доступ к платформе и каталогу','Финансовый тренер','1 сообщение или голос Артёму в неделю'] },
+    { id:'HLB_50K',  n:'VIP',           p:50000,   sub:'Живой созвон + месяц сопровождения',   feats:['Всё из PRO без лимитов','Личный созвон с Артёмом 30–45 мин / мес','Спорт-ассистент: тренировки и питание','Скидка 5% на Nihaohub-заказы','Чат сопровождения — ответ команды ХЛБ за 4 часа'] },
+    { id:'HLB_150K', n:'МЕНТОР',        p:150000,  max:true, sub:'Максимум внутри ХЛБ APP',    feats:['Всё безлимитно + AI «Твой Бриус»','4 личных созвона с Артёмом (1 в неделю)','Персональный чат сопровождения','Открытие бизнеса под ключ · 30 дней','Медийный разгон · контент-план и продакшн','Nihaohub Full: магазин под ключ'] }
   ];
 
   window.hlbOpenTariffs = function(){
@@ -9752,7 +9754,7 @@ nav#tabs .nav-logo span{ color:#fff !important; font-weight:900 !important }
       var p = document.createElement('div'); p.className='hlb-confetti-piece';
       p.style.left = (Math.random()*100)+'%';
       p.style.animationDelay = (Math.random()*.7)+'s';
-      var col = ['#FF9500','#FFA13A','#FFB35C','#B6FF00'][Math.floor(Math.random()*4)];
+      var col = ['#FF9500','#FFA13A','#FFB35C','#FFFFFF'][Math.floor(Math.random()*4)];
       p.style.background = col;
       document.body.appendChild(p);
       setTimeout(function(el){ return function(){ el.remove(); } }(p), 3600);
@@ -9785,10 +9787,10 @@ nav#tabs .nav-logo span{ color:#fff !important; font-weight:900 !important }
 
   function chatGroupLabel(minLvl){
     if(minLvl===1) return 'Открыто всем';
-    if(minLvl===2) return { txt:'Открывается на ХЛБ CLUB', badge:'5 000 ₽' };
-    if(minLvl===3) return { txt:'Открывается на ВСЁ + ТЁМ', badge:'20 000 ₽' };
-    if(minLvl===4) return { txt:'Открывается на СОПРОВОЖДЕНИЕ', badge:'50 000 ₽' };
-    if(minLvl===5) return { txt:'Открывается на МЕНТОР МЕС', badge:'150 000 ₽' };
+    if(minLvl===2) return { txt:'Открывается на КЛУБ', badge:'5 000 ₽' };
+    if(minLvl===3) return { txt:'Открывается на PRO', badge:'20 000 ₽' };
+    if(minLvl===4) return { txt:'Открывается на VIP', badge:'50 000 ₽' };
+    if(minLvl===5) return { txt:'Открывается на МЕНТОР', badge:'150 000 ₽' };
   }
 
   function initChats(){
@@ -9821,7 +9823,7 @@ nav#tabs .nav-logo span{ color:#fff !important; font-weight:900 !important }
   // ==== генератор SVG-аватарок для чатов без реального фото ====
   const CHAT_ICONS = {
     community:{ bg:'linear-gradient(135deg,#FF9500,#B36600)', ic:'<circle cx="9" cy="9" r="3"/><circle cx="17" cy="9" r="3"/><path d="M3 20c0-2.8 2.2-5 5-5s5 2.2 5 5M13 20c0-2.8 2.2-5 5-5s2 0 3 1"/>' },
-    my10:     { bg:'linear-gradient(135deg,#B6FF00,#4C7A00)', ic:'<circle cx="12" cy="12" r="9"/><path d="M12 3v18M3 12h18"/>' },
+    my10:     { bg:'linear-gradient(135deg,#FF9500,#7A4A00)', ic:'<circle cx="12" cy="12" r="9"/><path d="M12 3v18M3 12h18"/>' },
     drop:     { bg:'linear-gradient(135deg,#FFA13A,#8A3B00)', ic:'<rect x="3" y="7" width="18" height="13" rx="2"/><path d="M8 7V5a4 4 0 018 0v2"/>' },
     efirs:    { bg:'linear-gradient(135deg,#3B9EFF,#0057A0)', ic:'<rect x="2" y="6" width="20" height="12" rx="2"/><circle cx="12" cy="12" r="3"/><circle cx="18" cy="9" r="1"/>' },
     sopr:     { bg:'linear-gradient(135deg,#FF6B00,#8A2A00)', ic:'<path d="M20 21v-2a4 4 0 00-3-3.87M4 21v-2a4 4 0 013-3.87M12 11a4 4 0 100-8 4 4 0 000 8z"/>' },
@@ -9909,63 +9911,20 @@ nav#tabs .nav-logo span{ color:#fff !important; font-weight:900 !important }
 
   // ============ PROFILE ============
   // ==== Патч чатов ХЛБ под каналы ХЛБ ====
-  window.hlbPatchOkoChats = function(){
-    if(typeof CHATS === 'undefined') return;
-    var patches = {
-      1: {name:'Артём Бриус', nick:'gdebrius', ava:'/hlb-app/assets/av/gdebrius.jpg', preview:'Артём: Как настроение? Расскажи, чем занимаешься.', time:'сейчас', unread:1, verified:true},
-      2: {name:'ХЛБ · Клуб Артёма', ava:'/hlb-app/assets/av/hlb.jpg', preview:'Артём: Мне стыдно за всё происходящее. Хочу сообщество по 5 000 ₽…', time:'20:04', unread:3, verified:true, subs:'986'},
-      3: {name:'Nihaodrop · Клуб', ava:'/hlb-app/assets/av/brius_mentor.jpg', preview:'Влад: +9 600 ₽ на второй день. Работает!', time:'ср', unread:0, verified:true, subs:'421'},
-      4: {name:'Команда сопровождения', ava:'/hlb-app/assets/av/brius_mentor.jpg', preview:'Полина: Как прошёл первый день? Расскажи.', time:'вчера', unread:0},
-      5: {name:'Ксения М.', nick:'ksusha', ava:null, preview:'Кто в спринте по подъёмам? Погнали!', time:'20:15', unread:0}
-    };
-    CHATS.forEach(function(c){
-      var p = patches[c.id]; if(!p) return;
-      Object.keys(p).forEach(function(k){ c[k] = p[k]; });
-    });
-    // Дополню списком чатов уровня тарифа
-    if(!window.HLB_EXTRA_CHATS_ADDED){
-      var moreChats = [
-        {id:'brius_ch', avaImg:'/hlb-app/assets/av/artem_brius.jpg', name:'Артём Бриус · канал', kind:'channel', verified:true, subs:'24 813', preview:'Артём: Полнейшая пересборка. Знаете, что в коробках склада…', time:'сегодня', unread:0,
-         msgs:[{in:1, t:'15:32', kind:'text', body:'Полнейшая пересборка. Знаете, что в этих коробках на складе нихаохаба? Дохрена всего разного.'}]},
-        {id:'brius_main', avaImg:'/hlb-app/assets/av/brius.jpg', name:'Бриус', kind:'channel', verified:true, subs:'73 987', preview:'Финальная часть моего перформанса.', time:'вчера', unread:0,
-         msgs:[{in:1, t:'19:22', kind:'text', body:'Финальная часть моего перформанса: оставил только одну реакцию клоуна. Жмите. 🤡'}]},
-        {id:'hlb_reviews', avaImg:'/hlb-app/assets/av/hlb_reviews.jpg', name:'ХЛБ · отзывы', kind:'channel', subs:'5 892', preview:'Мария: После ХЛБ жизнь уже не станет прежней.', time:'сегодня', unread:1,
-         msgs:[{in:1, t:'12:30', kind:'text', body:'После ХЛБ жизнь уже не станет прежней. Слушать надо каждый день.'}]},
-        {id:'kito', avaImg:'/hlb-app/assets/av/kitovarka.jpg', name:'КИТОВАРКА', kind:'channel', subs:'1 438', preview:'Товарный бизнес с Китаем 🇨🇳', time:'вчера', unread:0,
-         msgs:[{in:1, t:'—', kind:'text', body:'Не варим китов — занимаемся товарным бизнесом с Китаем.'}]},
-      ];
-      moreChats.forEach(function(c){ if(!CHATS.find(function(x){return x.id===c.id;})) CHATS.push(c); });
-      window.HLB_EXTRA_CHATS_ADDED = true;
-    }
-    // Ре-рендер списка чатов через ХЛБ
-    try{ if(typeof renderChatList==='function') renderChatList(''); }catch(e){}
-  };
+  window.hlbPatchOkoChats = function(){ /* no-op: массив CHATS в статике уже содержит реальные каналы Артёма Бриуса */ };
 
   function initProfile(){
     const s = document.getElementById('screen-profile'); if(!s) return;
     var w = s.querySelector('.hlb-prof-wrap'); if(w){ w.remove(); }
-    var av = document.getElementById('profAva'); if(av && !av.querySelector('img')){
-      av.innerHTML = '<img src="'+AV+'/gdebrius.jpg" alt="" style="width:100%;height:100%;object-fit:cover;border-radius:50%">';
+    var av = document.getElementById('profAva'); if(av){
+      av.innerHTML = '<img src="'+AV+'/artem_brius.jpg" alt="" style="width:100%;height:100%;object-fit:cover;border-radius:50%">';
       av.style.background = 'transparent'; av.style.padding = '0'; av.style.border = '3px solid var(--hlb-orange)';
     }
-    var nm = document.getElementById('profName'); if(nm && !nm.textContent.includes('Артём')) nm.textContent = 'Артём Бриус';
+    var nm = document.getElementById('profName'); if(nm) nm.textContent = 'Артём Бриус';
     var nk = document.getElementById('profNick'); if(nk) nk.textContent = '@gdebrius · Гуанчжоу';
     var pt = document.getElementById('profTier'); if(pt) pt.textContent = HLB_STATE.tier==='guest'?'Демо-режим':'ТАРИФ: '+TIER_NAMES[HLB_STATE.tier];
-    // Кнопка «Тарифы» в оригинальном профиле ХЛБ — вставляю большую CTA-плашку сверху секции «Аккаунт»
-    var pad = s.querySelector('.pad');
-    if(pad && !pad.querySelector('.hlb-prof-tariff-cta')){
-      var cta = document.createElement('button');
-      cta.className = 'hlb-prof-tariff-cta hlb-tap';
-      cta.style.cssText = 'width:100%;display:flex;gap:14px;align-items:center;padding:16px 18px;margin:16px 0;background:linear-gradient(135deg,var(--hlb-orange-2),var(--hlb-orange));color:#000;border:0;border-radius:20px;cursor:pointer;font-family:var(--hlb-font);box-shadow:0 14px 32px rgba(255,149,0,.34);animation:hlbGlowPulse 3s ease-in-out infinite;position:relative;overflow:hidden';
-      cta.innerHTML = '<div style="width:44px;height:44px;border-radius:14px;background:rgba(0,0,0,.14);display:flex;align-items:center;justify-content:center"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2l3 7h7l-5.5 4.5L18 21l-6-4-6 4 1.5-7.5L2 9h7z"/></svg></div>'+
-        '<div style="flex:1;text-align:left"><b style="font-weight:900;font-size:16px;letter-spacing:-.01em;display:block">Тарифы ХЛБ APP</b><small style="font-weight:600;font-size:12px;opacity:.7">От 1 000 ₽ / мес · '+(HLB_STATE.tier==='guest'?'демо':TIER_NAMES[HLB_STATE.tier])+'</small></div>'+
-        '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M9 6l6 6-6 6"/></svg>';
-      cta.onclick = function(){ hlbOpenTariffs(); };
-      // вставим сверху над «Аккаунт»
-      var afterHero = pad.querySelector('.profile-top') || pad.firstChild;
-      if(afterHero && afterHero.nextSibling) pad.insertBefore(cta, afterHero.nextSibling);
-      else pad.appendChild(cta);
-    }
+    // Верхняя CTA-плашка «Тарифы ХЛБ APP» убрана по требованию — тарифы открываются из нижней секции профиля
+    var oldCta = s.querySelector('.hlb-prof-tariff-cta'); if(oldCta) oldCta.remove();
     return;
     var lvl = tierLevel();
     var isGuest = HLB_STATE.tier==='guest';
@@ -10070,7 +10029,7 @@ nav#tabs .nav-logo span{ color:#fff !important; font-weight:900 !important }
     cats: [
       {id:'smm',   n:'SMM и медийка',    ic:'📱', c:'#FF9500'},
       {id:'video', n:'Монтаж и видео',   ic:'🎬', c:'#FFA13A'},
-      {id:'des',   n:'Дизайн',           ic:'🎨', c:'#B6FF00'},
+      {id:'des',   n:'Дизайн',           ic:'🎨', c:'#FFB35C'},
       {id:'copy',  n:'Копирайт',         ic:'✍️', c:'#FFD700'},
       {id:'web',   n:'Сайты и лендинги', ic:'🌐', c:'#3B9EFF'},
       {id:'ai',    n:'AI и автоматизация',ic:'🤖', c:'#FF6B00'},
@@ -10080,7 +10039,7 @@ nav#tabs .nav-logo span{ color:#fff !important; font-weight:900 !important }
     items: [
       {id:1,  cat:'smm',   t:'Ведение Instagram на месяц', p:'от 25 000 ₽', n:'Ксения Р.',   r:4.9, d:32, ava:'K', c:'#FF9500', ds:'30 постов/сторис/рилс. Разработка контент-плана. Аналитика.'},
       {id:2,  cat:'video', t:'Монтаж рилса за 6 часов',   p:'от 3 500 ₽', n:'Артём М.',    r:5.0, d:71, ava:'A', c:'#FFA13A', ds:'Cinematic-монтаж, цветокоррекция, субтитры, музыка.'},
-      {id:3,  cat:'des',   t:'Аватар + обложки хайлайтов', p:'от 4 000 ₽', n:'Дарья К.',    r:4.8, d:44, ava:'Д', c:'#B6FF00', ds:'Комплект под твой tone of voice. 3 варианта на выбор.'},
+      {id:3,  cat:'des',   t:'Аватар + обложки хайлайтов', p:'от 4 000 ₽', n:'Дарья К.',    r:4.8, d:44, ava:'Д', c:'#FFB35C', ds:'Комплект под твой tone of voice. 3 варианта на выбор.'},
       {id:4,  cat:'copy',  t:'Продающий текст на закреп',  p:'от 5 000 ₽', n:'Валерия О.',   r:4.9, d:22, ava:'В', c:'#FFD700', ds:'Скрипт продающего поста для закрепа канала. По методу Артёма.'},
       {id:5,  cat:'web',   t:'Лендинг под ключ за 5 дней',  p:'от 30 000 ₽',n:'Максим П.',   r:5.0, d:18, ava:'М', c:'#3B9EFF', ds:'Одностраничник, форма, интеграция с Lava.top, SEO.'},
       {id:6,  cat:'ai',    t:'Настройка воронки в Telegram',p:'от 15 000 ₽',n:'Игорь Т.',    r:4.7, d:26, ava:'И', c:'#FF6B00', ds:'Бот, автоответы, welcome-flow, оплата, аналитика.'},
@@ -10335,797 +10294,19 @@ nav#tabs .nav-logo span{ color:#fff !important; font-weight:900 !important }
 
 
 
-<style id="hlb-v23">
-/* ============================================================
-   HLB v23 — FINAL CLEAN. Zero JS loops. Pure CSS + one observer.
-   ============================================================ */
-
-:root {
-  --hlb-orange: #FF9500;
-  --hlb-orange-glow: rgba(255, 149, 0, .35);
-  --hlb-bg: #0A0500;
-  --hlb-card: #14100A;
-  --hlb-border: rgba(255, 149, 0, .18);
-  /* TG bar clearance: safe-area + native TG buttons row */
-  --tg-top: calc(env(safe-area-inset-top, 0px) + 60px);
-  --tg-bot: calc(env(safe-area-inset-bottom, 0px) + 60px);
-}
-
-/* ==== GLOBAL TG BAR RULE: content NEVER under TG native bar ==== */
-html, body { overscroll-behavior: none !important; background: var(--hlb-bg) !important; }
-
-/* All screens */
-.screen, #screen-feed, #screen-chats, #screen-mini, #screen-wallet, #screen-profile,
-#screen-partner, #screen-tariffs, #screen-market, #screen-academy, #screen-admin,
-.hlb-app-view, .mini-app, [id^="ma-"], .app-screen {
-  padding-top: var(--tg-top) !important;
-  padding-bottom: calc(var(--tg-bot) + 24px) !important;
-}
-
-/* All sheets, modals, popups, toasts — never above TG bar */
-.sheet, [id^="sheet-"], .modal, [class*="modal"],
-.pp2-view, .pp-welcome, #ppLive, .app-toast, [class*="toast"],
-[class*="notify"], .hlb-toast, .wal-live, [class*="wal-live"],
-[class*="pp-welcome"] {
-  top: var(--tg-top) !important;
-}
-/* Sheets that slide from bottom — allow normal position */
-.sheet.slide-up, .sheet[data-slide="up"] { top: auto !important; bottom: 0 !important; }
-
-/* Kill known auto-open modals */
-#ppLive, .wal-live, [class*="wal-live"] { display: none !important; }
-
-/* ==== SPLASH: clean single animation ==== */
-#splash {
-  background: radial-gradient(circle at 50% 40%, #1a1000 0%, #0A0500 60%) !important;
-  transition: opacity .3s ease !important;
-}
-#splash.gone { display: none !important; opacity: 0 !important; }
-#splash img, #splash .splash-logo, #splash [class*="logo"] {
-  width: 180px !important; height: 180px !important;
-  object-fit: contain !important;
-  animation: hlbSplash .6s ease-out !important;
-  filter: drop-shadow(0 0 30px rgba(255,149,0,.4)) !important;
-}
-@keyframes hlbSplash {
-  from { transform: scale(.9); opacity: 0; }
-  to { transform: scale(1); opacity: 1; }
-}
-/* Remove any injected ::before/::after */
-#splash::before, #splash::after { display: none !important; content: none !important; }
-
-/* ==== HEADER (app top bar) ==== */
-.tv, header, .app-head, [class*="topbar"] {
-  padding-top: calc(env(safe-area-inset-top, 0px) + 8px) !important;
-  background: rgba(10,5,0,.98) !important;
-  backdrop-filter: blur(12px) !important;
-  border-bottom: 1px solid var(--hlb-border) !important;
-}
-
-/* ==== BOTTOM NAV ==== */
-nav#tabs {
-  position: fixed !important; left: 0 !important; right: 0 !important; bottom: 0 !important;
-  padding-bottom: env(safe-area-inset-bottom, 0px) !important;
-  min-height: 60px !important;
-  background: rgba(10,5,0,.96) !important;
-  backdrop-filter: blur(20px) !important;
-  border-top: 1px solid var(--hlb-border) !important;
-  z-index: 100 !important;
-}
-nav#tabs button, nav#tabs a {
-  transition: color .2s ease !important;
-  transform: none !important;
-  animation: none !important;
-  color: rgba(255,255,255,.55) !important;
-}
-nav#tabs button.active, nav#tabs a.active, nav#tabs .on {
-  color: var(--hlb-orange) !important;
-  transform: none !important;
-}
-
-/* ==== FEED TABS: single row, on=black on orange, off=white on transparent ==== */
-.fa-bar, .fa-head .fa-explain { display: none !important; }
-.feed-tabs {
-  display: flex !important;
-  gap: 6px !important;
-  padding: 12px 14px 8px !important;
-  align-items: center !important;
-  flex-wrap: nowrap !important;
-  overflow-x: auto !important;
-  overflow-y: hidden !important;
-  scrollbar-width: none !important;
-  justify-content: flex-start !important;
-}
-.feed-tabs::-webkit-scrollbar { display: none !important; }
-.feed-tabs button {
-  flex: 0 0 auto !important;
-  padding: 8px 14px !important;
-  font-size: 12px !important;
-  font-weight: 700 !important;
-  border-radius: 99px !important;
-  white-space: nowrap !important;
-  text-align: center !important;
-  display: inline-flex !important;
-  align-items: center !important;
-  justify-content: center !important;
-  gap: 4px !important;
-  min-height: 34px !important;
-  line-height: 1 !important;
-  transition: background .15s ease, color .15s ease !important;
-}
-.feed-tabs button.on, .feed-tabs button.active {
-  background: #FF9500 !important;
-  color: #000000 !important;
-  border: 1px solid #FF9500 !important;
-}
-.feed-tabs button:not(.on):not(.active) {
-  background: transparent !important;
-  color: #FFFFFF !important;
-  border: 1px solid rgba(255,255,255,.2) !important;
-}
-.feed-tabs button.hlb-refresh-btn {
-  padding: 8px 9px !important;
-  min-width: 34px !important;
-  border-radius: 50% !important;
-}
-.feed-tabs button.hlb-refresh-btn span { display: none !important; }
-.feed-tabs button svg { width: 14px !important; height: 14px !important; }
-
-/* ==== WALLET CARD: 4:3, wider, WHITE text ==== */
-#screen-wallet .w2-card, .w2-card {
-  background: linear-gradient(135deg, #1a0f00 0%, #0a0500 50%, #241000 100%) !important;
-  border: 1px solid rgba(255,149,0,.35) !important;
-  border-radius: 20px !important;
-  box-shadow: 0 20px 60px rgba(0,0,0,.6), 0 0 40px rgba(255,149,0,.15) !important;
-  aspect-ratio: 4/3 !important;
-  width: calc(100% - 20px) !important;
-  margin: 12px auto !important;
-  padding: 22px !important;
-  position: relative !important;
-  overflow: hidden !important;
-}
-.w2-card, .w2-card *:not(.rub):not([class*="brand"]):not([class*="rub"]) {
-  color: #FFFFFF !important;
-}
-.w2-card [class*="brand"], .w2-card .w2-brand {
-  color: #FFFFFF !important;
-  font-weight: 900 !important;
-  letter-spacing: 3px !important;
-  text-shadow: 0 0 20px var(--hlb-orange-glow) !important;
-}
-.w2-card [class*="num"] {
-  font-family: 'JetBrains Mono', 'Courier New', monospace !important;
-  letter-spacing: 3px !important;
-  color: rgba(255,255,255,.85) !important;
-  font-variant-numeric: tabular-nums !important;
-}
-.w2-card [class*="rub"], .w2-card .rub { color: var(--hlb-orange) !important; }
-
-/* ==== MINI-APPS 4:3 grid ==== */
-.hlb-apps-2col {
-  display: grid !important;
-  grid-template-columns: 1fr 1fr !important;
-  gap: 10px !important;
-  padding: 14px !important;
-}
-.hlb-app {
-  aspect-ratio: 4/3 !important;
-  min-height: unset !important;
-  padding: 14px 12px 12px !important;
-}
-.hlb-app-title { font-size: 14px !important; line-height: 1.1 !important; }
-.hlb-app-title small { font-size: 10px !important; margin-top: 3px !important; }
-.hlb-app-icon svg { width: 88px !important; height: 88px !important; }
-.hlb-app-badge {
-  top: 10px !important; left: 10px !important;
-  min-width: 30px !important; height: 30px !important;
-  font-size: 12px !important;
-}
-
-/* Hide tariff switcher in mini-apps */
-.hlb-apps-wrap > div:has(> button[data-t="HLB_150K"]) { display: none !important; }
-
-/* ==== MINI-APP OPEN VIEW: header sticky top ==== */
-.hlb-av-top, .app-view-head, [class*="app-head"] {
-  position: sticky !important;
-  top: 0 !important;
-  z-index: 60 !important;
-  padding-top: calc(env(safe-area-inset-top, 0px) + 10px) !important;
-  padding-left: 14px !important;
-  padding-right: 14px !important;
-  padding-bottom: 10px !important;
-  background: rgba(10,5,0,.97) !important;
-  backdrop-filter: blur(16px) !important;
-  border-bottom: 1px solid var(--hlb-border) !important;
-}
-.hlb-av-top .back {
-  min-width: 44px !important;
-  min-height: 44px !important;
-  border-radius: 12px !important;
-  background: rgba(255,255,255,.06) !important;
-  border: 1px solid var(--hlb-border) !important;
-  cursor: pointer !important;
-}
-/* Hide double headers */
-.hlb-app .hlb-av-hero ~ .hlb-av-hero { display: none !important; }
-.hlb-av-top + .hlb-av-top { display: none !important; }
-
-/* Mini-app input bar pinned to bottom (BRIUS-AI etc) */
-.hlb-msg-input-wrap, .hlb-app-input, [class*="app-input"], .brius-ai-input,
-.hlb-app-view [class*="input-bar"] {
-  position: fixed !important;
-  left: 0 !important; right: 0 !important;
-  bottom: calc(env(safe-area-inset-bottom, 0px) + 60px) !important;
-  padding: 10px 14px !important;
-  background: rgba(10,5,0,.98) !important;
-  backdrop-filter: blur(16px) !important;
-  border-top: 1px solid var(--hlb-border) !important;
-  z-index: 55 !important;
-}
-
-/* ==== CHATS: clean search, unified chip colors, proper padding ==== */
-#screen-chats { padding-top: calc(var(--tg-top) + 8px) !important; padding-bottom: calc(var(--tg-bot) + 84px) !important; }
-
-/* Search input clean */
-#chatSearch, [id*="chat-search"], .chat-search input, #screen-chats input[placeholder*="оиск"] {
-  background: rgba(255,255,255,.05) !important;
-  border: 1px solid rgba(255,255,255,.12) !important;
-  border-radius: 14px !important;
-  color: #FFFFFF !important;
-  padding: 12px 16px 12px 44px !important;
-  font-size: 14px !important;
-  height: auto !important;
-  transition: border-color .15s ease !important;
-}
-#chatSearch:focus, .chat-search input:focus, #screen-chats input:focus {
-  border-color: var(--hlb-orange) !important;
-  outline: none !important;
-}
-
-/* Filter chips (Каталог/Все/Личные/Группы) — UNIFIED */
-[class*="chat-filter"] button, [class*="chat-cat"] button,
-#screen-chats > div > button.chip, .chat-tabs button {
-  padding: 8px 16px !important;
-  border-radius: 99px !important;
-  font-size: 13px !important;
-  font-weight: 700 !important;
-  min-height: 34px !important;
-  background: transparent !important;
-  color: #FFFFFF !important;
-  border: 1px solid rgba(255,255,255,.15) !important;
-  transition: background .15s ease, color .15s ease !important;
-  background-image: none !important;
-}
-[class*="chat-filter"] button.on, [class*="chat-cat"] button.on,
-#screen-chats > div > button.chip.on, .chat-tabs button.on,
-[class*="chat-filter"] button.active, [class*="chat-cat"] button.active {
-  background: var(--hlb-orange) !important;
-  background-image: none !important;
-  color: #000000 !important;
-  border-color: var(--hlb-orange) !important;
-}
-
-/* Chat list padding — items don't cut off */
-#chatList, .chats-list, .chat-col {
-  padding-bottom: calc(var(--tg-bot) + 60px) !important;
-}
-.chat-item { padding: 12px 16px !important; }
-
-/* ==== PROFILE: remove upper tariff plate ==== */
-.hlb-prof-tariff-cta { display: none !important; }
-#screen-profile #profAva, #screen-profile .ava.lime, .profile-top .ava {
-  background-image: url('assets/av/artem_brius.jpg') !important;
-  background-size: cover !important;
-  background-position: center !important;
-  color: transparent !important;
-  text-indent: -9999px !important;
-  border: 3px solid var(--hlb-orange) !important;
-  box-shadow: 0 0 24px var(--hlb-orange-glow) !important;
-  border-radius: 50% !important;
-  overflow: hidden !important;
-}
-.pp2-ava, button.pp2-ava {
-  background: url('assets/av/artem_brius.jpg') center/cover no-repeat !important;
-  color: transparent !important;
-  font-size: 0 !important;
-  border: 3px solid var(--hlb-orange) !important;
-  box-shadow: 0 0 24px var(--hlb-orange-glow) !important;
-  border-radius: 22px !important;
-}
-.pp2-ava img { border-radius: inherit !important; }
-
-/* ==== TARIFFS ORIGINAL OKO STYLE (open/render) ==== */
-#screen-tariffs.active, .plans-wrap { display: block !important; }
-.plans-wrap .plan { opacity: 1 !important; visibility: visible !important; }
-
-/* Max-width for wide screens */
-@media (min-width: 500px) {
-  #root, .screen, main { max-width: 480px !important; margin: 0 auto !important; }
-  nav#tabs { max-width: 480px !important; left: 50% !important; right: auto !important; transform: translateX(-50%) !important; }
-}
-</style>
 
 
-<script id="hlb-v23-js">
-(function(){
-  'use strict';
-
-  // ==== ZERO setInterval — everything via MutationObserver (debounced) + hooks ====
-
-  var HLB_CHATS = [
-    { name: 'Артём Бриус',          preview: 'Артём: Привет. Как настроение? Расскажи, чем занят.', time: 'сейчас',  ava: 'assets/av/gdebrius.jpg',      verified: true, unread: 1 },
-    { name: 'ХЛБ',                  preview: 'Артём: Мне стыдно за всё происходящее. Хочу это исправить.', time: '20:04', ava: 'assets/av/hlb.jpg',       verified: true, unread: 3 },
-    { name: 'Артём Бриус · канал',  preview: 'Артём: Полнейшая пересборка. В коробках склада…', time: 'сегодня',   ava: 'assets/av/artem_brius.jpg', verified: true, unread: 0 },
-    { name: 'Бриус',                preview: 'Артём: Финальная часть моего перформанса.',       time: 'вчера', ava: 'assets/av/brius.jpg',       verified: true, unread: 0 },
-    { name: 'КИТОВАРКА',            preview: 'Товарный бизнес с Китаем 🇨🇳',                 time: 'вчера', ava: 'assets/av/kitovarka.jpg',   verified: false, unread: 0 },
-    { name: 'ХЛБ / отзывы',         preview: 'Мария: После ХЛБ жизнь уже не станет прежней.', time: 'сегодня', ava: 'assets/av/hlb_reviews.jpg', verified: false, unread: 1 },
-    { name: 'Бриус / отзывы',       preview: 'Дмитрий: 269 подписчиков → 17 800.',            time: 'ср',    ava: 'assets/av/brius_reviews.jpg', verified: false, unread: 0 },
-    { name: 'Nihaodrop',            preview: 'Влад: +9 600 ₽ на второй день. Работает!',      time: 'ср',    ava: 'assets/av/brius_mentor.jpg', verified: true, unread: 0 },
-    { name: 'briusMentor',          preview: 'Ментор Артёма — заявки на разбор',              time: '3 д',   ava: 'assets/av/brius_mentor.jpg', verified: true, unread: 0 }
-  ];
-
-  function esc(t){ return String(t||'').replace(/[<>&"']/g, function(c){return {'<':'&lt;','>':'&gt;','&':'&amp;','"':'&quot;',"'":'&#39;'}[c];}); }
-
-  // ==== Splash hide (one-shot) ====
-  function hideSplash(){
-    var sp = document.getElementById('splash');
-    if(sp && !sp.classList.contains('gone')){
-      sp.classList.add('gone');
-    }
-  }
-
-  // ==== Auto-login on guest/TG ====
-  function autoLogin(){
-    try{
-      var TG = window.Telegram && window.Telegram.WebApp;
-      var isTG = !!(TG && TG.initData);
-      var isGuest = /[?&]guest=1/.test(location.search);
-      var already = false;
-      try{ already = !!localStorage.getItem('oko-auth'); }catch(e){}
-      if(!already && (isTG || isGuest)){
-        try{ localStorage.setItem('oko-auth', isTG ? 'telegram' : 'guest'); }catch(e){}
-      }
-      // Always suppress onboarding to avoid tour/stories/pp-welcome loops
-      try{
-        ['pp-welcome-shown-v1','pp-welcome-shown','oko-onboarded','oko-tour-done','oko-tour','oko-stories-seen']
-          .forEach(function(k){ localStorage.setItem(k, '1'); });
-      }catch(e){}
-      var auth = document.getElementById('authScreen'); if(auth) auth.classList.add('hidden');
-      var ob = document.getElementById('onboard'); if(ob) ob.classList.add('hidden');
-    }catch(e){}
-  }
-
-  // ==== TG WebApp ====
-  var TG = window.Telegram && window.Telegram.WebApp;
-  if(TG){
-    try{
-      TG.ready();
-      TG.expand();
-      if(TG.disableVerticalSwipes) TG.disableVerticalSwipes();
-      if(TG.setHeaderColor) TG.setHeaderColor('#0A0500');
-      if(TG.setBottomBarColor) TG.setBottomBarColor('#0A0500');
-      if(TG.setBackgroundColor) TG.setBackgroundColor('#0A0500');
-    }catch(e){}
-    function syncH(){
-      var h = (TG.viewportStableHeight || TG.viewportHeight || window.innerHeight) + 'px';
-      document.documentElement.style.setProperty('--tg-h', h);
-    }
-    syncH();
-    if(TG.onEvent) TG.onEvent('viewportChanged', syncH);
-    window.addEventListener('resize', syncH);
-    document.addEventListener('click', function(e){
-      var el = e.target && e.target.closest && e.target.closest('button, a, [role="button"]');
-      if(el && TG.HapticFeedback && TG.HapticFeedback.impactOccurred){
-        try{ TG.HapticFeedback.impactOccurred('light'); }catch(err){}
-      }
-    }, true);
-  }
-
-  // ==== Force PROFILE (one-shot on load and after chat renders) ====
-  function forceProfile(){
-    if(window.PROFILE){
-      PROFILE.name  = 'Артём Бриус';
-      PROFILE.nick  = 'gdebrius';
-      PROFILE.bio   = 'Основатель ХЛБ. Медиа · Контент · Деньги — в одном приложении.';
-      PROFILE.avatar = 'assets/av/artem_brius.jpg';
-      PROFILE.role  = 'owner';
-      PROFILE.tier  = 'MAX';
-      if(window.VERIFIED && VERIFIED.add) VERIFIED.add('Артём Бриус');
-    }
-    // Text walker for "Основатель ОКО"
-    try {
-      var w = document.createTreeWalker(document.body, NodeFilter.SHOW_TEXT, null);
-      var n, dirty = [];
-      while((n = w.nextNode())){
-        if(n.nodeValue && n.nodeValue.indexOf('Основатель ОКО') !== -1) dirty.push(n);
-      }
-      dirty.forEach(function(nd){ nd.nodeValue = nd.nodeValue.replace(/Основатель ОКО/g, 'Основатель ХЛБ'); });
-    } catch(e){}
-    // Replace letter avatars with real image
-    ['profAva','epAva'].forEach(function(id){
-      var el = document.getElementById(id);
-      if(el && !el.dataset.hlbV23){
-        el.dataset.hlbV23 = '1';
-        el.innerHTML = '<img src="assets/av/artem_brius.jpg" alt="" style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover;border-radius:inherit">';
-        el.style.position = 'relative';
-        el.style.overflow = 'hidden';
-      }
-    });
-    document.querySelectorAll('.pp2-ava, button.pp2-ava').forEach(function(el){
-      if(!el.dataset.hlbV23){
-        el.dataset.hlbV23 = '1';
-        el.innerHTML = '<img src="assets/av/artem_brius.jpg" alt="" style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover;border-radius:inherit">';
-        el.style.position = 'relative';
-      }
-    });
-  }
-
-  // ==== Force real chats (called after renderChatList) ====
-  function patchChats(){
-    var list = document.getElementById('chatList');
-    if(!list) return;
-    var items = list.querySelectorAll('.chat-item');
-    if(!items.length) return;
-    var idx = 0;
-    items.forEach(function(el){
-      if(el.dataset.hlbV23Locked) return;
-      var t = (el.textContent||'').trim();
-      if(/Общий чат ХЛБ|Избранное/i.test(t)) return;
-      if(idx >= HLB_CHATS.length){ el.style.display = 'none'; return; }
-      var ch = HLB_CHATS[idx];
-      var verBadge = ch.verified
-        ? ' <svg width="13" height="13" viewBox="0 0 24 24" fill="#1DA1F2" style="vertical-align:-2px"><path d="M12 2l2.4 1.6L17 3l1 2.6L20.6 7l-.6 2.8L22 12l-2 2.2.6 2.8L18 18l-1 2.6-2.6-.6L12 22l-2.4-1.6L7 21l-1-2.6L3.4 17 4 14.2 2 12l2-2.2L3.4 7 6 6l1-2.6L9.6 4z"/><path d="M8.5 12.5l2.5 2.5 5-5" stroke="#fff" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg>'
-        : '';
-      var badge = ch.unread ? '<span class="badge" style="background:#FF9500;color:#000;min-width:22px;height:22px;border-radius:11px;font-weight:800;font-size:12px;display:inline-flex;align-items:center;justify-content:center;padding:0 6px">'+ch.unread+'</span>' : '';
-      el.innerHTML =
-        '<div class="ci-ava" style="width:52px;height:52px;flex-shrink:0">'+
-          '<img src="'+ch.ava+'" alt="" style="width:100%;height:100%;object-fit:cover;border-radius:50%;border:2px solid rgba(255,149,0,.2)">'+
-        '</div>'+
-        '<div class="meta" style="flex:1;min-width:0">'+
-          '<div class="row1" style="display:flex;justify-content:space-between;align-items:center;gap:6px">'+
-            '<span class="name" style="color:#fff;font-weight:700;font-size:15px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">'+esc(ch.name)+verBadge+'</span>'+
-            '<span class="time" style="color:rgba(255,255,255,.5);font-size:12px;flex-shrink:0">'+esc(ch.time)+'</span>'+
-          '</div>'+
-          '<div class="row1" style="display:flex;justify-content:space-between;align-items:center;gap:6px;margin-top:2px">'+
-            '<span class="preview" style="color:rgba(255,255,255,.55);font-size:13px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">'+esc(ch.preview)+'</span>'+
-            badge+
-          '</div>'+
-        '</div>';
-      el.style.padding = '12px 16px';
-      el.style.gap = '12px';
-      el.style.display = 'flex';
-      el.dataset.hlbV23 = String(idx);
-      el.dataset.hlbV23Locked = '1';
-      idx++;
-    });
-  }
-
-  // Hook renderChatList once
-  var _hookedChat = false;
-  function hookRenderChatList(){
-    if(_hookedChat) return true;
-    if(typeof window.renderChatList !== 'function') return false;
-    var orig = window.renderChatList;
-    window.renderChatList = function(){
-      // Clear locks so we re-patch after render
-      var list = document.getElementById('chatList');
-      if(list) list.querySelectorAll('.chat-item[data-hlb-v23-locked]').forEach(function(el){ delete el.dataset.hlbV23Locked; });
-      try{ orig.apply(this, arguments); }catch(e){}
-      requestAnimationFrame(patchChats);
-    };
-    _hookedChat = true;
-    return true;
-  }
-
-  // Feed-tabs merge Клипы + refresh (one-shot after fa-bar renders)
-  function mergeFeedControls(){
-    var feedTabs = document.querySelector('.feed-tabs');
-    if(!feedTabs) return;
-    var faClips = document.querySelector('.fa-clips');
-    var faRefresh = document.querySelector('.fa-refresh');
-    if(faClips && !feedTabs.querySelector('.hlb-clips-btn')){
-      var b = document.createElement('button');
-      b.type = 'button';
-      b.className = 'hlb-clips-btn';
-      b.setAttribute('aria-label', 'Клипы');
-      b.innerHTML = faClips.innerHTML;
-      b.onclick = function(e){ e.preventDefault(); if(window.faReelsOpenFirst) window.faReelsOpenFirst(); };
-      feedTabs.appendChild(b);
-    }
-    if(faRefresh && !feedTabs.querySelector('.hlb-refresh-btn')){
-      var r = document.createElement('button');
-      r.type = 'button';
-      r.className = 'hlb-refresh-btn';
-      r.setAttribute('aria-label', 'Обновить');
-      var svg = faRefresh.querySelector('svg');
-      r.innerHTML = svg ? svg.outerHTML : '↻';
-      r.onclick = function(e){ e.preventDefault(); if(window.faRefresh) window.faRefresh(); };
-      feedTabs.appendChild(r);
-    }
-  }
-
-  // ==== ONE MutationObserver, debounced 200ms ====
-  var moDeb;
-  function onMutation(){
-    clearTimeout(moDeb);
-    moDeb = setTimeout(function(){
-      hideSplash();
-      forceProfile();
-      hookRenderChatList();
-      patchChats();
-      mergeFeedControls();
-    }, 200);
-  }
-
-  function runAll(){
-    hideSplash();
-    autoLogin();
-    forceProfile();
-    hookRenderChatList();
-    patchChats();
-    mergeFeedControls();
-  }
-
-  if(document.readyState === 'loading'){
-    document.addEventListener('DOMContentLoaded', function(){
-      runAll();
-      requestAnimationFrame(runAll);
-      setTimeout(runAll, 400);
-      setTimeout(runAll, 1200);
-      try{
-        new MutationObserver(onMutation).observe(document.body, { childList: true, subtree: true });
-      }catch(e){}
-    });
-  } else {
-    runAll();
-    requestAnimationFrame(runAll);
-    setTimeout(runAll, 400);
-    setTimeout(runAll, 1200);
-    try{
-      new MutationObserver(onMutation).observe(document.body, { childList: true, subtree: true });
-    }catch(e){}
-  }
-
-  // Deep-link ?tab=X
-  function tabFromUrl(){
-    try{
-      var m = /[?&]tab=([a-z_-]+)/i.exec(location.search);
-      if(!m) return;
-      var t = m[1];
-      if(typeof window.showTab === 'function'){
-        setTimeout(function(){ try{ window.showTab(t); }catch(e){} }, 300);
-      }
-    }catch(e){}
-  }
-  setTimeout(tabFromUrl, 800);
-
-  // On tab click, re-run once
-  document.addEventListener('click', function(e){
-    if(e.target && e.target.closest && e.target.closest('nav#tabs button, nav#tabs a')){
-      setTimeout(function(){ requestAnimationFrame(runAll); }, 150);
-    }
-  });
-
-  // Kill known auto-live once
-  try{
-    if(typeof window.walMaybeDemoLive === 'function') window.walMaybeDemoLive = function(){};
-    if(typeof window.walLiveNotify === 'function') window.walLiveNotify = function(){};
-    if(typeof window.scheduleLiveNotif === 'function') window.scheduleLiveNotif = function(){};
-    if(typeof window.showLive === 'function') window.showLive = function(){};
-    window.__ppLivePlanned = true;
-  }catch(e){}
-})();
-</script>
 
 
-<style id="hlb-v23-1">
-/* v23.1 micro-fixes */
-
-/* Feed-tab: force text visible on orange */
-.feed-tabs button.on, .feed-tabs button.active {
-  text-indent: 0 !important;
-  visibility: visible !important;
-  opacity: 1 !important;
-  color: #000000 !important;
-  overflow: visible !important;
-}
-.feed-tabs button.on *,
-.feed-tabs button.active * {
-  color: #000000 !important;
-  visibility: visible !important;
-  opacity: 1 !important;
-}
-
-/* Chat filter chip force — override ANY lime/gradient */
-[class*="chat-filter"] button, [class*="chat-cat"] button,
-[class*="cat-chip"], .chat-tabs button, .chip {
-  background: transparent !important;
-  background-image: none !important;
-  color: #FFFFFF !important;
-  border: 1px solid rgba(255,255,255,.15) !important;
-}
-[class*="chat-filter"] button.on, [class*="chat-cat"] button.on,
-[class*="cat-chip"].on, .chat-tabs button.on, .chip.on,
-[class*="chat-filter"] button.active, [class*="chat-cat"] button.active,
-[class*="cat-chip"].active, .chat-tabs button.active, .chip.active {
-  background: #FF9500 !important;
-  background-image: none !important;
-  color: #000000 !important;
-  border-color: #FF9500 !important;
-}
-
-/* Wallet card content — force white and readable */
-#screen-wallet .w2-card, .w2-card {
-  aspect-ratio: 16/10 !important;
-  padding: 18px 20px !important;
-}
-.w2-card b, .w2-card h2, .w2-card h3,
-.w2-card [class*="brand"], .w2-card .w2-brand,
-#screen-wallet .w2-card [class*="brand"] {
-  color: #FFFFFF !important;
-  font-weight: 900 !important;
-  letter-spacing: 3px !important;
-  text-shadow: 0 0 24px rgba(255,149,0,.7), 0 0 8px rgba(255,149,0,.4) !important;
-  font-family: 'Bebas Neue', 'Arial Black', sans-serif !important;
-  font-size: 16px !important;
-}
-.w2-card [class*="num"] {
-  font-family: 'JetBrains Mono', 'Courier New', monospace !important;
-  color: rgba(255,255,255,.85) !important;
-  font-size: 13px !important;
-  letter-spacing: 2px !important;
-  white-space: nowrap !important;
-  overflow: hidden !important;
-  text-overflow: ellipsis !important;
-}
-.w2-card .w2-card-bal, .w2-card [class*="bal"] {
-  color: #FFFFFF !important;
-  font-family: 'Bebas Neue', sans-serif !important;
-  font-size: 46px !important;
-  line-height: 1 !important;
-  text-shadow: 0 0 30px rgba(255,149,0,.4) !important;
-}
-.w2-card [class*="dim"], .w2-card small, .w2-card .caption {
-  color: rgba(255,255,255,.6) !important;
-  font-size: 11px !important;
-  text-transform: uppercase !important;
-  letter-spacing: 2px !important;
-}
-
-/* Chat list — ensure bottom items don't cut off */
-#chatList { padding-bottom: calc(env(safe-area-inset-bottom, 0px) + 120px) !important; }
-#screen-chats { padding-bottom: calc(env(safe-area-inset-bottom, 0px) + 84px) !important; }
-
-/* Extra: any pop-up notification (Академия ХЛБ etc) — under TG bar */
-[id*="lesson"], [class*="lesson-toast"], [class*="notify-pop"],
-[class*="academy-toast"], [class*="promo-toast"], .app-noti {
-  top: calc(env(safe-area-inset-top, 0px) + 60px) !important;
-  z-index: 88 !important;
-}
-</style>
 
 
-<style id="hlb-v23-2">
-/* v23.2 last polish */
-
-/* Feed chip Рекомендации — force text render */
-.feed-tabs > button {
-  overflow: visible !important;
-  text-indent: 0px !important;
-  visibility: visible !important;
-  opacity: 1 !important;
-}
-.feed-tabs > button.on {
-  color: #000 !important;
-  -webkit-text-fill-color: #000 !important;
-}
-.feed-tabs > button:not(.on):not(.hlb-refresh-btn):not(.hlb-clips-btn) {
-  color: #FFFFFF !important;
-  -webkit-text-fill-color: #FFFFFF !important;
-}
-
-/* Chat filter chips — HARDCORE override all lime gradients */
-#screen-chats [class*="chip"],
-#screen-chats button.chip,
-#screen-chats .chip,
-[class*="chat-cat"] > button,
-[class*="chat-filter"] > button,
-.chat-tabs > button {
-  background: transparent !important;
-  background-color: transparent !important;
-  background-image: none !important;
-  color: #FFFFFF !important;
-  -webkit-text-fill-color: #FFFFFF !important;
-  border: 1px solid rgba(255,255,255,.18) !important;
-  box-shadow: none !important;
-}
-#screen-chats [class*="chip"].on,
-#screen-chats button.chip.on,
-#screen-chats .chip.on,
-[class*="chat-cat"] > button.on,
-[class*="chat-filter"] > button.on,
-.chat-tabs > button.on,
-[class*="chip"].active {
-  background: #FF9500 !important;
-  background-color: #FF9500 !important;
-  background-image: none !important;
-  color: #000000 !important;
-  -webkit-text-fill-color: #000000 !important;
-  border-color: #FF9500 !important;
-  box-shadow: 0 0 16px rgba(255,149,0,.35) !important;
-}
-
-/* Wallet card number: full digits, smaller font, no truncation */
-.w2-card [class*="num"], #screen-wallet .w2-card [class*="num"] {
-  font-family: 'JetBrains Mono', 'Courier New', monospace !important;
-  color: rgba(255,255,255,.85) !important;
-  font-size: 11px !important;
-  letter-spacing: 2px !important;
-  white-space: nowrap !important;
-  overflow: visible !important;
-  text-overflow: unset !important;
-  max-width: 100% !important;
-  padding: 4px 8px !important;
-}
-.w2-card > * { max-width: 100% !important; }
-</style>
 
 
-<style id="hlb-v24">
-/* v24: NO EMPTY GAP between TG bar and app header
-   Rule: header padded ONLY by safe-area (not extra 60px).
-   Content flows directly under header without .screen padding-top. */
 
-:root {
-  --tg-top: env(safe-area-inset-top, 0px);
-}
 
-/* Remove screen padding-top — was creating empty gap */
-.screen, #screen-feed, #screen-chats, #screen-mini, #screen-wallet, #screen-profile,
-#screen-partner, #screen-tariffs, #screen-market, #screen-academy, #screen-admin,
-.hlb-app-view, .mini-app, [id^="ma-"], .app-screen {
-  padding-top: 0 !important;
-  padding-bottom: calc(env(safe-area-inset-bottom, 0px) + 84px) !important;
-}
 
-/* Header sits RIGHT under TG bar with minimal safe-area padding */
-.tv, header, .app-head, [class*="topbar"] {
-  padding-top: calc(env(safe-area-inset-top, 0px) + 4px) !important;
-  padding-bottom: 8px !important;
-  position: sticky !important;
-  top: 0 !important;
-  z-index: 55 !important;
-  margin-top: 0 !important;
-  background: rgba(10,5,0,.98) !important;
-  backdrop-filter: blur(12px) !important;
-  border-bottom: 1px solid rgba(255,149,0,.18) !important;
-}
 
-/* Mini-app open-view header: same rule (right under TG bar) */
-.hlb-av-top, .app-view-head, [class*="app-head"] {
-  padding-top: calc(env(safe-area-inset-top, 0px) + 4px) !important;
-  padding-bottom: 10px !important;
-  position: sticky !important;
-  top: 0 !important;
-  z-index: 60 !important;
-  margin-top: 0 !important;
-  background: rgba(10,5,0,.97) !important;
-  backdrop-filter: blur(16px) !important;
-}
 
-/* Sheets, modals, toasts, popups: top edge starts at safe-area (right under TG bar), not below */
-.sheet, [id^="sheet-"], .modal, [class*="modal"],
-.pp2-view, .pp-welcome, .app-toast, [class*="toast"]:not(.hlb-toast-bottom),
-[class*="notify"]:not(nav#tabs *), .hlb-toast, [class*="wal-live"],
-[class*="pp-welcome"], [id*="lesson"], [class*="lesson-toast"] {
-  top: calc(env(safe-area-inset-top, 0px) + 8px) !important;
-}
-/* But bottom sheets keep bottom position */
-.sheet[data-slide="up"], .sheet.slide-up, .sheet-bottom { top: auto !important; }
-
-/* Feed-tabs, chat-search: no extra top margin (they come right after header) */
-.feed-tabs { padding-top: 8px !important; padding-bottom: 8px !important; }
-</style>
 
 </body>
 </html>

@@ -63,7 +63,7 @@ function setLang(l){
   if(!defs) return;
   const s = document.createElementNS('http://www.w3.org/2000/svg','symbol');
   s.setAttribute('id','i-verified'); s.setAttribute('viewBox','0 0 100 100');
-  s.innerHTML = '<path d="M50 6l11 9 14-2 5 13 13 5-2 14 9 11-9 11 2 14-13 5-5 13-14-2-11 9-11-9-14 2-5-13-13-5 2-14-9-11 9-11-2-14 13-5 5-13 14 2z" fill="#9AFF00" stroke="none"/><path d="M32 52l12 12 24-28" fill="none" stroke="#0a0a0a" stroke-width="9" stroke-linecap="round" stroke-linejoin="round"/>';
+  s.innerHTML = '<path d="M50 6l11 9 14-2 5 13 13 5-2 14 9 11-9 11 2 14-13 5-5 13-14-2-11 9-11-9-14 2-5-13-13-5 2-14-9-11 9-11-2-14 13-5 5-13 14 2z" fill="#FF9500" stroke="none"/><path d="M32 52l12 12 24-28" fill="none" stroke="#0a0a0a" stroke-width="9" stroke-linecap="round" stroke-linejoin="round"/>';
   defs.appendChild(s);
 })();
 const VERIFIED = new Set(['Артём Бриус','ХЛБ','Команда ХЛБ','Поддержка ХЛБ']);
@@ -159,11 +159,11 @@ const REG = {
 /* палитра аватара: строго бренд (чёрный + лайм), но с разнообразием тона.
    fg — цвет инициала, подобран под читаемость на каждом фоне. */
 const REG_AVA = [
-  {bg:'linear-gradient(135deg,#B9FF4D,#7ACC00)', fg:'#001400'},
-  {bg:'linear-gradient(135deg,#EAFF9C,#9AFF00)', fg:'#1a2a00'},
-  {bg:'linear-gradient(135deg,#9AFF00,#4d9c00)', fg:'#04140a'},
-  {bg:'linear-gradient(135deg,#1c1c1c,#000)',     fg:'#9AFF00'},
-  {bg:'linear-gradient(135deg,#38471f,#12180b)',  fg:'#B9FF4D'},
+  {bg:'linear-gradient(135deg,#FFB84D,#CC7A00)', fg:'#140a00'},
+  {bg:'linear-gradient(135deg,#FFDD9C,#FF9500)', fg:'#2a1a00'},
+  {bg:'linear-gradient(135deg,#FF9500,#9c5e00)', fg:'#140a04'},
+  {bg:'linear-gradient(135deg,#1c1c1c,#000)',     fg:'#FF9500'},
+  {bg:'linear-gradient(135deg,#47331f,#18120b)',  fg:'#FFB84D'},
   {bg:'linear-gradient(135deg,#f2f6ec,#cfe3b3)',  fg:'#3d7a00'},
 ];
 const REG_OWNER_EMAIL = (typeof ADMIN_EMAIL !== 'undefined') ? ADMIN_EMAIL : 'hlbapp.ru@gmail.com';
@@ -618,15 +618,15 @@ function regWelcomeBody(name){
 }
 function regProBody(){
   return `<div class="reg-pop">
-    <p class="reg-pop-lead">Максимум возможностей ХЛБ — приоритет, аналитика и сниженная комиссия.</p>
+    <p class="reg-pop-lead">Клуб Артёма Бриуса — чаты, эфиры, десятки и Brius-AI.</p>
     <div class="reg-pop-feats">
-      ${regFeatRow('rocket','Приоритет в ленте и поиске')}
-      ${regFeatRow('poll','Расширенная аналитика профиля')}
-      ${regFeatRow('megaphone','Кабинет продвижения')}
-      ${regFeatRow('money','Сниженная комиссия биржи')}
+      ${regFeatRow('rocket','Пишешь во всех чатах клуба')}
+      ${regFeatRow('poll','Общий эфир 1 раз в неделю')}
+      ${regFeatRow('megaphone','Десятки (чат из 10) и спринт-трекер')}
+      ${regFeatRow('money','Brius-AI — безлимит коротких')}
     </div>
     <div class="reg-pop-price">
-      <div><b>от 490 ₽</b><small>в месяц</small></div>
+      <div><b>5 000 ₽</b><small>в месяц</small></div>
       <span class="reg-pop-save">Выгода 20% при оплате за год</span>
     </div>
   </div>`;
@@ -668,10 +668,10 @@ function regPopupPro(){
     regPopTimers.push(setTimeout(regPopupPro, 20000)); return;
   }
   regPopupMark('pro');
-  showPopup({ico:'crown', title:'Открой ХЛБ PRO',
+  showPopup({ico:'crown', title:'Открой ХЛБ КЛУБ',
     body: regProBody(),
     actions:[
-      {label:'Оформить PRO', onclick:()=>{ if(typeof openPay === 'function') openPay('PRO'); else toast('Тарифы скоро откроются'); }},
+      {label:'Оформить КЛУБ', onclick:()=>{ if(typeof openPay === 'function') openPay('PRO'); else toast('Тарифы скоро откроются'); }},
       {label:'Позже', ghost:true},
     ]});
 }
@@ -728,12 +728,15 @@ const RG2 = {
 const RG2_ADMIN_EMAIL = (typeof ADMIN_EMAIL !== 'undefined') ? ADMIN_EMAIL : 'hlbapp.ru@gmail.com';
 const RG2_TAKEN_NICKS = ['oko','hlbapp','oko_official','brius','gdebrius','admin','support','team','ceo','help'];
 const RG2_TIERS = [
-  {id:'FREE',     name:'Free',     price:0,     line:'Старт бесплатно',           feats:['Лента и чаты','2 500 ₽ бонус','Базовые инструменты']},
-  {id:'START',    name:'Start',    price:990,   line:'Первые системные инструменты', feats:['Автопостинг в 2 сети','Файлы до 300 МБ','Скидка 5% на рекламу']},
-  {id:'PRO',      name:'Pro',      price:4900,  line:'Максимум возможностей',      feats:['Проверка видео: безлимит','Система роста','Все соцсети, файлы до 2 ГБ','Скидка 10% на рекламу'], reco:true},
-  {id:'BUSINESS', name:'Business', price:19900, line:'Команда и конвейер',         feats:['Контент-завод под ключ','Рекламный кабинет PRO','Менеджер и API']},
-  {id:'MAX',      name:'Max',      price:149900,line:'Максимальный доступ',         feats:['Всё из PRO + BUSINESS','Персональный продюсер','Приоритет во всём']},
+  {id:'FREE',     name:'ГОСТЬ',    price:0,     line:'Смотри и знакомься',          feats:['Лента ХЛБ','Знакомство с клубом','Базовый доступ']},
+  {id:'START',    name:'СТАРТ',    price:1000,  line:'Вход в ХЛБ',                  feats:['Все чаты и каналы ХЛБ (read-only)','Основной канал Артёма','Brius-AI 10 запросов/день','1 демо-вход в приложение']},
+  {id:'PRO',      name:'КЛУБ',     price:5000,  line:'Клуб Артёма',                 feats:['Пишешь во всех чатах','Общий эфир 1 раз в неделю','Десятки (чат из 10) и спринт-трекер','Brius-AI безлимит коротких'], reco:true},
+  {id:'BUSINESS', name:'PRO',      price:20000, line:'PRO-доступ',                  feats:['Личные разборы Артёма','2 эфира в неделю','Огуречная Академия 120+ уроков','Nihaodrop каталог 2000+']},
+  {id:'MAX',      name:'МЕНТОР',   price:150000,line:'Личный ментор Артёма',        feats:['Личный ментор — Артём Бриус','Сессия 1:1 каждый месяц','Nihaohub магазин под ключ','Все 20 приложений без лимитов']},
 ];
+/* видимые имена тарифов ХЛБ (внутренние ключи не меняются) */
+const HLB_TIER_NAME = {FREE:'ГОСТЬ', START:'СТАРТ', PRO:'КЛУБ', BUSINESS:'PRO', BUSINESS_PRO:'VIP', MAX:'МЕНТОР'};
+function hlbTierName(k){ return HLB_TIER_NAME[String(k||'').toUpperCase().replace(/[\s-]+/g,'_')] || String(k||''); }
 const RG2_PERIODS = [
   {m:1,  lab:'1 мес',  disc:0},
   {m:3,  lab:'3 мес',  disc:10},
@@ -1157,9 +1160,9 @@ function rg2Step3HTML(){
 }
 function rg2AvaPalette(){
   return (typeof REG_AVA !== 'undefined' && REG_AVA.length) ? REG_AVA : [
-    {bg:'linear-gradient(135deg,#B9FF4D,#7ACC00)', fg:'#001400'},
-    {bg:'linear-gradient(135deg,#9AFF00,#4d9c00)', fg:'#04140a'},
-    {bg:'linear-gradient(135deg,#1c1c1c,#000)',     fg:'#9AFF00'},
+    {bg:'linear-gradient(135deg,#FFB84D,#CC7A00)', fg:'#140a00'},
+    {bg:'linear-gradient(135deg,#FF9500,#9c5e00)', fg:'#140a04'},
+    {bg:'linear-gradient(135deg,#1c1c1c,#000)',     fg:'#FF9500'},
   ];
 }
 function rg2AvaRenderSw(){
@@ -1397,7 +1400,7 @@ function rg2FinishFlow(openPaySheet){
         if(typeof openPay === 'function' && typeof PLANS !== 'undefined' && PLANS[RG2.tier]){
           openPay(RG2.tier);
         } else {
-          if(typeof toast === 'function') toast('Тариф ' + RG2.tier + ' скоро подключим');
+          if(typeof toast === 'function') toast('Тариф ' + hlbTierName(RG2.tier) + ' скоро подключим');
         }
       }catch(e){}
     }, 900);
@@ -1518,18 +1521,13 @@ try{
   const saved = JSON.parse(localStorage.getItem('oko-rg2') || 'null');
   if(saved){
     if(typeof PROFILE !== 'undefined'){
-      if(saved.name) PROFILE.name = saved.name;
-      if(saved.nick) PROFILE.nick = saved.nick;
-      if(saved.bio)  PROFILE.bio  = saved.bio;
+      /* ХЛБ demo: имя/ник/био всегда фиксированы (Артём Бриус @gdebrius) — сохранённые в localStorage не применяем */
       if(saved.method === 'email') PROFILE.email = saved.contact;
       if(saved.method === 'phone') PROFILE.phone = saved.contact;
       if(saved.tier) PROFILE.tier = saved.tier;
       const a = rg2AvaPalette()[saved.avaIdx] || rg2AvaPalette()[0];
       PROFILE.avaBg = a.bg; PROFILE.avaFg = a.fg;
-      if(saved.avaImg){
-        const img = localStorage.getItem('oko-rg2-ava');
-        if(img) PROFILE.avaImg = img;
-      }
+      /* ХЛБ demo: сохранённый фото-аватар из localStorage не применяем — всегда аватар Артёма */
     }
   }
 }catch(e){}
@@ -1892,7 +1890,7 @@ const WAL_TON_ADDR = 'UQAoKoAppTonWa11etMockAddr9hfP2vXqLmTz4A';
 /* доп-настройки кошелька (персист): автопродление, ПИН, суточный вывод */
 const WAL_X = (()=>{ try{ return JSON.parse(localStorage.getItem('oko-wallet-x'))||{}; }catch(e){ return {}; } })();
 function walXSave(){ try{ localStorage.setItem('oko-wallet-x', JSON.stringify(WAL_X)); }catch(e){} }
-function walProPrice(){ return (typeof PLANS!=='undefined' && PLANS.PRO) ? PLANS.PRO.mo : 4890; }
+function walProPrice(){ return (typeof PLANS!=='undefined' && PLANS.PRO) ? PLANS.PRO.mo : 5000; }
 function walDMY(ts){ const d = new Date(ts); return String(d.getDate()).padStart(2,'0')+'.'+String(d.getMonth()+1).padStart(2,'0')+'.'+d.getFullYear(); }
 function walDMYT(ts){ const d = new Date(ts); return walDMY(ts)+' '+String(d.getHours()).padStart(2,'0')+':'+String(d.getMinutes()).padStart(2,'0'); }
 function walCopy(txt, msg){ try{ navigator.clipboard.writeText(txt); }catch(e){} toast(msg||'Скопировано'); }
@@ -2132,7 +2130,7 @@ function walDrawChart(animate){
     const base = H - 5;                         // ось для «роста»
     const Yfull = v => base - (v - lo) / (hi - lo) * (H - 12);
     const light = document.documentElement.dataset.theme === 'light';
-    const accent = (getComputedStyle(document.documentElement).getPropertyValue('--accent') || '').trim() || '#9AFF00';
+    const accent = (getComputedStyle(document.documentElement).getPropertyValue('--accent') || '').trim() || '#FF9500';
     const reduce = window.matchMedia && window.matchMedia('(prefers-reduced-motion:reduce)').matches;
 
     function frame(prog){
@@ -2210,7 +2208,7 @@ function walRenderCats(){
   }
   bar.style.display = 'flex';
   const total = cats.reduce((s,c)=>s+c[1],0);
-  const CAT_COLORS = ['#9AFF00','#7ECBEB','#FFB84A','#FF7EA6','#A980FF','#4EE2B8','#FFDF5C','#FF5C5C'];
+  const CAT_COLORS = ['#FF9500','#7ECBEB','#FFB84A','#FF7EA6','#A980FF','#4EE2B8','#FFDF5C','#FF5C5C'];
   bar.innerHTML = cats.map(([,v],i)=>
     `<i style="width:${(v/total*100).toFixed(1)}%;background:${CAT_COLORS[i%CAT_COLORS.length]};animation-delay:${i*70}ms"></i>`).join('');
   wrap.innerHTML = cats.map(([k,v],i)=>{
@@ -2332,16 +2330,16 @@ function walRenderAutopay(){
 function walToggleAutopay(){
   if(WAL_X.autopay){
     WAL_X.autopay = false; walXSave(); walRenderAutopay();
-    toast('Автопродление PRO выключено');
+    toast('Автопродление КЛУБ выключено');
     return;
   }
   const next = Date.now() + 30 * 864e5;
-  showPopup({ico:'crown', title:'Автопродление PRO',
-    body:'Тариф PRO — <b>' + fmtMoney(walProPrice()) + ' / мес</b>.<br>Первое автосписание с лицевого счёта — <b>' + walDMY(next) + '</b>.<br>Отключить можно в любой момент в кошельке.',
+  showPopup({ico:'crown', title:'Автопродление КЛУБ',
+    body:'Тариф КЛУБ — <b>' + fmtMoney(walProPrice()) + ' / мес</b>.<br>Первое автосписание с лицевого счёта — <b>' + walDMY(next) + '</b>.<br>Отключить можно в любой момент в кошельке.',
     actions:[
       {label:'Включить автопродление', onclick:()=>{
         WAL_X.autopay = true; WAL_X.nextAt = next; walXSave();
-        walRenderAutopay(); toast('Автопродление PRO включено — списание ' + walDMY(next));
+        walRenderAutopay(); toast('Автопродление КЛУБ включено — списание ' + walDMY(next));
       }},
       {label:'Отмена', ghost:true}
     ]});
@@ -2350,13 +2348,13 @@ function walToggleAutopay(){
 (function walAutoChargeDue(){
   if(!WAL_X.autopay || !WAL_X.nextAt || Date.now() < WAL_X.nextAt) return;
   const price = walProPrice();
-  if(WALLET.balance >= price && walletCharge(price, 'Автопродление тарифа PRO')){
+  if(WALLET.balance >= price && walletCharge(price, 'Автопродление тарифа КЛУБ')){
     hlbEarn(price, 'Тарифы');
     WAL_X.nextAt = Date.now() + 30 * 864e5;
-    toast('Тариф PRO продлён автоматически: ' + fmtMoney(price));
+    toast('Тариф КЛУБ продлён автоматически: ' + fmtMoney(price));
   } else {
     WAL_X.autopay = false;
-    toast('Автопродление PRO: не хватило средств — выключено');
+    toast('Автопродление КЛУБ: не хватило средств — выключено');
   }
   walXSave();
 })();
@@ -2822,8 +2820,8 @@ function walPlannedItems(){
   const now = new Date();
   const y = now.getFullYear();
   const nextAutopay = WAL_X.autopay && WAL_X.nextAt
-    ? {ic:'crown', title:'Автопродление PRO', date: walDMY(WAL_X.nextAt), sum: walProPrice(), sub:'Списание с лицевого счёта'}
-    : {ic:'crown', title:'Подписка PRO', date:'1 сентября ' + y, sum: walProPrice(), sub:'Продление тарифа, если включишь автопродление'};
+    ? {ic:'crown', title:'Автопродление КЛУБ', date: walDMY(WAL_X.nextAt), sum: walProPrice(), sub:'Списание с лицевого счёта'}
+    : {ic:'crown', title:'Подписка КЛУБ', date:'1 сентября ' + y, sum: walProPrice(), sub:'Продление тарифа, если включишь автопродление'};
   return [
     nextAutopay,
     {ic:'plus',    title:'Автопополнение баланса', date:'5 октября ' + y, sum: 3000, sub:'Регулярное пополнение с карты РФ'},
@@ -3464,7 +3462,7 @@ function walDrawRecvQR(){
   /* лого ХЛБ в центре — лайм-круг с O */
   const cx = W/2, cy = H/2, R = W * 0.13;
   ctx.fillStyle = '#fff'; ctx.beginPath(); ctx.arc(cx, cy, R + cell*0.7, 0, Math.PI*2); ctx.fill();
-  ctx.fillStyle = '#9AFF00'; ctx.beginPath(); ctx.arc(cx, cy, R, 0, Math.PI*2); ctx.fill();
+  ctx.fillStyle = '#FF9500'; ctx.beginPath(); ctx.arc(cx, cy, R, 0, Math.PI*2); ctx.fill();
   ctx.fillStyle = '#000';
   ctx.font = 'bold ' + Math.round(R * 1.05) + 'px "Bebas Neue", Impact, sans-serif';
   ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
@@ -3481,7 +3479,7 @@ function walShareReceive(){
 }
 
 /* ---------- ПИРОГ РАСХОДОВ (SVG donut) ---------- */
-const WAL_PIE_COLORS = ['#9AFF00','#7ECBEB','#FFB84A','#FF7EA6','#A980FF','#4EE2B8','#FFDF5C','#FF5C5C'];
+const WAL_PIE_COLORS = ['#FF9500','#7ECBEB','#FFB84A','#FF7EA6','#A980FF','#4EE2B8','#FFDF5C','#FF5C5C'];
 function walRenderPie(){
   const box = document.getElementById('walPie');
   if(!box) return;
@@ -3577,7 +3575,7 @@ function walUpdateAvg(){
 if(!WAL_X.goals){
   WAL_X.goals = walIsOwner()
     ? [
-        {id:'g_pro', name:'Копим на PRO', target: walProPrice(), saved: Math.round(walProPrice()*0.32), ic:'crown'},
+        {id:'g_pro', name:'Копим на КЛУБ', target: walProPrice(), saved: Math.round(walProPrice()*0.32), ic:'crown'},
         {id:'g_camera', name:'Камера для съёмок', target: 89000, saved: 24500, ic:'photo'},
       ]
     : [];
@@ -3815,20 +3813,8 @@ function walLiveClose(){
 /* демо-нотификация при заходе в кошелёк — раз за сессию, зачисляет 500₽ */
 let _walDemoLiveShown = false;
 function walMaybeDemoLive(){
-  if(!walIsOwner()) return;                              // гостям — никаких «пришло 500₽» (правка 29.07)
-  if(_walDemoLiveShown) return;
-  _walDemoLiveShown = true;
-  setTimeout(()=>{
-    walletAdd(500, 'Перевод в чате · Марк Волков');
-    walLiveNotify({
-      who:'Марк Волков',
-      title:'Пришло 500 ₽ от Марка',
-      sub:'@markvolkov · за монтаж рилса',
-      sum:'+ 500 ₽',
-      onclick:()=>{ if(typeof showTab==='function') showTab('wallet'); }
-    });
-    walFlash('in');
-  }, 1600);
+  /* демо-зачисление 500₽ и live-нотификация отключены для демо */
+  return;
 }
 
 /* ---------- ПАТЧИ денежных потоков ядра (прежнее поведение сохранено) ---------- */
@@ -3861,14 +3847,14 @@ doPay = function(){
     document.getElementById('payView').innerHTML = `<div style="text-align:center;padding:14px 0">
       <div class="pop-ico" style="width:58px;height:58px;border-radius:50%;background:var(--lime-dim);display:flex;align-items:center;justify-content:center;margin:0 auto 12px">${I('money')}</div>
       <p style="font-weight:800;font-size:19px">Не хватает ${fmtMoney(lack)}</p>
-      <p class="dim" style="font-size:13px;margin-top:6px">Тариф ${p.name} стоит ${fmtRub(total)}, на счёте ${fmtMoney(WALLET.balance)}.<br>Пополни кошелёк и вернись к оплате.</p>
+      <p class="dim" style="font-size:13px;margin-top:6px">Тариф ${hlbTierName(p.name)} стоит ${fmtRub(total)}, на счёте ${fmtMoney(WALLET.balance)}.<br>Пополни кошелёк и вернись к оплате.</p>
       <div style="height:16px"></div>
       <button class="btn" onclick="closeSheet();showTab('wallet');walOpenTopup(${Math.ceil(lack/100)*100})">${I('plus')} Пополнить кошелёк</button>
       <div style="height:9px"></div>
       <button class="btn ghost" onclick="renderPay()">Назад к оплате</button></div>`;
     return;
   }
-  walletCharge(total, 'Тариф ' + p.name);
+  walletCharge(total, 'Тариф ' + hlbTierName(p.name));
   hlbEarn(total, 'Тарифы');
   _prevDoPayWal();
 };
@@ -3968,7 +3954,7 @@ function w2OpenPay(){
     ico:'card', title:'Что оплатить?',
     body:'Выбери, куда пойдёт списание с лицевого счёта. Для новых услуг — раздел «Партнёрка» и «Мини-аппы».',
     actions:[
-      {label:'Тариф · подписка PRO', onclick:()=>{ if(typeof openPay === 'function') openPay('PRO'); else w2Open('autopay'); }},
+      {label:'Тариф · подписка КЛУБ', onclick:()=>{ if(typeof openPay === 'function') openPay('PRO'); else w2Open('autopay'); }},
       {label:'Автопополнение и шаблоны', onclick:()=>w2Open('autopay')},
       {label:'Перевод по нику или на карту', onclick:()=>w2Open('transfers')},
       {label:'Закрыть', ghost:true},
@@ -4547,7 +4533,7 @@ function w2RenderReceive(){
     try{
       const r = await w2ApiTopup(email, s.sum, s.method);
       if(r && r.url){
-        if(v) v.innerHTML = '<div class="wal-ok-wrap"><div class="wal-ok" style="background:linear-gradient(135deg,#9AFF00,#7ECBEB);color:#000">'+I('bolt')+'</div>'
+        if(v) v.innerHTML = '<div class="wal-ok-wrap"><div class="wal-ok" style="background:linear-gradient(135deg,#FF9500,#7ECBEB);color:#000">'+I('bolt')+'</div>'
           +'<p style="font-weight:800;font-size:19px;margin-top:14px">Счёт создан</p>'
           +'<p class="dim" style="font-size:13px;margin-top:6px">Оплата откроется на Lava.top. После оплаты баланс обновится автоматически.</p>'
           +'<div style="height:16px"></div>'
@@ -4804,7 +4790,7 @@ const GM_POOLS = {
     {t:'disc',    v:20,        w:28,  c:3, s:'−20%'},
     {t:'ticket',  v:5,         w:14,  c:4, s:'5 бил'},
     {t:'service', v:'promo',   w:6,   c:4, s:'Промо'},
-    {t:'tier',    v:'PRO',     w:2,   c:4, s:'PRO'}
+    {t:'tier',    v:'PRO',     w:2,   c:4, s:'КЛУБ'}
   ],
   /* крутка за 100 ₽ */
   p100: [
@@ -4819,7 +4805,7 @@ const GM_POOLS = {
     {t:'money',   v:500,       w:40,  c:3, s:'500 ₽'},
     {t:'ticket',  v:5,         w:20,  c:4, s:'5 бил'},
     {t:'service', v:'listing', w:8,   c:4, s:'Буст'},
-    {t:'tier',    v:'PRO',     w:2,   c:4, s:'PRO'}
+    {t:'tier',    v:'PRO',     w:2,   c:4, s:'КЛУБ'}
   ],
   /* крутка за 300 ₽ */
   p300: [
@@ -4833,7 +4819,7 @@ const GM_POOLS = {
     {t:'disc',    v:30,        w:40,  c:3, s:'−30%'},
     {t:'money',   v:1000,      w:35,  c:4, s:'1000 ₽'},
     {t:'service', v:'priority',w:22,  c:4, s:'Топ'},
-    {t:'tier',    v:'PRO',     w:15,  c:4, s:'PRO'},
+    {t:'tier',    v:'PRO',     w:15,  c:4, s:'КЛУБ'},
     {t:'disc',    v:50,        w:8,   c:4, s:'−50%'}
   ],
   /* крутка за 1000 ₽ */
@@ -4847,8 +4833,8 @@ const GM_POOLS = {
     {t:'money',   v:2000,      w:55,  c:3, s:'2000 ₽'},
     {t:'disc',    v:50,        w:45,  c:3, s:'−50%'},
     {t:'service', v:'campaign',w:40,  c:4, s:'Кампания'},
-    {t:'tier',    v:'PRO',     w:30,  c:4, s:'PRO'},
-    {t:'tier',    v:'BUSINESS',w:12,  c:4, s:'BIZ'},
+    {t:'tier',    v:'PRO',     w:30,  c:4, s:'КЛУБ'},
+    {t:'tier',    v:'BUSINESS',w:12,  c:4, s:'PRO'},
     {t:'money',   v:5000,      w:8,   c:4, s:'5000 ₽'}
   ]
 };
@@ -4860,11 +4846,11 @@ const GM_STAKES = {
 
 /* палитра секторов по «редкости», зависит от темы: [фон, подпись] */
 const GM_POOL_COLS_DARK = [
-  ['#16220b','#a9c47f'], ['#20340a','#c9ff70'], ['#33520a','#e4ffbf'], ['#5f9c0d','#0c1400'], ['#9AFF00','#0a1400']
+  ['#16220b','#a9c47f'], ['#20340a','#c9ff70'], ['#33520a','#e4ffbf'], ['#5f9c0d','#0c1400'], ['#FF9500','#0a1400']
 ];
 /* светлая тема: секторы углублены, чтобы колесо не «выцветало» на почти-белом столе, при этом подписи тёмные и читаемые */
 const GM_POOL_COLS_LIGHT = [
-  ['#cfe39a','#2c4708'], ['#b2d76e','#22400a'], ['#8fc23a','#15330a'], ['#6bac16','#0c2000'], ['#9AFF00','#0a1400']
+  ['#cfe39a','#2c4708'], ['#b2d76e','#22400a'], ['#8fc23a','#15330a'], ['#6bac16','#0c2000'], ['#FF9500','#0a1400']
 ];
 function gmIsLight(){ return document.documentElement.dataset.theme === 'light'; }
 function gmPoolCols(){ return gmIsLight() ? GM_POOL_COLS_LIGHT : GM_POOL_COLS_DARK; }
@@ -5234,7 +5220,7 @@ function gmGrant(p, mode, payTicket){
     case 'tier':
       if(typeof PROFILE !== 'undefined'){ PROFILE.tier = p.v; if(typeof renderMyProfile === 'function') renderMyProfile(); }
       prize = {type:'tier', val:p.v, status:'active'};
-      title = `Тариф ${p.v} на месяц`; break;
+      title = `Тариф ${hlbTierName(p.v)} на месяц`; break;
     case 'service':{
       const sv = GM_SERVICES[p.v] || {};
       prize = {type:'service', val:p.v, code:gmMakeCode(), status:'active'};
@@ -5303,8 +5289,8 @@ function gmConfetti(host, rare){
   const box = document.createElement('div');
   box.className = 'gm-confetti' + (rare ? ' rare' : '');
   const cols = rare
-    ? ['#9AFF00','#c9ff70','#eaffcc','#ffe873','#ffd23f','#ffffff']
-    : ['#9AFF00','#c9ff70','#6fb50d','#eaffcc','#ffffff'];
+    ? ['#FF9500','#c9ff70','#eaffcc','#ffe873','#ffd23f','#ffffff']
+    : ['#FF9500','#c9ff70','#6fb50d','#eaffcc','#ffffff'];
   const N = rare ? 46 : 28;
   let h = '';
   for(let i=0;i<N;i++){
@@ -5430,7 +5416,7 @@ function gmPrizeRow(p){
       else { badge='Использована'; bcls='used'; extra=`<span class="gm-code used">${p.code}</span>`; }
       break;
     case 'boost':  ic='gm-boost'; cat='Буст к призу'; title=`Буст ×${p.val} к призу`; badge=p.status==='used'?'Использован':'Активен'; bcls=p.status==='used'?'used':'active'; break;
-    case 'tier':   ic='crown';    cat='Тариф на месяц'; title=`Тариф ${p.val} на месяц`; badge='Активен'; bcls='active'; break;
+    case 'tier':   ic='crown';    cat='Тариф на месяц'; title=`Тариф ${hlbTierName(p.val)} на месяц`; badge='Активен'; bcls='active'; break;
     case 'service':{
       const sv = GM_SERVICES[p.val] || {};
       ic = sv.ic || 'gm-gift'; cat = 'Услуга ХЛБ'; title = sv.label || 'Услуга ХЛБ';
@@ -5630,7 +5616,7 @@ function gmMBAward(){
     case 'tier':
       if(typeof PROFILE !== 'undefined'){ PROFILE.tier = p.v; if(typeof renderMyProfile === 'function') renderMyProfile(); }
       prize = {type:'tier', val:p.v, status:'active'};
-      title = `Тариф ${p.v} на месяц`;
+      title = `Тариф ${hlbTierName(p.v)} на месяц`;
       gmAchUnlock('tier'); break;
   }
   gmPrizeAdd(prize);
@@ -5979,7 +5965,7 @@ function gmBpProgress(){
 }
 function gmBpReward(l){
   /* награды подобраны в стиле око: билеты, крутки, скидки, услуги, тарифы */
-  if(l % 10 === 0) return {t:'tier', v:'PRO', s:'PRO на месяц'};
+  if(l % 10 === 0) return {t:'tier', v:'PRO', s:'КЛУБ на месяц'};
   if(l % 5 === 0) return {t:'service', v:'priority', s:'Топ в ленте'};
   if(l % 3 === 0) return {t:'check', v:2, s:'2 проверки видео'};
   if(l % 2 === 0) return {t:'ticket', v:3, s:'3 билета'};
@@ -6003,7 +5989,7 @@ function gmBpGrant(l){
     case 'tier':
       if(typeof PROFILE !== 'undefined'){ PROFILE.tier = r.v; if(typeof renderMyProfile === 'function') renderMyProfile(); }
       gmPrizeAdd({type:'tier', val:r.v, status:'active'});
-      toast(`Пропуск ур ${l} · тариф ${r.v} на месяц`); break;
+      toast(`Пропуск ур ${l} · тариф ${hlbTierName(r.v)} на месяц`); break;
     case 'xp': gmTicketsAdd(1); break; /* xp-буст = маленький бонус, не циклим xp */
   }
   gmPrizesBtnRender();
@@ -6298,11 +6284,11 @@ const GM_GIFTS = [
   {id:'cup',     n:'Кубок',     ic:'gm-cup2',    ton:1.5,  rar:'Common',    col:'#f4c04a'},
   {id:'flame',   n:'Огонь',     ic:'gm-flame2',  ton:3,    rar:'Rare',      col:'#ff8a24'},
   {id:'rocket',  n:'Ракета',    ic:'gm-rocket2', ton:8,    rar:'Rare',      col:'#7cd0ff'},
-  {id:'diamond', n:'Диамант',   ic:'gm-diamond', ton:25,   rar:'Epic',      col:'#9AFF00'},
+  {id:'diamond', n:'Диамант',   ic:'gm-diamond', ton:25,   rar:'Epic',      col:'#FF9500'},
   {id:'crown',   n:'Корона',    ic:'gm-crown2',  ton:100,  rar:'Legendary', col:'#ffd23f'}
 ];
 const GM_RAR_COLORS = {
-  Common:    {bg:'rgba(154,255,0,.08)', ink:'#9AFF00',  ord:1},
+  Common:    {bg:'rgba(154,255,0,.08)', ink:'#FF9500',  ord:1},
   Rare:      {bg:'rgba(0,136,204,.14)', ink:'#0088CC',  ord:2},
   Epic:      {bg:'rgba(178,102,255,.15)',ink:'#b266ff', ord:3},
   Legendary: {bg:'rgba(255,210,63,.18)', ink:'#ffd23f', ord:4}
@@ -6465,7 +6451,7 @@ function gmGiftsInvRender(){
     return;
   }
   const items = inv.map(x=>{
-    const g = gmGiftById(x.id) || {ic:'gm-gift', col:'#9AFF00'};
+    const g = gmGiftById(x.id) || {ic:'gm-gift', col:'#FF9500'};
     const c = GM_RAR_COLORS[x.rar] || GM_RAR_COLORS.Common;
     const d = new Date(x.at);
     const time = d.toLocaleDateString('ru-RU',{day:'2-digit',month:'2-digit'}) + ' ' + d.toLocaleTimeString('ru-RU',{hour:'2-digit',minute:'2-digit'});
@@ -6628,7 +6614,7 @@ function gmScratchDone(){
       case 'check':  gmChecksAdd(p.v); prize = {type:'check', val:p.v, status:'active'}; title = `+ ${p.v} проверки видео`; break;
       case 'disc':   prize = {type:'discount', val:p.v, code:gmMakeCode(), status:'active'}; title = `Скидка −${p.v}% на тариф`; break;
       case 'boost':  gmBoostSet(p.v); prize = {type:'boost', val:p.v, status:'active'}; title = `Буст ×${p.v}`; break;
-      case 'tier':   if(typeof PROFILE!=='undefined'){ PROFILE.tier = p.v; } prize = {type:'tier', val:p.v, status:'active'}; title = `Тариф ${p.v} на месяц`; break;
+      case 'tier':   if(typeof PROFILE!=='undefined'){ PROFILE.tier = p.v; } prize = {type:'tier', val:p.v, status:'active'}; title = `Тариф ${hlbTierName(p.v)} на месяц`; break;
       case 'service':prize = {type:'service', val:p.v, code:gmMakeCode(), status:'active'}; title = (GM_SERVICES[p.v]||{}).label||'Услуга ХЛБ'; break;
     }
     gmPrizeAdd(prize);
@@ -6772,7 +6758,7 @@ function gmBoxPick(i){
       case 'disc':   prize = {type:'discount', val:p.v, code:gmMakeCode(), status:'active'}; title = `Скидка −${p.v}%`; break;
       case 'boost':  gmBoostSet(p.v); prize = {type:'boost', val:p.v, status:'active'}; title = `Буст ×${p.v}`; break;
       case 'service':prize = {type:'service', val:p.v, code:gmMakeCode(), status:'active'}; title = (GM_SERVICES[p.v]||{}).label||'Услуга ХЛБ'; break;
-      case 'tier':   if(typeof PROFILE!=='undefined'){ PROFILE.tier = p.v; } prize = {type:'tier', val:p.v, status:'active'}; title = `Тариф ${p.v} на месяц`; break;
+      case 'tier':   if(typeof PROFILE!=='undefined'){ PROFILE.tier = p.v; } prize = {type:'tier', val:p.v, status:'active'}; title = `Тариф ${hlbTierName(p.v)} на месяц`; break;
     }
     gmPrizeAdd(prize);
     const pel = document.getElementById('gmBoxPrize');
@@ -7192,7 +7178,7 @@ window.AC_PACK = Object.assign(window.AC_PACK||{}, {
   "m1": [
 {
   title:'Три типа участников',
-  sub:'3:12 · видео (голос Даниэля) + тест + игра', dur:'3:12',
+  sub:'3:12 · видео (голос Артёма) + тест + игра', dur:'3:12',
   videoUrl:'https://hlbapp.ru/media/oko_m1_0.mp4',
   c1:'ТРИ', c2:'ТИПА',
   slides:[
@@ -7230,7 +7216,7 @@ window.AC_PACK = Object.assign(window.AC_PACK||{}, {
 },
 {
   title:'Кейс на себе — полигон',
-  sub:'3:28 · видео (голос Даниэля) + тест + игра', dur:'3:28',
+  sub:'3:28 · видео (голос Артёма) + тест + игра', dur:'3:28',
   videoUrl:'https://hlbapp.ru/media/oko_m1_1.mp4',
   c1:'ПОЛИГОН', c2:'НА СЕБЕ',
   slides:[
@@ -7268,7 +7254,7 @@ window.AC_PACK = Object.assign(window.AC_PACK||{}, {
 },
 {
   title:'Стадии обучения',
-  sub:'3:40 · видео (голос Даниэля) + тест + игра', dur:'3:40',
+  sub:'3:40 · видео (голос Артёма) + тест + игра', dur:'3:40',
   videoUrl:'https://hlbapp.ru/media/oko_m1_2.mp4',
   c1:'СТАДИИ', c2:'ПУТИ',
   slides:[
@@ -7309,7 +7295,7 @@ window.AC_PACK = Object.assign(window.AC_PACK||{}, {
 },
 {
   title:'Кринж-этап и первые ролики',
-  sub:'3:20 · видео (голос Даниэля) + тест + игра', dur:'3:20',
+  sub:'3:20 · видео (голос Артёма) + тест + игра', dur:'3:20',
   videoUrl:'https://hlbapp.ru/media/oko_m1_3.mp4',
   c1:'КРИНЖ', c2:'ЭТАП',
   slides:[
@@ -7347,7 +7333,7 @@ window.AC_PACK = Object.assign(window.AC_PACK||{}, {
 },
 {
   title:'Цель в цифрах и срок',
-  sub:'3:34 · видео (голос Даниэля) + тест + игра', dur:'3:34',
+  sub:'3:34 · видео (голос Артёма) + тест + игра', dur:'3:34',
   videoUrl:'https://hlbapp.ru/media/oko_m1_4.mp4',
   c1:'ЦЕЛЬ', c2:'В ЦИФРАХ',
   slides:[
@@ -7385,7 +7371,7 @@ window.AC_PACK = Object.assign(window.AC_PACK||{}, {
 },
 {
   title:'Дисциплина против настроения',
-  sub:'3:26 · видео (голос Даниэля) + тест + игра', dur:'3:26',
+  sub:'3:26 · видео (голос Артёма) + тест + игра', dur:'3:26',
   videoUrl:'https://hlbapp.ru/media/oko_m1_5.mp4',
   c1:'ДИСЦИПЛИНА', c2:'БЬЁТ НАСТРОЙ',
   slides:[
@@ -7423,7 +7409,7 @@ window.AC_PACK = Object.assign(window.AC_PACK||{}, {
 },
 {
   title:'Окружение и насмотренность',
-  sub:'3:30 · видео (голос Даниэля) + тест + игра', dur:'3:30',
+  sub:'3:30 · видео (голос Артёма) + тест + игра', dur:'3:30',
   videoUrl:'https://hlbapp.ru/media/oko_m1_6.mp4',
   c1:'ОКРУЖЕНИЕ', c2:'ТЯНЕТ ВВЕРХ',
   slides:[
@@ -7461,7 +7447,7 @@ window.AC_PACK = Object.assign(window.AC_PACK||{}, {
 },
 {
   title:'План действий на 10 пунктов (ДЗ)',
-  sub:'3:52 · видео (голос Даниэля) + тест + игра', dur:'3:52',
+  sub:'3:52 · видео (голос Артёма) + тест + игра', dur:'3:52',
   videoUrl:'https://hlbapp.ru/media/oko_m1_7.mp4',
   c1:'ПЛАН', c2:'10 ПУНКТОВ',
   slides:[
@@ -7503,7 +7489,7 @@ window.AC_PACK = Object.assign(window.AC_PACK||{}, {
   "m2": [
 {
   title:'Шапка: 3 секунды',
-  sub:'3:12 · видео (голос Даниэля) + тест + игра', dur:'3:12',
+  sub:'3:12 · видео (голос Артёма) + тест + игра', dur:'3:12',
   videoUrl:'https://hlbapp.ru/media/oko_m2_0.mp4',
   c1:'3 СЕКУНДЫ', c2:'НА РЕШЕНИЕ',
   slides:[
@@ -7541,7 +7527,7 @@ window.AC_PACK = Object.assign(window.AC_PACK||{}, {
 },
 {
   title:'Ник, который запоминают',
-  sub:'2:48 · видео (голос Даниэля) + тест + игра', dur:'2:48',
+  sub:'2:48 · видео (голос Артёма) + тест + игра', dur:'2:48',
   videoUrl:'https://hlbapp.ru/media/oko_m2_1.mp4',
   c1:'НИК', c2:'БЕЗ МУСОРА',
   slides:[
@@ -7579,7 +7565,7 @@ window.AC_PACK = Object.assign(window.AC_PACK||{}, {
 },
 {
   title:'Аватар — лицо блога',
-  sub:'3:04 · видео (голос Даниэля) + тест + игра', dur:'3:04',
+  sub:'3:04 · видео (голос Артёма) + тест + игра', dur:'3:04',
   videoUrl:'https://hlbapp.ru/media/oko_m2_2.mp4',
   c1:'АВАТАР', c2:'ОТКРЫТЫЙ ВЗГЛЯД',
   slides:[
@@ -7617,7 +7603,7 @@ window.AC_PACK = Object.assign(window.AC_PACK||{}, {
 },
 {
   title:'Имя-строка и ключевые слова',
-  sub:'3:35 · видео (голос Даниэля) + тест + игра', dur:'3:35',
+  sub:'3:35 · видео (голос Артёма) + тест + игра', dur:'3:35',
   videoUrl:'https://hlbapp.ru/media/oko_m2_3.mp4',
   c1:'ИМЯ-СТРОКА', c2:'ПО НЕЙ ИЩУТ',
   slides:[
@@ -7655,7 +7641,7 @@ window.AC_PACK = Object.assign(window.AC_PACK||{}, {
 },
 {
   title:'Описание по формуле',
-  sub:'3:50 · видео (голос Даниэля) + тест + игра', dur:'3:50',
+  sub:'3:50 · видео (голос Артёма) + тест + игра', dur:'3:50',
   videoUrl:'https://hlbapp.ru/media/oko_m2_4.mp4',
   c1:'ОПИСАНИЕ', c2:'ПО ФОРМУЛЕ',
   slides:[
@@ -7693,7 +7679,7 @@ window.AC_PACK = Object.assign(window.AC_PACK||{}, {
 },
 {
   title:'Мультиссылка и трафик',
-  sub:'3:28 · видео (голос Даниэля) + тест + игра', dur:'3:28',
+  sub:'3:28 · видео (голос Артёма) + тест + игра', dur:'3:28',
   videoUrl:'https://hlbapp.ru/media/oko_m2_5.mp4',
   c1:'МУЛЬТИ-', c2:'ССЫЛКА',
   slides:[
@@ -7731,7 +7717,7 @@ window.AC_PACK = Object.assign(window.AC_PACK||{}, {
 },
 {
   title:'Вечные истории — витрина',
-  sub:'2:56 · видео (голос Даниэля) + тест + игра', dur:'2:56',
+  sub:'2:56 · видео (голос Артёма) + тест + игра', dur:'2:56',
   videoUrl:'https://hlbapp.ru/media/oko_m2_6.mp4',
   c1:'ВЕЧНЫЕ', c2:'ИСТОРИИ',
   slides:[
@@ -7769,7 +7755,7 @@ window.AC_PACK = Object.assign(window.AC_PACK||{}, {
 },
 {
   title:'Частые ошибки шапки',
-  sub:'3:40 · видео (голос Даниэля) + тест + игра', dur:'3:40',
+  sub:'3:40 · видео (голос Артёма) + тест + игра', dur:'3:40',
   videoUrl:'https://hlbapp.ru/media/oko_m2_7.mp4',
   c1:'ОШИБКИ', c2:'ШАПКИ',
   slides:[
@@ -7809,7 +7795,7 @@ window.AC_PACK = Object.assign(window.AC_PACK||{}, {
   "m3": [
 {
   title:'Зачем визуал (51% судят по картинке)',
-  sub:'3:12 · видео (голос Даниэля) + тест + игра', dur:'3:12',
+  sub:'3:12 · видео (голос Артёма) + тест + игра', dur:'3:12',
   videoUrl:'https://hlbapp.ru/media/oko_m3_0.mp4',
   c1:'ПЕРВЫЙ', c2:'ВЗГЛЯД',
   slides:[
@@ -7849,7 +7835,7 @@ window.AC_PACK = Object.assign(window.AC_PACK||{}, {
 },
 {
   title:'Баннерная слепота',
-  sub:'3:28 · видео (голос Даниэля) + тест + игра', dur:'3:28',
+  sub:'3:28 · видео (голос Артёма) + тест + игра', dur:'3:28',
   videoUrl:'https://hlbapp.ru/media/oko_m3_1.mp4',
   c1:'МОЗГ', c2:'ПРОЛИСТАЛ',
   slides:[
@@ -7887,7 +7873,7 @@ window.AC_PACK = Object.assign(window.AC_PACK||{}, {
 },
 {
   title:'Сбор смыслов и мудборд',
-  sub:'3:45 · видео (голос Даниэля) + тест + игра', dur:'3:45',
+  sub:'3:45 · видео (голос Артёма) + тест + игра', dur:'3:45',
   videoUrl:'https://hlbapp.ru/media/oko_m3_2.mp4',
   c1:'СНАЧАЛА', c2:'СМЫСЛ',
   slides:[
@@ -7927,7 +7913,7 @@ window.AC_PACK = Object.assign(window.AC_PACK||{}, {
 },
 {
   title:'Планирование сетки',
-  sub:'3:34 · видео (голос Даниэля) + тест + игра', dur:'3:34',
+  sub:'3:34 · видео (голос Артёма) + тест + игра', dur:'3:34',
   videoUrl:'https://hlbapp.ru/media/oko_m3_3.mp4',
   c1:'ЛЕНТА', c2:'КАК СИСТЕМА',
   slides:[
@@ -7968,7 +7954,7 @@ window.AC_PACK = Object.assign(window.AC_PACK||{}, {
 },
 {
   title:'Гамма и шрифты',
-  sub:'3:20 · видео (голос Даниэля) + тест + игра', dur:'3:20',
+  sub:'3:20 · видео (голос Артёма) + тест + игра', dur:'3:20',
   videoUrl:'https://hlbapp.ru/media/oko_m3_4.mp4',
   c1:'ЦВЕТ И', c2:'БУКВЫ',
   slides:[
@@ -8007,7 +7993,7 @@ window.AC_PACK = Object.assign(window.AC_PACK||{}, {
 },
 {
   title:'Планы и ракурсы съёмки',
-  sub:'3:52 · видео (голос Даниэля) + тест + игра', dur:'3:52',
+  sub:'3:52 · видео (голос Артёма) + тест + игра', dur:'3:52',
   videoUrl:'https://hlbapp.ru/media/oko_m3_5.mp4',
   c1:'ПЛАНЫ И', c2:'РАКУРСЫ',
   slides:[
@@ -8048,7 +8034,7 @@ window.AC_PACK = Object.assign(window.AC_PACK||{}, {
 },
 {
   title:'Личность в кадре (96% лайкают людей)',
-  sub:'4:02 · видео (голос Даниэля) + тест + игра', dur:'4:02',
+  sub:'4:02 · видео (голос Артёма) + тест + игра', dur:'4:02',
   videoUrl:'https://hlbapp.ru/media/oko_m3_6.mp4',
   c1:'ЛИЦО =', c2:'КОНТАКТ',
   slides:[
@@ -8092,7 +8078,7 @@ window.AC_PACK = Object.assign(window.AC_PACK||{}, {
   "m4": [
 {
   title:'Личный контент и доверие',
-  sub:'3:20 · видео (голос Даниэля) + тест + игра', dur:'3:20',
+  sub:'3:20 · видео (голос Артёма) + тест + игра', dur:'3:20',
   videoUrl:'https://hlbapp.ru/media/oko_m4_0.mp4',
   c1:'ЛИЧНОЕ', c2:'ДОВЕРИЕ',
   slides:[
@@ -8132,7 +8118,7 @@ window.AC_PACK = Object.assign(window.AC_PACK||{}, {
 },
 {
   title:'Шкала эмоций',
-  sub:'3:40 · видео (голос Даниэля) + тест + игра', dur:'3:40',
+  sub:'3:40 · видео (голос Артёма) + тест + игра', dur:'3:40',
   videoUrl:'https://hlbapp.ru/media/oko_m4_1.mp4',
   c1:'ШКАЛА', c2:'ЭМОЦИЙ',
   slides:[
@@ -8173,7 +8159,7 @@ window.AC_PACK = Object.assign(window.AC_PACK||{}, {
 },
 {
   title:'Реакция важнее нейтральности',
-  sub:'3:10 · видео (голос Даниэля) + тест + игра', dur:'3:10',
+  sub:'3:10 · видео (голос Артёма) + тест + игра', dur:'3:10',
   videoUrl:'https://hlbapp.ru/media/oko_m4_2.mp4',
   c1:'ЛЮБАЯ', c2:'РЕАКЦИЯ',
   slides:[
@@ -8213,7 +8199,7 @@ window.AC_PACK = Object.assign(window.AC_PACK||{}, {
 },
 {
   title:'Приверженность аудитории',
-  sub:'3:50 · видео (голос Даниэля) + тест + игра', dur:'3:50',
+  sub:'3:50 · видео (голос Артёма) + тест + игра', dur:'3:50',
   videoUrl:'https://hlbapp.ru/media/oko_m4_3.mp4',
   c1:'ЧТОБЫ', c2:'СКУЧАЛИ',
   slides:[
@@ -8254,7 +8240,7 @@ window.AC_PACK = Object.assign(window.AC_PACK||{}, {
 },
 {
   title:'Рубрики и контент-план',
-  sub:'3:30 · видео (голос Даниэля) + тест + игра', dur:'3:30',
+  sub:'3:30 · видео (голос Артёма) + тест + игра', dur:'3:30',
   videoUrl:'https://hlbapp.ru/media/oko_m4_4.mp4',
   c1:'РУБРИКИ', c2:'И ПЛАН',
   slides:[
@@ -8295,7 +8281,7 @@ window.AC_PACK = Object.assign(window.AC_PACK||{}, {
 },
 {
   title:'Контент-план по нишам',
-  sub:'4:00 · видео (голос Даниэля) + тест + игра', dur:'4:00',
+  sub:'4:00 · видео (голос Артёма) + тест + игра', dur:'4:00',
   videoUrl:'https://hlbapp.ru/media/oko_m4_5.mp4',
   c1:'ПЛАН', c2:'ПОД НИШУ',
   slides:[
@@ -8336,7 +8322,7 @@ window.AC_PACK = Object.assign(window.AC_PACK||{}, {
 },
 {
   title:'Комьюнити «вы не одни»',
-  sub:'3:45 · видео (голос Даниэля) + тест + игра', dur:'3:45',
+  sub:'3:45 · видео (голос Артёма) + тест + игра', dur:'3:45',
   videoUrl:'https://hlbapp.ru/media/oko_m4_6.mp4',
   c1:'ВЫ', c2:'НЕ ОДНИ',
   slides:[
@@ -8379,7 +8365,7 @@ window.AC_PACK = Object.assign(window.AC_PACK||{}, {
   "m5": [
 {
   title:'Прогрев через сторис',
-  sub:'3:30 · видео (голос Даниэля) + тест + игра', dur:'3:30',
+  sub:'3:30 · видео (голос Артёма) + тест + игра', dur:'3:30',
   videoUrl:'https://hlbapp.ru/media/oko_m5_0.mp4',
   c1:'СТОРИС', c2:'ПРОГРЕВ',
   slides:[
@@ -8417,7 +8403,7 @@ window.AC_PACK = Object.assign(window.AC_PACK||{}, {
 },
 {
   title:'Эфиры (Live)',
-  sub:'3:50 · видео (голос Даниэля) + тест + игра', dur:'3:50',
+  sub:'3:50 · видео (голос Артёма) + тест + игра', dur:'3:50',
   videoUrl:'https://hlbapp.ru/media/oko_m5_1.mp4',
   c1:'ЖИВОЙ', c2:'ЭФИР',
   slides:[
@@ -8455,7 +8441,7 @@ window.AC_PACK = Object.assign(window.AC_PACK||{}, {
 },
 {
   title:'Удержание на эфире',
-  sub:'3:40 · видео (голос Даниэля) + тест + игра', dur:'3:40',
+  sub:'3:40 · видео (голос Артёма) + тест + игра', dur:'3:40',
   videoUrl:'https://hlbapp.ru/media/oko_m5_2.mp4',
   c1:'УДЕРЖАНИЕ', c2:'ВНИМАНИЯ',
   slides:[
@@ -8493,7 +8479,7 @@ window.AC_PACK = Object.assign(window.AC_PACK||{}, {
 },
 {
   title:'Опросы и интерактив',
-  sub:'3:20 · видео (голос Даниэля) + тест + игра', dur:'3:20',
+  sub:'3:20 · видео (голос Артёма) + тест + игра', dur:'3:20',
   videoUrl:'https://hlbapp.ru/media/oko_m5_3.mp4',
   c1:'ОПРОС', c2:'ВОВЛЕКАЕТ',
   slides:[
@@ -10994,7 +10980,7 @@ window.AC_PACK = Object.assign(window.AC_PACK||{}, {
   task:{
     intro:'Опиши дизайн-систему своего продукта: палитра в HEX, шрифтовая пара, скругления и настроение. Сформулируй так, чтобы вставить в промпт Lovable.',
     chips:['Основной цвет (HEX)', 'Акцентный цвет (HEX)', 'Шрифт заголовков', 'Шрифт текста', 'Скругления и тени', 'Тёмная или светлая тема'],
-    ph:'Основной чёрный #0A0A0A, акцент лаймовый #9AFF00, фон тёмный. Заголовки Bebas Neue, текст Montserrat. Скругления средние, тени мягкие, много воздуха. Тёмная тема по умолчанию, светлая как опция. Стиль — минимализм, дерзко, без лишнего декора.',
+    ph:'Основной чёрный #0A0A0A, акцент лаймовый #FF9500, фон тёмный. Заголовки Bebas Neue, текст Montserrat. Скругления средние, тени мягкие, много воздуха. Тёмная тема по умолчанию, светлая как опция. Стиль — минимализм, дерзко, без лишнего декора.',
     verdict:'Сильно — цвета заданы кодами и ролями, а не «на глаз», ИИ соберёт единый стиль без разнобоя. Усилю: пропиши ещё состояние hover и disabled для кнопки (например акцент темнеет при наведении), иначе Lovable сделает их случайными и продукт потеряет цельность в мелочах.'
   }
 },
@@ -14168,7 +14154,7 @@ const MEDIA_LESSONS = [
 /* ---------- УРОК 1: Мышление и старт ---------- */
 {
   title:'Мышление и старт',
-  sub:'1:27 · видео (голос Даниэля) + слайды + тест + игра',
+  sub:'1:27 · видео (голос Артёма) + слайды + тест + игра',
   dur:'1:27',
   videoUrl:'https://hlbapp.ru/media/oko_media_l1.mp4',
   c1:'МЫШЛЕНИЕ', c2:'И СТАРТ',
@@ -14249,7 +14235,7 @@ const MEDIA_LESSONS = [
 /* ---------- УРОК 2: Упаковка профиля ---------- */
 {
   title:'Упаковка профиля',
-  sub:'1:24 · видео (голос Даниэля) + слайды + тест + игра',
+  sub:'1:24 · видео (голос Артёма) + слайды + тест + игра',
   dur:'1:24',
   videoUrl:'https://hlbapp.ru/media/oko_media_l2.mp4',
   c1:'УПАКОВКА', c2:'ПРОФИЛЯ',
@@ -14330,7 +14316,7 @@ const MEDIA_LESSONS = [
 /* ---------- УРОК 3: Визуал и лента ---------- */
 {
   title:'Визуал и лента',
-  sub:'1:11 · видео (голос Даниэля) + слайды + тест + игра',
+  sub:'1:11 · видео (голос Артёма) + слайды + тест + игра',
   dur:'1:11',
   videoUrl:'https://hlbapp.ru/media/oko_media_l3.mp4',
   c1:'ВИЗУАЛ', c2:'И ЛЕНТА',
@@ -14650,7 +14636,7 @@ const MEDIA_LESSONS2 = [
 /* ---------- УРОК 4: Типы контента и эмоции ---------- */
 {
   title:'Типы контента и эмоции',
-  sub:'1:02 · видео (голос Даниэля) + слайды + тест + игра',
+  sub:'1:02 · видео (голос Артёма) + слайды + тест + игра',
   dur:'1:02',
   videoUrl:'https://hlbapp.ru/media/oko_media_l4.mp4',
   c1:'КОНТЕНТ', c2:'И ЭМОЦИИ',
@@ -15125,6 +15111,8 @@ const MARKETING_LESSONS2 = [
    Существующие уроки — сиды блоков; остальное дозаполняется пачками (файл academy/ХЛБ_ACADEMY_BLOCK_MAP.md).
    AC_PACK_* — массивы доп.уроков блока (наполняются волнами производства). */
 const AC_PACK = (typeof window!=='undefined' && window.AC_PACK) ? window.AC_PACK : {};
+/* ребренд: в подписях уроков — голос Артёма (одноразовая чистка данных при загрузке, не DOM-патчинг) */
+try{ Object.keys(AC_PACK).forEach(function(k){ (AC_PACK[k]||[]).forEach(function(l){ if(l && l.sub) l.sub = l.sub.replace('голос Артёма','голос Артёма'); }); }); }catch(e){}
 function acPack(id){ return Array.isArray(AC_PACK[id]) ? AC_PACK[id] : []; }
 
 /* блоки: сид-уроки (уже готовые объекты) + пак дозаполнения по id блока */
@@ -15392,14 +15380,14 @@ function acOpenCourse(ci){
 function acCourseGate(ci){
   const c = AC_COURSES[ci];
   if(acCourseAccessible(ci)){ acOpenCourse(ci); return; }
-  if(typeof showPopup !== 'function'){ toast('Курс «'+c.title+'» доступен по подписке '+c.minTier); return; }
+  if(typeof showPopup !== 'function'){ toast('Курс «'+c.title+'» доступен по подписке '+hlbTierName(c.minTier)); return; }
   const fee = Math.round(c.price*AC_FEE), net = c.price - fee;
   showPopup({ico:'star', title:'Курс «'+c.title+'»',
-    body:'Премиум-курс Академии ХЛБ: <b>'+c.count+' '+acPlural(c.count,['урок','урока','уроков'])+'</b>, тесты, практика и именной сертификат за всё направление. Доступ навсегда.<br><br>Входит в подписку <b style="color:var(--accent)">'+c.minTier+'</b> и выше — либо разовая покупка за <b style="color:var(--accent)">'+acFmtPrice(c.price)+'</b>.<br><span style="font-size:11.5px;color:var(--dim);line-height:1.5">Автор курса получает '+acFmtPrice(net)+', комиссия платформы ХЛБ — 10% ('+acFmtPrice(fee)+').</span>',
+    body:'Премиум-курс Академии ХЛБ: <b>'+c.count+' '+acPlural(c.count,['урок','урока','уроков'])+'</b>, тесты, практика и именной сертификат за всё направление. Доступ навсегда.<br><br>Входит в подписку <b style="color:var(--accent)">'+hlbTierName(c.minTier)+'</b> и выше — либо разовая покупка за <b style="color:var(--accent)">'+acFmtPrice(c.price)+'</b>.<br><span style="font-size:11.5px;color:var(--dim);line-height:1.5">Автор курса получает '+acFmtPrice(net)+', комиссия платформы ХЛБ — 10% ('+acFmtPrice(fee)+').</span>',
     actions:[
-      {label:'Открыть по подписке '+c.minTier, onclick:()=>{
+      {label:'Открыть по подписке '+hlbTierName(c.minTier), onclick:()=>{
         if(typeof okoRequireSub === 'function'){
-          okoRequireSub(c.minTier, 'Курс «'+c.title+'» входит в подписку '+c.minTier+'. Оформи её — и получишь этот курс и десятки других возможностей.', ()=>acOpenCourse(ci));
+          okoRequireSub(c.minTier, 'Курс «'+c.title+'» входит в подписку '+hlbTierName(c.minTier)+'. Оформи её — и получишь этот курс и десятки других возможностей.', ()=>acOpenCourse(ci));
         } else { toast('Подписка временно недоступна'); }
       }},
       {label:'Купить за '+acFmtPrice(c.price), onclick:()=>acBuyCourse(ci)},
@@ -15515,7 +15503,7 @@ function acCourseCover(ci, hero){
   const c2Space = c2Len > 8 ? 1 : 2;
   const bigText = hero ? '' : `
     <text x="26" y="118" font-family="'Bebas Neue',Impact,sans-serif" font-size="26" fill="#fff" letter-spacing="1">${esc(c.c1)}</text>
-    <text x="26" y="152" font-family="'Bebas Neue',Impact,sans-serif" font-size="${c2Size}" fill="#9AFF00" letter-spacing="${c2Space}">${esc(c.c2)}</text>
+    <text x="26" y="152" font-family="'Bebas Neue',Impact,sans-serif" font-size="${c2Size}" fill="#FF9500" letter-spacing="${c2Space}">${esc(c.c2)}</text>
     <text x="26" y="176" font-family="Montserrat,sans-serif" font-size="9" font-weight="600" fill="rgba(255,255,255,.5)" letter-spacing="3">АКАДЕМИЯ ХЛБ</text>`;
   return `<svg class="ac-cover-svg" viewBox="0 0 320 190" preserveAspectRatio="xMidYMid slice" aria-hidden="true">
     <rect width="320" height="190" fill="#070a04"/>
@@ -15539,7 +15527,7 @@ function acCourseCardHtml(ci){
     ? `<span class="ac-cc-tag free">${I('bolt')} Бесплатно</span>`
     : acc
       ? `<span class="ac-cc-tag open">${I('check2')} Открыт</span>`
-      : `<span class="ac-cc-tag lock">${I('lock')} ${c.minTier}</span>`;
+      : `<span class="ac-cc-tag lock">${I('lock')} ${hlbTierName(c.minTier)}</span>`;
   const ring = acc
     ? `<span class="ac-mini-ring lg" title="Курс пройден на ${pct}%">
         <svg viewBox="0 0 36 36"><circle class="bg" cx="18" cy="18" r="15"/>
@@ -15755,7 +15743,7 @@ function acRecCourseHtml(ci){
   const cta = acc ? (started ? 'Продолжить курс' : 'Начать курс') : 'Открыть доступ';
   const meta = acc
     ? (started ? ('Начат · пройдено ' + pct + '%') : (c.count + ' ' + acPlural(c.count,['урок','урока','уроков']) + ' · доступ открыт'))
-    : (c.count + ' ' + acPlural(c.count,['урок','урока','уроков']) + ' · ' + acFmtPrice(c.price) + ' или подписка ' + c.minTier);
+    : (c.count + ' ' + acPlural(c.count,['урок','урока','уроков']) + ' · ' + acFmtPrice(c.price) + ' или подписка ' + hlbTierName(c.minTier));
   return `
     <div class="card ac-rec" onclick="acCourseCardClick(${rec})">
       <div class="ac-rec-head">
@@ -15919,7 +15907,7 @@ function acVpCover(L){
         <rect x="0" y="150" width="640" height="210" fill="url(#acPosterScrim)"/>
         <!-- заголовок вынесен в НИЖНЮЮ треть постера: не пересекается с центральной кнопкой play (она в чистом поле выше) -->
         <text x="48" y="272" font-family="'Bebas Neue',Impact,sans-serif" font-weight="700" font-size="40" fill="#fff" letter-spacing="1" textLength="${(L.c1||'').length>8?520:''}" lengthAdjust="spacingAndGlyphs">${L.c1}</text>
-        <text x="48" y="320" font-family="'Bebas Neue',Impact,sans-serif" font-weight="700" font-size="52" fill="#9AFF00" letter-spacing="${(L.c2||'').length>8?2:4}" textLength="${(L.c2||'').length>9?540:''}" lengthAdjust="spacingAndGlyphs">${L.c2}</text>
+        <text x="48" y="320" font-family="'Bebas Neue',Impact,sans-serif" font-weight="700" font-size="52" fill="#FF9500" letter-spacing="${(L.c2||'').length>8?2:4}" textLength="${(L.c2||'').length>9?540:''}" lengthAdjust="spacingAndGlyphs">${L.c2}</text>
         <text x="48" y="346" font-family="Montserrat,sans-serif" font-size="14" font-weight="600" fill="rgba(255,255,255,.6)" letter-spacing="3">АКАДЕМИЯ ХЛБ · УРОК ${acLocalNo(acL)}</text>
       </svg>`;
 }
@@ -17125,7 +17113,7 @@ function acMakeCert(cert, cb){
     const cv = document.createElement('canvas');
     cv.width = W; cv.height = H;
     const ctx = cv.getContext('2d');
-    const lime = '#9AFF00';
+    const lime = '#FF9500';
     // фон + тонкая сетка
     ctx.fillStyle = '#0a0a0a'; ctx.fillRect(0, 0, W, H);
     ctx.strokeStyle = 'rgba(154,255,0,.05)'; ctx.lineWidth = 1;
@@ -18082,7 +18070,7 @@ function acProfileInject(){
         const cv = document.createElement('canvas');
         cv.width = W; cv.height = H;
         const ctx = cv.getContext('2d');
-        const lime = '#9AFF00';
+        const lime = '#FF9500';
         ctx.fillStyle = '#0a0a0a'; ctx.fillRect(0,0,W,H);
         ctx.strokeStyle = 'rgba(154,255,0,.05)'; ctx.lineWidth = 1;
         for(let x=0;x<=W;x+=64){ ctx.beginPath(); ctx.moveTo(x,0); ctx.lineTo(x,H); ctx.stroke(); }
@@ -19860,7 +19848,7 @@ function adsAbInner(c){
 /* ---------- воронка конверсии: Показы → Клики → Целевые действия ---------- */
 function adsConv(c){ return Math.round((c.clicks||0) * (c.cvr || 0.22)); }
 const ADS_FN_STAGES = [
-  {k:'imps', ic:'eye',  l:'Показы',           col:'#9AFF00'},
+  {k:'imps', ic:'eye',  l:'Показы',           col:'#FF9500'},
   {k:'clk',  ic:'bolt', l:'Клики',            col:'#ffb020'},
   {k:'cv',   ic:'check',l:'Целевые действия', col:'#4da6ff'}
 ];
@@ -20019,7 +20007,7 @@ function adsDrawDays(c){
     x.fillStyle = 'rgba(255,176,32,.85)';
     adsRRect(x, cx+1.5, h-padB - d.c/maxC*ih, bw, d.c/maxC*ih, 2);
     const dt = new Date(now.getTime() - (6-i)*864e5);
-    x.fillStyle = i===6 ? '#9AFF00' : txt;
+    x.fillStyle = i===6 ? '#FF9500' : txt;
     x.font = '600 8.5px Montserrat, sans-serif'; x.textAlign = 'center';
     x.fillText(i===6 ? 'сегодня' : names[dt.getDay()], cx, h-4);
   });
@@ -20076,10 +20064,10 @@ function adsDrawSpark(c){
   x.lineTo(px(d.length-1), h); x.closePath(); x.fillStyle = grad; x.fill();
   x.beginPath();
   d.forEach((v,i)=> i ? x.lineTo(px(i), py(v)) : x.moveTo(px(i), py(v)));
-  x.strokeStyle = '#9AFF00'; x.lineWidth = 1.6; x.lineJoin = 'round'; x.lineCap = 'round'; x.stroke();
+  x.strokeStyle = '#FF9500'; x.lineWidth = 1.6; x.lineJoin = 'round'; x.lineCap = 'round'; x.stroke();
   const lv = d[d.length-1];
   x.beginPath(); x.arc(px(d.length-1), py(lv), 2.6, 0, Math.PI*2);
-  x.fillStyle = '#9AFF00'; x.shadowColor = 'rgba(154,255,0,.8)'; x.shadowBlur = 6; x.fill();
+  x.fillStyle = '#FF9500'; x.shadowColor = 'rgba(154,255,0,.8)'; x.shadowBlur = 6; x.fill();
 }
 
 /* баннер тарифной скидки на рекламу (или апселл, если тариф низкий) */
@@ -20090,19 +20078,19 @@ function adsRenderTier(){
     box.className = 'ads-tier on';
     box.onclick = null; box.removeAttribute('role');
     box.innerHTML = `<span class="ads-tier-ic">${I('fire')}</span>
-      <div class="ads-tier-mid"><b>Тариф ${tier} · −${Math.round(disc*100)}% на всю рекламу</b>
+      <div class="ads-tier-mid"><b>Тариф ${hlbTierName(tier)} · −${Math.round(disc*100)}% на всю рекламу</b>
         <small>Скидка уже применяется: за тот же бюджет — больше показов и кликов.</small></div>`;
   }else{
     box.className = 'ads-tier up';
     box.onclick = adsTierUpsell; box.setAttribute('role','button');
     box.innerHTML = `<span class="ads-tier-ic">${I('crown')}</span>
       <div class="ads-tier-mid"><b>Больше показов за те же деньги</b>
-        <small>PRO −10% · BUSINESS −20% · MAX −30% — бюджет тот же, результат больше.</small></div>
+        <small>КЛУБ −10% · PRO −20% · МЕНТОР −30% — бюджет тот же, результат больше.</small></div>
       <span class="ads-tier-cta">Открыть${I('chev')}</span>`;
   }
 }
 function adsTierUpsell(){
-  if(typeof okoRequireSub==='function') okoRequireSub('MAX','Реклама дешевле — до −30% на MAX');
+  if(typeof okoRequireSub==='function') okoRequireSub('MAX','Реклама дешевле — до −30% на МЕНТОР');
 }
 
 /* ================================================================
@@ -20665,13 +20653,13 @@ function adsBrandPoster(c){
     "<defs><radialGradient id='g' cx='28%' cy='24%' r='90%'>"+
     "<stop offset='0' stop-color='#1c2a0c'/><stop offset='55%' stop-color='#0d1207'/><stop offset='1' stop-color='#050705'/>"+
     "</radialGradient><linearGradient id='l' x1='0' y1='0' x2='1' y2='1'>"+
-    "<stop offset='0' stop-color='#9AFF00'/><stop offset='1' stop-color='#6fbf00'/></linearGradient></defs>"+
+    "<stop offset='0' stop-color='#FF9500'/><stop offset='1' stop-color='#6fbf00'/></linearGradient></defs>"+
     "<rect width='640' height='360' fill='url(#g)'/>"+
-    "<circle cx='120' cy='300' r='190' fill='#9AFF00' opacity='.06'/>"+
-    "<circle cx='540' cy='70' r='140' fill='#9AFF00' opacity='.05'/>"+
+    "<circle cx='120' cy='300' r='190' fill='#FF9500' opacity='.06'/>"+
+    "<circle cx='540' cy='70' r='140' fill='#FF9500' opacity='.05'/>"+
     "<g transform='translate(320 150)'><ellipse rx='58' ry='38' fill='none' stroke='url(#l)' stroke-width='9'/>"+
     "<circle r='17' fill='url(#l)'/></g>"+
-    "<text x='320' y='250' fill='#9AFF00' font-family='Arial,Helvetica,sans-serif' font-size='24' font-weight='700' letter-spacing='6' text-anchor='middle'>"+label+"</text>"+
+    "<text x='320' y='250' fill='#FF9500' font-family='Arial,Helvetica,sans-serif' font-size='24' font-weight='700' letter-spacing='6' text-anchor='middle'>"+label+"</text>"+
     "<text x='320' y='284' fill='#ffffff' opacity='.5' font-family='Arial,Helvetica,sans-serif' font-size='13' letter-spacing='2' text-anchor='middle'>ХЛБ ADS</text>"+
     "</svg>";
   return {type:'image', src:'data:image/svg+xml;utf8,'+encodeURIComponent(svg), name:'Креатив ХЛБ', w:640, h:360};
@@ -21833,7 +21821,7 @@ ru: { title:'Публичная оферта', rev:'Редакция № 4', sec
 <li><b>Лицевой счёт</b> — внутренний учётный счёт Пользователя в Сервисе, отражающий баланс средств для оплаты услуг.</li>
 <li><b>Биржа</b> — раздел Сервиса для заключения сделок между заказчиками и исполнителями услуг.</li>
 <li><b>Эскроу</b> — механика блокировки средств заказчика до подтверждения приёмки работы.</li>
-<li><b>Тариф</b> — объём платного функционала (START, PRO, BUSINESS) на выбранный период.</li>
+<li><b>Тариф</b> — объём платного функционала (СТАРТ, КЛУБ, PRO, VIP, МЕНТОР) на выбранный период.</li>
 </ul>`},
 {h:'Предмет договора', b:
 `<p>Оператор предоставляет Пользователю право использования Сервиса в пределах его функциональных возможностей: обмен сообщениями и звонки, публикация контента в социальной ленте, размещение и заказ услуг на Бирже, обучение в Академии, участие в играх (18+), размещение рекламы через рекламный кабинет, участие в партнёрской программе и операции по лицевому счёту.</p>
@@ -21841,11 +21829,11 @@ ru: { title:'Публичная оферта', rev:'Редакция № 4', sec
 {h:'Тарифы и порядок оплаты', b:
 `<div class="lg-table-wrap"><table class="lg-table">
 <tr><th>Тариф</th><th>Цена / мес*</th><th>Состав</th></tr>
-<tr><td>START</td><td>990&nbsp;₽</td><td>Мессенджер Premium (файлы до 4 ГБ, транскрипция голосовых), магазин шаблонов, каталог трендов, 30 проверок видео в месяц, активация партнёрской программы.</td></tr>
-<tr><td>PRO</td><td>4&nbsp;900&nbsp;₽</td><td>Персональная система роста, личный помощник ХЛБ (300 обращений), студия контента (100 генераций), 100 проверок видео и 20 автоправок в месяц, аналитика 3 каналов.</td></tr>
-<tr><td>BUSINESS</td><td>19&nbsp;900&nbsp;₽</td><td>Контент-производство 30–50 роликов в месяц, команда специалистов ХЛБ под проект, автопостинг во все привязанные соцсети, приоритетная поддержка, командные аккаунты (до 3).</td></tr>
-<tr><td>BUSINESS&nbsp;PRO</td><td>49&nbsp;900&nbsp;₽</td><td>Контент-производство 100 роликов в месяц, персональный образ (двойник голоса и лица), безлимитные помощник и студия, API-доступ, до 5 командных аккаунтов, бонус: лендинг и бот при годовой оплате.</td></tr>
-<tr><td>MAX</td><td>149&nbsp;900&nbsp;₽</td><td>Контент-производство 300 роликов в месяц, полная команда специалистов ХЛБ с персональным менеджером, полный digital-запуск (сайт, бот, автоматизации) при годовой оплате, до 15 командных аккаунтов, white-label.</td></tr>
+<tr><td>СТАРТ</td><td>1&nbsp;000&nbsp;₽</td><td>Все чаты и каналы ХЛБ в режиме чтения, основной канал Артёма, Brius-AI (10 запросов в день), лента, 1 демо-вход в приложение.</td></tr>
+<tr><td>КЛУБ</td><td>5&nbsp;000&nbsp;₽</td><td>Сообщения во всех чатах, общий эфир 1 раз в неделю, десятки (чат из 10 участников), спринт-трекер, Brius-AI — безлимит коротких запросов.</td></tr>
+<tr><td>PRO</td><td>20&nbsp;000&nbsp;₽</td><td>Личные разборы Артёма, 2 эфира в неделю, Огуречная Академия (120+ уроков), каталог Nihaodrop (2000+ товаров), Brius-AI без лимитов.</td></tr>
+<tr><td>VIP</td><td>50&nbsp;000&nbsp;₽</td><td>Всё из тарифа PRO, команда сопровождения 24/7, персональный спорт-ассистент, аудит Instagram по методу Артёма.</td></tr>
+<tr><td>МЕНТОР</td><td>150&nbsp;000&nbsp;₽</td><td>Личный ментор — Артём Бриус, сессия 1:1 каждый месяц, магазин Nihaohub под ключ, все 20 приложений без лимитов.</td></tr>
 </table></div>
 <p class="lg-note">* Указана цена за месяц при оплате за год. Скидки периодов от базовой месячной цены: 3 месяца — 10%, 6 месяцев — 15%, 12 месяцев — 20%.</p>
 <p>Способы оплаты: банковские карты РФ, криптовалюта, платёжная платформа Lava.top. Цены могут указываться в долларах США; фактическое списание производится в валюте платёжного метода по курсу на дату платежа. Подписка продлевается автоматически на аналогичный период; автопродление отключается в настройках до даты списания.</p>`},
@@ -21884,7 +21872,7 @@ en: { title:'Public Offer Agreement', rev:'Revision No. 4', secs:[
 <li><b>Personal Account</b> — the User's internal ledger within the Service reflecting the balance of funds for paying for services.</li>
 <li><b>Marketplace</b> — the section of the Service for transactions between clients and service providers.</li>
 <li><b>Escrow</b> — the mechanism of holding the client's funds until acceptance of the work is confirmed.</li>
-<li><b>Plan</b> — the scope of paid functionality (START, PRO, BUSINESS) for a selected period.</li>
+<li><b>Plan</b> — the scope of paid functionality (START, CLUB, PRO, VIP, MENTOR) for a selected period.</li>
 </ul>`},
 {h:'Subject Matter', b:
 `<p>The Operator grants the User the right to use the Service within its functionality: messaging and calls, publishing content in the social feed, offering and ordering services on the Marketplace, learning in the Academy, participation in games (18+), placing advertising via the advertising cabinet, participation in the affiliate program, and operations on the personal account.</p>
@@ -21892,11 +21880,11 @@ en: { title:'Public Offer Agreement', rev:'Revision No. 4', secs:[
 {h:'Plans and Payment', b:
 `<div class="lg-table-wrap"><table class="lg-table">
 <tr><th>Plan</th><th>Price / mo*</th><th>Includes</th></tr>
-<tr><td>START</td><td>990&nbsp;RUB (~$10)</td><td>Premium messenger (files up to 4 GB, voice transcription), templates marketplace, trends catalog, 30 video checks per month, affiliate program activation.</td></tr>
-<tr><td>PRO</td><td>4&nbsp;900&nbsp;RUB (~$49)</td><td>Personal growth system, ХЛБ Personal Assistant (300 requests), Content Studio (100 generations), 100 video checks and 20 auto-fixes per month, analytics for 3 channels.</td></tr>
-<tr><td>BUSINESS</td><td>19&nbsp;900&nbsp;RUB (~$199)</td><td>Content production 30–50 videos per month, dedicated ХЛБ specialists on your project, autoposting to all connected social networks, priority support, up to 3 team accounts.</td></tr>
-<tr><td>BUSINESS&nbsp;PRO</td><td>49&nbsp;900&nbsp;RUB (~$499)</td><td>Content production 100 videos per month, Personal Image (voice and face twin), unlimited assistant and studio, API access, up to 5 team accounts, bonus: landing page and bot with annual payment.</td></tr>
-<tr><td>MAX</td><td>149&nbsp;900&nbsp;RUB (~$1499)</td><td>Content production 300 videos per month, full ХЛБ specialists team with a dedicated manager, complete digital launch (website, bot, automations) with annual payment, up to 15 team accounts, white-label.</td></tr>
+<tr><td>START</td><td>1&nbsp;000&nbsp;RUB (~$10)</td><td>All ХЛБ chats and channels in read-only mode, Artem's main channel, Brius-AI (10 requests per day), the feed, 1 demo access to the app.</td></tr>
+<tr><td>CLUB</td><td>5&nbsp;000&nbsp;RUB (~$50)</td><td>Posting in all chats, a group live stream once a week, "tens" (10-person group chat), sprint tracker, unlimited short Brius-AI requests.</td></tr>
+<tr><td>PRO</td><td>20&nbsp;000&nbsp;RUB (~$200)</td><td>Personal case reviews by Artem, 2 live streams per week, Cucumber Academy (120+ lessons), Nihaodrop catalog (2000+ products), unlimited Brius-AI.</td></tr>
+<tr><td>VIP</td><td>50&nbsp;000&nbsp;RUB (~$500)</td><td>Everything in PRO, a 24/7 support team, a personal sport assistant, an Instagram audit using Artem's method.</td></tr>
+<tr><td>MENTOR</td><td>150&nbsp;000&nbsp;RUB (~$1500)</td><td>A personal mentor — Artem Brius, a 1:1 session every month, a turnkey Nihaohub store, all 20 apps without limits.</td></tr>
 </table></div>
 <p class="lg-note">* Monthly price with annual billing. Period discounts off the base monthly price: 3 months — 10%, 6 months — 15%, 12 months — 20%.</p>
 <p>Payment methods: Russian bank cards, cryptocurrency, and the Lava.top payment platform. Prices may be quoted in US dollars; the actual charge is made in the currency of the payment method at the exchange rate on the payment date. Subscriptions renew automatically for the same period; auto-renewal can be disabled in the settings before the billing date.</p>`},
@@ -22654,7 +22642,7 @@ function lgToast(msg){
     let t = document.getElementById('lgToast');
     if(!t){
       t = document.createElement('div'); t.id = 'lgToast';
-      t.style.cssText = 'position:fixed;left:50%;bottom:24px;transform:translateX(-50%);background:var(--raised,#141414);color:var(--accent,#9AFF00);border:1px solid var(--accent,#9AFF00);padding:8px 16px;border-radius:99px;font:600 12.5px/1 Montserrat,sans-serif;letter-spacing:.04em;z-index:9999;box-shadow:0 6px 24px rgba(0,0,0,.35);opacity:0;transition:opacity .2s';
+      t.style.cssText = 'position:fixed;left:50%;bottom:24px;transform:translateX(-50%);background:var(--raised,#141414);color:var(--accent,#FF9500);border:1px solid var(--accent,#FF9500);padding:8px 16px;border-radius:99px;font:600 12.5px/1 Montserrat,sans-serif;letter-spacing:.04em;z-index:9999;box-shadow:0 6px 24px rgba(0,0,0,.35);opacity:0;transition:opacity .2s';
       document.body.appendChild(t);
     }
     t.textContent = msg; t.style.opacity = '1';
@@ -22981,8 +22969,8 @@ function vsApply(){
       VS_VERIFY.status = 'none'; vsSave();
       if(typeof showPopup === 'function') showPopup({
         ico:'lock', title:'Заявка отклонена',
-        body:'Для верификации нужен активный тариф PRO или BUSINESS либо подтверждённый официальный бизнес. Оформи PRO, и подай заявку снова.',
-        actions:[{label:'Оформить PRO', onclick:()=>openPay('PRO')},{label:'Позже', ghost:true}]
+        body:'Для верификации нужен активный тариф КЛУБ или PRO либо подтверждённый официальный бизнес. Оформи КЛУБ, и подай заявку снова.',
+        actions:[{label:'Оформить КЛУБ', onclick:()=>openPay('PRO')},{label:'Позже', ghost:true}]
       });
     }
     vsUpdateProw(); vsRenderVerify();
@@ -23080,7 +23068,7 @@ function vsTonArt(k, u){
     <path d="M20 40 A34 34 0 0 1 38 15" stroke="#fff" stroke-width="3" opacity=".55" fill="none" stroke-linecap="round"/>`;
   if(k === 'vs-rocket') return defs + `
     <g transform="rotate(35 50 50)">
-      <path d="M43 64 Q50 92 50 97 Q50 92 57 64 Z" fill="#9AFF00" opacity=".85"/>
+      <path d="M43 64 Q50 92 50 97 Q50 92 57 64 Z" fill="#FF9500" opacity=".85"/>
       <path d="M46.5 64 Q50 84 50 88 Q50 84 53.5 64 Z" fill="#fff" opacity=".85"/>
       <path d="M37 52 L23 72 L37 66 Z" fill="url(#${u}b)"/>
       <path d="M63 52 L77 72 L63 66 Z" fill="url(#${u}b)"/>
@@ -23094,7 +23082,7 @@ function vsTonArt(k, u){
   if(k === 'vs-eye') return defs + `
     <path d="M50 5 L88 29 L88 68 L50 95 L12 68 L12 29 Z" fill="url(#${u}a)" opacity=".26" stroke="url(#${u}b)" stroke-width="2.6"/>
     <path d="M18 50 Q50 24 82 50 Q50 76 18 50 Z" fill="#06101c" stroke="url(#${u}b)" stroke-width="3"/>
-    <circle cx="50" cy="50" r="17" fill="none" stroke="#9AFF00" stroke-width="1.4" opacity=".55" stroke-dasharray="4 6"/>
+    <circle cx="50" cy="50" r="17" fill="none" stroke="#FF9500" stroke-width="1.4" opacity=".55" stroke-dasharray="4 6"/>
     <circle cx="50" cy="50" r="13" fill="url(#${u}c)"/>
     <circle cx="50" cy="50" r="5.5" fill="#041018"/>
     <circle cx="45.5" cy="45" r="2.8" fill="#fff"/>
@@ -23110,7 +23098,7 @@ function vsTonArt(k, u){
 
 /* ---------- ПРЕМИУМ-АРТ БАЗОВЫХ СТИКЕРОВ (замена плоских кружков-иконок) ---------- */
 /* Каждый стикер — самодостаточная SVG-иллюстрация в фирменном языке ХЛБ:
-   строго чёрный + лайм #9AFF00 (никаких системных «цветных» эмодзи), градиенты,
+   строго чёрный + лайм #FF9500 (никаких системных «цветных» эмодзи), градиенты,
    белые блики, тёмный кейлайн (читается в тёмной И светлой теме), сигнатурная искра.
    Плавает прозрачно (в сообщении) и на тайле (в гриде). Реакции — компактная
    штриховая версия того же набора (I('heart') …); стикеры — премиум-заливка. */
@@ -23122,7 +23110,7 @@ function vsBaseSvg(ic, size){
 function vsBaseArt(ic, u){
   switch(ic){
   case 'logo': return `<defs>
-    <linearGradient id="${u}l" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#e7ff9e"/><stop offset=".5" stop-color="#9AFF00"/><stop offset="1" stop-color="#5aa300"/></linearGradient>
+    <linearGradient id="${u}l" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#e7ff9e"/><stop offset=".5" stop-color="#FF9500"/><stop offset="1" stop-color="#5aa300"/></linearGradient>
     <radialGradient id="${u}d" cx=".5" cy=".5" r=".62"><stop offset="0" stop-color="#16240a"/><stop offset="1" stop-color="#05080a"/></radialGradient></defs>
     <path d="M50 20 C76 20 94 50 94 50 C94 50 76 80 50 80 C24 80 6 50 6 50 C6 50 24 20 50 20 Z" fill="url(#${u}d)" stroke="url(#${u}l)" stroke-width="6" stroke-linejoin="round"/>
     <circle cx="50" cy="50" r="18" fill="url(#${u}l)"/>
@@ -23130,22 +23118,22 @@ function vsBaseArt(ic, u){
     <circle cx="44" cy="44" r="3.4" fill="#f4ffd6"/>
     <path d="M78 24 l2.4 6 6 2.4 -6 2.4 -2.4 6 -2.4 -6 -6 -2.4 6 -2.4 z" fill="#eaffb0"/>`;
   case 'fire': return `<defs>
-    <linearGradient id="${u}o" x1="0" y1="1" x2="0" y2="0"><stop offset="0" stop-color="#4f8f00"/><stop offset=".5" stop-color="#9AFF00"/><stop offset="1" stop-color="#e4ff9e"/></linearGradient>
+    <linearGradient id="${u}o" x1="0" y1="1" x2="0" y2="0"><stop offset="0" stop-color="#4f8f00"/><stop offset=".5" stop-color="#FF9500"/><stop offset="1" stop-color="#e4ff9e"/></linearGradient>
     <linearGradient id="${u}c" x1="0" y1="1" x2="0" y2="0"><stop offset="0" stop-color="#c6ff70"/><stop offset="1" stop-color="#ffffff"/></linearGradient></defs>
     <path d="M52 5 C61 26 84 34 79 61 C75 85 61 96 50 96 C37 96 21 87 21 63 C21 49 31 45 33 34 C43 43 45 31 40 22 C51 27 54 16 52 5 Z" fill="url(#${u}o)" stroke="#0a1403" stroke-width="1.6" stroke-linejoin="round"/>
     <path d="M51 46 C58 56 62 62 58 74 C55 86 47 88 43 82 C38 74 43 67 45 61 C47 56 51 54 51 46 Z" fill="url(#${u}c)"/>`;
   case 'heart': return `<defs>
-    <linearGradient id="${u}r" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#d6ff8f"/><stop offset=".5" stop-color="#9AFF00"/><stop offset="1" stop-color="#5aa300"/></linearGradient></defs>
+    <linearGradient id="${u}r" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#d6ff8f"/><stop offset=".5" stop-color="#FF9500"/><stop offset="1" stop-color="#5aa300"/></linearGradient></defs>
     <path d="M50 88 C16 63 6 45 6 29 C6 15 18 7 31 7 C41 7 47 13 50 20 C53 13 59 7 69 7 C82 7 94 15 94 29 C94 45 84 63 50 88 Z" fill="url(#${u}r)" stroke="#0a1403" stroke-width="1.6" stroke-linejoin="round"/>
     <path d="M27 19 C21 22 16 28 16 36" stroke="#f4ffd6" stroke-width="6" fill="none" stroke-linecap="round" opacity=".8"/>`;
   case 'thumb': return `<defs>
-    <linearGradient id="${u}t" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#c6ff70"/><stop offset=".55" stop-color="#9AFF00"/><stop offset="1" stop-color="#5fa800"/></linearGradient></defs>
+    <linearGradient id="${u}t" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#c6ff70"/><stop offset=".55" stop-color="#FF9500"/><stop offset="1" stop-color="#5fa800"/></linearGradient></defs>
     <rect x="20" y="46" width="16" height="40" rx="4.5" fill="#6cba12"/>
     <rect x="23" y="49" width="5" height="34" rx="2.5" fill="#b6ff5e" opacity=".65"/>
     <path d="M40 46 C40 46 46 44 49 38 C52 32 51 24 54 18 C56 14 63 14 64 21 C65 28 61 38 61 42 H80 C86 42 88 48 85 53 C88 56 87 62 83 64 C86 68 83 74 79 75 C81 80 77 86 71 86 H50 C44 86 40 82 40 76 Z" fill="url(#${u}t)"/>
     <path d="M46 50 C48 47 51 43 53 38" stroke="#eaffc0" stroke-width="3.5" fill="none" stroke-linecap="round" opacity=".7"/>`;
   case 'laugh': return `<defs>
-    <radialGradient id="${u}f" cx=".4" cy=".33" r=".78"><stop offset="0" stop-color="#eaffb8"/><stop offset=".55" stop-color="#9AFF00"/><stop offset="1" stop-color="#4f8f00"/></radialGradient></defs>
+    <radialGradient id="${u}f" cx=".4" cy=".33" r=".78"><stop offset="0" stop-color="#eaffb8"/><stop offset=".55" stop-color="#FF9500"/><stop offset="1" stop-color="#4f8f00"/></radialGradient></defs>
     <circle cx="50" cy="50" r="43" fill="url(#${u}f)" stroke="#0a1403" stroke-width="1.4"/>
     <circle cx="50" cy="50" r="43" fill="none" stroke="#fff" stroke-width="1.6" opacity=".28"/>
     <path d="M22 43 Q31 32 41 43" stroke="#0a1403" stroke-width="5" fill="none" stroke-linecap="round"/>
@@ -23155,7 +23143,7 @@ function vsBaseArt(ic, u){
     <path d="M13 52 q-5 8 0 14 q5 -5 0 -14 z" fill="#c6ff70"/>
     <path d="M87 52 q5 8 0 14 q-5 -5 0 -14 z" fill="#c6ff70"/>`;
   case 'wow': return `<defs>
-    <radialGradient id="${u}w" cx=".4" cy=".33" r=".8"><stop offset="0" stop-color="#eaffb8"/><stop offset=".55" stop-color="#9AFF00"/><stop offset="1" stop-color="#4f8f00"/></radialGradient></defs>
+    <radialGradient id="${u}w" cx=".4" cy=".33" r=".8"><stop offset="0" stop-color="#eaffb8"/><stop offset=".55" stop-color="#FF9500"/><stop offset="1" stop-color="#4f8f00"/></radialGradient></defs>
     <circle cx="50" cy="50" r="43" fill="url(#${u}w)" stroke="#0a1403" stroke-width="1.4"/>
     <circle cx="50" cy="50" r="43" fill="none" stroke="#fff" stroke-width="1.6" opacity=".3"/>
     <path d="M24 34 Q33 28 42 33" stroke="#0a1403" stroke-width="4" fill="none" stroke-linecap="round"/>
@@ -23165,20 +23153,20 @@ function vsBaseArt(ic, u){
     <circle cx="31.5" cy="44" r="2.4" fill="#eaffc0"/><circle cx="63.5" cy="44" r="2.4" fill="#eaffc0"/>
     <ellipse cx="50" cy="72" rx="9.5" ry="12.5" fill="#0a1403"/>`;
   case 'star': return `<defs>
-    <linearGradient id="${u}s" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#eaffb8"/><stop offset=".5" stop-color="#9AFF00"/><stop offset="1" stop-color="#5aa300"/></linearGradient></defs>
+    <linearGradient id="${u}s" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#eaffb8"/><stop offset=".5" stop-color="#FF9500"/><stop offset="1" stop-color="#5aa300"/></linearGradient></defs>
     <path d="M50 5 L62 37 L96 38 L69 59 L79 92 L50 72 L21 92 L31 59 L4 38 L38 37 Z" fill="url(#${u}s)" stroke="#0a1403" stroke-width="1.8" stroke-linejoin="round"/>
     <path d="M50 16 L58 39 L46 39 Z" fill="#fff" opacity=".4"/>
     <path d="M81 20 l1.9 4.8 4.8 1.9 -4.8 1.9 -1.9 4.8 -1.9 -4.8 -4.8 -1.9 4.8 -1.9 z" fill="#f4ffd6" opacity=".95"/>`;
   case 'crown': return `<defs>
-    <linearGradient id="${u}k" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#e4ff9e"/><stop offset=".5" stop-color="#9AFF00"/><stop offset="1" stop-color="#5aa300"/></linearGradient></defs>
+    <linearGradient id="${u}k" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#e4ff9e"/><stop offset=".5" stop-color="#FF9500"/><stop offset="1" stop-color="#5aa300"/></linearGradient></defs>
     <path d="M13 76 L18 32 L37 55 L50 24 L63 55 L82 32 L87 76 Z" fill="url(#${u}k)" stroke="#0a1403" stroke-width="1.8" stroke-linejoin="round"/>
     <rect x="15" y="76" width="70" height="14" rx="4" fill="#4f8f00"/>
     <rect x="15" y="76" width="70" height="5" rx="2.5" fill="#fff" opacity=".28"/>
     <circle cx="18" cy="30" r="5" fill="#f4ffd6"/><circle cx="82" cy="30" r="5" fill="#f4ffd6"/><circle cx="50" cy="22" r="5.5" fill="#f4ffd6"/>
     <circle cx="30" cy="83" r="4" fill="#0a1403"/><circle cx="50" cy="83" r="4.5" fill="#0a1403"/><circle cx="70" cy="83" r="4" fill="#0a1403"/>`;
   case 'rocket': return `<defs>
-    <linearGradient id="${u}q" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#e4ff9e"/><stop offset=".5" stop-color="#9AFF00"/><stop offset="1" stop-color="#5aa300"/></linearGradient>
-    <linearGradient id="${u}m" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#ffffff"/><stop offset="1" stop-color="#9AFF00"/></linearGradient></defs>
+    <linearGradient id="${u}q" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#e4ff9e"/><stop offset=".5" stop-color="#FF9500"/><stop offset="1" stop-color="#5aa300"/></linearGradient>
+    <linearGradient id="${u}m" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#ffffff"/><stop offset="1" stop-color="#FF9500"/></linearGradient></defs>
     <path d="M40 66 L28 84 L40 78 Z" fill="#4f8f00"/>
     <path d="M60 66 L72 84 L60 78 Z" fill="#4f8f00"/>
     <path d="M44 72 Q50 96 50 96 Q50 96 56 72 Z" fill="url(#${u}m)"/>
@@ -23188,11 +23176,11 @@ function vsBaseArt(ic, u){
     <circle cx="50" cy="38" r="5" fill="#c6ff70"/>
     <path d="M39 22 l1.8 4.6 4.6 1.8 -4.6 1.8 -1.8 4.6 -1.8 -4.6 -4.6 -1.8 4.6 -1.8 z" fill="#f4ffd6" opacity=".85"/>`;
   case 'bolt': return `<defs>
-    <linearGradient id="${u}z" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#e4ff9e"/><stop offset=".5" stop-color="#9AFF00"/><stop offset="1" stop-color="#5aa300"/></linearGradient></defs>
+    <linearGradient id="${u}z" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#e4ff9e"/><stop offset=".5" stop-color="#FF9500"/><stop offset="1" stop-color="#5aa300"/></linearGradient></defs>
     <path d="M58 4 L24 55 L45 55 L40 96 L78 41 L54 41 Z" fill="url(#${u}z)" stroke="#efffcf" stroke-width="2.2" stroke-linejoin="round"/>
     <path d="M55 14 L34 50 L48 50 L44 78" stroke="#fff" stroke-width="2.4" opacity=".55" fill="none" stroke-linejoin="round" stroke-linecap="round"/>`;
   case 'sad': return `<defs>
-    <radialGradient id="${u}j" cx=".4" cy=".33" r=".8"><stop offset="0" stop-color="#eaffb8"/><stop offset=".55" stop-color="#9AFF00"/><stop offset="1" stop-color="#4f8f00"/></radialGradient></defs>
+    <radialGradient id="${u}j" cx=".4" cy=".33" r=".8"><stop offset="0" stop-color="#eaffb8"/><stop offset=".55" stop-color="#FF9500"/><stop offset="1" stop-color="#4f8f00"/></radialGradient></defs>
     <circle cx="50" cy="50" r="43" fill="url(#${u}j)" stroke="#0a1403" stroke-width="1.4"/>
     <circle cx="50" cy="50" r="43" fill="none" stroke="#fff" stroke-width="1.6" opacity=".28"/>
     <path d="M24 40 Q33 46 41 41" stroke="#0a1403" stroke-width="4.5" fill="none" stroke-linecap="round"/>
@@ -23201,7 +23189,7 @@ function vsBaseArt(ic, u){
     <path d="M34 76 Q50 64 66 76" stroke="#0a1403" stroke-width="5" fill="none" stroke-linecap="round"/>
     <path d="M34 58 q-5 8 0 13 q5 -5 0 -13 z" fill="#c6ff70"/>`;
   case 'check': return `<defs>
-    <radialGradient id="${u}v" cx=".4" cy=".33" r=".82"><stop offset="0" stop-color="#eaffb8"/><stop offset=".55" stop-color="#9AFF00"/><stop offset="1" stop-color="#4f8f00"/></radialGradient></defs>
+    <radialGradient id="${u}v" cx=".4" cy=".33" r=".82"><stop offset="0" stop-color="#eaffb8"/><stop offset=".55" stop-color="#FF9500"/><stop offset="1" stop-color="#4f8f00"/></radialGradient></defs>
     <circle cx="50" cy="50" r="43" fill="url(#${u}v)" stroke="#0a1403" stroke-width="1.4"/>
     <circle cx="50" cy="50" r="43" fill="none" stroke="#fff" stroke-width="1.6" opacity=".3"/>
     <path d="M28 53 L44 69 L74 35" stroke="#f4ffd6" stroke-width="10" fill="none" stroke-linecap="round" stroke-linejoin="round" opacity=".45"/>
@@ -23244,9 +23232,9 @@ openStickers = function(){
 
 function vsLockedTap(){
   showPopup({
-    ico:'lock', title:'Стикеры TON — в подписке PRO',
+    ico:'lock', title:'Стикеры TON — в подписке КЛУБ',
     body:'Премиум-пак «TON Crystal» с эффектом дождя кристаллов открывается на тарифах PRO и BUSINESS.',
-    actions:[{label:'Оформить PRO', onclick:()=>openPay('PRO')},{label:'Позже', ghost:true}]
+    actions:[{label:'Оформить КЛУБ', onclick:()=>openPay('PRO')},{label:'Позже', ghost:true}]
   });
 }
 
@@ -23272,7 +23260,7 @@ function vsStickerSpark(){
     /* эпицентр — где появляется отправленный стикер (низ, ближе к правому краю) */
     const cx = r.left + r.width * 0.72, cy = r.top + r.height - 66;
     box.style.cssText = `left:${cx}px;top:${cy}px`;
-    const n = 7, star = '<svg viewBox="0 0 100 100"><path d="M50 8 L60 40 L92 50 L60 60 L50 92 L40 60 L8 50 L40 40 Z" fill="#9AFF00"/></svg>';
+    const n = 7, star = '<svg viewBox="0 0 100 100"><path d="M50 8 L60 40 L92 50 L60 60 L50 92 L40 60 L8 50 L40 40 Z" fill="#FF9500"/></svg>';
     let h = '';
     for(let k = 0; k < n; k++){
       const ang = (k / n) * Math.PI * 2 + Math.random() * 0.5;
@@ -23406,7 +23394,7 @@ function vsGiftArt(a, u){
   if(a==='star')    return vsBaseArt('star', u);
   if(a==='crown')   return vsBaseArt('crown', u);
   if(a==='ring') return `<defs>
-    <linearGradient id="${u}g" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#e7ff9e"/><stop offset=".5" stop-color="#9AFF00"/><stop offset="1" stop-color="#5aa300"/></linearGradient>
+    <linearGradient id="${u}g" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#e7ff9e"/><stop offset=".5" stop-color="#FF9500"/><stop offset="1" stop-color="#5aa300"/></linearGradient>
     <linearGradient id="${u}d" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#d8f6ff"/><stop offset=".5" stop-color="#7fd8ff"/><stop offset="1" stop-color="#2b9fe0"/></linearGradient></defs>
     <ellipse cx="50" cy="66" rx="26" ry="27" fill="none" stroke="url(#${u}g)" stroke-width="10"/>
     <ellipse cx="50" cy="66" rx="26" ry="27" fill="none" stroke="#eaffb8" stroke-width="2" opacity=".5"/>
@@ -23414,7 +23402,7 @@ function vsGiftArt(a, u){
     <path d="M34 30 H66 M50 8 L42 30 M50 8 L58 30 M42 30 L50 44 M58 30 L50 44" stroke="#eafaff" stroke-width="1.4" opacity=".8" fill="none"/>
     <path d="M40 32 l1.8 4.4 4.4 1.8 -4.4 1.8 -1.8 4.4 -1.8 -4.4 -4.4 -1.8 4.4 -1.8 z" fill="#fff" opacity=".9"/>`;
   if(a==='trophy') return `<defs>
-    <linearGradient id="${u}g" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#e7ff9e"/><stop offset=".5" stop-color="#9AFF00"/><stop offset="1" stop-color="#4f8f00"/></linearGradient></defs>
+    <linearGradient id="${u}g" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#e7ff9e"/><stop offset=".5" stop-color="#FF9500"/><stop offset="1" stop-color="#4f8f00"/></linearGradient></defs>
     <rect x="38" y="72" width="24" height="10" rx="3" fill="#4f8f00"/>
     <rect x="30" y="82" width="40" height="10" rx="4" fill="#6cba12"/>
     <rect x="30" y="82" width="40" height="4" rx="2" fill="#fff" opacity=".25"/>
@@ -23424,16 +23412,16 @@ function vsGiftArt(a, u){
     <path d="M50 26 L55 37 L67 38 L58 46 L61 58 L50 51 L39 58 L42 46 L33 38 L45 37 Z" fill="#fff" opacity=".85"/>`;
   if(a==='medal') return `<defs>
     <linearGradient id="${u}r" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#c6ff70"/><stop offset="1" stop-color="#6cba12"/></linearGradient>
-    <radialGradient id="${u}m" cx=".4" cy=".35" r=".7"><stop offset="0" stop-color="#eaffb8"/><stop offset=".5" stop-color="#9AFF00"/><stop offset="1" stop-color="#4f8f00"/></radialGradient></defs>
+    <radialGradient id="${u}m" cx=".4" cy=".35" r=".7"><stop offset="0" stop-color="#eaffb8"/><stop offset=".5" stop-color="#FF9500"/><stop offset="1" stop-color="#4f8f00"/></radialGradient></defs>
     <path d="M36 8 L30 44 L50 34 Z" fill="url(#${u}r)"/>
     <path d="M64 8 L70 44 L50 34 Z" fill="#7ec81a"/>
     <circle cx="50" cy="64" r="27" fill="url(#${u}m)" stroke="#eaffb8" stroke-width="3"/>
     <circle cx="50" cy="64" r="20" fill="#0a1403"/>
     <path d="M32 64 Q50 50 68 64 Q50 78 32 64 Z" fill="none" stroke="#c6ff70" stroke-width="3"/>
-    <circle cx="50" cy="64" r="7" fill="#9AFF00"/><circle cx="47" cy="61" r="2.4" fill="#0a1403"/>`;
+    <circle cx="50" cy="64" r="7" fill="#FF9500"/><circle cx="47" cy="61" r="2.4" fill="#0a1403"/>`;
   /* potion */
   return `<defs>
-    <linearGradient id="${u}p" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#c6ff70"/><stop offset=".5" stop-color="#9AFF00"/><stop offset="1" stop-color="#4f8f00"/></linearGradient></defs>
+    <linearGradient id="${u}p" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#c6ff70"/><stop offset=".5" stop-color="#FF9500"/><stop offset="1" stop-color="#4f8f00"/></linearGradient></defs>
     <path d="M42 12 H58 V40 L74 78 C77 86 71 92 63 92 H37 C29 92 23 86 26 78 L42 40 Z" fill="rgba(154,255,0,.14)" stroke="#eaffc0" stroke-width="3" stroke-linejoin="round"/>
     <path d="M35 56 L65 56 L73 76 C76 84 70 88 63 88 H37 C30 88 24 84 27 76 Z" fill="url(#${u}p)"/>
     <ellipse cx="50" cy="57" rx="15" ry="4" fill="#c6ff70" opacity=".7"/>
@@ -23707,8 +23695,8 @@ function vsOpenBuy(id){
 }
 function vsGiftLock(){
   showPopup({ ico:'crown', title:'Коллекционный подарок',
-    body:'Подарки с короной — эксклюзив тарифов PRO и BUSINESS. Оформи PRO, и коллекция откроется полностью.',
-    actions:[{label:'Оформить PRO', onclick:()=>{ if(typeof openPay==='function') openPay('PRO'); }},{label:'Позже', ghost:true}] });
+    body:'Подарки с короной — эксклюзив тарифов КЛУБ и PRO. Оформи КЛУБ, и коллекция откроется полностью.',
+    actions:[{label:'Оформить КЛУБ', onclick:()=>{ if(typeof openPay==='function') openPay('PRO'); }},{label:'Позже', ghost:true}] });
 }
 function vsBuyGift(id){
   const g = vsGiftById(id); if(!g) return;
@@ -23991,7 +23979,7 @@ function vsUnwrapClose(){
 function vsUnwrapConfetti(host){
   const layer = document.createElement('div');
   layer.className = 'vs-uwrap-conf';
-  const cols = ['#9AFF00','#0098EA','#4fd0ff','#c6ff70','#ffffff','#b57cff'];
+  const cols = ['#FF9500','#0098EA','#4fd0ff','#c6ff70','#ffffff','#b57cff'];
   const n = 46; let h = '';
   for(let k=0;k<n;k++){
     const x = (Math.random()*100).toFixed(1);
@@ -24071,17 +24059,17 @@ VS_GIFTS.forEach(function(g, i){
 /* --- новые SVG-арт подарки (расширяем vsGiftArt) --- */
 var _vsGiftArtPrev = vsGiftArt;
 vsGiftArt = function(a, u){
-  if(a==='flame') return '<defs><linearGradient id="'+u+'f" x1="0" y1="1" x2="0" y2="0"><stop offset="0" stop-color="#4f8f00"/><stop offset=".6" stop-color="#9AFF00"/><stop offset="1" stop-color="#eaffb8"/></linearGradient></defs>'
+  if(a==='flame') return '<defs><linearGradient id="'+u+'f" x1="0" y1="1" x2="0" y2="0"><stop offset="0" stop-color="#4f8f00"/><stop offset=".6" stop-color="#FF9500"/><stop offset="1" stop-color="#eaffb8"/></linearGradient></defs>'
     + '<path d="M50 8 C60 24 78 34 74 60 C70 82 60 92 50 92 C40 92 30 82 26 60 C22 34 40 24 50 8 Z" fill="url(#'+u+'f)" stroke="#0a1403" stroke-width="1.6" stroke-linejoin="round"/>'
     + '<path d="M50 32 C56 42 62 52 58 66 C55 78 46 78 42 66 C40 58 46 52 50 32 Z" fill="#fff" opacity=".6"/>'
     + '<circle cx="60" cy="86" r="3" fill="#c6ff70"/>';
-  if(a==='diamond') return '<defs><linearGradient id="'+u+'d" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#e7ff9e"/><stop offset=".5" stop-color="#9AFF00"/><stop offset="1" stop-color="#5aa300"/></linearGradient></defs>'
+  if(a==='diamond') return '<defs><linearGradient id="'+u+'d" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#e7ff9e"/><stop offset=".5" stop-color="#FF9500"/><stop offset="1" stop-color="#5aa300"/></linearGradient></defs>'
     + '<path d="M10 34 L30 12 L70 12 L90 34 L50 92 Z" fill="url(#'+u+'d)" stroke="#0a1403" stroke-width="1.8" stroke-linejoin="round"/>'
     + '<path d="M10 34 L90 34 L50 92 Z" fill="#fff" opacity=".22"/>'
     + '<path d="M30 12 L38 34 L50 92 L62 34 L70 12" fill="none" stroke="#f4ffd6" stroke-width="1.6" opacity=".85"/>'
     + '<path d="M10 34 L38 34 M62 34 L90 34" stroke="#f4ffd6" stroke-width="1.6" opacity=".7" fill="none"/>'
     + '<path d="M18 22 l1.6 4 4 1.6 -4 1.6 -1.6 4 -1.6 -4 -4 -1.6 4 -1.6 z" fill="#fff" opacity=".9"/>';
-  if(a==='lightning') return '<defs><linearGradient id="'+u+'l" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#eaffb8"/><stop offset=".5" stop-color="#9AFF00"/><stop offset="1" stop-color="#4f8f00"/></linearGradient></defs>'
+  if(a==='lightning') return '<defs><linearGradient id="'+u+'l" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#eaffb8"/><stop offset=".5" stop-color="#FF9500"/><stop offset="1" stop-color="#4f8f00"/></linearGradient></defs>'
     + '<path d="M62 4 L18 60 L44 60 L36 96 L82 40 L54 40 Z" fill="url(#'+u+'l)" stroke="#0a1403" stroke-width="1.8" stroke-linejoin="round"/>'
     + '<path d="M56 14 L28 54 L46 54 L40 84" stroke="#fff" stroke-width="2.4" opacity=".55" fill="none" stroke-linejoin="round" stroke-linecap="round"/>'
     + '<circle cx="16" cy="30" r="2.4" fill="#c6ff70" opacity=".9"/>'
@@ -24092,27 +24080,27 @@ vsGiftArt = function(a, u){
     + '<circle cx="58" cy="60" r="3" fill="#5aa300" opacity=".55"/>'
     + '<circle cx="34" cy="66" r="2.5" fill="#5aa300" opacity=".5"/>'
     + '<path d="M84 18 l1.6 4 4 1.6 -4 1.6 -1.6 4 -1.6 -4 -4 -1.6 4 -1.6 z" fill="#fff" opacity=".95"/>';
-  if(a==='sun') return '<defs><radialGradient id="'+u+'s" cx=".5" cy=".5" r=".6"><stop offset="0" stop-color="#ffffff"/><stop offset=".4" stop-color="#eaffb8"/><stop offset="1" stop-color="#9AFF00"/></radialGradient></defs>'
-    + '<g stroke="#9AFF00" stroke-width="4.5" stroke-linecap="round">'
+  if(a==='sun') return '<defs><radialGradient id="'+u+'s" cx=".5" cy=".5" r=".6"><stop offset="0" stop-color="#ffffff"/><stop offset=".4" stop-color="#eaffb8"/><stop offset="1" stop-color="#FF9500"/></radialGradient></defs>'
+    + '<g stroke="#FF9500" stroke-width="4.5" stroke-linecap="round">'
     + '<line x1="50" y1="4" x2="50" y2="18"/><line x1="50" y1="82" x2="50" y2="96"/>'
     + '<line x1="4" y1="50" x2="18" y2="50"/><line x1="82" y1="50" x2="96" y2="50"/>'
     + '<line x1="18" y1="18" x2="28" y2="28"/><line x1="72" y1="72" x2="82" y2="82"/>'
     + '<line x1="82" y1="18" x2="72" y2="28"/><line x1="18" y1="82" x2="28" y2="72"/></g>'
     + '<circle cx="50" cy="50" r="24" fill="url(#'+u+'s)" stroke="#0a1403" stroke-width="1.6"/>'
     + '<circle cx="42" cy="42" r="4" fill="#fff" opacity=".8"/>';
-  if(a==='shield') return '<defs><linearGradient id="'+u+'h" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#e4ff9e"/><stop offset=".5" stop-color="#9AFF00"/><stop offset="1" stop-color="#4f8f00"/></linearGradient></defs>'
+  if(a==='shield') return '<defs><linearGradient id="'+u+'h" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#e4ff9e"/><stop offset=".5" stop-color="#FF9500"/><stop offset="1" stop-color="#4f8f00"/></linearGradient></defs>'
     + '<path d="M50 6 L84 18 V52 C84 74 68 88 50 94 C32 88 16 74 16 52 V18 Z" fill="url(#'+u+'h)" stroke="#0a1403" stroke-width="2" stroke-linejoin="round"/>'
     + '<path d="M50 6 L84 18 V52 C84 74 68 88 50 94 Z" fill="#fff" opacity=".16"/>'
     + '<path d="M50 26 L58 46 H80 L62 58 L69 80 L50 68 L31 80 L38 58 L20 46 H42 Z" fill="#0a1403" opacity=".85"/>'
     + '<path d="M50 30 L56 44 L70 46 L58 55 L62 70 L50 62 Z" fill="#c6ff70"/>';
-  if(a==='key') return '<defs><linearGradient id="'+u+'k" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#eaffb8"/><stop offset=".55" stop-color="#9AFF00"/><stop offset="1" stop-color="#5aa300"/></linearGradient></defs>'
+  if(a==='key') return '<defs><linearGradient id="'+u+'k" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#eaffb8"/><stop offset=".55" stop-color="#FF9500"/><stop offset="1" stop-color="#5aa300"/></linearGradient></defs>'
     + '<circle cx="30" cy="30" r="20" fill="none" stroke="url(#'+u+'k)" stroke-width="8"/>'
     + '<circle cx="30" cy="30" r="8" fill="#0a1403"/>'
     + '<path d="M42 42 L88 88" stroke="url(#'+u+'k)" stroke-width="8" stroke-linecap="round"/>'
     + '<path d="M70 68 L82 68 L82 78" stroke="url(#'+u+'k)" stroke-width="8" stroke-linecap="round" fill="none"/>'
     + '<path d="M78 78 L88 78" stroke="url(#'+u+'k)" stroke-width="8" stroke-linecap="round"/>'
     + '<path d="M20 20 l1.6 4 4 1.6 -4 1.6 -1.6 4 -1.6 -4 -4 -1.6 4 -1.6 z" fill="#fff" opacity=".8"/>';
-  if(a==='skull') return '<defs><radialGradient id="'+u+'k" cx=".5" cy=".4" r=".7"><stop offset="0" stop-color="#eaffb8"/><stop offset=".5" stop-color="#9AFF00"/><stop offset="1" stop-color="#4f8f00"/></radialGradient></defs>'
+  if(a==='skull') return '<defs><radialGradient id="'+u+'k" cx=".5" cy=".4" r=".7"><stop offset="0" stop-color="#eaffb8"/><stop offset=".5" stop-color="#FF9500"/><stop offset="1" stop-color="#4f8f00"/></radialGradient></defs>'
     + '<path d="M50 8 C74 8 90 26 90 48 C90 60 84 68 78 74 L78 84 C78 88 74 92 68 92 L32 92 C26 92 22 88 22 84 L22 74 C16 68 10 60 10 48 C10 26 26 8 50 8 Z" fill="url(#'+u+'k)" stroke="#0a1403" stroke-width="2" stroke-linejoin="round"/>'
     + '<ellipse cx="34" cy="52" rx="10" ry="12" fill="#0a1403"/>'
     + '<ellipse cx="66" cy="52" rx="10" ry="12" fill="#0a1403"/>'
@@ -24120,21 +24108,21 @@ vsGiftArt = function(a, u){
     + '<circle cx="66" cy="52" r="3" fill="#c6ff70"/>'
     + '<path d="M42 74 L46 82 L50 74 L54 82 L58 74" stroke="#0a1403" stroke-width="4" fill="none" stroke-linejoin="round" stroke-linecap="round"/>'
     + '<path d="M46 66 L50 72 L54 66 Z" fill="#0a1403"/>';
-  if(a==='phoenix') return '<defs><linearGradient id="'+u+'p" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#eaffb8"/><stop offset=".5" stop-color="#9AFF00"/><stop offset="1" stop-color="#4f8f00"/></linearGradient><linearGradient id="'+u+'w" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#e4ff9e"/><stop offset="1" stop-color="#5aa300"/></linearGradient></defs>'
+  if(a==='phoenix') return '<defs><linearGradient id="'+u+'p" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#eaffb8"/><stop offset=".5" stop-color="#FF9500"/><stop offset="1" stop-color="#4f8f00"/></linearGradient><linearGradient id="'+u+'w" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#e4ff9e"/><stop offset="1" stop-color="#5aa300"/></linearGradient></defs>'
     + '<path d="M20 62 C10 42 22 20 40 22 C30 32 34 42 44 40 C34 54 42 66 50 60 C42 72 50 84 60 78 C50 88 62 92 68 84 C74 72 78 60 82 66 C88 54 82 40 72 42 C82 30 76 16 62 22 C56 8 44 8 40 22 Z" fill="url(#'+u+'w)" opacity=".85"/>'
     + '<path d="M50 12 C58 24 66 36 60 54 C55 68 44 68 40 54 C36 40 42 24 50 12 Z" fill="url(#'+u+'p)" stroke="#0a1403" stroke-width="1.6" stroke-linejoin="round"/>'
     + '<circle cx="48" cy="30" r="5" fill="#0a1403"/>'
     + '<circle cx="46" cy="28" r="1.6" fill="#c6ff70"/>'
     + '<path d="M50 60 C55 74 55 84 50 92 C45 84 45 74 50 60 Z" fill="#fff" opacity=".55"/>'
     + '<path d="M20 20 l1.8 4.4 4.4 1.8 -4.4 1.8 -1.8 4.4 -1.8 -4.4 -4.4 -1.8 4.4 -1.8 z" fill="#fff" opacity=".9"/>';
-  if(a==='dragon') return '<defs><linearGradient id="'+u+'d" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#eaffb8"/><stop offset=".5" stop-color="#9AFF00"/><stop offset="1" stop-color="#4f8f00"/></linearGradient></defs>'
+  if(a==='dragon') return '<defs><linearGradient id="'+u+'d" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#eaffb8"/><stop offset=".5" stop-color="#FF9500"/><stop offset="1" stop-color="#4f8f00"/></linearGradient></defs>'
     + '<path d="M14 82 C10 62 30 50 44 58 C56 40 78 42 82 60 C90 54 92 40 82 32 C68 40 62 30 66 18 C48 22 44 40 50 52 C34 46 20 60 22 74 Z" fill="url(#'+u+'d)" stroke="#0a1403" stroke-width="1.8" stroke-linejoin="round"/>'
     + '<path d="M66 18 L74 8 L70 22" fill="#c6ff70" stroke="#0a1403" stroke-width="1.4"/>'
     + '<circle cx="72" cy="34" r="3.5" fill="#0a1403"/>'
     + '<path d="M76 42 C82 44 88 42 90 38 C86 46 82 48 78 48" fill="#c6ff70"/>'
     + '<path d="M28 76 C32 68 36 74 32 82 M42 84 C46 76 50 82 46 90 M56 86 C60 78 64 84 60 92" stroke="#0a1403" stroke-width="1.4" fill="none"/>'
     + '<path d="M50 52 C56 50 62 54 62 60" stroke="#fff" stroke-width="2" opacity=".55" fill="none"/>';
-  if(a==='giftbox') return '<defs><linearGradient id="'+u+'g" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#e4ff9e"/><stop offset=".5" stop-color="#9AFF00"/><stop offset="1" stop-color="#4f8f00"/></linearGradient></defs>'
+  if(a==='giftbox') return '<defs><linearGradient id="'+u+'g" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#e4ff9e"/><stop offset=".5" stop-color="#FF9500"/><stop offset="1" stop-color="#4f8f00"/></linearGradient></defs>'
     + '<rect x="12" y="40" width="76" height="52" rx="6" fill="url(#'+u+'g)" stroke="#0a1403" stroke-width="2"/>'
     + '<rect x="8" y="30" width="84" height="18" rx="4" fill="#6cba12" stroke="#0a1403" stroke-width="2"/>'
     + '<rect x="8" y="30" width="84" height="5" rx="2" fill="#fff" opacity=".28"/>'
@@ -24142,7 +24130,7 @@ vsGiftArt = function(a, u){
     + '<rect x="45" y="30" width="10" height="62" fill="#c6ff70"/>'
     + '<path d="M50 30 C42 18 26 18 30 30 M50 30 C58 18 74 18 70 30" fill="none" stroke="#0a1403" stroke-width="4"/>'
     + '<path d="M50 30 C42 18 26 18 30 30 M50 30 C58 18 74 18 70 30" fill="none" stroke="#c6ff70" stroke-width="2.4"/>';
-  if(a==='nyeye') return '<defs><linearGradient id="'+u+'e" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#e4ff9e"/><stop offset="1" stop-color="#9AFF00"/></linearGradient></defs>'
+  if(a==='nyeye') return '<defs><linearGradient id="'+u+'e" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#e4ff9e"/><stop offset="1" stop-color="#FF9500"/></linearGradient></defs>'
     + '<path d="M18 30 C34 12 66 12 82 30 C74 20 60 16 50 16 C40 16 26 20 18 30 Z" fill="#c81f2b"/>'
     + '<path d="M18 30 L82 30" stroke="#0a1403" stroke-width="2" fill="none"/>'
     + '<circle cx="72" cy="18" r="6" fill="#fff"/>'
@@ -25163,7 +25151,7 @@ const ST_DICT = {
   'Прими условия сервиса, чтобы продолжить':'Accept the terms of service to continue',
   'Добро пожаловать в ХЛБ':'Welcome to ХЛБ','Забрать бонус':'Claim bonus',
   'Бонус на лицевом счёте — кошелёк уже в сборке':'Bonus credited to your account — the wallet is on its way',
-  'Открой ХЛБ PRO':'Unlock ХЛБ PRO','Оформить PRO':'Get PRO','Тарифы скоро откроются':'Plans are coming soon',
+  'Открой ХЛБ КЛУБ':'Unlock ХЛБ CLUB','Оформить КЛУБ':'Get CLUB','Тарифы скоро откроются':'Plans are coming soon',
   'Включи уведомления':'Turn on notifications','Уведомления включены':'Notifications enabled',
   'Похоже, в почте опечатка — проверь адрес':'Looks like a typo in the email — check the address',
   'Введи номер полностью — 11 цифр с +7':'Enter the full number — 11 digits starting with +7',
@@ -25409,7 +25397,7 @@ const ST_DICT = {
   'Подать заявку':'Apply','Проверяем аккаунт…':'Reviewing account…','Условия':'Requirements',
   'Заявка отправлена на модерацию':'Application sent to moderation','Аккаунт верифицирован':'Account verified',
   'Заявка отклонена':'Application rejected','Верифицированный аккаунт':'Verified account',
-  'Стикеры TON — в подписке PRO':'TON stickers — with PRO','необязательно':'optional','проверка':'review',
+  'Стикеры TON — в подписке КЛУБ':'TON stickers — with CLUB','необязательно':'optional','проверка':'review',
   /* --- PWA --- */
   'ХЛБ APP на главный экран':'Add ХЛБ to your home screen',
   'Установи ХЛБ APP как приложение: значок на рабочем столе, полный экран, работает быстрее.':'Install ХЛБ as an app: home screen icon, full screen, runs faster.',
@@ -25849,9 +25837,9 @@ function hqActSave(){ try{ localStorage.setItem('oko-admin-actions', JSON.string
     [2.30, 60,   'Игры: дорога'],    [3.10, 990,  'Продвижение'],
     [3.70, 1490, 'Тарифы'],          [4.20, 340,  'Игры: рулетка'],
     [5.05, 1500, 'Рекламный кабинет'],[5.80, 320,  'Комиссия Биржи 10%'],
-    [6.40, 120,  'Комиссия вывода'], [7.25, 4990, 'Тарифы'],
+    [6.40, 120,  'Комиссия вывода'], [7.25, 5000, 'Тарифы'],
     [8.10, 590,  'Продвижение'],     [9.00, 150,  'Игры: дорога'],
-    [10.2, 1200, 'Комиссия Биржи 10%'],[11.4, 990, 'Тарифы'],
+    [10.2, 1200, 'Комиссия Биржи 10%'],[11.4, 1000, 'Тарифы'],
     [12.6, 5000, 'Рекламный кабинет'],[13.9, 80,  'Игры: рулетка'],
     [15.1, 450,  'Комиссия Биржи 10%'],[16.8, 349, 'Продвижение'],
     [18.0, 2990, 'Тарифы'],          [19.5, 75,   'Комиссия вывода'],
@@ -26225,7 +26213,7 @@ const HQ_ROOMS = [
   {n:'Юридический',  ic:'file',      c:'#ef4444', s:'договор №14 на проверке 161-ФЗ', live:1,
     d:'Договоры, оферты, проверка по 152-ФЗ и 161-ФЗ, контроль реквизитов в диалогах.',
     k:[['в работе','3 док.'],['проверка 161-ФЗ','1'],['оферты','актуальны'],['риски','0']]},
-  {n:'Безопасность', ic:'shield',    c:'#9AFF00', s:'аптайм 99.98% · 0 инцидентов', live:1,
+  {n:'Безопасность', ic:'shield',    c:'#FF9500', s:'аптайм 99.98% · 0 инцидентов', live:1,
     d:'Мониторинг аптайма, антифрод, автоблок скам-реквизитов, защита аккаунтов от угона.',
     k:[['аптайм·30д','99.98%'],['инциденты','0'],['автоблоков','46'],['2FA','вкл']]},
   {n:'Research Lab', ic:'search',    c:'#4aa0ff', s:'разбор ниши · 2 отчёта в мозг', live:1,
@@ -26245,7 +26233,7 @@ const HQ_ROOMS = [
     k:[['прогрев','2 акк.'],['агентов','10'],['ролей','8'],['резерв','2']]},
 ];
 const HQ_AGENTS = [
-  {id:'ceo',      role:'Гендиректор', c:'#9AFF00', st:'work',  p:72, task:'аппрув КП для MedCraft',
+  {id:'ceo',      role:'Гендиректор', c:'#FF9500', st:'work',  p:72, task:'аппрув КП для MedCraft',
     pool:['обход штаба · раздача задач','смотрит дашборд выручки','аппрув договора №14','планёрка war-room 16:00']},
   {id:'sales',    role:'Sales',       c:'#4aa0ff', st:'work',  p:44, task:'дожим лида @stomat_pro — стадия КП',
     pool:['называет цену @beauty_msk','отправка КП клинике «Дента»','прогрев базы · 12 лидов','горячий лид → war-room']},
@@ -26384,7 +26372,7 @@ function hqHqView(){
    через hqOpen3d() (тяжёлый WebGL намеренно НЕ встраивается — лагает в webview). */
 function hqPortalCard(){
   /* агенты-орбиты вокруг знака ХЛБ — цвета берём из палитры отделов/агентов */
-  const nodes = ['#9AFF00','#4aa0ff','#a855f7','#ff7a3c','#22d3ee','#facc15','#ff6bad','#34d399']
+  const nodes = ['#FF9500','#4aa0ff','#a855f7','#ff7a3c','#22d3ee','#facc15','#ff6bad','#34d399']
     .map((c,i,arr)=>`<i style="--a:${Math.round(i*360/arr.length)}deg;--c:${c};--d:${(i*0.28).toFixed(2)}s"></i>`).join('');
   return `
     <button class="hq-portal card" type="button" onclick="hqOpen3d()" aria-label="Открыть 3D-штаб ХЛБ в новой вкладке">
@@ -26786,7 +26774,7 @@ HQ_STATE.aiOff = HQ_STATE.aiOff || {};      /* выключенные систе
 HQ_STATE.escDone = HQ_STATE.escDone || {};  /* закрытые эскалации по индексу (персист) */
 hqSave();
 const HQ_AISYS = [
-  {k:'support', n:'Поддержка',   ic:'chat',      c:'#9AFF00', load:81, m:'214 ответов/сут · ответ 41 сек'},
+  {k:'support', n:'Поддержка',   ic:'chat',      c:'#FF9500', load:81, m:'214 ответов/сут · ответ 41 сек'},
   {k:'assist',  n:'Ассистент',   ic:'bolt',      c:'#4aa0ff', load:44, m:'12 отчётов · сводки 09:00'},
   {k:'moder',   n:'Модератор',   ic:'shield',    c:'#a855f7', load:63, m:'68 автоблоков · очередь 0'},
   {k:'fraud',   n:'Антифрод',    ic:'lock',      c:'#ff7a3c', load:37, m:'1.2к проверок · 46 стопов'},
@@ -26956,7 +26944,7 @@ function hqCrisisOpen(){
 /* ---- 7.2 LIVE-ЛЕНТА СОБЫТИЙ: регистрации, оплаты, выводы, сделки (тик 5с) ---- */
 const HQ_FEED_POOL = [
   {k:'reg',   ic:'user',      c:'#4aa0ff', tpl:['Регистрация · @{nick} · через Telegram','Регистрация · @{nick} · e-mail','Новый гость: @{nick} · трафик из ленты']},
-  {k:'pay',   ic:'card',      c:'#9AFF00', tpl:['Оплата ${a} · PRO · {name}','Оплата ${a} · BUSINESS · {name}','Оплата ${a} · START · {name}','Продление ${a} · PRO · {name}']},
+  {k:'pay',   ic:'card',      c:'#FF9500', tpl:['Оплата ${a} · PRO · {name}','Оплата ${a} · BUSINESS · {name}','Оплата ${a} · START · {name}','Продление ${a} · PRO · {name}']},
   {k:'out',   ic:'money',     c:'#facc15', tpl:['Выплата партнёру ${a} · @{nick}','Вывод на карту ${a} · {name}','Комиссия +${b} ₽ · тариф']},
   {k:'deal',  ic:'briefcase', c:'#22d3ee', tpl:['Новая сделка Биржи · {name} · {c} ₽','Эскроу открыт · {c} ₽ · @{nick}','Сделка закрыта · {c} ₽ · комиссия 10%']},
   {k:'churn', ic:'flag',      c:'#ff7a3c', tpl:['Отписка от PRO · {name}','Заявка на возврат ${a} · @{nick}']},
@@ -27065,7 +27053,7 @@ function hqHeatBlock(){
 
 /* ---- 7.4 ТОП-ФИЧИ ПО ИСПОЛЬЗОВАНИЮ ---- */
 const HQ_FEATS = [
-  {n:'Контент-завод',   ic:'rocket',    c:'#9AFF00', n24:342, dl:'+18%', up:1, sub:'запусков за 24 часа'},
+  {n:'Контент-завод',   ic:'rocket',    c:'#FF9500', n24:342, dl:'+18%', up:1, sub:'запусков за 24 часа'},
   {n:'Reels-машина',    ic:'circle-play', c:'#4aa0ff', n24:217, dl:'+12%', up:1, sub:'сборок за сутки'},
   {n:'Академия ХЛБ',    ic:'crown',     c:'#facc15', n24:189, dl:'+9%',  up:1, sub:'уроков открыто'},
   {n:'Биржа услуг',     ic:'briefcase', c:'#22d3ee', n24:94,  dl:'+7%',  up:1, sub:'сделок закрыто'},
@@ -27092,7 +27080,7 @@ const HQ_FUNNEL = [
   {n:'Визиторы',    v:12840, c:'#4aa0ff', sub:'уник. за 30 дней'},
   {n:'Регистрации', v:1284,  c:'#22d3ee', sub:'аккаунтов создано'},
   {n:'START',       v:214,   c:'#facc15', sub:'активировали базовый'},
-  {n:'PRO',         v:78,    c:'#9AFF00', sub:'переход на средний'},
+  {n:'PRO',         v:78,    c:'#FF9500', sub:'переход на средний'},
   {n:'BUSINESS',    v:12,    c:'#ff7a3c', sub:'верхний тариф'},
 ];
 function hqFunnelBlock(){
@@ -27168,7 +27156,7 @@ function hqRoleSet(k){ HQ_STATE.role = k; hqSave(); renderAdmin(); toast('Рол
 /* ---------- 8.1 real-time метрики (свежие числа каждые 15 сек) ---------- */
 const HQ_TIERS = [
   {k:'BUSINESS', n:'BUSINESS', price:199, count:12, c:'#ff7a3c'},
-  {k:'PRO',      n:'PRO',      price:49,  count:78, c:'#9AFF00'},
+  {k:'PRO',      n:'PRO',      price:49,  count:78, c:'#FF9500'},
   {k:'START',    n:'START',    price:15,  count:214,c:'#facc15'},
   {k:'FREE',     n:'FREE',     price:0,   count:980,c:'#4aa0ff'},
 ];
@@ -27301,7 +27289,7 @@ function hqCohortBlock(){
 
 /* ---------- 8.4 A/B тесты ---------- */
 const HQ_AB = [
-  {k:'ab1', n:'Заголовок тарифа PRO',  variants:['A · «Ускоряй контент»','B · «Собери завод за час»'], split:'50/50', sample:2411, winner:'B', uplift:12.4, metric:'CTR карточки тарифа', st:'run'},
+  {k:'ab1', n:'Заголовок тарифа КЛУБ',  variants:['A · «Вступай в клуб»','B · «Ближе к Артёму»'], split:'50/50', sample:2411, winner:'B', uplift:12.4, metric:'CTR карточки тарифа', st:'run'},
   {k:'ab2', n:'Кнопка «Начать бесплатно» vs «Попробовать 7 дней»', variants:['A','B'], split:'50/50', sample:1890, winner:'A', uplift:4.8, metric:'клик по CTA', st:'done'},
   {k:'ab3', n:'Онбординг: 3 шага vs 5 шагов', variants:['3 шага','5 шагов'], split:'70/30', sample:940, winner:'3 шага', uplift:9.1, metric:'доход до 1-го урока', st:'run'},
   {k:'ab4', n:'Автоплей приветствия', variants:['вкл','выкл'], split:'50/50', sample:612, winner:null, uplift:0, metric:'глубина сессии', st:'wait'},
@@ -27360,7 +27348,7 @@ function hqClickBlock(){
             <radialGradient id="hqCg" cx="50%" cy="50%" r="50%">
               <stop offset="0%"  stop-color="#ff3838" stop-opacity=".95"/>
               <stop offset="45%" stop-color="#ffb400" stop-opacity=".6"/>
-              <stop offset="100%" stop-color="#9AFF00" stop-opacity="0"/>
+              <stop offset="100%" stop-color="#FF9500" stop-opacity="0"/>
             </radialGradient>
           </defs>
           <!-- шапка -->
@@ -27536,7 +27524,7 @@ ADMIN_TABS.push({k:'crm',     t:'CRM'});
 
 /* ФИНАНСЫ ------------------------------------------------------------------ */
 const HQ_FIN_INCOME = [
-  {k:'Lava.top карта', v:184000, c:'#9AFF00'},
+  {k:'Lava.top карта', v:184000, c:'#FF9500'},
   {k:'Криптовалюта',    v:56000,  c:'#4aa0ff'},
   {k:'ЮKassa · СБП',    v:42000,  c:'#facc15'},
   {k:'Партнёрские',     v:18000,  c:'#a855f7'},
@@ -27767,16 +27755,16 @@ function hqExportPdf(){
       *{box-sizing:border-box}
       body{font-family:-apple-system,BlinkMacSystemFont,Segoe UI,Roboto,sans-serif;color:#0d1a05;background:#fff;padding:32px;max-width:900px;margin:0 auto;line-height:1.5}
       h1{font-size:26px;letter-spacing:.02em;margin:0 0 6px;color:#0d1a05}
-      h2{font-size:17px;margin:28px 0 10px;color:#5cae00;border-bottom:2px solid #9AFF00;padding-bottom:5px}
-      .head{display:flex;align-items:center;gap:14px;border-bottom:3px solid #9AFF00;padding-bottom:14px;margin-bottom:18px}
-      .logo{width:52px;height:52px;border-radius:14px;background:#0d1a05;color:#9AFF00;display:grid;place-items:center;font-family:'Bebas Neue',Impact,sans-serif;font-size:26px;letter-spacing:.05em}
+      h2{font-size:17px;margin:28px 0 10px;color:#5cae00;border-bottom:2px solid #FF9500;padding-bottom:5px}
+      .head{display:flex;align-items:center;gap:14px;border-bottom:3px solid #FF9500;padding-bottom:14px;margin-bottom:18px}
+      .logo{width:52px;height:52px;border-radius:14px;background:#0d1a05;color:#FF9500;display:grid;place-items:center;font-family:'Bebas Neue',Impact,sans-serif;font-size:26px;letter-spacing:.05em}
       .meta{color:#5b6a4a;font-size:13px;margin-top:3px}
       table{width:100%;border-collapse:collapse;font-size:13px;margin-bottom:8px}
       th,td{text-align:left;padding:7px 10px;border-bottom:1px solid #e8efe0}
       th{background:#f6faed;font-weight:700;font-size:12px;color:#5cae00;text-transform:uppercase;letter-spacing:.05em}
       td b{color:#0d1a05;font-weight:700}
       .kpi{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:14px}
-      .k{background:#f6faed;border-left:3px solid #9AFF00;padding:11px 14px;border-radius:6px}
+      .k{background:#f6faed;border-left:3px solid #FF9500;padding:11px 14px;border-radius:6px}
       .k b{display:block;font-size:22px;color:#0d1a05;font-family:'Bebas Neue',Impact,sans-serif;letter-spacing:.03em}
       .k small{color:#5b6a4a;font-size:11px;text-transform:uppercase;letter-spacing:.05em}
       .foot{margin-top:32px;padding-top:16px;border-top:1px solid #e8efe0;color:#5b6a4a;font-size:12px;text-align:center}
@@ -29707,10 +29695,10 @@ function mpSparkline(seed){
   const last = pts[pts.length-1], lastX = xs(pts.length-1), lastY = ys(last);
   return `<svg class="mp-spark" viewBox="0 0 ${W} ${H}" preserveAspectRatio="none">
     <defs><linearGradient id="mpsparkg" x1="0" x2="0" y1="0" y2="1">
-      <stop offset="0" stop-color="#9AFF00" stop-opacity=".55"/><stop offset="1" stop-color="#9AFF00" stop-opacity="0"/></linearGradient></defs>
+      <stop offset="0" stop-color="#FF9500" stop-opacity=".55"/><stop offset="1" stop-color="#FF9500" stop-opacity="0"/></linearGradient></defs>
     <path d="${fill}" fill="url(#mpsparkg)" stroke="none"/>
-    <path d="${path}" fill="none" stroke="#9AFF00" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
-    <circle cx="${lastX.toFixed(1)}" cy="${lastY.toFixed(1)}" r="3" fill="#9AFF00"/>
+    <path d="${path}" fill="none" stroke="#FF9500" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+    <circle cx="${lastX.toFixed(1)}" cy="${lastY.toFixed(1)}" r="3" fill="#FF9500"/>
   </svg>`;
 }
 function mpOnTimeRate(l){ return 88 + ((l.seed||0) % 11); } // 88..98%
@@ -30741,7 +30729,7 @@ mpMap = function(){
   const rPx = Math.min(60, 15 + km*0.8);
   const ring = `<svg class="mp-map-ring" viewBox="0 0 320 130" preserveAspectRatio="none">
     <circle cx="16" cy="115" r="${rPx}" fill="none" stroke="rgba(154,255,0,.28)" stroke-dasharray="3 4"/>
-    <circle cx="16" cy="115" r="4" fill="#9AFF00"/>
+    <circle cx="16" cy="115" r="4" fill="#FF9500"/>
   </svg>
   <span class="mp-map-radius">${I('pos')} радиус · ${km} км</span>`;
   return html.replace('<span class="mp-map-me">', ring + '<span class="mp-map-me">');
@@ -31224,7 +31212,7 @@ function faDecorate(){
   if(baseNote) baseNote.remove();
 
   /* единая чистая шапка: «Умная лента» + (i) пояснение + «Обновить подборку» */
-  if(!list.querySelector('.fa-bar')){
+  if(false){ /* fa-bar отключён: Клипы и Обновить живут в статичном ряду .feed-tabs */
     const open = FA.infoOpen ? ' fa-open' : '';
     list.insertAdjacentHTML('afterbegin',
       `<div class="fa-head">`+
@@ -33678,6 +33666,7 @@ function dcPatchStory(){
 
 /* ---------- наполнение (при каждой загрузке; защита, по id 9001) ---------- */
 function dcSeed(){
+  return false; /* демо-чаты отключены: в списке только реальные каналы Артёма из статики */
   if(typeof CHATS === 'undefined' || CHATS.find(c=>c.id===9001)) return false;
 
   /* чаты, сразу после живого чата, чтобы список выглядел свежим */
@@ -33925,7 +33914,7 @@ const DC_CHATS_X_GROUPS = [
      {kind:'sys', body:'12 участников · 9 онлайн · внутренняя команда ХЛБ'},
      {kind:'sys', body:'Закреплено: цели Q3 — 200k MAU, 1 новый город запуска, +30% выручки к июню'},
      {in:1, who:'Артём (CTO)', t:'10:14', kind:'text', body:'Утро! По ночному деплою: миграция базы прошла чисто, старые джобы добиты, апи держит нагрузку без прогревов. Задержка p95 упала с 380 до 190 мс.', reacts:{fire:5, thumb:3}},
-     {in:1, who:'Аня (дизайн)', t:'10:22', kind:'text', body:'Отдаю ветку с новой обложкой кошелька и иконками биржи. Дизайн-ревью нужно от Даниэля до обеда, чтобы ушло в релиз.'},
+     {in:1, who:'Аня (дизайн)', t:'10:22', kind:'text', body:'Отдаю ветку с новой обложкой кошелька и иконками биржи. Дизайн-ревью нужно от Артёма до обеда, чтобы ушло в релиз.'},
      {in:0, t:'10:38', kind:'text', body:'Смотрю сейчас, дам замечания в фигме до 12:00. Один вопрос уже есть: почему на биржевой иконке лайм на 40% прозрачности? В бренде мы не разводим лайм.', reacts:{thumb:2}},
      {in:1, who:'Аня (дизайн)', t:'10:45', kind:'text', body:'Замерила, чтобы в списке миниатюр не сливалась с фоном тёмной темы. Готова вернуть 100% и добавить обводку 1 пт. Так лучше?'},
      {in:1, who:'Лена (SMM)', t:'11:20', kind:'text', body:'Кинула в @okonews пост про кошелёк и игры. Уже +240 подписчиков за час, репостов 34. Работает лучше чем прошлые анонсы.', reacts:{heart:4}},
@@ -33942,12 +33931,12 @@ const DC_CHATS_X_GROUPS = [
    msgs:[
      {kind:'sys', body:'Закрытый чат PRO-тарифа · 245 участников · 38 онлайн'},
      {kind:'sys', body:'Закреплено: расписание разборов, гайды и шаблоны PRO — в первом сообщении.'},
-     {in:1, who:'Модератор', t:'вчера', kind:'text', body:'Друзья, коротко по неделе. Вторник — разбор воронок из ленты, четверг — открытый Q&A с Даниэлем, суббота — практика по монтажу. Все встречи в 19:00 мск, запись остаётся на неделю.', reacts:{fire:24}},
+     {in:1, who:'Модератор', t:'вчера', kind:'text', body:'Друзья, коротко по неделе. Вторник — разбор воронок из ленты, четверг — открытый Q&A с Артёмом, суббота — практика по монтажу. Все встречи в 19:00 мск, запись остаётся на неделю.', reacts:{fire:24}},
      {in:1, who:'Ирина (студия йоги)', t:'вчера', kind:'text', body:'Поделюсь кейсом: за 3 недели PRO — +180 записей на пробное занятие. Формула та же, что показывал Артём: одно предложение, одна метрика, ежедневный ролик. Скрины охватов ниже.', reacts:{fire:47, heart:12}},
      {in:1, who:'Павел (мебель на заказ)', t:'вчера', kind:'text', body:'У кого-то работает бесплатная доставка как хук? У нас в нише все её обещают, но клиенты приходят на другой оффер.'},
      {in:1, who:'Оля (эксперт-маркетолог)', t:'вчера', kind:'text', body:'@Павел — бесплатная доставка давно приелась. Замени на «замер + смета за 30 минут» с таймером на посадочной. У моего клиента конверсия выросла в 2 раза.', reacts:{thumb:14}},
      {in:1, who:'Дмитрий (автосервис)', t:'09:44', kind:'text', body:'Вопрос по инструментам PRO: биржа автоматом снимает 10%, а если сделка идёт через мой личный кабинет, но клиент из чата PRO — комиссия та же?'},
-     {in:1, who:'Модератор', t:'10:02', kind:'text', body:'@Дмитрий — комиссия только с сделок через биржу ХЛБ. Если ведёшь клиента в личке, платишь только за подписку PRO, комиссии нет. Но и защиты холдом тоже нет.'},
+     {in:1, who:'Модератор', t:'10:02', kind:'text', body:'@Дмитрий — комиссия только с сделок через биржу ХЛБ. Если ведёшь клиента в личке, платишь только за подписку КЛУБ, комиссии нет. Но и защиты холдом тоже нет.'},
      {in:1, who:'Настя (эксперт по инстаграм)', t:'11:15', kind:'poll', q:'Что разбираем в четверг на Q&A?', opts:['Хуки и удержание','Продажи в сторис','Ошибки монтажа','Настройка ленты'], votes:[42,28,19,11], voted:0},
      {in:1, who:'Модератор', t:'11:30', kind:'text', body:'Голосуем до среды 20:00, тема с наибольшим числом голосов идёт в четверг. Свои вопросы можно оставлять прямо в этой ветке ответом на опрос.', reacts:{heart:9}},
      {in:1, who:'Илья (юрист-эксперт)', t:'14:22', kind:'text', body:'Спасибо за шаблон договора с самозанятым из закрепа — за неделю оформил 6 подрядчиков без правок. Это лучшее, что было в PRO за месяц.', reacts:{fire:18, thumb:22}},
@@ -34027,7 +34016,7 @@ const DC_CHATS_X_CHANNELS = [
    subs:'12.0к', writeAll:false, kindIcon:'megaphone', verified:true,
    preview:'Почему я снова начал вести дневник, спустя 8 лет', time:'19:00', unread:1,
    msgs:[
-     {kind:'sys', body:'Личный канал Даниэля · 12 040 подписчиков · verified · без рекламы и продажи услуг'},
+     {kind:'sys', body:'Личный канал Артёма · 12 040 подписчиков · verified · без рекламы и продажи услуг'},
      {in:1, t:'11 июля', kind:'text', body:'Мысль недели, которую хочется зафиксировать. Всю жизнь мне казалось, что успех — это финиш. Пробежал дистанцию, забрал приз, идёшь домой. Восемь лет в собственных проектах научили простой штуке: успех — это форма усталости, к которой ты постепенно привык. Проект-магазин, из которого я ушёл в 26; сеть студий, которая закрылась через два года; агентство, которое кормило команду четыре года и стало клеткой. Каждый раз, когда я «финишировал», через месяц я начинал сначала. Потому что финиша нет. Есть только скорость, с которой ты бежишь, и качество, с которым тебе жить в этом беге. Сейчас, в 34, я впервые собираю то, что делает бег осмысленным, а не бесконечным. ХЛБ — не проект, из которого хочется выйти. И это, кажется, впервые.', reacts:{heart:412, fire:187}},
      {in:1, t:'вчера', kind:'text', body:'История, за которую мне до сих пор стыдно, но она важна. В 2019 я нанял в свою первую команду человека, с которым дружил со школы. Он был толковый, я знал его 15 лет, всё казалось очевидным. Через 4 месяца я его уволил — потому что он не тянул, а по-другому решить я не умел. Дружба развалилась мгновенно, восстановилась только через два года и уже не той же. Урок, который я вынес: дружба и работа — не про хорошее отношение друг к другу, а про совпадение по темпу и по требованиям к результату. Если совпадаете — работайте, дружба выдержит. Если нет — не нанимайте, дружба важнее. Сейчас в ХЛБ двое из моих ближайших друзей работают со мной. Я долго сомневался, брать ли их. Взял только когда понял, что готов уволить, если понадобится, — и они это знали заранее.', reacts:{heart:284, thumb:96}},
      {in:1, t:'19:00', kind:'text', body:'Почему я снова начал вести дневник, спустя 8 лет. Пять минут в день, ручкой в бумажный блокнот. Три вопроса: что я сегодня сделал, что я сегодня понял, что я завтра решу. Ничего сверхумного, никаких методологий, никаких приложений. Работает потому, что рука пишет медленнее, чем думает голова, и от этого мысль вынуждена сжиматься до сути. Проверил на месяце: за 30 дней записей у меня накопилось 18 решений, которые я иначе бы забыл. Три из них перевернули приоритеты в ХЛБ. Одно спасло меня от очень плохого партнёрства. Стоимость привычки — блокнот за 300 ₽ и 5 минут перед сном. Возврат — трудно измерить, но точно кратный. Попробуй, если давно откладываешь.', reacts:{heart:376, fire:142}},
@@ -34068,6 +34057,7 @@ const DC_CHATS_X_CHANNELS = [
 
 /* -------------------- сид + инициализация -------------------- */
 function dcSeedExtra(){
+  return false; /* доп. демо-чаты отключены */
   if(typeof CHATS === 'undefined') return false;
   if(!dcExtraAllowed()) return false;
   if(CHATS.find(c=>c.id===9020)) return false; /* защита от двойного пуша */
@@ -35390,7 +35380,7 @@ function cpStartConference(){
   const cap = tier==='FREE' ? 20 : tier==='START' ? 50 : 200;
   if(typeof showPopup==='function'){
     showPopup({ico:'phone', title:'Начать созвон',
-      body:`Создать групповой созвон в «${cpEsc(c.name)}»? Работает как Zoom: до <b>${cap}</b> участников (тариф ${tier}). Микрофон и камера можно отключать, участников — модерировать.<br><br><small style="color:var(--dim)">В комнате: mute/unmute, вкл/выкл камера, вход по ссылке, запись — на PRO.</small>`,
+      body:`Создать групповой созвон в «${cpEsc(c.name)}»? Работает как Zoom: до <b>${cap}</b> участников (тариф ${hlbTierName(tier)}). Микрофон и камера можно отключать, участников — модерировать.<br><br><small style="color:var(--dim)">В комнате: mute/unmute, вкл/выкл камера, вход по ссылке, запись — на КЛУБ.</small>`,
       actions:[
         {label:'Начать', onclick:()=>{
           if(typeof startCall==='function') startCall(false);
@@ -35800,7 +35790,7 @@ if(typeof msgHtml === 'function'){
      • touchend вне палитры → палитра остаётся, тап-снаружи закрывает (как в TG).
 */
 const CP_QUICK_REACTS = ['heart','fire','star','thumb','laugh','sad'];
-const CP_RP_COLOR = {fire:'#ff7a1a', heart:'#ff3b6b', star:'#ffc522', thumb:'#9aff00', laugh:'#ffd23a', sad:'#7ab8ff', crown:'#ffc522'};
+const CP_RP_COLOR = {fire:'#ff7a1a', heart:'#ff3b6b', star:'#ffc522', thumb:'#ff9500', laugh:'#ffd23a', sad:'#7ab8ff', crown:'#ffc522'};
 let cpPalette = null, cpJustLp = false, cpLpTimer = null, cpLpStart = null;
 
 function cpInitLongPress(){
@@ -38077,14 +38067,14 @@ function mpSparkHtml(){
     <svg viewBox="0 0 ${w} ${h}" preserveAspectRatio="none" class="mp-spark-svg">
       <defs>
         <linearGradient id="mpSparkFill" x1="0" y1="0" x2="0" y2="1">
-          <stop offset="0%" stop-color="#9AFF00" stop-opacity=".38"/>
-          <stop offset="100%" stop-color="#9AFF00" stop-opacity="0"/>
+          <stop offset="0%" stop-color="#FF9500" stop-opacity=".38"/>
+          <stop offset="100%" stop-color="#FF9500" stop-opacity="0"/>
         </linearGradient>
       </defs>
       <path d="${area}" fill="url(#mpSparkFill)"/>
-      <path d="${line}" fill="none" stroke="#9AFF00" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
-      <circle cx="${dotX}" cy="${dotY}" r="3" fill="#9AFF00"/>
-      <circle cx="${dotX}" cy="${dotY}" r="6" fill="#9AFF00" opacity=".22"/>
+      <path d="${line}" fill="none" stroke="#FF9500" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+      <circle cx="${dotX}" cy="${dotY}" r="3" fill="#FF9500"/>
+      <circle cx="${dotX}" cy="${dotY}" r="6" fill="#FF9500" opacity=".22"/>
     </svg>
   </div>`;
 }
@@ -38406,9 +38396,9 @@ function psSocSparkSvg(id, w, h){
   const area = `M${pad} ${(h - pad).toFixed(1)} ` + pts.map((v, i) => 'L' + x(i).toFixed(1) + ' ' + y(v).toFixed(1)).join(' ') + ` L${(w - pad).toFixed(1)} ${(h - pad).toFixed(1)} Z`;
   const gid = 'psSocGrad_' + id;
   return `<svg class="ps-soc-plat-spark" viewBox="0 0 ${w} ${h}" preserveAspectRatio="none">
-    <defs><linearGradient id="${gid}" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#9AFF00" stop-opacity=".35"/><stop offset="100%" stop-color="#9AFF00" stop-opacity="0"/></linearGradient></defs>
+    <defs><linearGradient id="${gid}" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#FF9500" stop-opacity=".35"/><stop offset="100%" stop-color="#FF9500" stop-opacity="0"/></linearGradient></defs>
     <path d="${area}" fill="url(#${gid})"/>
-    <path d="${line}" fill="none" stroke="#9AFF00" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>
+    <path d="${line}" fill="none" stroke="#FF9500" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>
   </svg>`;
 }
 
@@ -38441,9 +38431,9 @@ function psSocQrSvg(text){
   /* центральный «логотип ХЛБ» — 7×7 клеток */
   const cx = 50, cy = 50, r = 8.5;
   cells.push(`<rect x="${cx-r}" y="${cy-r}" width="${r*2}" height="${r*2}" rx="3" fill="#fff"/>`);
-  cells.push(`<rect x="${cx-r+1.2}" y="${cy-r+1.2}" width="${(r-1.2)*2}" height="${(r-1.2)*2}" rx="2" fill="#9AFF00"/>`);
+  cells.push(`<rect x="${cx-r+1.2}" y="${cy-r+1.2}" width="${(r-1.2)*2}" height="${(r-1.2)*2}" rx="2" fill="#FF9500"/>`);
   cells.push(`<circle cx="${cx}" cy="${cy}" r="3.4" fill="#0a0d04"/>`);
-  cells.push(`<circle cx="${cx}" cy="${cy}" r="1.6" fill="#9AFF00"/>`);
+  cells.push(`<circle cx="${cx}" cy="${cy}" r="1.6" fill="#FF9500"/>`);
   return `<svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg" shape-rendering="crispEdges"><rect width="100" height="100" fill="#fff"/>${cells.join('')}</svg>`;
 }
 
@@ -38832,11 +38822,11 @@ function psSocDetail(id){
     <div class="ps-soc-det-chart">
       <div class="ps-soc-det-chart-h"><span>Подписчики за 7 дней</span><b>+${psSocFmt(gain)}</b></div>
       <svg class="ps-soc-det-chart-svg" viewBox="0 0 ${W} ${H}" preserveAspectRatio="none">
-        <defs><linearGradient id="psSocDetGrad" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#9AFF00" stop-opacity=".42"/><stop offset="100%" stop-color="#9AFF00" stop-opacity="0"/></linearGradient></defs>
+        <defs><linearGradient id="psSocDetGrad" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#FF9500" stop-opacity=".42"/><stop offset="100%" stop-color="#FF9500" stop-opacity="0"/></linearGradient></defs>
         <path d="${area}" fill="url(#psSocDetGrad)"/>
-        <path d="${line}" fill="none" stroke="#9AFF00" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-        <circle cx="${xF(dot).toFixed(1)}" cy="${yF(pts[dot]).toFixed(1)}" r="3.5" fill="#9AFF00"/>
-        <circle cx="${xF(dot).toFixed(1)}" cy="${yF(pts[dot]).toFixed(1)}" r="7" fill="#9AFF00" opacity=".24"/>
+        <path d="${line}" fill="none" stroke="#FF9500" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+        <circle cx="${xF(dot).toFixed(1)}" cy="${yF(pts[dot]).toFixed(1)}" r="3.5" fill="#FF9500"/>
+        <circle cx="${xF(dot).toFixed(1)}" cy="${yF(pts[dot]).toFixed(1)}" r="7" fill="#FF9500" opacity=".24"/>
       </svg>
     </div>
     <div class="ps-soc-sec" style="margin:6px 0 6px">${I('feed')} Последние 5 постов</div>
@@ -38884,7 +38874,7 @@ function psSocExportKit(){
     *{box-sizing:border-box;font-family:-apple-system,Segoe UI,Inter,Roboto,sans-serif;color:#0a0d04}
     body{margin:0;background:#fff;padding:40px 44px}
     .h{display:flex;align-items:center;gap:14px;border-bottom:2px solid #0a0d04;padding-bottom:16px;margin-bottom:22px}
-    .h .lg{width:44px;height:44px;background:#9AFF00;border-radius:12px;display:inline-flex;align-items:center;justify-content:center;font-weight:900;color:#0a0d04;font-size:22px}
+    .h .lg{width:44px;height:44px;background:#FF9500;border-radius:12px;display:inline-flex;align-items:center;justify-content:center;font-weight:900;color:#0a0d04;font-size:22px}
     h1{font-size:26px;margin:0;letter-spacing:.02em}
     .sub{color:#666;font-size:13px;margin-top:2px}
     .stat{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin:18px 0 22px}
@@ -39213,12 +39203,12 @@ function psSocInjectEntry(){
 
   /* тир: FREE / START / PRO / BUSINESS / BUSINESS_PRO / MAX */
   const PP2_TIER_META = {
-    FREE:         {lb:'FREE',         short:'Free',       kind:'free', tone:'gray'},
-    START:        {lb:'START',        short:'Start',      kind:'paid', tone:''},
-    PRO:          {lb:'PRO',          short:'Pro',        kind:'paid', tone:''},
-    BUSINESS:     {lb:'BUSINESS',     short:'Business',   kind:'paid', tone:''},
-    BUSINESS_PRO: {lb:'BUSINESS PRO', short:'Business Pro', kind:'paid', tone:''},
-    MAX:          {lb:'MAX',          short:'Max',        kind:'gold', tone:'gold'},
+    FREE:         {lb:'ГОСТЬ',        short:'Гость',      kind:'free', tone:'gray'},
+    START:        {lb:'СТАРТ',        short:'Старт',      kind:'paid', tone:''},
+    PRO:          {lb:'КЛУБ',         short:'Клуб',       kind:'paid', tone:''},
+    BUSINESS:     {lb:'PRO',          short:'Pro',        kind:'paid', tone:''},
+    BUSINESS_PRO: {lb:'VIP',          short:'VIP',        kind:'paid', tone:''},
+    MAX:          {lb:'МЕНТОР',       short:'Ментор',     kind:'gold', tone:'gold'},
   };
   function pp2Tier(){
     try{
@@ -39536,23 +39526,24 @@ function psSocInjectEntry(){
   /* --- Тарифы --- */
   const PP2_PLANS = [
     {k:'FREE',        f:'Бесплатно',      cls:'free',flag:'Текущий если нет платы',
-     feats:['Мессенджер и лента без лимитов','Публикации, реакции, чаты','Базовая проверка видео (5/мес)']},
-    {k:'START',        f:'990 ₽',          cls:'',    flag:'Старт',
-     feats:['Мессенджер Premium: файлы 4 ГБ','Магазин шаблонов + Каталог трендов','Аналитика 1 канала','Проверка видео 30/мес']},
-    {k:'PRO',          f:'4 900 ₽',        cls:'',    flag:'Хит',
-     feats:['Система Роста под ключ, 15 конкурентов','Помощник ХЛБ: 300 обращений','Студия контента: 100 генераций','Проверка 100/мес + 20 автоправок']},
-    {k:'BUSINESS',     f:'19 900 ₽',       cls:'',    flag:'Команда',
-     feats:['Контент-завод: 30–50 роликов/мес','5 специалистов ХЛБ','Автопостинг во все сети','Помощник 1000, проверка 300']},
-    {k:'BUSINESS_PRO', f:'49 900 ₽',       cls:'',    flag:'Business Pro',
-     feats:['Контент-завод: 100 роликов/мес','Персональный образ (двойник)','Помощник и Студия без лимитов','Лендинг + бот при годовой оплате']},
-    {k:'MAX',          f:'149 900 ₽',      cls:'max', flag:'Максимум',
-     feats:['Контент-завод: 300 роликов/мес','10 специалистов + менеджер','Полный digital-запуск','White-label, мультиаккаунт до 15']},
+     feats:['Лента ХЛБ и открытые материалы','Знакомство с клубом и Артёмом','Смотри и знакомься — бесплатно']},
+    {k:'START',        f:'1 000 ₽',        cls:'',    flag:'Старт',
+     feats:['Все чаты и каналы ХЛБ (read-only)','Основной канал Артёма','Brius-AI: 10 запросов/день','Лента + 1 демо-вход в приложение']},
+    {k:'PRO',          f:'5 000 ₽',        cls:'',    flag:'Хит',
+     feats:['Пишешь во всех чатах','Общий эфир 1 раз в неделю','Десятки (чат из 10) + спринт-трекер','Brius-AI: безлимит коротких']},
+    {k:'BUSINESS',     f:'20 000 ₽',       cls:'',    flag:'PRO',
+     feats:['Личные разборы Артёма','2 эфира в неделю','Огуречная Академия: 120+ уроков','Nihaodrop каталог 2000+, Brius-AI без лимитов']},
+    {k:'BUSINESS_PRO', f:'50 000 ₽',       cls:'',    flag:'VIP',
+     feats:['Всё из PRO','Команда сопровождения 24/7','Персональный спорт-ассистент','Аудит Instagram по методу Артёма']},
+    {k:'MAX',          f:'150 000 ₽',      cls:'max', flag:'Ментор',
+     feats:['Личный ментор — Артём Бриус','Сессия 1:1 каждый месяц','Nihaohub магазин под ключ','Все 20 приложений без лимитов']},
   ];
+  const PP2_NAME = {FREE:'ГОСТЬ', START:'СТАРТ', PRO:'КЛУБ', BUSINESS:'PRO', BUSINESS_PRO:'VIP', MAX:'МЕНТОР'};
   function pp2TiersPageHtml(){
     const cur = pp2Tier();
     const hero = '<div class="pp2-tier-hero">'
-      + '<h3>Один тариф — вместо целой команды</h3>'
-      + '<p>Приложение, ленты, монтаж, помощник, автопостинг и аналитика в одном месте. Скидки при оплате вперёд: 3 мес −10%, 6 мес −15%, год −20%.</p>'
+      + '<h3>Один тариф — весь клуб ХЛБ</h3>'
+      + '<p>Чаты, эфиры, разборы Артёма, Огуречная Академия, Nihaodrop и Brius-AI в одном месте. Скидки при оплате вперёд: 3 мес −10%, 6 мес −15%, год −20%.</p>'
       + '<div class="pp2-chips"><span class="pp2-chip">3 мес −10%</span><span class="pp2-chip">6 мес −15%</span><span class="pp2-chip gold">Год −20%</span></div>'
       + '</div>';
     const cards = '<div class="pp2-tiers">' + PP2_PLANS.map(function(p){
@@ -39561,11 +39552,11 @@ function psSocInjectEntry(){
       const priceHtml = isFree ? p.f : ('<b>' + esc2(p.f) + '</b><small>/мес</small>');
       const cta = isFree
         ? (on ? '<button class="btn ghost" disabled>Активен</button>' : '<button class="btn ghost" onclick="toast(\'FREE активируется сам по умолчанию\')">Оставить бесплатный</button>')
-        : (on ? '<button class="btn" disabled>Активен</button>' : '<button class="btn' + (p.k === 'PRO' ? '' : ' ghost') + '" onclick="openPay(\'' + p.k + '\')">Выбрать ' + esc2(p.k) + '</button>');
+        : (on ? '<button class="btn" disabled>Активен</button>' : '<button class="btn' + (p.k === 'PRO' ? '' : ' ghost') + '" onclick="openPay(\'' + p.k + '\')">Выбрать ' + esc2(PP2_NAME[p.k] || p.k) + '</button>');
       const feats = '<ul class="pp2-tier-feats">' + p.feats.map(function(f){ return '<li>' + esc2(f) + '</li>'; }).join('') + '</ul>';
       return '<div class="pp2-tier-card ' + p.cls + (on ? ' on' : '') + '">'
         + (p.flag ? '<span class="pp2-tier-flag">' + esc2(p.flag) + '</span>' : '')
-        + '<div class="pp2-tier-head"><span class="pp2-tier-name">' + esc2(p.k.replace('_', ' ')) + '</span>'
+        + '<div class="pp2-tier-head"><span class="pp2-tier-name">' + esc2(PP2_NAME[p.k] || p.k.replace('_', ' ')) + '</span>'
         + '<span class="pp2-tier-price">' + priceHtml + '</span></div>'
         + feats
         + '<div class="pp2-tier-cta">' + cta + '</div>'
@@ -39838,7 +39829,7 @@ function spSave(){ try{ localStorage.setItem('oko-stories-plus', JSON.stringify(
 
 /* 6 бренд-градиентов + цвет текста под каждый (яркий лайм требует тёмный текст) */
 const SP_BGS = [
-  {bg:'linear-gradient(135deg,#B9FF4D 0%,#9AFF00 45%,#3f6b00 100%)', fg:'#0b1400'},
+  {bg:'linear-gradient(135deg,#FFB84D 0%,#FF9500 45%,#3f6b00 100%)', fg:'#0b1400'},
   {bg:'linear-gradient(160deg,#131f04 0%,#060606 55%,#0e1a03 100%)', fg:'#fff'},
   {bg:'linear-gradient(150deg,#0a1a10 0%,#050505 60%,#08240e 100%)', fg:'#fff'},
   {bg:'linear-gradient(155deg,#233a00 0%,#0b1400 55%,#000 100%)',    fg:'#fff'},
@@ -40802,11 +40793,9 @@ function st2SyncActiveFromProfile(){
 /* применить профиль аккаунта на ядро PROFILE (при переключении/инициализации) */
 function st2ApplyAccToProfile(a){
   if(!a || typeof PROFILE === 'undefined') return;
-  PROFILE.name = a.name; PROFILE.nick = a.nick; PROFILE.tier = a.tier; PROFILE.role = a.role;
-  if(a.bio    !== undefined) PROFILE.bio    = a.bio;
+  /* ХЛБ demo: имя/ник/био/аватар владельца фиксированы (Артём Бриус @gdebrius) — аккаунты меняют только тариф/роль/статус */
+  PROFILE.tier = a.tier; PROFILE.role = a.role;
   PROFILE.status = a.status || null;
-  PROFILE.avatar = a.avatar || null;
-  PROFILE.cover  = a.cover  || null;
 }
 
 /* ---------- рендер вьюхи ---------- */
@@ -41346,7 +41335,7 @@ function st2StorageParts(total){
   const stick = Math.max(0.2, total * 0.09);
   const other = Math.max(0.1, total - media - docs - stick);
   return [
-    {v:media, label:'Медиа (фото, видео)', color:'#9AFF00'},
+    {v:media, label:'Медиа (фото, видео)', color:'#FF9500'},
     {v:docs,  label:'Документы',            color:'#5CD3F4'},
     {v:stick, label:'Стикеры и эмодзи',     color:'#F97AC9'},
     {v:other, label:'Прочее',               color:'#8A94A6'},
@@ -42808,10 +42797,7 @@ function st2InsertRow(){
   /* аккаунты: сид из PROFILE при первом запуске; иначе — применить активный аккаунт */
   if(typeof PROFILE !== 'undefined'){
     /* миграция: сохранённый ранее override ника -> PROFILE (до сида аккаунтов) */
-    if(ST2.nick && !ST2.accounts.length && PROFILE.nick !== ST2.nick){
-      PROFILE.nick = ST2.nick;
-      if(typeof renderMyProfile === 'function') renderMyProfile();
-    }
+    /* ХЛБ demo: сохранённый override ника не применяем — ник всегда @gdebrius */
     if(!ST2.accounts.length){
       ST2.accounts = [{id:'owner', name:PROFILE.name, nick:PROFILE.nick, tier:PROFILE.tier, role:PROFILE.role, bio:PROFILE.bio,
                        status:PROFILE.status||null, avatar:PROFILE.avatar||null, cover:PROFILE.cover||null}];
@@ -43829,9 +43815,9 @@ function st2InsertRow(){
     globalT = setTimeout(globalTick, 45000 + Math.random()*45000);
   }
   function startGlobal(){
-    if(globalT) return;
-    // первый показ — через 12–20 сек после старта, чтобы юзер успел освоиться
-    globalT = setTimeout(globalTick, 12000 + Math.random()*8000);
+    /* глобальные авто-тосты поверх экрана («Аня М. поставила 5 звёзд» и т.п.)
+       отключены для демо; статичный список в колокольчике остаётся */
+    return;
   }
 
   /* ================================================================
@@ -44171,7 +44157,7 @@ function st2InsertRow(){
 /* ===== module: tour ===== */
 /* ===== TOUR: сторис Даниэля + интерактивный тур (префикс tr-) =====
    Первый заход после регистрации:
-     1) STORIES — Instagram-style сторис от Даниэля (5 карточек: продукт,
+     1) STORIES — Instagram-style сторис от Артёма (5 карточек: продукт,
         тарифы, партнёрка, академия, штаб). Тап по правой половине — вперёд,
         по левой — назад, удержание — пауза, свайп вниз / крест — закрыть.
      2) TOUR — интерактивный тур: спотлайт вокруг реального элемента
@@ -44200,31 +44186,31 @@ const TR_STORIES = [
    title:{ru:'ХЛБ — экосистема, где всё в одном', en:'ХЛБ — everything in one place'},
    body:{ru:'Мессенджер, лента, биржа, кошелёк, академия и партнёрка. Один аккаунт — целый мир для роста и заработка.',
          en:'Messenger, feed, marketplace, wallet, academy and partner program. One account — a whole ecosystem for growth and income.'},
-   meta:{ru:'Артём · основатель ХЛБ', en:'Daniel · founder of ХЛБ'}},
+   meta:{ru:'Артём · основатель ХЛБ', en:'Artem · founder of ХЛБ'}},
   {key:'plans', ico:'crown', tone:'dark',
    tag:{ru:'Тарифы', en:'Plans'},
-   title:{ru:'Три плана — под любые задачи', en:'Three plans — for every need'},
-   body:{ru:'Free для старта, PRO для роста и BUSINESS для команд. Первые 2 500 ₽ на балансе — тратятся на любые тарифы и продвижение.',
-         en:'Free to start, PRO to grow and BUSINESS for teams. First 2,500 ₽ on your balance covers any plan or promotion.'},
-   meta:{ru:'Артём · тарифы ХЛБ', en:'Daniel · ХЛБ plans'}},
+   title:{ru:'Тарифы — под любые задачи', en:'Plans — for every need'},
+   body:{ru:'СТАРТ для входа, КЛУБ для роста, PRO и VIP для серьёзных, МЕНТОР — личная работа с Артёмом. Первые 2 500 ₽ на балансе — тратятся на любые тарифы и продвижение.',
+         en:'START to enter, CLUB to grow, PRO and VIP for the serious, MENTOR — personal work with Artem. First 2,500 ₽ on your balance covers any plan or promotion.'},
+   meta:{ru:'Артём · тарифы ХЛБ', en:'Artem · ХЛБ plans'}},
   {key:'partner', ico:'heart', tone:'lime',
    tag:{ru:'Партнёрка', en:'Partners'},
    title:{ru:'Приводи людей — расти вместе', en:'Bring people in — grow together'},
    body:{ru:'До 30% с оплат приглашённых, бессрочно. Промо-материалы, QR, дип-линки и прозрачная история начислений — всё в кабинете.',
          en:'Up to 30% of your invitees’ payments, forever. Promo assets, QR, deep links and a transparent payout log — all in one dashboard.'},
-   meta:{ru:'Артём · партнёрская программа', en:'Daniel · partner program'}},
+   meta:{ru:'Артём · партнёрская программа', en:'Artem · partner program'}},
   {key:'academy', ico:'star', tone:'dark',
    tag:{ru:'Академия', en:'Academy'},
    title:{ru:'Учись и получай сертификат', en:'Study and get certified'},
    body:{ru:'Полноформатные курсы: видео, слайды, тест и практика. За каждое направление — официальный сертификат ХЛБ с печатью и подписью.',
          en:'Full-format courses: video, slides, tests and practice. Every track ends with an official ХЛБ certificate — stamp and signature included.'},
-   meta:{ru:'Артём · академия ХЛБ', en:'Daniel · ХЛБ academy'}},
+   meta:{ru:'Артём · академия ХЛБ', en:'Artem · ХЛБ academy'}},
   {key:'hq', ico:'compass', tone:'lime',
    tag:{ru:'Штаб', en:'HQ'},
    title:{ru:'Штаб — твой контроль', en:'HQ — your control room'},
    body:{ru:'Профиль, статистика, темы, конфиденциальность и уведомления. Начни отсюда — и вернись сюда, чтобы включить повтор сторис и тура.',
          en:'Profile, stats, themes, privacy and notifications. Start here — and come back to replay stories or the tour anytime.'},
-   meta:{ru:'Артём · штаб ХЛБ', en:'Daniel · ХЛБ HQ'}},
+   meta:{ru:'Артём · штаб ХЛБ', en:'Artem · ХЛБ HQ'}},
 ];
 
 /* Каждый шаг двуязычен: title/text — {ru,en}. Рендер выбирает язык по LANG. */
@@ -44671,6 +44657,7 @@ function trBusy(){
     TS.open);
 }
 function trMaybeAuto(){
+  return; /* авто-запуск сторис и тура отключён для демо */
   if(trOpen || TS.open) return;
   if(typeof authed === 'function' && !authed()) return;  /* ждём логина — патчи ниже */
   if(trBusy()){ setTimeout(trMaybeAuto, 2600); return; } /* занято — попробуем позже */
@@ -44698,7 +44685,7 @@ function trAddRow(){
     if(!document.getElementById('trProwStories')){
       const bs = document.createElement('button');
       bs.className = 'prow'; bs.id = 'trProwStories';
-      bs.innerHTML = `${I('play')} <span id="trRowStoriesLabel">${trT('Сторис Даниэля','Daniel’s stories')}</span> <span class="chev">${I('chev')}</span>`;
+      bs.innerHTML = `${I('play')} <span id="trRowStoriesLabel">${trT('Сторис Артёма','Artem’s stories')}</span> <span class="chev">${I('chev')}</span>`;
       bs.onclick = ()=>{ trStoriesStart(null); };
       logoutRow.parentNode.insertBefore(bs, logoutRow);
     }
@@ -44729,7 +44716,7 @@ function trAddRow(){
   /* перевод строк профиля (i18n ядра, если доступно) */
   if(typeof regT === 'function' && typeof onLangChange === 'function' && typeof t === 'function'){
     regT({'tr.row': {ru:'Тур по ХЛБ', en:'ХЛБ tour'},
-          'tr.stories': {ru:'Сторис Даниэля', en:'Daniel’s stories'}});
+          'tr.stories': {ru:'Сторис Артёма', en:'Artem’s stories'}});
     onLangChange(function(){
       const l = document.getElementById('trRowLabel');
       if(l) l.textContent = t('tr.row');
@@ -45197,8 +45184,7 @@ if(typeof mpOpenPackages === 'function'){
       }
       const u = tg.initDataUnsafe && tg.initDataUnsafe.user;
       if(u && u.first_name){
-        PROFILE.name = u.first_name + (u.last_name ? ' ' + u.last_name : '');
-        if(u.username) PROFILE.nick = u.username;
+        /* ХЛБ demo: профиль всегда Артём Бриус @gdebrius — имя из Telegram не подставляем */
         try{ localStorage.setItem('oko-auth','tg'); }catch(e){}
         const auth = document.getElementById('authScreen');
         if(auth) auth.style.display = 'none';
@@ -45667,7 +45653,7 @@ var PW_ASSET = {
   /* нормализация имени тарифа (PROFILE.tier может быть "BUSINESS PRO" с пробелом) */
   function pwNorm(t){ return String(t||'').replace(/\s+/g,'_').toUpperCase(); }
   /* красивое имя тарифа для UI (обратно из ключа) */
-  function pwLabel(t){ return t==='BUSINESS_PRO' ? 'BUSINESS PRO' : t; }
+  function pwLabel(t){ if(typeof hlbTierName==='function'){ var n=hlbTierName(t); if(n) return n; } return t==='BUSINESS_PRO' ? 'BUSINESS PRO' : t; }
   function pwCurRank(){
     if(typeof isOwner==='function' && isOwner()) return 99;
     var t = (typeof PROFILE!=='undefined' && PROFILE.tier ? pwNorm(PROFILE.tier) : 'FREE');
@@ -45680,7 +45666,7 @@ var PW_ASSET = {
   }
 
   /* ---- цены/мес (fallback если PLANS нет), FREE = 0 ---- */
-  var PW_MO = {FREE:0, START:990, PRO:4900, BUSINESS:19900, BUSINESS_PRO:49900, MAX:149900};
+  var PW_MO = {FREE:0, START:1000, PRO:5000, BUSINESS:20000, BUSINESS_PRO:50000, MAX:150000};
   var PW_YR = {};   /* спец-годовых цен нет: скидка периода применяется единообразно */
   function pwMonthly(tier){
     if(typeof PLANS!=='undefined' && PLANS[tier] && PLANS[tier].mo) return PLANS[tier].mo;
@@ -45694,91 +45680,91 @@ var PW_ASSET = {
   /* прописать все тарифы в ядро, чтобы openPay(...)/doPay работали корректно */
   try{
     if(typeof PLANS!=='undefined'){
-      if(!PLANS.MAX) PLANS.MAX = {name:'MAX', mo:PW_MO.MAX};
-      if(!PLANS.BUSINESS_PRO) PLANS.BUSINESS_PRO = {name:'BUSINESS PRO', mo:PW_MO.BUSINESS_PRO};
-      if(!PLANS.FREE) PLANS.FREE = {name:'FREE', mo:0};
+      if(!PLANS.MAX) PLANS.MAX = {name:'МЕНТОР', mo:PW_MO.MAX};
+      if(!PLANS.BUSINESS_PRO) PLANS.BUSINESS_PRO = {name:'VIP', mo:PW_MO.BUSINESS_PRO};
+      if(!PLANS.FREE) PLANS.FREE = {name:'ГОСТЬ', mo:0};
     }
   }catch(e){}
 
   /* ---- выгоды по тарифам для продающего попапа (БЕЗ партнёрки — она отдельно) ---- */
   var PW_BENEFITS = {
     FREE: [
-      {t:'Мессенджер и лента', s:'общение, каналы, сторис — базовая социальная сеть'},
-      {t:'До 3 подписок', s:'подписывайся на каналы и людей без лимита времени'},
-      {t:'Файлы до 100 МБ', s:'загружай ролики и документы в чат'},
-      {t:'Голосовые до 5 минут', s:'общайся без ограничений в диалогах'}
+      {t:'Лента ХЛБ', s:'смотри, что происходит в клубе, и знакомься'},
+      {t:'Открытые материалы', s:'публичные посты и анонсы клуба'},
+      {t:'Знакомство с Артёмом', s:'открытый контент основателя ХЛБ'},
+      {t:'Без оплаты', s:'смотри и знакомься — навсегда бесплатно'}
     ],
     START: [
-      {t:'Premium-мессенджер 4 ГБ', s:'файлы до 4 ГБ, транскрипция голосовых, стикеры'},
-      {t:'Магазин шаблонов', s:'готовые сценарии, обложки и структуры Reels'},
-      {t:'Аналитика 1 канал', s:'разбор охватов, аудитории и роста подписок'},
-      {t:'30 проверок видео/мес', s:'команда ХЛБ смотрит хук, риски и тренды'}
+      {t:'Все чаты и каналы ХЛБ', s:'полный доступ на чтение (read-only)'},
+      {t:'Основной канал Артёма', s:'главные посты и мысли Артёма Бриуса'},
+      {t:'Brius-AI 10 запросов/день', s:'ИИ-ассистент клуба отвечает на вопросы'},
+      {t:'Лента + 1 демо-вход', s:'лента клуба и один демо-вход в приложение'}
     ],
     PRO: [
-      {t:'Всё из START', s:'Premium-мессенджер, магазин шаблонов, аналитика'},
-      {t:'Система Роста', s:'персональная стратегия и план на 30 дней'},
-      {t:'Автопостинг VK + Telegram', s:'публикация в один клик по расписанию'},
-      {t:'Все соцсети и реклама −10%', s:'подключай Instagram, TikTok, YouTube'}
+      {t:'Пишешь во всех чатах', s:'полноценное общение со всем клубом'},
+      {t:'Общий эфир 1 раз в неделю', s:'живой эфир с клубом каждую неделю'},
+      {t:'Десятки и спринт-трекер', s:'чат из 10 человек и трекер спринтов'},
+      {t:'Brius-AI безлимит коротких', s:'короткие запросы к ИИ без ограничений'}
     ],
     BUSINESS: [
-      {t:'Контент-завод 30 роликов/мес', s:'производство видео на конвейере'},
-      {t:'Академия премиум', s:'закрытые курсы, менторы, разборы'},
-      {t:'Белый лейбл', s:'публикуй под своим брендом без пометок ХЛБ'},
-      {t:'Реклама −20%', s:'самое выгодное продвижение в кабинете'}
+      {t:'Личные разборы Артёма', s:'Артём разбирает лично твою ситуацию'},
+      {t:'2 эфира в неделю', s:'вдвое больше живых эфиров с клубом'},
+      {t:'Огуречная Академия', s:'120+ уроков по контенту и продажам'},
+      {t:'Nihaodrop каталог 2000+', s:'товары для запуска + Brius-AI без лимитов'}
     ],
     BUSINESS_PRO: [
-      {t:'Контент-завод 100 роликов/мес', s:'три ролика в день без пауз'},
-      {t:'Голос-клон и студия', s:'озвучка твоим голосом, редактор шоу'},
-      {t:'API ХЛБ', s:'интеграции с CRM, сайтом, автоматизации'},
-      {t:'Команда до 5 мест', s:'общий штаб, роли и распределение задач'}
+      {t:'Всё из PRO', s:'разборы, эфиры, академия, Nihaodrop'},
+      {t:'Команда сопровождения 24/7', s:'личная поддержка в любое время'},
+      {t:'Персональный спорт-ассистент', s:'тренировки и режим под контролем'},
+      {t:'Аудит Instagram', s:'разбор твоего профиля по методу Артёма'}
     ],
     MAX: [
-      {t:'Контент-завод 500 роликов/мес', s:'полностью автоматический медиа-поток'},
-      {t:'Higgsfield-безлимит', s:'генерация видео и картинок без квот'},
-      {t:'Личный ассистент', s:'выделенный менеджер и команда 24/7'},
-      {t:'Бренд-агентство', s:'логотип, гайдлайн, лендинг, боты — под ключ'}
+      {t:'Личный ментор — Артём Бриус', s:'прямой доступ к основателю ХЛБ'},
+      {t:'Сессия 1:1 каждый месяц', s:'личная стратегическая встреча с Артёмом'},
+      {t:'Nihaohub магазин под ключ', s:'запуск твоего магазина силами команды'},
+      {t:'Все 20 приложений без лимитов', s:'полная экосистема ХЛБ без ограничений'}
     ]
   };
 
   /* ---- краткие фичи для карточек тарифов (4 маркерами) ---- */
   var PW_CARD_FEATS = {
-    FREE:         ['Мессенджер и лента','До 3 подписок','Файлы до 100 МБ','Голосовые до 5 мин'],
-    START:        ['Premium-мессенджер 4 ГБ','Магазин шаблонов','Аналитика 1 канал','30 проверок видео/мес'],
-    PRO:          ['Всё из START','Система Роста + автопостинг','Все соцсети','Реклама −10%'],
-    BUSINESS:     ['Контент-завод 30 роликов/мес','Академия премиум','Белый лейбл','Реклама −20%'],
-    BUSINESS_PRO: ['100 роликов/мес','Голос-клон и студия','API','Команда до 5 мест'],
-    MAX:          ['500 роликов/мес','Higgsfield-безлимит','Личный ассистент','Бренд-агентство под ключ']
+    FREE:         ['Лента ХЛБ','Открытые материалы','Знакомство с клубом','Навсегда бесплатно'],
+    START:        ['Все чаты и каналы (read-only)','Основной канал Артёма','Brius-AI 10 запросов/день','1 демо-вход в приложение'],
+    PRO:          ['Пишешь во всех чатах','Общий эфир 1 раз в неделю','Десятки + спринт-трекер','Brius-AI безлимит коротких'],
+    BUSINESS:     ['Личные разборы Артёма','2 эфира в неделю','Огуречная Академия 120+ уроков','Nihaodrop каталог 2000+'],
+    BUSINESS_PRO: ['Всё из PRO','Команда сопровождения 24/7','Спорт-ассистент','Аудит Instagram по методу Артёма'],
+    MAX:          ['Личный ментор — Артём Бриус','Сессия 1:1 каждый месяц','Nihaohub магазин под ключ','Все 20 приложений без лимитов']
   };
   var PW_TAG = {
-    FREE:'Базовая социальная сеть',
-    START:'Старт медийности',
-    PRO:'Выбор большинства',
-    BUSINESS:'Бизнес и команда',
-    BUSINESS_PRO:'Студия и API',
-    MAX:'Продакшн-агентство'
+    FREE:'Знакомство с ХЛБ',
+    START:'Вход в ХЛБ',
+    PRO:'Клуб Артёма',
+    BUSINESS:'PRO-доступ',
+    BUSINESS_PRO:'VIP-сопровождение',
+    MAX:'Личный ментор Артёма'
   };
   /* короткий ценностный подзаголовок для продающего попапа */
   var PW_SELL_SUB = {
-    FREE:'Общайся, читай ленту и подписывайся — навсегда бесплатно.',
-    START:'Первые шаги в медийности, без лишних лимитов.',
-    PRO:'Система Роста, автопостинг и все соцсети — выбор большинства.',
-    BUSINESS:'Контент-завод, академия премиум и белый лейбл.',
-    BUSINESS_PRO:'100 роликов в месяц, голос-клон, API и командная работа.',
-    MAX:'500 роликов в месяц, Higgsfield-безлимит и бренд-агентство.'
+    FREE:'Смотри и знакомься с клубом — навсегда бесплатно.',
+    START:'Все чаты и каналы ХЛБ, канал Артёма и Brius-AI — вход в клуб.',
+    PRO:'Пишешь во всех чатах, эфир каждую неделю, десятки и спринт-трекер.',
+    BUSINESS:'Личные разборы Артёма, 2 эфира в неделю и Огуречная Академия.',
+    BUSINESS_PRO:'Всё из PRO плюс команда сопровождения 24/7 и личный аудит.',
+    MAX:'Личный ментор — Артём Бриус: сессии 1:1 и магазин под ключ.'
   };
   /* что заменяет тариф (внешний рыночный якорь цены — честное «обычно от X/мес») */
   var PW_REPLACES = {
-    START:    {who:'сервисы автопостинга и планировщик', cost:6900},
-    PRO:      {who:'SMM-специалиста и аналитику под ключ', cost:60000},
-    BUSINESS: {who:'команду: SMM, монтажёр, таргетолог', cost:150000},
-    MAX:      {who:'продакшн-команду и агентство', cost:280000}
+    START:    {who:'платные каналы и подборки по отдельности', cost:5000},
+    PRO:      {who:'закрытый клуб и трекер-группу по отдельности', cost:15000},
+    BUSINESS: {who:'курсы, наставника и поставщиков по отдельности', cost:60000},
+    MAX:      {who:'личного ментора уровня Артёма на рынке', cost:300000}
   };
   /* мини-инфографика в попапе: 3 «кольца» [значение-в-центре, подпись, заливка%] */
   var PW_INFO = {
-    START:[['+46%','к охватам',46],['15','проверок',80],['2','соцсети',55]],
-    PRO:[['88%','продлевают',88],['∞','безлимит',100],['+30','дней плана',75]],
-    BUSINESS:[['×5','быстрее',90],['−20%','реклама',80],['PRO','кабинет',100]],
-    MAX:[['30','видео/мес',85],['5','мест',70],['−30%','реклама',92]]
+    START:[['10','Brius-AI/день',60],['1','демо-вход',40],['∞','чтение чатов',100]],
+    PRO:[['1','эфир/нед',70],['10','человек в десятке',80],['∞','Brius-AI кратко',100]],
+    BUSINESS:[['2','эфира/нед',85],['120+','уроков',90],['2000+','товаров',95]],
+    MAX:[['1:1','с Артёмом',100],['20','приложений',90],['24/7','команда',95]]
   };
 
   /* ---- фоновые ассеты (data-URI, вшиты) ---- */
@@ -45842,7 +45828,7 @@ var PW_ASSET = {
             '<div class="pw-lock-badge">'+ (sell ? I('crown') : I('lock')) +'</div>'+
             '<button class="pw-close" aria-label="Закрыть">'+I('plus')+'</button>'+
           '</div>'+
-          '<div class="pw-hero-cap"><div class="k">ХЛБ '+(PW_TAG[tier]||'')+'</div><h2>'+(sell?'Тариф ':'Открой ')+tier+'</h2></div>'+
+          '<div class="pw-hero-cap"><div class="k">ХЛБ '+(PW_TAG[tier]||'')+'</div><h2>'+(sell?'Тариф ':'Открой ')+pwLabel(tier)+'</h2></div>'+
         '</div>'+
         '<div class="pw-body">'+
           '<p class="pw-reason">'+reason+'</p>'+
@@ -45850,10 +45836,10 @@ var PW_ASSET = {
           '<div class="pw-benefits">'+ bens.map(function(b){
             return '<div class="pw-benefit"><span class="pw-b-ic">'+I('check2')+'</span><div><b>'+b.t+'</b><small>'+b.s+'</small></div></div>';
           }).join('') +'</div>'+
-          '<div class="pw-price"><div><div class="pw-p-l">Тариф '+tier+'</div>'+
+          '<div class="pw-price"><div><div class="pw-p-l">Тариф '+pwLabel(tier)+'</div>'+
             priceLine+'</div>'+
             '<div class="pw-p-note">'+priceNote+'</div></div>'+
-          '<button class="btn pw-cta pw-shine">'+I('crown')+' Оформить '+tier+'</button>'+
+          '<button class="btn pw-cta pw-shine">'+I('crown')+' Оформить '+pwLabel(tier)+'</button>'+
           '<button class="btn ghost pw-later">Может позже</button>'+
           '<div class="pw-guarant">'+I('check')+' Отмена в 1 клик · без скрытых списаний · безопасная оплата</div>'+
         '</div>'+
@@ -45883,11 +45869,11 @@ var PW_ASSET = {
         ico:'users',
         title:'Партнёрская программа',
         body:'<div class="pw-partner-pop">'+
-          '<p>Работает <b>на любом тарифе</b>, даже на FREE — она не входит в подписку, а идёт отдельно.</p>'+
+          '<p>Работает <b>на любом тарифе</b>, даже на ГОСТЬ — она не входит в подписку, а идёт отдельно.</p>'+
           '<div class="pw-pr"><b>15%</b><span>с каждой продажи по твоей ссылке</span></div>'+
           '<div class="pw-pr"><b>+5%</b><span>с дохода приглашённого партнёра</span></div>'+
           '<div class="pw-pr pw-pr-max"><b>до 20%</b><span>максимальная суммарная комиссия</span></div>'+
-          '<div class="pw-pr-eg">'+I('money')+' Пример: друг оформил PRO 4 890 ₽ → <b>+734 ₽</b> тебе на счёт</div>'+
+          '<div class="pw-pr-eg">'+I('money')+' Пример: друг оформил КЛУБ 5 000 ₽ → <b>+750 ₽</b> тебе на счёт</div>'+
           '<p class="dim" style="font-size:12px;margin:10px 0 4px">Твоя ссылка и готовый текст — поделись в один тап:</p>'+
           pwShareKitHtml()+
           '<p class="dim" style="font-size:12px;margin-top:10px">Выплаты — на лицевой счёт ХЛБ. Статистика переходов и начислений — в реальном времени.</p>'+
@@ -45920,7 +45906,7 @@ var PW_ASSET = {
     n.id = 'pwNudge';
     n.innerHTML =
       '<span class="pw-n-ic">'+I('crown')+'</span>'+
-      '<div class="pw-n-tx"><b>'+(o.title||'Открой больше с '+(o.minTier||'PRO'))+'</b><small>'+(o.text||'')+'</small></div>'+
+      '<div class="pw-n-tx"><b>'+(o.title||'Открой больше с '+pwLabel(o.minTier||'PRO'))+'</b><small>'+(o.text||'')+'</small></div>'+
       '<button class="pw-n-go">'+(o.cta||'Открыть доступ')+'</button>'+
       '<button class="pw-n-x" aria-label="Скрыть">'+I('plus')+'</button>';
     document.body.appendChild(n);
@@ -45935,8 +45921,8 @@ var PW_ASSET = {
 
   /* =================== ЛОКИ НА МИНИ-АППАХ =================== */
   var PW_MA_GATE = {
-    factory: {tier:'BUSINESS', label:'BUSINESS', reason:'<b>Контент-завод</b> собирает ролики на конвейере. Доступен с тарифа BUSINESS, а 30 видео/мес — на MAX.'},
-    system:  {tier:'PRO',      label:'PRO',      reason:'<b>Система роста</b> строит персональную стратегию и план на 30 дней. Доступно с тарифа PRO.'}
+    factory: {tier:'BUSINESS', label:'PRO',  reason:'<b>Огуречная Академия и Nihaodrop</b> — 120+ уроков и каталог 2000+ товаров. Доступно с тарифа PRO.'},
+    system:  {tier:'PRO',      label:'КЛУБ', reason:'<b>Клуб Артёма</b> — чаты, эфиры, десятки и спринт-трекер. Доступно с тарифа КЛУБ.'}
   };
 
   function pwDecorateTiles(){
@@ -45985,7 +45971,7 @@ var PW_ASSET = {
       if(!window.okoHasSub('PRO')){
         if(pwChecksUsed() >= PW_FREE_CHECKS){
           pwPaywall({minTier:'PRO',
-            reason:'Ты исчерпал <b>'+PW_FREE_CHECKS+' бесплатные проверки</b> на сегодня. С тарифом PRO проверки роликов — без лимита.'});
+            reason:'Ты исчерпал <b>'+PW_FREE_CHECKS+' бесплатные проверки</b> на сегодня. С тарифом КЛУБ проверки роликов — без лимита.'});
           return;
         }
         pwChecksInc();
@@ -46004,7 +45990,7 @@ var PW_ASSET = {
     if(sizeMB > limit && !window.okoHasSub(minTier)){
       var cap = (minTier==='MAX'?'8 ГБ':minTier==='BUSINESS'?'4 ГБ':'2 ГБ');
       pwPaywall({minTier:minTier,
-        reason:'Файл <b>'+sizeMB+' МБ</b> превышает лимит '+limit+' МБ твоего тарифа. С <b>'+minTier+'</b> загружай ролики до '+cap+' и 4K.'});
+        reason:'Файл <b>'+sizeMB+' МБ</b> превышает лимит '+limit+' МБ твоего тарифа. С <b>'+pwLabel(minTier)+'</b> загружай ролики до '+cap+' и 4K.'});
       return false;
     }
     if(typeof onOk==='function') onOk();
@@ -46044,19 +46030,20 @@ var PW_ASSET = {
 
   /* сравнительная таблица: FREE / START / PRO / BUSINESS / BUSINESS PRO / MAX (партнёрки тут НЕТ) */
   var PW_CMP_ROWS = [
-    {k:'Проверка видео',     vals:['no',    '30/мес',    'безлимит',    'безлимит',       'безлимит',    'безлимит']},
-    {k:'Загрузка файла',     vals:['100 МБ','4 ГБ',      '4 ГБ',        '8 ГБ',           '16 ГБ',       '32 ГБ']},
-    {k:'Автопостинг',        vals:['no',    'no',        'VK+TG',       'все сети',       'все + план',  'все + очередь']},
-    {k:'Система Роста',      vals:['no',    'no',        'yes',         'yes',            'yes',         'yes']},
-    {k:'Контент-завод',      vals:['no',    'no',        'no',          '30/мес',         '100/мес',     '500/мес']},
-    {k:'Академия премиум',   vals:['no',    'no',        'no',          'yes',            'yes',         'yes']},
-    {k:'Белый лейбл',        vals:['no',    'no',        'no',          'yes',            'yes',         'yes']},
-    {k:'Голос-клон / студия',vals:['no',    'no',        'no',          'no',             'yes',         'yes']},
-    {k:'API',                vals:['no',    'no',        'no',          'no',             'yes',         'yes']},
-    {k:'Команда / места',    vals:['no',    'no',        'no',          'no',             'до 5',        'до 15']},
-    {k:'Скидка на рекламу',  vals:['0%',    '0%',        '10%',         '20%',            '25%',         '30%']},
-    {k:'Higgsfield',         vals:['no',    'no',        'no',          'no',             'no',          'безлимит']},
-    {k:'Поддержка',          vals:['общая', 'общая',     'приоритет',   'приоритет',      '24/7',        '24/7 + личный']}
+    {k:'Чаты и каналы ХЛБ',  vals:['no',    'чтение',    'пишешь',      'пишешь',         'пишешь',      'пишешь']},
+    {k:'Канал Артёма',       vals:['no',    'yes',       'yes',         'yes',            'yes',         'yes']},
+    {k:'Brius-AI',           vals:['no',    '10/день',   '∞ коротких',  'безлимит',       'безлимит',    'безлимит']},
+    {k:'Общие эфиры',        vals:['no',    'no',        '1/нед',       '2/нед',          '2/нед',       '2/нед']},
+    {k:'Десятки + спринт-трекер', vals:['no','no',       'yes',         'yes',            'yes',         'yes']},
+    {k:'Личные разборы Артёма',   vals:['no','no',       'no',          'yes',            'yes',         'yes']},
+    {k:'Огуречная Академия', vals:['no',    'no',        'no',          '120+ уроков',    '120+ уроков', '120+ уроков']},
+    {k:'Nihaodrop каталог',  vals:['no',    'no',        'no',          '2000+',          '2000+',       '2000+']},
+    {k:'Команда сопровождения', vals:['no', 'no',        'no',          'no',             '24/7',        '24/7']},
+    {k:'Спорт-ассистент',    vals:['no',    'no',        'no',          'no',             'yes',         'yes']},
+    {k:'Аудит Instagram',    vals:['no',    'no',        'no',          'no',             'yes',         'yes']},
+    {k:'Сессия 1:1 с Артёмом', vals:['no',  'no',        'no',          'no',             'no',          '1/мес']},
+    {k:'Nihaohub магазин под ключ', vals:['no','no',     'no',          'no',             'no',          'yes']},
+    {k:'Приложения ХЛБ',     vals:['лента', '1 демо-вход','базовые',    'расширенные',    'расширенные', 'все 20']}
   ];
   function pwCmpCell(v, isPro){
     var cls = isPro ? ' pw-c-pro-cell' : '';
@@ -46072,23 +46059,23 @@ var PW_ASSET = {
     var avg = 34 + (base % 5);
     return [
       {v: (joined).toLocaleString('ru-RU').replace(/,/g,' '), l:'на платных тарифах'},
-      {v: pct+'%', l:'продлевают PRO'},
+      {v: pct+'%', l:'продлевают КЛУБ'},
       {v: '+'+avg+'%', l:'к охватам за мес'}
     ];
   }
 
   /* ---- лента недавней активности: правдоподобно, спокойно, БЕЗ фейк-срочности ---- */
   var PW_TICKER = [
-    ['Артём','оформил PRO'],
-    ['Студия Nova','продлила BUSINESS'],
-    ['Ирина','перешла на PRO'],
-    ['Максим','подключил START'],
-    ['MediaHub','взяли MAX · команда 5'],
-    ['Ольга','продлила PRO'],
-    ['Дамир','оформил PRO'],
-    ['Контент-цех','перешёл на BUSINESS'],
-    ['Настя','подключила START'],
-    ['Кирилл','продлил PRO']
+    ['Артём','оформил КЛУБ'],
+    ['Студия Nova','продлила PRO'],
+    ['Ирина','перешла на КЛУБ'],
+    ['Максим','подключил СТАРТ'],
+    ['MediaHub','взяли МЕНТОР'],
+    ['Ольга','продлила КЛУБ'],
+    ['Дамир','оформил VIP'],
+    ['Контент-цех','перешёл на PRO'],
+    ['Настя','подключила СТАРТ'],
+    ['Кирилл','продлил КЛУБ']
   ];
   function pwTickerHtml(){
     /* дублируем список для бесшовной CSS-прокрутки (translateY -50%) */
@@ -46128,10 +46115,10 @@ var PW_ASSET = {
 
   /* ---- FAQ / снятие возражений (native <details>, без JS-таймеров) ---- */
   var PW_FAQ = [
-    {q:'Спишется ровно столько, сколько показано?', a:'Да. Цена в карточке равна сумме к оплате — рубль в рубль. Годовой MAX — 259 200 ₽ (−20%), ни копейкой больше.'},
+    {q:'Спишется ровно столько, сколько показано?', a:'Да. Цена в карточке равна сумме к оплате — рубль в рубль. Годовой МЕНТОР — 1 440 000 ₽ (−20%), ни копейкой больше.'},
     {q:'Можно отменить подписку?', a:'В один клик в настройках. Автопродление выключается сразу, а доступ остаётся до конца оплаченного периода.'},
-    {q:'Почему ХЛБ не полностью бесплатный?', a:'Проверки видео, автопостинг и контент-завод — это работа реальной команды и серверов. Базовый уровень бесплатен навсегда: мессенджер, лента, кошелёк, партнёрка и Академия.'},
-    {q:'А если тариф не подойдёт?', a:'Понизь уровень или вернись на FREE когда угодно. Подписчики, ролики и баланс остаются с тобой.'}
+    {q:'Почему ХЛБ не полностью бесплатный?', a:'Эфиры, личные разборы, академия и Brius-AI — это работа Артёма, реальной команды и серверов. Базовый уровень бесплатен навсегда: лента, знакомство с клубом и кошелёк.'},
+    {q:'А если тариф не подойдёт?', a:'Понизь уровень или вернись на ГОСТЬ когда угодно. Контакты, прогресс и баланс остаются с тобой.'}
   ];
   function pwFaqHtml(){
     return '<div class="pw-faq"><div class="pw-faq-h">'+I('comment')+' Частые вопросы</div>'+
@@ -46143,7 +46130,7 @@ var PW_ASSET = {
 
   /* =================== ПАРТНЁРСКИЙ ШЭР-КИТ (растущая петля роста) =================== */
   window.pwRefLink = function(){ var n=(typeof PROFILE!=='undefined'&&PROFILE.nick)?PROFILE.nick:'ref'; return 'https://hlbapp.ru/i/'+n; };
-  window.pwShareText = function(){ return 'Веду соцсети через ХЛБ: команда проверяет ролики, автопостинг во все сети и система роста. Заходи по моей ссылке — '+window.pwRefLink(); };
+  window.pwShareText = function(){ return 'Я в клубе ХЛБ Артёма Бриуса: чаты, эфиры, разборы и Brius-AI. Заходи по моей ссылке — '+window.pwRefLink(); };
   window.pwCopyRef = function(){ var l=window.pwRefLink();
     try{ if(navigator.clipboard) navigator.clipboard.writeText(l); }catch(e){}
     if(typeof toast==='function') toast('Партнёрская ссылка скопирована'); };
@@ -46178,7 +46165,7 @@ var PW_ASSET = {
       '<svg viewBox="0 0 200 100" preserveAspectRatio="xMidYMid slice" aria-hidden="true">'+
         '<path class="pw-trail" d="M-10 92 Q 60 82 100 55 T 220 8"/>'+
         '<g class="pw-rocket">'+
-          '<path d="M-3.5 -7 L3.5 -7 L3.5 3 L0 8 L-3.5 3 Z" fill="#9AFF00"/>'+
+          '<path d="M-3.5 -7 L3.5 -7 L3.5 3 L0 8 L-3.5 3 Z" fill="#FF9500"/>'+
           '<circle cx="0" cy="-2.5" r="1.5" fill="#0a0a0a"/>'+
           '<path d="M-3.5 3 L-6 8 L0 5 L6 8 L3.5 3 Z" fill="rgba(154,255,0,.55)"/>'+
         '</g>'+
@@ -46292,7 +46279,7 @@ var PW_ASSET = {
       var isCur = cur===tier;
       var perDay = mo>0 ? Math.max(1, Math.round(mo/30)) : 0;
       var flag = isPro ? '<span class="pw-flag">Хит</span>'
-               : isMax ? '<span class="pw-flag pw-flag-max">MAX</span>' : '';
+               : isMax ? '<span class="pw-flag pw-flag-max">МЕНТОР</span>' : '';
       var curBadge = isCur ? '<span class="pw-tier-cur-badge">Сейчас</span>' : '';
       var priceLine = mo>0
         ? '<div class="pw-tier-price"><b>'+pwRub(mo)+'</b><span>/мес</span><span class="pw-per">'+pwRub(perDay)+'/день</span></div>'
@@ -46338,9 +46325,9 @@ var PW_ASSET = {
     var cmpHtml = '';
     if(pwCmpOpen){
       cmpHtml =
-      '<div class="pw-cmp-hint">'+I('chev')+' листай вправо: BUSINESS PRO, MAX</div>'+
+      '<div class="pw-cmp-hint">'+I('chev')+' листай вправо: VIP, МЕНТОР</div>'+
       '<div class="pw-cmp-wrap"><table class="pw-cmp">'+
-        '<thead><tr><th></th><th>FREE</th><th>START</th><th class="pw-c-pro">PRO<i class="pw-c-tag">хит</i></th><th>BUSINESS</th><th>B. PRO</th><th class="pw-c-max">MAX</th></tr></thead>'+
+        '<thead><tr><th></th><th>ГОСТЬ</th><th>СТАРТ</th><th class="pw-c-pro">КЛУБ<i class="pw-c-tag">хит</i></th><th>PRO</th><th>VIP</th><th class="pw-c-max">МЕНТОР</th></tr></thead>'+
         '<tbody>'+ PW_CMP_ROWS.map(function(r){
           return '<tr><th>'+r.k+'</th>'+
             r.vals.map(function(v,idx){ return pwCmpCell(v, idx===2); }).join('')+
@@ -46489,8 +46476,8 @@ var PW_ASSET = {
         try{ pwDecorateTiles(); }catch(e){}
         setTimeout(function(){
           pwNudge({minTier:'PRO',
-            title:'С PRO у тебя был бы доступ',
-            text:'К Системе роста, безлимитным проверкам и автопостингу',
+            title:'С тарифом КЛУБ у тебя был бы доступ',
+            text:'К чатам клуба, эфирам, десяткам и Brius-AI без лимитов',
             cta:'Открыть'});
         }, 1400);
       }
@@ -46525,7 +46512,7 @@ var PW_ASSET = {
   var TRIAL_KEY      = 'oko-pw-trial-v1';
   var TRIAL_OFFERED  = 'oko-pw-trial-offered-v1';
   var TRIAL_MS       = 7*24*3600*1000;
-  var TRIAL_RENEW    = 3430;   /* -30% от 4900 = 3430 */
+  var TRIAL_RENEW    = 3500;   /* -30% от 5000 = 3500 */
   var TRIAL_NOTIFY_H = 24;     /* показать «продлить со скидкой» за N часов до конца */
 
   function trialGet(){ try{ return JSON.parse(localStorage.getItem(TRIAL_KEY)||'null'); }catch(e){ return null; } }
@@ -46561,7 +46548,7 @@ var PW_ASSET = {
       PROFILE.tier = t.prevTier || 'FREE';
       try{ if(typeof renderMyProfile==='function') renderMyProfile(); }catch(e){}
       setTimeout(function(){
-        _toast('Пробный PRO закончился. Продли за 4 900 ₽ или продолжи в FREE.');
+        _toast('Пробный КЛУБ закончился. Продли за 5 000 ₽ или продолжи как ГОСТЬ.');
       }, 800);
     }
   }
@@ -46580,7 +46567,7 @@ var PW_ASSET = {
     trialSet({until: until, started: Date.now(), prevTier: prev, trialTier: 'PRO'});
     if(typeof PROFILE !== 'undefined') PROFILE.tier = 'PRO';
     try{ if(typeof renderMyProfile==='function') renderMyProfile(); }catch(e){}
-    _toast('Пробный PRO активирован на 7 дней');
+    _toast('Пробный КЛУБ активирован на 7 дней');
     return true;
   }
   window.pwTrialActivate = trialActivate;
@@ -46604,18 +46591,18 @@ var PW_ASSET = {
           '<div class="pw-trial-ray"></div>'+
           '<div class="pw-trial-badge">'+ico('crown')+'</div>'+
           '<div class="pw-trial-days"><b>7</b><span>дней</span></div>'+
-          '<div class="pw-trial-h1">PRO бесплатно</div>'+
-          '<div class="pw-trial-sub">Забери 7 дней тарифа PRO без карты и оплаты</div>'+
+          '<div class="pw-trial-h1">КЛУБ бесплатно</div>'+
+          '<div class="pw-trial-sub">Забери 7 дней тарифа КЛУБ без карты и оплаты</div>'+
         '</div>'+
         '<div class="pw-trial-body">'+
           '<ul class="pw-trial-list">'+
-            '<li>'+ico('check2')+'<span><b>Система Роста</b> — стратегия и план на 30 дней</span></li>'+
-            '<li>'+ico('check2')+'<span><b>Автопостинг</b> во все соцсети из одного окна</span></li>'+
-            '<li>'+ico('check2')+'<span><b>Проверка видео без лимита</b> и файлы до 2 ГБ</span></li>'+
-            '<li>'+ico('check2')+'<span><b>Скидка −10%</b> на рекламный кабинет</span></li>'+
+            '<li>'+ico('check2')+'<span><b>Пишешь во всех чатах</b> — полное общение с клубом</span></li>'+
+            '<li>'+ico('check2')+'<span><b>Общий эфир</b> с клубом 1 раз в неделю</span></li>'+
+            '<li>'+ico('check2')+'<span><b>Десятки</b> (чат из 10) и спринт-трекер</span></li>'+
+            '<li>'+ico('check2')+'<span><b>Brius-AI</b> — безлимит коротких запросов</span></li>'+
           '</ul>'+
-          '<div class="pw-trial-note">'+ico('lock')+' Карта не нужна — через 7 дней аккаунт автоматически вернётся в FREE, без списаний</div>'+
-          '<button class="btn pw-shine pw-trial-cta">'+ico('crown')+' Забрать 7 дней PRO</button>'+
+          '<div class="pw-trial-note">'+ico('lock')+' Карта не нужна — через 7 дней аккаунт автоматически вернётся в ГОСТЬ, без списаний</div>'+
+          '<button class="btn pw-shine pw-trial-cta">'+ico('crown')+' Забрать 7 дней КЛУБ</button>'+
           '<button class="btn ghost pw-trial-skip">Пропустить</button>'+
         '</div>'+
       '</div>';
@@ -46676,14 +46663,14 @@ var PW_ASSET = {
     if(typeof showPopup !== 'function') return;
     showPopup({
       ico:'crown',
-      title:'Пробный PRO заканчивается',
+      title:'Пробный КЛУБ заканчивается',
       body:
         '<p style="font-size:13.5px;line-height:1.55;color:var(--dim);margin-bottom:12px">'+
-          'Тебе доступна <b>скидка −30%</b> на первый месяц PRO. '+
-          'Оформи сейчас, чтобы не потерять Систему Роста, автопостинг и безлимит.'+
+          'Тебе доступна <b>скидка −30%</b> на первый месяц тарифа КЛУБ. '+
+          'Оформи сейчас, чтобы не потерять чаты, эфиры, десятки и Brius-AI.'+
         '</p>'+
         '<div class="pw-trial-renew-box">'+
-          '<div class="pw-trial-renew-old">4 900 ₽</div>'+
+          '<div class="pw-trial-renew-old">5 000 ₽</div>'+
           '<div class="pw-trial-renew-new"><b>'+num(TRIAL_RENEW)+' ₽</b><span>первый месяц</span></div>'+
           '<div class="pw-trial-renew-tag">−30%</div>'+
         '</div>',
@@ -46726,7 +46713,7 @@ var PW_ASSET = {
     var days = window.pwTrialDaysLeft();
     var chip = document.createElement('span');
     chip.className = 'pw-trial-badge-inline';
-    chip.innerHTML = ico('bolt') + '<span>Trial PRO · '+days+' дн</span>';
+    chip.innerHTML = ico('bolt') + '<span>Trial КЛУБ · '+days+' дн</span>';
     var tx = band.querySelector('.pw-prof-tx');
     if(tx) tx.appendChild(chip);
   }
@@ -46737,48 +46724,48 @@ var PW_ASSET = {
   var CROSSSELL = {
     /* тариф-который-оплатили → апселл */
     PRO: {
-      title:'Возьми ещё Систему Роста',
-      sub:'Для тех, кто хочет не просто автопостинг, а результат за 30 дней',
+      title:'Попробуй PRO на месяц',
+      sub:'Личные разборы Артёма, 2 эфира в неделю и Огуречная Академия',
       icon:'rocket',
-      old: 1990,
-      price: 990,
+      old: 20000,
+      price: 10000,
       save: 50,
-      pill: 'экономия 50%',
-      cta: 'Добавить Систему Роста · 990 ₽/мес',
+      pill: 'первый месяц −50%',
+      cta: 'Апгрейд до PRO · 10 000 ₽ за 1 мес',
       bullets:[
-        'Персональный план на 30 дней с целями и метриками',
-        'Разбор 15 конкурентов и слепые зоны рынка',
-        'Еженедельная проверка результатов и корректировки',
+        'Личные разборы Артёма — твоя ситуация под микроскопом',
+        'Огуречная Академия: 120+ уроков',
+        'Nihaodrop каталог 2000+ и Brius-AI без лимитов',
       ],
     },
     BUSINESS: {
-      title:'Добавь Контент-завод',
-      sub:'Три ролика в день без монтажёра — производство на конвейере',
+      title:'Апгрейд до VIP на месяц',
+      sub:'Команда сопровождения 24/7 и персональный спорт-ассистент',
       icon:'bolt',
-      old: 49900,
+      old: 50000,
       price: 25000,
       save: 50,
       pill: 'первый месяц −50%',
-      cta: 'Добавить Контент-завод · 25 000 ₽',
+      cta: 'Апгрейд VIP · 25 000 ₽ за 1 мес',
       bullets:[
-        '100 роликов в месяц: сценарий, монтаж, озвучка, субтитры',
-        'Формат под VK Clips, TikTok, Reels, Shorts, YT-Long',
-        'Отчёт по охватам и точкам роста каждую неделю',
+        'Всё из PRO + команда сопровождения 24/7',
+        'Персональный спорт-ассистент',
+        'Аудит Instagram по методу Артёма',
       ],
     },
     BUSINESS_PRO: {
-      title:'Апгрейд до MAX на месяц',
-      sub:'500 роликов, Higgsfield безлимит, бренд-агентство под ключ',
+      title:'Апгрейд до МЕНТОР на месяц',
+      sub:'Личный ментор — Артём Бриус: сессия 1:1 и магазин под ключ',
       icon:'crown',
-      old: 149900,
-      price: 99900,
-      save: 33,
-      pill: '−33% в первый месяц',
-      cta: 'Апгрейд MAX · 99 900 ₽ за 1 мес',
+      old: 150000,
+      price: 99000,
+      save: 34,
+      pill: '−34% в первый месяц',
+      cta: 'Апгрейд МЕНТОР · 99 000 ₽ за 1 мес',
       bullets:[
-        'Контент-завод 500 роликов вместо 100',
-        'Higgsfield безлимит + личный менеджер',
-        'Пакет «Бренд-агентство» — сайт, лендинг, боты',
+        'Личный ментор — Артём Бриус, сессия 1:1 каждый месяц',
+        'Nihaohub магазин под ключ',
+        'Все 20 приложений без лимитов',
       ],
     },
   };
@@ -46870,11 +46857,11 @@ var PW_ASSET = {
       name:'Всё ХЛБ',
       tag:'Максимальный комбо',
       icon:'crown',
-      old: 4900 + 990 + 990 + 590 + 990,   /* PRO + Академия + Аналитика + Партнёрка + Реклама */
+      old: 5000 + 990 + 990 + 590 + 990,   /* КЛУБ + Академия + Аналитика + Партнёрка + Реклама */
       priceNote:'−40%',
       discount: 40,
       bullets:[
-        'PRO (Система Роста, автопостинг, все соцсети)',
+        'КЛУБ (чаты, эфиры, десятки, Brius-AI)',
         'Академия премиум · все курсы и разборы',
         'Аналитика соцсетей · 10 каналов',
         'Партнёрка Pro · промо-материалы и приоритет',
@@ -46886,42 +46873,42 @@ var PW_ASSET = {
       name:'Стартовый пакет',
       tag:'Начни с сильной базы',
       icon:'rocket',
-      old: 3990,
+      old: 4000,
       price: 2490,
       priceNote:'−38%',
       discount: 38,
       bullets:[
-        'START тариф (Premium-мессенджер, 30 проверок)',
+        'СТАРТ тариф (все чаты и каналы ХЛБ, Brius-AI)',
         'Академия премиум с сертификатом',
-        'Магазин шаблонов + Каталог трендов',
+        'Основной канал Артёма + лента',
       ],
     },
     {
       id:'pro',
-      name:'Про пакет',
+      name:'Клубный пакет',
       tag:'Всё для быстрого роста',
       icon:'bolt',
-      old: 4900 + 490 + 990,     /* PRO + Партнёрка Pro + Реклама Pro */
+      old: 5000 + 490 + 990,     /* КЛУБ + Партнёрка Pro + Реклама Pro */
       priceNote:'−35%',
       discount: 35,
       bullets:[
-        'PRO тариф (Система Роста + автопостинг)',
+        'КЛУБ тариф (чаты, эфиры, десятки, спринт-трекер)',
         'Партнёрка Pro (промо, приоритет, повышенный %)',
         'Рекламный кабинет Pro (без комиссий ХЛБ)',
       ],
     },
     {
       id:'biz',
-      name:'Бизнес пакет',
-      tag:'Команда и производство',
+      name:'PRO пакет',
+      tag:'Разборы и академия',
       icon:'users',
-      old: 19900 + 25000,        /* BUSINESS + Контент-завод 30 роликов */
+      old: 20000 + 25000,        /* PRO-тариф + сопровождение запуска */
       priceNote:'−30%',
       discount: 30,
       bullets:[
-        'BUSINESS тариф (белый лейбл, академия премиум)',
-        'Контент-завод · 30 роликов в месяц под ключ',
-        '3 команды-места и общий штаб задач',
+        'PRO тариф (разборы Артёма, 2 эфира, Огуречная Академия)',
+        'Nihaodrop каталог 2000+ и сопровождение запуска',
+        'Brius-AI без лимитов',
       ],
     },
   ];
@@ -47379,7 +47366,7 @@ var PW_ASSET = {
     payoutMin:   1000,       // ₽ порог
     products: [
       {k:'all',    label:'Все', short:'all', dot:false},
-      {k:'sistema',label:'Система ХЛБ',   short:'sistema', price:4900,  desc:'PRO подписка · 4 900 ₽/мес', dot:true},
+      {k:'sistema',label:'Система ХЛБ',   short:'sistema', price:5000,  desc:'Подписка КЛУБ · 5 000 ₽/мес', dot:true},
       {k:'zavod',  label:'Контент-завод', short:'zavod',   price:2900,  desc:'Reels-конвейер · 2 900 ₽/мес', dot:true},
       {k:'consult',label:'Консалтинг',    short:'consult', price:30000, desc:'Личный разбор · 30 000 ₽', dot:true},
       {k:'club',   label:'Клуб ХЛБ',      short:'club',    price:1900,  desc:'Сообщество · 1 900 ₽/мес', dot:true},
@@ -47815,7 +47802,7 @@ var PW_ASSET = {
         </div>
       </div>
       <div id="ppCalcResult"></div>
-      <div class="pp-calc-hint">Пример: 10 клиентов на PRO 4 900 ₽ → +${fmtNum(10*4900*(REF_PCT_FIRST+REF_PCT_REPEAT)/100)} ₽/мес пассивно.</div>
+      <div class="pp-calc-hint">Пример: 10 клиентов на КЛУБ 5 000 ₽ → +${fmtNum(10*5000*(REF_PCT_FIRST+REF_PCT_REPEAT)/100)} ₽/мес пассивно.</div>
     </div>`;
   }
   function calcResultHTML(){
@@ -47974,7 +47961,7 @@ var PW_ASSET = {
     const c = size/2, r = 22;
     const brand = `<circle cx="${c}" cy="${c}" r="${r+2}" fill="#fff"/>
       <circle cx="${c}" cy="${c}" r="${r-2}" fill="#000"/>
-      <circle cx="${c}" cy="${c}" r="8" fill="#9AFF00"/>`;
+      <circle cx="${c}" cy="${c}" r="8" fill="#FF9500"/>`;
     return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${size} ${size}">
       <rect width="${size}" height="${size}" fill="#fff"/>
       <g fill="#000">${rects}</g>${brand}
@@ -48318,6 +48305,7 @@ var PW_ASSET = {
   /* ================= Onboarding welcome (первый заход) ================= */
   const WELCOME_KEY = 'pp-welcome-shown-v1';
   function maybeShowWelcome(){
+    return; /* авто-попап партнёрки отключён для демо */
     try{
       if(localStorage.getItem(WELCOME_KEY) === '1') return;
       // задержка · чтобы welcome не мешал открытию экрана
@@ -48380,6 +48368,7 @@ var PW_ASSET = {
     {t:'+6 350 ₽ от Ольги',         s:'PRO год · крупная оплата'},
   ];
   function scheduleLiveNotif(){
+    return; /* фейковые «+735 ₽ от Ивана» отключены для демо */
     if(window.__ppLivePlanned) return;
     window.__ppLivePlanned = true;
     setTimeout(()=>showLive(LIVE_MSGS[0]), 8000);
@@ -48433,30 +48422,30 @@ var PW_ASSET = {
     {
       id:'g3',
       need: 3,
-      reward: '+3 месяца PRO бесплатно',
-      short: '+3 мес PRO',
+      reward: '+3 месяца КЛУБ бесплатно',
+      short: '+3 мес КЛУБ',
       icon: 'crown',
-      body: 'Приведи 3 клиентов на тариф PRO и получи <b>3 месяца PRO бесплатно</b>.',
+      body: 'Приведи 3 клиентов на тариф КЛУБ и получи <b>3 месяца КЛУБ бесплатно</b>.',
       afterTier: null,      /* не апгрейдит tier, только продлевает */
       grantMonths: 3,
     },
     {
       id:'g10',
       need: 10,
-      reward: 'PRO навсегда',
-      short: 'PRO навсегда',
+      reward: 'КЛУБ навсегда',
+      short: 'КЛУБ навсегда',
       icon: 'bolt',
-      body: 'Приведи 10 клиентов на PRO — <b>PRO становится твоим навсегда</b>. Никаких списаний.',
+      body: 'Приведи 10 клиентов на КЛУБ — <b>КЛУБ становится твоим навсегда</b>. Никаких списаний.',
       afterTier: 'PRO',
       grantMonths: 0,
     },
     {
       id:'g30',
       need: 30,
-      reward: 'BUSINESS навсегда',
-      short: 'BUSINESS навсегда',
+      reward: 'PRO навсегда',
+      short: 'PRO навсегда',
       icon: 'rocket',
-      body: 'Приведи 30 клиентов на PRO — получаешь <b>BUSINESS навсегда</b> с контент-заводом, академией премиум и белым лейблом.',
+      body: 'Приведи 30 клиентов на КЛУБ — получаешь <b>PRO навсегда</b> с разборами Артёма, Огуречной Академией и Nihaodrop.',
       afterTier: 'BUSINESS',
       grantMonths: 0,
     },
@@ -48531,7 +48520,7 @@ var PW_ASSET = {
         showPopup({
           ico: g.icon,
           title: 'Награда за партнёрство',
-          body: '<p style="font-size:13.5px;line-height:1.55;margin-bottom:8px">Ты выполнил цель <b>«приведи '+g.need+' клиентов на PRO»</b>.</p>'+
+          body: '<p style="font-size:13.5px;line-height:1.55;margin-bottom:8px">Ты выполнил цель <b>«приведи '+g.need+' клиентов на КЛУБ»</b>.</p>'+
                 '<div class="pp-goal-reward-box">'+
                   '<div class="pp-goal-reward-ic">'+ico(g.icon)+'</div>'+
                   '<div class="pp-goal-reward-tx"><b>'+esc(g.reward)+'</b><small>зачислено автоматически</small></div>'+
@@ -48552,9 +48541,9 @@ var PW_ASSET = {
     var overallPct = Math.min(100, Math.round(count/totalNeed*100));
     return '<div class="pp-goals-h">'+
         '<div class="pp-goals-title"><span class="pp-goals-title-ic">'+ico('rocket')+'</span>'+
-          '<div><b>Реферальные цели</b><small>Приводи клиентов на PRO — получай тариф в подарок</small></div>'+
+          '<div><b>Реферальные цели</b><small>Приводи клиентов на КЛУБ — получай тариф в подарок</small></div>'+
         '</div>'+
-        '<div class="pp-goals-count"><b>'+count+'</b><span>/ '+totalNeed+' клиентов на PRO</span></div>'+
+        '<div class="pp-goals-count"><b>'+count+'</b><span>/ '+totalNeed+' клиентов на КЛУБ</span></div>'+
       '</div>'+
       '<div class="pp-goals-overall"><i style="width:'+overallPct+'%"></i></div>'+
       '<div class="pp-goals-list">'+
@@ -48652,7 +48641,7 @@ const CH_LESSON_URL = null;          // видео-уроки — заглушк
 
 /* фирменные градиенты-фоны (сменяемый фон канала) */
 const CH_BGS = [
-  'linear-gradient(135deg,#0a0a0a 0%,#1a2b00 55%,#9AFF00 140%)', // чёрный → лайм
+  'linear-gradient(135deg,#0a0a0a 0%,#1a2b00 55%,#FF9500 140%)', // чёрный → лайм
   'linear-gradient(135deg,#141414,#2a2a2a)',                     // графит
   'linear-gradient(135deg,#0d2818,#0a0a0a 70%)',                 // тёмно-зелёный → чёрный
   'linear-gradient(135deg,#12240a,#050a02)',                     // глубокий лист-зелёный → почти чёрный
@@ -48664,20 +48653,20 @@ const CH_BGS = [
   'linear-gradient(135deg,#1a1a1a,#0a1400)',                     // уголь → тёмно-зелёный (замена off-brand коричневого)
 ];
 const CH_AV_BGS = [   // legacy: плоские цвета аватара (оставлены для совместимости, НЕ используются в рендере)
-  '#9AFF00','#e8e8e8','#9AFF00','#f0c000','#00c8ff','#ff4da6','#0a0a0a','#9AFF00','#b98cff','#ff9a3c'
+  '#FF9500','#e8e8e8','#FF9500','#f0c000','#00c8ff','#ff4da6','#0a0a0a','#FF9500','#b98cff','#ff9a3c'
 ];
 /* Процедурные фирменные аватары: только чёрный + лайм/зелёное семейство (никаких off-brand цветов).
    g/c — тёмная тема (градиент-фон / цвет глифа), gl/cl — светлая тема (тайлы не должны быть
    чёрными кляксами на белых карточках → в светлой теме все тайлы светлые/лаймовые).
    Индекс = bg канала или хэш ника. */
 const CH_AV_GRADS = [
-  {g:'linear-gradient(135deg,#c8ff5e,#9AFF00 52%,#6fd400)', c:'#0a0a0a', gl:'linear-gradient(135deg,#c8ff5e,#9AFF00 52%,#7ad400)', cl:'#0a1400'}, // яркий лайм
-  {g:'linear-gradient(135deg,#2c2c2c,#0d0d0d)',            c:'#9AFF00', gl:'linear-gradient(135deg,#e9f5d2,#cfe9a4)',            cl:'#2e4d00'}, // графит → светлый лайм
-  {g:'linear-gradient(135deg,#9AFF00,#3a7a00)',            c:'#0a0a0a', gl:'linear-gradient(135deg,#b6f56a,#6fc400)',            cl:'#0a1400'}, // лайм → зелёный
+  {g:'linear-gradient(135deg,#c8ff5e,#FF9500 52%,#6fd400)', c:'#0a0a0a', gl:'linear-gradient(135deg,#c8ff5e,#FF9500 52%,#7ad400)', cl:'#0a1400'}, // яркий лайм
+  {g:'linear-gradient(135deg,#2c2c2c,#0d0d0d)',            c:'#FF9500', gl:'linear-gradient(135deg,#e9f5d2,#cfe9a4)',            cl:'#2e4d00'}, // графит → светлый лайм
+  {g:'linear-gradient(135deg,#FF9500,#3a7a00)',            c:'#0a0a0a', gl:'linear-gradient(135deg,#b6f56a,#6fc400)',            cl:'#0a1400'}, // лайм → зелёный
   {g:'linear-gradient(135deg,#eaffcf,#b6f56a)',            c:'#1e3a00', gl:'linear-gradient(135deg,#f2ffe0,#d3f2a6)',            cl:'#2e4d00'}, // бледный лайм
-  {g:'linear-gradient(135deg,#14330a,#0a0a0a)',            c:'#9AFF00', gl:'linear-gradient(135deg,#d9efb5,#add86e)',            cl:'#274500'}, // тёмн.зелёный → светлый
+  {g:'linear-gradient(135deg,#14330a,#0a0a0a)',            c:'#FF9500', gl:'linear-gradient(135deg,#d9efb5,#add86e)',            cl:'#274500'}, // тёмн.зелёный → светлый
   {g:'linear-gradient(135deg,#7ad400,#1f4d00)',            c:'#eaffcf', gl:'linear-gradient(135deg,#9ee84a,#5fae10)',            cl:'#0a1400'}, // средний зелёный
-  {g:'linear-gradient(135deg,#0a0a0a,#1a1a1a)',            c:'#9AFF00', gl:'linear-gradient(135deg,#eef8db,#c6e792)',            cl:'#2b4a00'}, // чёрный → светлый лайм
+  {g:'linear-gradient(135deg,#0a0a0a,#1a1a1a)',            c:'#FF9500', gl:'linear-gradient(135deg,#eef8db,#c6e792)',            cl:'#2b4a00'}, // чёрный → светлый лайм
   {g:'linear-gradient(135deg,#b6f56a,#7ad000)',            c:'#0a0a0a', gl:'linear-gradient(135deg,#c6f584,#8fd82e)',            cl:'#0a1400'}, // мягкий лайм
   {g:'linear-gradient(135deg,#1f3d00,#0d1a00)',            c:'#b6f56a', gl:'linear-gradient(135deg,#dcefb0,#b3da70)',            cl:'#2a4700'}, // тёмная олива → светлая
   {g:'linear-gradient(135deg,#8fe600,#2e5c00)',            c:'#f2ffe0', gl:'linear-gradient(135deg,#a9e85a,#5fa614)',            cl:'#0f2600'}, // зелёный
@@ -48763,7 +48752,7 @@ function chSeed(){
       icon:'megaphone', bg:6, kind:'channel', access:'open', type:'free', price:0, verified:true, subs:48200, reactions:true, discussions:false, owner:'Команда ХЛБ', ownerNick:'okonews',
       posts:[
         {txt:'Вышли платные каналы и курсы: создавай, продавай, зарабатывай. Комиссия ХЛБ всего 10%.', likes:1240, views:41000, when:'1 ч', media:'circle-play'},
-        {txt:'Розыгрыш PRO-подписки среди активных авторов недели. Условия внутри.', likes:820, views:33000, when:'вчера'},
+        {txt:'Розыгрыш подписки КЛУБ среди активных авторов недели. Условия внутри.', likes:820, views:33000, when:'вчера'},
       ]},
     { id:'ch-disc-5', name:'Инсайдеры ХЛБ', desc:'Закрытый бесплатный канал для активных участников: ранний доступ к новым фичам, закрытые созвоны с командой и прямое влияние на дорожную карту. Вступление — по заявке, бесплатно.',
       icon:'star', bg:2, kind:'channel', access:'closed', type:'free', price:0, verified:true, subs:1870, reactions:true, discussions:true, owner:'Команда ХЛБ', ownerNick:'oko_insiders',
@@ -49428,7 +49417,7 @@ window.chDraftPickCover = function(){
 };
 window.chDraftClearCover = function(){ chDraft.cover=null; chRender(); };
 window.chDraftPickChatBg = function(){
-  if(!chIsPro()){ toast('Свой фон — на тарифе START+'); return; }
+  if(!chIsPro()){ toast('Свой фон — на тарифе СТАРТ+'); return; }
   chPickFile(f=>chReadImage(f, 1200, 0.72, url=>{ chDraft.chatBgUrl=url; chDraft.chatBg=null; chRender(); }));
 };
 function chPriceChips(){
@@ -50349,7 +50338,7 @@ function chPageMStats(id){
     <div class="ch-donut">
       <canvas id="chStatDonut" width="192" height="192"></canvas>
       <div class="ch-donut-leg">
-        <div><i style="background:#9AFF00"></i>Из рекомендаций<b>46%</b></div>
+        <div><i style="background:#FF9500"></i>Из рекомендаций<b>46%</b></div>
         <div><i style="background:#6fd400"></i>По ссылке<b>31%</b></div>
         <div><i style="background:#3a7a00"></i>Поиск ХЛБ<b>15%</b></div>
         <div><i style="background:var(--border)"></i>Другое<b>8%</b></div>
@@ -50361,7 +50350,7 @@ function chPageMStats(id){
 }
 function chSeeded(seed){ let s=seed%2147483647; if(s<=0)s+=2147483646; return ()=>{ s=s*16807%2147483647; return (s-1)/2147483646; }; }
 function chDrawStats(c, subs, reach){
-  const acc = '#9AFF00', dim = 'rgba(154,255,0,.14)';
+  const acc = '#FF9500', dim = 'rgba(154,255,0,.14)';
   const gridCol = getComputedStyle(document.documentElement).getPropertyValue('--border')||'#333';
   const rnd = chSeeded((c.id.length*31 + subs)||7);
   // --- линия роста ---
@@ -50417,7 +50406,7 @@ function chDrawStats(c, subs, reach){
   (function(){
     const cv=document.getElementById('chStatDonut'); if(!cv) return;
     const ctx=cv.getContext('2d'), W=cv.width, H=cv.height, cx=W/2, cy=H/2, R=W/2-8, r=R*0.6;
-    const segs=[[0.46,'#9AFF00'],[0.31,'#6fd400'],[0.15,'#3a7a00'],[0.08,gridCol]];
+    const segs=[[0.46,'#FF9500'],[0.31,'#6fd400'],[0.15,'#3a7a00'],[0.08,gridCol]];
     let t=0;(function anim(){
       t=Math.min(1,t+0.05); ctx.clearRect(0,0,W,H);
       let a=-Math.PI/2;
@@ -50438,7 +50427,7 @@ function chDrawStats(c, subs, reach){
       t=Math.min(1,t+0.06); ctx.clearRect(0,0,W,H);
       w.forEach((v,i)=>{
         const h=(H-pad*2)*v*t; const bx=pad+gap*i+(gap-bw)/2; const by=H-pad-h;
-        const g=ctx.createLinearGradient(0,by,0,by+h); g.addColorStop(0,'#9AFF00'); g.addColorStop(1,'#2a5a00');
+        const g=ctx.createLinearGradient(0,by,0,by+h); g.addColorStop(0,'#FF9500'); g.addColorStop(1,'#2a5a00');
         ctx.fillStyle=g; ctx.globalAlpha=i===5?1:.8;
         ctx.fillRect(bx,by,bw,h); ctx.globalAlpha=1;
       });
@@ -50691,6 +50680,7 @@ function chInsertCatalogChip(){
   if(folders.querySelector('.ch-cat-open-chip')) return;
   const b = document.createElement('button');
   b.className = 'ch-cat-open-chip';
+  b.style.cssText = 'background:transparent;color:#fff;border:1px solid rgba(255,255,255,.18);background-image:none';
   b.innerHTML = chI('star') + '<span>Каталог</span>';
   b.title = 'Каталог платных каналов, клубов и курсов';
   b.addEventListener('click', e=>{ e.preventDefault(); chOpen('catalog'); });
@@ -50860,7 +50850,7 @@ const CH_MARKET = (function(){
   /* ------------- 10 КЛУБОВ (супергруппы, kind:club) ------------- */
   const CLUBS = [
     {id:'clm-1', name:'ХЛБ Club — предприниматели РФ', bg:0, icon:'crown', price:2990, subs:350, rating:4.9, reviews:88, niche:'biz', owner:'Артём (gdebrius)', ownerNick:'oko_club', verified:true,
-     desc:'Закрытый клуб основателей: две встречи в месяц с Даниэлем и приглашёнными фаундерами, чат с быстрыми ответами, разборы твоих финансов и продукта, приватная база подрядчиков ХЛБ. Отбор по анкете.'},
+     desc:'Закрытый клуб основателей: две встречи в месяц с Артёмом и приглашёнными фаундерами, чат с быстрыми ответами, разборы твоих финансов и продукта, приватная база подрядчиков ХЛБ. Отбор по анкете.'},
     {id:'clm-2', name:'Мама-предпринимательница', bg:3, icon:'compass', price:990, subs:800, rating:4.8, reviews:212, niche:'biz', owner:'Ольга Мельник', ownerNick:'mama_ceo', verified:true,
      desc:'Закрытое комьюнити для женщин, которые совмещают бизнес и детей. Совместные разборы, ежемесячные оффлайн-встречи в Москве и СПб, чат для быстрых советов, мастермайнды по бизнесу и режиму.'},
     {id:'clm-3', name:'Крипто-трейдеры-полуночники', bg:2, icon:'fire', price:1990, subs:210, rating:4.7, reviews:76, niche:'fin', owner:'Роман Гуров', ownerNick:'crypto_owl', verified:true,
@@ -50988,8 +50978,7 @@ const CH_MARKET = (function(){
   }catch(e){}
   chInsertProfileRow();
   try{ chInsertCatalogChip(); }catch(e){}
-  // зеркалим существующие свои каналы в мессенджер (после перезагрузки)
-  CH.mine.forEach(c=>chMirrorToChats(c));
+  // демо-каналы пользователя НЕ зеркалим в список чатов (демо для Артёма — только реальные каналы)
 })();
 
 /* экспорт в глобальную область (onclick в разметке) */
@@ -51552,7 +51541,7 @@ window.chCompose = chCompose; window.chLessonDraft = chLessonDraft;
     var mqR = win.matchMedia && win.matchMedia('(prefers-reduced-motion: reduce)');
     var REDUCED = !!(mqR && mqR.matches);
 
-    var LIME = '#9AFF00';
+    var LIME = '#FF9500';
 
     // Уже собранный API — не даём случайно перетереть.
     var api = win.okoWow = win.okoWow || {};
@@ -51928,7 +51917,7 @@ window.chCompose = chCompose; window.chLessonDraft = chLessonDraft;
         var cy = (typeof y === 'number') ? y : win.innerHeight / 2;
         ensureConfCanvas();
         // Палитра — лайм с лёгкими вариациями (яркий/тёмный/белый акцент)
-        var palette = [LIME, '#B8FF3D', '#7ACC00', '#DFFF9A', '#FFFFFF'];
+        var palette = [LIME, '#B8FF3D', '#CC7A00', '#DFFF9A', '#FFFFFF'];
         for(var i=0;i<count;i++){
           var ang = -Math.PI/2 + (Math.random() - 0.5) * Math.PI * 1.2; // веерный выхлоп вверх
           var speed = 6 + Math.random() * 10;
@@ -52216,7 +52205,7 @@ window.chCompose = chCompose; window.chLessonDraft = chLessonDraft;
   /* ============================================================
      0. КОНСТАНТЫ и УТИЛИТЫ
      ============================================================ */
-  const BRAND = { bg:'#0b0d0e', ink:'#ffffff', dim:'#9aa0a5', lime:'#9AFF00' };
+  const BRAND = { bg:'#0b0d0e', ink:'#ffffff', dim:'#9aa0a5', lime:'#FF9500' };
   const HOST  = 'hlbapp.ru';       // публичный домен ХЛБ
   const DEEP  = 'https://true-journey-418.higgsfield.app'; // зеркало прогресса
 
@@ -53378,7 +53367,7 @@ window.chCompose = chCompose; window.chLessonDraft = chLessonDraft;
       '</div>' +
       '<div class="vr-refsq-goal ' + (c >= g1 ? 'done' : '') + '">' +
         '<div class="badge">+3</div>' +
-        '<div><div class="t">PRO бесплатно 3 месяца</div><div class="s">' + (c >= g1 ? 'Открыто · зачислили тариф PRO' : 'Приведи ещё ' + (g1 - c) + ' клиентов через партнёрскую ссылку') + '</div></div>' +
+        '<div><div class="t">КЛУБ бесплатно 3 месяца</div><div class="s">' + (c >= g1 ? 'Открыто · зачислили тариф КЛУБ' : 'Приведи ещё ' + (g1 - c) + ' клиентов через партнёрскую ссылку') + '</div></div>' +
       '</div>' +
       '<div class="vr-refsq-goal ' + (c >= g2 ? 'done' : '') + '">' +
         '<div class="badge">+10</div>' +
