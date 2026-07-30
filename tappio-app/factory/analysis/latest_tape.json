@@ -5,8 +5,38 @@
  "code": "MEASURE",
  "top": [
   {
-   "views": 1541155,
-   "likes": 32086,
+   "views": 46640567,
+   "likes": 282438,
+   "comments": 3900,
+   "channel": "The Maker",
+   "followers": 1200000,
+   "dur": 191,
+   "id": "R1sQLwLi96c",
+   "title": "Few People Know About This Tape Measure Feature! Hidden Features of Tape Measure"
+  },
+  {
+   "views": 2315401,
+   "likes": 470,
+   "comments": 13,
+   "channel": "GRYMALA",
+   "followers": 2010,
+   "dur": 42,
+   "id": "FmOfqcITb9k",
+   "title": "AR Plan 3D – Camera to Plan, Floorplanner"
+  },
+  {
+   "views": 1947215,
+   "likes": 42882,
+   "comments": 2000,
+   "channel": "Make Build Modify",
+   "followers": 209000,
+   "dur": 200,
+   "id": "DqKIVmu6grM",
+   "title": "How to Read a Tape Measure - REALLY EASY"
+  },
+  {
+   "views": 1541158,
+   "likes": 32087,
    "comments": 807,
    "channel": "WoodWorkWeb",
    "followers": 676000,
@@ -15,7 +45,17 @@
    "title": "5 Quick Measuring Hacks - Woodworking Tips and Tricks"
   },
   {
-   "views": 1014332,
+   "views": 1058218,
+   "likes": 23817,
+   "comments": 1500,
+   "channel": "Stumpy Nubs (James Hamilton)",
+   "followers": 1040000,
+   "dur": 263,
+   "id": "PrchBGzC0bA",
+   "title": "How to read a tape measure without looking like an idiot"
+  },
+  {
+   "views": 1014352,
    "likes": 2281,
    "comments": 219,
    "channel": "laanlabs",
@@ -23,92 +63,42 @@
    "dur": 45,
    "id": "z7DYC_zbZCM",
    "title": "Air Measure App Demo - Augmented reality tape measure"
-  },
-  {
-   "views": 420456,
-   "likes": 2099,
-   "comments": 26,
-   "channel": "ContractorBhai Design Service",
-   "followers": 84400,
-   "dur": 69,
-   "id": "D7lW6Mn3TmQ",
-   "title": "\"Wardrobe Design & Cost Planner\" by ContractorBhai.com"
-  },
-  {
-   "views": 292539,
-   "likes": 1201,
-   "comments": 62,
-   "channel": "DailyZeck",
-   "followers": 23000,
-   "dur": 75,
-   "id": "h8Tx-ykllK4",
-   "title": "How to Use The Measure App on iPhone"
-  },
-  {
-   "views": 198433,
-   "likes": 1193,
-   "comments": 98,
-   "channel": "Payette Forward",
-   "followers": 1810000,
-   "dur": 313,
-   "id": "RvhZ074Vs7c",
-   "title": "How Do I Use The iPhone Measure App? How Accurate Is It?"
-  },
-  {
-   "views": 192136,
-   "likes": 4391,
-   "comments": 78,
-   "channel": "Sketch Design Craft",
-   "followers": 39400,
-   "dur": 483,
-   "id": "K8BL_APoga0",
-   "title": "5 apps I use to DESIGN any space - Cabin Renovation - iPad for Architects"
-  },
-  {
-   "views": 170046,
-   "likes": 1546,
-   "comments": 108,
-   "channel": "magicplan",
-   "followers": 24000,
-   "dur": 190,
-   "id": "-9mXkK1eV1s",
-   "title": "How to Get the Most Out of Your Laser Measure | magicplan"
-  },
-  {
-   "views": 140176,
-   "likes": 1356,
-   "comments": 90,
-   "channel": "TheSketchUpEssentials",
-   "followers": 606000,
-   "dur": 313,
-   "id": "HplrHVqeL-8",
-   "title": "Creating ROOM MODELS from Phone Lidar Scans! (New App Update!)"
-  },
-  {
-   "views": 86443,
-   "likes": 4756,
-   "comments": 346,
-   "channel": "DIYForKnuckleheads",
-   "followers": 449000,
-   "dur": 592,
-   "id": "hlLFkDlN2ok",
-   "title": "5 LIFE Changing Measuring Hacks!"
-  },
-  {
-   "views": 54489,
-   "likes": 502,
-   "comments": 40,
-   "channel": "drdecks",
-   "followers": 168000,
-   "dur": 404,
-   "id": "q9MgvgpZ1bM",
-   "title": "How Accurate Is The Default Measure App? || Dr Decks"
   }
  ],
  "millions_list": [
   {
-   "views": 1541155,
-   "likes": 32086,
+   "views": 46640567,
+   "likes": 282438,
+   "comments": 3900,
+   "channel": "The Maker",
+   "followers": 1200000,
+   "dur": 191,
+   "id": "R1sQLwLi96c",
+   "title": "Few People Know About This Tape Measure Feature! Hidden Features of Tape Measure"
+  },
+  {
+   "views": 2315401,
+   "likes": 470,
+   "comments": 13,
+   "channel": "GRYMALA",
+   "followers": 2010,
+   "dur": 42,
+   "id": "FmOfqcITb9k",
+   "title": "AR Plan 3D – Camera to Plan, Floorplanner"
+  },
+  {
+   "views": 1947215,
+   "likes": 42882,
+   "comments": 2000,
+   "channel": "Make Build Modify",
+   "followers": 209000,
+   "dur": 200,
+   "id": "DqKIVmu6grM",
+   "title": "How to Read a Tape Measure - REALLY EASY"
+  },
+  {
+   "views": 1541158,
+   "likes": 32087,
    "comments": 807,
    "channel": "WoodWorkWeb",
    "followers": 676000,
@@ -117,7 +107,17 @@
    "title": "5 Quick Measuring Hacks - Woodworking Tips and Tricks"
   },
   {
-   "views": 1014332,
+   "views": 1058218,
+   "likes": 23817,
+   "comments": 1500,
+   "channel": "Stumpy Nubs (James Hamilton)",
+   "followers": 1040000,
+   "dur": 263,
+   "id": "PrchBGzC0bA",
+   "title": "How to read a tape measure without looking like an idiot"
+  },
+  {
+   "views": 1014352,
    "likes": 2281,
    "comments": 219,
    "channel": "laanlabs",
@@ -127,21 +127,21 @@
    "title": "Air Measure App Demo - Augmented reality tape measure"
   }
  ],
- "millions": 2,
+ "millions": 6,
  "hooks": [
   "measure",
-  "app",
-  "use",
-  "measuring",
-  "hacks",
-  "design",
-  "iphone",
-  "accurate",
-  "quick",
-  "woodworking",
-  "tips",
-  "tricks"
+  "tape",
+  "plan",
+  "read",
+  "few",
+  "people",
+  "know",
+  "about",
+  "feature",
+  "hidden",
+  "features",
+  "camera"
  ],
- "ts": "2026-07-29 20:12 UTC",
- "avg_views": 411020
+ "ts": "2026-07-30 04:20 UTC",
+ "avg_views": 9086151
 }
