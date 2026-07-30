@@ -11170,6 +11170,553 @@ div:has(> button[data-t="guest"]) + div[style*="переключатель"],
 })();
 </script>
 
+
+<style id="hlb-v12">
+/* ========== ХЛБ v12 — 10 пунктов ========== */
+:root {
+  --hlb-orange: #FF9500;
+  --hlb-orange-soft: rgba(255, 149, 0, .12);
+  --hlb-orange-glow: rgba(255, 149, 0, .35);
+  --hlb-bg: #0A0500;
+  --hlb-card: #141410;
+  --tg-top: calc(env(safe-area-inset-top, 0px) + 8px);
+  --tg-bottom: calc(env(safe-area-inset-bottom, 0px) + 12px);
+  --tg-h: 100vh;
+}
+
+/* ==================================================================
+   #1: мини-аппы 4:3 карточки
+   ================================================================== */
+.hlb-apps-2col {
+  display: grid !important;
+  grid-template-columns: 1fr 1fr !important;
+  gap: 10px !important;
+  padding: 14px !important;
+}
+.hlb-app {
+  aspect-ratio: 4/3 !important;
+  min-height: unset !important;
+  height: auto !important;
+  padding: 14px 12px 12px !important;
+}
+.hlb-app-title { font-size: 15px !important; line-height: 1.1 !important; }
+.hlb-app-title small { font-size: 10px !important; margin-top: 3px !important; }
+.hlb-app-icon svg { width: 90px !important; height: 90px !important; }
+.hlb-app-badge {
+  top: 10px !important; left: 10px !important;
+  min-width: 30px !important; height: 30px !important;
+  font-size: 12px !important;
+}
+
+/* ==================================================================
+   #2, #4: nav-tabs — стоп дёрганьям и re-render
+   ================================================================== */
+nav#tabs {
+  position: fixed !important; bottom: 0 !important; left: 0 !important; right: 0 !important;
+  padding-bottom: env(safe-area-inset-bottom, 0px) !important;
+  background: rgba(10,5,0,.95) !important;
+  backdrop-filter: blur(20px) !important;
+  border-top: 1px solid rgba(255,149,0,.15) !important;
+  z-index: 100 !important;
+  min-height: 60px !important;
+}
+nav#tabs button, nav#tabs a {
+  transition: color .18s ease !important;
+  transform: none !important;
+  animation: none !important;
+  color: rgba(255,255,255,.55) !important;
+}
+nav#tabs button.active, nav#tabs a.active, nav#tabs .on {
+  color: var(--hlb-orange) !important;
+  transform: none !important;
+}
+nav#tabs button::after, nav#tabs a::after {
+  display: none !important;
+}
+
+/* ==================================================================
+   #3: feed-tabs Рек/Подписки — читаемый текст
+   ================================================================== */
+.feed-tabs {
+  padding: 12px 16px 8px !important;
+  gap: 8px !important;
+  background: transparent !important;
+}
+.feed-tabs button {
+  color: #fff !important;
+  background: transparent !important;
+  border: 1px solid rgba(255,255,255,.15) !important;
+  padding: 10px 20px !important;
+  border-radius: 99px !important;
+  font-size: 14px !important;
+  font-weight: 700 !important;
+}
+.feed-tabs button > *,
+.feed-tabs button span {
+  color: inherit !important;
+  position: relative !important;
+  z-index: 2 !important;
+}
+.feed-tabs button.on,
+.feed-tabs button.active {
+  background: var(--hlb-orange) !important;
+  color: #000 !important;
+  border-color: var(--hlb-orange) !important;
+  box-shadow: 0 0 20px rgba(255,149,0,.35) !important;
+}
+.feed-tabs button.on > *,
+.feed-tabs button.on span,
+.feed-tabs button.active > *,
+.feed-tabs button.active span { color: #000 !important; }
+
+/* ==================================================================
+   #5: кошелёк — чёрная банковская карта, ХЛБ-палитра
+   ================================================================== */
+#screen-wallet .w2-card, .w2-card {
+  background: linear-gradient(135deg, #1a0f00 0%, #0a0500 50%, #1a1000 100%) !important;
+  color: #fff !important;
+  border: 1px solid rgba(255,149,0,.35) !important;
+  border-radius: 20px !important;
+  box-shadow: 0 20px 60px rgba(0,0,0,.6), 0 0 40px rgba(255,149,0,.15), inset 0 1px 0 rgba(255,255,255,.06) !important;
+  overflow: hidden !important;
+  position: relative !important;
+  padding: 22px !important;
+  margin: 16px !important;
+}
+.w2-card * { color: #fff !important; }
+.w2-card .w2-brand,
+.w2-card [class*="brand"],
+.w2-card b:first-child {
+  color: var(--hlb-orange) !important;
+  font-weight: 900 !important;
+  letter-spacing: 3px !important;
+  text-shadow: 0 0 20px var(--hlb-orange-glow) !important;
+}
+.w2-card [class*="rub"], .w2-card .rub { color: var(--hlb-orange) !important; }
+.w2-card [class*="num"] {
+  font-family: 'JetBrains Mono', 'Courier New', monospace !important;
+  letter-spacing: 3px !important;
+  color: rgba(255,255,255,.85) !important;
+  font-variant-numeric: tabular-nums !important;
+}
+.w2-card::before {
+  content: ''; position: absolute; top: 0; left: -80%;
+  width: 60%; height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255,255,255,.08) 50%, transparent);
+  transform: skewX(-20deg);
+  animation: hlbCardShine 5s ease-in-out infinite;
+  pointer-events: none;
+}
+@keyframes hlbCardShine {
+  0%,100% { left: -80%; }
+  50%     { left: 130%; }
+}
+
+/* ==================================================================
+   #6: профиль — убрать верхнюю плашку "Тарифы ХЛБ APP"
+   ================================================================== */
+#screen-profile .hlb-tariff-top,
+#screen-profile [class*="prof-tariff-hero"],
+#screen-profile > .hlb-tariff-hero,
+#screen-profile .prof-tariff-banner {
+  display: none !important;
+}
+/* Первая большая оранжевая CTA в профиле — target по structure */
+#screen-profile > a[href*="tariff"]:first-of-type,
+#screen-profile > button[onclick*="tariff"]:first-of-type,
+#screen-profile > div:first-child > a[href*="tariff"],
+#screen-profile .hlb-prof-tariff-top {
+  display: none !important;
+}
+
+/* аватар профиля — реальный Артём */
+#screen-profile .hlb-prof-ava,
+#screen-profile #profAva,
+.hlb-prof-ava {
+  border: 3px solid var(--hlb-orange) !important;
+  box-shadow: 0 0 24px var(--hlb-orange-glow) !important;
+  overflow: hidden !important;
+  border-radius: 50% !important;
+}
+
+/* ==================================================================
+   #8, #10: глобальная адаптация под TG для ВСЕХ экранов
+   ================================================================== */
+html, body { overscroll-behavior: none !important; }
+
+.screen, .hlb-app-view, [id^="ma-"], .mini-app {
+  padding-top: calc(env(safe-area-inset-top, 0px) + 8px) !important;
+  padding-bottom: calc(env(safe-area-inset-bottom, 0px) + 84px) !important;
+  overscroll-behavior: contain !important;
+}
+
+/* Fullscreen mini-app view — интерфейс НЕ выше TG кнопок */
+.hlb-av-top, .app-view-head, [class*="app-head"], .hlb-app-view-head {
+  position: sticky !important;
+  top: 0 !important;
+  z-index: 60 !important;
+  padding-top: calc(env(safe-area-inset-top, 0px) + 10px) !important;
+  padding-left: 14px !important;
+  padding-right: 14px !important;
+  padding-bottom: 12px !important;
+  background: rgba(10,5,0,.95) !important;
+  backdrop-filter: blur(16px) !important;
+  border-bottom: 1px solid rgba(255,149,0,.15) !important;
+}
+.hlb-av-top .back, [class*="back-btn"], button[aria-label*="назад" i] {
+  min-width: 44px !important;
+  min-height: 44px !important;
+  padding: 10px !important;
+  border-radius: 12px !important;
+  background: rgba(255,255,255,.08) !important;
+  color: #fff !important;
+  border: 1px solid rgba(255,149,0,.2) !important;
+  cursor: pointer !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+}
+.hlb-av-top .back:active { transform: scale(.94) !important; background: rgba(255,149,0,.15) !important; }
+
+/* Убрать двойные хедеры */
+.hlb-app .hlb-av-hero ~ .hlb-av-hero,
+.hlb-app .hlb-av-top + .hlb-av-hero,
+.hlb-av-top + .hlb-av-top { display: none !important; }
+
+/* Убрать чёрную пустоту снизу в mini-apps */
+.hlb-app-view, .mini-app, [id^="ma-"] {
+  min-height: unset !important;
+}
+
+/* ==================================================================
+   Скрыть переключатель тарифов "переключатель тарифа · только для демо"
+   ================================================================== */
+.hlb-apps-wrap > div:has(button[data-t="HLB_150K"]),
+[class*="tariff-switch"]:not([data-hlb-keep]) {
+  display: none !important;
+}
+/* JS backup: hide by content — see JS */
+
+/* ==================================================================
+   Splash — чистый
+   ================================================================== */
+#splash::before, #splash::after { display: none !important; }
+#splash {
+  background: radial-gradient(circle at 50% 42%, #1a1000 0%, #0A0500 65%) !important;
+  transition: opacity .5s ease !important;
+}
+#splash img { animation: hlbLogoPop .8s cubic-bezier(.34,1.56,.64,1) !important; }
+@keyframes hlbLogoPop {
+  from { transform: scale(.5); opacity: 0; }
+  to   { transform: scale(1); opacity: 1; }
+}
+
+/* Force profile avatar as background image */
+#profAva, #epAva {
+  background-image: url('assets/av/artem_brius.jpg') !important;
+  background-size: cover !important;
+  background-position: center !important;
+  color: transparent !important;
+  text-indent: -9999px !important;
+  overflow: hidden !important;
+}
+
+/* Wide screen max-width */
+@media (min-width: 500px) {
+  #root, .screen, main { max-width: 480px !important; margin: 0 auto !important; }
+  nav#tabs { max-width: 480px !important; left: 50% !important; right: auto !important; transform: translateX(-50%) !important; }
+}
+</style>
+
+
+<script id="hlb-v12-js">
+(function(){
+  'use strict';
+
+  // ============== #2, #4: wrap showTab — no re-render on same tab ==============
+  function wrapShowTab(){
+    if(typeof window.showTab !== 'function') return false;
+    if(window.showTab.__hlbV12Wrapped) return true;
+    var orig = window.showTab;
+    var currentTab = null;
+    window.showTab = function(t){
+      if(t === currentTab) {
+        // just update visual — active class — but don't re-init
+        try{
+          document.querySelectorAll('nav#tabs button, nav#tabs a').forEach(function(b){
+            var d = b.getAttribute('data-t');
+            if(d === t) b.classList.add('active');
+            else b.classList.remove('active');
+          });
+        }catch(e){}
+        return;
+      }
+      currentTab = t;
+      try{ return orig.apply(this, arguments); }catch(e){}
+    };
+    window.showTab.__hlbV12Wrapped = true;
+    return true;
+  }
+  // Try wrap early and repeatedly
+  var wrapTimer = setInterval(function(){
+    if(wrapShowTab()) clearInterval(wrapTimer);
+  }, 100);
+  setTimeout(function(){ clearInterval(wrapTimer); }, 5000);
+
+  // ============== #6, #7: profile — remove top tariff plate + force Артём ==============
+  function fixProfile(){
+    try{
+      // Force PROFILE
+      ['oko-profile','oko-user','hlb-profile','oko-saved','okoProfile']
+        .forEach(function(k){ try{ localStorage.removeItem(k); }catch(e){} });
+
+      if(window.PROFILE){
+        PROFILE.name  = 'Артём Бриус';
+        PROFILE.nick  = 'gdebrius';
+        PROFILE.bio   = 'Основатель ХЛБ. Медиа · Контент · Деньги — в одном приложении.';
+        PROFILE.avatar = 'assets/av/artem_brius.jpg';
+        PROFILE.role  = 'owner';
+        PROFILE.tier  = 'MAX';
+        if(window.VERIFIED && VERIFIED.add) VERIFIED.add('Артём Бриус');
+      }
+
+      // Remove upper tariff plate in profile
+      var scr = document.getElementById('screen-profile');
+      if(scr){
+        // find first big orange CTA card that leads to tariffs
+        var candidates = scr.querySelectorAll('a, button, div');
+        for(var i=0; i<candidates.length; i++){
+          var el = candidates[i];
+          var txt = (el.textContent||'').trim();
+          if(!txt) continue;
+          // if the element is in first 400px of profile screen and mentions "Тарифы ХЛБ APP"
+          if(/Тарифы ХЛБ APP/i.test(txt) && el.getBoundingClientRect().top < 400){
+            // find its wrapper (parent chain)
+            var wrap = el;
+            for(var j=0; j<3; j++){
+              if(wrap.parentElement && wrap.parentElement !== scr) wrap = wrap.parentElement;
+            }
+            if(!wrap.dataset.hlbV12Hidden){
+              wrap.style.display = 'none';
+              wrap.dataset.hlbV12Hidden = '1';
+            }
+          }
+        }
+      }
+
+      // Replace letter avatar with real img
+      ['profAva','epAva'].forEach(function(id){
+        var el = document.getElementById(id);
+        if(el && !el.dataset.hlbV12Ava){
+          el.dataset.hlbV12Ava = '1';
+          el.innerHTML = '<img src="assets/av/artem_brius.jpg" alt="" style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover;border-radius:inherit">';
+          el.style.position = 'relative';
+        }
+      });
+
+      // Replace "Основатель ОКО" text with "Основатель ХЛБ"
+      var walker = document.createTreeWalker(document.body, NodeFilter.SHOW_TEXT, null);
+      var node, dirty=[];
+      while((node = walker.nextNode())){
+        if(node.nodeValue && node.nodeValue.indexOf('Основатель ОКО') !== -1){
+          dirty.push(node);
+        }
+      }
+      dirty.forEach(function(n){ n.nodeValue = n.nodeValue.replace(/Основатель ОКО/g, 'Основатель ХЛБ'); });
+    }catch(e){}
+  }
+
+  // ============== #7: tariffs — replace with HLB names/prices ==============
+  // Called on profile-tariffs subview
+  function patchTariffCards(){
+    var HLB_PLANS = [
+      { id:'HLB_1K',   name:'СТАРТ',  price:'1 000',   period:'/мес', tag:'',      features:['Все чаты и каналы ХЛБ (read-only)','Основной канал Артёма Бриуса','Brius-AI · 10 запросов в день','Лента и эфир-архив','1 демо-вход в любое приложение'] },
+      { id:'HLB_5K',   name:'КЛУБ',   price:'5 000',   period:'/мес', tag:'ХИТ',   features:['Пишешь во всех чатах ХЛБ','Общий эфир 1 раз в неделю','Десятки — чат из 10 таких же','Спринт-трекер · Инструкция · Дневник','Brius-AI · безлимит коротких ответов'] },
+      { id:'HLB_20K',  name:'PRO',    price:'20 000',  period:'/мес', tag:'',      features:['Все чаты + личные разборы Артёма','2 эфира в неделю с Артёмом','Огуречная Академия · 120+ уроков','Nihaodrop · дропшип-каталог 2000+','Brius-AI без лимитов'] },
+      { id:'HLB_50K',  name:'VIP',    price:'50 000',  period:'/мес', tag:'',      features:['Всё из PRO','Команда сопровождения 24/7','Персональный спорт-ассистент','Аудит Instagram по методу Артёма','Приоритет в очереди эфиров'] },
+      { id:'HLB_150K', name:'МЕНТОР', price:'150 000', period:'/мес', tag:'MAX',   features:['Всё из VIP','Личный ментор — Артём Бриус','Ежемесячная сессия 1:1 с Артёмом','Nihaohub — магазин под ключ','Полный доступ ко всем 20 приложениям'] }
+    ];
+
+    var scr = document.querySelector('#screen-tariffs, [data-screen="tariffs"], .hlb-tariffs, [class*="tariff-page"]');
+    if(!scr || scr.dataset.hlbV12Patched === '1') return;
+
+    // find cards inside and patch their content
+    var cards = scr.querySelectorAll('.plan, .plans-wrap .plan, [class*="tariff-card"]');
+    if(cards.length === 0) return;
+
+    cards.forEach(function(card, i){
+      var plan = HLB_PLANS[i]; if(!plan) return;
+      // update name
+      var nEl = card.querySelector('.plan-name, [class*="plan-name"], .plan-title, h3, b');
+      if(nEl) nEl.textContent = plan.name;
+      // update price
+      var pEl = card.querySelector('.plan-price, [class*="price"], .price');
+      if(pEl){
+        pEl.innerHTML = plan.price + ' <span style="color:#fff;opacity:.6;font-size:14px">₽ ' + plan.period + '</span>';
+      }
+      // update features
+      var fList = card.querySelector('.plan-features, ul, [class*="features"]');
+      if(fList){
+        fList.innerHTML = plan.features.map(function(f){
+          return '<li>' + f + '</li>';
+        }).join('');
+      }
+      // add HIT badge
+      if(plan.tag){
+        var badge = card.querySelector('.plan-tag, [class*="badge"], .chip.flag');
+        if(badge) badge.textContent = plan.tag;
+      }
+    });
+    scr.dataset.hlbV12Patched = '1';
+  }
+
+  // ============== #8, #10: hide tariff overlay in mini-apps ==============
+  function hideTariffOverlay(){
+    try{
+      document.querySelectorAll('div').forEach(function(el){
+        var t = el.textContent || '';
+        if(t.indexOf('переключатель тарифа') !== -1 && t.length < 100){
+          el.style.display = 'none';
+        }
+      });
+      document.querySelectorAll('button[data-t="HLB_150K"]').forEach(function(btn){
+        var wrap = btn.closest('div');
+        if(wrap && wrap.querySelectorAll('button[data-t]').length >= 5){
+          wrap.style.display = 'none';
+        }
+      });
+    }catch(e){}
+  }
+
+  // ============== double headers ==============
+  function fixDoubleHeaders(){
+    try{
+      document.querySelectorAll('.hlb-app, .mini-app, .hlb-app-view').forEach(function(app){
+        var heros = app.querySelectorAll('.hlb-av-hero');
+        for(var i=1; i<heros.length; i++) heros[i].style.display = 'none';
+        var tops = app.querySelectorAll('.hlb-av-top');
+        for(var i=1; i<tops.length; i++) tops[i].style.display = 'none';
+      });
+    }catch(e){}
+  }
+
+  // ============== #9: chats — force to real Artem channels ==============
+  function forceRealChats(){
+    try{
+      if(typeof window.hlbPatchOkoChats === 'function') window.hlbPatchOkoChats();
+      if(typeof window.renderChatList === 'function') window.renderChatList('');
+    }catch(e){}
+  }
+
+  // ============== splash hide ==============
+  function hideSplash(){
+    var sp = document.getElementById('splash');
+    if(sp && !sp.classList.contains('gone')){
+      sp.classList.add('gone');
+      setTimeout(function(){ try{ sp.style.display='none'; }catch(e){} }, 550);
+    }
+  }
+  setTimeout(hideSplash, 1200);
+  setTimeout(hideSplash, 2500);
+
+  // ============== TG WebApp adaptation ==============
+  var TG = window.Telegram && window.Telegram.WebApp;
+  if(TG){
+    try{
+      TG.ready();
+      TG.expand();
+      if(TG.disableVerticalSwipes) TG.disableVerticalSwipes();
+      if(TG.setHeaderColor) TG.setHeaderColor('#0A0500');
+      if(TG.setBottomBarColor) TG.setBottomBarColor('#0A0500');
+      if(TG.setBackgroundColor) TG.setBackgroundColor('#0A0500');
+    }catch(e){}
+    function syncH(){
+      var h = (TG.viewportStableHeight || TG.viewportHeight || window.innerHeight) + 'px';
+      document.documentElement.style.setProperty('--tg-h', h);
+    }
+    syncH();
+    if(TG.onEvent) TG.onEvent('viewportChanged', syncH);
+    window.addEventListener('resize', syncH);
+    // Haptic
+    document.addEventListener('click', function(e){
+      var el = e.target && e.target.closest && e.target.closest('button, a, [role="button"]');
+      if(el && TG.HapticFeedback && TG.HapticFeedback.impactOccurred){
+        try{ TG.HapticFeedback.impactOccurred('light'); }catch(err){}
+      }
+    }, true);
+  }
+
+  // ============== auto-login guest + tab ==============
+  function autoLogin(){
+    try{
+      var isTG = !!(TG && TG.initData);
+      var isGuest = /[?&]guest=1/.test(location.search);
+      var already = false;
+      try{ already = !!localStorage.getItem('oko-auth'); }catch(e){}
+      if(!already && (isTG || isGuest)){
+        try{ localStorage.setItem('oko-auth', isTG ? 'telegram' : 'guest'); }catch(e){}
+        try{ localStorage.setItem('oko-onboarded','1'); }catch(e){}
+        var auth = document.getElementById('authScreen'); if(auth) auth.classList.add('hidden');
+        var ob = document.getElementById('onboard'); if(ob) ob.classList.add('hidden');
+        try{ if(typeof initLive === 'function') initLive(); }catch(e){}
+      }
+    }catch(e){}
+  }
+  autoLogin();
+  setTimeout(autoLogin, 500);
+  setTimeout(autoLogin, 1500);
+
+  function tabFromUrl(){
+    try{
+      var m = /[?&]tab=([a-z_-]+)/i.exec(location.search);
+      if(!m) return;
+      var t = m[1];
+      if(typeof window.showTab === 'function'){
+        setTimeout(function(){ try{ window.showTab(t); }catch(e){} }, 300);
+        setTimeout(function(){ try{ window.showTab(t); }catch(e){} }, 1200);
+      }
+    }catch(e){}
+  }
+  setTimeout(tabFromUrl, 800);
+
+  // ============== master runner ==============
+  function runAll(){
+    fixProfile();
+    hideTariffOverlay();
+    fixDoubleHeaders();
+    patchTariffCards();
+    forceRealChats();
+  }
+
+  if(document.readyState === 'loading'){
+    document.addEventListener('DOMContentLoaded', function(){
+      runAll();
+      setTimeout(runAll, 600);
+      setTimeout(runAll, 1500);
+    });
+  } else {
+    runAll();
+    setTimeout(runAll, 600);
+    setTimeout(runAll, 1500);
+  }
+
+  // MutationObserver (debounced)
+  try{
+    var moTimer;
+    var mo = new MutationObserver(function(){
+      clearTimeout(moTimer);
+      moTimer = setTimeout(runAll, 250);
+    });
+    mo.observe(document.body, { childList: true, subtree: true });
+  }catch(e){}
+
+  document.addEventListener('click', function(e){
+    var t = e.target && e.target.closest && e.target.closest('nav#tabs button, nav#tabs a, [data-tab]');
+    if(t) setTimeout(runAll, 200);
+  });
+})();
+</script>
+
 </body>
 </html>
 
