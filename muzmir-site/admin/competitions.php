@@ -143,6 +143,18 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 'price' => (int)($prices[$i] ?? 0),
             ]);
         }
+
+        // Положение (DOCX из эталона) пересобирается автоматически при каждом
+        // создании/сохранении конкурса. Ошибка генерации не роняет сохранение.
+        try {
+            require_once BASE_PATH . '/core/regulation_gen.php';
+            regulation_generate((int) $id);
+            audit('regulation_generate', 'competition', $id);
+        } catch (\Throwable $e) {
+            error_log('regulation_generate(' . $id . ') failed: ' . $e->getMessage());
+            flash('Конкурс сохранён, но положение не сгенерировалось: ' . $e->getMessage(), 'warning');
+        }
+
         flash('Конкурс сохранён.', 'success');
         admin_redirect('competitions', ['action' => 'edit', 'id' => $id]);
     }
@@ -178,18 +190,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
     if ($do === 'regenerate') {
         $id = (int) input('id');
-        $comp = one("SELECT * FROM competitions WHERE id=?", [$id]);
-        if ($comp && function_exists('pdf_regulation')) {
-            try {
-                $path = pdf_regulation($comp);
-                update('competitions', ['regulation_pdf' => $path], 'id=:wid', ['wid' => $id]);
-                audit('regulation_generate', 'competition', $id);
-                flash('Положение сгенерировано.', 'success');
-            } catch (Throwable $e) {
-                flash('Не удалось сгенерировать положение: ' . $e->getMessage(), 'error');
-            }
-        } else {
-            flash('Генератор положения (pdf_regulation) пока не подключён.', 'warning');
+        try {
+            require_once BASE_PATH . '/core/regulation_gen.php';
+            regulation_generate($id);
+            audit('regulation_generate', 'competition', $id);
+            flash('Положение перегенерировано по эталону.', 'success');
+        } catch (Throwable $e) {
+            flash('Не удалось сгенерировать положение: ' . $e->getMessage(), 'error');
         }
         admin_redirect('competitions', ['action' => 'edit', 'id' => $id]);
     }
@@ -393,21 +400,21 @@ if ($action === 'edit') {
           </div>
           <div>
             <?php if ($id): ?>
-              <div class="field"><label>Положение о конкурсе (PDF)</label>
+              <div class="field"><label>Положение о конкурсе (DOCX из эталона)</label>
                 <p class="small muted" style="margin:0 0 12px">
                   <?php if ($c['regulation_pdf']): ?>
                     Готово: <b><?= h(basename($c['regulation_pdf'])) ?></b>
                   <?php else: ?>
-                    Ещё не сгенерировано.
+                    Ещё не сгенерировано (создастся автоматически при сохранении).
                   <?php endif; ?>
                 </p>
                 <div class="toolbar" style="margin:0">
-                  <button class="btn btn--navy btn--sm" formaction="<?= url('/admin/') ?>" name="do" value="regenerate"><?= admin_icon('download') ?>Сгенерировать положение</button>
+                  <button class="btn btn--navy btn--sm" formaction="<?= url('/admin/') ?>" name="do" value="regenerate"><?= admin_icon('download') ?>Перегенерировать положение</button>
                   <?php if ($c['regulation_pdf']): ?>
-                    <a class="btn btn--ghost btn--sm" href="<?= h(url(str_replace(BASE_PATH.'/public','',$c['regulation_pdf']))) ?>" target="_blank" rel="noopener"><?= admin_icon('eye') ?>Открыть PDF</a>
+                    <a class="btn btn--ghost btn--sm" href="<?= h(url(str_replace(BASE_PATH.'/public','',$c['regulation_pdf']))) ?>" target="_blank" rel="noopener"><?= admin_icon('eye') ?>Открыть файл</a>
                   <?php endif; ?>
                 </div>
-                <div class="hint" style="margin-top:10px">Кнопка сохраняет форму и пересобирает положение по актуальным данным конкурса.</div>
+                <div class="hint" style="margin-top:10px">Положение собирается 1:1 из эталона (платный/бесплатный), подставляются только название, даты и тематика «Свободная». Пересобирается автоматически при каждом сохранении.</div>
               </div>
             <?php else: ?>
               <p class="small muted">Генерация положения станет доступна после первого сохранения конкурса.</p>

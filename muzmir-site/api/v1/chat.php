@@ -80,8 +80,13 @@ try {
 } catch (\Throwable $e) {}
 
 $reply  = null;
+// Gemini (бесплатные ключи) — первый приоритет; при ошибке тихо падаем ниже.
+$geminiKey = (string) (cfgv('gemini_api_key') ?: '');
+if ($geminiKey !== '') {
+    $reply = chat_gemini_reply($geminiKey, $sessionKey, $text);
+}
 $apiKey = (string) (cfgv('claude_api_key') ?: '');
-if ($apiKey !== '') {
+if (($reply === null || $reply === '') && $apiKey !== '') {
     $reply = chat_claude_reply($apiKey, $sessionKey, $text);
 }
 // Совместимость: внешний мозг-агент, если настроен и Claude не ответил.
@@ -149,6 +154,63 @@ function chat_system_prompt(): string {
 
     $L[] = 'Оценка - 10-балльная шкала: 9-10 Гран-при, 8-9 Лауреат I степени, 7-8 Лауреат II, 6-7 Лауреат III, ниже - Дипломант I-III. Оргвзнос за уже аттестованный номер не возвращается; при отклонении заявки из-за нарушения правил - возвращается полностью.';
     return implode("\n", $L);
+}
+
+/**
+ * Вызов Gemini API (generativelanguage.googleapis.com generateContent).
+ * Та же база знаний (chat_system_prompt) через systemInstruction.
+ * Тихий фолбэк на null при любой ошибке — дальше Claude/агент/rule-based.
+ */
+function chat_gemini_reply(string $apiKey, string $sessionKey, string $text): ?string {
+    // История сессии -> contents (роли user/model, первым обязан идти user).
+    $contents = [];
+    try {
+        $rows = all(
+            "SELECT role, text FROM chat_messages WHERE session_key=? AND text<>'' ORDER BY id DESC LIMIT 12",
+            [$sessionKey]
+        );
+        foreach (array_reverse($rows) as $r) {
+            $role = ($r['role'] ?? '') === 'assistant' ? 'model' : 'user';
+            if (!$contents && $role === 'model') continue;
+            $contents[] = ['role' => $role, 'parts' => [['text' => (string) $r['text']]]];
+        }
+    } catch (\Throwable $e) { $contents = []; }
+    if (!$contents || end($contents)['role'] !== 'user') {
+        $contents[] = ['role' => 'user', 'parts' => [['text' => $text]]];
+    }
+
+    $model = (string) (cfgv('gemini_model') ?: 'gemini-2.5-flash');
+    $payload = json_encode([
+        'systemInstruction' => ['parts' => [['text' => chat_system_prompt()]]],
+        'contents'          => $contents,
+        'generationConfig'  => ['maxOutputTokens' => 1000, 'temperature' => 0.4],
+    ], JSON_UNESCAPED_UNICODE);
+
+    $base = rtrim((string) (cfgv('gemini_base_url') ?: 'https://generativelanguage.googleapis.com'), '/');
+    $ch = curl_init($base . '/v1beta/models/'
+        . rawurlencode($model) . ':generateContent?key=' . rawurlencode($apiKey));
+    curl_setopt_array($ch, [
+        CURLOPT_RETURNTRANSFER => true,
+        CURLOPT_POST           => true,
+        CURLOPT_POSTFIELDS     => $payload,
+        CURLOPT_HTTPHEADER     => ['Content-Type: application/json'],
+        CURLOPT_TIMEOUT        => 12,
+        CURLOPT_CONNECTTIMEOUT => 5,
+    ]);
+    $resp = curl_exec($ch);
+    $err  = curl_errno($ch);
+    $code = (int) curl_getinfo($ch, CURLINFO_RESPONSE_CODE);
+    curl_close($ch);
+    if ($err || !$resp || $code >= 400) return null;
+
+    $d = json_decode((string) $resp, true);
+    if (!is_array($d) || empty($d['candidates'][0]['content']['parts'])) return null;
+    $out = '';
+    foreach ($d['candidates'][0]['content']['parts'] as $p) {
+        if (isset($p['text'])) $out .= (string) $p['text'];
+    }
+    $out = trim($out);
+    return $out !== '' ? $out : null;
 }
 
 /** Вызов Claude API (api.anthropic.com /v1/messages). Тихий фолбэк на null при любой ошибке. */

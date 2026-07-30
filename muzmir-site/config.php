@@ -117,6 +117,15 @@ return [
     'agent_url'      => cfg('MUZMIR_AGENT_URL', ''),
     'agent_token'    => cfg('MUZMIR_AGENT_TOKEN', ''),
 
+    // Gemini API - бесплатный ИИ чата поддержки (generativelanguage.googleapis.com),
+    // приоритетнее Claude. Ключ только из окружения/config.local.php.
+    // gemini_base_url: с российского VPS прямой API геоблокирован Google
+    // («User location is not supported») — на проде ставится воркер-прокси OKO
+    // MUZMIR_GEMINI_BASE=https://gemini-proxy.okoteam.workers.dev (тот же путь API).
+    'gemini_api_key'  => cfg('MUZMIR_GEMINI_KEY', ''),
+    'gemini_model'    => cfg('MUZMIR_GEMINI_MODEL', 'gemini-2.5-flash'),
+    'gemini_base_url' => cfg('MUZMIR_GEMINI_BASE', 'https://generativelanguage.googleapis.com'),
+
     // Claude API - ИИ-помощник чата поддержки (api.anthropic.com). Ключ только из окружения/local.
     'claude_api_key' => cfg('MUZMIR_CLAUDE_KEY', ''),
 

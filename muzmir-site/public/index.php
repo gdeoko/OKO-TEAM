@@ -105,20 +105,28 @@ function serve(string $file, array $vars = []): void {
 if ($route === '/verify') serve('verify', ['number' => '']);
 if (preg_match('#^/verify/([A-Za-zА-Яа-я0-9\-]+)$#u', $route, $m)) serve('verify', ['number' => $m[1]]);
 if (preg_match('#^/competition/([a-z0-9\-]+)$#', $route, $m)) serve('competition', ['slug' => $m[1]]);
-// Скачивание PDF-положения конкурса (генерирует по эталону при первом запросе).
-if (preg_match('#^/competition/([a-z0-9\-]+)/regulation\.pdf$#', $route, $m)) {
+// Скачивание положения конкурса (DOCX 1:1 из эталона; генерирует при первом запросе).
+// Старые ссылки .../regulation.pdf продолжают работать и отдают актуальный файл.
+if (preg_match('#^/competition/([a-z0-9\-]+)/regulation\.(pdf|docx)$#', $route, $m)) {
     $c = one("SELECT * FROM competitions WHERE slug=?", [$m[1]]);
     if ($c) {
-        require_once BASE_PATH . '/core/pdf_regulation.php';
         try {
             $path = !empty($c['regulation_pdf']) && is_file($c['regulation_pdf'])
                 ? $c['regulation_pdf']
-                : pdf_regulation((array)$c);
-            if (empty($c['regulation_pdf']) && is_file($path)) {
-                update('competitions', ['regulation_pdf' => $path], 'id=:wid', ['wid' => (int)$c['id']]);
+                : null;
+            if ($path === null || strtolower(pathinfo($path, PATHINFO_EXTENSION)) !== 'docx') {
+                require_once BASE_PATH . '/core/regulation_gen.php';
+                $path = regulation_generate((int)$c['id']);
             }
-            header('Content-Type: application/pdf');
-            header('Content-Disposition: inline; filename="Polozhenie_' . $c['slug'] . '.pdf"');
+            $ext = strtolower(pathinfo($path, PATHINFO_EXTENSION));
+            if ($ext === 'docx') {
+                header('Content-Type: application/vnd.openxmlformats-officedocument.wordprocessingml.document');
+                header('Content-Disposition: attachment; filename="Polozhenie_' . $c['slug'] . '.docx"');
+            } else {
+                header('Content-Type: application/pdf');
+                header('Content-Disposition: inline; filename="Polozhenie_' . $c['slug'] . '.pdf"');
+            }
+            header('Content-Length: ' . (string) filesize($path));
             readfile($path);
             exit;
         } catch (\Throwable $e) {

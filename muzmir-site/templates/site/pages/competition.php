@@ -204,7 +204,7 @@ ob_start(); ?>
         <a class="btn btn--ghost btn--lg" href="<?= url('/competitions') ?>">Другие конкурсы</a>
       <?php endif; ?>
       <?php if (true): // Всегда доступно: если нет — генератор соберёт по эталону при первом запросе. ?>
-        <a class="btn btn--ghost btn--lg" href="<?= url('/competition/' . $c['slug'] . '/regulation.pdf') ?>" target="_blank" rel="noopener"><?= $ic['pdf'] ?> Скачать положение (PDF)</a>
+        <a class="btn btn--ghost btn--lg" href="<?= url('/competition/' . $c['slug'] . '/regulation.docx') ?>" target="_blank" rel="noopener"><?= $ic['pdf'] ?> Скачать положение</a>
       <?php endif; ?>
       <button class="btn btn--ghost btn--lg" type="button" data-share data-share-title="<?= h($c['name']) ?>" data-share-url="<?= h(url('/competition/' . $c['slug'])) ?>"><?= $ic['share'] ?> Поделиться</button>
     </div>
@@ -222,7 +222,7 @@ ob_start(); ?>
       <a class="comp-qchip" href="#compTabs" data-goto-tab="criteria">Как устроена оценка</a>
       <a class="comp-qchip" href="#sec-goals" data-goto-tab="about" data-goto-anchor="sec-goals">Цели и задачи</a>
       <a class="comp-qchip" href="#compTabs" data-goto-tab="participation">Награды</a>
-      <a class="comp-qchip" href="<?= url('/competition/' . $c['slug'] . '/regulation.pdf') ?>" target="_blank" rel="noopener">Положение</a>
+      <a class="comp-qchip" href="<?= url('/competition/' . $c['slug'] . '/regulation.docx') ?>" target="_blank" rel="noopener">Положение</a>
     </nav>
 
     <!-- Ключевые факты — инфографика -->
