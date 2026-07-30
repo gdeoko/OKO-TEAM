@@ -889,26 +889,10 @@
       });
     }
 
-    // Кнопки «Войти» (шапка + нижний appnav) открывают модалку вместо перехода.
-    $$('a[href$="/login"]').forEach(function (a) {
-      a.addEventListener('click', function (e) {
-        if (e.metaKey || e.ctrlKey || e.shiftKey || e.button) return; // не мешать открытию в новой вкладке
-        e.preventDefault();
-        open();
-      });
-    });
-    window.MuzmirAuth = { open: open, close: close };
-
-    // Первый визит гостя — показать один раз, не навязчиво.
-    if (!loggedIn) {
-      var seen = false;
-      try { seen = localStorage.getItem('muzmir-auth-seen') === '1'; } catch (e) {}
-      var path = location.pathname;
-      var onAuthPage = /\/(login|apply|cabinet|admin)(\/|$)/.test(path);
-      if (!seen && !onAuthPage) {
-        setTimeout(function () { if (!modal) open(); }, 3500);
-      }
-    }
+    // ВСПЛЫВАЮЩАЯ МОДАЛКА ВХОДА ОТКЛЮЧЕНА ПОЛНОСТЬЮ (по требованию).
+    // Все ссылки «Войти» ведут на отдельную страницу /login — никаких перехватов
+    // кликов и никакого авто-открытия попапа. open()/close() оставлены неиспользуемыми.
+    void open; void close;
   })();
 
   /* ---------- PWA ---------- */

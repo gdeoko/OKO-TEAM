@@ -1816,3 +1816,39 @@ h1,h2,h3,h4,.cc-title,.card h3,.comp-card h3,.rst-body b,.menu-tile-lbl,
 /* Когда открыта корзина наград — прячем нижнее меню (чтобы кнопка «Оплатить» была свободна) */
 body.mz-cart-open .appnav{display:none !important}
 body.mz-cart-open .shop-cart-fab{display:none !important}
+
+/* ══════════════════════════════════════════════════════════════════════════
+   APP-РЕЖИМ v5 — единый ЗАМЕТНЫЙ анимационный фон + вход без белой плашки/попапа
+   ══════════════════════════════════════════════════════════════════════════ */
+
+/* ПОЛНОСТЬЮ убиваем всплывающую модалку входа (создаётся динамически) */
+.auth-modal{display:none !important}
+
+/* Единый анимационный фон — ЯРЧЕ и равномернее на всех экранах, всегда fixed */
+.app-bg::before{
+  background:
+    radial-gradient(50% 42% at 15% 12%, rgba(232,194,90,.55), transparent 60%),
+    radial-gradient(46% 42% at 85% 22%, rgba(201,168,76,.48), transparent 62%),
+    radial-gradient(52% 46% at 50% 55%, rgba(212,175,90,.40), transparent 64%),
+    radial-gradient(50% 44% at 22% 88%, rgba(232,194,90,.50), transparent 62%),
+    radial-gradient(48% 44% at 82% 90%, rgba(201,168,76,.42), transparent 64%) !important;
+  filter:blur(46px) !important;opacity:1 !important;
+  animation:appbgAurora 26s ease-in-out infinite alternate !important}
+[data-theme="dark"] .app-bg::before{opacity:.68 !important}
+.app-bg::after{opacity:.10 !important}
+[data-theme="dark"] .app-bg::after{opacity:.12 !important}
+/* база фона — тёплый кремовый градиент, чтобы аврора красиво читалась */
+.app-bg{background:linear-gradient(165deg,#fff9ec 0%,#f7ecd0 55%,#f2e4c6 100%) !important}
+[data-theme="dark"] .app-bg{background:linear-gradient(165deg,#0f0b10 0%,#171019 55%,#1d1420 100%) !important}
+/* html/body прозрачные, чтобы fixed-фон просвечивал ВЕЗДЕ (не перекрывался белым) */
+html{background:transparent !important}
+body{background:transparent !important}
+
+/* Вход/регистрация — карточка СТЕКЛЯННАЯ (анимационный фон просвечивает, не белый блок) */
+.auth-page,.auth-page .section,.auth-page .container{background:transparent !important}
+.auth-shell,.auth-page .card.auth-shell{
+  background:color-mix(in srgb, #fffdf8 62%, transparent) !important;
+  backdrop-filter:blur(16px) saturate(1.15) !important;-webkit-backdrop-filter:blur(16px) saturate(1.15) !important;
+  border:1px solid rgba(201,168,76,.28) !important;
+  box-shadow:0 18px 46px rgba(139,111,31,.18) !important}
+[data-theme="dark"] .auth-shell{background:color-mix(in srgb,#1c1520 64%,transparent) !important;border-color:rgba(232,194,90,.22) !important}
