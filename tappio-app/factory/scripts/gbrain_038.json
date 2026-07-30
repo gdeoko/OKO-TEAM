@@ -25,16 +25,17 @@
   "big": "EVERY\nNAME",
   "q": [
    "elderly person smiling sharp mind"
-  ]
+  ],
+  "ai": "work/gbrain_038/cover_ai.png"
  },
  "segments": [
   {
    "id": "b1",
-   "text": "You just met them and the name is already gone."
+   "text": "Stop scrolling. You just met them and the name is already gone."
   },
   {
    "id": "b2",
-   "text": "It is not age. It is attention and encoding."
+   "text": "it's not age. it's attention and encoding."
   },
   {
    "id": "b3",
@@ -221,7 +222,7 @@
   "code": "FOCUS"
  },
  "caption": "USEFUL: Forgetting names isn't age — it's encoding. A 60-second test shows your memory score, and five-minute games train recall. Watch the number climb. Comment FOCUS for the app. #brainhealth #memory #focus #productivity #selfimprovement #mentalhealth #learning #focus #memory #binaural #brain",
- "yt_title": "Why you forget every name #shorts",
+ "yt_title": "7 Brain Exercises to Sharpen Your #shorts",
  "trend_keys": [
   "focus",
   "memory",
@@ -232,5 +233,18 @@
   "improve",
   "music"
  ],
- "content_type": "useful"
+ "content_type": "useful",
+ "comp_angle": {
+  "title": "7 Brain Exercises to Sharpen Your Mind",
+  "views": 3980873,
+  "channel": "Curiosity Code"
+ },
+ "virality": {
+  "score": 89,
+  "notes": [
+   "angle<-3980k",
+   "hook_boosted"
+  ],
+  "hook": "Stop scrolling. You just met them and the name is already gone."
+ }
 }

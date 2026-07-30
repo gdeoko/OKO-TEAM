@@ -24,7 +24,8 @@
   "big": "OLDER THAN\nYOU?",
   "q": [
    "memory old photos hands"
-  ]
+  ],
+  "ai": "work/gbrain_041/cover_ai.png"
  },
  "segments": [
   {
@@ -215,7 +216,7 @@
   "code": "FOCUS"
  },
  "caption": "Your brain has an age — speed, memory and focus set the number. One quick test estimates it, and daily training drops it. Most people score older than they think. Comment FOCUS for the app. #brainhealth #memory #focus #productivity #selfimprovement #mentalhealth #learning #test #binaural #focus #music",
- "yt_title": "Is your brain older than you are? #shorts",
+ "yt_title": "This Guy Can Teach You How #shorts",
  "trend_keys": [
   "test",
   "binaural",
@@ -226,5 +227,17 @@
   "improve",
   "beats"
  ],
- "content_type": "viral"
+ "content_type": "viral",
+ "comp_angle": {
+  "title": "This Guy Can Teach You How to Memorize Anything",
+  "views": 7509550,
+  "channel": "WIRED"
+ },
+ "virality": {
+  "score": 90,
+  "notes": [
+   "angle<-7509k"
+  ],
+  "hook": "Your brain has an age, just like your body."
+ }
 }

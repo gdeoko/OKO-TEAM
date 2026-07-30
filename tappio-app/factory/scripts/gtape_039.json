@@ -25,12 +25,13 @@
   "big": "WITHOUT\nA TAPE",
   "q": [
    "dining table room measure"
-  ]
+  ],
+  "ai": "work/gtape_039/cover_ai.png"
  },
  "segments": [
   {
    "id": "b1",
-   "text": "A rug, a TV, a shelf. Will it fit? Stop guessing."
+   "text": "Stop scrolling. A rug, a TV, a shelf. Will it fit? Stop guessing."
   },
   {
    "id": "b2",
@@ -206,7 +207,7 @@
   "code": "MEASURE"
  },
  "caption": "A rug, a TV, a shelf — will it fit? Point your phone, tap two points, and the length appears on the floor. Width, height, area — no tape, no helper. Comment MEASURE for the app. #diy #homedecor #interiordesign #measure #movingtips #renter #apartmenttherapy #reality #plan #app #measure 👉 Comment MEASURE for the link — link in bio.",
- "yt_title": "Measure any room without a tape #shorts",
+ "yt_title": "How Do I Use The iPhone #shorts",
  "trend_keys": [
   "reality",
   "plan",
@@ -217,5 +218,18 @@
   "floorplanner",
   "iphone"
  ],
- "content_type": "sales"
+ "content_type": "sales",
+ "comp_angle": {
+  "title": "How Do I Use The iPhone Measure App? How Accurate Is It?",
+  "views": 198437,
+  "channel": "Payette Forward"
+ },
+ "virality": {
+  "score": 89,
+  "notes": [
+   "angle<-198k",
+   "hook_boosted"
+  ],
+  "hook": "Stop scrolling. A rug, a TV, a shelf. Will it fit? Stop guessing."
+ }
 }
