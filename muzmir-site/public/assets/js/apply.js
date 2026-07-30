@@ -179,7 +179,8 @@
   function ageHint() {
     var hint = $('[data-age-hint]');
     if (!hint) return;
-    var age = ageFromDate($('#birth_date').value);
+    var bd = $('#birth_date'); // поля может не быть в форме — работаем без него
+    var age = bd ? ageFromDate(bd.value) : null;
     var cat = $('#age_category').value;
     if (age === null || !cat) { hint.textContent = ''; hint.style.color = ''; return; }
     var r = categoryRange(cat);
@@ -293,26 +294,26 @@
       return true;
     }
     if (step === 'user') {
+      // Обязательные: ФИО + возрастная категория (+ название коллектива, если коллектив).
+      // Поля birth_date в форме НЕТ — обращение к нему роняло валидацию у солиста.
       var group = $('input[name="is_group"]:checked').value === '1';
-      if (group) ok = markRequired($('#group_name'), !!$('#group_name').value.trim()) && ok;
+      if (group && $('#group_name')) ok = markRequired($('#group_name'), !!$('#group_name').value.trim()) && ok;
       ok = markRequired($('#full_name'), !!$('#full_name').value.trim()) && ok;
-      if (!group) ok = markRequired($('#birth_date'), !!$('#birth_date').value) && ok;
       ok = markRequired($('#age_category'), !!$('#age_category').value) && ok;
     }
     if (step === 'teacher') {
-      ok = markRequired($('#city'), !!$('#city').value.trim()) && ok;
+      // Педагог, учреждение и город — НЕобязательные (в диплом не идут, если пусто).
     }
     if (step === 'number') {
       ok = markRequired($('#nomination'), !!$('#nomination').value) && ok;
       var subF = $('#subgroupField');
-      if (subF.style.display !== 'none') ok = markRequired($('#subgroup'), !!$('#subgroup').value) && ok;
+      if (subF && subF.style.display !== 'none') ok = markRequired($('#subgroup'), !!$('#subgroup').value) && ok;
       ok = markRequired($('#formation'), !!$('#formation').value) && ok;
       ok = markRequired($('#work_title'), !!$('#work_title').value.trim()) && ok;
+      // Ссылка на конкурсный номер ОБЯЗАТЕЛЬНА и должна пройти проверку платформы.
       var vu = $('#video_url').value.trim();
-      if (vu) {
-        var r = checkPlatform(vu);
-        ok = markRequired($('#video_url'), r.state === 'ok') && ok;
-      }
+      var vr = vu ? checkPlatform(vu) : { state: 'bad' };
+      ok = markRequired($('#video_url'), !!vu && vr.state === 'ok') && ok;
     }
     if (step === 'contact') {
       ok = markRequired($('#email'), emailValid($('#email').value.trim())) && ok;
@@ -383,37 +384,18 @@
     if (totBox) totBox.innerHTML = 'Выбрано: <b>' + chosen.length + '</b> · <b>' + (total>0? total.toLocaleString('ru-RU')+' ₽' : (freeCount>0?'бесплатно':'0 ₽')) + '</b>';
   }
 
-  /* ---------- Согласие: положение + таймер 15 сек ---------- */
-  var timerStarted = false;
+  /* ---------- Согласие: 3 галочки сразу доступны, БЕЗ таймера ---------- */
   function setupConsent() {
     var chosen = $$('input[name="competition_ids[]"]:checked');
     var comp = chosen[0];
     var link = document.getElementById('regLink');
     if (link && comp) link.href = comp.getAttribute('data-reg') || CFG.agreement || '#';
-    if (link) link.addEventListener('click', startConsentTimer);
-    $('#agree_reg').addEventListener('change', refreshConsentBtn);
+    var reg = $('#agree_reg'), row = $('#agreeRegRow');
+    if (reg) { reg.disabled = false; reg.addEventListener('change', refreshConsentBtn); }
+    if (row) row.classList.remove('locked');
     $('#agree_pd').addEventListener('change', refreshConsentBtn);
     var arCb = $('#agree_rules');
     if (arCb) arCb.addEventListener('change', refreshConsentBtn);
-  }
-  function startConsentTimer() {
-    if (timerStarted) return;
-    timerStarted = true;
-    var left = (CFG.consentDelay || 15);
-    var badge = $('[data-timer]');
-    var cb = $('#agree_reg'), row = $('#agreeRegRow');
-    var iv = setInterval(function () {
-      left--;
-      if (badge) badge.textContent = left;
-      if (left <= 0) {
-        clearInterval(iv);
-        cb.disabled = false;
-        row.classList.remove('locked');
-        if (badge) badge.textContent = '0';
-        var note = document.querySelector('.consent-note');
-        if (note) note.innerHTML = 'Спасибо. Теперь отметьте согласие с условиями положения.';
-      }
-    }, 1000);
   }
   function refreshConsentBtn() {
     var ar = $('#agree_rules');
@@ -443,6 +425,7 @@
     try { raw = localStorage.getItem(DRAFT_KEY); } catch (e) { return; }
     if (!raw) return;
     var data; try { data = JSON.parse(raw); } catch (e) { return; }
+    var restored = 0;
     for (var name in data) {
       if (!data.hasOwnProperty(name) || !data[name]) continue;
       if (name === 'agree_reg' || name === 'agree_pd') continue; // согласие всегда заново
@@ -451,7 +434,12 @@
         if (el.type === 'radio') { if (el.value === data[name]) el.checked = true; }
         else if (el.type === 'checkbox') { el.checked = data[name] === '1'; }
         else el.value = data[name];
+        restored++;
       });
+    }
+    // Начатая заявка не пропадает: сообщаем, что продолжаем с места остановки.
+    if (restored > 2 && window.toast) {
+      setTimeout(function () { window.toast('Черновик заявки восстановлен — продолжайте с места остановки.', 'success'); }, 800);
     }
   }
   function clearDraft() { try { localStorage.removeItem(DRAFT_KEY); } catch (e) {} }
@@ -618,8 +606,9 @@
       });
     }
 
-    // Возраст ↔ категория
-    $('#birth_date').addEventListener('change', ageHint);
+    // Возраст ↔ категория (birth_date может отсутствовать в форме)
+    var bdEl = $('#birth_date');
+    if (bdEl) bdEl.addEventListener('change', ageHint);
     $('#age_category').addEventListener('change', ageHint);
 
     // Автосохранение

@@ -340,12 +340,16 @@ ob_start(); ?>
             <div class="hint">Как указать в дипломе руководителя. Можно оставить пустым.</div>
           </div>
           <div class="field ff">
-            <input type="text" id="institution" name="institution" placeholder=" " value="<?= h($prefill['institution']) ?>">
+            <input type="text" id="institution" name="institution" placeholder=" " list="dlInstitution" value="<?= h($prefill['institution']) ?>">
+            <?php $dlInst = all("SELECT DISTINCT institution FROM applications WHERE institution<>'' ORDER BY institution LIMIT 60"); ?>
+            <datalist id="dlInstitution"><?php foreach ($dlInst as $r): ?><option value="<?= h($r['institution']) ?>"><?php endforeach; ?></datalist>
             <label for="institution">Учреждение</label>
             <div class="hint">Например, детская школа искусств №1.</div>
           </div>
           <div class="field ff">
-            <input type="text" id="city" name="city" placeholder=" " required value="<?= h($prefill['city']) ?>">
+            <input type="text" id="city" name="city" placeholder=" " list="dlCity" value="<?= h($prefill['city']) ?>">
+            <?php $dlCity = all("SELECT DISTINCT city FROM applications WHERE city<>'' ORDER BY city LIMIT 80"); ?>
+            <datalist id="dlCity"><?php foreach ($dlCity as $r): ?><option value="<?= h($r['city']) ?>"><?php endforeach; ?></datalist>
             <label for="city">Населённый пункт</label>
             <div class="hint">Например, г. Москва.</div>
             <div class="err-msg">Укажите город или населённый пункт.</div>
@@ -409,7 +413,7 @@ ob_start(); ?>
             <div class="field ff">
               <input type="email" id="email" name="email" placeholder=" " required value="<?= h($prefill['email']) ?>">
               <label for="email">Электронная почта</label>
-              <div class="hint">На неё придут дипломы и результаты.</div>
+              <div class="hint">На электронную почту будут отправлены аттестационные результаты и наградные дипломы.</div>
               <div class="err-msg">Укажите корректную электронную почту.</div>
             </div>
             <div class="field ff">
@@ -420,8 +424,8 @@ ob_start(); ?>
           </div>
           <div class="field ff">
             <input type="text" id="address" name="address" placeholder=" " value="<?= h($prefill['address']) ?>">
-            <label for="address">Адрес доставки оригиналов</label>
-            <div class="hint">Нужен только для оригиналов наградных материалов. Дипломы приходят на почту.</div>
+            <label for="address">Адрес доставки (необязательно)</label>
+            <div class="hint">При оформлении оригиналов наград.</div>
           </div>
           <div class="field ff" style="max-width:240px">
             <input type="text" id="postal_index" name="postal_index" placeholder=" " inputmode="numeric" maxlength="6" value="<?= h($prefill['postal_index']) ?>">
@@ -444,13 +448,11 @@ ob_start(); ?>
           <div class="summary" id="applySummary"></div>
 
           <div class="consent-note">
-            Ознакомьтесь с положением конкурса.
-            <a href="#" target="_blank" rel="noopener" id="regLink" data-reg-link>Открыть положение</a>.
-            Отметка станет доступна через <span class="timer-badge" data-timer>15</span> секунд после открытия.
+            <a href="#" target="_blank" rel="noopener" id="regLink" data-reg-link>Открыть положение конкурса</a>
           </div>
 
-          <div class="consent-row locked" id="agreeRegRow">
-            <input type="checkbox" id="agree_reg" name="agree_reg" value="1" disabled>
+          <div class="consent-row" id="agreeRegRow">
+            <input type="checkbox" id="agree_reg" name="agree_reg" value="1">
             <label for="agree_reg">Я ознакомился с положением конкурса и принимаю его условия.</label>
           </div>
           <div class="consent-row">
