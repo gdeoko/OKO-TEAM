@@ -11070,6 +11070,63 @@ nav#tabs button.active, nav#tabs a.active, nav#tabs .on {
 .w2-card > * { max-width: 100% !important; }
 </style>
 
+
+<style id="hlb-v24">
+/* v24: NO EMPTY GAP between TG bar and app header
+   Rule: header padded ONLY by safe-area (not extra 60px).
+   Content flows directly under header without .screen padding-top. */
+
+:root {
+  --tg-top: env(safe-area-inset-top, 0px);
+}
+
+/* Remove screen padding-top — was creating empty gap */
+.screen, #screen-feed, #screen-chats, #screen-mini, #screen-wallet, #screen-profile,
+#screen-partner, #screen-tariffs, #screen-market, #screen-academy, #screen-admin,
+.hlb-app-view, .mini-app, [id^="ma-"], .app-screen {
+  padding-top: 0 !important;
+  padding-bottom: calc(env(safe-area-inset-bottom, 0px) + 84px) !important;
+}
+
+/* Header sits RIGHT under TG bar with minimal safe-area padding */
+.tv, header, .app-head, [class*="topbar"] {
+  padding-top: calc(env(safe-area-inset-top, 0px) + 4px) !important;
+  padding-bottom: 8px !important;
+  position: sticky !important;
+  top: 0 !important;
+  z-index: 55 !important;
+  margin-top: 0 !important;
+  background: rgba(10,5,0,.98) !important;
+  backdrop-filter: blur(12px) !important;
+  border-bottom: 1px solid rgba(255,149,0,.18) !important;
+}
+
+/* Mini-app open-view header: same rule (right under TG bar) */
+.hlb-av-top, .app-view-head, [class*="app-head"] {
+  padding-top: calc(env(safe-area-inset-top, 0px) + 4px) !important;
+  padding-bottom: 10px !important;
+  position: sticky !important;
+  top: 0 !important;
+  z-index: 60 !important;
+  margin-top: 0 !important;
+  background: rgba(10,5,0,.97) !important;
+  backdrop-filter: blur(16px) !important;
+}
+
+/* Sheets, modals, toasts, popups: top edge starts at safe-area (right under TG bar), not below */
+.sheet, [id^="sheet-"], .modal, [class*="modal"],
+.pp2-view, .pp-welcome, .app-toast, [class*="toast"]:not(.hlb-toast-bottom),
+[class*="notify"]:not(nav#tabs *), .hlb-toast, [class*="wal-live"],
+[class*="pp-welcome"], [id*="lesson"], [class*="lesson-toast"] {
+  top: calc(env(safe-area-inset-top, 0px) + 8px) !important;
+}
+/* But bottom sheets keep bottom position */
+.sheet[data-slide="up"], .sheet.slide-up, .sheet-bottom { top: auto !important; }
+
+/* Feed-tabs, chat-search: no extra top margin (they come right after header) */
+.feed-tabs { padding-top: 8px !important; padding-bottom: 8px !important; }
+</style>
+
 </body>
 </html>
 
