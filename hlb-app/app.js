@@ -45106,11 +45106,21 @@ if(typeof mpOpenPackages === 'function'){
      жёстко равна видимой области (visualViewport), а не 100dvh, который
      в Telegram-фуллскрине может считаться неверно. Работает и вне Telegram. */
   let _okoLastH = 0, _okoVhRaf = 0, _okoResizeOff = 0;
+  const _okoStart = (window.performance && performance.now) ? performance.now() : 0;
   function _okoApplyVh(){
     _okoVhRaf = 0;
     try{
       const h = Math.round((window.visualViewport && window.visualViewport.height) || window.innerHeight);
-      if(!h || h === _okoLastH) return;   // не трогаем DOM, если высота не изменилась — убирает лишние reflow/моргание
+      if(!h || h === _okoLastH) return;
+      /* v27.3 (корень «меню подпрыгивает / весь экран дёргается при клике»):
+         в Telegram-фуллскрине на Android событие viewportChanged/visualViewport.resize
+         летит на КАЖДОЕ касание, а высота при этом колеблется на пару пикселей.
+         Раньше мы на каждое такое колебание переписывали высоту html/body/#app
+         → реф­лоу всего приложения → подпрыгивание меню и дёрганье экрана.
+         Теперь после стартового «устаканивания» (2.5с) переписываем высоту ТОЛЬКО
+         при крупном изменении (клавиатура/поворот, ≥100px), мелкие колебания игнорим. */
+      const settling = _okoStart && (performance.now() - _okoStart) < 2500;
+      if(_okoLastH && !settling && Math.abs(h - _okoLastH) < 100) return;
       _okoLastH = h;
       document.documentElement.style.height = h + 'px';
       document.body.style.height = h + 'px';
@@ -45122,12 +45132,9 @@ if(typeof mpOpenPackages === 'function'){
      раньше каждый писал высоту в 3 элемента => лаг/дёрганье. Теперь один пересчёт за кадр.
      На время всплеска ресайза ставим декоративные анимации на паузу (класс перф-слоя). */
   function okoSyncVh(){
-    try{
-      const root = document.documentElement;
-      if(root && !root.classList.contains('oko-scrolling')) root.classList.add('oko-scrolling');
-      if(_okoResizeOff) clearTimeout(_okoResizeOff);
-      _okoResizeOff = setTimeout(function(){ _okoResizeOff = 0; try{ document.documentElement.classList.remove('oko-scrolling'); }catch(e){} }, 180);
-    }catch(e){}
+    /* v27.3: НЕ вешаем oko-scrolling на viewportChanged/resize — в TG-фуллскрине это
+       событие летит на каждый тап, и пауза анимаций (180мс) давала видимый хитч при
+       каждом клике по меню. Пауза анимаций остаётся только на реальный скролл (wm-слой). */
     if(_okoVhRaf) return;
     _okoVhRaf = (window.requestAnimationFrame || window.setTimeout)(_okoApplyVh, 16);
   }
