@@ -33111,6 +33111,10 @@ try{
 /* Реордер табов: «Рекомендации» — первой кнопкой, «Подписки» — второй.
    Форс-выбор «Рекомендации» при любом заходе на экран ленты (TikTok-по-умолчанию). */
 function faReorderTabs(){
+  /* v26 (правка Даниэля): НЕ трогаем ряд табов. Статическая разметка index.html —
+     Подписки, Рекомендации, Ролики, иконка «обновить» — в точном порядке; ничего
+     не удаляем и не переставляем. Раньше здесь стирались «Ролики» и refresh. */
+  return;
   try{
     const tabs = document.querySelector('#screen-feed .feed-tabs');
     if(!tabs || tabs.dataset.faReordered === '1') return;
@@ -33127,6 +33131,10 @@ function faReorderTabs(){
   }catch(e){}
 }
 function faForceRec(){
+  /* v26 (правка Даниэля): НЕ форсим «Рекомендации» и НЕ реранкуем ленту при заходе.
+     Лента по умолчанию — Подписки (первый таб), переключение только по клику юзера.
+     Это убирает мерцание/чёрные вспышки и уважает порядок табов. */
+  return;
   try{
     faReorderTabs();
     const tabs = document.querySelector('#screen-feed .feed-tabs');
@@ -33146,8 +33154,13 @@ try{
   if(typeof showTab === 'function'){
     const _prevShowTabRec = showTab;
     showTab = function(t){
+      /* фикс 30.07: форс «Рекомендаций» (переранжирование + новый seed → ре-рендер ленты)
+         запускаем ТОЛЬКО когда реально переходим на ленту с другого таба, а не при
+         повторном клике по уже активной ленте — иначе лента моргает/дёргается на ре-тапе. */
+      var _feedWasActive = false;
+      try{ var _fsw = document.getElementById('screen-feed'); _feedWasActive = !!(_fsw && _fsw.classList.contains('active')); }catch(e){}
       const r = _prevShowTabRec.apply(this, arguments);
-      try{ if(t === 'feed') setTimeout(faForceRec, 20); }catch(e){}
+      try{ if(t === 'feed' && !_feedWasActive) setTimeout(faForceRec, 20); }catch(e){}
       return r;
     };
   }
@@ -33917,7 +33930,7 @@ const DC_CHATS_X_GROUPS = [
      {in:1, who:'Аня (дизайн)', t:'10:22', kind:'text', body:'Отдаю ветку с новой обложкой кошелька и иконками биржи. Дизайн-ревью нужно от Артёма до обеда, чтобы ушло в релиз.'},
      {in:0, t:'10:38', kind:'text', body:'Смотрю сейчас, дам замечания в фигме до 12:00. Один вопрос уже есть: почему на биржевой иконке лайм на 40% прозрачности? В бренде мы не разводим лайм.', reacts:{thumb:2}},
      {in:1, who:'Аня (дизайн)', t:'10:45', kind:'text', body:'Замерила, чтобы в списке миниатюр не сливалась с фоном тёмной темы. Готова вернуть 100% и добавить обводку 1 пт. Так лучше?'},
-     {in:1, who:'Лена (SMM)', t:'11:20', kind:'text', body:'Кинула в @okonews пост про кошелёк и игры. Уже +240 подписчиков за час, репостов 34. Работает лучше чем прошлые анонсы.', reacts:{heart:4}},
+     {in:1, who:'Лена (SMM)', t:'11:20', kind:'text', body:'Кинула в @gdebrius пост про кошелёк и игры. Уже +240 подписчиков за час, репостов 34. Работает лучше чем прошлые анонсы.', reacts:{heart:4}},
      {in:1, who:'Марк (продажи)', t:'12:14', kind:'text', body:'Закрыли Луневу на 3 месяца контент-завода, договор с юристом, NDA готов. По цифрам — плюс 144 000 ₽ MRR, апсейл возможен через месяц.'},
      {in:0, t:'12:28', kind:'text', body:'Красиво. Марк — с новой сделки премия +8%, как договорились. Аня — обводка ок, релизим сегодня в 20:00, релиз-ноутс на мне.', reacts:{fire:6}},
      {in:1, who:'Артём (CTO)', t:'14:11', kind:'text', body:'Готовлю ветку под релиз. Прошу выключить фиче-флаг «bridge-v2» до понедельника, там ещё регресс на iOS 17.4.'},
@@ -38238,7 +38251,7 @@ function psSocSafeIco(v){
 /* ---------- persist ---------- */
 const PS_SOC_DEF_LINKS = [
   {id:'l1', ic:'globe',      t:'Мой сайт-визитка',    u:'hlbapp.ru/@gdebrius'},
-  {id:'l2', ic:'megaphone',  t:'Основной Telegram',   u:'t.me/okoappbot'},
+  {id:'l2', ic:'megaphone',  t:'Основной Telegram',   u:'t.me/hlbapp_bot'},
   {id:'l3', ic:'briefcase',  t:'Кейсы и портфолио',   u:'hlbapp.ru/@gdebrius/cases'},
 ];
 const PS_SOC_DEF_SCHED = [
@@ -39428,7 +39441,7 @@ function psSocInjectEntry(){
 
     /* футер */
     const foot = '<div class="pp2-foot"><b>ХЛБ</b> · <span id="pp2VerLb">сборка</span>'
-      + '<br><span>Сделано командой ХЛБ — @okoappbot</span></div>';
+      + '<br><span>Сделано командой ХЛБ — @hlbapp_bot</span></div>';
 
     return pp2Group(g1) + pp2Group(g2) + pp2Group(g3) + pp2Group(g4) + logout + foot;
   }
@@ -39704,7 +39717,7 @@ function psSocInjectEntry(){
         }
       }catch(e){}
     }
-    T('Свяжись с @okoappbot в Telegram');
+    T('Свяжись с @hlbapp_bot в Telegram');
   };
   window.pp2FAQ = function(){ T('FAQ скоро появится'); };
   window.pp2Bug = function(){ T('Спасибо — сигнал ушёл команде'); };
@@ -39725,8 +39738,8 @@ function psSocInjectEntry(){
     const rows = [
       pp2Row({ic:'globe', tone:'teal', t:'Сайт hlbapp.ru',
               s:'Открыть в браузере', onclick:"window.open('https://hlbapp.ru','_blank')"}),
-      pp2Row({ic:'megaphone', tone:'blue', t:'Telegram @okoappbot',
-              s:'Канал и бот', onclick:"window.open('https://t.me/okoappbot','_blank')"}),
+      pp2Row({ic:'megaphone', tone:'blue', t:'Telegram @hlbapp_bot',
+              s:'Канал и бот', onclick:"window.open('https://t.me/hlbapp_bot','_blank')"}),
       pp2Row({ic:'file', tone:'gray', t:'Правовые документы',
               s:'Оферта, политика, лицензии', onclick:'pp2OpenDocs()'}),
     ];
@@ -41688,7 +41701,7 @@ function st2LinkTg(err){
   }
   st2Prompt({
     ico:'send', title:'Привязать Telegram', err: err,
-    note:'Укажи @ник в Telegram — привяжем аккаунт после подтверждения через бота @okoappbot.',
+    note:'Укажи @ник в Telegram — привяжем аккаунт после подтверждения через бота @hlbapp_bot.',
     ph:'@nickname', saveLabel:'Привязать',
     save(v){
       v = v.replace(/^@/,'').trim();
@@ -45079,7 +45092,7 @@ if(typeof mpOpenPackages === 'function'){
 })();
 
 /* ===== module: tg-webapp ===== */
-/* ===== TG-WEBAPP: интеграция с Telegram Mini App (@okoappbot) =====
+/* ===== TG-WEBAPP: интеграция с Telegram Mini App (@hlbapp_bot) =====
    Скрипт telegram-web-app.js подгружается динамически и опционально:
    вне Telegram (или офлайн) приложение работает как обычно.
    Режим: FULLSCREEN (Bot API 8.0) + учёт safe-area, чтобы шапка
@@ -45136,6 +45149,11 @@ if(typeof mpOpenPackages === 'function'){
         app.style.paddingBottom = '0px';
       }
       try{ document.documentElement.style.setProperty('--hlb-safe-bottom', bottom + 'px'); }catch(_){}
+      /* v26: верхний инсет TG-бара -> CSS-переменная. Все fullscreen-оверлеи ВНЕ #app
+         (edit-profile, поиск, уведомления, админка, звонок, сторис, mini-app view,
+         тарифы, канал, wallet-подстраницы) в fullscreen заезжают под нативный бар TG.
+         Через var(--hlb-safe-top) их шапки прижимаются вплотную под бар — единое правило высоты. */
+      try{ document.documentElement.style.setProperty('--hlb-safe-top', top + 'px'); }catch(_){}
       ['authScreen','onboard','splash'].forEach(id=>{
         const el = document.getElementById(id);
         if(el) el.style.paddingTop = top + 'px';
@@ -53400,6 +53418,18 @@ window.chCompose = chCompose; window.chLessonDraft = chLessonDraft;
     if(typeof window.showTab === 'function'){
       const orig = window.showTab;
       window.showTab = function(t){
+        /* ГЛОБАЛЬНЫЙ GUARD (фикс моргания/дёргания 30.07): если таб уже активен —
+           НЕ запускаем всю цепочку обёрток (renderFeed/renderWallet/faForceRec/
+           adsRender/renderMyProfile/ppRender и т.п.), только лёгкая уборка sheet'ов,
+           как в ядре showTab. Убирает повторную перерисовку по клику на текущий таб. */
+        try{
+          var _scg = document.getElementById('screen-'+t);
+          if(_scg && _scg.classList.contains('active')){
+            try{ if(typeof closeSheet==='function') closeSheet(); }catch(e){}
+            try{ var _mmg=document.getElementById('msgMenu'); if(_mmg && _mmg.classList.contains('open') && typeof closeMsgMenu==='function') closeMsgMenu(); }catch(e){}
+            return;
+          }
+        }catch(e){}
         const r = orig.apply(this, arguments);
         if(t === 'partner') setTimeout(tick, 300);
         return r;

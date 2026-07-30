@@ -1467,7 +1467,7 @@ button:focus-visible,a:focus-visible,input:focus-visible,textarea:focus-visible,
 <!-- ============ ХЛБ LAZY BUNDLE LOADER ============ -->
 <link rel="stylesheet" href="app.css" media="print" onload="this.media='all'">
 <noscript><link rel="stylesheet" href="app.css"></noscript>
-<script defer src="app.js"></script>
+<script defer src="app.js?v=27"></script>
 <script>
 /* Обёртки над встроенными в base.html функциями — для авто-трека page_view / share.
    showTab существует в inline-скрипте base.html, поэтому оборачиваем по мере
@@ -1749,7 +1749,7 @@ button:focus-visible,a:focus-visible,input:focus-visible,textarea:focus-visible,
       <div class="feed-tabs">
         <button class="on" onclick="feedTab(this,'sub')">Подписки</button>
         <button onclick="feedTab(this,'rec')">Рекомендации</button>
-        <button onclick="if(typeof faReelsOpenFirst==='function'){faReelsOpenFirst()}else if(typeof toast==='function'){toast('Клипы загружаются')}" title="Клипы" aria-label="Клипы"><svg class="i"><use href="#i-circle-play"/></svg>Клипы</button>
+        <button onclick="if(typeof faReelsOpenFirst==='function'){faReelsOpenFirst()}else if(typeof toast==='function'){toast('Ролики загружаются')}" title="Ролики" aria-label="Ролики"><svg class="i"><use href="#i-circle-play"/></svg>Ролики</button>
         <button class="ft-refresh" onclick="renderFeed(curFeedKind||'sub');if(typeof toast==='function')toast('Лента обновлена')" title="Обновить" aria-label="Обновить"><svg class="i"><use href="#i-refresh"/></svg></button>
       </div>
       <div id="feedList"></div>
@@ -3732,6 +3732,16 @@ try{ applyTheme(localStorage.getItem('hlb-theme')||'dark'); }catch(e){}
 
 /* ================= ИКОНКА-ХЕЛПЕР ================= */
 const I = (n,cls='') => `<svg class="i ${cls}"><use href="#i-${n}"/></svg>`;
+/* Превью чат-листа не рендерит фирменные эмодзи-шорткоды (:oko-KEY:/:hlb-KEY:)
+   и в тексте торчит сырой код. Вырезаем шорткоды из превью; если после этого
+   ничего не осталось — показываем «Стикер». (в бабблах они рендерятся в SVG). */
+function emShortStrip(t){
+  if(typeof t!=='string' || t.indexOf(':')<0) return t;
+  var out = t.replace(/:(?:oko|hlb)-[a-z0-9-]+:/gi,'').replace(/\s{2,}/g,' ').trim();
+  if(!out) return 'Стикер';
+  return out;
+}
+try{ window.emShortStrip = emShortStrip; }catch(e){}
 const WAVE = seed => { // детерминированная волна голосового
   let h=''; for(let k=0;k<24;k++){ const v=6+((seed*31+k*17)%19); h+=`<i style="height:${v}px"></i>`; } return h;
 };
@@ -3954,7 +3964,7 @@ function renderChatList(filter=''){
         <div class="ci-ava">${avaHtml(c)}${(c.kind==='direct' && c.online)?'<span class="ci-online" title="в сети"></span>':''}</div>
         <div class="meta">
           <div class="row1"><span class="name">${c.cid?'<span class="live-dot" title="живой чат"></span>':''}${c.kindIcon?I(c.kindIcon):''}<span class="ci-txt">${c.name}</span>${c.verified?'<svg class="i" style="width:13px;height:13px;color:#FF9500;flex:0 0 auto"><use href="#i-check"/></svg>':''}</span><span class="time">${c.time}</span></div>
-          <div class="row1"><span class="preview">${pi?I(pi):''}<span class="ci-txt">${c.preview}</span></span>${c.unread?`<span class="badge">${c.unread}</span>`:''}</div>
+          <div class="row1"><span class="preview">${pi?I(pi):''}<span class="ci-txt">${emShortStrip(c.preview)}</span></span>${c.unread?`<span class="badge">${c.unread}</span>`:''}</div>
         </div>
       </div>`;
     }).join('');
@@ -4245,7 +4255,7 @@ const ADMIN = {
   flags: [
     {t:'Контент-завод', d:'Мини-апп конвейера роликов (Business/Scale)', on:true},
     {t:'Видео-премодератор ХЛБ', d:'Реальный анализ загруженных роликов', on:false},
-    {t:'Telegram Login', d:'Вход через @okoappbot initData', on:false},
+    {t:'Telegram Login', d:'Вход через @hlbapp_bot initData', on:false},
     {t:'Оплата Lava.top', d:'Вебхуки → мгновенная активация тарифа', on:false},
     {t:'Звонки LiveKit', d:'Аудио/видео 1-на-1 и групповые', on:false},
   ],
@@ -10308,6 +10318,53 @@ nav#tabs .nav-logo span{ color:#fff !important; font-weight:900 !important }
 
 
 
+<style id="hlb-v26">
+/* ============================================================
+   v26 — ЕДИНОЕ ПРАВИЛО ВЫСОТЫ ДЛЯ ВСЕХ ВНУТРЕННИХ ЭКРАНОВ
+   Корень бага: app.js вызывает tg.requestFullscreen(); #app пэддится
+   JS-ом (applySafeArea), но ВСЕ fixed-оверлеи ВНЕ #app (mini-app view,
+   тарифы, канал, редактор профиля, поиск, уведомления, админка, звонок,
+   сторис, подстраницы кошелька) в fullscreen заезжают ПОД нативный бар TG.
+   app.js теперь выставляет --hlb-safe-top = высота бара TG; прижимаем ей
+   шапки всех оверлеев вплотную под бар — как на корневых вкладках.
+   ============================================================ */
+:root{ --hlb-safe-top: env(safe-area-inset-top, 0px); }
+
+.hlb-av-top,
+#hlbTariffsScreen .head,
+.hlb-cv-top,
+.ep-head,
+.sv-head,
+.search-head,
+.wal-stmt-bar,
+.w2-bar{
+  padding-top: calc(var(--hlb-safe-top, env(safe-area-inset-top,0px)) + 8px) !important;
+}
+
+/* Оверлеи с верхним отступом на самом контейнере */
+#callScreen{ padding-top: calc(var(--hlb-safe-top, env(safe-area-inset-top,0px)) + 44px) !important; }
+
+/* Абсолютно-позиционированные верхние элементы */
+#storyViewer .sv-top{ top: calc(var(--hlb-safe-top, env(safe-area-inset-top,0px)) + 14px) !important; }
+.call-self{ top: calc(var(--hlb-safe-top, env(safe-area-inset-top,0px)) + 14px) !important; }
+#authScreen .hlb-skip,
+.ob-skip{ top: calc(var(--hlb-safe-top, env(safe-area-inset-top,0px)) + 12px) !important; }
+
+/* ---- Feed-tabs: строго ОДИН ряд — Подписки, Рекомендации, Ролики + иконка обновить ---- */
+#screen-feed .feed-tabs{ display:flex !important; flex-wrap:nowrap !important; justify-content:flex-start !important; align-items:center !important; gap:5px !important; padding:12px 12px 6px !important; overflow:visible !important; }
+#screen-feed .feed-tabs button{ flex:0 0 auto !important; font-size:11.5px !important; padding:6px 10px !important; white-space:nowrap !important; display:inline-flex !important; align-items:center !important; gap:4px !important; }
+#screen-feed .feed-tabs button svg.i{ width:14px !important; height:14px !important; }
+#screen-feed .feed-tabs .ft-refresh{ margin-left:auto !important; padding:6px 8px !important; }
+#screen-feed .feed-tabs .ft-refresh svg.i{ width:15px !important; height:15px !important; }
+
+/* ---- Адаптация текста: не рвать слова криво, не обрезать «не до конца» ---- */
+*{ overflow-wrap:break-word; }
+/* денежные суммы/крупные цифры — не переносить по разрядам, ровные моноширинные цифры */
+.wal-balance, .w2-balance, .w2-acc-sum, .amount, .num,
+[class*="-amount"], [class*="balance"], [class*="-sum"]{
+  white-space:nowrap; font-variant-numeric:tabular-nums;
+}
+</style>
 </body>
 </html>
 
