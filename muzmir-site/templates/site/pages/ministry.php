@@ -213,14 +213,14 @@ ob_start(); ?>
       <p class="eyebrow">Информационная поддержка</p>
       <h2>Поддержка министерства культуры и образования</h2>
       <div class="gold-rule"></div>
-      <p class="ms-lead"><strong>При информационной поддержке Министерств культуры и образования субъектов РФ и портала «PRO.Культура.РФ».</strong> Ниже — официальные письма региональных ведомств.</p>
+      <p class="ms-lead"><strong>При информационной поддержке Министерств культуры и образования субъектов РФ и портала «Про.Культура.РФ».</strong> Ниже — официальные письма региональных ведомств.</p>
     </div>
 
     <div class="partners reveal" style="margin-top:30px">
       <?php foreach ([
           ['emblem_minkultury_rf', 'Министерства культуры субъектов РФ'],
           ['emblem_minobrazovaniya', 'Министерства образования субъектов РФ'],
-          ['prokultura_full_horizontal', 'PRO.Культура.РФ'],
+          ['prokultura_full_horizontal', 'Про.Культура.РФ'],
           ['emblem_roskomnadzor', 'Роскомнадзор'],
       ] as [$img, $alt]): ?>
         <img src="<?= asset('img/' . $img . '.webp') ?>" alt="<?= h($alt) ?>" title="<?= h($alt) ?>" loading="lazy">

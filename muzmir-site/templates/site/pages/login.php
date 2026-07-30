@@ -78,7 +78,7 @@ ob_start(); ?>
         <input type="hidden" name="next" value="<?= h($next) ?>">
         <div class="field">
           <label for="email">Электронная почта</label>
-          <input type="email" id="email" name="email" value="<?= h($email) ?>" placeholder="you@example.ru" autocomplete="email" inputmode="email" required>
+          <input type="email" id="email" name="email" value="<?= h($email) ?>" placeholder="ваша@почта.рф" autocomplete="email" inputmode="email" required>
         </div>
         <div class="field" data-pass-field>
           <label for="password">Пароль</label>

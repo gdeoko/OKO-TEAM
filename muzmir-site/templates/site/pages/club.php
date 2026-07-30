@@ -162,7 +162,7 @@ ob_start(); ?>
         </div>
         <div class="field">
           <label for="cj_email">Электронная почта</label>
-          <input type="email" id="cj_email" name="email" value="<?= h($u['email'] ?? '') ?>" placeholder="you@example.ru" required>
+          <input type="email" id="cj_email" name="email" value="<?= h($u['email'] ?? '') ?>" placeholder="ваша@почта.рф" required>
         </div>
         <div class="field">
           <label for="cj_phone">Телефон</label>

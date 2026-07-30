@@ -90,7 +90,7 @@ ob_start(); ?>
       <ul class="hero-trust" aria-label="Правовая основа и поддержка">
         <li><span class="hero-trust-ic"><?= $icons['shield'] ?></span>Роскомнадзор № 094084</li>
         <li><span class="hero-trust-ic"><?= $icons['gov'] ?></span>При поддержке Минкультуры</li>
-        <li><span class="hero-trust-ic"><?= $icons['globe'] ?></span>Портал «PRO.Культура.РФ»</li>
+        <li><span class="hero-trust-ic"><?= $icons['globe'] ?></span>Портал «Про.Культура.РФ»</li>
       </ul>
       <div class="hero-eq" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i></div>
     </div>

@@ -126,7 +126,6 @@ ob_start(); ?>
               <span class="cr-label">Мы в социальных сетях</span>
               <div class="contact-social">
                 <a href="<?= h(cfgv('org_vk')) ?>" target="_blank" rel="noopener"><?= $ico['vk'] ?><span>ВКонтакте</span></a>
-                <a href="<?= h(cfgv('org_tg_channel')) ?>" target="_blank" rel="noopener"><?= $ico['tg'] ?><span>Telegram</span></a>
               </div>
             </div>
           </li>

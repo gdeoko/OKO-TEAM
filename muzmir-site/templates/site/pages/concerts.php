@@ -1,5 +1,5 @@
 <?php
-/** Онлайн-гала-концерты: премиум-видеогалерея (RuTube), фильтры по категориям, привязка к PRO.Культура.РФ. */
+/** Онлайн-гала-концерты: премиум-видеогалерея (RuTube), фильтры по категориям, привязка к Про.Культура.РФ. */
 $concerts = all("SELECT * FROM concerts ORDER BY sort DESC, date DESC");
 $categories = [];
 $catCounts = [];
@@ -113,7 +113,7 @@ ob_start(); ?>
     </div>
     <div class="concert-lead reveal">
       <p style="color:var(--text-dim);margin:0">Записи гала-концертов, творческих вечеров и концертных программ Культурного центра «Музыкальный Мир» - лауреаты и дипломанты наших конкурсов на одной сцене.</p>
-      <div class="concert-support"><?= $icoInfo ?><span>Мероприятия проходят при информационной поддержке государственного портала «PRO.Культура.РФ».</span></div>
+      <div class="concert-support"><?= $icoInfo ?><span>Мероприятия проходят при информационной поддержке государственного портала «Про.Культура.РФ».</span></div>
     </div>
   </div>
 </section>
@@ -213,7 +213,7 @@ ob_start(); ?>
     <div class="reveal">
       <div class="concert-empty"><span style="width:34px;height:34px"><?= $icoSoon ?></span></div>
       <h2>Скоро</h2>
-      <p style="color:var(--muted)">Видеозаписи гала-концертов и творческих вечеров появятся здесь в ближайшее время. Анонсы публикуются во «ВКонтакте» и на портале «PRO.Культура.РФ».</p>
+      <p style="color:var(--muted)">Видеозаписи гала-концертов и творческих вечеров появятся здесь в ближайшее время. Анонсы публикуются во «ВКонтакте» и на портале «Про.Культура.РФ».</p>
       <div style="display:flex;gap:12px;justify-content:center;flex-wrap:wrap;margin-top:6px">
         <a class="btn btn--primary" href="<?= h(cfgv('org_vk')) ?>" target="_blank" rel="noopener">Сообщество во «ВКонтакте»</a>
         <a class="btn btn--ghost" href="<?= url('/') ?>">На главную</a>

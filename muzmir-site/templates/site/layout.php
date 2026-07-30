@@ -9,7 +9,7 @@ $partners = [
   ['emblem_minkultury_rf','Минкультуры РФ','https://culture.gov.ru'],
   ['emblem_minobrazovaniya','Минобрнауки РФ','https://minobrnauki.gov.ru'],
   ['emblem_roskomnadzor','Роскомнадзор','https://rkn.gov.ru'],
-  ['prokultura_full_horizontal','PROКультура.РФ','https://pro.culture.ru'],
+  ['prokultura_full_horizontal','Про.Культура.РФ','https://pro.culture.ru'],
   ['natsproekty_kultura','Нацпроекты «Культура»','https://национальныепроекты.рф'],
 ];
 $u = current_user();
@@ -188,8 +188,8 @@ html body{padding-top:0 !important}
   </div>
 </nav>
 
-<a class="chat-fab" id="chatFab" href="https://t.me/kc_muz_mir_bot" target="_blank" rel="noopener" aria-label="Поддержка в Telegram" title="Написать в Telegram-бот">
-  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 2 11 13M22 2l-7 20-4-9-9-4z"/></svg>
+<a class="chat-fab" id="chatFab" href="<?= h(cfgv('org_vk')) ?>" target="_blank" rel="noopener" aria-label="Мы во ВКонтакте" title="Написать нам во ВКонтакте">
+  <svg viewBox="0 0 24 24" fill="currentColor"><path d="M13.2 17.4c-5.5 0-8.9-3.8-9-10.1h2.8c.1 4.6 2.2 6.6 3.8 7V7.3h2.6v4c1.6-.2 3.3-2 3.9-4h2.6c-.5 2.5-2.2 4.3-3.4 5 1.2.6 3.2 2.2 3.9 5.1h-2.9c-.6-1.9-2.1-3.4-4.1-3.6v3.6h-.2z"/></svg>
 </a>
 
 <!-- Радио «Классика» — видимый мини-плеер (управляет фоновой музыкой) -->
@@ -226,7 +226,7 @@ html body{padding-top:0 !important}
       'streetAddress'   => $street !== '' ? $street : 'ул. Солянка, д.14, стр.7',
       'addressCountry'  => 'RU',
     ],
-    'sameAs'     => array_values(array_filter([cfgv('org_vk'), cfgv('org_tg_channel')])),
+    'sameAs'     => array_values(array_filter([cfgv('org_vk')])),
   ];
 ?>
 <script type="application/ld+json"><?= json_encode($org_ld, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES) ?></script>
@@ -357,33 +357,5 @@ if('serviceWorker' in navigator){
 <script src="<?= asset('js/spa.js') ?>" defer></script>
 <script src="<?= asset('js/motion.js') ?>" defer></script>
 <script src="<?= asset('js/funnel.js') ?>" defer></script>
-<?php if ($inTg): ?>
-<!-- Telegram Mini App: тот же сайт открывается нативно в боте (автологин, тема, expand, back). -->
-<script>
-(function(){
-  document.documentElement.classList.add('in-tg');
-  try{ document.cookie = 'mz_tg=1; path=/; max-age=86400; samesite=lax'; }catch(e){}
-  function init(){
-    var tg = window.Telegram && window.Telegram.WebApp; if(!tg) return;
-    try{ tg.ready(); tg.expand && tg.expand(); }catch(e){}
-    // Тема — светлая по умолчанию всегда (не подхватываем TG dark-scheme).
-    try{ if(!localStorage.getItem('muzmir-theme')){ document.documentElement.dataset.theme='light'; localStorage.setItem('muzmir-theme','light'); } }catch(e){}
-    // Кнопка «назад» Telegram
-    try{ if(tg.BackButton){ if(location.pathname!=='/' ) tg.BackButton.show(); else tg.BackButton.hide();
-      tg.BackButton.onClick(function(){ if(history.length>1) history.back(); else { location.href='/?tg=1'; } }); } }catch(e){}
-    // Автологин по initData (один раз за запуск), если не авторизован
-    try{
-      if(tg.initData && !document.body.classList.contains('is-auth') && !sessionStorage.getItem('mz_tg_auth')){
-        sessionStorage.setItem('mz_tg_auth','1');
-        fetch('/api/v1/tma_auth',{method:'POST',headers:{'Content-Type':'application/x-www-form-urlencoded'},body:'initData='+encodeURIComponent(tg.initData)})
-          .then(function(r){return r.json();}).then(function(d){ if(d&&d.ok){ location.reload(); } }).catch(function(){});
-      }
-    }catch(e){}
-  }
-  if(window.Telegram && window.Telegram.WebApp){ init(); }
-  else { var s=document.createElement('script'); s.src='https://telegram.org/js/telegram-web-app.js'; s.async=true; s.onload=init; document.head.appendChild(s); }
-})();
-</script>
-<?php endif; ?>
 </body>
 </html>

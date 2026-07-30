@@ -57,8 +57,6 @@
         '<div class="share-panel" style="margin-top:6px">' +
           '<a class="share-btn share-btn--vk" target="_blank" rel="noopener" href="https://vk.com/share.php?url=' + link + '&title=' + txt + '">' +
             '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M13.2 17.4c-5.5 0-8.9-3.8-9-10.1h2.8c.1 4.6 2.2 6.6 3.8 7V7.3h2.6v4c1.6-.2 3.3-2 3.9-4h2.6c-.5 2.5-2.2 4.3-3.4 5 1.2.6 3.2 2.2 3.9 5.1h-2.9c-.6-1.9-2.1-3.4-4.1-3.6v3.6h-.2z"/></svg>ВКонтакте</a>' +
-          '<a class="share-btn share-btn--tg" target="_blank" rel="noopener" href="https://t.me/share/url?url=' + link + '&text=' + txt + '">' +
-            '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M22 4L2 12l6 2 2 6 4-4 6 4z"/></svg>Telegram</a>' +
           '<a class="share-btn share-btn--wa" target="_blank" rel="noopener" href="https://wa.me/?text=' + txt + '%20' + link + '">' +
             '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M20 3.5C18 1.5 15.2.4 12.3.4 6.8.4 2.3 4.9 2.3 10.4c0 1.8.5 3.5 1.3 5L2.2 20l4.9-1.3c1.4.8 3 1.2 4.7 1.2h.4c5.5 0 10-4.5 10-10 0-2.7-1-5.2-2.9-7.1zm-7.7 15.4c-1.4 0-2.9-.4-4.1-1.1l-.3-.2-3 .8.8-2.9-.2-.3c-.8-1.2-1.2-2.7-1.2-4.1 0-4.4 3.6-8 8-8 2.2 0 4.2.9 5.7 2.4s2.3 3.5 2.3 5.7c0 4.3-3.6 7.7-8 7.7z"/></svg>WhatsApp</a>' +
           '<button type="button" class="share-btn share-btn--copy" data-copy>' +

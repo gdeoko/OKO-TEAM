@@ -255,10 +255,10 @@ ob_start(); ?>
     <div class="reveal">
       <div class="blog-soon"><?= $svg['soon'] ?></div>
       <h2>Скоро здесь появятся статьи</h2>
-      <p style="color:var(--text-dim)">Мы готовим блог центра: гиды по конкурсам, истории лауреатов, разборы номинаций и рассказы о композиторах. А пока - следите за новостями во «ВКонтакте» и в Telegram-канале.</p>
+      <p style="color:var(--text-dim)">Мы готовим блог центра: гиды по конкурсам, истории лауреатов, разборы номинаций и рассказы о композиторах. А пока — следите за новостями в нашем сообществе «ВКонтакте».</p>
       <div style="margin-top:8px">
         <a class="btn btn--primary" href="<?= h(cfgv('org_vk')) ?>" target="_blank" rel="noopener">Сообщество «ВКонтакте»</a>
-        <a class="btn btn--ghost" href="<?= h(cfgv('org_tg_channel')) ?>" target="_blank" rel="noopener">Telegram-канал</a>
+        <a class="btn btn--ghost" href="<?= h(cfgv('org_vk')) ?>" target="_blank" rel="noopener">Мы во ВКонтакте</a>
       </div>
     </div>
   </div>
@@ -329,7 +329,7 @@ ob_start(); ?>
       <h2>Не пропустите новое</h2>
       <p style="color:var(--text-dim);margin:14px auto 22px">Анонсы конкурсов, результаты и новые статьи - в наших официальных каналах. Подпишитесь, чтобы быть в курсе.</p>
       <a class="btn btn--primary btn--lg" href="<?= h(cfgv('org_vk')) ?>" target="_blank" rel="noopener">«ВКонтакте»</a>
-      <a class="btn btn--ghost btn--lg" href="<?= h(cfgv('org_tg_channel')) ?>" target="_blank" rel="noopener">Telegram-канал</a>
+      <a class="btn btn--ghost btn--lg" href="<?= h(cfgv('org_vk')) ?>" target="_blank" rel="noopener">Мы во ВКонтакте</a>
     </div>
   </div>
 </section>

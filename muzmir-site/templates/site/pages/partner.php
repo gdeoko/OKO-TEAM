@@ -21,7 +21,7 @@ db()->exec("CREATE TABLE IF NOT EXISTS partner_requests (
 
 $percent = (int) setting('partner_percent', '15');
 
-$networks = ['Instagram', 'VK', 'Telegram', 'YouTube', 'RuTube', 'Дзен', 'Другое'];
+$networks = ['ВКонтакте', 'RuTube', 'Дзен', 'Одноклассники', 'Другое'];
 
 $fields = ['full_name' => '', 'network' => '', 'reach' => '', 'contact' => '', 'comment' => ''];
 $errors = [];
@@ -208,7 +208,7 @@ ob_start(); ?>
       </div>
       <div class="field<?= isset($errors['contact']) ? ' error' : '' ?>">
         <label for="p_contact">Контакты для связи</label>
-        <input type="text" id="p_contact" name="contact" value="<?= h($fields['contact']) ?>" placeholder="Почта, телефон или Telegram" required>
+        <input type="text" id="p_contact" name="contact" value="<?= h($fields['contact']) ?>" placeholder="Почта или телефон" required>
         <div class="err-msg">Укажите способ связи с Вами.</div>
       </div>
       <div class="field">

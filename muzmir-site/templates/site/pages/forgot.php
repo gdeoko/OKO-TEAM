@@ -91,7 +91,7 @@ ob_start(); ?>
           <?= csrf_field() ?>
           <div class="field">
             <label for="email">Электронная почта</label>
-            <input type="email" id="email" name="email" value="<?= h($email) ?>" placeholder="you@example.ru" autocomplete="email" inputmode="email" required>
+            <input type="email" id="email" name="email" value="<?= h($email) ?>" placeholder="ваша@почта.рф" autocomplete="email" inputmode="email" required>
           </div>
           <button class="btn btn--primary btn--block btn--lg" type="submit">Отправить ссылку</button>
         </form>

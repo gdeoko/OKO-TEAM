@@ -317,7 +317,7 @@ ob_start(); ?>
                   <input type="hidden" name="slug" value="<?= h($c['slug']) ?>">
                   <div class="field">
                     <label for="rm_email_<?= h($c['slug']) ?>">Электронная почта</label>
-                    <input type="email" id="rm_email_<?= h($c['slug']) ?>" name="email" placeholder="you@example.ru" required>
+                    <input type="email" id="rm_email_<?= h($c['slug']) ?>" name="email" placeholder="ваша@почта.рф" required>
                   </div>
                   <button class="btn btn--primary btn--block btn--sm" type="submit">Напомнить за неделю до старта</button>
                 </form>

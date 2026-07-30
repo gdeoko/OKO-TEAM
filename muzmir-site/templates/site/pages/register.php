@@ -53,7 +53,7 @@ ob_start(); ?>
         <form id="regEmailForm" novalidate>
           <div class="field">
             <label for="reg_email">Электронная почта</label>
-            <input type="email" id="reg_email" name="email" placeholder="you@example.ru" autocomplete="email" inputmode="email" required>
+            <input type="email" id="reg_email" name="email" placeholder="ваша@почта.рф" autocomplete="email" inputmode="email" required>
             <div class="hint">Пришлём 6-значный код для подтверждения — пароль настроите потом.</div>
           </div>
           <button class="btn btn--primary btn--block btn--lg" type="submit"><?= $svgMail ?> Отправить код</button>

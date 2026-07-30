@@ -2,12 +2,12 @@
  "streams": [
   {
    "url": "https://media-ssl.musicradio.com/ClassicFMMP3",
-   "title": "Classic FM · популярная классика",
+   "title": "Классик ФМ · популярная классика",
    "live": true
   },
   {
    "url": "https://stream.srg-ssr.ch/m/rsc_de/mp3_128",
-   "title": "Radio Swiss Classic · классика 24/7",
+   "title": "Классическое радио · 24/7",
    "live": true
   }
  ],

@@ -708,7 +708,6 @@ ob_start(); ?>
                 'email' => ['Почта',    '<rect x="3" y="5" width="18" height="14" rx="2"/><path d="M3 7l9 6 9-6"/>', url('/login')],
                 'vk'    => ['ВКонтакте','<path d="M13.2 17.4c-5.5 0-8.9-3.8-9-10.1h2.8c.1 4.6 2.2 6.6 3.8 7V7.3h2.6v4c1.6-.2 3.3-2 3.9-4h2.6c-.5 2.5-2.2 4.3-3.4 5 1.2.6 3.2 2.2 3.9 5.1h-2.9c-.6-1.9-2.1-3.4-4.1-3.6v3.6h-.2z"/>', url('/api/v1/oauth_vk?bind=1')],
                 'max'   => ['MAX',      '<path d="M4 19V6l8 6 8-6v13"/>', url('/api/v1/oauth_max?bind=1')],
-                'tg'    => ['Telegram', '<path d="M22 4L2 12l6 2 2 6 4-4 6 4z"/>', 'https://t.me/kc_muz_mir_bot?start=link_'.$uid],
                 'phone' => ['Телефон',  '<path d="M5 4h4l2 5-2.5 1.5a11 11 0 0 0 5 5L20 13l2 4v3a1 1 0 0 1-1 1A17 17 0 0 1 4 5a1 1 0 0 1 1-1z"/>', '#'],
               ];
             ?>
@@ -762,11 +761,6 @@ ob_start(); ?>
               <label class="switch">
                 <span class="switch-txt"><strong>Рассылка на почту</strong><span>Статусы заявок, результаты, готовность дипломов</span></span>
                 <input type="checkbox" name="notify_email" value="1" <?= (int)$user['notify_email'] ? 'checked' : '' ?>>
-                <span class="switch-ui" aria-hidden="true"></span>
-              </label>
-              <label class="switch">
-                <span class="switch-txt"><strong>Уведомления в Telegram</strong><span>Быстрые оповещения в мессенджере</span></span>
-                <input type="checkbox" name="notify_tg" value="1" <?= (int)$user['notify_tg'] ? 'checked' : '' ?>>
                 <span class="switch-ui" aria-hidden="true"></span>
               </label>
               <button class="btn btn--primary" type="submit" style="margin-top:18px">Сохранить</button>

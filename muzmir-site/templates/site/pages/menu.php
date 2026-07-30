@@ -76,9 +76,9 @@ ob_start(); ?>
         <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.7" style="margin-right:8px"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><path d="M8.6 13.5l6.8 4M15.4 6.5l-6.8 4"/></svg>
         Поделиться приложением
       </button>
-      <a class="btn btn--ghost btn--block" href="https://t.me/kc_muz_mir_bot" target="_blank" rel="noopener" style="margin-top:10px">
-        <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.7" style="margin-right:8px"><path d="M22 2 11 13M22 2l-7 20-4-9-9-4z"/></svg>
-        Написать в Telegram-бот
+      <a class="btn btn--ghost btn--block" href="<?= h(cfgv('org_vk')) ?>" target="_blank" rel="noopener" style="margin-top:10px">
+        <svg viewBox="0 0 24 24" width="20" height="20" fill="currentColor" style="margin-right:8px"><path d="M13.2 17.4c-5.5 0-8.9-3.8-9-10.1h2.8c.1 4.6 2.2 6.6 3.8 7V7.3h2.6v4c1.6-.2 3.3-2 3.9-4h2.6c-.5 2.5-2.2 4.3-3.4 5 1.2.6 3.2 2.2 3.9 5.1h-2.9c-.6-1.9-2.1-3.4-4.1-3.6v3.6h-.2z"/></svg>
+        Написать нам во ВКонтакте
       </a>
     </div>
   </div>
