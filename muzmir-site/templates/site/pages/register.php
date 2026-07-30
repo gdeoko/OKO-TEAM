@@ -43,9 +43,6 @@ ob_start(); ?>
           <?php if ($vkReady): ?>
             <a class="auth-btn auth-btn--vk" href="<?= url('/api/v1/oauth_vk') ?>" rel="nofollow"><?= $svgVk ?><span>Через ВКонтакте</span></a>
           <?php endif; ?>
-          <?php if ($maxReady): ?>
-            <a class="auth-btn auth-btn--max" href="<?= url('/api/v1/oauth_max') ?>" rel="nofollow"><?= $svgMax ?><span>Через MAX</span></a>
-          <?php endif; ?>
         </div>
 
         <?php if ($vkReady || $maxReady): ?><div class="auth-sep"><span>или почта / телефон</span></div><?php endif; ?>

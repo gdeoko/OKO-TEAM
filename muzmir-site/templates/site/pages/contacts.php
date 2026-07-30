@@ -126,6 +126,7 @@ ob_start(); ?>
               <span class="cr-label">Мы в социальных сетях</span>
               <div class="contact-social">
                 <a href="<?= h(cfgv('org_vk')) ?>" target="_blank" rel="noopener"><?= $ico['vk'] ?><span>ВКонтакте</span></a>
+                <a href="https://max.ru/join/v4SJluLzTAMWm4r5ldJ-JyA2rS5InmPYjaP6drn3F8I" target="_blank" rel="noopener"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="5"/><path d="M7 16V9l5 4 5-4v7"/></svg><span>MAX</span></a>
               </div>
             </div>
           </li>

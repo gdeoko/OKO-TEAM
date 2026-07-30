@@ -64,11 +64,6 @@ ob_start(); ?>
         <?php else: ?>
           <button type="button" class="auth-btn auth-btn--vk" disabled style="opacity:.55;cursor:not-allowed"><?= $svgVk ?><span>Вход через ВКонтакте</span></button>
         <?php endif; ?>
-        <?php if ($maxReady): ?>
-          <a class="auth-btn auth-btn--max" href="<?= url('/api/v1/oauth_max') ?>" rel="nofollow"><?= $svgMax ?><span>Войти через MAX</span></a>
-        <?php else: ?>
-          <button type="button" class="auth-btn auth-btn--max" disabled style="opacity:.55;cursor:not-allowed"><?= $svgMax ?><span>Вход через MAX</span></button>
-        <?php endif; ?>
       </div>
 
       <div class="auth-sep"><span>или по почте</span></div>
@@ -207,7 +202,7 @@ ob_start(); ?>
             var c = document.getElementById('phoneCode'); if (c) c.focus();
             toast('Код отправлен по SMS.', 'success');
           } else if (res.data && res.data.sms_unavailable) {
-            toast(res.data.message || 'SMS-вход временно недоступен. Войдите через ВК, MAX или почту.', 'error');
+            toast(res.data.message || 'SMS-вход временно недоступен. Войдите через ВКонтакте или почту.', 'error');
           } else { fail(res, 'Не удалось отправить код.'); }
         }).catch(function () { load(pbtn, false); toast('Сеть недоступна.', 'error'); });
       } else {

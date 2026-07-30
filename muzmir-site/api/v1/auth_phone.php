@@ -57,7 +57,7 @@ if ($action === 'request') {
     if (!$sent && cfgv('debug')) $out['dev_hint'] = $code;
     if (!$sent && !cfgv('debug')) {
         // Прод без настроенного SMS-провайдера — не раскрываем код, честно сообщаем.
-        $out['message'] = 'SMS-вход временно недоступен. Войдите через VK, MAX или почту.';
+        $out['message'] = 'SMS-вход временно недоступен. Войдите через ВКонтакте или почту.';
         $out['sms_unavailable'] = true;
     }
     json_out($out);
