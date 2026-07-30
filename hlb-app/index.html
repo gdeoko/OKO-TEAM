@@ -12438,6 +12438,320 @@ body.sheet-open, body.modal-open {
 })();
 </script>
 
+
+<style id="hlb-v19">
+/* v19: unified feed-tabs row */
+
+/* Hide original fa-bar (Умная лента bar) */
+.fa-bar { display: none !important; }
+.fa-head .fa-explain { display: none !important; }
+
+/* Feed-tabs container becomes the unified row */
+#screen-feed .feed-tabs,
+.feed-tabs {
+  display: flex !important;
+  gap: 8px !important;
+  padding: 12px 14px 8px !important;
+  align-items: center !important;
+  flex-wrap: nowrap !important;
+  overflow-x: auto !important;
+  overflow-y: hidden !important;
+  scrollbar-width: none !important;
+}
+.feed-tabs::-webkit-scrollbar { display: none !important; }
+
+/* Text buttons (Подписки, Рекомендации, Клипы) */
+.feed-tabs > button {
+  flex: 0 0 auto !important;
+  padding: 8px 16px !important;
+  font-size: 13px !important;
+  font-weight: 700 !important;
+  border-radius: 99px !important;
+  white-space: nowrap !important;
+  text-align: center !important;
+  line-height: 1 !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  gap: 6px !important;
+  min-height: 36px !important;
+  cursor: pointer !important;
+}
+.feed-tabs > button.on {
+  background: #FF9500 !important;
+  color: #000 !important;
+  border: 1px solid #FF9500 !important;
+  box-shadow: 0 0 16px rgba(255,149,0,.35) !important;
+}
+.feed-tabs > button:not(.on) {
+  background: transparent !important;
+  color: #fff !important;
+  border: 1px solid rgba(255,255,255,.18) !important;
+}
+
+/* Клипы button: icon + label */
+.feed-tabs > button.hlb-clips-btn svg {
+  width: 14px !important; height: 14px !important;
+}
+
+/* Refresh: ICON ONLY (no text) */
+.feed-tabs > button.hlb-refresh-btn {
+  padding: 8px 10px !important;
+  min-width: 36px !important;
+  min-height: 36px !important;
+  border-radius: 50% !important;
+  margin-left: auto !important; /* push to right */
+}
+.feed-tabs > button.hlb-refresh-btn span { display: none !important; }
+.feed-tabs > button.hlb-refresh-btn svg {
+  width: 16px !important; height: 16px !important;
+}
+</style>
+
+
+<script id="hlb-v19-js">
+(function(){
+  'use strict';
+
+  // Merge fa-clips and fa-refresh into feed-tabs row
+  function mergeFeedControls(){
+    var feedTabs = document.querySelector('.feed-tabs');
+    if (!feedTabs) return;
+    // Find fa-clips and fa-refresh anywhere on page
+    var faClips = document.querySelector('.fa-clips');
+    var faRefresh = document.querySelector('.fa-refresh');
+
+    if (faClips && !feedTabs.querySelector('.hlb-clips-btn')) {
+      // Clone Клипы into feed-tabs
+      var clipsBtn = document.createElement('button');
+      clipsBtn.type = 'button';
+      clipsBtn.className = 'hlb-clips-btn';
+      clipsBtn.setAttribute('aria-label', 'Открыть клипы');
+      clipsBtn.innerHTML = faClips.innerHTML;
+      clipsBtn.onclick = function(e){
+        e.preventDefault();
+        if (typeof window.faReelsOpenFirst === 'function') window.faReelsOpenFirst();
+      };
+      feedTabs.appendChild(clipsBtn);
+    }
+
+    if (faRefresh && !feedTabs.querySelector('.hlb-refresh-btn')) {
+      // Clone Обновить as ICON ONLY
+      var refBtn = document.createElement('button');
+      refBtn.type = 'button';
+      refBtn.className = 'hlb-refresh-btn';
+      refBtn.setAttribute('aria-label', 'Обновить подборку');
+      // Take svg from faRefresh; strip text
+      var svg = faRefresh.querySelector('svg');
+      refBtn.innerHTML = svg ? svg.outerHTML : '↻';
+      refBtn.onclick = function(e){
+        e.preventDefault();
+        if (typeof window.faRefresh === 'function') window.faRefresh();
+      };
+      feedTabs.appendChild(refBtn);
+    }
+  }
+
+  mergeFeedControls();
+  setInterval(mergeFeedControls, 500);
+})();
+</script>
+
+
+<style id="hlb-v20">
+/* v20 */
+
+/* Fix feed-tabs: no margin-left:auto that pushed first button off-screen */
+.feed-tabs > button.hlb-refresh-btn {
+  margin-left: 0 !important;
+}
+
+/* Ensure scroll starts at 0 with proper padding */
+#screen-feed .feed-tabs,
+.feed-tabs {
+  scroll-snap-type: none !important;
+  scroll-behavior: auto !important;
+  padding-left: 14px !important;
+  padding-right: 14px !important;
+  justify-content: flex-start !important;
+}
+</style>
+
+
+<script id="hlb-v20-js">
+(function(){
+  'use strict';
+
+  // Force feed-tabs scrollLeft to 0 so first button not clipped
+  function fixFeedScroll(){
+    var ft = document.querySelector('.feed-tabs');
+    if (ft && ft.scrollLeft !== 0) {
+      ft.scrollLeft = 0;
+    }
+  }
+  fixFeedScroll();
+  setInterval(fixFeedScroll, 500);
+
+  // === REAL CHATS ===
+  // Real Artem Brius channels list — overwrites base CHATS entries by index
+  var REAL_CHATS = [
+    // Reserved index 0 = live chat, keep as-is
+    { name: 'Артём Бриус',           nick: 'gdebrius',   ava: 'assets/av/gdebrius.jpg',    preview: 'Артём: Привет. Как настроение?', time: 'сейчас', unread: 1, verified: true, subs: '' },
+    { name: 'ХЛБ',                   nick: 'hlbclub',    ava: 'assets/av/hlb.jpg',         preview: 'Артём: Мне стыдно за всё происходящее. Хочу это исправить.', time: '20:04', unread: 3, verified: true, subs: '986' },
+    { name: 'Артём Бриус · канал',   nick: 'gdebrius_ch',ava: 'assets/av/artem_brius.jpg', preview: 'Артём: Полнейшая пересборка. В коробках склада...', time: 'сегодня', unread: 0, verified: true, subs: '24 813' },
+    { name: 'Бриус',                 nick: 'brius',      ava: 'assets/av/brius.jpg',       preview: 'Артём: Финальная часть моего перформанса. Жмите.', time: 'вчера', unread: 0, verified: true, subs: '73 987' },
+    { name: 'КИТОВАРКА',             nick: 'kitovarka',  ava: 'assets/av/kitovarka.jpg',   preview: 'Товарный бизнес с Китаем 🇨🇳', time: 'вчера', unread: 0, verified: false, subs: '1 438' },
+    { name: 'ХЛБ / отзывы',          nick: 'hlbreviews', ava: 'assets/av/hlb_reviews.jpg', preview: 'Мария: После ХЛБ жизнь уже не станет прежней.', time: 'сегодня', unread: 1, verified: false, subs: '5 892' },
+    { name: 'Бриус / отзывы',        nick: 'briusrev',   ava: 'assets/av/brius_reviews.jpg', preview: 'Дмитрий: 269 подписчиков → 17,8 тысяч.', time: 'ср', unread: 0, verified: false, subs: '527' },
+    { name: 'Nihaodrop · клуб',      nick: 'nihaodrop',  ava: 'assets/av/brius_mentor.jpg', preview: 'Влад: +9 600 ₽ на второй день. Работает!', time: 'ср', unread: 0, verified: true, subs: '421' },
+    { name: 'briusMentor',           nick: 'briusmentor', ava: 'assets/av/brius_mentor.jpg', preview: 'Ментор Артёма — заявки на разбор', time: '3 д', unread: 0, verified: true, subs: 'заявки' }
+  ];
+
+  function overrideChatsData(){
+    try {
+      if (typeof window.CHATS === 'undefined' || !window.CHATS) return;
+      var C = window.CHATS;
+      var realIdx = 0;
+      for (var i = 0; i < C.length; i++) {
+        var c = C[i];
+        // Skip the live chat (id:'live')
+        if (c.id === 'live' || c.live) continue;
+        // Skip Избранное if any
+        if (/избранн/i.test(c.name||'')) continue;
+        // Overwrite with real Artem channel data
+        if (realIdx < REAL_CHATS.length) {
+          var real = REAL_CHATS[realIdx];
+          c.name = real.name;
+          c.nick = real.nick;
+          c.preview = real.preview;
+          c.time = real.time;
+          c.unread = real.unread;
+          c.verified = real.verified;
+          c.subs = real.subs;
+          c.avaImg = real.ava;
+          c.ava = real.ava;
+          if (c.kind !== 'channel') c.kind = 'channel';
+          realIdx++;
+        } else {
+          // Extra chats beyond our list — hide via kind 'hidden' or remove
+          c.__hlbHidden = true;
+        }
+      }
+      // Filter out hidden
+      window.CHATS = C.filter(function(c){ return !c.__hlbHidden; });
+      // Re-render
+      if (typeof window.renderChatList === 'function') window.renderChatList('');
+    } catch(e) {}
+  }
+  overrideChatsData();
+  setTimeout(overrideChatsData, 300);
+  setTimeout(overrideChatsData, 1000);
+  setTimeout(overrideChatsData, 2500);
+
+  // Also intercept renderChatList to re-apply if CHATS gets re-populated
+  var interv = setInterval(function(){
+    try {
+      if (window.CHATS && window.CHATS.some(function(c){
+        return /новости|мария егорова|иван петров|reels под ключ|клуб роста · pro|инсайды/i.test(c.name||'');
+      })) {
+        overrideChatsData();
+      }
+    } catch(e) {}
+  }, 700);
+})();
+</script>
+
+
+<style id="hlb-v21">
+/* v21 */
+
+/* Feed-tabs: fit 4 elements */
+#screen-feed .feed-tabs, .feed-tabs {
+  padding: 12px 12px 8px !important;
+  gap: 6px !important;
+}
+#screen-feed .feed-tabs > button, .feed-tabs > button {
+  padding: 7px 12px !important;
+  font-size: 12px !important;
+  font-weight: 700 !important;
+  min-height: 34px !important;
+}
+.feed-tabs > button.hlb-refresh-btn {
+  padding: 7px 9px !important;
+  min-width: 34px !important;
+  min-height: 34px !important;
+  border-radius: 50% !important;
+  flex: 0 0 auto !important;
+}
+</style>
+
+
+<script id="hlb-v21-js">
+(function(){
+  'use strict';
+
+  // Real Artem Brius channels in strict order
+  var REAL_CHANNELS = [
+    { name: 'Артём Бриус',          preview: 'Артём: Привет. Как настроение? Расскажи, чем занят.', time: 'сейчас',   ava: 'assets/av/gdebrius.jpg',      verified: true },
+    { name: 'ХЛБ',                  preview: 'Артём: Мне стыдно за всё происходящее. Хочу это исправить.', time: '20:04', ava: 'assets/av/hlb.jpg',       verified: true },
+    { name: 'Артём Бриус · канал',  preview: 'Артём: Полнейшая пересборка. В коробках склада…', time: 'сегодня',  ava: 'assets/av/artem_brius.jpg', verified: true },
+    { name: 'Бриус',                preview: 'Артём: Финальная часть моего перформанса. Жмите.', time: 'вчера', ava: 'assets/av/brius.jpg',       verified: true },
+    { name: 'КИТОВАРКА',            preview: 'Товарный бизнес с Китаем 🇨🇳',                 time: 'вчера', ava: 'assets/av/kitovarka.jpg',   verified: false },
+    { name: 'ХЛБ / отзывы',         preview: 'Мария: После ХЛБ жизнь уже не станет прежней.', time: 'сегодня', ava: 'assets/av/hlb_reviews.jpg', verified: false },
+    { name: 'Бриус / отзывы',       preview: 'Дмитрий: 269 подписчиков → 17 800.',            time: 'ср',    ava: 'assets/av/brius_reviews.jpg', verified: false },
+    { name: 'Nihaodrop',            preview: 'Влад: +9 600 ₽ на второй день. Работает!',      time: 'ср',    ava: 'assets/av/brius_mentor.jpg', verified: true },
+    { name: 'briusMentor',          preview: 'Ментор Артёма — заявки на разбор',              time: '3 д',   ava: 'assets/av/brius_mentor.jpg', verified: true }
+  ];
+
+  function esc(t){ return String(t||'').replace(/[<>&"']/g, function(c){return {'<':'&lt;','>':'&gt;','&':'&amp;','"':'&quot;',"'":'&#39;'}[c];}); }
+
+  function patchChatDom(){
+    var items = document.querySelectorAll('#chatList .chat-item, .chat-col .chat-item');
+    if (!items.length) return;
+    var idx = 0;
+    items.forEach(function(el){
+      var t = (el.textContent||'').trim();
+      // Skip Общий чат ХЛБ (live) and Избранное (favorites)
+      if (/Общий чат ХЛБ|Избранное/i.test(t)) return;
+      if (idx >= REAL_CHANNELS.length) {
+        el.style.display = 'none'; return;
+      }
+      var ch = REAL_CHANNELS[idx];
+      // Build fresh item HTML
+      var verBadge = ch.verified
+        ? '<svg width="12" height="12" viewBox="0 0 24 24" fill="#1DA1F2" style="vertical-align:-1px;margin-left:3px"><path d="M12 2l2.4 1.6L17 3l1 2.6L20.6 7l-.6 2.8L22 12l-2 2.2.6 2.8L18 18l-1 2.6-2.6-.6L12 22l-2.4-1.6L7 21l-1-2.6L3.4 17 4 14.2 2 12l2-2.2L3.4 7 6 6l1-2.6L9.6 4z"/><path d="M8.5 12.5l2.5 2.5 5-5" stroke="#fff" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg>'
+        : '';
+      el.innerHTML =
+        '<div class="ci-ava">' +
+          '<img src="' + ch.ava + '" alt="" style="width:52px;height:52px;object-fit:cover;border-radius:50%;border:2px solid rgba(255,149,0,.18);display:block">' +
+        '</div>' +
+        '<div class="meta">' +
+          '<div class="row1">' +
+            '<span class="name"><span class="ci-txt">' + esc(ch.name) + verBadge + '</span></span>' +
+            '<span class="time">' + esc(ch.time) + '</span>' +
+          '</div>' +
+          '<div class="row1">' +
+            '<span class="preview"><span class="ci-txt">' + esc(ch.preview) + '</span></span>' +
+          '</div>' +
+        '</div>';
+      el.dataset.hlbV21 = idx.toString();
+      idx++;
+    });
+  }
+
+  patchChatDom();
+  setTimeout(patchChatDom, 500);
+  setTimeout(patchChatDom, 1500);
+  setInterval(patchChatDom, 800);
+
+  // Hook click on chats tab
+  document.addEventListener('click', function(e){
+    var t = e.target && e.target.closest && e.target.closest('nav#tabs button[data-t="chats"]');
+    if (t) setTimeout(patchChatDom, 300);
+  });
+})();
+</script>
+
 </body>
 </html>
 
