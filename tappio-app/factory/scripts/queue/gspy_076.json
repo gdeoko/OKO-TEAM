@@ -1,0 +1,233 @@
+{
+ "id": "gspy_076",
+ "app": "spy",
+ "voice": "en-US-AndrewNeural",
+ "rate": "+7%",
+ "grade": "clean_ad",
+ "brand": {
+  "accent": "#00D9FF",
+  "accent2": "#7CFCFF",
+  "code": "PRIVACY",
+  "logo": "spy.png",
+  "name": "SPY CAMERA FINDER"
+ },
+ "music": {
+  "queries": [
+   "clean corporate underscore",
+   "cinematic underscore tech",
+   "minimal techno tension",
+   "neon night synth"
+  ]
+ },
+ "cover": {
+  "kicker": "IR GLINT",
+  "top": "THE LENS",
+  "big": "ALWAYS\nGLOWS",
+  "q": [
+   "door lock hotel keycard"
+  ]
+ },
+ "segments": [
+  {
+   "id": "b1",
+   "text": "Turn off the lights. Raise your phone camera."
+  },
+  {
+   "id": "b2",
+   "text": "A hidden lens reflects infrared as a tiny bright dot."
+  },
+  {
+   "id": "b3",
+   "text": "Slowly pan across mirrors, vents and smoke detectors."
+  },
+  {
+   "id": "b4",
+   "text": "The app highlights suspicious reflections for you."
+  },
+  {
+   "id": "b5",
+   "text": "Found one? Cover it and report the listing."
+  },
+  {
+   "id": "b6",
+   "text": "Sixty seconds of scanning saves your privacy."
+  }
+ ],
+ "shots": [
+  {
+   "q": [
+    "dark bedroom lamp light"
+   ],
+   "motion": "zin"
+  },
+  {
+   "q": [
+    "smoke detector ceiling closeup"
+   ],
+   "insert": "rrect",
+   "pos": "center"
+  },
+  {
+   "q": [
+    "airbnb apartment cozy night"
+   ],
+   "motion": "panup"
+  },
+  {
+   "q": [
+    "traveler suitcase hotel hallway"
+   ],
+   "insert": "tv",
+   "pos": "lower"
+  },
+  {
+   "q": [
+    "tv on wall hotel room"
+   ],
+   "motion": "panr"
+  },
+  {
+   "q": [
+    "power outlet wall socket closeup"
+   ],
+   "insert": "diamond",
+   "pos": "lower"
+  },
+  {
+   "q": [
+    "person entering hotel room luggage"
+   ],
+   "motion": "zout"
+  },
+  {
+   "q": [
+    "mirror bathroom hotel"
+   ],
+   "insert": "tilt",
+   "pos": "upper"
+  },
+  {
+   "q": [
+    "door lock hotel keycard"
+   ],
+   "motion": "panl"
+  },
+  {
+   "q": [
+    "woman looking around hotel room worried"
+   ],
+   "insert": "circle",
+   "pos": "upper"
+  },
+  {
+   "q": [
+    "security camera lens macro"
+   ],
+   "motion": "pandown"
+  }
+ ],
+ "overlays": [
+  {
+   "at": 0.075,
+   "dur": 1.9,
+   "type": "kicker",
+   "text": "WI-FI SCAN"
+  },
+  {
+   "at": 0.092,
+   "dur": 2.3,
+   "type": "bars",
+   "title": "TIME TO SCAN",
+   "unit": "s",
+   "items": [
+    [
+     "Manual",
+     300
+    ],
+    [
+     "App",
+     30
+    ]
+   ],
+   "pos": "center"
+  },
+  {
+   "at": 0.115,
+   "dur": 2.36,
+   "type": "stat_count",
+   "to": 30,
+   "suffix": "s",
+   "label": "PER ROOM",
+   "pos": "center"
+  },
+  {
+   "at": 0.136,
+   "dur": 1.76,
+   "type": "callout",
+   "text": "IR GLINT GIVES IT AWAY",
+   "pos": "center"
+  },
+  {
+   "at": 0.137,
+   "dur": 2.36,
+   "type": "ticker",
+   "to": 2,
+   "suffix": "",
+   "label": "SIGNALS CHECKED",
+   "pos": "lower"
+  },
+  {
+   "at": 0.218,
+   "dur": 1.83,
+   "type": "lowerthird",
+   "title": "SCAN THE WI-FI",
+   "sub": "unknown devices appear"
+  },
+  {
+   "at": 0.776,
+   "dur": 2.6,
+   "type": "checklist",
+   "items": [
+    "Scan Wi-Fi",
+    "Lights off",
+    "Check vents",
+    "Unplug unknowns"
+   ],
+   "pos": "center"
+  },
+  {
+   "at": 0.865,
+   "dur": 1.89,
+   "type": "kinetic",
+   "top": "SCAN",
+   "big": "NOW"
+  },
+  {
+   "at": 0.885,
+   "dur": 2.05,
+   "type": "gauge",
+   "to": 30,
+   "max": 60,
+   "suffix": "s",
+   "label": "FULL ROOM SWEEP",
+   "pos": "center"
+  }
+ ],
+ "cta": {
+  "text": "Comment PRIVACY for the app.",
+  "code": "PRIVACY"
+ },
+ "caption": "USEFUL: Lights off, camera up. A hidden lens glows in infrared. Pan across vents, mirrors and smoke detectors to catch the glint. Comment PRIVACY for the app. #privacy #airbnb #travelsafety #hiddencamera #traveltips #hotelroom #safetytips #airbnb #bathroom #cops #hidden",
+ "yt_title": "Spot a hidden camera lens in the dark #shorts",
+ "trend_keys": [
+  "airbnb",
+  "bathroom",
+  "cops",
+  "hidden",
+  "camera",
+  "cameras",
+  "phone",
+  "find"
+ ],
+ "content_type": "useful"
+}
