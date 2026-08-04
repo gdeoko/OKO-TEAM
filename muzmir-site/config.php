@@ -97,6 +97,9 @@ return [
     // Сервис «Рассылки» (broadcast.vkforms.ru) — рассылка подписчикам сообщества
     'vk_broadcast_token'   => cfg('MUZMIR_VK_BROADCAST_TOKEN', ''),  // Управление сервисом → Настройки → Создать ключ
     'vk_broadcast_lists'   => cfg('MUZMIR_VK_BROADCAST_LISTS', ''),  // id списков через запятую
+    // Callback API (авто-ответы бота в сообщениях сообщества) — заполняет scripts/vk_setup_callback.php
+    'vk_confirm'           => cfg('MUZMIR_VK_CONFIRM', ''),          // строка подтверждения сервера Callback
+    'vk_callback_secret'   => cfg('MUZMIR_VK_CALLBACK_SECRET', ''),  // секретный ключ входящих запросов ВК
 
     // MAX (мессенджер Max, max.ru / Max ID OAuth) — секреты только из окружения/local
     'max_client_id'        => cfg('MUZMIR_MAX_CLIENT_ID', ''),
