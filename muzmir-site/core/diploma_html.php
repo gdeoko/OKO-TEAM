@@ -53,6 +53,7 @@ function diploma_theme_pick(array $c, array $tpl): array {
             'grad_dtype'  => 'linear-gradient(180deg,#FFF6C4 0%,#FFD54F 18%,#FFC107 38%,#D4A017 52%,#B8860B 62%,#FFC107 80%,#FFF3B0 100%)',
             'grad_degree' => 'linear-gradient(180deg,#FFFFFF 0%,#CFEFFF 35%,#8FD4F5 65%,#E8F9FF 100%)',
             'name_color' => '#BFE9FF', 'ff_name' => "'Prata',serif",
+            'script_font' => 'Bad+Script', 'ff_script' => "'Bad Script',cursive", 'script_fs' => 43, 'script_color' => '#D6F1FF',
         ],
         // Зенит, триумф: античная классика, тёплое торжественное золото.
         'zenith' => [
@@ -62,6 +63,7 @@ function diploma_theme_pick(array $c, array $tpl): array {
             'grad_dtype'  => 'linear-gradient(180deg,#FFFBE8 0%,#FFE082 20%,#F5C542 40%,#C9971C 55%,#A67C10 65%,#E9C567 82%,#FFF7D6 100%)',
             'grad_degree' => 'linear-gradient(180deg,#FFFFFF 0%,#FFF3C4 30%,#F0CE72 60%,#D4A017 85%,#FFE082 100%)',
             'name_color' => '#FFE99C', 'ff_name' => "'Forum',serif",
+            'script_font' => 'Marck+Script', 'ff_script' => "'Marck Script',cursive", 'script_fs' => 40, 'script_color' => '#FFE99C',
         ],
         // Театр, сцена: бархат и шампань, тёплый кремовый свет рампы.
         'theatre' => [
@@ -71,6 +73,7 @@ function diploma_theme_pick(array $c, array $tpl): array {
             'grad_dtype'  => 'linear-gradient(180deg,#FFF9EC 0%,#FFE7B8 22%,#F4C878 42%,#D89A3D 56%,#B87526 66%,#F2BE6A 82%,#FFF2D8 100%)',
             'grad_degree' => 'linear-gradient(180deg,#FFFFFF 0%,#FFF0D6 32%,#F2CE8E 62%,#D89A3D 88%,#FFE3B0 100%)',
             'name_color' => '#FFE9C4', 'ff_name' => "'Cormorant Garamond',serif",
+            'script_font' => 'Caveat:wght@600;700', 'ff_script' => "'Caveat',cursive", 'script_fs' => 45, 'script_color' => '#FFE3B0',
         ],
         // Держава: имперское золото с рубиновым отблеском, строгая антиква.
         'derzhava' => [
@@ -80,6 +83,7 @@ function diploma_theme_pick(array $c, array $tpl): array {
             'grad_dtype'  => 'linear-gradient(180deg,#FFF6D0 0%,#FFD766 20%,#F0AE3C 40%,#C4571E 55%,#A63E14 63%,#E8A93C 80%,#FFE9A6 100%)',
             'grad_degree' => 'linear-gradient(180deg,#FFFFFF 0%,#FFEFC0 30%,#F0C868 60%,#D08A20 85%,#FFD766 100%)',
             'name_color' => '#FFE9A6', 'ff_name' => "'Old Standard TT',serif",
+            'script_font' => 'Lobster', 'ff_script' => "'Lobster',cursive", 'script_fs' => 37, 'script_color' => '#FFD98F',
         ],
         // Классика эталона (фолбэк).
         'classic' => [
@@ -89,6 +93,7 @@ function diploma_theme_pick(array $c, array $tpl): array {
             'grad_dtype'  => 'linear-gradient(180deg,#FFF3B0 0%,#FFD54F 15%,#FFC107 30%,#D4A017 45%,#A67C10 55%,#D4A017 70%,#FFC107 85%,#FFF3B0 100%)',
             'grad_degree' => 'linear-gradient(180deg,#FFF3B0 0%,#FFD54F 25%,#D4A017 55%,#A67C10 75%,#FFC107 100%)',
             'name_color' => '#FFE082', 'ff_name' => "'Playfair Display',serif",
+            'script_font' => 'Marck+Script', 'ff_script' => "'Marck Script',cursive", 'script_fs' => 40, 'script_color' => '#FFE082',
         ],
     ];
     $key = (string)($tpl['theme'] ?? '');
@@ -198,7 +203,7 @@ function diploma_html(array $c, array $a, array $opt = []): string {
 <title><?= h($dtype) ?> — <?= h($compName) ?></title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600;700;800;900&family=Manrope:wght@400;500;600;700;800&family=Marck+Script<?= $T['fonts'] !== '' ? '&family=' . $T['fonts'] : '' ?>&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600;700;800;900&family=Manrope:wght@400;500;600;700;800&family=Marck+Script<?= $T['fonts'] !== '' ? '&family=' . $T['fonts'] : '' ?><?= ($T['script_font'] ?? '') !== '' && $T['script_font'] !== 'Marck+Script' ? '&family=' . $T['script_font'] : '' ?>&display=swap" rel="stylesheet">
 <style>
 /* ===== 1:1 из эталона diplom_laureat2.html / blagodarnost1.html ===== */
 *{box-sizing:border-box;margin:0;padding:0}
@@ -245,7 +250,7 @@ body{background:#444;font-family:'Manrope',sans-serif;padding:20px;min-height:10
 .extra-award{text-align:center;font-family:'Playfair Display',serif;font-size:14.5pt;font-weight:800;color:<?= $T['name_color'] ?>;margin:-1.5mm 0 2.5mm;filter:drop-shadow(0 1px 3px rgba(0,0,0,.6))}
 .awarded-label{text-align:center;font-family:'Playfair Display',serif;font-size:15pt;font-weight:700;color:#fff;margin-bottom:1mm}
 .awarded-name{text-align:center;font-family:<?= $T['ff_name'] ?>;font-size:29pt;font-weight:900;color:<?= $T['name_color'] ?>;margin-bottom:3mm;filter:drop-shadow(0 2px 4px rgba(0,0,0,.6))}
-.awarded-name-script{text-align:center;font-family:'Marck Script',cursive;font-size:40pt;color:<?= $T['name_color'] ?>;margin-bottom:3mm;filter:drop-shadow(0 2px 6px rgba(0,0,0,.7));line-height:1}
+.awarded-name-script{text-align:center;font-family:<?= $T['ff_script'] ?>;font-size:<?= $T['script_fs'] ?>pt;color:<?= $T['script_color'] ?>;margin-bottom:3mm;filter:drop-shadow(0 2px 6px rgba(0,0,0,.7));line-height:1}
 .field-list{padding:0 6mm;font-family:'Playfair Display',serif;font-size:<?= $fldFs ?>pt;font-weight:700;line-height:<?= $fldLh ?>;text-align:center}
 .field-list .field{color:#fff;filter:drop-shadow(0 1px 3px rgba(0,0,0,.5))}
 /* Текст благодарности сжат так, чтобы гарантированно не доставать до подписей */
