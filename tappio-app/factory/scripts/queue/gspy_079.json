@@ -1,0 +1,239 @@
+{
+ "id": "gspy_079",
+ "app": "spy",
+ "voice": "en-US-AndrewNeural",
+ "rate": "+5%",
+ "grade": "cold_cyan",
+ "brand": {
+  "accent": "#00D9FF",
+  "accent2": "#7CFCFF",
+  "code": "PRIVACY",
+  "logo": "spy.png",
+  "name": "SPY CAMERA FINDER"
+ },
+ "music": {
+  "queries": [
+   "epic inspiring rise",
+   "neon night synth",
+   "minimal techno tension",
+   "investigative documentary underscore"
+  ]
+ },
+ "cover": {
+  "kicker": "TOP 5 SPOTS",
+  "top": "WHERE CAMS",
+  "big": "ALWAYS\nHIDE",
+  "q": [
+   "desk lamp table hotel"
+  ]
+ },
+ "segments": [
+  {
+   "id": "b1",
+   "text": "Smoke detectors: the number one hiding spot."
+  },
+  {
+   "id": "b2",
+   "text": "Alarm clocks pointed straight at the bed."
+  },
+  {
+   "id": "b3",
+   "text": "Air vents with a suspicious little hole."
+  },
+  {
+   "id": "b4",
+   "text": "TV frames and power outlets facing the room."
+  },
+  {
+   "id": "b5",
+   "text": "Check each one: line of sight to the bed is the clue."
+  },
+  {
+   "id": "b6",
+   "text": "Scan first, relax second. Every trip."
+  }
+ ],
+ "shots": [
+  {
+   "q": [
+    "airbnb apartment cozy night"
+   ],
+   "motion": "panr"
+  },
+  {
+   "q": [
+    "alarm clock nightstand bedroom"
+   ],
+   "insert": "tv",
+   "pos": "center"
+  },
+  {
+   "q": [
+    "surveillance concept eye lens"
+   ],
+   "motion": "pandown"
+  },
+  {
+   "q": [
+    "traveler suitcase hotel hallway"
+   ],
+   "insert": "tilt",
+   "pos": "lower"
+  },
+  {
+   "q": [
+    "smoke detector ceiling closeup"
+   ],
+   "motion": "zin"
+  },
+  {
+   "q": [
+    "door lock hotel keycard"
+   ],
+   "insert": "diamond",
+   "pos": "lower"
+  },
+  {
+   "q": [
+    "picture frame on wall room"
+   ],
+   "motion": "panup"
+  },
+  {
+   "q": [
+    "wifi router network dark tech"
+   ],
+   "insert": "hexagon",
+   "pos": "lower"
+  },
+  {
+   "q": [
+    "desk lamp table hotel"
+   ],
+   "motion": "zout"
+  },
+  {
+   "q": [
+    "usb charger plug closeup"
+   ],
+   "insert": "arch",
+   "pos": "center"
+  }
+ ],
+ "overlays": [
+  {
+   "at": 0.033,
+   "dur": 1.87,
+   "type": "kicker",
+   "text": "WI-FI SCAN"
+  },
+  {
+   "at": 0.106,
+   "dur": 2.05,
+   "type": "bars",
+   "title": "TIME TO SCAN",
+   "unit": "s",
+   "items": [
+    [
+     "Manual",
+     300
+    ],
+    [
+     "App",
+     30
+    ]
+   ],
+   "pos": "center"
+  },
+  {
+   "at": 0.107,
+   "dur": 2.6,
+   "type": "checklist",
+   "items": [
+    "Scan Wi-Fi",
+    "Lights off",
+    "Check vents",
+    "Unplug unknowns"
+   ],
+   "pos": "center"
+  },
+  {
+   "at": 0.192,
+   "dur": 2.04,
+   "type": "callout",
+   "text": "MOST CAMS NEED WI-FI",
+   "pos": "center"
+  },
+  {
+   "at": 0.281,
+   "dur": 2.39,
+   "type": "stat_count",
+   "to": 5,
+   "suffix": "",
+   "label": "HIDING SPOTS",
+   "pos": "center"
+  },
+  {
+   "at": 0.396,
+   "dur": 1.71,
+   "type": "kinetic",
+   "top": "STAY",
+   "big": "PRIVATE"
+  },
+  {
+   "at": 0.464,
+   "dur": 1.67,
+   "type": "lowerthird",
+   "title": "CHECK THE VENTS",
+   "sub": "line of sight to the bed"
+  },
+  {
+   "at": 0.74,
+   "dur": 1.84,
+   "type": "chips",
+   "items": [
+    "VENTS",
+    "CLOCKS",
+    "OUTLETS",
+    "TVs"
+   ],
+   "pos": "upper"
+  },
+  {
+   "at": 0.776,
+   "dur": 1.89,
+   "type": "ticker",
+   "to": 60,
+   "suffix": "s",
+   "label": "FULL SWEEP",
+   "pos": "lower"
+  },
+  {
+   "at": 0.918,
+   "dur": 2.34,
+   "type": "gauge",
+   "to": 94,
+   "max": 100,
+   "suffix": "%",
+   "label": "DETECTION RATE",
+   "pos": "center"
+  }
+ ],
+ "cta": {
+  "text": "Get it now — comment PRIVACY and I'll send the link. Link in bio.",
+  "code": "PRIVACY"
+ },
+ "caption": "Smoke detectors, alarm clocks, vents, TV frames, outlets — the five spots cams love. Check anything with a clear line of sight to the bed. Comment PRIVACY for the app. #privacy #airbnb #travelsafety #hiddencamera #traveltips #hotelroom #safetytips #hidden #ways #five #find 👉 Comment PRIVACY for the link — link in bio.",
+ "yt_title": "Top 5 places hidden cameras hide #shorts",
+ "trend_keys": [
+  "hidden",
+  "ways",
+  "five",
+  "find",
+  "look",
+  "tested",
+  "airbnb",
+  "cameras"
+ ],
+ "content_type": "sales"
+}
