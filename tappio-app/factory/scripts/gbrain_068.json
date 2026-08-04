@@ -1,0 +1,245 @@
+{
+ "id": "gbrain_068",
+ "app": "brain",
+ "voice": "en-US-BrianNeural",
+ "rate": "+7%",
+ "grade": "teal_orange",
+ "brand": {
+  "accent": "#9B5DE5",
+  "accent2": "#C9A7FF",
+  "code": "FOCUS",
+  "logo": "brain.png",
+  "name": "BRAINOVA"
+ },
+ "music": {
+  "queries": [
+   "calm focus ambient",
+   "calm motivational underscore",
+   "gentle cinematic hope"
+  ]
+ },
+ "cover": {
+  "kicker": "DOPAMINE RESET",
+  "top": "WHY YOU CAN'T",
+  "big": "SIT AND\nTHINK",
+  "q": [
+   "sticky notes wall reminders"
+  ]
+ },
+ "segments": [
+  {
+   "id": "b1",
+   "text": "Stop scrolling. Endless scrolling floods your brain with noise."
+  },
+  {
+   "id": "b2",
+   "text": "Deep focus starts to feel almost painful."
+  },
+  {
+   "id": "b3",
+   "text": "The fix is short bursts of real challenge."
+  },
+  {
+   "id": "b4",
+   "text": "Puzzles reset your attention span, gently."
+  },
+  {
+   "id": "b5",
+   "text": "Each session rebuilds patience and calm."
+  },
+  {
+   "id": "b6",
+   "text": "Trade the scroll for five sharp minutes."
+  }
+ ],
+ "shots": [
+  {
+   "q": [
+    "neurons synapse animation blue"
+   ],
+   "insert": "tv",
+   "pos": "upper"
+  },
+  {
+   "q": [
+    "man reading book focused"
+   ],
+   "motion": "pandown"
+  },
+  {
+   "q": [
+    "memory old photos hands"
+   ],
+   "insert": "diamond",
+   "pos": "lower"
+  },
+  {
+   "q": [
+    "student studying desk lamp night"
+   ],
+   "motion": "zout"
+  },
+  {
+   "q": [
+    "person forgetting keys frustrated"
+   ],
+   "insert": "phone",
+   "pos": "center"
+  },
+  {
+   "q": [
+    "person doing crossword puzzle"
+   ],
+   "motion": "panl"
+  },
+  {
+   "q": [
+    "teacher classroom explaining"
+   ],
+   "insert": "tilt",
+   "pos": "upper"
+  },
+  {
+   "q": [
+    "person thinking trying to remember"
+   ],
+   "motion": "zin"
+  },
+  {
+   "q": [
+    "glass of water healthy morning"
+   ],
+   "insert": "circle",
+   "pos": "upper"
+  },
+  {
+   "q": [
+    "sticky notes wall reminders"
+   ],
+   "motion": "panr"
+  },
+  {
+   "q": [
+    "chess board close up thinking"
+   ],
+   "insert": "arch",
+   "pos": "center"
+  },
+  {
+   "q": [
+    "notebook writing pen hand"
+   ],
+   "motion": "panup"
+  },
+  {
+   "q": [
+    "runner morning sunrise energy"
+   ],
+   "insert": "hexagon",
+   "pos": "lower"
+  },
+  {
+   "q": [
+    "light bulb idea dark"
+   ],
+   "motion": "pandown"
+  }
+ ],
+ "overlays": [
+  {
+   "at": 0.102,
+   "dur": 1.8,
+   "type": "kicker",
+   "text": "DAILY REP"
+  },
+  {
+   "at": 0.131,
+   "dur": 2.08,
+   "type": "chips",
+   "items": [
+    "SPEED",
+    "MEMORY",
+    "FOCUS",
+    "LOGIC"
+   ],
+   "pos": "upper"
+  },
+  {
+   "at": 0.187,
+   "dur": 1.64,
+   "type": "ticker",
+   "to": 147,
+   "suffix": "%",
+   "label": "RECALL SPEED",
+   "pos": "lower"
+  },
+  {
+   "at": 0.237,
+   "dur": 1.91,
+   "type": "callout",
+   "text": "STREAKS BEAT WILLPOWER",
+   "pos": "center"
+  },
+  {
+   "at": 0.257,
+   "dur": 1.63,
+   "type": "stat_count",
+   "to": 60,
+   "suffix": "s",
+   "label": "TO A SCORE",
+   "pos": "center"
+  },
+  {
+   "at": 0.38,
+   "dur": 2.6,
+   "type": "checklist",
+   "items": [
+    "Hear it",
+    "Picture it",
+    "Repeat it",
+    "Recall it"
+   ],
+   "pos": "center"
+  },
+  {
+   "at": 0.595,
+   "dur": 1.71,
+   "type": "gauge",
+   "to": 5,
+   "max": 10,
+   "suffix": "min",
+   "label": "PER DAY",
+   "pos": "center"
+  }
+ ],
+ "cta": {
+  "text": "Comment FOCUS for the app.",
+  "code": "FOCUS"
+ },
+ "caption": "USEFUL: Endless scrolling makes deep focus feel painful. Short bursts of real challenge reset your attention span — trade the scroll for five sharp minutes. Comment FOCUS for the app. #brainhealth #memory #focus #productivity #selfimprovement #mentalhealth #learning #memory #memorize #brain #test",
+ "yt_title": "Study Music Alpha Waves Relaxing Studying #shorts",
+ "trend_keys": [
+  "memory",
+  "memorize",
+  "brain",
+  "test",
+  "focus",
+  "concentration",
+  "age",
+  "mental"
+ ],
+ "content_type": "useful",
+ "comp_angle": {
+  "title": "Study Music Alpha Waves: Relaxing Studying Music, Brain Power, Focus Concentration Music, ",
+  "views": 235065280,
+  "channel": "Yellow Brick Cinema - Relaxing Music"
+ },
+ "virality": {
+  "score": 90,
+  "notes": [
+   "angle<-235065k",
+   "hook_boosted"
+  ],
+  "hook": "Stop scrolling. Endless scrolling floods your brain with noise."
+ }
+}
