@@ -138,6 +138,13 @@ function mailings_notify_all(string $title, string $body, string $url, string $i
     return $n;
 }
 
+/** Название текущего месяца в родительном падеже (для темы письма). */
+function mailings_month_ru(): string {
+    $m = [1=>'января',2=>'февраля',3=>'марта',4=>'апреля',5=>'мая',6=>'июня',
+          7=>'июля',8=>'августа',9=>'сентября',10=>'октября',11=>'ноября',12=>'декабря'];
+    return $m[(int) date('n')] ?? '';
+}
+
 /* ============================= Кусочки контента =============================== */
 
 /** Дата 'YYYY-MM-DD...' -> 'дд.мм.гггг' (пусто, если не разобралась). */
@@ -318,15 +325,48 @@ try {
         );
     }
 
-    /* ============ 2. «Осталось 3 дня до конца приёма» (10:00-11:00 мск) ============ */
+    /* ============ 1а. СВОДКА МЕСЯЦА (1 числа, 10:00 мск) ============ */
+    // Календарь владельца: 1-го — рассылка «запущены новые конкурсы» всей базе,
+    // даже если событийная рассылка по какому-то конкурсу уже была.
+    if ($day === 1 && $hour === 10) {
+        $kindMonth = 'month_launch_' . date('Y-m');
+        $monthly = array_values(array_filter(
+            all("SELECT id, slug, name, start_date, end_date FROM competitions
+                  WHERE status = 'open' ORDER BY sort, id ASC"),
+            static fn(array $c): bool => !mailing_sent($kindMonth, (string) (int) $c['id'])
+        ));
+        if ($monthly) {
+            $subject = 'Новые конкурсы ' . mailings_month_ru() . ' - КЦ «Музыкальный Мир»';
+            $html = mailings_comps_html(
+                'Конкурсы месяца запущены',
+                'Приём заявок открыт с 1 по 25 число. Выбирайте конкурс, подавайте заявку и покажите своё мастерство.',
+                $monthly,
+                'Подать заявку',
+                'Запущены конкурсы месяца: ' . mailings_comp_names($monthly) . '.'
+            );
+            $vk = mailings_comps_vk(
+                'КОНКУРСЫ МЕСЯЦА ЗАПУЩЕНЫ. Приём заявок открыт с 1 по 25 число:',
+                $monthly,
+                'Ждём ваши заявки! Все конкурсы центра: ' . url('/competitions')
+            );
+            mailings_run_comps_campaign(
+                $kindMonth, $monthly, $recipients, $subject, $html, $vk,
+                'Конкурсы месяца запущены',
+                'Открыт приём заявок: ' . mailings_comp_names($monthly) . '. Подайте заявку!'
+            );
+        }
+    }
+
+    /* ============ 2. «Осталось 3 дня до конца приёма» (22 числа / end_date-3, 10:00 мск) ============ */
     if ($hour === 10) {
+        $soonWhere = $day === 22
+            ? "status = 'open' AND end_date IS NOT NULL AND end_date <> ''"
+            : "status = 'open' AND end_date IS NOT NULL AND end_date <> '' AND date(end_date, '-3 days') = ?";
         $soon = array_values(array_filter(
             all(
                 "SELECT id, slug, name, start_date, end_date FROM competitions
-                  WHERE status = 'open' AND end_date IS NOT NULL AND end_date <> ''
-                    AND date(end_date, '-3 days') = ?
-               ORDER BY id ASC",
-                [$today]
+                  WHERE $soonWhere ORDER BY id ASC",
+                $day === 22 ? [] : [$today]
             ),
             static fn(array $c): bool => !mailing_sent('deadline_3', (string) (int) $c['id'])
         ));
@@ -356,15 +396,16 @@ try {
         }
     }
 
-    /* ============ 3. «Последний день приёма» (9:00-10:00 мск) ============ */
+    /* ============ 3. «Последний день приёма» (25 числа / end_date, 9:00 мск) ============ */
     if ($hour === 9) {
+        $lastWhere = $day === 25
+            ? "status = 'open' AND end_date IS NOT NULL AND end_date <> ''"
+            : "status = 'open' AND end_date IS NOT NULL AND end_date <> '' AND date(end_date) = ?";
         $last = array_values(array_filter(
             all(
                 "SELECT id, slug, name, start_date, end_date FROM competitions
-                  WHERE status = 'open' AND end_date IS NOT NULL AND end_date <> ''
-                    AND date(end_date) = ?
-               ORDER BY id ASC",
-                [$today]
+                  WHERE $lastWhere ORDER BY id ASC",
+                $day === 25 ? [] : [$today]
             ),
             static fn(array $c): bool => !mailing_sent('deadline_last', (string) (int) $c['id'])
         ));

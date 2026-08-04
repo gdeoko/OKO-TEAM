@@ -32,7 +32,8 @@ if (!cron_lock(JOB, 300)) {
 }
 
 try {
-    $batch = max(1, (int) cfgv('mail_batch_size', 40));
+    // Антибан-темп: не чаще 1 письма в 30 секунд (2 за минутный запуск).
+    $batch = max(1, (int) cfgv('mail_throttle_per_run', 2));
 
     // Если подключён специализированный модуль обработки очереди - используем его.
     if (function_exists('newsletter_process_queue')) {

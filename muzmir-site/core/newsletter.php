@@ -252,21 +252,29 @@ function nl_sent_today(): int {
  */
 function newsletter_process_queue(int $limit): int {
     $dailyLimit = (int) cfgv('mail_daily_limit', 400);
-    $batchCap   = (int) cfgv('mail_batch_size', 40);
-    if ($limit <= 0) $limit = $batchCap;
+    // Антибан-темп: не чаще 1 письма в mail_send_gap секунд (по умолчанию 30) —
+    // при ежеминутном кроне это 2 письма за запуск с паузой между ними.
+    $gap     = max(0, (int) cfgv('mail_send_gap', 30));
+    $perRun  = max(1, (int) cfgv('mail_throttle_per_run', 2));
+    $limit   = $limit > 0 ? min($limit, $perRun) : $perRun;
 
     $remaining = $dailyLimit - nl_sent_today();
     if ($remaining <= 0) { nl_log('process: дневной лимит исчерпан'); return 0; }
 
+    // Приоритет: транзакционные письма (0) всегда раньше массовых (10).
+    try { db()->exec("ALTER TABLE mail_queue ADD COLUMN priority INTEGER DEFAULT 0"); } catch (\Throwable $e) {}
+
     $take = min($limit, $remaining);
     $rows = all(
-        "SELECT * FROM mail_queue WHERE status = 'queued' ORDER BY id ASC LIMIT ?",
+        "SELECT * FROM mail_queue WHERE status = 'queued' ORDER BY COALESCE(priority,0) ASC, id ASC LIMIT ?",
         [$take]
     );
     if (!$rows) return 0;
 
     $sent = 0;
+    $i = 0;
     foreach ($rows as $row) {
+        if ($i++ > 0 && $gap > 0) sleep($gap);
         $id = (int) $row['id'];
         $opt = [];
         if (!empty($row['attach'])) $opt['attach'] = (string) $row['attach'];
