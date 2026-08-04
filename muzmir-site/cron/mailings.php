@@ -37,6 +37,7 @@ require_once BASE_PATH . '/core/mailer.php';
 // + core/notifications.php подключается изнутри result_mail.php.
 require_once BASE_PATH . '/core/result_mail.php';
 require_once BASE_PATH . '/core/vk.php';
+require_once BASE_PATH . '/core/vk_templates.php';
 require_once BASE_PATH . '/core/club.php';
 require_once __DIR__ . '/_lib.php';
 
@@ -226,7 +227,7 @@ function mailings_run_comps_campaign(
     $queued = mailings_queue_all($recipients, $subject, $html);
 
     $vkOk = false;
-    if (trim((string) cfgv('vk_token', '')) !== '') {
+    if ($vkText !== '' && trim((string) cfgv('vk_token', '')) !== '') {
         $r = vk_wall_post($vkText);
         $vkOk = !isset($r['error']);
         if (!$vkOk) {
@@ -290,7 +291,7 @@ try {
     // created_at — SQL-дефолт datetime('now'), UTC (см. соглашение в cron/_lib.php).
     $launch = array_values(array_filter(
         all(
-            "SELECT id, slug, name, start_date, end_date FROM competitions
+            "SELECT * FROM competitions
               WHERE status = 'open'
                 AND (date(start_date) = ? OR created_at >= datetime('now', '-1 day'))
            ORDER BY id ASC",
@@ -312,15 +313,20 @@ try {
             'Подать заявку',
             'Открыт приём заявок: ' . mailings_comp_names($launch) . '.'
         );
-        $vk = mailings_comps_vk(
-            'ОТКРЫТ ПРИЁМ ЗАЯВОК. Культурный центр «Музыкальный Мир» приглашает к участию в '
-                . ($many ? 'новых конкурсах:' : 'новом конкурсе:'),
-            $launch,
-            'Ждём ваши заявки! Все конкурсы центра: ' . url('/competitions')
-        );
-        // Почта — только месячной сводкой 1-го числа; событийно — ВК + приложение сразу.
+        /* ВК: отдельный пост на каждый конкурс с его афишей — шаблон «запуск». */
+        if (trim((string) cfgv('vk_token', '')) !== '') {
+            foreach ($launch as $lc) {
+                $af = BASE_PATH . '/public/uploads/comp/' . (int) $lc['id'] . '/afisha.jpg';
+                $r = (is_file($af) && function_exists('vk_wall_post_with_photo'))
+                    ? vk_wall_post_with_photo(vkt_launch($lc), $af)
+                    : vk_wall_post(vkt_launch($lc));
+                cron_log(JOB, 'comp_launch VK «' . $lc['name'] . '»: '
+                    . (isset($r['error']) ? 'ОШИБКА ' . (string)($r['error']['error_msg'] ?? '?') : 'OK'));
+            }
+        }
+        // Почта — только месячной сводкой 1-го числа; здесь ВК уже опубликован, кампания даёт in-app.
         mailings_run_comps_campaign(
-            'comp_launch', $launch, [], $subject, $html, $vk,
+            'comp_launch', $launch, [], $subject, $html, '',
             'Открыт приём заявок',
             ($many ? 'Новые конкурсы: ' : 'Новый конкурс: ') . mailings_comp_names($launch) . '. Подайте заявку!'
         );
@@ -332,7 +338,7 @@ try {
     if ($day === 1 && $hour === 10) {
         $kindMonth = 'month_launch_' . date('Y-m');
         $monthly = array_values(array_filter(
-            all("SELECT id, slug, name, start_date, end_date FROM competitions
+            all("SELECT * FROM competitions
                   WHERE status = 'open' ORDER BY sort, id ASC"),
             static fn(array $c): bool => !mailing_sent($kindMonth, (string) (int) $c['id'])
         ));
@@ -365,7 +371,7 @@ try {
             : "status = 'open' AND end_date IS NOT NULL AND end_date <> '' AND date(end_date, '-3 days') = ?";
         $soon = array_values(array_filter(
             all(
-                "SELECT id, slug, name, start_date, end_date FROM competitions
+                "SELECT * FROM competitions
                   WHERE $soonWhere ORDER BY id ASC",
                 $day === 22 ? [] : [$today]
             ),
@@ -384,11 +390,7 @@ try {
                 'Успеть подать заявку',
                 'Приём заявок завершается через 3 дня: ' . mailings_comp_names($soon) . '.'
             );
-            $vk = mailings_comps_vk(
-                'ОСТАЛОСЬ 3 ДНЯ. Совсем скоро завершается приём заявок:',
-                $soon,
-                'Не откладывайте на последний день. Все конкурсы: ' . url('/competitions')
-            );
+            $vk = vkt_deadline($soon, false);
             // По календарю владельца: без почты — только ВК + приложение.
             mailings_run_comps_campaign(
                 'deadline_3', $soon, [], $subject, $html, $vk,
@@ -405,7 +407,7 @@ try {
             : "status = 'open' AND end_date IS NOT NULL AND end_date <> '' AND date(end_date) = ?";
         $last = array_values(array_filter(
             all(
-                "SELECT id, slug, name, start_date, end_date FROM competitions
+                "SELECT * FROM competitions
                   WHERE $lastWhere ORDER BY id ASC",
                 $day === 25 ? [] : [$today]
             ),
@@ -424,17 +426,39 @@ try {
                 'Подать заявку сегодня',
                 'Сегодня последний день приёма заявок: ' . mailings_comp_names($last) . '.'
             );
-            $vk = mailings_comps_vk(
-                'ПОСЛЕДНИЙ ДЕНЬ ПРИЁМА ЗАЯВОК. Сегодня завершается приём:',
-                $last,
-                'Заявки принимаются до конца дня. Все конкурсы: ' . url('/competitions')
-            );
+            $vk = vkt_deadline($last, true);
             // По календарю владельца: без почты — только ВК + приложение.
             mailings_run_comps_campaign(
                 'deadline_last', $last, [], $subject, $html, $vk,
                 'Последний день приёма заявок',
                 'Сегодня завершается приём: ' . mailings_comp_names($last) . '. Подайте заявку до конца дня.'
             );
+        }
+    }
+
+    /* ============ 3б. «Приём заявок закрыт» (26 числа / end_date+1, 10:00 мск) ============ */
+    if ($hour === 10) {
+        $closedWhere = $day === 26
+            ? "status IN ('open','judging') AND end_date IS NOT NULL AND end_date <> '' AND date(end_date) < ?"
+            : "status IN ('open','judging') AND end_date IS NOT NULL AND end_date <> '' AND date(end_date, '+1 day') = ?";
+        $closedComps = array_values(array_filter(
+            all("SELECT * FROM competitions WHERE $closedWhere ORDER BY id ASC", [$today]),
+            static fn(array $c): bool => !mailing_sent('closed_post', (string) (int) $c['id'])
+        ));
+        if ($closedComps) {
+            $vkOkC = false;
+            if (trim((string) cfgv('vk_token', '')) !== '') {
+                $r = vk_wall_post(vkt_closed($closedComps));
+                $vkOkC = !isset($r['error']);
+                if (!$vkOkC) cron_log(JOB, 'closed_post: wall.post ОШИБКА: ' . (string)($r['error']['error_msg'] ?? '?'));
+            }
+            $inC = mailings_notify_all('Приём заявок закрыт',
+                'Приём заявок завершён: ' . mailings_comp_names($closedComps) . '. Следите за результатами.',
+                url('/results'), 'bell');
+            if ($vkOkC || $inC > 0) {
+                foreach ($closedComps as $c) mailing_mark('closed_post', (string) (int) $c['id']);
+                cron_log(JOB, 'closed_post: ' . mailings_comp_names($closedComps) . ' — ВК ' . ($vkOkC ? 'OK' : 'нет') . ", in-app $inC");
+            }
         }
     }
 

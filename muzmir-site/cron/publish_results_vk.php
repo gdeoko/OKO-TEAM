@@ -30,6 +30,7 @@ $GLOBALS['CFG'] = require BASE_PATH . '/config.php';
 require_once BASE_PATH . '/core/db.php';
 require_once BASE_PATH . '/core/helpers.php';
 require_once BASE_PATH . '/core/vk.php';
+require_once BASE_PATH . '/core/vk_templates.php';
 require_once BASE_PATH . '/core/result_mail.php';
 require_once __DIR__ . '/_lib.php';
 
@@ -93,11 +94,13 @@ try {
         $name = trim((string) $c['name']);
         $link = url('/results/' . (string) $c['slug']);
 
-        $message = 'ИТОГИ КОНКУРСА «' . $name . '» — жюри подвело итоги! '
-            . 'Результаты и наградные материалы: ' . $link . '. '
-            . 'Поздравляем всех участников!';
+        // Полный шаблон Даниэля «результаты длинного конкурса» (core/vk_templates.php).
+        $message = vkt_results_long($c);
 
-        $r = vk_wall_post($message);
+        $af = BASE_PATH . '/public/uploads/comp/' . $cid . '/afisha.jpg';
+        $r = (is_file($af) && function_exists('vk_wall_post_with_photo'))
+            ? vk_wall_post_with_photo($message, $af)
+            : vk_wall_post($message);
         if (isset($r['error'])) {
             cron_log(JOB, "конкурс #$cid «{$name}»: wall.post ОШИБКА: "
                 . (string) ($r['error']['error_msg'] ?? '?') . ' - пропуск, попробуем в следующий раз');

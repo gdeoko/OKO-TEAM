@@ -57,6 +57,15 @@ $aliases = [
 $aliases['/order-awards'] = '/awards';
 if (isset($aliases[$route])) { header('Location: ' . url($aliases[$route]), true, 301); exit; }
 
+// Короткие ссылки из постов ВК: /konkurs-<slug> -> подача, /obrazci-<slug> -> награды конкурса.
+if (preg_match('#^/konkurs-([a-z0-9\-]+)$#', $route, $m)) {
+    header('Location: ' . url('/apply?competition=' . rawurlencode($m[1])), true, 301); exit;
+}
+if (preg_match('#^/obrazci-([a-z0-9\-]+)$#', $route, $m)) {
+    $c = one("SELECT id FROM competitions WHERE slug=?", [$m[1]]);
+    header('Location: ' . url($c ? '/awards?comp=' . (int)$c['id'] : '/awards'), true, 301); exit;
+}
+
 // Карта сайта: статические маршруты + конкурсы по slug.
 if ($route === '/sitemap.xml') {
     header('Content-Type: application/xml; charset=utf-8');
