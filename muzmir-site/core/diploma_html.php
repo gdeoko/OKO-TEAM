@@ -231,7 +231,6 @@ body{background:#444;font-family:'Manrope',sans-serif;padding:20px;min-height:10
 .logos-row .logo-prok{height:16mm}
 .logos-row .logo-medal{height:21mm}
 .logos-row .logo-natsproekty{height:19mm}
-.logos-row .logo-badge{height:21mm}
 .logos-row .logo-center{height:36mm;flex-shrink:0;margin:0 2mm}
 .competition-type{text-align:center;font-family:'Playfair Display',serif;font-size:15.5pt;font-weight:800;color:#fff;margin-bottom:1.5mm}
 .competition-name{text-align:center;font-family:<?= $T['ff_comp'] ?>;font-size:37pt;font-weight:900;
@@ -303,7 +302,6 @@ body{background:#444;font-family:'Manrope',sans-serif;padding:20px;min-height:10
       <img class="logo logo-center" src="<?= $imgDip ?>/logo_center.png" alt="">
       <img class="logo logo-medal" src="<?= $imgDip ?>/logo_rkn_gold.png" alt="">
       <img class="logo logo-natsproekty" src="<?= $imgDip ?>/logo_natsproekty.png" alt="">
-      <img class="logo logo-badge" src="<?= $imgDip ?>/logo_mm_badge.png" alt="">
     </div>
 
     <?php $e = $E('comptype'); ?>
