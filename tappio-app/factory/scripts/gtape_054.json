@@ -1,0 +1,248 @@
+{
+ "id": "gtape_054",
+ "app": "tape",
+ "voice": "en-US-ChristopherNeural",
+ "rate": "+7%",
+ "grade": "teal_orange",
+ "brand": {
+  "accent": "#F4C430",
+  "accent2": "#FFE08A",
+  "code": "MEASURE",
+  "logo": "tape.png",
+  "name": "3D TAPE MEASURE"
+ },
+ "music": {
+  "queries": [
+   "motivational corporate",
+   "bright pop home",
+   "cheerful folk clap",
+   "upbeat indie acoustic diy"
+  ]
+ },
+ "cover": {
+  "kicker": "10 SECONDS",
+  "top": "A TAPE MEASURE",
+  "big": "IN YOUR\nPOCKET",
+  "q": [
+   "garden patio outdoor measuring"
+  ],
+  "ai": "work/gtape_054/cover_ai.png"
+ },
+ "segments": [
+  {
+   "id": "b1",
+   "text": "Stop scrolling. You always have your phone. Now it measures too."
+  },
+  {
+   "id": "b2",
+   "text": "No tape, no marks, no second person."
+  },
+  {
+   "id": "b3",
+   "text": "Tap two points and read the distance."
+  },
+  {
+   "id": "b4",
+   "text": "Rooms, walls, furniture, all in seconds."
+  },
+  {
+   "id": "b5",
+   "text": "Save projects and share the sizes."
+  },
+  {
+   "id": "b6",
+   "text": "The tape measure you never forget at home."
+  }
+ ],
+ "shots": [
+  {
+   "q": [
+    "apartment tour empty rooms"
+   ],
+   "motion": "pandown"
+  },
+  {
+   "q": [
+    "person measuring living room with phone ar"
+   ],
+   "insert": "arch",
+   "pos": "center"
+  },
+  {
+   "q": [
+    "person relaxing on couch bright apartment"
+   ],
+   "motion": "zout"
+  },
+  {
+   "q": [
+    "cozy furnished living room warm light"
+   ],
+   "insert": "circle",
+   "pos": "upper"
+  },
+  {
+   "q": [
+    "dining table room measure"
+   ],
+   "motion": "panup"
+  },
+  {
+   "q": [
+    "moving boxes new apartment"
+   ],
+   "insert": "tv",
+   "pos": "lower"
+  },
+  {
+   "q": [
+    "office desk setup measuring space"
+   ],
+   "motion": "panr"
+  },
+  {
+   "q": [
+    "paint wall renovation room"
+   ],
+   "insert": "rrect",
+   "pos": "upper"
+  },
+  {
+   "q": [
+    "rolled up rug floor room"
+   ],
+   "motion": "panl"
+  },
+  {
+   "q": [
+    "couple planning home layout tablet"
+   ],
+   "insert": "hexagon",
+   "pos": "upper"
+  },
+  {
+   "q": [
+    "furniture store showroom sofa"
+   ],
+   "motion": "zin"
+  },
+  {
+   "q": [
+    "bedroom bed frame assembly"
+   ],
+   "insert": "phone",
+   "pos": "lower"
+  },
+  {
+   "q": [
+    "closet organizer measuring wardrobe"
+   ],
+   "motion": "pandown"
+  },
+  {
+   "q": [
+    "bookshelf assembly instructions floor"
+   ],
+   "insert": "diamond",
+   "pos": "upper"
+  },
+  {
+   "q": [
+    "kitchen cabinets measuring renovation"
+   ],
+   "motion": "zout"
+  }
+ ],
+ "overlays": [
+  {
+   "at": 0.149,
+   "dur": 1.97,
+   "type": "kicker",
+   "text": "AR MEASURE"
+  },
+  {
+   "at": 0.165,
+   "dur": 2.28,
+   "type": "stat_count",
+   "to": 3,
+   "suffix": "%",
+   "label": "ERROR",
+   "pos": "center"
+  },
+  {
+   "at": 0.178,
+   "dur": 2.25,
+   "type": "kinetic",
+   "top": "STOP",
+   "big": "GUESSING"
+  },
+  {
+   "at": 0.346,
+   "dur": 2.6,
+   "type": "checklist",
+   "items": [
+    "Point the phone",
+    "Tap two points",
+    "Read the length",
+    "Save the project"
+   ],
+   "pos": "center"
+  },
+  {
+   "at": 0.35,
+   "dur": 2.4,
+   "type": "chips",
+   "items": [
+    "POINT",
+    "TAP",
+    "READ",
+    "SAVE"
+   ],
+   "pos": "lower"
+  },
+  {
+   "at": 0.398,
+   "dur": 2.09,
+   "type": "callout",
+   "text": "NO TAPE, NO HELPER",
+   "pos": "center"
+  },
+  {
+   "at": 0.618,
+   "dur": 2.33,
+   "type": "lowerthird",
+   "title": "DROP A FRAME",
+   "sub": "test it before the nail"
+  }
+ ],
+ "cta": {
+  "text": "Get it now — comment MEASURE and I'll send the link. Link in bio.",
+  "code": "MEASURE"
+ },
+ "caption": "You always have your phone — now it measures too. No tape, no marks, no helper. Tap two points, read the distance, save the project. Comment MEASURE for the app. #diy #homedecor #interiordesign #measure #movingtips #renter #apartmenttherapy #tape #hacks #accurate #app 👉 Comment MEASURE for the link — link in bio.",
+ "yt_title": "Tick Sticking a Carpentry HACK few #shorts",
+ "trend_keys": [
+  "tape",
+  "hacks",
+  "accurate",
+  "app",
+  "iphone",
+  "measuring",
+  "measure",
+  "use"
+ ],
+ "content_type": "sales",
+ "comp_angle": {
+  "title": "Tick Sticking, a Carpentry HACK (few people know)",
+  "views": 6660259,
+  "channel": "seejanedrill"
+ },
+ "virality": {
+  "score": 90,
+  "notes": [
+   "angle<-6660k",
+   "hook_boosted"
+  ],
+  "hook": "Stop scrolling. You always have your phone. Now it measures too."
+ }
+}

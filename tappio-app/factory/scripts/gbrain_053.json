@@ -24,12 +24,13 @@
   "big": "14\nDAYS",
   "q": [
    "man reading book focused"
-  ]
+  ],
+  "ai": "work/gbrain_053/cover_ai.png"
  },
  "segments": [
   {
    "id": "b1",
-   "text": "Big change starts with one tiny daily rep."
+   "text": "Stop scrolling. Big change starts with one tiny daily rep."
   },
   {
    "id": "b2",
@@ -222,7 +223,7 @@
   "code": "FOCUS"
  },
  "caption": "One tiny daily rep compounds: faster reactions by day five, sharper recall by day ten, a streak that keeps you going. Fourteen days to a quicker mind. Comment FOCUS for the app. #brainhealth #memory #focus #productivity #selfimprovement #mentalhealth #learning #memory #memorize #improve #secrets",
- "yt_title": "Get measurably smarter in 14 days #shorts",
+ "yt_title": "How to Train Your Brain to #shorts",
  "trend_keys": [
   "memory",
   "memorize",
@@ -233,5 +234,18 @@
   "focus",
   "hack"
  ],
- "content_type": "viral"
+ "content_type": "viral",
+ "comp_angle": {
+  "title": "How to Train Your Brain to Think in English (Stop Translating!) | Podcast for Easy Convers",
+  "views": 1499028,
+  "channel": "English Conversation Podcast"
+ },
+ "virality": {
+  "score": 90,
+  "notes": [
+   "angle<-1499k",
+   "hook_boosted"
+  ],
+  "hook": "Stop scrolling. Big change starts with one tiny daily rep."
+ }
 }
