@@ -215,6 +215,12 @@ case 'sendNewsletter':
 case 'downloadAnketa':
     require_admin(); require __DIR__.'/anketa_download.php'; download_anketa_zip($_GET['id']??''); exit;
 
+case 'downloadAnketaPdf':
+    require_admin(); require __DIR__.'/anketa_report.php'; render_anketa_report($_GET['id']??''); exit;
+
+case 'anketaFile':
+    require_admin(); require __DIR__.'/anketa_report.php'; serve_anketa_file((int)($_GET['id']??0)); exit;
+
 case 'agentDialog':
     require_agent(); $cid=agent_resolve_client($body);
     db_insert("INSERT INTO dialogs (client_id,tg_user_id,account,role,message,stage,created_at) VALUES (?,?,?,?,?,?,?)",
@@ -774,6 +780,61 @@ case 'admin_finance_export':
         $r['manual']?'да':'',$r['ref']?:'',$r['partner_amount']?:'',$r['invoice_id']?:''],';');
     fclose($f); exit;
 
+// ── Ручной ввод оплаты (когда Lava webhook не сработал) ──
+// POST {email, name, amount, product, method?, tx_id?, comment?, ref?}
+// → создаёт клиента (если нет), payments+deals, начисляет 15% партнёру если ref
+case 'admin_manual_payment':
+    require_admin();
+    partner_ensure_tables();
+    manual_payment_ensure_columns();
+    $email=strtolower(trim((string)($body['email']??'')));
+    $name=trim((string)($body['name']??''));
+    $amount=(int)round((float)($body['amount']??0));
+    $product=trim((string)($body['product']??'sistema'));
+    $method=trim((string)($body['method']??'manual'));
+    $txId=trim((string)($body['tx_id']??''));
+    $comment=trim((string)($body['comment']??''));
+    $ref=trim((string)($body['ref']??''));
+    if(!$email) fail('Email обязателен');
+    if(!$name) fail('Имя обязательно');
+    if($amount<=0) fail('Сумма должна быть > 0');
+    if(!filter_var($email,FILTER_VALIDATE_EMAIL)) fail('Некорректный email');
+    // upsert клиента и пометить оплату
+    $existing=db_one("SELECT id,name FROM clients WHERE lower(email)=?",[$email]);
+    if($existing){
+        $cid=(int)$existing['id'];
+        db_exec("UPDATE clients SET name=COALESCE(NULLIF(name,''),?), paid=1, paid_product=?, paid_ts=?, status='deal' WHERE id=?",[$name,$product,now(),$cid]);
+    } else {
+        $cid=client_upsert(['name'=>$name,'email'=>$email,'products'=>[$product],'status'=>'deal','source'=>'manual']);
+        db_exec("UPDATE clients SET paid=1, paid_product=?, paid_ts=? WHERE id=?",[$product,now(),$cid]);
+    }
+    // payment (+ tx_id, note лениво в extra колонках)
+    $payId=db_insert("INSERT INTO payments (client_id,email,name,product,amount,method,manual,tx_id,note,created_at) VALUES (?,?,?,?,?,?,?,?,?,?)",
+        [$cid,$email,$name,$product,(string)$amount,$method,1,$txId,$comment,now()]);
+    // deal (амаунт как INT для агрегатов)
+    db_insert("INSERT INTO deals (client_id,product,amount,status,created_at,closed_at) VALUES (?,?,?,?,?,?)",
+        [$cid,$product,$amount,'won',now(),now()]);
+    // партнёрская выплата 15% (если ref задан)
+    $partnerAmount=0;
+    if($ref!==''){
+        $pct=(float)($C['partner_percent']??15);
+        $partnerAmount=round($amount*$pct/100,2);
+        db_insert("INSERT INTO partner_payouts (ref,buyer_email,product,amount,partner_amount,status,invoice_id) VALUES (?,?,?,?,?,?,?)",
+            [$ref,$email,$product,$amount,$partnerAmount,'pending',$txId?:'manual-'.$payId]);
+    }
+    // уведомление владельцу
+    $prodName=$GLOBALS['PRODUCTS'][$product]['name'] ?? $product;
+    $msg="<b>Оплата (ручной ввод)</b>\n\n"
+        .htmlspecialchars($name)."\n"
+        .htmlspecialchars($email)."\n"
+        .htmlspecialchars($prodName).' · '.number_format($amount,0,'.',' ').'₽'
+        ."\nМетод: ".htmlspecialchars($method)
+        .($txId?"\nTX: ".htmlspecialchars($txId):'')
+        .($comment?"\n\n".htmlspecialchars($comment):'')
+        .($ref?"\n\nreferrer: <code>".htmlspecialchars($ref)."</code> → партнёру ".number_format($partnerAmount,0,'.',' ')."₽":'');
+    tg_send($C['daniel_tg'],$msg,[],topic_thread('deals'));
+    out(['ok'=>true,'payment_id'=>$payId,'client_id'=>$cid,'partner_amount'=>$partnerAmount,'amount'=>$amount]);
+
 // ── Универсальное админ-действие (ban/unban/refund/bonus/mark_paid/message/set_status) ──
 case 'admin_action':
     require_admin();
@@ -1125,6 +1186,15 @@ function wallet_ensure_account($email){
         $schemaReady = true;
     }
     db_exec("INSERT OR IGNORE INTO wallet_accounts (client_email,balance,hold,updated_at) VALUES (?,0,0,?)",[$email, now()]);
+}
+// Добавляем колонки tx_id и note в payments (если их ещё нет) — для ручного ввода оплат.
+function manual_payment_ensure_columns(){
+    static $ready = false; if($ready) return;
+    $cols = db_all("PRAGMA table_info(payments)");
+    $names = array_map(fn($r)=>$r['name'], $cols);
+    if(!in_array('tx_id',$names)) @db_exec("ALTER TABLE payments ADD COLUMN tx_id TEXT");
+    if(!in_array('note',$names))  @db_exec("ALTER TABLE payments ADD COLUMN note TEXT");
+    $ready = true;
 }
 // Партнёрские таблицы (создаются лениво lava_webhook / pay_url — на пустой БД их может не быть).
 function partner_ensure_tables(){

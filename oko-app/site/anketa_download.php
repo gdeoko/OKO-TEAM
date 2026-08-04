@@ -67,6 +67,14 @@ function anketa_txt(array $ordered, array $meta): string {
 }
 
 function download_anketa_zip(string $sid) {
+    // По умолчанию — красивый HTML/PDF-отчёт (открывается в браузере, печатается в PDF).
+    // Для отладки / машинной обработки — старый ZIP+JSON включается флагом ?raw=1.
+    if (empty($_GET['raw'])) {
+        $key = $_GET['key'] ?? '';
+        $qs = 'action=downloadAnketaPdf&id=' . rawurlencode($sid) . '&key=' . rawurlencode((string)$key);
+        header('Location: /api.php?' . $qs, true, 302);
+        return;
+    }
     $a = db_one("SELECT * FROM anketa_submissions WHERE submission_id=? OR id=?", [$sid, (int)$sid]);
     if (!$a) { http_response_code(404); echo 'Анкета не найдена'; return; }
     $sid = $a['submission_id'];
