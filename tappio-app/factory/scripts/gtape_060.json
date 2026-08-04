@@ -24,12 +24,13 @@
   "big": "FIT THROUGH\nTHE DOOR?",
   "q": [
    "hands holding phone ar app screen"
-  ]
+  ],
+  "ai": "work/gtape_060/cover_ai.png"
  },
  "segments": [
   {
    "id": "b1",
-   "text": "Big furniture, narrow doorway, moving day panic."
+   "text": "Stop scrolling. Big furniture, narrow doorway, moving day panic."
   },
   {
    "id": "b2",
@@ -243,7 +244,7 @@
   "code": "MEASURE"
  },
  "caption": "Moving day panic? Measure the doorway, measure the sofa, let the app compare. Green means go, red means turn it sideways. Comment MEASURE for the app. #diy #homedecor #interiordesign #measure #movingtips #renter #apartmenttherapy #app #interior #arrange #reality",
- "yt_title": "Will the sofa fit through the door? #shorts",
+ "yt_title": "How Do I Use The iPhone #shorts",
  "trend_keys": [
   "app",
   "interior",
@@ -254,5 +255,18 @@
   "measure",
   "furniture"
  ],
- "content_type": "viral"
+ "content_type": "viral",
+ "comp_angle": {
+  "title": "How Do I Use The iPhone Measure App? How Accurate Is It?",
+  "views": 198481,
+  "channel": "Payette Forward"
+ },
+ "virality": {
+  "score": 92,
+  "notes": [
+   "angle<-198k",
+   "hook_boosted"
+  ],
+  "hook": "Stop scrolling. Big furniture, narrow doorway, moving day panic."
+ }
 }
