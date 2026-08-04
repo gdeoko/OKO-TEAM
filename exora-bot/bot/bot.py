@@ -9,7 +9,9 @@ aiogram 3.x, long-polling, SQLite для заявок, курс Binance/CoinGeck
     export EXORA_SUPPORT=@exora_support
     python3 bot.py
 """
-import os, json, asyncio, sqlite3, logging, time, re, urllib.parse
+import os, json, asyncio, sqlite3, logging, time, re, urllib.parse, smtplib, ssl
+from email.mime.text import MIMEText
+from email.mime.multipart import MIMEMultipart
 from datetime import datetime, timezone, timedelta
 from pathlib import Path
 from typing import Optional
@@ -39,6 +41,13 @@ DB_PATH.parent.mkdir(parents=True, exist_ok=True)
 
 API_PORT      = int(os.environ.get("EXORA_API_PORT", "8093"))
 API_TOKEN     = os.environ.get("EXORA_API_TOKEN", "exora-admin-2026")
+
+GMAIL_USER    = os.environ.get("GMAIL_USER", "")
+GMAIL_PASS    = os.environ.get("GMAIL_PASS", "")
+NOTIFY_EMAIL  = os.environ.get("EXORA_NOTIFY_EMAIL", GMAIL_USER)
+
+FOLLOWUP_MIN  = int(os.environ.get("EXORA_FOLLOWUP_MIN", "15"))
+ESCALATE_MIN  = int(os.environ.get("EXORA_ESCALATE_MIN", "30"))
 
 LOG_LEVEL = os.environ.get("EXORA_LOG_LEVEL", "INFO").upper()
 logging.basicConfig(level=LOG_LEVEL, format="%(asctime)s %(levelname)s %(name)s: %(message)s")
@@ -85,6 +94,28 @@ def db_init():
     CREATE TABLE IF NOT EXISTS settings (
         key   TEXT PRIMARY KEY,
         value TEXT
+    );
+    CREATE TABLE IF NOT EXISTS rate_alerts (
+        id           INTEGER PRIMARY KEY AUTOINCREMENT,
+        tg_id        INTEGER,
+        target       REAL,
+        direction    TEXT,
+        created_at   INTEGER,
+        triggered_at INTEGER DEFAULT 0,
+        active       INTEGER DEFAULT 1
+    );
+    CREATE TABLE IF NOT EXISTS admin_log (
+        id           INTEGER PRIMARY KEY AUTOINCREMENT,
+        ts           INTEGER,
+        admin_id     INTEGER,
+        action       TEXT,
+        target_id    TEXT,
+        meta         TEXT
+    );
+    CREATE TABLE IF NOT EXISTS order_reminders (
+        order_id     TEXT PRIMARY KEY,
+        reminded_at  INTEGER DEFAULT 0,
+        escalated_at INTEGER DEFAULT 0
     );
     """)
     con.commit()
@@ -154,6 +185,40 @@ def set_setting(key, value):
     con.execute("INSERT INTO settings(key,value) VALUES(?,?) ON CONFLICT(key) DO UPDATE SET value=excluded.value", (key, str(value)))
     con.commit()
     con.close()
+
+def admin_log(admin_id: int, action: str, target_id: str = "", meta: dict = None):
+    try:
+        con = db_conn()
+        con.execute("INSERT INTO admin_log(ts, admin_id, action, target_id, meta) VALUES(?,?,?,?,?)",
+                    (int(time.time()), admin_id, action, target_id, json.dumps(meta or {}, ensure_ascii=False)))
+        con.commit(); con.close()
+    except Exception as e:
+        log.warning(f"admin_log fail: {e}")
+
+
+# ============================================================
+#  EMAIL notifications (Gmail SMTP)
+# ============================================================
+def send_email(subject: str, body: str, to: str = None):
+    if not GMAIL_USER or not GMAIL_PASS:
+        return False
+    to = to or NOTIFY_EMAIL
+    if not to: return False
+    try:
+        msg = MIMEMultipart("alternative")
+        msg["Subject"] = subject
+        msg["From"] = f"Exora Bot <{GMAIL_USER}>"
+        msg["To"] = to
+        msg.attach(MIMEText(body, "html", "utf-8"))
+        ctx = ssl.create_default_context()
+        with smtplib.SMTP_SSL("smtp.gmail.com", 465, context=ctx, timeout=10) as s:
+            s.login(GMAIL_USER, GMAIL_PASS)
+            s.send_message(msg)
+        log.info(f"email → {to}: {subject}")
+        return True
+    except Exception as e:
+        log.warning(f"send_email fail: {e}")
+        return False
 
 # ----- rate fetcher -----
 _rate_cache = {"ts": 0, "value": 0.0, "src": ""}
@@ -340,6 +405,163 @@ async def h_web_app(msg: Message):
             await bot.send_message(aid, order_admin_text(o, oid, user), reply_markup=kb_admin_order(oid))
         except Exception as e:
             log.warning(f"admin notify {aid}: {e}")
+    # Email notify
+    try:
+        html = f"""
+        <h2>Новая заявка #{oid}</h2>
+        <p><b>Клиент:</b> {msg.from_user.first_name} (@{msg.from_user.username or 'id'+str(msg.from_user.id)})</p>
+        <p><b>{'Купить' if o.get('direction')=='buy' else 'Продать'} USDT</b> · {net_ru(o.get('network'))}</p>
+        <p><b>Отдаёт:</b> {fmt_money(o.get('give'))} {o.get('giveCur','')}<br/>
+           <b>Получает:</b> {fmt_money(o.get('get'))} {o.get('getCur','')}<br/>
+           <b>Курс:</b> {fmt_money(o.get('rate'))} ₽</p>
+        <p><b>Реквизиты клиента:</b> <code>{o.get('wallet','')}</code></p>
+        <p><b>Контакт:</b> {o.get('contact','')}</p>
+        <p><a href="https://exora-app.higgsfield.app/admin/">Открыть в админке</a></p>
+        """
+        asyncio.create_task(asyncio.to_thread(send_email, f"Exora: заявка #{oid}", html))
+    except Exception as e:
+        log.warning(f"email schedule: {e}")
+
+
+# ============================================================
+#  RATE ALERTS
+# ============================================================
+@router.message(Command("alert"))
+async def h_alert(msg: Message, command: CommandObject):
+    upsert_user(msg.from_user)
+    args = (command.args or "").strip()
+    if not args:
+        con = db_conn()
+        rows = con.execute("SELECT * FROM rate_alerts WHERE tg_id=? AND active=1 ORDER BY id DESC", (msg.from_user.id,)).fetchall()
+        con.close()
+        r, _ = await fetch_rate()
+        txt = [f"🔔 <b>Уведомления о курсе</b>\n\nТекущий курс: <b>{fmt_money(r)} ₽</b>\n"]
+        if not rows:
+            txt.append("У вас нет активных уведомлений.\n\n<b>Как создать:</b>\n"
+                       "<code>/alert 95</code> — уведомить при достижении 95 ₽\n"
+                       "<code>/alert &gt;100</code> — когда курс поднимется до 100 ₽\n"
+                       "<code>/alert &lt;90</code> — когда курс упадёт до 90 ₽")
+        else:
+            txt.append("<b>Активные уведомления:</b>")
+            for r_ in rows:
+                arrow = "↑" if r_["direction"] == "up" else "↓"
+                txt.append(f"#{r_['id']} · {arrow} <b>{fmt_money(r_['target'])} ₽</b>")
+            txt.append("\n<code>/alert_del ID</code> — удалить")
+        await msg.answer("\n".join(txt))
+        return
+    m = re.match(r"^([<>]?)\s*(\d+(?:[.,]\d+)?)$", args)
+    if not m:
+        await msg.answer("Формат: <code>/alert 95</code> или <code>/alert &gt;100</code> / <code>/alert &lt;90</code>")
+        return
+    op, val = m.group(1), float(m.group(2).replace(",", "."))
+    r, _ = await fetch_rate()
+    if not op:
+        direction = "up" if val > r else "down"
+    else:
+        direction = "up" if op == ">" else "down"
+    con = db_conn()
+    cur = con.execute("INSERT INTO rate_alerts(tg_id, target, direction, created_at, active) VALUES(?,?,?,?,1)",
+                      (msg.from_user.id, val, direction, int(time.time())))
+    aid = cur.lastrowid
+    con.commit(); con.close()
+    await msg.answer(
+        f"✅ <b>Уведомление #{aid} создано</b>\n\n"
+        f"Пришлю сообщение, когда курс {'поднимется до' if direction=='up' else 'опустится до'} <b>{fmt_money(val)} ₽</b>.\n"
+        f"Сейчас: <b>{fmt_money(r)} ₽</b>"
+    )
+
+
+@router.message(Command("alert_del"))
+async def h_alert_del(msg: Message, command: CommandObject):
+    args = (command.args or "").strip()
+    if not args.isdigit():
+        await msg.answer("Использование: <code>/alert_del 42</code>")
+        return
+    con = db_conn()
+    con.execute("UPDATE rate_alerts SET active=0 WHERE id=? AND tg_id=?", (int(args), msg.from_user.id))
+    con.commit(); con.close()
+    await msg.answer(f"❌ Уведомление #{args} удалено")
+
+
+# ============================================================
+#  BACKGROUND TASKS: rate alerts + order follow-up
+# ============================================================
+async def bg_rate_alerts():
+    """Каждую минуту проверять курс и триггерить активные alerts."""
+    while True:
+        try:
+            r, _ = await fetch_rate()
+            con = db_conn()
+            rows = con.execute("SELECT * FROM rate_alerts WHERE active=1").fetchall()
+            for a in rows:
+                hit = (a["direction"] == "up" and r >= a["target"]) or (a["direction"] == "down" and r <= a["target"])
+                if not hit: continue
+                try:
+                    arrow = "🟢" if a["direction"] == "up" else "🔴"
+                    await bot.send_message(
+                        a["tg_id"],
+                        f"{arrow} <b>Курс USDT достиг {fmt_money(a['target'])} ₽</b>\n\n"
+                        f"Текущий: <b>{fmt_money(r)} ₽</b>\n"
+                        f"Ваше уведомление #{a['id']} сработало.",
+                        reply_markup=kb_open_app()
+                    )
+                    con.execute("UPDATE rate_alerts SET active=0, triggered_at=? WHERE id=?", (int(time.time()), a["id"]))
+                    con.commit()
+                except Exception as e:
+                    log.warning(f"alert send {a['tg_id']}: {e}")
+            con.close()
+        except Exception as e:
+            log.warning(f"bg_rate_alerts: {e}")
+        await asyncio.sleep(60)
+
+
+async def bg_order_followup():
+    """Auto follow-up: клиент — через 15 мин, эскалация админам — через 30 мин."""
+    while True:
+        try:
+            now = int(time.time())
+            con = db_conn()
+            rows = con.execute("""
+                SELECT o.id, o.tg_id, o.created_at, o.direction, o.give_amount, o.give_cur,
+                       COALESCE(rem.reminded_at,0) as reminded, COALESCE(rem.escalated_at,0) as escalated
+                FROM orders o
+                LEFT JOIN order_reminders rem ON rem.order_id = o.id
+                WHERE o.status='new' AND o.created_at > ?
+            """, (now - 3*3600,)).fetchall()
+            for r in rows:
+                age = now - r["created_at"]
+                # напомнить клиенту (once) после FOLLOWUP_MIN
+                if age >= FOLLOWUP_MIN * 60 and not r["reminded"] and r["tg_id"]:
+                    try:
+                        await bot.send_message(
+                            r["tg_id"],
+                            f"⏰ <b>Заявка #{r['id']} ждёт вашей активности</b>\n\n"
+                            f"Прошло {FOLLOWUP_MIN} минут. Если возникли вопросы — напишите в поддержку {SUPPORT_HANDLE}.\n"
+                            f"Заявка отменяется автоматически через 24 часа."
+                        )
+                        con.execute("INSERT OR REPLACE INTO order_reminders(order_id, reminded_at, escalated_at) VALUES(?,?,?)",
+                                    (r["id"], now, r["escalated"]))
+                        con.commit()
+                    except Exception as e:
+                        log.warning(f"followup {r['id']}: {e}")
+                # эскалация админам после ESCALATE_MIN
+                if age >= ESCALATE_MIN * 60 and not r["escalated"]:
+                    for aid in ADMIN_IDS:
+                        try:
+                            await bot.send_message(
+                                aid,
+                                f"🔔 <b>Эскалация: заявка #{r['id']} висит {age//60} мин</b>\n\n"
+                                f"Клиент id {r['tg_id']}: {r['direction']} {fmt_money(r['give_amount'])} {r['give_cur']}\n"
+                                f"Свяжитесь с клиентом."
+                            )
+                        except Exception: pass
+                    con.execute("INSERT OR REPLACE INTO order_reminders(order_id, reminded_at, escalated_at) VALUES(?,?,?)",
+                                (r["id"], r["reminded"] or now, now))
+                    con.commit()
+            con.close()
+        except Exception as e:
+            log.warning(f"bg_order_followup: {e}")
+        await asyncio.sleep(60)
 
 
 @router.message(Command("rate"))
@@ -555,6 +777,7 @@ async def h_admin_action(cb: CallbackQuery):
     if not row: await cb.answer("Заявка не найдена", show_alert=True); con.close(); return
     con.execute("UPDATE orders SET status=? WHERE id=?", (new_status, oid))
     con.commit(); con.close()
+    admin_log(cb.from_user.id, "order_status", oid, {"status": new_status})
     # уведомить клиента
     if row["tg_id"]:
         try:
@@ -665,6 +888,7 @@ async def setup_bot_meta():
             BotCommand(command="start", description="Начать · открыть меню"),
             BotCommand(command="rate", description="Актуальный курс USDT"),
             BotCommand(command="aml", description="AML-проверка кошелька"),
+            BotCommand(command="alert", description="Уведомление о курсе"),
             BotCommand(command="myorders", description="Мои заявки"),
             BotCommand(command="about", description="О компании"),
             BotCommand(command="support", description="Связаться с поддержкой"),
@@ -828,11 +1052,96 @@ async def api_aml_check(request):
     return _cors(web.json_response(r))
 
 
+async def api_order_timeline(request):
+    """PUBLIC: получить прогресс заявки по её ID (для клиента в mini-app)."""
+    oid = request.match_info["oid"]
+    con = db_conn()
+    row = con.execute("SELECT * FROM orders WHERE id=?", (oid,)).fetchone()
+    con.close()
+    if not row:
+        return _cors(web.json_response({"error": "not found"}, status=404))
+    order_ts = row["created_at"]
+    steps = [
+        {"key":"new",         "label":"Заявка создана",  "done": True,  "ts": order_ts},
+        {"key":"processing",  "label":"Принята в работу", "done": row["status"] in ("processing","completed"), "ts": None},
+        {"key":"paid",        "label":"Оплата получена", "done": row["status"] == "completed", "ts": None},
+        {"key":"completed",   "label":"USDT выдан",       "done": row["status"] == "completed", "ts": None},
+    ]
+    if row["status"] == "cancelled":
+        steps = [
+            {"key":"new",       "label":"Заявка создана","done":True,  "ts": order_ts},
+            {"key":"cancelled", "label":"Отменена",       "done":True,  "ts": None},
+        ]
+    return _cors(web.json_response({
+        "id": row["id"],
+        "status": row["status"],
+        "steps": steps,
+    }))
+
+
+async def api_admin_log(request):
+    if not _auth(request): return _cors(web.json_response({"error":"auth"}, status=401))
+    limit = min(int(request.query.get("limit", "50")), 200)
+    con = db_conn()
+    rows = con.execute("SELECT * FROM admin_log ORDER BY ts DESC LIMIT ?", (limit,)).fetchall()
+    con.close()
+    return _cors(web.json_response({
+        "log": [{"id":r["id"],"ts":r["ts"]*1000,"admin_id":r["admin_id"],
+                 "action":r["action"],"target_id":r["target_id"],
+                 "meta":json.loads(r["meta"] or "{}")} for r in rows]
+    }))
+
+
+async def api_alerts(request):
+    if not _auth(request): return _cors(web.json_response({"error":"auth"}, status=401))
+    con = db_conn()
+    rows = con.execute("""SELECT a.*, u.username FROM rate_alerts a
+                          LEFT JOIN users u ON u.tg_id=a.tg_id
+                          ORDER BY a.id DESC LIMIT 100""").fetchall()
+    con.close()
+    return _cors(web.json_response({
+        "alerts": [{"id":r["id"],"tg_id":r["tg_id"],"target":r["target"],
+                    "direction":r["direction"],"active":bool(r["active"]),
+                    "created_at":r["created_at"]*1000,
+                    "triggered_at":(r["triggered_at"] or 0)*1000,
+                    "username":r["username"]} for r in rows]
+    }))
+
+
+async def api_orders_chart(request):
+    """Данные для линейного chart в админке — заявки за N дней."""
+    if not _auth(request): return _cors(web.json_response({"error":"auth"}, status=401))
+    days = min(int(request.query.get("days", "30")), 365)
+    con = db_conn()
+    now = int(time.time())
+    buckets = {}
+    for i in range(days):
+        d = (now - i*86400)
+        key = datetime.fromtimestamp(d, timezone(timedelta(hours=3))).strftime("%Y-%m-%d")
+        buckets[key] = {"count":0,"volume":0,"done":0}
+    rows = con.execute("SELECT * FROM orders WHERE created_at >= ?", (now - days*86400,)).fetchall()
+    for r in rows:
+        key = datetime.fromtimestamp(r["created_at"], timezone(timedelta(hours=3))).strftime("%Y-%m-%d")
+        if key in buckets:
+            buckets[key]["count"] += 1
+            v = (r["get_amount"] if r["get_cur"]=="USDT" else r["give_amount"]) or 0
+            buckets[key]["volume"] += v
+            if r["status"] == "completed":
+                buckets[key]["done"] += 1
+    con.close()
+    series = [{"date":k, **v} for k,v in sorted(buckets.items())]
+    return _cors(web.json_response({"series": series}))
+
+
 def build_api_app() -> web.Application:
     app = web.Application()
     app.router.add_route("OPTIONS", "/{tail:.*}", api_options)
     app.router.add_get ("/api/health",           api_health)
     app.router.add_get ("/api/aml-check",        api_aml_check)
+    app.router.add_get ("/api/order/{oid}/timeline", api_order_timeline)
+    app.router.add_get ("/api/admin/log",        api_admin_log)
+    app.router.add_get ("/api/admin/alerts",     api_alerts)
+    app.router.add_get ("/api/admin/chart",      api_orders_chart)
     app.router.add_get ("/api/stats",            api_stats)
     app.router.add_get ("/api/orders",           api_orders_list)
     app.router.add_patch("/api/orders/{oid}",    api_order_patch)
@@ -855,6 +1164,11 @@ async def main():
     site = web.TCPSite(runner, "127.0.0.1", API_PORT)
     await site.start()
     log.info(f"REST API listening on 127.0.0.1:{API_PORT}")
+
+    # Background tasks
+    asyncio.create_task(bg_rate_alerts())
+    asyncio.create_task(bg_order_followup())
+    log.info("Background tasks: rate_alerts + order_followup")
 
     await dp.start_polling(bot, allowed_updates=dp.resolve_used_update_types())
 

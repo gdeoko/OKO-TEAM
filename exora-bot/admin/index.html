@@ -4,7 +4,7 @@
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
 <title>Exora Admin</title>
-<meta name="build" content="exora-admin-v2" />
+<meta name="build" content="exora-admin-v3" />
 <script src="https://telegram.org/js/telegram-web-app.js"></script>
 <style>
   :root{
@@ -215,6 +215,9 @@
 
 <div class="tabs">
   <button class="tab active" data-tab="orders">📋 Заявки</button>
+  <button class="tab" data-tab="analytics">📊 Аналитика</button>
+  <button class="tab" data-tab="alerts">🔔 Алерты</button>
+  <button class="tab" data-tab="log">📜 Лог</button>
   <button class="tab" data-tab="settings">⚙ Настройки</button>
   <button class="tab" data-tab="broadcast">📢 Рассылка</button>
   <button class="tab" data-tab="texts">📝 Тексты</button>
@@ -232,7 +235,49 @@
     <button class="filt g" onclick="exportCsv()">⬇ CSV</button>
     <button class="filt g" onclick="loadOrders()">↻ Обновить</button>
   </div>
+  <input type="text" id="orderSearch" placeholder="Поиск по ID, клиенту, адресу…" style="width:100%;padding:12px 14px;background:var(--card-hi);border:1px solid var(--line);border-radius:12px;color:var(--text);font-family:inherit;font-size:14px;margin-bottom:12px" />
   <div class="card-wrap" id="ordersWrap"></div>
+</div>
+
+<!-- ANALYTICS -->
+<div class="panel" id="tab-analytics">
+  <div class="box">
+    <div class="box-h">
+      <h3>Заявки по дням · график</h3>
+      <div style="display:flex;gap:4px">
+        <button class="filt g chart-r" data-days="7">7д</button>
+        <button class="filt g chart-r active" data-days="30">30д</button>
+        <button class="filt g chart-r" data-days="90">90д</button>
+      </div>
+    </div>
+    <canvas id="chartOrders" style="width:100%;height:220px;display:block"></canvas>
+  </div>
+  <div class="row" style="margin-top:14px">
+    <div class="box">
+      <div class="box-h"><h3>Распределение статусов</h3></div>
+      <div id="statusPie"></div>
+    </div>
+    <div class="box">
+      <div class="box-h"><h3>Топ клиентов (по объёму)</h3></div>
+      <div id="topClients" style="font-size:13px"></div>
+    </div>
+  </div>
+</div>
+
+<!-- ALERTS -->
+<div class="panel" id="tab-alerts">
+  <div class="box">
+    <div class="box-h"><h3>Активные уведомления о курсе</h3><button class="filt g" onclick="loadAlerts()">↻ Обновить</button></div>
+    <div id="alertsList"></div>
+  </div>
+</div>
+
+<!-- LOG -->
+<div class="panel" id="tab-log">
+  <div class="box">
+    <div class="box-h"><h3>Лог действий администраторов</h3><button class="filt g" onclick="loadAdminLog()">↻ Обновить</button></div>
+    <div id="logList" style="font-size:12.5px;font-family:'SF Mono',Consolas,monospace"></div>
+  </div>
 </div>
 
 <!-- SETTINGS -->
@@ -607,6 +652,198 @@ async function loadSettings(){
     }
   } catch(e){}
 }
+
+/* Search */
+document.getElementById('orderSearch').addEventListener('input', e => {
+  window._search = e.target.value.trim().toLowerCase();
+  renderOrders();
+});
+
+/* Override renderOrders with search filter */
+const _origRender = renderOrders;
+renderOrders = function(){
+  const q = (window._search || '').toLowerCase();
+  const orig = currentOrders;
+  if (q) currentOrders = orig.filter(o =>
+    (o.id||'').toLowerCase().includes(q) ||
+    (o.user||'').toLowerCase().includes(q) ||
+    (o.wallet||'').toLowerCase().includes(q) ||
+    String(o.uid||o.tg_id||'').includes(q)
+  );
+  _origRender();
+  currentOrders = orig;
+};
+
+/* Analytics chart */
+let currentChartDays = 30;
+document.querySelectorAll('.chart-r').forEach(b => b.addEventListener('click', () => {
+  document.querySelectorAll('.chart-r').forEach(x => x.classList.remove('active'));
+  b.classList.add('active');
+  currentChartDays = parseInt(b.dataset.days);
+  loadChart();
+}));
+
+async function loadChart(){
+  try {
+    const r = await api('/api/admin/chart?days=' + currentChartDays);
+    if (r && r.series) drawChart(r.series);
+  } catch(e){ drawChart([]); }
+}
+
+function drawChart(series){
+  const c = document.getElementById('chartOrders');
+  if (!c) return;
+  const dpr = Math.min(window.devicePixelRatio||1, 2);
+  const rect = c.getBoundingClientRect();
+  c.width = rect.width * dpr; c.height = 220 * dpr;
+  c.style.height = '220px';
+  const ctx = c.getContext('2d');
+  ctx.scale(dpr, dpr);
+  const W = rect.width, H = 220, pad = 24;
+  ctx.clearRect(0,0,W,H);
+  if (!series.length) { ctx.fillStyle='rgba(255,255,255,.4)';ctx.font='13px Inter';ctx.fillText('Нет данных за период', 20, 40); return; }
+  const counts = series.map(s => s.count);
+  const maxC = Math.max(...counts, 1);
+  const stepX = (W - pad*2) / Math.max(series.length - 1, 1);
+  // Gradient fill
+  const g = ctx.createLinearGradient(0,0,0,H);
+  g.addColorStop(0, 'rgba(94,210,156,.35)'); g.addColorStop(1, 'rgba(94,210,156,0)');
+  // Grid lines
+  ctx.strokeStyle = 'rgba(255,255,255,.05)';
+  for (let i=0;i<5;i++){ const y = pad + i*(H-pad*2)/4; ctx.beginPath(); ctx.moveTo(pad, y); ctx.lineTo(W-pad/2, y); ctx.stroke(); }
+  // Fill path
+  ctx.beginPath();
+  ctx.moveTo(pad, H - pad);
+  series.forEach((s,i) => {
+    const x = pad + i*stepX;
+    const y = H - pad - (s.count/maxC)*(H - pad*2);
+    ctx.lineTo(x, y);
+  });
+  ctx.lineTo(pad + (series.length-1)*stepX, H - pad); ctx.closePath();
+  ctx.fillStyle = g; ctx.fill();
+  // Line
+  ctx.beginPath();
+  series.forEach((s,i) => {
+    const x = pad + i*stepX;
+    const y = H - pad - (s.count/maxC)*(H - pad*2);
+    if (i===0) ctx.moveTo(x,y); else ctx.lineTo(x,y);
+  });
+  ctx.strokeStyle = '#5ED29C'; ctx.lineWidth = 2.5; ctx.lineCap='round';ctx.lineJoin='round';
+  ctx.stroke();
+  // Dots
+  series.forEach((s,i) => {
+    if (s.count === 0) return;
+    const x = pad + i*stepX;
+    const y = H - pad - (s.count/maxC)*(H - pad*2);
+    ctx.beginPath(); ctx.arc(x,y,3,0,Math.PI*2); ctx.fillStyle='#5ED29C'; ctx.fill();
+  });
+  // Y axis labels
+  ctx.fillStyle = 'rgba(255,255,255,.4)'; ctx.font = '10px Inter';
+  for (let i=0;i<=4;i++){
+    const v = Math.round(maxC * (1 - i/4));
+    ctx.fillText(String(v), 2, pad + i*(H-pad*2)/4 + 3);
+  }
+  // X axis labels (first/mid/last)
+  const dates = series.map(s => s.date);
+  if (dates.length) {
+    ctx.fillText(dates[0].slice(5), pad, H - 4);
+    const midIdx = Math.floor(dates.length/2);
+    ctx.fillText(dates[midIdx].slice(5), pad + midIdx*stepX - 12, H - 4);
+    ctx.fillText(dates[dates.length-1].slice(5), W - pad - 26, H - 4);
+  }
+  // Status pie
+  renderStatusPie();
+  renderTopClients();
+}
+
+function renderStatusPie(){
+  const c = document.getElementById('statusPie'); if (!c) return;
+  const cts = {new:0,processing:0,completed:0,cancelled:0};
+  for (const o of currentOrders) cts[o.status] = (cts[o.status]||0) + 1;
+  const total = currentOrders.length || 1;
+  const items = [
+    {k:'new', l:'Новых', c:'#5AC8FF'},
+    {k:'processing', l:'В работе', c:'#FFB020'},
+    {k:'completed', l:'Готово', c:'#5ED29C'},
+    {k:'cancelled', l:'Отмена', c:'#FF6B6B'},
+  ];
+  c.innerHTML = items.map(i => {
+    const cnt = cts[i.k]||0; const pct = ((cnt/total)*100).toFixed(0);
+    return `
+      <div style="margin-bottom:10px">
+        <div style="display:flex;justify-content:space-between;font-size:13px;margin-bottom:4px">
+          <span><span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:${i.c};margin-right:6px"></span>${i.l}</span>
+          <span><b>${cnt}</b> <span style="color:var(--muted);font-size:11px">(${pct}%)</span></span>
+        </div>
+        <div style="height:5px;border-radius:3px;background:rgba(255,255,255,.06);overflow:hidden">
+          <div style="height:100%;width:${pct}%;background:${i.c};transition:width .8s cubic-bezier(.4,0,.2,1)"></div>
+        </div>
+      </div>`;
+  }).join('');
+}
+
+function renderTopClients(){
+  const c = document.getElementById('topClients'); if (!c) return;
+  const map = {};
+  for (const o of currentOrders){
+    const uid = o.uid||o.tg_id||o.user||'anon';
+    if (!map[uid]) map[uid] = {user:o.user||('id'+uid), volume:0, count:0};
+    map[uid].volume += (o.getCur==='USDT'?+o.get:0) + (o.giveCur==='USDT'?+o.give:0);
+    map[uid].count += 1;
+  }
+  const sorted = Object.values(map).sort((a,b) => b.volume - a.volume).slice(0,5);
+  if (!sorted.length) { c.innerHTML = '<div style="color:var(--muted);text-align:center;padding:20px 0">Пока пусто</div>'; return; }
+  c.innerHTML = sorted.map((u,i) => `
+    <div style="display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid var(--line)">
+      <div style="width:24px;height:24px;border-radius:50%;background:${['#FFD700','#C0C0C0','#CD7F32','#6B7280','#6B7280'][i]};color:#062018;display:grid;place-items:center;font-weight:800;font-size:11px">${i+1}</div>
+      <div style="flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap"><b>${u.user}</b> <span style="color:var(--muted);font-size:11.5px">· ${u.count} шт</span></div>
+      <div style="color:var(--brand);font-weight:700;font-variant-numeric:tabular-nums">${fmt(u.volume)}</div>
+    </div>
+  `).join('');
+}
+
+/* Alerts */
+async function loadAlerts(){
+  try {
+    const r = await api('/api/admin/alerts');
+    const c = document.getElementById('alertsList');
+    if (!r || !r.alerts || !r.alerts.length) { c.innerHTML='<div class="empty"><div class="empty-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M15 17h5l-1.4-1.4A2 2 0 0118 14.2V11a6 6 0 00-4-5.7V5a2 2 0 10-4 0v.3A6 6 0 006 11v3.2c0 .5-.2 1-.6 1.4L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"/></svg></div><h3>Уведомлений нет</h3><p>Клиенты пока не подписывались на курс</p></div>'; return; }
+    c.innerHTML = r.alerts.map(a => {
+      const arrow = a.direction === 'up' ? '↑' : '↓';
+      const state = a.active ? '🟢 активно' : (a.triggered_at ? '✅ сработало' : '⚪ отключено');
+      return `
+        <div style="display:grid;grid-template-columns:auto 1fr auto auto;gap:10px;padding:10px 0;border-bottom:1px solid var(--line);align-items:center;font-size:13.5px">
+          <div style="width:32px;height:32px;border-radius:8px;background:rgba(94,210,156,.14);color:var(--brand);display:grid;place-items:center;font-weight:800">${arrow}</div>
+          <div><b>${fmt(a.target,2)} ₽</b><div style="color:var(--muted);font-size:11.5px;margin-top:2px">${a.username?'@'+a.username:'id '+a.tg_id} · ${new Date(a.created_at).toLocaleString('ru-RU',{day:'2-digit',month:'short',hour:'2-digit',minute:'2-digit'})}</div></div>
+          <div style="font-size:11.5px;color:var(--muted)">${state}</div>
+        </div>`;
+    }).join('');
+  } catch(e){ document.getElementById('alertsList').innerHTML = '<div style="color:var(--danger);padding:10px">Ошибка загрузки: '+e.message+'</div>'; }
+}
+
+/* Admin log */
+async function loadAdminLog(){
+  try {
+    const r = await api('/api/admin/log');
+    const c = document.getElementById('logList');
+    if (!r || !r.log || !r.log.length) { c.innerHTML='<div class="empty"><h3>Лог пуст</h3><p>Ещё нет действий администраторов</p></div>'; return; }
+    c.innerHTML = r.log.map(e => `
+      <div style="padding:8px 12px;border-bottom:1px solid var(--line);display:grid;grid-template-columns:auto auto 1fr auto;gap:12px;align-items:center">
+        <span style="color:var(--muted)">${new Date(e.ts).toLocaleString('ru-RU',{day:'2-digit',month:'short',hour:'2-digit',minute:'2-digit'})}</span>
+        <span style="color:var(--cyan)">id ${e.admin_id}</span>
+        <span><b>${e.action}</b>${e.target_id?' · '+e.target_id:''} ${e.meta?.status?' → '+e.meta.status:''}</span>
+      </div>
+    `).join('');
+  } catch(e){ document.getElementById('logList').innerHTML = '<div style="color:var(--danger);padding:10px">Ошибка: '+e.message+'</div>'; }
+}
+
+// Load on tab switch
+document.querySelectorAll('.tab').forEach(t => t.addEventListener('click', () => {
+  const tab = t.dataset.tab;
+  if (tab === 'analytics') { loadChart(); renderStatusPie(); renderTopClients(); }
+  if (tab === 'alerts') loadAlerts();
+  if (tab === 'log') loadAdminLog();
+}));
 
 loadOrders();
 loadRate();
