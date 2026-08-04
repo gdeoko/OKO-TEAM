@@ -102,7 +102,7 @@ if ($isFirstMessage && is_file(BASE_PATH . '/core/notify_owner.php')) {
 }
 
 // Ответ помощника: Gemini → Claude → внешний агент → rule-based (общий «мозг»).
-$reply = chat_brain_reply($text, $sessionKey, $uid);
+$reply = chat_brain_reply($text, $sessionKey, $uid, 'web');
 
 try {
     insert('chat_messages', ['user_id' => $uid, 'session_key' => $sessionKey, 'role' => 'assistant', 'text' => $reply, 'file' => '']);
@@ -111,7 +111,32 @@ try {
 // Контекстные кнопки-действия под ответом (ссылки на разделы, диплом файлом, отзыв в конце).
 $actions = chat_actions($text, $uid, $sessionKey);
 
-json_out(['ok' => true, 'reply' => $reply, 'actions' => $actions, 'session' => $sessionKey]);
+// Веб-формат: голые ссылки из текста -> красивые кнопки (в приложении), текст чистый.
+$fmt     = chat_web_format($reply, $actions);
+$actions = $fmt['actions'];
+$image   = chat_sample_image($text);   // картинка-образец «по необходимости»
+
+json_out([
+    'ok'      => true,
+    'reply'   => $fmt['text'],
+    'actions' => $actions,
+    'image'   => $image,
+    'session' => $sessionKey,
+]);
+
+/** Картинка-образец для чата: показываем реальный образец диплома/награды по запросу. */
+function chat_sample_image(string $text): ?string {
+    $t = mb_strtolower($text);
+    $wants = false;
+    foreach (['образц', 'пример', 'как выглядит', 'покажи', 'фото'] as $w) if (mb_strpos($t, $w) !== false) $wants = true;
+    $topic = false;
+    foreach (['диплом', 'наград', 'кубок', 'медал', 'грамот', 'благодар'] as $w) if (mb_strpos($t, $w) !== false) $topic = true;
+    if (!($wants && $topic)) return null;
+    foreach ((glob(BASE_PATH . '/public/assets/img/awards/*/diploma.jpg') ?: []) as $f) {
+        return url(str_replace(BASE_PATH . '/public', '', $f));
+    }
+    return null;
+}
 
 /* ==================== Помощники ==================== */
 

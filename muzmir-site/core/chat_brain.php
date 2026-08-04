@@ -19,6 +19,12 @@ function chat_system_prompt(): string {
     $L[] = 'Стиль — официально-деловой, тёплый, вежливый, обращение только на «Вы», по-русски, без выдумок. Аккуратно используй эмодзи в духе центра: ✅ 📫 ⏳ 🕑 🙏 🏆 🌍. Отвечай по сути (обычно 3-7 строк).';
     $L[] = 'ОБЯЗАТЕЛЬНО завершай ответ подписью отдельной строкой: «🌍 С уважением, оргкомитет культуры и искусства Культурного центра «Музыкальный Мир» 🌍».';
     $L[] = 'Если вопрос про сроки, режим работы, доставку или контакты — добавляй блок: график работы ' . cfgv('org_hours') . '; сообщество ВКонтакте ' . cfgv('org_vk') . '; колл-центр ' . cfgv('org_phone') . ' (скрытые номера блокируются системой безопасности); почта ' . cfgv('org_email') . '.';
+    // Формат ссылок зависит от канала: сайт — кнопками (без URL в тексте), ВК — прямыми ссылками.
+    if (($GLOBALS['chat_channel'] ?? 'vk') === 'web') {
+        $L[] = 'ВАЖНО: НЕ вставляй в текст ответа полные URL-адреса. Упоминай разделы словами (например «на странице «Заявка»», «в разделе «Награды»»). Кликабельные кнопки со ссылками система добавит автоматически под ответом.';
+    } else {
+        $L[] = 'Ссылки давай прямыми и красивыми, вида https://' . cfgv('domain', 'музыкальный-мир.рф') . '/apply — во ВКонтакте они кликабельны. Не используй punycode и не сокращай ссылки.';
+    }
 
     $comps = '';
     try {
@@ -241,7 +247,8 @@ function chat_rule_reply(string $text): string {
  * @param string   $sessionKey ключ диалога (веб-сессия или "vk_<peer_id>")
  * @param int|null $uid        id пользователя сайта, если известен
  */
-function chat_brain_reply(string $text, string $sessionKey, ?int $uid = null): string {
+function chat_brain_reply(string $text, string $sessionKey, ?int $uid = null, string $channel = 'vk'): string {
+    $GLOBALS['chat_channel'] = $channel; // 'web' = ссылки кнопками, 'vk' = прямыми ссылками
     $reply = null;
 
     $geminiKey = (string) (cfgv('gemini_api_key') ?: '');
@@ -260,6 +267,57 @@ function chat_brain_reply(string $text, string $sessionKey, ?int $uid = null): s
         $reply = chat_rule_reply($text);
     }
     return chat_ensure_greeting($reply);
+}
+
+/**
+ * Форматирование ответа для ВЕБ-ЧАТА сайта: голые ссылки из текста превращаются
+ * в красивые кнопки (same-origin, открываются в приложении), а из текста ссылки
+ * убираются. В ВК это НЕ применяется — там ссылки остаются прямыми и кликабельными.
+ * @return array{text:string,actions:array}
+ */
+function chat_web_format(string $reply, array $actions): array {
+    $labels = [
+        '/apply'        => 'Подать заявку',
+        '/competitions' => 'Конкурсы и положения',
+        '/documents'    => 'Положения конкурсов',
+        '/awards'       => 'Заказать награды',
+        '/faq'          => 'Справка и сроки',
+        '/verify'       => 'Проверить диплом',
+        '/reviews'      => 'Оставить отзыв',
+        '/results'      => 'Результаты конкурсов',
+        '/club'         => 'Клуб участников',
+        '/contacts'     => 'Контакты',
+    ];
+    // Уже занятые пути (чтобы не плодить дубликаты кнопок).
+    $seen = [];
+    foreach ($actions as $a) {
+        if (!empty($a['url'])) { $p = rtrim((string) parse_url($a['url'], PHP_URL_PATH), '/'); if ($p !== '') $seen[$p] = 1; }
+    }
+    if (preg_match_all('~https?://[^\s<>"\')]+~u', $reply, $mm)) {
+        foreach (array_unique($mm[0]) as $u) {
+            $u   = rtrim($u, ".,;:!?)]»”\"'");   // отрезаем хвостовую пунктуацию предложения
+            $host = (string) parse_url($u, PHP_URL_HOST);
+            $path = rtrim((string) parse_url($u, PHP_URL_PATH), '/');
+            $isLocal = $host !== '' && (mb_stripos($host, 'музыкальный-мир') !== false || stripos($host, 'xn--') !== false);
+            if ($isLocal) {
+                if ($path === '' || isset($seen[$path])) continue;
+                $actions[] = ['type' => 'link', 'label' => $labels[$path] ?? 'Открыть раздел', 'url' => url($path)];
+                $seen[$path] = 1;
+            } else {
+                $actions[] = ['type' => 'link', 'label' => (stripos($u, 'pochta') !== false ? 'Отследить посылку' : 'Открыть ссылку'), 'url' => $u];
+            }
+        }
+    }
+    // Убираем ссылки и «мусорные» вводные из текста.
+    $t = preg_replace('~https?://[^\s<>"\')]+~u', '', $reply);
+    $t = preg_replace('~(?:,?\s*)?(?:по\s+)?(?:данной\s+|этой\s+|следующей\s+)?ссылке\s*[:：]?~ui', '', (string) $t);
+    $t = preg_replace('~\(\s*\)~u', '', (string) $t);            // пустые скобки от «(ссылка)»
+    $t = preg_replace('~[«"“]\s*[»"”]~u', '', (string) $t);      // пустые кавычки
+    $t = preg_replace('~[ \t]*[:：]\s*(?=[.\n)]|$)~u', '', (string) $t); // висячее двоеточие
+    $t = preg_replace('~[ \t]{2,}~u', ' ', (string) $t);
+    $t = preg_replace('~[ \t]+\n~u', "\n", (string) $t);
+    $t = preg_replace('~\n{3,}~u', "\n\n", (string) $t);
+    return ['text' => trim((string) $t), 'actions' => $actions];
 }
 
 /** Гарантирует, что ответ начинается с официального приветствия (идемпотентно). */

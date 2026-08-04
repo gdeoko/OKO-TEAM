@@ -237,8 +237,9 @@ body.mz-kb .chat-inputbar{bottom:calc(10px + env(safe-area-inset-bottom,0px))}
     typingEl = null;
   }
 
-  function addAgent(text, actions){
+  function addAgent(text, actions, image){
     var item = {r:'a', t:text, ts:Date.now()};
+    if (image) { item.f = image; item.k = 'image'; }
     pushHist(item); render(item);
     if (actions && actions.length) renderActions(actions);
   }
@@ -323,7 +324,7 @@ body.mz-kb .chat-inputbar{bottom:calc(10px + env(safe-area-inset-bottom,0px))}
     .then(function(r){ return r.json(); })
     .then(function(d){
       hideTyping();
-      addAgent((d && (d.reply || d.error)) || 'Не удалось получить ответ. Попробуйте ещё раз.', d && d.actions);
+      addAgent((d && (d.reply || d.error)) || 'Не удалось получить ответ. Попробуйте ещё раз.', d && d.actions, d && d.image);
     })
     .catch(function(){
       hideTyping();

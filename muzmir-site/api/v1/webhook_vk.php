@@ -106,7 +106,7 @@ function vk_cb_ack_then_process(string $type): void {
             $reply = "Здравствуйте, доброго времени суток.\n\nНапишите, пожалуйста, Ваш вопрос текстом — подскажу по заявкам, участию, результатам и наградам Культурного центра «Музыкальный Мир».\n\n🌍 С уважением, оргкомитет культуры и искусства Культурного центра «Музыкальный Мир» 🌍";
         } else {
             insert('chat_messages', ['user_id' => null, 'session_key' => $sessionKey, 'role' => 'user', 'text' => $text, 'file' => '']);
-            $reply = chat_brain_reply($text, $sessionKey, null);
+            $reply = chat_brain_reply($text, $sessionKey, null, 'vk');
         }
         insert('chat_messages', ['user_id' => null, 'session_key' => $sessionKey, 'role' => 'assistant', 'text' => $reply, 'file' => '']);
 
