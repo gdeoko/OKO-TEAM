@@ -94,20 +94,24 @@ ob_start(); ?>
 .comp-list{display:grid;gap:12px}
 .comp-opt{display:block;cursor:pointer}
 .comp-opt input{position:absolute;opacity:0;pointer-events:none}
-.comp-opt .co-body{border:1.5px solid var(--glass-brd);border-radius:var(--radius-sm);padding:16px 18px;
+.comp-opt .co-body{border:1.5px solid var(--glass-brd);border-radius:16px;padding:16px 18px;
   display:flex;align-items:center;gap:14px;min-height:64px;background:var(--panel);backdrop-filter:blur(10px);
   transition:border-color .2s,background .2s,box-shadow .2s,transform .2s}
+/* Карточка-афиша: обложка/фон диплома заливает всю карточку, поверх — чекбокс и название */
+.comp-opt .co-body--cover{position:relative;overflow:hidden;min-height:132px;align-items:flex-end;padding:14px 16px;
+  background-size:cover;background-position:center;color:#fff;border-color:var(--glass-brd2)}
 @media(hover:hover){.comp-opt:hover .co-body{border-color:var(--gold);box-shadow:var(--shadow-card);transform:translateY(-2px)}}
 .comp-opt input:checked + .co-body{border-color:var(--gold);background:var(--gold-soft);box-shadow:0 0 0 3px var(--gold-soft)}
+.comp-opt input:checked + .co-body--cover{box-shadow:0 0 0 3px var(--gold),0 12px 30px rgba(199,147,34,.32)}
 .comp-opt input:focus-visible + .co-body{box-shadow:0 0 0 4px var(--gold-soft)}
-.co-mark{width:24px;height:24px;border-radius:50%;border:1.5px solid var(--glass-brd);flex:0 0 auto;position:relative;transition:.2s}
-/* Квадрат 1:1 — фон диплома конкурса (участник сразу видит, какой диплом получит) */
-.co-thumb{width:56px;height:56px;flex:0 0 auto;border-radius:12px;overflow:hidden;border:1px solid var(--glass-brd);box-shadow:var(--shadow-soft)}
-.co-thumb img{width:100%;height:100%;object-fit:cover;object-position:top center;display:block}
+.co-mark{width:26px;height:26px;border-radius:50%;border:1.5px solid var(--glass-brd);flex:0 0 auto;position:relative;transition:.2s;background:rgba(255,255,255,.9)}
+.co-body--cover .co-mark{position:absolute;top:12px;right:12px;border-color:rgba(255,255,255,.85);
+  box-shadow:0 2px 8px rgba(0,0,0,.35)}
 .comp-opt input:checked + .co-body .co-mark{border-color:var(--gold);background:var(--grad-gold)}
-.comp-opt input:checked + .co-body .co-mark::after{content:"";position:absolute;left:7px;top:7px;width:8px;height:8px;border-radius:50%;background:var(--gold-fg)}
-.co-main{flex:1;min-width:0}
+.comp-opt input:checked + .co-body .co-mark::after{content:"";position:absolute;left:8px;top:8px;width:8px;height:8px;border-radius:50%;background:var(--gold-fg)}
+.co-main{flex:1;min-width:0;position:relative;z-index:2}
 .co-main b{display:block;font-family:var(--ff-serif);font-size:1.12rem;color:var(--text);line-height:1.2;overflow-wrap:anywhere}
+.co-body--cover .co-main b{color:#fff;font-size:1.28rem;text-shadow:0 2px 10px rgba(0,0,0,.55)}
 .co-tags{display:flex;gap:8px;flex-wrap:wrap;margin-top:8px}
 
 /* Сегмент солист / коллектив */
@@ -277,12 +281,13 @@ ob_start(); ?>
                   data-paid="<?= (int)$c['is_paid'] ?>" data-price="<?= (int)$c['price'] ?>"
                   data-reg="<?= url('/competition/'.$c['slug'].'/regulation.docx') ?>" data-code="<?= h($c['code']) ?>"
                   <?= $preId === (int)$c['id'] ? 'checked' : '' ?>>
-                <span class="co-body">
+                <?php $dbg = trim((string)($c['diploma_bg'] ?? ''));
+                      $cvr = trim((string)($c['cover'] ?? ''));
+                      $bgSrc = $dbg !== '' ? $dbg : $cvr;
+                      $bgUrl = $bgSrc !== '' ? (preg_match('~^https?://~', $bgSrc) ? $bgSrc : url('/' . ltrim($bgSrc, '/'))) : '';
+                      $coStyle = $bgUrl !== '' ? "background-image:linear-gradient(180deg,rgba(8,16,42,.28) 0%,rgba(8,16,42,.55) 52%,rgba(8,16,42,.88) 100%),url('".h($bgUrl)."')" : ''; ?>
+                <span class="co-body<?= $bgUrl !== '' ? ' co-body--cover' : '' ?>"<?= $coStyle !== '' ? ' style="'.$coStyle.'"' : '' ?>>
                   <span class="co-mark"></span>
-                  <?php $dbg = trim((string)($c['diploma_bg'] ?? ''));
-                  if ($dbg !== ''): $dbg = preg_match('~^https?://~', $dbg) ? $dbg : url('/' . ltrim($dbg, '/')); ?>
-                    <span class="co-thumb" aria-hidden="true"><img src="<?= h($dbg) ?>" alt="" loading="lazy" decoding="async"></span>
-                  <?php endif; ?>
                   <span class="co-main">
                     <b><?= h($c['name']) ?></b>
                     <span class="co-tags">
