@@ -1,4 +1,4 @@
-const CACHE = 'muzmir-v44';
+const CACHE = 'muzmir-v45';
 const CORE = ['/offline.html', '/assets/img/logo_muzmir_256.png'];
 
 self.addEventListener('install', e => {
@@ -37,6 +37,8 @@ self.addEventListener('fetch', e => {
     );
     return;
   }
+  // Видео-фоны — напрямую из сети (Range-запросы нельзя класть в Cache API).
+  if (url.pathname.startsWith('/assets/video/')) return;
   // Прочие /assets/ (изображения, шрифты) — stale-while-revalidate.
   if (url.pathname.startsWith('/assets/')) {
     e.respondWith(

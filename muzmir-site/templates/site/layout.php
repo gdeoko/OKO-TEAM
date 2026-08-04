@@ -116,27 +116,66 @@ html body{padding-top:0 !important}
 </head>
 <body<?= $u ? ' class="is-auth"' : '' ?>>
 <div class="app-bg" aria-hidden="true">
-  <video class="app-bg-video" id="appBgVideo" autoplay muted loop playsinline preload="auto"
-         poster="<?= asset('video/bg-poster.jpg') ?>">
-    <source src="<?= asset('video/bg-loop.webm') ?>" type="video/webm">
-    <source src="<?= asset('video/bg-loop.mp4') ?>" type="video/mp4">
-  </video>
+  <video class="app-bg-video" id="appBgVideo" autoplay muted loop playsinline preload="metadata"
+         poster="<?= asset('video/bg-pc-light.jpg') ?>"></video>
   <span class="app-bg-tint"></span>
   <span class="ab-rays"></span>
   <span class="ab-glow"></span>
   <span class="ab-stars"></span>
   <span class="ab-fly">&#9835;</span><span class="ab-fly">&#9834;</span><span class="ab-fly">&#119070;</span><span class="ab-fly">&#9833;</span><span class="ab-fly">&#9835;</span><span class="ab-fly">&#9834;</span><span class="ab-fly">&#9836;</span><span class="ab-fly">&#9835;</span>
 </div>
+<style id="mz-bgvid-css">
+/* Видео-фон v2: 4 ролика (тема × аспект), чёткое изображение — без блендов, мутности и затемнений */
+.app-bg-video{mix-blend-mode:normal !important;opacity:0;transition:opacity .8s ease}
+:root:not([data-theme="dark"]) .app-bg-video,
+:root:not([data-theme="dark"]) .app-bg-video.on{mix-blend-mode:normal !important}
+.app-bg-video.on,[data-theme="dark"] .app-bg-video.on{opacity:1 !important}
+.app-bg-video.sw{opacity:0 !important;transition:opacity .3s ease}
+/* Декоративные слои поверх видео — минимум, чтобы не «мутнить» картинку */
+.app-bg .ab-rays{opacity:.18 !important}
+[data-theme="dark"] .app-bg .ab-rays{opacity:.26 !important}
+.app-bg .ab-glow{opacity:.24 !important}
+[data-theme="dark"] .app-bg .ab-glow{opacity:.3 !important}
+:root:not([data-theme="dark"]) .ab-stars{display:none}
+</style>
 <script>
-/* Видео-фон: не грузим при экономии трафика / reduced-motion; мягкое появление; гарантируем autoplay */
+/* Видео-фон: 4 ролика — light/dark × 16:9/9:16. Смена темы и ориентации — на лету, с мягким фейдом.
+   Не грузим при экономии трафика / reduced-motion; гарантируем autoplay. */
 (function(){
   var v=document.getElementById('appBgVideo'); if(!v) return;
   var c=navigator.connection||{}; var save=c.saveData===true;
   var rm=window.matchMedia&&matchMedia('(prefers-reduced-motion: reduce)').matches;
   if(save||rm){ v.removeAttribute('autoplay'); v.remove(); return; }
-  v.addEventListener('playing',function(){ v.classList.add('on'); });
+  var V={
+    'pc-light':{webm:'<?= asset('video/bg-pc-light.webm') ?>',mp4:'<?= asset('video/bg-pc-light.mp4') ?>',jpg:'<?= asset('video/bg-pc-light.jpg') ?>'},
+    'pc-dark':{webm:'<?= asset('video/bg-pc-dark.webm') ?>',mp4:'<?= asset('video/bg-pc-dark.mp4') ?>',jpg:'<?= asset('video/bg-pc-dark.jpg') ?>'},
+    'mob-light':{webm:'<?= asset('video/bg-mob-light.webm') ?>',mp4:'<?= asset('video/bg-mob-light.mp4') ?>',jpg:'<?= asset('video/bg-mob-light.jpg') ?>'},
+    'mob-dark':{webm:'<?= asset('video/bg-mob-dark.webm') ?>',mp4:'<?= asset('video/bg-mob-dark.mp4') ?>',jpg:'<?= asset('video/bg-mob-dark.jpg') ?>'}
+  };
+  var canWebm=!!v.canPlayType && v.canPlayType('video/webm; codecs="vp9"')!=='';
+  var mqPortrait=matchMedia('(orientation: portrait)');
+  var mqMobile=matchMedia('(max-width: 768px)');
+  function key(){
+    var mob=mqPortrait.matches||mqMobile.matches;
+    var dark=document.documentElement.dataset.theme==='dark';
+    return (mob?'mob':'pc')+'-'+(dark?'dark':'light');
+  }
   var tryPlay=function(){ var p=v.play&&v.play(); if(p&&p.catch) p.catch(function(){}); };
-  tryPlay();
+  var cur='';
+  function apply(){
+    var k=key(); if(k===cur) return; cur=k;
+    var d=V[k], src=d[canWebm?'webm':'mp4'];
+    var swap=function(){ v.poster=d.jpg; v.src=src; v.load(); tryPlay(); };
+    if(v.classList.contains('on')){ v.classList.add('sw'); setTimeout(swap,320); }
+    else swap();
+  }
+  v.addEventListener('playing',function(){ v.classList.remove('sw'); v.classList.add('on'); });
+  apply();
+  new MutationObserver(function(){ apply(); })
+    .observe(document.documentElement,{attributes:true,attributeFilter:['data-theme']});
+  var onMq=function(){ apply(); };
+  if(mqPortrait.addEventListener){ mqPortrait.addEventListener('change',onMq); mqMobile.addEventListener('change',onMq); }
+  else if(mqPortrait.addListener){ mqPortrait.addListener(onMq); mqMobile.addListener(onMq); }
   ['pointerdown','touchstart','click'].forEach(function(ev){document.addEventListener(ev,function h(){tryPlay();document.removeEventListener(ev,h,true);},true);});
 })();
 </script>
