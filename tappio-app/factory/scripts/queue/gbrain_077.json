@@ -1,0 +1,240 @@
+{
+ "id": "gbrain_077",
+ "app": "brain",
+ "voice": "en-US-BrianNeural",
+ "rate": "+6%",
+ "grade": "purple_dream",
+ "brand": {
+  "accent": "#9B5DE5",
+  "accent2": "#C9A7FF",
+  "code": "FOCUS",
+  "logo": "brain.png",
+  "name": "BRAINOVA"
+ },
+ "music": {
+  "queries": [
+   "cinematic tension build",
+   "dreamy synth focus",
+   "calm motivational underscore",
+   "uplifting focus ambient"
+  ]
+ },
+ "cover": {
+  "kicker": "BRAIN AGE",
+  "top": "IS YOUR MIND",
+  "big": "OLDER THAN\nYOU?",
+  "q": [
+   "student studying desk lamp night"
+  ]
+ },
+ "segments": [
+  {
+   "id": "b1",
+   "text": "Your brain has an age, just like your body."
+  },
+  {
+   "id": "b2",
+   "text": "Speed, memory and focus reveal the real number."
+  },
+  {
+   "id": "b3",
+   "text": "One short test estimates it in a minute."
+  },
+  {
+   "id": "b4",
+   "text": "Most people score older than they expect."
+  },
+  {
+   "id": "b5",
+   "text": "The good news: it drops with daily training."
+  },
+  {
+   "id": "b6",
+   "text": "Find your brain age today."
+  }
+ ],
+ "shots": [
+  {
+   "q": [
+    "brain scan mri blue"
+   ],
+   "motion": "zout"
+  },
+  {
+   "q": [
+    "yoga breathing calm room"
+   ],
+   "insert": "tv",
+   "pos": "upper"
+  },
+  {
+   "q": [
+    "clock ticking time closeup"
+   ],
+   "motion": "zin"
+  },
+  {
+   "q": [
+    "man reading book focused"
+   ],
+   "insert": "hexagon",
+   "pos": "upper"
+  },
+  {
+   "q": [
+    "woman meditating calm light"
+   ],
+   "motion": "panl"
+  },
+  {
+   "q": [
+    "walking park green trees"
+   ],
+   "insert": "rrect",
+   "pos": "lower"
+  },
+  {
+   "q": [
+    "coffee cup morning desk"
+   ],
+   "motion": "panup"
+  },
+  {
+   "q": [
+    "chess board close up thinking"
+   ],
+   "insert": "arch",
+   "pos": "lower"
+  },
+  {
+   "q": [
+    "sticky notes wall reminders"
+   ],
+   "motion": "panr"
+  },
+  {
+   "q": [
+    "elderly person smiling sharp mind"
+   ],
+   "insert": "tilt",
+   "pos": "upper"
+  },
+  {
+   "q": [
+    "light bulb idea dark"
+   ],
+   "motion": "pandown"
+  },
+  {
+   "q": [
+    "person forgetting keys frustrated"
+   ],
+   "insert": "phone",
+   "pos": "center"
+  },
+  {
+   "q": [
+    "person thinking trying to remember"
+   ],
+   "motion": "zout"
+  },
+  {
+   "q": [
+    "teacher classroom explaining"
+   ],
+   "insert": "diamond",
+   "pos": "center"
+  },
+  {
+   "q": [
+    "memory old photos hands"
+   ],
+   "motion": "zin"
+  },
+  {
+   "q": [
+    "glass of water healthy morning"
+   ],
+   "insert": "circle",
+   "pos": "center"
+  }
+ ],
+ "overlays": [
+  {
+   "at": 0.098,
+   "dur": 1.73,
+   "type": "kicker",
+   "text": "BRAIN AGE"
+  },
+  {
+   "at": 0.246,
+   "dur": 2.29,
+   "type": "chips",
+   "items": [
+    "SPEED",
+    "MEMORY",
+    "FOCUS",
+    "LOGIC"
+   ],
+   "pos": "upper"
+  },
+  {
+   "at": 0.3,
+   "dur": 2.3,
+   "type": "kinetic",
+   "top": "RECALL",
+   "big": "FASTER"
+  },
+  {
+   "at": 0.414,
+   "dur": 1.86,
+   "type": "ticker",
+   "to": 147,
+   "suffix": "%",
+   "label": "RECALL SPEED",
+   "pos": "lower"
+  },
+  {
+   "at": 0.699,
+   "dur": 1.89,
+   "type": "bars",
+   "title": "FOCUS AFTER 14 DAYS",
+   "unit": "%",
+   "items": [
+    [
+     "Before",
+     41
+    ],
+    [
+     "After",
+     78
+    ]
+   ],
+   "pos": "center"
+  },
+  {
+   "at": 0.831,
+   "dur": 1.71,
+   "type": "callout",
+   "text": "IT'S ENCODING, NOT AGE",
+   "pos": "center"
+  }
+ ],
+ "cta": {
+  "text": "Comment FOCUS for the app.",
+  "code": "FOCUS"
+ },
+ "caption": "Your brain has an age — speed, memory and focus set the number. One quick test estimates it, and daily training drops it. Most people score older than they think. Comment FOCUS for the app. #brainhealth #memory #focus #productivity #selfimprovement #mentalhealth #learning #music #concentration #beats #binaural",
+ "yt_title": "Is your brain older than you are? #shorts",
+ "trend_keys": [
+  "music",
+  "concentration",
+  "beats",
+  "binaural",
+  "brain",
+  "power",
+  "focus",
+  "memory"
+ ],
+ "content_type": "viral"
+}
