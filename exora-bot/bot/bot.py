@@ -15,6 +15,7 @@ from pathlib import Path
 from typing import Optional
 
 import aiohttp
+from aiohttp import web
 from aiogram import Bot, Dispatcher, F, Router, types
 from aiogram.enums import ParseMode, ChatAction
 from aiogram.filters import Command, CommandStart, CommandObject
@@ -35,6 +36,9 @@ COMPANY_ADDR  = os.environ.get("EXORA_ADDR", "Россия · онлайн 24/7"
 
 DB_PATH       = Path(os.environ.get("EXORA_DB", "/opt/exora-bot/data/exora.sqlite"))
 DB_PATH.parent.mkdir(parents=True, exist_ok=True)
+
+API_PORT      = int(os.environ.get("EXORA_API_PORT", "8093"))
+API_TOKEN     = os.environ.get("EXORA_API_TOKEN", "exora-admin-2026")
 
 LOG_LEVEL = os.environ.get("EXORA_LOG_LEVEL", "INFO").upper()
 logging.basicConfig(level=LOG_LEVEL, format="%(asctime)s %(levelname)s %(name)s: %(message)s")
@@ -559,11 +563,160 @@ async def setup_bot_meta():
         log.warning(f"menu button: {e}")
 
 
+# ============================================================
+#  REST API for admin panel
+# ============================================================
+
+def _auth(request: web.Request) -> bool:
+    tok = request.headers.get("X-Admin-Token") or request.query.get("token")
+    return bool(tok) and tok == API_TOKEN
+
+def _cors(resp: web.Response) -> web.Response:
+    resp.headers["Access-Control-Allow-Origin"] = "*"
+    resp.headers["Access-Control-Allow-Headers"] = "Content-Type, X-Admin-Token"
+    resp.headers["Access-Control-Allow-Methods"] = "GET, POST, PUT, PATCH, DELETE, OPTIONS"
+    return resp
+
+async def api_options(request):
+    return _cors(web.Response(status=204))
+
+async def api_stats(request):
+    if not _auth(request): return _cors(web.json_response({"error":"auth"}, status=401))
+    con = db_conn()
+    users = con.execute("SELECT COUNT(*) c FROM users").fetchone()["c"]
+    tot   = con.execute("SELECT COUNT(*) c FROM orders").fetchone()["c"]
+    new_c = con.execute("SELECT COUNT(*) c FROM orders WHERE status='new'").fetchone()["c"]
+    done  = con.execute("SELECT COUNT(*) c FROM orders WHERE status='completed'").fetchone()["c"]
+    week  = int(time.time()) - 7*86400
+    day   = int(time.time()) - 86400
+    today = con.execute("SELECT COUNT(*) c FROM orders WHERE created_at>=?", (day,)).fetchone()["c"]
+    vol_row = con.execute("""SELECT
+        COALESCE(SUM(CASE WHEN get_cur='USDT' THEN get_amount WHEN give_cur='USDT' THEN give_amount ELSE 0 END),0) v
+        FROM orders WHERE created_at>=?""", (week,)).fetchone()
+    vol = vol_row["v"] or 0
+    con.close()
+    r, src = await fetch_rate()
+    return _cors(web.json_response({
+        "users": users, "orders_total": tot, "orders_new": new_c,
+        "orders_done": done, "orders_today": today, "volume_7d": vol,
+        "rate": r, "rate_source": src,
+    }))
+
+async def api_orders_list(request):
+    if not _auth(request): return _cors(web.json_response({"error":"auth"}, status=401))
+    limit = min(int(request.query.get("limit", "50")), 500)
+    con = db_conn()
+    rows = con.execute("""
+        SELECT o.*, u.username, u.first_name FROM orders o
+        LEFT JOIN users u ON u.tg_id=o.tg_id
+        ORDER BY o.created_at DESC LIMIT ?
+    """, (limit,)).fetchall()
+    con.close()
+    out = []
+    for r in rows:
+        out.append({
+            "id": r["id"],
+            "ts": r["created_at"] * 1000,
+            "direction": r["direction"],
+            "network": r["network"],
+            "give": r["give_amount"], "giveCur": r["give_cur"],
+            "get":  r["get_amount"],  "getCur":  r["get_cur"],
+            "rate": r["rate"], "wallet": r["wallet"], "contact": r["contact"],
+            "status": r["status"], "note": r["admin_note"],
+            "uid": r["tg_id"],
+            "user": ("@" + r["username"]) if r["username"] else (r["first_name"] or f"id{r['tg_id']}"),
+        })
+    return _cors(web.json_response({"orders": out}))
+
+async def api_order_patch(request):
+    if not _auth(request): return _cors(web.json_response({"error":"auth"}, status=401))
+    oid = request.match_info["oid"]
+    body = await request.json()
+    new_status = body.get("status")
+    if new_status not in ("new","processing","completed","cancelled"):
+        return _cors(web.json_response({"error":"bad status"}, status=400))
+    con = db_conn()
+    row = con.execute("SELECT tg_id FROM orders WHERE id=?", (oid,)).fetchone()
+    if not row: con.close(); return _cors(web.json_response({"error":"not found"}, status=404))
+    con.execute("UPDATE orders SET status=? WHERE id=?", (new_status, oid))
+    con.commit(); con.close()
+    if row["tg_id"]:
+        try:
+            emoji = {"processing":"⏳", "completed":"✅", "cancelled":"❌", "new":"🆕"}[new_status]
+            label = {"processing":"взята в работу", "completed":"выполнена", "cancelled":"отменена", "new":"возвращена в очередь"}[new_status]
+            await bot.send_message(row["tg_id"], f"{emoji} Ваша заявка <b>#{oid}</b> {label}.")
+        except Exception as e:
+            log.warning(f"notify {row['tg_id']}: {e}")
+    return _cors(web.json_response({"ok": True, "id": oid, "status": new_status}))
+
+async def api_settings_get(request):
+    if not _auth(request): return _cors(web.json_response({"error":"auth"}, status=401))
+    con = db_conn()
+    rows = con.execute("SELECT key, value FROM settings").fetchall()
+    con.close()
+    return _cors(web.json_response({"settings": {r["key"]: r["value"] for r in rows}}))
+
+async def api_setting_put(request):
+    if not _auth(request): return _cors(web.json_response({"error":"auth"}, status=401))
+    key = request.match_info["key"]
+    body = await request.json()
+    set_setting(key, str(body.get("value", "")))
+    return _cors(web.json_response({"ok": True, "key": key}))
+
+async def api_broadcast(request):
+    if not _auth(request): return _cors(web.json_response({"error":"auth"}, status=401))
+    body = await request.json()
+    text = (body.get("text") or "").strip()
+    target = body.get("target", "all")
+    if not text: return _cors(web.json_response({"error":"empty"}, status=400))
+    con = db_conn()
+    if target == "active":
+        cutoff = int(time.time()) - 30*86400
+        rows = con.execute("SELECT tg_id FROM users WHERE last_seen>=?", (cutoff,)).fetchall()
+    else:
+        rows = con.execute("SELECT tg_id FROM users").fetchall()
+    con.close()
+    ok, fail = 0, 0
+    for r in rows:
+        try:
+            await bot.send_message(r["tg_id"], text)
+            ok += 1
+            await asyncio.sleep(0.05)
+        except Exception:
+            fail += 1
+    return _cors(web.json_response({"ok": ok, "fail": fail, "total": len(rows)}))
+
+async def api_health(request):
+    return _cors(web.json_response({"ok": True, "service": "exora-bot", "ts": int(time.time())}))
+
+
+def build_api_app() -> web.Application:
+    app = web.Application()
+    app.router.add_route("OPTIONS", "/{tail:.*}", api_options)
+    app.router.add_get ("/api/health",           api_health)
+    app.router.add_get ("/api/stats",            api_stats)
+    app.router.add_get ("/api/orders",           api_orders_list)
+    app.router.add_patch("/api/orders/{oid}",    api_order_patch)
+    app.router.add_get ("/api/settings",         api_settings_get)
+    app.router.add_put ("/api/settings/{key}",   api_setting_put)
+    app.router.add_post("/api/broadcast",        api_broadcast)
+    return app
+
+
 async def main():
     db_init()
     log.info(f"Exora bot starting. Mini-app: {MINIAPP_URL}. Admins: {ADMIN_IDS}. DB: {DB_PATH}")
     await bot.delete_webhook(drop_pending_updates=False)
     await setup_bot_meta()
+
+    # Start REST API server for admin panel
+    api = build_api_app()
+    runner = web.AppRunner(api)
+    await runner.setup()
+    site = web.TCPSite(runner, "127.0.0.1", API_PORT)
+    await site.start()
+    log.info(f"REST API listening on 127.0.0.1:{API_PORT}")
+
     await dp.start_polling(bot, allowed_updates=dp.resolve_used_update_types())
 
 
