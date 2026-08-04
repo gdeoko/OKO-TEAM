@@ -112,6 +112,13 @@ html body header.app-header{
 html[data-theme="dark"] body header.app-header{background:color-mix(in srgb,#0C1738 76%,transparent) !important;border-bottom-color:rgba(226,190,96,.20) !important}
 /* Никакого padding-top на body — sticky-шапка сама занимает место */
 html body{padding-top:0 !important}
+/* ПК ≥1024px: нижнее меню скрыто (кроме Telegram Mini App) — навигация в шапке. */
+@media(min-width:1024px){
+  html:not(.in-tg) body nav.appnav,
+  html:not(.in-tg) body nav.appnav.appnav{display:none !important}
+  html:not(.in-tg) body{padding-bottom:0 !important}
+  html:not(.in-tg) body main{padding-bottom:56px !important}
+}
 </style>
 </head>
 <body<?= $u ? ' class="is-auth"' : '' ?>>
@@ -132,6 +139,16 @@ html body{padding-top:0 !important}
     <img src="<?= asset('img/logo_muzmir_256.png') ?>" alt="Логотип КЦ «Музыкальный Мир»" width="40" height="40">
     <span>Музыкальный<br>Мир</span>
   </a>
+  <?php $act = $active ?? ''; ?>
+  <nav class="pc-nav" aria-label="Основная навигация">
+    <a href="<?= url('/') ?>" class="<?= $act === '/' ? 'is-active' : '' ?>">Главная</a>
+    <a href="<?= url('/competitions') ?>" class="<?= $act === '/competitions' ? 'is-active' : '' ?>">Афиша</a>
+    <a href="<?= url('/apply') ?>" class="<?= $act === '/apply' ? 'is-active' : '' ?>">Подать заявку</a>
+    <a href="<?= url('/awards') ?>" class="<?= $act === '/awards' ? 'is-active' : '' ?>">Награды</a>
+    <a href="<?= url('/calendar') ?>" class="<?= $act === '/calendar' ? 'is-active' : '' ?>">Календарь</a>
+    <a href="<?= url('/club') ?>" class="<?= $act === '/club' ? 'is-active' : '' ?>">ВИП-клуб</a>
+    <a href="<?= url($u ? '/cabinet' : '/login') ?>" class="<?= in_array($act, ['/cabinet','/login','/register','/notifications'], true) ? 'is-active' : '' ?>"><?= $u ? 'Профиль' : 'Вход' ?></a>
+  </nav>
   <div class="app-header-actions">
     <a class="app-icon-btn" href="<?= url('/menu') ?>#menuSearch" aria-label="Поиск по разделам" title="Поиск">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/></svg>

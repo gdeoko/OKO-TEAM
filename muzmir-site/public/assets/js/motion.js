@@ -127,6 +127,47 @@
   bindCountdown(document);
   document.addEventListener('mz-spa-navigate', function(){ bindCountdown(document); });
 
+  /* ---------- Count-up: КПИ-цифры «догоняют» значение при появлении ---------- */
+  (function(){
+    if (reduced || !('IntersectionObserver' in window)) return;
+    var SEL = '.stat b, .stats-chip b, .cab-kpi b, .kpi b, .club-stats b, .calx-kpi b, .cab-level-num';
+    function animate(el){
+      var orig = el.textContent;
+      var m = /^([^\d]*)([\d][\d\s  ]*)(.*)$/.exec(orig.trim());
+      if (!m) return;
+      var val = parseInt(m[2].replace(/[\s  ]/g, ''), 10);
+      if (!isFinite(val) || val <= 1 || val > 9999999) return;
+      var grouped = /[\s  ]/.test(m[2].trim());
+      var pre = m[1], suf = m[3], t0 = null, dur = Math.min(1400, 700 + val % 500);
+      el.classList.add('mz-counting');
+      function fmt(v){ return grouped ? v.toLocaleString('ru-RU') : String(v); }
+      function frame(ts){
+        if (t0 === null) t0 = ts;
+        var p = Math.min(1, (ts - t0) / dur);
+        var e = 1 - Math.pow(1 - p, 3); /* easeOutCubic */
+        el.textContent = pre + fmt(Math.round(val * e)) + suf;
+        if (p < 1) requestAnimationFrame(frame);
+        else { el.textContent = orig; el.classList.remove('mz-counting'); }
+      }
+      requestAnimationFrame(frame);
+    }
+    function bindCount(root){
+      var els = (root||document).querySelectorAll(SEL);
+      var io = new IntersectionObserver(function(entries){
+        entries.forEach(function(en){
+          if (en.isIntersecting){ io.unobserve(en.target); animate(en.target); }
+        });
+      }, {threshold:.35});
+      els.forEach(function(el){
+        if (el.dataset.cntBound || el.closest('.mz-countdown') || el.closest('[data-deadline]')) return;
+        el.dataset.cntBound = '1';
+        io.observe(el);
+      });
+    }
+    bindCount(document);
+    document.addEventListener('mz-spa-navigate', function(){ bindCount(document); });
+  })();
+
   /* ---------- Image skeleton: маркируем img[data-loaded] когда картинка готова ---------- */
   function markLoaded(img){
     if (img.complete && img.naturalWidth > 0) img.setAttribute('data-loaded','1');

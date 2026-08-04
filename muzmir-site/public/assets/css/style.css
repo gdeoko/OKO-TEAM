@@ -2256,3 +2256,155 @@ html body nav.appnav, .appnav-inner, .appnav a.appnav-cta{overflow:visible !impo
 @keyframes fabPulse{0%{transform:scale(1)}40%{transform:scale(1.22)}100%{transform:scale(1)}}
 .scr-fio{padding:4px 0 8px}
 .scr-fio input{width:100%;min-height:40px;border-radius:10px;padding:8px 12px;font:inherit}
+
+/* ══════════════════════════════════════════════════════════════════════════
+   АДАПТАЦИЯ v9 — ПК-РЕЖИМ (≥1024px) + МОБИЛЬНАЯ ПОЛИРОВКА (≤768px).
+   Авторитетный финальный слой: полноценный десктоп вместо «растянутой мобилы»,
+   ровные ритмы и компактность на телефоне. НЕ трогает фон (#mzBgArt).
+   ══════════════════════════════════════════════════════════════════════════ */
+
+/* Горизонтальное меню шапки — существует только на ПК */
+.pc-nav{display:none}
+
+@media(min-width:1024px){
+  /* ── Шапка: широкий контейнер + полноценное меню ── */
+  .app-header .container{max-width:1240px;min-height:62px;gap:18px;
+    padding-left:28px;padding-right:28px}
+  .app-header .brand img{width:42px;height:42px}
+  .app-header .brand span{font-size:1.06rem}
+  .pc-nav{display:flex;align-items:center;justify-content:center;gap:2px;flex:1;min-width:0}
+  .pc-nav a{position:relative;padding:11px 13px;border-radius:11px;white-space:nowrap;
+    font-family:var(--ff-body);font-weight:700;font-size:.92rem;letter-spacing:.005em;
+    color:var(--text-dim);text-decoration:none;
+    transition:color .2s,background .2s,transform .18s cubic-bezier(.2,.8,.2,1)}
+  .pc-nav a::after{content:"";position:absolute;left:13px;right:13px;bottom:5px;height:2px;border-radius:999px;
+    background:var(--grad-gold);box-shadow:0 0 8px rgba(199,147,34,.55);
+    transform:scaleX(0);transform-origin:center;transition:transform .28s cubic-bezier(.2,.8,.2,1)}
+  .pc-nav a:hover{color:var(--gold-ink);background:var(--gold-soft);transform:translateY(-1px)}
+  .pc-nav a:hover::after,.pc-nav a.is-active::after{transform:scaleX(1)}
+  .pc-nav a.is-active{color:var(--gold-ink)}
+  [data-theme="dark"] .pc-nav a:hover,[data-theme="dark"] .pc-nav a.is-active{color:var(--gold)}
+  .pc-nav a:active{transform:translateY(0) scale(.97)}
+
+  /* ── Нижнее моб-меню скрыто (дубль критического правила в layout) ── */
+  html:not(.in-tg) body nav.appnav{display:none !important}
+  .chat-fab{bottom:24px;right:24px;width:58px;height:58px}
+  .chat-fab svg{width:26px;height:26px}
+  .mz-radio{bottom:24px}
+
+  /* ── Ритм секций: больше воздуха, ровная шкала ── */
+  .section{padding:60px 0 !important}
+  .section:first-of-type{padding-top:32px !important}
+  .section-head,.section--head{margin-bottom:38px !important}
+  .section-head h2,.section--head h2{font-size:clamp(1.8rem,2.6vw,2.6rem) !important}
+  .section-head p{font-size:1rem !important;max-width:640px}
+  .page-hero{padding:34px 0 20px}
+  .menu-page{padding:30px 0 48px !important}
+  .menu-head{margin-bottom:24px}
+
+  /* ── Hero в 2 колонки: текст слева, визуал справа ── */
+  .hero{padding:30px 0 44px !important}
+  .hero .container{display:grid !important;grid-template-columns:1.08fr .92fr;gap:56px;
+    align-items:center;text-align:left}
+  .hero .container>.reveal:not(.hero-media){order:1}
+  .hero .hero-media,.hero-media{order:2 !important;margin:0 !important;justify-self:center}
+  .hero-logo,.hero-media img.hero-logo{width:min(330px,86%) !important;
+    filter:drop-shadow(0 22px 54px rgba(199,147,34,.42)) !important;
+    animation:float 7s ease-in-out infinite !important}
+  .hero .eyebrow{font-size:1.2rem !important;margin-bottom:6px !important}
+  .hero h1{font-size:clamp(2.3rem,3.6vw,3.5rem) !important;line-height:1.04 !important;margin:0 0 .22em !important}
+  .hero .lead{font-size:1.06rem !important;line-height:1.55 !important;max-width:560px;margin:0 0 24px !important}
+  .hero-cta{flex-direction:row;justify-content:flex-start;width:auto;max-width:none;gap:14px}
+  .hero-cta .btn{width:auto;min-width:220px}
+  .hero-trust{justify-content:flex-start;margin:20px 0 0 !important;max-width:none}
+  .hero-trust li{font-size:.78rem !important;padding:7px 13px !important}
+
+  /* ── Сетки карточек: 3-4 колонки, ровные межколонники ── */
+  .grid{gap:26px}
+  .grid-2{grid-template-columns:repeat(2,1fr)}
+  .grid-3{grid-template-columns:repeat(3,1fr)}
+  .grid-4{grid-template-columns:repeat(4,1fr)}
+  .qa-grid{gap:16px}
+  .menu-grid{grid-template-columns:repeat(4,1fr);gap:14px}
+  .card{padding:26px}
+  .comp-card{padding:0}
+  .comp-card .cc-body{padding:20px 22px}
+  .shop-grid{grid-template-columns:repeat(3,1fr) !important;gap:16px}
+  .aw-grid{grid-template-columns:repeat(4,1fr)}
+  .ach-grid{grid-template-columns:repeat(3,1fr)}
+  .cab-kpis{grid-template-columns:repeat(4,1fr);gap:14px}
+  .notif-list{max-width:720px;margin:0 auto}
+
+  /* ── Модалки/шиты: по центру, с макс-шириной ── */
+  .mz-fun{align-items:center;padding-bottom:20px}
+  .mz-fun-card{max-width:460px}
+  .mz-pop-card{max-width:460px}
+  .shop-cart{align-items:center;padding:32px}
+  .shop-cart-panel{border-radius:24px !important;max-width:620px;
+    padding:12px 26px 26px !important;box-shadow:0 30px 80px rgba(20,16,6,.4)}
+  .auth-shell{max-width:520px}
+  .mz-onb-card{max-width:480px}
+
+  /* ── Формы: шире, поля в 2 колонки где уместно ── */
+  .apply-wrap{max-width:940px !important}
+  .apply-card{padding:38px 44px 34px !important}
+  .apply-card .astep.active[data-step="user"],
+  .apply-card .astep.active[data-step="teacher"],
+  .apply-card .astep.active[data-step="number"],
+  .apply-card .astep.active[data-step="contact"]{
+    display:grid;grid-template-columns:1fr 1fr;gap:0 26px;align-items:start}
+  .apply-card .astep .astep-head,.apply-card .astep .seg,.apply-card .astep .grid-2c,
+  .apply-card .astep .astep-nav,.apply-card .astep .comp-list,.apply-card .astep .comp-toolbar,
+  .apply-card .astep .summary,.apply-card .astep .summary-head,.apply-card .astep .consent-row,
+  .apply-card .astep .consent-note,.apply-card .astep>.err-msg{grid-column:1/-1}
+  .apply-card .astep-nav{justify-content:flex-end}
+  .apply-card .astep-nav .btn{flex:0 0 auto;min-width:210px}
+  .apply-card .astep-nav .back{min-width:140px}
+  .subscribe-form{max-width:600px}
+
+  /* ── Микро-моушен ПК: подъём карточек, свечение кнопок ── */
+  .card:hover,.comp-card:hover,.menu-tile:hover,.qa-tile:hover,.shop-card:hover{
+    transform:translateY(-5px)}
+  .btn--primary:hover{box-shadow:0 18px 44px rgba(199,147,34,.5),var(--shadow-inset-top) !important;
+    filter:brightness(1.05)}
+  .app-icon-btn:hover{transform:translateY(-1px)}
+  .stats-chip:hover b,.cab-kpi:hover b{filter:drop-shadow(0 0 10px rgba(199,147,34,.35))}
+}
+
+/* Широкие ПК ≥1281px: контейнер контента — разумная ширина, крупные межколонники */
+@media(min-width:1281px){
+  .container{max-width:1200px}
+  .app-header .container{max-width:1280px}
+  .grid{gap:30px}
+}
+
+/* ══ МОБИЛЬНАЯ ПОЛИРОВКА ≤768px: единая шкала отступов, тап-таргеты, компактность ══ */
+@media(max-width:768px){
+  /* Шкала отступов: секция 24, голова секции 16, карточки 16 */
+  .section{padding:24px 0 !important}
+  .section:first-of-type{padding-top:10px !important}
+  .section-head,.section--head{margin-bottom:16px !important}
+  .page-hero{padding:14px 0 8px !important}
+  .grid{gap:12px !important}
+  .qa-grid{gap:10px}
+  .menu-grid{gap:10px}
+  .card{padding:16px !important}
+  .comp-card{padding:0 !important}
+  .comp-card .cc-body{padding:14px 16px}
+  /* Тап-таргеты ≥44px */
+  .app-icon-btn{width:44px;height:44px}
+  .appnav a{min-height:48px}
+  .share-btn{min-height:40px}
+  .pc-nav{display:none !important}
+  /* Карточки и медиа не создают горизонтальный скролл */
+  .container{min-width:0}
+  .grid>*{min-width:0}
+  .cc-meta{font-size:.8rem}
+  .stats-chip b{font-size:clamp(1.1rem,5.4vw,1.5rem)}
+  /* Кнопки-ряды переносятся, не выпирают */
+  .hero-cta .btn{min-height:48px}
+  .astep-nav{flex-wrap:wrap}
+}
+
+/* ══ Count-up КПИ: цифра «догоняет» значение при появлении (JS в motion.js) ══ */
+.mz-counting{font-variant-numeric:tabular-nums}
