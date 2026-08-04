@@ -54,11 +54,12 @@ if ($code === '') {
     if (input('bind') !== '' && ($cu = current_user())) $_SESSION['oauth_vk_bind'] = (int) $cu['id'];
     else unset($_SESSION['oauth_vk_bind']);
     $challenge = rtrim(strtr(base64_encode(hash('sha256', $verifier, true)), '+/', '-_'), '=');
+    // scope не задаём: VK ID Web-приложение отдаёт базовый профиль (имя, фото)
+    // без явного согласия на email; запрос лишнего scope приводил к отказу.
     $auth = 'https://id.vk.com/authorize?' . http_build_query([
         'response_type'         => 'code',
         'client_id'             => $clientId,
         'redirect_uri'          => $redirectUri,
-        'scope'                 => 'email',
         'state'                 => $st,
         'code_challenge'        => $challenge,
         'code_challenge_method' => 'S256',
