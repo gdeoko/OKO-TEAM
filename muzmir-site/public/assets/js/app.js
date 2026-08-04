@@ -289,13 +289,13 @@
     window.addEventListener('load', positionAppInd);
   }
 
-  /* ---------- Аккордеон (совместим с <div> и <button> .acc-q) ---------- */
-  $$('.acc-q').forEach(function (q) {
-    q.addEventListener('click', function () {
-      var item = q.parentNode;
-      var open = item.classList.toggle('open');
-      if (q.hasAttribute('aria-expanded')) q.setAttribute('aria-expanded', open ? 'true' : 'false');
-    });
+  /* ---------- Аккордеон (делегирование на document — работает и после SPA-перехода) ---------- */
+  document.addEventListener('click', function (e) {
+    var q = e.target.closest && e.target.closest('.acc-q');
+    if (!q) return;
+    var item = q.parentNode;
+    var open = item.classList.toggle('open');
+    if (q.hasAttribute('aria-expanded')) q.setAttribute('aria-expanded', open ? 'true' : 'false');
   });
 
   /* ---------- Parallax-tilt карточек (только hover:hover, не reduced) ---------- */

@@ -418,9 +418,9 @@ ob_start(); ?>
           </div>
         </section>
 
-        <!-- ШАГ 5. Контакты и адрес -->
+        <!-- ШАГ 5. Контакты -->
         <section class="astep" data-step="contact">
-          <div class="astep-head"><p class="eyebrow">Шаг 5</p><h2>Контакты и доставка</h2></div>
+          <div class="astep-head"><p class="eyebrow">Шаг 5</p><h2>Контакты</h2></div>
           <div class="grid-2c">
             <div class="field ff">
               <input type="email" id="email" name="email" placeholder=" " required value="<?= h($prefill['email']) ?>">
@@ -434,15 +434,7 @@ ob_start(); ?>
               <div class="err-msg">Укажите телефон в формате +7 (___) ___-__-__.</div>
             </div>
           </div>
-          <div class="field ff">
-            <input type="text" id="address" name="address" placeholder=" " value="<?= h($prefill['address']) ?>">
-            <label for="address">Адрес доставки (необязательно)</label>
-            <div class="hint">При оформлении оригиналов наград.</div>
-          </div>
-          <div class="field ff" style="max-width:240px">
-            <input type="text" id="postal_index" name="postal_index" placeholder=" " inputmode="numeric" maxlength="6" value="<?= h($prefill['postal_index']) ?>">
-            <label for="postal_index">Почтовый индекс</label>
-          </div>
+          <p class="hint" style="margin:2px 0 0">Адрес доставки указывается отдельно — при заказе оригиналов наград в разделе «Награды».</p>
           <div class="astep-nav">
             <button type="button" class="btn btn--ghost back" data-back>Назад</button>
             <button type="button" class="btn btn--primary" data-next>Продолжить</button>

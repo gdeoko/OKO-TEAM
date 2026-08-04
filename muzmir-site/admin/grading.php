@@ -288,29 +288,22 @@ if (in_array(input('action'), ['results_csv', 'results_html'], true)) {
     exit;
 }
 
-/* ---------- Сохранение внутренней оценки жюри (10-балльная шкала) ---------- */
+/* ---------- Приватная заметка жюри (без баллов — балльная система убрана) ---------- */
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && input('do') === 'grade') {
     if (!csrf_check()) { flash('Сессия устарела.', 'error'); admin_redirect('grading'); }
     $appId = (int) input('id');
-    $score = (float) input('score');
     $note  = trim(input('note'));
     $jid   = (int) (current_user()['id'] ?? 0);
-    if ($appId && $score >= 1 && $score <= 10) {
-        $cur = one("SELECT * FROM applications WHERE id=?", [$appId]) ?: ['id' => $appId];
-        // одна оценка на пару (жюри, заявка) — обновляем существующую
+    if ($appId) {
+        // Балльная шкала отключена — сохраняем только приватную заметку жюри.
         $ex = one("SELECT id FROM jury_grades WHERE application_id=? AND jury_id=?", [$appId, $jid]);
         if ($ex) {
-            update('jury_grades', ['score'=>$score,'note'=>$note], 'id=:wid', ['wid'=>$ex['id']]);
+            update('jury_grades', ['note'=>$note], 'id=:wid', ['wid'=>$ex['id']]);
         } else {
-            insert('jury_grades', ['application_id'=>$appId,'jury_id'=>$jid,'score'=>$score,'note'=>$note]);
+            insert('jury_grades', ['application_id'=>$appId,'jury_id'=>$jid,'note'=>$note]);
         }
-        recalc_score($appId);
-        q("UPDATE jury_assignments SET done=1 WHERE application_id=? AND jury_id=?", [$appId, $jid]);
-        audit('grade', 'application', $appId, ['score'=>$score]);
-        flash('Оценка сохранена: ' . $score . ' балла.', 'success');
-        $next = grading_next_id($cur, $comp, $order);
-        if ($next) admin_redirect('grading', array_filter(['id'=>$next,'competition'=>$comp,'order'=>$order]));
-        admin_redirect('grading', array_filter(['competition'=>$comp,'order'=>$order]));
+        audit('grade_note', 'application', $appId);
+        flash('Заметка сохранена.', 'success');
     }
     admin_redirect('grading', array_filter(['id'=>$appId,'competition'=>$comp,'order'=>$order]));
 }
@@ -326,15 +319,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && input('do') === 'grade_result') {
     if ($appId && in_array($result, RESULT_PRESETS(), true)) {
         $cur = one("SELECT * FROM applications WHERE id=?", [$appId]);
         if (!$cur) { flash('Заявка не найдена.', 'error'); admin_redirect('grading'); }
+        // Балльная система убрана — итог задаётся только званием, без числового балла.
         $score = null;
-        if ($result === 'ГРАН-ПРИ') {
-            // Балл нужен ТОЛЬКО для Гран-при: 9.1–10 с шагом 0.1.
-            $score = round((float) str_replace(',', '.', input('granprix_score')), 1);
-            if ($score < 9.1 || $score > 10) {
-                flash('Для Гран-при укажите балл от 9.1 до 10.', 'error');
-                admin_redirect('grading', array_filter(['id'=>$appId,'competition'=>$comp,'order'=>$order]));
-            }
-        }
         // Срок отправки: пусто = автоматически по сроку (3 раб.дня от подачи, cron);
         // заполненный datetime = ручной override администратора.
         $override = '';
@@ -589,7 +575,7 @@ if ($id = (int) input('id')) {
 
       <div class="card" id="resultCard">
         <h3>Итоговый результат</h3>
-        <p class="small muted">Выберите звание. Балл — только для Гран-при. Доп. диплом и комментарий — по желанию. До момента отправки результат можно менять — повторное сохранение перезапишет итог.</p>
+        <p class="small muted">Выберите звание. Доп. диплом и комментарий — по желанию. До момента отправки результат можно менять — повторное сохранение перезапишет итог.</p>
         <form method="post" action="<?= url('/admin/?p=grading') ?>">
           <?= csrf_field() ?><input type="hidden" name="p" value="grading"><input type="hidden" name="do" value="grade_result">
           <input type="hidden" name="id" value="<?= $id ?>"><input type="hidden" name="competition" value="<?= $comp ?>"><input type="hidden" name="order" value="<?= h($order) ?>">
@@ -600,14 +586,6 @@ if ($id = (int) input('id')) {
                 <span><?= h($rp) ?></span>
               </label>
             <?php endforeach; ?>
-          </div>
-          <div class="field" id="gpScoreBox" style="display:<?= $a['result']==='ГРАН-ПРИ'?'block':'none' ?>;margin-top:12px">
-            <label>Балл Гран-при (9.1–10)</label>
-            <select name="granprix_score">
-              <?php for ($s=91;$s<=100;$s++): $v=number_format($s/10,1,'.',''); ?>
-                <option value="<?= $v ?>" <?= ($a['result']==='ГРАН-ПРИ' && $a['score']!==null && number_format((float)$a['score'],1,'.','')===$v)?'selected':'' ?>><?= $v ?></option>
-              <?php endfor; ?>
-            </select>
           </div>
           <div class="field" style="margin-top:10px">
             <label>Дополнительный диплом (необязательно)</label>
@@ -639,7 +617,7 @@ if ($id = (int) input('id')) {
           </div>
           <button class="btn btn--primary" style="margin-top:8px"><?= admin_icon('check') ?>Сохранить итог и далее</button>
           <?php if ($a['result']): ?>
-            <span class="badge badge--gold" style="margin-left:8px"><?= h($a['result']) ?><?= $a['score']!==null?' · '.h(number_format((float)$a['score'],1,'.','')):'' ?></span>
+            <span class="badge badge--gold" style="margin-left:8px"><?= h($a['result']) ?></span>
           <?php endif; ?>
         </form>
 
@@ -684,11 +662,9 @@ if ($id = (int) input('id')) {
         </style>
         <script>
         (function(){
-          var box=document.getElementById('gpScoreBox');
           document.querySelectorAll('.rp-item input').forEach(function(r){
             r.addEventListener('change',function(){
               document.querySelectorAll('.rp-item').forEach(function(l){l.classList.toggle('on',l.querySelector('input').checked);});
-              box.style.display = (r.value==='ГРАН-ПРИ') ? 'block' : 'none';
             });
           });
           var sel=document.getElementById('extraSel'), cust=document.getElementById('extraCustom');
@@ -698,45 +674,23 @@ if ($id = (int) input('id')) {
       </div>
 
       <div class="card">
-        <h3>Балльная шкала жюри (внутренняя)</h3>
-        <p class="small muted">Нажмите клавишу <kbd>1</kbd>–<kbd>9</kbd> (<kbd>0</kbd> = 10) — балл сохранится и откроется следующая заявка автоматически.</p>
+        <h3>Приватная заметка жюри</h3>
+        <p class="small muted">Внутренний комментарий по заявке — виден только жюри, участнику не показывается.</p>
         <form method="post" action="<?= url('/admin/?p=grading') ?>" id="gradeForm">
           <?= csrf_field() ?><input type="hidden" name="p" value="grading"><input type="hidden" name="do" value="grade"><input type="hidden" name="id" value="<?= $id ?>">
-          <input type="hidden" name="competition" value="<?= $comp ?>"><input type="hidden" name="order" value="<?= h($order) ?>"><input type="hidden" name="score" id="scoreInput" value="<?= h((string)($my['score'] ?? '')) ?>">
-          <div class="pill-scale" id="scale">
-            <?php for ($n=1;$n<=10;$n++): ?>
-              <button type="button" class="<?= ($my && (float)$my['score']==$n)?'on':'' ?>" data-score="<?= $n ?>" title="<?= h($legend[$n]) ?>"><?= $n ?></button>
-            <?php endfor; ?>
-          </div>
-          <div class="jf-verdict" id="jfVerdict" aria-live="polite"></div>
-          <div class="jf-legend">
-            <?php foreach ($legendGroups as $g): ?>
-              <span class="lg"><i><?= $g['from']===$g['to'] ? $g['from'] : $g['from'].'-'.$g['to'] ?></i><?= h($g['title']) ?></span>
-            <?php endforeach; ?>
-          </div>
-          <div class="field" style="margin-top:16px">
-            <label>Приватная заметка (видит только жюри) — клавиша <kbd>N</kbd></label>
+          <input type="hidden" name="competition" value="<?= $comp ?>"><input type="hidden" name="order" value="<?= h($order) ?>">
+          <div class="field">
             <textarea name="note" placeholder="Комментарий для внутренней работы"><?= h($my['note'] ?? '') ?></textarea>
           </div>
           <div class="field--inline">
-            <button class="btn btn--primary"><?= admin_icon('check') ?>Сохранить и далее</button>
-            <?php if ($my): ?><span class="badge badge--gold">Ваша оценка: <?= h((string)$my['score']) ?> → <?= h(score_to_result((float)$my['score'])) ?></span><?php endif; ?>
+            <button class="btn btn--ghost btn--sm"><?= admin_icon('check') ?>Сохранить заметку</button>
           </div>
         </form>
         <hr>
         <h4>Текущий итог заявки</h4>
         <div class="kv">
-          <dt>Средний балл</dt><dd><?= $a['score']!==null ? '<b>'.h((string)$a['score']).'</b>' : '—' ?></dd>
-          <dt>Результат</dt><dd><?= $a['result'] ? '<span class="badge badge--gold">'.h($a['result']).'</span>' : '—' ?></dd>
+          <dt>Результат</dt><dd><?= $a['result'] ? '<span class="badge badge--gold">'.h($a['result']).'</span>' : '— не выставлен —' ?></dd>
         </div>
-      </div>
-    </div>
-
-    <div class="jf-overlay" id="jfOverlay">
-      <div class="box">
-        <div class="num" id="jfOvNum">–</div>
-        <div class="ttl" id="jfOvTitle">Сохранение…</div>
-        <div class="hint"><kbd>Esc</kbd> — отменить</div>
       </div>
     </div>
 
@@ -797,54 +751,14 @@ if ($id = (int) input('id')) {
     </script>
     <script>
     (function(){
-      var input=document.getElementById('scoreInput'), form=document.getElementById('gradeForm');
-      var verdict=document.getElementById('jfVerdict');
-      var overlay=document.getElementById('jfOverlay'), ovNum=document.getElementById('jfOvNum'), ovTitle=document.getElementById('jfOvTitle');
-      var note=form ? form.querySelector('textarea') : null;
-      var legend=<?= json_encode($legend, JSON_UNESCAPED_UNICODE) ?>;
+      // Навигация по заявкам стрелками (балльная система убрана).
       var nextUrl=<?= json_encode($nextUrl) ?>, prevUrl=<?= json_encode($prevUrl) ?>;
-      var pending=null;
-
-      function showVerdict(n){
-        if(!verdict) return;
-        verdict.textContent = n + ' - ' + (legend[n] || '');
-        verdict.classList.add('show');
-      }
-      function select(n){
-        document.querySelectorAll('#scale button').forEach(function(x){ x.classList.toggle('on', x.dataset.score===String(n)); });
-        input.value=n; showVerdict(n);
-      }
-      function cancelPending(){
-        if(pending){ clearTimeout(pending); pending=null; }
-        if(overlay) overlay.classList.remove('show');
-      }
-      // Балл → выбор + мгновенный автопереход (короткое окно на отмену клавишей Esc).
-      function grade(n){
-        select(n);
-        cancelPending();
-        if(overlay){ ovNum.textContent=n; ovTitle.textContent=legend[n]||'Сохранение…'; overlay.classList.add('show'); }
-        pending=setTimeout(function(){ form.submit(); }, 300);
-      }
-
-      document.querySelectorAll('#scale button').forEach(function(b){
-        b.addEventListener('click', function(){ grade(b.dataset.score); });
-        b.addEventListener('mouseenter', function(){ showVerdict(b.dataset.score); });
-      });
-
       document.addEventListener('keydown', function(e){
-        if(e.key==='Escape'){ cancelPending(); if(document.activeElement && document.activeElement.blur) document.activeElement.blur(); return; }
-        var typing = e.target.tagName==='TEXTAREA' || e.target.tagName==='INPUT';
+        var typing = e.target.tagName==='TEXTAREA' || e.target.tagName==='INPUT' || e.target.tagName==='SELECT';
         if(typing) return;
-        var n=null;
-        if(e.key>='1' && e.key<='9') n=e.key; else if(e.key==='0') n='10';
-        if(n){ e.preventDefault(); grade(n); return; }
-        if(e.key==='Enter'){ if(input.value){ e.preventDefault(); cancelPending(); form.submit(); } return; }
-        if((e.key==='n'||e.key==='N'||e.key==='т'||e.key==='Т') && note){ e.preventDefault(); note.focus(); return; }
         if((e.key===' '||e.key==='ArrowRight') && nextUrl){ e.preventDefault(); location.href=nextUrl; return; }
         if(e.key==='ArrowLeft' && prevUrl){ e.preventDefault(); location.href=prevUrl; return; }
       });
-
-      <?php if ($my): ?>showVerdict('<?= h((string)(int)$my['score']) ?>');<?php endif; ?>
     })();
     </script>
     <?php

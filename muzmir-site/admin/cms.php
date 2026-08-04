@@ -348,7 +348,7 @@ else:
     <div class="card card--pad0">
       <div style="padding:18px"><div class="section-title" style="margin:0"><h3 style="margin:0">Письма</h3><span class="badge badge--gold"><?= $cMinistry ?></span></div></div>
       <div class="table-wrap" style="border:none"><table class="tbl"><thead><tr><th></th><th>Регион</th><th>Заголовок</th><th></th></tr></thead><tbody>
-        <?php $mins = all("SELECT * FROM ministry_letters ORDER BY sort,id"); if(!$mins): ?><tr><td colspan="4" class="muted" style="text-align:center;padding:22px">Писем пока нет</td></tr><?php endif; ?>
+        <?php $mins = all("SELECT * FROM ministry_letters ORDER BY sort, id DESC"); if(!$mins): ?><tr><td colspan="4" class="muted" style="text-align:center;padding:22px">Писем пока нет</td></tr><?php endif; ?>
         <?php foreach ($mins as $x): ?>
           <tr><td><?php if(trim((string)$x['image_path'])!==''): ?><img class="cms-thumb cms-thumb--doc" src="<?= h($x['image_path']) ?>" alt="" loading="lazy" onerror="this.style.display='none';this.nextElementSibling.style.display='flex'"><span class="cms-thumb cms-thumb--doc cms-thumb-ph" style="display:none"><?= admin_icon('diplomas') ?></span><?php else: ?><span class="cms-thumb cms-thumb--doc cms-thumb-ph"><?= admin_icon('diplomas') ?></span><?php endif; ?></td>
             <td><b><?= h($x['region']) ?></b></td><td class="small"><?= h($x['title'] ?: '—') ?></td>

@@ -42,7 +42,7 @@ ob_start(); ?>
 .rv-star{width:20px;height:20px;fill:var(--glass-brd)}
 .rv-star.is-on{fill:var(--gold);filter:drop-shadow(0 1px 3px rgba(199,147,34,.35))}
 /* Компактная шапка раздела */
-.rv-head-bar{display:flex;align-items:baseline;justify-content:space-between;gap:12px 18px;flex-wrap:wrap;margin-bottom:18px}
+.rv-head-bar{display:flex;flex-direction:column;align-items:center;text-align:center;gap:8px;margin-bottom:18px}
 .rv-head-bar h2{margin:0;font-family:var(--ff-display);word-break:normal;hyphens:none}
 .rv-head-sub{color:var(--muted);font-size:.9rem;display:inline-flex;align-items:center;gap:8px}
 .rv-head-sub .rv-stars{transform:translateY(2px)}

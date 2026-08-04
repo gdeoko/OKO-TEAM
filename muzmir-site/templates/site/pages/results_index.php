@@ -34,9 +34,7 @@ ob_start(); ?>
             <div class="rst-body">
               <b><?= h($c['name']) ?></b>
               <span class="rst-meta">
-                <?= (int)$c['total_apps'] ?> заявок
-                <?php if ($winners > 0): ?> · <?= (int)$winners ?> результатов<?php endif; ?>
-                <?php if (!empty($c['results_date'])): ?> · итоги <?= h(ru_date($c['results_date'])) ?><?php endif; ?>
+                <?php if (!empty($c['results_date'])): ?>итоги <?= h(ru_date($c['results_date'])) ?><?php endif; ?>
               </span>
               <?php if ($isJudging): ?>
                 <span class="badge badge--judging" style="margin-top:6px;display:inline-block">Идёт оценка</span>

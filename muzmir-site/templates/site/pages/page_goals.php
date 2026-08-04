@@ -123,6 +123,10 @@ ob_start(); ?>
 
 <section class="section">
   <div class="container" style="max-width:820px">
+    <a class="aw-back" href="<?= url('/menu') ?>" style="display:inline-flex;align-items:center;gap:8px;margin-bottom:10px;color:var(--muted);text-decoration:none">
+      <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5M11 6l-6 6 6 6"/></svg>
+      Назад
+    </a>
     <div class="section-head reveal">
       <p class="eyebrow">О деятельности</p>
       <h2>Цели и задачи</h2>
@@ -188,7 +192,7 @@ ob_start(); ?>
       <div class="stat"><b data-count="9" data-suffix="">0</b><span>Номинаций</span></div>
       <div class="stat"><b data-count="10" data-suffix="">0</b><span>Возрастных категорий</span></div>
       <div class="stat"><b data-count="7" data-suffix="">0</b><span>Наградных званий</span></div>
-      <div class="stat"><b data-count="10" data-suffix="-балльная">0</b><span>Система оценки</span></div>
+      <div class="stat"><b data-count="5" data-suffix="">0</b><span>Критериев оценки жюри</span></div>
     </div>
 
     <div class="grid grid-2" style="align-items:start">

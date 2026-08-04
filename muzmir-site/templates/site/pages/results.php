@@ -47,8 +47,14 @@ if (!$isFinished) {
       <div class="container" style="text-align:center;max-width:640px">
         <p class="eyebrow"><?= h($typeLabel) ?></p>
         <h1><?= h($c['name']) ?></h1>
-        <p style="color:var(--muted);margin-top:14px">Результаты этого конкурса ещё не опубликованы: приём заявок или оценка жюри продолжается.
-           Итоги появятся на этой странице сразу после завершения конкурса.</p>
+        <?php $rd = trim((string)($c['results_date'] ?? '')); ?>
+        <?php if ($rd !== ''): ?>
+          <p style="color:var(--muted);margin-top:14px">Результаты конкурса будут опубликованы <b><?= h(ru_date($rd)) ?></b>.
+             Список победителей появится на этой странице в день публикации.</p>
+        <?php else: ?>
+          <p style="color:var(--muted);margin-top:14px">Результаты этого конкурса ещё не опубликованы: приём заявок или оценка жюри продолжается.
+             Итоги появятся на этой странице сразу после завершения конкурса.</p>
+        <?php endif; ?>
         <div style="margin-top:26px;display:flex;gap:12px;justify-content:center;flex-wrap:wrap">
           <a class="btn btn--primary" href="<?= url('/competition/' . $c['slug']) ?>">О конкурсе</a>
           <a class="btn btn--ghost" href="<?= url('/competitions') ?>">Все конкурсы</a>
@@ -294,7 +300,6 @@ ob_start(); ?>
           <h3>
             <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="var(--gold)" stroke-width="1.6" stroke-linecap="round"><path d="M9 18V5l12-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="18" cy="16" r="3"/></svg>
             <span><?= h($nom) ?></span>
-            <span class="n-count"><?= count($rows) ?></span>
           </h3>
           <div class="grid grid-2">
           <?php foreach ($rows as $i => $r):

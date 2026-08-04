@@ -318,24 +318,7 @@ $achIcons = ['crown', 'star', 'globe', 'heart'];
         <div class="stat"><b data-count="<?= h($val) ?>" data-suffix="<?= h($suf) ?>">0</b><span><?= h($label) ?></span></div>
       <?php endforeach; ?>
     </div>
-    <div class="reveal" style="text-align:center;margin-bottom:22px">
-      <p class="eyebrow" style="margin-bottom:6px">Топ-направления</p>
-      <h3 style="margin:0">Что выбирают участники</h3>
-    </div>
-    <?php $pickIcons = ['mic', 'note', 'dance', 'quote', 'mask', 'palette']; ?>
-    <div class="pick-grid">
-      <?php foreach ($nominations as $ni => [$name, $pct]): ?>
-        <div class="pick-card reveal">
-          <div class="pick-ic"><?= $svg[$pickIcons[$ni] ?? 'star'] ?></div>
-          <div class="pick-body">
-            <div class="pick-top"><span><?= h($name) ?></span><b><?= (int)$pct ?>%</b></div>
-            <div class="pick-track"><span class="pick-fill" style="width:<?= (int)$pct ?>%"></span></div>
-          </div>
-        </div>
-      <?php endforeach; ?>
-    </div>
-
-    <div class="reveal" style="margin-top:44px">
+    <div class="reveal" style="margin-top:22px">
       <h3 style="text-align:center;margin-bottom:6px">География участников - 85 регионов России</h3>
       <p style="color:var(--text-dim);text-align:center;max-width:640px;margin:0 auto 22px">Участники из всех федеральных округов - от Калининграда до Дальнего Востока, а также из стран СНГ и дальнего зарубежья.</p>
       <?= render_regions_heatmap() ?>

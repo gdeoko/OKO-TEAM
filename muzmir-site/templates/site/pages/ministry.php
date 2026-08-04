@@ -9,7 +9,7 @@
  * «документ готовится к публикации», а не битая картинка. Идеальная мобилка.
  */
 
-$letters = all("SELECT * FROM ministry_letters ORDER BY sort, id");
+$letters = all("SELECT * FROM ministry_letters ORDER BY sort, id DESC");
 
 /* --- Справочник федеральных округов (короткое имя, полное имя) --- */
 $DISTRICTS = [
