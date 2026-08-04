@@ -1,0 +1,244 @@
+{
+ "id": "gtape_075",
+ "app": "tape",
+ "voice": "en-US-ChristopherNeural",
+ "rate": "+7%",
+ "grade": "warm_gold",
+ "brand": {
+  "accent": "#F4C430",
+  "accent2": "#FFE08A",
+  "code": "MEASURE",
+  "logo": "tape.png",
+  "name": "3D TAPE MEASURE"
+ },
+ "music": {
+  "queries": [
+   "energetic upbeat",
+   "warm optimistic guitar",
+   "upbeat indie acoustic diy",
+   "bright pop home"
+  ]
+ },
+ "cover": {
+  "kicker": "WILL IT FIT?",
+  "top": "MEASURE ANY ROOM",
+  "big": "WITHOUT\nA TAPE",
+  "q": [
+   "dining table room measure"
+  ]
+ },
+ "segments": [
+  {
+   "id": "b1",
+   "text": "A rug, a TV, a shelf. Will it fit? Stop guessing."
+  },
+  {
+   "id": "b2",
+   "text": "Point your phone, tap two points."
+  },
+  {
+   "id": "b3",
+   "text": "The length appears right on the floor."
+  },
+  {
+   "id": "b4",
+   "text": "Width, height, area, no helper needed."
+  },
+  {
+   "id": "b5",
+   "text": "Save every wall as a project, export a PDF."
+  },
+  {
+   "id": "b6",
+   "text": "Measure any space from your couch in ten seconds."
+  }
+ ],
+ "shots": [
+  {
+   "q": [
+    "couple planning home layout tablet"
+   ],
+   "insert": "tv",
+   "pos": "lower"
+  },
+  {
+   "q": [
+    "modern tv mounted on wall living room"
+   ],
+   "motion": "pandown"
+  },
+  {
+   "q": [
+    "apartment tour empty rooms"
+   ],
+   "insert": "phone",
+   "pos": "center"
+  },
+  {
+   "q": [
+    "office desk setup measuring space"
+   ],
+   "motion": "zin"
+  },
+  {
+   "q": [
+    "bookshelf assembly instructions floor"
+   ],
+   "insert": "hexagon",
+   "pos": "lower"
+  },
+  {
+   "q": [
+    "garden patio outdoor measuring"
+   ],
+   "motion": "zout"
+  },
+  {
+   "q": [
+    "doorway measuring frame home"
+   ],
+   "insert": "rrect",
+   "pos": "lower"
+  },
+  {
+   "q": [
+    "closet organizer measuring wardrobe"
+   ],
+   "motion": "panup"
+  },
+  {
+   "q": [
+    "picture frame hanging wall level"
+   ],
+   "insert": "tilt",
+   "pos": "lower"
+  },
+  {
+   "q": [
+    "bedroom bed frame assembly"
+   ],
+   "motion": "panr"
+  },
+  {
+   "q": [
+    "kitchen cabinets measuring renovation"
+   ],
+   "insert": "circle",
+   "pos": "upper"
+  },
+  {
+   "q": [
+    "curtains window measuring home"
+   ],
+   "motion": "panl"
+  },
+  {
+   "q": [
+    "cozy furnished living room warm light"
+   ],
+   "insert": "arch",
+   "pos": "lower"
+  },
+  {
+   "q": [
+    "empty living room wooden floor sunlight"
+   ],
+   "motion": "pandown"
+  },
+  {
+   "q": [
+    "hands arranging shelf wall decor"
+   ],
+   "insert": "diamond",
+   "pos": "center"
+  }
+ ],
+ "overlays": [
+  {
+   "at": 0.041,
+   "dur": 1.99,
+   "type": "kicker",
+   "text": "MEASURE 101"
+  },
+  {
+   "at": 0.175,
+   "dur": 2.0,
+   "type": "lowerthird",
+   "title": "EXPORT A PDF",
+   "sub": "sizes in one tap"
+  },
+  {
+   "at": 0.3,
+   "dur": 2.2,
+   "type": "kinetic",
+   "top": "NO",
+   "big": "TAPE"
+  },
+  {
+   "at": 0.479,
+   "dur": 2.05,
+   "type": "ticker",
+   "to": 10,
+   "suffix": "s",
+   "label": "PER MEASURE",
+   "pos": "lower"
+  },
+  {
+   "at": 0.531,
+   "dur": 1.85,
+   "type": "bars",
+   "title": "FURNITURE RETURNS",
+   "unit": "%",
+   "items": [
+    [
+     "Guessing",
+     22
+    ],
+    [
+     "Measured",
+     4
+    ]
+   ],
+   "pos": "center"
+  },
+  {
+   "at": 0.612,
+   "dur": 2.6,
+   "type": "checklist",
+   "items": [
+    "Measure the door",
+    "Measure the sofa",
+    "Compare sizes",
+    "Move it in"
+   ],
+   "pos": "center"
+  },
+  {
+   "at": 0.791,
+   "dur": 1.81,
+   "type": "gauge",
+   "to": 10,
+   "max": 60,
+   "suffix": "s",
+   "label": "PER MEASUREMENT",
+   "pos": "center"
+  }
+ ],
+ "cta": {
+  "text": "Comment MEASURE for the app.",
+  "code": "MEASURE"
+ },
+ "caption": "A rug, a TV, a shelf — will it fit? Point your phone, tap two points, and the length appears on the floor. Width, height, area — no tape, no helper. Comment MEASURE for the app. #diy #homedecor #interiordesign #measure #movingtips #renter #apartmenttherapy #tricks #design #app #tape",
+ "yt_title": "Measure any room without a tape #shorts",
+ "trend_keys": [
+  "tricks",
+  "design",
+  "app",
+  "tape",
+  "tips",
+  "measure",
+  "iphone",
+  "measuring"
+ ],
+ "content_type": "viral"
+}
