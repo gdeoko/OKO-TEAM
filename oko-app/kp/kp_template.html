@@ -65,7 +65,10 @@ body.booting #holo-canvas{z-index:9995}
 .pl-brand.glitch::before{color:#9AFF00;transform:translate(2px,-1px);opacity:.8;clip-path:inset(0 0 55% 0);animation:plGl .16s steps(2) infinite}
 .pl-brand.glitch::after{color:#12E6FF;transform:translate(-2px,1px);opacity:.55;clip-path:inset(52% 0 0 0);animation:plGl .2s steps(2) infinite reverse}
 @keyframes plGl{50%{transform:translate(-2px,1px)}}
-.pl-bar2{width:min(270px,66vw);height:3px;border-radius:3px;background:rgba(154,255,0,.14);overflow:hidden;position:relative}
+.pl-bar2{width:min(270px,66vw);height:3px;border-radius:3px;background:rgba(154,255,0,.14);overflow:hidden;position:fixed;left:50%;bottom:6vh;transform:translateX(-50%);z-index:9993}
+.pl-lbl{position:fixed;left:0;right:0;bottom:2.5vh;text-align:center;z-index:9993;font-family:'Unbounded',sans-serif;font-weight:700;font-size:11px;letter-spacing:3px;color:var(--w3);text-transform:uppercase;transition:opacity .4s}
+.pl-lbl b{color:var(--lime)}
+.pl-bar2{transition:opacity .4s}
 .pl-bar2 i{position:absolute;left:0;top:0;height:100%;width:0;background:linear-gradient(90deg,#5FBF00,var(--lime));box-shadow:0 0 16px var(--lime)}
 .pl-lbl{font-family:'Unbounded',sans-serif;font-weight:700;font-size:11px;letter-spacing:3px;color:var(--w3);text-transform:uppercase;transition:opacity .4s}
 .pl-lbl b{color:var(--lime)}
@@ -1098,7 +1101,7 @@ window.playVoice=function(btn){var a=btn.parentElement.parentElement.querySelect
 })();
 </script>
 <script type="module">
-import { initHolo } from './js/holo.js?v=110';
+import { initHolo } from './js/holo.js?v=111';
 function go(){ try{ initHolo(); }catch(e){ console.log('holo',e); } }
 if(document.readyState==='complete') setTimeout(go,200); else window.addEventListener('load',()=>setTimeout(go,200));
 </script>
