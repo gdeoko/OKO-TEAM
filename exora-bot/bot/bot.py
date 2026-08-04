@@ -31,7 +31,7 @@ from aiogram.types import (
 # ----- config -----
 BOT_TOKEN     = os.environ["EXORA_BOT_TOKEN"]
 MINIAPP_URL   = os.environ.get("EXORA_MINIAPP_URL", "https://exora-app.higgsfield.app")
-ADMIN_IDS     = [int(x) for x in os.environ.get("EXORA_ADMIN_IDS", "").split(",") if x.strip().isdigit()]
+SEED_ADMIN_IDS= [int(x) for x in os.environ.get("EXORA_ADMIN_IDS", "").split(",") if x.strip().isdigit()]
 SUPPORT_HANDLE= os.environ.get("EXORA_SUPPORT", "@exora_support")
 BRAND_NAME    = os.environ.get("EXORA_BRAND", "Exora")
 COMPANY_ADDR  = os.environ.get("EXORA_ADDR", "Россия · онлайн 24/7")
@@ -117,6 +117,13 @@ def db_init():
         reminded_at  INTEGER DEFAULT 0,
         escalated_at INTEGER DEFAULT 0
     );
+    CREATE TABLE IF NOT EXISTS admins (
+        tg_id      INTEGER PRIMARY KEY,
+        username   TEXT,
+        added_at   INTEGER,
+        added_by   INTEGER,
+        is_super   INTEGER DEFAULT 0
+    );
     """)
     con.commit()
     # defaults
@@ -130,8 +137,44 @@ def db_init():
     }
     for k, v in defaults.items():
         con.execute("INSERT OR IGNORE INTO settings(key,value) VALUES(?,?)", (k, v))
+    # Seed admins из env (только если таблица пустая)
+    n = con.execute("SELECT COUNT(*) c FROM admins").fetchone()["c"]
+    if n == 0:
+        now = int(time.time())
+        for aid in SEED_ADMIN_IDS:
+            con.execute("INSERT OR IGNORE INTO admins(tg_id, username, added_at, added_by, is_super) VALUES(?,?,?,?,1)",
+                        (aid, "", now, aid))
     con.commit()
     con.close()
+
+
+def get_admin_ids() -> list[int]:
+    """Актуальный список admin id из БД (union с env-seed для устойчивости)."""
+    con = db_conn()
+    rows = con.execute("SELECT tg_id FROM admins").fetchall()
+    con.close()
+    ids = {r["tg_id"] for r in rows} | set(SEED_ADMIN_IDS)
+    return sorted(ids)
+
+def is_admin(tg_id: int) -> bool:
+    return tg_id in get_admin_ids()
+
+def add_admin_db(tg_id: int, username: str, added_by: int):
+    con = db_conn()
+    con.execute("INSERT OR REPLACE INTO admins(tg_id, username, added_at, added_by, is_super) VALUES(?,?,?,?,0)",
+                (tg_id, username or "", int(time.time()), added_by))
+    con.commit(); con.close()
+
+def del_admin_db(tg_id: int):
+    con = db_conn()
+    con.execute("DELETE FROM admins WHERE tg_id=?", (tg_id,))
+    con.commit(); con.close()
+
+def list_admins_db() -> list[dict]:
+    con = db_conn()
+    rows = con.execute("SELECT * FROM admins ORDER BY is_super DESC, added_at ASC").fetchall()
+    con.close()
+    return [dict(r) for r in rows]
 
 def upsert_user(u: types.User, source: str = "", ref_by: Optional[int] = None):
     now = int(time.time())
@@ -400,7 +443,7 @@ async def h_web_app(msg: Message):
     await msg.answer(order_client_text(o, oid))
     # Уведомление админам
     user = {"id": msg.from_user.id, "username": msg.from_user.username, "first_name": msg.from_user.first_name}
-    for aid in ADMIN_IDS:
+    for aid in get_admin_ids():
         try:
             await bot.send_message(aid, order_admin_text(o, oid, user), reply_markup=kb_admin_order(oid))
         except Exception as e:
@@ -546,7 +589,7 @@ async def bg_order_followup():
                         log.warning(f"followup {r['id']}: {e}")
                 # эскалация админам после ESCALATE_MIN
                 if age >= ESCALATE_MIN * 60 and not r["escalated"]:
-                    for aid in ADMIN_IDS:
+                    for aid in get_admin_ids():
                         try:
                             await bot.send_message(
                                 aid,
@@ -766,7 +809,7 @@ def format_aml_result(query: str, r: dict) -> str:
 
 @router.callback_query(F.data.startswith("ord:"))
 async def h_admin_action(cb: CallbackQuery):
-    if cb.from_user.id not in ADMIN_IDS:
+    if not is_admin(cb.from_user.id):
         await cb.answer("Только для админов", show_alert=True); return
     _, action, oid = cb.data.split(":", 2)
     new_status = {"process":"processing", "done":"completed", "cancel":"cancelled"}.get(action)
@@ -793,9 +836,125 @@ async def h_admin_action(cb: CallbackQuery):
     except Exception: pass
 
 
+@router.message(Command("admin_add"))
+async def h_admin_add(msg: Message, command: CommandObject):
+    if not is_admin(msg.from_user.id):
+        await msg.answer("Доступ только для админов."); return
+    args = (command.args or "").strip().split()
+    if not args or not args[0].lstrip("@").isdigit() and not args[0].startswith("@"):
+        await msg.answer(
+            "Использование:\n"
+            "<code>/admin_add 123456789</code> — добавить по ID\n"
+            "<code>/admin_add 123456789 @username</code> — с именем\n\n"
+            "Как узнать ID: пусть новый админ напишет боту /start и пришлёт команду <code>/whoami</code>"
+        )
+        return
+    raw = args[0].lstrip("@")
+    if not raw.isdigit():
+        await msg.answer("ID должен быть числом. Попросите нового админа выполнить /whoami")
+        return
+    new_id = int(raw)
+    uname = args[1].lstrip("@") if len(args) > 1 else ""
+    if is_admin(new_id):
+        await msg.answer(f"⚠️ id <code>{new_id}</code> уже админ")
+        return
+    add_admin_db(new_id, uname, msg.from_user.id)
+    admin_log(msg.from_user.id, "admin_add", str(new_id), {"username": uname})
+    await msg.answer(
+        f"✅ <b>Админ добавлен</b>\n\n"
+        f"ID: <code>{new_id}</code>\n"
+        f"Ник: {'@'+uname if uname else '—'}\n\n"
+        f"Он получит уведомления о новых заявках и сможет их модерировать."
+    )
+    # Уведомить нового
+    try:
+        await bot.send_message(new_id,
+            f"🛡 <b>Вам выданы права администратора {BRAND_NAME}</b>\n\n"
+            f"Теперь вы будете получать уведомления о новых заявках и сможете:\n"
+            f"• Модерировать заявки (кнопки под уведомлениями)\n"
+            f"• /admin — сводка\n"
+            f"• /admin_orders — последние заявки\n"
+            f"• /admin_list — список админов\n"
+            f"• /admin_broadcast — рассылка\n"
+            f"• /admin_set — правка настроек"
+        )
+    except Exception: pass
+
+
+@router.message(Command("admin_del"))
+async def h_admin_del(msg: Message, command: CommandObject):
+    if not is_admin(msg.from_user.id):
+        await msg.answer("Доступ только для админов."); return
+    args = (command.args or "").strip()
+    if not args.isdigit():
+        await msg.answer("Использование: <code>/admin_del 123456789</code>")
+        return
+    target = int(args)
+    if target == msg.from_user.id:
+        await msg.answer("❌ Нельзя удалить самого себя")
+        return
+    admins = list_admins_db()
+    row = next((a for a in admins if a["tg_id"] == target), None)
+    if not row:
+        await msg.answer(f"⚠️ id <code>{target}</code> не в списке админов")
+        return
+    if row.get("is_super"):
+        # только другой super может удалить super
+        me = next((a for a in admins if a["tg_id"] == msg.from_user.id), None)
+        if not (me and me.get("is_super")):
+            await msg.answer("❌ Только super-админ может удалить другого super-админа")
+            return
+    del_admin_db(target)
+    admin_log(msg.from_user.id, "admin_del", str(target))
+    await msg.answer(f"✅ Админ <code>{target}</code> удалён")
+
+
+@router.message(Command("admin_list"))
+async def h_admin_list(msg: Message):
+    if not is_admin(msg.from_user.id):
+        await msg.answer("Доступ только для админов."); return
+    admins = list_admins_db()
+    all_ids = get_admin_ids()
+    if not admins and not all_ids:
+        await msg.answer("Список пуст"); return
+    lines = [f"🛡 <b>Администраторы {BRAND_NAME}</b>\n"]
+    shown = set()
+    for a in admins:
+        crown = "👑 " if a.get("is_super") else "🔹 "
+        uname = f" @{a['username']}" if a.get("username") else ""
+        when = datetime.fromtimestamp(a["added_at"], timezone(timedelta(hours=3))).strftime('%d.%m.%Y') if a.get("added_at") else ""
+        lines.append(f"{crown}<code>{a['tg_id']}</code>{uname}  <i>{when}</i>")
+        shown.add(a["tg_id"])
+    # env-seed что не в БД
+    for aid in all_ids:
+        if aid not in shown:
+            lines.append(f"⚙️ <code>{aid}</code> <i>(из env)</i>")
+    lines.append(
+        "\n<b>Управление:</b>\n"
+        "<code>/admin_add ID [@username]</code>\n"
+        "<code>/admin_del ID</code>\n"
+        "<code>/whoami</code> — узнать свой ID"
+    )
+    await msg.answer("\n".join(lines))
+
+
+@router.message(Command("whoami"))
+async def h_whoami(msg: Message):
+    role = "👑 super-админ" if is_admin(msg.from_user.id) and any(a["tg_id"]==msg.from_user.id and a.get("is_super") for a in list_admins_db()) else \
+           ("🛡 админ" if is_admin(msg.from_user.id) else "👤 пользователь")
+    uname = f"@{msg.from_user.username}" if msg.from_user.username else "—"
+    await msg.answer(
+        f"<b>Ваш профиль</b>\n\n"
+        f"ID: <code>{msg.from_user.id}</code>\n"
+        f"Ник: {uname}\n"
+        f"Имя: {msg.from_user.first_name or '—'}\n"
+        f"Роль: {role}"
+    )
+
+
 @router.message(Command("admin"))
 async def h_admin(msg: Message):
-    if msg.from_user.id not in ADMIN_IDS:
+    if not is_admin(msg.from_user.id):
         await msg.answer("Доступ только для админов."); return
     con = db_conn()
     stats = con.execute("SELECT COUNT(*) c, SUM(CASE WHEN status='new' THEN 1 ELSE 0 END) new_c, SUM(CASE WHEN status='completed' THEN 1 ELSE 0 END) done_c FROM orders").fetchone()
@@ -820,7 +979,7 @@ async def h_admin(msg: Message):
 
 @router.message(Command("admin_orders"))
 async def h_admin_orders(msg: Message):
-    if msg.from_user.id not in ADMIN_IDS: return
+    if not is_admin(msg.from_user.id): return
     rows = list_orders(limit=15)
     if not rows: await msg.answer("Заявок пока нет."); return
     lines = [f"📋 <b>Последние {len(rows)} заявок</b>\n"]
@@ -834,7 +993,7 @@ async def h_admin_orders(msg: Message):
 
 @router.message(Command("admin_set"))
 async def h_admin_set(msg: Message, command: CommandObject):
-    if msg.from_user.id not in ADMIN_IDS: return
+    if not is_admin(msg.from_user.id): return
     if not command.args:
         await msg.answer("Использование: <code>/admin_set key value</code>"); return
     parts = command.args.strip().split(maxsplit=1)
@@ -846,7 +1005,7 @@ async def h_admin_set(msg: Message, command: CommandObject):
 
 @router.message(Command("admin_broadcast"))
 async def h_admin_broadcast(msg: Message, command: CommandObject):
-    if msg.from_user.id not in ADMIN_IDS: return
+    if not is_admin(msg.from_user.id): return
     text = command.args or ""
     if not text.strip():
         await msg.answer("Использование: <code>/admin_broadcast Текст сообщения</code>"); return
@@ -890,6 +1049,7 @@ async def setup_bot_meta():
             BotCommand(command="aml", description="AML-проверка кошелька"),
             BotCommand(command="alert", description="Уведомление о курсе"),
             BotCommand(command="myorders", description="Мои заявки"),
+            BotCommand(command="whoami", description="Мой ID и роль"),
             BotCommand(command="about", description="О компании"),
             BotCommand(command="support", description="Связаться с поддержкой"),
         ], scope=BotCommandScopeDefault())
@@ -1153,7 +1313,7 @@ def build_api_app() -> web.Application:
 
 async def main():
     db_init()
-    log.info(f"Exora bot starting. Mini-app: {MINIAPP_URL}. Admins: {ADMIN_IDS}. DB: {DB_PATH}")
+    log.info(f"Exora bot starting. Mini-app: {MINIAPP_URL}. Admins: {get_admin_ids()}. DB: {DB_PATH}")
     await bot.delete_webhook(drop_pending_updates=False)
     await setup_bot_meta()
 
