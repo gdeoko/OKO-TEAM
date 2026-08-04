@@ -1,6 +1,6 @@
 <?php
 /**
- * Рассылки КЦ «Музыкальный Мир» — премиум-конструктор сегментированных писем.
+ * Рассылки Культурного центра «Музыкальный Мир» — премиум-конструктор сегментированных писем.
  *
  * Возможности интерфейса:
  *  - аудитории: все контакты / подписчики / участники / педагоги / участники конкурса /
@@ -294,7 +294,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             } else {
                 $body = nl_admin_personalize($data['body'], (string) ($me['full_name'] ?? ''));
                 $html = nl_admin_wrap($body, url('/'), '', mb_substr(trim(strip_tags($body)), 0, 120));
-                $subj = '[Тест] ' . nl_admin_personalize($data['subject'] !== '' ? $data['subject'] : 'Письмо КЦ «Музыкальный Мир»', (string) ($me['full_name'] ?? ''));
+                $subj = '[Тест] ' . nl_admin_personalize($data['subject'] !== '' ? $data['subject'] : 'Письмо Культурного центра «Музыкальный Мир»', (string) ($me['full_name'] ?? ''));
                 $ok = false;
                 if (function_exists('mail_send')) {
                     try { $ok = mail_send($to, $subj, $html); } catch (\Throwable $e) { $ok = false; }

@@ -50,7 +50,7 @@ ob_start(); ?>
   <div class="container" style="max-width:440px">
     <div class="card reveal auth-shell" style="padding:34px 26px 30px">
       <div class="auth-head" style="text-align:center;margin-bottom:22px">
-        <img src="<?= asset('img/logo_muzmir_256.png') ?>" alt="КЦ «Музыкальный Мир»" width="64" height="64"
+        <img src="<?= asset('img/logo_muzmir_256.png') ?>" alt="Культурного центра «Музыкальный Мир»" width="64" height="64"
              style="width:64px;height:64px;border-radius:50%;border:1px solid var(--glass-brd);margin:0 auto 12px;display:block">
         <p class="eyebrow" style="margin-bottom:2px">Личный кабинет</p>
         <h1 style="font-size:1.7rem;margin:0 0 6px">Новый пароль</h1>
@@ -81,4 +81,4 @@ ob_start(); ?>
 </section>
 <?php
 $content = ob_get_clean();
-render_page('Новый пароль', $content, ['active' => '/login', 'meta' => 'Смена пароля от личного кабинета КЦ «Музыкальный Мир».']);
+render_page('Новый пароль', $content, ['active' => '/login', 'meta' => 'Смена пароля от личного кабинета Культурного центра «Музыкальный Мир».']);

@@ -44,8 +44,8 @@ $statusView = static function (string $s): array {
 $openCount = 0;
 foreach ($comps as $c) { if (in_array($c['status'], ['open', 'judging'], true)) $openCount++; }
 
-/* Начальный вид (noscript и до инициализации JS): открытые или все. */
-$viewClass = $fStatus === 'all' ? 'cf-grid--all' : 'cf-grid--open';
+/* Показываем все конкурсы (статус-фильтр «Открытые/Все» убран — оставлен только «Тип»). */
+$viewClass = 'cf-grid--all';
 
 $icoFilter = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M22 3H2l8 9.46V19l4 2v-8.54z"/></svg>';
 $icoArrow  = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" width="16" height="16"><path d="M5 12h14M13 6l6 6-6 6"/></svg>';
@@ -73,40 +73,12 @@ ob_start(); ?>
     </div>
 
     <div class="comp-filters reveal">
-      <div class="cf-tabs" role="tablist" aria-label="Статус конкурса">
-        <?php foreach ($STATUS_FILTERS as $val => $label): ?>
-          <a class="cf-tab<?= $fStatus === $val ? ' is-active' : '' ?>"
-             href="<?= h($tabHref($val)) ?>"
-             role="tab" aria-selected="<?= $fStatus === $val ? 'true' : 'false' ?>"
-             data-status-tab="<?= h($val) ?>">
-            <span><?= h($label) ?></span>
-          </a>
-        <?php endforeach; ?>
-      </div>
-
-      <form class="cf-selects" method="get" action="<?= url('/competitions') ?>">
-        <input type="hidden" name="status" value="<?= h($fStatus) ?>" data-status-field>
+      <form class="cf-selects cf-selects--single" method="get" action="<?= url('/competitions') ?>">
         <label class="cf-select">
-          <span><?= $icoFilter ?>Тип</span>
+          <span><?= $icoFilter ?>Тип конкурса</span>
           <select name="type" onchange="this.form.submit()">
             <?php foreach ($TYPE_FILTERS as $val => $label): ?>
               <option value="<?= h($val) ?>" <?= $fType === $val ? 'selected' : '' ?>><?= h($label) ?></option>
-            <?php endforeach; ?>
-          </select>
-        </label>
-        <label class="cf-select">
-          <span>Направленность</span>
-          <select name="dir" onchange="this.form.submit()">
-            <?php foreach ($DIR_FILTERS as $val => $label): ?>
-              <option value="<?= h($val) ?>" <?= $fDir === $val ? 'selected' : '' ?>><?= h($label) ?></option>
-            <?php endforeach; ?>
-          </select>
-        </label>
-        <label class="cf-select">
-          <span>Сортировка</span>
-          <select name="sort" onchange="this.form.submit()">
-            <?php foreach ($SORT_FILTERS as $val => $label): ?>
-              <option value="<?= h($val) ?>" <?= $fSort === $val ? 'selected' : '' ?>><?= h($label) ?></option>
             <?php endforeach; ?>
           </select>
         </label>
@@ -352,7 +324,7 @@ if ($listItems) {
     $jsonld[] = [
         '@context'        => 'https://schema.org',
         '@type'           => 'ItemList',
-        'name'            => 'Открытые конкурсы КЦ «Музыкальный Мир»',
+        'name'            => 'Открытые конкурсы Культурного центра «Музыкальный Мир»',
         'url'             => url('/competitions'),
         'numberOfItems'   => count($listItems),
         'itemListElement' => $listItems,
@@ -361,6 +333,6 @@ if ($listItems) {
 
 render_page('Конкурсы', $content, [
     'active' => '/competitions',
-    'meta' => 'Каталог международных и всероссийских онлайн-конкурсов и фестивалей культуры и искусства КЦ «Музыкальный Мир». Открытые и завершённые конкурсы, подача заявок онлайн.',
+    'meta' => 'Каталог международных и всероссийских онлайн-конкурсов и фестивалей культуры и искусства Культурного центра «Музыкальный Мир». Открытые и завершённые конкурсы, подача заявок онлайн.',
     'jsonld' => $jsonld ?: null,
 ]);

@@ -80,7 +80,7 @@ $applyUrl = url('/apply') . '?competition=' . rawurlencode($c['slug']);
 /* Описание конкурса. */
 $about = trim((string)$c['description']);
 if ($about === '') {
-    $about = 'КЦ «Музыкальный Мир» проводит ' . mb_strtolower($typeLabel)
+    $about = 'Культурного центра «Музыкальный Мир» проводит ' . mb_strtolower($typeLabel)
         . ' «' . $c['name'] . '» в дистанционном формате. К участию приглашаются исполнители и коллективы любого возраста и уровня подготовки. '
         . 'Работы принимаются по видеозаписи, конкурс проходит по номинациям и возрастным категориям. Итоги оценивает компетентное жюри, наградные документы направляются на электронную почту участника.';
 }
@@ -772,7 +772,7 @@ $metaBase = $about !== '' ? mb_substr(trim(preg_replace('/\s+/u', ' ', strip_tag
 
 /* --- SEO: schema.org разметка конкурса (EducationEvent) + хлебные крошки --- */
 $compUrl  = url('/competitions/' . rawurlencode($c['slug']));
-$ldDesc   = $metaBase !== '' ? $metaBase : ($typeLabel . ' «' . $c['name'] . '» - КЦ «Музыкальный Мир».');
+$ldDesc   = $metaBase !== '' ? $metaBase : ($typeLabel . ' «' . $c['name'] . '» - Культурного центра «Музыкальный Мир».');
 $ldPrice  = $c['is_paid'] ? (int) $c['price'] : 0;
 
 $event_ld = [
@@ -817,7 +817,7 @@ $breadcrumb_ld = [
 
 render_page($c['name'], $content, [
     'active'   => '/competitions',
-    'meta'     => $metaBase !== '' ? $metaBase : ($typeLabel . ' «' . $c['name'] . '» - КЦ «Музыкальный Мир». Подача заявки онлайн, номинации, возрастные категории, наградные документы.'),
+    'meta'     => $metaBase !== '' ? $metaBase : ($typeLabel . ' «' . $c['name'] . '» - Культурного центра «Музыкальный Мир». Подача заявки онлайн, номинации, возрастные категории, наградные документы.'),
     'og_image' => !empty($c['cover']) ? $c['cover'] : asset('img/logo_muzmir_main.png'),
     'jsonld'   => [$event_ld, $breadcrumb_ld],
 ]);

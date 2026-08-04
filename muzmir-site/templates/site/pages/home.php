@@ -77,7 +77,7 @@ ob_start(); ?>
     <div class="reveal hero-media">
       <span class="hero-ring" aria-hidden="true"></span>
       <span class="hero-ring hero-ring--2" aria-hidden="true"></span>
-      <img class="hero-logo" src="<?= asset('img/logo_muzmir_main.webp') ?>" alt="Логотип КЦ «Музыкальный Мир»" width="380" height="380" style="view-transition-name:hero-logo">
+      <img class="hero-logo" src="<?= asset('img/logo_muzmir_main.webp') ?>" alt="Логотип Культурного центра «Музыкальный Мир»" width="380" height="380" style="view-transition-name:hero-logo">
     </div>
     <div class="reveal">
       <p class="eyebrow eyebrow--script">Искусство объединяет мир</p>
@@ -210,4 +210,4 @@ ob_start(); ?>
 
 <?php
 $content = ob_get_clean();
-render_page('Главная', $content, ['active' => '/', 'meta' => 'КЦ «Музыкальный Мир» - международные и всероссийские онлайн-конкурсы и фестивали культуры и искусства. Подача заявок, дипломы, награды онлайн.']);
+render_page('Главная', $content, ['active' => '/', 'meta' => 'Культурного центра «Музыкальный Мир» - международные и всероссийские онлайн-конкурсы и фестивали культуры и искусства. Подача заявок, дипломы, награды онлайн.']);

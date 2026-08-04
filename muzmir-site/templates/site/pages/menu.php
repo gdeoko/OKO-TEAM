@@ -63,7 +63,7 @@ ob_start(); ?>
     <div class="menu-head">
       <p class="eyebrow eyebrow--script">Навигация</p>
       <h1>Меню</h1>
-      <p class="menu-sub">Все разделы КЦ «Музыкальный Мир»</p>
+      <p class="menu-sub">Все разделы Культурного центра «Музыкальный Мир»</p>
     </div>
 
     <div class="menu-search" id="menuSearch">
@@ -114,7 +114,7 @@ ob_start(); ?>
     </script>
 
     <div class="menu-actions">
-      <button type="button" class="btn btn--primary btn--block btn--lg" data-share data-share-title="КЦ «Музыкальный Мир» — конкурсы культуры и искусства" data-share-url="<?= h(url('/')) ?>">
+      <button type="button" class="btn btn--primary btn--block btn--lg" data-share data-share-title="Культурного центра «Музыкальный Мир» — конкурсы культуры и искусства" data-share-url="<?= h(url('/')) ?>">
         <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.7" style="margin-right:8px"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><path d="M8.6 13.5l6.8 4M15.4 6.5l-6.8 4"/></svg>
         Поделиться приложением
       </button>
@@ -127,4 +127,4 @@ ob_start(); ?>
 </section>
 <?php
 $content = ob_get_clean();
-render_page('Меню', $content, ['active' => '/menu', 'meta' => 'Меню сайта КЦ «Музыкальный Мир»: все разделы, конкурсы, награды, концерты, личный кабинет.']);
+render_page('Меню', $content, ['active' => '/menu', 'meta' => 'Меню сайта Культурного центра «Музыкальный Мир»: все разделы, конкурсы, награды, концерты, личный кабинет.']);

@@ -247,7 +247,7 @@ function tg_touch_user(string $tgId, array $from): void {
 function tg_cmd_start(string $chatId, array $from): void {
     $name = trim((string) ($from['first_name'] ?? ''));
     $hi   = $name !== '' ? ('Здравствуйте, ' . h($name) . '!') : 'Здравствуйте!';
-    $org  = h((string) cfgv('org_name', 'КЦ «Музыкальный Мир»'));
+    $org  = h((string) cfgv('org_name', 'Культурного центра «Музыкальный Мир»'));
     $text = $hi . "\n\n"
           . "Это бот " . $org . " - международные и всероссийские онлайн-конкурсы "
           . "и фестивали культуры и искусства.\n\n"

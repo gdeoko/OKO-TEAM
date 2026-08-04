@@ -76,7 +76,7 @@ window.MZTheme=(function(){var K='muzmir-admin-theme';
 <div class="admin-shell">
   <aside class="sidebar">
     <div class="sidebar__brand">
-      <img src="<?= logo_data_uri() ?>" alt="Логотип КЦ «Музыкальный Мир»">
+      <img src="<?= logo_data_uri() ?>" alt="Логотип Культурного центра «Музыкальный Мир»">
       <div><b>Музыкальный&nbsp;Мир</b><span>Панель управления</span></div>
     </div>
     <nav class="sidebar__nav">

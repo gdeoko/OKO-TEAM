@@ -27,7 +27,7 @@ $dipCount  = count($diplomas);
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,viewport-fit=cover">
 <meta name="theme-color" content="#0b0a0d">
-<title>КЦ «Музыкальный Мир»</title>
+<title>Культурный центр «Музыкальный Мир»</title>
 <script src="https://telegram.org/js/telegram-web-app.js"></script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -201,7 +201,7 @@ a{color:var(--gold-2);text-decoration:none}
         <?php endforeach; ?>
         <?php foreach ($orders as $o): ?>
           <div class="row">
-            <div><strong><?= h($o['items'] ?: 'Заказ наград') ?></strong><small><?= $o['tracking'] ? 'Трек: '.h($o['tracking']) : 'Оформлен' ?></small></div>
+            <div><strong><?= h(order_items_label($o['items'] ?? '')) ?></strong><small><?= $o['tracking'] ? 'Трек: '.h($o['tracking']) : 'Оформлен' ?></small></div>
             <span class="badge <?= $o['status']==='delivered'?'ok':'' ?>"><?= h($orderStatus[$o['status']] ?? $o['status']) ?></span>
           </div>
         <?php endforeach; ?>

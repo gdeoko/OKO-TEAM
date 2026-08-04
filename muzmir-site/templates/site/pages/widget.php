@@ -1,6 +1,6 @@
 <?php
 /**
- * Генератор embed-виджета КЦ «Музыкальный Мир» для сторонних сайтов.
+ * Генератор embed-виджета Культурного центра «Музыкальный Мир» для сторонних сайтов.
  * ?embed=1 - самодостаточный компактный HTML без общего лейаута (для iframe/скрипта).
  * Виджет: мини-проверка диплома + список действующих конкурсов.
  */
@@ -18,7 +18,7 @@ if ($isEmbed) {
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>КЦ «Музыкальный Мир»</title>
+<title>Культурный центр «Музыкальный Мир»</title>
 <style>
   :root{
     --w-bg:#FFFCF5;--w-panel:#fff;--w-text:#1B2340;--w-dim:#4a4636;--w-muted:#6a6353;
@@ -90,9 +90,9 @@ if ($isEmbed) {
 <body>
 <div class="w-wrap">
   <div class="w-head">
-    <img class="w-logo" src="<?= h(logo_data_uri()) ?>" alt="Логотип КЦ «Музыкальный Мир»">
+    <img class="w-logo" src="<?= h(logo_data_uri()) ?>" alt="Логотип Культурного центра «Музыкальный Мир»">
     <div class="w-ttl">
-      <b>КЦ «Музыкальный Мир»</b>
+      <b>Культурный центр «Музыкальный Мир»</b>
       <span>Конкурсы и проверка дипломов</span>
     </div>
   </div>
@@ -153,12 +153,12 @@ if ($isEmbed) {
 
 $embedSrc = url('/widget?embed=1');
 $iframeCode = '<iframe src="' . $embedSrc . '" width="100%" height="480" style="border:0;border-radius:12px" '
-            . 'title="КЦ «Музыкальный Мир»" loading="lazy"></iframe>';
+            . 'title="Культурного центра «Музыкальный Мир»" loading="lazy"></iframe>';
 $scriptCode = "<script>\n"
             . "(function(){\n"
             . "  var f=document.createElement('iframe');\n"
             . "  f.src=\"{$embedSrc}\";\n"
-            . "  f.title=\"КЦ «Музыкальный Мир»\";\n"
+            . "  f.title=\"Культурного центра «Музыкальный Мир»\";\n"
             . "  f.loading=\"lazy\";\n"
             . "  f.style.cssText=\"width:100%;height:480px;border:0;border-radius:12px\";\n"
             . "  document.currentScript.parentNode.insertBefore(f, document.currentScript);\n"
@@ -194,7 +194,7 @@ ob_start(); ?>
   <div class="container" style="max-width:760px;text-align:center">
     <div class="reveal">
       <p class="eyebrow">Для партнёрских сайтов</p>
-      <h1 style="font-family:var(--ff-display);font-size:clamp(1.9rem,4vw,2.6rem);margin-bottom:.3em">Виджет КЦ «Музыкальный Мир»</h1>
+      <h1 style="font-family:var(--ff-display);font-size:clamp(1.9rem,4vw,2.6rem);margin-bottom:.3em">Виджет Культурного центра «Музыкальный Мир»</h1>
       <p>Разместите на своём сайте компактный виджет: посетители смогут проверить подлинность диплома и увидеть
         действующие конкурсы Культурного центра. Виджет обновляется автоматически - дорабатывать ничего не нужно.</p>
     </div>
@@ -228,7 +228,7 @@ ob_start(); ?>
   <div class="container" style="max-width:560px">
     <div class="section-head reveal"><p class="eyebrow">Превью</p><h2>Так это выглядит</h2></div>
     <div class="embed-preview reveal">
-      <iframe src="<?= h($embedSrc) ?>" loading="lazy" title="Превью виджета КЦ «Музыкальный Мир»"></iframe>
+      <iframe src="<?= h($embedSrc) ?>" loading="lazy" title="Превью виджета Культурного центра «Музыкальный Мир»"></iframe>
     </div>
   </div>
 </section>
@@ -279,7 +279,7 @@ document.querySelectorAll('[data-copy]').forEach(function (btn) {
 </script>
 <?php
 $content = ob_get_clean();
-render_page('Виджет КЦ «Музыкальный Мир»', $content, [
+render_page('Виджет Культурного центра «Музыкальный Мир»', $content, [
     'active' => '/widget',
-    'meta'   => 'Готовый embed-виджет КЦ «Музыкальный Мир» для сторонних сайтов: проверка подлинности диплома и список действующих конкурсов - iframe или скрипт для вставки.',
+    'meta'   => 'Готовый embed-виджет Культурного центра «Музыкальный Мир» для сторонних сайтов: проверка подлинности диплома и список действующих конкурсов - iframe или скрипт для вставки.',
 ]);

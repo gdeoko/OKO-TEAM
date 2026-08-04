@@ -153,7 +153,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             } else {
                 $html = '<p>Подтвердите почту: <a href="' . h($link) . '">' . h($link) . '</a></p>';
             }
-            mail_queue((string)$user['email'], (string)($user['full_name'] ?? ''), 'Подтвердите почту — КЦ «Музыкальный Мир»', $html);
+            mail_queue((string)$user['email'], (string)($user['full_name'] ?? ''), 'Подтвердите почту — Культурного центра «Музыкальный Мир»', $html);
             audit('verify_resend', 'user', $uid);
             flash('Письмо со ссылкой подтверждения отправлено на ' . $user['email'] . '.', 'success');
         }
@@ -170,7 +170,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     'preheader' => 'Диплом № ' . $dn . ' — во вложении.',
                   ])
                 : '<p>Здравствуйте, ' . h($user['full_name'] ?: 'участник') . '.</p><p>Ваш диплом № ' . h($dn) . ' во вложении.</p>';
-            mail_queue($user['email'], $user['full_name'], 'Ваш диплом — КЦ «Музыкальный Мир»', $html, (string)($d['pdf_path'] ?? ''));
+            mail_queue($user['email'], $user['full_name'], 'Ваш диплом — Культурного центра «Музыкальный Мир»', $html, (string)($d['pdf_path'] ?? ''));
             flash('Диплом отправлен на Вашу почту.', 'success');
         } elseif ($d) {
             flash('Диплом готов к скачиванию в разделе «Дипломы».', 'info');
@@ -742,7 +742,7 @@ ob_start(); ?>
             <div class="cab-card reveal" style="--i:<?= $k ?>">
               <div class="cab-row">
                 <div style="min-width:0">
-                  <span class="cab-ttl"><?= h($o['items'] ?: 'Наградная продукция') ?></span>
+                  <span class="cab-ttl"><?= h(order_items_label($o['items'] ?? '')) ?></span>
                   <p class="cab-meta"><?= h($o['competition'] ?: '') ?><?php if ($o['result']): ?> - <?= h($o['result']) ?><?php endif; ?></p>
                   <p class="cab-meta">Заказ от <?= h(ru_date(substr((string)$o['created_at'],0,10))) ?><?php if ($o['amount']): ?> - <?= h(money((int)$o['amount'])) ?><?php endif; ?></p>
                   <?php if (!empty($o['tracking'])): ?><p class="cab-meta">Трек-номер: <strong><?= h($o['tracking']) ?></strong></p><?php endif; ?>
@@ -1318,4 +1318,4 @@ ob_start(); ?>
 </script>
 <?php
 $content = ob_get_clean();
-render_page('Личный кабинет', $content, ['active' => '/cabinet', 'meta' => 'Личный кабинет участника КЦ «Музыкальный Мир»: заявки, дипломы, награды, настройки.']);
+render_page('Личный кабинет', $content, ['active' => '/cabinet', 'meta' => 'Личный кабинет участника Культурного центра «Музыкальный Мир»: заявки, дипломы, награды, настройки.']);

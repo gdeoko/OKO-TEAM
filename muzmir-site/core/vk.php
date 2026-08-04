@@ -1,7 +1,7 @@
 <?php
 /**
  * VK API — авто-постинг, работа со стеной, рассылки и т.п. от лица пользователя (Председатель Оргкомитета)
- * или сообщества КЦ «Музыкальный Мир» (vk.com/music_world.online, id 211325055, is_admin=1, admin_level=3).
+ * или сообщества Культурного центра «Музыкальный Мир» (vk.com/music_world.online, id 211325055, is_admin=1, admin_level=3).
  *
  * Токен лежит в config.local.php (MUZMIR_VK_TOKEN), доступен через cfgv('vk_token').
  * Для постинга от имени сообщества передаётся owner_id = -group_id и from_group=1.

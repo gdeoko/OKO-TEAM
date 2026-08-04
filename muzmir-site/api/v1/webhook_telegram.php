@@ -24,7 +24,7 @@ $msg = $update['message'] ?? null;
 $text = $msg['text'] ?? '';
 $chatId = (string) ($msg['chat']['id'] ?? '');
 if ($chatId !== '' && str_starts_with($text, '/start')) {
-    $reply = 'Здравствуйте! Это бот КЦ «Музыкальный Мир». Сайт: ' . rtrim(cfgv('base_url'), '/')
+    $reply = 'Здравствуйте! Это бот Культурного центра «Музыкальный Мир». Сайт: ' . rtrim(cfgv('base_url'), '/')
            . '. Телефон: ' . cfgv('org_phone') . '.';
     if (function_exists('tg_send')) tg_send($chatId, $reply);
     else tg_send_raw($chatId, $reply);

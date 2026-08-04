@@ -257,7 +257,7 @@ ob_start(); ?>
       <p class="eyebrow"><?= h($typeLabel) ?> · Итоги</p>
       <h1><?= h($c['name']) ?></h1>
       <p style="color:var(--muted);margin-top:10px">
-        Официальные результаты конкурса КЦ «Музыкальный Мир».
+        Официальные результаты конкурса Культурного центра «Музыкальный Мир».
         <?php if (!empty($c['results_date'])): ?>Подведены <?= h(ru_date($c['results_date'])) ?>.<?php endif; ?>
         Каждый диплом можно проверить в <a href="<?= url('/verify') ?>">реестре подлинности</a>.
       </p>
@@ -364,7 +364,7 @@ ob_start(); ?>
         <div class="section-head reveal" style="margin:8px 0 16px"><p class="eyebrow">Материалы</p><h2>Афиши конкурса</h2></div>
         <div class="res-media reveal" style="margin-bottom:36px">
           <?php foreach ($posters as $p): ?>
-            <a class="res-poster" href="<?= h($p['image_path']) ?>" target="_blank" rel="noopener"><img src="<?= h($p['image_path']) ?>" alt="Афиша конкурса «<?= h($c['name']) ?>» - КЦ «Музыкальный Мир»" loading="lazy"></a>
+            <a class="res-poster" href="<?= h($p['image_path']) ?>" target="_blank" rel="noopener"><img src="<?= h($p['image_path']) ?>" alt="Афиша конкурса «<?= h($c['name']) ?>» - Культурного центра «Музыкальный Мир»" loading="lazy"></a>
           <?php endforeach; ?>
         </div>
       <?php endif; ?>
@@ -415,8 +415,8 @@ ob_start(); ?>
 <?php
 $content = ob_get_clean();
 $metaDesc = $results
-    ? 'Результаты конкурса «' . $c['name'] . '»: ' . count($results) . ' победителей и лауреатов, ' . count($byNomination) . ' номинаций. КЦ «Музыкальный Мир».'
-    : 'Результаты конкурса «' . $c['name'] . '» - КЦ «Музыкальный Мир».';
+    ? 'Результаты конкурса «' . $c['name'] . '»: ' . count($results) . ' победителей и лауреатов, ' . count($byNomination) . ' номинаций. Культурного центра «Музыкальный Мир».'
+    : 'Результаты конкурса «' . $c['name'] . '» - Культурного центра «Музыкальный Мир».';
 render_page('Результаты - ' . $c['name'], $content, [
     'active'   => '/competitions',
     'meta'     => $metaDesc,

@@ -1,6 +1,6 @@
 <?php
 /**
- * Фирменные транзакционные письма КЦ «Музыкальный Мир»:
+ * Фирменные транзакционные письма Культурного центра «Музыкальный Мир»:
  *  - application_mail_send() — письмо «Заявка принята» (вызов из api/v1/apply.php);
  *  - result_mail_send()      — письмо с результатом конкурса + in-app уведомление
  *                              (вызов из admin/grading.php для платных конкурсов).
@@ -104,7 +104,7 @@ function application_mail_send(int $appId): bool {
         . '<p style="margin:0 0 4px;color:' . $muted . ';font-size:14px;">Статус заявки, оплата и дипломы — в Вашем личном кабинете.</p>'
         . rm_mail_btn(url('/cabinet'), 'Личный кабинет');
 
-    $subject = 'Заявка №' . $num . ' принята — КЦ «Музыкальный Мир»';
+    $subject = 'Заявка №' . $num . ' принята — Культурного центра «Музыкальный Мир»';
     $html = rm_mail_layout($inner, 'Заявка №' . $num . ' зарегистрирована. Детали и статус — в личном кабинете.');
     return mail_queue((string) $a['email'], $name, $subject, $html) > 0;
 }

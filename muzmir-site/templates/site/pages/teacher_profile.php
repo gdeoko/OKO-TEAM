@@ -176,7 +176,7 @@ ob_start(); ?>
         <div class="tp-id">
           <p class="eyebrow">Профиль педагога</p>
           <h1><?= h($teacher['name']) ?></h1>
-          <p class="role">Наставник участников конкурсов КЦ «Музыкальный Мир»</p>
+          <p class="role">Наставник участников конкурсов Культурного центра «Музыкальный Мир»</p>
           <div class="tp-badges">
             <?php if ($wins['Гран-при'] > 0): ?><span class="badge badge--judging">Подготовил обладателей Гран-при</span><?php endif; ?>
             <?php if ($hasIntl): ?><span class="badge badge--intl">Международный уровень</span><?php endif; ?>
@@ -185,7 +185,7 @@ ob_start(); ?>
           <?php $shareUrl = rtrim(cfgv('base_url'), '/') . '/pedagog/' . $teacher['slug']; ?>
           <div class="tp-actions">
             <button class="btn btn--ghost" type="button" data-share
-                    data-share-title="<?= h($teacher['name']) ?> - КЦ Музыкальный Мир"
+                    data-share-title="<?= h($teacher['name']) ?> - Культурный центр «Музыкальный Мир»"
                     data-share-url="<?= h($shareUrl) ?>">Поделиться</button>
           </div>
         </div>
@@ -263,8 +263,8 @@ ob_start(); ?>
 $content = ob_get_clean();
 $ttl = $teacher ? $teacher['name'] : 'Профиль педагога';
 $metaDesc = $teacher
-    ? 'Педагог ' . $teacher['name'] . ': ' . count($students) . ' учеников, ' . count($items) . ' наградных документов на конкурсах КЦ «Музыкальный Мир».'
-    : 'Публичный профиль педагога - участника конкурсов КЦ «Музыкальный Мир».';
+    ? 'Педагог ' . $teacher['name'] . ': ' . count($students) . ' учеников, ' . count($items) . ' наградных документов на конкурсах Культурного центра «Музыкальный Мир».'
+    : 'Публичный профиль педагога - участника конкурсов Культурного центра «Музыкальный Мир».';
 
 // JSON-LD Person — персональная страница педагога для поисковой выдачи.
 $opts = ['active' => '', 'meta' => $metaDesc];

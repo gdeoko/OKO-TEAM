@@ -258,7 +258,7 @@ ob_start(); ?>
           </svg>
         </div>
         <h1>Диплом подлинный</h1>
-        <p>Документ найден в реестре КЦ «Музыкальный Мир».</p>
+        <p>Документ найден в реестре Культурного центра «Музыкальный Мир».</p>
         <div class="num">№ <?= h($d['number']) ?></div>
       </div>
 
@@ -274,7 +274,7 @@ ob_start(); ?>
 
         <div class="cert-inner">
           <div class="cert-medallion">
-            <img class="cert-logo" src="<?= h(logo_data_uri()) ?>" alt="Логотип КЦ «Музыкальный Мир»">
+            <img class="cert-logo" src="<?= h(logo_data_uri()) ?>" alt="Логотип Культурного центра «Музыкальный Мир»">
           </div>
           <div class="cert-org">Культурный центр «Музыкальный Мир»</div>
           <div class="cert-sub">наградной документ</div>
@@ -293,7 +293,7 @@ ob_start(); ?>
           <?php if ($d['work_title']): ?><p class="cert-work">«<?= h($d['work_title']) ?>»</p><?php endif; ?>
 
           <div class="cert-grid">
-            <div class="fld"><span>Конкурс</span><strong><?= h($d['comp_name'] ?: 'Конкурс КЦ «Музыкальный Мир»') ?></strong></div>
+            <div class="fld"><span>Конкурс</span><strong><?= h($d['comp_name'] ?: 'Конкурс Культурного центра «Музыкальный Мир»') ?></strong></div>
             <div class="fld"><span>Тип</span><strong><?= $d['comp_type']==='national' ? 'Всероссийский' : 'Международный' ?></strong></div>
             <?php if ($d['nomination']): ?><div class="fld"><span>Номинация</span><strong><?= h($d['nomination']) ?></strong></div><?php endif; ?>
             <?php if ($d['teacher']): ?><div class="fld"><span>Педагог</span><strong><?= h($d['teacher']) ?></strong></div><?php endif; ?>
@@ -311,13 +311,13 @@ ob_start(); ?>
 
       <div class="cert-meta">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M20 6 9 17l-5-5"/></svg>
-        Сведения предоставлены реестром КЦ «Музыкальный Мир» и подтверждают подлинность документа<?php if(isset($vcount) && $vcount>1): ?> - проверялся <?= (int)$vcount ?> раз<?php endif; ?>.
+        Сведения предоставлены реестром Культурного центра «Музыкальный Мир» и подтверждают подлинность документа<?php if(isset($vcount) && $vcount>1): ?> - проверялся <?= (int)$vcount ?> раз<?php endif; ?>.
       </div>
 
       <?php $shareUrl = $verifyBase . '/' . rawurlencode((string)$d['number']); ?>
       <div class="vfy-share reveal">
         <button class="btn btn--ghost" type="button" data-share
-                data-share-title="Диплом № <?= h($d['number']) ?> - КЦ «Музыкальный Мир»"
+                data-share-title="Диплом № <?= h($d['number']) ?> - Культурного центра «Музыкальный Мир»"
                 data-share-url="<?= h($shareUrl) ?>">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><path d="m8.6 13.5 6.8 4M15.4 6.5l-6.8 4"/></svg>
           Поделиться
@@ -490,4 +490,4 @@ ob_start(); ?>
 <?php
 $content = ob_get_clean();
 $ttl = $d ? ('Диплом № ' . $number) : 'Проверка диплома';
-render_page($ttl, $content, ['active' => '', 'meta' => 'Проверка подлинности наградных документов КЦ «Музыкальный Мир» по номеру или QR-коду.']);
+render_page($ttl, $content, ['active' => '', 'meta' => 'Проверка подлинности наградных документов Культурного центра «Музыкальный Мир» по номеру или QR-коду.']);

@@ -1,6 +1,6 @@
 <?php
 /**
- * Почтовый модуль КЦ «Музыкальный Мир».
+ * Почтовый модуль Культурного центра «Музыкальный Мир».
  * Отправка через Gmail SMTP по cURL (smtps://smtp.gmail.com:465), очередь писем,
  * рендер премиум HTML-шаблонов. Все ошибки — тихие, наружу только bool/int.
  * Контракт: см. docs/CONTRACTS.md (раздел mailer).
@@ -225,7 +225,7 @@ function mail_send(string $to, string $subject, string $html, array $opt = []): 
         return false;
     }
 
-    $fromName = (string) ($opt['from_name'] ?? cfgv('mail_from_name', 'КЦ «Музыкальный Мир»'));
+    $fromName = (string) ($opt['from_name'] ?? cfgv('mail_from_name', 'Культурного центра «Музыкальный Мир»'));
     $replyTo  = (string) ($opt['reply_to'] ?? cfgv('mail_reply_to', ''));
     $attach   = (string) ($opt['attach'] ?? '');
 

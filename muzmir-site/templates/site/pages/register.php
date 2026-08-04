@@ -21,7 +21,7 @@ ob_start(); ?>
   <div class="container" style="max-width:460px">
     <div class="reveal in auth-shell" id="regShell">
       <div class="auth-head" style="text-align:center;margin-bottom:22px">
-        <img src="<?= asset('img/logo_muzmir_256.png') ?>" alt="КЦ «Музыкальный Мир»" width="72" height="72"
+        <img src="<?= asset('img/logo_muzmir_256.png') ?>" alt="Культурного центра «Музыкальный Мир»" width="72" height="72"
              style="width:72px;height:72px;border-radius:50%;border:1px solid var(--glass-brd);margin:0 auto 14px;display:block;filter:drop-shadow(0 8px 20px rgba(201,168,76,.28))">
         <p class="eyebrow eyebrow--script" style="margin-bottom:2px">Присоединяйтесь</p>
         <h1 style="font-size:1.9rem;margin:0 0 6px;background:var(--grad-gold);-webkit-background-clip:text;background-clip:text;color:transparent">Регистрация</h1>
@@ -246,4 +246,4 @@ ob_start(); ?>
 </script>
 <?php
 $content = ob_get_clean();
-render_page('Регистрация', $content, ['active' => '/register', 'meta' => 'Регистрация в КЦ «Музыкальный Мир»: код на почту без пароля, ВК, MAX, телефон. Профиль за 30 секунд.']);
+render_page('Регистрация', $content, ['active' => '/register', 'meta' => 'Регистрация в Культурного центра «Музыкальный Мир»: код на почту без пароля, ВК, MAX, телефон. Профиль за 30 секунд.']);

@@ -27,7 +27,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $link = url('/reset-password?token=' . urlencode($token));
             $name = trim((string)($u['full_name'] ?? ''));
             if (function_exists('mail_queue')) {
-                mail_queue($email, $name, 'Восстановление пароля - КЦ «Музыкальный Мир»', reset_email_html($name, $link));
+                mail_queue($email, $name, 'Восстановление пароля - Культурного центра «Музыкальный Мир»', reset_email_html($name, $link));
             }
         }
         // Нейтральный ответ вне зависимости от наличия адреса в базе.
@@ -56,7 +56,7 @@ ob_start(); ?>
   <div class="container" style="max-width:440px">
     <div class="card reveal auth-shell" style="padding:34px 26px 30px">
       <div class="auth-head" style="text-align:center;margin-bottom:22px">
-        <img src="<?= asset('img/logo_muzmir_256.png') ?>" alt="КЦ «Музыкальный Мир»" width="64" height="64"
+        <img src="<?= asset('img/logo_muzmir_256.png') ?>" alt="Культурного центра «Музыкальный Мир»" width="64" height="64"
              style="width:64px;height:64px;border-radius:50%;border:1px solid var(--glass-brd);margin:0 auto 12px;display:block">
         <p class="eyebrow" style="margin-bottom:2px">Личный кабинет</p>
         <h1 style="font-size:1.7rem;margin:0 0 6px">Восстановление пароля</h1>
@@ -88,4 +88,4 @@ ob_start(); ?>
 </section>
 <?php
 $content = ob_get_clean();
-render_page('Восстановление пароля', $content, ['active' => '/login', 'meta' => 'Восстановление пароля от личного кабинета КЦ «Музыкальный Мир».']);
+render_page('Восстановление пароля', $content, ['active' => '/login', 'meta' => 'Восстановление пароля от личного кабинета Культурного центра «Музыкальный Мир».']);

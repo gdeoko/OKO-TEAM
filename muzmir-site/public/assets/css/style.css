@@ -2408,3 +2408,24 @@ html body nav.appnav, .appnav-inner, .appnav a.appnav-cta{overflow:visible !impo
 
 /* ══ Count-up КПИ: цифра «догоняет» значение при появлении (JS в motion.js) ══ */
 .mz-counting{font-variant-numeric:tabular-nums}
+
+/* ═══════════ Правки по отзыву владельца (август) ═══════════ */
+/* Шапка: иконки-медальоны видимы и в тёмной теме (были тёмное-на-тёмном) */
+[data-theme="dark"] .app-icon-btn{
+  background:radial-gradient(circle at 34% 28%, #FBEEB6 0%, #E9C566 34%, #C79322 70%) !important;
+  color:#12183A !important;border:1px solid rgba(255,240,190,.5) !important;
+  box-shadow:0 4px 12px rgba(0,0,0,.4), inset 0 1px 2px rgba(255,255,255,.6) !important}
+[data-theme="dark"] .app-icon-btn svg{color:#12183A !important}
+/* Ровный ряд иконок шапки, без «уезжания» вправо на узких экранах */
+.app-header-actions{gap:7px !important}
+.app-icon-btn{width:38px !important;height:38px !important;flex:0 0 38px !important}
+.app-icon-btn svg{width:19px !important;height:19px !important;display:block}
+@media(max-width:380px){
+  .app-header-actions{gap:5px !important}
+  .app-icon-btn{width:35px !important;height:35px !important;flex:0 0 35px !important}
+  .app-icon-btn svg{width:18px !important;height:18px !important}
+}
+/* Каталог конкурсов: единственный фильтр «Тип» — по центру, читаемый (не золото-на-золоте) */
+.cf-selects--single{display:flex;justify-content:center;margin-top:4px}
+.cf-selects--single .cf-select{width:min(420px,100%)}
+.cf-selects--single .cf-select select{width:100%}

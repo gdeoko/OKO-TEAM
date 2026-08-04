@@ -170,7 +170,7 @@ if (!$uid && $email !== '') {
                     'preheader' => 'Личный кабинет создан — установите пароль для входа.',
                   ])
                 : '<p>Здравствуйте, ' . h($full_name) . '.</p><p>Мы создали для Вас личный кабинет — установите пароль для входа в разделе настроек кабинета на сайте центра.</p>';
-            mail_queue($email, $full_name, 'Ваш кабинет создан — КЦ «Музыкальный Мир»', $html);
+            mail_queue($email, $full_name, 'Ваш кабинет создан — Культурного центра «Музыкальный Мир»', $html);
         }
         audit('auto_register_on_apply', 'user', $uid, ['email' => $email]);
     }
@@ -299,7 +299,7 @@ if (is_file(BASE_PATH . '/core/result_mail.php')) {
 } elseif (function_exists('mail_queue')) {
     // Фолбэк на случай отсутствия модуля фирменных писем.
     $numsList = implode(', ', $numbers);
-    $subject  = 'Заявка №' . $number . ' принята — КЦ «Музыкальный Мир»';
+    $subject  = 'Заявка №' . $number . ' принята — Культурного центра «Музыкальный Мир»';
     $fallbackMsg = (count($numbers) > 1 ? 'Ваши заявки ' : 'Ваша заявка ') . $numsList . ' на '
         . (count($comps) > 1 ? 'конкурсы' : 'конкурс') . ' «' . $compsList . '» принят' . (count($comps) > 1 ? 'ы' : 'а')
         . '. Мы сообщим о результатах на этот адрес.';

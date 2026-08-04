@@ -20,6 +20,7 @@
 
   function rnd(a, b) { return a + Math.random() * (b - a); }
 
+  var lastSeedW = 0;
   function resize() {
     W = window.innerWidth; H = window.innerHeight;
     canvas.width = Math.round(W * DPR);
@@ -28,7 +29,10 @@
     canvas.style.height = H + 'px';
     ctx.setTransform(DPR, 0, 0, DPR, 0, 0);
     area = Math.max(0.45, Math.min(1.6, (W * H) / (1280 * 800)));
-    seed();
+    // Пересев ТОЛЬКО при значимой смене ширины (поворот экрана/ресайз окна).
+    // На мобиле при скролле адресная строка меняет ТОЛЬКО высоту — тогда не пересеваем,
+    // иначе облака/звёзды/планета «прыгают» на новые случайные позиции.
+    if (!stars.length || Math.abs(W - lastSeedW) > 40) { lastSeedW = W; seed(); }
   }
 
   function seed() {
@@ -44,9 +48,11 @@
       });
     }
     stars = [];
-    var nStars = Math.round(150 * area);
+    var nStars = Math.round(190 * area);
     for (i = 0; i < nStars; i++) {
-      stars.push({ x: rnd(0, W), y: rnd(0, H), r: rnd(0.4, 1.5), ph: rnd(0, Math.PI * 2), sp: rnd(0.4, 1.6) });
+      var rr = Math.random(); rr = rr * rr; // больше мелких звёзд, меньше крупных
+      stars.push({ x: rnd(0, W), y: rnd(0, H), r: 0.4 + rr * 1.4, ph: rnd(0, Math.PI * 2),
+        sp: rnd(0.4, 1.6), tint: (Math.random() < 0.18 ? 1 : Math.random() < 0.3 ? 2 : 0) });
     }
     bokeh = [];
     for (i = 0; i < Math.round(6 * area); i++) {
@@ -156,42 +162,74 @@
     var neb2 = ctx.createRadialGradient(W * 0.85, H * 0.75, 0, W * 0.85, H * 0.75, Math.max(W, H) * 0.4);
     neb2.addColorStop(0, 'rgba(199,147,34,0.07)'); neb2.addColorStop(1, 'rgba(199,147,34,0)');
     ctx.fillStyle = neb2; ctx.fillRect(0, 0, W, H);
-    // Звёзды мерцают
+    // Млечный путь — мягкая диагональная полоса пыли для реализма
+    ctx.save();
+    ctx.translate(W * 0.5, H * 0.42);
+    ctx.rotate(-0.5);
+    var mw = ctx.createLinearGradient(0, -H * 0.14, 0, H * 0.14);
+    mw.addColorStop(0, 'rgba(120,150,220,0)');
+    mw.addColorStop(0.5, 'rgba(150,170,225,0.10)');
+    mw.addColorStop(1, 'rgba(120,150,220,0)');
+    ctx.fillStyle = mw;
+    ctx.fillRect(-W, -H * 0.14, W * 2, H * 0.28);
+    ctx.restore();
+    // Звёзды мерцают (тёплые/холодные оттенки — реалистичнее)
     for (var i = 0; i < stars.length; i++) {
       var s = stars[i];
       var a = 0.35 + 0.55 * Math.abs(Math.sin(t * 0.002 * s.sp + s.ph));
-      ctx.fillStyle = 'rgba(255,248,222,' + a.toFixed(3) + ')';
+      ctx.fillStyle = s.tint === 1 ? 'rgba(255,236,200,' + a.toFixed(3) + ')'
+                     : s.tint === 2 ? 'rgba(200,220,255,' + a.toFixed(3) + ')'
+                     : 'rgba(255,250,232,' + a.toFixed(3) + ')';
       ctx.beginPath(); ctx.arc(s.x, s.y, s.r, 0, Math.PI * 2); ctx.fill();
+      if (s.r > 1.15) { // крупные звёзды с тонкими лучами
+        ctx.globalAlpha = a * 0.5;
+        ctx.strokeStyle = ctx.fillStyle; ctx.lineWidth = 0.6;
+        ctx.beginPath();
+        ctx.moveTo(s.x - s.r * 3, s.y); ctx.lineTo(s.x + s.r * 3, s.y);
+        ctx.moveTo(s.x, s.y - s.r * 3); ctx.lineTo(s.x, s.y + s.r * 3);
+        ctx.stroke(); ctx.globalAlpha = 1;
+      }
     }
-    // Луна (верхний правый угол)
-    var mx = W * 0.84, my = H * 0.14, mr = Math.min(W, H) * 0.085;
-    var mh = ctx.createRadialGradient(mx, my, mr * 0.2, mx, my, mr * 3.4);
-    mh.addColorStop(0, 'rgba(240,240,255,0.22)'); mh.addColorStop(1, 'rgba(240,240,255,0)');
+    // Луна (верхний правый) — реалистичный мягкий терминатор + кратеры
+    var mx = W * 0.82, my = H * 0.13, mr = Math.min(W, H) * 0.09;
+    var mh = ctx.createRadialGradient(mx, my, mr * 0.2, mx, my, mr * 3.6);
+    mh.addColorStop(0, 'rgba(240,242,255,0.24)'); mh.addColorStop(1, 'rgba(240,242,255,0)');
     ctx.fillStyle = mh; ctx.fillRect(0, 0, W, H);
-    var moon = ctx.createRadialGradient(mx - mr * 0.35, my - mr * 0.35, mr * 0.1, mx, my, mr);
-    moon.addColorStop(0, '#F5F3EA'); moon.addColorStop(0.7, '#D9D6C8'); moon.addColorStop(1, '#B9B5A5');
+    var moon = ctx.createRadialGradient(mx - mr * 0.4, my - mr * 0.4, mr * 0.1, mx, my, mr * 1.05);
+    moon.addColorStop(0, '#FBFAF3'); moon.addColorStop(0.55, '#E4E1D4'); moon.addColorStop(0.85, '#C4C0B0'); moon.addColorStop(1, '#9E9A8A');
     ctx.beginPath(); ctx.arc(mx, my, mr, 0, Math.PI * 2);
     ctx.fillStyle = moon;
-    ctx.shadowColor = 'rgba(235,235,250,0.6)'; ctx.shadowBlur = 30;
+    ctx.shadowColor = 'rgba(235,238,255,0.55)'; ctx.shadowBlur = 34;
     ctx.fill(); ctx.shadowBlur = 0;
-    // Кратеры
-    ctx.fillStyle = 'rgba(150,146,130,0.35)';
-    var craters = [[-0.3, -0.15, 0.16], [0.25, 0.1, 0.11], [0.02, 0.38, 0.13], [-0.12, 0.12, 0.07], [0.38, -0.3, 0.08]];
+    // Кратеры (мягкие, с подсветкой края)
+    ctx.save();
+    ctx.beginPath(); ctx.arc(mx, my, mr, 0, Math.PI * 2); ctx.clip();
+    var craters = [[-0.3, -0.15, 0.16], [0.25, 0.1, 0.12], [0.02, 0.38, 0.13], [-0.12, 0.12, 0.07], [0.38, -0.28, 0.08], [-0.44, 0.28, 0.09]];
     for (i = 0; i < craters.length; i++) {
-      ctx.beginPath();
-      ctx.arc(mx + craters[i][0] * mr, my + craters[i][1] * mr, craters[i][2] * mr, 0, Math.PI * 2);
-      ctx.fill();
+      var cxr = mx + craters[i][0] * mr, cyr = my + craters[i][1] * mr, crr = craters[i][2] * mr;
+      ctx.fillStyle = 'rgba(140,136,120,0.34)';
+      ctx.beginPath(); ctx.arc(cxr, cyr, crr, 0, Math.PI * 2); ctx.fill();
+      ctx.fillStyle = 'rgba(255,255,250,0.16)';
+      ctx.beginPath(); ctx.arc(cxr - crr * 0.2, cyr - crr * 0.2, crr * 0.7, 0, Math.PI * 2); ctx.fill();
     }
-    // Земля (нижний левый угол, крупная дуга из-за края)
-    var ex = W * 0.06, ey = H * 1.06, er = Math.min(W, H) * 0.34;
-    var atm = ctx.createRadialGradient(ex, ey, er * 0.9, ex, ey, er * 1.25);
-    atm.addColorStop(0, 'rgba(90,160,255,0.0)');
-    atm.addColorStop(0.75, 'rgba(96,170,255,0.28)');
-    atm.addColorStop(1, 'rgba(96,170,255,0)');
+    // Мягкий терминатор (затенение справа-снизу — фаза Луны)
+    var term = ctx.createRadialGradient(mx - mr * 0.5, my - mr * 0.5, mr * 0.3, mx + mr * 0.4, my + mr * 0.4, mr * 1.4);
+    term.addColorStop(0, 'rgba(10,16,40,0)'); term.addColorStop(0.7, 'rgba(10,16,40,0)'); term.addColorStop(1, 'rgba(8,12,32,0.5)');
+    ctx.fillStyle = term; ctx.fillRect(mx - mr, my - mr, mr * 2, mr * 2);
+    ctx.restore();
+    // Земля — крупная планета внизу, ХОРОШО видна на мобиле (высокая дуга)
+    var portrait = H > W;
+    var ex = W * (portrait ? 0.5 : 0.1);
+    var er = Math.min(W, H) * (portrait ? 0.62 : 0.4);
+    var ey = H + er * (portrait ? 0.66 : 0.72); // центр ниже экрана — видна верхняя дуга
+    var atm = ctx.createRadialGradient(ex, ey, er * 0.92, ex, ey, er * 1.2);
+    atm.addColorStop(0, 'rgba(96,170,255,0)');
+    atm.addColorStop(0.7, 'rgba(110,180,255,0.32)');
+    atm.addColorStop(1, 'rgba(110,180,255,0)');
     ctx.fillStyle = atm;
-    ctx.beginPath(); ctx.arc(ex, ey, er * 1.25, 0, Math.PI * 2); ctx.fill();
-    var earth = ctx.createRadialGradient(ex - er * 0.3, ey - er * 0.5, er * 0.2, ex, ey, er);
-    earth.addColorStop(0, '#3E7EDB'); earth.addColorStop(0.6, '#1E4E9E'); earth.addColorStop(1, '#0E2B63');
+    ctx.beginPath(); ctx.arc(ex, ey, er * 1.2, 0, Math.PI * 2); ctx.fill();
+    var earth = ctx.createRadialGradient(ex - er * 0.32, ey - er * 0.5, er * 0.15, ex, ey, er);
+    earth.addColorStop(0, '#4A8BEA'); earth.addColorStop(0.5, '#245BB0'); earth.addColorStop(0.82, '#123A7E'); earth.addColorStop(1, '#0A2352');
     ctx.beginPath(); ctx.arc(ex, ey, er, 0, Math.PI * 2);
     ctx.fillStyle = earth; ctx.fill();
     // Материки (мягкие пятна) + лёгкое вращение

@@ -113,7 +113,7 @@ if ($action === 'request') {
                 'preheader'   => 'Ваш код для входа на сайт центра. Действует 15 минут.',
               ])
             : '<p>Код для входа: <b style="font-size:28px;letter-spacing:6px;">' . h($code) . '</b>. Действует 15 минут.</p>';
-        $sent = (bool) mail_queue($email, input('name'), 'Код для входа — КЦ «Музыкальный Мир»', $html);
+        $sent = (bool) mail_queue($email, input('name'), 'Код для входа — Культурного центра «Музыкальный Мир»', $html);
     }
 
     $out = ['ok' => true, 'sent' => $sent, 'need_verify' => true, 'message' => 'Код отправлен на почту'];

@@ -1,6 +1,6 @@
 <?php
 /**
- * Платёжный модуль КЦ «Музыкальный Мир» — единая логика применения статуса ЮKassa.
+ * Платёжный модуль Культурного центра «Музыкальный Мир» — единая логика применения статуса ЮKassa.
  * Используется и вебхуком (api/v1/webhook_yukassa.php), и крон-реконсилером
  * (cron/reconcile_payments.php), чтобы платежи подтверждались даже без настроенных
  * в ЛК HTTP-уведомлений: реконсилер сам опрашивает статус по API (pull), вебхук — push.
@@ -159,7 +159,7 @@ function payment_apply_status(string $paymentId, string $status, array $obj = []
         $html = function_exists('mail_template')
             ? mail_template('payment_success', ['name' => $name, 'full_name' => $name, 'amount' => $amount, 'payment_id' => $paymentId, 'cabinet_url' => rtrim((string) cfgv('base_url'), '/') . '/cabinet'])
             : '<p>Здравствуйте' . ($name ? ', ' . h($name) : '') . '!</p><p>Оплата успешно получена. Благодарим Вас!</p>';
-        mail_queue($email, $name, 'Оплата получена — КЦ «Музыкальный Мир»', $html);
+        mail_queue($email, $name, 'Оплата получена — Культурного центра «Музыкальный Мир»', $html);
     }
 
     if (function_exists('tg_notify_admin')) {

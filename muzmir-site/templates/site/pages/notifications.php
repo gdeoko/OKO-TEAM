@@ -86,4 +86,4 @@ setTimeout(function(){
 </script>
 <?php
 $content = ob_get_clean();
-render_page('Уведомления', $content, ['active' => '/notifications', 'meta' => 'Активность и уведомления по Вашим заявкам, дипломам, оплатам — КЦ «Музыкальный Мир».']);
+render_page('Уведомления', $content, ['active' => '/notifications', 'meta' => 'Активность и уведомления по Вашим заявкам, дипломам, оплатам — Культурного центра «Музыкальный Мир».']);

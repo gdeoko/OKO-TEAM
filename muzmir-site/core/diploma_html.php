@@ -296,7 +296,7 @@ body{background:#444;font-family:'Manrope',sans-serif;padding:20px;min-height:10
 
     <?php $e = $E('logos'); ?>
     <?php /* Порядок Даниэля: Про Культура — Минпросвещения — Минкультуры —
-             КЦ «Музыкальный Мир» (центр) — Союз композиторов — Минобразования —
+             Культурного центра «Музыкальный Мир» (центр) — Союз композиторов — Минобразования —
              Нацпроекты «Культура». Всего 7. */ ?>
     <div class="logos-row"<?= $D('logos') . _dh_style($e) ?>>
       <img class="logo logo-prok" src="<?= $imgDip ?>/logo_prokultura.png" alt="">

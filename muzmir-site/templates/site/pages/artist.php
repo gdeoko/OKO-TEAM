@@ -200,7 +200,7 @@ ob_start(); ?>
           <?php $shareUrl = rtrim(cfgv('base_url'), '/') . '/artist/' . $artist['slug']; ?>
           <div class="pro-actions">
             <button class="btn btn--ghost" type="button" data-share
-                    data-share-title="<?= h($artist['name']) ?> - КЦ Музыкальный Мир"
+                    data-share-title="<?= h($artist['name']) ?> - Культурный центр «Музыкальный Мир»"
                     data-share-url="<?= h($shareUrl) ?>">Поделиться</button>
           </div>
         </div>
@@ -303,8 +303,8 @@ ob_start(); ?>
 $content = ob_get_clean();
 $ttl = $artist ? $artist['name'] : 'Портфолио участника';
 $metaDesc = $artist
-    ? 'Портфолио участника ' . $artist['name'] . ': ' . count($items) . ' наградных документов, ' . count($competitions) . ' конкурсов КЦ «Музыкальный Мир». Проверка подлинности дипломов онлайн.'
-    : 'Портфолио участника конкурсов КЦ «Музыкальный Мир».';
+    ? 'Портфолио участника ' . $artist['name'] . ': ' . count($items) . ' наградных документов, ' . count($competitions) . ' конкурсов Культурного центра «Музыкальный Мир». Проверка подлинности дипломов онлайн.'
+    : 'Портфолио участника конкурсов Культурного центра «Музыкальный Мир».';
 
 // JSON-LD Person — для индексации персональной страницы участника.
 $opts = ['active' => '', 'meta' => $metaDesc];

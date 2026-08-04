@@ -1,6 +1,6 @@
 <?php
 /**
- * КЦ «Музыкальный Мир» — конфигурация.
+ * Культурного центра «Музыкальный Мир» — конфигурация.
  * Секреты НЕ хранятся в git. Значения берутся из переменных окружения,
  * либо из config.local.php (в .gitignore). Здесь только безопасные дефолты.
  */
@@ -35,7 +35,7 @@ function cfg(string $key, $default = null) {
 
 return [
     // Организация
-    'org_name'       => 'КЦ «Музыкальный Мир»',
+    'org_name'       => 'Культурного центра «Музыкальный Мир»',
     'org_full'       => 'Культурный центр «Музыкальный Мир»',
     'org_short'      => 'Музыкальный Мир',
     'org_reg'        => 'Роскомнадзор №094084 от 24.06.2025',
@@ -68,7 +68,7 @@ return [
     'smtp_port'      => (int) cfg('MUZMIR_SMTP_PORT', 465),
     'smtp_user'      => cfg('MUZMIR_SMTP_USER', 'kulturniy.centr.mir@gmail.com'),
     'smtp_pass'      => cfg('MUZMIR_SMTP_PASS', ''),   // App Password — только env/local
-    'mail_from_name' => 'КЦ «Музыкальный Мир»',
+    'mail_from_name' => 'Культурного центра «Музыкальный Мир»',
     'mail_reply_to'  => 'kulturniy.centr.mir@mail.ru',
     // Дневной лимит Gmail — рассылки идут очередью батчами
     'mail_daily_limit' => (int) cfg('MUZMIR_MAIL_DAILY_LIMIT', 400),

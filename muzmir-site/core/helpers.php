@@ -40,7 +40,7 @@ function normalize_text(string $t): string {
 
 /** Рендер публичной страницы в общий лейаут. */
 function render_page(string $title, string $content, array $opts = []): void {
-    $meta_description = $opts['meta'] ?? 'Международные и всероссийские онлайн-конкурсы и фестивали культуры и искусства. КЦ «Музыкальный Мир».';
+    $meta_description = $opts['meta'] ?? 'Международные и всероссийские онлайн-конкурсы и фестивали культуры и искусства. Культурного центра «Музыкальный Мир».';
     $og_image = $opts['og_image'] ?? asset('img/og_muzmir.png');
     $active = $opts['active'] ?? '';
     $wide = $opts['wide'] ?? false;
@@ -135,6 +135,32 @@ function _ru_plural(int $n, array $f): string {
     if ($n1 > 1 && $n1 < 5) return $f[1];
     if ($n1 == 1) return $f[0];
     return $f[2];
+}
+
+/**
+ * Человекочитаемое название заказа наградной продукции из JSON-поля items.
+ * Формат в БД: [{"item":"...","kind":"original|electronic|club","price":N}, ...].
+ * Старые заказы (обычный текст) возвращаются как есть.
+ */
+function order_items_label(?string $json): string {
+    $s = trim((string) $json);
+    if ($s === '') return 'Наградная продукция';
+    if ($s[0] !== '[' && $s[0] !== '{') return $s; // старый формат — просто текст
+    $data = json_decode($s, true);
+    if (!is_array($data)) return $s;
+    if (isset($data['item'])) $data = [$data]; // одиночный объект
+    $kindMap = ['original' => 'оригинал, почтой', 'electronic' => 'электронный',
+                'digital' => 'электронный', 'club' => ''];
+    $parts = [];
+    foreach ($data as $it) {
+        if (!is_array($it)) continue;
+        $name = trim((string) ($it['item'] ?? ''));
+        if ($name === '') continue;
+        $kl = $kindMap[(string) ($it['kind'] ?? '')] ?? '';
+        $qty = (int) ($it['qty'] ?? 0);
+        $parts[] = $name . ($kl !== '' ? ' (' . $kl . ')' : '') . ($qty > 1 ? ' ×' . $qty : '');
+    }
+    return $parts ? implode(', ', $parts) : 'Наградная продукция';
 }
 
 /** Логотип как base64 data-URI (для писем, дипломов, PDF). */

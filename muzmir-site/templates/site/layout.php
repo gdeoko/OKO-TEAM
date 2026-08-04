@@ -91,6 +91,8 @@ html body,html.in-tg body{
   contain:none !important;
 }
 html body main{padding-bottom:calc(24px + env(safe-area-inset-bottom)) !important}
+/* Клавиатура открыта — нижнее меню уезжает вниз (не «повисает» посередине над клавой). */
+html body.mz-kb nav.appnav,html body.mz-kb nav.appnav.appnav{transform:translateY(130%) !important;transition:transform .18s ease}
 /* CRITICAL: шапка STICKY сверху (в потоке — НЕ перекрывает контент), непрозрачная. */
 html body header.app-header{
   position:sticky !important;
@@ -136,7 +138,7 @@ html body{padding-top:0 !important}
 
 <header class="header app-header"><div class="container">
   <a class="brand" href="<?= url('/') ?>">
-    <img src="<?= asset('img/logo_muzmir_256.png') ?>" alt="Логотип КЦ «Музыкальный Мир»" width="40" height="40">
+    <img src="<?= asset('img/logo_muzmir_256.png') ?>" alt="Логотип Культурного центра «Музыкальный Мир»" width="40" height="40">
     <span>Музыкальный<br>Мир</span>
   </a>
   <?php $act = $active ?? ''; ?>
@@ -197,9 +199,7 @@ html body{padding-top:0 !important}
   </div>
 </nav>
 
-<a class="chat-fab" id="chatFab" href="<?= h(cfgv('org_vk')) ?>" target="_blank" rel="noopener" aria-label="Мы во ВКонтакте" title="Написать нам во ВКонтакте">
-  <svg viewBox="0 0 24 24" fill="currentColor"><path d="M13.2 17.4c-5.5 0-8.9-3.8-9-10.1h2.8c.1 4.6 2.2 6.6 3.8 7V7.3h2.6v4c1.6-.2 3.3-2 3.9-4h2.6c-.5 2.5-2.2 4.3-3.4 5 1.2.6 3.2 2.2 3.9 5.1h-2.9c-.6-1.9-2.1-3.4-4.1-3.6v3.6h-.2z"/></svg>
-</a>
+<?php /* Плавающая ВК-иконка убрана (мешала) — ВКонтакте остаётся ссылкой в разделе «Контакты». */ ?>
 
 <?php /* Фоновая музыка играет всегда (music.js), без видимого плеера. Выключить — в настройках профиля. */ ?>
 
@@ -277,8 +277,20 @@ if('serviceWorker' in navigator){
   document.addEventListener('mz-spa-navigate', reassert);
 })();
 
-// Нижнее меню ПРИБИТО к низу всегда (не прячем и не поднимаем при клавиатуре).
-// interactive-widget=resizes-visual в viewport держит fixed-элементы у низа экрана.
+// Нижнее меню прибито к низу. Когда открыта экранная клавиатура — уводим его
+// вниз (класс mz-kb), чтобы оно не «поднималось» и не висело посередине над клавой.
+// Детект по visualViewport: высота видимой области заметно меньше окна = клавиатура.
+(function(){
+  var vv = window.visualViewport; if(!vv) return;
+  var body = document.body;
+  function upd(){
+    var kbOpen = (window.innerHeight - vv.height) > 140; // порог ~клавиатура
+    body.classList.toggle('mz-kb', kbOpen);
+  }
+  vv.addEventListener('resize', upd);
+  vv.addEventListener('scroll', upd);
+  upd();
+})();
 
 // Переключатель темы в шапке (тёмная/светлая), сохраняется в localStorage.
 (function(){
@@ -353,62 +365,8 @@ if('serviceWorker' in navigator){
   document.addEventListener('mz-spa-navigate', function(){ scan(document); });
 })();
 
-// Чат поддержки: разовое приветствие для новых посетителей - через 6 секунд бейдж «1»
-// на иконке чата, короткий тихий сигнал, вибро и стеклянная мини-плашка сверху (тап -> /chat).
-(function(){
-  var KEY = 'mz-chat-greeted';
-  try { if (localStorage.getItem(KEY)) return; } catch(e){ return; }
-  if ((location.pathname || '').indexOf('/chat') !== -1) {
-    try { localStorage.setItem(KEY, '1'); } catch(e){}
-    return;
-  }
-  setTimeout(function(){
-    try { if (localStorage.getItem(KEY)) return; } catch(e){}
-    // Бейдж-цифра на иконке чата в шапке
-    var b = document.getElementById('chatBadge');
-    if (b) { b.textContent = '1'; b.style.display = 'inline-flex'; }
-    // Короткий тихий сигнал: два тона через WebAudio (может быть заблокирован политикой автозвука - тогда молча пропускаем)
-    try {
-      var AC = window.AudioContext || window.webkitAudioContext;
-      if (AC) {
-        var ctx = new AC();
-        if (ctx.state === 'suspended' && ctx.resume) ctx.resume();
-        var t0 = ctx.currentTime + 0.02;
-        [[880,0],[1318.5,0.18]].forEach(function(p){
-          var o = ctx.createOscillator(), g = ctx.createGain();
-          o.type = 'sine'; o.frequency.value = p[0];
-          g.gain.setValueAtTime(0.0001, t0 + p[1]);
-          g.gain.exponentialRampToValueAtTime(0.05, t0 + p[1] + 0.03);
-          g.gain.exponentialRampToValueAtTime(0.0001, t0 + p[1] + 0.22);
-          o.connect(g); g.connect(ctx.destination);
-          o.start(t0 + p[1]); o.stop(t0 + p[1] + 0.25);
-        });
-      }
-    } catch(e){}
-    if (navigator.vibrate) { try { navigator.vibrate(80); } catch(e){} }
-    // Стеклянная мини-плашка сверху с частью текста приветствия
-    var st = document.createElement('style');
-    st.textContent = '#mzChatNudge{position:fixed;top:calc(64px + env(safe-area-inset-top,0px));left:12px;right:12px;margin:0 auto;max-width:420px;z-index:1200;display:flex;gap:10px;align-items:center;padding:12px 14px;border-radius:16px;background:var(--glass-card,rgba(255,253,247,.92));border:1px solid var(--glass-brd2,rgba(180,130,28,.34));backdrop-filter:blur(14px) saturate(1.3);-webkit-backdrop-filter:blur(14px) saturate(1.3);box-shadow:0 14px 40px rgba(21,34,76,.22);text-decoration:none;color:var(--text,#15224C);transform:translateY(-16px);opacity:0;transition:transform .35s ease,opacity .35s ease}'
-      + '#mzChatNudge.on{transform:none;opacity:1}'
-      + '#mzChatNudge .ic{flex:0 0 38px;width:38px;height:38px;border-radius:50%;background:var(--grad-gold,linear-gradient(135deg,#F8E7A6,#C79322));display:flex;align-items:center;justify-content:center;color:var(--gold-fg,#1B1533)}'
-      + '#mzChatNudge .ic svg{width:20px;height:20px}'
-      + '#mzChatNudge b{display:block;font-size:.86rem;line-height:1.25}'
-      + '#mzChatNudge i{display:block;font-style:normal;font-size:.8rem;color:var(--muted,#6a7096);line-height:1.3}';
-    document.head.appendChild(st);
-    var el = document.createElement('a');
-    el.id = 'mzChatNudge';
-    el.href = '<?= url('/chat') ?>';
-    el.setAttribute('aria-label', 'Открыть чат поддержки');
-    el.innerHTML = '<span class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M21 11.8a8.3 8.3 0 0 1-8.5 8.2 8.9 8.9 0 0 1-3.8-.8l-5.2 1.2 1.2-4.9a8.1 8.1 0 0 1-1.2-4.2A8.3 8.3 0 0 1 12 3.5a8.3 8.3 0 0 1 9 8.3z"/></svg></span>'
-      + '<span style="min-width:0"><b>Помощник «Музыкальный Мир»</b><i>Здравствуйте! Подскажу по конкурсам, заявкам и наградам</i></span>';
-    document.body.appendChild(el);
-    requestAnimationFrame(function(){ el.classList.add('on'); });
-    setTimeout(function(){
-      el.classList.remove('on');
-      setTimeout(function(){ if (el.parentNode) el.parentNode.removeChild(el); }, 400);
-    }, 6000);
-  }, 6000);
-})();
+/* Всплывающее чат-приветствие убрано по просьбе владельца (мешало). Чат
+   доступен из иконки в шапке и из нижнего меню. */
 </script>
 <script src="<?= asset('js/app.js') ?>" defer></script>
 <script src="<?= asset('js/music.js') ?>" defer></script>
