@@ -252,6 +252,7 @@ body.scrolled .scroll-hint{opacity:0!important;pointer-events:none}
 .acap-t{font-family:'Unbounded',sans-serif;font-size:19px;font-weight:800;margin-bottom:8px}
 .acap-d{font-size:13px;color:var(--w2);line-height:1.55}
 #holoWoman{position:absolute;right:1%;top:50%;transform:translateY(-50%);width:44%;height:82%;z-index:2}
+#holoWoman img{position:absolute;inset:0;width:100%;height:100%;object-fit:contain;object-position:right center;pointer-events:none;filter:drop-shadow(0 20px 60px rgba(0,0,0,.5)) drop-shadow(0 0 30px rgba(154,255,0,.12));transition:transform .12s linear,opacity .35s}
 @media(max-width:760px){#holoWoman{right:auto;left:50%;transform:translateX(-50%);top:140px;width:88%;height:30vh}}
 .adt-dots{position:absolute;bottom:16px;left:50%;transform:translateX(-50%);display:flex;gap:7px;z-index:4}
 .adt-dot{width:8px;height:8px;border-radius:50%;background:rgba(255,255,255,.22)}
@@ -516,7 +517,7 @@ details.tier-detail[open] .tier-detail-h .ar{transform:rotate(90deg)}
   <div class="adt-pin" id="adtPin">
     <div class="adt-sticky">
       <div class="adt-head"><div class="sec-lbl">Агенты</div><h2 class="sec-h">Что умеют <span class="lime">ИИ-агенты</span></h2></div>
-      <div id="holoWoman" class="holo-anchor"></div>
+      <div id="holoWoman" class="holo-anchor"><img id="womanImg" src="kp-media/fig/woman.webp?v=1" alt="" loading="lazy" decoding="async"></div>
       <div class="acap-stage" id="acapStage">
         <div class="acap"><div class="acap-i"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="4" width="18" height="14" rx="2"/><path d="M8 20h8"/></svg></div><div class="acap-t">Заходят в ваши соцсети</div><div class="acap-d">Работают прямо в реальных аккаунтах как команда: публикуют, отвечают в директ и комментах, ведут диалоги 24/7.</div></div>
         <div class="acap"><div class="acap-i"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/></svg></div><div class="acap-t">Находят клиентов повсюду</div><div class="acap-d">Ищут аудиторию по нише и гео, собирают базы, выходят на холодных — и приводят тёплые заявки на автомате.</div></div>
@@ -1098,7 +1099,7 @@ window.playVoice=function(btn){var a=btn.parentElement.parentElement.querySelect
 })();
 </script>
 <script type="module">
-import { initHolo } from './js/holo.js?v=113';
+import { initHolo } from './js/holo.js?v=115';
 function go(){ try{ initHolo(); }catch(e){ console.log('holo',e); } }
 if(document.readyState==='complete') setTimeout(go,200); else window.addEventListener('load',()=>setTimeout(go,200));
 </script>

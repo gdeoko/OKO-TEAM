@@ -86,7 +86,20 @@ export function initHolo(){
     handWrap=new THREE.Group(); handWrap.add(handInner); scene.add(handWrap);
     handWrap.userData.hand=h; handAnchor=a; window.__handAspect=+handAspect.toFixed(3);
   })();
-  makeSprite('holoWoman','kp-media/fig/woman_sheet.webp?v=92',6,6,36,340/316,{progType:'woman',fit:'contain'});
+  // ЖЕНЩИНА: HD-картинка с чистым альфа-каналом (rembg-вырез) вместо пиксельного спрайт-листа.
+  // Плавная привязка к скроллу: лёгкий параллакс + масштаб + появление.
+  (function(){var img=document.getElementById('womanImg'),el=document.getElementById('adtPin');if(!img||!el)return;
+    var lastP=-1;
+    function scrub(){var r=el.getBoundingClientRect();var p=Math.max(0,Math.min(1,-r.top/Math.max(1,r.height-innerHeight)));
+      if(Math.abs(p-lastP)<0.003)return; lastP=p;
+      // мягкое появление в начале + лёгкий подъём и вращение по прогрессу
+      var enter=Math.min(1,Math.max(0,(1-Math.min(1,Math.max(0,r.top/innerHeight)))*1.4));
+      var rise=(1-p)*18;             // 18px рост вниз в начале, стабилизация к концу
+      var sc=1+p*0.06;               // едва заметный zoom-in
+      img.style.opacity=enter.toFixed(3);
+      img.style.transform='translate3d(0,'+rise.toFixed(1)+'px,0) scale('+sc.toFixed(3)+')';}
+    addEventListener('scroll',scrub,{passive:true}); addEventListener('resize',scrub); scrub();
+  })();
 
   // ---- РОБОТ ГАРАНТИЙ: настоящий 3D GLB, полный скелет + процедурное «дыхание» (руки/ноги/голова) ----
   let robot=null,robotNorm=1,robotBones={},robotMats=[];const robotAnchor=document.getElementById('guarRobot');
