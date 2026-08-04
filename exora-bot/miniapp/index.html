@@ -4,25 +4,22 @@
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no" />
 <title>Exora — обмен криптовалют</title>
-<meta name="theme-color" content="#050810" />
-<meta name="build" content="exora-miniapp-v3" />
+<meta name="theme-color" content="#04070E" />
+<meta name="build" content="exora-miniapp-v4" />
 <script src="https://telegram.org/js/telegram-web-app.js"></script>
 <style>
   :root{
-    --nav-h: 70px;
     --safe-b: env(safe-area-inset-bottom, 0px);
     --safe-t: env(safe-area-inset-top, 0px);
-    --bottom-pad: calc(var(--nav-h) + var(--safe-b) + 40px);
+    --nav-h: 68px;
 
     --bg-0:#04070E;
     --bg-1:#0A0F1C;
 
-    --card:rgba(255,255,255,0.045);
-    --card-hi:rgba(255,255,255,0.08);
-    --glass:rgba(20,26,38,0.55);
-    --glass-hi:rgba(28,36,52,0.72);
-    --line:rgba(255,255,255,0.08);
-    --line-hi:rgba(255,255,255,0.16);
+    --glass:rgba(18,24,36,0.62);
+    --glass-hi:rgba(28,36,52,0.78);
+    --line:rgba(255,255,255,0.09);
+    --line-hi:rgba(255,255,255,0.18);
 
     --text:#F8FAFC;
     --muted:rgba(248,250,252,0.62);
@@ -34,6 +31,7 @@
     --cyan:#5AC8FF;
     --purple:#A78BFA;
     --amber:#FCD34D;
+    --pink:#F472B6;
     --danger:#FF6B6B;
     --warn:#FFB020;
 
@@ -46,84 +44,97 @@
     --shadow-brand:0 20px 40px -12px rgba(94,210,156,.5);
 
     --font:'Inter','SF Pro Text','Segoe UI',system-ui,-apple-system,sans-serif;
-    --font-h:'Inter','SF Pro Display',system-ui,-apple-system,sans-serif;
   }
   *,*::before,*::after{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
-  html,body{height:100%;background:var(--bg-0);color:var(--text);font-family:var(--font);-webkit-font-smoothing:antialiased;text-rendering:optimizeLegibility;overscroll-behavior:none;font-feature-settings:"cv11","ss01","ss03"}
-  html{scroll-behavior:smooth}
+  html,body{background:var(--bg-0);color:var(--text);font-family:var(--font);-webkit-font-smoothing:antialiased;text-rendering:optimizeLegibility;overscroll-behavior:none;font-feature-settings:"cv11","ss01","ss03"}
+  html{height:100%;height:-webkit-fill-available}
   body{
-    min-height:100vh; min-height:100dvh;
-    padding: calc(var(--safe-t) + 8px) 14px var(--bottom-pad);
-    position:relative; isolation:isolate;
-    max-width:640px; margin:0 auto;
+    height:100vh;height:100dvh;
+    display:grid;grid-template-rows:auto 1fr auto;
+    max-width:640px;margin:0 auto;
+    overflow:hidden;position:relative;isolation:isolate;
   }
   a{color:inherit;text-decoration:none}
   button{font-family:inherit;color:inherit;cursor:pointer;border:none;background:transparent;outline:none}
-  input,select,textarea{font-family:inherit;color:inherit;background:transparent;border:none;outline:none;-webkit-appearance:none;appearance:none}
+  input,textarea,select{font-family:inherit;color:inherit;background:transparent;border:none;outline:none;-webkit-appearance:none;appearance:none}
 
   /* ====================================================
-     CINEMATIC BACKGROUND (VIDEO + OVERLAY + ORBS)
+     CINEMATIC VIDEO BACKGROUND
      ==================================================== */
   .bg{position:fixed;inset:0;z-index:-3;pointer-events:none;overflow:hidden;background:#04070E}
-  .bg-video{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;opacity:0.55;filter:saturate(1.1) contrast(1.05)}
-  .bg-overlay{position:absolute;inset:0;
-    background:
-      radial-gradient(70% 55% at 50% 8%, rgba(94,210,156,0.20) 0%, transparent 55%),
-      radial-gradient(60% 50% at 100% 100%, rgba(90,200,255,0.12) 0%, transparent 55%),
-      linear-gradient(180deg, rgba(4,7,14,0.35) 0%, rgba(4,7,14,0.65) 45%, rgba(4,7,14,0.92) 100%);
+  .bg-video{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;opacity:0.5;filter:saturate(1.15) contrast(1.05) blur(0px)}
+  .bg-overlay{position:absolute;inset:0;background:
+    radial-gradient(70% 55% at 50% 6%, rgba(94,210,156,0.22) 0%, transparent 55%),
+    radial-gradient(65% 55% at 100% 96%, rgba(90,200,255,0.14) 0%, transparent 55%),
+    radial-gradient(70% 55% at 0% 96%, rgba(167,139,250,0.10) 0%, transparent 55%),
+    linear-gradient(180deg, rgba(4,7,14,0.35) 0%, rgba(4,7,14,0.62) 45%, rgba(4,7,14,0.92) 100%);
   }
-  .bg-grain{position:absolute;inset:0;opacity:.4;mix-blend-mode:overlay;
-    background-image:
-      radial-gradient(1px 1px at 20% 30%, rgba(255,255,255,.09), transparent 51%),
-      radial-gradient(1px 1px at 80% 60%, rgba(255,255,255,.06), transparent 51%),
-      radial-gradient(1px 1px at 40% 80%, rgba(255,255,255,.05), transparent 51%),
-      radial-gradient(1.5px 1.5px at 90% 40%, rgba(255,255,255,.05), transparent 51%),
-      radial-gradient(1px 1px at 10% 70%, rgba(255,255,255,.06), transparent 51%);
+  .bg-canvas{position:absolute;inset:0;width:100%;height:100%}
+  .bg-grain{position:absolute;inset:0;opacity:.35;mix-blend-mode:overlay;background-image:
+    radial-gradient(1px 1px at 20% 30%, rgba(255,255,255,.09), transparent 51%),
+    radial-gradient(1px 1px at 80% 60%, rgba(255,255,255,.06), transparent 51%),
+    radial-gradient(1px 1px at 40% 80%, rgba(255,255,255,.05), transparent 51%),
+    radial-gradient(1.5px 1.5px at 90% 40%, rgba(255,255,255,.05), transparent 51%),
+    radial-gradient(1px 1px at 10% 70%, rgba(255,255,255,.06), transparent 51%);
   }
-  .orb{position:absolute;border-radius:50%;filter:blur(70px);pointer-events:none;will-change:transform}
-  .orb.a{width:340px;height:340px;background:radial-gradient(circle,var(--brand-glow) 0%,transparent 65%);top:-100px;left:-80px;opacity:.6;animation:float-a 22s ease-in-out infinite}
-  .orb.b{width:300px;height:300px;background:radial-gradient(circle,rgba(90,200,255,.25) 0%,transparent 65%);top:25%;right:-100px;opacity:.5;animation:float-b 26s ease-in-out infinite}
-  @keyframes float-a { 0%,100%{transform:translate(0,0) scale(1)} 50%{transform:translate(30px,40px) scale(1.1)} }
-  @keyframes float-b { 0%,100%{transform:translate(0,0) scale(1)} 50%{transform:translate(-40px,20px) scale(0.9)} }
 
   /* ====================================================
-     TOPBAR
+     HEADER
      ==================================================== */
-  .topbar{display:flex;align-items:center;justify-content:space-between;padding:6px 4px 14px;position:relative;z-index:1}
+  header{
+    padding: calc(var(--safe-t) + 10px) 14px 10px;
+    display:flex;align-items:center;justify-content:space-between;
+    position:relative;z-index:2;
+  }
   .brand{display:flex;align-items:center;gap:10px;min-width:0}
-  .logo{width:36px;height:36px;border-radius:12px;position:relative;overflow:hidden;background:linear-gradient(135deg,#5ED29C 0%,#3FBF86 55%,#2A9A6B 100%);display:grid;place-items:center;font-weight:800;font-size:20px;letter-spacing:-.05em;color:#062018;box-shadow:0 8px 24px rgba(94,210,156,.45),inset 0 1px 0 rgba(255,255,255,.4);flex-shrink:0}
-  .logo::before{content:"";position:absolute;inset:1px;border-radius:11px;background:linear-gradient(135deg,rgba(255,255,255,.3),transparent 40%);pointer-events:none}
-  .brand-t{min-width:0}
+  .logo{
+    width:38px;height:38px;border-radius:13px;position:relative;overflow:hidden;
+    background:linear-gradient(135deg,#5ED29C 0%,#3FBF86 55%,#2A9A6B 100%);
+    display:grid;place-items:center;font-weight:800;font-size:20px;letter-spacing:-.05em;color:#062018;
+    box-shadow:0 10px 24px rgba(94,210,156,.45),inset 0 1px 0 rgba(255,255,255,.4);flex-shrink:0;
+    animation:logo-glow 3s ease-in-out infinite;
+  }
+  .logo::before{content:"";position:absolute;inset:1px;border-radius:11px;background:linear-gradient(135deg,rgba(255,255,255,.35),transparent 40%);pointer-events:none}
+  @keyframes logo-glow{
+    0%,100%{box-shadow:0 10px 24px rgba(94,210,156,.35),inset 0 1px 0 rgba(255,255,255,.4)}
+    50%    {box-shadow:0 10px 32px rgba(94,210,156,.65),inset 0 1px 0 rgba(255,255,255,.4)}
+  }
   .brand-name{font-size:17px;font-weight:800;letter-spacing:-.02em;line-height:1}
   .brand-sub{font-size:11px;color:var(--muted);font-weight:500;margin-top:3px;letter-spacing:.01em;line-height:1;display:flex;align-items:center;gap:5px}
   .live-dot{width:6px;height:6px;border-radius:50%;background:var(--brand);box-shadow:0 0 0 3px rgba(94,210,156,.2);animation:pulse 2s infinite}
   @keyframes pulse{0%,100%{box-shadow:0 0 0 3px rgba(94,210,156,.2)}50%{box-shadow:0 0 0 6px rgba(94,210,156,0)}}
   .actions{display:flex;gap:8px;flex-shrink:0}
-  .ico-btn{width:38px;height:38px;border-radius:12px;background:var(--glass);border:1px solid var(--line-hi);display:grid;place-items:center;transition:.15s;color:var(--text);backdrop-filter:blur(20px) saturate(180%);-webkit-backdrop-filter:blur(20px) saturate(180%)}
+  .ico-btn{width:40px;height:40px;border-radius:12px;background:var(--glass);border:1px solid var(--line-hi);display:grid;place-items:center;transition:.15s;color:var(--text);backdrop-filter:blur(20px) saturate(180%);-webkit-backdrop-filter:blur(20px) saturate(180%)}
   .ico-btn:active{transform:scale(.94);background:var(--glass-hi)}
-  .ico-btn svg{width:17px;height:17px;opacity:.9}
+  .ico-btn svg{width:18px;height:18px;opacity:.9}
 
-  /* SCREENS */
-  .screen{display:none;animation:screenIn .28s cubic-bezier(.4,0,.2,1);position:relative;z-index:1}
+  /* ====================================================
+     MAIN scroll container
+     ==================================================== */
+  main{
+    overflow-y:auto;
+    -webkit-overflow-scrolling:touch;
+    overscroll-behavior:contain;
+    padding: 4px 14px 24px;
+    position:relative;z-index:1;
+  }
+  main::-webkit-scrollbar{width:0;height:0}
+
+  .screen{display:none;animation:screenIn .28s cubic-bezier(.4,0,.2,1)}
   .screen.active{display:block}
   @keyframes screenIn{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
 
   /* ====================================================
-     HERO CARD (main showcase)
+     HERO
      ==================================================== */
   .hero{
     position:relative;border-radius:var(--radius-lg);overflow:hidden;
-    padding:24px 22px 24px;margin-bottom:14px;
-    background:var(--glass);
-    border:1px solid var(--line-hi);
-    backdrop-filter:blur(24px) saturate(180%);
-    -webkit-backdrop-filter:blur(24px) saturate(180%);
+    padding:22px 20px 20px;margin-bottom:14px;
+    background:var(--glass);border:1px solid var(--line-hi);
+    backdrop-filter:blur(26px) saturate(180%);-webkit-backdrop-filter:blur(26px) saturate(180%);
     box-shadow:var(--shadow-2), inset 0 1px 0 rgba(255,255,255,.09);
   }
-  .hero::before{
-    content:"";position:absolute;top:-1px;left:16%;right:16%;height:1px;
-    background:linear-gradient(90deg,transparent,rgba(94,210,156,.7),transparent);
-  }
+  .hero::before{content:"";position:absolute;top:-1px;left:14%;right:14%;height:1px;background:linear-gradient(90deg,transparent,rgba(94,210,156,.7),transparent)}
   .hero::after{
     content:"";position:absolute;inset:-1px;border-radius:inherit;padding:1px;
     background:linear-gradient(180deg,rgba(255,255,255,0.18) 0%,rgba(255,255,255,0) 30%,rgba(255,255,255,0) 70%,rgba(94,210,156,0.24) 100%);
@@ -131,103 +142,133 @@
     -webkit-mask-composite:xor;mask-composite:exclude;pointer-events:none;
   }
   .hero-lbl{font-size:11px;color:var(--muted);letter-spacing:.14em;font-weight:700;text-transform:uppercase;margin-bottom:10px;display:flex;align-items:center;gap:8px}
-  .hero-rate{display:flex;align-items:baseline;gap:8px;margin-bottom:6px;flex-wrap:wrap}
+  .hero-live{padding:3px 8px 3px 6px;border-radius:100px;background:rgba(94,210,156,.16);color:var(--brand);display:inline-flex;align-items:center;gap:5px;text-transform:uppercase;font-size:10px;letter-spacing:.1em;font-weight:800}
+  .hero-live::before{content:"";width:6px;height:6px;border-radius:50%;background:var(--brand);animation:pulse 1.5s infinite;box-shadow:0 0 0 2px rgba(94,210,156,.25)}
+  .hero-rate{display:flex;align-items:baseline;gap:8px;flex-wrap:wrap}
   .hero-rate .num{
     font-size:52px;font-weight:800;letter-spacing:-.045em;line-height:1;font-variant-numeric:tabular-nums;
     background:linear-gradient(180deg,#fff 0%,#a8afba 100%);
     -webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;
+    transition:filter .3s ease;
   }
+  .hero-rate .num.flash{animation:num-flash .6s ease}
+  @keyframes num-flash{0%{filter:brightness(1)}50%{filter:brightness(1.4) drop-shadow(0 0 8px rgba(94,210,156,.5))}100%{filter:brightness(1)}}
   .hero-rate .cur{font-size:17px;color:var(--muted);font-weight:600;letter-spacing:-.01em}
   .hero-delta{padding:3px 8px;border-radius:100px;font-size:11.5px;font-weight:700;font-variant-numeric:tabular-nums;letter-spacing:-.005em;display:inline-flex;align-items:center;gap:3px}
   .hero-delta.up{background:rgba(94,210,156,.16);color:var(--brand)}
   .hero-delta.dn{background:rgba(255,107,107,.16);color:var(--danger)}
   .hero-src{color:var(--muted);font-size:12px;margin-top:6px}
-  .hero-actions{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:22px}
+
+  /* Live sparkline chart */
+  .spark-wrap{margin-top:16px;height:64px;position:relative;border-radius:14px;background:linear-gradient(180deg, rgba(94,210,156,0.06), transparent);border:1px solid rgba(94,210,156,0.14);overflow:hidden}
+  .spark{width:100%;height:100%}
+  .spark-scale{position:absolute;right:8px;top:6px;font-size:9.5px;color:var(--muted);font-weight:600;letter-spacing:.06em}
+
+  .hero-actions{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:16px}
   .hero-btn{
     display:inline-flex;align-items:center;justify-content:center;gap:8px;
-    height:54px;border-radius:16px;font-weight:700;font-size:15px;letter-spacing:-.01em;transition:.15s;
-    padding:0 14px;
+    height:52px;border-radius:16px;font-weight:700;font-size:15px;letter-spacing:-.01em;transition:.15s;
+    padding:0 14px;position:relative;overflow:hidden;
   }
   .hero-btn.primary{background:linear-gradient(180deg,#68DDA6 0%,#3FBF86 100%);color:#062018;box-shadow:var(--shadow-brand)}
-  .hero-btn.primary:active{transform:scale(.97);box-shadow:0 10px 22px -8px rgba(94,210,156,.5)}
+  .hero-btn.primary::before{content:"";position:absolute;top:0;bottom:0;left:-100%;width:60%;background:linear-gradient(90deg,transparent,rgba(255,255,255,.35),transparent);animation:shine 3s infinite}
+  @keyframes shine{0%{left:-100%}100%{left:150%}}
+  .hero-btn.primary:active{transform:scale(.97)}
   .hero-btn.secondary{background:rgba(255,255,255,.08);border:1px solid var(--line-hi);color:var(--text);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px)}
   .hero-btn.secondary:active{transform:scale(.97);background:rgba(255,255,255,.13)}
-  .hero-btn svg{width:18px;height:18px}
+  .hero-btn svg{width:18px;height:18px;position:relative;z-index:1}
+  .hero-btn span{position:relative;z-index:1}
 
-  /* Arrow-circle button (Halo style) */
-  .btn-arrow{
-    display:inline-flex;align-items:center;gap:10px;height:52px;
-    padding:0 6px 0 20px;border-radius:100px;
-    background:#F8FAFC;color:#062018;font-weight:700;font-size:14.5px;
-    letter-spacing:-.01em;transition:.15s;
-  }
-  .btn-arrow:active{transform:scale(.97)}
-  .btn-arrow .arr{width:40px;height:40px;border-radius:50%;background:#062018;color:#F8FAFC;display:grid;place-items:center}
-  .btn-arrow .arr svg{width:18px;height:18px}
-  .btn-arrow.dark{background:#062018;color:#F8FAFC}
-  .btn-arrow.dark .arr{background:#F8FAFC;color:#062018}
-
-  /* ====================================================
-     SECTION HEADER + PAIRS
-     ==================================================== */
   .sec-h{display:flex;align-items:center;justify-content:space-between;margin:22px 4px 12px}
   .sec-h h3{font-size:15px;font-weight:700;letter-spacing:-.01em}
   .sec-h a{color:var(--muted);font-size:13px;font-weight:600;cursor:pointer}
 
+  /* ====================================================
+     PAIRS
+     ==================================================== */
   .pairs{display:flex;flex-direction:column;gap:8px}
   .pair{
     display:grid;grid-template-columns:38px 1fr auto;align-items:center;gap:12px;padding:12px 14px;
     border-radius:16px;background:var(--glass);border:1px solid var(--line);transition:.15s;
-    backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);
+    backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);position:relative;overflow:hidden;
   }
+  .pair::before{content:"";position:absolute;left:0;top:0;bottom:0;width:2px;background:var(--brand);opacity:0;transition:.15s}
   .pair:active{background:var(--glass-hi);transform:scale(.99)}
-  .pair-ico{width:38px;height:38px;border-radius:50%;display:grid;place-items:center;font-weight:800;color:#fff;font-size:13px;letter-spacing:-.02em;box-shadow:inset 0 1px 0 rgba(255,255,255,.2)}
+  .pair:active::before{opacity:1}
+  .pair-ico{width:38px;height:38px;border-radius:50%;display:grid;place-items:center;font-weight:800;color:#fff;font-size:13px;letter-spacing:-.02em;box-shadow:inset 0 1px 0 rgba(255,255,255,.2);position:relative}
   .pair-ico.usdt{background:linear-gradient(135deg,#26A17B,#1e7c5e)}
   .pair-ico.btc{background:linear-gradient(135deg,#F7931A,#c9760f)}
   .pair-ico.eth{background:linear-gradient(135deg,#627EEA,#3d5ec0)}
   .pair-ico.ton{background:linear-gradient(135deg,#0098EA,#0072b3)}
-  .pair-ico.bnb{background:linear-gradient(135deg,#F3BA2F,#b8891c)}
   .pair-name{font-weight:600;font-size:14.5px;letter-spacing:-.01em;line-height:1.15}
   .pair-name span{color:var(--muted);font-weight:500;font-size:11.5px;margin-left:6px}
   .pair-sub{color:var(--muted);font-size:11.5px;margin-top:3px}
   .pair-price{text-align:right;font-weight:700;font-size:14.5px;font-variant-numeric:tabular-nums;letter-spacing:-.01em;line-height:1.15}
-  .pair-delta{font-size:11px;font-weight:700;margin-top:3px;font-variant-numeric:tabular-nums}
+  .pair-delta{font-size:11px;font-weight:700;margin-top:3px;font-variant-numeric:tabular-nums;display:inline-flex;align-items:center;gap:3px}
   .delta-up{color:var(--brand)}
   .delta-dn{color:var(--danger)}
 
   /* ====================================================
-     QUICK ACTIONS (3 columns now, without referral)
+     QUICK ACTIONS (3 cols)
      ==================================================== */
   .quick{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
   .quick .q{
     display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;padding:16px 6px;border-radius:16px;
     background:var(--glass);border:1px solid var(--line);transition:.15s;color:var(--text);text-align:center;
-    backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);min-height:96px;
+    backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);min-height:96px;position:relative;overflow:hidden;
   }
   .quick .q:active{background:var(--glass-hi);transform:scale(.96)}
   .quick .ic{
-    width:36px;height:36px;border-radius:12px;background:rgba(94,210,156,.14);color:var(--brand);
-    display:grid;place-items:center;position:relative;overflow:hidden;
+    width:38px;height:38px;border-radius:12px;
+    background:linear-gradient(135deg,rgba(94,210,156,.18),rgba(94,210,156,.06));
+    color:var(--brand);display:grid;place-items:center;position:relative;overflow:hidden;
+    border:1px solid rgba(94,210,156,.24);
   }
   .quick .ic svg{width:18px;height:18px;position:relative;z-index:1}
   .quick .lb{font-size:12px;color:var(--text);font-weight:600;letter-spacing:-.005em;line-height:1.15}
 
   /* ====================================================
-     BRAND MARQUEE (bottom of home)
+     STAT RINGS ("Почему Exora")
      ==================================================== */
-  .marquee-wrap{
-    margin-top:20px;padding:14px 16px;border-radius:18px;
-    background:var(--glass);border:1px solid var(--line);
+  .rings{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+  .ring-c{
+    padding:16px;border-radius:18px;background:var(--glass);border:1px solid var(--line);
     backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);
-    overflow:hidden;position:relative;
+    position:relative;overflow:hidden;display:flex;align-items:center;gap:12px;
   }
-  .marquee-wrap::after{content:"";position:absolute;top:0;bottom:0;right:0;width:40px;background:linear-gradient(90deg,transparent,var(--bg-0));pointer-events:none;z-index:2}
-  .marquee-wrap::before{content:"";position:absolute;top:0;bottom:0;left:0;width:40px;background:linear-gradient(90deg,var(--bg-0),transparent);pointer-events:none;z-index:2}
-  .marquee-lbl{font-size:10.5px;color:var(--muted);letter-spacing:.16em;font-weight:700;text-transform:uppercase;margin-bottom:10px;text-align:center}
-  .marquee{display:flex;gap:0;width:max-content;animation:marquee 26s linear infinite}
-  @keyframes marquee { from{transform:translateX(0)} to{transform:translateX(-50%)} }
-  .marquee-item{padding:0 22px;color:rgba(255,255,255,.5);white-space:nowrap;font-weight:700;font-size:14.5px;letter-spacing:-.01em;display:flex;align-items:center;gap:6px}
-  .marquee-item svg{width:16px;height:16px;opacity:.7}
+  .ring-c::before{content:"";position:absolute;top:0;left:0;right:0;height:1px;background:linear-gradient(90deg,transparent,rgba(255,255,255,.14),transparent)}
+  .ring{position:relative;width:56px;height:56px;flex-shrink:0}
+  .ring svg{transform:rotate(-90deg);width:100%;height:100%}
+  .ring circle{fill:none;stroke-linecap:round}
+  .ring .track{stroke:rgba(255,255,255,.08);stroke-width:5}
+  .ring .fill{stroke:var(--brand);stroke-width:5;stroke-dasharray:0 999;transition:stroke-dasharray 1.6s cubic-bezier(.4,0,.2,1);filter:drop-shadow(0 0 6px rgba(94,210,156,.6))}
+  .ring .val{position:absolute;inset:0;display:grid;place-items:center;font-size:13px;font-weight:800;letter-spacing:-.02em;font-variant-numeric:tabular-nums}
+  .ring-c .txt{min-width:0}
+  .ring-c .txt .t{font-size:14px;font-weight:700;letter-spacing:-.01em;line-height:1.2}
+  .ring-c .txt .s{color:var(--muted);font-size:11.5px;margin-top:3px;line-height:1.35}
+
+  /* ====================================================
+     BAR CHART (последние обмены)
+     ==================================================== */
+  .bars{
+    padding:18px;border-radius:18px;background:var(--glass);border:1px solid var(--line);
+    backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);
+  }
+  .bars-h{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:14px}
+  .bars-h .l{font-size:11.5px;color:var(--muted);letter-spacing:.1em;text-transform:uppercase;font-weight:700}
+  .bars-h .v{font-size:22px;font-weight:800;letter-spacing:-.025em;font-variant-numeric:tabular-nums}
+  .bars-h .v small{font-size:12px;color:var(--muted);font-weight:600;margin-left:4px}
+  .bars-row{display:grid;grid-template-columns:repeat(7,1fr);gap:6px;height:72px;align-items:end}
+  .bars-row .b{
+    height:0%;background:linear-gradient(180deg,#5ED29C 0%,#26A17B 100%);border-radius:5px 5px 0 0;
+    transition:height 1.4s cubic-bezier(.4,0,.2,1);
+    box-shadow:0 0 6px rgba(94,210,156,.4);
+    position:relative;min-height:4px;
+  }
+  .bars-row .b span{position:absolute;top:-16px;left:50%;transform:translateX(-50%);font-size:9.5px;color:var(--muted);font-weight:600;opacity:0;transition:opacity .3s ease .8s}
+  .bars-row .b.done span{opacity:1}
+  .bars-labels{display:grid;grid-template-columns:repeat(7,1fr);gap:6px;margin-top:6px}
+  .bars-labels span{text-align:center;font-size:10.5px;color:var(--dim);font-weight:600}
 
   /* ====================================================
      BANNER
@@ -238,30 +279,31 @@
     border:1px solid rgba(94,210,156,.24);display:flex;gap:12px;align-items:flex-start;
     backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);
   }
-  .banner-ic{flex-shrink:0;width:34px;height:34px;border-radius:12px;background:rgba(94,210,156,.22);color:var(--brand);display:grid;place-items:center;box-shadow:inset 0 1px 0 rgba(255,255,255,.1)}
+  .banner-ic{flex-shrink:0;width:36px;height:36px;border-radius:12px;background:rgba(94,210,156,.22);color:var(--brand);display:grid;place-items:center;box-shadow:inset 0 1px 0 rgba(255,255,255,.1);animation:banner-pulse 2.6s infinite}
+  @keyframes banner-pulse{0%,100%{box-shadow:inset 0 1px 0 rgba(255,255,255,.1),0 0 0 0 rgba(94,210,156,.35)}50%{box-shadow:inset 0 1px 0 rgba(255,255,255,.1),0 0 0 10px rgba(94,210,156,0)}}
   .banner-ic svg{width:16px;height:16px}
   .banner-tx{font-size:13px;line-height:1.4;color:var(--text)}
   .banner-tx b{font-weight:700;color:var(--brand)}
 
   /* ====================================================
-     WHY BLOCKS
+     BRAND MARQUEE
      ==================================================== */
-  .why{display:grid;grid-template-columns:1fr 1fr;gap:10px}
-  .why-c{
-    padding:16px;border-radius:18px;background:var(--glass);border:1px solid var(--line);
+  .marquee-wrap{
+    margin-top:20px;padding:14px 0;border-radius:18px;
+    background:var(--glass);border:1px solid var(--line);
     backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);
-    position:relative;overflow:hidden;
+    overflow:hidden;position:relative;
   }
-  .why-c::before{content:"";position:absolute;top:0;left:0;right:0;height:1px;background:linear-gradient(90deg,transparent,rgba(255,255,255,.14),transparent)}
-  .why-c .n{font-size:26px;font-weight:800;letter-spacing:-.035em;line-height:1;font-variant-numeric:tabular-nums}
-  .why-c .n small{font-size:15px;font-weight:700;color:var(--muted);margin-left:2px}
-  .why-c .l{font-size:11.5px;color:var(--muted);margin-top:8px;letter-spacing:.01em;line-height:1.4;font-weight:500}
-  .why-c .em{background:linear-gradient(135deg,#5ED29C,#5AC8FF);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent}
+  .marquee-wrap::after{content:"";position:absolute;top:0;bottom:0;right:0;width:40px;background:linear-gradient(90deg,transparent,#0d131f);pointer-events:none;z-index:2}
+  .marquee-wrap::before{content:"";position:absolute;top:0;bottom:0;left:0;width:40px;background:linear-gradient(90deg,#0d131f,transparent);pointer-events:none;z-index:2}
+  .marquee-lbl{font-size:10.5px;color:var(--muted);letter-spacing:.16em;font-weight:700;text-transform:uppercase;margin-bottom:10px;text-align:center;padding:0 16px}
+  .marquee{display:flex;gap:0;width:max-content;animation:marquee 28s linear infinite}
+  @keyframes marquee { from{transform:translateX(0)} to{transform:translateX(-50%)} }
+  .marquee-item{padding:0 20px;color:rgba(255,255,255,.55);white-space:nowrap;font-weight:700;font-size:14.5px;letter-spacing:-.01em}
 
   /* ====================================================
      EXCHANGE FORM
      ==================================================== */
-  .form{padding-bottom:20px}
   .dir-tabs{
     display:grid;grid-template-columns:1fr 1fr;background:var(--glass);border-radius:16px;
     padding:5px;border:1px solid var(--line);margin-bottom:14px;
@@ -292,7 +334,7 @@
   .swap-sel-chev{width:12px;height:12px;color:var(--muted)}
   .swap-flip{
     position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);width:42px;height:42px;border-radius:14px;
-    background:#141c2a;border:3px solid var(--bg-0);display:grid;place-items:center;box-shadow:var(--shadow-2);transition:.2s;z-index:2;
+    background:#141c2a;border:3px solid var(--bg-0);display:grid;place-items:center;box-shadow:var(--shadow-2);transition:.3s;z-index:2;
   }
   .swap-flip:active{transform:translate(-50%,-50%) scale(.9) rotate(180deg)}
   .swap-flip svg{width:16px;height:16px;color:var(--text)}
@@ -304,10 +346,11 @@
     font-size:14.5px;color:var(--text);transition:.15s;font-family:inherit;
     backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);
   }
-  .field-in:focus{border-color:var(--brand);background:rgba(94,210,156,.05)}
+  .field-in:focus{border-color:var(--brand);background:rgba(94,210,156,.05);box-shadow:0 0 0 3px rgba(94,210,156,.1)}
   .field-in::placeholder{color:var(--dim)}
   .field-hint{font-size:11.5px;color:var(--dim);margin-top:6px;line-height:1.35}
   .field-hint.err{color:var(--danger)}
+  .field-hint.ok{color:var(--brand)}
 
   .segmented{
     display:flex;background:var(--glass);border-radius:14px;padding:4px;border:1px solid var(--line);gap:2px;
@@ -338,11 +381,13 @@
     width:100%;height:56px;border-radius:16px;background:linear-gradient(180deg,#68DDA6,#3FBF86);
     color:#062018;font-weight:800;font-size:16px;letter-spacing:-.01em;
     box-shadow:var(--shadow-brand);transition:.15s;
-    display:flex;align-items:center;justify-content:center;gap:10px;
+    display:flex;align-items:center;justify-content:center;gap:10px;position:relative;overflow:hidden;
   }
   .submit:disabled{background:rgba(255,255,255,.07);color:var(--dim);box-shadow:none}
+  .submit:not(:disabled)::before{content:"";position:absolute;top:0;bottom:0;left:-100%;width:60%;background:linear-gradient(90deg,transparent,rgba(255,255,255,.35),transparent);animation:shine 3s infinite}
   .submit:active:not(:disabled){transform:scale(.98)}
-  .submit svg{width:20px;height:20px}
+  .submit svg{width:20px;height:20px;position:relative;z-index:1}
+  .submit span{position:relative;z-index:1}
   .submit-hint{text-align:center;font-size:11.5px;color:var(--dim);margin-top:12px;line-height:1.4}
   .submit-hint a{color:var(--muted);text-decoration:underline;text-underline-offset:2px;cursor:pointer}
 
@@ -375,35 +420,42 @@
   .about-card h4{font-size:15px;font-weight:700;letter-spacing:-.01em;margin-bottom:8px}
   .about-card p{color:var(--muted);font-size:13.5px;line-height:1.5}
   .about-list{display:flex;flex-direction:column;gap:10px;margin-top:14px;list-style:none}
-  .about-list li{display:flex;align-items:flex-start;gap:10px;font-size:13.5px;color:var(--text);line-height:1.4}
+  .about-list li{display:flex;align-items:flex-start;gap:10px;font-size:13.5px;color:var(--text);line-height:1.4;animation:fadeInUp .5s both}
+  .about-list li:nth-child(1){animation-delay:.05s}
+  .about-list li:nth-child(2){animation-delay:.10s}
+  .about-list li:nth-child(3){animation-delay:.15s}
+  .about-list li:nth-child(4){animation-delay:.20s}
+  .about-list li:nth-child(5){animation-delay:.25s}
+  .about-list li:nth-child(6){animation-delay:.30s}
+  @keyframes fadeInUp{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
   .about-list .chk{flex-shrink:0;width:22px;height:22px;border-radius:7px;background:rgba(94,210,156,.15);color:var(--brand);display:grid;place-items:center;margin-top:1px}
   .about-list .chk svg{width:12px;height:12px}
   .about-hero{
     text-align:center;padding:28px 20px;border-radius:24px;position:relative;overflow:hidden;
-    background:var(--glass);
-    border:1px solid var(--line-hi);margin-bottom:14px;backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);
+    background:var(--glass);border:1px solid var(--line-hi);margin-bottom:14px;
+    backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);
   }
-  .about-hero::before{
-    content:"";position:absolute;top:-1px;left:20%;right:20%;height:1px;
-    background:linear-gradient(90deg,transparent,rgba(94,210,156,.7),transparent);
-  }
+  .about-hero::before{content:"";position:absolute;top:-1px;left:20%;right:20%;height:1px;background:linear-gradient(90deg,transparent,rgba(94,210,156,.7),transparent)}
   .about-hero .logo{width:72px;height:72px;border-radius:22px;font-size:36px;margin:0 auto 14px}
   .about-hero-name{font-size:28px;font-weight:800;letter-spacing:-.03em;margin-bottom:4px;background:linear-gradient(180deg,#fff 0%,#a8afba 100%);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent}
   .about-hero-sub{color:var(--muted);font-size:14px}
 
-  /* NAV */
-  .nav{
-    position:fixed;left:0;right:0;bottom:0;z-index:100;
-    padding:8px 10px calc(var(--safe-b) + 10px);
-    background:rgba(6,10,18,.78);
+  /* ====================================================
+     NAV (static, inside body grid)
+     ==================================================== */
+  nav.tabs{
+    padding:8px 10px calc(var(--safe-b) + 8px);
+    background:rgba(6,10,18,.85);
     backdrop-filter:blur(28px) saturate(180%);-webkit-backdrop-filter:blur(28px) saturate(180%);
     border-top:1px solid rgba(255,255,255,.06);
+    position:relative;z-index:2;
   }
-  .nav::before{content:"";position:absolute;left:24%;right:24%;top:0;height:1px;background:linear-gradient(90deg,transparent,rgba(94,210,156,.4),transparent)}
-  .nav-inner{display:grid;grid-template-columns:repeat(4,1fr);gap:2px;max-width:520px;margin:0 auto}
+  nav.tabs::before{content:"";position:absolute;left:24%;right:24%;top:0;height:1px;background:linear-gradient(90deg,transparent,rgba(94,210,156,.4),transparent)}
+  .tabs-inner{display:grid;grid-template-columns:repeat(4,1fr);gap:2px;max-width:520px;margin:0 auto}
   .nav-i{display:flex;flex-direction:column;align-items:center;gap:4px;padding:8px 4px;border-radius:12px;color:var(--muted);transition:.15s;position:relative}
   .nav-i.active{color:var(--brand)}
-  .nav-i.active::before{content:"";position:absolute;top:0;left:50%;transform:translateX(-50%);width:24px;height:2px;border-radius:0 0 2px 2px;background:var(--brand);box-shadow:0 0 8px var(--brand)}
+  .nav-i.active::before{content:"";position:absolute;top:0;left:50%;transform:translateX(-50%);width:24px;height:2px;border-radius:0 0 2px 2px;background:var(--brand);box-shadow:0 0 8px var(--brand);animation:tab-in .3s ease}
+  @keyframes tab-in{from{width:0}to{width:24px}}
   .nav-i svg{width:22px;height:22px}
   .nav-i span{font-size:10.5px;font-weight:600;letter-spacing:-.005em}
 
@@ -425,9 +477,9 @@
   .modal-list{display:flex;flex-direction:column;gap:6px}
   .modal-item{
     display:flex;align-items:center;gap:12px;padding:12px 14px;border-radius:14px;
-    background:var(--card);border:1px solid var(--line);transition:.15s;color:var(--text);
+    background:rgba(255,255,255,.04);border:1px solid var(--line);transition:.15s;color:var(--text);
   }
-  .modal-item:active{background:var(--card-hi)}
+  .modal-item:active{background:rgba(255,255,255,.09)}
   .modal-item.on{background:rgba(94,210,156,.10);border-color:rgba(94,210,156,.4)}
   .modal-item-ic{width:36px;height:36px;border-radius:50%;display:grid;place-items:center;font-weight:800;color:#fff;font-size:13px;letter-spacing:-.02em;flex-shrink:0;box-shadow:inset 0 1px 0 rgba(255,255,255,.2)}
   .modal-item-nm{flex:1;min-width:0}
@@ -437,21 +489,25 @@
   .modal-item-check svg{width:22px;height:22px}
 
   /* SUCCESS */
-  .success{text-align:center;padding:24px 4px}
+  .success{text-align:center;padding:24px 4px;position:relative}
   .success-ic{
-    width:88px;height:88px;border-radius:50%;background:linear-gradient(135deg,#5ED29C,#3FBF86);
+    width:96px;height:96px;border-radius:50%;background:linear-gradient(135deg,#5ED29C,#3FBF86);
     display:grid;place-items:center;margin:0 auto 22px;
-    box-shadow:0 20px 40px -8px rgba(94,210,156,.5), inset 0 2px 4px rgba(255,255,255,.4);
-    animation:successPop .55s cubic-bezier(.34,1.56,.64,1);
+    box-shadow:0 20px 40px -8px rgba(94,210,156,.55), inset 0 2px 4px rgba(255,255,255,.4);
+    animation:successPop .55s cubic-bezier(.34,1.56,.64,1);position:relative;
   }
+  .success-ic::before{content:"";position:absolute;inset:-6px;border-radius:50%;border:2px solid rgba(94,210,156,.35);animation:ring-out 1.6s ease-out infinite}
+  .success-ic::after{content:"";position:absolute;inset:-14px;border-radius:50%;border:2px solid rgba(94,210,156,.2);animation:ring-out 1.6s ease-out .35s infinite}
+  @keyframes ring-out{0%{transform:scale(.85);opacity:1}100%{transform:scale(1.4);opacity:0}}
   @keyframes successPop{from{transform:scale(.4);opacity:0}to{transform:scale(1);opacity:1}}
-  .success-ic svg{width:44px;height:44px;color:#062018;stroke-width:3}
+  .success-ic svg{width:48px;height:48px;color:#062018;stroke-width:3}
   .success h2{font-size:22px;font-weight:800;letter-spacing:-.02em;margin-bottom:8px}
   .success p{color:var(--muted);font-size:14px;line-height:1.5;max-width:300px;margin:0 auto}
   .success-details{
     background:var(--glass);border:1px solid var(--line);border-radius:18px;padding:16px;margin-top:22px;text-align:left;
     backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);
   }
+  #confetti{position:fixed;inset:0;pointer-events:none;z-index:250}
 
   /* TOAST */
   .toast{
@@ -471,28 +527,23 @@
   .empty-ic svg{width:30px;height:30px}
   .empty h3{font-size:16px;font-weight:700;letter-spacing:-.01em;margin-bottom:4px}
   .empty p{color:var(--muted);font-size:13.5px;line-height:1.5}
-
-  /* Гарантированный spacer в конце любого экрана */
-  .end-spacer{height:32px}
 </style>
 </head>
 <body>
 
 <div class="bg" aria-hidden="true">
-  <video class="bg-video" autoplay muted loop playsinline preload="auto" poster="">
+  <video class="bg-video" autoplay muted loop playsinline preload="auto">
     <source src="https://d8j0ntlcm91z4.cloudfront.net/user_38xzZboKViGWJOttwIXH07lWA1P/hf_20260423_161253_c72b1869-400f-45ed-ac0c-52f68c2ed5bd.mp4" type="video/mp4" />
   </video>
+  <canvas class="bg-canvas" id="bgCanvas"></canvas>
   <div class="bg-overlay"></div>
   <div class="bg-grain"></div>
-  <div class="orb a"></div>
-  <div class="orb b"></div>
 </div>
 
-<!-- ============ TOPBAR ============ -->
-<div class="topbar">
+<header>
   <div class="brand">
     <div class="logo">E</div>
-    <div class="brand-t">
+    <div>
       <div class="brand-name">Exora</div>
       <div class="brand-sub"><span class="live-dot"></span>Онлайн · Обмен 24/7</div>
     </div>
@@ -502,99 +553,156 @@
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/></svg>
     </button>
   </div>
-</div>
+</header>
 
-<!-- ============ HOME ============ -->
-<section class="screen active" id="scr-home">
-  <div class="hero">
-    <div class="hero-lbl">
-      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
-      Курс USDT / RUB · <span style="text-transform:none;letter-spacing:0;color:var(--brand)">live</span>
+<main id="main">
+
+  <!-- ============ HOME ============ -->
+  <section class="screen active" id="scr-home">
+    <div class="hero">
+      <div class="hero-lbl">Курс USDT / RUB <span class="hero-live">live</span></div>
+      <div class="hero-rate">
+        <span class="num" id="rateVal">—</span>
+        <span class="cur">₽</span>
+        <span class="hero-delta up" id="rateDelta" style="display:none"></span>
+      </div>
+      <div class="hero-src" id="rateSrc">Загрузка курса…</div>
+
+      <div class="spark-wrap">
+        <svg class="spark" id="spark" viewBox="0 0 300 64" preserveAspectRatio="none">
+          <defs>
+            <linearGradient id="sg" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0%" stop-color="#5ED29C" stop-opacity="0.55"/>
+              <stop offset="100%" stop-color="#5ED29C" stop-opacity="0"/>
+            </linearGradient>
+          </defs>
+          <path id="sparkFill" d="" fill="url(#sg)"/>
+          <path id="sparkLine" d="" fill="none" stroke="#5ED29C" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>
+        </svg>
+        <div class="spark-scale" id="sparkScale">30 сек</div>
+      </div>
+
+      <div class="hero-actions">
+        <button class="hero-btn primary" data-goto="exchange" data-dir="buy">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 5v14m-7-7h14"/></svg>
+          <span>Купить USDT</span>
+        </button>
+        <button class="hero-btn secondary" data-goto="exchange" data-dir="sell">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M5 12h14"/></svg>
+          <span>Продать USDT</span>
+        </button>
+      </div>
     </div>
-    <div class="hero-rate">
-      <span class="num" id="rateVal">—</span>
-      <span class="cur">₽</span>
-      <span class="hero-delta up" id="rateDelta" style="display:none"></span>
-    </div>
-    <div class="hero-src" id="rateSrc">Обновляется каждые 30 сек · Binance</div>
-    <div class="hero-actions">
-      <button class="hero-btn primary" data-goto="exchange" data-dir="buy">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 5v14m-7-7h14"/></svg>
-        Купить USDT
+
+    <div class="sec-h"><h3>Быстрые действия</h3></div>
+    <div class="quick">
+      <button class="q" data-goto="orders">
+        <div class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4"/></svg></div>
+        <span class="lb">Мои заявки</span>
       </button>
-      <button class="hero-btn secondary" data-goto="exchange" data-dir="sell">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M5 12h14"/></svg>
-        Продать USDT
+      <button class="q" data-action="aml">
+        <div class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg></div>
+        <span class="lb">AML-проверка</span>
+      </button>
+      <button class="q" data-action="support">
+        <div class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 11.5a8.38 8.38 0 01-.9 3.8 8.5 8.5 0 01-7.6 4.7 8.38 8.38 0 01-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 01-.9-3.8 8.5 8.5 0 014.7-7.6 8.38 8.38 0 013.8-.9h.5a8.48 8.48 0 018 8v.5z"/></svg></div>
+        <span class="lb">Поддержка</span>
       </button>
     </div>
-  </div>
 
-  <div class="sec-h"><h3>Быстрые действия</h3></div>
-  <div class="quick">
-    <button class="q" data-goto="orders">
-      <div class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4"/></svg></div>
-      <span class="lb">Мои заявки</span>
-    </button>
-    <button class="q" data-action="aml">
-      <div class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg></div>
-      <span class="lb">AML-проверка</span>
-    </button>
-    <button class="q" data-action="support">
-      <div class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 11.5a8.38 8.38 0 01-.9 3.8 8.5 8.5 0 01-7.6 4.7 8.38 8.38 0 01-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 01-.9-3.8 8.5 8.5 0 014.7-7.6 8.38 8.38 0 013.8-.9h.5a8.48 8.48 0 018 8v.5z"/></svg></div>
-      <span class="lb">Поддержка</span>
-    </button>
-  </div>
-
-  <div class="sec-h"><h3>Курсы валют</h3><a data-action="refresh">Обновить →</a></div>
-  <div class="pairs" id="pairsList">
-    <div class="pair" style="opacity:.5">
-      <div class="pair-ico usdt">U</div>
-      <div><div class="pair-name">Загрузка…</div></div>
-      <div></div>
+    <div class="sec-h"><h3>Курсы валют</h3><a data-action="refresh">Обновить →</a></div>
+    <div class="pairs" id="pairsList">
+      <div class="pair" style="opacity:.5">
+        <div class="pair-ico usdt">U</div>
+        <div><div class="pair-name">Загрузка…</div></div>
+        <div></div>
+      </div>
     </div>
-  </div>
 
-  <div class="sec-h"><h3>Наши преимущества</h3></div>
-  <div class="why">
-    <div class="why-c"><div class="n">24/7</div><div class="l">Работаем без выходных и обеденных перерывов</div></div>
-    <div class="why-c"><div class="n">~15<small>мин</small></div><div class="l">Средняя скорость обмена от заявки до выдачи</div></div>
-    <div class="why-c"><div class="n em">0%</div><div class="l">Комиссия сервиса — платите ровно курс</div></div>
-    <div class="why-c"><div class="n">4</div><div class="l">Сети USDT: TRC-20, ERC-20, BEP-20, TON</div></div>
-  </div>
-
-  <div class="banner">
-    <div class="banner-ic"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg></div>
-    <div class="banner-tx"><b>Курс без надбавок.</b> Мы не берём комиссию при покупке и продаже USDT. Итог, который вы видите — ровно столько и получаете.</div>
-  </div>
-
-  <div class="marquee-wrap">
-    <div class="marquee-lbl">работаем с топ-биржами</div>
-    <div class="marquee">
-      <div class="marquee-item">Binance</div>
-      <div class="marquee-item">Bybit</div>
-      <div class="marquee-item">OKX</div>
-      <div class="marquee-item">Bitget</div>
-      <div class="marquee-item">Tether</div>
-      <div class="marquee-item">Tron</div>
-      <div class="marquee-item">Ethereum</div>
-      <div class="marquee-item">TON</div>
-      <div class="marquee-item">Binance</div>
-      <div class="marquee-item">Bybit</div>
-      <div class="marquee-item">OKX</div>
-      <div class="marquee-item">Bitget</div>
-      <div class="marquee-item">Tether</div>
-      <div class="marquee-item">Tron</div>
-      <div class="marquee-item">Ethereum</div>
-      <div class="marquee-item">TON</div>
+    <div class="sec-h"><h3>Активность обменника</h3></div>
+    <div class="bars">
+      <div class="bars-h">
+        <div>
+          <div class="l">оборот за неделю</div>
+          <div class="v"><span id="volumeVal">0</span> <small>USDT</small></div>
+        </div>
+        <div style="text-align:right">
+          <div class="l">заявок</div>
+          <div class="v" style="color:var(--brand)"><span id="ordersCntVal">0</span></div>
+        </div>
+      </div>
+      <div class="bars-row" id="barsRow">
+        <div class="b"></div><div class="b"></div><div class="b"></div><div class="b"></div>
+        <div class="b"></div><div class="b"></div><div class="b"></div>
+      </div>
+      <div class="bars-labels">
+        <span>ПН</span><span>ВТ</span><span>СР</span><span>ЧТ</span>
+        <span>ПТ</span><span>СБ</span><span>ВС</span>
+      </div>
     </div>
-  </div>
 
-  <div class="end-spacer"></div>
-</section>
+    <div class="sec-h"><h3>Почему Exora</h3></div>
+    <div class="rings">
+      <div class="ring-c">
+        <div class="ring" data-pct="100" data-label="24/7">
+          <svg viewBox="0 0 40 40"><circle class="track" cx="20" cy="20" r="16"/><circle class="fill" cx="20" cy="20" r="16"/></svg>
+          <div class="val">24/7</div>
+        </div>
+        <div class="txt"><div class="t">Работаем всегда</div><div class="s">Без выходных и обеденных перерывов</div></div>
+      </div>
+      <div class="ring-c">
+        <div class="ring" data-pct="100" data-label="0%">
+          <svg viewBox="0 0 40 40"><circle class="track" cx="20" cy="20" r="16"/><circle class="fill" cx="20" cy="20" r="16"/></svg>
+          <div class="val">0%</div>
+        </div>
+        <div class="txt"><div class="t">Без комиссий</div><div class="s">Итог = ровно тому, что видите</div></div>
+      </div>
+      <div class="ring-c">
+        <div class="ring" data-pct="85" data-label="15м">
+          <svg viewBox="0 0 40 40"><circle class="track" cx="20" cy="20" r="16"/><circle class="fill" cx="20" cy="20" r="16"/></svg>
+          <div class="val">15м</div>
+        </div>
+        <div class="txt"><div class="t">Быстрый обмен</div><div class="s">Средняя скорость 10–30 минут</div></div>
+      </div>
+      <div class="ring-c">
+        <div class="ring" data-pct="100" data-label="4">
+          <svg viewBox="0 0 40 40"><circle class="track" cx="20" cy="20" r="16"/><circle class="fill" cx="20" cy="20" r="16"/></svg>
+          <div class="val">4</div>
+        </div>
+        <div class="txt"><div class="t">Сети USDT</div><div class="s">TRC-20 · ERC-20 · BEP-20 · TON</div></div>
+      </div>
+    </div>
 
-<!-- ============ EXCHANGE ============ -->
-<section class="screen" id="scr-exchange">
-  <div class="form">
+    <div class="banner">
+      <div class="banner-ic"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg></div>
+      <div class="banner-tx"><b>Курс без надбавок.</b> Мы не берём комиссию при покупке и продаже USDT. Итог, который вы видите — ровно столько и получаете.</div>
+    </div>
+
+    <div class="marquee-wrap">
+      <div class="marquee-lbl">работаем с топ-биржами</div>
+      <div class="marquee" id="marquee">
+        <div class="marquee-item">Binance</div>
+        <div class="marquee-item">Bybit</div>
+        <div class="marquee-item">OKX</div>
+        <div class="marquee-item">Bitget</div>
+        <div class="marquee-item">Tether</div>
+        <div class="marquee-item">Tron</div>
+        <div class="marquee-item">Ethereum</div>
+        <div class="marquee-item">TON</div>
+        <div class="marquee-item">Binance</div>
+        <div class="marquee-item">Bybit</div>
+        <div class="marquee-item">OKX</div>
+        <div class="marquee-item">Bitget</div>
+        <div class="marquee-item">Tether</div>
+        <div class="marquee-item">Tron</div>
+        <div class="marquee-item">Ethereum</div>
+        <div class="marquee-item">TON</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ EXCHANGE ============ -->
+  <section class="screen" id="scr-exchange">
     <div class="dir-tabs">
       <button class="dir-tab active" data-dir="buy">Купить USDT</button>
       <button class="dir-tab" data-dir="sell">Продать USDT</button>
@@ -607,12 +715,7 @@
           <input type="text" inputmode="decimal" id="giveIn" placeholder="0" autocomplete="off" />
           <button class="swap-sel" data-sel="give"><span class="swap-sel-ic" id="giveIc" style="background:linear-gradient(135deg,#8892A6,#5a6272)">₽</span><span id="giveCur">RUB</span><svg class="swap-sel-chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="6 9 12 15 18 9"/></svg></button>
         </div>
-        <div class="amounts-chips" id="quickAmt">
-          <button data-amt="10000">10 000 ₽</button>
-          <button data-amt="30000">30 000 ₽</button>
-          <button data-amt="50000">50 000 ₽</button>
-          <button data-amt="100000">100 000 ₽</button>
-        </div>
+        <div class="amounts-chips" id="quickAmt"></div>
       </div>
       <button class="swap-flip" id="swapFlip" aria-label="Поменять">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M7 4v16m0 0l-4-4m4 4l4-4M17 20V4m0 0l-4 4m4-4l4 4"/></svg>
@@ -663,62 +766,59 @@
     <div class="submit-hint">
       Нажимая «Создать заявку», вы соглашаетесь<br/>с <a data-action="terms">условиями использования</a>
     </div>
-    <div class="end-spacer"></div>
-  </div>
-</section>
+  </section>
 
-<!-- ============ ORDERS ============ -->
-<section class="screen" id="scr-orders">
-  <div class="sec-h" style="margin-top:4px"><h3>Мои заявки</h3></div>
-  <div id="ordersList"></div>
-  <div class="end-spacer"></div>
-</section>
+  <!-- ============ ORDERS ============ -->
+  <section class="screen" id="scr-orders">
+    <div class="sec-h" style="margin-top:4px"><h3>Мои заявки</h3></div>
+    <div id="ordersList"></div>
+  </section>
 
-<!-- ============ ABOUT ============ -->
-<section class="screen" id="scr-about">
-  <div class="about-hero">
-    <div class="logo">E</div>
-    <div class="about-hero-name">Exora</div>
-    <div class="about-hero-sub">Обмен криптовалют · Россия · 24/7</div>
-  </div>
+  <!-- ============ ABOUT ============ -->
+  <section class="screen" id="scr-about">
+    <div class="about-hero">
+      <div class="logo">E</div>
+      <div class="about-hero-name">Exora</div>
+      <div class="about-hero-sub">Обмен криптовалют · Россия · 24/7</div>
+    </div>
 
-  <div class="about-card">
-    <h4>О сервисе</h4>
-    <p>Exora — сервис быстрого обмена криптовалют для физических лиц и бизнеса. Работаем круглосуточно, без выходных и обеденных перерывов. Курс обновляется в реальном времени с крупнейших бирж.</p>
-  </div>
+    <div class="about-card">
+      <h4>О сервисе</h4>
+      <p>Exora — сервис быстрого обмена криптовалют для физических лиц и бизнеса. Работаем круглосуточно, без выходных и обеденных перерывов. Курс обновляется в реальном времени с крупнейших бирж.</p>
+    </div>
 
-  <div class="about-card">
-    <h4>Наши преимущества</h4>
-    <ul class="about-list">
-      <li><span class="chk"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg></span>Лучший курс USDT в регионе</li>
-      <li><span class="chk"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg></span>Нулевая комиссия сервиса</li>
-      <li><span class="chk"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg></span>Работа 24 часа в сутки, без выходных</li>
-      <li><span class="chk"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg></span>Оператор, а не бот</li>
-      <li><span class="chk"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg></span>Поддержка 4 сетей: TRC-20 / ERC-20 / BEP-20 / TON</li>
-      <li><span class="chk"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg></span>AML-проверка кошельков</li>
-    </ul>
-  </div>
+    <div class="about-card">
+      <h4>Наши преимущества</h4>
+      <ul class="about-list">
+        <li><span class="chk"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg></span>Лучший курс USDT в регионе</li>
+        <li><span class="chk"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg></span>Нулевая комиссия сервиса</li>
+        <li><span class="chk"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg></span>Работа 24 часа в сутки, без выходных</li>
+        <li><span class="chk"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg></span>Оператор, а не бот</li>
+        <li><span class="chk"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg></span>Поддержка 4 сетей: TRC-20 / ERC-20 / BEP-20 / TON</li>
+        <li><span class="chk"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg></span>AML-проверка кошельков</li>
+      </ul>
+    </div>
 
-  <div class="about-card">
-    <h4>Лимиты обмена</h4>
-    <div class="sr"><span>Минимальная сумма</span><span>300 USDT</span></div>
-    <div class="sr"><span>Максимальная сумма</span><span>100 000 USDT</span></div>
-    <div class="sr"><span>Скорость обмена</span><span>10–30 минут</span></div>
-  </div>
+    <div class="about-card">
+      <h4>Лимиты обмена</h4>
+      <div class="sr"><span>Минимальная сумма</span><span>300 USDT</span></div>
+      <div class="sr"><span>Максимальная сумма</span><span>100 000 USDT</span></div>
+      <div class="sr"><span>Скорость обмена</span><span>10–30 минут</span></div>
+    </div>
 
-  <div class="about-card">
-    <h4>Связаться</h4>
-    <button class="hero-btn secondary" data-action="support" style="height:48px;margin-top:6px;width:100%">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 11.5a8.38 8.38 0 01-.9 3.8 8.5 8.5 0 01-7.6 4.7 8.38 8.38 0 01-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 01-.9-3.8 8.5 8.5 0 014.7-7.6 8.38 8.38 0 013.8-.9h.5a8.48 8.48 0 018 8v.5z"/></svg>
-      Открыть чат поддержки
-    </button>
-  </div>
-  <div class="end-spacer"></div>
-</section>
+    <div class="about-card">
+      <h4>Связаться</h4>
+      <button class="hero-btn secondary" data-action="support" style="height:48px;margin-top:6px;width:100%">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 11.5a8.38 8.38 0 01-.9 3.8 8.5 8.5 0 01-7.6 4.7 8.38 8.38 0 01-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 01-.9-3.8 8.5 8.5 0 014.7-7.6 8.38 8.38 0 013.8-.9h.5a8.48 8.48 0 018 8v.5z"/></svg>
+        <span>Открыть чат поддержки</span>
+      </button>
+    </div>
+  </section>
 
-<!-- ============ NAV ============ -->
-<nav class="nav">
-  <div class="nav-inner">
+</main>
+
+<nav class="tabs">
+  <div class="tabs-inner">
     <button class="nav-i active" data-goto="home">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
       <span>Главная</span>
@@ -746,6 +846,7 @@
   </div>
 </div>
 
+<canvas id="confetti"></canvas>
 <div class="toast" id="toast"></div>
 
 <script>
@@ -762,9 +863,7 @@
     BTC:  {name:'Bitcoin',          short:'B', bg:'linear-gradient(135deg,#F7931A,#c9760f)'},
     ETH:  {name:'Ethereum',         short:'E', bg:'linear-gradient(135deg,#627EEA,#3d5ec0)'},
     TON:  {name:'Toncoin',          short:'T', bg:'linear-gradient(135deg,#0098EA,#0072b3)'},
-    BNB:  {name:'BNB',              short:'B', bg:'linear-gradient(135deg,#F3BA2F,#b8891c)'},
   };
-
   const NETS = {
     TRC20:{label:'TRC-20', pattern:/^T[a-km-zA-HJ-NP-Z1-9]{25,34}$/, ph:'T… (34 симв.)'},
     ERC20:{label:'ERC-20', pattern:/^0x[a-fA-F0-9]{40}$/,              ph:'0x… (42 симв.)'},
@@ -775,9 +874,10 @@
   const state = {
     direction:'buy', network:'TRC20', giveCur:'RUB', getCur:'USDT',
     give:'', get:'', wallet:'', contact:'', lastEdit:'give',
-    rate:null, rateSrc:'',
+    rate:null, rateSrc:'', rateHistory:[],
     markupBuy:1.02, markupSell:0.98, minUSDT:300, maxUSDT:100000,
-    prices:{}, orders: (()=>{try{return JSON.parse(localStorage.getItem('exora_orders')||'[]')}catch(_){return[]}})(),
+    prices:{},
+    orders: (()=>{try{return JSON.parse(localStorage.getItem('exora_orders')||'[]')}catch(_){return[]}})(),
   };
 
   if (tg) {
@@ -801,8 +901,8 @@
     } catch(_){}
   };
 
-  const toastEl = $('#toast');
-  let toastTimer=null;
+  /* ---- TOAST ---- */
+  const toastEl = $('#toast'); let toastTimer=null;
   function toast(msg, kind){
     const ic = kind==='ok'
       ? '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg>'
@@ -810,19 +910,190 @@
       : '';
     toastEl.innerHTML = ic + '<span>'+escapeHtml(msg)+'</span>';
     toastEl.className = 'toast show ' + (kind||'');
-    clearTimeout(toastTimer); toastTimer = setTimeout(()=>{ toastEl.className='toast'; },2600);
+    clearTimeout(toastTimer); toastTimer = setTimeout(()=>{ toastEl.className='toast'; }, 2400);
   }
-  window.exoraToast = toast;
 
+  /* ---- BG PARTICLES (canvas) ---- */
+  (function initParticles(){
+    const c = document.getElementById('bgCanvas');
+    if (!c) return;
+    const ctx = c.getContext('2d');
+    let W=0, H=0, dpr = Math.min(window.devicePixelRatio||1, 2);
+    const N = window.innerWidth < 500 ? 32 : 55;
+    const pts = [];
+    function resize(){
+      W = window.innerWidth; H = window.innerHeight;
+      c.width = W*dpr; c.height = H*dpr;
+      c.style.width=W+'px'; c.style.height=H+'px';
+      ctx.scale(dpr,dpr);
+    }
+    resize(); window.addEventListener('resize', ()=>{ dpr = Math.min(window.devicePixelRatio||1, 2); resize(); });
+    for (let i=0;i<N;i++){
+      pts.push({
+        x: Math.random()*W, y: Math.random()*H,
+        vx:(Math.random()-.5)*.3, vy:(Math.random()-.5)*.3,
+        r: Math.random()*1.4 + .4,
+        hue: Math.random()<.5 ? 148 : 200,
+      });
+    }
+    function tick(){
+      ctx.clearRect(0,0,W,H);
+      for (const p of pts){
+        p.x += p.vx; p.y += p.vy;
+        if (p.x<0||p.x>W) p.vx *= -1;
+        if (p.y<0||p.y>H) p.vy *= -1;
+        ctx.beginPath();
+        ctx.arc(p.x, p.y, p.r, 0, Math.PI*2);
+        ctx.fillStyle = `hsla(${p.hue}, 70%, 65%, .5)`;
+        ctx.fill();
+      }
+      // connections
+      for (let i=0;i<pts.length;i++){
+        for (let j=i+1;j<pts.length;j++){
+          const a=pts[i], b=pts[j];
+          const d = Math.hypot(a.x-b.x, a.y-b.y);
+          if (d < 90){
+            ctx.beginPath();
+            ctx.moveTo(a.x, a.y); ctx.lineTo(b.x, b.y);
+            ctx.strokeStyle = `rgba(94,210,156,${(1 - d/90) * 0.14})`;
+            ctx.lineWidth = 0.6;
+            ctx.stroke();
+          }
+        }
+      }
+      requestAnimationFrame(tick);
+    }
+    tick();
+  })();
+
+  /* ---- SPARKLINE ---- */
+  function updateSpark(){
+    if (state.rateHistory.length < 2) return;
+    const w = 300, h = 64, pad=4;
+    const vals = state.rateHistory.slice(-40);
+    const min = Math.min(...vals), max = Math.max(...vals);
+    const rng = Math.max(max-min, 0.01);
+    const step = (w - pad*2) / (vals.length - 1);
+    const pts = vals.map((v,i) => [pad + i*step, h - pad - (v-min)/rng * (h - pad*2)]);
+    const line = pts.map((p,i) => (i===0?'M':'L') + p[0].toFixed(1)+','+p[1].toFixed(1)).join(' ');
+    const fill = line + ` L ${pts[pts.length-1][0].toFixed(1)},${h} L ${pts[0][0].toFixed(1)},${h} Z`;
+    $('#sparkLine').setAttribute('d', line);
+    $('#sparkFill').setAttribute('d', fill);
+    $('#sparkScale').textContent = fmtRub(vals[0]) + ' → ' + fmtRub(vals[vals.length-1]) + ' ₽';
+  }
+
+  /* ---- RATE FETCH ---- */
+  async function fetchRate(){
+    try {
+      const r = await fetch('https://api.binance.com/api/v3/ticker/24hr?symbol=USDTRUB',{cache:'no-store'});
+      const j = await r.json();
+      if (j && j.lastPrice) return { rate: parseFloat(j.lastPrice), change: parseFloat(j.priceChangePercent||0), source:'Binance' };
+    } catch(_){}
+    try {
+      const r = await fetch('https://api.coingecko.com/api/v3/simple/price?ids=tether&vs_currencies=rub&include_24hr_change=true',{cache:'no-store'});
+      const j = await r.json();
+      if (j && j.tether) return { rate: parseFloat(j.tether.rub), change: parseFloat(j.tether.rub_24h_change||0), source:'CoinGecko' };
+    } catch(_){}
+    return { rate: state.rate || 100, change: 0, source: state.rateSrc || 'резерв' };
+  }
+  async function fetchPrices(){
+    try {
+      const r = await fetch('https://api.binance.com/api/v3/ticker/24hr?symbols='+encodeURIComponent('["BTCUSDT","ETHUSDT","TONUSDT"]'),{cache:'no-store'});
+      const arr = await r.json();
+      const out = {};
+      if (Array.isArray(arr)) for (const t of arr) out[t.symbol.replace('USDT','')] = { price:parseFloat(t.lastPrice), change:parseFloat(t.priceChangePercent) };
+      return out;
+    } catch(_){ return {}; }
+  }
+  async function refreshRates(){
+    const [r,p] = await Promise.all([fetchRate(), fetchPrices()]);
+    const prev = state.rate;
+    state.rate = r.rate; state.rateSrc = r.source; state.prices = p;
+    state.rateHistory.push(r.rate); if (state.rateHistory.length > 60) state.rateHistory.shift();
+    const rn = $('#rateVal');
+    rn.textContent = fmtRub(r.rate);
+    if (prev && prev !== r.rate) { rn.classList.remove('flash'); void rn.offsetWidth; rn.classList.add('flash'); }
+    $('#rateSrc').textContent = 'Обновлено '+new Date().toLocaleTimeString('ru-RU',{hour:'2-digit',minute:'2-digit'})+' · '+r.source;
+    const d = $('#rateDelta');
+    if (r.change !== undefined && !isNaN(r.change)) {
+      d.style.display='inline-flex';
+      d.className='hero-delta '+(r.change>=0?'up':'dn');
+      d.textContent = (r.change>=0?'+':'')+r.change.toFixed(2)+'%';
+    }
+    renderPairs(); recalc(); updateSpark();
+  }
+
+  function renderPairs(){
+    const c = $('#pairsList'); c.innerHTML='';
+    const pairs = [
+      {sym:'USDT', name:'Tether',   cls:'usdt', rub: state.rate, change: 0},
+      {sym:'BTC',  name:'Bitcoin',  cls:'btc',  rub: (state.prices.BTC?.price||0)*state.rate, change: state.prices.BTC?.change||0},
+      {sym:'ETH',  name:'Ethereum', cls:'eth',  rub: (state.prices.ETH?.price||0)*state.rate, change: state.prices.ETH?.change||0},
+      {sym:'TON',  name:'Toncoin',  cls:'ton',  rub: (state.prices.TON?.price||0)*state.rate, change: state.prices.TON?.change||0},
+    ];
+    for (const p of pairs){
+      if (!p.rub || !isFinite(p.rub)) continue;
+      const up = p.change >= 0;
+      const row = document.createElement('button');
+      row.type='button'; row.className='pair';
+      row.innerHTML = `
+        <div class="pair-ico ${p.cls}">${p.sym.slice(0,1)}</div>
+        <div>
+          <div class="pair-name">${p.sym}<span>${p.name}</span></div>
+          <div class="pair-sub">${p.sym==='USDT'?'стабильная монета':'1 '+p.sym+' в рублях'}</div>
+        </div>
+        <div>
+          <div class="pair-price">${fmtRub(p.rub)} ₽</div>
+          <div class="pair-delta ${up?'delta-up':'delta-dn'}">${up?'▲':'▼'} ${p.change.toFixed(2)}%</div>
+        </div>`;
+      row.addEventListener('click', () => {
+        haptic('light');
+        if (p.sym === 'USDT') { setDirection('buy'); goto('exchange'); }
+        else toast('Для обмена '+p.sym+' — свяжитесь с оператором','ok');
+      });
+      c.appendChild(row);
+    }
+  }
+
+  /* ---- ANIMATED COUNTERS / RINGS / BARS ---- */
+  function animateCount(el, target, dur=1400, prefix='', suffix=''){
+    const start = 0, t0 = performance.now();
+    function frame(t){
+      const p = Math.min(1, (t - t0)/dur);
+      const e = 1 - Math.pow(1 - p, 3);
+      const v = Math.floor(start + (target - start) * e);
+      el.textContent = prefix + fmtNum(v) + suffix;
+      if (p < 1) requestAnimationFrame(frame);
+    }
+    requestAnimationFrame(frame);
+  }
+  function animateRings(){
+    const CIRC = 2 * Math.PI * 16;
+    $$('.ring').forEach(r => {
+      const pct = parseFloat(r.dataset.pct || 0);
+      const fill = r.querySelector('.fill');
+      setTimeout(()=>{ fill.style.strokeDasharray = (CIRC * pct/100).toFixed(2) + ' ' + CIRC.toFixed(2); }, 200);
+    });
+  }
+  function animateBars(){
+    const heights = [55, 72, 48, 88, 92, 65, 74];
+    $$('#barsRow .b').forEach((b, i) => {
+      const h = heights[i] || 40;
+      setTimeout(() => { b.style.height = h + '%'; b.classList.add('done'); }, i * 80 + 200);
+    });
+    animateCount($('#volumeVal'), 128420, 1600);
+    animateCount($('#ordersCntVal'), 246, 1400);
+  }
+
+  /* ---- NAV ---- */
   function goto(id){
     $$('.screen').forEach(s => s.classList.remove('active'));
     const el = $('#scr-'+id); if (el) el.classList.add('active');
     $$('.nav-i').forEach(a => a.classList.toggle('active', a.dataset.goto === id));
     if (id === 'orders') renderOrders();
     if (tg && tg.BackButton) { try { id==='home'?tg.BackButton.hide():tg.BackButton.show(); } catch(_){} }
-    window.scrollTo({top:0, behavior:'instant'});
+    $('#main').scrollTo({top:0, behavior:'instant'});
   }
-
   document.addEventListener('click', e => {
     const g = e.target.closest('[data-goto]');
     if (g) { e.preventDefault(); goto(g.dataset.goto); if (g.dataset.dir) setDirection(g.dataset.dir); haptic('light'); return; }
@@ -848,76 +1119,7 @@
   }
   $('#btnSupport').addEventListener('click', () => handleAction('support'));
 
-  async function fetchRate(){
-    try {
-      const r = await fetch('https://api.binance.com/api/v3/ticker/24hr?symbol=USDTRUB',{cache:'no-store'});
-      const j = await r.json();
-      if (j && j.lastPrice) return { rate: parseFloat(j.lastPrice), change: parseFloat(j.priceChangePercent||0), source:'Binance' };
-    } catch(_){}
-    try {
-      const r = await fetch('https://api.coingecko.com/api/v3/simple/price?ids=tether&vs_currencies=rub&include_24hr_change=true',{cache:'no-store'});
-      const j = await r.json();
-      if (j && j.tether) return { rate: parseFloat(j.tether.rub), change: parseFloat(j.tether.rub_24h_change||0), source:'CoinGecko' };
-    } catch(_){}
-    return { rate: state.rate || 100, change: 0, source: state.rateSrc || 'резерв' };
-  }
-
-  async function fetchPrices(){
-    try {
-      const r = await fetch('https://api.binance.com/api/v3/ticker/24hr?symbols='+encodeURIComponent('["BTCUSDT","ETHUSDT","TONUSDT","BNBUSDT"]'),{cache:'no-store'});
-      const arr = await r.json();
-      const out = {};
-      if (Array.isArray(arr)) for (const t of arr) out[t.symbol.replace('USDT','')] = { price:parseFloat(t.lastPrice), change:parseFloat(t.priceChangePercent) };
-      return out;
-    } catch(_){ return {}; }
-  }
-
-  async function refreshRates(){
-    const [r,p] = await Promise.all([fetchRate(), fetchPrices()]);
-    state.rate = r.rate; state.rateSrc = r.source; state.prices = p;
-    $('#rateVal').textContent = fmtRub(r.rate);
-    $('#rateSrc').textContent = 'Обновлено '+new Date().toLocaleTimeString('ru-RU',{hour:'2-digit',minute:'2-digit'})+' · '+r.source;
-    const delta = $('#rateDelta');
-    if (r.change !== undefined && !isNaN(r.change)) {
-      delta.style.display='inline-flex';
-      delta.className='hero-delta '+(r.change>=0?'up':'dn');
-      delta.textContent = (r.change>=0?'+':'')+r.change.toFixed(2)+'%';
-    }
-    renderPairs(); recalc();
-  }
-
-  function renderPairs(){
-    const c = $('#pairsList'); c.innerHTML='';
-    const pairs = [
-      {sym:'USDT', name:'Tether',   cls:'usdt', rub: state.rate, change: 0},
-      {sym:'BTC',  name:'Bitcoin',  cls:'btc',  rub: (state.prices.BTC?.price||0)*state.rate, change: state.prices.BTC?.change||0},
-      {sym:'ETH',  name:'Ethereum', cls:'eth',  rub: (state.prices.ETH?.price||0)*state.rate, change: state.prices.ETH?.change||0},
-      {sym:'TON',  name:'Toncoin',  cls:'ton',  rub: (state.prices.TON?.price||0)*state.rate, change: state.prices.TON?.change||0},
-    ];
-    for (const p of pairs){
-      if (!p.rub || !isFinite(p.rub)) continue;
-      const up = p.change >= 0;
-      const row = document.createElement('button');
-      row.type='button'; row.className='pair';
-      row.innerHTML = `
-        <div class="pair-ico ${p.cls}">${p.sym.slice(0,1)}</div>
-        <div>
-          <div class="pair-name">${p.sym}<span>${p.name}</span></div>
-          <div class="pair-sub">${p.sym==='USDT'?'1 USDT ≈ 1 $':'1 '+p.sym+' в рублях'}</div>
-        </div>
-        <div>
-          <div class="pair-price">${fmtRub(p.rub)} ₽</div>
-          <div class="pair-delta ${up?'delta-up':'delta-dn'}">${up?'+':''}${p.change.toFixed(2)}%</div>
-        </div>`;
-      row.addEventListener('click', () => {
-        haptic('light');
-        if (p.sym === 'USDT') { setDirection('buy'); goto('exchange'); }
-        else toast('Для обмена '+p.sym+' — свяжитесь с оператором','ok');
-      });
-      c.appendChild(row);
-    }
-  }
-
+  /* ---- EXCHANGE ---- */
   function setDirection(dir){
     state.direction = dir;
     $$('.dir-tab').forEach(t => t.classList.toggle('active', t.dataset.dir === dir));
@@ -1020,10 +1222,12 @@
     if (ok && (!state.contact || state.contact.length<3)) { ok=false; hint='Укажите Telegram или телефон'; }
     btn.disabled = !ok;
     tx.textContent = ok?'Создать заявку':hint;
-    $('#walletHint').textContent = ok
+    const wh = $('#walletHint');
+    wh.textContent = ok
       ? (state.direction==='buy'?'Адрес корректен · сеть '+NETS[state.network].label:'Оператор свяжется для приёма USDT')
       : (state.direction==='buy'?'Проверьте адрес и сеть — ошибка приведёт к потере средств':'Укажите номер карты, СБП или телефон');
-    $('#walletHint').classList.toggle('err', !ok && state.wallet && state.wallet.length>=6);
+    wh.classList.toggle('err', !ok && state.wallet && state.wallet.length>=6);
+    wh.classList.toggle('ok', ok);
   }
 
   $('#submitBtn').addEventListener('click', submitOrder);
@@ -1041,7 +1245,7 @@
     state.orders.unshift(order);
     try { localStorage.setItem('exora_orders', JSON.stringify(state.orders.slice(0,50))); } catch(_){}
     if (tg && tg.sendData) { try { tg.sendData(JSON.stringify({type:'order', order})); } catch(_){} }
-    haptic('success'); showSuccess(order);
+    haptic('success'); showSuccess(order); confetti();
   }
   function showSuccess(order){
     const scr = $('#scr-exchange');
@@ -1065,13 +1269,58 @@
           Не переводите средства до подтверждения оператора<br/>Уведомления придут в бот @exorappbot
         </div>
       </div>
-      <div class="end-spacer"></div>
     `;
     $('#newOrder').addEventListener('click', () => location.reload());
     $('#toOrders').addEventListener('click', () => goto('orders'));
     setTimeout(() => { if (tg && tg.close) { try { tg.close(); } catch(_){} } }, 5500);
   }
 
+  /* ---- CONFETTI ---- */
+  function confetti(){
+    const c = document.getElementById('confetti');
+    const ctx = c.getContext('2d');
+    const dpr = Math.min(window.devicePixelRatio||1, 2);
+    c.width = window.innerWidth*dpr; c.height = window.innerHeight*dpr;
+    c.style.width = window.innerWidth+'px'; c.style.height = window.innerHeight+'px';
+    ctx.scale(dpr,dpr);
+    const W = window.innerWidth, H = window.innerHeight;
+    const colors = ['#5ED29C','#3FBF86','#5AC8FF','#A78BFA','#FCD34D','#F472B6'];
+    const parts = [];
+    for (let i=0;i<80;i++){
+      parts.push({
+        x: W/2, y: H/2, r: Math.random()*4+2,
+        vx: (Math.random()-.5)*10, vy: (Math.random()-1)*8,
+        color: colors[Math.floor(Math.random()*colors.length)],
+        rot: Math.random()*Math.PI*2, vr:(Math.random()-.5)*.2,
+        life: 1,
+      });
+    }
+    let t0 = performance.now();
+    function tick(t){
+      const dt = (t - t0)/16; t0 = t;
+      ctx.clearRect(0,0,W,H);
+      let alive = false;
+      for (const p of parts){
+        if (p.life <= 0) continue;
+        alive = true;
+        p.vy += 0.28 * dt;
+        p.x += p.vx * dt; p.y += p.vy * dt;
+        p.rot += p.vr * dt;
+        p.life -= 0.008 * dt;
+        ctx.save();
+        ctx.translate(p.x, p.y); ctx.rotate(p.rot);
+        ctx.globalAlpha = Math.max(0, p.life);
+        ctx.fillStyle = p.color;
+        ctx.fillRect(-p.r, -p.r, p.r*2, p.r*2);
+        ctx.restore();
+      }
+      if (alive) requestAnimationFrame(tick);
+      else ctx.clearRect(0,0,W,H);
+    }
+    requestAnimationFrame(tick);
+  }
+
+  /* ---- MODAL ---- */
   function openSelect(kind){
     const isGive = kind === 'give';
     const current = isGive ? state.giveCur : state.getCur;
@@ -1105,6 +1354,7 @@
   $('#modalBack').addEventListener('click', e => { if (e.target === $('#modalBack')) closeModal(); });
   $$('.swap-sel').forEach(el => el.addEventListener('click', () => { openSelect(el.dataset.sel); haptic('light'); }));
 
+  /* ---- ORDERS ---- */
   function renderOrders(){
     const c = $('#ordersList'); c.innerHTML='';
     if (!state.orders.length) {
@@ -1143,10 +1393,12 @@
     }
   }
 
+  /* ---- INIT ---- */
   setDirection('buy');
   refreshRates();
   setInterval(refreshRates, 30000);
   renderOrders();
+  setTimeout(() => { animateRings(); animateBars(); }, 500);
 })();
 </script>
 </body>

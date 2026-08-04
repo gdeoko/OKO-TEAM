@@ -332,13 +332,16 @@ const $$ = (s,r=document) => Array.from(r.querySelectorAll(s));
 const tg = window.Telegram && window.Telegram.WebApp;
 try { tg && tg.ready(); tg && tg.expand(); } catch(_){}
 
-/* API config — reads window.EXORA_API from meta if provided */
+/* API config — hardcoded default + optional ?api= override */
 const API_META = document.querySelector('meta[name="exora-api"]');
-const API_BASE = (API_META && API_META.content) || (new URLSearchParams(location.search)).get('api') || '';
-const ADMIN_TOKEN = (new URLSearchParams(location.search)).get('token') || '';
+const DEFAULT_API = 'https://height-amend-communications-cds.trycloudflare.com';
+const DEFAULT_TOKEN = 'exora-admin-2026';
+const qs = new URLSearchParams(location.search);
+const API_BASE = qs.get('api') || (API_META && API_META.content) || DEFAULT_API;
+const ADMIN_TOKEN = qs.get('token') || DEFAULT_TOKEN;
 
 async function api(path, opts={}){
-  if (!API_BASE) return null; // demo mode
+  if (!API_BASE) throw new Error('API not configured');
   const r = await fetch(API_BASE.replace(/\/$/,'') + path, {
     ...opts,
     headers: { 'Content-Type':'application/json', 'X-Admin-Token': ADMIN_TOKEN, ...(opts.headers||{}) }
@@ -486,12 +489,13 @@ window.setStatus = setStatus;
 
 function populateStats(){
   const orders = currentOrders;
-  $('#statUsers').textContent = usingDemo ? '134' : (window._stats?.users ?? '—');
-  $('#statToday').textContent = orders.filter(o => Date.now() - o.ts < 86400000).length;
-  $('#statNew').textContent = orders.filter(o => o.status === 'new').length;
-  $('#statDone').textContent = orders.filter(o => o.status === 'completed').length;
-  const volume = orders.filter(o => Date.now() - o.ts < 7*86400000)
-    .reduce((s, o) => s + (o.getCur === 'USDT' ? +o.get : (o.giveCur === 'USDT' ? +o.give : 0)), 0);
+  const s = window._stats || {};
+  $('#statUsers').textContent = s.users ?? (usingDemo ? '134' : '—');
+  $('#statToday').textContent = s.orders_today ?? orders.filter(o => Date.now() - o.ts < 86400000).length;
+  $('#statNew').textContent = s.orders_new ?? orders.filter(o => o.status === 'new').length;
+  $('#statDone').textContent = s.orders_done ?? orders.filter(o => o.status === 'completed').length;
+  const volume = s.volume_7d ?? orders.filter(o => Date.now() - o.ts < 7*86400000)
+    .reduce((acc, o) => acc + (o.getCur === 'USDT' ? +o.get : (o.giveCur === 'USDT' ? +o.give : 0)), 0);
   $('#statVol').textContent = fmt(volume);
 }
 
@@ -508,7 +512,7 @@ window.exportCsv = () => {
   toast('CSV скачан', 'ok');
 };
 
-/* SETTINGS SAVE */
+/* SETTINGS SAVE — всегда через API */
 async function saveSettings(){
   const data = {
     markup_buy:  $('#markupBuy').value,
@@ -516,13 +520,12 @@ async function saveSettings(){
     min_usdt:    $('#minU').value,
     max_usdt:    $('#maxU').value,
   };
-  if (usingDemo){ toast('Демо: сохранено локально. В продакшене — через API.', 'ok'); return; }
   try {
     for (const [k,v] of Object.entries(data)){
       await api('/api/settings/' + k, { method:'PUT', body: JSON.stringify({ value: v }) });
     }
-    toast('Настройки сохранены', 'ok');
-  } catch(e){ toast('Ошибка: ' + e.message, 'er'); }
+    toast('✅ Настройки сохранены', 'ok');
+  } catch(e){ toast('Ошибка API: ' + e.message, 'er'); }
 }
 window.saveSettings = saveSettings;
 
@@ -534,23 +537,21 @@ async function saveWallets(){
     wallet_ton:   $('#wTon').value,
     wallet_rub:   $('#wRub').value,
   };
-  if (usingDemo){ toast('Демо: сохранено локально. В продакшене — через API.', 'ok'); return; }
   try {
     for (const [k,v] of Object.entries(data)){
       await api('/api/settings/' + k, { method:'PUT', body: JSON.stringify({ value: v }) });
     }
-    toast('Кошельки сохранены', 'ok');
-  } catch(e){ toast('Ошибка: ' + e.message, 'er'); }
+    toast('✅ Кошельки сохранены', 'ok');
+  } catch(e){ toast('Ошибка API: ' + e.message, 'er'); }
 }
 window.saveWallets = saveWallets;
 
 async function saveText(key){
   const val = key === 'welcome_text' ? $('#welcomeText').value : $('#aboutText').value;
-  if (usingDemo){ toast('Демо: текст сохранён локально', 'ok'); return; }
   try {
     await api('/api/settings/' + key, { method:'PUT', body: JSON.stringify({ value: val }) });
-    toast('Текст сохранён', 'ok');
-  } catch(e){ toast('Ошибка: ' + e.message, 'er'); }
+    toast('✅ Текст сохранён', 'ok');
+  } catch(e){ toast('Ошибка API: ' + e.message, 'er'); }
 }
 window.saveText = saveText;
 
@@ -558,11 +559,11 @@ async function sendBroadcast(target){
   const text = $('#bcText').value.trim();
   if (!text) { toast('Введите текст рассылки', 'er'); return; }
   if (!confirm('Отправить рассылку ' + (target==='all'?'ВСЕМ':'активным (30д)') + ' пользователям?')) return;
-  if (usingDemo){ toast('Демо: рассылка не отправлена. Используйте /admin_broadcast в боте.', 'ok'); return; }
   try {
+    toast('Рассылка запущена…', 'ok');
     const r = await api('/api/broadcast', { method:'POST', body: JSON.stringify({ text, target }) });
-    toast('Рассылка запущена: ' + (r.ok||0) + ' успешно, ' + (r.fail||0) + ' ошибок', 'ok');
-  } catch(e){ toast('Ошибка: ' + e.message, 'er'); }
+    toast('✅ Готово: ' + (r.ok||0) + ' успешно, ' + (r.fail||0) + ' ошибок', 'ok');
+  } catch(e){ toast('Ошибка API: ' + e.message, 'er'); }
 }
 window.sendBroadcast = sendBroadcast;
 
@@ -581,7 +582,6 @@ async function loadRate(){
 }
 
 async function loadStats(){
-  if (usingDemo) return;
   try {
     const r = await api('/api/stats');
     if (r){ window._stats = r; populateStats(); }
@@ -589,7 +589,6 @@ async function loadStats(){
 }
 
 async function loadSettings(){
-  if (usingDemo) return;
   try {
     const r = await api('/api/settings');
     if (r){

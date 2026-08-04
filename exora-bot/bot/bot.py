@@ -410,18 +410,6 @@ async def h_aml(msg: Message):
     )
 
 
-@router.message(Command("referral"))
-async def h_ref(msg: Message):
-    me = await bot.get_me()
-    link = f"https://t.me/{me.username}?start=ref_{msg.from_user.id}"
-    await msg.answer(
-        "🎁 <b>Реферальная программа</b>\n\n"
-        "Приглашайте друзей и получайте <b>0.5% от их обменов</b> в USDT на ваш кошелёк.\n\n"
-        f"🔗 <b>Ваша ссылка:</b>\n<code>{link}</code>\n\n"
-        "Отправьте её друзьям — как только они сделают первый обмен, вы получите бонус."
-    )
-
-
 @router.callback_query(F.data.startswith("ord:"))
 async def h_admin_action(cb: CallbackQuery):
     if cb.from_user.id not in ADMIN_IDS:
