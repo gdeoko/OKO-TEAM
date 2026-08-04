@@ -338,8 +338,10 @@ ob_start(); ?>
       <?php foreach ($cards as $i => $card): $c = $card['c']; $paid = (int) $c['is_paid'] === 1; ?>
         <article class="card calx-card reveal calx-card--<?= h($card['phase']) ?>" id="comp-<?= h($c['slug']) ?>" style="--i:<?= $i % 3 ?>">
           <span class="calx-accent" aria-hidden="true"></span>
-          <?php $cvr = trim((string)($c['cover'] ?? '')); if ($cvr !== ''):
-            $cvr = preg_match('~^https?://~', $cvr) ? $cvr : url('/' . ltrim($cvr, '/')); ?>
+          <?php $cvrRaw = trim((string)($c['cover'] ?? '')); if ($cvrRaw !== ''):
+            $cvr = preg_match('~^https?://~', $cvrRaw) ? $cvrRaw : url('/' . ltrim($cvrRaw, '/'));
+            $cvrMt = @filemtime(BASE_PATH . '/public/' . ltrim(preg_replace('~^https?://[^/]+~', '', $cvrRaw), '/'));
+            if ($cvrMt) $cvr .= (strpos($cvr, '?') !== false ? '&' : '?') . 'v=' . $cvrMt; ?>
             <a class="calx-poster" href="<?= url('/apply?competition=' . rawurlencode($c['slug'])) ?>"
                aria-label="Подать заявку на конкурс «<?= h($c['name']) ?>»">
               <img src="<?= h($cvr) ?>" alt="Афиша конкурса «<?= h($c['name']) ?>»" loading="lazy" decoding="async">

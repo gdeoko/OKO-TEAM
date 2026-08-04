@@ -135,7 +135,6 @@ ob_start(); ?>
 
         <div class="contact-actions">
           <a class="btn btn--primary" href="tel:<?= h($hasTwo ? $phone2Raw : $phone1Raw) ?>"><?= $ico['phone'] ?><span>Позвонить</span></a>
-          <a class="btn btn--ghost" href="https://yandex.ru/maps/?text=<?= urlencode(cfgv('org_address')) ?>&z=16" target="_blank" rel="noopener"><?= $ico['pin'] ?><span>Проложить маршрут</span></a>
         </div>
 
         <div class="contact-note">
