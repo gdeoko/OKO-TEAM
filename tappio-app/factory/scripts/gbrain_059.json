@@ -1,0 +1,264 @@
+{
+ "id": "gbrain_059",
+ "app": "brain",
+ "voice": "en-US-BrianNeural",
+ "rate": "+6%",
+ "grade": "purple_dream",
+ "brand": {
+  "accent": "#9B5DE5",
+  "accent2": "#C9A7FF",
+  "code": "FOCUS",
+  "logo": "brain.png",
+  "name": "BRAINOVA"
+ },
+ "music": {
+  "queries": [
+   "uplifting confident",
+   "dreamy synth focus",
+   "uplifting focus ambient"
+  ]
+ },
+ "cover": {
+  "kicker": "BRAIN AGE",
+  "top": "IS YOUR MIND",
+  "big": "OLDER THAN\nYOU?",
+  "q": [
+   "yoga breathing calm room"
+  ],
+  "ai": "work/gbrain_059/cover_ai.png"
+ },
+ "segments": [
+  {
+   "id": "b1",
+   "text": "Your brain has an age, just like your body."
+  },
+  {
+   "id": "b2",
+   "text": "Speed, memory and focus reveal the real number."
+  },
+  {
+   "id": "b3",
+   "text": "One short test estimates it in a minute."
+  },
+  {
+   "id": "b4",
+   "text": "Most people score older than they expect."
+  },
+  {
+   "id": "b5",
+   "text": "The good news: it drops with daily training."
+  },
+  {
+   "id": "b6",
+   "text": "Find your brain age today."
+  }
+ ],
+ "shots": [
+  {
+   "q": [
+    "man reading book focused"
+   ],
+   "motion": "panr"
+  },
+  {
+   "q": [
+    "person thinking trying to remember"
+   ],
+   "insert": "tv",
+   "pos": "lower"
+  },
+  {
+   "q": [
+    "focused eyes close up concentration"
+   ],
+   "motion": "pandown"
+  },
+  {
+   "q": [
+    "memory old photos hands"
+   ],
+   "insert": "phone",
+   "pos": "center"
+  },
+  {
+   "q": [
+    "light bulb idea dark"
+   ],
+   "motion": "panup"
+  },
+  {
+   "q": [
+    "notebook writing pen hand"
+   ],
+   "insert": "rrect",
+   "pos": "center"
+  },
+  {
+   "q": [
+    "glass of water healthy morning"
+   ],
+   "motion": "zout"
+  },
+  {
+   "q": [
+    "chess board close up thinking"
+   ],
+   "insert": "arch",
+   "pos": "center"
+  },
+  {
+   "q": [
+    "person sleeping rest night"
+   ],
+   "motion": "zin"
+  },
+  {
+   "q": [
+    "sticky notes wall reminders"
+   ],
+   "insert": "diamond",
+   "pos": "center"
+  },
+  {
+   "q": [
+    "woman meditating calm light"
+   ],
+   "motion": "panl"
+  },
+  {
+   "q": [
+    "teacher classroom explaining"
+   ],
+   "insert": "hexagon",
+   "pos": "center"
+  },
+  {
+   "q": [
+    "elderly person smiling sharp mind"
+   ],
+   "motion": "panr"
+  },
+  {
+   "q": [
+    "person doing crossword puzzle"
+   ],
+   "insert": "circle",
+   "pos": "center"
+  },
+  {
+   "q": [
+    "neurons synapse animation blue"
+   ],
+   "motion": "pandown"
+  }
+ ],
+ "overlays": [
+  {
+   "at": 0.225,
+   "dur": 1.63,
+   "type": "kicker",
+   "text": "FOCUS FIX"
+  },
+  {
+   "at": 0.288,
+   "dur": 1.64,
+   "type": "kinetic",
+   "top": "RECALL",
+   "big": "FASTER"
+  },
+  {
+   "at": 0.443,
+   "dur": 1.69,
+   "type": "gauge",
+   "to": 78,
+   "max": 100,
+   "suffix": "%",
+   "label": "FOCUS SCORE",
+   "pos": "center"
+  },
+  {
+   "at": 0.513,
+   "dur": 1.71,
+   "type": "stat_count",
+   "to": 60,
+   "suffix": "s",
+   "label": "TO A SCORE",
+   "pos": "center"
+  },
+  {
+   "at": 0.607,
+   "dur": 2.02,
+   "type": "callout",
+   "text": "FOCUS IS A MUSCLE",
+   "pos": "center"
+  },
+  {
+   "at": 0.798,
+   "dur": 2.01,
+   "type": "bars",
+   "title": "DISTRACTION",
+   "unit": "%",
+   "items": [
+    [
+     "Before",
+     80
+    ],
+    [
+     "After",
+     29
+    ]
+   ],
+   "pos": "center"
+  },
+  {
+   "at": 0.86,
+   "dur": 1.82,
+   "type": "chips",
+   "items": [
+    "SPEED",
+    "MEMORY",
+    "FOCUS",
+    "LOGIC"
+   ],
+   "pos": "lower"
+  },
+  {
+   "at": 0.875,
+   "dur": 1.92,
+   "type": "ticker",
+   "to": 5,
+   "suffix": "min",
+   "label": "A DAY",
+   "pos": "lower"
+  }
+ ],
+ "cta": {
+  "text": "Get it now — comment FOCUS and I'll send the link. Link in bio.",
+  "code": "FOCUS"
+ },
+ "caption": "Your brain has an age — speed, memory and focus set the number. One quick test estimates it, and daily training drops it. Most people score older than they think. Comment FOCUS for the app. #brainhealth #memory #focus #productivity #selfimprovement #mentalhealth #learning #beats #binaural #focus #memory 👉 Comment FOCUS for the link — link in bio.",
+ "yt_title": "How to Get Your Brain to #shorts",
+ "trend_keys": [
+  "beats",
+  "binaural",
+  "focus",
+  "memory",
+  "brain",
+  "music",
+  "concentration",
+  "improve"
+ ],
+ "content_type": "sales",
+ "comp_angle": {
+  "title": "How to Get Your Brain to Focus | Chris Bailey | TEDxManchester",
+  "views": 20011950,
+  "channel": "TEDx Talks"
+ },
+ "virality": {
+  "score": 91,
+  "notes": [
+   "angle<-20011k"
+  ],
+  "hook": "Your brain has an age, just like your body."
+ }
+}
