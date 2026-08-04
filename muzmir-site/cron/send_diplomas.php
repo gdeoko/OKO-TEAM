@@ -19,6 +19,7 @@ require_once BASE_PATH . '/core/helpers.php';
 require_once BASE_PATH . '/core/mailer.php';
 require_once BASE_PATH . '/core/telegram.php';
 require_once BASE_PATH . '/core/pdf_diploma.php';
+require_once BASE_PATH . '/core/diploma_render.php';
 db();
 
 // 1) Убеждаемся что нужные колонки есть (мягкие миграции).
@@ -40,9 +41,11 @@ $fresh = all("SELECT a.*, c.results_mode, c.results_date, c.is_paid AS comp_is_p
 foreach ($fresh as $a) {
     $comp = one("SELECT * FROM competitions WHERE id=?", [$a['competition_id']]);
     if (!$comp) continue;
-    // 2а. Генерируем PDF основного диплома (если функция готова)
+    // 2а. Генерируем PDF основного диплома: сначала HTML-шаблон (эталон, печать
+    //     Chromium'ом на бастионе), при недоступности — старый GD-генератор.
     $pdfPath = null;
-    if (function_exists('pdf_diploma')) {
+    try { $pdfPath = diploma_pdf_html((array)$a); } catch (\Throwable $e) { $pdfPath = null; }
+    if (!$pdfPath && function_exists('pdf_diploma')) {
         try { $pdfPath = pdf_diploma((array)$a, 'main'); } catch (\Throwable $e) { $pdfPath = null; }
     }
     // 2б. Планируем отправку: ручной override администратора > режим конкурса > 3 раб.дня от даты подачи.

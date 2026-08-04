@@ -52,6 +52,11 @@ return [
     'domain_puny'    => 'xn----7sbugdeiegh1b0a9hen.xn--p1ai',
     'base_url'       => cfg('MUZMIR_BASE_URL', 'http://localhost:8080'),
 
+    // Бастион oko-poster: печать HTML-дипломов в PDF (Playwright) + scp обратно.
+    'poster_url'     => cfg('MUZMIR_POSTER_URL', ''),
+    'poster_token'   => cfg('MUZMIR_POSTER_TOKEN', ''),
+    'vps_ssh_pass'   => cfg('MUZMIR_VPS_SSH_PASS', ''),
+
     // База данных
     'db_path'        => BASE_PATH . '/data/muzmir.sqlite',
 

@@ -151,6 +151,25 @@ if (preg_match('#^/diploma/([A-Za-z0-9\-]+)\.pdf$#', $route, $m)) {
     }
     http_response_code(404); echo 'Диплом не найден'; exit;
 }
+// Приватный рендер боевого диплома для PDF-печати бастионом (ключ в settings).
+if (preg_match('#^/diploma-render/(\d+)$#', $route, $m)) {
+    $key  = (string)($_GET['key'] ?? '');
+    $good = (string) setting('diploma_render_key', '');
+    $app  = one("SELECT * FROM applications WHERE id=?", [(int)$m[1]]);
+    if (!$app || $good === '' || $key === '' || !hash_equals($good, $key)) {
+        http_response_code(404); echo 'Не найдено'; exit;
+    }
+    $c = one("SELECT * FROM competitions WHERE id=?", [(int)$app['competition_id']]);
+    require_once BASE_PATH . '/core/diploma_html.php';
+    $opt = [];
+    if (($_GET['type'] ?? '') === 'thanks') {
+        $opt['thanks'] = true;
+        if (!empty($app['teacher'])) $app['full_name'] = $app['teacher']; // благодарность — педагогу
+    }
+    echo diploma_html($c ?: [], $app, $opt);
+    exit;
+}
+
 // Демо-образец диплома конкурса (HTML-сборщик по эталону, водяной знак «ОБРАЗЕЦ»).
 if (preg_match('#^/diploma-sample/([a-z0-9\-]+)$#', $route, $m)) {
     $c = one("SELECT * FROM competitions WHERE slug=?", [$m[1]]);

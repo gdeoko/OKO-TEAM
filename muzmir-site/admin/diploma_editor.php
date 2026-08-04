@@ -21,7 +21,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && input('do') === 'save_diploma_tpl')
     if (!is_array($j)) { flash('Не удалось разобрать настройки шаблона.', 'error'); admin_redirect('diploma_editor', ['comp' => $cid]); }
 
     $keys = ['org','legal','logos','comptype','compname','support','dtype','degree','label','name','fields','bottom'];
-    $clean = ['overlay' => max(0, min(100, (int)($j['overlay'] ?? 55))), 'els' => []];
+    $clean = ['overlay' => max(0, min(100, (int)($j['overlay'] ?? 55))),
+              'fade'    => max(30, min(160, (int)($j['fade'] ?? 95))), 'els' => []];
     foreach ($keys as $k) {
         $e = $j['els'][$k] ?? null;
         if (!is_array($e)) continue;
@@ -100,10 +101,12 @@ if (!$comp) {
 }
 
 /* ---------- Редактор ---------- */
-$tpl = ['els' => new stdClass(), 'overlay' => 55];
+$defOverlay = !empty($comp['diploma_bg']) ? 55 : 0;
+$tpl = ['els' => new stdClass(), 'overlay' => $defOverlay, 'fade' => 95];
 if (!empty($comp['diploma_template'])) {
     $j = json_decode((string)$comp['diploma_template'], true);
-    if (is_array($j)) $tpl = ['els' => (object)($j['els'] ?? []), 'overlay' => (int)($j['overlay'] ?? 55)];
+    if (is_array($j)) $tpl = ['els' => (object)($j['els'] ?? []),
+        'overlay' => (int)($j['overlay'] ?? $defOverlay), 'fade' => (int)($j['fade'] ?? 95)];
 }
 $elements = [
     'org'      => ['Название организации', 17],
@@ -163,6 +166,9 @@ ob_start(); ?>
       <div class="card__head" style="margin-bottom:10px"><?= admin_icon('settings') ?><h3>Фон</h3></div>
       <div class="field" style="margin-bottom:6px"><label>Затемнение фона сверху: <b id="deOverlayVal"><?= (int)$tpl['overlay'] ?></b>%</label>
         <div class="de-overlay"><input type="range" id="deOverlay" min="0" max="100" step="5" value="<?= (int)$tpl['overlay'] ?>"></div>
+      </div>
+      <div class="field" style="margin-bottom:6px"><label>Засвет снизу (зона подписей): <b id="deFadeVal"><?= (int)$tpl['fade'] ?></b> мм</label>
+        <div class="de-overlay"><input type="range" id="deFade" min="30" max="160" step="5" value="<?= (int)$tpl['fade'] ?>"></div>
       </div>
       <p class="de-hint">Картинка фона задаётся в карточке конкурса (файл А4).
         Текущий: <b><?= $comp['diploma_bg'] ? h(basename((string)$comp['diploma_bg'])) : 'градиент по умолчанию' ?></b></p>
@@ -245,9 +251,11 @@ ob_start(); ?>
   }
   function applyOverlay(){
     var d = frame.contentDocument; if (!d) return;
-    var tone = d.querySelector('.bg-tone'); if (!tone) return;
+    var tone = d.querySelector('.bg-tone');
     var o = (TPL.overlay===undefined?55:TPL.overlay)/100;
-    tone.style.background = 'linear-gradient(180deg, rgba(8,12,28,'+(o*.62).toFixed(2)+') 0%, rgba(8,12,28,'+(o*.38).toFixed(2)+') 45%, rgba(8,12,28,0) 62%)';
+    if (tone) tone.style.background = 'linear-gradient(180deg, rgba(8,12,28,'+(o*.66).toFixed(2)+') 0%, rgba(8,12,28,'+(o*.46).toFixed(2)+') 40%, rgba(8,12,28,'+(o*.22).toFixed(2)+') 60%, rgba(8,12,28,0) 72%)';
+    var wg = d.querySelector('.bg-white-gradient');
+    if (wg) wg.style.height = (TPL.fade===undefined?95:TPL.fade) + 'mm';
   }
   function applyAll(){ Object.keys(BASE_FS).forEach(applyEl); applyOverlay(); }
 
@@ -284,6 +292,10 @@ ob_start(); ?>
   var ov = document.getElementById('deOverlay'), ovVal = document.getElementById('deOverlayVal');
   ov.addEventListener('input', function(){
     TPL.overlay = parseInt(ov.value, 10); ovVal.textContent = ov.value; applyOverlay();
+  });
+  var fd = document.getElementById('deFade'), fdVal = document.getElementById('deFadeVal');
+  fd.addEventListener('input', function(){
+    TPL.fade = parseInt(fd.value, 10); fdVal.textContent = fd.value; applyOverlay();
   });
 
   /* ---- перетаскивание элементов на макете ---- */
