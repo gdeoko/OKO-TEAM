@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no" />
 <title>Exora — обмен криптовалют</title>
 <meta name="theme-color" content="#04070E" />
-<meta name="build" content="exora-miniapp-v7" />
+<meta name="build" content="exora-miniapp-v8" />
 <link rel="manifest" href="/exora.webmanifest" />
 <link rel="apple-touch-icon" href="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAxODAgMTgwIj48cmVjdCB3aWR0aD0iMTgwIiBoZWlnaHQ9IjE4MCIgcng9IjM4IiBmaWxsPSIjNUVEMjlDIi8+PHRleHQgeD0iOTAiIHk9IjEyNSIgZm9udC1zaXplPSIxMDAiIGZvbnQtZmFtaWx5PSJJbnRlciIgZm9udC13ZWlnaHQ9IjkwMCIgZmlsbD0iIzA2MjAxOCIgdGV4dC1hbmNob3I9Im1pZGRsZSI+RTwvdGV4dD48L3N2Zz4=" />
 <script src="https://telegram.org/js/telegram-web-app.js"></script>
@@ -574,6 +574,33 @@
   .empty-ic svg{width:30px;height:30px}
   .empty h3{font-size:16px;font-weight:700;letter-spacing:-.01em;margin-bottom:4px}
   .empty p{color:var(--muted);font-size:13.5px;line-height:1.5}
+
+  /* DOC pages */
+  .doc-head{display:flex;align-items:center;gap:12px;margin:4px 0 16px;padding:6px 4px}
+  .doc-back{width:38px;height:38px;border-radius:12px;background:var(--glass);border:1px solid var(--line);display:grid;place-items:center;color:var(--text);flex-shrink:0;transition:.15s;cursor:pointer}
+  .doc-back:active{background:var(--glass-hi);transform:scale(.94)}
+  .doc-back svg{width:18px;height:18px}
+  .doc-title{font-size:22px;font-weight:800;letter-spacing:-.02em;line-height:1.15}
+  .doc-sub{font-size:12px;color:var(--muted);margin-top:2px}
+  .doc-body{background:var(--glass);border:1px solid var(--line);border-radius:20px;padding:18px 18px 4px;backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px)}
+  .doc-body h4{font-size:15px;font-weight:700;letter-spacing:-.01em;margin:18px 0 8px}
+  .doc-body h4:first-child{margin-top:0}
+  .doc-body p, .doc-body li{color:var(--muted);font-size:13.5px;line-height:1.55;margin-bottom:8px}
+  .doc-body ul{padding-left:18px;margin:6px 0 12px;list-style:disc}
+  .doc-body a{color:var(--brand);text-decoration:underline;text-underline-offset:2px}
+  .doc-body b{color:var(--text)}
+
+  .faq-item{background:var(--glass);border:1px solid var(--line);border-radius:14px;margin-bottom:8px;overflow:hidden;transition:.15s;backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px)}
+  .faq-item.open{border-color:rgba(94,210,156,.28);background:rgba(94,210,156,.06)}
+  .faq-q{padding:14px 16px;display:flex;justify-content:space-between;align-items:center;gap:10px;cursor:pointer;font-weight:700;font-size:14px;letter-spacing:-.005em;user-select:none}
+  .faq-q .plus{color:var(--brand);font-size:22px;font-weight:400;line-height:1;transition:.25s;flex-shrink:0}
+  .faq-item.open .faq-q .plus{transform:rotate(45deg)}
+  .faq-a{max-height:0;overflow:hidden;transition:max-height .35s ease}
+  .faq-item.open .faq-a{max-height:600px}
+  .faq-a-in{padding:0 16px 14px;color:var(--muted);font-size:13.5px;line-height:1.55}
+  .faq-a-in code{background:rgba(0,0,0,.4);padding:2px 8px;border-radius:6px;font-size:12px;color:var(--brand)}
+  .faq-cat{font-size:11px;color:var(--muted);letter-spacing:.14em;text-transform:uppercase;font-weight:700;margin:22px 4px 10px}
+  .faq-cat:first-child{margin-top:6px}
 </style>
 </head>
 <body>
@@ -880,17 +907,210 @@
     <div class="about-card">
       <h4>Документы</h4>
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:8px">
-        <a class="hero-btn secondary" style="height:44px" href="/terms/" target="_blank" rel="noopener">
-          Соглашение
-        </a>
-        <a class="hero-btn secondary" style="height:44px" href="/privacy/" target="_blank" rel="noopener">
-          Конфид.
-        </a>
-        <a class="hero-btn secondary" style="height:44px;grid-column:span 2" href="/faq/" target="_blank" rel="noopener">
-          Часто задаваемые вопросы
-        </a>
+        <button class="hero-btn secondary" style="height:44px" data-goto="terms">Соглашение</button>
+        <button class="hero-btn secondary" style="height:44px" data-goto="privacy">Конфид.</button>
+        <button class="hero-btn secondary" style="height:44px;grid-column:span 2" data-goto="faq">Часто задаваемые вопросы</button>
       </div>
     </div>
+  </section>
+
+  <!-- ============ TERMS ============ -->
+  <section class="screen" id="scr-terms">
+    <div class="doc-head">
+      <button class="doc-back" data-goto="about" aria-label="Назад">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>
+      </button>
+      <div>
+        <div class="doc-title">Пользовательское соглашение</div>
+        <div class="doc-sub">Редакция от 04.08.2026</div>
+      </div>
+    </div>
+    <div class="doc-body">
+      <h4>1. Общие положения</h4>
+      <p>Настоящее пользовательское соглашение регулирует отношения между сервисом Exora (далее — «Сервис») и физическим лицом (далее — «Клиент»), использующим сервис для обмена криптовалют.</p>
+      <p>Использование Сервиса означает полное и безоговорочное согласие Клиента с условиями Соглашения.</p>
+
+      <h4>2. Предмет соглашения</h4>
+      <p>Сервис предоставляет Клиенту возможность обмена криптовалюты Tether USD (USDT) на российские рубли (RUB) и обратно через оператора Сервиса.</p>
+      <p>Работаем в круглосуточном режиме 24/7, без выходных.</p>
+
+      <h4>3. Порядок оказания услуг</h4>
+      <ul>
+        <li>Клиент оставляет заявку через бот @exorappbot или мини-приложение</li>
+        <li>Оператор связывается с Клиентом в течение 5–15 минут для подтверждения условий</li>
+        <li>После подтверждения Клиент осуществляет перевод средств/криптовалюты</li>
+        <li>Сервис в течение 10–30 минут производит встречный перевод</li>
+        <li>Обмен считается завершённым после подтверждения обеими сторонами</li>
+      </ul>
+
+      <h4>4. Лимиты и комиссии</h4>
+      <ul>
+        <li>Минимальная сумма — <b>300 USDT</b></li>
+        <li>Максимальная сумма — <b>100 000 USDT</b></li>
+        <li>Комиссия Сервиса — <b>0%</b>, курс включает все накладные расходы</li>
+        <li>Курс фиксируется на момент подтверждения заявки оператором</li>
+      </ul>
+
+      <h4>5. Обязанности Клиента</h4>
+      <ul>
+        <li>Предоставить корректные реквизиты для перевода</li>
+        <li>При ошибке в реквизитах Сервис не несёт ответственности за утрату средств</li>
+        <li>Подтверждает, что средства получены законным путём</li>
+        <li>Не использовать Сервис для отмывания денежных средств и незаконной деятельности</li>
+      </ul>
+
+      <h4>6. AML-политика</h4>
+      <p>Сервис проводит автоматическую проверку кошельков через открытые источники (TronScan, GoPlus Security, TON Center). Сервис оставляет за собой право отказать в обмене при выявлении высокого риска.</p>
+      <p>В случае отказа средства возвращаются на исходный кошелёк за вычетом комиссии сети.</p>
+
+      <h4>7. Ограничение ответственности</h4>
+      <p>Сервис не несёт ответственности за: убытки от предоставления некорректных реквизитов, изменение курса между созданием и подтверждением заявки, задержки в блокчейн-сетях, действия банков и криптобирж.</p>
+
+      <h4>8. Разрешение споров</h4>
+      <p>Все споры разрешаются в претензионном порядке. Претензия направляется в поддержку. Сервис обязуется рассмотреть в течение 10 рабочих дней.</p>
+
+      <h4>9. Заключительные положения</h4>
+      <p>Сервис вправе изменять условия. Актуальная редакция — в мини-приложении. Продолжение использования означает согласие с новой редакцией.</p>
+    </div>
+    <div class="end-spacer"></div>
+  </section>
+
+  <!-- ============ PRIVACY ============ -->
+  <section class="screen" id="scr-privacy">
+    <div class="doc-head">
+      <button class="doc-back" data-goto="about" aria-label="Назад">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>
+      </button>
+      <div>
+        <div class="doc-title">Политика конфиденциальности</div>
+        <div class="doc-sub">Редакция от 04.08.2026</div>
+      </div>
+    </div>
+    <div class="doc-body">
+      <h4>1. Общие положения</h4>
+      <p>Настоящая Политика описывает порядок сбора, хранения и обработки персональных данных Клиентов сервиса Exora.</p>
+      <p>Используя Сервис, Клиент выражает согласие с условиями настоящей Политики.</p>
+
+      <h4>2. Собираемые данные</h4>
+      <ul>
+        <li>Telegram ID, username, имя — при взаимодействии с ботом</li>
+        <li>Адреса криптовалютных кошельков</li>
+        <li>Реквизиты для получения RUB (карта, СБП, телефон)</li>
+        <li>История заявок и обменов</li>
+        <li>Технические данные: IP-адрес, тип устройства, время сессий</li>
+      </ul>
+
+      <h4>3. Цели обработки</h4>
+      <ul>
+        <li>Оказание услуг обмена криптовалюты</li>
+        <li>Связь с Клиентом для подтверждения заявок</li>
+        <li>Соблюдение требований AML/KYC</li>
+        <li>Улучшение работы Сервиса</li>
+        <li>Уведомления о статусе заявок и изменении курса</li>
+      </ul>
+
+      <h4>4. Хранение данных</h4>
+      <p>Данные хранятся на серверах в защищённом виде. Срок хранения — не менее 5 лет с момента последней активности (в соответствии с ФЗ №115-ФЗ).</p>
+
+      <h4>5. Передача третьим лицам</h4>
+      <p>Сервис не передаёт данные третьим лицам, за исключением:</p>
+      <ul>
+        <li>По требованию уполномоченных органов РФ</li>
+        <li>Публичные blockchain-эксплореры для AML (только адрес кошелька)</li>
+        <li>API Telegram, Binance, CoinGecko для базовой работы</li>
+      </ul>
+
+      <h4>6. Права Клиента</h4>
+      <ul>
+        <li>Запросить удаление своих персональных данных</li>
+        <li>Получить копию собранных о нём данных</li>
+        <li>Отозвать согласие на обработку данных</li>
+      </ul>
+
+      <h4>7. Локальное хранилище</h4>
+      <p>Мини-приложение использует localStorage для хранения истории заявок на устройстве Клиента. Эти данные не передаются на сервер.</p>
+
+      <h4>8. Изменения Политики</h4>
+      <p>Сервис вправе изменять Политику. Актуальная редакция — в мини-приложении.</p>
+
+      <h4>9. Контакты</h4>
+      <p>По вопросам обработки данных: <a data-action="support">@dmdiam</a></p>
+    </div>
+    <div class="end-spacer"></div>
+  </section>
+
+  <!-- ============ FAQ ============ -->
+  <section class="screen" id="scr-faq">
+    <div class="doc-head">
+      <button class="doc-back" data-goto="about" aria-label="Назад">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>
+      </button>
+      <div>
+        <div class="doc-title">Частые вопросы</div>
+        <div class="doc-sub">Ответы на популярные вопросы</div>
+      </div>
+    </div>
+
+    <div class="faq-cat">Как это работает</div>
+    <div class="faq-item"><div class="faq-q">Как создать заявку на обмен?<span class="plus">+</span></div>
+      <div class="faq-a"><div class="faq-a-in">Откройте бот @exorappbot, нажмите «💱 Обмен USDT» — откроется мини-приложение. Выберите направление, сеть, укажите сумму, свой адрес и контакт. Нажмите «Создать заявку» — оператор свяжется в течение 5–15 минут.</div></div>
+    </div>
+    <div class="faq-item"><div class="faq-q">Сколько занимает обмен?<span class="plus">+</span></div>
+      <div class="faq-a"><div class="faq-a-in">Средняя скорость — 10–30 минут с момента подтверждения оператором. Зависит от загруженности блокчейна и наличия оператора онлайн (работаем 24/7).</div></div>
+    </div>
+    <div class="faq-item"><div class="faq-q">Какая комиссия?<span class="plus">+</span></div>
+      <div class="faq-a"><div class="faq-a-in">Комиссия сервиса — <b>0%</b>. Курс, который вы видите, уже включает всё. Дополнительно списывается только сетевая комиссия блокчейна (~1–2 USDT для TRC-20).</div></div>
+    </div>
+
+    <div class="faq-cat">Сети и валюты</div>
+    <div class="faq-item"><div class="faq-q">Какие сети USDT поддерживаются?<span class="plus">+</span></div>
+      <div class="faq-a"><div class="faq-a-in"><b>TRC-20</b> (Tron, рекомендуется — минимальная комиссия), <b>ERC-20</b> (Ethereum), <b>BEP-20</b> (BSC), <b>TON</b>.</div></div>
+    </div>
+    <div class="faq-item"><div class="faq-q">Могу ли я обменять BTC/ETH/TON?<span class="plus">+</span></div>
+      <div class="faq-a"><div class="faq-a-in">Основное направление — USDT. Обмен других валют возможен по индивидуальному запросу — свяжитесь с оператором.</div></div>
+    </div>
+
+    <div class="faq-cat">Лимиты</div>
+    <div class="faq-item"><div class="faq-q">Какие лимиты обмена?<span class="plus">+</span></div>
+      <div class="faq-a"><div class="faq-a-in">Минимум — <b>300 USDT</b>. Максимум — <b>100 000 USDT</b>. Для больших сумм — по индивидуальной договорённости.</div></div>
+    </div>
+    <div class="faq-item"><div class="faq-q">Нужна ли верификация?<span class="plus">+</span></div>
+      <div class="faq-a"><div class="faq-a-in">При соответствии стандартной AML-проверке — не требуется. Для сумм свыше 50 000 USDT возможен запрос дополнительных данных.</div></div>
+    </div>
+
+    <div class="faq-cat">AML-проверка</div>
+    <div class="faq-item"><div class="faq-q">Что такое AML-проверка?<span class="plus">+</span></div>
+      <div class="faq-a"><div class="faq-a-in">Проверка кошелька на связь с санкционными списками, миксерами, украденными средствами. Проводится автоматически через TronScan, GoPlus Security, TON Center для каждой заявки.</div></div>
+    </div>
+    <div class="faq-item"><div class="faq-q">Что если кошелёк не прошёл AML?<span class="plus">+</span></div>
+      <div class="faq-a"><div class="faq-a-in">Средства возвращаются на исходный кошелёк за вычетом сетевой комиссии. Свяжитесь с поддержкой для уточнения причин — иногда проблема в свежести кошелька (&lt;7 дней).</div></div>
+    </div>
+
+    <div class="faq-cat">Безопасность</div>
+    <div class="faq-item"><div class="faq-q">Как убедиться, что вы не мошенники?<span class="plus">+</span></div>
+      <div class="faq-a"><div class="faq-a-in">Работаем через договор. Отзывы: <a href="https://t.me/okoreviews">@okoreviews</a>. Кейсы: <a href="https://t.me/okocase">@okocase</a>. За каждой заявкой — живой оператор.</div></div>
+    </div>
+    <div class="faq-item"><div class="faq-q">Что если я ошибся в адресе?<span class="plus">+</span></div>
+      <div class="faq-a"><div class="faq-a-in">До подтверждения оператором можно отменить заявку. Если средства уже переведены на неверный адрес — возврат невозможен. Всегда проверяйте адрес и сеть перед переводом.</div></div>
+    </div>
+
+    <div class="faq-cat">Уведомления</div>
+    <div class="faq-item"><div class="faq-q">Как получать уведомления о курсе?<span class="plus">+</span></div>
+      <div class="faq-a"><div class="faq-a-in">В боте: <code>/alert 95</code> — придёт уведомление при достижении курса 95 ₽. Работает в обе стороны.</div></div>
+    </div>
+    <div class="faq-item"><div class="faq-q">Как отследить статус заявки?<span class="plus">+</span></div>
+      <div class="faq-a"><div class="faq-a-in">В мини-приложении откройте «Заявки» → тапните на заявку. Увидите таймлайн: создана → в работе → оплата → выдача. Push-уведомления приходят в бот при смене статуса.</div></div>
+    </div>
+
+    <div class="faq-cat">Поддержка</div>
+    <div class="faq-item"><div class="faq-q">Как связаться с поддержкой?<span class="plus">+</span></div>
+      <div class="faq-a"><div class="faq-a-in">Пишите <a data-action="support">@dmdiam</a>. Работаем 24/7, время ответа — до 15 минут.</div></div>
+    </div>
+    <div class="faq-item"><div class="faq-q">Есть ли API для автоматизации?<span class="plus">+</span></div>
+      <div class="faq-a"><div class="faq-a-in">Для корпоративных клиентов — API-доступ с webhook-уведомлениями. Условия обсуждаются индивидуально.</div></div>
+    </div>
+
+    <div class="end-spacer"></div>
   </section>
 
 </main>
@@ -1658,6 +1878,13 @@
         </div>`;
     }).join('');
   }
+
+
+  /* ---- FAQ accordion ---- */
+  document.addEventListener('click', e => {
+    const q = e.target.closest('.faq-q');
+    if (q) { q.parentElement.classList.toggle('open'); haptic('light'); }
+  });
 
   /* ---- INIT ---- */
   setDirection('buy');
