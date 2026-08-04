@@ -26,12 +26,12 @@ if ($selComp) {
 
 $meta = [
   'Кубок Гран-при'        => ['ic'=>'cup',    'slug'=>'cup',      'tag'=>'Высшая награда', 'desc'=>'Объёмный кубок обладателю Гран-при. Премиальное исполнение, подарочная упаковка.'],
-  'Статуэтка лауреата'    => ['ic'=>'trophy', 'slug'=>'statuette', 'tag'=>'', 'desc'=>'Наградная статуэтка лауреата I–III степени.'],
-  'Медаль дипломанта'     => ['ic'=>'medal',  'slug'=>'medal',    'tag'=>'', 'desc'=>'Металлическая медаль на ленте с символикой центра.'],
-  'Основной диплом'       => ['ic'=>'diploma','slug'=>'diploma',  'tag'=>'', 'desc'=>'Официальный диплом с результатом. Электронный — бесплатно; оригинал — на плотной бумаге.'],
-  'Дополнительный диплом' => ['ic'=>'diploma','slug'=>'diploma2', 'tag'=>'', 'desc'=>'Дополнительный экземпляр — для второго педагога, концертмейстера или архива.'],
-  'Именной диплом'        => ['ic'=>'diploma','slug'=>'diploma-name','tag'=>'', 'desc'=>'Индивидуальный диплом участнику коллектива с сохранённым званием.'],
-  'Благодарность'         => ['ic'=>'thanks', 'slug'=>'thanks',   'tag'=>'', 'desc'=>'Именная благодарность педагогу или руководителю.'],
+  'Статуэтка лауреата'    => ['ic'=>'trophy', 'slug'=>'statuette', 'tag'=>'', 'desc'=>'Наградная статуэтка лауреата I–III степени. Металл под золото/серебро/бронзу, гравировка звания.'],
+  'Медаль дипломанта'     => ['ic'=>'medal',  'slug'=>'medal',    'tag'=>'', 'desc'=>'Металлическая медаль на ленте с символикой центра — дипломантам I–III степени.'],
+  'Основной диплом'       => ['ic'=>'diploma','slug'=>'diploma',  'tag'=>'', 'desc'=>'Официальный диплом с итогом выступления. Присуждается по результату: ГРАН-ПРИ · ЛАУРЕАТ I, II, III степени · ДИПЛОМАНТ I, II, III степени · УЧАСТНИК. Электронный — бесплатно, оригинал — на плотной дизайнерской бумаге с печатями и подписями.'],
+  'Дополнительный диплом' => ['ic'=>'diploma','slug'=>'diploma2', 'tag'=>'', 'desc'=>'Диплом за специальную номинацию: ЗА АРТИСТИЗМ · ЗА ПАТРИОТИЗМ · ЗА ОРИГИНАЛЬНОЕ ИСПОЛНЕНИЕ · ЗА ВЕРНОСТЬ ТРАДИЦИЯМ и другие. Дополняет основной диплом.'],
+  'Именной диплом'        => ['ic'=>'diploma','slug'=>'diploma-name','tag'=>'', 'desc'=>'Для одного участника коллектива: то же звание, что у коллектива (ГРАН-ПРИ · ЛАУРЕАТ · ДИПЛОМАНТ · УЧАСТНИК), но с ФИО конкретного участника и названием коллектива в дипломе.'],
+  'Благодарность'         => ['ic'=>'thanks', 'slug'=>'thanks',   'tag'=>'', 'desc'=>'Именная благодарность педагогу, концертмейстеру или руководителю коллектива за подготовку участников.'],
 ];
 $icons = [
   'cup'     => '<path d="M8 21h8M12 17v4M6 4h12v5a6 6 0 0 1-12 0V4z"/><path d="M6 6H3a3 3 0 0 0 3 5M18 6h3a3 3 0 0 1-3 5"/>',
@@ -119,28 +119,8 @@ ob_start(); ?>
       <p style="color:var(--muted);margin:0;font-size:.9rem">Электронный основной диплом — бесплатно всем участникам. Ниже — образцы и цены оригиналов с доставкой.</p>
     </div>
 
-    <?php /* Образец заполненного диплома: живой HTML-макет с подписями и печатями */ ?>
-    <div class="card reveal" style="padding:0;overflow:hidden;margin:0 0 18px;display:flex;flex-wrap:wrap;align-items:stretch">
-      <?php // Превью — реальный отрендеренный образец диплома (эталон-шаблон), фолбэк на фон.
-            $sPreview = award_photo('diploma', (int)$selComp['id']);
-            if (!$sPreview) {
-              $sBg = trim((string)($selComp['diploma_bg'] ?? ''));
-              $sPreview = $sBg !== '' ? (preg_match('~^https?://~', $sBg) ? $sBg : url('/' . ltrim($sBg, '/'))) : '';
-            } ?>
-      <?php if ($sPreview): ?>
-        <a href="<?= url('/diploma-sample/' . $selComp['slug']) ?>" target="_blank" rel="noopener"
-           style="flex:0 0 148px;aspect-ratio:210/297;display:block;background:url('<?= h($sPreview) ?>') top center/cover no-repeat;border-right:1px solid var(--line)"
-           aria-label="Открыть образец диплома"></a>
-      <?php endif; ?>
-      <div style="flex:1;min-width:220px;padding:20px 22px;display:flex;flex-direction:column;gap:10px;justify-content:center">
-        <p style="margin:0;color:var(--muted);font-size:.88rem">Так выглядит заполненный диплом «<?= h($selComp['name']) ?>» —
-          с результатом, данными участника, подписями председателя жюри и генерального директора, печатями центра.</p>
-        <div style="display:flex;gap:10px;flex-wrap:wrap">
-          <a class="btn btn--primary btn--sm" href="<?= url('/diploma-sample/' . $selComp['slug']) ?>" target="_blank" rel="noopener">Открыть образец</a>
-          <a class="btn btn--ghost btn--sm" href="<?= url('/diploma-sample/' . $selComp['slug']) ?>?thanks=1" target="_blank" rel="noopener">Благодарность педагогу</a>
-        </div>
-      </div>
-    </div>
+    <?php /* Верхний блок с отдельным образцом убран по просьбе — оставлены только
+             карточки наград с ценами; крупный просмотр открывается по клику на карточку. */ ?>
 
     <div class="aw-grid">
       <?php foreach ($order as $item):
@@ -150,16 +130,29 @@ ob_start(); ?>
         $ic = $icons[$m['ic']] ?? $icons['diploma'];
         $photo = award_photo($m['slug'], (int)$selComp['id']);
         $minPrice = min($kinds);
+        // Крупное превью для модалки: фото награды; для дипломов — общий шаблон
+        // диплома конкурса (award_photo('diploma') или diploma_bg).
+        $preview = $photo;
+        if (!$preview && in_array($m['slug'], ['diploma','diploma2','diploma-name'], true)) {
+          $preview = award_photo('diploma', (int)$selComp['id']);
+          if (!$preview) {
+            $sBg = trim((string)($selComp['diploma_bg'] ?? ''));
+            $preview = $sBg !== '' ? (preg_match('~^https?://~', $sBg) ? $sBg : url('/' . ltrim($sBg, '/'))) : '';
+          }
+        }
       ?>
       <article class="shop-card aw-card reveal" data-item="<?= h($item) ?>">
-        <div class="aw-media<?= $photo ? ' has-photo' : '' ?>">
+        <button type="button" class="aw-media<?= $photo ? ' has-photo' : '' ?>" data-aw-open
+                data-title="<?= h($item) ?>" data-desc="<?= h($m['desc']) ?>" data-preview="<?= h($preview) ?>"
+                aria-label="Посмотреть крупно: <?= h($item) ?>">
           <?php if ($m['tag']): ?><span class="aw-badge"><?= h($m['tag']) ?></span><?php endif; ?>
           <?php if ($photo): ?>
             <img src="<?= h($photo) ?>" alt="<?= h($item) ?>" loading="lazy">
           <?php else: ?>
             <span class="aw-medallion"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><?= $ic ?></svg></span>
           <?php endif; ?>
-        </div>
+          <span class="aw-zoom" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3M11 8v6M8 11h6"/></svg></span>
+        </button>
         <div class="aw-info">
           <h3 class="aw-name"><?= h($item) ?></h3>
           <div class="aw-kinds">
@@ -189,6 +182,63 @@ ob_start(); ?>
     <?php if (!$catalog): ?><p style="color:var(--muted);text-align:center;margin-top:20px">Прайс наград пока не заполнен.</p><?php endif; ?>
   </div>
 </section>
+
+<?php /* Модалка крупного просмотра образца награды (диплом/кубок/статуэтка/медаль) */ ?>
+<div class="aw-modal" id="awModal" hidden aria-modal="true" role="dialog">
+  <div class="aw-modal-backdrop" data-aw-close></div>
+  <div class="aw-modal-panel">
+    <button type="button" class="aw-modal-x" data-aw-close aria-label="Закрыть">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg>
+    </button>
+    <div class="aw-modal-media" id="awModalMedia"></div>
+    <div class="aw-modal-body">
+      <h3 class="aw-modal-title" id="awModalTitle"></h3>
+      <p class="aw-modal-desc" id="awModalDesc"></p>
+    </div>
+  </div>
+</div>
+<style>
+.aw-media{position:relative;border:0;width:100%;padding:0;cursor:zoom-in;background:transparent;display:block}
+.aw-zoom{position:absolute;right:8px;bottom:8px;width:30px;height:30px;border-radius:50%;display:flex;align-items:center;justify-content:center;background:rgba(10,20,50,.55);color:#fff;backdrop-filter:blur(4px);opacity:.9;transition:.2s}
+.aw-media:hover .aw-zoom{opacity:1;transform:scale(1.06)}
+.aw-zoom svg{width:16px;height:16px}
+.aw-modal{position:fixed;inset:0;z-index:2000;display:flex;align-items:center;justify-content:center;padding:20px}
+.aw-modal[hidden]{display:none}
+.aw-modal-backdrop{position:absolute;inset:0;background:rgba(6,12,32,.82);backdrop-filter:blur(6px)}
+.aw-modal-panel{position:relative;z-index:1;max-width:520px;width:100%;max-height:92vh;overflow:auto;background:var(--card,#fff);border-radius:20px;box-shadow:0 24px 70px rgba(0,0,0,.5);animation:awPop .28s cubic-bezier(.2,.9,.3,1.2)}
+@keyframes awPop{from{opacity:0;transform:translateY(16px) scale(.96)}to{opacity:1;transform:none}}
+.aw-modal-x{position:absolute;top:12px;right:12px;z-index:2;width:40px;height:40px;border-radius:50%;border:0;background:rgba(10,20,50,.6);color:#fff;display:flex;align-items:center;justify-content:center;cursor:pointer}
+.aw-modal-x svg{width:20px;height:20px}
+.aw-modal-media{width:100%;background:#0b1430;display:flex;align-items:center;justify-content:center;border-radius:20px 20px 0 0;min-height:200px}
+.aw-modal-media img{max-width:100%;max-height:70vh;display:block;object-fit:contain}
+.aw-modal-media .aw-medallion{width:120px;height:120px;color:var(--gold-2,#d4a24a)}
+.aw-modal-media .aw-medallion svg{width:100%;height:100%}
+.aw-modal-body{padding:18px 22px 24px}
+.aw-modal-title{margin:0 0 8px;font-size:1.25rem}
+.aw-modal-desc{margin:0;color:var(--muted);font-size:.95rem;line-height:1.6}
+</style>
+<script>
+(function(){
+  var modal=document.getElementById('awModal');
+  if(!modal)return;
+  var media=document.getElementById('awModalMedia'),
+      title=document.getElementById('awModalTitle'),
+      desc=document.getElementById('awModalDesc');
+  function open(btn){
+    var t=btn.getAttribute('data-title')||'',d=btn.getAttribute('data-desc')||'',p=btn.getAttribute('data-preview')||'';
+    title.textContent=t; desc.textContent=d;
+    if(p){media.innerHTML='<img src="'+p.replace(/"/g,'&quot;')+'" alt="'+t.replace(/"/g,'&quot;')+'">';}
+    else{var med=btn.querySelector('.aw-medallion');media.innerHTML=med?med.outerHTML:'';}
+    modal.hidden=false;document.body.style.overflow='hidden';
+  }
+  function close(){modal.hidden=true;document.body.style.overflow='';media.innerHTML='';}
+  document.addEventListener('click',function(e){
+    var op=e.target.closest('[data-aw-open]'); if(op){e.preventDefault();open(op);return;}
+    if(e.target.closest('[data-aw-close]'))close();
+  });
+  document.addEventListener('keydown',function(e){if(e.key==='Escape'&&!modal.hidden)close();});
+})();
+</script>
 
 <button type="button" class="shop-cart-fab" id="cartFab" hidden aria-label="Корзина">
   <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="21" r="1.6"/><circle cx="18" cy="21" r="1.6"/><path d="M2 3h3l2.4 12.4a2 2 0 0 0 2 1.6h8.5a2 2 0 0 0 2-1.6L23 7H6"/></svg>

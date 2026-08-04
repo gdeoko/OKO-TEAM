@@ -81,6 +81,15 @@ function mm_email_layout(string $inner, array $opt = []): string {
         ? $note . ' <a href="' . h($unsubUrl) . '" style="color:' . $gold . ';text-decoration:underline;">Отписаться от рассылки</a>.'
         : $note;
 
+    // Подписка на наши каналы — ВКонтакте и MAX (в каждом письме).
+    $vkUrl  = h((string) cfgv('org_vk', 'https://vk.com/muzmir_kc'));
+    $maxUrl = h((string) cfgv('org_max', 'https://max.ru/join/v4SJluLzTAMWm4r5ldJ-JyA2rS5InmPYjaP6drn3F8I'));
+    $social = '<div style="margin-top:18px;">'
+        . '<div style="font-size:12px;color:' . $muted . ';margin-bottom:8px;">Подпишитесь на наши каналы — анонсы конкурсов, результаты и полезное:</div>'
+        . '<a href="' . $vkUrl . '" style="display:inline-block;margin:0 8px 8px 0;padding:9px 18px;background:' . $navy . ';color:#FFFFFF;text-decoration:none;border-radius:9px;font-size:13px;font-weight:700;">ВКонтакте</a>'
+        . '<a href="' . $maxUrl . '" style="display:inline-block;margin:0 8px 8px 0;padding:9px 18px;background:' . $gold . ';color:' . $navy . ';text-decoration:none;border-radius:9px;font-size:13px;font-weight:700;">Канал в MAX</a>'
+        . '</div>';
+
     return <<<HTML
 <!DOCTYPE html>
 <html lang="ru">
@@ -117,6 +126,7 @@ function mm_email_layout(string $inner, array $opt = []): string {
     <td style="padding:24px 42px 32px;font-size:13px;line-height:1.65;color:{$muted};">
       <div style="font-family:Georgia,'Times New Roman',serif;font-weight:700;color:{$navy};font-size:14px;margin-bottom:6px;">{$org}</div>
       {$contacts}
+      {$social}
       <div style="margin-top:16px;font-size:12px;color:#96A0BE;">{$unsubLine}</div>
       <div style="margin-top:8px;font-size:12px;color:#A9B2CC;">© {$year} {$org}</div>
     </td>

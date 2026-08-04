@@ -325,7 +325,13 @@ if (function_exists('tg_notify_admin')) {
 }
 
 // --- уведомление владельца в 3 канала + серверная аналитика ---
-if (is_file(BASE_PATH . '/core/notify_owner.php')) {
+// ВАЖНО: владельцу шлём событие ТОЛЬКО если оплата не требуется (бесплатный
+// конкурс или сумма 0). По платной, ещё НЕ оплаченной заявке владелец НЕ
+// уведомляется — он получит уведомление «Оплата получена» из вебхука ЮKassa
+// (core/payments.php), когда деньги реально придут. Так владелец видит только
+// оплаченные заявки, а неоплаченные не создают шум.
+$ownerNeedsNotify = ($priceInfo === null) || ((int) ($priceInfo['amount'] ?? 0) <= 0);
+if ($ownerNeedsNotify && is_file(BASE_PATH . '/core/notify_owner.php')) {
     require_once BASE_PATH . '/core/notify_owner.php';
     try {
         $sumText = $priceInfo !== null
