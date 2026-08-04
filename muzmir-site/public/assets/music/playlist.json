@@ -2,215 +2,38 @@
  "streams": [
   {
    "url": "https://uk2.streamingpulse.com/ssl/vcr1",
-   "title": "Классика · без ведущих",
+   "title": "Venice Classic Radio · без ведущих",
+   "live": true
+  },
+  {
+   "url": "https://live.musopen.org:8085/streamvbr0",
+   "title": "Musopen Classical · 24/7 без ведущих",
    "live": true
   },
   {
    "url": "https://stream.srg-ssr.ch/m/rsc_de/mp3_128",
-   "title": "Классическое радио · 24/7",
+   "title": "Radio Swiss Classic",
    "live": true
   }
  ],
  "tracks": [
-  {
-   "url": "https://archive.org/download/CarusoHandel/CarusoHandel-OmbraMaiFu.mp3",
-   "title": "Ombra Mai Fu",
-   "composer": "Handel"
-  },
-  {
-   "url": "https://archive.org/download/PedroYElLoboCuentoMusicalNarrado/05-pedroYElLobo.mp3",
-   "title": "Pedro y el lobo, cuento musical narrado",
-   "composer": "Prokofiev"
-  },
-  {
-   "url": "https://archive.org/download/lp_peer-gynt_edvard-grieg-sir-john-barbirolli-halle/disc1/01.01.%20Overture.mp3",
-   "title": "Peer Gynt",
-   "composer": "Grieg"
-  },
-  {
-   "url": "https://archive.org/download/ChopinFourteenWaltzes/01%20No.%201%20in%20E%20flat%2C%20Op.%2018%20Grande%20valse%20brilliante.mp3",
-   "title": "Chopin: Fourteen Waltzes",
-   "composer": "Chopin"
-  },
-  {
-   "url": "https://archive.org/download/SibeliusSocietyAlbumNo.1/01_tempoMoltoModerato.mp3",
-   "title": "Sibelius Society: Album No. 1",
-   "composer": "Sibelius"
-  },
-  {
-   "url": "https://archive.org/download/lp_artists-life-waltz-blue-danube-waltz_johann-strauss-jr-georges-bizet-camille/disc1/01.01.%20Artist%27s%20Life%20Waltz.mp3",
-   "title": "Artist's Life Waltz / Blue Danube Waltz / Wine, Woman And Song Waltz / L'Arlésie",
-   "composer": "Saint-Saens"
-  },
-  {
-   "url": "https://archive.org/download/rcavictorsbestof00rubi/01_La_mer___dialogue_du_vent_et_la_mer___Debussy__Boston_Symphony_Orchestra___Charles_Munch__cond.__LM_2111.mp3",
-   "title": "RCA Victor's best of '57 Red Seal preview album",
-   "composer": "Verdi"
-  },
-  {
-   "url": "https://archive.org/download/ToreadorSong_201309/Toreador%20Song.mp3",
-   "title": "Toreador Song",
-   "composer": "Bizet"
-  },
-  {
-   "url": "https://archive.org/download/lp_carmen-complete_georges-bizet/disc2/04.01.%20Act%20II%20%28conluded%29.mp3",
-   "title": "Carmen (Complete)",
-   "composer": "Bizet"
-  },
-  {
-   "url": "https://archive.org/download/lp_intgrale-des-poemes-symphoniques-avec-les_franz-liszt-the-london-philharmonic-orches/disc1/01.01.%20Les%20Pr%C3%A9ludes%20%28Po%C3%A8me%20Symphonique%20N%C2%B0%203%20D%27Apr%C3%A8s%20Lamartine%29.mp3",
-   "title": "Intégrale Des Poèmes Symphoniques (Avec \"Les Préludes\" Et \"Mazeppa\")",
-   "composer": "Liszt"
-  },
-  {
-   "url": "https://archive.org/download/DvorakSymphonyNo.9fromTheNewWorld/01_Adagio-AlegroMolto.mp3",
-   "title": "Symphony No. 9 \"From the New World\"",
-   "composer": "Dvorak"
-  },
-  {
-   "url": "https://archive.org/download/TheBlueDanube/The%20Blue%20Danube.mp3",
-   "title": "The Blue Danube",
-   "composer": "Strauss"
-  },
-  {
-   "url": "https://archive.org/download/HaydnSymphonyNo.100military/01-JosephHaydnSymphonyNr100InGMajorMilitary-AdagioAllegro.mp3",
-   "title": "Haydn Symphony No. 100 'Military'",
-   "composer": "Haydn"
-  },
-  {
-   "url": "https://archive.org/download/napsot7/napsot7.mp3",
-   "title": "napsot7",
-   "composer": "Dvorak"
-  },
-  {
-   "url": "https://archive.org/download/lp_paganini-saint-sans_zino-francescatti-niccol-paganini-camille/disc1/01.02.%20Concerto%20No.1%20In%20D%20Major%2C%20Op.%206%3A%20Second%20Movement%3A%20Adagio%20Expressivo.mp3",
-   "title": "Paganini + Saint Saëns",
-   "composer": "Saint-Saens"
-  },
-  {
-   "url": "https://archive.org/download/lp_grieg-piano-concerto-and-favorite-encores_arthur-rubinstein-alfred-wallenstein-edvar/disc1/01.01.%20Concerto%20In%20A%20Minor%2C%20Op.%2016%3A%20I.%20Allegro%20Molto%20Moderato.mp3",
-   "title": "Grieg Piano Concerto (and Favorite Encores)",
-   "composer": "Grieg"
-  },
-  {
-   "url": "https://archive.org/download/lp_basic-library-of-the-worlds-greatest-music_nikolai-rimsky-korsakov-antonn-dvok-dvorak/disc1/01.01.%20Scherezade%2C%20Op.%2035%3A%203rd%20Movement%3A%20Andantino%2C%20Quasi%20Allegretto%3B%204th%20Movement%3A%20Allegro%20Molto.mp3",
-   "title": "Basic Library Of The World's Greatest Music - Album No. 3",
-   "composer": "Rimsky-Korsakov"
-  },
-  {
-   "url": "https://archive.org/download/LaDamoiselleElue/La%20Damoiselle%20elue.mp3",
-   "title": "La Damoiselle Elue, L 62",
-   "composer": "Debussy"
-  },
-  {
-   "url": "https://archive.org/download/SchubertMomentsMusicaux1-6/01_no.1InCMajor.mp3",
-   "title": "Schubert: Moments musicaux 1-6",
-   "composer": "Schubert"
-  },
-  {
-   "url": "https://archive.org/download/stereostereoster00font/01_Hungarian_march__Deutschmeister_Band_.mp3",
-   "title": "Stereo! Stereo! Stereo!",
-   "composer": "Rossini"
-  },
-  {
-   "url": "https://archive.org/download/lp_requiem_giuseppe-verdi-joan-sutherland-marilyn-hor/disc1/01.01.%20Requiem.mp3",
-   "title": "Requiem",
-   "composer": "Verdi"
-  },
-  {
-   "url": "https://archive.org/download/BeaucoupsDeDansesMacabres/01DanseMacabreOp.40-Orchestra.mp3",
-   "title": "Beaucoups de Danses Macabres",
-   "composer": "Saint-Saens"
-  },
-  {
-   "url": "https://archive.org/download/carmenopera_201903/Carmen/Carmen%201%2C1.mp3",
-   "title": "Carmen Full Opera",
-   "composer": "Bizet"
-  },
-  {
-   "url": "https://archive.org/download/TheMarriageOfFigaro/The%20Marriage%20of%20Figaro.mp3",
-   "title": "The Marriage Of Figaro",
-   "composer": "Mozart"
-  },
-  {
-   "url": "https://archive.org/download/EmperorWaltz_201309/Emperor%20Waltz.mp3",
-   "title": "Kaiser-Walzer (Emperor Waltz), Op. 437",
-   "composer": "Strauss"
-  },
-  {
-   "url": "https://archive.org/download/78_pensier-profondo-how-deep-the-thought-is_poli-gigli-baronti-members-of-la-s_gbia7005099/01%20-%20QUESTO%20MAR%20ROSSO%20%28THIS%20RED%20SEA%20PAS%20-%20POLI%2C%20GIGLI%20%26%20BARONTI.mp3",
-   "title": "QUESTO MAR ROSSO (THIS RED SEA PASSAGE); PENSIER PROFONDO ! (How deep the though",
-   "composer": "Puccini"
-  },
-  {
-   "url": "https://archive.org/download/ucberkeley_webcast_itunesu_390697297/1.%202007-12-07%20-%20Keynote%20Address%3A%20The%20China%20Sustainable%20Energy%20Renewable%20Energy%20Program.mp3",
-   "title": "Humanities Events Audio",
-   "composer": "Faure"
-  },
-  {
-   "url": "https://archive.org/download/ClairDeLune_182/Debussy_Clair_de_Lune.mp3",
-   "title": "Clair de Lune",
-   "composer": "Debussy"
-  },
-  {
-   "url": "https://archive.org/download/humorous_readings_recitations_1711_librivox/humorousreadingsandrecitations_01_wagner.mp3",
-   "title": "Humorous Readings and Recitations",
-   "composer": "Wagner"
-  },
-  {
-   "url": "https://archive.org/download/TheHeavensAreTelling/TheHeavensAreTelling.mp3",
-   "title": "The Heavens are Telling",
-   "composer": "Haydn"
-  },
-  {
-   "url": "https://archive.org/download/musicofrimskykor00rims/01_La_nuit_de_No__l__Christmas_eve__suite.mp3",
-   "title": "Music of Rimsky-Korsakov",
-   "composer": "Rimsky-Korsakov"
-  },
-  {
-   "url": "https://archive.org/download/lp_the-four-seasons_antonio-vivaldi_0/disc1/01.01.%20No.%201%20Spring%20-%201st%20Movt.%20Allegro%3B%202nd%20Movt.%20Largo%3B%203rd%20Movt.%20Allegro.mp3",
-   "title": "The Four Seasons",
-   "composer": "Vivaldi"
-  },
-  {
-   "url": "https://archive.org/download/sibelius-symphonies-1-7/01%20Symphony%20No.%201%20-%20I%20Andante%20ma%20non%20troppo%20-%20Allegro%20energico.mp3",
-   "title": "Sibelius Symphonies 1-7",
-   "composer": "Sibelius"
-  },
-  {
-   "url": "https://archive.org/download/CarusoVerdi/CarusoVerdi-CelesteAida.mp3",
-   "title": "Collected Works of Caruso (Verdi)",
-   "composer": "Verdi"
-  },
-  {
-   "url": "https://archive.org/download/SuiteBergamasque-ClairDeLunedebussy/ClairdeluneDebussy.mp3",
-   "title": "Suite Bergamasque - Clair De Lune (Debussy)",
-   "composer": "Debussy"
-  },
-  {
-   "url": "https://archive.org/download/BestPodcastInTheUniverse/002Noagenda-85853-11-02-2007.mp3",
-   "title": "THE BEST PODCAST IN THE UNIVERSE! - Episodes 001 - 700",
-   "composer": "Dvorak"
-  },
-  {
-   "url": "https://archive.org/download/78_wedding-march_symphony-orchestra-mendelssohn_gbia0012855a/Wedding%20March%20-%20Symphony%20Orchestra%20-%20Mendelssohn-restored.mp3",
-   "title": "Wedding March",
-   "composer": "Mendelssohn"
-  },
-  {
-   "url": "https://archive.org/download/BarberOfSeville_719/Rossini_Largo_Al_Factotum_Barber_of_Seville.mp3",
-   "title": "Barber of Seville",
-   "composer": "Rossini"
-  },
-  {
-   "url": "https://archive.org/download/BizetHabnera/Bizet_Habanera.mp3",
-   "title": "Bizet Habnera",
-   "composer": "Bizet"
-  },
-  {
-   "url": "https://archive.org/download/lp_bolero_maurice-ravel-eugene-ormandy-the-philad/disc1/01.01.%20Bolero.mp3",
-   "title": "Bolero",
-   "composer": "Ravel"
-  }
+  {"url": "https://archive.org/download/ClairDeLune_182/Debussy_Clair_de_Lune.mp3", "title": "Clair de Lune", "composer": "Debussy"},
+  {"url": "https://archive.org/download/lp_the-four-seasons_antonio-vivaldi_0/disc1/01.01.%20No.%201%20Spring%20-%201st%20Movt.%20Allegro%3B%202nd%20Movt.%20Largo%3B%203rd%20Movt.%20Allegro.mp3", "title": "Времена года — Весна", "composer": "Vivaldi"},
+  {"url": "https://archive.org/download/ChopinFourteenWaltzes/01%20No.%201%20in%20E%20flat%2C%20Op.%2018%20Grande%20valse%20brilliante.mp3", "title": "Большой блестящий вальс", "composer": "Chopin"},
+  {"url": "https://archive.org/download/TheBlueDanube/The%20Blue%20Danube.mp3", "title": "На прекрасном голубом Дунае", "composer": "Strauss"},
+  {"url": "https://archive.org/download/DvorakSymphonyNo.9fromTheNewWorld/01_Adagio-AlegroMolto.mp3", "title": "Симфония №9 «Из Нового Света»", "composer": "Dvorak"},
+  {"url": "https://archive.org/download/lp_peer-gynt_edvard-grieg-sir-john-barbirolli-halle/disc1/01.01.%20Overture.mp3", "title": "Пер Гюнт — Увертюра", "composer": "Grieg"},
+  {"url": "https://archive.org/download/SibeliusSocietyAlbumNo.1/01_tempoMoltoModerato.mp3", "title": "Album No. 1", "composer": "Sibelius"},
+  {"url": "https://archive.org/download/SchubertMomentsMusicaux1-6/01_no.1InCMajor.mp3", "title": "Музыкальные моменты", "composer": "Schubert"},
+  {"url": "https://archive.org/download/lp_bolero_maurice-ravel-eugene-ormandy-the-philad/disc1/01.01.%20Bolero.mp3", "title": "Болеро", "composer": "Ravel"},
+  {"url": "https://archive.org/download/EmperorWaltz_201309/Emperor%20Waltz.mp3", "title": "Императорский вальс", "composer": "Strauss"},
+  {"url": "https://archive.org/download/lp_grieg-piano-concerto-and-favorite-encores_arthur-rubinstein-alfred-wallenstein-edvar/disc1/01.01.%20Concerto%20In%20A%20Minor%2C%20Op.%2016%3A%20I.%20Allegro%20Molto%20Moderato.mp3", "title": "Концерт для фортепиано ля минор", "composer": "Grieg"},
+  {"url": "https://archive.org/download/lp_basic-library-of-the-worlds-greatest-music_nikolai-rimsky-korsakov-antonn-dvok-dvorak/disc1/01.01.%20Scherezade%2C%20Op.%2035%3A%203rd%20Movement%3A%20Andantino%2C%20Quasi%20Allegretto%3B%204th%20Movement%3A%20Allegro%20Molto.mp3", "title": "Шехеразада", "composer": "Rimsky-Korsakov"},
+  {"url": "https://archive.org/download/HaydnSymphonyNo.100military/01-JosephHaydnSymphonyNr100InGMajorMilitary-AdagioAllegro.mp3", "title": "Симфония №100 «Военная»", "composer": "Haydn"},
+  {"url": "https://archive.org/download/lp_paganini-saint-sans_zino-francescatti-niccol-paganini-camille/disc1/01.02.%20Concerto%20No.1%20In%20D%20Major%2C%20Op.%206%3A%20Second%20Movement%3A%20Adagio%20Expressivo.mp3", "title": "Концерт для скрипки №1", "composer": "Paganini"},
+  {"url": "https://archive.org/download/SuiteBergamasque-ClairDeLunedebussy/ClairdeluneDebussy.mp3", "title": "Бергамасская сюита", "composer": "Debussy"},
+  {"url": "https://archive.org/download/BeaucoupsDeDansesMacabres/01DanseMacabreOp.40-Orchestra.mp3", "title": "Пляска смерти", "composer": "Saint-Saens"},
+  {"url": "https://archive.org/download/78_wedding-march_symphony-orchestra-mendelssohn_gbia0012855a/Wedding%20March%20-%20Symphony%20Orchestra%20-%20Mendelssohn-restored.mp3", "title": "Свадебный марш", "composer": "Mendelssohn"},
+  {"url": "https://archive.org/download/sibelius-symphonies-1-7/01%20Symphony%20No.%201%20-%20I%20Andante%20ma%20non%20troppo%20-%20Allegro%20energico.mp3", "title": "Симфония №1", "composer": "Sibelius"}
  ]
 }

@@ -131,7 +131,6 @@ ob_start(); ?>
            aria-label="Открыть образец диплома"></a>
       <?php endif; ?>
       <div style="flex:1;min-width:220px;padding:20px 22px;display:flex;flex-direction:column;gap:10px;justify-content:center">
-        <h3 style="margin:0">Образец диплома конкурса</h3>
         <p style="margin:0;color:var(--muted);font-size:.88rem">Так выглядит заполненный диплом «<?= h($selComp['name']) ?>» —
           с результатом, данными участника, подписями председателя жюри и генерального директора, печатями центра.</p>
         <div style="display:flex;gap:10px;flex-wrap:wrap">

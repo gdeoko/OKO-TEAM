@@ -97,56 +97,6 @@ ob_start(); ?>
   </div>
 </section>
 
-<?php if ($currentUser || $quickDeadline): ?>
-<section class="section quick-actions" style="padding:14px 0 0">
-  <div class="container">
-    <div class="qa-grid">
-      <?php if ($quickApp):
-        [$stLbl, $stKind] = $quickAppStatusLbl[$quickApp['status']] ?? [$quickApp['status'], 'ok']; ?>
-      <a class="qa-tile qa-tile--<?= h($stKind) ?>" href="<?= url('/cabinet#apps') ?>">
-        <div class="qa-ic">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6M9 15l2 2 4-4"/></svg>
-        </div>
-        <div class="qa-body">
-          <span class="qa-lbl">Последняя заявка</span>
-          <b><?= h(mb_strimwidth($quickApp['comp_name'], 0, 38, '…')) ?></b>
-          <span class="qa-meta">№ <?= h($quickApp['number']) ?> · <?= h($stLbl) ?></span>
-        </div>
-        <svg class="qa-arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M9 6l6 6-6 6"/></svg>
-      </a>
-      <?php endif; ?>
-
-      <?php if ($quickDeadline):
-        $daysLeft = max(0, (int) ceil((strtotime($quickDeadline['end_date']) - time()) / 86400));
-      ?>
-      <a class="qa-tile qa-tile--<?= $daysLeft <= 3 ? 'warn' : 'ok' ?>" href="<?= url('/competition/' . $quickDeadline['slug']) ?>">
-        <div class="qa-ic">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M3 10h18M8 2v4M16 2v4"/></svg>
-        </div>
-        <div class="qa-body">
-          <span class="qa-lbl">Ближайший дедлайн</span>
-          <b><?= h(mb_strimwidth($quickDeadline['name'], 0, 38, '…')) ?></b>
-          <span class="qa-meta">Осталось <?= (int)$daysLeft ?> <?= _ru_plural($daysLeft, ['день','дня','дней']) ?> · до <?= h(ru_date($quickDeadline['end_date'])) ?></span>
-        </div>
-        <svg class="qa-arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M9 6l6 6-6 6"/></svg>
-      </a>
-      <?php endif; ?>
-
-      <a class="qa-tile qa-tile--cta" href="<?= url('/apply') ?>">
-        <div class="qa-ic">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>
-        </div>
-        <div class="qa-body">
-          <span class="qa-lbl">Новая заявка</span>
-          <b>Подать сейчас</b>
-          <span class="qa-meta">Один клик — выбрать конкурс и подать</span>
-        </div>
-        <svg class="qa-arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M9 6l6 6-6 6"/></svg>
-      </a>
-    </div>
-  </div>
-</section>
-<?php endif; ?>
 
 <!-- Анимационный разделитель -->
 <div class="mz-divider" aria-hidden="true"><i></i></div>

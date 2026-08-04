@@ -2458,3 +2458,24 @@ html body nav.appnav, .appnav-inner, .appnav a.appnav-cta{overflow:visible !impo
 .auth-btn--vk, .auth-btn--vk span, .auth-btn--vk svg,
 .auth-btn--max, .auth-btn--max span, .auth-btn--max svg{
   color:#fff !important;-webkit-text-fill-color:#fff !important;fill:currentColor}
+
+/* ══════════════ ФИНАЛЬНЫЕ ПРАВКИ: нижний док, кнопки ══════════════ */
+/* Убираем стрелки-«палочки» индикатора: только чистое подчёркивание под активной. */
+.appnav a::before{display:none !important}
+.appnav a::after{content:"" !important;position:absolute !important;left:50% !important;top:auto !important;bottom:1px !important;
+  transform:translateX(-50%) scaleX(0) !important;width:22px !important;height:3px !important;border-radius:3px !important;
+  background:var(--grad-gold) !important;box-shadow:0 0 7px rgba(201,168,76,.6) !important;opacity:1 !important;
+  transition:transform .26s cubic-bezier(.34,1.4,.5,1) !important}
+.appnav a.active::after{transform:translateX(-50%) scaleX(1) !important}
+.appnav a.appnav-cta::after{display:none !important}
+.appnav-inner{align-items:flex-end !important;justify-content:space-around !important}
+
+/* Контраст текста на кнопках: золотая заливка → всегда тёмный navy-текст. */
+.btn--primary,.btn.active,.btn--gold,.aw-comp-go,.co-cta,.auth-btn--primary{color:var(--gold-fg) !important}
+.btn--primary svg,.btn.active svg,.btn--gold svg{color:var(--gold-fg)}
+/* Ghost/прозрачные — читаемый золотой по теме (не сливается с фоном). */
+.btn--ghost{color:var(--gold-ink)}
+[data-theme="dark"] .btn--ghost{color:var(--gold)}
+/* Базовый .btn без модификатора — безопасный тёмно-золотой (на светлом/стекле). */
+.btn:not(.btn--primary):not(.active):not(.btn--gold):not(.btn--ghost){color:var(--gold-ink)}
+[data-theme="dark"] .btn:not(.btn--primary):not(.active):not(.btn--gold):not(.btn--ghost){color:var(--gold)}

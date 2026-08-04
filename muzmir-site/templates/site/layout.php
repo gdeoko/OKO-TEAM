@@ -137,13 +137,48 @@ html body{padding-top:0 !important}
 </head>
 <body<?= $u ? ' class="is-auth"' : '' ?>>
 <div class="app-bg" aria-hidden="true">
+  <!-- Тёмная тема: реальное видео Земли из космоса -->
+  <video class="bg-earth" autoplay muted loop playsinline preload="auto" disablepictureinpicture>
+    <source src="<?= url('/assets/video/bg/earth.mp4') ?>" type="video/mp4">
+  </video>
+  <!-- Светлая тема: реальное небо + настоящие облака (без радуги) -->
+  <div class="bg-sky"></div>
+  <div class="bg-clouds">
+    <span class="bg-cloud bg-cloud--1"></span>
+    <span class="bg-cloud bg-cloud--2"></span>
+    <span class="bg-cloud bg-cloud--3"></span>
+  </div>
+  <!-- Затемняющая вуаль для читаемости текста -->
+  <div class="bg-scrim"></div>
+  <!-- Оверлей «магии»: ноты, звёзды, кометы -->
   <canvas id="mzBgArt"></canvas>
 </div>
 <style id="mz-bgart-css">
-/* Рисованный анимационный фон: canvas на весь экран, поверх — контент. */
-.app-bg{position:fixed;inset:0;z-index:-1;overflow:hidden}
-.app-bg #mzBgArt{position:absolute;inset:0;width:100%;height:100%;display:block}
-/* Старые декоративные слои и видео-стили не используются */
+.app-bg{position:fixed;inset:0;z-index:-1;overflow:hidden;background:#0C1738}
+:root:not([data-theme="dark"]) .app-bg{background:#BFDDF3}
+.app-bg #mzBgArt{position:absolute;inset:0;width:100%;height:100%;display:block;z-index:4}
+/* ── Тёмная тема: видео настоящей Земли ── */
+.bg-earth{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;z-index:1;opacity:0;transition:opacity .9s ease}
+[data-theme="dark"] .bg-earth{opacity:1}
+/* ── Светлая тема: небо-градиент + облака ── */
+.bg-sky{position:absolute;inset:0;z-index:1;opacity:1;transition:opacity .9s ease;
+  background:linear-gradient(180deg,#8FC3EC 0%,#A9D2F0 34%,#CDE6F6 68%,#EAF4FB 100%)}
+[data-theme="dark"] .bg-sky{opacity:0}
+.bg-clouds{position:absolute;inset:0;z-index:2;overflow:hidden;opacity:1;transition:opacity .9s ease}
+[data-theme="dark"] .bg-clouds{opacity:0}
+.bg-cloud{position:absolute;background-image:url('<?= url('/assets/img/bg/clouds.png') ?>');
+  background-size:contain;background-repeat:no-repeat;background-position:center;will-change:transform;pointer-events:none}
+.bg-cloud--1{width:min(70vw,820px);height:44vh;left:-14vw;bottom:6vh;opacity:.9;animation:bgCloud1 90s ease-in-out infinite}
+.bg-cloud--2{width:min(60vw,700px);height:38vh;right:-12vw;top:8vh;opacity:.8;animation:bgCloud2 120s ease-in-out infinite}
+.bg-cloud--3{width:min(50vw,600px);height:32vh;left:22vw;top:34vh;opacity:.55;animation:bgCloud3 150s ease-in-out infinite}
+@keyframes bgCloud1{0%,100%{transform:translateX(-4vw)}50%{transform:translateX(10vw)}}
+@keyframes bgCloud2{0%,100%{transform:scaleX(-1) translateX(-3vw)}50%{transform:scaleX(-1) translateX(-11vw)}}
+@keyframes bgCloud3{0%,100%{transform:translateX(0)}50%{transform:translateX(-9vw)}}
+/* ── Вуаль читаемости: чуть темнит видео/небо ── */
+.bg-scrim{position:absolute;inset:0;z-index:3;pointer-events:none;
+  background:radial-gradient(120% 90% at 50% 12%,rgba(12,23,56,0) 0%,rgba(12,23,56,.28) 100%)}
+:root:not([data-theme="dark"]) .bg-scrim{background:linear-gradient(180deg,rgba(255,255,255,.10) 0%,rgba(255,255,255,.30) 100%)}
+@media(prefers-reduced-motion:reduce){.bg-cloud{animation:none !important}}
 .app-bg-video,.ab-rays,.ab-glow,.ab-stars,.ab-fly,.app-bg-tint{display:none !important}
 </style>
 <script src="<?= asset('js/bg-art.js') ?>" defer></script>

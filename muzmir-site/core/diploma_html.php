@@ -269,8 +269,14 @@ body{background:#444;font-family:'Manrope',sans-serif;padding:20px;min-height:10
 .sig-signature-1{width:26mm;height:auto;display:block;transform:scale(1.8);transform-origin:center right}
 .sig-signature-2{width:28mm;height:auto;display:block;transform:scale(1.8);transform-origin:center right}
 .footer-city{text-align:center;margin-top:4mm;font-family:'Playfair Display',serif;font-size:12.5pt;font-weight:700;color:#1a1a2a}
-.sample-mark{position:absolute;inset:0;z-index:9;display:flex;align-items:center;justify-content:center;pointer-events:none}
-.sample-mark span{font-family:'Playfair Display',serif;font-weight:900;font-size:52pt;letter-spacing:14px;color:rgba(200,40,60,.22);transform:rotate(-28deg);border:6px solid rgba(200,40,60,.18);padding:6mm 14mm;border-radius:8mm}
+/* Водяной знак «ОБРАЗЕЦ» повторяется ПО ВСЕМУ ПОЛЮ диплома (перекрёстно, по диагонали). */
+.sample-mark{position:absolute;inset:-20%;z-index:9;pointer-events:none;overflow:hidden;
+  display:flex;flex-wrap:wrap;align-content:center;justify-content:center;gap:9mm 18mm;
+  transform:rotate(-30deg)}
+.sample-mark span{font-family:'Playfair Display',serif;font-weight:900;font-size:26pt;letter-spacing:8px;
+  color:rgba(200,40,60,.13);white-space:nowrap;text-transform:uppercase}
+/* Рамка «ОБРАЗЕЦ» по всему периметру диплома. */
+.sample-frame{position:absolute;inset:5mm;z-index:9;pointer-events:none;border:3px dashed rgba(200,40,60,.28);border-radius:4mm}
 <?php if ($edit): ?>[data-el]{cursor:grab}[data-el]:hover{outline:1px dashed rgba(255,215,80,.85)}<?php endif; ?>
 @media print{body{background:#fff;padding:0}.diploma{box-shadow:none;margin:0}}
 </style>
@@ -280,7 +286,7 @@ body{background:#444;font-family:'Manrope',sans-serif;padding:20px;min-height:10
   <div class="bg-layer"></div>
   <?php if ($overlay > 0 || $edit): ?><div class="bg-tone"></div><?php endif; ?>
   <div class="bg-white-gradient"></div>
-  <?php if ($sample): ?><div class="sample-mark"><span>ОБРАЗЕЦ</span></div><?php endif; ?>
+  <?php if ($sample): ?><div class="sample-frame"></div><div class="sample-mark"><?php for ($si = 0; $si < 60; $si++) echo '<span>ОБРАЗЕЦ</span>'; ?></div><?php endif; ?>
 
   <div class="content">
     <?php $e = $E('org'); $e2 = $E('legal'); ?>
