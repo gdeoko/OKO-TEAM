@@ -1,0 +1,232 @@
+{
+ "id": "gtape_066",
+ "app": "tape",
+ "voice": "en-US-ChristopherNeural",
+ "rate": "+6%",
+ "grade": "clean_ad",
+ "brand": {
+  "accent": "#F4C430",
+  "accent2": "#FFE08A",
+  "code": "MEASURE",
+  "logo": "tape.png",
+  "name": "3D TAPE MEASURE"
+ },
+ "music": {
+  "queries": [
+   "minimal tech ambient",
+   "bright pop home",
+   "happy ukulele diy"
+  ]
+ },
+ "cover": {
+  "kicker": "ONLINE SHOPPING",
+  "top": "BUY FURNITURE",
+  "big": "THAT ACTUALLY\nFITS",
+  "q": [
+   "modern tv mounted on wall living room"
+  ]
+ },
+ "segments": [
+  {
+   "id": "b1",
+   "text": "Stop scrolling. That online sofa looks perfect on screen."
+  },
+  {
+   "id": "b2",
+   "text": "But will it swallow your whole living room?"
+  },
+  {
+   "id": "b3",
+   "text": "Measure the real space with your phone first."
+  },
+  {
+   "id": "b4",
+   "text": "Compare it to the product dimensions."
+  },
+  {
+   "id": "b5",
+   "text": "Order only what genuinely fits."
+  },
+  {
+   "id": "b6",
+   "text": "Fewer returns, zero regret."
+  }
+ ],
+ "shots": [
+  {
+   "q": [
+    "picture frame hanging wall level"
+   ],
+   "motion": "panl"
+  },
+  {
+   "q": [
+    "person measuring living room with phone ar"
+   ],
+   "insert": "tilt",
+   "pos": "upper"
+  },
+  {
+   "q": [
+    "kitchen cabinets measuring renovation"
+   ],
+   "motion": "zout"
+  },
+  {
+   "q": [
+    "apartment tour empty rooms"
+   ],
+   "insert": "arch",
+   "pos": "upper"
+  },
+  {
+   "q": [
+    "measuring tape metal bending closeup"
+   ],
+   "motion": "zin"
+  },
+  {
+   "q": [
+    "modern tv mounted on wall living room"
+   ],
+   "insert": "circle",
+   "pos": "upper"
+  },
+  {
+   "q": [
+    "doorway measuring frame home"
+   ],
+   "motion": "panup"
+  },
+  {
+   "q": [
+    "blueprint floor plan on tablet desk"
+   ],
+   "insert": "rrect",
+   "pos": "upper"
+  },
+  {
+   "q": [
+    "dining table room measure"
+   ],
+   "motion": "panr"
+  },
+  {
+   "q": [
+    "curtains window measuring home"
+   ],
+   "insert": "hexagon",
+   "pos": "lower"
+  },
+  {
+   "q": [
+    "moving boxes new apartment"
+   ],
+   "motion": "pandown"
+  }
+ ],
+ "overlays": [
+  {
+   "at": 0.068,
+   "dur": 1.68,
+   "type": "kicker",
+   "text": "MEASURE 101"
+  },
+  {
+   "at": 0.177,
+   "dur": 1.85,
+   "type": "lowerthird",
+   "title": "TAP TWO POINTS",
+   "sub": "length appears on the floor"
+  },
+  {
+   "at": 0.302,
+   "dur": 1.68,
+   "type": "kinetic",
+   "top": "STOP",
+   "big": "GUESSING"
+  },
+  {
+   "at": 0.434,
+   "dur": 1.89,
+   "type": "chips",
+   "items": [
+    "LENGTH",
+    "WIDTH",
+    "HEIGHT",
+    "AREA"
+   ],
+   "pos": "upper"
+  },
+  {
+   "at": 0.451,
+   "dur": 2.6,
+   "type": "checklist",
+   "items": [
+    "Measure the door",
+    "Measure the sofa",
+    "Compare sizes",
+    "Move it in"
+   ],
+   "pos": "center"
+  },
+  {
+   "at": 0.665,
+   "dur": 1.8,
+   "type": "stat_count",
+   "to": 1,
+   "suffix": "",
+   "label": "PERSON NEEDED",
+   "pos": "center"
+  },
+  {
+   "at": 0.709,
+   "dur": 1.87,
+   "type": "gauge",
+   "to": 10,
+   "max": 60,
+   "suffix": "s",
+   "label": "PER MEASUREMENT",
+   "pos": "center"
+  },
+  {
+   "at": 0.904,
+   "dur": 1.66,
+   "type": "ticker",
+   "to": 4,
+   "suffix": "",
+   "label": "WALLS SAVED",
+   "pos": "lower"
+  }
+ ],
+ "cta": {
+  "text": "Comment MEASURE for the app.",
+  "code": "MEASURE"
+ },
+ "caption": "USEFUL: That online sofa looks perfect — until it swallows the room. Measure the real space, compare to the listing, order only what fits. Fewer returns, zero regret. Comment MEASURE for the app. #diy #homedecor #interiordesign #measure #movingtips #renter #apartmenttherapy #space #measure #app #furniture",
+ "yt_title": "How to read a tape measure #shorts",
+ "trend_keys": [
+  "space",
+  "measure",
+  "app",
+  "furniture",
+  "iphone",
+  "design",
+  "arrange",
+  "use"
+ ],
+ "content_type": "useful",
+ "comp_angle": {
+  "title": "How to read a tape measure without looking like an idiot",
+  "views": 1058750,
+  "channel": "Stumpy Nubs (James Hamilton)"
+ },
+ "virality": {
+  "score": 89,
+  "notes": [
+   "angle<-1058k",
+   "hook_boosted"
+  ],
+  "hook": "Stop scrolling. That online sofa looks perfect on screen."
+ }
+}
