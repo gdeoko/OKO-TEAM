@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" width="512" height="512" viewBox="0 0 512 512" fill="currentColor">
+  <text x="256" y="298" text-anchor="middle" font-family="Orbitron, 'Space Grotesk', Impact, sans-serif"
+        font-size="130" font-weight="900" letter-spacing="10">EXORA</text>
+  <text x="256" y="352" text-anchor="middle" font-family="'Space Grotesk', system-ui, sans-serif"
+        font-size="26" font-weight="600" letter-spacing="8" opacity=".72">CRYPTO EXCHANGE</text>
+  <rect x="176" y="176" width="160" height="8"/>
+  <rect x="176" y="384" width="160" height="8"/>
+</svg>
