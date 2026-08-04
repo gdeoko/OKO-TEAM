@@ -149,16 +149,52 @@ if (preg_match('#^/competition/([a-z0-9\-]+)/regulation\.(pdf|docx)$#', $route, 
     }
     http_response_code(404); echo 'Конкурс не найден'; exit;
 }
-// Скачивание PDF диплома по номеру (публично, но с логированием verify_log).
+// Скачивание PDF диплома по номеру. Всегда отдаёт боевой PDF по НАШЕМУ HTML-шаблону:
+// если файла нет — рендерит через бастион (diploma_pdf_html), фолбэк — GD-генератор.
 if (preg_match('#^/diploma/([A-Za-z0-9\-]+)\.pdf$#', $route, $m)) {
     $d = one("SELECT * FROM diplomas WHERE number=?", [$m[1]]);
-    if ($d && !empty($d['pdf_path']) && is_file($d['pdf_path'])) {
-        header('Content-Type: application/pdf');
-        header('Content-Disposition: inline; filename="Diploma_' . $d['number'] . '.pdf"');
-        readfile($d['pdf_path']);
-        exit;
+    if (!$d) { http_response_code(404); echo 'Диплом не найден'; exit; }
+    $app = one("SELECT * FROM applications WHERE id=?", [(int) $d['application_id']]);
+    require_once BASE_PATH . '/core/diploma_render.php';
+
+    $file = '';
+    $stored = trim((string) ($d['pdf_path'] ?? ''));
+    if ($stored !== '' && !str_starts_with($stored, 'http')) {
+        $abs = $stored[0] === '/' && str_starts_with($stored, '/var') ? $stored
+             : BASE_PATH . '/public/' . ltrim($stored, '/');
+        if (is_file($abs) && filesize($abs) > 20000) $file = $abs;
     }
-    http_response_code(404); echo 'Диплом не найден'; exit;
+    // Рендер боевого шаблона (кэшируем: сохраняем веб-путь в pdf_path)
+    if ($file === '' && $app) {
+        $rendered = diploma_pdf_html($app, ['thanks' => (($d['type'] ?? '') === 'thanks')]);
+        if ($rendered && is_file($rendered)) {
+            $file = $rendered;
+            update('diplomas', ['pdf_path' => '/diplomas/' . basename($rendered)], 'id=:id', ['id' => (int) $d['id']]);
+        }
+    }
+    // Фолбэк — GD-генератор (если бастион недоступен)
+    if ($file === '' && $app && function_exists('pdf_diploma')) {
+        try { $gd = pdf_diploma($app, (string) ($d['type'] ?: 'main')); if ($gd && is_file($gd)) $file = $gd; }
+        catch (\Throwable $e) { /* ниже 404 */ }
+    }
+    if ($file === '') { http_response_code(404); echo 'Диплом ещё формируется, попробуйте через минуту'; exit; }
+    header('Content-Type: application/pdf');
+    header('Content-Disposition: inline; filename="Diploma_' . $d['number'] . '.pdf"');
+    header('Content-Length: ' . (string) filesize($file));
+    readfile($file);
+    exit;
+}
+// Визуальный просмотр диплома (реальный HTML-шаблон, для реестра и кабинета).
+if (preg_match('#^/diploma-view/([A-Za-z0-9\-]+)$#', $route, $m)) {
+    $d = one("SELECT * FROM diplomas WHERE number=?", [$m[1]]);
+    if (!$d) { http_response_code(404); echo 'Диплом не найден'; exit; }
+    $app = one("SELECT * FROM applications WHERE id=?", [(int) $d['application_id']]);
+    $c   = $app ? one("SELECT * FROM competitions WHERE id=?", [(int) $app['competition_id']]) : null;
+    require_once BASE_PATH . '/core/diploma_html.php';
+    $opt = [];
+    if (($d['type'] ?? '') === 'thanks') { $opt['thanks'] = true; if (!empty($app['teacher'])) $app['full_name'] = $app['teacher']; }
+    echo diploma_html($c ?: [], $app ?: [], $opt);
+    exit;
 }
 // Приватный рендер боевого диплома для PDF-печати бастионом (ключ в settings).
 if (preg_match('#^/diploma-render/(\d+)$#', $route, $m)) {

@@ -292,6 +292,25 @@ if('serviceWorker' in navigator){
   upd();
 })();
 
+// Плавная прокрутка к якорям на той же странице (кнопки «К оплате», якоря
+// календаря и т.п.), с учётом высоты залипающей шапки. Надёжнее нативной.
+(function(){
+  function headerH(){ var h=document.querySelector('header.app-header'); return h?h.getBoundingClientRect().height:60; }
+  document.addEventListener('click', function(e){
+    var a = e.target.closest && e.target.closest('a[href^="#"]');
+    if(!a) return;
+    var id = a.getAttribute('href');
+    if(!id || id === '#' || id.length < 2) return;
+    var target;
+    try { target = document.querySelector(id); } catch(_){ return; }
+    if(!target) return;
+    e.preventDefault();
+    var y = target.getBoundingClientRect().top + window.pageYOffset - headerH() - 12;
+    window.scrollTo({ top: Math.max(0, y), behavior: 'smooth' });
+    if(history.replaceState) history.replaceState(null, '', id);
+  }, false);
+})();
+
 // Переключатель темы в шапке (тёмная/светлая), сохраняется в localStorage.
 (function(){
   var btn = document.getElementById('themeToggle'); if(!btn) return;

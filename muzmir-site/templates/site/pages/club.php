@@ -68,10 +68,8 @@ html{scroll-behavior:smooth}
 .club-hero-cta .btn svg{width:17px;height:17px;fill:none;stroke:currentColor;stroke-width:2.2;stroke-linecap:round;stroke-linejoin:round}
 .club-hero-price{font-family:var(--ff-display);font-size:1.15rem;color:var(--gold-2);letter-spacing:.02em;white-space:nowrap}
 .club-hero-price span{font-size:.8rem;color:var(--muted);font-family:var(--ff-body)}
-.club-chipnav{display:flex;gap:10px;flex-wrap:nowrap;overflow-x:auto;padding:4px 2px 10px;margin:16px 0 0;
-  -webkit-overflow-scrolling:touch;scrollbar-width:none;justify-content:center}
-.club-chipnav::-webkit-scrollbar{display:none}
-.club-chip{flex:none;display:inline-flex;align-items:center;gap:8px;padding:9px 16px;border-radius:999px;
+.club-chipnav{display:flex;gap:10px;flex-wrap:wrap;padding:4px 2px 10px;margin:16px 0 0;justify-content:center}
+.club-chip{flex:0 0 auto;display:inline-flex;align-items:center;gap:8px;padding:9px 15px;border-radius:999px;
   background:var(--glass-card);backdrop-filter:blur(18px);-webkit-backdrop-filter:blur(18px);
   border:1px solid var(--glass-brd2);color:var(--text);text-decoration:none;font-size:.85rem;font-weight:700;
   white-space:nowrap;word-break:normal;hyphens:none;transition:transform .2s ease,border-color .2s ease,color .2s ease}
@@ -120,6 +118,27 @@ html{scroll-behavior:smooth}
   .club-medal span{width:22px;height:22px}
   .club-ben h3{font-size:.86rem}
   .club-ben p{font-size:.73rem}
+}
+
+/* --- Инфографика-сравнение: Обычно vs Клуб --- */
+.club-cmp{max-width:720px;margin:0 auto;padding:8px 4px}
+.club-cmp-head{display:grid;grid-template-columns:1.3fr 1fr 1fr;gap:10px;align-items:end;margin-bottom:6px}
+.club-cmp-head div{text-align:center;font-weight:800;font-size:.82rem;color:var(--muted)}
+.club-cmp-head .is-club{color:var(--gold-2,var(--gold));font-family:var(--ff-display);font-size:1rem;
+  display:flex;align-items:center;justify-content:center;gap:6px}
+.club-cmp-head .is-club svg{width:15px;height:15px;color:var(--gold)}
+.club-cmp-row{display:grid;grid-template-columns:1.3fr 1fr 1fr;gap:10px;align-items:center;
+  padding:13px 6px;border-top:1px solid var(--glass-brd2)}
+.club-cmp-row .lbl{font-weight:700;font-size:.88rem;line-height:1.25}
+.club-cmp-row .v{text-align:center;font-size:.9rem;color:var(--muted)}
+.club-cmp-row .v.club{color:var(--gold-2,var(--gold));font-weight:800}
+.club-cmp-row .v .x{color:#c1666b}
+.club-cmp-row .v svg{width:17px;height:17px;vertical-align:-3px}
+.club-cmp-row .v.club svg{color:#4c9a63}
+@media (max-width:520px){
+  .club-cmp-head,.club-cmp-row{gap:6px}
+  .club-cmp-row .lbl{font-size:.8rem}
+  .club-cmp-row .v{font-size:.82rem}
 }
 
 /* --- Шаги вступления --- */
@@ -260,6 +279,38 @@ html{scroll-behavior:smooth}
         <div class="club-stat"><b>3 дня</b><span>результаты и дипломы вместо 5 рабочих дней</span></div>
         <div class="club-stat"><b>1 / мес</b><span>бесплатный конкурс + электронный диплом</span></div>
       </div>
+    </div>
+  </div>
+</section>
+
+<section class="section section--tint">
+  <div class="container">
+    <div class="section-head reveal"><p class="eyebrow">Наглядно</p><h2>Клуб против обычного участия</h2></div>
+    <?php
+      $ok = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"/></svg>';
+      $no = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6 6 18M6 6l12 12"/></svg>';
+      $cmp = [
+        ['Стоимость дипломов и наград', 'полная', '−' . (int)$discount . '%'],
+        ['Сроки результатов', '5 рабочих дней', '3 дня'],
+        ['Бесплатный конкурс', $no, '1 в месяц'],
+        ['Приоритетная проверка заявок', $no, $ok],
+        ['Закрытые конкурсы Клуба', $no, $ok],
+        ['Мастер-классы и разборы', $no, $ok],
+      ];
+    ?>
+    <div class="card reveal club-cmp">
+      <div class="club-cmp-head">
+        <div></div>
+        <div>Обычно</div>
+        <div class="is-club"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2l3 7h7l-5.5 4 2 7L12 16l-6.5 4 2-7L2 9h7z"/></svg>Клуб</div>
+      </div>
+      <?php foreach ($cmp as $r): ?>
+        <div class="club-cmp-row">
+          <span class="lbl"><?= h($r[0]) ?></span>
+          <span class="v"><?= $r[1] === $no ? '<span class="x">' . $no . '</span>' : h($r[1]) ?></span>
+          <span class="v club"><?= ($r[2] === $ok) ? $ok : h($r[2]) ?></span>
+        </div>
+      <?php endforeach; ?>
     </div>
   </div>
 </section>

@@ -309,10 +309,35 @@ ob_start(); ?>
         </div>
       </div>
 
+      <!-- Визуальный просмотр самого диплома (реальный шаблон) -->
+      <div class="dip-visual reveal">
+        <h2 class="dip-visual-h">Так выглядит сам диплом</h2>
+        <div class="dip-embed" id="dipEmbed">
+          <iframe src="<?= url('/diploma-view/'.$d['number']) ?>" loading="lazy" title="Диплом № <?= h($d['number']) ?>"></iframe>
+        </div>
+        <a class="btn btn--ghost btn--sm" href="<?= url('/diploma-view/'.$d['number']) ?>" target="_blank" rel="noopener" style="margin-top:12px">Открыть в полном размере</a>
+      </div>
+
       <div class="cert-meta">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M20 6 9 17l-5-5"/></svg>
         Сведения предоставлены реестром Культурного центра «Музыкальный Мир» и подтверждают подлинность документа<?php if(isset($vcount) && $vcount>1): ?> - проверялся <?= (int)$vcount ?> раз<?php endif; ?>.
       </div>
+      <style>
+      .dip-visual{margin:26px auto 0;max-width:560px;text-align:center}
+      .dip-visual-h{font-family:var(--ff-display);font-size:1.15rem;margin:0 0 12px}
+      .dip-embed{position:relative;width:100%;margin:0 auto;aspect-ratio:210/297;border-radius:14px;overflow:hidden;
+        border:1px solid var(--line);box-shadow:0 18px 46px rgba(21,34,76,.28);background:#0a1330}
+      .dip-embed iframe{position:absolute;top:0;left:0;width:794px;height:1123px;border:0;transform-origin:top left;background:#0a1330}
+      </style>
+      <script>
+      (function(){
+        var box=document.getElementById('dipEmbed'); if(!box) return;
+        var fr=box.querySelector('iframe');
+        function fit(){ var w=box.clientWidth; fr.style.transform='scale('+(w/794)+')'; }
+        fit(); window.addEventListener('resize',fit);
+        setTimeout(fit,300);
+      })();
+      </script>
 
       <?php $shareUrl = $verifyBase . '/' . rawurlencode((string)$d['number']); ?>
       <div class="vfy-share reveal">

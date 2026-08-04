@@ -161,6 +161,26 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     } elseif ($action === 'resend_diploma') {
         $dn = input('number');
         $d = one("SELECT d.* FROM diplomas d JOIN applications a ON a.id=d.application_id WHERE d.number=? AND a.user_id=?", [$dn, $uid]);
+        // Гарантируем боевой PDF по нашему HTML-шаблону (перед отправкой во вложении).
+        if ($d) {
+            $stored = trim((string) ($d['pdf_path'] ?? ''));
+            $absStored = ($stored !== '' && !str_starts_with($stored, 'http'))
+                ? ($stored[0] === '/' && str_starts_with($stored, '/var') ? $stored : BASE_PATH . '/public/' . ltrim($stored, '/'))
+                : '';
+            if ($absStored === '' || !is_file($absStored) || filesize($absStored) < 20000) {
+                if (is_file(BASE_PATH . '/core/diploma_render.php')) require_once BASE_PATH . '/core/diploma_render.php';
+                $appRow = one("SELECT * FROM applications WHERE id=?", [(int) $d['application_id']]);
+                if ($appRow && function_exists('diploma_pdf_html')) {
+                    $rp = diploma_pdf_html($appRow, ['thanks' => (($d['type'] ?? '') === 'thanks')]);
+                    if ($rp && is_file($rp)) {
+                        update('diplomas', ['pdf_path' => '/diplomas/' . basename($rp)], 'id=:id', ['id' => (int) $d['id']]);
+                        $d['pdf_path'] = $rp; // абсолютный путь для вложения
+                    }
+                }
+            } elseif ($absStored !== '') {
+                $d['pdf_path'] = $absStored;
+            }
+        }
         if ($d && function_exists('mail_queue')) {
             $html = function_exists('mail_template')
                 ? mail_template('generic', [
@@ -703,26 +723,30 @@ ob_start(); ?>
           <?php if (!$diplomas): ?>
             <div class="cab-card cab-empty"><?= $icons['diploma'] ?><p>Дипломы появятся здесь после оценки Ваших работ жюри.</p></div>
           <?php else: foreach ($diplomas as $k => $d): ?>
-            <div class="cab-card reveal" style="--i:<?= $k ?>">
-              <div class="cab-row">
-                <div style="min-width:0">
-                  <span class="cab-ttl"><?= h($d['result'] ?: $d['app_result'] ?: 'Диплом') ?></span>
-                  <p class="cab-meta"><?= h($d['comp_name'] ?: 'Конкурс') ?> - <?= h($d['full_name']) ?></p>
-                  <p class="cab-meta">Диплом № <?= h($d['number']) ?> - <?= h(ru_date(substr((string)$d['created_at'],0,10))) ?></p>
+            <div class="cab-card cab-dip reveal" style="--i:<?= $k ?>">
+              <a class="cab-dip-thumb" href="<?= url('/diploma-view/'.$d['number']) ?>" target="_blank" rel="noopener" aria-label="Посмотреть диплом целиком">
+                <iframe src="<?= url('/diploma-view/'.$d['number']) ?>" loading="lazy" tabindex="-1" title="Образец диплома № <?= h($d['number']) ?>"></iframe>
+                <span class="cab-dip-zoom"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3M11 8v6M8 11h6"/></svg></span>
+              </a>
+              <div class="cab-dip-body">
+                <div class="cab-row">
+                  <div style="min-width:0">
+                    <span class="cab-ttl"><?= h($d['result'] ?: $d['app_result'] ?: 'Диплом') ?></span>
+                    <p class="cab-meta"><?= h($d['comp_name'] ?: 'Конкурс') ?> - <?= h($d['full_name']) ?></p>
+                    <p class="cab-meta">Диплом № <?= h($d['number']) ?> - <?= h(ru_date(substr((string)$d['created_at'],0,10))) ?></p>
+                  </div>
+                  <div><?= $badge('Готов','success') ?></div>
                 </div>
-                <div><?= $badge('Готов','success') ?></div>
-              </div>
-              <div class="cab-actions" style="margin-top:16px">
-                <?php if (!empty($d['pdf_path'])): ?>
-                  <a class="btn btn--primary" href="<?= h(str_starts_with((string)$d['pdf_path'],'http') ? $d['pdf_path'] : url($d['pdf_path'])) ?>" target="_blank" rel="noopener"><?= $icons['dl'] ?> Скачать PDF</a>
-                <?php endif; ?>
-                <form method="post" action="<?= url('/cabinet') ?>" style="margin:0">
-                  <?= csrf_field() ?>
-                  <input type="hidden" name="action" value="resend_diploma">
-                  <input type="hidden" name="number" value="<?= h($d['number']) ?>">
-                  <button class="btn btn--ghost" type="submit"><?= $icons['mail'] ?> На почту</button>
-                </form>
-                <a class="btn btn--ghost" href="<?= url('/verify/'.$d['number']) ?>" target="_blank" rel="noopener"><?= $icons['qr'] ?> Проверка QR</a>
+                <div class="cab-actions" style="margin-top:14px">
+                  <a class="btn btn--primary" href="<?= url('/diploma/'.$d['number'].'.pdf') ?>" target="_blank" rel="noopener"><?= $icons['dl'] ?> Скачать PDF</a>
+                  <form method="post" action="<?= url('/cabinet') ?>" style="margin:0">
+                    <?= csrf_field() ?>
+                    <input type="hidden" name="action" value="resend_diploma">
+                    <input type="hidden" name="number" value="<?= h($d['number']) ?>">
+                    <button class="btn btn--ghost" type="submit"><?= $icons['mail'] ?> На почту</button>
+                  </form>
+                  <a class="btn btn--ghost" href="<?= url('/verify/'.$d['number']) ?>" target="_blank" rel="noopener"><?= $icons['qr'] ?> Проверка QR</a>
+                </div>
               </div>
             </div>
           <?php endforeach; endif; ?>

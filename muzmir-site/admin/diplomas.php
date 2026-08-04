@@ -178,8 +178,16 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && input('do') === 'generate') {
         $app['diploma_number'] = $number;
         if ($special !== '') $app['special_award'] = $special;
 
+        // Сначала боевой PDF по НАШЕМУ HTML-шаблону (через бастион), фолбэк — GD.
         $pdfPath = '';
-        if (function_exists('pdf_diploma')) {
+        if (is_file(BASE_PATH . '/core/diploma_render.php')) require_once BASE_PATH . '/core/diploma_render.php';
+        if (function_exists('diploma_pdf_html')) {
+            try {
+                $rp = diploma_pdf_html($app, ['thanks' => ($dtype === 'thanks')]);
+                if ($rp && is_file($rp)) { $pdfPath = '/diplomas/' . basename($rp); $pdfok++; }
+            } catch (Throwable $e) { $pdfPath = ''; }
+        }
+        if ($pdfPath === '' && function_exists('pdf_diploma')) {
             try { $pdfPath = pdf_diploma($app, $dtype); if ($pdfPath) $pdfok++; } catch (Throwable $e) { $pdfPath = ''; }
         }
         insert('diplomas', ['number'=>$number,'application_id'=>$appId,'type'=>$dtype,'result'=>$recResult,'pdf_path'=>$pdfPath]);

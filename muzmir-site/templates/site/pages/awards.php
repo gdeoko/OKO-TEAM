@@ -80,14 +80,16 @@ ob_start(); ?>
         $coverUrl = $cover !== '' ? (preg_match('~^https?://~', $cover) ? $cover : asset('img/comp/'.$cover)) : '';
         $scope = ($c['type'] === 'international') ? 'Международный' : 'Всероссийский';
       ?>
-      <a class="aw-comp reveal" style="--i:<?= $i ?>" href="<?= url('/awards') ?>?comp=<?= (int)$c['id'] ?>">
-        <div class="aw-comp-cover comp-banner"<?= $coverUrl ? ' style="background-image:linear-gradient(90deg,rgba(10,20,50,.72),rgba(10,20,50,.15)),url(\''.h($coverUrl).'\');background-size:cover;background-position:center"' : '' ?>>
-          <span class="aw-comp-scope"><?= h($scope) ?></span>
-        </div>
+      <?php $dirMap=['multi'=>'Многожанровый','patriotic'=>'Патриотический','vocal'=>'Вокал','instrumental'=>'Инструментальный','dance'=>'Хореография','art'=>'ИЗО и ДПИ'];
+            $dir = $dirMap[(string)$c['direction']] ?? ($c['direction'] ?: 'Многожанровый');
+            $awStyle = "--i:$i" . ($coverUrl ? ";background-image:linear-gradient(180deg,rgba(8,16,42,.30) 0%,rgba(8,16,42,.55) 55%,rgba(8,16,42,.86) 100%),url('".h($coverUrl)."')" : ''); ?>
+      <a class="aw-comp<?= $coverUrl ? ' has-cover' : '' ?> reveal" style="<?= $awStyle ?>" href="<?= url('/awards') ?>?comp=<?= (int)$c['id'] ?>">
+        <span class="aw-comp-scope"><?= h($scope) ?></span>
+        <span class="aw-comp-emb" aria-hidden="true">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M8 21h8M12 17v4M6 4h12v5a6 6 0 0 1-12 0V4z"/><path d="M6 6H3a3 3 0 0 0 3 5M18 6h3a3 3 0 0 1-3 5"/></svg>
+        </span>
         <div class="aw-comp-body">
           <h3 class="aw-comp-name"><?= h($c['name']) ?></h3>
-          <?php $dirMap=['multi'=>'Многожанровый','patriotic'=>'Патриотический','vocal'=>'Вокал','instrumental'=>'Инструментальный','dance'=>'Хореография','art'=>'ИЗО и ДПИ'];
-                $dir = $dirMap[(string)$c['direction']] ?? ($c['direction'] ?: 'Многожанровый'); ?>
           <p class="aw-comp-sub"><?= h(mb_strimwidth((string)$dir,0,40,'…')) ?></p>
           <span class="aw-comp-go">Выбрать награды
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
@@ -117,11 +119,15 @@ ob_start(); ?>
 
     <?php /* Образец заполненного диплома: живой HTML-макет с подписями и печатями */ ?>
     <div class="card reveal" style="padding:0;overflow:hidden;margin:0 0 18px;display:flex;flex-wrap:wrap;align-items:stretch">
-      <?php $sBg = trim((string)($selComp['diploma_bg'] ?? ''));
-            $sBgUrl = $sBg !== '' ? (preg_match('~^https?://~', $sBg) ? $sBg : url('/' . ltrim($sBg, '/'))) : ''; ?>
-      <?php if ($sBgUrl): ?>
+      <?php // Превью — реальный отрендеренный образец диплома (эталон-шаблон), фолбэк на фон.
+            $sPreview = award_photo('diploma', (int)$selComp['id']);
+            if (!$sPreview) {
+              $sBg = trim((string)($selComp['diploma_bg'] ?? ''));
+              $sPreview = $sBg !== '' ? (preg_match('~^https?://~', $sBg) ? $sBg : url('/' . ltrim($sBg, '/'))) : '';
+            } ?>
+      <?php if ($sPreview): ?>
         <a href="<?= url('/diploma-sample/' . $selComp['slug']) ?>" target="_blank" rel="noopener"
-           style="flex:0 0 132px;aspect-ratio:210/297;display:block;background:url('<?= h($sBgUrl) ?>') top center/cover no-repeat"
+           style="flex:0 0 148px;aspect-ratio:210/297;display:block;background:url('<?= h($sPreview) ?>') top center/cover no-repeat;border-right:1px solid var(--line)"
            aria-label="Открыть образец диплома"></a>
       <?php endif; ?>
       <div style="flex:1;min-width:220px;padding:20px 22px;display:flex;flex-direction:column;gap:10px;justify-content:center">

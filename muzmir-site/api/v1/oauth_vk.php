@@ -55,7 +55,7 @@ if ($code === '') {
         'scope'                 => 'email',
         'state'                 => $st,
         'code_challenge'        => $challenge,
-        'code_challenge_method' => 's256',
+        'code_challenge_method' => 'S256',
     ]);
     redirect($auth);
 }
