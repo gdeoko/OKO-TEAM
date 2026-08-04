@@ -24,7 +24,21 @@ $ev = function_exists('v_email') ? v_email($email) : ['ok' => (bool) filter_var(
 if (!($ev['ok'] ?? false)) json_out(['ok' => false, 'error' => 'Проверьте электронную почту'], 422);
 
 $subject = 'Обратная связь с сайта - ' . ($name !== '' ? $name : $email);
-$body = '<p><b>Имя:</b> ' . h($name) . '</p>'
+$fieldsHtml = '<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin:0 0 8px;background:#F4F6FC;border:1px solid #DCE3F3;border-radius:14px;">'
+    . '<tr><td style="padding:20px 24px;font-size:14px;line-height:1.9;color:#33406B;">'
+    . '<div style="font-weight:600;color:#17307A;font-size:13px;letter-spacing:.08em;text-transform:uppercase;margin-bottom:10px;">Данные обращения</div>'
+    . '<div><span style="color:#6B7699;">Имя:</span> ' . h($name) . '</div>'
+    . '<div><span style="color:#6B7699;">Почта:</span> ' . h($email) . '</div>'
+    . '<div><span style="color:#6B7699;">Телефон:</span> ' . h($phone) . '</div>'
+    . '</td></tr></table>'
+    . '<p style="margin:16px 0 0;"><b style="color:#17307A;">Сообщение:</b><br>' . nl2br(h($msg)) . '</p>';
+$body = function_exists('mail_template')
+    ? mail_template('generic', [
+        'title'     => 'Обратная связь с сайта',
+        'message'   => $fieldsHtml,
+        'preheader' => 'Новое обращение: ' . ($name !== '' ? $name : $email),
+      ])
+    : '<p><b>Имя:</b> ' . h($name) . '</p>'
       . '<p><b>Почта:</b> ' . h($email) . '</p>'
       . '<p><b>Телефон:</b> ' . h($phone) . '</p>'
       . '<p><b>Сообщение:</b><br>' . nl2br(h($msg)) . '</p>';

@@ -48,7 +48,22 @@ if (($_SERVER['REQUEST_METHOD'] ?? 'GET') === 'POST') {
                 'comment'   => normalize_text($fields['comment']),
             ]);
             $subject = 'Заявка в партнёрскую программу - ' . $fields['full_name'];
-            $body = '<p><b>Имя:</b> ' . h($fields['full_name']) . '</p>'
+            $partnerCard = '<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin:0 0 8px;background:#F4F6FC;border:1px solid #DCE3F3;border-radius:14px;">'
+                  . '<tr><td style="padding:20px 24px;font-size:14px;line-height:1.9;color:#33406B;">'
+                  . '<div style="font-weight:600;color:#17307A;font-size:13px;letter-spacing:.08em;text-transform:uppercase;margin-bottom:10px;">Данные заявки</div>'
+                  . '<div><span style="color:#6B7699;">Имя:</span> ' . h($fields['full_name']) . '</div>'
+                  . '<div><span style="color:#6B7699;">Соцсеть:</span> ' . h($fields['network']) . '</div>'
+                  . '<div><span style="color:#6B7699;">Охват:</span> ' . h($fields['reach']) . '</div>'
+                  . '<div><span style="color:#6B7699;">Контакты:</span> ' . h($fields['contact']) . '</div>'
+                  . '</td></tr></table>'
+                  . ($fields['comment'] !== '' ? '<p style="margin:16px 0 0;"><b style="color:#17307A;">Комментарий:</b><br>' . nl2br(h($fields['comment'])) . '</p>' : '');
+            $body = function_exists('mail_template')
+                ? mail_template('generic', [
+                    'title'     => 'Заявка в партнёрскую программу',
+                    'message'   => $partnerCard,
+                    'preheader' => 'Новая заявка партнёра: ' . $fields['full_name'],
+                  ])
+                : '<p><b>Имя:</b> ' . h($fields['full_name']) . '</p>'
                   . '<p><b>Соцсеть:</b> ' . h($fields['network']) . '</p>'
                   . '<p><b>Охват:</b> ' . h($fields['reach']) . '</p>'
                   . '<p><b>Контакты:</b> ' . h($fields['contact']) . '</p>'

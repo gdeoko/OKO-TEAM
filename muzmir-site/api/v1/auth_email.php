@@ -104,15 +104,16 @@ if ($action === 'request') {
 
     $sent = false;
     if (function_exists('mail_queue')) {
-        $logo = function_exists('logo_data_uri') ? logo_data_uri() : '';
-        $html = '<div style="font-family:Montserrat,Arial,sans-serif;max-width:480px;margin:0 auto;padding:24px;color:#1a1a1a">'
-              . ($logo ? '<div style="text-align:center;margin-bottom:16px"><img src="' . h($logo) . '" alt="Музыкальный Мир" style="height:56px"></div>' : '')
-              . '<h2 style="text-align:center;margin:0 0 8px">Код для входа</h2>'
-              . '<p style="text-align:center;margin:0 0 16px;color:#555">КЦ «Музыкальный Мир»</p>'
-              . '<div style="font-size:34px;letter-spacing:8px;font-weight:700;text-align:center;padding:16px;background:#f4f4f6;border-radius:12px">' . h($code) . '</div>'
-              . '<p style="text-align:center;color:#888;font-size:13px;margin-top:16px">Код действует 15 минут. Если вы не запрашивали вход — просто игнорируйте письмо.</p>'
-              . '</div>';
-        $sent = (bool) mail_queue($email, input('name'), 'Код для входа - КЦ «Музыкальный Мир»', $html);
+        // Фирменное письмо с крупным кодом в рамке (шаблон otp_code, единый лейаут).
+        $html = function_exists('mail_template')
+            ? mail_template('otp_code', [
+                'name'        => (string) input('name'),
+                'code'        => $code,
+                'ttl_minutes' => 15,
+                'preheader'   => 'Ваш код для входа на сайт центра. Действует 15 минут.',
+              ])
+            : '<p>Код для входа: <b style="font-size:28px;letter-spacing:6px;">' . h($code) . '</b>. Действует 15 минут.</p>';
+        $sent = (bool) mail_queue($email, input('name'), 'Код для входа — КЦ «Музыкальный Мир»', $html);
     }
 
     $out = ['ok' => true, 'sent' => $sent, 'need_verify' => true, 'message' => 'Код отправлен на почту'];

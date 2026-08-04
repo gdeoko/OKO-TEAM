@@ -84,8 +84,10 @@ try {
     if ($orgEmail !== '' && function_exists('mail_queue')) {
         $message = nl2br(h($summary));
         $html = function_exists('mail_template') ? mail_template('monthly_report', [
-            'message'   => $summary,
-            'preheader' => 'Сводка за ' . $monthTitle,
+            'month_title' => $monthTitle,
+            'message'     => $summary,
+            'admin_url'   => rtrim((string) cfgv('base_url'), '/') . '/admin/?page=analytics',
+            'preheader'   => 'Сводка за ' . $monthTitle,
         ]) : $message;
         mail_queue($orgEmail, (string) cfgv('org_name', ''), 'Отчёт за ' . $monthTitle, $html);
     }

@@ -209,7 +209,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && input('do') === 'send') {
         $name = $d['is_group'] ? $d['group_name'] : $d['full_name'];
         $subject = 'Ваш диплом · ' . $d['comp'];
         $body = function_exists('mail_template')
-            ? mail_template('diploma', ['name'=>$name,'result'=>$d['result'],'comp'=>$d['comp'],'number'=>$d['number']])
+            ? mail_template('diploma', [
+                'name'           => $name,
+                'result'         => (string) $d['result'],
+                'competition'    => (string) $d['comp'],
+                'diploma_number' => (string) $d['number'],
+                'diploma_url'    => url('/cabinet'),
+                'preheader'      => 'Ваш диплом готов и приложен к письму.',
+              ])
             : '<p>Здравствуйте, ' . h($name) . '.</p><p>Поздравляем с результатом «' . h($d['result']) . '» в конкурсе «' . h($d['comp']) . '». Ваш диплом № ' . h($d['number']) . ' во вложении.</p>';
         insert('mail_queue', ['to_email'=>$d['email'],'to_name'=>$name,'subject'=>$subject,'body'=>$body,'attach'=>$d['pdf_path'] ?: '']);
         q("UPDATE diplomas SET sent_at=datetime('now') WHERE id=?", [$did]);
@@ -230,7 +237,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && input('do') === 'resend') {
               LEFT JOIN competitions c ON c.id=a.competition_id WHERE d.id=?", [$did]);
     if ($d && $d['email']) {
         $name = $d['is_group'] ? $d['group_name'] : $d['full_name'];
-        $body = '<p>Здравствуйте, ' . h($name) . '.</p><p>Повторно направляем Ваш диплом № ' . h($d['number']) . ' по конкурсу «' . h($d['comp']) . '».</p>';
+        $body = function_exists('mail_template')
+            ? mail_template('generic', [
+                'title'     => 'Ваш диплом (повторно)',
+                'name'      => (string) $name,
+                'message'   => 'Повторно направляем Ваш диплом № ' . $d['number'] . ' по конкурсу «' . $d['comp'] . '». Документ в формате PDF приложен к этому письму.',
+                'preheader' => 'Диплом № ' . $d['number'] . ' — во вложении.',
+              ])
+            : '<p>Здравствуйте, ' . h($name) . '.</p><p>Повторно направляем Ваш диплом № ' . h($d['number']) . ' по конкурсу «' . h($d['comp']) . '».</p>';
         insert('mail_queue', ['to_email'=>$d['email'],'to_name'=>$name,'subject'=>'Ваш диплом (повторно) · '.$d['comp'],'body'=>$body,'attach'=>$d['pdf_path'] ?: '']);
         q("UPDATE diplomas SET sent_at=datetime('now') WHERE id=?", [$did]);
         audit('diploma_resend', 'diploma', $did);

@@ -175,12 +175,27 @@ if (is_file(BASE_PATH . '/core/notify_owner.php')) {
 // --- письмо-подтверждение покупателю в очередь ---
 if ($buyerEmail !== '' && filter_var($buyerEmail, FILTER_VALIDATE_EMAIL)) {
     $subject = 'Заказ наградного материала принят';
-    $html = '<p>Здравствуйте' . ($buyerName !== '' ? ', ' . h($buyerName) : '') . '!</p>'
+    $orderCard = '<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin:0 0 8px;background:#F4F6FC;border:1px solid #DCE3F3;border-radius:14px;">'
+        . '<tr><td style="padding:20px 24px;font-size:14px;line-height:1.9;color:#33406B;">'
+        . '<div style="font-weight:600;color:#17307A;font-size:13px;letter-spacing:.08em;text-transform:uppercase;margin-bottom:10px;">Детали заказа</div>'
+        . '<div><span style="color:#6B7699;">Номер заказа:</span> <b style="color:#17307A;">№' . h((string) $orderId) . '</b></div>'
+        . '<div><span style="color:#6B7699;">Состав:</span> ' . h($itemsText) . '</div>'
+        . '<div><span style="color:#6B7699;">Сумма к оплате:</span> <b style="color:#17307A;">' . h(money($amount)) . '</b></div>'
+        . '</td></tr></table>';
+    $html = function_exists('mail_template')
+        ? mail_template('generic', [
+            'title'     => 'Заказ наград принят',
+            'name'      => $buyerName,
+            'message'   => '<p style="margin:0 0 16px;">Ваш заказ наградного материала принят.</p>' . $orderCard
+                . '<p style="margin:16px 0 0;">После оплаты мы изготовим и отправим материалы, а трек-номер для отслеживания пришлём на этот адрес.</p>',
+            'cta_url'   => rtrim((string) cfgv('base_url'), '/') . '/cabinet',
+            'cta_text'  => 'Личный кабинет',
+            'preheader' => 'Заказ №' . $orderId . ' принят. Сумма к оплате: ' . money($amount) . '.',
+          ])
+        : '<p>Здравствуйте' . ($buyerName !== '' ? ', ' . h($buyerName) : '') . '!</p>'
           . '<p>Ваш заказ наградного материала <b>№' . h((string) $orderId) . '</b> принят.</p>'
           . '<p><b>Состав заказа:</b> ' . h($itemsText) . '</p>'
-          . '<p><b>Сумма к оплате:</b> ' . h(money($amount)) . '</p>'
-          . '<p>После оплаты мы изготовим и отправим материалы, а трек-номер для отслеживания '
-          . 'пришлём на этот адрес.</p>';
+          . '<p><b>Сумма к оплате:</b> ' . h(money($amount)) . '</p>';
     if (function_exists('mail_queue')) {
         mail_queue($buyerEmail, $buyerName, $subject, $html);
     } elseif (tbl_exists('mail_queue')) {

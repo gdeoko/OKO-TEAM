@@ -154,10 +154,20 @@ if (function_exists('tg_notify_admin')) {
     tg_notify_admin("Импорт от педагога: {$user['full_name']}\n{$comp['name']}\nСоздано заявок: {$created}");
 }
 if ($created && $user['email'] && function_exists('mail_queue')) {
-    $html = '<p>Здравствуйте, ' . h($user['full_name'] ?: 'коллега') . '!</p>'
+    $html = function_exists('mail_template')
+        ? mail_template('generic', [
+            'title'     => 'Импорт учеников завершён',
+            'name'      => (string) ($user['full_name'] ?: 'коллега'),
+            'message'   => 'Импорт учеников на конкурс «' . $comp['name'] . '» завершён. Создано заявок: ' . $created . '.'
+                . "\nНомера заявок: " . implode(', ', $numbers) . '.',
+            'cta_url'   => rtrim((string) cfgv('base_url'), '/') . '/cabinet',
+            'cta_text'  => 'Открыть кабинет',
+            'preheader' => 'Создано заявок: ' . $created . '. Все статусы — в кабинете.',
+          ])
+        : '<p>Здравствуйте, ' . h($user['full_name'] ?: 'коллега') . '!</p>'
           . '<p>Импорт учеников на конкурс «' . h($comp['name']) . '» завершён. Создано заявок: <b>' . $created . '</b>.</p>'
           . '<p>Номера заявок: ' . h(implode(', ', $numbers)) . '.</p>';
-    mail_queue($user['email'], $user['full_name'], 'Импорт учеников завершён - ' . $comp['name'], $html);
+    mail_queue($user['email'], $user['full_name'], 'Импорт учеников завершён — ' . $comp['name'], $html);
 }
 
 json_out(['ok' => true, 'created' => $created, 'numbers' => $numbers, 'errors' => $errors]);

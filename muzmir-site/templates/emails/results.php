@@ -11,11 +11,11 @@ $hello = $name !== '' ? 'Здравствуйте, ' . h($name) . '!' : 'Здр�
 <p style="margin:0 0 14px;"><?= $hello ?></p>
 <p style="margin:0 0 20px;">Жюри завершило работу по конкурсу «<?= h($competition) ?>». Благодарим Вас за участие.</p>
 <?php if ($result !== ''): ?>
-<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin:0 0 22px;background:linear-gradient(135deg,#fbf1de,#f3e2c4);border-radius:14px;border:1px solid #e6d0a8;">
-  <tr><td style="padding:24px;text-align:center;">
-    <div style="font-size:13px;letter-spacing:.12em;text-transform:uppercase;color:#C79322;margin-bottom:6px;">Ваш результат</div>
-    <div style="font-size:22px;font-weight:700;color:#17307A;line-height:1.25;">«<?= h($result) ?>»</div>
-    <?php if ($score !== ''): ?><div style="margin-top:6px;font-size:14px;color:#6B7699;">Оценка жюри: <?= h($score) ?></div><?php endif; ?>
+<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin:0 0 22px;border-radius:16px;overflow:hidden;">
+  <tr><td style="background:#17307A;background:linear-gradient(135deg,#17307A 0%,#24499F 100%);padding:26px 24px;text-align:center;">
+    <div style="font-size:12px;letter-spacing:.2em;text-transform:uppercase;color:rgba(255,255,255,.75);margin-bottom:8px;">Ваш результат</div>
+    <div style="font-family:Georgia,'Times New Roman',serif;font-size:26px;font-weight:700;color:#C79322;line-height:1.25;">«<?= h($result) ?>»</div>
+    <?php if ($score !== ''): ?><div style="margin-top:8px;font-size:14px;color:rgba(255,255,255,.85);">Оценка жюри: <?= h($score) ?></div><?php endif; ?>
   </td></tr>
 </table>
 <?php endif; ?>

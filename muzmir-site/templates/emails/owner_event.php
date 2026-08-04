@@ -13,7 +13,7 @@ $fields = is_array($fields ?? null) ? $fields : [];
             text-transform:uppercase;font-weight:600;padding:5px 12px;border-radius:999px;margin:0 0 14px;">
   <?= h($topic) ?>
 </div>
-<h2 style="margin:0 0 10px;font-size:20px;line-height:1.35;color:#1D2B55;"><?= h($title) ?></h2>
+<h2 style="margin:0 0 10px;font-family:Georgia,'Times New Roman',serif;font-size:20px;line-height:1.35;color:#17307A;"><?= h($title) ?></h2>
 <?php if (trim($text) !== ''): ?>
 <p style="margin:0 0 14px;"><?= nl2br(h($text)) ?></p>
 <?php endif; ?>

@@ -159,22 +159,37 @@ function _plan_send_at(DateTimeInterface $now, array $a, array $comp): DateTime 
 
 /** HTML-письмо с прикреплённым дипломом (кратко, брендово). */
 function _diploma_email_html(array $d): string {
-    $comp = htmlspecialchars((string)($d['comp_name'] ?? 'конкурса'), ENT_QUOTES, 'UTF-8');
-    $name = htmlspecialchars((string)($d['full_name'] ?? ''), ENT_QUOTES, 'UTF-8');
-    $num  = htmlspecialchars((string)($d['number'] ?? ''), ENT_QUOTES, 'UTF-8');
-    $res  = htmlspecialchars((string)($d['result'] ?? ''), ENT_QUOTES, 'UTF-8');
-    $orderUrl = htmlspecialchars(base_url() . '/order-awards?app=' . (int)$d['application_id'], ENT_QUOTES, 'UTF-8');
-    return <<<HTML
-<div style="font-family:'Segoe UI',Arial,sans-serif;max-width:640px;margin:0 auto;background:#FFFCF5;color:#1B2340;padding:32px;border-radius:16px;border:1px solid #eee6d2">
-  <h1 style="font-family:'Playfair Display',Georgia,serif;color:#8B6F1F;margin:0 0 16px;font-size:26px">Диплом конкурса «{$comp}»</h1>
-  <p>Уважаем{$name}!</p>
-  <p>По итогам аттестации Оргкомитета Вам присуждено звание: <b style="color:#8B6F1F">{$res}</b>.</p>
-  <p>Номер диплома: <b>{$num}</b>. Электронная версия диплома во вложении.</p>
-  <p>Оригинал диплома, кубок, статуэтку, медаль и благодарности педагогам можно заказать почтой в личном кабинете —
-    <a href="{$orderUrl}" style="color:#8B6F1F;font-weight:600">оформить заказ наградного материала</a>.</p>
-  <p style="margin-top:22px;color:#6a6353;font-size:.9em">Культурный центр «Музыкальный Мир» - при информационной поддержке Министерства культуры и образования субъектов РФ.</p>
-</div>
-HTML;
+    $comp = (string)($d['comp_name'] ?? 'конкурса');
+    $name = trim((string)($d['full_name'] ?? ''));
+    $num  = (string)($d['number'] ?? '');
+    $res  = (string)($d['result'] ?? '');
+    $orderUrl = base_url() . '/order-awards?app=' . (int)$d['application_id'];
+    $hello = $name !== '' ? 'Здравствуйте, ' . h($name) . '!' : 'Здравствуйте!';
+
+    $inner = '<h1 style="margin:0 0 18px;font-family:Georgia,\'Times New Roman\',serif;font-size:25px;color:' . MM_NAVY . ';font-weight:700;line-height:1.25;">Диплом конкурса «' . h($comp) . '»</h1>'
+        . '<p style="margin:0 0 14px;">' . $hello . '</p>'
+        . '<p style="margin:0 0 20px;">По итогам аттестации Оргкомитета Вам присуждено звание:</p>'
+        // Крупно результат — золотом на синем градиенте.
+        . '<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin:0 0 20px;border-radius:16px;overflow:hidden;">'
+        . '<tr><td style="background:' . MM_NAVY . ';background:linear-gradient(135deg,' . MM_NAVY . ' 0%,' . MM_NAVY2 . ' 100%);padding:26px 24px;text-align:center;">'
+        . '<div style="font-size:12px;letter-spacing:.2em;text-transform:uppercase;color:rgba(255,255,255,.75);margin-bottom:8px;">Ваше звание</div>'
+        . '<div style="font-family:Georgia,\'Times New Roman\',serif;font-size:26px;line-height:1.25;font-weight:700;color:' . MM_GOLD . ';letter-spacing:.03em;">' . h($res) . '</div>'
+        . '</td></tr></table>'
+        // Карточка диплома.
+        . '<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin:0 0 20px;background:' . MM_CARD . ';border:1px solid ' . MM_LINE . ';border-radius:14px;">'
+        . '<tr><td style="padding:18px 24px;font-size:14px;line-height:1.9;color:#33406B;">'
+        . '<div style="font-weight:600;color:' . MM_NAVY . ';font-size:13px;letter-spacing:.08em;text-transform:uppercase;margin-bottom:8px;">Ваш диплом</div>'
+        . '<div><span style="color:' . MM_MUTED . ';">Номер диплома:</span> <b style="color:' . MM_NAVY . ';">' . h($num) . '</b></div>'
+        . '<div><span style="color:' . MM_MUTED . ';">Формат:</span> PDF, во вложении к этому письму</div>'
+        . '</td></tr></table>'
+        . '<p style="margin:0 0 4px;">Оригинал диплома, кубок, статуэтку, медаль и благодарности педагогам можно заказать почтой в личном кабинете.</p>'
+        . mm_email_btn($orderUrl, 'Заказать наградной материал')
+        . '<p style="margin:16px 0 0;font-size:13px;color:' . MM_MUTED . ';">Культурный центр «Музыкальный Мир» — при информационной поддержке Министерства культуры и образования субъектов РФ.</p>';
+
+    return mm_email_layout($inner, [
+        'preheader'     => 'Вам присуждено звание «' . $res . '». Диплом № ' . $num . ' — во вложении.',
+        'audience_note' => 'Вы получили это письмо, так как участвуете в конкурсах центра.',
+    ]);
 }
 
 /** Отправка оригинала (без подписи/печати) + заявки + адреса в бот заказа (t.me/zakaznagrad) через нашего бота. */

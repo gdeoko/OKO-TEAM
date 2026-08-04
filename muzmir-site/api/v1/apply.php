@@ -160,9 +160,16 @@ if (!$uid && $email !== '') {
         if (function_exists('login_user')) login_user($uid);
         if (function_exists('mail_queue')) {
             $link = rtrim((string) cfgv('base_url'), '/') . '/cabinet#settings';
-            $html = '<p>Здравствуйте, ' . h($full_name) . '.</p>'
-                  . '<p>Мы создали для Вас личный кабинет — там Ваши заявки, статусы, дипломы.</p>'
-                  . '<p>Установите пароль для входа: <a href="' . h($link) . '">' . h($link) . '</a></p>';
+            $html = function_exists('mail_template')
+                ? mail_template('generic', [
+                    'title'     => 'Ваш личный кабинет создан',
+                    'name'      => $full_name,
+                    'message'   => 'Мы создали для Вас личный кабинет на сайте центра — там Ваши заявки, статусы, оплаты и дипломы. Осталось установить пароль для входа.',
+                    'cta_url'   => $link,
+                    'cta_text'  => 'Установить пароль',
+                    'preheader' => 'Личный кабинет создан — установите пароль для входа.',
+                  ])
+                : '<p>Здравствуйте, ' . h($full_name) . '.</p><p>Мы создали для Вас личный кабинет — установите пароль для входа в разделе настроек кабинета на сайте центра.</p>';
             mail_queue($email, $full_name, 'Ваш кабинет создан — КЦ «Музыкальный Мир»', $html);
         }
         audit('auto_register_on_apply', 'user', $uid, ['email' => $email]);
@@ -293,10 +300,19 @@ if (is_file(BASE_PATH . '/core/result_mail.php')) {
     // Фолбэк на случай отсутствия модуля фирменных писем.
     $numsList = implode(', ', $numbers);
     $subject  = 'Заявка №' . $number . ' принята — КЦ «Музыкальный Мир»';
-    $html = '<p>Здравствуйте, ' . h($full_name) . '!</p>'
-          . '<p>' . (count($numbers) > 1 ? 'Ваши заявки' : 'Ваша заявка') . ' <b>' . h($numsList) . '</b> на '
-          . (count($comps) > 1 ? 'конкурсы' : 'конкурс') . ' «' . h($compsList) . '» принят'.(count($comps)>1?'ы':'а').'.</p>'
-          . '<p>Мы сообщим о результатах на этот адрес.</p>';
+    $fallbackMsg = (count($numbers) > 1 ? 'Ваши заявки ' : 'Ваша заявка ') . $numsList . ' на '
+        . (count($comps) > 1 ? 'конкурсы' : 'конкурс') . ' «' . $compsList . '» принят' . (count($comps) > 1 ? 'ы' : 'а')
+        . '. Мы сообщим о результатах на этот адрес.';
+    $html = function_exists('mail_template')
+        ? mail_template('generic', [
+            'title'     => 'Заявка принята',
+            'name'      => $full_name,
+            'message'   => $fallbackMsg,
+            'cta_url'   => rtrim((string) cfgv('base_url'), '/') . '/cabinet',
+            'cta_text'  => 'Личный кабинет',
+            'preheader' => 'Заявка зарегистрирована и передана оргкомитету.',
+          ])
+        : '<p>Здравствуйте, ' . h($full_name) . '!</p><p>' . h($fallbackMsg) . '</p>';
     mail_queue($email, $full_name, $subject, $html);
 }
 

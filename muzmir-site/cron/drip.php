@@ -63,13 +63,9 @@ function drip_unsub_url(string $token): string {
     return rtrim((string) cfgv('base_url'), '/') . '/api/v1/unsubscribe.php?token=' . urlencode($token);
 }
 
-/** CTA-кнопка письма (фирменная тёплая палитра). */
+/** CTA-кнопка письма — единый фирменный стиль (mm_email_btn, core/mailer.php). */
 function drip_button(string $url, string $label): string {
-    return '<table role="presentation" cellpadding="0" cellspacing="0" style="margin:24px 0 6px;">'
-        . '<tr><td style="border-radius:10px;background:linear-gradient(135deg,#a0522d,#b8860b);">'
-        . '<a href="' . h($url) . '" style="display:inline-block;padding:14px 34px;color:#ffffff;'
-        . 'text-decoration:none;font-weight:600;font-size:15px;border-radius:10px;">' . h($label) . '</a>'
-        . '</td></tr></table>';
+    return mm_email_btn($url, $label, 'gold');
 }
 
 /** Обёртка + постановка письма в очередь. Возвращает true при успехе. */
@@ -101,44 +97,44 @@ function drip_body_apply(string $name): string {
     $hello = $name !== '' ? 'Здравствуйте, ' . h($name) . '!' : 'Здравствуйте!';
     $apply = function_exists('url') ? url('/apply') : '/apply';
     $faq   = function_exists('url') ? url('/voprosi') : '/voprosi';
-    $rowLbl = 'style="font-weight:600;color:#7a2e1e;font-size:13px;letter-spacing:.06em;text-transform:uppercase;margin:0 0 10px;"';
+    $rowLbl = 'style="font-weight:600;color:#17307A;font-size:13px;letter-spacing:.06em;text-transform:uppercase;margin:0 0 10px;"';
     return <<<HTML
-<h1 style="margin:0 0 18px;font-size:24px;color:#7a2e1e;font-weight:700;line-height:1.25;">Как подать заявку</h1>
+<h1 style="margin:0 0 18px;font-family:Georgia,'Times New Roman',serif;font-size:25px;color:#17307A;font-weight:700;line-height:1.25;">Как подать заявку</h1>
 <p style="margin:0 0 14px;">{$hello}</p>
 <p style="margin:0 0 16px;">Рассказываем, как принять участие в конкурсах культурного центра «Музыкальный Мир»
 и на что обратить внимание при подготовке конкурсного материала, чтобы работу приняли без замечаний.</p>
 
-<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin:0 0 20px;background:#f6ecdb;border-radius:14px;">
-  <tr><td style="padding:20px 24px;font-size:14px;line-height:1.85;color:#5a4632;">
+<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin:0 0 20px;background:#F4F6FC;border:1px solid #DCE3F3;border-radius:14px;">
+  <tr><td style="padding:20px 24px;font-size:14px;line-height:1.85;color:#33406B;">
     <div {$rowLbl}>Порядок подачи</div>
-    <div><span style="color:#a0522d;">1.</span> Выберите конкурс и номинацию на сайте центра.</div>
-    <div><span style="color:#a0522d;">2.</span> Заполните форму заявки: данные участника, номинация, возрастная категория.</div>
-    <div><span style="color:#a0522d;">3.</span> Приложите ссылку на конкурсный материал (видео) или фото работы.</div>
-    <div style="margin-top:6px;color:#8a7658;">Одна заявка — один конкурсный номер.</div>
+    <div><span style="color:#C79322;">1.</span> Выберите конкурс и номинацию на сайте центра.</div>
+    <div><span style="color:#C79322;">2.</span> Заполните форму заявки: данные участника, номинация, возрастная категория.</div>
+    <div><span style="color:#C79322;">3.</span> Приложите ссылку на конкурсный материал (видео) или фото работы.</div>
+    <div style="margin-top:6px;color:#6B7699;">Одна заявка — один конкурсный номер.</div>
   </td></tr>
 </table>
 
-<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin:0 0 20px;background:#f6ecdb;border-radius:14px;">
-  <tr><td style="padding:20px 24px;font-size:14px;line-height:1.85;color:#5a4632;">
+<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin:0 0 20px;background:#F4F6FC;border:1px solid #DCE3F3;border-radius:14px;">
+  <tr><td style="padding:20px 24px;font-size:14px;line-height:1.85;color:#33406B;">
     <div {$rowLbl}>Требования к видео</div>
-    <div><span style="color:#a0522d;">•</span> Запись без монтажа, склеек, стоп-кадров и спецэффектов, без остановки камеры.</div>
-    <div><span style="color:#a0522d;">•</span> Качество не ниже 480p, запись сделана не ранее чем за один год.</div>
-    <div><span style="color:#a0522d;">•</span> Ссылки принимаются только на: <b style="color:#7a2e1e;">RuTube, Google Диск, Яндекс&nbsp;Диск, OK&nbsp;видео, VK&nbsp;видео, Дзен&nbsp;видео</b>.</div>
-    <div><span style="color:#a0522d;">•</span> Не принимаются ссылки на Instagram, Facebook, TikTok, YouTube и мессенджеры.</div>
+    <div><span style="color:#C79322;">•</span> Запись без монтажа, склеек, стоп-кадров и спецэффектов, без остановки камеры.</div>
+    <div><span style="color:#C79322;">•</span> Качество не ниже 480p, запись сделана не ранее чем за один год.</div>
+    <div><span style="color:#C79322;">•</span> Ссылки принимаются только на: <b style="color:#17307A;">RuTube, Google Диск, Яндекс&nbsp;Диск, OK&nbsp;видео, VK&nbsp;видео, Дзен&nbsp;видео</b>.</div>
+    <div><span style="color:#C79322;">•</span> Не принимаются ссылки на Instagram, Facebook, TikTok, YouTube и мессенджеры.</div>
   </td></tr>
 </table>
 
-<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin:0 0 4px;background:#f6ecdb;border-radius:14px;">
-  <tr><td style="padding:20px 24px;font-size:14px;line-height:1.85;color:#5a4632;">
+<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin:0 0 4px;background:#F4F6FC;border:1px solid #DCE3F3;border-radius:14px;">
+  <tr><td style="padding:20px 24px;font-size:14px;line-height:1.85;color:#33406B;">
     <div {$rowLbl}>Фото- и изобразительные работы</div>
-    <div><span style="color:#a0522d;">•</span> Чёткое фото или скан под прямым углом, без бликов и фильтров — в кадре только само полотно.</div>
+    <div><span style="color:#C79322;">•</span> Чёткое фото или скан под прямым углом, без бликов и фильтров — в кадре только само полотно.</div>
   </td></tr>
 </table>
 
 HTML
     . drip_button($apply, 'Подать заявку')
-    . '<p style="margin:18px 0 0;font-size:13px;color:#8a7658;">Остались вопросы? Ответы на частые из них — в разделе '
-    . '<a href="' . h($faq) . '" style="color:#a0522d;text-decoration:underline;">справки на сайте</a>.</p>';
+    . '<p style="margin:18px 0 0;font-size:13px;color:#6B7699;">Остались вопросы? Ответы на частые из них — в разделе '
+    . '<a href="' . h($faq) . '" style="color:#C79322;text-decoration:underline;">справки на сайте</a>.</p>';
 }
 
 /** Шаг 3 (день 7): действующие конкурсы. $comps — открытые конкурсы из БД. */
@@ -154,22 +150,22 @@ function drip_body_competitions(string $name, array $comps): string {
             ? 'оргвзнос ' . (int) ($c['price'] ?? 0) . ' ₽'
             : 'участие бесплатное';
         $link   = function_exists('url') ? url('/competition/' . ($c['slug'] ?? '')) : '/competition/' . ($c['slug'] ?? '');
-        $items .= '<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin:0 0 12px;background:#f6ecdb;border-radius:14px;">'
-            . '<tr><td style="padding:18px 22px;font-size:14px;line-height:1.7;color:#5a4632;">'
-            . '<div style="font-weight:700;color:#7a2e1e;font-size:16px;margin-bottom:4px;">'
-            . '<a href="' . h($link) . '" style="color:#7a2e1e;text-decoration:none;">' . h((string) $c['name']) . '</a></div>'
-            . '<div style="color:#8a7658;font-size:13px;">' . h($typeRu) . ' конкурс · ' . h($price)
-            . ($end !== '' ? ' · приём заявок до <b style="color:#7a2e1e;">' . h($end) . '</b>' : '') . '</div>'
+        $items .= '<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin:0 0 12px;background:#F4F6FC;border:1px solid #DCE3F3;border-radius:14px;">'
+            . '<tr><td style="padding:18px 22px;font-size:14px;line-height:1.7;color:#33406B;">'
+            . '<div style="font-weight:700;color:#17307A;font-size:16px;margin-bottom:4px;">'
+            . '<a href="' . h($link) . '" style="color:#17307A;text-decoration:none;">' . h((string) $c['name']) . '</a></div>'
+            . '<div style="color:#6B7699;font-size:13px;">' . h($typeRu) . ' конкурс · ' . h($price)
+            . ($end !== '' ? ' · приём заявок до <b style="color:#17307A;">' . h($end) . '</b>' : '') . '</div>'
             . '</td></tr></table>';
     }
 
-    return '<h1 style="margin:0 0 18px;font-size:24px;color:#7a2e1e;font-weight:700;line-height:1.25;">Действующие конкурсы</h1>'
+    return '<h1 style="margin:0 0 18px;font-family:Georgia,\'Times New Roman\',serif;font-size:25px;color:#17307A;font-weight:700;line-height:1.25;">Действующие конкурсы</h1>'
         . '<p style="margin:0 0 14px;">' . $hello . '</p>'
         . '<p style="margin:0 0 20px;">Приём заявок открыт — приглашаем Вас принять участие. '
         . 'Ниже конкурсы, заявки на которые принимаются прямо сейчас.</p>'
         . $items
         . drip_button($all, 'Все конкурсы')
-        . '<p style="margin:18px 0 0;font-size:13px;color:#8a7658;">Желаем Вам ярких выступлений и заслуженных наград.</p>';
+        . '<p style="margin:18px 0 0;font-size:13px;color:#6B7699;">Желаем Вам ярких выступлений и заслуженных наград.</p>';
 }
 
 /* ---------- Основной прогон ---------- */

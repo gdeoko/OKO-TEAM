@@ -137,20 +137,25 @@ function nl_admin_wrap(string $bodyHtml, string $unsubUrl, string $pixel, string
     if (function_exists('nl_wrap_email')) {
         return nl_wrap_email($bodyHtml, $unsubUrl, $pixel, $preheader);
     }
-    $logo = function_exists('logo_data_uri') ? logo_data_uri() : '';
-    $org  = h((string) cfgv('org_full', 'Культурный центр «Музыкальный Мир»'));
+    if (function_exists('mm_email_layout')) {
+        return mm_email_layout($bodyHtml, [
+            'preheader'       => $preheader,
+            'unsubscribe_url' => $unsubUrl,
+            'pixel'           => $pixel,
+        ]);
+    }
+    $org = h((string) cfgv('org_full', 'Культурный центр «Музыкальный Мир»'));
     return '<!doctype html><html lang="ru"><head><meta charset="UTF-8">'
         . '<meta name="viewport" content="width=device-width,initial-scale=1"></head>'
-        . '<body style="margin:0;background:#f0e6d6;font-family:Segoe UI,Arial,sans-serif;color:#3a2e22;">'
+        . '<body style="margin:0;background:#FAF4E6;font-family:Segoe UI,Arial,sans-serif;color:#1D2B55;">'
         . '<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="padding:28px 12px"><tr><td align="center">'
-        . '<table role="presentation" width="600" cellpadding="0" cellspacing="0" style="max-width:100%;background:#fbf6ef;border-radius:18px;overflow:hidden">'
-        . '<tr><td style="background:linear-gradient(135deg,#7a2e1e,#a0522d 55%,#b8860b);padding:30px;text-align:center">'
-        . ($logo !== '' ? '<img src="' . $logo . '" alt="" width="88" height="88" style="border-radius:14px;background:#fff;padding:6px">' : '')
-        . '<div style="margin-top:12px;color:#fff;letter-spacing:.14em;text-transform:uppercase;font-weight:600;font-size:14px">' . $org . '</div></td></tr>'
+        . '<table role="presentation" width="600" cellpadding="0" cellspacing="0" style="max-width:100%;background:#FFFFFF;border-radius:18px;overflow:hidden">'
+        . '<tr><td style="background:linear-gradient(135deg,#17307A,#24499F);padding:30px;text-align:center">'
+        . '<div style="font-family:Georgia,serif;color:#C79322;font-weight:700;font-size:19px">Культурный центр «Музыкальный Мир»</div></td></tr>'
         . '<tr><td style="padding:38px 42px;font-size:16px;line-height:1.7">' . $bodyHtml . '</td></tr>'
-        . '<tr><td style="padding:22px 42px 30px;font-size:12px;color:#a8977c">'
+        . '<tr><td style="padding:22px 42px 30px;font-size:12px;color:#96A0BE">'
         . 'Вы получили это письмо, так как оставили заявку или подписку на сайте центра. '
-        . '<a href="' . h($unsubUrl) . '" style="color:#a0522d">Отписаться</a>.</td></tr>'
+        . '<a href="' . h($unsubUrl) . '" style="color:#C79322">Отписаться</a>.</td></tr>'
         . '</table></td></tr></table>' . $pixel . '</body></html>';
 }
 

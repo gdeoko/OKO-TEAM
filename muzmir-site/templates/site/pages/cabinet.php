@@ -68,8 +68,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $dn = input('number');
         $d = one("SELECT d.* FROM diplomas d JOIN applications a ON a.id=d.application_id WHERE d.number=? AND a.user_id=?", [$dn, $uid]);
         if ($d && function_exists('mail_queue')) {
-            $html = '<p>Здравствуйте, ' . h($user['full_name'] ?: 'участник') . '.</p><p>Ваш диплом № ' . h($dn) . ' во вложении.</p>';
-            mail_queue($user['email'], $user['full_name'], 'Ваш диплом - КЦ «Музыкальный Мир»', $html, (string)($d['pdf_path'] ?? ''));
+            $html = function_exists('mail_template')
+                ? mail_template('generic', [
+                    'title'     => 'Ваш диплом',
+                    'name'      => (string) ($user['full_name'] ?: 'участник'),
+                    'message'   => 'По Вашему запросу повторно направляем диплом № ' . $dn . '. Документ в формате PDF приложен к этому письму.',
+                    'preheader' => 'Диплом № ' . $dn . ' — во вложении.',
+                  ])
+                : '<p>Здравствуйте, ' . h($user['full_name'] ?: 'участник') . '.</p><p>Ваш диплом № ' . h($dn) . ' во вложении.</p>';
+            mail_queue($user['email'], $user['full_name'], 'Ваш диплом — КЦ «Музыкальный Мир»', $html, (string)($d['pdf_path'] ?? ''));
             flash('Диплом отправлен на Вашу почту.', 'success');
         } elseif ($d) {
             flash('Диплом готов к скачиванию в разделе «Дипломы».', 'info');

@@ -81,11 +81,12 @@ try {
     $orgEmail = (string) cfgv('org_email', '');
     if ($orgEmail !== '' && function_exists('mail_queue')) {
         $body = "Годовой отчёт о деятельности Культурного центра «Музыкальный Мир» за $year год "
-            . "сформирован автоматически и приложен к настоящему письму в формате PDF.\n\n"
-            . "Также отчёт доступен по ссылке: $url";
+            . "сформирован автоматически и приложен к настоящему письму в формате PDF.";
         $html = function_exists('mail_template') ? mail_template('annual_report', [
-            'message'   => $body,
-            'preheader' => 'Годовой отчёт за ' . $year . ' год',
+            'year'       => (string) $year,
+            'message'    => $body,
+            'report_url' => $url,
+            'preheader'  => 'Годовой отчёт за ' . $year . ' год',
         ]) : nl2br(h($body));
         // 5-й аргумент — путь к файлу вложения (см. core/mailer.php: mail_queue → mail_build_mime).
         mail_queue($orgEmail, (string) cfgv('org_name', ''), $subject, $html, $pdf);

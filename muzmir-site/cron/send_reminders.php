@@ -84,13 +84,11 @@ try {
         if (already_notified('reminder_payment', 'application', $id)) continue;
 
         $name = trim((string) $a['full_name']);
-        $message = 'Здравствуйте' . ($name !== '' ? ', ' . $name : '') . '! Ваша заявка'
-            . ($a['number'] ? ' № ' . $a['number'] : '') . ' на конкурс «' . $a['comp_name'] . '» зарегистрирована, '
-            . 'но оплата участия ещё не поступила. Чтобы работу передали жюри, оплатите участие '
-            . 'в личном кабинете: ' . url('/cabinet') . '.';
-
         $html = function_exists('mail_template') ? mail_template('reminder_payment', [
-            'message'          => $message,
+            'name'             => $name,
+            'competition'      => (string) $a['comp_name'],
+            'number'           => (string) ($a['number'] ?? ''),
+            'cabinet_url'      => url('/cabinet'),
             'preheader'        => 'Оплата участия пока не поступила',
             'unsubscribe_url'  => reminder_unsub_url_email((string) $a['email']),
         ]) : '';
