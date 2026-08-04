@@ -38,6 +38,71 @@ function _dh_style(array $cfg, ?float $baseFs = null): string {
     return $s !== '' ? ' style="' . $s . '"' : '';
 }
 
+/**
+ * Дизайн-тема диплома по названию конкурса: свои шрифты и цвета для названия,
+ * слова ДИПЛОМ/БЛАГОДАРНОСТЬ, степени и ФИО. Все шрифты — с кириллицей.
+ * Переопределяется ключом diploma_template.theme (cosmos|zenith|theatre|derzhava|classic).
+ */
+function diploma_theme_pick(array $c, array $tpl): array {
+    $themes = [
+        // Космос, звёзды: холодное сияние, серебристо-ледяные акценты к золоту.
+        'cosmos' => [
+            'fonts'   => 'Prata',
+            'ff_comp' => "'Prata',serif", 'ls_comp' => '4px',
+            'grad_comp'   => 'linear-gradient(180deg,#EAF7FF 0%,#BFE9FF 30%,#7FC9F0 55%,#CDEFFF 80%,#FFFFFF 100%)',
+            'grad_dtype'  => 'linear-gradient(180deg,#FFF6C4 0%,#FFD54F 18%,#FFC107 38%,#D4A017 52%,#B8860B 62%,#FFC107 80%,#FFF3B0 100%)',
+            'grad_degree' => 'linear-gradient(180deg,#FFFFFF 0%,#CFEFFF 35%,#8FD4F5 65%,#E8F9FF 100%)',
+            'name_color' => '#BFE9FF', 'ff_name' => "'Prata',serif",
+        ],
+        // Зенит, триумф: античная классика, тёплое торжественное золото.
+        'zenith' => [
+            'fonts'   => 'Forum',
+            'ff_comp' => "'Forum',serif", 'ls_comp' => '5px',
+            'grad_comp'   => 'linear-gradient(180deg,#FFF7D6 0%,#FFE082 25%,#E9C567 45%,#B8860B 58%,#E9C567 75%,#FFF3B0 100%)',
+            'grad_dtype'  => 'linear-gradient(180deg,#FFFBE8 0%,#FFE082 20%,#F5C542 40%,#C9971C 55%,#A67C10 65%,#E9C567 82%,#FFF7D6 100%)',
+            'grad_degree' => 'linear-gradient(180deg,#FFFFFF 0%,#FFF3C4 30%,#F0CE72 60%,#D4A017 85%,#FFE082 100%)',
+            'name_color' => '#FFE99C', 'ff_name' => "'Forum',serif",
+        ],
+        // Театр, сцена: бархат и шампань, тёплый кремовый свет рампы.
+        'theatre' => [
+            'fonts'   => 'Cormorant+Garamond:wght@600;700',
+            'ff_comp' => "'Cormorant Garamond',serif", 'ls_comp' => '3px',
+            'grad_comp'   => 'linear-gradient(180deg,#FFF6E8 0%,#FFE3B0 30%,#F2BE6A 55%,#D89A3D 70%,#FFDFA6 100%)',
+            'grad_dtype'  => 'linear-gradient(180deg,#FFF9EC 0%,#FFE7B8 22%,#F4C878 42%,#D89A3D 56%,#B87526 66%,#F2BE6A 82%,#FFF2D8 100%)',
+            'grad_degree' => 'linear-gradient(180deg,#FFFFFF 0%,#FFF0D6 32%,#F2CE8E 62%,#D89A3D 88%,#FFE3B0 100%)',
+            'name_color' => '#FFE9C4', 'ff_name' => "'Cormorant Garamond',serif",
+        ],
+        // Держава: имперское золото с рубиновым отблеском, строгая антиква.
+        'derzhava' => [
+            'fonts'   => 'Old+Standard+TT:wght@700',
+            'ff_comp' => "'Old Standard TT',serif", 'ls_comp' => '4px',
+            'grad_comp'   => 'linear-gradient(180deg,#FFF3C4 0%,#FFD766 22%,#E8A93C 45%,#B8641B 60%,#E8A93C 78%,#FFE9A6 100%)',
+            'grad_dtype'  => 'linear-gradient(180deg,#FFF6D0 0%,#FFD766 20%,#F0AE3C 40%,#C4571E 55%,#A63E14 63%,#E8A93C 80%,#FFE9A6 100%)',
+            'grad_degree' => 'linear-gradient(180deg,#FFFFFF 0%,#FFEFC0 30%,#F0C868 60%,#D08A20 85%,#FFD766 100%)',
+            'name_color' => '#FFE9A6', 'ff_name' => "'Old Standard TT',serif",
+        ],
+        // Классика эталона (фолбэк).
+        'classic' => [
+            'fonts'   => '',
+            'ff_comp' => "'Playfair Display',serif", 'ls_comp' => '3px',
+            'grad_comp'   => 'linear-gradient(180deg,#FFF3B0 0%,#FFD54F 20%,#C9A84C 45%,#8B6F1F 55%,#C9A84C 75%,#FFE082 100%)',
+            'grad_dtype'  => 'linear-gradient(180deg,#FFF3B0 0%,#FFD54F 15%,#FFC107 30%,#D4A017 45%,#A67C10 55%,#D4A017 70%,#FFC107 85%,#FFF3B0 100%)',
+            'grad_degree' => 'linear-gradient(180deg,#FFF3B0 0%,#FFD54F 25%,#D4A017 55%,#A67C10 75%,#FFC107 100%)',
+            'name_color' => '#FFE082', 'ff_name' => "'Playfair Display',serif",
+        ],
+    ];
+    $key = (string)($tpl['theme'] ?? '');
+    if (!isset($themes[$key])) {
+        $n = mb_strtolower((string)($c['name'] ?? ''));
+        $key = 'classic';
+        if (preg_match('/росси|велич|держав|патриот|родин|отчизн|отечеств/u', $n)) $key = 'derzhava';
+        elseif (preg_match('/зенит|слав|вершин|олимп|триумф|пик /u', $n))          $key = 'zenith';
+        elseif (preg_match('/искусств|благо|сцен|театр|творч|арт/u', $n))          $key = 'theatre';
+        elseif (preg_match('/талант|звёзд|звезд|мир|космос|галакт|вселенн/u', $n)) $key = 'cosmos';
+    }
+    return $themes[$key] + ['key' => $key];
+}
+
 function diploma_html(array $c, array $a, array $opt = []): string {
     $tpl = [];
     if (!empty($c['diploma_template'])) {
@@ -57,7 +122,8 @@ function diploma_html(array $c, array $a, array $opt = []): string {
     }
     // Затемнение нужно только поверх фотографии; на градиенте эталона — ноль.
     $overlay = isset($tpl['overlay']) ? max(0, min(100, (int)$tpl['overlay'])) : ($bgUrl ? 55 : 0);
-    $fade    = isset($tpl['fade']) ? max(30, min(160, (int)$tpl['fade'])) : 95;
+    $fade    = isset($tpl['fade']) ? max(30, min(160, (int)$tpl['fade'])) : 105;
+    $T       = diploma_theme_pick($c, $tpl);
 
     $isIntl   = ($c['type'] ?? '') === 'international';
     $typeGenM = $isIntl ? 'международного' : 'всероссийского';   // род. падеж
@@ -132,7 +198,7 @@ function diploma_html(array $c, array $a, array $opt = []): string {
 <title><?= h($dtype) ?> — <?= h($compName) ?></title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600;700;800;900&family=Manrope:wght@400;500;600;700;800&family=Marck+Script&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600;700;800;900&family=Manrope:wght@400;500;600;700;800&family=Marck+Script<?= $T['fonts'] !== '' ? '&family=' . $T['fonts'] : '' ?>&display=swap" rel="stylesheet">
 <style>
 /* ===== 1:1 из эталона diplom_laureat2.html / blagodarnost1.html ===== */
 *{box-sizing:border-box;margin:0;padding:0}
@@ -147,36 +213,39 @@ body{background:#444;font-family:'Manrope',sans-serif;padding:20px;min-height:10
 .bg-tone{position:absolute;inset:0;z-index:1;pointer-events:none;
   background:linear-gradient(180deg, rgba(8,12,28,<?= number_format($overlay/100*.68,2,'.','') ?>) 0%, rgba(8,12,28,<?= number_format($overlay/100*.52,2,'.','') ?>) 45%, rgba(8,12,28,<?= number_format($overlay/100*.34,2,'.','') ?>) 65%, rgba(8,12,28,<?= number_format($overlay/100*.14,2,'.','') ?>) 78%, rgba(8,12,28,0) 88%)}
 <?php endif; ?>
-/* Белое растворение снизу — часть фона (высота = «засвет», настраивается) */
+/* Засвет снизу: длинное мягкое растворение кверху, без белого «блока» */
 .bg-white-gradient{position:absolute;bottom:0;left:0;right:0;height:<?= $fade ?>mm;z-index:2;pointer-events:none;
-  background:linear-gradient(180deg, transparent 0%, rgba(240,240,245,.1) 12%, rgba(245,245,250,.45) 35%, rgba(250,250,252,.82) 60%, rgba(255,255,255,.96) 100%)}
+  background:linear-gradient(180deg, transparent 0%, rgba(248,248,252,.05) 16%, rgba(250,250,253,.16) 34%, rgba(252,252,254,.36) 52%, rgba(253,253,255,.62) 70%, rgba(255,255,255,.85) 86%, rgba(255,255,255,.95) 100%)}
 .content{position:relative;z-index:3;padding:10mm 14mm 0;height:100%}
 .header-legal{text-align:center;font-size:7.5pt;line-height:1.35;color:#fff;margin-bottom:5mm}
 .header-legal .org-name{font-family:'Playfair Display',serif;font-size:17pt;font-weight:800;margin-bottom:3mm;color:#fff}
 .header-legal .legal-text{font-weight:500;color:#fff}
+/* Ряд логотипов: светлые версии для тёмных фонов, выровнены по центру */
 .logos-row{display:flex;justify-content:space-between;align-items:center;margin-bottom:3mm;padding:0 3mm}
-.logos-row .logo{width:auto;filter:drop-shadow(0 2px 6px rgba(0,0,0,.3))}
-.logos-row .logo-prok{height:18mm}.logos-row .logo-emblem{height:22mm}.logos-row .logo-rossia{height:22mm}
-.logos-row .logo-natsproekty{height:20mm}
+.logos-row .logo{width:auto;filter:drop-shadow(0 2px 6px rgba(0,0,0,.45))}
+.logos-row .logo-prok{height:15mm}
+.logos-row .logo-medal{height:20mm}
+.logos-row .logo-natsproekty{height:18mm}
+.logos-row .logo-badge{height:20mm}
 .logos-row .logo-center{height:34mm;flex-shrink:0;margin:0 2mm}
 .competition-type{text-align:center;font-family:'Playfair Display',serif;font-size:15pt;font-weight:700;color:#fff;margin-bottom:2mm}
-.competition-name{text-align:center;font-family:'Playfair Display',serif;font-size:30pt;font-weight:900;
-  background:linear-gradient(180deg,#FFF3B0 0%,#FFD54F 20%,#C9A84C 45%,#8B6F1F 55%,#C9A84C 75%,#FFE082 100%);
+.competition-name{text-align:center;font-family:<?= $T['ff_comp'] ?>;font-size:30pt;font-weight:900;
+  background:<?= $T['grad_comp'] ?>;
   -webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;
-  letter-spacing:3px;margin-bottom:3mm;filter:drop-shadow(0 2px 4px rgba(0,0,0,.6))}
+  letter-spacing:<?= $T['ls_comp'] ?>;margin-bottom:3mm;filter:drop-shadow(0 2px 4px rgba(0,0,0,.65))}
 .support-line{text-align:center;font-family:'Playfair Display',serif;font-size:12pt;font-weight:600;line-height:1.4;margin-bottom:4mm;padding:0 5mm;color:#fff}
-.diploma-type{text-align:center;font-family:'Playfair Display',serif;font-size:48pt;font-weight:900;
-  background:linear-gradient(180deg,#FFF3B0 0%,#FFD54F 15%,#FFC107 30%,#D4A017 45%,#A67C10 55%,#D4A017 70%,#FFC107 85%,#FFF3B0 100%);
+.diploma-type{text-align:center;font-family:<?= $T['ff_comp'] ?>;font-size:48pt;font-weight:900;
+  background:<?= $T['grad_dtype'] ?>;
   -webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;
   letter-spacing:6px;margin-bottom:1mm;filter:drop-shadow(0 3px 6px rgba(0,0,0,.7));line-height:1}
-.diploma-degree{text-align:center;font-family:'Playfair Display',serif;font-size:28pt;font-weight:900;
-  background:linear-gradient(180deg,#FFF3B0 0%,#FFD54F 25%,#D4A017 55%,#A67C10 75%,#FFC107 100%);
+.diploma-degree{text-align:center;font-family:<?= $T['ff_comp'] ?>;font-size:28pt;font-weight:900;
+  background:<?= $T['grad_degree'] ?>;
   -webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;
   letter-spacing:4px;margin-bottom:4mm;filter:drop-shadow(0 2px 5px rgba(0,0,0,.7));line-height:1}
-.extra-award{text-align:center;font-family:'Playfair Display',serif;font-size:14pt;font-weight:700;color:#FFE082;margin:-2mm 0 3mm;filter:drop-shadow(0 1px 3px rgba(0,0,0,.6))}
+.extra-award{text-align:center;font-family:'Playfair Display',serif;font-size:14pt;font-weight:700;color:<?= $T['name_color'] ?>;margin:-2mm 0 3mm;filter:drop-shadow(0 1px 3px rgba(0,0,0,.6))}
 .awarded-label{text-align:center;font-family:'Playfair Display',serif;font-size:15pt;font-weight:600;color:#fff;margin-bottom:2mm}
-.awarded-name{text-align:center;font-family:'Playfair Display',serif;font-size:24pt;font-weight:700;color:#FFE082;margin-bottom:4mm;filter:drop-shadow(0 2px 4px rgba(0,0,0,.6))}
-.awarded-name-script{text-align:center;font-family:'Marck Script',cursive;font-size:36pt;color:#FFE082;margin-bottom:4mm;filter:drop-shadow(0 2px 6px rgba(0,0,0,.7));line-height:1}
+.awarded-name{text-align:center;font-family:<?= $T['ff_name'] ?>;font-size:24pt;font-weight:700;color:<?= $T['name_color'] ?>;margin-bottom:4mm;filter:drop-shadow(0 2px 4px rgba(0,0,0,.6))}
+.awarded-name-script{text-align:center;font-family:'Marck Script',cursive;font-size:36pt;color:<?= $T['name_color'] ?>;margin-bottom:4mm;filter:drop-shadow(0 2px 6px rgba(0,0,0,.7));line-height:1}
 .field-list{padding:0 8mm;font-family:'Playfair Display',serif;font-size:<?= $fldFs ?>pt;font-weight:600;line-height:<?= $fldLh ?>;text-align:center}
 .field-list .field{color:#fff;filter:drop-shadow(0 1px 3px rgba(0,0,0,.5))}
 /* Текст благодарности сжат так, чтобы гарантированно не доставать до подписей */
@@ -221,13 +290,13 @@ body{background:#444;font-family:'Manrope',sans-serif;padding:20px;min-height:10
 
     <?php $e = $E('logos'); ?>
     <div class="logos-row"<?= $D('logos') . _dh_style($e) ?>>
-      <img class="logo logo-prok" src="<?= $imgDip ?>/logo_prok.png" alt="">
-      <img class="logo logo-emblem" src="<?= $imgDip ?>/logo_emblem1.png" alt="">
-      <img class="logo logo-rossia" src="<?= $imgDip ?>/logo_rossia.png" alt="">
+      <img class="logo logo-prok" src="<?= $imgDip ?>/logo_prok_w.png" alt="">
+      <img class="logo logo-medal" src="<?= $imgDip ?>/logo_minkult_gold.png" alt="">
+      <img class="logo logo-medal" src="<?= $imgDip ?>/logo_rossia_gold.png" alt="">
       <img class="logo logo-center" src="<?= $imgDip ?>/logo_center.png" alt="">
-      <img class="logo logo-emblem" src="<?= $imgDip ?>/logo_emblem2.png" alt="">
+      <img class="logo logo-medal" src="<?= $imgDip ?>/logo_rkn_gold.png" alt="">
       <img class="logo logo-natsproekty" src="<?= $imgDip ?>/logo_natsproekty.png" alt="">
-      <img class="logo logo-emblem" src="<?= $imgDip ?>/logo_emblem3.png" alt="">
+      <img class="logo logo-badge" src="<?= $imgDip ?>/logo_mm_badge.png" alt="">
     </div>
 
     <?php $e = $E('comptype'); ?>
