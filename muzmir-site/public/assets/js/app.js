@@ -869,3 +869,61 @@
     window.addEventListener('load', function () { navigator.serviceWorker.register('/service-worker.js').catch(function () {}); });
   }
 })();
+
+/* ---------- Аналитика сайта (site_events, api/v1/track) ---------- */
+/* pageview при загрузке и SPA-навигации; клики по .btn и ссылкам —
+   делегирование + троттлинг, отправка через sendBeacon (без ПД). */
+(function () {
+  'use strict';
+  var API = '/api/v1/track';
+  var lastClick = 0;
+
+  function send(type, path, meta) {
+    try {
+      var payload = JSON.stringify({
+        type: type,
+        path: path || (location.pathname + location.search),
+        meta: meta || {}
+      });
+      if (navigator.sendBeacon) {
+        navigator.sendBeacon(API, new Blob([payload], { type: 'application/json' }));
+      } else {
+        var x = new XMLHttpRequest();
+        x.open('POST', API, true);
+        x.setRequestHeader('Content-Type', 'application/json');
+        x.send(payload);
+      }
+    } catch (e) { /* тихо */ }
+  }
+
+  /* pageview при первичной загрузке */
+  send('pageview');
+
+  /* pageview при SPA-навигации (spa.js шлёт mz-spa-navigate; mz:navigated — совместимость) */
+  document.addEventListener('mz-spa-navigate', function (e) {
+    var u = e && e.detail && e.detail.url;
+    try { u = u ? new URL(u, location.href) : null; } catch (err) { u = null; }
+    send('pageview', u ? (u.pathname + u.search) : (location.pathname + location.search));
+  });
+  document.addEventListener('mz:navigated', function () { send('pageview'); });
+  window.addEventListener('mz:navigated', function () { send('pageview'); });
+
+  /* Клики по кнопкам и ссылкам: делегирование + троттлинг 400мс */
+  document.addEventListener('click', function (e) {
+    var t = e.target;
+    var el = t && t.closest ? t.closest('.btn, a[href]') : null;
+    if (!el) return;
+    var now = Date.now();
+    if (now - lastClick < 400) return;
+    lastClick = now;
+    var label = (el.getAttribute('data-track') || el.getAttribute('aria-label') || el.textContent || '')
+      .replace(/\s+/g, ' ').trim().slice(0, 80);
+    var href = el.getAttribute('href') || '';
+    if (/^(mailto|tel|javascript):/i.test(href)) href = href.split(':')[0] + ':';
+    send('click', location.pathname, {
+      t: label,
+      href: href.slice(0, 140),
+      btn: el.classList && el.classList.contains('btn') ? 1 : 0
+    });
+  }, true);
+})();

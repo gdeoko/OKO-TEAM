@@ -84,6 +84,17 @@ if ($action === 'request') {
             mail_queue($email, $name, 'Добро пожаловать в «Музыкальный Мир»', mail_template('welcome', ['name' => $name]));
         }
 
+        if ($isNewUser && is_file(BASE_PATH . '/core/notify_owner.php')) {
+            require_once BASE_PATH . '/core/notify_owner.php';
+            owner_notify('РЕГИСТРАЦИИ', 'Новая регистрация (email + пароль)', '', [
+                'Имя'    => $name,
+                'Email'  => $email,
+                '_event' => 'register',
+                '_path'  => '/register',
+                '_meta'  => ['user_id' => $uid, 'via' => 'email_password'],
+            ]);
+        }
+
         json_out(['ok' => true, 'registered' => true, 'redirect' => '/cabinet?auth=ok']);
     }
 
@@ -141,6 +152,17 @@ if ($action === 'verify') {
     if ($isNewUser && $email !== '' && function_exists('mail_queue') && function_exists('mail_template')) {
         $welcomeName = (string) input('name');
         mail_queue($email, $welcomeName, 'Добро пожаловать в «Музыкальный Мир»', mail_template('welcome', ['name' => $welcomeName]));
+    }
+
+    if ($isNewUser && is_file(BASE_PATH . '/core/notify_owner.php')) {
+        require_once BASE_PATH . '/core/notify_owner.php';
+        owner_notify('РЕГИСТРАЦИИ', 'Новая регистрация (email, код)', '', [
+            'Имя'    => (string) input('name'),
+            'Email'  => $email,
+            '_event' => 'register',
+            '_path'  => '/register',
+            '_meta'  => ['user_id' => $uid, 'via' => 'email_magic'],
+        ]);
     }
 
     json_out(['ok' => true, 'registered' => true, 'redirect' => '/cabinet?auth=ok']);

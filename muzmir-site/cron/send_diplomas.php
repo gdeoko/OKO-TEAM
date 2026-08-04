@@ -21,18 +21,21 @@ require_once BASE_PATH . '/core/telegram.php';
 require_once BASE_PATH . '/core/pdf_diploma.php';
 db();
 
-// 1) Убеждаемся что колонка scheduled_at есть.
+// 1) Убеждаемся что нужные колонки есть (мягкие миграции).
 try { db()->exec("ALTER TABLE diplomas ADD COLUMN scheduled_at TEXT"); } catch (\Throwable $e) {}
+try { db()->exec("ALTER TABLE applications ADD COLUMN send_at_override TEXT"); } catch (\Throwable $e) {}
 
 date_default_timezone_set('Europe/Moscow');
 $now = new DateTime('now');
 
-// 2) Планируем отправку у новоаттестованных заявок (jury_graded_at установлен, но диплом ещё не спланирован).
-$fresh = all("SELECT a.id, a.number, a.competition_id, a.result, a.email, a.created_at,
-                     c.results_mode, c.results_date
+// 2) Планируем отправку у новоаттестованных заявок (результат проставлен, но диплом ещё не спланирован).
+//    Отклонённые заявки не трогаем; повторное grade_result с изменённым итогом удаляет
+//    неотправленный диплом — здесь он будет пересоздан с новым результатом и свежим PDF.
+$fresh = all("SELECT a.*, c.results_mode, c.results_date, c.is_paid AS comp_is_paid
               FROM applications a
               JOIN competitions c ON c.id = a.competition_id
               WHERE a.result IS NOT NULL AND a.result <> ''
+                AND a.status <> 'rejected'
                 AND NOT EXISTS (SELECT 1 FROM diplomas d WHERE d.application_id = a.id)");
 foreach ($fresh as $a) {
     $comp = one("SELECT * FROM competitions WHERE id=?", [$a['competition_id']]);
@@ -42,8 +45,8 @@ foreach ($fresh as $a) {
     if (function_exists('pdf_diploma')) {
         try { $pdfPath = pdf_diploma((array)$a, 'main'); } catch (\Throwable $e) { $pdfPath = null; }
     }
-    // 2б. Планируем отправку
-    $sched = _plan_send_at($now, (string)($comp['results_mode'] ?? 'email'), (string)($comp['results_date'] ?? ''));
+    // 2б. Планируем отправку: ручной override администратора > режим конкурса > 3 раб.дня от даты подачи.
+    $sched = _plan_send_at($now, (array)$a, (array)$comp);
     insert('diplomas', [
         'number'         => diploma_make_number((string)$a['number'], 'main'),
         'application_id' => (int)$a['id'],
@@ -65,6 +68,7 @@ $dueList = all("SELECT d.*, a.email, a.full_name, a.number AS app_number, c.name
                 WHERE d.sent_at IS NULL
                   AND d.scheduled_at IS NOT NULL
                   AND d.scheduled_at <= ?
+                  AND a.status <> 'rejected'
                 ORDER BY d.scheduled_at ASC
                 LIMIT 30", [$now->format('Y-m-d H:i:s')]);
 
@@ -85,6 +89,8 @@ foreach ($dueList as $d) {
     }
     if ($ok) {
         update('diplomas', ['sent_at' => $now->format('Y-m-d H:i:s')], 'id=:id', ['id' => (int)$d['id']]);
+        // Автостатус: диплом отправлен -> заявка исполнена (цепочка подана→оценена→исполнена).
+        q("UPDATE applications SET status='done' WHERE id=?", [(int)$d['application_id']]);
         $sentThisTick++;
     } else {
         // сдвигаем ещё на 5 минут (retry)
@@ -96,20 +102,55 @@ fwrite(STDERR, "send_diplomas: planned=" . count($fresh) . " sent_now=$sentThisT
 
 // ================= helpers =================
 
-/** Планирование даты отправки в зависимости от режима + рабочего окна МСК 9:00-18:00, пн-пт. */
-function _plan_send_at(DateTimeInterface $now, string $mode, string $resultsDate): DateTime {
-    if ($mode === 'list' && $resultsDate) {
-        // Длинный — пакетная рассылка в дату публикации в 09:05 МСК
-        try { return new DateTime($resultsDate . ' 09:05'); } catch (\Throwable $e) {}
+/**
+ * Планирование даты отправки результата/диплома.
+ * Приоритет:
+ *  1) applications.send_at_override — ручная дата администратора (со страницы оценки);
+ *  2) длинные бесплатные (results_mode='list' ИЛИ is_paid=0) — пакетно в дату публикации
+ *     (results_date, иначе ближайшее 28-е число) в 09:05 МСК, по одному не шлём;
+ *  3) короткие платные — ДАТА ПОДАЧИ заявки (created_at) + 3 рабочих дня (вс — нерабочий),
+ *     рабочее окно 9:00-18:00 МСК; если оценка произошла ПОЗЖЕ этого срока —
+ *     ближайшее рабочее окно.
+ */
+function _plan_send_at(DateTimeInterface $now, array $a, array $comp): DateTime {
+    // 1) Ручной override администратора.
+    $ov = trim((string)($a['send_at_override'] ?? ''));
+    if ($ov !== '') {
+        try { return new DateTime($ov); } catch (\Throwable $e) { /* некорректная дата — игнор */ }
     }
-    // Короткий — минимум 3 раб.дня, максимум 5, дальше сдвиг к 9:00 МСК буднего дня.
-    $t = new DateTime($now->format('Y-m-d H:i:s'));
-    $t->modify('+3 weekdays');
-    $t->setTime(9, (int)round(rand(0, 55))); // 9:00-9:55 разлёт, чтобы не в одну минуту
-    // если попали на субботу/воскресенье — сдвиг на понедельник
-    $wd = (int)$t->format('w'); // 0=вс, 6=сб
-    if ($wd === 6) $t->modify('+2 days')->setTime(9, (int)round(rand(0, 55)));
-    if ($wd === 0) $t->modify('+1 day')->setTime(9, (int)round(rand(0, 55)));
+
+    $mode   = (string)($comp['results_mode'] ?? 'email');
+    $isPaid = (int)($comp['is_paid'] ?? 0) === 1;
+
+    // 2) Длинные бесплатные: копим, пакетная рассылка в день публикации.
+    if ($mode === 'list' || !$isPaid) {
+        $rd = trim((string)($comp['results_date'] ?? ''));
+        if ($rd !== '') {
+            try { return new DateTime($rd . ' 09:05'); } catch (\Throwable $e) {}
+        }
+        // Ближайшее 28-е число в 09:05.
+        $t = new DateTime($now->format('Y-m-') . '28 09:05');
+        if ($t <= $now) $t->modify('first day of next month')->modify('+27 days')->setTime(9, 5);
+        return $t;
+    }
+
+    // 3) Короткие платные: created_at + 3 рабочих дня (вс — нерабочий).
+    try { $t = new DateTime((string)($a['created_at'] ?? 'now')); } catch (\Throwable $e) { $t = new DateTime($now->format('Y-m-d H:i:s')); }
+    $days = 0;
+    while ($days < 3) {
+        $t->modify('+1 day');
+        if ((int)$t->format('w') !== 0) $days++; // 0 = воскресенье, не считаем
+    }
+    $t->setTime(9, rand(0, 55)); // разлёт 9:00-9:55, чтобы письма не летели в одну минуту
+
+    // Оценка произошла позже срока — отправляем в ближайшее рабочее окно 9:00-18:00.
+    if ($now >= $t) {
+        $t = (new DateTime($now->format('Y-m-d H:i:s')))->modify('+5 minutes');
+        $hour = (int)$t->format('G');
+        if ($hour >= 18)    $t->modify('+1 day')->setTime(9, rand(0, 55));
+        elseif ($hour < 9)  $t->setTime(9, rand(0, 55));
+        while ((int)$t->format('w') === 0) $t->modify('+1 day')->setTime(9, rand(0, 55));
+    }
     return $t;
 }
 

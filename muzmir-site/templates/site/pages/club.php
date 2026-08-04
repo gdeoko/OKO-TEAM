@@ -13,22 +13,42 @@ $uid = (int) ($u['id'] ?? 0);
 $isMember = $uid > 0 && function_exists('club_is_active') && club_is_active($uid);
 $status   = ($uid > 0 && function_exists('club_status')) ? club_status($uid)
                                                           : ['active' => false, 'expires_at' => null, 'started_at' => null, 'discount' => 0];
-$discount = (int) ($status['discount'] ?? 20);
-if ($discount <= 0) $discount = 20;
+$discount = (int) ($status['discount'] ?? 0);
+if ($discount <= 0) $discount = (int) setting('club_discount', '25');
+if ($discount <= 0) $discount = 25;
 
+/* Полный список привилегий Клуба (10). Иконки — только SVG stroke=currentColor. */
 $benefits = [
-    ['ic' => '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M20 12V8a2 2 0 0 0-2-2h-4l-2-2H6a2 2 0 0 0-2 2v10a2 2 0 0 0 2 2h4"/><path d="M14 14l6 6M20 14l-6 6"/></svg>',
-      't' => 'Скидка ' . $discount . '% на участие', 'd' => 'На организационные взносы конкурсов, дипломы и наградные материалы - весь срок членства, применяется автоматически'],
+    ['ic' => '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="7.5" cy="7.5" r="2.2"/><circle cx="16.5" cy="16.5" r="2.2"/><path d="M19 5 5 19"/></svg>',
+      't' => 'Скидка ' . $discount . '% на всё платное',
+      'd' => 'Дипломы, кубки, статуэтки, медали — оригиналы и электронные версии. Применяется автоматически'],
     ['ic' => '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3.5 2"/></svg>',
-      't' => 'Ранний доступ к результатам', 'd' => 'Заявки участников Клуба проверяются приоритетно, вне общей очереди - итоги и дипломы Вы получаете раньше остальных'],
+      't' => 'Результаты за 3 рабочих дня',
+      'd' => 'Вместо 5. Воскресенье — нерабочий день, отсчёт со следующего дня после подачи заявки'],
+    ['ic' => '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><rect x="3" y="8" width="18" height="4" rx="1"/><path d="M5 12v8a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-8M12 8v13"/><path d="M12 8s-1.5-4.5-4.5-4.5A2.25 2.25 0 0 0 7.5 8M12 8s1.5-4.5 4.5-4.5A2.25 2.25 0 0 1 16.5 8"/></svg>',
+      't' => 'Бесплатный конкурс каждый месяц',
+      'd' => '1 заявка с 1 номером в месяц — бесплатно, плюс бесплатный электронный диплом'],
     ['ic' => '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M12 2l3 7h7l-5.5 4 2 7L12 16l-6.5 4 2-7L2 9h7z"/></svg>',
-      't' => 'Закрытые конкурсы', 'd' => 'Отдельные конкурсы только для членов Клуба - каждый месяц: меньше участников, особое внимание жюри'],
+      't' => 'Закрытые конкурсы Клуба',
+      'd' => 'Отдельные конкурсы только для членов Клуба: меньше участников, особое внимание жюри'],
+    ['ic' => '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M2 12s3.5-6 10-6 10 6 10 6-3.5 6-10 6-10-6-10-6z"/><circle cx="12" cy="12" r="2.6"/></svg>',
+      't' => 'Ранний доступ к результатам',
+      'd' => 'Заявки членов Клуба проверяются вне общей очереди — итоги Вы узнаёте раньше остальных'],
     ['ic' => '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M3 12a9 9 0 0 1 18 0v5a2 2 0 0 1-2 2h-2v-6h4M3 12v5a2 2 0 0 0 2 2h2v-6H3"/><path d="M17 19a2 2 0 0 1-2 2h-3"/></svg>',
-      't' => 'Приоритетная поддержка', 'd' => 'Вопросы участников Клуба разбираются в первую очередь: помощь с заявками, документами и наградами'],
-    ['ic' => '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M21 11.5a8.38 8.38 0 0 1-8.5 8.5 8.5 8.5 0 0 1-3.8-.9L3 21l1.9-5.7A8.5 8.5 0 1 1 21 11.5z"/></svg>',
-      't' => 'Клубный чат участников', 'd' => 'Закрытое сообщество постоянных участников и педагогов: встречи с жюри, разборы номеров, обмен опытом', 'soon' => true],
+      't' => 'Приоритетная поддержка',
+      'd' => 'Ответ в течение 24 часов: помощь с заявками, документами и наградами — в первую очередь'],
     ['ic' => '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="12" cy="8" r="6"/><path d="M8.2 13.9 7 22l5-3 5 3-1.2-8.1"/></svg>',
-      't' => 'Спецпредложения на награды', 'd' => 'Особые условия на медали, кубки и наградную атрибутику - предложения только для членов Клуба'],
+      't' => 'Спецпредложения на награды',
+      'd' => 'Особые условия на медали, кубки и наградную атрибутику — только для членов Клуба'],
+    ['ic' => '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M22 10 12 5 2 10l10 5 10-5z"/><path d="M6 12v5c0 1.5 2.7 3 6 3s6-1.5 6-3v-5M22 10v6"/></svg>',
+      't' => 'Мастер-классы и разборы',
+      'd' => 'Закрытые мастер-классы и разбор конкурсных номеров от экспертов — для роста Ваших учеников'],
+    ['ic' => '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><rect x="2" y="5" width="20" height="14" rx="2"/><circle cx="8" cy="11" r="2"/><path d="M5 16c.6-1.6 1.7-2.4 3-2.4s2.4.8 3 2.4M15 9h4M15 13h4"/></svg>',
+      't' => 'Именная карта участника',
+      'd' => 'Электронная карта члена Клуба — подтверждает статус и привилегии постоянного участника'],
+    ['ic' => '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M21 11.5a8.38 8.38 0 0 1-8.5 8.5 8.5 8.5 0 0 1-3.8-.9L3 21l1.9-5.7A8.5 8.5 0 1 1 21 11.5z"/></svg>',
+      't' => 'Клубный чат участников',
+      'd' => 'Закрытое сообщество участников и педагогов: встречи с жюри, обмен опытом', 'soon' => true],
 ];
 
 $expiresRu = !empty($status['expires_at']) ? ru_date(substr((string) $status['expires_at'], 0, 10)) : '';
@@ -37,9 +57,85 @@ $startedRu = !empty($status['started_at']) ? ru_date(substr((string) $status['st
 ob_start(); ?>
 <style>
 /* Скоуп-фикс: в общем style.css и .eyebrow, и .section-head h2 заданы display:inline-block,
-   поэтому при коротком заголовке (напр. «Стоимость / Одна подписка на месяц») эйброу и h2
-   встают в одну строку. Возвращаем эйброу на отдельную строку над заголовком. */
+   поэтому при коротком заголовке эйброу и h2 встают в одну строку. Возвращаем эйброу
+   на отдельную строку над заголовком. */
 .section-head .eyebrow{display:block}
+html{scroll-behavior:smooth}
+#club-benefits,#club-join,#club-pay{scroll-margin-top:86px}
+
+/* --- Герой: компактно, CTA + якорные чипы + инфографика --- */
+.club-hero-cta{display:flex;align-items:center;justify-content:center;gap:14px;flex-wrap:wrap;margin-top:18px}
+.club-hero-cta .btn svg{width:17px;height:17px;fill:none;stroke:currentColor;stroke-width:2.2;stroke-linecap:round;stroke-linejoin:round}
+.club-hero-price{font-family:var(--ff-display);font-size:1.15rem;color:var(--gold-2);letter-spacing:.02em;white-space:nowrap}
+.club-hero-price span{font-size:.8rem;color:var(--muted);font-family:var(--ff-body)}
+.club-chipnav{display:flex;gap:10px;flex-wrap:nowrap;overflow-x:auto;padding:4px 2px 10px;margin:16px 0 0;
+  -webkit-overflow-scrolling:touch;scrollbar-width:none;justify-content:center}
+.club-chipnav::-webkit-scrollbar{display:none}
+.club-chip{flex:none;display:inline-flex;align-items:center;gap:8px;padding:9px 16px;border-radius:999px;
+  background:var(--glass-card);backdrop-filter:blur(18px);-webkit-backdrop-filter:blur(18px);
+  border:1px solid var(--glass-brd2);color:var(--text);text-decoration:none;font-size:.85rem;font-weight:700;
+  white-space:nowrap;word-break:normal;hyphens:none;transition:transform .2s ease,border-color .2s ease,color .2s ease}
+.club-chip svg{width:15px;height:15px;color:var(--gold);fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+.club-chip:hover{transform:translateY(-2px);border-color:var(--gold);color:var(--gold-2,var(--gold))}
+
+/* Инфографика: три ключевые цифры */
+.club-stats{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;max-width:640px;margin:22px auto 0}
+.club-stat{padding:16px 10px 14px;border-radius:16px;text-align:center;
+  background:var(--glass-card);backdrop-filter:blur(18px);-webkit-backdrop-filter:blur(18px);
+  border:1px solid var(--glass-brd2);transition:transform .25s ease,border-color .25s ease}
+.club-stat:hover{transform:translateY(-3px);border-color:var(--gold)}
+.club-stat b{display:block;font-family:var(--ff-display);font-weight:400;font-size:clamp(1.4rem,4vw,1.9rem);
+  letter-spacing:.02em;color:var(--gold-2);line-height:1.1}
+.club-stat span{display:block;margin-top:4px;color:var(--muted);font-size:.74rem;line-height:1.35;word-break:normal;hyphens:none}
+[data-theme="dark"] .club-stat b{color:var(--gold)}
+
+/* --- Привилегии: компактные карточки, 2 колонки на мобиле --- */
+.club-ben-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(215px,1fr));gap:14px}
+.club-ben{position:relative;padding:20px 14px 16px;text-align:center;border-radius:18px;
+  background:var(--glass-card);backdrop-filter:blur(18px);-webkit-backdrop-filter:blur(18px);
+  border:1px solid var(--glass-brd2);
+  transition:transform .28s ease,box-shadow .28s ease,border-color .28s ease}
+.club-ben:hover{transform:translateY(-5px);border-color:var(--gold);box-shadow:0 14px 34px rgba(199,147,34,.16)}
+.club-ben-num{position:absolute;top:10px;left:12px;font-family:var(--ff-display);font-size:.95rem;
+  color:var(--gold);opacity:.55;letter-spacing:.04em}
+.club-medal{position:relative;width:58px;height:58px;margin:0 auto 12px;border-radius:50%;
+  display:flex;align-items:center;justify-content:center;color:var(--gold);
+  background:radial-gradient(circle at 32% 28%,rgba(233,197,103,.42),rgba(199,147,34,.10) 72%);
+  border:1px solid color-mix(in srgb,var(--gold) 45%,transparent);
+  box-shadow:0 6px 18px rgba(199,147,34,.18)}
+.club-medal::after{content:"";position:absolute;inset:-5px;border-radius:50%;
+  border:1px solid color-mix(in srgb,var(--gold) 30%,transparent);opacity:0;transition:opacity .25s ease}
+.club-ben:hover .club-medal::after{opacity:1;animation:clubRing 1.6s ease-out infinite}
+@keyframes clubRing{0%{transform:scale(.9);opacity:.7}100%{transform:scale(1.25);opacity:0}}
+.club-medal span{width:27px;height:27px;display:block}
+.club-medal svg{width:100%;height:100%}
+.club-ben h3{margin:0 0 5px;font-size:.98rem;line-height:1.3;word-break:normal;hyphens:none}
+.club-ben p{margin:0;color:var(--muted);font-size:.8rem;line-height:1.45;word-break:normal;hyphens:none}
+.club-soon{position:absolute;top:10px;right:10px;padding:3px 9px;border-radius:999px;font-size:.62rem;
+  font-weight:800;letter-spacing:.06em;text-transform:uppercase;color:var(--gold-fg,#fff);background:var(--grad-gold)}
+@media (max-width:760px){
+  .club-ben-grid{grid-template-columns:repeat(2,1fr);gap:10px}
+  .club-ben{padding:16px 10px 13px}
+  .club-medal{width:48px;height:48px;margin-bottom:10px}
+  .club-medal span{width:22px;height:22px}
+  .club-ben h3{font-size:.86rem}
+  .club-ben p{font-size:.73rem}
+}
+
+/* --- Шаги вступления --- */
+.club-steps{display:grid;grid-template-columns:repeat(3,1fr);gap:16px}
+.club-step-card{position:relative;padding:26px 20px 22px;border-radius:18px;
+  background:var(--glass-card);backdrop-filter:blur(18px);-webkit-backdrop-filter:blur(18px);
+  border:1px solid var(--glass-brd2);transition:transform .28s ease,border-color .28s ease}
+.club-step-card:hover{transform:translateY(-4px);border-color:var(--gold)}
+.club-step-num{width:44px;height:44px;border-radius:50%;display:flex;align-items:center;justify-content:center;
+  margin-bottom:14px;background:var(--grad-gold);color:var(--gold-fg,#fff);
+  font-family:var(--ff-display);font-size:1.25rem;box-shadow:0 6px 16px rgba(199,147,34,.3)}
+.club-step-card h3{margin:0 0 6px;word-break:normal;hyphens:none}
+.club-step-card p{margin:0;color:var(--muted);font-size:.9rem;line-height:1.5}
+@media (max-width:760px){.club-steps{grid-template-columns:1fr}}
+
+/* --- Оплата --- */
 .club-price-card{max-width:420px;margin:0 auto;text-align:center;padding:36px 30px}
 .club-price{font-family:var(--ff-display);letter-spacing:.02em;font-size:2.8rem;color:var(--gold-2);margin:6px 0}
 .club-price span{font-size:1.1rem;color:var(--muted);font-family:var(--ff-body)}
@@ -68,54 +164,19 @@ ob_start(); ?>
 .club-benefits-list .cb-ic svg{width:100%;height:100%}
 .club-benefits-list b{font-family:var(--ff-body);font-weight:800;display:block;margin-bottom:2px}
 .club-benefits-list p{margin:0;color:var(--muted);font-size:.88rem;line-height:1.45}
+.club-benefits-list .club-soon-inline{display:inline-block;margin-left:8px;padding:2px 9px;border-radius:999px;
+  font-size:.64rem;font-weight:800;letter-spacing:.06em;text-transform:uppercase;vertical-align:2px;
+  color:var(--gold-fg,#fff);background:var(--grad-gold)}
 .club-actions{margin-top:26px;display:flex;gap:12px;justify-content:center;flex-wrap:wrap}
 
 [data-theme="dark"] .club-until{color:var(--gold)}
 [data-theme="dark"] .club-benefits-list li{background:rgba(255,255,255,.03)}
-
-/* --- Якорные чипы (доп-меню длинной страницы) --- */
-html{scroll-behavior:smooth}
-.club-chipnav{display:flex;gap:10px;flex-wrap:nowrap;overflow-x:auto;padding:4px 2px 10px;margin:18px 0 0;
-  -webkit-overflow-scrolling:touch;scrollbar-width:none}
-.club-chipnav::-webkit-scrollbar{display:none}
-.club-chip{flex:none;display:inline-flex;align-items:center;gap:8px;padding:9px 16px;border-radius:999px;
-  background:var(--glass-card);backdrop-filter:blur(18px);-webkit-backdrop-filter:blur(18px);
-  border:1px solid var(--glass-brd2);color:var(--text);text-decoration:none;font-size:.85rem;font-weight:700;
-  white-space:nowrap;word-break:normal;hyphens:none;transition:transform .2s ease,border-color .2s ease,color .2s ease}
-.club-chip svg{width:15px;height:15px;color:var(--gold)}
-.club-chip:hover{transform:translateY(-2px);border-color:var(--gold);color:var(--gold-2,var(--gold))}
-
-/* --- Карточки преимуществ: стекло + подъём --- */
-.club-benefit-card{position:relative;text-align:center;padding:26px 20px;
-  background:var(--glass-card);backdrop-filter:blur(18px);-webkit-backdrop-filter:blur(18px);
-  border:1px solid var(--glass-brd2);border-radius:18px;
-  transition:transform .28s ease,box-shadow .28s ease,border-color .28s ease}
-.club-benefit-card:hover{transform:translateY(-5px);border-color:var(--gold);box-shadow:0 14px 34px rgba(199,147,34,.16)}
-.club-benefit-card h3{word-break:normal;hyphens:none}
-.club-soon{position:absolute;top:12px;right:12px;padding:4px 10px;border-radius:999px;font-size:.68rem;
-  font-weight:800;letter-spacing:.06em;text-transform:uppercase;color:var(--gold-fg,#fff);background:var(--grad-gold)}
-.club-benefits-list .club-soon-inline{display:inline-block;margin-left:8px;padding:2px 9px;border-radius:999px;
-  font-size:.64rem;font-weight:800;letter-spacing:.06em;text-transform:uppercase;vertical-align:2px;
-  color:var(--gold-fg,#fff);background:var(--grad-gold)}
-
-/* --- Шаги вступления --- */
-.club-steps{display:grid;grid-template-columns:repeat(3,1fr);gap:16px}
-.club-step-card{position:relative;padding:26px 20px 22px;border-radius:18px;
-  background:var(--glass-card);backdrop-filter:blur(18px);-webkit-backdrop-filter:blur(18px);
-  border:1px solid var(--glass-brd2);transition:transform .28s ease,border-color .28s ease}
-.club-step-card:hover{transform:translateY(-4px);border-color:var(--gold)}
-.club-step-num{width:44px;height:44px;border-radius:50%;display:flex;align-items:center;justify-content:center;
-  margin-bottom:14px;background:var(--grad-gold);color:var(--gold-fg,#fff);
-  font-family:var(--ff-display);font-size:1.25rem;box-shadow:0 6px 16px rgba(199,147,34,.3)}
-.club-step-card h3{margin:0 0 6px;word-break:normal;hyphens:none}
-.club-step-card p{margin:0;color:var(--muted);font-size:.9rem;line-height:1.5}
-@media (max-width:760px){.club-steps{grid-template-columns:1fr}}
-
 @media (max-width:520px){.club-benefits-list li{padding:12px 13px}}
 @media (prefers-reduced-motion:reduce){
   html{scroll-behavior:auto}
   .club-badge .dot::after{animation:none}
-  .club-chip,.club-benefit-card,.club-step-card{transition:none}
+  .club-ben:hover .club-medal::after{animation:none;opacity:0}
+  .club-chip,.club-ben,.club-stat,.club-step-card{transition:none}
 }
 </style>
 
@@ -168,39 +229,52 @@ html{scroll-behavior:smooth}
 
 <?php else: ?>
 <section class="section section--parchment">
-  <div class="container" style="max-width:760px">
+  <div class="container" style="max-width:820px">
     <a class="aw-back" href="<?= url('/menu') ?>"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5M11 6l-6 6 6 6"/></svg>Назад</a>
     <div class="reveal" style="text-align:center">
       <p class="eyebrow">Для постоянных участников</p>
       <h1 style="font-family:var(--ff-display);font-size:clamp(1.9rem,4vw,2.6rem);margin-bottom:.3em">Клуб постоянных участников</h1>
-      <p>Ежемесячная подписка для тех, кто регулярно подаёт заявки на конкурсы Культурного центра «Музыкальный Мир»:
-        скидки, приоритет и закрытое сообщество.</p>
-      <nav class="club-chipnav reveal" aria-label="Разделы страницы" style="justify-content:center">
+      <p style="margin-bottom:0">Ежемесячная подписка для тех, кто регулярно участвует в конкурсах Культурного центра
+        «Музыкальный Мир»: скидка <?= (int) $discount ?>% на всё, быстрые результаты и закрытые конкурсы.</p>
+
+      <div class="club-hero-cta">
+        <a class="btn btn--primary" href="#club-pay">К оплате
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M6 13l6 6 6-6"/></svg></a>
+        <span class="club-hero-price"><?= h(money($price)) ?> <span>/ месяц</span></span>
+      </div>
+
+      <nav class="club-chipnav" aria-label="Разделы страницы">
         <a class="club-chip" href="#club-benefits">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2l3 7h7l-5.5 4 2 7L12 16l-6.5 4 2-7L2 9h7z"/></svg>
-          Что даёт клуб</a>
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2l3 7h7l-5.5 4 2 7L12 16l-6.5 4 2-7L2 9h7z"/></svg>
+          Привилегии</a>
         <a class="club-chip" href="#club-join">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
           Как вступить</a>
-        <a class="club-chip" href="#club-price">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="5" width="20" height="14" rx="2"/><path d="M2 10h20"/></svg>
-          Стоимость</a>
+        <a class="club-chip" href="#club-pay">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="2" y="5" width="20" height="14" rx="2"/><path d="M2 10h20"/></svg>
+          Оплата</a>
       </nav>
+
+      <div class="club-stats reveal">
+        <div class="club-stat"><b>−<?= (int) $discount ?>%</b><span>на всё платное: дипломы, кубки, медали</span></div>
+        <div class="club-stat"><b>3 дня</b><span>результаты и дипломы вместо 5 рабочих дней</span></div>
+        <div class="club-stat"><b>1 / мес</b><span>бесплатный конкурс + электронный диплом</span></div>
+      </div>
     </div>
   </div>
 </section>
 
 <section class="section" id="club-benefits">
   <div class="container">
-    <div class="section-head reveal"><p class="eyebrow">Преимущества</p><h2>Что даёт членство в Клубе</h2></div>
-    <div class="grid grid-3">
-      <?php foreach ($benefits as $b): ?>
-        <div class="club-benefit-card reveal">
+    <div class="section-head reveal"><p class="eyebrow">Привилегии</p><h2>Что даёт членство в Клубе</h2></div>
+    <div class="club-ben-grid">
+      <?php foreach ($benefits as $i => $b): ?>
+        <div class="club-ben reveal" style="--i:<?= (int) ($i % 4) ?>">
+          <span class="club-ben-num"><?= str_pad((string) ($i + 1), 2, '0', STR_PAD_LEFT) ?></span>
           <?php if (!empty($b['soon'])): ?><span class="club-soon">Скоро</span><?php endif; ?>
-          <div style="width:64px;height:64px;margin:0 auto 14px;border-radius:50%;background:var(--gold-soft);
-            display:flex;align-items:center;justify-content:center;color:var(--gold)"><span style="width:30px;height:30px;display:block"><?= $b['ic'] ?></span></div>
+          <div class="club-medal"><span><?= $b['ic'] ?></span></div>
           <h3><?= h($b['t']) ?></h3>
-          <p style="color:var(--muted);font-size:.92rem"><?= h($b['d']) ?></p>
+          <p><?= h($b['d']) ?></p>
         </div>
       <?php endforeach; ?>
     </div>
@@ -211,17 +285,17 @@ html{scroll-behavior:smooth}
   <div class="container">
     <div class="section-head reveal"><p class="eyebrow">Путь в Клуб</p><h2>Как вступить</h2></div>
     <div class="club-steps">
-      <div class="club-step-card reveal">
+      <div class="club-step-card reveal" style="--i:0">
         <div class="club-step-num">1</div>
         <h3>Заполните форму</h3>
         <p>Укажите имя, электронную почту и телефон в форме ниже. Если Вы уже зарегистрированы на сайте - данные подставятся автоматически.</p>
       </div>
-      <div class="club-step-card reveal">
+      <div class="club-step-card reveal" style="--i:1">
         <div class="club-step-num">2</div>
         <h3>Оплатите подписку</h3>
         <p>После отправки формы Вы перейдёте к оплате, либо счёт придёт на Вашу электронную почту. Оплата - раз в месяц.</p>
       </div>
-      <div class="club-step-card reveal">
+      <div class="club-step-card reveal" style="--i:2">
         <div class="club-step-num">3</div>
         <h3>Пользуйтесь привилегиями</h3>
         <p>Скидка <?= (int) $discount ?>% и приоритетная проверка заявок включаются сразу после оплаты и применяются автоматически.</p>
@@ -230,9 +304,9 @@ html{scroll-behavior:smooth}
   </div>
 </section>
 
-<section class="section section--tint" id="club-price">
+<section class="section section--tint" id="club-pay">
   <div class="container">
-    <div class="section-head reveal"><p class="eyebrow">Стоимость</p><h2>Одна подписка на месяц</h2></div>
+    <div class="section-head reveal"><p class="eyebrow">Оплата</p><h2>Одна подписка на месяц</h2></div>
     <div class="card reveal club-price-card">
       <p style="color:var(--muted)">Членство в Клубе</p>
       <div class="club-price"><?= h(money($price)) ?><span> / месяц</span></div>
@@ -299,5 +373,5 @@ html{scroll-behavior:smooth}
 $content = ob_get_clean();
 render_page('Клуб постоянных участников', $content, [
     'active' => '/club',
-    'meta'   => 'Клуб постоянных участников КЦ «Музыкальный Мир»: скидка ' . $discount . '%, приоритетная модерация, закрытый чат и встречи с жюри.',
+    'meta'   => 'Клуб постоянных участников КЦ «Музыкальный Мир»: скидка ' . $discount . '% на всё, результаты за 3 дня, бесплатный конкурс каждый месяц и закрытые конкурсы.',
 ]);

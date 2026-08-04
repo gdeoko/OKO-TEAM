@@ -8,7 +8,7 @@
 $u = current_user();
 
 // Открытые конкурсы для выбора.
-$comps = all("SELECT id, slug, name, type, direction, cover, end_date, nominations
+$comps = all("SELECT id, slug, name, type, direction, cover, diploma_bg, end_date, nominations
               FROM competitions WHERE status='open' ORDER BY sort, id");
 
 // Выбранный конкурс (уровень 2).
@@ -113,6 +113,26 @@ ob_start(); ?>
       <p class="eyebrow eyebrow--script" style="margin:0"><?= h($scope) ?> конкурс</p>
       <h1 class="aw-title" style="font-size:clamp(1.4rem,5vw,1.95rem)">Награды «<?= h($selComp['name']) ?>»</h1>
       <p style="color:var(--muted);margin:0;font-size:.9rem">Электронный основной диплом — бесплатно всем участникам. Ниже — образцы и цены оригиналов с доставкой.</p>
+    </div>
+
+    <?php /* Образец заполненного диплома: живой HTML-макет с подписями и печатями */ ?>
+    <div class="card reveal" style="padding:0;overflow:hidden;margin:0 0 18px;display:flex;flex-wrap:wrap;align-items:stretch">
+      <?php $sBg = trim((string)($selComp['diploma_bg'] ?? ''));
+            $sBgUrl = $sBg !== '' ? (preg_match('~^https?://~', $sBg) ? $sBg : url('/' . ltrim($sBg, '/'))) : ''; ?>
+      <?php if ($sBgUrl): ?>
+        <a href="<?= url('/diploma-sample/' . $selComp['slug']) ?>" target="_blank" rel="noopener"
+           style="flex:0 0 132px;aspect-ratio:210/297;display:block;background:url('<?= h($sBgUrl) ?>') top center/cover no-repeat"
+           aria-label="Открыть образец диплома"></a>
+      <?php endif; ?>
+      <div style="flex:1;min-width:220px;padding:20px 22px;display:flex;flex-direction:column;gap:10px;justify-content:center">
+        <h3 style="margin:0">Образец диплома конкурса</h3>
+        <p style="margin:0;color:var(--muted);font-size:.88rem">Так выглядит заполненный диплом «<?= h($selComp['name']) ?>» —
+          с результатом, данными участника, подписями председателя жюри и генерального директора, печатями центра.</p>
+        <div style="display:flex;gap:10px;flex-wrap:wrap">
+          <a class="btn btn--primary btn--sm" href="<?= url('/diploma-sample/' . $selComp['slug']) ?>" target="_blank" rel="noopener">Открыть образец</a>
+          <a class="btn btn--ghost btn--sm" href="<?= url('/diploma-sample/' . $selComp['slug']) ?>?thanks=1" target="_blank" rel="noopener">Благодарность педагогу</a>
+        </div>
+      </div>
     </div>
 
     <div class="aw-grid">

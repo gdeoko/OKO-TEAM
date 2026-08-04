@@ -3,6 +3,36 @@
  *  обложка, тема/фон диплома, генерация положения-PDF, статусы, предпросмотр. */
 declare(strict_types=1);
 
+/* Мягкая миграция: формат конкурса (длинный/короткий) — влияет на автодаты результатов. */
+try { q("ALTER TABLE competitions ADD COLUMN duration TEXT DEFAULT 'long'"); } catch (\Throwable $e) {}
+
+/** Сохранение загруженного изображения конкурса в public/uploads/comp/{id}/.
+ *  Возвращает относительный путь (uploads/comp/...) или '' если файла нет/ошибка. */
+function comp_upload_image(string $field, int $compId, string $baseName, int $maxMb = 15): string {
+    $f = $_FILES[$field] ?? null;
+    if (!$f || ($f['error'] ?? UPLOAD_ERR_NO_FILE) !== UPLOAD_ERR_OK) return '';
+    $ext = strtolower(pathinfo((string)$f['name'], PATHINFO_EXTENSION));
+    if ($ext === 'jpeg') $ext = 'jpg';
+    $mime = function_exists('mime_content_type') ? (string) mime_content_type($f['tmp_name']) : '';
+    if (!in_array($ext, ['png','jpg','webp'], true) || ($mime !== '' && !str_starts_with($mime, 'image/'))) {
+        flash('Файл «' . $baseName . '» должен быть изображением png/jpg/webp.', 'error');
+        return '';
+    }
+    if ((int)$f['size'] > $maxMb * 1024 * 1024) {
+        flash('Файл «' . $baseName . '» больше ' . $maxMb . ' МБ.', 'error');
+        return '';
+    }
+    $dir = BASE_PATH . '/public/uploads/comp/' . $compId . '/';
+    if (!is_dir($dir)) @mkdir($dir, 0775, true);
+    // Старые версии с другим расширением убираем, чтобы не путались.
+    foreach (['png','jpg','webp'] as $e2) @unlink($dir . $baseName . '.' . $e2);
+    if (!@move_uploaded_file($f['tmp_name'], $dir . $baseName . '.' . $ext)) {
+        flash('Не удалось сохранить файл «' . $baseName . '».', 'error');
+        return '';
+    }
+    return 'uploads/comp/' . $compId . '/' . $baseName . '.' . $ext;
+}
+
 /* ---------- POST-экшены ---------- */
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     if (!csrf_check()) { flash('Сессия устарела, повторите.', 'error'); admin_redirect('competitions'); }
@@ -18,12 +48,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $diplomaTheme = input('diploma_theme');
         if (!function_exists('diploma_themes') || !array_key_exists($diplomaTheme, diploma_themes())) $diplomaTheme = '';
 
+        $duration = input('duration') === 'short' ? 'short' : 'long';
         $data = [
             'slug'          => $slug,
             'code'          => mb_strtoupper(trim(input('code'))),
             'name'          => trim(input('name')),
             'type'          => in_array(input('type'), ['international','national'], true) ? input('type') : 'international',
             'direction'     => in_array(input('direction'), ['multi','patriotic','thematic'], true) ? input('direction') : 'multi',
+            'duration'      => $duration,
             'is_paid'       => isset($_POST['is_paid']) ? 1 : 0,
             'price'         => (int) input('price'),
             'cover'         => trim(input('cover')),
@@ -39,6 +71,19 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             'sort'          => (int) input('sort'),
         ];
 
+        /* Автосроки нового конкурса: приём 1–25 следующего месяца.
+         * Результаты: длинный формат — 28 числа того же месяца;
+         * короткий — за 5 рабочих дней после подачи (дату не фиксируем,
+         * отправку планирует cron по каждой заявке). */
+        if (!$id) {
+            $nextM = new DateTimeImmutable('first day of next month');
+            if (empty($data['start_date'])) $data['start_date'] = $nextM->format('Y-m-01');
+            if (empty($data['end_date']))   $data['end_date']   = $nextM->format('Y-m-25');
+            if (empty($data['results_date']) && $duration === 'long') {
+                $data['results_date'] = $nextM->format('Y-m-28');
+            }
+        }
+
         $oldStatus = $id ? (string) scalar("SELECT status FROM competitions WHERE id=?", [$id]) : '';
 
         if ($id) {
@@ -47,6 +92,49 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         } else {
             $id = insert('competitions', $data);
             audit('competition_create', 'competition', $id, ['name' => $data['name']]);
+        }
+
+        /* Загрузка файлов: афиша 16:9 (обложка), фон диплома А4, фото наград.
+         * Файлы приоритетнее текстовых полей — перезаписывают пути. */
+        $upd = [];
+        if ($p = comp_upload_image('afisha_file', $id, 'afisha'))          $upd['cover'] = $p;
+        if ($p = comp_upload_image('diploma_bg_file', $id, 'diploma_bg'))  $upd['diploma_bg'] = $p;
+        if ($upd) update('competitions', $upd, 'id=:wid', ['wid' => $id]);
+
+        // Фото наград (кубки/статуэтки/медали) — несколько файлов за раз.
+        if (!empty($_FILES['award_photos']) && is_array($_FILES['award_photos']['name'] ?? null)) {
+            $processNice = isset($_POST['award_process']); // обработать: вырезать фон, оформить с тенью
+            $rawDir  = BASE_PATH . '/public/uploads/comp/' . $id . '/awards/';
+            $liveDir = BASE_PATH . '/public/assets/img/awards/' . $id . '/';
+            $saved = 0;
+            foreach ($_FILES['award_photos']['name'] as $i => $nm) {
+                if (($_FILES['award_photos']['error'][$i] ?? UPLOAD_ERR_NO_FILE) !== UPLOAD_ERR_OK) continue;
+                $ext = strtolower(pathinfo((string)$nm, PATHINFO_EXTENSION));
+                if ($ext === 'jpeg') $ext = 'jpg';
+                if (!in_array($ext, ['png','jpg','webp'], true)) continue;
+                if ((int)$_FILES['award_photos']['size'][$i] > 15 * 1024 * 1024) continue;
+                $slugName = strtolower(preg_replace('/[^a-z0-9]+/i', '-', pathinfo((string)$nm, PATHINFO_FILENAME)));
+                $slugName = trim($slugName, '-') ?: 'award-' . ($i + 1);
+                if (!is_dir($rawDir)) @mkdir($rawDir, 0775, true);
+                if (@move_uploaded_file($_FILES['award_photos']['tmp_name'][$i], $rawDir . $slugName . '.' . $ext)) {
+                    $saved++;
+                    if (!$processNice) {
+                        // Профессиональное фото — сразу в витрину наград как есть.
+                        if (!is_dir($liveDir)) @mkdir($liveDir, 0775, true);
+                        @copy($rawDir . $slugName . '.' . $ext, $liveDir . $slugName . '.jpg');
+                    }
+                }
+            }
+            if ($saved) {
+                if ($processNice) {
+                    // Очередь на красивую обработку (вырезать фон, тень, карточка товара).
+                    set_setting('award_process_pending:' . $id, date('Y-m-d H:i'));
+                    flash($saved . ' фото наград загружено. Поставлены в очередь на обработку (вырез фона + оформление).', 'success');
+                } else {
+                    flash($saved . ' фото наград загружено и опубликовано в витрине без обработки.', 'success');
+                }
+                audit('award_photos_upload', 'competition', $id, ['count' => $saved, 'process' => $processNice ? 1 : 0]);
+            }
         }
 
         // Событие сайта -> мозг-агент при смене статуса конкурса.
@@ -256,7 +344,8 @@ if ($action === 'edit') {
     $c = $c ?: ['id'=>0,'slug'=>'','code'=>'','name'=>'','type'=>'international','direction'=>'multi',
         'is_paid'=>1,'price'=>500,'cover'=>'','description'=>'','start_date'=>'','end_date'=>'',
         'results_date'=>'','results_mode'=>'email','status'=>'draft','nominations'=>'','sort'=>0,
-        'regulation_pdf'=>'','diploma_theme'=>'','diploma_bg'=>''];
+        'regulation_pdf'=>'','diploma_theme'=>'','diploma_bg'=>'','duration'=>'long'];
+    $c += ['duration' => 'long'];
     $activeNoms = $c['nominations'] ? (json_decode($c['nominations'], true) ?: []) : [];
     $prices = $id ? all("SELECT item,kind,price FROM awards_prices WHERE competition_id=? ORDER BY id", [$id]) : [];
     if (!$prices) $prices = [['item'=>'','kind'=>'original','price'=>0]];
@@ -290,7 +379,7 @@ if ($action === 'edit') {
     </div>
     <?php endif; ?>
 
-    <form method="post" action="<?= url('/admin/') ?>">
+    <form method="post" action="<?= url('/admin/') ?>" enctype="multipart/form-data">
       <?= csrf_field() ?>
       <input type="hidden" name="do" value="save">
       <input type="hidden" name="id" value="<?= (int)$c['id'] ?>">
@@ -314,8 +403,22 @@ if ($action === 'edit') {
               <option value="thematic" <?= $c['direction']==='thematic'?'selected':'' ?>>Тематический</option>
             </select></div>
           </div>
+          <div class="field"><label>Формат</label><select name="duration">
+              <option value="long" <?= ($c['duration'] ?? 'long')!=='short'?'selected':'' ?>>Длинный — приём 1–25, результаты 28 числа</option>
+              <option value="short" <?= ($c['duration'] ?? '')==='short'?'selected':'' ?>>Короткий — результаты за 5 рабочих дней после подачи</option>
+            </select>
+            <div class="hint">У нового конкурса сроки заполняются автоматически: приём с 1 по 25 число следующего месяца.</div>
+          </div>
           <div class="field"><label>Описание</label><textarea name="description" placeholder="Краткое описание конкурса для карточки на сайте"><?= h($c['description']) ?></textarea></div>
-          <div class="field"><label>Обложка (URL или путь)</label><input name="cover" value="<?= h($c['cover']) ?>" placeholder="assets/img/..."></div>
+          <div class="field"><label>Афиша конкурса (16:9, png/jpg/webp до 15 МБ)</label>
+            <input type="file" name="afisha_file" accept="image/*">
+            <?php if (!empty($c['cover'])): ?>
+              <div style="margin-top:8px"><img src="<?= h(url('/' . ltrim((string)$c['cover'], '/'))) ?>" alt="Афиша"
+                   style="max-width:260px;width:100%;aspect-ratio:16/9;object-fit:cover;border-radius:10px;border:1px solid var(--a-line)"></div>
+            <?php endif; ?>
+            <div class="hint">Афиша показывается в календаре и на карточке конкурса; клик по ней ведёт на подачу заявки.</div>
+          </div>
+          <input type="hidden" name="cover" value="<?= h($c['cover']) ?>">
         </div>
 
         <div class="card">
@@ -384,18 +487,26 @@ if ($action === 'edit') {
         <div class="card__head"><?= admin_icon('diplomas') ?><h3>Диплом и положение</h3></div>
         <div class="grid grid-2" style="gap:22px">
           <div>
-            <div class="field"><label>Тема диплома (фон)</label>
-              <select name="diploma_theme">
-                <option value="">— не задана —</option>
-                <?php foreach ($themes as $key => $label): ?>
-                  <option value="<?= h($key) ?>" <?= ($c['diploma_theme']??'')===$key?'selected':'' ?>><?= h($label) ?></option>
-                <?php endforeach; ?>
-              </select>
-              <div class="hint">Загрузка своей подложки и предпросмотр диплома - в разделе «Дипломы».</div>
+            <div class="field"><label>Фон диплома (А4 портрет, png/jpg/webp до 15 МБ)</label>
+              <input type="file" name="diploma_bg_file" accept="image/*">
+              <?php if (!empty($c['diploma_bg'])): ?>
+                <div style="margin-top:8px"><img src="<?= h(url('/' . ltrim((string)$c['diploma_bg'], '/'))) ?>" alt="Фон диплома"
+                     style="max-width:170px;width:100%;aspect-ratio:210/297;object-fit:cover;border-radius:10px;border:1px solid var(--a-line)"></div>
+              <?php endif; ?>
+              <div class="hint">Этот же фон показывается квадратом при выборе конкурса в форме подачи и в образце диплома.</div>
             </div>
-            <div class="field"><label>Фон-подложка (URL или путь к PNG)</label>
-              <input name="diploma_bg" value="<?= h((string)($c['diploma_bg'] ?? '')) ?>" placeholder="assets/img/diploma_bg.png">
-              <?php if (!empty($c['diploma_bg'])): ?><div class="hint">Текущий: <?= h(basename((string)$c['diploma_bg'])) ?></div><?php endif; ?>
+            <input type="hidden" name="diploma_bg" value="<?= h((string)($c['diploma_bg'] ?? '')) ?>">
+            <input type="hidden" name="diploma_theme" value="<?= h((string)($c['diploma_theme'] ?? '')) ?>">
+            <?php if ($id): ?>
+            <div class="toolbar" style="margin:0 0 14px">
+              <a class="btn btn--navy btn--sm" href="<?= a_link('diploma_editor', ['comp' => $id]) ?>"><?= admin_icon('edit') ?>Редактор макета диплома</a>
+              <a class="btn btn--ghost btn--sm" href="<?= h(url('/diploma-sample/' . $c['slug'])) ?>" target="_blank" rel="noopener"><?= admin_icon('eye') ?>Демо-образец</a>
+            </div>
+            <?php endif; ?>
+            <div class="field"><label>Фото наград (кубки, статуэтки, медали — можно несколько)</label>
+              <input type="file" name="award_photos[]" accept="image/*" multiple>
+              <label class="paycheck" style="margin-top:10px"><input type="checkbox" name="award_process" checked>
+                <span>Обработать красиво: вырезать фон, добавить тень и оформление. Снимите галочку, если фото уже профессиональные — опубликуются как есть.</span></label>
             </div>
           </div>
           <div>

@@ -149,6 +149,29 @@ if (function_exists('tg_notify_admin')) {
     );
 }
 
+// --- уведомление владельца в 3 канала + серверная аналитика ---
+if (is_file(BASE_PATH . '/core/notify_owner.php')) {
+    require_once BASE_PATH . '/core/notify_owner.php';
+    try {
+        $isClub = strpos(json_encode($normItems, JSON_UNESCAPED_UNICODE), '"kind":"club"') !== false;
+        owner_notify(
+            $isClub ? 'ВИП-КЛУБ' : 'ЗАКАЗЫ НАГРАД',
+            $isClub ? 'Заявка на вступление в клуб (заказ №' . $orderId . ')' : 'Новый заказ наград №' . $orderId,
+            '',
+            [
+                'Покупатель' => $buyerName,
+                'Email'      => $buyerEmail,
+                'Конкурс'    => $compName,
+                'Состав'     => $itemsText,
+                'Сумма'      => money($amount),
+                '_event'     => $isClub ? 'club_order' : 'order',
+                '_path'      => '/order-awards',
+                '_meta'      => ['order_id' => $orderId, 'amount' => $amount],
+            ]
+        );
+    } catch (\Throwable $e) { /* тихо */ }
+}
+
 // --- письмо-подтверждение покупателю в очередь ---
 if ($buyerEmail !== '' && filter_var($buyerEmail, FILTER_VALIDATE_EMAIL)) {
     $subject = 'Заказ наградного материала принят';

@@ -141,8 +141,9 @@ ob_start(); ?>
           $cvCover = trim((string) ($c['cover'] ?? ''));
           if ($cvCover !== '') $cvCover = preg_replace('~^https?://(?:localhost|127\.0\.0\.1)(?::\d+)?~i', '', $cvCover);
         ?>
-          <a class="card comp-card card--3d reveal" data-fin="<?= $isFin ?>" href="<?= url('/competition/' . $c['slug']) ?>">
-            <div class="cc-cover cc-cover--s<?= $cvSeed ?>">
+          <div class="card comp-card card--3d reveal" data-fin="<?= $isFin ?>">
+            <a class="cc-cover cc-cover--s<?= $cvSeed ?>" href="<?= url('/apply?competition=' . rawurlencode($c['slug'])) ?>"
+               aria-label="Подать заявку на конкурс «<?= h($cvName) ?>»">
               <span class="cc-fallback" aria-hidden="true">
                 <span class="cc-fallback-glow"></span>
                 <svg class="cc-fallback-pat" viewBox="0 0 200 250" preserveAspectRatio="xMidYMid slice" aria-hidden="true">
@@ -157,7 +158,7 @@ ob_start(); ?>
                 <span class="cc-scrim" aria-hidden="true"></span>
               <?php endif; ?>
               <span class="cc-cover-badge badge badge--<?= $badgeClass ?>"><?= h($badgeLabel) ?></span>
-            </div>
+            </a>
             <div class="cc-body">
               <div class="cc-badges">
                 <span class="badge badge--intl"><?= $c['type'] === 'international' ? 'Международный' : 'Всероссийский' ?></span>
@@ -174,9 +175,12 @@ ob_start(); ?>
                   <span class="cc-date"><?= $icoCal ?>приём с <?= h(ru_date($c['start_date'])) ?></span>
                 <?php endif; ?>
               </div>
-              <span class="btn btn--ghost btn--block">Подробнее <?= $icoArrow ?></span>
+              <div class="cc-actions">
+                <a class="btn btn--primary" href="<?= url('/apply?competition=' . rawurlencode($c['slug'])) ?>">Подать заявку <?= $icoArrow ?></a>
+                <a class="btn btn--ghost" href="<?= url('/competition/' . $c['slug'] . '/regulation.docx') ?>">Положение</a>
+              </div>
             </div>
-          </a>
+          </div>
         <?php endforeach; ?>
       </div>
       <div class="cf-empty reveal" data-comp-empty hidden>
@@ -202,8 +206,11 @@ ob_start(); ?>
 .cf-count{color:var(--muted);font-size:.9rem;margin-bottom:18px}
 
 .comp-card{padding:0;display:flex;flex-direction:column}
-/* Премиальная обложка: реальная афиша $c['cover'] или богатый фолбэк с монограммой и кодом */
-.comp-card .cc-cover{aspect-ratio:4/5;background:var(--grad-gold);position:relative;overflow:hidden;border-radius:0}
+/* Афиша конкурса 16:9 (клик — на подачу заявки) или богатый фолбэк с монограммой и кодом */
+.comp-card .cc-cover{display:block;aspect-ratio:16/9;background:var(--grad-gold);position:relative;overflow:hidden;border-radius:0}
+.cc-actions{display:flex;gap:10px;margin-top:auto}
+.cc-actions .btn--primary{flex:1;justify-content:center}
+@media (max-width:420px){.cc-actions{flex-direction:column}}
 .comp-card .cc-cover .cc-img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;object-position:center;z-index:2;display:block}
 .cc-scrim{position:absolute;inset:0;z-index:3;pointer-events:none;
   background:linear-gradient(180deg,rgba(18,12,2,.42) 0,rgba(18,12,2,0) 26%,rgba(18,12,2,0) 60%,rgba(18,12,2,.34) 100%)}
@@ -236,7 +243,7 @@ ob_start(); ?>
 .cc-title{margin:2px 0 0;overflow-wrap:anywhere;word-break:break-word;hyphens:auto}
 .cc-date{display:inline-flex;align-items:center;gap:6px}
 .cc-date svg{color:var(--gold);flex:none}
-.comp-card .btn{margin-top:auto}
+.cc-actions .btn{margin-top:0}
 
 /* Табы статуса: без JS фильтрует серверный класс, с JS - мгновенно. */
 .cf-grid--open .comp-card[data-fin="1"]{display:none}
@@ -337,7 +344,7 @@ foreach ($comps as $c) {
         '@type'    => 'ListItem',
         'position' => ++$pos,
         'name'     => $c['name'],
-        'url'      => url('/competition/' . rawurlencode($c['slug'])),
+        'url'      => url('/apply?competition=' . rawurlencode($c['slug'])),
     ];
 }
 $jsonld = [];

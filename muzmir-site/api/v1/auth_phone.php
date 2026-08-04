@@ -102,6 +102,18 @@ if ($action === 'verify') {
         mail_queue($email, $name, 'Добро пожаловать в «Музыкальный Мир»', mail_template('welcome', ['name' => $name]));
     }
 
+    if ($isNewUser && is_file(BASE_PATH . '/core/notify_owner.php')) {
+        require_once BASE_PATH . '/core/notify_owner.php';
+        owner_notify('РЕГИСТРАЦИИ', 'Новая регистрация (телефон)', '', [
+            'Имя'     => $name,
+            'Телефон' => $formatted,
+            'Email'   => $email,
+            '_event'  => 'register',
+            '_path'   => '/login',
+            '_meta'   => ['user_id' => $uid, 'via' => 'phone_otp'],
+        ]);
+    }
+
     json_out(['ok' => true, 'registered' => true, 'redirect' => '/cabinet?auth=ok']);
 }
 

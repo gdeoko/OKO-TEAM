@@ -308,6 +308,32 @@ if (function_exists('tg_notify_admin')) {
     );
 }
 
+// --- уведомление владельца в 3 канала + серверная аналитика ---
+if (is_file(BASE_PATH . '/core/notify_owner.php')) {
+    require_once BASE_PATH . '/core/notify_owner.php';
+    try {
+        $sumText = $priceInfo !== null
+            ? (money((int) $priceInfo['amount']) . ($priceInfo['discount_pct'] > 0 ? ' (скидка ' . $priceInfo['discount_pct'] . '%)' : ''))
+            : 'бесплатно';
+        owner_notify(
+            'ЗАЯВКИ',
+            count($numbers) > 1 ? 'Новые заявки (' . count($numbers) . ')' : 'Новая заявка ' . $number,
+            '',
+            [
+                'Номер'     => implode(', ', $numbers),
+                'ФИО'       => $full_name,
+                'Конкурс'   => $compsList,
+                'Номинация' => $nomination,
+                'Сумма'     => $sumText,
+                '_event'    => 'application',
+                '_path'     => '/apply',
+                '_meta'     => ['number' => $number, 'count' => count($numbers),
+                                'amount' => (int) ($priceInfo['amount'] ?? 0)],
+            ]
+        );
+    } catch (\Throwable $e) { /* тихо */ }
+}
+
 // --- in-app уведомление пользователю ---
 if ($uid && is_file(BASE_PATH . '/core/notifications.php')) {
     require_once BASE_PATH . '/core/notifications.php';

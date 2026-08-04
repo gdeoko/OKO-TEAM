@@ -46,8 +46,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && input('do') === 'bulk') {
     $act = input('bulk_action');
     if ($ids && $act) {
         $in = implode(',', array_fill(0, count($ids), '?'));
-        $map = ['mark_paid'=>['is_paid'=>1,'status'=>'paid'], 'to_judging'=>['status'=>'judging'],
-                'reject'=>['status'=>'rejected'], 'mark_new'=>['status'=>'new']];
+        // Переносы статусов «на оценку»/«в новые» убраны: очередь оценивания собирает
+        // все неоценённые заявки автоматически (admin/grading.php).
+        $map = ['mark_paid'=>['is_paid'=>1,'status'=>'paid'], 'reject'=>['status'=>'rejected']];
         if (isset($map[$act])) {
             $set = implode(',', array_map(fn($k)=>"$k=?", array_keys($map[$act])));
             q("UPDATE applications SET $set WHERE id IN ($in)", array_merge(array_values($map[$act]), $ids));
@@ -62,12 +63,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && input('do') === 'bulk') {
     admin_redirect('applications', array_filter(['competition'=>input('competition'),'status'=>input('status')]));
 }
 
-/* ---------- Смена статуса одной заявки ---------- */
+/* ---------- Смена статуса одной заявки (аварийная; переносы «на оценку» убраны —
+              статус-цепочка подана→оценена→исполнена работает автоматически) ---------- */
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && input('do') === 'set_status') {
     if (!csrf_check()) { flash('Сессия устарела.', 'error'); admin_redirect('applications'); }
     $id = (int) input('id');
     $st = input('status');
-    if (in_array($st, ['new','paid','judging','graded','sent','rejected'], true)) {
+    if (in_array($st, ['paid','graded','sent','done','rejected'], true)) {
         $extra = $st === 'paid' ? ',is_paid=1' : '';
         q("UPDATE applications SET status=? $extra WHERE id=?", [$st, $id]);
         audit('application_status', 'application', $id, ['status'=>$st]);
@@ -160,11 +162,12 @@ if ($id = (int) input('id')) {
           <?php else: ?><p class="muted">Ссылка на видео не указана.</p><?php endif; ?>
         </div>
         <div class="card" style="margin-bottom:18px">
-          <h3>Сменить статус</h3>
+          <h3>Статус</h3>
+          <p class="small muted" style="margin:-4px 0 10px">Статусы движутся автоматически: подана → оценена (после итога в «Оценивании») → исполнена (после отправки диплома). Ручная смена — только для аварийных случаев.</p>
           <form method="post" action="<?= url('/admin/') ?>" class="field--inline">
             <?= csrf_field() ?><input type="hidden" name="do" value="set_status"><input type="hidden" name="id" value="<?= $id ?>">
             <select name="status" style="max-width:220px">
-              <?php foreach (['new','paid','judging','graded','sent','rejected'] as $s): ?>
+              <?php foreach (['paid','graded','sent','done','rejected'] as $s): ?>
                 <option value="<?= $s ?>" <?= $a['status']===$s?'selected':'' ?>><?= h(app_status_ru($s)) ?></option>
               <?php endforeach; ?>
             </select>
@@ -256,7 +259,7 @@ ob_start(); ?>
     <?php foreach (AGE_CATEGORIES() as $cat): ?><option value="<?= h($cat) ?>" <?= input('category')===$cat?'selected':'' ?>><?= h($cat) ?></option><?php endforeach; ?>
   </select></div>
   <div class="field"><label>Статус</label><select name="status"><option value="">Любой</option>
-    <?php foreach (['new','paid','judging','graded','sent','rejected'] as $s): ?><option value="<?= $s ?>" <?= input('status')===$s?'selected':'' ?>><?= h(app_status_ru($s)) ?></option><?php endforeach; ?>
+    <?php foreach (['new','submitted','pending','paid','judging','graded','sent','done','rejected'] as $s): ?><option value="<?= $s ?>" <?= input('status')===$s?'selected':'' ?>><?= h(app_status_ru($s)) ?></option><?php endforeach; ?>
   </select></div>
   <div class="field"><label>С даты</label><input type="date" name="date_from" value="<?= h(input('date_from')) ?>"></div>
   <div class="field"><label>По дату</label><input type="date" name="date_to" value="<?= h(input('date_to')) ?>"></div>
@@ -271,8 +274,6 @@ ob_start(); ?>
     <select name="bulk_action" style="max-width:240px">
       <option value="">Массовое действие…</option>
       <option value="mark_paid">Отметить оплаченными</option>
-      <option value="to_judging">Отправить на оценку</option>
-      <option value="mark_new">Вернуть в «Новые»</option>
       <option value="flag_suspicious">Отметить подозрительными</option>
       <option value="reject">Отклонить</option>
     </select>

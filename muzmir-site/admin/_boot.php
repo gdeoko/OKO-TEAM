@@ -60,6 +60,8 @@ function admin_modules(): array {
         'grading'      => ['Оценивание',   'jury',      'grading'],
         'diplomas'     => ['Дипломы',      'moderator', 'diplomas'],
         'newsletter'   => ['Рассылки',     'moderator', 'newsletter'],
+        'diploma_editor' => ['Шаблон диплома', 'moderator', 'edit'],
+        'analytics'    => ['Аналитика',    'moderator', 'chart'],
         'cms'          => ['Контент',      'moderator', 'cms'],
         'users'        => ['Пользователи', 'admin',     'users'],
         'settings'     => ['Настройки',    'admin',     'settings'],
@@ -104,8 +106,9 @@ function role_ru(string $role): string {
 
 /** Русское название статуса заявки. */
 function app_status_ru(string $s): string {
-    return ['new'=>'Новая','paid'=>'Оплачена','judging'=>'На оценке','graded'=>'Оценена',
-            'sent'=>'Отправлена','rejected'=>'Отклонена'][$s] ?? $s;
+    return ['new'=>'Новая','submitted'=>'Подана','pending'=>'Ожидает оплаты','paid'=>'Оплачена',
+            'judging'=>'На оценке','graded'=>'Оценена','sent'=>'Отправлена',
+            'done'=>'Исполнена','rejected'=>'Отклонена'][$s] ?? $s;
 }
 function comp_status_ru(string $s): string {
     return ['draft'=>'Черновик','open'=>'Открыт','closed'=>'Закрыт','judging'=>'Оценивание','finished'=>'Завершён'][$s] ?? $s;
@@ -146,7 +149,10 @@ function diploma_preview_generate(array $comp): array {
         $out['error'] = 'Генератор диплома пока не подключён.';
         return $out;
     }
-    $bg = trim((string)($comp['diploma_bg'] ?: $comp['diploma_template']));
+    // diploma_template нынче хранит JSON визуального редактора — как путь к фону не используем.
+    $legacyTpl = trim((string)($comp['diploma_template'] ?? ''));
+    if ($legacyTpl !== '' && $legacyTpl[0] === '{') $legacyTpl = '';
+    $bg = trim((string)($comp['diploma_bg'] ?: $legacyTpl));
     $fake = [
         'is_group'     => 0,
         'full_name'    => 'Иванова Анна Сергеевна',

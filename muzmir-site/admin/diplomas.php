@@ -34,10 +34,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && input('do') === 'save_template') {
         }
     }
 
+    // diploma_template больше не трогаем: там живёт JSON-конфиг визуального редактора.
     update('competitions', [
         'diploma_theme'    => $theme,
         'diploma_bg'       => $bg,
-        'diploma_template' => trim(input('diploma_template')),
         'diploma_approved' => 0, // любое изменение шаблона снимает подтверждение
     ], 'id=:wid', ['wid' => $cid]);
     unset($_SESSION['diploma_preview'][$cid]);
@@ -260,7 +260,7 @@ ob_start(); ?>
   <?php
     $approved = (int)($current['diploma_approved'] ?? 0) === 1;
     $preview  = $_SESSION['diploma_preview'][$comp] ?? null;
-    $hasTpl   = trim((string)($current['diploma_theme'] ?: $current['diploma_bg'] ?: $current['diploma_template'])) !== '';
+    $hasTpl   = trim((string)($current['diploma_theme'] ?: $current['diploma_bg'])) !== '';
   ?>
   <div class="card" style="margin-bottom:18px">
     <div class="section-title" style="margin-bottom:8px"><h3>Шаблон диплома</h3>
@@ -286,11 +286,10 @@ ob_start(); ?>
           <?php if (!empty($current['diploma_bg'])): ?><span class="small muted">Текущий: <?= h(basename((string)$current['diploma_bg'])) ?></span><?php endif; ?>
         </div>
       </div>
-      <div class="field"><label>Путь/URL макета вручную (необязательно)</label>
-        <input name="diploma_template" value="<?= h((string)$current['diploma_template']) ?>" placeholder="assets/img/diploma_bg.png"></div>
       <div class="toolbar" style="margin-top:6px">
         <button class="btn btn--primary btn--sm"><?= admin_icon('check') ?>Сохранить шаблон</button>
         <button class="btn btn--ghost btn--sm" form="tplPreview"><?= admin_icon('eye') ?>Предпросмотр шаблона</button>
+        <a class="btn btn--navy btn--sm" href="<?= a_link('diploma_editor', ['comp' => $comp]) ?>"><?= admin_icon('edit') ?>Визуальный редактор шаблона</a>
       </div>
     </form>
 

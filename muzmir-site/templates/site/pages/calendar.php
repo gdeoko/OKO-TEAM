@@ -338,11 +338,18 @@ ob_start(); ?>
       <?php foreach ($cards as $i => $card): $c = $card['c']; $paid = (int) $c['is_paid'] === 1; ?>
         <article class="card calx-card reveal calx-card--<?= h($card['phase']) ?>" id="comp-<?= h($c['slug']) ?>" style="--i:<?= $i % 3 ?>">
           <span class="calx-accent" aria-hidden="true"></span>
+          <?php $cvr = trim((string)($c['cover'] ?? '')); if ($cvr !== ''):
+            $cvr = preg_match('~^https?://~', $cvr) ? $cvr : url('/' . ltrim($cvr, '/')); ?>
+            <a class="calx-poster" href="<?= url('/apply?competition=' . rawurlencode($c['slug'])) ?>"
+               aria-label="Подать заявку на конкурс «<?= h($c['name']) ?>»">
+              <img src="<?= h($cvr) ?>" alt="Афиша конкурса «<?= h($c['name']) ?>»" loading="lazy" decoding="async">
+            </a>
+          <?php endif; ?>
           <div class="calx-card__head">
             <span class="badge badge--<?= $card['badgeClass'] ?>"><?= h($card['badgeLabel']) ?></span>
             <span class="calx-type"><?= h($typeLabel($c['type'])) ?></span>
           </div>
-          <h3 class="calx-card__title"><a href="<?= url('/competition/' . $c['slug']) ?>"><?= h($c['name']) ?></a></h3>
+          <h3 class="calx-card__title"><a href="<?= url('/apply?competition=' . rawurlencode($c['slug'])) ?>"><?= h($c['name']) ?></a></h3>
           <p class="calx-card__note"><?= h($card['note']) ?></p>
 
           <?php if (!empty($c['start_date']) && !empty($c['end_date'])): ?>
@@ -370,9 +377,9 @@ ob_start(); ?>
           <div class="calx-card__actions">
             <?php if (in_array($card['phase'], ['open', 'ending', 'last'], true)): ?>
               <a class="btn btn--primary btn--sm" href="<?= url('/apply') . '?competition=' . rawurlencode($c['slug']) ?>">Подать заявку</a>
-              <a class="btn btn--ghost btn--sm" href="<?= url('/competition/' . $c['slug']) ?>">Подробнее <?= $ic['arrow'] ?></a>
+              <a class="btn btn--ghost btn--sm" href="<?= url('/competition/' . $c['slug'] . '/regulation.docx') ?>">Положение</a>
             <?php elseif ($card['phase'] === 'results'): ?>
-              <a class="btn btn--primary btn--sm" href="<?= url('/competition/' . $c['slug']) ?>#results">Результаты <?= $ic['arrow'] ?></a>
+              <a class="btn btn--primary btn--sm" href="<?= url('/results/' . $c['slug']) ?>">Результаты <?= $ic['arrow'] ?></a>
             <?php elseif ($card['phase'] === 'soon'): ?>
               <details class="cal-remind">
                 <summary class="btn btn--ghost btn--sm"><?= $ic['bell'] ?> Напомнить</summary>
@@ -388,12 +395,12 @@ ob_start(); ?>
                   <button class="btn btn--primary btn--block btn--sm" type="submit">Напомнить за неделю до старта</button>
                 </form>
               </details>
-              <a class="btn btn--ghost btn--sm" href="<?= url('/competition/' . $c['slug']) ?>">Подробнее <?= $ic['arrow'] ?></a>
+              <a class="btn btn--ghost btn--sm" href="<?= url('/competition/' . $c['slug'] . '/regulation.docx') ?>">Положение</a>
             <?php else: ?>
-              <a class="btn btn--ghost btn--sm" href="<?= url('/competition/' . $c['slug']) ?>">Подробнее <?= $ic['arrow'] ?></a>
+              <a class="btn btn--ghost btn--sm" href="<?= url('/competition/' . $c['slug'] . '/regulation.docx') ?>">Положение</a>
             <?php endif; ?>
             <button type="button" class="btn btn--ghost btn--sm cal-share"
-                    data-share="<?= h(url('/competition/' . $c['slug'])) ?>"
+                    data-share="<?= h(url('/apply?competition=' . rawurlencode($c['slug']))) ?>"
                     data-title="<?= h($c['name']) ?>"
                     aria-label="Поделиться конкурсом «<?= h($c['name']) ?>»"><?= $ic['share'] ?> Поделиться</button>
           </div>
@@ -421,7 +428,7 @@ ob_start(); ?>
             <?php foreach ($items as $it): $c = $it['comp']; ?>
               <div class="timeline-item calx-tl-item calx-tl-item--<?= $it['type'] ?>">
                 <span class="tl-date"><?= $it['day'] ?> <?= h($monthsRuGen[$mNum]) ?></span>
-                <h4><a href="<?= url('/competition/' . $c['slug']) ?>"><?= h($c['name']) ?></a></h4>
+                <h4><a href="<?= url('/apply?competition=' . rawurlencode($c['slug'])) ?>"><?= h($c['name']) ?></a></h4>
                 <p class="calx-tl-lbl"><span class="calx-tl-ico"><?= $typeIcon[$it['type']] ?? $ic['cal'] ?></span><?= h($it['label']) ?></p>
               </div>
             <?php endforeach; ?>
@@ -509,6 +516,10 @@ ob_start(); ?>
 
 .calx-cards{align-items:stretch}
 .calx-card{display:flex;flex-direction:column;padding:24px 24px 24px 27px;scroll-margin-top:110px;position:relative;overflow:hidden}
+/* Афиша конкурса 16:9 — вся информация на ней, клик ведёт на подачу заявки */
+.calx-poster{display:block;margin:-24px -24px 16px -27px;aspect-ratio:16/9;overflow:hidden;background:var(--gold-soft)}
+.calx-poster img{width:100%;height:100%;object-fit:cover;display:block;transition:transform .5s cubic-bezier(.2,.8,.2,1)}
+@media(hover:hover){.calx-card:hover .calx-poster img{transform:scale(1.04)}}
 /* Левая фазовая полоса-акцент (жизненный цикл конкурса) */
 .calx-accent{position:absolute;left:0;top:0;bottom:0;width:4px;background:var(--gold);border-radius:0 3px 3px 0;opacity:.85}
 .calx-card--open .calx-accent,.calx-card--ending .calx-accent,.calx-card--last .calx-accent{background:var(--mint)}

@@ -74,7 +74,6 @@ if ($route === '/sitemap.xml') {
     foreach ($slugs as $row) {
         $s = is_array($row) ? ($row['slug'] ?? '') : (string) $row;
         if ($s === '') continue;
-        echo '  <url><loc>' . htmlspecialchars($baseUrl . '/competition/' . $s, ENT_XML1) . '</loc></url>' . "\n";
         echo '  <url><loc>' . htmlspecialchars($baseUrl . '/awards/' . $s, ENT_XML1) . '</loc></url>' . "\n";
     }
     // Статьи блога (pages со слагом blog-*).
@@ -104,7 +103,11 @@ function serve(string $file, array $vars = []): void {
 // Динамические маршруты
 if ($route === '/verify') serve('verify', ['number' => '']);
 if (preg_match('#^/verify/([A-Za-zА-Яа-я0-9\-]+)$#u', $route, $m)) serve('verify', ['number' => $m[1]]);
-if (preg_match('#^/competition/([a-z0-9\-]+)$#', $route, $m)) serve('competition', ['slug' => $m[1]]);
+// Внутренняя страница конкурса упразднена: вся информация — на афише в календаре,
+// клик по конкурсу ведёт сразу на подачу заявки с предвыбором.
+if (preg_match('#^/competition/([a-z0-9\-]+)$#', $route, $m)) {
+    header('Location: ' . url('/apply?competition=' . rawurlencode($m[1])), true, 301); exit;
+}
 // Скачивание положения конкурса (DOCX 1:1 из эталона; генерирует при первом запросе).
 // Старые ссылки .../regulation.pdf продолжают работать и отдают актуальный файл.
 if (preg_match('#^/competition/([a-z0-9\-]+)/regulation\.(pdf|docx)$#', $route, $m)) {
@@ -147,6 +150,18 @@ if (preg_match('#^/diploma/([A-Za-z0-9\-]+)\.pdf$#', $route, $m)) {
         exit;
     }
     http_response_code(404); echo 'Диплом не найден'; exit;
+}
+// Демо-образец диплома конкурса (HTML-сборщик по эталону, водяной знак «ОБРАЗЕЦ»).
+if (preg_match('#^/diploma-sample/([a-z0-9\-]+)$#', $route, $m)) {
+    $c = one("SELECT * FROM competitions WHERE slug=?", [$m[1]]);
+    if ($c) {
+        require_once BASE_PATH . '/core/diploma_html.php';
+        $opt = ['sample' => true];
+        if (isset($_GET['thanks'])) $opt['thanks'] = true;
+        echo diploma_html($c, diploma_sample_app(), $opt);
+        exit;
+    }
+    http_response_code(404); echo 'Конкурс не найден'; exit;
 }
 if (preg_match('#^/awards/([a-z0-9\-]+)$#', $route, $m)) serve('awards_competition', ['slug' => $m[1]]);
 if (preg_match('#^/artist/([a-z0-9\-]+)$#', $route, $m)) serve('artist', ['slug' => $m[1]]);

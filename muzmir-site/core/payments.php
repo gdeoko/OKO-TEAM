@@ -119,7 +119,24 @@ function payment_apply_status(string $paymentId, string $status, array $obj = []
                 $cu = one("SELECT id FROM users WHERE email=?", [mb_strtolower((string) $ordRow['email'])]);
                 $cuid = (int) ($cu['id'] ?? 0);
             }
-            if ($cuid > 0 && function_exists('club_grant')) { club_grant($cuid, 1, 'payment'); }
+            if ($cuid > 0 && function_exists('club_grant')) {
+                $clubSt = club_grant($cuid, 1, 'payment');
+                // Уведомление владельца: вступление/продление ВИП-клуба.
+                if (!function_exists('owner_notify') && is_file(__DIR__ . '/notify_owner.php')) {
+                    require_once __DIR__ . '/notify_owner.php';
+                }
+                if (function_exists('owner_notify')) {
+                    $cu2 = one("SELECT full_name, email FROM users WHERE id=?", [$cuid]);
+                    owner_notify('ВИП-КЛУБ', 'Новое членство в клубе', 'Оплата подписки клуба прошла успешно.', [
+                        'Участник'  => trim((string) ($cu2['full_name'] ?? '')) ?: ('user #' . $cuid),
+                        'Email'     => (string) ($cu2['email'] ?? ''),
+                        'Действует до' => (string) ($clubSt['expires_at'] ?? ''),
+                        'Платёж'    => $paymentId,
+                        '_event'    => 'club_join',
+                        '_meta'     => ['user_id' => $cuid, 'payment' => $paymentId],
+                    ]);
+                }
+            }
         }
     }
 
@@ -147,6 +164,49 @@ function payment_apply_status(string $paymentId, string $status, array $obj = []
 
     if (function_exists('tg_notify_admin')) {
         tg_notify_admin('Оплата прошла: ' . $paymentId . ' на сумму ' . $amount . ' ₽');
+    }
+
+    // --- Уведомление владельца в 3 канала + серверная аналитика ---
+    if (!function_exists('owner_notify') && is_file(__DIR__ . '/notify_owner.php')) {
+        require_once __DIR__ . '/notify_owner.php';
+    }
+    if (function_exists('owner_notify')) {
+        try {
+            if ($orderId) {
+                // Оплата заказа наградных материалов — в ветку заказов.
+                owner_notify('ЗАКАЗЫ НАГРАД', 'Заказ наград №' . (int) $orderId . ' оплачен', '', [
+                    'Заказ'      => '№' . (int) $orderId,
+                    'Покупатель' => $name,
+                    'Email'      => $email,
+                    'Сумма'      => (int) $amount . ' ₽',
+                    'Платёж'     => $paymentId,
+                    '_event'     => 'order_paid',
+                    '_meta'      => ['order_id' => (int) $orderId, 'amount' => (int) $amount],
+                ]);
+            }
+            if ($batchIds) {
+                $numsRow = all('SELECT number FROM applications WHERE id IN ('
+                    . implode(',', array_map('intval', $batchIds)) . ')');
+                $nums = implode(', ', array_map(static fn($r) => (string) $r['number'], $numsRow));
+                owner_notify('ОПЛАТЫ', 'Оплата оргвзноса получена', '', [
+                    'Заявки'   => $nums ?: ('#' . implode(', #', $batchIds)),
+                    'Участник' => $name,
+                    'Email'    => $email,
+                    'Сумма'    => (int) $amount . ' ₽',
+                    'Платёж'   => $paymentId,
+                    '_event'   => 'payment',
+                    '_meta'    => ['payment' => $paymentId, 'amount' => (int) $amount,
+                                   'apps' => count($batchIds)],
+                ]);
+            } elseif (!$orderId) {
+                owner_notify('ОПЛАТЫ', 'Оплата получена', '', [
+                    'Сумма'  => (int) $amount . ' ₽',
+                    'Платёж' => $paymentId,
+                    '_event' => 'payment',
+                    '_meta'  => ['payment' => $paymentId, 'amount' => (int) $amount],
+                ]);
+            }
+        } catch (\Throwable $e) { /* тихо */ }
     }
     if (function_exists('audit')) {
         audit('payment_succeeded', 'payments', (int) ($pay['id'] ?? 0), ['yukassa_id' => $paymentId, 'amount' => $amount]);

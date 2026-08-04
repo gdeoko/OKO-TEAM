@@ -37,4 +37,18 @@ insert('subscribers', [
 ]);
 audit('subscribe', 'subscribers', null, ['email' => $email]);
 
+// --- уведомление владельца о новом подписчике + серверная аналитика ---
+if (is_file(BASE_PATH . '/core/notify_owner.php')) {
+    require_once BASE_PATH . '/core/notify_owner.php';
+    try {
+        owner_notify('ПОДПИСЧИКИ', 'Новый подписчик рассылки', '', [
+            'Email'    => $email,
+            'Имя'      => input('name'),
+            'Источник' => input('source', 'site'),
+            '_event'   => 'subscribe',
+            '_meta'    => ['source' => input('source', 'site')],
+        ]);
+    } catch (\Throwable $e) { /* тихо */ }
+}
+
 json_out(['ok' => true, 'message' => 'Подписка оформлена. Спасибо!']);

@@ -75,9 +75,30 @@ if ($text === '') $text = trim(input('text')); // совместимость с�
 if ($text === '') json_out(['ok' => false, 'error' => 'Пустое сообщение'], 422);
 if (mb_strlen($text) > 2000) $text = mb_substr($text, 0, 2000);
 
+// Первое ли это сообщение сессии (для уведомления владельцу о новом диалоге).
+$isFirstMessage = false;
+try {
+    $isFirstMessage = (int) scalar(
+        "SELECT COUNT(*) FROM chat_messages WHERE session_key=? AND role='user'", [$sessionKey]
+    ) === 0;
+} catch (\Throwable $e) {}
+
 try {
     insert('chat_messages', ['user_id' => $uid, 'session_key' => $sessionKey, 'role' => 'user', 'text' => $text, 'file' => '']);
 } catch (\Throwable $e) {}
+
+// --- уведомление владельца о новом диалоге чат-бота + серверная аналитика ---
+if ($isFirstMessage && is_file(BASE_PATH . '/core/notify_owner.php')) {
+    require_once BASE_PATH . '/core/notify_owner.php';
+    try {
+        owner_notify('ЧАТ-БОТ', 'Новый диалог в чате сайта', mb_substr($text, 0, 500), [
+            'Сессия'       => $sessionKey,
+            'Пользователь' => $uid ? ('id ' . $uid) : 'гость',
+            '_event'       => 'chat_start',
+            '_meta'        => ['session' => $sessionKey],
+        ]);
+    } catch (\Throwable $e) { /* тихо */ }
+}
 
 $reply  = null;
 // Gemini (бесплатные ключи) — первый приоритет; при ошибке тихо падаем ниже.

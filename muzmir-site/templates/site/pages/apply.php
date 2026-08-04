@@ -1,7 +1,7 @@
 <?php
 /** Страница «Подать заявку» — умная многошаговая форма (8 шагов). */
 
-$comps = all("SELECT id,slug,code,name,type,is_paid,price FROM competitions
+$comps = all("SELECT id,slug,code,name,type,is_paid,price,diploma_bg FROM competitions
               WHERE status='open' ORDER BY sort");
 
 // Предвыбор конкурса из ?competition=slug
@@ -101,6 +101,9 @@ ob_start(); ?>
 .comp-opt input:checked + .co-body{border-color:var(--gold);background:var(--gold-soft);box-shadow:0 0 0 3px var(--gold-soft)}
 .comp-opt input:focus-visible + .co-body{box-shadow:0 0 0 4px var(--gold-soft)}
 .co-mark{width:24px;height:24px;border-radius:50%;border:1.5px solid var(--glass-brd);flex:0 0 auto;position:relative;transition:.2s}
+/* Квадрат 1:1 — фон диплома конкурса (участник сразу видит, какой диплом получит) */
+.co-thumb{width:56px;height:56px;flex:0 0 auto;border-radius:12px;overflow:hidden;border:1px solid var(--glass-brd);box-shadow:var(--shadow-soft)}
+.co-thumb img{width:100%;height:100%;object-fit:cover;object-position:top center;display:block}
 .comp-opt input:checked + .co-body .co-mark{border-color:var(--gold);background:var(--grad-gold)}
 .comp-opt input:checked + .co-body .co-mark::after{content:"";position:absolute;left:7px;top:7px;width:8px;height:8px;border-radius:50%;background:var(--gold-fg)}
 .co-main{flex:1;min-width:0}
@@ -272,10 +275,14 @@ ob_start(); ?>
                 <input type="checkbox" name="competition_ids[]" value="<?= (int)$c['id'] ?>"
                   data-slug="<?= h($c['slug']) ?>" data-name="<?= h($c['name']) ?>"
                   data-paid="<?= (int)$c['is_paid'] ?>" data-price="<?= (int)$c['price'] ?>"
-                  data-reg="<?= url('/competition/'.$c['slug']) ?>" data-code="<?= h($c['code']) ?>"
+                  data-reg="<?= url('/competition/'.$c['slug'].'/regulation.docx') ?>" data-code="<?= h($c['code']) ?>"
                   <?= $preId === (int)$c['id'] ? 'checked' : '' ?>>
                 <span class="co-body">
                   <span class="co-mark"></span>
+                  <?php $dbg = trim((string)($c['diploma_bg'] ?? ''));
+                  if ($dbg !== ''): $dbg = preg_match('~^https?://~', $dbg) ? $dbg : url('/' . ltrim($dbg, '/')); ?>
+                    <span class="co-thumb" aria-hidden="true"><img src="<?= h($dbg) ?>" alt="" loading="lazy" decoding="async"></span>
+                  <?php endif; ?>
                   <span class="co-main">
                     <b><?= h($c['name']) ?></b>
                     <span class="co-tags">

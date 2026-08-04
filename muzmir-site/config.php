@@ -76,6 +76,9 @@ return [
     // Отдельный chat/канал для заявок на оригиналы наградного материала (t.me/zakaznagrad).
     // Требования: наш бот @kc_muz_mir_bot добавлен в этот чат/канал администратором.
     'tg_orders_chat' => cfg('MUZMIR_TG_ORDERS_CHAT', '@zakaznagrad'),
+    // Форум-супергруппа владельца для событийных уведомлений (owner_notify):
+    // числовой chat_id, бот должен быть админом с правом «Управление темами».
+    'tg_owner_chat'  => cfg('MUZMIR_TG_OWNER_CHAT', ''),
 
     // OAuth (вход через соцсети) — секреты только из окружения/local
     'vk_client_id'         => cfg('MUZMIR_VK_CLIENT_ID', ''),
