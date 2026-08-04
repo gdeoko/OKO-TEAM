@@ -101,12 +101,28 @@ if ($isFirstMessage && is_file(BASE_PATH . '/core/notify_owner.php')) {
     } catch (\Throwable $e) { /* тихо */ }
 }
 
-// Ответ помощника: Gemini → Claude → внешний агент → rule-based (общий «мозг»).
-$reply = chat_brain_reply($text, $sessionKey, $uid, 'web');
+// Имя для персонального приветствия (у авторизованных).
+$greetName = '';
+if ($uid && ($cu = current_user())) {
+    $full = trim((string) ($cu['full_name'] ?? ''));
+    if ($full !== '') $greetName = preg_split('~\s+~u', $full)[0];
+}
+
+// Ответ по правилам диалога: приветствие раз в начале, подпись — только при завершении.
+$closing = false;
+if (chat_is_closing($text)) {
+    $reply   = chat_closing_message($greetName);
+    $closing = true;
+} else {
+    $greet = chat_should_greet($sessionKey);
+    $core  = chat_brain_reply($text, $sessionKey, $uid, 'web');
+    $reply = chat_wrap_reply($sessionKey, $core, $greetName, $greet, false);
+}
 
 try {
     insert('chat_messages', ['user_id' => $uid, 'session_key' => $sessionKey, 'role' => 'assistant', 'text' => $reply, 'file' => '']);
 } catch (\Throwable $e) {}
+if ($closing) chat_mark_dialog_end($sessionKey); // маркер — ПОСЛЕ ответа
 
 // Контекстные кнопки-действия под ответом (ссылки на разделы, диплом файлом, отзыв в конце).
 $actions = chat_actions($text, $uid, $sessionKey);

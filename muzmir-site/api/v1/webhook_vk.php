@@ -101,19 +101,34 @@ function vk_cb_ack_then_process(string $type): void {
 
     try {
         _vk_bot_ensure_chatlog();
-        // Пустой текст (стикер/вложение без слов) — вежливая подсказка.
-        if ($text === '') {
-            $reply = "Здравствуйте, доброго времени суток.\n\nНапишите, пожалуйста, Ваш вопрос текстом — подскажу по заявкам, участию, результатам и наградам Культурного центра «Музыкальный Мир».\n\n🌍 С уважением, оргкомитет культуры и искусства Культурного центра «Музыкальный Мир» 🌍";
-        } else {
+        // Логируем входящее сообщение пользователя (если есть текст).
+        if ($text !== '') {
             insert('chat_messages', ['user_id' => null, 'session_key' => $sessionKey, 'role' => 'user', 'text' => $text, 'file' => '']);
-            $reply = chat_brain_reply($text, $sessionKey, null, 'vk');
         }
+
+        $name  = vk_user_name($peer);            // имя для персонального приветствия
+        $greet = chat_should_greet($sessionKey); // здороваемся раз в начале / после суток
+        $closing = false;
+
+        if ($text !== '' && chat_is_closing($text)) {
+            // Пользователь завершил диалог («спасибо», «пока» и т.п.) — финальный шаблон.
+            $reply   = chat_closing_message($name);
+            $closing = true;
+        } elseif ($text === '') {
+            $core  = 'Напишите, пожалуйста, Ваш вопрос текстом — подскажу по заявкам, участию, результатам и наградам Культурного центра «Музыкальный Мир».';
+            $reply = chat_wrap_reply($sessionKey, $core, $name, $greet, false);
+        } else {
+            $core  = chat_brain_reply($text, $sessionKey, null, 'vk');
+            $reply = chat_wrap_reply($sessionKey, $core, $name, $greet, false);
+        }
+
         insert('chat_messages', ['user_id' => null, 'session_key' => $sessionKey, 'role' => 'assistant', 'text' => $reply, 'file' => '']);
+        if ($closing) chat_mark_dialog_end($sessionKey); // маркер — ПОСЛЕ ответа, чтобы следующий диалог снова здоровался
 
         // Отправка ответа от имени сообщества. Уникальный random_id на каждый
         // ответ — иначе ВК считает повтор и молча отбрасывает второе сообщение.
         vk_dm_send($peer, $reply, '', random_int(1, 2000000000));
-        _vk_log('bot reply peer=' . $peer . ' len=' . mb_strlen($reply));
+        _vk_log('bot reply peer=' . $peer . ' greet=' . (int) $greet . ' len=' . mb_strlen($reply));
     } catch (\Throwable $e) {
         _vk_log('bot error peer=' . $peer . ': ' . $e->getMessage());
     }

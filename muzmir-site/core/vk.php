@@ -273,6 +273,16 @@ function vk_dm_enqueue_dialogs(string $message, string $attachment, string $kind
 }
 
 /** Отправить одно личное сообщение от имени сообщества. */
+/** Имя пользователя ВК по peer_id (для персонального приветствия). Кэш на запрос. */
+function vk_user_name(int $peer): string {
+    static $cache = [];
+    if ($peer <= 0 || $peer >= 2000000000) return ''; // не личка/групповой чат
+    if (isset($cache[$peer])) return $cache[$peer];
+    $r = vk_api('users.get', ['user_ids' => $peer, 'fields' => 'first_name']);
+    $name = trim((string) ($r['response'][0]['first_name'] ?? ''));
+    return $cache[$peer] = $name;
+}
+
 function vk_dm_send(int $peer, string $message, string $attachment = '', int $randomId = 0): array {
     $params = [
         'group_id'  => (int) cfgv('vk_group_id', 211325055),
