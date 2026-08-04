@@ -118,8 +118,13 @@ ob_start(); ?>
           }
           $cvCode = mb_strtoupper(trim((string) ($c['code'] ?? '')));
           $cvSeed = (int) ($c['id'] ?? 0) % 5;
-          $cvCover = trim((string) ($c['cover'] ?? ''));
-          if ($cvCover !== '') $cvCover = preg_replace('~^https?://(?:localhost|127\.0\.0\.1)(?::\d+)?~i', '', $cvCover);
+          $cvRaw = trim((string) ($c['cover'] ?? ''));
+          $cvCover = '';
+          if ($cvRaw !== '') {
+            $cvCover = preg_match('~^https?://~', $cvRaw) ? $cvRaw : url('/' . ltrim($cvRaw, '/'));
+            $cvMt = @filemtime(BASE_PATH . '/public/' . ltrim(preg_replace('~^https?://[^/]+~', '', $cvRaw), '/'));
+            if ($cvMt) $cvCover .= (strpos($cvCover, '?') !== false ? '&' : '?') . 'v=' . $cvMt; // анти-кэш при замене афиши
+          }
           $isOpen = $c['status'] === 'open';
           $dirName = ['multi' => 'Многожанровый', 'patriotic' => 'Патриотический', 'thematic' => 'Тематический'][$c['direction'] ?? 'multi'] ?? 'Многожанровый';
         ?>

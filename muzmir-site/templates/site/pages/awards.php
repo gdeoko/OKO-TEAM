@@ -76,8 +76,10 @@ ob_start(); ?>
 
     <div class="aw-comp-list">
       <?php foreach ($comps as $i => $c):
-        $cover = trim((string)($c['cover'] ?? ''));
-        $coverUrl = $cover !== '' ? (preg_match('~^https?://~', $cover) ? $cover : url('/' . ltrim($cover, '/'))) : '';
+        // Фон карточки награды — ПУСТОЙ ШАБЛОН ДИПЛОМА (diploma_bg), а не афиша конкурса.
+        $tpl = trim((string)($c['diploma_bg'] ?? ''));
+        if ($tpl === '') $tpl = trim((string)($c['cover'] ?? '')); // фолбэк, если шаблон не задан
+        $coverUrl = $tpl !== '' ? (preg_match('~^https?://~', $tpl) ? $tpl : url('/' . ltrim($tpl, '/'))) : '';
         $scope = ($c['type'] === 'international') ? 'Международный' : 'Всероссийский';
       ?>
       <?php $dirMap=['multi'=>'Многожанровый','patriotic'=>'Патриотический','vocal'=>'Вокал','instrumental'=>'Инструментальный','dance'=>'Хореография','art'=>'ИЗО и ДПИ'];

@@ -110,9 +110,15 @@ ob_start(); ?>
           }
           $cvCode = mb_strtoupper(trim((string) ($c['code'] ?? '')));
           $cvSeed = (int) ($c['id'] ?? 0) % 5;
-          $cvCover = trim((string) ($c['cover'] ?? ''));
-          // Абсолютный путь от корня — иначе на /competitions относительный src мог 404-ить (нет афиши).
-          if ($cvCover !== '' && !preg_match('~^https?://~', $cvCover)) $cvCover = url('/' . ltrim($cvCover, '/'));
+          $cvRaw = trim((string) ($c['cover'] ?? ''));
+          $cvCover = '';
+          if ($cvRaw !== '') {
+            // Абсолютный путь от корня + анти-кэш (?v=mtime) — иначе на /competitions относительный
+            // src мог 404-ить, а после замены афиши браузер показывал старую из кэша.
+            $cvCover = preg_match('~^https?://~', $cvRaw) ? $cvRaw : url('/' . ltrim($cvRaw, '/'));
+            $cvMt = @filemtime(BASE_PATH . '/public/' . ltrim(preg_replace('~^https?://[^/]+~', '', $cvRaw), '/'));
+            if ($cvMt) $cvCover .= (strpos($cvCover, '?') !== false ? '&' : '?') . 'v=' . $cvMt;
+          }
         ?>
           <div class="card comp-card card--3d reveal" data-fin="<?= $isFin ?>">
             <a class="cc-cover cc-cover--s<?= $cvSeed ?>" href="<?= url('/apply?competition=' . rawurlencode($c['slug'])) ?>"
