@@ -111,7 +111,8 @@ ob_start(); ?>
           $cvCode = mb_strtoupper(trim((string) ($c['code'] ?? '')));
           $cvSeed = (int) ($c['id'] ?? 0) % 5;
           $cvCover = trim((string) ($c['cover'] ?? ''));
-          if ($cvCover !== '') $cvCover = preg_replace('~^https?://(?:localhost|127\.0\.0\.1)(?::\d+)?~i', '', $cvCover);
+          // Абсолютный путь от корня — иначе на /competitions относительный src мог 404-ить (нет афиши).
+          if ($cvCover !== '' && !preg_match('~^https?://~', $cvCover)) $cvCover = url('/' . ltrim($cvCover, '/'));
         ?>
           <div class="card comp-card card--3d reveal" data-fin="<?= $isFin ?>">
             <a class="cc-cover cc-cover--s<?= $cvSeed ?>" href="<?= url('/apply?competition=' . rawurlencode($c['slug'])) ?>"
