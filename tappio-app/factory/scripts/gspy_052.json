@@ -1,0 +1,258 @@
+{
+ "id": "gspy_052",
+ "app": "spy",
+ "voice": "en-US-AndrewNeural",
+ "rate": "+6%",
+ "grade": "clean_ad",
+ "brand": {
+  "accent": "#00D9FF",
+  "accent2": "#7CFCFF",
+  "code": "PRIVACY",
+  "logo": "spy.png",
+  "name": "SPY CAMERA FINDER"
+ },
+ "music": {
+  "queries": [
+   "soft piano thoughtful",
+   "neon night synth",
+   "investigative documentary underscore",
+   "cyber suspense pulse"
+  ]
+ },
+ "cover": {
+  "kicker": "WHY IT WORKS",
+  "top": "THE SCIENCE OF",
+  "big": "CATCHING\nA LENS",
+  "q": [
+   "woman looking around hotel room worried"
+  ]
+ },
+ "segments": [
+  {
+   "id": "b1",
+   "text": "Stop scrolling. Every camera has a lens, and lenses reflect."
+  },
+  {
+   "id": "b2",
+   "text": "Infrared bounces back as a sharp bright point."
+  },
+  {
+   "id": "b3",
+   "text": "Wireless cams also shout on the local network."
+  },
+  {
+   "id": "b4",
+   "text": "Two signals, two ways to catch them."
+  },
+  {
+   "id": "b5",
+   "text": "The app checks both at the same time."
+  },
+  {
+   "id": "b6",
+   "text": "Physics is on your side. Use it."
+  }
+ ],
+ "shots": [
+  {
+   "q": [
+    "desk lamp table hotel"
+   ],
+   "motion": "panl"
+  },
+  {
+   "q": [
+    "air vent grille ceiling"
+   ],
+   "insert": "diamond",
+   "pos": "center"
+  },
+  {
+   "q": [
+    "picture frame on wall room"
+   ],
+   "motion": "pandown"
+  },
+  {
+   "q": [
+    "laptop screen code green"
+   ],
+   "insert": "arch",
+   "pos": "center"
+  },
+  {
+   "q": [
+    "dark bedroom lamp light"
+   ],
+   "motion": "panr"
+  },
+  {
+   "q": [
+    "person entering hotel room luggage"
+   ],
+   "insert": "circle",
+   "pos": "lower"
+  },
+  {
+   "q": [
+    "network cables server blue light"
+   ],
+   "motion": "panup"
+  },
+  {
+   "q": [
+    "usb charger plug closeup"
+   ],
+   "insert": "tilt",
+   "pos": "center"
+  },
+  {
+   "q": [
+    "alarm clock nightstand bedroom"
+   ],
+   "motion": "zin"
+  },
+  {
+   "q": [
+    "person relaxing bed phone night"
+   ],
+   "insert": "hexagon",
+   "pos": "upper"
+  },
+  {
+   "q": [
+    "closet wardrobe hotel room"
+   ],
+   "motion": "zout"
+  }
+ ],
+ "overlays": [
+  {
+   "at": 0.045,
+   "dur": 2.37,
+   "type": "kicker",
+   "text": "WI-FI SCAN"
+  },
+  {
+   "at": 0.107,
+   "dur": 1.85,
+   "type": "ticker",
+   "to": 100,
+   "suffix": "%",
+   "label": "PRIVACY BACK",
+   "pos": "lower"
+  },
+  {
+   "at": 0.376,
+   "dur": 2.28,
+   "type": "gauge",
+   "to": 5,
+   "max": 10,
+   "suffix": "",
+   "label": "SPOTS TO CHECK",
+   "pos": "center"
+  },
+  {
+   "at": 0.451,
+   "dur": 2.15,
+   "type": "bars",
+   "title": "HIDDEN CAM REPORTS",
+   "unit": "%",
+   "items": [
+    [
+     "2019",
+     6
+    ],
+    [
+     "2024",
+     34
+    ]
+   ],
+   "pos": "center"
+  },
+  {
+   "at": 0.617,
+   "dur": 2.03,
+   "type": "chips",
+   "items": [
+    "SCAN",
+    "SWEEP",
+    "CHECK",
+    "RELAX"
+   ],
+   "pos": "lower"
+  },
+  {
+   "at": 0.666,
+   "dur": 2.38,
+   "type": "callout",
+   "text": "MOST CAMS NEED WI-FI",
+   "pos": "center"
+  },
+  {
+   "at": 0.789,
+   "dur": 1.63,
+   "type": "kinetic",
+   "top": "SCAN",
+   "big": "NOW"
+  },
+  {
+   "at": 0.823,
+   "dur": 1.66,
+   "type": "stat_count",
+   "to": 5,
+   "suffix": "",
+   "label": "HIDING SPOTS",
+   "pos": "center"
+  },
+  {
+   "at": 0.856,
+   "dur": 2.6,
+   "type": "checklist",
+   "items": [
+    "Smoke detector",
+    "Alarm clock",
+    "TV frame",
+    "Power outlet"
+   ],
+   "pos": "center"
+  },
+  {
+   "at": 0.912,
+   "dur": 1.67,
+   "type": "lowerthird",
+   "title": "CHECK THE VENTS",
+   "sub": "line of sight to the bed"
+  }
+ ],
+ "cta": {
+  "text": "Comment PRIVACY for the app.",
+  "code": "PRIVACY"
+ },
+ "caption": "USEFUL: Every lens reflects infrared as a bright point, and wireless cams shout on the network. Two signals, one scan — physics is on your side. Comment PRIVACY for the app. #privacy #airbnb #travelsafety #hiddencamera #traveltips #hotelroom #safetytips #phone #camera #airbnb #find",
+ "yt_title": "We tested five ways to find #shorts",
+ "trend_keys": [
+  "phone",
+  "camera",
+  "airbnb",
+  "find",
+  "cameras",
+  "former",
+  "hidden",
+  "look"
+ ],
+ "content_type": "useful",
+ "comp_angle": {
+  "title": "We tested five ways to find hidden cameras in hotels and house rentals",
+  "views": 2869440,
+  "channel": "CNBC International"
+ },
+ "virality": {
+  "score": 91,
+  "notes": [
+   "angle<-2869k",
+   "hook_boosted"
+  ],
+  "hook": "Stop scrolling. Every camera has a lens, and lenses reflect."
+ }
+}

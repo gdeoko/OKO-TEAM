@@ -24,12 +24,13 @@
   "big": "MEASURE\nWITH AR",
   "q": [
    "person measuring living room with phone ar"
-  ]
+  ],
+  "ai": "work/gtape_051/cover_ai.png"
  },
  "segments": [
   {
    "id": "b1",
-   "text": "Every DIY starts with an honest measurement."
+   "text": "Stop scrolling. Every DIY starts with an honest measurement."
   },
   {
    "id": "b2",
@@ -196,7 +197,7 @@
   "code": "MEASURE"
  },
  "caption": "Every DIY starts with an honest measurement. Skip the bent tape — point, tap, read length off the floor, export to PDF. Measure right, build once. Comment MEASURE for the app. #diy #homedecor #interiordesign #measure #movingtips #renter #apartmenttherapy #tape #measuring #iphone #hacks",
- "yt_title": "Measure your DIY project with AR #shorts",
+ "yt_title": "Creating ROOM MODELS from Phone Lidar #shorts",
  "trend_keys": [
   "tape",
   "measuring",
@@ -207,5 +208,18 @@
   "use",
   "accurate"
  ],
- "content_type": "viral"
+ "content_type": "viral",
+ "comp_angle": {
+  "title": "Creating ROOM MODELS from Phone Lidar Scans! (New App Update!)",
+  "views": 140339,
+  "channel": "TheSketchUpEssentials"
+ },
+ "virality": {
+  "score": 88,
+  "notes": [
+   "angle<-140k",
+   "hook_boosted"
+  ],
+  "hook": "Stop scrolling. Every DIY starts with an honest measurement."
+ }
 }
