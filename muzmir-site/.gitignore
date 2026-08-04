@@ -1,6 +1,7 @@
 config.local.php
 data/*.sqlite
 data/*.sqlite-*
+data/*.db
 data/backups/*
 data/logs/*
 data/import/*.txt
