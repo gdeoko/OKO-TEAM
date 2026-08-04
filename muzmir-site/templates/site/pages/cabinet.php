@@ -165,15 +165,7 @@ if ($nameSrc !== '') {
 $initials = mb_strtoupper($initials);
 $avatar = trim((string)($user['avatar'] ?? ''));
 
-$sections = [
-  ['apps','Мои заявки'],
-  ['diplomas','Мои дипломы'],
-  ['awards','Награды и заказы'],
-  ['achievements','Достижения'],
-  ['stats','Статистика'],
-  ['settings','Настройки'],
-];
-if ($isTeacher) { $sections[] = ['students','Мои ученики']; $sections[] = ['ref','Реферальная программа']; }
+// Меню кабинета ($menuGroups) собирается ниже — после подсчёта достижений и статистики.
 
 /* --- Достижения (медали за прогресс, по образцу OKO app) --- */
 $countApps    = count($apps);
@@ -235,11 +227,34 @@ $monthLabels = array_slice(array_keys($byMonth), -6);
 $monthVals = array_values(array_intersect_key($byMonth, array_flip($monthLabels)));
 $maxMonth = max([1, ...($monthVals ?: [0])]);
 
+/* --- Меню кабинета в стиле настроек Telegram: группы → компактные строки-пункты.
+       Формат пункта: [id, название, значение справа, цвет квадратика иконки] --- */
+$menuGroups = [
+  ['Конкурсы', [
+    ['apps',     'Мои заявки',       (string)count($apps),     '#17307A'],
+    ['diplomas', 'Мои дипломы',      (string)count($diplomas), '#C79322'],
+    ['awards',   'Награды и заказы', (string)count($orders),   '#8E2438'],
+  ]],
+  ['Прогресс', [
+    ['achievements', 'Достижения', $achDoneCount . ' из ' . count($achievements), '#2E7D4F'],
+    ['stats',        'Статистика', 'Ур. ' . (int)$level,                          '#5B3A8E'],
+  ]],
+];
+if ($isTeacher) {
+    $menuGroups[] = ['Педагогу', [
+      ['students', 'Мои ученики',            (string)count($students), '#1B6F7A'],
+      ['ref',      'Реферальная программа',  $refCodes ? (string)count($refCodes) : '', '#B5651D'],
+    ]];
+}
+$menuGroups[] = ['Аккаунт', [
+  ['settings', 'Настройки', '', '#64748B'],
+]];
+
 ob_start(); ?>
 <style>
 .cab{max-width:960px;margin:0 auto}
-/* --- Шапка профиля --- */
-.cab-hero{position:relative;overflow:hidden;border-radius:var(--radius-lg);padding:30px 30px 26px;margin-bottom:24px;
+/* --- Шапка профиля (компактная, в стиле настроек Telegram) --- */
+.cab-hero{position:relative;overflow:hidden;border-radius:var(--radius-lg);padding:18px 20px;margin-bottom:18px;
   background:
     radial-gradient(680px 320px at 100% -30%,var(--gold-soft),transparent 62%),
     radial-gradient(520px 300px at -10% 130%,var(--gold-soft),transparent 60%),
@@ -250,42 +265,48 @@ ob_start(); ?>
   -webkit-mask:radial-gradient(120% 90% at 88% -10%,#000,transparent 62%);
   mask:radial-gradient(120% 90% at 88% -10%,#000,transparent 62%)}
 .cab-hero::after{content:"";position:absolute;left:0;right:0;top:0;height:3px;z-index:2;background:var(--grad-gold);opacity:.9}
-.cab-hero-note{position:absolute;top:-14px;right:-6px;width:150px;height:150px;z-index:0;color:var(--gold);opacity:.09;pointer-events:none}
-.cab-hero-top{position:relative;z-index:1;display:flex;gap:20px;align-items:center;flex-wrap:wrap}
-.cab-ava{width:88px;height:88px;border-radius:26px;flex:none;position:relative;overflow:hidden;
+.cab-hero-note{position:absolute;top:-14px;right:-6px;width:110px;height:110px;z-index:0;color:var(--gold);opacity:.09;pointer-events:none}
+.cab-hero-top{position:relative;z-index:1;display:flex;gap:14px;align-items:center}
+.cab-ava{width:60px;height:60px;border-radius:18px;flex:none;position:relative;overflow:hidden;
   background:var(--grad-gold);color:var(--gold-fg);display:flex;align-items:center;justify-content:center;
-  font-family:var(--ff-display);font-weight:800;font-size:2.2rem;
+  font-family:var(--ff-display);font-weight:800;font-size:1.5rem;
   box-shadow:0 12px 30px -8px rgba(139,111,31,.5),inset 0 0 24px color-mix(in srgb,var(--gold-fg) 16%,transparent),0 0 0 1px var(--glass-brd)}
 .cab-ava::after{content:"";position:absolute;inset:0;border-radius:inherit;pointer-events:none;
   box-shadow:inset 0 1px 0 rgba(255,255,255,.4);background:linear-gradient(160deg,rgba(255,255,255,.28),transparent 45%)}
 .cab-ava img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
 .cab-id{min-width:0;flex:1}
-.cab-id h1{font-family:var(--ff-display);font-size:clamp(1.55rem,4.5vw,2.2rem);line-height:1.08;margin:0 0 9px;overflow-wrap:anywhere}
-.cab-role{display:inline-flex;align-items:center;gap:6px;font-size:.72rem;font-weight:800;letter-spacing:.07em;text-transform:uppercase;
-  padding:5px 13px;border-radius:999px;background:var(--gold-soft);color:var(--gold-2);border:1px solid var(--glass-brd);
+.cab-id h1{font-family:var(--ff-display);font-size:clamp(1.2rem,4vw,1.6rem);line-height:1.1;margin:0 0 4px;overflow-wrap:anywhere}
+.cab-role{display:inline-flex;align-items:center;gap:6px;font-size:.62rem;font-weight:800;letter-spacing:.07em;text-transform:uppercase;
+  padding:3px 10px;border-radius:999px;background:var(--gold-soft);color:var(--gold-2);border:1px solid var(--glass-brd);
   box-shadow:inset 0 0 12px var(--gold-soft)}
-.cab-role::before{content:"";width:6px;height:6px;border-radius:50%;background:var(--grad-gold);box-shadow:0 0 8px var(--gold)}
-.cab-email{display:block;color:var(--muted);font-size:.88rem;margin-top:10px;overflow-wrap:anywhere}
-.cab-stats{position:relative;z-index:1;display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-top:24px}
-.cab-stat{position:relative;overflow:hidden;text-align:center;padding:17px 8px 15px;border-radius:var(--radius-sm);
-  background:linear-gradient(180deg,var(--glass),transparent);border:1px solid var(--glass-brd);
-  box-shadow:var(--shadow-soft);transition:transform .25s cubic-bezier(.2,.8,.2,1),box-shadow .25s}
-.cab-stat::before{content:"";position:absolute;left:22%;right:22%;top:0;height:2px;border-radius:2px;background:var(--grad-gold);opacity:.7}
-.cab-stat:hover{transform:translateY(-4px);box-shadow:var(--shadow-card),var(--shadow-glow)}
-.cab-stat b{display:block;font-family:var(--ff-display);font-size:clamp(1.8rem,5vw,2.5rem);line-height:1;
-  background:var(--grad-gold-text);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent}
-.cab-stat span{display:block;color:var(--muted);font-size:.76rem;letter-spacing:.04em;margin-top:6px}
-/* --- Вкладки (горизонтальный скролл на мобилке) --- */
-.cab-tabs{display:flex;gap:8px;margin-bottom:22px;overflow-x:auto;scrollbar-width:none;-webkit-overflow-scrolling:touch;
-  padding:5px;scroll-snap-type:x proximity;background:var(--panel);border:1px solid var(--glass-brd);border-radius:999px;backdrop-filter:blur(10px)}
-.cab-tabs::-webkit-scrollbar{display:none}
-.cab-tab{display:inline-flex;align-items:center;gap:8px;white-space:nowrap;flex:none;scroll-snap-align:start;
-  padding:11px 18px;border-radius:999px;color:var(--text-dim);font-weight:700;font-size:.9rem;cursor:pointer;
-  background:none;border:none;transition:color .2s,background .2s,box-shadow .2s;min-height:44px}
-.cab-tab:hover{color:var(--text)}
-.cab-tab.active{background:var(--grad-gold);color:var(--gold-fg);box-shadow:var(--shadow-btn)}
-.cab-tab.active svg{stroke:var(--gold-fg)}
-.cab-tab svg{width:18px;height:18px}
+.cab-role::before{content:"";width:5px;height:5px;border-radius:50%;background:var(--grad-gold);box-shadow:0 0 8px var(--gold)}
+.cab-email{display:block;color:var(--muted);font-size:.82rem;margin-top:5px;overflow-wrap:anywhere}
+/* --- Меню кабинета в стиле настроек Telegram: группы стеклянных карточек, компактные строки-пункты --- */
+.cab-menu{display:flex;flex-direction:column;gap:16px;margin-bottom:20px}
+.cab-group-ttl{font-size:.7rem;font-weight:800;letter-spacing:.09em;text-transform:uppercase;color:var(--muted);margin:0 0 6px;padding:0 16px}
+.cab-group-card{background:var(--glass-card,var(--panel));border:1px solid var(--glass-brd);border-radius:var(--radius);
+  overflow:hidden;box-shadow:var(--shadow-card);backdrop-filter:blur(14px)}
+.cab-item{position:relative;display:flex;align-items:center;gap:12px;width:100%;min-height:46px;padding:6px 14px;
+  background:none;border:none;cursor:pointer;color:var(--text);text-align:left;font:inherit;text-decoration:none;
+  transition:background .15s;-webkit-tap-highlight-color:transparent}
+.cab-item:hover{background:var(--glass)}
+.cab-item + .cab-item::before{content:"";position:absolute;left:56px;right:0;top:0;height:1px;background:var(--line)}
+.cab-item-ic{width:30px;height:30px;border-radius:8px;flex:none;display:flex;align-items:center;justify-content:center;
+  background:var(--ic,#64748B);color:#fff;box-shadow:inset 0 1px 0 rgba(255,255,255,.22)}
+.cab-item-ic svg{width:17px;height:17px;stroke:#fff}
+.cab-item-lbl{flex:1;min-width:0;font-weight:600;font-size:.93rem;overflow-wrap:anywhere}
+.cab-item-val{flex:none;color:var(--muted);font-size:.84rem;font-weight:700}
+.cab-item-chev{flex:none;color:var(--muted);opacity:.55;width:16px;height:16px}
+.cab-item--danger .cab-item-lbl{color:var(--error,#B3261E);font-weight:700}
+.cab-item--danger .cab-item-ic{background:#B3392E}
+.cab-item--danger:hover{background:color-mix(in srgb,#B3392E 8%,transparent)}
+/* --- Кнопка «Назад» из раздела в меню --- */
+.cab-back{display:none;align-items:center;gap:6px;margin:0 0 12px;background:none;border:none;cursor:pointer;
+  color:var(--gold-2);font-weight:700;font-size:.93rem;padding:8px 4px;min-height:44px;font-family:inherit}
+.cab-back svg{width:18px;height:18px;flex:none}
+.cab.is-section .cab-back{display:inline-flex}
+.cab.is-section .cab-menu{display:none}
+:root:not([data-theme="dark"]) .cab-back{color:var(--gold-ink)}
 /* --- Панели / карточки --- */
 .cab-panel{display:none}
 .cab-panel.active{display:block;animation:cabFade .45s cubic-bezier(.2,.8,.2,1)}
@@ -391,14 +412,14 @@ ob_start(); ?>
 /* --- Кнопка «Паспорт участника» --- */
 .cab-passport{margin-bottom:16px}
 @media(max-width:560px){
-  .cab-ava{width:66px;height:66px;border-radius:20px;font-size:1.7rem}
-  .cab-stats{gap:8px}
+  .cab-ava{width:52px;height:52px;border-radius:15px;font-size:1.3rem}
+  .cab-hero{padding:15px 16px}
   .cab-step small{font-size:.6rem}
 }
 @media(prefers-reduced-motion:reduce){
   .cab-panel.active{animation:none}
-  .cab-card,.cab-stat,.cab-step,.cab-step::before,.cab-dot,.switch-ui,.switch-ui::after{transition:none}
-  .cab-card:hover,.cab-stat:hover{transform:none}
+  .cab-card,.cab-item,.cab-step,.cab-step::before,.cab-dot,.switch-ui,.switch-ui::after{transition:none}
+  .cab-card:hover{transform:none}
   .cab-bar i{transition:none}
 }
 </style>
@@ -416,27 +437,49 @@ ob_start(); ?>
           <div class="cab-id">
             <h1><?= h($user['full_name'] ?: 'Участник') ?></h1>
             <span class="cab-role"><?= h($roleLabels[$user['role']] ?? 'Участник') ?></span>
-            <span class="cab-email"><?= h($user['email']) ?></span>
+            <span class="cab-email"><?= h($user['email']) ?><?php if (trim((string)($user['phone'] ?? '')) !== ''): ?> &middot; <?= h($user['phone']) ?><?php endif; ?></span>
           </div>
-        </div>
-        <div class="cab-stats">
-          <div class="cab-stat"><b><?= count($apps) ?></b><span>Заявок</span></div>
-          <div class="cab-stat"><b><?= count($diplomas) ?></b><span>Дипломов</span></div>
-          <div class="cab-stat"><b><?= count($orders) ?></b><span>Заказов</span></div>
         </div>
       </div>
 
-      <!-- Вкладки -->
-      <div class="cab-tabs scroll-x" id="cabTabs" role="tablist">
-        <?php foreach ($sections as $i => [$id,$label]): ?>
-          <button type="button" class="cab-tab <?= $i===0?'active':'' ?>" data-tab="<?= $id ?>" role="tab" aria-selected="<?= $i===0?'true':'false' ?>"><?= $icons[$id] ?><span><?= h($label) ?></span></button>
+      <!-- Меню кабинета (вертикальные группы, как в настройках Telegram) -->
+      <nav class="cab-menu" id="cabMenu" aria-label="Разделы кабинета">
+        <?php foreach ($menuGroups as [$gTitle, $gItems]): ?>
+        <div class="cab-group reveal">
+          <div class="cab-group-ttl"><?= h($gTitle) ?></div>
+          <div class="cab-group-card">
+            <?php foreach ($gItems as [$id, $label, $val, $col]): ?>
+            <button type="button" class="cab-item" data-tab="<?= h($id) ?>" style="--ic:<?= h($col) ?>">
+              <span class="cab-item-ic"><?= $icons[$id] ?? $icons['settings'] ?></span>
+              <span class="cab-item-lbl"><?= h($label) ?></span>
+              <?php if ($val !== ''): ?><span class="cab-item-val"><?= h($val) ?></span><?php endif; ?>
+              <svg class="cab-item-chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m9 6 6 6-6 6"/></svg>
+            </button>
+            <?php endforeach; ?>
+          </div>
+        </div>
         <?php endforeach; ?>
-      </div>
+        <div class="cab-group reveal">
+          <div class="cab-group-card">
+            <a class="cab-item cab-item--danger" href="<?= url('/logout') ?>">
+              <span class="cab-item-ic"><?= $icon('<path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4M16 17l5-5-5-5M21 12H9"/>') ?></span>
+              <span class="cab-item-lbl">Выйти из аккаунта</span>
+              <svg class="cab-item-chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m9 6 6 6-6 6"/></svg>
+            </a>
+          </div>
+        </div>
+      </nav>
+
+      <!-- Кнопка возврата из раздела в меню -->
+      <button type="button" class="cab-back" id="cabBack">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m15 6-6 6 6 6"/></svg>
+        Личный кабинет
+      </button>
 
       <div class="cab-main">
 
         <!-- Мои заявки -->
-        <div class="cab-panel active" id="tab-apps" role="tabpanel">
+        <div class="cab-panel" id="tab-apps" role="tabpanel">
           <h2>Мои заявки и результаты</h2>
           <?php if (!$apps): ?>
             <div class="cab-card cab-empty">
@@ -934,23 +977,31 @@ ob_start(); ?>
 </section>
 <script>
 (function(){
-  var tabs=document.getElementById('cabTabs');
-  if(!tabs)return;
-  var btns=tabs.querySelectorAll('.cab-tab');
+  var menu=document.getElementById('cabMenu');
+  var back=document.getElementById('cabBack');
+  var wrap=document.querySelector('.cab');
+  if(!menu||!wrap)return;
+  var btns=menu.querySelectorAll('.cab-item[data-tab]');
   function fillBars(id){
     document.querySelectorAll('#tab-'+id+' .cab-bar i').forEach(function(el){
       requestAnimationFrame(function(){el.style.width=(el.getAttribute('data-w')||0)+'%';});
     });
   }
   function show(id){
+    wrap.classList.add('is-section');
     document.querySelectorAll('.cab-panel').forEach(function(p){p.classList.toggle('active',p.id==='tab-'+id);});
-    btns.forEach(function(b){var on=b.getAttribute('data-tab')===id;b.classList.toggle('active',on);b.setAttribute('aria-selected',on?'true':'false');});
     fillBars(id);
+    window.scrollTo({top:0,behavior:'auto'});
   }
-  btns.forEach(function(b){b.addEventListener('click',function(){var id=b.getAttribute('data-tab');show(id);history.replaceState(null,'','#'+id);
-    b.scrollIntoView({inline:'center',block:'nearest',behavior:'smooth'});});});
+  function showMenu(){
+    wrap.classList.remove('is-section');
+    document.querySelectorAll('.cab-panel').forEach(function(p){p.classList.remove('active');});
+    history.replaceState(null,'',location.pathname);
+  }
+  btns.forEach(function(b){b.addEventListener('click',function(){var id=b.getAttribute('data-tab');show(id);history.replaceState(null,'','#'+id);});});
+  if(back)back.addEventListener('click',showMenu);
   var h=(location.hash||'').replace('#','');
-  if(h&&document.getElementById('tab-'+h))show(h); else fillBars('apps');
+  if(h&&document.getElementById('tab-'+h))show(h);
   // Копирование реф-кода
   document.querySelectorAll('.cab-copy').forEach(function(btn){
     btn.addEventListener('click',function(){
