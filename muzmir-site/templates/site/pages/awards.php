@@ -262,21 +262,23 @@ ob_start(); ?>
       <div class="shop-total"><span>Итого</span><b id="cartTotal">0 ₽</b></div>
 
       <?php if ($u): ?>
-        <?php $compApps = array_values(array_filter($myApps, fn($a) => (int)$a['competition_id'] === (int)$selComp['id']));
-              $listApps = $compApps ?: $myApps; ?>
+        <?php // Заказ наград — только по заявкам с выставленным результатом (оценённым).
+              $gradedApps = array_values(array_filter($myApps, fn($a) => trim((string)($a['result'] ?? '')) !== ''));
+              $compApps = array_values(array_filter($gradedApps, fn($a) => (int)$a['competition_id'] === (int)$selComp['id']));
+              $listApps = $compApps ?: $gradedApps; ?>
         <?php if ($listApps): ?>
         <div class="field">
-          <label for="ord_app">По какой заявке</label>
+          <label for="ord_app">По какой заявке (только оценённые)</label>
           <select id="ord_app" name="application_id" required>
             <option value="">Выберите заявку…</option>
             <?php foreach ($listApps as $a): ?>
               <option value="<?= (int)$a['id'] ?>"><?= h($a['number']) ?> — <?= h(mb_strimwidth((string)$a['comp_name'],0,24,'…')) ?><?= $a['result']?' ('.h($a['result']).')':'' ?></option>
             <?php endforeach; ?>
           </select>
-          <?php if (!$compApps): ?><div class="hint">Нет заявки на этот конкурс. <a href="<?= url('/apply') ?>?comp=<?= (int)$selComp['id'] ?>">Подать заявку</a></div><?php endif; ?>
+          <?php if (!$compApps): ?><div class="hint">Нет оценённой заявки на этот конкурс — доступны другие ваши оценённые заявки.</div><?php endif; ?>
         </div>
         <?php else: ?>
-          <p class="shop-hint">У Вас пока нет заявок. <a href="<?= url('/apply') ?>?comp=<?= (int)$selComp['id'] ?>">Подайте заявку на участие</a> — затем сможете заказать награды.</p>
+          <p class="shop-hint">Заказать наградную продукцию можно после подведения итогов. Как только жюри выставит результат по вашей заявке — здесь появится выбор. <a href="<?= url('/apply') ?>?comp=<?= (int)$selComp['id'] ?>">Подать заявку</a></p>
         <?php endif; ?>
       <?php else: ?>
         <div class="field">

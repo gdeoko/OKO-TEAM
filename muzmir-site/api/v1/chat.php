@@ -134,6 +134,12 @@ try {
 } catch (\Throwable $e) {}
 if ($closing) chat_mark_dialog_end($sessionKey); // маркер — ПОСЛЕ ответа
 
+// --- Эскалация оператору в Телеграм (тихо для пользователя) ---
+// Если участник просит живого человека, недоволен или упоминает возврат/жалобу —
+// один раз за сессию отправляем владельцу диалог + имя + телефон + заявки, чтобы
+// живой оператор мог подключиться. Пользователю НЕ пишем «передал специалистам».
+chat_maybe_escalate($text, $uid, $sessionKey, $greetName);
+
 // Контекстные кнопки-действия под ответом (ссылки на разделы, диплом файлом, отзыв в конце).
 $actions = chat_actions($text, $uid, $sessionKey);
 
@@ -149,6 +155,61 @@ json_out([
     'image'   => $image,
     'session' => $sessionKey,
 ]);
+
+/**
+ * Тихая эскалация оператору в Телеграм. Триггеры: просьба о живом человеке,
+ * недовольство, возврат/жалоба. Один раз за сессию (маркер role='escalated').
+ * Отправляет владельцу транскрипт + имя + телефон + заявки участника.
+ */
+function chat_maybe_escalate(string $text, ?int $uid, string $sessionKey, string $greetName): void {
+    $t = mb_strtolower($text);
+    $triggers = ['оператор', 'живой человек', 'с человеком', 'менеджер', 'жалоб', 'недоволен',
+                 'недовольна', 'верните деньги', 'возврат', 'не помог', 'позовите', 'соедините',
+                 'администратор', 'сотрудник', 'отвратительн', 'безобразие', 'обман'];
+    $hit = false;
+    foreach ($triggers as $w) if (mb_strpos($t, $w) !== false) { $hit = true; break; }
+    if (!$hit) return;
+    try {
+        $already = (int) scalar("SELECT COUNT(*) FROM chat_messages WHERE session_key=? AND role='escalated'", [$sessionKey]);
+        if ($already > 0) return;
+    } catch (\Throwable $e) { return; }
+
+    // Транскрипт последних сообщений.
+    $lines = [];
+    try {
+        $rows = all("SELECT role, text FROM chat_messages WHERE session_key=? AND role IN ('user','assistant') ORDER BY id DESC LIMIT 12", [$sessionKey]);
+        foreach (array_reverse($rows) as $r) {
+            $who = $r['role'] === 'user' ? '👤' : '🤖';
+            $tx = trim((string) $r['text']);
+            if ($tx !== '') $lines[] = $who . ' ' . mb_substr($tx, 0, 240);
+        }
+    } catch (\Throwable $e) {}
+
+    $name = $greetName; $phone = ''; $email = '';
+    if ($uid && ($cu = current_user())) {
+        $name = trim((string) ($cu['full_name'] ?? '')) ?: $greetName;
+        $phone = trim((string) ($cu['phone'] ?? ''));
+        $email = trim((string) ($cu['email'] ?? ''));
+    }
+    $apps = trim((string) ($GLOBALS['chat_user_ctx'] ?? ''));
+
+    if (is_file(BASE_PATH . '/core/notify_owner.php')) {
+        require_once BASE_PATH . '/core/notify_owner.php';
+        try {
+            owner_notify('ЧАТ-БОТ', '🔔 Нужен оператор — участник просит живого человека',
+                implode("\n", $lines), [
+                    'Участник' => $name ?: 'гость',
+                    'Телефон'  => $phone,
+                    'Почта'    => $email,
+                    'Заявки'   => mb_substr($apps, 0, 280),
+                    'Сессия'   => $sessionKey,
+                    '_event'   => 'chat_escalation',
+                    '_meta'    => ['session' => $sessionKey, 'uid' => (int) ($uid ?? 0)],
+                ]);
+        } catch (\Throwable $e) { /* тихо */ }
+    }
+    try { insert('chat_messages', ['user_id' => $uid, 'session_key' => $sessionKey, 'role' => 'escalated', 'text' => '', 'file' => '']); } catch (\Throwable $e) {}
+}
 
 /** Картинка-образец для чата: показываем реальный образец диплома/награды по запросу. */
 function chat_sample_image(string $text): ?string {
@@ -213,6 +274,10 @@ function chat_actions(string $text, ?int $uid, string $sessionKey): array {
     }
     if ($has(['результат', 'итог', 'балл', 'оцен', 'победител', 'лауреат'])) {
         $add('Результаты конкурсов', url('/results'));
+    }
+    // Персональные заявки участника — прямая кнопка в кабинет к его заявкам.
+    if ($uid && $has(['моя заявк', 'мои заявк', 'мою заявк', 'статус', 'что с заявк', 'где заявк', 'приняли', 'оплатил', 'моя работа', 'мои работы'])) {
+        $add('Мои заявки', url('/cabinet') . '#apps');
     }
     // Диплом файлом — для авторизованных с готовыми дипломами; иначе проверка по номеру.
     if ($has(['диплом', 'сертификат', 'скачать', 'провер', 'подлинн'])) {

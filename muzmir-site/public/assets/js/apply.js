@@ -9,6 +9,21 @@
   var $$ = function (s, c) { return Array.prototype.slice.call((c || form).querySelectorAll(s)); };
   var DRAFT_KEY = 'muzmir_apply_draft_v1';
 
+  // Автозаполнение промокода педагога из ссылки-приглашения (?promo=/?ref=/?code=).
+  try {
+    var qp = new URLSearchParams(location.search);
+    var refCode = (qp.get('promo') || qp.get('ref') || qp.get('code') || '').toUpperCase().replace(/[^A-Z0-9]/g, '');
+    if (refCode) {
+      try { localStorage.setItem('muzmir_ref_code', refCode); } catch (e) {}
+    } else {
+      try { refCode = (localStorage.getItem('muzmir_ref_code') || ''); } catch (e) {}
+    }
+    if (refCode) {
+      var pc = document.getElementById('promo_code');
+      if (pc && !pc.value) pc.value = refCode;
+    }
+  } catch (e) {}
+
   // Порядок навигационных шагов. «pay» вставляется только для платного конкурса.
   var STEP_ORDER = ['comp', 'user', 'teacher', 'number', 'contact', 'consent'];
   var panels = {};

@@ -140,6 +140,18 @@ function diploma_html(array $c, array $a, array $opt = []): string {
     $name     = trim((string)($a['full_name'] ?? '')) ?: 'Иванов Иван Иванович';
     $year     = date('Y');
 
+    // Номер диплома + QR-код проверки подлинности (правый нижний угол).
+    $dipNumber = trim((string)($opt['number'] ?? ($a['number'] ?? '')));
+    if ($dipNumber === '' && $sample) $dipNumber = 'MM-2026-00001';
+    $qrSvg = '';
+    if ($dipNumber !== '') {
+        if (!function_exists('qr_svg') && is_file(BASE_PATH . '/core/qr.php')) require_once BASE_PATH . '/core/qr.php';
+        if (function_exists('qr_svg')) {
+            $verifyUrl = $base . '/verify/' . rawurlencode($dipNumber);
+            try { $qrSvg = qr_svg($verifyUrl); } catch (\Throwable $e) { $qrSvg = ''; }
+        }
+    }
+
     /* Поля: в образце — все строки эталона с плейсхолдерами (шаблон 1:1),
      * в боевом дипломе — только заполненные из заявки. */
     if ($sample && !$thanks) {
@@ -269,6 +281,12 @@ body{background:#444;font-family:'Manrope',sans-serif;padding:20px;min-height:10
 .sig-signature-1{width:26mm;height:auto;display:block;transform:scale(1.8);transform-origin:center right}
 .sig-signature-2{width:28mm;height:auto;display:block;transform:scale(1.8);transform-origin:center right}
 .footer-city{text-align:center;margin-top:4mm;font-family:'Playfair Display',serif;font-size:12.5pt;font-weight:700;color:#1a1a2a}
+/* Номер диплома + QR проверки подлинности — правый нижний угол. */
+.dip-verify{position:absolute;right:7mm;bottom:6mm;z-index:6;display:flex;flex-direction:column;align-items:center;gap:.7mm}
+.dip-verify .qr{width:15mm;height:15mm;background:#fff;padding:1mm;border-radius:1.5mm;box-shadow:0 1px 4px rgba(0,0,0,.25)}
+.dip-verify .qr svg{width:100%;height:100%;display:block}
+.dip-verify .num{font-family:'Manrope',sans-serif;font-size:7pt;font-weight:800;color:#1a1a2a;letter-spacing:.3px}
+.dip-verify .lbl{font-family:'Manrope',sans-serif;font-size:5.6pt;font-weight:600;color:#3a3a4a;text-transform:uppercase;letter-spacing:.4px}
 /* Водяной знак «ОБРАЗЕЦ» повторяется ПО ВСЕМУ ПОЛЮ диплома (перекрёстно, по диагонали). */
 .sample-mark{position:absolute;inset:-20%;z-index:9;pointer-events:none;overflow:hidden;
   display:flex;flex-wrap:wrap;align-content:center;justify-content:center;gap:9mm 18mm;
@@ -379,6 +397,13 @@ body{background:#444;font-family:'Manrope',sans-serif;padding:20px;min-height:10
     </div>
     <div class="footer-city">Российская Федерация, город Москва - <?= $year ?></div>
   </div>
+  <?php if ($qrSvg !== ''): ?>
+  <div class="dip-verify">
+    <div class="qr"><?= $qrSvg ?></div>
+    <div class="num">№ <?= h($dipNumber) ?></div>
+    <div class="lbl">проверка подлинности</div>
+  </div>
+  <?php endif; ?>
 </div>
 </body>
 </html>

@@ -1203,12 +1203,13 @@ ob_start(); ?>
             <div class="cab-kpi"><b><?= h(money((int)$refReward)) ?></b><span>Начислено вознаграждений</span></div>
           </div>
 
-          <?php if ($refCodes): foreach ($refCodes as $k => $c): ?>
+          <?php if ($refCodes): foreach ($refCodes as $k => $c):
+            $refLink = rtrim((string)cfgv('base_url'), '/') . '/apply?promo=' . rawurlencode((string)$c['code']); ?>
             <div class="cab-card reveal" style="--i:<?= $k ?>">
               <div class="cab-row">
                 <div>
                   <span class="cab-code" data-code="<?= h($c['code']) ?>"><?= h($c['code']) ?>
-                    <button type="button" class="cab-copy" title="Скопировать"><?= $icon('<rect x="9" y="9" width="11" height="11" rx="2"/><path d="M5 15V5a2 2 0 0 1 2-2h8"/>') ?></button>
+                    <button type="button" class="cab-copy" title="Скопировать код"><?= $icon('<rect x="9" y="9" width="11" height="11" rx="2"/><path d="M5 15V5a2 2 0 0 1 2-2h8"/>') ?></button>
                   </span>
                   <p class="cab-meta">Скидка ученику <?= (int)$c['percent'] ?>% - Ваше вознаграждение <?= (int)$c['reward_percent'] ?>%</p>
                 </div>
@@ -1217,30 +1218,37 @@ ob_start(); ?>
                   <p class="cab-meta">Применений: <strong><?= (int)$c['uses'] ?></strong></p>
                 </div>
               </div>
-            </div>
-          <?php endforeach; endif; ?>
-
-          <div class="cab-card">
-            <h3 style="margin-top:0;font-family:var(--ff-serif)">Создать промокод</h3>
-            <form method="post" action="<?= url('/cabinet') ?>">
-              <?= csrf_field() ?>
-              <input type="hidden" name="action" value="referral_create">
-              <div class="grid grid-2" style="display:grid;grid-template-columns:1fr 1fr;gap:14px">
-                <div class="field" style="margin-bottom:0">
-                  <label for="r_code">Свой код (необязательно)</label>
-                  <input type="text" id="r_code" name="code" maxlength="16" placeholder="Сгенерируем автоматически">
-                </div>
-                <div class="field" style="margin-bottom:0">
-                  <label for="r_pct">Скидка ученику, %</label>
-                  <input type="number" id="r_pct" name="percent" value="5" min="1" max="30">
+              <div class="cab-share" style="margin-top:12px;padding-top:12px;border-top:1px solid var(--glass-brd)">
+                <label class="cab-meta" style="display:block;margin-bottom:6px">Ссылка-приглашение — промокод подставится автоматически:</label>
+                <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+                  <input type="text" class="ref-link-input" readonly value="<?= h($refLink) ?>" data-link="<?= h($refLink) ?>"
+                         style="flex:1;min-width:200px;font-size:.82rem;padding:9px 12px;border:1px solid var(--glass-brd);border-radius:10px;background:var(--surface,#fff);color:var(--text)">
+                  <button type="button" class="btn btn--primary btn--sm ref-link-copy" data-link="<?= h($refLink) ?>">Скопировать ссылку</button>
                 </div>
               </div>
-              <p class="cab-meta" style="margin:14px 0">Поделитесь кодом с учениками - они получают скидку, а Вам начисляется вознаграждение после оплаты.</p>
-              <button class="btn btn--primary" type="submit">Создать промокод</button>
-            </form>
-          </div>
+            </div>
+          <?php endforeach; else: ?>
+            <div class="cab-card">
+              <h3 style="margin-top:0;font-family:var(--ff-serif)">Ваш промокод</h3>
+              <p class="cab-meta" style="margin:0 0 14px">Получите персональную ссылку-приглашение. Ученики переходят по ней — промокод подставляется сам, они получают скидку, а Вам начисляется вознаграждение после оплаты.</p>
+              <form method="post" action="<?= url('/cabinet') ?>">
+                <?= csrf_field() ?>
+                <input type="hidden" name="action" value="referral_create">
+                <button class="btn btn--primary" type="submit">Получить мой промокод и ссылку</button>
+              </form>
+            </div>
+          <?php endif; ?>
         </div>
         <?php endif; ?>
+        <script>
+        (function(){
+          document.addEventListener('click',function(e){
+            var b=e.target.closest('.ref-link-copy'); if(!b)return;
+            var link=b.getAttribute('data-link')||'';
+            if(navigator.clipboard){navigator.clipboard.writeText(link).then(function(){var o=b.textContent;b.textContent='Скопировано';setTimeout(function(){b.textContent=o;},1600);});}
+          });
+        })();
+        </script>
 
       </div>
     </div>
