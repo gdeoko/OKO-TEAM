@@ -87,6 +87,53 @@ function vk_wall_post_with_photo(string $message, string $photoPath, array $extr
     return vk_wall_post($message, $extra);
 }
 
+/**
+ * Опубликовать историю (сторис) сообщества из изображения (лучше 1080×1920, 9:16).
+ * Кликабельная ссылка ($link) добавляется, только если у сообщества есть право
+ * на ссылки в историях; иначе публикуем сторис без ссылки.
+ * @return array VK-ответ stories.save (response.items[0].story при успехе).
+ */
+function vk_story_photo(string $filePath, string $link = ''): array {
+    if (!is_file($filePath)) return ['error' => ['error_msg' => 'story file not found: ' . $filePath]];
+    $gid = (int) cfgv('vk_group_id', 211325055);
+    $params = ['group_id' => $gid, 'add_to_news' => 1];
+    if ($link !== '') { $params['link_url'] = $link; $params['link_text'] = 'open'; }
+    $s = vk_api('stories.getPhotoUploadServer', $params);
+    $url = (string) ($s['response']['upload_url'] ?? '');
+    if ($url === '') {
+        // Ссылка не разрешена — пробуем без неё.
+        if ($link !== '') return vk_story_photo($filePath, '');
+        _vk_log('story upload_url ERR: ' . json_encode($s['error'] ?? $s, JSON_UNESCAPED_UNICODE));
+        return $s;
+    }
+    $ch = curl_init($url);
+    curl_setopt_array($ch, [
+        CURLOPT_POST => true,
+        CURLOPT_POSTFIELDS => ['file' => new CURLFile($filePath)],
+        CURLOPT_RETURNTRANSFER => true,
+        CURLOPT_TIMEOUT => 60,
+    ]);
+    $up = json_decode((string) curl_exec($ch), true);
+    curl_close($ch);
+    $ur = $up['response']['upload_result'] ?? ($up['response'] ?? '');
+    if (!$ur) { _vk_log('story upload failed'); return ['error' => ['error_msg' => 'story upload failed']]; }
+    $save = vk_api('stories.save', ['upload_results' => is_array($ur) ? json_encode($ur) : (string) $ur]);
+    if (isset($save['error'])) _vk_log('stories.save ERR: ' . ($save['error']['error_msg'] ?? '?'));
+    else _vk_log('stories.save OK');
+    return $save;
+}
+
+/**
+ * Единая публикация анонса: пост на стену сообщества (+ фото) и, при наличии
+ * картинки, дубль в историю (сторис). Возвращает результаты обеих операций.
+ * @return array{wall:array,story:?array}
+ */
+function vk_publish_post(string $message, string $photoPath = '', bool $alsoStory = true, string $link = ''): array {
+    $wall  = $photoPath !== '' ? vk_wall_post_with_photo($message, $photoPath) : vk_wall_post($message);
+    $story = ($alsoStory && $photoPath !== '') ? vk_story_photo($photoPath, $link) : null;
+    return ['wall' => $wall, 'story' => $story];
+}
+
 /* ============ Рассылка подписчикам через сервис «Рассылки» (vkforms) ============ */
 
 /**
