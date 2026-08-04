@@ -318,8 +318,9 @@ try {
             $launch,
             'Ждём ваши заявки! Все конкурсы центра: ' . url('/competitions')
         );
+        // Почта — только месячной сводкой 1-го числа; событийно — ВК + приложение сразу.
         mailings_run_comps_campaign(
-            'comp_launch', $launch, $recipients, $subject, $html, $vk,
+            'comp_launch', $launch, [], $subject, $html, $vk,
             'Открыт приём заявок',
             ($many ? 'Новые конкурсы: ' : 'Новый конкурс: ') . mailings_comp_names($launch) . '. Подайте заявку!'
         );
@@ -388,8 +389,9 @@ try {
                 $soon,
                 'Не откладывайте на последний день. Все конкурсы: ' . url('/competitions')
             );
+            // По календарю владельца: без почты — только ВК + приложение.
             mailings_run_comps_campaign(
-                'deadline_3', $soon, $recipients, $subject, $html, $vk,
+                'deadline_3', $soon, [], $subject, $html, $vk,
                 'Осталось 3 дня до конца приёма',
                 'Приём заявок завершается: ' . mailings_comp_names($soon) . '. Успейте подать заявку.'
             );
@@ -427,8 +429,9 @@ try {
                 $last,
                 'Заявки принимаются до конца дня. Все конкурсы: ' . url('/competitions')
             );
+            // По календарю владельца: без почты — только ВК + приложение.
             mailings_run_comps_campaign(
-                'deadline_last', $last, $recipients, $subject, $html, $vk,
+                'deadline_last', $last, [], $subject, $html, $vk,
                 'Последний день приёма заявок',
                 'Сегодня завершается приём: ' . mailings_comp_names($last) . '. Подайте заявку до конца дня.'
             );
@@ -485,7 +488,12 @@ try {
             . '<p style="margin:14px 0 0;font-size:13px;color:' . $muted . ';">Подробности и условия членства — на странице клуба.</p>';
         $html = rm_mail_layout($inner, 'Клуб постоянных участников: скидка 25% на всё, результаты за 3 дня, бесплатный конкурс каждый месяц.');
 
-        $queued = mailings_queue_all($vipRecipients, 'Клуб постоянных участников - привилегии для Вас', $html);
+        // По календарю владельца: массовой почты о клубе нет (персональные письма
+        // уходят каждому новому через 5 дней — cron/drip.php, шаг vip_d5).
+        $queued = 0;
+        $inAppVip = mailings_notify_all('Клуб постоянных участников',
+            'Скидка 25% на всё, результаты за 3 дня, бесплатный конкурс каждый месяц. Вступайте!',
+            url('/club'), 'star');
 
         $vkOk = false;
         if (trim((string) cfgv('vk_token', '')) !== '') {
@@ -504,10 +512,10 @@ try {
             cron_log(JOB, 'vip_club: vk_token не настроен - ВК-пост пропущен');
         }
 
-        if ($queued > 0 || $vkOk) {
+        if ($inAppVip > 0 || $vkOk) {
             mailing_mark('vip_club', date('Y-m'));
-            cron_log(JOB, 'vip_club ' . date('Y-m') . ': писем в очереди ' . $queued
-                . ' (не-членам клуба из ' . count($recipients) . '), ВК ' . ($vkOk ? 'OK' : 'нет'));
+            cron_log(JOB, 'vip_club ' . date('Y-m') . ': in-app ' . $inAppVip
+                . ', ВК ' . ($vkOk ? 'OK' : 'нет') . ' (почта — персонально через drip)');
         } else {
             cron_log(JOB, 'vip_club: ни один канал не сработал - без отметки, повторим в следующем месяце в окно');
         }

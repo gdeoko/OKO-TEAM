@@ -37,6 +37,11 @@ insert('subscribers', [
 ]);
 audit('subscribe', 'subscribers', null, ['email' => $email]);
 
+// Подписка тоже открывает личный кабинет (без дублей — auth_ensure_account идемпотентна).
+if (function_exists('auth_ensure_account')) {
+    try { auth_ensure_account($email, (string) input('name')); } catch (\Throwable $e) {}
+}
+
 // --- уведомление владельца о новом подписчике + серверная аналитика ---
 if (is_file(BASE_PATH . '/core/notify_owner.php')) {
     require_once BASE_PATH . '/core/notify_owner.php';

@@ -252,3 +252,55 @@ function auth_send_sms(string $phoneDigits, string $text): bool {
     // Неизвестный провайдер — считаем не настроенным.
     return false;
 }
+
+/**
+ * Гарантирует личный кабинет по адресу почты (автосоздание из любой точки:
+ * подписка, заказ наград, заявка). Если аккаунт уже есть — возвращает его id,
+ * дублей не создаёт. Новому пользователю генерируется пароль и в очередь
+ * (после транзакционных, priority 5) уходит письмо с логином, паролем
+ * и кнопкой входа. Возвращает id пользователя или 0.
+ */
+function auth_ensure_account(string $email, string $name = ''): int {
+    $email = mb_strtolower(trim($email));
+    if ($email === '' || !filter_var($email, FILTER_VALIDATE_EMAIL)) return 0;
+
+    $u = one("SELECT id FROM users WHERE email=?", [$email]);
+    if ($u) return (int) $u['id'];
+
+    $alphabet = 'abcdefghjkmnpqrstuvwxyz23456789';
+    $pass = '';
+    for ($i = 0; $i < 9; $i++) $pass .= $alphabet[random_int(0, strlen($alphabet) - 1)];
+
+    $uid = (int) insert('users', [
+        'email'          => $email,
+        'full_name'      => trim($name),
+        'role'           => 'user',
+        'password_hash'  => password_hash($pass, PASSWORD_DEFAULT),
+        'email_verified' => 1,
+    ]);
+    audit('account_autocreate', 'user', $uid, ['email' => $email]);
+
+    if (function_exists('mm_email_layout') && function_exists('mm_email_btn') && function_exists('mail_queue')) {
+        try {
+            $base = rtrim((string) cfgv('base_url'), '/');
+            $inner = '<p style="margin:0 0 14px;font-size:15px;color:#2a2a3a;">Здравствуйте'
+                . ($name !== '' ? ', ' . h($name) : '') . '! Мы открыли для Вас личный кабинет'
+                . ' на сайте Культурного центра «Музыкальный Мир»: заявки, результаты,'
+                . ' электронные дипломы и заказ наград — в одном месте.</p>'
+                . '<div style="margin:0 0 16px;padding:16px 18px;border:1.5px solid #C79322;border-radius:12px;background:#FCF9F0;text-align:center;">'
+                . '<div style="font-size:13px;color:#6b5d3f;margin-bottom:6px;">Ваш логин</div>'
+                . '<div style="font-size:16px;font-weight:bold;color:#17307A;margin-bottom:10px;">' . h($email) . '</div>'
+                . '<div style="font-size:13px;color:#6b5d3f;margin-bottom:6px;">Временный пароль</div>'
+                . '<div style="font-family:monospace;font-size:22px;font-weight:bold;letter-spacing:3px;color:#17307A;">' . h($pass) . '</div>'
+                . '<div style="font-size:12px;color:#8a7b58;margin-top:8px;">После входа пароль можно сменить в настройках кабинета.</div>'
+                . '</div>'
+                . mm_email_btn($base . '/login', 'Войти в личный кабинет');
+            $html = mm_email_layout($inner, ['title' => 'Ваш личный кабинет открыт']);
+            try { db()->exec("ALTER TABLE mail_queue ADD COLUMN priority INTEGER DEFAULT 0"); } catch (\Throwable $e) {}
+            insert('mail_queue', ['to_email' => $email, 'to_name' => $name,
+                'subject' => 'Ваш личный кабинет — «Музыкальный Мир»',
+                'body' => $html, 'status' => 'queued', 'priority' => 5]);
+        } catch (\Throwable $e) { /* письмо не должно ломать основной сценарий */ }
+    }
+    return $uid;
+}

@@ -203,6 +203,11 @@ if ($buyerEmail !== '' && filter_var($buyerEmail, FILTER_VALIDATE_EMAIL)) {
     }
 }
 
+// Заказ наград тоже открывает личный кабинет (идемпотентно, дублей нет).
+if (function_exists('auth_ensure_account') && $buyerEmail !== '') {
+    try { auth_ensure_account($buyerEmail, (string) $buyerName); } catch (\Throwable $e) {}
+}
+
 json_out([
     'ok'       => true,
     'order_id' => $orderId,
