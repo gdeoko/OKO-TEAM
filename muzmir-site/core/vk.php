@@ -108,7 +108,12 @@ function vk_broadcast(string $message, string $attachment = ''): array {
     $token = trim((string) cfgv('vk_broadcast_token', ''));
     if ($token === '') return ['ok' => false, 'error' => 'vk_broadcast_token не настроен'];
     $lists = array_values(array_filter(array_map('trim', explode(',', (string) cfgv('vk_broadcast_lists', '')))));
-    if (!$lists) return ['ok' => false, 'error' => 'vk_broadcast_lists не настроены (нужен хотя бы один id списка)'];
+    // Если id списка не задан — подбираем автоматически по имени базы («…вещает»).
+    if (!$lists) {
+        $id = vk_broadcast_resolve_list($token, (string) cfgv('vk_broadcast_list_name', 'вещает'));
+        if ($id > 0) $lists = [(string) $id];
+    }
+    if (!$lists) return ['ok' => false, 'error' => 'не найден список рассылки (проверьте ключ или задайте vk_broadcast_lists)'];
 
     $body = [
         'message'  => $message,
@@ -137,6 +142,28 @@ function vk_broadcast(string $message, string $attachment = ''): array {
     $id = (int) ($d['response']['id'] ?? 0);
     _vk_log('broadcast OK id=' . $id);
     return ['ok' => true, 'id' => $id];
+}
+
+/** Найти id списка рассылки сервиса «Рассылки» по части имени (например «вещает»). */
+function vk_broadcast_resolve_list(string $token, string $needle): int {
+    static $cache = [];
+    if (isset($cache[$needle])) return $cache[$needle];
+    $ch = curl_init('https://broadcast.vkforms.ru/api/v2/list/?token=' . rawurlencode($token));
+    curl_setopt_array($ch, [CURLOPT_RETURNTRANSFER => true, CURLOPT_TIMEOUT => 15]);
+    $resp = curl_exec($ch);
+    curl_close($ch);
+    $d = json_decode((string) $resp, true);
+    $lists = $d['response']['lists'] ?? [];
+    $found = 0; $needleLc = mb_strtolower(trim($needle));
+    foreach ($lists as $l) {
+        if ($needleLc === '' || mb_stripos((string) ($l['name'] ?? ''), $needleLc) !== false) {
+            $found = (int) ($l['id'] ?? 0);
+            if ($found > 0) break;
+        }
+    }
+    // Фолбэк — первый список, если по имени не нашли
+    if ($found === 0 && !empty($lists[0]['id'])) $found = (int) $lists[0]['id'];
+    return $cache[$needle] = $found;
 }
 
 /* ==================== Рассылка в личку от имени сообщества ==================== */
