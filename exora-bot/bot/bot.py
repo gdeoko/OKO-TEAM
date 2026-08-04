@@ -188,8 +188,8 @@ def kb_main() -> ReplyKeyboardMarkup:
         keyboard=[
             [KeyboardButton(text="💱 Обмен USDT", web_app=WebAppInfo(url=MINIAPP_URL))],
             [KeyboardButton(text="📊 Курс"), KeyboardButton(text="📋 Мои заявки")],
-            [KeyboardButton(text="🛡 AML проверка"), KeyboardButton(text="🎁 Реферальная программа")],
-            [KeyboardButton(text="ℹ️ О нас"), KeyboardButton(text="💬 Поддержка")],
+            [KeyboardButton(text="🛡 AML проверка"), KeyboardButton(text="💬 Поддержка")],
+            [KeyboardButton(text="ℹ️ О нас")],
         ],
         resize_keyboard=True, input_field_placeholder="Выберите действие"
     )
@@ -410,7 +410,7 @@ async def h_aml(msg: Message):
     )
 
 
-@router.message(F.text == "🎁 Реферальная программа")
+@router.message(Command("referral"))
 async def h_ref(msg: Message):
     me = await bot.get_me()
     link = f"https://t.me/{me.username}?start=ref_{msg.from_user.id}"
