@@ -99,6 +99,7 @@ function vk_cb_ack_then_process(string $type): void {
 
     $sessionKey = 'vk_' . $peer;
 
+    $t0 = time(); // отсчёт «человеческой» паузы от момента получения вопроса
     try {
         _vk_bot_ensure_chatlog();
         // Логируем входящее сообщение пользователя (если есть текст).
@@ -106,9 +107,10 @@ function vk_cb_ack_then_process(string $type): void {
             insert('chat_messages', ['user_id' => null, 'session_key' => $sessionKey, 'role' => 'user', 'text' => $text, 'file' => '']);
         }
 
+        vk_typing($peer);                        // «печатает…» сразу, как живой оператор
         $name  = vk_user_name($peer);            // имя для персонального приветствия
         $greet = chat_should_greet($sessionKey); // здороваемся раз в начале / после суток
-        $closing = false;
+        $closing = false; $short = false;
 
         if ($text !== '' && chat_is_closing($text)) {
             // Пользователь завершил диалог («спасибо», «пока» и т.п.) — финальный шаблон.
@@ -117,18 +119,29 @@ function vk_cb_ack_then_process(string $type): void {
         } elseif ($text === '') {
             $core  = 'Напишите, пожалуйста, Ваш вопрос текстом — подскажу по заявкам, участию, результатам и наградам Культурного центра «Музыкальный Мир».';
             $reply = chat_wrap_reply($sessionKey, $core, $name, $greet, false);
+        } elseif (($rep = chat_repeat_count($sessionKey, $text)) > 0) {
+            // Один и тот же вопрос повторно (в т.ч. троллинг) — короткий человеческий ответ.
+            $reply = chat_repeat_reply($rep, $name);
+            $short = true;
         } else {
             $core  = chat_brain_reply($text, $sessionKey, null, 'vk');
             $reply = chat_wrap_reply($sessionKey, $core, $name, $greet, false);
         }
 
+        // Сразу фиксируем ответ в истории (состояние диалога корректно тут же).
         insert('chat_messages', ['user_id' => null, 'session_key' => $sessionKey, 'role' => 'assistant', 'text' => $reply, 'file' => '']);
         if ($closing) chat_mark_dialog_end($sessionKey); // маркер — ПОСЛЕ ответа, чтобы следующий диалог снова здоровался
 
-        // Отправка ответа от имени сообщества. Уникальный random_id на каждый
-        // ответ — иначе ВК считает повтор и молча отбрасывает второе сообщение.
-        vk_dm_send($peer, $reply, '', random_int(1, 2000000000));
-        _vk_log('bot reply peer=' . $peer . ' greet=' . (int) $greet . ' len=' . mb_strlen($reply));
+        // Человеческая пауза 20-30 сек (для коротких/повторных — 8-14 сек) с «печатает…».
+        // Выполняется ОТДЕЛЬНЫМ отсоединённым процессом, чтобы НЕ держать php-fpm воркер
+        // (пул из 5 — иначе подвиснет весь сайт). Индикатор «печатает…» уже показан выше.
+        $target = $short ? random_int(8, 14) : random_int(20, 30);
+        $target = (int) max(3, $target - (time() - $t0)); // вычесть уже потраченное на генерацию
+        $cmd = 'php ' . escapeshellarg(BASE_PATH . '/cron/vk_send_delayed.php')
+             . ' ' . (int) $peer . ' ' . (int) $target . ' ' . escapeshellarg(base64_encode($reply))
+             . ' >/dev/null 2>&1 &';
+        exec($cmd);
+        _vk_log('bot reply peer=' . $peer . ' greet=' . (int) $greet . ' short=' . (int) $short . ' delay=' . $target . 's len=' . mb_strlen($reply));
     } catch (\Throwable $e) {
         _vk_log('bot error peer=' . $peer . ': ' . $e->getMessage());
     }

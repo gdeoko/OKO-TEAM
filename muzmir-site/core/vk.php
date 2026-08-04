@@ -273,6 +273,16 @@ function vk_dm_enqueue_dialogs(string $message, string $attachment, string $kind
 }
 
 /** Отправить одно личное сообщение от имени сообщества. */
+/** Показать статус «печатает…» в диалоге ВК (держится ~10 сек, нужно повторять). */
+function vk_typing(int $peer): void {
+    if ($peer <= 0) return;
+    vk_api('messages.setActivity', [
+        'group_id' => (int) cfgv('vk_group_id', 211325055),
+        'peer_id'  => $peer,
+        'type'     => 'typing',
+    ]);
+}
+
 /** Имя пользователя ВК по peer_id (для персонального приветствия). Кэш на запрос. */
 function vk_user_name(int $peer): string {
     static $cache = [];
