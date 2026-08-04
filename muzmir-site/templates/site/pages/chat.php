@@ -44,7 +44,7 @@ ob_start(); ?>
       <input type="file" id="chatFile" accept="image/*,video/*" hidden>
       <textarea id="chatText" rows="1" maxlength="2000" placeholder="Напишите сообщение..." aria-label="Сообщение в чат поддержки"></textarea>
       <button type="button" class="chat-send" id="chatSend" aria-label="Отправить сообщение" title="Отправить">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 2L11 13"/><path d="M22 2l-7 20-4-9-9-4z"/></svg>
+        <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M3.4 20.4l17.5-7.5a1 1 0 0 0 0-1.84L3.4 3.56a1 1 0 0 0-1.4.94l.01 4.9c0 .5.37.92.86.98L14 12 2.87 13.62a1 1 0 0 0-.86.98L2 19.46a1 1 0 0 0 1.4.94z"/></svg>
       </button>
     </div>
   </div>
@@ -110,23 +110,50 @@ ob_start(); ?>
 /* Поле ввода - закреплено над нижним меню */
 .chat-inputbar{position:fixed;left:0;right:0;bottom:calc(82px + env(safe-area-inset-bottom,0px));z-index:850;
   padding:0 12px;pointer-events:none}
-.chat-inputbar-in{pointer-events:auto;max-width:720px;margin:0 auto;display:flex;align-items:flex-end;gap:8px;
-  padding:8px;border-radius:22px;background:var(--glass-card);border:1px solid var(--glass-brd2);
+.chat-inputbar-in{pointer-events:auto;max-width:720px;margin:0 auto;display:flex;align-items:center;gap:6px;
+  padding:6px 6px 6px 8px;border-radius:26px;background:var(--glass-card);border:1px solid var(--glass-brd2);
   backdrop-filter:blur(16px) saturate(1.35);-webkit-backdrop-filter:blur(16px) saturate(1.35);
   box-shadow:0 14px 40px rgba(21,34,76,.18)}
 #chatText{flex:1;min-width:0;resize:none;border:0;outline:0;background:transparent;color:var(--text);
-  font-family:var(--ff-body);font-size:.95rem;line-height:1.4;padding:9px 6px;max-height:120px}
+  font-family:var(--ff-body);font-size:.95rem;line-height:1.35;padding:8px 4px;max-height:118px;align-self:center}
 #chatText::placeholder{color:var(--muted)}
-.chat-attach,.chat-send{flex:0 0 40px;width:40px;height:40px;border-radius:50%;border:0;cursor:pointer;
-  display:flex;align-items:center;justify-content:center;transition:transform .15s ease}
-.chat-attach{background:transparent;color:var(--muted);border:1px solid var(--glass-brd2)}
+.chat-attach,.chat-send{flex:0 0 42px;width:42px;height:42px;border-radius:50%;border:0;cursor:pointer;
+  display:flex;align-items:center;justify-content:center;transition:transform .15s ease,box-shadow .2s ease;align-self:center}
+.chat-attach{background:transparent;color:var(--muted)}
 .chat-attach:hover{color:var(--gold-ink)}
-.chat-send{background:var(--grad-gold);color:var(--gold-fg);box-shadow:var(--shadow-btn)}
-.chat-send:active,.chat-attach:active{transform:scale(.92)}
+.chat-send{background:var(--grad-gold);color:var(--gold-fg);box-shadow:0 6px 16px rgba(199,147,34,.42)}
+.chat-send:hover{box-shadow:0 8px 20px rgba(199,147,34,.55)}
+.chat-send:active,.chat-attach:active{transform:scale(.9)}
 .chat-send[disabled]{opacity:.55;cursor:default}
-.chat-attach svg,.chat-send svg{width:19px;height:19px}
+.chat-attach svg{width:20px;height:20px}
+.chat-send svg{width:20px;height:20px;margin-left:1px}
 
-body.mz-kbd-open .chat-inputbar{bottom:calc(10px + env(safe-area-inset-bottom,0px))}
+/* Кнопки-действия под ответом бота */
+.chat-actions{display:flex;flex-wrap:wrap;gap:8px;align-self:flex-start;max-width:86%;margin-top:-4px}
+.chat-act{display:inline-flex;align-items:center;gap:6px;padding:9px 14px;border-radius:999px;font-size:.82rem;
+  font-weight:700;text-decoration:none;cursor:pointer;font-family:inherit;border:1px solid var(--gold);
+  background:var(--gold-soft);color:var(--gold-ink);transition:transform .15s ease,box-shadow .15s ease}
+[data-theme="dark"] .chat-act{color:var(--gold);background:color-mix(in srgb,var(--gold-soft) 34%,transparent)}
+.chat-act:hover{transform:translateY(-1px);box-shadow:0 6px 16px rgba(199,147,34,.24)}
+.chat-act--review{border-color:transparent;background:var(--grad-gold);color:var(--gold-fg)}
+.chat-act--review svg{width:15px;height:15px}
+
+/* Виджет отзыва (звёзды + комментарий) */
+.chat-review{align-self:stretch;margin-top:4px;padding:16px;border-radius:18px;
+  background:var(--glass-card);border:1px solid var(--glass-brd2);
+  backdrop-filter:blur(12px) saturate(1.25);-webkit-backdrop-filter:blur(12px) saturate(1.25);
+  box-shadow:var(--shadow-soft);display:flex;flex-direction:column;gap:10px}
+.chat-review>b{font-size:.92rem;line-height:1.3}
+.cr-stars{display:flex;gap:4px;justify-content:center}
+.cr-star{background:none;border:0;padding:2px;cursor:pointer;color:var(--line);transition:transform .12s ease,color .12s ease}
+.cr-star svg{width:34px;height:34px}
+.cr-star.on{color:#F3B01C}
+.cr-star:hover{transform:scale(1.12)}
+.cr-text{width:100%;border:1.5px solid var(--glass-brd2);border-radius:12px;background:var(--bg);color:var(--text);
+  font-family:inherit;font-size:.9rem;padding:10px 12px;resize:none}
+.cr-msg{margin:0;text-align:center;color:var(--mint);font-weight:700;font-size:.9rem}
+
+body.mz-kb .chat-inputbar{bottom:calc(10px + env(safe-area-inset-bottom,0px))}
 @media (min-width:1281px){.chat-inputbar{bottom:24px}}
 </style>
 
@@ -210,9 +237,73 @@ body.mz-kbd-open .chat-inputbar{bottom:calc(10px + env(safe-area-inset-bottom,0p
     typingEl = null;
   }
 
-  function addAgent(text){
+  function addAgent(text, actions){
     var item = {r:'a', t:text, ts:Date.now()};
     pushHist(item); render(item);
+    if (actions && actions.length) renderActions(actions);
+  }
+
+  /* Кнопки-действия под ответом бота: ссылки на разделы, диплом файлом, отзыв. */
+  function renderActions(actions){
+    var wrap = document.createElement('div');
+    wrap.className = 'chat-actions';
+    actions.forEach(function(a){
+      if (a.type === 'review') {
+        var rb = document.createElement('button');
+        rb.type = 'button'; rb.className = 'chat-act chat-act--review';
+        rb.innerHTML = '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2l2.9 6.3 6.9.6-5.2 4.6 1.6 6.8L12 17.3 5.8 20.9l1.6-6.8L2.2 8.9l6.9-.6z"/></svg>' + esc(a.label);
+        rb.addEventListener('click', function(){ openReview(); rb.disabled = true; });
+        wrap.appendChild(rb);
+      } else {
+        var el = document.createElement('a');
+        el.className = 'chat-act'; el.href = a.url;
+        if (/^https?:/.test(a.url) && a.url.indexOf(location.host) === -1) { el.target = '_blank'; el.rel = 'noopener'; }
+        el.textContent = a.label;
+        wrap.appendChild(el);
+      }
+    });
+    log.appendChild(wrap);
+    scrollDown();
+  }
+
+  /* Виджет отзыва (звёзды + комментарий), как в чат-ботах банков. */
+  function openReview(){
+    if (document.getElementById('chatReview')) return;
+    var box = document.createElement('div');
+    box.id = 'chatReview'; box.className = 'chat-review';
+    box.innerHTML =
+      '<b>Оцените работу Культурного центра «Музыкальный Мир»</b>' +
+      '<div class="cr-stars" role="radiogroup" aria-label="Оценка">' +
+        [1,2,3,4,5].map(function(n){ return '<button type="button" class="cr-star" data-n="'+n+'" aria-label="'+n+'">'+
+          '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2l2.9 6.3 6.9.6-5.2 4.6 1.6 6.8L12 17.3 5.8 20.9l1.6-6.8L2.2 8.9l6.9-.6z"/></svg></button>'; }).join('') +
+      '</div>' +
+      '<textarea class="cr-text" rows="2" maxlength="600" placeholder="Что понравилось или что улучшить? (необязательно)"></textarea>' +
+      '<button type="button" class="btn btn--primary btn--block cr-send">Отправить отзыв</button>' +
+      '<p class="cr-msg" hidden></p>';
+    log.appendChild(box); scrollDown();
+    var rating = 5, stars = box.querySelectorAll('.cr-star');
+    function paint(){ stars.forEach(function(s){ s.classList.toggle('on', (+s.dataset.n) <= rating); }); }
+    stars.forEach(function(s){ s.addEventListener('click', function(){ rating = +s.dataset.n; paint(); }); });
+    paint();
+    box.querySelector('.cr-send').addEventListener('click', function(){
+      var txt = box.querySelector('.cr-text').value.trim();
+      var msg = box.querySelector('.cr-msg');
+      var b = new URLSearchParams();
+      b.set('rating', String(rating)); b.set('text', txt || 'Оценка через чат помощника'); b.set('_csrf', CSRF);
+      fetch('<?= url('/api/v1/review') ?>', {method:'POST', credentials:'same-origin', body:b})
+        .then(function(r){ return r.json().catch(function(){return {};}); })
+        .then(function(d){
+          if (d && d.ok) { finishReview(box, 'Спасибо! Ваш отзыв отправлен.'); return; }
+          // Гость (нужен вход) — не теряем отзыв: отправим как сообщение боту/владельцу.
+          send('Отзыв о работе центра: ' + rating + '/5. ' + (txt || ''));
+          finishReview(box, 'Спасибо за оценку!');
+        })
+        .catch(function(){ finishReview(box, 'Спасибо за оценку!'); });
+    });
+    function finishReview(box, text){
+      box.querySelector('.cr-send').disabled = true;
+      var m = box.querySelector('.cr-msg'); m.hidden = false; m.textContent = text;
+    }
   }
 
   function send(text){
@@ -232,7 +323,7 @@ body.mz-kbd-open .chat-inputbar{bottom:calc(10px + env(safe-area-inset-bottom,0p
     .then(function(r){ return r.json(); })
     .then(function(d){
       hideTyping();
-      addAgent((d && (d.reply || d.error)) || 'Не удалось получить ответ. Попробуйте ещё раз.');
+      addAgent((d && (d.reply || d.error)) || 'Не удалось получить ответ. Попробуйте ещё раз.', d && d.actions);
     })
     .catch(function(){
       hideTyping();

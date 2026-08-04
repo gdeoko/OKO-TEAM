@@ -122,7 +122,10 @@ try {
     insert('chat_messages', ['user_id' => $uid, 'session_key' => $sessionKey, 'role' => 'assistant', 'text' => $reply, 'file' => '']);
 } catch (\Throwable $e) {}
 
-json_out(['ok' => true, 'reply' => $reply, 'session' => $sessionKey]);
+// Контекстные кнопки-действия под ответом (ссылки на разделы, диплом файлом, отзыв в конце).
+$actions = chat_actions($text, $uid, $sessionKey);
+
+json_out(['ok' => true, 'reply' => $reply, 'actions' => $actions, 'session' => $sessionKey]);
 
 /* ==================== Помощники ==================== */
 
@@ -290,6 +293,77 @@ function chat_claude_reply(string $apiKey, string $sessionKey, string $text): ?s
     return $out !== '' ? $out : null;
 }
 
+/**
+ * Контекстные кнопки-действия под ответом помощника: ссылки на разделы,
+ * положение, образцы наград, диплом файлом (для авторизованных), запрос отзыва.
+ * @return array<int,array{type:string,label:string,url?:string}>
+ */
+function chat_actions(string $text, ?int $uid, string $sessionKey): array {
+    $t = mb_strtolower($text);
+    $has = static function (array $w) use ($t): bool {
+        foreach ($w as $x) if (mb_strpos($t, $x) !== false) return true;
+        return false;
+    };
+    $acts = [];
+    $seen = [];
+    $add = function (string $label, string $url) use (&$acts, &$seen): void {
+        if (isset($seen[$url])) return; $seen[$url] = 1;
+        $acts[] = ['type' => 'link', 'label' => $label, 'url' => $url];
+    };
+
+    if ($has(['заявк', 'подать', 'участвова', 'регистрац', 'записат', 'подобра', 'какой конкурс', 'выбрать конкурс'])) {
+        $add('Подать заявку', url('/apply'));
+        $add('Все конкурсы', url('/competitions'));
+    }
+    if ($has(['положen', 'положен', 'правил', 'регламент', 'условия'])) {
+        $add('Положения конкурсов', url('/competitions'));
+        $add('Документы', url('/documents'));
+    }
+    if ($has(['наград', 'кубок', 'медал', 'статуэт', 'заказ', 'образц', 'оплат', 'цена', 'стоим'])) {
+        $add('Образцы наград и цены', url('/awards'));
+    }
+    if ($has(['результат', 'итог', 'балл', 'оцен', 'победител', 'лауреат'])) {
+        $add('Результаты конкурсов', url('/results'));
+    }
+    // Диплом файлом — для авторизованных с готовыми дипломами; иначе проверка по номеру.
+    if ($has(['диплом', 'сертификат', 'скачать', 'провер', 'подлинн'])) {
+        $got = false;
+        if ($uid) {
+            try {
+                $ds = all("SELECT d.number, d.result FROM diplomas d JOIN applications a ON a.id=d.application_id
+                           WHERE a.user_id=? ORDER BY d.created_at DESC LIMIT 4", [$uid]);
+                foreach ($ds as $d) {
+                    $add('Диплом ' . ($d['result'] ?: '№ ' . $d['number']) . ' (PDF)', url('/diploma/' . $d['number'] . '.pdf'));
+                    $got = true;
+                }
+            } catch (\Throwable $e) {}
+            if ($got) $add('Все мои дипломы', url('/cabinet') . '#diplomas');
+        }
+        if (!$got) $add('Проверить диплом по номеру', url('/verify'));
+    }
+    if ($has(['контакт', 'телефон', 'связат', 'вконтакте', 'вк ', 'сообществ'])) {
+        $add('Написать в сообществе ВК', (string) cfgv('org_vk'));
+        $add('Контакты', url('/contacts'));
+    }
+    if ($has(['клуб', 'подписк', 'скидк', 'постоянн'])) {
+        $add('Клуб постоянных участников', url('/club'));
+    }
+
+    // Запрос отзыва в конце диалога: после 3+ ответов помощника и на «спасибо/пока»,
+    // один раз за сессию (флаг в БД как системное сообщение role='review_asked').
+    try {
+        $agentCnt = (int) scalar("SELECT COUNT(*) FROM chat_messages WHERE session_key=? AND role='assistant'", [$sessionKey]);
+        $asked    = (int) scalar("SELECT COUNT(*) FROM chat_messages WHERE session_key=? AND role='review_asked'", [$sessionKey]);
+        $bye      = $has(['спасибо', 'благодар', 'пока', 'до свидан', 'всё понятно', 'все понятно', 'ясно, спасибо']);
+        if ($asked === 0 && ($agentCnt >= 3 || $bye)) {
+            $acts[] = ['type' => 'review', 'label' => 'Оценить работу центра'];
+            try { insert('chat_messages', ['user_id' => $uid, 'session_key' => $sessionKey, 'role' => 'review_asked', 'text' => '', 'file' => '']); } catch (\Throwable $e) {}
+        }
+    } catch (\Throwable $e) {}
+
+    return $acts;
+}
+
 /** Rule-based ответы по ключевым словам (фолбэк без ключа Claude / при ошибке API). */
 function chat_rule_reply(string $text): string {
     $t        = mb_strtolower($text);
@@ -304,10 +378,10 @@ function chat_rule_reply(string $text): string {
         return 'Подать заявку просто: откройте страницу «Заявка» (' . url('/apply') . '), выберите конкурс, заполните форму и прикрепите ссылку на конкурсное видео (RuTube, ВК Видео, Яндекс или Google Диск, ОК Видео, Дзен). После отправки Вы получите номер заявки.' . $tail;
     }
     if ($has(['цена', 'стоим', 'сколько', 'оргвзнос', 'оплат', 'взнос', 'бесплат'])) {
-        return 'Конкурс «Слава России» - бесплатный. Конкурсы «Эврика» и «Симфония Звёзд» - оргвзнос 500 ₽ за одну заявку: приём и регистрация, аттестация номера компетентным жюри и электронный диплом на почту.' . $tail;
+        return 'Стоимость зависит от конкурса: есть бесплатные и с организационным взносом за заявку. Актуальные суммы указаны на карточке каждого конкурса в разделе «Афиша» (' . url('/competitions') . '). В оргвзнос входит приём и регистрация, аттестация номера компетентным жюри и электронный диплом на почту.' . $tail;
     }
     if ($has(['результат', 'итог', 'балл', 'оцен', 'когда придут'])) {
-        return 'Результаты «Эврики» направляются каждому участнику на электронную почту из заявки в течение 5 рабочих дней после аттестации. Итоги конкурсов также публикуются в разделе «Результаты» (' . url('/results') . ').' . $tail;
+        return 'Результаты направляются каждому участнику на электронную почту из заявки, а также публикуются в разделе «Результаты» (' . url('/results') . '). Сроки указаны в положении конкретного конкурса.' . $tail;
     }
     if ($has(['наград', 'кубок', 'медал', 'статуэт', 'заказ'])) {
         return 'Наградной материал (кубки, статуэтки, медали, оригиналы дипломов) заказывается после оглашения результатов - добровольно, на странице «Награды» (' . url('/awards') . '). Например: кубок Гран-при - 1500 ₽, статуэтка лауреата - 1000 ₽, медаль дипломанта - 500 ₽. Доставка оригиналов - наложенным платежом.' . $tail;
