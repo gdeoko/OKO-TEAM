@@ -9,14 +9,14 @@ $countdown = (string)($vars['countdown'] ?? '');
 $comp = (string)($vars['comp_url'] ?? '#');
 $hello = $name !== '' ? 'Здравствуйте, ' . h($name) . '!' : 'Здравствуйте!';
 ?>
-<h1 style="margin:0 0 18px;font-size:24px;color:#7a2e1e;font-weight:700;line-height:1.25;">Конкурс скоро стартует</h1>
+<h1 style="margin:0 0 18px;font-family:Georgia,'Times New Roman',serif;font-size:25px;color:#17307A;font-weight:700;line-height:1.25;">Конкурс скоро стартует</h1>
 <p style="margin:0 0 14px;"><?= $hello ?></p>
 <p style="margin:0 0 20px;">Вы просили напомнить о конкурсе «<?= h($competition) ?>»<?= $countdown !== '' ? ' - и вот он уже ' . h($countdown) : '' ?>. Самое время подготовить работу, чтобы подать заявку в первый же день приёма.</p>
 <?php if ($start !== ''): ?>
-<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin:0 0 22px;background:#f6ecdb;border-radius:14px;">
+<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin:0 0 22px;background:#F4F6FC;border:1px solid #DCE3F3;border-radius:14px;">
   <tr><td style="padding:22px 24px;text-align:center;">
-    <div style="font-size:13px;letter-spacing:.12em;text-transform:uppercase;color:#a0522d;margin-bottom:6px;">Приём заявок открывается</div>
-    <div style="font-size:20px;font-weight:700;color:#7a2e1e;line-height:1.25;"><?= h($start) ?></div>
+    <div style="font-size:13px;letter-spacing:.12em;text-transform:uppercase;color:#C79322;margin-bottom:6px;">Приём заявок открывается</div>
+    <div style="font-size:20px;font-weight:700;color:#17307A;line-height:1.25;"><?= h($start) ?></div>
   </td></tr>
 </table>
 <?php endif; ?>
@@ -24,9 +24,9 @@ $hello = $name !== '' ? 'Здравствуйте, ' . h($name) . '!' : 'Здр�
 <p style="margin:0 0 6px;">Загляните на страницу конкурса - там условия участия, номинации и сроки. Мы подготовили всё, чтобы Вы ничего не упустили.</p>
 
 <table role="presentation" cellpadding="0" cellspacing="0" style="margin:24px 0 6px;">
-  <tr><td style="border-radius:10px;background:linear-gradient(135deg,#a0522d,#b8860b);">
-    <a href="<?= h($comp) ?>" style="display:inline-block;padding:14px 34px;color:#ffffff;text-decoration:none;font-weight:600;font-size:15px;border-radius:10px;">Открыть страницу конкурса</a>
+  <tr><td style="border-radius:12px;background:#C79322;background:linear-gradient(135deg,#C79322,#E3B94F);">
+    <a href="<?= h($comp) ?>" style="display:inline-block;padding:14px 34px;color:#17307A;text-decoration:none;font-weight:700;font-size:15px;border-radius:12px;">Открыть страницу конкурса</a>
   </td></tr>
 </table>
 
-<p style="margin:18px 0 0;font-size:13px;color:#8a7658;">Это единичное напоминание - повторных писем по этому конкурсу не будет.</p>
+<p style="margin:18px 0 0;font-size:13px;color:#6B7699;">Это единичное напоминание - повторных писем по этому конкурсу не будет.</p>

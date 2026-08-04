@@ -147,65 +147,14 @@ function newsletter_track_click(string $token, string $url = ''): string {
  *  Вёрстка письма (премиум-лейаут КЦ, лого + подвал + отписка)
  * ===================================================================== */
 
-/** Оборачивает тело рассылки в фирменный HTML-лейаут письма. */
+/** Оборачивает тело рассылки в единый фирменный HTML-лейаут (mm_email_layout, core/mailer.php). */
 function nl_wrap_email(string $bodyHtml, string $unsubUrl, string $openPixel, string $preheader = ''): string {
-    $logo  = logo_data_uri();
-    $org   = h((string) cfgv('org_full', 'Культурный центр «Музыкальный Мир»'));
-    $addr  = h((string) cfgv('org_address', ''));
-    $phone = h((string) cfgv('org_phone', ''));
-    $email = h((string) cfgv('org_email', ''));
-    $hours = h((string) cfgv('org_hours', ''));
-    $year  = (int) cfgv('year', (int) date('Y'));
-    $unsub = h($unsubUrl);
-    $pre   = h($preheader);
-
-    return <<<HTML
-<!DOCTYPE html>
-<html lang="ru">
-<head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<meta name="x-apple-disable-message-reformatting">
-<title>{$org}</title>
-</head>
-<body style="margin:0;padding:0;background:#f0e6d6;font-family:'Segoe UI',Arial,sans-serif;color:#3a2e22;">
-<div style="display:none;max-height:0;overflow:hidden;opacity:0;">{$pre}</div>
-<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#f0e6d6;padding:28px 12px;">
-<tr><td align="center">
-<table role="presentation" width="600" cellpadding="0" cellspacing="0" style="width:600px;max-width:100%;background:#fbf6ef;border-radius:18px;overflow:hidden;box-shadow:0 12px 40px rgba(90,50,20,.14);">
-  <tr>
-    <td style="background:linear-gradient(135deg,#7a2e1e 0%,#a0522d 55%,#b8860b 100%);padding:34px 40px;text-align:center;">
-      <img src="{$logo}" alt="{$org}" width="96" height="96" style="display:inline-block;width:96px;height:96px;border-radius:14px;background:#fff;padding:6px;">
-      <div style="margin-top:14px;color:#fff;font-size:15px;letter-spacing:.14em;text-transform:uppercase;font-weight:600;">Культурный центр «Музыкальный Мир»</div>
-    </td>
-  </tr>
-  <tr>
-    <td style="padding:40px 44px 30px;font-size:16px;line-height:1.7;color:#3a2e22;">
-      {$bodyHtml}
-    </td>
-  </tr>
-  <tr><td style="padding:0 44px;"><div style="height:1px;background:#e6d6bf;"></div></td></tr>
-  <tr>
-    <td style="padding:26px 44px 34px;font-size:13px;line-height:1.65;color:#8a7658;">
-      <div style="font-weight:600;color:#7a2e1e;font-size:14px;margin-bottom:8px;">{$org}</div>
-      <div>{$addr}</div>
-      <div>Телефон: {$phone}</div>
-      <div>Почта: {$email}</div>
-      <div>Режим работы: {$hours}</div>
-      <div style="margin-top:18px;font-size:12px;color:#a8977c;">
-        Вы получили это письмо, так как оставили заявку или подписку на сайте центра.
-        <a href="{$unsub}" style="color:#a0522d;text-decoration:underline;">Отписаться от рассылки</a>.
-      </div>
-      <div style="margin-top:10px;font-size:12px;color:#bfae92;">© {$year} {$org}</div>
-    </td>
-  </tr>
-</table>
-</td></tr>
-</table>
-{$openPixel}
-</body>
-</html>
-HTML;
+    if (!function_exists('mm_email_layout')) require_once __DIR__ . '/mailer.php';
+    return mm_email_layout($bodyHtml, [
+        'preheader'       => $preheader,
+        'unsubscribe_url' => $unsubUrl,
+        'pixel'           => $openPixel,
+    ]);
 }
 
 /* =====================================================================

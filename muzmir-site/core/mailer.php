@@ -7,6 +7,130 @@
  */
 declare(strict_types=1);
 
+/* ================= Единый фирменный стиль писем (имперская палитра) =================
+ * Синий #17307A, золото #C79322, айвори #FAF4E6. Georgia/Playfair для заголовков,
+ * table-вёрстка, все ссылки — только кнопками. Использовать ВЕЗДЕ, где собирается письмо.
+ */
+const MM_NAVY   = '#17307A';
+const MM_NAVY2  = '#24499F';
+const MM_GOLD   = '#C79322';
+const MM_GOLD2  = '#E3B94F';
+const MM_IVORY  = '#FAF4E6';
+const MM_INK    = '#1D2B55';
+const MM_MUTED  = '#6B7699';
+const MM_CARD   = '#F4F6FC';
+const MM_LINE   = '#DCE3F3';
+
+/** Абсолютный URL логотипа центра для писем (почтовики режут data:-URI). */
+function mm_logo_url(): string {
+    $base = rtrim((string) cfgv('base_url', ''), '/');
+    if ($base === '' || stripos($base, 'localhost') !== false || stripos($base, '127.0.0.1') !== false) {
+        $base = 'https://xn----7sbugdeiegh1b0a9hen.xn--p1ai';
+    }
+    return $base . '/assets/img/logo_muzmir_256.png';
+}
+
+/**
+ * Фирменная кнопка письма (table-обёртка — стабильно во всех почтовиках).
+ * $variant: 'gold' (золотой градиент, синий текст) | 'navy' (синий градиент, золотой текст).
+ */
+function mm_email_btn(string $href, string $label, string $variant = 'gold'): string {
+    if ($variant === 'navy') {
+        $bg = 'background:' . MM_NAVY . ';background:linear-gradient(135deg,' . MM_NAVY . ',' . MM_NAVY2 . ');';
+        $color = MM_GOLD2;
+    } else {
+        $bg = 'background:' . MM_GOLD . ';background:linear-gradient(135deg,' . MM_GOLD . ',' . MM_GOLD2 . ');';
+        $color = MM_NAVY;
+    }
+    return '<table role="presentation" cellpadding="0" cellspacing="0" style="margin:22px 0 8px;">'
+        . '<tr><td style="border-radius:12px;' . $bg . '">'
+        . '<a href="' . h($href) . '" style="display:inline-block;padding:14px 36px;color:' . $color . ';'
+        . 'text-decoration:none;font-weight:700;font-size:15px;letter-spacing:.02em;border-radius:12px;">'
+        . h($label) . '</a></td></tr></table>';
+}
+
+/**
+ * Единый фирменный лейаут письма: шапка с логотипом на синем градиенте,
+ * белая карточка контента, подвал с контактами. Все письма сайта — только через него.
+ * $opt: preheader, unsubscribe_url (ссылка отписки в подвале, иначе строка без ссылки),
+ *       pixel (HTML пикселя открытия), audience_note (пояснение в подвале).
+ */
+function mm_email_layout(string $inner, array $opt = []): string {
+    $navy = MM_NAVY; $navy2 = MM_NAVY2; $gold = MM_GOLD; $ink = MM_INK;
+    $muted = MM_MUTED; $ivory = MM_IVORY; $line = MM_LINE;
+
+    $logo  = h(mm_logo_url());
+    $org   = h((string) cfgv('org_full', 'Культурный центр «Музыкальный Мир»'));
+    $addr  = h((string) cfgv('org_address', ''));
+    $phone = h((string) cfgv('org_phone', '+7 (999) 504-88-99'));
+    $email = h((string) cfgv('org_email', ''));
+    $hours = h((string) cfgv('org_hours', ''));
+    $year  = (int) cfgv('year', (int) date('Y'));
+    $pre   = h((string) ($opt['preheader'] ?? ''));
+    $pixel = (string) ($opt['pixel'] ?? '');
+    $note  = h((string) ($opt['audience_note'] ?? 'Вы получили это письмо, так как оставили заявку или подписку на сайте центра.'));
+
+    $contacts = '';
+    if ($addr  !== '') $contacts .= '<div style="margin-top:2px;">' . $addr . '</div>';
+    if ($phone !== '') $contacts .= '<div style="margin-top:2px;">Телефон: ' . $phone . '</div>';
+    if ($email !== '') $contacts .= '<div style="margin-top:2px;">Почта: ' . $email . '</div>';
+    if ($hours !== '') $contacts .= '<div style="margin-top:2px;">Режим работы: ' . $hours . '</div>';
+
+    $unsubUrl = trim((string) ($opt['unsubscribe_url'] ?? ''));
+    $unsubLine = $unsubUrl !== '' && $unsubUrl !== '{{unsubscribe_url}}'
+        ? $note . ' <a href="' . h($unsubUrl) . '" style="color:' . $gold . ';text-decoration:underline;">Отписаться от рассылки</a>.'
+        : $note;
+
+    return <<<HTML
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="x-apple-disable-message-reformatting">
+<title>{$org}</title>
+</head>
+<body style="margin:0;padding:0;background:{$ivory};font-family:'Segoe UI',Arial,Helvetica,sans-serif;color:{$ink};">
+<div style="display:none;max-height:0;overflow:hidden;opacity:0;">{$pre}</div>
+<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:{$ivory};padding:28px 12px;">
+<tr><td align="center">
+<table role="presentation" width="600" cellpadding="0" cellspacing="0" style="width:600px;max-width:100%;background:#FFFFFF;border-radius:18px;overflow:hidden;box-shadow:0 12px 40px rgba(23,48,122,.16);">
+
+  <tr>
+    <td style="background:{$navy};background:linear-gradient(135deg,{$navy} 0%,{$navy2} 100%);padding:32px 40px 28px;text-align:center;">
+      <img src="{$logo}" alt="{$org}" width="96" height="96"
+           style="display:inline-block;width:96px;height:96px;border-radius:50%;background:#FFFFFF;border:2px solid {$gold};">
+      <div style="margin-top:14px;font-family:Georgia,'Times New Roman',serif;font-size:20px;font-weight:700;color:{$gold};letter-spacing:.04em;line-height:1.35;">Культурный центр<br>«Музыкальный Мир»</div>
+      <div style="margin-top:8px;font-size:11px;letter-spacing:.18em;text-transform:uppercase;color:rgba(255,255,255,.78);">Конкурсы · Фестивали · Концерты</div>
+    </td>
+  </tr>
+
+  <tr>
+    <td style="padding:38px 42px 28px;font-size:15px;line-height:1.7;color:{$ink};">
+      {$inner}
+    </td>
+  </tr>
+
+  <tr><td style="padding:0 42px;"><div style="height:1px;background:{$line};"></div></td></tr>
+
+  <tr>
+    <td style="padding:24px 42px 32px;font-size:13px;line-height:1.65;color:{$muted};">
+      <div style="font-family:Georgia,'Times New Roman',serif;font-weight:700;color:{$navy};font-size:14px;margin-bottom:6px;">{$org}</div>
+      {$contacts}
+      <div style="margin-top:16px;font-size:12px;color:#96A0BE;">{$unsubLine}</div>
+      <div style="margin-top:8px;font-size:12px;color:#A9B2CC;">© {$year} {$org}</div>
+    </td>
+  </tr>
+
+</table>
+</td></tr>
+</table>
+{$pixel}
+</body>
+</html>
+HTML;
+}
+
 /** Тихий лог почты в data/logs/mail.log. */
 function mail_log(string $msg): void {
     $line = '[' . date('Y-m-d H:i:s') . '] ' . $msg . "\n";
@@ -180,65 +304,8 @@ function mail_template(string $name, array $vars = []): string {
         $inner = '<p style="margin:0">' . h((string)($vars['message'] ?? '')) . '</p>';
     }
 
-    $logo   = logo_data_uri();
-    $org    = h((string) cfgv('org_full', 'Культурный центр «Музыкальный Мир»'));
-    $addr   = h((string) cfgv('org_address', ''));
-    $phone  = h((string) cfgv('org_phone', ''));
-    $email  = h((string) cfgv('org_email', ''));
-    $hours  = h((string) cfgv('org_hours', ''));
-    $year   = (int) cfgv('year', (int) date('Y'));
-    $unsub  = $vars['unsubscribe_url'] ?? '{{unsubscribe_url}}';
-    $preheader = h((string) ($vars['preheader'] ?? ''));
-
-    return <<<HTML
-<!DOCTYPE html>
-<html lang="ru">
-<head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<meta name="x-apple-disable-message-reformatting">
-<title>{$org}</title>
-</head>
-<body style="margin:0;padding:0;background:#f0e6d6;font-family:'Segoe UI',Arial,sans-serif;color:#3a2e22;">
-<div style="display:none;max-height:0;overflow:hidden;opacity:0;">{$preheader}</div>
-<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#f0e6d6;padding:28px 12px;">
-<tr><td align="center">
-<table role="presentation" width="600" cellpadding="0" cellspacing="0" style="width:600px;max-width:100%;background:#fbf6ef;border-radius:18px;overflow:hidden;box-shadow:0 12px 40px rgba(90,50,20,.14);">
-
-  <tr>
-    <td style="background:linear-gradient(135deg,#7a2e1e 0%,#a0522d 55%,#b8860b 100%);padding:34px 40px;text-align:center;">
-      <img src="{$logo}" alt="{$org}" width="96" height="96" style="display:inline-block;width:96px;height:96px;border-radius:14px;background:#fff;padding:6px;">
-      <div style="margin-top:14px;color:#fff;font-size:15px;letter-spacing:.14em;text-transform:uppercase;font-weight:600;">Культурный центр «Музыкальный Мир»</div>
-    </td>
-  </tr>
-
-  <tr>
-    <td style="padding:40px 44px 30px;font-size:16px;line-height:1.7;color:#3a2e22;">
-      {$inner}
-    </td>
-  </tr>
-
-  <tr><td style="padding:0 44px;"><div style="height:1px;background:#e6d6bf;"></div></td></tr>
-
-  <tr>
-    <td style="padding:26px 44px 34px;font-size:13px;line-height:1.65;color:#8a7658;">
-      <div style="font-weight:600;color:#7a2e1e;font-size:14px;margin-bottom:8px;">{$org}</div>
-      <div>{$addr}</div>
-      <div>Телефон: {$phone}</div>
-      <div>Почта: {$email}</div>
-      <div>Режим работы: {$hours}</div>
-      <div style="margin-top:18px;font-size:12px;color:#a8977c;">
-        Вы получили это письмо, так как оставили заявку или подписку на сайте центра.
-        <a href="{$unsub}" style="color:#a0522d;text-decoration:underline;">Отписаться от рассылки</a>.
-      </div>
-      <div style="margin-top:10px;font-size:12px;color:#bfae92;">© {$year} {$org}</div>
-    </td>
-  </tr>
-
-</table>
-</td></tr>
-</table>
-</body>
-</html>
-HTML;
+    return mm_email_layout($inner, [
+        'preheader'       => (string) ($vars['preheader'] ?? ''),
+        'unsubscribe_url' => (string) ($vars['unsubscribe_url'] ?? ''),
+    ]);
 }

@@ -4,8 +4,8 @@
  *  - application_mail_send() — письмо «Заявка принята» (вызов из api/v1/apply.php);
  *  - result_mail_send()      — письмо с результатом конкурса + in-app уведомление
  *                              (вызов из admin/grading.php для платных конкурсов).
- * Дизайн: шапка — золото #C79322 на синем градиенте #17307A→#24499F, текстовая
- * монограмма «ММ» (без картинок-вложений), золотые кнопки, подвал с контактами
+ * Дизайн: единый фирменный лейаут mm_email_layout() (core/mailer.php) — логотип
+ * центра на синем градиенте #17307A→#24499F, золотые кнопки, подвал с контактами
  * из cfgv(). Вся вёрстка — таблицы + инлайн-CSS (совместимость с почтовиками).
  * Отправка — через существующую очередь mail_queue (core/mailer.php).
  */
@@ -28,13 +28,9 @@ const RM_LINE       = '#DCE3F3';
 
 /* ============================== Кирпичики ================================= */
 
-/** Золотая кнопка (таблица — стабильно в почтовых клиентах). */
+/** Золотая кнопка (таблица — стабильно в почтовых клиентах). Единый стиль — mm_email_btn(). */
 function rm_mail_btn(string $href, string $label): string {
-    return '<table role="presentation" cellpadding="0" cellspacing="0" style="margin:22px 0 8px;">'
-        . '<tr><td style="border-radius:12px;background:' . RM_GOLD . ';background:linear-gradient(135deg,' . RM_GOLD . ',' . RM_GOLD_LIGHT . ');">'
-        . '<a href="' . h($href) . '" style="display:inline-block;padding:14px 36px;color:' . RM_NAVY . ';'
-        . 'text-decoration:none;font-weight:700;font-size:15px;letter-spacing:.02em;border-radius:12px;">'
-        . h($label) . '</a></td></tr></table>';
+    return mm_email_btn($href, $label, 'gold');
 }
 
 /** Строка «метка — значение» для карточки заявки. Пустые значения пропускаются. */
@@ -77,71 +73,10 @@ function rm_mail_app_card(array $a, array $c): string {
  * название центра золотом, подвал с контактами из настроек.
  */
 function rm_mail_layout(string $inner, string $preheader = ''): string {
-    $org   = h((string) cfgv('org_full', 'Культурный центр «Музыкальный Мир»'));
-    $addr  = h((string) cfgv('org_address', ''));
-    $phone = h((string) cfgv('org_phone', ''));
-    $email = h((string) cfgv('org_email', ''));
-    $hours = h((string) cfgv('org_hours', ''));
-    $year  = (int) cfgv('year', (int) date('Y'));
-    $pre   = h($preheader);
-    $navy = RM_NAVY; $navy2 = RM_NAVY_2; $gold = RM_GOLD; $ink = RM_INK; $muted = RM_MUTED; $bg = RM_BG; $line = RM_LINE;
-
-    $contacts = '';
-    if ($addr  !== '') $contacts .= '<div style="margin-top:2px;">' . $addr . '</div>';
-    if ($phone !== '') $contacts .= '<div style="margin-top:2px;">Телефон: ' . $phone . '</div>';
-    if ($email !== '') $contacts .= '<div style="margin-top:2px;">Почта: ' . $email . '</div>';
-    if ($hours !== '') $contacts .= '<div style="margin-top:2px;">Режим работы: ' . $hours . '</div>';
-
-    return <<<HTML
-<!DOCTYPE html>
-<html lang="ru">
-<head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<meta name="x-apple-disable-message-reformatting">
-<title>{$org}</title>
-</head>
-<body style="margin:0;padding:0;background:{$bg};font-family:'Segoe UI',Arial,Helvetica,sans-serif;color:{$ink};">
-<div style="display:none;max-height:0;overflow:hidden;opacity:0;">{$pre}</div>
-<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:{$bg};padding:28px 12px;">
-<tr><td align="center">
-<table role="presentation" width="600" cellpadding="0" cellspacing="0" style="width:600px;max-width:100%;background:#fdfdff;border-radius:18px;overflow:hidden;box-shadow:0 12px 40px rgba(23,48,122,.16);">
-
-  <tr>
-    <td style="background:{$navy};background:linear-gradient(135deg,{$navy} 0%,{$navy2} 100%);padding:34px 40px 30px;text-align:center;">
-      <table role="presentation" cellpadding="0" cellspacing="0" align="center" style="margin:0 auto;">
-        <tr><td align="center" style="width:64px;height:64px;border-radius:50%;border:2px solid {$gold};background:rgba(255,255,255,.07);text-align:center;vertical-align:middle;">
-          <span style="font-family:Georgia,'Times New Roman',serif;font-size:24px;font-weight:700;color:{$gold};letter-spacing:.04em;line-height:64px;">ММ</span>
-        </td></tr>
-      </table>
-      <div style="margin-top:14px;font-family:Georgia,'Times New Roman',serif;font-size:20px;font-weight:700;color:{$gold};letter-spacing:.04em;line-height:1.35;">Культурный центр<br>«Музыкальный Мир»</div>
-      <div style="margin-top:8px;font-size:11px;letter-spacing:.18em;text-transform:uppercase;color:rgba(255,255,255,.75);">Конкурсы · Фестивали · Концерты</div>
-    </td>
-  </tr>
-
-  <tr>
-    <td style="padding:38px 42px 28px;font-size:15px;line-height:1.7;color:{$ink};">
-      {$inner}
-    </td>
-  </tr>
-
-  <tr><td style="padding:0 42px;"><div style="height:1px;background:{$line};"></div></td></tr>
-
-  <tr>
-    <td style="padding:24px 42px 32px;font-size:13px;line-height:1.65;color:{$muted};">
-      <div style="font-weight:700;color:{$navy};font-size:14px;margin-bottom:6px;">{$org}</div>
-      {$contacts}
-      <div style="margin-top:16px;font-size:12px;color:#96A0BE;">Вы получили это письмо, так как участвуете в конкурсах центра.</div>
-      <div style="margin-top:8px;font-size:12px;color:#A9B2CC;">© {$year} {$org}</div>
-    </td>
-  </tr>
-
-</table>
-</td></tr>
-</table>
-</body>
-</html>
-HTML;
+    return mm_email_layout($inner, [
+        'preheader'     => $preheader,
+        'audience_note' => 'Вы получили это письмо, так как участвуете в конкурсах центра.',
+    ]);
 }
 
 /* ========================= Письмо «Заявка принята» ========================= */
