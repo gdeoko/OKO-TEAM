@@ -38,7 +38,7 @@ a{text-decoration:none;color:inherit}img,video{max-width:100%;display:block}
 html.lenis,html.lenis body{height:auto}.lenis.lenis-smooth{scroll-behavior:auto!important}.lenis.lenis-stopped{overflow:hidden}
 /* PRELOADER — 3D-лого сразу */
 /* ЗАПУСК: 3D-глаз сразу виден, под ним прогресс, затем кнопка ВОЙТИ */
-#preloader{position:fixed;inset:0;z-index:9990;background:transparent;display:flex;flex-direction:column;align-items:center;justify-content:flex-end;padding-bottom:11vh;gap:16px;transition:opacity .8s ease,visibility .8s}
+#preloader{position:fixed;inset:0;z-index:9990;background:transparent;display:flex;flex-direction:column;align-items:center;justify-content:flex-end;padding-bottom:22vh;gap:12px;transition:opacity .8s ease,visibility .8s}
 #preloader.done{opacity:0;visibility:hidden;pointer-events:none}
 html.booting,body.booting{overflow:hidden;touch-action:none;overscroll-behavior:none}
 body.booting #holo-canvas{z-index:9995}
@@ -70,7 +70,7 @@ body.booting #holo-canvas{z-index:9995}
 .pl-lbl{font-family:'Unbounded',sans-serif;font-weight:700;font-size:11px;letter-spacing:3px;color:var(--w3);text-transform:uppercase;transition:opacity .4s}
 .pl-lbl b{color:var(--lime)}
 /* Кнопка START — круглая, вращающееся неоновое кольцо + пульс + плавающая. Гарантирует жест → звук на 100%. */
-.pl-start{position:relative;width:156px;height:156px;border-radius:50%;border:none;background:transparent;cursor:pointer;
+.pl-start{position:relative;width:170px;height:170px;border-radius:50%;border:none;background:transparent;cursor:pointer;
   opacity:0;pointer-events:none;transform:translateY(18px) scale(.86);transition:opacity .6s ease,transform .6s cubic-bezier(.16,1,.3,1);
   -webkit-tap-highlight-color:transparent;display:grid;place-items:center;isolation:isolate;margin-top:6px}
 .pl-start.show{opacity:1;pointer-events:auto;transform:none;animation:stFloat 3.4s ease-in-out infinite}
@@ -94,8 +94,7 @@ body.booting #holo-canvas{z-index:9995}
 .pl-flash{position:fixed;inset:0;background:radial-gradient(circle at 50% 42%,rgba(210,255,140,.95),rgba(154,255,0,.42) 30%,transparent 62%);opacity:0;pointer-events:none;z-index:9996}
 /* каскад появления hero после входа */
 .hero-badge,.hero-title,.hero-stats,.hero-btns,.scroll-hint{transition:opacity .8s cubic-bezier(.16,1,.3,1),transform .8s cubic-bezier(.16,1,.3,1)}
-body.booting .hero-badge,body.booting .hero-stats,body.booting .hero-btns{opacity:0}
-body.booting .hero-title{opacity:1!important;transform:none!important}
+body.booting .hero-title,body.booting .hero-badge,body.booting .hero-stats,body.booting .hero-btns,body.booting .hero-title *{opacity:0!important}
 /* BACKGROUND — видео-квадратики (лёгкое) + спираль ДНК + свечения */
 #bgv{position:fixed;inset:0;z-index:-3;width:100%;height:100%;object-fit:cover;opacity:.5;pointer-events:none}
 #bg-grid{display:none}
@@ -604,7 +603,7 @@ details.tier-detail[open] .tier-detail-h .ar{transform:rotate(90deg)}
 </section>
 
 <!-- HERO CLONE (бесшовный луп) -->
-<section class="hero" id="heroClone" aria-hidden="true" style="display:none">
+<section class="hero" id="heroClone" aria-hidden="true">
   <div class="eye-wrap"><div id="holoEye2" class="holo-anchor" style="width:100%;height:100%"></div></div>
   <div class="hero-badge"><span class="hbdot"></span>Экосистема роста бизнеса под ключ</div>
   <h1 class="hero-title">О<span class="lime">К</span>О</h1>
@@ -1099,7 +1098,7 @@ window.playVoice=function(btn){var a=btn.parentElement.parentElement.querySelect
 })();
 </script>
 <script type="module">
-import { initHolo } from './js/holo.js?v=109';
+import { initHolo } from './js/holo.js?v=110';
 function go(){ try{ initHolo(); }catch(e){ console.log('holo',e); } }
 if(document.readyState==='complete') setTimeout(go,200); else window.addEventListener('load',()=>setTimeout(go,200));
 </script>
