@@ -45,8 +45,15 @@ if (!user_can('jury')) {
 
 /* ---------- Роутер ---------- */
 $modules = admin_modules();
-$p = (string)($_GET['p'] ?? 'dashboard');
-if (!isset($modules[$p]) || !is_file(__DIR__ . '/' . $p . '.php')) {
+$p = (string)($_GET['p'] ?? '');
+// Формы админки постятся на /admin/ без ?p= — восстанавливаем страницу из Referer,
+// иначе POST-обработчики (смена статуса, массовые действия, сохранение) не срабатывали
+// и грузился дашборд («вылетало на главную»).
+if ($p === '' && ($_SERVER['REQUEST_METHOD'] ?? 'GET') === 'POST') {
+    $ref = (string)($_SERVER['HTTP_REFERER'] ?? '');
+    if ($ref !== '' && preg_match('~[?&]p=([a-z_]+)~', $ref, $mref)) $p = $mref[1];
+}
+if ($p === '' || !isset($modules[$p]) || !is_file(__DIR__ . '/' . $p . '.php')) {
     $p = 'dashboard';
 }
 admin_require($p);

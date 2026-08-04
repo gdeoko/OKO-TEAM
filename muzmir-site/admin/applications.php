@@ -54,6 +54,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && input('do') === 'bulk') {
             q("UPDATE applications SET $set WHERE id IN ($in)", array_merge(array_values($map[$act]), $ids));
             audit('applications_bulk', 'application', null, ['action'=>$act,'ids'=>$ids]);
             flash('Обновлено заявок: ' . count($ids) . '.', 'success');
+        } elseif ($act === 'mark_new') {
+            // Вернуть в «новые» и снять оценку (исправление ошибочно оценённых).
+            q("UPDATE applications SET status='new',score=NULL,result='',graded_at=NULL,jury_comment='' WHERE id IN ($in)", $ids);
+            audit('applications_bulk', 'application', null, ['action'=>'mark_new','ids'=>$ids]);
+            flash('Возвращено в новые: ' . count($ids) . '.', 'success');
+        } elseif ($act === 'delete') {
+            q("DELETE FROM applications WHERE id IN ($in)", $ids);
+            audit('applications_bulk', 'application', null, ['action'=>'delete','ids'=>$ids]);
+            flash('Удалено заявок: ' . count($ids) . '.', 'success');
         } elseif ($act === 'flag_suspicious') {
             q("UPDATE applications SET flag='suspicious' WHERE id IN ($in)", $ids);
             audit('applications_flag', 'application', null, ['ids'=>$ids]);
@@ -69,13 +78,27 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && input('do') === 'set_status') {
     if (!csrf_check()) { flash('Сессия устарела.', 'error'); admin_redirect('applications'); }
     $id = (int) input('id');
     $st = input('status');
-    if (in_array($st, ['paid','graded','sent','done','rejected'], true)) {
+    if (in_array($st, ['new','submitted','pending','paid','judging','graded','sent','done','rejected'], true)) {
         $extra = $st === 'paid' ? ',is_paid=1' : '';
+        // Возврат в «до-аттестации» — снимаем оценку/результат (это исправляет ошибочно оценённые заявки).
+        if (in_array($st, ['new','submitted','pending','judging'], true)) $extra .= ",score=NULL,result='',graded_at=NULL,jury_comment=''";
         q("UPDATE applications SET status=? $extra WHERE id=?", [$st, $id]);
         audit('application_status', 'application', $id, ['status'=>$st]);
         flash('Статус заявки обновлён.', 'success');
     }
     admin_redirect('applications', ['id' => $id]);
+}
+
+/* ---------- Удаление одной заявки ---------- */
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && input('do') === 'delete_app') {
+    if (!csrf_check()) { flash('Сессия устарела.', 'error'); admin_redirect('applications'); }
+    $id = (int) input('id');
+    if ($id > 0) {
+        q("DELETE FROM applications WHERE id=?", [$id]);
+        audit('application_delete', 'application', $id, []);
+        flash('Заявка удалена.', 'success');
+    }
+    admin_redirect('applications');
 }
 
 /* ---------- Редактирование полей заявки (перед печатью диплома) ---------- */
@@ -164,20 +187,25 @@ if ($id = (int) input('id')) {
         <div class="card" style="margin-bottom:18px">
           <h3>Статус</h3>
           <p class="small muted" style="margin:-4px 0 10px">Статусы движутся автоматически: подана → оценена (после итога в «Оценивании») → исполнена (после отправки диплома). Ручная смена — только для аварийных случаев.</p>
-          <form method="post" action="<?= url('/admin/') ?>" class="field--inline">
+          <form method="post" action="<?= url('/admin/?p=applications') ?>" class="field--inline">
             <?= csrf_field() ?><input type="hidden" name="do" value="set_status"><input type="hidden" name="id" value="<?= $id ?>">
             <select name="status" style="max-width:220px">
-              <?php foreach (['paid','graded','sent','done','rejected'] as $s): ?>
+              <?php foreach (['new','submitted','pending','paid','judging','graded','sent','done','rejected'] as $s): ?>
                 <option value="<?= $s ?>" <?= $a['status']===$s?'selected':'' ?>><?= h(app_status_ru($s)) ?></option>
               <?php endforeach; ?>
             </select>
             <button class="btn btn--primary btn--sm">Применить</button>
           </form>
+          <p class="small muted" style="margin:8px 0 0">Возврат в «Новая/Подана» автоматически снимает оценку и результат.</p>
+          <form method="post" action="<?= url('/admin/?p=applications') ?>" style="margin-top:10px" onsubmit="return confirm('Удалить заявку без возможности восстановления?')">
+            <?= csrf_field() ?><input type="hidden" name="do" value="delete_app"><input type="hidden" name="id" value="<?= $id ?>">
+            <button class="btn btn--ghost btn--sm" style="color:var(--error,#c0392b);border-color:var(--error,#c0392b)"><?= admin_icon('trash') ?? '' ?>Удалить заявку</button>
+          </form>
         </div>
         <div class="card" style="margin-bottom:18px">
           <h3>Редактировать данные заявки</h3>
           <p class="small muted" style="margin:-4px 0 12px">Скорректируйте поля перед печатью диплома — они попадут в PDF и верификацию.</p>
-          <form method="post" action="<?= url('/admin/') ?>">
+          <form method="post" action="<?= url('/admin/?p=applications') ?>">
             <?= csrf_field() ?><input type="hidden" name="do" value="edit_app"><input type="hidden" name="id" value="<?= $id ?>">
             <div class="field"><label><?= $a['is_group'] ? 'Контактное лицо (ФИО)' : 'ФИО участника' ?></label>
               <input name="full_name" value="<?= h((string)$a['full_name']) ?>"></div>
@@ -267,15 +295,17 @@ ob_start(); ?>
   <a class="btn btn--ghost btn--sm" href="<?= a_link('applications') ?>">Сброс</a>
 </form>
 
-<form method="post" action="<?= url('/admin/') ?>">
+<form method="post" action="<?= url('/admin/?p=applications') ?>">
   <?= csrf_field() ?><input type="hidden" name="do" value="bulk">
   <input type="hidden" name="competition" value="<?= h(input('competition')) ?>"><input type="hidden" name="status" value="<?= h(input('status')) ?>">
   <div class="toolbar">
     <select name="bulk_action" style="max-width:240px">
       <option value="">Массовое действие…</option>
       <option value="mark_paid">Отметить оплаченными</option>
+      <option value="mark_new">Вернуть в «Новые» (снять оценку)</option>
       <option value="flag_suspicious">Отметить подозрительными</option>
       <option value="reject">Отклонить</option>
+      <option value="delete">Удалить заявки</option>
     </select>
     <button class="btn btn--navy btn--sm" onclick="return confirm('Применить к выбранным заявкам?')"><?= admin_icon('check') ?>Применить</button>
   </div>
