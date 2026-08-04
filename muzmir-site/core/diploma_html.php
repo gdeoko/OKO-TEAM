@@ -164,10 +164,10 @@ function diploma_html(array $c, array $a, array $opt = []): string {
     foreach ($fields as $fk => $fv) {
         $fldLines += max(1, (int)ceil(mb_strlen($fk . ': ' . $fv) / 58));
     }
-    $fldFs = 12.5; $fldLh = 1.75;
+    $fldFs = 13.5; $fldLh = 1.62;
     if ($fldLines > 6) {
-        $fldFs = max(9.5, round(12.5 * 6 / $fldLines, 1));
-        $fldLh = 1.5;
+        $fldFs = max(10.0, round(13.5 * 6 / $fldLines, 1));
+        $fldLh = 1.45;
     }
 
     // Текст благодарности — эталон, с подстановкой конкурса.
@@ -216,53 +216,53 @@ body{background:#444;font-family:'Manrope',sans-serif;padding:20px;min-height:10
 /* Засвет снизу: длинное мягкое растворение кверху, без белого «блока» */
 .bg-white-gradient{position:absolute;bottom:0;left:0;right:0;height:<?= $fade ?>mm;z-index:2;pointer-events:none;
   background:linear-gradient(180deg, transparent 0%, rgba(248,248,252,.05) 16%, rgba(250,250,253,.16) 34%, rgba(252,252,254,.36) 52%, rgba(253,253,255,.62) 70%, rgba(255,255,255,.85) 86%, rgba(255,255,255,.95) 100%)}
-.content{position:relative;z-index:3;padding:10mm 14mm 0;height:100%}
-.header-legal{text-align:center;font-size:7.5pt;line-height:1.35;color:#fff;margin-bottom:5mm}
-.header-legal .org-name{font-family:'Playfair Display',serif;font-size:17pt;font-weight:800;margin-bottom:3mm;color:#fff}
-.header-legal .legal-text{font-weight:500;color:#fff}
+.content{position:relative;z-index:3;padding:8mm 12mm 0;height:100%}
+.header-legal{text-align:center;font-size:7.5pt;line-height:1.3;color:#fff;margin-bottom:3mm}
+.header-legal .org-name{font-family:'Playfair Display',serif;font-size:19pt;font-weight:900;margin-bottom:2mm;color:#fff}
+.header-legal .legal-text{font-weight:600;color:#fff}
 /* Ряд логотипов: светлые версии для тёмных фонов, выровнены по центру */
-.logos-row{display:flex;justify-content:space-between;align-items:center;margin-bottom:3mm;padding:0 3mm}
+.logos-row{display:flex;justify-content:space-between;align-items:center;margin-bottom:2mm;padding:0 2mm}
 .logos-row .logo{width:auto;filter:drop-shadow(0 2px 6px rgba(0,0,0,.45))}
-.logos-row .logo-prok{height:15mm}
-.logos-row .logo-medal{height:20mm}
-.logos-row .logo-natsproekty{height:18mm}
-.logos-row .logo-badge{height:20mm}
-.logos-row .logo-center{height:34mm;flex-shrink:0;margin:0 2mm}
-.competition-type{text-align:center;font-family:'Playfair Display',serif;font-size:15pt;font-weight:700;color:#fff;margin-bottom:2mm}
-.competition-name{text-align:center;font-family:<?= $T['ff_comp'] ?>;font-size:30pt;font-weight:900;
+.logos-row .logo-prok{height:16mm}
+.logos-row .logo-medal{height:21mm}
+.logos-row .logo-natsproekty{height:19mm}
+.logos-row .logo-badge{height:21mm}
+.logos-row .logo-center{height:36mm;flex-shrink:0;margin:0 2mm}
+.competition-type{text-align:center;font-family:'Playfair Display',serif;font-size:15.5pt;font-weight:800;color:#fff;margin-bottom:1.5mm}
+.competition-name{text-align:center;font-family:<?= $T['ff_comp'] ?>;font-size:37pt;font-weight:900;
   background:<?= $T['grad_comp'] ?>;
   -webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;
-  letter-spacing:<?= $T['ls_comp'] ?>;margin-bottom:3mm;filter:drop-shadow(0 2px 4px rgba(0,0,0,.65))}
-.support-line{text-align:center;font-family:'Playfair Display',serif;font-size:12pt;font-weight:600;line-height:1.4;margin-bottom:4mm;padding:0 5mm;color:#fff}
-.diploma-type{text-align:center;font-family:<?= $T['ff_comp'] ?>;font-size:48pt;font-weight:900;
+  letter-spacing:<?= $T['ls_comp'] ?>;margin-bottom:2mm;line-height:1.05;filter:drop-shadow(0 2px 4px rgba(0,0,0,.65))}
+.support-line{text-align:center;font-family:'Playfair Display',serif;font-size:11.5pt;font-weight:700;line-height:1.3;margin-bottom:3mm;padding:0 5mm;color:#fff}
+.diploma-type{text-align:center;font-family:<?= $T['ff_comp'] ?>;font-size:<?= $thanks ? 48 : 58 ?>pt;font-weight:900;
   background:<?= $T['grad_dtype'] ?>;
   -webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;
-  letter-spacing:6px;margin-bottom:1mm;filter:drop-shadow(0 3px 6px rgba(0,0,0,.7));line-height:1}
-.diploma-degree{text-align:center;font-family:<?= $T['ff_comp'] ?>;font-size:28pt;font-weight:900;
+  letter-spacing:5px;margin-bottom:1mm;filter:drop-shadow(0 3px 6px rgba(0,0,0,.7));line-height:1}
+.diploma-degree{text-align:center;font-family:<?= $T['ff_comp'] ?>;font-size:33pt;font-weight:900;
   background:<?= $T['grad_degree'] ?>;
   -webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;
-  letter-spacing:4px;margin-bottom:4mm;filter:drop-shadow(0 2px 5px rgba(0,0,0,.7));line-height:1}
-.extra-award{text-align:center;font-family:'Playfair Display',serif;font-size:14pt;font-weight:700;color:<?= $T['name_color'] ?>;margin:-2mm 0 3mm;filter:drop-shadow(0 1px 3px rgba(0,0,0,.6))}
-.awarded-label{text-align:center;font-family:'Playfair Display',serif;font-size:15pt;font-weight:600;color:#fff;margin-bottom:2mm}
-.awarded-name{text-align:center;font-family:<?= $T['ff_name'] ?>;font-size:24pt;font-weight:700;color:<?= $T['name_color'] ?>;margin-bottom:4mm;filter:drop-shadow(0 2px 4px rgba(0,0,0,.6))}
-.awarded-name-script{text-align:center;font-family:'Marck Script',cursive;font-size:36pt;color:<?= $T['name_color'] ?>;margin-bottom:4mm;filter:drop-shadow(0 2px 6px rgba(0,0,0,.7));line-height:1}
-.field-list{padding:0 8mm;font-family:'Playfair Display',serif;font-size:<?= $fldFs ?>pt;font-weight:600;line-height:<?= $fldLh ?>;text-align:center}
+  letter-spacing:4px;margin-bottom:2.5mm;filter:drop-shadow(0 2px 5px rgba(0,0,0,.7));line-height:1}
+.extra-award{text-align:center;font-family:'Playfair Display',serif;font-size:14.5pt;font-weight:800;color:<?= $T['name_color'] ?>;margin:-1.5mm 0 2.5mm;filter:drop-shadow(0 1px 3px rgba(0,0,0,.6))}
+.awarded-label{text-align:center;font-family:'Playfair Display',serif;font-size:15pt;font-weight:700;color:#fff;margin-bottom:1mm}
+.awarded-name{text-align:center;font-family:<?= $T['ff_name'] ?>;font-size:29pt;font-weight:900;color:<?= $T['name_color'] ?>;margin-bottom:3mm;filter:drop-shadow(0 2px 4px rgba(0,0,0,.6))}
+.awarded-name-script{text-align:center;font-family:'Marck Script',cursive;font-size:40pt;color:<?= $T['name_color'] ?>;margin-bottom:3mm;filter:drop-shadow(0 2px 6px rgba(0,0,0,.7));line-height:1}
+.field-list{padding:0 6mm;font-family:'Playfair Display',serif;font-size:<?= $fldFs ?>pt;font-weight:700;line-height:<?= $fldLh ?>;text-align:center}
 .field-list .field{color:#fff;filter:drop-shadow(0 1px 3px rgba(0,0,0,.5))}
 /* Текст благодарности сжат так, чтобы гарантированно не доставать до подписей */
-.gratitude-text{padding:0 8mm;font-family:'Playfair Display',serif;font-size:11pt;font-weight:600;line-height:1.45;text-align:center;color:#fff;filter:drop-shadow(0 1px 3px rgba(0,0,0,.5))}
+.gratitude-text{padding:0 7mm;font-family:'Playfair Display',serif;font-size:11.5pt;font-weight:700;line-height:1.42;text-align:center;color:#fff;filter:drop-shadow(0 1px 3px rgba(0,0,0,.5))}
 .bottom-block{position:absolute;bottom:10mm;left:14mm;right:14mm;z-index:4;color:#1a1a2a}
 /* Фиксированные высоты строк: блок подписей никогда не наезжает на поля выше.
  * Круглая печать сознательно «выступает» вверх поверх листа, как настоящая. */
 .signatures-grid{display:grid;grid-template-columns:1fr 82mm;grid-template-rows:20mm 24mm;gap:4mm 4mm;align-items:center}
-.sig-text-block{font-family:'Manrope',sans-serif;font-size:9pt;line-height:1.35;padding-right:3mm}
-.sig-text-block .sig-name{font-weight:700;text-decoration:underline;margin-bottom:1mm;color:#1a1a2a;font-size:10.5pt}
-.sig-text-block .sig-role{font-weight:500;color:#1a1a2a}
+.sig-text-block{font-family:'Manrope',sans-serif;font-size:9.5pt;line-height:1.32;padding-right:3mm}
+.sig-text-block .sig-name{font-weight:800;text-decoration:underline;margin-bottom:1mm;color:#1a1a2a;font-size:11pt}
+.sig-text-block .sig-role{font-weight:600;color:#1a1a2a}
 .sig-visual-block{display:grid;grid-template-columns:1fr auto;gap:2mm;align-items:center;position:relative;height:100%}
 .chairman-stamp{width:auto;max-width:55mm;max-height:20mm;display:block;justify-self:end}
 .big-seal{width:40mm;height:auto;display:block;justify-self:end;opacity:.92;margin-top:-14mm}
 .sig-signature-1{width:26mm;height:auto;display:block}
 .sig-signature-2{width:28mm;height:auto;display:block}
-.footer-city{text-align:center;margin-top:5mm;font-family:'Playfair Display',serif;font-size:12pt;font-weight:600;color:#1a1a2a}
+.footer-city{text-align:center;margin-top:4mm;font-family:'Playfair Display',serif;font-size:12.5pt;font-weight:700;color:#1a1a2a}
 .sample-mark{position:absolute;inset:0;z-index:9;display:flex;align-items:center;justify-content:center;pointer-events:none}
 .sample-mark span{font-family:'Playfair Display',serif;font-weight:900;font-size:52pt;letter-spacing:14px;color:rgba(200,40,60,.22);transform:rotate(-28deg);border:6px solid rgba(200,40,60,.18);padding:6mm 14mm;border-radius:8mm}
 <?php if ($edit): ?>[data-el]{cursor:grab}[data-el]:hover{outline:1px dashed rgba(255,215,80,.85)}<?php endif; ?>
