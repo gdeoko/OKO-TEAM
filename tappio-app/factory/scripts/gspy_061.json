@@ -1,0 +1,246 @@
+{
+ "id": "gspy_061",
+ "app": "spy",
+ "voice": "en-US-AndrewNeural",
+ "rate": "+7%",
+ "grade": "cold_cyan",
+ "brand": {
+  "accent": "#00D9FF",
+  "accent2": "#7CFCFF",
+  "code": "PRIVACY",
+  "logo": "spy.png",
+  "name": "SPY CAMERA FINDER"
+ },
+ "music": {
+  "queries": [
+   "cinematic tension build",
+   "dark tension electronic",
+   "investigative documentary underscore"
+  ]
+ },
+ "cover": {
+  "kicker": "TOP 5 SPOTS",
+  "top": "WHERE CAMS",
+  "big": "ALWAYS\nHIDE",
+  "q": [
+   "smoke detector ceiling closeup"
+  ],
+  "ai": "work/gspy_061/cover_ai.png"
+ },
+ "segments": [
+  {
+   "id": "b1",
+   "text": "Stop scrolling. Smoke detectors: the number one hiding spot."
+  },
+  {
+   "id": "b2",
+   "text": "Alarm clocks pointed straight at the bed."
+  },
+  {
+   "id": "b3",
+   "text": "Air vents with a suspicious little hole."
+  },
+  {
+   "id": "b4",
+   "text": "TV frames and power outlets facing the room."
+  },
+  {
+   "id": "b5",
+   "text": "Check each one: line of sight to the bed is the clue."
+  },
+  {
+   "id": "b6",
+   "text": "Scan first, relax second. Every trip."
+  }
+ ],
+ "shots": [
+  {
+   "q": [
+    "network cables server blue light"
+   ],
+   "motion": "zin"
+  },
+  {
+   "q": [
+    "usb charger plug closeup"
+   ],
+   "insert": "arch",
+   "pos": "center"
+  },
+  {
+   "q": [
+    "mirror bathroom hotel"
+   ],
+   "motion": "pandown"
+  },
+  {
+   "q": [
+    "smoke detector ceiling closeup"
+   ],
+   "insert": "rrect",
+   "pos": "lower"
+  },
+  {
+   "q": [
+    "security camera lens macro"
+   ],
+   "motion": "zout"
+  },
+  {
+   "q": [
+    "alarm clock nightstand bedroom"
+   ],
+   "insert": "phone",
+   "pos": "upper"
+  },
+  {
+   "q": [
+    "reflection glass light dot"
+   ],
+   "motion": "panr"
+  },
+  {
+   "q": [
+    "phone flashlight scanning wall"
+   ],
+   "insert": "tilt",
+   "pos": "upper"
+  },
+  {
+   "q": [
+    "traveler suitcase hotel hallway"
+   ],
+   "motion": "panup"
+  },
+  {
+   "q": [
+    "woman looking around hotel room worried"
+   ],
+   "insert": "tv",
+   "pos": "upper"
+  },
+  {
+   "q": [
+    "power outlet wall socket closeup"
+   ],
+   "motion": "panl"
+  }
+ ],
+ "overlays": [
+  {
+   "at": 0.212,
+   "dur": 1.95,
+   "type": "kicker",
+   "text": "STAY SAFE"
+  },
+  {
+   "at": 0.226,
+   "dur": 1.65,
+   "type": "kinetic",
+   "top": "STAY",
+   "big": "PRIVATE"
+  },
+  {
+   "at": 0.302,
+   "dur": 2.28,
+   "type": "lowerthird",
+   "title": "CHECK THE VENTS",
+   "sub": "line of sight to the bed"
+  },
+  {
+   "at": 0.58,
+   "dur": 1.73,
+   "type": "ticker",
+   "to": 100,
+   "suffix": "%",
+   "label": "PRIVACY BACK",
+   "pos": "lower"
+  },
+  {
+   "at": 0.82,
+   "dur": 2.6,
+   "type": "checklist",
+   "items": [
+    "Smoke detector",
+    "Alarm clock",
+    "TV frame",
+    "Power outlet"
+   ],
+   "pos": "center"
+  },
+  {
+   "at": 0.866,
+   "dur": 1.81,
+   "type": "callout",
+   "text": "IR GLINT GIVES IT AWAY",
+   "pos": "center"
+  },
+  {
+   "at": 0.875,
+   "dur": 2.3,
+   "type": "gauge",
+   "to": 30,
+   "max": 60,
+   "suffix": "s",
+   "label": "FULL ROOM SWEEP",
+   "pos": "center"
+  },
+  {
+   "at": 0.911,
+   "dur": 2.18,
+   "type": "stat_count",
+   "to": 30,
+   "suffix": "s",
+   "label": "PER ROOM",
+   "pos": "center"
+  },
+  {
+   "at": 0.92,
+   "dur": 2.23,
+   "type": "bars",
+   "title": "DETECTION RATE",
+   "unit": "%",
+   "items": [
+    [
+     "Naked eye",
+     18
+    ],
+    [
+     "With app",
+     94
+    ]
+   ],
+   "pos": "center"
+  }
+ ],
+ "cta": {
+  "text": "Comment PRIVACY for the app.",
+  "code": "PRIVACY"
+ },
+ "caption": "Smoke detectors, alarm clocks, vents, TV frames, outlets — the five spots cams love. Check anything with a clear line of sight to the bed. Comment PRIVACY for the app. #privacy #airbnb #travelsafety #hiddencamera #traveltips #hotelroom #safetytips #former #hidden #tested #hotel",
+ "yt_title": "DIY hidden spy camera at home #shorts",
+ "trend_keys": [
+  "former",
+  "hidden",
+  "tested",
+  "hotel",
+  "spy",
+  "cameras",
+  "find",
+  "camera"
+ ],
+ "content_type": "viral",
+ "comp_angle": {
+  "title": "DIY hidden spy camera at home - using old phone camera",
+  "views": 1179125,
+  "channel": "i maker Official"
+ },
+ "virality": {
+  "score": 90,
+  "notes": [
+   "angle<-1179k",
+   "hook_boosted"
+  ],
+  "hook": "Stop scrolling. Smoke detectors: the number one hiding spot."
+ }
+}
