@@ -266,8 +266,9 @@ body{background:#444;font-family:'Manrope',sans-serif;padding:20px;min-height:10
 /* Штамп председателя поднят: круглая печать касается его лишь слегка снизу */
 .chairman-stamp{width:auto;max-width:55mm;max-height:20mm;display:block;justify-self:end;transform:translateY(-8mm)}
 .big-seal{width:40mm;height:auto;display:block;justify-self:end;opacity:.92;margin-top:-14mm}
-.sig-signature-1{width:26mm;height:auto;display:block}
-.sig-signature-2{width:28mm;height:auto;display:block}
+/* Росписи увеличены в 1.8 раза через scale — позиция не сдвигается */
+.sig-signature-1{width:26mm;height:auto;display:block;transform:scale(1.8);transform-origin:center right}
+.sig-signature-2{width:28mm;height:auto;display:block;transform:scale(1.8);transform-origin:center right}
 .footer-city{text-align:center;margin-top:4mm;font-family:'Playfair Display',serif;font-size:12.5pt;font-weight:700;color:#1a1a2a}
 .sample-mark{position:absolute;inset:0;z-index:9;display:flex;align-items:center;justify-content:center;pointer-events:none}
 .sample-mark span{font-family:'Playfair Display',serif;font-weight:900;font-size:52pt;letter-spacing:14px;color:rgba(200,40,60,.22);transform:rotate(-28deg);border:6px solid rgba(200,40,60,.18);padding:6mm 14mm;border-radius:8mm}
