@@ -1,0 +1,152 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Exora — 5 концептов логотипа</title>
+<style>
+  :root{
+    --bg-dark:#04070E; --bg-mid:#0a0f1a; --panel:rgba(255,255,255,.04);
+    --line:rgba(255,255,255,.09); --line-hi:rgba(255,255,255,.18);
+    --text:#F5F7FA; --muted:rgba(245,247,250,.62); --dim:rgba(245,247,250,.36);
+    --brand:#5ED29C;
+    --font:'Inter','SF Pro Text','Segoe UI',system-ui,-apple-system,sans-serif;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{background:var(--bg-dark);color:var(--text);font-family:var(--font);-webkit-font-smoothing:antialiased;padding:32px 20px 60px;max-width:1200px;margin:0 auto;line-height:1.5}
+  h1{font-size:32px;letter-spacing:-.03em;font-weight:800;margin-bottom:6px}
+  .sub{color:var(--muted);font-size:14px;margin-bottom:32px}
+  .card{background:var(--panel);border:1px solid var(--line);border-radius:24px;padding:24px;margin-bottom:20px;backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px)}
+  .card-h{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:20px;flex-wrap:wrap;gap:12px}
+  .card-h h2{font-size:22px;letter-spacing:-.02em;font-weight:800}
+  .card-h .tag{padding:4px 12px;border-radius:100px;background:rgba(94,210,156,.14);color:var(--brand);font-size:11px;font-weight:700;letter-spacing:.06em;text-transform:uppercase}
+  .desc{color:var(--muted);font-size:13.5px;margin-bottom:18px;line-height:1.55}
+  .grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:14px}
+  .swatch{border-radius:16px;overflow:hidden;position:relative;aspect-ratio:1;padding:18px;display:flex;align-items:center;justify-content:center;transition:.2s}
+  .swatch:hover{transform:translateY(-2px)}
+  .swatch.dark{background:linear-gradient(180deg,#04070E,#0a0f1a);border:1px solid rgba(255,255,255,.06)}
+  .swatch.light{background:linear-gradient(180deg,#f7f9fc,#e6ecf3);border:1px solid rgba(0,0,0,.06)}
+  .swatch.brand{background:linear-gradient(180deg,#3FBF86,#2A9A6B);border:1px solid rgba(255,255,255,.14)}
+  .swatch.mono{background:#0a0f1a;border:1px solid rgba(255,255,255,.06)}
+  .swatch svg{width:80%;height:80%;object-fit:contain}
+  .swatch .lbl{position:absolute;top:8px;left:12px;font-size:9.5px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;opacity:.5}
+  .swatch.light .lbl{color:#0a0d10}
+  .sm{aspect-ratio:auto;padding:16px 20px;height:80px}
+  .sm svg{width:48px;height:48px}
+  .sm .word{margin-left:14px;font-size:26px;font-weight:800;letter-spacing:-.03em}
+  .sm.dark .word{color:var(--text)}
+  .sm.light .word{color:#0a0d10}
+  .filerow{margin-top:14px;padding-top:14px;border-top:1px dashed var(--line);display:flex;flex-wrap:wrap;gap:8px}
+  .filerow a{padding:6px 12px;border-radius:8px;background:rgba(94,210,156,.12);color:var(--brand);font-size:12px;font-weight:600;text-decoration:none;transition:.15s;display:inline-flex;align-items:center;gap:5px}
+  .filerow a:hover{background:rgba(94,210,156,.2)}
+  .note{margin-top:32px;padding:18px 20px;border-radius:16px;background:rgba(94,210,156,.06);border:1px solid rgba(94,210,156,.24);color:var(--text);font-size:13.5px;line-height:1.6}
+  .note b{color:var(--brand)}
+  .foot{margin-top:36px;text-align:center;color:var(--dim);font-size:12px;padding-top:20px;border-top:1px solid var(--line)}
+</style>
+</head>
+<body>
+
+<h1>Exora — 5 концептов логотипа</h1>
+<div class="sub">Каждый в векторе (SVG) · готов к конвертации в PNG/PDF/EPS/ICO любых размеров</div>
+
+<!-- 01 -->
+<div class="card">
+  <div class="card-h">
+    <h2>1 · Exchange Arrows</h2>
+    <span class="tag">Обмен · Минимализм · Основной</span>
+  </div>
+  <div class="desc">
+    Буква <b>E</b> где средняя полоса — двунаправленная стрелка (символ обмена). Solid mint-gradient плитка, чёрная монограмма. Читается мгновенно, узнаваема с любого размера, работает как favicon 16×16.
+  </div>
+  <div class="grid">
+    <div class="swatch dark"><span class="lbl">Dark BG</span><img src="01-exchange-arrows.svg" style="width:82%"/></div>
+    <div class="swatch light"><span class="lbl">Light BG</span><img src="01-exchange-arrows.svg" style="width:82%"/></div>
+    <div class="swatch brand"><span class="lbl">On brand</span><img src="01-exchange-arrows.svg" style="width:82%"/></div>
+    <div class="swatch dark sm"><span class="lbl">Wordmark</span><img src="01-exchange-arrows.svg"/><span class="word">Exora</span></div>
+  </div>
+  <div class="filerow"><a href="01-exchange-arrows.svg" download>⬇ SVG</a></div>
+</div>
+
+<!-- 02 -->
+<div class="card">
+  <div class="card-h">
+    <h2>2 · Aurora Wave</h2>
+    <span class="tag">Премиум · Cinematic · Fintech-vibe</span>
+  </div>
+  <div class="desc">
+    3 gradient-волны (purple → mint → amber) образуют E через мягкую вертикальную стойку. Aurora-стилистика в духе <i>USD Halo</i>, <i>Ledger</i>, <i>Solana</i>. Ощущение движения, живого курса, современности.
+  </div>
+  <div class="grid">
+    <div class="swatch dark"><span class="lbl">Dark BG</span><img src="02-aurora-wave.svg" style="width:82%"/></div>
+    <div class="swatch mono"><span class="lbl">Alt dark</span><img src="02-aurora-wave.svg" style="width:82%"/></div>
+    <div class="swatch light"><span class="lbl">Light BG</span><img src="02-aurora-wave.svg" style="width:82%"/></div>
+    <div class="swatch dark sm"><span class="lbl">Wordmark</span><img src="02-aurora-wave.svg"/><span class="word">Exora</span></div>
+  </div>
+  <div class="filerow"><a href="02-aurora-wave.svg" download>⬇ SVG</a></div>
+</div>
+
+<!-- 03 -->
+<div class="card">
+  <div class="card-h">
+    <h2>3 · Hex Vault</h2>
+    <span class="tag">Крипто · Safety · Vault</span>
+  </div>
+  <div class="desc">
+    Гексагон (крипто-код), внутри мощная E с двойной обводкой, 6 узловых точек (blockchain nodes). Ассоциация с надёжностью, кошельком, защищённой сделкой. Идеально для крипто-обменника.
+  </div>
+  <div class="grid">
+    <div class="swatch dark"><span class="lbl">Dark BG</span><img src="03-hex-vault.svg" style="width:82%"/></div>
+    <div class="swatch mono"><span class="lbl">Alt dark</span><img src="03-hex-vault.svg" style="width:82%"/></div>
+    <div class="swatch light"><span class="lbl">Light BG</span><img src="03-hex-vault.svg" style="width:82%"/></div>
+    <div class="swatch dark sm"><span class="lbl">Wordmark</span><img src="03-hex-vault.svg"/><span class="word">Exora</span></div>
+  </div>
+  <div class="filerow"><a href="03-hex-vault.svg" download>⬇ SVG</a></div>
+</div>
+
+<!-- 04 -->
+<div class="card">
+  <div class="card-h">
+    <h2>4 · Infinity Flow</h2>
+    <span class="tag">Обмен 24/7 · Wordmark · Bold</span>
+  </div>
+  <div class="desc">
+    Символ бесконечности ∞ с двумя противонаправленными стрелками (обмен как бесконечный поток), в центре — E-cutout mint. Единственный вариант с текстом «EXORA» — сразу может использоваться как full-lockup.
+  </div>
+  <div class="grid">
+    <div class="swatch dark"><span class="lbl">Dark BG</span><img src="04-infinity-flow.svg" style="width:82%"/></div>
+    <div class="swatch light"><span class="lbl">Light BG</span><img src="04-infinity-flow.svg" style="width:82%"/></div>
+    <div class="swatch brand"><span class="lbl">On brand</span><img src="04-infinity-flow.svg" style="width:82%"/></div>
+    <div class="swatch dark sm"><span class="lbl">Wordmark</span><img src="04-infinity-flow.svg"/><span class="word">Exora</span></div>
+  </div>
+  <div class="filerow"><a href="04-infinity-flow.svg" download>⬇ SVG</a></div>
+</div>
+
+<!-- 05 -->
+<div class="card">
+  <div class="card-h">
+    <h2>5 · Prism Facet</h2>
+    <span class="tag">Diamond · Многоцвет · Модерн-арт</span>
+  </div>
+  <div class="desc">
+    3 гранёные фасетки (mint → cyan → purple), сложенные в E-форму, соединённые светлым «хребтом». Ассоциация с кристаллом, spectrum, ценностью. Самый «арт»-вариант, не похож ни на кого.
+  </div>
+  <div class="grid">
+    <div class="swatch dark"><span class="lbl">Dark BG</span><img src="05-prism-facet.svg" style="width:82%"/></div>
+    <div class="swatch mono"><span class="lbl">Alt dark</span><img src="05-prism-facet.svg" style="width:82%"/></div>
+    <div class="swatch light"><span class="lbl">Light BG</span><img src="05-prism-facet.svg" style="width:82%"/></div>
+    <div class="swatch dark sm"><span class="lbl">Wordmark</span><img src="05-prism-facet.svg"/><span class="word">Exora</span></div>
+  </div>
+  <div class="filerow"><a href="05-prism-facet.svg" download>⬇ SVG</a></div>
+</div>
+
+<div class="note">
+  <b>Как использовать:</b> все 5 — векторные SVG. Выберешь один — я сделаю полный пак:
+  PNG (16, 32, 64, 128, 256, 512, 1024, 2048), ICO для favicon, PDF для печати, EPS для типографии,
+  монохром/light/dark варианты, transparent + background, wordmark-lockup (горизонтальный + вертикальный),
+  social preview (1200×630), app icon iOS/Android, brand-guide PDF. Всё как у OKO.
+</div>
+
+<div class="foot">Exora Crypto Exchange · 2026 · концепты 1–5</div>
+
+</body>
+</html>

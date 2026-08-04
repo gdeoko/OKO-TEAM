@@ -1,0 +1,57 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" fill="none">
+  <title>Exora — Hex Vault Logo</title>
+  <defs>
+    <linearGradient id="gh" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#0f1c2e"/>
+      <stop offset="100%" stop-color="#04070E"/>
+    </linearGradient>
+    <linearGradient id="ghAcc" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#68DDA6"/>
+      <stop offset="100%" stop-color="#3FBF86"/>
+    </linearGradient>
+    <linearGradient id="ghSheen" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="rgba(255,255,255,.16)"/>
+      <stop offset="35%" stop-color="rgba(255,255,255,0)"/>
+    </linearGradient>
+    <filter id="glow3" x="-30%" y="-30%" width="160%" height="160%">
+      <feGaussianBlur stdDeviation="10"/>
+    </filter>
+  </defs>
+
+  <!-- Dark plate -->
+  <rect x="16" y="16" width="480" height="480" rx="108" fill="url(#gh)"/>
+  <rect x="18" y="18" width="476" height="476" rx="106" fill="url(#ghSheen)"/>
+
+  <!-- Outer hex frame -->
+  <g stroke="rgba(94,210,156,.35)" fill="none">
+    <path d="M 256 88 L 384 168 L 384 344 L 256 424 L 128 344 L 128 168 Z" stroke-width="2"/>
+    <path d="M 256 108 L 366 178 L 366 334 L 256 404 L 146 334 L 146 178 Z" stroke-width="1"/>
+  </g>
+
+  <!-- Filled hex accent -->
+  <g filter="url(#glow3)" opacity=".4">
+    <path d="M 256 128 L 348 190 L 348 322 L 256 384 L 164 322 L 164 190 Z" fill="url(#ghAcc)"/>
+  </g>
+
+  <!-- Bold E -->
+  <g transform="translate(180 168)" fill="url(#ghAcc)">
+    <rect x="0" y="0" width="152" height="36" rx="10"/>
+    <rect x="0" y="0" width="36" height="176" rx="10"/>
+    <rect x="0" y="140" width="152" height="36" rx="10"/>
+    <rect x="0" y="70" width="118" height="36" rx="10"/>
+  </g>
+  <g transform="translate(180 168)" fill="url(#ghSheen)" opacity=".7">
+    <rect x="0" y="0" width="152" height="36" rx="10"/>
+    <rect x="0" y="0" width="36" height="176" rx="10"/>
+    <rect x="0" y="140" width="152" height="36" rx="10"/>
+    <rect x="0" y="70" width="118" height="36" rx="10"/>
+  </g>
+
+  <!-- Corner nodes (circuit) -->
+  <circle cx="256" cy="88"  r="6" fill="#5ED29C"/>
+  <circle cx="384" cy="168" r="6" fill="#5ED29C"/>
+  <circle cx="384" cy="344" r="6" fill="#5ED29C"/>
+  <circle cx="256" cy="424" r="6" fill="#5ED29C"/>
+  <circle cx="128" cy="344" r="6" fill="#5ED29C"/>
+  <circle cx="128" cy="168" r="6" fill="#5ED29C"/>
+</svg>

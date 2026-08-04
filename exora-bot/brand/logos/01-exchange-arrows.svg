@@ -1,0 +1,38 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" fill="none">
+  <title>Exora — Exchange Arrows Logo</title>
+  <defs>
+    <linearGradient id="g1" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#68DDA6"/>
+      <stop offset="60%" stop-color="#3FBF86"/>
+      <stop offset="100%" stop-color="#2A9A6B"/>
+    </linearGradient>
+    <linearGradient id="g1s" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="rgba(255,255,255,.4)"/>
+      <stop offset="30%" stop-color="rgba(255,255,255,0)"/>
+    </linearGradient>
+    <filter id="glow1" x="-30%" y="-30%" width="160%" height="160%">
+      <feGaussianBlur stdDeviation="18"/>
+    </filter>
+  </defs>
+
+  <!-- Rounded square shell -->
+  <rect x="16" y="16" width="480" height="480" rx="108" fill="url(#g1)"/>
+  <rect x="18" y="18" width="476" height="476" rx="106" fill="url(#g1s)" opacity=".55"/>
+
+  <!-- Inner mark: E where middle bar is 2-way arrow (обмен) -->
+  <g transform="translate(120 120)" fill="#062018">
+    <!-- Top bar -->
+    <rect x="0" y="0" width="272" height="42" rx="14"/>
+    <!-- Left stem -->
+    <rect x="0" y="0" width="42" height="272" rx="14"/>
+    <!-- Bottom bar -->
+    <rect x="0" y="230" width="272" height="42" rx="14"/>
+    <!-- Middle: two-way arrow (exchange) -->
+    <rect x="42" y="118" width="196" height="36" rx="10"/>
+    <path d="M 62 100 L 44 136 L 62 172 Z"/>
+    <path d="M 218 100 L 236 136 L 218 172 Z"/>
+  </g>
+
+  <!-- Subtle bottom shadow -->
+  <ellipse cx="256" cy="466" rx="200" ry="6" fill="rgba(0,0,0,.15)"/>
+</svg>
