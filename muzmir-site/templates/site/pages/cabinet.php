@@ -206,6 +206,29 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             flash('Промокод «' . ($ref['code'] ?? '') . '» создан.', 'success');
         }
         redirect('/cabinet');
+    } elseif ($action === 'edit_app') {
+        // Редактирование своей заявки — только до оценки/отправки результата.
+        $appId = (int) input('app_id');
+        $app = one("SELECT * FROM applications WHERE id=? AND user_id=?", [$appId, $uid]);
+        $editable = ['new','submitted','pending','paid','judging'];
+        if (!$app) {
+            flash('Заявка не найдена.', 'error');
+        } elseif (!in_array((string)$app['status'], $editable, true)) {
+            flash('Эту заявку уже нельзя изменить — результат подведён или заявка отклонена.', 'warning');
+        } else {
+            update('applications', [
+                'full_name'    => mb_substr(trim(input('full_name')), 0, 200),
+                'group_name'   => mb_substr(trim(input('group_name')), 0, 200),
+                'age_category' => mb_substr(trim(input('age_category')), 0, 60),
+                'nomination'   => mb_substr(trim(input('nomination')), 0, 120),
+                'teacher'      => mb_substr(trim(input('teacher')), 0, 200),
+                'institution'  => mb_substr(trim(input('institution')), 0, 200),
+                'work_title'   => mb_substr(trim(input('work_title')), 0, 200),
+            ], 'id=:wid', ['wid' => $appId]);
+            audit('application_edit', 'application', $appId);
+            flash('Заявка обновлена.', 'success');
+        }
+        redirect('/cabinet#apps');
     }
 }
 
@@ -680,6 +703,26 @@ ob_start(); ?>
                 <dl class="cab-info">
                   <?php foreach ($info as [$il,$iv]): ?><dt><?= h($il) ?></dt><dd><?= h($iv) ?></dd><?php endforeach; ?>
                 </dl>
+              <?php endif; ?>
+              <?php $editable = in_array((string)$a['status'], ['new','submitted','pending','paid','judging'], true); ?>
+              <?php if ($editable): ?>
+                <details class="cab-edit" style="margin-top:8px">
+                  <summary style="cursor:pointer;color:var(--gold-ink,#8B6F1F);font-weight:700;font-size:.9rem;list-style:none">Изменить заявку</summary>
+                  <form method="post" action="<?= url('/cabinet') ?>" style="margin-top:12px;display:grid;gap:10px">
+                    <?= csrf_field() ?>
+                    <input type="hidden" name="action" value="edit_app">
+                    <input type="hidden" name="app_id" value="<?= (int)$a['id'] ?>">
+                    <div class="field" style="margin:0"><label>ФИО участника</label><input type="text" name="full_name" value="<?= h($a['full_name'] ?? '') ?>"></div>
+                    <div class="field" style="margin:0"><label>Название коллектива</label><input type="text" name="group_name" value="<?= h($a['group_name'] ?? '') ?>"></div>
+                    <div class="field" style="margin:0"><label>Возрастная категория</label><input type="text" name="age_category" value="<?= h($a['age_category'] ?? '') ?>"></div>
+                    <div class="field" style="margin:0"><label>Номинация</label><input type="text" name="nomination" value="<?= h($a['nomination'] ?? '') ?>"></div>
+                    <div class="field" style="margin:0"><label>Преподаватель</label><input type="text" name="teacher" value="<?= h($a['teacher'] ?? '') ?>"></div>
+                    <div class="field" style="margin:0"><label>Учреждение</label><input type="text" name="institution" value="<?= h($a['institution'] ?? '') ?>"></div>
+                    <div class="field" style="margin:0"><label>Название конкурсного номера</label><input type="text" name="work_title" value="<?= h($a['work_title'] ?? '') ?>"></div>
+                    <button type="submit" class="btn btn--primary btn--sm">Сохранить изменения</button>
+                    <p class="hint" style="margin:0">Редактирование доступно до подведения итогов.</p>
+                  </form>
+                </details>
               <?php endif; ?>
               <?php if ($isRej): ?>
                 <p class="cab-reject">Заявка отклонена. Свяжитесь с нами для уточнения.</p>

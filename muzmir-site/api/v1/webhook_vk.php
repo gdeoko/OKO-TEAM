@@ -136,6 +136,30 @@ function vk_cb_ack_then_process(string $type): void {
         insert('chat_messages', ['user_id' => null, 'session_key' => $sessionKey, 'role' => 'assistant', 'text' => $reply, 'file' => '']);
         if ($closing) chat_mark_dialog_end($sessionKey); // маркер — ПОСЛЕ ответа, чтобы следующий диалог снова здоровался
 
+        // Тихая эскалация оператору в Телеграм: участник просит живого человека / жалоба / возврат.
+        try {
+            $tl = mb_strtolower($text);
+            $trg = ['оператор','живой человек','с человеком','менеджер','жалоб','недоволен','верните деньги','возврат','не помог','позовите','соедините','администратор','сотрудник','обман'];
+            $hitVk = false;
+            foreach ($trg as $w) if ($text !== '' && mb_strpos($tl, $w) !== false) { $hitVk = true; break; }
+            $doneVk = (int) scalar("SELECT COUNT(*) FROM chat_messages WHERE session_key=? AND role='escalated'", [$sessionKey]);
+            if ($hitVk && $doneVk === 0) {
+                if (!function_exists('owner_notify') && is_file(BASE_PATH . '/core/notify_owner.php')) require_once BASE_PATH . '/core/notify_owner.php';
+                if (function_exists('owner_notify')) {
+                    $hist = all("SELECT role,text FROM chat_messages WHERE session_key=? AND role IN ('user','assistant') ORDER BY id DESC LIMIT 10", [$sessionKey]);
+                    $tr = [];
+                    foreach (array_reverse($hist) as $r) { $tx = trim((string)$r['text']); if ($tx!=='') $tr[] = ($r['role']==='user'?'👤':'🤖').' '.mb_substr($tx,0,200); }
+                    owner_notify('ЧАТ-БОТ', '🔔 Нужен оператор (ВКонтакте) — участник просит живого человека', implode("\n", $tr), [
+                        'Участник ВК' => $name ?: ('peer ' . $peer),
+                        'peer_id'     => (string)$peer,
+                        'Ссылка'      => 'https://vk.com/gim' . (int) cfgv('vk_group_id', 211325055) . '?sel=' . $peer,
+                        '_event'      => 'chat_escalation_vk',
+                    ]);
+                }
+                insert('chat_messages', ['user_id' => null, 'session_key' => $sessionKey, 'role' => 'escalated', 'text' => '', 'file' => '']);
+            }
+        } catch (\Throwable $e) { /* тихо */ }
+
         // Человеческая пауза 20-30 сек (для коротких/повторных — 8-14 сек) с «печатает…».
         // Выполняется ОТДЕЛЬНЫМ отсоединённым процессом, чтобы НЕ держать php-fpm воркер
         // (пул из 5 — иначе подвиснет весь сайт). Индикатор «печатает…» уже показан выше.
