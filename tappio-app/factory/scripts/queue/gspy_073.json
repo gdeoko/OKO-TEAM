@@ -1,0 +1,232 @@
+{
+ "id": "gspy_073",
+ "app": "spy",
+ "voice": "en-US-AndrewNeural",
+ "rate": "+4%",
+ "grade": "clean_ad",
+ "brand": {
+  "accent": "#00D9FF",
+  "accent2": "#7CFCFF",
+  "code": "PRIVACY",
+  "logo": "spy.png",
+  "name": "SPY CAMERA FINDER"
+ },
+ "music": {
+  "queries": [
+   "hype trap beat",
+   "dark tension electronic",
+   "neon night synth",
+   "cyber suspense pulse"
+  ]
+ },
+ "cover": {
+  "kicker": "WI-FI SCAN",
+  "top": "EVERY HIDDEN CAM",
+  "big": "IS ON THE\nNETWORK",
+  "q": [
+   "network cables server blue light"
+  ]
+ },
+ "segments": [
+  {
+   "id": "b1",
+   "text": "Checked into a rental? A hidden lens could be watching."
+  },
+  {
+   "id": "b2",
+   "text": "Most spy cams need Wi-Fi. That is their weak spot."
+  },
+  {
+   "id": "b3",
+   "text": "Open the app, scan the network in seconds."
+  },
+  {
+   "id": "b4",
+   "text": "It flags every unknown device on that router."
+  },
+  {
+   "id": "b5",
+   "text": "Then sweep the room: your camera catches the IR glint."
+  },
+  {
+   "id": "b6",
+   "text": "One scan before you unpack. Peace of mind, instantly."
+  }
+ ],
+ "shots": [
+  {
+   "q": [
+    "closet wardrobe hotel room"
+   ],
+   "insert": "rrect",
+   "pos": "lower"
+  },
+  {
+   "q": [
+    "air vent grille ceiling"
+   ],
+   "motion": "panup"
+  },
+  {
+   "q": [
+    "network cables server blue light"
+   ],
+   "insert": "tv",
+   "pos": "center"
+  },
+  {
+   "q": [
+    "airbnb apartment cozy night"
+   ],
+   "motion": "zout"
+  },
+  {
+   "q": [
+    "smoke detector ceiling closeup"
+   ],
+   "insert": "diamond",
+   "pos": "center"
+  },
+  {
+   "q": [
+    "traveler suitcase hotel hallway"
+   ],
+   "motion": "panl"
+  },
+  {
+   "q": [
+    "security camera lens macro"
+   ],
+   "insert": "hexagon",
+   "pos": "lower"
+  },
+  {
+   "q": [
+    "person entering hotel room luggage"
+   ],
+   "motion": "zin"
+  },
+  {
+   "q": [
+    "surveillance concept eye lens"
+   ],
+   "insert": "circle",
+   "pos": "upper"
+  },
+  {
+   "q": [
+    "desk lamp table hotel"
+   ],
+   "motion": "panr"
+  },
+  {
+   "q": [
+    "bookshelf decor living room"
+   ],
+   "insert": "tilt",
+   "pos": "center"
+  },
+  {
+   "q": [
+    "door lock hotel keycard"
+   ],
+   "motion": "pandown"
+  },
+  {
+   "q": [
+    "person relaxing bed phone night"
+   ],
+   "insert": "phone",
+   "pos": "upper"
+  }
+ ],
+ "overlays": [
+  {
+   "at": 0.087,
+   "dur": 1.8,
+   "type": "kicker",
+   "text": "WI-FI SCAN"
+  },
+  {
+   "at": 0.101,
+   "dur": 2.37,
+   "type": "chips",
+   "items": [
+    "VENTS",
+    "CLOCKS",
+    "OUTLETS",
+    "TVs"
+   ],
+   "pos": "upper"
+  },
+  {
+   "at": 0.174,
+   "dur": 1.91,
+   "type": "kinetic",
+   "top": "LOOK",
+   "big": "CLOSER"
+  },
+  {
+   "at": 0.341,
+   "dur": 1.78,
+   "type": "gauge",
+   "to": 94,
+   "max": 100,
+   "suffix": "%",
+   "label": "DETECTION RATE",
+   "pos": "center"
+  },
+  {
+   "at": 0.473,
+   "dur": 1.61,
+   "type": "callout",
+   "text": "LINE OF SIGHT = RED FLAG",
+   "pos": "center"
+  },
+  {
+   "at": 0.568,
+   "dur": 2.01,
+   "type": "ticker",
+   "to": 2,
+   "suffix": "",
+   "label": "SIGNALS CHECKED",
+   "pos": "lower"
+  },
+  {
+   "at": 0.865,
+   "dur": 2.6,
+   "type": "checklist",
+   "items": [
+    "Scan Wi-Fi",
+    "Lights off",
+    "Check vents",
+    "Unplug unknowns"
+   ],
+   "pos": "center"
+  },
+  {
+   "at": 0.904,
+   "dur": 1.76,
+   "type": "lowerthird",
+   "title": "SCAN THE WI-FI",
+   "sub": "unknown devices appear"
+  }
+ ],
+ "cta": {
+  "text": "Comment PRIVACY for the app.",
+  "code": "PRIVACY"
+ },
+ "caption": "Checked into a rental? Hidden cams live on the Wi-Fi. Scan the network, flag every unknown device, then sweep for the IR glint. Comment PRIVACY for the app. #privacy #airbnb #travelsafety #hiddencamera #traveltips #hotelroom #safetytips #airbnb #hidden #spy #cameras",
+ "yt_title": "Find hidden cameras with a Wi-Fi scan #shorts",
+ "trend_keys": [
+  "airbnb",
+  "hidden",
+  "spy",
+  "cameras",
+  "funniest",
+  "caught",
+  "find",
+  "camera"
+ ],
+ "content_type": "viral"
+}
