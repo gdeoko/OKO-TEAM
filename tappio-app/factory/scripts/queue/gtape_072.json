@@ -1,0 +1,248 @@
+{
+ "id": "gtape_072",
+ "app": "tape",
+ "voice": "en-US-ChristopherNeural",
+ "rate": "+7%",
+ "grade": "teal_orange",
+ "brand": {
+  "accent": "#F4C430",
+  "accent2": "#FFE08A",
+  "code": "MEASURE",
+  "logo": "tape.png",
+  "name": "3D TAPE MEASURE"
+ },
+ "music": {
+  "queries": [
+   "calm focus ambient",
+   "cheerful folk clap",
+   "bright pop home"
+  ]
+ },
+ "cover": {
+  "kicker": "10 SECONDS",
+  "top": "A TAPE MEASURE",
+  "big": "IN YOUR\nPOCKET",
+  "q": [
+   "rolled up rug floor room"
+  ]
+ },
+ "segments": [
+  {
+   "id": "b1",
+   "text": "You always have your phone. Now it measures too."
+  },
+  {
+   "id": "b2",
+   "text": "No tape, no marks, no second person."
+  },
+  {
+   "id": "b3",
+   "text": "Tap two points and read the distance."
+  },
+  {
+   "id": "b4",
+   "text": "Rooms, walls, furniture, all in seconds."
+  },
+  {
+   "id": "b5",
+   "text": "Save projects and share the sizes."
+  },
+  {
+   "id": "b6",
+   "text": "The tape measure you never forget at home."
+  }
+ ],
+ "shots": [
+  {
+   "q": [
+    "cozy furnished living room warm light"
+   ],
+   "motion": "zin"
+  },
+  {
+   "q": [
+    "hands holding phone ar app screen"
+   ],
+   "insert": "circle",
+   "pos": "upper"
+  },
+  {
+   "q": [
+    "person measuring living room with phone ar"
+   ],
+   "motion": "panl"
+  },
+  {
+   "q": [
+    "carpenter measuring wood workshop"
+   ],
+   "insert": "arch",
+   "pos": "center"
+  },
+  {
+   "q": [
+    "bookshelf assembly instructions floor"
+   ],
+   "motion": "pandown"
+  },
+  {
+   "q": [
+    "moving boxes new apartment"
+   ],
+   "insert": "rrect",
+   "pos": "center"
+  },
+  {
+   "q": [
+    "bedroom bed frame assembly"
+   ],
+   "motion": "panup"
+  },
+  {
+   "q": [
+    "hands arranging shelf wall decor"
+   ],
+   "insert": "tv",
+   "pos": "upper"
+  },
+  {
+   "q": [
+    "closet organizer measuring wardrobe"
+   ],
+   "motion": "panr"
+  },
+  {
+   "q": [
+    "picture frame hanging wall level"
+   ],
+   "insert": "diamond",
+   "pos": "center"
+  },
+  {
+   "q": [
+    "furniture store showroom sofa"
+   ],
+   "motion": "zout"
+  },
+  {
+   "q": [
+    "hand pointing phone at wall measuring"
+   ],
+   "insert": "tilt",
+   "pos": "center"
+  },
+  {
+   "q": [
+    "rolled up rug floor room"
+   ],
+   "motion": "zin"
+  }
+ ],
+ "overlays": [
+  {
+   "at": 0.036,
+   "dur": 1.68,
+   "type": "kicker",
+   "text": "AR MEASURE"
+  },
+  {
+   "at": 0.156,
+   "dur": 1.78,
+   "type": "gauge",
+   "to": 10,
+   "max": 60,
+   "suffix": "s",
+   "label": "PER MEASUREMENT",
+   "pos": "center"
+  },
+  {
+   "at": 0.214,
+   "dur": 1.63,
+   "type": "lowerthird",
+   "title": "MEASURE THE DOOR",
+   "sub": "then measure the sofa"
+  },
+  {
+   "at": 0.228,
+   "dur": 2.13,
+   "type": "bars",
+   "title": "FURNITURE RETURNS",
+   "unit": "%",
+   "items": [
+    [
+     "Guessing",
+     22
+    ],
+    [
+     "Measured",
+     4
+    ]
+   ],
+   "pos": "center"
+  },
+  {
+   "at": 0.382,
+   "dur": 1.95,
+   "type": "chips",
+   "items": [
+    "LENGTH",
+    "WIDTH",
+    "HEIGHT",
+    "AREA"
+   ],
+   "pos": "lower"
+  },
+  {
+   "at": 0.493,
+   "dur": 2.6,
+   "type": "checklist",
+   "items": [
+    "Point the phone",
+    "Tap two points",
+    "Read the length",
+    "Save the project"
+   ],
+   "pos": "center"
+  },
+  {
+   "at": 0.527,
+   "dur": 2.23,
+   "type": "stat_count",
+   "to": 3,
+   "suffix": "%",
+   "label": "ERROR",
+   "pos": "center"
+  },
+  {
+   "at": 0.608,
+   "dur": 2.17,
+   "type": "callout",
+   "text": "MEASURE FROM THE COUCH",
+   "pos": "center"
+  },
+  {
+   "at": 0.813,
+   "dur": 2.28,
+   "type": "kinetic",
+   "top": "MEASURE",
+   "big": "ANY ROOM"
+  }
+ ],
+ "cta": {
+  "text": "Comment MEASURE for the app.",
+  "code": "MEASURE"
+ },
+ "caption": "USEFUL: You always have your phone — now it measures too. No tape, no marks, no helper. Tap two points, read the distance, save the project. Comment MEASURE for the app. #diy #homedecor #interiordesign #measure #movingtips #renter #apartmenttherapy #measure #app #iphone #furniture",
+ "yt_title": "A tape measure that lives in your pocket #shorts",
+ "trend_keys": [
+  "measure",
+  "app",
+  "iphone",
+  "furniture",
+  "design",
+  "arrange",
+  "use",
+  "space"
+ ],
+ "content_type": "useful"
+}
