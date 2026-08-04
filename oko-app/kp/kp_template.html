@@ -213,7 +213,7 @@ body.scrolled .scroll-hint{opacity:0!important;pointer-events:none}
 .ocard-tag{font-size:10px;letter-spacing:2px;text-transform:uppercase;color:var(--lime);font-weight:700}
 .ocard-name{font-family:'Unbounded',sans-serif;font-size:clamp(19px,3.2vw,30px);font-weight:900;line-height:1.05}
 /* horizontal auto carousel */
-.hcaro{position:relative;overflow:hidden;margin-top:14px;-webkit-mask-image:linear-gradient(90deg,transparent,#000 5%,#000 95%,transparent);mask-image:linear-gradient(90deg,transparent,#000 5%,#000 95%,transparent)}
+.hcaro{position:relative;overflow:hidden;margin-top:14px;}
 .hcaro-track{display:flex;gap:14px;width:max-content;will-change:transform}
 .vcard{width:210px;flex:0 0 auto;border-radius:16px;overflow:hidden;background:#0a0c0a;border:1px solid var(--border);transition:border-color .3s,transform .3s}
 .vcard:hover{border-color:var(--border-lime);transform:translateY(-4px)}
@@ -307,7 +307,7 @@ details.tier-detail[open] .tier-detail-h .ar{transform:rotate(90deg)}
 .scarce{display:inline-flex;align-items:center;gap:8px;background:rgba(255,60,60,.08);border:1px solid rgba(255,80,80,.25);color:#ff9a9a;font-size:12px;font-weight:700;padding:8px 16px;border-radius:30px;margin:0 auto}
 .scarce .d{width:7px;height:7px;background:#ff5a5a;border-radius:50%;animation:blink 1.4s infinite}
 /* REVIEWS — circles */
-.rev-caro{position:relative;overflow:hidden;margin-top:10px;padding:6px 0 12px;-webkit-mask-image:linear-gradient(90deg,transparent,#000 5%,#000 95%,transparent);mask-image:linear-gradient(90deg,transparent,#000 5%,#000 95%,transparent)}
+.rev-caro{position:relative;overflow:hidden;margin-top:10px;padding:6px 0 12px;}
 .rev-track{display:flex;gap:14px;width:max-content;will-change:transform}
 .rcirc{flex:0 0 auto;width:118px;text-align:center;cursor:pointer}
 .rcirc-v{width:118px;height:118px;border-radius:50%;overflow:hidden;position:relative;border:2px solid var(--lime);box-shadow:0 0 22px rgba(154,255,0,.25);background:#0a0c0a}
@@ -316,7 +316,7 @@ details.tier-detail[open] .tier-detail-h .ar{transform:rotate(90deg)}
 .rcirc.voice .rcirc-v{border-style:dashed;display:flex;align-items:center;justify-content:center}
 .rcirc-nm{font-size:11px;color:var(--w2);margin-top:8px;font-weight:600}
 .rcirc-play{width:40px;height:40px;border-radius:50%;background:var(--lime);border:none;cursor:pointer;display:flex;align-items:center;justify-content:center}
-.trev-caro{position:relative;overflow:hidden;margin-top:16px;-webkit-mask-image:linear-gradient(90deg,transparent,#000 5%,#000 95%,transparent);mask-image:linear-gradient(90deg,transparent,#000 5%,#000 95%,transparent)}
+.trev-caro{position:relative;overflow:hidden;margin-top:16px;}
 .trev-track{display:flex;gap:14px;width:max-content;will-change:transform}
 .trev{width:300px;flex:0 0 auto;background:rgba(255,255,255,.03);border:1px solid var(--border);border-radius:16px;padding:18px}
 .trev-h{display:flex;align-items:center;gap:10px;margin-bottom:10px}
@@ -604,7 +604,7 @@ details.tier-detail[open] .tier-detail-h .ar{transform:rotate(90deg)}
 </section>
 
 <!-- HERO CLONE (бесшовный луп) -->
-<section class="hero" id="heroClone" aria-hidden="true">
+<section class="hero" id="heroClone" aria-hidden="true" style="display:none">
   <div class="eye-wrap"><div id="holoEye2" class="holo-anchor" style="width:100%;height:100%"></div></div>
   <div class="hero-badge"><span class="hbdot"></span>Экосистема роста бизнеса под ключ</div>
   <h1 class="hero-title">О<span class="lime">К</span>О</h1>
@@ -868,8 +868,46 @@ function build(){
   });
   gsap.utils.toArray('[data-n]').forEach(function(el){var to=+el.getAttribute('data-n'),suf=el.getAttribute('data-suf')||'';ST.create({trigger:el,start:'top 92%',once:true,onEnter:function(){var o={v:0};gsap.to(o,{v:to,duration:1.4,ease:'power2.out',onUpdate:function(){el.textContent=Math.round(o.v)+suf;}});}});});
   if(!TOUCH)document.querySelectorAll('.magnetic').forEach(function(b){b.addEventListener('pointermove',function(e){var r=b.getBoundingClientRect();gsap.to(b,{x:(e.clientX-r.left-r.width/2)*.3,y:(e.clientY-r.top-r.height/2)*.4,duration:.4});});b.addEventListener('pointerleave',function(){gsap.to(b,{x:0,y:0,duration:.5,ease:'elastic.out(1,0.4)'});});});
-  /* marquees */
-  function marquee(track,speed){if(!track||!track.children.length)return;track.innerHTML=track.innerHTML+track.innerHTML;var half=track.scrollWidth/2,pos=0,last=null;function step(t){if(last==null)last=t;var dt=(t-last)/1000;last=t;pos-=speed*dt;if(pos<=-half)pos+=half;track.style.transform='translate3d('+pos+'px,0,0)';requestAnimationFrame(step);}requestAnimationFrame(step);}
+  /* marquees с ручным свайпом (авто + drag/swipe + продолжение авто) */
+  function marquee(track,speed){
+    if(!track||!track.children.length)return;
+    track.innerHTML=track.innerHTML+track.innerHTML;   // дублируем для бесшовного лупа
+    track.style.cursor='grab';track.style.touchAction='pan-y';track.style.userSelect='none';track.style.webkitUserSelect='none';
+    var half=track.scrollWidth/2, pos=0, last=null, dragging=false, sx=0, sPos=0, vel=0, lastMoveT=0, lastX=0;
+    function norm(p){ p=p%half; if(p>0)p-=half; return p; }
+    function apply(){ track.style.transform='translate3d('+pos+'px,0,0)'; }
+    function step(t){
+      if(last==null)last=t; var dt=(t-last)/1000; last=t;
+      if(!dragging){
+        pos-=speed*dt;
+        if(Math.abs(vel)>1){ pos+=vel*dt; vel*=Math.pow(0.001,dt); }   // инерция после свайпа
+        pos=norm(pos); apply();
+      }
+      requestAnimationFrame(step);
+    }
+    var container=track.parentElement;
+    function down(e){ dragging=true; last=null;
+      var x=e.touches?e.touches[0].clientX:e.clientX;
+      sx=x; sPos=pos; lastX=x; lastMoveT=performance.now(); vel=0;
+      track.style.cursor='grabbing';
+    }
+    function move(e){
+      if(!dragging)return;
+      var x=e.touches?e.touches[0].clientX:e.clientX;
+      pos=norm(sPos+(x-sx)); apply();
+      var now=performance.now(), dt=Math.max(16,now-lastMoveT)/1000;
+      vel=(x-lastX)/dt; lastX=x; lastMoveT=now;
+    }
+    function up(){ if(!dragging)return; dragging=false; track.style.cursor='grab'; }
+    container.addEventListener('pointerdown',down);
+    addEventListener('pointermove',move);
+    addEventListener('pointerup',up);
+    addEventListener('pointercancel',up);
+    container.addEventListener('touchstart',down,{passive:true});
+    addEventListener('touchmove',move,{passive:true});
+    addEventListener('touchend',up);
+    requestAnimationFrame(step);
+  }
   document.querySelectorAll('.hcaro-track').forEach(function(tr,i){marquee(tr,26+(i%3)*5);});
   marquee(document.querySelector('.trev-track'),30);
   marquee(document.querySelector('.rev-track'),22);
@@ -1061,7 +1099,7 @@ window.playVoice=function(btn){var a=btn.parentElement.parentElement.querySelect
 })();
 </script>
 <script type="module">
-import { initHolo } from './js/holo.js?v=108';
+import { initHolo } from './js/holo.js?v=109';
 function go(){ try{ initHolo(); }catch(e){ console.log('holo',e); } }
 if(document.readyState==='complete') setTimeout(go,200); else window.addEventListener('load',()=>setTimeout(go,200));
 </script>
