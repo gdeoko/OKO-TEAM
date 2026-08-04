@@ -137,6 +137,32 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             }
         }
 
+        // Письмо поддержки министерства — в галерею ministry_letters (новые сверху).
+        if (!empty($_FILES['ministry_letter']) && ($_FILES['ministry_letter']['error'] ?? UPLOAD_ERR_NO_FILE) === UPLOAD_ERR_OK
+            && is_uploaded_file($_FILES['ministry_letter']['tmp_name'])) {
+            $mlExt = strtolower(pathinfo((string)$_FILES['ministry_letter']['name'], PATHINFO_EXTENSION));
+            if ($mlExt === 'jpeg') $mlExt = 'jpg';
+            if (in_array($mlExt, ['png','jpg','webp'], true) && (int)$_FILES['ministry_letter']['size'] <= 15*1024*1024) {
+                $mlDir = BASE_PATH . '/public/uploads/ministry/';
+                if (!is_dir($mlDir)) @mkdir($mlDir, 0775, true);
+                $mlName = 'ml_' . $id . '_' . substr(bin2hex(random_bytes(4)), 0, 8) . '.' . $mlExt;
+                if (@move_uploaded_file($_FILES['ministry_letter']['tmp_name'], $mlDir . $mlName)) {
+                    try {
+                        q("CREATE TABLE IF NOT EXISTS ministry_letters (id INTEGER PRIMARY KEY AUTOINCREMENT, region TEXT, title TEXT, image_path TEXT, sort INTEGER DEFAULT 0)");
+                        insert('ministry_letters', [
+                            'region'     => mb_substr(trim(input('ministry_region')), 0, 160) ?: 'Министерство культуры',
+                            'title'      => mb_substr((string)$data['name'], 0, 200),
+                            'image_path' => 'uploads/ministry/' . $mlName,
+                            'sort'       => 0,
+                        ]);
+                        flash('Письмо министерства загружено в галерею.', 'success');
+                    } catch (\Throwable $e) { /* тихо */ }
+                }
+            } else {
+                flash('Письмо министерства должно быть изображением (png/jpg/webp) до 15 МБ.', 'error');
+            }
+        }
+
         // Событие сайта -> мозг-агент при смене статуса конкурса.
         require_once BASE_PATH . '/core/events.php';
         $newStatus = $data['status'];
@@ -419,6 +445,11 @@ if ($action === 'edit') {
             <div class="hint">Афиша показывается в календаре и на карточке конкурса; клик по ней ведёт на подачу заявки.</div>
           </div>
           <input type="hidden" name="cover" value="<?= h($c['cover']) ?>">
+          <div class="field"><label>Письмо поддержки министерства (png/jpg/webp до 15 МБ)</label>
+            <input type="file" name="ministry_letter" accept="image/*">
+            <input type="text" name="ministry_region" placeholder="Регион/ведомство (напр.: Министерство культуры)" value="" style="margin-top:8px">
+            <div class="hint">Загруженное письмо появится в разделе «Письма министерств» (новые — сверху).</div>
+          </div>
         </div>
 
         <div class="card">
@@ -544,6 +575,19 @@ if ($action === 'edit') {
     </form>
 
     <script>
+    // Авто-генерация кода конкурса из названия (инициалы слов), если поле пустое.
+    (function(){
+      var nm=document.getElementById('fName'), code=document.querySelector('input[name="code"]');
+      if(!nm||!code) return;
+      var translit={а:'A',б:'B',в:'V',г:'G',д:'D',е:'E',ж:'Z',з:'Z',и:'I',й:'I',к:'K',л:'L',м:'M',н:'N',о:'O',п:'P',р:'R',с:'S',т:'T',у:'U',ф:'F',х:'H',ц:'C',ч:'C',ш:'S',щ:'S',э:'E',ю:'U',я:'Y'};
+      nm.addEventListener('input',function(){
+        if(code.dataset.touched) return;
+        var words=nm.value.trim().toLowerCase().split(/\s+/).filter(Boolean);
+        var c=words.map(function(w){var ch=w[0]||'';return translit[ch]||(/[a-z0-9]/.test(ch)?ch.toUpperCase():'');}).join('').slice(0,4);
+        if(c) code.value=c;
+      });
+      code.addEventListener('input',function(){code.dataset.touched='1';});
+    })();
     var X_SVG = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 6 6 18M6 6l12 12"/></svg>';
     function addPrice(){
       var tb=document.querySelector('#priceTbl tbody');
