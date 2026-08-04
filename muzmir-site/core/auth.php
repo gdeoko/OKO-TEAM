@@ -67,7 +67,11 @@ function register_user(string $email, string $password, string $name = ''): arra
 
 function attempt_login(string $email, string $password): ?array {
     $u = one("SELECT * FROM users WHERE email=?", [mb_strtolower(trim($email))]);
-    if ($u && $u['password_hash'] && password_verify($password, $u['password_hash'])) return $u;
+    if ($u && $u['password_hash'] && password_verify($password, $u['password_hash'])) {
+        // Заблокированный админом аккаунт войти не может.
+        if ((int)($u['blocked'] ?? 0) === 1) return null;
+        return $u;
+    }
     return null;
 }
 

@@ -46,6 +46,37 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && input('do') === 'save_template') {
     admin_redirect('diplomas', ['competition' => $cid]);
 }
 
+/* ---------- Фото наградных материалов (кубок/статуэтка/медаль/диплом) по конкурсу ---------- */
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && input('do') === 'save_award_photos') {
+    if (!csrf_check()) { flash('Сессия устарела.', 'error'); admin_redirect('diplomas'); }
+    $cid = (int) input('competition');
+    // Именованные слоты: имя input → канонический slug витрины наград.
+    $slots = ['cup' => 'Кубок Гран-при', 'statuette' => 'Статуэтка лауреата',
+              'medal' => 'Медаль дипломанта', 'diploma' => 'Диплом (образец)'];
+    $liveDir = BASE_PATH . '/public/assets/img/awards/' . $cid . '/';
+    $saved = 0;
+    foreach ($slots as $slug => $label) {
+        $key = 'award_' . $slug;
+        if (empty($_FILES[$key]) || ($_FILES[$key]['error'] ?? UPLOAD_ERR_NO_FILE) !== UPLOAD_ERR_OK) continue;
+        if (!is_uploaded_file($_FILES[$key]['tmp_name'])) continue;
+        $ext = strtolower(pathinfo((string)$_FILES[$key]['name'], PATHINFO_EXTENSION));
+        if ($ext === 'jpeg') $ext = 'jpg';
+        if (!in_array($ext, ['png','jpg','webp'], true)) continue;
+        if ((int)$_FILES[$key]['size'] > 15 * 1024 * 1024) continue;
+        $mime = function_exists('mime_content_type') ? (string) @mime_content_type($_FILES[$key]['tmp_name']) : '';
+        if ($mime !== '' && !str_starts_with($mime, 'image/')) continue;
+        if (!is_dir($liveDir)) @mkdir($liveDir, 0775, true);
+        if (@move_uploaded_file($_FILES[$key]['tmp_name'], $liveDir . $slug . '.jpg')) $saved++;
+    }
+    if ($saved) {
+        audit('award_photos', 'competition', $cid, ['count' => $saved]);
+        flash($saved . ' фото наградных материалов загружено и опубликовано в витрине наград.', 'success');
+    } else {
+        flash('Не выбрано ни одного корректного файла (png/jpg/webp до 15 МБ).', 'error');
+    }
+    admin_redirect('diplomas', ['competition' => $cid]);
+}
+
 /* ---------- Предпросмотр шаблона (тестовый диплом на фейковых данных) ---------- */
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && input('do') === 'preview_template') {
     if (!csrf_check()) { flash('Сессия устарела.', 'error'); admin_redirect('diplomas'); }
@@ -285,7 +316,7 @@ ob_start(); ?>
     $hasTpl   = trim((string)($current['diploma_theme'] ?: $current['diploma_bg'])) !== '';
   ?>
   <div class="card" style="margin-bottom:18px">
-    <div class="section-title" style="margin-bottom:8px"><h3>Шаблон диплома</h3>
+    <div class="section-title" style="margin-bottom:8px"><h3>Шаблоны наград</h3>
       <span class="badge <?= $approved ? 'badge--open' : 'badge--muted' ?>"><?= $approved ? 'Шаблон подтверждён' : 'Не подтверждён' ?></span>
     </div>
 
@@ -319,6 +350,34 @@ ob_start(); ?>
     <form method="post" action="<?= url('/admin/') ?>" id="tplPreview" style="display:none">
       <?= csrf_field() ?><input type="hidden" name="do" value="preview_template"><input type="hidden" name="competition" value="<?= $comp ?>">
     </form>
+
+    <!-- Фото наградных материалов конкурса: кубок / статуэтка / медаль / образец диплома -->
+    <div style="margin-top:18px;border-top:1px solid rgba(0,0,0,.08);padding-top:14px">
+      <h4 style="margin:0 0 4px">Фотографии наградной продукции</h4>
+      <p class="small muted" style="margin:0 0 12px">Загрузите реальные фото — они появятся в разделе «Награды» этого конкурса. Пустые поля не меняют текущие фото. Рекомендуется квадрат, до 15 МБ.</p>
+      <?php
+        $awSlots = ['cup'=>'Кубок Гран-при','statuette'=>'Статуэтка лауреата','medal'=>'Медаль дипломанта','diploma'=>'Образец диплома'];
+        $awDir = '/assets/img/awards/' . $comp . '/';
+      ?>
+      <form method="post" action="<?= url('/admin/') ?>" enctype="multipart/form-data">
+        <?= csrf_field() ?><input type="hidden" name="do" value="save_award_photos"><input type="hidden" name="competition" value="<?= $comp ?>">
+        <div class="form-row" style="flex-wrap:wrap;gap:12px">
+          <?php foreach ($awSlots as $slug => $label):
+            $exists = is_file(BASE_PATH . '/public' . $awDir . $slug . '.jpg'); ?>
+            <div class="field" style="min-width:190px;flex:1">
+              <label><?= h($label) ?></label>
+              <?php if ($exists): ?>
+                <img src="<?= url(ltrim($awDir,'/') . $slug . '.jpg') ?>?v=<?= @filemtime(BASE_PATH.'/public'.$awDir.$slug.'.jpg') ?>" alt="" style="width:64px;height:64px;object-fit:cover;border-radius:8px;border:1px solid rgba(0,0,0,.1);margin-bottom:6px;display:block">
+              <?php endif; ?>
+              <input type="file" name="award_<?= h($slug) ?>" accept="image/*">
+            </div>
+          <?php endforeach; ?>
+        </div>
+        <div class="toolbar" style="margin-top:8px">
+          <button class="btn btn--primary btn--sm"><?= admin_icon('check') ?>Сохранить фото наград</button>
+        </div>
+      </form>
+    </div>
 
     <?php if ($preview && !empty($preview['pdf_url'])): ?>
       <div style="margin-top:16px;border-top:1px solid rgba(0,0,0,.08);padding-top:14px">

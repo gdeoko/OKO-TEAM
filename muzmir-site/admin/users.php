@@ -19,6 +19,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     if (!csrf_check()) { flash('Сессия устарела.', 'error'); admin_redirect('users'); }
     $do = input('do');
 
+    // Мягко гарантируем колонку blocked (для блокировки аккаунтов).
+    try { db()->exec("ALTER TABLE users ADD COLUMN blocked INTEGER DEFAULT 0"); } catch (\Throwable $e) {}
+
     if ($do === 'set_role') {
         $uid = (int) input('uid');
         $role = input('role');
@@ -31,6 +34,31 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 flash('Роль обновлена.', 'success');
             } else flash('Роль владельца изменить нельзя.', 'warning');
         }
+        admin_redirect('users', ['tab'=>'users']);
+    }
+
+    if ($do === 'block_user' || $do === 'unblock_user') {
+        $uid = (int) input('uid');
+        $target = one("SELECT role FROM users WHERE id=?", [$uid]);
+        $me = (int) (current_user()['id'] ?? 0);
+        if ($target && $target['role'] !== 'owner' && $uid !== $me) {
+            $b = $do === 'block_user' ? 1 : 0;
+            update('users', ['blocked'=>$b], 'id=:wid', ['wid'=>$uid]);
+            audit($b ? 'user_block' : 'user_unblock', 'user', $uid);
+            flash($b ? 'Пользователь заблокирован.' : 'Пользователь разблокирован.', 'success');
+        } else flash('Этого пользователя изменить нельзя.', 'warning');
+        admin_redirect('users', ['tab'=>'users']);
+    }
+
+    if ($do === 'delete_user') {
+        $uid = (int) input('uid');
+        $target = one("SELECT role FROM users WHERE id=?", [$uid]);
+        $me = (int) (current_user()['id'] ?? 0);
+        if ($target && $target['role'] !== 'owner' && $uid !== $me) {
+            q("DELETE FROM users WHERE id=?", [$uid]);
+            audit('user_delete', 'user', $uid);
+            flash('Пользователь удалён.', 'success');
+        } else flash('Владельца и себя удалить нельзя.', 'warning');
         admin_redirect('users', ['tab'=>'users']);
     }
 
@@ -179,16 +207,16 @@ ob_start(); ?>
     <?php if ($qs||$rf): ?><a class="btn btn--ghost btn--sm" href="<?= a_link('users',['tab'=>'users']) ?>">Сброс</a><?php endif; ?>
   </form>
   <div class="table-wrap"><table class="tbl">
-    <thead><tr><th>ID</th><th>Пользователь</th><th>Телефон</th><th>Роль</th><th>Регистрация</th><th>Назначить роль</th></tr></thead>
+    <thead><tr><th>ID</th><th>Пользователь</th><th>Телефон</th><th>Роль</th><th>Регистрация</th><th>Назначить роль</th><th>Действия</th></tr></thead>
     <tbody>
-      <?php if (!$users): ?><tr><td colspan="6" class="muted" style="text-align:center;padding:26px">По запросу никого не найдено</td></tr><?php endif; ?>
-      <?php foreach ($users as $u): $ini = mb_strtoupper(mb_substr($u['full_name'] ?: $u['email'] ?: '?',0,1)); ?>
-        <tr>
+      <?php if (!$users): ?><tr><td colspan="7" class="muted" style="text-align:center;padding:26px">По запросу никого не найдено</td></tr><?php endif; ?>
+      <?php foreach ($users as $u): $ini = mb_strtoupper(mb_substr($u['full_name'] ?: $u['email'] ?: '?',0,1)); $isBlocked = (int)($u['blocked'] ?? 0) === 1; ?>
+        <tr<?= $isBlocked ? ' style="opacity:.6"' : '' ?>>
           <td class="small"><?= $u['id'] ?></td>
           <td>
             <div class="u-idcell">
               <span class="u-avatar"><?php if(trim((string)$u['avatar'])!==''): ?><img src="<?= h($u['avatar']) ?>" alt="" loading="lazy" onerror="this.replaceWith(document.createTextNode('<?= h($ini) ?>'))"><?php else: ?><?= h($ini) ?><?php endif; ?></span>
-              <span><b><?= h($u['full_name'] ?: '—') ?><?php if($u['id']==$meId): ?> <span class="u-me">вы</span><?php endif; ?></b><span class="small muted"><?= h($u['email']) ?></span></span>
+              <span><b><?= h($u['full_name'] ?: '—') ?><?php if($u['id']==$meId): ?> <span class="u-me">вы</span><?php endif; ?><?php if($isBlocked): ?> <span class="badge badge--muted">заблокирован</span><?php endif; ?></b><span class="small muted"><?= h($u['email']) ?></span></span>
             </div>
           </td>
           <td class="small"><?= h($u['phone'] ?: '—') ?></td>
@@ -203,6 +231,20 @@ ob_start(); ?>
               </select>
             </form>
             <?php else: ?><span class="small muted">защищено</span><?php endif; ?>
+          </td>
+          <td>
+            <?php if ($u['role'] !== 'owner' && $u['id'] != $meId): ?>
+            <div style="display:flex;gap:6px;flex-wrap:wrap">
+              <form method="post" action="<?= url('/admin/') ?>">
+                <?= csrf_field() ?><input type="hidden" name="do" value="<?= $isBlocked ? 'unblock_user' : 'block_user' ?>"><input type="hidden" name="uid" value="<?= $u['id'] ?>">
+                <button class="btn btn--ghost btn--sm" type="submit"><?= $isBlocked ? 'Разблокировать' : 'Блокировать' ?></button>
+              </form>
+              <form method="post" action="<?= url('/admin/') ?>" onsubmit="return confirm('Удалить пользователя <?= h(addslashes($u['email'] ?: (string)$u['id'])) ?> без возможности восстановления?')">
+                <?= csrf_field() ?><input type="hidden" name="do" value="delete_user"><input type="hidden" name="uid" value="<?= $u['id'] ?>">
+                <button class="btn btn--sm" type="submit" style="background:#8b2f2f;color:#fff">Удалить</button>
+              </form>
+            </div>
+            <?php else: ?><span class="small muted">—</span><?php endif; ?>
           </td>
         </tr>
       <?php endforeach; ?>
