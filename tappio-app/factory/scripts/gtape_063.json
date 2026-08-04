@@ -1,0 +1,265 @@
+{
+ "id": "gtape_063",
+ "app": "tape",
+ "voice": "en-US-ChristopherNeural",
+ "rate": "+4%",
+ "grade": "teal_orange",
+ "brand": {
+  "accent": "#F4C430",
+  "accent2": "#FFE08A",
+  "code": "MEASURE",
+  "logo": "tape.png",
+  "name": "3D TAPE MEASURE"
+ },
+ "music": {
+  "queries": [
+   "cinematic tension build",
+   "positive corporate light groove",
+   "bright pop home"
+  ]
+ },
+ "cover": {
+  "kicker": "RENTER HACK",
+  "top": "DECORATE",
+  "big": "WITHOUT\nHOLES",
+  "q": [
+   "modern tv mounted on wall living room"
+  ],
+  "ai": "work/gtape_063/cover_ai.png"
+ },
+ "segments": [
+  {
+   "id": "b1",
+   "text": "Stop scrolling. Renting means no guessing and no wall damage."
+  },
+  {
+   "id": "b2",
+   "text": "Measure the empty wall with your phone."
+  },
+  {
+   "id": "b3",
+   "text": "Drop a virtual frame to test the spot."
+  },
+  {
+   "id": "b4",
+   "text": "Line up shelves before a single nail."
+  },
+  {
+   "id": "b5",
+   "text": "Save the layout, shop with real sizes."
+  },
+  {
+   "id": "b6",
+   "text": "Decorate smart, get your deposit back."
+  }
+ ],
+ "shots": [
+  {
+   "q": [
+    "cozy furnished living room warm light"
+   ],
+   "motion": "panr"
+  },
+  {
+   "q": [
+    "person measuring living room with phone ar"
+   ],
+   "insert": "circle",
+   "pos": "upper"
+  },
+  {
+   "q": [
+    "carpenter measuring wood workshop"
+   ],
+   "motion": "zin"
+  },
+  {
+   "q": [
+    "bookshelf assembly instructions floor"
+   ],
+   "insert": "diamond",
+   "pos": "lower"
+  },
+  {
+   "q": [
+    "doorway measuring frame home"
+   ],
+   "motion": "zout"
+  },
+  {
+   "q": [
+    "dining table room measure"
+   ],
+   "insert": "tv",
+   "pos": "lower"
+  },
+  {
+   "q": [
+    "moving boxes new apartment"
+   ],
+   "motion": "pandown"
+  },
+  {
+   "q": [
+    "picture frame hanging wall level"
+   ],
+   "insert": "tilt",
+   "pos": "lower"
+  },
+  {
+   "q": [
+    "empty living room wooden floor sunlight"
+   ],
+   "motion": "panup"
+  },
+  {
+   "q": [
+    "measuring tape metal bending closeup"
+   ],
+   "insert": "rrect",
+   "pos": "lower"
+  },
+  {
+   "q": [
+    "furniture store showroom sofa"
+   ],
+   "motion": "panl"
+  },
+  {
+   "q": [
+    "garden patio outdoor measuring"
+   ],
+   "insert": "hexagon",
+   "pos": "lower"
+  }
+ ],
+ "overlays": [
+  {
+   "at": 0.07,
+   "dur": 1.67,
+   "type": "kicker",
+   "text": "WILL IT FIT?"
+  },
+  {
+   "at": 0.158,
+   "dur": 1.71,
+   "type": "bars",
+   "title": "FURNITURE RETURNS",
+   "unit": "%",
+   "items": [
+    [
+     "Guessing",
+     22
+    ],
+    [
+     "Measured",
+     4
+    ]
+   ],
+   "pos": "center"
+  },
+  {
+   "at": 0.343,
+   "dur": 2.09,
+   "type": "ticker",
+   "to": 4,
+   "suffix": "",
+   "label": "WALLS SAVED",
+   "pos": "lower"
+  },
+  {
+   "at": 0.409,
+   "dur": 2.1,
+   "type": "kinetic",
+   "top": "STOP",
+   "big": "GUESSING"
+  },
+  {
+   "at": 0.679,
+   "dur": 2.12,
+   "type": "chips",
+   "items": [
+    "POINT",
+    "TAP",
+    "READ",
+    "SAVE"
+   ],
+   "pos": "lower"
+  },
+  {
+   "at": 0.737,
+   "dur": 2.09,
+   "type": "stat_count",
+   "to": 3,
+   "suffix": "%",
+   "label": "ERROR",
+   "pos": "center"
+  },
+  {
+   "at": 0.769,
+   "dur": 1.73,
+   "type": "callout",
+   "text": "MEASURE FROM THE COUCH",
+   "pos": "center"
+  },
+  {
+   "at": 0.817,
+   "dur": 2.6,
+   "type": "checklist",
+   "items": [
+    "Point the phone",
+    "Tap two points",
+    "Read the length",
+    "Save the project"
+   ],
+   "pos": "center"
+  },
+  {
+   "at": 0.886,
+   "dur": 2.27,
+   "type": "gauge",
+   "to": 1,
+   "max": 10,
+   "suffix": "",
+   "label": "PEOPLE NEEDED",
+   "pos": "center"
+  },
+  {
+   "at": 0.906,
+   "dur": 1.62,
+   "type": "lowerthird",
+   "title": "MEASURE THE DOOR",
+   "sub": "then measure the sofa"
+  }
+ ],
+ "cta": {
+  "text": "Comment MEASURE for the app.",
+  "code": "MEASURE"
+ },
+ "caption": "Renting? Measure the wall, drop a virtual frame, line up shelves before a single nail. Shop with real sizes and keep your deposit. Comment MEASURE for the app. #diy #homedecor #interiordesign #measure #movingtips #renter #apartmenttherapy #app #augmented #iphone #measure",
+ "yt_title": "Creating ROOM MODELS from Phone Lidar #shorts",
+ "trend_keys": [
+  "app",
+  "augmented",
+  "iphone",
+  "measure",
+  "reality",
+  "arrange",
+  "interior",
+  "furniture"
+ ],
+ "content_type": "viral",
+ "comp_angle": {
+  "title": "Creating ROOM MODELS from Phone Lidar Scans! (New App Update!)",
+  "views": 140343,
+  "channel": "TheSketchUpEssentials"
+ },
+ "virality": {
+  "score": 92,
+  "notes": [
+   "angle<-140k",
+   "hook_boosted"
+  ],
+  "hook": "Stop scrolling. Renting means no guessing and no wall damage."
+ }
+}
