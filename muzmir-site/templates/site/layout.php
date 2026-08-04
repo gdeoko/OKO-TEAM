@@ -163,12 +163,11 @@ html body{padding-top:0 !important}
       <svg class="ic-moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"/></svg>
       <svg class="ic-sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" style="display:none"><circle cx="12" cy="12" r="4.5"/><path d="M12 2v2M12 20v2M4 12H2M22 12h-2M5 5l1.4 1.4M17.6 17.6L19 19M5 19l1.4-1.4M17.6 6.4L19 5"/></svg>
     </button>
-    <?php if ($u): ?>
-      <a class="app-icon-btn" href="<?= url('/notifications') ?>" aria-label="Уведомления" title="Уведомления">
+    <?php /* Колокольчик показываем всегда; для гостя ведёт на вход. */ ?>
+      <a class="app-icon-btn" href="<?= url($u ? '/notifications' : '/login') ?>" aria-label="Уведомления" title="Уведомления">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8a6 6 0 0 0-12 0c0 7-3 9-3 9h18s-3-2-3-9M13.7 21a2 2 0 0 1-3.4 0"/></svg>
-        <?php if ($unreadNotif > 0): ?><span class="app-icon-badge"><?= $unreadNotif > 9 ? '9+' : (int)$unreadNotif ?></span><?php endif; ?>
+        <?php if ($u && $unreadNotif > 0): ?><span class="app-icon-badge"><?= $unreadNotif > 9 ? '9+' : (int)$unreadNotif ?></span><?php endif; ?>
       </a>
-    <?php endif; ?>
   </div>
 </div></header>
 

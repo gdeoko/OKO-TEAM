@@ -2453,3 +2453,8 @@ html body nav.appnav, .appnav-inner, .appnav a.appnav-cta{overflow:visible !impo
   .cab-dip-thumb{flex-basis:96px;width:96px;height:136px}
   .cab-dip-thumb iframe{transform:scale(.122)}
 }
+
+/* Кнопка «Войти через ВКонтакте»: текст всегда белый (глобальное a{color:gold} золотило span) */
+.auth-btn--vk, .auth-btn--vk span, .auth-btn--vk svg,
+.auth-btn--max, .auth-btn--max span, .auth-btn--max svg{
+  color:#fff !important;-webkit-text-fill-color:#fff !important;fill:currentColor}
