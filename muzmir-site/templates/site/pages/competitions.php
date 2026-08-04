@@ -156,7 +156,7 @@ ob_start(); ?>
               </div>
               <div class="cc-actions">
                 <a class="btn btn--primary" href="<?= url('/apply?competition=' . rawurlencode($c['slug'])) ?>">Подать заявку <?= $icoArrow ?></a>
-                <a class="btn btn--ghost" href="<?= url('/competition/' . $c['slug'] . '/regulation.docx') ?>">Положение</a>
+                <a class="btn btn--ghost" href="<?= url('/competition/' . $c['slug'] . '/regulation.pdf') ?>">Положение</a>
               </div>
             </div>
           </div>

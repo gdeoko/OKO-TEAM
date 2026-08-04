@@ -379,7 +379,7 @@ ob_start(); ?>
           <div class="calx-card__actions">
             <?php if (in_array($card['phase'], ['open', 'ending', 'last'], true)): ?>
               <a class="btn btn--primary btn--sm" href="<?= url('/apply') . '?competition=' . rawurlencode($c['slug']) ?>">Подать заявку</a>
-              <a class="btn btn--ghost btn--sm" href="<?= url('/competition/' . $c['slug'] . '/regulation.docx') ?>">Положение</a>
+              <a class="btn btn--ghost btn--sm" href="<?= url('/competition/' . $c['slug'] . '/regulation.pdf') ?>">Положение</a>
             <?php elseif ($card['phase'] === 'results'): ?>
               <a class="btn btn--primary btn--sm" href="<?= url('/results/' . $c['slug']) ?>">Результаты <?= $ic['arrow'] ?></a>
             <?php elseif ($card['phase'] === 'soon'): ?>
@@ -397,9 +397,9 @@ ob_start(); ?>
                   <button class="btn btn--primary btn--block btn--sm" type="submit">Напомнить за неделю до старта</button>
                 </form>
               </details>
-              <a class="btn btn--ghost btn--sm" href="<?= url('/competition/' . $c['slug'] . '/regulation.docx') ?>">Положение</a>
+              <a class="btn btn--ghost btn--sm" href="<?= url('/competition/' . $c['slug'] . '/regulation.pdf') ?>">Положение</a>
             <?php else: ?>
-              <a class="btn btn--ghost btn--sm" href="<?= url('/competition/' . $c['slug'] . '/regulation.docx') ?>">Положение</a>
+              <a class="btn btn--ghost btn--sm" href="<?= url('/competition/' . $c['slug'] . '/regulation.pdf') ?>">Положение</a>
             <?php endif; ?>
             <button type="button" class="btn btn--ghost btn--sm cal-share"
                     data-share="<?= h(url('/apply?competition=' . rawurlencode($c['slug']))) ?>"

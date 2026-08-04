@@ -118,6 +118,11 @@ ob_start(); ?>
             <input type="text" id="reg_nick" name="nickname" placeholder="как обращаться" maxlength="30">
           </div>
           <div class="field">
+            <label for="reg_promo">Промокод педагога (если есть)</label>
+            <input type="text" id="reg_promo" name="promo_code" placeholder="Например, ABCD1234" maxlength="16" autocapitalize="characters" style="text-transform:uppercase">
+            <div class="hint">Подставится автоматически при подаче заявки — участник получит скидку.</div>
+          </div>
+          <div class="field">
             <label>Категория</label>
             <div class="cat-picker">
               <label class="cat-opt is-on"><input type="radio" name="category" value="participant" checked><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0 1 16 0"/></svg><span>Участник</span></label>
@@ -242,6 +247,19 @@ ob_start(); ?>
     var v = this.value.trim();
     if (v && ap.textContent === '?') ap.textContent = v[0].toUpperCase();
   });
+  // Промокод: префилл из ?promo=/localStorage, сохранение в localStorage для автоподстановки в заявке.
+  (function(){
+    var pf = document.getElementById('reg_promo'); if (!pf) return;
+    try {
+      var qp = new URLSearchParams(location.search);
+      var code = (qp.get('promo') || qp.get('ref') || qp.get('code') || localStorage.getItem('muzmir_ref_code') || '').toUpperCase().replace(/[^A-Z0-9]/g,'');
+      if (code) pf.value = code;
+    } catch(e){}
+    pf.addEventListener('input', function(){
+      var c = this.value.toUpperCase().replace(/[^A-Z0-9]/g,'');
+      try { if (c) localStorage.setItem('muzmir_ref_code', c); } catch(e){}
+    });
+  })();
 })();
 </script>
 <?php

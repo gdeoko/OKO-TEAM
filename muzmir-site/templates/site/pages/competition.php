@@ -222,7 +222,7 @@ ob_start(); ?>
       <a class="comp-qchip" href="#compTabs" data-goto-tab="criteria">Как устроена оценка</a>
       <a class="comp-qchip" href="#sec-goals" data-goto-tab="about" data-goto-anchor="sec-goals">Цели и задачи</a>
       <a class="comp-qchip" href="#compTabs" data-goto-tab="participation">Награды</a>
-      <a class="comp-qchip" href="<?= url('/competition/' . $c['slug'] . '/regulation.docx') ?>" target="_blank" rel="noopener">Положение</a>
+      <a class="comp-qchip" href="<?= url('/competition/' . $c['slug'] . '/regulation.pdf') ?>" target="_blank" rel="noopener">Положение</a>
     </nav>
 
     <!-- Ключевые факты — инфографика -->

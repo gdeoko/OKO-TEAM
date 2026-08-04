@@ -279,7 +279,7 @@ ob_start(); ?>
                 <input type="checkbox" name="competition_ids[]" value="<?= (int)$c['id'] ?>"
                   data-slug="<?= h($c['slug']) ?>" data-name="<?= h($c['name']) ?>"
                   data-paid="<?= (int)$c['is_paid'] ?>" data-price="<?= (int)$c['price'] ?>"
-                  data-reg="<?= url('/competition/'.$c['slug'].'/regulation.docx') ?>" data-code="<?= h($c['code']) ?>"
+                  data-reg="<?= url('/competition/'.$c['slug'].'/regulation.pdf') ?>" data-code="<?= h($c['code']) ?>"
                   <?= $preId === (int)$c['id'] ? 'checked' : '' ?>>
                 <?php $dbg = trim((string)($c['diploma_bg'] ?? ''));
                       $cvr = trim((string)($c['cover'] ?? ''));

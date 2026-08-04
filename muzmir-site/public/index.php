@@ -123,6 +123,19 @@ if (preg_match('#^/competition/([a-z0-9\-]+)/regulation\.(pdf|docx)$#', $route, 
     $c = one("SELECT * FROM competitions WHERE slug=?", [$m[1]]);
     if ($c) {
         try {
+            $reqExt = strtolower($m[2]);
+            // PDF-запрос (по умолчанию для «Открыть положение») — отдаём ИНЛАЙН,
+            // чтобы положение ОТКРЫВАЛОСЬ в браузере, а не скачивалось.
+            if ($reqExt === 'pdf') {
+                require_once BASE_PATH . '/core/pdf_regulation.php';
+                $pdfData = pdf_regulation($c);
+                header('Content-Type: application/pdf');
+                header('Content-Disposition: inline; filename="Polozhenie_' . $c['slug'] . '.pdf"');
+                header('Content-Length: ' . (string) strlen($pdfData));
+                echo $pdfData;
+                exit;
+            }
+            // Явный .docx-запрос — по-прежнему отдаём файлом (для редактирования).
             $path = !empty($c['regulation_pdf']) && is_file($c['regulation_pdf'])
                 ? $c['regulation_pdf']
                 : null;
@@ -130,14 +143,8 @@ if (preg_match('#^/competition/([a-z0-9\-]+)/regulation\.(pdf|docx)$#', $route, 
                 require_once BASE_PATH . '/core/regulation_gen.php';
                 $path = regulation_generate((int)$c['id']);
             }
-            $ext = strtolower(pathinfo($path, PATHINFO_EXTENSION));
-            if ($ext === 'docx') {
-                header('Content-Type: application/vnd.openxmlformats-officedocument.wordprocessingml.document');
-                header('Content-Disposition: attachment; filename="Polozhenie_' . $c['slug'] . '.docx"');
-            } else {
-                header('Content-Type: application/pdf');
-                header('Content-Disposition: inline; filename="Polozhenie_' . $c['slug'] . '.pdf"');
-            }
+            header('Content-Type: application/vnd.openxmlformats-officedocument.wordprocessingml.document');
+            header('Content-Disposition: attachment; filename="Polozhenie_' . $c['slug'] . '.docx"');
             header('Content-Length: ' . (string) filesize($path));
             readfile($path);
             exit;
