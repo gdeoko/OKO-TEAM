@@ -19,12 +19,17 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         redirect('/cabinet');
     } elseif ($action === 'profile') {
         $fio = input('full_name');
-        $phone = input('phone');
         $avatar = trim(input('avatar'));
         $nickname = trim(input('nickname'));
         $category = trim(input('category'));
         if (function_exists('v_fio') && $fio !== '') $fio = v_fio($fio);
-        $upd = ['full_name' => $fio, 'phone' => $phone, 'nickname' => $nickname];
+        $upd = ['full_name' => $fio, 'nickname' => $nickname];
+        // Телефон из формы профиля больше не правится (привязка — через SMS-код в «Способах входа»),
+        // но поле обновляем, если форма его прислала (обратная совместимость).
+        if (array_key_exists('phone', $_POST)) $upd['phone'] = input('phone');
+        // Город — мягкий ALTER users.city (идемпотентно).
+        ensure_user_column('city');
+        $upd['city'] = mb_substr(trim(input('city')), 0, 80);
         $allowedCats = ['participant','teacher','parent','director','other'];
         if (in_array($category, $allowedCats, true)) $upd['category'] = $category;
         if ($avatar === '' || preg_match('~^https?://~i', $avatar) || str_starts_with($avatar, 'data:image/')) $upd['avatar'] = $avatar;
@@ -64,6 +69,95 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             flash('Пароль изменён.', 'success');
         }
         redirect('/cabinet');
+    } elseif ($action === 'privacy') {
+        // Конфиденциальность: users.privacy JSON (мягкий ALTER) + notify_email (существующая колонка).
+        ensure_user_column('privacy', "TEXT DEFAULT ''");
+        $priv = [
+            'name_public'  => input('name_public') === 'initials' ? 'initials' : 'full',
+            'notify_inapp' => isset($_POST['notify_inapp']) ? 1 : 0,
+        ];
+        update('users', [
+            'privacy'      => json_encode($priv, JSON_UNESCAPED_UNICODE),
+            'notify_email' => isset($_POST['notify_email']) ? 1 : 0,
+        ], 'id=:id', ['id' => $uid]);
+        audit('privacy_update', 'user', $uid, $priv);
+        flash('Настройки конфиденциальности сохранены.', 'success');
+        redirect('/cabinet#settings');
+    } elseif ($action === 'phone_request') {
+        // Привязка телефона: шаг 1 — SMS-код на номер. Без SMS-провайдера честно сообщаем.
+        $phoneIn = input('phone');
+        $digits = preg_replace('/\D+/', '', $phoneIn);
+        if (strlen($digits) === 11 && ($digits[0] === '8' || $digits[0] === '7')) $digits = '7' . substr($digits, 1);
+        elseif (strlen($digits) === 10) $digits = '7' . $digits;
+        $vp = function_exists('v_phone') ? v_phone($phoneIn) : ['ok' => strlen($digits) === 11, 'formatted' => $phoneIn];
+        if (!($vp['ok'] ?? false) || strlen($digits) !== 11 || $digits[0] !== '7') {
+            flash('Проверьте номер телефона — нужен российский номер из 11 цифр.', 'error');
+        } elseif (one("SELECT id FROM users WHERE (phone=? OR phone=?) AND phone_verified=1 AND id<>?",
+                      [(string)($vp['formatted'] ?? ('+' . $digits)), $digits, $uid])) {
+            flash('Этот номер уже привязан к другому аккаунту.', 'error');
+        } elseif (!rate_ok('phone_bind:' . $uid, 5, 900)) {
+            flash('Слишком часто. Подождите пару минут и попробуйте снова.', 'error');
+        } else {
+            $code = auth_gen_code(5);
+            auth_store_code('phone_bind', $digits, $code, 600); // TTL 10 минут
+            $sent = auth_send_sms($digits, 'Код привязки телефона на сайте Музыкальный Мир: ' . $code);
+            if ($sent || cfgv('debug')) {
+                $_SESSION['phone_bind'] = ['digits' => $digits, 'formatted' => (string)($vp['formatted'] ?? ('+' . $digits))];
+                flash($sent ? 'Код отправлен по SMS на ' . ($vp['formatted'] ?? $phoneIn) . '. Введите его ниже.'
+                            : 'SMS-провайдер не настроен (режим отладки). Код: ' . $code, $sent ? 'success' : 'info');
+            } else {
+                flash('SMS временно недоступна. Попробуйте позже или привяжите вход через ВКонтакте.', 'error');
+            }
+        }
+        redirect('/cabinet#settings');
+    } elseif ($action === 'phone_verify') {
+        // Привязка телефона: шаг 2 — проверка кода, номер закрепляется за текущим аккаунтом.
+        $pb = $_SESSION['phone_bind'] ?? null;
+        $code = trim((string)($_POST['code'] ?? ''));
+        if (!is_array($pb) || ($pb['digits'] ?? '') === '') {
+            flash('Сначала запросите код на номер телефона.', 'error');
+        } elseif ($code === '' || !auth_check_code('phone_bind', (string)$pb['digits'], $code)) {
+            flash('Неверный или просроченный код. Запросите новый.', 'error');
+        } elseif (one("SELECT id FROM users WHERE (phone=? OR phone=?) AND phone_verified=1 AND id<>?",
+                      [(string)$pb['formatted'], (string)$pb['digits'], $uid])) {
+            flash('Этот номер уже привязан к другому аккаунту.', 'error');
+        } else {
+            update('users', ['phone' => (string)$pb['formatted'], 'phone_verified' => 1], 'id=:id', ['id' => $uid]);
+            unset($_SESSION['phone_bind']);
+            audit('phone_bind', 'user', $uid, ['phone' => (string)$pb['formatted']]);
+            flash('Телефон привязан к Вашему аккаунту.', 'success');
+        }
+        redirect('/cabinet#settings');
+    } elseif ($action === 'phone_cancel') {
+        unset($_SESSION['phone_bind']);
+        redirect('/cabinet#settings');
+    } elseif ($action === 'resend_verify') {
+        // Повторное письмо подтверждения почты (для аккаунтов с email_verified=0).
+        if ((int)($user['email_verified'] ?? 0) === 1) {
+            flash('Почта уже подтверждена.', 'info');
+        } elseif (trim((string)($user['email'] ?? '')) === '') {
+            flash('У аккаунта не указана почта.', 'error');
+        } elseif (!rate_ok('verify_mail:' . $uid, 3, 3600)) {
+            flash('Письмо уже отправляли недавно. Проверьте почту и папку «Спам».', 'info');
+        } elseif (function_exists('mail_queue')) {
+            $tok = trim((string)($user['verify_token'] ?? ''));
+            if ($tok === '') { $tok = bin2hex(random_bytes(16)); update('users', ['verify_token' => $tok], 'id=:id', ['id' => $uid]); }
+            $link = url('/verify-email') . '?token=' . urlencode($tok);
+            if (function_exists('mm_email_layout') && function_exists('mm_email_btn')) {
+                $inner = '<p style="margin:0 0 14px;font-size:15px;color:#2a2a3a;">Здравствуйте'
+                    . (trim((string)($user['full_name'] ?? '')) !== '' ? ', ' . h($user['full_name']) : '')
+                    . '! Подтвердите адрес электронной почты в личном кабинете — нажмите кнопку ниже.</p>'
+                    . mm_email_btn($link, 'Подтвердить почту')
+                    . '<p style="margin:14px 0 0;font-size:12px;color:#8a7b58;">Если кнопка не открывается, скопируйте ссылку: ' . h($link) . '</p>';
+                $html = mm_email_layout($inner, ['title' => 'Подтверждение почты']);
+            } else {
+                $html = '<p>Подтвердите почту: <a href="' . h($link) . '">' . h($link) . '</a></p>';
+            }
+            mail_queue((string)$user['email'], (string)($user['full_name'] ?? ''), 'Подтвердите почту — КЦ «Музыкальный Мир»', $html);
+            audit('verify_resend', 'user', $uid);
+            flash('Письмо со ссылкой подтверждения отправлено на ' . $user['email'] . '.', 'success');
+        }
+        redirect('/cabinet#settings');
     } elseif ($action === 'resend_diploma') {
         $dn = input('number');
         $d = one("SELECT d.* FROM diplomas d JOIN applications a ON a.id=d.application_id WHERE d.number=? AND a.user_id=?", [$dn, $uid]);
@@ -164,6 +258,27 @@ if ($nameSrc !== '') {
 }
 $initials = mb_strtoupper($initials);
 $avatar = trim((string)($user['avatar'] ?? ''));
+
+/* --- Клуб постоянных участников: ВИП-галочка и строка статуса в настройках --- */
+if (!function_exists('club_status') && is_file(BASE_PATH . '/core/club.php')) require_once BASE_PATH . '/core/club.php';
+$club = function_exists('club_status') ? club_status($uid) : ['active' => false, 'expires_at' => null];
+$isVip = !empty($club['active']);
+$clubUntil = $isVip && !empty($club['expires_at']) ? ru_date(substr((string)$club['expires_at'], 0, 10)) : '';
+// Золотая SVG-галочка верификации (круглый бейдж) — рядом с именем в шапке кабинета.
+$vipBadge = '<span class="cab-vip" title="Участник Клуба"><svg viewBox="0 0 24 24" role="img" aria-label="Участник Клуба">'
+    . '<circle cx="12" cy="12" r="11" fill="#C79322"/><circle cx="12" cy="12" r="11" fill="url(#mmVipG)"/>'
+    . '<path d="M7.4 12.4l3 3.1 6.2-6.6" fill="none" stroke="#FFFDF6" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/>'
+    . '<defs><linearGradient id="mmVipG" x1="3" y1="3" x2="21" y2="21" gradientUnits="userSpaceOnUse">'
+    . '<stop offset="0" stop-color="#EED27C"/><stop offset="1" stop-color="#B07E14"/></linearGradient></defs></svg></span>';
+
+/* --- Конфиденциальность (users.privacy JSON): имя в результатах, письма, in-app --- */
+$priv = json_decode((string)($user['privacy'] ?? ''), true);
+if (!is_array($priv)) $priv = [];
+$privNameFull = (($priv['name_public'] ?? 'full') !== 'initials');
+$privInapp    = (int)($priv['notify_inapp'] ?? 1) === 1;
+
+/* --- Привязка телефона: ожидание кода из SMS (шаг 2) --- */
+$phonePending = is_array($_SESSION['phone_bind'] ?? null) ? (string)($_SESSION['phone_bind']['formatted'] ?? '') : '';
 
 // Меню кабинета ($menuGroups) собирается ниже — после подсчёта достижений и статистики.
 
@@ -300,6 +415,30 @@ ob_start(); ?>
 .cab-item--danger .cab-item-lbl{color:var(--error,#B3261E);font-weight:700}
 .cab-item--danger .cab-item-ic{background:#B3392E}
 .cab-item--danger:hover{background:color-mix(in srgb,#B3392E 8%,transparent)}
+/* --- ВИП-галочка члена Клуба (в шапке, рядом с именем) --- */
+.cab-vip{display:inline-flex;vertical-align:-2px;margin-left:6px;width:20px;height:20px;flex:none;
+  filter:drop-shadow(0 2px 5px rgba(199,147,34,.55))}
+.cab-vip svg{width:100%;height:100%}
+/* --- Настройки в стиле Telegram: группы строк, раскрывающиеся секции --- */
+.cab-sets{display:flex;flex-direction:column;gap:16px}
+.cab-sub{display:block;font-weight:500;font-size:.76rem;color:var(--muted);margin-top:1px;overflow-wrap:anywhere}
+.cab-set{border:none;margin:0}
+.cab-set + .cab-set,.cab-set + .cab-srow,.cab-srow + .cab-set,.cab-srow + .cab-srow{border-top:1px solid var(--line)}
+.cab-set > summary{list-style:none;display:flex;align-items:center;gap:12px;min-height:48px;padding:7px 14px;
+  cursor:pointer;transition:background .15s;-webkit-tap-highlight-color:transparent}
+.cab-set > summary::-webkit-details-marker{display:none}
+.cab-set > summary:hover{background:var(--glass)}
+.cab-set > summary .cab-item-chev{transition:transform .2s}
+.cab-set[open] > summary .cab-item-chev{transform:rotate(90deg)}
+.cab-set-body{padding:6px 16px 20px}
+.cab-set-body .field:last-of-type{margin-bottom:14px}
+.cab-srow{display:flex;align-items:center;gap:12px;min-height:48px;padding:7px 14px}
+.cab-srow form{margin:0}
+.cab-link-ok{display:inline-flex;align-items:center;gap:5px;color:var(--gold-2);font-size:.8rem;font-weight:800}
+.cab-link-ok svg{width:14px;height:14px}
+.cab-link-no{color:var(--muted);font-size:.8rem;font-weight:600}
+:root:not([data-theme="dark"]) .cab-link-ok{color:var(--gold-ink)}
+.cab-set-body .switch{padding:13px 0}
 /* --- Кнопка «Назад» из раздела в меню --- */
 .cab-back{display:none;align-items:center;gap:6px;margin:0 0 12px;background:none;border:none;cursor:pointer;
   color:var(--gold-2);font-weight:700;font-size:.93rem;padding:8px 4px;min-height:44px;font-family:inherit}
@@ -435,7 +574,7 @@ ob_start(); ?>
             <?php if ($avatar !== ''): ?><img src="<?= h($avatar) ?>" alt="Фото профиля: <?= h($user['full_name'] ?: 'участник') ?>" loading="lazy"><?php else: ?><?= h($initials) ?><?php endif; ?>
           </div>
           <div class="cab-id">
-            <h1><?= h($user['full_name'] ?: 'Участник') ?></h1>
+            <h1><?= h($user['full_name'] ?: 'Участник') ?><?= $isVip ? $vipBadge : '' ?></h1>
             <span class="cab-role"><?= h($roleLabels[$user['role']] ?? 'Участник') ?></span>
             <span class="cab-email"><?= h($user['email']) ?><?php if (trim((string)($user['phone'] ?? '')) !== ''): ?> &middot; <?= h($user['phone']) ?><?php endif; ?></span>
           </div>
@@ -723,179 +862,305 @@ ob_start(); ?>
           </div>
         </div>
 
-        <!-- Настройки -->
+        <!-- Настройки (в стиле настроек Telegram: группы строк) -->
         <div class="cab-panel" id="tab-settings" role="tabpanel">
           <h2>Настройки</h2>
+          <div class="cab-sets">
 
-          <div class="cab-card">
-            <h3 style="margin-top:0;font-family:var(--ff-serif)">Тема приложения</h3>
-            <div class="theme-picker">
-              <button type="button" class="theme-opt" data-theme-set="light" aria-pressed="false">
-                <span class="theme-preview theme-preview--light"><i></i><i></i><i></i></span>
-                <span>Светлая</span>
-              </button>
-              <button type="button" class="theme-opt" data-theme-set="dark" aria-pressed="false">
-                <span class="theme-preview theme-preview--dark"><i></i><i></i><i></i></span>
-                <span>Тёмная</span>
-              </button>
+            <!-- Клуб постоянных участников -->
+            <div class="cab-group">
+              <div class="cab-group-ttl">Клуб постоянных участников</div>
+              <div class="cab-group-card">
+                <?php if ($isVip): ?>
+                <a class="cab-item" href="<?= url('/club') ?>" style="--ic:#C79322">
+                  <span class="cab-item-ic"><?= $icon('<path d="M20 6L9 17l-5-5"/>') ?></span>
+                  <span class="cab-item-lbl">Членство активно<span class="cab-sub">Клуб постоянных участников — активен до <?= h($clubUntil ?: 'бессрочно') ?></span></span>
+                  <span class="cab-item-val">&minus;<?= (int)($club['discount'] ?? 20) ?>%</span>
+                  <svg class="cab-item-chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m9 6 6 6-6 6"/></svg>
+                </a>
+                <?php else: ?>
+                <a class="cab-item" href="<?= url('/club') ?>" style="--ic:#17307A">
+                  <span class="cab-item-ic"><?= $icon('<path d="M2 8l4 5 6-9 6 9 4-5v10H2z"/>') ?></span>
+                  <span class="cab-item-lbl">Вступить в клуб<span class="cab-sub">Скидка на конкурсы, приоритет и галочка участника Клуба</span></span>
+                  <svg class="cab-item-chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m9 6 6 6-6 6"/></svg>
+                </a>
+                <?php endif; ?>
+              </div>
             </div>
-            <p class="hint" style="margin-top:12px">Тема сохраняется на устройстве. По умолчанию — светлая.</p>
-          </div>
 
-          <div class="cab-card">
-            <h3 style="margin-top:0;font-family:var(--ff-serif)">Профиль</h3>
-            <form method="post" action="<?= url('/cabinet') ?>" enctype="multipart/form-data" id="profileForm">
-              <?= csrf_field() ?>
-              <input type="hidden" name="action" value="profile">
-              <input type="hidden" id="p_ava_hidden" name="avatar" value="<?= h($avatar) ?>">
-              <div class="cab-avaedit">
-                <div class="cab-ava" id="cabAvaPreview">
-                  <?php if ($avatar !== ''): ?><img src="<?= h($avatar) ?>" alt="Текущее фото профиля" loading="lazy"><?php else: ?><?= h($initials) ?><?php endif; ?>
-                </div>
-                <div style="flex:1;min-width:0;display:flex;flex-direction:column;gap:8px">
-                  <label class="btn btn--ghost btn--sm" for="p_ava_file" style="cursor:pointer;text-align:center">Загрузить фото</label>
-                  <input type="file" id="p_ava_file" accept="image/*" hidden>
-                  <button type="button" class="btn btn--ghost btn--sm" id="p_ava_clear" style="min-height:36px;font-size:.82rem">Удалить фото</button>
-                  <div class="hint" style="font-size:.72rem;margin:0">JPG/PNG до 3 МБ. Сохранится в профиль.</div>
-                </div>
-              </div>
+            <!-- Профиль -->
+            <div class="cab-group">
+              <div class="cab-group-ttl">Профиль</div>
+              <div class="cab-group-card">
+                <details class="cab-set" id="setProfile">
+                  <summary style="--ic:#17307A">
+                    <span class="cab-item-ic"><?= $icon('<circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0 1 16 0"/>') ?></span>
+                    <span class="cab-item-lbl">Данные профиля<span class="cab-sub"><?= h($user['full_name'] ?: 'Имя не указано') ?><?= trim((string)($user['city'] ?? '')) !== '' ? ' · ' . h($user['city']) : '' ?></span></span>
+                    <svg class="cab-item-chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m9 6 6 6-6 6"/></svg>
+                  </summary>
+                  <div class="cab-set-body">
+                    <form method="post" action="<?= url('/cabinet') ?>" enctype="multipart/form-data" id="profileForm">
+                      <?= csrf_field() ?>
+                      <input type="hidden" name="action" value="profile">
+                      <input type="hidden" id="p_ava_hidden" name="avatar" value="<?= h($avatar) ?>">
+                      <div class="cab-avaedit">
+                        <div class="cab-ava" id="cabAvaPreview">
+                          <?php if ($avatar !== ''): ?><img src="<?= h($avatar) ?>" alt="Текущее фото профиля" loading="lazy"><?php else: ?><?= h($initials) ?><?php endif; ?>
+                        </div>
+                        <div style="flex:1;min-width:0;display:flex;flex-direction:column;gap:8px">
+                          <label class="btn btn--ghost btn--sm" for="p_ava_file" style="cursor:pointer;text-align:center">Загрузить фото</label>
+                          <input type="file" id="p_ava_file" accept="image/*" hidden>
+                          <button type="button" class="btn btn--ghost btn--sm" id="p_ava_clear" style="min-height:36px;font-size:.82rem">Удалить фото</button>
+                          <div class="hint" style="font-size:.72rem;margin:0">JPG/PNG до 3 МБ. Сохранится в профиль.</div>
+                        </div>
+                      </div>
 
-              <div class="field">
-                <label>Категория</label>
-                <div class="cat-picker">
-                  <?php
-                    $curCat = (string)($user['category'] ?? '');
-                    if ($curCat === '') $curCat = $isTeacher ? 'teacher' : 'participant';
-                    $cats = [
-                      'participant' => ['Участник', '<circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0 1 16 0"/>'],
-                      'teacher'     => ['Педагог',  '<path d="M12 3l10 5-10 5L2 8z"/><path d="M6 10v6a6 6 0 0 0 12 0v-6"/>'],
-                      'parent'      => ['Родитель', '<circle cx="9" cy="8" r="3"/><circle cx="17" cy="9" r="2.4"/><path d="M2 21a7 7 0 0 1 14 0M13 21a5 5 0 0 1 9 0"/>'],
-                      'director'    => ['Директор', '<path d="M3 21h18M5 21V10l7-5 7 5v11M9 21v-6h6v6"/>'],
-                      'other'       => ['Другое',   '<circle cx="12" cy="12" r="10"/><path d="M9 9a3 3 0 0 1 6 0c0 2-3 2.5-3 4M12 17h.01"/>'],
-                    ];
-                    foreach ($cats as $key => [$lbl, $svg]):
-                  ?>
-                    <label class="cat-opt <?= $curCat===$key?'is-on':'' ?>">
-                      <input type="radio" name="category" value="<?= h($key) ?>" <?= $curCat===$key?'checked':'' ?>>
-                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><?= $svg ?></svg>
-                      <span><?= h($lbl) ?></span>
-                    </label>
-                  <?php endforeach; ?>
-                </div>
-              </div>
+                      <div class="field">
+                        <label>Категория</label>
+                        <div class="cat-picker">
+                          <?php
+                            $curCat = (string)($user['category'] ?? '');
+                            if ($curCat === '') $curCat = $isTeacher ? 'teacher' : 'participant';
+                            $cats = [
+                              'participant' => ['Участник', '<circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0 1 16 0"/>'],
+                              'teacher'     => ['Педагог',  '<path d="M12 3l10 5-10 5L2 8z"/><path d="M6 10v6a6 6 0 0 0 12 0v-6"/>'],
+                              'parent'      => ['Родитель', '<circle cx="9" cy="8" r="3"/><circle cx="17" cy="9" r="2.4"/><path d="M2 21a7 7 0 0 1 14 0M13 21a5 5 0 0 1 9 0"/>'],
+                              'director'    => ['Директор', '<path d="M3 21h18M5 21V10l7-5 7 5v11M9 21v-6h6v6"/>'],
+                              'other'       => ['Другое',   '<circle cx="12" cy="12" r="10"/><path d="M9 9a3 3 0 0 1 6 0c0 2-3 2.5-3 4M12 17h.01"/>'],
+                            ];
+                            foreach ($cats as $key => [$lbl, $svg]):
+                          ?>
+                            <label class="cat-opt <?= $curCat===$key?'is-on':'' ?>">
+                              <input type="radio" name="category" value="<?= h($key) ?>" <?= $curCat===$key?'checked':'' ?>>
+                              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><?= $svg ?></svg>
+                              <span><?= h($lbl) ?></span>
+                            </label>
+                          <?php endforeach; ?>
+                        </div>
+                      </div>
 
-              <div class="field">
-                <label for="p_fio">Фамилия, имя, отчество</label>
-                <input type="text" id="p_fio" name="full_name" value="<?= h($user['full_name']) ?>" placeholder="Иванова Мария Петровна">
-              </div>
-              <div class="field">
-                <label for="p_nick">Никнейм</label>
-                <input type="text" id="p_nick" name="nickname" value="<?= h($user['nickname'] ?? '') ?>" placeholder="как обращаться" maxlength="30">
-                <div class="hint">Короткое имя для приветствия. Не отображается в дипломе.</div>
-              </div>
-              <div class="field">
-                <label for="p_phone">Телефон</label>
-                <input type="tel" id="p_phone" name="phone" value="<?= h($user['phone']) ?>" placeholder="+7 (___) ___-__-__">
-              </div>
-              <div class="field">
-                <label>Электронная почта</label>
-                <input type="email" value="<?= h($user['email']) ?>" disabled>
-                <div class="hint">Почта используется для входа и наградных документов.</div>
-              </div>
-              <button class="btn btn--primary" type="submit">Сохранить профиль</button>
-            </form>
-          </div>
-
-          <!-- Привязанные способы входа -->
-          <div class="cab-card">
-            <h3 style="margin-top:0;font-family:var(--ff-serif)">Способы входа</h3>
-            <p class="hint" style="margin:0 0 14px">Привяжите несколько способов — заходите как удобно.</p>
-            <?php
-              $linked = [
-                'email' => (bool)($user['email'] ?? ''),
-                'vk'    => !empty($user['vk_id']),
-                'max'   => !empty($user['max_id']),
-                'tg'    => !empty($user['tg_id']),
-                'phone' => !empty($user['phone']) && !empty($user['phone_verified']),
-              ];
-              $methods = [
-                'email' => ['Почта',    '<rect x="3" y="5" width="18" height="14" rx="2"/><path d="M3 7l9 6 9-6"/>', url('/login')],
-                'vk'    => ['ВКонтакте','<path d="M13.2 17.4c-5.5 0-8.9-3.8-9-10.1h2.8c.1 4.6 2.2 6.6 3.8 7V7.3h2.6v4c1.6-.2 3.3-2 3.9-4h2.6c-.5 2.5-2.2 4.3-3.4 5 1.2.6 3.2 2.2 3.9 5.1h-2.9c-.6-1.9-2.1-3.4-4.1-3.6v3.6h-.2z"/>', url('/api/v1/oauth_vk?bind=1')],
-                'max'   => ['MAX',      '<path d="M4 19V6l8 6 8-6v13"/>', url('/api/v1/oauth_max?bind=1')],
-                'phone' => ['Телефон',  '<path d="M5 4h4l2 5-2.5 1.5a11 11 0 0 0 5 5L20 13l2 4v3a1 1 0 0 1-1 1A17 17 0 0 1 4 5a1 1 0 0 1 1-1z"/>', '#'],
-              ];
-            ?>
-            <div class="link-list">
-              <?php foreach ($methods as $k => [$lbl, $svg, $bindUrl]): $on = $linked[$k]; ?>
-                <div class="link-row <?= $on ? 'is-on' : '' ?>">
-                  <span class="link-ic"><svg viewBox="0 0 24 24" fill="<?= $k==='vk'?'currentColor':'none' ?>" stroke="<?= $k==='vk'?'none':'currentColor' ?>" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><?= $svg ?></svg></span>
-                  <div class="link-body">
-                    <b><?= h($lbl) ?></b>
-                    <span><?= $on ? 'Привязан' : 'Не привязан' ?></span>
+                      <div class="field">
+                        <label for="p_fio">Фамилия, имя, отчество</label>
+                        <input type="text" id="p_fio" name="full_name" value="<?= h($user['full_name']) ?>" placeholder="Иванова Мария Петровна">
+                      </div>
+                      <div class="field">
+                        <label for="p_nick">Никнейм</label>
+                        <input type="text" id="p_nick" name="nickname" value="<?= h($user['nickname'] ?? '') ?>" placeholder="как обращаться" maxlength="30">
+                        <div class="hint">Короткое имя для приветствия. Не отображается в дипломе.</div>
+                      </div>
+                      <div class="field">
+                        <label for="p_city">Город</label>
+                        <input type="text" id="p_city" name="city" value="<?= h($user['city'] ?? '') ?>" placeholder="Москва" maxlength="80">
+                        <div class="hint">Помогает нам приглашать Вас на очные события Вашего региона.</div>
+                      </div>
+                      <div class="field">
+                        <label>Электронная почта</label>
+                        <input type="email" value="<?= h($user['email']) ?>" disabled>
+                        <div class="hint">Почта используется для входа и наградных документов.</div>
+                      </div>
+                      <button class="btn btn--primary" type="submit">Сохранить профиль</button>
+                    </form>
                   </div>
-                  <?php if ($on): ?>
-                    <?php if ($k !== 'email'): // email — основной, нельзя отвязать ?>
-                      <form method="post" action="<?= url('/cabinet') ?>" style="margin:0">
-                        <?= csrf_field() ?>
-                        <input type="hidden" name="action" value="unlink">
-                        <input type="hidden" name="provider" value="<?= h($k) ?>">
-                        <button type="submit" class="btn btn--ghost btn--sm" style="min-height:34px">Отвязать</button>
-                      </form>
-                    <?php else: ?>
-                      <span class="link-ok">Основной</span>
-                    <?php endif; ?>
+                </details>
+              </div>
+            </div>
+
+            <!-- Способы входа -->
+            <div class="cab-group">
+              <div class="cab-group-ttl">Способы входа</div>
+              <div class="cab-group-card">
+
+                <!-- Почта -->
+                <div class="cab-srow" style="--ic:#17307A">
+                  <span class="cab-item-ic"><?= $icon('<rect x="3" y="5" width="18" height="14" rx="2"/><path d="m3 7 9 6 9-6"/>') ?></span>
+                  <span class="cab-item-lbl">Почта<span class="cab-sub"><?= h($user['email'] ?: 'Не указана') ?></span></span>
+                  <?php if ((int)($user['email_verified'] ?? 0) === 1): ?>
+                    <span class="cab-link-ok"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"/></svg>Подтверждена</span>
+                  <?php elseif (trim((string)($user['email'] ?? '')) !== ''): ?>
+                    <form method="post" action="<?= url('/cabinet') ?>">
+                      <?= csrf_field() ?>
+                      <input type="hidden" name="action" value="resend_verify">
+                      <button type="submit" class="btn btn--ghost btn--sm" style="min-height:34px">Подтвердить</button>
+                    </form>
                   <?php else: ?>
-                    <a class="btn btn--primary btn--sm" href="<?= h($bindUrl) ?>" style="min-height:34px">Привязать</a>
+                    <span class="cab-link-no">Не указана</span>
                   <?php endif; ?>
                 </div>
-              <?php endforeach; ?>
+
+                <!-- Телефон -->
+                <?php $phoneLinked = trim((string)($user['phone'] ?? '')) !== '' && !empty($user['phone_verified']); ?>
+                <?php if ($phoneLinked): ?>
+                <div class="cab-srow" style="--ic:#2E7D4F">
+                  <span class="cab-item-ic"><?= $icon('<path d="M5 4h4l2 5-2.5 1.5a11 11 0 0 0 5 5L16 13l5 2v4a1 1 0 0 1-1 1A17 17 0 0 1 4 5a1 1 0 0 1 1-1z"/>') ?></span>
+                  <span class="cab-item-lbl">Телефон<span class="cab-sub"><?= h($user['phone']) ?></span></span>
+                  <form method="post" action="<?= url('/cabinet') ?>">
+                    <?= csrf_field() ?>
+                    <input type="hidden" name="action" value="unlink">
+                    <input type="hidden" name="provider" value="phone">
+                    <button type="submit" class="btn btn--ghost btn--sm" style="min-height:34px">Отвязать</button>
+                  </form>
+                </div>
+                <?php else: ?>
+                <details class="cab-set" <?= $phonePending !== '' ? 'open' : '' ?>>
+                  <summary style="--ic:#2E7D4F">
+                    <span class="cab-item-ic"><?= $icon('<path d="M5 4h4l2 5-2.5 1.5a11 11 0 0 0 5 5L16 13l5 2v4a1 1 0 0 1-1 1A17 17 0 0 1 4 5a1 1 0 0 1 1-1z"/>') ?></span>
+                    <span class="cab-item-lbl">Телефон<span class="cab-sub"><?= trim((string)($user['phone'] ?? '')) !== '' ? h($user['phone']) . ' — не подтверждён' : 'Не привязан' ?></span></span>
+                    <span class="cab-link-no">Привязать</span>
+                    <svg class="cab-item-chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m9 6 6 6-6 6"/></svg>
+                  </summary>
+                  <div class="cab-set-body">
+                    <?php if ($phonePending !== ''): ?>
+                      <p class="hint" style="margin:0 0 12px">Код из SMS отправлен на <strong><?= h($phonePending) ?></strong>. Введите его в течение 10 минут.</p>
+                      <form method="post" action="<?= url('/cabinet') ?>">
+                        <?= csrf_field() ?>
+                        <input type="hidden" name="action" value="phone_verify">
+                        <div class="field">
+                          <label for="ph_code">Код из SMS</label>
+                          <input type="text" id="ph_code" name="code" inputmode="numeric" autocomplete="one-time-code" maxlength="6" placeholder="•••••" required>
+                        </div>
+                        <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:center">
+                          <button class="btn btn--primary" type="submit">Подтвердить</button>
+                        </div>
+                      </form>
+                      <form method="post" action="<?= url('/cabinet') ?>" style="margin-top:10px">
+                        <?= csrf_field() ?>
+                        <input type="hidden" name="action" value="phone_cancel">
+                        <button type="submit" class="btn btn--ghost btn--sm" style="min-height:34px">Изменить номер</button>
+                      </form>
+                    <?php else: ?>
+                      <form method="post" action="<?= url('/cabinet') ?>">
+                        <?= csrf_field() ?>
+                        <input type="hidden" name="action" value="phone_request">
+                        <div class="field">
+                          <label for="ph_num">Номер телефона</label>
+                          <input type="tel" id="ph_num" name="phone" value="<?= h($user['phone'] ?? '') ?>" placeholder="+7 (___) ___-__-__" required>
+                        </div>
+                        <button class="btn btn--primary" type="submit">Получить код по SMS</button>
+                        <p class="hint" style="margin:10px 0 0">Пришлём SMS с кодом подтверждения. После привязки сможете входить по номеру телефона.</p>
+                      </form>
+                    <?php endif; ?>
+                  </div>
+                </details>
+                <?php endif; ?>
+
+                <!-- ВКонтакте -->
+                <div class="cab-srow" style="--ic:#0077FF">
+                  <span class="cab-item-ic"><svg viewBox="0 0 24 24" width="17" height="17" fill="#fff" style="flex:none"><path d="M13.2 17.4c-5.5 0-8.9-3.8-9-10.1h2.8c.1 4.6 2.2 6.6 3.8 7V7.3h2.6v4c1.6-.2 3.3-2 3.9-4h2.6c-.5 2.5-2.2 4.3-3.4 5 1.2.6 3.2 2.2 3.9 5.1h-2.9c-.6-1.9-2.1-3.4-4.1-3.6v3.6h-.2z"/></svg></span>
+                  <span class="cab-item-lbl">ВКонтакте<span class="cab-sub"><?= !empty($user['vk_id']) ? 'Привязан' : 'Вход в 1 клик через VK ID' ?></span></span>
+                  <?php if (!empty($user['vk_id'])): ?>
+                    <form method="post" action="<?= url('/cabinet') ?>">
+                      <?= csrf_field() ?>
+                      <input type="hidden" name="action" value="unlink">
+                      <input type="hidden" name="provider" value="vk">
+                      <button type="submit" class="btn btn--ghost btn--sm" style="min-height:34px">Отвязать</button>
+                    </form>
+                  <?php else: ?>
+                    <a class="btn btn--primary btn--sm" href="<?= url('/api/v1/oauth_vk?bind=1') ?>" style="min-height:34px">Привязать ВК</a>
+                  <?php endif; ?>
+                </div>
+
+                <!-- MAX -->
+                <div class="cab-srow" style="--ic:#6C3FD8">
+                  <span class="cab-item-ic"><?= $icon('<path d="M4 19V6l8 6 8-6v13"/>') ?></span>
+                  <span class="cab-item-lbl">MAX<span class="cab-sub"><?= !empty($user['max_id']) ? 'Привязан' : 'Мессенджер MAX' ?></span></span>
+                  <?php if (!empty($user['max_id'])): ?>
+                    <form method="post" action="<?= url('/cabinet') ?>">
+                      <?= csrf_field() ?>
+                      <input type="hidden" name="action" value="unlink">
+                      <input type="hidden" name="provider" value="max">
+                      <button type="submit" class="btn btn--ghost btn--sm" style="min-height:34px">Отвязать</button>
+                    </form>
+                  <?php else: ?>
+                    <a class="btn btn--primary btn--sm" href="<?= url('/api/v1/oauth_max?bind=1') ?>" style="min-height:34px">Привязать</a>
+                  <?php endif; ?>
+                </div>
+
+                <!-- Пароль -->
+                <details class="cab-set">
+                  <summary style="--ic:#5B3A8E">
+                    <span class="cab-item-ic"><?= $icon('<rect x="4" y="10" width="16" height="10" rx="2"/><path d="M8 10V7a4 4 0 0 1 8 0v3"/>') ?></span>
+                    <span class="cab-item-lbl">Пароль<span class="cab-sub"><?= trim((string)($user['password_hash'] ?? '')) !== '' ? 'Сменить пароль входа' : 'Пароль не задан' ?></span></span>
+                    <svg class="cab-item-chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m9 6 6 6-6 6"/></svg>
+                  </summary>
+                  <div class="cab-set-body">
+                    <form method="post" action="<?= url('/cabinet') ?>">
+                      <?= csrf_field() ?>
+                      <input type="hidden" name="action" value="password">
+                      <div class="field">
+                        <label for="cur_pw">Текущий пароль</label>
+                        <input type="password" id="cur_pw" name="current_password" autocomplete="current-password" required>
+                      </div>
+                      <div class="field">
+                        <label for="new_pw">Новый пароль</label>
+                        <input type="password" id="new_pw" name="new_password" autocomplete="new-password" minlength="6" required>
+                      </div>
+                      <button class="btn btn--primary" type="submit">Изменить пароль</button>
+                    </form>
+                  </div>
+                </details>
+              </div>
             </div>
-          </div>
 
-          <!-- Тумблер фоновой музыки -->
-          <div class="cab-card">
-            <h3 style="margin-top:0;font-family:var(--ff-serif)">Фоновая музыка</h3>
-            <form method="post" action="<?= url('/cabinet') ?>">
-              <?= csrf_field() ?>
-              <input type="hidden" name="action" value="music_toggle">
-              <label class="switch">
-                <span class="switch-txt"><strong>Классическая музыка в приложении</strong><span>Автоматически играет фоном (Вивальди, Моцарт, Бах, Шопен). Можно отключить.</span></span>
-                <input type="checkbox" name="music_off" value="1" <?= !empty($user['music_off']) ? 'checked' : '' ?> onchange="this.form.submit()">
-                <span class="switch-ui" aria-hidden="true"></span>
-              </label>
-              <div style="text-align:right;margin-top:8px"><small style="color:var(--muted)">Настройка сохраняется автоматически</small></div>
-            </form>
-          </div>
-
-          <div class="cab-card">
-            <h3 style="margin-top:0;font-family:var(--ff-serif)">Подписка и уведомления</h3>
-            <form method="post" action="<?= url('/cabinet') ?>">
-              <?= csrf_field() ?>
-              <input type="hidden" name="action" value="notify">
-              <label class="switch">
-                <span class="switch-txt"><strong>Рассылка на почту</strong><span>Статусы заявок, результаты, готовность дипломов</span></span>
-                <input type="checkbox" name="notify_email" value="1" <?= (int)$user['notify_email'] ? 'checked' : '' ?>>
-                <span class="switch-ui" aria-hidden="true"></span>
-              </label>
-              <button class="btn btn--primary" type="submit" style="margin-top:18px">Сохранить</button>
-            </form>
-          </div>
-
-          <div class="cab-card">
-            <h3 style="margin-top:0;font-family:var(--ff-serif)">Смена пароля</h3>
-            <form method="post" action="<?= url('/cabinet') ?>">
-              <?= csrf_field() ?>
-              <input type="hidden" name="action" value="password">
-              <div class="field">
-                <label for="cur_pw">Текущий пароль</label>
-                <input type="password" id="cur_pw" name="current_password" autocomplete="current-password" required>
+            <!-- Конфиденциальность -->
+            <div class="cab-group">
+              <div class="cab-group-ttl">Конфиденциальность и уведомления</div>
+              <div class="cab-group-card">
+                <form method="post" action="<?= url('/cabinet') ?>" class="cab-set-body" style="padding-top:6px">
+                  <?= csrf_field() ?>
+                  <input type="hidden" name="action" value="privacy">
+                  <input type="hidden" name="name_public" value="initials">
+                  <label class="switch">
+                    <span class="switch-txt"><strong>Полное имя в публичных результатах</strong><span>Выключено — в итогах конкурсов покажем «Фамилия И. О.» вместо полного имени</span></span>
+                    <input type="checkbox" name="name_public" value="full" <?= $privNameFull ? 'checked' : '' ?>>
+                    <span class="switch-ui" aria-hidden="true"></span>
+                  </label>
+                  <label class="switch">
+                    <span class="switch-txt"><strong>Письма на почту</strong><span>Статусы заявок, результаты, готовность дипломов</span></span>
+                    <input type="checkbox" name="notify_email" value="1" <?= (int)($user['notify_email'] ?? 1) ? 'checked' : '' ?>>
+                    <span class="switch-ui" aria-hidden="true"></span>
+                  </label>
+                  <label class="switch">
+                    <span class="switch-txt"><strong>Уведомления в приложении</strong><span>Колокольчик в шапке: события по заявкам и наградам</span></span>
+                    <input type="checkbox" name="notify_inapp" value="1" <?= $privInapp ? 'checked' : '' ?>>
+                    <span class="switch-ui" aria-hidden="true"></span>
+                  </label>
+                  <button class="btn btn--primary" type="submit" style="margin-top:16px">Сохранить</button>
+                </form>
               </div>
-              <div class="field">
-                <label for="new_pw">Новый пароль</label>
-                <input type="password" id="new_pw" name="new_password" autocomplete="new-password" minlength="6" required>
+            </div>
+
+            <!-- Приложение -->
+            <div class="cab-group">
+              <div class="cab-group-ttl">Приложение</div>
+              <div class="cab-group-card">
+                <div class="cab-set-body" style="padding-top:16px">
+                  <strong style="display:block;margin-bottom:10px;font-size:.95rem">Тема</strong>
+                  <div class="theme-picker">
+                    <button type="button" class="theme-opt" data-theme-set="light" aria-pressed="false">
+                      <span class="theme-preview theme-preview--light"><i></i><i></i><i></i></span>
+                      <span>Светлая</span>
+                    </button>
+                    <button type="button" class="theme-opt" data-theme-set="dark" aria-pressed="false">
+                      <span class="theme-preview theme-preview--dark"><i></i><i></i><i></i></span>
+                      <span>Тёмная</span>
+                    </button>
+                  </div>
+                  <p class="hint" style="margin:12px 0 0">Тема сохраняется на устройстве. По умолчанию — светлая.</p>
+                </div>
+                <div class="cab-set-body" style="border-top:1px solid var(--line);padding-top:4px;padding-bottom:8px">
+                  <form method="post" action="<?= url('/cabinet') ?>">
+                    <?= csrf_field() ?>
+                    <input type="hidden" name="action" value="music_toggle">
+                    <label class="switch" style="border-bottom:none">
+                      <span class="switch-txt"><strong>Отключить фоновую музыку</strong><span>Классика в приложении (Вивальди, Моцарт, Бах, Шопен). Сохраняется автоматически</span></span>
+                      <input type="checkbox" name="music_off" value="1" <?= !empty($user['music_off']) ? 'checked' : '' ?> onchange="this.form.submit()">
+                      <span class="switch-ui" aria-hidden="true"></span>
+                    </label>
+                  </form>
+                </div>
               </div>
-              <button class="btn btn--primary" type="submit">Изменить пароль</button>
-            </form>
+            </div>
+
           </div>
 
           <a class="cab-logout" href="<?= url('/logout') ?>"><?= $icon('<path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4M16 17l5-5-5-5M21 12H9"/>') ?> Выйти из аккаунта</a>

@@ -43,6 +43,10 @@ if ($code === '') {
     $verifier = rtrim(strtr(base64_encode(random_bytes(48)), '+/', '-_'), '=');
     $_SESSION['oauth_vk_state']    = $st;
     $_SESSION['oauth_vk_verifier'] = $verifier;
+    // Привязка ВК к уже залогиненному аккаунту (кнопка «Привязать» в кабинете, ?bind=1):
+    // запоминаем uid в сессии — на шаге 2 привяжем vk_id к нему, а не создадим нового.
+    if (input('bind') !== '' && ($cu = current_user())) $_SESSION['oauth_vk_bind'] = (int) $cu['id'];
+    else unset($_SESSION['oauth_vk_bind']);
     $challenge = rtrim(strtr(base64_encode(hash('sha256', $verifier, true)), '+/', '-_'), '=');
     $auth = 'https://id.vk.com/authorize?' . http_build_query([
         'response_type'         => 'code',
@@ -115,6 +119,25 @@ if ($pr) {
     $name   = trim((string)($u['first_name'] ?? '') . ' ' . (string)($u['last_name'] ?? ''));
     $avatar = (string)($u['avatar'] ?? '');
     $email  = mb_strtolower(trim((string)($u['email'] ?? '')));
+}
+
+// --- Привязка к текущему аккаунту (из кабинета, ?bind=1): не upsert, а точечный UPDATE. ---
+$bindUid = (int) ($_SESSION['oauth_vk_bind'] ?? 0);
+unset($_SESSION['oauth_vk_bind']);
+if ($bindUid > 0 && ($cu = current_user()) && (int) $cu['id'] === $bindUid) {
+    ensure_user_column('vk_id');
+    $busy = one("SELECT id FROM users WHERE vk_id = ? AND vk_id <> '' AND id <> ?", [$vkUserId, $bindUid]);
+    if ($busy) {
+        flash('Этот аккаунт ВКонтакте уже привязан к другому профилю. Сначала отвяжите его там.', 'error');
+    } else {
+        $upd = ['vk_id' => $vkUserId];
+        if ($avatar !== '' && (string) ($cu['avatar'] ?? '') === '')    $upd['avatar'] = $avatar;
+        if ($name   !== '' && (string) ($cu['full_name'] ?? '') === '') $upd['full_name'] = $name;
+        update('users', $upd, 'id=:id', ['id' => $bindUid]);
+        audit('vk_bind', 'user', $bindUid, ['vk_user_id' => $vkUserId]);
+        flash('ВКонтакте привязан к Вашему аккаунту.', 'success');
+    }
+    redirect('/cabinet#settings');
 }
 
 // upsert users (по vk_id / email), сохранение имени + аватара, вход.

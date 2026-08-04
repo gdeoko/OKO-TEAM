@@ -82,6 +82,29 @@ $allDiplomaRows = all(
      FROM diplomas d JOIN applications a ON a.id = d.application_id
      WHERE a.full_name <> ''"
 );
+/* Конфиденциальность: пользователи с privacy.name_public='initials' (настройка кабинета,
+   users.privacy JSON) показываются в публичных результатах как «Фамилия И. О.». */
+$privInitials = [];
+try {
+    foreach (all("SELECT id, privacy FROM users WHERE privacy LIKE '%initials%'") as $pu) {
+        $pj = json_decode((string) ($pu['privacy'] ?? ''), true);
+        if (is_array($pj) && ($pj['name_public'] ?? '') === 'initials') $privInitials[(int) $pu['id']] = true;
+    }
+} catch (\Throwable $e) { /* колонки privacy может ещё не быть — тогда скрывать некого */ }
+if ($privInitials) {
+    $mmInitials = function (string $name): string {
+        $parts = array_values(array_filter(preg_split('~\s+~u', trim($name)) ?: [], fn($w) => $w !== ''));
+        if (count($parts) < 2) return $name;
+        $out = (string) $parts[0];
+        for ($i = 1, $n = count($parts); $i < $n; $i++) $out .= ' ' . mb_strtoupper(mb_substr($parts[$i], 0, 1)) . '.';
+        return $out;
+    };
+    foreach ($results as &$rr) if (!empty($rr['user_id']) && isset($privInitials[(int) $rr['user_id']])) $rr['full_name'] = $mmInitials((string) $rr['full_name']);
+    unset($rr);
+    foreach ($allDiplomaRows as &$rr) if (!empty($rr['user_id']) && isset($privInitials[(int) $rr['user_id']])) $rr['full_name'] = $mmInitials((string) $rr['full_name']);
+    unset($rr);
+}
+
 $artistSlugMap = [];
 $artistGroups = [];
 foreach ($allDiplomaRows as $r) {

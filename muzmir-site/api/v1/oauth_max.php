@@ -42,6 +42,9 @@ if ($err !== '') {
 if ($code === '') {
     $st = bin2hex(random_bytes(16));
     $_SESSION['oauth_max_state'] = $st;
+    // Привязка MAX к уже залогиненному аккаунту (кнопка «Привязать» в кабинете, ?bind=1).
+    if (input('bind') !== '' && ($cu = current_user())) $_SESSION['oauth_max_bind'] = (int) $cu['id'];
+    else unset($_SESSION['oauth_max_bind']);
     $auth = $authorizeUrl . '?' . http_build_query([
         'client_id'     => $clientId,
         'redirect_uri'  => $redirectUri,
@@ -103,6 +106,25 @@ $name   = trim((string)($profile['name'] ?? trim(((string)($profile['first_name'
 $avatar = (string)($profile['picture'] ?? $profile['avatar'] ?? $profile['photo'] ?? $profile['photo_url'] ?? '');
 
 if ($extId === '') { flash('MAX не вернул идентификатор аккаунта.', 'error'); redirect('/login'); }
+
+// --- Привязка к текущему аккаунту (из кабинета, ?bind=1): не upsert, а точечный UPDATE. ---
+$bindUid = (int) ($_SESSION['oauth_max_bind'] ?? 0);
+unset($_SESSION['oauth_max_bind']);
+if ($bindUid > 0 && ($cu = current_user()) && (int) $cu['id'] === $bindUid) {
+    ensure_user_column('max_id');
+    $busy = one("SELECT id FROM users WHERE max_id = ? AND max_id <> '' AND id <> ?", [$extId, $bindUid]);
+    if ($busy) {
+        flash('Этот аккаунт MAX уже привязан к другому профилю. Сначала отвяжите его там.', 'error');
+    } else {
+        $upd = ['max_id' => $extId];
+        if ($avatar !== '' && (string) ($cu['avatar'] ?? '') === '')    $upd['avatar'] = $avatar;
+        if ($name   !== '' && (string) ($cu['full_name'] ?? '') === '') $upd['full_name'] = $name;
+        update('users', $upd, 'id=:id', ['id' => $bindUid]);
+        audit('max_bind', 'user', $bindUid, ['max_id' => $extId]);
+        flash('MAX привязан к Вашему аккаунту.', 'success');
+    }
+    redirect('/cabinet#settings');
+}
 
 // upsert users (по max_id / email), сохранение имени + аватара, вход.
 // Фиксируем максимальный id до upsert: если после вернётся больший id — это новый пользователь.
