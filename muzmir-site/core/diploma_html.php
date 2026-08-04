@@ -53,7 +53,7 @@ function diploma_theme_pick(array $c, array $tpl): array {
             'grad_dtype'  => 'linear-gradient(180deg,#FFF6C4 0%,#FFD54F 18%,#FFC107 38%,#D4A017 52%,#B8860B 62%,#FFC107 80%,#FFF3B0 100%)',
             'grad_degree' => 'linear-gradient(180deg,#FFFFFF 0%,#CFEFFF 35%,#8FD4F5 65%,#E8F9FF 100%)',
             'name_color' => '#BFE9FF', 'ff_name' => "'Prata',serif",
-            'script_font' => 'Bad+Script', 'ff_script' => "'Bad Script',cursive", 'script_fs' => 43, 'script_color' => '#D6F1FF',
+            'script_font' => 'Pacifico', 'ff_script' => "'Pacifico',cursive", 'script_fs' => 36, 'script_color' => '#D6F1FF',
         ],
         // Зенит, триумф: античная классика, тёплое торжественное золото.
         'zenith' => [
@@ -73,7 +73,7 @@ function diploma_theme_pick(array $c, array $tpl): array {
             'grad_dtype'  => 'linear-gradient(180deg,#FFF9EC 0%,#FFE7B8 22%,#F4C878 42%,#D89A3D 56%,#B87526 66%,#F2BE6A 82%,#FFF2D8 100%)',
             'grad_degree' => 'linear-gradient(180deg,#FFFFFF 0%,#FFF0D6 32%,#F2CE8E 62%,#D89A3D 88%,#FFE3B0 100%)',
             'name_color' => '#FFE9C4', 'ff_name' => "'Cormorant Garamond',serif",
-            'script_font' => 'Caveat:wght@600;700', 'ff_script' => "'Caveat',cursive", 'script_fs' => 45, 'script_color' => '#FFE3B0',
+            'script_font' => 'Poiret+One', 'ff_script' => "'Poiret One',cursive", 'script_fs' => 42, 'script_color' => '#FFE3B0',
         ],
         // Держава: имперское золото с рубиновым отблеском, строгая антиква.
         'derzhava' => [
