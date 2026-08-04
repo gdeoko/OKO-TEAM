@@ -77,7 +77,7 @@ ob_start(); ?>
     <div class="aw-comp-list">
       <?php foreach ($comps as $i => $c):
         $cover = trim((string)($c['cover'] ?? ''));
-        $coverUrl = $cover !== '' ? (preg_match('~^https?://~', $cover) ? $cover : asset('img/comp/'.$cover)) : '';
+        $coverUrl = $cover !== '' ? (preg_match('~^https?://~', $cover) ? $cover : url('/' . ltrim($cover, '/'))) : '';
         $scope = ($c['type'] === 'international') ? 'Международный' : 'Всероссийский';
       ?>
       <?php $dirMap=['multi'=>'Многожанровый','patriotic'=>'Патриотический','vocal'=>'Вокал','instrumental'=>'Инструментальный','dance'=>'Хореография','art'=>'ИЗО и ДПИ'];

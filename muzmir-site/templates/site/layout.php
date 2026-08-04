@@ -114,13 +114,25 @@ html body header.app-header{
 html[data-theme="dark"] body header.app-header{background:color-mix(in srgb,#0C1738 76%,transparent) !important;border-bottom-color:rgba(226,190,96,.20) !important}
 /* Никакого padding-top на body — sticky-шапка сама занимает место */
 html body{padding-top:0 !important}
-/* ПК ≥1024px: нижнее меню скрыто (кроме Telegram Mini App) — навигация в шапке. */
+/* ПК ≥1024px: НИЖНЕЕ меню остаётся (как в приложении) — центрированный «док».
+   Верхние ссылки-меню в шапке прячем: структура ровно как в мобильной версии,
+   только шире. Контент — шире по ширине экрана (см. .container ниже). */
 @media(min-width:1024px){
-  html:not(.in-tg) body nav.appnav,
-  html:not(.in-tg) body nav.appnav.appnav{display:none !important}
-  html:not(.in-tg) body{padding-bottom:0 !important}
-  html:not(.in-tg) body main{padding-bottom:56px !important}
+  html body nav.appnav,html body nav.appnav.appnav{
+    left:50% !important;right:auto !important;transform:translateX(-50%) !important;
+    bottom:16px !important;width:min(640px,86vw) !important;top:auto !important;
+    border:1px solid var(--line,rgba(0,0,0,.12)) !important;border-radius:24px !important;
+    box-shadow:0 18px 50px rgba(21,34,76,.22) !important;
+    padding:8px 18px calc(8px + env(safe-area-inset-bottom)) !important}
+  html body.mz-kb nav.appnav,html body.mz-kb nav.appnav.appnav{transform:translateX(-50%) translateY(170%) !important}
+  header.app-header .pc-nav{display:none !important}
+  html body{padding-bottom:calc(100px + env(safe-area-inset-bottom)) !important}
+  html body main{padding-bottom:calc(44px + env(safe-area-inset-bottom)) !important}
 }
+/* Шире контент на больших экранах — меньше пустых полей по краям. */
+@media(min-width:1440px){ .container{max-width:1360px} }
+@media(min-width:1720px){ .container{max-width:1520px} }
+@media(min-width:2200px){ .container{max-width:1680px} }
 </style>
 </head>
 <body<?= $u ? ' class="is-auth"' : '' ?>>
