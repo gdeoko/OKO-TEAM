@@ -15,7 +15,7 @@
   var theme = document.documentElement.dataset.theme === 'dark' ? 'dark' : 'light';
 
   var NOTE_GLYPHS = ['♪', '♫', '♩', '♬', '𝄞'];
-  var notes = [], sparks = [], stars = [], bokeh = [];
+  var notes = [], sparks = [], stars = [], bokeh = [], clouds = [];
   var t = 0;
 
   function rnd(a, b) { return a + Math.random() * (b - a); }
@@ -49,52 +49,89 @@
       stars.push({ x: rnd(0, W), y: rnd(0, H), r: rnd(0.4, 1.5), ph: rnd(0, Math.PI * 2), sp: rnd(0.4, 1.6) });
     }
     bokeh = [];
-    for (i = 0; i < Math.round(9 * area); i++) {
-      bokeh.push({ x: rnd(0, W), y: rnd(0, H), r: rnd(28, 90), vx: rnd(-0.05, 0.05), vy: rnd(-0.08, -0.02), a: rnd(0.03, 0.09) });
+    for (i = 0; i < Math.round(6 * area); i++) {
+      bokeh.push({ x: rnd(0, W), y: rnd(0, H), r: rnd(28, 80), vx: rnd(-0.05, 0.05), vy: rnd(-0.08, -0.02), a: rnd(0.02, 0.06) });
+    }
+    // Реалистичные облака светлой темы: кластер мягких пуфов, медленный дрейф
+    clouds = [];
+    var nClouds = W < 700 ? 4 : 6;
+    for (i = 0; i < nClouds; i++) {
+      var cw = rnd(0.22, 0.42) * Math.max(W * 0.6, 420);
+      var puffs = [];
+      var np = 6 + Math.floor(rnd(0, 4));
+      for (var k = 0; k < np; k++) {
+        puffs.push({ dx: rnd(-0.42, 0.42), dy: rnd(-0.16, 0.14), r: rnd(0.2, 0.4) });
+      }
+      clouds.push({
+        x: rnd(-0.1, 1.1) * W,
+        y: rnd(0.08, 0.72) * H,
+        w: cw, vx: rnd(0.05, 0.16) * (Math.random() < 0.5 ? 1 : 1),
+        a: rnd(0.5, 0.85), puffs: puffs
+      });
     }
     sparks = [];
   }
 
-  /* ---------- Светлая тема: солнце ---------- */
+  /* ---------- Светлая тема: небо с облаками и реалистичным солнцем ---------- */
+  function drawCloud(c) {
+    var baseR = c.w * 0.30;
+    // Тень-подложка снизу — объём
+    ctx.save();
+    ctx.globalAlpha = c.a * 0.25;
+    ctx.fillStyle = '#C9B98F';
+    ctx.beginPath();
+    ctx.ellipse(c.x, c.y + baseR * 0.55, c.w * 0.5, baseR * 0.4, 0, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.restore();
+    // Пуфы
+    for (var k = 0; k < c.puffs.length; k++) {
+      var pf = c.puffs[k];
+      var px = c.x + pf.dx * c.w, py = c.y + pf.dy * c.w * 0.5, pr = pf.r * c.w;
+      var g = ctx.createRadialGradient(px, py - pr * 0.3, pr * 0.1, px, py, pr);
+      g.addColorStop(0, 'rgba(255,255,255,' + (c.a) + ')');
+      g.addColorStop(0.7, 'rgba(255,252,244,' + (c.a * 0.8).toFixed(3) + ')');
+      g.addColorStop(1, 'rgba(255,250,240,0)');
+      ctx.fillStyle = g;
+      ctx.beginPath(); ctx.arc(px, py, pr, 0, Math.PI * 2); ctx.fill();
+    }
+  }
+
   function drawLight() {
+    // Небо: нежно-голубое сверху, тёплый крем к горизонту (бренд-айвори)
     var g = ctx.createLinearGradient(0, 0, 0, H);
-    g.addColorStop(0, '#FDF7E6'); g.addColorStop(0.45, '#FAF1DC'); g.addColorStop(1, '#F4E6C6');
+    g.addColorStop(0, '#BFDFF2');
+    g.addColorStop(0.45, '#DFEDF2');
+    g.addColorStop(0.75, '#F6EEDA');
+    g.addColorStop(1, '#F4E6C6');
     ctx.fillStyle = g; ctx.fillRect(0, 0, W, H);
 
-    var sx = W * 0.85, sy = H * 0.12, sr = Math.min(W, H) * 0.11;
-    // Дальнее тёплое сияние
-    var halo = ctx.createRadialGradient(sx, sy, 0, sx, sy, sr * 5.2);
-    halo.addColorStop(0, 'rgba(255,214,110,0.5)');
-    halo.addColorStop(0.35, 'rgba(255,205,92,0.18)');
-    halo.addColorStop(1, 'rgba(255,205,92,0)');
-    ctx.fillStyle = halo; ctx.fillRect(0, 0, W, H);
-    // Живые лучи (медленно вращаются, дышат)
-    ctx.save();
-    ctx.translate(sx, sy);
-    ctx.rotate(t * 0.0006);
-    for (var i = 0; i < 12; i++) {
-      var la = 0.10 + 0.05 * Math.sin(t * 0.004 + i * 1.7);
-      ctx.rotate(Math.PI / 6);
-      var lg = ctx.createLinearGradient(0, 0, sr * 4.4, 0);
-      lg.addColorStop(0, 'rgba(255,204,88,' + la.toFixed(3) + ')');
-      lg.addColorStop(1, 'rgba(255,204,88,0)');
-      ctx.fillStyle = lg;
-      ctx.beginPath();
-      ctx.moveTo(sr * 0.8, 0);
-      ctx.lineTo(sr * 4.4, -sr * 0.34);
-      ctx.lineTo(sr * 4.4, sr * 0.34);
-      ctx.closePath();
-      ctx.fill();
+    // Реалистичное солнце: яркое ядро + многослойная корона, лёгкое дыхание
+    var sx = W * 0.82, sy = H * 0.14;
+    var sr = Math.max(34, Math.min(W, H) * 0.075);
+    var pulse = 1 + 0.03 * Math.sin(t * 0.0016);
+    var glow = ctx.createRadialGradient(sx, sy, 0, sx, sy, sr * 7 * pulse);
+    glow.addColorStop(0, 'rgba(255,244,214,0.85)');
+    glow.addColorStop(0.18, 'rgba(255,226,150,0.45)');
+    glow.addColorStop(0.45, 'rgba(255,214,120,0.16)');
+    glow.addColorStop(1, 'rgba(255,214,120,0)');
+    ctx.fillStyle = glow; ctx.fillRect(0, 0, W, H);
+    var core = ctx.createRadialGradient(sx, sy, 0, sx, sy, sr * pulse);
+    core.addColorStop(0, '#FFFDF4');
+    core.addColorStop(0.55, '#FFF3C8');
+    core.addColorStop(0.85, '#FFE08E');
+    core.addColorStop(1, 'rgba(255,214,120,0.0)');
+    ctx.beginPath(); ctx.arc(sx, sy, sr * 1.35 * pulse, 0, Math.PI * 2);
+    ctx.fillStyle = core; ctx.fill();
+
+    // Облака: дальние за солнцем, дрейф с мягким параллаксом по высоте
+    for (var i = 0; i < clouds.length; i++) {
+      var c = clouds[i];
+      c.x += c.vx * (0.5 + c.y / H);
+      if (c.x - c.w > W) { c.x = -c.w; c.y = rnd(0.08, 0.72) * H; }
+      drawCloud(c);
     }
-    ctx.restore();
-    // Диск солнца
-    var sun = ctx.createRadialGradient(sx - sr * 0.25, sy - sr * 0.25, sr * 0.1, sx, sy, sr);
-    sun.addColorStop(0, '#FFF6D8'); sun.addColorStop(0.55, '#FFDF8E'); sun.addColorStop(1, '#F2BE5A');
-    ctx.beginPath(); ctx.arc(sx, sy, sr, 0, Math.PI * 2);
-    ctx.fillStyle = sun;
-    ctx.shadowColor = 'rgba(255,205,92,0.85)'; ctx.shadowBlur = 44;
-    ctx.fill(); ctx.shadowBlur = 0;
-    // Боке
+
+    // Лёгкое золотое боке в нижней части
     for (i = 0; i < bokeh.length; i++) {
       var b = bokeh[i];
       b.x += b.vx; b.y += b.vy;
