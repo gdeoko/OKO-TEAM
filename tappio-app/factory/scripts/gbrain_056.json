@@ -24,16 +24,17 @@
   "big": "EVERY\nNAME",
   "q": [
    "walking park green trees"
-  ]
+  ],
+  "ai": "work/gbrain_056/cover_ai.png"
  },
  "segments": [
   {
    "id": "b1",
-   "text": "You just met them and the name is already gone."
+   "text": "Stop scrolling. You just met them and the name is already gone."
   },
   {
    "id": "b2",
-   "text": "It is not age. It is attention and encoding."
+   "text": "it's not age. it's attention and encoding."
   },
   {
    "id": "b3",
@@ -249,7 +250,7 @@
   "code": "FOCUS"
  },
  "caption": "USEFUL: Forgetting names isn't age — it's encoding. A 60-second test shows your memory score, and five-minute games train recall. Watch the number climb. Comment FOCUS for the app. #brainhealth #memory #focus #productivity #selfimprovement #mentalhealth #learning #waves #brain #memory #concentration",
- "yt_title": "Why you forget every name #shorts",
+ "yt_title": "Power Focus 14Hz Beta Waves that #shorts",
  "trend_keys": [
   "waves",
   "brain",
@@ -260,5 +261,18 @@
   "improve",
   "focus"
  ],
- "content_type": "useful"
+ "content_type": "useful",
+ "comp_angle": {
+  "title": "Power Focus - 14Hz Beta Waves that Improve Concentration and Focus",
+  "views": 5294621,
+  "channel": "Study Sonic Focus"
+ },
+ "virality": {
+  "score": 93,
+  "notes": [
+   "angle<-5294k",
+   "hook_boosted"
+  ],
+  "hook": "Stop scrolling. You just met them and the name is already gone."
+ }
 }

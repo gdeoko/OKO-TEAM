@@ -1,0 +1,265 @@
+{
+ "id": "gtape_057",
+ "app": "tape",
+ "voice": "en-US-ChristopherNeural",
+ "rate": "+5%",
+ "grade": "clean_ad",
+ "brand": {
+  "accent": "#F4C430",
+  "accent2": "#FFE08A",
+  "code": "MEASURE",
+  "logo": "tape.png",
+  "name": "3D TAPE MEASURE"
+ },
+ "music": {
+  "queries": [
+   "driving electronic",
+   "happy ukulele diy",
+   "warm optimistic guitar",
+   "cheerful folk clap"
+  ]
+ },
+ "cover": {
+  "kicker": "WILL IT FIT?",
+  "top": "MEASURE ANY ROOM",
+  "big": "WITHOUT\nA TAPE",
+  "q": [
+   "measuring tape metal bending closeup"
+  ],
+  "ai": "work/gtape_057/cover_ai.png"
+ },
+ "segments": [
+  {
+   "id": "b1",
+   "text": "Stop scrolling. A rug, a TV, a shelf. Will it fit? Stop guessing."
+  },
+  {
+   "id": "b2",
+   "text": "Point your phone, tap two points."
+  },
+  {
+   "id": "b3",
+   "text": "The length appears right on the floor."
+  },
+  {
+   "id": "b4",
+   "text": "Width, height, area, no helper needed."
+  },
+  {
+   "id": "b5",
+   "text": "Save every wall as a project, export a PDF."
+  },
+  {
+   "id": "b6",
+   "text": "Measure any space from your couch in ten seconds."
+  }
+ ],
+ "shots": [
+  {
+   "q": [
+    "bookshelf assembly instructions floor"
+   ],
+   "motion": "pandown"
+  },
+  {
+   "q": [
+    "measuring tape metal bending closeup"
+   ],
+   "insert": "tilt",
+   "pos": "center"
+  },
+  {
+   "q": [
+    "empty living room wooden floor sunlight"
+   ],
+   "motion": "panup"
+  },
+  {
+   "q": [
+    "curtains window measuring home"
+   ],
+   "insert": "rrect",
+   "pos": "lower"
+  },
+  {
+   "q": [
+    "modern tv mounted on wall living room"
+   ],
+   "motion": "zin"
+  },
+  {
+   "q": [
+    "person measuring living room with phone ar"
+   ],
+   "insert": "tv",
+   "pos": "center"
+  },
+  {
+   "q": [
+    "moving boxes new apartment"
+   ],
+   "motion": "panl"
+  },
+  {
+   "q": [
+    "paint wall renovation room"
+   ],
+   "insert": "hexagon",
+   "pos": "upper"
+  },
+  {
+   "q": [
+    "hand pointing phone at wall measuring"
+   ],
+   "motion": "panr"
+  },
+  {
+   "q": [
+    "person relaxing on couch bright apartment"
+   ],
+   "insert": "circle",
+   "pos": "upper"
+  },
+  {
+   "q": [
+    "furniture store showroom sofa"
+   ],
+   "motion": "zout"
+  },
+  {
+   "q": [
+    "garden patio outdoor measuring"
+   ],
+   "insert": "diamond",
+   "pos": "lower"
+  },
+  {
+   "q": [
+    "rolled up rug floor room"
+   ],
+   "motion": "pandown"
+  }
+ ],
+ "overlays": [
+  {
+   "at": 0.12,
+   "dur": 2.23,
+   "type": "kicker",
+   "text": "AR MEASURE"
+  },
+  {
+   "at": 0.158,
+   "dur": 2.6,
+   "type": "checklist",
+   "items": [
+    "Point the phone",
+    "Tap two points",
+    "Read the length",
+    "Save the project"
+   ],
+   "pos": "center"
+  },
+  {
+   "at": 0.229,
+   "dur": 2.33,
+   "type": "kinetic",
+   "top": "JUST",
+   "big": "TAP"
+  },
+  {
+   "at": 0.35,
+   "dur": 1.64,
+   "type": "gauge",
+   "to": 10,
+   "max": 60,
+   "suffix": "s",
+   "label": "PER MEASUREMENT",
+   "pos": "center"
+  },
+  {
+   "at": 0.455,
+   "dur": 2.15,
+   "type": "bars",
+   "title": "TAPE VS PHONE ERROR",
+   "unit": "%",
+   "items": [
+    [
+     "Metal tape",
+     12
+    ],
+    [
+     "Phone AR",
+     3
+    ]
+   ],
+   "pos": "center"
+  },
+  {
+   "at": 0.498,
+   "dur": 2.06,
+   "type": "lowerthird",
+   "title": "DROP A FRAME",
+   "sub": "test it before the nail"
+  },
+  {
+   "at": 0.557,
+   "dur": 2.27,
+   "type": "chips",
+   "items": [
+    "POINT",
+    "TAP",
+    "READ",
+    "SAVE"
+   ],
+   "pos": "lower"
+  },
+  {
+   "at": 0.863,
+   "dur": 1.71,
+   "type": "ticker",
+   "to": 10,
+   "suffix": "s",
+   "label": "PER MEASURE",
+   "pos": "lower"
+  },
+  {
+   "at": 0.898,
+   "dur": 2.08,
+   "type": "stat_count",
+   "to": 1,
+   "suffix": "",
+   "label": "PERSON NEEDED",
+   "pos": "center"
+  }
+ ],
+ "cta": {
+  "text": "Comment MEASURE for the app.",
+  "code": "MEASURE"
+ },
+ "caption": "A rug, a TV, a shelf — will it fit? Point your phone, tap two points, and the length appears on the floor. Width, height, area — no tape, no helper. Comment MEASURE for the app. #diy #homedecor #interiordesign #measure #movingtips #renter #apartmenttherapy #woodworking #tape #tips #plan",
+ "yt_title": "ARuler Measure anything with Augmented Reality #shorts",
+ "trend_keys": [
+  "woodworking",
+  "tape",
+  "tips",
+  "plan",
+  "measuring",
+  "quick",
+  "hacks",
+  "measure"
+ ],
+ "content_type": "viral",
+ "comp_angle": {
+  "title": "ARuler - Measure anything with Augmented Reality and your phone",
+  "views": 980166,
+  "channel": "GRYMALA"
+ },
+ "virality": {
+  "score": 91,
+  "notes": [
+   "angle<-980k",
+   "hook_boosted"
+  ],
+  "hook": "Stop scrolling. A rug, a TV, a shelf. Will it fit? Stop guessing."
+ }
+}

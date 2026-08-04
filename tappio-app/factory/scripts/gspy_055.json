@@ -25,16 +25,17 @@
   "big": "IS ON THE\nNETWORK",
   "q": [
    "reflection glass light dot"
-  ]
+  ],
+  "ai": "work/gspy_055/cover_ai.png"
  },
  "segments": [
   {
    "id": "b1",
-   "text": "Checked into a rental? A hidden lens could be watching."
+   "text": "Stop scrolling. Checked into a rental? A hidden lens could be watching."
   },
   {
    "id": "b2",
-   "text": "Most spy cams need Wi-Fi. That is their weak spot."
+   "text": "Most spy cams need Wi-Fi. that's their weak spot."
   },
   {
    "id": "b3",
@@ -201,7 +202,7 @@
   "code": "PRIVACY"
  },
  "caption": "Checked into a rental? Hidden cams live on the Wi-Fi. Scan the network, flag every unknown device, then sweep for the IR glint. Comment PRIVACY for the app. #privacy #airbnb #travelsafety #hiddencamera #traveltips #hotelroom #safetytips #look #hidden #find #phone",
- "yt_title": "Find hidden cameras with a Wi-Fi scan #shorts",
+ "yt_title": "I Rented an AirBnB to Look #shorts",
  "trend_keys": [
   "look",
   "hidden",
@@ -212,5 +213,18 @@
   "former",
   "airbnb"
  ],
- "content_type": "viral"
+ "content_type": "viral",
+ "comp_angle": {
+  "title": "I Rented an AirBnB to Look for Hidden Cameras",
+  "views": 1949579,
+  "channel": "Linus Tech Tips"
+ },
+ "virality": {
+  "score": 89,
+  "notes": [
+   "angle<-1949k",
+   "hook_boosted"
+  ],
+  "hook": "Stop scrolling. Checked into a rental? A hidden lens could be watching."
+ }
 }

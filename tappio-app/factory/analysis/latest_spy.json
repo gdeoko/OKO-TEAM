@@ -5,6 +5,26 @@
  "code": "PRIVACY",
  "top": [
   {
+   "views": 1743939,
+   "likes": 29119,
+   "comments": 1500,
+   "channel": "Jason Hanson",
+   "followers": 845000,
+   "dur": 540,
+   "id": "3zE8Tf9chEA",
+   "title": "Former CIA: Simple Technique to Find Hidden Cameras in an Airbnb"
+  },
+  {
+   "views": 1373890,
+   "likes": 17131,
+   "comments": 677,
+   "channel": "Sentel Tech",
+   "followers": 16200,
+   "dur": 195,
+   "id": "NkP7-pjzGhI",
+   "title": "How to Find Hidden Spy Cameras and Audio Bugs (The Professional Way)"
+  },
+  {
    "views": 2869440,
    "likes": 43800,
    "comments": 2900,
@@ -33,70 +53,30 @@
    "dur": 863,
    "id": "0208nuGPmZw",
    "title": "I Rented an AirBnB to Look for Hidden Cameras"
-  },
-  {
-   "views": 1743939,
-   "likes": 29119,
-   "comments": 1500,
-   "channel": "Jason Hanson",
-   "followers": 845000,
-   "dur": 540,
-   "id": "3zE8Tf9chEA",
-   "title": "Former CIA: Simple Technique to Find Hidden Cameras in an Airbnb"
-  },
-  {
-   "views": 1373890,
-   "likes": 17131,
-   "comments": 677,
-   "channel": "Sentel Tech",
-   "followers": 16200,
-   "dur": 195,
-   "id": "NkP7-pjzGhI",
-   "title": "How to Find Hidden Spy Cameras and Audio Bugs (The Professional Way)"
-  },
-  {
-   "views": 1165036,
-   "likes": 32192,
-   "comments": 1600,
-   "channel": "BulletProofBabes",
-   "followers": 48100,
-   "dur": 424,
-   "id": "vKZmAZqqYHU",
-   "title": "How to Find Hidden Cameras with Your Phone"
-  },
-  {
-   "views": 1075048,
-   "likes": 11798,
-   "comments": 2100,
-   "channel": "Law&Crime BodyCam",
-   "followers": 531000,
-   "dur": 1132,
-   "id": "DHZIQoiJJRo",
-   "title": "Cops Find Hidden Camera in Airbnb Bathroom"
-  },
-  {
-   "views": 1019726,
-   "likes": 15081,
-   "comments": 1400,
-   "channel": "Silver Cymbal",
-   "followers": 1080000,
-   "dur": 278,
-   "id": "UToWV2ZN9h4",
-   "title": "Most ILLEGAL CAMERA OUTLET you will never See"
-  },
-  {
-   "views": 7334741,
-   "likes": 53028,
-   "comments": 8200,
-   "channel": "CNN",
-   "followers": 19700000,
-   "dur": 345,
-   "id": "pqQJ2FxB988",
-   "title": "‘So creepy’: Inside CNN’s investigation of Airbnb’s hidden camera problem"
   }
  ],
  "millions_list": [
   {
+   "views": 1743939,
+   "likes": 29119,
+   "comments": 1500,
+   "channel": "Jason Hanson",
+   "followers": 845000,
+   "dur": 540,
+   "id": "3zE8Tf9chEA",
+   "title": "Former CIA: Simple Technique to Find Hidden Cameras in an Airbnb"
+  },
+  {
+   "views": 1373890,
+   "likes": 17131,
+   "comments": 677,
+   "channel": "Sentel Tech",
+   "followers": 16200,
+   "dur": 195,
+   "id": "NkP7-pjzGhI",
+   "title": "How to Find Hidden Spy Cameras and Audio Bugs (The Professional Way)"
+  },
+  {
    "views": 2869440,
    "likes": 43800,
    "comments": 2900,
@@ -125,83 +105,23 @@
    "dur": 863,
    "id": "0208nuGPmZw",
    "title": "I Rented an AirBnB to Look for Hidden Cameras"
-  },
-  {
-   "views": 1743939,
-   "likes": 29119,
-   "comments": 1500,
-   "channel": "Jason Hanson",
-   "followers": 845000,
-   "dur": 540,
-   "id": "3zE8Tf9chEA",
-   "title": "Former CIA: Simple Technique to Find Hidden Cameras in an Airbnb"
-  },
-  {
-   "views": 1373890,
-   "likes": 17131,
-   "comments": 677,
-   "channel": "Sentel Tech",
-   "followers": 16200,
-   "dur": 195,
-   "id": "NkP7-pjzGhI",
-   "title": "How to Find Hidden Spy Cameras and Audio Bugs (The Professional Way)"
-  },
-  {
-   "views": 1165036,
-   "likes": 32192,
-   "comments": 1600,
-   "channel": "BulletProofBabes",
-   "followers": 48100,
-   "dur": 424,
-   "id": "vKZmAZqqYHU",
-   "title": "How to Find Hidden Cameras with Your Phone"
-  },
-  {
-   "views": 1075048,
-   "likes": 11798,
-   "comments": 2100,
-   "channel": "Law&Crime BodyCam",
-   "followers": 531000,
-   "dur": 1132,
-   "id": "DHZIQoiJJRo",
-   "title": "Cops Find Hidden Camera in Airbnb Bathroom"
-  },
-  {
-   "views": 1019726,
-   "likes": 15081,
-   "comments": 1400,
-   "channel": "Silver Cymbal",
-   "followers": 1080000,
-   "dur": 278,
-   "id": "UToWV2ZN9h4",
-   "title": "Most ILLEGAL CAMERA OUTLET you will never See"
-  },
-  {
-   "views": 7334741,
-   "likes": 53028,
-   "comments": 8200,
-   "channel": "CNN",
-   "followers": 19700000,
-   "dur": 345,
-   "id": "pqQJ2FxB988",
-   "title": "‘So creepy’: Inside CNN’s investigation of Airbnb’s hidden camera problem"
   }
  ],
- "millions": 9,
+ "millions": 5,
  "hooks": [
   "hidden",
-  "find",
   "cameras",
+  "find",
   "airbnb",
-  "camera",
-  "tested",
-  "five",
-  "ways",
-  "hotels",
-  "house",
-  "rentals",
-  "hotel"
+  "former",
+  "cia",
+  "simple",
+  "technique",
+  "spy",
+  "audio",
+  "bugs",
+  "professional"
  ],
- "ts": "2026-08-04 04:27 UTC",
- "avg_views": 2298686
+ "ts": "2026-08-04 04:46 UTC",
+ "avg_views": 2018725
 }
