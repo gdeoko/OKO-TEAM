@@ -1,0 +1,93 @@
+<!doctype html><html lang="ru"><head><meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1"/>
+<title>Exora Brand Pack — Preview</title>
+<style>
+  :root{--bg:#04070E;--panel:rgba(255,255,255,.04);--line:rgba(255,255,255,.09);
+        --text:#F5F7FA;--muted:rgba(245,247,250,.62);--brand:#5ED29C;
+        --font:'Inter','SF Pro Text','Segoe UI',system-ui,sans-serif}
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{background:var(--bg);color:var(--text);font-family:var(--font);padding:32px 20px 60px;max-width:1200px;margin:0 auto;-webkit-font-smoothing:antialiased;line-height:1.5}
+  h1{font-size:34px;letter-spacing:-.03em;font-weight:800;margin-bottom:6px}
+  .sub{color:var(--muted);font-size:14px;margin-bottom:30px}
+  h2{font-size:20px;letter-spacing:-.01em;margin:28px 0 12px}
+  .card{background:var(--panel);border:1px solid var(--line);border-radius:20px;padding:20px;margin-bottom:16px}
+  .grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:12px}
+  .sw{border-radius:14px;padding:16px;aspect-ratio:1;display:flex;align-items:center;justify-content:center;position:relative;overflow:hidden}
+  .sw.dark{background:linear-gradient(180deg,#04070E,#0a0f1a);border:1px solid rgba(255,255,255,.06)}
+  .sw.light{background:linear-gradient(180deg,#f7f9fc,#e6ecf3);border:1px solid rgba(0,0,0,.06)}
+  .sw.brand{background:linear-gradient(180deg,#3FBF86,#2A9A6B)}
+  .sw img{width:82%;height:82%;object-fit:contain}
+  .sw .lbl{position:absolute;top:8px;left:12px;font-size:9.5px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;opacity:.55}
+  .sw.light .lbl{color:#0a0d10}
+  .colors{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:12px;margin-bottom:20px}
+  .colors > div{padding:14px;border-radius:12px;border:1px solid var(--line);background:var(--panel);text-align:center}
+  .swatch{width:100%;height:60px;border-radius:8px;margin-bottom:8px}
+  .name{font-size:12px;font-weight:600;letter-spacing:-.005em}
+  .hex{font-size:11px;color:var(--muted);font-family:'SF Mono',Consolas,monospace;margin-top:2px}
+  .files{margin-top:14px;padding-top:14px;border-top:1px dashed var(--line);font-size:12px;color:var(--muted)}
+  .files b{color:var(--text)}
+  .files code{background:rgba(0,0,0,.3);padding:2px 6px;border-radius:4px;color:var(--brand)}
+</style></head><body>
+<h1>Exora — Brand Pack</h1>
+<div class="sub">Aurora Liquid · концепт A1 · полный вектор + все форматы</div>
+
+<h2>Цвета</h2>
+<div class="colors">
+  <div><div class="swatch" style="background:linear-gradient(135deg,#5ED29C,#3FBF86,#5AC8FF,#A78BFA)"></div><div class="name">Aurora Master</div><div class="hex">multi-gradient</div></div>
+  <div><div class="swatch" style="background:#5ED29C"></div><div class="name">Mint</div><div class="hex">#5ED29C</div></div>
+  <div><div class="swatch" style="background:#3FBF86"></div><div class="name">Mint dark</div><div class="hex">#3FBF86</div></div>
+  <div><div class="swatch" style="background:#062018;border:1px solid rgba(255,255,255,.1)"></div><div class="name">Dark</div><div class="hex">#062018</div></div>
+  <div><div class="swatch" style="background:#04070E;border:1px solid rgba(255,255,255,.1)"></div><div class="name">Void</div><div class="hex">#04070E</div></div>
+  <div><div class="swatch" style="background:#FFFFFF;border:1px solid rgba(0,0,0,.1)"></div><div class="name">White</div><div class="hex">#FFFFFF</div></div>
+</div>
+
+<h2>Все варианты</h2>
+<div class="card">
+  <div style="font-size:14px;font-weight:700;margin-bottom:10px">Aurora — оригинал</div>
+  <div class="grid">
+    <div class="sw dark"><span class="lbl">Dark</span><img src="logo/png/exora-logo-aurora-512.png"/></div>
+    <div class="sw light"><span class="lbl">Light</span><img src="logo/png/exora-logo-aurora-512.png"/></div>
+    <div class="sw brand"><span class="lbl">On brand</span><img src="logo/png/exora-logo-aurora-512.png"/></div>
+  </div>
+  <div class="files"><b>Файлы:</b>
+    <code>logo/png/exora-logo-aurora-{32|48|64|128|256|512|1024|2048}.png</code>,
+    <code>svg</code>, <code>jpg</code>, <code>pdf</code>, <code>ico</code>
+  </div>
+</div>
+
+<div class="card">
+  <div style="font-size:14px;font-weight:700;margin-bottom:10px">Mint — брендовый акцент</div>
+  <div class="grid">
+    <div class="sw dark"><span class="lbl">Dark</span><img src="logo/png/exora-logo-mint-512.png"/></div>
+    <div class="sw light"><span class="lbl">Light</span><img src="logo/png/exora-logo-mint-512.png"/></div>
+  </div>
+</div>
+
+<div class="card">
+  <div style="font-size:14px;font-weight:700;margin-bottom:10px">White — для тёмного фона</div>
+  <div class="grid">
+    <div class="sw dark"><span class="lbl">Dark</span><img src="logo/png/exora-logo-white-512.png"/></div>
+    <div class="sw brand"><span class="lbl">On brand</span><img src="logo/png/exora-logo-white-512.png"/></div>
+  </div>
+</div>
+
+<div class="card">
+  <div style="font-size:14px;font-weight:700;margin-bottom:10px">Black / Graphite — для светлого фона</div>
+  <div class="grid">
+    <div class="sw light"><span class="lbl">Black</span><img src="logo/png/exora-logo-black-512.png"/></div>
+    <div class="sw light"><span class="lbl">Graphite</span><img src="logo/png/exora-logo-mono-graphite-512.png"/></div>
+  </div>
+</div>
+
+<div class="card">
+  <div style="font-size:14px;font-weight:700;margin-bottom:10px">Favicon (16→256 px)</div>
+  <div style="display:flex;gap:14px;align-items:center;background:#0a0f1a;padding:16px;border-radius:12px">
+    <img src="logo/png/exora-logo-aurora-32.png" style="width:32px;height:32px"/>
+    <img src="logo/png/exora-logo-aurora-48.png" style="width:48px;height:48px"/>
+    <img src="logo/png/exora-logo-aurora-64.png" style="width:64px;height:64px"/>
+    <img src="logo/png/exora-logo-aurora-128.png" style="width:128px;height:128px"/>
+    <img src="logo/png/exora-logo-aurora-256.png" style="width:256px;height:256px"/>
+  </div>
+</div>
+
+</body></html>
