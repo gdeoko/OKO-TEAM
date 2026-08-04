@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no" />
 <title>Exora — обмен криптовалют</title>
 <meta name="theme-color" content="#04070E" />
-<meta name="build" content="exora-miniapp-v6" />
+<meta name="build" content="exora-miniapp-v7" />
 <link rel="manifest" href="/exora.webmanifest" />
 <link rel="apple-touch-icon" href="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAxODAgMTgwIj48cmVjdCB3aWR0aD0iMTgwIiBoZWlnaHQ9IjE4MCIgcng9IjM4IiBmaWxsPSIjNUVEMjlDIi8+PHRleHQgeD0iOTAiIHk9IjEyNSIgZm9udC1zaXplPSIxMDAiIGZvbnQtZmFtaWx5PSJJbnRlciIgZm9udC13ZWlnaHQ9IjkwMCIgZmlsbD0iIzA2MjAxOCIgdGV4dC1hbmNob3I9Im1pZGRsZSI+RTwvdGV4dD48L3N2Zz4=" />
 <script src="https://telegram.org/js/telegram-web-app.js"></script>
@@ -90,16 +90,15 @@
   }
   .brand{display:flex;align-items:center;gap:10px;min-width:0}
   .logo{
-    width:38px;height:38px;border-radius:13px;position:relative;overflow:hidden;
-    background:linear-gradient(135deg,#5ED29C 0%,#3FBF86 55%,#2A9A6B 100%);
-    display:grid;place-items:center;font-weight:800;font-size:20px;letter-spacing:-.05em;color:#062018;
-    box-shadow:0 10px 24px rgba(94,210,156,.45),inset 0 1px 0 rgba(255,255,255,.4);flex-shrink:0;
+    width:38px;height:38px;border-radius:12px;position:relative;overflow:hidden;flex-shrink:0;
+    display:grid;place-items:center;
+    filter:drop-shadow(0 6px 16px rgba(94,210,156,.35));
     animation:logo-glow 3s ease-in-out infinite;
   }
-  .logo::before{content:"";position:absolute;inset:1px;border-radius:11px;background:linear-gradient(135deg,rgba(255,255,255,.35),transparent 40%);pointer-events:none}
+  .logo img{width:100%;height:100%;object-fit:contain;display:block}
   @keyframes logo-glow{
-    0%,100%{box-shadow:0 10px 24px rgba(94,210,156,.35),inset 0 1px 0 rgba(255,255,255,.4)}
-    50%    {box-shadow:0 10px 32px rgba(94,210,156,.65),inset 0 1px 0 rgba(255,255,255,.4)}
+    0%,100%{filter:drop-shadow(0 6px 16px rgba(94,210,156,.35))}
+    50%    {filter:drop-shadow(0 8px 24px rgba(94,210,156,.65))}
   }
   .brand-name{font-size:17px;font-weight:800;letter-spacing:-.02em;line-height:1}
   .brand-sub{font-size:11px;color:var(--muted);font-weight:500;margin-top:3px;letter-spacing:.01em;line-height:1;display:flex;align-items:center;gap:5px}
@@ -483,7 +482,8 @@
     backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);
   }
   .about-hero::before{content:"";position:absolute;top:-1px;left:20%;right:20%;height:1px;background:linear-gradient(90deg,transparent,rgba(94,210,156,.7),transparent)}
-  .about-hero .logo{width:72px;height:72px;border-radius:22px;font-size:36px;margin:0 auto 14px}
+  .about-hero .logo{width:88px;height:88px;border-radius:22px;margin:0 auto 14px}
+  .about-hero .logo img{width:100%;height:100%;object-fit:contain}
   .about-hero-name{font-size:28px;font-weight:800;letter-spacing:-.03em;margin-bottom:4px;background:linear-gradient(180deg,#fff 0%,#a8afba 100%);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent}
   .about-hero-sub{color:var(--muted);font-size:14px}
 
@@ -589,7 +589,7 @@
 
 <header>
   <div class="brand">
-    <div class="logo">E</div>
+    <div class="logo"><img src="/exora-logo.svg" alt="Exora" width="38" height="38"/></div>
     <div>
       <div class="brand-name">Exora</div>
       <div class="brand-sub"><span class="live-dot"></span>Онлайн · Обмен 24/7</div>
@@ -840,7 +840,7 @@
   <!-- ============ ABOUT ============ -->
   <section class="screen" id="scr-about">
     <div class="about-hero">
-      <div class="logo">E</div>
+      <div class="logo"><img src="/exora-logo.svg" alt="Exora" width="72" height="72"/></div>
       <div class="about-hero-name">Exora</div>
       <div class="about-hero-sub">Обмен криптовалют · Россия · 24/7</div>
     </div>
