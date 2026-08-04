@@ -252,59 +252,45 @@ function nl_sent_today(): int {
  */
 function newsletter_process_queue(int $limit): int {
     $dailyLimit = (int) cfgv('mail_daily_limit', 400);
-    // Антибан-темп: не чаще 1 письма в mail_send_gap секунд (по умолчанию 30) —
-    // при ежеминутном кроне это 2 письма за запуск с паузой между ними.
-    $gap     = max(0, (int) cfgv('mail_send_gap', 30));
-    $perRun  = max(1, (int) cfgv('mail_throttle_per_run', 2));
-    $limit   = $limit > 0 ? min($limit, $perRun) : $perRun;
-
-    $remaining = $dailyLimit - nl_sent_today();
-    if ($remaining <= 0) { nl_log('process: дневной лимит исчерпан'); return 0; }
-
-    // Приоритет: транзакционные письма (0) всегда раньше массовых (10).
+    $gap        = max(0, (int) cfgv('mail_send_gap', 30));   // антибан-пауза для МАССОВЫХ
+    $perRun     = max(1, (int) cfgv('mail_throttle_per_run', 2));
     try { db()->exec("ALTER TABLE mail_queue ADD COLUMN priority INTEGER DEFAULT 0"); } catch (\Throwable $e) {}
 
-    $take = min($limit, $remaining);
-    $rows = all(
-        "SELECT * FROM mail_queue WHERE status = 'queued' ORDER BY COALESCE(priority,0) ASC, id ASC LIMIT ?",
-        [$take]
-    );
-    if (!$rows) return 0;
-
-    $sent = 0;
-    $i = 0;
-    foreach ($rows as $row) {
-        if ($i++ > 0 && $gap > 0) sleep($gap);
+    // Отправка одного письма очереди с обновлением статуса.
+    $sendRow = function (array $row): bool {
         $id = (int) $row['id'];
         $opt = [];
         if (!empty($row['attach'])) $opt['attach'] = (string) $row['attach'];
-
         $ok = false;
-        try {
-            $ok = mail_send((string) $row['to_email'], (string) $row['subject'], (string) $row['body'], $opt);
-        } catch (\Throwable $e) {
-            nl_log('process: исключение на письме #' . $id . ' — ' . $e->getMessage());
-        }
-
+        try { $ok = mail_send((string) $row['to_email'], (string) $row['subject'], (string) $row['body'], $opt); }
+        catch (\Throwable $e) { nl_log('process: исключение #' . $id . ' — ' . $e->getMessage()); }
         if ($ok) {
-            update('mail_queue', [
-                'status'  => 'sent',
-                'sent_at' => date('Y-m-d H:i:s'),
-                'tries'   => (int) $row['tries'] + 1,
-            ], 'id=:id', ['id' => $id]);
-            if (!empty($row['newsletter_id'])) {
-                q("UPDATE newsletters SET stats_sent = stats_sent + 1 WHERE id = ?", [(int) $row['newsletter_id']]);
-            }
-            $sent++;
+            update('mail_queue', ['status' => 'sent', 'sent_at' => date('Y-m-d H:i:s'), 'tries' => (int) $row['tries'] + 1], 'id=:id', ['id' => $id]);
+            if (!empty($row['newsletter_id'])) q("UPDATE newsletters SET stats_sent = stats_sent + 1 WHERE id = ?", [(int) $row['newsletter_id']]);
         } else {
-            $tries  = (int) $row['tries'] + 1;
-            $status = $tries >= 3 ? 'failed' : 'queued'; // до 3 попыток
-            update('mail_queue', [
-                'status' => $status,
-                'tries'  => $tries,
-                'error'  => 'send failed',
-            ], 'id=:id', ['id' => $id]);
+            $tries = (int) $row['tries'] + 1;
+            update('mail_queue', ['status' => $tries >= 3 ? 'failed' : 'queued', 'tries' => $tries, 'error' => 'send failed'], 'id=:id', ['id' => $id]);
         }
+        return $ok;
+    };
+
+    $sent = 0;
+
+    // 1) ТРАНЗАКЦИОННЫЕ (priority=0: результаты, подтверждения заявок/оплат, заказы наград,
+    //    восстановление пароля, уведомления) — отправляем ВСЕГДА и сразу, БЕЗ дневного лимита,
+    //    до 30 за запуск. Их немного, но они критичны и не должны ждать за массовой рассылкой.
+    $tx = all("SELECT * FROM mail_queue WHERE status='queued' AND COALESCE(priority,0)=0 ORDER BY id ASC LIMIT 30");
+    foreach ($tx as $row) { if ($sendRow($row)) $sent++; }
+
+    // 2) МАССОВЫЕ (priority>0) — в рамках дневного лимита Gmail, с антибан-паузой.
+    $remaining = $dailyLimit - nl_sent_today();
+    if ($remaining > 0) {
+        $take = min(max(1, $perRun), $remaining);
+        $bulk = all("SELECT * FROM mail_queue WHERE status='queued' AND COALESCE(priority,0)>0 ORDER BY id ASC LIMIT ?", [$take]);
+        $i = 0;
+        foreach ($bulk as $row) { if ($i++ > 0 && $gap > 0) sleep($gap); if ($sendRow($row)) $sent++; }
+    } else {
+        nl_log('process: дневной лимит массовых исчерпан (транзакционные отправлены)');
     }
 
     // Рассылки без остатка в очереди помечаем как отправленные.
@@ -313,6 +299,6 @@ function newsletter_process_queue(int $limit): int {
           AND id NOT IN (SELECT DISTINCT newsletter_id FROM mail_queue
                           WHERE newsletter_id IS NOT NULL AND status = 'queued')");
 
-    nl_log("process: отправлено $sent из " . count($rows));
+    nl_log("process: отправлено $sent (транзакционных " . count($tx) . ")");
     return $sent;
 }
