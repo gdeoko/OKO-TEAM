@@ -110,6 +110,10 @@ function vk_cb_ack_then_process(string $type): void {
         vk_typing($peer);                        // «печатает…» сразу, как живой оператор
         $name  = vk_user_name($peer);            // имя для персонального приветствия
         $greet = chat_should_greet($sessionKey); // здороваемся раз в начале / после суток
+        // Если этот ВК-пользователь привязан к аккаунту сайта — подтягиваем его заявки.
+        try { $vkUid = (int) (scalar("SELECT id FROM users WHERE vk_id = ?", [(string) $peer]) ?: 0); }
+        catch (\Throwable $e) { $vkUid = 0; }
+        $GLOBALS['chat_user_ctx'] = $vkUid ? chat_user_context($vkUid) : '';
         $closing = false; $short = false;
 
         if ($text !== '' && chat_is_closing($text)) {

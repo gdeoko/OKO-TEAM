@@ -30,7 +30,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         // Город — мягкий ALTER users.city (идемпотентно).
         ensure_user_column('city');
         $upd['city'] = mb_substr(trim(input('city')), 0, 80);
-        $allowedCats = ['participant','teacher','parent','director','other'];
+        $allowedCats = ['participant','teacher','parent'];
         if (in_array($category, $allowedCats, true)) $upd['category'] = $category;
         if ($avatar === '' || preg_match('~^https?://~i', $avatar) || str_starts_with($avatar, 'data:image/')) $upd['avatar'] = $avatar;
         // Категория «Педагог» — если пользователь ещё не teacher/jury/moderator, поднимаем роль до teacher
@@ -949,8 +949,6 @@ ob_start(); ?>
                               'participant' => ['Участник', '<circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0 1 16 0"/>'],
                               'teacher'     => ['Педагог',  '<path d="M12 3l10 5-10 5L2 8z"/><path d="M6 10v6a6 6 0 0 0 12 0v-6"/>'],
                               'parent'      => ['Родитель', '<circle cx="9" cy="8" r="3"/><circle cx="17" cy="9" r="2.4"/><path d="M2 21a7 7 0 0 1 14 0M13 21a5 5 0 0 1 9 0"/>'],
-                              'director'    => ['Директор', '<path d="M3 21h18M5 21V10l7-5 7 5v11M9 21v-6h6v6"/>'],
-                              'other'       => ['Другое',   '<circle cx="12" cy="12" r="10"/><path d="M9 9a3 3 0 0 1 6 0c0 2-3 2.5-3 4M12 17h.01"/>'],
                             ];
                             foreach ($cats as $key => [$lbl, $svg]):
                           ?>

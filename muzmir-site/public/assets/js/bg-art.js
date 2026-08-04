@@ -38,7 +38,7 @@
       notes.push({
         x: rnd(0, W), y: rnd(0, H),
         s: rnd(12, 30),
-        vy: rnd(-10, -26) / 60,
+        vy: rnd(9, 22) / 60,  // падают сверху вниз
         vx: rnd(-6, 6) / 60,
         rot: rnd(-0.4, 0.4), vr: rnd(-0.3, 0.3) / 60,
         sway: rnd(0, Math.PI * 2), swaySp: rnd(0.4, 1.1),
@@ -52,14 +52,14 @@
     for (var j = 0; j < starN; j++) {
       var rr = Math.random();
       stars.push({ x: rnd(0, W), y: rnd(0, H * 0.92), r: 0.4 + rr * rr * 1.9,
-        ph: rnd(0, Math.PI * 2), tw: rnd(0.6, 1.8), gold: Math.random() < 0.22 });
+        ph: rnd(0, Math.PI * 2), tw: rnd(0.6, 1.8), gold: Math.random() < 0.22, vy: rnd(5, 15) / 60 });
     }
     // Золотые искры-пыльца (для светлой темы среди облаков).
     sparks = [];
     var sparkN = Math.max(18, Math.min(42, Math.round(area / 40000)));
     for (var k = 0; k < sparkN; k++) {
       sparks.push({ x: rnd(0, W), y: rnd(0, H), r: rnd(0.6, 2.0),
-        ph: rnd(0, Math.PI * 2), tw: rnd(0.5, 1.4), vy: rnd(-4, -10) / 60, vx: rnd(-3, 3) / 60 });
+        ph: rnd(0, Math.PI * 2), tw: rnd(0.5, 1.4), vy: rnd(4, 11) / 60, vx: rnd(-3, 3) / 60 });
     }
     comets = [];
   }
@@ -75,6 +75,7 @@
 
   function drawStar(s, t) {
     if (theme !== 'dark') return;
+    s.y += s.vy; if (s.y > H + 2) { s.y = -2; s.x = rnd(0, W); }
     var tw = 0.55 + 0.45 * Math.sin(t * 0.001 * s.tw + s.ph);
     ctx.globalAlpha = tw * 0.95;
     if (ctx.globalAlpha <= 0.02) return;
@@ -90,7 +91,7 @@
   function drawSpark(s, t) {
     if (theme === 'dark') return;
     s.x += s.vx; s.y += s.vy;
-    if (s.y < -6) { s.y = H + 6; s.x = rnd(0, W); }
+    if (s.y > H + 6) { s.y = -6; s.x = rnd(0, W); }
     var tw = 0.4 + 0.6 * Math.abs(Math.sin(t * 0.001 * s.tw + s.ph));
     ctx.globalAlpha = tw * 0.5;
     ctx.beginPath();
@@ -134,7 +135,7 @@
     ctx.fillText(n.gl, 0, 0);
     ctx.restore();
     n.x += n.vx; n.y += n.vy; n.rot += n.vr;
-    if (n.y < -n.s * 2) { n.y = H + n.s * 2; n.x = rnd(0, W); }
+    if (n.y > H + n.s * 2) { n.y = -n.s * 2; n.x = rnd(0, W); }
     if (n.x < -n.s * 2) n.x = W + n.s; if (n.x > W + n.s * 2) n.x = -n.s;
   }
 

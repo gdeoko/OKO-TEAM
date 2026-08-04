@@ -101,12 +101,22 @@ if ($isFirstMessage && is_file(BASE_PATH . '/core/notify_owner.php')) {
     } catch (\Throwable $e) { /* тихо */ }
 }
 
-// Имя для персонального приветствия (у авторизованных).
+// Имя для персонального приветствия (у авторизованных) — именно ИМЯ, а не фамилия.
 $greetName = '';
 if ($uid && ($cu = current_user())) {
+    $nick = trim((string) ($cu['nickname'] ?? ''));
     $full = trim((string) ($cu['full_name'] ?? ''));
-    if ($full !== '') $greetName = preg_split('~\s+~u', $full)[0];
+    if ($nick !== '') {
+        $greetName = $nick;
+    } elseif ($full !== '') {
+        $parts = preg_split('~\s+~u', $full);
+        // В РФ ФИО обычно «Фамилия Имя [Отчество]» → имя это 2-е слово; если одно слово — его.
+        $greetName = (count($parts) >= 2) ? $parts[1] : $parts[0];
+    }
 }
+
+// Персональный контекст участника (его заявки/статусы) — чтобы бот отвечал по делу.
+$GLOBALS['chat_user_ctx'] = chat_user_context($uid);
 
 // Ответ по правилам диалога: приветствие раз в начале, подпись — только при завершении.
 $closing = false;

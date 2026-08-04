@@ -108,7 +108,7 @@ ob_start(); ?>
 @keyframes chatTd{0%,60%,100%{transform:translateY(0);opacity:.4}30%{transform:translateY(-4px);opacity:1}}
 
 /* Поле ввода - закреплено над нижним меню */
-.chat-inputbar{position:fixed;left:0;right:0;bottom:calc(82px + env(safe-area-inset-bottom,0px));z-index:850;
+.chat-inputbar{position:fixed;left:0;right:0;bottom:calc(90px + env(safe-area-inset-bottom,0px));z-index:850;
   padding:0 12px;pointer-events:none}
 .chat-inputbar-in{pointer-events:auto;max-width:720px;margin:0 auto;display:flex;align-items:center;gap:6px;
   padding:6px 6px 6px 8px;border-radius:26px;background:var(--glass-card);border:1px solid var(--glass-brd2);
@@ -154,7 +154,8 @@ ob_start(); ?>
 .cr-msg{margin:0;text-align:center;color:var(--mint);font-weight:700;font-size:.9rem}
 
 body.mz-kb .chat-inputbar{bottom:calc(10px + env(safe-area-inset-bottom,0px))}
-@media (min-width:1281px){.chat-inputbar{bottom:24px}}
+/* ПК: нижнее меню — центрированный док (bottom:16px, ~74px высотой). Поле ввода ставим ВЫШЕ дока. */
+@media (min-width:1024px){.chat-inputbar{bottom:calc(104px + env(safe-area-inset-bottom,0px))}}
 </style>
 
 <script>
