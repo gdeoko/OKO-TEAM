@@ -9,7 +9,7 @@ aiogram 3.x, long-polling, SQLite для заявок, курс Binance/CoinGeck
     export EXORA_SUPPORT=@exora_support
     python3 bot.py
 """
-import os, json, asyncio, sqlite3, logging, time, urllib.parse
+import os, json, asyncio, sqlite3, logging, time, re, urllib.parse
 from datetime import datetime, timezone, timedelta
 from pathlib import Path
 from typing import Optional
@@ -400,14 +400,146 @@ async def h_support(msg: Message):
     )
 
 
+@router.message(Command("aml"))
 @router.message(F.text == "🛡 AML проверка")
-async def h_aml(msg: Message):
+async def h_aml(msg: Message, command: CommandObject = None):
+    args = (command.args if command else "").strip() if command else ""
+    if not args and msg.text and " " in msg.text:
+        args = msg.text.split(maxsplit=1)[1].strip()
+    if args:
+        result = await aml_check_full(args)
+        await msg.answer(format_aml_result(args, result), disable_web_page_preview=True)
+        return
     await msg.answer(
-        "🛡 <b>AML проверка кошелька</b>\n\n"
-        "Проверяем кошельки USDT на связь с санкционными списками, миксерами и незаконной активностью.\n\n"
-        "Пришлите адрес кошелька в поддержку — оператор проверит и вернёт отчёт.\n\n"
-        f"💬 {SUPPORT_HANDLE}"
+        "🛡 <b>AML проверка кошелька — автоматически</b>\n\n"
+        "Пришлите адрес кошелька — я мгновенно проверю через открытые источники:\n"
+        "• <b>TRC-20</b> (Tron) → TronScan\n"
+        "• <b>ERC-20 / BEP-20</b> (Ethereum / BSC) → GoPlus Security\n"
+        "• <b>TON</b> → TON Center\n\n"
+        "Результат: возраст кошелька, кол-во транзакций, чёрные списки, риск-скор.\n\n"
+        "Или используйте команду: <code>/aml TXxxxxxxxx…</code>"
     )
+
+
+ADDR_PATTERNS = [
+    ("TRC20", re.compile(r"\b(T[a-km-zA-HJ-NP-Z1-9]{33})\b")),
+    ("ERC20", re.compile(r"\b(0x[a-fA-F0-9]{40})\b")),
+    ("TON",   re.compile(r"\b((?:UQ|EQ)[A-Za-z0-9_-]{46})\b")),
+]
+
+def detect_address(text: str):
+    for net, p in ADDR_PATTERNS:
+        m = p.search(text or "")
+        if m: return net, m.group(1)
+    return None, None
+
+
+async def aml_check_full(address: str, network: str = None) -> dict:
+    """Auto AML check via public APIs. Returns {risk:0-100, age_days, tx_count, balance, source, verdict}."""
+    if not network:
+        net, addr = detect_address(address)
+        network = net or "TRC20"
+        address = addr or address
+
+    result = {"risk": 50, "age_days": None, "tx_count": None, "balance": None,
+              "source": "unknown", "verdict": "unknown", "network": network, "address": address}
+
+    async with aiohttp.ClientSession(timeout=aiohttp.ClientTimeout(total=8)) as s:
+        try:
+            if network == "TRC20":
+                # TronScan API
+                async with s.get(f"https://apilist.tronscan.org/api/account?address={address}") as r:
+                    j = await r.json()
+                    age_days = None
+                    if j.get("date_created"):
+                        age_days = int((time.time() * 1000 - int(j["date_created"])) / 86400000)
+                    tx_count = j.get("totalTransactionCount", 0) or 0
+                    balance = (j.get("balance", 0) or 0) / 1_000_000
+                    is_black = bool(j.get("blackListInfo")) or bool(j.get("blackList"))
+                    risk = 5
+                    if is_black: risk = 95
+                    elif tx_count == 0 and (age_days is None or age_days < 1): risk = 55
+                    elif age_days is not None and age_days < 7: risk = 40
+                    elif tx_count < 5: risk = 25
+                    result.update({
+                        "risk": risk, "age_days": age_days, "tx_count": tx_count,
+                        "balance": balance, "source": "TronScan",
+                        "verdict": "danger" if risk >= 65 else ("warn" if risk >= 30 else "safe"),
+                    })
+                    return result
+
+            if network in ("ERC20", "BEP20"):
+                # GoPlus Security
+                chain = "1" if network == "ERC20" else "56"
+                async with s.get(f"https://api.gopluslabs.io/api/v1/address_security/{address}?chain_id={chain}") as r:
+                    j = await r.json()
+                    d = j.get("result", {}) if j else {}
+                    risk = 5
+                    flags = ["blacklist_doubt", "blackmail_activities", "cybercrime",
+                             "darkweb_transactions", "money_laundering", "phishing_activities",
+                             "sanctioned", "stealing_attack", "financial_crime"]
+                    matched = [f for f in flags if str(d.get(f, "0")) == "1"]
+                    if matched:
+                        risk = 95
+                    elif str(d.get("honeypot_related_address", "0")) == "1":
+                        risk = 70
+                    elif str(d.get("fake_kyc", "0")) == "1":
+                        risk = 60
+                    elif str(d.get("mixer", "0")) == "1":
+                        risk = 55
+                    result.update({
+                        "risk": risk, "source": "GoPlus",
+                        "flags": matched,
+                        "verdict": "danger" if risk >= 65 else ("warn" if risk >= 30 else "safe"),
+                    })
+                    return result
+
+            if network == "TON":
+                # TON Center
+                async with s.get(f"https://toncenter.com/api/v2/getAddressInformation?address={address}") as r:
+                    j = await r.json()
+                    rr = j.get("result", {}) if j else {}
+                    balance = int(rr.get("balance", 0) or 0) / 1_000_000_000
+                    state = rr.get("state", "")
+                    risk = 20 if state == "uninitialized" else 8
+                    result.update({
+                        "risk": risk, "balance": balance, "source": "TON Center",
+                        "verdict": "safe" if risk < 30 else "warn",
+                    })
+                    return result
+        except Exception as e:
+            log.warning(f"aml {network} {address}: {e}")
+            result["error"] = str(e)
+
+    return result
+
+
+def format_aml_result(query: str, r: dict) -> str:
+    if r.get("error") or not r.get("source"):
+        return (f"🛡 <b>AML проверка</b>\n\n"
+                f"<code>{query}</code>\n\n"
+                f"Не удалось получить данные из открытых источников. "
+                f"Пришлите адрес в поддержку {SUPPORT_HANDLE} — оператор проверит через профессиональный сервис.")
+    verdict = r.get("verdict", "unknown")
+    emoji = {"safe":"🟢", "warn":"🟡", "danger":"🔴"}.get(verdict, "⚪")
+    label = {"safe":"Кошелёк чистый", "warn":"Требует внимания", "danger":"Высокий риск"}.get(verdict, "Неопределено")
+    net = r.get("network", "?")
+    risk = r.get("risk", 0)
+    lines = [f"🛡 <b>AML проверка · {net}</b>\n",
+             f"<code>{r.get('address', query)}</code>\n",
+             f"{emoji} <b>{label}</b>  ·  риск <b>{risk}%</b>\n"]
+    if r.get("age_days") is not None:
+        lines.append(f"📅 Возраст: <b>{r['age_days']} дней</b>")
+    if r.get("tx_count") is not None:
+        lines.append(f"🔄 Транзакций: <b>{r['tx_count']:,}</b>".replace(",", " "))
+    if r.get("balance") is not None:
+        lines.append(f"💰 Баланс: <b>{r['balance']:.4f}</b>")
+    if r.get("flags"):
+        lines.append(f"⚠️ Флаги: <b>{', '.join(r['flags'])}</b>")
+    lines.append(f"\n<i>Источник: {r.get('source','?')} · автоматически</i>")
+    if verdict != "safe":
+        lines.append(f"\n💬 Для профессиональной AML — {SUPPORT_HANDLE}")
+    return "\n".join(lines)
 
 
 @router.callback_query(F.data.startswith("ord:"))
@@ -510,11 +642,18 @@ async def h_admin_broadcast(msg: Message, command: CommandObject):
     await msg.answer(f"✅ Готово: {ok} отправлено, {fail} ошибок")
 
 
-@router.message()
+@router.message(F.text)
 async def fallback(msg: Message):
-    # Неопознанный текст — мягкий ответ + кнопка mini-app
+    # Auto-detect crypto address in text → run AML
+    net, addr = detect_address(msg.text)
+    if addr:
+        await bot.send_chat_action(msg.chat.id, ChatAction.TYPING)
+        r = await aml_check_full(addr, net)
+        await msg.answer(format_aml_result(addr, r), disable_web_page_preview=True)
+        return
     await msg.answer(
-        "Не понял вопрос 🤔 Воспользуйтесь меню внизу или откройте мини-приложение:",
+        "Не понял вопрос 🤔\n\nВоспользуйтесь меню внизу или откройте мини-приложение. "
+        "Также можете прислать адрес кошелька — я мгновенно проверю через AML.",
         reply_markup=kb_open_app()
     )
 
@@ -525,6 +664,7 @@ async def setup_bot_meta():
         await bot.set_my_commands([
             BotCommand(command="start", description="Начать · открыть меню"),
             BotCommand(command="rate", description="Актуальный курс USDT"),
+            BotCommand(command="aml", description="AML-проверка кошелька"),
             BotCommand(command="myorders", description="Мои заявки"),
             BotCommand(command="about", description="О компании"),
             BotCommand(command="support", description="Связаться с поддержкой"),
@@ -678,10 +818,21 @@ async def api_health(request):
     return _cors(web.json_response({"ok": True, "service": "exora-bot", "ts": int(time.time())}))
 
 
+async def api_aml_check(request):
+    # PUBLIC endpoint (no auth) — используется mini-app
+    address = request.query.get("address", "").strip()
+    network = request.query.get("network", "").strip().upper() or None
+    if not address:
+        return _cors(web.json_response({"error": "address required"}, status=400))
+    r = await aml_check_full(address, network)
+    return _cors(web.json_response(r))
+
+
 def build_api_app() -> web.Application:
     app = web.Application()
     app.router.add_route("OPTIONS", "/{tail:.*}", api_options)
     app.router.add_get ("/api/health",           api_health)
+    app.router.add_get ("/api/aml-check",        api_aml_check)
     app.router.add_get ("/api/stats",            api_stats)
     app.router.add_get ("/api/orders",           api_orders_list)
     app.router.add_patch("/api/orders/{oid}",    api_order_patch)

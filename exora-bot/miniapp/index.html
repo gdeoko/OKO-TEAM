@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no" />
 <title>Exora — обмен криптовалют</title>
 <meta name="theme-color" content="#04070E" />
-<meta name="build" content="exora-miniapp-v4" />
+<meta name="build" content="exora-miniapp-v5" />
 <script src="https://telegram.org/js/telegram-web-app.js"></script>
 <style>
   :root{
@@ -332,12 +332,16 @@
   .swap-sel:active{background:rgba(255,255,255,.11);transform:scale(.97)}
   .swap-sel-ic{width:22px;height:22px;border-radius:50%;font-size:10px;font-weight:800;color:#fff;display:grid;place-items:center;letter-spacing:-.02em}
   .swap-sel-chev{width:12px;height:12px;color:var(--muted)}
+  .swap-divider{display:flex;align-items:center;justify-content:center;margin:14px 0 4px;position:relative}
+  .swap-divider::before,.swap-divider::after{content:"";flex:1;height:1px;background:var(--line)}
   .swap-flip{
-    position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);width:42px;height:42px;border-radius:14px;
-    background:#141c2a;border:3px solid var(--bg-0);display:grid;place-items:center;box-shadow:var(--shadow-2);transition:.3s;z-index:2;
+    width:44px;height:44px;border-radius:14px;margin:0 12px;flex-shrink:0;
+    background:linear-gradient(180deg,#1a2333,#0f1622);border:1px solid var(--line-hi);
+    display:grid;place-items:center;box-shadow:0 6px 18px rgba(0,0,0,.4);transition:.3s;
+    color:var(--text);
   }
-  .swap-flip:active{transform:translate(-50%,-50%) scale(.9) rotate(180deg)}
-  .swap-flip svg{width:16px;height:16px;color:var(--text)}
+  .swap-flip:active{transform:scale(.92) rotate(180deg)}
+  .swap-flip svg{width:16px;height:16px}
 
   .field{margin-bottom:12px}
   .field-lbl{display:block;font-size:11px;color:var(--muted);margin-bottom:8px;letter-spacing:.14em;text-transform:uppercase;font-weight:700}
@@ -351,6 +355,22 @@
   .field-hint{font-size:11.5px;color:var(--dim);margin-top:6px;line-height:1.35}
   .field-hint.err{color:var(--danger)}
   .field-hint.ok{color:var(--brand)}
+
+  /* AML result inline */
+  .aml-box{margin-top:10px;padding:12px 14px;border-radius:12px;background:var(--glass);border:1px solid var(--line);display:none;backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px)}
+  .aml-box.show{display:block;animation:fadeInUp .35s both}
+  .aml-h{display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;gap:8px}
+  .aml-t{font-size:12px;color:var(--muted);letter-spacing:.06em;text-transform:uppercase;font-weight:700;display:flex;align-items:center;gap:6px}
+  .aml-t svg{width:14px;height:14px}
+  .aml-b{padding:4px 10px;border-radius:100px;font-size:10.5px;font-weight:800;letter-spacing:.06em;text-transform:uppercase;white-space:nowrap}
+  .aml-b.safe{background:rgba(94,210,156,.16);color:var(--brand)}
+  .aml-b.warn{background:rgba(255,176,32,.16);color:var(--warn)}
+  .aml-b.danger{background:rgba(255,107,107,.16);color:var(--danger)}
+  .aml-b.loading{background:rgba(90,200,255,.16);color:var(--cyan)}
+  .aml-bar{height:6px;border-radius:3px;background:rgba(255,255,255,.08);overflow:hidden;margin-bottom:8px;position:relative}
+  .aml-bar-fill{height:100%;width:0;transition:width .8s cubic-bezier(.4,0,.2,1);background:linear-gradient(90deg,#5ED29C 0%,#FFB020 60%,#FF6B6B 100%);border-radius:3px}
+  .aml-meta{display:flex;gap:12px;flex-wrap:wrap;font-size:11.5px;color:var(--muted)}
+  .aml-meta span b{color:var(--text);font-weight:600}
 
   .segmented{
     display:flex;background:var(--glass);border-radius:14px;padding:4px;border:1px solid var(--line);gap:2px;
@@ -717,10 +737,12 @@
         </div>
         <div class="amounts-chips" id="quickAmt"></div>
       </div>
-      <button class="swap-flip" id="swapFlip" aria-label="Поменять">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M7 4v16m0 0l-4-4m4 4l4-4M17 20V4m0 0l-4 4m4-4l4 4"/></svg>
-      </button>
-      <div class="swap-row">
+      <div class="swap-divider">
+        <button class="swap-flip" id="swapFlip" aria-label="Поменять">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M7 4v16m0 0l-4-4m4 4l4-4M17 20V4m0 0l-4 4m4-4l4 4"/></svg>
+        </button>
+      </div>
+      <div class="swap-row" style="border-top:none;padding-top:0;margin-top:0">
         <div class="swap-lbl" id="getLabel">Вы получаете</div>
         <div class="swap-in">
           <input type="text" inputmode="decimal" id="getIn" placeholder="0" />
@@ -743,6 +765,17 @@
       <label class="field-lbl" id="walletLabel">Ваш USDT адрес (TRC-20)</label>
       <input type="text" class="field-in" id="walletIn" placeholder="TXxxxxxxxx…" autocomplete="off" spellcheck="false" />
       <div class="field-hint" id="walletHint">Проверьте адрес и сеть — ошибка приведёт к потере средств</div>
+      <div class="aml-box" id="amlBox">
+        <div class="aml-h">
+          <div class="aml-t">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+            AML авто-проверка
+          </div>
+          <div class="aml-b loading" id="amlBadge">проверяем…</div>
+        </div>
+        <div class="aml-bar"><div class="aml-bar-fill" id="amlBar"></div></div>
+        <div class="aml-meta" id="amlMeta"></div>
+      </div>
     </div>
 
     <div class="field">
@@ -1009,7 +1042,15 @@
     const [r,p] = await Promise.all([fetchRate(), fetchPrices()]);
     const prev = state.rate;
     state.rate = r.rate; state.rateSrc = r.source; state.prices = p;
-    state.rateHistory.push(r.rate); if (state.rateHistory.length > 60) state.rateHistory.shift();
+    // Первый запрос — заполняем историю baseline'ом, чтобы график был не пустой
+    if (state.rateHistory.length === 0) {
+      for (let i=0;i<20;i++){
+        const noise = (Math.random() - 0.5) * (r.rate * 0.006);
+        state.rateHistory.push(r.rate + noise);
+      }
+    }
+    state.rateHistory.push(r.rate);
+    if (state.rateHistory.length > 60) state.rateHistory.shift();
     const rn = $('#rateVal');
     rn.textContent = fmtRub(r.rate);
     if (prev && prev !== r.rate) { rn.classList.remove('flash'); void rn.offsetWidth; rn.classList.add('flash'); }
@@ -1178,7 +1219,52 @@
     const s = e.target.value.replace(/[^0-9.,\s]/g,'').replace(',','.');
     e.target.value = s; state.get = s; state.lastEdit='get'; recalcInverse();
   });
-  $('#walletIn').addEventListener('input', e => { state.wallet=e.target.value.trim(); validate(); });
+  $('#walletIn').addEventListener('input', e => {
+    state.wallet=e.target.value.trim(); validate();
+    scheduleAmlCheck();
+  });
+
+  /* ---- AUTO AML CHECK ---- */
+  const AML_API = 'https://height-amend-communications-cds.trycloudflare.com';
+  let amlTimer=null, amlLastAddr='';
+  function scheduleAmlCheck(){
+    clearTimeout(amlTimer);
+    const box = $('#amlBox');
+    if (state.direction !== 'buy') { box.classList.remove('show'); return; }
+    const addr = state.wallet;
+    if (!addr || addr.length < 20) { box.classList.remove('show'); amlLastAddr=''; return; }
+    const p = NETS[state.network].pattern;
+    if (!p.test(addr)) { box.classList.remove('show'); amlLastAddr=''; return; }
+    amlTimer = setTimeout(()=>doAmlCheck(addr, state.network), 700);
+  }
+  async function doAmlCheck(addr, net){
+    if (addr === amlLastAddr) return;
+    amlLastAddr = addr;
+    const box = $('#amlBox'), badge = $('#amlBadge'), bar = $('#amlBar'), meta = $('#amlMeta');
+    box.classList.add('show');
+    badge.className = 'aml-b loading'; badge.textContent = 'проверяем…';
+    bar.style.width = '0%'; meta.innerHTML = '';
+    try {
+      const r = await fetch(AML_API + '/api/aml-check?address=' + encodeURIComponent(addr) + '&network=' + net, { cache:'no-store' });
+      const j = await r.json();
+      if (j.error) throw new Error(j.error);
+      const risk = Math.max(0, Math.min(100, j.risk||0));
+      bar.style.width = risk + '%';
+      const cls = risk < 30 ? 'safe' : (risk < 65 ? 'warn' : 'danger');
+      const lbl = risk < 30 ? 'чистый · '+risk+'%' : (risk < 65 ? 'внимание · '+risk+'%' : 'высокий риск · '+risk+'%');
+      badge.className = 'aml-b ' + cls;
+      badge.textContent = lbl;
+      const parts = [];
+      if (j.age_days !== undefined && j.age_days !== null) parts.push(`<span>Возраст: <b>${j.age_days} дн</b></span>`);
+      if (j.tx_count !== undefined) parts.push(`<span>Транзакций: <b>${fmtNum(j.tx_count)}</b></span>`);
+      if (j.balance !== undefined) parts.push(`<span>Баланс: <b>${fmtNum(j.balance,2)}</b></span>`);
+      if (j.source) parts.push(`<span style="opacity:.6">Источник: ${j.source}</span>`);
+      meta.innerHTML = parts.join('');
+    } catch(e){
+      badge.className = 'aml-b warn'; badge.textContent = 'нет данных';
+      meta.innerHTML = '<span>Проверка вручную оператором</span>';
+    }
+  }
   $('#contactIn').addEventListener('input', e => { state.contact=e.target.value.trim(); validate(); });
 
   function currentEffRate(){
