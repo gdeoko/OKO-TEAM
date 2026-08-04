@@ -87,6 +87,58 @@ function vk_wall_post_with_photo(string $message, string $photoPath, array $extr
     return vk_wall_post($message, $extra);
 }
 
+/* ============ Рассылка подписчикам через сервис «Рассылки» (vkforms) ============ */
+
+/**
+ * Отправка рассылки подписчикам сообщества через сервис «Рассылки»
+ * (broadcast.vkforms.ru, приложение в меню сообщества). Легально: аудитория —
+ * те, кто сам подписался на рассылку. Лимит сервиса — 200 рассылок/сутки.
+ *
+ * Ключи в config.local.php:
+ *   vk_broadcast_token — ключ доступа (Управление сервисом → Настройки → Создать ключ)
+ *   vk_broadcast_lists — id списков рассылки через запятую (необязательно; если
+ *                        пусто — рассылка по всем спискам сервиса не делается,
+ *                        нужен хотя бы один list_id).
+ *
+ * @param string $message   текст поста
+ * @param string $attachment attachment-строка VK (например 'wall-GID_POSTID' или 'photoOWNER_ID')
+ * @return array{ok:bool,error?:string,id?:int}
+ */
+function vk_broadcast(string $message, string $attachment = ''): array {
+    $token = trim((string) cfgv('vk_broadcast_token', ''));
+    if ($token === '') return ['ok' => false, 'error' => 'vk_broadcast_token не настроен'];
+    $lists = array_values(array_filter(array_map('trim', explode(',', (string) cfgv('vk_broadcast_lists', '')))));
+    if (!$lists) return ['ok' => false, 'error' => 'vk_broadcast_lists не настроены (нужен хотя бы один id списка)'];
+
+    $body = [
+        'message'  => $message,
+        'list_ids' => array_map('intval', $lists),
+        'run_now'  => 1,
+    ];
+    if ($attachment !== '') $body['attachment'] = $attachment;
+
+    $ch = curl_init('https://broadcast.vkforms.ru/api/v2/broadcast?token=' . rawurlencode($token));
+    curl_setopt_array($ch, [
+        CURLOPT_POST           => true,
+        CURLOPT_RETURNTRANSFER => true,
+        CURLOPT_TIMEOUT        => 25,
+        CURLOPT_HTTPHEADER     => ['Content-Type: application/json'],
+        CURLOPT_POSTFIELDS     => json_encode($body, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES),
+    ]);
+    $resp = curl_exec($ch);
+    $err  = curl_error($ch);
+    curl_close($ch);
+    if ($resp === false) { _vk_log('broadcast cURL ERR: ' . $err); return ['ok' => false, 'error' => 'cURL: ' . $err]; }
+    $d = json_decode((string) $resp, true);
+    if (isset($d['error'])) {
+        _vk_log('broadcast API ERR: ' . json_encode($d['error'], JSON_UNESCAPED_UNICODE));
+        return ['ok' => false, 'error' => (string) ($d['error']['description'] ?? $d['error']['message'] ?? 'unknown')];
+    }
+    $id = (int) ($d['response']['id'] ?? 0);
+    _vk_log('broadcast OK id=' . $id);
+    return ['ok' => true, 'id' => $id];
+}
+
 /* ==================== Рассылка в личку от имени сообщества ==================== */
 
 /**

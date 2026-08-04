@@ -94,6 +94,9 @@ return [
     'vk_group_id'          => cfg('MUZMIR_VK_GROUP_ID', '211325055'),
     'vk_group_url'         => cfg('MUZMIR_VK_GROUP_URL', 'https://vk.com/music_world.online'),
     'vk_api_version'       => '5.199',
+    // Сервис «Рассылки» (broadcast.vkforms.ru) — рассылка подписчикам сообщества
+    'vk_broadcast_token'   => cfg('MUZMIR_VK_BROADCAST_TOKEN', ''),  // Управление сервисом → Настройки → Создать ключ
+    'vk_broadcast_lists'   => cfg('MUZMIR_VK_BROADCAST_LISTS', ''),  // id списков через запятую
 
     // MAX (мессенджер Max, max.ru / Max ID OAuth) — секреты только из окружения/local
     'max_client_id'        => cfg('MUZMIR_MAX_CLIENT_ID', ''),

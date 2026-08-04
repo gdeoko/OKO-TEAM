@@ -17,6 +17,12 @@ require __DIR__ . '/_boot.php';
 
 $clientId    = (string) cfgv('vk_client_id');
 $redirectUri = ($ov = (string) cfgv('vk_redirect')) !== '' ? $ov : url('/api/v1/oauth_vk');
+// VK ID отклоняет redirect_uri с не-ASCII доменом (кириллица «музыкальный-мир.рф»)
+// → «Ошибка загрузки». Приводим хост к punycode (xn--…), путь оставляем как есть.
+if (preg_match('~^(https?://)([^/]+)(.*)$~u', $redirectUri, $mru) && preg_match('~[^\x00-\x7F]~', $mru[2])) {
+    $asciiHost = function_exists('idn_to_ascii') ? idn_to_ascii($mru[2], IDNA_DEFAULT, INTL_IDNA_VARIANT_UTS46) : false;
+    if (is_string($asciiHost) && $asciiHost !== '') $redirectUri = $mru[1] . $asciiHost . $mru[3];
+}
 
 // Креды не заданы — мягкий JSON для фронта (кнопка покажет подсказку).
 if ($clientId === '') {
