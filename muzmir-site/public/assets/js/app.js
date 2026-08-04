@@ -1,4 +1,4 @@
-/* КЦ «Музыкальный Мир» — фронтенд. Vanilla JS, без библиотек. */
+/* Культурный центр «Музыкальный Мир» — фронтенд. Vanilla JS, без библиотек. */
 (function () {
   'use strict';
   var $ = function (s, c) { return (c || document).querySelector(s); };
@@ -716,7 +716,7 @@
             '<svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg>' +
           '</button>' +
           '<div class="auth-head">' +
-            '<img class="auth-logo" src="' + LOGO + '" alt="КЦ «Музыкальный Мир»" width="56" height="56">' +
+            '<img class="auth-logo" src="' + LOGO + '" alt="Культурный центр «Музыкальный Мир»" width="56" height="56">' +
             '<h3 class="auth-title">Вход в личный кабинет</h3>' +
             '<p class="auth-sub">Быстрый вход в один клик или по почте / телефону.</p>' +
           '</div>' +
