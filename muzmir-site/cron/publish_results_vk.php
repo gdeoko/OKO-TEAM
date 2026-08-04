@@ -109,6 +109,10 @@ try {
         }
         $postId = (int) ($r['response']['post_id'] ?? 0);
         cron_log(JOB, "конкурс #$cid «{$name}»: пост опубликован (post_id=$postId)");
+        if (function_exists('vk_dm_enqueue_dialogs')) {
+            $dm = vk_dm_enqueue_dialogs($message, vk_dm_wall_attachment($r), 'results_dm', (string) $cid);
+            cron_log(JOB, "конкурс #$cid: в личку ВК поставлено $dm");
+        }
 
         // Рассылка писем с результатами всем оценённым заявкам конкурса.
         $apps = all(

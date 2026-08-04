@@ -87,6 +87,84 @@ function vk_wall_post_with_photo(string $message, string $photoPath, array $extr
     return vk_wall_post($message, $extra);
 }
 
+/* ==================== Рассылка в личку от имени сообщества ==================== */
+
+/**
+ * Очередь личных сообщений от сообщества (аудитория — открытые диалоги
+ * сообщества: только те, кто сам писал/разрешил сообщения; ~5 тыс. диалогов).
+ * Антидубль: UNIQUE(peer_id, kind, ref). Отправку делает cron/vk_dm_worker.php.
+ */
+function vk_dm_ensure_table(): void {
+    db()->exec("CREATE TABLE IF NOT EXISTS vk_dm_queue (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        peer_id INTEGER NOT NULL,
+        message TEXT NOT NULL,
+        attachment TEXT NOT NULL DEFAULT '',
+        kind TEXT NOT NULL,
+        ref TEXT NOT NULL,
+        status TEXT NOT NULL DEFAULT 'queued',
+        error TEXT,
+        created_at TEXT NOT NULL DEFAULT (datetime('now')),
+        sent_at TEXT,
+        UNIQUE(peer_id, kind, ref)
+    )");
+    db()->exec("CREATE INDEX IF NOT EXISTS idx_vk_dm_status ON vk_dm_queue(status, id)");
+}
+
+/**
+ * Поставить рассылку в личку всем открытым диалогам сообщества.
+ * Получатели: messages.getConversations (только люди, кому можно писать).
+ * Возвращает число добавленных в очередь.
+ */
+function vk_dm_enqueue_dialogs(string $message, string $attachment, string $kind, string $ref): int {
+    if (trim((string) cfgv('vk_token', '')) === '') return 0;
+    vk_dm_ensure_table();
+    $gid = (int) cfgv('vk_group_id', 211325055);
+    $ins = db()->prepare("INSERT OR IGNORE INTO vk_dm_queue (peer_id, message, attachment, kind, ref) VALUES (?,?,?,?,?)");
+    $added = 0;
+    $offset = 0;
+    do {
+        $r = vk_api('messages.getConversations', ['group_id' => $gid, 'count' => 200, 'offset' => $offset]);
+        if (isset($r['error'])) {
+            _vk_log('dm_enqueue getConversations ERR: ' . ($r['error']['error_msg'] ?? '?'));
+            break;
+        }
+        $items = $r['response']['items'] ?? [];
+        $total = (int) ($r['response']['count'] ?? 0);
+        foreach ($items as $it) {
+            $conv = $it['conversation'] ?? [];
+            $peer = (int) ($conv['peer']['id'] ?? 0);
+            if (($conv['peer']['type'] ?? '') !== 'user' || $peer <= 0) continue;
+            if (isset($conv['can_write']['allowed']) && !$conv['can_write']['allowed']) continue;
+            $ins->execute([$peer, $message, $attachment, $kind, $ref]);
+            if ($ins->rowCount() > 0) $added++;
+        }
+        $offset += 200;
+        usleep(350000); // мягкий rate-limit к VK API
+    } while ($offset < $total && count($items) > 0);
+    _vk_log("dm_enqueue kind=$kind ref=$ref added=$added");
+    return $added;
+}
+
+/** Отправить одно личное сообщение от имени сообщества. */
+function vk_dm_send(int $peer, string $message, string $attachment = '', int $randomId = 0): array {
+    $params = [
+        'group_id'  => (int) cfgv('vk_group_id', 211325055),
+        'peer_id'   => $peer,
+        'random_id' => $randomId ?: $peer,
+        'message'   => $message,
+    ];
+    if ($attachment !== '') $params['attachment'] = $attachment;
+    return vk_api('messages.send', $params);
+}
+
+/** attachment-строка «этот пост со стены» для личных сообщений. */
+function vk_dm_wall_attachment(array $wallPostResult): string {
+    $postId = (int) ($wallPostResult['response']['post_id'] ?? 0);
+    if ($postId <= 0) return '';
+    return 'wall-' . (int) cfgv('vk_group_id', 211325055) . '_' . $postId;
+}
+
 /** Проверить рабочий ли токен + права. */
 function vk_health(): array {
     $u = vk_api('users.get', []);

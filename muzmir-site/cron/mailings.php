@@ -232,6 +232,11 @@ function mailings_run_comps_campaign(
         $vkOk = !isset($r['error']);
         if (!$vkOk) {
             cron_log(JOB, "$kind: wall.post ОШИБКА: " . (string) ($r['error']['error_msg'] ?? '?'));
+        } elseif (function_exists('vk_dm_enqueue_dialogs')) {
+            // тот же пост — в личку всем открытым диалогам сообщества
+            $dmRef = implode('-', array_map(static fn(array $c): int => (int) $c['id'], $comps));
+            $dm = vk_dm_enqueue_dialogs($vkText, vk_dm_wall_attachment($r), $kind . '_dm', $dmRef);
+            cron_log(JOB, "$kind: в личку ВК поставлено $dm");
         }
     } else {
         cron_log(JOB, "$kind: vk_token не настроен - ВК-пост пропущен");
@@ -322,6 +327,11 @@ try {
                     : vk_wall_post(vkt_launch($lc));
                 cron_log(JOB, 'comp_launch VK «' . $lc['name'] . '»: '
                     . (isset($r['error']) ? 'ОШИБКА ' . (string)($r['error']['error_msg'] ?? '?') : 'OK'));
+                if (!isset($r['error']) && function_exists('vk_dm_enqueue_dialogs')) {
+                    $dm = vk_dm_enqueue_dialogs(vkt_launch($lc), vk_dm_wall_attachment($r),
+                        'launch_dm', (string) (int) $lc['id']);
+                    cron_log(JOB, 'comp_launch «' . $lc['name'] . '»: в личку ВК поставлено ' . $dm);
+                }
             }
         }
         // Почта — только месячной сводкой 1-го числа; здесь ВК уже опубликован, кампания даёт in-app.
@@ -450,7 +460,13 @@ try {
             if (trim((string) cfgv('vk_token', '')) !== '') {
                 $r = vk_wall_post(vkt_closed($closedComps));
                 $vkOkC = !isset($r['error']);
-                if (!$vkOkC) cron_log(JOB, 'closed_post: wall.post ОШИБКА: ' . (string)($r['error']['error_msg'] ?? '?'));
+                if (!$vkOkC) {
+                    cron_log(JOB, 'closed_post: wall.post ОШИБКА: ' . (string)($r['error']['error_msg'] ?? '?'));
+                } elseif (function_exists('vk_dm_enqueue_dialogs')) {
+                    $dmRef = implode('-', array_map(static fn(array $c): int => (int) $c['id'], $closedComps));
+                    $dm = vk_dm_enqueue_dialogs(vkt_closed($closedComps), vk_dm_wall_attachment($r), 'closed_dm', $dmRef);
+                    cron_log(JOB, "closed_post: в личку ВК поставлено $dm");
+                }
             }
             $inC = mailings_notify_all('Приём заявок закрыт',
                 'Приём заявок завершён: ' . mailings_comp_names($closedComps) . '. Следите за результатами.',
@@ -531,6 +547,15 @@ try {
             $vkOk = !isset($r['error']);
             if (!$vkOk) {
                 cron_log(JOB, 'vip_club: wall.post ОШИБКА: ' . (string) ($r['error']['error_msg'] ?? '?'));
+            } elseif (function_exists('vk_dm_enqueue_dialogs')) {
+                $dm = vk_dm_enqueue_dialogs(
+                    "КЛУБ ПОСТОЯННЫХ УЧАСТНИКОВ. Для тех, кто выступает с нами регулярно:\n\n"
+                    . "- скидка 25% на все конкурсы и наградную продукцию;\n"
+                    . "- результаты выступлений за 3 дня;\n"
+                    . "- один бесплатный конкурс каждый месяц.\n\n"
+                    . 'Вступайте: ' . $clubUrl,
+                    vk_dm_wall_attachment($r), 'vip_dm', date('Y-m'));
+                cron_log(JOB, "vip_club: в личку ВК поставлено $dm");
             }
         } else {
             cron_log(JOB, 'vip_club: vk_token не настроен - ВК-пост пропущен');
