@@ -8,9 +8,9 @@
  */
 declare(strict_types=1);
 
-/** Базовый вызов метода VK API. */
-function vk_api(string $method, array $params = []): array {
-    $token = (string) cfgv('vk_token');
+/** Базовый вызов метода VK API. $tokenOverride — использовать иной токен (напр. токен сообщества). */
+function vk_api(string $method, array $params = [], string $tokenOverride = ''): array {
+    $token = $tokenOverride !== '' ? $tokenOverride : (string) cfgv('vk_token');
     if ($token === '') return ['error' => ['error_msg' => 'VK token not configured']];
     $params['access_token'] = $token;
     $params['v'] = cfgv('vk_api_version', '5.199');
