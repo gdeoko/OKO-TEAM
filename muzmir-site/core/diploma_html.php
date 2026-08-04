@@ -263,7 +263,8 @@ body{background:#444;font-family:'Manrope',sans-serif;padding:20px;min-height:10
 .sig-text-block .sig-name{font-weight:800;text-decoration:underline;margin-bottom:1mm;color:#1a1a2a;font-size:11pt}
 .sig-text-block .sig-role{font-weight:600;color:#1a1a2a}
 .sig-visual-block{display:grid;grid-template-columns:1fr auto;gap:2mm;align-items:center;position:relative;height:100%}
-.chairman-stamp{width:auto;max-width:55mm;max-height:20mm;display:block;justify-self:end}
+/* Штамп председателя поднят: круглая печать касается его лишь слегка снизу */
+.chairman-stamp{width:auto;max-width:55mm;max-height:20mm;display:block;justify-self:end;transform:translateY(-8mm)}
 .big-seal{width:40mm;height:auto;display:block;justify-self:end;opacity:.92;margin-top:-14mm}
 .sig-signature-1{width:26mm;height:auto;display:block}
 .sig-signature-2{width:28mm;height:auto;display:block}
