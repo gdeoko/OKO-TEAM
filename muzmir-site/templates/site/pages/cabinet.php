@@ -1059,22 +1059,6 @@ ob_start(); ?>
                   <?php endif; ?>
                 </div>
 
-                <!-- MAX -->
-                <div class="cab-srow" style="--ic:#6C3FD8">
-                  <span class="cab-item-ic"><?= $icon('<path d="M4 19V6l8 6 8-6v13"/>') ?></span>
-                  <span class="cab-item-lbl">MAX<span class="cab-sub"><?= !empty($user['max_id']) ? 'Привязан' : 'Мессенджер MAX' ?></span></span>
-                  <?php if (!empty($user['max_id'])): ?>
-                    <form method="post" action="<?= url('/cabinet') ?>">
-                      <?= csrf_field() ?>
-                      <input type="hidden" name="action" value="unlink">
-                      <input type="hidden" name="provider" value="max">
-                      <button type="submit" class="btn btn--ghost btn--sm" style="min-height:34px">Отвязать</button>
-                    </form>
-                  <?php else: ?>
-                    <a class="btn btn--primary btn--sm" href="<?= url('/api/v1/oauth_max?bind=1') ?>" style="min-height:34px">Привязать</a>
-                  <?php endif; ?>
-                </div>
-
                 <!-- Пароль -->
                 <details class="cab-set">
                   <summary style="--ic:#5B3A8E">
