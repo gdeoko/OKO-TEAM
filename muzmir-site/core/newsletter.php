@@ -245,6 +245,15 @@ function nl_sent_today(): int {
     );
 }
 
+/** Сколько МАССОВЫХ (priority>0) писем отправлено сегодня — для потолка пула. */
+function nl_bulk_sent_today(): int {
+    $dayStart = date('Y-m-d 00:00:00');
+    return (int) scalar(
+        "SELECT COUNT(*) FROM mail_queue WHERE status = 'sent' AND COALESCE(priority,0) > 0 AND sent_at >= ?",
+        [$dayStart]
+    );
+}
+
 /**
  * Отправляет пачку из mail_queue через mail_send, уважая дневной лимит Gmail
  * (cfgv('mail_daily_limit')). Обновляет статусы писем и newsletters.stats_sent.
@@ -257,10 +266,12 @@ function newsletter_process_queue(int $limit): int {
     try { db()->exec("ALTER TABLE mail_queue ADD COLUMN priority INTEGER DEFAULT 0"); } catch (\Throwable $e) {}
 
     // Отправка одного письма очереди с обновлением статуса.
-    $sendRow = function (array $row): bool {
+    // $account — необязательный аккаунт-отправитель (для массовых рассылок из пула).
+    $sendRow = function (array $row, array $account = []): bool {
         $id = (int) $row['id'];
         $opt = [];
         if (!empty($row['attach'])) $opt['attach'] = (string) $row['attach'];
+        if ($account) $opt['account'] = $account;
         $ok = false;
         try { $ok = mail_send((string) $row['to_email'], (string) $row['subject'], (string) $row['body'], $opt); }
         catch (\Throwable $e) { nl_log('process: исключение #' . $id . ' — ' . $e->getMessage()); }
@@ -282,13 +293,26 @@ function newsletter_process_queue(int $limit): int {
     $tx = all("SELECT * FROM mail_queue WHERE status='queued' AND COALESCE(priority,0)=0 ORDER BY id ASC LIMIT 30");
     foreach ($tx as $row) { if ($sendRow($row)) $sent++; }
 
-    // 2) МАССОВЫЕ (priority>0) — в рамках дневного лимита Gmail, с антибан-паузой.
-    $remaining = $dailyLimit - nl_sent_today();
+    // 2) МАССОВЫЕ (priority>0) — по пулу почт (round-robin), каждая со своим дневным
+    //    лимитом. Общий дневной потолок массовых = лимит на аккаунт × число аккаунтов.
+    //    Транзакционные (выше) всегда идут с основной почты и от пула не зависят.
+    $accounts = function_exists('mail_bulk_accounts') ? mail_bulk_accounts() : [];
+    $nAcc     = max(1, count($accounts));
+    $bulkCap  = $dailyLimit * $nAcc;                 // суммарно по всем рассыльным ящикам
+    $remaining = $bulkCap - nl_bulk_sent_today();
     if ($remaining > 0) {
         $take = min(max(1, $perRun), $remaining);
         $bulk = all("SELECT * FROM mail_queue WHERE status='queued' AND COALESCE(priority,0)>0 ORDER BY id ASC LIMIT ?", [$take]);
+        // Индекс ротации хранится в settings, чтобы аккаунты чередовались между запусками.
+        $rot = (int) setting('bulk_rot_idx', '0');
         $i = 0;
-        foreach ($bulk as $row) { if ($i++ > 0 && $gap > 0) sleep($gap); if ($sendRow($row)) $sent++; }
+        foreach ($bulk as $row) {
+            if ($i++ > 0 && $gap > 0) sleep($gap);
+            $acc = $accounts ? $accounts[$rot % $nAcc] : [];
+            $rot++;
+            if ($sendRow($row, $acc)) $sent++;
+        }
+        set_setting('bulk_rot_idx', (string) $rot);
     } else {
         nl_log('process: дневной лимит массовых исчерпан (транзакционные отправлены)');
     }

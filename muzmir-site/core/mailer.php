@@ -219,6 +219,39 @@ function mail_mime_part(string $boundary, string $ctype, string $content): strin
  * Отправка письма через Gmail SMTP (cURL, smtps://…:465).
  * @param array $opt ['attach'=>путь, 'reply_to'=>адрес, 'from_name'=>имя]
  */
+/**
+ * Пул почтовых аккаунтов для МАССОВЫХ рассылок (round-robin).
+ * Читается из cfgv('smtp_bulk_accounts') — JSON-массив объектов:
+ *   [{"host":"smtp.gmail.com","port":465,"user":"...","pass":"...","from_name":"..."}, ...]
+ * Если пул пуст — вернётся пустой массив, и рассылка пойдёт с основной почты.
+ * Так транзакционные письма (подтверждения/результаты) не зависят от репутации
+ * рассыльных ящиков, а массовая рассылка размазывается по нескольким аккаунтам.
+ *
+ * @return array<int,array{host:string,port:int,user:string,pass:string,from_name:string}>
+ */
+function mail_bulk_accounts(): array {
+    static $cache = null;
+    if ($cache !== null) return $cache;
+    $cache = [];
+    $raw = trim((string) cfgv('smtp_bulk_accounts', ''));
+    if ($raw !== '') {
+        $j = json_decode($raw, true);
+        if (is_array($j)) {
+            foreach ($j as $a) {
+                if (!is_array($a) || empty($a['user']) || empty($a['pass'])) continue;
+                $cache[] = [
+                    'host'      => (string) ($a['host'] ?? 'smtp.gmail.com'),
+                    'port'      => (int) ($a['port'] ?? 465),
+                    'user'      => (string) $a['user'],
+                    'pass'      => (string) $a['pass'],
+                    'from_name' => (string) ($a['from_name'] ?? cfgv('mail_from_name', 'Культурного центра «Музыкальный Мир»')),
+                ];
+            }
+        }
+    }
+    return $cache;
+}
+
 function mail_send(string $to, string $subject, string $html, array $opt = []): bool {
     $to = trim($to);
     if ($to === '' || !filter_var($to, FILTER_VALIDATE_EMAIL)) {
@@ -226,16 +259,19 @@ function mail_send(string $to, string $subject, string $html, array $opt = []): 
         return false;
     }
 
-    $user = (string) cfgv('smtp_user');
-    $pass = (string) cfgv('smtp_pass');
-    $host = (string) cfgv('smtp_host', 'smtp.gmail.com');
-    $port = (int) cfgv('smtp_port', 465);
+    // Аккаунт-отправитель: по умолчанию основная (транзакционная) почта.
+    // Для МАССОВЫХ рассылок воркер передаёт $opt['account'] из пула smtp_bulk_accounts.
+    $acc  = is_array($opt['account'] ?? null) ? $opt['account'] : [];
+    $user = (string) ($acc['user'] ?? cfgv('smtp_user'));
+    $pass = (string) ($acc['pass'] ?? cfgv('smtp_pass'));
+    $host = (string) ($acc['host'] ?? cfgv('smtp_host', 'smtp.gmail.com'));
+    $port = (int) ($acc['port'] ?? cfgv('smtp_port', 465));
     if ($user === '' || $pass === '') {
         mail_log('SKIP no SMTP credentials for ' . $to);
         return false;
     }
 
-    $fromName = (string) ($opt['from_name'] ?? cfgv('mail_from_name', 'Культурного центра «Музыкальный Мир»'));
+    $fromName = (string) ($opt['from_name'] ?? $acc['from_name'] ?? cfgv('mail_from_name', 'Культурного центра «Музыкальный Мир»'));
     $replyTo  = (string) ($opt['reply_to'] ?? cfgv('mail_reply_to', ''));
     $attach   = (string) ($opt['attach'] ?? '');
 

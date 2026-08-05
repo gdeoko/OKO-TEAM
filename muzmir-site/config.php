@@ -70,7 +70,11 @@ return [
     'smtp_pass'      => cfg('MUZMIR_SMTP_PASS', ''),   // App Password — только env/local
     'mail_from_name' => 'Культурного центра «Музыкальный Мир»',
     'mail_reply_to'  => 'kulturniy.centr.mir@mail.ru',
-    // Дневной лимит Gmail — рассылки идут очередью батчами
+    // Пул почт для МАССОВЫХ рассылок (round-robin), JSON-массив:
+    // [{"host":"smtp.gmail.com","port":465,"user":"box1@...","pass":"app-pass","from_name":"..."}, ...]
+    // Транзакционные письма всегда идут с основной smtp_* — от пула не зависят.
+    'smtp_bulk_accounts' => cfg('MUZMIR_SMTP_BULK_ACCOUNTS', ''),
+    // Дневной лимит на ОДИН ящик — общий потолок массовых = лимит × число ящиков пула
     'mail_daily_limit' => (int) cfg('MUZMIR_MAIL_DAILY_LIMIT', 400),
     'mail_batch_size'  => (int) cfg('MUZMIR_MAIL_BATCH', 40),
 
