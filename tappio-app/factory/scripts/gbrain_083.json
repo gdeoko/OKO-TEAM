@@ -1,0 +1,257 @@
+{
+ "id": "gbrain_083",
+ "app": "brain",
+ "voice": "en-US-BrianNeural",
+ "rate": "+6%",
+ "grade": "teal_orange",
+ "brand": {
+  "accent": "#9B5DE5",
+  "accent2": "#C9A7FF",
+  "code": "FOCUS",
+  "logo": "brain.png",
+  "name": "BRAINOVA"
+ },
+ "music": {
+  "queries": [
+   "driving electronic",
+   "bright optimistic electronic",
+   "dreamy synth focus"
+  ]
+ },
+ "cover": {
+  "kicker": "MEMORY HACK",
+  "top": "REMEMBER",
+  "big": "ANY NAME\nFOR GOOD",
+  "q": [
+   "smartphone brain game screen"
+  ]
+ },
+ "segments": [
+  {
+   "id": "b1",
+   "text": "Stop scrolling. Hear the name, then say it back out loud."
+  },
+  {
+   "id": "b2",
+   "text": "Link it to a picture: Rose, a red rose."
+  },
+  {
+   "id": "b3",
+   "text": "Repeat it once after ten seconds."
+  },
+  {
+   "id": "b4",
+   "text": "That triple hit locks it into memory."
+  },
+  {
+   "id": "b5",
+   "text": "Train the habit with quick daily reps."
+  },
+  {
+   "id": "b6",
+   "text": "Never blank on a name again."
+  }
+ ],
+ "shots": [
+  {
+   "q": [
+    "runner morning sunrise energy"
+   ],
+   "motion": "zin"
+  },
+  {
+   "q": [
+    "fish oil supplement pills"
+   ],
+   "insert": "arch",
+   "pos": "upper"
+  },
+  {
+   "q": [
+    "memory old photos hands"
+   ],
+   "motion": "panl"
+  },
+  {
+   "q": [
+    "puzzle pieces hands table"
+   ],
+   "insert": "tv",
+   "pos": "upper"
+  },
+  {
+   "q": [
+    "neurons synapse animation blue"
+   ],
+   "motion": "panr"
+  },
+  {
+   "q": [
+    "person doing crossword puzzle"
+   ],
+   "insert": "diamond",
+   "pos": "upper"
+  },
+  {
+   "q": [
+    "group people names introduction"
+   ],
+   "motion": "panup"
+  },
+  {
+   "q": [
+    "light bulb idea dark"
+   ],
+   "insert": "phone",
+   "pos": "lower"
+  },
+  {
+   "q": [
+    "person forgetting keys frustrated"
+   ],
+   "motion": "pandown"
+  },
+  {
+   "q": [
+    "man reading book focused"
+   ],
+   "insert": "tilt",
+   "pos": "lower"
+  },
+  {
+   "q": [
+    "woman meditating calm light"
+   ],
+   "motion": "zout"
+  }
+ ],
+ "overlays": [
+  {
+   "at": 0.294,
+   "dur": 1.63,
+   "type": "kicker",
+   "text": "DAILY REP"
+  },
+  {
+   "at": 0.329,
+   "dur": 2.6,
+   "type": "checklist",
+   "items": [
+    "Take the test",
+    "Play 5 min",
+    "Beat your score",
+    "Keep the streak"
+   ],
+   "pos": "center"
+  },
+  {
+   "at": 0.364,
+   "dur": 1.86,
+   "type": "kinetic",
+   "top": "FOCUS",
+   "big": "UP"
+  },
+  {
+   "at": 0.49,
+   "dur": 1.81,
+   "type": "gauge",
+   "to": 14,
+   "max": 30,
+   "suffix": "d",
+   "label": "TO SHARPER RECALL",
+   "pos": "center"
+  },
+  {
+   "at": 0.546,
+   "dur": 1.69,
+   "type": "lowerthird",
+   "title": "FIVE MINUTES A DAY",
+   "sub": "focus grows like a muscle"
+  },
+  {
+   "at": 0.695,
+   "dur": 2.04,
+   "type": "bars",
+   "title": "RECALL SPEED",
+   "unit": "%",
+   "items": [
+    [
+     "Week 1",
+     100
+    ],
+    [
+     "Week 3",
+     147
+    ]
+   ],
+   "pos": "center"
+  },
+  {
+   "at": 0.728,
+   "dur": 1.68,
+   "type": "ticker",
+   "to": 14,
+   "suffix": "d",
+   "label": "STREAK",
+   "pos": "lower"
+  },
+  {
+   "at": 0.729,
+   "dur": 1.73,
+   "type": "callout",
+   "text": "FOCUS IS A MUSCLE",
+   "pos": "center"
+  },
+  {
+   "at": 0.827,
+   "dur": 2.06,
+   "type": "stat_count",
+   "to": 5,
+   "suffix": "min",
+   "label": "A DAY",
+   "pos": "center"
+  },
+  {
+   "at": 0.846,
+   "dur": 1.98,
+   "type": "chips",
+   "items": [
+    "SPEED",
+    "MEMORY",
+    "FOCUS",
+    "LOGIC"
+   ],
+   "pos": "upper"
+  }
+ ],
+ "cta": {
+  "text": "Comment FOCUS for the app.",
+  "code": "FOCUS"
+ },
+ "caption": "Say it back, link it to an image, repeat after ten seconds — that triple hit locks a name in. Train the habit with quick daily reps. Comment FOCUS for the app. #brainhealth #memory #focus #productivity #selfimprovement #mentalhealth #learning #test #concentration #music #age",
+ "yt_title": "How To Fix Your Attention Span #shorts",
+ "trend_keys": [
+  "test",
+  "concentration",
+  "music",
+  "age",
+  "focus",
+  "brain",
+  "mental",
+  "memory"
+ ],
+ "content_type": "viral",
+ "comp_angle": {
+  "title": "How To Fix Your Attention Span (Before It's Too Late)",
+  "views": 4275164,
+  "channel": "Daniel Pink"
+ },
+ "virality": {
+  "score": 91,
+  "notes": [
+   "angle<-4275k",
+   "hook_boosted"
+  ],
+  "hook": "Stop scrolling. Hear the name, then say it back out loud."
+ }
+}
