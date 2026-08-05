@@ -251,9 +251,16 @@ body.scrolled .scroll-hint{opacity:0!important;pointer-events:none}
 .acap-i{width:46px;height:46px;border-radius:12px;background:rgba(154,255,0,.1);border:1px solid rgba(154,255,0,.25);display:flex;align-items:center;justify-content:center;color:var(--lime);margin-bottom:14px}
 .acap-t{font-family:'Unbounded',sans-serif;font-size:19px;font-weight:800;margin-bottom:8px}
 .acap-d{font-size:13px;color:var(--w2);line-height:1.55}
-#holoWoman{position:absolute;right:1%;top:50%;transform:translateY(-50%);width:44%;height:82%;z-index:2}
-#holoWoman img{position:absolute;inset:0;width:100%;height:100%;object-fit:contain;object-position:right center;pointer-events:none;filter:drop-shadow(0 20px 60px rgba(0,0,0,.5)) drop-shadow(0 0 30px rgba(154,255,0,.12));transition:transform .12s linear,opacity .35s}
-@media(max-width:760px){#holoWoman{right:auto;left:50%;transform:translateX(-50%);top:140px;width:88%;height:30vh}}
+#holoWoman{position:absolute;right:3%;top:50%;transform:translateY(-50%);width:46%;height:88%;z-index:2}
+#holoWoman img{position:absolute;inset:0;width:100%;height:100%;object-fit:contain;object-position:center center;pointer-events:none;filter:drop-shadow(0 20px 60px rgba(0,0,0,.5)) drop-shadow(0 0 30px rgba(154,255,0,.12));transition:transform .12s linear,opacity .35s}
+@media(max-width:760px){#holoWoman{right:auto;left:50%;transform:translateX(-50%);top:118px;width:94%;height:42vh}}
+/* нейроны — точечное свечение по мозгу, привязано к прогрессу скролла карточек */
+#holoWoman .neurons{position:absolute;inset:0;width:100%;height:100%;pointer-events:none;mix-blend-mode:screen;z-index:3;overflow:visible}
+#holoWoman .neuron{fill:#9AFF00;opacity:0;transition:opacity .18s linear;filter:drop-shadow(0 0 3px #9AFF00) drop-shadow(0 0 6px rgba(154,255,0,.6))}
+#holoWoman .neuron.on{opacity:.85}
+#holoWoman .neuron.peak{opacity:1;fill:#c9ff7d}
+#holoWoman .synapse{stroke:rgba(154,255,0,.4);stroke-width:.15;fill:none;stroke-dasharray:.5 .8;opacity:0;transition:opacity .3s linear}
+#holoWoman .synapse.on{opacity:.55}
 .adt-dots{position:absolute;bottom:16px;left:50%;transform:translateX(-50%);display:flex;gap:7px;z-index:4}
 .adt-dot{width:8px;height:8px;border-radius:50%;background:rgba(255,255,255,.22)}
 .adt-dot.on{background:var(--lime);width:22px;border-radius:4px}
@@ -517,7 +524,7 @@ details.tier-detail[open] .tier-detail-h .ar{transform:rotate(90deg)}
   <div class="adt-pin" id="adtPin">
     <div class="adt-sticky">
       <div class="adt-head"><div class="sec-lbl">Агенты</div><h2 class="sec-h">Что умеют <span class="lime">ИИ-агенты</span></h2></div>
-      <div id="holoWoman" class="holo-anchor"><img id="womanImg" src="kp-media/fig/woman.webp?v=1" alt="" loading="lazy" decoding="async"></div>
+      <div id="holoWoman" class="holo-anchor"><img id="womanImg" src="kp-media/fig/woman.webp?v=1" alt="" loading="lazy" decoding="async"><svg class="neurons" viewBox="0 0 100 100" preserveAspectRatio="xMidYMid meet" aria-hidden="true"><g id="neuronPoints"></g><g id="neuronLines"></g></svg></div>
       <div class="acap-stage" id="acapStage">
         <div class="acap"><div class="acap-i"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="4" width="18" height="14" rx="2"/><path d="M8 20h8"/></svg></div><div class="acap-t">Заходят в ваши соцсети</div><div class="acap-d">Работают прямо в реальных аккаунтах как команда: публикуют, отвечают в директ и комментах, ведут диалоги 24/7.</div></div>
         <div class="acap"><div class="acap-i"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/></svg></div><div class="acap-t">Находят клиентов повсюду</div><div class="acap-d">Ищут аудиторию по нише и гео, собирают базы, выходят на холодных — и приводят тёплые заявки на автомате.</div></div>
@@ -955,12 +962,47 @@ function build(){
   buildLoop();
   ST.refresh();
 }
-/* ---- AGENTS capability coverflow ---- */
+/* ---- AGENTS capability coverflow + нейроны ---- */
 function buildAgents(){
-  var stage=document.getElementById('acapStage'),woman=document.getElementById('figWoman'),dotsC=document.getElementById('adtDots');
+  var stage=document.getElementById('acapStage'),woman=document.getElementById('womanImg'),dotsC=document.getElementById('adtDots');
   if(!stage)return;var cards=Array.from(stage.querySelectorAll('.acap')),N=cards.length;
   cards.forEach(function(_,i){var d=document.createElement('span');d.className='adt-dot'+(i===0?' on':'');dotsC.appendChild(d);});
   var dots=Array.from(dotsC.children);
+  /* --- neurons: генерим ~44 точки в зоне мозга (правая верхняя часть) --- */
+  var pointsG=document.getElementById('neuronPoints'),linesG=document.getElementById('neuronLines');
+  var neurons=[];
+  if(pointsG){
+    var SVGNS='http://www.w3.org/2000/svg';
+    /* псевдо-random по seed (стабильно между рендерами) */
+    var seed=97;function rnd(){seed=(seed*9301+49297)%233280;return seed/233280;}
+    for(var i=0;i<44;i++){
+      /* область мозга на нашем cropped-фото: x 44..92, y 8..54 (верхняя правая четверть) */
+      var cx=44+rnd()*48, cy=8+rnd()*46;
+      var r=0.7+rnd()*1.4;
+      var c=document.createElementNS(SVGNS,'circle');
+      c.setAttribute('cx',cx.toFixed(2));c.setAttribute('cy',cy.toFixed(2));c.setAttribute('r',r.toFixed(2));
+      c.setAttribute('class','neuron');
+      c.dataset.order=cy.toFixed(2); /* сортировка снизу вверх = меньший cy = загорается позже */
+      c.dataset.jitter=(0.5+rnd()*0.8).toFixed(2); /* индивидуальный jitter-порог */
+      pointsG.appendChild(c);
+      neurons.push({el:c,cy:cy,jitter:parseFloat(c.dataset.jitter)});
+    }
+    /* синапсы: несколько тонких линий между близкими нейронами */
+    neurons.sort(function(a,b){return b.cy-a.cy;}); /* снизу вверх */
+    for(var j=0;j<neurons.length-1;j++){
+      var a=neurons[j],b=neurons[j+1];
+      var dx=parseFloat(a.el.getAttribute('cx'))-parseFloat(b.el.getAttribute('cx'));
+      var dy=a.cy-b.cy;
+      if(Math.abs(dx)>18||Math.abs(dy)>18)continue;
+      var line=document.createElementNS(SVGNS,'line');
+      line.setAttribute('x1',a.el.getAttribute('cx'));line.setAttribute('y1',a.el.getAttribute('cy'));
+      line.setAttribute('x2',b.el.getAttribute('cx'));line.setAttribute('y2',b.el.getAttribute('cy'));
+      line.setAttribute('class','synapse');
+      linesG.appendChild(line);
+      a.line=line;
+    }
+  }
+  var synapses=linesG?Array.from(linesG.querySelectorAll('.synapse')):[];
   function layout(active){
     cards.forEach(function(c,i){var off=i-active,a=Math.abs(off);
       var tx=off*(TOUCH?66:60),tz=-a*230,ry=-off*34,sc=1-Math.min(a*.14,.4),op=a>1.7?0:1-Math.min(a*.42,.75);
@@ -968,13 +1010,31 @@ function buildAgents(){
       c.style.opacity=op;c.style.zIndex=String(100-Math.round(a*10));});
     var ai=Math.round(active);dots.forEach(function(d,i){d.classList.toggle('on',i===ai);});
   }
-  layout(0);
-  ST.create({trigger:'#adtPin',start:'top top',end:'bottom bottom',scrub:.9,onUpdate:function(self){
-    var p=self.progress,active=p*(N-1);layout(active);
-    if(woman){var wp=Math.min(p/0.12,1);var rise=(1-wp)* (TOUCH?-30:34);
-      woman.style.opacity=(0.15+wp*0.75);
-      woman.style.transform=(TOUCH?('translateX(50%) translateY('+((1-wp)*40)+'%)'):('translateY('+((1-wp)*30)+'%)'));
+  function updateNeurons(p){
+    /* p=0..1 → сколько нейронов уже "прожглись" (снизу вверх) */
+    var total=neurons.length;if(!total)return;
+    var head=p*total;
+    for(var i=0;i<total;i++){
+      var n=neurons[i];
+      var dist=i-head; /* <0 = уже прошли; ~0 = сейчас; >0 = впереди */
+      var el=n.el;
+      if(dist<-1){ el.classList.add('on'); el.classList.remove('peak'); }
+      else if(dist<0){ el.classList.add('on','peak'); }
+      else if(dist<n.jitter){
+        /* неровно, точечно — часть загорается раньше по jitter-порогу */
+        el.classList.add('on'); el.classList.remove('peak');
+      }
+      else { el.classList.remove('on','peak'); }
     }
+    /* синапсы — загораются пропорционально */
+    synapses.forEach(function(s,idx){
+      var t=idx/Math.max(1,synapses.length-1);
+      s.classList.toggle('on',t<=p+0.05);
+    });
+  }
+  layout(0);updateNeurons(0);
+  ST.create({trigger:'#adtPin',start:'top top',end:'bottom bottom',scrub:.9,onUpdate:function(self){
+    var p=self.progress,active=p*(N-1);layout(active);updateNeurons(p);
   }});
 }
 /* ---- TARIFFS coverflow + accordion + pricing ---- */
