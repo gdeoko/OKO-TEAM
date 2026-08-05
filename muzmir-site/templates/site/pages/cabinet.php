@@ -182,6 +182,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             }
         }
         if ($d && function_exists('mail_queue')) {
+            // Отправляем на e-mail, УКАЗАННЫЙ В ЗАЯВКЕ (фолбэк — аккаунтная почта).
+            $appMail = (string) scalar("SELECT email FROM applications WHERE id=?", [(int) $d['application_id']]);
+            $toMail  = filter_var($appMail, FILTER_VALIDATE_EMAIL) ? $appMail : (string) ($user['email'] ?? '');
             $html = function_exists('mail_template')
                 ? mail_template('generic', [
                     'title'     => 'Ваш диплом',
@@ -190,8 +193,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     'preheader' => 'Диплом № ' . $dn . ' — во вложении.',
                   ])
                 : '<p>Здравствуйте, ' . h($user['full_name'] ?: 'участник') . '.</p><p>Ваш диплом № ' . h($dn) . ' во вложении.</p>';
-            mail_queue($user['email'], $user['full_name'], 'Ваш диплом — Культурного центра «Музыкальный Мир»', $html, (string)($d['pdf_path'] ?? ''));
-            flash('Диплом отправлен на Вашу почту.', 'success');
+            mail_queue($toMail, $user['full_name'], 'Ваш диплом — Культурного центра «Музыкальный Мир»', $html, (string)($d['pdf_path'] ?? ''));
+            flash('Диплом отправлен на почту, указанную в заявке (' . h($toMail) . ').', 'success');
         } elseif ($d) {
             flash('Диплом готов к скачиванию в разделе «Дипломы».', 'info');
         } else {

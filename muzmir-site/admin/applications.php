@@ -18,7 +18,7 @@ function apps_filter(): array {
 /* ---------- Экспорт CSV (до любого вывода) ---------- */
 if (input('action') === 'export') {
     [$where, $args] = apps_filter();
-    $rows = all("SELECT a.*, c.name comp FROM applications a
+    $rows = all("SELECT a.*, c.name comp, c.is_paid comp_paid FROM applications a
                  LEFT JOIN competitions c ON c.id=a.competition_id $where ORDER BY a.id DESC", $args);
     audit('applications_export', 'application', null, ['count' => count($rows)]);
     header('Content-Type: text/csv; charset=utf-8');
@@ -142,7 +142,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && input('do') === 'edit_app') {
 
 /* ================= КАРТОЧКА ЗАЯВКИ ================= */
 if ($id = (int) input('id')) {
-    $a = one("SELECT a.*, c.name comp, c.slug comp_slug FROM applications a
+    $a = one("SELECT a.*, c.name comp, c.slug comp_slug, c.is_paid comp_paid FROM applications a
               LEFT JOIN competitions c ON c.id=a.competition_id WHERE a.id=?", [$id]);
     if (!$a) { flash('Заявка не найдена.', 'error'); admin_redirect('applications'); }
     $grades = all("SELECT g.*, u.full_name jury FROM jury_grades g LEFT JOIN users u ON u.id=g.jury_id
@@ -170,7 +170,7 @@ if ($id = (int) input('id')) {
           <dt>Город</dt><dd><?= h($a['city'] ?: '—') ?></dd>
           <dt>Email</dt><dd><a href="mailto:<?= h($a['email']) ?>"><?= h($a['email']) ?></a></dd>
           <dt>Телефон</dt><dd><?= h($a['phone'] ?: '—') ?></dd>
-          <dt>Оплата</dt><dd><?= $a['is_paid'] ? '<span class="badge badge--paid">Оплачено</span>' : '<span class="badge badge--muted">Не оплачено</span>' ?></dd>
+          <dt>Оплата</dt><dd><?= (int)($a['comp_paid'] ?? 1) === 0 ? '<span class="badge badge--muted">Бесплатный конкурс</span>' : ($a['is_paid'] ? '<span class="badge badge--paid">Оплачено</span>' : '<span class="badge badge--muted">Не оплачено</span>') ?></dd>
           <?php if ($a['score'] !== null): ?><dt>Балл / результат</dt><dd><b><?= h((string)$a['score']) ?></b> · <?= h($a['result']) ?></dd><?php endif; ?>
           <?php if ($a['flag']): ?><dt>Метка</dt><dd><span class="badge badge--rejected"><?= h($a['flag']) ?></span></dd><?php endif; ?>
           <dt>Создана</dt><dd><?= h($a['created_at']) ?></dd>
@@ -326,7 +326,7 @@ ob_start(); ?>
             <td class="small"><?= h($a['comp']) ?></td>
             <td class="small"><?= h($a['nomination']) ?></td>
             <td><span class="badge badge--<?= h($a['status']) ?>"><?= h(app_status_ru($a['status'])) ?></span></td>
-            <td><?= $a['is_paid'] ? '✓' : '—' ?></td>
+            <td><?= (int)($a['comp_paid'] ?? 1) === 0 ? '<span class="badge badge--muted small">беспл.</span>' : ($a['is_paid'] ? '✓' : '—') ?></td>
             <td class="small"><?= h(date('d.m.y', strtotime($a['created_at']))) ?></td>
           </tr>
         <?php endforeach; ?>

@@ -8,7 +8,7 @@
 $u = current_user();
 
 // Открытые конкурсы для выбора.
-$comps = all("SELECT id, slug, name, type, direction, cover, diploma_bg, end_date, nominations
+$comps = all("SELECT id, slug, name, type, direction, cover, diploma_bg, end_date, nominations, is_paid
               FROM competitions WHERE status='open' ORDER BY sort, id");
 
 // Выбранный конкурс (уровень 2).
@@ -123,7 +123,12 @@ ob_start(); ?>
              карточки наград с ценами; крупный просмотр открывается по клику на карточку. */ ?>
 
     <div class="aw-grid">
-      <?php foreach ($order as $item):
+      <?php
+      // На ПЛАТНЫХ конкурсах основной и дополнительный диплом входят в стоимость участия —
+      // из образцов и заказа их убираем (заказывать отдельно нельзя).
+      $paidComp = (int)($selComp['is_paid'] ?? 0) === 1;
+      foreach ($order as $item):
+        if ($paidComp && in_array($item, ['Основной диплом','Дополнительный диплом'], true)) continue;
         if (empty($catalog[$item])) continue;
         $m = $meta[$item] ?? ['ic'=>'diploma','slug'=>'diploma','tag'=>'','desc'=>''];
         $kinds = $catalog[$item];
@@ -449,6 +454,11 @@ ob_start(); ?>
     });
     totalEl.textContent=total.toLocaleString('ru-RU')+' ₽';
     countEl.textContent=count; fab.hidden=count===0; emptyBox.hidden=count>0; form.hidden=count===0;
+    // Адрес доставки нужен ТОЛЬКО если в корзине есть оригинал (кубок/статуэтка/медаль/оригинал диплома).
+    var needAddr=cart.some(function(c){return c.kind==='original';});
+    var af=document.getElementById('addrField'), ai=document.getElementById('ord_addr');
+    if(af){af.style.display=needAddr?'':'none';}
+    if(ai){ai.required=!!needAddr;}
   }
   function openCart(){sheet.hidden=false;document.body.classList.add('mz-cart-open');requestAnimationFrame(function(){sheet.classList.add('on');});}
   function closeCart(){sheet.classList.remove('on');document.body.classList.remove('mz-cart-open');setTimeout(function(){sheet.hidden=true;},300);}
@@ -471,6 +481,11 @@ ob_start(); ?>
           }
         }
       }
+    }
+    // Для оригиналов адрес доставки обязателен.
+    if(cart.some(function(c){return c.kind==='original';})){
+      var addrV=(document.getElementById('ord_addr')||{}).value||'';
+      if(!addrV.trim()){ err.textContent='Укажите адрес доставки — в заказе есть оригинал (отправка Почтой России).'; err.hidden=false; var b1=$('#orderSubmit'); b1.disabled=false; b1.textContent='Оплатить'; return; }
     }
     var items=[]; cart.forEach(function(c){for(var i=0;i<c.qty;i++){var it={item:c.item,kind:c.kind};var f=(c.fios||[])[i];if(f&&f.trim())it.fio=f.trim();items.push(it);}});
     var fd=new FormData(form); fd.set('items',JSON.stringify(items));
