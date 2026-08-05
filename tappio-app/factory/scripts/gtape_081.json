@@ -30,7 +30,7 @@
  "segments": [
   {
    "id": "b1",
-   "text": "Renting means no guessing and no wall damage."
+   "text": "Stop scrolling. Renting means no guessing and no wall damage."
   },
   {
    "id": "b2",
@@ -233,7 +233,7 @@
   "code": "MEASURE"
  },
  "caption": "Renting? Measure the wall, drop a virtual frame, line up shelves before a single nail. Shop with real sizes and keep your deposit. Comment MEASURE for the app. #diy #homedecor #interiordesign #measure #movingtips #renter #apartmenttherapy #app #iphone #floorplanner #plan",
- "yt_title": "Decorate a rental without holes #shorts",
+ "yt_title": "Air Measure App Demo Augmented reality #shorts",
  "trend_keys": [
   "app",
   "iphone",
@@ -244,5 +244,18 @@
   "tape",
   "measure"
  ],
- "content_type": "viral"
+ "content_type": "viral",
+ "comp_angle": {
+  "title": "Air Measure App Demo - Augmented reality tape measure",
+  "views": 1014576,
+  "channel": "laanlabs"
+ },
+ "virality": {
+  "score": 90,
+  "notes": [
+   "angle<-1014k",
+   "hook_boosted"
+  ],
+  "hook": "Stop scrolling. Renting means no guessing and no wall damage."
+ }
 }

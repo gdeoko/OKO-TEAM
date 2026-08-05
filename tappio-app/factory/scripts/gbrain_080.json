@@ -30,7 +30,7 @@
  "segments": [
   {
    "id": "b1",
-   "text": "Focus is not a gift, it is a muscle."
+   "text": "Stop scrolling. Focus isn't a gift, it's a muscle."
   },
   {
    "id": "b2",
@@ -224,7 +224,7 @@
   "code": "FOCUS"
  },
  "caption": "Focus is a muscle, not a gift. Five minutes of adaptive puzzles a day, and in two weeks distractions lose their grip. Start tomorrow. Comment FOCUS for the app. #brainhealth #memory #focus #productivity #selfimprovement #mentalhealth #learning #mental #memory #focus #test",
- "yt_title": "Train your focus like a muscle #shorts",
+ "yt_title": "How to Get Your Brain to #shorts",
  "trend_keys": [
   "mental",
   "memory",
@@ -235,5 +235,18 @@
   "concentration",
   "age"
  ],
- "content_type": "viral"
+ "content_type": "viral",
+ "comp_angle": {
+  "title": "How to Get Your Brain to Focus | Chris Bailey | TEDxManchester",
+  "views": 20015782,
+  "channel": "TEDx Talks"
+ },
+ "virality": {
+  "score": 91,
+  "notes": [
+   "angle<-20015k",
+   "hook_boosted"
+  ],
+  "hook": "Stop scrolling. Focus isn't a gift, it's a muscle."
+ }
 }
