@@ -341,6 +341,10 @@ function newsletter_process_queue(int $limit): int {
     $gap        = max(0, (int) cfgv('mail_send_gap', 30));   // антибан-пауза для МАССОВЫХ
     $perRun     = max(1, (int) cfgv('mail_throttle_per_run', 2));
     try { db()->exec("ALTER TABLE mail_queue ADD COLUMN priority INTEGER DEFAULT 0"); } catch (\Throwable $e) {}
+    // scheduled_at — плановое время отправки. NULL/пусто = сразу. Позволяет админу из
+    // «живого пульта» (admin/dispatch.php) отложить письмо или задержать его.
+    try { db()->exec("ALTER TABLE mail_queue ADD COLUMN scheduled_at TEXT"); } catch (\Throwable $e) {}
+    $nowTs = date('Y-m-d H:i:s');
 
     // Отправка одного письма очереди с обновлением статуса.
     // $account — необязательный аккаунт-отправитель (для массовых рассылок из пула).
@@ -375,14 +379,16 @@ function newsletter_process_queue(int $limit): int {
     // 1) ТРАНЗАКЦИОННЫЕ (priority=0: результаты, подтверждения заявок/оплат, заказы наград,
     //    восстановление пароля, уведомления, дипломы) — сразу, БЕЗ дневного лимита, до 30 за запуск.
     //    Каждое уходит со своего отправителя (Gmail для конкурсов, nagradi для наград).
-    $tx = all("SELECT * FROM mail_queue WHERE status='queued' AND COALESCE(priority,0)=0 ORDER BY id ASC LIMIT 30");
+    $tx = all("SELECT * FROM mail_queue WHERE status='queued' AND COALESCE(priority,0)=0
+               AND (scheduled_at IS NULL OR scheduled_at='' OR scheduled_at<=?) ORDER BY id ASC LIMIT 30", [$nowTs]);
     foreach ($tx as $row) { if ($sendRow($row, $route($row))) $sent++; }
 
     // 2) МАССОВЫЕ (priority>0) — через news@музыкальный-мир.рф, в рамках дневного лимита.
     $remaining = $dailyLimit - nl_bulk_sent_today();
     if ($remaining > 0) {
         $take = min(max(1, $perRun), $remaining);
-        $bulk = all("SELECT * FROM mail_queue WHERE status='queued' AND COALESCE(priority,0)>0 ORDER BY id ASC LIMIT ?", [$take]);
+        $bulk = all("SELECT * FROM mail_queue WHERE status='queued' AND COALESCE(priority,0)>0
+                     AND (scheduled_at IS NULL OR scheduled_at='' OR scheduled_at<=?) ORDER BY id ASC LIMIT ?", [$nowTs, $take]);
         $i = 0;
         foreach ($bulk as $row) {
             if ($i++ > 0 && $gap > 0) sleep($gap);

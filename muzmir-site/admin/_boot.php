@@ -60,6 +60,7 @@ function admin_modules(): array {
         'competitions' => ['Конкурсы',     'moderator', 'competitions'],
         'applications' => ['Заявки',       'jury',      'applications'],
         'grading'      => ['Оценивание',   'jury',      'grading'],
+        'dispatch'     => ['Отправки',     'moderator', 'send'],
         'diplomas'     => ['Дипломы',      'moderator', 'diplomas'],
         'orders'       => ['Заказы оригиналов', 'moderator', 'trophy'],
         'newsletter'   => ['Рассылки',     'moderator', 'newsletter'],
