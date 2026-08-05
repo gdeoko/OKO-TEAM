@@ -153,9 +153,10 @@ function mail_encode_header(string $s): string {
     return '=?UTF-8?B?' . base64_encode($s) . '?=';
 }
 
-/** Собирает готовое MIME-письмо (multipart) с HTML и опциональным вложением. */
+/** Собирает готовое MIME-письмо (multipart) с HTML и вложением(ями).
+ *  $attach — путь (строка) ИЛИ массив путей (несколько вложений). */
 function mail_build_mime(string $fromName, string $fromEmail, string $to, string $replyTo,
-                         string $subject, string $html, string $attach = ''): string {
+                         string $subject, string $html, $attach = ''): string {
     $eol = "\r\n";
     $boundary = 'mm_' . bin2hex(random_bytes(12));
     $fromH = mail_encode_header($fromName) . ' <' . $fromEmail . '>';
@@ -173,9 +174,11 @@ function mail_build_mime(string $fromName, string $fromEmail, string $to, string
         strip_tags(preg_replace('/<(br|\/p|\/div|\/tr|\/h[1-6])>/i', "\n", $html)),
         ENT_QUOTES, 'UTF-8')));
 
-    $hasAttach = $attach !== '' && is_file($attach) && is_readable($attach);
+    // Нормализуем вложения к списку существующих читаемых файлов.
+    $attList = is_array($attach) ? $attach : ($attach !== '' ? [$attach] : []);
+    $attList = array_values(array_filter($attList, fn($p) => is_string($p) && $p !== '' && is_file($p) && is_readable($p)));
 
-    if ($hasAttach) {
+    if ($attList) {
         $altBoundary = 'alt_' . bin2hex(random_bytes(8));
         $headers .= 'Content-Type: multipart/mixed; boundary="' . $boundary . '"' . $eol;
 
@@ -185,16 +188,18 @@ function mail_build_mime(string $fromName, string $fromEmail, string $to, string
         $body .= mail_mime_part($altBoundary, 'text/html; charset=UTF-8', $html);
         $body .= '--' . $altBoundary . '--' . $eol . $eol;
 
-        $data = (string) @file_get_contents($attach);
-        $fname = mail_encode_header(basename($attach));
-        $mime  = function_exists('finfo_open')
-            ? (finfo_file(finfo_open(FILEINFO_MIME_TYPE), $attach) ?: 'application/octet-stream')
-            : 'application/octet-stream';
-        $body .= '--' . $boundary . $eol;
-        $body .= 'Content-Type: ' . $mime . '; name="' . $fname . '"' . $eol;
-        $body .= 'Content-Transfer-Encoding: base64' . $eol;
-        $body .= 'Content-Disposition: attachment; filename="' . $fname . '"' . $eol . $eol;
-        $body .= chunk_split(base64_encode($data)) . $eol;
+        foreach ($attList as $ap) {
+            $data = (string) @file_get_contents($ap);
+            $fname = mail_encode_header(basename($ap));
+            $mime  = function_exists('finfo_open')
+                ? (finfo_file(finfo_open(FILEINFO_MIME_TYPE), $ap) ?: 'application/octet-stream')
+                : 'application/octet-stream';
+            $body .= '--' . $boundary . $eol;
+            $body .= 'Content-Type: ' . $mime . '; name="' . $fname . '"' . $eol;
+            $body .= 'Content-Transfer-Encoding: base64' . $eol;
+            $body .= 'Content-Disposition: attachment; filename="' . $fname . '"' . $eol . $eol;
+            $body .= chunk_split(base64_encode($data)) . $eol;
+        }
         $body .= '--' . $boundary . '--' . $eol;
     } else {
         $headers .= 'Content-Type: multipart/alternative; boundary="' . $boundary . '"' . $eol;
@@ -324,7 +329,10 @@ function mail_send(string $to, string $subject, string $html, array $opt = []): 
 
     $fromName = (string) ($opt['from_name'] ?? $acc['from_name'] ?? cfgv('mail_from_name', 'Культурного центра «Музыкальный Мир»'));
     $replyTo  = (string) ($opt['reply_to'] ?? cfgv('mail_reply_to', ''));
-    $attach   = (string) ($opt['attach'] ?? '');
+    // Вложения: 'attachments' (массив путей) имеет приоритет, иначе одиночный 'attach'.
+    $attach   = isset($opt['attachments']) && is_array($opt['attachments'])
+                  ? $opt['attachments']
+                  : (string) ($opt['attach'] ?? '');
     // Адрес в заголовке From может отличаться от логина авторизации:
     // логин Яндекса для IDN-домена — в punycode (user), а показываем красивый
     // кириллический адрес (from_addr). Конверт (MAIL FROM) — по логину user.
@@ -351,7 +359,7 @@ function mail_send(string $to, string $subject, string $html, array $opt = []): 
         CURLOPT_READFUNCTION   => function ($ch, $fd, $len) use ($stream) {
             return fread($stream, $len);
         },
-        CURLOPT_TIMEOUT        => 30,
+        CURLOPT_TIMEOUT        => 180,   // дипломы с фоном тяжёлые (до ~5 МБ); аплоуд нескольких вложений может быть долгим
         CURLOPT_CONNECTTIMEOUT => 15,
         CURLOPT_RETURNTRANSFER => true,
         CURLOPT_SSL_VERIFYPEER => true,
