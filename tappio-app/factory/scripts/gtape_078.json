@@ -29,7 +29,7 @@
  "segments": [
   {
    "id": "b1",
-   "text": "Big furniture, narrow doorway, moving day panic."
+   "text": "Stop scrolling. Big furniture, narrow doorway, moving day panic."
   },
   {
    "id": "b2",
@@ -225,7 +225,7 @@
   "code": "MEASURE"
  },
  "caption": "USEFUL: Moving day panic? Measure the doorway, measure the sofa, let the app compare. Green means go, red means turn it sideways. Comment MEASURE for the app. #diy #homedecor #interiordesign #measure #movingtips #renter #apartmenttherapy #people #about #few #plan",
- "yt_title": "Will the sofa fit through the door? #shorts",
+ "yt_title": "How to Use The Measure App #shorts",
  "trend_keys": [
   "people",
   "about",
@@ -236,5 +236,18 @@
   "feature",
   "measure"
  ],
- "content_type": "useful"
+ "content_type": "useful",
+ "comp_angle": {
+  "title": "How to Use The Measure App on iPhone",
+  "views": 292772,
+  "channel": "DailyZeck"
+ },
+ "virality": {
+  "score": 90,
+  "notes": [
+   "angle<-292k",
+   "hook_boosted"
+  ],
+  "hook": "Stop scrolling. Big furniture, narrow doorway, moving day panic."
+ }
 }

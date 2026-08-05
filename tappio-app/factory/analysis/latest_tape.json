@@ -5,37 +5,7 @@
  "code": "MEASURE",
  "top": [
   {
-   "views": 1541193,
-   "likes": 32088,
-   "comments": 807,
-   "channel": "WoodWorkWeb",
-   "followers": 676000,
-   "dur": 403,
-   "id": "TOve6oVPKVw",
-   "title": "5 Quick Measuring Hacks - Woodworking Tips and Tricks"
-  },
-  {
-   "views": 1058813,
-   "likes": 23822,
-   "comments": 1500,
-   "channel": "Stumpy Nubs (James Hamilton)",
-   "followers": 1040000,
-   "dur": 263,
-   "id": "PrchBGzC0bA",
-   "title": "How to read a tape measure without looking like an idiot"
-  },
-  {
-   "views": 1014576,
-   "likes": 2280,
-   "comments": 219,
-   "channel": "laanlabs",
-   "followers": 6280,
-   "dur": 45,
-   "id": "z7DYC_zbZCM",
-   "title": "Air Measure App Demo - Augmented reality tape measure"
-  },
-  {
-   "views": 46658655,
+   "views": 46658663,
    "likes": 282484,
    "comments": 3900,
    "channel": "The Maker",
@@ -53,41 +23,91 @@
    "dur": 42,
    "id": "FmOfqcITb9k",
    "title": "AR Plan 3D – Camera to Plan, Floorplanner"
+  },
+  {
+   "views": 980532,
+   "likes": 1035,
+   "comments": 10,
+   "channel": "GRYMALA",
+   "followers": 2010,
+   "dur": 29,
+   "id": "xtwFdG68QIY",
+   "title": "ARuler - Measure anything with Augmented Reality and your phone"
+  },
+  {
+   "views": 672768,
+   "likes": 2453,
+   "comments": 64,
+   "channel": "XFix",
+   "followers": 625000,
+   "dur": 77,
+   "id": "RRm50e0QyUE",
+   "title": "Measure App for Android better than iPhone"
+  },
+  {
+   "views": 614792,
+   "likes": 21781,
+   "comments": 794,
+   "channel": "Caroline Winkler",
+   "followers": 1180000,
+   "dur": 1771,
+   "id": "2kzyoTfawGM",
+   "title": "How to pick the right furniture + decor for your home."
+  },
+  {
+   "views": 415024,
+   "likes": 11606,
+   "comments": 296,
+   "channel": "baixu",
+   "followers": 298000,
+   "dur": 889,
+   "id": "XCmdF2JrRgs",
+   "title": "How to Arrange Your Living Room Furniture (An Architect’s Guide!)"
+  },
+  {
+   "views": 346372,
+   "likes": 6804,
+   "comments": 335,
+   "channel": "Everyday Home Repairs",
+   "followers": 1300000,
+   "dur": 320,
+   "id": "MG_BKbNdhLU",
+   "title": "Measuring Tree Height Without A Tape Measure"
+  },
+  {
+   "views": 292772,
+   "likes": 1202,
+   "comments": 62,
+   "channel": "DailyZeck",
+   "followers": 23000,
+   "dur": 75,
+   "id": "h8Tx-ykllK4",
+   "title": "How to Use The Measure App on iPhone"
+  },
+  {
+   "views": 250818,
+   "likes": 1627,
+   "comments": 124,
+   "channel": "PicTailor",
+   "followers": 326,
+   "dur": 70,
+   "id": "Z_WdWF2yAI8",
+   "title": "How To Measure Yourself Without A Tape Measure"
+  },
+  {
+   "views": 179914,
+   "likes": 209,
+   "comments": 13,
+   "channel": "GRYMALA",
+   "followers": 2010,
+   "dur": 48,
+   "id": "sbehopkAJxU",
+   "title": "AR Plan 3D – Cam to Plan, Floorplanner"
   }
  ],
  "millions_list": [
   {
-   "views": 1541193,
-   "likes": 32088,
-   "comments": 807,
-   "channel": "WoodWorkWeb",
-   "followers": 676000,
-   "dur": 403,
-   "id": "TOve6oVPKVw",
-   "title": "5 Quick Measuring Hacks - Woodworking Tips and Tricks"
-  },
-  {
-   "views": 1058813,
-   "likes": 23822,
-   "comments": 1500,
-   "channel": "Stumpy Nubs (James Hamilton)",
-   "followers": 1040000,
-   "dur": 263,
-   "id": "PrchBGzC0bA",
-   "title": "How to read a tape measure without looking like an idiot"
-  },
-  {
-   "views": 1014576,
-   "likes": 2280,
-   "comments": 219,
-   "channel": "laanlabs",
-   "followers": 6280,
-   "dur": 45,
-   "id": "z7DYC_zbZCM",
-   "title": "Air Measure App Demo - Augmented reality tape measure"
-  },
-  {
-   "views": 46658655,
+   "views": 46658663,
    "likes": 282484,
    "comments": 3900,
    "channel": "The Maker",
@@ -107,21 +127,21 @@
    "title": "AR Plan 3D – Camera to Plan, Floorplanner"
   }
  ],
- "millions": 5,
+ "millions": 2,
  "hooks": [
   "measure",
   "tape",
   "plan",
-  "quick",
-  "measuring",
-  "hacks",
-  "woodworking",
-  "tips",
-  "tricks",
-  "read",
+  "floorplanner",
+  "app",
+  "iphone",
+  "furniture",
   "without",
-  "looking"
+  "few",
+  "people",
+  "know",
+  "about"
  ],
- "ts": "2026-08-05 04:36 UTC",
- "avg_views": 10517739
+ "ts": "2026-08-05 04:51 UTC",
+ "avg_views": 5272711
 }
