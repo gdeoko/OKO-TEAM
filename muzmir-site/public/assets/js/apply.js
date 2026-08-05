@@ -258,7 +258,9 @@
     order.forEach(function (key) {
       var node = progressNodes[key]; if (!node) return;
       node.classList.remove('active', 'done');
-      if (key === 'pay' && !isPaid) { node.style.display = 'none'; return; }
+      // Узел «Оплата» остаётся в разметке всегда (только приглушается у бесплатного) —
+      // иначе прогресс-бар реф­лоу­ит и «прыгает» при каждом выборе конкурса.
+      if (key === 'pay') { node.style.opacity = isPaid ? '' : '.32'; }
       node.style.display = '';
       if (current === 'done') { node.classList.add('done'); return; }
       var idx = steps.indexOf(key);
@@ -275,12 +277,8 @@
       panels[step].classList.add('active');
       animateIn(panels[step], dir || 'next');
     }
-    // Кнопка отправки для бесплатного конкурса живёт в отдельной панели.
-    if (step === 'consent' && !isPaid) {
-      // после согласия у бесплатного — сразу submit-free
-    }
     renderProgress();
-    if (step === 'consent') buildSummary();
+    if (step === 'consent') { buildSummary(); updateConsentBtnLabel(); }
     if (step === 'pay') fillPayAmount();
     var top = form.getBoundingClientRect().top + window.pageYOffset - 90;
     window.scrollTo({ top: top, behavior: reduceMotion() ? 'auto' : 'smooth' });
@@ -289,14 +287,20 @@
     if (!validateStep(current)) return;
     var steps = activeSteps();
     var idx = steps.indexOf(current);
-    if (current === 'consent' && !isPaid) { show('submit-free', 'next'); return; }
+    // Бесплатный конкурс: шаг 6 «Проверка и согласие» — последний, кнопка сразу
+    // отправляет заявку (без отдельной пустой страницы submit-free).
+    if (current === 'consent' && !isPaid) { submit({ preventDefault: function () {} }); return; }
     if (idx !== -1 && idx < steps.length - 1) show(steps[idx + 1], 'next');
   }
   function goBack() {
-    if (current === 'submit-free') { show('consent', 'back'); return; }
     var steps = activeSteps();
     var idx = steps.indexOf(current);
     if (idx > 0) show(steps[idx - 1], 'back');
+  }
+  // Кнопка шага «Согласие»: у платного ведёт к шагу оплаты, у бесплатного отправляет.
+  function updateConsentBtnLabel() {
+    var btn = document.getElementById('consentNext');
+    if (btn) btn.textContent = isPaid ? 'Продолжить' : 'Отправить заявку';
   }
 
   /* ---------- Валидация шага ---------- */
@@ -564,6 +568,7 @@
       var link = document.getElementById('regLink');
       if (link && first) link.href = first.getAttribute('data-reg') || '#';
       renderProgress();
+      updateConsentBtnLabel();
       fillPayAmount();
       saveDraft();
     }

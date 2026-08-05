@@ -203,14 +203,11 @@ ob_start(); ?>
 .comp-opt:nth-child(2){animation-delay:.10s}
 .comp-opt:nth-child(3){animation-delay:.16s}
 .comp-opt:nth-child(4){animation-delay:.22s}
-/* Тактильный отклик на нажатие карточек и сегмента */
-.co-body{will-change:transform}
-.comp-opt:active .co-body{transform:translateY(0) scale(.99)}
-.seg label{transition:background .18s,color .18s,box-shadow .18s,transform .12s}
-.seg label:active{transform:scale(.97)}
-.consent-row{transition:border-color .2s,background .2s,transform .12s}
-.consent-row:active{transform:scale(.995)}
-.astep-nav .btn{transition:transform .12s,box-shadow .2s,background .2s,border-color .2s}
+/* Отклик на нажатие — БЕЗ transform-scale (масштабирование выборов «дёргало»
+   форму при каждом клике). Меняем только цвет/тень, разметка статична. */
+.seg label{transition:background .18s,color .18s,box-shadow .18s}
+.consent-row{transition:border-color .2s,background .2s}
+.astep-nav .btn{transition:box-shadow .2s,background .2s,border-color .2s}
 
 /* ===== Адаптив 360/390: без горизонтального оверфлоу и кривых переносов ===== */
 .apply-card input,.apply-card select,.apply-card textarea{max-width:100%}
@@ -474,7 +471,7 @@ ob_start(); ?>
 
           <div class="astep-nav">
             <button type="button" class="btn btn--ghost back" data-back>Назад</button>
-            <button type="button" class="btn btn--primary" data-next id="consentNext" disabled>Продолжить</button>
+            <button type="button" class="btn btn--primary" data-next id="consentNext" disabled>Отправить заявку</button>
           </div>
         </section>
 
@@ -505,13 +502,8 @@ ob_start(); ?>
           </div>
         </section>
 
-        <!-- Кнопка отправки для бесплатного конкурса (без шага оплаты) -->
-        <div class="astep" data-step="submit-free">
-          <div class="astep-nav">
-            <button type="button" class="btn btn--ghost back" data-back>Назад</button>
-            <button type="submit" class="btn btn--primary" data-submit>Отправить заявку</button>
-          </div>
-        </div>
+        <!-- (убрана отдельная пустая страница отправки: у бесплатного конкурса
+             кнопка «Отправить заявку» живёт прямо на шаге 6 «Проверка и согласие») -->
 
         <!-- ШАГ 8. Готово -->
         <section class="astep" data-step="done">
