@@ -98,6 +98,19 @@ if (!$applicationId) {
     }
 }
 
+// ПРАВИЛО (Даниэль): наградной материал заказывается ТОЛЬКО по оценённой заявке
+// (есть результат/звание). Клубное членство — исключение (это не награда за конкурс).
+$isClubOrder = strpos(json_encode($normItems, JSON_UNESCAPED_UNICODE), '"kind":"club"') !== false;
+if (!$isClubOrder) {
+    if (!$applicationId) {
+        json_out(['ok' => false, 'error' => 'Заказать награды можно только по оценённой заявке. Дождитесь результатов или подайте заявку на участие.'], 422);
+    }
+    $appRow = one("SELECT id, result, status FROM applications WHERE id=?", [$applicationId]);
+    if (!$appRow || trim((string) ($appRow['result'] ?? '')) === '') {
+        json_out(['ok' => false, 'error' => 'По этой заявке ещё нет результата оценки — заказ наград недоступен. Дождитесь публикации результатов.'], 422);
+    }
+}
+
 $orderId = insert('awards_orders', [
     'application_id' => $applicationId ?: null,
     'user_id'        => $uid,

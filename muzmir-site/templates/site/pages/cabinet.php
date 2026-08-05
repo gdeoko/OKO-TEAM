@@ -842,6 +842,12 @@ ob_start(); ?>
                   <a class="btn btn--primary btn--sm" href="<?= h($trackUrl) ?>" target="_blank" rel="noopener" style="margin-top:12px">
                     <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" style="vertical-align:-3px;margin-right:5px"><path d="M1 3h15v13H1zM16 8h4l3 3v5h-7M5.5 21a2 2 0 1 0 0-4 2 2 0 0 0 0 4zM18.5 21a2 2 0 1 0 0-4 2 2 0 0 0 0 4z"/></svg>Отследить посылку</a>
                 <?php endif; ?>
+                <?php if ((string)$o['status'] === 'new'): ?>
+                  <div class="cab-order-actions" style="margin-top:12px;display:flex;gap:8px;flex-wrap:wrap">
+                    <button type="button" class="btn btn--primary btn--sm" data-order-pay="<?= (int)$o['id'] ?>">Оплатить заказ</button>
+                    <button type="button" class="btn btn--ghost btn--sm" data-order-del="<?= (int)$o['id'] ?>" style="color:var(--error,#c0392b)">Удалить заказ</button>
+                  </div>
+                <?php endif; ?>
               <?php endif; ?>
             </div>
           <?php endforeach; endif; ?>
@@ -1316,6 +1322,27 @@ ob_start(); ?>
             var b=e.target.closest('.ref-link-copy'); if(!b)return;
             var link=b.getAttribute('data-link')||'';
             if(navigator.clipboard){navigator.clipboard.writeText(link).then(function(){var o=b.textContent;b.textContent='Скопировано';setTimeout(function(){b.textContent=o;},1600);});}
+          });
+          // Оплата / удаление неоплаченного заказа наград из кабинета.
+          function csrf(){var i=document.querySelector('input[name="_csrf"]');return i?i.value:'';}
+          function post(action,id){
+            var fd=new FormData();fd.append('action',action);fd.append('order_id',id);fd.append('_csrf',csrf());
+            return fetch('<?= url('/api/v1/order_manage') ?>',{method:'POST',body:fd,headers:{'X-Requested-With':'fetch'}})
+              .then(function(r){return r.json().catch(function(){return{};});});
+          }
+          document.addEventListener('click',function(e){
+            var pay=e.target.closest('[data-order-pay]');
+            if(pay){e.preventDefault();var id=pay.getAttribute('data-order-pay');pay.disabled=true;pay.textContent='Готовим оплату…';
+              post('pay',id).then(function(d){
+                if(d&&d.ok&&d.confirmation_url){location.href=d.confirmation_url;}
+                else{pay.disabled=false;pay.textContent='Оплатить заказ';alert((d&&d.error)||'Не удалось создать оплату.');}
+              });return;}
+            var del=e.target.closest('[data-order-del]');
+            if(del){e.preventDefault();if(!confirm('Удалить неоплаченный заказ?'))return;var id=del.getAttribute('data-order-del');del.disabled=true;
+              post('delete',id).then(function(d){
+                if(d&&d.ok&&d.deleted){var card=del.closest('.cab-card');if(card)card.remove();}
+                else{del.disabled=false;alert((d&&d.error)||'Не удалось удалить заказ.');}
+              });return;}
           });
         })();
         </script>
