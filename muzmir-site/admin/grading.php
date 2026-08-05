@@ -321,12 +321,18 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && input('do') === 'grade_result') {
         if (!$cur) { flash('Заявка не найдена.', 'error'); admin_redirect('grading'); }
         // Балльная система убрана — итог задаётся только званием, без числового балла.
         $score = null;
-        // Срок отправки: пусто = автоматически по сроку (3 раб.дня от подачи, cron);
-        // заполненный datetime = ручной override администратора.
+        // Срок отправки диплома:
+        //   auto_send=1 (галочка вкл) → пусто: cron отправит автоматически по сроку
+        //     (короткий платный — 5 раб.дней, ВИП — 3; длинный/бесплатный — пакетом в дату публикации);
+        //   галочка ВЫКЛ + дата задана → ручной override на дату;
+        //   галочка ВЫКЛ + дата пустая → МОМЕНТАЛЬНО (сейчас).
         $override = '';
         $sendAtRaw = trim(input('send_at'));
-        if (input('auto_send') !== '1' && $sendAtRaw !== '') {
-            try { $override = (new DateTime($sendAtRaw))->format('Y-m-d H:i:s'); } catch (\Throwable $e) { $override = ''; }
+        if (input('auto_send') !== '1') {
+            if ($sendAtRaw !== '') {
+                try { $override = (new DateTime($sendAtRaw))->format('Y-m-d H:i:s'); } catch (\Throwable $e) { $override = ''; }
+            }
+            if ($override === '') $override = date('Y-m-d H:i:s'); // моментальная отправка
         }
         update('applications', [
             'result' => $result, 'score' => $score,
@@ -350,6 +356,21 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && input('do') === 'grade_result') {
         }
         if ($override !== '') {
             q("UPDATE diplomas SET scheduled_at=? WHERE application_id=? AND sent_at IS NULL", [$override, $appId]);
+        }
+        // Результат готов → участнику письмо + уведомление в личный кабинет.
+        // Только при ПЕРВОЙ аттестации и для КОРОТКИХ конкурсов (results_mode!='list').
+        // Длинные (list) публикуются пакетом 28-го (cron/publish_results_vk) — здесь молчим.
+        $firstGrade = trim((string)($cur['result'] ?? '')) === '';
+        $compRow = one("SELECT results_mode FROM competitions WHERE id=?", [(int)$cur['competition_id']]) ?: [];
+        if ($firstGrade && (string)($compRow['results_mode'] ?? 'email') !== 'list') {
+            if (is_file(BASE_PATH.'/core/result_mail.php'))   require_once BASE_PATH.'/core/result_mail.php';
+            if (is_file(BASE_PATH.'/core/notifications.php')) require_once BASE_PATH.'/core/notifications.php';
+            if (!empty($cur['user_id']) && function_exists('notify_user')) {
+                notify_user((int)$cur['user_id'], 'Ваш результат готов',
+                    'Жюри подвело итоги: ' . $result . '. Письмо с результатом отправлено на почту из заявки.',
+                    url('/cabinet'), 'award');
+            }
+            if (function_exists('result_mail_send')) { try { result_mail_send($appId); } catch (\Throwable $e) {} }
         }
         audit('grade_result', 'application', $appId, ['result'=>$result,'score'=>$score,'extra'=>$extra,'send_at'=>$override]);
         flash('Итог сохранён: ' . $result . ($score !== null ? ' · ' . number_format($score,1,'.','') : '')

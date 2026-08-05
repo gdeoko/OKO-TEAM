@@ -20,8 +20,42 @@
 declare(strict_types=1);
 
 /* Движок обёртки/трекинга и почтовый модуль (не трогаем, только вызываем). */
-if (is_file(BASE_PATH . '/core/mailer.php'))     require_once BASE_PATH . '/core/mailer.php';
-if (is_file(BASE_PATH . '/core/newsletter.php')) require_once BASE_PATH . '/core/newsletter.php';
+if (is_file(BASE_PATH . '/core/mailer.php'))        require_once BASE_PATH . '/core/mailer.php';
+if (is_file(BASE_PATH . '/core/newsletter.php'))    require_once BASE_PATH . '/core/newsletter.php';
+if (is_file(BASE_PATH . '/core/mail_campaigns.php')) require_once BASE_PATH . '/core/mail_campaigns.php';
+
+/* Живое число живых/выбывших адресов базы (для панели плана). */
+function nl_base_stats(): array {
+    return [
+        'live'    => (int) scalar("SELECT COUNT(*) FROM subscribers WHERE active=1"),
+        'bounced' => (int) scalar("SELECT COUNT(*) FROM subscribers WHERE active=0 OR tags LIKE '%bounced%'"),
+        'total'   => (int) scalar("SELECT COUNT(*) FROM subscribers"),
+    ];
+}
+
+/**
+ * Прогноз завершения массовой рассылки: сколько дней и до какой даты уйдёт $remaining
+ * писем при кривой прогрева, начиная с СЕГОДНЯШНЕГО дня кампании (с учётом уже отправленного сегодня).
+ * @return array{days:int,date:string,perday:array<int,int>}
+ */
+function nl_plan_projection(int $remaining): array {
+    if ($remaining <= 0) return ['days' => 0, 'date' => date('d.m.Y'), 'perday' => []];
+    $day = function_exists('nl_campaign_day') ? max(1, nl_campaign_day()) : 1;
+    $sentToday = function_exists('nl_bulk_sent_today') ? nl_bulk_sent_today() : 0;
+    $curve = function_exists('nl_ramp_curve') ? nl_ramp_curve() : [];
+    $peak  = function_exists('nl_ramp_peak') ? nl_ramp_peak() : 480;
+    $left = $remaining; $d = $day; $extraDays = 0; $perday = [];
+    // Остаток ёмкости на сегодня.
+    $capToday = $d >= 15 ? $peak : ($curve[$d] ?? $peak);
+    $todayLeft = max(0, $capToday - $sentToday);
+    if ($todayLeft > 0) { $take = min($left, $todayLeft); $left -= $take; $perday[$d] = $take; }
+    while ($left > 0 && $extraDays < 60) {
+        $extraDays++; $d++;
+        $cap = $d >= 15 ? $peak : ($curve[$d] ?? $peak);
+        $take = min($left, $cap); $left -= $take; $perday[$d] = ($perday[$d] ?? 0) + $take;
+    }
+    return ['days' => $extraDays, 'date' => date('d.m.Y', time() + $extraDays * 86400), 'perday' => $perday];
+}
 
 /* =====================================================================
  *  Аудитории
@@ -224,6 +258,7 @@ function nl_admin_enqueue(int $id): int {
                 'body'          => $html,
                 'newsletter_id' => $id,
                 'status'        => 'queued',
+                'priority'      => 5,   // МАССОВАЯ: воркер шлёт через news@ с дневным лимитом и паузами
             ]);
             $queued++;
         }
@@ -258,6 +293,39 @@ nl_admin_run_due();
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     if (!csrf_check()) { flash('Сессия устарела.', 'error'); admin_redirect('newsletter'); }
     $do = input('do');
+
+    /* --- Запуск плана прогрева 1–24: фиксируем старт, создаём кампанию и ставим в очередь. --- */
+    if ($do === 'start_plan') {
+        set_setting('bulk_campaign_start', date('Y-m-d'));
+        $type = input('preset') ?: 'new_competitions';
+        $built = function_exists('campaign_build') ? campaign_build($type) : ['subject' => 'Приглашение', 'body' => ''];
+        $nid = insert('newsletters', [
+            'subject'  => $built['subject'],
+            'body'     => $built['body'],
+            'audience' => 'all',
+            'status'   => 'draft',
+        ]);
+        $queued = nl_admin_enqueue((int) $nid);
+        audit('newsletter_start_plan', 'newsletter', (int) $nid, ['queued' => $queued]);
+        flash("План прогрева запущен. В очередь поставлено писем: $queued. Отправка идёт плавно (прогрев домена), с проверкой отказов.", $queued > 0 ? 'success' : 'error');
+        admin_redirect('newsletter');
+    }
+
+    /* --- Пауза плана: массовые письма в очереди замораживаются. --- */
+    if ($do === 'pause_plan') {
+        q("UPDATE mail_queue SET status='paused' WHERE status='queued' AND COALESCE(priority,0)>0");
+        set_setting('bulk_campaign_start', '');
+        flash('План прогрева на паузе. Массовые письма заморожены (транзакционные продолжают идти).', 'success');
+        admin_redirect('newsletter');
+    }
+
+    /* --- Возобновление плана после паузы. --- */
+    if ($do === 'resume_plan') {
+        if (nl_campaign_start() === '') set_setting('bulk_campaign_start', date('Y-m-d'));
+        q("UPDATE mail_queue SET status='queued' WHERE status='paused' AND COALESCE(priority,0)>0");
+        flash('План прогрева возобновлён.', 'success');
+        admin_redirect('newsletter');
+    }
 
     /* --- Предпросмотр: рендер письма в брендовой обёртке (новая вкладка). --- */
     if ($do === 'preview') {
@@ -371,6 +439,14 @@ if ($action === 'edit' || $action === 'new') {
     $id = (int) input('id');
     $n  = $id ? one("SELECT * FROM newsletters WHERE id=?", [$id]) : null;
     $n  = $n ?: ['id' => 0, 'subject' => '', 'body' => '', 'audience' => 'all', 'scheduled_at' => '', 'status' => 'draft'];
+
+    // Готовый пресет кампании (красивое письмо с афишами/наградами/кнопками).
+    $preset = (string) input('preset');
+    if ($preset !== '' && !$id && function_exists('campaign_build') && array_key_exists($preset, campaign_types())) {
+        $built = campaign_build($preset);
+        $n['subject'] = $built['subject'];
+        $n['body']    = $built['body'];
+    }
     [$aud, $audVal] = array_pad(explode(':', (string) $n['audience'], 2), 2, '');
     $aud = $aud ?: 'all';
     $subB = $id ? (string) setting("nl_subject_b_$id", '') : '';
@@ -391,7 +467,20 @@ if ($action === 'edit' || $action === 'new') {
     ];
 
     ob_start(); ?>
-    <div class="toolbar"><a class="btn btn--ghost btn--sm" href="<?= a_link('newsletter') ?>"><?= admin_icon('back') ?>К списку</a></div>
+    <div class="toolbar" style="justify-content:space-between;flex-wrap:wrap;gap:10px">
+      <a class="btn btn--ghost btn--sm" href="<?= a_link('newsletter') ?>"><?= admin_icon('back') ?>К списку</a>
+    </div>
+    <?php if (function_exists('campaign_types')): ?>
+    <div class="card" style="margin-bottom:14px">
+      <h3 style="margin-top:0">Готовые кампании <span class="muted small">— подставят красивое письмо с афишами, образцами наград и кнопками</span></h3>
+      <div class="toolbar" style="gap:8px;flex-wrap:wrap">
+        <?php foreach (campaign_types() as $ck => $clabel): ?>
+          <a class="btn btn--gold btn--sm" href="<?= a_link('newsletter', ['action' => 'new', 'preset' => $ck]) ?>"><?= admin_icon('newsletter') ?><?= h($clabel) ?></a>
+        <?php endforeach; ?>
+      </div>
+      <div class="hint">Можно отредактировать текст перед отправкой. Логотип, подвал, соцкнопки и отписку добавит брендовый шаблон.</div>
+    </div>
+    <?php endif; ?>
     <form method="post" action="<?= url('/admin/') ?>" id="nlForm">
       <?= csrf_field() ?><input type="hidden" name="id" value="<?= (int) $n['id'] ?>">
       <div class="grid grid-2" style="align-items:start">
@@ -523,7 +612,48 @@ $avgClick  = $sumSent > 0 ? round($sumClick / $sumSent * 100) : 0;
 $circ = 314.159;
 $dash = $circ * (1 - min(100, max(0, $avgOpen)) / 100);
 
-ob_start(); ?>
+ob_start();
+
+/* --- Панель ПЛАНА ПРОГРЕВА 1–24 --- */
+$bs        = nl_base_stats();
+$planDay   = function_exists('nl_campaign_day') ? nl_campaign_day() : 0;
+$capToday  = function_exists('nl_daily_cap') ? nl_daily_cap() : 0;
+$sentBulkT = function_exists('nl_bulk_sent_today') ? nl_bulk_sent_today() : 0;
+$bulkQueued= (int) scalar("SELECT COUNT(*) FROM mail_queue WHERE status='queued' AND COALESCE(priority,0)>0");
+$bulkPaused= (int) scalar("SELECT COUNT(*) FROM mail_queue WHERE status='paused' AND COALESCE(priority,0)>0");
+$bulkSentA = (int) scalar("SELECT COUNT(*) FROM mail_queue WHERE status='sent' AND COALESCE(priority,0)>0");
+$remainBulk= $bulkQueued > 0 ? $bulkQueued : max(0, $bs['live'] - $bulkSentA);
+$proj      = nl_plan_projection($remainBulk);
+$planActive= $planDay > 0;
+?>
+<div class="card" style="margin-bottom:20px;border:1.5px solid var(--gold-soft,#e7d9a8)">
+  <div class="section-title" style="margin-top:0"><h3 style="margin:0">План рассылки по базе (прогрев домена)</h3>
+    <span class="badge badge--<?= $planActive ? ($bulkPaused>0 ? 'scheduled' : 'sending') : 'draft' ?>"><?= $planActive ? ($bulkPaused>0 ? 'на паузе' : 'идёт, день '.$planDay) : 'не запущен' ?></span>
+  </div>
+  <div class="grid grid-4" style="margin:6px 0 14px">
+    <div class="stat"><div class="stat__label">Живых адресов</div><div class="stat__value"><?= number_format($bs['live'],0,',',' ') ?></div><div class="stat__sub">выбыло отказов: <?= (int)$bs['bounced'] ?></div></div>
+    <div class="stat"><div class="stat__label">Лимит сегодня</div><div class="stat__value"><?= (int)$capToday ?></div><div class="stat__sub">отправлено: <?= (int)$sentBulkT ?></div></div>
+    <div class="stat"><div class="stat__label">В очереди (массовые)</div><div class="stat__value"><?= number_format($bulkQueued,0,',',' ') ?></div><div class="stat__sub"><?= $bulkPaused>0 ? ('заморожено: '.$bulkPaused) : ('отправлено всего: '.$bulkSentA) ?></div></div>
+    <div class="stat"><div class="stat__label">Прогноз финиша</div><div class="stat__value"><?= $proj['days'] > 0 ? ('~'.$proj['days'].' дн.') : '—' ?></div><div class="stat__sub"><?= $proj['days'] > 0 ? ('к '.$proj['date']) : 'нет активной очереди' ?></div></div>
+  </div>
+  <div class="hint" style="margin-bottom:12px">Массовые письма (новые конкурсы, ВИП-клуб, новости) уходят ТОЛЬКО с news@ плавно по кривой прогрева: 60→90→120…→480 писем/день. Транзакционные (заявки, результаты, дипломы) идут отдельно и мгновенно. Отказавшие адреса автоматически выводятся из базы.</div>
+  <form method="post" action="<?= url('/admin/') ?>" style="display:flex;gap:8px;flex-wrap:wrap;align-items:center">
+    <?= csrf_field() ?>
+    <?php if (!$planActive): ?>
+      <select name="preset" style="max-width:280px">
+        <?php foreach (campaign_types() as $ck => $cl): ?><option value="<?= h($ck) ?>"><?= h($cl) ?></option><?php endforeach; ?>
+      </select>
+      <button class="btn btn--primary btn--sm" name="do" value="start_plan" onclick="return confirm('Запустить план рассылки по всей базе? Отправка начнётся плавно (прогрев). Массовые письма пойдут только с news@.')"><?= admin_icon('send') ?>Запустить план по базе</button>
+    <?php else: ?>
+      <?php if ($bulkPaused > 0): ?>
+        <button class="btn btn--primary btn--sm" name="do" value="resume_plan"><?= admin_icon('send') ?>Возобновить</button>
+      <?php else: ?>
+        <button class="btn btn--ghost btn--sm" name="do" value="pause_plan" onclick="return confirm('Поставить массовую рассылку на паузу?')"><?= admin_icon('clock') ?>Пауза</button>
+      <?php endif; ?>
+    <?php endif; ?>
+  </form>
+</div>
+
 <div class="section-title"><h2>Рассылки</h2>
   <a class="btn btn--primary" href="<?= a_link('newsletter', ['action' => 'new']) ?>"><?= admin_icon('plus') ?>Новая рассылка</a></div>
 

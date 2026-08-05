@@ -14,8 +14,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     } elseif (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
         flash('Проверьте адрес электронной почты.', 'error');
     } else {
-        // Только пользователи с паролем (у входа через соцсети пароля нет).
-        $u = one("SELECT * FROM users WHERE email=? AND password_hash IS NOT NULL AND password_hash<>''", [$email]);
+        // Любой пользователь с этим адресом (в т.ч. авто-созданные при подаче заявки и
+        // вошедшие через соцсети/код — им ссылка позволит ЗАДАТЬ пароль). Иначе восстановление
+        // для них было тупиком и «письмо не приходило».
+        $u = one("SELECT * FROM users WHERE email=?", [$email]);
         if ($u) {
             $token = bin2hex(random_bytes(24));
             update('users', [

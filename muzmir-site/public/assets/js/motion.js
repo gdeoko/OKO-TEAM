@@ -220,6 +220,38 @@
     });
   })();
 
+  /* ---------- PWA install: iOS/Safari (beforeinstallprompt там не срабатывает) ---------- */
+  (function(){
+    var ua = navigator.userAgent || '';
+    var isIOS = /iPad|iPhone|iPod/.test(ua) && !window.MSStream;
+    var isSafari = /^((?!chrome|android|crios|fxios).)*safari/i.test(ua);
+    var standalone = ('standalone' in navigator && navigator.standalone) ||
+      (window.matchMedia && window.matchMedia('(display-mode: standalone)').matches);
+    if (!isIOS || standalone) return;
+    if (document.documentElement.classList.contains('in-tg')) return;
+    if (/^\/(admin|api|login|register|apply|cabinet)/.test(location.pathname)) return;
+    try { var last = parseInt(localStorage.getItem('mz-pwa-ios')||'0',10);
+      if (Date.now() - last < 7*86400*1000) return; } catch(e){}
+    setTimeout(function(){
+      var bar = document.createElement('div'); bar.className = 'mz-pwa-bar';
+      bar.innerHTML =
+        '<div class="mz-pwa-inner">' +
+          '<div class="mz-pwa-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M12 3v12"/><path d="M8 7l4-4 4 4"/><rect x="4" y="11" width="16" height="10" rx="2"/></svg></div>' +
+          '<div class="mz-pwa-body"><b>Установить приложение</b><span>Нажмите «Поделиться» ' +
+          '<svg viewBox="0 0 24 24" width="14" height="14" style="vertical-align:-2px" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M12 3v12"/><path d="M8 7l4-4 4 4"/><path d="M5 12v7a2 2 0 002 2h10a2 2 0 002-2v-7"/></svg>' +
+          ' и «На экран „Домой“»</span></div>' +
+          '<button type="button" class="mz-pwa-x" data-pwa-no aria-label="Закрыть"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg></button>' +
+        '</div>';
+      document.body.appendChild(bar);
+      requestAnimationFrame(function(){ bar.classList.add('on'); });
+      bar.querySelector('[data-pwa-no]').addEventListener('click', function(){
+        bar.classList.remove('on'); setTimeout(function(){bar.remove();}, 260);
+        try{ localStorage.setItem('mz-pwa-ios', String(Date.now())); }catch(e){}
+      });
+      try{ localStorage.setItem('mz-pwa-ios', String(Date.now())); }catch(e){}
+    }, 9000);
+  })();
+
   /* ---------- Онбординг: 3 экрана при первом визите ---------- */
   var LS = 'mz-onb-done';
   var done = false; try { done = localStorage.getItem(LS) === '1'; } catch(e){}

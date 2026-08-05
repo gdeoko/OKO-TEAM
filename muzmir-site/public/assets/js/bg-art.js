@@ -21,8 +21,12 @@
   function pick(a) { return a[(Math.random() * a.length) | 0]; }
 
   function resize() {
-    W = cv.clientWidth = window.innerWidth;
-    H = cv.clientHeight = window.innerHeight;
+    // ВАЖНО: clientWidth/clientHeight — только для чтения; присваивание им в strict-mode
+    // кидает TypeError и роняет весь скрипт (из-за этого фон-канвас не инициализировался).
+    W = window.innerWidth;
+    H = window.innerHeight;
+    cv.style.width = W + 'px';
+    cv.style.height = H + 'px';
     cv.width = Math.round(W * DPR);
     cv.height = Math.round(H * DPR);
     ctx.setTransform(DPR, 0, 0, DPR, 0, 0);
@@ -31,28 +35,31 @@
 
   function seed() {
     var area = W * H;
-    // Ноты — заметно больше, чем раньше.
-    var noteN = Math.max(14, Math.min(32, Math.round(area / 44000)));
+    // Ноты — изящные, некрупные, полупрозрачные (эстетичный фон, не «баннер»).
+    var noteN = Math.max(12, Math.min(26, Math.round(area / 52000)));
     notes = [];
     for (var i = 0; i < noteN; i++) {
+      var big = Math.random() < 0.28;               // редкие покрупнее — для глубины
       notes.push({
         x: rnd(0, W), y: rnd(0, H),
-        s: rnd(12, 30),
-        vy: rnd(9, 22) / 60,  // падают сверху вниз
-        vx: rnd(-6, 6) / 60,
-        rot: rnd(-0.4, 0.4), vr: rnd(-0.3, 0.3) / 60,
-        sway: rnd(0, Math.PI * 2), swaySp: rnd(0.4, 1.1),
-        op: rnd(0.35, 0.85),
-        gl: pick(['𝄞', '♫', '♪', '♬', '♩', '♫'])
+        s: big ? rnd(15, 20) : rnd(8, 13),
+        vy: rnd(7, 16) / 60,  // мягко падают сверху вниз
+        vx: rnd(-4, 4) / 60,
+        rot: rnd(-0.28, 0.28), vr: rnd(-0.22, 0.22) / 60,
+        sway: rnd(0, Math.PI * 2), swaySp: rnd(0.3, 0.9),
+        op: (big ? rnd(0.28, 0.5) : rnd(0.4, 0.66)),
+        // Тип рисуется ВЕКТОРОМ (не Unicode-глифом — они не во всех шрифтах):
+        // 0 восьмая, 1 пара с балкой, 2 четверть, 3 скрипичный ключ.
+        kind: pick([0, 1, 0, 2, 3, 0, 3])
       });
     }
-    // Звёзды — украшают тёмное небо (мерцание), больше и ярче.
-    var starN = Math.max(60, Math.min(160, Math.round(area / 8500)));
+    // Звёзды — мерцают на ОБЕИХ темах (в тёмной ярче/крупнее, в светлой — деликатно).
+    var starN = Math.max(46, Math.min(140, Math.round(area / 10000)));
     stars = [];
     for (var j = 0; j < starN; j++) {
       var rr = Math.random();
-      stars.push({ x: rnd(0, W), y: rnd(0, H * 0.92), r: 0.4 + rr * rr * 1.9,
-        ph: rnd(0, Math.PI * 2), tw: rnd(0.6, 1.8), gold: Math.random() < 0.22, vy: rnd(5, 15) / 60 });
+      stars.push({ x: rnd(0, W), y: rnd(0, H * 0.95), r: 0.4 + rr * rr * 1.7,
+        ph: rnd(0, Math.PI * 2), tw: rnd(0.6, 1.8), gold: Math.random() < 0.3, vy: rnd(4, 12) / 60 });
     }
     // Золотые искры-пыльца (для светлой темы среди облаков).
     sparks = [];
@@ -74,16 +81,23 @@
   }
 
   function drawStar(s, t) {
-    if (theme !== 'dark') return;
+    var dark = theme === 'dark';
     s.y += s.vy; if (s.y > H + 2) { s.y = -2; s.x = rnd(0, W); }
     var tw = 0.55 + 0.45 * Math.sin(t * 0.001 * s.tw + s.ph);
-    ctx.globalAlpha = tw * 0.95;
+    // На светлой теме звёзды тоже есть, но деликатнее (тёплое золото по небу).
+    ctx.globalAlpha = tw * (dark ? 0.95 : 0.5);
     if (ctx.globalAlpha <= 0.02) return;
     ctx.beginPath();
-    ctx.arc(s.x, s.y, s.r, 0, Math.PI * 2);
-    ctx.fillStyle = s.gold ? '#FFE9A8' : '#EAF2FF';
-    ctx.shadowColor = s.gold ? 'rgba(255,213,120,0.9)' : 'rgba(200,224,255,0.8)';
-    ctx.shadowBlur = 6 + s.r * 3;
+    ctx.arc(s.x, s.y, s.r * (dark ? 1 : 0.85), 0, Math.PI * 2);
+    if (dark) {
+      ctx.fillStyle = s.gold ? '#FFE9A8' : '#EAF2FF';
+      ctx.shadowColor = s.gold ? 'rgba(255,213,120,0.9)' : 'rgba(200,224,255,0.8)';
+      ctx.shadowBlur = 6 + s.r * 3;
+    } else {
+      ctx.fillStyle = s.gold ? '#E9C55E' : '#FFFFFF';
+      ctx.shadowColor = s.gold ? 'rgba(212,154,61,0.7)' : 'rgba(255,255,255,0.8)';
+      ctx.shadowBlur = 4 + s.r * 2;
+    }
     ctx.fill();
     ctx.shadowBlur = 0;
   }
@@ -118,25 +132,71 @@
     ctx.shadowColor = 'rgba(255,220,140,0.9)'; ctx.shadowBlur = 10; ctx.fill(); ctx.shadowBlur = 0;
   }
 
+  // Векторная головка ноты (наклонный залитый эллипс).
+  function noteHead(x, y, r) {
+    ctx.save(); ctx.translate(x, y); ctx.rotate(-0.35);
+    ctx.beginPath(); ctx.ellipse(0, 0, r * 1.18, r * 0.82, 0, 0, Math.PI * 2); ctx.fill();
+    ctx.restore();
+  }
+
+  // Стилизованный скрипичный ключ (безье), рисуется на любом устройстве одинаково.
+  function drawTreble(s) {
+    var u = s * 0.5;
+    ctx.lineWidth = Math.max(1.6, s * 0.17); ctx.lineCap = 'round'; ctx.lineJoin = 'round';
+    ctx.beginPath();
+    ctx.moveTo(0.2 * u, 2.4 * u);
+    ctx.bezierCurveTo(1.7 * u, 1.7 * u, 1.5 * u, -0.3 * u, 0.1 * u, -0.3 * u);
+    ctx.bezierCurveTo(-1.4 * u, -0.3 * u, -1.3 * u, 1.7 * u, 0.35 * u, 1.85 * u);
+    ctx.bezierCurveTo(2.0 * u, 2.0 * u, 1.8 * u, -1.5 * u, 0.2 * u, -2.6 * u);
+    ctx.stroke();
+    ctx.beginPath(); ctx.arc(-0.05 * u, 2.9 * u, u * 0.3, 0, Math.PI * 2); ctx.fill();
+  }
+
+  // Рисует фигуру ноты (kind) с центром в (0,0), масштаб s. Заливка/обводка — уже заданы.
+  function drawNoteShape(kind, s) {
+    var r = s * 0.42;
+    ctx.lineCap = 'round'; ctx.lineJoin = 'round';
+    if (kind === 3) { drawTreble(s); return; }
+    if (kind === 1) { // пара нот с балкой
+      var dx = s * 0.95;
+      noteHead(-dx * 0.5, r * 0.9, r); noteHead(dx * 0.5, r * 0.9, r);
+      ctx.lineWidth = Math.max(1.5, s * 0.13);
+      ctx.beginPath();
+      ctx.moveTo(-dx * 0.5 + r * 1.05, r * 0.9); ctx.lineTo(-dx * 0.5 + r * 1.05, -s * 1.15);
+      ctx.moveTo(dx * 0.5 + r * 1.05, r * 0.9); ctx.lineTo(dx * 0.5 + r * 1.05, -s * 1.15);
+      ctx.stroke();
+      ctx.lineWidth = s * 0.3;
+      ctx.beginPath(); ctx.moveTo(-dx * 0.5 + r * 1.0, -s * 1.1); ctx.lineTo(dx * 0.5 + r * 1.1, -s * 1.1); ctx.stroke();
+      return;
+    }
+    noteHead(0, r * 0.9, r);
+    ctx.lineWidth = Math.max(1.5, s * 0.13);
+    ctx.beginPath(); ctx.moveTo(r * 1.05, r * 0.9); ctx.lineTo(r * 1.05, -s * 1.2); ctx.stroke();
+    if (kind === 0) { // флажок восьмой
+      ctx.lineWidth = Math.max(1.6, s * 0.16);
+      ctx.beginPath(); ctx.moveTo(r * 1.05, -s * 1.2);
+      ctx.quadraticCurveTo(r * 1.05 + s * 0.95, -s * 0.85, r * 1.05 + s * 0.2, -s * 0.28);
+      ctx.stroke();
+    }
+  }
+
   function drawNote(n, t) {
     ctx.save();
-    var sway = Math.sin(t * 0.0006 * n.swaySp + n.sway) * 10;
+    var sway = Math.sin(t * 0.0006 * n.swaySp + n.sway) * 12;
     ctx.translate(n.x + sway, n.y);
     ctx.rotate(n.rot);
     ctx.globalAlpha = n.op;
     var grd = ctx.createLinearGradient(0, -n.s, 0, n.s);
-    grd.addColorStop(0, theme === 'dark' ? '#FFE082' : '#D89A3D');
-    grd.addColorStop(1, theme === 'dark' ? '#C79322' : '#A9741C');
-    ctx.fillStyle = grd;
-    ctx.shadowColor = theme === 'dark' ? 'rgba(255,214,110,0.6)' : 'rgba(199,147,34,0.45)';
-    ctx.shadowBlur = 10;
-    ctx.font = '700 ' + (n.s * 1.8) + "px 'Segoe UI Symbol','Noto Music','Noto Sans Symbols',serif";
-    ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
-    ctx.fillText(n.gl, 0, 0);
+    grd.addColorStop(0, theme === 'dark' ? '#FFE79A' : '#C79322');
+    grd.addColorStop(1, theme === 'dark' ? '#E0A82E' : '#8A5E12');
+    ctx.fillStyle = grd; ctx.strokeStyle = grd;
+    ctx.shadowColor = theme === 'dark' ? 'rgba(255,214,110,0.55)' : 'rgba(120,80,10,0.35)';
+    ctx.shadowBlur = theme === 'dark' ? 12 : 6;
+    drawNoteShape(n.kind, n.s);
     ctx.restore();
     n.x += n.vx; n.y += n.vy; n.rot += n.vr;
-    if (n.y > H + n.s * 2) { n.y = -n.s * 2; n.x = rnd(0, W); }
-    if (n.x < -n.s * 2) n.x = W + n.s; if (n.x > W + n.s * 2) n.x = -n.s;
+    if (n.y > H + n.s * 3) { n.y = -n.s * 3; n.x = rnd(0, W); }
+    if (n.x < -n.s * 3) n.x = W + n.s; if (n.x > W + n.s * 3) n.x = -n.s;
   }
 
   var cometTimer = 0;

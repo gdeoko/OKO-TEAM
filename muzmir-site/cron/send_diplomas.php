@@ -137,10 +137,15 @@ function _plan_send_at(DateTimeInterface $now, array $a, array $comp): DateTime 
         return $t;
     }
 
-    // 3) Короткие платные: created_at + 3 рабочих дня (вс — нерабочий).
-    try { $t = new DateTime((string)($a['created_at'] ?? 'now')); } catch (\Throwable $e) { $t = new DateTime($now->format('Y-m-d H:i:s')); }
+    // 3) Короткие платные: результат + 5 рабочих дней; для участников ВИП-клуба — 3
+    //    (вс — нерабочий). Точка отсчёта — момент аттестации (graded_at), иначе подача.
+    if (is_file(BASE_PATH . '/core/club.php')) require_once BASE_PATH . '/core/club.php';
+    $base = trim((string)($a['graded_at'] ?? '')) !== '' ? (string)$a['graded_at'] : (string)($a['created_at'] ?? 'now');
+    try { $t = new DateTime($base); } catch (\Throwable $e) { $t = new DateTime($now->format('Y-m-d H:i:s')); }
+    $wDays = 5;
+    if (!empty($a['user_id']) && function_exists('club_is_active') && club_is_active((int)$a['user_id'])) $wDays = 3;
     $days = 0;
-    while ($days < 3) {
+    while ($days < $wDays) {
         $t->modify('+1 day');
         if ((int)$t->format('w') !== 0) $days++; // 0 = воскресенье, не считаем
     }

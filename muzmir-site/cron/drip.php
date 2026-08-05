@@ -120,7 +120,7 @@ function drip_body_apply(string $name): string {
     <div><span style="color:#C79322;">•</span> Запись без монтажа, склеек, стоп-кадров и спецэффектов, без остановки камеры.</div>
     <div><span style="color:#C79322;">•</span> Качество не ниже 480p, запись сделана не ранее чем за один год.</div>
     <div><span style="color:#C79322;">•</span> Ссылки принимаются только на: <b style="color:#17307A;">RuTube, Google Диск, Яндекс&nbsp;Диск, OK&nbsp;видео, VK&nbsp;видео, Дзен&nbsp;видео</b>.</div>
-    <div><span style="color:#C79322;">•</span> Не принимаются ссылки на Instagram, Facebook, TikTok, YouTube и мессенджеры.</div>
+    <div><span style="color:#C79322;">•</span> Не принимаются ссылки на иностранные соцсети, видеохостинги и мессенджеры (заблокированные в РФ).</div>
   </td></tr>
 </table>
 

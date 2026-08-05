@@ -215,7 +215,8 @@ function db_migrate(PDO $pdo): void {
         subject TEXT, body TEXT,
         attach TEXT DEFAULT '',
         newsletter_id INTEGER,
-        status TEXT DEFAULT 'queued',        -- queued|sent|failed
+        status TEXT DEFAULT 'queued',        -- queued|sent|failed|paused
+        priority INTEGER DEFAULT 0,          -- 0=транзакционное (сразу), >0=массовое (лимит+паузы)
         tries INTEGER DEFAULT 0,
         error TEXT DEFAULT '',
         created_at TEXT DEFAULT (datetime('now')),

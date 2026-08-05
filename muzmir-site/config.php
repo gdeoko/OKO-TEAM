@@ -79,7 +79,11 @@ return [
     'smtp_senders'       => cfg('MUZMIR_SMTP_SENDERS', ''),
     // Дневной лимит на ОДИН ящик — общий потолок массовых = лимит × число ящиков пула
     'mail_daily_limit' => (int) cfg('MUZMIR_MAIL_DAILY_LIMIT', 400),
+    'mail_daily_max'   => (int) cfg('MUZMIR_MAIL_DAILY_MAX', 480),   // потолок прогрева на 1 ящик news@
     'mail_batch_size'  => (int) cfg('MUZMIR_MAIL_BATCH', 40),
+    // IMAP ящика news@ — для авто-очистки базы от отказов (cron/process_bounces.php).
+    'imap_host'        => cfg('MUZMIR_IMAP_HOST', 'imap.yandex.ru'),
+    'imap_port'        => (int) cfg('MUZMIR_IMAP_PORT', 993),
 
     // Telegram
     'tg_bot_token'   => cfg('MUZMIR_TG_BOT_TOKEN', ''),

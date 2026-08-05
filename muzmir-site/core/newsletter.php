@@ -212,6 +212,7 @@ function newsletter_enqueue(int $newsletterId): int {
                 'body'          => $body,
                 'newsletter_id' => $newsletterId,
                 'status'        => 'queued',
+                'priority'      => 5,   // МАССОВАЯ: воркер шлёт через news@ с дневным лимитом и паузами
             ]);
             $queued++;
         }
@@ -254,13 +255,89 @@ function nl_bulk_sent_today(): int {
     );
 }
 
+/* =====================================================================
+ *  ПРОГРЕВ ДОМЕНА: рамп дневного лимита массовых по дню кампании
+ * =====================================================================
+ * Холодная база + свежий домен news@ = нельзя слать много сразу (Яндекс
+ * тротлит 553 и репутация падает → спам). Раскочегариваем плавно: с малого
+ * к потолку. Старт кампании фиксируется в settings['bulk_campaign_start']
+ * (кнопкой «Запустить план» в админке). Пока старт не задан — берётся ручной
+ * лимит cfgv('mail_daily_limit') (для точечных ad-hoc рассылок). */
+
+/** Кривая прогрева: день кампании (1..) → потолок массовых на этот день. */
+function nl_ramp_curve(): array {
+    return [
+        1 => 60,  2 => 90,  3 => 120, 4 => 160, 5 => 200, 6 => 250, 7 => 300,
+        8 => 350, 9 => 400, 10 => 430, 11 => 450, 12 => 470, 13 => 480, 14 => 480,
+    ]; // с 15-го дня и далее — потолок (nl_ramp_peak)
+}
+
+/** Абсолютный безопасный потолок массовых на один ящик news@ в сутки. */
+function nl_ramp_peak(): int { return (int) cfgv('mail_daily_max', 480); }
+
+/** Дата старта плана рассылки (YYYY-MM-DD) или '' если план не запущен. */
+function nl_campaign_start(): string {
+    $s = trim((string) setting('bulk_campaign_start', ''));
+    return $s !== '' ? substr($s, 0, 10) : '';
+}
+
+/** Номер дня кампании (1 = день старта). 0 — если план не запущен. */
+function nl_campaign_day(): int {
+    $start = nl_campaign_start();
+    if ($start === '') return 0;
+    $d0 = strtotime($start . ' 00:00:00');
+    if ($d0 === false) return 0;
+    $days = (int) floor((time() - $d0) / 86400) + 1;
+    return max(1, $days);
+}
+
+/** Дневной потолок массовых с учётом прогрева. */
+function nl_daily_cap(): int {
+    $day = nl_campaign_day();
+    if ($day === 0) {                          // план не запущен — ручной лимит
+        return max(1, (int) cfgv('mail_daily_limit', 130));
+    }
+    $curve = nl_ramp_curve();
+    $cap = $day >= 15 ? nl_ramp_peak() : ($curve[$day] ?? nl_ramp_peak());
+    return min($cap, nl_ramp_peak());
+}
+
 /**
- * Отправляет пачку из mail_queue через mail_send, уважая дневной лимит Gmail
- * (cfgv('mail_daily_limit')). Обновляет статусы писем и newsletters.stats_sent.
+ * Помечает недоставленные адреса «отказами»: подписчик active=0 + тег bounced,
+ * чтобы он выбыл из будущих волн, а дневная квота заполнялась живыми адресами
+ * (естественный «backfill» — счёт идёт по доставленным, не по попыткам).
+ * $email — адрес, $reason — краткая причина для лога.
+ */
+function nl_mark_bounced(string $email, string $reason = 'bounce'): void {
+    $email = mb_strtolower(trim($email));
+    if ($email === '') return;
+    $row = one("SELECT id, tags, active FROM subscribers WHERE email=?", [$email]);
+    if (!$row) return;
+    $tags = (string) ($row['tags'] ?? '');
+    if (mb_stripos($tags, 'bounced') === false) $tags = trim($tags . ',bounced', ', ');
+    update('subscribers', ['active' => 0, 'tags' => $tags], 'id=:id', ['id' => (int) $row['id']]);
+    nl_log('bounce: ' . $email . ' → выведен из базы (' . $reason . ')');
+}
+
+/** Прунит адреса, письма которым окончательно провалились (status=failed). */
+function nl_prune_failed(): int {
+    $rows = all("SELECT DISTINCT to_email FROM mail_queue WHERE status='failed' AND COALESCE(priority,0)>0");
+    $n = 0;
+    foreach ($rows as $r) {
+        $e = mb_strtolower(trim((string) $r['to_email']));
+        $sub = one("SELECT active FROM subscribers WHERE email=?", [$e]);
+        if ($sub && (int) $sub['active'] === 1) { nl_mark_bounced($e, 'smtp-failed'); $n++; }
+    }
+    return $n;
+}
+
+/**
+ * Отправляет пачку из mail_queue через mail_send, уважая дневной лимит с учётом
+ * прогрева (nl_daily_cap). Обновляет статусы писем и newsletters.stats_sent.
  * Зовётся из cron process_newsletter_queue.php. Возвращает число отправленных.
  */
 function newsletter_process_queue(int $limit): int {
-    $dailyLimit = (int) cfgv('mail_daily_limit', 400);
+    $dailyLimit = nl_daily_cap();
     $gap        = max(0, (int) cfgv('mail_send_gap', 30));   // антибан-пауза для МАССОВЫХ
     $perRun     = max(1, (int) cfgv('mail_throttle_per_run', 2));
     try { db()->exec("ALTER TABLE mail_queue ADD COLUMN priority INTEGER DEFAULT 0"); } catch (\Throwable $e) {}
@@ -315,12 +392,16 @@ function newsletter_process_queue(int $limit): int {
         nl_log('process: дневной лимит массовых исчерпан (транзакционные отправлены)');
     }
 
+    // Чистим базу от адресов, письма которым окончательно провалились на SMTP.
+    $pruned = nl_prune_failed();
+    if ($pruned > 0) nl_log("process: выведено из базы (SMTP-отказ) — $pruned");
+
     // Рассылки без остатка в очереди помечаем как отправленные.
     q("UPDATE newsletters SET status = 'sent', sent_at = COALESCE(sent_at, datetime('now'))
         WHERE status = 'sending'
           AND id NOT IN (SELECT DISTINCT newsletter_id FROM mail_queue
                           WHERE newsletter_id IS NOT NULL AND status = 'queued')");
 
-    nl_log("process: отправлено $sent (транзакционных " . count($tx) . ")");
+    nl_log("process: отправлено $sent (транзакционных " . count($tx) . ", лимит массовых сегодня " . nl_daily_cap() . ", день кампании " . nl_campaign_day() . ")");
     return $sent;
 }
