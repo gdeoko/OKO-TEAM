@@ -1,0 +1,246 @@
+{
+ "id": "gspy_070",
+ "app": "spy",
+ "voice": "en-US-AndrewNeural",
+ "rate": "+4%",
+ "grade": "teal_orange",
+ "brand": {
+  "accent": "#00D9FF",
+  "accent2": "#7CFCFF",
+  "code": "PRIVACY",
+  "logo": "spy.png",
+  "name": "SPY CAMERA FINDER"
+ },
+ "music": {
+  "queries": [
+   "hype trap beat",
+   "neon night synth",
+   "minimal techno tension",
+   "cinematic underscore tech"
+  ]
+ },
+ "cover": {
+  "kicker": "WHY IT WORKS",
+  "top": "THE SCIENCE OF",
+  "big": "CATCHING\nA LENS",
+  "q": [
+   "closet wardrobe hotel room"
+  ]
+ },
+ "segments": [
+  {
+   "id": "b1",
+   "text": "Every camera has a lens, and lenses reflect."
+  },
+  {
+   "id": "b2",
+   "text": "Infrared bounces back as a sharp bright point."
+  },
+  {
+   "id": "b3",
+   "text": "Wireless cams also shout on the local network."
+  },
+  {
+   "id": "b4",
+   "text": "Two signals, two ways to catch them."
+  },
+  {
+   "id": "b5",
+   "text": "The app checks both at the same time."
+  },
+  {
+   "id": "b6",
+   "text": "Physics is on your side. Use it."
+  }
+ ],
+ "shots": [
+  {
+   "q": [
+    "closet wardrobe hotel room"
+   ],
+   "motion": "zin"
+  },
+  {
+   "q": [
+    "person relaxing bed phone night"
+   ],
+   "insert": "circle",
+   "pos": "upper"
+  },
+  {
+   "q": [
+    "reflection glass light dot"
+   ],
+   "motion": "zout"
+  },
+  {
+   "q": [
+    "door lock hotel keycard"
+   ],
+   "insert": "tilt",
+   "pos": "center"
+  },
+  {
+   "q": [
+    "wifi router network dark tech"
+   ],
+   "motion": "panup"
+  },
+  {
+   "q": [
+    "tv on wall hotel room"
+   ],
+   "insert": "diamond",
+   "pos": "center"
+  },
+  {
+   "q": [
+    "desk lamp table hotel"
+   ],
+   "motion": "panr"
+  },
+  {
+   "q": [
+    "smoke detector ceiling closeup"
+   ],
+   "insert": "arch",
+   "pos": "lower"
+  },
+  {
+   "q": [
+    "network cables server blue light"
+   ],
+   "motion": "panl"
+  },
+  {
+   "q": [
+    "surveillance concept eye lens"
+   ],
+   "insert": "hexagon",
+   "pos": "upper"
+  },
+  {
+   "q": [
+    "hotel room modern interior"
+   ],
+   "motion": "pandown"
+  },
+  {
+   "q": [
+    "dark bedroom lamp light"
+   ],
+   "insert": "tv",
+   "pos": "lower"
+  },
+  {
+   "q": [
+    "usb charger plug closeup"
+   ],
+   "motion": "zin"
+  }
+ ],
+ "overlays": [
+  {
+   "at": 0.14,
+   "dur": 1.87,
+   "type": "kicker",
+   "text": "LENS CHECK"
+  },
+  {
+   "at": 0.371,
+   "dur": 2.6,
+   "type": "checklist",
+   "items": [
+    "Smoke detector",
+    "Alarm clock",
+    "TV frame",
+    "Power outlet"
+   ],
+   "pos": "center"
+  },
+  {
+   "at": 0.371,
+   "dur": 1.74,
+   "type": "ticker",
+   "to": 2,
+   "suffix": "",
+   "label": "SIGNALS CHECKED",
+   "pos": "lower"
+  },
+  {
+   "at": 0.38,
+   "dur": 2.26,
+   "type": "callout",
+   "text": "IR GLINT GIVES IT AWAY",
+   "pos": "center"
+  },
+  {
+   "at": 0.395,
+   "dur": 2.26,
+   "type": "gauge",
+   "to": 5,
+   "max": 10,
+   "suffix": "",
+   "label": "SPOTS TO CHECK",
+   "pos": "center"
+  },
+  {
+   "at": 0.459,
+   "dur": 1.78,
+   "type": "bars",
+   "title": "HIDDEN CAM REPORTS",
+   "unit": "%",
+   "items": [
+    [
+     "2019",
+     6
+    ],
+    [
+     "2024",
+     34
+    ]
+   ],
+   "pos": "center"
+  },
+  {
+   "at": 0.491,
+   "dur": 1.71,
+   "type": "kinetic",
+   "top": "STOP",
+   "big": "GUESSING"
+  },
+  {
+   "at": 0.583,
+   "dur": 2.02,
+   "type": "lowerthird",
+   "title": "UNPLUG UNKNOWNS",
+   "sub": "30 seconds, total"
+  },
+  {
+   "at": 0.812,
+   "dur": 2.19,
+   "type": "stat_count",
+   "to": 5,
+   "suffix": "",
+   "label": "HIDING SPOTS",
+   "pos": "center"
+  }
+ ],
+ "cta": {
+  "text": "Comment PRIVACY for the app.",
+  "code": "PRIVACY"
+ },
+ "caption": "Every lens reflects infrared as a bright point, and wireless cams shout on the network. Two signals, one scan — physics is on your side. Comment PRIVACY for the app. #privacy #airbnb #travelsafety #hiddencamera #traveltips #hotelroom #safetytips #hidden #camera #find #hotel",
+ "yt_title": "The science of finding hidden cameras #shorts",
+ "trend_keys": [
+  "hidden",
+  "camera",
+  "find",
+  "hotel",
+  "cameras",
+  "secret",
+  "former",
+  "spy"
+ ],
+ "content_type": "viral"
+}
