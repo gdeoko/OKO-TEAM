@@ -39,16 +39,26 @@ $paid = $paid ?: $anyComp; $free = $free ?: $anyComp;
 $N = 0; $log = [];
 $unsub = $base . '/unsubscribe?e=' . rawurlencode($TO);
 
+// Фильтр «слать только эти номера» и пауза между письмами (для докидки упавших).
+$ONLY = [];
+$GAP  = 11;
+foreach ($argv as $a) {
+    if (str_starts_with($a, '--only=')) $ONLY = array_filter(array_map('intval', explode(',', substr($a, 7))));
+    if (str_starts_with($a, '--gap='))  $GAP  = max(3, (int) substr($a, 6));
+}
+
 /** Прямая отправка (с паузой и одним повтором). $acc — аккаунт отправителя. */
 function tsend(string $to, string $subject, string $html, array $acc, string $fromName, array &$log, int &$N): void {
-    static $first = true;
-    if (!$first) sleep(11);
-    $first = false;
+    global $ONLY, $GAP;
     $N++;
+    if ($ONLY && !in_array($N, $ONLY, true)) return;   // докидываем только выбранные
+    static $first = true;
+    if (!$first) sleep($GAP);
+    $first = false;
     $subj = '[ТЕСТ ' . $N . '] ' . $subject;
     $opt = ['account' => $acc, 'from_name' => $fromName];
     $ok = mail_send($to, $subj, $html, $opt);
-    if (!$ok) { sleep(14); $ok = mail_send($to, $subj, $html, $opt); }
+    if (!$ok) { sleep($GAP + 6); $ok = mail_send($to, $subj, $html, $opt); }
     $log[] = sprintf("%2d. %-46s %s", $N, mb_substr($subject, 0, 46), $ok ? 'OK' : 'FAIL');
 }
 

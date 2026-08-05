@@ -423,10 +423,20 @@ function mail_send(string $to, string $subject, string $html, array $opt = []): 
     $attach   = isset($opt['attachments']) && is_array($opt['attachments'])
                   ? $opt['attachments']
                   : (string) ($opt['attach'] ?? '');
-    // Адрес в заголовке From может отличаться от логина авторизации:
-    // логин Яндекса для IDN-домена — в punycode (user), а показываем красивый
-    // кириллический адрес (from_addr). Конверт (MAIL FROM) — по логину user.
+    // Адрес в заголовке From. ВАЖНО: домен обязан быть в PUNYCODE (ASCII).
+    // Сырой кириллический адрес (news@музыкальный-мир.рф) RFC-невалиден
+    // (нет SMTPUTF8/EAI) и Яндекс метит письмо как СПАМ (554 5.7.1). Поэтому
+    // IDN-домен приводим к punycode; красивое кириллическое имя даёт from_name.
     $fromAddr = (string) ($acc['from_addr'] ?? $user);
+    if (preg_match('/[^\x20-\x7E]/', $fromAddr)) {           // есть не-ASCII (кириллица)
+        if (str_contains($fromAddr, '@') && function_exists('idn_to_ascii')) {
+            [$lp, $dom] = explode('@', $fromAddr, 2);
+            $asc = @idn_to_ascii($dom, IDNA_DEFAULT, INTL_IDNA_VARIANT_UTS46);
+            $fromAddr = $asc ? ($lp . '@' . $asc) : $user;
+        } else {
+            $fromAddr = $user;                                // фолбэк: punycode-логин
+        }
+    }
 
     $mime = mail_build_mime($fromName, $fromAddr, $to, $replyTo, $subject, $html, $attach);
 
