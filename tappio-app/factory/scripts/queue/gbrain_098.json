@@ -1,0 +1,227 @@
+{
+ "id": "gbrain_098",
+ "app": "brain",
+ "voice": "en-US-BrianNeural",
+ "rate": "+5%",
+ "grade": "purple_dream",
+ "brand": {
+  "accent": "#9B5DE5",
+  "accent2": "#C9A7FF",
+  "code": "FOCUS",
+  "logo": "brain.png",
+  "name": "BRAINOVA"
+ },
+ "music": {
+  "queries": [
+   "minimal tech ambient",
+   "calm motivational underscore",
+   "warm inspiring piano electronic",
+   "gentle cinematic hope"
+  ]
+ },
+ "cover": {
+  "kicker": "5-MIN HABIT",
+  "top": "TRAIN FOCUS",
+  "big": "LIKE A\nMUSCLE",
+  "q": [
+   "coffee cup morning desk"
+  ]
+ },
+ "segments": [
+  {
+   "id": "b1",
+   "text": "Focus is not a gift, it is a muscle."
+  },
+  {
+   "id": "b2",
+   "text": "Five minutes a day is enough to grow it."
+  },
+  {
+   "id": "b3",
+   "text": "Short, hard puzzles push your limit gently."
+  },
+  {
+   "id": "b4",
+   "text": "The app adapts as you get faster."
+  },
+  {
+   "id": "b5",
+   "text": "In two weeks distractions lose their grip."
+  },
+  {
+   "id": "b6",
+   "text": "Start with five minutes tomorrow."
+  }
+ ],
+ "shots": [
+  {
+   "q": [
+    "chess board close up thinking"
+   ],
+   "motion": "pandown"
+  },
+  {
+   "q": [
+    "group people names introduction"
+   ],
+   "insert": "arch",
+   "pos": "upper"
+  },
+  {
+   "q": [
+    "person thinking trying to remember"
+   ],
+   "motion": "panup"
+  },
+  {
+   "q": [
+    "light bulb idea dark"
+   ],
+   "insert": "tilt",
+   "pos": "lower"
+  },
+  {
+   "q": [
+    "memory old photos hands"
+   ],
+   "motion": "panr"
+  },
+  {
+   "q": [
+    "smartphone brain game screen"
+   ],
+   "insert": "tv",
+   "pos": "upper"
+  },
+  {
+   "q": [
+    "woman meditating calm light"
+   ],
+   "motion": "zout"
+  },
+  {
+   "q": [
+    "student studying desk lamp night"
+   ],
+   "insert": "rrect",
+   "pos": "lower"
+  },
+  {
+   "q": [
+    "neurons synapse animation blue"
+   ],
+   "motion": "panl"
+  },
+  {
+   "q": [
+    "person sleeping rest night"
+   ],
+   "insert": "diamond",
+   "pos": "lower"
+  },
+  {
+   "q": [
+    "brain scan mri blue"
+   ],
+   "motion": "zin"
+  }
+ ],
+ "overlays": [
+  {
+   "at": 0.236,
+   "dur": 1.92,
+   "type": "kicker",
+   "text": "FOCUS FIX"
+  },
+  {
+   "at": 0.244,
+   "dur": 2.3,
+   "type": "ticker",
+   "to": 5,
+   "suffix": "min",
+   "label": "A DAY",
+   "pos": "lower"
+  },
+  {
+   "at": 0.343,
+   "dur": 1.96,
+   "type": "chips",
+   "items": [
+    "DAY 1",
+    "DAY 5",
+    "DAY 10",
+    "DAY 14"
+   ],
+   "pos": "lower"
+  },
+  {
+   "at": 0.595,
+   "dur": 1.72,
+   "type": "kinetic",
+   "top": "STAY",
+   "big": "SHARP"
+  },
+  {
+   "at": 0.778,
+   "dur": 1.68,
+   "type": "lowerthird",
+   "title": "SAY IT BACK",
+   "sub": "names stick instantly"
+  },
+  {
+   "at": 0.78,
+   "dur": 2.6,
+   "type": "checklist",
+   "items": [
+    "Take the test",
+    "Play 5 min",
+    "Beat your score",
+    "Keep the streak"
+   ],
+   "pos": "center"
+  },
+  {
+   "at": 0.849,
+   "dur": 1.83,
+   "type": "callout",
+   "text": "STREAKS BEAT WILLPOWER",
+   "pos": "center"
+  },
+  {
+   "at": 0.867,
+   "dur": 2.27,
+   "type": "stat_count",
+   "to": 60,
+   "suffix": "s",
+   "label": "TO A SCORE",
+   "pos": "center"
+  },
+  {
+   "at": 0.904,
+   "dur": 1.76,
+   "type": "gauge",
+   "to": 78,
+   "max": 100,
+   "suffix": "%",
+   "label": "FOCUS SCORE",
+   "pos": "center"
+  }
+ ],
+ "cta": {
+  "text": "Comment FOCUS for the app.",
+  "code": "FOCUS"
+ },
+ "caption": "USEFUL: Focus is a muscle, not a gift. Five minutes of adaptive puzzles a day, and in two weeks distractions lose their grip. Start tomorrow. Comment FOCUS for the app. #brainhealth #memory #focus #productivity #selfimprovement #mentalhealth #learning #mental #beats #test #music",
+ "yt_title": "Train your focus like a muscle #shorts",
+ "trend_keys": [
+  "mental",
+  "beats",
+  "test",
+  "music",
+  "memory",
+  "age",
+  "binaural",
+  "focus"
+ ],
+ "content_type": "useful"
+}
