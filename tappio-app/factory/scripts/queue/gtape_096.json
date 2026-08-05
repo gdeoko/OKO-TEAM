@@ -1,0 +1,250 @@
+{
+ "id": "gtape_096",
+ "app": "tape",
+ "voice": "en-US-ChristopherNeural",
+ "rate": "+6%",
+ "grade": "warm_gold",
+ "brand": {
+  "accent": "#F4C430",
+  "accent2": "#FFE08A",
+  "code": "MEASURE",
+  "logo": "tape.png",
+  "name": "3D TAPE MEASURE"
+ },
+ "music": {
+  "queries": [
+   "clean corporate underscore",
+   "bright pop home",
+   "positive corporate light groove",
+   "upbeat indie acoustic diy"
+  ]
+ },
+ "cover": {
+  "kicker": "MOVING DAY",
+  "top": "WILL THE SOFA",
+  "big": "FIT THROUGH\nTHE DOOR?",
+  "q": [
+   "closet organizer measuring wardrobe"
+  ]
+ },
+ "segments": [
+  {
+   "id": "b1",
+   "text": "Big furniture, narrow doorway, moving day panic."
+  },
+  {
+   "id": "b2",
+   "text": "Measure the door frame with your phone first."
+  },
+  {
+   "id": "b3",
+   "text": "Then measure the sofa the same way."
+  },
+  {
+   "id": "b4",
+   "text": "The app compares both in real time."
+  },
+  {
+   "id": "b5",
+   "text": "Green means go, red means turn it sideways."
+  },
+  {
+   "id": "b6",
+   "text": "Never get stuck on the stairs again."
+  }
+ ],
+ "shots": [
+  {
+   "q": [
+    "paint wall renovation room"
+   ],
+   "insert": "arch",
+   "pos": "upper"
+  },
+  {
+   "q": [
+    "moving boxes new apartment"
+   ],
+   "motion": "panup"
+  },
+  {
+   "q": [
+    "picture frame hanging wall level"
+   ],
+   "insert": "rrect",
+   "pos": "upper"
+  },
+  {
+   "q": [
+    "cozy furnished living room warm light"
+   ],
+   "motion": "panl"
+  },
+  {
+   "q": [
+    "hands arranging shelf wall decor"
+   ],
+   "insert": "tilt",
+   "pos": "upper"
+  },
+  {
+   "q": [
+    "kitchen cabinets measuring renovation"
+   ],
+   "motion": "zin"
+  },
+  {
+   "q": [
+    "curtains window measuring home"
+   ],
+   "insert": "phone",
+   "pos": "center"
+  },
+  {
+   "q": [
+    "apartment tour empty rooms"
+   ],
+   "motion": "panr"
+  },
+  {
+   "q": [
+    "carpenter measuring wood workshop"
+   ],
+   "insert": "hexagon",
+   "pos": "lower"
+  },
+  {
+   "q": [
+    "couple planning home layout tablet"
+   ],
+   "motion": "pandown"
+  },
+  {
+   "q": [
+    "bookshelf assembly instructions floor"
+   ],
+   "insert": "diamond",
+   "pos": "lower"
+  },
+  {
+   "q": [
+    "furniture store showroom sofa"
+   ],
+   "motion": "zout"
+  },
+  {
+   "q": [
+    "person relaxing on couch bright apartment"
+   ],
+   "insert": "circle",
+   "pos": "lower"
+  },
+  {
+   "q": [
+    "hand pointing phone at wall measuring"
+   ],
+   "motion": "panup"
+  },
+  {
+   "q": [
+    "blueprint floor plan on tablet desk"
+   ],
+   "insert": "tv",
+   "pos": "center"
+  },
+  {
+   "q": [
+    "dining table room measure"
+   ],
+   "motion": "panl"
+  }
+ ],
+ "overlays": [
+  {
+   "at": 0.268,
+   "dur": 1.72,
+   "type": "kicker",
+   "text": "NO TAPE"
+  },
+  {
+   "at": 0.327,
+   "dur": 1.6,
+   "type": "bars",
+   "title": "FURNITURE RETURNS",
+   "unit": "%",
+   "items": [
+    [
+     "Guessing",
+     22
+    ],
+    [
+     "Measured",
+     4
+    ]
+   ],
+   "pos": "center"
+  },
+  {
+   "at": 0.34,
+   "dur": 2.6,
+   "type": "checklist",
+   "items": [
+    "Point the phone",
+    "Tap two points",
+    "Read the length",
+    "Save the project"
+   ],
+   "pos": "center"
+  },
+  {
+   "at": 0.399,
+   "dur": 2.34,
+   "type": "kinetic",
+   "top": "MEASURE",
+   "big": "ANY ROOM"
+  },
+  {
+   "at": 0.616,
+   "dur": 1.83,
+   "type": "chips",
+   "items": [
+    "POINT",
+    "TAP",
+    "READ",
+    "SAVE"
+   ],
+   "pos": "lower"
+  },
+  {
+   "at": 0.618,
+   "dur": 2.13,
+   "type": "callout",
+   "text": "NO TAPE, NO HELPER",
+   "pos": "center"
+  },
+  {
+   "at": 0.63,
+   "dur": 2.3,
+   "type": "lowerthird",
+   "title": "MEASURE THE DOOR",
+   "sub": "then measure the sofa"
+  }
+ ],
+ "cta": {
+  "text": "Comment MEASURE for the app.",
+  "code": "MEASURE"
+ },
+ "caption": "USEFUL: Moving day panic? Measure the doorway, measure the sofa, let the app compare. Green means go, red means turn it sideways. Comment MEASURE for the app. #diy #homedecor #interiordesign #measure #movingtips #renter #apartmenttherapy #iphone #measure #plan #floorplanner",
+ "yt_title": "Will the sofa fit through the door? #shorts",
+ "trend_keys": [
+  "iphone",
+  "measure",
+  "plan",
+  "floorplanner",
+  "tape",
+  "living",
+  "app",
+  "furniture"
+ ],
+ "content_type": "useful"
+}
