@@ -117,7 +117,10 @@ function diploma_html(array $c, array $a, array $opt = []): string {
     $sample = !empty($opt['sample']);
     $thanks = !empty($opt['thanks']);
     $isExtra = !empty($opt['extra']);   // ОТДЕЛЬНЫЙ дополнительный диплом (спецноминация)
+    $named  = !empty($opt['named']);    // именной диплом (в составе коллектива)
     $edit   = !empty($opt['edit']);
+    // ЧИСТЫЙ оригинал: без подписей и печатей (их ставят живьём), НО с номером+QR.
+    $clean  = !empty($opt['clean']);
 
     $base   = rtrim(cfgv('base_url'), '/');
     $imgDip = $base . '/assets/img/diploma';
@@ -146,15 +149,19 @@ function diploma_html(array $c, array $a, array $opt = []): string {
     $year     = date('Y');
 
     // Номер диплома + QR-код проверки подлинности (правый нижний угол).
+    // ЖЁСТКОЕ ПРАВИЛО: номер есть ВСЕГДА на всех типах (осн/доп/именной/благодарность),
+    // и на электронном, и на оригинале. Номер печатается независимо от QR.
     $dipNumber = trim((string)($opt['number'] ?? ($a['number'] ?? '')));
-    if ($dipNumber === '' && $sample) $dipNumber = 'MM-2026-00001';
+    if ($dipNumber === '') {
+        // страховка: номер не должен быть пустым НИКОГДА
+        $seed = (string)($a['id'] ?? '') . '|' . $name . '|' . $dtype . '|' . ($isExtra ? 'E' : ($thanks ? 'T' : ($named ? 'N' : 'M')));
+        $dipNumber = 'MM-' . date('Y') . '-' . strtoupper(substr(md5($seed), 0, 6));
+    }
     $qrSvg = '';
-    if ($dipNumber !== '') {
-        if (!function_exists('qr_svg') && is_file(BASE_PATH . '/core/qr.php')) require_once BASE_PATH . '/core/qr.php';
-        if (function_exists('qr_svg')) {
-            $verifyUrl = $base . '/verify/' . rawurlencode($dipNumber);
-            try { $qrSvg = qr_svg($verifyUrl); } catch (\Throwable $e) { $qrSvg = ''; }
-        }
+    if (!function_exists('qr_svg') && is_file(BASE_PATH . '/core/qr.php')) require_once BASE_PATH . '/core/qr.php';
+    if (function_exists('qr_svg')) {
+        $verifyUrl = $base . '/verify/' . rawurlencode($dipNumber);
+        try { $qrSvg = qr_svg($verifyUrl); } catch (\Throwable $e) { $qrSvg = ''; }
     }
 
     /* Поля: в образце — все строки эталона с плейсхолдерами (шаблон 1:1),
@@ -388,27 +395,30 @@ body{background:#444;font-family:'Manrope',sans-serif;padding:20px;min-height:10
         <div class="sig-role"><?= h($roleChairman) ?></div>
       </div>
       <div class="sig-visual-block">
-        <img class="chairman-stamp" src="<?= $imgDip ?>/stamp.png" alt="">
-        <img class="sig-signature-1" src="<?= $imgDip ?>/sig1.png" alt="">
+        <?php if (!$clean): ?>
+          <img class="chairman-stamp" src="<?= $imgDip ?>/stamp.png" alt="">
+          <img class="sig-signature-1" src="<?= $imgDip ?>/sig1.png" alt="">
+        <?php endif; ?>
       </div>
       <div class="sig-text-block">
         <div class="sig-name">Ильясов Альберт Ильясович</div>
         <div class="sig-role"><?= h($roleDirector) ?></div>
       </div>
       <div class="sig-visual-block">
-        <img class="big-seal" src="<?= $imgDip ?>/seal.png" alt="">
-        <img class="sig-signature-2" src="<?= $imgDip ?>/sig2.png" alt="">
+        <?php if (!$clean): ?>
+          <img class="big-seal" src="<?= $imgDip ?>/seal.png" alt="">
+          <img class="sig-signature-2" src="<?= $imgDip ?>/sig2.png" alt="">
+        <?php endif; ?>
       </div>
     </div>
     <div class="footer-city">Российская Федерация, город Москва - <?= $year ?></div>
   </div>
-  <?php if ($qrSvg !== ''): ?>
+  <?php /* Номер + QR + «проверка подлинности» — ВСЕГДА (номер даже без QR). */ ?>
   <div class="dip-verify">
-    <div class="qr"><?= $qrSvg ?></div>
+    <?php if ($qrSvg !== ''): ?><div class="qr"><?= $qrSvg ?></div><?php endif; ?>
     <div class="num">№ <?= h($dipNumber) ?></div>
     <div class="lbl">проверка подлинности</div>
   </div>
-  <?php endif; ?>
 </div>
 </body>
 </html>

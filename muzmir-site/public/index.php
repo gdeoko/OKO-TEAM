@@ -213,6 +213,7 @@ if (preg_match('#^/diploma-render/(\d+)$#', $route, $m)) {
     }
     $c = one("SELECT * FROM competitions WHERE id=?", [(int)$app['competition_id']]);
     require_once BASE_PATH . '/core/diploma_html.php';
+    require_once BASE_PATH . '/core/pdf_diploma.php';   // diploma_make_number()
     $opt = [];
     $rtype = (string)($_GET['type'] ?? '');
     if ($rtype === 'thanks') {
@@ -220,6 +221,14 @@ if (preg_match('#^/diploma-render/(\d+)$#', $route, $m)) {
         if (!empty($app['teacher'])) $app['full_name'] = $app['teacher']; // благодарность — педагогу
     } elseif ($rtype === 'extra') {
         $opt['extra'] = true;  // отдельный дополнительный диплом (спецноминация)
+    } elseif ($rtype === 'named') {
+        $opt['named'] = true;  // именной диплом (участник в составе коллектива)
+    }
+    // ЧИСТЫЙ оригинал (без подписи/печати) — для типографии/изготовления. Номер+QR остаются.
+    if (!empty($_GET['clean'])) $opt['clean'] = true;
+    // ЖЁСТКОЕ ПРАВИЛО: номер диплома всегда корректный (по типу), совпадает с реестром /verify.
+    if (function_exists('diploma_make_number')) {
+        $opt['number'] = diploma_make_number((string)($app['number'] ?? ''), $rtype ?: 'main');
     }
     echo diploma_html($c ?: [], $app, $opt);
     exit;

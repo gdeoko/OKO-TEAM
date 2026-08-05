@@ -36,12 +36,15 @@ function diploma_pdf_html(array $app, array $opt = []): ?string {
     $appId  = (int) ($app['id'] ?? 0);
     if ($poster === '' || $token === '' || $sshPas === '' || $appId <= 0) return null;
 
-    $type = !empty($opt['thanks']) ? 'thanks' : (!empty($opt['extra']) ? 'extra' : 'main');
+    $type  = !empty($opt['thanks']) ? 'thanks' : (!empty($opt['extra']) ? 'extra' : (!empty($opt['named']) ? 'named' : 'main'));
+    $clean = !empty($opt['clean']);
     $url  = rtrim((string) cfgv('base_url'), '/') . '/diploma-render/' . $appId
-          . '?key=' . diploma_render_key() . ($type !== 'main' ? '&type=' . $type : '');
+          . '?key=' . diploma_render_key()
+          . ($type !== 'main' ? '&type=' . $type : '')
+          . ($clean ? '&clean=1' : '');
 
     $num  = (string) ($app['number'] ?? ('APP' . $appId));
-    $slug = trim(strtolower((string) preg_replace('/[^a-z0-9]+/i', '-', $num . '-' . $type)), '-');
+    $slug = trim(strtolower((string) preg_replace('/[^a-z0-9]+/i', '-', $num . '-' . $type . ($clean ? '-clean' : ''))), '-');
     $outDir = BASE_PATH . '/public/diplomas/';
     if (!is_dir($outDir)) @mkdir($outDir, 0775, true);
     $out = $outDir . 'diploma_' . $slug . '.pdf';
