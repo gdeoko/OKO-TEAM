@@ -22,6 +22,33 @@ require_once BASE_PATH . '/core/pdf_diploma.php';
 require_once BASE_PATH . '/core/diploma_render.php';
 db();
 
+// CLI-хук проверки рендера письма диплома (без запуска рассылки):
+//   php cron/send_diplomas.php --render-test
+if (PHP_SAPI === 'cli' && in_array('--render-test', $argv, true)) {
+    $sample = [
+        'comp_name' => 'Величие России',
+        'full_name' => 'Смирнова Екатерина Александровна',
+        'number'    => 'MM-2026-A1B2C3',
+        'result'    => 'ЛАУРЕАТ I СТЕПЕНИ',
+        'type'      => 'main',
+    ];
+    $html = _diploma_email_html($sample);
+    echo "RENDER OK, длина: " . strlen($html) . " байт\n";
+    if (in_array('--print', $argv, true)) echo $html . "\n";
+    // Реальная отправка тестового письма: --send <email> (через nagradi, без вложения)
+    $si = array_search('--send', $argv, true);
+    if ($si !== false && isset($argv[$si + 1])) {
+        $to = (string) $argv[$si + 1];
+        $nagradi = mail_senders()['nagradi'] ?? [];
+        if (!$nagradi) { echo "нет отправителя nagradi\n"; exit(1); }
+        $ok = mail_send($to, 'Ваш диплом — «' . $sample['comp_name'] . '» (' . $sample['result'] . ')', $html, [
+            'account' => $nagradi, 'from_name' => 'Наградный отдел «Музыкальный Мир»',
+        ]);
+        echo "ОТПРАВКА на $to: " . ($ok ? 'OK' : 'FAIL') . "\n";
+    }
+    exit(0);
+}
+
 // 1) Убеждаемся что нужные колонки есть (мягкие миграции).
 try { db()->exec("ALTER TABLE diplomas ADD COLUMN scheduled_at TEXT"); } catch (\Throwable $e) {}
 try { db()->exec("ALTER TABLE applications ADD COLUMN send_at_override TEXT"); } catch (\Throwable $e) {}
@@ -99,14 +126,13 @@ foreach ($dueList as $d) {
                   : 'Ваш диплом конкурса «')
              . $d['comp_name'] . '» - № ' . $d['number'];
     $html = _diploma_email_html((array)$d);
-    // mail_send прикладывает ОДИН файл через ключ 'attach' (путь). Диплом — один PDF.
     // Отправитель — наградной ящик nagradi@ (как и задумано для дипломов/наград).
+    // Диплом НЕ прикладываем файлом: письмо богатое (кнопки/промо), а «тяжёлое вложение +
+    // много промо-ссылок» на свежем домене Яндекс режет как спам. Диплом — кнопкой «Скачать
+    // диплом (PDF)» (ссылка на /diploma/<номер>.pdf). Вложение вернём, когда домен прогреется.
     $opt = [];
     $nagradi = function_exists('mail_senders') ? (mail_senders()['nagradi'] ?? []) : [];
     if ($nagradi) $opt['account'] = $nagradi;
-    if (!empty($d['pdf_path']) && is_file((string)$d['pdf_path'])) {
-        $opt['attach'] = (string)$d['pdf_path'];
-    }
     $ok = false;
     if (function_exists('mail_send')) {
         $ok = (bool) mail_send($to, $subject, $html, $opt);
@@ -189,44 +215,46 @@ function _diploma_email_html(array $d): string {
     $name = trim((string)($d['full_name'] ?? ''));
     $num  = (string)($d['number'] ?? '');
     $res  = (string)($d['result'] ?? '');
-    $orderUrl = base_url() . '/order-awards?app=' . (int)$d['application_id'];
+    $isExtra = (string)($d['type'] ?? 'main') === 'extra';
+    $base = rtrim((string) cfgv('base_url', 'https://xn----7sbugdeiegh1b0a9hen.xn--p1ai'), '/');
+    $downloadUrl = $base . '/diploma/' . rawurlencode($num) . '.pdf';
+    $orderUrl    = $base . '/awards';
+    $verifyUrl   = $base . '/verify/' . rawurlencode($num);
+    $reviewUrl   = $base . '/reviews';
     $hello = $name !== '' ? 'Здравствуйте, ' . h($name) . '!' : 'Здравствуйте!';
 
-    $inner = '<h1 style="margin:0 0 18px;font-family:Georgia,\'Times New Roman\',serif;font-size:25px;color:' . MM_NAVY . ';font-weight:700;line-height:1.25;">Диплом конкурса «' . h($comp) . '»</h1>'
-        . '<p style="margin:0 0 14px;">' . $hello . '</p>'
-        . '<p style="margin:0 0 20px;">По итогам аттестации Оргкомитета Вам присуждено звание:</p>'
-        // Крупно результат — золотом на синем градиенте.
-        . '<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin:0 0 20px;border-radius:16px;overflow:hidden;">'
-        . '<tr><td style="background:' . MM_NAVY . ';background:linear-gradient(135deg,' . MM_NAVY . ' 0%,' . MM_NAVY2 . ' 100%);padding:26px 24px;text-align:center;">'
-        . '<div style="font-size:12px;letter-spacing:.2em;text-transform:uppercase;color:rgba(255,255,255,.75);margin-bottom:8px;">Ваше звание</div>'
-        . '<div style="font-family:Georgia,\'Times New Roman\',serif;font-size:26px;line-height:1.25;font-weight:700;color:' . MM_GOLD . ';letter-spacing:.03em;">' . h($res) . '</div>'
-        . '</td></tr></table>'
-        // Карточка диплома.
-        . '<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin:0 0 20px;background:' . MM_CARD . ';border:1px solid ' . MM_LINE . ';border-radius:14px;">'
-        . '<tr><td style="padding:18px 24px;font-size:14px;line-height:1.9;color:#33406B;">'
-        . '<div style="font-weight:600;color:' . MM_NAVY . ';font-size:13px;letter-spacing:.08em;text-transform:uppercase;margin-bottom:8px;">Ваш диплом</div>'
-        . '<div><span style="color:' . MM_MUTED . ';">Номер диплома:</span> <b style="color:' . MM_NAVY . ';">' . h($num) . '</b></div>'
-        . '<div><span style="color:' . MM_MUTED . ';">Формат:</span> PDF, во вложении к этому письму</div>'
-        . '</td></tr></table>'
-        . '<p style="margin:0 0 4px;">Оригинал диплома, кубок, статуэтку, медаль и благодарности педагогам можно заказать почтой в личном кабинете.</p>'
-        . mm_email_btn($orderUrl, 'Заказать наградной материал')
-        . '<p style="margin:16px 0 0;font-size:13px;color:' . MM_MUTED . ';">Культурный центр «Музыкальный Мир» — при информационной поддержке Министерства культуры и образования субъектов РФ.</p>';
+    // Рекомендованный оригинал награды по аттестационному результату.
+    $rU = mb_strtoupper($res);
+    $award = mb_strpos($rU, 'ГРАН') !== false ? 'кубок Гран-при'
+           : (mb_strpos($rU, 'ЛАУРЕАТ') !== false ? 'статуэтку лауреата'
+           : (mb_strpos($rU, 'ДИПЛОМАНТ') !== false ? 'медаль дипломанта' : 'оригинал диплома'));
+    $titleLine = $isExtra ? 'Дополнительный диплом (спецноминация)' : 'Диплом конкурса «' . h($comp) . '»';
+    $awardedLbl = $isExtra ? 'Специальная номинация' : 'Ваше звание';
 
-    // ВАЖНО: диплом — ТРАНЗАКЦИОННОЕ письмо с тяжёлым PDF во вложении. Маркетинговая обёртка
-    // mm_email_layout (отписка/соц-кнопки/«подпишитесь») + вложение → Яндекс режет как СПАМ
-    // (554 5.7.1). Поэтому лёгкий фирменный шаблон: логотип + суть + контакты, без маркетинга.
-    $logo = h(mm_logo_url());
-    return '<!DOCTYPE html><html lang="ru"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"></head>'
-        . '<body style="margin:0;background:#F4F6FC;font-family:\'Segoe UI\',Arial,sans-serif;color:' . MM_INK . ';">'
-        . '<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#F4F6FC;padding:24px 12px;"><tr><td align="center">'
-        . '<table role="presentation" width="600" cellpadding="0" cellspacing="0" style="width:600px;max-width:100%;background:#FFFFFF;border-radius:14px;overflow:hidden;border:1px solid ' . MM_LINE . ';">'
-        . '<tr><td style="background:' . MM_NAVY . ';padding:22px 32px;text-align:center;">'
-        . '<img src="' . $logo . '" alt="" width="60" height="60" style="width:60px;height:60px;border-radius:50%;background:#fff;border:2px solid ' . MM_GOLD . ';">'
-        . '<div style="margin-top:8px;font-family:Georgia,serif;color:' . MM_GOLD . ';font-weight:700;font-size:15px;">Культурный центр «Музыкальный Мир»</div></td></tr>'
-        . '<tr><td style="padding:26px 32px;">' . $inner . '</td></tr>'
-        . '<tr><td style="padding:14px 32px 22px;border-top:1px solid ' . MM_LINE . ';font-size:12px;color:' . MM_MUTED . ';">'
-        . 'Культурный центр «Музыкальный Мир» · ' . h((string) cfgv('org_phone')) . ' · ' . h((string) cfgv('org_email')) . '</td></tr>'
-        . '</table></td></tr></table></body></html>';
+    $inner = '<h1 style="margin:0 0 16px;font-family:Georgia,\'Times New Roman\',serif;font-size:24px;color:' . MM_NAVY . ';font-weight:700;line-height:1.25;">' . $titleLine . '</h1>'
+        . '<p style="margin:0 0 14px;">' . $hello . '</p>'
+        . '<p style="margin:0 0 18px;">По итогам аттестации компетентного жюри ' . ($isExtra ? 'Вам присуждена специальная номинация:' : 'Вам присуждено звание:') . '</p>'
+        . '<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin:0 0 20px;border-radius:16px;overflow:hidden;"><tr>'
+        . '<td style="background:' . MM_NAVY . ';background:linear-gradient(135deg,' . MM_NAVY . ' 0%,' . MM_NAVY2 . ' 100%);padding:24px;text-align:center;">'
+        . '<div style="font-size:12px;letter-spacing:.2em;text-transform:uppercase;color:rgba(255,255,255,.72);margin-bottom:8px;">' . $awardedLbl . '</div>'
+        . '<div style="font-family:Georgia,serif;font-size:26px;font-weight:700;color:' . MM_GOLD . ';letter-spacing:.03em;">' . h($res) . '</div></td></tr></table>'
+        . '<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin:0 0 18px;background:' . MM_CARD . ';border:1px solid ' . MM_LINE . ';border-radius:12px;"><tr>'
+        . '<td style="padding:14px 20px;font-size:14px;color:#33406B;"><span style="color:' . MM_MUTED . ';">Номер диплома:</span> <b style="color:' . MM_NAVY . ';">' . h($num) . '</b>'
+        . ' · проверка подлинности по QR и на сайте.</td></tr></table>'
+        . '<p style="margin:0 0 6px;font-weight:600;color:' . MM_NAVY . ';">Оригиналы наград — Почтой России:</p>'
+        . '<p style="margin:0 0 14px;font-size:14px;color:' . MM_INK . ';line-height:1.6;">По Вашему результату доступны к заказу: <b>' . $award . '</b>, а также благодарность педагогу за подготовку. '
+        . 'Оригиналы — на плотной дизайнерской бумаге, с голографическими логотипами, живыми подписями и печатями.</p>';
+
+    return mm_email_tx($inner, [
+        'preheader' => 'Ваш диплом готов' . ($res !== '' ? ' — «' . $res . '»' : '') . '. Скачайте и закажите наградной материал.',
+        'hero'      => mm_cta_primary($orderUrl, 'Заказать наградной материал', 'По результату: ' . $award),
+        'actions'   => [
+            ['Скачать диплом (PDF)', $downloadUrl],
+            ['Проверить подлинность', $verifyUrl],
+            ['Оставить отзыв', $reviewUrl],
+        ],
+        'thanks'    => true,
+    ]);
 }
 
 /** Отправка оригинала (без подписи/печати) + заявки + адреса в бот заказа (t.me/zakaznagrad) через нашего бота. */

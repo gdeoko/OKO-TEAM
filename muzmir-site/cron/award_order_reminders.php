@@ -126,10 +126,15 @@ function award_reminder_html(array $a, int $daysLeft, string $awardsUrl): string
         . '<b style="color:' . $navy . ';">' . AWARD_ORDER_WINDOW_DAYS . ' дней</b> после публикации результата — '
         . 'осталось <b style="color:' . $navy . ';">' . h(award_ru_days($daysLeft)) . '</b>, до ' . h($deadline) . '.</div>'
         . '</td></tr></table>'
-        . rm_mail_btn($awardsUrl, 'Заказать награды')
+        . '<p style="margin:6px 0 0;font-weight:600;color:' . $navy . ';">Оригиналы наград — Почтой России:</p>'
+        . '<p style="margin:6px 0 0;font-size:14px;color:' . RM_INK . ';line-height:1.6;">На плотной дизайнерской бумаге, с голографическими логотипами, живыми подписями и печатями. Доступна и благодарность педагогу за подготовку.</p>'
         . '<p style="margin:14px 0 0;font-size:13px;color:' . $muted . ';">Если наградная продукция Вам не нужна, просто оставьте это письмо без ответа.</p>';
 
-    return rm_mail_layout($inner, 'Заказ наград по результату «' . $result . '» доступен ещё ' . award_ru_days($daysLeft) . '.');
+    return mm_email_tx($inner, [
+        'preheader' => 'Заказ наград по результату «' . $result . '» доступен ещё ' . award_ru_days($daysLeft) . '.',
+        'hero'      => mm_cta_primary($awardsUrl, 'Заказать наградной материал', $result !== '' ? 'По результату: ' . $result : ''),
+        'actions'   => [['Личный кабинет', url('/cabinet')], ['Оставить отзыв', url('/reviews')]],
+    ]);
 }
 
 try {

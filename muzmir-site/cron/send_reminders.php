@@ -93,7 +93,10 @@ try {
             'number'           => (string) ($a['number'] ?? ''),
             'cabinet_url'      => url('/cabinet'),
             'preheader'        => 'Оплата участия пока не поступила',
-            'unsubscribe_url'  => reminder_unsub_url_email((string) $a['email']),
+            '_tx'              => [
+                'hero'    => mm_cta_primary(url('/cabinet'), 'Оплатить участие', ($a['number'] ?? '') !== '' ? 'Заявка №' . (string) $a['number'] . ' ждёт оплаты' : 'Заявка ждёт оплаты'),
+                'actions' => [['Личный кабинет', url('/cabinet')], ['Другие конкурсы', url('/competitions')]],
+            ],
         ]) : '';
 
         if ($html !== '' && reminder_enqueue((string) $a['email'], $name, 'Оплатите участие - «' . $a['comp_name'] . '»', $html)) {
@@ -131,13 +134,17 @@ try {
             continue;
         }
 
+        $awardOrderUrl = url('/awards') . '?app=' . $id;
         $html = function_exists('mail_template') ? mail_template('reminder_award', [
             'name'            => trim((string) $a['full_name']),
             'competition'     => (string) $a['comp_name'],
             'result'          => (string) $a['result'],
-            'order_url'       => url('/awards/order?application=' . $id),
+            'order_url'       => $awardOrderUrl,
             'preheader'       => 'Оформите памятную награду',
-            'unsubscribe_url' => reminder_unsub_url_email((string) $a['email']),
+            '_tx'             => [
+                'hero'    => mm_cta_primary($awardOrderUrl, 'Заказать наградной материал', (string) $a['result'] !== '' ? 'По результату: ' . (string) $a['result'] : ''),
+                'actions' => [['Личный кабинет', url('/cabinet')], ['Оставить отзыв', url('/reviews')]],
+            ],
         ]) : '';
 
         if ($html !== '' && reminder_enqueue((string) $a['email'], (string) $a['full_name'], 'Оформите награду - «' . $a['comp_name'] . '»', $html)) {

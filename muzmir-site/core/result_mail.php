@@ -101,15 +101,28 @@ function application_mail_send(int $appId): bool {
         . '«' . h((string) ($c['name'] ?? '')) . '» зарегистрирована и передана оргкомитету. '
         . 'О результатах мы сообщим письмом на этот адрес.</p>'
         . rm_mail_app_card($a, $c)
-        . '<p style="margin:0 0 4px;color:' . $muted . ';font-size:14px;">Статус заявки, оплата и дипломы — в Вашем личном кабинете.</p>'
-        . rm_mail_btn(url('/cabinet'), 'Личный кабинет');
+        . '<p style="margin:0 0 4px;color:' . $muted . ';font-size:14px;">Статус заявки, оплата и дипломы — в Вашем личном кабинете. '
+        . 'Вы можете принять участие и в других конкурсах центра — заявки объединяются в одну оплату.</p>';
 
-    $subject = 'Заявка №' . $num . ' принята — Культурного центра «Музыкальный Мир»';
-    $html = rm_mail_layout($inner, 'Заявка №' . $num . ' зарегистрирована. Детали и статус — в личном кабинете.');
+    $subject = 'Заявка №' . $num . ' принята — Культурный центр «Музыкальный Мир»';
+    $html = mm_email_tx($inner, [
+        'preheader' => 'Заявка №' . $num . ' зарегистрирована. Детали и статус — в личном кабинете.',
+        'hero'      => mm_cta_primary(url('/cabinet'), 'Открыть личный кабинет', 'Статус заявки · оплата · дипломы'),
+        'actions'   => [['Другие конкурсы', url('/competitions')], ['Оставить отзыв', url('/reviews')]],
+    ]);
     return mail_queue((string) $a['email'], $name, $subject, $html) > 0;
 }
 
 /* ========================= Письмо с результатом =========================== */
+
+/** Короткое название рекомендованного оригинала награды по результату. */
+function rm_award_name(string $result): string {
+    $r = mb_strtoupper($result);
+    if (str_contains($r, 'ГРАН-ПРИ'))  return 'кубок Гран-при';
+    if (str_contains($r, 'ЛАУРЕАТ'))   return 'статуэтка лауреата';
+    if (str_contains($r, 'ДИПЛОМАНТ')) return 'медаль дипломанта';
+    return 'наградные материалы';
+}
 
 /** Подсказка по наградам в зависимости от результата (для платных конкурсов). */
 function rm_award_hint(string $result): string {
@@ -144,7 +157,7 @@ function result_mail_send(int $appId): bool {
 
     $inner = '<p style="margin:0 0 14px;">' . $hello . '</p>'
         . '<p style="margin:0 0 20px;">Жюри подвело итоги конкурса «' . h((string) ($c['name'] ?? '')) . '». '
-        . 'Благодарим Вас за участие — и с радостью объявляем результат.</p>';
+        . 'С радостью объявляем Ваш результат.</p>';
 
     // Крупно результат — золотом на синем градиенте.
     $scoreLine = ($a['score'] !== null && $a['score'] !== '')
@@ -182,33 +195,36 @@ function result_mail_send(int $appId): bool {
     // Карточка данных заявки.
     $inner .= rm_mail_app_card($a, $c);
 
+    $reviewsUrl = url('/reviews');
+    $cabinetUrl = url('/cabinet');
     if ($isPaid) {
         // Платный конкурс: сроки наградных дипломов + блок заказа оригиналов наград.
         $awardsUrl = url('/awards') . '?comp=' . (int) $a['competition_id'] . '&app=' . $appId;
-        $inner .= '<p style="margin:0 0 20px;">Наградные дипломы придут на эту почту в течение '
+        $inner .= '<p style="margin:0 0 14px;">Наградные дипломы придут на эту почту в течение '
             . '<b style="color:' . $navy . ';">5 рабочих дней</b> и появятся в личном кабинете.</p>'
-            . '<table role="presentation" width="100%" cellpadding="0" cellspacing="0" '
-            . 'style="margin:0 0 8px;background:' . $card . ';border:1px solid ' . $line . ';border-radius:16px;">'
-            . '<tr><td style="padding:24px 26px;text-align:center;">'
-            . '<div style="font-family:Georgia,\'Times New Roman\',serif;font-size:19px;font-weight:700;color:' . $navy . ';margin-bottom:8px;">Закажите оригиналы наград</div>'
-            . '<div style="font-size:14px;line-height:1.65;color:' . $muted . ';">' . h(rm_award_hint($result))
-            . ' Награда с Вашим именем — памятное подтверждение успеха для дома, сцены и портфолио.</div>'
-            . '<table role="presentation" cellpadding="0" cellspacing="0" align="center" style="margin:18px auto 2px;">'
-            . '<tr><td style="border-radius:12px;background:' . $gold . ';background:linear-gradient(135deg,' . $gold . ',' . RM_GOLD_LIGHT . ');">'
-            . '<a href="' . h($awardsUrl) . '" style="display:inline-block;padding:14px 36px;color:' . $navy . ';text-decoration:none;font-weight:700;font-size:15px;border-radius:12px;">Заказать награды</a>'
-            . '</td></tr></table>'
-            . '</td></tr></table>';
+            . '<p style="margin:0 0 6px;font-weight:600;color:' . $navy . ';">Оригиналы наград — Почтой России:</p>'
+            . '<p style="margin:0 0 8px;font-size:14px;color:' . RM_INK . ';line-height:1.65;">' . h(rm_award_hint($result))
+            . ' Также доступна благодарность педагогу за подготовку. Оригиналы — на плотной дизайнерской бумаге, '
+            . 'с голографическими логотипами, живыми подписями и печатями. Награда с Вашим именем — памятное подтверждение успеха для дома, сцены и портфолио.</p>';
+        $hero = mm_cta_primary($awardsUrl, 'Заказать наградной материал', 'По результату: ' . rm_award_name($result));
+        $actions = [['Личный кабинет', $cabinetUrl], ['Оставить отзыв', $reviewsUrl]];
     } else {
         // Бесплатный конкурс: страница результатов.
         $resultsUrl = url('/results/' . (string) ($c['slug'] ?? ''));
-        $inner .= '<p style="margin:0 0 4px;color:' . $muted . ';font-size:14px;">Полный протокол конкурса — на странице результатов.</p>'
-            . rm_mail_btn($resultsUrl, 'Посмотреть результаты');
+        $inner .= '<p style="margin:0 0 4px;color:' . $muted . ';font-size:14px;">Полный протокол конкурса — на странице результатов.</p>';
+        $hero = mm_cta_primary($resultsUrl, 'Посмотреть результаты конкурса', 'Протокол и звания участников');
+        $actions = [['Личный кабинет', $cabinetUrl], ['Оставить отзыв', $reviewsUrl]];
     }
 
     $subject = 'Ваш результат — ' . $result;
     $pre  = 'Итоги конкурса «' . (string) ($c['name'] ?? '') . '»: ' . $result
         . ($extra !== '' ? ' + ' . $extra : '') . '.';
-    $html = rm_mail_layout($inner, $pre);
+    $html = mm_email_tx($inner, [
+        'preheader' => $pre,
+        'hero'      => $hero,
+        'actions'   => $actions,
+        'thanks'    => true,
+    ]);
 
     $queued = false;
     if (trim((string) $a['email']) !== '') {

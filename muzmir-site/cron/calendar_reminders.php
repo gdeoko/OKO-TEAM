@@ -149,14 +149,18 @@ try {
                 ? calrem_unsub_url_token((string) $s['unsub_token'])
                 : calrem_unsub_url_email($email);
 
+            $compUrl = url('/competition/' . $comp['slug']);
             $html = function_exists('mail_template') ? mail_template('calendar_reminder', [
                 'name'            => $name,
                 'competition'     => (string) $comp['name'],
                 'start_date'      => function_exists('ru_date') ? ru_date($start) : $start,
                 'countdown'       => $countdown,
-                'comp_url'        => url('/competition/' . $comp['slug']),
+                'comp_url'        => $compUrl,
                 'preheader'       => 'Конкурс «' . $comp['name'] . '» ' . $countdown,
-                'unsubscribe_url' => $unsub,
+                '_tx'             => [
+                    'hero'    => mm_cta_primary($compUrl, 'Открыть страницу конкурса', 'Приём заявок ' . $countdown),
+                    'actions' => [['Все конкурсы', url('/competitions')], ['Календарь', url('/calendar')]],
+                ],
             ]) : '';
 
             $subject = 'Напоминание: конкурс «' . $comp['name'] . '» ' . $countdown;

@@ -156,8 +156,15 @@ function payment_apply_status(string $paymentId, string $status, array $obj = []
 
     // Письмо об успешной оплате (в очередь — воркер разошлёт).
     if ($email !== '' && function_exists('mail_queue')) {
+        $baseCab = rtrim((string) cfgv('base_url'), '/');
         $html = function_exists('mail_template')
-            ? mail_template('payment_success', ['name' => $name, 'full_name' => $name, 'amount' => $amount, 'payment_id' => $paymentId, 'cabinet_url' => rtrim((string) cfgv('base_url'), '/') . '/cabinet'])
+            ? mail_template('payment_success', ['name' => $name, 'full_name' => $name, 'amount' => $amount, 'payment_id' => $paymentId, 'cabinet_url' => $baseCab . '/cabinet',
+                '_tx' => [
+                    'preheader' => 'Оплата участия получена. Работа передана жюри.',
+                    'hero'      => mm_cta_primary($baseCab . '/cabinet', 'Перейти в личный кабинет', 'Оплата подтверждена'),
+                    'actions'   => [['Другие конкурсы', $baseCab . '/competitions'], ['Оставить отзыв', $baseCab . '/reviews']],
+                    'thanks'    => true,
+                ]])
             : '<p>Здравствуйте' . ($name ? ', ' . h($name) : '') . '!</p><p>Оплата успешно получена. Благодарим Вас!</p>';
         mail_queue($email, $name, 'Оплата получена — Культурного центра «Музыкальный Мир»', $html);
     }

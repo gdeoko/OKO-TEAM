@@ -23,10 +23,4 @@ $hello = $name !== '' ? 'Здравствуйте, ' . h($name) . '!' : 'Здр�
 
 <p style="margin:0 0 6px;">Загляните на страницу конкурса - там условия участия, номинации и сроки. Мы подготовили всё, чтобы Вы ничего не упустили.</p>
 
-<table role="presentation" cellpadding="0" cellspacing="0" style="margin:24px 0 6px;">
-  <tr><td style="border-radius:12px;background:#C79322;background:linear-gradient(135deg,#C79322,#E3B94F);">
-    <a href="<?= h($comp) ?>" style="display:inline-block;padding:14px 34px;color:#17307A;text-decoration:none;font-weight:700;font-size:15px;border-radius:12px;">Открыть страницу конкурса</a>
-  </td></tr>
-</table>
-
 <p style="margin:18px 0 0;font-size:13px;color:#6B7699;">Это единичное напоминание - повторных писем по этому конкурсу не будет.</p>

@@ -21,9 +21,3 @@ $hello = $name !== '' ? 'Здравствуйте, ' . h($name) . '!' : 'Здр�
 </table>
 
 <p style="margin:0 0 6px;">Работа передана жюри. Результаты и диплом придут на этот адрес, а также появятся в личном кабинете.</p>
-
-<table role="presentation" cellpadding="0" cellspacing="0" style="margin:24px 0 6px;">
-  <tr><td style="border-radius:12px;background:#C79322;background:linear-gradient(135deg,#C79322,#E3B94F);">
-    <a href="<?= h($cabinet) ?>" style="display:inline-block;padding:14px 34px;color:#17307A;text-decoration:none;font-weight:700;font-size:15px;border-radius:12px;">Перейти в личный кабинет</a>
-  </td></tr>
-</table>

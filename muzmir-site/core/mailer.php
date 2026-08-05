@@ -141,6 +141,96 @@ function mm_email_layout(string $inner, array $opt = []): string {
 HTML;
 }
 
+/**
+ * Крупная выделенная ПЕРВИЧНАЯ кнопка-CTA (ставится вверху письма — главное действие).
+ * $variant: 'gold' | 'navy'.
+ */
+function mm_cta_primary(string $href, string $label, string $sub = '', string $variant = 'gold'): string {
+    $bg = $variant === 'navy'
+        ? 'background:' . MM_NAVY . ';background:linear-gradient(135deg,' . MM_NAVY . ',' . MM_NAVY2 . ');'
+        : 'background:' . MM_GOLD . ';background:linear-gradient(135deg,' . MM_GOLD . ',' . MM_GOLD2 . ');';
+    $color = $variant === 'navy' ? MM_GOLD2 : MM_NAVY;
+    $s = '<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin:0 0 22px;"><tr>'
+        . '<td style="border-radius:14px;' . $bg . 'padding:18px 22px;text-align:center;">';
+    if ($sub !== '') $s .= '<div style="font-size:12px;letter-spacing:.06em;text-transform:uppercase;color:' . ($variant === 'navy' ? 'rgba(255,233,168,.85)' : 'rgba(23,48,122,.75)') . ';margin-bottom:8px;font-weight:700;">' . h($sub) . '</div>';
+    $s .= '<a href="' . h($href) . '" style="display:inline-block;padding:13px 34px;border-radius:11px;background:' . ($variant === 'navy' ? MM_GOLD : MM_NAVY) . ';color:' . ($variant === 'navy' ? MM_NAVY : MM_GOLD2) . ';text-decoration:none;font-weight:700;font-size:16px;">' . h($label) . '</a>'
+        . '</td></tr></table>';
+    return $s;
+}
+
+/** Ряд вторичных кнопок-ссылок. $buttons = [[label,url,emoji?], ...]. */
+function mm_actions_row(array $buttons): string {
+    $cells = '';
+    foreach ($buttons as $b) {
+        $label = (string) ($b[0] ?? ''); $url = (string) ($b[1] ?? '');
+        if ($label === '' || $url === '') continue;
+        $cells .= '<td style="padding:5px;"><a href="' . h($url) . '" style="display:block;text-align:center;padding:11px 10px;border:1.5px solid ' . MM_LINE . ';border-radius:11px;color:' . MM_NAVY . ';text-decoration:none;font-weight:700;font-size:13px;background:' . MM_CARD . ';">' . h($label) . '</a></td>';
+    }
+    if ($cells === '') return '';
+    return '<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin:6px 0 14px;"><tr>' . $cells . '</tr></table>';
+}
+
+/** Промо-блок: ВИП-клуб + другие конкурсы (кнопки). */
+function mm_promo_block(): string {
+    $base = rtrim((string) cfgv('base_url', 'https://xn----7sbugdeiegh1b0a9hen.xn--p1ai'), '/');
+    return '<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin:6px 0 8px;"><tr>'
+        . '<td width="50%" style="padding:5px;"><a href="' . h($base . '/club') . '" style="display:block;text-align:center;padding:14px 10px;border-radius:12px;background:' . MM_GOLD . ';background:linear-gradient(135deg,' . MM_GOLD . ',' . MM_GOLD2 . ');color:' . MM_NAVY . ';text-decoration:none;font-weight:700;font-size:14px;">Вступить в ВИП-клуб</a></td>'
+        . '<td width="50%" style="padding:5px;"><a href="' . h($base . '/competitions') . '" style="display:block;text-align:center;padding:14px 10px;border-radius:12px;background:' . MM_NAVY . ';background:linear-gradient(135deg,' . MM_NAVY . ',' . MM_NAVY2 . ');color:' . MM_GOLD2 . ';text-decoration:none;font-weight:700;font-size:14px;">Другие конкурсы центра</a></td>'
+        . '</tr></table>';
+}
+
+/**
+ * Богатый ТРАНЗАКЦИОННЫЙ лейаут письма (результаты, дипломы, заказы, дожимы):
+ * логотип, выделенная первичная CTA вверху, контент, ряд вторичных кнопок,
+ * промо (ВИП/другие конкурсы), соцканалы (ВК/MAX) и контакты. БЕЗ «отписаться»
+ * (это транзакционные письма — булк-подпись провоцирует спам-фильтр Яндекса).
+ * $opt: preheader, hero (HTML первичной CTA, напр. mm_cta_primary(...)),
+ *       actions ([[label,url],...]), promo(bool, по умолч. true), social(bool, по умолч. true),
+ *       thanks(bool — добавить «Благодарим за участие»).
+ */
+function mm_email_tx(string $inner, array $opt = []): string {
+    $navy = MM_NAVY; $navy2 = MM_NAVY2; $gold = MM_GOLD; $ink = MM_INK; $muted = MM_MUTED; $line = MM_LINE;
+    $logo  = h(mm_logo_url());
+    $org   = 'Культурный центр «Музыкальный Мир»';
+    $phone = h((string) cfgv('org_phone', '+7 (999) 504-88-99'));
+    $email = h((string) cfgv('org_email', ''));
+    $addr  = h((string) cfgv('org_address', ''));
+    $year  = (int) cfgv('year', (int) date('Y'));
+    $pre   = h((string) ($opt['preheader'] ?? ''));
+    $hero  = (string) ($opt['hero'] ?? '');
+    $actions = mm_actions_row((array) ($opt['actions'] ?? []));
+    $promo = (($opt['promo'] ?? true)) ? mm_promo_block() : '';
+    $thanks = !empty($opt['thanks']) ? '<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin:16px 0 0;background:' . MM_CARD . ';border:1px solid ' . $line . ';border-radius:12px;"><tr><td style="width:4px;background:' . $gold . ';border-radius:12px 0 0 12px;"></td><td style="padding:14px 20px;font-size:14px;color:' . $ink . ';line-height:1.6;">Благодарим Вас за участие. Желаем новых творческих побед — и ждём Вас на конкурсах центра!</td></tr></table>' : '';
+
+    $vkUrl  = h((string) cfgv('org_vk', 'https://vk.com/music_world.online'));
+    $maxUrl = h((string) cfgv('org_max', 'https://max.ru/join/v4SJluLzTAMWm4r5ldJ-JyA2rS5InmPYjaP6drn3F8I'));
+    $social = (($opt['social'] ?? true)) ? ('<div style="margin-top:16px;padding-top:14px;border-top:1px solid ' . $line . ';">'
+        . '<div style="font-size:12px;color:' . $muted . ';margin-bottom:8px;">Мы в соцсетях — анонсы конкурсов, результаты, полезное:</div>'
+        . '<a href="' . $vkUrl . '" style="display:inline-block;margin:0 8px 6px 0;padding:9px 18px;background:' . $navy . ';color:#fff;text-decoration:none;border-radius:9px;font-size:13px;font-weight:700;">ВКонтакте</a>'
+        . '<a href="' . $maxUrl . '" style="display:inline-block;margin:0 8px 6px 0;padding:9px 18px;background:' . $gold . ';color:' . $navy . ';text-decoration:none;border-radius:9px;font-size:13px;font-weight:700;">Канал в MAX</a>'
+        . '</div>') : '';
+
+    return '<!DOCTYPE html><html lang="ru"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="x-apple-disable-message-reformatting"></head>'
+        . '<body style="margin:0;padding:0;background:#EEF1F8;font-family:\'Segoe UI\',Arial,Helvetica,sans-serif;color:' . $ink . ';">'
+        . '<div style="display:none;max-height:0;overflow:hidden;opacity:0;">' . $pre . '</div>'
+        . '<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#EEF1F8;padding:26px 12px;"><tr><td align="center">'
+        . '<table role="presentation" width="600" cellpadding="0" cellspacing="0" style="width:600px;max-width:100%;background:#FFFFFF;border-radius:16px;overflow:hidden;box-shadow:0 10px 34px rgba(23,48,122,.14);">'
+        . '<tr><td style="background:' . $navy . ';background:linear-gradient(135deg,' . $navy . ' 0%,' . $navy2 . ' 100%);padding:26px 32px;text-align:center;">'
+        . '<img src="' . $logo . '" alt="" width="76" height="76" style="width:76px;height:76px;border-radius:50%;background:#fff;border:2px solid ' . $gold . ';">'
+        . '<div style="margin-top:10px;font-family:Georgia,serif;color:' . $gold . ';font-weight:700;font-size:17px;line-height:1.3;">Культурный центр<br>«Музыкальный Мир»</div>'
+        . '<div style="margin-top:6px;font-size:11px;letter-spacing:.16em;text-transform:uppercase;color:rgba(255,255,255,.72);">Конкурсы · Фестивали · Награды</div></td></tr>'
+        . '<tr><td style="padding:30px 32px 22px;font-size:15px;line-height:1.7;">' . $hero . $inner . $thanks . '</td></tr>'
+        . ($actions !== '' ? '<tr><td style="padding:0 28px 6px;">' . $actions . '</td></tr>' : '')
+        . ($promo !== '' ? '<tr><td style="padding:0 28px 8px;">' . $promo . '</td></tr>' : '')
+        . '<tr><td style="padding:16px 32px 26px;border-top:1px solid ' . $line . ';font-size:13px;color:' . $muted . ';line-height:1.6;">'
+        . '<div style="font-family:Georgia,serif;font-weight:700;color:' . $navy . ';font-size:14px;margin-bottom:6px;">' . $org . '</div>'
+        . ($addr !== '' ? '<div>' . $addr . '</div>' : '')
+        . '<div>Телефон: ' . $phone . ($email !== '' ? ' · Почта: ' . $email : '') . '</div>'
+        . $social
+        . '<div style="margin-top:12px;font-size:12px;color:#A9B2CC;">© ' . $year . ' ' . $org . '</div>'
+        . '</td></tr></table></td></tr></table></body></html>';
+}
+
 /** Тихий лог почты в data/logs/mail.log. */
 function mail_log(string $msg): void {
     $line = '[' . date('Y-m-d H:i:s') . '] ' . $msg . "\n";
@@ -411,6 +501,14 @@ function mail_template(string $name, array $vars = []): string {
     } else {
         mail_log('TEMPLATE MISSING: ' . $name);
         $inner = '<p style="margin:0">' . h((string)($vars['message'] ?? '')) . '</p>';
+    }
+
+    // Богатый транзакционный лейаут (hero + вторичные кнопки + промо + соцсети),
+    // если вызывающий передал $vars['_tx'] (участнику-адресованные письма).
+    if (isset($vars['_tx']) && is_array($vars['_tx'])) {
+        $tx = $vars['_tx'];
+        if (!isset($tx['preheader'])) $tx['preheader'] = (string) ($vars['preheader'] ?? '');
+        return mm_email_tx($inner, $tx);
     }
 
     return mm_email_layout($inner, [
