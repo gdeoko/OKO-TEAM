@@ -62,6 +62,47 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         admin_redirect('users', ['tab'=>'users']);
     }
 
+    if ($do === 'edit_user') {
+        $uid = (int) input('uid');
+        $target = one("SELECT * FROM users WHERE id=?", [$uid]);
+        $me = (int) (current_user()['id'] ?? 0);
+        if (!$target) { flash('Пользователь не найден.', 'error'); admin_redirect('users', ['tab'=>'users']); }
+        $email = mb_strtolower(input('email'));
+        if ($email === '' || !filter_var($email, FILTER_VALIDATE_EMAIL)) {
+            flash('Некорректный email.', 'error'); admin_redirect('users', ['tab'=>'users']);
+        }
+        // email должен быть уникален среди других аккаунтов
+        $dupe = one("SELECT id FROM users WHERE lower(email)=? AND id<>?", [$email, $uid]);
+        if ($dupe) { flash('Этот email уже занят другим аккаунтом.', 'error'); admin_redirect('users', ['tab'=>'users']); }
+
+        $data = [
+            'full_name' => input('full_name'),
+            'email'     => $email,
+            'phone'     => input('phone'),
+            'nickname'  => input('nickname'),
+            'category'  => input('category'),
+        ];
+
+        // Роль: владельца понижать нельзя; свою роль менять нельзя (защита от само-понижения).
+        $role = input('role');
+        if (isset(ROLE_RANK[$role]) && $role !== $target['role']) {
+            if ($target['role'] === 'owner') {
+                flash('Роль владельца изменить нельзя — остальные поля сохранены.', 'warning');
+            } elseif ($uid === $me) {
+                flash('Свою роль изменить нельзя — остальные поля сохранены.', 'warning');
+            } elseif ($role === 'owner') {
+                flash('Назначить роль «Владелец» нельзя — остальные поля сохранены.', 'warning');
+            } else {
+                $data['role'] = $role;
+            }
+        }
+
+        update('users', $data, 'id=:wid', ['wid'=>$uid]);
+        audit('user_edit', 'user', $uid, ['fields'=>array_keys($data)]);
+        flash('Профиль участника обновлён.', 'success');
+        admin_redirect('users', ['tab'=>'users']);
+    }
+
     if ($do === 'import_subs' && isset($_FILES['csv']) && is_uploaded_file($_FILES['csv']['tmp_name'])) {
         $fh = fopen($_FILES['csv']['tmp_name'], 'r');
         $n = 0; $head = null;
@@ -112,6 +153,39 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         }
         audit('subscribers_merge', 'subscriber', null, ['removed'=>$removed]);
         flash($removed ? "Удалено дублей: $removed." : 'Дубли не найдены.', $removed ? 'success' : 'info');
+        admin_redirect('users', ['tab'=>'subs']);
+    }
+
+    if ($do === 'sub_delete') {
+        $sid = (int) input('sid');
+        if ($sid && one("SELECT id FROM subscribers WHERE id=?", [$sid])) {
+            q("DELETE FROM subscribers WHERE id=?", [$sid]);
+            audit('subscriber_delete', 'subscriber', $sid);
+            flash('Подписчик удалён.', 'success');
+        } else flash('Подписчик не найден.', 'warning');
+        admin_redirect('users', ['tab'=>'subs']);
+    }
+
+    if ($do === 'sub_toggle') {
+        $sid = (int) input('sid');
+        $cur = one("SELECT active FROM subscribers WHERE id=?", [$sid]);
+        if ($cur !== null) {
+            $na = (int)$cur['active'] === 1 ? 0 : 1;
+            update('subscribers', ['active'=>$na], 'id=:wid', ['wid'=>$sid]);
+            audit($na ? 'subscriber_enable' : 'subscriber_disable', 'subscriber', $sid);
+            flash($na ? 'Подписчик включён.' : 'Подписчик отключён.', 'success');
+        } else flash('Подписчик не найден.', 'warning');
+        admin_redirect('users', ['tab'=>'subs']);
+    }
+
+    if ($do === 'sub_edit') {
+        $sid = (int) input('sid');
+        if ($sid && one("SELECT id FROM subscribers WHERE id=?", [$sid])) {
+            $tags = implode(', ', array_filter(array_map('trim', explode(',', input('tags')))));
+            update('subscribers', ['name'=>input('name'), 'tags'=>$tags], 'id=:wid', ['wid'=>$sid]);
+            audit('subscriber_edit', 'subscriber', $sid, ['name'=>input('name')]);
+            flash('Данные подписчика обновлены.', 'success');
+        } else flash('Подписчик не найден.', 'warning');
         admin_redirect('users', ['tab'=>'subs']);
     }
 }
@@ -166,6 +240,30 @@ ob_start(); ?>
 .u-audit-meta pre{margin:6px 0 0;background:var(--a-parchment);border:1px solid var(--a-line);border-radius:8px;
   padding:9px 11px;font-size:.76rem;white-space:pre-wrap;word-break:break-word;color:var(--a-ink)}
 @media (max-width:820px){.u-stats{grid-template-columns:1fr}}
+/* ===== Инлайн-редактирование / профиль ===== */
+.u-detailrow>td{padding:0!important;border-top:none!important;background:transparent}
+.u-tools{display:flex;flex-wrap:wrap;gap:8px;padding:2px 0 12px}
+details.u-d{display:inline-block}
+details.u-d>summary{list-style:none;cursor:pointer;user-select:none}
+details.u-d>summary::-webkit-details-marker{display:none}
+details.u-d>summary::marker{content:""}
+details.u-d[open]>summary{border-color:var(--a-gold)}
+.u-panel{margin:8px 0 4px;padding:15px;border:1px solid var(--a-line);border-radius:12px;background:#fff;max-width:680px;box-shadow:0 6px 20px rgba(20,16,4,.06)}
+.u-panel .field{margin:0}
+.u-panel label{display:block;font-size:.68rem;font-weight:800;color:var(--a-muted);text-transform:uppercase;letter-spacing:.05em;margin-bottom:5px}
+.u-panel input,.u-panel select{width:100%;padding:9px 12px;border:1.5px solid var(--a-line);border-radius:9px;font:inherit;background:#fff;color:var(--a-ink)}
+.u-panel input:disabled{background:var(--a-parchment);color:var(--a-muted)}
+.u-form-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:14px}
+@media(max-width:640px){.u-form-grid{grid-template-columns:1fr}}
+.u-profile-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:10px;margin-bottom:14px}
+.u-pm{background:var(--a-parchment);border:1px solid var(--a-line);border-radius:10px;padding:10px 12px}
+.u-pm .k{font-size:.66rem;text-transform:uppercase;letter-spacing:.05em;color:var(--a-muted);font-weight:800}
+.u-pm .v{font-weight:700;color:var(--a-ink);margin-top:3px;font-size:.95rem}
+.u-logins{display:flex;flex-wrap:wrap;gap:6px}
+.u-applist{margin:0;padding:0;list-style:none;display:flex;flex-direction:column;gap:6px}
+.u-applist li{display:flex;align-items:center;gap:9px;flex-wrap:wrap;font-size:.86rem;padding:7px 10px;border:1px solid var(--a-line);border-radius:9px;background:#fff}
+.u-applist li .num{font-family:var(--ff-head,inherit);font-weight:700;color:var(--a-navy-2)}
+details.u-d>summary svg{width:15px;height:15px;vertical-align:-2px;margin-right:4px}
 </style>
 
 <div class="section-title"><h2>Пользователи и подписчики</h2></div>
@@ -197,7 +295,11 @@ ob_start(); ?>
   $where = $w ? 'WHERE ' . implode(' AND ', $w) : '';
   $users = all("SELECT * FROM users $where ORDER BY (role='owner') DESC, id DESC LIMIT 300", $ua);
   $roles = array_keys(ROLE_RANK);
-  $meId  = (int)(current_user()['id'] ?? 0); ?>
+  $meId  = (int)(current_user()['id'] ?? 0);
+  // Кол-во заявок по пользователям (одним запросом, для карточки профиля).
+  $appCounts = [];
+  foreach (all("SELECT user_id, COUNT(*) c FROM applications WHERE user_id IS NOT NULL GROUP BY user_id") as $ac)
+      $appCounts[(int)$ac['user_id']] = (int)$ac['c']; ?>
   <form method="get" class="filters"><input type="hidden" name="p" value="users"><input type="hidden" name="tab" value="users">
     <div class="field"><label>Поиск</label><input name="q" value="<?= h($qs) ?>" placeholder="email, имя или телефон"></div>
     <div class="field"><label>Роль</label><select name="role"><option value="">Все роли</option>
@@ -247,6 +349,81 @@ ob_start(); ?>
             <?php else: ?><span class="small muted">—</span><?php endif; ?>
           </td>
         </tr>
+        <?php
+          // Способы входа
+          $logins = [];
+          if (trim((string)($u['password_hash'] ?? '')) !== '') $logins[] = 'Email/пароль';
+          if (trim((string)($u['google_id'] ?? '')) !== '')     $logins[] = 'Google';
+          if (trim((string)($u['tg_id'] ?? '')) !== '')         $logins[] = 'Telegram';
+          if (trim((string)($u['vk_id'] ?? '')) !== '')         $logins[] = 'VK';
+          if (trim((string)($u['max_id'] ?? '')) !== '')        $logins[] = 'MAX';
+          $uApps = (int)($appCounts[(int)$u['id']] ?? 0);
+          $uAppRows = $uApps ? all("SELECT id, number, status, created_at FROM applications WHERE user_id=? ORDER BY id DESC LIMIT 10", [$u['id']]) : [];
+          $roleLocked = ($u['role'] === 'owner') || ((int)$u['id'] === $meId);
+        ?>
+        <tr class="u-detailrow"><td colspan="7">
+          <div class="u-tools">
+            <details class="u-d">
+              <summary class="btn btn--ghost btn--sm"><?= admin_icon('edit') ?>Изменить</summary>
+              <div class="u-panel">
+                <form method="post" action="<?= url('/admin/') ?>">
+                  <?= csrf_field() ?><input type="hidden" name="do" value="edit_user"><input type="hidden" name="uid" value="<?= $u['id'] ?>">
+                  <div class="u-form-grid">
+                    <div class="field"><label>Имя</label><input name="full_name" value="<?= h((string)$u['full_name']) ?>" placeholder="ФИО"></div>
+                    <div class="field"><label>Email</label><input name="email" type="email" value="<?= h((string)$u['email']) ?>" required></div>
+                    <div class="field"><label>Телефон</label><input name="phone" value="<?= h((string)$u['phone']) ?>"></div>
+                    <div class="field"><label>Никнейм</label><input name="nickname" value="<?= h((string)($u['nickname'] ?? '')) ?>"></div>
+                    <div class="field"><label>Категория</label><input name="category" value="<?= h((string)($u['category'] ?? '')) ?>"></div>
+                    <div class="field"><label>Роль</label>
+                      <?php if ($roleLocked): ?>
+                        <input value="<?= h(role_ru($u['role'])) ?>" disabled>
+                        <input type="hidden" name="role" value="<?= h($u['role']) ?>">
+                        <span class="small muted"><?= $u['role']==='owner' ? 'роль владельца защищена' : 'свою роль изменить нельзя' ?></span>
+                      <?php else: ?>
+                        <select name="role">
+                          <?php foreach ($roles as $r): if ($r==='owner') continue; ?><option value="<?= $r ?>" <?= $u['role']===$r?'selected':'' ?>><?= h(role_ru($r)) ?></option><?php endforeach; ?>
+                        </select>
+                      <?php endif; ?>
+                    </div>
+                  </div>
+                  <button class="btn btn--primary btn--sm" type="submit"><?= admin_icon('check') ?>Сохранить профиль</button>
+                </form>
+              </div>
+            </details>
+            <details class="u-d">
+              <summary class="btn btn--ghost btn--sm"><?= admin_icon('eye') ?>Профиль</summary>
+              <div class="u-panel">
+                <div class="u-profile-grid">
+                  <div class="u-pm"><div class="k">ID</div><div class="v">#<?= $u['id'] ?></div></div>
+                  <div class="u-pm"><div class="k">Регистрация</div><div class="v"><?= h(date('d.m.Y', strtotime($u['created_at']))) ?></div></div>
+                  <div class="u-pm"><div class="k">Последний вход</div><div class="v"><?= !empty($u['last_login']) ? h(date('d.m.Y H:i', strtotime($u['last_login']))) : '—' ?></div></div>
+                  <div class="u-pm"><div class="k">Заявок</div><div class="v"><?= $uApps ?></div></div>
+                  <div class="u-pm"><div class="k">Email подтверждён</div><div class="v"><?= (int)($u['email_verified'] ?? 0) ? 'да' : 'нет' ?></div></div>
+                  <div class="u-pm"><div class="k">Город</div><div class="v"><?= h((string)($u['city'] ?? '')) ?: '—' ?></div></div>
+                </div>
+                <div style="margin-bottom:12px">
+                  <div class="k small muted" style="font-weight:800;text-transform:uppercase;letter-spacing:.05em;margin-bottom:6px">Способы входа</div>
+                  <div class="u-logins">
+                    <?php if ($logins): foreach ($logins as $lg): ?><span class="tag"><?= h($lg) ?></span><?php endforeach; else: ?><span class="small muted">не заданы</span><?php endif; ?>
+                  </div>
+                </div>
+                <div>
+                  <div class="k small muted" style="font-weight:800;text-transform:uppercase;letter-spacing:.05em;margin-bottom:6px">Заявки<?= $uApps>10 ? ' (последние 10 из '.$uApps.')' : '' ?></div>
+                  <?php if ($uAppRows): ?>
+                    <ul class="u-applist">
+                      <?php foreach ($uAppRows as $ap): ?>
+                        <li><span class="num"><?= h((string)($ap['number'] ?: ('#'.$ap['id']))) ?></span>
+                          <span class="badge badge--<?= role_badge_class('user') ?>" style="background:var(--a-parchment);border:1px solid var(--a-line);color:var(--a-ink)"><?= h(app_status_ru((string)$ap['status'])) ?></span>
+                          <span class="small muted"><?= h(date('d.m.y', strtotime($ap['created_at']))) ?></span>
+                        </li>
+                      <?php endforeach; ?>
+                    </ul>
+                  <?php else: ?><span class="small muted">заявок нет</span><?php endif; ?>
+                </div>
+              </div>
+            </details>
+          </div>
+        </td></tr>
       <?php endforeach; ?>
     </tbody>
   </table></div>
@@ -318,9 +495,9 @@ ob_start(); ?>
     </div>
     <div class="table-wrap"><table class="tbl">
       <thead><tr><th class="checkbox-cell"><input type="checkbox" id="chkAll"></th>
-        <th>Email</th><th>Имя</th><th>Источник</th><th>Теги</th><th>Активен</th></tr></thead>
+        <th>Email</th><th>Имя</th><th>Источник</th><th>Теги</th><th>Активен</th><th>Действия</th></tr></thead>
       <tbody>
-        <?php if (!$subs): ?><tr><td colspan="6" class="muted" style="text-align:center;padding:26px">Подписчиков нет</td></tr><?php endif; ?>
+        <?php if (!$subs): ?><tr><td colspan="7" class="muted" style="text-align:center;padding:26px">Подписчиков нет</td></tr><?php endif; ?>
         <?php foreach ($subs as $s): ?>
           <tr>
             <td class="checkbox-cell"><input type="checkbox" class="rowchk" name="ids[]" value="<?= $s['id'] ?>"></td>
@@ -329,11 +506,33 @@ ob_start(); ?>
             <td class="small"><?php if($s['source']!==''): ?><span class="tag"><?= h($s['source']) ?></span><?php else: ?>—<?php endif; ?></td>
             <td><?php foreach (array_filter(array_map('trim', explode(',', (string)$s['tags']))) as $t): ?><span class="tag"><?= h($t) ?></span><?php endforeach; ?></td>
             <td><?= $s['active'] ? '<span class="badge badge--paid">да</span>' : '<span class="badge badge--muted">нет</span>' ?></td>
+            <td>
+              <div style="display:flex;gap:6px;flex-wrap:wrap;align-items:flex-start">
+                <button form="s_tog_<?= $s['id'] ?>" type="submit" class="btn btn--ghost btn--sm"><?= $s['active'] ? 'Выключить' : 'Включить' ?></button>
+                <details class="u-d">
+                  <summary class="btn btn--ghost btn--sm"><?= admin_icon('edit') ?>Изменить</summary>
+                  <div class="u-panel" style="min-width:260px">
+                    <div class="u-form-grid" style="grid-template-columns:1fr;margin-bottom:12px">
+                      <div class="field"><label>Имя</label><input form="s_edit_<?= $s['id'] ?>" name="name" value="<?= h((string)$s['name']) ?>"></div>
+                      <div class="field"><label>Теги (через запятую)</label><input form="s_edit_<?= $s['id'] ?>" name="tags" value="<?= h((string)$s['tags']) ?>"></div>
+                    </div>
+                    <button form="s_edit_<?= $s['id'] ?>" type="submit" class="btn btn--primary btn--sm"><?= admin_icon('check') ?>Сохранить</button>
+                  </div>
+                </details>
+                <button form="s_del_<?= $s['id'] ?>" type="submit" class="btn btn--sm" style="background:#8b2f2f;color:#fff" onclick="return confirm('Удалить подписчика <?= h(addslashes($s['email'])) ?>?')">Удалить</button>
+              </div>
+            </td>
           </tr>
         <?php endforeach; ?>
       </tbody>
     </table></div>
   </form>
+  <?php /* Мини-формы построчных действий (вне основной формы — вложенные формы недопустимы) */ ?>
+  <?php foreach ($subs as $s): ?>
+    <form id="s_tog_<?= $s['id'] ?>" method="post" action="<?= url('/admin/') ?>" style="display:none"><?= csrf_field() ?><input type="hidden" name="do" value="sub_toggle"><input type="hidden" name="sid" value="<?= $s['id'] ?>"></form>
+    <form id="s_del_<?= $s['id'] ?>" method="post" action="<?= url('/admin/') ?>" style="display:none"><?= csrf_field() ?><input type="hidden" name="do" value="sub_delete"><input type="hidden" name="sid" value="<?= $s['id'] ?>"></form>
+    <form id="s_edit_<?= $s['id'] ?>" method="post" action="<?= url('/admin/') ?>" style="display:none"><?= csrf_field() ?><input type="hidden" name="do" value="sub_edit"><input type="hidden" name="sid" value="<?= $s['id'] ?>"></form>
+  <?php endforeach; ?>
   <script>
   (function(){
     var all=document.getElementById('chkAll'), cnt=document.getElementById('selCnt');

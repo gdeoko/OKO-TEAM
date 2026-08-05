@@ -128,6 +128,11 @@ if (chat_is_closing($text)) {
 } else {
     $greet = chat_should_greet($sessionKey);
     $core  = chat_brain_reply($text, $sessionKey, $uid, 'web');
+    // Эскалация «нет ответа»: мозг ушёл в rule-фолбэк — просим позвонить + уведомляем владельца.
+    if (!empty($GLOBALS['chat_fell_back'])) {
+        $tail = chat_escalate_no_answer($uid, $sessionKey, $greetName, $text, 'web');
+        if ($tail !== '') $core = trim($core . "\n\n" . $tail);
+    }
     $reply = chat_wrap_reply($sessionKey, $core, $greetName, $greet, false);
 }
 
@@ -280,6 +285,62 @@ function chat_actions(string $text, ?int $uid, string $sessionKey): array {
     // Персональные заявки участника — прямая кнопка в кабинет к его заявкам.
     if ($uid && $has(['моя заявк', 'мои заявк', 'мою заявк', 'статус', 'что с заявк', 'где заявк', 'приняли', 'оплатил', 'моя работа', 'мои работы'])) {
         $add('Мои заявки', url('/cabinet') . '#apps');
+    }
+
+    // Вопрос про результат/диплом. Если у участника несколько действующих заявок и он
+    // ещё не назвал конкретную — предлагаем выпадающий список (клиент рисует <select>).
+    // Если заявка одна — списка нет, бот отвечает сразу по ней. Заодно, когда заявка
+    // определена и аттестована, а диплом готов — добавляем кнопку скачивания (задача 2).
+    $askResultDiploma = $has(['результат', 'итог', 'балл', 'оцен', 'диплом', 'сертификат', 'аттест', 'провер', 'готов ли', 'где мой', 'когда']);
+    if ($uid && $askResultDiploma) {
+        $stMap = ['new' => 'на рассмотрении', 'pending' => 'на рассмотрении', 'submitted' => 'принята, ожидает аттестации',
+            'paid' => 'оплачена, ожидает аттестации', 'review' => 'на аттестации жюри', 'judging' => 'на аттестации жюри',
+            'scored' => 'аттестована, результат готов', 'done' => 'аттестована, результат готов',
+            'unpaid' => 'ожидает оплаты'];
+
+        $acted = [];
+        try {
+            $acted = all("SELECT a.id, a.number, a.status, a.result, c.name AS comp_name
+                            FROM applications a JOIN competitions c ON c.id = a.competition_id
+                           WHERE a.user_id = ? AND a.status NOT IN ('rejected')
+                        ORDER BY a.id DESC LIMIT 15", [$uid]);
+        } catch (\Throwable $e) { $acted = []; }
+
+        // Назвал ли участник конкретную заявку? Ищем номер заявки как подстроку сообщения
+        // (номера вида «VR-2026-00006», регистр не важен) — иначе список для выбора.
+        $target = null;
+        foreach ($acted as $a) {
+            $num = trim((string) ($a['number'] ?? ''));
+            if ($num !== '' && mb_stripos($text, $num) !== false) { $target = $a; break; }
+        }
+
+        if ($target === null && count($acted) > 1) {
+            // Несколько действующих заявок и номер не назван — выпадающий список.
+            $options = [];
+            foreach ($acted as $a) {
+                $num = (string) ($a['number'] ?? $a['id'] ?? '');
+                $st  = $stMap[(string) ($a['status'] ?? '')] ?? (string) ($a['status'] ?? '—');
+                $options[] = ['label' => '№' . $num . ' «' . (string) ($a['comp_name'] ?? '') . '» — ' . $st,
+                              'value' => (int) $a['id'], 'number' => $num];
+            }
+            $acts[] = ['type' => 'select', 'label' => 'Выберите заявку', 'options' => $options];
+        } else {
+            // Одна заявка ИЛИ участник назвал конкретную — если она аттестована и есть
+            // готовый диплом, сразу отдаём кнопку скачивания (не полагаясь на keyword-логику).
+            if ($target === null && count($acted) === 1) $target = $acted[0];
+            if ($target) {
+                $attested = in_array((string) ($target['status'] ?? ''), ['scored', 'done'], true)
+                    || trim((string) ($target['result'] ?? '')) !== '';
+                if ($attested) {
+                    try {
+                        $dip = one("SELECT number FROM diplomas WHERE application_id=? ORDER BY id DESC LIMIT 1", [(int) $target['id']]);
+                    } catch (\Throwable $e) { $dip = null; }
+                    if ($dip && !empty($dip['number'])) {
+                        $add('Скачать диплом (PDF)', url('/diploma/' . $dip['number'] . '.pdf'));
+                    }
+                }
+            }
+        }
     }
     // Диплом файлом — для авторизованных с готовыми дипломами; иначе проверка по номеру.
     if ($has(['диплом', 'сертификат', 'скачать', 'провер', 'подлинн'])) {

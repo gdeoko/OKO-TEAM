@@ -286,7 +286,8 @@ function chat_rule_reply(string $text): string {
  * @param int|null $uid        id пользователя сайта, если известен
  */
 function chat_brain_reply(string $text, string $sessionKey, ?int $uid = null, string $channel = 'vk'): string {
-    $GLOBALS['chat_channel'] = $channel; // 'web' = ссылки кнопками, 'vk' = прямыми ссылками
+    $GLOBALS['chat_channel']   = $channel; // 'web' = ссылки кнопками, 'vk' = прямыми ссылками
+    $GLOBALS['chat_fell_back'] = false;    // признак: «мозг» не ответил, ушли в rule-фолбэк
     $reply = null;
 
     $geminiKey = (string) (cfgv('gemini_api_key') ?: '');
@@ -302,9 +303,152 @@ function chat_brain_reply(string $text, string $sessionKey, ?int $uid = null, st
         $reply = agent_chat_proxy((string) $agentUrl, (string) cfgv('agent_token'), $text, $sessionKey, $uid);
     }
     if ($reply === null || $reply === '') {
+        // Ни Gemini, ни Claude, ни агент не дали ответа — общий шаблон по ключевым словам.
+        // Признак поднимаем, чтобы вызывающий код (веб/ВК) мог эскалировать «нет ответа».
         $reply = chat_rule_reply($text);
+        $GLOBALS['chat_fell_back'] = true;
     }
     return trim($reply);
+}
+
+/**
+ * Эскалация «нет ответа»: «мозг» ушёл в rule-фолбэк (не смог точно ответить по вопросу).
+ * Один раз за сессию (маркер role='escalated_noanswer', отдельно от keyword-эскалации):
+ *   (а) возвращает пользователю текст-приписку с просьбой позвонить в колл-центр;
+ *   (б) уведомляет владельца в Телеграм (owner_notify): имя/фамилия, все заявки со
+ *       статусами, телефон (если нет — почта/ссылка ВК), краткая суть обращения.
+ * @param int|null $uid     id пользователя сайта (в ВК — привязанный к peer, если есть)
+ * @param string   $channel 'web' | 'vk'
+ * @param array    $extra   доп. поля для владельца (напр. ссылка на диалог ВК)
+ * @return string текст-приписка для пользователя ('' — если уже эскалировали в этой сессии)
+ */
+function chat_escalate_no_answer(?int $uid, string $sessionKey, string $name, string $userText, string $channel = 'web', array $extra = []): string {
+    // Строго один раз за сессию.
+    try {
+        $done = (int) scalar("SELECT COUNT(*) FROM chat_messages WHERE session_key=? AND role='escalated_noanswer'", [$sessionKey]);
+        if ($done > 0) return '';
+    } catch (\Throwable $e) { return ''; }
+
+    $tel = (string) cfgv('org_phone');
+
+    // Контактные данные участника: ФИО, телефон, почта.
+    $fio = trim($name); $phone = ''; $email = '';
+    if ($uid) {
+        try {
+            $u = one("SELECT full_name, phone, email FROM users WHERE id=?", [$uid]);
+            if ($u) {
+                $fio   = trim((string) ($u['full_name'] ?? '')) ?: $fio;
+                $phone = trim((string) ($u['phone'] ?? ''));
+                $email = trim((string) ($u['email'] ?? ''));
+            }
+        } catch (\Throwable $e) { /* тихо */ }
+    }
+
+    // Все заявки участника со статусами (компактно, для владельца).
+    $appsLines = [];
+    if ($uid) {
+        $stMap = ['new' => 'на рассмотрении', 'pending' => 'на рассмотрении', 'submitted' => 'принята, ожидает аттестации',
+            'paid' => 'оплачена, ожидает аттестации', 'review' => 'на аттестации жюри', 'judging' => 'на аттестации жюри',
+            'scored' => 'аттестована (результат готов)', 'done' => 'аттестована (результат готов)',
+            'rejected' => 'отклонена', 'unpaid' => 'ожидает оплаты'];
+        try {
+            $apps = all("SELECT a.number, a.status, a.result, c.name AS comp_name
+                           FROM applications a JOIN competitions c ON c.id = a.competition_id
+                          WHERE a.user_id = ? ORDER BY a.id DESC LIMIT 15", [$uid]);
+            foreach ($apps as $a) {
+                $st  = $stMap[(string) ($a['status'] ?? '')] ?? (string) ($a['status'] ?? '—');
+                $res = trim((string) ($a['result'] ?? ''));
+                $ln  = '№' . (string) ($a['number'] ?? '') . ' «' . (string) ($a['comp_name'] ?? '') . '» — ' . $st;
+                if ($res !== '') $ln .= ', результат: ' . $res;
+                $appsLines[] = $ln;
+            }
+        } catch (\Throwable $e) { /* тихо */ }
+    }
+
+    // Транскрипт последних сообщений — краткая суть обращения для оператора.
+    $lines = [];
+    try {
+        $rows = all("SELECT role, text FROM chat_messages WHERE session_key=? AND role IN ('user','assistant') ORDER BY id DESC LIMIT 10", [$sessionKey]);
+        foreach (array_reverse($rows) as $r) {
+            $who = ($r['role'] ?? '') === 'user' ? '👤' : '🤖';
+            $tx  = trim((string) $r['text']);
+            if ($tx !== '') $lines[] = $who . ' ' . mb_substr($tx, 0, 220);
+        }
+    } catch (\Throwable $e) {}
+    if (!$lines) $lines[] = '👤 ' . mb_substr(trim($userText), 0, 220);
+
+    // Контакт для оператора: телефон → почта → ссылка/пометка ВК.
+    $contact = $phone !== '' ? $phone : ($email !== '' ? $email : '');
+    if ($contact === '' && !empty($extra['Ссылка'])) $contact = (string) $extra['Ссылка'];
+
+    if (!function_exists('owner_notify') && is_file(BASE_PATH . '/core/notify_owner.php')) {
+        require_once BASE_PATH . '/core/notify_owner.php';
+    }
+    if (function_exists('owner_notify')) {
+        $fields = [
+            'Участник' => ($fio !== '' ? $fio : 'гость') . ($channel === 'vk' ? ' (ВКонтакте)' : ''),
+            'Телефон'  => $phone,
+            'Почта'    => $email,
+            'Заявки'   => $appsLines ? mb_substr(implode('; ', $appsLines), 0, 500) : '—',
+            'Суть'     => mb_substr(trim($userText), 0, 240),
+            'Сессия'   => $sessionKey,
+            '_event'   => 'chat_escalation_no_answer',
+            '_meta'    => ['session' => $sessionKey, 'uid' => (int) ($uid ?? 0), 'channel' => $channel],
+        ] + $extra;
+        try {
+            owner_notify('ЧАТ-БОТ', '🔔 Бот не смог ответить — нужен оператор', implode("\n", $lines), $fields);
+        } catch (\Throwable $e) { /* тихо */ }
+    }
+
+    // Маркер: эскалация «нет ответа» уже выполнена в этой сессии.
+    try { insert('chat_messages', ['user_id' => $uid, 'session_key' => $sessionKey, 'role' => 'escalated_noanswer', 'text' => '', 'file' => '']); } catch (\Throwable $e) {}
+
+    // Текст-приписка пользователю.
+    return 'К сожалению, по этому вопросу мне лучше подключить сотрудника. '
+        . 'Просим позвонить по телефону колл-центра ' . $tel
+        . ' для решения вопроса (скрытые номера блокируются системой безопасности). Мы обязательно поможем.';
+}
+
+/**
+ * Пронумерованный список действующих заявок участника — для ВК (клавиатур нет,
+ * поэтому список цифрами/номерами прямо в тексте). Аналог выпадающего <select>
+ * на сайте. Показываем только когда: вопрос про результат/диплом, действующих
+ * заявок больше одной и конкретный номер ещё не назван. Иначе — '' (список не нужен,
+ * бот отвечает сразу; при одной заявке уточнять нечего).
+ */
+function chat_apps_numbered_text(?int $uid, string $userText): string {
+    if (!$uid) return '';
+    $t = mb_strtolower($userText);
+    $ask = false;
+    foreach (['результат', 'итог', 'балл', 'оцен', 'диплом', 'сертификат', 'аттест', 'провер', 'готов', 'когда'] as $w) {
+        if (mb_strpos($t, $w) !== false) { $ask = true; break; }
+    }
+    if (!$ask) return '';
+    try {
+        $apps = all("SELECT a.number, a.status, a.result, c.name AS comp_name
+                       FROM applications a JOIN competitions c ON c.id = a.competition_id
+                      WHERE a.user_id = ? AND a.status NOT IN ('rejected')
+                   ORDER BY a.id DESC LIMIT 15", [$uid]);
+    } catch (\Throwable $e) { return ''; }
+    if (count($apps) <= 1) return '';
+    // Конкретный номер уже назван (номер заявки как подстрока сообщения) — список не нужен.
+    foreach ($apps as $a) {
+        $num = trim((string) ($a['number'] ?? ''));
+        if ($num !== '' && mb_stripos($userText, $num) !== false) return '';
+    }
+    $stMap = ['new' => 'на рассмотрении', 'pending' => 'на рассмотрении', 'submitted' => 'принята, ожидает аттестации',
+        'paid' => 'оплачена, ожидает аттестации', 'review' => 'на аттестации жюри', 'judging' => 'на аттестации жюри',
+        'scored' => 'аттестована, результат готов', 'done' => 'аттестована, результат готов',
+        'unpaid' => 'ожидает оплаты'];
+    $L = ['У Вас несколько заявок. Подскажите, пожалуйста, по какой именно вопрос — ответьте её номером (например, №' . (string) ($apps[0]['number'] ?? '') . '):'];
+    $i = 0;
+    foreach ($apps as $a) {
+        $i++;
+        $num = (string) ($a['number'] ?? '');
+        $st  = $stMap[(string) ($a['status'] ?? '')] ?? (string) ($a['status'] ?? '—');
+        $L[] = $i . ') Заявка №' . $num . ' «' . (string) ($a['comp_name'] ?? '') . '» — ' . $st;
+    }
+    return implode("\n", $L);
 }
 
 /* ==================== Правила диалога: приветствие и подпись ==================== */

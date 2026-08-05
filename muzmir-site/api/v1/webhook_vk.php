@@ -129,6 +129,19 @@ function vk_cb_ack_then_process(string $type): void {
             $short = true;
         } else {
             $core  = chat_brain_reply($text, $sessionKey, null, 'vk');
+            // Задача 1 (ВК): вопрос про результат/диплом + несколько действующих заявок и
+            // номер не назван → пронумерованный список заявок (клавиатур нет — цифрами/номерами).
+            if ($vkUid) {
+                $picker = chat_apps_numbered_text($vkUid, $text);
+                if ($picker !== '') $core = trim($core . "\n\n" . $picker);
+            }
+            // Задача 3 (ВК): мозг ушёл в rule-фолбэк — просим позвонить + уведомляем владельца.
+            if (!empty($GLOBALS['chat_fell_back'])) {
+                $vkLink = 'https://vk.com/gim' . (int) cfgv('vk_group_id', 211325055) . '?sel=' . $peer;
+                $tail = chat_escalate_no_answer($vkUid ?: null, $sessionKey, $name, $text, 'vk',
+                    ['Ссылка' => $vkLink, 'peer_id' => (string) $peer]);
+                if ($tail !== '') $core = trim($core . "\n\n" . $tail);
+            }
             $reply = chat_wrap_reply($sessionKey, $core, $name, $greet, false);
         }
 

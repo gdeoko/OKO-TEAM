@@ -137,6 +137,12 @@ ob_start(); ?>
 .chat-act:hover{transform:translateY(-1px);box-shadow:0 6px 16px rgba(199,147,34,.24)}
 .chat-act--review{border-color:transparent;background:var(--grad-gold);color:var(--gold-fg)}
 .chat-act--review svg{width:15px;height:15px}
+/* Выпадающий список заявок */
+.chat-select{-webkit-appearance:none;appearance:none;max-width:100%;padding-right:34px;
+  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23c79322' stroke-width='2.4' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'/%3E%3C/svg%3E");
+  background-repeat:no-repeat;background-position:right 12px center;background-size:14px}
+.chat-select:disabled{opacity:.7;cursor:default}
+[data-theme="dark"] .chat-select{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23e8b950' stroke-width='2.4' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'/%3E%3C/svg%3E")}
 
 /* Виджет отзыва (звёзды + комментарий) */
 .chat-review{align-self:stretch;margin-top:4px;padding:16px;border-radius:18px;
@@ -256,6 +262,29 @@ body.mz-kb .chat-inputbar{bottom:calc(10px + env(safe-area-inset-bottom,0px))}
         rb.innerHTML = '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2l2.9 6.3 6.9.6-5.2 4.6 1.6 6.8L12 17.3 5.8 20.9l1.6-6.8L2.2 8.9l6.9-.6z"/></svg>' + esc(a.label);
         rb.addEventListener('click', function(){ openReview(); rb.disabled = true; });
         wrap.appendChild(rb);
+      } else if (a.type === 'select') {
+        // Выпадающий список заявок: по выбору шлём follow-up с номером заявки,
+        // после чего бот отвечает уже по этой конкретной заявке.
+        var sel = document.createElement('select');
+        sel.className = 'chat-act chat-select';
+        var ph = document.createElement('option');
+        ph.value = ''; ph.textContent = a.label || 'Выберите заявку';
+        ph.disabled = true; ph.selected = true;
+        sel.appendChild(ph);
+        (a.options || []).forEach(function(o){
+          var op = document.createElement('option');
+          op.value = String(o.value);
+          op.textContent = o.label;
+          if (o.number != null) op.setAttribute('data-number', String(o.number));
+          sel.appendChild(op);
+        });
+        sel.addEventListener('change', function(){
+          var opt = sel.options[sel.selectedIndex];
+          var num = (opt && opt.getAttribute('data-number')) || sel.value;
+          sel.disabled = true;
+          if (num) send('Заявка №' + num);
+        });
+        wrap.appendChild(sel);
       } else {
         var el = document.createElement('a');
         el.className = 'chat-act'; el.href = a.url;
