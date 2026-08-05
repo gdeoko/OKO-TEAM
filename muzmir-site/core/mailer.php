@@ -253,6 +253,56 @@ function mail_bulk_accounts(): array {
     return $cache;
 }
 
+/**
+ * Именованные почтовые отправители (маршрутизация по категориям писем).
+ * Читается из cfgv('smtp_senders') — JSON-объект {ключ: {host,port,user,pass,from_addr,from_name}}.
+ * Ключи: 'nagradi' (награды/дипломы), 'news' (массовые рассылки).
+ * Официальная Gmail-почта — это отправитель по умолчанию (пустой аккаунт).
+ */
+function mail_senders(): array {
+    static $cache = null;
+    if ($cache !== null) return $cache;
+    $cache = [];
+    $raw = trim((string) cfgv('smtp_senders', ''));
+    if ($raw !== '') {
+        $j = json_decode($raw, true);
+        if (is_array($j)) {
+            foreach ($j as $key => $a) {
+                if (!is_array($a) || empty($a['user']) || empty($a['pass'])) continue;
+                $cache[(string) $key] = [
+                    'host'      => (string) ($a['host'] ?? 'smtp.yandex.ru'),
+                    'port'      => (int) ($a['port'] ?? 465),
+                    'user'      => (string) $a['user'],
+                    'pass'      => (string) $a['pass'],
+                    'from_addr' => (string) ($a['from_addr'] ?? $a['user']),
+                    'from_name' => (string) ($a['from_name'] ?? cfgv('mail_from_name', 'Культурный центр «Музыкальный Мир»')),
+                ];
+            }
+        }
+    }
+    return $cache;
+}
+
+/**
+ * Выбор аккаунта-отправителя по письму очереди (категория):
+ *   массовые (priority>0)          → 'news'  (рассылки);
+ *   награды/дипломы (по теме)       → 'nagradi';
+ *   всё остальное (заявки/результаты)→ [] (официальная Gmail по умолчанию).
+ * Мягкие фолбэки, если нужный отправитель не настроен.
+ */
+function mail_route_account(array $row): array {
+    $senders  = mail_senders();
+    $priority = (int) ($row['priority'] ?? 0);
+    $subj     = mb_strtolower((string) ($row['subject'] ?? ''));
+    if ($priority > 0) {
+        return $senders['news'] ?? $senders['nagradi'] ?? [];   // массовые
+    }
+    foreach (['диплом', 'наград', 'кубок', 'статуэт', 'медал', 'благодарн'] as $w) {
+        if (mb_strpos($subj, $w) !== false) return $senders['nagradi'] ?? [];   // награды
+    }
+    return [];   // заявки/результаты/уведомления — официальная Gmail
+}
+
 function mail_send(string $to, string $subject, string $html, array $opt = []): bool {
     $to = trim($to);
     if ($to === '' || !filter_var($to, FILTER_VALIDATE_EMAIL)) {

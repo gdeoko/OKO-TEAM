@@ -74,6 +74,9 @@ return [
     // [{"host":"smtp.gmail.com","port":465,"user":"box1@...","pass":"app-pass","from_name":"..."}, ...]
     // Транзакционные письма всегда идут с основной smtp_* — от пула не зависят.
     'smtp_bulk_accounts' => cfg('MUZMIR_SMTP_BULK_ACCOUNTS', ''),
+    // Именованные отправители (маршрутизация): JSON {nagradi:{...}, news:{...}}.
+    // Награды/дипломы → nagradi, массовые → news, остальное → официальная Gmail.
+    'smtp_senders'       => cfg('MUZMIR_SMTP_SENDERS', ''),
     // Дневной лимит на ОДИН ящик — общий потолок массовых = лимит × число ящиков пула
     'mail_daily_limit' => (int) cfg('MUZMIR_MAIL_DAILY_LIMIT', 400),
     'mail_batch_size'  => (int) cfg('MUZMIR_MAIL_BATCH', 40),

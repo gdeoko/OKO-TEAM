@@ -287,32 +287,30 @@ function newsletter_process_queue(int $limit): int {
 
     $sent = 0;
 
-    // 1) ТРАНЗАКЦИОННЫЕ (priority=0: результаты, подтверждения заявок/оплат, заказы наград,
-    //    восстановление пароля, уведомления) — отправляем ВСЕГДА и сразу, БЕЗ дневного лимита,
-    //    до 30 за запуск. Их немного, но они критичны и не должны ждать за массовой рассылкой.
-    $tx = all("SELECT * FROM mail_queue WHERE status='queued' AND COALESCE(priority,0)=0 ORDER BY id ASC LIMIT 30");
-    foreach ($tx as $row) { if ($sendRow($row)) $sent++; }
+    // Маршрутизация по категориям (mail_route_account):
+    //   заявки/результаты/уведомления → официальная Gmail (аккаунт по умолчанию);
+    //   награды/дипломы → nagradi@музыкальный-мир.рф;
+    //   массовые рассылки → news@музыкальный-мир.рф.
+    $route = function (array $row): array {
+        return function_exists('mail_route_account') ? mail_route_account($row) : [];
+    };
 
-    // 2) МАССОВЫЕ (priority>0) — по пулу почт (round-robin), каждая со своим дневным
-    //    лимитом. Общий дневной потолок массовых = лимит на аккаунт × число аккаунтов.
-    //    Транзакционные (выше) всегда идут с основной почты и от пула не зависят.
-    $accounts = function_exists('mail_bulk_accounts') ? mail_bulk_accounts() : [];
-    $nAcc     = max(1, count($accounts));
-    $bulkCap  = $dailyLimit * $nAcc;                 // суммарно по всем рассыльным ящикам
-    $remaining = $bulkCap - nl_bulk_sent_today();
+    // 1) ТРАНЗАКЦИОННЫЕ (priority=0: результаты, подтверждения заявок/оплат, заказы наград,
+    //    восстановление пароля, уведомления, дипломы) — сразу, БЕЗ дневного лимита, до 30 за запуск.
+    //    Каждое уходит со своего отправителя (Gmail для конкурсов, nagradi для наград).
+    $tx = all("SELECT * FROM mail_queue WHERE status='queued' AND COALESCE(priority,0)=0 ORDER BY id ASC LIMIT 30");
+    foreach ($tx as $row) { if ($sendRow($row, $route($row))) $sent++; }
+
+    // 2) МАССОВЫЕ (priority>0) — через news@музыкальный-мир.рф, в рамках дневного лимита.
+    $remaining = $dailyLimit - nl_bulk_sent_today();
     if ($remaining > 0) {
         $take = min(max(1, $perRun), $remaining);
         $bulk = all("SELECT * FROM mail_queue WHERE status='queued' AND COALESCE(priority,0)>0 ORDER BY id ASC LIMIT ?", [$take]);
-        // Индекс ротации хранится в settings, чтобы аккаунты чередовались между запусками.
-        $rot = (int) setting('bulk_rot_idx', '0');
         $i = 0;
         foreach ($bulk as $row) {
             if ($i++ > 0 && $gap > 0) sleep($gap);
-            $acc = $accounts ? $accounts[$rot % $nAcc] : [];
-            $rot++;
-            if ($sendRow($row, $acc)) $sent++;
+            if ($sendRow($row, $route($row))) $sent++;
         }
-        set_setting('bulk_rot_idx', (string) $rot);
     } else {
         nl_log('process: дневной лимит массовых исчерпан (транзакционные отправлены)');
     }
