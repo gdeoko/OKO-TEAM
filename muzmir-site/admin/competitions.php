@@ -33,6 +33,29 @@ function comp_upload_image(string $field, int $compId, string $baseName, int $ma
     return 'uploads/comp/' . $compId . '/' . $baseName . '.' . $ext;
 }
 
+/** Сдвиг даты на ближайший РАБОЧИЙ день: сб/вс → следующий понедельник.
+ *  Принимает и возвращает строку формата 'Y-m-d'. Некорректный вход — без изменений. */
+function comp_shift_workday(string $ymd): string {
+    try { $d = new DateTimeImmutable($ymd); } catch (\Throwable $e) { return $ymd; }
+    $dow = (int) $d->format('N'); // 1=пн … 6=сб, 7=вс
+    if ($dow === 6)      $d = $d->modify('+2 days'); // суббота → понедельник
+    elseif ($dow === 7)  $d = $d->modify('+1 day');  // воскресенье → понедельник
+    return $d->format('Y-m-d');
+}
+
+/** Авто-описание конкурса по шаблону — из названия, типа и направления.
+ *  Используется только когда админ оставил поле «описание» пустым. */
+function comp_auto_description(string $name, string $type, string $direction): string {
+    $name   = trim($name) ?: 'Конкурс';
+    $typeRu = $type === 'national' ? 'всероссийский' : 'международный';
+    $dirRu  = ['multi' => 'многожанровый', 'patriotic' => 'патриотический',
+               'thematic' => 'тематический'][$direction] ?? 'многожанровый';
+    return $name . ' — ' . $typeRu . ' ' . $dirRu
+        . ' конкурс культуры и искусства при информационной поддержке органов культуры. '
+        . 'Приём заявок онлайн, аттестация компетентным жюри, дипломы и наградной материал '
+        . 'для лауреатов и дипломантов.';
+}
+
 /* ---------- POST-экшены ---------- */
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     if (!csrf_check()) { flash('Сессия устарела, повторите.', 'error'); admin_redirect('competitions'); }
@@ -71,16 +94,28 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             'sort'          => (int) input('sort'),
         ];
 
+        /* Авто-описание по шаблону: только если поле пустое (ручной текст не затираем). */
+        if ($data['description'] === '') {
+            $data['description'] = comp_auto_description($data['name'], $data['type'], $data['direction']);
+        }
+
         /* Автосроки нового конкурса: приём 1–25 следующего месяца.
-         * Результаты: длинный формат — 28 числа того же месяца;
-         * короткий — за 5 рабочих дней после подачи (дату не фиксируем,
-         * отправку планирует cron по каждой заявке). */
+         * Результаты: длинный формат — 28 числа того же месяца, со сдвигом на
+         * ближайший рабочий день, если 28-е выпадает на сб/вс;
+         * короткий — «в течение 5 рабочих дней» после подачи (конкретную дату
+         * не фиксируем, режим выдачи — на почту, планирует cron по каждой заявке).
+         * Даты проставляются только по пустым полям — админ может задать вручную. */
         if (!$id) {
             $nextM = new DateTimeImmutable('first day of next month');
             if (empty($data['start_date'])) $data['start_date'] = $nextM->format('Y-m-01');
             if (empty($data['end_date']))   $data['end_date']   = $nextM->format('Y-m-25');
-            if (empty($data['results_date']) && $duration === 'long') {
-                $data['results_date'] = $nextM->format('Y-m-28');
+            if ($duration === 'long') {
+                if (empty($data['results_date'])) {
+                    $data['results_date'] = comp_shift_workday($nextM->format('Y-m-28'));
+                }
+            } else {
+                // Короткий формат: дату результатов не ставим, выдача — на почту.
+                if (empty($data['results_date'])) $data['results_mode'] = 'email';
             }
         }
 
@@ -135,6 +170,31 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 }
                 audit('award_photos_upload', 'competition', $id, ['count' => $saved, 'process' => $processNice ? 1 : 0]);
             }
+        }
+
+        /* Раздельные ИМЕНОВАННЫЕ слоты фото наград (кубок/статуэтка/медаль) —
+         * по образцу admin/diplomas.php: каждый слот → канонический файл
+         * public/assets/img/awards/<cid>/{cup,statuette,medal}.jpg.
+         * Пустой слот не трогает текущее фото. */
+        $awSlots = ['cup' => 'Кубок', 'statuette' => 'Статуэтка', 'medal' => 'Медаль'];
+        $slotDir = BASE_PATH . '/public/assets/img/awards/' . $id . '/';
+        $slotSaved = 0;
+        foreach ($awSlots as $slug => $label) {
+            $key = 'award_' . $slug;
+            if (empty($_FILES[$key]) || ($_FILES[$key]['error'] ?? UPLOAD_ERR_NO_FILE) !== UPLOAD_ERR_OK) continue;
+            if (!is_uploaded_file($_FILES[$key]['tmp_name'])) continue;
+            $ext = strtolower(pathinfo((string)$_FILES[$key]['name'], PATHINFO_EXTENSION));
+            if ($ext === 'jpeg') $ext = 'jpg';
+            if (!in_array($ext, ['png','jpg','webp'], true)) continue;
+            if ((int)$_FILES[$key]['size'] > 15 * 1024 * 1024) continue;
+            $mime = function_exists('mime_content_type') ? (string) @mime_content_type($_FILES[$key]['tmp_name']) : '';
+            if ($mime !== '' && !str_starts_with($mime, 'image/')) continue;
+            if (!is_dir($slotDir)) @mkdir($slotDir, 0775, true);
+            if (@move_uploaded_file($_FILES[$key]['tmp_name'], $slotDir . $slug . '.jpg')) $slotSaved++;
+        }
+        if ($slotSaved) {
+            audit('award_photos_slots', 'competition', $id, ['count' => $slotSaved]);
+            flash($slotSaved . ' фото наград (по слотам) сохранено и опубликовано в витрине.', 'success');
         }
 
         // Письмо поддержки министерства — в галерею ministry_letters (новые сверху).
@@ -534,7 +594,24 @@ if ($action === 'edit') {
               <a class="btn btn--ghost btn--sm" href="<?= h(url('/diploma-sample/' . $c['slug'])) ?>" target="_blank" rel="noopener"><?= admin_icon('eye') ?>Демо-образец</a>
             </div>
             <?php endif; ?>
-            <div class="field"><label>Фото наград (кубки, статуэтки, медали — можно несколько)</label>
+            <div class="field"><label>Фото наград по слотам (кубок · статуэтка · медаль)</label>
+              <p class="small muted" style="margin:0 0 8px">Загрузите фото под каждый вид отдельно. Пустой слот не меняет текущее фото. Публикуется в витрину наград как есть.</p>
+              <div class="form-row" style="flex-wrap:wrap;gap:12px">
+                <?php
+                  $awSlotDir = '/assets/img/awards/' . $id . '/';
+                  foreach (['cup'=>'Кубок','statuette'=>'Статуэтка','medal'=>'Медаль'] as $awSlug => $awLabel):
+                    $awExists = $id && is_file(BASE_PATH . '/public' . $awSlotDir . $awSlug . '.jpg'); ?>
+                  <div class="field" style="min-width:150px;flex:1">
+                    <label><?= h($awLabel) ?></label>
+                    <?php if ($awExists): ?>
+                      <img src="<?= h(url(ltrim($awSlotDir,'/') . $awSlug . '.jpg')) ?>?v=<?= @filemtime(BASE_PATH.'/public'.$awSlotDir.$awSlug.'.jpg') ?>" alt="" style="width:56px;height:56px;object-fit:cover;border-radius:8px;border:1px solid var(--a-line);margin-bottom:6px;display:block">
+                    <?php endif; ?>
+                    <input type="file" name="award_<?= h($awSlug) ?>" accept="image/*">
+                  </div>
+                <?php endforeach; ?>
+              </div>
+            </div>
+            <div class="field"><label>Фото наград пакетом (несколько файлов — по имени файла)</label>
               <input type="file" name="award_photos[]" accept="image/*" multiple>
               <label class="paycheck" style="margin-top:10px"><input type="checkbox" name="award_process" checked>
                 <span>Обработать красиво: вырезать фон, добавить тень и оформление. Снимите галочку, если фото уже профессиональные — опубликуются как есть.</span></label>

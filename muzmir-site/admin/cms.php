@@ -51,9 +51,28 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     if ($do === 'del_concert') { $id=(int)input('id'); q("DELETE FROM concerts WHERE id=?", [$id]); audit('concert_delete','concert',$id); flash('Концерт удалён.','success'); admin_redirect('cms',['tab'=>'concerts']); }
 
     if ($do === 'save_ministry') {
+        try { db()->exec("ALTER TABLE ministry_letters ADD COLUMN doc_path TEXT DEFAULT ''"); } catch (\Throwable $e) {}
         $id = (int) input('id');
         $data = ['region'=>trim(input('region')),'title'=>trim(input('title')),
                  'image_path'=>trim(input('image_path')),'sort'=>(int)input('sort')];
+        // Загрузка файла-изображения письма (jpg/png/webp) — необязательно.
+        if (!empty($_FILES['image_file']['tmp_name']) && is_uploaded_file($_FILES['image_file']['tmp_name'])) {
+            $ext = strtolower(pathinfo((string)$_FILES['image_file']['name'], PATHINFO_EXTENSION));
+            if (in_array($ext, ['jpg','jpeg','png','webp'], true)) {
+                $dir = BASE_PATH . '/public/uploads/ministry'; @mkdir($dir, 0775, true);
+                $fn = 'letter_' . ($id ?: 'new') . '_' . substr(bin2hex(random_bytes(4)),0,8) . '.' . $ext;
+                if (@move_uploaded_file($_FILES['image_file']['tmp_name'], $dir . '/' . $fn)) $data['image_path'] = '/uploads/ministry/' . $fn;
+            }
+        }
+        // Приложение ДОКУМЕНТА поддержки (pdf/doc/docx/jpg/png) — необязательно.
+        if (!empty($_FILES['doc_file']['tmp_name']) && is_uploaded_file($_FILES['doc_file']['tmp_name'])) {
+            $ext = strtolower(pathinfo((string)$_FILES['doc_file']['name'], PATHINFO_EXTENSION));
+            if (in_array($ext, ['pdf','doc','docx','jpg','jpeg','png','webp'], true)) {
+                $dir = BASE_PATH . '/public/uploads/ministry'; @mkdir($dir, 0775, true);
+                $fn = 'doc_' . ($id ?: 'new') . '_' . substr(bin2hex(random_bytes(4)),0,8) . '.' . $ext;
+                if (@move_uploaded_file($_FILES['doc_file']['tmp_name'], $dir . '/' . $fn)) $data['doc_path'] = '/uploads/ministry/' . $fn;
+            }
+        }
         if ($id) update('ministry_letters', $data, 'id=:wid', ['wid'=>$id]); else $id = insert('ministry_letters', $data);
         audit('ministry_save', 'ministry_letter', $id);
         flash('Письмо сохранено.', 'success');
@@ -330,7 +349,7 @@ else:
   <div class="grid grid-2">
     <div class="card">
       <div class="section-title"><h3 style="margin:0"><?= $edit?'Редактирование письма':'Новое письмо' ?></h3><?php if($edit): ?><span class="badge badge--muted">#<?= (int)$m['id'] ?></span><?php endif; ?></div>
-      <form method="post" action="<?= url('/admin/') ?>">
+      <form method="post" action="<?= url('/admin/') ?>" enctype="multipart/form-data">
         <?= csrf_field() ?><input type="hidden" name="do" value="save_ministry"><input type="hidden" name="tab" value="ministry"><input type="hidden" name="id" value="<?= (int)$m['id'] ?>">
         <div class="field"><label>Регион / субъект</label><input name="region" value="<?= h($m['region']) ?>" required></div>
         <div class="field"><label>Заголовок</label><input name="title" value="<?= h($m['title']) ?>"></div>
@@ -338,8 +357,15 @@ else:
           <div class="field"><label>Путь к изображению письма</label><input name="image_path" value="<?= h($m['image_path']) ?>"></div>
           <div class="field"><label>Порядок</label><input type="number" name="sort" value="<?= (int)$m['sort'] ?>"></div>
         </div>
+        <div class="form-row">
+          <div class="field"><label>Загрузить изображение письма <span class="muted small">(jpg/png/webp)</span></label><input type="file" name="image_file" accept=".jpg,.jpeg,.png,.webp"></div>
+          <div class="field"><label>Приложить документ поддержки <span class="muted small">(pdf/doc/docx/скан)</span></label><input type="file" name="doc_file" accept=".pdf,.doc,.docx,.jpg,.jpeg,.png,.webp"></div>
+        </div>
         <?php if ($edit && trim((string)$m['image_path'])!==''): ?>
           <div class="field"><label>Текущее изображение</label><a href="<?= h($m['image_path']) ?>" target="_blank" rel="noopener"><img src="<?= h($m['image_path']) ?>" alt="" style="max-width:160px;border-radius:9px;border:1px solid var(--a-line)" loading="lazy"></a></div>
+        <?php endif; ?>
+        <?php if ($edit && trim((string)($m['doc_path'] ?? ''))!==''): ?>
+          <div class="field"><label>Приложенный документ</label><a class="btn btn--ghost btn--sm" href="<?= h($m['doc_path']) ?>" target="_blank" rel="noopener"><?= admin_icon('diplomas') ?>Открыть документ поддержки</a></div>
         <?php endif; ?>
         <button class="btn btn--primary"><?= admin_icon('check') ?>Сохранить</button>
         <?php if ($edit): ?><a class="btn btn--ghost" href="<?= a_link('cms',['tab'=>'ministry']) ?>">Отмена</a><?php endif; ?>

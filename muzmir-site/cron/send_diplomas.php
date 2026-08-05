@@ -59,6 +59,20 @@ foreach ($fresh as $a) {
         'lang'           => 'ru',
         'scheduled_at'   => $sched->format('Y-m-d H:i:s'),
     ]);
+    // 2б-доп. Дополнительный диплом (спецноминация) — ОТДЕЛЬНЫМ документом, тем же расписанием.
+    if (trim((string)($a['extra_diploma'] ?? '')) !== '') {
+        $pdfExtra = null;
+        try { $pdfExtra = diploma_pdf_html((array)$a, ['extra' => true]); } catch (\Throwable $e) { $pdfExtra = null; }
+        insert('diplomas', [
+            'number'         => diploma_make_number((string)$a['number'], 'extra'),
+            'application_id' => (int)$a['id'],
+            'type'           => 'extra',
+            'result'         => (string)$a['extra_diploma'],
+            'pdf_path'       => $pdfExtra ?: '',
+            'lang'           => 'ru',
+            'scheduled_at'   => $sched->format('Y-m-d H:i:s'),
+        ]);
+    }
     // 2в. Оригинал (без подписи/печати) сразу летит в бот заказа (t.me/zakaznagrad) — админ отправит почтой.
     _send_original_to_orders_bot((array)$a, (array)$comp);
 }
@@ -80,15 +94,19 @@ foreach ($dueList as $d) {
     if ($sentThisTick >= 1) break; // ровно один в минуту
     $to = (string)$d['email']; if ($to === '' || !filter_var($to, FILTER_VALIDATE_EMAIL)) continue;
 
-    $subject = 'Ваш диплом конкурса «' . $d['comp_name'] . '» - № ' . $d['number'];
+    $subject = ((string)($d['type'] ?? 'main') === 'extra'
+                  ? 'Ваш дополнительный диплом (спецноминация) конкурса «'
+                  : 'Ваш диплом конкурса «')
+             . $d['comp_name'] . '» - № ' . $d['number'];
     $html = _diploma_email_html((array)$d);
-    $atts = [];
-    if (!empty($d['pdf_path']) && is_file($d['pdf_path'])) {
-        $atts[] = ['path' => (string)$d['pdf_path'], 'name' => 'diploma_' . $d['number'] . '.pdf'];
+    // mail_send прикладывает ОДИН файл через ключ 'attach' (путь). Диплом — один PDF.
+    $opt = [];
+    if (!empty($d['pdf_path']) && is_file((string)$d['pdf_path'])) {
+        $opt['attach'] = (string)$d['pdf_path'];
     }
     $ok = false;
     if (function_exists('mail_send')) {
-        $ok = (bool) mail_send($to, $subject, $html, ['attachments' => $atts]);
+        $ok = (bool) mail_send($to, $subject, $html, $opt);
     }
     if ($ok) {
         update('diplomas', ['sent_at' => $now->format('Y-m-d H:i:s')], 'id=:id', ['id' => (int)$d['id']]);
