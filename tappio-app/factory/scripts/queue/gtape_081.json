@@ -1,0 +1,248 @@
+{
+ "id": "gtape_081",
+ "app": "tape",
+ "voice": "en-US-ChristopherNeural",
+ "rate": "+5%",
+ "grade": "teal_orange",
+ "brand": {
+  "accent": "#F4C430",
+  "accent2": "#FFE08A",
+  "code": "MEASURE",
+  "logo": "tape.png",
+  "name": "3D TAPE MEASURE"
+ },
+ "music": {
+  "queries": [
+   "cinematic tension build",
+   "happy ukulele diy",
+   "upbeat indie acoustic diy",
+   "positive corporate light groove"
+  ]
+ },
+ "cover": {
+  "kicker": "RENTER HACK",
+  "top": "DECORATE",
+  "big": "WITHOUT\nHOLES",
+  "q": [
+   "kitchen cabinets measuring renovation"
+  ]
+ },
+ "segments": [
+  {
+   "id": "b1",
+   "text": "Renting means no guessing and no wall damage."
+  },
+  {
+   "id": "b2",
+   "text": "Measure the empty wall with your phone."
+  },
+  {
+   "id": "b3",
+   "text": "Drop a virtual frame to test the spot."
+  },
+  {
+   "id": "b4",
+   "text": "Line up shelves before a single nail."
+  },
+  {
+   "id": "b5",
+   "text": "Save the layout, shop with real sizes."
+  },
+  {
+   "id": "b6",
+   "text": "Decorate smart, get your deposit back."
+  }
+ ],
+ "shots": [
+  {
+   "q": [
+    "bookshelf assembly instructions floor"
+   ],
+   "insert": "circle",
+   "pos": "upper"
+  },
+  {
+   "q": [
+    "hands arranging shelf wall decor"
+   ],
+   "motion": "pandown"
+  },
+  {
+   "q": [
+    "garden patio outdoor measuring"
+   ],
+   "insert": "rrect",
+   "pos": "lower"
+  },
+  {
+   "q": [
+    "blueprint floor plan on tablet desk"
+   ],
+   "motion": "zin"
+  },
+  {
+   "q": [
+    "dining table room measure"
+   ],
+   "insert": "tilt",
+   "pos": "upper"
+  },
+  {
+   "q": [
+    "person relaxing on couch bright apartment"
+   ],
+   "motion": "panr"
+  },
+  {
+   "q": [
+    "empty living room wooden floor sunlight"
+   ],
+   "insert": "tv",
+   "pos": "center"
+  },
+  {
+   "q": [
+    "couple planning home layout tablet"
+   ],
+   "motion": "zout"
+  },
+  {
+   "q": [
+    "furniture store showroom sofa"
+   ],
+   "insert": "arch",
+   "pos": "lower"
+  },
+  {
+   "q": [
+    "person measuring living room with phone ar"
+   ],
+   "motion": "panl"
+  },
+  {
+   "q": [
+    "measuring tape metal bending closeup"
+   ],
+   "insert": "hexagon",
+   "pos": "center"
+  },
+  {
+   "q": [
+    "hand pointing phone at wall measuring"
+   ],
+   "motion": "panup"
+  },
+  {
+   "q": [
+    "modern tv mounted on wall living room"
+   ],
+   "insert": "diamond",
+   "pos": "upper"
+  },
+  {
+   "q": [
+    "curtains window measuring home"
+   ],
+   "motion": "pandown"
+  },
+  {
+   "q": [
+    "kitchen cabinets measuring renovation"
+   ],
+   "insert": "phone",
+   "pos": "center"
+  }
+ ],
+ "overlays": [
+  {
+   "at": 0.123,
+   "dur": 1.67,
+   "type": "kicker",
+   "text": "POCKET TAPE"
+  },
+  {
+   "at": 0.28,
+   "dur": 2.6,
+   "type": "checklist",
+   "items": [
+    "Measure the door",
+    "Measure the sofa",
+    "Compare sizes",
+    "Move it in"
+   ],
+   "pos": "center"
+  },
+  {
+   "at": 0.432,
+   "dur": 1.6,
+   "type": "stat_count",
+   "to": 1,
+   "suffix": "",
+   "label": "PERSON NEEDED",
+   "pos": "center"
+  },
+  {
+   "at": 0.646,
+   "dur": 2.06,
+   "type": "chips",
+   "items": [
+    "POINT",
+    "TAP",
+    "READ",
+    "SAVE"
+   ],
+   "pos": "upper"
+  },
+  {
+   "at": 0.675,
+   "dur": 2.1,
+   "type": "bars",
+   "title": "FURNITURE RETURNS",
+   "unit": "%",
+   "items": [
+    [
+     "Guessing",
+     22
+    ],
+    [
+     "Measured",
+     4
+    ]
+   ],
+   "pos": "center"
+  },
+  {
+   "at": 0.719,
+   "dur": 1.91,
+   "type": "lowerthird",
+   "title": "MEASURE THE DOOR",
+   "sub": "then measure the sofa"
+  },
+  {
+   "at": 0.837,
+   "dur": 2.34,
+   "type": "ticker",
+   "to": 1,
+   "suffix": "",
+   "label": "TAP TO START",
+   "pos": "lower"
+  }
+ ],
+ "cta": {
+  "text": "Comment MEASURE for the app.",
+  "code": "MEASURE"
+ },
+ "caption": "Renting? Measure the wall, drop a virtual frame, line up shelves before a single nail. Shop with real sizes and keep your deposit. Comment MEASURE for the app. #diy #homedecor #interiordesign #measure #movingtips #renter #apartmenttherapy #app #iphone #floorplanner #plan",
+ "yt_title": "Decorate a rental without holes #shorts",
+ "trend_keys": [
+  "app",
+  "iphone",
+  "floorplanner",
+  "plan",
+  "furniture",
+  "without",
+  "tape",
+  "measure"
+ ],
+ "content_type": "viral"
+}
