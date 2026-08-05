@@ -45,6 +45,11 @@ if ($action === 'pay') {
     if (!$payment || empty($payment['id'])) {
         json_out(['ok' => false, 'error' => 'Не удалось создать платёж. Попробуйте позже.'], 502);
     }
+    // Гасим прежние НЕзавершённые платежи этого заказа, чтобы повторный клик «Оплатить»
+    // не плодил висящие pending-платежи (двойная реальная оплата → дубль письма/уведомления).
+    if (tbl_exists('payments')) {
+        q("UPDATE payments SET status='canceled' WHERE order_id=? AND status IN ('pending','waiting_for_capture','')", [$orderId]);
+    }
     update('awards_orders', ['payment_id' => $payment['id']], 'id=:id', ['id' => $orderId]);
     if (tbl_exists('payments')) {
         insert('payments', [

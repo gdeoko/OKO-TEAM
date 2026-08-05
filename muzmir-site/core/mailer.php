@@ -438,6 +438,15 @@ function mail_send(string $to, string $subject, string $html, array $opt = []): 
         }
     }
 
+    // Envelope-from (SMTP MAIL FROM) тоже обязан быть ASCII: если логин кириллический —
+    // приводим домен к punycode, иначе Яндекс/сервер отвергнет (SMTPUTF8 не гарантирован).
+    $envelopeFrom = $user;
+    if (preg_match('/[^\x20-\x7E]/', $envelopeFrom) && str_contains($envelopeFrom, '@') && function_exists('idn_to_ascii')) {
+        [$elp, $edom] = explode('@', $envelopeFrom, 2);
+        $easc = @idn_to_ascii($edom, IDNA_DEFAULT, INTL_IDNA_VARIANT_UTS46);
+        if ($easc) $envelopeFrom = $elp . '@' . $easc;
+    }
+
     $mime = mail_build_mime($fromName, $fromAddr, $to, $replyTo, $subject, $html, $attach);
 
     // Тело письма читаем cURL'ом из потока в памяти.
@@ -451,7 +460,7 @@ function mail_send(string $to, string $subject, string $html, array $opt = []): 
         CURLOPT_USE_SSL        => CURLUSESSL_ALL,
         CURLOPT_USERNAME       => $user,
         CURLOPT_PASSWORD       => $pass,
-        CURLOPT_MAIL_FROM      => '<' . $user . '>',
+        CURLOPT_MAIL_FROM      => '<' . $envelopeFrom . '>',
         CURLOPT_MAIL_RCPT      => ['<' . $to . '>'],
         CURLOPT_UPLOAD         => true,
         CURLOPT_INFILE         => $stream,

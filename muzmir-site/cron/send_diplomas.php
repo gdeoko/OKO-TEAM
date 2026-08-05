@@ -70,6 +70,7 @@ if (PHP_SAPI === 'cli' && in_array('--render-test', $argv, true)) {
 try { db()->exec("ALTER TABLE diplomas ADD COLUMN scheduled_at TEXT"); } catch (\Throwable $e) {}
 try { db()->exec("ALTER TABLE applications ADD COLUMN send_at_override TEXT"); } catch (\Throwable $e) {}
 try { db()->exec("ALTER TABLE competitions ADD COLUMN results_published_at TEXT"); } catch (\Throwable $e) {}
+try { db()->exec("ALTER TABLE diplomas ADD COLUMN send_tries INTEGER DEFAULT 0"); } catch (\Throwable $e) {}
 
 date_default_timezone_set('Europe/Moscow');
 $now = new DateTime('now');
@@ -172,9 +173,20 @@ foreach ($groups as $appId => $items) {
         q("UPDATE applications SET status='done' WHERE id=?", [(int)$appId]);
         $sentThisTick++;
     } else {
-        // сдвигаем всю группу на 5 минут (retry)
+        // Ретрай через 5 минут, но не бесконечно: после 5 попыток снимаем с расписания
+        // (scheduled_at=NULL → уходит из очереди), чтобы битый адрес не забивал слот
+        // «1 письмо/тик» вечно. Счётчик tries — в diplomas.send_tries (мягкая миграция выше).
         foreach ($items as $it) {
-            update('diplomas', ['scheduled_at' => (clone $now)->modify('+5 minutes')->format('Y-m-d H:i:s')], 'id=:id', ['id' => (int)$it['id']]);
+            $tries = (int) ($it['send_tries'] ?? 0) + 1;
+            if ($tries >= 5) {
+                update('diplomas', ['scheduled_at' => null, 'send_tries' => $tries], 'id=:id', ['id' => (int)$it['id']]);
+                fwrite(STDERR, "send_diplomas: диплом #{$it['id']} снят с отправки после $tries попыток (адрес $to)\n");
+            } else {
+                update('diplomas', [
+                    'scheduled_at' => (clone $now)->modify('+5 minutes')->format('Y-m-d H:i:s'),
+                    'send_tries'   => $tries,
+                ], 'id=:id', ['id' => (int)$it['id']]);
+            }
         }
     }
 }

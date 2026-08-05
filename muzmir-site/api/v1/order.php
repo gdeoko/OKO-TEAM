@@ -106,9 +106,14 @@ if (!$isClubOrder) {
         json_out(['ok' => false, 'error' => 'Заказать награды можно только по оценённой заявке. Дождитесь результатов или подайте заявку на участие.'], 422);
     }
     try { db()->exec("ALTER TABLE competitions ADD COLUMN results_published_at TEXT"); } catch (\Throwable $e) {}
-    $appRow = one("SELECT a.id, a.result, a.status, c.results_mode, c.results_published_at
+    $appRow = one("SELECT a.id, a.result, a.status, a.user_id, c.results_mode, c.results_published_at
                    FROM applications a LEFT JOIN competitions c ON c.id=a.competition_id
                    WHERE a.id=?", [$applicationId]);
+    // Привязка к покупателю: авторизованный пользователь может заказывать награды только
+    // по СВОЕЙ заявке (не подставить чужой application_id). Гость (без сессии) — по номеру.
+    if ($appRow && $uid && !empty($appRow['user_id']) && (int) $appRow['user_id'] !== (int) $uid) {
+        json_out(['ok' => false, 'error' => 'Эта заявка принадлежит другому участнику — заказ по ней недоступен.'], 403);
+    }
     if (!$appRow || trim((string) ($appRow['result'] ?? '')) === '') {
         json_out(['ok' => false, 'error' => 'По этой заявке ещё нет результата оценки — заказ наград недоступен. Дождитесь публикации результатов.'], 422);
     }

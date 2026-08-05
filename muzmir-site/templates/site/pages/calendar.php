@@ -141,7 +141,6 @@ $comps = all(
 /* --- Карточки-статусы: по конкурсу, с фазой жизненного цикла --- */
 $phaseWeight = ['last' => 0, 'ending' => 1, 'open' => 2, 'soon' => 3, 'judging' => 4, 'awaiting' => 5, 'results' => 6, 'done' => 7];
 $cards = [];
-$kpi = ['total' => 0, 'open' => 0, 'soon' => 0, 'results' => 0];
 foreach ($comps as $c) {
     [$badgeClass, $badgeLabel, $note, $phase] = $lifecycle($c);
     // Прогресс окна приёма заявок (0..100).
@@ -159,10 +158,6 @@ foreach ($comps as $c) {
         'c' => $c, 'badgeClass' => $badgeClass, 'badgeLabel' => $badgeLabel,
         'note' => $note, 'phase' => $phase, 'pct' => $pct,
     ];
-    $kpi['total']++;
-    if (in_array($phase, ['open', 'ending', 'last'], true)) $kpi['open']++;
-    if ($phase === 'soon') $kpi['soon']++;
-    if ($phase === 'results') $kpi['results']++;
 }
 // Активные конкурсы - выше, завершённые - ниже.
 usort($cards, function ($a, $b) use ($phaseWeight) {
@@ -504,8 +499,6 @@ ob_start(); ?>
 .cal-year-chip{padding:9px 18px;border-radius:999px;border:1.5px solid var(--gold);font-weight:700;color:var(--gold-2)}
 .cal-year-chip.is-active{background:var(--grad-gold);color:var(--gold-fg);border-color:transparent;box-shadow:var(--shadow-btn)}
 
-.calx-kpi{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-top:26px}
-.calx-kpi .stat{text-align:center}
 
 .btn--sm{padding:9px 16px;font-size:.86rem}
 .btn--sm svg{width:15px;height:15px}
@@ -569,8 +562,6 @@ ob_start(); ?>
 .calx-tl-title{position:relative;z-index:1}
 .calx-window .bar{box-shadow:inset 0 1px 3px rgba(139,111,31,.12)}
 .calx-window .bar>i{box-shadow:0 0 8px rgba(201,168,76,.5)}
-.calx-kpi .stat{position:relative;overflow:hidden}
-.calx-kpi .stat::after{content:"";position:absolute;left:0;right:0;bottom:0;height:2px;background:var(--grad-gold);opacity:.5}
 
 /* --- Моушен-микро (только transform/opacity; глушится глобальным prefers-reduced-motion) --- */
 .cal-yearnav{transition:background .2s ease,color .2s ease,border-color .2s ease,transform .2s ease}
@@ -634,7 +625,6 @@ ob_start(); ?>
 .arcx-item__ic svg{width:100%;height:100%}
 .arcx-item__name{font-size:.88rem;font-weight:600;color:var(--text);line-height:1.35}
 
-@media (max-width:960px){.calx-kpi{grid-template-columns:repeat(2,1fr)}}
 @media (max-width:640px){
   .calx-card__actions .btn{flex:1 1 100%}
   .arcx{padding-left:20px}
@@ -642,7 +632,6 @@ ob_start(); ?>
   .arcx-year__num{font-size:1.85rem}
   .arcx-list{grid-template-columns:1fr}
 }
-@media (max-width:400px){.calx-kpi{gap:10px}.calx-kpi .stat b{font-size:1.5rem}}
 </style>
 
 <!-- Кнопки «Поделиться» ([data-share]) обрабатываются глобально в partials/popups.php. -->
