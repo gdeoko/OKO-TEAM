@@ -7,8 +7,14 @@ $competition = (string)($vars['competition'] ?? '');
 $start = (string)($vars['start_date'] ?? '');
 $countdown = (string)($vars['countdown'] ?? '');
 $comp = (string)($vars['comp_url'] ?? '#');
+$cover = (string)($vars['cover_url'] ?? '');
 $hello = $name !== '' ? 'Здравствуйте, ' . h($name) . '!' : 'Здравствуйте!';
 ?>
+<?php if ($cover !== ''): ?>
+<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin:0 0 18px;"><tr><td align="center">
+  <a href="<?= h($comp) ?>" style="text-decoration:none;"><img src="<?= h($cover) ?>" alt="Афиша конкурса «<?= h($competition) ?>»" width="516" style="display:block;width:100%;max-width:516px;height:auto;border-radius:14px;border:1px solid #DCE3F3;"></a>
+</td></tr></table>
+<?php endif; ?>
 <h1 style="margin:0 0 18px;font-family:Georgia,'Times New Roman',serif;font-size:25px;color:#17307A;font-weight:700;line-height:1.25;">Конкурс скоро стартует</h1>
 <p style="margin:0 0 14px;"><?= $hello ?></p>
 <p style="margin:0 0 20px;">Вы просили напомнить о конкурсе «<?= h($competition) ?>»<?= $countdown !== '' ? ' - и вот он уже ' . h($countdown) : '' ?>. Самое время подготовить работу, чтобы подать заявку в первый же день приёма.</p>

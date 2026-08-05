@@ -120,7 +120,7 @@ try {
             // Конкурс берём из БД по slug (ничего не выдумываем).
             if (!array_key_exists($slug, $compCache)) {
                 $compCache[$slug] = one(
-                    "SELECT id, slug, name, start_date, status FROM competitions
+                    "SELECT id, slug, name, start_date, status, cover FROM competitions
                       WHERE slug = ? AND status <> 'draft'",
                     [$slug]
                 );
@@ -150,12 +150,17 @@ try {
                 : calrem_unsub_url_email($email);
 
             $compUrl = url('/competition/' . $comp['slug']);
+            // Афиша конкурса в письмо (обложка из БД, абсолютный URL).
+            $coverRaw = trim((string) ($comp['cover'] ?? ''));
+            $coverUrl = $coverRaw === '' ? ''
+                : (preg_match('~^https?://~', $coverRaw) ? $coverRaw : rtrim((string) cfgv('base_url'), '/') . '/' . ltrim($coverRaw, '/'));
             $html = function_exists('mail_template') ? mail_template('calendar_reminder', [
                 'name'            => $name,
                 'competition'     => (string) $comp['name'],
                 'start_date'      => function_exists('ru_date') ? ru_date($start) : $start,
                 'countdown'       => $countdown,
                 'comp_url'        => $compUrl,
+                'cover_url'       => $coverUrl,
                 'preheader'       => 'Конкурс «' . $comp['name'] . '» ' . $countdown,
                 '_tx'             => [
                     'hero'    => mm_cta_primary($compUrl, 'Открыть страницу конкурса', 'Приём заявок ' . $countdown),

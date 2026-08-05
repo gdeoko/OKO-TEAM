@@ -193,6 +193,50 @@ try {
             cron_log(JOB, "дедлайн $days дн.: «{$c['name']}» -> $queued писем в очередь");
         }
     }
+
+    /* ---------- 4) Дожим «оставьте отзыв» (через 3 дня после отправки диплома) ---------- */
+    $reviews = 0;
+    $rows = all(
+        "SELECT a.id, a.user_id, a.full_name, a.email, a.competition_id, c.name AS comp_name, c.slug AS comp_slug
+           FROM diplomas d
+           JOIN applications a ON a.id = d.application_id
+           JOIN competitions c ON c.id = a.competition_id
+          WHERE d.sent_at IS NOT NULL
+            AND date(d.sent_at) <= date('now', '-3 days')
+            AND a.email <> ''
+          GROUP BY a.id"
+    );
+    foreach ($rows as $a) {
+        $id = (int) $a['id'];
+        if (already_notified('reminder_review', 'application', $id)) continue;
+        // Уже оставил отзыв по этому конкурсу — не просим повторно.
+        $has = (int) scalar("SELECT COUNT(*) FROM reviews WHERE competition_id=? AND (user_id=? OR author=?)",
+            [(int) $a['competition_id'], (int) ($a['user_id'] ?? 0), (string) $a['full_name']]);
+        if ($has > 0) { audit('reminder_review', 'application', $id, ['skipped' => 'has_review']); continue; }
+
+        $reviewsUrl = url('/reviews');
+        $name = trim((string) $a['full_name']);
+        $hello = $name !== '' ? 'Здравствуйте, ' . h($name) . '!' : 'Здравствуйте!';
+        $inner = '<h1 style="margin:0 0 14px;font-family:Georgia,serif;font-size:23px;color:#17307A;font-weight:700;">Поделитесь впечатлением</h1>'
+               . '<p style="margin:0 0 12px;">' . $hello . '</p>'
+               . '<p style="margin:0 0 16px;">Вы участвовали в конкурсе «' . h((string) $a['comp_name']) . '» и получили наградные документы. '
+               . 'Нам очень важно Ваше мнение — расскажите, как всё прошло. Ваш отзыв помогает другим участникам и вдохновляет нас. Это займёт минуту.</p>';
+        $html = function_exists('mm_email_tx') ? mm_email_tx($inner, [
+            'preheader' => 'Расскажите о конкурсе «' . (string) $a['comp_name'] . '»',
+            'hero'      => mm_cta_primary($reviewsUrl, 'Оставить отзыв', 'Конкурс «' . (string) $a['comp_name'] . '»'),
+            'actions'   => [['Личный кабинет', url('/cabinet')], ['Другие конкурсы', url('/competitions')]],
+            'thanks'    => true,
+        ]) : '';
+        if ($html !== '' && reminder_enqueue((string) $a['email'], (string) $a['full_name'], 'Поделитесь отзывом о конкурсе «' . $a['comp_name'] . '»', $html)) {
+            audit('reminder_review', 'application', $id, ['competition' => $a['comp_name']]);
+            if (!empty($a['user_id']) && function_exists('notify_user')) {
+                notify_user((int) $a['user_id'], 'Поделитесь отзывом',
+                    'Расскажите, как прошёл конкурс «' . $a['comp_name'] . '». Ваше мнение важно для нас.', '/reviews', 'star');
+            }
+            $reviews++;
+        }
+    }
+    cron_log(JOB, "дожим отзывов: поставлено в очередь $reviews");
 } catch (\Throwable $e) {
     cron_log(JOB, 'ОШИБКА: ' . $e->getMessage());
 } finally {
