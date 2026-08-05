@@ -236,9 +236,20 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 }
 
 // --- Данные ---
-$apps = all("SELECT a.*, c.name AS comp_name, c.slug AS comp_slug, c.is_paid AS comp_paid
+$apps = all("SELECT a.*, c.name AS comp_name, c.slug AS comp_slug, c.is_paid AS comp_paid,
+                    c.results_mode AS comp_results_mode, c.results_date AS comp_results_date,
+                    c.results_published_at AS comp_results_pub
              FROM applications a LEFT JOIN competitions c ON c.id=a.competition_id
              WHERE a.user_id=? ORDER BY a.created_at DESC", [$uid]);
+// Длинный конкурс (results_mode='list'): участник НЕ видит звание и не заказывает
+// награды, пока результаты не опубликованы. Прячем результат до публикации.
+foreach ($apps as &$_a) {
+    $_longHidden = ((string)($_a['comp_results_mode'] ?? '') === 'list')
+        && trim((string)($_a['comp_results_pub'] ?? '')) === '';
+    $_a['_long_hidden'] = $_longHidden;
+    if ($_longHidden) { $_a['result'] = ''; $_a['extra_diploma'] = ''; }
+}
+unset($_a);
 $diplomas = all("SELECT d.*, a.full_name, a.result AS app_result, c.name AS comp_name
                  FROM diplomas d
                  JOIN applications a ON a.id=d.application_id
@@ -760,6 +771,9 @@ ob_start(); ?>
                 <?php else: ?>
                   <p class="cab-order-gone">Срок заказа наград по этой заявке истёк (60 дней после оценки).</p>
                 <?php endif; ?>
+              <?php elseif (!empty($a['_long_hidden'])): ?>
+                <?php $ld = trim((string)($a['comp_results_date'] ?? '')); ?>
+                <p class="cab-meta" style="margin-top:10px;opacity:.85">Результаты этого конкурса будут опубликованы<?= $ld !== '' ? ' ' . h(ru_date(substr($ld,0,10))) : '' ?>. После публикации здесь появится звание, и можно будет заказать награды.</p>
               <?php elseif (!$isRej): ?>
                 <p class="cab-meta" style="margin-top:10px;opacity:.85">Награды можно будет заказать после оглашения результата.</p>
               <?php endif; ?>

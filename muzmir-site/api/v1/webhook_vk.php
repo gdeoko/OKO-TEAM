@@ -107,6 +107,21 @@ function vk_cb_ack_then_process(string $type): void {
             insert('chat_messages', ['user_id' => null, 'session_key' => $sessionKey, 'role' => 'user', 'text' => $text, 'file' => '']);
         }
 
+        // Последний ответ оператора в этом диалоге — для антидубля и «тишины на стикеры».
+        try {
+            $lastAsst = (string) (scalar("SELECT text FROM chat_messages WHERE session_key=? AND role='assistant' ORDER BY id DESC LIMIT 1", [$sessionKey]) ?: '');
+            $lastRole = (string) (scalar("SELECT role FROM chat_messages WHERE session_key=? ORDER BY id DESC LIMIT 1", [$sessionKey]) ?: '');
+        } catch (\Throwable $e) { $lastAsst = ''; $lastRole = ''; }
+        // Нормализация для сравнения (без пробелов/регистра/эмодзи-хвостов).
+        $normReply = static fn(string $s): string => mb_strtolower(preg_replace('/\s+/u', ' ', trim($s)));
+
+        // Стикеры/картинки/пустой текст: НЕ дёргаем человека повторно. Если мы только что
+        // ответили (последняя запись — наш ответ) — молчим. Иначе один раз мягко просим текст.
+        if ($text === '' && $lastRole === 'assistant') {
+            _vk_log('skip empty (sticker) peer=' . $peer . ' — уже ответили');
+            return;
+        }
+
         vk_typing($peer);                        // «печатает…» сразу, как живой оператор
         $name  = vk_user_name($peer);            // имя для персонального приветствия
         $greet = chat_should_greet($sessionKey); // здороваемся раз в начале / после суток
@@ -143,6 +158,24 @@ function vk_cb_ack_then_process(string $type): void {
                 if ($tail !== '') $core = trim($core . "\n\n" . $tail);
             }
             $reply = chat_wrap_reply($sessionKey, $core, $name, $greet, false);
+        }
+
+        // АНТИДУБЛЬ: нельзя слать один и тот же ответ подряд (участник видит спам).
+        // Если сгенерированный ответ совпал с прошлым — заменяем коротким уточнением;
+        // если и оно уже было — молчим (не отвечаем на каждое сообщение/стикер).
+        if (!$closing && $lastAsst !== '' && $normReply($reply) === $normReply($lastAsst)) {
+            $clarifiers = [
+                'Уточните, пожалуйста, вопрос текстом — по участию, оплате, результатам или наградам, — и я подскажу.',
+                'Напишите, пожалуйста, чем помочь: заявка, оплата, результаты или награды?',
+            ];
+            // Выбираем вариант, которого ещё не было последним.
+            $alt = $normReply($clarifiers[0]) === $normReply($lastAsst) ? $clarifiers[1] : $clarifiers[0];
+            if ($normReply($alt) === $normReply($lastAsst)) {
+                _vk_log('skip duplicate reply peer=' . $peer);
+                return; // всё уже сказано — молчим
+            }
+            $reply = chat_wrap_reply($sessionKey, $alt, $name, false, true);
+            $short = true;
         }
 
         // Сразу фиксируем ответ в истории (состояние диалога корректно тут же).

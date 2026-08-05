@@ -105,9 +105,16 @@ if (!$isClubOrder) {
     if (!$applicationId) {
         json_out(['ok' => false, 'error' => 'Заказать награды можно только по оценённой заявке. Дождитесь результатов или подайте заявку на участие.'], 422);
     }
-    $appRow = one("SELECT id, result, status FROM applications WHERE id=?", [$applicationId]);
+    $appRow = one("SELECT a.id, a.result, a.status, c.results_mode, c.results_published_at
+                   FROM applications a LEFT JOIN competitions c ON c.id=a.competition_id
+                   WHERE a.id=?", [$applicationId]);
     if (!$appRow || trim((string) ($appRow['result'] ?? '')) === '') {
         json_out(['ok' => false, 'error' => 'По этой заявке ещё нет результата оценки — заказ наград недоступен. Дождитесь публикации результатов.'], 422);
+    }
+    // Длинный конкурс: заказ наград доступен ТОЛЬКО после публикации результатов.
+    if ((string) ($appRow['results_mode'] ?? '') === 'list'
+        && trim((string) ($appRow['results_published_at'] ?? '')) === '') {
+        json_out(['ok' => false, 'error' => 'Результаты этого конкурса ещё не опубликованы. Заказ наград откроется после публикации итогов.'], 422);
     }
 }
 

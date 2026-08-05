@@ -88,7 +88,10 @@ function grading_queue_rows(int $comp = 0, string $order = 'old'): array {
     // ГЕЙТ ПО ОПЛАТЕ: в очередь оценивания попадают только принятые заявки —
     // бесплатные (is_paid=1 сразу) и оплаченные платные (is_paid=1 после оплаты).
     // Неоплаченная платная заявка «не существует» и не оценивается.
-    $w = "a.status IN ('new','submitted','pending','paid','judging') AND a.is_paid=1"; $args = [];
+    // ДЛИННЫЕ КОНКУРСЫ (results_mode='list') сюда НЕ попадают — они оцениваются
+    // в отдельном разделе «Длинные конкурсы» (admin/longcomp.php).
+    $w = "a.status IN ('new','submitted','pending','paid','judging') AND a.is_paid=1
+          AND (c.results_mode IS NULL OR c.results_mode <> 'list')"; $args = [];
     if ($comp) { $w .= " AND a.competition_id=?"; $args[] = $comp; }
     $rows = all("SELECT a.*, c.name comp FROM applications a
                  LEFT JOIN competitions c ON c.id=a.competition_id
