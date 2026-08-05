@@ -244,6 +244,7 @@ function mail_bulk_accounts(): array {
                     'port'      => (int) ($a['port'] ?? 465),
                     'user'      => (string) $a['user'],
                     'pass'      => (string) $a['pass'],
+                    'from_addr' => (string) ($a['from_addr'] ?? $a['user']),
                     'from_name' => (string) ($a['from_name'] ?? cfgv('mail_from_name', 'Культурного центра «Музыкальный Мир»')),
                 ];
             }
@@ -274,8 +275,12 @@ function mail_send(string $to, string $subject, string $html, array $opt = []): 
     $fromName = (string) ($opt['from_name'] ?? $acc['from_name'] ?? cfgv('mail_from_name', 'Культурного центра «Музыкальный Мир»'));
     $replyTo  = (string) ($opt['reply_to'] ?? cfgv('mail_reply_to', ''));
     $attach   = (string) ($opt['attach'] ?? '');
+    // Адрес в заголовке From может отличаться от логина авторизации:
+    // логин Яндекса для IDN-домена — в punycode (user), а показываем красивый
+    // кириллический адрес (from_addr). Конверт (MAIL FROM) — по логину user.
+    $fromAddr = (string) ($acc['from_addr'] ?? $user);
 
-    $mime = mail_build_mime($fromName, $user, $to, $replyTo, $subject, $html, $attach);
+    $mime = mail_build_mime($fromName, $fromAddr, $to, $replyTo, $subject, $html, $attach);
 
     // Тело письма читаем cURL'ом из потока в памяти.
     $stream = fopen('php://temp', 'r+');
