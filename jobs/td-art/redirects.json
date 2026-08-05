@@ -1,0 +1,640 @@
+{
+  "items": [
+    {
+      "source": "/design-project/dom/",
+      "target": "https://design.td-art.ru/folio",
+      "code": 301,
+      "regex": false
+    },
+    {
+      "source": "/design-project/kvartira/",
+      "target": "https://design.td-art.ru/folio",
+      "code": 301,
+      "regex": false
+    },
+    {
+      "source": "/articles/interesnoe/elitnyj-dizajn-interera-v-chem-zhe-on-zaklyuchaetsya/",
+      "target": "https://design.td-art.ru/folio",
+      "code": 301,
+      "regex": false
+    },
+    {
+      "source": "/articles/interesnoe/stil-barokko-v-interere/",
+      "target": "https://design.td-art.ru/folio",
+      "code": 301,
+      "regex": false
+    },
+    {
+      "source": "/articles/gostinaya/osobennosti-interera-gostinoj-v-chastnom-dome/",
+      "target": "https://design.td-art.ru/folio",
+      "code": 301,
+      "regex": false
+    },
+    {
+      "source": "/",
+      "target": "https://design.td-art.ru/",
+      "code": 301,
+      "regex": false
+    },
+    {
+      "source": "/articles/bedroom/balcony/",
+      "target": "https://design.td-art.ru/folio",
+      "code": 301,
+      "regex": false
+    },
+    {
+      "source": "/articles/gostinaya/fireplace/",
+      "target": "https://design.td-art.ru/folio",
+      "code": 301,
+      "regex": false
+    },
+    {
+      "source": "/articles/interesnoe/vintazhnyj-stil-v-dizajne-interera/",
+      "target": "https://design.td-art.ru/folio",
+      "code": 301,
+      "regex": false
+    },
+    {
+      "source": "/articles/interesnoe/stil-konstruktivizm-v-dizajne-interera/",
+      "target": "https://design.td-art.ru/folio",
+      "code": 301,
+      "regex": false
+    },
+    {
+      "source": "/articles/bedroom/interer-spalni-v-klassicheskom-stile/",
+      "target": "https://design.td-art.ru/folio",
+      "code": 301,
+      "regex": false
+    },
+    {
+      "source": "/design-project/avtorskiy-nadzor/",
+      "target": "https://design.td-art.ru/complex",
+      "code": 301,
+      "regex": false
+    },
+    {
+      "source": "/articles/interesnoe/fioletovie-ottenki-v-interiere/",
+      "target": "https://design.td-art.ru/folio",
+      "code": 301,
+      "regex": false
+    },
+    {
+      "source": "/articles/bedroom/bay-window/",
+      "target": "https://design.td-art.ru/folio",
+      "code": 301,
+      "regex": false
+    },
+    {
+      "source": "/articles/vannaya/art-deko",
+      "target": "https://design.td-art.ru/folio",
+      "code": 301,
+      "regex": false
+    },
+    {
+      "source": "/prices/",
+      "target": "https://design.td-art.ru/",
+      "code": 301,
+      "regex": false
+    },
+    {
+      "source": "/articles/interesnoe/skolko-nuzhno-vremeni-na-rabotu-s-dizajnerom/",
+      "target": "https://design.td-art.ru/folio",
+      "code": 301,
+      "regex": false
+    },
+    {
+      "source": "/articles/interesnoe/8-sovetov-kak-pravilno-sdelat-remont/",
+      "target": "https://design.td-art.ru/folio",
+      "code": 301,
+      "regex": false
+    },
+    {
+      "source": "/articles/kitchen/balcony/",
+      "target": "https://design.td-art.ru/folio",
+      "code": 301,
+      "regex": false
+    },
+    {
+      "source": "/contacts/",
+      "target": "https://design.td-art.ru/#contacts",
+      "code": 301,
+      "regex": false
+    },
+    {
+      "source": "/byuro/",
+      "target": "https://design.td-art.ru/folio",
+      "code": 301,
+      "regex": false
+    },
+    {
+      "source": "/",
+      "target": "https://design.td-art.ru/",
+      "code": 301,
+      "regex": false
+    },
+    {
+      "source": "/",
+      "target": "https://design.td-art.ru/",
+      "code": 301,
+      "regex": false
+    },
+    {
+      "source": "/articles/interesnoe/kak-pravilno-vybrat-lestnicu-dlya-kottedzha-ili-chastnogo-doma/",
+      "target": "https://design.td-art.ru/folio",
+      "code": 301,
+      "regex": false
+    },
+    {
+      "source": "/articles/gostinaya/minimalizm/",
+      "target": "https://design.td-art.ru/folio",
+      "code": 301,
+      "regex": false
+    },
+    {
+      "source": "/design-project/komplektaciya/",
+      "target": "https://design.td-art.ru/complex",
+      "code": 301,
+      "regex": false
+    },
+    {
+      "source": "/articles/kitchen/bay-window/",
+      "target": "https://design.td-art.ru/folio",
+      "code": 301,
+      "regex": false
+    },
+    {
+      "source": "/articles/kitchen/bar/",
+      "target": "https://design.td-art.ru/folio",
+      "code": 301,
+      "regex": false
+    },
+    {
+      "source": "/articles/interesnoe/kirpich-vnutri-doma/",
+      "target": "https://design.td-art.ru/folio",
+      "code": 301,
+      "regex": false
+    },
+    {
+      "source": "/design-project/",
+      "target": "https://design.td-art.ru/",
+      "code": 301,
+      "regex": false
+    },
+    {
+      "source": "/articles/interesnoe/dizajn-proekt-bolshoj-kvartiry/",
+      "target": "https://design.td-art.ru/folio",
+      "code": 301,
+      "regex": false
+    },
+    {
+      "source": "/articles/kitchen/studio",
+      "target": "https://design.td-art.ru/folio",
+      "code": 301,
+      "regex": false
+    },
+    {
+      "source": "/articles/kitchen/art-deko/",
+      "target": "https://design.td-art.ru/folio",
+      "code": 301,
+      "regex": false
+    },
+    {
+      "source": "/articles/gostinaya/high-tech/",
+      "target": "https://design.td-art.ru/folio",
+      "code": 301,
+      "regex": false
+    },
+    {
+      "source": "/articles/vannaya/high-tech/",
+      "target": "https://design.td-art.ru/folio",
+      "code": 301,
+      "regex": false
+    },
+    {
+      "source": "/articles/interesnoe/anglijskij-stil-v-dizajne-interera/",
+      "target": "https://design.td-art.ru/folio",
+      "code": 301,
+      "regex": false
+    },
+    {
+      "source": "/articles/interesnoe/dizajn-interera-v-klassicheskom-stile/",
+      "target": "https://design.td-art.ru/folio",
+      "code": 301,
+      "regex": false
+    },
+    {
+      "source": "/articles/vannaya/kak-sozdat-vannuyu-komnatu-v-ekostile/",
+      "target": "https://design.td-art.ru/folio",
+      "code": 301,
+      "regex": false
+    },
+    {
+      "source": "/articles/vannaya/minimalism/",
+      "target": "https://design.td-art.ru/folio",
+      "code": 301,
+      "regex": false
+    },
+    {
+      "source": "/articles/vannaya/provence/",
+      "target": "https://design.td-art.ru/folio",
+      "code": 301,
+      "regex": false
+    },
+    {
+      "source": "/articles/interesnoe/frilanser-vs-arhitekturnogo-byuro-kuda-idti-za-intererom-svoej-mechty/",
+      "target": "https://design.td-art.ru/folio",
+      "code": 301,
+      "regex": false
+    },
+    {
+      "source": "/articles/interesnoe/dizajn-kvartiry-svobodnoj-planirovki/",
+      "target": "https://design.td-art.ru/folio",
+      "code": 301,
+      "regex": false
+    },
+    {
+      "source": "/articles/prihozhaya/art-deko/",
+      "target": "https://design.td-art.ru/folio",
+      "code": 301,
+      "regex": false
+    },
+    {
+      "source": "/design-project/interier-pod-kluch/",
+      "target": "https://design.td-art.ru/complex",
+      "code": 301,
+      "regex": false
+    },
+    {
+      "source": "/articles/interesnoe/stil-pop-art/",
+      "target": "https://design.td-art.ru/folio",
+      "code": 301,
+      "regex": false
+    },
+    {
+      "source": "/articles/vannaya/classic/",
+      "target": "https://design.td-art.ru/folio",
+      "code": 301,
+      "regex": false
+    },
+    {
+      "source": "/articles/prihozhaya/dizajn-bolshoj-prihozhej/",
+      "target": "https://design.td-art.ru/folio",
+      "code": 301,
+      "regex": false
+    },
+    {
+      "source": "/articles/bedroom/kantri/",
+      "target": "https://design.td-art.ru/folio",
+      "code": 301,
+      "regex": false
+    },
+    {
+      "source": "/articles/vannaya/idei-po-planirovke-vannoj-komnaty/",
+      "target": "https://design.td-art.ru/folio",
+      "code": 301,
+      "regex": false
+    },
+    {
+      "source": "/articles/kitchen/dizajn-uglovoj-kuhni/",
+      "target": "https://design.td-art.ru/folio",
+      "code": 301,
+      "regex": false
+    },
+    {
+      "source": "/articles/interesnoe/kak-sdelat-pereplanirovku-kvartiry/",
+      "target": "https://design.td-art.ru/folio",
+      "code": 301,
+      "regex": false
+    },
+    {
+      "source": "/articles/bedroom/classic/",
+      "target": "https://design.td-art.ru/folio",
+      "code": 301,
+      "regex": false
+    },
+    {
+      "source": "/articles/gostinaya/art-deko/",
+      "target": "https://design.td-art.ru/folio",
+      "code": 301,
+      "regex": false
+    },
+    {
+      "source": "/articles/kitchen/big/",
+      "target": "https://design.td-art.ru/folio",
+      "code": 301,
+      "regex": false
+    },
+    {
+      "source": "/articles/interesnoe/stil-ampir-v-interere/",
+      "target": "https://design.td-art.ru/folio",
+      "code": 301,
+      "regex": false
+    },
+    {
+      "source": "/articles/interesnoe/klassicheskij-skandinavskij-stil/",
+      "target": "https://design.td-art.ru/folio",
+      "code": 301,
+      "regex": false
+    },
+    {
+      "source": "/articles/interesnoe/interer-sochetayuwij-chernye-i-belye-tona/",
+      "target": "https://design.td-art.ru/folio",
+      "code": 301,
+      "regex": false
+    },
+    {
+      "source": "/articles/bedroom/art-deko/",
+      "target": "https://design.td-art.ru/folio",
+      "code": 301,
+      "regex": false
+    },
+    {
+      "source": "/portfolio/",
+      "target": "https://design.td-art.ru/folio",
+      "code": 301,
+      "regex": false
+    },
+    {
+      "source": "/articles/gostinaya/bay-window-2/",
+      "target": "https://design.td-art.ru/folio",
+      "code": 301,
+      "regex": false
+    },
+    {
+      "source": "/articles/interesnoe/chto-delat-esli-dizajn-proekt-interera-ne-nravitsja/",
+      "target": "https://design.td-art.ru/folio",
+      "code": 301,
+      "regex": false
+    },
+    {
+      "source": "/articles/vannaya/",
+      "target": "https://design.td-art.ru/folio",
+      "code": 301,
+      "regex": false
+    },
+    {
+      "source": "/portfolio/kopengagen/",
+      "target": "https://design.td-art.ru/folio",
+      "code": 301,
+      "regex": false
+    },
+    {
+      "source": "/portfolio/arbat/",
+      "target": "https://design.td-art.ru/arbat",
+      "code": 301,
+      "regex": false
+    },
+    {
+      "source": "/articles/bedroom/modern/",
+      "target": "https://design.td-art.ru/folio",
+      "code": 301,
+      "regex": false
+    },
+    {
+      "source": "/articles/vannaya/modern/",
+      "target": "https://design.td-art.ru/folio",
+      "code": 301,
+      "regex": false
+    },
+    {
+      "source": "/articles/gostinaya/dizajn-bolshoj-gostinoj/",
+      "target": "https://design.td-art.ru/folio",
+      "code": 301,
+      "regex": false
+    },
+    {
+      "source": "/articles/interesnoe/menyaem-interer-pri-pomowi-cveta/",
+      "target": "https://design.td-art.ru/folio",
+      "code": 301,
+      "regex": false
+    },
+    {
+      "source": "/portfolio/paveletskaya/",
+      "target": "https://design.td-art.ru/paveletskaya",
+      "code": 301,
+      "regex": false
+    },
+    {
+      "source": "/articles/interesnoe/skolko-stoit-horoshij-dizajn-proekt/",
+      "target": "https://design.td-art.ru/folio",
+      "code": 301,
+      "regex": false
+    },
+    {
+      "source": "/portfolio/kristall/",
+      "target": "https://design.td-art.ru/crystal",
+      "code": 301,
+      "regex": false
+    },
+    {
+      "source": "/articles/kitchen/classic/",
+      "target": "https://design.td-art.ru/folio",
+      "code": 301,
+      "regex": false
+    },
+    {
+      "source": "/portfolio/zhk-wow/",
+      "target": "https://design.td-art.ru/wow",
+      "code": 301,
+      "regex": false
+    },
+    {
+      "source": "/articles/bedroom/minimalism/",
+      "target": "https://design.td-art.ru/folio",
+      "code": 301,
+      "regex": false
+    },
+    {
+      "source": "/articles/interesnoe/kak-organizovat-home-office/",
+      "target": "https://design.td-art.ru/folio",
+      "code": 301,
+      "regex": false
+    },
+    {
+      "source": "/articles/bedroom/",
+      "target": "https://design.td-art.ru/folio",
+      "code": 301,
+      "regex": false
+    },
+    {
+      "source": "/articles/interesnoe/ostrovnaya-kuhnya-v-interere/",
+      "target": "https://design.td-art.ru/folio",
+      "code": 301,
+      "regex": false
+    },
+    {
+      "source": "/portfolio/akademika-pavlova/",
+      "target": "https://design.td-art.ru/pavlova",
+      "code": 301,
+      "regex": false
+    },
+    {
+      "source": "/portfolio/shuvalovskij/",
+      "target": "https://design.td-art.ru/shuvalovsky",
+      "code": 301,
+      "regex": false
+    },
+    {
+      "source": "/articles/kitchen/provence/",
+      "target": "https://design.td-art.ru/folio",
+      "code": 301,
+      "regex": false
+    },
+    {
+      "source": "/portfolio/serdce-stolicy/",
+      "target": "https://design.td-art.ru/heart",
+      "code": 301,
+      "regex": false
+    },
+    {
+      "source": "/articles/",
+      "target": "https://design.td-art.ru/folio",
+      "code": 301,
+      "regex": false
+    },
+    {
+      "source": "/articles/interesnoe/dizajn-proekt-taunhausa/",
+      "target": "https://design.td-art.ru/folio",
+      "code": 301,
+      "regex": false
+    },
+    {
+      "source": "/portfolio/shome/",
+      "target": "https://design.td-art.ru/shome",
+      "code": 301,
+      "regex": false
+    },
+    {
+      "source": "/articles/gostinaya/",
+      "target": "https://design.td-art.ru/folio",
+      "code": 301,
+      "regex": false
+    },
+    {
+      "source": "/portfolio/west-garden/",
+      "target": "https://design.td-art.ru/westgarden",
+      "code": 301,
+      "regex": false
+    },
+    {
+      "source": "/poisk/",
+      "target": "https://design.td-art.ru/folio",
+      "code": 301,
+      "regex": false
+    },
+    {
+      "source": "/portfolio/kvartira-v-zhk-4-solnca/",
+      "target": "https://design.td-art.ru/4suns",
+      "code": 301,
+      "regex": false
+    },
+    {
+      "source": "/articles/interesnoe/stil-barokko/",
+      "target": "https://design.td-art.ru/folio",
+      "code": 301,
+      "regex": false
+    },
+    {
+      "source": "/portfolio/horoshevskij/",
+      "target": "https://design.td-art.ru/horoshevski",
+      "code": 301,
+      "regex": false
+    },
+    {
+      "source": "/articles/kitchen/modern/",
+      "target": "https://design.td-art.ru/folio",
+      "code": 301,
+      "regex": false
+    },
+    {
+      "source": "/articles/prihozhaya/high-tech/",
+      "target": "https://design.td-art.ru/folio",
+      "code": 301,
+      "regex": false
+    },
+    {
+      "source": "/articles/interesnoe/dizajn-interera-v-sovremennom-stile/",
+      "target": "https://design.td-art.ru/folio",
+      "code": 301,
+      "regex": false
+    },
+    {
+      "source": "/articles/interesnoe/osoznannyj-interer-opredeljaemsja-s-vyborom/",
+      "target": "https://design.td-art.ru/folio",
+      "code": 301,
+      "regex": false
+    },
+    {
+      "source": "/portfolio/fili-city/",
+      "target": "https://design.td-art.ru/folio",
+      "code": 301,
+      "regex": false
+    },
+    {
+      "source": "/portfolio/dom-v-poselke-novye-veshki/",
+      "target": "https://design.td-art.ru/veshki",
+      "code": 301,
+      "regex": false
+    },
+    {
+      "source": "/portfolio/spasskie-vyselki/",
+      "target": "https://design.td-art.ru/house190",
+      "code": 301,
+      "regex": false
+    },
+    {
+      "source": "/articles/kitchen/",
+      "target": "https://design.td-art.ru/folio",
+      "code": 301,
+      "regex": false
+    },
+    {
+      "source": "/portfolio/kvartira-v-starom-fonde/",
+      "target": "https://design.td-art.ru/folio",
+      "code": 301,
+      "regex": false
+    },
+    {
+      "source": "/portfolio/dom-v-novoj-moskve-160m2/",
+      "target": "https://design.td-art.ru/house160",
+      "code": 301,
+      "regex": false
+    },
+    {
+      "source": "/portfolio/kvartira-na-donskom-proezde/",
+      "target": "https://design.td-art.ru/donskoy",
+      "code": 301,
+      "regex": false
+    },
+    {
+      "source": "/portfolio/west-garden-50m2/",
+      "target": "https://design.td-art.ru/westgarden50",
+      "code": 301,
+      "regex": false
+    },
+    {
+      "source": "/articles/prihozhaya/",
+      "target": "https://design.td-art.ru/folio",
+      "code": 301,
+      "regex": false
+    },
+    {
+      "source": "/articles/interesnoe/kak-rasporyaditsya-prostranstvom-lodzhii/",
+      "target": "https://design.td-art.ru/folio",
+      "code": 301,
+      "regex": false
+    },
+    {
+      "source": "/articles/interesnoe/kak-ne-popast-na-novichka/",
+      "target": "https://design.td-art.ru/folio",
+      "code": 301,
+      "regex": false
+    },
+    {
+      "source": "/(.*)",
+      "target": "https://design.td-art.ru/folio",
+      "code": 301,
+      "regex": true
+    }
+  ]
+}
