@@ -117,17 +117,27 @@ foreach ($comps as $c) {
             . '<div style="font-size:12px;color:' . $muted . ';">№ ' . h($it['number']) . ' · QR-проверка подлинности в правом нижнем углу · PDF во вложении</div>'
             . '</td></tr><tr><td style="padding:8px 16px 16px;">' . $img . '</td></tr></table>';
     }
+    // ВАЖНО: транзакционное письмо (с вложениями) — БЕЗ маркетинговой обёртки
+    // (отписка/соц-кнопки/«подпишитесь» → Яндекс режет как СПАМ 554 5.7.1).
+    // Лёгкий фирменный шаблон: логотип + контент + короткий контактный подвал.
+    $logo = h(mm_logo_url());
     $inner = '<p style="margin:0 0 6px;font-size:16px;color:' . $ink . ';">Тестовые наградные документы конкурса</p>'
         . '<h2 style="margin:0 0 16px;font-family:Georgia,serif;font-size:22px;color:' . $navy . ';">«' . h($cname) . '»</h2>'
         . '<p style="margin:0 0 18px;font-size:14px;color:' . $muted . ';line-height:1.6;">Ниже — 4 документа по этому конкурсу: основной диплом (аттестационный результат), '
         . 'дополнительный (спецноминация), именной (участник в составе коллектива) и благодарность педагогу. '
         . 'Каждый — с номером и QR-кодом проверки подлинности. Файлы PDF приложены к письму.</p>'
         . $cards;
-
-    $html = mm_email_layout($inner, [
-        'preheader' => 'Тест наградных документов: ' . $cname . ' (4 файла)',
-        'audience_note' => 'Служебное тестовое письмо наградного отдела.',
-    ]);
+    $html = '<!DOCTYPE html><html lang="ru"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"></head>'
+        . '<body style="margin:0;background:#F4F6FC;font-family:\'Segoe UI\',Arial,sans-serif;color:' . $ink . ';">'
+        . '<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#F4F6FC;padding:24px 12px;"><tr><td align="center">'
+        . '<table role="presentation" width="600" cellpadding="0" cellspacing="0" style="width:600px;max-width:100%;background:#FFFFFF;border-radius:14px;overflow:hidden;border:1px solid ' . $line . ';">'
+        . '<tr><td style="background:' . $navy . ';padding:22px 32px;text-align:center;">'
+        . '<img src="' . $logo . '" alt="" width="64" height="64" style="width:64px;height:64px;border-radius:50%;background:#fff;border:2px solid ' . $gold . ';">'
+        . '<div style="margin-top:8px;font-family:Georgia,serif;color:' . $gold . ';font-weight:700;font-size:16px;">Наградный отдел · «Музыкальный Мир»</div></td></tr>'
+        . '<tr><td style="padding:28px 32px;">' . $inner . '</td></tr>'
+        . '<tr><td style="padding:14px 32px 22px;border-top:1px solid ' . $line . ';font-size:12px;color:' . $muted . ';">'
+        . 'Культурный центр «Музыкальный Мир» · ' . h((string)cfgv('org_phone')) . ' · ' . h((string)cfgv('org_email')) . '</td></tr>'
+        . '</table></td></tr></table></body></html>';
 
     $atts = array_values(array_filter(array_map(fn($it) => $it['pdf'], $items), fn($p) => $p && is_file($p)));
     $subject = 'ТЕСТ наградных документов — «' . $cname . '» (4 файла)';

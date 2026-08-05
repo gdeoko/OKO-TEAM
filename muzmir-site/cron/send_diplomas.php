@@ -100,7 +100,10 @@ foreach ($dueList as $d) {
              . $d['comp_name'] . '» - № ' . $d['number'];
     $html = _diploma_email_html((array)$d);
     // mail_send прикладывает ОДИН файл через ключ 'attach' (путь). Диплом — один PDF.
+    // Отправитель — наградной ящик nagradi@ (как и задумано для дипломов/наград).
     $opt = [];
+    $nagradi = function_exists('mail_senders') ? (mail_senders()['nagradi'] ?? []) : [];
+    if ($nagradi) $opt['account'] = $nagradi;
     if (!empty($d['pdf_path']) && is_file((string)$d['pdf_path'])) {
         $opt['attach'] = (string)$d['pdf_path'];
     }
@@ -209,10 +212,21 @@ function _diploma_email_html(array $d): string {
         . mm_email_btn($orderUrl, 'Заказать наградной материал')
         . '<p style="margin:16px 0 0;font-size:13px;color:' . MM_MUTED . ';">Культурный центр «Музыкальный Мир» — при информационной поддержке Министерства культуры и образования субъектов РФ.</p>';
 
-    return mm_email_layout($inner, [
-        'preheader'     => 'Вам присуждено звание «' . $res . '». Диплом № ' . $num . ' — во вложении.',
-        'audience_note' => 'Вы получили это письмо, так как участвуете в конкурсах центра.',
-    ]);
+    // ВАЖНО: диплом — ТРАНЗАКЦИОННОЕ письмо с тяжёлым PDF во вложении. Маркетинговая обёртка
+    // mm_email_layout (отписка/соц-кнопки/«подпишитесь») + вложение → Яндекс режет как СПАМ
+    // (554 5.7.1). Поэтому лёгкий фирменный шаблон: логотип + суть + контакты, без маркетинга.
+    $logo = h(mm_logo_url());
+    return '<!DOCTYPE html><html lang="ru"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"></head>'
+        . '<body style="margin:0;background:#F4F6FC;font-family:\'Segoe UI\',Arial,sans-serif;color:' . MM_INK . ';">'
+        . '<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#F4F6FC;padding:24px 12px;"><tr><td align="center">'
+        . '<table role="presentation" width="600" cellpadding="0" cellspacing="0" style="width:600px;max-width:100%;background:#FFFFFF;border-radius:14px;overflow:hidden;border:1px solid ' . MM_LINE . ';">'
+        . '<tr><td style="background:' . MM_NAVY . ';padding:22px 32px;text-align:center;">'
+        . '<img src="' . $logo . '" alt="" width="60" height="60" style="width:60px;height:60px;border-radius:50%;background:#fff;border:2px solid ' . MM_GOLD . ';">'
+        . '<div style="margin-top:8px;font-family:Georgia,serif;color:' . MM_GOLD . ';font-weight:700;font-size:15px;">Культурный центр «Музыкальный Мир»</div></td></tr>'
+        . '<tr><td style="padding:26px 32px;">' . $inner . '</td></tr>'
+        . '<tr><td style="padding:14px 32px 22px;border-top:1px solid ' . MM_LINE . ';font-size:12px;color:' . MM_MUTED . ';">'
+        . 'Культурный центр «Музыкальный Мир» · ' . h((string) cfgv('org_phone')) . ' · ' . h((string) cfgv('org_email')) . '</td></tr>'
+        . '</table></td></tr></table></body></html>';
 }
 
 /** Отправка оригинала (без подписи/печати) + заявки + адреса в бот заказа (t.me/zakaznagrad) через нашего бота. */
