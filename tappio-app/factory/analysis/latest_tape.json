@@ -5,7 +5,17 @@
  "code": "MEASURE",
  "top": [
   {
-   "views": 1014601,
+   "views": 1541199,
+   "likes": 32088,
+   "comments": 807,
+   "channel": "WoodWorkWeb",
+   "followers": 676000,
+   "dur": 403,
+   "id": "TOve6oVPKVw",
+   "title": "5 Quick Measuring Hacks - Woodworking Tips and Tricks"
+  },
+  {
+   "views": 1014606,
    "likes": 2280,
    "comments": 219,
    "channel": "laanlabs",
@@ -15,7 +25,17 @@
    "title": "Air Measure App Demo - Augmented reality tape measure"
   },
   {
-   "views": 672817,
+   "views": 46659489,
+   "likes": 282488,
+   "comments": 3900,
+   "channel": "The Maker",
+   "followers": 1200000,
+   "dur": 191,
+   "id": "R1sQLwLi96c",
+   "title": "Few People Know About This Tape Measure Feature! Hidden Features of Tape Measure"
+  },
+  {
+   "views": 672834,
    "likes": 2454,
    "comments": 64,
    "channel": "XFix",
@@ -25,27 +45,7 @@
    "title": "Measure App for Android better than iPhone"
   },
   {
-   "views": 614963,
-   "likes": 21784,
-   "comments": 794,
-   "channel": "Caroline Winkler",
-   "followers": 1180000,
-   "dur": 1771,
-   "id": "2kzyoTfawGM",
-   "title": "How to pick the right furniture + decor for your home."
-  },
-  {
-   "views": 415344,
-   "likes": 11612,
-   "comments": 296,
-   "channel": "baixu",
-   "followers": 298000,
-   "dur": 889,
-   "id": "XCmdF2JrRgs",
-   "title": "How to Arrange Your Living Room Furniture (An Architect’s Guide!)"
-  },
-  {
-   "views": 292783,
+   "views": 292796,
    "likes": 1202,
    "comments": 62,
    "channel": "DailyZeck",
@@ -55,8 +55,8 @@
    "title": "How to Use The Measure App on iPhone"
   },
   {
-   "views": 198493,
-   "likes": 1193,
+   "views": 198494,
+   "likes": 1194,
    "comments": 98,
    "channel": "Payette Forward",
    "followers": 1810000,
@@ -65,49 +65,59 @@
    "title": "How Do I Use The iPhone Measure App? How Accurate Is It?"
   },
   {
-   "views": 167416,
-   "likes": 4140,
-   "comments": 560,
-   "channel": "Julie Khuu",
-   "followers": 583000,
-   "dur": 858,
-   "id": "vTPPwFPGlC4",
-   "title": "AWKWARD SPACES- How to Design Around a Corner Fireplace (Furniture + Space Planning Tips!)"
+   "views": 121886,
+   "likes": 1579,
+   "comments": 28,
+   "channel": "Popular Woodworking",
+   "followers": 274000,
+   "dur": 156,
+   "id": "0-Oyg5TNi9s",
+   "title": "Accurate Measuring Tips | Tricks of the Trade"
   },
   {
-   "views": 140379,
-   "likes": 1358,
-   "comments": 90,
-   "channel": "TheSketchUpEssentials",
-   "followers": 606000,
-   "dur": 313,
-   "id": "HplrHVqeL-8",
-   "title": "Creating ROOM MODELS from Phone Lidar Scans! (New App Update!)"
+   "views": 108707,
+   "likes": 1402,
+   "comments": 41,
+   "channel": "Erinn Valencich",
+   "followers": 6510,
+   "dur": 702,
+   "id": "3bIRXou5l6E",
+   "title": "How to Measure Windows for Curtains"
   },
   {
-   "views": 138481,
-   "likes": 3537,
-   "comments": 75,
-   "channel": "Reynard Lowell",
-   "followers": 600000,
-   "dur": 1045,
-   "id": "AHefyeTUs5o",
-   "title": "How To Arrange Your Furniture (7 Layout Mistakes To Avoid)"
+   "views": 86467,
+   "likes": 4757,
+   "comments": 346,
+   "channel": "DIYForKnuckleheads",
+   "followers": 450000,
+   "dur": 592,
+   "id": "hlLFkDlN2ok",
+   "title": "5 LIFE Changing Measuring Hacks!"
   },
   {
-   "views": 137687,
-   "likes": 4346,
-   "comments": 62,
-   "channel": "designchickee",
-   "followers": 74000,
-   "dur": 566,
-   "id": "RZYGTxcPsxY",
-   "title": "How to Arrange Furniture Like a Professional Interior Designer - Interior Design Tips"
+   "views": 69468,
+   "likes": 760,
+   "comments": 70,
+   "channel": "Popular Woodworking",
+   "followers": 274000,
+   "dur": 1127,
+   "id": "1mPfxqyg5wE",
+   "title": "Measuring Hacks | I Can Do That!"
   }
  ],
  "millions_list": [
   {
-   "views": 1014601,
+   "views": 1541199,
+   "likes": 32088,
+   "comments": 807,
+   "channel": "WoodWorkWeb",
+   "followers": 676000,
+   "dur": 403,
+   "id": "TOve6oVPKVw",
+   "title": "5 Quick Measuring Hacks - Woodworking Tips and Tricks"
+  },
+  {
+   "views": 1014606,
    "likes": 2280,
    "comments": 219,
    "channel": "laanlabs",
@@ -115,23 +125,33 @@
    "dur": 45,
    "id": "z7DYC_zbZCM",
    "title": "Air Measure App Demo - Augmented reality tape measure"
+  },
+  {
+   "views": 46659489,
+   "likes": 282488,
+   "comments": 3900,
+   "channel": "The Maker",
+   "followers": 1200000,
+   "dur": 191,
+   "id": "R1sQLwLi96c",
+   "title": "Few People Know About This Tape Measure Feature! Hidden Features of Tape Measure"
   }
  ],
- "millions": 1,
+ "millions": 3,
  "hooks": [
   "measure",
+  "measuring",
   "app",
-  "furniture",
+  "hacks",
+  "tape",
   "iphone",
-  "arrange",
-  "room",
-  "use",
-  "design",
   "tips",
-  "interior",
-  "air",
-  "demo"
+  "tricks",
+  "use",
+  "accurate",
+  "quick",
+  "woodworking"
  ],
- "ts": "2026-08-05 16:14 UTC",
- "avg_views": 379296
+ "ts": "2026-08-05 22:13 UTC",
+ "avg_views": 5076594
 }

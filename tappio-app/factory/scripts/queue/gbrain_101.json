@@ -1,0 +1,221 @@
+{
+ "id": "gbrain_101",
+ "app": "brain",
+ "voice": "en-US-BrianNeural",
+ "rate": "+6%",
+ "grade": "purple_dream",
+ "brand": {
+  "accent": "#9B5DE5",
+  "accent2": "#C9A7FF",
+  "code": "FOCUS",
+  "logo": "brain.png",
+  "name": "BRAINOVA"
+ },
+ "music": {
+  "queries": [
+   "hype trap beat",
+   "calm motivational underscore",
+   "uplifting focus ambient"
+  ]
+ },
+ "cover": {
+  "kicker": "MEMORY HACK",
+  "top": "REMEMBER",
+  "big": "ANY NAME\nFOR GOOD",
+  "q": [
+   "person forgetting keys frustrated"
+  ]
+ },
+ "segments": [
+  {
+   "id": "b1",
+   "text": "Hear the name, then say it back out loud."
+  },
+  {
+   "id": "b2",
+   "text": "Link it to a picture: Rose, a red rose."
+  },
+  {
+   "id": "b3",
+   "text": "Repeat it once after ten seconds."
+  },
+  {
+   "id": "b4",
+   "text": "That triple hit locks it into memory."
+  },
+  {
+   "id": "b5",
+   "text": "Train the habit with quick daily reps."
+  },
+  {
+   "id": "b6",
+   "text": "Never blank on a name again."
+  }
+ ],
+ "shots": [
+  {
+   "q": [
+    "notebook writing pen hand"
+   ],
+   "motion": "panl"
+  },
+  {
+   "q": [
+    "walking park green trees"
+   ],
+   "insert": "phone",
+   "pos": "center"
+  },
+  {
+   "q": [
+    "light bulb idea dark"
+   ],
+   "motion": "zin"
+  },
+  {
+   "q": [
+    "glass of water healthy morning"
+   ],
+   "insert": "tilt",
+   "pos": "upper"
+  },
+  {
+   "q": [
+    "person doing crossword puzzle"
+   ],
+   "motion": "panup"
+  },
+  {
+   "q": [
+    "brain scan mri blue"
+   ],
+   "insert": "rrect",
+   "pos": "upper"
+  },
+  {
+   "q": [
+    "clock ticking time closeup"
+   ],
+   "motion": "pandown"
+  },
+  {
+   "q": [
+    "person sleeping rest night"
+   ],
+   "insert": "tv",
+   "pos": "center"
+  },
+  {
+   "q": [
+    "student studying desk lamp night"
+   ],
+   "motion": "zout"
+  },
+  {
+   "q": [
+    "elderly person smiling sharp mind"
+   ],
+   "insert": "arch",
+   "pos": "center"
+  },
+  {
+   "q": [
+    "coffee cup morning desk"
+   ],
+   "motion": "panr"
+  },
+  {
+   "q": [
+    "sticky notes wall reminders"
+   ],
+   "insert": "hexagon",
+   "pos": "lower"
+  },
+  {
+   "q": [
+    "neurons synapse animation blue"
+   ],
+   "motion": "panl"
+  },
+  {
+   "q": [
+    "yoga breathing calm room"
+   ],
+   "insert": "circle",
+   "pos": "lower"
+  }
+ ],
+ "overlays": [
+  {
+   "at": 0.178,
+   "dur": 1.84,
+   "type": "kinetic",
+   "top": "STAY",
+   "big": "SHARP"
+  },
+  {
+   "at": 0.218,
+   "dur": 2.26,
+   "type": "callout",
+   "text": "FOCUS IS A MUSCLE",
+   "pos": "center"
+  },
+  {
+   "at": 0.423,
+   "dur": 2.38,
+   "type": "ticker",
+   "to": 147,
+   "suffix": "%",
+   "label": "RECALL SPEED",
+   "pos": "lower"
+  },
+  {
+   "at": 0.684,
+   "dur": 2.6,
+   "type": "checklist",
+   "items": [
+    "Take the test",
+    "Play 5 min",
+    "Beat your score",
+    "Keep the streak"
+   ],
+   "pos": "center"
+  },
+  {
+   "at": 0.75,
+   "dur": 2.07,
+   "type": "lowerthird",
+   "title": "FIVE MINUTES A DAY",
+   "sub": "focus grows like a muscle"
+  },
+  {
+   "at": 0.827,
+   "dur": 2.2,
+   "type": "chips",
+   "items": [
+    "RECALL",
+    "REACT",
+    "SOLVE",
+    "REPEAT"
+   ],
+   "pos": "upper"
+  }
+ ],
+ "cta": {
+  "text": "Comment FOCUS for the app.",
+  "code": "FOCUS"
+ },
+ "caption": "Say it back, link it to an image, repeat after ten seconds — that triple hit locks a name in. Train the habit with quick daily reps. Comment FOCUS for the app. #brainhealth #memory #focus #productivity #selfimprovement #mentalhealth #learning #chris #brain #memory #focus",
+ "yt_title": "Remember any name for good #shorts",
+ "trend_keys": [
+  "chris",
+  "brain",
+  "memory",
+  "focus",
+  "get",
+  "bailey",
+  "music",
+  "anything"
+ ],
+ "content_type": "viral"
+}
