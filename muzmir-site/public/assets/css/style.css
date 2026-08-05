@@ -1261,7 +1261,9 @@ body.mz-kbd-open .chat-fab{opacity:0!important;pointer-events:none!important}
   background:color-mix(in srgb,var(--gold-soft) 60%,transparent);
   border:1px solid var(--glass-brd)}
 .comp-toolbar .btn--sm{padding:8px 14px;min-height:36px !important;font-size:.86rem !important;border-radius:10px !important}
-.comp-total{font-size:.94rem;font-weight:600;color:var(--text)}
+/* Итог «Выбрано: N · X ₽» — ВСЕГДА на своей строке (flex-basis:100%), чтобы
+   тулбар не менял высоту при выборе конкурса (иначе форма «прыгает» на каждом клике). */
+.comp-total{font-size:.94rem;font-weight:600;color:var(--text);flex:0 0 100%;text-align:right}
 .comp-total b{font-weight:800;color:var(--gold-ink);font-size:1rem}
 
 /* ══ Кабинет: KPI-плитки и мини-графики (OKO-стиль) ══ */

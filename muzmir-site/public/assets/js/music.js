@@ -136,11 +136,31 @@
       if (userWantsOn && (!audio || audio.paused)) mutedPrestart(); // 2) беззвучный предзапуск
     }, 350);
     armGesture();        // 3) первое касание где угодно → звук
-    // Сворачивание: плавно затухаем в ноль; возврат — плавно возвращаем.
-    document.addEventListener('visibilitychange', function () {
+
+    // Уход со страницы (сворачивание/переключение вкладки): ПЛАВНО затухаем в ноль
+    // и СТАВИМ НА ПАУЗУ (не просто mute — иначе поток продолжает играть в фоне).
+    // Возврат на страницу: возобновляем и ПЛАВНО поднимаем громкость.
+    var hideTimer = null;
+    function fadeOutPause() {
       if (!audio || audio.paused) return;
-      fade(document.hidden ? 0 : 0.32, document.hidden ? 600 : 1000);
+      fade(0, 600);
+      clearTimeout(hideTimer);
+      hideTimer = setTimeout(function () { try { if (audio && !audio.paused) audio.pause(); } catch (e) {} }, 650);
+    }
+    function fadeInResume() {
+      clearTimeout(hideTimer);
+      if (!userWantsOn || !audio) return;
+      if (audio.paused) { audio.muted = false; var pr = audio.play(); if (pr && pr.catch) pr.catch(function () {}); }
+      fade(0.32, 1000);
+    }
+    document.addEventListener('visibilitychange', function () {
+      if (document.hidden) fadeOutPause(); else fadeInResume();
     });
+    // Потеря фокуса окна (alt-tab на десктопе) — тоже мягко приглушаем и ставим паузу.
+    window.addEventListener('blur',  fadeOutPause);
+    window.addEventListener('focus', fadeInResume);
+    // Полный уход (закрытие/переход) — жёстко останавливаем, чтобы звук не «догонял».
+    window.addEventListener('pagehide', function () { try { if (audio) audio.pause(); } catch (e) {} });
   }
 
   // Для настроек профиля: включить/выключить фоновую музыку на лету.
