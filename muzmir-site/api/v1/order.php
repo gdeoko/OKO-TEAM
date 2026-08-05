@@ -105,6 +105,7 @@ if (!$isClubOrder) {
     if (!$applicationId) {
         json_out(['ok' => false, 'error' => 'Заказать награды можно только по оценённой заявке. Дождитесь результатов или подайте заявку на участие.'], 422);
     }
+    try { db()->exec("ALTER TABLE competitions ADD COLUMN results_published_at TEXT"); } catch (\Throwable $e) {}
     $appRow = one("SELECT a.id, a.result, a.status, c.results_mode, c.results_published_at
                    FROM applications a LEFT JOIN competitions c ON c.id=a.competition_id
                    WHERE a.id=?", [$applicationId]);

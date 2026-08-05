@@ -69,6 +69,7 @@ if (PHP_SAPI === 'cli' && in_array('--render-test', $argv, true)) {
 // 1) Убеждаемся что нужные колонки есть (мягкие миграции).
 try { db()->exec("ALTER TABLE diplomas ADD COLUMN scheduled_at TEXT"); } catch (\Throwable $e) {}
 try { db()->exec("ALTER TABLE applications ADD COLUMN send_at_override TEXT"); } catch (\Throwable $e) {}
+try { db()->exec("ALTER TABLE competitions ADD COLUMN results_published_at TEXT"); } catch (\Throwable $e) {}
 
 date_default_timezone_set('Europe/Moscow');
 $now = new DateTime('now');
@@ -130,6 +131,9 @@ $dueList = all("SELECT d.*, a.email, a.full_name, a.number AS app_number, c.name
                   AND d.scheduled_at IS NOT NULL
                   AND d.scheduled_at <= ?
                   AND a.status <> 'rejected'
+                  -- Длинный конкурс (results_mode='list'): дипломы не рассылаем,
+                  -- пока итоги не опубликованы админом (результаты — только пакетно).
+                  AND (c.results_mode <> 'list' OR c.results_published_at IS NOT NULL)
                 ORDER BY d.scheduled_at ASC
                 LIMIT 30", [$now->format('Y-m-d H:i:s')]);
 

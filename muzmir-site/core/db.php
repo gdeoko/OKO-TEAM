@@ -96,6 +96,7 @@ function db_migrate(PDO $pdo): void {
         end_date TEXT,
         results_date TEXT,
         results_mode TEXT DEFAULT 'email',
+        results_published_at TEXT,          -- дата публикации итогов длинного конкурса (results_mode='list')
         status TEXT DEFAULT 'draft',        -- draft|open|closed|judging|finished
         regulation_pdf TEXT DEFAULT '',
         diploma_template TEXT DEFAULT '',

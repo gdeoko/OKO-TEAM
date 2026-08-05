@@ -95,7 +95,7 @@ try {
             'preheader'        => 'Оплата участия пока не поступила',
             '_tx'              => [
                 'hero'    => mm_cta_primary(url('/cabinet'), 'Оплатить участие', ($a['number'] ?? '') !== '' ? 'Заявка №' . (string) $a['number'] . ' ждёт оплаты' : 'Заявка ждёт оплаты'),
-                'actions' => [['Личный кабинет', url('/cabinet')], ['Другие конкурсы', url('/competitions')]],
+                'actions' => [['Личный кабинет', url('/cabinet')]],
             ],
         ]) : '';
 
@@ -224,7 +224,7 @@ try {
         $html = function_exists('mm_email_tx') ? mm_email_tx($inner, [
             'preheader' => 'Расскажите о конкурсе «' . (string) $a['comp_name'] . '»',
             'hero'      => mm_cta_primary($reviewsUrl, 'Оставить отзыв', 'Конкурс «' . (string) $a['comp_name'] . '»'),
-            'actions'   => [['Личный кабинет', url('/cabinet')], ['Другие конкурсы', url('/competitions')]],
+            'actions'   => [['Личный кабинет', url('/cabinet')]],
             'thanks'    => true,
         ]) : '';
         if ($html !== '' && reminder_enqueue((string) $a['email'], (string) $a['full_name'], 'Поделитесь отзывом о конкурсе «' . $a['comp_name'] . '»', $html)) {

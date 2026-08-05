@@ -42,7 +42,7 @@ return [
     'org_address'    => '109240, г. Москва, ул. Солянка, д.14, стр.7',
     'org_phone'      => '+7 (999) 504-88-99',
     'org_phone_raw'  => '+79995048899',
-    'org_email'      => 'kulturniy.centr.mir@mail.ru',
+    'org_email'      => 'kulturniy.centr.mir@gmail.com',
     'org_hours'      => 'Пн–Пт 09:00–18:00, Сб 10:00–16:00, Вс/праздники — выходной (МСК)',
     'org_vk'         => 'https://vk.com/music_world.online',
     'org_tg_channel' => 'https://t.me/kc_mus_mir',

@@ -107,17 +107,21 @@ function vk_cb_ack_then_process(string $type): void {
             insert('chat_messages', ['user_id' => null, 'session_key' => $sessionKey, 'role' => 'user', 'text' => $text, 'file' => '']);
         }
 
-        // Последний ответ оператора в этом диалоге — для антидубля и «тишины на стикеры».
+        // Последний ответ оператора + последняя СОДЕРЖАТЕЛЬНАЯ роль (user/assistant,
+        // игнорируя системные маркеры escalated/dialog_end) — для антидубля и «тишины на стикеры».
         try {
             $lastAsst = (string) (scalar("SELECT text FROM chat_messages WHERE session_key=? AND role='assistant' ORDER BY id DESC LIMIT 1", [$sessionKey]) ?: '');
-            $lastRole = (string) (scalar("SELECT role FROM chat_messages WHERE session_key=? ORDER BY id DESC LIMIT 1", [$sessionKey]) ?: '');
+            $lastRole = (string) (scalar("SELECT role FROM chat_messages WHERE session_key=? AND role IN ('user','assistant') ORDER BY id DESC LIMIT 1", [$sessionKey]) ?: '');
         } catch (\Throwable $e) { $lastAsst = ''; $lastRole = ''; }
         // Нормализация для сравнения (без пробелов/регистра/эмодзи-хвостов).
         $normReply = static fn(string $s): string => mb_strtolower(preg_replace('/\s+/u', ' ', trim($s)));
 
-        // Стикеры/картинки/пустой текст: НЕ дёргаем человека повторно. Если мы только что
-        // ответили (последняя запись — наш ответ) — молчим. Иначе один раз мягко просим текст.
-        if ($text === '' && $lastRole === 'assistant') {
+        // Вложения (фото/видео/документ) во входящем сообщении — например скрин заявки/оплаты.
+        $hasAttach = !empty($msg['attachments']) && is_array($msg['attachments']);
+
+        // Стикеры/эмодзи/пустой текст БЕЗ вложения: не дёргаем человека повторно. Если мы
+        // только что ответили (последняя содержательная запись — наш ответ) — молчим.
+        if ($text === '' && !$hasAttach && $lastRole === 'assistant') {
             _vk_log('skip empty (sticker) peer=' . $peer . ' — уже ответили');
             return;
         }
@@ -136,7 +140,10 @@ function vk_cb_ack_then_process(string $type): void {
             $reply   = chat_closing_message($name);
             $closing = true;
         } elseif ($text === '') {
-            $core  = 'Напишите, пожалуйста, Ваш вопрос текстом — подскажу по заявкам, участию, результатам и наградам Культурного центра «Музыкальный Мир».';
+            // Пришло вложение (фото/скрин) без подписи — подтверждаем получение, а не «пишите текстом».
+            $core = $hasAttach
+                ? 'Спасибо, вложение получила. Подскажите, пожалуйста, по какому вопросу — заявка, оплата, результаты или наградные материалы, — и я помогу.'
+                : 'Напишите, пожалуйста, Ваш вопрос текстом — подскажу по заявкам, участию, результатам и наградам Культурного центра «Музыкальный Мир».';
             $reply = chat_wrap_reply($sessionKey, $core, $name, $greet, false);
         } elseif (($rep = chat_repeat_count($sessionKey, $text)) > 0) {
             // Один и тот же вопрос повторно (в т.ч. троллинг) — короткий человеческий ответ.
@@ -174,7 +181,7 @@ function vk_cb_ack_then_process(string $type): void {
                 _vk_log('skip duplicate reply peer=' . $peer);
                 return; // всё уже сказано — молчим
             }
-            $reply = chat_wrap_reply($sessionKey, $alt, $name, false, true);
+            $reply = chat_wrap_reply($sessionKey, $alt, $name, false, false);
             $short = true;
         }
 

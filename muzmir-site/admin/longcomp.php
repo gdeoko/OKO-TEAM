@@ -12,7 +12,7 @@
  */
 declare(strict_types=1);
 
-require_once BASE_PATH . '/admin/grading.php'; // RESULT_PRESETS(), EXTRA_PRESETS(), grade_result()
+require_once BASE_PATH . '/core/presets.php'; // RESULT_PRESETS(), EXTRA_PRESETS() — БЕЗ включения grading.php
 
 // Публикация результатов — мягкая миграция колонки.
 try { db()->exec("ALTER TABLE competitions ADD COLUMN results_published_at TEXT"); } catch (\Throwable $e) {}

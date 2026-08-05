@@ -223,8 +223,10 @@ $appId  = $appIds[0];
 // в момент подтверждения оплаты. Бесплатные заявки принимаются как раньше — сразу.
 $freeAppIds = [];   // заявки на бесплатные конкурсы — принимаются немедленно
 $freeComps  = [];   // соответствующие конкурсы (для письма/уведомления)
+$paidAppIds = [];   // заявки на платные конкурсы — ждут оплаты (для metadata платежа)
 foreach ($comps as $i => $ci) {
     if (!(int) $ci['is_paid']) { $freeAppIds[] = $appIds[$i]; $freeComps[] = $ci; }
+    else { $paidAppIds[] = $appIds[$i]; }
 }
 $hasPaidPending = count($freeAppIds) < count($appIds); // есть неоплаченные платные
 
@@ -255,6 +257,19 @@ if ($paidComps) {
     $totalPct = min(40, max($loyaltyPct, $clubPct) + $refPct);
     $amount = loyalty_apply($basePriceSum, $totalPct);
 
+    // Платный конкурс с нулевым итогом (price=0 у платного — мисконфиг) НЕ должен
+    // «зависать» невидимой заявкой: принимаем такие заявки как бесплатные (is_paid=1,
+    // письмо/уведомление/приём сразу), иначе они не попадут никуда.
+    if ($amount <= 0 && $paidAppIds) {
+        foreach ($comps as $i => $ci) {
+            if ((int) $ci['is_paid'] && !in_array($appIds[$i], $freeAppIds, true)) {
+                update('applications', ['is_paid' => 1], 'id=:id', ['id' => (int) $appIds[$i]]);
+                $freeAppIds[] = $appIds[$i]; $freeComps[] = $ci;
+            }
+        }
+        $paidAppIds = [];
+    }
+
     $priceInfo = [
         'base_price'    => $basePriceSum,
         'paid_count'    => count($paidComps),
@@ -273,8 +288,10 @@ if ($paidComps) {
             $amount,
             'Оргвзнос за участие в конкурсах: ' . $descNames,
             [
-                'application_ids' => implode(',', $appIds),
-                'application_id'  => (int)$appId, // для обратной совместимости
+                // ТОЛЬКО платные заявки — иначе при оплате бесплатные в смешанном батче
+                // получат дубль письма и ложную плашку «Оплата получена» (core/payments.php).
+                'application_ids' => implode(',', $paidAppIds ?: $appIds),
+                'application_id'  => (int)($paidAppIds[0] ?? $appId), // для обратной совместимости
                 'numbers'         => implode(',', $numbers),
                 'number'          => $number,
                 'email'           => $email,

@@ -236,6 +236,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 }
 
 // --- Данные ---
+// Колонка results_published_at может отсутствовать на старой БД — добавляем мягко,
+// чтобы запрос ниже не падал 500 (создаётся также в admin/longcomp.php).
+try { db()->exec("ALTER TABLE competitions ADD COLUMN results_published_at TEXT"); } catch (\Throwable $e) {}
 $apps = all("SELECT a.*, c.name AS comp_name, c.slug AS comp_slug, c.is_paid AS comp_paid,
                     c.results_mode AS comp_results_mode, c.results_date AS comp_results_date,
                     c.results_published_at AS comp_results_pub

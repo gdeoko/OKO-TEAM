@@ -164,7 +164,7 @@ try {
                 'preheader'       => 'Конкурс «' . $comp['name'] . '» ' . $countdown,
                 '_tx'             => [
                     'hero'    => mm_cta_primary($compUrl, 'Открыть страницу конкурса', 'Приём заявок ' . $countdown),
-                    'actions' => [['Все конкурсы', url('/competitions')], ['Календарь', url('/calendar')]],
+                    'actions' => [['Календарь конкурсов', url('/calendar')]],
                 ],
             ]) : '';
 

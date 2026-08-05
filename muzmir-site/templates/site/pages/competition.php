@@ -255,8 +255,8 @@ ob_start(); ?>
 
     <!-- Конкурс в цифрах (статичные значения) -->
     <div class="comp-stats reveal" id="sec-stats">
-      <div class="comp-stat"><b>12+</b><span>Номинаций</span></div>
-      <div class="comp-stat"><b>7</b><span>Возрастных категорий</span></div>
+      <div class="comp-stat"><b><?= count($noms) ?></b><span>Номинаций</span></div>
+      <div class="comp-stat"><b><?= count($ages) ?></b><span>Возрастных категорий</span></div>
       <div class="comp-stat">
         <b>8</b><span>Наградных званий</span>
         <small class="comp-stat__hint">Гран-при, Лауреат I–III, Дипломант I–III, Участник</small>
