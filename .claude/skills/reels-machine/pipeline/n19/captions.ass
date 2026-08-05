@@ -1,0 +1,27 @@
+[Script Info]
+ScriptType: v4.00+
+PlayResX: 1080
+PlayResY: 1920
+WrapStyle: 2
+
+[V4+ Styles]
+Format: Name, Fontname, Fontsize, PrimaryColour, SecondaryColour, OutlineColour, BackColour, Bold, Italic, Underline, StrikeOut, ScaleX, ScaleY, Spacing, Angle, BorderStyle, Outline, Shadow, Alignment, MarginL, MarginR, MarginV, Encoding
+Style: Sub,Soyuz Grotesk,94,&H002059EA&,&H00FFFFFF,&H00000000,&H00000000,-1,0,0,0,100,100,1,0,1,0,0,4,5,60,60,0,204
+
+[Events]
+Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text
+Dialogue: 0,0:00:00.15,0:00:01.93,Sub,,0,0,0,,{\an5\pos(540,1560)\fad(50,40)}{\k90}СНИМАЕТЕ {\k81}НА
+Dialogue: 0,0:00:01.95,0:00:03.73,Sub,,0,0,0,,{\an5\pos(540,1560)\fad(50,40)}{\k90}ТЕЛЕФОН {\k81}ТЕРЯЕТЕ
+Dialogue: 0,0:00:03.75,0:00:06.06,Sub,,0,0,0,,{\an5\pos(540,1560)\fad(50,40)}{\k120}КЛИЕНТОВ {\k101}ТЕЛЕФОН
+Dialogue: 0,0:00:06.08,0:00:08.30,Sub,,0,0,0,,{\an5\pos(540,1560)\fad(50,40)}{\k112}КАРТИНКА {\k101}СТУДИЯ
+Dialogue: 0,0:00:08.32,0:00:10.86,Sub,,0,0,0,,{\an5\pos(540,1560)\fad(50,40)}{\k143}ПРОДАЖИ {\k101}СВЕТ
+Dialogue: 0,0:00:10.88,0:00:13.11,Sub,,0,0,0,,{\an5\pos(540,1560)\fad(50,40)}{\k112}ЗВУК {\k101}МОНТАЖ
+Dialogue: 0,0:00:13.12,0:00:15.66,Sub,,0,0,0,,{\an5\pos(540,1560)\fad(50,40)}{\k143}ПРОДАКШНА {\k101}ОДИН
+Dialogue: 0,0:00:15.68,0:00:17.91,Sub,,0,0,0,,{\an5\pos(540,1560)\fad(50,40)}{\k112}РОЛИК {\k101}РАБОТАЕТ
+Dialogue: 0,0:00:17.93,0:00:20.08,Sub,,0,0,0,,{\an5\pos(540,1560)\fad(50,40)}{\k143}МЕСЯЦАМИ {\k68}КОНКУРЕНТ
+Dialogue: 0,0:00:20.10,0:00:21.58,Sub,,0,0,0,,{\an5\pos(540,1560)\fad(50,40)}{\k75}В {\k68}ТЕМНОТЕ
+Dialogue: 0,0:00:21.60,0:00:23.08,Sub,,0,0,0,,{\an5\pos(540,1560)\fad(50,40)}{\k75}ВЫ {\k68}В
+Dialogue: 0,0:00:23.10,0:00:24.88,Sub,,0,0,0,,{\an5\pos(540,1560)\fad(50,40)}{\k105}КИНО {\k68}СНИМЕМ
+Dialogue: 0,0:00:24.90,0:00:26.38,Sub,,0,0,0,,{\an5\pos(540,1560)\fad(50,40)}{\k75}В {\k68}СТУДИИ
+Dialogue: 0,0:00:26.40,0:00:27.88,Sub,,0,0,0,,{\an5\pos(540,1560)\fad(50,40)}{\k75}СЪЕМКА {\k68}В
+Dialogue: 0,0:00:27.90,0:00:28.66,Sub,,0,0,0,,{\an5\pos(540,1560)\fad(50,40)}{\k68}ДИРЕКТ
