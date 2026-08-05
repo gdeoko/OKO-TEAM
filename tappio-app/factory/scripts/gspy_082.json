@@ -1,0 +1,278 @@
+{
+ "id": "gspy_082",
+ "app": "spy",
+ "voice": "en-US-AndrewNeural",
+ "rate": "+7%",
+ "grade": "teal_orange",
+ "brand": {
+  "accent": "#00D9FF",
+  "accent2": "#7CFCFF",
+  "code": "PRIVACY",
+  "logo": "spy.png",
+  "name": "SPY CAMERA FINDER"
+ },
+ "music": {
+  "queries": [
+   "minimal tech ambient",
+   "dark tension electronic",
+   "cinematic underscore tech",
+   "cyber suspense pulse"
+  ]
+ },
+ "cover": {
+  "kicker": "CHECKOUT LIST",
+  "top": "30-SECOND",
+  "big": "ROOM\nSWEEP",
+  "q": [
+   "phone flashlight scanning wall"
+  ]
+ },
+ "segments": [
+  {
+   "id": "b1",
+   "text": "Stop scrolling. New room? Run this thirty-second sweep first."
+  },
+  {
+   "id": "b2",
+   "text": "One: scan the Wi-Fi for unknown devices."
+  },
+  {
+   "id": "b3",
+   "text": "Two: kill the lights and pan for lens glints."
+  },
+  {
+   "id": "b4",
+   "text": "Three: check anything aimed at the bed."
+  },
+  {
+   "id": "b5",
+   "text": "Four: unplug what you can't explain."
+  },
+  {
+   "id": "b6",
+   "text": "Do it once, then actually relax."
+  }
+ ],
+ "shots": [
+  {
+   "q": [
+    "desk lamp table hotel"
+   ],
+   "insert": "diamond",
+   "pos": "lower"
+  },
+  {
+   "q": [
+    "air vent grille ceiling"
+   ],
+   "motion": "pandown"
+  },
+  {
+   "q": [
+    "traveler suitcase hotel hallway"
+   ],
+   "insert": "circle",
+   "pos": "upper"
+  },
+  {
+   "q": [
+    "phone flashlight scanning wall"
+   ],
+   "motion": "panup"
+  },
+  {
+   "q": [
+    "hotel room modern interior"
+   ],
+   "insert": "arch",
+   "pos": "center"
+  },
+  {
+   "q": [
+    "surveillance concept eye lens"
+   ],
+   "motion": "panl"
+  },
+  {
+   "q": [
+    "dark bedroom lamp light"
+   ],
+   "insert": "hexagon",
+   "pos": "center"
+  },
+  {
+   "q": [
+    "reflection glass light dot"
+   ],
+   "motion": "zin"
+  },
+  {
+   "q": [
+    "woman looking around hotel room worried"
+   ],
+   "insert": "tilt",
+   "pos": "upper"
+  },
+  {
+   "q": [
+    "power outlet wall socket closeup"
+   ],
+   "motion": "panr"
+  },
+  {
+   "q": [
+    "tv on wall hotel room"
+   ],
+   "insert": "rrect",
+   "pos": "upper"
+  },
+  {
+   "q": [
+    "laptop screen code green"
+   ],
+   "motion": "zout"
+  },
+  {
+   "q": [
+    "airbnb apartment cozy night"
+   ],
+   "insert": "tv",
+   "pos": "lower"
+  },
+  {
+   "q": [
+    "bookshelf decor living room"
+   ],
+   "motion": "pandown"
+  }
+ ],
+ "overlays": [
+  {
+   "at": 0.051,
+   "dur": 2.36,
+   "type": "kicker",
+   "text": "SCAN FIRST"
+  },
+  {
+   "at": 0.061,
+   "dur": 1.84,
+   "type": "gauge",
+   "to": 30,
+   "max": 60,
+   "suffix": "s",
+   "label": "FULL ROOM SWEEP",
+   "pos": "center"
+  },
+  {
+   "at": 0.082,
+   "dur": 1.78,
+   "type": "stat_count",
+   "to": 94,
+   "suffix": "%",
+   "label": "DETECTION",
+   "pos": "center"
+  },
+  {
+   "at": 0.182,
+   "dur": 1.8,
+   "type": "bars",
+   "title": "HIDDEN CAM REPORTS",
+   "unit": "%",
+   "items": [
+    [
+     "2019",
+     6
+    ],
+    [
+     "2024",
+     34
+    ]
+   ],
+   "pos": "center"
+  },
+  {
+   "at": 0.282,
+   "dur": 1.7,
+   "type": "kinetic",
+   "top": "LOOK",
+   "big": "CLOSER"
+  },
+  {
+   "at": 0.364,
+   "dur": 2.33,
+   "type": "callout",
+   "text": "IR GLINT GIVES IT AWAY",
+   "pos": "center"
+  },
+  {
+   "at": 0.418,
+   "dur": 1.83,
+   "type": "ticker",
+   "to": 2,
+   "suffix": "",
+   "label": "SIGNALS CHECKED",
+   "pos": "lower"
+  },
+  {
+   "at": 0.64,
+   "dur": 1.61,
+   "type": "chips",
+   "items": [
+    "WI-FI",
+    "IR",
+    "BLUETOOTH",
+    "RF"
+   ],
+   "pos": "upper"
+  },
+  {
+   "at": 0.692,
+   "dur": 1.63,
+   "type": "lowerthird",
+   "title": "KILL THE LIGHTS",
+   "sub": "lenses glow in IR"
+  },
+  {
+   "at": 0.917,
+   "dur": 2.6,
+   "type": "checklist",
+   "items": [
+    "Scan Wi-Fi",
+    "Lights off",
+    "Check vents",
+    "Unplug unknowns"
+   ],
+   "pos": "center"
+  }
+ ],
+ "cta": {
+  "text": "Comment PRIVACY for the app.",
+  "code": "PRIVACY"
+ },
+ "caption": "USEFUL: Every new room deserves a 30-second sweep: scan the Wi-Fi, kill the lights, pan for glints, check the bed sight-lines, unplug the unknowns. Comment PRIVACY for the app. #privacy #airbnb #travelsafety #hiddencamera #traveltips #hotelroom #safetytips #look #ways #five #airbnb",
+ "yt_title": "Most ILLEGAL CAMERA OUTLET you will #shorts",
+ "trend_keys": [
+  "look",
+  "ways",
+  "five",
+  "airbnb",
+  "hidden",
+  "tested",
+  "cameras",
+  "find"
+ ],
+ "content_type": "useful",
+ "comp_angle": {
+  "title": "Most ILLEGAL CAMERA OUTLET you will never See",
+  "views": 1020401,
+  "channel": "Silver Cymbal"
+ },
+ "virality": {
+  "score": 93,
+  "notes": [
+   "angle<-1020k",
+   "hook_boosted"
+  ],
+  "hook": "Stop scrolling. New room? Run this thirty-second sweep first."
+ }
+}
