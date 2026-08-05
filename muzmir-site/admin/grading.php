@@ -85,7 +85,10 @@ function recalc_score(int $appId): void {
  * статусов), старые -> новые, заявки одного участника (email ИЛИ телефон) — подряд.
  */
 function grading_queue_rows(int $comp = 0, string $order = 'old'): array {
-    $w = "a.status IN ('new','submitted','pending','paid','judging')"; $args = [];
+    // ГЕЙТ ПО ОПЛАТЕ: в очередь оценивания попадают только принятые заявки —
+    // бесплатные (is_paid=1 сразу) и оплаченные платные (is_paid=1 после оплаты).
+    // Неоплаченная платная заявка «не существует» и не оценивается.
+    $w = "a.status IN ('new','submitted','pending','paid','judging') AND a.is_paid=1"; $args = [];
     if ($comp) { $w .= " AND a.competition_id=?"; $args[] = $comp; }
     $rows = all("SELECT a.*, c.name comp FROM applications a
                  LEFT JOIN competitions c ON c.id=a.competition_id

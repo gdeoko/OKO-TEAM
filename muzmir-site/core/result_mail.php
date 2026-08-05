@@ -83,9 +83,12 @@ function rm_mail_layout(string $inner, string $preheader = ''): string {
 
 /**
  * Ставит в очередь письмо о принятии заявки №{номер}.
+ * $paid=true — заявка принята ПОСЛЕ подтверждения оплаты (платный конкурс): в письме
+ * добавляется зелёная плашка «Оплата получена» (вызывается из core/payments.php).
+ * $paid=false — бесплатная заявка, принимается сразу (вызов из api/v1/apply.php).
  * Возвращает true, если письмо поставлено в очередь.
  */
-function application_mail_send(int $appId): bool {
+function application_mail_send(int $appId, bool $paid = false): bool {
     $a = one("SELECT * FROM applications WHERE id=?", [$appId]);
     if (!$a || trim((string) $a['email']) === '') return false;
     $c = one("SELECT * FROM competitions WHERE id=?", [(int) $a['competition_id']]) ?: [];
@@ -95,18 +98,32 @@ function application_mail_send(int $appId): bool {
     $num   = (string) $a['number'];
     $navy = RM_NAVY; $muted = RM_MUTED;
 
+    // Плашка «Оплата получена» — только для платной заявки, принятой после оплаты.
+    $paidBadge = $paid
+        ? '<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin:0 0 18px;background:#EAF7EE;border:1px solid #BFE6C9;border-radius:14px;">'
+          . '<tr><td style="width:4px;background:#2E9E4F;border-radius:14px 0 0 14px;"></td>'
+          . '<td style="padding:13px 20px;font-size:13.5px;line-height:1.6;color:#1E6B36;">'
+          . '<b style="color:#2E9E4F;letter-spacing:.03em;">ОПЛАТА ПОЛУЧЕНА.</b> Оргвзнос за участие зачислен — заявка принята и передана жюри. '
+          . 'Спасибо за участие!</td></tr></table>'
+        : '';
+
+    $lead = $paid
+        ? 'Ваша заявка <b style="color:' . $navy . ';">№' . h($num) . '</b> на конкурс «' . h((string) ($c['name'] ?? '')) . '» '
+          . 'оплачена, принята и передана жюри. О результатах мы сообщим письмом на этот адрес.'
+        : 'Ваша заявка <b style="color:' . $navy . ';">№' . h($num) . '</b> на конкурс «' . h((string) ($c['name'] ?? '')) . '» '
+          . 'зарегистрирована и передана оргкомитету. О результатах мы сообщим письмом на этот адрес.';
+
     $inner = '<h1 style="margin:0 0 16px;font-family:Georgia,\'Times New Roman\',serif;font-size:26px;line-height:1.25;font-weight:700;color:' . $navy . ';">Заявка принята</h1>'
         . '<p style="margin:0 0 14px;">' . $hello . '</p>'
-        . '<p style="margin:0 0 20px;">Ваша заявка <b style="color:' . $navy . ';">№' . h($num) . '</b> на конкурс '
-        . '«' . h((string) ($c['name'] ?? '')) . '» зарегистрирована и передана оргкомитету. '
-        . 'О результатах мы сообщим письмом на этот адрес.</p>'
+        . $paidBadge
+        . '<p style="margin:0 0 20px;">' . $lead . '</p>'
         . rm_mail_app_card($a, $c)
         . '<p style="margin:0 0 4px;color:' . $muted . ';font-size:14px;">Статус заявки, оплата и дипломы — в Вашем личном кабинете. '
         . 'Вы можете принять участие и в других конкурсах центра — заявки объединяются в одну оплату.</p>';
 
     $subject = 'Заявка №' . $num . ' принята — Культурный центр «Музыкальный Мир»';
     $html = mm_email_tx($inner, [
-        'preheader' => 'Заявка №' . $num . ' зарегистрирована. Детали и статус — в личном кабинете.',
+        'preheader' => 'Заявка №' . $num . ($paid ? ' оплачена и принята.' : ' зарегистрирована.') . ' Детали и статус — в личном кабинете.',
         'hero'      => mm_cta_primary(url('/cabinet'), 'Открыть личный кабинет', 'Статус заявки · оплата · дипломы'),
         'actions'   => [['Другие конкурсы', url('/competitions')], ['Оставить отзыв', url('/reviews')]],
     ]);

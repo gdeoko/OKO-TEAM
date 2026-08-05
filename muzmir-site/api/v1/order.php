@@ -138,68 +138,78 @@ $itemsText  = implode(', ', array_map(
     $normItems
 ));
 
-// --- уведомление админу (по образцу apply.php) ---
-if (function_exists('tg_notify_admin')) {
-    tg_notify_admin(
-        "Новый заказ наградных материалов №{$orderId}\n"
-        . ($compName !== '' ? $compName . "\n" : '')
-        . ($buyerName !== '' ? $buyerName . "\n" : '')
-        . $itemsText . "\n"
-        . 'Сумма: ' . money($amount)
-    );
-}
+// --- ГЕЙТ ПО ОПЛАТЕ (Даниэль): до оплаты заказ «не существует» ---
+// Пока заказ НЕ оплачен: НЕ шлём письмо-подтверждение покупателю, НЕ уведомляем
+// админа/владельца в Telegram, заказ НЕ показывается в админ-разделе «Заказы»
+// (там фильтр по статусу оплаты). Покупатель видит заказ в кабинете и может его
+// оплатить или удалить; дожим «оплатите» шлёт cron. Все уведомления и письмо-
+// подтверждение уходят из core/payments.php в момент подтверждения оплаты.
+// Единственное исключение — БЕСПЛАТНЫЙ заказ (amount<=0): принимаем сразу.
+$orderIsFree = ($amount <= 0);
 
-// --- уведомление владельца в 3 канала + серверная аналитика ---
-if (is_file(BASE_PATH . '/core/notify_owner.php')) {
-    require_once BASE_PATH . '/core/notify_owner.php';
-    try {
-        $isClub = strpos(json_encode($normItems, JSON_UNESCAPED_UNICODE), '"kind":"club"') !== false;
-        owner_notify(
-            $isClub ? 'ВИП-КЛУБ' : 'ЗАКАЗЫ НАГРАД',
-            $isClub ? 'Заявка на вступление в клуб (заказ №' . $orderId . ')' : 'Новый заказ наград №' . $orderId,
-            '',
-            [
-                'Покупатель' => $buyerName,
-                'Email'      => $buyerEmail,
-                'Конкурс'    => $compName,
-                'Состав'     => $itemsText,
-                'Сумма'      => money($amount),
-                '_event'     => $isClub ? 'club_order' : 'order',
-                '_path'      => '/order-awards',
-                '_meta'      => ['order_id' => $orderId, 'amount' => $amount],
-            ]
+if ($orderIsFree) {
+    // --- уведомление админу (по образцу apply.php) ---
+    if (function_exists('tg_notify_admin')) {
+        tg_notify_admin(
+            "Новый заказ наградных материалов №{$orderId}\n"
+            . ($compName !== '' ? $compName . "\n" : '')
+            . ($buyerName !== '' ? $buyerName . "\n" : '')
+            . $itemsText . "\n"
+            . 'Сумма: ' . money($amount)
         );
-    } catch (\Throwable $e) { /* тихо */ }
-}
+    }
 
-// --- письмо-подтверждение покупателю в очередь ---
-if ($buyerEmail !== '' && filter_var($buyerEmail, FILTER_VALIDATE_EMAIL)) {
-    $subject = 'Заказ наградного материала принят';
-    $orderCard = '<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin:0 0 8px;background:#F4F6FC;border:1px solid #DCE3F3;border-radius:14px;">'
-        . '<tr><td style="padding:20px 24px;font-size:14px;line-height:1.9;color:#33406B;">'
-        . '<div style="font-weight:600;color:#17307A;font-size:13px;letter-spacing:.08em;text-transform:uppercase;margin-bottom:10px;">Детали заказа</div>'
-        . '<div><span style="color:#6B7699;">Номер заказа:</span> <b style="color:#17307A;">№' . h((string) $orderId) . '</b></div>'
-        . '<div><span style="color:#6B7699;">Состав:</span> ' . h($itemsText) . '</div>'
-        . '<div><span style="color:#6B7699;">Сумма к оплате:</span> <b style="color:#17307A;">' . h(money($amount)) . '</b></div>'
-        . '</td></tr></table>';
-    $html = function_exists('mail_template')
-        ? mail_template('generic', [
-            'title'     => 'Заказ наград принят',
-            'name'      => $buyerName,
-            'message'   => '<p style="margin:0 0 16px;">Ваш заказ наградного материала принят.</p>' . $orderCard
-                . '<p style="margin:16px 0 0;">После оплаты мы изготовим и отправим материалы, а трек-номер для отслеживания пришлём на этот адрес.</p>',
-            'cta_url'   => rtrim((string) cfgv('base_url'), '/') . '/cabinet',
-            'cta_text'  => 'Личный кабинет',
-            'preheader' => 'Заказ №' . $orderId . ' принят. Сумма к оплате: ' . money($amount) . '.',
-          ])
-        : '<p>Здравствуйте' . ($buyerName !== '' ? ', ' . h($buyerName) : '') . '!</p>'
-          . '<p>Ваш заказ наградного материала <b>№' . h((string) $orderId) . '</b> принят.</p>'
-          . '<p><b>Состав заказа:</b> ' . h($itemsText) . '</p>'
-          . '<p><b>Сумма к оплате:</b> ' . h(money($amount)) . '</p>';
-    if (function_exists('mail_queue')) {
-        mail_queue($buyerEmail, $buyerName, $subject, $html);
-    } elseif (tbl_exists('mail_queue')) {
-        insert('mail_queue', ['to_email' => $buyerEmail, 'to_name' => $buyerName, 'subject' => $subject, 'body' => $html]);
+    // --- уведомление владельца в 3 канала + серверная аналитика ---
+    if (is_file(BASE_PATH . '/core/notify_owner.php')) {
+        require_once BASE_PATH . '/core/notify_owner.php';
+        try {
+            $isClub = strpos(json_encode($normItems, JSON_UNESCAPED_UNICODE), '"kind":"club"') !== false;
+            owner_notify(
+                $isClub ? 'ВИП-КЛУБ' : 'ЗАКАЗЫ НАГРАД',
+                $isClub ? 'Заявка на вступление в клуб (заказ №' . $orderId . ')' : 'Новый заказ наград №' . $orderId,
+                '',
+                [
+                    'Покупатель' => $buyerName,
+                    'Email'      => $buyerEmail,
+                    'Конкурс'    => $compName,
+                    'Состав'     => $itemsText,
+                    'Сумма'      => money($amount),
+                    '_event'     => $isClub ? 'club_order' : 'order',
+                    '_path'      => '/order-awards',
+                    '_meta'      => ['order_id' => $orderId, 'amount' => $amount],
+                ]
+            );
+        } catch (\Throwable $e) { /* тихо */ }
+    }
+
+    // --- письмо-подтверждение покупателю в очередь ---
+    if ($buyerEmail !== '' && filter_var($buyerEmail, FILTER_VALIDATE_EMAIL)) {
+        $subject = 'Заказ наградного материала принят';
+        $orderCard = '<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin:0 0 8px;background:#F4F6FC;border:1px solid #DCE3F3;border-radius:14px;">'
+            . '<tr><td style="padding:20px 24px;font-size:14px;line-height:1.9;color:#33406B;">'
+            . '<div style="font-weight:600;color:#17307A;font-size:13px;letter-spacing:.08em;text-transform:uppercase;margin-bottom:10px;">Детали заказа</div>'
+            . '<div><span style="color:#6B7699;">Номер заказа:</span> <b style="color:#17307A;">№' . h((string) $orderId) . '</b></div>'
+            . '<div><span style="color:#6B7699;">Состав:</span> ' . h($itemsText) . '</div>'
+            . '<div><span style="color:#6B7699;">Сумма:</span> <b style="color:#17307A;">' . h(money($amount)) . '</b></div>'
+            . '</td></tr></table>';
+        $html = function_exists('mail_template')
+            ? mail_template('generic', [
+                'title'     => 'Заказ наград принят',
+                'name'      => $buyerName,
+                'message'   => '<p style="margin:0 0 16px;">Ваш заказ наградного материала принят.</p>' . $orderCard
+                    . '<p style="margin:16px 0 0;">Мы изготовим и отправим материалы, а трек-номер для отслеживания пришлём на этот адрес.</p>',
+                'cta_url'   => rtrim((string) cfgv('base_url'), '/') . '/cabinet',
+                'cta_text'  => 'Личный кабинет',
+                'preheader' => 'Заказ №' . $orderId . ' принят.',
+              ])
+            : '<p>Здравствуйте' . ($buyerName !== '' ? ', ' . h($buyerName) : '') . '!</p>'
+              . '<p>Ваш заказ наградного материала <b>№' . h((string) $orderId) . '</b> принят.</p>'
+              . '<p><b>Состав заказа:</b> ' . h($itemsText) . '</p>';
+        if (function_exists('mail_queue')) {
+            mail_queue($buyerEmail, $buyerName, $subject, $html);
+        } elseif (tbl_exists('mail_queue')) {
+            insert('mail_queue', ['to_email' => $buyerEmail, 'to_name' => $buyerName, 'subject' => $subject, 'body' => $html]);
+        }
     }
 }
 

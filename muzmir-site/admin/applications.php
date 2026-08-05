@@ -12,6 +12,11 @@ function apps_filter(): array {
     if ($d1 = input('date_from')) { $w[] = 'date(a.created_at)>=?'; $a[] = $d1; }
     if ($d2 = input('date_to')) { $w[] = 'date(a.created_at)<=?'; $a[] = $d2; }
     if ($qs = input('q')) { $w[] = '(a.full_name LIKE ? OR a.number LIKE ? OR a.email LIKE ?)'; $a[]="%$qs%"; $a[]="%$qs%"; $a[]="%$qs%"; }
+    // ГЕЙТ ПО ОПЛАТЕ (Даниэль): неоплаченные заявки на ПЛАТНЫЕ конкурсы по умолчанию
+    // скрыты — «до оплаты заявки не существует для админов». is_paid=1 у всех
+    // бесплатных (ставится сразу) и у оплаченных платных. Чекбокс «Ожидают оплаты»
+    // (show_unpaid=1) раскрывает их для поддержки/диагностики без потери данных.
+    if (input('show_unpaid') !== '1') { $w[] = 'a.is_paid=1'; }
     return [$w ? 'WHERE ' . implode(' AND ', $w) : '', $a];
 }
 
@@ -261,7 +266,7 @@ if ($id = (int) input('id')) {
 $total = (int) scalar("SELECT COUNT(*) FROM applications a $where", $args);
 $page  = max(1, (int) input('pg', '1'));
 $per   = 50; $off = ($page - 1) * $per;
-$rows = all("SELECT a.*, c.name comp FROM applications a
+$rows = all("SELECT a.*, c.name comp, c.is_paid comp_paid FROM applications a
              LEFT JOIN competitions c ON c.id=a.competition_id
              $where ORDER BY a.id DESC LIMIT $per OFFSET $off", $args);
 $comps = all("SELECT id,name FROM competitions ORDER BY sort,name");
@@ -291,6 +296,9 @@ ob_start(); ?>
   </select></div>
   <div class="field"><label>С даты</label><input type="date" name="date_from" value="<?= h(input('date_from')) ?>"></div>
   <div class="field"><label>По дату</label><input type="date" name="date_to" value="<?= h(input('date_to')) ?>"></div>
+  <div class="field"><label style="display:flex;align-items:center;gap:8px;cursor:pointer;white-space:nowrap">
+    <input type="checkbox" name="show_unpaid" value="1" <?= input('show_unpaid')==='1'?'checked':'' ?> style="width:auto"> Ожидают оплаты</label>
+    <span class="small muted">неоплаченные платные заявки</span></div>
   <button class="btn btn--primary btn--sm">Фильтр</button>
   <a class="btn btn--ghost btn--sm" href="<?= a_link('applications') ?>">Сброс</a>
 </form>

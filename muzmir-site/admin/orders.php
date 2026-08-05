@@ -49,10 +49,17 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 }
 
 /* ------------------------------- Данные --------------------------------- */
-$filter = input('status');   // '', paid, made, shipped, delivered
+$filter = input('status');   // '', paid, made, shipped, delivered, new
 $where  = "items NOT LIKE '%\"kind\":\"club\"%'";  // клубные членства сюда не относятся
 $params = [];
-if (in_array($filter, ['new','paid','made','shipped','delivered'], true)) { $where .= " AND status=?"; $params[] = $filter; }
+if (in_array($filter, ['new','paid','made','shipped','delivered'], true)) {
+    $where .= " AND status=?"; $params[] = $filter;
+} else {
+    // ГЕЙТ ПО ОПЛАТЕ (Даниэль): по умолчанию неоплаченные заказы (status='new')
+    // скрыты — «до оплаты заказа не существует». Их видно только на вкладке
+    // «Ожидает оплаты», чтобы не путаться и не отправлять неоплаченное.
+    $where .= " AND status <> 'new'";
+}
 $orders = all("SELECT * FROM awards_orders WHERE $where ORDER BY (status='paid') DESC, id DESC LIMIT 300", $params);
 
 // Счётчики по статусам (только оригинальные заказы).
@@ -70,7 +77,9 @@ ob_start(); ?>
 </div>
 
 <div class="tabs" style="margin-bottom:18px;display:flex;gap:6px;flex-wrap:wrap;">
-  <?php foreach (['' => 'Все'] + $STAT as $k => $lbl): $n = $k === '' ? array_sum($counts) : ($counts[$k] ?? 0); ?>
+  <?php foreach (['' => 'Все'] + $STAT as $k => $lbl):
+      // «Все» = оплаченные и далее (без ожидающих оплаты — они на своей вкладке).
+      $n = $k === '' ? (array_sum($counts) - ($counts['new'] ?? 0)) : ($counts[$k] ?? 0); ?>
     <a class="tag <?= $filter === $k ? 'active' : '' ?>" href="<?= a_link('orders', $k === '' ? [] : ['status' => $k]) ?>"
        style="padding:7px 13px;border-radius:10px;<?= $filter===$k?'background:var(--a-navy);color:#fff;':'' ?>"><?= h($lbl) ?> · <?= $n ?></a>
   <?php endforeach; ?>

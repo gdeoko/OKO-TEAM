@@ -103,6 +103,19 @@ function payment_apply_status(string $paymentId, string $status, array $obj = []
                 audit('referral_paid', 'applications', (int) $appId, ['reward' => $refReward, 'payment_id' => $paymentId, 'batch' => count($batchIds)]);
             }
         }
+
+        // Письмо «Заявка принята» (с плашкой «Оплата получена») — только СЕЙЧАС, после
+        // подтверждения оплаты. До оплаты платная заявка не слала письмо о принятии
+        // (api/v1/apply.php). Для платных заявок это письмо заменяет общий payment_success
+        // (ниже он для app-батчей подавляется, чтобы не было дубля).
+        if (is_file(__DIR__ . '/result_mail.php')) {
+            require_once __DIR__ . '/result_mail.php';
+            if (function_exists('application_mail_send')) {
+                foreach ($batchIds as $aid) {
+                    try { application_mail_send((int) $aid, true); } catch (\Throwable $e) { /* тихо, в mail.log */ }
+                }
+            }
+        }
     }
     if ($orderId) {
         update('awards_orders', ['status' => 'paid'], 'id=:id', ['id' => (int) $orderId]);
@@ -163,18 +176,34 @@ function payment_apply_status(string $paymentId, string $status, array $obj = []
     }
 
     // Письмо об успешной оплате (в очередь — воркер разошлёт).
-    if ($email !== '' && function_exists('mail_queue')) {
+    // Для заявок-батчей общий payment_success НЕ шлём — участник уже получил
+    // фирменное «Заявка принята» с плашкой «Оплата получена» (см. выше). Общее
+    // письмо об оплате оставляем для заказов наград и одиночных платежей.
+    $suppressPaySuccess = !empty($batchIds) && empty($orderId);
+    if (!$suppressPaySuccess && $email !== '' && function_exists('mail_queue')) {
         $baseCab = rtrim((string) cfgv('base_url'), '/');
+        if ($orderId) {
+            // Заказ наградных материалов оплачен — письмо «принят в производство».
+            $preheader = 'Оплата заказа наград получена. Заказ передан в изготовление.';
+            $heroSub   = 'Заказ №' . (int) $orderId . ' · передан в изготовление';
+            $actions   = [['Отследить в кабинете', $baseCab . '/cabinet'], ['Оставить отзыв', $baseCab . '/reviews']];
+            $subjectPay = 'Оплата заказа наград получена — Культурный центр «Музыкальный Мир»';
+        } else {
+            $preheader = 'Оплата участия получена. Работа передана жюри.';
+            $heroSub   = 'Оплата подтверждена';
+            $actions   = [['Другие конкурсы', $baseCab . '/competitions'], ['Оставить отзыв', $baseCab . '/reviews']];
+            $subjectPay = 'Оплата получена — Культурный центр «Музыкальный Мир»';
+        }
         $html = function_exists('mail_template')
             ? mail_template('payment_success', ['name' => $name, 'full_name' => $name, 'amount' => $amount, 'payment_id' => $paymentId, 'cabinet_url' => $baseCab . '/cabinet',
                 '_tx' => [
-                    'preheader' => 'Оплата участия получена. Работа передана жюри.',
-                    'hero'      => mm_cta_primary($baseCab . '/cabinet', 'Перейти в личный кабинет', 'Оплата подтверждена'),
-                    'actions'   => [['Другие конкурсы', $baseCab . '/competitions'], ['Оставить отзыв', $baseCab . '/reviews']],
+                    'preheader' => $preheader,
+                    'hero'      => mm_cta_primary($baseCab . '/cabinet', 'Перейти в личный кабинет', $heroSub),
+                    'actions'   => $actions,
                     'thanks'    => true,
                 ]])
             : '<p>Здравствуйте' . ($name ? ', ' . h($name) : '') . '!</p><p>Оплата успешно получена. Благодарим Вас!</p>';
-        mail_queue($email, $name, 'Оплата получена — Культурного центра «Музыкальный Мир»', $html);
+        mail_queue($email, $name, $subjectPay, $html);
     }
 
     if (function_exists('tg_notify_admin')) {

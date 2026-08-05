@@ -215,6 +215,19 @@ foreach ($comps as $ci) {
 $number = $numbers[0];
 $appId  = $appIds[0];
 
+// --- Разделяем заявки на бесплатные (принимаются сразу) и платные (ждут оплаты) ---
+// ПРАВИЛО (Даниэль): платная заявка НЕ существует для админов/владельца, пока не
+// оплачена. До оплаты: НЕ шлём письмо о принятии, НЕ уведомляем в Telegram/владельца,
+// НЕ показываем в админке (там фильтр по is_paid). Участник видит заявку в кабинете
+// с кнопкой оплаты; письмо о принятии и все уведомления уходят из core/payments.php
+// в момент подтверждения оплаты. Бесплатные заявки принимаются как раньше — сразу.
+$freeAppIds = [];   // заявки на бесплатные конкурсы — принимаются немедленно
+$freeComps  = [];   // соответствующие конкурсы (для письма/уведомления)
+foreach ($comps as $i => $ci) {
+    if (!(int) $ci['is_paid']) { $freeAppIds[] = $appIds[$i]; $freeComps[] = $ci; }
+}
+$hasPaidPending = count($freeAppIds) < count($appIds); // есть неоплаченные платные
+
 // --- Одна оплата за все платные заявки (сумма 500₽ × количество платных) ---
 $payment = null;
 $confirmationUrl = null;
@@ -289,19 +302,23 @@ if ($paidComps) {
     }
 }
 
-// --- Письмо-подтверждение (фирменный шаблон, по одному письму на заявку) ---
+// --- Письмо-подтверждение (фирменный шаблон, ТОЛЬКО по бесплатным заявкам) ---
+// Платные заявки письмо о принятии получат из core/payments.php после оплаты.
 $compsList = implode(', ', array_map(fn($c)=>$c['name'], $comps));
-if (is_file(BASE_PATH . '/core/result_mail.php')) {
+$freeCompsList = implode(', ', array_map(fn($c)=>$c['name'], $freeComps));
+if ($freeAppIds && is_file(BASE_PATH . '/core/result_mail.php')) {
     require_once BASE_PATH . '/core/result_mail.php';
-    foreach ($appIds as $aid) {
+    foreach ($freeAppIds as $aid) {
         try { application_mail_send((int) $aid); } catch (\Throwable $e) { /* тихо, в mail.log */ }
     }
-} elseif (function_exists('mail_queue')) {
+} elseif ($freeAppIds && function_exists('mail_queue')) {
     // Фолбэк на случай отсутствия модуля фирменных писем.
-    $numsList = implode(', ', $numbers);
-    $subject  = 'Заявка №' . $number . ' принята — Культурного центра «Музыкальный Мир»';
-    $fallbackMsg = (count($numbers) > 1 ? 'Ваши заявки ' : 'Ваша заявка ') . $numsList . ' на '
-        . (count($comps) > 1 ? 'конкурсы' : 'конкурс') . ' «' . $compsList . '» принят' . (count($comps) > 1 ? 'ы' : 'а')
+    $freeNums = [];
+    foreach ($comps as $i => $ci) if (!(int) $ci['is_paid']) $freeNums[] = $numbers[$i];
+    $numsList = implode(', ', $freeNums);
+    $subject  = 'Заявка №' . ($freeNums[0] ?? $number) . ' принята — Культурного центра «Музыкальный Мир»';
+    $fallbackMsg = (count($freeNums) > 1 ? 'Ваши заявки ' : 'Ваша заявка ') . $numsList . ' на '
+        . (count($freeComps) > 1 ? 'конкурсы' : 'конкурс') . ' «' . $freeCompsList . '» принят' . (count($freeComps) > 1 ? 'ы' : 'а')
         . '. Мы сообщим о результатах на этот адрес.';
     $html = function_exists('mail_template')
         ? mail_template('generic', [
@@ -316,41 +333,41 @@ if (is_file(BASE_PATH . '/core/result_mail.php')) {
     mail_queue($email, $full_name, $subject, $html);
 }
 
-// --- уведомление админу ---
-if (function_exists('tg_notify_admin')) {
+// --- уведомление админу (ТОЛЬКО о бесплатных заявках; платные — после оплаты) ---
+if ($freeAppIds && function_exists('tg_notify_admin')) {
+    $freeNums2 = [];
+    foreach ($comps as $i => $ci) if (!(int) $ci['is_paid']) $freeNums2[] = $numbers[$i];
     tg_notify_admin(
-        (count($numbers) > 1 ? "Новые заявки (".count($numbers)."):\n" : "Новая заявка {$number}\n")
-        . "{$compsList}\n{$full_name}\n{$nomination}"
+        (count($freeNums2) > 1 ? "Новые заявки (".count($freeNums2)."):\n" : "Новая заявка {$freeNums2[0]}\n")
+        . "{$freeCompsList}\n{$full_name}\n{$nomination}"
     );
 }
 
 // --- уведомление владельца в 3 канала + серверная аналитика ---
-// ВАЖНО: владельцу шлём событие ТОЛЬКО если оплата не требуется (бесплатный
-// конкурс или сумма 0). По платной, ещё НЕ оплаченной заявке владелец НЕ
-// уведомляется — он получит уведомление «Оплата получена» из вебхука ЮKassa
-// (core/payments.php), когда деньги реально придут. Так владелец видит только
-// оплаченные заявки, а неоплаченные не создают шум.
-$ownerNeedsNotify = ($priceInfo === null) || ((int) ($priceInfo['amount'] ?? 0) <= 0);
-if ($ownerNeedsNotify && is_file(BASE_PATH . '/core/notify_owner.php')) {
+// ВАЖНО (Даниэль): владельцу шлём событие ТОЛЬКО о бесплатных заявках. По платной,
+// ещё НЕ оплаченной заявке владелец НЕ уведомляется — он получит уведомление
+// «Оплата получена» из вебхука ЮKassa (core/payments.php), когда деньги реально
+// придут. Так владелец видит только принятые (оплаченные/бесплатные) заявки, а
+// неоплаченные платные не создают шум и «не существуют» до оплаты.
+if ($freeAppIds && is_file(BASE_PATH . '/core/notify_owner.php')) {
     require_once BASE_PATH . '/core/notify_owner.php';
     try {
-        $sumText = $priceInfo !== null
-            ? (money((int) $priceInfo['amount']) . ($priceInfo['discount_pct'] > 0 ? ' (скидка ' . $priceInfo['discount_pct'] . '%)' : ''))
-            : 'бесплатно';
+        $freeNums3 = [];
+        foreach ($comps as $i => $ci) if (!(int) $ci['is_paid']) $freeNums3[] = $numbers[$i];
         owner_notify(
             'ЗАЯВКИ',
-            count($numbers) > 1 ? 'Новые заявки (' . count($numbers) . ')' : 'Новая заявка ' . $number,
+            count($freeNums3) > 1 ? 'Новые заявки (' . count($freeNums3) . ')' : 'Новая заявка ' . ($freeNums3[0] ?? $number),
             '',
             [
-                'Номер'     => implode(', ', $numbers),
+                'Номер'     => implode(', ', $freeNums3),
                 'ФИО'       => $full_name,
-                'Конкурс'   => $compsList,
+                'Конкурс'   => $freeCompsList,
                 'Номинация' => $nomination,
-                'Сумма'     => $sumText,
+                'Сумма'     => 'бесплатно',
                 '_event'    => 'application',
                 '_path'     => '/apply',
-                '_meta'     => ['number' => $number, 'count' => count($numbers),
-                                'amount' => (int) ($priceInfo['amount'] ?? 0)],
+                '_meta'     => ['number' => ($freeNums3[0] ?? $number), 'count' => count($freeNums3),
+                                'amount' => 0],
             ]
         );
     } catch (\Throwable $e) { /* тихо */ }
