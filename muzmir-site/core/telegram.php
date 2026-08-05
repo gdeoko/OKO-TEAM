@@ -68,6 +68,9 @@ function tg_send(string $chatId, string $text, array $opt = []): array {
     if (!empty($opt['reply_to'])) {
         $params['reply_parameters'] = ['message_id' => (int) $opt['reply_to']];
     }
+    if (!empty($opt['message_thread_id'])) {   // ветка форума (топик рабочего чата)
+        $params['message_thread_id'] = (int) $opt['message_thread_id'];
+    }
     if (!empty($opt['keyboard']) && is_array($opt['keyboard'])) {
         $params['reply_markup'] = ['inline_keyboard' => $opt['keyboard']];
     } elseif (isset($opt['reply_markup']) && is_array($opt['reply_markup'])) {
@@ -96,8 +99,12 @@ function tg_send_document(string $chatId, string $file, array $opt = []): array 
     $params = ['chat_id' => $chatId];
     if (!empty($opt['caption'])) {
         $params['caption'] = $opt['caption'];
-        $params['parse_mode'] = $opt['parse_mode'] ?? 'HTML';
+        // parse_mode задаём только если он не пустой (пустой = плейн, без разметки).
+        if (!array_key_exists('parse_mode', $opt) || $opt['parse_mode'] !== '') {
+            $params['parse_mode'] = $opt['parse_mode'] ?? 'HTML';
+        }
     }
+    if (!empty($opt['message_thread_id'])) $params['message_thread_id'] = (int) $opt['message_thread_id'];
     // Локальный файл — грузим multipart; URL/file_id — строкой.
     if (is_file($file)) {
         $params['document'] = new \CURLFile($file, 'application/pdf', basename($file));

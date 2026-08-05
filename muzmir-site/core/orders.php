@@ -167,11 +167,15 @@ function order_dispatch_production(int $orderId): bool {
     if (!$order || !order_has_originals($order)) return false;
     if (trim((string)($order['dispatched_at'] ?? '')) !== '') return true; // уже отправляли
 
-    $chat = (string) cfgv('tg_orders_chat', '');
     $pdfs = order_generate_clean_pdfs($order);
     // Кэшируем чистые дипломы в заказ (для админки — скачивание без повторного рендера).
     $store = array_map(fn($p) => ['label' => $p['label'], 'url' => $p['url'], 'type' => $p['type']], $pdfs);
     update('awards_orders', ['clean_pdfs' => json_encode($store, JSON_UNESCAPED_UNICODE)], 'id=:id', ['id' => $orderId]);
+
+    // Маршрут — ТОПИК «ЗАКАЗЫ НАГРАД» рабочего чата (форум-группа), а не отдельный канал.
+    if (is_file(BASE_PATH . '/core/notify_owner.php')) require_once BASE_PATH . '/core/notify_owner.php';
+    $chat   = function_exists('owner_tg_chat') ? owner_tg_chat() : (string) cfgv('tg_orders_chat', '');
+    $thread = function_exists('owner_tg_thread') ? owner_tg_thread('ЗАКАЗЫ НАГРАД') : null;
 
     $caption = "🏭 ЗАКАЗ ОРИГИНАЛОВ №{$orderId} — В ПРОИЗВОДСТВО\n"
         . "Конкурс: " . (string)($order['competition'] ?? '') . "\n"
@@ -186,20 +190,25 @@ function order_dispatch_production(int $orderId): bool {
         . "Срок изготовления — до 7 раб. дней. Дипломы (чистые, без подписи/печати, с номером+QR) — ниже. "
         . "После отправки введите трек-номер в админке → участник получит письмо.";
 
-    // Основной канал — ветка заказов; фолбэк — админ-чат (если бот не добавлен в @zakaznagrad).
-    $targets = array_values(array_unique(array_filter([$chat, (string) cfgv('tg_admin_chat', '')])));
+    // Пост в топик «ЗАКАЗЫ НАГРАД» + чистые дипломы документами туда же.
+    // parse_mode='' (ПЛЕЙН): в подписи боевые данные (имена/адреса) с < > & — HTML-режим
+    // Телеграма их не парсит и режет отправку.
     $okTg = false;
-    foreach ($targets as $t) {
-        if (!function_exists('tg_send')) break;
+    if ($chat !== '' && function_exists('tg_send')) {
+        $topt = ['no_preview' => true, 'parse_mode' => ''];
+        if ($thread) $topt['message_thread_id'] = $thread;
         $r = null;
-        try { $r = tg_send($t, $caption); } catch (\Throwable $e) {}
-        $sent = is_array($r) && !empty($r['ok']);
-        if ($sent && function_exists('tg_send_document')) {
+        try { $r = tg_send($chat, $caption, $topt); } catch (\Throwable $e) {}
+        $okTg = is_array($r) && !empty($r['ok']);
+        if ($okTg && function_exists('tg_send_document')) {
             foreach ($pdfs as $p) {
-                if (is_file($p['path'])) { try { tg_send_document($t, $p['path'], ['caption' => $p['label'] . ' (оригинал, чистый) — заказ №' . $orderId]); } catch (\Throwable $e) {} }
+                if (is_file($p['path'])) {
+                    $dopt = ['caption' => $p['label'] . ' (оригинал, чистый) — заказ №' . $orderId, 'parse_mode' => ''];
+                    if ($thread) $dopt['message_thread_id'] = $thread;
+                    try { tg_send_document($chat, $p['path'], $dopt); } catch (\Throwable $e) {}
+                }
             }
         }
-        if ($sent) { $okTg = true; break; }   // ушло в первый рабочий канал — хватит
     }
     update('awards_orders', ['dispatched_at' => date('Y-m-d H:i:s')], 'id=:id', ['id' => $orderId]);
 
