@@ -1,0 +1,1791 @@
+{
+  "version": 5,
+  "meta": {
+    "site": "https://td-art.ru",
+    "target_site": "https://design.td-art.ru",
+    "generated_by": "OKO-TEAM jobs/td-art/gen.py",
+    "total_items": 104,
+    "notes": [
+      "canonical редирект www→non-www и http→https сделан на уровне .htaccess",
+      "последний item — regex catch-all /(.*), должен быть В КОНЦЕ группы"
+    ]
+  },
+  "groups": [
+    {
+      "id": 1,
+      "name": "td-art → design.td-art",
+      "module_id": 1,
+      "enabled": true
+    }
+  ],
+  "redirects": [
+    {
+      "url": "/design-project/dom/",
+      "match_url": "/design-project/dom/",
+      "match_type": "url",
+      "action_type": "url",
+      "action_code": 301,
+      "action_data": {
+        "url": "https://design.td-art.ru/folio",
+        "regex": false,
+        "flags": {}
+      },
+      "regex": false,
+      "position": 0,
+      "status": "enabled",
+      "group_id": 1,
+      "title": ""
+    },
+    {
+      "url": "/design-project/kvartira/",
+      "match_url": "/design-project/kvartira/",
+      "match_type": "url",
+      "action_type": "url",
+      "action_code": 301,
+      "action_data": {
+        "url": "https://design.td-art.ru/folio",
+        "regex": false,
+        "flags": {}
+      },
+      "regex": false,
+      "position": 1,
+      "status": "enabled",
+      "group_id": 1,
+      "title": ""
+    },
+    {
+      "url": "/articles/interesnoe/elitnyj-dizajn-interera-v-chem-zhe-on-zaklyuchaetsya/",
+      "match_url": "/articles/interesnoe/elitnyj-dizajn-interera-v-chem-zhe-on-zaklyuchaetsya/",
+      "match_type": "url",
+      "action_type": "url",
+      "action_code": 301,
+      "action_data": {
+        "url": "https://design.td-art.ru/folio",
+        "regex": false,
+        "flags": {}
+      },
+      "regex": false,
+      "position": 2,
+      "status": "enabled",
+      "group_id": 1,
+      "title": ""
+    },
+    {
+      "url": "/articles/interesnoe/stil-barokko-v-interere/",
+      "match_url": "/articles/interesnoe/stil-barokko-v-interere/",
+      "match_type": "url",
+      "action_type": "url",
+      "action_code": 301,
+      "action_data": {
+        "url": "https://design.td-art.ru/folio",
+        "regex": false,
+        "flags": {}
+      },
+      "regex": false,
+      "position": 3,
+      "status": "enabled",
+      "group_id": 1,
+      "title": ""
+    },
+    {
+      "url": "/articles/gostinaya/osobennosti-interera-gostinoj-v-chastnom-dome/",
+      "match_url": "/articles/gostinaya/osobennosti-interera-gostinoj-v-chastnom-dome/",
+      "match_type": "url",
+      "action_type": "url",
+      "action_code": 301,
+      "action_data": {
+        "url": "https://design.td-art.ru/folio",
+        "regex": false,
+        "flags": {}
+      },
+      "regex": false,
+      "position": 4,
+      "status": "enabled",
+      "group_id": 1,
+      "title": ""
+    },
+    {
+      "url": "/",
+      "match_url": "/",
+      "match_type": "url",
+      "action_type": "url",
+      "action_code": 301,
+      "action_data": {
+        "url": "https://design.td-art.ru/",
+        "regex": false,
+        "flags": {}
+      },
+      "regex": false,
+      "position": 5,
+      "status": "enabled",
+      "group_id": 1,
+      "title": ""
+    },
+    {
+      "url": "/articles/bedroom/balcony/",
+      "match_url": "/articles/bedroom/balcony/",
+      "match_type": "url",
+      "action_type": "url",
+      "action_code": 301,
+      "action_data": {
+        "url": "https://design.td-art.ru/folio",
+        "regex": false,
+        "flags": {}
+      },
+      "regex": false,
+      "position": 6,
+      "status": "enabled",
+      "group_id": 1,
+      "title": ""
+    },
+    {
+      "url": "/articles/gostinaya/fireplace/",
+      "match_url": "/articles/gostinaya/fireplace/",
+      "match_type": "url",
+      "action_type": "url",
+      "action_code": 301,
+      "action_data": {
+        "url": "https://design.td-art.ru/folio",
+        "regex": false,
+        "flags": {}
+      },
+      "regex": false,
+      "position": 7,
+      "status": "enabled",
+      "group_id": 1,
+      "title": ""
+    },
+    {
+      "url": "/articles/interesnoe/vintazhnyj-stil-v-dizajne-interera/",
+      "match_url": "/articles/interesnoe/vintazhnyj-stil-v-dizajne-interera/",
+      "match_type": "url",
+      "action_type": "url",
+      "action_code": 301,
+      "action_data": {
+        "url": "https://design.td-art.ru/folio",
+        "regex": false,
+        "flags": {}
+      },
+      "regex": false,
+      "position": 8,
+      "status": "enabled",
+      "group_id": 1,
+      "title": ""
+    },
+    {
+      "url": "/articles/interesnoe/stil-konstruktivizm-v-dizajne-interera/",
+      "match_url": "/articles/interesnoe/stil-konstruktivizm-v-dizajne-interera/",
+      "match_type": "url",
+      "action_type": "url",
+      "action_code": 301,
+      "action_data": {
+        "url": "https://design.td-art.ru/folio",
+        "regex": false,
+        "flags": {}
+      },
+      "regex": false,
+      "position": 9,
+      "status": "enabled",
+      "group_id": 1,
+      "title": ""
+    },
+    {
+      "url": "/articles/bedroom/interer-spalni-v-klassicheskom-stile/",
+      "match_url": "/articles/bedroom/interer-spalni-v-klassicheskom-stile/",
+      "match_type": "url",
+      "action_type": "url",
+      "action_code": 301,
+      "action_data": {
+        "url": "https://design.td-art.ru/folio",
+        "regex": false,
+        "flags": {}
+      },
+      "regex": false,
+      "position": 10,
+      "status": "enabled",
+      "group_id": 1,
+      "title": ""
+    },
+    {
+      "url": "/design-project/avtorskiy-nadzor/",
+      "match_url": "/design-project/avtorskiy-nadzor/",
+      "match_type": "url",
+      "action_type": "url",
+      "action_code": 301,
+      "action_data": {
+        "url": "https://design.td-art.ru/complex",
+        "regex": false,
+        "flags": {}
+      },
+      "regex": false,
+      "position": 11,
+      "status": "enabled",
+      "group_id": 1,
+      "title": ""
+    },
+    {
+      "url": "/articles/interesnoe/fioletovie-ottenki-v-interiere/",
+      "match_url": "/articles/interesnoe/fioletovie-ottenki-v-interiere/",
+      "match_type": "url",
+      "action_type": "url",
+      "action_code": 301,
+      "action_data": {
+        "url": "https://design.td-art.ru/folio",
+        "regex": false,
+        "flags": {}
+      },
+      "regex": false,
+      "position": 12,
+      "status": "enabled",
+      "group_id": 1,
+      "title": ""
+    },
+    {
+      "url": "/articles/bedroom/bay-window/",
+      "match_url": "/articles/bedroom/bay-window/",
+      "match_type": "url",
+      "action_type": "url",
+      "action_code": 301,
+      "action_data": {
+        "url": "https://design.td-art.ru/folio",
+        "regex": false,
+        "flags": {}
+      },
+      "regex": false,
+      "position": 13,
+      "status": "enabled",
+      "group_id": 1,
+      "title": ""
+    },
+    {
+      "url": "/articles/vannaya/art-deko",
+      "match_url": "/articles/vannaya/art-deko",
+      "match_type": "url",
+      "action_type": "url",
+      "action_code": 301,
+      "action_data": {
+        "url": "https://design.td-art.ru/folio",
+        "regex": false,
+        "flags": {}
+      },
+      "regex": false,
+      "position": 14,
+      "status": "enabled",
+      "group_id": 1,
+      "title": ""
+    },
+    {
+      "url": "/prices/",
+      "match_url": "/prices/",
+      "match_type": "url",
+      "action_type": "url",
+      "action_code": 301,
+      "action_data": {
+        "url": "https://design.td-art.ru/",
+        "regex": false,
+        "flags": {}
+      },
+      "regex": false,
+      "position": 15,
+      "status": "enabled",
+      "group_id": 1,
+      "title": ""
+    },
+    {
+      "url": "/articles/interesnoe/skolko-nuzhno-vremeni-na-rabotu-s-dizajnerom/",
+      "match_url": "/articles/interesnoe/skolko-nuzhno-vremeni-na-rabotu-s-dizajnerom/",
+      "match_type": "url",
+      "action_type": "url",
+      "action_code": 301,
+      "action_data": {
+        "url": "https://design.td-art.ru/folio",
+        "regex": false,
+        "flags": {}
+      },
+      "regex": false,
+      "position": 16,
+      "status": "enabled",
+      "group_id": 1,
+      "title": ""
+    },
+    {
+      "url": "/articles/interesnoe/8-sovetov-kak-pravilno-sdelat-remont/",
+      "match_url": "/articles/interesnoe/8-sovetov-kak-pravilno-sdelat-remont/",
+      "match_type": "url",
+      "action_type": "url",
+      "action_code": 301,
+      "action_data": {
+        "url": "https://design.td-art.ru/folio",
+        "regex": false,
+        "flags": {}
+      },
+      "regex": false,
+      "position": 17,
+      "status": "enabled",
+      "group_id": 1,
+      "title": ""
+    },
+    {
+      "url": "/articles/kitchen/balcony/",
+      "match_url": "/articles/kitchen/balcony/",
+      "match_type": "url",
+      "action_type": "url",
+      "action_code": 301,
+      "action_data": {
+        "url": "https://design.td-art.ru/folio",
+        "regex": false,
+        "flags": {}
+      },
+      "regex": false,
+      "position": 18,
+      "status": "enabled",
+      "group_id": 1,
+      "title": ""
+    },
+    {
+      "url": "/contacts/",
+      "match_url": "/contacts/",
+      "match_type": "url",
+      "action_type": "url",
+      "action_code": 301,
+      "action_data": {
+        "url": "https://design.td-art.ru/#contacts",
+        "regex": false,
+        "flags": {}
+      },
+      "regex": false,
+      "position": 19,
+      "status": "enabled",
+      "group_id": 1,
+      "title": ""
+    },
+    {
+      "url": "/byuro/",
+      "match_url": "/byuro/",
+      "match_type": "url",
+      "action_type": "url",
+      "action_code": 301,
+      "action_data": {
+        "url": "https://design.td-art.ru/folio",
+        "regex": false,
+        "flags": {}
+      },
+      "regex": false,
+      "position": 20,
+      "status": "enabled",
+      "group_id": 1,
+      "title": ""
+    },
+    {
+      "url": "/articles/interesnoe/kak-pravilno-vybrat-lestnicu-dlya-kottedzha-ili-chastnogo-doma/",
+      "match_url": "/articles/interesnoe/kak-pravilno-vybrat-lestnicu-dlya-kottedzha-ili-chastnogo-doma/",
+      "match_type": "url",
+      "action_type": "url",
+      "action_code": 301,
+      "action_data": {
+        "url": "https://design.td-art.ru/folio",
+        "regex": false,
+        "flags": {}
+      },
+      "regex": false,
+      "position": 21,
+      "status": "enabled",
+      "group_id": 1,
+      "title": ""
+    },
+    {
+      "url": "/articles/gostinaya/minimalizm/",
+      "match_url": "/articles/gostinaya/minimalizm/",
+      "match_type": "url",
+      "action_type": "url",
+      "action_code": 301,
+      "action_data": {
+        "url": "https://design.td-art.ru/folio",
+        "regex": false,
+        "flags": {}
+      },
+      "regex": false,
+      "position": 22,
+      "status": "enabled",
+      "group_id": 1,
+      "title": ""
+    },
+    {
+      "url": "/design-project/komplektaciya/",
+      "match_url": "/design-project/komplektaciya/",
+      "match_type": "url",
+      "action_type": "url",
+      "action_code": 301,
+      "action_data": {
+        "url": "https://design.td-art.ru/complex",
+        "regex": false,
+        "flags": {}
+      },
+      "regex": false,
+      "position": 23,
+      "status": "enabled",
+      "group_id": 1,
+      "title": ""
+    },
+    {
+      "url": "/articles/kitchen/bay-window/",
+      "match_url": "/articles/kitchen/bay-window/",
+      "match_type": "url",
+      "action_type": "url",
+      "action_code": 301,
+      "action_data": {
+        "url": "https://design.td-art.ru/folio",
+        "regex": false,
+        "flags": {}
+      },
+      "regex": false,
+      "position": 24,
+      "status": "enabled",
+      "group_id": 1,
+      "title": ""
+    },
+    {
+      "url": "/articles/kitchen/bar/",
+      "match_url": "/articles/kitchen/bar/",
+      "match_type": "url",
+      "action_type": "url",
+      "action_code": 301,
+      "action_data": {
+        "url": "https://design.td-art.ru/folio",
+        "regex": false,
+        "flags": {}
+      },
+      "regex": false,
+      "position": 25,
+      "status": "enabled",
+      "group_id": 1,
+      "title": ""
+    },
+    {
+      "url": "/articles/interesnoe/kirpich-vnutri-doma/",
+      "match_url": "/articles/interesnoe/kirpich-vnutri-doma/",
+      "match_type": "url",
+      "action_type": "url",
+      "action_code": 301,
+      "action_data": {
+        "url": "https://design.td-art.ru/folio",
+        "regex": false,
+        "flags": {}
+      },
+      "regex": false,
+      "position": 26,
+      "status": "enabled",
+      "group_id": 1,
+      "title": ""
+    },
+    {
+      "url": "/design-project/",
+      "match_url": "/design-project/",
+      "match_type": "url",
+      "action_type": "url",
+      "action_code": 301,
+      "action_data": {
+        "url": "https://design.td-art.ru/",
+        "regex": false,
+        "flags": {}
+      },
+      "regex": false,
+      "position": 27,
+      "status": "enabled",
+      "group_id": 1,
+      "title": ""
+    },
+    {
+      "url": "/articles/interesnoe/dizajn-proekt-bolshoj-kvartiry/",
+      "match_url": "/articles/interesnoe/dizajn-proekt-bolshoj-kvartiry/",
+      "match_type": "url",
+      "action_type": "url",
+      "action_code": 301,
+      "action_data": {
+        "url": "https://design.td-art.ru/folio",
+        "regex": false,
+        "flags": {}
+      },
+      "regex": false,
+      "position": 28,
+      "status": "enabled",
+      "group_id": 1,
+      "title": ""
+    },
+    {
+      "url": "/articles/kitchen/studio",
+      "match_url": "/articles/kitchen/studio",
+      "match_type": "url",
+      "action_type": "url",
+      "action_code": 301,
+      "action_data": {
+        "url": "https://design.td-art.ru/folio",
+        "regex": false,
+        "flags": {}
+      },
+      "regex": false,
+      "position": 29,
+      "status": "enabled",
+      "group_id": 1,
+      "title": ""
+    },
+    {
+      "url": "/articles/kitchen/art-deko/",
+      "match_url": "/articles/kitchen/art-deko/",
+      "match_type": "url",
+      "action_type": "url",
+      "action_code": 301,
+      "action_data": {
+        "url": "https://design.td-art.ru/folio",
+        "regex": false,
+        "flags": {}
+      },
+      "regex": false,
+      "position": 30,
+      "status": "enabled",
+      "group_id": 1,
+      "title": ""
+    },
+    {
+      "url": "/articles/gostinaya/high-tech/",
+      "match_url": "/articles/gostinaya/high-tech/",
+      "match_type": "url",
+      "action_type": "url",
+      "action_code": 301,
+      "action_data": {
+        "url": "https://design.td-art.ru/folio",
+        "regex": false,
+        "flags": {}
+      },
+      "regex": false,
+      "position": 31,
+      "status": "enabled",
+      "group_id": 1,
+      "title": ""
+    },
+    {
+      "url": "/articles/vannaya/high-tech/",
+      "match_url": "/articles/vannaya/high-tech/",
+      "match_type": "url",
+      "action_type": "url",
+      "action_code": 301,
+      "action_data": {
+        "url": "https://design.td-art.ru/folio",
+        "regex": false,
+        "flags": {}
+      },
+      "regex": false,
+      "position": 32,
+      "status": "enabled",
+      "group_id": 1,
+      "title": ""
+    },
+    {
+      "url": "/articles/interesnoe/anglijskij-stil-v-dizajne-interera/",
+      "match_url": "/articles/interesnoe/anglijskij-stil-v-dizajne-interera/",
+      "match_type": "url",
+      "action_type": "url",
+      "action_code": 301,
+      "action_data": {
+        "url": "https://design.td-art.ru/folio",
+        "regex": false,
+        "flags": {}
+      },
+      "regex": false,
+      "position": 33,
+      "status": "enabled",
+      "group_id": 1,
+      "title": ""
+    },
+    {
+      "url": "/articles/interesnoe/dizajn-interera-v-klassicheskom-stile/",
+      "match_url": "/articles/interesnoe/dizajn-interera-v-klassicheskom-stile/",
+      "match_type": "url",
+      "action_type": "url",
+      "action_code": 301,
+      "action_data": {
+        "url": "https://design.td-art.ru/folio",
+        "regex": false,
+        "flags": {}
+      },
+      "regex": false,
+      "position": 34,
+      "status": "enabled",
+      "group_id": 1,
+      "title": ""
+    },
+    {
+      "url": "/articles/vannaya/kak-sozdat-vannuyu-komnatu-v-ekostile/",
+      "match_url": "/articles/vannaya/kak-sozdat-vannuyu-komnatu-v-ekostile/",
+      "match_type": "url",
+      "action_type": "url",
+      "action_code": 301,
+      "action_data": {
+        "url": "https://design.td-art.ru/folio",
+        "regex": false,
+        "flags": {}
+      },
+      "regex": false,
+      "position": 35,
+      "status": "enabled",
+      "group_id": 1,
+      "title": ""
+    },
+    {
+      "url": "/articles/vannaya/minimalism/",
+      "match_url": "/articles/vannaya/minimalism/",
+      "match_type": "url",
+      "action_type": "url",
+      "action_code": 301,
+      "action_data": {
+        "url": "https://design.td-art.ru/folio",
+        "regex": false,
+        "flags": {}
+      },
+      "regex": false,
+      "position": 36,
+      "status": "enabled",
+      "group_id": 1,
+      "title": ""
+    },
+    {
+      "url": "/articles/vannaya/provence/",
+      "match_url": "/articles/vannaya/provence/",
+      "match_type": "url",
+      "action_type": "url",
+      "action_code": 301,
+      "action_data": {
+        "url": "https://design.td-art.ru/folio",
+        "regex": false,
+        "flags": {}
+      },
+      "regex": false,
+      "position": 37,
+      "status": "enabled",
+      "group_id": 1,
+      "title": ""
+    },
+    {
+      "url": "/articles/interesnoe/frilanser-vs-arhitekturnogo-byuro-kuda-idti-za-intererom-svoej-mechty/",
+      "match_url": "/articles/interesnoe/frilanser-vs-arhitekturnogo-byuro-kuda-idti-za-intererom-svoej-mechty/",
+      "match_type": "url",
+      "action_type": "url",
+      "action_code": 301,
+      "action_data": {
+        "url": "https://design.td-art.ru/folio",
+        "regex": false,
+        "flags": {}
+      },
+      "regex": false,
+      "position": 38,
+      "status": "enabled",
+      "group_id": 1,
+      "title": ""
+    },
+    {
+      "url": "/articles/interesnoe/dizajn-kvartiry-svobodnoj-planirovki/",
+      "match_url": "/articles/interesnoe/dizajn-kvartiry-svobodnoj-planirovki/",
+      "match_type": "url",
+      "action_type": "url",
+      "action_code": 301,
+      "action_data": {
+        "url": "https://design.td-art.ru/folio",
+        "regex": false,
+        "flags": {}
+      },
+      "regex": false,
+      "position": 39,
+      "status": "enabled",
+      "group_id": 1,
+      "title": ""
+    },
+    {
+      "url": "/articles/prihozhaya/art-deko/",
+      "match_url": "/articles/prihozhaya/art-deko/",
+      "match_type": "url",
+      "action_type": "url",
+      "action_code": 301,
+      "action_data": {
+        "url": "https://design.td-art.ru/folio",
+        "regex": false,
+        "flags": {}
+      },
+      "regex": false,
+      "position": 40,
+      "status": "enabled",
+      "group_id": 1,
+      "title": ""
+    },
+    {
+      "url": "/design-project/interier-pod-kluch/",
+      "match_url": "/design-project/interier-pod-kluch/",
+      "match_type": "url",
+      "action_type": "url",
+      "action_code": 301,
+      "action_data": {
+        "url": "https://design.td-art.ru/complex",
+        "regex": false,
+        "flags": {}
+      },
+      "regex": false,
+      "position": 41,
+      "status": "enabled",
+      "group_id": 1,
+      "title": ""
+    },
+    {
+      "url": "/articles/interesnoe/stil-pop-art/",
+      "match_url": "/articles/interesnoe/stil-pop-art/",
+      "match_type": "url",
+      "action_type": "url",
+      "action_code": 301,
+      "action_data": {
+        "url": "https://design.td-art.ru/folio",
+        "regex": false,
+        "flags": {}
+      },
+      "regex": false,
+      "position": 42,
+      "status": "enabled",
+      "group_id": 1,
+      "title": ""
+    },
+    {
+      "url": "/articles/vannaya/classic/",
+      "match_url": "/articles/vannaya/classic/",
+      "match_type": "url",
+      "action_type": "url",
+      "action_code": 301,
+      "action_data": {
+        "url": "https://design.td-art.ru/folio",
+        "regex": false,
+        "flags": {}
+      },
+      "regex": false,
+      "position": 43,
+      "status": "enabled",
+      "group_id": 1,
+      "title": ""
+    },
+    {
+      "url": "/articles/prihozhaya/dizajn-bolshoj-prihozhej/",
+      "match_url": "/articles/prihozhaya/dizajn-bolshoj-prihozhej/",
+      "match_type": "url",
+      "action_type": "url",
+      "action_code": 301,
+      "action_data": {
+        "url": "https://design.td-art.ru/folio",
+        "regex": false,
+        "flags": {}
+      },
+      "regex": false,
+      "position": 44,
+      "status": "enabled",
+      "group_id": 1,
+      "title": ""
+    },
+    {
+      "url": "/articles/bedroom/kantri/",
+      "match_url": "/articles/bedroom/kantri/",
+      "match_type": "url",
+      "action_type": "url",
+      "action_code": 301,
+      "action_data": {
+        "url": "https://design.td-art.ru/folio",
+        "regex": false,
+        "flags": {}
+      },
+      "regex": false,
+      "position": 45,
+      "status": "enabled",
+      "group_id": 1,
+      "title": ""
+    },
+    {
+      "url": "/articles/vannaya/idei-po-planirovke-vannoj-komnaty/",
+      "match_url": "/articles/vannaya/idei-po-planirovke-vannoj-komnaty/",
+      "match_type": "url",
+      "action_type": "url",
+      "action_code": 301,
+      "action_data": {
+        "url": "https://design.td-art.ru/folio",
+        "regex": false,
+        "flags": {}
+      },
+      "regex": false,
+      "position": 46,
+      "status": "enabled",
+      "group_id": 1,
+      "title": ""
+    },
+    {
+      "url": "/articles/kitchen/dizajn-uglovoj-kuhni/",
+      "match_url": "/articles/kitchen/dizajn-uglovoj-kuhni/",
+      "match_type": "url",
+      "action_type": "url",
+      "action_code": 301,
+      "action_data": {
+        "url": "https://design.td-art.ru/folio",
+        "regex": false,
+        "flags": {}
+      },
+      "regex": false,
+      "position": 47,
+      "status": "enabled",
+      "group_id": 1,
+      "title": ""
+    },
+    {
+      "url": "/articles/interesnoe/kak-sdelat-pereplanirovku-kvartiry/",
+      "match_url": "/articles/interesnoe/kak-sdelat-pereplanirovku-kvartiry/",
+      "match_type": "url",
+      "action_type": "url",
+      "action_code": 301,
+      "action_data": {
+        "url": "https://design.td-art.ru/folio",
+        "regex": false,
+        "flags": {}
+      },
+      "regex": false,
+      "position": 48,
+      "status": "enabled",
+      "group_id": 1,
+      "title": ""
+    },
+    {
+      "url": "/articles/bedroom/classic/",
+      "match_url": "/articles/bedroom/classic/",
+      "match_type": "url",
+      "action_type": "url",
+      "action_code": 301,
+      "action_data": {
+        "url": "https://design.td-art.ru/folio",
+        "regex": false,
+        "flags": {}
+      },
+      "regex": false,
+      "position": 49,
+      "status": "enabled",
+      "group_id": 1,
+      "title": ""
+    },
+    {
+      "url": "/articles/gostinaya/art-deko/",
+      "match_url": "/articles/gostinaya/art-deko/",
+      "match_type": "url",
+      "action_type": "url",
+      "action_code": 301,
+      "action_data": {
+        "url": "https://design.td-art.ru/folio",
+        "regex": false,
+        "flags": {}
+      },
+      "regex": false,
+      "position": 50,
+      "status": "enabled",
+      "group_id": 1,
+      "title": ""
+    },
+    {
+      "url": "/articles/kitchen/big/",
+      "match_url": "/articles/kitchen/big/",
+      "match_type": "url",
+      "action_type": "url",
+      "action_code": 301,
+      "action_data": {
+        "url": "https://design.td-art.ru/folio",
+        "regex": false,
+        "flags": {}
+      },
+      "regex": false,
+      "position": 51,
+      "status": "enabled",
+      "group_id": 1,
+      "title": ""
+    },
+    {
+      "url": "/articles/interesnoe/stil-ampir-v-interere/",
+      "match_url": "/articles/interesnoe/stil-ampir-v-interere/",
+      "match_type": "url",
+      "action_type": "url",
+      "action_code": 301,
+      "action_data": {
+        "url": "https://design.td-art.ru/folio",
+        "regex": false,
+        "flags": {}
+      },
+      "regex": false,
+      "position": 52,
+      "status": "enabled",
+      "group_id": 1,
+      "title": ""
+    },
+    {
+      "url": "/articles/interesnoe/klassicheskij-skandinavskij-stil/",
+      "match_url": "/articles/interesnoe/klassicheskij-skandinavskij-stil/",
+      "match_type": "url",
+      "action_type": "url",
+      "action_code": 301,
+      "action_data": {
+        "url": "https://design.td-art.ru/folio",
+        "regex": false,
+        "flags": {}
+      },
+      "regex": false,
+      "position": 53,
+      "status": "enabled",
+      "group_id": 1,
+      "title": ""
+    },
+    {
+      "url": "/articles/interesnoe/interer-sochetayuwij-chernye-i-belye-tona/",
+      "match_url": "/articles/interesnoe/interer-sochetayuwij-chernye-i-belye-tona/",
+      "match_type": "url",
+      "action_type": "url",
+      "action_code": 301,
+      "action_data": {
+        "url": "https://design.td-art.ru/folio",
+        "regex": false,
+        "flags": {}
+      },
+      "regex": false,
+      "position": 54,
+      "status": "enabled",
+      "group_id": 1,
+      "title": ""
+    },
+    {
+      "url": "/articles/bedroom/art-deko/",
+      "match_url": "/articles/bedroom/art-deko/",
+      "match_type": "url",
+      "action_type": "url",
+      "action_code": 301,
+      "action_data": {
+        "url": "https://design.td-art.ru/folio",
+        "regex": false,
+        "flags": {}
+      },
+      "regex": false,
+      "position": 55,
+      "status": "enabled",
+      "group_id": 1,
+      "title": ""
+    },
+    {
+      "url": "/portfolio/",
+      "match_url": "/portfolio/",
+      "match_type": "url",
+      "action_type": "url",
+      "action_code": 301,
+      "action_data": {
+        "url": "https://design.td-art.ru/folio",
+        "regex": false,
+        "flags": {}
+      },
+      "regex": false,
+      "position": 56,
+      "status": "enabled",
+      "group_id": 1,
+      "title": ""
+    },
+    {
+      "url": "/articles/gostinaya/bay-window-2/",
+      "match_url": "/articles/gostinaya/bay-window-2/",
+      "match_type": "url",
+      "action_type": "url",
+      "action_code": 301,
+      "action_data": {
+        "url": "https://design.td-art.ru/folio",
+        "regex": false,
+        "flags": {}
+      },
+      "regex": false,
+      "position": 57,
+      "status": "enabled",
+      "group_id": 1,
+      "title": ""
+    },
+    {
+      "url": "/articles/interesnoe/chto-delat-esli-dizajn-proekt-interera-ne-nravitsja/",
+      "match_url": "/articles/interesnoe/chto-delat-esli-dizajn-proekt-interera-ne-nravitsja/",
+      "match_type": "url",
+      "action_type": "url",
+      "action_code": 301,
+      "action_data": {
+        "url": "https://design.td-art.ru/folio",
+        "regex": false,
+        "flags": {}
+      },
+      "regex": false,
+      "position": 58,
+      "status": "enabled",
+      "group_id": 1,
+      "title": ""
+    },
+    {
+      "url": "/articles/vannaya/",
+      "match_url": "/articles/vannaya/",
+      "match_type": "url",
+      "action_type": "url",
+      "action_code": 301,
+      "action_data": {
+        "url": "https://design.td-art.ru/folio",
+        "regex": false,
+        "flags": {}
+      },
+      "regex": false,
+      "position": 59,
+      "status": "enabled",
+      "group_id": 1,
+      "title": ""
+    },
+    {
+      "url": "/portfolio/kopengagen/",
+      "match_url": "/portfolio/kopengagen/",
+      "match_type": "url",
+      "action_type": "url",
+      "action_code": 301,
+      "action_data": {
+        "url": "https://design.td-art.ru/folio",
+        "regex": false,
+        "flags": {}
+      },
+      "regex": false,
+      "position": 60,
+      "status": "enabled",
+      "group_id": 1,
+      "title": ""
+    },
+    {
+      "url": "/portfolio/arbat/",
+      "match_url": "/portfolio/arbat/",
+      "match_type": "url",
+      "action_type": "url",
+      "action_code": 301,
+      "action_data": {
+        "url": "https://design.td-art.ru/arbat",
+        "regex": false,
+        "flags": {}
+      },
+      "regex": false,
+      "position": 61,
+      "status": "enabled",
+      "group_id": 1,
+      "title": ""
+    },
+    {
+      "url": "/articles/bedroom/modern/",
+      "match_url": "/articles/bedroom/modern/",
+      "match_type": "url",
+      "action_type": "url",
+      "action_code": 301,
+      "action_data": {
+        "url": "https://design.td-art.ru/folio",
+        "regex": false,
+        "flags": {}
+      },
+      "regex": false,
+      "position": 62,
+      "status": "enabled",
+      "group_id": 1,
+      "title": ""
+    },
+    {
+      "url": "/articles/vannaya/modern/",
+      "match_url": "/articles/vannaya/modern/",
+      "match_type": "url",
+      "action_type": "url",
+      "action_code": 301,
+      "action_data": {
+        "url": "https://design.td-art.ru/folio",
+        "regex": false,
+        "flags": {}
+      },
+      "regex": false,
+      "position": 63,
+      "status": "enabled",
+      "group_id": 1,
+      "title": ""
+    },
+    {
+      "url": "/articles/gostinaya/dizajn-bolshoj-gostinoj/",
+      "match_url": "/articles/gostinaya/dizajn-bolshoj-gostinoj/",
+      "match_type": "url",
+      "action_type": "url",
+      "action_code": 301,
+      "action_data": {
+        "url": "https://design.td-art.ru/folio",
+        "regex": false,
+        "flags": {}
+      },
+      "regex": false,
+      "position": 64,
+      "status": "enabled",
+      "group_id": 1,
+      "title": ""
+    },
+    {
+      "url": "/articles/interesnoe/menyaem-interer-pri-pomowi-cveta/",
+      "match_url": "/articles/interesnoe/menyaem-interer-pri-pomowi-cveta/",
+      "match_type": "url",
+      "action_type": "url",
+      "action_code": 301,
+      "action_data": {
+        "url": "https://design.td-art.ru/folio",
+        "regex": false,
+        "flags": {}
+      },
+      "regex": false,
+      "position": 65,
+      "status": "enabled",
+      "group_id": 1,
+      "title": ""
+    },
+    {
+      "url": "/portfolio/paveletskaya/",
+      "match_url": "/portfolio/paveletskaya/",
+      "match_type": "url",
+      "action_type": "url",
+      "action_code": 301,
+      "action_data": {
+        "url": "https://design.td-art.ru/paveletskaya",
+        "regex": false,
+        "flags": {}
+      },
+      "regex": false,
+      "position": 66,
+      "status": "enabled",
+      "group_id": 1,
+      "title": ""
+    },
+    {
+      "url": "/articles/interesnoe/skolko-stoit-horoshij-dizajn-proekt/",
+      "match_url": "/articles/interesnoe/skolko-stoit-horoshij-dizajn-proekt/",
+      "match_type": "url",
+      "action_type": "url",
+      "action_code": 301,
+      "action_data": {
+        "url": "https://design.td-art.ru/folio",
+        "regex": false,
+        "flags": {}
+      },
+      "regex": false,
+      "position": 67,
+      "status": "enabled",
+      "group_id": 1,
+      "title": ""
+    },
+    {
+      "url": "/portfolio/kristall/",
+      "match_url": "/portfolio/kristall/",
+      "match_type": "url",
+      "action_type": "url",
+      "action_code": 301,
+      "action_data": {
+        "url": "https://design.td-art.ru/crystal",
+        "regex": false,
+        "flags": {}
+      },
+      "regex": false,
+      "position": 68,
+      "status": "enabled",
+      "group_id": 1,
+      "title": ""
+    },
+    {
+      "url": "/articles/kitchen/classic/",
+      "match_url": "/articles/kitchen/classic/",
+      "match_type": "url",
+      "action_type": "url",
+      "action_code": 301,
+      "action_data": {
+        "url": "https://design.td-art.ru/folio",
+        "regex": false,
+        "flags": {}
+      },
+      "regex": false,
+      "position": 69,
+      "status": "enabled",
+      "group_id": 1,
+      "title": ""
+    },
+    {
+      "url": "/portfolio/zhk-wow/",
+      "match_url": "/portfolio/zhk-wow/",
+      "match_type": "url",
+      "action_type": "url",
+      "action_code": 301,
+      "action_data": {
+        "url": "https://design.td-art.ru/wow",
+        "regex": false,
+        "flags": {}
+      },
+      "regex": false,
+      "position": 70,
+      "status": "enabled",
+      "group_id": 1,
+      "title": ""
+    },
+    {
+      "url": "/articles/bedroom/minimalism/",
+      "match_url": "/articles/bedroom/minimalism/",
+      "match_type": "url",
+      "action_type": "url",
+      "action_code": 301,
+      "action_data": {
+        "url": "https://design.td-art.ru/folio",
+        "regex": false,
+        "flags": {}
+      },
+      "regex": false,
+      "position": 71,
+      "status": "enabled",
+      "group_id": 1,
+      "title": ""
+    },
+    {
+      "url": "/articles/interesnoe/kak-organizovat-home-office/",
+      "match_url": "/articles/interesnoe/kak-organizovat-home-office/",
+      "match_type": "url",
+      "action_type": "url",
+      "action_code": 301,
+      "action_data": {
+        "url": "https://design.td-art.ru/folio",
+        "regex": false,
+        "flags": {}
+      },
+      "regex": false,
+      "position": 72,
+      "status": "enabled",
+      "group_id": 1,
+      "title": ""
+    },
+    {
+      "url": "/articles/bedroom/",
+      "match_url": "/articles/bedroom/",
+      "match_type": "url",
+      "action_type": "url",
+      "action_code": 301,
+      "action_data": {
+        "url": "https://design.td-art.ru/folio",
+        "regex": false,
+        "flags": {}
+      },
+      "regex": false,
+      "position": 73,
+      "status": "enabled",
+      "group_id": 1,
+      "title": ""
+    },
+    {
+      "url": "/articles/interesnoe/ostrovnaya-kuhnya-v-interere/",
+      "match_url": "/articles/interesnoe/ostrovnaya-kuhnya-v-interere/",
+      "match_type": "url",
+      "action_type": "url",
+      "action_code": 301,
+      "action_data": {
+        "url": "https://design.td-art.ru/folio",
+        "regex": false,
+        "flags": {}
+      },
+      "regex": false,
+      "position": 74,
+      "status": "enabled",
+      "group_id": 1,
+      "title": ""
+    },
+    {
+      "url": "/portfolio/akademika-pavlova/",
+      "match_url": "/portfolio/akademika-pavlova/",
+      "match_type": "url",
+      "action_type": "url",
+      "action_code": 301,
+      "action_data": {
+        "url": "https://design.td-art.ru/pavlova",
+        "regex": false,
+        "flags": {}
+      },
+      "regex": false,
+      "position": 75,
+      "status": "enabled",
+      "group_id": 1,
+      "title": ""
+    },
+    {
+      "url": "/portfolio/shuvalovskij/",
+      "match_url": "/portfolio/shuvalovskij/",
+      "match_type": "url",
+      "action_type": "url",
+      "action_code": 301,
+      "action_data": {
+        "url": "https://design.td-art.ru/shuvalovsky",
+        "regex": false,
+        "flags": {}
+      },
+      "regex": false,
+      "position": 76,
+      "status": "enabled",
+      "group_id": 1,
+      "title": ""
+    },
+    {
+      "url": "/articles/kitchen/provence/",
+      "match_url": "/articles/kitchen/provence/",
+      "match_type": "url",
+      "action_type": "url",
+      "action_code": 301,
+      "action_data": {
+        "url": "https://design.td-art.ru/folio",
+        "regex": false,
+        "flags": {}
+      },
+      "regex": false,
+      "position": 77,
+      "status": "enabled",
+      "group_id": 1,
+      "title": ""
+    },
+    {
+      "url": "/portfolio/serdce-stolicy/",
+      "match_url": "/portfolio/serdce-stolicy/",
+      "match_type": "url",
+      "action_type": "url",
+      "action_code": 301,
+      "action_data": {
+        "url": "https://design.td-art.ru/heart",
+        "regex": false,
+        "flags": {}
+      },
+      "regex": false,
+      "position": 78,
+      "status": "enabled",
+      "group_id": 1,
+      "title": ""
+    },
+    {
+      "url": "/articles/",
+      "match_url": "/articles/",
+      "match_type": "url",
+      "action_type": "url",
+      "action_code": 301,
+      "action_data": {
+        "url": "https://design.td-art.ru/folio",
+        "regex": false,
+        "flags": {}
+      },
+      "regex": false,
+      "position": 79,
+      "status": "enabled",
+      "group_id": 1,
+      "title": ""
+    },
+    {
+      "url": "/articles/interesnoe/dizajn-proekt-taunhausa/",
+      "match_url": "/articles/interesnoe/dizajn-proekt-taunhausa/",
+      "match_type": "url",
+      "action_type": "url",
+      "action_code": 301,
+      "action_data": {
+        "url": "https://design.td-art.ru/folio",
+        "regex": false,
+        "flags": {}
+      },
+      "regex": false,
+      "position": 80,
+      "status": "enabled",
+      "group_id": 1,
+      "title": ""
+    },
+    {
+      "url": "/portfolio/shome/",
+      "match_url": "/portfolio/shome/",
+      "match_type": "url",
+      "action_type": "url",
+      "action_code": 301,
+      "action_data": {
+        "url": "https://design.td-art.ru/shome",
+        "regex": false,
+        "flags": {}
+      },
+      "regex": false,
+      "position": 81,
+      "status": "enabled",
+      "group_id": 1,
+      "title": ""
+    },
+    {
+      "url": "/articles/gostinaya/",
+      "match_url": "/articles/gostinaya/",
+      "match_type": "url",
+      "action_type": "url",
+      "action_code": 301,
+      "action_data": {
+        "url": "https://design.td-art.ru/folio",
+        "regex": false,
+        "flags": {}
+      },
+      "regex": false,
+      "position": 82,
+      "status": "enabled",
+      "group_id": 1,
+      "title": ""
+    },
+    {
+      "url": "/portfolio/west-garden/",
+      "match_url": "/portfolio/west-garden/",
+      "match_type": "url",
+      "action_type": "url",
+      "action_code": 301,
+      "action_data": {
+        "url": "https://design.td-art.ru/westgarden",
+        "regex": false,
+        "flags": {}
+      },
+      "regex": false,
+      "position": 83,
+      "status": "enabled",
+      "group_id": 1,
+      "title": ""
+    },
+    {
+      "url": "/poisk/",
+      "match_url": "/poisk/",
+      "match_type": "url",
+      "action_type": "url",
+      "action_code": 301,
+      "action_data": {
+        "url": "https://design.td-art.ru/folio",
+        "regex": false,
+        "flags": {}
+      },
+      "regex": false,
+      "position": 84,
+      "status": "enabled",
+      "group_id": 1,
+      "title": ""
+    },
+    {
+      "url": "/portfolio/kvartira-v-zhk-4-solnca/",
+      "match_url": "/portfolio/kvartira-v-zhk-4-solnca/",
+      "match_type": "url",
+      "action_type": "url",
+      "action_code": 301,
+      "action_data": {
+        "url": "https://design.td-art.ru/4suns",
+        "regex": false,
+        "flags": {}
+      },
+      "regex": false,
+      "position": 85,
+      "status": "enabled",
+      "group_id": 1,
+      "title": ""
+    },
+    {
+      "url": "/articles/interesnoe/stil-barokko/",
+      "match_url": "/articles/interesnoe/stil-barokko/",
+      "match_type": "url",
+      "action_type": "url",
+      "action_code": 301,
+      "action_data": {
+        "url": "https://design.td-art.ru/folio",
+        "regex": false,
+        "flags": {}
+      },
+      "regex": false,
+      "position": 86,
+      "status": "enabled",
+      "group_id": 1,
+      "title": ""
+    },
+    {
+      "url": "/portfolio/horoshevskij/",
+      "match_url": "/portfolio/horoshevskij/",
+      "match_type": "url",
+      "action_type": "url",
+      "action_code": 301,
+      "action_data": {
+        "url": "https://design.td-art.ru/horoshevski",
+        "regex": false,
+        "flags": {}
+      },
+      "regex": false,
+      "position": 87,
+      "status": "enabled",
+      "group_id": 1,
+      "title": ""
+    },
+    {
+      "url": "/articles/kitchen/modern/",
+      "match_url": "/articles/kitchen/modern/",
+      "match_type": "url",
+      "action_type": "url",
+      "action_code": 301,
+      "action_data": {
+        "url": "https://design.td-art.ru/folio",
+        "regex": false,
+        "flags": {}
+      },
+      "regex": false,
+      "position": 88,
+      "status": "enabled",
+      "group_id": 1,
+      "title": ""
+    },
+    {
+      "url": "/articles/prihozhaya/high-tech/",
+      "match_url": "/articles/prihozhaya/high-tech/",
+      "match_type": "url",
+      "action_type": "url",
+      "action_code": 301,
+      "action_data": {
+        "url": "https://design.td-art.ru/folio",
+        "regex": false,
+        "flags": {}
+      },
+      "regex": false,
+      "position": 89,
+      "status": "enabled",
+      "group_id": 1,
+      "title": ""
+    },
+    {
+      "url": "/articles/interesnoe/dizajn-interera-v-sovremennom-stile/",
+      "match_url": "/articles/interesnoe/dizajn-interera-v-sovremennom-stile/",
+      "match_type": "url",
+      "action_type": "url",
+      "action_code": 301,
+      "action_data": {
+        "url": "https://design.td-art.ru/folio",
+        "regex": false,
+        "flags": {}
+      },
+      "regex": false,
+      "position": 90,
+      "status": "enabled",
+      "group_id": 1,
+      "title": ""
+    },
+    {
+      "url": "/articles/interesnoe/osoznannyj-interer-opredeljaemsja-s-vyborom/",
+      "match_url": "/articles/interesnoe/osoznannyj-interer-opredeljaemsja-s-vyborom/",
+      "match_type": "url",
+      "action_type": "url",
+      "action_code": 301,
+      "action_data": {
+        "url": "https://design.td-art.ru/folio",
+        "regex": false,
+        "flags": {}
+      },
+      "regex": false,
+      "position": 91,
+      "status": "enabled",
+      "group_id": 1,
+      "title": ""
+    },
+    {
+      "url": "/portfolio/fili-city/",
+      "match_url": "/portfolio/fili-city/",
+      "match_type": "url",
+      "action_type": "url",
+      "action_code": 301,
+      "action_data": {
+        "url": "https://design.td-art.ru/folio",
+        "regex": false,
+        "flags": {}
+      },
+      "regex": false,
+      "position": 92,
+      "status": "enabled",
+      "group_id": 1,
+      "title": ""
+    },
+    {
+      "url": "/portfolio/dom-v-poselke-novye-veshki/",
+      "match_url": "/portfolio/dom-v-poselke-novye-veshki/",
+      "match_type": "url",
+      "action_type": "url",
+      "action_code": 301,
+      "action_data": {
+        "url": "https://design.td-art.ru/veshki",
+        "regex": false,
+        "flags": {}
+      },
+      "regex": false,
+      "position": 93,
+      "status": "enabled",
+      "group_id": 1,
+      "title": ""
+    },
+    {
+      "url": "/portfolio/spasskie-vyselki/",
+      "match_url": "/portfolio/spasskie-vyselki/",
+      "match_type": "url",
+      "action_type": "url",
+      "action_code": 301,
+      "action_data": {
+        "url": "https://design.td-art.ru/house190",
+        "regex": false,
+        "flags": {}
+      },
+      "regex": false,
+      "position": 94,
+      "status": "enabled",
+      "group_id": 1,
+      "title": ""
+    },
+    {
+      "url": "/articles/kitchen/",
+      "match_url": "/articles/kitchen/",
+      "match_type": "url",
+      "action_type": "url",
+      "action_code": 301,
+      "action_data": {
+        "url": "https://design.td-art.ru/folio",
+        "regex": false,
+        "flags": {}
+      },
+      "regex": false,
+      "position": 95,
+      "status": "enabled",
+      "group_id": 1,
+      "title": ""
+    },
+    {
+      "url": "/portfolio/kvartira-v-starom-fonde/",
+      "match_url": "/portfolio/kvartira-v-starom-fonde/",
+      "match_type": "url",
+      "action_type": "url",
+      "action_code": 301,
+      "action_data": {
+        "url": "https://design.td-art.ru/folio",
+        "regex": false,
+        "flags": {}
+      },
+      "regex": false,
+      "position": 96,
+      "status": "enabled",
+      "group_id": 1,
+      "title": ""
+    },
+    {
+      "url": "/portfolio/dom-v-novoj-moskve-160m2/",
+      "match_url": "/portfolio/dom-v-novoj-moskve-160m2/",
+      "match_type": "url",
+      "action_type": "url",
+      "action_code": 301,
+      "action_data": {
+        "url": "https://design.td-art.ru/house160",
+        "regex": false,
+        "flags": {}
+      },
+      "regex": false,
+      "position": 97,
+      "status": "enabled",
+      "group_id": 1,
+      "title": ""
+    },
+    {
+      "url": "/portfolio/kvartira-na-donskom-proezde/",
+      "match_url": "/portfolio/kvartira-na-donskom-proezde/",
+      "match_type": "url",
+      "action_type": "url",
+      "action_code": 301,
+      "action_data": {
+        "url": "https://design.td-art.ru/donskoy",
+        "regex": false,
+        "flags": {}
+      },
+      "regex": false,
+      "position": 98,
+      "status": "enabled",
+      "group_id": 1,
+      "title": ""
+    },
+    {
+      "url": "/portfolio/west-garden-50m2/",
+      "match_url": "/portfolio/west-garden-50m2/",
+      "match_type": "url",
+      "action_type": "url",
+      "action_code": 301,
+      "action_data": {
+        "url": "https://design.td-art.ru/westgarden50",
+        "regex": false,
+        "flags": {}
+      },
+      "regex": false,
+      "position": 99,
+      "status": "enabled",
+      "group_id": 1,
+      "title": ""
+    },
+    {
+      "url": "/articles/prihozhaya/",
+      "match_url": "/articles/prihozhaya/",
+      "match_type": "url",
+      "action_type": "url",
+      "action_code": 301,
+      "action_data": {
+        "url": "https://design.td-art.ru/folio",
+        "regex": false,
+        "flags": {}
+      },
+      "regex": false,
+      "position": 100,
+      "status": "enabled",
+      "group_id": 1,
+      "title": ""
+    },
+    {
+      "url": "/articles/interesnoe/kak-rasporyaditsya-prostranstvom-lodzhii/",
+      "match_url": "/articles/interesnoe/kak-rasporyaditsya-prostranstvom-lodzhii/",
+      "match_type": "url",
+      "action_type": "url",
+      "action_code": 301,
+      "action_data": {
+        "url": "https://design.td-art.ru/folio",
+        "regex": false,
+        "flags": {}
+      },
+      "regex": false,
+      "position": 101,
+      "status": "enabled",
+      "group_id": 1,
+      "title": ""
+    },
+    {
+      "url": "/articles/interesnoe/kak-ne-popast-na-novichka/",
+      "match_url": "/articles/interesnoe/kak-ne-popast-na-novichka/",
+      "match_type": "url",
+      "action_type": "url",
+      "action_code": 301,
+      "action_data": {
+        "url": "https://design.td-art.ru/folio",
+        "regex": false,
+        "flags": {}
+      },
+      "regex": false,
+      "position": 102,
+      "status": "enabled",
+      "group_id": 1,
+      "title": ""
+    },
+    {
+      "url": "/(.*)",
+      "match_url": "/(.*)",
+      "match_type": "url",
+      "action_type": "url",
+      "action_code": 301,
+      "action_data": {
+        "url": "https://design.td-art.ru/folio",
+        "regex": true,
+        "flags": {}
+      },
+      "regex": true,
+      "position": 103,
+      "status": "enabled",
+      "group_id": 1,
+      "title": ""
+    }
+  ]
+}
