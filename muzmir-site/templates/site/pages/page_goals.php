@@ -188,12 +188,8 @@ ob_start(); ?>
       <div class="gold-rule"></div>
     </div>
 
-    <div class="grid grid-4 reveal" style="margin-bottom:40px">
-      <div class="stat"><b data-count="9" data-suffix="">0</b><span>Номинаций</span></div>
-      <div class="stat"><b data-count="10" data-suffix="">0</b><span>Возрастных категорий</span></div>
-      <div class="stat"><b data-count="7" data-suffix="">0</b><span>Наградных званий</span></div>
-      <div class="stat"><b data-count="5" data-suffix="">0</b><span>Критериев оценки жюри</span></div>
-    </div>
+    <?php /* Блок из 4 карточек-счётчиков (Номинаций / Возрастных категорий /
+             Наградных званий / Критериев оценки жюри) убран по просьбе Даниэля. */ ?>
 
     <div class="grid grid-2" style="align-items:start">
       <div class="card reveal">

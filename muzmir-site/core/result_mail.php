@@ -125,7 +125,8 @@ function application_mail_send(int $appId, bool $paid = false): bool {
     $html = mm_email_tx($inner, [
         'preheader' => 'Заявка №' . $num . ($paid ? ' оплачена и принята.' : ' зарегистрирована.') . ' Детали и статус — в личном кабинете.',
         'hero'      => mm_cta_primary(url('/cabinet'), 'Открыть личный кабинет', 'Статус заявки · оплата · дипломы'),
-        'actions'   => [['Другие конкурсы', url('/competitions')], ['Оставить отзыв', url('/reviews')]],
+        // «Другие конкурсы» убрана — в подвале письма уже есть кнопка «Другие конкурсы центра».
+        'actions'   => [['Оставить отзыв', url('/reviews')]],
     ]);
     return mail_queue((string) $a['email'], $name, $subject, $html) > 0;
 }

@@ -14,14 +14,27 @@ if (!rate_ok('feedback:' . client_ip(), 10, 3600)) {
 }
 
 $name  = input('name');
+// Форма контактов шлёт единое поле «contact» (почта ИЛИ телефон). Поддерживаем и
+// старые раздельные поля email/phone для обратной совместимости.
+$contact = trim((string) input('contact'));
 $email = mb_strtolower(input('email'));
 $phone = input('phone');
+if ($contact !== '') {
+    if (filter_var($contact, FILTER_VALIDATE_EMAIL)) { $email = mb_strtolower($contact); }
+    else { $phone = $contact; }
+}
 $msg   = normalize_text(input('message'));
 
 if (mb_strlen($msg) < 5) json_out(['ok' => false, 'error' => 'Опишите обращение подробнее'], 422);
 
-$ev = function_exists('v_email') ? v_email($email) : ['ok' => (bool) filter_var($email, FILTER_VALIDATE_EMAIL)];
-if (!($ev['ok'] ?? false)) json_out(['ok' => false, 'error' => 'Проверьте электронную почту'], 422);
+// Контакт обязателен, но это может быть телефон — не валим на «почте», если дан телефон.
+if ($email === '' && trim((string) $phone) === '') {
+    json_out(['ok' => false, 'error' => 'Укажите электронную почту или телефон для ответа'], 422);
+}
+if ($email !== '') {
+    $ev = function_exists('v_email') ? v_email($email) : ['ok' => (bool) filter_var($email, FILTER_VALIDATE_EMAIL)];
+    if (!($ev['ok'] ?? false)) json_out(['ok' => false, 'error' => 'Проверьте электронную почту'], 422);
+}
 
 $subject = 'Обратная связь с сайта - ' . ($name !== '' ? $name : $email);
 $fieldsHtml = '<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin:0 0 8px;background:#F4F6FC;border:1px solid #DCE3F3;border-radius:14px;">'
@@ -43,7 +56,9 @@ $body = function_exists('mail_template')
       . '<p><b>Телефон:</b> ' . h($phone) . '</p>'
       . '<p><b>Сообщение:</b><br>' . nl2br(h($msg)) . '</p>';
 
-$admin = cfgv('org_email');
+// Обращения с сайта — на основную почту центра (Даниэль: kulturniy.centr.mir@gmail.com).
+$admin = trim((string) cfgv('org_email'));
+if ($admin === '' || !filter_var($admin, FILTER_VALIDATE_EMAIL)) $admin = 'kulturniy.centr.mir@gmail.com';
 if (function_exists('mail_queue')) {
     mail_queue($admin, 'Оргкомитет', $subject, $body);
 } elseif (tbl_exists('mail_queue')) {

@@ -18,10 +18,10 @@ $timeline = [
 
 /* Реальные показатели центра (фиксированные значения). */
 $stats = [
-    ['8', '', 'лет работы'],
+    ['5', '', 'лет работы'],
     ['1300', '+', 'проведённых конкурсов'],
-    ['600000', '+', 'участников'],
-    ['15', '+', 'стран мира'],
+    ['603000', '', 'участников'],
+    ['15', '', 'стран мира'],
 ];
 
 /* Топ-направления по базе заявок (доля, %). */
@@ -313,9 +313,12 @@ $achIcons = ['crown', 'star', 'globe', 'heart'];
       <div class="gold-rule"></div>
       <p>Итоги многолетней работы центра: конкурсы, участники и география.</p>
     </div>
-    <div class="stats reveal" style="margin-bottom:44px">
-      <?php foreach ($stats as [$val, $suf, $label]): ?>
-        <div class="stat"><b data-count="<?= h($val) ?>" data-suffix="<?= h($suf) ?>">0</b><span><?= h($label) ?></span></div>
+    <div class="stats reveal" style="margin-bottom:44px;justify-content:center;text-align:center">
+      <?php foreach ($stats as [$val, $suf, $label]):
+        // Статичное форматированное значение (гарантированно видно даже без анимации);
+        // data-count оставляем как усиление (счётчик анимирует к тому же числу).
+        $shown = number_format((int) $val, 0, '', ' ') . $suf; ?>
+        <div class="stat"><b data-count="<?= h($val) ?>" data-suffix="<?= h($suf) ?>"><?= h($shown) ?></b><span><?= h($label) ?></span></div>
       <?php endforeach; ?>
     </div>
     <div class="reveal" style="margin-top:22px">

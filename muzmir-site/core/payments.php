@@ -191,7 +191,8 @@ function payment_apply_status(string $paymentId, string $status, array $obj = []
         } else {
             $preheader = 'Оплата участия получена. Работа передана жюри.';
             $heroSub   = 'Оплата подтверждена';
-            $actions   = [['Другие конкурсы', $baseCab . '/competitions'], ['Оставить отзыв', $baseCab . '/reviews']];
+            // «Другие конкурсы» убрана — в подвале письма уже есть «Другие конкурсы центра».
+            $actions   = [['Оставить отзыв', $baseCab . '/reviews']];
             $subjectPay = 'Оплата получена — Культурный центр «Музыкальный Мир»';
         }
         $html = function_exists('mail_template')

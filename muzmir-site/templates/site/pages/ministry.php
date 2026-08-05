@@ -9,7 +9,11 @@
  * «документ готовится к публикации», а не битая картинка. Идеальная мобилка.
  */
 
-$letters = all("SELECT * FROM ministry_letters ORDER BY sort, id DESC");
+// Сортировка «письма и благодарности» — по дате письма, новые сверху. Дата письма
+// хранится в колонке letter_date (мягкая миграция); если не заполнена — новые по id.
+try { db()->exec("ALTER TABLE ministry_letters ADD COLUMN letter_date TEXT"); } catch (\Throwable $e) {}
+$letters = all("SELECT * FROM ministry_letters
+                ORDER BY (letter_date IS NULL OR letter_date='') ASC, letter_date DESC, sort, id DESC");
 
 /* --- Справочник федеральных округов (короткое имя, полное имя) --- */
 $DISTRICTS = [

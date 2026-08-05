@@ -294,14 +294,8 @@ ob_start(); ?>
       <a class="cal-yearnav" href="<?= url('/calendar?year=' . ($year + 1)) ?>" aria-label="Следующий год"><?= $ic['right'] ?></a>
     </div>
 
-    <?php if ($totalEvents > 0): ?>
-      <div class="calx-kpi reveal">
-        <div class="stat"><b><?= (int) $kpi['total'] ?></b><span>мероприятий в году</span></div>
-        <div class="stat"><b><?= (int) $kpi['open'] ?></b><span>приём открыт</span></div>
-        <div class="stat"><b><?= (int) $kpi['soon'] ?></b><span>впереди по плану</span></div>
-        <div class="stat"><b><?= (int) $kpi['results'] ?></b><span>с результатами</span></div>
-      </div>
-    <?php endif; ?>
+    <?php /* Блок карточек-счётчиков (мероприятий в году / приём открыт / впереди по
+             плану / с результатами) убран по просьбе Даниэля. */ ?>
 
     <nav class="calx-anchors reveal" aria-label="Разделы страницы">
       <?php if ($totalEvents > 0): ?>
