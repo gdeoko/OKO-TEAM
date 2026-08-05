@@ -183,6 +183,71 @@ ob_start(); ?>
   </div>
 </section>
 
+<?php /* DaData автоподсказка адреса (бесплатно до 10000/день). Токен — публичный ключ suggestions. */ ?>
+<style>
+.dd-suggest{position:absolute;left:0;right:0;top:100%;z-index:50;background:var(--card,#fff);border:1px solid var(--glass-brd,rgba(0,0,0,.12));border-radius:12px;box-shadow:0 12px 34px rgba(0,0,0,.18);margin-top:4px;max-height:280px;overflow:auto}
+.dd-suggest[hidden]{display:none}
+.dd-item{padding:10px 14px;cursor:pointer;font-size:.92rem;border-bottom:1px solid var(--glass-brd,rgba(0,0,0,.06))}
+.dd-item:last-child{border-bottom:0}
+.dd-item:hover,.dd-item.active{background:rgba(154,255,0,.12)}
+.dd-item small{display:block;color:var(--muted);font-size:.78rem;margin-top:2px}
+</style>
+<script>
+(function(){
+  var TOKEN = <?= json_encode((string) cfgv('dadata_token', '')) ?>;
+  var input = document.getElementById('ord_addr');
+  var box = document.getElementById('ddSuggest');
+  var postal = document.getElementById('ord_postal');
+  if (!input || !box || !TOKEN) return; // без токена — обычное поле
+  var timer = null, items = [], active = -1;
+  function hide(){ box.hidden = true; box.innerHTML=''; items=[]; active=-1; }
+  function render(sugs){
+    items = sugs || [];
+    if (!items.length){ hide(); return; }
+    box.innerHTML = items.map(function(s,i){
+      var pc = (s.data && s.data.postal_code) ? s.data.postal_code + ', ' : '';
+      return '<div class="dd-item" data-i="'+i+'">'+ s.value.replace(/</g,'&lt;') +
+             (pc ? '<small>Индекс: '+pc.replace(/, $/,'')+'</small>':'') + '</div>';
+    }).join('');
+    box.hidden = false; active = -1;
+  }
+  function choose(i){
+    var s = items[i]; if (!s) return;
+    input.value = s.value;
+    if (postal && s.data && s.data.postal_code) postal.value = s.data.postal_code;
+    hide();
+  }
+  function query(q){
+    fetch('https://suggestions.dadata.ru/suggestions/api/4_1/rs/suggest/address', {
+      method:'POST',
+      headers:{'Content-Type':'application/json','Accept':'application/json','Authorization':'Token '+TOKEN},
+      body: JSON.stringify({ query:q, count:7 })
+    }).then(function(r){ return r.json(); })
+      .then(function(d){ render(d.suggestions||[]); })
+      .catch(function(){ hide(); });
+  }
+  input.addEventListener('input', function(){
+    var q = input.value.trim();
+    if (postal) postal.value='';
+    if (q.length < 3){ hide(); return; }
+    clearTimeout(timer); timer = setTimeout(function(){ query(q); }, 220);
+  });
+  box.addEventListener('mousedown', function(e){
+    var it = e.target.closest('.dd-item'); if (!it) return;
+    e.preventDefault(); choose(parseInt(it.getAttribute('data-i'),10));
+  });
+  input.addEventListener('keydown', function(e){
+    if (box.hidden) return;
+    if (e.key==='ArrowDown'){ e.preventDefault(); active=Math.min(active+1,items.length-1); }
+    else if (e.key==='ArrowUp'){ e.preventDefault(); active=Math.max(active-1,0); }
+    else if (e.key==='Enter' && active>=0){ e.preventDefault(); choose(active); return; }
+    else if (e.key==='Escape'){ hide(); return; } else return;
+    Array.prototype.forEach.call(box.children,function(c,i){ c.classList.toggle('active',i===active); });
+  });
+  document.addEventListener('click', function(e){ if (!e.target.closest('#addrField')) hide(); });
+})();
+</script>
+
 <?php /* Модалка крупного просмотра образца награды (диплом/кубок/статуэтка/медаль) */ ?>
 <div class="aw-modal" id="awModal" hidden aria-modal="true" role="dialog">
   <div class="aw-modal-backdrop" data-aw-close></div>
@@ -302,10 +367,12 @@ ob_start(); ?>
           <input type="tel" id="ord_phone" name="phone" value="<?= h($u['phone'] ?? '') ?>" data-phone required>
         </div>
       </div>
-      <div class="field" id="addrField">
+      <div class="field" id="addrField" style="position:relative">
         <label for="ord_addr">Адрес доставки (для оригиналов)</label>
-        <input type="text" id="ord_addr" name="address" placeholder="Индекс, город, улица, дом, кв.">
-        <div class="hint">Доставка оригиналов — Почтой России.</div>
+        <input type="text" id="ord_addr" name="address" placeholder="Начните вводить: город, улица, дом…" autocomplete="off">
+        <input type="hidden" id="ord_postal" name="postal_index" value="">
+        <div id="ddSuggest" class="dd-suggest" hidden></div>
+        <div class="hint">Начните вводить адрес — подскажем и подставим индекс. Доставка Почтой России.</div>
       </div>
       <button type="submit" class="btn btn--primary btn--block btn--lg" id="orderSubmit">Оплатить</button>
       <p id="orderErr" class="shop-err" hidden></p>
