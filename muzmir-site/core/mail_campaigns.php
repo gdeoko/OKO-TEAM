@@ -111,20 +111,29 @@ function mmc_h(string $text, string $sub = ''): string {
     return $s;
 }
 
-/** Плашка «При поддержке органов культуры». */
+/**
+ * Каноническая формулировка поддержки (единая для ВСЕХ писем/материалов).
+ * ВАЖНО (правило Даниэля): пишем ТОЛЬКО так, «при поддержке органов культуры» — нельзя.
+ */
+function mmc_support_line(): string {
+    return 'при информационной поддержке Министерства культуры и образования субъектов '
+         . 'Российской Федерации и государственного портала «Pro Культура»';
+}
+
+/** Плашка официальной информационной поддержки. */
 function mmc_ministry_badge(): string {
     $n = mmc_ministry_count();
     $navy = MM_NAVY; $gold = MM_GOLD; $ivory = MM_IVORY;
     $link = mmc_base() . '/ministry-support';
-    $cnt  = $n > 0 ? ($n . '+ благодарственных писем от органов культуры регионов России') : 'Официальная поддержка органов культуры регионов России';
+    $cnt  = $n > 0 ? ($n . '+ благодарственных писем от учреждений культуры регионов России') : 'Официальные благодарственные письма от учреждений культуры регионов России';
     return '<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin:6px 0 22px;">'
         . '<tr><td style="background:' . $ivory . ';border:1px solid ' . MM_LINE . ';border-radius:14px;padding:16px 18px;">'
         . '<table role="presentation" width="100%" cellpadding="0" cellspacing="0"><tr>'
         . '<td style="padding-right:14px;vertical-align:middle;width:44px;">'
         . '<div style="width:40px;height:40px;border-radius:50%;background:' . $navy . ';color:' . MM_GOLD2 . ';font-family:Georgia,serif;font-weight:700;font-size:20px;text-align:center;line-height:40px;">✦</div></td>'
         . '<td style="vertical-align:middle;">'
-        . '<div style="font-weight:700;color:' . $navy . ';font-size:14px;">Официально · при поддержке органов культуры</div>'
-        . '<div style="font-size:13px;color:' . MM_MUTED . ';margin-top:2px;">' . h($cnt) . '</div>'
+        . '<div style="font-weight:700;color:' . $navy . ';font-size:14px;">Официально · при информационной поддержке Министерства культуры</div>'
+        . '<div style="font-size:13px;color:' . MM_MUTED . ';margin-top:3px;line-height:1.5;">и образования субъектов РФ и государственного портала «Pro Культура». ' . h($cnt) . '.</div>'
         . '<a href="' . h($link) . '" style="display:inline-block;margin-top:8px;color:' . $gold . ';font-weight:700;font-size:13px;text-decoration:underline;">Смотреть письма поддержки →</a>'
         . '</td></tr></table></td></tr></table>';
 }
@@ -275,7 +284,7 @@ function campaign_inner(string $type, array $opt = []): string {
 
     // Почему мы (соц-доказательство).
     $why = '<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin:10px 0 22px;">'
-        . '<tr><td style="padding:6px 0;font-size:14px;color:' . $ink . ';">✓ Официально · при поддержке органов культуры регионов России</td></tr>'
+        . '<tr><td style="padding:6px 0;font-size:14px;color:' . $ink . ';">✓ Официально · ' . mmc_support_line() . '</td></tr>'
         . '<tr><td style="padding:6px 0;font-size:14px;color:' . $ink . ';">✓ Аттестационные дипломы — учитываются в портфолио педагога и ученика</td></tr>'
         . '<tr><td style="padding:6px 0;font-size:14px;color:' . $ink . ';">✓ Участники из 85 регионов России и зарубежья</td></tr>'
         . '<tr><td style="padding:6px 0;font-size:14px;color:' . $ink . ';">✓ Быстрые результаты и электронный диплом каждому участнику — бесплатно</td></tr>'

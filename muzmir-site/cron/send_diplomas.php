@@ -44,9 +44,23 @@ if (PHP_SAPI === 'cli' && in_array('--render-test', $argv, true)) {
         $to = (string) $argv[$si + 1];
         $nagradi = mail_senders()['nagradi'] ?? [];
         if (!$nagradi) { echo "нет отправителя nagradi\n"; exit(1); }
-        $ok = mail_send($to, 'Ваш диплом — «' . $sample['comp_name'] . '» (' . $sample['result'] . ')', $html, [
-            'account' => $nagradi, 'from_name' => 'Наградный отдел «Музыкальный Мир»',
-        ]);
+        // Берём РЕАЛЬНЫЙ диплом с готовым PDF — чтобы проверить файл-вложение + фото в теле.
+        $real = one("SELECT d.*, a.full_name, c.name AS comp_name
+                     FROM diplomas d JOIN applications a ON a.id=d.application_id
+                     JOIN competitions c ON c.id=a.competition_id
+                     WHERE d.pdf_path <> '' ORDER BY d.id DESC LIMIT 1");
+        $opt = ['account' => $nagradi, 'from_name' => 'Наградный отдел «Музыкальный Мир»'];
+        if ($real) {
+            [$pdfAbs, $imgUrl] = _diploma_files((array)$real);
+            $real['_img_url'] = $imgUrl;
+            $html = _diploma_email_html((array)$real);
+            if ($pdfAbs) $opt['attach'] = $pdfAbs;
+            $subj = 'Ваш диплом конкурса «' . ($real['comp_name'] ?? '') . '» - № ' . ($real['number'] ?? '');
+            echo "используем реальный диплом id=" . $real['id'] . " pdf=" . ($pdfAbs?'да':'нет') . " png=" . ($imgUrl?'да':'нет') . "\n";
+        } else {
+            $subj = 'Ваш диплом — «' . $sample['comp_name'] . '» (' . $sample['result'] . ')';
+        }
+        $ok = mail_send($to, $subj, $html, $opt);
         echo "ОТПРАВКА на $to: " . ($ok ? 'OK' : 'FAIL') . "\n";
     }
     exit(0);
@@ -128,14 +142,18 @@ foreach ($dueList as $d) {
                   ? 'Ваш дополнительный диплом (спецноминация) конкурса «'
                   : 'Ваш диплом конкурса «')
              . $d['comp_name'] . '» - № ' . $d['number'];
+    // Диплом идёт КАК НАДО (как в ручных письмах центра): файлом (PDF во вложении)
+    // И фотографией диплома в теле письма. PNG-превью генерим из PDF (pdftoppm) и
+    // отдаём картинкой по HTTPS; PDF прикладываем вложением. (Спам-проблема была из-за
+    // кириллического From — исправлено punycode-фиксом в mailer.php.)
+    [$pdfAbs, $imgUrl] = _diploma_files((array)$d);
+    $d['_img_url'] = $imgUrl;
     $html = _diploma_email_html((array)$d);
     // Отправитель — наградной ящик nagradi@ (как и задумано для дипломов/наград).
-    // Диплом НЕ прикладываем файлом: письмо богатое (кнопки/промо), а «тяжёлое вложение +
-    // много промо-ссылок» на свежем домене Яндекс режет как спам. Диплом — кнопкой «Скачать
-    // диплом (PDF)» (ссылка на /diploma/<номер>.pdf). Вложение вернём, когда домен прогреется.
     $opt = [];
     $nagradi = function_exists('mail_senders') ? (mail_senders()['nagradi'] ?? []) : [];
     if ($nagradi) $opt['account'] = $nagradi;
+    if ($pdfAbs) $opt['attach'] = $pdfAbs;          // официальный файл диплома (PDF с QR)
     $ok = false;
     if (function_exists('mail_send')) {
         $ok = (bool) mail_send($to, $subject, $html, $opt);
@@ -234,7 +252,17 @@ function _diploma_email_html(array $d): string {
     $titleLine = $isExtra ? 'Дополнительный диплом (спецноминация)' : 'Диплом конкурса «' . h($comp) . '»';
     $awardedLbl = $isExtra ? 'Специальная номинация' : 'Ваше звание';
 
-    $inner = '<h1 style="margin:0 0 16px;font-family:Georgia,\'Times New Roman\',serif;font-size:24px;color:' . MM_NAVY . ';font-weight:700;line-height:1.25;">' . $titleLine . '</h1>'
+    // Фото диплома в теле письма (как в ручных письмах центра) + файл во вложении.
+    $imgUrl = (string)($d['_img_url'] ?? '');
+    $imgBlock = $imgUrl !== ''
+        ? '<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin:0 0 20px;"><tr><td align="center">'
+          . '<img src="' . h($imgUrl) . '" alt="Диплом" width="520" style="display:block;width:100%;max-width:520px;height:auto;border-radius:12px;border:1px solid ' . MM_LINE . ';box-shadow:0 8px 26px rgba(23,48,122,.18);">'
+          . '<div style="margin-top:8px;font-size:12px;color:' . MM_MUTED . ';">Официальный диплом · PDF-файл прикреплён к письму</div>'
+          . '</td></tr></table>'
+        : '';
+
+    $inner = $imgBlock
+        . '<h1 style="margin:0 0 16px;font-family:Georgia,\'Times New Roman\',serif;font-size:24px;color:' . MM_NAVY . ';font-weight:700;line-height:1.25;">' . $titleLine . '</h1>'
         . '<p style="margin:0 0 14px;">' . $hello . '</p>'
         . '<p style="margin:0 0 18px;">По итогам аттестации компетентного жюри ' . ($isExtra ? 'Вам присуждена специальная номинация:' : 'Вам присуждено звание:') . '</p>'
         . '<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin:0 0 20px;border-radius:16px;overflow:hidden;"><tr>'
@@ -252,12 +280,43 @@ function _diploma_email_html(array $d): string {
         'preheader' => 'Ваш диплом готов' . ($res !== '' ? ' — «' . $res . '»' : '') . '. Скачайте и закажите наградной материал.',
         'hero'      => mm_cta_primary($orderUrl, 'Заказать наградной материал', 'По результату: ' . $award),
         'actions'   => [
-            ['Скачать диплом (PDF)', $downloadUrl],
+            ['Скачать диплом ещё раз', $downloadUrl],
             ['Проверить подлинность', $verifyUrl],
             ['Оставить отзыв', $reviewUrl],
         ],
         'thanks'    => true,
     ]);
+}
+
+/**
+ * Возвращает [абсолютный путь PDF диплома для вложения, HTTPS-URL PNG-превью для тела].
+ * PNG-превью генерим из PDF через pdftoppm (кэшируем в public/diplomas/preview_<num>.png).
+ */
+function _diploma_files(array $d): array {
+    $base = rtrim((string) cfgv('base_url', 'https://xn----7sbugdeiegh1b0a9hen.xn--p1ai'), '/');
+    $stored = trim((string)($d['pdf_path'] ?? ''));
+    $pdfAbs = '';
+    if ($stored !== '' && !str_starts_with($stored, 'http')) {
+        $pdfAbs = (str_starts_with($stored, '/var')) ? $stored
+                : BASE_PATH . '/public/' . ltrim($stored, '/');
+        if (!is_file($pdfAbs)) $pdfAbs = '';
+    }
+    $imgUrl = '';
+    if ($pdfAbs !== '') {
+        $num    = (string)($d['number'] ?? '');
+        $slug   = trim(strtolower((string) preg_replace('/[^a-z0-9]+/i', '-', $num)), '-') ?: substr(md5($pdfAbs), 0, 8);
+        $dir    = BASE_PATH . '/public/diplomas';
+        if (!is_dir($dir)) @mkdir($dir, 0775, true);
+        $prefix = $dir . '/preview_' . $slug;
+        $png    = $prefix . '-1.png';
+        if (!is_file($png)) {
+            @exec('pdftoppm -png -r 110 -f 1 -l 1 ' . escapeshellarg($pdfAbs) . ' ' . escapeshellarg($prefix) . ' 2>&1');
+        }
+        foreach ([$prefix . '-1.png', $prefix . '.png'] as $cand) {
+            if (is_file($cand)) { $imgUrl = $base . '/diplomas/' . basename($cand); break; }
+        }
+    }
+    return [$pdfAbs, $imgUrl];
 }
 
 /** Отправка оригинала (без подписи/печати) + заявки + адреса в бот заказа (t.me/zakaznagrad) через нашего бота. */
