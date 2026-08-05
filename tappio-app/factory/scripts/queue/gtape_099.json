@@ -1,0 +1,265 @@
+{
+ "id": "gtape_099",
+ "app": "tape",
+ "voice": "en-US-ChristopherNeural",
+ "rate": "+7%",
+ "grade": "teal_orange",
+ "brand": {
+  "accent": "#F4C430",
+  "accent2": "#FFE08A",
+  "code": "MEASURE",
+  "logo": "tape.png",
+  "name": "3D TAPE MEASURE"
+ },
+ "music": {
+  "queries": [
+   "uplifting confident",
+   "warm optimistic guitar",
+   "happy ukulele diy",
+   "positive corporate light groove"
+  ]
+ },
+ "cover": {
+  "kicker": "RENTER HACK",
+  "top": "DECORATE",
+  "big": "WITHOUT\nHOLES",
+  "q": [
+   "empty living room wooden floor sunlight"
+  ]
+ },
+ "segments": [
+  {
+   "id": "b1",
+   "text": "Renting means no guessing and no wall damage."
+  },
+  {
+   "id": "b2",
+   "text": "Measure the empty wall with your phone."
+  },
+  {
+   "id": "b3",
+   "text": "Drop a virtual frame to test the spot."
+  },
+  {
+   "id": "b4",
+   "text": "Line up shelves before a single nail."
+  },
+  {
+   "id": "b5",
+   "text": "Save the layout, shop with real sizes."
+  },
+  {
+   "id": "b6",
+   "text": "Decorate smart, get your deposit back."
+  }
+ ],
+ "shots": [
+  {
+   "q": [
+    "person measuring living room with phone ar"
+   ],
+   "motion": "zout"
+  },
+  {
+   "q": [
+    "cozy furnished living room warm light"
+   ],
+   "insert": "tv",
+   "pos": "center"
+  },
+  {
+   "q": [
+    "bedroom bed frame assembly"
+   ],
+   "motion": "pandown"
+  },
+  {
+   "q": [
+    "dining table room measure"
+   ],
+   "insert": "arch",
+   "pos": "upper"
+  },
+  {
+   "q": [
+    "moving boxes new apartment"
+   ],
+   "motion": "panup"
+  },
+  {
+   "q": [
+    "measuring tape metal bending closeup"
+   ],
+   "insert": "diamond",
+   "pos": "center"
+  },
+  {
+   "q": [
+    "office desk setup measuring space"
+   ],
+   "motion": "zin"
+  },
+  {
+   "q": [
+    "garden patio outdoor measuring"
+   ],
+   "insert": "circle",
+   "pos": "lower"
+  },
+  {
+   "q": [
+    "kitchen cabinets measuring renovation"
+   ],
+   "motion": "panl"
+  },
+  {
+   "q": [
+    "empty living room wooden floor sunlight"
+   ],
+   "insert": "tilt",
+   "pos": "lower"
+  },
+  {
+   "q": [
+    "curtains window measuring home"
+   ],
+   "motion": "panr"
+  },
+  {
+   "q": [
+    "person relaxing on couch bright apartment"
+   ],
+   "insert": "hexagon",
+   "pos": "upper"
+  },
+  {
+   "q": [
+    "picture frame hanging wall level"
+   ],
+   "motion": "zout"
+  },
+  {
+   "q": [
+    "apartment tour empty rooms"
+   ],
+   "insert": "rrect",
+   "pos": "center"
+  }
+ ],
+ "overlays": [
+  {
+   "at": 0.064,
+   "dur": 1.94,
+   "type": "kicker",
+   "text": "WILL IT FIT?"
+  },
+  {
+   "at": 0.17,
+   "dur": 1.63,
+   "type": "kinetic",
+   "top": "FIT",
+   "big": "CHECK"
+  },
+  {
+   "at": 0.198,
+   "dur": 2.6,
+   "type": "checklist",
+   "items": [
+    "Measure the door",
+    "Measure the sofa",
+    "Compare sizes",
+    "Move it in"
+   ],
+   "pos": "center"
+  },
+  {
+   "at": 0.303,
+   "dur": 1.61,
+   "type": "stat_count",
+   "to": 1,
+   "suffix": "",
+   "label": "PERSON NEEDED",
+   "pos": "center"
+  },
+  {
+   "at": 0.319,
+   "dur": 1.65,
+   "type": "gauge",
+   "to": 10,
+   "max": 60,
+   "suffix": "s",
+   "label": "PER MEASUREMENT",
+   "pos": "center"
+  },
+  {
+   "at": 0.391,
+   "dur": 2.07,
+   "type": "ticker",
+   "to": 1,
+   "suffix": "",
+   "label": "TAP TO START",
+   "pos": "lower"
+  },
+  {
+   "at": 0.589,
+   "dur": 1.71,
+   "type": "callout",
+   "text": "NO TAPE, NO HELPER",
+   "pos": "center"
+  },
+  {
+   "at": 0.627,
+   "dur": 2.05,
+   "type": "bars",
+   "title": "TAPE VS PHONE ERROR",
+   "unit": "%",
+   "items": [
+    [
+     "Metal tape",
+     12
+    ],
+    [
+     "Phone AR",
+     3
+    ]
+   ],
+   "pos": "center"
+  },
+  {
+   "at": 0.642,
+   "dur": 2.26,
+   "type": "lowerthird",
+   "title": "EXPORT A PDF",
+   "sub": "sizes in one tap"
+  },
+  {
+   "at": 0.733,
+   "dur": 2.29,
+   "type": "chips",
+   "items": [
+    "LENGTH",
+    "WIDTH",
+    "HEIGHT",
+    "AREA"
+   ],
+   "pos": "upper"
+  }
+ ],
+ "cta": {
+  "text": "Get it now — comment MEASURE and I'll send the link. Link in bio.",
+  "code": "MEASURE"
+ },
+ "caption": "Renting? Measure the wall, drop a virtual frame, line up shelves before a single nail. Shop with real sizes and keep your deposit. Comment MEASURE for the app. #diy #homedecor #interiordesign #measure #movingtips #renter #apartmenttherapy #iphone #use #arrange #app 👉 Comment MEASURE for the link — link in bio.",
+ "yt_title": "Decorate a rental without holes #shorts",
+ "trend_keys": [
+  "iphone",
+  "use",
+  "arrange",
+  "app",
+  "design",
+  "room",
+  "measure",
+  "furniture"
+ ],
+ "content_type": "sales"
+}
