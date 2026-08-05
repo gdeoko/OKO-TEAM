@@ -21,6 +21,24 @@
    Если ok=false — не отправлять. Если ошиблись после отправки — УДАЛИТЬ (TG/VK
    `delete_messages` или `edit_message_text`). После успешной отправки — `outbound_guard.log()`.
    Для постов/сторис — `content_engine._is_dupe()` по SHA256 первых 400 символов.
+   3 аккаунта в TG (acc1/acc2/acc3) — каждый УНИКАЛЬНОМУ клиенту, один uid = один аккаунт навсегда.
+
+6a. **BLOCKLIST — родственники, друзья, боты, оплатившие клиенты.** Перед ЛЮБОЙ рассылкой:
+   `core/blocklist.is_blocked(uid=..., username=..., name=...)`. Если True — не трогать никогда.
+   Список в `data_runtime/personal_blocklist.json`. Автопометка: фамилия Пак, слова «мама/папа/
+   тётя/брат/сестра/бабушка», наши боты (@ktodaniel_bot, @okoappbot, @Vakansii_TexSpecialists_Kot_Bot,
+   @FreelancerVacancii_Bot и т.д.), стадия оплата/работа/производство.
+
+6b. **НИКАКОЙ АВТО-РАССЫЛКИ БЕЗ ПЕРСОНАЛИЗАЦИИ.** Каждое исходящее — уникальное. Через
+   `core/personalize.py`: fetch_context → classify (client/worker/partner) → analyze
+   (brand/niche/goals/pains/budget) → build LLM-задачу в claude_bridge → ответ идёт человеку.
+   validate_before_send блокирует: цену в первом касании, шаблонные маркеры, отсутствие
+   персонального упоминания.
+
+6c. **ПЕРСОНАЛЬНЫЕ КП-ССЫЛКИ.** Для каждого клиента — своя kp-URL: `okoteam.top/kp/dmitry-brand`,
+   `okoteam.top/kp/marina-salon` и т.д. Эталон вёрстки KP (`www/kp/`) один, но контент/цены/
+   кейсы/тарифы адаптируются под клиента (JSON в `data_runtime/kp_configs/<slug>.json` →
+   PHP-роутер вставляет в шаблон).
 7. **ЛОГО — ТОЛЬКО НАСТОЯЩЕЕ, ВЕЗДЕ И ВСЕГДА, в base64, не искажая пропорции.**
    Файлы: `brand/oko-logo.png` (оригинал 1000×1000), `brand/oko-logo-256.png`,
    `brand/oko-logo-b64.txt` (готовый data-URI для вставки в `<img src=...>`).
