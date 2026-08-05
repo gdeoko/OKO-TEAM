@@ -156,8 +156,19 @@ function result_mail_send(int $appId): bool {
     $navy = RM_NAVY; $navy2 = RM_NAVY_2; $gold = RM_GOLD; $muted = RM_MUTED; $card = RM_CARD; $line = RM_LINE;
 
     $inner = '<p style="margin:0 0 14px;">' . $hello . '</p>'
-        . '<p style="margin:0 0 20px;">Жюри подвело итоги конкурса «' . h((string) ($c['name'] ?? '')) . '». '
+        . '<p style="margin:0 0 18px;">Жюри подвело итоги конкурса «' . h((string) ($c['name'] ?? '')) . '». '
         . 'С радостью объявляем Ваш результат.</p>';
+
+    // Блок ВНИМАНИЕ (как в ручных письмах центра) — про наградной материал в стоимости участия.
+    if ($isPaid) {
+        $inner .= '<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin:0 0 20px;background:#FFF6F4;border:1px solid #F0C9C0;border-radius:14px;">'
+            . '<tr><td style="width:4px;background:#C0392B;border-radius:14px 0 0 14px;"></td>'
+            . '<td style="padding:14px 20px;font-size:13.5px;line-height:1.6;color:#7A2E22;">'
+            . '<b style="color:#C0392B;letter-spacing:.04em;">ВНИМАНИЕ.</b> Рассылка наградного материала (электронный основной диплом, '
+            . 'электронный дополнительный — при наличии), включённого в стоимость участия (оргвзнос), осуществляется в течение '
+            . '<b>5 рабочих дней</b> на электронную почту, указанную в заявке. По желанию — оригиналы наград (кубок/статуэтка/медаль, '
+            . 'диплом и благодарность педагогу) Почтой России.</td></tr></table>';
+    }
 
     // Крупно результат — золотом на синем градиенте.
     $scoreLine = ($a['score'] !== null && $a['score'] !== '')
@@ -206,8 +217,9 @@ function result_mail_send(int $appId): bool {
             . '<p style="margin:0 0 8px;font-size:14px;color:' . RM_INK . ';line-height:1.65;">' . h(rm_award_hint($result))
             . ' Также доступна благодарность педагогу за подготовку. Оригиналы — на плотной дизайнерской бумаге, '
             . 'с голографическими логотипами, живыми подписями и печатями. Награда с Вашим именем — памятное подтверждение успеха для дома, сцены и портфолио.</p>';
-        $hero = mm_cta_primary($awardsUrl, 'Заказать наградной материал', 'По результату: ' . rm_award_name($result));
-        $actions = [['Личный кабинет', $cabinetUrl], ['Оставить отзыв', $reviewsUrl]];
+        $hero = mm_cta_primary($awardsUrl, 'Заказать награды', 'По результату: ' . rm_award_name($result));
+        // Кнопки как в ручном письме центра: Заказать / Образцы наград / Сроки изготовления.
+        $actions = [['Образцы наград', url('/awards')], ['Сроки изготовления', url('/awards')], ['Оставить отзыв', $reviewsUrl]];
     } else {
         // Бесплатный конкурс: страница результатов.
         $resultsUrl = url('/results/' . (string) ($c['slug'] ?? ''));
