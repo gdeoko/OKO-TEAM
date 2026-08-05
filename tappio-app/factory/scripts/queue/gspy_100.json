@@ -1,0 +1,252 @@
+{
+ "id": "gspy_100",
+ "app": "spy",
+ "voice": "en-US-AndrewNeural",
+ "rate": "+4%",
+ "grade": "clean_ad",
+ "brand": {
+  "accent": "#00D9FF",
+  "accent2": "#7CFCFF",
+  "code": "PRIVACY",
+  "logo": "spy.png",
+  "name": "SPY CAMERA FINDER"
+ },
+ "music": {
+  "queries": [
+   "punchy pop energy",
+   "minimal techno tension",
+   "cyber suspense pulse",
+   "cinematic underscore tech"
+  ]
+ },
+ "cover": {
+  "kicker": "CHECKOUT LIST",
+  "top": "30-SECOND",
+  "big": "ROOM\nSWEEP",
+  "q": [
+   "hand holding smartphone dark"
+  ]
+ },
+ "segments": [
+  {
+   "id": "b1",
+   "text": "New room? Run this thirty-second sweep first."
+  },
+  {
+   "id": "b2",
+   "text": "One: scan the Wi-Fi for unknown devices."
+  },
+  {
+   "id": "b3",
+   "text": "Two: kill the lights and pan for lens glints."
+  },
+  {
+   "id": "b4",
+   "text": "Three: check anything aimed at the bed."
+  },
+  {
+   "id": "b5",
+   "text": "Four: unplug what you can't explain."
+  },
+  {
+   "id": "b6",
+   "text": "Do it once, then actually relax."
+  }
+ ],
+ "shots": [
+  {
+   "q": [
+    "closet wardrobe hotel room"
+   ],
+   "motion": "panup"
+  },
+  {
+   "q": [
+    "smoke detector ceiling closeup"
+   ],
+   "insert": "tilt",
+   "pos": "center"
+  },
+  {
+   "q": [
+    "person entering hotel room luggage"
+   ],
+   "motion": "panr"
+  },
+  {
+   "q": [
+    "mirror bathroom hotel"
+   ],
+   "insert": "circle",
+   "pos": "center"
+  },
+  {
+   "q": [
+    "wifi router network dark tech"
+   ],
+   "motion": "zin"
+  },
+  {
+   "q": [
+    "reflection glass light dot"
+   ],
+   "insert": "hexagon",
+   "pos": "lower"
+  },
+  {
+   "q": [
+    "laptop screen code green"
+   ],
+   "motion": "pandown"
+  },
+  {
+   "q": [
+    "alarm clock nightstand bedroom"
+   ],
+   "insert": "tv",
+   "pos": "lower"
+  },
+  {
+   "q": [
+    "picture frame on wall room"
+   ],
+   "motion": "panl"
+  },
+  {
+   "q": [
+    "desk lamp table hotel"
+   ],
+   "insert": "arch",
+   "pos": "center"
+  },
+  {
+   "q": [
+    "phone flashlight scanning wall"
+   ],
+   "motion": "zout"
+  },
+  {
+   "q": [
+    "air vent grille ceiling"
+   ],
+   "insert": "phone",
+   "pos": "lower"
+  }
+ ],
+ "overlays": [
+  {
+   "at": 0.102,
+   "dur": 1.93,
+   "type": "kicker",
+   "text": "WI-FI SCAN"
+  },
+  {
+   "at": 0.287,
+   "dur": 2.19,
+   "type": "gauge",
+   "to": 94,
+   "max": 100,
+   "suffix": "%",
+   "label": "DETECTION RATE",
+   "pos": "center"
+  },
+  {
+   "at": 0.437,
+   "dur": 1.73,
+   "type": "chips",
+   "items": [
+    "WI-FI",
+    "IR",
+    "BLUETOOTH",
+    "RF"
+   ],
+   "pos": "lower"
+  },
+  {
+   "at": 0.448,
+   "dur": 2.6,
+   "type": "checklist",
+   "items": [
+    "Smoke detector",
+    "Alarm clock",
+    "TV frame",
+    "Power outlet"
+   ],
+   "pos": "center"
+  },
+  {
+   "at": 0.457,
+   "dur": 1.91,
+   "type": "bars",
+   "title": "TIME TO SCAN",
+   "unit": "s",
+   "items": [
+    [
+     "Manual",
+     300
+    ],
+    [
+     "App",
+     30
+    ]
+   ],
+   "pos": "center"
+  },
+  {
+   "at": 0.501,
+   "dur": 2.37,
+   "type": "callout",
+   "text": "LINE OF SIGHT = RED FLAG",
+   "pos": "center"
+  },
+  {
+   "at": 0.688,
+   "dur": 1.85,
+   "type": "stat_count",
+   "to": 30,
+   "suffix": "s",
+   "label": "PER ROOM",
+   "pos": "center"
+  },
+  {
+   "at": 0.755,
+   "dur": 1.82,
+   "type": "kinetic",
+   "top": "LIGHTS",
+   "big": "OFF"
+  },
+  {
+   "at": 0.905,
+   "dur": 2.32,
+   "type": "ticker",
+   "to": 100,
+   "suffix": "%",
+   "label": "PRIVACY BACK",
+   "pos": "lower"
+  },
+  {
+   "at": 0.92,
+   "dur": 2.12,
+   "type": "lowerthird",
+   "title": "KILL THE LIGHTS",
+   "sub": "lenses glow in IR"
+  }
+ ],
+ "cta": {
+  "text": "Comment PRIVACY for the app.",
+  "code": "PRIVACY"
+ },
+ "caption": "Every new room deserves a 30-second sweep: scan the Wi-Fi, kill the lights, pan for glints, check the bed sight-lines, unplug the unknowns. Comment PRIVACY for the app. #privacy #airbnb #travelsafety #hiddencamera #traveltips #hotelroom #safetytips #cameras #caught #spy #tested",
+ "yt_title": "30-second hidden camera room sweep #shorts",
+ "trend_keys": [
+  "cameras",
+  "caught",
+  "spy",
+  "tested",
+  "hidden",
+  "find",
+  "camera",
+  "airbnb"
+ ],
+ "content_type": "viral"
+}
