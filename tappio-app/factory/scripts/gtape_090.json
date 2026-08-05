@@ -1,0 +1,247 @@
+{
+ "id": "gtape_090",
+ "app": "tape",
+ "voice": "en-US-ChristopherNeural",
+ "rate": "+6%",
+ "grade": "warm_gold",
+ "brand": {
+  "accent": "#F4C430",
+  "accent2": "#FFE08A",
+  "code": "MEASURE",
+  "logo": "tape.png",
+  "name": "3D TAPE MEASURE"
+ },
+ "music": {
+  "queries": [
+   "cinematic tension build",
+   "bright pop home",
+   "upbeat indie acoustic diy",
+   "positive corporate light groove"
+  ]
+ },
+ "cover": {
+  "kicker": "10 SECONDS",
+  "top": "A TAPE MEASURE",
+  "big": "IN YOUR\nPOCKET",
+  "q": [
+   "bedroom bed frame assembly"
+  ],
+  "ai": "work/gtape_090/cover_ai.png"
+ },
+ "segments": [
+  {
+   "id": "b1",
+   "text": "Stop scrolling. You always have your phone. Now it measures too."
+  },
+  {
+   "id": "b2",
+   "text": "No tape, no marks, no second person."
+  },
+  {
+   "id": "b3",
+   "text": "Tap two points and read the distance."
+  },
+  {
+   "id": "b4",
+   "text": "Rooms, walls, furniture, all in seconds."
+  },
+  {
+   "id": "b5",
+   "text": "Save projects and share the sizes."
+  },
+  {
+   "id": "b6",
+   "text": "The tape measure you never forget at home."
+  }
+ ],
+ "shots": [
+  {
+   "q": [
+    "kitchen cabinets measuring renovation"
+   ],
+   "insert": "hexagon",
+   "pos": "upper"
+  },
+  {
+   "q": [
+    "bookshelf assembly instructions floor"
+   ],
+   "motion": "zout"
+  },
+  {
+   "q": [
+    "measuring tape metal bending closeup"
+   ],
+   "insert": "tilt",
+   "pos": "lower"
+  },
+  {
+   "q": [
+    "office desk setup measuring space"
+   ],
+   "motion": "panr"
+  },
+  {
+   "q": [
+    "blueprint floor plan on tablet desk"
+   ],
+   "insert": "phone",
+   "pos": "upper"
+  },
+  {
+   "q": [
+    "curtains window measuring home"
+   ],
+   "motion": "pandown"
+  },
+  {
+   "q": [
+    "person relaxing on couch bright apartment"
+   ],
+   "insert": "tv",
+   "pos": "center"
+  },
+  {
+   "q": [
+    "moving boxes new apartment"
+   ],
+   "motion": "panl"
+  },
+  {
+   "q": [
+    "rolled up rug floor room"
+   ],
+   "insert": "rrect",
+   "pos": "center"
+  },
+  {
+   "q": [
+    "furniture store showroom sofa"
+   ],
+   "motion": "panup"
+  },
+  {
+   "q": [
+    "doorway measuring frame home"
+   ],
+   "insert": "arch",
+   "pos": "center"
+  },
+  {
+   "q": [
+    "person measuring living room with phone ar"
+   ],
+   "motion": "zin"
+  }
+ ],
+ "overlays": [
+  {
+   "at": 0.095,
+   "dur": 2.21,
+   "type": "kicker",
+   "text": "NO TAPE"
+  },
+  {
+   "at": 0.344,
+   "dur": 1.83,
+   "type": "kinetic",
+   "top": "JUST",
+   "big": "TAP"
+  },
+  {
+   "at": 0.379,
+   "dur": 2.19,
+   "type": "gauge",
+   "to": 1,
+   "max": 10,
+   "suffix": "",
+   "label": "PEOPLE NEEDED",
+   "pos": "center"
+  },
+  {
+   "at": 0.641,
+   "dur": 2.27,
+   "type": "bars",
+   "title": "TAPE VS PHONE ERROR",
+   "unit": "%",
+   "items": [
+    [
+     "Metal tape",
+     12
+    ],
+    [
+     "Phone AR",
+     3
+    ]
+   ],
+   "pos": "center"
+  },
+  {
+   "at": 0.642,
+   "dur": 1.77,
+   "type": "chips",
+   "items": [
+    "POINT",
+    "TAP",
+    "READ",
+    "SAVE"
+   ],
+   "pos": "lower"
+  },
+  {
+   "at": 0.811,
+   "dur": 2.13,
+   "type": "stat_count",
+   "to": 10,
+   "suffix": "s",
+   "label": "PER ROOM",
+   "pos": "center"
+  },
+  {
+   "at": 0.821,
+   "dur": 2.28,
+   "type": "callout",
+   "text": "NO TAPE, NO HELPER",
+   "pos": "center"
+  },
+  {
+   "at": 0.898,
+   "dur": 2.03,
+   "type": "ticker",
+   "to": 1,
+   "suffix": "",
+   "label": "TAP TO START",
+   "pos": "lower"
+  }
+ ],
+ "cta": {
+  "text": "Comment MEASURE for the app.",
+  "code": "MEASURE"
+ },
+ "caption": "You always have your phone — now it measures too. No tape, no marks, no helper. Tap two points, read the distance, save the project. Comment MEASURE for the app. #diy #homedecor #interiordesign #measure #movingtips #renter #apartmenttherapy #app #living #iphone #room",
+ "yt_title": "Few People Know About This Tape #shorts",
+ "trend_keys": [
+  "app",
+  "living",
+  "iphone",
+  "room",
+  "furniture",
+  "arrange",
+  "measure",
+  "guide"
+ ],
+ "content_type": "viral",
+ "comp_angle": {
+  "title": "Few People Know About This Tape Measure Feature! Hidden Features of Tape Measure",
+  "views": 46659489,
+  "channel": "The Maker"
+ },
+ "virality": {
+  "score": 90,
+  "notes": [
+   "angle<-46659k",
+   "hook_boosted"
+  ],
+  "hook": "Stop scrolling. You always have your phone. Now it measures too."
+ }
+}
