@@ -36,9 +36,9 @@ function diploma_pdf_html(array $app, array $opt = []): ?string {
     $appId  = (int) ($app['id'] ?? 0);
     if ($poster === '' || $token === '' || $sshPas === '' || $appId <= 0) return null;
 
-    $type = !empty($opt['thanks']) ? 'thanks' : 'main';
+    $type = !empty($opt['thanks']) ? 'thanks' : (!empty($opt['extra']) ? 'extra' : 'main');
     $url  = rtrim((string) cfgv('base_url'), '/') . '/diploma-render/' . $appId
-          . '?key=' . diploma_render_key() . ($type === 'thanks' ? '&type=thanks' : '');
+          . '?key=' . diploma_render_key() . ($type !== 'main' ? '&type=' . $type : '');
 
     $num  = (string) ($app['number'] ?? ('APP' . $appId));
     $slug = trim(strtolower((string) preg_replace('/[^a-z0-9]+/i', '-', $num . '-' . $type)), '-');

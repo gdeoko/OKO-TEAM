@@ -214,9 +214,12 @@ if (preg_match('#^/diploma-render/(\d+)$#', $route, $m)) {
     $c = one("SELECT * FROM competitions WHERE id=?", [(int)$app['competition_id']]);
     require_once BASE_PATH . '/core/diploma_html.php';
     $opt = [];
-    if (($_GET['type'] ?? '') === 'thanks') {
+    $rtype = (string)($_GET['type'] ?? '');
+    if ($rtype === 'thanks') {
         $opt['thanks'] = true;
         if (!empty($app['teacher'])) $app['full_name'] = $app['teacher']; // благодарность — педагогу
+    } elseif ($rtype === 'extra') {
+        $opt['extra'] = true;  // отдельный дополнительный диплом (спецноминация)
     }
     echo diploma_html($c ?: [], $app, $opt);
     exit;
@@ -229,6 +232,7 @@ if (preg_match('#^/diploma-sample/([a-z0-9\-]+)$#', $route, $m)) {
         require_once BASE_PATH . '/core/diploma_html.php';
         $opt = ['sample' => true];
         if (isset($_GET['thanks'])) $opt['thanks'] = true;
+        if (isset($_GET['extra']))  $opt['extra']  = true;
         echo diploma_html($c, diploma_sample_app(), $opt);
         exit;
     }

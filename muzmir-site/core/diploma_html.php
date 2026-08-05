@@ -116,6 +116,7 @@ function diploma_html(array $c, array $a, array $opt = []): string {
     }
     $sample = !empty($opt['sample']);
     $thanks = !empty($opt['thanks']);
+    $isExtra = !empty($opt['extra']);   // ОТДЕЛЬНЫЙ дополнительный диплом (спецноминация)
     $edit   = !empty($opt['edit']);
 
     $base   = rtrim(cfgv('base_url'), '/');
@@ -134,8 +135,12 @@ function diploma_html(array $c, array $a, array $opt = []): string {
     $typeGenM = $isIntl ? 'международного' : 'всероссийского';   // род. падеж
     $compType = ($isIntl ? 'Международный' : 'Всероссийский') . ' многожанровый конкурс';
     $compName = mb_strtoupper(trim((string)($c['name'] ?? '')) ?: 'НАЗВАНИЕ КОНКУРСА');
-    $degree   = mb_strtoupper(trim((string)($a['result'] ?? '')) ?: 'ЛАУРЕАТ 1 СТЕПЕНИ');
     $extra    = trim((string)($a['extra_diploma'] ?? ''));
+    // Основной диплом: степень = аттестационный результат (ГРАН-ПРИ/ЛАУРЕАТ/…).
+    // Дополнительный диплом ($isExtra): степень = спецноминация (ЗА АРТИСТИЗМ и т.п.).
+    $degree   = $isExtra
+        ? (mb_strtoupper($extra) ?: 'ЗА ТВОРЧЕСКИЕ ДОСТИЖЕНИЯ')
+        : (mb_strtoupper(trim((string)($a['result'] ?? ''))) ?: 'ЛАУРЕАТ 1 СТЕПЕНИ');
     $dtype    = $thanks ? 'БЛАГОДАРНОСТЬ' : 'ДИПЛОМ';
     $name     = trim((string)($a['full_name'] ?? '')) ?: 'Иванов Иван Иванович';
     $year     = date('Y');
@@ -348,7 +353,7 @@ body{background:#444;font-family:'Manrope',sans-serif;padding:20px;min-height:10
     <?php if (!$thanks): ?>
       <?php $e = $E('degree'); ?>
       <div class="diploma-degree"<?= $D('degree') . _dh_style($e, 28.0) ?>><?= h($degree) ?></div>
-      <?php if ($extra !== ''): ?><div class="extra-award">Дополнительный диплом: <?= h(mb_strtoupper($extra)) ?></div><?php endif; ?>
+      <?php /* Доп. награда печатается ОТДЕЛЬНЫМ дипломом (diploma_html(...,['extra'=>true])), не строкой здесь. */ ?>
 
       <?php $e = $E('label'); ?>
       <div class="awarded-label"<?= $D('label') . _dh_style($e, 15.0) ?>>награждается:</div>
@@ -414,5 +419,5 @@ body{background:#444;font-family:'Manrope',sans-serif;padding:20px;min-height:10
 /** Данные для шаблона-образца (плейсхолдеры эталона). */
 function diploma_sample_app(): array {
     return ['full_name' => 'Иванов Иван Иванович', 'result' => 'ЛАУРЕАТ 1 СТЕПЕНИ',
-            'extra_diploma' => ''];
+            'extra_diploma' => 'ЗА АРТИСТИЗМ'];
 }
