@@ -1,0 +1,271 @@
+{
+ "id": "gbrain_095",
+ "app": "brain",
+ "voice": "en-US-BrianNeural",
+ "rate": "+4%",
+ "grade": "purple_dream",
+ "brand": {
+  "accent": "#9B5DE5",
+  "accent2": "#C9A7FF",
+  "code": "FOCUS",
+  "logo": "brain.png",
+  "name": "BRAINOVA"
+ },
+ "music": {
+  "queries": [
+   "energetic upbeat",
+   "uplifting focus ambient",
+   "calm motivational underscore"
+  ]
+ },
+ "cover": {
+  "kicker": "BRAIN AGE",
+  "top": "IS YOUR MIND",
+  "big": "OLDER THAN\nYOU?",
+  "q": [
+   "notebook writing pen hand"
+  ]
+ },
+ "segments": [
+  {
+   "id": "b1",
+   "text": "Your brain has an age, just like your body."
+  },
+  {
+   "id": "b2",
+   "text": "Speed, memory and focus reveal the real number."
+  },
+  {
+   "id": "b3",
+   "text": "One short test estimates it in a minute."
+  },
+  {
+   "id": "b4",
+   "text": "Most people score older than they expect."
+  },
+  {
+   "id": "b5",
+   "text": "The good news: it drops with daily training."
+  },
+  {
+   "id": "b6",
+   "text": "Find your brain age today."
+  }
+ ],
+ "shots": [
+  {
+   "q": [
+    "yoga breathing calm room"
+   ],
+   "insert": "arch",
+   "pos": "upper"
+  },
+  {
+   "q": [
+    "chess board close up thinking"
+   ],
+   "motion": "pandown"
+  },
+  {
+   "q": [
+    "fish oil supplement pills"
+   ],
+   "insert": "diamond",
+   "pos": "lower"
+  },
+  {
+   "q": [
+    "runner morning sunrise energy"
+   ],
+   "motion": "zout"
+  },
+  {
+   "q": [
+    "memory old photos hands"
+   ],
+   "insert": "circle",
+   "pos": "upper"
+  },
+  {
+   "q": [
+    "notebook writing pen hand"
+   ],
+   "motion": "zin"
+  },
+  {
+   "q": [
+    "clock ticking time closeup"
+   ],
+   "insert": "phone",
+   "pos": "center"
+  },
+  {
+   "q": [
+    "elderly person smiling sharp mind"
+   ],
+   "motion": "panr"
+  },
+  {
+   "q": [
+    "person sleeping rest night"
+   ],
+   "insert": "tv",
+   "pos": "lower"
+  },
+  {
+   "q": [
+    "coffee cup morning desk"
+   ],
+   "motion": "panup"
+  },
+  {
+   "q": [
+    "teacher classroom explaining"
+   ],
+   "insert": "tilt",
+   "pos": "center"
+  },
+  {
+   "q": [
+    "student studying desk lamp night"
+   ],
+   "motion": "panl"
+  },
+  {
+   "q": [
+    "person forgetting keys frustrated"
+   ],
+   "insert": "rrect",
+   "pos": "lower"
+  },
+  {
+   "q": [
+    "neurons synapse animation blue"
+   ],
+   "motion": "pandown"
+  },
+  {
+   "q": [
+    "woman meditating calm light"
+   ],
+   "insert": "hexagon",
+   "pos": "center"
+  }
+ ],
+ "overlays": [
+  {
+   "at": 0.073,
+   "dur": 2.1,
+   "type": "kicker",
+   "text": "MEMORY 101"
+  },
+  {
+   "at": 0.267,
+   "dur": 1.82,
+   "type": "ticker",
+   "to": 5,
+   "suffix": "min",
+   "label": "A DAY",
+   "pos": "lower"
+  },
+  {
+   "at": 0.307,
+   "dur": 1.93,
+   "type": "callout",
+   "text": "IT'S ENCODING, NOT AGE",
+   "pos": "center"
+  },
+  {
+   "at": 0.392,
+   "dur": 2.6,
+   "type": "checklist",
+   "items": [
+    "Take the test",
+    "Play 5 min",
+    "Beat your score",
+    "Keep the streak"
+   ],
+   "pos": "center"
+  },
+  {
+   "at": 0.426,
+   "dur": 1.61,
+   "type": "kinetic",
+   "top": "STAY",
+   "big": "SHARP"
+  },
+  {
+   "at": 0.426,
+   "dur": 1.7,
+   "type": "bars",
+   "title": "RECALL SPEED",
+   "unit": "%",
+   "items": [
+    [
+     "Week 1",
+     100
+    ],
+    [
+     "Week 3",
+     147
+    ]
+   ],
+   "pos": "center"
+  },
+  {
+   "at": 0.44,
+   "dur": 1.86,
+   "type": "gauge",
+   "to": 5,
+   "max": 10,
+   "suffix": "min",
+   "label": "PER DAY",
+   "pos": "center"
+  },
+  {
+   "at": 0.505,
+   "dur": 2.08,
+   "type": "lowerthird",
+   "title": "SHORT HARD PUZZLES",
+   "sub": "reset your attention"
+  },
+  {
+   "at": 0.559,
+   "dur": 2.39,
+   "type": "chips",
+   "items": [
+    "SPEED",
+    "MEMORY",
+    "FOCUS",
+    "LOGIC"
+   ],
+   "pos": "lower"
+  },
+  {
+   "at": 0.664,
+   "dur": 1.93,
+   "type": "stat_count",
+   "to": 5,
+   "suffix": "min",
+   "label": "A DAY",
+   "pos": "center"
+  }
+ ],
+ "cta": {
+  "text": "Comment FOCUS for the app.",
+  "code": "FOCUS"
+ },
+ "caption": "Your brain has an age — speed, memory and focus set the number. One quick test estimates it, and daily training drops it. Most people score older than they think. Comment FOCUS for the app. #brainhealth #memory #focus #productivity #selfimprovement #mentalhealth #learning #brain #improve #memorize #focus",
+ "yt_title": "Is your brain older than you are? #shorts",
+ "trend_keys": [
+  "brain",
+  "improve",
+  "memorize",
+  "focus",
+  "activate",
+  "exercises",
+  "guy",
+  "huberman"
+ ],
+ "content_type": "viral"
+}
