@@ -22,6 +22,9 @@ require_once BASE_PATH . '/core/pdf_diploma.php';
 require_once BASE_PATH . '/core/diploma_render.php';
 db();
 
+// Библиотечный режим: только функции (_diploma_email_html и пр.), крон не запускается.
+if (defined('MM_EMAIL_TEST_LIB')) return;
+
 // CLI-хук проверки рендера письма диплома (без запуска рассылки):
 //   php cron/send_diplomas.php --render-test
 if (PHP_SAPI === 'cli' && in_array('--render-test', $argv, true)) {

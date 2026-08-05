@@ -52,6 +52,10 @@ if (!function_exists('tbl_exists')) {
     }
 }
 
+// Библиотечный режим: при включённом MM_EMAIL_TEST_LIB подключающий скрипт
+// получает только функции (award_reminder_html и пр.), сам крон не запускается.
+if (defined('MM_EMAIL_TEST_LIB')) return;
+
 if (!cron_lock(JOB, 3600 * 6)) {
     cron_log(JOB, 'предыдущий запуск ещё выполняется, выход');
     exit(0);
