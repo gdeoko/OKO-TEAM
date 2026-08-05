@@ -434,7 +434,22 @@ if ($action === 'edit') {
     $c += ['duration' => 'long'];
     $activeNoms = $c['nominations'] ? (json_decode($c['nominations'], true) ?: []) : [];
     $prices = $id ? all("SELECT item,kind,price FROM awards_prices WHERE competition_id=? ORDER BY id", [$id]) : [];
-    if (!$prices) $prices = [['item'=>'','kind'=>'original','price'=>0]];
+    // Если прайс пуст — подставляем канонический список наград (как в разделе «Награды»/образцах),
+    // чтобы блок не был пустым и админ сразу видел ВСЕ позиции с ценами по умолчанию.
+    if (!$prices) {
+        $prices = [
+            ['item'=>'Кубок Гран-при',        'kind'=>'original', 'price'=>2500],
+            ['item'=>'Статуэтка лауреата',    'kind'=>'original', 'price'=>1800],
+            ['item'=>'Медаль дипломанта',     'kind'=>'original', 'price'=>900],
+            ['item'=>'Основной диплом',       'kind'=>'original', 'price'=>500],
+            ['item'=>'Основной диплом',       'kind'=>'digital',  'price'=>0],
+            ['item'=>'Дополнительный диплом',  'kind'=>'original', 'price'=>500],
+            ['item'=>'Дополнительный диплом',  'kind'=>'digital',  'price'=>0],
+            ['item'=>'Именной диплом',        'kind'=>'original', 'price'=>500],
+            ['item'=>'Благодарность',         'kind'=>'original', 'price'=>500],
+            ['item'=>'Благодарность',         'kind'=>'digital',  'price'=>0],
+        ];
+    }
     $appsCount = $id ? (int) scalar("SELECT COUNT(*) FROM applications WHERE competition_id=?", [$id]) : 0;
     $themes = function_exists('diploma_themes') ? diploma_themes() : [];
     $publicUrl = url('/competition/' . ($c['slug'] ?: ''));

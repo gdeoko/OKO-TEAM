@@ -266,8 +266,9 @@ if ($id = (int) input('id')) {
 $total = (int) scalar("SELECT COUNT(*) FROM applications a $where", $args);
 $page  = max(1, (int) input('pg', '1'));
 $per   = 50; $off = ($page - 1) * $per;
-$rows = all("SELECT a.*, c.name comp, c.is_paid comp_paid FROM applications a
+$rows = all("SELECT a.*, c.name comp, c.is_paid comp_paid, u.role AS user_role FROM applications a
              LEFT JOIN competitions c ON c.id=a.competition_id
+             LEFT JOIN users u ON u.id=a.user_id
              $where ORDER BY a.id DESC LIMIT $per OFFSET $off", $args);
 $comps = all("SELECT id,name FROM competitions ORDER BY sort,name");
 $pages = (int) ceil($total / $per);
@@ -330,7 +331,7 @@ ob_start(); ?>
           <tr>
             <td class="checkbox-cell"><input type="checkbox" class="rowchk" name="ids[]" value="<?= $a['id'] ?>"></td>
             <td><a href="<?= a_link('applications', ['id'=>$a['id']]) ?>"><b><?= h($a['number'] ?: '#'.$a['id']) ?></b></a><?= $a['flag'] ? ' <span class="badge badge--rejected small">'.h($a['flag']).'</span>' : '' ?></td>
-            <td><?= h($a['is_group'] ? $a['group_name'] : $a['full_name']) ?></td>
+            <td><?= h($a['is_group'] ? $a['group_name'] : $a['full_name']) ?><?= is_vip_user((int)($a['user_id']??0), (string)($a['user_role']??'')) ? vip_badge() : '' ?></td>
             <td class="small"><?= h($a['comp']) ?></td>
             <td class="small"><?= h($a['nomination']) ?></td>
             <td><span class="badge badge--<?= h($a['status']) ?>"><?= h(app_status_ru($a['status'])) ?></span></td>

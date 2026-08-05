@@ -73,6 +73,28 @@ function admin_modules(): array {
     ];
 }
 
+/**
+ * ВИП-статус пользователя: активное членство ВИП-клуба ИЛИ владелец/оргкомитет
+ * (им положена безлимитная бесплатная подписка). Возвращает true для синей галочки.
+ */
+function is_vip_user(?int $uid, string $role = ''): bool {
+    if (in_array($role, ['owner', 'admin', 'orgcom'], true)) return true; // безлимитный ВИП
+    if (!$uid || $uid <= 0) return false;
+    if (!function_exists('club_is_active') && is_file(BASE_PATH . '/core/club.php')) {
+        require_once BASE_PATH . '/core/club.php';
+    }
+    return function_exists('club_is_active') ? club_is_active((int) $uid) : false;
+}
+
+/** Синяя галочка «ВИП-клуб» (SVG) для админ-списков. */
+function vip_badge(): string {
+    return '<span title="Участник ВИП-клуба" style="display:inline-flex;vertical-align:-3px;margin-left:4px">'
+        . '<svg width="16" height="16" viewBox="0 0 24 24" fill="#2C7BE5">'
+        . '<path d="M12 2l2.5 2.1 3.2-.5 1.1 3.1 3 1.3-1 3 1 3-3 1.3-1.1 3.1-3.2-.5L12 22l-2.5-2.1-3.2.5-1.1-3.1-3-1.3 1-3-1-3 3-1.3 1.1-3.1 3.2.5z"/>'
+        . '<path d="M8.3 12.4l2.4 2.4 4.6-4.9" stroke="#fff" stroke-width="2.1" fill="none" stroke-linecap="round" stroke-linejoin="round"/>'
+        . '</svg></span>';
+}
+
 /** Проверка доступа к модулю по текущей роли. */
 function admin_can(string $module): bool {
     $m = admin_modules();
