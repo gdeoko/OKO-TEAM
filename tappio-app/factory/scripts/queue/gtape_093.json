@@ -1,0 +1,236 @@
+{
+ "id": "gtape_093",
+ "app": "tape",
+ "voice": "en-US-ChristopherNeural",
+ "rate": "+4%",
+ "grade": "warm_gold",
+ "brand": {
+  "accent": "#F4C430",
+  "accent2": "#FFE08A",
+  "code": "MEASURE",
+  "logo": "tape.png",
+  "name": "3D TAPE MEASURE"
+ },
+ "music": {
+  "queries": [
+   "driving electronic",
+   "cheerful folk clap",
+   "bright pop home"
+  ]
+ },
+ "cover": {
+  "kicker": "WILL IT FIT?",
+  "top": "MEASURE ANY ROOM",
+  "big": "WITHOUT\nA TAPE",
+  "q": [
+   "hands arranging shelf wall decor"
+  ]
+ },
+ "segments": [
+  {
+   "id": "b1",
+   "text": "A rug, a TV, a shelf. Will it fit? Stop guessing."
+  },
+  {
+   "id": "b2",
+   "text": "Point your phone, tap two points."
+  },
+  {
+   "id": "b3",
+   "text": "The length appears right on the floor."
+  },
+  {
+   "id": "b4",
+   "text": "Width, height, area, no helper needed."
+  },
+  {
+   "id": "b5",
+   "text": "Save every wall as a project, export a PDF."
+  },
+  {
+   "id": "b6",
+   "text": "Measure any space from your couch in ten seconds."
+  }
+ ],
+ "shots": [
+  {
+   "q": [
+    "closet organizer measuring wardrobe"
+   ],
+   "insert": "arch",
+   "pos": "upper"
+  },
+  {
+   "q": [
+    "kitchen cabinets measuring renovation"
+   ],
+   "motion": "pandown"
+  },
+  {
+   "q": [
+    "paint wall renovation room"
+   ],
+   "insert": "tilt",
+   "pos": "upper"
+  },
+  {
+   "q": [
+    "bedroom bed frame assembly"
+   ],
+   "motion": "panl"
+  },
+  {
+   "q": [
+    "office desk setup measuring space"
+   ],
+   "insert": "phone",
+   "pos": "lower"
+  },
+  {
+   "q": [
+    "measuring tape metal bending closeup"
+   ],
+   "motion": "panr"
+  },
+  {
+   "q": [
+    "carpenter measuring wood workshop"
+   ],
+   "insert": "rrect",
+   "pos": "upper"
+  },
+  {
+   "q": [
+    "moving boxes new apartment"
+   ],
+   "motion": "panup"
+  },
+  {
+   "q": [
+    "hand pointing phone at wall measuring"
+   ],
+   "insert": "diamond",
+   "pos": "upper"
+  },
+  {
+   "q": [
+    "person relaxing on couch bright apartment"
+   ],
+   "motion": "zin"
+  },
+  {
+   "q": [
+    "couple planning home layout tablet"
+   ],
+   "insert": "tv",
+   "pos": "center"
+  },
+  {
+   "q": [
+    "blueprint floor plan on tablet desk"
+   ],
+   "motion": "zout"
+  },
+  {
+   "q": [
+    "hands holding phone ar app screen"
+   ],
+   "insert": "hexagon",
+   "pos": "lower"
+  },
+  {
+   "q": [
+    "doorway measuring frame home"
+   ],
+   "motion": "pandown"
+  }
+ ],
+ "overlays": [
+  {
+   "at": 0.038,
+   "dur": 1.94,
+   "type": "kicker",
+   "text": "NO TAPE"
+  },
+  {
+   "at": 0.21,
+   "dur": 2.36,
+   "type": "gauge",
+   "to": 4,
+   "max": 100,
+   "suffix": "%",
+   "label": "RETURN RATE",
+   "pos": "center"
+  },
+  {
+   "at": 0.491,
+   "dur": 2.34,
+   "type": "lowerthird",
+   "title": "EXPORT A PDF",
+   "sub": "sizes in one tap"
+  },
+  {
+   "at": 0.586,
+   "dur": 1.86,
+   "type": "stat_count",
+   "to": 1,
+   "suffix": "",
+   "label": "PERSON NEEDED",
+   "pos": "center"
+  },
+  {
+   "at": 0.597,
+   "dur": 2.6,
+   "type": "checklist",
+   "items": [
+    "Point the phone",
+    "Tap two points",
+    "Read the length",
+    "Save the project"
+   ],
+   "pos": "center"
+  },
+  {
+   "at": 0.632,
+   "dur": 2.09,
+   "type": "bars",
+   "title": "TAPE VS PHONE ERROR",
+   "unit": "%",
+   "items": [
+    [
+     "Metal tape",
+     12
+    ],
+    [
+     "Phone AR",
+     3
+    ]
+   ],
+   "pos": "center"
+  },
+  {
+   "at": 0.676,
+   "dur": 1.66,
+   "type": "kinetic",
+   "top": "STOP",
+   "big": "GUESSING"
+  }
+ ],
+ "cta": {
+  "text": "Comment MEASURE for the app.",
+  "code": "MEASURE"
+ },
+ "caption": "A rug, a TV, a shelf — will it fit? Point your phone, tap two points, and the length appears on the floor. Width, height, area — no tape, no helper. Comment MEASURE for the app. #diy #homedecor #interiordesign #measure #movingtips #renter #apartmenttherapy #measure #living #iphone #furniture",
+ "yt_title": "Measure any room without a tape #shorts",
+ "trend_keys": [
+  "measure",
+  "living",
+  "iphone",
+  "furniture",
+  "app",
+  "room",
+  "guide",
+  "arrange"
+ ],
+ "content_type": "viral"
+}

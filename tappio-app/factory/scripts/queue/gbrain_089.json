@@ -1,0 +1,198 @@
+{
+ "id": "gbrain_089",
+ "app": "brain",
+ "voice": "en-US-BrianNeural",
+ "rate": "+7%",
+ "grade": "purple_dream",
+ "brand": {
+  "accent": "#9B5DE5",
+  "accent2": "#C9A7FF",
+  "code": "FOCUS",
+  "logo": "brain.png",
+  "name": "BRAINOVA"
+ },
+ "music": {
+  "queries": [
+   "positive success anthem",
+   "uplifting focus ambient",
+   "warm inspiring piano electronic"
+  ]
+ },
+ "cover": {
+  "kicker": "DAILY STREAK",
+  "top": "SMARTER IN",
+  "big": "14\nDAYS",
+  "q": [
+   "memory old photos hands"
+  ]
+ },
+ "segments": [
+  {
+   "id": "b1",
+   "text": "Big change starts with one tiny daily rep."
+  },
+  {
+   "id": "b2",
+   "text": "Day one feels slow and a little clumsy."
+  },
+  {
+   "id": "b3",
+   "text": "By day five your reaction time drops."
+  },
+  {
+   "id": "b4",
+   "text": "By day ten recall feels sharper, easier."
+  },
+  {
+   "id": "b5",
+   "text": "Two weeks in, the streak keeps you going."
+  },
+  {
+   "id": "b6",
+   "text": "Fourteen days to a quicker mind."
+  }
+ ],
+ "shots": [
+  {
+   "q": [
+    "chess board close up thinking"
+   ],
+   "motion": "panup"
+  },
+  {
+   "q": [
+    "light bulb idea dark"
+   ],
+   "insert": "circle",
+   "pos": "lower"
+  },
+  {
+   "q": [
+    "elderly person smiling sharp mind"
+   ],
+   "motion": "zout"
+  },
+  {
+   "q": [
+    "student studying desk lamp night"
+   ],
+   "insert": "hexagon",
+   "pos": "center"
+  },
+  {
+   "q": [
+    "puzzle pieces hands table"
+   ],
+   "motion": "panr"
+  },
+  {
+   "q": [
+    "person doing crossword puzzle"
+   ],
+   "insert": "rrect",
+   "pos": "center"
+  },
+  {
+   "q": [
+    "coffee cup morning desk"
+   ],
+   "motion": "pandown"
+  },
+  {
+   "q": [
+    "woman meditating calm light"
+   ],
+   "insert": "diamond",
+   "pos": "lower"
+  },
+  {
+   "q": [
+    "neurons synapse animation blue"
+   ],
+   "motion": "zin"
+  },
+  {
+   "q": [
+    "teacher classroom explaining"
+   ],
+   "insert": "tv",
+   "pos": "center"
+  }
+ ],
+ "overlays": [
+  {
+   "at": 0.096,
+   "dur": 2.32,
+   "type": "kicker",
+   "text": "FOCUS FIX"
+  },
+  {
+   "at": 0.239,
+   "dur": 2.6,
+   "type": "checklist",
+   "items": [
+    "Take the test",
+    "Play 5 min",
+    "Beat your score",
+    "Keep the streak"
+   ],
+   "pos": "center"
+  },
+  {
+   "at": 0.288,
+   "dur": 1.79,
+   "type": "kinetic",
+   "top": "STAY",
+   "big": "SHARP"
+  },
+  {
+   "at": 0.311,
+   "dur": 1.88,
+   "type": "callout",
+   "text": "FOCUS IS A MUSCLE",
+   "pos": "center"
+  },
+  {
+   "at": 0.362,
+   "dur": 1.87,
+   "type": "lowerthird",
+   "title": "SAY IT BACK",
+   "sub": "names stick instantly"
+  },
+  {
+   "at": 0.364,
+   "dur": 1.74,
+   "type": "stat_count",
+   "to": 5,
+   "suffix": "min",
+   "label": "A DAY",
+   "pos": "center"
+  },
+  {
+   "at": 0.422,
+   "dur": 1.68,
+   "type": "ticker",
+   "to": 5,
+   "suffix": "min",
+   "label": "A DAY",
+   "pos": "lower"
+  }
+ ],
+ "cta": {
+  "text": "Get it now — comment FOCUS and I'll send the link. Link in bio.",
+  "code": "FOCUS"
+ },
+ "caption": "One tiny daily rep compounds: faster reactions by day five, sharper recall by day ten, a streak that keeps you going. Fourteen days to a quicker mind. Comment FOCUS for the app. #brainhealth #memory #focus #productivity #selfimprovement #mentalhealth #learning #concentration #mental #music #memory 👉 Comment FOCUS for the link — link in bio.",
+ "yt_title": "Get measurably smarter in 14 days #shorts",
+ "trend_keys": [
+  "concentration",
+  "mental",
+  "music",
+  "memory",
+  "test",
+  "age",
+  "focus",
+  "binaural"
+ ],
+ "content_type": "sales"
+}

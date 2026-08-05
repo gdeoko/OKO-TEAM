@@ -1,0 +1,199 @@
+{
+ "id": "gspy_088",
+ "app": "spy",
+ "voice": "en-US-AndrewNeural",
+ "rate": "+6%",
+ "grade": "clean_ad",
+ "brand": {
+  "accent": "#00D9FF",
+  "accent2": "#7CFCFF",
+  "code": "PRIVACY",
+  "logo": "spy.png",
+  "name": "SPY CAMERA FINDER"
+ },
+ "music": {
+  "queries": [
+   "calm focus ambient",
+   "neon night synth",
+   "investigative documentary underscore",
+   "cinematic underscore tech"
+  ]
+ },
+ "cover": {
+  "kicker": "WHY IT WORKS",
+  "top": "THE SCIENCE OF",
+  "big": "CATCHING\nA LENS",
+  "q": [
+   "desk lamp table hotel"
+  ]
+ },
+ "segments": [
+  {
+   "id": "b1",
+   "text": "Every camera has a lens, and lenses reflect."
+  },
+  {
+   "id": "b2",
+   "text": "Infrared bounces back as a sharp bright point."
+  },
+  {
+   "id": "b3",
+   "text": "Wireless cams also shout on the local network."
+  },
+  {
+   "id": "b4",
+   "text": "Two signals, two ways to catch them."
+  },
+  {
+   "id": "b5",
+   "text": "The app checks both at the same time."
+  },
+  {
+   "id": "b6",
+   "text": "Physics is on your side. Use it."
+  }
+ ],
+ "shots": [
+  {
+   "q": [
+    "laptop screen code green"
+   ],
+   "insert": "phone",
+   "pos": "center"
+  },
+  {
+   "q": [
+    "reflection glass light dot"
+   ],
+   "motion": "panl"
+  },
+  {
+   "q": [
+    "person entering hotel room luggage"
+   ],
+   "insert": "hexagon",
+   "pos": "lower"
+  },
+  {
+   "q": [
+    "traveler suitcase hotel hallway"
+   ],
+   "motion": "zin"
+  },
+  {
+   "q": [
+    "surveillance concept eye lens"
+   ],
+   "insert": "tilt",
+   "pos": "upper"
+  },
+  {
+   "q": [
+    "alarm clock nightstand bedroom"
+   ],
+   "motion": "panup"
+  },
+  {
+   "q": [
+    "mirror bathroom hotel"
+   ],
+   "insert": "arch",
+   "pos": "lower"
+  },
+  {
+   "q": [
+    "person relaxing bed phone night"
+   ],
+   "motion": "pandown"
+  },
+  {
+   "q": [
+    "airbnb apartment cozy night"
+   ],
+   "insert": "tv",
+   "pos": "lower"
+  },
+  {
+   "q": [
+    "dark bedroom lamp light"
+   ],
+   "motion": "zout"
+  }
+ ],
+ "overlays": [
+  {
+   "at": 0.03,
+   "dur": 1.79,
+   "type": "kicker",
+   "text": "SCAN FIRST"
+  },
+  {
+   "at": 0.197,
+   "dur": 1.63,
+   "type": "ticker",
+   "to": 2,
+   "suffix": "",
+   "label": "SIGNALS CHECKED",
+   "pos": "lower"
+  },
+  {
+   "at": 0.392,
+   "dur": 2.11,
+   "type": "bars",
+   "title": "HIDDEN CAM REPORTS",
+   "unit": "%",
+   "items": [
+    [
+     "2019",
+     6
+    ],
+    [
+     "2024",
+     34
+    ]
+   ],
+   "pos": "center"
+  },
+  {
+   "at": 0.41,
+   "dur": 1.83,
+   "type": "gauge",
+   "to": 5,
+   "max": 10,
+   "suffix": "",
+   "label": "SPOTS TO CHECK",
+   "pos": "center"
+  },
+  {
+   "at": 0.44,
+   "dur": 2.16,
+   "type": "kinetic",
+   "top": "LIGHTS",
+   "big": "OFF"
+  },
+  {
+   "at": 0.707,
+   "dur": 1.66,
+   "type": "lowerthird",
+   "title": "UNPLUG UNKNOWNS",
+   "sub": "30 seconds, total"
+  }
+ ],
+ "cta": {
+  "text": "Comment PRIVACY for the app.",
+  "code": "PRIVACY"
+ },
+ "caption": "USEFUL: Every lens reflects infrared as a bright point, and wireless cams shout on the network. Two signals, one scan — physics is on your side. Comment PRIVACY for the app. #privacy #airbnb #travelsafety #hiddencamera #traveltips #hotelroom #safetytips #bugs #audio #cameras #find",
+ "yt_title": "The science of finding hidden cameras #shorts",
+ "trend_keys": [
+  "bugs",
+  "audio",
+  "cameras",
+  "find",
+  "investigation",
+  "camera",
+  "hidden",
+  "spy"
+ ],
+ "content_type": "useful"
+}
