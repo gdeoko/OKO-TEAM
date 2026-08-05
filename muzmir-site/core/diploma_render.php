@@ -73,5 +73,32 @@ function diploma_pdf_html(array $app, array $opt = []): ?string {
         return null;
     }
     clearstatcache(true, $out);
-    return (is_file($out) && filesize($out) > 20000) ? $out : null;
+    if (!is_file($out) || filesize($out) <= 20000) return null;
+
+    // Сжатие PDF (Ghostscript): фон-фото даунсемплится до 150dpi, ТЕКСТ и QR остаются
+    // векторными/резкими. Тяжёлый диплом ~4МБ → ~0.8-1.2МБ, чтобы 3 файла (осн+доп+
+    // благодарность) проходили одним письмом без спам-режекта Яндекса по размеру.
+    diploma_compress_pdf($out);
+    clearstatcache(true, $out);
+    return $out;
+}
+
+/** Сжимает PDF на месте через Ghostscript (/ebook ~150dpi). Тихо пропускает, если gs нет. */
+function diploma_compress_pdf(string $path): void {
+    if (!is_file($path)) return;
+    $gs = trim((string) @shell_exec('command -v gs 2>/dev/null'));
+    if ($gs === '') return;
+    $before = (int) filesize($path);
+    $tmp = $path . '.gs.pdf';
+    $cmd = escapeshellarg($gs) . ' -sDEVICE=pdfwrite -dCompatibilityLevel=1.5 -dPDFSETTINGS=/ebook'
+         . ' -dDownsampleColorImages=true -dColorImageResolution=150'
+         . ' -dNOPAUSE -dQUIET -dBATCH -sOutputFile=' . escapeshellarg($tmp) . ' ' . escapeshellarg($path) . ' 2>/dev/null';
+    @shell_exec($cmd);
+    clearstatcache(true, $tmp);
+    // Заменяем только если сжатие удалось и файл заметно меньше и не битый.
+    if (is_file($tmp) && filesize($tmp) > 20000 && filesize($tmp) < $before) {
+        @rename($tmp, $path);
+    } else {
+        @unlink($tmp);
+    }
 }

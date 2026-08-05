@@ -236,7 +236,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 }
 
 // --- Данные ---
-$apps = all("SELECT a.*, c.name AS comp_name, c.slug AS comp_slug
+$apps = all("SELECT a.*, c.name AS comp_name, c.slug AS comp_slug, c.is_paid AS comp_paid
              FROM applications a LEFT JOIN competitions c ON c.id=a.competition_id
              WHERE a.user_id=? ORDER BY a.created_at DESC", [$uid]);
 $diplomas = all("SELECT d.*, a.full_name, a.result AS app_result, c.name AS comp_name
@@ -267,7 +267,10 @@ $appBadge = ['new'=>['Подана','blue'],'paid'=>['Оплачена','gold'],
              'graded'=>['Оценена','gold'],'sent'=>['Диплом отправлен','gold'],'rejected'=>['Отклонена','bord']];
 // Окно заказа наград: 60 дней от graded_at — только если такая колонка реально есть в БД.
 $hasGradedAt = $apps && array_key_exists('graded_at', $apps[0]);
-$orderStatus = ['new'=>['Оформлен','info'],'paid'=>['Оплачен','info'],'shipped'=>['Отправлен','warning'],'delivered'=>['Доставлен','success']];
+$orderStatus = ['new'=>['Оформлен','info'],'paid'=>['Оплачен','info'],'made'=>['Изготовлен','warning'],'shipped'=>['Отправлен','warning'],'delivered'=>['Доставлен','success']];
+// Конвейер статуса заказа оригиналов.
+$orderPipe   = ['paid','made','shipped','delivered'];
+$orderPipeL  = ['Оплачено','Изготовлено','Отправлено','Доставлено'];
 // Конвейер статуса заявки для инфографики-прогресса.
 $pipeline = ['new','paid','judging','graded','sent'];
 $pipeLabels = ['Подана','Оплата','Оценка','Оценена','Диплом'];
@@ -675,9 +678,13 @@ ob_start(); ?>
           <?php else: foreach ($apps as $k => $a):
             [$bl,$bc] = $appBadge[$a['status']] ?? [(string)$a['status'],'blue'];
             $isRej = $a['status'] === 'rejected';
-            $cur = array_search($a['status'], $pipeline, true);
+            // Бесплатный конкурс — БЕЗ шага «Оплата» (её нет, статус не может быть выполнен).
+            $isFreeComp = isset($a['comp_paid']) && (int)$a['comp_paid'] !== 1;
+            $pipe    = $isFreeComp ? ['new','judging','graded','sent'] : $pipeline;
+            $pLabels = $isFreeComp ? ['Подана','Оценка','Оценена','Диплом'] : $pipeLabels;
+            $cur = array_search($a['status'], $pipe, true);
             if ($cur === false) $cur = 0;
-            $pct = $isRej ? 100 : (int)round(($cur + 1) / count($pipeline) * 100);
+            $pct = $isRej ? 100 : (int)round(($cur + 1) / count($pipe) * 100);
             // ФИО / Коллектив / Возрастная категория / Номинация / Преподаватель / Учреждение / Конкурсный номер
             $info = [];
             if (trim((string)($a['full_name'] ?? '')) !== '')    $info[] = ['ФИО', $a['full_name']];
@@ -731,7 +738,7 @@ ob_start(); ?>
                 <p class="cab-reject">Заявка отклонена. Свяжитесь с нами для уточнения.</p>
               <?php else: ?>
                 <div class="cab-steps">
-                  <?php foreach ($pipeLabels as $pi => $pl): ?>
+                  <?php foreach ($pLabels as $pi => $pl): ?>
                     <div class="cab-step <?= $pi <= $cur ? 'done' : '' ?> <?= $pi === $cur ? 'here' : '' ?>"><span class="cab-dot"></span><small><?= h($pl) ?></small></div>
                   <?php endforeach; ?>
                 </div>
@@ -808,17 +815,34 @@ ob_start(); ?>
               <a class="btn btn--primary" href="<?= url('/order-awards') ?>">Заказать награды</a>
             </div>
           <?php else: foreach ($orders as $k => $o):
-            [$sl,$st] = $orderStatus[$o['status']] ?? [$o['status'],'info']; ?>
+            [$sl,$st] = $orderStatus[$o['status']] ?? [$o['status'],'info'];
+            $ocur = array_search((string)$o['status'], $orderPipe, true);
+            if ($ocur === false) $ocur = ((string)$o['status'] === 'new') ? -1 : 0;
+            $track = trim((string)($o['tracking'] ?? ''));
+            $trackUrl = $track !== '' ? 'https://www.pochta.ru/tracking#' . rawurlencode($track) : '';
+            $isClubOrder = strpos((string)($o['items'] ?? ''), '"kind":"club"') !== false; ?>
             <div class="cab-card reveal" style="--i:<?= $k ?>">
               <div class="cab-row">
                 <div style="min-width:0">
                   <span class="cab-ttl"><?= h(order_items_label($o['items'] ?? '')) ?></span>
                   <p class="cab-meta"><?= h($o['competition'] ?: '') ?><?php if ($o['result']): ?> - <?= h($o['result']) ?><?php endif; ?></p>
                   <p class="cab-meta">Заказ от <?= h(ru_date(substr((string)$o['created_at'],0,10))) ?><?php if ($o['amount']): ?> - <?= h(money((int)$o['amount'])) ?><?php endif; ?></p>
-                  <?php if (!empty($o['tracking'])): ?><p class="cab-meta">Трек-номер: <strong><?= h($o['tracking']) ?></strong></p><?php endif; ?>
+                  <?php if ($track !== ''): ?><p class="cab-meta">Трек-номер: <strong><?= h($track) ?></strong></p><?php endif; ?>
                 </div>
                 <div style="text-align:right"><?= $badge($sl,$st) ?></div>
               </div>
+              <?php if (!$isClubOrder): ?>
+                <div class="cab-steps" style="margin-top:14px">
+                  <?php foreach ($orderPipeL as $pi => $pl): ?>
+                    <div class="cab-step <?= $pi <= $ocur ? 'done' : '' ?> <?= $pi === $ocur ? 'here' : '' ?>"><span class="cab-dot"></span><small><?= h($pl) ?></small></div>
+                  <?php endforeach; ?>
+                </div>
+                <div class="cab-bar"><i data-w="<?= (int)round((($ocur+1)/count($orderPipe))*100) ?>"></i></div>
+                <?php if ($trackUrl !== ''): ?>
+                  <a class="btn btn--primary btn--sm" href="<?= h($trackUrl) ?>" target="_blank" rel="noopener" style="margin-top:12px">
+                    <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" style="vertical-align:-3px;margin-right:5px"><path d="M1 3h15v13H1zM16 8h4l3 3v5h-7M5.5 21a2 2 0 1 0 0-4 2 2 0 0 0 0 4zM18.5 21a2 2 0 1 0 0-4 2 2 0 0 0 0 4z"/></svg>Отследить посылку</a>
+                <?php endif; ?>
+              <?php endif; ?>
             </div>
           <?php endforeach; endif; ?>
         </div>

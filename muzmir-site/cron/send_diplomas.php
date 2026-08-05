@@ -133,39 +133,45 @@ $dueList = all("SELECT d.*, a.email, a.full_name, a.number AS app_number, c.name
                 ORDER BY d.scheduled_at ASC
                 LIMIT 30", [$now->format('Y-m-d H:i:s')]);
 
-$sentThisTick = 0;
-foreach ($dueList as $d) {
-    if ($sentThisTick >= 1) break; // ровно один в минуту
-    $to = (string)$d['email']; if ($to === '' || !filter_var($to, FILTER_VALIDATE_EMAIL)) continue;
+// ГРУППИРОВКА: все дипломы ОДНОЙ заявки (осн + доп + именной + благодарность) — в ОДНОМ письме.
+$groups = [];
+foreach ($dueList as $d) { $groups[(int)$d['application_id']][] = $d; }
 
-    $subject = ((string)($d['type'] ?? 'main') === 'extra'
-                  ? 'Ваш дополнительный диплом (спецноминация) конкурса «'
-                  : 'Ваш диплом конкурса «')
-             . $d['comp_name'] . '» - № ' . $d['number'];
-    // Диплом идёт КАК НАДО (как в ручных письмах центра): файлом (PDF во вложении)
-    // И фотографией диплома в теле письма. PNG-превью генерим из PDF (pdftoppm) и
-    // отдаём картинкой по HTTPS; PDF прикладываем вложением. (Спам-проблема была из-за
-    // кириллического From — исправлено punycode-фиксом в mailer.php.)
-    [$pdfAbs, $imgUrl] = _diploma_files((array)$d);
-    $d['_img_url'] = $imgUrl;
-    $html = _diploma_email_html((array)$d);
-    // Отправитель — наградной ящик nagradi@ (как и задумано для дипломов/наград).
+$sentThisTick = 0;
+foreach ($groups as $appId => $items) {
+    if ($sentThisTick >= 1) break; // одна заявка (одно письмо) в минуту
+    $first = $items[0];
+    $to = (string)$first['email']; if ($to === '' || !filter_var($to, FILTER_VALIDATE_EMAIL)) continue;
+
+    // Собираем вложения (PDF) + фото каждого диплома для тела письма.
+    $attachments = []; $blocks = [];
+    foreach ($items as $it) {
+        [$pdfAbs, $imgUrl] = _diploma_files((array)$it);
+        if ($pdfAbs) $attachments[] = $pdfAbs;
+        $blocks[] = ['type' => (string)($it['type'] ?? 'main'), 'result' => (string)($it['result'] ?? ''), 'number' => (string)($it['number'] ?? ''), 'img' => $imgUrl];
+    }
+    $cnt = count($items);
+    $subject = ($cnt > 1 ? 'Ваши наградные документы конкурса «' : 'Ваш диплом конкурса «')
+             . $first['comp_name'] . '» - заявка № ' . $first['app_number'];
+    $html = _diploma_group_html($blocks, (string)$first['full_name'], (string)$first['comp_name']);
+
     $opt = [];
     $nagradi = function_exists('mail_senders') ? (mail_senders()['nagradi'] ?? []) : [];
     if ($nagradi) $opt['account'] = $nagradi;
-    if ($pdfAbs) $opt['attach'] = $pdfAbs;          // официальный файл диплома (PDF с QR)
+    if ($attachments) $opt['attachments'] = $attachments;   // все PDF во вложении
     $ok = false;
     if (function_exists('mail_send')) {
         $ok = (bool) mail_send($to, $subject, $html, $opt);
     }
     if ($ok) {
-        update('diplomas', ['sent_at' => $now->format('Y-m-d H:i:s')], 'id=:id', ['id' => (int)$d['id']]);
-        // Автостатус: диплом отправлен -> заявка исполнена (цепочка подана→оценена→исполнена).
-        q("UPDATE applications SET status='done' WHERE id=?", [(int)$d['application_id']]);
+        foreach ($items as $it) update('diplomas', ['sent_at' => $now->format('Y-m-d H:i:s')], 'id=:id', ['id' => (int)$it['id']]);
+        q("UPDATE applications SET status='done' WHERE id=?", [(int)$appId]);
         $sentThisTick++;
     } else {
-        // сдвигаем ещё на 5 минут (retry)
-        update('diplomas', ['scheduled_at' => (clone $now)->modify('+5 minutes')->format('Y-m-d H:i:s')], 'id=:id', ['id' => (int)$d['id']]);
+        // сдвигаем всю группу на 5 минут (retry)
+        foreach ($items as $it) {
+            update('diplomas', ['scheduled_at' => (clone $now)->modify('+5 minutes')->format('Y-m-d H:i:s')], 'id=:id', ['id' => (int)$it['id']]);
+        }
     }
 }
 
@@ -284,6 +290,54 @@ function _diploma_email_html(array $d): string {
             ['Проверить подлинность', $verifyUrl],
             ['Оставить отзыв', $reviewUrl],
         ],
+        'thanks'    => true,
+    ]);
+}
+
+/**
+ * Групповое письмо: ВСЕ дипломы одной заявки (осн/доп/именной/благодарность) в одном
+ * письме — каждый фотографией в теле + все PDF во вложении. Богатый шаблон + кнопки.
+ * $blocks: [[type,result,number,img], ...].
+ */
+function _diploma_group_html(array $blocks, string $name, string $comp): string {
+    $base = rtrim((string) cfgv('base_url', 'https://xn----7sbugdeiegh1b0a9hen.xn--p1ai'), '/');
+    $hello = trim($name) !== '' ? 'Здравствуйте, ' . h($name) . '!' : 'Здравствуйте!';
+    $labels = ['main' => 'Основной диплом', 'extra' => 'Дополнительный диплом (спецноминация)', 'named' => 'Именной диплом', 'thanks' => 'Благодарность'];
+
+    // Рекомендованный оригинал по результату (по основному диплому).
+    $mainRes = '';
+    foreach ($blocks as $b) { if (($b['type'] ?? '') === 'main') { $mainRes = (string)$b['result']; break; } }
+    if ($mainRes === '' && $blocks) $mainRes = (string)$blocks[0]['result'];
+    $rU = mb_strtoupper($mainRes);
+    $award = mb_strpos($rU, 'ГРАН') !== false ? 'кубок Гран-при'
+           : (mb_strpos($rU, 'ЛАУРЕАТ') !== false ? 'статуэтку лауреата'
+           : (mb_strpos($rU, 'ДИПЛОМАНТ') !== false ? 'медаль дипломанта' : 'оригинал диплома'));
+
+    $cards = '';
+    foreach ($blocks as $b) {
+        $lbl = $labels[$b['type'] ?? 'main'] ?? 'Диплом';
+        $meta = ($b['type'] ?? '') === 'thanks' ? 'Педагогу за подготовку участника'
+              : (($b['type'] ?? '') === 'extra' ? ('Спецноминация: ' . h((string)$b['result'])) : ('Звание: ' . h((string)$b['result'])));
+        $img = !empty($b['img'])
+            ? '<img src="' . h((string)$b['img']) . '" alt="' . h($lbl) . '" width="520" style="display:block;width:100%;max-width:520px;height:auto;border-radius:12px;border:1px solid ' . MM_LINE . ';box-shadow:0 6px 20px rgba(23,48,122,.16);">'
+            : '';
+        $cards .= '<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin:0 0 22px;">'
+            . '<tr><td style="padding:0 0 8px;"><div style="font-family:Georgia,serif;font-weight:700;color:' . MM_NAVY . ';font-size:17px;">' . h($lbl) . '</div>'
+            . '<div style="font-size:13px;color:' . MM_MUTED . ';">' . $meta . ' · № ' . h((string)$b['number']) . ' · QR проверки подлинности · PDF во вложении</div></td></tr>'
+            . '<tr><td align="center">' . $img . '</td></tr></table>';
+    }
+
+    $inner = '<h1 style="margin:0 0 14px;font-family:Georgia,serif;font-size:24px;color:' . MM_NAVY . ';font-weight:700;line-height:1.25;">Ваши наградные документы</h1>'
+        . '<p style="margin:0 0 12px;">' . $hello . '</p>'
+        . '<p style="margin:0 0 20px;">По итогам аттестации компетентного жюри конкурса «' . h($comp) . '» подготовлены Ваши наградные документы. Каждый — с номером и QR-кодом проверки подлинности; официальные PDF-файлы прикреплены к письму.</p>'
+        . $cards
+        . '<p style="margin:6px 0 6px;font-weight:600;color:' . MM_NAVY . ';">Оригиналы наград — Почтой России:</p>'
+        . '<p style="margin:0 0 8px;font-size:14px;color:' . MM_INK . ';line-height:1.6;">По Вашему результату доступны к заказу: <b>' . $award . '</b>, оригинал диплома на дизайнерской бумаге и благодарность педагогу — с голографическими логотипами, живыми подписями и печатями.</p>';
+
+    return mm_email_tx($inner, [
+        'preheader' => 'Ваши наградные документы конкурса «' . $comp . '» готовы. Файлы во вложении.',
+        'hero'      => mm_cta_primary($base . '/awards', 'Заказать наградной материал', 'По результату: ' . $award),
+        'actions'   => [['Проверить подлинность', $base . '/verify'], ['Личный кабинет', $base . '/cabinet'], ['Оставить отзыв', $base . '/reviews']],
         'thanks'    => true,
     ]);
 }
