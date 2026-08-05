@@ -1,0 +1,201 @@
+{
+ "id": "gspy_097",
+ "app": "spy",
+ "voice": "en-US-AndrewNeural",
+ "rate": "+5%",
+ "grade": "teal_orange",
+ "brand": {
+  "accent": "#00D9FF",
+  "accent2": "#7CFCFF",
+  "code": "PRIVACY",
+  "logo": "spy.png",
+  "name": "SPY CAMERA FINDER"
+ },
+ "music": {
+  "queries": [
+   "energetic upbeat",
+   "dark tension electronic",
+   "cyber suspense pulse"
+  ]
+ },
+ "cover": {
+  "kicker": "TOP 5 SPOTS",
+  "top": "WHERE CAMS",
+  "big": "ALWAYS\nHIDE",
+  "q": [
+   "picture frame on wall room"
+  ]
+ },
+ "segments": [
+  {
+   "id": "b1",
+   "text": "Smoke detectors: the number one hiding spot."
+  },
+  {
+   "id": "b2",
+   "text": "Alarm clocks pointed straight at the bed."
+  },
+  {
+   "id": "b3",
+   "text": "Air vents with a suspicious little hole."
+  },
+  {
+   "id": "b4",
+   "text": "TV frames and power outlets facing the room."
+  },
+  {
+   "id": "b5",
+   "text": "Check each one: line of sight to the bed is the clue."
+  },
+  {
+   "id": "b6",
+   "text": "Scan first, relax second. Every trip."
+  }
+ ],
+ "shots": [
+  {
+   "q": [
+    "airbnb apartment cozy night"
+   ],
+   "insert": "circle",
+   "pos": "lower"
+  },
+  {
+   "q": [
+    "network cables server blue light"
+   ],
+   "motion": "panup"
+  },
+  {
+   "q": [
+    "security camera lens macro"
+   ],
+   "insert": "rrect",
+   "pos": "lower"
+  },
+  {
+   "q": [
+    "reflection glass light dot"
+   ],
+   "motion": "zin"
+  },
+  {
+   "q": [
+    "door lock hotel keycard"
+   ],
+   "insert": "hexagon",
+   "pos": "center"
+  },
+  {
+   "q": [
+    "mirror bathroom hotel"
+   ],
+   "motion": "pandown"
+  },
+  {
+   "q": [
+    "phone flashlight scanning wall"
+   ],
+   "insert": "tv",
+   "pos": "upper"
+  },
+  {
+   "q": [
+    "surveillance concept eye lens"
+   ],
+   "motion": "panr"
+  },
+  {
+   "q": [
+    "dark bedroom lamp light"
+   ],
+   "insert": "diamond",
+   "pos": "lower"
+  },
+  {
+   "q": [
+    "woman looking around hotel room worried"
+   ],
+   "motion": "panl"
+  }
+ ],
+ "overlays": [
+  {
+   "at": 0.105,
+   "dur": 2.06,
+   "type": "kicker",
+   "text": "SCAN FIRST"
+  },
+  {
+   "at": 0.233,
+   "dur": 2.33,
+   "type": "lowerthird",
+   "title": "SCAN THE WI-FI",
+   "sub": "unknown devices appear"
+  },
+  {
+   "at": 0.423,
+   "dur": 1.87,
+   "type": "kinetic",
+   "top": "LIGHTS",
+   "big": "OFF"
+  },
+  {
+   "at": 0.486,
+   "dur": 2.16,
+   "type": "chips",
+   "items": [
+    "WI-FI",
+    "IR",
+    "BLUETOOTH",
+    "RF"
+   ],
+   "pos": "upper"
+  },
+  {
+   "at": 0.553,
+   "dur": 1.72,
+   "type": "bars",
+   "title": "DETECTION RATE",
+   "unit": "%",
+   "items": [
+    [
+     "Naked eye",
+     18
+    ],
+    [
+     "With app",
+     94
+    ]
+   ],
+   "pos": "center"
+  },
+  {
+   "at": 0.792,
+   "dur": 2.0,
+   "type": "gauge",
+   "to": 5,
+   "max": 10,
+   "suffix": "",
+   "label": "SPOTS TO CHECK",
+   "pos": "center"
+  }
+ ],
+ "cta": {
+  "text": "Comment PRIVACY for the app.",
+  "code": "PRIVACY"
+ },
+ "caption": "Smoke detectors, alarm clocks, vents, TV frames, outlets — the five spots cams love. Check anything with a clear line of sight to the bed. Comment PRIVACY for the app. #privacy #airbnb #travelsafety #hiddencamera #traveltips #hotelroom #safetytips #ways #tested #find #hotels",
+ "yt_title": "Top 5 places hidden cameras hide #shorts",
+ "trend_keys": [
+  "ways",
+  "tested",
+  "find",
+  "hotels",
+  "airbnb",
+  "cameras",
+  "five",
+  "hidden"
+ ],
+ "content_type": "viral"
+}
