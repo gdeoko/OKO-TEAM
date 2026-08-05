@@ -1,0 +1,271 @@
+{
+ "id": "gspy_094",
+ "app": "spy",
+ "voice": "en-US-AndrewNeural",
+ "rate": "+6%",
+ "grade": "clean_ad",
+ "brand": {
+  "accent": "#00D9FF",
+  "accent2": "#7CFCFF",
+  "code": "PRIVACY",
+  "logo": "spy.png",
+  "name": "SPY CAMERA FINDER"
+ },
+ "music": {
+  "queries": [
+   "epic inspiring rise",
+   "cinematic underscore tech",
+   "dark tension electronic"
+  ]
+ },
+ "cover": {
+  "kicker": "IR GLINT",
+  "top": "THE LENS",
+  "big": "ALWAYS\nGLOWS",
+  "q": [
+   "network cables server blue light"
+  ]
+ },
+ "segments": [
+  {
+   "id": "b1",
+   "text": "Turn off the lights. Raise your phone camera."
+  },
+  {
+   "id": "b2",
+   "text": "A hidden lens reflects infrared as a tiny bright dot."
+  },
+  {
+   "id": "b3",
+   "text": "Slowly pan across mirrors, vents and smoke detectors."
+  },
+  {
+   "id": "b4",
+   "text": "The app highlights suspicious reflections for you."
+  },
+  {
+   "id": "b5",
+   "text": "Found one? Cover it and report the listing."
+  },
+  {
+   "id": "b6",
+   "text": "Sixty seconds of scanning saves your privacy."
+  }
+ ],
+ "shots": [
+  {
+   "q": [
+    "door lock hotel keycard"
+   ],
+   "insert": "circle",
+   "pos": "center"
+  },
+  {
+   "q": [
+    "curtains window hotel evening"
+   ],
+   "motion": "zout"
+  },
+  {
+   "q": [
+    "wifi router network dark tech"
+   ],
+   "insert": "tilt",
+   "pos": "upper"
+  },
+  {
+   "q": [
+    "mirror bathroom hotel"
+   ],
+   "motion": "panup"
+  },
+  {
+   "q": [
+    "picture frame on wall room"
+   ],
+   "insert": "tv",
+   "pos": "lower"
+  },
+  {
+   "q": [
+    "alarm clock nightstand bedroom"
+   ],
+   "motion": "zin"
+  },
+  {
+   "q": [
+    "surveillance concept eye lens"
+   ],
+   "insert": "phone",
+   "pos": "lower"
+  },
+  {
+   "q": [
+    "tv on wall hotel room"
+   ],
+   "motion": "panr"
+  },
+  {
+   "q": [
+    "airbnb apartment cozy night"
+   ],
+   "insert": "diamond",
+   "pos": "lower"
+  },
+  {
+   "q": [
+    "network cables server blue light"
+   ],
+   "motion": "panl"
+  },
+  {
+   "q": [
+    "phone flashlight scanning wall"
+   ],
+   "insert": "arch",
+   "pos": "lower"
+  },
+  {
+   "q": [
+    "laptop screen code green"
+   ],
+   "motion": "pandown"
+  },
+  {
+   "q": [
+    "desk lamp table hotel"
+   ],
+   "insert": "hexagon",
+   "pos": "lower"
+  },
+  {
+   "q": [
+    "closet wardrobe hotel room"
+   ],
+   "motion": "zout"
+  },
+  {
+   "q": [
+    "person entering hotel room luggage"
+   ],
+   "insert": "rrect",
+   "pos": "lower"
+  }
+ ],
+ "overlays": [
+  {
+   "at": 0.115,
+   "dur": 1.66,
+   "type": "kicker",
+   "text": "LENS CHECK"
+  },
+  {
+   "at": 0.116,
+   "dur": 2.07,
+   "type": "lowerthird",
+   "title": "SCAN THE WI-FI",
+   "sub": "unknown devices appear"
+  },
+  {
+   "at": 0.12,
+   "dur": 1.98,
+   "type": "callout",
+   "text": "LINE OF SIGHT = RED FLAG",
+   "pos": "center"
+  },
+  {
+   "at": 0.293,
+   "dur": 1.71,
+   "type": "gauge",
+   "to": 94,
+   "max": 100,
+   "suffix": "%",
+   "label": "DETECTION RATE",
+   "pos": "center"
+  },
+  {
+   "at": 0.59,
+   "dur": 2.07,
+   "type": "chips",
+   "items": [
+    "VENTS",
+    "CLOCKS",
+    "OUTLETS",
+    "TVs"
+   ],
+   "pos": "lower"
+  },
+  {
+   "at": 0.596,
+   "dur": 2.02,
+   "type": "bars",
+   "title": "DETECTION RATE",
+   "unit": "%",
+   "items": [
+    [
+     "Naked eye",
+     18
+    ],
+    [
+     "With app",
+     94
+    ]
+   ],
+   "pos": "center"
+  },
+  {
+   "at": 0.68,
+   "dur": 1.63,
+   "type": "kinetic",
+   "top": "STAY",
+   "big": "PRIVATE"
+  },
+  {
+   "at": 0.696,
+   "dur": 2.6,
+   "type": "checklist",
+   "items": [
+    "Scan Wi-Fi",
+    "Lights off",
+    "Check vents",
+    "Unplug unknowns"
+   ],
+   "pos": "center"
+  },
+  {
+   "at": 0.749,
+   "dur": 2.18,
+   "type": "ticker",
+   "to": 60,
+   "suffix": "s",
+   "label": "FULL SWEEP",
+   "pos": "lower"
+  },
+  {
+   "at": 0.798,
+   "dur": 1.88,
+   "type": "stat_count",
+   "to": 94,
+   "suffix": "%",
+   "label": "DETECTION",
+   "pos": "center"
+  }
+ ],
+ "cta": {
+  "text": "Get it now — comment PRIVACY and I'll send the link. Link in bio.",
+  "code": "PRIVACY"
+ },
+ "caption": "Lights off, camera up. A hidden lens glows in infrared. Pan across vents, mirrors and smoke detectors to catch the glint. Comment PRIVACY for the app. #privacy #airbnb #travelsafety #hiddencamera #traveltips #hotelroom #safetytips #camera #most #spy #find 👉 Comment PRIVACY for the link — link in bio.",
+ "yt_title": "Spot a hidden camera lens in the dark #shorts",
+ "trend_keys": [
+  "camera",
+  "most",
+  "spy",
+  "find",
+  "cameras",
+  "moments",
+  "former",
+  "hidden"
+ ],
+ "content_type": "sales"
+}
