@@ -29,7 +29,7 @@
  "segments": [
   {
    "id": "b1",
-   "text": "Big change starts with one tiny daily rep."
+   "text": "Stop scrolling. Big change starts with one tiny daily rep."
   },
   {
    "id": "b2",
@@ -219,7 +219,7 @@
   "code": "FOCUS"
  },
  "caption": "One tiny daily rep compounds: faster reactions by day five, sharper recall by day ten, a streak that keeps you going. Fourteen days to a quicker mind. Comment FOCUS for the app. #brainhealth #memory #focus #productivity #selfimprovement #mentalhealth #learning #memorize #mental #age #test",
- "yt_title": "Get measurably smarter in 14 days #shorts",
+ "yt_title": "7 Brain Exercises to Sharpen Your #shorts",
  "trend_keys": [
   "memorize",
   "mental",
@@ -230,5 +230,18 @@
   "memory",
   "focus"
  ],
- "content_type": "viral"
+ "content_type": "viral",
+ "comp_angle": {
+  "title": "7 Brain Exercises to Sharpen Your Mind",
+  "views": 4008933,
+  "channel": "Curiosity Code"
+ },
+ "virality": {
+  "score": 90,
+  "notes": [
+   "angle<-4008k",
+   "hook_boosted"
+  ],
+  "hook": "Stop scrolling. Big change starts with one tiny daily rep."
+ }
 }

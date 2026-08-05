@@ -1,0 +1,249 @@
+{
+ "id": "gbrain_074",
+ "app": "brain",
+ "voice": "en-US-BrianNeural",
+ "rate": "+5%",
+ "grade": "teal_orange",
+ "brand": {
+  "accent": "#9B5DE5",
+  "accent2": "#C9A7FF",
+  "code": "FOCUS",
+  "logo": "brain.png",
+  "name": "BRAINOVA"
+ },
+ "music": {
+  "queries": [
+   "epic inspiring rise",
+   "warm inspiring piano electronic",
+   "bright optimistic electronic"
+  ]
+ },
+ "cover": {
+  "kicker": "60-SECOND TEST",
+  "top": "WHY YOU FORGET",
+  "big": "EVERY\nNAME",
+  "q": [
+   "man reading book focused"
+  ]
+ },
+ "segments": [
+  {
+   "id": "b1",
+   "text": "You just met them and the name is already gone."
+  },
+  {
+   "id": "b2",
+   "text": "It is not age. It is attention and encoding."
+  },
+  {
+   "id": "b3",
+   "text": "A quick daily test shows your memory score."
+  },
+  {
+   "id": "b4",
+   "text": "Simple games train recall in five minutes."
+  },
+  {
+   "id": "b5",
+   "text": "Watch the number climb week after week."
+  },
+  {
+   "id": "b6",
+   "text": "See your brain age in sixty seconds."
+  }
+ ],
+ "shots": [
+  {
+   "q": [
+    "coffee cup morning desk"
+   ],
+   "insert": "phone",
+   "pos": "center"
+  },
+  {
+   "q": [
+    "puzzle pieces hands table"
+   ],
+   "motion": "zin"
+  },
+  {
+   "q": [
+    "group people names introduction"
+   ],
+   "insert": "rrect",
+   "pos": "center"
+  },
+  {
+   "q": [
+    "person sleeping rest night"
+   ],
+   "motion": "zout"
+  },
+  {
+   "q": [
+    "chess board close up thinking"
+   ],
+   "insert": "arch",
+   "pos": "upper"
+  },
+  {
+   "q": [
+    "person doing crossword puzzle"
+   ],
+   "motion": "pandown"
+  },
+  {
+   "q": [
+    "person forgetting keys frustrated"
+   ],
+   "insert": "circle",
+   "pos": "lower"
+  },
+  {
+   "q": [
+    "neurons synapse animation blue"
+   ],
+   "motion": "panr"
+  },
+  {
+   "q": [
+    "smartphone brain game screen"
+   ],
+   "insert": "tv",
+   "pos": "center"
+  },
+  {
+   "q": [
+    "man reading book focused"
+   ],
+   "motion": "panl"
+  },
+  {
+   "q": [
+    "focused eyes close up concentration"
+   ],
+   "insert": "tilt",
+   "pos": "center"
+  },
+  {
+   "q": [
+    "yoga breathing calm room"
+   ],
+   "motion": "panup"
+  },
+  {
+   "q": [
+    "sticky notes wall reminders"
+   ],
+   "insert": "diamond",
+   "pos": "center"
+  }
+ ],
+ "overlays": [
+  {
+   "at": 0.088,
+   "dur": 1.66,
+   "type": "kicker",
+   "text": "FOCUS FIX"
+  },
+  {
+   "at": 0.166,
+   "dur": 2.32,
+   "type": "chips",
+   "items": [
+    "DAY 1",
+    "DAY 5",
+    "DAY 10",
+    "DAY 14"
+   ],
+   "pos": "upper"
+  },
+  {
+   "at": 0.244,
+   "dur": 2.25,
+   "type": "gauge",
+   "to": 14,
+   "max": 30,
+   "suffix": "d",
+   "label": "TO SHARPER RECALL",
+   "pos": "center"
+  },
+  {
+   "at": 0.41,
+   "dur": 1.7,
+   "type": "lowerthird",
+   "title": "SHORT HARD PUZZLES",
+   "sub": "reset your attention"
+  },
+  {
+   "at": 0.419,
+   "dur": 2.6,
+   "type": "checklist",
+   "items": [
+    "Hear it",
+    "Picture it",
+    "Repeat it",
+    "Recall it"
+   ],
+   "pos": "center"
+  },
+  {
+   "at": 0.457,
+   "dur": 2.25,
+   "type": "ticker",
+   "to": 14,
+   "suffix": "d",
+   "label": "STREAK",
+   "pos": "lower"
+  },
+  {
+   "at": 0.531,
+   "dur": 1.68,
+   "type": "bars",
+   "title": "RECALL SPEED",
+   "unit": "%",
+   "items": [
+    [
+     "Week 1",
+     100
+    ],
+    [
+     "Week 3",
+     147
+    ]
+   ],
+   "pos": "center"
+  },
+  {
+   "at": 0.536,
+   "dur": 2.26,
+   "type": "kinetic",
+   "top": "TRAIN",
+   "big": "DAILY"
+  },
+  {
+   "at": 0.652,
+   "dur": 1.72,
+   "type": "callout",
+   "text": "FOCUS IS A MUSCLE",
+   "pos": "center"
+  }
+ ],
+ "cta": {
+  "text": "Get it now — comment FOCUS and I'll send the link. Link in bio.",
+  "code": "FOCUS"
+ },
+ "caption": "Forgetting names isn't age — it's encoding. A 60-second test shows your memory score, and five-minute games train recall. Watch the number climb. Comment FOCUS for the app. #brainhealth #memory #focus #productivity #selfimprovement #mentalhealth #learning #huberman #studying #brain #memory 👉 Comment FOCUS for the link — link in bio.",
+ "yt_title": "Why you forget every name #shorts",
+ "trend_keys": [
+  "huberman",
+  "studying",
+  "brain",
+  "memory",
+  "power",
+  "focus",
+  "music",
+  "improve"
+ ],
+ "content_type": "sales"
+}

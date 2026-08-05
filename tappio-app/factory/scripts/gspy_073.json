@@ -30,11 +30,11 @@
  "segments": [
   {
    "id": "b1",
-   "text": "Checked into a rental? A hidden lens could be watching."
+   "text": "Stop scrolling. Checked into a rental? A hidden lens could be watching."
   },
   {
    "id": "b2",
-   "text": "Most spy cams need Wi-Fi. That is their weak spot."
+   "text": "Most spy cams need Wi-Fi. that's their weak spot."
   },
   {
    "id": "b3",
@@ -217,7 +217,7 @@
   "code": "PRIVACY"
  },
  "caption": "Checked into a rental? Hidden cams live on the Wi-Fi. Scan the network, flag every unknown device, then sweep for the IR glint. Comment PRIVACY for the app. #privacy #airbnb #travelsafety #hiddencamera #traveltips #hotelroom #safetytips #airbnb #hidden #spy #cameras",
- "yt_title": "Find hidden cameras with a Wi-Fi scan #shorts",
+ "yt_title": "Former CIA Simple Technique to Find #shorts",
  "trend_keys": [
   "airbnb",
   "hidden",
@@ -228,5 +228,18 @@
   "find",
   "camera"
  ],
- "content_type": "viral"
+ "content_type": "viral",
+ "comp_angle": {
+  "title": "Former CIA: Simple Technique to Find Hidden Cameras in an Airbnb",
+  "views": 1744369,
+  "channel": "Jason Hanson"
+ },
+ "virality": {
+  "score": 90,
+  "notes": [
+   "angle<-1744k",
+   "hook_boosted"
+  ],
+  "hook": "Stop scrolling. Checked into a rental? A hidden lens could be watching."
+ }
 }
