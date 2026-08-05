@@ -29,11 +29,11 @@
  "segments": [
   {
    "id": "b1",
-   "text": "You just met them and the name is already gone."
+   "text": "Stop scrolling. You just met them and the name is already gone."
   },
   {
    "id": "b2",
-   "text": "It is not age. It is attention and encoding."
+   "text": "it's not age. it's attention and encoding."
   },
   {
    "id": "b3",
@@ -234,7 +234,7 @@
   "code": "FOCUS"
  },
  "caption": "Forgetting names isn't age — it's encoding. A 60-second test shows your memory score, and five-minute games train recall. Watch the number climb. Comment FOCUS for the app. #brainhealth #memory #focus #productivity #selfimprovement #mentalhealth #learning #huberman #studying #brain #memory 👉 Comment FOCUS for the link — link in bio.",
- "yt_title": "Why you forget every name #shorts",
+ "yt_title": "How to Remember Everything You Read #shorts",
  "trend_keys": [
   "huberman",
   "studying",
@@ -245,5 +245,18 @@
   "music",
   "improve"
  ],
- "content_type": "sales"
+ "content_type": "sales",
+ "comp_angle": {
+  "title": "How to Remember Everything You Read (The Ultimate Memory Hack!)",
+  "views": 1327953,
+  "channel": "The Peak Circuit"
+ },
+ "virality": {
+  "score": 91,
+  "notes": [
+   "angle<-1327k",
+   "hook_boosted"
+  ],
+  "hook": "Stop scrolling. You just met them and the name is already gone."
+ }
 }

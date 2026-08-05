@@ -30,7 +30,7 @@
  "segments": [
   {
    "id": "b1",
-   "text": "Turn off the lights. Raise your phone camera."
+   "text": "Stop scrolling. Turn off the lights. Raise your phone camera."
   },
   {
    "id": "b2",
@@ -218,7 +218,7 @@
   "code": "PRIVACY"
  },
  "caption": "USEFUL: Lights off, camera up. A hidden lens glows in infrared. Pan across vents, mirrors and smoke detectors to catch the glint. Comment PRIVACY for the app. #privacy #airbnb #travelsafety #hiddencamera #traveltips #hotelroom #safetytips #airbnb #bathroom #cops #hidden",
- "yt_title": "Spot a hidden camera lens in the dark #shorts",
+ "yt_title": "How to Find Hidden Spy Cameras #shorts",
  "trend_keys": [
   "airbnb",
   "bathroom",
@@ -229,5 +229,18 @@
   "phone",
   "find"
  ],
- "content_type": "useful"
+ "content_type": "useful",
+ "comp_angle": {
+  "title": "How to Find Hidden Spy Cameras and Audio Bugs (The Professional Way)",
+  "views": 1374100,
+  "channel": "Sentel Tech"
+ },
+ "virality": {
+  "score": 90,
+  "notes": [
+   "angle<-1374k",
+   "hook_boosted"
+  ],
+  "hook": "Stop scrolling. Turn off the lights. Raise your phone camera."
+ }
 }

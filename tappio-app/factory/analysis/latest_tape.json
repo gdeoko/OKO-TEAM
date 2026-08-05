@@ -5,16 +5,6 @@
  "code": "MEASURE",
  "top": [
   {
-   "views": 46658642,
-   "likes": 282484,
-   "comments": 3900,
-   "channel": "The Maker",
-   "followers": 1200000,
-   "dur": 191,
-   "id": "R1sQLwLi96c",
-   "title": "Few People Know About This Tape Measure Feature! Hidden Features of Tape Measure"
-  },
-  {
    "views": 1541193,
    "likes": 32088,
    "comments": 807,
@@ -23,6 +13,16 @@
    "dur": 403,
    "id": "TOve6oVPKVw",
    "title": "5 Quick Measuring Hacks - Woodworking Tips and Tricks"
+  },
+  {
+   "views": 1058813,
+   "likes": 23822,
+   "comments": 1500,
+   "channel": "Stumpy Nubs (James Hamilton)",
+   "followers": 1040000,
+   "dur": 263,
+   "id": "PrchBGzC0bA",
+   "title": "How to read a tape measure without looking like an idiot"
   },
   {
    "views": 1014576,
@@ -35,88 +35,28 @@
    "title": "Air Measure App Demo - Augmented reality tape measure"
   },
   {
-   "views": 672768,
-   "likes": 2453,
-   "comments": 64,
-   "channel": "XFix",
-   "followers": 625000,
-   "dur": 77,
-   "id": "RRm50e0QyUE",
-   "title": "Measure App for Android better than iPhone"
+   "views": 46658655,
+   "likes": 282484,
+   "comments": 3900,
+   "channel": "The Maker",
+   "followers": 1200000,
+   "dur": 191,
+   "id": "R1sQLwLi96c",
+   "title": "Few People Know About This Tape Measure Feature! Hidden Features of Tape Measure"
   },
   {
-   "views": 292772,
-   "likes": 1202,
-   "comments": 62,
-   "channel": "DailyZeck",
-   "followers": 23000,
-   "dur": 75,
-   "id": "h8Tx-ykllK4",
-   "title": "How to Use The Measure App on iPhone"
-  },
-  {
-   "views": 198489,
-   "likes": 1193,
-   "comments": 98,
-   "channel": "Payette Forward",
-   "followers": 1810000,
-   "dur": 313,
-   "id": "RvhZ074Vs7c",
-   "title": "How Do I Use The iPhone Measure App? How Accurate Is It?"
-  },
-  {
-   "views": 193964,
-   "likes": 4425,
-   "comments": 78,
-   "channel": "Sketch Design Craft",
-   "followers": 39700,
-   "dur": 483,
-   "id": "K8BL_APoga0",
-   "title": "5 apps I use to DESIGN any space - Cabin Renovation - iPad for Architects"
-  },
-  {
-   "views": 121866,
-   "likes": 1579,
-   "comments": 28,
-   "channel": "Popular Woodworking",
-   "followers": 274000,
-   "dur": 156,
-   "id": "0-Oyg5TNi9s",
-   "title": "Accurate Measuring Tips | Tricks of the Trade"
-  },
-  {
-   "views": 108690,
-   "likes": 1402,
-   "comments": 41,
-   "channel": "Erinn Valencich",
-   "followers": 6510,
-   "dur": 702,
-   "id": "3bIRXou5l6E",
-   "title": "How to Measure Windows for Curtains"
-  },
-  {
-   "views": 91430,
-   "likes": 2252,
-   "comments": 51,
-   "channel": "Reynard Lowell",
-   "followers": 600000,
-   "dur": 774,
-   "id": "MaB34LzIEwE",
-   "title": "6 Easy Steps to Layout Any Room (& Mistakes To Avoid) - Space Planning 101"
+   "views": 2315460,
+   "likes": 470,
+   "comments": 13,
+   "channel": "GRYMALA",
+   "followers": 2010,
+   "dur": 42,
+   "id": "FmOfqcITb9k",
+   "title": "AR Plan 3D – Camera to Plan, Floorplanner"
   }
  ],
  "millions_list": [
   {
-   "views": 46658642,
-   "likes": 282484,
-   "comments": 3900,
-   "channel": "The Maker",
-   "followers": 1200000,
-   "dur": 191,
-   "id": "R1sQLwLi96c",
-   "title": "Few People Know About This Tape Measure Feature! Hidden Features of Tape Measure"
-  },
-  {
    "views": 1541193,
    "likes": 32088,
    "comments": 807,
@@ -127,6 +67,16 @@
    "title": "5 Quick Measuring Hacks - Woodworking Tips and Tricks"
   },
   {
+   "views": 1058813,
+   "likes": 23822,
+   "comments": 1500,
+   "channel": "Stumpy Nubs (James Hamilton)",
+   "followers": 1040000,
+   "dur": 263,
+   "id": "PrchBGzC0bA",
+   "title": "How to read a tape measure without looking like an idiot"
+  },
+  {
    "views": 1014576,
    "likes": 2280,
    "comments": 219,
@@ -135,23 +85,43 @@
    "dur": 45,
    "id": "z7DYC_zbZCM",
    "title": "Air Measure App Demo - Augmented reality tape measure"
+  },
+  {
+   "views": 46658655,
+   "likes": 282484,
+   "comments": 3900,
+   "channel": "The Maker",
+   "followers": 1200000,
+   "dur": 191,
+   "id": "R1sQLwLi96c",
+   "title": "Few People Know About This Tape Measure Feature! Hidden Features of Tape Measure"
+  },
+  {
+   "views": 2315460,
+   "likes": 470,
+   "comments": 13,
+   "channel": "GRYMALA",
+   "followers": 2010,
+   "dur": 42,
+   "id": "FmOfqcITb9k",
+   "title": "AR Plan 3D – Camera to Plan, Floorplanner"
   }
  ],
- "millions": 3,
+ "millions": 5,
  "hooks": [
   "measure",
-  "app",
   "tape",
-  "iphone",
-  "use",
+  "plan",
+  "quick",
   "measuring",
+  "hacks",
+  "woodworking",
   "tips",
   "tricks",
-  "accurate",
-  "any",
-  "space",
-  "few"
+  "read",
+  "without",
+  "looking"
  ],
- "ts": "2026-08-05 04:22 UTC",
- "avg_views": 5089439
+ "ts": "2026-08-05 04:36 UTC",
+ "avg_views": 10517739
 }

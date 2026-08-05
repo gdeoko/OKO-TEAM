@@ -30,7 +30,7 @@
  "segments": [
   {
    "id": "b1",
-   "text": "A rug, a TV, a shelf. Will it fit? Stop guessing."
+   "text": "Stop scrolling. A rug, a TV, a shelf. Will it fit? Stop guessing."
   },
   {
    "id": "b2",
@@ -229,7 +229,7 @@
   "code": "MEASURE"
  },
  "caption": "A rug, a TV, a shelf — will it fit? Point your phone, tap two points, and the length appears on the floor. Width, height, area — no tape, no helper. Comment MEASURE for the app. #diy #homedecor #interiordesign #measure #movingtips #renter #apartmenttherapy #tricks #design #app #tape",
- "yt_title": "Measure any room without a tape #shorts",
+ "yt_title": "Few People Know About This Tape #shorts",
  "trend_keys": [
   "tricks",
   "design",
@@ -240,5 +240,18 @@
   "iphone",
   "measuring"
  ],
- "content_type": "viral"
+ "content_type": "viral",
+ "comp_angle": {
+  "title": "Few People Know About This Tape Measure Feature! Hidden Features of Tape Measure",
+  "views": 46658655,
+  "channel": "The Maker"
+ },
+ "virality": {
+  "score": 90,
+  "notes": [
+   "angle<-46658k",
+   "hook_boosted"
+  ],
+  "hook": "Stop scrolling. A rug, a TV, a shelf. Will it fit? Stop guessing."
+ }
 }
