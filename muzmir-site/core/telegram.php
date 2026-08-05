@@ -11,13 +11,26 @@
 declare(strict_types=1);
 
 /** Низкоуровневый вызов метода Bot API через cURL. Тихий фолбэк. */
-function tg_api(string $method, array $params = []): array {
+function tg_api(string $method, array $params = [], bool $multipart = false): array {
     $token = (string) cfgv('tg_bot_token', '');
     if ($token === '') {
         return ['ok' => false, 'error' => 'no_token', 'description' => 'tg_bot_token is empty'];
     }
     $url = "https://api.telegram.org/bot{$token}/{$method}";
     $ch = curl_init($url);
+    // Multipart (загрузка файла CURLFile) — без json_encode и без JSON-заголовка.
+    if ($multipart) {
+        foreach ($params as $k => $v) {
+            if (is_array($v)) $params[$k] = json_encode($v, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
+        }
+        curl_setopt_array($ch, [
+            CURLOPT_RETURNTRANSFER => true,
+            CURLOPT_POST           => true,
+            CURLOPT_POSTFIELDS     => $params,   // CURLFile → multipart автоматически
+            CURLOPT_TIMEOUT        => 60,
+            CURLOPT_CONNECTTIMEOUT => 8,
+        ]);
+    } else
     curl_setopt_array($ch, [
         CURLOPT_RETURNTRANSFER => true,
         CURLOPT_POST           => true,
@@ -75,6 +88,23 @@ function tg_send_photo(string $chatId, string $photo, array $opt = []): array {
         $params['reply_markup'] = ['inline_keyboard' => $opt['keyboard']];
     }
     return tg_api('sendPhoto', $params);
+}
+
+/** sendDocument. $file — локальный путь ИЛИ URL/file_id. $opt: caption, keyboard. */
+function tg_send_document(string $chatId, string $file, array $opt = []): array {
+    if ($chatId === '' || $file === '') return ['ok' => false, 'error' => 'no_args'];
+    $params = ['chat_id' => $chatId];
+    if (!empty($opt['caption'])) {
+        $params['caption'] = $opt['caption'];
+        $params['parse_mode'] = $opt['parse_mode'] ?? 'HTML';
+    }
+    // Локальный файл — грузим multipart; URL/file_id — строкой.
+    if (is_file($file)) {
+        $params['document'] = new \CURLFile($file, 'application/pdf', basename($file));
+        return tg_api('sendDocument', $params, true);   // multipart
+    }
+    $params['document'] = $file;
+    return tg_api('sendDocument', $params);
 }
 
 /** Уведомление администратора (cfgv('tg_admin_chat')). Тихо. */

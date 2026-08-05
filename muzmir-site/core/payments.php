@@ -106,6 +106,14 @@ function payment_apply_status(string $paymentId, string $status, array $obj = []
     }
     if ($orderId) {
         update('awards_orders', ['status' => 'paid'], 'id=:id', ['id' => (int) $orderId]);
+        // ОРИГИНАЛЫ: сразу (не ждём) собираем производственный пакет — чистые дипломы
+        // (без подписи/печати, с номером+QR) + состав/адрес → в Telegram-ветку и в админку.
+        if (is_file(__DIR__ . '/orders.php')) {
+            require_once __DIR__ . '/orders.php';
+            if (function_exists('order_dispatch_production')) {
+                try { order_dispatch_production((int) $orderId); } catch (\Throwable $e) { error_log('order_dispatch_production: ' . $e->getMessage()); }
+            }
+        }
         if ($email === '') {
             $ord = one("SELECT * FROM awards_orders WHERE id=?", [(int) $orderId]);
             if ($ord) { $email = (string) ($ord['email'] ?? ''); $name = (string) ($ord['full_name'] ?? ''); }

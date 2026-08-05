@@ -46,6 +46,8 @@ function admin_icon(string $name): string {
         'money'        => '<line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/>',
         'clock'        => '<circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/>',
         'chart'        => '<path d="M18 20V10M12 20V4M6 20v-6"/>',
+        'trophy'       => '<path d="M8 21h8M12 17v4M7 4h10v5a5 5 0 0 1-10 0V4zM17 5h3v2a3 3 0 0 1-3 3M7 5H4v2a3 3 0 0 0 3 3"/>',
+        'truck'        => '<path d="M1 3h15v13H1zM16 8h4l3 3v5h-7M5.5 21a2 2 0 1 0 0-4 2 2 0 0 0 0 4zM18.5 21a2 2 0 1 0 0-4 2 2 0 0 0 0 4z"/>',
     ];
     $body = $p[$name] ?? $p['dashboard'];
     return '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' . $body . '</svg>';
@@ -59,6 +61,7 @@ function admin_modules(): array {
         'applications' => ['Заявки',       'jury',      'applications'],
         'grading'      => ['Оценивание',   'jury',      'grading'],
         'diplomas'     => ['Дипломы',      'moderator', 'diplomas'],
+        'orders'       => ['Заказы оригиналов', 'moderator', 'trophy'],
         'newsletter'   => ['Рассылки',     'moderator', 'newsletter'],
         'diploma_editor' => ['Шаблон диплома', 'moderator', 'edit'],
         'analytics'    => ['Аналитика',    'moderator', 'chart'],
