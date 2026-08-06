@@ -8,15 +8,46 @@
  */
 declare(strict_types=1);
 require_once BASE_PATH . '/core/jury.php';
+require_once BASE_PATH . '/core/link_check.php';
 jury_ensure_schema();
 
-/** Пытается собрать embed-URL для видео. Иначе null (покажем кнопку «Открыть»). */
-function grading_embed(string $url): ?string {
-    if (preg_match('#rutube\.ru/(?:video|shorts|play/embed)/([a-z0-9]+)#i', $url, $m)) return 'https://rutube.ru/play/embed/' . $m[1];
-    if (preg_match('#drive\.google\.com/file/d/([^/]+)#', $url, $m)) return 'https://drive.google.com/file/d/' . $m[1] . '/preview';
-    if (preg_match('#vkvideo\.ru/video(-?\d+_\d+)#', $url, $m) || preg_match('#vk\.com/video(-?\d+_\d+)#', $url, $m)) {
+/** Прямая ссылка на файл Яндекс.Диска (для HTML5-плеера). null при ошибке. */
+function _yadisk_direct(string $url): ?string {
+    try {
+        $j = _lc_http_json('https://cloud-api.yandex.net/v1/disk/public/resources/download?public_key=' . rawurlencode($url));
+        $href = is_array($j) ? (string)($j['href'] ?? '') : '';
+        return $href !== '' ? $href : null;
+    } catch (\Throwable $e) { return null; }
+}
+
+/**
+ * Пытается собрать превью видео для карточки оценки на ВСЕХ разрешённых площадках.
+ * Возвращает ['type'=>'iframe'|'video','src'=>...] либо null (покажем кнопку «Открыть»).
+ */
+function grading_embed(string $url): ?array {
+    $url = trim($url);
+    // RuTube
+    if (preg_match('#rutube\.ru/(?:video|shorts|play/embed)/([a-z0-9]+)#i', $url, $m))
+        return ['type'=>'iframe','src'=>'https://rutube.ru/play/embed/' . $m[1]];
+    // Google Диск (file/d/… или ?id=…)
+    if (preg_match('#drive\.google\.com/file/d/([a-zA-Z0-9_-]{10,})#', $url, $m)
+        || preg_match('#[?&]id=([a-zA-Z0-9_-]{10,})#', $url, $m))
+        return ['type'=>'iframe','src'=>'https://drive.google.com/file/d/' . $m[1] . '/preview'];
+    // VK Видео
+    if (preg_match('#(?:vkvideo\.ru|vk\.com)/video(-?\d+_\d+)#', $url, $m)) {
         [$oid, $vid] = explode('_', $m[1]);
-        return 'https://vk.com/video_ext.php?oid=' . $oid . '&id=' . $vid;
+        return ['type'=>'iframe','src'=>'https://vk.com/video_ext.php?oid=' . $oid . '&id=' . $vid];
+    }
+    // ОК Видео
+    if (preg_match('#ok\.ru/(?:video|videoembed|live)/(\d+)#i', $url, $m))
+        return ['type'=>'iframe','src'=>'https://ok.ru/videoembed/' . $m[1]];
+    // Дзен Видео
+    if (preg_match('#dzen\.ru/(?:video/watch/|embed/|video/)([a-z0-9]+)#i', $url, $m))
+        return ['type'=>'iframe','src'=>'https://dzen.ru/embed/' . $m[1]];
+    // Яндекс.Диск — тянем прямую ссылку и играем HTML5-плеером
+    if (preg_match('#(?:disk\.yandex|yadi\.sk)#i', $url)) {
+        $href = _yadisk_direct($url);
+        if ($href) return ['type'=>'video','src'=>$href];
     }
     return null;
 }
@@ -144,90 +175,44 @@ function grading_next_id(array $cur, int $comp, string $order): ?int {
 
 /* ---------------- Проверка ссылки на конкурсное видео (с кэшем) ---------------- */
 
-/** HTTP GET -> JSON (короткие таймауты, тихо null при любой ошибке). */
-function _lc_http_json(string $url): ?array {
-    if (!function_exists('curl_init')) return null;
-    try {
-        $ch = curl_init($url);
-        curl_setopt_array($ch, [CURLOPT_RETURNTRANSFER => true, CURLOPT_FOLLOWLOCATION => true,
-            CURLOPT_MAXREDIRS => 4, CURLOPT_CONNECTTIMEOUT => 4, CURLOPT_TIMEOUT => 7,
-            CURLOPT_USERAGENT => 'Mozilla/5.0 (MuzMirLinkCheck)']);
-        $body = curl_exec($ch);
-        curl_close($ch);
-        if (!is_string($body) || $body === '') return null;
-        $j = json_decode($body, true);
-        return is_array($j) ? $j : null;
-    } catch (\Throwable $e) { return null; }
-}
-
 /**
- * Проверка ссылки по 3 пунктам: платформа / доступность / дата публикации не старше 1 года.
- * true|false|null (null = «не проверено / проверьте вручную» — сеть с VPS может врать, не блокируем).
- * Кэш — applications.link_check (JSON).
+ * Проверка ссылки: платформа / доступность (существует и открыто) / дата не старше года.
+ * Работает через единый video_verify() (core/link_check.php) — тот же движок, что и при
+ * подаче заявки, поэтому «Ссылка НЕ отвечает» больше не показывается ложно для площадок,
+ * которые не отвечают на HEAD. Кэш — applications.link_check (JSON).
+ * reachable: true — открыто; false — реально не найдено/закрыто; null — вопрос неприменим.
  */
 function grading_link_check(array $a, bool $force = false): array {
     $empty = ['platform' => null, 'platform_label' => '', 'reachable' => null,
-              'fresh' => null, 'published' => '', 'checked_at' => ''];
+              'fresh' => null, 'published' => '', 'checked_at' => '', 'reason' => ''];
     $url = trim((string)($a['video_url'] ?? ''));
     if ($url === '') return $empty;
     if (!$force && !empty($a['link_check'])) {
         $c = json_decode((string)$a['link_check'], true);
         if (is_array($c) && !empty($c['checked_at'])) return $c + $empty;
     }
+    if (!function_exists('video_verify')) require_once BASE_PATH . '/core/link_check.php';
+    $v = video_verify($url);
+
     $res = $empty;
-    $res['checked_at'] = date('Y-m-d H:i:s');
+    $res['checked_at']     = date('Y-m-d H:i:s');
+    $res['reason']         = (string)($v['reason'] ?? '');
+    $label                 = (string)($v['platform'] ?? '');
+    $res['platform_label'] = $label;
+    $res['platform']       = ($label !== '');   // площадка распознана среди разрешённых
 
-    // 1) Платформа (справочники core/data.php).
-    $host = mb_strtolower((string)(parse_url($url, PHP_URL_HOST) ?: ''));
-    foreach (BLOCKED_PLATFORMS() as $b) {
-        if ($host !== '' && str_contains($host, $b)) { $res['platform'] = false; $res['platform_label'] = $b; break; }
-    }
-    if ($res['platform'] === null) {
-        foreach (ALLOWED_PLATFORMS() as $dom => $label) {
-            if (str_contains($host, $dom) || str_contains($url, $dom)) { $res['platform'] = true; $res['platform_label'] = $label; break; }
-        }
-    }
-    if ($res['platform'] === null) $res['platform'] = false;
+    $ts = $v['ts'] ?? null;
+    if ($ts) $res['published'] = date('d.m.Y', (int)$ts);
 
-    // 2) Доступность (HEAD; при сетевой ошибке — «не проверено», не блокируем).
-    if (function_exists('curl_init')) {
-        try {
-            $ch = curl_init($url);
-            curl_setopt_array($ch, [CURLOPT_NOBODY => true, CURLOPT_RETURNTRANSFER => true,
-                CURLOPT_FOLLOWLOCATION => true, CURLOPT_MAXREDIRS => 4,
-                CURLOPT_CONNECTTIMEOUT => 4, CURLOPT_TIMEOUT => 7,
-                CURLOPT_USERAGENT => 'Mozilla/5.0 (MuzMirLinkCheck)']);
-            curl_exec($ch);
-            $code = (int) curl_getinfo($ch, CURLINFO_RESPONSE_CODE);
-            $errno = curl_errno($ch);
-            curl_close($ch);
-            if ($errno) $res['reachable'] = null;
-            elseif (in_array($code, [403, 405, 429], true)) $res['reachable'] = null; // HEAD не разрешён — не проверено
-            elseif ($code >= 200 && $code < 400) $res['reachable'] = true;
-            else $res['reachable'] = false;
-        } catch (\Throwable $e) { $res['reachable'] = null; }
-    }
+    $stale = $v['stale'] ?? null;
+    if ($stale === true)       $res['fresh'] = false;
+    elseif ($stale === false)  $res['fresh'] = true;
+    else                       $res['fresh'] = null; // дату определить не удалось — вручную
 
-    // 3) Дата публикации: RuTube API / VK video.get (иначе — «проверьте вручную»).
-    $ts = null;
-    try {
-        if (preg_match('#rutube\.ru/(?:video|shorts|play/embed)/([a-z0-9]+)#i', $url, $m)) {
-            $j = _lc_http_json('https://rutube.ru/api/video/' . $m[1] . '/');
-            if ($j && !empty($j['created_ts'])) $ts = strtotime((string)$j['created_ts']) ?: null;
-        } elseif (preg_match('#(?:vk\.com|vkvideo\.ru)/video(-?\d+_\d+)#', $url, $m)) {
-            $tok = (string) cfgv('vk_token', '');
-            if ($tok !== '') {
-                $j = _lc_http_json('https://api.vk.com/method/video.get?videos=' . $m[1]
-                    . '&access_token=' . rawurlencode($tok) . '&v=5.199');
-                $item = $j['response']['items'][0] ?? null;
-                if ($item && !empty($item['date'])) $ts = (int)$item['date'];
-            }
-        }
-    } catch (\Throwable $e) { $ts = null; }
-    if ($ts) {
-        $res['published'] = date('d.m.Y', $ts);
-        $res['fresh'] = $ts >= strtotime('-1 year');
-    }
+    if (!empty($v['ok']))          $res['reachable'] = true;   // открыто и доступно
+    elseif ($stale === true)       $res['reachable'] = true;   // ссылка рабочая, просто старше года
+    elseif ($label === '')         $res['reachable'] = null;   // не наша площадка — доступность неприменима
+    else                           $res['reachable'] = false;  // реально не найдено/закрыто/приватно
 
     try { q("UPDATE applications SET link_check=? WHERE id=?", [json_encode($res, JSON_UNESCAPED_UNICODE), (int)$a['id']]); } catch (\Throwable $e) {}
     return $res;
@@ -561,8 +546,10 @@ if ($id = (int) input('id')) {
 
     <div class="grid grid-2">
       <div class="card card--pad0" style="padding:14px">
-        <?php if ($embed): ?>
-          <div class="video-frame"><iframe src="<?= h($embed) ?>" allowfullscreen allow="autoplay; encrypted-media"></iframe></div>
+        <?php if ($embed && ($embed['type'] ?? '') === 'video'): ?>
+          <div class="video-frame"><video src="<?= h($embed['src']) ?>" controls preload="metadata" style="width:100%;height:100%;background:#000"></video></div>
+        <?php elseif ($embed): ?>
+          <div class="video-frame"><iframe src="<?= h($embed['src']) ?>" allowfullscreen allow="autoplay; encrypted-media"></iframe></div>
         <?php elseif ($a['video_url']): ?>
           <div class="empty"><?= admin_icon('eye') ?><p>Это видео нельзя встроить напрямую.</p>
             <a class="btn btn--navy" href="<?= h($a['video_url']) ?>" target="_blank" rel="noopener">Открыть видео в новой вкладке</a></div>
