@@ -325,12 +325,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && input('do') === 'grade_result') {
     if ($appId && in_array($result, RESULT_PRESETS(), true)) {
         $cur = one("SELECT * FROM applications WHERE id=?", [$appId]);
         if (!$cur) { flash('Заявка не найдена.', 'error'); admin_redirect('grading'); }
-        // ЗАЩИТА ОТ БАГА: не оцениваем длинный конкурс здесь (моментальная отправка результата).
+        // Длинный конкурс (results_mode='list') оценивается той же карточкой, НО письмо-результат
+        // НЕ уходит моментально (ниже, стр. с $firstGrade) — итоги копятся в список и публикуются пакетом.
+        // После сохранения возвращаемся в раздел «Оценка длинных», а не в короткую очередь.
         $curMode = one("SELECT results_mode FROM competitions WHERE id=?", [(int) $cur['competition_id']]);
-        if ((string) ($curMode['results_mode'] ?? '') === 'list') {
-            flash('Это длинный конкурс — оценка в разделе «Оценка длинных».', 'error');
-            admin_redirect('longcomp', ['id' => $appId]);
-        }
+        $isLongComp = (string) ($curMode['results_mode'] ?? '') === 'list';
         // Балльная система убрана — итог задаётся только званием, без числового балла.
         $score = null;
         // Срок отправки диплома:
@@ -388,6 +387,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && input('do') === 'grade_result') {
         flash('Итог сохранён: ' . $result . ($score !== null ? ' · ' . number_format($score,1,'.','') : '')
             . ($extra !== '' ? ' · доп: ' . $extra : '')
             . ($override !== '' ? ' · отправка ' . date('d.m.Y H:i', strtotime($override)) : ' · отправка автоматически по сроку') . '.', 'success');
+        // Длинный конкурс — возвращаемся в его раздел (список аттестации/оценённых).
+        if (!empty($isLongComp)) {
+            admin_redirect('longcomp', ['competition' => (int) $cur['competition_id']]);
+        }
         $next = grading_next_id($cur, $comp, $order);
         if ($next) admin_redirect('grading', array_filter(['id'=>$next,'competition'=>$comp,'order'=>$order]));
         admin_redirect('grading', array_filter(['competition'=>$comp,'order'=>$order]));
@@ -443,12 +446,8 @@ if ($id = (int) input('id')) {
     $a = one("SELECT a.*, c.name comp, c.is_paid comp_paid, c.results_mode FROM applications a
               LEFT JOIN competitions c ON c.id=a.competition_id WHERE a.id=?", [$id]);
     if (!$a) { flash('Заявка не найдена.', 'error'); admin_redirect('grading'); }
-    // ЗАЩИТА ОТ БАГА: длинный конкурс (results_mode='list') нельзя оценивать здесь как короткий
-    // (иначе моментально уходит результат на почту). Такие заявки — только в «Оценка длинных».
-    if ((string) ($a['results_mode'] ?? '') === 'list') {
-        flash('Это длинный конкурс. Оценка — в разделе «Оценка длинных».', 'error');
-        admin_redirect('longcomp', ['id' => $id]);
-    }
+    // Длинный конкурс оценивается той же карточкой; результат не уходит моментально (копится в список).
+    $isLongView = (string) ($a['results_mode'] ?? '') === 'list';
     $jid = (int) (current_user()['id'] ?? 0);
     $my = one("SELECT * FROM jury_grades WHERE application_id=? AND jury_id=?", [$id, $jid]);
     $embed = $a['video_url'] ? grading_embed($a['video_url']) : null;
@@ -543,11 +542,16 @@ if ($id = (int) input('id')) {
     </style>
     <div class="jury-fast">
     <div class="jf-topbar">
-      <a class="btn btn--ghost btn--sm" href="<?= a_link('grading', array_filter(['competition'=>$comp,'order'=>$order])) ?>"><?= admin_icon('back') ?>К очереди</a>
-      <span class="small muted"><?= $pos ? 'Заявка ' . $pos . ' из ' . $total . ' в очереди' : 'Заявка вне очереди (редактирование итога)' ?></span>
-      <span class="sp"></span>
-      <?php if ($prevId): ?><a class="btn btn--ghost btn--sm" href="<?= $prevUrl ?>">← Назад</a><?php endif; ?>
-      <?php if ($nextId): ?><a class="btn btn--navy btn--sm" href="<?= $nextUrl ?>">Пропустить →</a><?php endif; ?>
+      <?php if (!empty($isLongView)): ?>
+        <a class="btn btn--ghost btn--sm" href="<?= a_link('longcomp', ['competition'=>(int)$a['competition_id']]) ?>"><?= admin_icon('back') ?>К списку длинного конкурса</a>
+        <span class="small muted">Длинный конкурс — результат сохранится в список (без моментальной отправки).</span>
+      <?php else: ?>
+        <a class="btn btn--ghost btn--sm" href="<?= a_link('grading', array_filter(['competition'=>$comp,'order'=>$order])) ?>"><?= admin_icon('back') ?>К очереди</a>
+        <span class="small muted"><?= $pos ? 'Заявка ' . $pos . ' из ' . $total . ' в очереди' : 'Заявка вне очереди (редактирование итога)' ?></span>
+        <span class="sp"></span>
+        <?php if ($prevId): ?><a class="btn btn--ghost btn--sm" href="<?= $prevUrl ?>">← Назад</a><?php endif; ?>
+        <?php if ($nextId): ?><a class="btn btn--navy btn--sm" href="<?= $nextUrl ?>">Пропустить →</a><?php endif; ?>
+      <?php endif; ?>
     </div>
 
     <div class="grid grid-2">
