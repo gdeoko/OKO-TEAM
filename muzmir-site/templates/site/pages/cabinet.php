@@ -778,8 +778,17 @@ ob_start(); ?>
                 <?php if (trim((string)($a['extra_diploma'] ?? '')) !== ''): ?>
                   <p class="cab-extra"><span>Дополнительный диплом:</span> <?= h($a['extra_diploma']) ?></p>
                 <?php endif; ?>
-                <?php if (trim((string)($a['jury_comment'] ?? '')) !== ''): ?>
-                  <p class="cab-jury">Комментарий жюри: «<?= h($a['jury_comment']) ?>»</p>
+                <?php // Комментарий и рекомендация жюри — ТОЛЬКО для участников ВИП-клуба.
+                  if ($isVip): ?>
+                  <?php if (trim((string)($a['jury_comment'] ?? '')) !== ''): ?>
+                    <p class="cab-jury">Комментарий жюри: «<?= h($a['jury_comment']) ?>»</p>
+                  <?php else: ?>
+                    <div style="margin-top:10px">
+                      <button type="button" class="btn btn--ghost btn--sm" data-jury-req="<?= (int)$a['id'] ?>">Запросить комментарий и рекомендацию жюри</button>
+                    </div>
+                  <?php endif; ?>
+                <?php elseif (trim((string)($a['jury_comment'] ?? '')) !== ''): ?>
+                  <p class="cab-meta" style="margin-top:8px;color:var(--gold-ink,#8B6F1F)">Комментарий и рекомендация жюри доступны участникам <a href="<?= url('/club') ?>">ВИП-клуба</a>.</p>
                 <?php endif; ?>
                 <?php if ($canOrder): ?>
                   <div style="display:flex;gap:10px;flex-wrap:wrap;margin-top:14px">
@@ -1393,6 +1402,16 @@ ob_start(); ?>
                 if(d&&d.ok&&d.deleted){var card=adel.closest('.cab-card');if(card)card.remove();}
                 else{adel.disabled=false;alert((d&&d.error)||'Не удалось удалить заявку.');}
               });return;}
+            // Запрос комментария и рекомендации жюри (только ВИП-клуб).
+            var jreq=e.target.closest('[data-jury-req]');
+            if(jreq){e.preventDefault();var jid=jreq.getAttribute('data-jury-req');jreq.disabled=true;jreq.textContent='Отправляем…';
+              var fd=new FormData();fd.append('application_id',jid);fd.append('_csrf',csrf());
+              fetch('<?= url('/api/v1/jury_request') ?>',{method:'POST',body:fd,headers:{'X-Requested-With':'fetch'},credentials:'same-origin'})
+                .then(function(r){return r.json().catch(function(){return{};});})
+                .then(function(d){
+                  if(d&&d.ok){jreq.textContent='Запрос отправлен';jreq.disabled=true;alert(d.message||'Запрос отправлен.');}
+                  else{jreq.disabled=false;jreq.textContent='Запросить комментарий и рекомендацию жюри';alert((d&&d.error)||'Не удалось отправить запрос.');}
+                });return;}
           });
         })();
         </script>
