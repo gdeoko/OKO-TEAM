@@ -188,8 +188,10 @@ ob_start(); ?>
 /* Афиша конкурса 16:9 (клик — на подачу заявки) или богатый фолбэк с монограммой и кодом */
 .comp-card .cc-cover{display:block;aspect-ratio:16/9;background:var(--grad-gold);position:relative;overflow:hidden;border-radius:0}
 .cc-actions{display:flex;gap:10px;margin-top:auto}
-.cc-actions .btn--primary{flex:1;justify-content:center}
-@media (max-width:420px){.cc-actions{flex-direction:column}}
+.cc-actions .btn{flex:1;justify-content:center;white-space:nowrap}
+/* На телефонах (в т.ч. крупных 430px) кнопки СТЕКОМ на всю ширину — иначе длинное
+   «Подать заявку» не влезает в половину карточки и ломается по буквам вертикально. */
+@media (max-width:600px){.cc-actions{flex-direction:column}.cc-actions .btn{width:100%}}
 .comp-card .cc-cover .cc-img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;object-position:center;z-index:2;display:block}
 .cc-scrim{position:absolute;inset:0;z-index:3;pointer-events:none;
   background:linear-gradient(180deg,rgba(18,12,2,.42) 0,rgba(18,12,2,0) 26%,rgba(18,12,2,0) 60%,rgba(18,12,2,.34) 100%)}

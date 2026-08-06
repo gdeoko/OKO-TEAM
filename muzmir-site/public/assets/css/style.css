@@ -530,8 +530,14 @@ body>.header,body>main,body>.footer,body>.topbar{position:relative;z-index:1}
 /* .appnav НЕ включаем — оно должно оставаться position:fixed (иначе съезжает в конец страницы) */
 
 /* ══════════════════════════════ REVEAL / КАСКАД ══════════════════════════════ */
-.js .reveal{opacity:0;transform:translateY(14px);transition:opacity .35s ease-out,transform .35s ease-out}
-.js .reveal.in{opacity:1;transform:none;transition-delay:calc(var(--i,0)*40ms)}
+/* Появление БЕЗ зависимости от JS/observer: чистая CSS-анимация на загрузке с
+   fill-mode:both — контент ГАРАНТИРОВАННО становится видимым (не остаётся пустым,
+   даже если IntersectionObserver не сработал), и НЕ мерцает при скролле (не
+   переигрывается). Раньше .reveal висел на opacity:0 до JS → на части страниц
+   контент пропадал и «моргал». */
+.js .reveal{animation:revealUp .5s ease-out both}
+@keyframes revealUp{from{opacity:0;transform:translateY(14px)}to{opacity:1;transform:none}}
+.js .reveal.in{opacity:1;transform:none}
 .cascade>*{animation:cascade .6s cubic-bezier(.2,.8,.2,1) backwards;animation-delay:calc(var(--i,0)*70ms)}
 
 /* ══════════════════════════════ ЧАТ ══════════════════════════════ */
