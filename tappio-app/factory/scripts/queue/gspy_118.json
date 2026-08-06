@@ -1,0 +1,233 @@
+{
+ "id": "gspy_118",
+ "app": "spy",
+ "voice": "en-US-AndrewNeural",
+ "rate": "+5%",
+ "grade": "clean_ad",
+ "brand": {
+  "accent": "#00D9FF",
+  "accent2": "#7CFCFF",
+  "code": "PRIVACY",
+  "logo": "spy.png",
+  "name": "SPY CAMERA FINDER"
+ },
+ "music": {
+  "queries": [
+   "clean corporate underscore",
+   "cyber suspense pulse",
+   "minimal techno tension"
+  ]
+ },
+ "cover": {
+  "kicker": "CHECKOUT LIST",
+  "top": "30-SECOND",
+  "big": "ROOM\nSWEEP",
+  "q": [
+   "person relaxing bed phone night"
+  ]
+ },
+ "segments": [
+  {
+   "id": "b1",
+   "text": "New room? Run this thirty-second sweep first."
+  },
+  {
+   "id": "b2",
+   "text": "One: scan the Wi-Fi for unknown devices."
+  },
+  {
+   "id": "b3",
+   "text": "Two: kill the lights and pan for lens glints."
+  },
+  {
+   "id": "b4",
+   "text": "Three: check anything aimed at the bed."
+  },
+  {
+   "id": "b5",
+   "text": "Four: unplug what you can't explain."
+  },
+  {
+   "id": "b6",
+   "text": "Do it once, then actually relax."
+  }
+ ],
+ "shots": [
+  {
+   "q": [
+    "dark bedroom lamp light"
+   ],
+   "insert": "circle",
+   "pos": "lower"
+  },
+  {
+   "q": [
+    "usb charger plug closeup"
+   ],
+   "motion": "zin"
+  },
+  {
+   "q": [
+    "mirror bathroom hotel"
+   ],
+   "insert": "diamond",
+   "pos": "upper"
+  },
+  {
+   "q": [
+    "security camera lens macro"
+   ],
+   "motion": "zout"
+  },
+  {
+   "q": [
+    "closet wardrobe hotel room"
+   ],
+   "insert": "rrect",
+   "pos": "upper"
+  },
+  {
+   "q": [
+    "curtains window hotel evening"
+   ],
+   "motion": "pandown"
+  },
+  {
+   "q": [
+    "phone flashlight scanning wall"
+   ],
+   "insert": "hexagon",
+   "pos": "upper"
+  },
+  {
+   "q": [
+    "hand holding smartphone dark"
+   ],
+   "motion": "panup"
+  },
+  {
+   "q": [
+    "traveler suitcase hotel hallway"
+   ],
+   "insert": "tilt",
+   "pos": "center"
+  },
+  {
+   "q": [
+    "desk lamp table hotel"
+   ],
+   "motion": "panr"
+  },
+  {
+   "q": [
+    "laptop screen code green"
+   ],
+   "insert": "arch",
+   "pos": "center"
+  },
+  {
+   "q": [
+    "surveillance concept eye lens"
+   ],
+   "motion": "panl"
+  },
+  {
+   "q": [
+    "hotel room modern interior"
+   ],
+   "insert": "phone",
+   "pos": "upper"
+  },
+  {
+   "q": [
+    "person entering hotel room luggage"
+   ],
+   "motion": "zin"
+  }
+ ],
+ "overlays": [
+  {
+   "at": 0.152,
+   "dur": 2.13,
+   "type": "kicker",
+   "text": "PRIVACY 101"
+  },
+  {
+   "at": 0.229,
+   "dur": 2.05,
+   "type": "lowerthird",
+   "title": "UNPLUG UNKNOWNS",
+   "sub": "30 seconds, total"
+  },
+  {
+   "at": 0.294,
+   "dur": 2.17,
+   "type": "ticker",
+   "to": 2,
+   "suffix": "",
+   "label": "SIGNALS CHECKED",
+   "pos": "lower"
+  },
+  {
+   "at": 0.43,
+   "dur": 1.76,
+   "type": "callout",
+   "text": "MOST CAMS NEED WI-FI",
+   "pos": "center"
+  },
+  {
+   "at": 0.445,
+   "dur": 2.08,
+   "type": "bars",
+   "title": "TIME TO SCAN",
+   "unit": "s",
+   "items": [
+    [
+     "Manual",
+     300
+    ],
+    [
+     "App",
+     30
+    ]
+   ],
+   "pos": "center"
+  },
+  {
+   "at": 0.558,
+   "dur": 1.61,
+   "type": "stat_count",
+   "to": 30,
+   "suffix": "s",
+   "label": "PER ROOM",
+   "pos": "center"
+  },
+  {
+   "at": 0.91,
+   "dur": 2.15,
+   "type": "gauge",
+   "to": 5,
+   "max": 10,
+   "suffix": "",
+   "label": "SPOTS TO CHECK",
+   "pos": "center"
+  }
+ ],
+ "cta": {
+  "text": "Comment PRIVACY for the app.",
+  "code": "PRIVACY"
+ },
+ "caption": "USEFUL: Every new room deserves a 30-second sweep: scan the Wi-Fi, kill the lights, pan for glints, check the bed sight-lines, unplug the unknowns. Comment PRIVACY for the app. #privacy #airbnb #travelsafety #hiddencamera #traveltips #hotelroom #safetytips #cameras #hotel #find #illegal",
+ "yt_title": "30-second hidden camera room sweep #shorts",
+ "trend_keys": [
+  "cameras",
+  "hotel",
+  "find",
+  "illegal",
+  "spy",
+  "hidden",
+  "most",
+  "camera"
+ ],
+ "content_type": "useful"
+}
