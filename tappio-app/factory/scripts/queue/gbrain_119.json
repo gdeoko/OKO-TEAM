@@ -1,0 +1,242 @@
+{
+ "id": "gbrain_119",
+ "app": "brain",
+ "voice": "en-US-BrianNeural",
+ "rate": "+6%",
+ "grade": "teal_orange",
+ "brand": {
+  "accent": "#9B5DE5",
+  "accent2": "#C9A7FF",
+  "code": "FOCUS",
+  "logo": "brain.png",
+  "name": "BRAINOVA"
+ },
+ "music": {
+  "queries": [
+   "uplifting confident",
+   "warm inspiring piano electronic",
+   "dreamy synth focus",
+   "calm motivational underscore"
+  ]
+ },
+ "cover": {
+  "kicker": "MEMORY HACK",
+  "top": "REMEMBER",
+  "big": "ANY NAME\nFOR GOOD",
+  "q": [
+   "sticky notes wall reminders"
+  ]
+ },
+ "segments": [
+  {
+   "id": "b1",
+   "text": "Hear the name, then say it back out loud."
+  },
+  {
+   "id": "b2",
+   "text": "Link it to a picture: Rose, a red rose."
+  },
+  {
+   "id": "b3",
+   "text": "Repeat it once after ten seconds."
+  },
+  {
+   "id": "b4",
+   "text": "That triple hit locks it into memory."
+  },
+  {
+   "id": "b5",
+   "text": "Train the habit with quick daily reps."
+  },
+  {
+   "id": "b6",
+   "text": "Never blank on a name again."
+  }
+ ],
+ "shots": [
+  {
+   "q": [
+    "puzzle pieces hands table"
+   ],
+   "insert": "tilt",
+   "pos": "center"
+  },
+  {
+   "q": [
+    "memory old photos hands"
+   ],
+   "motion": "panup"
+  },
+  {
+   "q": [
+    "sticky notes wall reminders"
+   ],
+   "insert": "circle",
+   "pos": "upper"
+  },
+  {
+   "q": [
+    "student studying desk lamp night"
+   ],
+   "motion": "pandown"
+  },
+  {
+   "q": [
+    "man reading book focused"
+   ],
+   "insert": "tv",
+   "pos": "lower"
+  },
+  {
+   "q": [
+    "light bulb idea dark"
+   ],
+   "motion": "panl"
+  },
+  {
+   "q": [
+    "yoga breathing calm room"
+   ],
+   "insert": "diamond",
+   "pos": "center"
+  },
+  {
+   "q": [
+    "chess board close up thinking"
+   ],
+   "motion": "zin"
+  },
+  {
+   "q": [
+    "woman meditating calm light"
+   ],
+   "insert": "rrect",
+   "pos": "lower"
+  },
+  {
+   "q": [
+    "elderly person smiling sharp mind"
+   ],
+   "motion": "zout"
+  },
+  {
+   "q": [
+    "person doing crossword puzzle"
+   ],
+   "insert": "hexagon",
+   "pos": "lower"
+  },
+  {
+   "q": [
+    "smartphone brain game screen"
+   ],
+   "motion": "panr"
+  },
+  {
+   "q": [
+    "glass of water healthy morning"
+   ],
+   "insert": "arch",
+   "pos": "upper"
+  },
+  {
+   "q": [
+    "runner morning sunrise energy"
+   ],
+   "motion": "panup"
+  },
+  {
+   "q": [
+    "focused eyes close up concentration"
+   ],
+   "insert": "phone",
+   "pos": "lower"
+  }
+ ],
+ "overlays": [
+  {
+   "at": 0.093,
+   "dur": 2.1,
+   "type": "kicker",
+   "text": "BRAIN AGE"
+  },
+  {
+   "at": 0.236,
+   "dur": 2.21,
+   "type": "gauge",
+   "to": 5,
+   "max": 10,
+   "suffix": "min",
+   "label": "PER DAY",
+   "pos": "center"
+  },
+  {
+   "at": 0.383,
+   "dur": 2.6,
+   "type": "checklist",
+   "items": [
+    "Take the test",
+    "Play 5 min",
+    "Beat your score",
+    "Keep the streak"
+   ],
+   "pos": "center"
+  },
+  {
+   "at": 0.45,
+   "dur": 2.33,
+   "type": "callout",
+   "text": "IT'S ENCODING, NOT AGE",
+   "pos": "center"
+  },
+  {
+   "at": 0.582,
+   "dur": 2.11,
+   "type": "lowerthird",
+   "title": "DAILY STREAK",
+   "sub": "compounds fast"
+  },
+  {
+   "at": 0.682,
+   "dur": 1.87,
+   "type": "stat_count",
+   "to": 60,
+   "suffix": "s",
+   "label": "TO A SCORE",
+   "pos": "center"
+  },
+  {
+   "at": 0.786,
+   "dur": 2.31,
+   "type": "kinetic",
+   "top": "RECALL",
+   "big": "FASTER"
+  },
+  {
+   "at": 0.899,
+   "dur": 1.65,
+   "type": "ticker",
+   "to": 5,
+   "suffix": "min",
+   "label": "A DAY",
+   "pos": "lower"
+  }
+ ],
+ "cta": {
+  "text": "Get it now — comment FOCUS and I'll send the link. Link in bio.",
+  "code": "FOCUS"
+ },
+ "caption": "Say it back, link it to an image, repeat after ten seconds — that triple hit locks a name in. Train the habit with quick daily reps. Comment FOCUS for the app. #brainhealth #memory #focus #productivity #selfimprovement #mentalhealth #learning #memory #brain #music #power 👉 Comment FOCUS for the link — link in bio.",
+ "yt_title": "Remember any name for good #shorts",
+ "trend_keys": [
+  "memory",
+  "brain",
+  "music",
+  "power",
+  "binaural",
+  "improve",
+  "focus",
+  "increase"
+ ],
+ "content_type": "sales"
+}
