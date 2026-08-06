@@ -69,16 +69,17 @@ const DISP_MAIL_TYPES = ['all'=>'Все','diploma'=>'Дипломы','newsletter
 /** Единый список фильтров для сводной очереди/архива. */
 function disp_filters(): array {
     return [
-        'all'        => 'Все',
-        'diploma'    => 'Дипломы к отправке',
-        'mail'       => 'Все письма',
-        'newsletter' => 'Письма · рассылки',
-        'result'     => 'Письма · результаты',
-        'notify'     => 'Письма · уведомления',
-        'dunning'    => 'Письма · дожимы',
-        'news'       => 'Письма · новости',
-        'other'      => 'Письма · прочее',
-        'order'      => 'Заказы в производстве',
+        'all'          => 'Все',
+        'result_sched' => 'Результаты по расписанию',
+        'diploma'      => 'Дипломы к отправке',
+        'mail'         => 'Все письма',
+        'newsletter'   => 'Письма · рассылки',
+        'result'       => 'Письма · результаты',
+        'notify'       => 'Письма · уведомления',
+        'dunning'      => 'Письма · дожимы',
+        'news'         => 'Письма · новости',
+        'other'        => 'Письма · прочее',
+        'order'        => 'Заказы в производстве',
     ];
 }
 
@@ -263,6 +264,37 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         disp_done(false, 'Неизвестное действие.');
     }
 
+    /* ---- РЕЗУЛЬТАТ по расписанию ---- */
+    if ($kind === 'result' && $id) {
+        $a = one("SELECT * FROM applications WHERE id=?", [$id]);
+        if (!$a) disp_done(false, 'Заявка не найдена.');
+        if (trim((string) ($a['result_sent_at'] ?? '')) !== '') disp_done(false, 'Результат уже отправлен.');
+        if ($do === 'resched') {
+            $dt = trim(input('scheduled_at'));
+            if ($dt === '') disp_done(false, 'Укажите дату и время.');
+            $norm = date('Y-m-d H:i:s', strtotime(str_replace('T', ' ', $dt)) ?: time());
+            update('applications', ['result_send_at' => $norm], 'id=:id', ['id' => $id]);
+            audit('dispatch_result_resched', 'application', $id, ['at' => $norm]);
+            disp_done(true, 'Отправка результата перенесена на ' . disp_dt($norm) . '.', ['when' => disp_dt($norm)]);
+        } elseif ($do === 'sendnow') {
+            require_once BASE_PATH . '/core/result_mail.php';
+            if (is_file(BASE_PATH . '/core/notifications.php')) require_once BASE_PATH . '/core/notifications.php';
+            $ok = false;
+            try { $ok = function_exists('result_mail_send') ? (bool) result_mail_send($id) : false; } catch (\Throwable $e) {}
+            update('applications', ['result_sent_at' => date('Y-m-d H:i:s'), 'result_send_at' => date('Y-m-d H:i:s')], 'id=:id', ['id' => $id]);
+            if (!empty($a['user_id']) && function_exists('notify_user')) {
+                notify_user((int) $a['user_id'], 'Ваш результат готов', 'Жюри подвело итоги: ' . (string) $a['result'] . '.', url('/cabinet'), 'award');
+            }
+            audit('dispatch_result_sendnow', 'application', $id, ['ok' => $ok]);
+            disp_done(true, $ok ? 'Результат отправлен сейчас.' : 'Результат помечен отправленным (письмо могло не уйти).', ['remove' => true]);
+        } elseif ($do === 'cancel') {
+            update('applications', ['result_send_at' => ''], 'id=:id', ['id' => $id]);
+            audit('dispatch_result_cancel', 'application', $id, []);
+            disp_done(true, 'Плановая отправка результата отменена (заявка осталась оценённой).', ['remove' => true]);
+        }
+        disp_done(false, 'Неизвестное действие.');
+    }
+
     disp_done(false, 'Неизвестный объект.');
 }
 
@@ -279,10 +311,11 @@ $ql = mb_strtolower($q);
 
 /** Отфильтровать элемент по типу и поисковой строке. */
 $matchType = function (array $it) use ($f): bool {
-    if ($f === 'all')    return true;
-    if ($f === 'diploma') return $it['kind'] === 'diploma';
-    if ($f === 'order')  return $it['kind'] === 'order';
-    if ($f === 'mail')   return $it['kind'] === 'mail';
+    if ($f === 'all')          return true;
+    if ($f === 'result_sched') return $it['kind'] === 'result';
+    if ($f === 'diploma')      return $it['kind'] === 'diploma';
+    if ($f === 'order')        return $it['kind'] === 'order';
+    if ($f === 'mail')         return $it['kind'] === 'mail';
     return $it['kind'] === 'mail' && ($it['mtype'] ?? '') === $f;   // подтип письма
 };
 $matchSearch = function (array $it) use ($ql): bool {
@@ -305,6 +338,14 @@ $mailsRaw = all("SELECT * FROM mail_queue WHERE status='queued' ORDER BY
 $ordersRaw = all("SELECT * FROM awards_orders
                   WHERE status IN ('paid','made','shipped') AND items NOT LIKE '%\"kind\":\"club\"%'
                   ORDER BY (status='paid') DESC, id DESC LIMIT 300");
+/* ---- 4) Результаты по расписанию (оценены, письмо-результат ещё не ушло) ---- */
+$resultsRaw = all("SELECT a.id, a.number, a.full_name, a.group_name, a.is_group, a.email, a.phone,
+                          a.result, a.result_send_at, c.name comp_name
+                   FROM applications a LEFT JOIN competitions c ON c.id=a.competition_id
+                   WHERE a.result <> '' AND COALESCE(a.result_send_at,'') <> ''
+                     AND COALESCE(a.result_sent_at,'') = ''
+                     AND COALESCE(c.results_mode,'') <> 'list'
+                   ORDER BY a.result_send_at ASC LIMIT 400");
 /* ---- Архив отправленных писем ---- */
 $sentRaw = all("SELECT * FROM mail_queue WHERE status='sent' ORDER BY sent_at DESC, id DESC LIMIT 300");
 
@@ -321,6 +362,19 @@ foreach ($diplomasRaw as $d) {
         'when' => (string) ($d['scheduled_at'] ?? ''),
         'search' => mb_strtolower(trim("$who {$d['email']} {$d['phone']} {$d['comp_name']} {$d['app_number']} {$d['result']}")),
         'raw' => $d,
+    ];
+}
+foreach ($resultsRaw as $r) {
+    $who = $r['is_group'] ? (string) $r['group_name'] : (string) $r['full_name'];
+    $queue[] = [
+        'kind' => 'result', 'id' => (int) $r['id'], 'mtype' => '',
+        'type_label' => 'Результат',
+        'who' => $who, 'email' => (string) $r['email'], 'phone' => (string) ($r['phone'] ?? ''),
+        'comp' => (string) $r['comp_name'], 'number' => (string) $r['number'],
+        'title' => 'Результат: ' . (string) $r['result'],
+        'when' => (string) ($r['result_send_at'] ?? ''),
+        'search' => mb_strtolower(trim("$who {$r['email']} {$r['phone']} {$r['comp_name']} {$r['number']} {$r['result']} результат")),
+        'raw' => $r,
     ];
 }
 foreach ($mailsRaw as $m) {
@@ -408,6 +462,7 @@ ob_start(); ?>
 .disp-toolbar .field{margin:0}
 .disp-when{display:inline-block;padding:4px 10px;border-radius:999px;color:#fff;font-size:12px;font-weight:700;white-space:nowrap}
 .disp-typechip{display:inline-block;padding:3px 9px;border-radius:8px;font-size:11px;font-weight:700;letter-spacing:.02em;white-space:nowrap}
+.disp-typechip.k-result{background:#E7F7EE;color:#1E7A44}
 .disp-typechip.k-diploma{background:#EAF1FF;color:#17307A}
 .disp-typechip.k-mail{background:#F0EAFE;color:#5B36B0}
 .disp-typechip.k-order{background:#FBF1DA;color:#8B6F1F}
@@ -496,7 +551,12 @@ tr.disp-row.gone{opacity:0;transition:.4s}
         <td><span class="disp-when-cell"><?= $rowWhen($it) ?></span></td>
         <td>
           <div class="disp-acts">
-          <?php if ($k === 'diploma'): ?>
+          <?php if ($k === 'result'): ?>
+            <input type="datetime-local" id="w-<?= $rid ?>" value="<?= h($it['when'] ? date('Y-m-d\TH:i', strtotime($it['when'])) : '') ?>">
+            <button class="btn btn--ghost btn--sm" data-act="resched" data-kind="result" data-id="<?= $iid ?>" data-when="w-<?= $rid ?>" data-row="<?= $rid ?>" title="Перенести отправку результата">OK</button>
+            <button class="btn btn--primary btn--sm" data-act="sendnow" data-kind="result" data-id="<?= $iid ?>" data-row="<?= $rid ?>" data-confirm="Отправить результат участнику сейчас?"><?= admin_icon('send') ?>Сейчас</button>
+            <button class="btn btn--ghost btn--sm" data-act="cancel" data-kind="result" data-id="<?= $iid ?>" data-row="<?= $rid ?>" data-confirm="Отменить плановую отправку результата?" style="color:#C0392B;border-color:#C0392B"><?= admin_icon('trash') ?></button>
+          <?php elseif ($k === 'diploma'): ?>
             <input type="datetime-local" id="w-<?= $rid ?>" value="<?= h($it['when'] ? date('Y-m-d\TH:i', strtotime($it['when'])) : '') ?>">
             <button class="btn btn--ghost btn--sm" data-act="resched" data-kind="diploma" data-id="<?= $iid ?>" data-when="w-<?= $rid ?>" data-row="<?= $rid ?>" title="Изменить дату/время">OK</button>
             <button class="btn btn--primary btn--sm" data-act="sendnow" data-kind="diploma" data-id="<?= $iid ?>" data-row="<?= $rid ?>"><?= admin_icon('send') ?>Сейчас</button>
