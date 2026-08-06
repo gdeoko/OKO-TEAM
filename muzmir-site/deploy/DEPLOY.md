@@ -55,5 +55,22 @@ URL `https://музыкальный-мир.рф/api/v1/webhook_yukassa` (соб�
 ```
 Все — `php /var/www/muzmir/cron/<name>.php >/dev/null 2>&1`. Проверить: `crontab -l`, `systemctl is-active cron`.
 
+## Положение (PDF 1:1 с эталоном) — LibreOffice
+Положение конкурса отдаётся как PDF, полученный конвертацией УТВЕРЖДЁННОГО эталона
+`.docx` (шапка с печатью/подписью/гербами) в PDF через LibreOffice headless. Ставится:
+```
+apt-get install -y --no-install-recommends libreoffice-writer fonts-liberation fonts-dejavu
+```
+Тонкости (учтены в `core/regulation_pdf.php`):
+- запускать soffice под www-data нужно, предварительно сделав `cd` в записываемый каталог —
+  скрипт-обёртка soffice в конце делает `cd "$(pwd)"`, и если рабочий каталог `/root`
+  (недоступен www-data), падает «can't cd to /root»;
+- задавать `HOME` через `env HOME=...` (иначе soffice падает без `$HOME`), профиль —
+  `-env:UserInstallation=file://<dir>`;
+- эталоны `docs/polozheniya/*.docx` должны быть читаемы www-data (`chmod 644`).
+Если LibreOffice недоступен — код сам падает на старый генератор `core/pdf_regulation.php`,
+чтобы ссылка «Открыть положение» не отдавала ошибку. PDF кэшируется в
+`public/uploads/regulations/{slug}.pdf` (ключ кэша — по названию/датам/типу конкурса).
+
 ## Секреты
 Только в `/var/www/muzmir/config.local.php` (chmod 640, вне git). В репозиторий не коммитить.

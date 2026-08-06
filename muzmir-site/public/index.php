@@ -131,11 +131,21 @@ if (preg_match('#^/competition/([a-z0-9\-]+)/regulation\.(pdf|docx)$#', $route, 
             // PDF-запрос (по умолчанию для «Открыть положение») — отдаём ИНЛАЙН,
             // чтобы положение ОТКРЫВАЛОСЬ в браузере, а не скачивалось.
             if ($reqExt === 'pdf') {
-                require_once BASE_PATH . '/core/pdf_regulation.php';
-                $pdf = pdf_regulation($c);
-                // pdf_regulation() возвращает ПУТЬ к сгенерированному файлу (или, в старых версиях,
-                // сами байты). Поддерживаем оба: если это существующий файл — отдаём его содержимое.
-                $pdfData = ($pdf !== '' && strlen($pdf) < 512 && is_file($pdf)) ? (string) file_get_contents($pdf) : (string) $pdf;
+                // 1:1 с эталоном DOCX через LibreOffice (шапка, печать, подпись, гербы).
+                $pdfData = '';
+                try {
+                    require_once BASE_PATH . '/core/regulation_pdf.php';
+                    $pdfPath = regulation_pdf($c);
+                    if (is_file($pdfPath)) $pdfData = (string) file_get_contents($pdfPath);
+                } catch (\Throwable $ePdf) {
+                    error_log('regulation_pdf (soffice) failed: ' . $ePdf->getMessage());
+                }
+                // Фолбэк на старый генератор, если конвертация недоступна (чтобы ссылка не падала).
+                if ($pdfData === '' || strncmp($pdfData, '%PDF', 4) !== 0) {
+                    require_once BASE_PATH . '/core/pdf_regulation.php';
+                    $pdf = pdf_regulation($c);
+                    $pdfData = ($pdf !== '' && strlen($pdf) < 512 && is_file($pdf)) ? (string) file_get_contents($pdf) : (string) $pdf;
+                }
                 if ($pdfData === '' || strncmp($pdfData, '%PDF', 4) !== 0) {
                     throw new \RuntimeException('Не удалось сформировать PDF положения.');
                 }
