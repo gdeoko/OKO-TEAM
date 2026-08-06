@@ -1,0 +1,240 @@
+{
+ "id": "gbrain_113",
+ "app": "brain",
+ "voice": "en-US-BrianNeural",
+ "rate": "+4%",
+ "grade": "clean_ad",
+ "brand": {
+  "accent": "#9B5DE5",
+  "accent2": "#C9A7FF",
+  "code": "FOCUS",
+  "logo": "brain.png",
+  "name": "BRAINOVA"
+ },
+ "music": {
+  "queries": [
+   "hype trap beat",
+   "bright optimistic electronic",
+   "calm motivational underscore",
+   "gentle cinematic hope"
+  ]
+ },
+ "cover": {
+  "kicker": "BRAIN AGE",
+  "top": "IS YOUR MIND",
+  "big": "OLDER THAN\nYOU?",
+  "q": [
+   "person sleeping rest night"
+  ]
+ },
+ "segments": [
+  {
+   "id": "b1",
+   "text": "Your brain has an age, just like your body."
+  },
+  {
+   "id": "b2",
+   "text": "Speed, memory and focus reveal the real number."
+  },
+  {
+   "id": "b3",
+   "text": "One short test estimates it in a minute."
+  },
+  {
+   "id": "b4",
+   "text": "Most people score older than they expect."
+  },
+  {
+   "id": "b5",
+   "text": "The good news: it drops with daily training."
+  },
+  {
+   "id": "b6",
+   "text": "Find your brain age today."
+  }
+ ],
+ "shots": [
+  {
+   "q": [
+    "coffee cup morning desk"
+   ],
+   "insert": "tv",
+   "pos": "center"
+  },
+  {
+   "q": [
+    "glass of water healthy morning"
+   ],
+   "motion": "zout"
+  },
+  {
+   "q": [
+    "chess board close up thinking"
+   ],
+   "insert": "phone",
+   "pos": "upper"
+  },
+  {
+   "q": [
+    "elderly person smiling sharp mind"
+   ],
+   "motion": "panl"
+  },
+  {
+   "q": [
+    "smartphone brain game screen"
+   ],
+   "insert": "arch",
+   "pos": "center"
+  },
+  {
+   "q": [
+    "person thinking trying to remember"
+   ],
+   "motion": "pandown"
+  },
+  {
+   "q": [
+    "runner morning sunrise energy"
+   ],
+   "insert": "rrect",
+   "pos": "upper"
+  },
+  {
+   "q": [
+    "clock ticking time closeup"
+   ],
+   "motion": "panr"
+  },
+  {
+   "q": [
+    "walking park green trees"
+   ],
+   "insert": "diamond",
+   "pos": "upper"
+  },
+  {
+   "q": [
+    "fish oil supplement pills"
+   ],
+   "motion": "zin"
+  },
+  {
+   "q": [
+    "man reading book focused"
+   ],
+   "insert": "circle",
+   "pos": "lower"
+  },
+  {
+   "q": [
+    "notebook writing pen hand"
+   ],
+   "motion": "panup"
+  },
+  {
+   "q": [
+    "memory old photos hands"
+   ],
+   "insert": "hexagon",
+   "pos": "upper"
+  },
+  {
+   "q": [
+    "sticky notes wall reminders"
+   ],
+   "motion": "zout"
+  }
+ ],
+ "overlays": [
+  {
+   "at": 0.273,
+   "dur": 1.85,
+   "type": "stat_count",
+   "to": 5,
+   "suffix": "min",
+   "label": "A DAY",
+   "pos": "center"
+  },
+  {
+   "at": 0.37,
+   "dur": 1.62,
+   "type": "chips",
+   "items": [
+    "SPEED",
+    "MEMORY",
+    "FOCUS",
+    "LOGIC"
+   ],
+   "pos": "upper"
+  },
+  {
+   "at": 0.597,
+   "dur": 2.33,
+   "type": "callout",
+   "text": "FOCUS IS A MUSCLE",
+   "pos": "center"
+  },
+  {
+   "at": 0.67,
+   "dur": 1.61,
+   "type": "lowerthird",
+   "title": "FIVE MINUTES A DAY",
+   "sub": "focus grows like a muscle"
+  },
+  {
+   "at": 0.689,
+   "dur": 2.11,
+   "type": "bars",
+   "title": "DISTRACTION",
+   "unit": "%",
+   "items": [
+    [
+     "Before",
+     80
+    ],
+    [
+     "After",
+     29
+    ]
+   ],
+   "pos": "center"
+  },
+  {
+   "at": 0.78,
+   "dur": 1.8,
+   "type": "kinetic",
+   "top": "BEAT",
+   "big": "THE FOG"
+  },
+  {
+   "at": 0.796,
+   "dur": 2.6,
+   "type": "checklist",
+   "items": [
+    "Hear it",
+    "Picture it",
+    "Repeat it",
+    "Recall it"
+   ],
+   "pos": "center"
+  }
+ ],
+ "cta": {
+  "text": "Comment FOCUS for the app.",
+  "code": "FOCUS"
+ },
+ "caption": "Your brain has an age — speed, memory and focus set the number. One quick test estimates it, and daily training drops it. Most people score older than they think. Comment FOCUS for the app. #brainhealth #memory #focus #productivity #selfimprovement #mentalhealth #learning #beats #focus #improve #memory",
+ "yt_title": "Is your brain older than you are? #shorts",
+ "trend_keys": [
+  "beats",
+  "focus",
+  "improve",
+  "memory",
+  "binaural",
+  "brain",
+  "concentration",
+  "music"
+ ],
+ "content_type": "viral"
+}

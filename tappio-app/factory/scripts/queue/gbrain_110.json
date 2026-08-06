@@ -1,0 +1,240 @@
+{
+ "id": "gbrain_110",
+ "app": "brain",
+ "voice": "en-US-BrianNeural",
+ "rate": "+7%",
+ "grade": "teal_orange",
+ "brand": {
+  "accent": "#9B5DE5",
+  "accent2": "#C9A7FF",
+  "code": "FOCUS",
+  "logo": "brain.png",
+  "name": "BRAINOVA"
+ },
+ "music": {
+  "queries": [
+   "driving electronic",
+   "calm motivational underscore",
+   "warm inspiring piano electronic"
+  ]
+ },
+ "cover": {
+  "kicker": "60-SECOND TEST",
+  "top": "WHY YOU FORGET",
+  "big": "EVERY\nNAME",
+  "q": [
+   "coffee cup morning desk"
+  ]
+ },
+ "segments": [
+  {
+   "id": "b1",
+   "text": "You just met them and the name is already gone."
+  },
+  {
+   "id": "b2",
+   "text": "It is not age. It is attention and encoding."
+  },
+  {
+   "id": "b3",
+   "text": "A quick daily test shows your memory score."
+  },
+  {
+   "id": "b4",
+   "text": "Simple games train recall in five minutes."
+  },
+  {
+   "id": "b5",
+   "text": "Watch the number climb week after week."
+  },
+  {
+   "id": "b6",
+   "text": "See your brain age in sixty seconds."
+  }
+ ],
+ "shots": [
+  {
+   "q": [
+    "coffee cup morning desk"
+   ],
+   "motion": "zout"
+  },
+  {
+   "q": [
+    "neurons synapse animation blue"
+   ],
+   "insert": "tilt",
+   "pos": "lower"
+  },
+  {
+   "q": [
+    "sticky notes wall reminders"
+   ],
+   "motion": "panl"
+  },
+  {
+   "q": [
+    "focused eyes close up concentration"
+   ],
+   "insert": "arch",
+   "pos": "lower"
+  },
+  {
+   "q": [
+    "person sleeping rest night"
+   ],
+   "motion": "panup"
+  },
+  {
+   "q": [
+    "glass of water healthy morning"
+   ],
+   "insert": "tv",
+   "pos": "center"
+  },
+  {
+   "q": [
+    "chess board close up thinking"
+   ],
+   "motion": "pandown"
+  },
+  {
+   "q": [
+    "smartphone brain game screen"
+   ],
+   "insert": "hexagon",
+   "pos": "lower"
+  },
+  {
+   "q": [
+    "elderly person smiling sharp mind"
+   ],
+   "motion": "panr"
+  },
+  {
+   "q": [
+    "group people names introduction"
+   ],
+   "insert": "circle",
+   "pos": "upper"
+  },
+  {
+   "q": [
+    "person thinking trying to remember"
+   ],
+   "motion": "zin"
+  },
+  {
+   "q": [
+    "fish oil supplement pills"
+   ],
+   "insert": "phone",
+   "pos": "center"
+  },
+  {
+   "q": [
+    "yoga breathing calm room"
+   ],
+   "motion": "zout"
+  },
+  {
+   "q": [
+    "runner morning sunrise energy"
+   ],
+   "insert": "rrect",
+   "pos": "lower"
+  }
+ ],
+ "overlays": [
+  {
+   "at": 0.063,
+   "dur": 2.03,
+   "type": "kicker",
+   "text": "BRAIN AGE"
+  },
+  {
+   "at": 0.15,
+   "dur": 1.83,
+   "type": "lowerthird",
+   "title": "FIVE MINUTES A DAY",
+   "sub": "focus grows like a muscle"
+  },
+  {
+   "at": 0.356,
+   "dur": 2.6,
+   "type": "checklist",
+   "items": [
+    "Hear it",
+    "Picture it",
+    "Repeat it",
+    "Recall it"
+   ],
+   "pos": "center"
+  },
+  {
+   "at": 0.467,
+   "dur": 1.84,
+   "type": "stat_count",
+   "to": 14,
+   "suffix": "d",
+   "label": "TO SHARPER",
+   "pos": "center"
+  },
+  {
+   "at": 0.527,
+   "dur": 1.8,
+   "type": "chips",
+   "items": [
+    "RECALL",
+    "REACT",
+    "SOLVE",
+    "REPEAT"
+   ],
+   "pos": "lower"
+  },
+  {
+   "at": 0.693,
+   "dur": 2.39,
+   "type": "bars",
+   "title": "FOCUS AFTER 14 DAYS",
+   "unit": "%",
+   "items": [
+    [
+     "Before",
+     41
+    ],
+    [
+     "After",
+     78
+    ]
+   ],
+   "pos": "center"
+  },
+  {
+   "at": 0.87,
+   "dur": 1.69,
+   "type": "ticker",
+   "to": 147,
+   "suffix": "%",
+   "label": "RECALL SPEED",
+   "pos": "lower"
+  }
+ ],
+ "cta": {
+  "text": "Comment FOCUS for the app.",
+  "code": "FOCUS"
+ },
+ "caption": "Forgetting names isn't age — it's encoding. A 60-second test shows your memory score, and five-minute games train recall. Watch the number climb. Comment FOCUS for the app. #brainhealth #memory #focus #productivity #selfimprovement #mentalhealth #learning #brain #binaural #focus #beats",
+ "yt_title": "Why you forget every name #shorts",
+ "trend_keys": [
+  "brain",
+  "binaural",
+  "focus",
+  "beats",
+  "concentration",
+  "improve",
+  "music",
+  "memory"
+ ],
+ "content_type": "viral"
+}

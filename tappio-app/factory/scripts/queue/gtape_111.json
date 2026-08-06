@@ -1,0 +1,207 @@
+{
+ "id": "gtape_111",
+ "app": "tape",
+ "voice": "en-US-ChristopherNeural",
+ "rate": "+7%",
+ "grade": "warm_gold",
+ "brand": {
+  "accent": "#F4C430",
+  "accent2": "#FFE08A",
+  "code": "MEASURE",
+  "logo": "tape.png",
+  "name": "3D TAPE MEASURE"
+ },
+ "music": {
+  "queries": [
+   "driving electronic",
+   "cheerful folk clap",
+   "bright pop home"
+  ]
+ },
+ "cover": {
+  "kicker": "WILL IT FIT?",
+  "top": "MEASURE ANY ROOM",
+  "big": "WITHOUT\nA TAPE",
+  "q": [
+   "cozy furnished living room warm light"
+  ]
+ },
+ "segments": [
+  {
+   "id": "b1",
+   "text": "A rug, a TV, a shelf. Will it fit? Stop guessing."
+  },
+  {
+   "id": "b2",
+   "text": "Point your phone, tap two points."
+  },
+  {
+   "id": "b3",
+   "text": "The length appears right on the floor."
+  },
+  {
+   "id": "b4",
+   "text": "Width, height, area, no helper needed."
+  },
+  {
+   "id": "b5",
+   "text": "Save every wall as a project, export a PDF."
+  },
+  {
+   "id": "b6",
+   "text": "Measure any space from your couch in ten seconds."
+  }
+ ],
+ "shots": [
+  {
+   "q": [
+    "dining table room measure"
+   ],
+   "motion": "pandown"
+  },
+  {
+   "q": [
+    "office desk setup measuring space"
+   ],
+   "insert": "diamond",
+   "pos": "upper"
+  },
+  {
+   "q": [
+    "couple planning home layout tablet"
+   ],
+   "motion": "panup"
+  },
+  {
+   "q": [
+    "person relaxing on couch bright apartment"
+   ],
+   "insert": "tv",
+   "pos": "upper"
+  },
+  {
+   "q": [
+    "hands holding phone ar app screen"
+   ],
+   "motion": "zout"
+  },
+  {
+   "q": [
+    "blueprint floor plan on tablet desk"
+   ],
+   "insert": "circle",
+   "pos": "upper"
+  },
+  {
+   "q": [
+    "curtains window measuring home"
+   ],
+   "motion": "panr"
+  },
+  {
+   "q": [
+    "hand pointing phone at wall measuring"
+   ],
+   "insert": "rrect",
+   "pos": "lower"
+  },
+  {
+   "q": [
+    "doorway measuring frame home"
+   ],
+   "motion": "zin"
+  },
+  {
+   "q": [
+    "moving boxes new apartment"
+   ],
+   "insert": "arch",
+   "pos": "center"
+  },
+  {
+   "q": [
+    "garden patio outdoor measuring"
+   ],
+   "motion": "panl"
+  },
+  {
+   "q": [
+    "kitchen cabinets measuring renovation"
+   ],
+   "insert": "phone",
+   "pos": "center"
+  }
+ ],
+ "overlays": [
+  {
+   "at": 0.037,
+   "dur": 2.3,
+   "type": "kicker",
+   "text": "NO TAPE"
+  },
+  {
+   "at": 0.04,
+   "dur": 2.18,
+   "type": "kinetic",
+   "top": "FIT",
+   "big": "CHECK"
+  },
+  {
+   "at": 0.159,
+   "dur": 1.68,
+   "type": "callout",
+   "text": "MEASURE FROM THE COUCH",
+   "pos": "center"
+  },
+  {
+   "at": 0.216,
+   "dur": 1.64,
+   "type": "stat_count",
+   "to": 3,
+   "suffix": "%",
+   "label": "ERROR",
+   "pos": "center"
+  },
+  {
+   "at": 0.342,
+   "dur": 1.6,
+   "type": "chips",
+   "items": [
+    "POINT",
+    "TAP",
+    "READ",
+    "SAVE"
+   ],
+   "pos": "lower"
+  },
+  {
+   "at": 0.613,
+   "dur": 2.6,
+   "type": "checklist",
+   "items": [
+    "Measure the door",
+    "Measure the sofa",
+    "Compare sizes",
+    "Move it in"
+   ],
+   "pos": "center"
+  }
+ ],
+ "cta": {
+  "text": "Comment MEASURE for the app.",
+  "code": "MEASURE"
+ },
+ "caption": "A rug, a TV, a shelf — will it fit? Point your phone, tap two points, and the length appears on the floor. Width, height, area — no tape, no helper. Comment MEASURE for the app. #diy #homedecor #interiordesign #measure #movingtips #renter #apartmenttherapy #camera #measure #plan #read",
+ "yt_title": "Measure any room without a tape #shorts",
+ "trend_keys": [
+  "camera",
+  "measure",
+  "plan",
+  "read",
+  "tape",
+  "floorplanner",
+  "easy",
+  "really"
+ ],
+ "content_type": "viral"
+}
