@@ -56,8 +56,12 @@ function notify_from_email(string $toEmail, string $subject, string $html = '', 
     if (!function_exists('tbl_exists') || !tbl_exists('notifications')) return 0;
     // Пропускаем одноразовые коды/сброс пароля — в приложении бессмысленны.
     if (preg_match('~код подтвержд|ваш код|код для вход|подтверждение вход|сброс пароля|восстановлен\w* пароля|one[- ]?time|verification code~ui', $subject)) return 0;
+    // Только РЕАЛЬНЫМ пользователям приложения (кто хоть раз заходил — есть сессия).
+    // Импортированная база почт (9k+ аккаунтов) в приложение не заходит — не засоряем
+    // таблицу уведомлений на массовых рассылках; письмо им всё равно уходит на почту.
     try {
-        $u = one("SELECT id FROM users WHERE lower(email)=? LIMIT 1", [$toEmail]);
+        $u = one("SELECT u.id FROM users u WHERE lower(u.email)=?
+                    AND EXISTS (SELECT 1 FROM sessions s WHERE s.user_id=u.id) LIMIT 1", [$toEmail]);
     } catch (\Throwable $e) { return 0; }
     if (!$u) return 0;
 
