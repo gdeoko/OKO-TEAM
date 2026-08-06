@@ -733,61 +733,7 @@ if ($id = (int) input('id')) {
       </div>
     </div>
 
-    <?php
-      $myVideo = one("SELECT * FROM jury_video WHERE application_id=? AND jury_id=?", [$id, $jid]);
-      $allVideos = all("SELECT jv.*, u.full_name jname FROM jury_video jv LEFT JOIN users u ON u.id=jv.jury_id
-                        WHERE jv.application_id=? ORDER BY jv.created_at DESC", [$id]);
-    ?>
-    <div class="card" style="margin-top:18px">
-      <h3>Видеорецензия жюри</h3>
-      <p class="small muted">Короткий видеокомментарий (30-60 секунд, mp4). Файл прикрепится к диплому участника автоматически.</p>
-      <?php if ($myVideo): ?>
-        <p class="small"><span class="badge badge--paid">Ваша рецензия загружена</span>
-          <a href="<?= h(url($myVideo['path'])) ?>" target="_blank" rel="noopener">открыть видео</a>
-          · <?= h(date('d.m.y H:i', strtotime($myVideo['created_at']))) ?> — загрузите новый файл, чтобы заменить.</p>
-      <?php endif; ?>
-      <form id="videoReviewForm" enctype="multipart/form-data">
-        <?= csrf_field() ?>
-        <input type="hidden" name="application_id" value="<?= $id ?>">
-        <div class="field--inline">
-          <input type="file" name="video" accept="video/mp4,.mp4" required>
-          <button type="submit" class="btn btn--navy btn--sm"><?= admin_icon('send') ?>Загрузить рецензию</button>
-        </div>
-        <p class="err-msg" id="videoReviewMsg" style="display:none;margin-top:8px"></p>
-      </form>
-      <?php if ($allVideos): ?>
-        <hr>
-        <p class="small muted" style="margin-bottom:6px">Все рецензии по заявке:</p>
-        <ul class="small" style="margin:0;padding-left:18px">
-          <?php foreach ($allVideos as $v): ?>
-            <li><?= h($v['jname'] ?: ('Жюри #' . $v['jury_id'])) ?> —
-              <a href="<?= h(url($v['path'])) ?>" target="_blank" rel="noopener">видео</a>
-              (<?= h(date('d.m.y H:i', strtotime($v['created_at']))) ?>)</li>
-          <?php endforeach; ?>
-        </ul>
-      <?php endif; ?>
-    </div>
     </div><!-- /.jury-fast -->
-    <script>
-    (function(){
-      var vform=document.getElementById('videoReviewForm');
-      if (vform) {
-        vform.addEventListener('submit', function(e){
-          e.preventDefault();
-          var msg=document.getElementById('videoReviewMsg');
-          msg.style.display='none'; msg.textContent='';
-          var fd=new FormData(vform);
-          fetch('<?= url('/api/v1/jury_video.php') ?>', {method:'POST', body:fd, credentials:'same-origin'})
-            .then(function(r){ return r.json(); })
-            .then(function(d){
-              if (d.ok) { location.reload(); }
-              else { msg.textContent = d.error || 'Не удалось загрузить видео.'; msg.style.display='block'; }
-            })
-            .catch(function(){ msg.textContent='Ошибка сети при загрузке видео.'; msg.style.display='block'; });
-        });
-      }
-    })();
-    </script>
     <script>
     (function(){
       // Навигация по заявкам стрелками (балльная система убрана).
