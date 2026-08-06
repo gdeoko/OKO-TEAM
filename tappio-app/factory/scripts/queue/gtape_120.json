@@ -1,0 +1,232 @@
+{
+ "id": "gtape_120",
+ "app": "tape",
+ "voice": "en-US-ChristopherNeural",
+ "rate": "+4%",
+ "grade": "teal_orange",
+ "brand": {
+  "accent": "#F4C430",
+  "accent2": "#FFE08A",
+  "code": "MEASURE",
+  "logo": "tape.png",
+  "name": "3D TAPE MEASURE"
+ },
+ "music": {
+  "queries": [
+   "hype trap beat",
+   "cheerful folk clap",
+   "happy ukulele diy",
+   "bright pop home"
+  ]
+ },
+ "cover": {
+  "kicker": "ONLINE SHOPPING",
+  "top": "BUY FURNITURE",
+  "big": "THAT ACTUALLY\nFITS",
+  "q": [
+   "bookshelf assembly instructions floor"
+  ]
+ },
+ "segments": [
+  {
+   "id": "b1",
+   "text": "That online sofa looks perfect on screen."
+  },
+  {
+   "id": "b2",
+   "text": "But will it swallow your whole living room?"
+  },
+  {
+   "id": "b3",
+   "text": "Measure the real space with your phone first."
+  },
+  {
+   "id": "b4",
+   "text": "Compare it to the product dimensions."
+  },
+  {
+   "id": "b5",
+   "text": "Order only what genuinely fits."
+  },
+  {
+   "id": "b6",
+   "text": "Fewer returns, zero regret."
+  }
+ ],
+ "shots": [
+  {
+   "q": [
+    "garden patio outdoor measuring"
+   ],
+   "motion": "zin"
+  },
+  {
+   "q": [
+    "couple planning home layout tablet"
+   ],
+   "insert": "circle",
+   "pos": "lower"
+  },
+  {
+   "q": [
+    "hands holding phone ar app screen"
+   ],
+   "motion": "panl"
+  },
+  {
+   "q": [
+    "office desk setup measuring space"
+   ],
+   "insert": "tv",
+   "pos": "center"
+  },
+  {
+   "q": [
+    "person relaxing on couch bright apartment"
+   ],
+   "motion": "pandown"
+  },
+  {
+   "q": [
+    "picture frame hanging wall level"
+   ],
+   "insert": "rrect",
+   "pos": "upper"
+  },
+  {
+   "q": [
+    "rolled up rug floor room"
+   ],
+   "motion": "zout"
+  },
+  {
+   "q": [
+    "curtains window measuring home"
+   ],
+   "insert": "hexagon",
+   "pos": "lower"
+  },
+  {
+   "q": [
+    "cozy furnished living room warm light"
+   ],
+   "motion": "panup"
+  },
+  {
+   "q": [
+    "carpenter measuring wood workshop"
+   ],
+   "insert": "phone",
+   "pos": "lower"
+  }
+ ],
+ "overlays": [
+  {
+   "at": 0.163,
+   "dur": 2.26,
+   "type": "kicker",
+   "text": "POCKET TAPE"
+  },
+  {
+   "at": 0.223,
+   "dur": 2.21,
+   "type": "bars",
+   "title": "TIME TO MEASURE",
+   "unit": "s",
+   "items": [
+    [
+     "Tape + helper",
+     90
+    ],
+    [
+     "Phone",
+     10
+    ]
+   ],
+   "pos": "center"
+  },
+  {
+   "at": 0.343,
+   "dur": 2.0,
+   "type": "stat_count",
+   "to": 10,
+   "suffix": "s",
+   "label": "PER ROOM",
+   "pos": "center"
+  },
+  {
+   "at": 0.38,
+   "dur": 2.28,
+   "type": "kinetic",
+   "top": "FIT",
+   "big": "CHECK"
+  },
+  {
+   "at": 0.668,
+   "dur": 1.9,
+   "type": "gauge",
+   "to": 4,
+   "max": 100,
+   "suffix": "%",
+   "label": "RETURN RATE",
+   "pos": "center"
+  },
+  {
+   "at": 0.713,
+   "dur": 2.01,
+   "type": "callout",
+   "text": "BUY WHAT ACTUALLY FITS",
+   "pos": "center"
+  },
+  {
+   "at": 0.715,
+   "dur": 2.6,
+   "type": "checklist",
+   "items": [
+    "Measure the door",
+    "Measure the sofa",
+    "Compare sizes",
+    "Move it in"
+   ],
+   "pos": "center"
+  },
+  {
+   "at": 0.783,
+   "dur": 1.93,
+   "type": "chips",
+   "items": [
+    "LENGTH",
+    "WIDTH",
+    "HEIGHT",
+    "AREA"
+   ],
+   "pos": "upper"
+  },
+  {
+   "at": 0.905,
+   "dur": 2.4,
+   "type": "ticker",
+   "to": 4,
+   "suffix": "",
+   "label": "WALLS SAVED",
+   "pos": "lower"
+  }
+ ],
+ "cta": {
+  "text": "Comment MEASURE for the app.",
+  "code": "MEASURE"
+ },
+ "caption": "That online sofa looks perfect — until it swallows the room. Measure the real space, compare to the listing, order only what fits. Fewer returns, zero regret. Comment MEASURE for the app. #diy #homedecor #interiordesign #measure #movingtips #renter #apartmenttherapy #people #app #tape #measure",
+ "yt_title": "Buy furniture that actually fits #shorts",
+ "trend_keys": [
+  "people",
+  "app",
+  "tape",
+  "measure",
+  "few",
+  "hacks",
+  "know",
+  "measuring"
+ ],
+ "content_type": "viral"
+}
