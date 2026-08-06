@@ -371,21 +371,27 @@ if ($freeAppIds && is_file(BASE_PATH . '/core/notify_owner.php')) {
     try {
         $freeNums3 = [];
         foreach ($comps as $i => $ci) if (!(int) $ci['is_paid']) $freeNums3[] = $numbers[$i];
+        // Полное письмо центру со всеми полями заявки + кнопкой «Оценить» (дип-линк в админку).
+        $firstFreeId = (int) ($freeAppIds[0] ?? 0);
+        $extraFields = [
+            'Оргвзнос' => 'бесплатно',
+            '_event'   => 'application',
+            '_path'    => '/apply',
+            '_meta'    => ['number' => ($freeNums3[0] ?? $number), 'count' => count($freeNums3), 'amount' => 0],
+        ];
+        if (count($freeNums3) > 1) $extraFields['Заявок в пакете'] = (string) count($freeNums3) . ' (' . implode(', ', $freeNums3) . ')';
         owner_notify(
             'ЗАЯВКИ',
             count($freeNums3) > 1 ? 'Новые заявки (' . count($freeNums3) . ')' : 'Новая заявка ' . ($freeNums3[0] ?? $number),
             '',
-            [
-                'Номер'     => implode(', ', $freeNums3),
-                'ФИО'       => $full_name,
-                'Конкурс'   => $freeCompsList,
-                'Номинация' => $nomination,
-                'Сумма'     => 'бесплатно',
-                '_event'    => 'application',
-                '_path'     => '/apply',
-                '_meta'     => ['number' => ($freeNums3[0] ?? $number), 'count' => count($freeNums3),
-                                'amount' => 0],
-            ]
+            $firstFreeId > 0 && function_exists('owner_app_data')
+                ? owner_app_data($firstFreeId, $extraFields)
+                : [
+                    'Номер' => implode(', ', $freeNums3), 'ФИО' => $full_name,
+                    'Конкурс' => $freeCompsList, 'Номинация' => $nomination, 'Оргвзнос' => 'бесплатно',
+                    '_event' => 'application', '_path' => '/apply',
+                    '_meta' => ['number' => ($freeNums3[0] ?? $number), 'count' => count($freeNums3), 'amount' => 0],
+                  ]
         );
     } catch (\Throwable $e) { /* тихо */ }
 }

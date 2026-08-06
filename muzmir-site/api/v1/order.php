@@ -203,6 +203,7 @@ if ($orderIsFree) {
                     '_event'     => $isClub ? 'club_order' : 'order',
                     '_path'      => '/order-awards',
                     '_meta'      => ['order_id' => $orderId, 'amount' => $amount],
+                    '_actions'   => [['Открыть заказ в админке', rtrim((string) cfgv('base_url'), '/') . '/admin/?p=orders&id=' . $orderId]],
                 ]
             );
         } catch (\Throwable $e) { /* тихо */ }

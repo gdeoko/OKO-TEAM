@@ -103,7 +103,7 @@ function application_mail_send(int $appId, bool $paid = false): bool {
         ? '<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin:0 0 18px;background:#EAF7EE;border:1px solid #BFE6C9;border-radius:14px;">'
           . '<tr><td style="width:4px;background:#2E9E4F;border-radius:14px 0 0 14px;"></td>'
           . '<td style="padding:13px 20px;font-size:13.5px;line-height:1.6;color:#1E6B36;">'
-          . '<b style="color:#2E9E4F;letter-spacing:.03em;">ОПЛАТА ПОЛУЧЕНА.</b> Оргвзнос за участие зачислен — заявка принята и передана жюри. '
+          . '<b style="color:#2E9E4F;letter-spacing:.03em;">ЗАЯВКА НА УЧАСТИЕ ПРИНЯТА.</b> Оргвзнос зачислен, заявка передана жюри. '
           . 'Спасибо за участие!</td></tr></table>'
         : '';
 

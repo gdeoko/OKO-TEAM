@@ -41,6 +41,59 @@ function owner_topics(): array {
     ];
 }
 
+/* ═══════════════════════ Полные данные события для письма центру ═══════════════════════ */
+
+/**
+ * Полный набор полей заявки для письма/уведомления владельцу + кнопка «Оценить»
+ * (дип-линк в нужный раздел админки: короткие → grading, длинные → longcomp).
+ * Пустые поля отбрасываются. $extra объединяется поверх (служебные _event/_meta/_path,
+ * а также Сумма/Платёж по ситуации).
+ */
+function owner_app_data(int $appId, array $extra = []): array {
+    $a = one("SELECT * FROM applications WHERE id=?", [$appId]);
+    if (!$a) return $extra;
+    $c = one("SELECT * FROM competitions WHERE id=?", [(int) $a['competition_id']]) ?: [];
+    $isLong = ((string) ($c['results_mode'] ?? '')) === 'list';
+    $isGroup = (int) ($a['is_group'] ?? 0) === 1 || trim((string) ($a['group_name'] ?? '')) !== '';
+    $who = $isGroup ? (trim((string) $a['group_name']) ?: trim((string) $a['full_name'])) : trim((string) $a['full_name']);
+    $adminBase = rtrim((string) cfgv('base_url'), '/') . '/admin/?p=' . ($isLong ? 'longcomp' : 'grading') . '&id=' . $appId;
+
+    $nomination = trim(((string) ($a['nomination'] ?? '')) . ' · ' . ((string) ($a['subgroup'] ?? '')), " ·");
+    $video = trim((string) ($a['video_url'] ?? ''));
+    $status = (string) ($a['status'] ?? '');
+    $statusRu = ['new' => 'Новая', 'paid' => 'Оплачена', 'graded' => 'Оценена', 'rejected' => 'Отклонена'][$status] ?? $status;
+
+    $fields = [
+        'Номер'                => (string) $a['number'],
+        'Конкурс'              => (string) ($c['name'] ?? ''),
+        'Тип конкурса'         => $isLong ? 'Длинный (список)' : 'Короткий (5 раб. дней)',
+        ($isGroup ? 'Коллектив' : 'Участник') => $who,
+        'ФИО (для диплома)'    => (string) $a['full_name'],
+        'Формат'               => (string) ($a['formation'] ?? ''),
+        'Возрастная категория' => (string) ($a['age_category'] ?? ''),
+        'Номинация'            => $nomination,
+        'Конкурсный номер'     => (string) ($a['work_title'] ?? ''),
+        'Педагог'              => (string) ($a['teacher'] ?? ''),
+        'Учреждение'           => (string) ($a['institution'] ?? ''),
+        'Город'                => (string) ($a['city'] ?? ''),
+        'Email'                => (string) ($a['email'] ?? ''),
+        'Телефон'              => (string) ($a['phone'] ?? ''),
+        'Конкурсный материал'  => $video !== '' ? ($video . (($a['video_platform'] ?? '') !== '' ? '  (' . $a['video_platform'] . ')' : '')) : '',
+        'Статус'               => $statusRu,
+    ];
+    // Убираем пустые.
+    $fields = array_filter($fields, static fn($v) => trim((string) $v) !== '');
+
+    $actions = [
+        ['Оценить заявку', $adminBase],
+    ];
+    // $extra может добавить поля (Сумма/Платёж) и служебные ключи; свои _actions не трогаем.
+    $data = $fields;
+    foreach ($extra as $k => $v) $data[$k] = $v;
+    if (!isset($data['_actions'])) $data['_actions'] = $actions;
+    return $data;
+}
+
 /* ═══════════════════════ Аналитика: site_events ═══════════════════════ */
 
 /** Мягкое создание таблицы событий сайта. */
@@ -252,6 +305,13 @@ function owner_notify(string $topic, string $title, string $text, array $data = 
     $eventType = (string) ($data['_event'] ?? $topics[$topic]);
     $eventPath = (string) ($data['_path'] ?? '');
     $eventMeta = is_array($data['_meta'] ?? null) ? $data['_meta'] : [];
+    // Кнопки-действия для письма (пары [подпись, url]); в TG/ВК добавим текстом.
+    $actions = [];
+    foreach ((is_array($data['_actions'] ?? null) ? $data['_actions'] : []) as $act) {
+        if (is_array($act) && isset($act[0], $act[1]) && trim((string) $act[1]) !== '') {
+            $actions[] = [(string) $act[0], (string) $act[1]];
+        }
+    }
     $fields = [];
     foreach ($data as $k => $v) {
         if (is_string($k) && $k !== '' && $k[0] === '_') continue;
@@ -274,7 +334,7 @@ function owner_notify(string $topic, string $title, string $text, array $data = 
             $html = function_exists('mail_template')
                 ? mail_template('owner_event', [
                     'topic' => $topic, 'title' => $title, 'text' => $text,
-                    'fields' => $fields, 'preheader' => $title,
+                    'fields' => $fields, 'actions' => $actions, 'preheader' => $title,
                     'unsubscribe_url' => rtrim((string) cfgv('base_url'), '/') . '/admin/',
                   ])
                 : '<p><b>' . h($topic . ' — ' . $title) . '</b></p><p>' . nl2br(h($text)) . '</p>';
@@ -287,6 +347,7 @@ function owner_notify(string $topic, string $title, string $text, array $data = 
         $tg = '<b>' . h($title) . '</b>';
         if (trim($text) !== '') $tg .= "\n" . h($text);
         foreach ($fields as $k => $v) $tg .= "\n" . h($k) . ': ' . h($v);
+        foreach ($actions as $act) $tg .= "\n<a href=\"" . h($act[1]) . '">' . h($act[0]) . '</a>';
         owner_tg_send($topic, mb_substr($tg, 0, 4000));
     } catch (\Throwable $e) { /* тихо */ }
 
@@ -295,6 +356,7 @@ function owner_notify(string $topic, string $title, string $text, array $data = 
         $vk = '[' . $topic . '] ' . $title;
         if (trim($text) !== '') $vk .= "\n" . $text;
         foreach ($fields as $k => $v) $vk .= "\n" . $k . ': ' . $v;
+        foreach ($actions as $act) $vk .= "\n" . $act[0] . ': ' . $act[1];
         owner_vk_send($vk);
     } catch (\Throwable $e) { /* тихо */ }
 }

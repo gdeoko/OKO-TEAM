@@ -184,10 +184,10 @@ function payment_apply_status(string $paymentId, string $status, array $obj = []
         $baseCab = rtrim((string) cfgv('base_url'), '/');
         if ($orderId) {
             // Заказ наградных материалов оплачен — письмо «принят в производство».
-            $preheader = 'Оплата заказа наград получена. Заказ передан в изготовление.';
+            $preheader = 'Заявка на изготовление наградного материала принята. Заказ передан в изготовление.';
             $heroSub   = 'Заказ №' . (int) $orderId . ' · передан в изготовление';
             $actions   = [['Отследить в кабинете', $baseCab . '/cabinet'], ['Оставить отзыв', $baseCab . '/reviews']];
-            $subjectPay = 'Оплата заказа наград получена — Культурный центр «Музыкальный Мир»';
+            $subjectPay = 'Заявка на изготовление наград принята — Культурный центр «Музыкальный Мир»';
         } else {
             $preheader = 'Оплата участия получена. Работа передана жюри.';
             $heroSub   = 'Оплата подтверждена';
@@ -233,16 +233,24 @@ function payment_apply_status(string $paymentId, string $status, array $obj = []
                 $numsRow = all('SELECT number FROM applications WHERE id IN ('
                     . implode(',', array_map('intval', $batchIds)) . ')');
                 $nums = implode(', ', array_map(static fn($r) => (string) $r['number'], $numsRow));
-                owner_notify('ОПЛАТЫ', 'Оплата оргвзноса получена', '', [
-                    'Заявки'   => $nums ?: ('#' . implode(', #', $batchIds)),
-                    'Участник' => $name,
-                    'Email'    => $email,
-                    'Сумма'    => (int) $amount . ' ₽',
+                // Полное письмо центру: все поля заявки + оплата + кнопка «Оценить».
+                $payExtra = [
+                    'Оргвзнос' => (int) $amount . ' ₽ · ОПЛАЧЕНО',
                     'Платёж'   => $paymentId,
                     '_event'   => 'payment',
-                    '_meta'    => ['payment' => $paymentId, 'amount' => (int) $amount,
-                                   'apps' => count($batchIds)],
-                ]);
+                    '_meta'    => ['payment' => $paymentId, 'amount' => (int) $amount, 'apps' => count($batchIds)],
+                ];
+                if (count($batchIds) > 1) $payExtra['Заявок в чеке'] = (string) count($batchIds) . ' (' . ($nums ?: '') . ')';
+                owner_notify('ОПЛАТЫ', 'Оплата оргвзноса получена — заявка принята', '',
+                    function_exists('owner_app_data')
+                        ? owner_app_data((int) $batchIds[0], $payExtra)
+                        : [
+                            'Заявки' => $nums ?: ('#' . implode(', #', $batchIds)),
+                            'Участник' => $name, 'Email' => $email, 'Сумма' => (int) $amount . ' ₽',
+                            'Платёж' => $paymentId, '_event' => 'payment',
+                            '_meta' => ['payment' => $paymentId, 'amount' => (int) $amount, 'apps' => count($batchIds)],
+                          ]
+                );
             } elseif (!$orderId) {
                 owner_notify('ОПЛАТЫ', 'Оплата получена', '', [
                     'Сумма'  => (int) $amount . ' ₽',
