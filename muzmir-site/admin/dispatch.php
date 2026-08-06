@@ -155,9 +155,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         } elseif ($do === 'edit') {
             $subj = trim(input('subject'));
             $to   = mb_strtolower(trim(input('to_email')));
+            $body = (string) input('body');          // HTML из WYSIWYG-редактора
+            $attach = trim(input('attach'));         // вложение (URL/путь) — можно очистить
             $data = [];
             if ($subj !== '') $data['subject'] = $subj;
             if ($to !== '' && filter_var($to, FILTER_VALIDATE_EMAIL)) $data['to_email'] = $to;
+            if (input('body') !== null && $body !== '') $data['body'] = $body;
+            if (input('attach') !== null) $data['attach'] = $attach; // пусто = удалить вложение
             if ($data) { update('mail_queue', $data, 'id=:id', ['id' => $id]); flash('Письмо отредактировано.', 'success'); }
             audit('dispatch_edit', 'mail', $id, array_keys($data));
         }
@@ -330,11 +334,24 @@ ob_start(); ?>
               <button class="btn btn--ghost btn--sm" type="submit" style="color:#C0392B;border-color:#C0392B"><?= admin_icon('trash') ?? 'X' ?></button>
             </form>
           </div>
-          <form method="post" action="<?= url('/admin/') ?>" id="me<?= (int)$m['id'] ?>" style="display:none;gap:6px;margin-top:8px;flex-wrap:wrap;align-items:center;"><?= csrf_field() ?>
+          <form method="post" action="<?= url('/admin/') ?>" id="me<?= (int)$m['id'] ?>" style="display:none;gap:8px;margin-top:8px;flex-direction:column;" onsubmit="document.getElementById('mb<?= (int)$m['id'] ?>').value=document.getElementById('mw<?= (int)$m['id'] ?>').innerHTML;"><?= csrf_field() ?>
             <input type="hidden" name="kind" value="mail"><input type="hidden" name="do" value="edit"><input type="hidden" name="id" value="<?= (int)$m['id'] ?>">
-            <input type="email" name="to_email" value="<?= h((string)$m['to_email']) ?>" placeholder="email" style="padding:6px 9px;border:1px solid var(--a-line);border-radius:8px;min-width:200px;">
-            <input type="text" name="subject" value="<?= h((string)$m['subject']) ?>" placeholder="тема" style="padding:6px 9px;border:1px solid var(--a-line);border-radius:8px;min-width:260px;flex:1;">
-            <button class="btn btn--navy btn--sm" type="submit">Сохранить</button>
+            <div style="display:flex;gap:8px;flex-wrap:wrap">
+              <input type="email" name="to_email" value="<?= h((string)$m['to_email']) ?>" placeholder="email" style="padding:6px 9px;border:1px solid var(--a-line);border-radius:8px;min-width:200px;">
+              <input type="text" name="subject" value="<?= h((string)$m['subject']) ?>" placeholder="тема" style="padding:6px 9px;border:1px solid var(--a-line);border-radius:8px;min-width:260px;flex:1;">
+            </div>
+            <input type="text" name="attach" value="<?= h((string)($m['attach'] ?? '')) ?>" placeholder="Вложение (ссылка/путь; пусто = удалить)" style="padding:6px 9px;border:1px solid var(--a-line);border-radius:8px;">
+            <!-- WYSIWYG-редактор тела письма: панель форматирования + contenteditable (без символов кода) -->
+            <div style="display:flex;gap:4px;flex-wrap:wrap">
+              <?php foreach ([['bold','Ж'],['italic','К'],['underline','П'],['insertUnorderedList','•']] as $cmd): ?>
+                <button type="button" class="btn btn--ghost btn--sm" onclick="document.execCommand('<?= $cmd[0] ?>',false,null);document.getElementById('mw<?= (int)$m['id'] ?>').focus();"><?= $cmd[1] ?></button>
+              <?php endforeach; ?>
+              <button type="button" class="btn btn--ghost btn--sm" onclick="var u=prompt('Ссылка (URL):','https://');if(u)document.execCommand('createLink',false,u);">Ссылка</button>
+              <button type="button" class="btn btn--ghost btn--sm" onclick="var u=prompt('URL кнопки:','https://');if(u){document.execCommand('insertHTML',false,'<a href=\''+u+'\' style=\'display:inline-block;background:#17307A;color:#fff;text-decoration:none;padding:10px 18px;border-radius:8px;font-weight:700\'>Кнопка</a>');}">Кнопка</button>
+            </div>
+            <div id="mw<?= (int)$m['id'] ?>" contenteditable="true" style="min-height:160px;max-height:420px;overflow:auto;padding:12px 14px;border:1px solid var(--a-line);border-radius:10px;background:#fff;color:#111;font-size:14px;line-height:1.6"><?= (string)($m['body'] ?? '') ?></div>
+            <input type="hidden" name="body" id="mb<?= (int)$m['id'] ?>">
+            <div><button class="btn btn--navy btn--sm" type="submit">Сохранить письмо</button></div>
           </form>
         </td>
       </tr>
