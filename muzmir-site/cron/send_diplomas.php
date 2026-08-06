@@ -71,9 +71,40 @@ try { db()->exec("ALTER TABLE diplomas ADD COLUMN scheduled_at TEXT"); } catch (
 try { db()->exec("ALTER TABLE applications ADD COLUMN send_at_override TEXT"); } catch (\Throwable $e) {}
 try { db()->exec("ALTER TABLE competitions ADD COLUMN results_published_at TEXT"); } catch (\Throwable $e) {}
 try { db()->exec("ALTER TABLE diplomas ADD COLUMN send_tries INTEGER DEFAULT 0"); } catch (\Throwable $e) {}
+try { db()->exec("ALTER TABLE applications ADD COLUMN result_send_at TEXT DEFAULT ''"); } catch (\Throwable $e) {}
+try { db()->exec("ALTER TABLE applications ADD COLUMN result_sent_at TEXT DEFAULT ''"); } catch (\Throwable $e) {}
 
 date_default_timezone_set('Europe/Moscow');
 $now = new DateTime('now');
+
+// 1а) РЕЗУЛЬТАТЫ по расписанию: у коротких конкурсов результат уходит по result_send_at
+//     (моментально — уже отправлен в админке; дата/авто — отправляет этот cron), ОТДЕЛЬНО
+//     и РАНЬШЕ наградных дипломов. Наградной материал уходит позже (через N раб.дней от подачи).
+if (function_exists('all')) {
+    $dueRes = all("SELECT a.id, a.user_id FROM applications a
+                     JOIN competitions c ON c.id = a.competition_id
+                    WHERE a.result IS NOT NULL AND a.result <> '' AND a.status <> 'rejected'
+                      AND (c.results_mode IS NULL OR c.results_mode <> 'list')
+                      AND a.result_send_at <> '' AND a.result_send_at <= ?
+                      AND (a.result_sent_at IS NULL OR a.result_sent_at = '')
+                    ORDER BY a.result_send_at ASC LIMIT 30", [$now->format('Y-m-d H:i:s')]);
+    if ($dueRes) {
+        if (is_file(BASE_PATH.'/core/result_mail.php'))   require_once BASE_PATH.'/core/result_mail.php';
+        if (is_file(BASE_PATH.'/core/notifications.php')) require_once BASE_PATH.'/core/notifications.php';
+        foreach ($dueRes as $r) {
+            $ok = false;
+            if (function_exists('result_mail_send')) { try { $ok = (bool) result_mail_send((int)$r['id']); } catch (\Throwable $e) {} }
+            if ($ok) {
+                q("UPDATE applications SET result_sent_at=? WHERE id=?", [$now->format('Y-m-d H:i:s'), (int)$r['id']]);
+                if (!empty($r['user_id']) && function_exists('notify_user')) {
+                    notify_user((int)$r['user_id'], 'Ваш результат готов',
+                        'Жюри подвело итоги конкурса. Наградные дипломы придут на почту из заявки в ближайшие рабочие дни.',
+                        '/cabinet', 'award');
+                }
+            }
+        }
+    }
+}
 
 // 2) Планируем отправку у новоаттестованных заявок (результат проставлен, но диплом ещё не спланирован).
 //    Отклонённые заявки не трогаем; повторное grade_result с изменённым итогом удаляет
@@ -206,12 +237,8 @@ fwrite(STDERR, "send_diplomas: planned=" . count($fresh) . " sent_now=$sentThisT
  *     ближайшее рабочее окно.
  */
 function _plan_send_at(DateTimeInterface $now, array $a, array $comp): DateTime {
-    // 1) Ручной override администратора.
-    $ov = trim((string)($a['send_at_override'] ?? ''));
-    if ($ov !== '') {
-        try { return new DateTime($ov); } catch (\Throwable $e) { /* некорректная дата — игнор */ }
-    }
-
+    // Наградные дипломы НЕ следуют за ручным сроком результата (send_at_override) —
+    // они всегда уходят через N рабочих дней от ДАТЫ ПОДАЧИ заявки.
     $mode   = (string)($comp['results_mode'] ?? 'email');
     $isPaid = (int)($comp['is_paid'] ?? 0) === 1;
 

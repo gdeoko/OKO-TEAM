@@ -23,7 +23,8 @@ function grading_embed(string $url): ?string {
 
 /* Мягкие миграции: итог, комментарий, проверка ссылки, отклонение, ручной срок отправки. */
 foreach (['extra_diploma' => "TEXT DEFAULT ''", 'jury_comment' => "TEXT DEFAULT ''", 'graded_at' => "TEXT",
-          'link_check' => "TEXT", 'reject_reason' => "TEXT DEFAULT ''", 'send_at_override' => "TEXT"] as $col => $def) {
+          'link_check' => "TEXT", 'reject_reason' => "TEXT DEFAULT ''", 'send_at_override' => "TEXT",
+          'result_send_at' => "TEXT DEFAULT ''", 'result_sent_at' => "TEXT DEFAULT ''"] as $col => $def) {
     try { q("ALTER TABLE applications ADD COLUMN $col $def"); } catch (\Throwable $e) { /* уже есть */ }
 }
 try { q("ALTER TABLE diplomas ADD COLUMN scheduled_at TEXT"); } catch (\Throwable $e) { /* уже есть */ }
@@ -332,63 +333,65 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && input('do') === 'grade_result') {
         $isLongComp = (string) ($curMode['results_mode'] ?? '') === 'list';
         // Балльная система убрана — итог задаётся только званием, без числового балла.
         $score = null;
-        // Срок отправки диплома:
-        //   auto_send=1 (галочка вкл) → пусто: cron отправит автоматически по сроку
-        //     (короткий платный — 5 раб.дней, ВИП — 3; длинный/бесплатный — пакетом в дату публикации);
-        //   галочка ВЫКЛ + дата задана → ручной override на дату;
-        //   галочка ВЫКЛ + дата пустая → МОМЕНТАЛЬНО (сейчас).
-        // Длинный конкурс: НИКОГДА не шлём по одному и не задаём срок «5 рабочих» —
-        // результат копится в список и публикуется пакетом. override всегда пустой.
-        $override = '';
+        require_once BASE_PATH . '/core/send_timing.php';
+        if (is_file(BASE_PATH . '/core/club.php')) require_once BASE_PATH . '/core/club.php';
+        // ВИП-клуб — 3 рабочих дня, иначе 5. Точка отсчёта — ДАТА ПОДАЧИ (created_at).
+        $wdays = (!empty($cur['user_id']) && function_exists('club_is_active') && club_is_active((int) $cur['user_id'])) ? 3 : 5;
+        $autoSend  = input('auto_send') === '1';
         $sendAtRaw = trim(input('send_at'));
-        if (!$isLongComp && input('auto_send') !== '1') {
-            if ($sendAtRaw !== '') {
-                try { $override = (new DateTime($sendAtRaw))->format('Y-m-d H:i:s'); } catch (\Throwable $e) { $override = ''; }
-            }
-            if ($override === '') $override = date('Y-m-d H:i:s'); // моментальная отправка
+        $submitted = (string) ($cur['created_at'] ?? '');
+
+        // РЕЗУЛЬТАТ (аттестационный) — по управлению из карточки. Длинные (list) — молчим (пакет).
+        $resultAt = null;
+        if (!$isLongComp) {
+            $resultAt = $autoSend
+                ? result_plan_at($submitted, true, '', $wdays)
+                : result_plan_at($submitted, false, $sendAtRaw, $wdays);
         }
+        $resultSendAt = $resultAt ? $resultAt->format('Y-m-d H:i:s') : '';
+
+        $firstGrade = trim((string)($cur['result'] ?? '')) === '';
+        $changed = ((string)$cur['result'] !== $result)
+            || ((string)($cur['extra_diploma'] ?? '') !== $extra);
+
         update('applications', [
             'result' => $result, 'score' => $score,
             'extra_diploma' => $extra, 'jury_comment' => $jcomment,
-            'status' => 'graded', 'send_at_override' => $override,
+            'status' => 'graded',
+            'result_send_at'  => $resultSendAt,
+            // если итог изменился и результат ещё не ушёл — переотправим по новому сроку
+            'result_sent_at'  => ($changed && !$firstGrade) ? '' : (string)($cur['result_sent_at'] ?? ''),
+            'send_at_override' => '', // НЕ используется для дипломов — они всегда по подаче + N раб.дней
         ], 'id=:wid', ['wid' => $appId]);
-        // Момент проставления результата — стартовая точка цепочки напоминаний
-        // о заказе наград (cron/award_order_reminders.php). Ставим один раз.
         q("UPDATE applications SET graded_at=? WHERE id=? AND (graded_at IS NULL OR graded_at='')",
           [date('Y-m-d H:i:s'), $appId]);
         q("UPDATE jury_assignments SET done=1 WHERE application_id=?", [$appId]);
 
-        // Результат можно редактировать до отправки: если итог изменился, а диплом
-        // ещё НЕ отправлен — сносим запланированный диплом, cron пересоздаст его
-        // с новым результатом и свежим PDF по тому же сроку.
-        $changed = ((string)$cur['result'] !== $result)
-            || ((string)($cur['extra_diploma'] ?? '') !== $extra)
-            || ($score !== null && (string)$cur['score'] !== (string)$score);
-        if ($changed) {
-            q("DELETE FROM diplomas WHERE application_id=? AND sent_at IS NULL", [$appId]);
-        }
-        if ($override !== '') {
-            q("UPDATE diplomas SET scheduled_at=? WHERE application_id=? AND sent_at IS NULL", [$override, $appId]);
-        }
-        // Результат готов → участнику письмо + уведомление в личный кабинет.
-        // Только при ПЕРВОЙ аттестации и для КОРОТКИХ конкурсов (results_mode!='list').
-        // Длинные (list) публикуются пакетом 28-го (cron/publish_results_vk) — здесь молчим.
-        $firstGrade = trim((string)($cur['result'] ?? '')) === '';
-        $compRow = one("SELECT results_mode FROM competitions WHERE id=?", [(int)$cur['competition_id']]) ?: [];
-        if ($firstGrade && (string)($compRow['results_mode'] ?? 'email') !== 'list') {
+        // Итог изменился, а диплом ещё НЕ отправлен — сносим (cron пересоздаст по подаче + N раб.дней).
+        if ($changed) q("DELETE FROM diplomas WHERE application_id=? AND sent_at IS NULL", [$appId]);
+
+        // РЕЗУЛЬТАТ: если срок наступил (моментально/дата в прошлом) — шлём СЕЙЧАС;
+        // иначе отправит cron/send_diplomas по result_send_at. Наградные дипломы уходят
+        // ОТДЕЛЬНО и ПОЗЖЕ — через N рабочих дней от даты подачи (см. cron).
+        $now = new DateTime('now');
+        $dueNow = $resultAt && $resultAt <= $now;
+        if (!$isLongComp && ($firstGrade || $changed) && $dueNow) {
             if (is_file(BASE_PATH.'/core/result_mail.php'))   require_once BASE_PATH.'/core/result_mail.php';
             if (is_file(BASE_PATH.'/core/notifications.php')) require_once BASE_PATH.'/core/notifications.php';
+            $sent = false;
+            if (function_exists('result_mail_send')) { try { $sent = (bool) result_mail_send($appId); } catch (\Throwable $e) {} }
+            if ($sent) q("UPDATE applications SET result_sent_at=? WHERE id=?", [date('Y-m-d H:i:s'), $appId]);
             if (!empty($cur['user_id']) && function_exists('notify_user')) {
                 notify_user((int)$cur['user_id'], 'Ваш результат готов',
-                    'Жюри подвело итоги: ' . $result . '. Письмо с результатом отправлено на почту из заявки.',
+                    'Жюри подвело итоги: ' . $result . '. Наградные дипломы придут на почту из заявки в течение ' . $wdays . ' рабочих дней.',
                     url('/cabinet'), 'award');
             }
-            if (function_exists('result_mail_send')) { try { result_mail_send($appId); } catch (\Throwable $e) {} }
         }
-        audit('grade_result', 'application', $appId, ['result'=>$result,'score'=>$score,'extra'=>$extra,'send_at'=>$override]);
-        flash('Итог сохранён: ' . $result . ($score !== null ? ' · ' . number_format($score,1,'.','') : '')
-            . ($extra !== '' ? ' · доп: ' . $extra : '')
-            . ($override !== '' ? ' · отправка ' . date('d.m.Y H:i', strtotime($override)) : ' · отправка автоматически по сроку') . '.', 'success');
+        audit('grade_result', 'application', $appId, ['result'=>$result,'extra'=>$extra,'result_at'=>$resultSendAt]);
+        $flashWhen = $isLongComp ? 'публикуется пакетом'
+            : ($dueNow ? 'результат отправлен сейчас' : ('результат ' . date('d.m.Y H:i', $resultAt->getTimestamp())));
+        flash('Итог сохранён: ' . $result . ($extra !== '' ? ' · доп: ' . $extra : '')
+            . ' · ' . $flashWhen . '. Наградные дипломы — через ' . $wdays . ' раб. дней от подачи.', 'success');
         // Длинный конкурс — возвращаемся в его раздел (список аттестации/оценённых).
         if (!empty($isLongComp)) {
             admin_redirect('longcomp', ['competition' => (int) $cur['competition_id']]);
