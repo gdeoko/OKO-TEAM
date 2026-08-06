@@ -153,7 +153,40 @@ ob_start(); ?>
   <a class="btn btn--ghost btn--sm" href="<?= a_link('competitions', ['action' => 'edit', 'id' => $compId]) ?>"><?= admin_icon('competitions') ?>Карточка конкурса</a>
 </div>
 <div class="section-title">
-  <h2>Редактор диплома — <?= h($comp['name']) ?></h2>
+  <h2>Редактор наград — <?= h($comp['name']) ?></h2>
+  <a class="btn btn--ghost btn--sm" href="<?= a_link('diploma_editor') ?>"><?= admin_icon('back') ?>Все конкурсы</a>
+</div>
+
+<?php
+// Галерея всех наград конкурса: 4 диплома (превью) + фото наград (кубок/статуэтка/медаль).
+$sbase = url('/diploma-sample/' . $comp['slug']);
+$dipTypes = [
+    'Основной диплом'       => $sbase,
+    'Дополнительный диплом'  => $sbase . '?extra=1',
+    'Именной диплом'        => $sbase . '?named=1',
+    'Благодарность педагогу' => $sbase . '?thanks=1',
+];
+$awardDir = BASE_PATH . '/public/assets/img/awards/' . (int)$comp['id'] . '/';
+$awardPhotos = is_dir($awardDir) ? array_values(array_filter(scandir($awardDir) ?: [], fn($f) => preg_match('~\.(png|jpe?g|webp)$~i', $f))) : [];
+?>
+<div class="card" style="margin-bottom:16px">
+  <div class="section-title" style="margin-bottom:8px"><h3>Все награды конкурса — открыть и посмотреть</h3></div>
+  <p class="small muted" style="margin:-4px 0 12px">Дипломы (основной / дополнительный / именной / благодарность) собираются по макету ниже — нажмите, чтобы открыть образец каждого. Фото наград (кубок · статуэтка · медаль) — загрузка в «Конкурсы».</p>
+  <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:12px">
+    <?php foreach ($dipTypes as $lbl => $u): ?>
+      <a href="<?= h($u) ?>" target="_blank" rel="noopener" style="display:block;border:1px solid var(--a-line);border-radius:12px;overflow:hidden;text-decoration:none;background:#fff">
+        <div style="aspect-ratio:1.414/1;overflow:hidden;background:#f4f4f4"><iframe src="<?= h($u) ?>" style="width:283%;height:283%;transform:scale(.353);transform-origin:top left;border:0;pointer-events:none"></iframe></div>
+        <div style="padding:8px 10px;font-size:.82rem;font-weight:700;color:var(--a-navy)"><?= h($lbl) ?></div>
+      </a>
+    <?php endforeach; ?>
+    <?php foreach ($awardPhotos as $ph): ?>
+      <a href="<?= h(url('/assets/img/awards/' . (int)$comp['id'] . '/' . $ph)) ?>" target="_blank" rel="noopener" style="display:block;border:1px solid var(--a-line);border-radius:12px;overflow:hidden;text-decoration:none;background:#fff">
+        <div style="aspect-ratio:1.414/1;overflow:hidden;background:#f4f4f4;display:flex;align-items:center;justify-content:center"><img src="<?= h(url('/assets/img/awards/' . (int)$comp['id'] . '/' . $ph)) ?>" style="max-width:100%;max-height:100%;object-fit:contain"></div>
+        <div style="padding:8px 10px;font-size:.82rem;font-weight:700;color:var(--a-navy)"><?= h(pathinfo($ph, PATHINFO_FILENAME)) ?></div>
+      </a>
+    <?php endforeach; ?>
+    <a href="<?= a_link('competitions', ['id'=>(int)$comp['id']]) ?>" style="display:flex;align-items:center;justify-content:center;border:1px dashed var(--a-line);border-radius:12px;min-height:120px;text-decoration:none;color:var(--a-navy);font-weight:700;font-size:.85rem;text-align:center;padding:10px">+ Загрузить / изменить<br>фото наград</a>
+  </div>
 </div>
 
 <div class="de-wrap">

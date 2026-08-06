@@ -248,6 +248,7 @@ if (preg_match('#^/diploma-sample/([a-z0-9\-]+)$#', $route, $m)) {
         $opt = ['sample' => true];
         if (isset($_GET['thanks'])) $opt['thanks'] = true;
         if (isset($_GET['extra']))  $opt['extra']  = true;
+        if (isset($_GET['named']))  $opt['named']  = true;
         echo diploma_html($c, diploma_sample_app(), $opt);
         exit;
     }
