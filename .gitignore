@@ -24,3 +24,6 @@ OKO_MASTER_VAULT.md.b64
 # python cache
 __pycache__/
 *.pyc
+
+# Session scratchpad (temp helpers, secrets) — never commit
+scratchpad/
