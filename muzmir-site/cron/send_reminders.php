@@ -68,20 +68,11 @@ try {
 
     $orgHours = (string) cfgv('org_hours', '');
 
-    /* ---------- 1) Напоминание об оплате заявки ---------- */
+    /* ---------- 1) Напоминание об оплате заявки ----------
+     * ОТКЛЮЧЕНО: заменено точным дожимом cron/dunning.php (3 мин / 1 ч / 24 ч + автоудаление).
+     * Оставляем пустой набор, чтобы не было дублей писем об оплате. */
     $unpaid = 0;
-    // Дожим ТОЛЬКО по действительно неоплаченным заявкам на раннем этапе.
-    // Любой статус после оплаты (paid/judging/graded/sent/done) и отклонённые
-    // исключены — чтобы оплатившие участники НИКОГДА не получали «оплатите».
-    $rows = all(
-        "SELECT a.id, a.number, a.full_name, a.email, a.user_id, c.name AS comp_name
-           FROM applications a
-           JOIN competitions c ON c.id = a.competition_id
-          WHERE c.is_paid = 1 AND a.is_paid = 0
-            AND a.status NOT IN ('rejected','paid','judging','graded','sent','done')
-            AND a.email <> ''
-            AND a.created_at <= datetime('now', '-2 days')"
-    );
+    $rows = [];
     foreach ($rows as $a) {
         $id = (int) $a['id'];
         if (already_notified('reminder_payment', 'application', $id)) continue;
