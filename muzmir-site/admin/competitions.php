@@ -773,89 +773,10 @@ if ($action === 'edit') {
       if (!$isLongComp) unset($LW['results']);
     ?>
     <div class="card" id="launchPult" style="margin-top:22px">
-      <div class="section-title"><h3><?= admin_icon('send') ?>Пуск-пульт конкурса</h3></div>
-      <p class="small muted" style="margin:-4px 0 10px">Тексты по эталонам сообщества (правятся и сохраняются). «Запустить» разошлёт по выбранным каналам сразу или по расписанию. Ничего не уходит, пока не нажмёте «Запустить».</p>
-      <div style="margin:-4px 0 12px;padding:10px 12px;background:#FFF6E9;border:1px solid #F0D9A8;border-radius:10px;font-size:.82rem;color:#8B6F1F">
-        <b>«Осталось 3 дня», «Последний день», «Приём закрыт»</b> — это ОДИН общий пост сразу по всем открытым конкурсам. Запускайте его <b>один раз</b> (из любого конкурса), не по каждому. «Открытие» — отдельно на каждый конкурс.<?= !$isLongComp ? ' Пост «Результаты» у коротких платных не публикуется — результат уходит участнику на почту.' : '' ?>
-      </div>
-      <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:12px" id="lpWaves">
-        <?php $first=true; foreach ($LW as $wk=>$wl): ?>
-          <button type="button" class="btn btn--sm <?= $first?'btn--navy':'btn--ghost' ?>" data-wave="<?= h($wk) ?>"><?= h($wl) ?></button>
-        <?php $first=false; endforeach; ?>
-      </div>
-      <textarea id="lpText" style="width:100%;min-height:260px;padding:12px 14px;border:1px solid var(--a-line);border-radius:10px;font-size:13px;line-height:1.55;font-family:ui-monospace,Menlo,monospace" placeholder="Загрузка текста…"></textarea>
-      <div style="display:flex;gap:8px;flex-wrap:wrap;margin:10px 0 16px">
-        <button type="button" class="btn btn--navy btn--sm" id="lpSave"><?= admin_icon('check') ?>Сохранить текст</button>
-        <button type="button" class="btn btn--ghost btn--sm" id="lpReset">Вернуть эталон</button>
-        <span class="small muted" id="lpTextState" style="align-self:center"></span>
-      </div>
-      <div style="display:flex;gap:14px;flex-wrap:wrap;align-items:flex-end;margin-bottom:14px">
-        <div>
-          <div class="small muted" style="margin-bottom:6px">Каналы</div>
-          <div style="display:flex;gap:12px;flex-wrap:wrap">
-            <?php foreach ($LC as $ck=>$cl): ?>
-              <label style="display:flex;align-items:center;gap:6px;font-size:.85rem;white-space:nowrap"><input type="checkbox" class="lpCh" value="<?= h($ck) ?>" checked style="width:auto"> <?= h($cl) ?></label>
-            <?php endforeach; ?>
-          </div>
-        </div>
-        <div>
-          <div class="small muted" style="margin-bottom:6px">Когда (МСК)</div>
-          <input type="datetime-local" id="lpWhen" style="padding:8px 10px;border:1px solid var(--a-line);border-radius:8px">
-          <span class="small muted">пусто = сейчас</span>
-        </div>
-      </div>
-      <div style="display:flex;gap:8px;flex-wrap:wrap">
-        <button type="button" class="btn btn--ghost" id="lpPreview"><?= admin_icon('eye') ?>Предпросмотр</button>
-        <button type="button" class="btn btn--primary" id="lpFire"><?= admin_icon('send') ?>Запустить</button>
-      </div>
-      <div id="lpReport" style="display:none;margin-top:14px;padding:14px;border:1px solid var(--a-line);border-radius:10px;background:var(--a-soft,#f7f8fc);font-size:.88rem"></div>
+      <div class="section-title"><h3><?= admin_icon('rocket') ?>Запуск конкурса</h3></div>
+      <p class="small muted" style="margin:-4px 0 12px">Запуск рекламной кампании (посты в ВК, рассылки по почте и в приложении) вынесен в отдельный <b>общий пульт</b> — один запуск сразу на все конкурсы, с планированием на рабочее время и авто-постами 22/25 числа. Так не будет 4 одинаковых постов и случайных ночных публикаций.</p>
+      <a class="btn btn--primary" href="<?= a_link('launch') ?>"><?= admin_icon('rocket') ?>Открыть общий пульт запуска</a>
     </div>
-
-    <script>
-    (function(){
-      var CID=<?= (int)$id ?>, CSRF=<?= json_encode(csrf_token()) ?>, URL=<?= json_encode(url('/admin/?p=competitions')) ?>;
-      var wave='launch', T=document.getElementById('lpText'), ST=document.getElementById('lpTextState'), RP=document.getElementById('lpReport');
-      function post(d){var f=new FormData();f.append('id',CID);f.append('wave',wave);f.append('_csrf',CSRF);for(var k in d)f.append(k,d[k]);
-        return fetch(URL,{method:'POST',credentials:'same-origin',body:f}).then(function(r){return r.json();});}
-      function chans(){return Array.prototype.map.call(document.querySelectorAll('.lpCh:checked'),function(c){return c.value;}).join(',');}
-      function loadText(){T.value='Загрузка…';ST.textContent='';
-        fetch(URL+'&do=launch_text&id='+CID+'&wave='+wave,{credentials:'same-origin'}).then(function(r){return r.json();}).then(function(d){
-          if(d.ok){T.value=d.text;ST.textContent=d.is_custom?'✎ свой текст':'эталон';}else{T.value='';ST.textContent='ошибка';}});}
-      document.getElementById('lpWaves').addEventListener('click',function(e){var b=e.target.closest('[data-wave]');if(!b)return;
-        wave=b.getAttribute('data-wave');
-        Array.prototype.forEach.call(this.children,function(x){x.className='btn btn--sm '+(x===b?'btn--navy':'btn--ghost');});
-        RP.style.display='none';loadText();});
-      document.getElementById('lpSave').addEventListener('click',function(){post({do:'launch_save',text:T.value}).then(function(d){ST.textContent=d.is_custom?'✎ свой текст (сохранён)':'эталон';});});
-      document.getElementById('lpReset').addEventListener('click',function(){post({do:'launch_save',text:''}).then(function(){loadText();});});
-      document.getElementById('lpPreview').addEventListener('click',function(){
-        var ch=chans();if(!ch){alert('Выберите канал');return;}
-        RP.style.display='block';RP.innerHTML='Готовлю предпросмотр…';
-        post({do:'launch_preview',channels:ch}).then(function(d){
-          if(!d.ok){RP.innerHTML='<b style="color:#C0392B">'+(d.msg||'Ошибка')+'</b>';return;}
-          var h='<b>Предпросмотр (ничего не отправлено):</b><ul style="margin:8px 0 0;padding-left:18px">';
-          for(var k in (d.report||{}))h+='<li>'+k+': '+d.report[k]+'</li>';
-          h+='</ul>';
-          if(d.email_html)h+='<div style="margin-top:10px"><a href="#" id="lpMailPrev">Открыть превью письма →</a></div>';
-          RP.innerHTML=h;
-          if(d.email_html){document.getElementById('lpMailPrev').onclick=function(e){e.preventDefault();var w=window.open('','_blank');w.document.write(d.email_html);w.document.close();};}
-        });
-      });
-      document.getElementById('lpFire').addEventListener('click',function(){
-        var ch=chans();if(!ch){alert('Выберите канал');return;}
-        var when=document.getElementById('lpWhen').value;
-        var msg=when?('Запланировать рассылку на '+when.replace('T',' ')+' МСК по каналам: '+ch+'?'):('ЗАПУСТИТЬ СЕЙЧАС по каналам: '+ch+'? Это реальная отправка.');
-        if(!confirm(msg))return;
-        RP.style.display='block';RP.innerHTML='Запускаю…';
-        post({do:'launch_fire',channels:ch,when:when}).then(function(d){
-          if(!d.ok){RP.innerHTML='<b style="color:#C0392B">'+(d.msg||'Ошибка')+'</b>';return;}
-          var h='<b style="color:#1E7A44">'+(d.msg||'Готово')+'</b>';
-          if(d.report){h+='<ul style="margin:8px 0 0;padding-left:18px">';for(var k in d.report)h+='<li>'+k+': '+d.report[k]+'</li>';h+='</ul>';}
-          RP.innerHTML=h;
-        });
-      });
-      loadText();
-    })();
-    </script>
     <?php endif; ?>
 
     <?php

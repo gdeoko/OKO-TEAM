@@ -18,6 +18,7 @@ if (is_file(__DIR__ . '/mailer.php'))        require_once __DIR__ . '/mailer.php
 if (is_file(__DIR__ . '/newsletter.php'))     require_once __DIR__ . '/newsletter.php';
 if (is_file(__DIR__ . '/notifications.php'))   require_once __DIR__ . '/notifications.php';
 if (is_file(__DIR__ . '/vk.php'))              require_once __DIR__ . '/vk.php';
+if (is_file(__DIR__ . '/send_timing.php'))     require_once __DIR__ . '/send_timing.php';
 
 /** Человекочитаемые названия волн (порядок = порядок в пульте). */
 function launch_waves(): array {
@@ -269,18 +270,129 @@ function launch_fire(int $compId, string $wave, array $channels, string $when = 
     return ['ok' => true, 'scheduled' => false, 'report' => $report, 'msg' => $dry ? 'Предпросмотр (ничего не отправлено).' : 'Запущено.'];
 }
 
-/** Cron: выполнить наступившие запланированные запуски. Возвращает число выполненных. */
+/* =====================================================================
+ *  ОБЩИЙ ПУЛЬТ ЗАПУСКА (по всем конкурсам сразу) — планирование и авто-закрытие.
+ *  Ничего не публикуется само по себе: посты уходят ТОЛЬКО по расписанию,
+ *  которое оргкомитет явно создаёт кнопкой «Запланировать всё» в разделе «Запуск».
+ * ===================================================================== */
+
+/** Дата/время в рабочем окне: воскресенье → переносим на понедельник, время сохраняем. */
+function launch_workday_at(int $y, int $m, int $d, int $hh, int $mi): string {
+    $t = new \DateTime(sprintf('%04d-%02d-%02d %02d:%02d:00', $y, $m, $d, $hh, $mi));
+    while ((int) $t->format('w') === 0) { $t->modify('+1 day'); }   // вс — нерабочий
+    return $t->format('Y-m-d H:i:s');
+}
+
+/** Дата запуска по умолчанию: 1-е число (если вс — 2-е). Если 1-е уже прошло — след. месяц. */
+function launch_default_date(): string {
+    $now = new \DateTime('now');
+    $y = (int) $now->format('Y'); $m = (int) $now->format('n'); $d = (int) $now->format('j');
+    if ($d > 1) { $m++; if ($m > 12) { $m = 1; $y++; } }
+    $t = new \DateTime(sprintf('%04d-%02d-01 00:00:00', $y, $m));
+    if ((int) $t->format('w') === 0) $t->modify('+1 day');          // 1-е вс → 2-е
+    return $t->format('Y-m-d');
+}
+
+/**
+ * Запланировать ПОЛНЫЙ запуск: волна launch по всем открытым конкурсам на выбранные
+ * дату/время (приведённые к рабочему слоту) + общие посты d3/last/closed по месяцу запуска
+ * (22 09:00 «осталось 3 дня», 25 09:00 «последний день», 25 18:00 «приём закрыт»).
+ * Предыдущий незавершённый план отменяется.
+ */
+function launch_schedule_all(string $launchDate, string $launchTime, array $channels): array {
+    launch_migrate();
+    $channels = array_values(array_intersect($channels, array_keys(launch_channels())));
+    if (!$channels) return ['ok' => false, 'msg' => 'Не выбран ни один канал'];
+    $comps = launch_open_comps();
+    if (!$comps) return ['ok' => false, 'msg' => 'Нет открытых конкурсов (status=open) для запуска'];
+
+    q("UPDATE launch_jobs SET status='cancelled' WHERE status='scheduled'");
+
+    // Время запуска → ближайший рабочий слот (ночь/вс → 09:0x ближайшего рабочего дня).
+    $lt = strtotime($launchDate . ' ' . ($launchTime ?: '09:00'));
+    if (!$lt) $lt = time();
+    $fromDt = (new \DateTime())->setTimestamp($lt);
+    $slot = function_exists('next_working_slot') ? next_working_slot($fromDt) : $fromDt;
+    $runLaunch = $slot->format('Y-m-d H:i:s');
+
+    foreach ($comps as $c) {
+        insert('launch_jobs', ['competition_id' => (int) $c['id'], 'wave' => 'launch',
+            'channels' => implode(',', $channels), 'run_at' => $runLaunch, 'status' => 'scheduled']);
+    }
+
+    // Общие волны — по месяцу запуска. Представитель — первый открытый (сводные волны
+    // сами агрегируют все открытые конкурсы в один пост).
+    $ly = (int) date('Y', $lt); $lm = (int) date('n', $lt);
+    $rep = (int) $comps[0]['id'];
+    $d3     = launch_workday_at($ly, $lm, 22, 9, 0);
+    $last   = launch_workday_at($ly, $lm, 25, 9, 0);
+    $closed = launch_workday_at($ly, $lm, 25, 18, 0);
+    insert('launch_jobs', ['competition_id' => $rep, 'wave' => 'd3',     'channels' => implode(',', $channels), 'run_at' => $d3,     'status' => 'scheduled']);
+    insert('launch_jobs', ['competition_id' => $rep, 'wave' => 'last',   'channels' => implode(',', $channels), 'run_at' => $last,   'status' => 'scheduled']);
+    insert('launch_jobs', ['competition_id' => $rep, 'wave' => 'closed', 'channels' => implode(',', $channels), 'run_at' => $closed, 'status' => 'scheduled']);
+
+    if (function_exists('audit')) audit('launch_plan', 'competition', 0,
+        ['launch' => $runLaunch, 'd3' => $d3, 'last' => $last, 'closed' => $closed, 'comps' => count($comps), 'channels' => $channels]);
+    return ['ok' => true, 'scheduled' => [
+        'launch' => ['count' => count($comps), 'run_at' => $runLaunch],
+        'd3' => $d3, 'last' => $last, 'closed' => $closed,
+    ]];
+}
+
+/** Отменить весь текущий план (незавершённые задания). */
+function launch_cancel_all(): int {
+    launch_migrate();
+    $n = (int) scalar("SELECT COUNT(*) FROM launch_jobs WHERE status='scheduled'");
+    q("UPDATE launch_jobs SET status='cancelled' WHERE status='scheduled'");
+    if ($n && function_exists('audit')) audit('launch_plan_cancel', 'competition', 0, ['count' => $n]);
+    return $n;
+}
+
+/**
+ * Авто-закрытие приёма заявок (вызывается при выполнении волны 'closed', т.е. 25-е 18:00).
+ * Открытые конкурсы → status='closed' (уходят с афиши и из календаря, приём прекращается).
+ * Ставим флаг для публичного окна «новые конкурсы с 1 числа».
+ */
+function launch_close_intake(): void {
+    foreach (launch_open_comps() as $c) {
+        update('competitions', ['status' => 'closed'], 'id=:id', ['id' => (int) $c['id']]);
+    }
+    if (function_exists('set_setting')) {
+        set_setting('intake_closed', '1');
+        set_setting('intake_closed_at', date('Y-m-d H:i:s'));
+        // Дата следующего открытия — 1-е следующего месяца (для текста окна).
+        set_setting('intake_reopen_date', launch_default_date());
+    }
+    if (function_exists('audit')) audit('intake_closed', 'competition', 0, []);
+}
+
+/**
+ * Cron: выполнить наступившие запланированные запуски — С ЗАЩИТОЙ РАБОЧЕГО ВРЕМЕНИ.
+ * Посты уходят только в окне 09:00–18:00 и не в воскресенье. Если задание «просрочено»
+ * в нерабочее время (ночь/вс) — оно НЕ теряется и НЕ шлётся ночью, а ждёт ближайшего
+ * рабочего момента (страховка от случайной ночной публикации). Возвращает число выполненных.
+ */
 function launch_run_due(): int {
     launch_migrate();
-    $due = all("SELECT * FROM launch_jobs WHERE status='scheduled' AND run_at <= ? ORDER BY run_at ASC", [date('Y-m-d H:i:s')]);
+    $now = new \DateTime('now');
+    $h = (int) $now->format('G');
+    $isSunday = ((int) $now->format('w') === 0);
+    // Рабочее окно 09:00–18:00 включительно (18:00 — момент закрытия приёма).
+    $inWindow = (!$isSunday && $h >= 9 && $h <= 18);
+    if (!$inWindow) return 0;   // вне рабочего окна ничего не публикуем
+
+    $due = all("SELECT * FROM launch_jobs WHERE status='scheduled' AND run_at <= ? ORDER BY run_at ASC", [$now->format('Y-m-d H:i:s')]);
     $done = 0;
     foreach ($due as $j) {
+        $wave = (string) $j['wave'];
         $channels = array_filter(array_map('trim', explode(',', (string) $j['channels'])));
-        $res = launch_fire((int) $j['competition_id'], (string) $j['wave'], $channels, '', false);
+        $res = launch_fire((int) $j['competition_id'], $wave, $channels, '', false);
         update('launch_jobs', [
-            'status' => 'done', 'done_at' => date('Y-m-d H:i:s'),
+            'status' => 'done', 'done_at' => $now->format('Y-m-d H:i:s'),
             'report' => json_encode($res['report'] ?? [], JSON_UNESCAPED_UNICODE),
         ], 'id=:id', ['id' => (int) $j['id']]);
+        // Волна «приём закрыт» → авто-закрытие приёма заявок и афиш.
+        if ($wave === 'closed') { try { launch_close_intake(); } catch (\Throwable $e) { error_log('launch_close_intake: ' . $e->getMessage()); } }
         $done++;
     }
     return $done;

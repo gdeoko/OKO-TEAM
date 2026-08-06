@@ -49,6 +49,7 @@ function admin_icon(string $name): string {
         'trophy'       => '<path d="M8 21h8M12 17v4M7 4h10v5a5 5 0 0 1-10 0V4zM17 5h3v2a3 3 0 0 1-3 3M7 5H4v2a3 3 0 0 0 3 3"/>',
         'truck'        => '<path d="M1 3h15v13H1zM16 8h4l3 3v5h-7M5.5 21a2 2 0 1 0 0-4 2 2 0 0 0 0 4zM18.5 21a2 2 0 1 0 0-4 2 2 0 0 0 0 4z"/>',
         'search'       => '<circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/>',
+        'rocket'       => '<path d="M4.5 16.5c-1.5 1.26-2 5-2 5s3.74-.5 5-2c.71-.84.7-2.13-.09-2.91a2.18 2.18 0 0 0-2.91-.09zM12 15l-3-3a22 22 0 0 1 2-3.95A12.88 12.88 0 0 1 22 2c0 2.72-.78 7.5-6 11a22.35 22.35 0 0 1-4 2z"/><path d="M9 12H4s.55-3.03 2-4c1.62-1.08 5 0 5 0M12 15v5s3.03-.55 4-2c1.08-1.62 0-5 0-5"/>',
     ];
     $body = $p[$name] ?? $p['dashboard'];
     return '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' . $body . '</svg>';
@@ -63,6 +64,7 @@ function admin_modules(): array {
         'grading'      => ['Оценка коротких', 'jury',    'grading'],
         'longcomp'     => ['Оценка длинных', 'jury',    'chart'],
         'dispatch'     => ['Отправки',     'moderator', 'send'],
+        'launch'       => ['Запуск',       'admin',     'rocket'],
         'diploma_editor' => ['Редактор наград', 'moderator', 'edit'],
         // Скрыты из сайдбара (4-й флаг true), но доступны по ссылке из «Редактора наград».
         'diplomas'     => ['Дипломы',      'moderator', 'diplomas', true],

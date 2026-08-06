@@ -17,8 +17,11 @@ $fSort   = input('sort', 'default');  if (!isset($SORT_FILTERS[$fSort]))     $fS
 
 /* --- Серверная выборка из БД (type/dir/sort фильтруют на сервере; статус -
    таб на JS-хуках поверх полной выборки, с noscript-фолбэком через CSS/ссылку). --- */
-$where = ["status <> 'draft'"];
+// Черновики и ЗАКРЫТЫЕ (авто-закрытие приёма 25-го в 18:00) не показываем в афише.
+$where = ["status <> 'draft'", "status <> 'closed'"];
 $args  = [];
+$intakeClosed = (string) setting('intake_closed', '') === '1';
+$reopenDate   = (string) setting('intake_reopen_date', '');
 if ($fType !== 'all') { $where[] = "type = ?";      $args[] = $fType; }
 if ($fDir !== 'all')  { $where[] = "direction = ?"; $args[] = $fDir; }
 
@@ -90,11 +93,39 @@ ob_start(); ?>
 
 <section class="section">
   <div class="container">
+    <?php if ($intakeClosed): ?>
+      <?php $reopenTxt = $reopenDate ? ru_date($reopenDate) : '1-го числа следующего месяца'; ?>
+      <div class="intake-closed-banner reveal" role="status">
+        <div class="icb-badge"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg></div>
+        <h3>Приём заявок этого месяца завершён</h3>
+        <p>Спасибо всем участникам! Новые конкурсы откроются <b><?= h($reopenTxt) ?></b>.
+        Подпишитесь на уведомления в приложении — сообщим о старте первыми, чтобы Вы успели подать заявку в срок.</p>
+        <div class="icb-actions">
+          <a class="btn btn--primary" href="<?= url('/reviews') ?>">Смотреть работы участников</a>
+          <a class="btn btn--ghost" href="<?= url('/menu') ?>">В меню</a>
+        </div>
+      </div>
+      <style>
+        .intake-closed-banner{text-align:center;max-width:620px;margin:0 auto 8px;padding:34px 26px;border-radius:20px;
+          background:linear-gradient(160deg,#fff,#F6F1E6);border:1px solid #E8DFC7;box-shadow:0 18px 50px rgba(60,45,10,.10)}
+        .intake-closed-banner .icb-badge{width:58px;height:58px;margin:0 auto 14px;border-radius:50%;display:flex;align-items:center;justify-content:center;
+          background:rgba(200,160,60,.14);color:#B98A2E}
+        .intake-closed-banner .icb-badge svg{width:30px;height:30px}
+        .intake-closed-banner h3{margin:0 0 8px;font-size:1.35rem}
+        .intake-closed-banner p{color:var(--muted,#6a7096);margin:0 0 18px;line-height:1.65}
+        .intake-closed-banner .icb-actions{display:flex;gap:10px;justify-content:center;flex-wrap:wrap}
+        [data-theme="dark"] .intake-closed-banner{background:linear-gradient(160deg,#1a1e2e,#20222f);border-color:#3a3320}
+      </style>
+    <?php endif; ?>
     <?php if (!$comps): ?>
+      <?php if ($intakeClosed): ?>
+        <!-- Плашка выше уже всё объясняет — второй блок «ничего не найдено» не показываем. -->
+      <?php else: ?>
       <div class="card reveal" style="text-align:center">
         <h3>Ничего не найдено</h3>
         <p style="color:var(--muted)">По выбранным условиям конкурсов нет. Измените фильтры или посмотрите <a href="<?= h($tabHref('all')) ?>">все конкурсы</a>.</p>
       </div>
+      <?php endif; ?>
     <?php else: ?>
       <p class="cf-count reveal" data-count-all="<?= count($comps) ?>" data-count-open="<?= $openCount ?>">
         <span data-count-label></span>
