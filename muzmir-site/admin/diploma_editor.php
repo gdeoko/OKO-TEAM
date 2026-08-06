@@ -52,6 +52,69 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && input('do') === 'reset_diploma_tpl'
     admin_redirect('diploma_editor', ['comp' => $cid]);
 }
 
+/* ---------- Сохранение фото наград и фона диплома (по каждому конкурсу) ---------- */
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && input('do') === 'save_award_media') {
+    if (!csrf_check()) { flash('Сессия устарела, повторите.', 'error'); admin_redirect('diploma_editor', ['comp' => $compId]); }
+    $cid = (int) input('competition');
+    if ($cid <= 0 || !one("SELECT id FROM competitions WHERE id=?", [$cid])) {
+        flash('Конкурс не найден.', 'error'); admin_redirect('diploma_editor');
+    }
+    $errs = []; $okList = [];
+    // Единый разбор одного файлового поля -> сохранение в целевой путь как есть.
+    $takeFile = function (string $field) use (&$errs): ?array {
+        $f = $_FILES[$field] ?? null;
+        if (!$f || ($f['error'] ?? UPLOAD_ERR_NO_FILE) === UPLOAD_ERR_NO_FILE) return null; // поле пустое — не трогаем
+        $err = (int)($f['error'] ?? UPLOAD_ERR_OK);
+        if ($err === UPLOAD_ERR_INI_SIZE || $err === UPLOAD_ERR_FORM_SIZE) { $errs[] = 'файл слишком большой (лимит 30 МБ)'; return null; }
+        if ($err !== UPLOAD_ERR_OK || !is_uploaded_file($f['tmp_name'])) { $errs[] = 'ошибка загрузки файла'; return null; }
+        $ext = strtolower(pathinfo((string)$f['name'], PATHINFO_EXTENSION));
+        if ($ext === 'jpeg') $ext = 'jpg';
+        if (!in_array($ext, ['png','jpg','webp'], true)) { $errs[] = 'формат должен быть png/jpg/webp'; return null; }
+        if ((int)$f['size'] > 30 * 1024 * 1024) { $errs[] = 'файл больше 30 МБ'; return null; }
+        $mime = function_exists('mime_content_type') ? (string) @mime_content_type($f['tmp_name']) : '';
+        if ($mime !== '' && !str_starts_with($mime, 'image/')) { $errs[] = 'файл не является изображением'; return null; }
+        return ['tmp' => $f['tmp_name'], 'ext' => $ext];
+    };
+
+    // 1) Именованные слоты наград -> public/assets/img/awards/<cid>/{slug}.jpg (канон .jpg).
+    $slotDir = BASE_PATH . '/public/assets/img/awards/' . $cid . '/';
+    $slots = ['cup' => 'Кубок', 'statuette' => 'Статуэтка', 'medal' => 'Медаль'];
+    foreach ($slots as $slug => $label) {
+        $file = $takeFile('award_' . $slug);
+        if ($file === null) continue;
+        if (!is_dir($slotDir)) @mkdir($slotDir, 0775, true);
+        if (@move_uploaded_file($file['tmp'], $slotDir . $slug . '.jpg')) { @chmod($slotDir . $slug . '.jpg', 0664); $okList[] = $label; }
+        else $errs[] = $label . ': не удалось сохранить (права на папку)';
+    }
+
+    // 2) Фон диплома А4 (он же фон благодарности) -> uploads/comp/<cid>/diploma_bg.<ext>.
+    $bg = $takeFile('diploma_bg_file');
+    if ($bg !== null) {
+        $bgDir = BASE_PATH . '/public/uploads/comp/' . $cid . '/';
+        if (!is_dir($bgDir)) @mkdir($bgDir, 0775, true);
+        foreach (glob($bgDir . 'diploma_bg.*') ?: [] as $old) @unlink($old); // старый фон убрать
+        $rel = 'uploads/comp/' . $cid . '/diploma_bg.' . $bg['ext'];
+        if (@move_uploaded_file($bg['tmp'], BASE_PATH . '/public/' . $rel)) {
+            @chmod(BASE_PATH . '/public/' . $rel, 0664);
+            update('competitions', ['diploma_bg' => $rel], 'id=:wid', ['wid' => $cid]);
+            $okList[] = 'Фон диплома';
+        } else $errs[] = 'Фон диплома: не удалось сохранить';
+    }
+
+    // 3) Сброс фона диплома к градиенту по умолчанию.
+    if (input('drop_bg') === '1') {
+        $bgDir = BASE_PATH . '/public/uploads/comp/' . $cid . '/';
+        foreach (glob($bgDir . 'diploma_bg.*') ?: [] as $old) @unlink($old);
+        update('competitions', ['diploma_bg' => ''], 'id=:wid', ['wid' => $cid]);
+        $okList[] = 'Фон сброшен к градиенту';
+    }
+
+    if ($okList) { audit('award_media_save', 'competition', $cid, ['saved' => $okList]); flash('Сохранено: ' . implode(', ', $okList) . '.', 'success'); }
+    if ($errs)  { flash('Не сохранено: ' . implode('; ', array_unique($errs)) . '.', 'error'); }
+    if (!$okList && !$errs) flash('Файлы не выбраны — ничего не изменилось.', 'error');
+    admin_redirect('diploma_editor', ['comp' => $cid]);
+}
+
 /* ---------- Живой предпросмотр для iframe (raw HTML диплома) ---------- */
 if (input('preview') === '1' && $compId) {
     $c = one("SELECT * FROM competitions WHERE id=?", [$compId]);
@@ -75,8 +138,9 @@ if (!$comp) {
     ob_start(); ?>
     <div class="section-title"><h2>Редактор наград</h2></div>
     <div class="card">
-      <p class="small muted" style="margin-top:0">Единый раздел наград по действующим конкурсам: макеты дипломов (основной / дополнительный / именной / благодарность),
-        фото наград (кубок · статуэтка · медаль) и операции с дипломами. Выберите конкурс — откроется визуальный редактор макета.</p>
+      <p class="small muted" style="margin-top:0">Единый раздел наград по каждому конкурсу отдельно: загрузка фото наград (кубок · статуэтка · медаль),
+        фон диплома и благодарности, макеты дипломов (основной / дополнительный / именной / благодарность) и операции с дипломами.
+        Выберите конкурс — откроются загрузка фото наград и визуальный редактор макета.</p>
       <div class="table-wrap"><table class="tbl">
         <thead><tr><th>Конкурс</th><th>Статус</th><th>Фон</th><th>Настройки</th><th style="width:340px"></th></tr></thead>
         <tbody>
@@ -87,9 +151,8 @@ if (!$comp) {
             <td class="small"><?= $r['diploma_bg'] ? h(basename((string)$r['diploma_bg'])) : '<span class="muted">градиент по умолчанию</span>' ?></td>
             <td class="small"><?= ($r['diploma_template'] && ($r['diploma_template'][0] ?? '') === '{') ? 'настроен' : '<span class="muted">по умолчанию</span>' ?></td>
             <td class="icon-cell" style="text-align:right;white-space:nowrap">
-              <a class="btn btn--primary btn--sm" href="<?= a_link('diploma_editor', ['comp' => $r['id']]) ?>"><?= admin_icon('edit') ?>Макет диплома</a>
+              <a class="btn btn--primary btn--sm" href="<?= a_link('diploma_editor', ['comp' => $r['id']]) ?>"><?= admin_icon('trophy') ?>Награды и макет</a>
               <a class="btn btn--ghost btn--sm" href="<?= h(url('/diploma-sample/' . $r['slug'])) ?>" target="_blank" rel="noopener"><?= admin_icon('eye') ?>Образец</a>
-              <a class="btn btn--ghost btn--sm" href="<?= a_link('competitions', ['id' => $r['id']]) ?>"><?= admin_icon('trophy') ?>Фото наград</a>
               <a class="btn btn--ghost btn--sm" href="<?= a_link('diplomas', ['competition' => $r['id']]) ?>"><?= admin_icon('diplomas') ?>Дипломы</a>
             </td>
           </tr>
@@ -166,26 +229,79 @@ $dipTypes = [
     'Именной диплом'        => $sbase . '?named=1',
     'Благодарность педагогу' => $sbase . '?thanks=1',
 ];
-$awardDir = BASE_PATH . '/public/assets/img/awards/' . (int)$comp['id'] . '/';
-$awardPhotos = is_dir($awardDir) ? array_values(array_filter(scandir($awardDir) ?: [], fn($f) => preg_match('~\.(png|jpe?g|webp)$~i', $f))) : [];
+$cidI = (int)$comp['id'];
+$awardDirFs = BASE_PATH . '/public/assets/img/awards/' . $cidI . '/';
+// Текущее фото слота с версией по mtime (антикэш) или null.
+$slotSrc = function (string $slug) use ($awardDirFs, $cidI): ?string {
+    $p = $awardDirFs . $slug . '.jpg';
+    if (!is_file($p)) return null;
+    return url('/assets/img/awards/' . $cidI . '/' . $slug . '.jpg') . '?v=' . filemtime($p);
+};
+$awardSlots = ['cup' => 'Кубок', 'statuette' => 'Статуэтка', 'medal' => 'Медаль'];
+$bgPath = trim((string)($comp['diploma_bg'] ?? ''));
+$bgFsPath = $bgPath !== '' ? BASE_PATH . '/public/' . ltrim($bgPath, '/') : '';
+$bgSrc = ($bgFsPath && is_file($bgFsPath)) ? url('/' . ltrim($bgPath, '/')) . '?v=' . filemtime($bgFsPath) : null;
 ?>
+<style>
+.aw-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:14px}
+.aw-slot{border:1px solid var(--a-line);border-radius:14px;overflow:hidden;background:#fff;display:flex;flex-direction:column}
+.aw-slot__img{aspect-ratio:1/1;background:#f4f4f4;display:flex;align-items:center;justify-content:center;overflow:hidden}
+.aw-slot__img img{max-width:100%;max-height:100%;object-fit:contain}
+.aw-slot__empty{color:var(--a-muted);font-size:.8rem;text-align:center;padding:10px}
+.aw-slot__body{padding:9px 11px;display:flex;flex-direction:column;gap:7px}
+.aw-slot__ttl{font-size:.86rem;font-weight:700;color:var(--a-navy)}
+.aw-slot input[type=file]{font-size:.74rem;width:100%}
+.aw-note{font-size:.78rem;color:var(--a-muted);line-height:1.45;margin:6px 0 0}
+[data-theme=dark] .aw-slot{background:#1c1b23}
+[data-theme=dark] .aw-slot__ttl{color:#fff}
+</style>
 <div class="card" style="margin-bottom:16px">
-  <div class="section-title" style="margin-bottom:8px"><h3>Все награды конкурса — открыть и посмотреть</h3></div>
-  <p class="small muted" style="margin:-4px 0 12px">Дипломы (основной / дополнительный / именной / благодарность) собираются по макету ниже — нажмите, чтобы открыть образец каждого. Фото наград (кубок · статуэтка · медаль) — загрузка в «Конкурсы».</p>
-  <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:12px">
+  <div class="section-title" style="margin-bottom:8px"><h3>Фото наград и фон диплома — <?= h($comp['name']) ?></h3></div>
+  <p class="aw-note" style="margin-top:-2px">Отдельно по этому конкурсу. Загрузите фото кубка, статуэтки и медали и фон диплома (он же фон благодарности). Максимум 30 МБ на файл — png/jpg/webp. После загрузки картинка обновится сразу.</p>
+  <form method="post" action="<?= url('/admin/') ?>" enctype="multipart/form-data" style="margin-top:12px">
+    <?= csrf_field() ?>
+    <input type="hidden" name="do" value="save_award_media">
+    <input type="hidden" name="competition" value="<?= $cidI ?>">
+    <div class="aw-grid">
+      <?php foreach ($awardSlots as $slug => $label): $src = $slotSrc($slug); ?>
+        <div class="aw-slot">
+          <div class="aw-slot__img">
+            <?php if ($src): ?><img src="<?= h($src) ?>" alt="<?= h($label) ?>">
+            <?php else: ?><div class="aw-slot__empty">нет фото<br><?= h($label) ?></div><?php endif; ?>
+          </div>
+          <div class="aw-slot__body">
+            <div class="aw-slot__ttl"><?= h($label) ?></div>
+            <input type="file" name="award_<?= $slug ?>" accept="image/png,image/jpeg,image/webp">
+          </div>
+        </div>
+      <?php endforeach; ?>
+      <!-- Фон диплома / благодарности -->
+      <div class="aw-slot">
+        <div class="aw-slot__img">
+          <?php if ($bgSrc): ?><img src="<?= h($bgSrc) ?>" alt="Фон диплома">
+          <?php else: ?><div class="aw-slot__empty">градиент<br>по умолчанию</div><?php endif; ?>
+        </div>
+        <div class="aw-slot__body">
+          <div class="aw-slot__ttl">Фон диплома и благодарности</div>
+          <input type="file" name="diploma_bg_file" accept="image/png,image/jpeg,image/webp">
+          <?php if ($bgSrc): ?><label style="font-size:.76rem;color:var(--a-muted);display:flex;align-items:center;gap:6px"><input type="checkbox" name="drop_bg" value="1"> убрать фон (градиент)</label><?php endif; ?>
+        </div>
+      </div>
+    </div>
+    <div class="toolbar" style="margin:14px 0 0">
+      <button class="btn btn--primary"><?= admin_icon('check') ?>Сохранить фото наград и фон</button>
+    </div>
+  </form>
+
+  <div class="section-title" style="margin:18px 0 8px"><h3>Образцы дипломов — открыть и посмотреть</h3></div>
+  <p class="aw-note" style="margin-top:-2px">Собираются по макету ниже. Нажмите, чтобы открыть образец каждого типа.</p>
+  <div class="aw-grid" style="margin-top:10px">
     <?php foreach ($dipTypes as $lbl => $u): ?>
-      <a href="<?= h($u) ?>" target="_blank" rel="noopener" style="display:block;border:1px solid var(--a-line);border-radius:12px;overflow:hidden;text-decoration:none;background:#fff">
+      <a href="<?= h($u) ?>" target="_blank" rel="noopener" style="display:block;border:1px solid var(--a-line);border-radius:14px;overflow:hidden;text-decoration:none;background:#fff">
         <div style="aspect-ratio:1.414/1;overflow:hidden;background:#f4f4f4"><iframe src="<?= h($u) ?>" style="width:283%;height:283%;transform:scale(.353);transform-origin:top left;border:0;pointer-events:none"></iframe></div>
         <div style="padding:8px 10px;font-size:.82rem;font-weight:700;color:var(--a-navy)"><?= h($lbl) ?></div>
       </a>
     <?php endforeach; ?>
-    <?php foreach ($awardPhotos as $ph): ?>
-      <a href="<?= h(url('/assets/img/awards/' . (int)$comp['id'] . '/' . $ph)) ?>" target="_blank" rel="noopener" style="display:block;border:1px solid var(--a-line);border-radius:12px;overflow:hidden;text-decoration:none;background:#fff">
-        <div style="aspect-ratio:1.414/1;overflow:hidden;background:#f4f4f4;display:flex;align-items:center;justify-content:center"><img src="<?= h(url('/assets/img/awards/' . (int)$comp['id'] . '/' . $ph)) ?>" style="max-width:100%;max-height:100%;object-fit:contain"></div>
-        <div style="padding:8px 10px;font-size:.82rem;font-weight:700;color:var(--a-navy)"><?= h(pathinfo($ph, PATHINFO_FILENAME)) ?></div>
-      </a>
-    <?php endforeach; ?>
-    <a href="<?= a_link('competitions', ['id'=>(int)$comp['id']]) ?>" style="display:flex;align-items:center;justify-content:center;border:1px dashed var(--a-line);border-radius:12px;min-height:120px;text-decoration:none;color:var(--a-navy);font-weight:700;font-size:.85rem;text-align:center;padding:10px">+ Загрузить / изменить<br>фото наград</a>
   </div>
 </div>
 
