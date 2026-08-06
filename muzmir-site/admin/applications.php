@@ -156,7 +156,8 @@ if ($id = (int) input('id')) {
     ob_start(); ?>
     <div class="toolbar">
       <a class="btn btn--ghost btn--sm" href="<?= a_link('applications') ?>"><?= admin_icon('back') ?>К списку</a>
-      <?php if (admin_can('grading')): ?><a class="btn btn--navy btn--sm" href="<?= a_link('grading', ['id'=>$id]) ?>"><?= admin_icon('grading') ?>Оценить</a><?php endif; ?>
+      <?php /* Кнопка «Оценить» убрана намеренно (Даниэль): оценка ТОЛЬКО в разделах
+              «Оценка коротких» / «Оценка длинных», короткие и длинные не пересекаются. */ ?>
     </div>
     <div class="grid grid-2">
       <div class="card">

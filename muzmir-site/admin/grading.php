@@ -325,6 +325,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && input('do') === 'grade_result') {
     if ($appId && in_array($result, RESULT_PRESETS(), true)) {
         $cur = one("SELECT * FROM applications WHERE id=?", [$appId]);
         if (!$cur) { flash('Заявка не найдена.', 'error'); admin_redirect('grading'); }
+        // ЗАЩИТА ОТ БАГА: не оцениваем длинный конкурс здесь (моментальная отправка результата).
+        $curMode = one("SELECT results_mode FROM competitions WHERE id=?", [(int) $cur['competition_id']]);
+        if ((string) ($curMode['results_mode'] ?? '') === 'list') {
+            flash('Это длинный конкурс — оценка в разделе «Оценка длинных».', 'error');
+            admin_redirect('longcomp', ['id' => $appId]);
+        }
         // Балльная система убрана — итог задаётся только званием, без числового балла.
         $score = null;
         // Срок отправки диплома:
@@ -437,6 +443,12 @@ if ($id = (int) input('id')) {
     $a = one("SELECT a.*, c.name comp, c.is_paid comp_paid, c.results_mode FROM applications a
               LEFT JOIN competitions c ON c.id=a.competition_id WHERE a.id=?", [$id]);
     if (!$a) { flash('Заявка не найдена.', 'error'); admin_redirect('grading'); }
+    // ЗАЩИТА ОТ БАГА: длинный конкурс (results_mode='list') нельзя оценивать здесь как короткий
+    // (иначе моментально уходит результат на почту). Такие заявки — только в «Оценка длинных».
+    if ((string) ($a['results_mode'] ?? '') === 'list') {
+        flash('Это длинный конкурс. Оценка — в разделе «Оценка длинных».', 'error');
+        admin_redirect('longcomp', ['id' => $id]);
+    }
     $jid = (int) (current_user()['id'] ?? 0);
     $my = one("SELECT * FROM jury_grades WHERE application_id=? AND jury_id=?", [$id, $jid]);
     $embed = $a['video_url'] ? grading_embed($a['video_url']) : null;

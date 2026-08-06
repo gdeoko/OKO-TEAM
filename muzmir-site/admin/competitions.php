@@ -437,17 +437,19 @@ if ($action === 'edit') {
     // Если прайс пуст — подставляем канонический список наград (как в разделе «Награды»/образцах),
     // чтобы блок не был пустым и админ сразу видел ВСЕ позиции с ценами по умолчанию.
     if (!$prices) {
+        // Единый прайс наград (Даниэль): на ВСЕ конкурсы.
         $prices = [
-            ['item'=>'Кубок Гран-при',        'kind'=>'original', 'price'=>2500],
-            ['item'=>'Статуэтка лауреата',    'kind'=>'original', 'price'=>1800],
-            ['item'=>'Медаль дипломанта',     'kind'=>'original', 'price'=>900],
+            ['item'=>'Кубок',                 'kind'=>'original', 'price'=>1000],
+            ['item'=>'Статуэтка',             'kind'=>'original', 'price'=>800],
+            ['item'=>'Медаль',                'kind'=>'original', 'price'=>500],
+            ['item'=>'Основной диплом',       'kind'=>'digital',  'price'=>400],
             ['item'=>'Основной диплом',       'kind'=>'original', 'price'=>500],
-            ['item'=>'Основной диплом',       'kind'=>'digital',  'price'=>0],
-            ['item'=>'Дополнительный диплом',  'kind'=>'original', 'price'=>500],
-            ['item'=>'Дополнительный диплом',  'kind'=>'digital',  'price'=>0],
+            ['item'=>'Дополнительный диплом',  'kind'=>'digital',  'price'=>350],
+            ['item'=>'Дополнительный диплом',  'kind'=>'original', 'price'=>450],
+            ['item'=>'Благодарность',         'kind'=>'digital',  'price'=>300],
+            ['item'=>'Благодарность',         'kind'=>'original', 'price'=>400],
+            ['item'=>'Именной диплом',        'kind'=>'digital',  'price'=>400],
             ['item'=>'Именной диплом',        'kind'=>'original', 'price'=>500],
-            ['item'=>'Благодарность',         'kind'=>'original', 'price'=>500],
-            ['item'=>'Благодарность',         'kind'=>'digital',  'price'=>0],
         ];
     }
     $appsCount = $id ? (int) scalar("SELECT COUNT(*) FROM applications WHERE competition_id=?", [$id]) : 0;
