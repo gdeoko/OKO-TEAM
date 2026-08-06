@@ -13,6 +13,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     redirect('/notifications');
 }
 
+// Клик по уведомлению: помечаем прочитанным и уводим на его ссылку (GET, без JS).
+if (($openId = (int) input('open')) > 0) {
+    notify_mark_read($uid, $openId);
+    $n = one("SELECT url FROM notifications WHERE id=? AND user_id=?", [$openId, $uid]);
+    $dest = ($n && !empty($n['url'])) ? (string) $n['url'] : '/notifications';
+    redirect($dest);
+}
+
 // При открытии — считаем показанные как «прочитанные» через 3 сек JS-таймером (см. ниже)
 $list = notify_list($uid, 100);
 $unread = notify_unread_count($uid);
@@ -23,7 +31,10 @@ $iconSvgs = [
   'diploma' => '<path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6M9 15l2 2 4-4"/>',
   'pay'     => '<rect x="3" y="6" width="18" height="12" rx="2"/><path d="M3 10h18M6 15h4"/>',
   'star'    => '<path d="M12 2l3 7h7l-5.5 4 2 7L12 16l-6.5 4 2-7L2 9h7z"/>',
+  'chat'    => '<path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8z"/>',
 ];
+// Уведомления «от чат-бота» (советы, нуджи, промо) — чат-иконка.
+$iconAlias = ['nudge' => 'chat', 'promo' => 'chat', 'tip_help' => 'chat', 'tip_vk' => 'chat', 'tip_max' => 'chat', 'tip_vip' => 'star'];
 
 ob_start(); ?>
 <section class="section" style="padding-top:22px">
@@ -50,11 +61,13 @@ ob_start(); ?>
     <?php else: ?>
       <div class="notif-list">
         <?php foreach ($list as $n):
-          $svg = $iconSvgs[$n['icon'] ?? 'bell'] ?? $iconSvgs['bell'];
+          $icKey = $iconAlias[$n['icon'] ?? ''] ?? ($n['icon'] ?? 'bell');
+          $svg = $iconSvgs[$icKey] ?? $iconSvgs['bell'];
           $unreadCls = (int)$n['is_read'] ? '' : ' unread';
         ?>
-          <?php $tag = !empty($n['url']) ? 'a' : 'div'; ?>
-          <<?= $tag ?> class="notif-item<?= $unreadCls ?>"<?php if (!empty($n['url'])): ?> href="<?= h($n['url']) ?>"<?php endif; ?>>
+          <?php $tag = !empty($n['url']) ? 'a' : 'div';
+                // Клик уводит через ?open=ID — уведомление помечается прочитанным на сервере. ?>
+          <<?= $tag ?> class="notif-item<?= $unreadCls ?>"<?php if (!empty($n['url'])): ?> href="<?= h(url('/notifications')) ?>?open=<?= (int)$n['id'] ?>"<?php endif; ?>>
             <div class="notif-ic">
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><?= $svg ?></svg>
             </div>
@@ -73,16 +86,23 @@ ob_start(); ?>
 
 <script>
 // Автоматически помечаем показанные уведомления прочитанными через 3 секунды
-setTimeout(function(){
-  if (document.querySelector('.notif-item.unread')) {
-    fetch('/notifications', {
-      method:'POST',
-      credentials:'same-origin',
+// (токен CSRF рендерим на сервере — meta-тега csrf-token на странице нет).
+(function(){
+  var CSRF = <?= json_encode(csrf_token(), JSON_UNESCAPED_SLASHES) ?>;
+  setTimeout(function(){
+    if (!document.querySelector('.notif-item.unread')) return;
+    fetch('<?= url('/notifications') ?>', {
+      method:'POST', credentials:'same-origin',
       headers:{'Content-Type':'application/x-www-form-urlencoded'},
-      body: 'action=read_all&_csrf=' + encodeURIComponent(document.querySelector('meta[name=csrf-token]')?.content || '')
+      body: 'action=read_all&_csrf=' + encodeURIComponent(CSRF)
+    }).then(function(){
+      document.querySelectorAll('.notif-item.unread').forEach(function(el){ el.classList.remove('unread'); });
+      document.querySelectorAll('.notif-dot').forEach(function(d){ d.remove(); });
+      // Погасить бейджи в шапке (колокольчик) и нижнем меню (профиль) сразу.
+      document.querySelectorAll('.app-icon-badge,.appnav-badge').forEach(function(b){ b.remove(); });
     }).catch(function(){});
-  }
-}, 3000);
+  }, 3000);
+})();
 </script>
 <?php
 $content = ob_get_clean();

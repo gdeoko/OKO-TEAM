@@ -70,7 +70,43 @@ try {
         }
     }
 
-    cron_log(JOB, "нудж:$nudged промо:$promoed");
+    /* 3) Ротация «сообщений от чат-бота»: помощь, подписка ВК/МАКС, ВИП-клуб.
+          Каждому активному пользователю — не чаще одного типа раз в 30 дней,
+          и не больше одного нового типа за проход (чтобы не спамить). */
+    $TIPS = [
+        'tip_help' => ['Мы на связи — помогу с заявкой',
+            'Есть вопрос по конкурсу, оплате или диплому? Напишите в чат — подскажу по шагам.',
+            '/contacts', 'tip_help'],
+        'tip_vk'   => ['Подпишитесь на нас ВКонтакте',
+            'Новости конкурсов, результаты и розыгрыши — в нашей группе ВКонтакте.',
+            'https://vk.com/muzmir_kc', 'tip_vk'],
+        'tip_max'  => ['Мы теперь и в МАКС',
+            'Подпишитесь на канал в МАКС — уведомления о новых конкурсах и дедлайнах.',
+            'https://max.ru/join', 'tip_max'],
+        'tip_vip'  => ['ВИП-клуб «Музыкальный Мир»',
+            'Скидки на конкурсы, приоритетная проверка и комментарии жюри. Загляните в клуб.',
+            '/club', 'tip_vip'],
+    ];
+    $tipped = 0; $TIP_CAP = 400;
+    // Активные пользователи (была сессия за 21 день), которым сегодня не слали нудж/промо выше.
+    $activeUsers = all(
+        "SELECT DISTINCT u.id FROM users u JOIN sessions s ON s.user_id=u.id
+          WHERE s.created_at >= datetime('now','-21 days') LIMIT " . (int)$TIP_CAP);
+    foreach ($activeUsers as $u) {
+        $uid = (int) $u['id'];
+        foreach ($TIPS as [$title, $body, $url, $ic]) {
+            // Уже получал этот тип за последние 30 дней? — пропускаем.
+            $has = (int) scalar(
+                "SELECT COUNT(*) FROM notifications WHERE user_id=? AND icon=? AND created_at >= datetime('now','-30 days')",
+                [$uid, $ic]);
+            if ($has) continue;
+            notify_user($uid, $title, $body, $url, $ic);
+            $tipped++;
+            break; // один тип за проход на пользователя
+        }
+    }
+
+    cron_log(JOB, "нудж:$nudged промо:$promoed советы:$tipped");
 } catch (\Throwable $e) {
     cron_log(JOB, 'ОШИБКА: ' . $e->getMessage());
 } finally {

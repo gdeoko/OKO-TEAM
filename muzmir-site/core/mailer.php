@@ -485,13 +485,21 @@ function mail_send(string $to, string $subject, string $html, array $opt = []): 
     } else {
         mail_log('FAIL to ' . $to . ' | ' . $subject . ' | ' . $err);
     }
+    // Дублируем письмо в приложение как уведомление — но НЕ для писем из очереди
+    // (у них уведомление уже создано в mail_queue(), иначе был бы дубль).
+    if ($ok && empty($opt['from_queue'])) {
+        if (!function_exists('notify_from_email') && is_file(BASE_PATH . '/core/notifications.php')) require_once BASE_PATH . '/core/notifications.php';
+        if (function_exists('notify_from_email')) {
+            try { notify_from_email($to, $subject, $html, ['url' => (string)($opt['inapp_url'] ?? '/cabinet')]); } catch (\Throwable $e) {}
+        }
+    }
     return $ok;
 }
 
 /** Кладёт письмо в очередь mail_queue (реальная отправка — воркером). */
 function mail_queue(string $to, string $name, string $subject, string $html, string $attach = ''): int {
     try {
-        return insert('mail_queue', [
+        $id = insert('mail_queue', [
             'to_email' => trim($to),
             'to_name'  => $name,
             'subject'  => $subject,
@@ -499,6 +507,12 @@ function mail_queue(string $to, string $name, string $subject, string $html, str
             'attach'   => $attach,
             'status'   => 'queued',
         ]);
+        // Сразу дублируем в приложение как уведомление (письмо уйдёт воркером позже).
+        if ($id) {
+            if (!function_exists('notify_from_email') && is_file(BASE_PATH . '/core/notifications.php')) require_once BASE_PATH . '/core/notifications.php';
+            if (function_exists('notify_from_email')) { try { notify_from_email($to, $subject, $html); } catch (\Throwable $e) {} }
+        }
+        return $id;
     } catch (\Throwable $e) {
         mail_log('QUEUE FAIL ' . $to . ' | ' . $e->getMessage());
         return 0;

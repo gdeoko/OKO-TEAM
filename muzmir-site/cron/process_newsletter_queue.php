@@ -76,7 +76,8 @@ try {
         $ok = false;
         try {
             $ok = mail_send((string) $row['to_email'], (string) $row['subject'], (string) $row['body'], [
-                'attach' => (string) ($row['attach'] ?? ''),
+                'attach'     => (string) ($row['attach'] ?? ''),
+                'from_queue' => true, // уведомление в приложении уже создано при постановке в очередь
             ]);
         } catch (\Throwable $e) {
             cron_log(JOB, 'mail_send() исключение #' . $row['id'] . ': ' . $e->getMessage());
