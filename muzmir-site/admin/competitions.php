@@ -768,10 +768,18 @@ if ($action === 'edit') {
     })();
     </script>
 
-    <?php if ($id): $LW = launch_waves(); $LC = launch_channels(); ?>
+    <?php if ($id):
+      $LW = launch_waves(); $LC = launch_channels();
+      $isLongComp = (string)($c['results_mode'] ?? '') === 'list';
+      // Пост результатов — только для длинных (по коротким результат уходит на почту).
+      if (!$isLongComp) unset($LW['results']);
+    ?>
     <div class="card" id="launchPult" style="margin-top:22px">
       <div class="section-title"><h3><?= admin_icon('send') ?>Пуск-пульт конкурса</h3></div>
-      <p class="small muted" style="margin:-4px 0 14px">Тексты по эталонам сообщества (правятся и сохраняются). «Запустить» разошлёт по выбранным каналам сразу или по расписанию. Ничего не уходит, пока не нажмёте «Запустить».</p>
+      <p class="small muted" style="margin:-4px 0 10px">Тексты по эталонам сообщества (правятся и сохраняются). «Запустить» разошлёт по выбранным каналам сразу или по расписанию. Ничего не уходит, пока не нажмёте «Запустить».</p>
+      <div style="margin:-4px 0 12px;padding:10px 12px;background:#FFF6E9;border:1px solid #F0D9A8;border-radius:10px;font-size:.82rem;color:#8B6F1F">
+        <b>«Осталось 3 дня», «Последний день», «Приём закрыт»</b> — это ОДИН общий пост сразу по всем открытым конкурсам. Запускайте его <b>один раз</b> (из любого конкурса), не по каждому. «Открытие» — отдельно на каждый конкурс.<?= !$isLongComp ? ' Пост «Результаты» у коротких платных не публикуется — результат уходит участнику на почту.' : '' ?>
+      </div>
       <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:12px" id="lpWaves">
         <?php $first=true; foreach ($LW as $wk=>$wl): ?>
           <button type="button" class="btn btn--sm <?= $first?'btn--navy':'btn--ghost' ?>" data-wave="<?= h($wk) ?>"><?= h($wl) ?></button>

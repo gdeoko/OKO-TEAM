@@ -66,6 +66,9 @@ if (preg_match('#^/obrazci-([a-z0-9\-]+)$#', $route, $m)) {
     $c = one("SELECT id FROM competitions WHERE slug=?", [$m[1]]);
     header('Location: ' . url($c ? '/awards?comp=' . (int)$c['id'] : '/awards'), true, 301); exit;
 }
+if (preg_match('#^/polozhenie-([a-z0-9\-]+)$#', $route, $m)) {   // положение КОНКРЕТНОГО конкурса (PDF инлайн)
+    header('Location: ' . url('/competition/' . $m[1] . '/regulation.pdf'), true, 301); exit;
+}
 
 // Карта сайта: статические маршруты + конкурсы по slug.
 if ($route === '/sitemap.xml') {

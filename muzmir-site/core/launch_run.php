@@ -40,11 +40,9 @@ function launch_channels(): array {
     ];
 }
 
-/** Нормализация записи конкурса для эталонов (проставляем duration из results_mode). */
+/** Нормализация записи конкурса для эталонов (длинный/короткий — строго по results_mode). */
 function launch_norm_comp(array $c): array {
-    if (!isset($c['duration'])) {
-        $c['duration'] = (($c['results_mode'] ?? '') === 'list') ? 'long' : 'short';
-    }
+    $c['duration'] = ((string)($c['results_mode'] ?? '') === 'list') ? 'long' : 'short';
     return $c;
 }
 
@@ -205,6 +203,10 @@ function launch_fire(int $compId, string $wave, array $channels, string $when = 
     $channels = array_values(array_intersect($channels, array_keys(launch_channels())));
     if (!$channels) return ['ok' => false, 'msg' => 'Не выбран ни один канал'];
     if (!isset(launch_waves()[$wave])) return ['ok' => false, 'msg' => 'Неизвестная волна'];
+    // Пост результатов — ТОЛЬКО для длинных конкурсов (по коротким результат уходит на почту).
+    if ($wave === 'results' && !vkt_is_long($c)) {
+        return ['ok' => false, 'msg' => 'Пост результатов — только для длинных конкурсов. По коротким платным результаты приходят на почту в течение 5 рабочих дней, отдельный пост не публикуется.'];
+    }
 
     // Сводные волны — по всем открытым конкурсам; одиночные — по одному.
     $siblings = in_array($wave, ['d3', 'last', 'closed'], true) ? launch_open_comps() : [$c];

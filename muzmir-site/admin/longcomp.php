@@ -175,10 +175,7 @@ ob_start(); ?>
     $aid = (int)$a['id'];
     ob_start(); ?>
       <a class="btn btn--navy btn--sm" href="<?= a_link('grading', ['id'=>$aid]) ?>"><?= admin_icon('grading') ?>Оценить</a>
-      <form method="post" action="<?= url('/admin/') ?>" style="display:inline" onsubmit="return confirm('Отклонить заявку?')"><?= csrf_field() ?>
-        <input type="hidden" name="do" value="reject"><input type="hidden" name="competition" value="<?= $comp ?>"><input type="hidden" name="id" value="<?= $aid ?>">
-        <button class="btn btn--ghost btn--sm"><?= admin_icon('x') ?>Отклонить</button>
-      </form>
+      <?php // Отклонить — только ВНУТРИ заявки (после просмотра), в списке кнопки нет. ?>
       <form method="post" action="<?= url('/admin/') ?>" style="display:inline" onsubmit="return confirm('Удалить заявку безвозвратно?')"><?= csrf_field() ?>
         <input type="hidden" name="do" value="delete"><input type="hidden" name="competition" value="<?= $comp ?>"><input type="hidden" name="id" value="<?= $aid ?>">
         <button class="btn btn--ghost btn--sm">Удалить</button>

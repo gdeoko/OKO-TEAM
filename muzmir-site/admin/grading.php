@@ -329,6 +329,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && input('do') === 'grade_result') {
         if (is_file(BASE_PATH . '/core/club.php')) require_once BASE_PATH . '/core/club.php';
         // ВИП-клуб — 3 рабочих дня, иначе 5. Точка отсчёта — ДАТА ПОДАЧИ (created_at).
         $wdays = (!empty($cur['user_id']) && function_exists('club_is_active') && club_is_active((int) $cur['user_id'])) ? 3 : 5;
+        $sendNow   = input('send_now') === '1';   // кнопка «Отправить сейчас» — моментально
         $autoSend  = input('auto_send') === '1';
         $sendAtRaw = trim(input('send_at'));
         $submitted = (string) ($cur['created_at'] ?? '');
@@ -336,9 +337,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && input('do') === 'grade_result') {
         // РЕЗУЛЬТАТ (аттестационный) — по управлению из карточки. Длинные (list) — молчим (пакет).
         $resultAt = null;
         if (!$isLongComp) {
-            $resultAt = $autoSend
-                ? result_plan_at($submitted, true, '', $wdays)
-                : result_plan_at($submitted, false, $sendAtRaw, $wdays);
+            if ($sendNow) {
+                $resultAt = new \DateTime('now');                              // моментально
+            } else {
+                $resultAt = $autoSend
+                    ? result_plan_at($submitted, true, '', $wdays)             // авто по сроку + рабочее окно
+                    : result_plan_at($submitted, false, $sendAtRaw, $wdays);   // ручная дата / моментально
+            }
         }
         $resultSendAt = $resultAt ? $resultAt->format('Y-m-d H:i:s') : '';
 
@@ -717,21 +722,28 @@ if ($id = (int) input('id')) {
           <?php $ovr = trim((string)($a['send_at_override'] ?? '')); ?>
           <?php if (empty($isLongView)): ?>
           <div class="field" style="margin-top:10px;padding:10px 12px;border:1px dashed var(--a-line);border-radius:10px">
-            <label style="display:flex;align-items:center;gap:8px;cursor:pointer">
-              <input type="checkbox" name="auto_send" id="autoSendChk" value="1" <?= $ovr==='' ? 'checked' : '' ?>>
-              <span>Отправить результат автоматически по сроку<br><span class="small muted">3 рабочих дня от даты подачи (вс — нерабочий), окно 9:00–18:00 МСК</span></span>
+            <div style="font-weight:700;margin-bottom:6px">Когда отправить результат участнику?</div>
+            <label style="display:flex;align-items:flex-start;gap:8px;cursor:pointer;margin-bottom:6px">
+              <input type="checkbox" name="auto_send" id="autoSendChk" value="1" checked style="margin-top:3px">
+              <span>Автоматически по сроку<br><span class="small muted">5 рабочих дней от даты подачи (ВИП — 3; вс — нерабочий), окно 9:00–18:00 МСК. Если срок вышел — ближайшее рабочее утро.</span></span>
             </label>
-            <div id="sendAtBox" style="margin-top:8px;display:<?= $ovr==='' ? 'none' : 'block' ?>">
-              <label class="small muted">Ручная дата и время отправки (override администратора)</label>
-              <input type="datetime-local" name="send_at" value="<?= $ovr !== '' ? h(date('Y-m-d\TH:i', strtotime($ovr))) : '' ?>">
-            </div>
+            <label style="display:flex;align-items:center;gap:8px;cursor:pointer">
+              <input type="datetime-local" name="send_at" id="sendAtInp" value="<?= $ovr !== '' ? h(date('Y-m-d\TH:i', strtotime($ovr))) : '' ?>" style="max-width:220px">
+              <span class="small muted">— или в выбранную дату/время (снимет «авто»)</span>
+            </label>
           </div>
           <?php else: ?>
           <div class="field" style="margin-top:10px;padding:10px 12px;border:1px dashed var(--a-line);border-radius:10px">
             <span class="small muted">Длинный конкурс: результат сохраняется в общий список и публикуется пакетом в дату публикации. Персональных писем «в течение 5 рабочих дней» здесь нет — участники увидят звания после публикации итогов.</span>
           </div>
           <?php endif; ?>
-          <button class="btn btn--primary" style="margin-top:8px"><?= admin_icon('check') ?>Сохранить итог и далее</button>
+          <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:10px;align-items:center">
+            <button class="btn btn--primary" type="submit"><?= admin_icon('check') ?>Сохранить итог</button>
+            <?php if (empty($isLongView)): ?>
+              <button class="btn btn--navy" type="submit" name="send_now" value="1" onclick="return confirm('Отправить результат участнику ПРЯМО СЕЙЧАС?')"><?= admin_icon('send') ?>Сохранить и отправить сейчас</button>
+            <?php endif; ?>
+          </div>
+          <script>(function(){var c=document.getElementById('autoSendChk'),d=document.getElementById('sendAtInp');if(c&&d){d.addEventListener('input',function(){if(d.value)c.checked=false;});c.addEventListener('change',function(){if(c.checked)d.value='';});}})();</script>
           <?php if ($a['result']): ?>
             <span class="badge badge--gold" style="margin-left:8px"><?= h($a['result']) ?></span>
           <?php endif; ?>
