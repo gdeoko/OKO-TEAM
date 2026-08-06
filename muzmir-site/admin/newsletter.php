@@ -598,7 +598,15 @@ if ($action === 'edit' || $action === 'new') {
 /* =====================================================================
  *  СПИСОК + статистика доставки
  * ===================================================================== */
-$rows = all("SELECT * FROM newsletters ORDER BY id DESC LIMIT 100");
+$nlq = trim(input('q'));
+if ($nlq !== '') {
+    $nll = '%' . $nlq . '%';
+    $rows = all("SELECT * FROM newsletters
+                 WHERE subject LIKE ? OR COALESCE(audience,'') LIKE ? OR COALESCE(body,'') LIKE ?
+                 ORDER BY id DESC LIMIT 100", [$nll, $nll, $nll]);
+} else {
+    $rows = all("SELECT * FROM newsletters ORDER BY id DESC LIMIT 100");
+}
 
 $total     = count($rows);
 $sumSent   = (int) scalar("SELECT COALESCE(SUM(stats_sent),0) FROM newsletters");
@@ -704,6 +712,13 @@ $planActive= $planDay > 0;
     </div>
   </div>
 </div>
+
+<form method="get" class="filters" style="margin-bottom:12px">
+  <input type="hidden" name="p" value="newsletter">
+  <div class="field"><label>Поиск</label><input name="q" value="<?= h($nlq) ?>" placeholder="тема, аудитория, текст письма"></div>
+  <button class="btn btn--primary btn--sm"><?= admin_icon('search') ?>Поиск</button>
+  <?php if ($nlq !== ''): ?><a class="btn btn--ghost btn--sm" href="<?= a_link('newsletter') ?>">Сброс</a><?php endif; ?>
+</form>
 
 <div class="table-wrap"><table class="tbl tbl--zebra">
   <thead><tr><th>Тема</th><th>Аудитория</th><th>Статус</th><th class="num">Отпр.</th><th class="num">Откр.</th><th class="num">Клики</th><th>Дата</th><th></th></tr></thead>

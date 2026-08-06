@@ -2,18 +2,19 @@
 /**
  * ЖИВОЙ ПУЛЬТ АВТОМАТИЗАЦИИ («Отправки»).
  *
- * Единая таблица всех запланированных авто-действий в реальном времени — даже после
- * оценки/заказа. Даниэль может зайти и по каждой строке:
- *   • изменить дату/время отправки;
- *   • отправить сейчас (моментально);
- *   • отменить;
- *   • отредактировать (тема/адрес письма).
+ * ЕДИНЫЙ список всего, что стоит в очереди авто-отправки (дипломы, письма, заказы
+ * оригиналов), + ЕДИНЫЙ архив отправленного. Сверху — фильтр по типу и поисковая
+ * строка (ФИО / почта / телефон / конкурс / номер / тема / любой текст письма).
+ * Все действия идут по AJAX — страница НЕ перезагружается и НЕ прыгает вниз.
  *
- * Источники (реальные механизмы, не заглушки):
- *   1) Дипломы к отправке   — diplomas.scheduled_at (крон send_diplomas.php шлёт по времени);
- *   2) Письма в очереди     — mail_queue (крон process_newsletter_queue шлёт; scheduled_at держит/откладывает);
- *   3) Заказы в производстве — awards_orders (оплачено→изготовить→отправить), с плановыми
- *      датами «изготовить до / отправить до» (раб. дни от даты оплаты/диспетча).
+ * По каждой строке очереди: изменить дату/время, отправить сейчас, отменить,
+ * отредактировать письмо (тема, адрес, дата, тело, кнопки со ссылками — с «Отмена»
+ * и «Сохранить»). В архиве: просмотр, дублировать, отредактировать-и-дублировать.
+ *
+ * Источники (реальные механизмы):
+ *   1) diplomas.scheduled_at   — крон send_diplomas.php шлёт по времени;
+ *   2) mail_queue              — крон process_newsletter_queue; scheduled_at держит/откладывает;
+ *   3) awards_orders           — оплачено→изготовить→отправить (раб. дни от оплаты/диспетча).
  */
 declare(strict_types=1);
 
@@ -52,17 +53,6 @@ function disp_when_badge(string $s): array {
     return ['#2C7BE5', disp_dt($s)];
 }
 
-/* --------- Просмотр реального письма (GET) — открывает тело письма как есть --------- */
-if (input('do') === 'view' && input('kind') === 'mail') {
-    $m = one("SELECT * FROM mail_queue WHERE id=?", [(int) input('id')]);
-    if ($m) {
-        header('Content-Type: text/html; charset=utf-8');
-        echo (string) ($m['body'] ?? '<p>Пусто</p>');
-        exit;
-    }
-    http_response_code(404); echo 'Письмо не найдено'; exit;
-}
-
 /* --------- Классификация письма по типу (для фильтра «Отправки») --------- */
 function disp_mail_type(array $m): string {
     $s = mb_strtolower((string) ($m['subject'] ?? ''));
@@ -76,9 +66,62 @@ function disp_mail_type(array $m): string {
 }
 const DISP_MAIL_TYPES = ['all'=>'Все','diploma'=>'Дипломы','newsletter'=>'Рассылки','result'=>'Результаты','notify'=>'Уведомления','dunning'=>'Дожимы','news'=>'Новости','other'=>'Прочее'];
 
+/** Единый список фильтров для сводной очереди/архива. */
+function disp_filters(): array {
+    return [
+        'all'        => 'Все',
+        'diploma'    => 'Дипломы к отправке',
+        'mail'       => 'Все письма',
+        'newsletter' => 'Письма · рассылки',
+        'result'     => 'Письма · результаты',
+        'notify'     => 'Письма · уведомления',
+        'dunning'    => 'Письма · дожимы',
+        'news'       => 'Письма · новости',
+        'other'      => 'Письма · прочее',
+        'order'      => 'Заказы в производстве',
+    ];
+}
+
+$dTypeLbl = ['main' => 'Основной диплом', 'named' => 'Именной диплом', 'extra' => 'Спец-награда', 'thanks' => 'Благодарность педагогу'];
+
+/** Ответ AJAX или обычный редирект (для форм без JS). */
+function disp_done(bool $ok, string $msg, array $extra = []): void {
+    if (input('ajax') === '1') { json_out(['ok' => $ok, 'msg' => $msg] + $extra); }
+    flash($msg, $ok ? 'success' : 'error');
+    admin_redirect('dispatch');
+}
+
+/* --------- Просмотр реального письма (GET) — открывает тело письма как есть --------- */
+if (input('do') === 'view' && input('kind') === 'mail') {
+    $m = one("SELECT * FROM mail_queue WHERE id=?", [(int) input('id')]);
+    if ($m) {
+        header('Content-Type: text/html; charset=utf-8');
+        echo (string) ($m['body'] ?? '<p>Пусто</p>');
+        exit;
+    }
+    http_response_code(404); echo 'Письмо не найдено'; exit;
+}
+
+/* --------- JSON-данные письма для редактора (тема/адрес/дата/тело/вложение) --------- */
+if (input('do') === 'get' && input('kind') === 'mail') {
+    $m = one("SELECT * FROM mail_queue WHERE id=?", [(int) input('id')]);
+    if (!$m) json_out(['ok' => false, 'error' => 'Письмо не найдено'], 404);
+    $sched = trim((string) ($m['scheduled_at'] ?? ''));
+    json_out([
+        'ok'           => true,
+        'to_email'     => (string) $m['to_email'],
+        'to_name'      => (string) ($m['to_name'] ?? ''),
+        'subject'      => (string) $m['subject'],
+        'body'         => (string) ($m['body'] ?? ''),
+        'attach'       => (string) ($m['attach'] ?? ''),
+        'scheduled_at' => $sched !== '' ? date('Y-m-d\TH:i', strtotime($sched)) : '',
+        'status'       => (string) ($m['status'] ?? ''),
+    ]);
+}
+
 /* ============================ POST-обработчики ============================ */
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    if (!csrf_check()) { flash('Сессия устарела.', 'error'); admin_redirect('dispatch'); }
+    if (!csrf_check()) { disp_done(false, 'Сессия устарела. Обновите страницу.'); }
     $do   = input('do');
     $kind = input('kind');           // diploma | mail | order
     $id   = (int) input('id');
@@ -87,25 +130,22 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     if ($kind === 'diploma' && $id) {
         if ($do === 'resched') {
             $dt = trim(input('scheduled_at'));
-            if ($dt !== '') {
-                $norm = date('Y-m-d H:i:s', strtotime(str_replace('T', ' ', $dt)) ?: time());
-                update('diplomas', ['scheduled_at' => $norm], 'id=:id', ['id' => $id]);
-                audit('dispatch_resched', 'diploma', $id, ['at' => $norm]);
-                flash('Дата отправки диплома изменена на ' . disp_dt($norm) . '.', 'success');
-            }
+            if ($dt === '') disp_done(false, 'Укажите дату и время.');
+            $norm = date('Y-m-d H:i:s', strtotime(str_replace('T', ' ', $dt)) ?: time());
+            update('diplomas', ['scheduled_at' => $norm], 'id=:id', ['id' => $id]);
+            audit('dispatch_resched', 'diploma', $id, ['at' => $norm]);
+            disp_done(true, 'Дата отправки диплома изменена на ' . disp_dt($norm) . '.', ['when' => disp_dt($norm)]);
         } elseif ($do === 'sendnow') {
-            // Делаем диплом «просроченным» — крон подхватит первым (order by scheduled_at ASC)
-            // и отправит в течение минуты. Плюс пробуем толкнуть крон немедленно.
             update('diplomas', ['scheduled_at' => '2000-01-01 00:00:00'], 'id=:id', ['id' => $id]);
             @exec('cd ' . escapeshellarg(BASE_PATH) . ' && php cron/send_diplomas.php > /dev/null 2>&1 &');
             audit('dispatch_sendnow', 'diploma', $id, []);
-            flash('Диплом поставлен на моментальную отправку (уйдёт в течение минуты).', 'success');
+            disp_done(true, 'Диплом поставлен на моментальную отправку (уйдёт в течение минуты).', ['remove' => true]);
         } elseif ($do === 'cancel') {
             q("DELETE FROM diplomas WHERE id=? AND sent_at IS NULL", [$id]);
             audit('dispatch_cancel', 'diploma', $id, []);
-            flash('Плановая отправка диплома отменена.', 'info');
+            disp_done(true, 'Плановая отправка диплома отменена.', ['remove' => true]);
         }
-        admin_redirect('dispatch');
+        disp_done(false, 'Неизвестное действие.');
     }
 
     /* ---- ПИСЬМО ---- */
@@ -115,9 +155,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $norm = $dt !== '' ? date('Y-m-d H:i:s', strtotime(str_replace('T', ' ', $dt)) ?: time()) : null;
             update('mail_queue', ['scheduled_at' => $norm], 'id=:id', ['id' => $id]);
             audit('dispatch_resched', 'mail', $id, ['at' => $norm]);
-            flash('Время письма изменено' . ($norm ? ' на ' . disp_dt($norm) : '') . '.', 'success');
+            disp_done(true, 'Время письма изменено' . ($norm ? ' на ' . disp_dt($norm) : '') . '.', ['when' => $norm ? disp_dt($norm) : 'сразу']);
         } elseif ($do === 'sendnow') {
-            // Одиночное письмо шлём НАПРЯМУЮ (моментально), без ожидания крона.
             $m = one("SELECT * FROM mail_queue WHERE id=? AND status='queued'", [$id]);
             if ($m && function_exists('mail_send')) {
                 $opt = [];
@@ -127,45 +166,76 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 try { $ok = (bool) mail_send((string) $m['to_email'], (string) $m['subject'], (string) $m['body'], $opt); } catch (\Throwable $e) {}
                 if ($ok) {
                     update('mail_queue', ['status' => 'sent', 'sent_at' => date('Y-m-d H:i:s'), 'scheduled_at' => null], 'id=:id', ['id' => $id]);
-                    flash('Письмо отправлено сейчас.', 'success');
-                } else {
-                    update('mail_queue', ['scheduled_at' => null, 'priority' => 0], 'id=:id', ['id' => $id]);
-                    flash('Мгновенная отправка не удалась — письмо поставлено в приоритетную очередь (уйдёт в течение минуты).', 'warning');
+                    audit('dispatch_sendnow', 'mail', $id, ['ok' => true]);
+                    disp_done(true, 'Письмо отправлено сейчас.', ['remove' => true]);
                 }
-                audit('dispatch_sendnow', 'mail', $id, ['ok' => $ok]);
-            } else {
-                flash('Письмо не найдено или уже обработано.', 'error');
+                update('mail_queue', ['scheduled_at' => null, 'priority' => 0], 'id=:id', ['id' => $id]);
+                audit('dispatch_sendnow', 'mail', $id, ['ok' => false]);
+                disp_done(true, 'Мгновенная отправка не удалась — письмо в приоритетной очереди (уйдёт в течение минуты).', ['remove' => true]);
             }
+            disp_done(false, 'Письмо не найдено или уже обработано.');
         } elseif ($do === 'cancel') {
             update('mail_queue', ['status' => 'cancelled'], 'id=:id', ['id' => $id]);
             audit('dispatch_cancel', 'mail', $id, []);
-            flash('Письмо отменено — отправлено не будет.', 'info');
+            disp_done(true, 'Письмо отменено — отправлено не будет.', ['remove' => true]);
         } elseif ($do === 'duplicate') {
-            // Дублировать / отправить ещё раз: ставим копию письма в очередь (priority 0 — уйдёт сразу).
             $m = one("SELECT * FROM mail_queue WHERE id=?", [$id]);
-            if ($m) {
-                insert('mail_queue', [
-                    'to_email' => (string) $m['to_email'], 'to_name' => (string) ($m['to_name'] ?? ''),
-                    'subject' => (string) $m['subject'], 'body' => (string) $m['body'],
-                    'attach' => (string) ($m['attach'] ?? ''), 'status' => 'queued', 'priority' => 0,
-                ]);
-                audit('dispatch_duplicate', 'mail', $id, []);
-                flash('Копия письма поставлена в очередь (уйдёт заново).', 'success');
-            }
+            if (!$m) disp_done(false, 'Письмо не найдено.');
+            insert('mail_queue', [
+                'to_email' => (string) $m['to_email'], 'to_name' => (string) ($m['to_name'] ?? ''),
+                'subject' => (string) $m['subject'], 'body' => (string) $m['body'],
+                'attach' => (string) ($m['attach'] ?? ''), 'status' => 'queued', 'priority' => 0,
+            ]);
+            audit('dispatch_duplicate', 'mail', $id, []);
+            disp_done(true, 'Копия письма поставлена в очередь (уйдёт заново).');
+        } elseif ($do === 'duplicate_edit') {
+            // Редактировать-и-дублировать: создаём НОВОЕ письмо из архивного с правками.
+            $to   = mb_strtolower(trim(input('to_email')));
+            $subj = trim(input('subject'));
+            $body = (string) input('body');
+            $attach = trim(input('attach'));
+            $dt   = trim(input('scheduled_at'));
+            if (!filter_var($to, FILTER_VALIDATE_EMAIL)) disp_done(false, 'Укажите корректный email получателя.');
+            if ($subj === '' || $body === '') disp_done(false, 'Тема и текст письма не должны быть пустыми.');
+            $sched = $dt !== '' ? date('Y-m-d H:i:s', strtotime(str_replace('T', ' ', $dt)) ?: time()) : null;
+            insert('mail_queue', [
+                'to_email' => $to, 'to_name' => trim(input('to_name')),
+                'subject' => $subj, 'body' => $body, 'attach' => $attach,
+                'status' => 'queued', 'priority' => 0, 'scheduled_at' => $sched,
+            ]);
+            audit('dispatch_duplicate_edit', 'mail', $id, []);
+            disp_done(true, 'Новое письмо с правками поставлено в очередь' . ($sched ? ' на ' . disp_dt($sched) : ' (уйдёт сразу)') . '.');
         } elseif ($do === 'edit') {
+            // Редактирование письма В ОЧЕРЕДИ: сохраняем только по кнопке «Сохранить».
+            $m = one("SELECT * FROM mail_queue WHERE id=?", [$id]);
+            if (!$m) disp_done(false, 'Письмо не найдено.');
+            if ((string) ($m['status'] ?? '') !== 'queued') disp_done(false, 'Это письмо уже отправлено — редактировать нельзя (используйте «дублировать»).');
             $subj = trim(input('subject'));
             $to   = mb_strtolower(trim(input('to_email')));
-            $body = (string) input('body');          // HTML из WYSIWYG-редактора
-            $attach = trim(input('attach'));         // вложение (URL/путь) — можно очистить
+            $body = (string) input('body');
+            $attach = trim(input('attach'));
             $data = [];
             if ($subj !== '') $data['subject'] = $subj;
             if ($to !== '' && filter_var($to, FILTER_VALIDATE_EMAIL)) $data['to_email'] = $to;
-            if (input('body') !== null && $body !== '') $data['body'] = $body;
+            if (input('body') !== '' && $body !== '') $data['body'] = $body;
             if (input('attach') !== null) $data['attach'] = $attach; // пусто = удалить вложение
-            if ($data) { update('mail_queue', $data, 'id=:id', ['id' => $id]); flash('Письмо отредактировано.', 'success'); }
+            // Дату/время меняем ТОЛЬКО если поле присутствует в запросе; пусто = держим/сразу.
+            if (input('sched_touched') === '1') {
+                $dt = trim(input('scheduled_at'));
+                $data['scheduled_at'] = $dt !== '' ? date('Y-m-d H:i:s', strtotime(str_replace('T', ' ', $dt)) ?: time()) : null;
+            }
+            if ($data) { update('mail_queue', $data, 'id=:id', ['id' => $id]); }
             audit('dispatch_edit', 'mail', $id, array_keys($data));
+            $whenLbl = array_key_exists('scheduled_at', $data)
+                ? ($data['scheduled_at'] ? disp_dt((string) $data['scheduled_at']) : 'сразу')
+                : null;
+            disp_done(true, 'Письмо отредактировано и сохранено.', array_filter([
+                'subject' => $data['subject'] ?? null,
+                'to_email' => $data['to_email'] ?? null,
+                'when' => $whenLbl,
+            ], fn($v) => $v !== null));
         }
-        admin_redirect('dispatch');
+        disp_done(false, 'Неизвестное действие.');
     }
 
     /* ---- ЗАКАЗ ---- */
@@ -173,186 +243,282 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         require_once BASE_PATH . '/core/orders.php';
         if ($do === 'made') {
             update('awards_orders', ['status' => 'made', 'made_at' => date('Y-m-d H:i:s')], 'id=:id', ['id' => $id]);
-            flash('Заказ №' . $id . ' отмечен изготовленным.', 'success');
+            disp_done(true, 'Заказ №' . $id . ' отмечен изготовленным.', ['status' => 'made']);
         } elseif ($do === 'ship') {
             $track = trim(input('tracking'));
-            if ($track === '') { flash('Введите трек-номер.', 'error'); admin_redirect('dispatch'); }
+            if ($track === '') disp_done(false, 'Введите трек-номер.');
             $ok = function_exists('order_mark_shipped') ? order_mark_shipped($id, $track) : false;
-            flash($ok ? ('Заказ №' . $id . ' отправлен, участнику ушло письмо с трек-номером.') : 'Статус обновлён, письмо не ушло.', $ok ? 'success' : 'warning');
+            disp_done($ok, $ok ? ('Заказ №' . $id . ' отправлен, участнику ушло письмо с трек-номером.') : 'Статус обновлён, письмо не ушло.', ['remove' => $ok]);
         } elseif ($do === 'redispatch') {
             update('awards_orders', ['dispatched_at' => ''], 'id=:id', ['id' => $id]);
             $ok = function_exists('order_dispatch_production') ? order_dispatch_production($id) : false;
-            flash($ok ? ('Пакет заказа №' . $id . ' переотправлен в производство (Telegram).') : 'Не удалось отправить в Telegram.', $ok ? 'success' : 'error');
+            disp_done($ok, $ok ? ('Пакет заказа №' . $id . ' переотправлен в производство (Telegram).') : 'Не удалось отправить в Telegram.');
         } elseif ($do === 'resched') {
-            // Меняем «дату оплаты/диспетча» — плановые сроки изготовления/отправки считаются от неё.
             $dt = trim(input('scheduled_at'));
-            if ($dt !== '') {
-                $norm = date('Y-m-d H:i:s', strtotime(str_replace('T', ' ', $dt)) ?: time());
-                update('awards_orders', ['dispatched_at' => $norm], 'id=:id', ['id' => $id]);
-                flash('Точка отсчёта сроков заказа №' . $id . ' изменена на ' . disp_dt($norm) . '.', 'success');
-            }
+            if ($dt === '') disp_done(false, 'Укажите дату.');
+            $norm = date('Y-m-d H:i:s', strtotime(str_replace('T', ' ', $dt)) ?: time());
+            update('awards_orders', ['dispatched_at' => $norm], 'id=:id', ['id' => $id]);
+            disp_done(true, 'Точка отсчёта сроков заказа №' . $id . ' изменена на ' . disp_dt($norm) . '.', ['when' => disp_dt($norm)]);
         }
-        admin_redirect('dispatch');
+        disp_done(false, 'Неизвестное действие.');
     }
 
-    admin_redirect('dispatch');
+    disp_done(false, 'Неизвестный объект.');
 }
 
 /* ================================ ДАННЫЕ ================================= */
 $now = date('Y-m-d H:i:s');
-
-// Настройки сроков (раб. дни).
 $makeDays = (int) (function_exists('setting') ? setting('order_make_days', '7') : 7);
 $shipDays = (int) (function_exists('setting') ? setting('order_ship_days', '14') : 14);
 
-// 1) Дипломы к отправке (ещё не отправлены).
-$diplomas = all("SELECT d.*, a.full_name, a.group_name, a.is_group, a.email, a.number app_number,
-                        c.name comp_name
-                 FROM diplomas d
-                 JOIN applications a ON a.id=d.application_id
-                 LEFT JOIN competitions c ON c.id=a.competition_id
-                 WHERE d.sent_at IS NULL
-                 ORDER BY (d.scheduled_at IS NULL) ASC, d.scheduled_at ASC, d.id ASC LIMIT 300");
+$filters = disp_filters();
+$f = input('f') ?: 'all';
+if (!isset($filters[$f])) $f = 'all';
+$q = trim(input('q'));
+$ql = mb_strtolower($q);
 
-// 2) Письма в очереди (не отправленные, не отменённые).
-$mails = all("SELECT * FROM mail_queue WHERE status='queued' ORDER BY
-              (scheduled_at IS NULL OR scheduled_at='') DESC, scheduled_at ASC, id ASC LIMIT 300");
+/** Отфильтровать элемент по типу и поисковой строке. */
+$matchType = function (array $it) use ($f): bool {
+    if ($f === 'all')    return true;
+    if ($f === 'diploma') return $it['kind'] === 'diploma';
+    if ($f === 'order')  return $it['kind'] === 'order';
+    if ($f === 'mail')   return $it['kind'] === 'mail';
+    return $it['kind'] === 'mail' && ($it['mtype'] ?? '') === $f;   // подтип письма
+};
+$matchSearch = function (array $it) use ($ql): bool {
+    if ($ql === '') return true;
+    return str_contains($it['search'], $ql);
+};
 
-// 2б) Архив отправленных писем (последние) — для журнала «кому/когда/что ушло».
-$sentMails = all("SELECT * FROM mail_queue WHERE status='sent' ORDER BY sent_at DESC, id DESC LIMIT 200");
+/* ---- 1) Дипломы к отправке ---- */
+$diplomasRaw = all("SELECT d.*, a.full_name, a.group_name, a.is_group, a.email, a.phone, a.number app_number,
+                           c.name comp_name
+                    FROM diplomas d
+                    JOIN applications a ON a.id=d.application_id
+                    LEFT JOIN competitions c ON c.id=a.competition_id
+                    WHERE d.sent_at IS NULL
+                    ORDER BY (d.scheduled_at IS NULL) ASC, d.scheduled_at ASC, d.id ASC LIMIT 500");
+/* ---- 2) Письма в очереди ---- */
+$mailsRaw = all("SELECT * FROM mail_queue WHERE status='queued' ORDER BY
+                 (scheduled_at IS NULL OR scheduled_at='') DESC, scheduled_at ASC, id ASC LIMIT 500");
+/* ---- 3) Заказы в производстве ---- */
+$ordersRaw = all("SELECT * FROM awards_orders
+                  WHERE status IN ('paid','made','shipped') AND items NOT LIKE '%\"kind\":\"club\"%'
+                  ORDER BY (status='paid') DESC, id DESC LIMIT 300");
+/* ---- Архив отправленных писем ---- */
+$sentRaw = all("SELECT * FROM mail_queue WHERE status='sent' ORDER BY sent_at DESC, id DESC LIMIT 300");
 
-// Фильтр по типу письма (all|diploma|newsletter|result|notify|dunning|news|other).
-$mtype = input('mtype') ?: 'all';
-if (!isset(DISP_MAIL_TYPES[$mtype])) $mtype = 'all';
-if ($mtype !== 'all') {
-    $mails     = array_values(array_filter($mails,     fn($m) => disp_mail_type($m) === $mtype));
-    $sentMails = array_values(array_filter($sentMails, fn($m) => disp_mail_type($m) === $mtype));
+/* ---- Нормализация в единый список ---- */
+$queue = [];
+foreach ($diplomasRaw as $d) {
+    $who = $d['is_group'] ? (string) $d['group_name'] : (string) $d['full_name'];
+    $queue[] = [
+        'kind' => 'diploma', 'id' => (int) $d['id'], 'mtype' => '',
+        'type_label' => ($dTypeLbl[(string) $d['type']] ?? (string) $d['type']),
+        'who' => $who, 'email' => (string) $d['email'], 'phone' => (string) ($d['phone'] ?? ''),
+        'comp' => (string) $d['comp_name'], 'number' => (string) $d['app_number'],
+        'title' => ($dTypeLbl[(string) $d['type']] ?? (string) $d['type']) . ' · ' . (string) $d['result'],
+        'when' => (string) ($d['scheduled_at'] ?? ''),
+        'search' => mb_strtolower(trim("$who {$d['email']} {$d['phone']} {$d['comp_name']} {$d['app_number']} {$d['result']}")),
+        'raw' => $d,
+    ];
+}
+foreach ($mailsRaw as $m) {
+    $mt = disp_mail_type($m);
+    $bodyText = trim(preg_replace('~\s+~u', ' ', strip_tags((string) ($m['body'] ?? ''))));
+    $queue[] = [
+        'kind' => 'mail', 'id' => (int) $m['id'], 'mtype' => $mt,
+        'type_label' => DISP_MAIL_TYPES[$mt] ?? $mt,
+        'who' => (string) ($m['to_name'] ?? ''), 'email' => (string) $m['to_email'], 'phone' => '',
+        'comp' => '', 'number' => '',
+        'title' => (string) $m['subject'],
+        'when' => (string) ($m['scheduled_at'] ?? ''),
+        'priority' => (int) ($m['priority'] ?? 0),
+        'search' => mb_strtolower(trim("{$m['to_email']} {$m['to_name']} {$m['subject']} " . mb_substr($bodyText, 0, 600))),
+        'raw' => $m,
+    ];
+}
+foreach ($ordersRaw as $o) {
+    $anchor = trim((string) ($o['dispatched_at'] ?? '')) ?: trim((string) ($o['created_at'] ?? $now));
+    $itemsText = '';
+    $decoded = json_decode((string) ($o['items'] ?? '[]'), true);
+    if (is_array($decoded)) $itemsText = implode(', ', array_map(fn($it) => (string) ($it['item'] ?? ''), $decoded));
+    $queue[] = [
+        'kind' => 'order', 'id' => (int) $o['id'], 'mtype' => '',
+        'type_label' => 'Заказ оригиналов',
+        'who' => (string) $o['full_name'], 'email' => (string) ($o['email'] ?? ''), 'phone' => (string) ($o['phone'] ?? ''),
+        'comp' => (string) ($o['competition'] ?? ''), 'number' => (string) $o['id'],
+        'title' => (string) ($o['result'] ?? '') . ($itemsText !== '' ? ' · ' . $itemsText : ''),
+        'when' => disp_add_workdays($anchor, $shipDays),
+        'status' => (string) $o['status'],
+        'search' => mb_strtolower(trim("{$o['full_name']} {$o['email']} {$o['phone']} {$o['competition']} {$o['result']} {$itemsText} №{$o['id']}")),
+        'raw' => $o + ['_anchor' => $anchor],
+    ];
 }
 
-// 3) Заказы в производстве (оплаченные и в пути).
-$orders = all("SELECT * FROM awards_orders
-               WHERE status IN ('paid','made','shipped') AND items NOT LIKE '%\"kind\":\"club\"%'
-               ORDER BY (status='paid') DESC, id DESC LIMIT 200");
+/* ---- Применяем фильтр + поиск ---- */
+$queueF = array_values(array_filter($queue, fn($it) => $matchType($it) && $matchSearch($it)));
+/* Сортировка очереди по плановому времени (просроченные и «сразу» — вверху). */
+usort($queueF, function ($a, $b) {
+    $ta = strtotime($a['when'] ?: '') ?: 0;
+    $tb = strtotime($b['when'] ?: '') ?: 0;
+    if ($ta === 0 && $tb !== 0) return -1;
+    if ($tb === 0 && $ta !== 0) return 1;
+    return $ta <=> $tb;
+});
 
-$dTypeLbl = ['main' => 'Основной диплом', 'named' => 'Именной диплом', 'extra' => 'Спец-награда', 'thanks' => 'Благодарность педагогу'];
+/* ---- Архив: нормализация + фильтр/поиск ---- */
+$archive = [];
+foreach ($sentRaw as $m) {
+    $mt = disp_mail_type($m);
+    $bodyText = trim(preg_replace('~\s+~u', ' ', strip_tags((string) ($m['body'] ?? ''))));
+    $archive[] = [
+        'kind' => 'mail', 'id' => (int) $m['id'], 'mtype' => $mt,
+        'type_label' => DISP_MAIL_TYPES[$mt] ?? $mt,
+        'who' => (string) ($m['to_name'] ?? ''), 'email' => (string) $m['to_email'],
+        'title' => (string) $m['subject'], 'sent_at' => (string) ($m['sent_at'] ?? ''),
+        'search' => mb_strtolower(trim("{$m['to_email']} {$m['to_name']} {$m['subject']} " . mb_substr($bodyText, 0, 600))),
+    ];
+}
+$archiveKeep = function (array $it) use ($f): bool {
+    // Архив — только письма. Фильтры «дипломы к отправке»/«заказы» его не касаются.
+    if ($f === 'all' || $f === 'mail') return true;
+    if (in_array($f, ['diploma', 'order'], true)) return false;
+    return ($it['mtype'] ?? '') === $f; // подтип письма
+};
+$archiveF = array_values(array_filter($archive, fn($it) => $archiveKeep($it) && $matchSearch($it)));
+
+$countQueue = count($queueF);
+$countArch  = count($archiveF);
+
+/* ---- Хелперы рендера строки очереди ---- */
+$rowWhen = function (array $it): string {
+    if ($it['kind'] === 'mail') {
+        $prio = (int) ($it['priority'] ?? 0);
+        [$wc, $wl] = $it['when'] !== '' ? disp_when_badge($it['when']) : ['#1E9E5A', $prio === 0 ? 'сразу' : 'по плану'];
+    } else {
+        [$wc, $wl] = disp_when_badge($it['when']);
+    }
+    return '<span class="disp-when" style="background:' . $wc . '">' . h($wl) . '</span>';
+};
 
 ob_start(); ?>
+<style>
+.disp-toolbar{display:flex;gap:10px;flex-wrap:wrap;align-items:flex-end;margin-bottom:16px}
+.disp-toolbar .field{margin:0}
+.disp-when{display:inline-block;padding:4px 10px;border-radius:999px;color:#fff;font-size:12px;font-weight:700;white-space:nowrap}
+.disp-typechip{display:inline-block;padding:3px 9px;border-radius:8px;font-size:11px;font-weight:700;letter-spacing:.02em;white-space:nowrap}
+.disp-typechip.k-diploma{background:#EAF1FF;color:#17307A}
+.disp-typechip.k-mail{background:#F0EAFE;color:#5B36B0}
+.disp-typechip.k-order{background:#FBF1DA;color:#8B6F1F}
+.disp-acts{display:flex;flex-wrap:wrap;gap:6px;align-items:center}
+.disp-acts input[type=datetime-local],.disp-acts input[type=text]{padding:5px 8px;border:1px solid var(--a-line);border-radius:8px;font-size:12px}
+tr.disp-row.gone{opacity:0;transition:.4s}
+/* Тост */
+#dispToast{position:fixed;left:50%;bottom:26px;transform:translateX(-50%) translateY(30px);z-index:300;
+  background:#17307A;color:#fff;padding:12px 22px;border-radius:12px;font-size:14px;font-weight:600;
+  box-shadow:0 14px 40px rgba(0,0,0,.35);opacity:0;pointer-events:none;transition:.28s;max-width:90vw;text-align:center}
+#dispToast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+#dispToast.err{background:#C0392B}
+/* Модал редактора письма */
+#mailEditor{position:fixed;inset:0;z-index:280;display:none;align-items:flex-start;justify-content:center;
+  background:rgba(12,10,20,.55);padding:24px 12px;overflow:auto}
+#mailEditor.show{display:flex}
+#mailEditor .box{background:#fff;color:#111;border-radius:18px;max-width:720px;width:100%;box-shadow:0 24px 70px rgba(0,0,0,.4);
+  overflow:hidden;animation:meIn .24s cubic-bezier(.2,.9,.3,1.15)}
+@keyframes meIn{from{transform:translateY(14px) scale(.98);opacity:0}to{transform:none;opacity:1}}
+#mailEditor .box-head{display:flex;align-items:center;justify-content:space-between;padding:16px 20px;border-bottom:1px solid #E6E9F2}
+#mailEditor .box-head h3{margin:0;font-size:17px;color:#17307A}
+#mailEditor .box-body{padding:18px 20px;max-height:70vh;overflow:auto}
+#mailEditor label{display:block;font-size:12px;color:#6B7699;margin:12px 0 4px;font-weight:600}
+#mailEditor input[type=text],#mailEditor input[type=email],#mailEditor input[type=datetime-local]{
+  width:100%;padding:9px 12px;border:1px solid #D6DCEC;border-radius:10px;font-size:14px}
+#meToolbar{display:flex;gap:5px;flex-wrap:wrap;margin:4px 0 6px}
+#meToolbar button{padding:6px 11px;border:1px solid #D6DCEC;border-radius:8px;background:#F7F8FC;cursor:pointer;font-size:13px;font-weight:700}
+#meToolbar button:hover{background:#ECEFF8}
+#meBody{min-height:200px;max-height:360px;overflow:auto;padding:12px 14px;border:1px solid #D6DCEC;border-radius:10px;
+  background:#fff;color:#111;font-size:14px;line-height:1.6}
+#meBody a{color:#17307A}
+#mailEditor .box-foot{display:flex;gap:10px;justify-content:flex-end;padding:14px 20px;border-top:1px solid #E6E9F2;background:#FAFBFF}
+.me-hint{font-size:12px;color:#8892B0;margin-top:4px}
+@media (max-width:640px){#mailEditor .box-foot{position:sticky;bottom:0}}
+</style>
+
 <div class="page-head">
   <h1>Отправки · живой пульт</h1>
-  <p class="muted small">Всё, что уходит автоматически — дипломы после оценки, письма из очереди, оригиналы наград после оплаты. По каждой строке: изменить дату/время, отправить сейчас, отменить, отредактировать. Обновляется в реальном времени.</p>
+  <p class="muted small">Единый список всего, что уходит автоматически: дипломы после оценки, письма из очереди, оригиналы наград после оплаты. Фильтр и поиск — сверху. Действия применяются без перезагрузки страницы.</p>
 </div>
 
-<div class="tabs" style="margin-bottom:18px;display:flex;gap:6px;flex-wrap:wrap;">
-  <a class="tag active" href="#dip" style="padding:7px 13px;border-radius:10px;">Дипломы к отправке · <?= count($diplomas) ?></a>
-  <a class="tag" href="#mail" style="padding:7px 13px;border-radius:10px;">Письма в очереди · <?= count($mails) ?></a>
-  <a class="tag" href="#ord" style="padding:7px 13px;border-radius:10px;">Заказы в производстве · <?= count($orders) ?></a>
-  <a class="tag" href="#sent" style="padding:7px 13px;border-radius:10px;">Архив отправленных · <?= count($sentMails) ?></a>
-</div>
-
-<!-- ============ ДИПЛОМЫ ============ -->
-<div class="card" id="dip" style="margin-bottom:20px;">
-  <div class="section-title" style="margin-bottom:8px"><h3>Дипломы к отправке</h3></div>
-  <p class="small muted" style="margin:-4px 0 12px">После оценки диплом планируется автоматически (платные — +5 раб. дней, ВИП — +3; длинные бесплатные — в дату публикации). Здесь можно сдвинуть время, отправить сейчас или отменить.</p>
-  <?php if (!$diplomas): ?>
-    <p class="muted">Запланированных дипломов нет.</p>
-  <?php else: ?>
-  <div class="table-wrap"><table class="tbl">
-    <thead><tr><th>Кому</th><th>Диплом</th><th>Конкурс</th><th>Плановая отправка</th><th>Действия</th></tr></thead>
-    <tbody>
-    <?php foreach ($diplomas as $d): $who = $d['is_group'] ? $d['group_name'] : $d['full_name'];
-      [$wc, $wl] = disp_when_badge((string)($d['scheduled_at'] ?? '')); ?>
-      <tr>
-        <td><?= h((string)$who) ?><br><span class="small muted"><?= h((string)$d['email']) ?> · №<?= h((string)$d['app_number']) ?></span></td>
-        <td class="small"><?= h($dTypeLbl[(string)$d['type']] ?? (string)$d['type']) ?><br><span class="muted"><?= h((string)$d['result']) ?></span></td>
-        <td class="small"><?= h((string)$d['comp_name']) ?></td>
-        <td><span style="display:inline-block;padding:4px 10px;border-radius:999px;background:<?= $wc ?>;color:#fff;font-size:12px;font-weight:700;white-space:nowrap"><?= h($wl) ?></span></td>
-        <td>
-          <div style="display:flex;flex-wrap:wrap;gap:6px;align-items:center;">
-            <form method="post" action="<?= url('/admin/') ?>" style="display:inline-flex;gap:4px;align-items:center;"><?= csrf_field() ?>
-              <input type="hidden" name="kind" value="diploma"><input type="hidden" name="do" value="resched"><input type="hidden" name="id" value="<?= (int)$d['id'] ?>">
-              <input type="datetime-local" name="scheduled_at" value="<?= h($d['scheduled_at'] ? date('Y-m-d\TH:i', strtotime((string)$d['scheduled_at'])) : '') ?>" style="padding:5px 8px;border:1px solid var(--a-line);border-radius:8px;font-size:12px;">
-              <button class="btn btn--ghost btn--sm" type="submit" title="Изменить дату/время">OK</button>
-            </form>
-            <form method="post" action="<?= url('/admin/') ?>" style="display:inline"><?= csrf_field() ?>
-              <input type="hidden" name="kind" value="diploma"><input type="hidden" name="do" value="sendnow"><input type="hidden" name="id" value="<?= (int)$d['id'] ?>">
-              <button class="btn btn--primary btn--sm" type="submit"><?= admin_icon('send') ?>Сейчас</button>
-            </form>
-            <form method="post" action="<?= url('/admin/') ?>" style="display:inline" onsubmit="return confirm('Отменить плановую отправку диплома?')"><?= csrf_field() ?>
-              <input type="hidden" name="kind" value="diploma"><input type="hidden" name="do" value="cancel"><input type="hidden" name="id" value="<?= (int)$d['id'] ?>">
-              <button class="btn btn--ghost btn--sm" type="submit" style="color:#C0392B;border-color:#C0392B"><?= admin_icon('trash') ?? 'X' ?></button>
-            </form>
-          </div>
-        </td>
-      </tr>
-    <?php endforeach; ?>
-    </tbody>
-  </table></div>
-  <?php endif; ?>
-</div>
-
-<!-- ============ ПИСЬМА ============ -->
-<div class="card" id="mail" style="margin-bottom:20px;">
-  <div class="section-title" style="margin-bottom:8px"><h3>Письма в очереди</h3></div>
-  <p class="small muted" style="margin:-4px 0 12px">Транзакционные (заявки, результаты, оплаты, дипломы) уходят сразу; массовые — по плану прогрева. Плановое время держит письмо до нужного момента. «Сейчас» — моментальная отправка.</p>
-  <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:12px">
-    <?php foreach (DISP_MAIL_TYPES as $tk => $tl): ?>
-      <a class="tag <?= $mtype===$tk?'active':'' ?>" href="<?= a_link('dispatch', $tk==='all'?[]:['mtype'=>$tk]) ?>#mail"
-         style="padding:6px 12px;border-radius:9px;font-size:.82rem;<?= $mtype===$tk?'background:var(--a-navy);color:#fff':'' ?>"><?= h($tl) ?></a>
-    <?php endforeach; ?>
+<form method="get" class="filters disp-toolbar" id="dispFilter">
+  <input type="hidden" name="p" value="dispatch">
+  <div class="field"><label>Поиск</label>
+    <input name="q" value="<?= h($q) ?>" placeholder="ФИО, почта, телефон, конкурс, №, тема или текст письма" style="min-width:280px">
   </div>
-  <?php if (!$mails): ?>
-    <p class="muted">Очередь писем пуста.</p>
+  <div class="field"><label>Тип</label>
+    <select name="f" onchange="this.form.submit()">
+      <?php foreach ($filters as $fk => $fl): ?>
+        <option value="<?= h($fk) ?>" <?= $f === $fk ? 'selected' : '' ?>><?= h($fl) ?></option>
+      <?php endforeach; ?>
+    </select>
+  </div>
+  <button class="btn btn--primary btn--sm"><?= admin_icon('search') ?>Поиск</button>
+  <?php if ($q !== '' || $f !== 'all'): ?><a class="btn btn--ghost btn--sm" href="<?= a_link('dispatch') ?>">Сброс</a><?php endif; ?>
+</form>
+
+<div class="tabs" style="margin-bottom:14px;display:flex;gap:6px;flex-wrap:wrap;">
+  <a class="tag active" href="#queue" style="padding:7px 13px;border-radius:10px;">В очереди · <?= $countQueue ?></a>
+  <a class="tag" href="#arch" style="padding:7px 13px;border-radius:10px;">Архив отправленных · <?= $countArch ?></a>
+</div>
+
+<!-- ============ ЕДИНАЯ ОЧЕРЕДЬ ============ -->
+<div class="card" id="queue" style="margin-bottom:20px;">
+  <div class="section-title" style="margin-bottom:8px"><h3>В очереди</h3></div>
+  <p class="small muted" style="margin:-4px 0 12px">По каждой строке: изменить дату/время, отправить сейчас, отменить, а письма — отредактировать (кнопка «✎»). Всё сохраняется на месте.</p>
+  <?php if (!$queueF): ?>
+    <p class="muted">По этому фильтру в очереди пусто.</p>
   <?php else: ?>
   <div class="table-wrap"><table class="tbl">
-    <thead><tr><th>Кому</th><th>Тема</th><th>Тип</th><th>Плановое время</th><th>Действия</th></tr></thead>
+    <thead><tr><th>Тип</th><th>Кому</th><th>Что</th><th>Когда</th><th>Действия</th></tr></thead>
     <tbody>
-    <?php foreach ($mails as $m):
-      $prio = (int)($m['priority'] ?? 0);
-      $whenRaw = (string)($m['scheduled_at'] ?? '');
-      [$wc, $wl] = $whenRaw !== '' ? disp_when_badge($whenRaw) : ['#1E9E5A', $prio === 0 ? 'сразу' : 'по плану'];
-    ?>
-      <tr>
-        <td class="small"><?= h((string)$m['to_email']) ?><?= $m['to_name'] ? '<br><span class="muted">'.h((string)$m['to_name']).'</span>' : '' ?></td>
-        <td class="small"><?= h(mb_strimwidth((string)$m['subject'], 0, 60, '…')) ?></td>
-        <td><span class="badge <?= $prio===0?'badge--paid':'badge--muted' ?> small"><?= $prio===0?'транз.':'массов.' ?></span></td>
-        <td><span style="display:inline-block;padding:4px 10px;border-radius:999px;background:<?= $wc ?>;color:#fff;font-size:12px;font-weight:700;white-space:nowrap"><?= h($wl) ?></span></td>
+    <?php foreach ($queueF as $it): $k = $it['kind']; $iid = $it['id']; $rid = "row-$k-$iid"; ?>
+      <tr class="disp-row" id="<?= $rid ?>">
         <td>
-          <div style="display:flex;flex-wrap:wrap;gap:6px;align-items:center;">
-            <form method="post" action="<?= url('/admin/') ?>" style="display:inline-flex;gap:4px;align-items:center;"><?= csrf_field() ?>
-              <input type="hidden" name="kind" value="mail"><input type="hidden" name="do" value="resched"><input type="hidden" name="id" value="<?= (int)$m['id'] ?>">
-              <input type="datetime-local" name="scheduled_at" value="<?= h($whenRaw ? date('Y-m-d\TH:i', strtotime($whenRaw)) : '') ?>" style="padding:5px 8px;border:1px solid var(--a-line);border-radius:8px;font-size:12px;">
-              <button class="btn btn--ghost btn--sm" type="submit" title="Изменить/держать">OK</button>
-            </form>
-            <form method="post" action="<?= url('/admin/') ?>" style="display:inline"><?= csrf_field() ?>
-              <input type="hidden" name="kind" value="mail"><input type="hidden" name="do" value="sendnow"><input type="hidden" name="id" value="<?= (int)$m['id'] ?>">
-              <button class="btn btn--primary btn--sm" type="submit"><?= admin_icon('send') ?>Сейчас</button>
-            </form>
-            <button class="btn btn--ghost btn--sm" type="button" onclick="document.getElementById('me<?= (int)$m['id'] ?>').style.display=(document.getElementById('me<?= (int)$m['id'] ?>').style.display==='none'?'flex':'none')" title="Редактировать">✎</button>
-            <a class="btn btn--ghost btn--sm" href="<?= a_link('dispatch', ['do'=>'view','kind'=>'mail','id'=>(int)$m['id']]) ?>" target="_blank" rel="noopener" title="Открыть письмо"><?= admin_icon('eye') ?? 'просмотр' ?></a>
-            <form method="post" action="<?= url('/admin/') ?>" style="display:inline" onsubmit="return confirm('Отменить письмо?')"><?= csrf_field() ?>
-              <input type="hidden" name="kind" value="mail"><input type="hidden" name="do" value="cancel"><input type="hidden" name="id" value="<?= (int)$m['id'] ?>">
-              <button class="btn btn--ghost btn--sm" type="submit" style="color:#C0392B;border-color:#C0392B"><?= admin_icon('trash') ?? 'X' ?></button>
-            </form>
+          <span class="disp-typechip k-<?= $k ?>"><?= h($it['type_label']) ?></span>
+          <?php if ($k === 'mail'): ?><br><span class="badge <?= ($it['priority']??0)===0?'badge--paid':'badge--muted' ?> small" style="margin-top:4px"><?= ($it['priority']??0)===0?'транз.':'массов.' ?></span><?php endif; ?>
+        </td>
+        <td class="small">
+          <b><?= h($it['who'] ?: '—') ?></b>
+          <?php if ($it['email']): ?><br><span class="muted"><?= h($it['email']) ?></span><?php endif; ?>
+          <?php if (!empty($it['number']) && $k !== 'order'): ?><br><span class="muted">№<?= h($it['number']) ?></span><?php endif; ?>
+          <?php if ($k === 'order'): ?><br><span class="muted">Заказ №<?= h($it['number']) ?></span><?php endif; ?>
+        </td>
+        <td class="small"><?= h(mb_strimwidth($it['title'], 0, 70, '…')) ?><?php if ($it['comp']): ?><br><span class="muted"><?= h($it['comp']) ?></span><?php endif; ?></td>
+        <td><span class="disp-when-cell"><?= $rowWhen($it) ?></span></td>
+        <td>
+          <div class="disp-acts">
+          <?php if ($k === 'diploma'): ?>
+            <input type="datetime-local" id="w-<?= $rid ?>" value="<?= h($it['when'] ? date('Y-m-d\TH:i', strtotime($it['when'])) : '') ?>">
+            <button class="btn btn--ghost btn--sm" data-act="resched" data-kind="diploma" data-id="<?= $iid ?>" data-when="w-<?= $rid ?>" data-row="<?= $rid ?>" title="Изменить дату/время">OK</button>
+            <button class="btn btn--primary btn--sm" data-act="sendnow" data-kind="diploma" data-id="<?= $iid ?>" data-row="<?= $rid ?>"><?= admin_icon('send') ?>Сейчас</button>
+            <button class="btn btn--ghost btn--sm" data-act="cancel" data-kind="diploma" data-id="<?= $iid ?>" data-row="<?= $rid ?>" data-confirm="Отменить плановую отправку диплома?" style="color:#C0392B;border-color:#C0392B"><?= admin_icon('trash') ?></button>
+          <?php elseif ($k === 'mail'): ?>
+            <input type="datetime-local" id="w-<?= $rid ?>" value="<?= h($it['when'] ? date('Y-m-d\TH:i', strtotime($it['when'])) : '') ?>">
+            <button class="btn btn--ghost btn--sm" data-act="resched" data-kind="mail" data-id="<?= $iid ?>" data-when="w-<?= $rid ?>" data-row="<?= $rid ?>" title="Изменить/держать">OK</button>
+            <button class="btn btn--primary btn--sm" data-act="sendnow" data-kind="mail" data-id="<?= $iid ?>" data-row="<?= $rid ?>"><?= admin_icon('send') ?>Сейчас</button>
+            <button class="btn btn--ghost btn--sm" data-act="editmail" data-id="<?= $iid ?>" data-row="<?= $rid ?>" title="Редактировать письмо"><?= admin_icon('edit') ?></button>
+            <a class="btn btn--ghost btn--sm" href="<?= a_link('dispatch', ['do'=>'view','kind'=>'mail','id'=>$iid]) ?>" target="_blank" rel="noopener" title="Открыть письмо"><?= admin_icon('eye') ?></a>
+            <button class="btn btn--ghost btn--sm" data-act="cancel" data-kind="mail" data-id="<?= $iid ?>" data-row="<?= $rid ?>" data-confirm="Отменить письмо?" style="color:#C0392B;border-color:#C0392B"><?= admin_icon('trash') ?></button>
+          <?php elseif ($k === 'order'): $st = $it['status'] ?? 'paid'; ?>
+            <?php if ($st === 'paid'): ?>
+              <button class="btn btn--navy btn--sm" data-act="made" data-kind="order" data-id="<?= $iid ?>" data-row="<?= $rid ?>"><?= admin_icon('check') ?>Изготовлено</button>
+            <?php endif; ?>
+            <?php if (in_array($st, ['paid','made'], true)): ?>
+              <input type="text" id="trk-<?= $rid ?>" placeholder="Трек-номер" style="min-width:150px">
+              <button class="btn btn--primary btn--sm" data-act="ship" data-kind="order" data-id="<?= $iid ?>" data-track="trk-<?= $rid ?>" data-row="<?= $rid ?>"><?= admin_icon('truck') ?>Отправить</button>
+            <?php endif; ?>
+            <button class="btn btn--ghost btn--sm" data-act="redispatch" data-kind="order" data-id="<?= $iid ?>" data-row="<?= $rid ?>"><?= admin_icon('send') ?>В производство</button>
+          <?php endif; ?>
           </div>
-          <form method="post" action="<?= url('/admin/') ?>" id="me<?= (int)$m['id'] ?>" style="display:none;gap:8px;margin-top:8px;flex-direction:column;" onsubmit="document.getElementById('mb<?= (int)$m['id'] ?>').value=document.getElementById('mw<?= (int)$m['id'] ?>').innerHTML;"><?= csrf_field() ?>
-            <input type="hidden" name="kind" value="mail"><input type="hidden" name="do" value="edit"><input type="hidden" name="id" value="<?= (int)$m['id'] ?>">
-            <div style="display:flex;gap:8px;flex-wrap:wrap">
-              <input type="email" name="to_email" value="<?= h((string)$m['to_email']) ?>" placeholder="email" style="padding:6px 9px;border:1px solid var(--a-line);border-radius:8px;min-width:200px;">
-              <input type="text" name="subject" value="<?= h((string)$m['subject']) ?>" placeholder="тема" style="padding:6px 9px;border:1px solid var(--a-line);border-radius:8px;min-width:260px;flex:1;">
-            </div>
-            <input type="text" name="attach" value="<?= h((string)($m['attach'] ?? '')) ?>" placeholder="Вложение (ссылка/путь; пусто = удалить)" style="padding:6px 9px;border:1px solid var(--a-line);border-radius:8px;">
-            <!-- WYSIWYG-редактор тела письма: панель форматирования + contenteditable (без символов кода) -->
-            <div style="display:flex;gap:4px;flex-wrap:wrap">
-              <?php foreach ([['bold','Ж'],['italic','К'],['underline','П'],['insertUnorderedList','•']] as $cmd): ?>
-                <button type="button" class="btn btn--ghost btn--sm" onclick="document.execCommand('<?= $cmd[0] ?>',false,null);document.getElementById('mw<?= (int)$m['id'] ?>').focus();"><?= $cmd[1] ?></button>
-              <?php endforeach; ?>
-              <button type="button" class="btn btn--ghost btn--sm" onclick="var u=prompt('Ссылка (URL):','https://');if(u)document.execCommand('createLink',false,u);">Ссылка</button>
-              <button type="button" class="btn btn--ghost btn--sm" onclick="var u=prompt('URL кнопки:','https://');if(u){document.execCommand('insertHTML',false,'<a href=\''+u+'\' style=\'display:inline-block;background:#17307A;color:#fff;text-decoration:none;padding:10px 18px;border-radius:8px;font-weight:700\'>Кнопка</a>');}">Кнопка</button>
-            </div>
-            <div id="mw<?= (int)$m['id'] ?>" contenteditable="true" style="min-height:160px;max-height:420px;overflow:auto;padding:12px 14px;border:1px solid var(--a-line);border-radius:10px;background:#fff;color:#111;font-size:14px;line-height:1.6"><?= (string)($m['body'] ?? '') ?></div>
-            <input type="hidden" name="body" id="mb<?= (int)$m['id'] ?>">
-            <div><button class="btn btn--navy btn--sm" type="submit">Сохранить письмо</button></div>
-          </form>
         </td>
       </tr>
     <?php endforeach; ?>
@@ -361,97 +527,224 @@ ob_start(); ?>
   <?php endif; ?>
 </div>
 
-<!-- ============ ЗАКАЗЫ ============ -->
-<div class="card" id="ord" style="margin-bottom:20px;">
-  <div class="section-title" style="margin-bottom:8px"><h3>Заказы оригиналов в производстве</h3></div>
-  <p class="small muted" style="margin:-4px 0 12px">После оплаты заказ уходит в производство автоматически. Плановые сроки: изготовить до <?= $makeDays ?> раб. дн., отправить до <?= $shipDays ?> раб. дн. от оплаты. Отметить изготовление, отправить с трек-номером или изменить точку отсчёта сроков.</p>
-  <?php if (!$orders): ?>
-    <p class="muted">Заказов в производстве нет. <a href="<?= a_link('orders') ?>">Все заказы →</a></p>
+<!-- ============ АРХИВ ОТПРАВЛЕННЫХ ============ -->
+<div class="card" id="arch" style="margin-bottom:20px;">
+  <div class="section-title" style="margin-bottom:8px"><h3>Архив отправленных · <?= $countArch ?></h3></div>
+  <p class="small muted" style="margin:-4px 0 12px">Что реально ушло. «Просмотр» — открыть письмо; «Дублировать» — отправить как есть; «Изменить и дублировать» — открыть в редакторе, поправить и отправить новой копией.</p>
+  <?php if (!$archiveF): ?>
+    <p class="muted">По этому фильтру в архиве пусто.</p>
   <?php else: ?>
-  <?php foreach ($orders as $o):
-    $oid=(int)$o['id']; $st=(string)$o['status'];
-    $anchor = trim((string)($o['dispatched_at'] ?? '')) ?: trim((string)($o['created_at'] ?? $now));
-    $makeBy = disp_add_workdays($anchor, $makeDays);
-    $shipBy = disp_add_workdays($anchor, $shipDays);
-    $STAT=['paid'=>'К изготовлению','made'=>'Изготовлено','shipped'=>'Отправлено'];
-    $badge=['paid'=>'#C79322','made'=>'#2C7BE5','shipped'=>'#17307A'][$st] ?? '#8892B0';
-  ?>
-    <div style="border:1px solid var(--a-line);border-radius:12px;padding:12px 14px;margin-bottom:10px;">
-      <div style="display:flex;flex-wrap:wrap;gap:10px;justify-content:space-between;align-items:center;">
-        <div>
-          <b style="color:var(--a-navy)">Заказ №<?= $oid ?></b> · <?= h((string)$o['full_name']) ?>
-          <span style="display:inline-block;margin-left:6px;padding:3px 10px;border-radius:999px;background:<?= $badge ?>;color:#fff;font-size:11px;font-weight:700;"><?= h($STAT[$st] ?? $st) ?></span>
-          <div class="small muted"><?= h((string)$o['competition']) ?> · <?= h((string)$o['result']) ?> · <?= h(function_exists('money')?money((int)$o['amount']):(int)$o['amount'].' ₽') ?></div>
-        </div>
-        <div class="small" style="text-align:right;">
-          <div>Изготовить до: <b style="color:<?= strtotime($makeBy)<time()&&$st==='paid'?'#C0392B':'#17307A' ?>"><?= disp_dt($makeBy) ?></b></div>
-          <div>Отправить до: <b style="color:<?= strtotime($shipBy)<time()&&$st!=='shipped'?'#C0392B':'#17307A' ?>"><?= disp_dt($shipBy) ?></b></div>
-        </div>
-      </div>
-      <div style="display:flex;flex-wrap:wrap;gap:6px;align-items:center;margin-top:10px;">
-        <?php if ($st==='paid'): ?>
-          <form method="post" action="<?= url('/admin/') ?>" style="display:inline"><?= csrf_field() ?>
-            <input type="hidden" name="kind" value="order"><input type="hidden" name="do" value="made"><input type="hidden" name="id" value="<?= $oid ?>">
-            <button class="btn btn--navy btn--sm" type="submit"><?= admin_icon('check') ?>Изготовлено</button>
-          </form>
-        <?php endif; ?>
-        <?php if (in_array($st,['paid','made'],true)): ?>
-          <form method="post" action="<?= url('/admin/') ?>" style="display:inline-flex;gap:5px;align-items:center;"><?= csrf_field() ?>
-            <input type="hidden" name="kind" value="order"><input type="hidden" name="do" value="ship"><input type="hidden" name="id" value="<?= $oid ?>">
-            <input type="text" name="tracking" placeholder="Трек-номер" required style="padding:6px 10px;border:1px solid var(--a-line);border-radius:8px;min-width:170px;">
-            <button class="btn btn--primary btn--sm" type="submit"><?= admin_icon('truck') ?? '' ?>Отправить сейчас</button>
-          </form>
-        <?php endif; ?>
-        <form method="post" action="<?= url('/admin/') ?>" style="display:inline-flex;gap:4px;align-items:center;"><?= csrf_field() ?>
-          <input type="hidden" name="kind" value="order"><input type="hidden" name="do" value="resched"><input type="hidden" name="id" value="<?= $oid ?>">
-          <input type="datetime-local" name="scheduled_at" value="<?= h(date('Y-m-d\TH:i', strtotime($anchor))) ?>" style="padding:5px 8px;border:1px solid var(--a-line);border-radius:8px;font-size:12px;" title="Точка отсчёта сроков">
-          <button class="btn btn--ghost btn--sm" type="submit">Сроки</button>
-        </form>
-        <form method="post" action="<?= url('/admin/') ?>" style="display:inline;margin-left:auto"><?= csrf_field() ?>
-          <input type="hidden" name="kind" value="order"><input type="hidden" name="do" value="redispatch"><input type="hidden" name="id" value="<?= $oid ?>">
-          <button class="btn btn--ghost btn--sm" type="submit"><?= admin_icon('send') ?>В производство (Telegram)</button>
-        </form>
-      </div>
+  <div class="table-wrap"><table class="tbl">
+    <thead><tr><th>Тип</th><th>Кому</th><th>Тема</th><th>Отправлено</th><th>Действия</th></tr></thead>
+    <tbody>
+    <?php foreach ($archiveF as $it): $iid = $it['id']; $rid = "arch-$iid"; ?>
+      <tr class="disp-row" id="<?= $rid ?>">
+        <td><span class="disp-typechip k-mail"><?= h($it['type_label']) ?></span></td>
+        <td class="small"><?= h($it['email']) ?><?= $it['who'] ? '<br><span class="muted">'.h($it['who']).'</span>' : '' ?></td>
+        <td class="small"><?= h(mb_strimwidth($it['title'], 0, 66, '…')) ?></td>
+        <td class="small muted"><?= h($it['sent_at']) ?></td>
+        <td>
+          <div class="disp-acts">
+            <a class="btn btn--ghost btn--sm" href="<?= a_link('dispatch', ['do'=>'view','kind'=>'mail','id'=>$iid]) ?>" target="_blank" rel="noopener"><?= admin_icon('eye') ?>Просмотр</a>
+            <button class="btn btn--navy btn--sm" data-act="editdup" data-id="<?= $iid ?>"><?= admin_icon('edit') ?>Изменить и дублировать</button>
+            <button class="btn btn--ghost btn--sm" data-act="dup" data-kind="mail" data-id="<?= $iid ?>" data-confirm="Отправить это письмо ещё раз как есть?"><?= admin_icon('copy') ?>Дублировать</button>
+          </div>
+        </td>
+      </tr>
+    <?php endforeach; ?>
+    </tbody>
+  </table></div>
+  <?php endif; ?>
+</div>
+
+<!-- ============ ТОСТ + МОДАЛ РЕДАКТОРА ПИСЬМА ============ -->
+<div id="dispToast"></div>
+
+<div id="mailEditor" aria-hidden="true">
+  <div class="box" role="dialog" aria-modal="true" aria-labelledby="meTitle">
+    <div class="box-head">
+      <h3 id="meTitle">Редактирование письма</h3>
+      <button type="button" class="btn btn--ghost btn--sm" data-me="close" aria-label="Закрыть"><?= admin_icon('x') ?></button>
     </div>
-  <?php endforeach; ?>
-  <p class="small"><a href="<?= a_link('orders') ?>">Открыть полный раздел «Заказы оригиналов» →</a></p>
-  <?php endif; ?>
-</div>
-<?php
-?>
-
-<!-- ============ АРХИВ ОТПРАВЛЕННЫХ (журнал: кому/когда/что) ============ -->
-<div class="card" id="sent" style="margin-bottom:20px;">
-  <div class="section-title" style="margin-bottom:8px"><h3>Архив отправленных · <?= count($sentMails) ?></h3></div>
-  <p class="small muted" style="margin:-4px 0 12px">Что реально ушло: кому, когда, какая тема и тип. Открыть само письмо — «Просмотр»; отправить ещё раз — «Дублировать». Фильтр по типу — сверху (действует и на очередь, и на архив).</p>
-  <?php if (!$sentMails): ?>
-    <p class="muted">В архиве по этому фильтру пусто.</p>
-  <?php else: ?>
-  <div class="table-wrap"><table class="tbl">
-    <thead><tr><th>Кому</th><th>Тема</th><th>Тип</th><th>Отправлено</th><th>Действия</th></tr></thead>
-    <tbody>
-    <?php foreach ($sentMails as $m): $mt = disp_mail_type($m); ?>
-      <tr>
-        <td class="small"><?= h((string)$m['to_email']) ?><?= $m['to_name'] ? '<br><span class="muted">'.h((string)$m['to_name']).'</span>' : '' ?></td>
-        <td class="small"><?= h(mb_strimwidth((string)$m['subject'], 0, 60, '…')) ?></td>
-        <td><span class="badge badge--muted small"><?= h(DISP_MAIL_TYPES[$mt] ?? $mt) ?></span></td>
-        <td class="small muted"><?= h((string)($m['sent_at'] ?? '')) ?></td>
-        <td>
-          <div style="display:flex;gap:6px;flex-wrap:wrap">
-            <a class="btn btn--ghost btn--sm" href="<?= a_link('dispatch', ['do'=>'view','kind'=>'mail','id'=>(int)$m['id']]) ?>" target="_blank" rel="noopener">Просмотр</a>
-            <form method="post" action="<?= url('/admin/') ?>" style="display:inline" onsubmit="return confirm('Отправить это письмо ещё раз?')"><?= csrf_field() ?>
-              <input type="hidden" name="kind" value="mail"><input type="hidden" name="do" value="duplicate"><input type="hidden" name="id" value="<?= (int)$m['id'] ?>">
-              <button class="btn btn--navy btn--sm" type="submit">Дублировать</button>
-            </form>
-          </div>
-        </td>
-      </tr>
-    <?php endforeach; ?>
-    </tbody>
-  </table></div>
-  <?php endif; ?>
+    <div class="box-body">
+      <input type="hidden" id="meId"><input type="hidden" id="meMode">
+      <label>Кому (email)</label>
+      <input type="email" id="meTo" placeholder="participant@example.com">
+      <label>Имя получателя</label>
+      <input type="text" id="meName" placeholder="Необязательно">
+      <label>Тема письма</label>
+      <input type="text" id="meSubject" placeholder="Тема">
+      <label>Дата и время отправки <span class="me-hint" style="display:inline">— пусто = уйдёт сразу; не трогайте, чтобы оставить запланированное</span></label>
+      <input type="datetime-local" id="meSched" data-touched="0">
+      <label>Текст письма</label>
+      <div id="meToolbar">
+        <button type="button" data-cmd="bold" title="Жирный">Ж</button>
+        <button type="button" data-cmd="italic" title="Курсив" style="font-style:italic">К</button>
+        <button type="button" data-cmd="underline" title="Подчёркнутый" style="text-decoration:underline">П</button>
+        <button type="button" data-cmd="insertUnorderedList" title="Список">•</button>
+        <button type="button" data-cmd="link" title="Текстовая ссылка">Ссылка</button>
+        <button type="button" data-cmd="button" title="Кнопка со ссылкой">Кнопка</button>
+        <button type="button" data-cmd="editlink" title="Изменить ссылку/кнопку под курсором">Изменить ссылку</button>
+      </div>
+      <div id="meBody" contenteditable="true"></div>
+      <label>Вложение (ссылка/путь; пусто = без вложения)</label>
+      <input type="text" id="meAttach" placeholder="https://…">
+    </div>
+    <div class="box-foot">
+      <button type="button" class="btn btn--ghost" data-me="close">Отмена</button>
+      <button type="button" class="btn btn--primary" id="meSave"><?= admin_icon('check') ?>Сохранить</button>
+    </div>
+  </div>
 </div>
 
+<script>
+(function(){
+  var CSRF = <?= json_encode(csrf_token()) ?>;
+  var POST_URL = <?= json_encode(url('/admin/?p=dispatch')) ?>;
+  var GET_URL  = <?= json_encode(a_link('dispatch')) ?>;
+
+  function toast(msg, isErr){
+    var t=document.getElementById('dispToast'); t.textContent=msg;
+    t.className = isErr ? 'show err' : 'show';
+    clearTimeout(t._h); t._h=setTimeout(function(){ t.className=''; }, 3600);
+  }
+  function post(data){
+    var fd=new FormData();
+    fd.append('ajax','1'); fd.append('_csrf',CSRF);
+    for(var k in data){ if(data[k]!==undefined && data[k]!==null) fd.append(k,data[k]); }
+    return fetch(POST_URL,{method:'POST',credentials:'same-origin',body:fd})
+      .then(function(r){return r.json();});
+  }
+  function removeRow(id){
+    var row=document.getElementById(id); if(!row) return;
+    row.classList.add('gone'); setTimeout(function(){ if(row&&row.parentNode) row.parentNode.removeChild(row); },400);
+  }
+  function setWhen(rowId, label){
+    var row=document.getElementById(rowId); if(!row) return;
+    var cell=row.querySelector('.disp-when-cell'); if(!cell) return;
+    var col = /сейчас|уход/i.test(label) ? '#C0392B' : (/сразу/i.test(label)?'#1E9E5A':'#2C7BE5');
+    cell.innerHTML='<span class="disp-when" style="background:'+col+'">'+label.replace(/</g,'&lt;')+'</span>';
+  }
+
+  /* ---- Делегированные действия по строкам ---- */
+  document.addEventListener('click', function(e){
+    var b=e.target.closest('[data-act]'); if(!b) return;
+    var act=b.getAttribute('data-act');
+
+    if(act==='editmail'){ e.preventDefault(); openEditor(b.getAttribute('data-id'),'edit'); return; }
+    if(act==='editdup'){ e.preventDefault(); openEditor(b.getAttribute('data-id'),'duplicate'); return; }
+
+    var kind=b.getAttribute('data-kind'), id=b.getAttribute('data-id'), row=b.getAttribute('data-row');
+    var conf=b.getAttribute('data-confirm');
+    if(conf && !confirm(conf)) return;
+    e.preventDefault();
+
+    var doMap={sendnow:'sendnow',cancel:'cancel',resched:'resched',dup:'duplicate',
+               made:'made',ship:'ship',redispatch:'redispatch'};
+    var payload={kind:kind,id:id,do:doMap[act]};
+
+    if(act==='resched'){ var wi=document.getElementById(b.getAttribute('data-when')); payload.scheduled_at = wi?wi.value:''; }
+    if(act==='ship'){ var ti=document.getElementById(b.getAttribute('data-track')); if(!ti||!ti.value.trim()){toast('Введите трек-номер',true);return;} payload.tracking=ti.value.trim(); }
+
+    b.disabled=true;
+    post(payload).then(function(res){
+      b.disabled=false;
+      toast(res.msg||(res.ok?'Готово':'Ошибка'), !res.ok);
+      if(!res.ok) return;
+      if(res.remove && row){ removeRow(row); return; }
+      if(res.when && row){ setWhen(row, res.when); }
+      if(act==='made' && row){ var chip=document.querySelector('#'+row+' .disp-typechip'); /* статус обновится при перезагрузке */ }
+      if(act==='dup'){ /* остаётся в архиве, копия ушла в очередь */ }
+    }).catch(function(){ b.disabled=false; toast('Сеть недоступна, повторите',true); });
+  });
+
+  /* ================= РЕДАКТОР ПИСЬМА ================= */
+  var M={ov:document.getElementById('mailEditor'),id:document.getElementById('meId'),mode:document.getElementById('meMode'),
+    to:document.getElementById('meTo'),name:document.getElementById('meName'),subject:document.getElementById('meSubject'),
+    sched:document.getElementById('meSched'),body:document.getElementById('meBody'),attach:document.getElementById('meAttach'),
+    title:document.getElementById('meTitle'),save:document.getElementById('meSave')};
+
+  function closeEditor(){ M.ov.classList.remove('show'); M.ov.setAttribute('aria-hidden','true'); }
+  function openEditor(id, mode){
+    M.id.value=id; M.mode.value=mode;
+    M.title.textContent = mode==='duplicate' ? 'Изменить и дублировать письмо' : 'Редактирование письма в очереди';
+    M.sched.setAttribute('data-touched','0');
+    M.to.value='';M.name.value='';M.subject.value='';M.sched.value='';M.body.innerHTML='<p>Загрузка…</p>';M.attach.value='';
+    M.ov.classList.add('show'); M.ov.setAttribute('aria-hidden','false');
+    fetch(GET_URL+'&do=get&kind=mail&id='+encodeURIComponent(id),{credentials:'same-origin'})
+      .then(function(r){return r.json();}).then(function(d){
+        if(!d.ok){ toast(d.error||'Не удалось загрузить письмо',true); closeEditor(); return; }
+        M.to.value=d.to_email||''; M.name.value=d.to_name||''; M.subject.value=d.subject||'';
+        M.sched.value=d.scheduled_at||''; M.body.innerHTML=d.body||''; M.attach.value=d.attach||'';
+      }).catch(function(){ toast('Сеть недоступна',true); closeEditor(); });
+  }
+  M.sched.addEventListener('input', function(){ this.setAttribute('data-touched','1'); });
+
+  M.ov.addEventListener('click', function(e){
+    if(e.target===M.ov || e.target.closest('[data-me="close"]')) closeEditor();
+  });
+  document.addEventListener('keydown', function(e){ if(e.key==='Escape' && M.ov.classList.contains('show')) closeEditor(); });
+
+  /* Панель форматирования */
+  function anchorUnder(){
+    var s=window.getSelection(); if(!s.rangeCount) return null;
+    var n=s.anchorNode; while(n && n!==M.body){ if(n.nodeType===1 && n.tagName==='A') return n; n=n.parentNode; }
+    return null;
+  }
+  var BTN_STYLE="display:inline-block;background:#17307A;color:#fff;text-decoration:none;padding:10px 18px;border-radius:8px;font-weight:700";
+  document.getElementById('meToolbar').addEventListener('click', function(e){
+    var b=e.target.closest('[data-cmd]'); if(!b) return; e.preventDefault();
+    var cmd=b.getAttribute('data-cmd'); M.body.focus();
+    if(cmd==='link' || cmd==='editlink'){
+      var a=anchorUnder(); var sel=window.getSelection().toString();
+      var text=prompt('Текст ссылки:', a?a.textContent:(sel||'ссылка')); if(text===null) return;
+      var url=prompt('Адрес (URL):', a?a.getAttribute('href'):'https://'); if(url===null) return;
+      if(a){ a.textContent=text; a.setAttribute('href',url); }
+      else { document.execCommand('insertHTML',false,'<a href="'+esc(url)+'">'+esc(text)+'</a>'); }
+    } else if(cmd==='button'){
+      var a2=anchorUnder(); var sel2=window.getSelection().toString();
+      var t2=prompt('Текст кнопки:', a2?a2.textContent:(sel2||'Кнопка')); if(t2===null) return;
+      var u2=prompt('Ссылка кнопки (URL):', a2?a2.getAttribute('href'):'https://'); if(u2===null) return;
+      if(a2){ a2.textContent=t2; a2.setAttribute('href',u2); a2.setAttribute('style',BTN_STYLE); }
+      else { document.execCommand('insertHTML',false,'<a href="'+esc(u2)+'" style="'+BTN_STYLE+'">'+esc(t2)+'</a>'); }
+    } else {
+      document.execCommand(cmd,false,null);
+    }
+    M.body.focus();
+  });
+  function esc(s){ return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+
+  /* Сохранить */
+  M.save.addEventListener('click', function(){
+    var mode=M.mode.value, id=M.id.value;
+    if(!M.to.value.trim()){ toast('Укажите email получателя',true); M.to.focus(); return; }
+    if(!M.subject.value.trim()){ toast('Укажите тему',true); M.subject.focus(); return; }
+    var payload={kind:'mail',id:id,to_email:M.to.value.trim(),to_name:M.name.value.trim(),
+      subject:M.subject.value.trim(),body:M.body.innerHTML,attach:M.attach.value.trim()};
+    if(mode==='duplicate'){
+      payload.do='duplicate_edit'; payload.scheduled_at=M.sched.value;
+    } else {
+      payload.do='edit';
+      if(M.sched.getAttribute('data-touched')==='1'){ payload.sched_touched='1'; payload.scheduled_at=M.sched.value; }
+    }
+    M.save.disabled=true;
+    post(payload).then(function(res){
+      M.save.disabled=false;
+      toast(res.msg||(res.ok?'Сохранено':'Ошибка'), !res.ok);
+      if(!res.ok) return;
+      if(mode==='edit'){
+        var row=document.getElementById('row-mail-'+id);
+        if(row){
+          if(res.subject){ var c=row.children[2]; if(c) c.innerHTML=res.subject.replace(/</g,'&lt;'); }
+          if(res.to_email){ var e0=row.children[1]; if(e0){ var mm=e0.querySelector('.muted'); } }
+          if(res.when){ setWhen('row-mail-'+id, res.when); }
+        }
+      }
+      closeEditor();
+    }).catch(function(){ M.save.disabled=false; toast('Сеть недоступна',true); });
+  });
+})();
+</script>
 <?php
 $content = ob_get_clean();
 admin_layout('Отправки', $content, 'dispatch');

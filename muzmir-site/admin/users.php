@@ -430,10 +430,11 @@ details.u-d>summary svg{width:15px;height:15px;vertical-align:-2px;margin-right:
   <p class="small muted" style="margin-top:10px">Показано <?= count($users) ?><?= count($users)>=300?' (первые 300)':'' ?>. Роль применяется мгновенно и пишется в аудит-лог.</p>
 
 <?php elseif ($tab === 'subs'):
-  $seg = input('seg'); $src = input('seg_source');
+  $seg = input('seg'); $src = input('seg_source'); $sq = trim(input('q'));
   $w = []; $sa = [];
   if ($seg) { $w[] = "tags LIKE ?"; $sa[] = "%$seg%"; }
   if ($src) { $w[] = "source=?"; $sa[] = $src; }
+  if ($sq !== '') { $w[] = "(email LIKE ? OR name LIKE ?)"; $sa[] = "%$sq%"; $sa[] = "%$sq%"; }
   $where = $w ? 'WHERE ' . implode(' AND ', $w) : '';
   $subs = all("SELECT * FROM subscribers $where ORDER BY id DESC LIMIT 500", $sa);
   $sources = all("SELECT DISTINCT source FROM subscribers WHERE source<>''");
@@ -478,11 +479,12 @@ details.u-d>summary svg{width:15px;height:15px;vertical-align:-2px;margin-right:
   <?php endif; ?>
 
   <form method="get" class="filters"><input type="hidden" name="p" value="users"><input type="hidden" name="tab" value="subs">
+    <div class="field"><label>Поиск</label><input name="q" value="<?= h($sq) ?>" placeholder="email или имя"></div>
     <div class="field"><label>Сегмент (тег)</label><select name="seg"><option value="">Все</option>
       <?php foreach (array_keys($allTags) as $t): ?><option value="<?= h($t) ?>" <?= $seg===$t?'selected':'' ?>><?= h($t) ?></option><?php endforeach; ?></select></div>
     <div class="field"><label>Источник</label><select name="seg_source"><option value="">Все</option>
       <?php foreach ($sources as $s): ?><option value="<?= h($s['source']) ?>" <?= $src===$s['source']?'selected':'' ?>><?= h($s['source']) ?></option><?php endforeach; ?></select></div>
-    <button class="btn btn--primary btn--sm">Фильтр</button>
+    <button class="btn btn--primary btn--sm"><?= admin_icon('search') ?>Поиск</button>
     <a class="btn btn--ghost btn--sm" href="<?= a_link('users', ['tab'=>'subs']) ?>">Сброс</a>
   </form>
 

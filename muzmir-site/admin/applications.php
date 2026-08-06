@@ -301,7 +301,7 @@ ob_start(); ?>
   <div class="field"><label style="display:flex;align-items:center;gap:8px;cursor:pointer;white-space:nowrap">
     <input type="checkbox" name="show_unpaid" value="1" <?= input('show_unpaid')==='1'?'checked':'' ?> style="width:auto"> Ожидают оплаты</label>
     <span class="small muted">неоплаченные платные заявки</span></div>
-  <button class="btn btn--primary btn--sm">Фильтр</button>
+  <button class="btn btn--primary btn--sm"><?= admin_icon('search') ?? '' ?>Поиск</button>
   <a class="btn btn--ghost btn--sm" href="<?= a_link('applications') ?>">Сброс</a>
 </form>
 

@@ -99,6 +99,9 @@ ob_start(); ?>
       <?php endforeach; ?>
     </select>
   </div>
+  <div class="field"><label>Поиск</label><input name="q" value="<?= h(input('q')) ?>" placeholder="ФИО, коллектив, №, email, телефон, номер"></div>
+  <button class="btn btn--primary btn--sm"><?= admin_icon('search') ?>Поиск</button>
+  <?php if (trim(input('q')) !== ''): ?><a class="btn btn--ghost btn--sm" href="<?= a_link('longcomp', ['competition'=>$comp]) ?>">Сброс</a><?php endif; ?>
 </form>
 
 <?php if (!$longComps): ?>
@@ -108,6 +111,15 @@ ob_start(); ?>
 <?php else:
   $all = all("SELECT * FROM applications WHERE competition_id=? AND is_paid=1 AND status<>'rejected'
               ORDER BY full_name COLLATE NOCASE", [$comp]);
+  $qLong = trim(input('q'));
+  if ($qLong !== '') {
+      $ql = mb_strtolower($qLong);
+      $all = array_values(array_filter($all, function ($a) use ($ql) {
+          $hay = mb_strtolower(trim((string)($a['full_name'] ?? '') . ' ' . ($a['group_name'] ?? '') . ' '
+               . ($a['number'] ?? '') . ' ' . ($a['email'] ?? '') . ' ' . ($a['phone'] ?? '') . ' ' . ($a['work_title'] ?? '')));
+          return str_contains($hay, $ql);
+      }));
+  }
   $toGrade = array_values(array_filter($all, fn($a) => trim((string)$a['result']) === ''));
   $graded  = array_values(array_filter($all, fn($a) => trim((string)$a['result']) !== ''));
   $tot = count($all); $done = count($graded);

@@ -116,7 +116,7 @@ function recalc_score(int $appId): void {
  * Очередь оценивания: ВСЕ неоценённые заявки автоматически (без ручных переносов
  * статусов), старые -> новые, заявки одного участника (email ИЛИ телефон) — подряд.
  */
-function grading_queue_rows(int $comp = 0, string $order = 'old'): array {
+function grading_queue_rows(int $comp = 0, string $order = 'old', string $q = ''): array {
     // ГЕЙТ ПО ОПЛАТЕ: в очередь оценивания попадают только принятые заявки —
     // бесплатные (is_paid=1 сразу) и оплаченные платные (is_paid=1 после оплаты).
     // Неоплаченная платная заявка «не существует» и не оценивается.
@@ -125,6 +125,13 @@ function grading_queue_rows(int $comp = 0, string $order = 'old'): array {
     $w = "a.status IN ('new','submitted','pending','paid','judging') AND a.is_paid=1
           AND (c.results_mode IS NULL OR c.results_mode <> 'list')"; $args = [];
     if ($comp) { $w .= " AND a.competition_id=?"; $args[] = $comp; }
+    $q = trim($q);
+    if ($q !== '') {
+        $w .= " AND (a.full_name LIKE ? OR a.group_name LIKE ? OR a.number LIKE ? OR a.email LIKE ?
+                     OR a.phone LIKE ? OR a.work_title LIKE ? OR c.name LIKE ?)";
+        $like = '%' . $q . '%';
+        array_push($args, $like, $like, $like, $like, $like, $like, $like);
+    }
     $rows = all("SELECT a.*, c.name comp FROM applications a
                  LEFT JOIN competitions c ON c.id=a.competition_id
                  WHERE $w ORDER BY a.created_at ASC, a.id ASC LIMIT 500", $args);
@@ -761,14 +768,21 @@ $comps = all("SELECT id,name,is_paid,results_mode,results_date FROM competitions
 $compRow = null;
 foreach ($comps as $c) if ((int)$c['id'] === $comp) { $compRow = $c; break; }
 
+$qSearch = trim(input('q'));
 $show = ($comp && input('show') === 'graded') ? 'graded' : '';
 if ($show === 'graded') {
+    $gw = "a.competition_id=? AND a.result<>'' AND a.status<>'rejected'"; $gargs = [$comp];
+    if ($qSearch !== '') {
+        $gw .= " AND (a.full_name LIKE ? OR a.group_name LIKE ? OR a.number LIKE ? OR a.email LIKE ?
+                      OR a.phone LIKE ? OR a.work_title LIKE ?)";
+        $gl = '%' . $qSearch . '%'; array_push($gargs, $gl, $gl, $gl, $gl, $gl, $gl);
+    }
     $rows = all("SELECT a.*, c.name comp, 1 grp_count, 0 grp_pos FROM applications a
                  LEFT JOIN competitions c ON c.id=a.competition_id
-                 WHERE a.competition_id=? AND a.result<>'' AND a.status<>'rejected'
-                 ORDER BY a.created_at " . ($order === 'new' ? 'DESC' : 'ASC') . ", a.id LIMIT 500", [$comp]);
+                 WHERE $gw
+                 ORDER BY a.created_at " . ($order === 'new' ? 'DESC' : 'ASC') . ", a.id LIMIT 500", $gargs);
 } else {
-    $rows = grading_queue_rows($comp, $order);
+    $rows = grading_queue_rows($comp, $order, $qSearch);
 }
 $qTotal = count($rows);
 
@@ -795,6 +809,7 @@ ob_start(); ?>
 
 <form method="get" class="filters">
   <input type="hidden" name="p" value="grading"><?php if ($show): ?><input type="hidden" name="show" value="graded"><?php endif; ?>
+  <div class="field"><label>Поиск</label><input name="q" value="<?= h($qSearch) ?>" placeholder="ФИО, коллектив, №, email, телефон, номер"></div>
   <div class="field"><label>Конкурс</label><select name="competition" onchange="this.form.submit()"><option value="">Все конкурсы</option>
     <?php foreach ($comps as $c): ?><option value="<?= $c['id'] ?>" <?= $comp===(int)$c['id']?'selected':'' ?>><?= h($c['name']) ?></option><?php endforeach; ?>
   </select></div>
@@ -802,6 +817,8 @@ ob_start(); ?>
     <option value="old" <?= $order==='old'?'selected':'' ?>>Старые → новые</option>
     <option value="new" <?= $order==='new'?'selected':'' ?>>Новые → старые</option>
   </select></div>
+  <button class="btn btn--primary btn--sm"><?= admin_icon('search') ?? '' ?>Поиск</button>
+  <?php if ($qSearch !== ''): ?><a class="btn btn--ghost btn--sm" href="<?= a_link('grading', array_filter(['competition'=>$comp,'order'=>$order,'show'=>$show?:null])) ?>">Сброс</a><?php endif; ?>
 </form>
 
 <?php if ($longStats): ?>
