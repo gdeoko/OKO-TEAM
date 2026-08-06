@@ -662,7 +662,7 @@ if ($action === 'edit') {
       <div class="toolbar" style="margin-top:22px">
         <button class="btn btn--primary"><?= admin_icon('check') ?>Сохранить</button>
         <?php if ($id): ?>
-          <button class="btn btn--ghost" name="do" value="copy"><?= admin_icon('copy') ?>Дублировать</button>
+          <button class="btn btn--ghost" name="do" value="copy" formnovalidate onclick="return confirm('Создать копию-черновик этого конкурса? Появится отдельный конкурс «(копия)».')"><?= admin_icon('copy') ?>Дублировать</button>
           <button class="btn btn--danger" name="do" value="delete" onclick="return confirm('Удалить конкурс безвозвратно? Прайс наград тоже будет удалён.')"><?= admin_icon('trash') ?>Удалить</button>
         <?php endif; ?>
       </div>
@@ -784,7 +784,7 @@ ob_start(); ?>
             <a class="btn btn--ghost btn--sm" href="<?= a_link('competitions', ['action'=>'edit','id'=>$c['id']]) ?>" title="Редактировать"><?= admin_icon('edit') ?></a>
             <form method="post" action="<?= url('/admin/') ?>" style="display:inline">
               <?= csrf_field() ?><input type="hidden" name="do" value="copy"><input type="hidden" name="id" value="<?= $c['id'] ?>">
-              <button class="btn btn--ghost btn--sm" title="Дублировать"><?= admin_icon('copy') ?></button>
+              <button class="btn btn--ghost btn--sm" title="Дублировать" onclick="return confirm('Создать копию-черновик этого конкурса?')"><?= admin_icon('copy') ?></button>
             </form>
           </td>
         </tr>

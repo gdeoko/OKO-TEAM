@@ -59,7 +59,10 @@ function award_photo(string $slug, int $compId = 0): ?string {
     if ($compId) $cands[] = "img/awards/$compId/$slug.jpg";
     $cands[] = "img/awards/$slug.jpg";
     foreach ($cands as $rel) {
-        if (is_file(BASE_PATH . '/public/assets/' . $rel)) return asset($rel);
+        $abs = BASE_PATH . '/public/assets/' . $rel;
+        // Антикэш по mtime: nginx отдаёт картинки с max-age=30d, без версии
+        // заменённое фото на сайте не обновлялось бы.
+        if (is_file($abs)) return asset($rel) . '?v=' . filemtime($abs);
     }
     return null;
 }

@@ -290,8 +290,27 @@ $bgSrc = ($bgFsPath && is_file($bgFsPath)) ? url('/' . ltrim($bgPath, '/')) . '?
     </div>
     <div class="toolbar" style="margin:14px 0 0">
       <button class="btn btn--primary"><?= admin_icon('check') ?>Сохранить фото наград и фон</button>
+      <span class="aw-note" id="awDirty" style="display:none;align-self:center">Выбрано новое фото — нажмите «Сохранить», чтобы применить.</span>
     </div>
   </form>
+  <script>
+  (function(){
+    // Мгновенный предпросмотр выбранного файла ДО сохранения.
+    document.querySelectorAll('.aw-slot input[type=file]').forEach(function(inp){
+      inp.addEventListener('change', function(){
+        var f = inp.files && inp.files[0]; if (!f) return;
+        var box = inp.closest('.aw-slot').querySelector('.aw-slot__img');
+        if (!box) return;
+        var url = URL.createObjectURL(f);
+        var img = box.querySelector('img');
+        if (!img) { box.innerHTML = ''; img = document.createElement('img'); box.appendChild(img); }
+        img.src = url;
+        img.onload = function(){ URL.revokeObjectURL(url); };
+        var d = document.getElementById('awDirty'); if (d) d.style.display = '';
+      });
+    });
+  })();
+  </script>
 
   <div class="section-title" style="margin:18px 0 8px"><h3>Образцы дипломов — открыть и посмотреть</h3></div>
   <p class="aw-note" style="margin-top:-2px">Собираются по макету ниже. Нажмите, чтобы открыть образец каждого типа.</p>
