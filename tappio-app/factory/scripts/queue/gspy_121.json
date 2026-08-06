@@ -1,0 +1,210 @@
+{
+ "id": "gspy_121",
+ "app": "spy",
+ "voice": "en-US-AndrewNeural",
+ "rate": "+5%",
+ "grade": "clean_ad",
+ "brand": {
+  "accent": "#00D9FF",
+  "accent2": "#7CFCFF",
+  "code": "PRIVACY",
+  "logo": "spy.png",
+  "name": "SPY CAMERA FINDER"
+ },
+ "music": {
+  "queries": [
+   "punchy pop energy",
+   "minimal techno tension",
+   "cyber suspense pulse"
+  ]
+ },
+ "cover": {
+  "kicker": "TRUE STORY",
+  "top": "THEY FOUND",
+  "big": "A CAM IN\nTHE VENT",
+  "q": [
+   "curtains window hotel evening"
+  ]
+ },
+ "segments": [
+  {
+   "id": "b1",
+   "text": "A traveler felt watched in a quiet rental."
+  },
+  {
+   "id": "b2",
+   "text": "She scanned the Wi-Fi and saw a strange device."
+  },
+  {
+   "id": "b3",
+   "text": "The app traced it to the air vent by the bed."
+  },
+  {
+   "id": "b4",
+   "text": "Behind the grille: a pinhole camera, recording."
+  },
+  {
+   "id": "b5",
+   "text": "One scan turned a creepy feeling into proof."
+  },
+  {
+   "id": "b6",
+   "text": "Trust the tech, not just the vibe."
+  }
+ ],
+ "shots": [
+  {
+   "q": [
+    "person relaxing bed phone night"
+   ],
+   "motion": "panr"
+  },
+  {
+   "q": [
+    "closet wardrobe hotel room"
+   ],
+   "insert": "hexagon",
+   "pos": "lower"
+  },
+  {
+   "q": [
+    "picture frame on wall room"
+   ],
+   "motion": "pandown"
+  },
+  {
+   "q": [
+    "desk lamp table hotel"
+   ],
+   "insert": "arch",
+   "pos": "upper"
+  },
+  {
+   "q": [
+    "power outlet wall socket closeup"
+   ],
+   "motion": "panup"
+  },
+  {
+   "q": [
+    "dark bedroom lamp light"
+   ],
+   "insert": "tilt",
+   "pos": "upper"
+  },
+  {
+   "q": [
+    "door lock hotel keycard"
+   ],
+   "motion": "zin"
+  },
+  {
+   "q": [
+    "network cables server blue light"
+   ],
+   "insert": "diamond",
+   "pos": "upper"
+  },
+  {
+   "q": [
+    "woman looking around hotel room worried"
+   ],
+   "motion": "panl"
+  },
+  {
+   "q": [
+    "bookshelf decor living room"
+   ],
+   "insert": "rrect",
+   "pos": "center"
+  },
+  {
+   "q": [
+    "security camera lens macro"
+   ],
+   "motion": "zout"
+  }
+ ],
+ "overlays": [
+  {
+   "at": 0.153,
+   "dur": 1.8,
+   "type": "kicker",
+   "text": "WI-FI SCAN"
+  },
+  {
+   "at": 0.158,
+   "dur": 1.78,
+   "type": "gauge",
+   "to": 30,
+   "max": 60,
+   "suffix": "s",
+   "label": "FULL ROOM SWEEP",
+   "pos": "center"
+  },
+  {
+   "at": 0.178,
+   "dur": 2.6,
+   "type": "checklist",
+   "items": [
+    "Smoke detector",
+    "Alarm clock",
+    "TV frame",
+    "Power outlet"
+   ],
+   "pos": "center"
+  },
+  {
+   "at": 0.253,
+   "dur": 2.36,
+   "type": "chips",
+   "items": [
+    "WI-FI",
+    "IR",
+    "BLUETOOTH",
+    "RF"
+   ],
+   "pos": "upper"
+  },
+  {
+   "at": 0.484,
+   "dur": 1.7,
+   "type": "kinetic",
+   "top": "STOP",
+   "big": "GUESSING"
+  },
+  {
+   "at": 0.612,
+   "dur": 2.33,
+   "type": "stat_count",
+   "to": 5,
+   "suffix": "",
+   "label": "HIDING SPOTS",
+   "pos": "center"
+  },
+  {
+   "at": 0.902,
+   "dur": 2.34,
+   "type": "callout",
+   "text": "IR GLINT GIVES IT AWAY",
+   "pos": "center"
+  }
+ ],
+ "cta": {
+  "text": "Comment PRIVACY for the app.",
+  "code": "PRIVACY"
+ },
+ "caption": "A traveler felt watched. One Wi-Fi scan traced a strange device to the vent — a pinhole cam behind the grille. Trust the scan, not just the vibe. Comment PRIVACY for the app. #privacy #airbnb #travelsafety #hiddencamera #traveltips #hotelroom #safetytips #hotels #airbnb #find #hidden",
+ "yt_title": "She found a hidden camera in the vent #shorts",
+ "trend_keys": [
+  "hotels",
+  "airbnb",
+  "find",
+  "hidden",
+  "way",
+  "spy",
+  "cameras",
+  "former"
+ ],
+ "content_type": "viral"
+}
