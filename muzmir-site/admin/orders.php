@@ -11,10 +11,53 @@ require_once BASE_PATH . '/core/orders.php';
 orders_migrate();
 
 /* ---------------------------- POST-обработчики ---------------------------- */
+/* --------- Печатный производственный лист заказа (GET) --------- */
+if (input('do') === 'print' && (int) input('id') > 0) {
+    $o = one("SELECT * FROM awards_orders WHERE id=?", [(int) input('id')]);
+    if ($o) {
+        $items = json_decode((string) ($o['items'] ?? '[]'), true);
+        $rows = '';
+        foreach ((is_array($items) ? $items : []) as $it) {
+            $nm = is_array($it) ? (string) ($it['item'] ?? '') : (string) $it;
+            $kd = is_array($it) ? (string) ($it['kind'] ?? '') : '';
+            if ($nm === '') continue;
+            $rows .= '<tr><td>' . h($nm) . '</td><td>' . h($kd === 'digital' ? 'электронный' : ($kd === 'original' ? 'оригинал' : $kd)) . '</td></tr>';
+        }
+        header('Content-Type: text/html; charset=utf-8');
+        echo '<!doctype html><html lang="ru"><head><meta charset="utf-8"><title>Заказ №' . (int) $o['id'] . '</title>'
+            . '<style>body{font-family:Arial,sans-serif;font-size:13px;color:#111;max-width:760px;margin:20px auto;padding:0 16px}'
+            . 'h1{font-size:20px}table{border-collapse:collapse;width:100%;margin:10px 0}td,th{border:1px solid #999;padding:6px 9px;text-align:left}'
+            . '.kv{margin:3px 0}@media print{.noprint{display:none}}</style></head><body onload="window.print()">'
+            . '<h1>Производственный лист · Заказ №' . (int) $o['id'] . '</h1>'
+            . '<div class="kv"><b>Получатель:</b> ' . h((string) ($o['full_name'] ?? '')) . '</div>'
+            . '<div class="kv"><b>Email:</b> ' . h((string) ($o['email'] ?? '')) . ' · <b>Телефон:</b> ' . h((string) ($o['phone'] ?? '')) . '</div>'
+            . '<div class="kv"><b>Индекс:</b> ' . h((string) ($o['postal_index'] ?? '')) . '</div>'
+            . '<div class="kv"><b>Адрес:</b> ' . h((string) ($o['address'] ?? '')) . '</div>'
+            . '<div class="kv"><b>Сумма:</b> ' . (int) ($o['amount'] ?? 0) . ' ₽ · <b>Статус:</b> ' . h((string) ($o['status'] ?? '')) . '</div>'
+            . '<table><thead><tr><th>Наградной материал</th><th>Вид</th></tr></thead><tbody>' . $rows . '</tbody></table>'
+            . '<p class="noprint"><button onclick="window.print()">Печать</button></p>'
+            . '</body></html>';
+        exit;
+    }
+    http_response_code(404); echo 'Заказ не найден'; exit;
+}
+
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     if (!csrf_check()) { flash('Сессия устарела.', 'error'); admin_redirect('orders'); }
     $do  = input('do');
     $oid = (int) input('order');
+
+    if ($do === 'edit_addr' && $oid) {
+        update('awards_orders', [
+            'full_name'    => mb_substr(trim(input('full_name')), 0, 200),
+            'address'      => mb_substr(trim(input('address')), 0, 500),
+            'postal_index' => mb_substr(trim(input('postal_index')), 0, 20),
+            'phone'        => mb_substr(trim(input('phone')), 0, 40),
+        ], 'id=:id', ['id' => $oid]);
+        audit('order_edit_addr', 'awards_orders', $oid, []);
+        flash('Данные заказа №' . $oid . ' обновлены.', 'success');
+        admin_redirect('orders');
+    }
 
     if ($do === 'made' && $oid) {
         update('awards_orders', ['status' => 'made', 'made_at' => date('Y-m-d H:i:s')], 'id=:id', ['id' => $oid]);
@@ -127,6 +170,18 @@ ob_start(); ?>
           <div class="small">📍 <?= h((string)($o['address'] ?: '(адрес не указан — уточнить)')) ?></div>
           <div class="small">📞 <?= h((string)$o['phone']) ?> · ✉ <?= h((string)$o['email']) ?></div>
           <div class="small muted" style="margin-top:4px;">Сумма: <?= h(function_exists('money') ? money((int)$o['amount']) : (int)$o['amount'].' ₽') ?></div>
+          <div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:8px">
+            <a class="btn btn--ghost btn--sm" href="<?= a_link('orders', ['do'=>'print','id'=>(int)$o['id']]) ?>" target="_blank" rel="noopener"><?= admin_icon('diplomas') ?? '' ?>Печать листа</a>
+            <button type="button" class="btn btn--ghost btn--sm" onclick="var f=document.getElementById('oe<?= (int)$o['id'] ?>');f.style.display=f.style.display==='none'?'grid':'none'">Редактировать адрес</button>
+          </div>
+          <form method="post" action="<?= url('/admin/') ?>" id="oe<?= (int)$o['id'] ?>" style="display:none;gap:6px;margin-top:8px"><?= csrf_field() ?>
+            <input type="hidden" name="do" value="edit_addr"><input type="hidden" name="order" value="<?= (int)$o['id'] ?>">
+            <input type="text" name="full_name" value="<?= h((string)$o['full_name']) ?>" placeholder="Получатель" style="padding:6px 9px;border:1px solid var(--a-line);border-radius:8px">
+            <input type="text" name="postal_index" value="<?= h((string)($o['postal_index'] ?? '')) ?>" placeholder="Индекс" style="padding:6px 9px;border:1px solid var(--a-line);border-radius:8px">
+            <input type="text" name="phone" value="<?= h((string)$o['phone']) ?>" placeholder="Телефон" style="padding:6px 9px;border:1px solid var(--a-line);border-radius:8px">
+            <textarea name="address" placeholder="Адрес" style="padding:6px 9px;border:1px solid var(--a-line);border-radius:8px;min-height:52px"><?= h((string)($o['address'] ?? '')) ?></textarea>
+            <button class="btn btn--navy btn--sm" type="submit">Сохранить</button>
+          </form>
         </div>
         <!-- Состав с фото -->
         <div>
