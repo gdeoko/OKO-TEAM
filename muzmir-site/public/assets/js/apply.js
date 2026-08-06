@@ -153,6 +153,52 @@
   function phoneComplete(v) { return (v || '').replace(/\D/g, '').length === 11; }
   function emailValid(v) { return /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(v || ''); }
 
+  /* ---------- Форматирование ФИО / коллектива / названия номера ---------- */
+  function fmtFio(s) {
+    s = (s || '').replace(/[«»"“”'‘’`]/g, '').replace(/\s+/g, ' ').trim();
+    if (!s) return '';
+    return s.split(' ').map(function (w) {
+      return w.split('-').map(function (p) {
+        return p ? p.charAt(0).toUpperCase() + p.slice(1).toLowerCase() : p;
+      }).join('-');
+    }).join(' ');
+  }
+  function fioIsFull(s) {
+    var parts = (s || '').trim().split(/\s+/).filter(function (w) { return w.length >= 2 && /^[\wа-яё\-’']+$/i.test(w); });
+    return parts.length >= 3;
+  }
+  function smartTitle(s) {
+    s = (s || '').trim(); if (!s) return '';
+    var oneWord = !/\s/.test(s), allUpper = (s === s.toUpperCase());
+    if (oneWord || allUpper) return s.charAt(0).toUpperCase() + s.slice(1).toLowerCase();
+    return s.charAt(0).toUpperCase() + s.slice(1);
+  }
+  function quoteTitle(s) {
+    s = (s || '').trim(); if (!s) return '';
+    if (/[«»]/.test(s)) return s;                                  // пользователь уже оформил
+    s = s.replace(/^["“”'‘’`\s]+/, '').replace(/["“”'‘’`\s]+$/, '');
+    return s ? '«' + smartTitle(s) + '»' : '';
+  }
+  var COLL_TYPES = ['вокальный ансамбль', 'танцевальный коллектив', 'хореографический коллектив', 'вокальный дуэт',
+    'танцевальный дуэт', 'вокальная группа', 'вокальный коллектив', 'ансамбль', 'коллектив', 'дуэт', 'трио',
+    'квартет', 'квинтет', 'хор', 'студия', 'группа', 'оркестр', 'театр', 'капелла'];
+  function quoteCollective(s) {
+    s = (s || '').replace(/\s+/g, ' ').trim(); if (!s) return '';
+    var prefix = '', name = '', m = s.match(/^(.*?)[«"“](.+?)[»"”]\s*$/);
+    if (m) { prefix = m[1].trim(); name = m[2].trim(); }
+    else {
+      name = s.replace(/[«»"“”'‘’`]/g, '').trim();
+      var low = name.toLowerCase();
+      for (var i = 0; i < COLL_TYPES.length; i++) {
+        if (low.indexOf(COLL_TYPES[i]) === 0) { prefix = name.slice(0, COLL_TYPES[i].length); name = name.slice(COLL_TYPES[i].length).trim(); break; }
+      }
+    }
+    if (!name) { name = prefix; prefix = ''; }
+    var q = '«' + smartTitle(name) + '»';
+    if (!prefix) return q;
+    return prefix.charAt(0).toUpperCase() + prefix.slice(1).toLowerCase() + ' ' + q;
+  }
+
   /* ---------- Платформа ссылки ---------- */
   function checkPlatform(url) {
     var host = '';
@@ -357,9 +403,15 @@
     if (step === 'user') {
       // Обязательные: ФИО + возрастная категория (+ название коллектива, если коллектив).
       // Поля birth_date в форме НЕТ — обращение к нему роняло валидацию у солиста.
+      // Солист ИЛИ коллектив — строго одно из двух.
       var group = $('input[name="is_group"]:checked').value === '1';
-      if (group && $('#group_name')) ok = markRequired($('#group_name'), !!$('#group_name').value.trim()) && ok;
-      ok = markRequired($('#full_name'), !!$('#full_name').value.trim()) && ok;
+      if (group) {
+        if ($('#group_name')) ok = markRequired($('#group_name'), !!$('#group_name').value.trim()) && ok;
+      } else {
+        var fnv = fmtFio($('#full_name').value);
+        $('#full_name').value = fnv;
+        ok = markRequired($('#full_name'), fioIsFull(fnv)) && ok; // требуем полное ФИО
+      }
       ok = markRequired($('#age_category'), !!$('#age_category').value) && ok;
     }
     if (step === 'teacher') {
@@ -667,6 +719,14 @@
         setErr(vurl, r.state !== 'ok');
       });
     }
+
+    // Автоформат при уходе из поля: ФИО (регистр), коллектив и номер (в «ёлочках»).
+    var fnEl = $('#full_name');
+    if (fnEl) fnEl.addEventListener('blur', function () { if (fnEl.value.trim()) fnEl.value = fmtFio(fnEl.value); });
+    var gnEl = $('#group_name');
+    if (gnEl) gnEl.addEventListener('blur', function () { if (gnEl.value.trim()) gnEl.value = quoteCollective(gnEl.value); });
+    var wtEl = $('#work_title');
+    if (wtEl) wtEl.addEventListener('blur', function () { if (wtEl.value.trim()) wtEl.value = quoteTitle(wtEl.value); });
 
     // Возраст ↔ категория (birth_date может отсутствовать в форме)
     var bdEl = $('#birth_date');

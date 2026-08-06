@@ -322,11 +322,11 @@ ob_start(); ?>
             <div class="hint">Например, образцовый ансамбль «Родник».</div>
             <div class="err-msg">Укажите название коллектива.</div>
           </div>
-          <div class="field ff">
-            <input type="text" id="full_name" name="full_name" placeholder=" " data-fio required value="<?= h($prefill['full_name']) ?>">
-            <label for="full_name" id="fnLabel">Фамилия, имя, отчество участника</label>
-            <div class="hint">Регистр поправится автоматически.</div>
-            <div class="err-msg">Укажите ФИО участника.</div>
+          <div class="field ff" data-when="solo">
+            <input type="text" id="full_name" name="full_name" placeholder=" " data-fio value="<?= h($prefill['full_name']) ?>">
+            <label for="full_name" id="fnLabel">Фамилия Имя Отчество участника</label>
+            <div class="hint">Полностью: Фамилия Имя Отчество. Регистр поправится автоматически.</div>
+            <div class="err-msg">Укажите ПОЛНОСТЬЮ: Фамилия Имя Отчество.</div>
           </div>
           <div class="field">
             <label for="age_category">Возрастная категория</label>
