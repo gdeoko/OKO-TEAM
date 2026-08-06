@@ -599,10 +599,19 @@ ob_start(); ?>
         }
       }
     }
-    // Для оригиналов адрес доставки обязателен.
+    // ФИО получателя — ПОЛНОСТЬЮ (Фамилия Имя Отчество), не «Имя» и не «Имя Фамилия».
+    var fioV=((document.getElementById('ord_name')||{}).value||'').trim();
+    var fioParts=fioV.split(/\s+/).filter(function(w){return w.length>=2;});
+    if(fioParts.length<3){ err.textContent='Укажите ФИО получателя ПОЛНОСТЬЮ: Фамилия, Имя и Отчество.'; err.hidden=false; var bF=$('#orderSubmit'); bF.disabled=false; bF.textContent='Оплатить'; document.getElementById('ord_name').focus(); return; }
+    // Для оригиналов адрес доставки обязателен и ПОЛНЫЙ: город, улица и ДОМ.
     if(cart.some(function(c){return c.kind==='original';})){
-      var addrV=(document.getElementById('ord_addr')||{}).value||'';
-      if(!addrV.trim()){ err.textContent='Укажите адрес доставки — в заказе есть оригинал (отправка Почтой России).'; err.hidden=false; var b1=$('#orderSubmit'); b1.disabled=false; b1.textContent='Оплатить'; return; }
+      var addrV=((document.getElementById('ord_addr')||{}).value||'').trim();
+      var hasHouse=/(^|[\s,.])(д(ом)?\.?\s*)?\d+/i.test(addrV);          // есть номер дома
+      var hasStreet=/(ул|улиц|просп|пр-?кт|пер(еул)?|шоссе|бульв|наб|аллея|проезд|тракт|мкр|микрорайон|кварт(ал)?|деревн|село|посёл|поселок|станиц)/i.test(addrV);
+      if(!addrV || !hasHouse || !hasStreet){
+        err.textContent='Адрес должен быть ПОЛНЫМ: город, улица и дом (номер квартиры — по желанию). Без дома отправить нельзя.';
+        err.hidden=false; var b1=$('#orderSubmit'); b1.disabled=false; b1.textContent='Оплатить'; document.getElementById('ord_addr').focus(); return;
+      }
     }
     var items=[]; cart.forEach(function(c){for(var i=0;i<c.qty;i++){var it={item:c.item,kind:c.kind};var f=(c.fios||[])[i];if(f&&f.trim())it.fio=f.trim();items.push(it);}});
     var fd=new FormData(form); fd.set('items',JSON.stringify(items));

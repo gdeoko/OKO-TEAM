@@ -723,14 +723,19 @@ if ($id = (int) input('id')) {
           <?php if (empty($isLongView)): ?>
           <div class="field" style="margin-top:10px;padding:10px 12px;border:1px dashed var(--a-line);border-radius:10px">
             <div style="font-weight:700;margin-bottom:6px">Когда отправить результат участнику?</div>
-            <label style="display:flex;align-items:flex-start;gap:8px;cursor:pointer;margin-bottom:6px">
+            <label style="display:flex;align-items:flex-start;gap:8px;cursor:pointer;margin-bottom:8px">
               <input type="checkbox" name="auto_send" id="autoSendChk" value="1" checked style="margin-top:3px">
-              <span>Автоматически по сроку<br><span class="small muted">5 рабочих дней от даты подачи (ВИП — 3; вс — нерабочий), окно 9:00–18:00 МСК. Если срок вышел — ближайшее рабочее утро.</span></span>
+              <span>Автоматически по сроку <b>(по умолчанию)</b><br><span class="small muted">5 рабочих дней от даты подачи (ВИП — 3; вс — нерабочий), окно 9:00–18:00 МСК. Если срок вышел — ближайшее рабочее утро.</span></span>
             </label>
-            <label style="display:flex;align-items:center;gap:8px;cursor:pointer">
-              <input type="datetime-local" name="send_at" id="sendAtInp" value="<?= $ovr !== '' ? h(date('Y-m-d\TH:i', strtotime($ovr))) : '' ?>" style="max-width:220px">
-              <span class="small muted">— или в выбранную дату/время (снимет «авто»)</span>
-            </label>
+            <!-- Появляется только когда снята галочка «авто» -->
+            <div id="manualBox" style="display:none;padding-left:26px;border-left:2px solid var(--a-line)">
+              <div class="small muted" style="margin-bottom:6px">Галочка снята — выберите один из вариантов:</div>
+              <button class="btn btn--navy btn--sm" type="submit" name="send_now" value="1" onclick="return confirm('Отправить результат участнику ПРЯМО СЕЙЧАС?')" style="margin-bottom:8px"><?= admin_icon('send') ?>Отправить сейчас (моментально)</button>
+              <label style="display:flex;align-items:center;gap:8px">
+                <input type="datetime-local" name="send_at" id="sendAtInp" value="<?= $ovr !== '' ? h(date('Y-m-d\TH:i', strtotime($ovr))) : '' ?>" style="max-width:220px">
+                <span class="small muted">— или запрограммировать на дату/время</span>
+              </label>
+            </div>
           </div>
           <?php else: ?>
           <div class="field" style="margin-top:10px;padding:10px 12px;border:1px dashed var(--a-line);border-radius:10px">
@@ -739,11 +744,13 @@ if ($id = (int) input('id')) {
           <?php endif; ?>
           <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:10px;align-items:center">
             <button class="btn btn--primary" type="submit"><?= admin_icon('check') ?>Сохранить итог</button>
-            <?php if (empty($isLongView)): ?>
-              <button class="btn btn--navy" type="submit" name="send_now" value="1" onclick="return confirm('Отправить результат участнику ПРЯМО СЕЙЧАС?')"><?= admin_icon('send') ?>Сохранить и отправить сейчас</button>
-            <?php endif; ?>
           </div>
-          <script>(function(){var c=document.getElementById('autoSendChk'),d=document.getElementById('sendAtInp');if(c&&d){d.addEventListener('input',function(){if(d.value)c.checked=false;});c.addEventListener('change',function(){if(c.checked)d.value='';});}})();</script>
+          <script>(function(){
+            var c=document.getElementById('autoSendChk'),box=document.getElementById('manualBox'),d=document.getElementById('sendAtInp');
+            if(!c) return;
+            function sync(){ if(box) box.style.display = c.checked ? 'none':'block'; if(c.checked && d) d.value=''; }
+            c.addEventListener('change',sync); sync();
+          })();</script>
           <?php if ($a['result']): ?>
             <span class="badge badge--gold" style="margin-left:8px"><?= h($a['result']) ?></span>
           <?php endif; ?>
