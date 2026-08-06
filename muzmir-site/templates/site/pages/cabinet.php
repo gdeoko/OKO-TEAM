@@ -811,9 +811,6 @@ ob_start(); ?>
         <!-- Мои дипломы -->
         <div class="cab-panel" id="tab-diplomas" role="tabpanel">
           <h2>Мои дипломы</h2>
-          <?php if ($diplomas): ?>
-            <a class="btn btn--primary cab-passport" href="<?= url('/api/v1/passport') ?>" rel="nofollow"><?= $icons['dl'] ?> Скачать паспорт участника (все дипломы, PDF)</a>
-          <?php endif; ?>
           <?php if (!$diplomas): ?>
             <div class="cab-card cab-empty"><?= $icons['diploma'] ?><p>Дипломы появятся здесь после оценки Ваших работ жюри.</p></div>
           <?php else: foreach ($diplomas as $k => $d): ?>
