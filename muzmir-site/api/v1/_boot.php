@@ -65,9 +65,12 @@ function require_post(): void {
     }
 }
 
-/** Существует ли таблица в SQLite. */
-function tbl_exists(string $t): bool {
-    return (bool) one("SELECT name FROM sqlite_master WHERE type='table' AND name=?", [$t]);
+/** Существует ли таблица в SQLite. Каноническое определение — в core/db.php
+ *  (доступно и кронам, и вебу). Здесь — страховка на случай изменения порядка подключений. */
+if (!function_exists('tbl_exists')) {
+    function tbl_exists(string $t): bool {
+        return (bool) one("SELECT name FROM sqlite_master WHERE type='table' AND name=?", [$t]);
+    }
 }
 
 /** Номер заявки формата CODE-ГГГГ-NNNNN (код конкурса + год + порядковый по конкурсу). */

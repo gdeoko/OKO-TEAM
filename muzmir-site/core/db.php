@@ -39,6 +39,13 @@ function scalar(string $sql, array $args = []) {
     $r = q($sql, $args)->fetch(PDO::FETCH_NUM);
     return $r === false ? null : $r[0];
 }
+/** Существует ли таблица в SQLite. Определяется в ядре, чтобы быть доступной и в CLI-кронах
+ *  (реконсилер платежей), и в веб-API — иначе payment_apply_status() молча выходит. */
+if (!function_exists('tbl_exists')) {
+    function tbl_exists(string $t): bool {
+        return (bool) one("SELECT name FROM sqlite_master WHERE type='table' AND name=?", [$t]);
+    }
+}
 function insert(string $table, array $data): int {
     $cols = array_keys($data);
     $ph = array_map(fn($c) => ':' . $c, $cols);

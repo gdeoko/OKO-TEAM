@@ -101,7 +101,8 @@ function client_ip(): string {
 
 function audit(string $action, string $entity = '', ?int $entity_id = null, array $meta = []): void {
     insert('audit_log', [
-        'user_id' => current_user()['id'] ?? null,
+        // В CLI-кронах (реконсилер платежей) core/auth.php не подключён — current_user() может отсутствовать.
+        'user_id' => (function_exists('current_user') ? (current_user()['id'] ?? null) : null),
         'action' => $action, 'entity' => $entity, 'entity_id' => $entity_id,
         'meta' => json_encode($meta, JSON_UNESCAPED_UNICODE), 'ip' => client_ip(),
     ]);
