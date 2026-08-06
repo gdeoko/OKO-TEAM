@@ -6,6 +6,47 @@ declare(strict_types=1);
 /* Мягкая миграция: формат конкурса (длинный/короткий) — влияет на автодаты результатов. */
 try { q("ALTER TABLE competitions ADD COLUMN duration TEXT DEFAULT 'long'"); } catch (\Throwable $e) {}
 
+require_once BASE_PATH . '/core/launch_run.php';
+
+/* ===== Пуск-пульт (AJAX): текст волны, сохранение правки, предпросмотр, запуск ===== */
+if (in_array(input('do'), ['launch_text', 'launch_save', 'launch_preview', 'launch_fire'], true)) {
+    $cid  = (int) input('id');
+    $wave = (string) input('wave');
+    if (input('do') !== 'launch_text' && !csrf_check()) json_out(['ok' => false, 'msg' => 'Сессия устарела. Обновите страницу.'], 403);
+    $c = $cid ? one("SELECT * FROM competitions WHERE id=?", [$cid]) : null;
+    if (!$c) json_out(['ok' => false, 'msg' => 'Конкурс не найден'], 404);
+    if (!isset(launch_waves()[$wave])) json_out(['ok' => false, 'msg' => 'Неизвестная волна'], 400);
+    $siblings = in_array($wave, ['d3', 'last', 'closed'], true) ? launch_open_comps() : [launch_norm_comp($c)];
+
+    if (input('do') === 'launch_text') {           // текущий текст (override или эталон) для редактора
+        json_out(['ok' => true, 'text' => launch_wave_text($c, $wave, $siblings),
+                  'is_custom' => trim((string) setting('launch_txt:' . $cid . ':' . $wave, '')) !== '']);
+    }
+    if (input('do') === 'launch_save') {           // сохранить ручную правку (или сбросить к эталону, если пусто)
+        $txt = trim((string) input('text'));
+        if ($txt === '' || $txt === trim(launch_wave_default($c, $wave, $siblings))) {
+            set_setting('launch_txt:' . $cid . ':' . $wave, '');
+            json_out(['ok' => true, 'msg' => 'Возвращён эталонный текст.', 'is_custom' => false]);
+        }
+        set_setting('launch_txt:' . $cid . ':' . $wave, $txt);
+        audit('launch_text_save', 'competition', $cid, ['wave' => $wave]);
+        json_out(['ok' => true, 'msg' => 'Текст сохранён.', 'is_custom' => true]);
+    }
+    if (input('do') === 'launch_preview') {         // dry-run: что и куда уйдёт, без отправки
+        $channels = array_filter(array_map('trim', explode(',', (string) input('channels'))));
+        $res = launch_fire($cid, $wave, $channels, '', true);
+        $res['email_html'] = launch_email_html($c, $wave, $siblings);
+        json_out($res);
+    }
+    if (input('do') === 'launch_fire') {            // реальный запуск / планирование
+        if (!user_can('admin')) json_out(['ok' => false, 'msg' => 'Недостаточно прав для запуска рассылок.'], 403);
+        $channels = array_filter(array_map('trim', explode(',', (string) input('channels'))));
+        $when = trim((string) input('when'));
+        $res = launch_fire($cid, $wave, $channels, $when, false);
+        json_out($res);
+    }
+}
+
 /** Сохранение загруженного изображения конкурса в public/uploads/comp/{id}/.
  *  Возвращает относительный путь (uploads/comp/...) или '' если файла нет/ошибка. */
 function comp_upload_image(string $field, int $compId, string $baseName, int $maxMb = 15): string {
