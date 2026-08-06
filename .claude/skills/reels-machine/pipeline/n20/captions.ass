@@ -1,0 +1,22 @@
+[Script Info]
+ScriptType: v4.00+
+PlayResX: 1080
+PlayResY: 1920
+WrapStyle: 2
+
+[V4+ Styles]
+Format: Name, Fontname, Fontsize, PrimaryColour, SecondaryColour, OutlineColour, BackColour, Bold, Italic, Underline, StrikeOut, ScaleX, ScaleY, Spacing, Angle, BorderStyle, Outline, Shadow, Alignment, MarginL, MarginR, MarginV, Encoding
+Style: Sub,Soyuz Grotesk,94,&H002059EA&,&H00FFFFFF,&H00000000,&H00000000,-1,0,0,0,100,100,1,0,1,0,0,4,5,60,60,0,204
+
+[Events]
+Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text
+Dialogue: 0,0:00:00.15,0:00:03.10,Sub,,0,0,0,,{\an5\pos(540,1560)\fad(50,40)}{\k150}3 {\k135}СЕКРЕТА
+Dialogue: 0,0:00:03.15,0:00:06.40,Sub,,0,0,0,,{\an5\pos(540,1560)\fad(50,40)}{\k180}ВИДЕОГРАФОВ {\k135}СВЕТ
+Dialogue: 0,0:00:06.45,0:00:09.40,Sub,,0,0,0,,{\an5\pos(540,1560)\fad(50,40)}{\k150}ВАЖНЕЕ {\k135}КАМЕРЫ
+Dialogue: 0,0:00:09.75,0:00:11.53,Sub,,0,0,0,,{\an5\pos(540,1560)\fad(50,40)}{\k90}СНИМАЮТ {\k81}В
+Dialogue: 0,0:00:11.55,0:00:13.33,Sub,,0,0,0,,{\an5\pos(540,1560)\fad(50,40)}{\k90}2 {\k81}РАЗА
+Dialogue: 0,0:00:13.35,0:00:15.66,Sub,,0,0,0,,{\an5\pos(540,1560)\fad(50,40)}{\k120}БОЛЬШЕ {\k101}ПЕРВЫЕ
+Dialogue: 0,0:00:15.68,0:00:17.91,Sub,,0,0,0,,{\an5\pos(540,1560)\fad(50,40)}{\k112}3 {\k101}СЕКУНДЫ
+Dialogue: 0,0:00:17.93,0:00:21.48,Sub,,0,0,0,,{\an5\pos(540,1560)\fad(50,40)}{\k143}ОТДЕЛЬНО {\k202}РЕШАЕТ
+Dialogue: 0,0:00:21.60,0:00:25.60,Sub,,0,0,0,,{\an5\pos(540,1560)\fad(50,40)}{\k255}ПОДГОТОВКА {\k135}СЪЕМКА
+Dialogue: 0,0:00:25.65,0:00:28.58,Sub,,0,0,0,,{\an5\pos(540,1560)\fad(50,40)}{\k150}В {\k135}ДИРЕКТ
