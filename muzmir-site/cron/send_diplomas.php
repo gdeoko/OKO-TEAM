@@ -254,29 +254,19 @@ function _plan_send_at(DateTimeInterface $now, array $a, array $comp): DateTime 
         return $t;
     }
 
-    // 3) Короткие платные: результат + 5 рабочих дней; для участников ВИП-клуба — 3
-    //    (вс — нерабочий). Точка отсчёта — момент аттестации (graded_at), иначе подача.
+    // 3) Короткие платные: наградные дипломы — через N рабочих дней ПОСЛЕ РЕЗУЛЬТАТА
+    //    (result_send_at), N=5 (ВИП-клуб — 3), вс — нерабочий, только рабочее окно
+    //    9:00-18:00 МСК. Если срок уже прошёл — ближайшее рабочее окно (никогда ночью).
     if (is_file(BASE_PATH . '/core/club.php')) require_once BASE_PATH . '/core/club.php';
-    $base = trim((string)($a['graded_at'] ?? '')) !== '' ? (string)$a['graded_at'] : (string)($a['created_at'] ?? 'now');
-    try { $t = new DateTime($base); } catch (\Throwable $e) { $t = new DateTime($now->format('Y-m-d H:i:s')); }
+    require_once BASE_PATH . '/core/send_timing.php';
+    // Точка отсчёта — плановое время результата; если его нет — момент аттестации, иначе подача.
+    $base = trim((string)($a['result_send_at'] ?? '')) !== '' ? (string)$a['result_send_at']
+          : (trim((string)($a['graded_at'] ?? '')) !== '' ? (string)$a['graded_at'] : (string)($a['created_at'] ?? 'now'));
     $wDays = 5;
     if (!empty($a['user_id']) && function_exists('club_is_active') && club_is_active((int)$a['user_id'])) $wDays = 3;
-    $days = 0;
-    while ($days < $wDays) {
-        $t->modify('+1 day');
-        if ((int)$t->format('w') !== 0) $days++; // 0 = воскресенье, не считаем
-    }
-    $t->setTime(9, rand(0, 55)); // разлёт 9:00-9:55, чтобы письма не летели в одну минуту
-
-    // Оценка произошла позже срока — отправляем в ближайшее рабочее окно 9:00-18:00.
-    if ($now >= $t) {
-        $t = (new DateTime($now->format('Y-m-d H:i:s')))->modify('+5 minutes');
-        $hour = (int)$t->format('G');
-        if ($hour >= 18)    $t->modify('+1 day')->setTime(9, rand(0, 55));
-        elseif ($hour < 9)  $t->setTime(9, rand(0, 55));
-        while ((int)$t->format('w') === 0) $t->modify('+1 day')->setTime(9, rand(0, 55));
-    }
-    return $t;
+    $planned = working_days_add($base, $wDays);                                  // результат + N раб.дней, 09:0x
+    $soonest = next_working_slot(new DateTime($now->format('Y-m-d H:i:s')));     // ближайшее рабочее окно
+    return $planned > $soonest ? $planned : $soonest;
 }
 
 /** HTML-письмо с прикреплённым дипломом (кратко, брендово). */
