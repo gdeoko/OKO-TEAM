@@ -283,6 +283,7 @@ $map = [
     '/reset-password' => 'reset_password',
     '/verify-email' => 'verify_email',
     '/cabinet' => 'cabinet',
+    '/pay-status' => 'pay_status',
     '/notifications' => 'notifications',
     '/chat' => 'chat',
     '/results' => 'results_index',

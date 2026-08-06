@@ -98,7 +98,9 @@ function yukassa_create_payment(int $amount, string $description, array $meta = 
     $body = [
         'amount'       => ['value' => number_format($amount, 2, '.', ''), 'currency' => 'RUB'],
         'capture'      => true,
-        'confirmation' => ['type' => 'redirect', 'return_url' => rtrim(cfgv('base_url'), '/') . '/cabinet'],
+        // Возврат с ЮKassa — на страницу ожидания оплаты (спиннер → окно успеха).
+        // Путь можно переопределить через meta.return_path.
+        'confirmation' => ['type' => 'redirect', 'return_url' => rtrim(cfgv('base_url'), '/') . ((string) ($meta['return_path'] ?? '/pay-status'))],
         'description'  => mb_substr($description, 0, 128),
         'metadata'     => $meta,
     ];
