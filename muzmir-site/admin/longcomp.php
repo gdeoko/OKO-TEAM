@@ -65,36 +65,23 @@ $whoPlace = static function (array $a): string {
     return $city !== '' ? ('Россия, ' . $city) : 'Россия';
 };
 
-/* --------------- Экспорт результатов в DOCX (по эталону) -------------- */
+/* --------------- Экспорт результатов в DOCX (эталон-шапка + таблица) -------------- */
 if ($current && input('do') === 'results_doc') {
-    $rows = all("SELECT * FROM applications WHERE competition_id=? AND is_paid=1 AND status<>'rejected'
-                 AND result IS NOT NULL AND result<>'' ORDER BY full_name COLLATE NOCASE", [$comp]);
-    $title = 'РЕЗУЛЬТАТЫ КОНКУРСА «' . mb_strtoupper((string) $current['name']) . '»';
-    // HTML-документ Word (.doc) — Word открывает как обычный документ; таблица строго по эталону.
-    $tr = '';
-    foreach ($rows as $a) {
-        $tr .= '<tr>'
-            . '<td>' . h($whoName($a)) . '</td>'
-            . '<td>' . h((string) $a['work_title']) . '</td>'
-            . '<td>' . h($whoPlace($a)) . '</td>'
-            . '<td>' . h((string) $a['result']) . (trim((string)($a['extra_diploma'] ?? '')) !== '' ? '. Дополнительный диплом: ' . h((string)$a['extra_diploma']) . '.' : '') . '</td>'
-            . '</tr>';
+    require_once BASE_PATH . '/core/results_doc.php';
+    try {
+        $path = results_docx((int) $comp);
+    } catch (\Throwable $e) {
+        http_response_code(500);
+        flash('Не удалось сформировать список результатов: ' . $e->getMessage(), 'error');
+        admin_redirect('longcomp', ['competition' => $comp]);
     }
-    $doc = '<html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:w="urn:schemas-microsoft-com:office:word" xmlns="http://www.w3.org/TR/REC-html40">'
-        . '<head><meta charset="utf-8"><style>'
-        . 'body{font-family:"Times New Roman",serif;font-size:12pt} h1{font-size:16pt;text-align:center;margin:0 0 4pt}'
-        . 'table{border-collapse:collapse;width:100%} td,th{border:1px solid #000;padding:4pt 6pt;font-size:10pt;vertical-align:top}'
-        . 'th{background:#EDEDED;font-weight:bold}'
-        . '</style></head><body>'
-        . '<h1>Результаты</h1><p style="text-align:center;margin:0 0 10pt;font-size:11pt">' . h($title) . '</p>'
-        . '<table><thead><tr>'
-        . '<th>Ф.И.О. участника / название коллектива</th><th>Название конкурсного номера</th><th>Страна / Город</th><th>Аттестационный результат</th>'
-        . '</tr></thead><tbody>' . $tr . '</tbody></table>'
-        . '</body></html>';
-    $fn = 'РЕЗУЛЬТАТЫ КОНКУРСА ' . preg_replace('~[^\p{L}\p{N} ]+~u', '', (string) $current['name']) . '.doc';
-    header('Content-Type: application/msword; charset=utf-8');
+    $fn = 'РЕЗУЛЬТАТЫ КОНКУРСА ' . preg_replace('~[^\p{L}\p{N} ]+~u', '', (string) $current['name']) . '.docx';
+    header('Content-Type: application/vnd.openxmlformats-officedocument.wordprocessingml.document');
     header('Content-Disposition: attachment; filename="' . rawurlencode($fn) . '"; filename*=UTF-8\'\'' . rawurlencode($fn));
-    echo $doc; exit;
+    header('Content-Length: ' . filesize($path));
+    readfile($path);
+    @unlink($path);
+    exit;
 }
 
 ob_start(); ?>

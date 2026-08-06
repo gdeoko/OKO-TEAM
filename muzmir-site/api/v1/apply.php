@@ -51,9 +51,27 @@ $comp = $comps[0];
 
 $errors = [];
 
-// ФИО
-$full_name = function_exists('v_fio') ? v_fio(input('full_name')) : trim(input('full_name'));
-if (mb_strlen($full_name) < 3) $errors['full_name'] = 'Укажите ФИО участника';
+// Нормализация ввода (ФИО / коллектив / название номера).
+if (is_file(BASE_PATH . '/core/text_format.php')) require_once BASE_PATH . '/core/text_format.php';
+
+// Солист ИЛИ коллектив — строго одно из двух. При коллективе ФИО НЕ вносится, и наоборот.
+$isGroup = (int) (input('is_group') ? 1 : 0);
+$groupRaw = trim((string) input('group_name'));
+$fioRaw   = function_exists('v_fio') ? v_fio(input('full_name')) : trim((string) input('full_name'));
+
+if ($isGroup) {
+    // Коллектив: имя коллектива в «ёлочках», ФИО очищаем.
+    if ($groupRaw === '') $errors['group_name'] = 'Укажите название коллектива';
+    $group_name = function_exists('collective_normalize') ? collective_normalize($groupRaw) : $groupRaw;
+    $full_name  = '';
+} else {
+    // Солист: полное ФИО (Фамилия Имя Отчество), название коллектива очищаем.
+    $full_name = function_exists('fio_normalize') ? fio_normalize($fioRaw) : $fioRaw;
+    if ($full_name === '') $errors['full_name'] = 'Укажите ФИО участника';
+    elseif (function_exists('fio_is_full') && !fio_is_full($full_name))
+        $errors['full_name'] = 'Укажите ПОЛНОСТЬЮ: Фамилия Имя Отчество';
+    $group_name = '';
+}
 
 // Email
 $email = mb_strtolower(input('email'));
@@ -198,14 +216,14 @@ foreach ($comps as $ci) {
         'competition_id' => (int) $ci['id'],
         'user_id'        => $uid,
         'full_name'      => $full_name,
-        'is_group'       => input('is_group') ? 1 : 0,
-        'group_name'     => input('group_name'),
+        'is_group'       => $isGroup,
+        'group_name'     => $group_name,
         'birth_date'     => input('birth_date'),
         'age_category'   => input('age_category'),
         'nomination'     => $nomination,
         'subgroup'       => input('subgroup'),
         'formation'      => input('formation'),
-        'work_title'     => input('work_title'),
+        'work_title'     => function_exists('quote_title') ? quote_title((string) input('work_title')) : input('work_title'),
         'teacher'        => input('teacher'),
         'institution'    => input('institution'),
         'city'           => input('city'),
