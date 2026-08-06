@@ -138,6 +138,28 @@ if (!$isClubOrder) {
     }
 }
 
+// --- Серверная валидация получателя и адреса (зеркало клиентской проверки) ---
+// ФИО — ПОЛНОСТЬЮ (Фамилия Имя Отчество). Адрес — полный (город/улица/ДОМ), только если
+// в заказе есть ОРИГИНАЛ (kind=original), т.е. нужна почтовая доставка. Клубное членство —
+// без этих требований (это не отправляемый материал).
+$hasOriginal = false;
+foreach ($normItems as $ni) { if ((string) ($ni['kind'] ?? '') === 'original') { $hasOriginal = true; break; } }
+if (!$isClubOrder) {
+    $fio = trim((string) input('full_name'));
+    $fioParts = array_values(array_filter(preg_split('~\s+~u', $fio) ?: [], static fn($w) => mb_strlen($w) >= 2));
+    if (count($fioParts) < 3) {
+        json_out(['ok' => false, 'error' => 'Укажите ФИО получателя ПОЛНОСТЬЮ: Фамилия, Имя и Отчество.'], 422);
+    }
+}
+if ($hasOriginal) {
+    $addr = trim((string) input('address'));
+    $hasHouse  = (bool) preg_match('~(^|[\s,.])(д(ом)?\.?\s*)?\d+~iu', $addr);
+    $hasStreet = (bool) preg_match('~(ул|улиц|просп|пр-?кт|пер(еул)?|шоссе|бульв|наб|аллея|проезд|тракт|мкр|микрорайон|кварт|деревн|село|посёл|поселок|станиц)~iu', $addr);
+    if ($addr === '' || !$hasHouse || !$hasStreet) {
+        json_out(['ok' => false, 'error' => 'Адрес должен быть ПОЛНЫМ: город, улица и дом (номер квартиры — по желанию). Без дома отправить нельзя.'], 422);
+    }
+}
+
 $orderId = insert('awards_orders', [
     'application_id' => $applicationId ?: null,
     'user_id'        => $uid,

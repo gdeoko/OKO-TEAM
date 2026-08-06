@@ -98,10 +98,11 @@ function launch_email_subject(array $c, string $wave): string {
 /** Rich-HTML письма из текста волны + фирменные кнопки/контакты. */
 function launch_email_html(array $c, string $wave, array $siblings = []): string {
     $text = launch_wave_text($c, $wave, $siblings);
-    // Автоссылки: музыкальный-мир.рф/... , vk.ru/... , t.me/... → кликабельные.
+    // Автоссылки: музыкальный-мир.рф/... , vk.ru/... , max.ru/... → кликабельные.
+    // (Telegram/YouTube/Instagram/WhatsApp/Facebook НЕ линкуем и не упоминаем — запрещены.)
     $safe = h($text);
     $safe = preg_replace('~(музыкальный-мир\.рф[^\s<]*)~u', '<a href="https://$1" style="color:#17307A">$1</a>', $safe);
-    $safe = preg_replace('~((?:vk\.ru|vk\.com|t\.me)/[^\s<]+)~u', '<a href="https://$1" style="color:#17307A">$1</a>', $safe);
+    $safe = preg_replace('~((?:vk\.ru|vk\.com|max\.ru)/[^\s<]+)~u', '<a href="https://$1" style="color:#17307A">$1</a>', $safe);
     $body = nl2br($safe);
 
     $applyUrl   = url('/apply');

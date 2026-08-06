@@ -196,12 +196,17 @@ ob_start(); ?>
 
 <?php /* DaData автоподсказка адреса (бесплатно до 10000/день). Токен — публичный ключ suggestions. */ ?>
 <style>
-.dd-suggest{position:absolute;left:0;right:0;top:100%;z-index:50;background:var(--card,#fff);border:1px solid var(--glass-brd,rgba(0,0,0,.12));border-radius:12px;box-shadow:0 12px 34px rgba(0,0,0,.18);margin-top:4px;max-height:280px;overflow:auto}
+.dd-suggest{position:absolute;left:0;right:0;top:100%;z-index:50;background:#fff;color:#15224C;border:1px solid var(--glass-brd,rgba(0,0,0,.12));border-radius:12px;box-shadow:0 12px 34px rgba(0,0,0,.18);margin-top:4px;max-height:280px;overflow:auto}
 .dd-suggest[hidden]{display:none}
-.dd-item{padding:10px 14px;cursor:pointer;font-size:.92rem;border-bottom:1px solid var(--glass-brd,rgba(0,0,0,.06))}
+.dd-item{padding:10px 14px;cursor:pointer;font-size:.92rem;color:#15224C;border-bottom:1px solid rgba(0,0,0,.06)}
 .dd-item:last-child{border-bottom:0}
-.dd-item:hover,.dd-item.active{background:rgba(154,255,0,.12)}
-.dd-item small{display:block;color:var(--muted);font-size:.78rem;margin-top:2px}
+.dd-item:hover,.dd-item.active{background:rgba(154,255,0,.16)}
+.dd-item small{display:block;color:#6a7096;font-size:.78rem;margin-top:2px}
+/* Тёмная тема: тёмная выпадашка со светлым текстом — читаемый контраст. */
+[data-theme="dark"] .dd-suggest{background:#171a2b;color:#F2E9CF;border-color:rgba(255,255,255,.16);box-shadow:0 14px 38px rgba(0,0,0,.6)}
+[data-theme="dark"] .dd-item{color:#F2E9CF;border-bottom-color:rgba(255,255,255,.09)}
+[data-theme="dark"] .dd-item small{color:#a9b4d6}
+[data-theme="dark"] .dd-item:hover,[data-theme="dark"] .dd-item.active{background:rgba(154,255,0,.20);color:#fff}
 </style>
 <script>
 (function(){
