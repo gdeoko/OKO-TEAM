@@ -141,7 +141,9 @@ function payment_apply_status(string $paymentId, string $status, array $obj = []
                 $cuid = (int) ($cu['id'] ?? 0);
             }
             if ($cuid > 0 && function_exists('club_grant')) {
-                $clubSt = club_grant($cuid, 1, 'payment');
+                // Период членства: годовой (12 мес) если в items period=year, иначе 1 месяц.
+                $clubMonths = (strpos((string) ($ordRow['items'] ?? ''), '"period":"year"') !== false) ? 12 : 1;
+                $clubSt = club_grant($cuid, $clubMonths, 'payment');
                 // Уведомление владельца: вступление/продление ВИП-клуба.
                 if (!function_exists('owner_notify') && is_file(__DIR__ . '/notify_owner.php')) {
                     require_once __DIR__ . '/notify_owner.php';

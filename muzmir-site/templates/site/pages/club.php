@@ -7,6 +7,7 @@ $__clubCore = (defined('BASE_PATH') ? BASE_PATH : dirname(__DIR__, 3)) . '/core/
 if (!function_exists('club_is_active') && is_file($__clubCore)) require_once $__clubCore;
 
 $price = (int) setting('club_price', '1000');
+$priceYear = (int) setting('club_price_year', '10000');
 $u = current_user();
 $uid = (int) ($u['id'] ?? 0);
 
@@ -357,11 +358,22 @@ html{scroll-behavior:smooth}
 
 <section class="section section--tint" id="club-pay">
   <div class="container">
-    <div class="section-head reveal"><p class="eyebrow">Оплата</p><h2>Одна подписка на месяц</h2></div>
+    <div class="section-head reveal"><p class="eyebrow">Оплата</p><h2>Выберите период подписки</h2></div>
     <div class="card reveal club-price-card">
       <p style="color:var(--muted)">Членство в Клубе</p>
-      <div class="club-price"><?= h(money($price)) ?><span> / месяц</span></div>
-      <p style="color:var(--muted);font-size:.92rem">Продление - ежемесячно. Отменить можно в любое время в личном кабинете.</p>
+
+      <div class="club-period" role="tablist" style="display:flex;gap:10px;justify-content:center;margin:6px 0 4px">
+        <button type="button" class="club-per-btn is-active" data-period="month" data-price="<?= (int)$price ?>"
+          style="flex:1;max-width:170px;padding:12px 10px;border-radius:14px;border:2px solid var(--gold);background:var(--gold-soft);cursor:pointer;font-weight:800;color:var(--text)">
+          Месяц<br><span style="font-weight:700;color:var(--gold-2)"><?= h(money($price)) ?></span></button>
+        <button type="button" class="club-per-btn" data-period="year" data-price="<?= (int)$priceYear ?>"
+          style="flex:1;max-width:170px;padding:12px 10px;border-radius:14px;border:2px solid var(--line);background:transparent;cursor:pointer;font-weight:800;color:var(--text)">
+          Год<br><span style="font-weight:700;color:var(--gold-2)"><?= h(money($priceYear)) ?></span>
+          <small style="display:block;font-weight:700;color:#2E9E4F;font-size:.7rem;margin-top:2px">выгоднее на 2 000 ₽</small></button>
+      </div>
+
+      <div class="club-price" id="clubPriceView"><?= h(money($price)) ?><span id="clubPriceUnit"> / месяц</span></div>
+      <p style="color:var(--muted);font-size:.92rem">Продление автоматическое. Отменить можно в любое время в личном кабинете.</p>
 
       <form class="club-form" id="clubJoinForm" style="margin-top:22px;text-align:left">
         <div class="field">
@@ -388,6 +400,20 @@ html{scroll-behavior:smooth}
   var btn = document.getElementById('cjSubmit');
   var msg = document.getElementById('cjMsg');
   var price = <?= (int) $price ?>;
+  var period = 'month';
+  var moneyFmt = function(n){ return n.toLocaleString('ru-RU') + ' ₽'; };
+  // Переключатель периода Месяц / Год.
+  Array.prototype.forEach.call(document.querySelectorAll('.club-per-btn'), function(b){
+    b.addEventListener('click', function(){
+      Array.prototype.forEach.call(document.querySelectorAll('.club-per-btn'), function(x){
+        x.classList.remove('is-active'); x.style.borderColor='var(--line)'; x.style.background='transparent';
+      });
+      b.classList.add('is-active'); b.style.borderColor='var(--gold)'; b.style.background='var(--gold-soft)';
+      period = b.getAttribute('data-period'); price = parseInt(b.getAttribute('data-price'),10);
+      document.getElementById('clubPriceView').firstChild.nodeValue = moneyFmt(price);
+      document.getElementById('clubPriceUnit').textContent = period==='year' ? ' / год' : ' / месяц';
+    });
+  });
   form.addEventListener('submit', function (e) {
     e.preventDefault();
     var name = form.full_name.value.trim();
@@ -402,7 +428,8 @@ html{scroll-behavior:smooth}
     body.set('competition', 'Клуб постоянных участников');
     body.set('amount', String(price));
     body.set('_csrf', <?= json_encode(csrf_token(), JSON_UNESCAPED_SLASHES) ?>);
-    body.set('items', JSON.stringify([{ item: 'Клуб постоянных участников - месячная подписка', kind: 'club' }]));
+    var itemLabel = period === 'year' ? 'Клуб постоянных участников — годовая подписка' : 'Клуб постоянных участников — месячная подписка';
+    body.set('items', JSON.stringify([{ item: itemLabel, kind: 'club', period: period }]));
     fetch(<?= json_encode(url('/api/v1/order'), JSON_UNESCAPED_SLASHES) ?>, { method: 'POST', body: body })
       .then(function (r) { return r.json(); })
       .then(function (d) {

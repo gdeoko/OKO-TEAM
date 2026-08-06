@@ -44,10 +44,17 @@ foreach ($items as $it) {
     if ($kind === '') $kind = 'original';
 
     // Клубное членство — цена из настроек (не из awards_prices), активируется при оплате.
+    // period: 'year' → годовая (10000 ₽, 12 мес), иначе месячная (1000 ₽, 1 мес).
     if ($kind === 'club') {
-        $price = (int) setting('club_price', '500');
+        $period = trim((string) ($it['period'] ?? 'month'));
+        if ($period === 'year') {
+            $price = (int) setting('club_price_year', '10000');
+        } else {
+            $period = 'month';
+            $price = (int) setting('club_price', '1000');
+        }
         $serverAmount += $price;
-        $normItems[] = ['item' => $itemName, 'kind' => 'club', 'price' => $price];
+        $normItems[] = ['item' => $itemName, 'kind' => 'club', 'period' => $period, 'price' => $price];
         continue;
     }
 
