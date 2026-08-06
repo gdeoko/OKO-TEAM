@@ -1,0 +1,240 @@
+{
+ "id": "gtape_105",
+ "app": "tape",
+ "voice": "en-US-ChristopherNeural",
+ "rate": "+6%",
+ "grade": "clean_ad",
+ "brand": {
+  "accent": "#F4C430",
+  "accent2": "#FFE08A",
+  "code": "MEASURE",
+  "logo": "tape.png",
+  "name": "3D TAPE MEASURE"
+ },
+ "music": {
+  "queries": [
+   "cinematic tension build",
+   "warm optimistic guitar",
+   "positive corporate light groove",
+   "upbeat indie acoustic diy"
+  ]
+ },
+ "cover": {
+  "kicker": "DIY PROJECT",
+  "top": "CUT ONCE",
+  "big": "MEASURE\nWITH AR",
+  "q": [
+   "paint wall renovation room"
+  ],
+  "ai": "work/gtape_105/cover_ai.png"
+ },
+ "segments": [
+  {
+   "id": "b1",
+   "text": "Stop scrolling. Every DIY starts with an honest measurement."
+  },
+  {
+   "id": "b2",
+   "text": "Skip the bent metal tape and the helper."
+  },
+  {
+   "id": "b3",
+   "text": "Point, tap, and read length off the floor."
+  },
+  {
+   "id": "b4",
+   "text": "Get width, height and area in one shot."
+  },
+  {
+   "id": "b5",
+   "text": "Export the numbers straight to a PDF."
+  },
+  {
+   "id": "b6",
+   "text": "Measure right, build once."
+  }
+ ],
+ "shots": [
+  {
+   "q": [
+    "moving boxes new apartment"
+   ],
+   "insert": "arch",
+   "pos": "center"
+  },
+  {
+   "q": [
+    "doorway measuring frame home"
+   ],
+   "motion": "panup"
+  },
+  {
+   "q": [
+    "dining table room measure"
+   ],
+   "insert": "circle",
+   "pos": "lower"
+  },
+  {
+   "q": [
+    "hands holding phone ar app screen"
+   ],
+   "motion": "zout"
+  },
+  {
+   "q": [
+    "person relaxing on couch bright apartment"
+   ],
+   "insert": "tilt",
+   "pos": "upper"
+  },
+  {
+   "q": [
+    "curtains window measuring home"
+   ],
+   "motion": "panl"
+  },
+  {
+   "q": [
+    "bookshelf assembly instructions floor"
+   ],
+   "insert": "phone",
+   "pos": "lower"
+  },
+  {
+   "q": [
+    "rolled up rug floor room"
+   ],
+   "motion": "pandown"
+  },
+  {
+   "q": [
+    "cozy furnished living room warm light"
+   ],
+   "insert": "hexagon",
+   "pos": "lower"
+  },
+  {
+   "q": [
+    "apartment tour empty rooms"
+   ],
+   "motion": "zin"
+  },
+  {
+   "q": [
+    "hand pointing phone at wall measuring"
+   ],
+   "insert": "diamond",
+   "pos": "center"
+  },
+  {
+   "q": [
+    "picture frame hanging wall level"
+   ],
+   "motion": "panr"
+  },
+  {
+   "q": [
+    "office desk setup measuring space"
+   ],
+   "insert": "tv",
+   "pos": "lower"
+  },
+  {
+   "q": [
+    "kitchen cabinets measuring renovation"
+   ],
+   "motion": "panup"
+  }
+ ],
+ "overlays": [
+  {
+   "at": 0.281,
+   "dur": 2.32,
+   "type": "kicker",
+   "text": "MEASURE 101"
+  },
+  {
+   "at": 0.374,
+   "dur": 1.61,
+   "type": "ticker",
+   "to": 10,
+   "suffix": "s",
+   "label": "PER MEASURE",
+   "pos": "lower"
+  },
+  {
+   "at": 0.504,
+   "dur": 2.05,
+   "type": "kinetic",
+   "top": "MEASURE",
+   "big": "ANY ROOM"
+  },
+  {
+   "at": 0.568,
+   "dur": 2.6,
+   "type": "checklist",
+   "items": [
+    "Point the phone",
+    "Tap two points",
+    "Read the length",
+    "Save the project"
+   ],
+   "pos": "center"
+  },
+  {
+   "at": 0.577,
+   "dur": 1.95,
+   "type": "callout",
+   "text": "MEASURE FROM THE COUCH",
+   "pos": "center"
+  },
+  {
+   "at": 0.696,
+   "dur": 1.99,
+   "type": "gauge",
+   "to": 4,
+   "max": 100,
+   "suffix": "%",
+   "label": "RETURN RATE",
+   "pos": "center"
+  },
+  {
+   "at": 0.713,
+   "dur": 2.25,
+   "type": "lowerthird",
+   "title": "DROP A FRAME",
+   "sub": "test it before the nail"
+  }
+ ],
+ "cta": {
+  "text": "Comment MEASURE for the app.",
+  "code": "MEASURE"
+ },
+ "caption": "Every DIY starts with an honest measurement. Skip the bent tape — point, tap, read length off the floor, export to PDF. Measure right, build once. Comment MEASURE for the app. #diy #homedecor #interiordesign #measure #movingtips #renter #apartmenttherapy #measure #app #measuring #tricks",
+ "yt_title": "How to Arrange Your Living Room #shorts",
+ "trend_keys": [
+  "measure",
+  "app",
+  "measuring",
+  "tricks",
+  "hacks",
+  "tips",
+  "tape",
+  "iphone"
+ ],
+ "content_type": "viral",
+ "comp_angle": {
+  "title": "How to Arrange Your Living Room Furniture (An Architect’s Guide!)",
+  "views": 415716,
+  "channel": "baixu"
+ },
+ "virality": {
+  "score": 90,
+  "notes": [
+   "angle<-415k",
+   "hook_boosted"
+  ],
+  "hook": "Stop scrolling. Every DIY starts with an honest measurement."
+ }
+}
