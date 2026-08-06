@@ -87,6 +87,16 @@ function regulation_generate(int $competitionId): string {
     $isPaid = (int) ($c['is_paid'] ?? 0) === 1;
     $etalon = BASE_PATH . '/docs/polozheniya/' . ($isPaid ? 'etalon_2.docx' : 'etalon_4.docx');
     if (!is_file($etalon)) throw new \RuntimeException('Эталон положения не найден: ' . basename($etalon));
+    // Частая причина сбоя copy(): эталон залит с правами 600 (root-only) и недоступен
+    // php-fpm (www-data) для чтения. Пробуем самолечение, иначе — понятная ошибка про ИСТОЧНИК.
+    if (!is_readable($etalon)) {
+        @chmod($etalon, 0644);
+        clearstatcache(true, $etalon);
+        if (!is_readable($etalon)) {
+            throw new \RuntimeException('Эталон недоступен для чтения: ' . basename($etalon)
+                . ' — выставьте права 644 (chmod 644 docs/polozheniya/*.docx)');
+        }
+    }
 
     $slug = trim((string) ($c['slug'] ?? ''));
     if ($slug === '') $slug = 'competition-' . $competitionId;
