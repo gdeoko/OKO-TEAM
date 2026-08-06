@@ -1,0 +1,86 @@
+<?php
+/**
+ * Оплата СВОЕЙ неоплаченной заявки на платный конкурс из личного кабинета.
+ *   action=pay    — создать (пере)платёж ЮKassa для неоплаченной платной заявки → confirmation_url;
+ *   action=delete — удалить свою неоплаченную заявку (до оплаты её как бы «не существует»).
+ * Логика применения оплаты — та же payment_apply_status() (metadata.application_ids).
+ */
+declare(strict_types=1);
+require __DIR__ . '/_boot.php';
+require_post();
+
+if (!request_same_origin_ap() || !csrf_check()) {
+    json_out(['ok' => false, 'error' => 'Недопустимый источник запроса'], 403);
+}
+
+$u = current_user();
+if (!$u) json_out(['ok' => false, 'error' => 'Требуется вход в кабинет'], 401);
+$uid = (int) $u['id'];
+
+$action = input('action');
+$appId  = (int) input('application_id');
+if ($appId <= 0) json_out(['ok' => false, 'error' => 'Заявка не указана'], 400);
+
+$a = one("SELECT a.*, c.name comp_name, c.is_paid comp_paid, c.price comp_price
+          FROM applications a LEFT JOIN competitions c ON c.id=a.competition_id
+          WHERE a.id=? AND a.user_id=?", [$appId, $uid]);
+if (!$a) json_out(['ok' => false, 'error' => 'Заявка не найдена'], 404);
+
+if ((int) $a['is_paid'] === 1) {
+    json_out(['ok' => false, 'error' => 'Эта заявка уже оплачена.'], 409);
+}
+
+if ($action === 'delete') {
+    q("DELETE FROM applications WHERE id=? AND user_id=? AND is_paid=0", [$appId, $uid]);
+    if (tbl_exists('payments')) q("DELETE FROM payments WHERE application_id=? AND status IN ('pending','')", [$appId]);
+    audit('application_delete_self', 'applications', $appId, ['user' => $uid]);
+    json_out(['ok' => true, 'deleted' => true]);
+}
+
+if ($action === 'pay') {
+    if ((int) $a['comp_paid'] !== 1) {
+        json_out(['ok' => false, 'error' => 'Участие в этом конкурсе бесплатное — оплата не требуется.'], 400);
+    }
+    $amount = (int) $a['comp_price'];
+    if ($amount <= 0) json_out(['ok' => false, 'error' => 'Сумма участия нулевая — оплата не требуется.'], 400);
+
+    $payment = yukassa_create_payment($amount, 'Оргвзнос за участие: ' . (string) $a['comp_name'], [
+        'application_ids' => (string) $appId,
+        'application_id'  => $appId,
+        'number'          => (string) $a['number'],
+        'numbers'         => (string) $a['number'],
+        'email'           => mb_strtolower((string) $a['email']),
+    ]);
+    if (!$payment || empty($payment['id'])) {
+        json_out(['ok' => false, 'error' => 'Не удалось создать платёж. Попробуйте позже.'], 502);
+    }
+    // Гасим прежние висящие платежи этой заявки (повторный клик не плодит pending).
+    if (tbl_exists('payments')) {
+        q("UPDATE payments SET status='canceled' WHERE application_id=? AND status IN ('pending','waiting_for_capture','')", [$appId]);
+        insert('payments', [
+            'application_id' => $appId, 'amount' => $amount, 'method' => 'yukassa',
+            'status' => $payment['status'] ?? 'pending', 'yukassa_id' => $payment['id'], 'purpose' => 'application',
+        ]);
+    }
+    audit('application_pay_self', 'applications', $appId, ['user' => $uid, 'amount' => $amount]);
+    json_out([
+        'ok' => true,
+        'confirmation_url' => $payment['confirmation_url'] ?? null,
+        'payment' => ['id' => $payment['id'], 'status' => $payment['status'] ?? 'pending', 'confirmation_url' => $payment['confirmation_url'] ?? null],
+    ]);
+}
+
+json_out(['ok' => false, 'error' => 'Неизвестное действие'], 400);
+
+/** Проверка Origin/Referer своего домена. */
+function request_same_origin_ap(): bool {
+    $hosts = [];
+    if ($bu = cfgv('base_url')) { $h = parse_url((string) $bu, PHP_URL_HOST); if ($h) $hosts[] = strtolower($h); }
+    foreach (['domain', 'domain_puny'] as $k) { if ($d = cfgv($k)) $hosts[] = strtolower((string) $d); }
+    $hosts = array_values(array_unique(array_filter($hosts)));
+    if (!$hosts) return true;
+    $src = $_SERVER['HTTP_ORIGIN'] ?? ($_SERVER['HTTP_REFERER'] ?? '');
+    if ($src === '') return false;
+    $srcHost = strtolower((string) parse_url($src, PHP_URL_HOST));
+    return $srcHost !== '' && in_array($srcHost, $hosts, true);
+}

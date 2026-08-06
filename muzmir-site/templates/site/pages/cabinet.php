@@ -227,6 +227,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 'teacher'      => mb_substr(trim(input('teacher')), 0, 200),
                 'institution'  => mb_substr(trim(input('institution')), 0, 200),
                 'work_title'   => mb_substr(trim(input('work_title')), 0, 200),
+                'city'         => mb_substr(trim(input('city')), 0, 120),
+                'video_url'    => mb_substr(trim(input('video_url')), 0, 500),
             ], 'id=:wid', ['wid' => $appId]);
             audit('application_edit', 'application', $appId);
             flash('Заявка обновлена.', 'success');
@@ -728,6 +730,17 @@ ob_start(); ?>
                   <?php foreach ($info as [$il,$iv]): ?><dt><?= h($il) ?></dt><dd><?= h($iv) ?></dd><?php endforeach; ?>
                 </dl>
               <?php endif; ?>
+              <?php // Неоплаченная заявка на ПЛАТНЫЙ конкурс — кнопка «Оплатить заявку».
+                    $needsPay = (int)($a['comp_paid'] ?? 0) === 1 && (int)($a['is_paid'] ?? 0) !== 1 && !$isRej;
+                    if ($needsPay): ?>
+                <div class="cab-pay-note" style="margin-top:12px;background:#FFF6E9;border:1px solid #F0D9A8;border-radius:12px;padding:12px 16px">
+                  <p style="margin:0 0 10px;font-size:.9rem;color:#8B6F1F">Заявка не оплачена. Оплатите оргвзнос, чтобы она была принята и передана жюри.</p>
+                  <div style="display:flex;gap:10px;flex-wrap:wrap">
+                    <button type="button" class="btn btn--primary btn--sm" data-app-pay="<?= (int)$a['id'] ?>">Оплатить заявку</button>
+                    <button type="button" class="btn btn--ghost btn--sm" data-app-del="<?= (int)$a['id'] ?>">Удалить</button>
+                  </div>
+                </div>
+              <?php endif; ?>
               <?php $editable = in_array((string)$a['status'], ['new','submitted','pending','paid','judging'], true); ?>
               <?php if ($editable): ?>
                 <details class="cab-edit" style="margin-top:8px">
@@ -743,6 +756,8 @@ ob_start(); ?>
                     <div class="field" style="margin:0"><label>Преподаватель</label><input type="text" name="teacher" value="<?= h($a['teacher'] ?? '') ?>"></div>
                     <div class="field" style="margin:0"><label>Учреждение</label><input type="text" name="institution" value="<?= h($a['institution'] ?? '') ?>"></div>
                     <div class="field" style="margin:0"><label>Название конкурсного номера</label><input type="text" name="work_title" value="<?= h($a['work_title'] ?? '') ?>"></div>
+                    <div class="field" style="margin:0"><label>Город</label><input type="text" name="city" value="<?= h($a['city'] ?? '') ?>"></div>
+                    <div class="field" style="margin:0"><label>Ссылка на конкурсный материал</label><input type="url" name="video_url" value="<?= h($a['video_url'] ?? '') ?>" placeholder="https://..."></div>
                     <button type="submit" class="btn btn--primary btn--sm">Сохранить изменения</button>
                     <p class="hint" style="margin:0">Редактирование доступно до подведения итогов.</p>
                   </form>
@@ -1359,6 +1374,24 @@ ob_start(); ?>
               post('delete',id).then(function(d){
                 if(d&&d.ok&&d.deleted){var card=del.closest('.cab-card');if(card)card.remove();}
                 else{del.disabled=false;alert((d&&d.error)||'Не удалось удалить заказ.');}
+              });return;}
+            // Оплата / удаление неоплаченной заявки на участие.
+            function appPost(action,id){
+              var fd=new FormData();fd.append('action',action);fd.append('application_id',id);fd.append('_csrf',csrf());
+              return fetch('<?= url('/api/v1/app_pay') ?>',{method:'POST',body:fd,headers:{'X-Requested-With':'fetch'}})
+                .then(function(r){return r.json().catch(function(){return{};});});
+            }
+            var apay=e.target.closest('[data-app-pay]');
+            if(apay){e.preventDefault();var aid=apay.getAttribute('data-app-pay');apay.disabled=true;apay.textContent='Готовим оплату…';
+              appPost('pay',aid).then(function(d){
+                if(d&&d.ok&&d.confirmation_url){location.href=d.confirmation_url;}
+                else{apay.disabled=false;apay.textContent='Оплатить заявку';alert((d&&d.error)||'Не удалось создать оплату.');}
+              });return;}
+            var adel=e.target.closest('[data-app-del]');
+            if(adel){e.preventDefault();if(!confirm('Удалить неоплаченную заявку?'))return;var aid2=adel.getAttribute('data-app-del');adel.disabled=true;
+              appPost('delete',aid2).then(function(d){
+                if(d&&d.ok&&d.deleted){var card=adel.closest('.cab-card');if(card)card.remove();}
+                else{adel.disabled=false;alert((d&&d.error)||'Не удалось удалить заявку.');}
               });return;}
           });
         })();
