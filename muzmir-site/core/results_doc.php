@@ -62,8 +62,9 @@ function results_docx(int $compId): string {
     $xml = str_replace('28.08.', date('d.m.', $ts) , $xml);
     $xml = str_replace('2026 год', date('Y', $ts) . ' год', $xml);
 
-    // 2) Таблица результатов (перед финальным <w:sectPr>): 5 колонок.
-    $wc = [2100, 1900, 2100, 1500, 2000]; // ФИО | Коллектив | Номер | Страна/Город | Результат
+    // 2) Таблица результатов (перед финальным <w:sectPr>): 4 колонки.
+    // ФИО и коллектив — в ОДНОЙ графе (пишется что-то одно, без пустого столбца).
+    $wc = [2900, 2300, 1700, 2700]; // ФИО/Коллектив | Номер | Страна/Город | Результат
     $grid = '<w:tblGrid>' . implode('', array_map(fn($w) => '<w:gridCol w:w="' . $w . '"/>', $wc)) . '</w:tblGrid>';
     $borders = '<w:tblBorders>'
         . '<w:top w:val="single" w:sz="4" w:space="0" w:color="000000"/>'
@@ -76,28 +77,27 @@ function results_docx(int $compId): string {
            . '<w:tblLook w:val="04A0" w:firstRow="1" w:lastRow="0" w:firstColumn="1" w:lastColumn="0" w:noHBand="0" w:noVBand="1"/></w:tblPr>';
 
     $head = '<w:tr><w:trPr><w:tblHeader/></w:trPr>'
-        . rd_cell('Ф.И.О. участника', $wc[0], true, true, true)
-        . rd_cell('Название коллектива', $wc[1], true, true, true)
-        . rd_cell('Название конкурсного номера', $wc[2], true, true, true)
-        . rd_cell('Страна / Город', $wc[3], true, true, true)
-        . rd_cell('Аттестационный результат', $wc[4], true, true, true)
+        . rd_cell('Ф.И.О. участника / название коллектива', $wc[0], true, true, true)
+        . rd_cell('Название конкурсного номера', $wc[1], true, true, true)
+        . rd_cell('Страна / Город', $wc[2], true, true, true)
+        . rd_cell('Аттестационный результат', $wc[3], true, true, true)
         . '</w:tr>';
 
     $body = '';
     foreach ($rows as $a) {
-        $fio  = trim((string) $a['full_name']);
+        // Одна графа: коллектив (если есть) ИЛИ ФИО участника.
         $grp  = trim((string) $a['group_name']);
+        $who  = $grp !== '' ? $grp : trim((string) $a['full_name']);
         $work = work_title_for_list((string) $a['work_title']);
         $city = trim((string) ($a['city'] ?? ''));
         $place = $city !== '' ? ('Россия, ' . $city) : 'Россия';
         $res  = (string) $a['result']
               . (trim((string) ($a['extra_diploma'] ?? '')) !== '' ? '. Дополнительный диплом: ' . (string) $a['extra_diploma'] . '.' : '');
         $body .= '<w:tr>'
-            . rd_cell($fio, $wc[0])
-            . rd_cell($grp, $wc[1])
-            . rd_cell($work, $wc[2])
-            . rd_cell($place, $wc[3])
-            . rd_cell($res, $wc[4])
+            . rd_cell($who, $wc[0])
+            . rd_cell($work, $wc[1])
+            . rd_cell($place, $wc[2])
+            . rd_cell($res, $wc[3])
             . '</w:tr>';
     }
     if ($body === '') {
