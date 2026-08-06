@@ -272,16 +272,23 @@
   }
   function show(step, dir) {
     current = step;
+    // Смена шага — единый чистый CSS-fade (apFade), без ручной JS-анимации,
+    // чтобы не было двойной анимации (морг) и рывков вёрстки.
     for (var k in panels) if (panels.hasOwnProperty(k)) panels[k].classList.remove('active');
     if (panels[step]) {
+      // Перезапуск анимации: снять и вернуть класс в следующий кадр (иначе .active
+      // остаётся и apFade не проигрывается повторно на том же узле).
+      void panels[step].offsetWidth;
       panels[step].classList.add('active');
-      animateIn(panels[step], dir || 'next');
     }
     renderProgress();
     if (step === 'consent') { buildSummary(); updateConsentBtnLabel(); }
     if (step === 'pay') fillPayAmount();
-    var top = form.getBoundingClientRect().top + window.pageYOffset - 90;
-    window.scrollTo({ top: top, behavior: reduceMotion() ? 'auto' : 'smooth' });
+    // Скроллим к форме ТОЛЬКО если её верх ушёл за пределы экрана — не дёргаем на каждом шаге.
+    var r = form.getBoundingClientRect();
+    if (r.top < 0 || r.top > window.innerHeight * 0.5) {
+      window.scrollTo({ top: r.top + window.pageYOffset - 90, behavior: reduceMotion() ? 'auto' : 'smooth' });
+    }
   }
   function goNext() {
     if (!validateStep(current)) return;

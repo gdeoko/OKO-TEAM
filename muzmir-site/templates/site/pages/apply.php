@@ -84,8 +84,10 @@ ob_start(); ?>
 .apply-card::after{content:"";position:absolute;left:0;right:0;top:0;height:3px;background:var(--grad-gold);opacity:.9}
 @media(max-width:560px){.apply-card{padding:24px 18px}}
 .astep{display:none}
-.astep.active{display:block;animation:apIn .35s ease}
-@keyframes apIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+.astep{opacity:1}
+.astep.active{display:block;animation:apFade .28s ease both;will-change:opacity}
+/* Плавный чистый fade без сдвига — не «моргает» и не «дёргает» вёрстку при смене шага. */
+@keyframes apFade{from{opacity:0}to{opacity:1}}
 .astep-head{margin-bottom:22px}
 .astep-head .eyebrow{margin-bottom:4px}
 .astep-head h2{font-size:clamp(1.35rem,4.4vw,1.6rem);margin:0;line-height:1.15}
