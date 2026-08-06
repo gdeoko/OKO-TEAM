@@ -24,12 +24,13 @@
   "big": "ALWAYS\nGLOWS",
   "q": [
    "network cables server blue light"
-  ]
+  ],
+  "ai": "work/gspy_094/cover_ai.png"
  },
  "segments": [
   {
    "id": "b1",
-   "text": "Turn off the lights. Raise your phone camera."
+   "text": "Stop scrolling. Turn off the lights. Raise your phone camera."
   },
   {
    "id": "b2",
@@ -256,7 +257,7 @@
   "code": "PRIVACY"
  },
  "caption": "Lights off, camera up. A hidden lens glows in infrared. Pan across vents, mirrors and smoke detectors to catch the glint. Comment PRIVACY for the app. #privacy #airbnb #travelsafety #hiddencamera #traveltips #hotelroom #safetytips #camera #most #spy #find 👉 Comment PRIVACY for the link — link in bio.",
- "yt_title": "Spot a hidden camera lens in the dark #shorts",
+ "yt_title": "We tested five ways to find #shorts",
  "trend_keys": [
   "camera",
   "most",
@@ -267,5 +268,18 @@
   "former",
   "hidden"
  ],
- "content_type": "sales"
+ "content_type": "sales",
+ "comp_angle": {
+  "title": "We tested five ways to find hidden cameras in hotels and house rentals",
+  "views": 2870321,
+  "channel": "CNBC International"
+ },
+ "virality": {
+  "score": 93,
+  "notes": [
+   "angle<-2870k",
+   "hook_boosted"
+  ],
+  "hook": "Stop scrolling. Turn off the lights. Raise your phone camera."
+ }
 }

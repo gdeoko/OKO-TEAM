@@ -25,12 +25,13 @@
   "big": "ROOM\nSWEEP",
   "q": [
    "hand holding smartphone dark"
-  ]
+  ],
+  "ai": "work/gspy_100/cover_ai.png"
  },
  "segments": [
   {
    "id": "b1",
-   "text": "New room? Run this thirty-second sweep first."
+   "text": "Stop scrolling. New room? Run this thirty-second sweep first."
   },
   {
    "id": "b2",
@@ -237,7 +238,7 @@
   "code": "PRIVACY"
  },
  "caption": "Every new room deserves a 30-second sweep: scan the Wi-Fi, kill the lights, pan for glints, check the bed sight-lines, unplug the unknowns. Comment PRIVACY for the app. #privacy #airbnb #travelsafety #hiddencamera #traveltips #hotelroom #safetytips #cameras #caught #spy #tested",
- "yt_title": "30-second hidden camera room sweep #shorts",
+ "yt_title": "Hidden Camera Exposes Psycho Wife's Dirty #shorts",
  "trend_keys": [
   "cameras",
   "caught",
@@ -248,5 +249,18 @@
   "camera",
   "airbnb"
  ],
- "content_type": "viral"
+ "content_type": "viral",
+ "comp_angle": {
+  "title": "Hidden Camera Exposes Psycho Wife's Dirty Secret",
+  "views": 3024193,
+  "channel": "M7 Crime Storytime"
+ },
+ "virality": {
+  "score": 92,
+  "notes": [
+   "angle<-3024k",
+   "hook_boosted"
+  ],
+  "hook": "Stop scrolling. New room? Run this thirty-second sweep first."
+ }
 }

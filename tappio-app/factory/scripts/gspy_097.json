@@ -24,12 +24,13 @@
   "big": "ALWAYS\nHIDE",
   "q": [
    "picture frame on wall room"
-  ]
+  ],
+  "ai": "work/gspy_097/cover_ai.png"
  },
  "segments": [
   {
    "id": "b1",
-   "text": "Smoke detectors: the number one hiding spot."
+   "text": "Stop scrolling. Smoke detectors: the number one hiding spot."
   },
   {
    "id": "b2",
@@ -186,7 +187,7 @@
   "code": "PRIVACY"
  },
  "caption": "Smoke detectors, alarm clocks, vents, TV frames, outlets — the five spots cams love. Check anything with a clear line of sight to the bed. Comment PRIVACY for the app. #privacy #airbnb #travelsafety #hiddencamera #traveltips #hotelroom #safetytips #ways #tested #find #hotels",
- "yt_title": "Top 5 places hidden cameras hide #shorts",
+ "yt_title": "How to Find HIDDEN CAMERAS in #shorts",
  "trend_keys": [
   "ways",
   "tested",
@@ -197,5 +198,18 @@
   "five",
   "hidden"
  ],
- "content_type": "viral"
+ "content_type": "viral",
+ "comp_angle": {
+  "title": "How to Find HIDDEN CAMERAS in Airbnb & Hotel (5-Minute Scan)",
+  "views": 2158862,
+  "channel": "Project Untethered"
+ },
+ "virality": {
+  "score": 87,
+  "notes": [
+   "angle<-2158k",
+   "hook_boosted"
+  ],
+  "hook": "Stop scrolling. Smoke detectors: the number one hiding spot."
+ }
 }

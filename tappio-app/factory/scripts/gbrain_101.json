@@ -24,12 +24,13 @@
   "big": "ANY NAME\nFOR GOOD",
   "q": [
    "person forgetting keys frustrated"
-  ]
+  ],
+  "ai": "work/gbrain_101/cover_ai.png"
  },
  "segments": [
   {
    "id": "b1",
-   "text": "Hear the name, then say it back out loud."
+   "text": "Stop scrolling. Hear the name, then say it back out loud."
   },
   {
    "id": "b2",
@@ -206,7 +207,7 @@
   "code": "FOCUS"
  },
  "caption": "Say it back, link it to an image, repeat after ten seconds — that triple hit locks a name in. Train the habit with quick daily reps. Comment FOCUS for the app. #brainhealth #memory #focus #productivity #selfimprovement #mentalhealth #learning #chris #brain #memory #focus",
- "yt_title": "Remember any name for good #shorts",
+ "yt_title": "Accelerated Learning Gamma Waves for Focus #shorts",
  "trend_keys": [
   "chris",
   "brain",
@@ -217,5 +218,18 @@
   "music",
   "anything"
  ],
- "content_type": "viral"
+ "content_type": "viral",
+ "comp_angle": {
+  "title": "Accelerated Learning - Gamma Waves for Focus / Concentration / Memory - Binaural Beats - F",
+  "views": 28088446,
+  "channel": "Magnetic Minds"
+ },
+ "virality": {
+  "score": 89,
+  "notes": [
+   "angle<-28088k",
+   "hook_boosted"
+  ],
+  "hook": "Stop scrolling. Hear the name, then say it back out loud."
+ }
 }

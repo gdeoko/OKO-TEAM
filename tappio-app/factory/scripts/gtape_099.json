@@ -25,12 +25,13 @@
   "big": "WITHOUT\nHOLES",
   "q": [
    "empty living room wooden floor sunlight"
-  ]
+  ],
+  "ai": "work/gtape_099/cover_ai.png"
  },
  "segments": [
   {
    "id": "b1",
-   "text": "Renting means no guessing and no wall damage."
+   "text": "Stop scrolling. Renting means no guessing and no wall damage."
   },
   {
    "id": "b2",
@@ -250,7 +251,7 @@
   "code": "MEASURE"
  },
  "caption": "Renting? Measure the wall, drop a virtual frame, line up shelves before a single nail. Shop with real sizes and keep your deposit. Comment MEASURE for the app. #diy #homedecor #interiordesign #measure #movingtips #renter #apartmenttherapy #iphone #use #arrange #app 👉 Comment MEASURE for the link — link in bio.",
- "yt_title": "Decorate a rental without holes #shorts",
+ "yt_title": "5 Quick Measuring Hacks Woodworking Tips #shorts",
  "trend_keys": [
   "iphone",
   "use",
@@ -261,5 +262,18 @@
   "measure",
   "furniture"
  ],
- "content_type": "sales"
+ "content_type": "sales",
+ "comp_angle": {
+  "title": "5 Quick Measuring Hacks - Woodworking Tips and Tricks",
+  "views": 1541200,
+  "channel": "WoodWorkWeb"
+ },
+ "virality": {
+  "score": 93,
+  "notes": [
+   "angle<-1541k",
+   "hook_boosted"
+  ],
+  "hook": "Stop scrolling. Renting means no guessing and no wall damage."
+ }
 }

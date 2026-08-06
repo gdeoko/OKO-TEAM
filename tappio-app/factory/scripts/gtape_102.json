@@ -25,12 +25,13 @@
   "big": "THAT ACTUALLY\nFITS",
   "q": [
    "cozy furnished living room warm light"
-  ]
+  ],
+  "ai": "work/gtape_102/cover_ai.png"
  },
  "segments": [
   {
    "id": "b1",
-   "text": "That online sofa looks perfect on screen."
+   "text": "Stop scrolling. That online sofa looks perfect on screen."
   },
   {
    "id": "b2",
@@ -256,7 +257,7 @@
   "code": "MEASURE"
  },
  "caption": "USEFUL: That online sofa looks perfect — until it swallows the room. Measure the real space, compare to the listing, order only what fits. Fewer returns, zero regret. Comment MEASURE for the app. #diy #homedecor #interiordesign #measure #movingtips #renter #apartmenttherapy #iphone #hacks #app #tips",
- "yt_title": "Buy furniture that actually fits #shorts",
+ "yt_title": "AR Plan 3D Camera to Plan #shorts",
  "trend_keys": [
   "iphone",
   "hacks",
@@ -267,5 +268,18 @@
   "tricks",
   "measure"
  ],
- "content_type": "useful"
+ "content_type": "useful",
+ "comp_angle": {
+  "title": "AR Plan 3D – Camera to Plan, Floorplanner",
+  "views": 2315463,
+  "channel": "GRYMALA"
+ },
+ "virality": {
+  "score": 93,
+  "notes": [
+   "angle<-2315k",
+   "hook_boosted"
+  ],
+  "hook": "Stop scrolling. That online sofa looks perfect on screen."
+ }
 }
