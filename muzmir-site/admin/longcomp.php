@@ -157,6 +157,20 @@ ob_start(); ?>
   </div>
 
   <?php
+    // Текст поста-объявления результатов (по эталону) — для публикации рядом с PDF.
+    $postText = "Результаты\n\nДля просмотра результатов конкурса откройте pdf файл, прикреплённый к данному посту "
+        . "(РЕЗУЛЬТАТЫ КОНКУРСА «" . mb_strtoupper((string)$current['name']) . "».pdf).\n"
+        . "📃Поиск осуществляется по:\n"
+        . "• Фамилии и имени конкурсанта, название коллектива, название конкурсного номера";
+  ?>
+  <div class="card" style="margin-bottom:16px">
+    <div class="section-title" style="margin-bottom:8px"><h3>Пост-объявление результатов (по эталону)</h3></div>
+    <p class="small muted" style="margin:-4px 0 10px">Текст поста для публикации рядом с PDF-файлом результатов. Кнопка — скопировать. PDF/DOCX — выше «Скачать результаты».</p>
+    <textarea id="postText" readonly style="width:100%;min-height:120px;padding:12px 14px;border:1px solid var(--a-line);border-radius:10px;font-size:.92rem;line-height:1.6;resize:vertical"><?= h($postText) ?></textarea>
+    <div style="margin-top:8px"><button type="button" class="btn btn--navy btn--sm" onclick="var t=document.getElementById('postText');t.select();document.execCommand('copy');this.textContent='Скопировано ✓'">Скопировать текст поста</button></div>
+  </div>
+
+  <?php
   // Печать одной строки-заявки с действиями.
   $rowActions = function(array $a) use ($comp) {
     $aid = (int)$a['id'];

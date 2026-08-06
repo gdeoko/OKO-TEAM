@@ -6,6 +6,17 @@
  */
 declare(strict_types=1);
 
+// Отметить запрос комментария жюри (ВИП) выполненным.
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && input('do') === 'jury_req_done') {
+    if (!csrf_check()) { flash('Сессия устарела.', 'error'); admin_redirect('dashboard'); }
+    if (function_exists('tbl_exists') && tbl_exists('jury_comment_requests')) {
+        update('jury_comment_requests', ['status' => 'done'], 'id=:id', ['id' => (int) input('id')]);
+        audit('jury_req_done', 'jury_comment_requests', (int) input('id'), []);
+        flash('Запрос отмечен выполненным.', 'success');
+    }
+    admin_redirect('dashboard');
+}
+
 $paidStatuses = "('paid','succeeded')";
 
 /* ── Счётчики верхнего уровня ─────────────────────────────────── */
@@ -169,7 +180,43 @@ foreach ($appPal as $k => $col) if (($appByStatus[$k] ?? 0) > 0) $appSlices[] = 
 $compSlices = [];
 foreach ($compPal as $k => $col) if (($compByStatus[$k] ?? 0) > 0) $compSlices[] = ['label' => comp_status_ru($k), 'value' => $compByStatus[$k], 'color' => $col];
 
-ob_start(); ?>
+ob_start();
+// Запросы комментариев/рекомендаций жюри от участников ВИП-клуба (изготовить и отправить).
+$juryReqs = [];
+if (function_exists('tbl_exists') && tbl_exists('jury_comment_requests')) {
+    $juryReqs = all("SELECT r.*, a.number, a.full_name, a.email, a.result, a.jury_comment, c.name comp_name
+                     FROM jury_comment_requests r
+                     JOIN applications a ON a.id=r.application_id
+                     LEFT JOIN competitions c ON c.id=a.competition_id
+                     WHERE r.status='new' ORDER BY r.created_at DESC LIMIT 50");
+}
+?>
+<?php if ($juryReqs): ?>
+<div class="card" style="margin-bottom:20px;border:1px solid var(--a-gold,#C79322)">
+  <div class="section-title" style="margin-bottom:8px"><h3>ВИП-клуб · запросы комментария и рекомендации жюри <span class="badge badge--gold"><?= count($juryReqs) ?></span></h3></div>
+  <p class="small muted" style="margin:-4px 0 12px">Участники клуба запросили комментарий и рекомендацию жюри по оценённой заявке — изготовить и отправить. «Открыть заявку» → впишите комментарий и сохраните.</p>
+  <div class="table-wrap"><table class="tbl">
+    <thead><tr><th>Заявка</th><th>Участник</th><th>Конкурс · результат</th><th>Комментарий</th><th>Действия</th></tr></thead>
+    <tbody>
+    <?php foreach ($juryReqs as $r): ?>
+      <tr>
+        <td class="small"><?= h((string)$r['number']) ?><br><span class="muted"><?= h((string)$r['email']) ?></span></td>
+        <td class="small"><?= h((string)$r['full_name']) ?></td>
+        <td class="small"><?= h((string)($r['comp_name'] ?? '')) ?><br><span class="badge badge--gold small"><?= h((string)$r['result']) ?></span></td>
+        <td class="small"><?= trim((string)($r['jury_comment'] ?? '')) !== '' ? '<span class="badge badge--paid small">есть</span>' : '<span class="muted">нет</span>' ?></td>
+        <td style="white-space:nowrap">
+          <a class="btn btn--navy btn--sm" href="<?= a_link('grading', ['id'=>(int)$r['application_id']]) ?>">Открыть заявку</a>
+          <form method="post" action="<?= url('/admin/') ?>" style="display:inline"><?= csrf_field() ?>
+            <input type="hidden" name="do" value="jury_req_done"><input type="hidden" name="id" value="<?= (int)$r['id'] ?>">
+            <button class="btn btn--ghost btn--sm">Готово</button>
+          </form>
+        </td>
+      </tr>
+    <?php endforeach; ?>
+    </tbody>
+  </table></div>
+</div>
+<?php endif; ?>
 
 <style>
 .dashwrap{--ring-bg:rgba(139,111,31,.14);--donut-ink:#1B2340;--chart-grid:rgba(139,111,31,.12);--soft:rgba(139,111,31,.06)}

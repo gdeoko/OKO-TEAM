@@ -77,6 +77,13 @@ foreach ($items as $it) {
         continue;
     }
     $price = (int) $price;
+    // В ПЛАТНОМ конкурсе электронные основной и дополнительный дипломы входят в стоимость
+    // участия (оргвзнос) — при заказе они бесплатны. В бесплатном — по прайсу.
+    if ($kind === 'digital'
+        && in_array($itemName, ['Основной диплом', 'Дополнительный диплом'], true)
+        && $comp && (int) ($comp['is_paid'] ?? 0) === 1) {
+        $price = 0;
+    }
     $serverAmount += $price;
     $normItems[] = ['item' => $itemName, 'kind' => $kind, 'price' => $price];
 }
