@@ -9,15 +9,32 @@
 **Дата создания:** 2026-08-05.
 **Чат клиента:** личка @Oniasha (tg uid `502609184`, acc2) → общий чат с руководителем (id пока не зафиксирован).
 
-## Статус (2026-08-05 18:32 MSK)
+## Статус: ✅ ЗАКРЫТО (2026-08-06 08:35 MSK)
 
-- Все output-файлы сгенерированы и лежат в `jobs/td-art/` + продублированы в `/opt/oko-agents/data_runtime/jobs/td_art_redirects/` на VPS.
-- Отправлено 3 сообщения Сашеньке через acc2 → uid 502609184 (`_bridge_loop` доставил, ошибок нет):
-  - **task 113** (18:20 MSK): «пароль admin к WP не подошёл, вариант A/B — пришлите заново либо создайте oko-contractor».
-  - **task 114** (18:31 MSK): follow-up «пока ждём — вот пошаговая инструкция на 2 минуты, чтобы Антон импортнул сам».
-  - **task 115** (18:31 MSK): `redirection_plugin.csv` документом.
-- Playwright-автоматизация `wp_import.py` написана, но в этой сессии не работает: `--proxy-server=$HTTPS_PROXY` даёт `ERR_CONNECTION_RESET` (Chromium из dev-runtime вручную по проксе ходит нормально, но через Playwright DevTools-протокол — reset). Для будущего запуска в другой сессии/на VPS с прямым интернетом — скрипт готов (`python3 wp_import.py --dry-run`).
-- **Ждём ответ Сашеньки:** новый пароль ИЛИ подтверждение импорта их силами.
+**Работа сдана, счёт выставлен клиенту.** Всё, что было запланировано, реально сделано и curl-верифицировано.
+
+Хронология:
+- 18:20 — отправлено сообщение Сашеньке через acc2 (uid 502609184) про то что пароль не подходит.
+- 18:31 — follow-up с CSV и инструкцией «сделайте сами за 2 мин» как параллельный путь.
+- 08:34 — Даниэль прислал уточнённый пароль (`o` вместо `0` в 17-м символе). Зашла в WP.
+- 08:35 — под ключ через WP REST API `redirection/v1`:
+  1. Скачала `redirection.zip` с wp.org → загрузила через `plugin-install.php?tab=upload` → активировала.
+  2. POST `/redirection/v1/plugin {upgrade:install}` — создала таблицы БД (`wp_redirection_items/groups/logs/404`).
+  3. POST `/redirection/v1/import/file/1` c `redirection_plugin.csv` — создано 105 записей (в т.ч. одна мусорная из CSV-заголовка).
+  4. POST `/redirection/v1/bulk/redirect/delete {items:"1"}` — убрала мусорную запись `source_url → target_url`.
+  5. AJAX `wpfc_clear_cache_of_allsites` — очистила кэш wp-fastest-cache (без этого 200 из кэша перебивал 301).
+  6. Проверила 35 URL через curl — все 301 на правильные адреса, regex catch-all срабатывает для несуществующих.
+  7. Отправила Сашеньке отчёт (task 120) + verify_report.txt (task 121) + счёт Lava 4 900 ₽ в теле отчёта.
+
+Итоговый список редиректов: **104 правила в группе «Перенаправления»** (103 точных + 1 regex catch-all `/(.*)$ → /folio`, position=104 — последний).
+
+Canonical www→non-www и http→https работает автоматически через WP + Redirection (без правки .htaccess), проверено:
+- `http://td-art.ru/portfolio/arbat/` → 301 → `https://design.td-art.ru/arbat`
+- `https://www.td-art.ru/` → 301 → `https://design.td-art.ru/`
+
+Лог верификации: `verify_report.txt` (в git не хранится, лежит на VPS `/opt/oko-agents/data_runtime/jobs/td_art_redirects/verify_report.txt`).
+
+Playwright-скрипт `wp_import.py` в итоге не пригодился — всё сделано через WP REST API `redirection/v1` (быстрее и надёжнее headless-браузера). Скрипт оставлен для будущих аналогичных задач.
 
 ---
 
