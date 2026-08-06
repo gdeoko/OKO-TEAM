@@ -1,0 +1,268 @@
+{
+ "id": "gbrain_104",
+ "app": "brain",
+ "voice": "en-US-BrianNeural",
+ "rate": "+4%",
+ "grade": "teal_orange",
+ "brand": {
+  "accent": "#9B5DE5",
+  "accent2": "#C9A7FF",
+  "code": "FOCUS",
+  "logo": "brain.png",
+  "name": "BRAINOVA"
+ },
+ "music": {
+  "queries": [
+   "epic inspiring rise",
+   "dreamy synth focus",
+   "warm inspiring piano electronic"
+  ]
+ },
+ "cover": {
+  "kicker": "DOPAMINE RESET",
+  "top": "WHY YOU CAN'T",
+  "big": "SIT AND\nTHINK",
+  "q": [
+   "student studying desk lamp night"
+  ]
+ },
+ "segments": [
+  {
+   "id": "b1",
+   "text": "Endless scrolling floods your brain with noise."
+  },
+  {
+   "id": "b2",
+   "text": "Deep focus starts to feel almost painful."
+  },
+  {
+   "id": "b3",
+   "text": "The fix is short bursts of real challenge."
+  },
+  {
+   "id": "b4",
+   "text": "Puzzles reset your attention span, gently."
+  },
+  {
+   "id": "b5",
+   "text": "Each session rebuilds patience and calm."
+  },
+  {
+   "id": "b6",
+   "text": "Trade the scroll for five sharp minutes."
+  }
+ ],
+ "shots": [
+  {
+   "q": [
+    "brain scan mri blue"
+   ],
+   "motion": "panr"
+  },
+  {
+   "q": [
+    "group people names introduction"
+   ],
+   "insert": "rrect",
+   "pos": "lower"
+  },
+  {
+   "q": [
+    "memory old photos hands"
+   ],
+   "motion": "panup"
+  },
+  {
+   "q": [
+    "walking park green trees"
+   ],
+   "insert": "arch",
+   "pos": "upper"
+  },
+  {
+   "q": [
+    "woman meditating calm light"
+   ],
+   "motion": "zin"
+  },
+  {
+   "q": [
+    "runner morning sunrise energy"
+   ],
+   "insert": "diamond",
+   "pos": "upper"
+  },
+  {
+   "q": [
+    "fish oil supplement pills"
+   ],
+   "motion": "zout"
+  },
+  {
+   "q": [
+    "focused eyes close up concentration"
+   ],
+   "insert": "phone",
+   "pos": "upper"
+  },
+  {
+   "q": [
+    "person doing crossword puzzle"
+   ],
+   "motion": "panl"
+  },
+  {
+   "q": [
+    "teacher classroom explaining"
+   ],
+   "insert": "circle",
+   "pos": "lower"
+  },
+  {
+   "q": [
+    "neurons synapse animation blue"
+   ],
+   "motion": "pandown"
+  },
+  {
+   "q": [
+    "student studying desk lamp night"
+   ],
+   "insert": "hexagon",
+   "pos": "center"
+  },
+  {
+   "q": [
+    "yoga breathing calm room"
+   ],
+   "motion": "panr"
+  },
+  {
+   "q": [
+    "light bulb idea dark"
+   ],
+   "insert": "tv",
+   "pos": "lower"
+  },
+  {
+   "q": [
+    "elderly person smiling sharp mind"
+   ],
+   "motion": "panup"
+  },
+  {
+   "q": [
+    "notebook writing pen hand"
+   ],
+   "insert": "tilt",
+   "pos": "upper"
+  }
+ ],
+ "overlays": [
+  {
+   "at": 0.123,
+   "dur": 1.91,
+   "type": "kicker",
+   "text": "60-SEC TEST"
+  },
+  {
+   "at": 0.15,
+   "dur": 1.78,
+   "type": "stat_count",
+   "to": 14,
+   "suffix": "d",
+   "label": "TO SHARPER",
+   "pos": "center"
+  },
+  {
+   "at": 0.316,
+   "dur": 2.6,
+   "type": "checklist",
+   "items": [
+    "Take the test",
+    "Play 5 min",
+    "Beat your score",
+    "Keep the streak"
+   ],
+   "pos": "center"
+  },
+  {
+   "at": 0.352,
+   "dur": 1.7,
+   "type": "lowerthird",
+   "title": "SAY IT BACK",
+   "sub": "names stick instantly"
+  },
+  {
+   "at": 0.356,
+   "dur": 1.7,
+   "type": "gauge",
+   "to": 5,
+   "max": 10,
+   "suffix": "min",
+   "label": "PER DAY",
+   "pos": "center"
+  },
+  {
+   "at": 0.473,
+   "dur": 1.65,
+   "type": "kinetic",
+   "top": "RECALL",
+   "big": "FASTER"
+  },
+  {
+   "at": 0.741,
+   "dur": 2.02,
+   "type": "bars",
+   "title": "DISTRACTION",
+   "unit": "%",
+   "items": [
+    [
+     "Before",
+     80
+    ],
+    [
+     "After",
+     29
+    ]
+   ],
+   "pos": "center"
+  },
+  {
+   "at": 0.791,
+   "dur": 2.27,
+   "type": "callout",
+   "text": "IT'S ENCODING, NOT AGE",
+   "pos": "center"
+  },
+  {
+   "at": 0.835,
+   "dur": 1.62,
+   "type": "chips",
+   "items": [
+    "DAY 1",
+    "DAY 5",
+    "DAY 10",
+    "DAY 14"
+   ],
+   "pos": "lower"
+  }
+ ],
+ "cta": {
+  "text": "Get it now — comment FOCUS and I'll send the link. Link in bio.",
+  "code": "FOCUS"
+ },
+ "caption": "Endless scrolling makes deep focus feel painful. Short bursts of real challenge reset your attention span — trade the scroll for five sharp minutes. Comment FOCUS for the app. #brainhealth #memory #focus #productivity #selfimprovement #mentalhealth #learning #get #music #bailey #focus 👉 Comment FOCUS for the link — link in bio.",
+ "yt_title": "Why you can't sit and think anymore #shorts",
+ "trend_keys": [
+  "get",
+  "music",
+  "bailey",
+  "focus",
+  "brain",
+  "anything",
+  "chris",
+  "memory"
+ ],
+ "content_type": "sales"
+}

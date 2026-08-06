@@ -1,25 +1,23 @@
 {
- "seq": 101,
+ "seq": 106,
  "angle_idx": {
-  "spy": 4,
-  "brain": 4,
-  "tape": 3
+  "spy": 6,
+  "brain": 5,
+  "tape": 5
  },
- "app_rr": 101,
+ "app_rr": 106,
  "shot_off": {
-  "spy": 14,
-  "brain": 22,
-  "tape": 15
+  "spy": 0,
+  "brain": 2,
+  "tape": 2
  },
  "ov_off": {
-  "spy": 102,
-  "brain": 102,
-  "tape": 99
+  "spy": 108,
+  "brain": 105,
+  "tape": 105
  },
  "ov_fp": {
   "spy": [
-   "bars|chips|gauge|kicker|kinetic|lowerthird|stat_count",
-   "bars|callout|checklist|chips|gauge|kicker|kinetic|lowerthird|stat_count|ticker",
    "bars|callout|chips|gauge|kicker|kinetic|ticker",
    "bars|callout|checklist|chips|gauge|kicker|kinetic|lowerthird|stat_count|ticker",
    "gauge|kicker|kinetic|lowerthird|stat_count|ticker",
@@ -37,10 +35,11 @@
    "bars|callout|checklist|chips|gauge|kicker|kinetic",
    "bars|callout|checklist|chips|gauge|kicker|kinetic|lowerthird|stat_count|ticker",
    "bars|chips|gauge|kicker|kinetic|lowerthird",
-   "bars|callout|checklist|chips|gauge|kicker|kinetic|lowerthird|stat_count|ticker"
+   "bars|callout|checklist|chips|gauge|kicker|kinetic|lowerthird|stat_count|ticker",
+   "bars|chips|gauge|kicker|kinetic|lowerthird|stat_count|ticker",
+   "chips|gauge|kicker|kinetic|lowerthird|stat_count|ticker"
   ],
   "brain": [
-   "bars|chips|gauge|kicker|kinetic|lowerthird|stat_count|ticker",
    "bars|checklist|kicker|kinetic|lowerthird|ticker",
    "bars|callout|checklist|chips|gauge|kicker|kinetic|lowerthird|stat_count|ticker",
    "bars|checklist|chips|gauge|kicker|kinetic|stat_count|ticker",
@@ -59,11 +58,10 @@
    "callout|gauge|kicker|kinetic|lowerthird|stat_count|ticker",
    "bars|callout|checklist|chips|gauge|kicker|kinetic|lowerthird|stat_count|ticker",
    "callout|checklist|chips|gauge|kicker|kinetic|lowerthird|stat_count|ticker",
-   "callout|checklist|chips|kinetic|lowerthird|ticker"
+   "callout|checklist|chips|kinetic|lowerthird|ticker",
+   "bars|callout|checklist|chips|gauge|kicker|kinetic|lowerthird|stat_count"
   ],
   "tape": [
-   "bars|callout|chips|gauge|kicker|kinetic|lowerthird|stat_count|ticker",
-   "bars|checklist|kicker|kinetic|lowerthird|stat_count",
    "bars|callout|checklist|chips|kicker|kinetic|lowerthird|stat_count|ticker",
    "callout|checklist|chips|gauge|kicker|kinetic|stat_count",
    "callout|checklist|chips|kicker|kinetic|lowerthird|stat_count",
@@ -81,7 +79,9 @@
    "bars|callout|chips|gauge|kicker|kinetic|stat_count|ticker",
    "bars|checklist|gauge|kicker|kinetic|lowerthird|stat_count",
    "bars|callout|checklist|chips|kicker|kinetic|lowerthird",
-   "bars|callout|checklist|chips|gauge|kicker|kinetic|lowerthird|stat_count|ticker"
+   "bars|callout|checklist|chips|gauge|kicker|kinetic|lowerthird|stat_count|ticker",
+   "bars|callout|checklist|chips|gauge|kicker|kinetic|lowerthird|stat_count|ticker",
+   "callout|checklist|gauge|kicker|kinetic|lowerthird|ticker"
   ]
  }
 }
