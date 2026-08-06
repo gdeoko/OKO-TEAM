@@ -9,6 +9,7 @@ $GLOBALS['CFG'] = $CFG;
 require_once BASE_PATH . '/core/db.php';
 require_once BASE_PATH . '/core/data.php';
 require_once BASE_PATH . '/core/helpers.php';
+require_once BASE_PATH . '/core/countdown.php';
 require_once BASE_PATH . '/core/auth.php';
 require_once BASE_PATH . '/core/security.php';
 

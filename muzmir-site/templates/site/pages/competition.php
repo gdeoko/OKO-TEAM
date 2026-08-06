@@ -188,7 +188,18 @@ ob_start(); ?>
       <span class="badge badge--<?= $statusMap[0] ?>"><?= h($statusMap[1]) ?></span>
       <span class="badge badge--intl"><?= h($typeLabel) ?></span>
       <span class="badge badge--intl"><?= h($dirLabel[$c['direction']] ?? 'Многожанровый') ?></span>
+      <?php if ($cd = comp_countdown_badge($c['end_date'] ?? '', (string) $c['status'])): ?>
+        <span class="cb-countdown <?= $cd['cls'] ?>"><?= h($cd['text']) ?></span>
+      <?php endif; ?>
     </div>
+    <style>
+    .cb-countdown{padding:6px 13px;border-radius:999px;font-size:.74rem;font-weight:800;letter-spacing:.04em;color:#fff;text-transform:uppercase;box-shadow:0 4px 16px rgba(0,0,0,.3)}
+    .cb-countdown.cd--week{background:linear-gradient(135deg,#2C7BE5,#1B5FC0)}
+    .cb-countdown.cd--soon{background:linear-gradient(135deg,#E8952B,#C77714)}
+    .cb-countdown.cd--last{background:linear-gradient(135deg,#E24C3B,#C0271A);animation:cbPulse 1.4s ease-in-out infinite}
+    @keyframes cbPulse{0%,100%{transform:scale(1)}50%{transform:scale(1.06)}}
+    @media (prefers-reduced-motion:reduce){.cb-countdown.cd--last{animation:none}}
+    </style>
     <h1><?= h($c['name']) ?></h1>
     <p class="comp-banner__lead">Дистанционный конкурс культуры и искусства при информационной поддержке Министерств культуры и образования субъектов Российской Федерации.</p>
     <?php if ($isOpen && !empty($c['end_date'])): ?>

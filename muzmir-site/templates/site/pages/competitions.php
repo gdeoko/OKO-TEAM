@@ -137,6 +137,9 @@ ob_start(); ?>
                 <span class="cc-scrim" aria-hidden="true"></span>
               <?php endif; ?>
               <span class="cc-cover-badge badge badge--<?= $badgeClass ?>"><?= h($badgeLabel) ?></span>
+              <?php if ($cd = comp_countdown_badge($c['end_date'] ?? '', (string) $c['status'])): ?>
+                <span class="cc-countdown <?= $cd['cls'] ?>"><?= h($cd['text']) ?></span>
+              <?php endif; ?>
             </a>
             <div class="cc-body">
               <div class="cc-badges">
@@ -213,6 +216,13 @@ ob_start(); ?>
 .cc-cover--s3{--fb-a:#DEC97E;--fb-b:#8B6F1F;--fb-glow:color-mix(in srgb,var(--mint) 50%,transparent)}
 .cc-cover--s4{--fb-a:#EAD08A;--fb-b:#BE9C40}
 .cc-cover-badge{position:absolute;top:12px;left:12px;z-index:4;box-shadow:0 4px 16px rgba(0,0,0,.28);backdrop-filter:blur(6px)}
+.cc-countdown{position:absolute;top:12px;right:12px;z-index:5;padding:6px 12px;border-radius:999px;font-size:.72rem;font-weight:800;
+  letter-spacing:.04em;color:#fff;text-transform:uppercase;box-shadow:0 4px 16px rgba(0,0,0,.32);white-space:nowrap}
+.cc-countdown.cd--week{background:linear-gradient(135deg,#2C7BE5,#1B5FC0)}
+.cc-countdown.cd--soon{background:linear-gradient(135deg,#E8952B,#C77714)}
+.cc-countdown.cd--last{background:linear-gradient(135deg,#E24C3B,#C0271A);animation:cdPulse 1.4s ease-in-out infinite}
+@keyframes cdPulse{0%,100%{transform:scale(1)}50%{transform:scale(1.06)}}
+@media (prefers-reduced-motion:reduce){.cc-countdown.cd--last{animation:none}}
 .cc-body{display:flex;flex-direction:column;gap:12px;flex:1;padding:22px}
 .cc-badges{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
 .cc-fee{display:inline-flex;align-items:center;gap:6px;font-size:.72rem;font-weight:800;letter-spacing:.04em;
