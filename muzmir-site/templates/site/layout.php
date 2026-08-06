@@ -17,9 +17,16 @@ $u = current_user();
 $inTg = isset($_GET['tg']) || !empty($_COOKIE['mz_tg']);
 // Кол-во непрочитанных уведомлений — бейдж в нижнем меню
 $unreadNotif = 0;
+$latestNotif = null;
 if ($u && is_file(BASE_PATH . '/core/notifications.php')) {
     require_once BASE_PATH . '/core/notifications.php';
     $unreadNotif = notify_unread_count((int) $u['id']);
+    // Новейшее непрочитанное — покажем «тостом сверху» (как от чата), однократно на уведомление.
+    if ($unreadNotif > 0 && function_exists('notify_list')) {
+        foreach (notify_list((int) $u['id'], 10) as $n) {
+            if ((int) ($n['is_read'] ?? 0) === 0) { $latestNotif = $n; break; }
+        }
+    }
 }
 ?><!doctype html>
 <html lang="ru"<?= $inTg ? ' class="in-tg"' : '' ?>>
@@ -434,6 +441,22 @@ if('serviceWorker' in navigator){
    доступен из иконки в шапке и из нижнего меню. */
 </script>
 <script src="<?= asset('js/app.js') ?>" defer></script>
+<?php if ($latestNotif): ?>
+<script>
+// Новое непрочитанное уведомление — показываем «тостом сверху» (как от чата), однократно на уведомление.
+(function(){
+  var N = <?= json_encode(['id'=>(int)$latestNotif['id'],'title'=>(string)($latestNotif['title']??''),'body'=>(string)($latestNotif['body']??''),'url'=>(string)($latestNotif['url']??'/notifications')], JSON_UNESCAPED_UNICODE|JSON_UNESCAPED_SLASHES) ?>;
+  try { var seen = JSON.parse(localStorage.getItem('mz-notif-toasted')||'[]'); if (seen.indexOf(N.id)>=0) return;
+    seen.push(N.id); if (seen.length>50) seen = seen.slice(-50); localStorage.setItem('mz-notif-toasted', JSON.stringify(seen)); } catch(e){}
+  function go(){
+    if (typeof window.toast === 'function') {
+      window.toast((N.title||'Уведомление') + (N.body? ' — '+N.body : ''), 'success');
+    }
+  }
+  if (document.readyState==='complete') setTimeout(go, 900); else window.addEventListener('load', function(){ setTimeout(go, 900); });
+})();
+</script>
+<?php endif; ?>
 <script src="<?= asset('js/music.js') ?>" defer></script>
 <script src="<?= asset('js/spa.js') ?>" defer></script>
 <script src="<?= asset('js/motion.js') ?>" defer></script>
