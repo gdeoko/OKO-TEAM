@@ -337,9 +337,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && input('do') === 'grade_result') {
         //     (короткий платный — 5 раб.дней, ВИП — 3; длинный/бесплатный — пакетом в дату публикации);
         //   галочка ВЫКЛ + дата задана → ручной override на дату;
         //   галочка ВЫКЛ + дата пустая → МОМЕНТАЛЬНО (сейчас).
+        // Длинный конкурс: НИКОГДА не шлём по одному и не задаём срок «5 рабочих» —
+        // результат копится в список и публикуется пакетом. override всегда пустой.
         $override = '';
         $sendAtRaw = trim(input('send_at'));
-        if (input('auto_send') !== '1') {
+        if (!$isLongComp && input('auto_send') !== '1') {
             if ($sendAtRaw !== '') {
                 try { $override = (new DateTime($sendAtRaw))->format('Y-m-d H:i:s'); } catch (\Throwable $e) { $override = ''; }
             }
@@ -648,6 +650,7 @@ if ($id = (int) input('id')) {
             <textarea name="jury_comment" placeholder="Например: яркое, эмоциональное выступление"><?= h($a['jury_comment'] ?? '') ?></textarea>
           </div>
           <?php $ovr = trim((string)($a['send_at_override'] ?? '')); ?>
+          <?php if (empty($isLongView)): ?>
           <div class="field" style="margin-top:10px;padding:10px 12px;border:1px dashed var(--a-line);border-radius:10px">
             <label style="display:flex;align-items:center;gap:8px;cursor:pointer">
               <input type="checkbox" name="auto_send" id="autoSendChk" value="1" <?= $ovr==='' ? 'checked' : '' ?>>
@@ -658,6 +661,11 @@ if ($id = (int) input('id')) {
               <input type="datetime-local" name="send_at" value="<?= $ovr !== '' ? h(date('Y-m-d\TH:i', strtotime($ovr))) : '' ?>">
             </div>
           </div>
+          <?php else: ?>
+          <div class="field" style="margin-top:10px;padding:10px 12px;border:1px dashed var(--a-line);border-radius:10px">
+            <span class="small muted">Длинный конкурс: результат сохраняется в общий список и публикуется пакетом в дату публикации. Персональных писем «в течение 5 рабочих дней» здесь нет — участники увидят звания после публикации итогов.</span>
+          </div>
+          <?php endif; ?>
           <button class="btn btn--primary" style="margin-top:8px"><?= admin_icon('check') ?>Сохранить итог и далее</button>
           <?php if ($a['result']): ?>
             <span class="badge badge--gold" style="margin-left:8px"><?= h($a['result']) ?></span>
@@ -752,7 +760,9 @@ if ($id = (int) input('id')) {
     </script>
     <?php
     $content = ob_get_clean();
-    admin_layout('Оценивание', $content, 'grading');
+    // Длинный конкурс: карточка та же, но раздел в меню — «Оценка длинных», не «коротких».
+    if (!empty($isLongView)) admin_layout('Оценка длинного конкурса — ' . h($a['comp']), $content, 'longcomp');
+    else admin_layout('Оценивание', $content, 'grading');
     exit;
 }
 
