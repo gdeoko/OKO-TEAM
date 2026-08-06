@@ -19,13 +19,12 @@ declare(strict_types=1);
 
 const VKT_SITE  = 'музыкальный-мир.рф';
 const VKT_VK    = 'vk.ru/music_world.online';
-const VKT_TG    = 't.me/kc_mus_mir';
 const VKT_MAIL_MAIN   = 'kulturniy.centr.mir@gmail.com';
 const VKT_MAIL_NEWS   = 'news@музыкальный-мир.рф';
 const VKT_MAIL_AWARDS = 'nagradi@музыкальный-мир.рф';
 
-/** Телефон колл-центра (как в эталонных постах). */
-function vkt_phone(): string { return function_exists('cfgv') ? (string) cfgv('org_phone', '+7(950)945-99-00') : '+7(950)945-99-00'; }
+/** Телефон колл-центра. ЕДИНЫЙ по всему проекту. */
+function vkt_phone(): string { return function_exists('cfgv') ? (string) cfgv('org_phone', '+7(999)504-88-99') : '+7(999)504-88-99'; }
 /** Ссылка-приглашение в МАКС. */
 function vkt_max(): string {
     $u = function_exists('cfgv') ? (string) cfgv('org_max', 'https://max.ru/join/v4SJluLzTAMWm4r5ldJ-JyA2rS5InmPYjaP6drn3F8I') : '';
@@ -67,7 +66,6 @@ function vkt_contacts(): string {
       . "💬 Мы на связи:\n"
       . 'ВКонтакте: ' . VKT_VK . "\n"
       . 'МАКС: ' . vkt_max() . "\n"
-      . 'Telegram: ' . VKT_TG . "\n"
       . '📞 Колл-центр: ' . vkt_phone() . "\n\n"
       . "📧 Почты для обращений:\n"
       . '• Общие вопросы и заявки: ' . VKT_MAIL_MAIN . "\n"
