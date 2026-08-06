@@ -293,6 +293,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && input('do') === 'resend') {
 }
 
 $comps = all("SELECT id,name,status FROM competitions ORDER BY sort,name");
+// По умолчанию — первый конкурс (без пустой страницы «Выберите…»).
+if (!$comp && $comps) $comp = (int) $comps[0]['id'];
 $current = $comp ? one("SELECT * FROM competitions WHERE id=?", [$comp]) : null;
 $tab = input('tab') ?: 'ready';
 
@@ -301,7 +303,7 @@ ob_start(); ?>
 
 <form method="get" class="filters">
   <input type="hidden" name="p" value="diplomas">
-  <div class="field"><label>Конкурс</label><select name="competition" onchange="this.form.submit()"><option value="">Выберите конкурс…</option>
+  <div class="field"><label>Конкурс</label><select name="competition" onchange="this.form.submit()">
     <?php foreach ($comps as $c): ?><option value="<?= $c['id'] ?>" <?= $comp===(int)$c['id']?'selected':'' ?>><?= h($c['name']) ?> · <?= h(comp_status_ru($c['status'])) ?></option><?php endforeach; ?>
   </select></div>
 </form>

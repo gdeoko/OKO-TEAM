@@ -65,6 +65,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 /* ------------------------------- ДАННЫЕ ------------------------------ */
 $longComps = all("SELECT * FROM competitions WHERE results_mode='list' ORDER BY sort, name");
 $comp = (int) input('competition');
+// По умолчанию — первый длинный конкурс (без пустой страницы «Выберите…»).
+if (!$comp && $longComps) $comp = (int) $longComps[0]['id'];
 $current = $comp ? one("SELECT * FROM competitions WHERE id=? AND results_mode='list'", [$comp]) : null;
 
 ob_start(); ?>
@@ -77,7 +79,6 @@ ob_start(); ?>
   <input type="hidden" name="p" value="longcomp">
   <div class="field"><label>Конкурс</label>
     <select name="competition" onchange="this.form.submit()">
-      <option value="">Выберите длинный конкурс…</option>
       <?php foreach ($longComps as $c): ?>
         <option value="<?= (int)$c['id'] ?>" <?= $comp===(int)$c['id']?'selected':'' ?>><?= h($c['name']) ?></option>
       <?php endforeach; ?>
