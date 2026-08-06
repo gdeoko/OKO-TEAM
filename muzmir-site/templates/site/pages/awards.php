@@ -47,7 +47,9 @@ $order = ['Кубок Гран-при','Статуэтка лауреата','М
 // Заявки пользователя (для оформления).
 $myApps = [];
 if ($u) {
-    $myApps = all("SELECT a.id, a.number, a.competition_id, a.full_name, a.result, c.name AS comp_name
+    $myApps = all("SELECT a.id, a.number, a.competition_id, a.full_name, a.result, a.status,
+                          c.name AS comp_name, c.slug AS comp_slug,
+                          c.results_mode AS comp_rmode, c.results_published_at AS comp_rpub
                    FROM applications a LEFT JOIN competitions c ON c.id=a.competition_id
                    WHERE a.user_id=? ORDER BY a.created_at DESC", [(int)$u['id']]);
 }
@@ -338,23 +340,27 @@ ob_start(); ?>
       <div class="shop-total"><span>Итого</span><b id="cartTotal">0 ₽</b></div>
 
       <?php if ($u): ?>
-        <?php // Заказ наград — только по заявкам с выставленным результатом (оценённым).
-              $gradedApps = array_values(array_filter($myApps, fn($a) => trim((string)($a['result'] ?? '')) !== ''));
-              $compApps = array_values(array_filter($gradedApps, fn($a) => (int)$a['competition_id'] === (int)$selComp['id']));
-              $listApps = $compApps ?: $gradedApps; ?>
-        <?php if ($listApps): ?>
+        <?php
+          // Заказ наград — только по ОЦЕНЁННОЙ заявке ЭТОГО конкурса (для длинных — после публикации).
+          $_orderable = function (array $a): bool {
+              return trim((string)($a['result'] ?? '')) !== ''
+                  && ((string)($a['comp_rmode'] ?? '') !== 'list' || trim((string)($a['comp_rpub'] ?? '')) !== '');
+          };
+          $compApps    = array_values(array_filter($myApps, fn($a) => (int)$a['competition_id'] === (int)$selComp['id'] && $_orderable($a)));
+          $hasCompApp  = (bool) array_filter($myApps, fn($a) => (int)$a['competition_id'] === (int)$selComp['id']);
+          $otherGraded = array_values(array_filter($myApps, fn($a) => (int)$a['competition_id'] !== (int)$selComp['id'] && $_orderable($a)));
+          $selApp = (int) ($_GET['app'] ?? 0);
+        ?>
+        <?php if ($compApps): ?>
         <div class="field">
           <label for="ord_app">По какой заявке (только оценённые)</label>
           <select id="ord_app" name="application_id" required>
             <option value="">Выберите заявку…</option>
-            <?php foreach ($listApps as $a): ?>
-              <option value="<?= (int)$a['id'] ?>"><?= h($a['number']) ?> — <?= h(mb_strimwidth((string)$a['comp_name'],0,24,'…')) ?><?= $a['result']?' ('.h($a['result']).')':'' ?></option>
+            <?php foreach ($compApps as $a): ?>
+              <option value="<?= (int)$a['id'] ?>" <?= $selApp === (int)$a['id'] ? 'selected' : '' ?>><?= h($a['number']) ?><?= $a['result']?' ('.h($a['result']).')':'' ?></option>
             <?php endforeach; ?>
           </select>
-          <?php if (!$compApps): ?><div class="hint">Нет оценённой заявки на этот конкурс — доступны другие ваши оценённые заявки.</div><?php endif; ?>
         </div>
-        <?php else: ?>
-          <p class="shop-hint">Заказать наградную продукцию можно после подведения итогов. Как только жюри выставит результат по вашей заявке — здесь появится выбор. <a href="<?= url('/apply') ?>?comp=<?= (int)$selComp['id'] ?>">Подать заявку</a></p>
         <?php endif; ?>
       <?php else: ?>
         <div class="field">
@@ -391,6 +397,53 @@ ob_start(); ?>
   </div>
 </div>
 
+<?php if (!empty($selComp)):
+  $mmaOther = null;
+  if (!empty($otherGraded)) {
+      $o0 = $otherGraded[0];
+      $mmaOther = ['id' => (int)$o0['competition_id'], 'slug' => (string)$o0['comp_slug'],
+                   'app' => (int)$o0['id'], 'name' => (string)$o0['comp_name']];
+  }
+  $mma = [
+      'compId'       => (int)$selComp['id'],
+      'compName'     => (string)$selComp['name'],
+      'hasCompGraded'=> !empty($compApps),
+      'hasCompApp'   => !empty($hasCompApp),
+      'applyUrl'     => url('/apply') . '?comp=' . (int)$selComp['id'],
+      'cabinetUrl'   => url('/cabinet') . '#apps',
+      'awardsUrl'    => url('/awards'),
+      'other'        => $mmaOther,
+  ];
+?>
+<!-- Всплывающее окно заказа наград (нет заявки / нет результата / есть на другом конкурсе) -->
+<div id="awPop" class="aw-pop" hidden>
+  <div class="aw-pop-back" data-awp-close></div>
+  <div class="aw-pop-box" role="dialog" aria-modal="true" aria-labelledby="awPopTitle">
+    <button type="button" class="aw-pop-x" data-awp-close aria-label="Закрыть">✕</button>
+    <div class="aw-pop-ico" aria-hidden="true">🏆</div>
+    <h3 id="awPopTitle"></h3>
+    <p id="awPopText"></p>
+    <div id="awPopBtns" class="aw-pop-btns"></div>
+  </div>
+</div>
+<style>
+.aw-pop{position:fixed;inset:0;z-index:1200;display:flex;align-items:center;justify-content:center;padding:20px}
+.aw-pop[hidden]{display:none}
+.aw-pop-back{position:absolute;inset:0;background:rgba(8,12,30,.62);backdrop-filter:blur(3px)}
+.aw-pop-box{position:relative;z-index:1;max-width:420px;width:100%;background:var(--card,#12204a);color:#fff;
+  border-radius:20px;padding:26px 24px 22px;text-align:center;box-shadow:0 24px 70px rgba(0,0,0,.5);
+  border:1px solid rgba(255,255,255,.12);animation:awpIn .26s cubic-bezier(.2,.9,.3,1.15)}
+@keyframes awpIn{from{transform:translateY(16px) scale(.97);opacity:0}to{transform:none;opacity:1}}
+.aw-pop-x{position:absolute;top:12px;right:14px;background:none;border:0;color:rgba(255,255,255,.6);font-size:20px;cursor:pointer;line-height:1}
+.aw-pop-ico{font-size:40px;margin-bottom:8px}
+.aw-pop-box h3{margin:0 0 10px;font-size:1.25rem;line-height:1.25}
+.aw-pop-box p{margin:0 0 18px;font-size:.96rem;line-height:1.55;color:rgba(255,255,255,.85)}
+.aw-pop-btns{display:flex;flex-direction:column;gap:10px}
+.aw-pop-btns .btn{width:100%}
+</style>
+<script>window.MMA = <?= json_encode($mma, JSON_UNESCAPED_UNICODE|JSON_UNESCAPED_SLASHES) ?>;</script>
+<?php endif; ?>
+
 <script>
 (function(){
   var KIND_LABEL = {"original":"Оригинал","digital":"Электронный","club":"Клуб"};
@@ -399,6 +452,61 @@ ob_start(); ?>
   var fab=$('#cartFab'), sheet=$('#cartSheet'), itemsBox=$('#cartItems'), emptyBox=$('#cartEmpty'),
       form=$('#orderForm'), totalEl=$('#cartTotal'), countEl=$('#cartCount');
   if(!fab) return;
+  var MMA=window.MMA||{};
+
+  /* ---- Всплывающее окно заказа ---- */
+  function awPop(title,text,btns){
+    var p=$('#awPop'); if(!p) return;
+    $('#awPopTitle').textContent=title; $('#awPopText').textContent=text;
+    var box=$('#awPopBtns'); box.innerHTML='';
+    (btns||[]).forEach(function(b){
+      var el=document.createElement(b.href?'a':'button');
+      el.className='btn '+(b.primary?'btn--primary':'btn--ghost');
+      el.textContent=b.label;
+      if(b.href){el.href=b.href;} else {el.type='button'; el.onclick=b.onClick;}
+      box.appendChild(el);
+    });
+    p.hidden=false;
+  }
+  function awPopClose(){var p=$('#awPop'); if(p)p.hidden=true;}
+  document.querySelectorAll('[data-awp-close]').forEach(function(b){b.addEventListener('click',awPopClose);});
+
+  /* ---- Перенос корзины на другой конкурс ---- */
+  function transferCartTo(compId,appId){
+    try{ sessionStorage.setItem('mm_cart_x', JSON.stringify(cart)); }catch(e){}
+    location.href=(MMA.awardsUrl||'/awards')+'?comp='+compId+(appId?'&app='+appId:'')+'#order';
+  }
+  // Восстановление перенесённой корзины на целевой странице
+  try{
+    var xr=sessionStorage.getItem('mm_cart_x');
+    if(xr){ cart=JSON.parse(xr)||[]; sessionStorage.removeItem('mm_cart_x'); }
+  }catch(e){}
+
+  /* ---- Проверка: можно ли оформить заказ по этому конкурсу; иначе показать окно ---- */
+  function ensureOrderable(){
+    var sel=$('#ord_app');
+    if(MMA.hasCompGraded && sel && sel.value) return true;         // выбрана оценённая заявка этого конкурса
+    if(MMA.hasCompGraded && sel && !sel.value){ sel.focus(); if(window.toast)window.toast('Выберите заявку из списка','error'); return false; }
+    // Нет оценённой заявки на ЭТОТ конкурс — разбираем случай
+    if(MMA.hasCompApp){
+      var t='Заявка на конкурс «'+(MMA.compName||'')+'» есть, но жюри ещё не выставило результат. Как только он появится — здесь откроется заказ. Отследить статус можно в личном кабинете.';
+      var btns=[{label:'В личный кабинет — отследить статус',href:MMA.cabinetUrl,primary:!MMA.other}];
+      if(MMA.other){ t+=' А сейчас вы можете заказать награды по уже оценённой заявке на «'+MMA.other.name+'» — перенесём корзину.';
+        btns.unshift({label:'Заказать по «'+MMA.other.name+'»',primary:true,onClick:function(){transferCartTo(MMA.other.id,MMA.other.app);}}); }
+      btns.push({label:'Закрыть',onClick:awPopClose});
+      awPop('Результат ещё не подведён', t, btns);
+    } else if(MMA.other){
+      awPop('На этот конкурс у вас нет заявки',
+        'Но у вас есть оценённая заявка на конкурс «'+MMA.other.name+'». Можно заказать награды по ней — мы перенесём вашу корзину туда автоматически.',
+        [{label:'Заказать по заявке «'+MMA.other.name+'»',primary:true,onClick:function(){transferCartTo(MMA.other.id,MMA.other.app);}},
+         {label:'Подать заявку на этот конкурс',href:MMA.applyUrl}]);
+    } else {
+      awPop('Нужна оценённая заявка',
+        'Чтобы заказать наградную продукцию по конкурсу «'+(MMA.compName||'')+'», подайте заявку на участие и дождитесь результата жюри.',
+        [{label:'Подать заявку',href:MMA.applyUrl,primary:true},{label:'Закрыть',onClick:awPopClose}]);
+    }
+    return false;
+  }
 
   document.querySelectorAll('[data-qty]').forEach(function(q){
     var v=q.querySelector('[data-val]');
@@ -474,6 +582,9 @@ ob_start(); ?>
   form.addEventListener('submit',function(e){
     e.preventDefault();
     if(!cart.length)return;
+    // Гость (есть поле «Номер заявки») — проверку делает сервер; окно не показываем.
+    var isGuest = !!$('#ord_number');
+    if(!isGuest && !ensureOrderable()) return;
     var err=$('#orderErr'); err.hidden=true;
     var btn=$('#orderSubmit'); btn.disabled=true; btn.textContent='Создаём заказ…';
     // ФИО обязательны для каждого экземпляра именного диплома и благодарности.
@@ -504,6 +615,9 @@ ob_start(); ?>
         location.href='<?= url('/cabinet') ?>#awards';
       }).catch(function(){btn.disabled=false;btn.textContent='Оплатить';err.textContent='Ошибка сети, попробуйте ещё раз';err.hidden=false;});
   });
+
+  // Если корзину перенесли с другого конкурса — показываем её сразу.
+  if(cart.length){ render(); openCart(); }
 })();
 </script>
 <?php endif; ?>

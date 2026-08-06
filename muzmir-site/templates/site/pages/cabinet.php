@@ -253,6 +253,9 @@ foreach ($apps as &$_a) {
         && trim((string)($_a['comp_results_pub'] ?? '')) === '';
     $_a['_long_hidden'] = $_longHidden;
     if ($_longHidden) { $_a['result'] = ''; $_a['extra_diploma'] = ''; }
+    // Длинный конкурс до публикации: НЕ показываем участнику «Оценена» — маскируем под «На оценке».
+    $_a['_disp_status'] = ($_longHidden && in_array((string)$_a['status'], ['graded','sent'], true))
+        ? 'judging' : (string)$_a['status'];
 }
 unset($_a);
 $diplomas = all("SELECT d.*, a.full_name, a.result AS app_result, c.name AS comp_name
@@ -692,13 +695,14 @@ ob_start(); ?>
               <a class="btn btn--primary" href="<?= url('/apply') ?>">Подать заявку</a>
             </div>
           <?php else: foreach ($apps as $k => $a):
-            [$bl,$bc] = $appBadge[$a['status']] ?? [(string)$a['status'],'blue'];
+            $dispStatus = (string)($a['_disp_status'] ?? $a['status']);   // маскированный для показа (длинные до публикации)
+            [$bl,$bc] = $appBadge[$dispStatus] ?? [(string)$dispStatus,'blue'];
             $isRej = $a['status'] === 'rejected';
             // Бесплатный конкурс — БЕЗ шага «Оплата» (её нет, статус не может быть выполнен).
             $isFreeComp = isset($a['comp_paid']) && (int)$a['comp_paid'] !== 1;
             $pipe    = $isFreeComp ? ['new','judging','graded','sent'] : $pipeline;
             $pLabels = $isFreeComp ? ['Подана','Оценка','Оценена','Диплом'] : $pipeLabels;
-            $cur = array_search($a['status'], $pipe, true);
+            $cur = array_search($dispStatus, $pipe, true);
             if ($cur === false) $cur = 0;
             $pct = $isRej ? 100 : (int)round(($cur + 1) / count($pipe) * 100);
             // ФИО / Коллектив / Возрастная категория / Номинация / Преподаватель / Учреждение / Конкурсный номер
