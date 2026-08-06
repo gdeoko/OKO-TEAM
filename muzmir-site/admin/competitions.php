@@ -38,12 +38,10 @@ if (in_array(input('do'), ['launch_text', 'launch_save', 'launch_preview', 'laun
         $res['email_html'] = launch_email_html($c, $wave, $siblings);
         json_out($res);
     }
-    if (input('do') === 'launch_fire') {            // реальный запуск / планирование
-        if (!user_can('admin')) json_out(['ok' => false, 'msg' => 'Недостаточно прав для запуска рассылок.'], 403);
-        $channels = array_filter(array_map('trim', explode(',', (string) input('channels'))));
-        $when = trim((string) input('when'));
-        $res = launch_fire($cid, $wave, $channels, $when, false);
-        json_out($res);
+    if (input('do') === 'launch_fire') {            // ОТКЛЮЧЕНО: моментальный запуск из карточки конкурса
+        // Запуск/постинг в ВК теперь ТОЛЬКО через общий пульт (админка → «Запуск»),
+        // где всё планируется на рабочее время и защищено от случайного ночного постинга.
+        json_out(['ok' => false, 'msg' => 'Запуск отсюда отключён. Используйте общий пульт запуска: Админка → «Запуск». Там можно выбрать дату/время и запустить сразу все конкурсы (по умолчанию 1 число месяца, в рабочее время).'], 400);
     }
 }
 

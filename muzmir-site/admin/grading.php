@@ -417,7 +417,23 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && input('do') === 'reject') {
     q("DELETE FROM diplomas WHERE application_id=? AND sent_at IS NULL", [$appId]);
     audit('application_reject', 'application', $appId, ['reason' => $reason]);
 
-    // Письмо участнику: причина + предложение исправить и подать заново.
+    // --- Автовозврат оргвзноса при отклонении ПЛАТНОЙ заявки (ЮKassa) ---
+    // Бесплатный конкурс: успешного платежа нет → возврат не выполняется (и не нужен).
+    $refund = ['ok' => false, 'amount' => 0, 'error' => null];
+    $refunded = false; $refundAmount = 0;
+    if ((int) ($a['is_paid'] ?? 0) === 1) {
+        require_once BASE_PATH . '/core/payments.php';
+        try {
+            $refund = refund_application($appId, $reason);
+            if (!empty($refund['ok']) && (int) ($refund['amount'] ?? 0) > 0) {
+                $refunded = true; $refundAmount = (int) $refund['amount'];
+            }
+        } catch (\Throwable $e) {
+            $refund = ['ok' => false, 'amount' => 0, 'error' => $e->getMessage()];
+        }
+    }
+
+    // Письмо участнику: причина + возврат средств (если был) + предложение подать заново.
     $mailed = false;
     if (trim((string)$a['email']) !== '' && is_file(BASE_PATH . '/core/result_mail.php')) {
         require_once BASE_PATH . '/core/result_mail.php';
@@ -431,13 +447,23 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && input('do') === 'reject') {
                 . '<tr><td style="padding:16px 22px;"><div style="font-size:12px;letter-spacing:.1em;text-transform:uppercase;color:#A0403E;margin-bottom:6px;">Причина отклонения</div>'
                 . '<div style="font-size:14px;line-height:1.7;color:' . RM_INK . ';">' . nl2br(h($reason)) . '</div></td></tr></table>'
                 . '<p style="margin:0 0 14px;">Это не отказ навсегда: пожалуйста, устраните замечание (например, замените видеозапись или скорректируйте данные) и <b style="color:' . RM_NAVY . ';">подайте заявку заново</b> — мы с радостью примем её к аттестации.</p>'
-                . '<p style="margin:0 0 4px;color:' . RM_MUTED . ';font-size:13px;">Если был внесён оргвзнос, он возвращается в полном объёме (п. 7.6.1 положения).</p>'
+                . ($refunded
+                    ? '<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin:0 0 18px;background:#EAF7EF;border:1px solid #BFE6CC;border-radius:14px;">'
+                      . '<tr><td style="padding:16px 22px;"><div style="font-size:12px;letter-spacing:.1em;text-transform:uppercase;color:#1E7A44;margin-bottom:6px;">Возврат средств</div>'
+                      . '<div style="font-size:14px;line-height:1.7;color:' . RM_INK . ';">Оргвзнос <b>' . $refundAmount . ' ₽</b> возвращён в полном объёме на ту же карту/способ оплаты. Зачисление обычно занимает до 3 рабочих дней (срок зависит от банка).</div></td></tr></table>'
+                    : '<p style="margin:0 0 4px;color:' . RM_MUTED . ';font-size:13px;">Если был внесён оргвзнос, он возвращается в полном объёме (п. 7.6.1 положения).</p>')
                 . rm_mail_btn(url('/apply'), 'Подать заявку заново');
             $html = rm_mail_layout($inner, 'Заявка №' . (string)$a['number'] . ': требуется исправление. Причина внутри — исправьте и подайте заново.');
             $mailed = mail_queue((string)$a['email'], $name, 'Заявка №' . (string)$a['number'] . ' — требуется исправление', $html) > 0;
         } catch (\Throwable $e) { /* письмо не должно ломать отклонение */ }
     }
-    flash('Заявка отклонена.' . ($mailed ? ' Участнику отправлено письмо с причиной и предложением подать заново.' : ''), 'success');
+    $refundMsg = '';
+    if ((int) ($a['is_paid'] ?? 0) === 1) {
+        if ($refunded) $refundMsg = ' Возврат ' . $refundAmount . ' ₽ отправлен в ЮKassa.';
+        elseif (!empty($refund['already'])) $refundMsg = ' Возврат уже был выполнен ранее.';
+        elseif (!empty($refund['error'])) $refundMsg = ' ВНИМАНИЕ: автовозврат не прошёл (' . $refund['error'] . ') — верните вручную в ЛК ЮKassa.';
+    }
+    flash('Заявка отклонена.' . ($mailed ? ' Участнику отправлено письмо с причиной и предложением подать заново.' : '') . $refundMsg, $refunded || (int)($a['is_paid'] ?? 0) !== 1 ? 'success' : 'error');
     $next = grading_next_id($a, $comp, $order);
     if ($next) admin_redirect('grading', array_filter(['id'=>$next,'competition'=>$comp,'order'=>$order]));
     admin_redirect('grading', array_filter(['competition'=>$comp,'order'=>$order]));

@@ -32,6 +32,87 @@ function yukassa_get_payment(string $id): ?array {
 }
 
 /**
+ * Находит УСПЕШНЫЙ платёж, покрывающий заявку (для возврата при отклонении).
+ * Прямое совпадение payments.application_id. Возвращает строку payments или null.
+ */
+function payment_for_application(int $appId): ?array {
+    if ($appId <= 0 || !function_exists('tbl_exists') || !tbl_exists('payments')) return null;
+    // Успешный, ещё не возвращённый платёж по этой заявке.
+    $p = one("SELECT * FROM payments WHERE application_id=? AND status='succeeded'
+              AND (yukassa_id<>'' AND yukassa_id NOT LIKE 'stub-%') ORDER BY id DESC LIMIT 1", [$appId]);
+    return $p ?: null;
+}
+
+/**
+ * Возврат средств в ЮKassa: POST /v3/refunds. Полный или частичный.
+ * @param string $paymentId  ЮKassa payment id (succeeded).
+ * @param float  $amountRub  сумма к возврату в рублях (>0).
+ * @param string $reason     причина (уходит в description, до 250 симв.).
+ * @return array ['ok'=>bool, 'id'=>?string, 'status'=>?string, 'error'=>?string]
+ */
+function yukassa_refund(string $paymentId, float $amountRub, string $reason = ''): array {
+    $shop = cfgv('yukassa_shop');
+    $secret = cfgv('yukassa_secret');
+    if (!$shop || !$secret) return ['ok' => false, 'error' => 'ЮKassa не настроена (нет shop/secret).'];
+    if ($paymentId === '' || str_starts_with($paymentId, 'stub-')) return ['ok' => false, 'error' => 'Некорректный id платежа.'];
+    if ($amountRub <= 0) return ['ok' => false, 'error' => 'Сумма возврата должна быть > 0.'];
+
+    $body = [
+        'payment_id' => $paymentId,
+        'amount'     => ['value' => number_format($amountRub, 2, '.', ''), 'currency' => 'RUB'],
+    ];
+    if ($reason !== '') $body['description'] = mb_substr($reason, 0, 250);
+
+    $ik = 'rf-' . $paymentId . '-' . substr(hash('sha256', $paymentId . '|' . $amountRub . '|' . $reason), 0, 16);
+    $ch = curl_init('https://api.yookassa.ru/v3/refunds');
+    curl_setopt_array($ch, [
+        CURLOPT_RETURNTRANSFER => true,
+        CURLOPT_POST           => true,
+        CURLOPT_USERPWD        => $shop . ':' . $secret,
+        CURLOPT_HTTPHEADER     => ['Content-Type: application/json', 'Idempotence-Key: ' . $ik],
+        CURLOPT_POSTFIELDS     => json_encode($body, JSON_UNESCAPED_UNICODE),
+        CURLOPT_TIMEOUT        => 20,
+    ]);
+    $resp = curl_exec($ch);
+    $code = (int) curl_getinfo($ch, CURLINFO_HTTP_CODE);
+    $cerr = curl_errno($ch) ? curl_error($ch) : '';
+    curl_close($ch);
+    if ($cerr) return ['ok' => false, 'error' => 'Сеть ЮKassa: ' . $cerr];
+    $d = json_decode((string) $resp, true);
+    if ($code >= 200 && $code < 300 && is_array($d) && !empty($d['id'])) {
+        return ['ok' => true, 'id' => (string) $d['id'], 'status' => (string) ($d['status'] ?? 'pending')];
+    }
+    $msg = is_array($d) ? ((string) ($d['description'] ?? $d['type'] ?? '') ?: ('HTTP ' . $code)) : ('HTTP ' . $code);
+    return ['ok' => false, 'error' => $msg, 'http' => $code, 'raw' => is_array($d) ? $d : null];
+}
+
+/**
+ * Полный сценарий возврата по заявке при отклонении платного конкурса.
+ * Находит платёж, вызывает возврат, помечает payments.status='refunded', пишет audit.
+ * @return array ['ok'=>bool, 'amount'=>int, 'error'=>?string, 'refund_id'=>?string]
+ */
+function refund_application(int $appId, string $reason = ''): array {
+    $pay = payment_for_application($appId);
+    if (!$pay) return ['ok' => false, 'amount' => 0, 'error' => 'Успешный платёж по заявке не найден (возможно, бесплатный конкурс или оплата вручную).'];
+    if ((string) ($pay['status'] ?? '') === 'refunded') {
+        return ['ok' => true, 'amount' => (int) ($pay['amount'] ?? 0), 'already' => true, 'refund_id' => ''];
+    }
+    $amount = (float) (int) ($pay['amount'] ?? 0);
+    if ($amount <= 0) {
+        // Сумма 0 (бесплатно) — возвращать нечего, но не ошибка.
+        return ['ok' => true, 'amount' => 0, 'error' => null, 'refund_id' => ''];
+    }
+    $res = yukassa_refund((string) $pay['yukassa_id'], $amount, $reason !== '' ? ('Возврат оргвзноса: ' . $reason) : 'Возврат оргвзноса по отклонённой заявке');
+    if (!$res['ok']) {
+        if (function_exists('audit')) audit('refund_failed', 'payments', (int) $pay['id'], ['app' => $appId, 'error' => $res['error'] ?? '', 'yukassa_id' => $pay['yukassa_id']]);
+        return ['ok' => false, 'amount' => (int) $amount, 'error' => $res['error'] ?? 'Не удалось выполнить возврат.'];
+    }
+    update('payments', ['status' => 'refunded'], 'id=:id', ['id' => (int) $pay['id']]);
+    if (function_exists('audit')) audit('refund_succeeded', 'payments', (int) $pay['id'], ['app' => $appId, 'amount' => (int) $amount, 'refund_id' => $res['id'], 'yukassa_id' => $pay['yukassa_id']]);
+    return ['ok' => true, 'amount' => (int) $amount, 'error' => null, 'refund_id' => (string) $res['id']];
+}
+
+/**
  * Применяет статус платежа к БД. Идемпотентно: бизнес-эффекты (пометка заявки/заказа
  * оплаченными, письмо, уведомление админу) выполняются только при ПЕРЕХОДЕ в succeeded.
  * @param string $paymentId  ЮKassa payment id (совпадает с payments.yukassa_id)
