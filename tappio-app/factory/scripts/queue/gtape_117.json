@@ -1,0 +1,220 @@
+{
+ "id": "gtape_117",
+ "app": "tape",
+ "voice": "en-US-ChristopherNeural",
+ "rate": "+4%",
+ "grade": "teal_orange",
+ "brand": {
+  "accent": "#F4C430",
+  "accent2": "#FFE08A",
+  "code": "MEASURE",
+  "logo": "tape.png",
+  "name": "3D TAPE MEASURE"
+ },
+ "music": {
+  "queries": [
+   "cinematic tension build",
+   "warm optimistic guitar",
+   "bright pop home"
+  ]
+ },
+ "cover": {
+  "kicker": "RENTER HACK",
+  "top": "DECORATE",
+  "big": "WITHOUT\nHOLES",
+  "q": [
+   "hands arranging shelf wall decor"
+  ]
+ },
+ "segments": [
+  {
+   "id": "b1",
+   "text": "Renting means no guessing and no wall damage."
+  },
+  {
+   "id": "b2",
+   "text": "Measure the empty wall with your phone."
+  },
+  {
+   "id": "b3",
+   "text": "Drop a virtual frame to test the spot."
+  },
+  {
+   "id": "b4",
+   "text": "Line up shelves before a single nail."
+  },
+  {
+   "id": "b5",
+   "text": "Save the layout, shop with real sizes."
+  },
+  {
+   "id": "b6",
+   "text": "Decorate smart, get your deposit back."
+  }
+ ],
+ "shots": [
+  {
+   "q": [
+    "person measuring living room with phone ar"
+   ],
+   "motion": "panr"
+  },
+  {
+   "q": [
+    "rolled up rug floor room"
+   ],
+   "insert": "hexagon",
+   "pos": "lower"
+  },
+  {
+   "q": [
+    "blueprint floor plan on tablet desk"
+   ],
+   "motion": "zin"
+  },
+  {
+   "q": [
+    "bookshelf assembly instructions floor"
+   ],
+   "insert": "diamond",
+   "pos": "upper"
+  },
+  {
+   "q": [
+    "office desk setup measuring space"
+   ],
+   "motion": "panup"
+  },
+  {
+   "q": [
+    "measuring tape metal bending closeup"
+   ],
+   "insert": "tilt",
+   "pos": "lower"
+  },
+  {
+   "q": [
+    "picture frame hanging wall level"
+   ],
+   "motion": "pandown"
+  },
+  {
+   "q": [
+    "cozy furnished living room warm light"
+   ],
+   "insert": "tv",
+   "pos": "center"
+  },
+  {
+   "q": [
+    "apartment tour empty rooms"
+   ],
+   "motion": "panl"
+  },
+  {
+   "q": [
+    "doorway measuring frame home"
+   ],
+   "insert": "rrect",
+   "pos": "upper"
+  },
+  {
+   "q": [
+    "hands arranging shelf wall decor"
+   ],
+   "motion": "zout"
+  },
+  {
+   "q": [
+    "person relaxing on couch bright apartment"
+   ],
+   "insert": "circle",
+   "pos": "upper"
+  },
+  {
+   "q": [
+    "kitchen cabinets measuring renovation"
+   ],
+   "motion": "panr"
+  },
+  {
+   "q": [
+    "modern tv mounted on wall living room"
+   ],
+   "insert": "arch",
+   "pos": "lower"
+  }
+ ],
+ "overlays": [
+  {
+   "at": 0.158,
+   "dur": 1.81,
+   "type": "kicker",
+   "text": "POCKET TAPE"
+  },
+  {
+   "at": 0.364,
+   "dur": 2.6,
+   "type": "checklist",
+   "items": [
+    "Measure the door",
+    "Measure the sofa",
+    "Compare sizes",
+    "Move it in"
+   ],
+   "pos": "center"
+  },
+  {
+   "at": 0.366,
+   "dur": 1.89,
+   "type": "lowerthird",
+   "title": "EXPORT A PDF",
+   "sub": "sizes in one tap"
+  },
+  {
+   "at": 0.443,
+   "dur": 2.07,
+   "type": "ticker",
+   "to": 10,
+   "suffix": "s",
+   "label": "PER MEASURE",
+   "pos": "lower"
+  },
+  {
+   "at": 0.6,
+   "dur": 2.23,
+   "type": "callout",
+   "text": "BUY WHAT ACTUALLY FITS",
+   "pos": "center"
+  },
+  {
+   "at": 0.776,
+   "dur": 1.92,
+   "type": "chips",
+   "items": [
+    "LENGTH",
+    "WIDTH",
+    "HEIGHT",
+    "AREA"
+   ],
+   "pos": "upper"
+  }
+ ],
+ "cta": {
+  "text": "Comment MEASURE for the app.",
+  "code": "MEASURE"
+ },
+ "caption": "Renting? Measure the wall, drop a virtual frame, line up shelves before a single nail. Shop with real sizes and keep your deposit. Comment MEASURE for the app. #diy #homedecor #interiordesign #measure #movingtips #renter #apartmenttherapy #living #room #tips #interior",
+ "yt_title": "Decorate a rental without holes #shorts",
+ "trend_keys": [
+  "living",
+  "room",
+  "tips",
+  "interior",
+  "arrange",
+  "guide",
+  "furniture",
+  "design"
+ ],
+ "content_type": "viral"
+}
