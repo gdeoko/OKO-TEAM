@@ -128,7 +128,13 @@ if (preg_match('#^/competition/([a-z0-9\-]+)/regulation\.(pdf|docx)$#', $route, 
             // чтобы положение ОТКРЫВАЛОСЬ в браузере, а не скачивалось.
             if ($reqExt === 'pdf') {
                 require_once BASE_PATH . '/core/pdf_regulation.php';
-                $pdfData = pdf_regulation($c);
+                $pdf = pdf_regulation($c);
+                // pdf_regulation() возвращает ПУТЬ к сгенерированному файлу (или, в старых версиях,
+                // сами байты). Поддерживаем оба: если это существующий файл — отдаём его содержимое.
+                $pdfData = ($pdf !== '' && strlen($pdf) < 512 && is_file($pdf)) ? (string) file_get_contents($pdf) : (string) $pdf;
+                if ($pdfData === '' || strncmp($pdfData, '%PDF', 4) !== 0) {
+                    throw new \RuntimeException('Не удалось сформировать PDF положения.');
+                }
                 header('Content-Type: application/pdf');
                 header('Content-Disposition: inline; filename="Polozhenie_' . $c['slug'] . '.pdf"');
                 header('Content-Length: ' . (string) strlen($pdfData));
