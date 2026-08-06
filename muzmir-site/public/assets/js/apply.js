@@ -292,12 +292,47 @@
   }
   function goNext() {
     if (!validateStep(current)) return;
+    // Шаг «Номер»: перед переходом сервер проверяет ссылку — существование,
+    // открытый доступ, что это видео и что не старше 1 года.
+    if (current === 'number') { verifyVideoThenAdvance(); return; }
+    proceedNext();
+  }
+  function proceedNext() {
     var steps = activeSteps();
     var idx = steps.indexOf(current);
     // Бесплатный конкурс: шаг 6 «Проверка и согласие» — последний, кнопка сразу
     // отправляет заявку (без отдельной пустой страницы submit-free).
     if (current === 'consent' && !isPaid) { submit({ preventDefault: function () {} }); return; }
     if (idx !== -1 && idx < steps.length - 1) show(steps[idx + 1], 'next');
+  }
+  var videoChecking = false;
+  function verifyVideoThenAdvance() {
+    var vurl = $('#video_url'); var v = vurl ? vurl.value.trim() : '';
+    if (!v || !CFG.videoCheck || !window.fetch) { proceedNext(); return; }
+    if (videoChecking) return;
+    videoChecking = true;
+    var live = $('[data-plat-live]');
+    var btns = $$('[data-next]'); btns.forEach(function (b) { b.disabled = true; });
+    if (live) { live.className = 'plat-live'; live.textContent = 'Проверяем ссылку…'; }
+    var ctrl = window.AbortController ? new AbortController() : null;
+    var to = setTimeout(function () { if (ctrl) ctrl.abort(); }, 13000);
+    var done = function () { clearTimeout(to); videoChecking = false; btns.forEach(function (b) { b.disabled = false; }); };
+    fetch(CFG.videoCheck + '?url=' + encodeURIComponent(v), { headers: { 'X-Requested-With': 'fetch' }, signal: ctrl ? ctrl.signal : undefined })
+      .then(function (r) { return r.json(); })
+      .then(function (d) {
+        done();
+        if (d && d.ok === false) {
+          setErr(vurl, true);
+          if (live) { live.className = 'plat-live bad'; live.textContent = d.reason || 'Ссылка не прошла проверку.'; }
+          flashFormError(d.reason || 'Проверьте ссылку на конкурсное видео.');
+          var r = vurl.getBoundingClientRect();
+          if (r.top < 60 || r.top > window.innerHeight) window.scrollTo({ top: r.top + window.pageYOffset - 100, behavior: reduceMotion() ? 'auto' : 'smooth' });
+          return;
+        }
+        if (live && d && d.platform) { live.className = 'plat-live ok'; live.textContent = d.platform + ' — ссылка принята'; }
+        proceedNext();
+      })
+      .catch(function () { done(); proceedNext(); }); // сеть недоступна/таймаут — не мешаем подаче
   }
   function goBack() {
     var steps = activeSteps();

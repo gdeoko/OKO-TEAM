@@ -33,6 +33,7 @@ if ($_prefUser) {
 // Конфиг для клиентской логики (apply.js читает window.APPLY_CONFIG)
 $jsCfg = [
     'apiUrl'    => url('/api/v1/apply'),
+    'videoCheck'=> url('/api/v1/video_check'),
     'privacy'   => url('/privacy'),
     'agreement' => url('/agreement'),
     'consentDelay' => 15,

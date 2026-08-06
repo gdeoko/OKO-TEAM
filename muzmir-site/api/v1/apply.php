@@ -80,12 +80,15 @@ if ($video !== '') {
     if (!($vv['ok'] ?? false)) $errors['video_url'] = $vv['reason'] ?? 'Недопустимая ссылка на видео';
     $platform = $vv['platform'] ?? '';
 
-    // Возраст видео: не пропускаем заведомо нарушающее положение (п. 8.11 — старше 1 года).
-    // Проверяем ТОЛЬКО если ссылка платформенно валидна и дату удалось определить (RuTube/VK).
+    // Полная проверка ссылки: существование, открытый доступ, что это видео/работа,
+    // и возраст (старше 1 года — п. 8.11 — не принимается). Блокируем только при
+    // уверенном нарушении; если сеть не дала ответа — по этому пункту не блокируем.
     if (empty($errors['video_url'])) {
         if (is_file(BASE_PATH . '/core/link_check.php')) require_once BASE_PATH . '/core/link_check.php';
-        if (function_exists('video_is_stale') && video_is_stale($video) === true) {
-            $errors['video_url'] = 'Конкурсный материал старше 1 года — по положению (п. 8.11) такое видео к участию не принимается. Загрузите запись не старше года.';
+        if (function_exists('video_verify')) {
+            $vr = video_verify($video);
+            if (!($vr['ok'] ?? false)) $errors['video_url'] = (string)($vr['reason'] ?? 'Ссылка не прошла проверку.');
+            if (!empty($vr['platform'])) $platform = (string) $vr['platform'];
         }
     }
 }
