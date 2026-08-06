@@ -73,12 +73,12 @@ $comp = $compId ? one("SELECT * FROM competitions WHERE id=?", [$compId]) : null
 if (!$comp) {
     $rows = all("SELECT id, name, status, slug, diploma_bg, diploma_template FROM competitions ORDER BY sort, id DESC");
     ob_start(); ?>
-    <div class="section-title"><h2>Шаблон диплома</h2></div>
+    <div class="section-title"><h2>Редактор наград</h2></div>
     <div class="card">
-      <p class="small muted" style="margin-top:0">Выберите конкурс — откроется визуальный редактор макета диплома:
-        двигайте элементы, меняйте кегль, регулируйте затемнение фона и сохраняйте. Боевые дипломы соберутся по этим настройкам.</p>
+      <p class="small muted" style="margin-top:0">Единый раздел наград по действующим конкурсам: макеты дипломов (основной / дополнительный / именной / благодарность),
+        фото наград (кубок · статуэтка · медаль) и операции с дипломами. Выберите конкурс — откроется визуальный редактор макета.</p>
       <div class="table-wrap"><table class="tbl">
-        <thead><tr><th>Конкурс</th><th>Статус</th><th>Фон</th><th>Настройки</th><th style="width:220px"></th></tr></thead>
+        <thead><tr><th>Конкурс</th><th>Статус</th><th>Фон</th><th>Настройки</th><th style="width:340px"></th></tr></thead>
         <tbody>
         <?php foreach ($rows as $r): ?>
           <tr>
@@ -87,8 +87,10 @@ if (!$comp) {
             <td class="small"><?= $r['diploma_bg'] ? h(basename((string)$r['diploma_bg'])) : '<span class="muted">градиент по умолчанию</span>' ?></td>
             <td class="small"><?= ($r['diploma_template'] && ($r['diploma_template'][0] ?? '') === '{') ? 'настроен' : '<span class="muted">по умолчанию</span>' ?></td>
             <td class="icon-cell" style="text-align:right;white-space:nowrap">
-              <a class="btn btn--primary btn--sm" href="<?= a_link('diploma_editor', ['comp' => $r['id']]) ?>"><?= admin_icon('edit') ?>Редактор</a>
+              <a class="btn btn--primary btn--sm" href="<?= a_link('diploma_editor', ['comp' => $r['id']]) ?>"><?= admin_icon('edit') ?>Макет диплома</a>
               <a class="btn btn--ghost btn--sm" href="<?= h(url('/diploma-sample/' . $r['slug'])) ?>" target="_blank" rel="noopener"><?= admin_icon('eye') ?>Образец</a>
+              <a class="btn btn--ghost btn--sm" href="<?= a_link('competitions', ['id' => $r['id']]) ?>"><?= admin_icon('trophy') ?>Фото наград</a>
+              <a class="btn btn--ghost btn--sm" href="<?= a_link('diplomas', ['competition' => $r['id']]) ?>"><?= admin_icon('diplomas') ?>Дипломы</a>
             </td>
           </tr>
         <?php endforeach; ?>
@@ -96,7 +98,7 @@ if (!$comp) {
       </table></div>
     </div>
     <?php
-    admin_layout('Шаблон диплома', ob_get_clean(), 'diploma_editor');
+    admin_layout('Редактор наград', ob_get_clean(), 'diploma_editor');
     exit;
 }
 

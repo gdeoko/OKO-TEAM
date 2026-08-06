@@ -80,8 +80,9 @@ window.MZTheme=(function(){var K='muzmir-admin-theme';
       <div><b>Музыкальный&nbsp;Мир</b><span>Панель управления</span></div>
     </div>
     <nav class="sidebar__nav">
-      <?php foreach ($modules as $key => [$label, $minRole, $icon]): ?>
+      <?php foreach ($modules as $key => $mrow): [$label, $minRole, $icon] = $mrow; ?>
         <?php if (!user_can($minRole)) continue; ?>
+        <?php if (!empty($mrow[3])) continue; /* скрытый из сайдбара модуль (доступен по ссылке) */ ?>
         <a href="<?= a_link($key) ?>" class="<?= $active === $key ? 'active' : '' ?>">
           <?= admin_icon($icon) ?><span><?= h($label) ?></span>
         </a>
