@@ -5,123 +5,102 @@
  "code": "MEASURE",
  "top": [
   {
-   "views": 2315463,
-   "likes": 470,
-   "comments": 13,
-   "channel": "GRYMALA",
-   "followers": 2020,
-   "dur": 42,
-   "id": "FmOfqcITb9k",
-   "title": "AR Plan 3D – Camera to Plan, Floorplanner"
+   "views": 415716,
+   "likes": 11618,
+   "comments": 296,
+   "channel": "baixu",
+   "followers": 298000,
+   "dur": 889,
+   "id": "XCmdF2JrRgs",
+   "title": "How to Arrange Your Living Room Furniture (An Architect’s Guide!)"
   },
   {
-   "views": 1957866,
-   "likes": 43069,
-   "comments": 2000,
-   "channel": "Make Build Modify",
-   "followers": 209000,
-   "dur": 200,
-   "id": "DqKIVmu6grM",
-   "title": "How to Read a Tape Measure - REALLY EASY"
+   "views": 167437,
+   "likes": 4140,
+   "comments": 560,
+   "channel": "Julie Khuu",
+   "followers": 583000,
+   "dur": 858,
+   "id": "vTPPwFPGlC4",
+   "title": "AWKWARD SPACES- How to Design Around a Corner Fireplace (Furniture + Space Planning Tips!)"
   },
   {
-   "views": 1058936,
-   "likes": 23826,
-   "comments": 1500,
-   "channel": "Stumpy Nubs (James Hamilton)",
-   "followers": 1040000,
-   "dur": 263,
-   "id": "PrchBGzC0bA",
-   "title": "How to read a tape measure without looking like an idiot"
+   "views": 138847,
+   "likes": 3550,
+   "comments": 75,
+   "channel": "Reynard Lowell",
+   "followers": 600000,
+   "dur": 1045,
+   "id": "AHefyeTUs5o",
+   "title": "How To Arrange Your Furniture (7 Layout Mistakes To Avoid)"
   },
   {
-   "views": 1014613,
-   "likes": 2280,
-   "comments": 219,
-   "channel": "laanlabs",
-   "followers": 6280,
-   "dur": 45,
-   "id": "z7DYC_zbZCM",
-   "title": "Air Measure App Demo - Augmented reality tape measure"
+   "views": 137774,
+   "likes": 715,
+   "comments": 0,
+   "channel": "H&M Home",
+   "followers": 32100,
+   "dur": 105,
+   "id": "Xf8ImGLeO2U",
+   "title": "Interior hacks: Rug placement guide for your living room"
   },
   {
-   "views": 46659859,
-   "likes": 282491,
-   "comments": 3900,
-   "channel": "The Maker",
-   "followers": 1200000,
-   "dur": 191,
-   "id": "R1sQLwLi96c",
-   "title": "Few People Know About This Tape Measure Feature! Hidden Features of Tape Measure"
+   "views": 137727,
+   "likes": 4346,
+   "comments": 62,
+   "channel": "designchickee",
+   "followers": 74000,
+   "dur": 566,
+   "id": "RZYGTxcPsxY",
+   "title": "How to Arrange Furniture Like a Professional Interior Designer - Interior Design Tips"
+  },
+  {
+   "views": 110192,
+   "likes": 457,
+   "comments": 21,
+   "channel": "Circle Furniture",
+   "followers": 3720,
+   "dur": 171,
+   "id": "jbitbcytdD0",
+   "title": "Will Your Furniture Fit? Our Delivery Guy Can Tell You"
+  },
+  {
+   "views": 43407,
+   "likes": 198,
+   "comments": 22,
+   "channel": "Furniture Academy",
+   "followers": 10500,
+   "dur": 174,
+   "id": "NeQAcVH68DU",
+   "title": "3 Easy Steps to Measure Doorways for Furniture Deliveries"
+  },
+  {
+   "views": 15380,
+   "likes": 84,
+   "comments": 1,
+   "channel": "Clairrow",
+   "followers": 1460,
+   "dur": 296,
+   "id": "ii38qwxncpU",
+   "title": "How To Measure Doors, Hallways and Passageways for Furniture Delivery"
   }
  ],
- "millions_list": [
-  {
-   "views": 2315463,
-   "likes": 470,
-   "comments": 13,
-   "channel": "GRYMALA",
-   "followers": 2020,
-   "dur": 42,
-   "id": "FmOfqcITb9k",
-   "title": "AR Plan 3D – Camera to Plan, Floorplanner"
-  },
-  {
-   "views": 1957866,
-   "likes": 43069,
-   "comments": 2000,
-   "channel": "Make Build Modify",
-   "followers": 209000,
-   "dur": 200,
-   "id": "DqKIVmu6grM",
-   "title": "How to Read a Tape Measure - REALLY EASY"
-  },
-  {
-   "views": 1058936,
-   "likes": 23826,
-   "comments": 1500,
-   "channel": "Stumpy Nubs (James Hamilton)",
-   "followers": 1040000,
-   "dur": 263,
-   "id": "PrchBGzC0bA",
-   "title": "How to read a tape measure without looking like an idiot"
-  },
-  {
-   "views": 1014613,
-   "likes": 2280,
-   "comments": 219,
-   "channel": "laanlabs",
-   "followers": 6280,
-   "dur": 45,
-   "id": "z7DYC_zbZCM",
-   "title": "Air Measure App Demo - Augmented reality tape measure"
-  },
-  {
-   "views": 46659859,
-   "likes": 282491,
-   "comments": 3900,
-   "channel": "The Maker",
-   "followers": 1200000,
-   "dur": 191,
-   "id": "R1sQLwLi96c",
-   "title": "Few People Know About This Tape Measure Feature! Hidden Features of Tape Measure"
-  }
- ],
- "millions": 5,
+ "millions_list": [],
+ "millions": 0,
  "hooks": [
+  "furniture",
+  "arrange",
+  "interior",
+  "living",
+  "room",
+  "guide",
+  "design",
+  "tips",
+  "delivery",
   "measure",
-  "tape",
-  "plan",
-  "read",
-  "camera",
-  "floorplanner",
-  "really",
-  "easy",
-  "without",
-  "looking",
-  "like",
-  "idiot"
+  "architect",
+  "awkward"
  ],
- "ts": "2026-08-06 05:30 UTC",
- "avg_views": 10601347
+ "ts": "2026-08-06 08:15 UTC",
+ "avg_views": 145810
 }
