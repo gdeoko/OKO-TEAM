@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- Concept E · Split Coin
+     Стилизованная «монета» разделена по диагонали — обмен одного на другое. -->
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 640" width="512" height="640">
+  <rect width="512" height="640" fill="#ffffff"/>
+  <defs>
+    <clipPath id="cCoin"><circle cx="256" cy="210" r="128"/></clipPath>
+  </defs>
+  <g clip-path="url(#cCoin)">
+    <polygon points="128,82 384,82 384,338 128,338" fill="#1B5E3A"/>
+    <polygon points="128,82 384,82 384,338" fill="#7CC576"/>
+  </g>
+  <circle cx="256" cy="210" r="128" fill="none" stroke="#0E3F26" stroke-width="12"/>
+  <!-- Е -->
+  <g transform="translate(256 210)" fill="#ffffff">
+    <rect x="-42" y="-56" width="84" height="16" rx="3"/>
+    <rect x="-42" y="-56" width="16" height="112" rx="3"/>
+    <rect x="-42" y="40"  width="84" height="16" rx="3"/>
+    <rect x="-42" y="-8"  width="70" height="16" rx="3"/>
+  </g>
+  <text x="256" y="440" text-anchor="middle"
+        font-family="Poppins, Arial, sans-serif"
+        font-size="82" font-weight="700" fill="#1B5E3A">Exora</text>
+  <text x="256" y="488" text-anchor="middle"
+        font-family="Poppins, Arial, sans-serif" font-size="20" font-weight="500"
+        fill="#4A7A5A" letter-spacing="3">FAST · SAFE · 0% FEE</text>
+</svg>

@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- Concept D · Hex Node
+     Гексагон (крипто-blockchain) с монограммой E внутри, минимал-флет. -->
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 640" width="512" height="640">
+  <rect width="512" height="640" fill="#ffffff"/>
+  <g transform="translate(256 210)">
+    <!-- гексагон -->
+    <polygon points="0,-140 121,-70 121,70 0,140 -121,70 -121,-70"
+             fill="none" stroke="#1B5E3A" stroke-width="20" stroke-linejoin="round"/>
+    <!-- Е внутри -->
+    <g fill="#1B5E3A">
+      <rect x="-58" y="-70" width="116" height="20" rx="3"/>
+      <rect x="-58" y="-70" width="20"  height="140" rx="3"/>
+      <rect x="-58" y="60"  width="116" height="20" rx="3"/>
+      <rect x="-38" y="-10" width="80"  height="20" rx="3" fill="#7CC576"/>
+    </g>
+  </g>
+  <text x="256" y="440" text-anchor="middle"
+        font-family="Manrope, Arial, sans-serif"
+        font-size="82" font-weight="800" fill="#1B5E3A" letter-spacing="4">EXORA</text>
+  <text x="256" y="486" text-anchor="middle"
+        font-family="Manrope, Arial, sans-serif" font-size="20" font-weight="600"
+        fill="#4A7A5A" letter-spacing="3">SECURE · CRYPTO · SWAP</text>
+</svg>

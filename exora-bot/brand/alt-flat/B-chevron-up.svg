@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- Concept B · Double Chevron Up
+     Двойной шеврон вверх — рост курса, обмен, восходящее движение. Olive→lime. -->
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 640" width="512" height="640">
+  <rect width="512" height="640" fill="#ffffff"/>
+  <g transform="translate(256 210)" fill="none" stroke-linejoin="round" stroke-linecap="round">
+    <path d="M -110 -20 L 0 -120 L 110 -20" stroke="#7B8F3F" stroke-width="42"/>
+    <path d="M -110  70 L 0  -30 L 110  70" stroke="#B7CE4E" stroke-width="42"/>
+  </g>
+  <text x="256" y="440" text-anchor="middle"
+        font-family="Poppins, 'Segoe UI', Arial, sans-serif"
+        font-size="82" font-weight="700" fill="#3C5A2B" letter-spacing="1">Exora</text>
+  <text x="256" y="488" text-anchor="middle"
+        font-family="Poppins, Arial, sans-serif" font-size="20" font-weight="500"
+        fill="#6C825A" letter-spacing="3">CRYPTO · EXCHANGE · 24/7</text>
+</svg>

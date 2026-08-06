@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- Concept A · Exchange Diamond
+     4 повёрнутые плашки образуют ромб — «две валюты меняются местами». Deep forest. -->
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 640" width="512" height="640">
+  <rect width="512" height="640" fill="#ffffff"/>
+  <g transform="translate(256 200)">
+    <!-- 4 плашки в ромб -->
+    <g fill="#1B5E3A">
+      <rect x="-90" y="-90" width="70" height="70" rx="8" transform="rotate(45 -55 -55)"/>
+      <rect x="20"  y="-90" width="70" height="70" rx="8" transform="rotate(45  55 -55)"/>
+      <rect x="-90" y="20"  width="70" height="70" rx="8" transform="rotate(45 -55  55)"/>
+      <rect x="20"  y="20"  width="70" height="70" rx="8" transform="rotate(45  55  55)"/>
+    </g>
+    <!-- центральный микро-ромб (акцент) -->
+    <rect x="-14" y="-14" width="28" height="28" rx="4" transform="rotate(45)" fill="#7CC576"/>
+  </g>
+  <text x="256" y="450" text-anchor="middle"
+        font-family="Montserrat, 'Segoe UI', Arial, sans-serif"
+        font-size="86" font-weight="800" fill="#1B5E3A" letter-spacing="2">EXORA</text>
+  <text x="256" y="500" text-anchor="middle"
+        font-family="Montserrat, Arial, sans-serif" font-size="22" font-weight="500"
+        fill="#4A7A5A" letter-spacing="4">CRYPTO EXCHANGE</text>
+</svg>

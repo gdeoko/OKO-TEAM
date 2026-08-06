@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- Concept F · Infinity Swap
+     Символ бесконечности со стрелками — вечный поток обмена. -->
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 640" width="512" height="640">
+  <rect width="512" height="640" fill="#ffffff"/>
+  <g transform="translate(256 210)" fill="none" stroke-linecap="round" stroke-linejoin="round">
+    <!-- infinity contour -->
+    <path d="M -140 0
+             C -140 -80  -60 -80  0 0
+             C  60  80  140  80  140 0
+             C  140 -80   60 -80   0 0
+             C -60  80 -140  80 -140 0 Z"
+          stroke="#1B5E3A" stroke-width="24"/>
+    <!-- arrowheads -->
+    <g fill="#7CC576" stroke="none">
+      <polygon points="130,-20 160,0 130,20"/>
+      <polygon points="-130,20 -160,0 -130,-20"/>
+    </g>
+  </g>
+  <text x="256" y="450" text-anchor="middle"
+        font-family="Montserrat, Arial, sans-serif"
+        font-size="86" font-weight="800" fill="#1B5E3A" letter-spacing="2">EXORA</text>
+  <text x="256" y="498" text-anchor="middle"
+        font-family="Montserrat, Arial, sans-serif" font-size="20" font-weight="500"
+        fill="#4A7A5A" letter-spacing="4">NON-STOP EXCHANGE</text>
+</svg>
