@@ -147,6 +147,18 @@ ob_start(); ?>
 [data-theme="dark"] .field.ff:has(>input:focus)>label,
 [data-theme="dark"] .field.ff:has(>textarea:focus)>label{color:var(--gold)}
 
+/* Селекты в том же floating-стиле, что и поля: метка всегда сверху, единая стрелка. */
+.field.ff>select{padding-top:22px;padding-bottom:8px;padding-right:40px;appearance:none;-webkit-appearance:none;-moz-appearance:none;
+  background-image:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23b98a2e' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'><path d='M6 9l6 6 6-6'/></svg>");
+  background-repeat:no-repeat;background-position:right 14px center;background-size:18px}
+.field.ff:has(>select)>label{transform:translateY(-9px) scale(.78);color:var(--gold-ink)}
+[data-theme="dark"] .field.ff:has(>select)>label{color:var(--gold)}
+
+/* Единый вертикальный ритм полей в карточке заявки. */
+.apply-card .field{margin-bottom:16px}
+.apply-card .field .hint{line-height:1.4}
+.apply-card .field.ff>label{font-size:.92rem}
+
 /* Живая проверка ссылки на платформу */
 .plat-live{font-size:.84rem;margin-top:7px;display:none;font-weight:600;padding-left:20px;position:relative}
 .plat-live::before{content:"";position:absolute;left:0;top:3px;width:12px;height:12px;border-radius:50%;background:currentColor;opacity:.22}
@@ -328,12 +340,12 @@ ob_start(); ?>
             <div class="hint">Полностью: Фамилия Имя Отчество. Регистр поправится автоматически.</div>
             <div class="err-msg">Укажите ПОЛНОСТЬЮ: Фамилия Имя Отчество.</div>
           </div>
-          <div class="field">
-            <label for="age_category">Возрастная категория</label>
+          <div class="field ff">
             <select id="age_category" name="age_category" required>
               <option value="">Выберите категорию</option>
               <?php foreach ($ages as $a): ?><option value="<?= h($a) ?>"><?= h($a) ?></option><?php endforeach; ?>
             </select>
+            <label for="age_category">Возрастная категория</label>
             <div class="hint" data-age-hint></div>
             <div class="err-msg">Выберите возрастную категорию.</div>
           </div>
@@ -375,27 +387,27 @@ ob_start(); ?>
         <!-- ШАГ 4. Конкурсный номер -->
         <section class="astep" data-step="number">
           <div class="astep-head"><p class="eyebrow">Шаг 4</p><h2>Конкурсный номер</h2></div>
-          <div class="field">
-            <label for="nomination">Номинация</label>
+          <div class="field ff">
             <select id="nomination" name="nomination" required>
               <option value="">Выберите номинацию</option>
               <?php foreach (array_keys($noms) as $n): ?><option value="<?= h($n) ?>"><?= h($n) ?></option><?php endforeach; ?>
             </select>
+            <label for="nomination">Номинация</label>
             <div class="err-msg">Выберите номинацию.</div>
           </div>
-          <div class="field" id="subgroupField" style="display:none">
-            <label for="subgroup">Подраздел</label>
+          <div class="field ff" id="subgroupField" style="display:none">
             <select id="subgroup" name="subgroup">
               <option value="">Выберите подраздел</option>
             </select>
+            <label for="subgroup">Подраздел</label>
             <div class="err-msg">Выберите подраздел.</div>
           </div>
-          <div class="field">
-            <label for="formation">Форма исполнения</label>
+          <div class="field ff">
             <select id="formation" name="formation" required>
               <option value="">Выберите форму</option>
               <?php foreach ($forms as $f): ?><option value="<?= h($f) ?>"><?= h($f) ?></option><?php endforeach; ?>
             </select>
+            <label for="formation">Форма исполнения</label>
             <div class="err-msg">Выберите форму исполнения.</div>
           </div>
           <div class="field ff">

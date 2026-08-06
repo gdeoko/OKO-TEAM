@@ -720,13 +720,25 @@
       });
     }
 
-    // Автоформат при уходе из поля: ФИО (регистр), коллектив и номер (в «ёлочках»).
+    // Автоформат + мгновенная проверка при уходе из поля («сразу проверяй»).
     var fnEl = $('#full_name');
-    if (fnEl) fnEl.addEventListener('blur', function () { if (fnEl.value.trim()) fnEl.value = fmtFio(fnEl.value); });
+    if (fnEl) fnEl.addEventListener('blur', function () {
+      var v = fnEl.value.trim(); if (v) fnEl.value = fmtFio(fnEl.value);
+      var group = $('input[name="is_group"]:checked').value === '1';
+      if (!group && fnEl.value.trim()) setErr(fnEl, !fioIsFull(fnEl.value));
+    });
     var gnEl = $('#group_name');
     if (gnEl) gnEl.addEventListener('blur', function () { if (gnEl.value.trim()) gnEl.value = quoteCollective(gnEl.value); });
     var wtEl = $('#work_title');
     if (wtEl) wtEl.addEventListener('blur', function () { if (wtEl.value.trim()) wtEl.value = quoteTitle(wtEl.value); });
+    var emEl = $('#email');
+    if (emEl) emEl.addEventListener('blur', function () { if (emEl.value.trim()) setErr(emEl, !emailValid(emEl.value.trim())); });
+    var phEl = $('#phone');
+    if (phEl) phEl.addEventListener('blur', function () { if (phEl.value.trim()) setErr(phEl, !phoneComplete(phEl.value)); });
+    // Обязательные селекты — снимаем/ставим ошибку сразу при выборе.
+    ['#age_category', '#nomination', '#formation', '#subgroup'].forEach(function (sel) {
+      var el = $(sel); if (el) el.addEventListener('change', function () { setErr(el, !el.value); });
+    });
 
     // Возраст ↔ категория (birth_date может отсутствовать в форме)
     var bdEl = $('#birth_date');
