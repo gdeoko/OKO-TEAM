@@ -438,6 +438,43 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && input('do') === 'reject') {
     admin_redirect('grading', array_filter(['competition'=>$comp,'order'=>$order]));
 }
 
+/* ---------- Редактирование полей заявки ПРЯМО В ОЦЕНКЕ (короткие/длинные) ---------- */
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && input('do') === 'edit_app') {
+    if (!csrf_check()) { flash('Сессия устарела.', 'error'); admin_redirect('grading'); }
+    $appId = (int) input('id');
+    $cur = one("SELECT * FROM applications WHERE id=?", [$appId]);
+    if (!$cur) { flash('Заявка не найдена.', 'error'); admin_redirect('grading'); }
+    $back = array_filter(['id'=>$appId, 'competition'=>$comp, 'order'=>$order]);
+
+    // Обновляем ТОЛЬКО реально присланные поля (защита от затирания при частичной отправке).
+    $fields = ['full_name','group_name','teacher','nomination','work_title','institution','city','age_category','email','phone','video_url'];
+    $data = [];
+    foreach ($fields as $fld) {
+        if (!array_key_exists($fld, $_POST)) continue;
+        $val = trim((string) $_POST[$fld]);
+        if ($fld === 'email') $val = mb_strtolower($val);
+        $data[$fld] = $val;
+    }
+    if (!$data) { flash('Изменений нет.', 'info'); admin_redirect('grading', $back); }
+    if (isset($data['nomination']) && $data['nomination'] !== '' && function_exists('NOMINATIONS') && !array_key_exists($data['nomination'], NOMINATIONS())) {
+        flash('Недопустимая номинация — выберите из списка.', 'error'); admin_redirect('grading', $back);
+    }
+    if (isset($data['age_category']) && $data['age_category'] !== '' && function_exists('AGE_CATEGORIES') && !in_array($data['age_category'], AGE_CATEGORIES(), true)) {
+        flash('Недопустимая возрастная категория — выберите из списка.', 'error'); admin_redirect('grading', $back);
+    }
+    if (isset($data['email']) && $data['email'] !== '' && !filter_var($data['email'], FILTER_VALIDATE_EMAIL)) {
+        flash('Некорректный email.', 'error'); admin_redirect('grading', $back);
+    }
+    // Смена видео-ссылки — сбрасываем кэш проверки, чтобы перепроверилась.
+    if (isset($data['video_url']) && (string)($cur['video_url'] ?? '') !== $data['video_url']) $data['link_check'] = '';
+    update('applications', $data, 'id=:wid', ['wid' => $appId]);
+    $changed = [];
+    foreach ($data as $k => $v) if ((string)($cur[$k] ?? '') !== (string)$v) $changed[$k] = $v;
+    audit('application_edit', 'application', $appId, ['from' => 'grading', 'changed' => array_keys($changed)]);
+    flash($changed ? 'Данные заявки обновлены (' . count($changed) . ' пол.).' : 'Изменений нет.', $changed ? 'success' : 'info');
+    admin_redirect('grading', $back);
+}
+
 /* ================= РЕЖИМ ОЦЕНКИ ОДНОЙ ЗАЯВКИ ================= */
 if ($id = (int) input('id')) {
     $a = one("SELECT a.*, c.name comp, c.is_paid comp_paid, c.results_mode FROM applications a
@@ -596,6 +633,37 @@ if ($id = (int) input('id')) {
           <?php if ($a['result']): ?><dt>Текущий итог</dt><dd><span class="badge badge--gold"><?= h($a['result']) ?></span><?= $a['score']!==null ? ' · '.h((string)$a['score']) : '' ?></dd><?php endif; ?>
           <?php if (!empty($a['reject_reason'])): ?><dt>Причина отклонения</dt><dd class="small"><?= h($a['reject_reason']) ?></dd><?php endif; ?>
         </dl>
+
+        <button type="button" class="btn btn--ghost btn--sm" onclick="var f=document.getElementById('appEdit');f.style.display=f.style.display==='none'?'block':'none';" style="margin-bottom:4px"><?= admin_icon('edit') ?>Редактировать заявку</button>
+        <form id="appEdit" method="post" action="<?= url('/admin/?p=grading') ?>" style="display:none;margin-top:8px;padding:14px;border:1.5px solid var(--a-line);border-radius:12px;background:var(--a-soft,#f7f8fc)">
+          <?= csrf_field() ?><input type="hidden" name="do" value="edit_app">
+          <input type="hidden" name="id" value="<?= $id ?>"><input type="hidden" name="competition" value="<?= $comp ?>"><input type="hidden" name="order" value="<?= h($order) ?>">
+          <div class="ae-grid" style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+            <label style="grid-column:1/-1">ФИО (участник / контактное лицо)<input type="text" name="full_name" value="<?= h((string)$a['full_name']) ?>"></label>
+            <label style="grid-column:1/-1">Название коллектива<input type="text" name="group_name" value="<?= h((string)($a['group_name'] ?? '')) ?>" placeholder="Если коллектив"></label>
+            <label style="grid-column:1/-1">Конкурсный номер<input type="text" name="work_title" value="<?= h((string)$a['work_title']) ?>"></label>
+            <label>Номинация<select name="nomination"><option value="">—</option>
+              <?php foreach (array_keys(NOMINATIONS()) as $n): ?><option value="<?= h($n) ?>" <?= (string)$a['nomination']===$n?'selected':'' ?>><?= h($n) ?></option><?php endforeach; ?>
+            </select></label>
+            <label>Возрастная категория<select name="age_category"><option value="">—</option>
+              <?php foreach (AGE_CATEGORIES() as $cat): ?><option value="<?= h($cat) ?>" <?= (string)$a['age_category']===$cat?'selected':'' ?>><?= h($cat) ?></option><?php endforeach; ?>
+            </select></label>
+            <label>Педагог<input type="text" name="teacher" value="<?= h((string)($a['teacher'] ?? '')) ?>"></label>
+            <label>Учреждение<input type="text" name="institution" value="<?= h((string)($a['institution'] ?? '')) ?>"></label>
+            <label>Город<input type="text" name="city" value="<?= h((string)($a['city'] ?? '')) ?>"></label>
+            <label>Email<input type="email" name="email" value="<?= h((string)$a['email']) ?>"></label>
+            <label>Телефон<input type="text" name="phone" value="<?= h((string)($a['phone'] ?? '')) ?>"></label>
+            <label style="grid-column:1/-1">Ссылка на видео<input type="text" name="video_url" value="<?= h((string)($a['video_url'] ?? '')) ?>"></label>
+          </div>
+          <div style="display:flex;gap:8px;margin-top:12px">
+            <button class="btn btn--navy btn--sm" type="submit"><?= admin_icon('check') ?>Сохранить заявку</button>
+            <button class="btn btn--ghost btn--sm" type="button" onclick="document.getElementById('appEdit').style.display='none'">Отмена</button>
+          </div>
+        </form>
+        <style>#appEdit label{display:flex;flex-direction:column;gap:4px;font-size:.8rem;color:var(--a-muted,#6b7699)}
+        #appEdit input,#appEdit select{padding:8px 10px;border:1px solid var(--a-line);border-radius:8px;font-size:.9rem}
+        @media(max-width:640px){#appEdit .ae-grid{grid-template-columns:1fr}}</style>
+
         <?php if ($others): ?>
           <hr>
           <h4>Другие заявки этого участника <span class="badge badge--gold">участник <?= count($others)+1 ?> заявок</span></h4>
