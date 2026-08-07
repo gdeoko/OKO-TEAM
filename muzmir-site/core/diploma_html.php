@@ -145,7 +145,25 @@ function diploma_html(array $c, array $a, array $opt = []): string {
         ? (mb_strtoupper($extra) ?: 'ЗА ТВОРЧЕСКИЕ ДОСТИЖЕНИЯ')
         : (mb_strtoupper(trim((string)($a['result'] ?? ''))) ?: 'ЛАУРЕАТ 1 СТЕПЕНИ');
     $dtype    = $thanks ? 'БЛАГОДАРНОСТЬ' : 'ДИПЛОМ';
-    $name     = trim((string)($a['full_name'] ?? '')) ?: 'Иванов Иван Иванович';
+    // НАГРАЖДАЕМЫЙ на дипломе:
+    //  • коллектив/ансамбль (is_group=1 или формация ансамбль/хор) → НАЗВАНИЕ КОЛЛЕКТИВА
+    //    (не ФИО того, кто подал заявку от коллектива!);
+    //  • благодарность педагогу ($thanks) → ФИО преподавателя;
+    //  • соло → ФИО участника (full_name).
+    $fullName  = trim((string)($a['full_name'] ?? ''));
+    $groupName = trim((string)($a['group_name'] ?? ''));
+    $isGroup   = ((int)($a['is_group'] ?? 0) === 1)
+        || in_array(mb_strtolower(trim((string)($a['formation'] ?? ''))), ['ансамбль','хор','коллектив','ensemble','choir'], true);
+    if ($thanks) {
+        $name = (trim((string)($a['teacher'] ?? '')) ?: $fullName) ?: 'Иванов Иван Иванович';
+    } elseif ($named) {
+        // Именной диплом участника в составе коллектива — ФИО участника (если задано), иначе коллектив.
+        $name = ($fullName !== '' ? $fullName : $groupName) ?: 'Иванов Иван Иванович';
+    } elseif ($isGroup && $groupName !== '') {
+        $name = $groupName;
+    } else {
+        $name = $fullName ?: 'Иванов Иван Иванович';
+    }
     $year     = date('Y');
 
     // Номер диплома + QR-код проверки подлинности (правый нижний угол).
@@ -177,7 +195,9 @@ function diploma_html(array $c, array $a, array $opt = []): string {
         ];
     } else {
         $fields = [];
-        if (!empty($a['group_name']))   $fields['Название коллектива'] = $a['group_name'];
+        // «Название коллектива» показываем отдельной строкой только если оно НЕ вынесено
+        // в главную строку награждаемого (для соло/благодарности/именного).
+        if (!empty($a['group_name']) && $name !== $a['group_name']) $fields['Название коллектива'] = $a['group_name'];
         if (!empty($a['age_category'])) $fields['Возрастная категория'] = $a['age_category'];
         if (!empty($a['nomination']))   $fields['Номинация'] = $a['nomination'];
         if (!empty($a['teacher']))      $fields['Преподаватель'] = $a['teacher'];
