@@ -124,14 +124,29 @@ if (input('do') === 'get' && input('kind') === 'mail') {
 if (input('do') === 'dip_get' && input('kind') === 'diploma') {
     $d = one("SELECT * FROM diplomas WHERE id=?", [(int) input('id')]);
     if (!$d) json_out(['ok' => false, 'error' => 'Диплом не найден'], 404);
-    $a = one("SELECT * FROM applications WHERE id=?", [(int) $d['application_id']]) ?: [];
+    $aid = (int) $d['application_id'];
+    $a = one("SELECT * FROM applications WHERE id=?", [$aid]) ?: [];
     $s = trim((string) ($d['scheduled_at'] ?? ''));
+    // ВСЕ дипломы этой заявки (основной/доп/именной/благодарность) — каждый со своим
+    // предпросмотром и PDF, чтобы редактор показал предпросмотр по каждому типу.
+    $dipLbl = ['main' => 'Основной диплом', 'named' => 'Именной диплом', 'extra' => 'Спец-награда', 'thanks' => 'Благодарность педагогу'];
+    $items = [];
+    foreach (all("SELECT id, number, type, result FROM diplomas WHERE application_id=? ORDER BY CASE type WHEN 'main' THEN 1 WHEN 'extra' THEN 2 WHEN 'named' THEN 3 WHEN 'thanks' THEN 4 ELSE 5 END, id", [$aid]) as $x) {
+        $items[] = [
+            'id'      => (int) $x['id'],
+            'type'    => (string) $x['type'],
+            'label'   => $dipLbl[(string) $x['type']] ?? (string) $x['type'],
+            'result'  => (string) $x['result'],
+            'preview' => url('/diploma-view/' . rawurlencode((string) $x['number'])),
+            'pdf'     => url('/diploma/' . rawurlencode((string) $x['number']) . '.pdf'),
+        ];
+    }
     json_out([
         'ok'           => true,
+        'app_id'       => $aid,
         'number'       => (string) $d['number'],
         'type'         => (string) $d['type'],
-        'preview'      => url('/diploma-view/' . rawurlencode((string) $d['number'])),
-        'pdf'          => url('/diploma/' . rawurlencode((string) $d['number']) . '.pdf'),
+        'items'        => $items,
         'is_group'     => (int) ($a['is_group'] ?? 0),
         'group_name'   => (string) ($a['group_name'] ?? ''),
         'full_name'    => (string) ($a['full_name'] ?? ''),
@@ -637,8 +652,7 @@ tr.disp-row.gone{opacity:0;transition:.4s}
             <input type="datetime-local" id="w-<?= $rid ?>" value="<?= h($it['when'] ? date('Y-m-d\TH:i', strtotime($it['when'])) : '') ?>">
             <button class="btn btn--ghost btn--sm" data-act="resched" data-kind="diploma" data-id="<?= $iid ?>" data-app="<?= $appId ?>" data-when="w-<?= $rid ?>" data-row="<?= $rid ?>" title="Изменить дату/время (всё письмо)">OK</button>
             <button class="btn btn--primary btn--sm" data-act="sendnow" data-kind="diploma" data-id="<?= $iid ?>" data-app="<?= $appId ?>" data-row="<?= $rid ?>" data-confirm="Отправить письмо со всеми дипломами этой заявки сейчас?"><?= admin_icon('send') ?>Сейчас</button>
-            <button class="btn btn--ghost btn--sm" data-act="editdip" data-id="<?= $iid ?>" data-row="<?= $rid ?>" title="Редактировать дипломы заявки (данные + предпросмотр)"><?= admin_icon('edit') ?></button>
-            <a class="btn btn--ghost btn--sm" href="<?= h(url('/diploma-view/'.rawurlencode((string)$it['number']))) ?>" target="_blank" rel="noopener" title="Предпросмотр диплома"><?= admin_icon('eye') ?></a>
+            <button class="btn btn--ghost btn--sm" data-act="editdip" data-id="<?= $iid ?>" data-row="<?= $rid ?>" title="Редактировать дипломы заявки (данные + предпросмотр каждого типа)"><?= admin_icon('edit') ?>Диплом</button>
             <button class="btn btn--ghost btn--sm" data-act="cancel" data-kind="diploma" data-id="<?= $iid ?>" data-app="<?= $appId ?>" data-row="<?= $rid ?>" data-confirm="Отменить отправку письма со всеми дипломами этой заявки?" style="color:#C0392B;border-color:#C0392B"><?= admin_icon('trash') ?></button>
           <?php elseif ($k === 'mail'): ?>
             <input type="datetime-local" id="w-<?= $rid ?>" value="<?= h($it['when'] ? date('Y-m-d\TH:i', strtotime($it['when'])) : '') ?>">
@@ -746,10 +760,8 @@ tr.disp-row.gone{opacity:0;transition:.4s}
     <div class="box-body">
       <input type="hidden" id="deId">
       <p class="small muted" style="margin:0 0 10px">Диплом собирается строго из заявки. Правьте данные ниже — PDF пересоберётся. Проверяйте предпросмотром. Изменения затрагивают все дипломы этой заявки.</p>
-      <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px">
-        <a id="dePreview" class="btn btn--navy btn--sm" href="#" target="_blank" rel="noopener"><?= admin_icon('eye') ?>Предпросмотр диплома</a>
-        <a id="dePdf" class="btn btn--ghost btn--sm" href="#" target="_blank" rel="noopener"><?= admin_icon('download') ?>PDF</a>
-      </div>
+      <div style="font-size:12px;color:#6B7699;font-weight:600;margin:2px 0 6px">Предпросмотр по каждому диплому заявки</div>
+      <div id="deTypes" style="display:flex;flex-direction:column;gap:8px;margin-bottom:14px"></div>
       <label style="display:flex;align-items:center;gap:8px;font-weight:600"><input type="checkbox" id="deGroup" style="width:auto"> Коллектив (ансамбль/хор)</label>
       <div id="deGroupRow"><label>Название коллектива (в шапке диплома)</label><input type="text" id="deGroupName" placeholder="Например: Образцовый ансамбль…"></div>
       <label>ФИО участника / контактное лицо (для соло — идёт в шапку; для коллектива на диплом не выводится)</label>
@@ -867,7 +879,7 @@ tr.disp-row.gone{opacity:0;transition:.4s}
     group:document.getElementById('deGroup'),groupRow:document.getElementById('deGroupRow'),groupName:document.getElementById('deGroupName'),
     fullName:document.getElementById('deFullName'),teacher:document.getElementById('deTeacher'),nomination:document.getElementById('deNomination'),
     age:document.getElementById('deAge'),work:document.getElementById('deWork'),result:document.getElementById('deResult'),extra:document.getElementById('deExtra'),
-    sched:document.getElementById('deSched'),preview:document.getElementById('dePreview'),pdf:document.getElementById('dePdf'),save:document.getElementById('deSave')};
+    sched:document.getElementById('deSched'),types:document.getElementById('deTypes'),save:document.getElementById('deSave')};
   function closeDip(){ D.ov.classList.remove('show'); D.ov.setAttribute('aria-hidden','true'); }
   function syncGroup(){ D.groupRow.style.display = D.group.checked ? 'block' : 'none'; }
   function openDip(id){
@@ -882,7 +894,18 @@ tr.disp-row.gone{opacity:0;transition:.4s}
         D.groupName.value=d.group_name||''; D.fullName.value=d.full_name||''; D.teacher.value=d.teacher||'';
         D.nomination.value=d.nomination||''; D.age.value=d.age_category||''; D.work.value=d.work_title||'';
         D.result.value=d.result||''; D.extra.value=d.extra_diploma||''; D.sched.value=d.scheduled_at||'';
-        D.preview.href=d.preview||'#'; D.pdf.href=d.pdf||'#';
+        // Предпросмотр по КАЖДОМУ типу диплома этой заявки (основной/доп/именной/благодарность).
+        D.types.innerHTML='';
+        (d.items||[]).forEach(function(it){
+          var row=document.createElement('div');
+          row.style.cssText='display:flex;align-items:center;gap:8px;flex-wrap:wrap;padding:8px 10px;border:1px solid #E6E9F2;border-radius:10px;background:#FAFBFF';
+          var lab=document.createElement('div'); lab.style.cssText='flex:1;min-width:150px;font-size:13px;color:#17307A;font-weight:600';
+          lab.textContent=it.label+(it.result?(' · '+it.result):'');
+          var pv=document.createElement('a'); pv.className='btn btn--navy btn--sm'; pv.href=it.preview||'#'; pv.target='_blank'; pv.rel='noopener'; pv.textContent='Предпросмотр';
+          var pd=document.createElement('a'); pd.className='btn btn--ghost btn--sm'; pd.href=it.pdf||'#'; pd.target='_blank'; pd.rel='noopener'; pd.textContent='PDF';
+          row.appendChild(lab); row.appendChild(pv); row.appendChild(pd); D.types.appendChild(row);
+        });
+        if(!(d.items||[]).length){ D.types.innerHTML='<div class="small muted">Дипломы ещё не собраны.</div>'; }
       }).catch(function(){ toast('Сеть недоступна',true); closeDip(); });
   }
   D.group.addEventListener('change', syncGroup);

@@ -190,7 +190,10 @@ if ($sk !== '') {
             <form method="post" action="<?= url('/admin/') ?>" id="edit<?= (int) $m['id'] ?>" style="display:none;margin-top:6px"><?= csrf_field() ?>
               <input type="hidden" name="do" value="edit_msg"><input type="hidden" name="mid" value="<?= (int) $m['id'] ?>">
               <textarea name="text" rows="3" style="width:100%;box-sizing:border-box"><?= h($txt) ?></textarea>
-              <button class="btn btn--primary" style="padding:5px 12px;margin-top:5px">Сохранить</button>
+              <div style="display:flex;gap:6px;margin-top:5px">
+                <button class="btn btn--primary" style="padding:5px 12px">Сохранить</button>
+                <button type="button" class="btn btn--ghost" style="padding:5px 12px" onclick="document.getElementById('edit<?= (int) $m['id'] ?>').style.display='none'">Отмена</button>
+              </div>
             </form>
           </div>
         </div>

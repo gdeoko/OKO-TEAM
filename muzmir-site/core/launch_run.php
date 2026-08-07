@@ -401,6 +401,215 @@ function launch_close_intake(): void {
  * в нерабочее время (ночь/вс) — оно НЕ теряется и НЕ шлётся ночью, а ждёт ближайшего
  * рабочего момента (страховка от случайной ночной публикации). Возвращает число выполненных.
  */
+/**
+ * ВСТРОЕННЫЙ пульт запуска (без модалок) — рендерится прямо внизу раздела «Конкурсы».
+ * Все тексты волн видны сразу в textarea (сервер уже подставил текст), редактируются на
+ * месте, сохраняются/сбрасываются инлайн. Афиша, дата/время, каналы, предпросмотр письма,
+ * планирование и отмена — тут же. После запуска показывается запланированное/выполненное.
+ * Все AJAX уходят на ?p=launch (обработчики в admin/launch.php). $postUrl передаётся сам.
+ */
+function launch_panel_html(): string {
+    launch_migrate();
+    $openComps = launch_open_comps();
+    $channels  = launch_channels();
+    $defDate   = (string) (function_exists('setting') ? setting('launch_plan_date', launch_default_date()) : launch_default_date());
+    $defTime   = (string) (function_exists('setting') ? setting('launch_plan_time', '09:00') : '09:00');
+    $savedCh   = array_filter(explode(',', (string) (function_exists('setting') ? setting('launch_plan_channels', 'vk_wall,email,inapp') : 'vk_wall,email,inapp')));
+    if (!$savedCh) $savedCh = ['vk_wall', 'email', 'inapp'];
+    $jobs = all("SELECT j.*, c.name comp FROM launch_jobs j LEFT JOIN competitions c ON c.id=j.competition_id
+                 WHERE j.status IN ('scheduled','done') ORDER BY j.run_at ASC LIMIT 200");
+    $sched = array_values(array_filter($jobs, fn($j) => $j['status'] === 'scheduled'));
+    $doneJobs = array_values(array_filter($jobs, fn($j) => $j['status'] === 'done'));
+    $waveShort = ['launch' => 'Открытие', 'd3' => '3 дня', 'last' => 'Последний', 'closed' => 'Закрыт', 'results' => 'Результаты'];
+    $post = url('/admin/?p=launch');
+
+    $coverUrl = static function (array $c): string {
+        $cv = trim((string) ($c['cover'] ?? ''));
+        if ($cv === '') return '';
+        return preg_match('~^https?://~i', $cv) ? $cv : url('/' . ltrim($cv, '/'));
+    };
+
+    // Один инлайн-редактор текста волны (textarea + Сохранить/Сбросить + предпросмотр письма).
+    $editor = function (int $cid, string $wave, string $title, string $text, string $cover = '', bool $email = false) use ($post): string {
+        $tid = 'lw_' . $cid . '_' . $wave;
+        ob_start(); ?>
+        <div class="lp2-block" data-cid="<?= $cid ?>" data-wave="<?= h($wave) ?>">
+          <div class="lp2-bh"><b><?= h($title) ?></b>
+            <span class="lp2-state" id="st_<?= $tid ?>"></span></div>
+          <div class="lp2-body">
+            <?php if ($cover !== ''): ?><img class="lp2-cover" src="<?= h($cover) ?>" alt="Афиша" loading="lazy"><?php endif; ?>
+            <textarea id="<?= $tid ?>" class="lp2-ta" rows="8"><?= h($text) ?></textarea>
+          </div>
+          <div class="lp2-acts">
+            <button type="button" class="btn btn--primary btn--sm" data-lp2="save" data-t="<?= $tid ?>" data-id="<?= $cid ?>" data-wave="<?= h($wave) ?>">Сохранить текст</button>
+            <button type="button" class="btn btn--ghost btn--sm" data-lp2="reset" data-t="<?= $tid ?>" data-id="<?= $cid ?>" data-wave="<?= h($wave) ?>">Сбросить к эталону</button>
+            <?php if ($email): ?><a class="btn btn--ghost btn--sm" href="<?= h($post . '&do=email_preview&id=' . $cid . '&wave=' . $wave) ?>" target="_blank" rel="noopener">Предпросмотр письма</a><?php endif; ?>
+          </div>
+        </div>
+        <?php return (string) ob_get_clean();
+    };
+
+    ob_start(); ?>
+    <div class="lp2" data-post="<?= h($post) ?>" data-csrf="<?= h(csrf_token()) ?>">
+      <div class="page-head" style="margin-bottom:8px"><h2 style="margin:0"><?= admin_icon('rocket') ?> Пульт запуска</h2>
+        <p class="muted small" style="margin:4px 0 0">Всё видно сразу, редактируется на месте. Ничего не уходит раньше расписания и только в рабочее время (09:00–18:00, кроме вс). По умолчанию запуск — 1-е число (если вс → 2-е), общие посты 22 (09:00), 25 (09:00), 25 (18:00), результаты длинного — 28 (09:00). Если дата попадает на вс — сдвиг на день.</p>
+      </div>
+
+      <?php if (!$openComps): ?>
+        <div class="card" style="padding:18px">Нет открытых конкурсов. Создайте/откройте конкурсы выше — и здесь автоматически появятся тексты постов и писем для запуска.</div>
+      <?php else: ?>
+
+      <?php if ($sched): ?>
+      <div class="card" style="border-left:4px solid #1E9E5A">
+        <h3 style="margin:0 0 8px">Запланировано — панель управления</h3>
+        <table class="a-table" style="width:100%"><thead><tr><th>Когда (МСК)</th><th>Волна</th><th>Конкурс</th><th>Каналы</th></tr></thead><tbody>
+          <?php foreach ($sched as $j): ?>
+            <tr><td><b><?= h(date('d.m.Y H:i', strtotime((string) $j['run_at']))) ?></b></td>
+              <td><?= h($waveShort[$j['wave']] ?? $j['wave']) ?></td>
+              <td><?= h((string) ($j['comp'] ?? '—')) ?></td>
+              <td class="small muted"><?= h((string) $j['channels']) ?></td></tr>
+          <?php endforeach; ?>
+        </tbody></table>
+        <div style="margin-top:10px"><button type="button" class="btn btn--ghost btn--sm" data-lp2="cancel" style="color:#B23B3B;border-color:#d99">Отменить весь план</button></div>
+      </div>
+      <?php endif; ?>
+
+      <?php if ($doneJobs): ?>
+      <div class="card">
+        <h3 style="margin:0 0 8px">Уже опубликовано</h3>
+        <table class="a-table" style="width:100%"><thead><tr><th>Когда</th><th>Волна</th><th>Конкурс</th></tr></thead><tbody>
+          <?php foreach (array_slice(array_reverse($doneJobs), 0, 30) as $j): ?>
+            <tr><td><?= h(date('d.m H:i', strtotime((string) ($j['done_at'] ?: $j['run_at'])))) ?></td>
+              <td><?= h($waveShort[$j['wave']] ?? $j['wave']) ?></td>
+              <td><?= h((string) ($j['comp'] ?? '—')) ?></td></tr>
+          <?php endforeach; ?>
+        </tbody></table>
+      </div>
+      <?php endif; ?>
+
+      <div class="card">
+        <h3 style="margin:0 0 12px">План запуска</h3>
+        <div style="display:flex;gap:16px;flex-wrap:wrap;margin-bottom:10px">
+          <label class="small muted">Дата запуска<br><input type="date" id="lp2Date" value="<?= h($defDate) ?>" style="display:block;margin-top:4px;padding:8px 10px;border:1px solid #d7ddea;border-radius:10px"></label>
+          <label class="small muted">Время (МСК)<br><input type="time" id="lp2Time" value="<?= h($defTime) ?>" style="display:block;margin-top:4px;padding:8px 10px;border:1px solid #d7ddea;border-radius:10px"></label>
+        </div>
+        <div style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:12px">
+          <?php foreach ($channels as $ck => $cl): ?>
+            <label class="lp2-chip"><input type="checkbox" class="lp2Ch" value="<?= h($ck) ?>" <?= in_array($ck, $savedCh, true) ? 'checked' : '' ?>> <?= h($cl) ?></label>
+          <?php endforeach; ?>
+        </div>
+        <div style="display:flex;gap:10px;flex-wrap:wrap">
+          <button type="button" class="btn btn--ghost btn--sm" data-lp2="preview"><?= admin_icon('eye') ?>Предпросмотр (dry-run)</button>
+          <button type="button" class="btn btn--primary" data-lp2="schedule"><?= admin_icon('clock') ?>Запланировать всё</button>
+        </div>
+        <div id="lp2Msg" class="lp2-msg" hidden></div>
+        <div id="lp2Prev" class="lp2-prev" hidden></div>
+      </div>
+
+      <div class="card">
+        <h3 style="margin:0 0 4px">Тексты постов и писем</h3>
+        <p class="small muted" style="margin:0 0 14px">Всё уже составлено по эталонам — правьте и сохраняйте. Изменённый текст уйдёт при запуске.</p>
+
+        <?php $rep = (int) $openComps[0]['id']; ?>
+        <div class="lp2-group-t">Открытие — отдельный пост по каждому конкурсу (публикуется при запуске)</div>
+        <?php foreach ($openComps as $c):
+            echo $editor((int) $c['id'], 'launch', 'Открытие «' . $c['name'] . '»',
+                launch_wave_text($c, 'launch', [$c]), $coverUrl($c), true);
+        endforeach; ?>
+
+        <div class="lp2-group-t" style="margin-top:18px">Общие посты по всем конкурсам</div>
+        <?php
+        $sib = $openComps;
+        $repComp = launch_norm_comp($openComps[0]);
+        echo $editor($rep, 'd3', 'Осталось 3 дня (22-е, 09:00)', launch_wave_text($repComp, 'd3', $sib));
+        echo $editor($rep, 'last', 'Последний день (25-е, 09:00)', launch_wave_text($repComp, 'last', $sib));
+        echo $editor($rep, 'closed', 'Приём закрыт (25-е, 18:00)', launch_wave_text($repComp, 'closed', $sib));
+        ?>
+
+        <?php $longComps = array_values(array_filter($openComps, fn($c) => function_exists('vkt_is_long') && vkt_is_long($c))); ?>
+        <?php if ($longComps): ?>
+          <div class="lp2-group-t" style="margin-top:18px">Результаты длинного конкурса (28-е, 09:00) — список, афиша, файл, ссылки</div>
+          <?php foreach ($longComps as $c) {
+              echo $editor((int) $c['id'], 'results', 'Результаты «' . $c['name'] . '»',
+                  launch_wave_text($c, 'results', [$c]), $coverUrl($c), true);
+          } ?>
+        <?php endif; ?>
+      </div>
+
+      <?php endif; /* openComps */ ?>
+    </div>
+
+    <style>
+    .lp2 .card{margin-bottom:16px}
+    .lp2-chip{display:inline-flex;align-items:center;gap:6px;padding:7px 12px;border:1px solid #d7ddea;border-radius:999px;font-size:.85rem;cursor:pointer}
+    .lp2-msg{margin-top:12px;padding:10px 14px;border-radius:10px;font-size:.9rem}
+    .lp2-msg.ok{background:#E7F7EE;color:#1E7A44}.lp2-msg.err{background:#FDECEC;color:#B23B3B}
+    .lp2-prev{margin-top:12px;font-size:.85rem;line-height:1.6;color:#445;background:#F7F9FF;border:1px solid #E3E9F7;border-radius:10px;padding:12px 14px;white-space:pre-wrap}
+    .lp2-block{border:1px solid #E6E9F2;border-radius:14px;padding:12px 14px;margin:0 0 12px;background:#FCFDFF}
+    .lp2-bh{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:8px}
+    .lp2-bh b{color:#17307A}
+    .lp2-state{font-size:12px;color:#1E7A44}
+    .lp2-body{display:flex;gap:12px;align-items:flex-start}
+    .lp2-cover{width:120px;height:auto;border-radius:10px;border:1px solid #E6E9F2;flex:none}
+    .lp2-ta{flex:1;min-width:0;width:100%;box-sizing:border-box;padding:10px 12px;border:1px solid #d7ddea;border-radius:10px;font:inherit;font-size:.9rem;line-height:1.55;resize:vertical}
+    .lp2-acts{display:flex;gap:8px;flex-wrap:wrap;margin-top:8px}
+    .lp2-group-t{font-size:.8rem;letter-spacing:.05em;text-transform:uppercase;color:#889;margin:0 0 10px;font-weight:700}
+    @media(max-width:640px){.lp2-body{flex-direction:column}.lp2-cover{width:100%;max-width:220px}}
+    [data-theme=dark] .lp2-block{background:#151a29;border-color:#2a3150}
+    [data-theme=dark] .lp2-ta,[data-theme=dark] .lp2-chip{background:#171b2b;border-color:#2b3350;color:#e6ecff}
+    </style>
+
+    <script>
+    (function(){
+     try{
+      var root=document.querySelector('.lp2'); if(!root) return;
+      var POST=root.getAttribute('data-post'), CSRF=root.getAttribute('data-csrf');
+      var $=function(id){return document.getElementById(id);};
+      function post(data){ data._csrf=CSRF; return fetch(POST,{method:'POST',headers:{'Content-Type':'application/x-www-form-urlencoded'},credentials:'same-origin',body:new URLSearchParams(data)}).then(function(r){return r.json();}); }
+      function chans(){ return Array.prototype.map.call(root.querySelectorAll('.lp2Ch:checked'),function(c){return c.value;}).join(','); }
+      var msg=$('lp2Msg'), prev=$('lp2Prev');
+      function showMsg(t,ok){ if(!msg)return; msg.textContent=t; msg.className='lp2-msg '+(ok?'ok':'err'); msg.hidden=false; }
+      root.addEventListener('click', function(e){
+        var b=e.target.closest('[data-lp2]'); if(!b) return;
+        var act=b.getAttribute('data-lp2');
+        if(act==='save'){
+          var ta=$(b.getAttribute('data-t')); if(!ta) return;
+          var stEl=$('st_'+b.getAttribute('data-t'));
+          post({do:'save',id:b.getAttribute('data-id'),wave:b.getAttribute('data-wave'),text:ta.value}).then(function(d){
+            if(stEl){ stEl.textContent=d.ok?(d.is_custom?'✎ свой текст сохранён':'эталон'):(d.msg||'ошибка'); stEl.style.color=d.ok?'#1E7A44':'#B23B3B'; }
+          }).catch(function(){ if(stEl){stEl.textContent='ошибка сети'; stEl.style.color='#B23B3B';} });
+        } else if(act==='reset'){
+          if(!confirm('Вернуть эталонный текст?')) return;
+          post({do:'save',id:b.getAttribute('data-id'),wave:b.getAttribute('data-wave'),text:''}).then(function(d){
+            if(d.ok) location.reload();
+          }).catch(function(){});
+        } else if(act==='preview'){
+          var ch=chans(); if(!ch){showMsg('Выберите хотя бы один канал.',false);return;}
+          if(prev){prev.hidden=false;prev.textContent='Считаю…';}
+          post({do:'preview',channels:ch}).then(function(d){
+            if(!d.ok){if(prev)prev.hidden=true;showMsg(d.msg||'Ошибка',false);return;}
+            if(prev)prev.textContent=(d.lines||[]).join('\n');
+          }).catch(function(){showMsg('Ошибка сети.',false);});
+        } else if(act==='schedule'){
+          var ch2=chans(); if(!ch2){showMsg('Выберите хотя бы один канал.',false);return;}
+          var dE=$('lp2Date'), tE=$('lp2Time');
+          if(!confirm('Запланировать запуск на '+(dE?dE.value:'')+' '+(tE?tE.value:'')+' МСК и общие посты? Раньше расписания ничего не уйдёт.')) return;
+          post({do:'schedule',date:dE?dE.value:'',time:tE?tE.value:'',channels:ch2}).then(function(d){
+            if(!d.ok){showMsg(d.msg||'Ошибка',false);return;}
+            showMsg((d.msg||'Запланировано')+' Обновляю…',true); setTimeout(function(){location.reload();},900);
+          }).catch(function(){showMsg('Ошибка сети.',false);});
+        } else if(act==='cancel'){
+          if(!confirm('Отменить весь запланированный план?')) return;
+          post({do:'cancel'}).then(function(d){ showMsg(d.msg||'Отменено',true); setTimeout(function(){location.reload();},900); }).catch(function(){});
+        }
+      });
+     }catch(err){ try{ var w=document.createElement('div'); w.style.cssText='margin:12px;padding:10px 14px;border-radius:10px;background:#FDECEC;color:#B23B3B'; w.textContent='Пульт: '+(err&&err.message||err); (document.querySelector('.lp2')||document.body).appendChild(w);}catch(e){} }
+    })();
+    </script>
+    <?php
+    return (string) ob_get_clean();
+}
+
 function launch_run_due(): int {
     launch_migrate();
     $now = new \DateTime('now');
