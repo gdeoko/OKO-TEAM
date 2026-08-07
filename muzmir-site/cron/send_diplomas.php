@@ -10,9 +10,8 @@
  * Планирование хранится в diplomas.scheduled_at. Cron ежеминутно проверяет и шлёт.
  */
 declare(strict_types=1);
-define('BASE_PATH', dirname(__DIR__));
-$CFG = require BASE_PATH . '/config.php';
-$GLOBALS['CFG'] = $CFG;
+if (!defined('BASE_PATH')) define('BASE_PATH', dirname(__DIR__));   // безопасно и в библиотечном режиме (из кабинета)
+if (empty($GLOBALS['CFG'])) { $CFG = require BASE_PATH . '/config.php'; $GLOBALS['CFG'] = $CFG; }
 require_once BASE_PATH . '/core/db.php';
 require_once BASE_PATH . '/core/data.php';
 require_once BASE_PATH . '/core/helpers.php';
@@ -162,6 +161,7 @@ $dueList = all("SELECT d.*, a.email, a.full_name, a.number AS app_number, c.name
                 WHERE d.sent_at IS NULL
                   AND d.scheduled_at IS NOT NULL
                   AND d.scheduled_at <= ?
+                  AND COALESCE(d.send_tries,0) < 5
                   AND a.status <> 'rejected'
                   -- Длинный конкурс (results_mode='list'): дипломы не рассылаем,
                   -- пока итоги не опубликованы админом (результаты — только пакетно).
@@ -204,20 +204,15 @@ foreach ($groups as $appId => $items) {
         q("UPDATE applications SET status='done' WHERE id=?", [(int)$appId]);
         $sentThisTick++;
     } else {
-        // Ретрай через 5 минут, но не бесконечно: после 5 попыток снимаем с расписания
-        // (scheduled_at=NULL → уходит из очереди), чтобы битый адрес не забивал слот
-        // «1 письмо/тик» вечно. Счётчик tries — в diplomas.send_tries (мягкая миграция выше).
+        // ВАЖНО: время отправки, заданное оргкомитетом, НЕ трогаем при сбое — иначе оно
+        // «перескакивает» и письмо не уходит в назначенный момент. Просто считаем попытки:
+        // задание остаётся «наступившим» (scheduled_at <= now) и повторяется на следующем тике,
+        // пока не уйдёт. После 5 неудач выпадает из выборки (send_tries>=5), но заданное время
+        // остаётся видимым в «Отправках» вместе со статусом «не удалось отправить».
         foreach ($items as $it) {
             $tries = (int) ($it['send_tries'] ?? 0) + 1;
-            if ($tries >= 5) {
-                update('diplomas', ['scheduled_at' => null, 'send_tries' => $tries], 'id=:id', ['id' => (int)$it['id']]);
-                fwrite(STDERR, "send_diplomas: диплом #{$it['id']} снят с отправки после $tries попыток (адрес $to)\n");
-            } else {
-                update('diplomas', [
-                    'scheduled_at' => (clone $now)->modify('+5 minutes')->format('Y-m-d H:i:s'),
-                    'send_tries'   => $tries,
-                ], 'id=:id', ['id' => (int)$it['id']]);
-            }
+            update('diplomas', ['send_tries' => $tries], 'id=:id', ['id' => (int)$it['id']]);
+            if ($tries >= 5) fwrite(STDERR, "send_diplomas: диплом #{$it['id']} не ушёл после $tries попыток (адрес $to) — время оставлено как задано\n");
         }
     }
 }

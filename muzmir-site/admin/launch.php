@@ -47,6 +47,44 @@ if ((string) input('do') === 'email_preview') {
     exit;
 }
 
+/* --- Предпросмотр массового письма-блока (GET, HTML): konkurs | vip | kabinet --- */
+if ((string) input('do') === 'email_preview_campaign') {
+    $ctype = (string) input('ctype');
+    header('Content-Type: text/html; charset=utf-8');
+    if ($ctype === 'kabinet') {
+        if (!function_exists('kabinet_onboarding_html') && is_file(BASE_PATH . '/core/kabinet_onboarding.php')) require_once BASE_PATH . '/core/kabinet_onboarding.php';
+        echo function_exists('kabinet_onboarding_html')
+            ? kabinet_onboarding_html('example@mail.ru', 'Анна', 'k7m3np2qz')
+            : 'Шаблон недоступен';
+        exit;
+    }
+    if (!in_array($ctype, ['konkurs', 'vip'], true)) { http_response_code(404); echo 'Не найдено'; exit; }
+    [$subj, $body] = launch_email_build($ctype);
+    // Оборачиваем в фирменный лейаут (как при отправке) + подставляем имя-образец.
+    $body = str_replace('{{name}}', 'Анна', $body);
+    if (function_exists('nl_wrap_email')) echo nl_wrap_email($body, '#', '', $subj);
+    elseif (function_exists('mm_email_layout')) echo mm_email_layout($body, ['title' => $subj]);
+    else echo $body;
+    exit;
+}
+
+/* --- Сохранение email-блока (тема/лид/квота): konkurs | vip | kabinet --- */
+if ((string) input('do') === 'mail_block_save') {
+    header('Content-Type: application/json; charset=utf-8');
+    if (!csrf_check() || !user_can('admin')) json_out(['ok' => false, 'msg' => 'Нет доступа'], 403);
+    $ctype = (string) input('ctype');
+    if (!in_array($ctype, ['konkurs', 'vip', 'kabinet'], true)) json_out(['ok' => false, 'msg' => 'Неизвестный блок'], 422);
+    set_setting('launch_mail_subject:' . $ctype, trim((string) input('subject')));
+    set_setting('launch_mail_lead:' . $ctype, trim((string) input('lead')));
+    $qk = (string) input('quotakey');
+    if (in_array($qk, ['nl_split_konkurs', 'nl_split_vip', 'nl_split_kabinet'], true)) {
+        $q = max(0, min(1000, (int) input('quota')));
+        if ($q > 0) set_setting($qk, (string) $q);
+    }
+    audit('launch_mail_block_save', 'competition', 0, ['ctype' => $ctype]);
+    json_out(['ok' => true, 'msg' => 'Сохранено']);
+}
+
 /* --- Загрузка/замена афиши поста (multipart) --- */
 if ((string) input('do') === 'cover_upload') {
     header('Content-Type: application/json; charset=utf-8');

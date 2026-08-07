@@ -7,14 +7,20 @@
  */
 $u = current_user();
 
-// Открытые конкурсы для выбора.
+// Список для ВЫБОРА (уровень 1) — только запущенные открытые конкурсы (гейт витрины).
 $comps = all("SELECT id, slug, name, type, direction, cover, diploma_bg, end_date, nominations, is_paid
               FROM competitions WHERE status='open' AND COALESCE(launched,0) = 1 ORDER BY sort, id");
 
-// Выбранный конкурс (уровень 2).
+// Выбранный конкурс (уровень 2 — образцы наград и заказ). Загружаем НЕЗАВИСИМО от гейта витрины:
+// заказать награды можно по ЛЮБОМУ реальному конкурсу (в т.ч. с уже опубликованными результатами,
+// после приёма) — иначе кубки/статуэтки/медали пропадали бы из заказа после закрытия приёма.
 $compId = isset($_GET['comp']) ? (int) $_GET['comp'] : 0;
 $selComp = null;
 foreach ($comps as $c) { if ((int)$c['id'] === $compId) { $selComp = $c; break; } }
+if (!$selComp && $compId > 0) {
+    $selComp = one("SELECT id, slug, name, type, direction, cover, diploma_bg, end_date, nominations, is_paid
+                      FROM competitions WHERE id=? AND status <> 'draft'", [$compId]);
+}
 
 // Прайс: индивидуальный для конкурса, иначе общий шаблон.
 $catalog = [];

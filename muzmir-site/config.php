@@ -79,7 +79,7 @@ return [
     'smtp_senders'       => cfg('MUZMIR_SMTP_SENDERS', ''),
     // Дневной лимит на ОДИН ящик — общий потолок массовых = лимит × число ящиков пула
     'mail_daily_limit' => (int) cfg('MUZMIR_MAIL_DAILY_LIMIT', 400),
-    'mail_daily_max'   => (int) cfg('MUZMIR_MAIL_DAILY_MAX', 300),   // потолок массовых/день = 300 успешных (150 конкурсы+75 ВИП+75 кабинет; далее 200+100)
+    'mail_daily_max'   => (int) cfg('MUZMIR_MAIL_DAILY_MAX', 400),   // потолок массовых/день = 400 успешных (база 200 + ВИП 100 + кабинет 100)
     'mail_batch_size'  => (int) cfg('MUZMIR_MAIL_BATCH', 40),
     // IMAP ящика news@ — для авто-очистки базы от отказов (cron/process_bounces.php).
     'imap_host'        => cfg('MUZMIR_IMAP_HOST', 'imap.yandex.ru'),

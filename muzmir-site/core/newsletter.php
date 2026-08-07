@@ -195,9 +195,10 @@ function nl_campaign_type_for_audience(string $audience): string {
     return 'konkurs';
 }
 
-/** Мягко гарантирует колонку newsletters.campaign_type. */
+/** Мягко гарантирует колонки campaign_type в newsletters И в mail_queue. */
 function nl_ensure_campaign_type_col(): void {
     try { db()->exec("ALTER TABLE newsletters ADD COLUMN campaign_type TEXT DEFAULT 'konkurs'"); } catch (\Throwable $e) {}
+    try { db()->exec("ALTER TABLE mail_queue  ADD COLUMN campaign_type TEXT"); } catch (\Throwable $e) {}
 }
 
 function newsletter_enqueue(int $newsletterId): int {
@@ -250,6 +251,7 @@ function newsletter_enqueue(int $newsletterId): int {
                 'subject'       => $subject,
                 'body'          => $body,
                 'newsletter_id' => $newsletterId,
+                'campaign_type' => $ctype,   // тип для суточной квоты (konkurs/vip/kabinet)
                 'status'        => 'queued',
                 'priority'      => 5,   // МАССОВАЯ: воркер шлёт через news@ с дневным лимитом и паузами
             ]);
@@ -298,10 +300,12 @@ function nl_bulk_sent_today(): int {
 function nl_bulk_sent_today_type(string $type): int {
     $dayStart = date('Y-m-d 00:00:00');
     try {
+        // Тип берём сначала из mail_queue.campaign_type (в т.ч. онбординг кабинета без newsletter),
+        // иначе из связанной рассылки, иначе konkurs.
         return (int) scalar(
             "SELECT COUNT(*) FROM mail_queue q LEFT JOIN newsletters n ON n.id = q.newsletter_id
               WHERE q.status = 'sent' AND COALESCE(q.priority,0) > 0 AND q.sent_at >= ?
-                AND COALESCE(n.campaign_type,'konkurs') = ?",
+                AND COALESCE(q.campaign_type, n.campaign_type, 'konkurs') = ?",
             [$dayStart, $type]
         );
     } catch (\Throwable $e) { return 0; }
@@ -335,11 +339,13 @@ function nl_ramp_peak(): int { return (int) cfgv('mail_daily_max', 300); }
  * Возвращает ['konkurs'=>N, 'vip'=>N, 'kabinet'=>N] (kabinet=0 в обычном режиме).
  */
 function nl_daily_split(): array {
-    $phase = (string) setting('nl_kabinet_phase', '1'); // по умолчанию — фаза кабинета
-    if ($phase === '1') {
-        return ['konkurs' => 150, 'vip' => 75, 'kabinet' => 75];
-    }
-    return ['konkurs' => 200, 'vip' => 100, 'kabinet' => 0];
+    // Значения можно переопределить в settings (nl_split_konkurs / nl_split_vip / nl_split_kabinet)
+    // из блоков пульта запуска. По умолчанию: база 200/день, ВИП 100/день, кабинет 100/день.
+    $phase = (string) setting('nl_kabinet_phase', '1'); // '1' — идёт разовая волна «личный кабинет»
+    $k  = (int) setting('nl_split_konkurs', '200');
+    $v  = (int) setting('nl_split_vip',     '100');
+    $kb = (int) setting('nl_split_kabinet', $phase === '1' ? '100' : '0');
+    return ['konkurs' => max(0, $k), 'vip' => max(0, $v), 'kabinet' => max(0, $kb)];
 }
 
 /**
@@ -484,11 +490,11 @@ function newsletter_process_queue(int $limit): int {
         if ($allowed) {
             $ph   = implode(',', array_fill(0, count($allowed), '?'));
             $bulk = all(
-                "SELECT q.*, COALESCE(n.campaign_type,'konkurs') AS ctype
+                "SELECT q.*, COALESCE(q.campaign_type, n.campaign_type, 'konkurs') AS ctype
                    FROM mail_queue q LEFT JOIN newsletters n ON n.id = q.newsletter_id
                   WHERE q.status='queued' AND COALESCE(q.priority,0)>0
                     AND (q.scheduled_at IS NULL OR q.scheduled_at='' OR q.scheduled_at<=?)
-                    AND COALESCE(n.campaign_type,'konkurs') IN ($ph)
+                    AND COALESCE(q.campaign_type, n.campaign_type, 'konkurs') IN ($ph)
                   ORDER BY q.id ASC LIMIT ?",
                 array_merge([$nowTs], $allowed, [max(1, $budget * 4)])
             );

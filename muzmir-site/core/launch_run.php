@@ -197,6 +197,30 @@ function launch_email_html(array $c, string $wave, array $siblings = []): string
     return $inner . '<div style="margin-top:22px">' . $btnHtml . '</div>';
 }
 
+/** Тип кампании письма по волне (konkurs|vip|kabinet). */
+function launch_email_ctype(string $wave): string {
+    if ($wave === 'campaign_vip') return 'vip';
+    if ($wave === 'campaign_kabinet') return 'kabinet';
+    return 'konkurs';
+}
+
+/**
+ * Красивое письмо кампании с переопределениями из пульта запуска.
+ * $ctype: konkurs (все конкурсы в одном письме) | vip (ВИП-клуб). Возвращает [subject, body].
+ * (kabinet идёт отдельным персональным онбордингом с логином/паролем — не через этот билдер.)
+ */
+function launch_email_build(string $ctype): array {
+    if (!function_exists('campaign_build') && is_file(BASE_PATH . '/core/mail_campaigns.php')) require_once BASE_PATH . '/core/mail_campaigns.php';
+    $key = $ctype === 'vip' ? 'vip' : 'new_competitions';
+    $opt = [];
+    $subj = function_exists('setting') ? (string) setting('launch_mail_subject:' . $ctype, '') : '';
+    $lead = function_exists('setting') ? (string) setting('launch_mail_lead:' . $ctype, '') : '';
+    if (trim($subj) !== '') $opt['subject'] = $subj;
+    if (trim($lead) !== '') $opt['lead'] = $lead;
+    $b = function_exists('campaign_build') ? campaign_build($key, $opt) : ['subject' => 'Культурный центр «Музыкальный Мир»', 'body' => ''];
+    return [(string) $b['subject'], (string) $b['body']];
+}
+
 /** Короткое in-app уведомление по волне: [title, body, url]. */
 function launch_inapp_payload(array $c, string $wave): array {
     $n = (string) $c['name'];
@@ -369,29 +393,38 @@ function launch_fire(int $compId, string $wave, array $channels, string $when = 
                 }
                 $report['email'] = 'персональных писем участникам: ' . $sent;
             }
-        } elseif ($wave === 'campaign_vip' || $wave === 'campaign_kabinet') {
-            // Отдельные кампании: ВИП-клуб и «личный кабинет» — своя аудитория и своя суточная квота.
-            if (!function_exists('campaign_build') && is_file(BASE_PATH . '/core/mail_campaigns.php')) require_once BASE_PATH . '/core/mail_campaigns.php';
-            $ctype    = $wave === 'campaign_vip' ? 'vip' : 'kabinet';
-            $audience = $ctype;                                  // 'vip' | 'kabinet'
-            $built    = function_exists('campaign_build') ? campaign_build($ctype) : ['subject' => 'Культурный центр «Музыкальный Мир»', 'body' => ''];
+        } elseif ($wave === 'campaign_kabinet') {
+            // «Личный кабинет» — ПЕРСОНАЛЬНЫЙ онбординг: логин + временный пароль по эталону,
+            // каждому свой (не одинаковое письмо). Идёт под квотой типа 'kabinet' (100/день).
+            if (!function_exists('kabinet_onboarding_enqueue') && is_file(BASE_PATH . '/core/kabinet_onboarding.php')) require_once BASE_PATH . '/core/kabinet_onboarding.php';
             if ($dry) {
-                $cnt = count(function_exists('nl_resolve_recipients') ? nl_resolve_recipients($audience) : []);
-                $report['email'] = 'кампания «' . ($ctype === 'vip' ? 'ВИП-клуб' : 'личный кабинет') . '» → получателей: ' . $cnt . ' (квота ' . ($ctype === 'vip' ? '75' : '75') . '/день)';
+                $cnt = function_exists('kabinet_onboarding_pending') ? kabinet_onboarding_pending() : 0;
+                $report['email'] = 'онбординг «личный кабинет» (логин+пароль) → адресов: ' . $cnt . ' (квота 100/день)';
+            } else {
+                $queued = function_exists('kabinet_onboarding_enqueue') ? kabinet_onboarding_enqueue() : 0;
+                $report['email'] = 'онбординг «личный кабинет»: в очередь ' . (int) $queued;
+            }
+        } elseif ($wave === 'campaign_vip') {
+            // ВИП-клуб — красивое письмо (как раздел сайта, без цен), аудитория ВИП, квота 100/день.
+            [$vsubj, $vbody] = launch_email_build('vip');
+            if ($dry) {
+                $cnt = count(function_exists('nl_resolve_recipients') ? nl_resolve_recipients('vip') : []);
+                $report['email'] = 'кампания «ВИП-клуб» → получателей: ' . $cnt . ' (квота 100/день)';
             } else {
                 try {
-                    $nid = insert('newsletters', ['subject' => (string) $built['subject'], 'body' => (string) $built['body'], 'audience' => $audience, 'campaign_type' => $ctype, 'status' => 'draft']);
+                    $nid = insert('newsletters', ['subject' => $vsubj, 'body' => $vbody, 'audience' => 'vip', 'campaign_type' => 'vip', 'status' => 'draft']);
                     $queued = function_exists('newsletter_enqueue') ? newsletter_enqueue((int) $nid) : 0;
-                    $report['email'] = 'кампания «' . ($ctype === 'vip' ? 'ВИП-клуб' : 'личный кабинет') . '»: в очередь ' . (int) $queued;
+                    $report['email'] = 'кампания «ВИП-клуб»: в очередь ' . (int) $queued;
                 } catch (\Throwable $e) { $report['email'] = 'ошибка: ' . $e->getMessage(); }
             }
         } else {
-            // Открытие (launch/launch_mail) / прочее — общая массовая рассылка «конкурсы» (прогрев-очередь).
-            $subj = launch_email_subject($c, $tplWave === 'launch' ? 'launch' : $wave);
-            if ($dry) { $report['email'] = 'newsletter «' . $subj . '» → прогрев-очередь (конкурсы, до 150/день)'; }
+            // Открытие (launch/launch_mail) — ОДНО красивое письмо со всеми конкурсами (без цен),
+            // общая массовая рассылка по базе (квота «konkurs», 200/день).
+            [$ksubj, $kbody] = launch_email_build('konkurs');
+            if ($dry) { $report['email'] = 'newsletter «' . $ksubj . '» → прогрев-очередь (конкурсы, до 200/день)'; }
             else {
                 try {
-                    $nid = insert('newsletters', ['subject' => $subj, 'body' => launch_email_html($c, 'launch', $siblings), 'audience' => 'all', 'campaign_type' => 'konkurs', 'status' => 'draft']);
+                    $nid = insert('newsletters', ['subject' => $ksubj, 'body' => $kbody, 'audience' => 'all', 'campaign_type' => 'konkurs', 'status' => 'draft']);
                     $queued = function_exists('newsletter_enqueue') ? newsletter_enqueue((int) $nid) : 0;
                     $report['email'] = 'в очередь поставлено писем: ' . (int) $queued;
                 } catch (\Throwable $e) { $report['email'] = 'ошибка: ' . $e->getMessage(); }
@@ -462,8 +495,16 @@ function launch_schedule_all(string $launchDate, string $launchTime, array $chan
 
     q("UPDATE launch_jobs SET status='cancelled' WHERE status='scheduled'");
 
-    $hasVk    = (bool) array_intersect($channels, ['vk_wall', 'vk_dm']);
-    $vkCh     = array_values(array_intersect($channels, ['vk_wall', 'vk_dm'])) ?: ['vk_wall'];
+    // Идеальные наборы каналов по волнам (правило владельца, «как надо»):
+    //   • ВСЕ посты ВК (запуск по каждому конкурсу, 3 дня, последний, закрытие, результаты)
+    //     идут и на СТЕНУ (+авто-сторис), и РАССЫЛКОЙ В ЛИЧКУ (vk_dm) по всем;
+    //   • массовое письмо-открытие и результаты дублируются в IN-APP (кабинет/приложение + колокольчик).
+    // $channels из пульта используется как глобальный выключатель: канал уходит из наборов,
+    // только если он явно снят в пульте (по умолчанию включены все).
+    $enabled  = fn(array $set) => array_values(array_intersect($set, $channels)) ?: [];
+    $vkAll    = $enabled(['vk_wall', 'vk_dm']);          // стена+сторис + рассылка в личку
+    $hasVk    = (bool) $vkAll;
+    $vkCh     = $vkAll ?: ['vk_wall'];
     $hasEmail = in_array('email', $channels, true);
     $hasInapp = in_array('inapp', $channels, true);
 
@@ -508,9 +549,9 @@ function launch_schedule_all(string $launchDate, string $launchTime, array $chan
         $planned['campaign_kabinet'] = ['run_at' => $kabSlot->format('Y-m-d H:i:s')];
     }
 
-    // 4) Общие посты месяца (ВК+in-app, БЕЗ e-mail — email-канал отфильтруется в launch_fire).
+    // 4) Общие посты месяца — стена+сторис + рассылка ВК в личку + in-app (БЕЗ e-mail).
     $ly = (int) date('Y', $lt); $lm = (int) date('n', $lt);
-    $commonCh = array_values(array_diff($channels, ['email'])) ?: ['vk_wall', 'inapp'];
+    $commonCh = $enabled(['vk_wall', 'vk_dm', 'inapp']) ?: ['vk_wall', 'inapp'];
     $d3     = launch_workday_at($ly, $lm, 22, 9, 0);
     $last   = launch_workday_at($ly, $lm, 25, 9, 0);
     $closed = launch_workday_at($ly, $lm, 25, 18, 0);
@@ -521,7 +562,8 @@ function launch_schedule_all(string $launchDate, string $launchTime, array $chan
 
     // 5) Результаты 28 09:00 — по каждому ДЛИННОМУ конкурсу (ВК общий пост + персональные письма участникам).
     $results = launch_workday_at($ly, $lm, 28, 9, 0);
-    $resCh = array_values(array_unique(array_merge($vkCh, $hasEmail ? ['email'] : [], $hasInapp ? ['inapp'] : []))) ?: ['email'];
+    // Результаты: стена+сторис + рассылка ВК + персональные письма участникам + in-app/колокольчик.
+    $resCh = $enabled(['vk_wall', 'vk_dm', 'email', 'inapp']) ?: ['email'];
     $longIds = [];
     foreach ($comps as $c) {
         if (function_exists('vkt_is_long') ? vkt_is_long($c) : (($c['results_mode'] ?? '') === 'list')) {
@@ -584,8 +626,8 @@ function launch_panel_html(): string {
     $defDate   = (string) (function_exists('setting') ? setting('launch_plan_date', '2026-08-08') : '2026-08-08');
     if ($defDate === '') $defDate = '2026-08-08';
     $defTime   = (string) (function_exists('setting') ? setting('launch_plan_time', '09:00') : '09:00');
-    $savedCh   = array_filter(explode(',', (string) (function_exists('setting') ? setting('launch_plan_channels', 'vk_wall,email,inapp') : 'vk_wall,email,inapp')));
-    if (!$savedCh) $savedCh = ['vk_wall', 'email', 'inapp'];
+    $savedCh   = array_filter(explode(',', (string) (function_exists('setting') ? setting('launch_plan_channels', 'vk_wall,vk_dm,email,inapp') : 'vk_wall,vk_dm,email,inapp')));
+    if (!$savedCh) $savedCh = ['vk_wall', 'vk_dm', 'email', 'inapp'];
     $jobs = all("SELECT j.*, c.name comp FROM launch_jobs j LEFT JOIN competitions c ON c.id=j.competition_id
                  WHERE j.status IN ('scheduled','done') ORDER BY j.run_at ASC LIMIT 200");
     $sched = array_values(array_filter($jobs, fn($j) => $j['status'] === 'scheduled'));
@@ -694,11 +736,43 @@ function launch_panel_html(): string {
         <p class="small muted" style="margin:0 0 14px">Всё уже составлено по эталонам — правьте и сохраняйте. Изменённый текст уйдёт при запуске.</p>
 
         <?php $rep = (int) $openComps[0]['id']; $sib = $openComps; ?>
-        <div class="lp2-group-t">Открытие — отдельный пост по каждому конкурсу (публикуется при запуске)</div>
+        <div class="lp2-group-t">Посты ВКонтакте — отдельный пост по каждому конкурсу (стена + сторис + рассылка в личку по всем)</div>
         <?php foreach ($openComps as $c):
-            echo $editor((int) $c['id'], 'launch', 'Открытие «' . $c['name'] . '»',
-                launch_wave_text($c, 'launch', [$c]), $coverDisp($c, 'launch', [$c]), true);
+            echo $editor((int) $c['id'], 'launch', 'Пост ВК «' . $c['name'] . '»',
+                launch_wave_text($c, 'launch', [$c]), $coverDisp($c, 'launch', [$c]), false);
         endforeach; ?>
+
+        <div class="lp2-group-t" style="margin-top:18px">Массовые письма — отдельные блоки с редактированием и количеством в день (уходят при запуске)</div>
+        <?php
+        // Три email-блока: общая база (200/день), ВИП-клуб (100/день), личный кабинет (100/день).
+        $mailBlock = function (string $ctype, string $title, string $desc, string $quotaKey, int $quotaDef) use ($post): string {
+            $subj = (string) (function_exists('setting') ? setting('launch_mail_subject:' . $ctype, '') : '');
+            $lead = (string) (function_exists('setting') ? setting('launch_mail_lead:' . $ctype, '') : '');
+            $quota = (int) (function_exists('setting') ? setting($quotaKey, (string) $quotaDef) : $quotaDef);
+            ob_start(); ?>
+            <div class="lp2-block" data-mailblock="<?= h($ctype) ?>">
+              <div class="lp2-bh"><b><?= h($title) ?></b><span class="lp2-state" id="mbst_<?= h($ctype) ?>"></span></div>
+              <p class="small muted" style="margin:0 0 10px"><?= h($desc) ?></p>
+              <label class="small muted" style="display:block;margin-bottom:8px">Тема письма (пусто — по умолчанию)
+                <input type="text" id="mbsubj_<?= h($ctype) ?>" value="<?= h($subj) ?>" placeholder="Тема по умолчанию" style="display:block;width:100%;box-sizing:border-box;margin-top:4px;padding:9px 11px;border:1px solid #d7ddea;border-radius:10px;font:inherit">
+              </label>
+              <label class="small muted" style="display:block;margin-bottom:8px">Вводный абзац (необязательно, вставляется после приветствия)
+                <textarea id="mblead_<?= h($ctype) ?>" rows="3" class="lp2-ta" style="margin-top:4px"><?= h($lead) ?></textarea>
+              </label>
+              <label class="small muted" style="display:block;margin-bottom:10px">Количество в день (успешных писем)
+                <input type="number" min="1" max="1000" id="mbq_<?= h($ctype) ?>" value="<?= $quota ?>" style="display:block;width:120px;margin-top:4px;padding:9px 11px;border:1px solid #d7ddea;border-radius:10px;font:inherit">
+              </label>
+              <div class="lp2-acts">
+                <button type="button" class="btn btn--primary btn--sm" data-mbsave="<?= h($ctype) ?>" data-quotakey="<?= h($quotaKey) ?>">Сохранить</button>
+                <a class="btn btn--ghost btn--sm" href="<?= h($post . '&do=email_preview_campaign&ctype=' . $ctype) ?>" target="_blank" rel="noopener">Предпросмотр письма</a>
+              </div>
+            </div>
+            <?php return (string) ob_get_clean();
+        };
+        echo $mailBlock('konkurs', 'Общее письмо по базе — все конкурсы в одном', 'Красивое письмо со всеми конкурсами (без цен), уходит по всей базе почт. Дублируется в приложение (in-app) и колокольчик.', 'nl_split_konkurs', 200);
+        echo $mailBlock('vip', 'Письмо ВИП-клуб', 'Красивое письмо как раздел «ВИП-клуб» на сайте (без цен), CTA «Вступить» вверху и внизу. Аудитория — члены клуба.', 'nl_split_vip', 100);
+        echo $mailBlock('kabinet', 'Письмо «Личный кабинет» (логин + пароль)', 'Персональный онбординг по утверждённому эталону: логин и временный пароль каждому. Разовая волна по базе.', 'nl_split_kabinet', 100);
+        ?>
 
         <div class="lp2-group-t" style="margin-top:18px">Общие посты по всем конкурсам (афиша — авто-композит со всеми афишами и надписью, можно заменить)</div>
         <?php
@@ -768,6 +842,16 @@ function launch_panel_html(): string {
           if(!d.ok){showMsg(d.msg||'Ошибка загрузки',false);return;}
           showMsg('Афиша обновлена. Обновляю…',true); setTimeout(function(){location.reload();},700);
         }).catch(function(){showMsg('Ошибка сети.',false);});
+      });
+      // Сохранение email-блока (тема/лид/квота).
+      root.addEventListener('click', function(e){
+        var mb=e.target.closest('[data-mbsave]'); if(!mb) return;
+        var ct=mb.getAttribute('data-mbsave'), qk=mb.getAttribute('data-quotakey');
+        var st=$('mbst_'+ct);
+        var subj=$('mbsubj_'+ct), lead=$('mblead_'+ct), q=$('mbq_'+ct);
+        post({do:'mail_block_save',ctype:ct,quotakey:qk,subject:subj?subj.value:'',lead:lead?lead.value:'',quota:q?q.value:''}).then(function(d){
+          if(st){ st.textContent=d.ok?'сохранено':(d.msg||'ошибка'); st.style.color=d.ok?'#1E7A44':'#B23B3B'; }
+        }).catch(function(){ if(st){st.textContent='ошибка сети'; st.style.color='#B23B3B';} });
       });
       root.addEventListener('click', function(e){
         var b=e.target.closest('[data-lp2]'); if(!b) return;

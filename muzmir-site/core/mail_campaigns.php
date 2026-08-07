@@ -146,9 +146,7 @@ function mmc_competition_card(array $c): string {
     $name = (string) ($c['name'] ?? 'Конкурс');
     $cover = mmc_url((string) ($c['cover'] ?? ''));
     $typeL = mmc_type_label((string) ($c['type'] ?? ''));
-    $paid  = (int) ($c['is_paid'] ?? 0) === 1;
-    $price = (int) ($c['price'] ?? 0);
-    $priceL = $paid && $price > 0 ? ('Оргвзнос ' . number_format($price, 0, ',', ' ') . ' ₽') : 'Бесплатное участие';
+    // Цены в письмах НЕ показываем (правило владельца) — оргвзнос участник увидит на сайте.
     $end   = trim((string) ($c['end_date'] ?? ''));
     $endL  = $end !== '' ? ('Приём заявок до ' . date('d.m.Y', strtotime($end))) : '';
 
@@ -171,7 +169,6 @@ function mmc_competition_card(array $c): string {
         . '<div style="display:inline-block;background:' . $card . ';color:' . $navy . ';font-size:11px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;padding:4px 10px;border-radius:20px;margin-bottom:8px;">' . h($typeL) . '</div>'
         . '<div style="font-family:Georgia,serif;font-size:19px;font-weight:700;color:' . $navy . ';line-height:1.25;">' . h($name) . '</div>'
         . ($endL !== '' ? '<div style="font-size:13px;color:' . $muted . ';margin-top:6px;">📅 ' . h($endL) . '</div>' : '')
-        . '<div style="font-size:13px;color:' . ($paid ? $ink : '#1E7F43') . ';font-weight:700;margin-top:3px;">' . ($paid ? '💳 ' : '🎁 ') . h($priceL) . '</div>'
         . $btns
         . '</td></tr></table>';
 }
@@ -245,6 +242,36 @@ function mmc_kabinet_block(): string {
     return '<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin:6px 0 18px;">' . $cells . '</table>';
 }
 
+/** Сетка привилегий ВИП-клуба (как раздел «Что даёт членство» на сайте) — плитки без цен. */
+function mmc_vip_perks_grid(): string {
+    $navy = MM_NAVY; $muted = MM_MUTED; $card = MM_CARD; $line = MM_LINE;
+    $perks = [
+        ['★', 'Бесплатный конкурс каждый месяц', '1 заявка с 1 номером в месяц — бесплатно, плюс бесплатный электронный диплом.'],
+        ['✦', 'Закрытые конкурсы Клуба', 'Отдельные конкурсы, доступные только членам Клуба.'],
+        ['◆', 'Ранний доступ к результатам', 'Заявки членов Клуба проверяются вне общей очереди — итоги узнаёте раньше.'],
+        ['✚', 'Приоритетная поддержка', 'Ответ в течение 24 часов: помощь с заявками, документами и наградами — в первую очередь.'],
+        ['❖', 'Спецпредложения на награды', 'Особые условия на медали, кубки и наградную атрибутику — только для членов Клуба.'],
+        ['✎', 'Комментарии и рекомендации жюри', 'Персональные рекомендации аттестационного жюри по Вашему номеру — для роста учеников.'],
+        ['❋', 'Именная карта участника', 'Электронная карта члена Клуба — подтверждает статус и привилегии постоянного участника.'],
+        ['✧', 'Клубный чат участников', 'Закрытое сообщество участников и педагогов: встречи с жюри, обмен опытом.'],
+    ];
+    $cells = ''; $i = 0;
+    foreach ($perks as $p) {
+        if ($i % 2 === 0) $cells .= '<tr>';
+        $cells .= '<td width="50%" style="padding:7px;vertical-align:top;">'
+            . '<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:' . $card . ';border:1px solid ' . $line . ';border-radius:14px;height:100%;">'
+            . '<tr><td style="padding:15px 15px 16px;">'
+            . '<div style="width:34px;height:34px;border-radius:9px;background:' . $navy . ';color:' . MM_GOLD2 . ';font-family:Georgia,serif;font-weight:700;font-size:17px;text-align:center;line-height:34px;margin-bottom:9px;">' . $p[0] . '</div>'
+            . '<div style="font-weight:700;color:' . $navy . ';font-size:14.5px;margin-bottom:4px;line-height:1.3;">' . h($p[1]) . '</div>'
+            . '<div style="font-size:12.5px;color:' . $muted . ';line-height:1.5;">' . h($p[2]) . '</div>'
+            . '</td></tr></table></td>';
+        $i++;
+        if ($i % 2 === 0) $cells .= '</tr>';
+    }
+    if ($i % 2 === 1) $cells .= '<td width="50%"></td></tr>';
+    return '<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin:4px 0 16px;">' . $cells . '</table>';
+}
+
 /** Крупный финальный CTA. */
 function mmc_cta(string $label, string $href, string $variant = 'navy'): string {
     return '<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin:8px 0 4px;"><tr><td align="center">'
@@ -289,7 +316,9 @@ function campaign_subject(string $type, array $opt = []): string {
             $n > 0 ? ('Новые конкурсы с наградами и дипломами — успейте подать заявку')
                    : 'Творческие конкурсы «Музыкальный Мир» — открыт приём заявок'],
     ];
-    if ($type === 'news') return (string) ($opt['subject'] ?? 'Новости Культурного центра «Музыкальный Мир»');
+    // Явное переопределение темы (редактирование из пульта запуска) — приоритетнее пресетов.
+    if (trim((string) ($opt['subject'] ?? '')) !== '') return (string) $opt['subject'];
+    if ($type === 'news') return 'Новости Культурного центра «Музыкальный Мир»';
     $set = $variants[$type] ?? $variants['new_competitions'];
     return $set[$ab] ?? $set[0];
 }
@@ -308,6 +337,9 @@ function campaign_inner(string $type, array $opt = []): string {
     $navy = MM_NAVY; $ink = MM_INK; $muted = MM_MUTED;
     $base = mmc_base();
     $greet = '<p style="margin:0 0 6px;font-size:16px;color:' . $ink . ';">Здравствуйте, {{name}}!</p>';
+    // Редактируемый вводный абзац из пульта (если задан) — идёт сразу после приветствия.
+    $lead = trim((string) ($opt['lead'] ?? ''));
+    if ($lead !== '') $greet .= '<p style="margin:0 0 12px;font-size:15px;line-height:1.6;color:' . $ink . ';">' . nl2br(h($lead)) . '</p>';
 
     $comps = mmc_open_competitions();
     $firstCid = $comps ? (int) $comps[0]['id'] : 0;
@@ -326,11 +358,14 @@ function campaign_inner(string $type, array $opt = []): string {
     switch ($type) {
 
         case 'vip':
+            // Красиво, как раздел «ВИП-клуб» на сайте: CTA вверху и внизу, все привилегии,
+            // БЕЗ ЦЕН — стоимость участник увидит на сайте.
             return $greet
-                . mmc_h('Ваше приглашение в ВИП-клуб', 'Для педагогов и активных участников — участие во всех конкурсах сезона без ограничений.')
-                . mmc_vip_block()
+                . mmc_h('Клуб постоянных участников «Музыкальный Мир»', 'Для педагогов и активных участников — привилегии, ранние результаты и особые условия. Стоимость и периоды подписки — на сайте.')
+                . mmc_cta('Вступить в Клуб', $base . '/club', 'gold')
+                . mmc_vip_perks_grid()
                 . mmc_ministry_badge()
-                . mmc_cta('Узнать больше о ВИП-клубе', $base . '/club', 'gold');
+                . mmc_cta('Вступить в Клуб', $base . '/club', 'navy');
 
         case 'kabinet':
             return $greet

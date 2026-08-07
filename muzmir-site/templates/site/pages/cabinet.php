@@ -160,40 +160,42 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         redirect('/cabinet#settings');
     } elseif ($action === 'resend_diploma') {
         $dn = input('number');
-        $d = one("SELECT d.* FROM diplomas d JOIN applications a ON a.id=d.application_id WHERE d.number=? AND a.user_id=?", [$dn, $uid]);
-        // Гарантируем боевой PDF по нашему HTML-шаблону (перед отправкой во вложении).
-        if ($d) {
-            $stored = trim((string) ($d['pdf_path'] ?? ''));
-            $absStored = ($stored !== '' && !str_starts_with($stored, 'http'))
-                ? ($stored[0] === '/' && str_starts_with($stored, '/var') ? $stored : BASE_PATH . '/public/' . ltrim($stored, '/'))
-                : '';
-            if ($absStored === '' || !is_file($absStored) || filesize($absStored) < 20000) {
+        $d = one("SELECT d.*, a.full_name AS a_name, a.email AS a_email, c.name AS comp_name
+                    FROM diplomas d JOIN applications a ON a.id=d.application_id
+                    JOIN competitions c ON c.id=a.competition_id
+                   WHERE d.number=? AND a.user_id=?", [$dn, $uid]);
+        if ($d && function_exists('mail_queue')) {
+            // Тот же rich-шаблон и та же сборка PDF, что и при авто-отправке (библиотечный режим крона).
+            if (!function_exists('_diploma_email_html')) {
+                if (!defined('MM_EMAIL_TEST_LIB')) define('MM_EMAIL_TEST_LIB', 1);
+                if (is_file(BASE_PATH . '/cron/send_diplomas.php')) require_once BASE_PATH . '/cron/send_diplomas.php';
+            }
+            $appRow = one("SELECT * FROM applications WHERE id=?", [(int) $d['application_id']]);
+            $row = array_merge((array) $appRow, [
+                'number'    => $d['number'],
+                'type'      => (string) ($d['type'] ?? 'main'),
+                'result'    => (string) ($d['result'] ?? ($appRow['result'] ?? '')),
+                'comp_name' => (string) $d['comp_name'],
+            ]);
+            // Абсолютный путь PDF (собираем при необходимости) + фото для тела письма.
+            $pdfAbs = ''; $imgUrl = '';
+            if (function_exists('_diploma_files')) { [$pdfAbs, $imgUrl] = _diploma_files($row); $row['_img_url'] = $imgUrl; }
+            if ($pdfAbs === '') {
+                // Фолбэк: собрать PDF нашим HTML-рендером.
                 if (is_file(BASE_PATH . '/core/diploma_render.php')) require_once BASE_PATH . '/core/diploma_render.php';
-                $appRow = one("SELECT * FROM applications WHERE id=?", [(int) $d['application_id']]);
                 if ($appRow && function_exists('diploma_pdf_html')) {
                     $rp = diploma_pdf_html($appRow, ['thanks' => (($d['type'] ?? '') === 'thanks')]);
-                    if ($rp && is_file($rp)) {
-                        update('diplomas', ['pdf_path' => '/diplomas/' . basename($rp)], 'id=:id', ['id' => (int) $d['id']]);
-                        $d['pdf_path'] = $rp; // абсолютный путь для вложения
-                    }
+                    if ($rp && is_file($rp)) $pdfAbs = $rp;
                 }
-            } elseif ($absStored !== '') {
-                $d['pdf_path'] = $absStored;
             }
-        }
-        if ($d && function_exists('mail_queue')) {
-            // Отправляем на e-mail, УКАЗАННЫЙ В ЗАЯВКЕ (фолбэк — аккаунтная почта).
-            $appMail = (string) scalar("SELECT email FROM applications WHERE id=?", [(int) $d['application_id']]);
-            $toMail  = filter_var($appMail, FILTER_VALIDATE_EMAIL) ? $appMail : (string) ($user['email'] ?? '');
-            $html = function_exists('mail_template')
-                ? mail_template('generic', [
-                    'title'     => 'Ваш диплом',
-                    'name'      => (string) ($user['full_name'] ?: 'участник'),
-                    'message'   => 'По Вашему запросу повторно направляем диплом № ' . $dn . '. Документ в формате PDF приложен к этому письму.',
-                    'preheader' => 'Диплом № ' . $dn . ' — во вложении.',
-                  ])
-                : '<p>Здравствуйте, ' . h($user['full_name'] ?: 'участник') . '.</p><p>Ваш диплом № ' . h($dn) . ' во вложении.</p>';
-            mail_queue($toMail, $user['full_name'], 'Ваш диплом — Культурного центра «Музыкальный Мир»', $html, (string)($d['pdf_path'] ?? ''));
+            $html = function_exists('_diploma_email_html')
+                ? _diploma_email_html($row)
+                : ('<p>Здравствуйте! Ваш диплом № ' . h($dn) . ' — <a href="' . h(url('/diploma/' . $dn . '.pdf')) . '">скачать PDF</a>.</p>');
+            // На e-mail из заявки (фолбэк — почта аккаунта).
+            $toMail = filter_var((string) $d['a_email'], FILTER_VALIDATE_EMAIL) ? (string) $d['a_email'] : (string) ($user['email'] ?? '');
+            $subj   = 'Ваш диплом конкурса «' . (string) $d['comp_name'] . '» — № ' . $dn;
+            $name   = (string) ($d['a_name'] ?: ($user['full_name'] ?? 'участник'));
+            mail_queue($toMail, $name, $subj, $html, ($pdfAbs !== '' && is_file($pdfAbs)) ? $pdfAbs : '');
             flash('Диплом отправлен на почту, указанную в заявке (' . h($toMail) . ').', 'success');
         } elseif ($d) {
             flash('Диплом готов к скачиванию в разделе «Дипломы».', 'info');

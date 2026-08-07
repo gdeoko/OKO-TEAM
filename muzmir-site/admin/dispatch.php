@@ -184,11 +184,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $dt = trim(input('scheduled_at'));
             if ($dt === '') disp_done(false, 'Укажите дату и время.');
             $norm = date('Y-m-d H:i:s', strtotime(str_replace('T', ' ', $dt)) ?: time());
-            q("UPDATE diplomas SET scheduled_at=? WHERE id IN ($inHolder)", array_merge([$norm], $ids));
+            q("UPDATE diplomas SET scheduled_at=?, send_tries=0 WHERE id IN ($inHolder)", array_merge([$norm], $ids));
             audit('dispatch_resched', 'diploma', $ids[0] ?? 0, ['at' => $norm, 'app' => $appG, 'count' => count($ids)]);
             disp_done(true, 'Дата отправки письма с дипломами изменена на ' . disp_dt($norm) . '.', ['when' => disp_dt($norm)]);
         } elseif ($do === 'sendnow') {
-            q("UPDATE diplomas SET scheduled_at='2000-01-01 00:00:00' WHERE id IN ($inHolder)", $ids);
+            // Ставим «сейчас» + сбрасываем счётчик попыток (свежий заход) и дёргаем крон.
+            q("UPDATE diplomas SET scheduled_at=?, send_tries=0 WHERE id IN ($inHolder)",
+              array_merge([date('Y-m-d H:i:s')], $ids));
             @exec('cd ' . escapeshellarg(BASE_PATH) . ' && php cron/send_diplomas.php > /dev/null 2>&1 &');
             audit('dispatch_sendnow', 'diploma', $ids[0] ?? 0, ['app' => $appG, 'count' => count($ids)]);
             disp_done(true, 'Письмо с дипломами (все по заявке) поставлено на моментальную отправку — уйдёт одним письмом в течение минуты.', ['remove' => true]);
