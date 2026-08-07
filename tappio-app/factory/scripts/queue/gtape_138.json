@@ -1,0 +1,265 @@
+{
+ "id": "gtape_138",
+ "app": "tape",
+ "voice": "en-US-ChristopherNeural",
+ "rate": "+5%",
+ "grade": "teal_orange",
+ "brand": {
+  "accent": "#F4C430",
+  "accent2": "#FFE08A",
+  "code": "MEASURE",
+  "logo": "tape.png",
+  "name": "3D TAPE MEASURE"
+ },
+ "music": {
+  "queries": [
+   "calm focus ambient",
+   "happy ukulele diy",
+   "warm optimistic guitar",
+   "bright pop home"
+  ]
+ },
+ "cover": {
+  "kicker": "ONLINE SHOPPING",
+  "top": "BUY FURNITURE",
+  "big": "THAT ACTUALLY\nFITS",
+  "q": [
+   "bookshelf assembly instructions floor"
+  ]
+ },
+ "segments": [
+  {
+   "id": "b1",
+   "text": "That online sofa looks perfect on screen."
+  },
+  {
+   "id": "b2",
+   "text": "But will it swallow your whole living room?"
+  },
+  {
+   "id": "b3",
+   "text": "Measure the real space with your phone first."
+  },
+  {
+   "id": "b4",
+   "text": "Compare it to the product dimensions."
+  },
+  {
+   "id": "b5",
+   "text": "Order only what genuinely fits."
+  },
+  {
+   "id": "b6",
+   "text": "Fewer returns, zero regret."
+  }
+ ],
+ "shots": [
+  {
+   "q": [
+    "kitchen cabinets measuring renovation"
+   ],
+   "insert": "tv",
+   "pos": "lower"
+  },
+  {
+   "q": [
+    "blueprint floor plan on tablet desk"
+   ],
+   "motion": "pandown"
+  },
+  {
+   "q": [
+    "hand pointing phone at wall measuring"
+   ],
+   "insert": "tilt",
+   "pos": "center"
+  },
+  {
+   "q": [
+    "modern tv mounted on wall living room"
+   ],
+   "motion": "panr"
+  },
+  {
+   "q": [
+    "person measuring living room with phone ar"
+   ],
+   "insert": "phone",
+   "pos": "upper"
+  },
+  {
+   "q": [
+    "doorway measuring frame home"
+   ],
+   "motion": "panl"
+  },
+  {
+   "q": [
+    "empty living room wooden floor sunlight"
+   ],
+   "insert": "circle",
+   "pos": "upper"
+  },
+  {
+   "q": [
+    "couple planning home layout tablet"
+   ],
+   "motion": "zout"
+  },
+  {
+   "q": [
+    "rolled up rug floor room"
+   ],
+   "insert": "diamond",
+   "pos": "center"
+  },
+  {
+   "q": [
+    "apartment tour empty rooms"
+   ],
+   "motion": "panup"
+  },
+  {
+   "q": [
+    "dining table room measure"
+   ],
+   "insert": "hexagon",
+   "pos": "upper"
+  },
+  {
+   "q": [
+    "person relaxing on couch bright apartment"
+   ],
+   "motion": "zin"
+  },
+  {
+   "q": [
+    "bookshelf assembly instructions floor"
+   ],
+   "insert": "arch",
+   "pos": "center"
+  },
+  {
+   "q": [
+    "hands holding phone ar app screen"
+   ],
+   "motion": "pandown"
+  }
+ ],
+ "overlays": [
+  {
+   "at": 0.035,
+   "dur": 1.93,
+   "type": "kicker",
+   "text": "WILL IT FIT?"
+  },
+  {
+   "at": 0.099,
+   "dur": 1.95,
+   "type": "stat_count",
+   "to": 1,
+   "suffix": "",
+   "label": "PERSON NEEDED",
+   "pos": "center"
+  },
+  {
+   "at": 0.142,
+   "dur": 1.96,
+   "type": "bars",
+   "title": "TIME TO MEASURE",
+   "unit": "s",
+   "items": [
+    [
+     "Tape + helper",
+     90
+    ],
+    [
+     "Phone",
+     10
+    ]
+   ],
+   "pos": "center"
+  },
+  {
+   "at": 0.162,
+   "dur": 2.11,
+   "type": "chips",
+   "items": [
+    "LENGTH",
+    "WIDTH",
+    "HEIGHT",
+    "AREA"
+   ],
+   "pos": "upper"
+  },
+  {
+   "at": 0.249,
+   "dur": 1.91,
+   "type": "callout",
+   "text": "MEASURE FROM THE COUCH",
+   "pos": "center"
+  },
+  {
+   "at": 0.492,
+   "dur": 2.6,
+   "type": "checklist",
+   "items": [
+    "Point the phone",
+    "Tap two points",
+    "Read the length",
+    "Save the project"
+   ],
+   "pos": "center"
+  },
+  {
+   "at": 0.539,
+   "dur": 1.94,
+   "type": "kinetic",
+   "top": "NO",
+   "big": "TAPE"
+  },
+  {
+   "at": 0.667,
+   "dur": 1.6,
+   "type": "ticker",
+   "to": 4,
+   "suffix": "",
+   "label": "WALLS SAVED",
+   "pos": "lower"
+  },
+  {
+   "at": 0.725,
+   "dur": 1.64,
+   "type": "gauge",
+   "to": 4,
+   "max": 100,
+   "suffix": "%",
+   "label": "RETURN RATE",
+   "pos": "center"
+  },
+  {
+   "at": 0.82,
+   "dur": 1.66,
+   "type": "lowerthird",
+   "title": "TAP TWO POINTS",
+   "sub": "length appears on the floor"
+  }
+ ],
+ "cta": {
+  "text": "Comment MEASURE for the app.",
+  "code": "MEASURE"
+ },
+ "caption": "USEFUL: That online sofa looks perfect — until it swallows the room. Measure the real space, compare to the listing, order only what fits. Fewer returns, zero regret. Comment MEASURE for the app. #diy #homedecor #interiordesign #measure #movingtips #renter #apartmenttherapy #use #measure #augmented #demo",
+ "yt_title": "Buy furniture that actually fits #shorts",
+ "trend_keys": [
+  "use",
+  "measure",
+  "augmented",
+  "demo",
+  "reality",
+  "iphone",
+  "air",
+  "app"
+ ],
+ "content_type": "useful"
+}

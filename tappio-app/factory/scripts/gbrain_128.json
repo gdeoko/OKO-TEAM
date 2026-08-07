@@ -1,0 +1,231 @@
+{
+ "id": "gbrain_128",
+ "app": "brain",
+ "voice": "en-US-BrianNeural",
+ "rate": "+5%",
+ "grade": "clean_ad",
+ "brand": {
+  "accent": "#9B5DE5",
+  "accent2": "#C9A7FF",
+  "code": "FOCUS",
+  "logo": "brain.png",
+  "name": "BRAINOVA"
+ },
+ "music": {
+  "queries": [
+   "warm inspiring",
+   "gentle cinematic hope",
+   "uplifting focus ambient"
+  ]
+ },
+ "cover": {
+  "kicker": "60-SECOND TEST",
+  "top": "WHY YOU FORGET",
+  "big": "EVERY\nNAME",
+  "q": [
+   "walking park green trees"
+  ]
+ },
+ "segments": [
+  {
+   "id": "b1",
+   "text": "Stop scrolling. You just met them and the name is already gone."
+  },
+  {
+   "id": "b2",
+   "text": "it's not age. it's attention and encoding."
+  },
+  {
+   "id": "b3",
+   "text": "A quick daily test shows your memory score."
+  },
+  {
+   "id": "b4",
+   "text": "Simple games train recall in five minutes."
+  },
+  {
+   "id": "b5",
+   "text": "Watch the number climb week after week."
+  },
+  {
+   "id": "b6",
+   "text": "See your brain age in sixty seconds."
+  }
+ ],
+ "shots": [
+  {
+   "q": [
+    "focused eyes close up concentration"
+   ],
+   "motion": "panl"
+  },
+  {
+   "q": [
+    "teacher classroom explaining"
+   ],
+   "insert": "tilt",
+   "pos": "upper"
+  },
+  {
+   "q": [
+    "puzzle pieces hands table"
+   ],
+   "motion": "pandown"
+  },
+  {
+   "q": [
+    "neurons synapse animation blue"
+   ],
+   "insert": "tv",
+   "pos": "center"
+  },
+  {
+   "q": [
+    "memory old photos hands"
+   ],
+   "motion": "panup"
+  },
+  {
+   "q": [
+    "clock ticking time closeup"
+   ],
+   "insert": "arch",
+   "pos": "center"
+  },
+  {
+   "q": [
+    "chess board close up thinking"
+   ],
+   "motion": "panr"
+  },
+  {
+   "q": [
+    "man reading book focused"
+   ],
+   "insert": "rrect",
+   "pos": "center"
+  },
+  {
+   "q": [
+    "sticky notes wall reminders"
+   ],
+   "motion": "zout"
+  },
+  {
+   "q": [
+    "student studying desk lamp night"
+   ],
+   "insert": "hexagon",
+   "pos": "center"
+  },
+  {
+   "q": [
+    "yoga breathing calm room"
+   ],
+   "motion": "zin"
+  },
+  {
+   "q": [
+    "light bulb idea dark"
+   ],
+   "insert": "diamond",
+   "pos": "center"
+  },
+  {
+   "q": [
+    "group people names introduction"
+   ],
+   "motion": "panl"
+  }
+ ],
+ "overlays": [
+  {
+   "at": 0.108,
+   "dur": 2.06,
+   "type": "kicker",
+   "text": "60-SEC TEST"
+  },
+  {
+   "at": 0.203,
+   "dur": 2.36,
+   "type": "chips",
+   "items": [
+    "DAY 1",
+    "DAY 5",
+    "DAY 10",
+    "DAY 14"
+   ],
+   "pos": "upper"
+  },
+  {
+   "at": 0.513,
+   "dur": 2.6,
+   "type": "checklist",
+   "items": [
+    "Take the test",
+    "Play 5 min",
+    "Beat your score",
+    "Keep the streak"
+   ],
+   "pos": "center"
+  },
+  {
+   "at": 0.794,
+   "dur": 2.11,
+   "type": "lowerthird",
+   "title": "FIVE MINUTES A DAY",
+   "sub": "focus grows like a muscle"
+  },
+  {
+   "at": 0.855,
+   "dur": 2.05,
+   "type": "bars",
+   "title": "FOCUS AFTER 14 DAYS",
+   "unit": "%",
+   "items": [
+    [
+     "Before",
+     41
+    ],
+    [
+     "After",
+     78
+    ]
+   ],
+   "pos": "center"
+  },
+  {
+   "at": 0.865,
+   "dur": 2.35,
+   "type": "ticker",
+   "to": 14,
+   "suffix": "d",
+   "label": "STREAK",
+   "pos": "lower"
+  }
+ ],
+ "cta": {
+  "text": "Comment FOCUS for the app.",
+  "code": "FOCUS"
+ },
+ "caption": "USEFUL: Forgetting names isn't age — it's encoding. A 60-second test shows your memory score, and five-minute games train recall. Watch the number climb. Comment FOCUS for the app. #brainhealth #memory #focus #productivity #selfimprovement #mentalhealth #learning #mental #age #memorize #can",
+ "yt_title": "Why you forget every name #shorts",
+ "trend_keys": [
+  "mental",
+  "age",
+  "memorize",
+  "can",
+  "color",
+  "quick",
+  "tell",
+  "test"
+ ],
+ "content_type": "useful",
+ "virality": {
+  "score": 88,
+  "notes": [
+   "hook_boosted"
+  ],
+  "hook": "Stop scrolling. You just met them and the name is already gone."
+ }
+}
