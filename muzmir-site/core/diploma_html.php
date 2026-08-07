@@ -56,11 +56,43 @@ function _dh_teachers(string $raw): array {
     return [$label, implode(', ', $parts)];
 }
 /** style="" для элемента: вертикальный сдвиг + кегль + скрытие. */
+/** Подобрать кегль (pt), чтобы текст влез в $availMm в ОДНУ строку (эмпирика по ширине em). */
+function _dh_fit_pt(string $s, float $maxPt, float $emW, float $availMm, float $minPt = 12.0): float {
+    $len = max(1, mb_strlen(trim($s)));
+    $fit = $availMm / ($len * $emW * 0.3528);   // 0.3528 мм/pt
+    return round(max($minPt, min($maxPt, $fit)), 1);
+}
+/**
+ * Разбить длинное название на 2 сбалансированные строки: минимизируем длиннейшую строку,
+ * при равенстве — больше слов в первой строке (логичный перенос по смыслу).
+ * @return array{0:string,1:string}
+ */
+function _dh_split_two(string $s): array {
+    $words = preg_split('~\s+~u', trim($s), -1, PREG_SPLIT_NO_EMPTY) ?: [];
+    if (count($words) < 2) return [$s, ''];
+    $best = [$s, '']; $bestMax = PHP_INT_MAX; $bestW1 = 0;
+    for ($i = 1, $n = count($words); $i < $n; $i++) {
+        $l1 = implode(' ', array_slice($words, 0, $i));
+        $l2 = implode(' ', array_slice($words, $i));
+        $mx = max(mb_strlen($l1), mb_strlen($l2));
+        if ($mx < $bestMax || ($mx === $bestMax && $i > $bestW1)) { $bestMax = $mx; $best = [$l1, $l2]; $bestW1 = $i; }
+    }
+    return $best;
+}
+
 function _dh_style(array $cfg, ?float $baseFs = null): string {
     $s = '';
     if ($cfg['dy'] !== 0.0) $s .= 'transform:translateY(' . $cfg['dy'] . 'mm);';
     if ($cfg['fs'] !== null && $baseFs !== null) $s .= 'font-size:' . $cfg['fs'] . 'pt;';
     if ($cfg['hide']) $s .= 'display:none;';
+    return $s !== '' ? ' style="' . $s . '"' : '';
+}
+/** Как _dh_style, но добавляет авто-CSS ($autoCss) когда в шаблоне НЕТ ручного кегля. */
+function _dh_style2(array $cfg, string $autoCss = ''): string {
+    $s = '';
+    if (($cfg['dy'] ?? 0.0) !== 0.0) $s .= 'transform:translateY(' . $cfg['dy'] . 'mm);';
+    if (($cfg['fs'] ?? null) !== null) $s .= 'font-size:' . $cfg['fs'] . 'pt;'; else $s .= $autoCss;
+    if (!empty($cfg['hide'])) $s .= 'display:none;';
     return $s !== '' ? ' style="' . $s . '"' : '';
 }
 
@@ -191,6 +223,26 @@ function diploma_html(array $c, array $a, array $opt = []): string {
         $name = $fullName ?: 'Иванов Иван Иванович';
     }
     $year     = date('Y');
+
+    // --- СТРОГАЯ авто-подгонка вёрстки диплома ---
+    // Результат (степень/спец-номинация) и ФИО — ВСЕГДА одна строка: кегль сам ужимается,
+    // текст не переносится и не выходит за рамки (~2% от краёв листа). Название коллектива —
+    // максимум 2 строки с логичным (сбалансированным) переносом.
+    $AVAIL     = 180.0;   // мм полезной ширины (лист 210 мм минус поля/рамки)
+    $degreeFs  = _dh_fit_pt($degree, 33.0, 0.56, $AVAIL, 15.0);
+    $isGroupNm = $isGroup && $groupName !== '' && $name === $groupName;
+    $oneLineFs = _dh_fit_pt($name, 29.0, 0.56, $AVAIL, 10.0);   // кегль, если пытаться в 1 строку
+    // Коллектив: 2 строки ТОЛЬКО когда в одну красиво не влезает (кегль < 20pt). Короткое —
+    // одна строка. Соло/благодарность — всегда одна строка (кегль ужимается).
+    if ($isGroupNm && $oneLineFs < 20.0) {
+        [$nl1, $nl2] = _dh_split_two($name);
+        $nameHtml   = h($nl1) . '<br>' . h($nl2);
+        $longer     = mb_strlen($nl1) >= mb_strlen($nl2) ? $nl1 : $nl2;
+        $nameCss    = 'font-size:' . _dh_fit_pt($longer, 29.0, 0.56, $AVAIL, 14.0) . 'pt;line-height:1.06;white-space:normal;';
+    } else {
+        $nameHtml   = h($name);
+        $nameCss    = 'font-size:' . $oneLineFs . 'pt;white-space:nowrap;';
+    }
 
     // Номер диплома + QR-код проверки подлинности (правый нижний угол).
     // ЖЁСТКОЕ ПРАВИЛО: номер есть ВСЕГДА на всех типах (осн/доп/именной/благодарность),
@@ -408,13 +460,13 @@ body{background:#444;font-family:'Manrope',sans-serif;padding:20px;min-height:10
 
     <?php if (!$thanks): ?>
       <?php $e = $E('degree'); ?>
-      <div class="diploma-degree"<?= $D('degree') . _dh_style($e, 28.0) ?>><?= h($degree) ?></div>
+      <div class="diploma-degree"<?= $D('degree') . _dh_style2($e, 'font-size:' . $degreeFs . 'pt;white-space:nowrap;') ?>><?= h($degree) ?></div>
       <?php /* Доп. награда печатается ОТДЕЛЬНЫМ дипломом (diploma_html(...,['extra'=>true])), не строкой здесь. */ ?>
 
       <?php $e = $E('label'); ?>
       <div class="awarded-label"<?= $D('label') . _dh_style($e, 15.0) ?>>награждается:</div>
       <?php $e = $E('name'); ?>
-      <div class="awarded-name"<?= $D('name') . _dh_style($e, 24.0) ?>><?= h($name) ?></div>
+      <div class="awarded-name"<?= $D('name') . _dh_style2($e, $nameCss) ?>><?= $nameHtml ?></div>
 
       <?php $e = $E('fields'); ?>
       <div class="field-list"<?= $D('fields') . _dh_style($e, 12.5) ?>>
@@ -426,7 +478,7 @@ body{background:#444;font-family:'Manrope',sans-serif;padding:20px;min-height:10
       <?php $e = $E('label'); ?>
       <div class="awarded-label"<?= $D('label') . _dh_style($e, 15.0) ?>>награждается:</div>
       <?php $e = $E('name'); ?>
-      <div class="awarded-name-script"<?= $D('name') . _dh_style($e, 36.0) ?>><?= h($name) ?></div>
+      <div class="awarded-name-script"<?= $D('name') . _dh_style2($e, 'font-size:' . _dh_fit_pt($name, 36.0, 0.5, $AVAIL, 16.0) . 'pt;white-space:nowrap;') ?>><?= h($name) ?></div>
 
       <?php $e = $E('fields'); ?>
       <div class="gratitude-text"<?= $D('fields') . _dh_style($e, 11.5) ?>>
