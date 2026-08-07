@@ -2,6 +2,11 @@
 /** Контент: страницы, FAQ, отзывы (модерация), концерты, письма министерств. */
 declare(strict_types=1);
 
+/** Публичный URL страницы CMS: статьи блога живут на /blog/<slug>, остальные — на /<slug>. */
+function cms_page_url(string $slug): string {
+    return str_starts_with($slug, 'blog-') ? url('/blog/' . $slug) : url('/' . $slug);
+}
+
 /* ---------- POST ---------- */
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     if (!csrf_check()) { flash('Сессия устарела.', 'error'); admin_redirect('cms'); }
@@ -172,7 +177,7 @@ if ($tab === 'pages'):
   if ($edit): $pg = one("SELECT * FROM pages WHERE id=?", [$edit]); ?>
     <div class="toolbar">
       <a class="btn btn--ghost btn--sm" href="<?= a_link('cms',['tab'=>'pages']) ?>"><?= admin_icon('back') ?>К списку страниц</a>
-      <a class="btn btn--navy btn--sm" href="<?= url('/'.$pg['slug']) ?>" target="_blank" rel="noopener"><?= admin_icon('eye') ?>Открыть на сайте</a>
+      <a class="btn btn--navy btn--sm" href="<?= h(cms_page_url((string)$pg['slug'])) ?>" target="_blank" rel="noopener"><?= admin_icon('eye') ?>Открыть на сайте</a>
     </div>
     <form method="post" action="<?= url('/admin/') ?>" class="cms-ed-grid" id="pageForm">
       <?= csrf_field() ?><input type="hidden" name="do" value="save_page"><input type="hidden" name="tab" value="pages"><input type="hidden" name="id" value="<?= $edit ?>">
@@ -233,7 +238,7 @@ if ($tab === 'pages'):
           <td class="small"><?php if(!$ml): ?><span class="badge badge--rejected">нет</span><?php elseif($ml<70||$ml>170): ?><span class="badge badge--judging"><?= $ml ?></span><?php else: ?><span class="badge badge--paid"><?= $ml ?></span><?php endif; ?></td>
           <td class="small"><?= h(date('d.m.y', strtotime($p['updated_at']))) ?></td>
           <td style="white-space:nowrap"><a class="btn btn--navy btn--sm" href="<?= a_link('cms',['tab'=>'pages','edit'=>$p['id']]) ?>"><?= admin_icon('edit') ?>Править</a>
-            <a class="btn btn--ghost btn--sm" href="<?= url('/'.$p['slug']) ?>" target="_blank" rel="noopener"><?= admin_icon('eye') ?></a></td></tr>
+            <a class="btn btn--ghost btn--sm" href="<?= h(cms_page_url((string)$p['slug'])) ?>" target="_blank" rel="noopener"><?= admin_icon('eye') ?></a></td></tr>
       <?php endforeach; ?>
     </tbody></table></div>
   <?php endif; ?>

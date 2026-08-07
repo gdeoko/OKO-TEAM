@@ -108,8 +108,9 @@ $jobs = all("SELECT j.*, c.name comp FROM launch_jobs j LEFT JOIN competitions c
 $waveLabelShort = ['launch' => 'Открытие', 'd3' => '3 дня', 'last' => 'Последний', 'closed' => 'Закрыт', 'results' => 'Результаты'];
 
 ob_start(); ?>
-<div class="admin-head">
-  <h1><?= admin_icon('rocket') ?>Запуск — общий пульт</h1>
+<div class="page-head">
+  <h1><?= admin_icon('rocket') ?> Запуск — общий пульт</h1>
+  <p class="muted small">Единая точка запуска рекламной кампании по всем конкурсам.</p>
 </div>
 
 <div class="lp-note">
@@ -240,66 +241,76 @@ ob_start(); ?>
 
 <script>
 (function(){
+ try {
   var URL = <?= json_encode(a_link('launch')) ?>;
   var CSRF = <?= json_encode(csrf_token()) ?>;
+  var $=function(id){return document.getElementById(id);};
+  var on=function(id,ev,fn){var e=$(id);if(e)e.addEventListener(ev,fn);};
   function post(data){ data._csrf=CSRF; return fetch(URL,{method:'POST',headers:{'Content-Type':'application/x-www-form-urlencoded'},body:new URLSearchParams(data)}).then(function(r){return r.json();}); }
   function chans(){ return Array.prototype.map.call(document.querySelectorAll('.lpCh:checked'),function(c){return c.value;}).join(','); }
-  var msg=document.getElementById('lpMsg'), prev=document.getElementById('lpPrev');
-  function showMsg(t,ok){ msg.textContent=t; msg.className='lp-msg '+(ok?'ok':'err'); msg.hidden=false; }
+  var msg=$('lpMsg'), prev=$('lpPrev');
+  function showMsg(t,ok){ if(!msg)return; msg.textContent=t; msg.className='lp-msg '+(ok?'ok':'err'); msg.hidden=false; }
 
-  document.getElementById('lpPreview').addEventListener('click',function(){
+  on('lpPreview','click',function(){
     var ch=chans(); if(!ch){showMsg('Выберите хотя бы один канал.',false);return;}
-    prev.hidden=false; prev.textContent='Считаю предпросмотр…';
+    if(prev){prev.hidden=false; prev.textContent='Считаю предпросмотр…';}
     post({do:'preview',channels:ch}).then(function(d){
-      if(!d.ok){prev.hidden=true;showMsg(d.msg||'Ошибка',false);return;}
-      prev.textContent=d.lines.join('\n');
-    });
+      if(!d.ok){if(prev)prev.hidden=true;showMsg(d.msg||'Ошибка',false);return;}
+      if(prev)prev.textContent=d.lines.join('\n');
+    }).catch(function(){showMsg('Ошибка сети. Обновите страницу.',false);});
   });
-  document.getElementById('lpSchedule').addEventListener('click',function(){
+  on('lpSchedule','click',function(){
     var ch=chans(); if(!ch){showMsg('Выберите хотя бы один канал.',false);return;}
-    var date=document.getElementById('lpDate').value, time=document.getElementById('lpTime').value;
+    var dE=$('lpDate'), tE=$('lpTime'); var date=dE?dE.value:'', time=tE?tE.value:'';
     if(!confirm('Запланировать запуск на '+date+' '+time+' МСК и общие посты (22/25)? Ничего не уйдёт раньше расписания.')) return;
     post({do:'schedule',date:date,time:time,channels:ch}).then(function(d){
       if(!d.ok){showMsg(d.msg||'Ошибка',false);return;}
       showMsg(d.msg+' Обновляю…',true); setTimeout(function(){location.reload();},900);
-    });
+    }).catch(function(){showMsg('Ошибка сети. Обновите страницу.',false);});
   });
-  document.getElementById('lpCancel').addEventListener('click',function(){
+  on('lpCancel','click',function(){
     if(!confirm('Отменить весь запланированный план?')) return;
-    post({do:'cancel'}).then(function(d){ showMsg(d.msg,true); setTimeout(function(){location.reload();},900); });
+    post({do:'cancel'}).then(function(d){ showMsg(d.msg,true); setTimeout(function(){location.reload();},900); }).catch(function(){showMsg('Ошибка сети.',false);});
   });
 
   // Модал редактора текста
-  var modal=document.getElementById('lpModal'), mT=document.getElementById('lpmText'),
-      mTitle=document.getElementById('lpmTitle'), mState=document.getElementById('lpmState');
+  var modal=$('lpModal'), mT=$('lpmText'), mTitle=$('lpmTitle'), mState=$('lpmState');
   var curId=0, curWave='';
   function openEditor(id,wave,title){
-    curId=id; curWave=wave; mTitle.textContent=title; mT.value='Загрузка…'; mState.textContent='';
-    modal.hidden=false;
+    curId=id; curWave=wave;
+    if(mTitle)mTitle.textContent=title; if(mT)mT.value='Загрузка…'; if(mState)mState.textContent='';
+    if(modal)modal.hidden=false;
     fetch(URL+(URL.indexOf('?')>=0?'&':'?')+'do=text&id='+id+'&wave='+wave).then(function(r){return r.json();}).then(function(d){
-      if(!d.ok){mT.value='Не удалось загрузить.';return;}
-      mT.value=d.text; mState.textContent=d.is_custom?'✎ свой текст':'эталон';
-    });
+      if(!mT)return;
+      if(!d.ok){mT.value='Не удалось загрузить текст. Обновите страницу.';return;}
+      mT.value=d.text; if(mState)mState.textContent=d.is_custom?'✎ свой текст':'эталон';
+    }).catch(function(){ if(mT)mT.value='Ошибка сети при загрузке текста. Обновите страницу.'; });
   }
-  function closeEditor(){ modal.hidden=true; }
+  function closeEditor(){ if(modal)modal.hidden=true; }
   Array.prototype.forEach.call(document.querySelectorAll('.lp-edit'),function(b){
     b.addEventListener('click',function(){ openEditor(b.getAttribute('data-id'),b.getAttribute('data-wave'),b.getAttribute('data-title')); });
   });
-  document.getElementById('lpmClose').addEventListener('click',closeEditor);
-  document.getElementById('lpmCancel').addEventListener('click',closeEditor);
-  modal.addEventListener('click',function(e){ if(e.target===modal) closeEditor(); });
-  document.getElementById('lpmSave').addEventListener('click',function(){
+  on('lpmClose','click',closeEditor);
+  on('lpmCancel','click',closeEditor);
+  if(modal)modal.addEventListener('click',function(e){ if(e.target===modal) closeEditor(); });
+  on('lpmSave','click',function(){
+    if(!mT)return;
     post({do:'save',id:curId,wave:curWave,text:mT.value}).then(function(d){
+      if(!mState)return;
       if(!d.ok){mState.textContent=d.msg||'Ошибка';return;}
       mState.textContent=d.is_custom?'✎ свой текст (сохранён)':'эталон (сброшено)';
       setTimeout(closeEditor,600);
-    });
+    }).catch(function(){ if(mState)mState.textContent='Ошибка сети.'; });
   });
-  document.getElementById('lpmReset').addEventListener('click',function(){
-    mT.value=''; post({do:'save',id:curId,wave:curWave,text:''}).then(function(d){
-      mState.textContent='эталон'; openEditor(curId,curWave,mTitle.textContent);
-    });
+  on('lpmReset','click',function(){
+    if(mT)mT.value=''; post({do:'save',id:curId,wave:curWave,text:''}).then(function(d){
+      if(mState)mState.textContent='эталон'; openEditor(curId,curWave,mTitle?mTitle.textContent:'');
+    }).catch(function(){});
   });
+ } catch(err){
+   try{ var w=document.createElement('div'); w.style.cssText='margin:16px;padding:12px 16px;border-radius:10px;background:#FDECEC;color:#B23B3B;font-size:.9rem';
+        w.textContent='Не удалось инициализировать пульт: '+(err&&err.message||err)+'. Обновите страницу (Ctrl+F5).'; document.body.appendChild(w);}catch(e){}
+ }
 })();
 </script>
 <?php endif; /* !$openComps */ ?>
