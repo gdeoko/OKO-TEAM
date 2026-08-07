@@ -193,7 +193,10 @@ if (preg_match('#^/diploma/([A-Za-z0-9\-]+)\.pdf$#', $route, $m)) {
     }
     // Рендер боевого шаблона (кэшируем: сохраняем веб-путь в pdf_path)
     if ($file === '' && $app) {
-        $rendered = diploma_pdf_html($app, ['thanks' => (($d['type'] ?? '') === 'thanks')]);
+        // Тип диплома → правильная награда (основной/доп/именной/благодарность).
+        $dt   = (string) ($d['type'] ?? 'main');
+        $rOpt = ['thanks' => $dt === 'thanks', 'extra' => $dt === 'extra', 'named' => $dt === 'named'];
+        $rendered = diploma_pdf_html($app, $rOpt);
         if ($rendered && is_file($rendered)) {
             $file = $rendered;
             update('diplomas', ['pdf_path' => '/diplomas/' . basename($rendered)], 'id=:id', ['id' => (int) $d['id']]);
@@ -218,8 +221,13 @@ if (preg_match('#^/diploma-view/([A-Za-z0-9\-]+)$#', $route, $m)) {
     $app = one("SELECT * FROM applications WHERE id=?", [(int) $d['application_id']]);
     $c   = $app ? one("SELECT * FROM competitions WHERE id=?", [(int) $app['competition_id']]) : null;
     require_once BASE_PATH . '/core/diploma_html.php';
+    // Тип диплома → правильная награда: основной=result, доп=спец-номинация,
+    // именной=ФИО участника, благодарность=ФИО педагога.
     $opt = [];
-    if (($d['type'] ?? '') === 'thanks') { $opt['thanks'] = true; if (!empty($app['teacher'])) $app['full_name'] = $app['teacher']; }
+    $dtype = (string) ($d['type'] ?? 'main');
+    if ($dtype === 'thanks') { $opt['thanks'] = true; if (!empty($app['teacher'])) $app['full_name'] = $app['teacher']; }
+    elseif ($dtype === 'extra') { $opt['extra'] = true; }
+    elseif ($dtype === 'named') { $opt['named'] = true; }
     echo diploma_html($c ?: [], $app ?: [], $opt);
     exit;
 }
