@@ -234,6 +234,13 @@ function launch_fire(int $compId, string $wave, array $channels, string $when = 
     $channels = array_values(array_intersect($channels, array_keys(launch_channels())));
     if (!$channels) return ['ok' => false, 'msg' => 'Не выбран ни один канал'];
     if (!isset(launch_waves()[$wave])) return ['ok' => false, 'msg' => 'Неизвестная волна'];
+    // Правило владельца: «осталось 3 дня / последний день / приём закрыт» НЕ идут на почту —
+    // только in-app всем + пост ВКонтакте (с авто-сторис) + рассылка в личку. На почту идёт
+    // только открытие конкурсов и ВИП-клуб (и результаты длинного — участникам).
+    if (in_array($wave, ['d3', 'last', 'closed'], true)) {
+        $channels = array_values(array_diff($channels, ['email']));
+        if (!$channels) $channels = ['inapp', 'vk_wall'];
+    }
     // Пост результатов — ТОЛЬКО для длинных конкурсов (по коротким результат уходит на почту).
     if ($wave === 'results' && !vkt_is_long($c)) {
         return ['ok' => false, 'msg' => 'Пост результатов — только для длинных конкурсов. По коротким платным результаты приходят на почту в течение 5 рабочих дней, отдельный пост не публикуется.'];

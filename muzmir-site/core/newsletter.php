@@ -272,8 +272,37 @@ function nl_ramp_curve(): array {
     ]; // с 15-го дня и далее — потолок (nl_ramp_peak)
 }
 
-/** Абсолютный безопасный потолок массовых на один ящик news@ в сутки. */
-function nl_ramp_peak(): int { return (int) cfgv('mail_daily_max', 480); }
+/** Абсолютный безопасный потолок массовых на один ящик news@ в сутки (по умолчанию 300). */
+function nl_ramp_peak(): int { return (int) cfgv('mail_daily_max', 300); }
+
+/**
+ * Дневное распределение массовой рассылки по типам кампаний (в успешных письмах/день).
+ * СЕЙЧАС (пока идёт разовая рассылка про личный кабинет): 150 конкурсы + 75 ВИП + 75 кабинет.
+ * ДАЛЕЕ (кабинета больше нет): 200 конкурсы + 100 ВИП. Итого всегда 300 успешных/день.
+ * Переключатель: settings.nl_kabinet_phase = '1' (сейчас) | '0' (обычный режим).
+ * Возвращает ['konkurs'=>N, 'vip'=>N, 'kabinet'=>N] (kabinet=0 в обычном режиме).
+ */
+function nl_daily_split(): array {
+    $phase = (string) setting('nl_kabinet_phase', '1'); // по умолчанию — фаза кабинета
+    if ($phase === '1') {
+        return ['konkurs' => 150, 'vip' => 75, 'kabinet' => 75];
+    }
+    return ['konkurs' => 200, 'vip' => 100, 'kabinet' => 0];
+}
+
+/**
+ * Сколько писем конкретной кампании (newsletter_id) уже успешно ушло сегодня —
+ * чтобы соблюдать суточную квоту КАЖДОГО типа отдельно (конкурсы/ВИП/кабинет).
+ */
+function nl_newsletter_sent_today(int $newsletterId): int {
+    if ($newsletterId <= 0) return 0;
+    try {
+        return (int) scalar(
+            "SELECT COUNT(*) FROM mail_queue WHERE status='sent' AND newsletter_id=?
+               AND date(COALESCE(sent_at, created_at))=date('now','localtime')",
+            [$newsletterId]);
+    } catch (\Throwable $e) { return 0; }
+}
 
 /** Дата старта плана рассылки (YYYY-MM-DD) или '' если план не запущен. */
 function nl_campaign_start(): string {
