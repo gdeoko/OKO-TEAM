@@ -1,0 +1,214 @@
+{
+ "id": "gbrain_137",
+ "app": "brain",
+ "voice": "en-US-BrianNeural",
+ "rate": "+7%",
+ "grade": "teal_orange",
+ "brand": {
+  "accent": "#9B5DE5",
+  "accent2": "#C9A7FF",
+  "code": "FOCUS",
+  "logo": "brain.png",
+  "name": "BRAINOVA"
+ },
+ "music": {
+  "queries": [
+   "energetic upbeat",
+   "calm motivational underscore",
+   "uplifting focus ambient",
+   "dreamy synth focus"
+  ]
+ },
+ "cover": {
+  "kicker": "MEMORY HACK",
+  "top": "REMEMBER",
+  "big": "ANY NAME\nFOR GOOD",
+  "q": [
+   "smartphone brain game screen"
+  ]
+ },
+ "segments": [
+  {
+   "id": "b1",
+   "text": "Hear the name, then say it back out loud."
+  },
+  {
+   "id": "b2",
+   "text": "Link it to a picture: Rose, a red rose."
+  },
+  {
+   "id": "b3",
+   "text": "Repeat it once after ten seconds."
+  },
+  {
+   "id": "b4",
+   "text": "That triple hit locks it into memory."
+  },
+  {
+   "id": "b5",
+   "text": "Train the habit with quick daily reps."
+  },
+  {
+   "id": "b6",
+   "text": "Never blank on a name again."
+  }
+ ],
+ "shots": [
+  {
+   "q": [
+    "elderly person smiling sharp mind"
+   ],
+   "motion": "panl"
+  },
+  {
+   "q": [
+    "student studying desk lamp night"
+   ],
+   "insert": "diamond",
+   "pos": "upper"
+  },
+  {
+   "q": [
+    "fish oil supplement pills"
+   ],
+   "motion": "zin"
+  },
+  {
+   "q": [
+    "smartphone brain game screen"
+   ],
+   "insert": "circle",
+   "pos": "lower"
+  },
+  {
+   "q": [
+    "puzzle pieces hands table"
+   ],
+   "motion": "pandown"
+  },
+  {
+   "q": [
+    "brain scan mri blue"
+   ],
+   "insert": "tilt",
+   "pos": "upper"
+  },
+  {
+   "q": [
+    "man reading book focused"
+   ],
+   "motion": "zout"
+  },
+  {
+   "q": [
+    "clock ticking time closeup"
+   ],
+   "insert": "hexagon",
+   "pos": "center"
+  },
+  {
+   "q": [
+    "notebook writing pen hand"
+   ],
+   "motion": "panup"
+  },
+  {
+   "q": [
+    "memory old photos hands"
+   ],
+   "insert": "phone",
+   "pos": "upper"
+  },
+  {
+   "q": [
+    "person forgetting keys frustrated"
+   ],
+   "motion": "panr"
+  },
+  {
+   "q": [
+    "neurons synapse animation blue"
+   ],
+   "insert": "arch",
+   "pos": "lower"
+  },
+  {
+   "q": [
+    "runner morning sunrise energy"
+   ],
+   "motion": "panl"
+  },
+  {
+   "q": [
+    "sticky notes wall reminders"
+   ],
+   "insert": "tv",
+   "pos": "upper"
+  }
+ ],
+ "overlays": [
+  {
+   "at": 0.229,
+   "dur": 1.71,
+   "type": "kicker",
+   "text": "60-SEC TEST"
+  },
+  {
+   "at": 0.31,
+   "dur": 1.71,
+   "type": "lowerthird",
+   "title": "SAY IT BACK",
+   "sub": "names stick instantly"
+  },
+  {
+   "at": 0.38,
+   "dur": 2.18,
+   "type": "ticker",
+   "to": 147,
+   "suffix": "%",
+   "label": "RECALL SPEED",
+   "pos": "lower"
+  },
+  {
+   "at": 0.418,
+   "dur": 1.98,
+   "type": "gauge",
+   "to": 5,
+   "max": 10,
+   "suffix": "min",
+   "label": "PER DAY",
+   "pos": "center"
+  },
+  {
+   "at": 0.691,
+   "dur": 1.68,
+   "type": "kinetic",
+   "top": "FOCUS",
+   "big": "UP"
+  },
+  {
+   "at": 0.791,
+   "dur": 1.8,
+   "type": "callout",
+   "text": "STREAKS BEAT WILLPOWER",
+   "pos": "center"
+  }
+ ],
+ "cta": {
+  "text": "Comment FOCUS for the app.",
+  "code": "FOCUS"
+ },
+ "caption": "Say it back, link it to an image, repeat after ten seconds — that triple hit locks a name in. Train the habit with quick daily reps. Comment FOCUS for the app. #brainhealth #memory #focus #productivity #selfimprovement #mentalhealth #learning #memory #intelligence #beats #increase",
+ "yt_title": "Remember any name for good #shorts",
+ "trend_keys": [
+  "memory",
+  "intelligence",
+  "beats",
+  "increase",
+  "improve",
+  "brain",
+  "binaural",
+  "power"
+ ],
+ "content_type": "viral"
+}
