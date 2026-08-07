@@ -29,6 +29,32 @@ function _dh_cfg(array $tpl, string $key): array {
     return ['dy' => (float)($e['dy'] ?? 0), 'fs' => isset($e['fs']) ? (float)$e['fs'] : null,
             'hide' => !empty($e['hide'])];
 }
+
+/**
+ * Разбор поля «педагог» из заявки: если там несколько ФИО (через запятую/точку с запятой/
+ * «и»/с новой строки, либо просто несколько подряд идущих троек Фамилия-Имя-Отчество) —
+ * возвращает подпись «Педагоги» и список через запятую; для одного — «Педагог».
+ * @return array{0:string,1:string}  [подпись, значение]
+ */
+function _dh_teachers(string $raw): array {
+    $raw = trim(preg_replace('~\s+~u', ' ', $raw));
+    if ($raw === '') return ['Педагог', ''];
+    // 1) Явные разделители.
+    $parts = preg_split('~\s*(?:,|;|/|\bи\b|\n)\s*~u', $raw, -1, PREG_SPLIT_NO_EMPTY) ?: [];
+    $parts = array_values(array_filter(array_map('trim', $parts), static fn($p) => $p !== ''));
+    // 2) Разделителей нет, но несколько ФИО подряд (кратно 3 словам) — режем по тройкам.
+    if (count($parts) <= 1) {
+        $words = preg_split('~\s+~u', $raw, -1, PREG_SPLIT_NO_EMPTY) ?: [];
+        if (count($words) >= 6 && count($words) % 3 === 0) {
+            $parts = [];
+            for ($i = 0, $n = count($words); $i < $n; $i += 3) $parts[] = implode(' ', array_slice($words, $i, 3));
+        } else {
+            $parts = [$raw];
+        }
+    }
+    $label = count($parts) > 1 ? 'Педагоги' : 'Педагог';
+    return [$label, implode(', ', $parts)];
+}
 /** style="" для элемента: вертикальный сдвиг + кегль + скрытие. */
 function _dh_style(array $cfg, ?float $baseFs = null): string {
     $s = '';
@@ -189,21 +215,21 @@ function diploma_html(array $c, array $a, array $opt = []): string {
             'Название коллектива'   => 'указать название коллектива (если есть)',
             'Возрастная категория'  => '00-00 лет',
             'Номинация'             => 'указать вашу номинацию',
-            'Преподаватель'         => 'Иванов Иван Иванович',
+            'Педагог'               => 'Иванов Иван Иванович',
             'Название учреждения'   => 'указать ваше учреждение и город',
             'Конкурсный номер'      => 'Указать название вашего конкурсного номера',
         ];
     } else {
         $fields = [];
+        // Всё строго по заявке. Контактное лицо (full_name) на диплом НЕ выносится —
+        // это тот, кто заполнял заявку, а не участник/руководитель/педагог.
         // «Название коллектива» показываем отдельной строкой только если оно НЕ вынесено
         // в главную строку награждаемого (для соло/благодарности/именного).
         if (!empty($a['group_name']) && $name !== $a['group_name']) $fields['Название коллектива'] = $a['group_name'];
-        // Для коллектива: подавший заявку — руководитель коллектива (в шапке стоит название
-        // коллектива, а ФИО руководителя — отдельной строкой в данных).
-        if ($isGroup && $fullName !== '' && $name !== $fullName) $fields['Руководитель'] = $fullName;
         if (!empty($a['age_category'])) $fields['Возрастная категория'] = $a['age_category'];
         if (!empty($a['nomination']))   $fields['Номинация'] = $a['nomination'];
-        if (!empty($a['teacher']))      $fields['Преподаватель'] = $a['teacher'];
+        // Педагог(и): если в поле несколько ФИО — «Педагоги: ФИО, ФИО» (множественное + запятые).
+        if (!empty($a['teacher'])) { [$tLabel, $tVal] = _dh_teachers((string) $a['teacher']); if ($tVal !== '') $fields[$tLabel] = $tVal; }
         if (!empty($a['institution']))  $fields['Название учреждения'] = $a['institution'] . (!empty($a['city']) ? ', ' . $a['city'] : '');
         if (!empty($a['work_title']))   $fields['Конкурсный номер'] = $a['work_title'];
     }
