@@ -198,6 +198,9 @@ function diploma_html(array $c, array $a, array $opt = []): string {
         // «Название коллектива» показываем отдельной строкой только если оно НЕ вынесено
         // в главную строку награждаемого (для соло/благодарности/именного).
         if (!empty($a['group_name']) && $name !== $a['group_name']) $fields['Название коллектива'] = $a['group_name'];
+        // Для коллектива: подавший заявку — руководитель коллектива (в шапке стоит название
+        // коллектива, а ФИО руководителя — отдельной строкой в данных).
+        if ($isGroup && $fullName !== '' && $name !== $fullName) $fields['Руководитель'] = $fullName;
         if (!empty($a['age_category'])) $fields['Возрастная категория'] = $a['age_category'];
         if (!empty($a['nomination']))   $fields['Номинация'] = $a['nomination'];
         if (!empty($a['teacher']))      $fields['Преподаватель'] = $a['teacher'];
