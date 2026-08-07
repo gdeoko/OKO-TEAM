@@ -9,6 +9,7 @@
 declare(strict_types=1);
 require __DIR__ . '/_boot.php';
 require_once BASE_PATH . '/core/chat_brain.php';   // общий «мозг» (общий с ботом ВК)
+require_once BASE_PATH . '/core/chat_ops.php';     // состояние диалога: бот/оператор/график
 require_post();
 
 $action     = input('action', 'send');
@@ -117,8 +118,38 @@ if ($uid && ($cu = current_user())) {
     }
 }
 
+// Регистрируем/обновляем диалог в реестре (для админ-раздела «Чат-бот»).
+chat_dialog_set($sessionKey, ['channel' => 'web', 'title' => $greetName]);
+
+// --- Ручной перехват / блокировка / выключенный бот: авто-ответ НЕ даём ---
+// Оператор ведёт диалог из админки; клиент подхватит его сообщения опросом истории.
+if (($muted = chat_bot_muted($sessionKey)) !== '') {
+    json_out(['ok' => true, 'reply' => '', 'actions' => [], 'image' => null,
+              'session' => $sessionKey, 'muted' => $muted]);
+}
+
+// --- Вне рабочего времени (9:00–18:00 МСК, кроме вс): шаблон, вопрос сохранён ---
+if (!chat_is_working_hours()) {
+    $d = chat_dialog_get($sessionKey);
+    $tpl = chat_offhours_template($greetName);
+    if ((int) ($d['pending_offhours'] ?? 0) !== 1) {
+        chat_dialog_set($sessionKey, ['pending_offhours' => 1, 'offhours_at' => date('Y-m-d H:i:s')]);
+    }
+    try {
+        insert('chat_messages', ['user_id' => $uid, 'session_key' => $sessionKey, 'role' => 'assistant', 'text' => $tpl, 'file' => '']);
+    } catch (\Throwable $e) {}
+    json_out(['ok' => true, 'reply' => $tpl, 'actions' => [], 'image' => null, 'session' => $sessionKey, 'offhours' => true]);
+}
+// Рабочее время: снимаем «нерабочий» флаг, если он оставался.
+if ((int) (chat_dialog_get($sessionKey)['pending_offhours'] ?? 0) === 1) {
+    chat_dialog_set($sessionKey, ['pending_offhours' => 0]);
+}
+
 // Персональный контекст участника (его заявки/статусы) — чтобы бот отвечал по делу.
-$GLOBALS['chat_user_ctx'] = chat_user_context($uid);
+// + «обучение на диалоге»: если участник назвал ФИО/номер заявки — подтягиваем его данные.
+$ctx  = chat_user_context($uid);
+$hint = chat_context_from_dialogue($sessionKey, $text);
+$GLOBALS['chat_user_ctx'] = $hint !== '' ? trim($ctx . "\n" . $hint) : $ctx;
 
 // Ответ по правилам диалога: приветствие раз в начале, подпись — только при завершении.
 $closing = false;

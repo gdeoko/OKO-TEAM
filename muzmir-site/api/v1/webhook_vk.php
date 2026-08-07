@@ -14,6 +14,7 @@
 declare(strict_types=1);
 require __DIR__ . '/_boot.php';
 require_once BASE_PATH . '/core/chat_brain.php';
+require_once BASE_PATH . '/core/chat_ops.php';
 require_once BASE_PATH . '/core/vk.php';
 
 /** Мгновенный текстовый ответ ВК (не JSON) и выход. */
@@ -107,6 +108,41 @@ function vk_cb_ack_then_process(string $type): void {
             insert('chat_messages', ['user_id' => null, 'session_key' => $sessionKey, 'role' => 'user', 'text' => $text, 'file' => '']);
         }
 
+        // Регистрируем/обновляем диалог в реестре (для админ-раздела «Чат-бот»).
+        chat_dialog_set($sessionKey, ['channel' => 'vk', 'peer_id' => (string) $peer]);
+
+        // --- Ручной перехват / блокировка / выключенный бот: НЕ отвечаем автоматически ---
+        // (оператор ведёт диалог сам из админки; бот молчит 5–10 минут после его ответа).
+        if (($muted = chat_bot_muted($sessionKey)) !== '') {
+            _vk_log('bot muted (' . $muted . ') peer=' . $peer);
+            return;
+        }
+
+        // --- Вне рабочего времени (9:00–18:00 МСК, кроме вс): шаблон + сохраняем вопрос ---
+        // Ответ по существу бот даст утром (cron/chat_offhours_flush.php) или оператор.
+        if ($text !== '' && !chat_is_working_hours()) {
+            $d = chat_dialog_get($sessionKey);
+            if ((int) ($d['pending_offhours'] ?? 0) !== 1) {
+                $nm  = vk_user_name($peer);
+                $tpl = chat_offhours_template($nm);
+                insert('chat_messages', ['user_id' => null, 'session_key' => $sessionKey, 'role' => 'assistant', 'text' => $tpl, 'file' => '']);
+                chat_dialog_set($sessionKey, ['pending_offhours' => 1, 'offhours_at' => date('Y-m-d H:i:s'), 'title' => $nm]);
+                vk_typing($peer);
+                $cmd = 'php ' . escapeshellarg(BASE_PATH . '/cron/vk_send_delayed.php')
+                     . ' ' . (int) $peer . ' ' . random_int(4, 9) . ' ' . escapeshellarg(base64_encode($tpl))
+                     . ' >/dev/null 2>&1 &';
+                exec($cmd);
+                _vk_log('offhours template peer=' . $peer);
+            } else {
+                _vk_log('offhours (pending) peer=' . $peer . ' — молчим до утра');
+            }
+            return;
+        }
+        // Рабочее время: если оставался «нерабочий» вопрос — снимаем флаг, ответим сейчас.
+        if ((int) (chat_dialog_get($sessionKey)['pending_offhours'] ?? 0) === 1) {
+            chat_dialog_set($sessionKey, ['pending_offhours' => 0]);
+        }
+
         // Последний ответ оператора + последняя СОДЕРЖАТЕЛЬНАЯ роль (user/assistant,
         // игнорируя системные маркеры escalated/dialog_end) — для антидубля и «тишины на стикеры».
         try {
@@ -132,7 +168,10 @@ function vk_cb_ack_then_process(string $type): void {
         // Если этот ВК-пользователь привязан к аккаунту сайта — подтягиваем его заявки.
         try { $vkUid = (int) (scalar("SELECT id FROM users WHERE vk_id = ?", [(string) $peer]) ?: 0); }
         catch (\Throwable $e) { $vkUid = 0; }
-        $GLOBALS['chat_user_ctx'] = $vkUid ? chat_user_context($vkUid) : '';
+        // Контекст: привязанный аккаунт + «обучение на диалоге» (ФИО/номер заявки из переписки).
+        $ctx  = $vkUid ? chat_user_context($vkUid) : '';
+        $hint = ($text !== '') ? chat_context_from_dialogue($sessionKey, $text) : '';
+        $GLOBALS['chat_user_ctx'] = $hint !== '' ? trim($ctx . "\n" . $hint) : $ctx;
         $closing = false; $short = false;
 
         if ($text !== '' && chat_is_closing($text)) {
