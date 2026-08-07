@@ -58,7 +58,9 @@ function launch_wave_default(array $c, string $wave, array $siblings = []): stri
     $c = launch_norm_comp($c);
     $comps = $siblings ?: [$c];
     switch ($wave) {
-        case 'launch':  return vkt_launch($c);
+        // ЗАПУСК — один общий текст по всем открытым конкурсам (если их несколько);
+        // одиночный конкурс — отдельный пост.
+        case 'launch':  return count($comps) > 1 ? vkt_launch_all($comps) : vkt_launch($c);
         case 'd3':      return vkt_deadline($comps, false);
         case 'last':    return vkt_deadline($comps, true);
         case 'closed':  return vkt_closed($comps);
@@ -87,7 +89,7 @@ function launch_cover_path(array $c): string {
 function launch_email_subject(array $c, string $wave): string {
     $n = (string) $c['name'];
     return match ($wave) {
-        'launch'  => 'Открыт приём заявок: «' . $n . '»',
+        'launch'  => 'Открыт приём заявок в новые конкурсы — Культурный центр «Музыкальный Мир»',
         'd3'      => 'Осталось 3 дня — приём заявок закрывается',
         'last'    => 'Сегодня последний день приёма заявок',
         'closed'  => 'Приём заявок закрыт',
@@ -113,6 +115,33 @@ function launch_email_html(array $c, string $wave, array $siblings = []): string
     $vipUrl     = url('/vip');
 
     $inner = '<div style="font-size:15px;line-height:1.7;color:#33406B;">' . $body . '</div>';
+
+    // ЗАПУСК: общее письмо — карточки-афиши по каждому открытому конкурсу
+    // (обложка + «Подать заявку» + «Положение»). Это тот самый общий формат «4 афиши».
+    if ($wave === 'launch' && count($siblings) > 1) {
+        $base  = rtrim((string) (function_exists('cfgv') ? cfgv('base_url') : ''), '/');
+        $cards = '';
+        foreach ($siblings as $sc) {
+            $cover = trim((string) ($sc['cover'] ?? ''));
+            if ($cover !== '' && !preg_match('~^https?://~i', $cover)) $cover = $base . '/' . ltrim($cover, '/');
+            $name  = h((string) $sc['name']);
+            $paid  = (int) ($sc['is_paid'] ?? 0) === 1;
+            $feeTxt = $paid ? ('Оргвзнос ' . (int) $sc['price'] . ' ₽') : 'Участие бесплатное';
+            $applyU = $base . '/konkurs-' . h((string) $sc['slug']);
+            $regU   = $base . '/polozhenie-' . h((string) $sc['slug']);
+            $cards .= '<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin:0 0 16px;background:#F7F9FF;border:1px solid #E3E9F7;border-radius:14px;overflow:hidden">'
+                . ($cover !== '' ? '<tr><td><img src="' . h($cover) . '" alt="' . $name . '" width="100%" style="display:block;width:100%;max-width:100%;height:auto"></td></tr>' : '')
+                . '<tr><td style="padding:16px 18px">'
+                . '<div style="font-family:Georgia,serif;font-size:18px;font-weight:700;color:#17307A;margin:0 0 4px">«' . $name . '»</div>'
+                . '<div style="font-size:13px;color:#6A7096;margin:0 0 12px">' . $feeTxt . ' · приём до ' . h(function_exists('ru_date') ? ru_date((string) ($sc['end_date'] ?? '')) : (string) ($sc['end_date'] ?? '')) . '</div>'
+                . '<a href="' . h($applyU) . '" style="display:inline-block;background:#17307A;color:#fff;text-decoration:none;padding:10px 18px;border-radius:9px;font-weight:700;font-size:14px;margin:0 8px 6px 0">Подать заявку</a>'
+                . '<a href="' . h($regU) . '" style="display:inline-block;background:#fff;color:#17307A;text-decoration:none;padding:9px 17px;border-radius:9px;font-weight:700;font-size:14px;border:1.5px solid #17307A">Положение</a>'
+                . '</td></tr></table>';
+        }
+        $inner = '<div style="font-size:15px;line-height:1.7;color:#33406B;margin:0 0 18px">Культурный центр «Музыкальный Мир» приглашает принять участие в новых онлайн-конкурсах культуры и искусства:</div>'
+            . $cards
+            . '<div style="font-size:13.5px;line-height:1.7;color:#6A7096;margin:8px 0 0">Моментальный приём заявки · без ограничений по возрасту и количеству заявок · профессиональное жюри · в дипломе не указывается формат «онлайн».</div>';
+    }
 
     // Кнопки-действия (email-совместимые таблицы).
     $btns = [];
@@ -210,8 +239,9 @@ function launch_fire(int $compId, string $wave, array $channels, string $when = 
         return ['ok' => false, 'msg' => 'Пост результатов — только для длинных конкурсов. По коротким платным результаты приходят на почту в течение 5 рабочих дней, отдельный пост не публикуется.'];
     }
 
-    // Сводные волны — по всем открытым конкурсам; одиночные — по одному.
-    $siblings = in_array($wave, ['d3', 'last', 'closed'], true) ? launch_open_comps() : [$c];
+    // Сводные волны (запуск/3 дня/последний/закрыт) — ОДИН пост/письмо по всем открытым
+    // конкурсам. Одиночная — только «результаты» (по конкретному длинному конкурсу).
+    $siblings = in_array($wave, ['launch', 'd3', 'last', 'closed'], true) ? launch_open_comps() : [$c];
 
     // Планирование на будущее.
     $when = trim($when);
@@ -315,15 +345,14 @@ function launch_schedule_all(string $launchDate, string $launchTime, array $chan
     $slot = function_exists('next_working_slot') ? next_working_slot($fromDt) : $fromDt;
     $runLaunch = $slot->format('Y-m-d H:i:s');
 
-    foreach ($comps as $c) {
-        insert('launch_jobs', ['competition_id' => (int) $c['id'], 'wave' => 'launch',
-            'channels' => implode(',', $channels), 'run_at' => $runLaunch, 'status' => 'scheduled']);
-    }
-
-    // Общие волны — по месяцу запуска. Представитель — первый открытый (сводные волны
-    // сами агрегируют все открытые конкурсы в один пост).
-    $ly = (int) date('Y', $lt); $lm = (int) date('n', $lt);
+    // ЗАПУСК — ОДНО общее письмо/пост по всем открытым конкурсам (не по каждому отдельно).
+    // Представитель — первый открытый конкурс; сводная волна сама агрегирует все.
     $rep = (int) $comps[0]['id'];
+    insert('launch_jobs', ['competition_id' => $rep, 'wave' => 'launch',
+        'channels' => implode(',', $channels), 'run_at' => $runLaunch, 'status' => 'scheduled']);
+
+    // Общие волны — по месяцу запуска.
+    $ly = (int) date('Y', $lt); $lm = (int) date('n', $lt);
     $d3     = launch_workday_at($ly, $lm, 22, 9, 0);
     $last   = launch_workday_at($ly, $lm, 25, 9, 0);
     $closed = launch_workday_at($ly, $lm, 25, 18, 0);
@@ -334,7 +363,7 @@ function launch_schedule_all(string $launchDate, string $launchTime, array $chan
     if (function_exists('audit')) audit('launch_plan', 'competition', 0,
         ['launch' => $runLaunch, 'd3' => $d3, 'last' => $last, 'closed' => $closed, 'comps' => count($comps), 'channels' => $channels]);
     return ['ok' => true, 'scheduled' => [
-        'launch' => ['count' => count($comps), 'run_at' => $runLaunch],
+        'launch' => ['count' => 1, 'comps' => count($comps), 'run_at' => $runLaunch],
         'd3' => $d3, 'last' => $last, 'closed' => $closed,
     ]];
 }

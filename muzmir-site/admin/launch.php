@@ -148,16 +148,15 @@ ob_start(); ?>
   <h2 style="margin:0 0 6px">Тексты постов</h2>
   <p class="small muted" style="margin:0 0 14px">Тексты по эталонам сообщества. Правьте и сохраняйте — при запуске уйдёт ваш вариант. Общие посты (3 дня / последний / закрыт) и результаты — один текст на все конкурсы.</p>
 
+  <?php $rep = (int) $openComps[0]['id']; ?>
   <div class="lp-group">
-    <div class="lp-group-t">Открытие · по каждому конкурсу</div>
-    <?php foreach ($openComps as $c): ?>
-      <button type="button" class="lp-edit" data-id="<?= (int)$c['id'] ?>" data-wave="launch" data-title="Открытие — <?= h($c['name']) ?>"><?= admin_icon('edit') ?><?= h($c['name']) ?></button>
-    <?php endforeach; ?>
+    <div class="lp-group-t">Открытие — ОДНО общее письмо и пост по всем конкурсам</div>
+    <button type="button" class="lp-edit" data-id="<?= $rep ?>" data-wave="launch" data-title="Открытие (общее по всем конкурсам)"><?= admin_icon('edit') ?>Общий пост-открытие (все <?= count($openComps) ?> конкурса)</button>
+    <div class="small muted" style="margin-top:4px">Уходит одним письмом на всю базу (карточки-афиши всех конкурсов + кнопки «Подать заявку» и «Положение») и одним постом ВКонтакте — не по каждому конкурсу отдельно.</div>
   </div>
 
   <div class="lp-group">
     <div class="lp-group-t">Общие посты (один на все конкурсы)</div>
-    <?php $rep = (int) $openComps[0]['id']; ?>
     <button type="button" class="lp-edit" data-id="<?= $rep ?>" data-wave="d3" data-title="Общий: осталось 3 дня"><?= admin_icon('edit') ?>Осталось 3 дня</button>
     <button type="button" class="lp-edit" data-id="<?= $rep ?>" data-wave="last" data-title="Общий: последний день"><?= admin_icon('edit') ?>Последний день</button>
     <button type="button" class="lp-edit" data-id="<?= $rep ?>" data-wave="closed" data-title="Общий: приём закрыт"><?= admin_icon('edit') ?>Приём закрыт</button>

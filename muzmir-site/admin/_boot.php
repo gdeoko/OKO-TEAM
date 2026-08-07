@@ -64,7 +64,8 @@ function admin_modules(): array {
         'grading'      => ['Оценка коротких', 'jury',    'grading'],
         'longcomp'     => ['Оценка длинных', 'jury',    'chart'],
         'dispatch'     => ['Отправки',     'moderator', 'send'],
-        'launch'       => ['Запуск',       'admin',     'rocket'],
+        // Пульт запуска — не в сайдбаре (4-й флаг true): открывается из раздела «Конкурсы» снизу.
+        'launch'       => ['Запуск',       'admin',     'rocket', true],
         'diploma_editor' => ['Редактор наград', 'moderator', 'edit'],
         // Скрыты из сайдбара (4-й флаг true), но доступны по ссылке из «Редактора наград».
         'diplomas'     => ['Дипломы',      'moderator', 'diplomas', true],

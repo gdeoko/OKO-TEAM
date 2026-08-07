@@ -845,6 +845,14 @@ ob_start(); ?>
     </tbody>
   </table>
 </div>
+
+<div class="card" style="margin-top:22px;display:flex;gap:16px;align-items:center;flex-wrap:wrap">
+  <div style="flex:1;min-width:240px">
+    <h3 style="margin:0 0 4px;display:flex;align-items:center;gap:8px"><?= admin_icon('rocket') ?>Запуск кампании</h3>
+    <p class="small muted" style="margin:0">Один общий запуск сразу на все конкурсы: одно письмо-афиша по базе + пост ВКонтакте, планирование на дату/время (по умолчанию 1 число месяца, в рабочее время), авто-посты 22 и 25 числа. Отсюда — никаких моментальных и ночных отправок.</p>
+  </div>
+  <a class="btn btn--primary" href="<?= a_link('launch') ?>"><?= admin_icon('rocket') ?>Открыть пульт запуска</a>
+</div>
 <?php
 $content = ob_get_clean();
 admin_layout('Конкурсы', $content, 'competitions');
