@@ -1,0 +1,254 @@
+{
+ "id": "gtape_123",
+ "app": "tape",
+ "voice": "en-US-ChristopherNeural",
+ "rate": "+6%",
+ "grade": "clean_ad",
+ "brand": {
+  "accent": "#F4C430",
+  "accent2": "#FFE08A",
+  "code": "MEASURE",
+  "logo": "tape.png",
+  "name": "3D TAPE MEASURE"
+ },
+ "music": {
+  "queries": [
+   "punchy pop energy",
+   "positive corporate light groove",
+   "upbeat indie acoustic diy",
+   "cheerful folk clap"
+  ]
+ },
+ "cover": {
+  "kicker": "DIY PROJECT",
+  "top": "CUT ONCE",
+  "big": "MEASURE\nWITH AR",
+  "q": [
+   "hand pointing phone at wall measuring"
+  ],
+  "ai": "work/gtape_123/cover_ai.png"
+ },
+ "segments": [
+  {
+   "id": "b1",
+   "text": "Stop scrolling. Every DIY starts with an honest measurement."
+  },
+  {
+   "id": "b2",
+   "text": "Skip the bent metal tape and the helper."
+  },
+  {
+   "id": "b3",
+   "text": "Point, tap, and read length off the floor."
+  },
+  {
+   "id": "b4",
+   "text": "Get width, height and area in one shot."
+  },
+  {
+   "id": "b5",
+   "text": "Export the numbers straight to a PDF."
+  },
+  {
+   "id": "b6",
+   "text": "Measure right, build once."
+  }
+ ],
+ "shots": [
+  {
+   "q": [
+    "doorway measuring frame home"
+   ],
+   "motion": "panr"
+  },
+  {
+   "q": [
+    "paint wall renovation room"
+   ],
+   "insert": "tilt",
+   "pos": "lower"
+  },
+  {
+   "q": [
+    "rolled up rug floor room"
+   ],
+   "motion": "pandown"
+  },
+  {
+   "q": [
+    "modern tv mounted on wall living room"
+   ],
+   "insert": "arch",
+   "pos": "center"
+  },
+  {
+   "q": [
+    "bedroom bed frame assembly"
+   ],
+   "motion": "panup"
+  },
+  {
+   "q": [
+    "dining table room measure"
+   ],
+   "insert": "tv",
+   "pos": "upper"
+  },
+  {
+   "q": [
+    "measuring tape metal bending closeup"
+   ],
+   "motion": "zin"
+  },
+  {
+   "q": [
+    "closet organizer measuring wardrobe"
+   ],
+   "insert": "hexagon",
+   "pos": "lower"
+  },
+  {
+   "q": [
+    "bookshelf assembly instructions floor"
+   ],
+   "motion": "zout"
+  },
+  {
+   "q": [
+    "hands arranging shelf wall decor"
+   ],
+   "insert": "diamond",
+   "pos": "lower"
+  },
+  {
+   "q": [
+    "kitchen cabinets measuring renovation"
+   ],
+   "motion": "panl"
+  },
+  {
+   "q": [
+    "office desk setup measuring space"
+   ],
+   "insert": "rrect",
+   "pos": "upper"
+  },
+  {
+   "q": [
+    "empty living room wooden floor sunlight"
+   ],
+   "motion": "panr"
+  },
+  {
+   "q": [
+    "blueprint floor plan on tablet desk"
+   ],
+   "insert": "circle",
+   "pos": "lower"
+  },
+  {
+   "q": [
+    "person relaxing on couch bright apartment"
+   ],
+   "motion": "pandown"
+  },
+  {
+   "q": [
+    "carpenter measuring wood workshop"
+   ],
+   "insert": "phone",
+   "pos": "lower"
+  }
+ ],
+ "overlays": [
+  {
+   "at": 0.191,
+   "dur": 1.75,
+   "type": "kicker",
+   "text": "WILL IT FIT?"
+  },
+  {
+   "at": 0.304,
+   "dur": 1.67,
+   "type": "kinetic",
+   "top": "JUST",
+   "big": "TAP"
+  },
+  {
+   "at": 0.389,
+   "dur": 1.69,
+   "type": "callout",
+   "text": "BUY WHAT ACTUALLY FITS",
+   "pos": "center"
+  },
+  {
+   "at": 0.553,
+   "dur": 2.6,
+   "type": "checklist",
+   "items": [
+    "Point the phone",
+    "Tap two points",
+    "Read the length",
+    "Save the project"
+   ],
+   "pos": "center"
+  },
+  {
+   "at": 0.631,
+   "dur": 1.81,
+   "type": "bars",
+   "title": "TIME TO MEASURE",
+   "unit": "s",
+   "items": [
+    [
+     "Tape + helper",
+     90
+    ],
+    [
+     "Phone",
+     10
+    ]
+   ],
+   "pos": "center"
+  },
+  {
+   "at": 0.788,
+   "dur": 2.39,
+   "type": "stat_count",
+   "to": 1,
+   "suffix": "",
+   "label": "PERSON NEEDED",
+   "pos": "center"
+  }
+ ],
+ "cta": {
+  "text": "Comment MEASURE for the app.",
+  "code": "MEASURE"
+ },
+ "caption": "Every DIY starts with an honest measurement. Skip the bent tape — point, tap, read length off the floor, export to PDF. Measure right, build once. Comment MEASURE for the app. #diy #homedecor #interiordesign #measure #movingtips #renter #apartmenttherapy #measure #camera #plan #floorplanner",
+ "yt_title": "Live Demonstration MeasureSquare iPad Edition #shorts",
+ "trend_keys": [
+  "measure",
+  "camera",
+  "plan",
+  "floorplanner",
+  "know",
+  "people",
+  "tape",
+  "few"
+ ],
+ "content_type": "viral",
+ "comp_angle": {
+  "title": "Live Demonstration - MeasureSquare iPad Edition",
+  "views": 11603,
+  "channel": "Measure Square"
+ },
+ "virality": {
+  "score": 90,
+  "notes": [
+   "angle<-11k",
+   "hook_boosted"
+  ],
+  "hook": "Stop scrolling. Every DIY starts with an honest measurement."
+ }
+}

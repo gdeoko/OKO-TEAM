@@ -24,12 +24,13 @@
   "big": "FIT THROUGH\nTHE DOOR?",
   "q": [
    "kitchen cabinets measuring renovation"
-  ]
+  ],
+  "ai": "work/gtape_114/cover_ai.png"
  },
  "segments": [
   {
    "id": "b1",
-   "text": "Big furniture, narrow doorway, moving day panic."
+   "text": "Stop scrolling. Big furniture, narrow doorway, moving day panic."
   },
   {
    "id": "b2",
@@ -243,7 +244,7 @@
   "code": "MEASURE"
  },
  "caption": "Moving day panic? Measure the doorway, measure the sofa, let the app compare. Green means go, red means turn it sideways. Comment MEASURE for the app. #diy #homedecor #interiordesign #measure #movingtips #renter #apartmenttherapy #read #really #measure #floorplanner 👉 Comment MEASURE for the link — link in bio.",
- "yt_title": "Will the sofa fit through the door? #shorts",
+ "yt_title": "Measure the Distance Between Items RoomSketcher #shorts",
  "trend_keys": [
   "read",
   "really",
@@ -254,5 +255,18 @@
   "plan",
   "tape"
  ],
- "content_type": "sales"
+ "content_type": "sales",
+ "comp_angle": {
+  "title": "Measure the Distance Between Items - RoomSketcher App",
+  "views": 8875,
+  "channel": "RoomSketcher"
+ },
+ "virality": {
+  "score": 92,
+  "notes": [
+   "angle<-8k",
+   "hook_boosted"
+  ],
+  "hook": "Stop scrolling. Big furniture, narrow doorway, moving day panic."
+ }
 }

@@ -1,0 +1,253 @@
+{
+ "id": "gbrain_122",
+ "app": "brain",
+ "voice": "en-US-BrianNeural",
+ "rate": "+4%",
+ "grade": "clean_ad",
+ "brand": {
+  "accent": "#9B5DE5",
+  "accent2": "#C9A7FF",
+  "code": "FOCUS",
+  "logo": "brain.png",
+  "name": "BRAINOVA"
+ },
+ "music": {
+  "queries": [
+   "warm inspiring",
+   "bright optimistic electronic",
+   "gentle cinematic hope"
+  ]
+ },
+ "cover": {
+  "kicker": "DOPAMINE RESET",
+  "top": "WHY YOU CAN'T",
+  "big": "SIT AND\nTHINK",
+  "q": [
+   "neurons synapse animation blue"
+  ],
+  "ai": "work/gbrain_122/cover_ai.png"
+ },
+ "segments": [
+  {
+   "id": "b1",
+   "text": "Stop scrolling. Endless scrolling floods your brain with noise."
+  },
+  {
+   "id": "b2",
+   "text": "Deep focus starts to feel almost painful."
+  },
+  {
+   "id": "b3",
+   "text": "The fix is short bursts of real challenge."
+  },
+  {
+   "id": "b4",
+   "text": "Puzzles reset your attention span, gently."
+  },
+  {
+   "id": "b5",
+   "text": "Each session rebuilds patience and calm."
+  },
+  {
+   "id": "b6",
+   "text": "Trade the scroll for five sharp minutes."
+  }
+ ],
+ "shots": [
+  {
+   "q": [
+    "person doing crossword puzzle"
+   ],
+   "insert": "diamond",
+   "pos": "lower"
+  },
+  {
+   "q": [
+    "group people names introduction"
+   ],
+   "motion": "panl"
+  },
+  {
+   "q": [
+    "focused eyes close up concentration"
+   ],
+   "insert": "phone",
+   "pos": "center"
+  },
+  {
+   "q": [
+    "chess board close up thinking"
+   ],
+   "motion": "zin"
+  },
+  {
+   "q": [
+    "runner morning sunrise energy"
+   ],
+   "insert": "tilt",
+   "pos": "center"
+  },
+  {
+   "q": [
+    "fish oil supplement pills"
+   ],
+   "motion": "pandown"
+  },
+  {
+   "q": [
+    "sticky notes wall reminders"
+   ],
+   "insert": "circle",
+   "pos": "center"
+  },
+  {
+   "q": [
+    "teacher classroom explaining"
+   ],
+   "motion": "panr"
+  },
+  {
+   "q": [
+    "elderly person smiling sharp mind"
+   ],
+   "insert": "hexagon",
+   "pos": "center"
+  },
+  {
+   "q": [
+    "brain scan mri blue"
+   ],
+   "motion": "zout"
+  },
+  {
+   "q": [
+    "person sleeping rest night"
+   ],
+   "insert": "rrect",
+   "pos": "upper"
+  },
+  {
+   "q": [
+    "neurons synapse animation blue"
+   ],
+   "motion": "panup"
+  }
+ ],
+ "overlays": [
+  {
+   "at": 0.032,
+   "dur": 2.4,
+   "type": "kicker",
+   "text": "MEMORY 101"
+  },
+  {
+   "at": 0.137,
+   "dur": 1.88,
+   "type": "callout",
+   "text": "STREAKS BEAT WILLPOWER",
+   "pos": "center"
+  },
+  {
+   "at": 0.333,
+   "dur": 2.26,
+   "type": "kinetic",
+   "top": "BEAT",
+   "big": "THE FOG"
+  },
+  {
+   "at": 0.348,
+   "dur": 1.61,
+   "type": "ticker",
+   "to": 5,
+   "suffix": "min",
+   "label": "A DAY",
+   "pos": "lower"
+  },
+  {
+   "at": 0.37,
+   "dur": 1.62,
+   "type": "bars",
+   "title": "RECALL SPEED",
+   "unit": "%",
+   "items": [
+    [
+     "Week 1",
+     100
+    ],
+    [
+     "Week 3",
+     147
+    ]
+   ],
+   "pos": "center"
+  },
+  {
+   "at": 0.542,
+   "dur": 1.7,
+   "type": "chips",
+   "items": [
+    "SPEED",
+    "MEMORY",
+    "FOCUS",
+    "LOGIC"
+   ],
+   "pos": "upper"
+  },
+  {
+   "at": 0.618,
+   "dur": 2.03,
+   "type": "stat_count",
+   "to": 5,
+   "suffix": "min",
+   "label": "A DAY",
+   "pos": "center"
+  },
+  {
+   "at": 0.634,
+   "dur": 1.79,
+   "type": "lowerthird",
+   "title": "DAILY STREAK",
+   "sub": "compounds fast"
+  },
+  {
+   "at": 0.649,
+   "dur": 2.23,
+   "type": "gauge",
+   "to": 5,
+   "max": 10,
+   "suffix": "min",
+   "label": "PER DAY",
+   "pos": "center"
+  }
+ ],
+ "cta": {
+  "text": "Comment FOCUS for the app.",
+  "code": "FOCUS"
+ },
+ "caption": "USEFUL: Endless scrolling makes deep focus feel painful. Short bursts of real challenge reset your attention span — trade the scroll for five sharp minutes. Comment FOCUS for the app. #brainhealth #memory #focus #productivity #selfimprovement #mentalhealth #learning #games #states #out #memory",
+ "yt_title": "This Guy Can Teach You How #shorts",
+ "trend_keys": [
+  "games",
+  "states",
+  "out",
+  "memory",
+  "altered",
+  "brain",
+  "get",
+  "can"
+ ],
+ "content_type": "useful",
+ "comp_angle": {
+  "title": "This Guy Can Teach You How to Memorize Anything",
+  "views": 7510529,
+  "channel": "WIRED"
+ },
+ "virality": {
+  "score": 91,
+  "notes": [
+   "angle<-7510k",
+   "hook_boosted"
+  ],
+  "hook": "Stop scrolling. Endless scrolling floods your brain with noise."
+ }
+}

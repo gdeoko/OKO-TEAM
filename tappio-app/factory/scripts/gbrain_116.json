@@ -24,12 +24,13 @@
   "big": "LIKE A\nMUSCLE",
   "q": [
    "person forgetting keys frustrated"
-  ]
+  ],
+  "ai": "work/gbrain_116/cover_ai.png"
  },
  "segments": [
   {
    "id": "b1",
-   "text": "Focus is not a gift, it is a muscle."
+   "text": "Stop scrolling. Focus isn't a gift, it's a muscle."
   },
   {
    "id": "b2",
@@ -240,7 +241,7 @@
   "code": "FOCUS"
  },
  "caption": "USEFUL: Focus is a muscle, not a gift. Five minutes of adaptive puzzles a day, and in two weeks distractions lose their grip. Start tomorrow. Comment FOCUS for the app. #brainhealth #memory #focus #productivity #selfimprovement #mentalhealth #learning #increase #beats #brain #concentration",
- "yt_title": "Train your focus like a muscle #shorts",
+ "yt_title": "What Is Your Mental Age Quick #shorts",
  "trend_keys": [
   "increase",
   "beats",
@@ -251,5 +252,18 @@
   "focus",
   "improve"
  ],
- "content_type": "useful"
+ "content_type": "useful",
+ "comp_angle": {
+  "title": "What Is Your Mental Age? (Quick Test)",
+  "views": 14296649,
+  "channel": "BRIGHT SIDE"
+ },
+ "virality": {
+  "score": 92,
+  "notes": [
+   "angle<-14296k",
+   "hook_boosted"
+  ],
+  "hook": "Stop scrolling. Focus isn't a gift, it's a muscle."
+ }
 }

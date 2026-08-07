@@ -25,12 +25,13 @@
   "big": "THAT ACTUALLY\nFITS",
   "q": [
    "bookshelf assembly instructions floor"
-  ]
+  ],
+  "ai": "work/gtape_120/cover_ai.png"
  },
  "segments": [
   {
    "id": "b1",
-   "text": "That online sofa looks perfect on screen."
+   "text": "Stop scrolling. That online sofa looks perfect on screen."
   },
   {
    "id": "b2",
@@ -217,7 +218,7 @@
   "code": "MEASURE"
  },
  "caption": "That online sofa looks perfect — until it swallows the room. Measure the real space, compare to the listing, order only what fits. Fewer returns, zero regret. Comment MEASURE for the app. #diy #homedecor #interiordesign #measure #movingtips #renter #apartmenttherapy #people #app #tape #measure",
- "yt_title": "Buy furniture that actually fits #shorts",
+ "yt_title": "Measure App for iPhone #shorts",
  "trend_keys": [
   "people",
   "app",
@@ -228,5 +229,18 @@
   "know",
   "measuring"
  ],
- "content_type": "viral"
+ "content_type": "viral",
+ "comp_angle": {
+  "title": "Measure App for iPhone",
+  "views": 26335,
+  "channel": "dottotech"
+ },
+ "virality": {
+  "score": 90,
+  "notes": [
+   "angle<-26k",
+   "hook_boosted"
+  ],
+  "hook": "Stop scrolling. That online sofa looks perfect on screen."
+ }
 }

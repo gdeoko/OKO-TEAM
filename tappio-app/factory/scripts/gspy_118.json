@@ -24,12 +24,13 @@
   "big": "ROOM\nSWEEP",
   "q": [
    "person relaxing bed phone night"
-  ]
+  ],
+  "ai": "work/gspy_118/cover_ai.png"
  },
  "segments": [
   {
    "id": "b1",
-   "text": "New room? Run this thirty-second sweep first."
+   "text": "Stop scrolling. New room? Run this thirty-second sweep first."
   },
   {
    "id": "b2",
@@ -218,7 +219,7 @@
   "code": "PRIVACY"
  },
  "caption": "USEFUL: Every new room deserves a 30-second sweep: scan the Wi-Fi, kill the lights, pan for glints, check the bed sight-lines, unplug the unknowns. Comment PRIVACY for the app. #privacy #airbnb #travelsafety #hiddencamera #traveltips #hotelroom #safetytips #cameras #hotel #find #illegal",
- "yt_title": "30-second hidden camera room sweep #shorts",
+ "yt_title": "How to Find HIDDEN CAMERAS in #shorts",
  "trend_keys": [
   "cameras",
   "hotel",
@@ -229,5 +230,18 @@
   "most",
   "camera"
  ],
- "content_type": "useful"
+ "content_type": "useful",
+ "comp_angle": {
+  "title": "How to Find HIDDEN CAMERAS in Airbnb & Hotel (5-Minute Scan)",
+  "views": 2159815,
+  "channel": "Project Untethered"
+ },
+ "virality": {
+  "score": 90,
+  "notes": [
+   "angle<-2159k",
+   "hook_boosted"
+  ],
+  "hook": "Stop scrolling. New room? Run this thirty-second sweep first."
+ }
 }

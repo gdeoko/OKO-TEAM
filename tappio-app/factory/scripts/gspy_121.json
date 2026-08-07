@@ -24,12 +24,13 @@
   "big": "A CAM IN\nTHE VENT",
   "q": [
    "curtains window hotel evening"
-  ]
+  ],
+  "ai": "work/gspy_121/cover_ai.png"
  },
  "segments": [
   {
    "id": "b1",
-   "text": "A traveler felt watched in a quiet rental."
+   "text": "Stop scrolling. A traveler felt watched in a quiet rental."
   },
   {
    "id": "b2",
@@ -195,7 +196,7 @@
   "code": "PRIVACY"
  },
  "caption": "A traveler felt watched. One Wi-Fi scan traced a strange device to the vent — a pinhole cam behind the grille. Trust the scan, not just the vibe. Comment PRIVACY for the app. #privacy #airbnb #travelsafety #hiddencamera #traveltips #hotelroom #safetytips #hotels #airbnb #find #hidden",
- "yt_title": "She found a hidden camera in the vent #shorts",
+ "yt_title": "I Rented an AirBnB to Look #shorts",
  "trend_keys": [
   "hotels",
   "airbnb",
@@ -206,5 +207,18 @@
   "cameras",
   "former"
  ],
- "content_type": "viral"
+ "content_type": "viral",
+ "comp_angle": {
+  "title": "I Rented an AirBnB to Look for Hidden Cameras",
+  "views": 1950593,
+  "channel": "Linus Tech Tips"
+ },
+ "virality": {
+  "score": 88,
+  "notes": [
+   "angle<-1950k",
+   "hook_boosted"
+  ],
+  "hook": "Stop scrolling. A traveler felt watched in a quiet rental."
+ }
 }

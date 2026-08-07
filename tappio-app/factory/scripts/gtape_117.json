@@ -24,12 +24,13 @@
   "big": "WITHOUT\nHOLES",
   "q": [
    "hands arranging shelf wall decor"
-  ]
+  ],
+  "ai": "work/gtape_117/cover_ai.png"
  },
  "segments": [
   {
    "id": "b1",
-   "text": "Renting means no guessing and no wall damage."
+   "text": "Stop scrolling. Renting means no guessing and no wall damage."
   },
   {
    "id": "b2",
@@ -205,7 +206,7 @@
   "code": "MEASURE"
  },
  "caption": "Renting? Measure the wall, drop a virtual frame, line up shelves before a single nail. Shop with real sizes and keep your deposit. Comment MEASURE for the app. #diy #homedecor #interiordesign #measure #movingtips #renter #apartmenttherapy #living #room #tips #interior",
- "yt_title": "Decorate a rental without holes #shorts",
+ "yt_title": "How Accurate Is The Default Measure #shorts",
  "trend_keys": [
   "living",
   "room",
@@ -216,5 +217,18 @@
   "furniture",
   "design"
  ],
- "content_type": "viral"
+ "content_type": "viral",
+ "comp_angle": {
+  "title": "How Accurate Is The Default Measure App? || Dr Decks",
+  "views": 54592,
+  "channel": "drdecks"
+ },
+ "virality": {
+  "score": 89,
+  "notes": [
+   "angle<-54k",
+   "hook_boosted"
+  ],
+  "hook": "Stop scrolling. Renting means no guessing and no wall damage."
+ }
 }

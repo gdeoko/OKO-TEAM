@@ -25,12 +25,13 @@
   "big": "ANY NAME\nFOR GOOD",
   "q": [
    "sticky notes wall reminders"
-  ]
+  ],
+  "ai": "work/gbrain_119/cover_ai.png"
  },
  "segments": [
   {
    "id": "b1",
-   "text": "Hear the name, then say it back out loud."
+   "text": "Stop scrolling. Hear the name, then say it back out loud."
   },
   {
    "id": "b2",
@@ -227,7 +228,7 @@
   "code": "FOCUS"
  },
  "caption": "Say it back, link it to an image, repeat after ten seconds — that triple hit locks a name in. Train the habit with quick daily reps. Comment FOCUS for the app. #brainhealth #memory #focus #productivity #selfimprovement #mentalhealth #learning #memory #brain #music #power 👉 Comment FOCUS for the link — link in bio.",
- "yt_title": "Remember any name for good #shorts",
+ "yt_title": "Mental Age Test What Is Your #shorts",
  "trend_keys": [
   "memory",
   "brain",
@@ -238,5 +239,18 @@
   "focus",
   "increase"
  ],
- "content_type": "sales"
+ "content_type": "sales",
+ "comp_angle": {
+  "title": "Mental Age Test  - What Is Your Mental Age? | Personality Test | Mister Test",
+  "views": 10391977,
+  "channel": "Mister Test"
+ },
+ "virality": {
+  "score": 91,
+  "notes": [
+   "angle<-10391k",
+   "hook_boosted"
+  ],
+  "hook": "Stop scrolling. Hear the name, then say it back out loud."
+ }
 }
