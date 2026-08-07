@@ -153,23 +153,34 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $id   = (int) input('id');
 
     /* ---- ДИПЛОМ ---- */
-    if ($kind === 'diploma' && $id) {
+    // Действия применяются ко ВСЕЙ заявке (одна заявка = одно письмо): если передан
+    // app — берём все её неотправленные дипломы (основной+доп+именной+благодарность),
+    // иначе одиночный id (обратная совместимость).
+    $appG = (int) input('app');
+    if ($kind === 'diploma' && ($id || $appG)) {
+        $ids = [];
+        if ($appG > 0) {
+            $ids = array_map('intval', array_column(all("SELECT id FROM diplomas WHERE application_id=? AND sent_at IS NULL", [$appG]), 'id'));
+        } elseif ($id) { $ids = [$id]; }
+        if (!$ids && !in_array($do, ['dip_save'], true)) disp_done(false, 'Дипломы заявки не найдены.');
+        $inHolder = $ids ? implode(',', array_fill(0, count($ids), '?')) : '0';
+
         if ($do === 'resched') {
             $dt = trim(input('scheduled_at'));
             if ($dt === '') disp_done(false, 'Укажите дату и время.');
             $norm = date('Y-m-d H:i:s', strtotime(str_replace('T', ' ', $dt)) ?: time());
-            update('diplomas', ['scheduled_at' => $norm], 'id=:id', ['id' => $id]);
-            audit('dispatch_resched', 'diploma', $id, ['at' => $norm]);
-            disp_done(true, 'Дата отправки диплома изменена на ' . disp_dt($norm) . '.', ['when' => disp_dt($norm)]);
+            q("UPDATE diplomas SET scheduled_at=? WHERE id IN ($inHolder)", array_merge([$norm], $ids));
+            audit('dispatch_resched', 'diploma', $ids[0] ?? 0, ['at' => $norm, 'app' => $appG, 'count' => count($ids)]);
+            disp_done(true, 'Дата отправки письма с дипломами изменена на ' . disp_dt($norm) . '.', ['when' => disp_dt($norm)]);
         } elseif ($do === 'sendnow') {
-            update('diplomas', ['scheduled_at' => '2000-01-01 00:00:00'], 'id=:id', ['id' => $id]);
+            q("UPDATE diplomas SET scheduled_at='2000-01-01 00:00:00' WHERE id IN ($inHolder)", $ids);
             @exec('cd ' . escapeshellarg(BASE_PATH) . ' && php cron/send_diplomas.php > /dev/null 2>&1 &');
-            audit('dispatch_sendnow', 'diploma', $id, []);
-            disp_done(true, 'Диплом поставлен на моментальную отправку (уйдёт в течение минуты).', ['remove' => true]);
+            audit('dispatch_sendnow', 'diploma', $ids[0] ?? 0, ['app' => $appG, 'count' => count($ids)]);
+            disp_done(true, 'Письмо с дипломами (все по заявке) поставлено на моментальную отправку — уйдёт одним письмом в течение минуты.', ['remove' => true]);
         } elseif ($do === 'cancel') {
-            q("DELETE FROM diplomas WHERE id=? AND sent_at IS NULL", [$id]);
-            audit('dispatch_cancel', 'diploma', $id, []);
-            disp_done(true, 'Плановая отправка диплома отменена.', ['remove' => true]);
+            q("DELETE FROM diplomas WHERE id IN ($inHolder) AND sent_at IS NULL", $ids);
+            audit('dispatch_cancel', 'diploma', $ids[0] ?? 0, ['app' => $appG, 'count' => count($ids)]);
+            disp_done(true, 'Плановая отправка дипломов заявки отменена.', ['remove' => true]);
         } elseif ($do === 'dip_save') {
             // Редактирование ДИПЛОМА прямо в «Отправках»: правим данные заявки (диплом
             // собирается строго из неё), кэш PDF чистим — пересоберётся с правками.
@@ -398,17 +409,35 @@ $sentRaw = all("SELECT * FROM mail_queue WHERE status='sent' ORDER BY sent_at DE
 
 /* ---- Нормализация в единый список ---- */
 $queue = [];
-foreach ($diplomasRaw as $d) {
-    $who = $d['is_group'] ? (string) $d['group_name'] : (string) $d['full_name'];
+// Группируем дипломы ПО ЗАЯВКЕ: одна заявка = одна карточка = одно письмо (основной +
+// доп + именной + благодарность уходят вместе). Разные заявки никогда не объединяются.
+$dipGroups = [];
+foreach ($diplomasRaw as $d) { $dipGroups[(int) $d['application_id']][] = $d; }
+foreach ($dipGroups as $appId => $items) {
+    $first = $items[0];
+    $who = $first['is_group'] ? (string) $first['group_name'] : (string) $first['full_name'];
+    // Список типов диплома в письме («Основной · ЛАУРЕАТ II», «Спец-награда · …» и т.д.).
+    $parts = [];
+    $when = null;
+    foreach ($items as $it) {
+        $lbl = $dTypeLbl[(string) $it['type']] ?? (string) $it['type'];
+        $res = trim((string) $it['result']);
+        $parts[] = $lbl . ($res !== '' ? ' · ' . $res : '');
+        $sc = trim((string) ($it['scheduled_at'] ?? ''));
+        if ($sc !== '' && ($when === null || $sc < $when)) $when = $sc;
+    }
+    $primaryId = (int) $first['id'];
+    $title = 'Дипломы по заявке (' . count($items) . ' в одном письме): ' . implode(' + ', $parts);
     $queue[] = [
-        'kind' => 'diploma', 'id' => (int) $d['id'], 'mtype' => '',
-        'type_label' => ($dTypeLbl[(string) $d['type']] ?? (string) $d['type']),
-        'who' => $who, 'email' => (string) $d['email'], 'phone' => (string) ($d['phone'] ?? ''),
-        'comp' => (string) $d['comp_name'], 'number' => (string) $d['app_number'],
-        'title' => ($dTypeLbl[(string) $d['type']] ?? (string) $d['type']) . ' · ' . (string) $d['result'],
-        'when' => (string) ($d['scheduled_at'] ?? ''),
-        'search' => mb_strtolower(trim("$who {$d['email']} {$d['phone']} {$d['comp_name']} {$d['app_number']} {$d['result']}")),
-        'raw' => $d,
+        'kind' => 'diploma', 'id' => $primaryId, 'app' => (int) $appId, 'mtype' => '',
+        'type_label' => 'Письмо с дипломами',
+        'who' => $who, 'email' => (string) $first['email'], 'phone' => (string) ($first['phone'] ?? ''),
+        'comp' => (string) $first['comp_name'], 'number' => (string) $first['app_number'],
+        'title' => $title,
+        'dip_ids' => implode(',', array_map(fn($x) => (int) $x['id'], $items)),
+        'when' => (string) ($when ?? ''),
+        'search' => mb_strtolower(trim("$who {$first['email']} {$first['phone']} {$first['comp_name']} {$first['app_number']} " . implode(' ', array_column($items, 'result')))),
+        'raw' => $first,
     ];
 }
 foreach ($resultsRaw as $r) {
@@ -604,13 +633,13 @@ tr.disp-row.gone{opacity:0;transition:.4s}
             <button class="btn btn--ghost btn--sm" data-act="resched" data-kind="result" data-id="<?= $iid ?>" data-when="w-<?= $rid ?>" data-row="<?= $rid ?>" title="Перенести отправку результата">OK</button>
             <button class="btn btn--primary btn--sm" data-act="sendnow" data-kind="result" data-id="<?= $iid ?>" data-row="<?= $rid ?>" data-confirm="Отправить результат участнику сейчас?"><?= admin_icon('send') ?>Сейчас</button>
             <button class="btn btn--ghost btn--sm" data-act="cancel" data-kind="result" data-id="<?= $iid ?>" data-row="<?= $rid ?>" data-confirm="Отменить плановую отправку результата?" style="color:#C0392B;border-color:#C0392B"><?= admin_icon('trash') ?></button>
-          <?php elseif ($k === 'diploma'): ?>
+          <?php elseif ($k === 'diploma'): $appId = (int)($it['app'] ?? 0); ?>
             <input type="datetime-local" id="w-<?= $rid ?>" value="<?= h($it['when'] ? date('Y-m-d\TH:i', strtotime($it['when'])) : '') ?>">
-            <button class="btn btn--ghost btn--sm" data-act="resched" data-kind="diploma" data-id="<?= $iid ?>" data-when="w-<?= $rid ?>" data-row="<?= $rid ?>" title="Изменить дату/время">OK</button>
-            <button class="btn btn--primary btn--sm" data-act="sendnow" data-kind="diploma" data-id="<?= $iid ?>" data-row="<?= $rid ?>"><?= admin_icon('send') ?>Сейчас</button>
-            <button class="btn btn--ghost btn--sm" data-act="editdip" data-id="<?= $iid ?>" data-row="<?= $rid ?>" title="Редактировать диплом (данные + предпросмотр)"><?= admin_icon('edit') ?></button>
+            <button class="btn btn--ghost btn--sm" data-act="resched" data-kind="diploma" data-id="<?= $iid ?>" data-app="<?= $appId ?>" data-when="w-<?= $rid ?>" data-row="<?= $rid ?>" title="Изменить дату/время (всё письмо)">OK</button>
+            <button class="btn btn--primary btn--sm" data-act="sendnow" data-kind="diploma" data-id="<?= $iid ?>" data-app="<?= $appId ?>" data-row="<?= $rid ?>" data-confirm="Отправить письмо со всеми дипломами этой заявки сейчас?"><?= admin_icon('send') ?>Сейчас</button>
+            <button class="btn btn--ghost btn--sm" data-act="editdip" data-id="<?= $iid ?>" data-row="<?= $rid ?>" title="Редактировать дипломы заявки (данные + предпросмотр)"><?= admin_icon('edit') ?></button>
             <a class="btn btn--ghost btn--sm" href="<?= h(url('/diploma-view/'.rawurlencode((string)$it['number']))) ?>" target="_blank" rel="noopener" title="Предпросмотр диплома"><?= admin_icon('eye') ?></a>
-            <button class="btn btn--ghost btn--sm" data-act="cancel" data-kind="diploma" data-id="<?= $iid ?>" data-row="<?= $rid ?>" data-confirm="Отменить плановую отправку диплома?" style="color:#C0392B;border-color:#C0392B"><?= admin_icon('trash') ?></button>
+            <button class="btn btn--ghost btn--sm" data-act="cancel" data-kind="diploma" data-id="<?= $iid ?>" data-app="<?= $appId ?>" data-row="<?= $rid ?>" data-confirm="Отменить отправку письма со всеми дипломами этой заявки?" style="color:#C0392B;border-color:#C0392B"><?= admin_icon('trash') ?></button>
           <?php elseif ($k === 'mail'): ?>
             <input type="datetime-local" id="w-<?= $rid ?>" value="<?= h($it['when'] ? date('Y-m-d\TH:i', strtotime($it['when'])) : '') ?>">
             <button class="btn btn--ghost btn--sm" data-act="resched" data-kind="mail" data-id="<?= $iid ?>" data-when="w-<?= $rid ?>" data-row="<?= $rid ?>" title="Изменить/держать">OK</button>
@@ -788,6 +817,8 @@ tr.disp-row.gone{opacity:0;transition:.4s}
     var doMap={sendnow:'sendnow',cancel:'cancel',resched:'resched',dup:'duplicate',
                made:'made',ship:'ship',redispatch:'redispatch'};
     var payload={kind:kind,id:id,do:doMap[act]};
+    // Дипломы: действие применяется ко всей заявке (одно письмо) — передаём app.
+    var appAttr=b.getAttribute('data-app'); if(appAttr && appAttr!=='0') payload.app=appAttr;
 
     if(act==='resched'){ var wi=document.getElementById(b.getAttribute('data-when')); payload.scheduled_at = wi?wi.value:''; }
     if(act==='ship'){ var ti=document.getElementById(b.getAttribute('data-track')); if(!ti||!ti.value.trim()){toast('Введите трек-номер',true);return;} payload.tracking=ti.value.trim(); }
