@@ -273,3 +273,94 @@ function result_mail_send(int $appId): bool {
 
     return $queued;
 }
+
+/**
+ * ПЕРСОНАЛЬНОЕ письмо результата для ДЛИННОГО конкурса (results_mode='list').
+ * Отправляется КАЖДОМУ участнику отдельно (как по короткому), НЕ 1:1 с ВК-постом:
+ *   • афиша «РЕЗУЛЬТАТЫ КОНКУРСА» сверху; результат + карточка заявки;
+ *   • кнопки: заказать наградной материал (раздел наград конкурса), список результатов
+ *     на сайте, список результатов в ВК; вложение — файл списка результатов (DOCX);
+ *   • НИКАКОЙ кнопки «Подать заявку»; + in-app/колокол уведомление участнику.
+ * @param int    $appId     заявка участника
+ * @param string $vkUrl     ссылка на ВК-пост/сообщество с общим списком
+ * @param string $docxAbs   абсолютный путь к файлу списка (вложение), '' — без вложения
+ * @param string $docxUrl   публичный URL файла списка (для кнопки «Скачать»), '' — без кнопки
+ * @param string $posterUrl URL афиши «РЕЗУЛЬТАТЫ КОНКУРСА» (сверху письма), '' — без афиши
+ */
+function results_long_mail_send(int $appId, string $vkUrl = '', string $docxAbs = '', string $docxUrl = '', string $posterUrl = ''): bool {
+    $a = one("SELECT * FROM applications WHERE id=?", [$appId]);
+    if (!$a) return false;
+    $c = one("SELECT * FROM competitions WHERE id=?", [(int) $a['competition_id']]) ?: [];
+    $result = trim((string) ($a['result'] ?? ''));
+    if ($result === '') return false;
+
+    [$subject, $html] = results_long_mail_html($a, $c, $vkUrl, $docxUrl, $posterUrl);
+
+    $queued = false;
+    $whoName = trim((string) ($a['group_name'] ?? '')) !== '' ? trim((string) $a['group_name']) : trim((string) ($a['full_name'] ?? ''));
+    if (trim((string) ($a['email'] ?? '')) !== '') {
+        $queued = mail_queue((string) $a['email'], $whoName, $subject, $html, $docxAbs) > 0;
+    }
+    // In-app + колокол.
+    $uid = (int) ($a['user_id'] ?? 0);
+    if ($uid > 0) {
+        notify_user($uid, 'Результаты конкурса «' . (string) ($c['name'] ?? '') . '» — ' . $result,
+            'Заявка №' . (string) $a['number'] . '. Списки результатов — на сайте и в ВК. Можно заказать наградной материал.',
+            url('/results/' . (string) ($c['slug'] ?? '')), 'trophy');
+    }
+    return $queued;
+}
+
+/**
+ * Чистая сборка HTML персонального письма результата длинного конкурса (для отправки И
+ * для предпросмотра). Возвращает [subject, html]. Без «Подать заявку».
+ */
+function results_long_mail_html(array $a, array $c, string $vkUrl = '', string $docxUrl = '', string $posterUrl = ''): array {
+    $result = trim((string) ($a['result'] ?? '')) ?: 'ЛАУРЕАТ I СТЕПЕНИ';
+    $navy = RM_NAVY; $navy2 = RM_NAVY_2; $gold = RM_GOLD;
+    $whoName = trim((string) ($a['group_name'] ?? '')) !== '' ? trim((string) $a['group_name']) : trim((string) ($a['full_name'] ?? ''));
+    $hello = $whoName !== '' ? 'Здравствуйте, ' . h($whoName) . '!' : 'Здравствуйте!';
+    $extra = trim((string) ($a['extra_diploma'] ?? ''));
+
+    $inner = '';
+    // Афиша «РЕЗУЛЬТАТЫ КОНКУРСА» сверху.
+    if ($posterUrl !== '') {
+        $inner .= '<div style="margin:0 0 20px;text-align:center;"><img src="' . h($posterUrl) . '" alt="Результаты конкурса" style="max-width:100%;border-radius:14px;border:1px solid ' . RM_LINE . ';"></div>';
+    }
+    $inner .= '<p style="margin:0 0 14px;">' . $hello . '</p>'
+        . '<p style="margin:0 0 18px;">Культурный центр «Музыкальный Мир» подвёл итоги конкурса «' . h((string) ($c['name'] ?? '')) . '». '
+        . 'С радостью объявляем Ваш результат.</p>';
+    // Крупно результат.
+    $inner .= '<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin:0 0 20px;border-radius:16px;overflow:hidden;">'
+        . '<tr><td style="background:' . $navy . ';background:linear-gradient(135deg,' . $navy . ' 0%,' . $navy2 . ' 100%);padding:28px 26px;text-align:center;">'
+        . '<div style="font-size:12px;letter-spacing:.2em;text-transform:uppercase;color:rgba(255,255,255,.75);margin-bottom:10px;">Ваш результат</div>'
+        . '<div style="font-family:Georgia,serif;font-size:30px;line-height:1.25;font-weight:800;color:' . $gold . ';letter-spacing:.03em;">' . h($result) . '</div>'
+        . '</td></tr></table>';
+    if ($extra !== '') {
+        $inner .= '<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin:0 0 18px;background:#FBF4E1;border:1px solid #EAD9A8;border-radius:14px;">'
+            . '<tr><td style="padding:16px 22px;text-align:center;">'
+            . '<div style="font-size:12px;letter-spacing:.12em;text-transform:uppercase;color:#A07A1E;margin-bottom:4px;">Дополнительный диплом</div>'
+            . '<div style="font-family:Georgia,serif;font-size:18px;font-weight:700;color:' . $gold . ';">' . h($extra) . '</div>'
+            . '</td></tr></table>';
+    }
+    $inner .= rm_mail_app_card($a, $c);
+    $inner .= '<p style="margin:14px 0 0;color:' . RM_MUTED . ';font-size:14px;">Полный список результатов конкурса — на сайте, в нашем сообществе ВКонтакте и во вложении к этому письму.</p>';
+
+    // Кнопки: заказать награды (hero) + список на сайте + список в ВК + скачать файл.
+    $awardsUrl  = url('/awards') . '?comp=' . (int) $a['competition_id'];
+    $resultsUrl = url('/results/' . (string) ($c['slug'] ?? ''));
+    $hero = mm_cta_primary($awardsUrl, 'Заказать наградной материал', 'Кубки, медали, оригиналы дипломов по результату');
+    $actions = [['Список результатов на сайте', $resultsUrl]];
+    if ($vkUrl !== '')  $actions[] = ['Список результатов в ВКонтакте', $vkUrl];
+    if ($docxUrl !== '') $actions[] = ['Скачать список результатов (DOCX)', $docxUrl];
+    $actions[] = ['Оставить отзыв', url('/reviews')];
+
+    $subject = 'Результаты конкурса «' . (string) ($c['name'] ?? '') . '» — ' . $result;
+    $html = mm_email_tx($inner, [
+        'preheader' => 'Итоги конкурса «' . (string) ($c['name'] ?? '') . '»: ' . $result . '.',
+        'hero'      => $hero,
+        'actions'   => $actions,
+        'thanks'    => true,
+    ]);
+    return [$subject, $html];
+}

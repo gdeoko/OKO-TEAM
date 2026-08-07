@@ -29,8 +29,54 @@ if ((string) input('do') === 'email_preview') {
     $c = launch_norm_comp($c);
     $sib = in_array($wave, ['d3', 'last', 'closed'], true) ? launch_open_comps() : [$c];
     header('Content-Type: text/html; charset=utf-8');
+    if ($wave === 'results') {
+        // Результаты длинного — ПЕРСОНАЛЬНОЕ письмо участнику (образец), без «Подать заявку».
+        if (is_file(BASE_PATH . '/core/result_mail.php')) require_once BASE_PATH . '/core/result_mail.php';
+        $sample = one("SELECT * FROM applications WHERE competition_id=? AND COALESCE(result,'')<>'' ORDER BY id DESC LIMIT 1", [$cid])
+            ?: one("SELECT * FROM applications WHERE competition_id=? ORDER BY id DESC LIMIT 1", [$cid])
+            ?: ['full_name' => 'Иванова Анна Сергеевна', 'number' => 'VR-2026-00001', 'result' => 'ЛАУРЕАТ I СТЕПЕНИ', 'competition_id' => $cid, 'nomination' => 'Вокальное искусство', 'age_category' => '13-15 лет'];
+        $poster = launch_cover_path($c, 'results', [$c]);
+        $posterUrl = ($poster !== '' && str_starts_with($poster, BASE_PATH . '/public')) ? url(substr($poster, strlen(BASE_PATH . '/public'))) : '';
+        $docxUrl = is_file(BASE_PATH . '/public/uploads/launch/results_' . $cid . '.docx') ? url('/uploads/launch/results_' . $cid . '.docx') : '';
+        if (function_exists('results_long_mail_html')) {
+            [$subj, $html] = results_long_mail_html($sample, $c, (string) cfgv('org_vk'), $docxUrl, $posterUrl);
+            echo $html; exit;
+        }
+    }
     echo launch_email_html($c, $wave, $sib);
     exit;
+}
+
+/* --- Загрузка/замена афиши поста (multipart) --- */
+if ((string) input('do') === 'cover_upload') {
+    header('Content-Type: application/json; charset=utf-8');
+    if (!csrf_check() || !user_can('admin')) json_out(['ok' => false, 'msg' => 'Нет доступа'], 403);
+    $cid = (int) input('id'); $wave = (string) input('wave');
+    if (!$cid || !isset(launch_waves()[$wave])) json_out(['ok' => false, 'msg' => 'Не найдено'], 404);
+    if (empty($_FILES['cover']) || ($_FILES['cover']['error'] ?? 1) !== UPLOAD_ERR_OK) json_out(['ok' => false, 'msg' => 'Файл не загружен'], 422);
+    $f = $_FILES['cover'];
+    if (!is_uploaded_file($f['tmp_name'])) json_out(['ok' => false, 'msg' => 'Ошибка загрузки'], 422);
+    if ((int) $f['size'] > 15 * 1024 * 1024) json_out(['ok' => false, 'msg' => 'Файл слишком большой (до 15 МБ)'], 413);
+    $ext = strtolower(pathinfo((string) $f['name'], PATHINFO_EXTENSION));
+    if (!in_array($ext, ['jpg', 'jpeg', 'png', 'webp'], true)) json_out(['ok' => false, 'msg' => 'Только фото (jpg/png/webp)'], 422);
+    $mime = function_exists('mime_content_type') ? (string) @mime_content_type($f['tmp_name']) : '';
+    if ($mime !== '' && !preg_match('~^image/~', $mime)) json_out(['ok' => false, 'msg' => 'Файл не похож на изображение'], 422);
+    $dir = BASE_PATH . '/public/uploads/launch/';
+    if (!is_dir($dir)) @mkdir($dir, 0775, true);
+    $name = 'cover_' . $cid . '_' . $wave . '_' . bin2hex(random_bytes(4)) . '.' . $ext;
+    if (!@move_uploaded_file($f['tmp_name'], $dir . $name)) json_out(['ok' => false, 'msg' => 'Не удалось сохранить'], 500);
+    set_setting('launch_cover:' . $cid . ':' . $wave, 'uploads/launch/' . $name);
+    audit('launch_cover_set', 'competition', $cid, ['wave' => $wave]);
+    json_out(['ok' => true, 'msg' => 'Афиша обновлена.']);
+}
+if ((string) input('do') === 'cover_remove') {
+    header('Content-Type: application/json; charset=utf-8');
+    if (!csrf_check() || !user_can('admin')) json_out(['ok' => false, 'msg' => 'Нет доступа'], 403);
+    $cid = (int) input('id'); $wave = (string) input('wave');
+    if (!$cid || !isset(launch_waves()[$wave])) json_out(['ok' => false, 'msg' => 'Не найдено'], 404);
+    set_setting('launch_cover:' . $cid . ':' . $wave, '__none__');
+    audit('launch_cover_del', 'competition', $cid, ['wave' => $wave]);
+    json_out(['ok' => true, 'msg' => 'Афиша удалена.']);
 }
 
 /* ---------------- AJAX / POST-обработчики ---------------- */

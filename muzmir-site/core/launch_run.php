@@ -76,8 +76,34 @@ function launch_wave_text(array $c, string $wave, array $siblings = []): string 
     return launch_wave_default($c, $wave, $siblings);
 }
 
-/** Абсолютный путь к файлу афиши конкурса (для ВК-фото/сторис) или ''. */
-function launch_cover_path(array $c): string {
+/**
+ * Абсолютный путь к афише поста (для ВК-фото/сторис) или ''.
+ *  1) если админ загрузил свою афишу для этой волны (settings.launch_cover:{cid}:{wave}) — она;
+ *  2) для общих постов (d3/last/closed) и результатов — авто-композит (launch_poster);
+ *  3) иначе — афиша самого конкурса (cover).
+ */
+function launch_cover_path(array $c, string $wave = '', array $siblings = []): string {
+    $cid = (int) ($c['id'] ?? 0);
+    // 1) Пользовательский оверрайд афиши для этой волны.
+    if ($wave !== '' && function_exists('setting')) {
+        $ov = trim((string) setting('launch_cover:' . $cid . ':' . $wave, ''));
+        if ($ov === '__none__') return '';               // афишу явно удалили
+        if ($ov !== '') {
+            $op = BASE_PATH . '/public/' . ltrim(preg_replace('~^https?://[^/]+~i', '', $ov), '/');
+            if (is_file($op)) return $op;
+        }
+    }
+    // 2) Общие посты и результаты — композит с текстом (если получилось собрать).
+    if (in_array($wave, ['d3', 'last', 'closed', 'results'], true)) {
+        if (!function_exists('launch_poster') && is_file(BASE_PATH . '/core/launch_poster.php')) require_once BASE_PATH . '/core/launch_poster.php';
+        if (function_exists('launch_poster')) {
+            $comps = in_array($wave, ['d3', 'last', 'closed'], true) ? ($siblings ?: launch_open_comps()) : [$c];
+            $extra = $wave === 'results' ? (string) ($c['name'] ?? '') : '';
+            $poster = launch_poster($wave, $comps, $extra);
+            if ($poster) return $poster;
+        }
+    }
+    // 3) Афиша конкурса.
     $cover = trim((string) ($c['cover'] ?? ''));
     if ($cover === '') return '';
     $cover = preg_replace('~^https?://[^/]+~i', '', $cover);
@@ -265,7 +291,7 @@ function launch_fire(int $compId, string $wave, array $channels, string $when = 
     }
 
     $text  = launch_wave_text($c, $wave, $siblings);
-    $cover = launch_cover_path($c);
+    $cover = launch_cover_path($c, $wave, $siblings);
     $report = [];
 
     // ---- ВК стена + сторис ----
@@ -284,16 +310,53 @@ function launch_fire(int $compId, string $wave, array $channels, string $when = 
         if ($dry) { $report['vk_dm'] = 'рассылка в открытые диалоги (пачками)'; }
         else { $r = function_exists('vk_broadcast') ? vk_broadcast($text) : ['error' => ['error_msg' => 'vk_broadcast нет']]; $report['vk_dm'] = empty($r['error']) ? ('отправлено: ' . (int) ($r['sent'] ?? $r['count'] ?? 0)) : ('ошибка: ' . ($r['error']['error_msg'] ?? '?')); }
     }
-    // ---- Email по базе (прогрев) ----
+    // ---- Email ----
     if (in_array('email', $channels, true)) {
-        $subj = launch_email_subject($c, $wave);
-        if ($dry) { $report['email'] = 'newsletter «' . $subj . '» → прогрев-очередь (60→480/день)'; }
-        else {
-            try {
-                $nid = insert('newsletters', ['subject' => $subj, 'body' => launch_email_html($c, $wave, $siblings), 'audience' => 'all', 'status' => 'draft']);
-                $queued = function_exists('newsletter_enqueue') ? newsletter_enqueue((int) $nid) : 0;
-                $report['email'] = 'в очередь поставлено писем: ' . (int) $queued;
-            } catch (\Throwable $e) { $report['email'] = 'ошибка: ' . $e->getMessage(); }
+        if ($wave === 'results') {
+            // РЕЗУЛЬТАТЫ ДЛИННОГО: на почту — ПЕРСОНАЛЬНОЕ письмо КАЖДОМУ участнику
+            // (результат + заявка + кнопки + вложение списка), НЕ 1:1 с ВК-постом.
+            if ($dry) {
+                $cnt = (int) scalar("SELECT COUNT(*) FROM applications WHERE competition_id=? AND COALESCE(result,'')<>''", [$compId]);
+                $report['email'] = 'персональные письма участникам: ' . $cnt . ' (результат+заявка+кнопки+файл списка)';
+            } else {
+                if (!function_exists('results_long_mail_send') && is_file(BASE_PATH . '/core/result_mail.php')) require_once BASE_PATH . '/core/result_mail.php';
+                // Файл списка результатов (DOCX) — во вложение + публичная ссылка на кнопку.
+                $docxAbs = ''; $docxUrl = '';
+                try {
+                    if (is_file(BASE_PATH . '/core/results_doc.php')) require_once BASE_PATH . '/core/results_doc.php';
+                    if (function_exists('results_docx')) {
+                        $tmp = results_docx($compId);
+                        if ($tmp && is_file($tmp)) {
+                            $pubDir = BASE_PATH . '/public/uploads/launch/';
+                            if (!is_dir($pubDir)) @mkdir($pubDir, 0775, true);
+                            $pubName = 'results_' . $compId . '.docx';
+                            if (@copy($tmp, $pubDir . $pubName)) { $docxAbs = $pubDir . $pubName; $docxUrl = url('/uploads/launch/' . $pubName); }
+                            else { $docxAbs = $tmp; }
+                        }
+                    }
+                } catch (\Throwable $e) {}
+                $posterUrl = '';
+                if ($cover !== '' && str_starts_with($cover, BASE_PATH . '/public')) $posterUrl = url(substr($cover, strlen(BASE_PATH . '/public')));
+                $vkUrl = (string) cfgv('org_vk');
+                $sent = 0;
+                if (function_exists('results_long_mail_send')) {
+                    foreach (all("SELECT id FROM applications WHERE competition_id=? AND COALESCE(result,'')<>''", [$compId]) as $p) {
+                        if (results_long_mail_send((int) $p['id'], $vkUrl, $docxAbs, $docxUrl, $posterUrl)) $sent++;
+                    }
+                }
+                $report['email'] = 'персональных писем участникам: ' . $sent;
+            }
+        } else {
+            // Открытие / ВИП / прочее — обычная массовая рассылка (прогрев-очередь).
+            $subj = launch_email_subject($c, $wave);
+            if ($dry) { $report['email'] = 'newsletter «' . $subj . '» → прогрев-очередь (до 300/день)'; }
+            else {
+                try {
+                    $nid = insert('newsletters', ['subject' => $subj, 'body' => launch_email_html($c, $wave, $siblings), 'audience' => 'all', 'status' => 'draft']);
+                    $queued = function_exists('newsletter_enqueue') ? newsletter_enqueue((int) $nid) : 0;
+                    $report['email'] = 'в очередь поставлено писем: ' . (int) $queued;
+                } catch (\Throwable $e) { $report['email'] = 'ошибка: ' . $e->getMessage(); }
+            }
         }
     }
     // ---- In-app всем ----
@@ -419,7 +482,8 @@ function launch_panel_html(): string {
     launch_migrate();
     $openComps = launch_open_comps();
     $channels  = launch_channels();
-    $defDate   = (string) (function_exists('setting') ? setting('launch_plan_date', launch_default_date()) : launch_default_date());
+    $defDate   = (string) (function_exists('setting') ? setting('launch_plan_date', '2026-08-08') : '2026-08-08');
+    if ($defDate === '') $defDate = '2026-08-08';
     $defTime   = (string) (function_exists('setting') ? setting('launch_plan_time', '09:00') : '09:00');
     $savedCh   = array_filter(explode(',', (string) (function_exists('setting') ? setting('launch_plan_channels', 'vk_wall,email,inapp') : 'vk_wall,email,inapp')));
     if (!$savedCh) $savedCh = ['vk_wall', 'email', 'inapp'];
@@ -430,21 +494,32 @@ function launch_panel_html(): string {
     $waveShort = ['launch' => 'Открытие', 'd3' => '3 дня', 'last' => 'Последний', 'closed' => 'Закрыт', 'results' => 'Результаты'];
     $post = url('/admin/?p=launch');
 
-    $coverUrl = static function (array $c): string {
-        $cv = trim((string) ($c['cover'] ?? ''));
-        if ($cv === '') return '';
-        return preg_match('~^https?://~i', $cv) ? $cv : url('/' . ltrim($cv, '/'));
+    // Отображаемый URL афиши поста (учёт оверрайда/композита), '' если удалена/нет.
+    $coverDisp = function (array $c, string $wave, array $sib) : string {
+        $abs = launch_cover_path($c, $wave, $sib);
+        if ($abs === '') return '';
+        $pub = BASE_PATH . '/public';
+        if (str_starts_with($abs, $pub)) return url(substr($abs, strlen($pub))) . '?t=' . (int) @filemtime($abs);
+        return '';
     };
 
-    // Один инлайн-редактор текста волны (textarea + Сохранить/Сбросить + предпросмотр письма).
-    $editor = function (int $cid, string $wave, string $title, string $text, string $cover = '', bool $email = false) use ($post): string {
+    // Один инлайн-редактор поста: текст (textarea) + афиша (заменить/удалить) + Сохранить/Сбросить/Предпросмотр.
+    $editor = function (int $cid, string $wave, string $title, string $text, string $cover, bool $email) use ($post): string {
         $tid = 'lw_' . $cid . '_' . $wave;
         ob_start(); ?>
         <div class="lp2-block" data-cid="<?= $cid ?>" data-wave="<?= h($wave) ?>">
           <div class="lp2-bh"><b><?= h($title) ?></b>
             <span class="lp2-state" id="st_<?= $tid ?>"></span></div>
           <div class="lp2-body">
-            <?php if ($cover !== ''): ?><img class="lp2-cover" src="<?= h($cover) ?>" alt="Афиша" loading="lazy"><?php endif; ?>
+            <div class="lp2-coverwrap">
+              <?php if ($cover !== ''): ?><img class="lp2-cover" src="<?= h($cover) ?>" alt="Афиша поста" loading="lazy"><?php else: ?><div class="lp2-cover lp2-cover--empty">Без афиши</div><?php endif; ?>
+              <div class="lp2-coveracts">
+                <label class="btn btn--ghost btn--xs lp2-upl">Заменить афишу
+                  <input type="file" accept="image/*" data-lp2cover="<?= $cid ?>:<?= h($wave) ?>" style="display:none">
+                </label>
+                <?php if ($cover !== ''): ?><button type="button" class="btn btn--ghost btn--xs" data-lp2="coverdel" data-id="<?= $cid ?>" data-wave="<?= h($wave) ?>" style="color:#B23B3B">Удалить</button><?php endif; ?>
+              </div>
+            </div>
             <textarea id="<?= $tid ?>" class="lp2-ta" rows="8"><?= h($text) ?></textarea>
           </div>
           <div class="lp2-acts">
@@ -517,28 +592,27 @@ function launch_panel_html(): string {
         <h3 style="margin:0 0 4px">Тексты постов и писем</h3>
         <p class="small muted" style="margin:0 0 14px">Всё уже составлено по эталонам — правьте и сохраняйте. Изменённый текст уйдёт при запуске.</p>
 
-        <?php $rep = (int) $openComps[0]['id']; ?>
+        <?php $rep = (int) $openComps[0]['id']; $sib = $openComps; ?>
         <div class="lp2-group-t">Открытие — отдельный пост по каждому конкурсу (публикуется при запуске)</div>
         <?php foreach ($openComps as $c):
             echo $editor((int) $c['id'], 'launch', 'Открытие «' . $c['name'] . '»',
-                launch_wave_text($c, 'launch', [$c]), $coverUrl($c), true);
+                launch_wave_text($c, 'launch', [$c]), $coverDisp($c, 'launch', [$c]), true);
         endforeach; ?>
 
-        <div class="lp2-group-t" style="margin-top:18px">Общие посты по всем конкурсам</div>
+        <div class="lp2-group-t" style="margin-top:18px">Общие посты по всем конкурсам (афиша — авто-композит со всеми афишами и надписью, можно заменить)</div>
         <?php
-        $sib = $openComps;
         $repComp = launch_norm_comp($openComps[0]);
-        echo $editor($rep, 'd3', 'Осталось 3 дня (22-е, 09:00)', launch_wave_text($repComp, 'd3', $sib));
-        echo $editor($rep, 'last', 'Последний день (25-е, 09:00)', launch_wave_text($repComp, 'last', $sib));
-        echo $editor($rep, 'closed', 'Приём закрыт (25-е, 18:00)', launch_wave_text($repComp, 'closed', $sib));
+        echo $editor($rep, 'd3', 'Осталось 3 дня (22-е, 09:00)', launch_wave_text($repComp, 'd3', $sib), $coverDisp($repComp, 'd3', $sib), false);
+        echo $editor($rep, 'last', 'Последний день (25-е, 09:00)', launch_wave_text($repComp, 'last', $sib), $coverDisp($repComp, 'last', $sib), false);
+        echo $editor($rep, 'closed', 'Приём закрыт (25-е, 18:00)', launch_wave_text($repComp, 'closed', $sib), $coverDisp($repComp, 'closed', $sib), false);
         ?>
 
         <?php $longComps = array_values(array_filter($openComps, fn($c) => function_exists('vkt_is_long') && vkt_is_long($c))); ?>
         <?php if ($longComps): ?>
-          <div class="lp2-group-t" style="margin-top:18px">Результаты длинного конкурса (28-е, 09:00) — список, афиша, файл, ссылки</div>
+          <div class="lp2-group-t" style="margin-top:18px">Результаты длинного конкурса (28-е, 09:00) — ВК-пост общий; на почту — персональное письмо каждому участнику с результатом, кнопками и файлом списка</div>
           <?php foreach ($longComps as $c) {
               echo $editor((int) $c['id'], 'results', 'Результаты «' . $c['name'] . '»',
-                  launch_wave_text($c, 'results', [$c]), $coverUrl($c), true);
+                  launch_wave_text($c, 'results', [$c]), $coverDisp($c, 'results', [$c]), true);
           } ?>
         <?php endif; ?>
       </div>
@@ -548,6 +622,8 @@ function launch_panel_html(): string {
 
     <style>
     .lp2 .card{margin-bottom:16px}
+    .lp2 h2 svg,.lp2 h3 svg,.lp2 .btn svg{width:20px;height:20px;flex:none;vertical-align:-4px}
+    .lp2 h2{display:flex;align-items:center;gap:8px}
     .lp2-chip{display:inline-flex;align-items:center;gap:6px;padding:7px 12px;border:1px solid #d7ddea;border-radius:999px;font-size:.85rem;cursor:pointer}
     .lp2-msg{margin-top:12px;padding:10px 14px;border-radius:10px;font-size:.9rem}
     .lp2-msg.ok{background:#E7F7EE;color:#1E7A44}.lp2-msg.err{background:#FDECEC;color:#B23B3B}
@@ -557,7 +633,12 @@ function launch_panel_html(): string {
     .lp2-bh b{color:#17307A}
     .lp2-state{font-size:12px;color:#1E7A44}
     .lp2-body{display:flex;gap:12px;align-items:flex-start}
-    .lp2-cover{width:120px;height:auto;border-radius:10px;border:1px solid #E6E9F2;flex:none}
+    .lp2-coverwrap{flex:none;width:140px;display:flex;flex-direction:column;gap:6px}
+    .lp2-cover{width:140px;height:auto;border-radius:10px;border:1px solid #E6E9F2;display:block}
+    .lp2-cover--empty{height:88px;display:flex;align-items:center;justify-content:center;color:#99a;font-size:12px;background:#F4F6FB}
+    .lp2-coveracts{display:flex;gap:6px;flex-wrap:wrap}
+    .btn--xs{padding:4px 8px;font-size:12px;border-radius:8px}
+    .lp2-upl{cursor:pointer;margin:0}
     .lp2-ta{flex:1;min-width:0;width:100%;box-sizing:border-box;padding:10px 12px;border:1px solid #d7ddea;border-radius:10px;font:inherit;font-size:.9rem;line-height:1.55;resize:vertical}
     .lp2-acts{display:flex;gap:8px;flex-wrap:wrap;margin-top:8px}
     .lp2-group-t{font-size:.8rem;letter-spacing:.05em;text-transform:uppercase;color:#889;margin:0 0 10px;font-weight:700}
@@ -576,6 +657,17 @@ function launch_panel_html(): string {
       function chans(){ return Array.prototype.map.call(root.querySelectorAll('.lp2Ch:checked'),function(c){return c.value;}).join(','); }
       var msg=$('lp2Msg'), prev=$('lp2Prev');
       function showMsg(t,ok){ if(!msg)return; msg.textContent=t; msg.className='lp2-msg '+(ok?'ok':'err'); msg.hidden=false; }
+      // Загрузка/замена афиши поста (multipart).
+      root.addEventListener('change', function(e){
+        var inp=e.target.closest('[data-lp2cover]'); if(!inp||!inp.files||!inp.files[0]) return;
+        var pair=inp.getAttribute('data-lp2cover').split(':'); var f=inp.files[0];
+        var fd=new FormData(); fd.append('_csrf',CSRF); fd.append('do','cover_upload'); fd.append('id',pair[0]); fd.append('wave',pair[1]); fd.append('cover',f);
+        showMsg('Загружаю афишу…',true);
+        fetch(POST,{method:'POST',credentials:'same-origin',body:fd}).then(function(r){return r.json();}).then(function(d){
+          if(!d.ok){showMsg(d.msg||'Ошибка загрузки',false);return;}
+          showMsg('Афиша обновлена. Обновляю…',true); setTimeout(function(){location.reload();},700);
+        }).catch(function(){showMsg('Ошибка сети.',false);});
+      });
       root.addEventListener('click', function(e){
         var b=e.target.closest('[data-lp2]'); if(!b) return;
         var act=b.getAttribute('data-lp2');
@@ -608,6 +700,11 @@ function launch_panel_html(): string {
         } else if(act==='cancel'){
           if(!confirm('Отменить весь запланированный план?')) return;
           post({do:'cancel'}).then(function(d){ showMsg(d.msg||'Отменено',true); setTimeout(function(){location.reload();},900); }).catch(function(){});
+        } else if(act==='coverdel'){
+          if(!confirm('Удалить афишу этого поста?')) return;
+          post({do:'cover_remove',id:b.getAttribute('data-id'),wave:b.getAttribute('data-wave')}).then(function(d){
+            showMsg(d.msg||'Афиша удалена. Обновляю…',true); setTimeout(function(){location.reload();},700);
+          }).catch(function(){});
         }
       });
      }catch(err){ try{ var w=document.createElement('div'); w.style.cssText='margin:12px;padding:10px 14px;border-radius:10px;background:#FDECEC;color:#B23B3B'; w.textContent='Пульт: '+(err&&err.message||err); (document.querySelector('.lp2')||document.body).appendChild(w);}catch(e){} }
