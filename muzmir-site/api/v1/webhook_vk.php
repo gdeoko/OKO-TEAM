@@ -118,6 +118,27 @@ function vk_cb_ack_then_process(string $type): void {
             return;
         }
 
+        // --- Мультимодал: голосовое/фото/видео-вложение → текст (расшифровка ВК или Gemini) ---
+        // Распознаём ДО проверки нерабочего времени, чтобы и голосовое сохранилось и получило ответ.
+        if (empty($msg['attachments']) === false && is_array($msg['attachments'])) {
+            [$mk, $murl, $mtr] = _vk_extract_media($msg);
+            $mediaText = '';
+            if ($mtr !== '') {
+                $mediaText = $mtr;                                   // ВК уже расшифровала голосовое
+            } elseif ($mk !== '' && $murl !== '') {
+                try {
+                    require_once BASE_PATH . '/core/chat_media.php';
+                    $u = chat_media_understand_url($murl, $mk);
+                    if ($u !== '') $mediaText = chat_media_as_user_text($mk, $u);
+                } catch (\Throwable $e) { _vk_log('media understand err: ' . $e->getMessage()); }
+            }
+            if ($mediaText !== '') {
+                $text = ($text === '') ? $mediaText : trim($text . "\n" . $mediaText);
+                // Голосовое без подписи — сохраняем расшифровку как реплику пользователя (в историю/контекст).
+                try { insert('chat_messages', ['user_id' => null, 'session_key' => $sessionKey, 'role' => 'user', 'text' => $mediaText, 'file' => '']); } catch (\Throwable $e) {}
+            }
+        }
+
         // --- Вне рабочего времени (9:00–18:00 МСК, кроме вс): шаблон + сохраняем вопрос ---
         // Ответ по существу бот даст утром (cron/chat_offhours_flush.php) или оператор.
         if ($text !== '' && !chat_is_working_hours()) {
@@ -277,4 +298,53 @@ function _vk_bot_ensure_chatlog(): void {
             created_at TEXT DEFAULT (datetime('now'))
         )");
     } catch (\Throwable $e) {}
+}
+
+/**
+ * Извлекает одно медиа-вложение ВК для мультимодального понимания.
+ * Возвращает [kind, url, transcript]:
+ *   • audio_message → предпочитаем ГОТОВУЮ расшифровку ВК (transcript), иначе link_ogg/link_mp3 → Gemini;
+ *   • photo         → URL самого крупного размера (для распознавания диплома/скрина);
+ *   • doc           → если это картинка/аудио — его URL.
+ * kind ∈ {audio, image, video, ''}. Видео ВК напрямую не качается — пропускаем.
+ */
+function _vk_extract_media(array $msg): array {
+    $atts = $msg['attachments'] ?? [];
+    if (!is_array($atts)) return ['', '', ''];
+    // 1) Голосовое — приоритет (готовая расшифровка ВК бесплатна и точна).
+    foreach ($atts as $a) {
+        if (($a['type'] ?? '') === 'audio_message') {
+            $am = $a['audio_message'] ?? [];
+            $tr = trim((string) ($am['transcript'] ?? ''));
+            if ($tr !== '' && (int) ($am['transcript_state'] ?? 1) !== 0) return ['audio', '', $tr];
+            $url = (string) ($am['link_ogg'] ?? $am['link_mp3'] ?? '');
+            if ($url !== '') return ['audio', $url, ''];
+        }
+    }
+    // 2) Фото — крупнейший размер.
+    foreach ($atts as $a) {
+        if (($a['type'] ?? '') === 'photo') {
+            $sizes = $a['photo']['sizes'] ?? [];
+            if (is_array($sizes) && $sizes) {
+                usort($sizes, fn($x, $y) => ((int) ($y['width'] ?? 0)) <=> ((int) ($x['width'] ?? 0)));
+                $url = (string) ($sizes[0]['url'] ?? '');
+                if ($url !== '') return ['image', $url, ''];
+            }
+        }
+    }
+    // 3) Документ-картинка или документ-аудио.
+    foreach ($atts as $a) {
+        if (($a['type'] ?? '') === 'doc') {
+            $doc = $a['doc'] ?? [];
+            $ext = strtolower((string) ($doc['ext'] ?? ''));
+            $url = (string) ($doc['url'] ?? '');
+            $kind = function_exists('chat_media_kind') ? chat_media_kind($ext) : '';
+            if ($kind === '') {
+                if (in_array($ext, ['jpg', 'jpeg', 'png', 'webp', 'heic'], true)) $kind = 'image';
+                elseif (in_array($ext, ['ogg', 'mp3', 'm4a', 'wav'], true)) $kind = 'audio';
+            }
+            if ($kind !== '' && $kind !== 'video' && $url !== '') return [$kind, $url, ''];
+        }
+    }
+    return ['', '', ''];
 }

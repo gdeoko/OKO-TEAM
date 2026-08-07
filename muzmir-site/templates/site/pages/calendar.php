@@ -117,7 +117,7 @@ $lifecycle = static function (array $c) use ($today, $daysBetween, $plural, $sho
 };
 
 /* --- Годы, для которых есть хоть какие-то даты (для переключателя) --- */
-$allDated = all("SELECT start_date, end_date, results_date FROM competitions WHERE status <> 'draft'");
+$allDated = all("SELECT start_date, end_date, results_date FROM competitions WHERE status <> 'draft' AND COALESCE(launched,0) = 1");
 $yearsSet = [$year => true, (int) date('Y') => true];
 foreach ($allDated as $r) {
     foreach (['start_date', 'end_date', 'results_date'] as $f) {
@@ -132,7 +132,7 @@ sort($years);
 
 /* --- Конкурсы, у которых хоть одна дата попадает в выбранный год --- */
 $comps = all(
-    "SELECT * FROM competitions WHERE status <> 'draft' AND (
+    "SELECT * FROM competitions WHERE status <> 'draft' AND COALESCE(launched,0) = 1 AND (
         strftime('%Y', start_date) = :y OR strftime('%Y', end_date) = :y OR strftime('%Y', results_date) = :y
      ) ORDER BY start_date ASC, sort ASC",
     ['y' => (string) $year]

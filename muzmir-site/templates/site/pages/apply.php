@@ -1,8 +1,9 @@
 <?php
 /** Страница «Подать заявку» — умная многошаговая форма (8 шагов). */
 
+// ГЕЙТ ЗАПУСКА: заявку можно подать только на ЗАПУЩЕННЫЕ конкурсы (launched=1).
 $comps = all("SELECT id,slug,code,name,type,is_paid,price,diploma_bg FROM competitions
-              WHERE status='open' ORDER BY sort");
+              WHERE status='open' AND COALESCE(launched,0) = 1 ORDER BY sort");
 
 // Предвыбор конкурса из ?competition=slug
 $preSlug = preg_replace('/[^a-z0-9\-]/', '', (string)input('competition', ''));

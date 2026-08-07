@@ -9,7 +9,7 @@ $u = current_user();
 
 // Открытые конкурсы для выбора.
 $comps = all("SELECT id, slug, name, type, direction, cover, diploma_bg, end_date, nominations, is_paid
-              FROM competitions WHERE status='open' ORDER BY sort, id");
+              FROM competitions WHERE status='open' AND COALESCE(launched,0) = 1 ORDER BY sort, id");
 
 // Выбранный конкурс (уровень 2).
 $compId = isset($_GET['comp']) ? (int) $_GET['comp'] : 0;

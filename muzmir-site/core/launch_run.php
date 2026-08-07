@@ -254,12 +254,21 @@ function launch_migrate(): void {
  */
 function launch_fire(int $compId, string $wave, array $channels, string $when = '', bool $dry = false): array {
     launch_migrate();
+    // Колонка типа кампании нужна до INSERT в newsletters (квоты konkurs/vip/kabinet).
+    if (!function_exists('nl_ensure_campaign_type_col') && is_file(BASE_PATH . '/core/newsletter.php')) require_once BASE_PATH . '/core/newsletter.php';
+    if (function_exists('nl_ensure_campaign_type_col')) nl_ensure_campaign_type_col();
     $c = one("SELECT * FROM competitions WHERE id=?", [$compId]);
     if (!$c) return ['ok' => false, 'msg' => 'Конкурс не найден'];
     $c = launch_norm_comp($c);
     $channels = array_values(array_intersect($channels, array_keys(launch_channels())));
     if (!$channels) return ['ok' => false, 'msg' => 'Не выбран ни один канал'];
-    if (!isset(launch_waves()[$wave])) return ['ok' => false, 'msg' => 'Неизвестная волна'];
+    // Внутренние (не редактируемые в пульте) волны запуска:
+    //   launch_vk       — ПЕРСОНАЛЬНЫЙ пост ВК по каждому конкурсу (стена+сторис, своя афиша);
+    //   launch_mail      — ОБЩЕЕ письмо-открытие по всем конкурсам (4 афиши в одном письме) + in-app;
+    //   campaign_vip     — письмо-приглашение в ВИП-клуб (аудитория ВИП, своя квота);
+    //   campaign_kabinet — письмо о возможностях личного кабинета (аудитория зарег. пользователей).
+    $internalWaves = ['launch_vk', 'launch_mail', 'campaign_vip', 'campaign_kabinet'];
+    if (!isset(launch_waves()[$wave]) && !in_array($wave, $internalWaves, true)) return ['ok' => false, 'msg' => 'Неизвестная волна'];
     // Правило владельца: «осталось 3 дня / последний день / приём закрыт» НЕ идут на почту —
     // только in-app всем + пост ВКонтакте (с авто-сторис) + рассылка в личку. На почту идёт
     // только открытие конкурсов и ВИП-клуб (и результаты длинного — участникам).
@@ -267,14 +276,28 @@ function launch_fire(int $compId, string $wave, array $channels, string $when = 
         $channels = array_values(array_diff($channels, ['email']));
         if (!$channels) $channels = ['inapp', 'vk_wall'];
     }
+    // launch_vk — только ВК (стена/сторис/личка), по конкретному конкурсу.
+    if ($wave === 'launch_vk') {
+        $channels = array_values(array_intersect($channels, ['vk_wall', 'vk_dm'])) ?: ['vk_wall'];
+    }
+    // launch_mail — общее письмо + in-app (ВК идёт отдельными персональными постами launch_vk).
+    if ($wave === 'launch_mail') {
+        $channels = array_values(array_intersect($channels, ['email', 'inapp'])) ?: ['email', 'inapp'];
+    }
+    // campaign_* — только e-mail по своей аудитории.
+    if ($wave === 'campaign_vip' || $wave === 'campaign_kabinet') {
+        $channels = ['email'];
+    }
     // Пост результатов — ТОЛЬКО для длинных конкурсов (по коротким результат уходит на почту).
     if ($wave === 'results' && !vkt_is_long($c)) {
         return ['ok' => false, 'msg' => 'Пост результатов — только для длинных конкурсов. По коротким платным результаты приходят на почту в течение 5 рабочих дней, отдельный пост не публикуется.'];
     }
 
     // Сводные волны (запуск/3 дня/последний/закрыт) — ОДИН пост/письмо по всем открытым
-    // конкурсам. Одиночная — только «результаты» (по конкретному длинному конкурсу).
-    $siblings = in_array($wave, ['launch', 'd3', 'last', 'closed'], true) ? launch_open_comps() : [$c];
+    // конкурсам. Персональные (launch_vk/результаты/campaign_*) — по конкретному конкурсу.
+    $siblings = in_array($wave, ['launch', 'launch_mail', 'd3', 'last', 'closed'], true) ? launch_open_comps() : [$c];
+    // Ключ шаблонов текста/афиши: launch_vk использует эталоны «launch», но с одним конкурсом.
+    $tplWave = ($wave === 'launch_vk') ? 'launch' : $wave;
 
     // Планирование на будущее.
     $when = trim($when);
@@ -290,8 +313,8 @@ function launch_fire(int $compId, string $wave, array $channels, string $when = 
         }
     }
 
-    $text  = launch_wave_text($c, $wave, $siblings);
-    $cover = launch_cover_path($c, $wave, $siblings);
+    $text  = launch_wave_text($c, $tplWave, $siblings);
+    $cover = launch_cover_path($c, $tplWave, $siblings);
     $report = [];
 
     // ---- ВК стена + сторис ----
@@ -346,13 +369,29 @@ function launch_fire(int $compId, string $wave, array $channels, string $when = 
                 }
                 $report['email'] = 'персональных писем участникам: ' . $sent;
             }
+        } elseif ($wave === 'campaign_vip' || $wave === 'campaign_kabinet') {
+            // Отдельные кампании: ВИП-клуб и «личный кабинет» — своя аудитория и своя суточная квота.
+            if (!function_exists('campaign_build') && is_file(BASE_PATH . '/core/mail_campaigns.php')) require_once BASE_PATH . '/core/mail_campaigns.php';
+            $ctype    = $wave === 'campaign_vip' ? 'vip' : 'kabinet';
+            $audience = $ctype;                                  // 'vip' | 'kabinet'
+            $built    = function_exists('campaign_build') ? campaign_build($ctype) : ['subject' => 'Культурный центр «Музыкальный Мир»', 'body' => ''];
+            if ($dry) {
+                $cnt = count(function_exists('nl_resolve_recipients') ? nl_resolve_recipients($audience) : []);
+                $report['email'] = 'кампания «' . ($ctype === 'vip' ? 'ВИП-клуб' : 'личный кабинет') . '» → получателей: ' . $cnt . ' (квота ' . ($ctype === 'vip' ? '75' : '75') . '/день)';
+            } else {
+                try {
+                    $nid = insert('newsletters', ['subject' => (string) $built['subject'], 'body' => (string) $built['body'], 'audience' => $audience, 'campaign_type' => $ctype, 'status' => 'draft']);
+                    $queued = function_exists('newsletter_enqueue') ? newsletter_enqueue((int) $nid) : 0;
+                    $report['email'] = 'кампания «' . ($ctype === 'vip' ? 'ВИП-клуб' : 'личный кабинет') . '»: в очередь ' . (int) $queued;
+                } catch (\Throwable $e) { $report['email'] = 'ошибка: ' . $e->getMessage(); }
+            }
         } else {
-            // Открытие / ВИП / прочее — обычная массовая рассылка (прогрев-очередь).
-            $subj = launch_email_subject($c, $wave);
-            if ($dry) { $report['email'] = 'newsletter «' . $subj . '» → прогрев-очередь (до 300/день)'; }
+            // Открытие (launch/launch_mail) / прочее — общая массовая рассылка «конкурсы» (прогрев-очередь).
+            $subj = launch_email_subject($c, $tplWave === 'launch' ? 'launch' : $wave);
+            if ($dry) { $report['email'] = 'newsletter «' . $subj . '» → прогрев-очередь (конкурсы, до 150/день)'; }
             else {
                 try {
-                    $nid = insert('newsletters', ['subject' => $subj, 'body' => launch_email_html($c, $wave, $siblings), 'audience' => 'all', 'status' => 'draft']);
+                    $nid = insert('newsletters', ['subject' => $subj, 'body' => launch_email_html($c, 'launch', $siblings), 'audience' => 'all', 'campaign_type' => 'konkurs', 'status' => 'draft']);
                     $queued = function_exists('newsletter_enqueue') ? newsletter_enqueue((int) $nid) : 0;
                     $report['email'] = 'в очередь поставлено писем: ' . (int) $queued;
                 } catch (\Throwable $e) { $report['email'] = 'ошибка: ' . $e->getMessage(); }
@@ -361,9 +400,17 @@ function launch_fire(int $compId, string $wave, array $channels, string $when = 
     }
     // ---- In-app всем ----
     if (in_array('inapp', $channels, true)) {
-        [$t, $b, $u] = launch_inapp_payload($c, $wave);
+        [$t, $b, $u] = launch_inapp_payload($c, $wave === 'launch_mail' ? 'launch' : $wave);
         if ($dry) { $report['inapp'] = 'уведомление всем активным пользователям'; }
         else { $n = launch_notify_all($t, $b, $u, 'trophy'); $report['inapp'] = 'уведомлено пользователей: ' . $n; }
+    }
+
+    // Волна «Открытие» — конкурс(ы) становятся видимыми на сайте (гейт запуска).
+    if (!$dry && in_array($wave, ['launch', 'launch_mail', 'launch_vk'], true)) {
+        $toShow = in_array($wave, ['launch_mail'], true) ? $siblings : [$c];
+        foreach ($toShow as $sc) {
+            update('competitions', ['launched' => 1, 'launched_at' => date('Y-m-d H:i:s')], 'id=:id', ['id' => (int) $sc['id']]);
+        }
     }
 
     if (!$dry && function_exists('audit')) audit('launch_fire', 'competition', $compId, ['wave' => $wave, 'channels' => $channels, 'report' => $report]);
@@ -394,9 +441,16 @@ function launch_default_date(): string {
 }
 
 /**
- * Запланировать ПОЛНЫЙ запуск: волна launch по всем открытым конкурсам на выбранные
- * дату/время (приведённые к рабочему слоту) + общие посты d3/last/closed по месяцу запуска
- * (22 09:00 «осталось 3 дня», 25 09:00 «последний день», 25 18:00 «приём закрыт»).
+ * Запланировать ПОЛНЫЙ запуск. Один клик оргкомитета создаёт всё расписание:
+ *   • день запуска (рабочий слот):
+ *       — launch_vk       — ПЕРСОНАЛЬНЫЙ пост ВК (стена+сторис) по КАЖДОМУ конкурсу (своя афиша);
+ *       — launch_mail      — ОБЩЕЕ письмо «4 афиши в одном» по всей базе + in-app всем (гейт: конкурсы
+ *                            становятся видимыми на сайте);
+ *       — campaign_vip     — письмо-приглашение в ВИП-клуб (+15 мин, аудитория ВИП, квота 75/день);
+ *       — campaign_kabinet — письмо о возможностях личного кабинета (+30 мин, квота 75/день);
+ *   • общие посты месяца (ВК+in-app, БЕЗ e-mail): 22 09:00 «3 дня», 25 09:00 «последний день»,
+ *     25 18:00 «приём закрыт» (закрытие приёма);
+ *   • результаты 28 09:00 — по КАЖДОМУ длинному конкурсу (ВК-пост общий + персональные письма участникам).
  * Предыдущий незавершённый план отменяется.
  */
 function launch_schedule_all(string $launchDate, string $launchTime, array $channels): array {
@@ -408,34 +462,79 @@ function launch_schedule_all(string $launchDate, string $launchTime, array $chan
 
     q("UPDATE launch_jobs SET status='cancelled' WHERE status='scheduled'");
 
+    $hasVk    = (bool) array_intersect($channels, ['vk_wall', 'vk_dm']);
+    $vkCh     = array_values(array_intersect($channels, ['vk_wall', 'vk_dm'])) ?: ['vk_wall'];
+    $hasEmail = in_array('email', $channels, true);
+    $hasInapp = in_array('inapp', $channels, true);
+
     // Время запуска → ближайший рабочий слот (ночь/вс → 09:0x ближайшего рабочего дня).
     $lt = strtotime($launchDate . ' ' . ($launchTime ?: '09:00'));
     if (!$lt) $lt = time();
     $fromDt = (new \DateTime())->setTimestamp($lt);
     $slot = function_exists('next_working_slot') ? next_working_slot($fromDt) : $fromDt;
     $runLaunch = $slot->format('Y-m-d H:i:s');
-
-    // ЗАПУСК — ОДНО общее письмо/пост по всем открытым конкурсам (не по каждому отдельно).
-    // Представитель — первый открытый конкурс; сводная волна сама агрегирует все.
     $rep = (int) $comps[0]['id'];
-    insert('launch_jobs', ['competition_id' => $rep, 'wave' => 'launch',
-        'channels' => implode(',', $channels), 'run_at' => $runLaunch, 'status' => 'scheduled']);
+    $planned = [];
 
-    // Общие волны — по месяцу запуска.
+    // 1) ПЕРСОНАЛЬНЫЙ пост ВК по каждому конкурсу (своя афиша/текст).
+    if ($hasVk) {
+        foreach ($comps as $c) {
+            insert('launch_jobs', ['competition_id' => (int) $c['id'], 'wave' => 'launch_vk',
+                'channels' => implode(',', $vkCh), 'run_at' => $runLaunch, 'status' => 'scheduled']);
+        }
+        $planned['launch_vk'] = ['count' => count($comps), 'run_at' => $runLaunch];
+    }
+
+    // 2) ОБЩЕЕ письмо-открытие «4 афиши в одном» + in-app всем (гейт: показываем конкурсы на сайте).
+    $mailCh = array_values(array_intersect($channels, ['email', 'inapp']));
+    if (!$mailCh) $mailCh = $hasInapp ? ['inapp'] : ($hasEmail ? ['email'] : []);
+    if ($mailCh || (!$hasVk)) {
+        insert('launch_jobs', ['competition_id' => $rep, 'wave' => 'launch_mail',
+            'channels' => implode(',', $mailCh ?: ['inapp']), 'run_at' => $runLaunch, 'status' => 'scheduled']);
+        $planned['launch_mail'] = ['run_at' => $runLaunch, 'channels' => $mailCh];
+    }
+
+    // 3) Кампании ВИП-клуб и «личный кабинет» — только e-mail, по своей аудитории/квоте.
+    if ($hasEmail) {
+        $vipAt = (clone $slot); $vipAt->modify('+15 min');
+        $vipSlot = function_exists('next_working_slot') ? next_working_slot($vipAt) : $vipAt;
+        insert('launch_jobs', ['competition_id' => $rep, 'wave' => 'campaign_vip',
+            'channels' => 'email', 'run_at' => $vipSlot->format('Y-m-d H:i:s'), 'status' => 'scheduled']);
+        $kabAt = (clone $slot); $kabAt->modify('+30 min');
+        $kabSlot = function_exists('next_working_slot') ? next_working_slot($kabAt) : $kabAt;
+        insert('launch_jobs', ['competition_id' => $rep, 'wave' => 'campaign_kabinet',
+            'channels' => 'email', 'run_at' => $kabSlot->format('Y-m-d H:i:s'), 'status' => 'scheduled']);
+        $planned['campaign_vip']     = ['run_at' => $vipSlot->format('Y-m-d H:i:s')];
+        $planned['campaign_kabinet'] = ['run_at' => $kabSlot->format('Y-m-d H:i:s')];
+    }
+
+    // 4) Общие посты месяца (ВК+in-app, БЕЗ e-mail — email-канал отфильтруется в launch_fire).
     $ly = (int) date('Y', $lt); $lm = (int) date('n', $lt);
+    $commonCh = array_values(array_diff($channels, ['email'])) ?: ['vk_wall', 'inapp'];
     $d3     = launch_workday_at($ly, $lm, 22, 9, 0);
     $last   = launch_workday_at($ly, $lm, 25, 9, 0);
     $closed = launch_workday_at($ly, $lm, 25, 18, 0);
-    insert('launch_jobs', ['competition_id' => $rep, 'wave' => 'd3',     'channels' => implode(',', $channels), 'run_at' => $d3,     'status' => 'scheduled']);
-    insert('launch_jobs', ['competition_id' => $rep, 'wave' => 'last',   'channels' => implode(',', $channels), 'run_at' => $last,   'status' => 'scheduled']);
-    insert('launch_jobs', ['competition_id' => $rep, 'wave' => 'closed', 'channels' => implode(',', $channels), 'run_at' => $closed, 'status' => 'scheduled']);
+    insert('launch_jobs', ['competition_id' => $rep, 'wave' => 'd3',     'channels' => implode(',', $commonCh), 'run_at' => $d3,     'status' => 'scheduled']);
+    insert('launch_jobs', ['competition_id' => $rep, 'wave' => 'last',   'channels' => implode(',', $commonCh), 'run_at' => $last,   'status' => 'scheduled']);
+    insert('launch_jobs', ['competition_id' => $rep, 'wave' => 'closed', 'channels' => implode(',', $commonCh), 'run_at' => $closed, 'status' => 'scheduled']);
+    $planned['d3'] = $d3; $planned['last'] = $last; $planned['closed'] = $closed;
+
+    // 5) Результаты 28 09:00 — по каждому ДЛИННОМУ конкурсу (ВК общий пост + персональные письма участникам).
+    $results = launch_workday_at($ly, $lm, 28, 9, 0);
+    $resCh = array_values(array_unique(array_merge($vkCh, $hasEmail ? ['email'] : [], $hasInapp ? ['inapp'] : []))) ?: ['email'];
+    $longIds = [];
+    foreach ($comps as $c) {
+        if (function_exists('vkt_is_long') ? vkt_is_long($c) : (($c['results_mode'] ?? '') === 'list')) {
+            insert('launch_jobs', ['competition_id' => (int) $c['id'], 'wave' => 'results',
+                'channels' => implode(',', $resCh), 'run_at' => $results, 'status' => 'scheduled']);
+            $longIds[] = (int) $c['id'];
+        }
+    }
+    if ($longIds) $planned['results'] = ['run_at' => $results, 'comps' => count($longIds)];
 
     if (function_exists('audit')) audit('launch_plan', 'competition', 0,
-        ['launch' => $runLaunch, 'd3' => $d3, 'last' => $last, 'closed' => $closed, 'comps' => count($comps), 'channels' => $channels]);
-    return ['ok' => true, 'scheduled' => [
-        'launch' => ['count' => 1, 'comps' => count($comps), 'run_at' => $runLaunch],
-        'd3' => $d3, 'last' => $last, 'closed' => $closed,
-    ]];
+        ['plan' => $planned, 'comps' => count($comps), 'channels' => $channels]);
+    return ['ok' => true, 'scheduled' => $planned, 'comps' => count($comps)];
 }
 
 /** Отменить весь текущий план (незавершённые задания). */
@@ -491,7 +590,9 @@ function launch_panel_html(): string {
                  WHERE j.status IN ('scheduled','done') ORDER BY j.run_at ASC LIMIT 200");
     $sched = array_values(array_filter($jobs, fn($j) => $j['status'] === 'scheduled'));
     $doneJobs = array_values(array_filter($jobs, fn($j) => $j['status'] === 'done'));
-    $waveShort = ['launch' => 'Открытие', 'd3' => '3 дня', 'last' => 'Последний', 'closed' => 'Закрыт', 'results' => 'Результаты'];
+    $waveShort = ['launch' => 'Открытие', 'launch_vk' => 'Пост ВК (конкурс)', 'launch_mail' => 'Письмо-открытие',
+                  'campaign_vip' => 'ВИП-клуб', 'campaign_kabinet' => 'Личный кабинет',
+                  'd3' => '3 дня', 'last' => 'Последний', 'closed' => 'Закрыт', 'results' => 'Результаты'];
     $post = url('/admin/?p=launch');
 
     // Отображаемый URL афиши поста (учёт оверрайда/композита), '' если удалена/нет.

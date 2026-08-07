@@ -43,14 +43,13 @@ if ($action === 'upload') {
     if (!is_uploaded_file($f['tmp_name'])) json_out(['ok' => false, 'error' => 'Ошибка загрузки файла'], 422);
     if ((int) $f['size'] > 15 * 1024 * 1024) json_out(['ok' => false, 'error' => 'Файл слишком большой (максимум 15 МБ)'], 413);
 
+    require_once BASE_PATH . '/core/chat_media.php';   // мультимодал: голос/видео/фото → текст
     $ext    = strtolower(pathinfo((string) $f['name'], PATHINFO_EXTENSION));
-    $imgExt = ['jpg', 'jpeg', 'png', 'gif', 'webp', 'heic', 'heif'];
-    $vidExt = ['mp4', 'mov', 'webm', 'm4v', '3gp'];
-    $kind   = in_array($ext, $imgExt, true) ? 'image' : (in_array($ext, $vidExt, true) ? 'video' : '');
-    if ($kind === '') json_out(['ok' => false, 'error' => 'Можно прикрепить только фото или видео'], 422);
+    $kind   = chat_media_kind($ext);                   // image | audio | video | ''
+    if ($kind === '') json_out(['ok' => false, 'error' => 'Можно прикрепить фото, голосовое или видео'], 422);
     $mime = function_exists('mime_content_type') ? (string) @mime_content_type($f['tmp_name']) : '';
-    if ($mime !== '' && !preg_match('~^(image|video)/~', $mime)) {
-        json_out(['ok' => false, 'error' => 'Файл не похож на фото или видео'], 422);
+    if ($mime !== '' && !preg_match('~^(image|audio|video)/~', $mime)) {
+        json_out(['ok' => false, 'error' => 'Файл не похож на фото, голосовое или видео'], 422);
     }
 
     $dir = BASE_PATH . '/public/uploads/chat/';
@@ -60,10 +59,68 @@ if ($action === 'upload') {
         json_out(['ok' => false, 'error' => 'Не удалось сохранить файл'], 500);
     }
     $rel = 'uploads/chat/' . $name;
+
+    // Мультимодальное понимание: голос → расшифровка, фото/видео → распознавание (Gemini, бесплатно).
+    $understanding = '';
+    try { $understanding = chat_media_understand($dir . $name, $kind, $mime); } catch (\Throwable $e) {}
+    $derived = chat_media_as_user_text($kind, $understanding);
+
+    // Сохраняем сообщение-вложение; для голосового текст = расшифровка (попадёт в историю/контекст).
     try {
-        insert('chat_messages', ['user_id' => $uid, 'session_key' => $sessionKey, 'role' => 'user', 'text' => '', 'file' => $rel]);
+        insert('chat_messages', ['user_id' => $uid, 'session_key' => $sessionKey, 'role' => 'user',
+            'text' => ($kind === 'audio' ? $understanding : ''), 'file' => $rel]);
     } catch (\Throwable $e) {}
-    json_out(['ok' => true, 'url' => url($rel), 'file' => $rel, 'kind' => $kind, 'session' => $sessionKey]);
+
+    // Реестр диалога + владельцу о новом диалоге (если это первое сообщение).
+    $greetName = '';
+    if ($uid && ($cu = current_user())) {
+        $nick = trim((string) ($cu['nickname'] ?? '')); $full = trim((string) ($cu['full_name'] ?? ''));
+        if ($nick !== '') $greetName = $nick;
+        elseif ($full !== '') { $parts = preg_split('~\s+~u', $full); $greetName = (count($parts) >= 3) ? $parts[1] : $parts[0]; }
+    }
+    try { chat_dialog_set($sessionKey, ['channel' => 'web', 'title' => $greetName]); } catch (\Throwable $e) {}
+
+    // Ничего не распознали (или нет ключа Gemini) — просто подтверждаем получение вложения.
+    if ($derived === '') {
+        $ack = 'Спасибо, вложение получила. Подскажите, пожалуйста, по какому вопросу — заявка, оплата, результаты или наградные материалы, — и я помогу.';
+        json_out(['ok' => true, 'url' => url($rel), 'file' => $rel, 'kind' => $kind, 'session' => $sessionKey,
+                  'understood' => false, 'reply' => $ack]);
+    }
+
+    // Оператор ведёт диалог вручную / бот выключен — авто-ответ не даём.
+    if (($muted = chat_bot_muted($sessionKey)) !== '') {
+        json_out(['ok' => true, 'url' => url($rel), 'file' => $rel, 'kind' => $kind, 'session' => $sessionKey,
+                  'understood' => true, 'reply' => '', 'muted' => $muted]);
+    }
+    // Вне рабочего времени — шаблон, вопрос сохранён (ответим утром).
+    if (!chat_is_working_hours()) {
+        $tpl = chat_offhours_template($greetName);
+        if ((int) (chat_dialog_get($sessionKey)['pending_offhours'] ?? 0) !== 1) {
+            chat_dialog_set($sessionKey, ['pending_offhours' => 1, 'offhours_at' => date('Y-m-d H:i:s')]);
+        }
+        try { insert('chat_messages', ['user_id' => $uid, 'session_key' => $sessionKey, 'role' => 'assistant', 'text' => $tpl, 'file' => '']); } catch (\Throwable $e) {}
+        json_out(['ok' => true, 'url' => url($rel), 'file' => $rel, 'kind' => $kind, 'session' => $sessionKey,
+                  'understood' => true, 'reply' => $tpl, 'offhours' => true]);
+    }
+
+    // Отвечаем «мозгом» по распознанному содержимому вложения.
+    $ctx  = chat_user_context($uid);
+    $hint = chat_context_from_dialogue($sessionKey, $derived);
+    $GLOBALS['chat_user_ctx'] = $hint !== '' ? trim($ctx . "\n" . $hint) : $ctx;
+    $greet = chat_should_greet($sessionKey);
+    $core  = chat_brain_reply($derived, $sessionKey, $uid, 'web');
+    if (!empty($GLOBALS['chat_fell_back'])) {
+        $tail = chat_escalate_no_answer($uid, $sessionKey, $greetName, $derived, 'web');
+        if ($tail !== '') $core = trim($core . "\n\n" . $tail);
+    }
+    $reply = chat_wrap_reply($sessionKey, $core, $greetName, $greet, false);
+    try { insert('chat_messages', ['user_id' => $uid, 'session_key' => $sessionKey, 'role' => 'assistant', 'text' => $reply, 'file' => '']); } catch (\Throwable $e) {}
+    chat_maybe_escalate($derived, $uid, $sessionKey, $greetName);
+
+    $actions = chat_actions($derived, $uid, $sessionKey);
+    $fmt     = chat_web_format($reply, $actions);
+    json_out(['ok' => true, 'url' => url($rel), 'file' => $rel, 'kind' => $kind, 'session' => $sessionKey,
+              'understood' => true, 'reply' => $fmt['text'], 'actions' => $fmt['actions'], 'image' => chat_sample_image($derived)]);
 }
 
 /* ---------- Отправка сообщения ---------- */

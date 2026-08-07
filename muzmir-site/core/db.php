@@ -290,6 +290,16 @@ function db_migrate(PDO $pdo): void {
     CREATE INDEX IF NOT EXISTS idx_queue_status ON mail_queue(status);
     CREATE INDEX IF NOT EXISTS idx_sub_email ON subscribers(email);
     ");
+
+    // Ленивое добавление колонок к существующим таблицам (идемпотентно).
+    // launched: конкурс появляется на сайте (афиша/заявка/награды/календарь) ТОЛЬКО после
+    // запуска из пульта. До запуска — виден только в админке. Текущие конкурсы уже запущены.
+    foreach ([
+        ['competitions', 'launched',    'INTEGER DEFAULT 0'],
+        ['competitions', 'launched_at', 'TEXT'],
+    ] as $col) {
+        try { $pdo->exec("ALTER TABLE {$col[0]} ADD COLUMN {$col[1]} {$col[2]}"); } catch (\Throwable $e) { /* уже есть */ }
+    }
 }
 
 function setting(string $key, $default = null) {

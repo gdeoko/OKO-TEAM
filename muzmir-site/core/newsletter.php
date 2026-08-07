@@ -25,7 +25,7 @@ function nl_log(string $msg): void {
 
 /**
  * Разбор поля newsletters.audience → [email, name][].
- * Форматы: 'all' | 'segment:<тег>' | 'competition:<id>'.
+ * Форматы: 'all' | 'segment:<тег>' | 'competition:<id>' | 'vip' | 'kabinet'.
  * Отписавшихся (subscribers.active=0) исключаем на этапе постановки.
  */
 function nl_resolve_recipients(string $audience): array {
@@ -45,6 +45,23 @@ function nl_resolve_recipients(string $audience): array {
             "SELECT email, name FROM subscribers
               WHERE active = 1 AND tags LIKE ?",
             ['%' . $value . '%']
+        );
+    }
+    // ВИП-клуб: действующие члены клуба (активные + срок не истёк) с почтой.
+    if ($kind === 'vip') {
+        return all(
+            "SELECT u.email AS email, u.full_name AS name
+               FROM club_members m JOIN users u ON u.id = m.user_id
+              WHERE COALESCE(m.active,1) = 1
+                AND (m.expires_at IS NULL OR m.expires_at = '' OR m.expires_at > datetime('now'))
+                AND COALESCE(u.email,'') <> '' AND COALESCE(u.blocked,0) = 0"
+        );
+    }
+    // Личный кабинет: зарегистрированные пользователи (не заблокированные, с почтой, не отписавшиеся).
+    if ($kind === 'kabinet') {
+        return all(
+            "SELECT email, full_name AS name FROM users
+              WHERE COALESCE(email,'') <> '' AND COALESCE(blocked,0) = 0 AND COALESCE(notify_email,1) = 1"
         );
     }
     return all("SELECT email, name FROM subscribers WHERE active = 1");
@@ -166,6 +183,23 @@ function nl_wrap_email(string $bodyHtml, string $unsubUrl, string $openPixel, st
  * Идемпотентно: перед постановкой чистит прежние ещё не отправленные письма
  * этой рассылки. Возвращает число поставленных в очередь писем.
  */
+/**
+ * Тип кампании для суточной квоты (konkurs|vip|kabinet) — определяется по аудитории.
+ * ВИП-клуб и «личный кабинет» имеют отдельные дневные лимиты (см. nl_daily_split).
+ * Всё остальное (конкурсы/общая база/новости) — тип 'konkurs'.
+ */
+function nl_campaign_type_for_audience(string $audience): string {
+    $audience = trim(mb_strtolower($audience));
+    if ($audience === 'vip'     || str_starts_with($audience, 'vip:'))     return 'vip';
+    if ($audience === 'kabinet' || str_starts_with($audience, 'kabinet:')) return 'kabinet';
+    return 'konkurs';
+}
+
+/** Мягко гарантирует колонку newsletters.campaign_type. */
+function nl_ensure_campaign_type_col(): void {
+    try { db()->exec("ALTER TABLE newsletters ADD COLUMN campaign_type TEXT DEFAULT 'konkurs'"); } catch (\Throwable $e) {}
+}
+
 function newsletter_enqueue(int $newsletterId): int {
     $n = one("SELECT * FROM newsletters WHERE id = ?", [$newsletterId]);
     if (!$n) { nl_log("enqueue: рассылка #$newsletterId не найдена"); return 0; }
@@ -173,6 +207,11 @@ function newsletter_enqueue(int $newsletterId): int {
     $audience = (string) ($n['audience'] ?? 'all');
     $source   = str_starts_with($audience, 'competition:') ? 'competition' : 'newsletter';
     $recips   = nl_resolve_recipients($audience);
+
+    // Тип кампании (для суточных квот konkurs/vip/kabinet) фиксируем на рассылке.
+    nl_ensure_campaign_type_col();
+    $ctype = trim((string) ($n['campaign_type'] ?? '')) ?: nl_campaign_type_for_audience($audience);
+    try { update('newsletters', ['campaign_type' => $ctype], 'id=:id', ['id' => $newsletterId]); } catch (\Throwable $e) {}
 
     $subjectA = (string) ($n['subject'] ?? '');
     $subjectB = trim((string) setting('nl_subject_b_' . $newsletterId, ''));
@@ -253,6 +292,19 @@ function nl_bulk_sent_today(): int {
         "SELECT COUNT(*) FROM mail_queue WHERE status = 'sent' AND COALESCE(priority,0) > 0 AND sent_at >= ?",
         [$dayStart]
     );
+}
+
+/** Сколько массовых писем конкретного ТИПА (konkurs|vip|kabinet) ушло сегодня — для per-type квот. */
+function nl_bulk_sent_today_type(string $type): int {
+    $dayStart = date('Y-m-d 00:00:00');
+    try {
+        return (int) scalar(
+            "SELECT COUNT(*) FROM mail_queue q LEFT JOIN newsletters n ON n.id = q.newsletter_id
+              WHERE q.status = 'sent' AND COALESCE(q.priority,0) > 0 AND q.sent_at >= ?
+                AND COALESCE(n.campaign_type,'konkurs') = ?",
+            [$dayStart, $type]
+        );
+    } catch (\Throwable $e) { return 0; }
 }
 
 /* =====================================================================
@@ -412,16 +464,44 @@ function newsletter_process_queue(int $limit): int {
                AND (scheduled_at IS NULL OR scheduled_at='' OR scheduled_at<=?) ORDER BY id ASC LIMIT 30", [$nowTs]);
     foreach ($tx as $row) { if ($sendRow($row, $route($row))) $sent++; }
 
-    // 2) МАССОВЫЕ (priority>0) — через news@музыкальный-мир.рф, в рамках дневного лимита.
-    $remaining = $dailyLimit - nl_bulk_sent_today();
-    if ($remaining > 0) {
-        $take = min(max(1, $perRun), $remaining);
-        $bulk = all("SELECT * FROM mail_queue WHERE status='queued' AND COALESCE(priority,0)>0
-                     AND (scheduled_at IS NULL OR scheduled_at='' OR scheduled_at<=?) ORDER BY id ASC LIMIT ?", [$nowTs, $take]);
-        $i = 0;
-        foreach ($bulk as $row) {
-            if ($i++ > 0 && $gap > 0) sleep($gap);
-            if ($sendRow($row, $route($row))) $sent++;
+    // 2) МАССОВЫЕ (priority>0) — через news@музыкальный-мир.рф, в рамках дневного лимита
+    //    И с СОБЛЮДЕНИЕМ per-type квот (конкурсы/ВИП/кабинет = 150/75/75, масштабируется прогревом).
+    nl_ensure_campaign_type_col();
+    $globalRemaining = $dailyLimit - nl_bulk_sent_today();
+    if ($globalRemaining > 0) {
+        $split = nl_daily_split();                       // ['konkurs'=>,'vip'=>,'kabinet'=>]
+        $peak  = max(1, nl_ramp_peak());                 // потолок (300)
+        $scale = min(1.0, $dailyLimit / $peak);          // прогрев: доля от полного плана
+        // Остаток квоты по каждому типу на сегодня (масштабирован прогревом).
+        $typeLeft = [];
+        foreach (['konkurs', 'vip', 'kabinet'] as $t) {
+            $cap = (int) floor(($split[$t] ?? 0) * $scale);
+            if (($split[$t] ?? 0) > 0 && $cap < 1) $cap = 1;         // не «зануляем» тип на раннем прогреве
+            $typeLeft[$t] = max(0, $cap - nl_bulk_sent_today_type($t));
+        }
+        $allowed = array_keys(array_filter($typeLeft, fn($n) => $n > 0));
+        $budget  = min(max(1, $perRun), $globalRemaining);
+        if ($allowed) {
+            $ph   = implode(',', array_fill(0, count($allowed), '?'));
+            $bulk = all(
+                "SELECT q.*, COALESCE(n.campaign_type,'konkurs') AS ctype
+                   FROM mail_queue q LEFT JOIN newsletters n ON n.id = q.newsletter_id
+                  WHERE q.status='queued' AND COALESCE(q.priority,0)>0
+                    AND (q.scheduled_at IS NULL OR q.scheduled_at='' OR q.scheduled_at<=?)
+                    AND COALESCE(n.campaign_type,'konkurs') IN ($ph)
+                  ORDER BY q.id ASC LIMIT ?",
+                array_merge([$nowTs], $allowed, [max(1, $budget * 4)])
+            );
+            $i = 0; $bulkSent = 0;
+            foreach ($bulk as $row) {
+                if ($bulkSent >= $budget) break;                      // не больше бюджета за один прогон
+                $ct = (string) ($row['ctype'] ?? 'konkurs');
+                if (($typeLeft[$ct] ?? 0) <= 0) continue;             // квота типа исчерпана
+                if ($i++ > 0 && $gap > 0) sleep($gap);
+                if ($sendRow($row, $route($row))) { $sent++; $bulkSent++; $typeLeft[$ct]--; }
+            }
+        } else {
+            nl_log('process: суточные квоты всех типов (konkurs/vip/kabinet) на сегодня исчерпаны');
         }
     } else {
         nl_log('process: дневной лимит массовых исчерпан (транзакционные отправлены)');

@@ -218,6 +218,33 @@ function mmc_vip_block(): string {
         . '</td></tr></table>';
 }
 
+/** Блок «Личный кабинет» — возможности зарегистрированного пользователя (2×2 плитки). */
+function mmc_kabinet_block(): string {
+    $navy = MM_NAVY; $gold = MM_GOLD; $ink = MM_INK; $muted = MM_MUTED; $card = MM_CARD; $line = MM_LINE;
+    $base = mmc_base();
+    $tiles = [
+        ['✦', 'Заявки и результаты', 'Все ваши заявки, статусы проверки и итоги жюри — на одном экране.'],
+        ['✦', 'Дипломы под рукой', 'Электронные дипломы с номером и QR — скачать и переслать в один клик.'],
+        ['✦', 'Заказ наград', 'Кубки, статуэтки и медали победителям — прямо из кабинета, с доставкой.'],
+        ['✦', 'Приглашайте друзей', 'Реферальная программа: делитесь ссылкой и получайте бонусы.'],
+    ];
+    $cells = '';
+    $i = 0;
+    foreach ($tiles as $t) {
+        if ($i % 2 === 0) $cells .= '<tr>';
+        $cells .= '<td width="50%" style="padding:8px;vertical-align:top;">'
+            . '<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:' . $card . ';border:1px solid ' . $line . ';border-radius:14px;height:100%;">'
+            . '<tr><td style="padding:16px 16px 18px;">'
+            . '<div style="width:34px;height:34px;border-radius:9px;background:' . $navy . ';color:' . MM_GOLD2 . ';font-family:Georgia,serif;font-weight:700;font-size:17px;text-align:center;line-height:34px;margin-bottom:10px;">' . $t[0] . '</div>'
+            . '<div style="font-weight:700;color:' . $navy . ';font-size:15px;margin-bottom:5px;">' . h($t[1]) . '</div>'
+            . '<div style="font-size:13px;color:' . $muted . ';line-height:1.55;">' . h($t[2]) . '</div>'
+            . '</td></tr></table></td>';
+        $i++;
+        if ($i % 2 === 0) $cells .= '</tr>';
+    }
+    return '<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin:6px 0 18px;">' . $cells . '</table>';
+}
+
 /** Крупный финальный CTA. */
 function mmc_cta(string $label, string $href, string $variant = 'navy'): string {
     return '<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin:8px 0 4px;"><tr><td align="center">'
@@ -234,6 +261,7 @@ function campaign_types(): array {
     return [
         'new_competitions' => 'Новые конкурсы (приглашение)',
         'vip'              => 'ВИП-клуб (приглашение)',
+        'kabinet'          => 'Личный кабинет (возможности)',
         'launch'           => 'Запуск сайта / большой анонс',
         'deadline'         => 'Осталось 3 дня до конца приёма',
         'news'             => 'Новость / дайджест',
@@ -249,6 +277,8 @@ function campaign_subject(string $type, array $opt = []): string {
     $variants = [
         'vip'      => ['Приглашение в ВИП-клуб «Музыкальный Мир» — участвуйте без ограничений',
                        'ВИП-клуб «Музыкальный Мир»: все конкурсы сезона по одной подписке'],
+        'kabinet'  => ['Ваш личный кабинет «Музыкальный Мир» — заявки, дипломы и награды в одном месте',
+                       'Личный кабинет «Музыкальный Мир»: следите за результатами и скачивайте дипломы'],
         'launch'   => ['Мы открылись! Конкурсы, награды и дипломы — Культурный центр «Музыкальный Мир»',
                        'Культурный центр «Музыкальный Мир» открыт: конкурсы, награды, официальные дипломы'],
         'deadline' => ['Осталось 3 дня — успейте подать заявку на конкурс',
@@ -301,6 +331,14 @@ function campaign_inner(string $type, array $opt = []): string {
                 . mmc_vip_block()
                 . mmc_ministry_badge()
                 . mmc_cta('Узнать больше о ВИП-клубе', $base . '/club', 'gold');
+
+        case 'kabinet':
+            return $greet
+                . mmc_h('Ваш личный кабинет уже готов', 'Вход по вашей почте — все конкурсы, дипломы, награды и результаты собраны в одном месте.')
+                . mmc_kabinet_block()
+                . ($compCards !== '' ? mmc_h('Идёт приём заявок') . $compCards : '')
+                . mmc_ministry_badge()
+                . mmc_cta('Войти в личный кабинет', $base . '/cabinet', 'navy');
 
         case 'launch':
             return $greet

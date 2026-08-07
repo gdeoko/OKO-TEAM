@@ -18,7 +18,8 @@ $fSort   = input('sort', 'default');  if (!isset($SORT_FILTERS[$fSort]))     $fS
 /* --- Серверная выборка из БД (type/dir/sort фильтруют на сервере; статус -
    таб на JS-хуках поверх полной выборки, с noscript-фолбэком через CSS/ссылку). --- */
 // Черновики и ЗАКРЫТЫЕ (авто-закрытие приёма 25-го в 18:00) не показываем в афише.
-$where = ["status <> 'draft'", "status <> 'closed'"];
+// ГЕЙТ ЗАПУСКА: конкурс появляется на сайте ТОЛЬКО после запуска из пульта (launched=1).
+$where = ["status <> 'draft'", "status <> 'closed'", "COALESCE(launched,0) = 1"];
 $args  = [];
 $intakeClosed = (string) setting('intake_closed', '') === '1';
 $reopenDate   = (string) setting('intake_reopen_date', '');
