@@ -5,7 +5,27 @@
  "code": "MEASURE",
  "top": [
   {
-   "views": 292847,
+   "views": 1014666,
+   "likes": 2280,
+   "comments": 219,
+   "channel": "laanlabs",
+   "followers": 6280,
+   "dur": 45,
+   "id": "z7DYC_zbZCM",
+   "title": "Air Measure App Demo - Augmented reality tape measure"
+  },
+  {
+   "views": 672925,
+   "likes": 2454,
+   "comments": 64,
+   "channel": "XFix",
+   "followers": 626000,
+   "dur": 77,
+   "id": "RRm50e0QyUE",
+   "title": "Measure App for Android better than iPhone"
+  },
+  {
+   "views": 292849,
    "likes": 1202,
    "comments": 62,
    "channel": "DailyZeck",
@@ -15,7 +35,7 @@
    "title": "How to Use The Measure App on iPhone"
   },
   {
-   "views": 198502,
+   "views": 198504,
    "likes": 1194,
    "comments": 98,
    "channel": "Payette Forward",
@@ -25,17 +45,17 @@
    "title": "How Do I Use The iPhone Measure App? How Accurate Is It?"
   },
   {
-   "views": 54592,
-   "likes": 504,
-   "comments": 40,
-   "channel": "drdecks",
-   "followers": 168000,
-   "dur": 404,
-   "id": "q9MgvgpZ1bM",
-   "title": "How Accurate Is The Default Measure App? || Dr Decks"
+   "views": 49592,
+   "likes": 1194,
+   "comments": 117,
+   "channel": "Matt Risinger",
+   "followers": 1220000,
+   "dur": 1066,
+   "id": "5Kg05AV3Luo",
+   "title": "Watch THIS Before You Remodel - Plus the first GOOD 3D Measure App for plans!"
   },
   {
-   "views": 49013,
+   "views": 49017,
    "likes": 226,
    "comments": 18,
    "channel": "LoFi Alpaca",
@@ -45,7 +65,17 @@
    "title": "How To Use The Measure App On iPhone! (2025)"
   },
   {
-   "views": 26335,
+   "views": 35684,
+   "likes": 58,
+   "comments": 3,
+   "channel": "Foxtecc",
+   "followers": 243000,
+   "dur": 129,
+   "id": "fvgsFw9RgGo",
+   "title": "How to Use Measure App on iPhone (full guide)"
+  },
+  {
+   "views": 26345,
    "likes": 79,
    "comments": 15,
    "channel": "dottotech",
@@ -55,14 +85,14 @@
    "title": "Measure App for iPhone"
   },
   {
-   "views": 14761,
-   "likes": 260,
-   "comments": 3,
-   "channel": "Concepts App",
-   "followers": 157000,
-   "dur": 155,
-   "id": "tbbsrNxzEyc",
-   "title": "Walkthrough Series: Setting Scale"
+   "views": 17736,
+   "likes": 169,
+   "comments": 38,
+   "channel": "SPOTcm powered by BrockWorks",
+   "followers": 2020,
+   "dur": 500,
+   "id": "VRFVsW9Otr4",
+   "title": "Hover 3D Demo"
   },
   {
    "views": 11603,
@@ -73,54 +103,35 @@
    "dur": 207,
    "id": "oNVkXmHS00c",
    "title": "Live Demonstration - MeasureSquare iPad Edition"
-  },
-  {
-   "views": 8875,
-   "likes": 20,
-   "comments": 0,
-   "channel": "RoomSketcher",
-   "followers": 14400,
-   "dur": 115,
-   "id": "1s1Gc5tGh2Q",
-   "title": "Measure the Distance Between Items - RoomSketcher App"
-  },
-  {
-   "views": 7759,
-   "likes": 41,
-   "comments": 2,
-   "channel": "Quick Tutorials",
-   "followers": 30300,
-   "dur": 94,
-   "id": "DtTLW0uF1cs",
-   "title": "How to Measure Anything with Your iPhone (Measure App Explained)"
-  },
-  {
-   "views": 7514,
-   "likes": 40,
-   "comments": 12,
-   "channel": "Measure Square",
-   "followers": 3400,
-   "dur": 201,
-   "id": "7pjAa4SBIpk",
-   "title": "Room Scanner LiDAR 3D Scanner App | Floor Plan Tutorial | Measure Square"
   }
  ],
- "millions_list": [],
- "millions": 0,
+ "millions_list": [
+  {
+   "views": 1014666,
+   "likes": 2280,
+   "comments": 219,
+   "channel": "laanlabs",
+   "followers": 6280,
+   "dur": 45,
+   "id": "z7DYC_zbZCM",
+   "title": "Air Measure App Demo - Augmented reality tape measure"
+  }
+ ],
+ "millions": 1,
  "hooks": [
   "measure",
   "app",
   "iphone",
   "use",
-  "accurate",
-  "scanner",
-  "default",
-  "decks",
-  "walkthrough",
-  "series",
-  "setting",
-  "scale"
+  "demo",
+  "air",
+  "augmented",
+  "reality",
+  "tape",
+  "android",
+  "better",
+  "than"
  ],
- "ts": "2026-08-07 04:20 UTC",
- "avg_views": 67180
+ "ts": "2026-08-07 08:17 UTC",
+ "avg_views": 236892
 }
