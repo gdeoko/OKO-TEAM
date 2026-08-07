@@ -25,22 +25,25 @@ ANGLES={
    "зачем бизнесу студия а не телефон","сколько стоит профессиональное видео (и почему это дёшево)"]}
 
 def hist():
+    """Возвращает список (fmt, angle) из USED_TOPICS (формат '- fmt | date | angle')."""
     if not os.path.exists(REG): return []
     out=[]
     for l in open(REG,encoding="utf-8"):
         l=l.strip()
         if l.startswith("- "):
-            parts=l[2:].split("|")
-            if parts: out.append(parts[0].strip())
+            parts=[p.strip() for p in l[2:].split("|")]
+            fmt=parts[0] if parts else ""
+            angle=parts[-1] if len(parts)>=2 else ""
+            out.append((fmt,angle))
     return out
 
 def pick():
-    h=hist(); recent=h[-10:]
+    h=hist(); recent=[f for f,_ in h][-10:]
     c=collections.Counter(recent); n=max(1,len(recent))
     deficit={f:RATIO[f]-c.get(f,0)/n for f in RATIO}
     fmt=max(deficit,key=deficit.get) if recent else "viral"
-    used_angles=set(a for a in h)
-    pool=[a for a in ANGLES[fmt] if a not in [x.split("::")[-1] for x in h]] or ANGLES[fmt]
+    used_angles=set(a for _,a in h if a)
+    pool=[a for a in ANGLES[fmt] if a not in used_angles] or ANGLES[fmt]
     ang=random.Random(len(h)).choice(pool)
     return {"format":fmt,"angle":ang,
       "hint":f"Формат {fmt} (держим 50/30/20). Тема НОВАЯ под угол «{ang}», связка с V.CODE видеопродакшн. НЕ повторять прошлые."}
