@@ -12,6 +12,7 @@
 declare(strict_types=1);
 
 require_once BASE_PATH . '/core/presets.php';
+if (is_file(BASE_PATH . '/core/text_format.php')) require_once BASE_PATH . '/core/text_format.php';
 
 try { db()->exec("ALTER TABLE competitions ADD COLUMN results_published_at TEXT"); } catch (\Throwable $e) {}
 
@@ -62,7 +63,9 @@ $whoName = static fn(array $a): string => trim((string) $a['group_name']) !== ''
     ? trim((string) $a['group_name']) : trim((string) $a['full_name']);
 $whoPlace = static function (array $a): string {
     $city = trim((string) ($a['city'] ?? ''));
-    return $city !== '' ? ('Россия, ' . $city) : 'Россия';
+    if ($city === '') return 'Россия';
+    if (function_exists('city_normalize')) { $n = city_normalize($city); if ($n !== '') return $n; }
+    return mb_strpos($city, ',') !== false ? $city : ('Россия, ' . $city);
 };
 
 /* --------------- Экспорт результатов в DOCX (эталон-шапка + таблица) -------------- */

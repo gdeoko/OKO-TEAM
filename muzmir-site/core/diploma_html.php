@@ -282,7 +282,14 @@ function diploma_html(array $c, array $a, array $opt = []): string {
         if (!empty($a['nomination']))   $fields['Номинация'] = $a['nomination'];
         // Педагог(и): если в поле несколько ФИО — «Педагоги: ФИО, ФИО» (множественное + запятые).
         if (!empty($a['teacher'])) { [$tLabel, $tVal] = _dh_teachers((string) $a['teacher']); if ($tVal !== '') $fields[$tLabel] = $tVal; }
-        if (!empty($a['institution']))  $fields['Название учреждения'] = $a['institution'] . (!empty($a['city']) ? ', ' . $a['city'] : '');
+        if (!empty($a['institution'])) {
+            // Учреждение + город БЕЗ дублирования: «Московский …» уже содержит город.
+            if (!function_exists('institution_with_city') && is_file(BASE_PATH . '/core/text_format.php'))
+                require_once BASE_PATH . '/core/text_format.php';
+            $fields['Название учреждения'] = function_exists('institution_with_city')
+                ? institution_with_city((string) $a['institution'], (string) ($a['city'] ?? ''))
+                : $a['institution'] . (!empty($a['city']) ? ', ' . $a['city'] : '');
+        }
         if (!empty($a['work_title']))   $fields['Конкурсный номер'] = $a['work_title'];
     }
 

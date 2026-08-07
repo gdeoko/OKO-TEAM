@@ -90,7 +90,9 @@ function results_docx(int $compId): string {
         $who  = $grp !== '' ? $grp : trim((string) $a['full_name']);
         $work = work_title_for_list((string) $a['work_title']);
         $city = trim((string) ($a['city'] ?? ''));
-        $place = $city !== '' ? ('Россия, ' . $city) : 'Россия';
+        if ($city === '') $place = 'Россия';
+        elseif (function_exists('city_normalize') && ($cn = city_normalize($city)) !== '') $place = $cn;
+        else $place = mb_strpos($city, ',') !== false ? $city : ('Россия, ' . $city);
         $res  = (string) $a['result']
               . (trim((string) ($a['extra_diploma'] ?? '')) !== '' ? '. Дополнительный диплом: ' . (string) $a['extra_diploma'] . '.' : '');
         $body .= '<w:tr>'

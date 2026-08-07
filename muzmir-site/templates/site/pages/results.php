@@ -334,8 +334,11 @@ ob_start(); ?>
                   <?php if ($r['age_category']): ?>
                     <span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg><?= h($r['age_category']) ?></span>
                   <?php endif; ?>
-                  <?php if ($r['city']): ?>
-                    <span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 21s-7-6-7-11a7 7 0 0 1 14 0c0 5-7 11-7 11z"/><circle cx="12" cy="10" r="2.5"/></svg><?= h($r['city']) ?></span>
+                  <?php if ($r['city']):
+                    // Город хранится канонично «Страна, г. Город» — в бейдже показываем «г. Город».
+                    $cityBadge = ($cp = mb_strrpos((string) $r['city'], ',')) !== false
+                        ? trim(mb_substr((string) $r['city'], $cp + 1)) : (string) $r['city']; ?>
+                    <span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 21s-7-6-7-11a7 7 0 0 1 14 0c0 5-7 11-7 11z"/><circle cx="12" cy="10" r="2.5"/></svg><?= h($cityBadge) ?></span>
                   <?php endif; ?>
                   <?php if ($r['institution']): ?>
                     <span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M3 21h18M5 21V8l7-4 7 4v13M9 21v-5h6v5"/></svg><?= h($r['institution']) ?></span>

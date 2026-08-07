@@ -137,6 +137,16 @@ if ($birthDate !== '') {
     }
 }
 
+// Город/населённый пункт — ОБЯЗАТЕЛЕН. Авто-нормализация в «Страна, г. Город»
+// («Москва»→«Россия, г. Москва», «Минск»→«Республика Беларусь, г. Минск» и т.п.).
+$cityRaw = trim((string) input('city'));
+if ($cityRaw === '') {
+    $errors['city'] = 'Укажите город или населённый пункт';
+} else {
+    $cityNorm = function_exists('city_normalize') ? city_normalize($cityRaw) : $cityRaw;
+    if ($cityNorm === '') $errors['city'] = 'Укажите город или населённый пункт';
+}
+
 // --- Конкурсная работа обязательна для исполнительских/видео- и ИЗО/фото-номинаций ---
 // Исполнительские/видео: обязательна конкурсная ВИДЕО-ссылка. ИЗО/фото: допускается фото-ссылка.
 $performingNoms = [
@@ -226,7 +236,8 @@ foreach ($comps as $ci) {
         'work_title'     => function_exists('quote_title') ? quote_title((string) input('work_title')) : input('work_title'),
         'teacher'        => input('teacher'),
         'institution'    => input('institution'),
-        'city'           => input('city'),
+        'city'           => (function_exists('city_normalize') && ($cn = city_normalize((string) input('city'))) !== '')
+                                ? $cn : input('city'),
         'email'          => $email,
         'phone'          => $phone,
         'video_url'      => $video,
