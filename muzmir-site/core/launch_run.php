@@ -211,9 +211,15 @@ function launch_email_ctype(string $wave): string {
  */
 function launch_email_build(string $ctype): array {
     if (!function_exists('campaign_build') && is_file(BASE_PATH . '/core/mail_campaigns.php')) require_once BASE_PATH . '/core/mail_campaigns.php';
-    $key = $ctype === 'vip' ? 'vip' : 'new_competitions';
-    $opt = [];
+    $key  = $ctype === 'vip' ? 'vip' : 'new_competitions';
     $subj = function_exists('setting') ? (string) setting('launch_mail_subject:' . $ctype, '') : '';
+    // Визуально отредактированное в пульте тело письма (contenteditable) — приоритетнее шаблона.
+    $ovHtml = function_exists('setting') ? (string) setting('launch_mail_html:' . $ctype, '') : '';
+    if (trim($ovHtml) !== '') {
+        if (trim($subj) === '') { $b0 = function_exists('campaign_build') ? campaign_build($key) : ['subject' => 'Культурный центр «Музыкальный Мир»']; $subj = (string) $b0['subject']; }
+        return [$subj, $ovHtml];
+    }
+    $opt = [];
     $lead = function_exists('setting') ? (string) setting('launch_mail_lead:' . $ctype, '') : '';
     if (trim($subj) !== '') $opt['subject'] = $subj;
     if (trim($lead) !== '') $opt['lead'] = $lead;
@@ -742,12 +748,12 @@ function launch_panel_html(): string {
                 launch_wave_text($c, 'launch', [$c]), $coverDisp($c, 'launch', [$c]), false);
         endforeach; ?>
 
-        <div class="lp2-group-t" style="margin-top:18px">Массовые письма — отдельные блоки с редактированием и количеством в день (уходят при запуске)</div>
+        <div class="lp2-group-t" style="margin-top:18px">Массовые письма — редактируются ВИЗУАЛЬНО прямо в письме (текст, кнопки, картинки), с количеством в день (уходят при запуске)</div>
         <?php
-        // Три email-блока: общая база (200/день), ВИП-клуб (100/день), личный кабинет (100/день).
-        $mailBlock = function (string $ctype, string $title, string $desc, string $quotaKey, int $quotaDef) use ($post): string {
-            $subj = (string) (function_exists('setting') ? setting('launch_mail_subject:' . $ctype, '') : '');
-            $lead = (string) (function_exists('setting') ? setting('launch_mail_lead:' . $ctype, '') : '');
+        // Три email-блока с ВИЗУАЛЬНЫМ редактором (contenteditable, как в «Отправках»):
+        // общая база (200/день), ВИП-клуб (100/день), личный кабинет (100/день).
+        $mailBlock = function (string $ctype, string $title, string $desc, string $quotaKey, int $quotaDef, string $bodyHtml) use ($post): string {
+            $subj  = (string) (function_exists('setting') ? setting('launch_mail_subject:' . $ctype, '') : '');
             $quota = (int) (function_exists('setting') ? setting($quotaKey, (string) $quotaDef) : $quotaDef);
             ob_start(); ?>
             <div class="lp2-block" data-mailblock="<?= h($ctype) ?>">
@@ -756,22 +762,32 @@ function launch_panel_html(): string {
               <label class="small muted" style="display:block;margin-bottom:8px">Тема письма (пусто — по умолчанию)
                 <input type="text" id="mbsubj_<?= h($ctype) ?>" value="<?= h($subj) ?>" placeholder="Тема по умолчанию" style="display:block;width:100%;box-sizing:border-box;margin-top:4px;padding:9px 11px;border:1px solid #d7ddea;border-radius:10px;font:inherit">
               </label>
-              <label class="small muted" style="display:block;margin-bottom:8px">Вводный абзац (необязательно, вставляется после приветствия)
-                <textarea id="mblead_<?= h($ctype) ?>" rows="3" class="lp2-ta" style="margin-top:4px"><?= h($lead) ?></textarea>
-              </label>
-              <label class="small muted" style="display:block;margin-bottom:10px">Количество в день (успешных писем)
+              <div class="mb-toolbar">
+                <button type="button" data-mbcmd="bold" title="Жирный"><b>Ж</b></button>
+                <button type="button" data-mbcmd="italic" title="Курсив"><i>К</i></button>
+                <button type="button" data-mbcmd="link" title="Ссылка">🔗 Ссылка</button>
+                <button type="button" data-mbcmd="btn" title="Кнопка">▭ Кнопка</button>
+                <span class="small muted" style="margin-left:auto">Редактируйте прямо в письме ↓</span>
+              </div>
+              <div class="mb-edit" id="mbbody_<?= h($ctype) ?>" contenteditable="true"><?= $bodyHtml ?></div>
+              <label class="small muted" style="display:block;margin:10px 0 10px">Количество в день (успешных писем)
                 <input type="number" min="1" max="1000" id="mbq_<?= h($ctype) ?>" value="<?= $quota ?>" style="display:block;width:120px;margin-top:4px;padding:9px 11px;border:1px solid #d7ddea;border-radius:10px;font:inherit">
               </label>
               <div class="lp2-acts">
                 <button type="button" class="btn btn--primary btn--sm" data-mbsave="<?= h($ctype) ?>" data-quotakey="<?= h($quotaKey) ?>">Сохранить</button>
+                <button type="button" class="btn btn--ghost btn--sm" data-mbreset="<?= h($ctype) ?>" style="color:#B23B3B">Сбросить к шаблону</button>
                 <a class="btn btn--ghost btn--sm" href="<?= h($post . '&do=email_preview_campaign&ctype=' . $ctype) ?>" target="_blank" rel="noopener">Предпросмотр письма</a>
               </div>
             </div>
             <?php return (string) ob_get_clean();
         };
-        echo $mailBlock('konkurs', 'Общее письмо по базе — все конкурсы в одном', 'Красивое письмо со всеми конкурсами (без цен), уходит по всей базе почт. Дублируется в приложение (in-app) и колокольчик.', 'nl_split_konkurs', 200);
-        echo $mailBlock('vip', 'Письмо ВИП-клуб', 'Красивое письмо как раздел «ВИП-клуб» на сайте (без цен), CTA «Вступить» вверху и внизу. Аудитория — члены клуба.', 'nl_split_vip', 100);
-        echo $mailBlock('kabinet', 'Письмо «Личный кабинет» (логин + пароль)', 'Персональный онбординг по утверждённому эталону: логин и временный пароль каждому. Разовая волна по базе.', 'nl_split_kabinet', 100);
+        [, $konkBody] = launch_email_build('konkurs');
+        [, $vipBody]  = launch_email_build('vip');
+        $kabBody = function_exists('kabinet_onboarding_inner') ? kabinet_onboarding_inner()
+                 : ((is_file(BASE_PATH . '/core/kabinet_onboarding.php') && (require_once BASE_PATH . '/core/kabinet_onboarding.php') && function_exists('kabinet_onboarding_inner')) ? kabinet_onboarding_inner() : '');
+        echo $mailBlock('konkurs', 'Общее письмо по базе — все конкурсы в одном', 'Красивое письмо со всеми конкурсами (без цен), уходит по всей базе почт. Дублируется в приложение (in-app) и колокольчик. Правьте текст/кнопки/картинки прямо в письме.', 'nl_split_konkurs', 200, str_replace('{{name}}', 'Имя', (string) $konkBody));
+        echo $mailBlock('vip', 'Письмо ВИП-клуб', 'Красивое письмо как раздел «ВИП-клуб» на сайте (без цен), CTA «Вступить» вверху и внизу. Аудитория — члены клуба.', 'nl_split_vip', 100, str_replace('{{name}}', 'Имя', (string) $vipBody));
+        echo $mailBlock('kabinet', 'Письмо «Личный кабинет» (логин + пароль)', 'Персональный онбординг по утверждённому эталону. Поля {{login}} и {{password}} подставятся каждому автоматически. Разовая волна по базе.', 'nl_split_kabinet', 100, str_replace('{{name}}', 'Имя', (string) $kabBody));
         ?>
 
         <div class="lp2-group-t" style="margin-top:18px">Общие посты по всем конкурсам (афиша — авто-композит со всеми афишами и надписью, можно заменить)</div>
@@ -817,6 +833,15 @@ function launch_panel_html(): string {
     .lp2-ta{flex:1;min-width:0;width:100%;box-sizing:border-box;padding:10px 12px;border:1px solid #d7ddea;border-radius:10px;font:inherit;font-size:.9rem;line-height:1.55;resize:vertical}
     .lp2-acts{display:flex;gap:8px;flex-wrap:wrap;margin-top:8px}
     .lp2-group-t{font-size:.8rem;letter-spacing:.05em;text-transform:uppercase;color:#889;margin:0 0 10px;font-weight:700}
+    .mb-toolbar{display:flex;gap:6px;align-items:center;flex-wrap:wrap;margin:0 0 8px;padding:6px;background:#F4F6FB;border:1px solid #E3E9F7;border-radius:10px}
+    .mb-toolbar button{padding:5px 10px;border:1px solid #d7ddea;background:#fff;border-radius:8px;cursor:pointer;font-size:13px;line-height:1}
+    .mb-toolbar button:hover{background:#eef2fb}
+    .mb-edit{border:1px solid #d7ddea;border-radius:12px;padding:16px 18px;background:#fff;max-height:520px;overflow:auto;font-size:14px;line-height:1.5;color:#222}
+    .mb-edit:focus{outline:2px solid #C7932255;border-color:#C79322}
+    .mb-edit img{max-width:100%;height:auto}
+    [data-theme=dark] .mb-toolbar{background:#171b2b;border-color:#2b3350}
+    [data-theme=dark] .mb-toolbar button{background:#1c2136;border-color:#2b3350;color:#e6ecff}
+    [data-theme=dark] .mb-edit{background:#fff;color:#222}
     @media(max-width:640px){.lp2-body{flex-direction:column}.lp2-cover{width:100%;max-width:220px}}
     [data-theme=dark] .lp2-block{background:#151a29;border-color:#2a3150}
     [data-theme=dark] .lp2-ta,[data-theme=dark] .lp2-chip{background:#171b2b;border-color:#2b3350;color:#e6ecff}
@@ -843,15 +868,32 @@ function launch_panel_html(): string {
           showMsg('Афиша обновлена. Обновляю…',true); setTimeout(function(){location.reload();},700);
         }).catch(function(){showMsg('Ошибка сети.',false);});
       });
-      // Сохранение email-блока (тема/лид/квота).
+      // Визуальный редактор email-блоков: тулбар (Ж/К/ссылка/кнопка), сохранение тела, сброс.
+      var MB_BTN='display:inline-block;padding:12px 26px;border-radius:11px;background:#17307A;color:#E9C877;text-decoration:none;font-weight:700;font-size:14px';
+      root.addEventListener('click', function(e){
+        var tb=e.target.closest('[data-mbcmd]'); if(!tb) return;
+        var blk=tb.closest('[data-mailblock]'); if(!blk) return;
+        var ed=blk.querySelector('.mb-edit'); if(!ed) return;
+        ed.focus();
+        var cmd=tb.getAttribute('data-mbcmd');
+        if(cmd==='bold') document.execCommand('bold',false,null);
+        else if(cmd==='italic') document.execCommand('italic',false,null);
+        else if(cmd==='link'){ var u=prompt('Ссылка (URL):','https://'); if(u){ var t=prompt('Текст ссылки:', (window.getSelection && String(window.getSelection()))||'ссылка')||u; document.execCommand('insertHTML',false,'<a href="'+u.replace(/"/g,'&quot;')+'" style="color:#17307A">'+t.replace(/</g,'&lt;')+'</a>'); } }
+        else if(cmd==='btn'){ var bu=prompt('Ссылка кнопки (URL):','https://'); if(bu){ var bt=prompt('Текст кнопки:','Подробнее')||'Подробнее'; document.execCommand('insertHTML',false,'<div style="margin:16px 0"><a href="'+bu.replace(/"/g,'&quot;')+'" style="'+MB_BTN+'">'+bt.replace(/</g,'&lt;')+'</a></div>'); } }
+      });
       root.addEventListener('click', function(e){
         var mb=e.target.closest('[data-mbsave]'); if(!mb) return;
         var ct=mb.getAttribute('data-mbsave'), qk=mb.getAttribute('data-quotakey');
-        var st=$('mbst_'+ct);
-        var subj=$('mbsubj_'+ct), lead=$('mblead_'+ct), q=$('mbq_'+ct);
-        post({do:'mail_block_save',ctype:ct,quotakey:qk,subject:subj?subj.value:'',lead:lead?lead.value:'',quota:q?q.value:''}).then(function(d){
-          if(st){ st.textContent=d.ok?'сохранено':(d.msg||'ошибка'); st.style.color=d.ok?'#1E7A44':'#B23B3B'; }
+        var st=$('mbst_'+ct), subj=$('mbsubj_'+ct), q=$('mbq_'+ct), ed=$('mbbody_'+ct);
+        if(st){ st.textContent='сохраняю…'; st.style.color='#889'; }
+        post({do:'mail_block_save',ctype:ct,quotakey:qk,subject:subj?subj.value:'',html:ed?ed.innerHTML:'',quota:q?q.value:''}).then(function(d){
+          if(st){ st.textContent=d.ok?'✓ сохранено':(d.msg||'ошибка'); st.style.color=d.ok?'#1E7A44':'#B23B3B'; }
         }).catch(function(){ if(st){st.textContent='ошибка сети'; st.style.color='#B23B3B';} });
+      });
+      root.addEventListener('click', function(e){
+        var mr=e.target.closest('[data-mbreset]'); if(!mr) return;
+        if(!confirm('Вернуть эталонный шаблон письма? Ваши правки будут удалены.')) return;
+        post({do:'mail_block_reset',ctype:mr.getAttribute('data-mbreset')}).then(function(d){ if(d.ok) location.reload(); }).catch(function(){});
       });
       root.addEventListener('click', function(e){
         var b=e.target.closest('[data-lp2]'); if(!b) return;

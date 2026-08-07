@@ -160,6 +160,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         redirect('/cabinet#settings');
     } elseif ($action === 'resend_diploma') {
         $dn = input('number');
+        // Гарантируем загрузку почтового слоя (mail_queue) — иначе отправка «молча» не срабатывала.
+        if (!function_exists('mail_queue') && is_file(BASE_PATH . '/core/mailer.php')) require_once BASE_PATH . '/core/mailer.php';
         $d = one("SELECT d.*, a.full_name AS a_name, a.email AS a_email, c.name AS comp_name
                     FROM diplomas d JOIN applications a ON a.id=d.application_id
                     JOIN competitions c ON c.id=a.competition_id
@@ -196,10 +198,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $subj   = 'Ваш диплом конкурса «' . (string) $d['comp_name'] . '» — № ' . $dn;
             $name   = (string) ($d['a_name'] ?: ($user['full_name'] ?? 'участник'));
             mail_queue($toMail, $name, $subj, $html, ($pdfAbs !== '' && is_file($pdfAbs)) ? $pdfAbs : '');
+            if (input('ajax') === '1') json_out(['ok' => true, 'email' => $toMail, 'number' => (string) $dn]);
             flash('Диплом отправлен на почту, указанную в заявке (' . h($toMail) . ').', 'success');
         } elseif ($d) {
+            if (input('ajax') === '1') json_out(['ok' => false, 'msg' => 'Диплом готов к скачиванию в разделе «Дипломы».']);
             flash('Диплом готов к скачиванию в разделе «Дипломы».', 'info');
         } else {
+            if (input('ajax') === '1') json_out(['ok' => false, 'msg' => 'Диплом не найден.']);
             flash('Диплом не найден.', 'error');
         }
         redirect('/cabinet');
@@ -836,12 +841,7 @@ ob_start(); ?>
                 </div>
                 <div class="cab-actions" style="margin-top:14px">
                   <a class="btn btn--primary" href="<?= url('/diploma/'.$d['number'].'.pdf') ?>" target="_blank" rel="noopener"><?= $icons['dl'] ?> Скачать PDF</a>
-                  <form method="post" action="<?= url('/cabinet') ?>" style="margin:0">
-                    <?= csrf_field() ?>
-                    <input type="hidden" name="action" value="resend_diploma">
-                    <input type="hidden" name="number" value="<?= h($d['number']) ?>">
-                    <button class="btn btn--ghost" type="submit"><?= $icons['mail'] ?> На почту</button>
-                  </form>
+                  <button type="button" class="btn btn--ghost" data-dip-resend="<?= h($d['number']) ?>"><?= $icons['mail'] ?> На почту</button>
                   <a class="btn btn--ghost" href="<?= url('/verify/'.$d['number']) ?>" target="_blank" rel="noopener"><?= $icons['qr'] ?> Проверка QR</a>
                 </div>
               </div>
@@ -1512,6 +1512,66 @@ ob_start(); ?>
   applyTheme(curT);
   document.querySelectorAll('.theme-opt').forEach(function(b){
     b.addEventListener('click', function(){ applyTheme(b.getAttribute('data-theme-set')); });
+  });
+})();
+</script>
+
+<!-- Диплом «На почту»: AJAX + красивое окно подтверждения (без ухода из раздела) -->
+<div id="dipModal" class="dip-modal" hidden aria-hidden="true">
+  <div class="dip-modal__backdrop" data-dip-close></div>
+  <div class="dip-modal__card" role="dialog" aria-modal="true" aria-labelledby="dipModalTitle">
+    <div class="dip-modal__ic" id="dipModalIc">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 6h16v12H4z"/><path d="m4 7 8 6 8-6"/></svg>
+    </div>
+    <h3 id="dipModalTitle">Диплом отправлен</h3>
+    <p id="dipModalText">Письмо с дипломом отправлено на Вашу электронную почту.</p>
+    <button type="button" class="btn btn--primary btn--block" data-dip-close>Хорошо</button>
+  </div>
+</div>
+<style>
+.dip-modal{position:fixed;inset:0;z-index:9999;display:flex;align-items:center;justify-content:center;padding:20px}
+.dip-modal[hidden]{display:none}
+.dip-modal__backdrop{position:absolute;inset:0;background:rgba(10,14,30,.55);backdrop-filter:blur(4px);animation:dipFade .2s ease}
+.dip-modal__card{position:relative;max-width:380px;width:100%;background:var(--panel-solid,#fff);border:1px solid var(--glass-brd,#e6e9f2);
+  border-radius:20px;padding:28px 26px 22px;text-align:center;box-shadow:0 24px 60px rgba(10,14,30,.28);animation:dipPop .24s cubic-bezier(.2,.8,.3,1.2)}
+.dip-modal__ic{width:64px;height:64px;margin:0 auto 14px;border-radius:50%;display:flex;align-items:center;justify-content:center;
+  background:var(--gold-soft,#f7f0dc);color:var(--gold-ink,#a9822f)}
+.dip-modal__ic svg{width:32px;height:32px}
+.dip-modal__ic.err{background:#FDECEC;color:#C0392B}
+.dip-modal__card h3{margin:0 0 8px;font-size:1.2rem}
+.dip-modal__card p{margin:0 0 18px;color:var(--muted,#667);line-height:1.55;font-size:.95rem}
+.dip-modal__card p b{color:var(--text,#223)}
+[data-theme=dark] .dip-modal__card{background:#171b2b;border-color:#2b3350}
+@keyframes dipFade{from{opacity:0}to{opacity:1}}
+@keyframes dipPop{from{opacity:0;transform:translateY(12px) scale(.96)}to{opacity:1;transform:none}}
+</style>
+<script>
+(function(){
+  var modal=document.getElementById('dipModal'); if(!modal) return;
+  var ic=document.getElementById('dipModalIc'), title=document.getElementById('dipModalTitle'), text=document.getElementById('dipModalText');
+  var CSRF=<?= json_encode(csrf_token()) ?>, URL=<?= json_encode(url('/cabinet')) ?>;
+  function openModal(ok,msg){
+    ic.className='dip-modal__ic'+(ok?'':' err');
+    title.textContent=ok?'Диплом отправлен':'Не удалось отправить';
+    text.innerHTML=msg; modal.hidden=false; document.body.style.overflow='hidden';
+  }
+  function closeModal(){ modal.hidden=true; document.body.style.overflow=''; }
+  modal.addEventListener('click',function(e){ if(e.target.closest('[data-dip-close]')) closeModal(); });
+  document.addEventListener('keydown',function(e){ if(e.key==='Escape'&&!modal.hidden) closeModal(); });
+  document.addEventListener('click',function(e){
+    var btn=e.target.closest('[data-dip-resend]'); if(!btn) return;
+    e.preventDefault();
+    var num=btn.getAttribute('data-dip-resend'), old=btn.innerHTML;
+    btn.disabled=true; btn.style.opacity='.6';
+    var body=new URLSearchParams({action:'resend_diploma',number:num,ajax:'1',_csrf:CSRF});
+    fetch(URL,{method:'POST',headers:{'Content-Type':'application/x-www-form-urlencoded'},credentials:'same-origin',body:body})
+      .then(function(r){return r.json();})
+      .then(function(d){
+        if(d&&d.ok){ openModal(true,'Письмо с дипломом № <b>'+num+'</b> отправлено на Вашу электронную почту <b>'+(d.email||'')+'</b>. Проверьте входящие и папку «Спам».'); }
+        else{ openModal(false, (d&&d.msg)||'Попробуйте ещё раз позже.'); }
+      })
+      .catch(function(){ openModal(false,'Ошибка сети. Попробуйте ещё раз.'); })
+      .finally(function(){ btn.disabled=false; btn.style.opacity=''; btn.innerHTML=old; });
   });
 })();
 </script>

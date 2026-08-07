@@ -22,12 +22,34 @@ if (!$selComp && $compId > 0) {
                       FROM competitions WHERE id=? AND status <> 'draft'", [$compId]);
 }
 
-// Прайс: индивидуальный для конкурса, иначе общий шаблон.
+/**
+ * Канонизация названия товара из прайса к ключам витрины: в разных конкурсах кубок/статуэтка/
+ * медаль/благодарность заведены по-разному («Кубок» vs «Кубок Гран-при», «Благодарность педагогу»
+ * vs «Благодарность»). Без нормализации трофеи «терялись» на витрине заказа. '' — служебные строки
+ * (напр. «Доставка Почтой России») в каталог не идут.
+ */
+function aw_canon_item(string $item): string {
+    $l = mb_strtolower(trim($item));
+    if ($l === '') return '';
+    if (mb_strpos($l, 'доставк') !== false) return '';                 // строка доставки — не товар
+    if (mb_strpos($l, 'кубок') !== false)     return 'Кубок Гран-при';
+    if (mb_strpos($l, 'статуэтк') !== false)  return 'Статуэтка лауреата';
+    if (mb_strpos($l, 'медал') !== false)     return 'Медаль дипломанта';
+    if (mb_strpos($l, 'благодарн') !== false) return 'Благодарность';
+    if (mb_strpos($l, 'именн') !== false)     return 'Именной диплом';
+    if (mb_strpos($l, 'дополнит') !== false)  return 'Дополнительный диплом';
+    if (mb_strpos($l, 'основн') !== false)    return 'Основной диплом';
+    return $item;                                                      // прочее — как есть
+}
+
+// Прайс: общий шаблон + индивидуальные цены конкурса ПОВЕРХ него (мердж, а не «или-или»),
+// чтобы кубок/статуэтка/медаль присутствовали у любого конкурса, а цены конкурса переопределяли.
 $catalog = [];
 if ($selComp) {
-    $prices = all("SELECT item, kind, price FROM awards_prices WHERE competition_id=? ORDER BY price DESC", [$compId]);
-    if (!$prices) $prices = all("SELECT item, kind, price FROM awards_prices WHERE competition_id IS NULL ORDER BY price DESC");
-    foreach ($prices as $p) { $catalog[$p['item']][$p['kind']] = (int)$p['price']; }
+    $gen  = all("SELECT item, kind, price FROM awards_prices WHERE competition_id IS NULL ORDER BY price DESC");
+    $comp = all("SELECT item, kind, price FROM awards_prices WHERE competition_id=? ORDER BY price DESC", [$compId]);
+    foreach ($gen as $p)  { $it = aw_canon_item((string) $p['item']); if ($it !== '') $catalog[$it][$p['kind']] = (int) $p['price']; }
+    foreach ($comp as $p) { $it = aw_canon_item((string) $p['item']); if ($it !== '') $catalog[$it][$p['kind']] = (int) $p['price']; }
 }
 
 $meta = [

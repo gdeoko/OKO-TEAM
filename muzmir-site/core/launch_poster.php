@@ -87,68 +87,101 @@ function launch_poster(string $wave, array $comps, string $extra = ''): ?string 
 
     $W = 1200; $H = 630;
     $img = imagecreatetruecolor($W, $H);
-    // Фон — тёмно-синий градиент (бренд).
+    // Фон — тёмно-синий градиент (бренд), на случай пустых зон.
     for ($y = 0; $y < $H; $y++) {
         $t = $y / $H;
-        $r = (int) (13 + $t * 10); $g = (int) (16 + $t * 24); $b = (int) (40 + $t * 50);
-        $col = imagecolorallocate($img, $r, $g, $b);
-        imageline($img, 0, $y, $W, $y, $col);
+        $r = (int) (12 + $t * 10); $g = (int) (18 + $t * 20); $b = (int) (44 + $t * 46);
+        imageline($img, 0, $y, $W, $y, imagecolorallocate($img, $r, $g, $b));
     }
-    $gold  = imagecolorallocate($img, 212, 175, 55);
+    $goldA = [212, 175, 55]; $goldB = [176, 138, 44];
+    $navy  = imagecolorallocate($img, 12, 22, 58);
+    $gold  = imagecolorallocate($img, 224, 190, 92);
     $white = imagecolorallocate($img, 255, 255, 255);
-    $shadow= imagecolorallocatealpha($img, 0, 0, 0, 55);
 
-    // Сетка афиш вверху (до 4 в ряд), с рамкой.
+    // === НИЗ: афиши заполняют всю область под шапкой (без «мёртвого» синего поля) ===
     $covers = [];
     foreach ($comps as $c) { $g0 = lp_load_cover($c); if ($g0) $covers[] = $g0; }
-    $n = count($covers);
-    if ($n > 0) {
-        $n = min($n, 4);
-        $gap = 18; $areaW = $W - 80; $cw = (int) (($areaW - $gap * ($n - 1)) / $n); $ch = (int) ($cw * 0.62);
-        $x0 = 40; $y0 = 60;
-        for ($i = 0; $i < $n; $i++) {
-            $src = $covers[$i];
-            $sw = imagesx($src); $sh = imagesy($src);
-            // cover-fit
-            $scale = max($cw / $sw, $ch / $sh);
-            $nw = (int) ($sw * $scale); $nh = (int) ($sh * $scale);
-            $tmp = imagecreatetruecolor($cw, $ch);
-            imagecopyresampled($tmp, $src, 0, 0, (int) (($nw - $cw) / 2 / $scale), (int) (($nh - $ch) / 2 / $scale), $cw, $ch, (int) ($cw / $scale), (int) ($ch / $scale));
-            $x = $x0 + $i * ($cw + $gap);
-            imagecopy($img, $tmp, $x, $y0, 0, 0, $cw, $ch);
-            imagerectangle($img, $x, $y0, $x + $cw - 1, $y0 + $ch - 1, $gold);
-            imagedestroy($tmp);
+    $n = min(count($covers), 4);
+    $capH  = 132;                         // высота верхней золотой плашки-заголовка
+    $areaX = 0; $areaY = $capH; $areaW = $W; $areaH = $H - $capH;
+
+    // Раскладка прямоугольников под N афиш: 1 — во всю область; 2 — рядом; 3 — 2 сверху + 1 снизу; 4 — 2×2.
+    $rects = [];
+    if ($n === 1) {
+        $rects[] = [$areaX, $areaY, $areaW, $areaH];
+    } elseif ($n === 2) {
+        $halfW = (int) ($areaW / 2);
+        $rects[] = [$areaX, $areaY, $halfW, $areaH];
+        $rects[] = [$areaX + $halfW, $areaY, $areaW - $halfW, $areaH];
+    } elseif ($n === 3) {
+        $halfH = (int) ($areaH / 2); $halfW = (int) ($areaW / 2);
+        $rects[] = [$areaX, $areaY, $halfW, $halfH];
+        $rects[] = [$areaX + $halfW, $areaY, $areaW - $halfW, $halfH];
+        $rects[] = [$areaX, $areaY + $halfH, $areaW, $areaH - $halfH];
+    } elseif ($n >= 4) {
+        $halfH = (int) ($areaH / 2); $halfW = (int) ($areaW / 2);
+        $rects[] = [$areaX, $areaY, $halfW, $halfH];
+        $rects[] = [$areaX + $halfW, $areaY, $areaW - $halfW, $halfH];
+        $rects[] = [$areaX, $areaY + $halfH, $halfW, $areaH - $halfH];
+        $rects[] = [$areaX + $halfW, $areaY + $halfH, $areaW - $halfW, $areaH - $halfH];
+    }
+    for ($i = 0; $i < $n; $i++) {
+        [$rx, $ry, $rw, $rh] = $rects[$i];
+        $src = $covers[$i]; $sw = imagesx($src); $sh = imagesy($src);
+        $scale = max($rw / $sw, $rh / $sh);           // cover-fit
+        $srcW = (int) ($rw / $scale); $srcH = (int) ($rh / $scale);
+        $srcX = (int) (($sw - $srcW) / 2); $srcY = (int) (($sh - $srcH) / 2);
+        imagecopyresampled($img, $src, $rx, $ry, $srcX, $srcY, $rw, $rh, $srcW, $srcH);
+    }
+    foreach ($covers as $g0) imagedestroy($g0);
+
+    // Тонкие золотые разделители между афишами.
+    if ($n >= 2) {
+        if ($n === 2) { imagefilledrectangle($img, (int) ($W / 2) - 2, $areaY, (int) ($W / 2) + 1, $H, $gold); }
+        else { // 3/4 — крест
+            imagefilledrectangle($img, (int) ($W / 2) - 2, $areaY, (int) ($W / 2) + 1, $H, $gold);
+            imagefilledrectangle($img, 0, $areaY + (int) ($areaH / 2) - 2, $W, $areaY + (int) ($areaH / 2) + 1, $gold);
         }
-        foreach ($covers as $g0) imagedestroy($g0);
     }
 
-    // Затемняющая плашка снизу под текст.
-    $band = imagecreatetruecolor($W, 250);
-    imagefilledrectangle($band, 0, 0, $W, 250, imagecolorallocate($band, 8, 10, 26));
-    imagecopymerge($img, $band, 0, $H - 250, 0, 0, $W, 250, 78);
-    imagedestroy($band);
+    // Мягкое затемнение афиш снизу — чтобы нижняя подпись (название конкурса) читалась.
+    if ($extra !== '') {
+        $shade = imagecreatetruecolor($W, 96);
+        imagefilledrectangle($shade, 0, 0, $W, 96, imagecolorallocate($shade, 8, 12, 30));
+        imagecopymerge($img, $shade, 0, $H - 96, 0, 0, $W, 96, 62);
+        imagedestroy($shade);
+    }
 
-    // Заголовок волны — крупно, по центру, с автопереносом.
-    $size = 54;
+    // === ВЕРХ: золотая плашка-заголовок (текст тёмно-синим, высокий контраст, не поверх афиш) ===
+    for ($y = 0; $y < $capH; $y++) {
+        $t = $y / $capH;
+        $r = (int) ($goldA[0] + ($goldB[0] - $goldA[0]) * $t);
+        $g = (int) ($goldA[1] + ($goldB[1] - $goldA[1]) * $t);
+        $b = (int) ($goldA[2] + ($goldB[2] - $goldA[2]) * $t);
+        imageline($img, 0, $y, $W, $y, imagecolorallocate($img, $r, $g, $b));
+    }
+    imagefilledrectangle($img, 0, $capH - 4, $W, $capH - 1, $navy);   // нижняя грань плашки
+
+    $size = 52;
     $lines = lp_wrap($caption, $font, $size, $W - 120);
-    while (count($lines) > 2 && $size > 34) { $size -= 4; $lines = lp_wrap($caption, $font, $size, $W - 120); }
-    $lh = (int) ($size * 1.35);
+    while (count($lines) > 2 && $size > 30) { $size -= 4; $lines = lp_wrap($caption, $font, $size, $W - 120); }
+    if (count($lines) === 1) { while ($size < 62) { $t2 = lp_wrap($caption, $font, $size + 2, $W - 120); if (count($t2) > 1) break; $size += 2; } }
+    $lh = (int) ($size * 1.18);
     $blockH = $lh * count($lines);
-    $ty = $H - 150 + (int) (($blockH <= 120 ? (120 - $blockH) / 2 : 0));
+    $ty = (int) (($capH - $blockH) / 2);
     foreach ($lines as $ln) {
-        $bb = imagettfbbox($size, 0, $font, $ln);
-        $tw = abs($bb[2] - $bb[0]);
+        $bb = imagettfbbox($size, 0, $font, $ln); $tw = abs($bb[2] - $bb[0]);
         $tx = (int) (($W - $tw) / 2);
-        imagettftext($img, $size, 0, $tx + 2, $ty + $lh + 2, $shadow, $font, $ln);
-        imagettftext($img, $size, 0, $tx, $ty + $lh, $gold, $font, $ln);
+        imagettftext($img, $size, 0, $tx, $ty + $size, $navy, $font, $ln);
         $ty += $lh;
     }
-    // Доп. подпись (название конкурса для результатов) — под заголовком, белым.
+
+    // Нижняя подпись (название конкурса для результатов) — золотом по центру над низом.
     if ($extra !== '') {
-        $s2 = 30; $el = lp_wrap($extra, $font, $s2, $W - 140);
+        $s2 = 34; $el = lp_wrap($extra, $font, $s2, $W - 160);
         $ln = $el[0] ?? $extra;
         $bb = imagettfbbox($s2, 0, $font, $ln); $tw = abs($bb[2] - $bb[0]);
-        imagettftext($img, $s2, 0, (int) (($W - $tw) / 2), $H - 40, $white, $font, $ln);
+        imagettftext($img, $s2, 0, (int) (($W - $tw) / 2), $H - 34, $gold, $font, $ln);
     }
 
     imagepng($img, $out, 6);

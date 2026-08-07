@@ -12,23 +12,32 @@
  */
 declare(strict_types=1);
 
-/** HTML письма кабинета с логином/паролем (единый эталон). */
-function kabinet_onboarding_html(string $email, string $name, string $pass): string {
-    if (!function_exists('mm_email_layout')) require_once __DIR__ . '/mailer.php';
+/** Внутреннее тело кабинет-письма с токенами {{name}} {{login}} {{password}} (эталон или оверрайд из пульта). */
+function kabinet_onboarding_inner(): string {
+    $ov = function_exists('setting') ? (string) setting('launch_mail_html:kabinet', '') : '';
+    if (trim($ov) !== '') return $ov;
     $base = rtrim((string) cfgv('base_url'), '/');
     if ($base === '' || stripos($base, 'localhost') !== false) $base = 'https://xn----7sbugdeiegh1b0a9hen.xn--p1ai';
-    $inner = '<p style="margin:0 0 14px;font-size:15px;color:#2a2a3a;">Здравствуйте'
-        . ($name !== '' ? ', ' . h($name) : '') . '! Мы открыли для Вас личный кабинет'
+    if (!function_exists('mm_email_btn')) require_once __DIR__ . '/mailer.php';
+    return '<p style="margin:0 0 14px;font-size:15px;color:#2a2a3a;">Здравствуйте, {{name}}! Мы открыли для Вас личный кабинет'
         . ' на сайте Культурного центра «Музыкальный Мир»: заявки, результаты,'
         . ' электронные дипломы и заказ наград — всё в одном месте.</p>'
         . '<div style="margin:0 0 16px;padding:16px 18px;border:1.5px solid #C79322;border-radius:12px;background:#FCF9F0;text-align:center;">'
         . '<div style="font-size:13px;color:#6b5d3f;margin-bottom:6px;">Ваш логин</div>'
-        . '<div style="font-size:16px;font-weight:bold;color:#17307A;margin-bottom:10px;">' . h($email) . '</div>'
+        . '<div style="font-size:16px;font-weight:bold;color:#17307A;margin-bottom:10px;">{{login}}</div>'
         . '<div style="font-size:13px;color:#6b5d3f;margin-bottom:6px;">Временный пароль</div>'
-        . '<div style="font-family:monospace;font-size:22px;font-weight:bold;letter-spacing:3px;color:#17307A;">' . h($pass) . '</div>'
+        . '<div style="font-family:monospace;font-size:22px;font-weight:bold;letter-spacing:3px;color:#17307A;">{{password}}</div>'
         . '<div style="font-size:12px;color:#8a7b58;margin-top:8px;">После входа пароль можно сменить в настройках кабинета.</div>'
         . '</div>'
         . mm_email_btn($base . '/login', 'Войти в личный кабинет');
+}
+
+/** HTML письма кабинета с логином/паролем (единый эталон, с подстановкой значений). */
+function kabinet_onboarding_html(string $email, string $name, string $pass): string {
+    if (!function_exists('mm_email_layout')) require_once __DIR__ . '/mailer.php';
+    $inner = kabinet_onboarding_inner();
+    $inner = str_replace(['{{name}}', '{{login}}', '{{password}}'],
+                         [h($name !== '' ? $name : 'участник'), h($email), h($pass)], $inner);
     return mm_email_layout($inner, ['title' => 'Ваш личный кабинет открыт']);
 }
 

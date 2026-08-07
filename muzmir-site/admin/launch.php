@@ -68,14 +68,16 @@ if ((string) input('do') === 'email_preview_campaign') {
     exit;
 }
 
-/* --- Сохранение email-блока (тема/лид/квота): konkurs | vip | kabinet --- */
+/* --- Сохранение email-блока (тема/ВИЗУАЛЬНОЕ тело/квота): konkurs | vip | kabinet --- */
 if ((string) input('do') === 'mail_block_save') {
     header('Content-Type: application/json; charset=utf-8');
     if (!csrf_check() || !user_can('admin')) json_out(['ok' => false, 'msg' => 'Нет доступа'], 403);
     $ctype = (string) input('ctype');
     if (!in_array($ctype, ['konkurs', 'vip', 'kabinet'], true)) json_out(['ok' => false, 'msg' => 'Неизвестный блок'], 422);
     set_setting('launch_mail_subject:' . $ctype, trim((string) input('subject')));
-    set_setting('launch_mail_lead:' . $ctype, trim((string) input('lead')));
+    // Визуально отредактированное тело письма (contenteditable). Пусто — не трогаем.
+    $html = (string) input('html');
+    if (trim(strip_tags($html)) !== '') set_setting('launch_mail_html:' . $ctype, $html);
     $qk = (string) input('quotakey');
     if (in_array($qk, ['nl_split_konkurs', 'nl_split_vip', 'nl_split_kabinet'], true)) {
         $q = max(0, min(1000, (int) input('quota')));
@@ -83,6 +85,19 @@ if ((string) input('do') === 'mail_block_save') {
     }
     audit('launch_mail_block_save', 'competition', 0, ['ctype' => $ctype]);
     json_out(['ok' => true, 'msg' => 'Сохранено']);
+}
+
+/* --- Сброс email-блока к эталонному шаблону: konkurs | vip | kabinet --- */
+if ((string) input('do') === 'mail_block_reset') {
+    header('Content-Type: application/json; charset=utf-8');
+    if (!csrf_check() || !user_can('admin')) json_out(['ok' => false, 'msg' => 'Нет доступа'], 403);
+    $ctype = (string) input('ctype');
+    if (!in_array($ctype, ['konkurs', 'vip', 'kabinet'], true)) json_out(['ok' => false, 'msg' => 'Неизвестный блок'], 422);
+    set_setting('launch_mail_html:' . $ctype, '');
+    set_setting('launch_mail_subject:' . $ctype, '');
+    set_setting('launch_mail_lead:' . $ctype, '');
+    audit('launch_mail_block_reset', 'competition', 0, ['ctype' => $ctype]);
+    json_out(['ok' => true, 'msg' => 'Сброшено']);
 }
 
 /* --- Загрузка/замена афиши поста (multipart) --- */
