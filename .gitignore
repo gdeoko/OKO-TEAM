@@ -27,7 +27,7 @@ __pycache__/
 .claude/skills/reels-machine/pipeline/n*/clips/
 .claude/skills/reels-machine/pipeline/n*/ov/
 .claude/skills/reels-machine/pipeline/n*/vo/
-.claude/skills/reels-machine/pipeline/n*/_asm/
+.claude/skills/reels-machine/pipeline/n*/_asm*/
 .claude/skills/reels-machine/pipeline/n*/*.mp4
 .claude/skills/reels-machine/pipeline/n*/*.jpg
 .claude/skills/reels-machine/pipeline/n*/*.mp3
