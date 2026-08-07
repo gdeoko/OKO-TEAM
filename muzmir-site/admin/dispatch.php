@@ -120,6 +120,31 @@ if (input('do') === 'get' && input('kind') === 'mail') {
     ]);
 }
 
+/* --------- JSON-данные ДИПЛОМА для редактора (данные заявки + превью) --------- */
+if (input('do') === 'dip_get' && input('kind') === 'diploma') {
+    $d = one("SELECT * FROM diplomas WHERE id=?", [(int) input('id')]);
+    if (!$d) json_out(['ok' => false, 'error' => 'Диплом не найден'], 404);
+    $a = one("SELECT * FROM applications WHERE id=?", [(int) $d['application_id']]) ?: [];
+    $s = trim((string) ($d['scheduled_at'] ?? ''));
+    json_out([
+        'ok'           => true,
+        'number'       => (string) $d['number'],
+        'type'         => (string) $d['type'],
+        'preview'      => url('/diploma-view/' . rawurlencode((string) $d['number'])),
+        'pdf'          => url('/diploma/' . rawurlencode((string) $d['number']) . '.pdf'),
+        'is_group'     => (int) ($a['is_group'] ?? 0),
+        'group_name'   => (string) ($a['group_name'] ?? ''),
+        'full_name'    => (string) ($a['full_name'] ?? ''),
+        'teacher'      => (string) ($a['teacher'] ?? ''),
+        'nomination'   => (string) ($a['nomination'] ?? ''),
+        'age_category' => (string) ($a['age_category'] ?? ''),
+        'work_title'   => (string) ($a['work_title'] ?? ''),
+        'result'       => (string) ($a['result'] ?? ''),
+        'extra_diploma'=> (string) ($a['extra_diploma'] ?? ''),
+        'scheduled_at' => $s !== '' ? date('Y-m-d\TH:i', strtotime($s)) : '',
+    ]);
+}
+
 /* ============================ POST-обработчики ============================ */
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     if (!csrf_check()) { disp_done(false, 'Сессия устарела. Обновите страницу.'); }
@@ -145,6 +170,28 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             q("DELETE FROM diplomas WHERE id=? AND sent_at IS NULL", [$id]);
             audit('dispatch_cancel', 'diploma', $id, []);
             disp_done(true, 'Плановая отправка диплома отменена.', ['remove' => true]);
+        } elseif ($do === 'dip_save') {
+            // Редактирование ДИПЛОМА прямо в «Отправках»: правим данные заявки (диплом
+            // собирается строго из неё), кэш PDF чистим — пересоберётся с правками.
+            $d = one("SELECT * FROM diplomas WHERE id=?", [$id]);
+            if (!$d) disp_done(false, 'Диплом не найден.');
+            $aid = (int) $d['application_id'];
+            $data = [];
+            foreach (['group_name','full_name','teacher','nomination','age_category','work_title','result','extra_diploma'] as $f) {
+                if (input($f) !== null) $data[$f] = trim((string) input($f));
+            }
+            if (input('is_group') !== null) $data['is_group'] = input('is_group') === '1' ? 1 : 0;
+            if ($data && $aid) update('applications', $data, 'id=:id', ['id' => $aid]);
+            // Пересобрать все дипломы этой заявки с новыми данными.
+            if ($aid) q("UPDATE diplomas SET pdf_path='' WHERE application_id=?", [$aid]);
+            // Дату отправки меняем только если поле трогали.
+            if (input('sched_touched') === '1') {
+                $dt = trim(input('scheduled_at'));
+                $norm = $dt !== '' ? date('Y-m-d H:i:s', strtotime(str_replace('T', ' ', $dt)) ?: time()) : null;
+                update('diplomas', ['scheduled_at' => $norm], 'id=:id', ['id' => $id]);
+            }
+            audit('dispatch_dip_edit', 'diploma', $id, ['app' => $aid, 'fields' => array_keys($data)]);
+            disp_done(true, 'Диплом обновлён — данные сохранены, PDF пересоберётся. Проверьте предпросмотром.');
         }
         disp_done(false, 'Неизвестное действие.');
     }
@@ -476,17 +523,18 @@ tr.disp-row.gone{opacity:0;transition:.4s}
 #dispToast.show{opacity:1;transform:translateX(-50%) translateY(0)}
 #dispToast.err{background:#C0392B}
 /* Модал редактора письма */
-#mailEditor{position:fixed;inset:0;z-index:280;display:none;align-items:flex-start;justify-content:center;
+#mailEditor,#dipEditor{position:fixed;inset:0;z-index:280;display:none;align-items:flex-start;justify-content:center;
   background:rgba(12,10,20,.55);padding:24px 12px;overflow:auto}
-#mailEditor.show{display:flex}
-#mailEditor .box{background:#fff;color:#111;border-radius:18px;max-width:720px;width:100%;box-shadow:0 24px 70px rgba(0,0,0,.4);
+#mailEditor.show,#dipEditor.show{display:flex}
+#mailEditor .box,#dipEditor .box{background:#fff;color:#111;border-radius:18px;max-width:720px;width:100%;box-shadow:0 24px 70px rgba(0,0,0,.4);
   overflow:hidden;animation:meIn .24s cubic-bezier(.2,.9,.3,1.15)}
 @keyframes meIn{from{transform:translateY(14px) scale(.98);opacity:0}to{transform:none;opacity:1}}
-#mailEditor .box-head{display:flex;align-items:center;justify-content:space-between;padding:16px 20px;border-bottom:1px solid #E6E9F2}
-#mailEditor .box-head h3{margin:0;font-size:17px;color:#17307A}
-#mailEditor .box-body{padding:18px 20px;max-height:70vh;overflow:auto}
-#mailEditor label{display:block;font-size:12px;color:#6B7699;margin:12px 0 4px;font-weight:600}
-#mailEditor input[type=text],#mailEditor input[type=email],#mailEditor input[type=datetime-local]{
+#mailEditor .box-head,#dipEditor .box-head{display:flex;align-items:center;justify-content:space-between;padding:16px 20px;border-bottom:1px solid #E6E9F2}
+#mailEditor .box-head h3,#dipEditor .box-head h3{margin:0;font-size:17px;color:#17307A}
+#mailEditor .box-body,#dipEditor .box-body{padding:18px 20px;max-height:70vh;overflow:auto}
+#mailEditor label,#dipEditor label{display:block;font-size:12px;color:#6B7699;margin:12px 0 4px;font-weight:600}
+#mailEditor input[type=text],#mailEditor input[type=email],#mailEditor input[type=datetime-local],
+#dipEditor input[type=text],#dipEditor input[type=datetime-local]{
   width:100%;padding:9px 12px;border:1px solid #D6DCEC;border-radius:10px;font-size:14px}
 #meToolbar{display:flex;gap:5px;flex-wrap:wrap;margin:4px 0 6px}
 #meToolbar button{padding:6px 11px;border:1px solid #D6DCEC;border-radius:8px;background:#F7F8FC;cursor:pointer;font-size:13px;font-weight:700}
@@ -494,9 +542,9 @@ tr.disp-row.gone{opacity:0;transition:.4s}
 #meBody{min-height:200px;max-height:360px;overflow:auto;padding:12px 14px;border:1px solid #D6DCEC;border-radius:10px;
   background:#fff;color:#111;font-size:14px;line-height:1.6}
 #meBody a{color:#17307A}
-#mailEditor .box-foot{display:flex;gap:10px;justify-content:flex-end;padding:14px 20px;border-top:1px solid #E6E9F2;background:#FAFBFF}
+#mailEditor .box-foot,#dipEditor .box-foot{display:flex;gap:10px;justify-content:flex-end;padding:14px 20px;border-top:1px solid #E6E9F2;background:#FAFBFF}
 .me-hint{font-size:12px;color:#8892B0;margin-top:4px}
-@media (max-width:640px){#mailEditor .box-foot{position:sticky;bottom:0}}
+@media (max-width:640px){#mailEditor .box-foot,#dipEditor .box-foot{position:sticky;bottom:0}}
 </style>
 
 <div class="page-head">
@@ -560,6 +608,8 @@ tr.disp-row.gone{opacity:0;transition:.4s}
             <input type="datetime-local" id="w-<?= $rid ?>" value="<?= h($it['when'] ? date('Y-m-d\TH:i', strtotime($it['when'])) : '') ?>">
             <button class="btn btn--ghost btn--sm" data-act="resched" data-kind="diploma" data-id="<?= $iid ?>" data-when="w-<?= $rid ?>" data-row="<?= $rid ?>" title="Изменить дату/время">OK</button>
             <button class="btn btn--primary btn--sm" data-act="sendnow" data-kind="diploma" data-id="<?= $iid ?>" data-row="<?= $rid ?>"><?= admin_icon('send') ?>Сейчас</button>
+            <button class="btn btn--ghost btn--sm" data-act="editdip" data-id="<?= $iid ?>" data-row="<?= $rid ?>" title="Редактировать диплом (данные + предпросмотр)"><?= admin_icon('edit') ?></button>
+            <a class="btn btn--ghost btn--sm" href="<?= h(url('/diploma-view/'.rawurlencode((string)$it['number']))) ?>" target="_blank" rel="noopener" title="Предпросмотр диплома"><?= admin_icon('eye') ?></a>
             <button class="btn btn--ghost btn--sm" data-act="cancel" data-kind="diploma" data-id="<?= $iid ?>" data-row="<?= $rid ?>" data-confirm="Отменить плановую отправку диплома?" style="color:#C0392B;border-color:#C0392B"><?= admin_icon('trash') ?></button>
           <?php elseif ($k === 'mail'): ?>
             <input type="datetime-local" id="w-<?= $rid ?>" value="<?= h($it['when'] ? date('Y-m-d\TH:i', strtotime($it['when'])) : '') ?>">
@@ -657,6 +707,41 @@ tr.disp-row.gone{opacity:0;transition:.4s}
   </div>
 </div>
 
+<!-- ============ МОДАЛ РЕДАКТОРА ДИПЛОМА ============ -->
+<div id="dipEditor" aria-hidden="true">
+  <div class="box" role="dialog" aria-modal="true" aria-labelledby="deTitle">
+    <div class="box-head">
+      <h3 id="deTitle">Редактирование диплома</h3>
+      <button type="button" class="btn btn--ghost btn--sm" data-de="close" aria-label="Закрыть"><?= admin_icon('x') ?></button>
+    </div>
+    <div class="box-body">
+      <input type="hidden" id="deId">
+      <p class="small muted" style="margin:0 0 10px">Диплом собирается строго из заявки. Правьте данные ниже — PDF пересоберётся. Проверяйте предпросмотром. Изменения затрагивают все дипломы этой заявки.</p>
+      <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px">
+        <a id="dePreview" class="btn btn--navy btn--sm" href="#" target="_blank" rel="noopener"><?= admin_icon('eye') ?>Предпросмотр диплома</a>
+        <a id="dePdf" class="btn btn--ghost btn--sm" href="#" target="_blank" rel="noopener"><?= admin_icon('download') ?>PDF</a>
+      </div>
+      <label style="display:flex;align-items:center;gap:8px;font-weight:600"><input type="checkbox" id="deGroup" style="width:auto"> Коллектив (ансамбль/хор)</label>
+      <div id="deGroupRow"><label>Название коллектива (в шапке диплома)</label><input type="text" id="deGroupName" placeholder="Например: Образцовый ансамбль…"></div>
+      <label>ФИО участника / контактное лицо (для соло — идёт в шапку; для коллектива на диплом не выводится)</label>
+      <input type="text" id="deFullName" placeholder="Фамилия Имя Отчество">
+      <label>Педагог(и) — если несколько, через запятую (станет «Педагоги: …»)</label>
+      <input type="text" id="deTeacher" placeholder="Иванов И.И., Петров П.П.">
+      <label>Номинация</label><input type="text" id="deNomination">
+      <label>Возрастная категория</label><input type="text" id="deAge">
+      <label>Конкурсный номер</label><input type="text" id="deWork">
+      <label>Итог (степень) — для основного диплома</label><input type="text" id="deResult" placeholder="ЛАУРЕАТ I СТЕПЕНИ">
+      <label>Спец-номинация — для дополнительного диплома</label><input type="text" id="deExtra" placeholder="ЗА АРТИСТИЗМ">
+      <label>Дата и время отправки <span class="me-hint" style="display:inline">— не трогайте, чтобы оставить запланированное</span></label>
+      <input type="datetime-local" id="deSched" data-touched="0">
+    </div>
+    <div class="box-foot">
+      <button type="button" class="btn btn--ghost" data-de="close">Отмена</button>
+      <button type="button" class="btn btn--primary" id="deSave"><?= admin_icon('check') ?>Сохранить диплом</button>
+    </div>
+  </div>
+</div>
+
 <script>
 (function(){
   var CSRF = <?= json_encode(csrf_token()) ?>;
@@ -693,6 +778,7 @@ tr.disp-row.gone{opacity:0;transition:.4s}
 
     if(act==='editmail'){ e.preventDefault(); openEditor(b.getAttribute('data-id'),'edit'); return; }
     if(act==='editdup'){ e.preventDefault(); openEditor(b.getAttribute('data-id'),'duplicate'); return; }
+    if(act==='editdip'){ e.preventDefault(); openDip(b.getAttribute('data-id')); return; }
 
     var kind=b.getAttribute('data-kind'), id=b.getAttribute('data-id'), row=b.getAttribute('data-row');
     var conf=b.getAttribute('data-confirm');
@@ -744,6 +830,44 @@ tr.disp-row.gone{opacity:0;transition:.4s}
     if(e.target===M.ov || e.target.closest('[data-me="close"]')) closeEditor();
   });
   document.addEventListener('keydown', function(e){ if(e.key==='Escape' && M.ov.classList.contains('show')) closeEditor(); });
+
+  /* ================= РЕДАКТОР ДИПЛОМА ================= */
+  var D={ov:document.getElementById('dipEditor'),id:document.getElementById('deId'),
+    group:document.getElementById('deGroup'),groupRow:document.getElementById('deGroupRow'),groupName:document.getElementById('deGroupName'),
+    fullName:document.getElementById('deFullName'),teacher:document.getElementById('deTeacher'),nomination:document.getElementById('deNomination'),
+    age:document.getElementById('deAge'),work:document.getElementById('deWork'),result:document.getElementById('deResult'),extra:document.getElementById('deExtra'),
+    sched:document.getElementById('deSched'),preview:document.getElementById('dePreview'),pdf:document.getElementById('dePdf'),save:document.getElementById('deSave')};
+  function closeDip(){ D.ov.classList.remove('show'); D.ov.setAttribute('aria-hidden','true'); }
+  function syncGroup(){ D.groupRow.style.display = D.group.checked ? 'block' : 'none'; }
+  function openDip(id){
+    D.id.value=id; D.sched.setAttribute('data-touched','0');
+    ['groupName','fullName','teacher','nomination','age','work','result','extra'].forEach(function(k){ D[k].value=''; });
+    D.group.checked=false; syncGroup(); D.sched.value='';
+    D.ov.classList.add('show'); D.ov.setAttribute('aria-hidden','false');
+    fetch(GET_URL+'&do=dip_get&kind=diploma&id='+encodeURIComponent(id),{credentials:'same-origin'})
+      .then(function(r){return r.json();}).then(function(d){
+        if(!d.ok){ toast(d.error||'Не удалось загрузить диплом',true); closeDip(); return; }
+        D.group.checked = d.is_group==1; syncGroup();
+        D.groupName.value=d.group_name||''; D.fullName.value=d.full_name||''; D.teacher.value=d.teacher||'';
+        D.nomination.value=d.nomination||''; D.age.value=d.age_category||''; D.work.value=d.work_title||'';
+        D.result.value=d.result||''; D.extra.value=d.extra_diploma||''; D.sched.value=d.scheduled_at||'';
+        D.preview.href=d.preview||'#'; D.pdf.href=d.pdf||'#';
+      }).catch(function(){ toast('Сеть недоступна',true); closeDip(); });
+  }
+  D.group.addEventListener('change', syncGroup);
+  D.sched.addEventListener('input', function(){ this.setAttribute('data-touched','1'); });
+  D.ov.addEventListener('click', function(e){ if(e.target===D.ov || e.target.closest('[data-de="close"]')) closeDip(); });
+  document.addEventListener('keydown', function(e){ if(e.key==='Escape' && D.ov.classList.contains('show')) closeDip(); });
+  D.save.addEventListener('click', function(){
+    var payload={kind:'diploma',do:'dip_save',id:D.id.value,
+      is_group:D.group.checked?'1':'0',group_name:D.groupName.value.trim(),full_name:D.fullName.value.trim(),
+      teacher:D.teacher.value.trim(),nomination:D.nomination.value.trim(),age_category:D.age.value.trim(),
+      work_title:D.work.value.trim(),result:D.result.value.trim(),extra_diploma:D.extra.value.trim()};
+    if(D.sched.getAttribute('data-touched')==='1'){ payload.sched_touched='1'; payload.scheduled_at=D.sched.value; }
+    D.save.disabled=true;
+    post(payload).then(function(res){ D.save.disabled=false; toast(res.msg||(res.ok?'Готово':'Ошибка'),!res.ok);
+      if(res.ok){ closeDip(); } }).catch(function(){ D.save.disabled=false; toast('Сеть недоступна, повторите',true); });
+  });
 
   /* Панель форматирования */
   function anchorUnder(){
