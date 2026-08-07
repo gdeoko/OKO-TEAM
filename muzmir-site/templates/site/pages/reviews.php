@@ -111,6 +111,15 @@ ob_start(); ?>
 [data-theme="dark"] .rv-reply b{color:var(--gold)}
 .rv-reply b svg{width:16px;height:16px;fill:none;stroke:currentColor;stroke-width:2;flex:none}
 .rv-reply p{margin:0;color:var(--muted);line-height:1.55;font-size:.94rem;overflow-wrap:anywhere;word-break:normal;hyphens:none}
+/* Вложения к отзыву (фото дипломов / видео) */
+.rv-atts{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px}
+.rv-att{position:relative;width:96px;height:96px;border-radius:12px;overflow:hidden;border:1px solid var(--glass-brd2);display:block;background:#0002}
+.rv-att img,.rv-att video{width:100%;height:100%;object-fit:cover;display:block}
+.rv-att-play{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;color:#fff;font-size:1.4rem;text-shadow:0 2px 8px #000a;background:linear-gradient(transparent,rgba(0,0,0,.25))}
+.rv-file-preview{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}
+.rv-file-preview .rv-fp{width:64px;height:64px;border-radius:10px;overflow:hidden;border:1px solid var(--glass-brd2);position:relative}
+.rv-file-preview .rv-fp img,.rv-file-preview .rv-fp video{width:100%;height:100%;object-fit:cover}
+.rv-file-preview .rv-fp span{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;background:#0007;color:#fff;font-size:.7rem;text-align:center;padding:2px}
 /* Кнопка «Показать ещё» */
 .rv-more-wrap{display:flex;justify-content:center;margin:26px auto 0;max-width:760px}
 .rv-more{display:inline-flex;align-items:center;gap:9px;padding:12px 26px;min-height:46px;border-radius:999px;cursor:pointer;
@@ -173,6 +182,12 @@ ob_start(); ?>
             <textarea id="rv_text" name="text" rows="4" required placeholder="Поделитесь впечатлениями об участии в конкурсе"></textarea>
             <p class="hint">Отзыв публикуется после проверки Оргкомитетом.</p>
           </div>
+          <div class="field">
+            <label for="rv_files">Фото и видео (по желанию)</label>
+            <input type="file" id="rv_files" name="files[]" accept="image/*,video/*" multiple>
+            <p class="hint">Можно приложить фото диплома или видео выступления — до 5 файлов.</p>
+            <div id="rvFilePreview" class="rv-file-preview"></div>
+          </div>
           <button class="btn btn--primary btn--block" type="submit" id="rvSubmit">Отправить отзыв</button>
           <p class="hint" id="rvMsg" style="margin-top:10px"></p>
         </form>
@@ -207,10 +222,26 @@ ob_start(); ?>
               <?= $starRow($rating) ?>
             </div>
             <p class="rv-text">«<?= h($r['text']) ?>»</p>
+            <?php
+            // Вложения (фото дипломов / видео) — если приложены к отзыву.
+            $atts = [];
+            if (!empty($r['attachments'])) { $j = json_decode((string) $r['attachments'], true); if (is_array($j)) $atts = $j; }
+            if ($atts): ?>
+              <div class="rv-atts">
+                <?php foreach ($atts as $a):
+                    $au = url((string) ($a['url'] ?? '')); $ak = (string) ($a['kind'] ?? 'image'); ?>
+                  <?php if ($ak === 'video'): ?>
+                    <a class="rv-att" href="<?= h($au) ?>" target="_blank" rel="noopener"><video src="<?= h($au) ?>" muted preload="metadata"></video><span class="rv-att-play">▶</span></a>
+                  <?php else: ?>
+                    <a class="rv-att" href="<?= h($au) ?>" target="_blank" rel="noopener"><img src="<?= h($au) ?>" alt="Вложение к отзыву" loading="lazy"></a>
+                  <?php endif; ?>
+                <?php endforeach; ?>
+              </div>
+            <?php endif; ?>
             <?php if (!empty($r['admin_reply'])): ?>
               <div class="rv-reply">
                 <b><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>Ответ Оргкомитета</b>
-                <p><?= h($r['admin_reply']) ?></p>
+                <p><?= nl2br(h($r['admin_reply'])) ?></p>
               </div>
             <?php endif; ?>
           </article>
@@ -287,6 +318,28 @@ ob_start(); ?>
     rate.addEventListener('mouseleave', function () { setVal(+rateSel.value); });
   }
 
+  /* Превью выбранных файлов (фото/видео) + ограничение 5 файлов */
+  var fileInp = document.getElementById('rv_files');
+  var filePrev = document.getElementById('rvFilePreview');
+  if (fileInp && filePrev) {
+    fileInp.addEventListener('change', function () {
+      filePrev.innerHTML = '';
+      var files = Array.prototype.slice.call(fileInp.files || []).slice(0, 5);
+      files.forEach(function (f) {
+        var box = document.createElement('div'); box.className = 'rv-fp';
+        if (/^image\//.test(f.type)) {
+          var img = document.createElement('img'); img.src = URL.createObjectURL(f); box.appendChild(img);
+        } else if (/^video\//.test(f.type)) {
+          var v = document.createElement('video'); v.src = URL.createObjectURL(f); v.muted = true; box.appendChild(v);
+          var s = document.createElement('span'); s.textContent = '▶ видео'; box.appendChild(s);
+        } else {
+          var s2 = document.createElement('span'); s2.textContent = f.name.slice(0, 12); box.appendChild(s2);
+        }
+        filePrev.appendChild(box);
+      });
+    });
+  }
+
   /* Отправка формы без перезагрузки страницы (фолбэк - обычный POST). */
   var form = document.getElementById('rvForm');
   if (form && window.fetch && window.FormData) {
@@ -304,6 +357,8 @@ ob_start(); ?>
           if (msg) msg.textContent = 'Спасибо! Отзыв отправлен на проверку Оргкомитету.';
           var ta = document.getElementById('rv_text');
           if (ta) ta.value = '';
+          if (fileInp) fileInp.value = '';
+          if (filePrev) filePrev.innerHTML = '';
           if (typeof window.toast === 'function') window.toast('Спасибо! Отзыв отправлен на проверку Оргкомитету.', 'success');
         })
         .catch(function () {
