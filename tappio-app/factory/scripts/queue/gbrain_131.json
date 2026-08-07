@@ -1,0 +1,242 @@
+{
+ "id": "gbrain_131",
+ "app": "brain",
+ "voice": "en-US-BrianNeural",
+ "rate": "+5%",
+ "grade": "teal_orange",
+ "brand": {
+  "accent": "#9B5DE5",
+  "accent2": "#C9A7FF",
+  "code": "FOCUS",
+  "logo": "brain.png",
+  "name": "BRAINOVA"
+ },
+ "music": {
+  "queries": [
+   "punchy pop energy",
+   "warm inspiring piano electronic",
+   "bright optimistic electronic",
+   "gentle cinematic hope"
+  ]
+ },
+ "cover": {
+  "kicker": "BRAIN AGE",
+  "top": "IS YOUR MIND",
+  "big": "OLDER THAN\nYOU?",
+  "q": [
+   "woman meditating calm light"
+  ]
+ },
+ "segments": [
+  {
+   "id": "b1",
+   "text": "Your brain has an age, just like your body."
+  },
+  {
+   "id": "b2",
+   "text": "Speed, memory and focus reveal the real number."
+  },
+  {
+   "id": "b3",
+   "text": "One short test estimates it in a minute."
+  },
+  {
+   "id": "b4",
+   "text": "Most people score older than they expect."
+  },
+  {
+   "id": "b5",
+   "text": "The good news: it drops with daily training."
+  },
+  {
+   "id": "b6",
+   "text": "Find your brain age today."
+  }
+ ],
+ "shots": [
+  {
+   "q": [
+    "puzzle pieces hands table"
+   ],
+   "motion": "pandown"
+  },
+  {
+   "q": [
+    "person forgetting keys frustrated"
+   ],
+   "insert": "tv",
+   "pos": "upper"
+  },
+  {
+   "q": [
+    "man reading book focused"
+   ],
+   "motion": "zin"
+  },
+  {
+   "q": [
+    "elderly person smiling sharp mind"
+   ],
+   "insert": "circle",
+   "pos": "center"
+  },
+  {
+   "q": [
+    "glass of water healthy morning"
+   ],
+   "motion": "panup"
+  },
+  {
+   "q": [
+    "fish oil supplement pills"
+   ],
+   "insert": "arch",
+   "pos": "lower"
+  },
+  {
+   "q": [
+    "sticky notes wall reminders"
+   ],
+   "motion": "panr"
+  },
+  {
+   "q": [
+    "walking park green trees"
+   ],
+   "insert": "rrect",
+   "pos": "lower"
+  },
+  {
+   "q": [
+    "coffee cup morning desk"
+   ],
+   "motion": "zout"
+  },
+  {
+   "q": [
+    "clock ticking time closeup"
+   ],
+   "insert": "tilt",
+   "pos": "upper"
+  },
+  {
+   "q": [
+    "neurons synapse animation blue"
+   ],
+   "motion": "panl"
+  },
+  {
+   "q": [
+    "person sleeping rest night"
+   ],
+   "insert": "diamond",
+   "pos": "upper"
+  },
+  {
+   "q": [
+    "focused eyes close up concentration"
+   ],
+   "motion": "pandown"
+  },
+  {
+   "q": [
+    "chess board close up thinking"
+   ],
+   "insert": "hexagon",
+   "pos": "lower"
+  }
+ ],
+ "overlays": [
+  {
+   "at": 0.256,
+   "dur": 2.33,
+   "type": "kicker",
+   "text": "DAILY REP"
+  },
+  {
+   "at": 0.275,
+   "dur": 1.86,
+   "type": "chips",
+   "items": [
+    "SPEED",
+    "MEMORY",
+    "FOCUS",
+    "LOGIC"
+   ],
+   "pos": "upper"
+  },
+  {
+   "at": 0.286,
+   "dur": 2.21,
+   "type": "stat_count",
+   "to": 60,
+   "suffix": "s",
+   "label": "TO A SCORE",
+   "pos": "center"
+  },
+  {
+   "at": 0.444,
+   "dur": 2.6,
+   "type": "checklist",
+   "items": [
+    "Hear it",
+    "Picture it",
+    "Repeat it",
+    "Recall it"
+   ],
+   "pos": "center"
+  },
+  {
+   "at": 0.522,
+   "dur": 1.69,
+   "type": "gauge",
+   "to": 5,
+   "max": 10,
+   "suffix": "min",
+   "label": "PER DAY",
+   "pos": "center"
+  },
+  {
+   "at": 0.564,
+   "dur": 1.96,
+   "type": "bars",
+   "title": "RECALL SPEED",
+   "unit": "%",
+   "items": [
+    [
+     "Week 1",
+     100
+    ],
+    [
+     "Week 3",
+     147
+    ]
+   ],
+   "pos": "center"
+  },
+  {
+   "at": 0.579,
+   "dur": 1.67,
+   "type": "lowerthird",
+   "title": "DAILY STREAK",
+   "sub": "compounds fast"
+  }
+ ],
+ "cta": {
+  "text": "Comment FOCUS for the app.",
+  "code": "FOCUS"
+ },
+ "caption": "Your brain has an age — speed, memory and focus set the number. One quick test estimates it, and daily training drops it. Most people score older than they think. Comment FOCUS for the app. #brainhealth #memory #focus #productivity #selfimprovement #mentalhealth #learning #test #age #can #memorize",
+ "yt_title": "Is your brain older than you are? #shorts",
+ "trend_keys": [
+  "test",
+  "age",
+  "can",
+  "memorize",
+  "mental",
+  "quick",
+  "color",
+  "tell"
+ ],
+ "content_type": "viral"
+}

@@ -1,0 +1,247 @@
+{
+ "id": "gtape_132",
+ "app": "tape",
+ "voice": "en-US-ChristopherNeural",
+ "rate": "+4%",
+ "grade": "teal_orange",
+ "brand": {
+  "accent": "#F4C430",
+  "accent2": "#FFE08A",
+  "code": "MEASURE",
+  "logo": "tape.png",
+  "name": "3D TAPE MEASURE"
+ },
+ "music": {
+  "queries": [
+   "calm focus ambient",
+   "warm optimistic guitar",
+   "positive corporate light groove",
+   "upbeat indie acoustic diy"
+  ]
+ },
+ "cover": {
+  "kicker": "MOVING DAY",
+  "top": "WILL THE SOFA",
+  "big": "FIT THROUGH\nTHE DOOR?",
+  "q": [
+   "apartment tour empty rooms"
+  ]
+ },
+ "segments": [
+  {
+   "id": "b1",
+   "text": "Big furniture, narrow doorway, moving day panic."
+  },
+  {
+   "id": "b2",
+   "text": "Measure the door frame with your phone first."
+  },
+  {
+   "id": "b3",
+   "text": "Then measure the sofa the same way."
+  },
+  {
+   "id": "b4",
+   "text": "The app compares both in real time."
+  },
+  {
+   "id": "b5",
+   "text": "Green means go, red means turn it sideways."
+  },
+  {
+   "id": "b6",
+   "text": "Never get stuck on the stairs again."
+  }
+ ],
+ "shots": [
+  {
+   "q": [
+    "picture frame hanging wall level"
+   ],
+   "motion": "panup"
+  },
+  {
+   "q": [
+    "modern tv mounted on wall living room"
+   ],
+   "insert": "phone",
+   "pos": "center"
+  },
+  {
+   "q": [
+    "curtains window measuring home"
+   ],
+   "motion": "zin"
+  },
+  {
+   "q": [
+    "doorway measuring frame home"
+   ],
+   "insert": "arch",
+   "pos": "upper"
+  },
+  {
+   "q": [
+    "hands arranging shelf wall decor"
+   ],
+   "motion": "panr"
+  },
+  {
+   "q": [
+    "hands holding phone ar app screen"
+   ],
+   "insert": "tilt",
+   "pos": "upper"
+  },
+  {
+   "q": [
+    "moving boxes new apartment"
+   ],
+   "motion": "pandown"
+  },
+  {
+   "q": [
+    "cozy furnished living room warm light"
+   ],
+   "insert": "circle",
+   "pos": "upper"
+  },
+  {
+   "q": [
+    "carpenter measuring wood workshop"
+   ],
+   "motion": "panl"
+  },
+  {
+   "q": [
+    "blueprint floor plan on tablet desk"
+   ],
+   "insert": "tv",
+   "pos": "center"
+  },
+  {
+   "q": [
+    "bedroom bed frame assembly"
+   ],
+   "motion": "zout"
+  },
+  {
+   "q": [
+    "garden patio outdoor measuring"
+   ],
+   "insert": "diamond",
+   "pos": "center"
+  },
+  {
+   "q": [
+    "paint wall renovation room"
+   ],
+   "motion": "panup"
+  },
+  {
+   "q": [
+    "couple planning home layout tablet"
+   ],
+   "insert": "hexagon",
+   "pos": "upper"
+  },
+  {
+   "q": [
+    "rolled up rug floor room"
+   ],
+   "motion": "zin"
+  },
+  {
+   "q": [
+    "bookshelf assembly instructions floor"
+   ],
+   "insert": "rrect",
+   "pos": "upper"
+  }
+ ],
+ "overlays": [
+  {
+   "at": 0.068,
+   "dur": 2.33,
+   "type": "kicker",
+   "text": "POCKET TAPE"
+  },
+  {
+   "at": 0.373,
+   "dur": 1.75,
+   "type": "kinetic",
+   "top": "JUST",
+   "big": "TAP"
+  },
+  {
+   "at": 0.405,
+   "dur": 2.05,
+   "type": "callout",
+   "text": "NO TAPE, NO HELPER",
+   "pos": "center"
+  },
+  {
+   "at": 0.426,
+   "dur": 2.6,
+   "type": "checklist",
+   "items": [
+    "Point the phone",
+    "Tap two points",
+    "Read the length",
+    "Save the project"
+   ],
+   "pos": "center"
+  },
+  {
+   "at": 0.584,
+   "dur": 2.4,
+   "type": "bars",
+   "title": "TAPE VS PHONE ERROR",
+   "unit": "%",
+   "items": [
+    [
+     "Metal tape",
+     12
+    ],
+    [
+     "Phone AR",
+     3
+    ]
+   ],
+   "pos": "center"
+  },
+  {
+   "at": 0.753,
+   "dur": 1.79,
+   "type": "lowerthird",
+   "title": "MEASURE THE DOOR",
+   "sub": "then measure the sofa"
+  },
+  {
+   "at": 0.807,
+   "dur": 1.82,
+   "type": "ticker",
+   "to": 10,
+   "suffix": "s",
+   "label": "PER MEASURE",
+   "pos": "lower"
+  }
+ ],
+ "cta": {
+  "text": "Comment MEASURE for the app.",
+  "code": "MEASURE"
+ },
+ "caption": "USEFUL: Moving day panic? Measure the doorway, measure the sofa, let the app compare. Green means go, red means turn it sideways. Comment MEASURE for the app. #diy #homedecor #interiordesign #measure #movingtips #renter #apartmenttherapy #scanner #accurate #default #iphone",
+ "yt_title": "Will the sofa fit through the door? #shorts",
+ "trend_keys": [
+  "scanner",
+  "accurate",
+  "default",
+  "iphone",
+  "decks",
+  "measure",
+  "use",
+  "app"
+ ],
+ "content_type": "useful"
+}

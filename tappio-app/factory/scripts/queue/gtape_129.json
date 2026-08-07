@@ -1,0 +1,235 @@
+{
+ "id": "gtape_129",
+ "app": "tape",
+ "voice": "en-US-ChristopherNeural",
+ "rate": "+4%",
+ "grade": "clean_ad",
+ "brand": {
+  "accent": "#F4C430",
+  "accent2": "#FFE08A",
+  "code": "MEASURE",
+  "logo": "tape.png",
+  "name": "3D TAPE MEASURE"
+ },
+ "music": {
+  "queries": [
+   "motivational corporate",
+   "positive corporate light groove",
+   "cheerful folk clap"
+  ]
+ },
+ "cover": {
+  "kicker": "WILL IT FIT?",
+  "top": "MEASURE ANY ROOM",
+  "big": "WITHOUT\nA TAPE",
+  "q": [
+   "moving boxes new apartment"
+  ]
+ },
+ "segments": [
+  {
+   "id": "b1",
+   "text": "A rug, a TV, a shelf. Will it fit? Stop guessing."
+  },
+  {
+   "id": "b2",
+   "text": "Point your phone, tap two points."
+  },
+  {
+   "id": "b3",
+   "text": "The length appears right on the floor."
+  },
+  {
+   "id": "b4",
+   "text": "Width, height, area, no helper needed."
+  },
+  {
+   "id": "b5",
+   "text": "Save every wall as a project, export a PDF."
+  },
+  {
+   "id": "b6",
+   "text": "Measure any space from your couch in ten seconds."
+  }
+ ],
+ "shots": [
+  {
+   "q": [
+    "doorway measuring frame home"
+   ],
+   "insert": "tilt",
+   "pos": "center"
+  },
+  {
+   "q": [
+    "couple planning home layout tablet"
+   ],
+   "motion": "panup"
+  },
+  {
+   "q": [
+    "garden patio outdoor measuring"
+   ],
+   "insert": "circle",
+   "pos": "upper"
+  },
+  {
+   "q": [
+    "blueprint floor plan on tablet desk"
+   ],
+   "motion": "panl"
+  },
+  {
+   "q": [
+    "measuring tape metal bending closeup"
+   ],
+   "insert": "arch",
+   "pos": "center"
+  },
+  {
+   "q": [
+    "curtains window measuring home"
+   ],
+   "motion": "zin"
+  },
+  {
+   "q": [
+    "hand pointing phone at wall measuring"
+   ],
+   "insert": "phone",
+   "pos": "center"
+  },
+  {
+   "q": [
+    "bookshelf assembly instructions floor"
+   ],
+   "motion": "pandown"
+  },
+  {
+   "q": [
+    "hands holding phone ar app screen"
+   ],
+   "insert": "rrect",
+   "pos": "lower"
+  },
+  {
+   "q": [
+    "moving boxes new apartment"
+   ],
+   "motion": "zout"
+  },
+  {
+   "q": [
+    "picture frame hanging wall level"
+   ],
+   "insert": "diamond",
+   "pos": "upper"
+  }
+ ],
+ "overlays": [
+  {
+   "at": 0.067,
+   "dur": 2.07,
+   "type": "kicker",
+   "text": "AR MEASURE"
+  },
+  {
+   "at": 0.149,
+   "dur": 1.92,
+   "type": "callout",
+   "text": "MEASURE FROM THE COUCH",
+   "pos": "center"
+  },
+  {
+   "at": 0.219,
+   "dur": 1.99,
+   "type": "chips",
+   "items": [
+    "LENGTH",
+    "WIDTH",
+    "HEIGHT",
+    "AREA"
+   ],
+   "pos": "lower"
+  },
+  {
+   "at": 0.267,
+   "dur": 2.0,
+   "type": "ticker",
+   "to": 1,
+   "suffix": "",
+   "label": "TAP TO START",
+   "pos": "lower"
+  },
+  {
+   "at": 0.311,
+   "dur": 2.02,
+   "type": "bars",
+   "title": "TAPE VS PHONE ERROR",
+   "unit": "%",
+   "items": [
+    [
+     "Metal tape",
+     12
+    ],
+    [
+     "Phone AR",
+     3
+    ]
+   ],
+   "pos": "center"
+  },
+  {
+   "at": 0.496,
+   "dur": 2.6,
+   "type": "checklist",
+   "items": [
+    "Measure the door",
+    "Measure the sofa",
+    "Compare sizes",
+    "Move it in"
+   ],
+   "pos": "center"
+  },
+  {
+   "at": 0.64,
+   "dur": 1.62,
+   "type": "kinetic",
+   "top": "NO",
+   "big": "TAPE"
+  },
+  {
+   "at": 0.812,
+   "dur": 1.87,
+   "type": "lowerthird",
+   "title": "TAP TWO POINTS",
+   "sub": "length appears on the floor"
+  },
+  {
+   "at": 0.828,
+   "dur": 1.89,
+   "type": "stat_count",
+   "to": 10,
+   "suffix": "s",
+   "label": "PER ROOM",
+   "pos": "center"
+  }
+ ],
+ "cta": {
+  "text": "Get it now — comment MEASURE and I'll send the link. Link in bio.",
+  "code": "MEASURE"
+ },
+ "caption": "A rug, a TV, a shelf — will it fit? Point your phone, tap two points, and the length appears on the floor. Width, height, area — no tape, no helper. Comment MEASURE for the app. #diy #homedecor #interiordesign #measure #movingtips #renter #apartmenttherapy #app #accurate #default #use 👉 Comment MEASURE for the link — link in bio.",
+ "yt_title": "Measure any room without a tape #shorts",
+ "trend_keys": [
+  "app",
+  "accurate",
+  "default",
+  "use",
+  "scanner",
+  "iphone",
+  "decks",
+  "measure"
+ ],
+ "content_type": "sales"
+}

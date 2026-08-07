@@ -1,0 +1,223 @@
+{
+ "id": "gbrain_134",
+ "app": "brain",
+ "voice": "en-US-BrianNeural",
+ "rate": "+4%",
+ "grade": "teal_orange",
+ "brand": {
+  "accent": "#9B5DE5",
+  "accent2": "#C9A7FF",
+  "code": "FOCUS",
+  "logo": "brain.png",
+  "name": "BRAINOVA"
+ },
+ "music": {
+  "queries": [
+   "motivational corporate",
+   "warm inspiring piano electronic",
+   "uplifting focus ambient",
+   "gentle cinematic hope"
+  ]
+ },
+ "cover": {
+  "kicker": "5-MIN HABIT",
+  "top": "TRAIN FOCUS",
+  "big": "LIKE A\nMUSCLE",
+  "q": [
+   "neurons synapse animation blue"
+  ]
+ },
+ "segments": [
+  {
+   "id": "b1",
+   "text": "Focus is not a gift, it is a muscle."
+  },
+  {
+   "id": "b2",
+   "text": "Five minutes a day is enough to grow it."
+  },
+  {
+   "id": "b3",
+   "text": "Short, hard puzzles push your limit gently."
+  },
+  {
+   "id": "b4",
+   "text": "The app adapts as you get faster."
+  },
+  {
+   "id": "b5",
+   "text": "In two weeks distractions lose their grip."
+  },
+  {
+   "id": "b6",
+   "text": "Start with five minutes tomorrow."
+  }
+ ],
+ "shots": [
+  {
+   "q": [
+    "man reading book focused"
+   ],
+   "motion": "zout"
+  },
+  {
+   "q": [
+    "chess board close up thinking"
+   ],
+   "insert": "rrect",
+   "pos": "lower"
+  },
+  {
+   "q": [
+    "memory old photos hands"
+   ],
+   "motion": "panup"
+  },
+  {
+   "q": [
+    "teacher classroom explaining"
+   ],
+   "insert": "circle",
+   "pos": "center"
+  },
+  {
+   "q": [
+    "person thinking trying to remember"
+   ],
+   "motion": "zin"
+  },
+  {
+   "q": [
+    "runner morning sunrise energy"
+   ],
+   "insert": "phone",
+   "pos": "center"
+  },
+  {
+   "q": [
+    "elderly person smiling sharp mind"
+   ],
+   "motion": "pandown"
+  },
+  {
+   "q": [
+    "person doing crossword puzzle"
+   ],
+   "insert": "tv",
+   "pos": "center"
+  },
+  {
+   "q": [
+    "glass of water healthy morning"
+   ],
+   "motion": "panr"
+  },
+  {
+   "q": [
+    "person forgetting keys frustrated"
+   ],
+   "insert": "tilt",
+   "pos": "upper"
+  },
+  {
+   "q": [
+    "yoga breathing calm room"
+   ],
+   "motion": "panl"
+  },
+  {
+   "q": [
+    "walking park green trees"
+   ],
+   "insert": "arch",
+   "pos": "lower"
+  }
+ ],
+ "overlays": [
+  {
+   "at": 0.322,
+   "dur": 2.37,
+   "type": "kicker",
+   "text": "BRAIN AGE"
+  },
+  {
+   "at": 0.335,
+   "dur": 2.6,
+   "type": "checklist",
+   "items": [
+    "Hear it",
+    "Picture it",
+    "Repeat it",
+    "Recall it"
+   ],
+   "pos": "center"
+  },
+  {
+   "at": 0.701,
+   "dur": 2.34,
+   "type": "kinetic",
+   "top": "TRAIN",
+   "big": "DAILY"
+  },
+  {
+   "at": 0.736,
+   "dur": 1.69,
+   "type": "lowerthird",
+   "title": "DAILY STREAK",
+   "sub": "compounds fast"
+  },
+  {
+   "at": 0.762,
+   "dur": 2.06,
+   "type": "stat_count",
+   "to": 5,
+   "suffix": "min",
+   "label": "A DAY",
+   "pos": "center"
+  },
+  {
+   "at": 0.878,
+   "dur": 2.14,
+   "type": "ticker",
+   "to": 5,
+   "suffix": "min",
+   "label": "A DAY",
+   "pos": "lower"
+  },
+  {
+   "at": 0.886,
+   "dur": 1.82,
+   "type": "bars",
+   "title": "DISTRACTION",
+   "unit": "%",
+   "items": [
+    [
+     "Before",
+     80
+    ],
+    [
+     "After",
+     29
+    ]
+   ],
+   "pos": "center"
+  }
+ ],
+ "cta": {
+  "text": "Get it now — comment FOCUS and I'll send the link. Link in bio.",
+  "code": "FOCUS"
+ },
+ "caption": "Focus is a muscle, not a gift. Five minutes of adaptive puzzles a day, and in two weeks distractions lose their grip. Start tomorrow. Comment FOCUS for the app. #brainhealth #memory #focus #productivity #selfimprovement #mentalhealth #learning #quick #can #memorize #age 👉 Comment FOCUS for the link — link in bio.",
+ "yt_title": "Train your focus like a muscle #shorts",
+ "trend_keys": [
+  "quick",
+  "can",
+  "memorize",
+  "age",
+  "tell",
+  "color",
+  "mental",
+  "test"
+ ],
+ "content_type": "sales"
+}
