@@ -205,6 +205,102 @@ if (in_array((string) input('do'), ['text', 'save', 'preview', 'schedule', 'canc
     }
 }
 
-/* ---------------- Рендер: встроенный пульт (без модалок) ---------------- */
-$content = launch_panel_html();
-admin_layout('Запуск', $content, 'launch');
+/* ================= ПАНЕЛЬ УПРАВЛЕНИЯ ЗАПУСКОМ (кампания идёт) ================= */
+require_once BASE_PATH . '/core/launch_control.php';
+require_once BASE_PATH . '/core/newsletter.php';
+
+if (in_array((string) input('do'), ['ctl_mass','ctl_now','ctl_move','ctl_cancel','ctl_restore','ctl_finish'], true)) {
+    if (!csrf_check()) { flash('Сессия устарела. Обновите страницу.', 'error'); admin_redirect('launch'); }
+    if (!user_can('admin')) { flash('Недостаточно прав.', 'error'); admin_redirect('launch'); }
+    $do   = (string) input('do');
+    $wave = (string) input('wave');
+    $runAt = trim((string) input('run_at'));
+    $norm  = $runAt !== '' ? date('Y-m-d H:i:s', strtotime(str_replace('T', ' ', $runAt)) ?: time()) : '';
+
+    if ($do === 'ctl_mass') {
+        // Главный выключатель массовых коммуникаций (стоп-кран).
+        $on = (string) input('on') === '1';
+        mass_sending_set($on);
+        if ($on) {
+            // Возвращаем в очередь письма, снятые предыдущей остановкой.
+            q("UPDATE mail_queue SET status='queued' WHERE status='paused'");
+        } else {
+            // Снимаем массовые из очереди, личные (priority=0) не трогаем.
+            q("UPDATE mail_queue SET status='paused' WHERE status='queued' AND COALESCE(priority,0) > 0");
+        }
+        audit('launch_mass_toggle', 'competition', 0, ['on' => $on]);
+        flash($on ? 'Массовые рассылки и публикации включены — идут по расписанию и квотам.'
+                  : 'Всё массовое остановлено. Личные письма участникам продолжают отправляться.',
+              $on ? 'success' : 'warning');
+        admin_redirect('launch');
+    }
+
+    if ($wave === '') { flash('Волна не указана.', 'error'); admin_redirect('launch'); }
+
+    if ($do === 'ctl_move' && $norm !== '') {
+        $n = q("UPDATE launch_jobs SET run_at=? WHERE wave=? AND status='scheduled'", [$norm, $wave])->rowCount();
+        audit('launch_wave_move', 'competition', 0, ['wave' => $wave, 'at' => $norm, 'count' => $n]);
+        flash($n ? ('Волна «' . launch_wave_title($wave) . '» перенесена на ' . lc_dt($norm) . '.') : 'Нечего переносить.', $n ? 'success' : 'info');
+        admin_redirect('launch');
+    }
+
+    if ($do === 'ctl_cancel') {
+        $n = q("UPDATE launch_jobs SET status='cancelled' WHERE wave=? AND status='scheduled'", [$wave])->rowCount();
+        audit('launch_wave_cancel', 'competition', 0, ['wave' => $wave, 'count' => $n]);
+        flash($n ? ('Волна «' . launch_wave_title($wave) . '» убрана из плана.') : 'Волны в плане не было.', 'success');
+        admin_redirect('launch');
+    }
+
+    if ($do === 'ctl_restore') {
+        $at = $norm !== '' ? $norm : date('Y-m-d H:i:s', strtotime('+1 hour'));
+        $n = q("UPDATE launch_jobs SET status='scheduled', run_at=? WHERE wave=? AND status='cancelled'", [$at, $wave])->rowCount();
+        audit('launch_wave_restore', 'competition', 0, ['wave' => $wave, 'at' => $at, 'count' => $n]);
+        flash($n ? ('Волна возвращена в план на ' . lc_dt($at) . '.') : 'Нечего возвращать.', $n ? 'success' : 'info');
+        admin_redirect('launch');
+    }
+
+    if ($do === 'ctl_now') {
+        // Выполняем волну немедленно: ставим время «сейчас» и прогоняем планировщик.
+        // Массовые коммуникации при этом должны быть включены — иначе крон не отправит.
+        if (!mass_sending_enabled()) {
+            flash('Сначала включите массовые рассылки — сейчас всё остановлено стоп-краном.', 'error');
+            admin_redirect('launch');
+        }
+        q("UPDATE launch_jobs SET run_at=? WHERE wave=? AND status='scheduled'", [date('Y-m-d H:i:s'), $wave]);
+        $n = launch_run_due();
+        audit('launch_wave_now', 'competition', 0, ['wave' => $wave, 'fired' => $n]);
+        flash($n ? ('Волна «' . launch_wave_title($wave) . '» выполнена (заданий: ' . $n . ').')
+                 : 'Волна поставлена на ближайшее выполнение.', 'success');
+        admin_redirect('launch');
+    }
+
+    if ($do === 'ctl_finish') {
+        $n = launch_cancel_all();
+        mass_sending_set(false);
+        q("UPDATE mail_queue SET status='paused' WHERE status='queued' AND COALESCE(priority,0) > 0");
+        audit('launch_campaign_finish', 'competition', 0, ['cancelled' => $n]);
+        flash('Кампания завершена. Пульт вернулся в режим подготовки запуска.', 'success');
+        admin_redirect('launch');
+    }
+}
+
+/* ---------------- Рендер: пульт запуска ИЛИ панель управления ----------------
+   Пока кампания не запущена — пульт подготовки (план, тексты, афиши, каналы).
+   Как только появились выполненные/запланированные волны — на этом же месте
+   открывается панель управления кампанией. Переключение — по кнопке. */
+$view = (string) input('view');
+$isRunning = launch_campaign_active();
+if ($view === 'plan' || (!$isRunning && $view !== 'control')) {
+    $content = launch_panel_html();
+    if ($isRunning) {
+        $content = '<div class="card" style="margin-bottom:16px;display:flex;gap:12px;flex-wrap:wrap;align-items:center;justify-content:space-between">'
+            . '<div><b>Кампания уже идёт</b><div class="small muted">Вы смотрите пульт подготовки. Управление текущей кампанией — на отдельном экране.</div></div>'
+            . '<a class="btn btn--primary" href="' . a_link('launch', ['view' => 'control']) . '">Перейти к управлению</a></div>'
+            . $content;
+    }
+    admin_layout('Запуск', $content, 'launch');
+} else {
+    $content = launch_control_html()
+        . '<div style="margin-top:16px"><a class="btn btn--ghost" href="' . a_link('launch', ['view' => 'plan']) . '">Открыть пульт подготовки (тексты, афиши, план)</a></div>';
+    admin_layout('Управление запуском', $content, 'launch');
+}

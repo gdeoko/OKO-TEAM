@@ -22,6 +22,15 @@ if (is_file(BASE_PATH . '/core/notifications.php')) require_once BASE_PATH . '/c
 require_once __DIR__ . '/_lib.php';
 
 const JOB = 'engagement';
+
+// СТОП-КРАН: пока массовые коммуникации выключены в пульте запуска, ничего
+// массового наружу не уходит (см. core/newsletter.php::mass_sending_enabled).
+if (is_file(BASE_PATH . '/core/newsletter.php')) require_once BASE_PATH . '/core/newsletter.php';
+if (function_exists('mass_sending_enabled') && !mass_sending_enabled()) {
+    cron_log(JOB, 'массовые коммуникации выключены стоп-краном — выход');
+    exit(0);
+}
+
 if (!cron_lock(JOB, 600)) { exit(0); }
 if (!function_exists('notify_user') || !function_exists('tbl_exists') || !tbl_exists('notifications')) {
     cron_log(JOB, 'notifications недоступны — выход'); cron_unlock(JOB); exit(0);

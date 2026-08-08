@@ -29,7 +29,15 @@ if ($u && is_file(BASE_PATH . '/core/notifications.php')) {
     }
 }
 ?><!doctype html>
-<html lang="ru"<?= $inTg ? ' class="in-tg"' : '' ?>>
+<?php
+/* СТРАНИЦЫ ОФОРМЛЕНИЯ: подача заявки, заказ наград, оплата, вступление в клуб.
+   На них не должно быть ничего, что перекрывает экран — ни баннера установки
+   приложения, ни всплывающих уведомлений: человек заполняет форму, ему нельзя мешать.
+   Признак читают motion.js (PWA-баннеры) и подписчик уведомлений ниже. */
+$__path    = parse_url($_SERVER['REQUEST_URI'] ?? '/', PHP_URL_PATH) ?: '/';
+$__noPopup = (bool) preg_match('~^/(apply|order-awards|awards|pay|pay-status|club|register|login)~', $__path);
+?>
+<html lang="ru"<?= $inTg ? ' class="in-tg"' : '' ?><?= $__noPopup ? ' data-nopopup="1"' : '' ?>>
 <head>
 <script>document.documentElement.className+=' js';document.documentElement.dataset.theme='light';try{if(!localStorage.getItem('mz-theme-reset-v3')){localStorage.setItem('muzmir-theme','light');localStorage.setItem('mz-theme-reset-v3','1');}var t=localStorage.getItem('muzmir-theme');if(t==='dark')document.documentElement.dataset.theme='dark';}catch(e){}<?php if (!empty($u['music_off'])): ?>window.MZ_MUSIC_OFF=true;<?php endif; ?></script>
 <meta charset="utf-8">
@@ -443,7 +451,7 @@ if('serviceWorker' in navigator){
 <script src="<?= asset('js/app.js') ?>" defer></script>
 <!-- Подсказки адреса: работают на всех формах с полем data-address-suggest. -->
 <script src="<?= asset('js/address.js') ?>" defer></script>
-<?php if ($latestNotif): ?>
+<?php if ($latestNotif && !$__noPopup): /* на страницах оформления тост не показываем — не мешаем заполнять форму */ ?>
 <script>
 // Новое непрочитанное уведомление — показываем «тостом сверху» (как от чата), однократно на уведомление.
 (function(){

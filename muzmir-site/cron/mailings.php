@@ -42,6 +42,15 @@ require_once BASE_PATH . '/core/club.php';
 require_once __DIR__ . '/_lib.php';
 
 const JOB = 'mailings';
+
+// СТОП-КРАН: пока массовые коммуникации выключены в пульте запуска, ничего
+// массового наружу не уходит (см. core/newsletter.php::mass_sending_enabled).
+if (is_file(BASE_PATH . '/core/newsletter.php')) require_once BASE_PATH . '/core/newsletter.php';
+if (function_exists('mass_sending_enabled') && !mass_sending_enabled()) {
+    cron_log(JOB, 'массовые коммуникации выключены стоп-краном — выход');
+    exit(0);
+}
+
 /** Размер батча вставок в mail_queue (одна транзакция на батч). */
 const MAILINGS_BATCH = 200;
 

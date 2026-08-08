@@ -189,7 +189,10 @@
       e.preventDefault(); deferred = e;
       // Не показываем на служебных страницах и в TG (там свой install)
       if (document.documentElement.classList.contains('in-tg')) return;
-      if (/^\/(admin|api|login|register|apply|cabinet)/.test(location.pathname)) return;
+      // Страницы оформления (подача заявки, заказ наград, оплата) помечены
+      // data-nopopup — на них ничего не перекрывает экран.
+      if (document.documentElement.hasAttribute('data-nopopup')) return;
+      if (/^\/(admin|api|login|register|apply|cabinet|awards|order-awards|pay)/.test(location.pathname)) return;
       // Раз в неделю максимум
       try {
         var last = parseInt(localStorage.getItem('mz-pwa-shown')||'0', 10);
@@ -229,7 +232,8 @@
       (window.matchMedia && window.matchMedia('(display-mode: standalone)').matches);
     if (!isIOS || standalone) return;
     if (document.documentElement.classList.contains('in-tg')) return;
-    if (/^\/(admin|api|login|register|apply|cabinet)/.test(location.pathname)) return;
+    if (document.documentElement.hasAttribute('data-nopopup')) return;
+    if (/^\/(admin|api|login|register|apply|cabinet|awards|order-awards|pay)/.test(location.pathname)) return;
     try { var last = parseInt(localStorage.getItem('mz-pwa-ios')||'0',10);
       if (Date.now() - last < 7*86400*1000) return; } catch(e){}
     setTimeout(function(){

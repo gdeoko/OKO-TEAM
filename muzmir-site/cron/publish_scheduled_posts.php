@@ -23,6 +23,15 @@ require_once __DIR__ . '/_lib.php';
 
 const JOB = 'publish_scheduled_posts';
 
+
+// СТОП-КРАН: пока массовые коммуникации выключены в пульте запуска, ничего
+// массового наружу не уходит (см. core/newsletter.php::mass_sending_enabled).
+if (is_file(BASE_PATH . '/core/newsletter.php')) require_once BASE_PATH . '/core/newsletter.php';
+if (function_exists('mass_sending_enabled') && !mass_sending_enabled()) {
+    cron_log(JOB, 'массовые коммуникации выключены стоп-краном — выход');
+    exit(0);
+}
+
 if (!cron_lock(JOB, 1800)) {
     cron_log(JOB, 'предыдущий запуск ещё выполняется, выход');
     exit(0);

@@ -31,6 +31,15 @@ require_once __DIR__ . '/_lib.php';
 if (is_file(BASE_PATH . '/core/newsletter.php')) require_once BASE_PATH . '/core/newsletter.php';
 
 const JOB = 'drip';
+
+// СТОП-КРАН: пока массовые коммуникации выключены в пульте запуска, ничего
+// массового наружу не уходит (см. core/newsletter.php::mass_sending_enabled).
+if (is_file(BASE_PATH . '/core/newsletter.php')) require_once BASE_PATH . '/core/newsletter.php';
+if (function_exists('mass_sending_enabled') && !mass_sending_enabled()) {
+    cron_log(JOB, 'массовые коммуникации выключены стоп-краном — выход');
+    exit(0);
+}
+
 /** Максимум писем на один шаг за запуск (суточный лимит Gmail всё равно держит воркер очереди). */
 const DRIP_CAP = 200;
 

@@ -495,6 +495,10 @@ function mail_fallback_accounts(array $primary = []): array {
     foreach (mail_senders() as $a) {
         if (!empty($a['user']) && !isset($out[$key($a)])) $out[$key($a)] = $a;
     }
+    // Ящики, которые сейчас стабильно отказывают (карантин), уводим в конец очереди:
+    // не тратим на них время каждого письма, но и не выбрасываем совсем —
+    // когда почтовик снова начнёт принимать, ящик вернётся в строй сам.
+    uasort($out, fn(array $a, array $b) => mail_account_penalty($a) <=> mail_account_penalty($b));
     // Основной ящик из config (Gmail центра) — последний рубеж.
     $mainUser = (string) cfgv('smtp_user', '');
     $mainPass = (string) cfgv('smtp_pass', '');
@@ -508,6 +512,40 @@ function mail_fallback_accounts(array $primary = []): array {
         ];
     }
     return array_values($out);
+}
+
+/**
+ * Карантин почтового ящика.
+ *
+ * Если ящик подряд отказывает (например, почтовик режет домен как спам), держать его
+ * первым в очереди бессмысленно: каждое письмо теряет секунды на заведомо неудачные
+ * попытки. Ящик с 3+ отказами подряд уходит в конец очереди на час; первый успешный
+ * ответ обнуляет счётчик, и ящик снова становится основным.
+ */
+function mail_account_fail(string $user): void {
+    $user = mb_strtolower(trim($user));
+    if ($user === '' || !function_exists('set_setting')) return;
+    $k = 'mailfail:' . $user;
+    $n = (int) setting($k, '0') + 1;
+    set_setting($k, (string) $n);
+    set_setting('mailfail_at:' . $user, date('Y-m-d H:i:s'));
+}
+
+/** Сбрасывает счётчик отказов — ящик снова здоров. */
+function mail_account_ok(string $user): void {
+    $user = mb_strtolower(trim($user));
+    if ($user === '' || !function_exists('set_setting')) return;
+    if ((int) setting('mailfail:' . $user, '0') > 0) set_setting('mailfail:' . $user, '0');
+}
+
+/** Штраф ящика для сортировки: 0 — здоров, 1 — в карантине. */
+function mail_account_penalty(array $acc): int {
+    $user = mb_strtolower((string) ($acc['user'] ?? ''));
+    if ($user === '' || !function_exists('setting')) return 0;
+    if ((int) setting('mailfail:' . $user, '0') < 3) return 0;
+    // Карантин действует час с момента последнего отказа.
+    $at = strtotime((string) setting('mailfail_at:' . $user, '')) ?: 0;
+    return (time() - $at) < 3600 ? 1 : 0;
 }
 
 /**
@@ -527,6 +565,7 @@ function mail_send_failover(string $to, string $subject, string $html, array $op
         $ok = false;
         try { $ok = mail_send($to, $subject, $html, $try); } catch (\Throwable $e) { $ok = false; }
         if ($ok) {
+            mail_account_ok((string) ($acc['user'] ?? ''));   // ящик здоров
             if ($i > 0) {
                 $used = (string) ($acc['user'] ?? 'резервный ящик');
                 mail_switched($used);
@@ -537,6 +576,7 @@ function mail_send_failover(string $to, string $subject, string $html, array $op
             }
             return true;
         }
+        mail_account_fail((string) ($acc['user'] ?? ''));      // отказ — ближе к карантину
         $errors[] = (string) ($acc['user'] ?? 'основной') . ': ' . mail_last_error();
     }
     mail_last_error('Ни один из ' . count($accounts) . ' почтовых ящиков не принял письмо. ' . implode(' | ', $errors));

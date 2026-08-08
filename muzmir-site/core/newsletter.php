@@ -435,6 +435,26 @@ function nl_prune_failed(): int {
  * прогрева (nl_daily_cap). Обновляет статусы писем и newsletters.stats_sent.
  * Зовётся из cron process_newsletter_queue.php. Возвращает число отправленных.
  */
+/**
+ * ГЛОБАЛЬНЫЙ СТОП-КРАН массовых коммуникаций.
+ *
+ * Пока settings.mass_sending = '0' наружу не уходит НИЧЕГО массового: рассылки по базе,
+ * авто-посты ВК, волны запуска, дожимы и вовлечение. Личные (транзакционные) письма —
+ * результаты, дипломы, счета, восстановление пароля — продолжают ходить как обычно:
+ * они адресные и к запуску отношения не имеют.
+ *
+ * Включается кнопкой в пульте запуска, когда сайт готов к старту.
+ */
+function mass_sending_enabled(): bool {
+    return (string) setting('mass_sending', '0') === '1';
+}
+
+/** Включить/выключить массовые коммуникации (пульт запуска). */
+function mass_sending_set(bool $on): void {
+    set_setting('mass_sending', $on ? '1' : '0');
+    set_setting('mass_sending_changed_at', date('Y-m-d H:i:s'));
+}
+
 function newsletter_process_queue(int $limit): int {
     $dailyLimit = nl_daily_cap();
     $gap        = max(0, (int) cfgv('mail_send_gap', 30));   // антибан-пауза для МАССОВЫХ
@@ -500,8 +520,14 @@ function newsletter_process_queue(int $limit): int {
                AND (scheduled_at IS NULL OR scheduled_at='' OR scheduled_at<=?) ORDER BY id ASC LIMIT 30", [$nowTs]);
     foreach ($tx as $row) { if ($sendRow($row, $route($row))) $sent++; }
 
-    // 2) МАССОВЫЕ (priority>0) — через news@музыкальный-мир.рф, в рамках дневного лимита
-    //    И с СОБЛЮДЕНИЕМ per-type квот (конкурсы/ВИП/кабинет = 150/75/75, масштабируется прогревом).
+    // 2) МАССОВЫЕ (priority>0) — только когда массовые коммуникации включены в пульте.
+    //    До старта они просто ждут в очереди: ничего не теряется и никуда не уходит.
+    if (!mass_sending_enabled()) {
+        nl_log('process: массовые рассылки выключены стоп-краном (пульт запуска) — отправлены только личные письма');
+        return $sent;
+    }
+    //    Через news@музыкальный-мир.рф, в рамках дневного лимита И с СОБЛЮДЕНИЕМ
+    //    per-type квот (конкурсы/ВИП/кабинет = 200/100/100, масштабируется прогревом).
     nl_ensure_campaign_type_col();
     $globalRemaining = $dailyLimit - nl_bulk_sent_today();
     if ($globalRemaining > 0) {

@@ -274,6 +274,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 // чтобы запрос ниже не падал 500 (создаётся также в admin/longcomp.php).
 try { db()->exec("ALTER TABLE competitions ADD COLUMN results_published_at TEXT"); } catch (\Throwable $e) {}
 require_once BASE_PATH . '/core/app_status.php';
+require_once BASE_PATH . '/core/mailer.php';   // mm_vip_discount — единый размер скидки клуба
 $apps = all("SELECT a.*, c.name AS comp_name, c.slug AS comp_slug, c.is_paid AS comp_paid,
                     c.results_mode AS comp_results_mode, c.results_date AS comp_results_date,
                     c.results_published_at AS comp_results_pub
@@ -604,6 +605,15 @@ ob_start(); ?>
 .cab.is-section .cab-menu{display:none}
 :root:not([data-theme="dark"]) .cab-back{color:var(--gold-ink)}
 /* --- Панели / карточки --- */
+.cab-vip-hint{display:flex;gap:14px;align-items:center;justify-content:space-between;flex-wrap:wrap;
+  margin:0 0 16px;padding:14px 18px;border-radius:var(--radius-sm);
+  background:linear-gradient(135deg,color-mix(in srgb,var(--gold) 16%,transparent),transparent 70%),var(--panel);
+  border:1px solid color-mix(in srgb,var(--gold) 40%,transparent)}
+.cab-vip-hint--on{background:linear-gradient(135deg,color-mix(in srgb,var(--gold) 24%,transparent),transparent 70%),var(--panel)}
+.cab-vip-hint__txt{min-width:0;flex:1 1 260px}
+.cab-vip-hint__txt b{display:block;font-family:var(--ff-display);font-size:1.05rem;letter-spacing:.01em}
+.cab-vip-hint__txt span{display:block;margin-top:3px;color:var(--muted);font-size:.86rem;line-height:1.45}
+@media (max-width:560px){.cab-vip-hint{padding:13px 15px}.cab-vip-hint .btn{width:100%}}
 .cab-panel{display:none}
 .cab-panel.active{display:block;animation:cabFade .45s cubic-bezier(.2,.8,.2,1)}
 @keyframes cabFade{from{opacity:0;transform:translateY(14px)}to{opacity:1;transform:none}}
@@ -777,6 +787,29 @@ ob_start(); ?>
         <!-- Мои заявки -->
         <div class="cab-panel" id="tab-apps" role="tabpanel">
           <h2>Мои заявки и результаты</h2>
+
+          <?php /* Напоминание о ВИП-клубе: встроенная полоса в потоке страницы —
+                    НЕ всплывающее окно, ничего не перекрывает. Тем, кто уже в клубе,
+                    вместо неё показывается статус членства. */ ?>
+          <?php if (empty($club['active'])): ?>
+            <div class="cab-vip-hint">
+              <div class="cab-vip-hint__txt">
+                <b>ВИП-клуб — выгоднее на <?= (int) mm_vip_discount() ?>%</b>
+                <span>Скидка <?= (int) mm_vip_discount() ?>% на участие и награды, результаты и дипломы за 3 рабочих дня вместо 5, бесплатный конкурс каждый месяц.</span>
+              </div>
+              <a class="btn btn--primary btn--sm" href="<?= url('/club') ?>">Подробнее</a>
+            </div>
+          <?php else: ?>
+            <div class="cab-vip-hint cab-vip-hint--on">
+              <div class="cab-vip-hint__txt">
+                <b>Вы участник ВИП-клуба</b>
+                <span>Скидка <?= (int) ($club['discount'] ?? mm_vip_discount()) ?>% применяется автоматически, сроки — 3 рабочих дня.
+                  <?= !empty($club['staff']) ? 'Доступ оргкомитета — бессрочно.'
+                      : (!empty($club['expires_at']) ? 'Действует до ' . h(ru_date(substr((string)$club['expires_at'],0,10))) . '.' : '') ?></span>
+              </div>
+              <a class="btn btn--ghost btn--sm" href="<?= url('/club') ?>">Мои привилегии</a>
+            </div>
+          <?php endif; ?>
           <?php if (!$apps): ?>
             <div class="cab-card cab-empty">
               <?= $icons['apps'] ?>
