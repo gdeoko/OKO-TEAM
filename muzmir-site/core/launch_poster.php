@@ -184,7 +184,19 @@ function launch_poster(string $wave, array $comps, string $extra = ''): ?string 
         imagettftext($img, $s2, 0, (int) (($W - $tw) / 2), $H - 34, $gold, $font, $ln);
     }
 
-    imagepng($img, $out, 6);
+    // Пишем во временный файл и подменяем атомарно. Прямая запись поверх готового
+    // файла падала с «Permission denied», если постер создал другой процесс (например,
+    // CLI-крон от root, а веб идёт от www-data): в лог сыпались предупреждения, а на
+    // странице конкурсов постер молча не обновлялся.
+    $tmp = $out . '.tmp' . getmypid();
+    $okWrite = @imagepng($img, $tmp, 6);
     imagedestroy($img);
+    if ($okWrite && is_file($tmp)) {
+        @chmod($tmp, 0664);
+        if (@rename($tmp, $out)) return $out;
+        @unlink($tmp);
+    }
+    // Перезаписать не вышло — отдаём ранее собранный постер, если он на месте:
+    // лучше вчерашняя афиша, чем пост вообще без афиши.
     return is_file($out) ? $out : null;
 }
