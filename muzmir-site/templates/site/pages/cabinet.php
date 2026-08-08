@@ -209,7 +209,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             }
             if ($attach !== '') $opt['attach'] = $attach;
             $sentNow = false;
-            if (function_exists('mail_send')) {
+            if (function_exists('mail_send_failover')) {
+                try { $sentNow = (bool) mail_send_failover($toMail, $subj, $html, $opt); } catch (\Throwable $e) { $sentNow = false; }
+            } elseif (function_exists('mail_send')) {
                 try { $sentNow = (bool) mail_send($toMail, $subj, $html, $opt); } catch (\Throwable $e) { $sentNow = false; }
             }
             // Если моментальная отправка не удалась (SMTP недоступен) — кладём в очередь

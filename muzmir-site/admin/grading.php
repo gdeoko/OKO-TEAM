@@ -657,7 +657,7 @@ if ($id = (int) input('id')) {
           <span class="badge badge--<?= h($a['status']) ?>"><?= h(app_status_ru($a['status'])) ?></span></div>
         <dl class="kv">
           <dt>Конкурс</dt><dd><?= h($a['comp']) ?></dd>
-          <dt><?= $a['is_group'] ? 'Коллектив' : 'Участник' ?></dt><dd><b><?= h($a['is_group'] ? $a['group_name'] : $a['full_name']) ?></b></dd>
+          <dt><?= $a['is_group'] ? 'Коллектив' : 'Участник' ?></dt><dd><b><?= h($a['is_group'] ? $a['group_name'] : $a['full_name']) ?></b><?= vip_mark((int)($a['user_id'] ?? 0), '', (string)($a['email'] ?? '')) ?></dd>
           <?php if ($a['is_group']): ?><dt>Контактное лицо</dt><dd><?= h($a['full_name']) ?></dd><?php endif; ?>
           <dt>Конкурсный номер</dt><dd><b><?= h($a['work_title']) ?></b></dd>
           <dt>Номинация</dt><dd><?= h($a['nomination']) ?><?= $a['subgroup'] ? ' · '.h($a['subgroup']) : '' ?></dd>
@@ -981,7 +981,7 @@ ob_start(); ?>
       <?php if (!$rows): ?><tr><td colspan="7" class="muted" style="text-align:center;padding:28px"><?= $show ? 'Оценённых заявок пока нет' : 'Очередь пуста — все заявки оценены' ?></td></tr><?php endif; ?>
       <?php foreach ($rows as $a): ?>
         <tr class="<?= (int)$a['grp_count'] > 1 ? 'gq-grp' : '' ?>">
-          <td><b><?= h($a['is_group'] ? $a['group_name'] : $a['full_name']) ?></b>
+          <td><b><?= h($a['is_group'] ? $a['group_name'] : $a['full_name']) ?></b><?= vip_mark((int)($a['user_id'] ?? 0), '', (string)($a['email'] ?? '')) ?>
             <?php if ((int)$a['grp_count'] > 1 && (int)$a['grp_pos'] === 0): ?>
               <span class="badge badge--gold gq-badge">участник <?= (int)$a['grp_count'] ?> заявок</span>
             <?php elseif ((int)$a['grp_count'] > 1): ?>

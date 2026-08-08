@@ -153,7 +153,7 @@ ob_start(); ?>
       <div style="display:flex;justify-content:space-between;gap:14px;flex-wrap:wrap;align-items:flex-start">
         <div style="min-width:0">
           <b><?= h($who ?: '—') ?></b>
-          <?= is_vip_user((int)($a['user_id'] ?? 0)) ? vip_badge() : '' ?>
+          <?= vip_mark((int)($a['user_id'] ?? 0), '', (string)($a['email'] ?? '')) ?>
           <div class="small muted">
             <?= h((string)$a['comp_name']) ?> · заявка <?= h((string)$a['app_number']) ?> ·
             <?= h((string)$a['email']) ?>

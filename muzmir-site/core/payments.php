@@ -9,6 +9,49 @@
 declare(strict_types=1);
 
 /**
+ * Автосписание по сохранённому способу оплаты (рекуррент ЮKassa).
+ * Используется для продления подписки ВИП-клуба без участия плательщика.
+ * Возвращает ['id','status'] или null при ошибке сети/конфигурации.
+ */
+function yukassa_charge_saved(int $amount, string $paymentMethodId, string $description, array $meta = []): ?array {
+    $shop = cfgv('yukassa_shop'); $secret = cfgv('yukassa_secret');
+    if (!$shop || !$secret || $amount <= 0 || trim($paymentMethodId) === '') return null;
+    $body = [
+        'amount'            => ['value' => number_format($amount, 2, '.', ''), 'currency' => 'RUB'],
+        'capture'           => true,
+        'payment_method_id' => $paymentMethodId,
+        'description'       => mb_substr($description, 0, 128),
+        'metadata'          => $meta,
+    ];
+    $email = (string) ($meta['email'] ?? '');
+    if ($email !== '' && filter_var($email, FILTER_VALIDATE_EMAIL)) {
+        $body['receipt'] = [
+            'customer' => ['email' => $email],
+            'items'    => [[
+                'description'     => mb_substr($description, 0, 128),
+                'quantity'        => '1.00',
+                'amount'          => ['value' => number_format($amount, 2, '.', ''), 'currency' => 'RUB'],
+                'vat_code'        => 1, 'payment_mode' => 'full_payment', 'payment_subject' => 'service',
+            ]],
+        ];
+    }
+    $ch = curl_init('https://api.yookassa.ru/v3/payments');
+    curl_setopt_array($ch, [
+        CURLOPT_RETURNTRANSFER => true,
+        CURLOPT_POST           => true,
+        CURLOPT_POSTFIELDS     => json_encode($body, JSON_UNESCAPED_UNICODE),
+        CURLOPT_USERPWD        => $shop . ':' . $secret,
+        CURLOPT_HTTPHEADER     => ['Content-Type: application/json', 'Idempotence-Key: ' . bin2hex(random_bytes(16))],
+        CURLOPT_TIMEOUT        => 15,
+    ]);
+    $resp = curl_exec($ch); $err = curl_errno($ch); curl_close($ch);
+    if ($err || !$resp) return null;
+    $data = json_decode($resp, true);
+    if (!is_array($data) || empty($data['id'])) return null;
+    return ['id' => (string) $data['id'], 'status' => (string) ($data['status'] ?? 'pending')];
+}
+
+/**
  * Запрос статуса платежа в ЮKassa: GET /v3/payments/{id}.
  * @return array|null полный объект платежа или null при недоступности/stub.
  */
@@ -207,6 +250,12 @@ function payment_apply_status(string $paymentId, string $status, array $obj = []
             if (function_exists('order_dispatch_production')) {
                 try { order_dispatch_production((int) $orderId); } catch (\Throwable $e) { error_log('order_dispatch_production: ' . $e->getMessage()); }
             }
+            // ЭЛЕКТРОННЫЕ: создаём наградные документы и планируем отправку —
+            // ВИП-клуб через 3 рабочих дня, остальные через 5 (важно для длинного
+            // бесплатного конкурса, где награды не входят в участие и заказываются).
+            if (function_exists('order_fulfill_digital')) {
+                try { order_fulfill_digital((int) $orderId); } catch (\Throwable $e) { error_log('order_fulfill_digital: ' . $e->getMessage()); }
+            }
         }
         if ($email === '') {
             $ord = one("SELECT * FROM awards_orders WHERE id=?", [(int) $orderId]);
@@ -224,7 +273,12 @@ function payment_apply_status(string $paymentId, string $status, array $obj = []
             if ($cuid > 0 && function_exists('club_grant')) {
                 // Период членства: годовой (12 мес) если в items period=year, иначе 1 месяц.
                 $clubMonths = (strpos((string) ($ordRow['items'] ?? ''), '"period":"year"') !== false) ? 12 : 1;
-                $clubSt = club_grant($cuid, $clubMonths, 'payment');
+                // Сохранённый способ оплаты → автопродление следующего периода
+                // (месяц или год) без участия участника: cron/club_billing.php.
+                $clubSt = club_grant($cuid, $clubMonths, 'payment', [
+                    'period' => $clubMonths >= 12 ? 'year' : 'month',
+                    'payment_method_id' => (string) (($obj['payment_method']['saved'] ?? false) ? ($obj['payment_method']['id'] ?? '') : ''),
+                ]);
                 // Уведомление владельца: вступление/продление ВИП-клуба.
                 if (!function_exists('owner_notify') && is_file(__DIR__ . '/notify_owner.php')) {
                     require_once __DIR__ . '/notify_owner.php';

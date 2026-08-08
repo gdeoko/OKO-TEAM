@@ -483,6 +483,74 @@ function mail_last_error(?string $set = null): string {
     return $err;
 }
 
+/**
+ * Список запасных отправителей для письма: если основной ящик не принял письмо,
+ * пробуем следующий. Порядок — сначала «профильный» (награды/рассылки), затем
+ * остальные настроенные ящики, затем основной SMTP из конфига.
+ */
+function mail_fallback_accounts(array $primary = []): array {
+    $out = [];
+    $key = fn(array $a) => mb_strtolower((string) ($a['user'] ?? ''));
+    if (!empty($primary['user'])) $out[$key($primary)] = $primary;
+    foreach (mail_senders() as $a) {
+        if (!empty($a['user']) && !isset($out[$key($a)])) $out[$key($a)] = $a;
+    }
+    // Основной ящик из config (Gmail центра) — последний рубеж.
+    $mainUser = (string) cfgv('smtp_user', '');
+    $mainPass = (string) cfgv('smtp_pass', '');
+    if ($mainUser !== '' && $mainPass !== '' && !isset($out[mb_strtolower($mainUser)])) {
+        $out[mb_strtolower($mainUser)] = [
+            'host' => (string) cfgv('smtp_host', 'smtp.gmail.com'),
+            'port' => (int) cfgv('smtp_port', 465),
+            'user' => $mainUser, 'pass' => $mainPass,
+            'from_addr' => $mainUser,
+            'from_name' => (string) cfgv('mail_from_name', 'Культурный центр «Музыкальный Мир»'),
+        ];
+    }
+    return array_values($out);
+}
+
+/**
+ * Отправка с АВТОЗАМЕНОЙ ящика: перебирает доступные почты, пока письмо не уйдёт.
+ * Если сработал не первый ящик — пишет об этом в лог и в mail_switched(), чтобы
+ * админка показала «отправлено с резервной почты», а не молчала.
+ * Возвращает true, если письмо ушло хоть с какого-то ящика.
+ */
+function mail_send_failover(string $to, string $subject, string $html, array $opt = []): bool {
+    $accounts = mail_fallback_accounts(is_array($opt['account'] ?? null) ? $opt['account'] : []);
+    if (!$accounts) $accounts = [[]];        // ни одного настроенного — пробуем как есть
+    $errors = [];
+    foreach ($accounts as $i => $acc) {
+        $try = $opt;
+        if ($acc) $try['account'] = $acc;
+        if ($acc && empty($opt['from_name']) && !empty($acc['from_name'])) $try['from_name'] = $acc['from_name'];
+        $ok = false;
+        try { $ok = mail_send($to, $subject, $html, $try); } catch (\Throwable $e) { $ok = false; }
+        if ($ok) {
+            if ($i > 0) {
+                $used = (string) ($acc['user'] ?? 'резервный ящик');
+                mail_switched($used);
+                mail_log('FAILOVER: письмо для ' . $to . ' ушло с резервной почты ' . $used
+                         . ' (предыдущие: ' . implode(' | ', $errors) . ')');
+            } else {
+                mail_switched('');
+            }
+            return true;
+        }
+        $errors[] = (string) ($acc['user'] ?? 'основной') . ': ' . mail_last_error();
+    }
+    mail_last_error('Ни один из ' . count($accounts) . ' почтовых ящиков не принял письмо. ' . implode(' | ', $errors));
+    mail_switched('');
+    return false;
+}
+
+/** Ящик, которым письмо ушло вместо основного (пусто — замены не было). */
+function mail_switched(?string $set = null): string {
+    static $acc = '';
+    if ($set !== null) $acc = $set;
+    return $acc;
+}
+
 function mail_send(string $to, string $subject, string $html, array $opt = []): bool {
     mail_last_error('');
     $to = trim($to);

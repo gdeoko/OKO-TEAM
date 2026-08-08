@@ -294,7 +294,8 @@ if (input('action') === 'profile') {
     $puid = (int) $pu['id'];
     if (is_file(BASE_PATH . '/core/club.php')) require_once BASE_PATH . '/core/club.php';
     $club = function_exists('club_status') ? club_status($puid) : ['active'=>false,'expires_at'=>null];
-    $isVip = function_exists('is_vip_user') ? is_vip_user($puid, (string)$pu['role']) : !empty($club['active']);
+    $vipKind = function_exists('vip_kind') ? vip_kind($puid, (string)$pu['role'], (string)($pu['email'] ?? '')) : (!empty($club['active']) ? 'club' : '');
+    $isVip = $vipKind !== '';
     $pApps = all("SELECT a.*, c.name comp, c.slug cslug, c.results_mode rmode FROM applications a
                   LEFT JOIN competitions c ON c.id=a.competition_id WHERE a.user_id=? ORDER BY a.id DESC", [$puid]);
     $pDips = all("SELECT d.*, a.number anum, a.full_name, a.group_name FROM diplomas d
@@ -327,7 +328,7 @@ if (input('action') === 'profile') {
         </label>
       </form>
       <div class="up-head-info">
-        <div class="up-name"><?= h($pu['full_name'] ?: '(без имени)') ?><?php if ($isVip): ?> <?= vip_badge() ?><?php endif; ?></div>
+        <div class="up-name"><?= h($pu['full_name'] ?: '(без имени)') ?><?php if ($isVip): ?> <?= vip_badge($vipKind) ?><?php endif; ?></div>
         <div class="up-sub"><?= h($pu['email']) ?><?= $pu['phone'] ? ' · ' . h($pu['phone']) : '' ?></div>
         <div class="up-badges">
           <span class="badge badge--<?= role_badge_class((string)$pu['role']) ?>"><?= h($pu['role']) ?></span>
@@ -583,7 +584,7 @@ details.u-d>summary svg{width:15px;height:15px;vertical-align:-2px;margin-right:
           <td>
             <div class="u-idcell">
               <span class="u-avatar"><?php if(trim((string)$u['avatar'])!==''): ?><img src="<?= h($u['avatar']) ?>" alt="" loading="lazy" onerror="this.replaceWith(document.createTextNode('<?= h($ini) ?>'))"><?php else: ?><?= h($ini) ?><?php endif; ?></span>
-              <span><b><a href="<?= a_link('users', ['action'=>'profile','id'=>$u['id']]) ?>" style="color:inherit;text-decoration:none;border-bottom:1px dashed rgba(0,0,0,.25)"><?= h($u['full_name'] ?: '—') ?></a><?php if($u['id']==$meId): ?> <span class="u-me">вы</span><?php endif; ?><?php if($isBlocked): ?> <span class="badge badge--muted">заблокирован</span><?php endif; ?></b><span class="small muted"><?= h($u['email']) ?></span></span>
+              <span><b><a href="<?= a_link('users', ['action'=>'profile','id'=>$u['id']]) ?>" style="color:inherit;text-decoration:none;border-bottom:1px dashed rgba(0,0,0,.25)"><?= h($u['full_name'] ?: '—') ?></a><?= vip_mark((int)$u['id'], (string)($u['role'] ?? ''), (string)($u['email'] ?? '')) ?><?php if($u['id']==$meId): ?> <span class="u-me">вы</span><?php endif; ?><?php if($isBlocked): ?> <span class="badge badge--muted">заблокирован</span><?php endif; ?></b><span class="small muted"><?= h($u['email']) ?></span></span>
             </div>
           </td>
           <td class="small"><?= h($u['phone'] ?: '—') ?></td>

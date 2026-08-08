@@ -227,7 +227,17 @@ $orderId = insert('awards_orders', [
 ]);
 
 // --- заглушка создания платежа ЮKassa (сумма — серверная) ---
-$payment = yukassa_create_payment($amount, 'Наградные материалы, заказ №' . $orderId, ['order_id' => $orderId, 'email' => mb_strtolower(input('email'))]);
+$payment = yukassa_create_payment(
+    $amount,
+    $isClubOrder ? 'Членство в ВИП-клубе «Музыкальный Мир»' : ('Наградные материалы, заказ №' . $orderId),
+    [
+        'order_id' => $orderId,
+        'email'    => mb_strtolower(input('email')),
+        // Для подписки клуба просим сохранить способ оплаты — следующие периоды
+        // спишутся автоматически (ежемесячно либо раз в год).
+        'save_payment_method' => $isClubOrder,
+    ]
+);
 if ($payment && !empty($payment['id'])) {
     update('awards_orders', ['payment_id' => $payment['id']], 'id=:id', ['id' => $orderId]);
     if (tbl_exists('payments')) {

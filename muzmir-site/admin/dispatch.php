@@ -247,11 +247,18 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 if (!empty($m['attach'])) $opt['attach'] = (string) $m['attach'];
                 if (function_exists('mail_route_account')) { $acc = mail_route_account($m); if ($acc) $opt['account'] = $acc; }
                 $ok = false;
-                try { $ok = (bool) mail_send((string) $m['to_email'], (string) $m['subject'], (string) $m['body'], $opt); } catch (\Throwable $e) {}
+                try {
+                    $ok = function_exists('mail_send_failover')
+                        ? (bool) mail_send_failover((string) $m['to_email'], (string) $m['subject'], (string) $m['body'], $opt)
+                        : (bool) mail_send((string) $m['to_email'], (string) $m['subject'], (string) $m['body'], $opt);
+                } catch (\Throwable $e) {}
                 if ($ok) {
-                    update('mail_queue', ['status' => 'sent', 'sent_at' => date('Y-m-d H:i:s'), 'scheduled_at' => null, 'error' => ''], 'id=:id', ['id' => $id]);
-                    audit('dispatch_sendnow', 'mail', $id, ['ok' => true]);
-                    disp_done(true, 'Письмо отправлено сейчас — ' . (string) $m['to_email'] . '.', ['remove' => true]);
+                    $sw = function_exists('mail_switched') ? mail_switched() : '';
+                    update('mail_queue', ['status' => 'sent', 'sent_at' => date('Y-m-d H:i:s'), 'scheduled_at' => null,
+                                          'error' => $sw !== '' ? ('Отправлено с резервной почты: ' . $sw) : ''], 'id=:id', ['id' => $id]);
+                    audit('dispatch_sendnow', 'mail', $id, ['ok' => true, 'via' => $sw]);
+                    disp_done(true, 'Письмо отправлено сейчас — ' . (string) $m['to_email'] . '.'
+                        . ($sw !== '' ? ' Основная почта не ответила, письмо ушло с резервной: ' . $sw . '.' : ''), ['remove' => true]);
                 }
                 // Не ушло: возвращаем в очередь приоритетным и ПОКАЗЫВАЕМ причину,
                 // иначе выглядит как «нажал — ничего не произошло».
@@ -407,7 +414,7 @@ $matchSearch = function (array $it) use ($ql): bool {
 };
 
 /* ---- 1) Дипломы к отправке ---- */
-$diplomasRaw = all("SELECT d.*, a.full_name, a.group_name, a.is_group, a.email, a.phone, a.number app_number,
+$diplomasRaw = all("SELECT d.*, a.full_name, a.group_name, a.is_group, a.email, a.phone, a.user_id, a.number app_number,
                            c.name comp_name
                     FROM diplomas d
                     JOIN applications a ON a.id=d.application_id
@@ -422,7 +429,7 @@ $ordersRaw = all("SELECT * FROM awards_orders
                   WHERE status IN ('paid','made','shipped') AND items NOT LIKE '%\"kind\":\"club\"%'
                   ORDER BY (status='paid') DESC, id DESC LIMIT 300");
 /* ---- 4) Результаты по расписанию (оценены, письмо-результат ещё не ушло) ---- */
-$resultsRaw = all("SELECT a.id, a.number, a.full_name, a.group_name, a.is_group, a.email, a.phone,
+$resultsRaw = all("SELECT a.id, a.number, a.full_name, a.group_name, a.is_group, a.email, a.phone, a.user_id,
                           a.result, a.result_send_at, c.name comp_name
                    FROM applications a LEFT JOIN competitions c ON c.id=a.competition_id
                    WHERE a.result <> '' AND COALESCE(a.result_send_at,'') <> ''
@@ -470,6 +477,7 @@ foreach ($dipGroups as $appId => $items) {
         'kind' => 'diploma', 'id' => $primaryId, 'app' => (int) $appId, 'mtype' => '',
         'type_label' => 'Письмо с дипломами',
         'who' => $who, 'email' => (string) $first['email'], 'phone' => (string) ($first['phone'] ?? ''),
+        'user_id' => (int) ($first['user_id'] ?? 0),
         'comp' => (string) $first['comp_name'], 'number' => (string) $first['app_number'],
         'title' => $title,
         'dip_ids' => implode(',', array_map(fn($x) => (int) $x['id'], $items)),
@@ -484,6 +492,7 @@ foreach ($resultsRaw as $r) {
         'kind' => 'result', 'id' => (int) $r['id'], 'mtype' => '',
         'type_label' => 'Результат',
         'who' => $who, 'email' => (string) $r['email'], 'phone' => (string) ($r['phone'] ?? ''),
+        'user_id' => (int) ($r['user_id'] ?? 0),
         'comp' => (string) $r['comp_name'], 'number' => (string) $r['number'],
         'title' => 'Результат: ' . (string) $r['result'],
         'when' => (string) ($r['result_send_at'] ?? ''),
@@ -682,7 +691,7 @@ tr.disp-row.gone{opacity:0;transition:.4s}
           <?php if ($k === 'mail'): ?><br><span class="badge <?= ($it['priority']??0)===0?'badge--paid':'badge--muted' ?> small" style="margin-top:4px"><?= ($it['priority']??0)===0?'транз.':'массов.' ?></span><?php endif; ?>
         </td>
         <td class="small">
-          <b><?= h($it['who'] ?: '—') ?></b>
+          <b><?= h($it['who'] ?: '—') ?></b><?= vip_mark((int)($it['user_id'] ?? 0), '', (string)($it['email'] ?? '')) ?>
           <?php if ($it['email']): ?><br><span class="muted"><?= h($it['email']) ?></span><?php endif; ?>
           <?php if (!empty($it['number']) && $k !== 'order'): ?><br><span class="muted">№<?= h($it['number']) ?></span><?php endif; ?>
           <?php if ($k === 'order'): ?><br><span class="muted">Заказ №<?= h($it['number']) ?></span><?php endif; ?>

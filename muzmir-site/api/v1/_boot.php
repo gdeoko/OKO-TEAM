@@ -98,6 +98,9 @@ function yukassa_create_payment(int $amount, string $description, array $meta = 
     $body = [
         'amount'       => ['value' => number_format($amount, 2, '.', ''), 'currency' => 'RUB'],
         'capture'      => true,
+        // Подписка ВИП-клуба: просим ЮKassa сохранить способ оплаты, чтобы следующие
+        // периоды списывались автоматически (cron/club_billing.php) без участия плательщика.
+        'save_payment_method' => !empty($meta['save_payment_method']),
         // Возврат с ЮKassa — на страницу ожидания оплаты (спиннер → окно успеха).
         // Путь можно переопределить через meta.return_path.
         'confirmation' => ['type' => 'redirect', 'return_url' => rtrim(cfgv('base_url'), '/') . ((string) ($meta['return_path'] ?? '/pay-status'))],
@@ -139,8 +142,13 @@ function yukassa_create_payment(int $amount, string $description, array $meta = 
         'id'               => $data['id'],
         'status'           => $data['status'] ?? 'pending',
         'confirmation_url' => $data['confirmation']['confirmation_url'] ?? null,
+        // Сохранённый способ оплаты — по нему списываются следующие периоды подписки.
+        'payment_method_id' => (!empty($data['payment_method']['saved']) && !empty($data['payment_method']['id']))
+            ? (string) $data['payment_method']['id'] : '',
     ];
 }
+
+
 
 /** Прокси-запрос в мозг-агент. Тихий фолбэк на null при недоступности. */
 function agent_chat_proxy(string $url, string $token, string $text, string $session, ?int $uid): ?string {

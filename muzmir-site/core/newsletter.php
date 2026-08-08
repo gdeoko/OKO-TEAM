@@ -453,9 +453,20 @@ function newsletter_process_queue(int $limit): int {
         if (!empty($row['attach'])) $opt['attach'] = (string) $row['attach'];
         if ($account) $opt['account'] = $account;
         $ok = false;
-        try { $ok = mail_send((string) $row['to_email'], (string) $row['subject'], (string) $row['body'], $opt); }
+        // Автозамена ящика: если основной не принял — письмо уйдёт со следующей почты.
+        try {
+            $ok = function_exists('mail_send_failover')
+                ? mail_send_failover((string) $row['to_email'], (string) $row['subject'], (string) $row['body'], $opt)
+                : mail_send((string) $row['to_email'], (string) $row['subject'], (string) $row['body'], $opt);
+        }
         catch (\Throwable $e) { nl_log('process: исключение #' . $id . ' — ' . $e->getMessage()); }
         if ($ok) {
+            // Если сработала резервная почта — фиксируем это в письме очереди.
+            $sw = function_exists('mail_switched') ? mail_switched() : '';
+            if ($sw !== '') {
+                update('mail_queue', ['error' => 'Отправлено с резервной почты: ' . $sw], 'id=:id', ['id' => $id]);
+                nl_log('process: #' . $id . ' ушло с резервной почты ' . $sw);
+            }
             update('mail_queue', ['status' => 'sent', 'sent_at' => date('Y-m-d H:i:s'), 'tries' => (int) $row['tries'] + 1], 'id=:id', ['id' => $id]);
             if (!empty($row['newsletter_id'])) q("UPDATE newsletters SET stats_sent = stats_sent + 1 WHERE id = ?", [(int) $row['newsletter_id']]);
         } else {

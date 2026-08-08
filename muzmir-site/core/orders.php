@@ -32,6 +32,98 @@ function orders_migrate(): void {
  * Правила применяются и на витрине, и на сервере (клиенту доверять нельзя).
  */
 
+/**
+ * ИСПОЛНЕНИЕ ЗАКАЗА ЭЛЕКТРОННЫХ НАГРАД.
+ *
+ * Вызывается при успешной оплате заказа (core/payments.php). Создаёт записи в
+ * diplomas по оплаченным электронным позициям и планирует отправку:
+ *   • участник ВИП-клуба — через 3 рабочих дня от оплаты;
+ *   • обычный участник  — через 5 рабочих дней.
+ * Дальше письмо уходит кроном send_diplomas по scheduled_at, одним письмом на заявку.
+ *
+ * Нужно прежде всего длинному бесплатному конкурсу: там наградные документы не входят
+ * в участие, участник заказывает их сам после публикации итогов — и до этой функции
+ * оплаченный заказ электронных наград не порождал вообще ничего.
+ *
+ * Идемпотентна: повторный вызов не создаёт дубли (проверяет тип диплома по заявке).
+ */
+function order_fulfill_digital(int $orderId): int {
+    $o = one("SELECT * FROM awards_orders WHERE id=?", [$orderId]);
+    if (!$o) return 0;
+    $appId = (int) ($o['application_id'] ?? 0);
+    if (!$appId) return 0;
+
+    $items = json_decode((string) ($o['items'] ?? '[]'), true);
+    if (!is_array($items)) return 0;
+
+    // Название позиции → тип диплома.
+    $map = [
+        'основной диплом'        => 'main',
+        'дополнительный диплом'  => 'extra',
+        'именной диплом'         => 'named',
+        'благодарность'          => 'thanks',
+    ];
+
+    $a = one("SELECT * FROM applications WHERE id=?", [$appId]);
+    if (!$a) return 0;
+
+    // Срок: ВИП-клуб — 3 рабочих дня, остальные — 5 (от момента оплаты заказа).
+    if (is_file(BASE_PATH . '/core/club.php')) require_once BASE_PATH . '/core/club.php';
+    require_once BASE_PATH . '/core/send_timing.php';
+    $uid    = (int) ($o['user_id'] ?? $a['user_id'] ?? 0);
+    $isVip  = $uid > 0 && function_exists('club_is_active') && club_is_active($uid);
+    $wdays  = $isVip ? 3 : 5;
+    $sched  = working_days_after(date('Y-m-d H:i:s'), $wdays)->format('Y-m-d H:i:s');
+
+    if (!function_exists('diploma_make_number')) {
+        if (is_file(BASE_PATH . '/core/pdf_diploma.php')) require_once BASE_PATH . '/core/pdf_diploma.php';
+    }
+    if (is_file(BASE_PATH . '/core/diploma_render.php')) require_once BASE_PATH . '/core/diploma_render.php';
+
+    $created = 0;
+    foreach ($items as $it) {
+        if (!is_array($it) || (string) ($it['kind'] ?? '') !== 'digital') continue;
+        $type = $map[mb_strtolower(trim((string) ($it['item'] ?? '')))] ?? '';
+        if ($type === '') continue;
+        // Уже есть такой документ по заявке — не дублируем.
+        if (one("SELECT id FROM diplomas WHERE application_id=? AND type=?", [$appId, $type])) continue;
+
+        $result = $type === 'extra'
+            ? (string) ($a['extra_diploma'] ?? '')
+            : ($type === 'thanks' ? '' : (string) ($a['result'] ?? ''));
+
+        $pdf = null;
+        try {
+            if (function_exists('diploma_pdf_html')) {
+                $pdf = diploma_pdf_html((array) $a, ['extra' => $type === 'extra', 'thanks' => $type === 'thanks']);
+            }
+        } catch (\Throwable $e) { $pdf = null; }
+
+        insert('diplomas', [
+            'number'         => function_exists('diploma_make_number')
+                                  ? diploma_make_number((string) $a['number'], $type)
+                                  : ((string) $a['number'] . '-' . mb_strtoupper($type)),
+            'application_id' => $appId,
+            'type'           => $type,
+            'result'         => $result,
+            'pdf_path'       => $pdf ?: '',
+            'lang'           => 'ru',
+            'scheduled_at'   => $sched,
+        ]);
+        $created++;
+    }
+
+    if ($created > 0) {
+        if (is_file(BASE_PATH . '/core/app_status.php')) require_once BASE_PATH . '/core/app_status.php';
+        if (function_exists('app_status_sync')) app_status_sync($appId);
+        if (function_exists('audit')) {
+            audit('order_digital_fulfilled', 'awards_orders', $orderId,
+                  ['created' => $created, 'vip' => $isVip, 'days' => $wdays, 'at' => $sched]);
+        }
+    }
+    return $created;
+}
+
 /** Трофей, положенный по результату: 'Кубок' | 'Статуэтка' | 'Медаль' | '' (нет результата). */
 function award_trophy_for_result(string $result): string {
     $r = mb_strtoupper(trim($result), 'UTF-8');

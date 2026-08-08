@@ -159,9 +159,13 @@ function dops_diplomas_send_now(int $appId, bool $duplicate = false): array {
     if ($attachments) $opt['attachments'] = $attachments;
 
     $ok = false;
-    if (function_exists('mail_send')) {
+    // Автозамена почтового ящика: письмо уйдёт с любой рабочей почты центра.
+    if (function_exists('mail_send_failover')) {
+        try { $ok = (bool) mail_send_failover($to, $subj, $html, $opt); } catch (\Throwable $e) { $ok = false; }
+    } elseif (function_exists('mail_send')) {
         try { $ok = (bool) mail_send($to, $subj, $html, $opt); } catch (\Throwable $e) { $ok = false; }
     }
+    $switched = function_exists('mail_switched') ? mail_switched() : '';
     // Не ушло сейчас — кладём в очередь приоритетным, чтобы не потерялось.
     if (!$ok && function_exists('mail_queue')) {
         mail_queue($to, (string) ($a['full_name'] ?? ''), $subj, $html, $attachments[0] ?? '');
@@ -177,7 +181,8 @@ function dops_diplomas_send_now(int $appId, bool $duplicate = false): array {
     audit($duplicate ? 'diplomas_duplicate' : 'diplomas_sendnow', 'application', $appId, ['ok' => $ok, 'count' => $cnt]);
 
     return ['ok' => true, 'msg' => ($duplicate ? 'Письмо с наградами отправлено повторно' : 'Наградные документы отправлены')
-        . ' (' . $cnt . ' шт., одним письмом на ' . $to . ')' . ($ok ? '.' : ' — через очередь.')];
+        . ' (' . $cnt . ' шт., одним письмом на ' . $to . ')' . ($ok ? '.' : ' — через очередь.')
+        . ($switched !== '' ? ' Основная почта не ответила, отправлено с резервной: ' . $switched . '.' : '')];
 }
 
 /** Перенести отправку всех неотправленных наградных документов заявки. */

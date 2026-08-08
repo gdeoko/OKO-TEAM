@@ -539,7 +539,7 @@ ob_start(); ?>
             <td class="checkbox-cell"><input type="checkbox" class="rowchk" name="ids[]" value="<?= $a['id'] ?>"></td>
             <td>
               <a href="<?= a_link('applications', ['id'=>$a['id']]) ?>"><b><?= h($a['is_group'] ? $a['group_name'] : $a['full_name']) ?></b></a>
-              <?= is_vip_user((int)($a['user_id']??0), (string)($a['user_role']??'')) ? vip_badge() : '' ?>
+              <?= vip_mark((int)($a['user_id']??0), (string)($a['user_role']??''), (string)($a['email']??'')) ?>
               <?= $a['flag'] ? ' <span class="badge badge--rejected small">'.h($a['flag']).'</span>' : '' ?>
               <br><span class="small muted"><?= h($a['number'] ?: '#'.$a['id']) ?><?= $a['is_group'] ? ' · коллектив' : '' ?></span>
             </td>
