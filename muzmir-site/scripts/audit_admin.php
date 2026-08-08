@@ -11,7 +11,7 @@ if (PHP_SAPI !== 'cli') { fwrite(STDERR, "CLI only\n"); exit(1); }
 
 define('BASE_PATH', dirname(__DIR__));
 $GLOBALS['CFG'] = require BASE_PATH . '/config.php';
-foreach (['db','helpers','data','app_status','send_timing','loyalty','club','mailer','launch_control'] as $m) {
+foreach (['db','helpers','data','app_status','send_timing','loyalty','club','mailer','launch_control','paylink'] as $m) {
     require_once BASE_PATH . '/core/' . $m . '.php';
 }
 db();
@@ -197,6 +197,48 @@ if ($uidAny > 0) {
 }
 $b = discount_breakdown(LOYALTY_MAX_PCT, REFERRAL_MAX_PCT, 0);
 chk('достижения + промокод без клуба = ровно 10%', (int) $b['total'] === 10, (string) $b['total']);
+
+/* ───────── прямые ссылки на оплату ───────── */
+sec('Кнопка «Оплатить» ведёт на оплату КОНКРЕТНОГО счёта');
+$unpaidApp = one("SELECT a.id, a.number FROM applications a JOIN competitions c ON c.id=a.competition_id
+                   WHERE c.is_paid=1 AND COALESCE(a.is_paid,0)=0 ORDER BY a.id DESC LIMIT 1");
+if (!$unpaidApp) { ok('неоплаченных платных заявок нет — пропуск'); }
+else {
+    $aid = (int) $unpaidApp['id'];
+    chk('ссылка содержит номер счёта и подпись',
+        str_contains(pay_link_app($aid), 't=app&id=' . $aid) && str_contains(pay_link_app($aid), '&s='),
+        pay_link_app($aid));
+    $r = http($AJAR, $BASE . pay_path_app($aid));
+    chk('по верной ссылке открывается оплата этой заявки',
+        $r['code'] === 200 && str_contains($r['body'], (string) $unpaidApp['number']), (string) $r['code']);
+    chk('на странице оплаты нет «Личный кабинет» вместо счёта',
+        !str_contains($r['body'], 'Ссылка недействительна'));
+
+    $r = http($AJAR, $BASE . '/pay?t=app&id=' . $aid . '&s=' . str_repeat('0', 32));
+    chk('подделанная подпись отклоняется', str_contains($r['body'], 'Ссылка недействительна'));
+
+    $r = http($AJAR, $BASE . '/pay?t=app&id=' . ($aid + 1) . '&s=' . pay_sign('app', $aid));
+    chk('чужой номер с чужой подписью отклоняется', str_contains($r['body'], 'Ссылка недействительна'));
+
+    chk('подпись заявки и заказа не совпадают', pay_sign('app', $aid) !== pay_sign('order', $aid));
+}
+$unpaidOrd = one("SELECT id FROM awards_orders WHERE status='new' ORDER BY id DESC LIMIT 1");
+if (!$unpaidOrd) { ok('неоплаченных заказов нет — пропуск'); }
+else {
+    $oid = (int) $unpaidOrd['id'];
+    $r = http($AJAR, $BASE . pay_path_order($oid));
+    chk('по ссылке открывается оплата этого заказа',
+        $r['code'] === 200 && str_contains($r['body'], 'заказа №' . $oid), (string) $r['code']);
+}
+$paidApp = one("SELECT id, number FROM applications WHERE COALESCE(is_paid,0)=1 ORDER BY id DESC LIMIT 1");
+if ($paidApp) {
+    $r = http($AJAR, $BASE . pay_path_app((int) $paidApp['id']));
+    chk('по оплаченной заявке повторная оплата закрыта',
+        str_contains($r['body'], 'уже оплачена'), mb_substr(strip_tags($r['body']), 0, 0));
+}
+$r = http($AJAR, $BASE . '/pay?t=' . rawurlencode('мусор') . '&id=0');
+chk('битая ссылка не роняет страницу', $r['code'] === 200 && str_contains($r['body'], 'не распознана'));
+
 
 echo "\n" . str_repeat('─', 60) . "\n";
 echo ($FAIL === 0 ? "АДМИНКА И ПРАВИЛА ЧИСТО" : "ПРОВАЛОВ: $FAIL") . ", пройдено: $OK\n";

@@ -85,68 +85,8 @@ function gen_application_number(array $comp): string {
     return sprintf('%s-%s-%05d', $code, $year, time() % 100000);
 }
 
-/**
- * Создание платежа ЮKassa (заглушка, пока магазин не верифицирован).
- * Если ключи не заданы — возвращает stub. Все ошибки cURL — тихий фолбэк на null.
- */
-function yukassa_create_payment(int $amount, string $description, array $meta = []): ?array {
-    $shop = cfgv('yukassa_shop');
-    $secret = cfgv('yukassa_secret');
-    if (!$shop || !$secret || $amount <= 0) {
-        return ['id' => 'stub-' . bin2hex(random_bytes(6)), 'status' => 'pending', 'stub' => true, 'confirmation_url' => null];
-    }
-    $body = [
-        'amount'       => ['value' => number_format($amount, 2, '.', ''), 'currency' => 'RUB'],
-        'capture'      => true,
-        // Подписка ВИП-клуба: просим ЮKassa сохранить способ оплаты, чтобы следующие
-        // периоды списывались автоматически (cron/club_billing.php) без участия плательщика.
-        'save_payment_method' => !empty($meta['save_payment_method']),
-        // Возврат с ЮKassa — на страницу ожидания оплаты (спиннер → окно успеха).
-        // Путь можно переопределить через meta.return_path.
-        'confirmation' => ['type' => 'redirect', 'return_url' => rtrim(cfgv('base_url'), '/') . ((string) ($meta['return_path'] ?? '/pay-status'))],
-        'description'  => mb_substr($description, 0, 128),
-        'metadata'     => $meta,
-    ];
-    // Чек 54-ФЗ (для самозанятого/НПД ЮKassa регистрирует чек). Добавляем, если есть email.
-    $email = $meta['email'] ?? '';
-    if ($email !== '' && filter_var($email, FILTER_VALIDATE_EMAIL)) {
-        $body['receipt'] = [
-            'customer' => ['email' => $email],
-            'items'    => [[
-                'description'     => mb_substr($description, 0, 128),
-                'quantity'        => '1.00',
-                'amount'          => ['value' => number_format($amount, 2, '.', ''), 'currency' => 'RUB'],
-                'vat_code'        => 1,              // без НДС (самозанятый/НПД)
-                'payment_mode'    => 'full_payment',
-                'payment_subject' => 'service',
-            ]],
-        ];
-    }
-    $payload = json_encode($body, JSON_UNESCAPED_UNICODE);
-    $ch = curl_init('https://api.yookassa.ru/v3/payments');
-    curl_setopt_array($ch, [
-        CURLOPT_RETURNTRANSFER => true,
-        CURLOPT_POST           => true,
-        CURLOPT_POSTFIELDS     => $payload,
-        CURLOPT_USERPWD        => $shop . ':' . $secret,
-        CURLOPT_HTTPHEADER     => ['Content-Type: application/json', 'Idempotence-Key: ' . bin2hex(random_bytes(16))],
-        CURLOPT_TIMEOUT        => 10,
-    ]);
-    $resp = curl_exec($ch);
-    $err = curl_errno($ch);
-    curl_close($ch);
-    if ($err || !$resp) return null;
-    $data = json_decode($resp, true);
-    if (!is_array($data) || empty($data['id'])) return null;
-    return [
-        'id'               => $data['id'],
-        'status'           => $data['status'] ?? 'pending',
-        'confirmation_url' => $data['confirmation']['confirmation_url'] ?? null,
-        // Сохранённый способ оплаты — по нему списываются следующие периоды подписки.
-        'payment_method_id' => (!empty($data['payment_method']['saved']) && !empty($data['payment_method']['id']))
-            ? (string) $data['payment_method']['id'] : '',
-    ];
-}
+/* yukassa_create_payment переехала в core/payments.php — ею пользуются
+   и API, и страница оплаты /pay (ссылки «Оплатить» из писем). */
 
 
 

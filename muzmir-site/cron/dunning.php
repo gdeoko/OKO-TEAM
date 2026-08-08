@@ -23,6 +23,7 @@ require_once BASE_PATH . '/core/db.php';
 require_once BASE_PATH . '/core/helpers.php';
 require_once BASE_PATH . '/core/mailer.php';
 if (is_file(BASE_PATH . '/core/notifications.php')) require_once BASE_PATH . '/core/notifications.php';
+require_once BASE_PATH . '/core/paylink.php';   // прямые ссылки на оплату конкретного счёта
 require_once __DIR__ . '/_lib.php';
 
 const JOB = 'dunning';
@@ -108,7 +109,7 @@ try {
                 if ($uid > 0 && function_exists('notify_user')) {
                     notify_user($uid, 'Заявка ' . $num . ($isFinal ? ' будет удалена' : ' ждёт оплаты'),
                         $isFinal ? 'Оплатите в течение 24 часов, иначе заявка автоматически удалится.' : 'Оплатите оргвзнос, чтобы работа попала на оценку жюри.',
-                        '/cabinet#apps', 'pay');
+                        pay_path_app($id), 'pay');   // кнопка ведёт сразу на оплату этой заявки
                 }
                 $remApp++;
             }
@@ -149,7 +150,7 @@ try {
                 if ($uid > 0 && function_exists('notify_user')) {
                     notify_user($uid, 'Заказ №' . $id . ($isFinal ? ' будет удалён' : ' ждёт оплаты'),
                         $isFinal ? 'Оплатите в течение 24 часов, иначе заказ автоматически удалится.' : 'Оплатите заказ, чтобы мы передали его в изготовление.',
-                        '/cabinet', 'pay');
+                        pay_path_order($id), 'pay');   // кнопка ведёт сразу на оплату этого заказа
                 }
                 $remOrd++;
             }
@@ -181,7 +182,8 @@ function dun_app_mail_html(array $a, string $baseCab, bool $isFinal): string {
         . 'Оплатите оргвзнос, чтобы работа попала на оценку жюри.</p>';
     return mm_email_tx($inner, [
         'preheader' => 'Оплата участия пока не поступила',
-        'hero'      => mm_cta_primary($baseCab . '/cabinet', 'Оплатить участие', 'Заявка №' . $num),
+        // Кнопка ведёт прямо на оплату ЭТОЙ заявки (форма ЮKassa), а не в общий кабинет.
+        'hero'      => mm_cta_primary(pay_link_app((int) $a['id']), 'Оплатить участие', 'Заявка №' . $num),
         'actions'   => [['Личный кабинет', $baseCab . '/cabinet']],
     ]);
 }
@@ -221,7 +223,8 @@ function dun_ord_mail_html(array $o, string $baseCab, bool $isFinal): string {
         . 'Оплатите заказ, чтобы мы передали его в изготовление.</p>';
     return mm_email_tx($inner, [
         'preheader' => 'Оплата заказа пока не поступила',
-        'hero'      => mm_cta_primary($baseCab . '/cabinet', 'Оплатить заказ', 'Заказ №' . (int) $o['id']),
+        // Кнопка ведёт прямо на оплату ЭТОГО заказа (форма ЮKassa), а не в общий кабинет.
+        'hero'      => mm_cta_primary(pay_link_order((int) $o['id']), 'Оплатить заказ', 'Заказ №' . (int) $o['id']),
         'actions'   => [['Личный кабинет', $baseCab . '/cabinet']],
     ]);
 }

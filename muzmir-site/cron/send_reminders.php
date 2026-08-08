@@ -26,6 +26,7 @@ require_once BASE_PATH . '/core/helpers.php';
 require_once BASE_PATH . '/core/mailer.php';
 if (is_file(BASE_PATH . '/core/notifications.php')) require_once BASE_PATH . '/core/notifications.php';
 require_once __DIR__ . '/_lib.php';
+require_once BASE_PATH . '/core/paylink.php';   // прямые ссылки на оплату счёта
 // Опционально: движок рассылок даёт настоящий unsub_token через nl_ensure_subscriber().
 if (is_file(BASE_PATH . '/core/newsletter.php')) require_once BASE_PATH . '/core/newsletter.php';
 
@@ -82,10 +83,10 @@ try {
             'name'             => $name,
             'competition'      => (string) $a['comp_name'],
             'number'           => (string) ($a['number'] ?? ''),
-            'cabinet_url'      => url('/cabinet'),
+            'cabinet_url'      => pay_link_app($id),   // «оплатить» = сразу форма ЮKassa по этой заявке
             'preheader'        => 'Оплата участия пока не поступила',
             '_tx'              => [
-                'hero'    => mm_cta_primary(url('/cabinet'), 'Оплатить участие', ($a['number'] ?? '') !== '' ? 'Заявка №' . (string) $a['number'] . ' ждёт оплаты' : 'Заявка ждёт оплаты'),
+                'hero'    => mm_cta_primary(pay_link_app($id), 'Оплатить участие', ($a['number'] ?? '') !== '' ? 'Заявка №' . (string) $a['number'] . ' ждёт оплаты' : 'Заявка ждёт оплаты'),
                 'actions' => [['Личный кабинет', url('/cabinet')]],
             ],
         ]) : '';
@@ -95,7 +96,7 @@ try {
             // In-app уведомление участнику
             if (!empty($a['user_id']) && function_exists('notify_user')) {
                 notify_user((int)$a['user_id'], 'Заявка ' . $a['number'] . ' ждёт оплаты',
-                    'Чтобы работа попала на оценку жюри — оплатите оргвзнос.', '/cabinet#apps', 'pay');
+                    'Чтобы работа попала на оценку жюри — оплатите оргвзнос.', pay_path_app($id), 'pay');
             }
             $unpaid++;
         }

@@ -315,6 +315,8 @@ $map = [
     '/reset-password' => 'reset_password',
     '/verify-email' => 'verify_email',
     '/cabinet' => 'cabinet',
+    // Прямая оплата конкретного счёта из письма/уведомления → сразу форма ЮKassa.
+    '/pay' => 'pay',
     '/pay-status' => 'pay_status',
     '/notifications' => 'notifications',
     '/chat' => 'chat',

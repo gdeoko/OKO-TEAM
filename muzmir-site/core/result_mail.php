@@ -122,11 +122,23 @@ function application_mail_send(int $appId, bool $paid = false): bool {
         . 'Вы можете принять участие и в других конкурсах центра — заявки объединяются в одну оплату.</p>';
 
     $subject = 'Заявка №' . $num . ' принята — Культурный центр «Музыкальный Мир»';
+
+    // Если конкурс платный, а взнос ещё не поступил — главная кнопка письма ведёт
+    // ПРЯМО на оплату этой заявки (форма ЮKassa), а не в общий кабинет: искать свой
+    // счёт руками человек не должен.
+    $needsPay = !$paid && (int) ($c['is_paid'] ?? 0) === 1 && (int) ($a['is_paid'] ?? 0) !== 1;
+    if ($needsPay && !function_exists('pay_link_app')) require_once BASE_PATH . '/core/paylink.php';
+    $hero = $needsPay
+        ? mm_cta_primary(pay_link_app($appId), 'Оплатить участие', 'Заявка №' . $num . ' · ' . (int) ($c['price'] ?? 0) . ' ₽')
+        : mm_cta_primary(url('/cabinet'), 'Открыть личный кабинет', 'Статус заявки · оплата · дипломы');
+
     $html = mm_email_tx($inner, [
         'preheader' => 'Заявка №' . $num . ($paid ? ' оплачена и принята.' : ' зарегистрирована.') . ' Детали и статус — в личном кабинете.',
-        'hero'      => mm_cta_primary(url('/cabinet'), 'Открыть личный кабинет', 'Статус заявки · оплата · дипломы'),
+        'hero'      => $hero,
         // «Другие конкурсы» убрана — в подвале письма уже есть кнопка «Другие конкурсы центра».
-        'actions'   => [['Оставить отзыв', url('/reviews')]],
+        'actions'   => $needsPay
+            ? [['Личный кабинет', url('/cabinet')], ['Оставить отзыв', url('/reviews')]]
+            : [['Оставить отзыв', url('/reviews')]],
     ]);
     return mail_queue((string) $a['email'], $name, $subject, $html) > 0;
 }
