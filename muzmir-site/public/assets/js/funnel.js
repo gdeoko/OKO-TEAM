@@ -13,7 +13,11 @@
 
   var path = location.pathname;
   // На форме и в кабинете — не отвлекаем
-  var skipPage = /^\/(apply|cabinet|admin|api|login|register)/.test(path);
+  // Страницы оформления помечены data-nopopup (layout.php): награды, заказ, оплата,
+  // клуб, подача. Там воронку не показываем — модалка перекрывала каталог наград
+  // и съедала клики по кнопке «В корзину».
+  var skipPage = /^\/(apply|cabinet|admin|api|login|register)/.test(path)
+              || document.documentElement.dataset.nopopup === '1';
 
   var OFFERS = [
     {
@@ -56,7 +60,7 @@
       cond: function(){ return path === '/awards'; },
       title: 'Хотите оригинал награды?',
       text: 'Кубки, статуэтки, медали с гравировкой имени и результата. Заказ — за 2 минуты.',
-      cta: 'Заказать', href: '/order-awards'
+      cta: 'Заказать', href: '/awards'
     }
   ];
 

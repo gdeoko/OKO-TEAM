@@ -55,10 +55,23 @@ $aliases = [
     '/prays'       => '/awards',     // прайс наградного материала
     '/novosti'      => '/blog',            // Блог/Новости (русский слаг)
 ];
-// /order-awards — форма заказа ПО КОНКРЕТНОЙ ЗАЯВКЕ (?app=…). Без привязки страница
-// сама показывает выбор оценённых заявок участника (см. pages/order_awards.php),
-// поэтому редиректа здесь больше нет: он терял привязку к заявке и уводил человека
-// на витрину, где можно было выбрать любой результат и заказать чужой трофей.
+// /order-awards — СТАРЫЙ адрес плоской формы заказа. Настоящий раздел наград (образцы
+// + корзина) живёт на /awards?comp=<id>, поэтому старые ссылки уводим туда, сохраняя
+// привязку к заявке: /order-awards?app=N → /awards?comp=<конкурс заявки>&app=N.
+if ($route === '/order-awards') {
+    $__oaApp  = (int) input('app', '');
+    $__oaComp = trim((string) input('competition', ''));
+    $__to = '/awards';
+    if ($__oaApp > 0) {
+        $__c = one("SELECT competition_id FROM applications WHERE id=?", [$__oaApp]);
+        if ($__c) $__to = '/awards?comp=' . (int) $__c['competition_id'] . '&app=' . $__oaApp;
+    } elseif ($__oaComp !== '') {
+        $__c = one("SELECT id FROM competitions WHERE slug=? OR code=? OR id=?",
+                   [$__oaComp, $__oaComp, ctype_digit($__oaComp) ? (int) $__oaComp : 0]);
+        if ($__c) $__to = '/awards?comp=' . (int) $__c['id'];
+    }
+    header('Location: ' . url($__to), true, 302); exit;
+}
 if (isset($aliases[$route])) { header('Location: ' . url($aliases[$route]), true, 301); exit; }
 
 // Короткие ссылки из постов ВК: /konkurs-<slug> -> подача, /obrazci-<slug> -> награды конкурса.

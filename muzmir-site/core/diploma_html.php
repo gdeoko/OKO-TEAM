@@ -62,6 +62,90 @@ function _dh_fit_pt(string $s, float $maxPt, float $emW, float $availMm, float $
     $fit = $availMm / ($len * $emW * 0.3528);   // 0.3528 мм/pt
     return round(max($minPt, min($maxPt, $fit)), 1);
 }
+
+/**
+ * Ширина строки в мм при заданном кегле С УЧЁТОМ разрядки (letter-spacing).
+ * Разрядку раньше не считали — и «ЗА ВИРТУОЗНОЕ ИСПОЛНЕНИЕ» с letter-spacing 4px
+ * вылезало за лист и обрезалось на «…ИСПОЛНЕН».
+ */
+function _dh_text_mm(string $s, float $pt, float $emW, float $lsPx = 0.0): float {
+    $len = max(1, mb_strlen(trim($s)));
+    return $len * $emW * $pt * 0.3528 + max(0, $len - 1) * $lsPx * 0.264583;
+}
+
+/**
+ * Разбить строку на $lines сбалансированных строк ПО СЛОВАМ (слова не режутся).
+ * @return string[] ровно столько строк, сколько получилось (может быть меньше $lines)
+ */
+function _dh_split_lines(string $s, int $lines): array {
+    $words = preg_split('~\s+~u', trim($s), -1, PREG_SPLIT_NO_EMPTY) ?: [];
+    if ($lines <= 1 || count($words) <= 1) return [trim($s)];
+    if ($lines === 2) { $p = _dh_split_two($s); return $p[1] === '' ? [$p[0]] : $p; }
+
+    // Три и более: жадно набираем примерно равные по длине куски.
+    $total = mb_strlen(implode(' ', $words));
+    $target = $total / $lines;
+    $out = []; $cur = '';
+    foreach ($words as $w) {
+        $try = $cur === '' ? $w : $cur . ' ' . $w;
+        if ($cur !== '' && mb_strlen($try) > $target && count($out) < $lines - 1) { $out[] = $cur; $cur = $w; }
+        else $cur = $try;
+    }
+    if ($cur !== '') $out[] = $cur;
+    return $out;
+}
+
+/**
+ * АВТО-ВЁРСТКА строки диплома: слова НИКОГДА не режутся и текст НИКОГДА не вылезает.
+ *
+ * Порядок ровно такой, как просил владелец:
+ *   1) пробуем уместить в одну строку максимальным кеглем;
+ *   2) не влезло — переносим ПО СЛОВАМ на вторую строку;
+ *   3) не влезло и в две — уменьшаем кегль, пока не влезет.
+ *
+ * @param float $lsPx разрядка элемента в px (letter-spacing из CSS)
+ * @return array{html:string, css:string}
+ */
+function _dh_fit_block(string $text, float $maxPt, float $minPt, float $emW,
+                       float $availMm, float $lsPx = 0.0, int $maxLines = 2): array {
+    $text = trim($text);
+    if ($text === '') return ['html' => '', 'css' => 'font-size:' . $maxPt . 'pt;'];
+
+    for ($pt = $maxPt; $pt >= $minPt - 0.01; $pt -= 0.5) {
+        for ($n = 1; $n <= $maxLines; $n++) {
+            $parts = _dh_split_lines($text, $n);
+            if (count($parts) < $n) continue;              // на меньшее число строк уже проверили
+            $fits = true;
+            foreach ($parts as $p) { if (_dh_text_mm($p, $pt, $emW, $lsPx) > $availMm) { $fits = false; break; } }
+            if (!$fits) continue;
+            $lh = $n > 1 ? 1.06 : 1.05;
+            return [
+                'html' => implode('<br>', array_map('h', $parts)),
+                'css'  => 'font-size:' . round($pt, 1) . 'pt;line-height:' . $lh . ';'
+                        . ($n > 1 ? 'white-space:normal;' : 'white-space:nowrap;'),
+            ];
+        }
+    }
+    // Даже минимальным кеглем не влезло — отдаём минимальный кегль с обычным переносом
+    // по словам: лучше три строки мелко, чем обрезанное слово.
+    $parts = _dh_split_lines($text, $maxLines);
+    return [
+        'html' => implode('<br>', array_map('h', $parts)),
+        'css'  => 'font-size:' . round($minPt, 1) . 'pt;line-height:1.06;white-space:normal;word-break:normal;',
+    ];
+}
+
+/**
+ * Степень в человеческом виде: арабская цифра → римская заглавная.
+ * В шрифтах тем (Cormorant Garamond, Forum и др.) цифры по умолчанию старостильные —
+ * «ЛАУРЕАТ 1 СТЕПЕНИ» печаталось с крошечной единицей вровень со строчными буквами.
+ * Римские I/II/III — обычные заглавные, поэтому смотрятся ровно с остальным текстом.
+ */
+function _dh_degree_roman(string $s): string {
+    $map = ['1' => 'I', '2' => 'II', '3' => 'III', '4' => 'IV', '5' => 'V'];
+    return preg_replace_callback('~(?<![0-9])([1-5])(?=\s*(СТЕПЕН|степен|МЕСТ|мест))~u',
+        static fn($m) => $map[$m[1]] ?? $m[1], $s) ?? $s;
+}
 /**
  * Разбить длинное название на 2 сбалансированные строки: минимизируем длиннейшую строку,
  * при равенстве — больше слов в первой строке (логичный перенос по смыслу).
@@ -201,7 +285,7 @@ function diploma_html(array $c, array $a, array $opt = []): string {
     // Дополнительный диплом ($isExtra): степень = спецноминация (ЗА АРТИСТИЗМ и т.п.).
     $degree   = $isExtra
         ? (mb_strtoupper($extra) ?: 'ЗА ТВОРЧЕСКИЕ ДОСТИЖЕНИЯ')
-        : (mb_strtoupper(trim((string)($a['result'] ?? ''))) ?: 'ЛАУРЕАТ 1 СТЕПЕНИ');
+        : _dh_degree_roman(mb_strtoupper(trim((string)($a['result'] ?? ''))) ?: 'ЛАУРЕАТ I СТЕПЕНИ');
     $dtype    = $thanks ? 'БЛАГОДАРНОСТЬ' : 'ДИПЛОМ';
     // НАГРАЖДАЕМЫЙ на дипломе:
     //  • коллектив/ансамбль (is_group=1 или формация ансамбль/хор) → НАЗВАНИЕ КОЛЛЕКТИВА
@@ -225,24 +309,20 @@ function diploma_html(array $c, array $a, array $opt = []): string {
     $year     = date('Y');
 
     // --- СТРОГАЯ авто-подгонка вёрстки диплома ---
-    // Результат (степень/спец-номинация) и ФИО — ВСЕГДА одна строка: кегль сам ужимается,
-    // текст не переносится и не выходит за рамки (~2% от краёв листа). Название коллектива —
-    // максимум 2 строки с логичным (сбалансированным) переносом.
+    // Правило владельца: слова НИКОГДА не режутся и текст НИКОГДА не вылезает за лист.
+    // Сначала пробуем одну строку максимальным кеглем, не влезло — переносим ПО СЛОВАМ
+    // на вторую, не влезло и в две — уменьшаем кегль. Разрядка (letter-spacing) учтена:
+    // без неё «ЗА ВИРТУОЗНОЕ ИСПОЛНЕНИЕ» обрезалось на «…ИСПОЛНЕН».
     $AVAIL     = 180.0;   // мм полезной ширины (лист 210 мм минус поля/рамки)
-    $degreeFs  = _dh_fit_pt($degree, 33.0, 0.56, $AVAIL, 15.0);
-    $isGroupNm = $isGroup && $groupName !== '' && $name === $groupName;
-    $oneLineFs = _dh_fit_pt($name, 29.0, 0.56, $AVAIL, 10.0);   // кегль, если пытаться в 1 строку
-    // Коллектив: 2 строки ТОЛЬКО когда в одну красиво не влезает (кегль < 20pt). Короткое —
-    // одна строка. Соло/благодарность — всегда одна строка (кегль ужимается).
-    if ($isGroupNm && $oneLineFs < 20.0) {
-        [$nl1, $nl2] = _dh_split_two($name);
-        $nameHtml   = h($nl1) . '<br>' . h($nl2);
-        $longer     = mb_strlen($nl1) >= mb_strlen($nl2) ? $nl1 : $nl2;
-        $nameCss    = 'font-size:' . _dh_fit_pt($longer, 29.0, 0.56, $AVAIL, 14.0) . 'pt;line-height:1.06;white-space:normal;';
-    } else {
-        $nameHtml   = h($name);
-        $nameCss    = 'font-size:' . $oneLineFs . 'pt;white-space:nowrap;';
-    }
+    $degreeBlk = _dh_fit_block($degree, 33.0, 15.0, 0.56, $AVAIL, 4.0, 2);   // ls: .diploma-degree = 4px
+    $degreeHtml = $degreeBlk['html'];
+    $degreeCss  = $degreeBlk['css'];
+
+    // Награждаемый: коллектив — максимум 2 строки, соло/благодарность — тоже
+    // (длинное ФИО лучше перенести, чем ужать до нечитаемого).
+    $nameBlk  = _dh_fit_block($name, 29.0, 14.0, 0.56, $AVAIL, 0.0, 2);
+    $nameHtml = $nameBlk['html'];
+    $nameCss  = $nameBlk['css'];
 
     // Номер диплома + QR-код проверки подлинности (правый нижний угол).
     // ЖЁСТКОЕ ПРАВИЛО: номер есть ВСЕГДА на всех типах (осн/доп/именной/благодарность),
@@ -374,6 +454,10 @@ body{background:#444;font-family:'Manrope',sans-serif;padding:20px;min-height:10
   background:<?= $T['grad_dtype'] ?>;
   -webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;
   letter-spacing:5px;margin-bottom:1mm;filter:drop-shadow(0 3px 6px rgba(0,0,0,.7));line-height:1}
+/* Цифры — только «прописные» (lining): в антиквах тем цифры по умолчанию
+   старостильные, и «1 СТЕПЕНИ» печаталось крошечной единицей. */
+.diploma-degree,.awarded-name,.awarded-name-script,.field-list,.diploma-type{
+  font-variant-numeric:lining-nums;font-feature-settings:"lnum" 1,"onum" 0}
 .diploma-degree{text-align:center;font-family:<?= $T['ff_comp'] ?>;font-size:33pt;font-weight:900;
   background:<?= $T['grad_degree'] ?>;
   -webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;
@@ -386,12 +470,14 @@ body{background:#444;font-family:'Manrope',sans-serif;padding:20px;min-height:10
 .field-list .field{color:#fff;filter:drop-shadow(0 1px 3px rgba(0,0,0,.5))}
 /* Текст благодарности сжат так, чтобы гарантированно не доставать до подписей */
 .gratitude-text{padding:0 7mm;font-family:'Playfair Display',serif;font-size:11.5pt;font-weight:700;line-height:1.42;text-align:center;color:#fff;filter:drop-shadow(0 1px 3px rgba(0,0,0,.5))}
-.bottom-block{position:absolute;bottom:10mm;left:14mm;right:14mm;z-index:4;color:#1a1a2a}
-/* Фиксированные высоты строк: блок подписей никогда не наезжает на поля выше.
- * Круглая печать сознательно «выступает» вверх поверх листа, как настоящая. */
-.signatures-grid{display:grid;grid-template-columns:1fr 82mm;grid-template-rows:20mm 24mm;gap:4mm 4mm;align-items:center}
-.sig-text-block{font-family:'Manrope',sans-serif;font-size:9.5pt;line-height:1.32;padding-right:3mm}
-.sig-text-block .sig-name{font-weight:800;text-decoration:underline;margin-bottom:1mm;color:#1a1a2a;font-size:11pt}
+/* Подписи прижаты ниже и собраны компактнее: регалии набираются в ТРИ строки
+ * вместо четырёх, межстрочный интервал и промежуток между двумя подписями меньше.
+ * Это освобождает ~14 мм по вертикали — длинная заявка (много полей, длинные
+ * названия) больше не упирается в подписи и печати. */
+.bottom-block{position:absolute;bottom:7mm;left:14mm;right:14mm;z-index:4;color:#1a1a2a}
+.signatures-grid{display:grid;grid-template-columns:1fr 82mm;grid-template-rows:16mm 19mm;gap:2mm 4mm;align-items:center}
+.sig-text-block{font-family:'Manrope',sans-serif;font-size:8.4pt;line-height:1.2;padding-right:2mm}
+.sig-text-block .sig-name{font-weight:800;text-decoration:underline;margin-bottom:.6mm;color:#1a1a2a;font-size:10pt}
 .sig-text-block .sig-role{font-weight:600;color:#1a1a2a}
 .sig-visual-block{display:grid;grid-template-columns:1fr auto;gap:2mm;align-items:center;position:relative;height:100%}
 /* Штамп председателя поднят: круглая печать касается его лишь слегка снизу */
@@ -400,7 +486,7 @@ body{background:#444;font-family:'Manrope',sans-serif;padding:20px;min-height:10
 /* Росписи увеличены в 1.8 раза через scale — позиция не сдвигается */
 .sig-signature-1{width:26mm;height:auto;display:block;transform:scale(1.8);transform-origin:center right}
 .sig-signature-2{width:28mm;height:auto;display:block;transform:scale(1.8);transform-origin:center right}
-.footer-city{text-align:center;margin-top:4mm;font-family:'Playfair Display',serif;font-size:12.5pt;font-weight:700;color:#1a1a2a}
+.footer-city{text-align:center;margin-top:2.5mm;font-family:'Playfair Display',serif;font-size:12pt;font-weight:700;color:#1a1a2a}
 /* Номер диплома + QR проверки подлинности — правый нижний угол. */
 .dip-verify{position:absolute;right:7mm;bottom:6mm;z-index:6;display:flex;flex-direction:column;align-items:center;gap:.7mm}
 .dip-verify .qr{width:15mm;height:15mm;background:#fff;padding:1mm;border-radius:1.5mm;box-shadow:0 1px 4px rgba(0,0,0,.25)}
@@ -467,7 +553,7 @@ body{background:#444;font-family:'Manrope',sans-serif;padding:20px;min-height:10
 
     <?php if (!$thanks): ?>
       <?php $e = $E('degree'); ?>
-      <div class="diploma-degree"<?= $D('degree') . _dh_style2($e, 'font-size:' . $degreeFs . 'pt;white-space:nowrap;') ?>><?= h($degree) ?></div>
+      <div class="diploma-degree"<?= $D('degree') . _dh_style2($e, $degreeCss) ?>><?= $degreeHtml ?></div>
       <?php /* Доп. награда печатается ОТДЕЛЬНЫМ дипломом (diploma_html(...,['extra'=>true])), не строкой здесь. */ ?>
 
       <?php $e = $E('label'); ?>
@@ -485,7 +571,8 @@ body{background:#444;font-family:'Manrope',sans-serif;padding:20px;min-height:10
       <?php $e = $E('label'); ?>
       <div class="awarded-label"<?= $D('label') . _dh_style($e, 15.0) ?>>награждается:</div>
       <?php $e = $E('name'); ?>
-      <div class="awarded-name-script"<?= $D('name') . _dh_style2($e, 'font-size:' . _dh_fit_pt($name, 36.0, 0.5, $AVAIL, 16.0) . 'pt;white-space:nowrap;') ?>><?= h($name) ?></div>
+      <?php $scriptBlk = _dh_fit_block($name, (float) $T['script_fs'], 16.0, 0.5, $AVAIL, 0.0, 2); ?>
+      <div class="awarded-name-script"<?= $D('name') . _dh_style2($e, $scriptBlk['css']) ?>><?= $scriptBlk['html'] ?></div>
 
       <?php $e = $E('fields'); ?>
       <div class="gratitude-text"<?= $D('fields') . _dh_style($e, 11.5) ?>>

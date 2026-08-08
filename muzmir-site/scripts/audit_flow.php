@@ -72,6 +72,10 @@ chk('участник вошёл в кабинет', $userIn);
 
 /* ───────────── 1. Запуск конкурсов из пульта ───────────── */
 sec('Пульт запуска: гейт публикации');
+// Прогон должен быть повторяемым: возвращаем стенд в «до запуска» и снимаем
+// счётчики частоты (иначе повторный прогон упирается в защиту от флуда заявками).
+q("UPDATE competitions SET launched=0, results_published_at=NULL WHERE status='open'");
+try { q("DELETE FROM rate_limit"); } catch (\Throwable $e) {}
 $hidden = (int) scalar("SELECT COUNT(*) FROM competitions WHERE status='open' AND COALESCE(launched,0)=0");
 $r = http($AJAR, $BASE . '/competitions');
 chk('до запуска конкурсы на сайте не показываются',
@@ -193,8 +197,13 @@ sec('Кабинет участника: видно только то, что д�
 $cab = http($UJAR, $BASE . '/cabinet');
 chk('кабинет открывается', $cab['code'] === 200, (string) $cab['code']);
 chk('в кабинете есть отправленный результат', strpos($cab['body'], 'ЛАУРЕАТ I СТЕПЕНИ') !== false);
+// Проверяем именно НАШУ заявку: строка звания может встречаться и у старых заявок,
+// по которым результат уже дошёл.
+$posAuto = strpos($cab['body'], (string) $appAuto['number']);
+$cardAuto = $posAuto !== false ? substr($cab['body'], $posAuto, 3000) : '';
 chk('в кабинете НЕТ ещё не отправленного результата',
-    strpos($cab['body'], 'ДИПЛОМАНТ II СТЕПЕНИ') === false);
+    $cardAuto !== '' && strpos($cardAuto, 'ДИПЛОМАНТ II СТЕПЕНИ') === false,
+    $cardAuto === '' ? 'карточка заявки не найдена' : '');
 chk('заявка не пропала из кабинета', strpos($cab['body'], (string) $appPaid['number']) !== false,
     (string) $appPaid['number']);
 chk('в кабинете нет PHP-шума', stripos($cab['body'], 'Warning:') === false && stripos($cab['body'], 'Undefined') === false);
@@ -257,30 +266,28 @@ chk('«Сейчас» либо отправило, либо объяснило �
 
 /* ───────────── 8. Заказ наград ───────────── */
 sec('Заказ наград: состав строго по результату');
-$r = http($UJAR, $BASE . '/order-awards?app=' . $idPaid);
-chk('форма заказа по заявке открывается', $r['code'] === 200);
-chk('в форме зафиксирован результат заявки', strpos($r['body'], 'ЛАУРЕАТ I СТЕПЕНИ') !== false);
-$priceMap = [];
-if (preg_match('~var PRICES = (\{.*?\});~s', $r['body'], $pm)) {
-    $all = json_decode($pm[1], true);
-    $priceMap = is_array($all) ? ($all[(string) $paid['slug']] ?? []) : [];
-}
-chk('матрица цен разобрана', $priceMap !== [], implode(', ', array_keys($priceMap)));
-chk('лауреату не предлагается кубок', !isset($priceMap['Кубок||original']));
-chk('лауреату не предлагается медаль', !isset($priceMap['Медаль||original']));
-chk('лауреату предлагается статуэтка', isset($priceMap['Статуэтка||original']));
-chk('в платном нет электронного основного диплома', !isset($priceMap['Основной диплом||digital']));
-chk('в платном нет электронного дополнительного', !isset($priceMap['Дополнительный диплом||digital']));
-chk('в платном есть оригинал основного диплома', isset($priceMap['Основной диплом||original']));
+$r = http($UJAR, $BASE . '/awards?comp=' . (int) $paid['id'] . '&app=' . $idPaid);
+chk('раздел наград по заявке открывается', $r['code'] === 200);
+chk('в разделе зафиксирован результат заявки', strpos($r['body'], 'ЛАУРЕАТ I СТЕПЕНИ') !== false);
+chk('видна плашка «заказ по заявке»', strpos($r['body'], 'aw-applock') !== false);
+chk('есть образцы наград и корзина',
+    strpos($r['body'], 'aw-card') !== false && strpos($r['body'], 'cartFab') !== false);
+preg_match_all('~data-item="([^"]+)"~', $r['body'], $im);
+$items = array_values(array_unique($im[1] ?? []));
+chk('каталог наград собран', $items !== [], implode(', ', $items));
+chk('лауреату не предлагается кубок', !in_array('Кубок Гран-при', $items, true));
+chk('лауреату не предлагается медаль', !in_array('Медаль дипломанта', $items, true));
+chk('лауреату предлагается статуэтка', in_array('Статуэтка лауреата', $items, true));
+chk('кубок не задвоился', count(array_filter($items, fn($i) => str_contains($i, 'Кубок'))) <= 1);
+chk('в платном нет основного диплома отдельной позицией', !in_array('Основной диплом', $items, true));
 
-$r = http($UJAR, $BASE . '/order-awards');
-chk('заказ без заявки показывает выбор заявок, а не мёртвую форму',
-    stripos($r['body'], 'Выберите заявку') !== false || stripos($r['body'], 'Оценённых заявок пока нет') !== false
-    || stripos($r['body'], 'Войдите в личный кабинет') !== false);
-chk('на выборе заявок нет формы оплаты', stripos($r['body'], 'Оформить заказ и перейти к оплате') === false);
+$r = http($UJAR, $BASE . '/order-awards?app=' . $idPaid, null, false);
+chk('старый адрес заказа ведёт в раздел наград с привязкой',
+    in_array($r['code'], [301, 302], true)
+    && str_contains((string) ($r['head'] ?? ''), 'app=' . $idPaid), (string) $r['code']);
 
 sec('Заказ электронной награды: попадает в «Заказы электронных»');
-$tok = csrf($UJAR, '/order-awards?app=' . $idPaid);
+$tok = csrf($UJAR, '/awards?comp=' . (int) $paid['id'] . '&app=' . $idPaid);
 $r = http($UJAR, $BASE . '/api/v1/order.php', [
     '_csrf' => $tok, 'csrf' => $tok, 'application_id' => (string) $idPaid,
     'competition' => (string) $paid['slug'], 'result' => 'ЛАУРЕАТ I СТЕПЕНИ',
@@ -295,7 +302,7 @@ $ord = one("SELECT * FROM awards_orders WHERE application_id=? ORDER BY id DESC 
 chk('заказ сохранён', (bool) $ord, 'id=' . ($ord['id'] ?? '-'));
 
 sec('Сервер отклоняет запрещённый состав наград (подмена запроса)');
-$tok = csrf($UJAR, '/order-awards?app=' . $idPaid);
+$tok = csrf($UJAR, '/awards?comp=' . (int) $paid['id'] . '&app=' . $idPaid);
 $r = http($UJAR, $BASE . '/api/v1/order.php', [
     '_csrf' => $tok, 'csrf' => $tok, 'application_id' => (string) $idPaid,
     'competition' => (string) $paid['slug'], 'result' => 'ГРАН-ПРИ',
@@ -307,7 +314,7 @@ $j = json_decode($r['body'], true);
 chk('кубок лауреату отклонён сервером', ($j['ok'] ?? true) === false,
     substr((string) ($j['error'] ?? $r['body']), 0, 160));
 
-$tok = csrf($UJAR, '/order-awards?app=' . $idPaid);
+$tok = csrf($UJAR, '/awards?comp=' . (int) $paid['id'] . '&app=' . $idPaid);
 $r = http($UJAR, $BASE . '/api/v1/order.php', [
     '_csrf' => $tok, 'csrf' => $tok, 'application_id' => (string) $idPaid,
     'competition' => (string) $paid['slug'],
@@ -344,16 +351,13 @@ chk('после публикации участник видит результ�
 sec('Бесплатный конкурс: награды только по заказу');
 $dipFree = (int) scalar("SELECT COUNT(*) FROM diplomas WHERE application_id=?", [$idFree]);
 chk('в бесплатном дипломы сами не создаются', $dipFree === 0, "$dipFree шт");
-$r = http($UJAR, $BASE . '/order-awards?app=' . $idFree);
+$r = http($UJAR, $BASE . '/awards?comp=' . (int) $free['id'] . '&app=' . $idFree);
 chk('в бесплатном заказ наград открыт', $r['code'] === 200 && stripos($r['body'], 'ГРАН-ПРИ') !== false);
-$freeMap = [];
-if (preg_match('~var PRICES = (\{.*?\});~s', $r['body'], $pm)) {
-    $all = json_decode($pm[1], true);
-    $freeMap = is_array($all) ? ($all[(string) $free['slug']] ?? []) : [];
-}
-chk('гран-при предлагается кубок', isset($freeMap['Кубок||original']), implode(', ', array_keys($freeMap)));
-chk('гран-при не предлагается статуэтка', !isset($freeMap['Статуэтка||original']));
-chk('в бесплатном доступен электронный основной диплом', isset($freeMap['Основной диплом||digital']));
+preg_match_all('~data-item="([^"]+)"~', $r['body'], $fm);
+$fitems = array_values(array_unique($fm[1] ?? []));
+chk('гран-при предлагается кубок', in_array('Кубок Гран-при', $fitems, true), implode(', ', $fitems));
+chk('гран-при не предлагается статуэтка', !in_array('Статуэтка лауреата', $fitems, true));
+chk('в бесплатном доступен основной диплом', in_array('Основной диплом', $fitems, true));
 
 /* ───────────── 10. Почта: пулы и очередь ───────────── */
 sec('Почта: письма легли в очередь с правильным пулом');

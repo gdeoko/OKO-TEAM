@@ -22,25 +22,11 @@ if (!$selComp && $compId > 0) {
                       FROM competitions WHERE id=? AND status <> 'draft'", [$compId]);
 }
 
-/**
- * Канонизация названия товара из прайса к ключам витрины: в разных конкурсах кубок/статуэтка/
- * медаль/благодарность заведены по-разному («Кубок» vs «Кубок Гран-при», «Благодарность педагогу»
- * vs «Благодарность»). Без нормализации трофеи «терялись» на витрине заказа. '' — служебные строки
- * (напр. «Доставка Почтой России») в каталог не идут.
- */
-function aw_canon_item(string $item): string {
-    $l = mb_strtolower(trim($item));
-    if ($l === '') return '';
-    if (mb_strpos($l, 'доставк') !== false) return '';                 // строка доставки — не товар
-    if (mb_strpos($l, 'кубок') !== false)     return 'Кубок Гран-при';
-    if (mb_strpos($l, 'статуэтк') !== false)  return 'Статуэтка лауреата';
-    if (mb_strpos($l, 'медал') !== false)     return 'Медаль дипломанта';
-    if (mb_strpos($l, 'благодарн') !== false) return 'Благодарность';
-    if (mb_strpos($l, 'именн') !== false)     return 'Именной диплом';
-    if (mb_strpos($l, 'дополнит') !== false)  return 'Дополнительный диплом';
-    if (mb_strpos($l, 'основн') !== false)    return 'Основной диплом';
-    return $item;                                                      // прочее — как есть
-}
+/* Канонизация названий переехала в core/orders.php (award_canon_item): один и тот же
+   кубок был заведён и как «Кубок», и как «Кубок Гран-при» — в форме заказа он двоился.
+   Теперь имя приводится к одному во ВСЕХ каталогах наград. */
+require_once BASE_PATH . '/core/orders.php';
+function aw_canon_item(string $item): string { return award_canon_item($item); }
 
 // Прайс: общий шаблон + индивидуальные цены конкурса ПОВЕРХ него (мердж, а не «или-или»),
 // чтобы кубок/статуэтка/медаль присутствовали у любого конкурса, а цены конкурса переопределяли.
@@ -70,6 +56,19 @@ $icons = [
   'thanks'  => '<path d="M20.8 4.6c-1.7-1.7-4.4-1.7-6 0L12 7.4 9.2 4.6c-1.7-1.7-4.4-1.7-6 0-1.7 1.7-1.7 4.4 0 6L12 19l8.8-8.4c1.7-1.6 1.7-4.3 0-6z"/>',
 ];
 $kindLabel = ['original' => 'Оригинал (почтой)', 'digital' => 'Электронный', 'club' => 'Клуб'];
+
+// Скидка ВИП-клуба (20%) действует и в каталоге наград: цена показывается
+// перечёркнутой, рядом — цена участника клуба. Сервер считает сумму сам
+// (api/v1/order.php), здесь — честное отображение, чтобы итог совпадал.
+$clubPct = 0;
+if ($u && is_file(BASE_PATH . '/core/club.php')) {
+    require_once BASE_PATH . '/core/club.php';
+    if (function_exists('club_discount_percent')) $clubPct = (int) club_discount_percent((int) $u['id']);
+}
+/** Цена для участника клуба. */
+$clubPrice = static function (int $p) use ($clubPct): int {
+    return $clubPct > 0 ? (int) max(0, round($p * (100 - $clubPct) / 100)) : $p;
+};
 $order = ['Кубок Гран-при','Статуэтка лауреата','Медаль дипломанта','Основной диплом','Дополнительный диплом','Именной диплом','Благодарность'];
 
 // Заявки пользователя (для оформления).
@@ -95,6 +94,45 @@ function award_photo(string $slug, int $compId = 0): ?string {
         if (is_file($abs)) return asset($rel) . '?v=' . filemtime($abs);
     }
     return null;
+}
+
+/* ─────────────────────────────────────────────────────────────────────────────
+   ЗАКАЗ ПО КОНКРЕТНОЙ ЗАЯВКЕ: /awards?comp=<id>&app=<id>.
+   Так сюда ведёт кнопка «Заказать награды» из личного кабинета — участник видит
+   тот же раздел с образцами и корзиной, но состав ограничен его аттестационным
+   результатом: гран-при → только кубок, лауреат → только статуэтка, дипломант →
+   только медаль. Дипломы и благодарности доступны при любом результате.
+   ──────────────────────────────────────────────────────────────────────────── */
+$appLock = null;                     // заявка, по которой заказываем
+$appLockResult = '';                 // её аттестационный результат
+$appId = (int) input('app', '');
+if ($appId > 0 && $u) {
+    $ar = one("SELECT a.id, a.number, a.result, a.result_sent_at, a.competition_id,
+                      c.results_mode, c.results_published_at, c.name AS comp_name
+                 FROM applications a LEFT JOIN competitions c ON c.id = a.competition_id
+                WHERE a.id = ? AND a.user_id = ?", [$appId, (int) $u['id']]);
+    // Заказ открыт только когда результат реально дошёл до участника.
+    $delivered = $ar && (((string) ($ar['results_mode'] ?? '') === 'list')
+        ? trim((string) ($ar['results_published_at'] ?? '')) !== ''
+        : trim((string) ($ar['result_sent_at'] ?? '')) !== '');
+    if ($ar && trim((string) $ar['result']) !== '' && $delivered) {
+        $appLock = $ar;
+        $appLockResult = (string) $ar['result'];
+        // Конкурс берём из ЗАЯВКИ — чтобы состав и цены точно соответствовали ей.
+        if (!$selComp || (int) $selComp['id'] !== (int) $ar['competition_id']) {
+            $compId  = (int) $ar['competition_id'];
+            $selComp = one("SELECT id, slug, name, type, direction, cover, diploma_bg, end_date, nominations, is_paid
+                              FROM competitions WHERE id=?", [$compId]);
+            // Прайс пересобираем под конкурс заявки.
+            $catalog = [];
+            if ($selComp) {
+                $gen  = all("SELECT item, kind, price FROM awards_prices WHERE competition_id IS NULL ORDER BY price DESC");
+                $cmp  = all("SELECT item, kind, price FROM awards_prices WHERE competition_id=? ORDER BY price DESC", [$compId]);
+                foreach ($gen as $p) { $it = aw_canon_item((string) $p['item']); if ($it !== '') $catalog[$it][$p['kind']] = (int) $p['price']; }
+                foreach ($cmp as $p) { $it = aw_canon_item((string) $p['item']); if ($it !== '') $catalog[$it][$p['kind']] = (int) $p['price']; }
+            }
+        }
+    }
 }
 
 ob_start(); ?>
@@ -154,6 +192,18 @@ ob_start(); ?>
       <p style="color:var(--muted);margin:0;font-size:.9rem">Электронный основной диплом — бесплатно всем участникам. Ниже — образцы и цены оригиналов с доставкой.</p>
     </div>
 
+    <?php if ($appLock): ?>
+      <div class="aw-applock reveal">
+        <span class="aw-applock-ic">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M8 21h8M12 17v4M7 4h10v5a5 5 0 0 1-10 0z"/><path d="M17 5h3v2a3 3 0 0 1-3 3M7 5H4v2a3 3 0 0 0 3 3"/></svg>
+        </span>
+        <span>
+          <b>Заказ по заявке <?= h((string) $appLock['number']) ?></b> — результат: <b><?= h($appLockResult) ?></b>.
+          <span class="aw-applock-hint">Показаны только награды, положенные по этому результату. Данные подставятся из заявки.</span>
+        </span>
+      </div>
+    <?php endif; ?>
+
     <?php /* Верхний блок с отдельным образцом убран по просьбе — оставлены только
              карточки наград с ценами; крупный просмотр открывается по клику на карточку. */ ?>
 
@@ -165,8 +215,27 @@ ob_start(); ?>
       foreach ($order as $item):
         if ($paidComp && in_array($item, ['Основной диплом','Дополнительный диплом'], true)) continue;
         if (empty($catalog[$item])) continue;
+        // Заказ по конкретной заявке: показываем ТОЛЬКО то, что по её результату
+        // реально можно заказать (правила — core/orders.php, там же и серверная проверка).
+        if ($appLock) {
+            $allowedHere = false;
+            foreach (array_keys($catalog[$item]) as $k) {
+                [$okItem] = award_item_allowed($item, (string) $k, $appLockResult, $paidComp);
+                if ($okItem) { $allowedHere = true; break; }
+            }
+            if (!$allowedHere) continue;
+        }
         $m = $meta[$item] ?? ['ic'=>'diploma','slug'=>'diploma','tag'=>'','desc'=>''];
         $kinds = $catalog[$item];
+        // По заявке отсекаем и запрещённые ВИДЫ позиции (например электронный
+        // основной диплом в платном конкурсе — он входит в оргвзнос).
+        if ($appLock) {
+            $kinds = array_filter($kinds, static function ($price, $k) use ($item, $appLockResult, $paidComp) {
+                [$okKind] = award_item_allowed($item, (string) $k, $appLockResult, $paidComp);
+                return $okKind;
+            }, ARRAY_FILTER_USE_BOTH);
+            if (!$kinds) continue;
+        }
         $ic = $icons[$m['ic']] ?? $icons['diploma'];
         $photo = award_photo($m['slug'], (int)$selComp['id']);
         $minPrice = min($kinds);
@@ -197,10 +266,11 @@ ob_start(); ?>
           <h3 class="aw-name"><?= h($item) ?></h3>
           <div class="aw-kinds">
             <?php $first=true; foreach ($kinds as $kind => $price): ?>
+              <?php $my = $clubPrice((int) $price); ?>
               <label class="aw-kind">
-                <input type="radio" name="kind_<?= md5($item) ?>" value="<?= h($kind) ?>" data-price="<?= (int)$price ?>" <?= $first?'checked':'' ?>>
+                <input type="radio" name="kind_<?= md5($item) ?>" value="<?= h($kind) ?>" data-price="<?= $my ?>" data-full="<?= (int)$price ?>" <?= $first?'checked':'' ?>>
                 <span><?= h($kindLabel[$kind] ?? $kind) ?></span>
-                <b><?= $price>0 ? number_format((int)$price,0,'.',' ').' ₽' : 'Беспл.' ?></b>
+                <b><?php if ((int)$price <= 0): ?>Беспл.<?php elseif ($my !== (int)$price): ?><s style="opacity:.55;font-weight:400;margin-right:6px"><?= number_format((int)$price,0,'.',' ') ?> ₽</s><?= number_format($my,0,'.',' ') ?> ₽<?php else: ?><?= number_format((int)$price,0,'.',' ') ?> ₽<?php endif; ?></b>
               </label>
             <?php $first=false; endforeach; ?>
           </div>
@@ -334,7 +404,16 @@ ob_start(); ?>
           $otherGraded = array_values(array_filter($myApps, fn($a) => (int)$a['competition_id'] !== (int)$selComp['id'] && $_orderable($a)));
           $selApp = (int) ($_GET['app'] ?? 0);
         ?>
-        <?php if ($compApps): ?>
+        <?php if ($appLock): /* Пришли из кабинета по конкретной заявке — она зафиксирована. */ ?>
+        <div class="field">
+          <label for="ord_app">По какой заявке</label>
+          <select id="ord_app" disabled style="opacity:.75">
+            <option selected><?= h((string) $appLock['number']) ?> (<?= h($appLockResult) ?>)</option>
+          </select>
+          <input type="hidden" name="application_id" value="<?= (int) $appLock['id'] ?>">
+          <div class="hint">Состав наград ограничен результатом этой заявки.</div>
+        </div>
+        <?php elseif ($compApps): ?>
         <div class="field">
           <label for="ord_app">По какой заявке (только оценённые)</label>
           <select id="ord_app" name="application_id" required>
@@ -430,6 +509,7 @@ ob_start(); ?>
 <script>
 (function(){
   var KIND_LABEL = {"original":"Оригинал","digital":"Электронный","club":"Клуб"};
+  var CLUB_PCT = <?= (int) $clubPct ?>;   // скидка ВИП-клуба, %
   var cart = [];
   var $ = function(s,r){return (r||document).querySelector(s);};
   var fab=$('#cartFab'), sheet=$('#cartSheet'), itemsBox=$('#cartItems'), emptyBox=$('#cartEmpty'),
@@ -506,6 +586,7 @@ ob_start(); ?>
       var item=card.getAttribute('data-item');
       var kindInp=card.querySelector('input[type=radio]:checked');
       var kind=kindInp.value, price=parseInt(kindInp.getAttribute('data-price'));
+      var full=parseInt(kindInp.getAttribute('data-full'))||price;
       var qty=parseInt(card.querySelector('[data-val]').textContent)||1;
       var cap=maxQty(item);
       var ex=cart.find(function(c){return c.item===item&&c.kind===kind;});
@@ -514,7 +595,7 @@ ob_start(); ?>
         if(window.toast)window.toast(cap===1?'Этот диплом можно заказать только в одном экземпляре':'Максимум '+cap+' шт.','error');
         qty=Math.max(0,cap-cur); if(!qty)return;
       }
-      if(ex){ex.qty+=qty;}else{cart.push({item:item,kind:kind,price:price,qty:qty,fios:[]});}
+      if(ex){ex.qty+=qty;}else{cart.push({item:item,kind:kind,price:price,full:full,qty:qty,fios:[]});}
       render();
       // Корзину НЕ открываем автоматически — только пульс кнопки и подсказка.
       fab.classList.remove('pulse'); void fab.offsetWidth; fab.classList.add('pulse');
@@ -522,9 +603,9 @@ ob_start(); ?>
     });
   });
   function render(){
-    var total=0,count=0; itemsBox.innerHTML='';
+    var total=0,totalFull=0,count=0; itemsBox.innerHTML='';
     cart.forEach(function(c,i){
-      total+=c.price*c.qty; count+=c.qty;
+      total+=c.price*c.qty; totalFull+=(c.full||c.price)*c.qty; count+=c.qty;
       var row=document.createElement('div');row.className='shop-cart-row';
       var cap=maxQty(c.item);
       row.innerHTML='<div class="scr-info"><b>'+c.item+'</b><span>'+(KIND_LABEL[c.kind]||c.kind)+' · '+c.price+' ₽</span></div>'+
@@ -549,7 +630,11 @@ ob_start(); ?>
         }
       }
     });
-    totalEl.textContent=total.toLocaleString('ru-RU')+' ₽';
+    // Итог для участника клуба: перечёркнутая полная сумма и цена со скидкой.
+    totalEl.innerHTML = (CLUB_PCT>0 && totalFull>total)
+      ? '<s style="opacity:.55;font-weight:400;margin-right:8px">'+totalFull.toLocaleString('ru-RU')+' \u20BD</s>'+total.toLocaleString('ru-RU')+' \u20BD'+
+        '<span style="display:block;font-size:.8rem;color:var(--gold-2,#C79322);font-weight:700;margin-top:2px">ВИП-клуб \u2212'+CLUB_PCT+'%</span>'
+      : total.toLocaleString('ru-RU')+' \u20BD';
     countEl.textContent=count; fab.hidden=count===0; emptyBox.hidden=count>0; form.hidden=count===0;
     // Адрес доставки нужен ТОЛЬКО если в корзине есть оригинал (кубок/статуэтка/медаль/оригинал диплома).
     var needAddr=cart.some(function(c){return c.kind==='original';});

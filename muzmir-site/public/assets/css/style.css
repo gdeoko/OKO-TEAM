@@ -1791,7 +1791,8 @@ h1,h2,h3,h4,.cc-title,.card h3,.comp-card h3,.rst-body b,.menu-tile-lbl,
 .shop-add{flex:1;min-height:40px !important}
 
 /* Плавающая корзина-кнопка */
-.shop-cart-fab{position:fixed;right:16px;bottom:calc(88px + env(safe-area-inset-bottom));z-index:940;
+/* z-index выше cookie-баннера (945): кнопка корзины должна оставаться нажимаемой. */
+.shop-cart-fab{position:fixed;right:16px;bottom:calc(88px + env(safe-area-inset-bottom));z-index:960;
   width:58px;height:58px;border-radius:50%;background:var(--grad-gold);color:var(--gold-fg);border:none;cursor:pointer;
   box-shadow:0 10px 26px rgba(201,168,76,.45);display:flex;align-items:center;justify-content:center;
   animation:cartPop .32s cubic-bezier(.2,1.5,.4,1)}
@@ -2161,6 +2162,16 @@ input::placeholder,textarea::placeholder{color:color-mix(in srgb,var(--muted) 80
 .aw-comp-go svg{width:16px;height:16px}
 
 /* --- Уровень 2: сетка образцов 1:1 --- */
+
+/* Плашка «заказ по конкретной заявке» в разделе наград */
+.aw-applock{display:flex;gap:12px;align-items:flex-start;padding:13px 16px;margin:0 0 14px;
+  background:var(--gold-soft,#FFF6E9);border:1px solid var(--glass-brd,#F0D9A8);border-radius:14px;
+  font-size:.9rem;line-height:1.5;color:var(--gold-ink,#8B6F1F)}
+.aw-applock-ic{flex:none;width:34px;height:34px;border-radius:11px;background:var(--panel-solid,#fff);
+  display:flex;align-items:center;justify-content:center;color:var(--gold-ink,#8B6F1F)}
+.aw-applock-ic svg{width:19px;height:19px}
+.aw-applock-hint{display:block;margin-top:3px;color:var(--muted);font-size:.84rem}
+[data-theme="dark"] .aw-applock{color:var(--gold)}
 .aw-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
 @media(min-width:640px){.aw-grid{grid-template-columns:repeat(3,1fr)}}
 .aw-grid{align-items:stretch}

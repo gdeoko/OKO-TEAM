@@ -28,6 +28,11 @@
 @media(max-width:560px){.mz-cookie{grid-template-columns:1fr;bottom:calc(84px + env(safe-area-inset-bottom))}}
 /* Пока показан cookie-баннер — прячем радио-плеер (чтобы не накладывались) */
 body:has(.mz-cookie.on) .mz-radio{display:none}
+/* …а когда в каталоге наград появилась кнопка корзины — поднимаем НАД ней саму
+   плашку: висели ровно на одном месте, и по корзине физически некуда было нажать.
+   Двигаем плашку (она временная), а не кнопку — кнопка нужна на привычном месте. */
+body:has(.shop-cart-fab:not([hidden])) .mz-cookie{bottom:calc(164px + env(safe-area-inset-bottom))}
+@media(max-width:560px){body:has(.shop-cart-fab:not([hidden])) .mz-cookie{bottom:calc(158px + env(safe-area-inset-bottom))}}
 
 /* Лид-поп-ап */
 .mz-pop{position:fixed;inset:0;z-index:130;display:none;align-items:center;justify-content:center;padding:20px;
@@ -135,7 +140,11 @@ body:has(.mz-cookie.on) .mz-radio{display:none}
 
   /* ---- 2. Лид-поп-ап: exit-intent + скролл/таймер, 1 раз ---- */
   var pop = document.getElementById('mzLead');
-  var noLead = /^\/(apply|login|register|cabinet|order-awards|reset-password|forgot|tma|widget)/.test(path);
+  // Единый признак «страница оформления» — data-nopopup из layout.php. Держать
+  // второй список путей руками уже нельзя: /awards в нём забыли, и лид-модалка
+  // выскакивала прямо поверх каталога наград.
+  var noLead = /^\/(apply|login|register|cabinet|order-awards|reset-password|forgot|tma|widget)/.test(path)
+            || document.documentElement.dataset.nopopup === '1';
   if(pop && !seen('mz-lead-seen') && !noLead){
     var shown=false;
     function showLead(){

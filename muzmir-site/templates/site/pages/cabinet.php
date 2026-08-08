@@ -1035,7 +1035,9 @@ ob_start(); ?>
                   <div style="display:flex;gap:10px;flex-wrap:wrap;margin-top:14px">
                     <!-- Заказ строго по этой заявке: состав наград ограничивается её
                          аттестационным результатом (кубок/статуэтка/медаль). -->
-                    <a class="btn btn--primary" href="<?= url('/order-awards') ?>?app=<?= (int)$a['id'] ?>">Заказать награды</a>
+                    <!-- Ведём в НАСТОЯЩИЙ раздел наград (образцы + корзина), но с привязкой
+                         к этой заявке: состав ограничен её аттестационным результатом. -->
+                    <a class="btn btn--primary" href="<?= url('/awards') ?>?comp=<?= (int)$a['competition_id'] ?>&app=<?= (int)$a['id'] ?>">Заказать награды</a>
                     <span class="hint" style="align-self:center">Данные подставятся из заявки — вводить заново не нужно.</span>
                   </div>
                 <?php else: ?>
@@ -1088,7 +1090,7 @@ ob_start(); ?>
             <div class="cab-card cab-empty">
               <?= $icons['awards'] ?>
               <p>У Вас пока нет заказов наградной продукции.</p>
-              <a class="btn btn--primary" href="<?= url('/order-awards') ?>">Заказать награды</a>
+              <a class="btn btn--primary" href="<?= url('/awards') ?>">Заказать награды</a>
             </div>
           <?php else: foreach ($orders as $k => $o):
             [$sl,$st] = $orderStatus[$o['status']] ?? [$o['status'],'info'];

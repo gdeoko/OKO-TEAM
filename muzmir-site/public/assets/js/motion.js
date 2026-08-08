@@ -262,6 +262,10 @@
   if (done) return;
   // Не показываем на служебных страницах / если гость на /apply, /admin, /api, /login, /register — там свои UI
   if (/^\/(apply|admin|api|login|register|cabinet|verify|reset|logout|verify-email|forgot|__)/.test(location.pathname)) return;
+  // И НИКОГДА на страницах оформления (data-nopopup ставит layout.php: награды, заказ,
+  // оплата, клуб). Полноэкранный онбординг там перекрывал страницу и съедал клики —
+  // кнопка «В корзину» просто не нажималась.
+  if (document.documentElement.dataset.nopopup === '1') return;
 
   var SLIDES = [
     {

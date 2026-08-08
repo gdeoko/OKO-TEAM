@@ -57,12 +57,41 @@ $data = json_decode((string) $raw, true);
 $out  = [];
 foreach ((array) ($data['suggestions'] ?? []) as $s) {
     $d = (array) ($s['data'] ?? []);
+
+    // ПОЛНЫЙ адрес для подстановки в поле: страна, регион (область/республика/край),
+    // район, город/посёлок, улица, дом. DaData в своём `value` регион у крупных
+    // городов опускает — для почтовой отправки это неудобно, отправителю нужен
+    // адрес целиком. Собираем сами и не дублируем то, что уже есть в value.
+    $parts = [];
+    $country = trim((string) ($d['country'] ?? ''));
+    $region  = trim((string) ($d['region_with_type'] ?? ''));
+    $area    = trim((string) ($d['area_with_type'] ?? ''));
+    $city    = trim((string) ($d['city_with_type'] ?? ''));
+    $settl   = trim((string) ($d['settlement_with_type'] ?? ''));
+    $street  = trim((string) ($d['street_with_type'] ?? ''));
+    $house   = trim((string) ($d['house'] ?? ''));
+    $houseT  = trim((string) ($d['house_type'] ?? 'д'));
+
+    if ($country !== '') $parts[] = $country;
+    // У городов федерального значения регион и город совпадают («г Москва») — не дублируем.
+    if ($region !== '' && $region !== $city) $parts[] = $region;
+    if ($area !== '')  $parts[] = $area;
+    if ($city !== '')  $parts[] = $city;
+    if ($settl !== '' && $settl !== $city) $parts[] = $settl;
+    if ($street !== '') $parts[] = $street;
+    if ($house !== '')  $parts[] = ($houseT !== '' ? $houseT . ' ' : '') . $house;
+    $full = implode(', ', $parts);
+
     $out[] = [
-        'value'       => (string) ($s['value'] ?? ''),
+        // value — что подставится в поле (полный адрес), а короткий вариант DaData
+        // остаётся в `short` для компактного показа в списке.
+        'value'       => $full !== '' ? $full : (string) ($s['value'] ?? ''),
+        'short'       => (string) ($s['value'] ?? ''),
         'postal_code' => (string) ($d['postal_code'] ?? ''),
+        'region'      => $region,
         'city'        => (string) ($d['city'] ?? $d['settlement'] ?? ''),
-        'street'      => (string) ($d['street_with_type'] ?? ''),
-        'house'       => (string) ($d['house'] ?? ''),
+        'street'      => $street,
+        'house'       => $house,
     ];
 }
 json_out(['ok' => true, 'suggestions' => $out]);

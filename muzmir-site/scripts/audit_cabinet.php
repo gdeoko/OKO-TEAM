@@ -238,11 +238,14 @@ if ($paid) {
     chk('на подаче видна цена со скидкой клуба',
         stripos($r['body'], '20') !== false && stripos($r['body'], 'клуб') !== false);
 }
-$appO = one("SELECT * FROM applications WHERE user_id=? AND COALESCE(result,'')<>'' LIMIT 1", [$uid]);
+$appO = one("SELECT a.* FROM applications a JOIN competitions c ON c.id = a.competition_id
+              WHERE a.user_id=? AND COALESCE(a.result,'')<>'' AND COALESCE(a.result_sent_at,'')<>''
+              ORDER BY a.id DESC LIMIT 1", [$uid]);
 if ($appO) {
-    $r = http($UJAR, $BASE . '/order-awards?app=' . (int) $appO['id']);
-    chk('в заказе наград применена скидка клуба', stripos($r['body'], 'CLUB_PCT = 20') !== false,
+    $r = http($UJAR, $BASE . '/awards?comp=' . (int) $appO['competition_id'] . '&app=' . (int) $appO['id']);
+    chk('в каталоге наград применена скидка клуба', stripos($r['body'], 'CLUB_PCT = 20') !== false,
         (bool) preg_match('~CLUB_PCT = (\d+)~', $r['body'], $mm) ? $mm[0] : '');
+    chk('цены показаны перечёркнутыми со скидкой', str_contains($r['body'], 'data-full='));
 }
 // Сроки: клуб — 3 рабочих дня, обычный участник — 5.
 $vipPlan = working_days_add(date('Y-m-d H:i:s'), 3);

@@ -124,6 +124,31 @@ function order_fulfill_digital(int $orderId): int {
     return $created;
 }
 
+/**
+ * КАНОНИЧЕСКОЕ имя позиции прайса.
+ *
+ * В базе одни и те же награды заведены по-разному: «Кубок» и «Кубок Гран-при»,
+ * «Медаль» и «Медаль дипломанта», «Благодарность» и «Благодарность педагогу».
+ * Из-за этого в форме заказа один и тот же кубок показывался ДВАЖДЫ. Приводим
+ * к одному имени везде, где строится каталог наград.
+ *
+ * Возвращает '' для служебных строк прайса (например «Доставка Почтой России») —
+ * они не являются товаром и в каталог не попадают.
+ */
+function award_canon_item(string $item): string {
+    $l = mb_strtolower(trim($item), 'UTF-8');
+    if ($l === '') return '';
+    if (mb_strpos($l, 'доставк') !== false)   return '';
+    if (mb_strpos($l, 'кубок') !== false)     return 'Кубок Гран-при';
+    if (mb_strpos($l, 'статуэт') !== false)   return 'Статуэтка лауреата';
+    if (mb_strpos($l, 'медал') !== false)     return 'Медаль дипломанта';
+    if (mb_strpos($l, 'благодарн') !== false) return 'Благодарность';
+    if (mb_strpos($l, 'именн') !== false)     return 'Именной диплом';
+    if (mb_strpos($l, 'дополнит') !== false)  return 'Дополнительный диплом';
+    if (mb_strpos($l, 'основн') !== false)    return 'Основной диплом';
+    return trim($item);
+}
+
 /** Трофей, положенный по результату: 'Кубок' | 'Статуэтка' | 'Медаль' | '' (нет результата). */
 function award_trophy_for_result(string $result): string {
     $r = mb_strtoupper(trim($result), 'UTF-8');
