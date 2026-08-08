@@ -354,7 +354,12 @@ function launch_fire(int $compId, string $wave, array $channels, string $when = 
         } else {
             $r = $cover ? vk_wall_post_with_photo($text, $cover) : vk_wall_post($text);
             $ok = empty($r['error']);
-            $report['vk_wall'] = $ok ? 'опубликовано на стене' : ('ошибка: ' . ($r['error']['error_msg'] ?? '?'));
+            // Афиша обязательна: если она не приложилась, это должно быть ВИДНО в отчёте,
+            // а не выясняться потом по пустому посту в сообществе.
+            $noPhoto = !empty($r['photo_missing']);
+            $report['vk_wall'] = $ok
+                ? ('опубликовано на стене' . ($noPhoto ? ' — БЕЗ АФИШИ: ' . (string) ($r['photo_error'] ?? '') . ' (приложить вручную)' : ''))
+                : ('ошибка: ' . ($r['error']['error_msg'] ?? '?'));
             if ($ok && $cover) { $s = vk_story_photo($cover, url('/competition/' . (string) $c['slug'])); $report['vk_story'] = empty($s['error']) ? 'сторис опубликована' : ('сторис: ' . ($s['error']['error_msg'] ?? '?')); }
         }
     }

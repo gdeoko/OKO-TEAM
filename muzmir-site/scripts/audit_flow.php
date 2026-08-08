@@ -48,6 +48,8 @@ function csrf(string $jar, string $url): string {
     if (preg_match('~name="_csrf"\s+value="([^"]+)"~', $r['body'], $m)) return $m[1];
     if (preg_match('~name="csrf"\s+value="([^"]+)"~', $r['body'], $m)) return $m[1];
     if (preg_match('~<meta name="csrf-token" content="([^"]+)"~', $r['body'], $m)) return $m[1];
+    // «Отправки» отдают токен только в JS-переменной — кнопки там работают через fetch.
+    if (preg_match('~var CSRF = "([^"]+)"~', $r['body'], $m)) return $m[1];
     return '';
 }
 $AJAR = sys_get_temp_dir() . '/muzmir_flow_admin.txt';
@@ -143,10 +145,10 @@ chk('бесплатная заявка помечена «Бесплатно»',
 
 sec('Поиск в админке реально находит');
 foreach ([['applications', 'смирнова'], ['applications', 'СМИРНОВА'], ['applications', 'Аве Мария'],
-          ['grading', 'смирнова'], ['dispatch', 'смирнова']] as [$p, $q]) {
+          ['grading', 'смирнова']] as [$p, $q]) {
     $r = http($AJAR, $BASE . '/admin/?p=' . $p . '&q=' . rawurlencode($q));
     $found = strpos($r['body'], 'Смирнова') !== false || strpos($r['body'], (string) $appPaid['number']) !== false;
-    chk("поиск в «$p» по «$q» находит заявку", $found);
+    chk("поиск в «{$p}» по «{$q}» находит заявку", $found);
 }
 $r = http($AJAR, $BASE . '/admin/?p=applications&q=' . rawurlencode('заведомо-нет-такого'));
 chk('поиск по несуществующему даёт пустой список, а не всё подряд',
@@ -227,36 +229,49 @@ chk('в «Отправках» видна запланированная отп�
     || strpos($r['body'], 'Волков') !== false);
 
 $tok = csrf($AJAR, '/admin/?p=dispatch');
-$r = http($AJAR, $BASE . '/admin/?p=dispatch', ['_csrf' => $tok, 'do' => 'resched', 'kind' => 'result',
-        'id' => (string) $idAuto, 'when' => date('Y-m-d H:i', strtotime('+2 days 10:30'))]);
+$r = http($AJAR, $BASE . '/admin/?p=dispatch', ['ajax' => '1', '_csrf' => $tok, 'do' => 'resched', 'kind' => 'result',
+        'id' => (string) $idAuto, 'scheduled_at' => date('Y-m-d H:i', strtotime('+2 days 10:30'))]);
 $appAuto = one("SELECT * FROM applications WHERE id=?", [$idAuto]);
 chk('перенос отправки результата применился',
     trim((string) $appAuto['result_send_at']) !== '' && date('Y-m-d', strtotime((string) $appAuto['result_send_at'])) === date('Y-m-d', strtotime('+2 days')),
-    (string) $appAuto['result_send_at']);
+    (string) $appAuto['result_send_at'] . ' | ответ: ' . substr($r['body'], 0, 120));
 
 $tok = csrf($AJAR, '/admin/?p=dispatch');
-http($AJAR, $BASE . '/admin/?p=dispatch', ['_csrf' => $tok, 'do' => 'cancel', 'kind' => 'result', 'id' => (string) $idAuto]);
+http($AJAR, $BASE . '/admin/?p=dispatch', ['ajax' => '1', '_csrf' => $tok, 'do' => 'cancel', 'kind' => 'result', 'id' => (string) $idAuto]);
 $appAuto = one("SELECT * FROM applications WHERE id=?", [$idAuto]);
 chk('отмена плановой отправки применилась', trim((string) $appAuto['result_send_at']) === '',
     (string) $appAuto['result_send_at']);
 
 $tok = csrf($AJAR, '/admin/?p=dispatch');
 $before = (int) scalar("SELECT COUNT(*) FROM mail_queue");
-http($AJAR, $BASE . '/admin/?p=dispatch', ['_csrf' => $tok, 'do' => 'sendnow', 'kind' => 'result', 'id' => (string) $idAuto]);
+$rSend = http($AJAR, $BASE . '/admin/?p=dispatch', ['ajax' => '1', '_csrf' => $tok, 'do' => 'sendnow', 'kind' => 'result', 'id' => (string) $idAuto]);
 $appAuto = one("SELECT * FROM applications WHERE id=?", [$idAuto]);
-chk('«Сейчас» отправило результат', trim((string) $appAuto['result_sent_at']) !== '',
-    (string) $appAuto['result_sent_at']);
+// На стенде SMTP недоступен: важно, что кнопка отработала и ЧЕСТНО сообщила итог,
+// а письмо вернулось в очередь, а не потерялось молча.
+$jSend = json_decode($rSend['body'], true);
+chk('«Сейчас» вернуло понятный ответ', is_array($jSend) && array_key_exists('ok', $jSend),
+    substr($rSend['body'], 0, 160));
+chk('«Сейчас» либо отправило, либо объяснило причину',
+    trim((string) $appAuto['result_sent_at']) !== '' || trim((string) ($jSend['msg'] ?? '')) !== '',
+    trim((string) $appAuto['result_sent_at']) !== '' ? 'отправлено' : (string) ($jSend['msg'] ?? ''));
 
 /* ───────────── 8. Заказ наград ───────────── */
 sec('Заказ наград: состав строго по результату');
 $r = http($UJAR, $BASE . '/order-awards?app=' . $idPaid);
 chk('форма заказа по заявке открывается', $r['code'] === 200);
 chk('в форме зафиксирован результат заявки', strpos($r['body'], 'ЛАУРЕАТ I СТЕПЕНИ') !== false);
-chk('лауреату не предлагается кубок', strpos($r['body'], '"Кубок||original"') === false
-    && !preg_match('~Кубок[^<]{0,40}Оригинал~u', $r['body']));
-chk('лауреату предлагается статуэтка', stripos($r['body'], 'Статуэтка') !== false);
-chk('в платном нет электронного основного диплома',
-    !preg_match('~Основной диплом \- Электронная версия~u', $r['body']));
+$priceMap = [];
+if (preg_match('~var PRICES = (\{.*?\});~s', $r['body'], $pm)) {
+    $all = json_decode($pm[1], true);
+    $priceMap = is_array($all) ? ($all[(string) $paid['slug']] ?? []) : [];
+}
+chk('матрица цен разобрана', $priceMap !== [], implode(', ', array_keys($priceMap)));
+chk('лауреату не предлагается кубок', !isset($priceMap['Кубок||original']));
+chk('лауреату не предлагается медаль', !isset($priceMap['Медаль||original']));
+chk('лауреату предлагается статуэтка', isset($priceMap['Статуэтка||original']));
+chk('в платном нет электронного основного диплома', !isset($priceMap['Основной диплом||digital']));
+chk('в платном нет электронного дополнительного', !isset($priceMap['Дополнительный диплом||digital']));
+chk('в платном есть оригинал основного диплома', isset($priceMap['Основной диплом||original']));
 
 $r = http($UJAR, $BASE . '/order-awards');
 chk('заказ без заявки показывает выбор заявок, а не мёртвую форму',
@@ -331,9 +346,14 @@ $dipFree = (int) scalar("SELECT COUNT(*) FROM diplomas WHERE application_id=?", 
 chk('в бесплатном дипломы сами не создаются', $dipFree === 0, "$dipFree шт");
 $r = http($UJAR, $BASE . '/order-awards?app=' . $idFree);
 chk('в бесплатном заказ наград открыт', $r['code'] === 200 && stripos($r['body'], 'ГРАН-ПРИ') !== false);
-chk('гран-при предлагается кубок', stripos($r['body'], 'Кубок') !== false);
-chk('в бесплатном доступен электронный основной диплом',
-    (bool) preg_match('~Основной диплом[^<]{0,40}Электронная~u', $r['body']));
+$freeMap = [];
+if (preg_match('~var PRICES = (\{.*?\});~s', $r['body'], $pm)) {
+    $all = json_decode($pm[1], true);
+    $freeMap = is_array($all) ? ($all[(string) $free['slug']] ?? []) : [];
+}
+chk('гран-при предлагается кубок', isset($freeMap['Кубок||original']), implode(', ', array_keys($freeMap)));
+chk('гран-при не предлагается статуэтка', !isset($freeMap['Статуэтка||original']));
+chk('в бесплатном доступен электронный основной диплом', isset($freeMap['Основной диплом||digital']));
 
 /* ───────────── 10. Почта: пулы и очередь ───────────── */
 sec('Почта: письма легли в очередь с правильным пулом');

@@ -14,20 +14,44 @@ function vk_api(string $method, array $params = [], string $tokenOverride = ''):
     if ($token === '') return ['error' => ['error_msg' => 'VK token not configured']];
     $params['access_token'] = $token;
     $params['v'] = cfgv('vk_api_version', '5.199');
-    $ch = curl_init('https://api.vk.com/method/' . $method);
-    curl_setopt_array($ch, [
-        CURLOPT_POST => true,
-        CURLOPT_POSTFIELDS => http_build_query($params),
-        CURLOPT_RETURNTRANSFER => true,
-        CURLOPT_TIMEOUT => 25,
-        CURLOPT_CONNECTTIMEOUT => 10,
-    ]);
-    $res = curl_exec($ch);
-    $err = curl_error($ch);
-    curl_close($ch);
-    if ($res === false) return ['error' => ['error_msg' => 'cURL: ' . $err]];
-    $d = json_decode((string) $res, true);
-    return is_array($d) ? $d : ['error' => ['error_msg' => 'Bad JSON response']];
+
+    // ВК ограничивает частоту (3 запроса в секунду) и иногда отдаёт временные сбои.
+    // Раньше один такой отказ означал пост БЕЗ афиши: загрузка молча возвращала пусто.
+    // Теперь временные ошибки повторяем с нарастающей паузой.
+    $tempCodes = [1, 6, 9, 10, 29];   // неизвестная, слишком часто, флуд, внутренняя, лимит
+    $last = ['error' => ['error_msg' => 'нет ответа']];
+    for ($try = 1; $try <= 4; $try++) {
+        $ch = curl_init('https://api.vk.com/method/' . $method);
+        curl_setopt_array($ch, [
+            CURLOPT_POST => true,
+            CURLOPT_POSTFIELDS => http_build_query($params),
+            CURLOPT_RETURNTRANSFER => true,
+            CURLOPT_TIMEOUT => 25,
+            CURLOPT_CONNECTTIMEOUT => 10,
+        ]);
+        $res = curl_exec($ch);
+        $err = curl_error($ch);
+        curl_close($ch);
+
+        if ($res === false) {
+            $last = ['error' => ['error_msg' => 'cURL: ' . $err]];
+        } else {
+            $d = json_decode((string) $res, true);
+            if (!is_array($d)) {
+                $last = ['error' => ['error_msg' => 'Bad JSON response']];
+            } else {
+                $code = (int) ($d['error']['error_code'] ?? 0);
+                if (!isset($d['error']) || !in_array($code, $tempCodes, true)) return $d;   // успех или окончательный отказ
+                $last = $d;
+            }
+        }
+        if ($try < 4) {
+            _vk_log(sprintf('%s: временный сбой (%s), попытка %d из 4',
+                            $method, (string) ($last['error']['error_msg'] ?? '?'), $try));
+            usleep(400000 * $try);                  // 0.4с, 0.8с, 1.2с
+        }
+    }
+    return $last;
 }
 
 /** Пост на стену сообщества КЦ (от лица сообщества, from_group=1). */
@@ -48,41 +72,84 @@ function vk_wall_post(string $message, array $extra = []): array {
     return $r;
 }
 
-/** Загрузить изображение и получить attachments-строку для wall.post. Возвращает "photo{owner_id}_{id}" или ''. */
+/**
+ * Загрузить изображение и получить attachments-строку для wall.post.
+ * Возвращает "photo{owner_id}_{id}" или '' — причина последней неудачи доступна
+ * через vk_upload_last_error(). Вся загрузка (три шага ВК) повторяется до трёх раз:
+ * на живом тесте половина афиш терялась из-за частотного лимита ВК, и пост уходил
+ * без афиши — а афиша здесь обязательна.
+ */
 function vk_upload_wall_photo(string $filePath): string {
-    if (!is_file($filePath)) return '';
+    if (!is_file($filePath)) { vk_upload_last_error('файла нет: ' . $filePath); return ''; }
     $gid = (int) cfgv('vk_group_id', 211325055);
-    // 1) получить upload url
-    $s = vk_api('photos.getWallUploadServer', ['group_id' => $gid]);
-    $url = $s['response']['upload_url'] ?? '';
-    if ($url === '') return '';
-    // 2) загрузить файл
-    $ch = curl_init($url);
-    curl_setopt_array($ch, [
-        CURLOPT_POST => true,
-        CURLOPT_POSTFIELDS => ['photo' => new CURLFile($filePath)],
-        CURLOPT_RETURNTRANSFER => true,
-        CURLOPT_TIMEOUT => 60,
-    ]);
-    $up = json_decode((string) curl_exec($ch), true);
-    curl_close($ch);
-    if (!$up || empty($up['photo'])) return '';
-    // 3) сохранить фото
-    $save = vk_api('photos.saveWallPhoto', [
-        'group_id' => $gid,
-        'photo'    => $up['photo'],
-        'server'   => $up['server'] ?? '',
-        'hash'     => $up['hash'] ?? '',
-    ]);
-    $ph = ($save['response'][0] ?? []);
-    if (!$ph) return '';
-    return 'photo' . $ph['owner_id'] . '_' . $ph['id'];
+
+    for ($try = 1; $try <= 3; $try++) {
+        // 1) получить upload url
+        $s = vk_api('photos.getWallUploadServer', ['group_id' => $gid]);
+        $url = (string) ($s['response']['upload_url'] ?? '');
+        if ($url === '') {
+            vk_upload_last_error('getWallUploadServer: ' . (string) ($s['error']['error_msg'] ?? 'пусто'));
+        } else {
+            // 2) загрузить файл
+            $ch = curl_init($url);
+            curl_setopt_array($ch, [
+                CURLOPT_POST => true,
+                CURLOPT_POSTFIELDS => ['photo' => new CURLFile($filePath)],
+                CURLOPT_RETURNTRANSFER => true,
+                CURLOPT_TIMEOUT => 60,
+            ]);
+            $raw = (string) curl_exec($ch);
+            $cerr = curl_error($ch);
+            curl_close($ch);
+            $up = json_decode($raw, true);
+            if (!is_array($up) || empty($up['photo'])) {
+                vk_upload_last_error('загрузка файла: ' . ($cerr !== '' ? $cerr : substr($raw, 0, 120)));
+            } else {
+                // 3) сохранить фото
+                $save = vk_api('photos.saveWallPhoto', [
+                    'group_id' => $gid,
+                    'photo'    => (string) $up['photo'],
+                    'server'   => (string) ($up['server'] ?? ''),
+                    'hash'     => (string) ($up['hash'] ?? ''),
+                ]);
+                $ph = $save['response'][0] ?? [];
+                if ($ph) {
+                    if ($try > 1) _vk_log('афиша загрузилась со ' . $try . '-й попытки: ' . basename($filePath));
+                    return 'photo' . (int) $ph['owner_id'] . '_' . (int) $ph['id'];
+                }
+                vk_upload_last_error('saveWallPhoto: ' . (string) ($save['error']['error_msg'] ?? 'пусто'));
+            }
+        }
+        if ($try < 3) usleep(700000 * $try);        // 0.7с, 1.4с — переждать частотный лимит
+    }
+    _vk_log('АФИША НЕ ЗАГРУЗИЛАСЬ (' . basename($filePath) . '): ' . vk_upload_last_error());
+    return '';
 }
 
-/** Пост на стену с одним изображением. */
+/** Причина последней неудачной загрузки афиши (для админки и логов). */
+function vk_upload_last_error(?string $set = null): string {
+    static $e = '';
+    if ($set !== null) $e = $set;
+    return $e;
+}
+
+/**
+ * Пост на стену с одним изображением.
+ * Если афишу приложить не удалось — пост всё равно уходит (текст важнее молчания),
+ * но факт помечается в ответе (photo_missing) и в логе, чтобы это было видно,
+ * а не выяснялось потом по пустому посту.
+ */
 function vk_wall_post_with_photo(string $message, string $photoPath, array $extra = []): array {
-    $att = vk_upload_wall_photo($photoPath);
-    if ($att === '') return vk_wall_post($message, $extra);
+    $att = $photoPath !== '' ? vk_upload_wall_photo($photoPath) : '';
+    if ($att === '') {
+        $r = vk_wall_post($message, $extra);
+        if ($photoPath !== '') {
+            $r['photo_missing'] = true;
+            $r['photo_error']   = vk_upload_last_error();
+            _vk_log('пост опубликован БЕЗ афиши: ' . vk_upload_last_error());
+        }
+        return $r;
+    }
     $extra['attachments'] = $att;
     return vk_wall_post($message, $extra);
 }

@@ -47,7 +47,12 @@ foreach ($argv as $a) {
     if (str_starts_with($a, '--gap='))  $GAP  = max(3, (int) substr($a, 6));
 }
 
-/** Прямая отправка (с паузой и одним повтором). $acc — аккаунт отправителя. */
+/**
+ * Отправка БОЕВЫМ путём: mail_send_failover — та же цепочка ящиков и карантин, что
+ * и на проде. Раньше тест бил в один жёстко заданный ящик, поэтому не проверял
+ * главное — что письмо всё равно уходит, если основная почта не отвечает.
+ * В отчёт пишем, с какого ящика ушло (и была ли автозамена).
+ */
 function tsend(string $to, string $subject, string $html, array $acc, string $fromName, array &$log, int &$N): void {
     global $ONLY, $GAP;
     $N++;
@@ -57,9 +62,22 @@ function tsend(string $to, string $subject, string $html, array $acc, string $fr
     $first = false;
     $subj = '[ТЕСТ ' . $N . '] ' . $subject;
     $opt = ['account' => $acc, 'from_name' => $fromName];
-    $ok = mail_send($to, $subj, $html, $opt);
-    if (!$ok) { sleep($GAP + 6); $ok = mail_send($to, $subj, $html, $opt); }
-    $log[] = sprintf("%2d. %-46s %s", $N, mb_substr($subject, 0, 46), $ok ? 'OK' : 'FAIL');
+    if (function_exists('mail_switched')) mail_switched('');
+    $ok = function_exists('mail_send_failover')
+        ? mail_send_failover($to, $subj, $html, $opt)
+        : mail_send($to, $subj, $html, $opt);
+    if (!$ok) {
+        sleep($GAP + 6);
+        $ok = function_exists('mail_send_failover')
+            ? mail_send_failover($to, $subj, $html, $opt)
+            : mail_send($to, $subj, $html, $opt);
+    }
+    $via = function_exists('mail_switched') ? mail_switched() : '';
+    $why = (!$ok && function_exists('mail_last_error')) ? mail_last_error() : '';
+    $log[] = sprintf("%2d. %-46s %s%s", $N, mb_substr($subject, 0, 46),
+                     $ok ? 'OK' : 'FAIL',
+                     $ok ? ($via !== '' ? '  (резервная почта: ' . $via . ')' : '')
+                         : ('  ' . mb_substr($why, 0, 90)));
 }
 
 /** Рендер транзакционного письма через боевую функцию enqueue → достаём HTML из очереди. */
