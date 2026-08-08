@@ -4,7 +4,7 @@
 declare(strict_types=1);
 $root = dirname(__DIR__);
 $json = $root . '/data/ministry_letters_import.json';
-$db = $root . '/data/muzmir.sqlite';
+$db = (getenv('MUZMIR_DB_PATH') ?: $root . '/data/muzmir.sqlite');
 if (!is_file($json)) { fwrite(STDERR, "no manifest\n"); exit(1); }
 $items = json_decode(file_get_contents($json), true);
 if (!is_array($items)) { fwrite(STDERR, "bad manifest\n"); exit(1); }

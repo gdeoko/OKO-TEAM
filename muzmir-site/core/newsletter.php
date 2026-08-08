@@ -52,16 +52,36 @@ function nl_resolve_recipients(string $audience): array {
     // в клуб» получали ровно те, кто уже в клубе, и до базы оно не доходило.
     // Действующих членов, наоборот, исключаем — им приглашение не нужно.
     if ($kind === 'vip') {
+        // Кому НЕ шлём приглашение: действующим членам клуба и команде центра
+        // (владелец/оргкомитет/администраторы — у них клуб безлимитный по определению).
+        // Раньше выборка шла только по subscribers: зарегистрированные участники,
+        // не подписанные на новости, приглашения не получали вовсе.
+        $staff = [];
+        if (!function_exists('club_staff_emails') && is_file(BASE_PATH . '/core/club.php')) {
+            require_once BASE_PATH . '/core/club.php';
+        }
+        if (function_exists('club_staff_emails')) {
+            foreach (club_staff_emails() as $e) { $e = mb_strtolower(trim((string) $e)); if ($e !== '') $staff[] = $e; }
+        }
+        $staffIn = $staff ? implode(',', array_fill(0, count($staff), '?')) : "''";
+
         return all(
-            "SELECT s.email AS email, s.name AS name
-               FROM subscribers s
-              WHERE s.active = 1
-                AND LOWER(s.email) NOT IN (
-                    SELECT LOWER(u.email) FROM club_members m JOIN users u ON u.id = m.user_id
+            "SELECT email, name FROM (
+                 SELECT s.email AS email, s.name AS name FROM subscribers s WHERE s.active = 1
+                 UNION
+                 SELECT u.email AS email, u.full_name AS name FROM users u
+                  WHERE COALESCE(u.email,'') <> '' AND COALESCE(u.blocked,0) = 0
+                    AND COALESCE(u.notify_email,1) = 1
+                    AND COALESCE(u.role,'user') NOT IN ('owner','admin','orgcom')
+             )
+              WHERE LOWER(email) NOT IN (
+                    SELECT LOWER(u2.email) FROM club_members m JOIN users u2 ON u2.id = m.user_id
                      WHERE COALESCE(m.active,1) = 1
                        AND (m.expires_at IS NULL OR m.expires_at = '' OR m.expires_at > datetime('now'))
-                       AND COALESCE(u.email,'') <> ''
-                )"
+                       AND COALESCE(u2.email,'') <> ''
+                )
+                AND LOWER(email) NOT IN ($staffIn)",
+            $staff
         );
     }
     // «Личный кабинет» — тоже по ВСЕЙ базе (квота 100/день): рассказываем про кабинет

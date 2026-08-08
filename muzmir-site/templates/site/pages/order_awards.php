@@ -41,6 +41,112 @@ if ($appId && ($cu = current_user())) {
     }
 }
 
+/* ─────────────────────────────────────────────────────────────────────────────
+   Заказ наград оформляется ТОЛЬКО по оценённой заявке (правило владельца, и API
+   отклоняет заказ без application_id). Раньше страница с ?competition=… рисовала
+   полную форму, которую невозможно отправить: человек всё заполнял и упирался в
+   ошибку. Теперь без привязки к заявке показываем выбор своих оценённых заявок.
+   ──────────────────────────────────────────────────────────────────────────── */
+if (!$fromApp) {
+    $cu     = current_user();
+    $myApps = [];
+    if ($cu) {
+        $myApps = all(
+            "SELECT a.id, a.number, a.full_name, a.group_name, a.is_group, a.work_title, a.result,
+                    c.name AS comp_name, c.results_mode, c.results_published_at
+               FROM applications a
+               LEFT JOIN competitions c ON c.id = a.competition_id
+              WHERE a.user_id = ? AND COALESCE(a.result,'') <> '' AND COALESCE(a.status,'') <> 'rejected'
+                AND ( (COALESCE(c.results_mode,'') = 'list' AND COALESCE(c.results_published_at,'') <> '')
+                   OR (COALESCE(c.results_mode,'') <> 'list' AND COALESCE(a.result_sent_at,'') <> '') )
+              ORDER BY a.id DESC", [(int) $cu['id']]
+        );
+    }
+    ob_start(); ?>
+<section class="section section--hero-sub">
+  <div class="container">
+    <div class="section-head reveal">
+      <h1>Заказ наградного материала</h1>
+      <p>Награды изготавливаются по конкретной оценённой заявке — так состав наград и данные в дипломах точно совпадают с решением жюри.</p>
+    </div>
+  </div>
+</section>
+
+<section class="section" style="padding-top:0">
+  <div class="container" style="max-width:760px">
+
+    <?php if ($myApps): ?>
+      <div class="card reveal" style="padding:26px 26px 20px">
+        <h3 style="margin:0 0 6px">Выберите заявку</h3>
+        <p style="color:var(--muted);margin:0 0 18px">По каждой заявке доступен свой состав наград — строго по присвоенному результату.</p>
+        <?php foreach ($myApps as $a):
+            $who = ((int) ($a['is_group'] ?? 0) === 1 && trim((string) ($a['group_name'] ?? '')) !== '')
+                 ? (string) $a['group_name'] : (string) $a['full_name']; ?>
+          <a class="order-pick" href="<?= url('/order-awards') ?>?app=<?= (int) $a['id'] ?>">
+            <span class="order-pick-main">
+              <b><?= h($who) ?></b>
+              <span class="order-pick-sub"><?= h((string) $a['comp_name']) ?><?= trim((string) $a['work_title']) !== '' ? ' — «' . h((string) $a['work_title']) . '»' : '' ?></span>
+            </span>
+            <span class="order-pick-res"><?= h((string) $a['result']) ?></span>
+          </a>
+        <?php endforeach; ?>
+      </div>
+    <?php elseif ($cu): ?>
+      <div class="card reveal" style="padding:30px 26px;text-align:center">
+        <h3 style="margin:0 0 10px">Оценённых заявок пока нет</h3>
+        <p style="color:var(--muted);margin:0 0 20px">Заказ наградного материала откроется сразу после того, как результат аттестации придёт Вам на почту.</p>
+        <a class="btn btn--primary" href="<?= url('/apply') ?>">Подать заявку на конкурс</a>
+        <a class="btn btn--ghost" href="<?= url('/cabinet') ?>" style="margin-left:8px">Личный кабинет</a>
+      </div>
+    <?php else: ?>
+      <div class="card reveal" style="padding:30px 26px;text-align:center">
+        <h3 style="margin:0 0 10px">Войдите в личный кабинет</h3>
+        <p style="color:var(--muted);margin:0 0 20px">Награды заказываются по Вашей оценённой заявке — для этого нужен вход в кабинет.</p>
+        <a class="btn btn--primary" href="<?= url('/login') ?>?next=<?= urlencode('/order-awards') ?>">Войти</a>
+        <a class="btn btn--ghost" href="<?= url('/register') ?>" style="margin-left:8px">Зарегистрироваться</a>
+      </div>
+    <?php endif; ?>
+
+    <div class="card reveal award-note" style="margin-top:22px">
+      <div class="award-note-ic">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="12" cy="12" r="9"/><path d="M12 11v5"/><path d="M12 8h.01"/></svg>
+      </div>
+      <div>
+        <h3>Важно перед оформлением</h3>
+        <ul>
+          <li>Заявка на изготовление наградного материала оформляется только после оглашения результатов конкурса — по Вашему личному решению и на добровольной основе.</li>
+          <li>Стоимость доставки оригиналов оплачивается отдельно заказчиком при получении — наложенным платежом.</li>
+          <li>Организационный взнос за аттестованный конкурсный материал возврату не подлежит. При возврате посылки по вине заказчика повторная отправка производится полностью за его счёт.</li>
+        </ul>
+      </div>
+    </div>
+
+  </div>
+</section>
+<style>
+.order-pick{display:flex;align-items:center;justify-content:space-between;gap:14px;padding:14px 16px;margin-bottom:10px;
+  border:1px solid var(--line);border-radius:14px;text-decoration:none;color:inherit;transition:.18s}
+.order-pick:hover{border-color:var(--gold);box-shadow:var(--shadow-soft);transform:translateY(-1px)}
+.order-pick-main{display:flex;flex-direction:column;gap:3px;min-width:0}
+.order-pick-sub{color:var(--muted);font-size:.9rem}
+.order-pick-res{flex:none;font-weight:700;color:var(--gold-ink);white-space:nowrap;font-size:.92rem}
+[data-theme="dark"] .order-pick-res{color:var(--gold)}
+.award-note{display:flex;gap:16px;align-items:flex-start;background:var(--gold-soft)}
+.award-note-ic{width:46px;height:46px;flex:none;border-radius:14px;background:var(--panel-solid);border:1px solid var(--glass-brd);
+  display:flex;align-items:center;justify-content:center;color:var(--gold-ink)}
+.award-note-ic svg{width:24px;height:24px}
+.award-note h3{margin:2px 0 10px;font-size:1.1rem}
+.award-note ul{padding-left:18px;color:var(--text-dim);margin:0;line-height:1.5}
+.award-note li{margin-bottom:8px}
+@media(max-width:560px){.order-pick{flex-direction:column;align-items:flex-start;gap:6px}}
+</style>
+<?php
+    $content = ob_get_clean();
+    render_page('Заказ наградного материала', $content,
+        ['active' => '/awards', 'meta' => 'Заказ наградного материала Культурного центра «Музыкальный Мир» по оценённой заявке участника.']);
+    return;
+}
+
 // Результаты аттестации - из общей шкалы оценивания.
 $results = [];
 foreach (GRADE_SCALE() as [$lo, $hi, $title]) { $results[$title] = true; }

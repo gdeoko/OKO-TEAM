@@ -54,7 +54,8 @@ $benefits = [
       'd' => 'Закрытое сообщество участников и педагогов: встречи с жюри, обмен опытом', 'soon' => true],
 ];
 
-$expiresRu = !empty($status['expires_at']) ? ru_date(substr((string) $status['expires_at'], 0, 10)) : '';
+// expires_at хранится в UTC — участнику показываем местную дату (см. core/club.php).
+$expiresRu = !empty($status['expires_local']) ? ru_date(substr((string) $status['expires_local'], 0, 10)) : '';
 $startedRu = !empty($status['started_at']) ? ru_date(substr((string) $status['started_at'], 0, 10)) : '';
 
 ob_start(); ?>

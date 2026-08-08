@@ -242,29 +242,74 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         }
         redirect('/cabinet');
     } elseif ($action === 'edit_app') {
-        // Редактирование своей заявки — только до оценки/отправки результата.
+        // Редактирование своей заявки — ТОЛЬКО два рабочих дня со дня подачи
+        // (core/app_status.php: app_edit_window). Дальше материал у жюри, и данные
+        // обязаны совпадать с тем, что оценивалось и будет напечатано в дипломе.
+        require_once BASE_PATH . '/core/app_status.php';
+        require_once BASE_PATH . '/core/send_timing.php';
+        require_once BASE_PATH . '/core/data.php';
         $appId = (int) input('app_id');
         $app = one("SELECT * FROM applications WHERE id=? AND user_id=?", [$appId, $uid]);
-        $editable = ['new','submitted','pending','paid','judging'];
         if (!$app) {
             flash('Заявка не найдена.', 'error');
-        } elseif (!in_array((string)$app['status'], $editable, true)) {
-            flash('Эту заявку уже нельзя изменить — результат подведён или заявка отклонена.', 'warning');
-        } else {
-            update('applications', [
-                'full_name'    => mb_substr(trim(input('full_name')), 0, 200),
-                'group_name'   => mb_substr(trim(input('group_name')), 0, 200),
-                'age_category' => mb_substr(trim(input('age_category')), 0, 60),
-                'nomination'   => mb_substr(trim(input('nomination')), 0, 120),
-                'teacher'      => mb_substr(trim(input('teacher')), 0, 200),
-                'institution'  => mb_substr(trim(input('institution')), 0, 200),
-                'work_title'   => mb_substr(trim(input('work_title')), 0, 200),
-                'city'         => mb_substr(trim(input('city')), 0, 120),
-                'video_url'    => mb_substr(trim(input('video_url')), 0, 500),
-            ], 'id=:wid', ['wid' => $appId]);
-            audit('application_edit', 'application', $appId);
-            flash('Заявка обновлена.', 'success');
+            redirect('/cabinet#apps');
         }
+        $win = app_edit_window((array) $app);
+        if (!$win['can']) {
+            flash($win['reason'] !== '' ? $win['reason'] : 'Эту заявку уже нельзя изменить.', 'warning');
+            redirect('/cabinet#apps');
+        }
+
+        // Собираем ВСЕ поля, которые участник заполняет при подаче (кроме галочек согласия).
+        $isGroup = input('is_group') === '1' ? 1 : 0;
+        $nomination = mb_substr(trim((string) input('nomination')), 0, 120);
+        $subgroup   = mb_substr(trim((string) input('subgroup')), 0, 120);
+        $formation  = mb_substr(trim((string) input('formation')), 0, 120);
+
+        // Справочники — источник истины тот же, что и на подаче: чужие значения не принимаем.
+        $noms = NOMINATIONS();
+        if ($nomination !== '' && !isset($noms[$nomination])) $nomination = (string) $app['nomination'];
+        $subOk = $nomination !== '' ? ($noms[$nomination] ?? []) : [];
+        if ($subgroup !== '' && $subOk && !in_array($subgroup, $subOk, true)) $subgroup = '';
+        $formOk = FORMATIONS_FOR($nomination);
+        if ($formation !== '' && !in_array($formation, $formOk, true)) $formation = (string) $app['formation'];
+        $age = mb_substr(trim((string) input('age_category')), 0, 60);
+        if ($age !== '' && !in_array($age, AGE_CATEGORIES(), true)) $age = (string) $app['age_category'];
+
+        $email = mb_strtolower(trim((string) input('email')));
+        if ($email === '' || !filter_var($email, FILTER_VALIDATE_EMAIL)) $email = (string) $app['email'];
+        $city = trim((string) input('city'));
+        if (function_exists('city_normalize') && ($cn = city_normalize($city)) !== '') $city = $cn;
+
+        $data = [
+            'is_group'     => $isGroup,
+            'full_name'    => mb_substr(function_exists('v_fio') ? v_fio(input('full_name')) : trim((string) input('full_name')), 0, 200),
+            'group_name'   => mb_substr(trim((string) input('group_name')), 0, 200),
+            'birth_date'   => mb_substr(trim((string) input('birth_date')), 0, 20),
+            'age_category' => $age,
+            'nomination'   => $nomination,
+            'subgroup'     => $subgroup,
+            'formation'    => $formation,
+            'work_title'   => mb_substr(function_exists('quote_title') ? quote_title((string) input('work_title')) : trim((string) input('work_title')), 0, 200),
+            'teacher'      => mb_substr(function_exists('v_fio') ? v_fio(input('teacher')) : trim((string) input('teacher')), 0, 200),
+            'institution'  => mb_substr(trim((string) input('institution')), 0, 200),
+            'city'         => mb_substr($city, 0, 120),
+            'email'        => mb_substr($email, 0, 190),
+            'phone'        => mb_substr(trim((string) input('phone')), 0, 40),
+            'address'      => mb_substr(trim((string) input('address')), 0, 300),
+            'postal_index' => mb_substr(trim((string) input('postal_index')), 0, 20),
+            'video_url'    => mb_substr(trim((string) input('video_url')), 0, 500),
+        ];
+        // Солист или коллектив: пустое имя не затираем — оставляем прежнее.
+        if ($isGroup === 1 && $data['group_name'] === '') $data['group_name'] = (string) $app['group_name'];
+        if ($isGroup === 0 && $data['full_name'] === '')  $data['full_name']  = (string) $app['full_name'];
+
+        update('applications', $data, 'id=:wid', ['wid' => $appId]);
+        // Правки участника обязаны попасть в диплом: сносим ещё не отправленные
+        // наградные документы — крон соберёт их заново из обновлённой заявки.
+        q("DELETE FROM diplomas WHERE application_id=? AND (sent_at IS NULL OR sent_at='')", [$appId]);
+        audit('application_edit', 'application', $appId, ['fields' => array_keys($data)]);
+        flash('Заявка обновлена. Изменения учтены во всех наградных документах.', 'success');
         redirect('/cabinet#apps');
     }
 }
@@ -387,7 +432,8 @@ $avatar = trim((string)($user['avatar'] ?? ''));
 if (!function_exists('club_status') && is_file(BASE_PATH . '/core/club.php')) require_once BASE_PATH . '/core/club.php';
 $club = function_exists('club_status') ? club_status($uid) : ['active' => false, 'expires_at' => null];
 $isVip = !empty($club['active']);
-$clubUntil = $isVip && !empty($club['expires_at']) ? ru_date(substr((string)$club['expires_at'], 0, 10)) : '';
+// Показываем местное время: expires_at хранится в UTC (см. core/club.php).
+$clubUntil = $isVip && !empty($club['expires_local']) ? ru_date(substr((string)$club['expires_local'], 0, 10)) : '';
 // Золотая SVG-галочка верификации (круглый бейдж) — рядом с именем в шапке кабинета.
 $vipBadge = '<span class="cab-vip" title="Участник Клуба"><svg viewBox="0 0 24 24" role="img" aria-label="Участник Клуба">'
     . '<circle cx="12" cy="12" r="11" fill="#C79322"/><circle cx="12" cy="12" r="11" fill="url(#mmVipG)"/>'
@@ -466,7 +512,8 @@ foreach (array_keys($appStatus) as $_k) $byStatus[$_k] = 0;
 $byResult = ['gp'=>0,'laur1'=>0,'laur2'=>0,'laur3'=>0,'dipl'=>0,'other'=>0];
 $totalPaid = 0;
 $cntGraded = 0;      // результат уже получен на почту
-$cntJudging = 0;     // на оценке / результат в пути
+$cntJudging = 0;     // оценка проставлена, письмо с результатом в пути
+$cntNew = 0;         // подана, жюри ещё не подвело итог
 $cntRejected = 0;
 foreach ($apps as $a) {
     $m = substr((string)($a['created_at'] ?? ''), 0, 7);
@@ -476,7 +523,8 @@ foreach ($apps as $a) {
     $byStatus[$st]++;
     if (in_array($st, ['graded','making','made','extra','done'], true)) $cntGraded++;
     elseif ($st === 'rejected') $cntRejected++;
-    elseif (in_array($st, ['new','judging','paid','submitted','pending'], true)) $cntJudging++;
+    elseif ($st === 'judging') $cntJudging++;
+    elseif (in_array($st, ['new','paid','submitted','pending'], true)) $cntNew++;
     $r = mb_strtolower((string)($a['result'] ?? ''));
     if     (str_contains($r, 'гран')) $byResult['gp']++;
     elseif (str_contains($r, 'i степ') || str_contains($r, '1 степ')) $byResult['laur1']++;
@@ -722,6 +770,15 @@ ob_start(); ?>
   .cab-hero{padding:15px 16px}
   .cab-step small{font-size:.6rem}
 }
+/* --- Форма правки заявки (окно 2 рабочих дня) --- */
+.cab-edit-note{margin:0 0 4px;padding:10px 12px;border-radius:12px;background:var(--gold-soft,#FFF6E9);
+  border:1px solid var(--glass-brd,#F0D9A8);color:var(--gold-ink,#8B6F1F);font-size:.85rem;line-height:1.5}
+.cab-edit-form .field label{display:block;font-size:.8rem;color:var(--muted);margin-bottom:4px}
+.cab-edit-form .field input,.cab-edit-form .field select{width:100%}
+.cab-seg{display:flex;gap:6px;padding:4px;border-radius:12px;background:var(--panel-solid,#fff);border:1px solid var(--line)}
+.cab-seg label{flex:1;text-align:center;padding:8px 10px;border-radius:9px;cursor:pointer;font-size:.88rem;font-weight:600;transition:.15s}
+.cab-seg label.on{background:var(--grad-gold);color:var(--gold-fg,#fff)}
+.cab-seg input{position:absolute;opacity:0;width:0;height:0}
 @media(prefers-reduced-motion:reduce){
   .cab-panel.active{animation:none}
   .cab-card,.cab-item,.cab-step,.cab-step::before,.cab-dot,.switch-ui,.switch-ui::after{transition:none}
@@ -805,7 +862,7 @@ ob_start(); ?>
                 <b>Вы участник ВИП-клуба</b>
                 <span>Скидка <?= (int) ($club['discount'] ?? mm_vip_discount()) ?>% применяется автоматически, сроки — 3 рабочих дня.
                   <?= !empty($club['staff']) ? 'Доступ оргкомитета — бессрочно.'
-                      : (!empty($club['expires_at']) ? 'Действует до ' . h(ru_date(substr((string)$club['expires_at'],0,10))) . '.' : '') ?></span>
+                      : (!empty($club['expires_local']) ? 'Действует до ' . h(ru_date(substr((string)$club['expires_local'],0,10))) . '.' : '') ?></span>
               </div>
               <a class="btn btn--ghost btn--sm" href="<?= url('/club') ?>">Мои привилегии</a>
             </div>
@@ -867,27 +924,85 @@ ob_start(); ?>
                   </div>
                 </div>
               <?php endif; ?>
-              <?php $editable = in_array((string)$a['status'], ['new','submitted','pending','paid','judging'], true); ?>
-              <?php if ($editable): ?>
+              <?php
+                /* Окно правки — ДВА РАБОЧИХ ДНЯ со дня подачи (core/app_status.php).
+                   Показываем и когда можно, и когда уже нельзя — чтобы человек понимал
+                   правило, а не гадал, куда делась кнопка. */
+                $win = app_edit_window((array)$a);
+                $winUntil = $win['until'] !== '' ? app_state_dt($win['until']) : '';
+                $editGroup = (int)($a['is_group'] ?? 0) === 1;
+                $eNom = (string)($a['nomination'] ?? '');
+                $eSubs = NOMINATIONS()[$eNom] ?? [];
+              ?>
+              <?php if ($win['can']): ?>
                 <details class="cab-edit" style="margin-top:8px">
                   <summary style="cursor:pointer;color:var(--gold-ink,#8B6F1F);font-weight:700;font-size:.9rem;list-style:none">Изменить заявку</summary>
-                  <form method="post" action="<?= url('/cabinet') ?>" style="margin-top:12px;display:grid;gap:10px">
+                  <form method="post" action="<?= url('/cabinet') ?>" class="cab-edit-form" data-edit-form style="margin-top:12px;display:grid;gap:10px">
                     <?= csrf_field() ?>
                     <input type="hidden" name="action" value="edit_app">
                     <input type="hidden" name="app_id" value="<?= (int)$a['id'] ?>">
-                    <div class="field" style="margin:0"><label>ФИО участника</label><input type="text" name="full_name" value="<?= h($a['full_name'] ?? '') ?>"></div>
-                    <div class="field" style="margin:0"><label>Название коллектива</label><input type="text" name="group_name" value="<?= h($a['group_name'] ?? '') ?>"></div>
-                    <div class="field" style="margin:0"><label>Возрастная категория</label><input type="text" name="age_category" value="<?= h($a['age_category'] ?? '') ?>"></div>
-                    <div class="field" style="margin:0"><label>Номинация</label><input type="text" name="nomination" value="<?= h($a['nomination'] ?? '') ?>"></div>
-                    <div class="field" style="margin:0"><label>Преподаватель</label><input type="text" name="teacher" value="<?= h($a['teacher'] ?? '') ?>"></div>
-                    <div class="field" style="margin:0"><label>Учреждение</label><input type="text" name="institution" value="<?= h($a['institution'] ?? '') ?>"></div>
+
+                    <p class="cab-edit-note">Изменить заявку можно только в течение <b>двух рабочих дней</b> со дня подачи<?= $winUntil !== '' ? ' — до <b>' . h($winUntil) . '</b>' : '' ?>. Дальше материал уходит жюри, и данные должны совпадать с тем, что будет напечатано в дипломе.</p>
+
+                    <div class="cab-seg">
+                      <label class="<?= $editGroup ? '' : 'on' ?>"><input type="radio" name="is_group" value="0" <?= $editGroup ? '' : 'checked' ?>>Солист</label>
+                      <label class="<?= $editGroup ? 'on' : '' ?>"><input type="radio" name="is_group" value="1" <?= $editGroup ? 'checked' : '' ?>>Коллектив</label>
+                    </div>
+
+                    <div class="field" style="margin:0" data-when="solo" <?= $editGroup ? 'hidden' : '' ?>><label>Фамилия Имя Отчество участника</label><input type="text" name="full_name" value="<?= h($a['full_name'] ?? '') ?>"></div>
+                    <div class="field" style="margin:0" data-when="group" <?= $editGroup ? '' : 'hidden' ?>><label>Название коллектива</label><input type="text" name="group_name" value="<?= h($a['group_name'] ?? '') ?>"></div>
+
+                    <div class="field" style="margin:0"><label>Дата рождения</label><input type="date" name="birth_date" value="<?= h(substr((string)($a['birth_date'] ?? ''), 0, 10)) ?>"></div>
+                    <div class="field" style="margin:0"><label>Возрастная категория</label>
+                      <select name="age_category">
+                        <option value="">Выберите категорию</option>
+                        <?php foreach (AGE_CATEGORIES() as $ac): ?>
+                          <option value="<?= h($ac) ?>" <?= (string)($a['age_category'] ?? '') === $ac ? 'selected' : '' ?>><?= h($ac) ?></option>
+                        <?php endforeach; ?>
+                      </select>
+                    </div>
+
+                    <div class="field" style="margin:0"><label>Номинация</label>
+                      <select name="nomination" data-edit-nom>
+                        <option value="">Выберите номинацию</option>
+                        <?php foreach (array_keys(NOMINATIONS()) as $n): ?>
+                          <option value="<?= h($n) ?>" <?= $eNom === $n ? 'selected' : '' ?>><?= h($n) ?></option>
+                        <?php endforeach; ?>
+                      </select>
+                    </div>
+                    <div class="field" style="margin:0" data-edit-subwrap <?= $eSubs ? '' : 'hidden' ?>><label>Подраздел</label>
+                      <select name="subgroup" data-edit-sub>
+                        <option value="">Выберите подраздел</option>
+                        <?php foreach ($eSubs as $sg): ?>
+                          <option value="<?= h($sg) ?>" <?= (string)($a['subgroup'] ?? '') === $sg ? 'selected' : '' ?>><?= h($sg) ?></option>
+                        <?php endforeach; ?>
+                      </select>
+                    </div>
+                    <div class="field" style="margin:0"><label>Форма исполнения</label>
+                      <select name="formation" data-edit-form-sel>
+                        <option value="">Выберите форму</option>
+                        <?php foreach (FORMATIONS_FOR($eNom) as $fm): ?>
+                          <option value="<?= h($fm) ?>" <?= (string)($a['formation'] ?? '') === $fm ? 'selected' : '' ?>><?= h($fm) ?></option>
+                        <?php endforeach; ?>
+                      </select>
+                    </div>
+
                     <div class="field" style="margin:0"><label>Название конкурсного номера</label><input type="text" name="work_title" value="<?= h($a['work_title'] ?? '') ?>"></div>
-                    <div class="field" style="margin:0"><label>Город</label><input type="text" name="city" value="<?= h($a['city'] ?? '') ?>"></div>
+                    <div class="field" style="margin:0"><label>ФИО руководителя или педагога</label><input type="text" name="teacher" value="<?= h($a['teacher'] ?? '') ?>"></div>
+                    <div class="field" style="margin:0"><label>Учреждение</label><input type="text" name="institution" value="<?= h($a['institution'] ?? '') ?>"></div>
+                    <div class="field" style="margin:0"><label>Город / населённый пункт</label><input type="text" name="city" value="<?= h($a['city'] ?? '') ?>"></div>
+
+                    <div class="field" style="margin:0"><label>E-mail для результатов</label><input type="email" name="email" value="<?= h($a['email'] ?? '') ?>"></div>
+                    <div class="field" style="margin:0"><label>Телефон</label><input type="tel" name="phone" value="<?= h($a['phone'] ?? '') ?>"></div>
+                    <div class="field" style="margin:0"><label>Почтовый адрес (для оригиналов)</label><input type="text" name="address" data-address-suggest value="<?= h($a['address'] ?? '') ?>"></div>
+                    <div class="field" style="margin:0"><label>Почтовый индекс</label><input type="text" name="postal_index" value="<?= h($a['postal_index'] ?? '') ?>"></div>
                     <div class="field" style="margin:0"><label>Ссылка на конкурсный материал</label><input type="url" name="video_url" value="<?= h($a['video_url'] ?? '') ?>" placeholder="https://..."></div>
+
                     <button type="submit" class="btn btn--primary btn--sm">Сохранить изменения</button>
-                    <p class="hint" style="margin:0">Редактирование доступно до подведения итогов.</p>
                   </form>
                 </details>
+              <?php elseif ($win['reason'] !== '' && empty($a['result']) && !$isRej): ?>
+                <p class="cab-meta" style="margin-top:8px;opacity:.85"><?= h($win['reason']) ?></p>
               <?php endif; ?>
               <?php if ($isRej): ?>
                 <p class="cab-reject">Заявка отклонена. Свяжитесь с нами для уточнения.</p>
@@ -1090,6 +1205,9 @@ ob_start(); ?>
           <h2>Статистика и аналитика</h2>
           <div class="cab-kpis">
             <div class="cab-kpi"><b><?= (int)count($apps) ?></b><span>Всего заявок</span></div>
+            <?php if ($cntNew > 0): ?>
+              <div class="cab-kpi"><b><?= (int)$cntNew ?></b><span>Ждут жюри</span></div>
+            <?php endif; ?>
             <div class="cab-kpi"><b><?= (int)$cntJudging ?></b><span>На оценке</span></div>
             <div class="cab-kpi"><b><?= (int)$cntGraded ?></b><span>Оценено</span></div>
             <div class="cab-kpi"><b><?= (int)count($diplomas) ?></b><span>Дипломов получено</span></div>
@@ -1697,6 +1815,58 @@ ob_start(); ?>
 @keyframes dipFade{from{opacity:0}to{opacity:1}}
 @keyframes dipPop{from{opacity:0;transform:translateY(12px) scale(.96)}to{opacity:1;transform:none}}
 </style>
+<script>
+/* Правка заявки в кабинете: те же зависимости полей, что и на подаче —
+   подраздел и форма исполнения строго по выбранной номинации, чтобы в
+   «Хореографии» нельзя было выбрать «Хор». Справочники приходят с сервера. */
+(function(){
+  var NOMS = <?= json_encode(NOMINATIONS(), JSON_UNESCAPED_UNICODE) ?>;
+  var FORMS = <?= json_encode(FORMATIONS_MAP(), JSON_UNESCAPED_UNICODE) ?>;
+  var FORMS_DEFAULT = <?= json_encode(FORMATIONS_FOR(''), JSON_UNESCAPED_UNICODE) ?>;
+
+  function fill(sel, list, keep, placeholder) {
+    if (!sel) return;
+    var cur = keep || sel.value;
+    sel.innerHTML = '<option value="">' + placeholder + '</option>';
+    (list || []).forEach(function (v) {
+      var o = document.createElement('option');
+      o.value = v; o.textContent = v;
+      if (v === cur) o.selected = true;
+      sel.appendChild(o);
+    });
+  }
+
+  document.querySelectorAll('[data-edit-form]').forEach(function (form) {
+    var nom  = form.querySelector('[data-edit-nom]');
+    var sub  = form.querySelector('[data-edit-sub]');
+    var subW = form.querySelector('[data-edit-subwrap]');
+    var frm  = form.querySelector('[data-edit-form-sel]');
+
+    function sync(resetChild) {
+      var n = nom ? nom.value : '';
+      var subs = NOMS[n] || [];
+      if (subW) subW.hidden = subs.length === 0;
+      if (sub)  fill(sub, subs, resetChild ? '' : sub.value, 'Выберите подраздел');
+      if (frm)  fill(frm, FORMS[n] || FORMS_DEFAULT, resetChild ? '' : frm.value, 'Выберите форму');
+    }
+    if (nom) nom.addEventListener('change', function () { sync(true); });
+
+    // Переключатель «Солист / Коллектив»: показываем только нужное поле имени.
+    form.querySelectorAll('.cab-seg input[name="is_group"]').forEach(function (r) {
+      r.addEventListener('change', function () {
+        var group = form.querySelector('.cab-seg input[name="is_group"]:checked').value === '1';
+        form.querySelectorAll('.cab-seg label').forEach(function (l) {
+          l.classList.toggle('on', l.querySelector('input').checked);
+        });
+        var solo = form.querySelector('[data-when="solo"]');
+        var grp  = form.querySelector('[data-when="group"]');
+        if (solo) solo.hidden = group;
+        if (grp)  grp.hidden  = !group;
+      });
+    });
+  });
+})();
+</script>
 <script>
 (function(){
   var modal=document.getElementById('dipModal'); if(!modal) return;

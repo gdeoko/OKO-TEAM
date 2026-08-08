@@ -369,7 +369,7 @@ if (input('action') === 'profile') {
       <div class="card">
         <h3 style="margin:0 0 12px"><?= admin_icon('trophy') ?>ВИП-клуб</h3>
         <?php if (!empty($club['active'])): ?>
-          <p style="margin:0 0 10px">Статус: <b style="color:#1E7A44">активен</b><?= $club['expires_at'] ? ' до ' . h(date('d.m.Y', strtotime((string)$club['expires_at']))) : '' ?>. Скидка <?= (int)($club['discount']??0) ?>%.</p>
+          <p style="margin:0 0 10px">Статус: <b style="color:#1E7A44">активен</b><?= !empty($club['expires_local']) ? ' до ' . h(date('d.m.Y', strtotime((string)$club['expires_local']))) : '' ?>. Скидка <?= (int)($club['discount']??0) ?>%.</p>
           <form method="post" action="<?= url('/admin/') ?>" style="display:inline">
             <?= csrf_field() ?><input type="hidden" name="do" value="cancel_vip"><input type="hidden" name="uid" value="<?= $puid ?>">
             <button class="btn btn--ghost btn--sm" style="color:#8b2f2f;border-color:#d99" onclick="return confirm('Отменить членство ВИП-клуба?')"><?= admin_icon('x') ?>Отменить подписку</button>

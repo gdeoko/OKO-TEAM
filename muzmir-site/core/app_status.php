@@ -177,6 +177,51 @@ function app_state(array $app, bool $forAdmin = false): array {
     return $out;
 }
 
+/** Сколько рабочих дней участник может править поданную заявку. */
+const APP_EDIT_WORKDAYS = 2;
+
+/**
+ * ОКНО РЕДАКТИРОВАНИЯ ЗАЯВКИ УЧАСТНИКОМ (правило владельца, август 2026).
+ *
+ * Править свою заявку можно ТОЛЬКО в течение ДВУХ РАБОЧИХ ДНЕЙ со дня подачи —
+ * дальше материал уходит жюри, и данные обязаны совпадать с тем, что оценивалось
+ * и что будет напечатано в дипломе. Воскресенье не считается (см. send_timing.php).
+ *
+ * Дополнительно окно закрывается досрочно, если заявку уже оценили или отклонили.
+ *
+ * @return array{can:bool, until:string, reason:string}
+ *   can    — можно ли править прямо сейчас;
+ *   until  — момент, до которого окно открыто (Y-m-d H:i:s);
+ *   reason — почему нельзя (пустая строка, если можно).
+ */
+function app_edit_window(array $app): array {
+    if (!function_exists('working_days_add')) {
+        $st = BASE_PATH . '/core/send_timing.php';
+        if (is_file($st)) require_once $st;
+    }
+    $created = trim((string) ($app['created_at'] ?? ''));
+    $until   = '';
+    if ($created !== '' && function_exists('working_days_add')) {
+        // Конец окна — конец второго рабочего дня (18:00), а не 09:00 утра.
+        $d = working_days_add($created, APP_EDIT_WORKDAYS);
+        $d->setTime(18, 0);
+        $until = $d->format('Y-m-d H:i:s');
+    }
+
+    $status = (string) ($app['status'] ?? 'new');
+    if ($status === 'rejected') {
+        return ['can' => false, 'until' => $until, 'reason' => 'Заявка отклонена — изменения недоступны.'];
+    }
+    if (trim((string) ($app['result'] ?? '')) !== '') {
+        return ['can' => false, 'until' => $until, 'reason' => 'Итоги по заявке уже подведены — изменения недоступны.'];
+    }
+    if ($until !== '' && time() > strtotime($until)) {
+        return ['can' => false, 'until' => $until,
+                'reason' => 'Срок изменения истёк ' . app_state_dt($until) . ' — заявку можно править только два рабочих дня со дня подачи.'];
+    }
+    return ['can' => true, 'until' => $until, 'reason' => ''];
+}
+
 /** Короткая русская дата-время для подписей статуса. */
 function app_state_dt(string $s): string {
     $s = trim($s);

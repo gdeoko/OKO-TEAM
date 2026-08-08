@@ -2,7 +2,7 @@
 /** Сидинг 4 конкурсов на 1 августа 2026: 1 международный платный + 2 всерос платных + 1 всерос бесплатный.
  *  Идемпотентно (INSERT OR REPLACE по slug). Удаляет старые слаги evrika/simfoniya-zvezd/slava-rossii. */
 declare(strict_types=1);
-$db = __DIR__ . '/../data/muzmir.sqlite';
+$db = (getenv('MUZMIR_DB_PATH') ?: __DIR__ . '/../data/muzmir.sqlite');
 $d = new PDO('sqlite:' . $db);
 $d->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
 $d->exec('BEGIN');

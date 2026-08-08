@@ -210,11 +210,31 @@ function club_status(int $userId): array {
     $out['auto_renew'] = (int) ($row['auto_renew'] ?? 0) === 1;
     $out['period']     = (string) ($row['period'] ?? 'month');
     $exp = $row['expires_at'] ?? null;
-    $active = ((int) ($row['active'] ?? 0) === 1) && $exp !== null && strtotime((string) $exp) > time();
+    // ВАЖНО про время: expires_at пишется SQL-функцией datetime('now') — это UTC
+    // (см. соглашение в cron/_lib.php), а сайт живёт в Europe/Moscow. Раньше здесь
+    // стоял strtotime($exp) без указания зоны: PHP читал UTC-строку как московскую,
+    // и кабинет ещё три часа показывал «членство активно», когда скидки уже не
+    // действовали (club_is_active сравнивает по UTC и выключался вовремя).
+    $active = ((int) ($row['active'] ?? 0) === 1) && $exp !== null && club_ts((string) $exp) > time();
     $out['active']     = $active;
     $out['expires_at'] = $exp;
+    $out['expires_local'] = $exp !== null ? club_local((string) $exp) : null;   // для показа участнику
     $out['started_at'] = $row['started_at'] ?? null;
     $out['source']     = $row['source'] ?? null;
     $out['discount']   = $active ? club_discount_percent($userId) : 0;
     return $out;
+}
+
+/** UTC-строка из club_members → метка времени. */
+function club_ts(string $utc): int {
+    $utc = trim($utc);
+    if ($utc === '') return 0;
+    $t = strtotime($utc . ' UTC');
+    return $t === false ? 0 : $t;
+}
+
+/** UTC-строка из club_members → местное время сайта (Europe/Moscow) для показа. */
+function club_local(string $utc): string {
+    $ts = club_ts($utc);
+    return $ts > 0 ? date('Y-m-d H:i:s', $ts) : '';
 }

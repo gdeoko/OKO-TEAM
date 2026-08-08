@@ -25,7 +25,8 @@ if (!is_array($items)) $items = [];
 // --- Конкурс: по slug/code/id (нужен competition_id для персонального прайса) ---
 $compRef = input('competition');
 $comp = $compRef !== ''
-    ? one("SELECT id,slug,name FROM competitions WHERE slug=? OR code=? OR id=?",
+    // is_paid нужен ниже: в платном конкурсе электронные основной/доп. входят в оргвзнос.
+    ? one("SELECT id,slug,name,is_paid FROM competitions WHERE slug=? OR code=? OR id=?",
           [$compRef, $compRef, ctype_digit($compRef) ? (int) $compRef : 0])
     : null;
 $compId = $comp ? (int) $comp['id'] : null;

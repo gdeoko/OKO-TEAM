@@ -58,7 +58,9 @@ return [
     'vps_ssh_pass'   => cfg('MUZMIR_VPS_SSH_PASS', ''),
 
     // База данных
-    'db_path'        => BASE_PATH . '/data/muzmir.sqlite',
+    // Путь к базе. Переопределяется MUZMIR_DB_PATH — нужно, чтобы гонять сквозные
+    // тесты на отдельной тестовой базе, не трогая боевую.
+    'db_path'        => cfg('MUZMIR_DB_PATH', BASE_PATH . '/data/muzmir.sqlite'),
 
     // Почта (SMTP через cURL) — секреты и хост из окружения/config.local.
     // Переключение на mail.ru делается на проде через config.local.php без правки кода:
