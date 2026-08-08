@@ -85,24 +85,42 @@ function order_fulfill_digital(int $orderId): int {
         if (!is_array($it) || (string) ($it['kind'] ?? '') !== 'digital') continue;
         $type = $map[mb_strtolower(trim((string) ($it['item'] ?? '')))] ?? '';
         if ($type === '') continue;
-        // Уже есть такой документ по заявке — не дублируем.
-        if (one("SELECT id FROM diplomas WHERE application_id=? AND type=?", [$appId, $type])) continue;
-
+        // ФИО получателя из заказа. Правило владельца: одна благодарность =
+        // один педагог = одно ФИО. Заказали две — будет два разных документа,
+        // поэтому и повтор ловим по паре «тип + получатель», а не по одному типу.
+        $person = trim((string) ($it['fio'] ?? ''));
         $result = $type === 'extra'
             ? (string) ($a['extra_diploma'] ?? '')
-            : ($type === 'thanks' ? '' : (string) ($a['result'] ?? ''));
+            : ($type === 'thanks' ? $person : (string) ($a['result'] ?? ''));
+
+        $dup = $type === 'thanks' || $type === 'named'
+            ? one("SELECT id FROM diplomas WHERE application_id=? AND type=? AND COALESCE(result,'')=?",
+                  [$appId, $type, $result])
+            : one("SELECT id FROM diplomas WHERE application_id=? AND type=?", [$appId, $type]);
+        if ($dup) continue;
 
         $pdf = null;
         try {
             if (function_exists('diploma_pdf_html')) {
-                $pdf = diploma_pdf_html((array) $a, ['extra' => $type === 'extra', 'thanks' => $type === 'thanks']);
+                $pdf = diploma_pdf_html((array) $a, [
+                    'extra'  => $type === 'extra',
+                    'thanks' => $type === 'thanks',
+                    'named'  => $type === 'named',
+                    'person' => $person,          // чьё имя печатать (благодарность/именной)
+                ]);
             }
         } catch (\Throwable $e) { $pdf = null; }
 
+        $num = function_exists('diploma_make_number')
+                 ? diploma_make_number((string) $a['number'], $type)
+                 : ((string) $a['number'] . '-' . mb_strtoupper($type));
+        // Второй и последующие экземпляры одного типа — свой номер, иначе QR-проверка
+        // вела бы два разных бланка на одну запись.
+        $n = (int) scalar("SELECT COUNT(*) FROM diplomas WHERE application_id=? AND type=?", [$appId, $type]);
+        if ($n > 0) $num .= '-' . ($n + 1);
+
         insert('diplomas', [
-            'number'         => function_exists('diploma_make_number')
-                                  ? diploma_make_number((string) $a['number'], $type)
-                                  : ((string) $a['number'] . '-' . mb_strtoupper($type)),
+            'number'         => $num,
             'application_id' => $appId,
             'type'           => $type,
             'result'         => $result,

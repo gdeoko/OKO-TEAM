@@ -262,7 +262,10 @@ if (preg_match('#^/diploma-render/(\d+)$#', $route, $m)) {
     $rtype = (string)($_GET['type'] ?? '');
     if ($rtype === 'thanks') {
         $opt['thanks'] = true;
-        if (!empty($app['teacher'])) $app['full_name'] = $app['teacher']; // благодарность — педагогу
+        // Благодарность — ОДНОМУ педагогу. ФИО берём из заказа (person), иначе
+        // одного педагога из заявки; двух имён на бланке быть не может.
+        $opt['person']     = trim((string) ($_GET['person'] ?? ''));
+        $opt['person_idx'] = (int) ($_GET['pidx'] ?? 0);
     } elseif ($rtype === 'extra') {
         $opt['extra'] = true;  // отдельный дополнительный диплом (спецноминация)
     } elseif ($rtype === 'named') {

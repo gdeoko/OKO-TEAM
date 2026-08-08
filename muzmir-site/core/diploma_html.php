@@ -96,6 +96,23 @@ function _dh_split_lines(string $s, int $lines): array {
 }
 
 /**
+ * ОДНО ФИО из поля «педагог».
+ *
+ * Правило владельца: одна благодарность = один педагог = одно ФИО. Двух имён на
+ * одном бланке быть не может. В заявке педагоги нередко перечислены через запятую
+ * или просто подряд — берём одного (по умолчанию первого), а при заказе используем
+ * ровно то ФИО, которое указал заказчик.
+ *
+ * @param int $idx какой по счёту педагог нужен (0 — первый)
+ */
+function _dh_one_person(string $raw, int $idx = 0): string {
+    [, $joined] = _dh_teachers($raw);
+    $list = array_values(array_filter(array_map('trim', explode(',', $joined)), static fn($x) => $x !== ''));
+    if (!$list) return trim($raw);
+    return $list[$idx] ?? $list[0];
+}
+
+/**
  * АВТО-ВЁРСТКА строки диплома: слова НИКОГДА не режутся и текст НИКОГДА не вылезает.
  *
  * Порядок ровно такой, как просил владелец:
@@ -297,7 +314,14 @@ function diploma_html(array $c, array $a, array $opt = []): string {
     $isGroup   = ((int)($a['is_group'] ?? 0) === 1)
         || in_array(mb_strtolower(trim((string)($a['formation'] ?? ''))), ['ансамбль','хор','коллектив','ensemble','choir'], true);
     if ($thanks) {
-        $name = (trim((string)($a['teacher'] ?? '')) ?: $fullName) ?: 'Иванов Иван Иванович';
+        // Благодарность — строго ОДНОМУ педагогу. Явно переданное ФИО (из заказа)
+        // имеет приоритет; иначе берём одного педагога из заявки, а не весь список.
+        $person = trim((string) ($opt['person'] ?? ''));
+        if ($person === '') {
+            $raw = trim((string) ($a['teacher'] ?? ''));
+            $person = $raw !== '' ? _dh_one_person($raw, (int) ($opt['person_idx'] ?? 0)) : '';
+        }
+        $name = ($person ?: $fullName) ?: 'Иванов Иван Иванович';
     } elseif ($named) {
         // Именной диплом участника в составе коллектива — ФИО участника (если задано), иначе коллектив.
         $name = ($fullName !== '' ? $fullName : $groupName) ?: 'Иванов Иван Иванович';

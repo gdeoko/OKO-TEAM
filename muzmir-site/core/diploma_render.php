@@ -38,13 +38,20 @@ function diploma_pdf_html(array $app, array $opt = []): ?string {
 
     $type  = !empty($opt['thanks']) ? 'thanks' : (!empty($opt['extra']) ? 'extra' : (!empty($opt['named']) ? 'named' : 'main'));
     $clean = !empty($opt['clean']);
+    // Благодарность выписывается на КОНКРЕТНОЕ ФИО (одна благодарность = один педагог).
+    $person = trim((string) ($opt['person'] ?? ''));
+    $pidx   = (int) ($opt['person_idx'] ?? 0);
     $url  = rtrim((string) cfgv('base_url'), '/') . '/diploma-render/' . $appId
           . '?key=' . diploma_render_key()
           . ($type !== 'main' ? '&type=' . $type : '')
+          . ($person !== '' ? '&person=' . rawurlencode($person) : ($pidx > 0 ? '&pidx=' . $pidx : ''))
           . ($clean ? '&clean=1' : '');
 
     $num  = (string) ($app['number'] ?? ('APP' . $appId));
-    $slug = trim(strtolower((string) preg_replace('/[^a-z0-9]+/i', '-', $num . '-' . $type . ($clean ? '-clean' : ''))), '-');
+    // В имени файла учитываем получателя: у двух педагогов — две разные благодарности.
+    $tag  = $person !== '' ? substr(md5($person), 0, 6) : ($pidx > 0 ? 'p' . $pidx : '');
+    $slug = trim(strtolower((string) preg_replace('/[^a-z0-9]+/i', '-',
+                 $num . '-' . $type . ($tag !== '' ? '-' . $tag : '') . ($clean ? '-clean' : ''))), '-');
     $outDir = BASE_PATH . '/public/diplomas/';
     if (!is_dir($outDir)) @mkdir($outDir, 0775, true);
     $out = $outDir . 'diploma_' . $slug . '.pdf';
