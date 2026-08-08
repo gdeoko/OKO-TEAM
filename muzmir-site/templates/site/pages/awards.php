@@ -278,8 +278,7 @@ ob_start(); ?>
         <div class="aw-info">
           <h3 class="aw-name"><?= h($item) ?></h3>
           <?php if ($paidComp && in_array($item, ['Основной диплом','Дополнительный диплом'], true)): ?>
-            <p class="aw-inclusive">Электронный входит в стоимость участия — приходит на почту автоматически.
-              Здесь заказывается оригинал с печатями и подписями.</p>
+            <p class="aw-inclusive">Электронный входит в участие — здесь заказывается оригинал.</p>
           <?php endif; ?>
           <div class="aw-kinds">
             <?php $first=true; foreach ($kinds as $kind => $price): ?>
