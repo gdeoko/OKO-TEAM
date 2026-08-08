@@ -35,7 +35,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $upd['city'] = mb_substr(trim(input('city')), 0, 80);
         $allowedCats = ['participant','teacher','parent'];
         if (in_array($category, $allowedCats, true)) $upd['category'] = $category;
-        if ($avatar === '' || preg_match('~^https?://~i', $avatar) || str_starts_with($avatar, 'data:image/')) $upd['avatar'] = $avatar;
+        // Фото трогаем ТОЛЬКО если форма его прислала. Иначе любое сохранение профиля без
+        // этого поля (другая форма, старая вкладка, запрос без него) стирало загруженное
+        // фото в ноль. Удаление делается отдельной кнопкой через /api/v1/avatar.
+        if (array_key_exists('avatar', $_POST)
+            && ($avatar === '' || preg_match('~^https?://~i', $avatar) || str_starts_with($avatar, 'data:image/'))) {
+            $upd['avatar'] = $avatar;
+        }
         // Категория «Педагог» — если пользователь ещё не teacher/jury/moderator, поднимаем роль до teacher
         if ($category === 'teacher' && !in_array((string)($user['role'] ?? ''), ['teacher','jury','moderator','admin','owner'], true)) {
             $upd['role'] = 'teacher';
