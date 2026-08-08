@@ -270,60 +270,39 @@ function mm_vip_card(array $opt = []): string {
     $days  = mm_vip_days();
     $navy  = MM_NAVY; $gold = MM_GOLD; $gold2 = MM_GOLD2;
 
-    // Тёмная карта с золотом вместо золотой заливки: сплошное золото в письме
-    // выглядело грязным, а тёмный фон даёт золоту звучать и держит контраст
-    // в любой почте. Каждая привилегия — своей строкой, поэтому на узком экране
-    // карточка не растягивается в «простыню».
-    $ink    = '#0E1B3D';                      // глубокий фон карты
-    $ink2   = '#182A57';                      // мягкий переход
-    $line   = 'rgba(214,177,90,.28)';         // золотая волосяная линия
-    $textMu = '#C3CBE2';                      // подписи
-
+    // ЗОЛОТАЯ карточка клуба — как просил владелец. Главное требование: она должна
+    // оставаться КОМПАКТНОЙ и на телефоне. Раньше её растягивало в узкую «простыню»
+    // из-за длинных описаний: на 390 px каждое уезжало в три-четыре строки. Поэтому
+    // подписи короткие — одна строка на любой ширине.
     $perks = [
-        ['−' . $pct . '%', 'Скидка ' . $pct . '% на всё',       'Участие и весь наградной материал — постоянно.'],
-        [$days . ' дня',   'Ускоренные сроки',                  'Результаты и награды за ' . $days . ' рабочих дня вместо 5.'],
-        ['1 / мес',        'Бесплатный конкурс каждый месяц',   'Одна заявка ежемесячно, с электронным дипломом.'],
-        ['VIP',            'Закрытые конкурсы Клуба',           'Отдельные конкурсы только для членов Клуба.'],
-        ['24 ч',           'Приоритетная поддержка',            'Ответ в течение суток, проверка вне очереди.'],
-        ['★',              'Рекомендации жюри',                 'Личный комментарий жюри и именная карта участника.'],
+        ['−' . $pct . '%', 'Скидка ' . $pct . '% на всё',   'Участие и награды'],
+        [$days . ' дня',   'Ускоренные сроки',              $days . ' рабочих дня вместо 5'],
+        ['1/мес',          'Бесплатный конкурс',            'Одна заявка ежемесячно'],
+        ['VIP',            'Закрытые конкурсы',             'Только для членов Клуба'],
+        ['24ч',            'Приоритетная поддержка',        'Ответ в течение суток'],
+        ['★',              'Рекомендации жюри',             'Комментарий и именная карта'],
     ];
     $rows = '';
-    $last = count($perks) - 1;
-    foreach ($perks as $i => [$badge, $title, $desc]) {
-        $sep = $i === $last ? '' : 'border-bottom:1px solid ' . $line . ';';
+    foreach ($perks as [$badge, $title, $desc]) {
         $rows .= '<tr>'
-            . '<td width="66" valign="top" style="padding:11px 12px 11px 0;' . $sep . '">'
-            . '<div style="border:1px solid ' . $line . ';border-radius:999px;color:' . $gold2 . ';'
-            . 'font-size:11.5px;font-weight:700;text-align:center;padding:5px 6px;line-height:1.1;white-space:nowrap;">'
-            . h($badge) . '</div></td>'
-            . '<td valign="top" style="padding:11px 0;' . $sep . '">'
-            . '<div style="font-size:14px;font-weight:700;color:#FFFFFF;line-height:1.35;">' . h($title) . '</div>'
-            . '<div style="font-size:12.5px;color:' . $textMu . ';line-height:1.5;margin-top:2px;">' . h($desc) . '</div>'
-            . '</td></tr>';
+            . '<td width="52" valign="top" style="padding:4px 9px 4px 0;">'
+            . '<div style="background:' . $navy . ';color:' . $gold2 . ';border-radius:7px;font-size:10.5px;font-weight:700;'
+            . 'text-align:center;padding:5px 3px;line-height:1.1;white-space:nowrap;">' . h($badge) . '</div></td>'
+            . '<td valign="top" style="padding:4px 0;">'
+            . '<div style="font-size:13px;font-weight:700;color:#2A2005;line-height:1.3;">' . h($title) . '</div>'
+            . '<div style="font-size:11.5px;color:#5A4A18;line-height:1.35;">' . h($desc) . '</div></td>'
+            . '</tr>';
     }
 
-    return '<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin:20px 0 6px;">'
-        . '<tr><td style="border-radius:18px;padding:2px;background:linear-gradient(135deg,' . $gold2 . ' 0%,' . $gold . ' 45%,#8C6A18 100%);">'
-        . '<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="border-radius:16px;background:' . $ink . ';'
-        . 'background:linear-gradient(160deg,' . $ink2 . ' 0%,' . $ink . ' 70%);">'
-        . '<tr><td style="padding:22px 22px 20px;">'
-
-        // Шапка: надзаголовок и название клуба
-        . '<div style="font-size:10.5px;letter-spacing:.2em;text-transform:uppercase;color:' . $gold2 . ';font-weight:700;">Закрытый клуб центра</div>'
-        . '<div style="font-family:Georgia,serif;font-size:22px;font-weight:700;color:#FFFFFF;margin:6px 0 0;line-height:1.25;">'
-        . 'ВИП-клуб «Музыкальный&nbsp;Мир»</div>'
-        . '<div style="height:1px;background:' . $line . ';margin:14px 0 2px;"></div>'
-
-        // Привилегии
-        . '<table role="presentation" width="100%" cellpadding="0" cellspacing="0">' . $rows . '</table>'
-
-        // Кнопка
-        . '<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin:18px 0 0;"><tr>'
-        . '<td align="center" style="border-radius:12px;background:linear-gradient(135deg,' . $gold2 . ' 0%,' . $gold . ' 100%);">'
-        . '<a href="' . h($url) . '" style="display:block;padding:14px 22px;color:' . $navy . ';text-decoration:none;'
-        . 'font-weight:800;font-size:15px;letter-spacing:.01em;border-radius:12px;">Вступить в ВИП-клуб</a>'
-        . '</td></tr></table>'
-
+    return '<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin:18px 0 6px;">'
+        . '<tr><td style="border-radius:16px;padding:18px 18px 16px;'
+        . 'background:' . $gold . ';background:linear-gradient(135deg,' . $gold2 . ' 0%,' . $gold . ' 55%,#B8892B 100%);">'
+        . '<div style="font-size:10px;letter-spacing:.18em;text-transform:uppercase;color:' . $navy . ';font-weight:700;opacity:.75;">Закрытый клуб центра</div>'
+        . '<div style="font-family:Georgia,serif;font-size:19px;font-weight:700;color:' . $navy . ';margin:3px 0 0;line-height:1.25;">ВИП-клуб «Музыкальный&nbsp;Мир»</div>'
+        . '<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin:11px 0 0;">' . $rows . '</table>'
+        . '<table role="presentation" cellpadding="0" cellspacing="0" style="margin:13px 0 0;"><tr>'
+        . '<td style="border-radius:10px;background:' . $navy . ';">'
+        . '<a href="' . h($url) . '" style="display:inline-block;padding:11px 26px;color:' . $gold2 . ';text-decoration:none;font-weight:700;font-size:14px;border-radius:10px;">Вступить в ВИП-клуб →</a>'
         . '</td></tr></table>'
         . '</td></tr></table>';
 }
