@@ -461,16 +461,10 @@ function mail_senders(): array {
  * Мягкие фолбэки, если нужный отправитель не настроен.
  */
 function mail_route_account(array $row): array {
-    $senders  = mail_senders();
-    $priority = (int) ($row['priority'] ?? 0);
-    $subj     = mb_strtolower((string) ($row['subject'] ?? ''));
-    if ($priority > 0) {
-        return $senders['news'] ?? $senders['nagradi'] ?? [];   // массовые
-    }
-    foreach (['диплом', 'наград', 'кубок', 'статуэт', 'медал', 'благодарн'] as $w) {
-        if (mb_strpos($subj, $w) !== false) return $senders['nagradi'] ?? [];   // награды
-    }
-    return [];   // заявки/результаты/уведомления — официальная Gmail
+    // Первый ящик — согласно пулу письма (массовые/награды/личные).
+    $pool = mail_pool_for($row);
+    $chain = mail_fallback_accounts([], $pool);
+    return $chain[0] ?? [];
 }
 
 /**
@@ -484,33 +478,73 @@ function mail_last_error(?string $set = null): string {
 }
 
 /**
- * Список запасных отправителей для письма: если основной ящик не принял письмо,
- * пробуем следующий. Порядок — сначала «профильный» (награды/рассылки), затем
- * остальные настроенные ящики, затем основной SMTP из конфига.
+ * РАЗДЕЛЕНИЕ ПОЧТОВЫХ ПУЛОВ (правило владельца, август 2026).
+ *
+ *   bulk   — МАССОВЫЕ рассылки (запуск конкурсов, ВИП-клуб, личный кабинет).
+ *            Только news@музыкальный-мир.рф и nagradi.muzmir@gmail.com.
+ *            С официальной почты центра и наградного ящика массовые не уходят
+ *            никогда: их репутация нужна письмам, которые обязаны доходить.
+ *   awards — наградные документы и заказы: сначала наградный ящик, далее любые
+ *            рабочие почты центра — эти письма не должны вставать ни при каких условиях.
+ *   tx     — остальное личное (регистрация, результаты, оплаты, уведомления):
+ *            официальная почта центра, далее любые рабочие ящики.
  */
-function mail_fallback_accounts(array $primary = []): array {
-    $out = [];
-    $key = fn(array $a) => mb_strtolower((string) ($a['user'] ?? ''));
-    if (!empty($primary['user'])) $out[$key($primary)] = $primary;
-    foreach (mail_senders() as $a) {
-        if (!empty($a['user']) && !isset($out[$key($a)])) $out[$key($a)] = $a;
-    }
-    // Ящики, которые сейчас стабильно отказывают (карантин), уводим в конец очереди:
-    // не тратим на них время каждого письма, но и не выбрасываем совсем —
-    // когда почтовик снова начнёт принимать, ящик вернётся в строй сам.
-    uasort($out, fn(array $a, array $b) => mail_account_penalty($a) <=> mail_account_penalty($b));
-    // Основной ящик из config (Gmail центра) — последний рубеж.
-    $mainUser = (string) cfgv('smtp_user', '');
-    $mainPass = (string) cfgv('smtp_pass', '');
-    if ($mainUser !== '' && $mainPass !== '' && !isset($out[mb_strtolower($mainUser)])) {
-        $out[mb_strtolower($mainUser)] = [
+function mail_pool_names(string $pool): array {
+    return match ($pool) {
+        'bulk'   => ['news', 'news2'],                 // только эти два, без исключений
+        'awards' => ['nagradi', 'main', 'news2'],
+        default  => ['main', 'nagradi', 'news2'],
+    };
+}
+
+/** Ящик по имени из smtp_senders ('main' — основной из config). */
+function mail_account_by_name(string $name): array {
+    if ($name === 'main') {
+        $u = (string) cfgv('smtp_user', ''); $p = (string) cfgv('smtp_pass', '');
+        if ($u === '' || $p === '') return [];
+        return [
             'host' => (string) cfgv('smtp_host', 'smtp.gmail.com'),
             'port' => (int) cfgv('smtp_port', 465),
-            'user' => $mainUser, 'pass' => $mainPass,
-            'from_addr' => $mainUser,
+            'user' => $u, 'pass' => $p, 'from_addr' => $u,
             'from_name' => (string) cfgv('mail_from_name', 'Культурный центр «Музыкальный Мир»'),
         ];
     }
+    $s = mail_senders();
+    return is_array($s[$name] ?? null) ? $s[$name] : [];
+}
+
+/**
+ * Пул письма по его типу: массовые (priority>0) — bulk, письма о наградах — awards,
+ * остальные — tx.
+ */
+function mail_pool_for(array $row): string {
+    if ((int) ($row['priority'] ?? 0) > 0) return 'bulk';
+    $subj = mb_strtolower((string) ($row['subject'] ?? ''));
+    foreach (['диплом', 'наград', 'кубок', 'статуэт', 'медал', 'благодарн'] as $w) {
+        if (mb_strpos($subj, $w) !== false) return 'awards';
+    }
+    return 'tx';
+}
+
+/**
+ * Цепочка ящиков для письма с учётом пула и карантина.
+ * Массовое письмо никогда не выходит за пределы своего пула — даже если все его
+ * ящики отказали: письмо останется в очереди до восстановления канала.
+ */
+function mail_fallback_accounts(array $primary = [], string $pool = 'tx'): array {
+    $out = [];
+    $key = fn(array $a) => mb_strtolower((string) ($a['user'] ?? ''));
+
+    foreach (mail_pool_names($pool) as $name) {
+        $a = mail_account_by_name($name);
+        if ($a && !empty($a['user'])) $out[$key($a)] = $a;
+    }
+    // Явно переданный ящик — первым, но только если он разрешён для этого пула.
+    if (!empty($primary['user']) && isset($out[$key($primary)])) {
+        $out = [$key($primary) => $primary] + $out;
+    }
+    // Ящики в карантине уходят в конец: не тратим на них время каждого письма.
+    uasort($out, fn(array $a, array $b) => mail_account_penalty($a) <=> mail_account_penalty($b));
     return array_values($out);
 }
 
@@ -555,8 +589,15 @@ function mail_account_penalty(array $acc): int {
  * Возвращает true, если письмо ушло хоть с какого-то ящика.
  */
 function mail_send_failover(string $to, string $subject, string $html, array $opt = []): bool {
-    $accounts = mail_fallback_accounts(is_array($opt['account'] ?? null) ? $opt['account'] : []);
-    if (!$accounts) $accounts = [[]];        // ни одного настроенного — пробуем как есть
+    // Пул определяется типом письма: массовые — только рассылочные ящики,
+    // награды и личные письма — рабочие почты центра.
+    $pool = (string) ($opt['pool'] ?? mail_pool_for(['priority' => $opt['priority'] ?? 0, 'subject' => $subject]));
+    $accounts = mail_fallback_accounts(is_array($opt['account'] ?? null) ? $opt['account'] : [], $pool);
+    if (!$accounts) {
+        mail_last_error('Для этого типа писем не настроен ни один почтовый ящик (пул «' . $pool . '»).');
+        mail_log('POOL EMPTY (' . $pool . ') для ' . $to);
+        return false;
+    }
     $errors = [];
     foreach ($accounts as $i => $acc) {
         $try = $opt;
@@ -579,7 +620,7 @@ function mail_send_failover(string $to, string $subject, string $html, array $op
         mail_account_fail((string) ($acc['user'] ?? ''));      // отказ — ближе к карантину
         $errors[] = (string) ($acc['user'] ?? 'основной') . ': ' . mail_last_error();
     }
-    mail_last_error('Ни один из ' . count($accounts) . ' почтовых ящиков не принял письмо. ' . implode(' | ', $errors));
+    mail_last_error('Ни один из ' . count($accounts) . ' ящиков пула «' . $pool . '» не принял письмо. ' . implode(' | ', $errors));
     mail_switched('');
     return false;
 }
