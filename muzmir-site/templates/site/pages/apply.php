@@ -315,7 +315,17 @@ ob_start(); ?>
                     <b><?= h($c['name']) ?></b>
                     <span class="co-tags">
                       <span class="badge badge--intl"><?= $c['type']==='international'?'Международный':'Всероссийский' ?></span>
-                      <span class="badge <?= (int)$c['is_paid'] ? 'badge--closed' : 'badge--open' ?>"><?= (int)$c['is_paid'] ? (int)$c['price'].' ₽' : 'Бесплатный' ?></span>
+                      <?php
+                        // Участнику Клуба цену показываем так же, как в наградах и афише:
+                        // полная зачёркнута, рядом — со скидкой (сервер считает сам).
+                        $apFull = (int) $c['price'];
+                        $apMy   = ((int) $jsCfg['clubPct'] > 0) ? (int) max(0, round($apFull * (100 - (int) $jsCfg['clubPct']) / 100)) : $apFull;
+                      ?>
+                      <span class="badge <?= (int)$c['is_paid'] ? 'badge--closed' : 'badge--open' ?>"><?php
+                        if (!(int)$c['is_paid']) { echo 'Бесплатный'; }
+                        elseif ($apMy < $apFull) { echo '<s style="opacity:.6">' . $apFull . ' ₽</s> ' . $apMy . ' ₽'; }
+                        else { echo $apFull . ' ₽'; }
+                      ?></span>
                     </span>
                   </span>
                 </span>

@@ -58,6 +58,17 @@ $benefits = [
 $expiresRu = !empty($status['expires_local']) ? ru_date(substr((string) $status['expires_local'], 0, 10)) : '';
 $startedRu = !empty($status['started_at']) ? ru_date(substr((string) $status['started_at'], 0, 10)) : '';
 
+/* ── Данные именной карты (визитки) участника ── */
+$memberName   = trim((string) ($u['full_name'] ?? '')) ?: 'Участник Клуба';
+$memberAvatar = trim((string) ($u['avatar'] ?? ''));
+$memberCardNo = function_exists('club_card_no') ? club_card_no($uid) : '';
+$memberInit   = '';
+foreach (array_slice(preg_split('~\s+~u', $memberName, -1, PREG_SPLIT_NO_EMPTY) ?: [], 0, 2) as $w) {
+    $memberInit .= mb_strtoupper(mb_substr($w, 0, 1));
+}
+$memberSince  = $startedRu !== '' ? $startedRu : '';
+$memberUntil  = $expiresRu !== '' ? $expiresRu : (!empty($status['staff']) ? 'бессрочно' : '');
+
 ob_start(); ?>
 <style>
 /* Скоуп-фикс: в общем style.css и .eyebrow, и .section-head h2 заданы display:inline-block,
@@ -165,6 +176,50 @@ html{scroll-behavior:smooth}
 .club-form .field{text-align:left}
 .club-note{font-size:.82rem;color:var(--muted);margin-top:14px}
 
+/* --- Именная карта участника: горизонтальная визитка --- */
+.club-vcard{position:relative;max-width:480px;margin:0 auto 26px;aspect-ratio:1.586/1;border-radius:18px;
+  overflow:hidden;color:#3a2708;text-align:left;isolation:isolate;
+  background:linear-gradient(135deg,#F6E2A8 0%,#E4C36A 34%,#C79322 62%,#E9CE84 100%);
+  box-shadow:0 18px 44px rgba(150,110,20,.34),inset 0 1px 0 rgba(255,255,255,.75)}
+/* гильош — тонкая золотая сетка, без картинок */
+.club-vcard::before{content:"";position:absolute;inset:0;pointer-events:none;opacity:.30;
+  background:
+    repeating-linear-gradient(115deg,rgba(255,255,255,.55) 0 1px,transparent 1px 9px),
+    repeating-linear-gradient(-115deg,rgba(140,100,10,.28) 0 1px,transparent 1px 13px)}
+/* внутренняя рамка */
+.club-vcard::after{content:"";position:absolute;inset:9px;border-radius:12px;pointer-events:none;
+  border:1px solid rgba(255,255,255,.62);box-shadow:inset 0 0 0 1px rgba(140,100,10,.22)}
+.club-vc-in{position:relative;z-index:2;height:100%;padding:clamp(12px,3.4vw,18px) clamp(14px,4vw,22px);
+  display:grid;grid-template-columns:auto 1fr;grid-template-rows:auto 1fr auto;gap:0 clamp(10px,3vw,16px);align-items:center}
+.club-vc-top{grid-column:1/-1;display:flex;align-items:center;justify-content:space-between;gap:10px}
+.club-vc-org{font-family:var(--ff-body);font-weight:800;letter-spacing:.10em;text-transform:uppercase;
+  font-size:clamp(.50rem,1.9vw,.64rem);line-height:1.25;color:#5A3E0B}
+.club-vc-logo{width:clamp(30px,8vw,40px);height:clamp(30px,8vw,40px);object-fit:contain;flex:none;
+  filter:drop-shadow(0 2px 4px rgba(90,62,11,.35))}
+.club-vc-photo{width:clamp(54px,15vw,74px);height:clamp(54px,15vw,74px);border-radius:50%;overflow:hidden;flex:none;
+  display:flex;align-items:center;justify-content:center;background:rgba(255,255,255,.55);
+  border:2px solid rgba(255,255,255,.85);box-shadow:0 4px 12px rgba(120,86,14,.30);
+  font-family:var(--ff-display);font-size:clamp(1.1rem,4.4vw,1.5rem);color:#8A6512;letter-spacing:.02em}
+.club-vc-photo img{width:100%;height:100%;object-fit:cover;display:block}
+.club-vc-id{min-width:0}
+.club-vc-name{font-family:var(--ff-display);font-weight:400;letter-spacing:.01em;line-height:1.08;
+  font-size:clamp(.95rem,4.2vw,1.35rem);color:#3A2708;margin:0 0 2px;
+  overflow-wrap:break-word;word-break:normal;hyphens:none}
+.club-vc-role{display:inline-flex;align-items:center;gap:5px;font-weight:800;letter-spacing:.08em;
+  text-transform:uppercase;font-size:clamp(.46rem,1.8vw,.58rem);color:#5A3E0B}
+.club-vc-role i{width:5px;height:5px;border-radius:50%;background:#5A3E0B;display:block}
+.club-vc-bot{grid-column:1/-1;display:flex;align-items:flex-end;justify-content:space-between;gap:10px}
+.club-vc-no{font-family:var(--ff-body);font-weight:800;letter-spacing:.13em;
+  font-size:clamp(.62rem,2.4vw,.82rem);color:#4A3308}
+.club-vc-till{text-align:right;line-height:1.2}
+.club-vc-till b{display:block;font-family:var(--ff-body);font-weight:800;font-size:clamp(.62rem,2.4vw,.8rem);color:#4A3308}
+.club-vc-till span{display:block;font-size:clamp(.44rem,1.7vw,.55rem);letter-spacing:.09em;
+  text-transform:uppercase;color:#6B4C10;font-weight:700}
+@media(prefers-reduced-motion:no-preference){
+  .club-vcard{transition:transform .3s cubic-bezier(.2,.8,.2,1),box-shadow .3s}
+}
+@media(hover:hover){.club-vcard:hover{transform:translateY(-3px);box-shadow:0 24px 54px rgba(150,110,20,.42)}}
+
 /* --- Карточка активного члена Клуба --- */
 .club-member-card{max-width:560px;margin:0 auto;text-align:center;padding:38px 30px}
 .club-crest{width:96px;height:96px;margin:0 auto 8px;display:block;object-fit:contain}
@@ -219,8 +274,33 @@ html{scroll-behavior:smooth}
 <section class="section">
   <div class="container">
     <div class="card reveal club-member-card">
-      <img class="club-crest" src="<?= h(asset('img/pechat_kc_muzmir.png')) ?>"
-           alt="Печать Культурного центра «Музыкальный Мир»" width="96" height="96" loading="lazy">
+      <!-- Именная карта участника: горизонтальная визитка с фото. Печати здесь нет —
+           печать ставится только на документах, на карте участника — логотип центра. -->
+      <div class="club-vcard" role="img"
+           aria-label="Именная карта участника Клуба: <?= h($memberName) ?><?= $memberCardNo !== '' ? ', номер ' . h($memberCardNo) : '' ?>">
+        <div class="club-vc-in">
+          <div class="club-vc-top">
+            <span class="club-vc-org">Культурный центр<br>«Музыкальный Мир»</span>
+            <img class="club-vc-logo" src="<?= h(asset('img/logo_muzmir_256.png')) ?>"
+                 alt="Логотип Культурного центра «Музыкальный Мир»" width="40" height="40" loading="lazy">
+          </div>
+          <div class="club-vc-photo">
+            <?php if ($memberAvatar !== ''): ?>
+              <img src="<?= h($memberAvatar) ?>" alt="Фото участника <?= h($memberName) ?>" loading="lazy">
+            <?php else: ?><?= h($memberInit ?: 'МM') ?><?php endif; ?>
+          </div>
+          <div class="club-vc-id">
+            <p class="club-vc-name"><?= h($memberName) ?></p>
+            <span class="club-vc-role"><i></i>Участник Клуба<?= $memberSince !== '' ? ' · с ' . h($memberSince) : '' ?></span>
+          </div>
+          <div class="club-vc-bot">
+            <span class="club-vc-no"><?= h($memberCardNo) ?></span>
+            <?php if ($memberUntil !== ''): ?>
+              <span class="club-vc-till"><b><?= h($memberUntil) ?></b><span>действует до</span></span>
+            <?php endif; ?>
+          </div>
+        </div>
+      </div>
       <div><span class="club-badge"><span class="dot"></span>Участник Клуба</span></div>
       <?php if ($expiresRu !== ''): ?>
         <p class="club-until">Вы участник Клуба до <?= h($expiresRu) ?></p>
@@ -243,6 +323,14 @@ html{scroll-behavior:smooth}
       <div class="club-actions">
         <a class="btn btn--primary" href="<?= h(url('/cabinet')) ?>">Личный кабинет</a>
         <a class="btn btn--ghost" href="<?= h(url('/competitions')) ?>">Выбрать конкурс</a>
+      </div>
+      <div class="club-actions" style="margin-top:12px">
+        <!-- data-no-spa: PDF отдаётся напрямую, SPA-перехват тут не нужен -->
+        <a class="btn btn--ghost" data-no-spa target="_blank" rel="noopener"
+           href="<?= h(url('/club/certificate.pdf')) ?>">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12M8 11l4 4 4-4"/><path d="M4 17v2a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-2"/></svg>
+          Сертификат участника Клуба
+        </a>
       </div>
       <p class="club-note">Членство продлевается ежемесячно. Скидка <?= (int) $discount ?>%
         применяется ко всем платежам автоматически.</p>

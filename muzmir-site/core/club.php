@@ -225,6 +225,15 @@ function club_status(int $userId): array {
     return $out;
 }
 
+/** Номер именной карты участника Клуба — стабильный, выводится из id пользователя.
+ *  Формат «ММ 0007 4821»: первая группа — id, вторая — контрольная от id (без базы). */
+function club_card_no(int $userId): string {
+    if ($userId <= 0) return '';
+    $a = str_pad((string) ($userId % 10000), 4, '0', STR_PAD_LEFT);
+    $b = str_pad((string) (crc32('muzmir-club-' . $userId) % 10000), 4, '0', STR_PAD_LEFT);
+    return 'ММ ' . $a . ' ' . $b;
+}
+
 /** UTC-строка из club_members → метка времени. */
 function club_ts(string $utc): int {
     $utc = trim($utc);

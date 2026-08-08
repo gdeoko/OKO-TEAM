@@ -281,6 +281,39 @@ if (preg_match('#^/diploma-render/(\d+)$#', $route, $m)) {
     exit;
 }
 
+// Приватная страница сертификата участника Клуба — её печатает бастион (альбомный А4).
+if (preg_match('#^/club-cert-render/(\d+)$#', $route, $m)) {
+    $key  = (string) ($_GET['key'] ?? '');
+    $good = (string) setting('diploma_render_key', '');
+    $usr  = one("SELECT id, full_name, email FROM users WHERE id=?", [(int) $m[1]]);
+    if (!$usr || $good === '' || $key === '' || !hash_equals($good, $key)) {
+        http_response_code(404); echo 'Не найдено'; exit;
+    }
+    require_once BASE_PATH . '/core/club_cert.php';
+    echo club_cert_html($usr, club_status((int) $usr['id']));
+    exit;
+}
+
+// Сертификат участника Клуба (PDF) — только самому активному участнику Клуба.
+if ($route === '/club/certificate.pdf') {
+    $usr = current_user();
+    require_once BASE_PATH . '/core/club_cert.php';
+    if (!$usr || !club_is_active((int) $usr['id'])) {
+        header('Location: ' . url('/club')); exit;
+    }
+    $pdf = club_cert_pdf((int) $usr['id'], isset($_GET['regen']));
+    if (!$pdf || !is_file($pdf)) {
+        http_response_code(503);
+        echo 'Сертификат сейчас не удалось изготовить. Попробуйте через несколько минут.';
+        exit;
+    }
+    header('Content-Type: application/pdf');
+    header('Content-Length: ' . filesize($pdf));
+    header('Content-Disposition: inline; filename="sertifikat-kluba.pdf"');
+    readfile($pdf);
+    exit;
+}
+
 // Демо-образец диплома конкурса (HTML-сборщик по эталону, водяной знак «ОБРАЗЕЦ»).
 if (preg_match('#^/diploma-sample/([a-z0-9\-]+)$#', $route, $m)) {
     $c = one("SELECT * FROM competitions WHERE slug=?", [$m[1]]);

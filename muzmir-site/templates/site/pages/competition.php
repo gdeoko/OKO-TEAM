@@ -57,6 +57,25 @@ $forms  = FORMATIONS();
 $awards = all("SELECT * FROM awards_prices WHERE competition_id = ?", [$c['id']]);
 if (!$awards) $awards = all("SELECT * FROM awards_prices WHERE competition_id IS NULL ORDER BY id");
 
+/* Скидка ВИП-клуба — показываем так же, как в афише и наградах: полная цена
+   зачёркнута, рядом цена участника Клуба. Считает всё равно сервер. */
+$clubPct = 0;
+$__cu = function_exists('current_user') ? current_user() : null;
+if ($__cu && is_file(BASE_PATH . '/core/club.php')) {
+    require_once BASE_PATH . '/core/club.php';
+    if (function_exists('club_discount_percent')) $clubPct = (int) club_discount_percent((int) $__cu['id']);
+}
+$clubPrice = static function (int $p) use ($clubPct): int {
+    return $clubPct > 0 ? (int) max(0, round($p * (100 - $clubPct) / 100)) : $p;
+};
+/** Разметка цены: «500 ₽» или «<s>500 ₽</s> 400 ₽» для участника Клуба. */
+$priceHtml = static function (int $p) use ($clubPrice): string {
+    $my = $clubPrice($p);
+    return $my < $p
+        ? '<s style="opacity:.6;font-weight:400">' . h(money($p)) . '</s> ' . h(money($my))
+        : h(money($p));
+};
+
 /* Результаты: заявки с выставленной оценкой. */
 $results = all(
     "SELECT full_name, group_name, is_group, nomination, work_title, result, score
@@ -244,7 +263,7 @@ ob_start(); ?>
       </div>
       <div class="comp-info__item">
         <span class="comp-info__ic"><?= $ic['wallet'] ?></span>
-        <div><b>Участие</b><span><?= $c['is_paid'] ? h(money((int)$c['price'])) . ' за заявку' : 'Бесплатно' ?></span></div>
+        <div><b>Участие</b><span><?= $c['is_paid'] ? $priceHtml((int)$c['price']) . ' за заявку' : 'Бесплатно' ?><?= ($c['is_paid'] && $clubPct > 0) ? ' <small style="color:var(--gold-ink)">(−'.(int)$clubPct.'% Клуб)</small>' : '' ?></span></div>
       </div>
       <div class="comp-info__item">
         <span class="comp-info__ic"><?= $ic['cal'] ?></span>
@@ -412,7 +431,7 @@ ob_start(); ?>
       <div class="comp-panel" data-panel="participation">
         <?php if ($c['is_paid']): ?>
           <h3><span class="comp-h3ic"><?= $ic['wallet'] ?></span>Финансовые условия</h3>
-          <p>Организационный взнос - <b style="color:var(--gold)"><?= h(money((int)$c['price'])) ?></b> за заявку. В стоимость участия входит:</p>
+          <p>Организационный взнос - <b style="color:var(--gold)"><?= $priceHtml((int)$c['price']) ?></b> за заявку<?= $clubPct > 0 ? ' (скидка участника Клуба −'.(int)$clubPct.'%)' : '' ?>. В стоимость участия входит:</p>
           <ul class="comp-ul">
             <li>приём, сортировка и регистрация заявки;</li>
             <li>отправка конкурсного номера на аттестацию компетентному жюри;</li>
@@ -446,11 +465,17 @@ ob_start(); ?>
             <table class="comp-table">
               <thead><tr><th>Наградной материал</th><th>Вид</th><th>Стоимость</th></tr></thead>
               <tbody>
-                <?php foreach ($awards as $a): ?>
+                <?php foreach ($awards as $a):
+                  // Тот же фильтр, что и в разделе наград: на платном конкурсе электронные
+                  // основной и дополнительный входят в оргвзнос и в прайсе не показываются —
+                  // заказать можно только их оригиналы (правило — core/orders.php).
+                  if ((int)$c['is_paid'] === 1 && (string)$a['kind'] === 'digital'
+                      && in_array(trim((string)$a['item']), ['Основной диплом','Дополнительный диплом'], true)) continue;
+                ?>
                   <tr>
                     <td><?= h($a['item']) ?></td>
                     <td><?= $a['kind'] === 'original' ? 'Оригинал' : 'Электронный' ?></td>
-                    <td><?= (int)$a['price'] > 0 ? h(money((int)$a['price'])) : 'Входит в участие' ?></td>
+                    <td><?= (int)$a['price'] > 0 ? $priceHtml((int)$a['price']) : 'Входит в участие' ?></td>
                   </tr>
                 <?php endforeach; ?>
               </tbody>

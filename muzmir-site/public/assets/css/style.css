@@ -1161,14 +1161,26 @@ body::after{background-size:90px 90px!important;opacity:.035!important}
   .auth-card{max-width:none !important;width:100% !important;height:auto !important;min-height:100vh !important;border-radius:0 !important;padding:18px 18px calc(20px + env(safe-area-inset-bottom)) !important}
 }
 
-/* Тактильный отклик — все интерактивы отвечают на тап (native feel) */
+/* Тактильный отклик — все интерактивы отвечают на тап (native feel).
+   ВАЖНО (баг «кнопки не работают / окно прыгает»): масштабировать на :active можно
+   ТОЛЬКО мелкие самостоятельные элементы. Раньше scale(.97) вешался на .card /
+   .cab-card / .comp-card — контейнеры высотой до 2000px. При тапе такой контейнер
+   сжимался, всё его содержимое уезжало на 20-30px, кнопка уходила из-под пальца, и
+   синтетический click попадал уже мимо неё → «Личный кабинет» и «Выбрать конкурс»
+   не срабатывали, а карточка визуально «прыгала». Контейнерам оставляем отклик БЕЗ
+   сдвига layout — только яркость и тень. */
 @media(hover:none) and (pointer:coarse){
   a.card,.card,.btn,.appnav a,.sm-tile,.cab-card,.comp-card,.auth-btn,.chat-fab,.acc-q,.badge,button{
     -webkit-tap-highlight-color:transparent;
     transition:transform .12s ease,box-shadow .14s ease,filter .14s !important;
   }
-  a.card:active,.card:active,.btn:active,.sm-tile:active,.cab-card:active,.comp-card:active,.auth-btn:active{
+  /* мелкие самостоятельные интерактивы — можно сжимать */
+  .btn:active,.sm-tile:active,.auth-btn:active,.chat-fab:active,.badge:active{
     transform:scale(.97) !important;filter:brightness(.98);
+  }
+  /* крупные контейнеры с кнопками внутри — никакого transform */
+  a.card:active,.card:active,.cab-card:active,.comp-card:active{
+    transform:none !important;filter:brightness(.97);
   }
 }
 
@@ -2192,6 +2204,8 @@ input::placeholder,textarea::placeholder{color:color-mix(in srgb,var(--muted) 80
 .aw-info{display:flex;flex-direction:column;gap:8px;padding:11px 12px 12px;flex:1}
 .aw-name{font-family:var(--ff-serif);font-size:.92rem;font-weight:700;line-height:1.15;margin:0;
   min-height:2.3em;display:flex;align-items:flex-start}
+/* Пояснение по платным конкурсам: электронный диплом входит в оргвзнос, тут — оригинал */
+.aw-inclusive{margin:-2px 0 0;font-size:.66rem;line-height:1.32;color:var(--muted)}
 .aw-kinds{display:flex;flex-direction:column;gap:5px}
 .aw-buy{margin-top:auto}
 .aw-kind{display:flex;align-items:center;gap:6px;padding:6px 8px;border-radius:9px;cursor:pointer;

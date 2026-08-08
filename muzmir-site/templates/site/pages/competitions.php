@@ -56,6 +56,20 @@ $icoArrow  = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-
 $icoCal    = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" width="15" height="15"><rect x="3" y="4" width="18" height="18" rx="3"/><path d="M3 10h18M8 2v4M16 2v4"/></svg>';
 $icoCoin   = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" width="15" height="15"><circle cx="12" cy="12" r="9"/><path d="M12 7v10M9.5 9.2c0-1 1-1.7 2.5-1.7s2.5.7 2.5 1.7-1 1.6-2.5 1.6-2.5.7-2.5 1.7 1 1.7 2.5 1.7 2.5-.7 2.5-1.7"/></svg>';
 
+/* Скидка ВИП-клуба показывается и в афише конкурсов — так же, как в разделе наград:
+   полная цена зачёркнута, рядом цена участника Клуба. Сервер считает взнос сам
+   (api/v1/apply.php → discount_breakdown), здесь только честное отображение. */
+$clubPct = 0;
+$__u = function_exists('current_user') ? current_user() : null;
+if ($__u && is_file(BASE_PATH . '/core/club.php')) {
+    require_once BASE_PATH . '/core/club.php';
+    if (function_exists('club_discount_percent')) $clubPct = (int) club_discount_percent((int) $__u['id']);
+}
+/** Цена участника Клуба. */
+$clubPrice = static function (int $p) use ($clubPct): int {
+    return $clubPct > 0 ? (int) max(0, round($p * (100 - $clubPct) / 100)) : $p;
+};
+
 /* Ссылка табов - серверный фолбэк без JS (сохраняет остальные фильтры). */
 $tabHref = static function (string $status) use ($fType, $fDir, $fSort): string {
     $q = http_build_query(array_filter([
@@ -176,9 +190,15 @@ ob_start(); ?>
             <div class="cc-body">
               <div class="cc-badges">
                 <span class="badge badge--intl"><?= $c['type'] === 'international' ? 'Международный' : 'Всероссийский' ?></span>
-                <span class="cc-fee<?= $isPaid ? '' : ' cc-fee--free' ?>">
-                  <?= $icoCoin ?><?= $isPaid ? 'Взнос ' . (int) $c['price'] . ' ₽' : 'Участие бесплатное' ?>
+                <?php $ccFull = (int) $c['price']; $ccMy = $clubPrice($ccFull); ?>
+                <span class="cc-fee<?= $isPaid ? '' : ' cc-fee--free' ?><?= ($isPaid && $ccMy < $ccFull) ? ' cc-fee--club' : '' ?>">
+                  <?= $icoCoin ?><?php if (!$isPaid): ?>Участие бесплатное
+                  <?php elseif ($ccMy < $ccFull): ?>Взнос <s><?= $ccFull ?> ₽</s> <b><?= $ccMy ?> ₽</b>
+                  <?php else: ?>Взнос <?= $ccFull ?> ₽<?php endif; ?>
                 </span>
+                <?php if ($isPaid && $ccMy < $ccFull): ?>
+                  <span class="cc-clubtag">−<?= (int) $clubPct ?>% Клуб</span>
+                <?php endif; ?>
               </div>
               <h3 class="cc-title"><?= h($c['name']) ?></h3>
               <div class="cc-meta">
@@ -263,6 +283,13 @@ ob_start(); ?>
 .cc-fee svg{color:var(--gold)}
 .cc-fee--free{color:var(--mint);background:color-mix(in srgb,var(--mint) 14%,transparent);border-color:color-mix(in srgb,var(--mint) 30%,transparent)}
 .cc-fee--free svg{color:var(--mint)}
+/* Цена для участника Клуба: полная зачёркнута, рядом — со скидкой (как в наградах). */
+.cc-fee--club{white-space:nowrap}
+.cc-fee--club s{opacity:.6;font-weight:700;text-decoration-thickness:1.5px}
+.cc-fee--club b{font-weight:900}
+.cc-clubtag{display:inline-flex;align-items:center;font-size:.62rem;font-weight:900;letter-spacing:.06em;
+  text-transform:uppercase;padding:4px 9px;border-radius:999px;color:var(--gold-fg,#fff);background:var(--grad-gold);
+  box-shadow:0 4px 12px rgba(199,147,34,.28)}
 .cc-title{margin:2px 0 0;overflow-wrap:anywhere;word-break:break-word;hyphens:auto}
 .cc-date{display:inline-flex;align-items:center;gap:6px}
 .cc-date svg{color:var(--gold);flex:none}

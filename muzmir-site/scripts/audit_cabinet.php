@@ -263,6 +263,37 @@ foreach (club_staff_emails() as $se) {
 $anyOther = (int) scalar("SELECT COUNT(*) FROM subscribers WHERE active=1");
 chk('обычная база в рассылку попадает', count($vipList) > 0 || $anyOther === 0, count($vipList) . ' адресов');
 
+sec('ВИП-клуб: именная карта, сертификат и цены со скидкой');
+require_once BASE_PATH . '/core/club_cert.php';
+$cardNo = club_card_no($uid);
+chk('номер именной карты выдан', $cardNo !== '', $cardNo);
+chk('номер карты стабилен между вызовами', $cardNo === club_card_no($uid));
+$clubPage = http($UJAR, $BASE . '/club');
+chk('страница клуба открывается участнику', $clubPage['code'] === 200, (string) $clubPage['code']);
+chk('на странице клуба есть визитка участника', strpos($clubPage['body'], 'club-vcard') !== false);
+chk('в визитке настоящий логотип, а не печать',
+    strpos($clubPage['body'], 'logo_muzmir_256.png') !== false
+    && strpos($clubPage['body'], 'pechat_kc_muzmir') === false);
+chk('номер карты выведен на визитке', strpos($clubPage['body'], $cardNo) !== false);
+chk('кнопки «Личный кабинет» и «Выбрать конкурс» ведут по адресам',
+    strpos($clubPage['body'], '/cabinet') !== false && strpos($clubPage['body'], '/competitions') !== false);
+chk('есть кнопка сертификата участника Клуба',
+    strpos($clubPage['body'], '/club/certificate.pdf') !== false);
+$certUser = one("SELECT id, full_name, email FROM users WHERE id=?", [$uid]);
+$certHtml = club_cert_html($certUser, club_status($uid));
+chk('сертификат: лист альбомный А4', strpos($certHtml, 'size:297mm 210mm') !== false);
+chk('сертификат: есть подписи и печати',
+    strpos($certHtml, 'Галиулин Данил Дамирович') !== false
+    && strpos($certHtml, 'Ильясов Альберт Ильясович') !== false
+    && strpos($certHtml, '/stamp.png') !== false && strpos($certHtml, '/seal.png') !== false);
+chk('сертификат: ФИО и номер карты на месте',
+    strpos($certHtml, (string) $certUser['full_name']) !== false && strpos($certHtml, $cardNo) !== false);
+// Цены конкурсов участнику Клуба показываются со скидкой (как в наградах).
+$compPage = http($UJAR, $BASE . '/competitions');
+chk('в афише конкурсов видна клубная цена',
+    strpos($compPage['body'], 'cc-fee--club') !== false && strpos($compPage['body'], 'cc-clubtag') !== false);
+chk('в афише полная цена зачёркнута', preg_match('~cc-fee--club.*?<s>\d+~s', $compPage['body']) === 1);
+
 sec('ВИП-клуб: снятие привилегий по истечении');
 q("UPDATE club_members SET expires_at=datetime('now','-1 hour') WHERE user_id=?", [$uid]);
 chk('после истечения клуб неактивен', !club_is_active($uid));
