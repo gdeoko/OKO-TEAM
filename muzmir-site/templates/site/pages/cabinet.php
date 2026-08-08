@@ -387,10 +387,16 @@ $appBadge = ['new'=>['Подана','blue'],'paid'=>['Оплачена','gold'],
              'rejected'=>['Отклонена','bord']];
 // Окно заказа наград: 60 дней от graded_at — только если такая колонка реально есть в БД.
 $hasGradedAt = $apps && array_key_exists('graded_at', $apps[0]);
-$orderStatus = ['new'=>['Оформлен','info'],'paid'=>['Оплачен','info'],'made'=>['Изготовлен','warning'],'shipped'=>['Отправлен','warning'],'delivered'=>['Доставлен','success']];
+// ОРИГИНАЛЫ (правило владельца): участнику на почту они не отправляются никогда —
+// в кабинете видны ТОЛЬКО стадии изготовления и доставки: изготовление → отправка →
+// прибыло. Файлы оригиналов участнику не показываются и не скачиваются.
+$orderStatus = ['new'=>['Ожидает оплаты','warning'],'paid'=>['Изготовление','info'],'made'=>['Изготовление','info'],
+                'shipped'=>['Отправка','warning'],'delivered'=>['Прибыло','success']];
 // Конвейер статуса заказа оригиналов.
-$orderPipe   = ['paid','made','shipped','delivered'];
-$orderPipeL  = ['Оплачено','Изготовлено','Отправлено','Доставлено'];
+// Три стадии, как просил владелец. 'paid' и 'made' — одна стадия «Изготовление»:
+// для участника разницы нет, заказ в работе.
+$orderPipe   = ['paid', 'shipped', 'delivered'];
+$orderPipeL  = ['Изготовление', 'Отправка', 'Прибыло'];
 // Конвейер статуса заявки для инфографики-прогресса — единая лестница статусов.
 $pipeline = ['new','judging','graded','making','made'];
 $pipeLabels = ['Подана','На оценке','Оценена','Изготовление','Награды'];
@@ -1094,7 +1100,9 @@ ob_start(); ?>
             </div>
           <?php else: foreach ($orders as $k => $o):
             [$sl,$st] = $orderStatus[$o['status']] ?? [$o['status'],'info'];
-            $ocur = array_search((string)$o['status'], $orderPipe, true);
+            // 'made' показываем на той же стадии, что и 'paid' — «Изготовление».
+            $ostat = (string)$o['status'] === 'made' ? 'paid' : (string)$o['status'];
+            $ocur = array_search($ostat, $orderPipe, true);
             if ($ocur === false) $ocur = ((string)$o['status'] === 'new') ? -1 : 0;
             $track = trim((string)($o['tracking'] ?? ''));
             $trackUrl = $track !== '' ? 'https://www.pochta.ru/tracking#' . rawurlencode($track) : '';

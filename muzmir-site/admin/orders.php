@@ -95,13 +95,16 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 $filter = input('status');   // '', paid, made, shipped, delivered, new
 $where  = "items NOT LIKE '%\"kind\":\"club\"%'";  // клубные членства сюда не относятся
 $params = [];
-if (in_array($filter, ['new','paid','made','shipped','delivered'], true)) {
+if ($filter === 'archive') {
+    // АРХИВ: заказ, по которому введён трек-номер, уходит из работы сюда.
+    $where .= " AND status IN ('shipped','delivered')";
+} elseif (in_array($filter, ['new','paid','made','shipped','delivered'], true)) {
     $where .= " AND status=?"; $params[] = $filter;
 } else {
-    // ГЕЙТ ПО ОПЛАТЕ (Даниэль): по умолчанию неоплаченные заказы (status='new')
-    // скрыты — «до оплаты заказа не существует». Их видно только на вкладке
-    // «Ожидает оплаты», чтобы не путаться и не отправлять неоплаченное.
-    $where .= " AND status <> 'new'";
+    // РАБОЧИЙ СПИСОК (правило владельца): только то, что реально нужно сделать —
+    // распечатать и отправить. Неоплаченные скрыты («до оплаты заказа не существует»),
+    // а отправленные уходят в архив сразу после ввода трек-номера, чтобы не мешались.
+    $where .= " AND status IN ('paid','made')";
 }
 // Поиск по заказам (раньше его не было вовсе — заказ искали глазами по всему списку).
 $qOrd = trim((string) input('q'));
@@ -140,9 +143,14 @@ ob_start(); ?>
 </form>
 
 <div class="tabs" style="margin-bottom:18px;display:flex;gap:6px;flex-wrap:wrap;">
-  <?php foreach (['' => 'Все'] + $STAT as $k => $lbl):
-      // «Все» = оплаченные и далее (без ожидающих оплаты — они на своей вкладке).
-      $n = $k === '' ? (array_sum($counts) - ($counts['new'] ?? 0)) : ($counts[$k] ?? 0); ?>
+  <?php
+  // «В работе» — то, что нужно распечатать и отправить. После ввода трек-номера
+  // заказ уходит в «Архив» и в рабочем списке больше не мешается.
+  $TABS = ['' => 'В работе'] + $STAT + ['archive' => 'Архив'];
+  foreach ($TABS as $k => $lbl):
+      $n = $k === ''        ? (($counts['paid'] ?? 0) + ($counts['made'] ?? 0))
+         : ($k === 'archive' ? (($counts['shipped'] ?? 0) + ($counts['delivered'] ?? 0))
+         : ($counts[$k] ?? 0)); ?>
     <a class="tag <?= $filter === $k ? 'active' : '' ?>" href="<?= a_link('orders', $k === '' ? [] : ['status' => $k]) ?>"
        style="padding:7px 13px;border-radius:10px;<?= $filter===$k?'background:var(--a-navy);color:#fff;':'' ?>"><?= h($lbl) ?> · <?= $n ?></a>
   <?php endforeach; ?>

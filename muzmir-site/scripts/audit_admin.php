@@ -240,6 +240,52 @@ $r = http($AJAR, $BASE . '/pay?t=' . rawurlencode('мусор') . '&id=0');
 chk('битая ссылка не роняет страницу', $r['code'] === 200 && str_contains($r['body'], 'не распознана'));
 
 
+/* ───────── оригиналы: правила владельца ───────── */
+sec('Оригиналы: на почту не уходят, в работе — только к печати');
+require_once BASE_PATH . '/core/orders.php';
+
+// 1) Заказ оригинала НЕ создаёт наградной документ для рассылки.
+$ordOrig = one("SELECT * FROM awards_orders WHERE items LIKE '%\"kind\":\"original\"%' ORDER BY id DESC LIMIT 1");
+if (!$ordOrig) { ok('заказов оригиналов в базе нет — пропуск'); }
+else {
+    $oid  = (int) $ordOrig['id'];
+    $aid  = (int) ($ordOrig['application_id'] ?? 0);
+    $before = $aid ? (int) scalar("SELECT COUNT(*) FROM diplomas WHERE application_id=?", [$aid]) : 0;
+    order_fulfill_digital($oid);
+    $after  = $aid ? (int) scalar("SELECT COUNT(*) FROM diplomas WHERE application_id=?", [$aid]) : 0;
+    chk('оригинал не превращается в письмо участнику', $after === $before, "$before → $after");
+    chk('в заказе распознаны оригиналы', order_has_originals((array) $ordOrig));
+}
+
+// 2) Рабочий список админки — только то, что надо распечатать и отправить.
+$r = http($AJAR, $BASE . '/admin/?p=orders');
+chk('раздел заказов оригиналов открывается', $r['code'] === 200);
+chk('есть вкладка «В работе»', str_contains($r['body'], 'В работе'));
+chk('есть вкладка «Архив»', str_contains($r['body'], 'Архив'));
+$shipped = one("SELECT id FROM awards_orders WHERE status='shipped' ORDER BY id DESC LIMIT 1");
+if ($shipped) {
+    chk('отправленный заказ не мешается в работе',
+        !str_contains($r['body'], '№' . (int) $shipped['id'] . '<'), '№' . (int) $shipped['id']);
+    $ra = http($AJAR, $BASE . '/admin/?p=orders&status=archive');
+    chk('отправленный заказ виден в архиве', $ra['code'] === 200);
+} else { ok('отправленных заказов нет — пропуск'); }
+
+// 3) Письмо об отправке содержит трек и ссылку отслеживания.
+$sample = ['id' => 999, 'full_name' => 'Тестов Тест Тестович', 'tracking' => '80083502345678',
+           'items' => json_encode([['item' => 'Кубок Гран-при', 'kind' => 'original', 'count' => 1]], JSON_UNESCAPED_UNICODE)];
+$ship = order_ship_email($sample);
+chk('в письме есть трек-номер', str_contains($ship, '80083502345678'));
+chk('в письме есть ссылка отслеживания Почты России',
+    str_contains($ship, 'pochta.ru') || str_contains($ship, 'Отследить'));
+chk('в письме перечислен состав отправления', str_contains($ship, 'Кубок Гран-при'));
+chk('в письме НЕТ вложений-оригиналов (их не шлют)', !str_contains($ship, '.pdf'));
+
+// 4) В кабинете у оригиналов три стадии, без файлов.
+$cabSrc = file_get_contents(BASE_PATH . '/templates/site/pages/cabinet.php');
+chk('стадии заказа: Изготовление → Отправка → Прибыло',
+    str_contains($cabSrc, "'Изготовление', 'Отправка', 'Прибыло'"));
+
+
 echo "\n" . str_repeat('─', 60) . "\n";
 echo ($FAIL === 0 ? "АДМИНКА И ПРАВИЛА ЧИСТО" : "ПРОВАЛОВ: $FAIL") . ", пройдено: $OK\n";
 exit($FAIL === 0 ? 0 : 1);
