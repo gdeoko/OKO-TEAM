@@ -124,9 +124,17 @@ function _dh_one_person(string $raw, int $idx = 0): string {
  * @return array{html:string, css:string}
  */
 function _dh_fit_block(string $text, float $maxPt, float $minPt, float $emW,
-                       float $availMm, float $lsPx = 0.0, int $maxLines = 2): array {
+                       float $availMm, float $lsPx = 0.0, int $maxLines = 2,
+                       int $wrapMinWords = 2): array {
     $text = trim($text);
     if ($text === '') return ['html' => '', 'css' => 'font-size:' . $maxPt . 'pt;'];
+
+    // Короткие строки (ФИО человека — обычно три слова) НЕ переносим: «Мельникова /
+    // Анастасия Вадимовна» читается как две разные строки. Такие ужимаем кеглем и
+    // держим в одну строку. Перенос включается от $wrapMinWords слов — это названия
+    // коллективов и спецноминации, где он как раз и нужен.
+    $words = count(preg_split('~\s+~u', $text, -1, PREG_SPLIT_NO_EMPTY) ?: []);
+    if ($words < $wrapMinWords) $maxLines = 1;
 
     for ($pt = $maxPt; $pt >= $minPt - 0.01; $pt -= 0.5) {
         for ($n = 1; $n <= $maxLines; $n++) {
@@ -344,7 +352,9 @@ function diploma_html(array $c, array $a, array $opt = []): string {
 
     // Награждаемый: коллектив — максимум 2 строки, соло/благодарность — тоже
     // (длинное ФИО лучше перенести, чем ужать до нечитаемого).
-    $nameBlk  = _dh_fit_block($name, 29.0, 14.0, 0.56, $AVAIL, 0.0, 2);
+    // 4 слова — порог переноса: ФИО (Фамилия Имя Отчество) остаётся в одну строку,
+    // длинное название коллектива переносится на вторую.
+    $nameBlk  = _dh_fit_block($name, 29.0, 14.0, 0.56, $AVAIL, 0.0, 2, 4);
     $nameHtml = $nameBlk['html'];
     $nameCss  = $nameBlk['css'];
 
@@ -595,7 +605,8 @@ body{background:#444;font-family:'Manrope',sans-serif;padding:20px;min-height:10
       <?php $e = $E('label'); ?>
       <div class="awarded-label"<?= $D('label') . _dh_style($e, 15.0) ?>>награждается:</div>
       <?php $e = $E('name'); ?>
-      <?php $scriptBlk = _dh_fit_block($name, (float) $T['script_fs'], 16.0, 0.5, $AVAIL, 0.0, 2); ?>
+      <?php /* Благодарность — всегда ОДНО ФИО, поэтому и здесь порог переноса 4 слова. */
+            $scriptBlk = _dh_fit_block($name, (float) $T['script_fs'], 16.0, 0.5, $AVAIL, 0.0, 2, 4); ?>
       <div class="awarded-name-script"<?= $D('name') . _dh_style2($e, $scriptBlk['css']) ?>><?= $scriptBlk['html'] ?></div>
 
       <?php $e = $E('fields'); ?>
