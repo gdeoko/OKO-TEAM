@@ -102,6 +102,25 @@ if ($clientAmount !== $serverAmount) {
 $amount = $serverAmount;
 $uid = current_user()['id'] ?? null;
 
+// Признак «покупается само членство в клубе» — нужен и здесь (скидка на него не
+// распространяется), и ниже в проверках состава заказа.
+$isClubOrder = strpos(json_encode($normItems, JSON_UNESCAPED_UNICODE), '"kind":"club"') !== false;
+
+// СКИДКА ВИП-КЛУБА НА НАГРАДЫ (её здесь не было вовсе — клубная скидка работала
+// только при подаче заявки). Членство даёт 20% на весь наградной материал.
+$clubPctOrder = 0;
+if ($uid && !$isClubOrder) {
+    if (is_file(BASE_PATH . '/core/club.php')) require_once BASE_PATH . '/core/club.php';
+    if (function_exists('club_discount_percent')) $clubPctOrder = (int) club_discount_percent((int) $uid);
+}
+$amountBeforeDiscount = $amount;
+if ($clubPctOrder > 0 && $amount > 0) {
+    if (is_file(BASE_PATH . '/core/loyalty.php')) require_once BASE_PATH . '/core/loyalty.php';
+    $amount = function_exists('loyalty_apply')
+        ? loyalty_apply($amount, $clubPctOrder)
+        : (int) round($amount * (100 - $clubPctOrder) / 100);
+}
+
 // application_id: напрямую, либо резолвим по номеру заявки (для гостей).
 $applicationId = (int) input('application_id', '0');
 if (!$applicationId) {
@@ -114,13 +133,16 @@ if (!$applicationId) {
 
 // ПРАВИЛО (Даниэль): наградной материал заказывается ТОЛЬКО по оценённой заявке
 // (есть результат/звание). Клубное членство — исключение (это не награда за конкурс).
-$isClubOrder = strpos(json_encode($normItems, JSON_UNESCAPED_UNICODE), '"kind":"club"') !== false;
+// $isClubOrder уже вычислен выше — вместе с расчётом клубной скидки.
+$appRow = null;   // используется ниже и при клубном заказе остаётся null
 if (!$isClubOrder) {
     if (!$applicationId) {
         json_out(['ok' => false, 'error' => 'Заказать награды можно только по оценённой заявке. Дождитесь результатов или подайте заявку на участие.'], 422);
     }
     try { db()->exec("ALTER TABLE competitions ADD COLUMN results_published_at TEXT"); } catch (\Throwable $e) {}
-    $appRow = one("SELECT a.id, a.result, a.status, a.user_id, c.results_mode, c.results_published_at
+    $appRow = one("SELECT a.id, a.result, a.status, a.user_id, a.result_sent_at,
+                          c.id AS comp_id, c.name AS comp_name, c.is_paid AS comp_is_paid,
+                          c.results_mode, c.results_published_at
                    FROM applications a LEFT JOIN competitions c ON c.id=a.competition_id
                    WHERE a.id=?", [$applicationId]);
     // Привязка к покупателю: авторизованный пользователь может заказывать награды только
@@ -131,10 +153,36 @@ if (!$isClubOrder) {
     if (!$appRow || trim((string) ($appRow['result'] ?? '')) === '') {
         json_out(['ok' => false, 'error' => 'По этой заявке ещё нет результата оценки — заказ наград недоступен. Дождитесь публикации результатов.'], 422);
     }
+    // Короткий конкурс: заказ открывается только после того, как результат РЕАЛЬНО
+    // отправлен участнику на почту — до этого он не должен знать своё звание.
+    if ((string) ($appRow['results_mode'] ?? '') !== 'list'
+        && trim((string) ($appRow['result_sent_at'] ?? '')) === '') {
+        json_out(['ok' => false, 'error' => 'Результат по этой заявке ещё не направлен участнику. Заказ наград откроется после получения результата на почту.'], 422);
+    }
     // Длинный конкурс: заказ наград доступен ТОЛЬКО после публикации результатов.
     if ((string) ($appRow['results_mode'] ?? '') === 'list'
         && trim((string) ($appRow['results_published_at'] ?? '')) === '') {
         json_out(['ok' => false, 'error' => 'Результаты этого конкурса ещё не опубликованы. Заказ наград откроется после публикации итогов.'], 422);
+    }
+}
+
+// --- ПРАВИЛА СОСТАВА НАГРАД (сервер — источник истины) ---
+// Трофей строго по аттестационному результату ЗАЯВКИ (не по тому, что прислал клиент);
+// электронные основной/дополнительный в платном конкурсе не заказываются.
+// Раньше проверка была только в JS: подменой запроса дипломант мог заказать кубок.
+if (!$isClubOrder && $applicationId) {
+    require_once BASE_PATH . '/core/orders.php';
+    // Результат и платность берём из ЗАЯВКИ (её конкурс), а не из полей запроса —
+    // иначе состав наград определялся бы тем, что подставил клиент.
+    $appResult  = (string) ($appRow['result'] ?? '');
+    $compIsPaid = (int) ($appRow['comp_is_paid'] ?? 0) === 1;
+    foreach ($normItems as $ni) {
+        [$allowed, $why] = award_item_allowed(
+            (string) ($ni['item'] ?? ''), (string) ($ni['kind'] ?? 'original'), $appResult, $compIsPaid
+        );
+        if (!$allowed) {
+            json_out(['ok' => false, 'error' => 'Позиция «' . (string) ($ni['item'] ?? '') . '»: ' . $why], 422);
+        }
     }
 }
 
@@ -164,10 +212,14 @@ $orderId = insert('awards_orders', [
     'application_id' => $applicationId ?: null,
     'user_id'        => $uid,
     'full_name'      => input('full_name'),
-    'competition'    => $comp['name'] ?? input('competition'),
-    'result'         => input('result'),
+    // Конкурс и результат фиксируются по заявке — клиентские значения не принимаем.
+    'competition'    => (string) ($appRow['comp_name'] ?? $comp['name'] ?? input('competition')),
+    'result'         => (string) ($appRow['result'] ?? input('result')),
     'items'          => json_encode($normItems, JSON_UNESCAPED_UNICODE),
     'amount'         => $amount,
+    // Полная цена до клубной скидки и её размер — для чека, админки и писем.
+    'amount_full'    => $amountBeforeDiscount,
+    'discount_pct'   => $clubPctOrder,
     'email'          => mb_strtolower(input('email')),
     'phone'          => input('phone'),
     'address'        => input('address'),

@@ -103,8 +103,12 @@ function nl_admin_recipients(string $audience): array {
 
         case 'paid':
             return all(
+                // Состоявшиеся участники: оплачено ЛИБО есть результат. Перечислять коды
+                // статусов нельзя — лестница расширилась (making/made/extra/done), и
+                // сегмент терял бы получателей на поздних стадиях.
                 "SELECT DISTINCT email, full_name AS name FROM applications
-                  WHERE email<>'' AND (is_paid=1 OR status IN ('paid','judging','graded','sent'))"
+                  WHERE email<>'' AND status <> 'rejected'
+                    AND (is_paid=1 OR (result IS NOT NULL AND result<>''))"
             );
 
         case 'competition':

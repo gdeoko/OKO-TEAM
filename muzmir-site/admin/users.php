@@ -552,7 +552,10 @@ details.u-d>summary svg{width:15px;height:15px;vertical-align:-2px;margin-right:
   $qs = input('q');
   $rf = input('role');
   $w = []; $ua = [];
-  if ($qs) { $w[] = "(email LIKE ? OR full_name LIKE ? OR phone LIKE ?)"; $ua[]="%$qs%"; $ua[]="%$qs%"; $ua[]="%$qs%"; }
+  if ($qs) {
+      [$sq, $sa] = search_like(['email','full_name','phone'], (string) $qs);   // кириллица в любом регистре
+      if ($sq !== '') { $w[] = "($sq)"; $ua = array_merge($ua, $sa); }
+  }
   if ($rf && isset(ROLE_RANK[$rf])) { $w[] = "role=?"; $ua[] = $rf; }
   $where = $w ? 'WHERE ' . implode(' AND ', $w) : '';
   $users = all("SELECT * FROM users $where ORDER BY (role='owner') DESC, id DESC LIMIT 300", $ua);
@@ -697,7 +700,10 @@ details.u-d>summary svg{width:15px;height:15px;vertical-align:-2px;margin-right:
   $w = []; $sa = [];
   if ($seg) { $w[] = "tags LIKE ?"; $sa[] = "%$seg%"; }
   if ($src) { $w[] = "source=?"; $sa[] = $src; }
-  if ($sq !== '') { $w[] = "(email LIKE ? OR name LIKE ?)"; $sa[] = "%$sq%"; $sa[] = "%$sq%"; }
+  if ($sq !== '') {
+      [$_sq, $_sa] = search_like(['email','name'], $sq);
+      if ($_sq !== '') { $w[] = "($_sq)"; $sa = array_merge($sa, $_sa); }
+  }
   $where = $w ? 'WHERE ' . implode(' AND ', $w) : '';
   $subs = all("SELECT * FROM subscribers $where ORDER BY id DESC LIMIT 500", $sa);
   $sources = all("SELECT DISTINCT source FROM subscribers WHERE source<>''");

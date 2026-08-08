@@ -441,6 +441,8 @@ if('serviceWorker' in navigator){
    доступен из иконки в шапке и из нижнего меню. */
 </script>
 <script src="<?= asset('js/app.js') ?>" defer></script>
+<!-- Подсказки адреса: работают на всех формах с полем data-address-suggest. -->
+<script src="<?= asset('js/address.js') ?>" defer></script>
 <?php if ($latestNotif): ?>
 <script>
 // Новое непрочитанное уведомление — показываем «тостом сверху» (как от чата), однократно на уведомление.

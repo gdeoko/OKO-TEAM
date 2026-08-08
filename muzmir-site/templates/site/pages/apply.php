@@ -39,6 +39,16 @@ $jsCfg = [
     'agreement' => url('/agreement'),
     'consentDelay' => 15,
     'nominations'  => $noms,
+    // Формы исполнения строго по номинации (apply.js перестраивает селект при выборе).
+    'formations'   => FORMATIONS_MAP(),
+    // Скидка ВИП-клуба — цены в форме показываются перечёркнутыми.
+    'clubPct'      => (function () {
+        $u = current_user();
+        if (!$u || !is_file(BASE_PATH . '/core/club.php')) return 0;
+        require_once BASE_PATH . '/core/club.php';
+        return function_exists('club_discount_percent') ? (int) club_discount_percent((int) $u['id']) : 0;
+    })(),
+    'formationsDefault' => FORMATIONS_FOR(''),
     'allowed'   => ALLOWED_PLATFORMS(),
     'blocked'   => array_values(BLOCKED_PLATFORMS()),
 ];

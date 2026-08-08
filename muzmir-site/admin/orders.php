@@ -103,6 +103,17 @@ if (in_array($filter, ['new','paid','made','shipped','delivered'], true)) {
     // «Ожидает оплаты», чтобы не путаться и не отправлять неоплаченное.
     $where .= " AND status <> 'new'";
 }
+// Поиск по заказам (раньше его не было вовсе — заказ искали глазами по всему списку).
+$qOrd = trim((string) input('q'));
+if ($qOrd !== '') {
+    [$sq, $sa] = search_like(['full_name','email','phone','competition','result','address','tracking','items'], $qOrd);
+    if ($sq !== '') { $where .= " AND ($sq)"; $params = array_merge($params, $sa); }
+    // Точный поиск по номеру заказа: «№12» или просто «12».
+    if (preg_match('/^№?\s*(\d+)$/u', $qOrd, $m)) {
+        $where = '(' . $where . ') OR id=?';
+        $params[] = (int) $m[1];
+    }
+}
 $orders = all("SELECT * FROM awards_orders WHERE $where ORDER BY (status='paid') DESC, id DESC LIMIT 300", $params);
 
 // Счётчики по статусам (только оригинальные заказы).
@@ -118,6 +129,15 @@ ob_start(); ?>
   <h1>Заказы оригиналов наград</h1>
   <p class="muted small">Изготовление до 7 раб. дней, доставка Почтой России до 14 раб. дней. Дипломы ниже — «чистые» (без подписи/печати, с номером+QR): распечатайте, подпишите и поставьте печать живьём.</p>
 </div>
+
+<form method="get" class="filters" style="margin-bottom:14px">
+  <input type="hidden" name="p" value="orders">
+  <?php if ($filter !== ''): ?><input type="hidden" name="status" value="<?= h($filter) ?>"><?php endif; ?>
+  <div class="field"><label>Поиск</label>
+    <input name="q" value="<?= h($qOrd) ?>" placeholder="ФИО, почта, телефон, конкурс, результат, адрес, трек, № заказа" style="min-width:280px"></div>
+  <button class="btn btn--primary btn--sm"><?= admin_icon('search') ?>Найти</button>
+  <?php if ($qOrd !== ''): ?><a class="btn btn--ghost btn--sm" href="<?= a_link('orders', $filter !== '' ? ['status'=>$filter] : []) ?>">Сброс</a><?php endif; ?>
+</form>
 
 <div class="tabs" style="margin-bottom:18px;display:flex;gap:6px;flex-wrap:wrap;">
   <?php foreach (['' => 'Все'] + $STAT as $k => $lbl):

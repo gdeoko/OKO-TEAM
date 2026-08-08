@@ -47,20 +47,30 @@ function nl_resolve_recipients(string $audience): array {
             ['%' . $value . '%']
         );
     }
-    // ВИП-клуб: действующие члены клуба (активные + срок не истёк) с почтой.
+    // ВИП-клуб — ПРИГЛАШЕНИЕ вступить, поэтому идёт по ВСЕЙ базе (со своей суточной
+    // квотой 100/день), а не только по действующим членам: раньше письмо «вступайте
+    // в клуб» получали ровно те, кто уже в клубе, и до базы оно не доходило.
+    // Действующих членов, наоборот, исключаем — им приглашение не нужно.
     if ($kind === 'vip') {
         return all(
-            "SELECT u.email AS email, u.full_name AS name
-               FROM club_members m JOIN users u ON u.id = m.user_id
-              WHERE COALESCE(m.active,1) = 1
-                AND (m.expires_at IS NULL OR m.expires_at = '' OR m.expires_at > datetime('now'))
-                AND COALESCE(u.email,'') <> '' AND COALESCE(u.blocked,0) = 0"
+            "SELECT s.email AS email, s.name AS name
+               FROM subscribers s
+              WHERE s.active = 1
+                AND LOWER(s.email) NOT IN (
+                    SELECT LOWER(u.email) FROM club_members m JOIN users u ON u.id = m.user_id
+                     WHERE COALESCE(m.active,1) = 1
+                       AND (m.expires_at IS NULL OR m.expires_at = '' OR m.expires_at > datetime('now'))
+                       AND COALESCE(u.email,'') <> ''
+                )"
         );
     }
-    // Личный кабинет: зарегистрированные пользователи (не заблокированные, с почтой, не отписавшиеся).
+    // «Личный кабинет» — тоже по ВСЕЙ базе (квота 100/день): рассказываем про кабинет
+    // и подписчикам, и зарегистрированным. Отписавшиеся исключены.
     if ($kind === 'kabinet') {
         return all(
-            "SELECT email, full_name AS name FROM users
+            "SELECT email, name FROM subscribers WHERE active = 1
+             UNION
+             SELECT email, full_name AS name FROM users
               WHERE COALESCE(email,'') <> '' AND COALESCE(blocked,0) = 0 AND COALESCE(notify_email,1) = 1"
         );
     }
@@ -165,12 +175,14 @@ function newsletter_track_click(string $token, string $url = ''): string {
  * ===================================================================== */
 
 /** Оборачивает тело рассылки в единый фирменный HTML-лейаут (mm_email_layout, core/mailer.php). */
-function nl_wrap_email(string $bodyHtml, string $unsubUrl, string $openPixel, string $preheader = ''): string {
+function nl_wrap_email(string $bodyHtml, string $unsubUrl, string $openPixel, string $preheader = '', array $opt = []): string {
     if (!function_exists('mm_email_layout')) require_once __DIR__ . '/mailer.php';
     return mm_email_layout($bodyHtml, [
         'preheader'       => $preheader,
         'unsubscribe_url' => $unsubUrl,
         'pixel'           => $openPixel,
+        // Письмо про сам ВИП-клуб не должно нести ещё и карточку клуба в подвале.
+        'vip'             => $opt['vip'] ?? true,
     ]);
 }
 
@@ -448,7 +460,14 @@ function newsletter_process_queue(int $limit): int {
             if (!empty($row['newsletter_id'])) q("UPDATE newsletters SET stats_sent = stats_sent + 1 WHERE id = ?", [(int) $row['newsletter_id']]);
         } else {
             $tries = (int) $row['tries'] + 1;
-            update('mail_queue', ['status' => $tries >= 3 ? 'failed' : 'queued', 'tries' => $tries, 'error' => 'send failed'], 'id=:id', ['id' => $id]);
+            // Пишем РЕАЛЬНУЮ причину (нет SMTP-доступов, отказ сервера, плохой адрес),
+            // иначе в админке видно только «send failed» и непонятно, что чинить.
+            $why = function_exists('mail_last_error') ? mail_last_error() : '';
+            update('mail_queue', [
+                'status' => $tries >= 3 ? 'failed' : 'queued',
+                'tries'  => $tries,
+                'error'  => mb_substr($why !== '' ? $why : 'Отправка не удалась', 0, 300),
+            ], 'id=:id', ['id' => $id]);
         }
         return $ok;
     };

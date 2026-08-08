@@ -61,6 +61,23 @@ function comp_upload_image(string $field, int $compId, string $baseName, int $ma
         flash('Файл «' . $baseName . '» больше ' . $maxMb . ' МБ.', 'error');
         return '';
     }
+    // Защита от подмены полей: афиша — горизонтальная картинка (для писем и ВК),
+    // фон диплома — вертикальный лист A4. Если в афишу кладут вертикальный файл,
+    // в рассылке вместо афиши оказывался фон диплома — предупреждаем сразу.
+    $sz = @getimagesize($f['tmp_name']);
+    if ($sz && $sz[0] > 0 && $sz[1] > 0) {
+        $ratio = $sz[0] / $sz[1];
+        if ($baseName === 'afisha' && $ratio < 0.95) {
+            flash('Похоже, в «Афишу» загружен вертикальный файл (' . $sz[0] . '×' . $sz[1] . ') — это формат фона диплома. '
+                . 'Афиша должна быть горизонтальной (примерно 16:9): именно она идёт в письма и посты ВК.', 'error');
+            return '';
+        }
+        if ($baseName === 'diploma_bg' && $ratio > 1.05) {
+            flash('В «Фон диплома» загружен горизонтальный файл (' . $sz[0] . '×' . $sz[1] . ') — фон диплома должен быть вертикальным (A4).', 'error');
+            return '';
+        }
+    }
+
     $dir = BASE_PATH . '/public/uploads/comp/' . $compId . '/';
     if (!is_dir($dir)) @mkdir($dir, 0775, true);
     // Старые версии с другим расширением убираем, чтобы не путались.
@@ -554,11 +571,24 @@ if ($action === 'edit') {
           <div class="field"><label>Описание</label><textarea name="description" placeholder="Краткое описание конкурса для карточки на сайте"><?= h($c['description']) ?></textarea></div>
           <div class="field"><label>Афиша конкурса (16:9, png/jpg/webp до 15 МБ)</label>
             <input type="file" name="afisha_file" accept="image/*">
-            <?php if (!empty($c['cover'])): ?>
+            <?php if (!empty($c['cover'])):
+                    // Показываем реальные пропорции файла: так сразу видно, если в афишу
+                    // попал вертикальный фон диплома (именно этот файл уходит в рассылку).
+                    $_cvAbs = BASE_PATH . '/public/' . ltrim((string)$c['cover'], '/');
+                    $_cvSz  = is_file($_cvAbs) ? @getimagesize($_cvAbs) : null;
+                    $_vert  = $_cvSz && $_cvSz[1] > $_cvSz[0]; ?>
               <div style="margin-top:8px"><img src="<?= h(url('/' . ltrim((string)$c['cover'], '/'))) ?>" alt="Афиша"
-                   style="max-width:260px;width:100%;aspect-ratio:16/9;object-fit:cover;border-radius:10px;border:1px solid var(--a-line)"></div>
+                   style="max-width:260px;width:100%;border-radius:10px;border:1px solid var(--a-line)"></div>
+              <div class="small <?= $_vert ? '' : 'muted' ?>" style="margin-top:6px<?= $_vert ? ';color:#C0392B;font-weight:700' : '' ?>">
+                <?php if ($_cvSz): ?>
+                  Файл: <?= (int)$_cvSz[0] ?>×<?= (int)$_cvSz[1] ?> ·
+                  <?= $_vert ? 'ВЕРТИКАЛЬНЫЙ — похоже, это фон диплома, а не афиша. В письме и в ВК уйдёт именно он. Загрузите горизонтальную афишу.' : 'горизонтальная — верно' ?>
+                <?php else: ?>
+                  Файл афиши не найден на диске: <?= h((string)$c['cover']) ?>
+                <?php endif; ?>
+              </div>
             <?php endif; ?>
-            <div class="hint">Афиша показывается в календаре и на карточке конкурса; клик по ней ведёт на подачу заявки.</div>
+            <div class="hint">Афиша показывается в календаре, на карточке конкурса, в письмах рассылки и в постах ВК.</div>
           </div>
           <input type="hidden" name="cover" value="<?= h($c['cover']) ?>">
           <div class="field"><label>Письмо поддержки министерства (png/jpg/webp до 15 МБ)</label>

@@ -19,6 +19,15 @@ function db(): PDO {
     $pdo->exec('PRAGMA journal_mode=WAL');
     $pdo->exec('PRAGMA foreign_keys=ON');
     $pdo->exec('PRAGMA busy_timeout=15000');
+    // UTF-8 регистронезависимость для поиска. Встроенные LIKE/LOWER в SQLite работают
+    // только с ASCII: запрос «иванов» не находил «Иванов», и поиск в админке выглядел
+    // сломанным. Регистрируем свои функции на mb_* — их использует search_like().
+    $pdo->sqliteCreateFunction('mb_lower', function ($s) {
+        return $s === null ? null : mb_strtolower((string) $s, 'UTF-8');
+    }, 1);
+    $pdo->sqliteCreateFunction('mb_upper', function ($s) {
+        return $s === null ? null : mb_strtoupper((string) $s, 'UTF-8');
+    }, 1);
     db_migrate($pdo);
     if ($isNew) db_seed($pdo);
     return $pdo;
@@ -294,12 +303,95 @@ function db_migrate(PDO $pdo): void {
     // Ленивое добавление колонок к существующим таблицам (идемпотентно).
     // launched: конкурс появляется на сайте (афиша/заявка/награды/календарь) ТОЛЬКО после
     // запуска из пульта. До запуска — виден только в админке. Текущие конкурсы уже запущены.
+    //
+    // ВАЖНО: раньше эти колонки добавлялись «по месту» — в cron/send_diplomas.php,
+    // admin/grading.php, admin/dispatch.php, core/newsletter.php и т.д. Если модуль,
+    // создающий колонку, в этом запросе не подключался, любой другой код падал на
+    // «no such column» (например, кабинет не мог прочитать result_sent_at, пока не
+    // отработает крон). Теперь вся схема заводится здесь, в одном месте, при db().
     foreach ([
-        ['competitions', 'launched',    'INTEGER DEFAULT 0'],
-        ['competitions', 'launched_at', 'TEXT'],
+        ['competitions', 'launched',            'INTEGER DEFAULT 0'],
+        ['competitions', 'launched_at',         'TEXT'],
+        ['competitions', 'results_published_at','TEXT'],
+        ['competitions', 'duration',            "TEXT DEFAULT 'long'"],
+
+        // Заявка: аттестация, сроки отправки результата, служебные поля жюри.
+        ['applications', 'graded_at',        'TEXT'],
+        ['applications', 'extra_diploma',    "TEXT DEFAULT ''"],
+        ['applications', 'jury_comment',     "TEXT DEFAULT ''"],
+        ['applications', 'link_check',       'TEXT'],
+        ['applications', 'reject_reason',    "TEXT DEFAULT ''"],
+        ['applications', 'send_at_override', 'TEXT'],
+        ['applications', 'result_send_at',   "TEXT DEFAULT ''"],   // план отправки результата
+        ['applications', 'result_sent_at',   "TEXT DEFAULT ''"],   // ФАКТ отправки результата
+        ['applications', 'amount_paid',      'INTEGER DEFAULT 0'], // сколько реально оплачено за участие
+
+        // Дипломы: расписание отправки и счётчик попыток.
+        ['diplomas', 'scheduled_at',      'TEXT'],
+        ['diplomas', 'send_tries',        'INTEGER DEFAULT 0'],
+        ['diplomas', 'video_review_path', "TEXT DEFAULT ''"],
+
+        // Очередь писем: приоритет (0 = транзакционное) и плановое время.
+        ['mail_queue', 'scheduled_at',  'TEXT'],
+        ['mail_queue', 'priority',      'INTEGER DEFAULT 0'],
+        ['mail_queue', 'campaign_type', 'TEXT'],
+
+        // Заказы наградного материала: этапы исполнения.
+        ['awards_orders', 'made_at',       'TEXT'],
+        ['awards_orders', 'shipped_at',    'TEXT'],
+        ['awards_orders', 'delivered_at',  'TEXT'],
+        ['awards_orders', 'dispatched_at', 'TEXT'],
+        ['awards_orders', 'clean_pdfs',    "TEXT DEFAULT ''"],
+        ['awards_orders', 'kind',          "TEXT DEFAULT 'original'"], // original|digital|club|mixed
+        ['awards_orders', 'amount_full',   'INTEGER DEFAULT 0'],       // цена до клубной скидки
+        ['awards_orders', 'discount_pct',  'INTEGER DEFAULT 0'],       // применённая скидка ВИП, %
+        ['awards_orders', 'scheduled_at',  'TEXT'],                    // план отправки электронных
+        ['awards_orders', 'sent_at',       'TEXT'],                    // факт отправки электронных
+
+        ['users',   'blocked',     'INTEGER DEFAULT 0'],
+        ['reviews', 'attachments', "TEXT DEFAULT ''"],
+        ['newsletters', 'campaign_type', "TEXT DEFAULT 'konkurs'"],
     ] as $col) {
         try { $pdo->exec("ALTER TABLE {$col[0]} ADD COLUMN {$col[1]} {$col[2]}"); } catch (\Throwable $e) { /* уже есть */ }
     }
+
+    // Индексы под частые выборки очередей и статусов (список «Отправки», кабинет).
+    foreach ([
+        "CREATE INDEX IF NOT EXISTS idx_dip_sched   ON diplomas(sent_at, scheduled_at)",
+        "CREATE INDEX IF NOT EXISTS idx_queue_sched ON mail_queue(status, scheduled_at)",
+        "CREATE INDEX IF NOT EXISTS idx_ord_app     ON awards_orders(application_id)",
+        "CREATE INDEX IF NOT EXISTS idx_ord_status  ON awards_orders(status)",
+        "CREATE INDEX IF NOT EXISTS idx_app_result  ON applications(result_sent_at)",
+    ] as $ix) {
+        try { $pdo->exec($ix); } catch (\Throwable $e) { /* не критично */ }
+    }
+}
+
+/**
+ * Строит регистронезависимое (в т.ч. для кириллицы) условие поиска по нескольким полям.
+ * Поддерживает несколько слов: «иванов вокал» найдёт строку, где есть оба фрагмента
+ * (в любых полях и в любом порядке).
+ *
+ * @param  array $fields поля SQL, например ['a.full_name','a.email','c.name']
+ * @param  string $query пользовательская строка поиска
+ * @return array [фрагмент SQL для WHERE (или ''), массив аргументов]
+ */
+function search_like(array $fields, string $query): array {
+    $query = trim(preg_replace('/\s+/u', ' ', $query));
+    if ($query === '' || !$fields) return ['', []];
+    // Не более 5 слов — защита от неограниченного роста запроса.
+    $words = array_slice(explode(' ', $query), 0, 5);
+    $sql = []; $args = [];
+    foreach ($words as $w) {
+        $w = mb_strtolower($w, 'UTF-8');
+        $ors = [];
+        foreach ($fields as $f) {
+            $ors[] = "mb_lower(COALESCE($f,'')) LIKE ?";
+            $args[] = '%' . $w . '%';
+        }
+        $sql[] = '(' . implode(' OR ', $ors) . ')';
+    }
+    return [implode(' AND ', $sql), $args];
 }
 
 function setting(string $key, $default = null) {

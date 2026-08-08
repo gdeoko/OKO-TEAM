@@ -321,6 +321,25 @@
       field.style.display = 'none';
       sel.value = '';
     }
+    fillFormations();
+  }
+
+  /* ---------- Номинация → форма исполнения (строго по номинации) ----------
+     Общий список давал бессмыслицу («Хор» в хореографии). Набор берётся из
+     CFG.formations[номинация]; ранее выбранное значение сохраняется, если оно
+     допустимо для новой номинации. */
+  function fillFormations() {
+    var sel = $('#formation');
+    if (!sel) return;
+    var nom = $('#nomination') ? $('#nomination').value : '';
+    var list = (CFG.formations && CFG.formations[nom]) || CFG.formationsDefault || [];
+    if (!list.length) return;
+    var prev = sel.value;
+    sel.innerHTML = '<option value="">Выберите форму</option>';
+    list.forEach(function (f) {
+      var o = document.createElement('option'); o.value = f; o.textContent = f; sel.appendChild(o);
+    });
+    sel.value = list.indexOf(prev) >= 0 ? prev : '';
   }
 
   /* ---------- Тип: солист / коллектив ---------- */
@@ -535,12 +554,23 @@
       var p = parseInt(c.getAttribute('data-price'), 10) || 0;
       if (c.getAttribute('data-paid') === '1') { total += p; paidCount++; } else { freeCount++; }
     });
+    // Скидка ВИП-клуба (20%): показываем перечёркнутую полную цену и цену участника.
+    var clubPct = parseInt(CFG.clubPct, 10) || 0;
+    var pay = clubPct > 0 ? Math.max(0, Math.round(total * (100 - clubPct) / 100)) : total;
+    function rub(n) { return n.toLocaleString('ru-RU') + ' ₽'; }
+    function priceHtml(full, my) {
+      return (clubPct > 0 && my < full)
+        ? '<s style="opacity:.55;font-weight:400;margin-right:7px">' + rub(full) + '</s>' + rub(my)
+        : rub(full);
+    }
+
     var el = $('[data-pay-amount]');
     if (el) {
       if (total > 0) {
-        var txt = total.toLocaleString('ru-RU') + ' ₽';
+        var txt = priceHtml(total, pay);
         if (paidCount > 1) txt += ' <small style="color:var(--muted);font-weight:400">за ' + paidCount + ' участия</small>';
         if (freeCount > 0) txt += ' <small style="color:var(--muted);font-weight:400"> + ' + freeCount + ' бесплатн.</small>';
+        if (clubPct > 0 && pay < total) txt += '<small style="display:block;color:var(--gold-2,#C79322);font-weight:700">ВИП-клуб −' + clubPct + '%</small>';
         el.innerHTML = txt;
       } else {
         el.textContent = 'по положению';
@@ -548,7 +578,8 @@
     }
     // Обновляем счётчик в шапке шага 1
     var totBox = document.getElementById('mzApplyTotal');
-    if (totBox) totBox.innerHTML = 'Выбрано: <b>' + chosen.length + '</b> · <b>' + (total>0? total.toLocaleString('ru-RU')+' ₽' : (freeCount>0?'бесплатно':'0 ₽')) + '</b>';
+    if (totBox) totBox.innerHTML = 'Выбрано: <b>' + chosen.length + '</b> · <b>' +
+      (total > 0 ? priceHtml(total, pay) : (freeCount > 0 ? 'бесплатно' : '0 ₽')) + '</b>';
   }
 
   /* ---------- Согласие: 3 галочки сразу доступны, БЕЗ таймера ---------- */

@@ -188,12 +188,17 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             audit('dispatch_resched', 'diploma', $ids[0] ?? 0, ['at' => $norm, 'app' => $appG, 'count' => count($ids)]);
             disp_done(true, 'Дата отправки письма с дипломами изменена на ' . disp_dt($norm) . '.', ['when' => disp_dt($norm)]);
         } elseif ($do === 'sendnow') {
-            // Ставим «сейчас» + сбрасываем счётчик попыток (свежий заход) и дёргаем крон.
+            // Отправляем СИНХРОННО и сообщаем реальный итог. Раньше здесь только
+            // выставлялось время и запускался фоновый крон через exec() — если exec
+            // запрещён или PHP-CLI недоступен, письмо не уходило, а админ видел
+            // сообщение «поставлено на отправку» и ждал впустую.
+            require_once BASE_PATH . '/core/dispatch_ops.php';
+            $targetApp = $appG > 0 ? $appG : (int) (scalar("SELECT application_id FROM diplomas WHERE id=?", [$ids[0] ?? 0]) ?? 0);
             q("UPDATE diplomas SET scheduled_at=?, send_tries=0 WHERE id IN ($inHolder)",
               array_merge([date('Y-m-d H:i:s')], $ids));
-            @exec('cd ' . escapeshellarg(BASE_PATH) . ' && php cron/send_diplomas.php > /dev/null 2>&1 &');
-            audit('dispatch_sendnow', 'diploma', $ids[0] ?? 0, ['app' => $appG, 'count' => count($ids)]);
-            disp_done(true, 'Письмо с дипломами (все по заявке) поставлено на моментальную отправку — уйдёт одним письмом в течение минуты.', ['remove' => true]);
+            $r = dops_diplomas_send_now($targetApp, false);
+            audit('dispatch_sendnow', 'diploma', $ids[0] ?? 0, ['app' => $targetApp, 'count' => count($ids), 'ok' => $r['ok']]);
+            disp_done($r['ok'], $r['msg'], $r['ok'] ? ['remove' => true] : []);
         } elseif ($do === 'cancel') {
             q("DELETE FROM diplomas WHERE id IN ($inHolder) AND sent_at IS NULL", $ids);
             audit('dispatch_cancel', 'diploma', $ids[0] ?? 0, ['app' => $appG, 'count' => count($ids)]);
@@ -232,8 +237,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             update('mail_queue', ['scheduled_at' => $norm], 'id=:id', ['id' => $id]);
             audit('dispatch_resched', 'mail', $id, ['at' => $norm]);
             disp_done(true, 'Время письма изменено' . ($norm ? ' на ' . disp_dt($norm) : '') . '.', ['when' => $norm ? disp_dt($norm) : 'сразу']);
-        } elseif ($do === 'sendnow') {
-            $m = one("SELECT * FROM mail_queue WHERE id=? AND status='queued'", [$id]);
+        } elseif ($do === 'sendnow' || $do === 'retry') {
+            // «Повторить» берёт и провалившиеся письма (status='failed'), «Сейчас» — из очереди.
+            $m = $do === 'retry'
+                ? one("SELECT * FROM mail_queue WHERE id=?", [$id])
+                : one("SELECT * FROM mail_queue WHERE id=? AND status IN ('queued','paused')", [$id]);
             if ($m && function_exists('mail_send')) {
                 $opt = [];
                 if (!empty($m['attach'])) $opt['attach'] = (string) $m['attach'];
@@ -241,15 +249,22 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $ok = false;
                 try { $ok = (bool) mail_send((string) $m['to_email'], (string) $m['subject'], (string) $m['body'], $opt); } catch (\Throwable $e) {}
                 if ($ok) {
-                    update('mail_queue', ['status' => 'sent', 'sent_at' => date('Y-m-d H:i:s'), 'scheduled_at' => null], 'id=:id', ['id' => $id]);
+                    update('mail_queue', ['status' => 'sent', 'sent_at' => date('Y-m-d H:i:s'), 'scheduled_at' => null, 'error' => ''], 'id=:id', ['id' => $id]);
                     audit('dispatch_sendnow', 'mail', $id, ['ok' => true]);
-                    disp_done(true, 'Письмо отправлено сейчас.', ['remove' => true]);
+                    disp_done(true, 'Письмо отправлено сейчас — ' . (string) $m['to_email'] . '.', ['remove' => true]);
                 }
-                update('mail_queue', ['scheduled_at' => null, 'priority' => 0], 'id=:id', ['id' => $id]);
-                audit('dispatch_sendnow', 'mail', $id, ['ok' => false]);
-                disp_done(true, 'Мгновенная отправка не удалась — письмо в приоритетной очереди (уйдёт в течение минуты).', ['remove' => true]);
+                // Не ушло: возвращаем в очередь приоритетным и ПОКАЗЫВАЕМ причину,
+                // иначе выглядит как «нажал — ничего не произошло».
+                $why = function_exists('mail_last_error') ? mail_last_error() : '';
+                update('mail_queue', [
+                    'status' => 'queued', 'scheduled_at' => null, 'priority' => 0, 'tries' => 0,
+                    'error' => mb_substr($why !== '' ? $why : 'Отправка не удалась', 0, 300),
+                ], 'id=:id', ['id' => $id]);
+                audit('dispatch_sendnow', 'mail', $id, ['ok' => false, 'why' => $why]);
+                disp_done(false, 'Отправить сейчас не удалось: ' . ($why !== '' ? $why : 'SMTP недоступен')
+                    . ' Письмо возвращено в очередь и уйдёт, как только канал заработает.');
             }
-            disp_done(false, 'Письмо не найдено или уже обработано.');
+            disp_done(false, 'Письмо не найдено.');
         } elseif ($do === 'cancel') {
             update('mail_queue', ['status' => 'cancelled'], 'id=:id', ['id' => $id]);
             audit('dispatch_cancel', 'mail', $id, []);
@@ -352,16 +367,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             audit('dispatch_result_resched', 'application', $id, ['at' => $norm]);
             disp_done(true, 'Отправка результата перенесена на ' . disp_dt($norm) . '.', ['when' => disp_dt($norm)]);
         } elseif ($do === 'sendnow') {
-            require_once BASE_PATH . '/core/result_mail.php';
-            if (is_file(BASE_PATH . '/core/notifications.php')) require_once BASE_PATH . '/core/notifications.php';
-            $ok = false;
-            try { $ok = function_exists('result_mail_send') ? (bool) result_mail_send($id) : false; } catch (\Throwable $e) {}
-            update('applications', ['result_sent_at' => date('Y-m-d H:i:s'), 'result_send_at' => date('Y-m-d H:i:s')], 'id=:id', ['id' => $id]);
-            if (!empty($a['user_id']) && function_exists('notify_user')) {
-                notify_user((int) $a['user_id'], 'Ваш результат готов', 'Жюри подвело итоги: ' . (string) $a['result'] . '.', url('/cabinet'), 'award');
-            }
-            audit('dispatch_result_sendnow', 'application', $id, ['ok' => $ok]);
-            disp_done(true, $ok ? 'Результат отправлен сейчас.' : 'Результат помечен отправленным (письмо могло не уйти).', ['remove' => true]);
+            require_once BASE_PATH . '/core/dispatch_ops.php';
+            $r = dops_result_send_now($id, false);
+            disp_done($r['ok'], $r['msg'], $r['ok'] ? ['remove' => true] : []);
         } elseif ($do === 'cancel') {
             update('applications', ['result_send_at' => ''], 'id=:id', ['id' => $id]);
             audit('dispatch_result_cancel', 'application', $id, []);
@@ -423,6 +431,19 @@ $resultsRaw = all("SELECT a.id, a.number, a.full_name, a.group_name, a.is_group,
                    ORDER BY a.result_send_at ASC LIMIT 400");
 /* ---- Архив отправленных писем ---- */
 $sentRaw = all("SELECT * FROM mail_queue WHERE status='sent' ORDER BY sent_at DESC, id DESC LIMIT 300");
+/* ---- НЕ ОТПРАВЛЕННЫЕ (провалившиеся) ----
+   Раньше письма со status='failed' не показывались нигде: из очереди пропадали,
+   в архив не попадали. Со стороны это выглядело как «письма молча не отправляются». */
+$failedRaw = all("SELECT * FROM mail_queue WHERE status='failed' ORDER BY id DESC LIMIT 100");
+
+/* ---- Состояние почтового канала (диагностика в одну строку) ---- */
+$smtpUser = (string) cfgv('smtp_user', '');
+$smtpPass = (string) cfgv('smtp_pass', '');
+$mailReady = $smtpUser !== '' && $smtpPass !== '';
+$lastSent  = (string) (scalar("SELECT sent_at FROM mail_queue WHERE status='sent' ORDER BY sent_at DESC LIMIT 1") ?? '');
+$cntQueued = (int) (scalar("SELECT COUNT(*) FROM mail_queue WHERE status='queued'") ?? 0);
+$cntFailed = (int) (scalar("SELECT COUNT(*) FROM mail_queue WHERE status='failed'") ?? 0);
+$lastErr   = (string) (scalar("SELECT error FROM mail_queue WHERE status='failed' AND error<>'' ORDER BY id DESC LIMIT 1") ?? '');
 
 /* ---- Нормализация в единый список ---- */
 $queue = [];
@@ -598,6 +619,31 @@ tr.disp-row.gone{opacity:0;transition:.4s}
   <p class="muted small">Единый список всего, что уходит автоматически: дипломы после оценки, письма из очереди, оригиналы наград после оплаты. Фильтр и поиск — сверху. Действия применяются без перезагрузки страницы.</p>
 </div>
 
+<!-- Состояние почтового канала: сразу видно, почему письма не уходят. -->
+<div class="card" style="margin-bottom:16px;border-left:4px solid <?= $mailReady ? ($cntFailed > 0 ? '#C79322' : '#1E9E5A') : '#C0392B' ?>">
+  <div style="display:flex;gap:18px;flex-wrap:wrap;align-items:center;justify-content:space-between">
+    <div>
+      <b><?= $mailReady ? 'Почта настроена' : 'Почта НЕ настроена — письма не отправляются' ?></b>
+      <div class="small muted" style="margin-top:4px">
+        <?php if (!$mailReady): ?>
+          В окружении не заданы <code>MUZMIR_SMTP_USER</code> / <code>MUZMIR_SMTP_PASS</code>.
+          Пока их нет, любая отправка (в том числе «Отправить сейчас») будет падать, а письма копиться в очереди.
+        <?php else: ?>
+          Отправитель: <?= h($smtpUser) ?> · последняя успешная отправка:
+          <?= $lastSent !== '' ? h(disp_dt($lastSent)) : 'ещё не было' ?>
+        <?php endif; ?>
+      </div>
+      <?php if ($cntFailed > 0 && $lastErr !== ''): ?>
+        <div class="small" style="margin-top:6px;color:#C0392B">Последняя ошибка: <?= h(mb_strimwidth($lastErr, 0, 160, '…')) ?></div>
+      <?php endif; ?>
+    </div>
+    <div style="display:flex;gap:10px;flex-wrap:wrap">
+      <span class="badge badge--new">В очереди: <?= $cntQueued ?></span>
+      <?php if ($cntFailed > 0): ?><span class="badge badge--rejected">Не отправлено: <?= $cntFailed ?></span><?php endif; ?>
+    </div>
+  </div>
+</div>
+
 <form method="get" class="filters disp-toolbar" id="dispFilter">
   <input type="hidden" name="p" value="dispatch">
   <div class="field"><label>Поиск</label>
@@ -711,6 +757,34 @@ tr.disp-row.gone{opacity:0;transition:.4s}
   </table></div>
   <?php endif; ?>
 </div>
+
+<!-- ============ НЕ ОТПРАВЛЕННЫЕ ============ -->
+<?php if ($failedRaw): ?>
+<div class="card" id="failed" style="margin-bottom:20px;border-left:4px solid #C0392B">
+  <div class="section-title" style="margin-bottom:8px"><h3>Не отправлены · <?= count($failedRaw) ?></h3></div>
+  <p class="small muted" style="margin:-4px 0 12px">Письма, которые не удалось отправить после нескольких попыток. Причина указана в строке. Исправьте причину и нажмите «Повторить» — письмо вернётся в очередь.</p>
+  <div class="table-wrap"><table class="tbl">
+    <thead><tr><th>Кому</th><th>Тема</th><th>Причина</th><th>Попыток</th><th>Действия</th></tr></thead>
+    <tbody>
+    <?php foreach ($failedRaw as $m): $rid = 'fail-' . (int) $m['id']; ?>
+      <tr class="disp-row" id="<?= $rid ?>">
+        <td class="small"><?= h((string) $m['to_email']) ?></td>
+        <td class="small"><?= h(mb_strimwidth((string) $m['subject'], 0, 60, '…')) ?></td>
+        <td class="small" style="color:#C0392B"><?= h(mb_strimwidth((string) ($m['error'] ?? ''), 0, 90, '…')) ?></td>
+        <td class="small"><?= (int) ($m['tries'] ?? 0) ?></td>
+        <td>
+          <div class="disp-acts">
+            <button class="btn btn--primary btn--sm" data-act="retry" data-kind="mail" data-id="<?= (int) $m['id'] ?>" data-row="<?= $rid ?>"><?= admin_icon('send') ?>Повторить</button>
+            <a class="btn btn--ghost btn--sm" href="<?= a_link('dispatch', ['do'=>'view','kind'=>'mail','id'=>(int)$m['id']]) ?>" target="_blank" rel="noopener"><?= admin_icon('eye') ?></a>
+            <button class="btn btn--ghost btn--sm" data-act="cancel" data-kind="mail" data-id="<?= (int) $m['id'] ?>" data-row="<?= $rid ?>" data-confirm="Удалить письмо из списка?" style="color:#C0392B;border-color:#C0392B"><?= admin_icon('trash') ?></button>
+          </div>
+        </td>
+      </tr>
+    <?php endforeach; ?>
+    </tbody>
+  </table></div>
+</div>
+<?php endif; ?>
 
 <!-- ============ ТОСТ + МОДАЛ РЕДАКТОРА ПИСЬМА ============ -->
 <div id="dispToast"></div>
@@ -828,7 +902,7 @@ tr.disp-row.gone{opacity:0;transition:.4s}
     if(conf && !confirm(conf)) return;
     e.preventDefault();
 
-    var doMap={sendnow:'sendnow',cancel:'cancel',resched:'resched',dup:'duplicate',
+    var doMap={sendnow:'sendnow',retry:'retry',cancel:'cancel',resched:'resched',dup:'duplicate',
                made:'made',ship:'ship',redispatch:'redispatch'};
     var payload={kind:kind,id:id,do:doMap[act]};
     // Дипломы: действие применяется ко всей заявке (одно письмо) — передаём app.

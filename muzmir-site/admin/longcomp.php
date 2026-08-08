@@ -116,11 +116,17 @@ ob_start(); ?>
               ORDER BY full_name COLLATE NOCASE", [$comp]);
   $qLong = trim(input('q'));
   if ($qLong !== '') {
-      $ql = mb_strtolower($qLong);
-      $all = array_values(array_filter($all, function ($a) use ($ql) {
-          $hay = mb_strtolower(trim((string)($a['full_name'] ?? '') . ' ' . ($a['group_name'] ?? '') . ' '
-               . ($a['number'] ?? '') . ' ' . ($a['email'] ?? '') . ' ' . ($a['phone'] ?? '') . ' ' . ($a['work_title'] ?? '')));
-          return str_contains($hay, $ql);
+      // Многословный поиск: «иванова вальс» найдёт строку, где есть оба фрагмента.
+      $words = array_slice(preg_split('/\s+/u', mb_strtolower($qLong)) ?: [], 0, 5);
+      $all = array_values(array_filter($all, function ($a) use ($words) {
+          $hay = mb_strtolower(trim(implode(' ', [
+              (string)($a['full_name'] ?? ''), (string)($a['group_name'] ?? ''), (string)($a['number'] ?? ''),
+              (string)($a['email'] ?? ''), (string)($a['phone'] ?? ''), (string)($a['work_title'] ?? ''),
+              (string)($a['teacher'] ?? ''), (string)($a['institution'] ?? ''), (string)($a['city'] ?? ''),
+              (string)($a['nomination'] ?? ''), (string)($a['result'] ?? ''),
+          ])));
+          foreach ($words as $w) { if ($w !== '' && !str_contains($hay, $w)) return false; }
+          return true;
       }));
   }
   $toGrade = array_values(array_filter($all, fn($a) => trim((string)$a['result']) === ''));

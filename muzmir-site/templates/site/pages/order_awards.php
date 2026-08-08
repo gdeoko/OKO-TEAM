@@ -1,19 +1,34 @@
 <?php
 /** Форма заказа наградного материала. */
-$comps = all("SELECT id,slug,name FROM competitions WHERE status != 'draft' ORDER BY sort");
+$comps = all("SELECT id,slug,name,is_paid FROM competitions WHERE status != 'draft' ORDER BY sort");
 $preselect = input('competition', '');
 
 // Заказ ИЗ ЗАЯВКИ: /order-awards?app={id} — данные подставляются из заявки участника,
 // повторно ничего вводить не нужно. Трофей ограничивается аттестационным результатом.
+require_once BASE_PATH . '/core/orders.php';
+// Скидка ВИП-клуба (20%) — показываем перечёркнутые цены прямо в каталоге наград.
+$clubPct = 0;
+if (($_cu = current_user()) && is_file(BASE_PATH . '/core/club.php')) {
+    require_once BASE_PATH . '/core/club.php';
+    if (function_exists('club_discount_percent')) $clubPct = (int) club_discount_percent((int) $_cu['id']);
+}
 $pf = ['full_name'=>'','age_category'=>'','nomination'=>'','teacher'=>'','act_title'=>'','email'=>'','phone'=>''];
-$fromApp = null; $appResultLock = '';
+$fromApp = null; $appResultLock = ''; $appCompPaid = false;
 $appId = (int) input('app', '');
 if ($appId && ($cu = current_user())) {
-    $a = one("SELECT a.*, c.slug AS comp_slug, c.name AS comp_name FROM applications a
+    $a = one("SELECT a.*, c.slug AS comp_slug, c.name AS comp_name, c.is_paid AS comp_is_paid,
+                     c.results_mode AS comp_results_mode, c.results_published_at AS comp_results_pub
+              FROM applications a
               LEFT JOIN competitions c ON c.id=a.competition_id
               WHERE a.id=? AND a.user_id=?", [$appId, $cu['id']]);
-    if ($a && (string)($a['result'] ?? '') !== '') {
+    // Заказ открыт только когда результат реально дошёл до участника (короткие —
+    // по result_sent_at, длинные — после публикации итогов).
+    $_delivered = ((string)($a['comp_results_mode'] ?? '') === 'list')
+        ? trim((string)($a['comp_results_pub'] ?? '')) !== ''
+        : trim((string)($a['result_sent_at'] ?? '')) !== '';
+    if ($a && (string)($a['result'] ?? '') !== '' && $_delivered) {
         $fromApp = $a;
+        $appCompPaid = (int)($a['comp_is_paid'] ?? 0) === 1;
         $pf['full_name']   = $a['is_group'] ? ($a['group_name'] ?: $a['full_name']) : $a['full_name'];
         $pf['age_category']= (string)$a['age_category'];
         $pf['nomination']  = (string)$a['nomination'];
@@ -55,6 +70,11 @@ foreach ($comps as $c) {
     foreach ($allKeys as $k) {
         $val = $byComp[$c['id']][$k] ?? ($general[$k] ?? null);
         if ($val !== null) $row[$k] = $val;
+    }
+    // Состав наград ограничивается правилами (core/orders.php): трофей строго по
+    // результату заявки, в платном конкурсе нет электронных основного/дополнительного.
+    if ($fromApp) {
+        $row = award_filter_prices($row, $appResultLock, (int)($c['is_paid'] ?? 0) === 1);
     }
     $priceMatrix[$c['slug']] = $row;
 }
@@ -248,22 +268,40 @@ ob_start(); ?>
       <div class="grid grid-2">
         <div class="field">
           <label for="competition">Конкурс</label>
-          <select id="competition" name="competition" required>
-            <option value="">Выберите конкурс</option>
-            <?php foreach ($comps as $c): ?>
-              <option value="<?= h($c['slug']) ?>" <?= $preselect === $c['slug'] ? 'selected' : '' ?>><?= h($c['name']) ?></option>
-            <?php endforeach; ?>
-          </select>
+          <?php if ($fromApp): ?>
+            <!-- Заказ по конкретной заявке: конкурс и результат фиксированы её данными. -->
+            <select id="competition" name="competition" required disabled style="opacity:.75">
+              <option value="<?= h((string)$fromApp['comp_slug']) ?>" selected><?= h((string)$fromApp['comp_name']) ?></option>
+            </select>
+            <input type="hidden" name="competition" value="<?= h((string)$fromApp['comp_slug']) ?>">
+          <?php else: ?>
+            <select id="competition" name="competition" required>
+              <option value="">Выберите конкурс</option>
+              <?php foreach ($comps as $c): ?>
+                <option value="<?= h($c['slug']) ?>" <?= $preselect === $c['slug'] ? 'selected' : '' ?>><?= h($c['name']) ?></option>
+              <?php endforeach; ?>
+            </select>
+          <?php endif; ?>
           <span class="err-msg">Выберите конкурс.</span>
         </div>
         <div class="field">
           <label for="result">Аттестационный результат</label>
-          <select id="result" name="result" required>
-            <option value="">Выберите результат</option>
-            <?php foreach ($results as $r): ?>
-              <option value="<?= h($r) ?>" <?= $appResultLock === $r ? 'selected' : '' ?>><?= h($r) ?></option>
-            <?php endforeach; ?>
-          </select>
+          <?php if ($appResultLock !== ''): ?>
+            <!-- Результат берётся из аттестации заявки и не выбирается вручную: состав
+                 наград (кубок/статуэтка/медаль) определяется строго им. -->
+            <select id="result" name="result" required disabled style="opacity:.75">
+              <option value="<?= h($appResultLock) ?>" selected><?= h($appResultLock) ?></option>
+            </select>
+            <input type="hidden" name="result" value="<?= h($appResultLock) ?>">
+            <span class="hint">Присвоено жюри по заявке <?= h((string)($fromApp['number'] ?? '')) ?>.</span>
+          <?php else: ?>
+            <select id="result" name="result" required>
+              <option value="">Выберите результат</option>
+              <?php foreach ($results as $r): ?>
+                <option value="<?= h($r) ?>"><?= h($r) ?></option>
+              <?php endforeach; ?>
+            </select>
+          <?php endif; ?>
           <span class="err-msg">Выберите аттестационный результат.</span>
         </div>
       </div>
@@ -290,7 +328,11 @@ ob_start(); ?>
         </div>
 
         <div class="field ff">
-          <textarea id="address" name="address" rows="3" placeholder=" "></textarea>
+          <!-- Подсказки адреса — общий компонент assets/js/address.js через серверный
+               прокси /api/v1/address_suggest (ключ DaData в браузер не попадает).
+               Раньше здесь была обычная textarea без подсказок вообще. -->
+          <textarea id="address" name="address" rows="3" placeholder=" "
+                    data-address-suggest data-postal="#postal_index"></textarea>
           <label for="address">Полный адрес с индексом</label>
           <span class="hint">Например, 123456, город, улица, дом, квартира.</span>
           <span class="err-msg">Укажите полный адрес с индексом.</span>
@@ -340,6 +382,9 @@ ob_start(); ?>
 (function () {
   var PRICES = <?= json_encode($priceMatrix, JSON_UNESCAPED_UNICODE) ?>;
   var META = <?= json_encode($itemsMeta, JSON_UNESCAPED_UNICODE) ?>;
+  // Скидка ВИП-клуба: цены показываются перечёркнутыми, рядом — цена участника.
+  var CLUB_PCT = <?= (int) $clubPct ?>;
+  function clubPrice(n) { return CLUB_PCT > 0 ? Math.max(0, Math.round(n * (100 - CLUB_PCT) / 100)) : n; }
 
   var form = document.getElementById('awardsOrderForm');
   var compSel = document.getElementById('competition');
@@ -378,9 +423,13 @@ ob_start(); ?>
     keys.forEach(function (k) {
       var m = META[k] || { label: k };
       if (!resultAllows(m.item || m.label)) return;           // трофей не по результату — скрываем
+      var full = rows[k], my = clubPrice(full);
+      var priceHtml = CLUB_PCT > 0 && my !== full
+        ? '<s style="opacity:.55;font-weight:400;margin-right:7px">' + money(full) + '</s>' + money(my)
+        : money(full);
       html += '<label style="display:flex;justify-content:space-between;gap:12px;align-items:center;padding:11px 0;border-bottom:1px solid var(--line);cursor:pointer">' +
-        '<span><input type="checkbox" class="award-item" data-key="' + k + '" data-price="' + rows[k] + '" style="width:auto;margin-right:10px">' + m.label + '</span>' +
-        '<b style="white-space:nowrap">' + money(rows[k]) + '</b></label>';
+        '<span><input type="checkbox" class="award-item" data-key="' + k + '" data-price="' + my + '" data-full="' + full + '" style="width:auto;margin-right:10px">' + m.label + '</span>' +
+        '<b style="white-space:nowrap">' + priceHtml + '</b></label>';
     });
     if (!html) html = '<p style="color:var(--muted);margin:12px 0">Нет доступных позиций для выбранного результата.</p>';
     itemsBox.innerHTML = html;
@@ -398,9 +447,16 @@ ob_start(); ?>
 
   function recompute() {
     var boxes = itemsBox.querySelectorAll('.award-item:checked');
-    var total = 0;
-    boxes.forEach(function (b) { total += parseInt(b.getAttribute('data-price'), 10) || 0; });
-    totalEl.textContent = money(total);
+    var total = 0, totalFull = 0;
+    boxes.forEach(function (b) {
+      total += parseInt(b.getAttribute('data-price'), 10) || 0;
+      totalFull += parseInt(b.getAttribute('data-full'), 10) || 0;
+    });
+    // Итог: для члена клуба — перечёркнутая полная сумма и цена со скидкой.
+    totalEl.innerHTML = (CLUB_PCT > 0 && totalFull > total)
+      ? '<s style="opacity:.55;font-weight:400;margin-right:8px">' + money(totalFull) + '</s>' + money(total) +
+        '<span style="display:block;font-size:.8rem;color:var(--gold-2,#C79322);font-weight:700;margin-top:2px">ВИП-клуб −' + CLUB_PCT + '%</span>'
+      : money(total);
     recipientBlock.style.display = hasOriginal() ? '' : 'none';
   }
 

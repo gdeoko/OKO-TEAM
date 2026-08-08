@@ -173,46 +173,28 @@ function mmc_competition_card(array $c): string {
         . '</td></tr></table>';
 }
 
-/** Полоса образцов наград + кнопка на страницу образцов. */
+/**
+ * Кнопка на страницу образцов наград.
+ *
+ * Раньше здесь была целая полоса: заголовок «Настоящие награды победителям»,
+ * подзаголовок и ряд картинок-образцов. По решению владельца в общем письме
+ * запуска этот блок убран — остаётся только кнопка внизу, а сами образцы
+ * участник смотрит на сайте.
+ */
 function mmc_awards_strip(int $cid = 0): string {
-    $samples = mmc_award_samples($cid);
-    if (!$samples) return '';
-    $navy = MM_NAVY; $muted = MM_MUTED;
-    $cells = '';
-    $w = (int) floor(100 / max(1, count($samples)));
-    foreach ($samples as $s) {
-        $cells .= '<td width="' . $w . '%" style="padding:5px;text-align:center;vertical-align:top;">'
-            . '<img src="' . h($s['img']) . '" alt="' . h($s['label']) . '" width="120" style="display:block;width:100%;max-width:130px;height:auto;border-radius:10px;border:1px solid ' . MM_LINE . ';margin:0 auto;">'
-            . '<div style="font-size:12px;color:' . $muted . ';margin-top:6px;font-weight:600;">' . h($s['label']) . '</div>'
-            . '</td>';
-    }
-    return mmc_h('Настоящие награды победителям', 'Кубки, статуэтки, медали и дипломы — с бесплатным электронным дипломом каждому участнику.')
-        . '<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin:0 0 8px;"><tr>' . $cells . '</tr></table>'
-        . mm_email_btn(mmc_base() . '/awards', 'Смотреть образцы наград', 'gold');
+    return mm_email_btn(mmc_base() . '/awards', 'Образцы наград', 'gold');
 }
 
-/** Блок ВИП-клуба. */
+/**
+ * Блок ВИП-клуба в теле письма.
+ *
+ * Раньше здесь был свой золотой блок с четырьмя общими фразами. Теперь единственный
+ * источник — mm_vip_card() из core/mailer.php: она стоит в КАЖДОМ письме центра,
+ * содержит актуальную скидку и сроки. Функция оставлена для совместимости и
+ * возвращает пустую строку, чтобы карточка не дублировалась в одном письме дважды.
+ */
 function mmc_vip_block(): string {
-    $navy = MM_NAVY; $gold = MM_GOLD; $gold2 = MM_GOLD2;
-    $perks = [
-        'Безлимитное участие во всех конкурсах сезона',
-        'Приоритетная проверка жюри и ранние результаты',
-        'Эксклюзивные именные награды и статус ВИП',
-        'Персональный менеджер и закрытые мероприятия',
-    ];
-    $list = '';
-    foreach ($perks as $p) {
-        $list .= '<tr><td style="padding:5px 0;font-size:14px;color:#3A2E10;line-height:1.5;">✦ ' . h($p) . '</td></tr>';
-    }
-    return '<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin:8px 0 22px;">'
-        . '<tr><td style="border-radius:16px;padding:24px 22px;background:' . $gold . ';background:linear-gradient(135deg,' . $gold . ' 0%,' . $gold2 . ' 100%);">'
-        . '<div style="font-size:12px;letter-spacing:.16em;text-transform:uppercase;color:' . $navy . ';font-weight:700;opacity:.8;">Закрытый клуб</div>'
-        . '<div style="font-family:Georgia,serif;font-size:23px;font-weight:700;color:' . $navy . ';margin:4px 0 12px;">ВИП-клуб «Музыкальный Мир»</div>'
-        . '<table role="presentation" width="100%" cellpadding="0" cellspacing="0">' . $list . '</table>'
-        . '<table role="presentation" cellpadding="0" cellspacing="0" style="margin-top:16px;"><tr><td style="border-radius:11px;background:' . $navy . ';">'
-        . '<a href="' . h(mmc_base() . '/club') . '" style="display:inline-block;padding:13px 32px;color:' . $gold2 . ';text-decoration:none;font-weight:700;font-size:15px;border-radius:11px;">Вступить в ВИП-клуб →</a>'
-        . '</td></tr></table>'
-        . '</td></tr></table>';
+    return '';
 }
 
 /** Блок «Личный кабинет» — возможности зарегистрированного пользователя (2×2 плитки). */
@@ -245,7 +227,13 @@ function mmc_kabinet_block(): string {
 /** Сетка привилегий ВИП-клуба (как раздел «Что даёт членство» на сайте) — плитки без цен. */
 function mmc_vip_perks_grid(): string {
     $navy = MM_NAVY; $muted = MM_MUTED; $card = MM_CARD; $line = MM_LINE;
+    // Порядок — строго по важности, как в карточке клуба во всех письмах:
+    // скидка и сроки идут первыми (раньше их в этой сетке не было вообще).
+    $pct  = function_exists('mm_vip_discount') ? mm_vip_discount() : 20;
+    $days = function_exists('mm_vip_days') ? mm_vip_days() : 3;
     $perks = [
+        ['%',  'Скидка ' . $pct . '% на всё', 'Постоянная скидка на любые заявки на участие и на весь наградной материал.'],
+        ['⏱',  'Результаты за ' . $days . ' рабочих дня', 'Итоги и изготовление наград — за ' . $days . ' рабочих дня вместо обычных 5.'],
         ['★', 'Бесплатный конкурс каждый месяц', '1 заявка с 1 номером в месяц — бесплатно, плюс бесплатный электронный диплом.'],
         ['✦', 'Закрытые конкурсы Клуба', 'Отдельные конкурсы, доступные только членам Клуба.'],
         ['◆', 'Ранний доступ к результатам', 'Заявки членов Клуба проверяются вне общей очереди — итоги узнаёте раньше.'],

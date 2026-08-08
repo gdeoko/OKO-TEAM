@@ -76,6 +76,9 @@ function mm_email_layout(string $inner, array $opt = []): string {
     if ($email !== '') $contacts .= '<div style="margin-top:2px;">Почта: ' . $email . '</div>';
     if ($hours !== '') $contacts .= '<div style="margin-top:2px;">Режим работы: ' . $hours . '</div>';
 
+    // Карточка ВИП-клуба — в каждом письме (отключается явным ['vip'=>false]).
+    $vipCard = (($opt['vip'] ?? true) && function_exists('mm_vip_card')) ? mm_vip_card() : '';
+
     $unsubUrl = trim((string) ($opt['unsubscribe_url'] ?? ''));
     $unsubLine = $unsubUrl !== '' && $unsubUrl !== '{{unsubscribe_url}}'
         ? $note . ' <a href="' . h($unsubUrl) . '" style="color:' . $gold . ';text-decoration:underline;">Отписаться от рассылки</a>.'
@@ -119,6 +122,8 @@ function mm_email_layout(string $inner, array $opt = []): string {
       {$inner}
     </td>
   </tr>
+
+  <tr><td style="padding:0 38px 4px;">{$vipCard}</td></tr>
 
   <tr><td style="padding:0 42px;"><div style="height:1px;background:{$line};"></div></td></tr>
 
@@ -170,12 +175,15 @@ function mm_actions_row(array $buttons): string {
     return '<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin:6px 0 14px;"><tr>' . $cells . '</tr></table>';
 }
 
-/** Промо-блок: ВИП-клуб + другие конкурсы (кнопки). */
+/**
+ * Промо-блок: другие конкурсы центра.
+ * Кнопка ВИП-клуба отсюда убрана — она дублировала бы полноценную карточку клуба
+ * (mm_vip_card), которая теперь стоит в каждом письме перед подвалом.
+ */
 function mm_promo_block(): string {
     $base = rtrim((string) cfgv('base_url', 'https://xn----7sbugdeiegh1b0a9hen.xn--p1ai'), '/');
     return '<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin:6px 0 8px;"><tr>'
-        . '<td width="50%" style="padding:5px;"><a href="' . h($base . '/club') . '" style="display:block;text-align:center;padding:14px 10px;border-radius:12px;background:' . MM_GOLD . ';background:linear-gradient(135deg,' . MM_GOLD . ',' . MM_GOLD2 . ');color:' . MM_NAVY . ';text-decoration:none;font-weight:700;font-size:14px;">Вступить в ВИП-клуб</a></td>'
-        . '<td width="50%" style="padding:5px;"><a href="' . h($base . '/competitions') . '" style="display:block;text-align:center;padding:14px 10px;border-radius:12px;background:' . MM_NAVY . ';background:linear-gradient(135deg,' . MM_NAVY . ',' . MM_NAVY2 . ');color:' . MM_GOLD2 . ';text-decoration:none;font-weight:700;font-size:14px;">Другие конкурсы центра</a></td>'
+        . '<td style="padding:5px;"><a href="' . h($base . '/competitions') . '" style="display:block;text-align:center;padding:14px 10px;border-radius:12px;background:' . MM_NAVY . ';background:linear-gradient(135deg,' . MM_NAVY . ',' . MM_NAVY2 . ');color:' . MM_GOLD2 . ';text-decoration:none;font-weight:700;font-size:14px;">Другие конкурсы центра</a></td>'
         . '</tr></table>';
 }
 
@@ -222,6 +230,10 @@ function mm_email_tx(string $inner, array $opt = []): string {
         . '<tr><td style="padding:30px 32px 22px;font-size:15px;line-height:1.7;">' . $hero . $inner . $thanks . '</td></tr>'
         . ($actions !== '' ? '<tr><td style="padding:0 28px 6px;">' . $actions . '</td></tr>' : '')
         . ($promo !== '' ? '<tr><td style="padding:0 28px 8px;">' . $promo . '</td></tr>' : '')
+        // Карточка ВИП-клуба — в каждом письме центра, перед подвалом.
+        // Отключается только явным ['vip'=>false] (например, в самом письме про клуб).
+        . ((($opt['vip'] ?? true) && function_exists('mm_vip_card'))
+              ? '<tr><td style="padding:0 28px 10px;">' . mm_vip_card() . '</td></tr>' : '')
         . '<tr><td style="padding:16px 32px 26px;border-top:1px solid ' . $line . ';font-size:13px;color:' . $muted . ';line-height:1.6;">'
         . '<div style="font-family:Georgia,serif;font-weight:700;color:' . $navy . ';font-size:14px;margin-bottom:6px;">' . $org . '</div>'
         . ($addr !== '' ? '<div>' . $addr . '</div>' : '')
@@ -229,6 +241,69 @@ function mm_email_tx(string $inner, array $opt = []): string {
         . $social
         . '<div style="margin-top:12px;font-size:12px;color:#A9B2CC;">© ' . $year . ' ' . $org . '</div>'
         . '</td></tr></table></td></tr></table></body></html>';
+}
+
+/**
+ * Скидка члена ВИП-клуба, % — единственный источник правды для сайта, писем,
+ * подачи заявки и заказа наград. Меняется настройкой settings.club_discount.
+ */
+function mm_vip_discount(): int {
+    $pct = 0;
+    if (function_exists('setting')) $pct = (int) setting('club_discount', '20');
+    return $pct > 0 ? $pct : 20;
+}
+
+/** Срок для членов клуба (рабочих дней) против обычных 5. */
+function mm_vip_days(): int { return 3; }
+
+/**
+ * КАРТОЧКА ВИП-КЛУБА — компактный золотой блок, который ставится в КАЖДОЕ письмо
+ * центра (как контакты в подвале). Привилегии перечислены по убыванию важности:
+ * скидка 20% на всё → ускоренные сроки → бесплатный конкурс ежемесячно → далее.
+ * Вёрстка — только таблицы и инлайн-стили (стабильно во всех почтовиках).
+ */
+function mm_vip_card(array $opt = []): string {
+    $base  = rtrim((string) cfgv('base_url', 'https://xn----7sbugdeiegh1b0a9hen.xn--p1ai'), '/');
+    if (stripos($base, 'localhost') !== false) $base = 'https://xn----7sbugdeiegh1b0a9hen.xn--p1ai';
+    $url   = $base . '/club';
+    $pct   = mm_vip_discount();
+    $days  = mm_vip_days();
+    $navy  = MM_NAVY; $gold = MM_GOLD; $gold2 = MM_GOLD2;
+
+    // Порядок строго по важности — самое ценное первым.
+    $perks = [
+        ['−' . $pct . '%',  'Скидка ' . $pct . '% на всё', 'На любые заявки на участие и на весь наградной материал — постоянно.'],
+        [$days . ' дня',    'Ускоренные сроки',            'Результаты и изготовление наград за ' . $days . ' рабочих дня вместо 5.'],
+        ['1/мес',           'Бесплатный конкурс каждый месяц', 'Одна заявка ежемесячно бесплатно, с электронным дипломом.'],
+        ['VIP',             'Закрытые конкурсы Клуба',     'Отдельные конкурсы только для членов Клуба.'],
+        ['24ч',             'Приоритетная поддержка',      'Ответ в течение суток, проверка заявок вне общей очереди.'],
+        ['★',               'Рекомендации жюри и статус',  'Личные комментарии жюри, именная карта участника и клубный чат.'],
+    ];
+    $rows = '';
+    foreach ($perks as [$badge, $title, $desc]) {
+        $rows .= '<tr>'
+            . '<td width="58" valign="top" style="padding:5px 10px 5px 0;">'
+            . '<div style="background:' . $navy . ';color:' . $gold2 . ';border-radius:8px;font-size:11px;font-weight:700;'
+            . 'text-align:center;padding:6px 4px;line-height:1.1;white-space:nowrap;">' . h($badge) . '</div></td>'
+            . '<td valign="top" style="padding:5px 0;">'
+            . '<div style="font-size:13.5px;font-weight:700;color:#2A2005;line-height:1.35;">' . h($title) . '</div>'
+            . '<div style="font-size:12px;color:#5A4A18;line-height:1.45;">' . h($desc) . '</div></td>'
+            . '</tr>';
+    }
+
+    return '<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin:18px 0 6px;">'
+        . '<tr><td style="border-radius:16px;padding:20px 20px 18px;'
+        . 'background:' . $gold . ';background:linear-gradient(135deg,' . $gold2 . ' 0%,' . $gold . ' 55%,#B8892B 100%);">'
+        . '<table role="presentation" width="100%" cellpadding="0" cellspacing="0"><tr>'
+        . '<td><div style="font-size:10.5px;letter-spacing:.18em;text-transform:uppercase;color:' . $navy . ';font-weight:700;opacity:.75;">Закрытый клуб центра</div>'
+        . '<div style="font-family:Georgia,serif;font-size:20px;font-weight:700;color:' . $navy . ';margin:3px 0 0;">ВИП-клуб «Музыкальный Мир»</div></td>'
+        . '</tr></table>'
+        . '<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin:12px 0 0;">' . $rows . '</table>'
+        . '<table role="presentation" cellpadding="0" cellspacing="0" style="margin:14px 0 0;"><tr>'
+        . '<td style="border-radius:10px;background:' . $navy . ';">'
+        . '<a href="' . h($url) . '" style="display:inline-block;padding:12px 28px;color:' . $gold2 . ';text-decoration:none;font-weight:700;font-size:14.5px;border-radius:10px;">Вступить в ВИП-клуб →</a>'
+        . '</td></tr></table>'
+        . '</td></tr></table>';
 }
 
 /** Тихий лог почты в data/logs/mail.log. */
@@ -398,10 +473,22 @@ function mail_route_account(array $row): array {
     return [];   // заявки/результаты/уведомления — официальная Gmail
 }
 
+/**
+ * Причина последней неудачной отправки — чтобы админка могла показать её человеку,
+ * а не молча «письмо не ушло». Читается через mail_last_error().
+ */
+function mail_last_error(?string $set = null): string {
+    static $err = '';
+    if ($set !== null) $err = $set;
+    return $err;
+}
+
 function mail_send(string $to, string $subject, string $html, array $opt = []): bool {
+    mail_last_error('');
     $to = trim($to);
     if ($to === '' || !filter_var($to, FILTER_VALIDATE_EMAIL)) {
         mail_log('SKIP bad recipient: ' . $to);
+        mail_last_error('Некорректный адрес получателя: ' . $to);
         return false;
     }
 
@@ -414,6 +501,7 @@ function mail_send(string $to, string $subject, string $html, array $opt = []): 
     $port = (int) ($acc['port'] ?? cfgv('smtp_port', 465));
     if ($user === '' || $pass === '') {
         mail_log('SKIP no SMTP credentials for ' . $to);
+        mail_last_error('Не настроены доступы SMTP (MUZMIR_SMTP_USER / MUZMIR_SMTP_PASS) — письма не отправляются.');
         return false;
     }
 
@@ -484,6 +572,7 @@ function mail_send(string $to, string $subject, string $html, array $opt = []): 
         mail_log('SENT to ' . $to . ' | ' . $subject);
     } else {
         mail_log('FAIL to ' . $to . ' | ' . $subject . ' | ' . $err);
+        mail_last_error('SMTP ' . $host . ':' . $port . ' — ' . ($err !== '' ? $err : 'сервер отклонил письмо'));
     }
     // Дублируем письмо в приложение как уведомление — но НЕ для писем из очереди
     // (у них уведомление уже создано в mail_queue(), иначе был бы дубль).

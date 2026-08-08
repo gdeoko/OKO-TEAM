@@ -135,6 +135,12 @@ table.tbl td.num{text-align:right;font-variant-numeric:tabular-nums}
 .badge--finished{background:#eef3fb;color:#3a5f8f}
 .badge--gold{background:var(--grad-gold);color:#1a1400}
 .badge--muted{background:#eee;color:#666}
+/* Единая лестница статусов заявки (core/app_status.php) */
+.badge--making{background:#fdf1e3;color:#96601a}
+.badge--made{background:#e6f7f3;color:#1c8a72}
+.badge--extra{background:#eaf1ff;color:#2f4fa8}
+.badge--done{background:#e9f6ee;color:#2e7d4f}
+.badge--submitted{background:#eef3fb;color:#3a5f8f}
 
 /* ===== Формы ===== */
 .field{margin-bottom:16px}

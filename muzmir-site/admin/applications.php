@@ -11,7 +11,17 @@ function apps_filter(): array {
     if ($s = input('status')) { $w[] = 'a.status=?'; $a[] = $s; }
     if ($d1 = input('date_from')) { $w[] = 'date(a.created_at)>=?'; $a[] = $d1; }
     if ($d2 = input('date_to')) { $w[] = 'date(a.created_at)<=?'; $a[] = $d2; }
-    if ($qs = input('q')) { $w[] = '(a.full_name LIKE ? OR a.number LIKE ? OR a.email LIKE ?)'; $a[]="%$qs%"; $a[]="%$qs%"; $a[]="%$qs%"; }
+    // Поиск: регистронезависимый для кириллицы (search_like → mb_lower), по всем
+    // значимым полям заявки и названию конкурса, с поддержкой нескольких слов.
+    // Раньше искали LIKE по трём полям — «иванов» не находил «Иванов».
+    if (($qs = trim((string) input('q'))) !== '') {
+        [$sq, $sa] = search_like([
+            'a.full_name', 'a.group_name', 'a.number', 'a.email', 'a.phone',
+            'a.work_title', 'a.teacher', 'a.institution', 'a.city',
+            'a.nomination', 'a.result', 'c.name',
+        ], $qs);
+        if ($sq !== '') { $w[] = '(' . $sq . ')'; $a = array_merge($a, $sa); }
+    }
     // ГЕЙТ ПО ОПЛАТЕ (Даниэль): неоплаченные заявки на ПЛАТНЫЕ конкурсы по умолчанию
     // скрыты — «до оплаты заявки не существует для админов». is_paid=1 у всех
     // бесплатных (ставится сразу) и у оплаченных платных. Чекбокс «Ожидают оплаты»
@@ -145,13 +155,47 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && input('do') === 'edit_app') {
     admin_redirect('applications', ['id' => $id]);
 }
 
+/* ---------- Действия по отправкам прямо из карточки заявки ---------- */
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && in_array((string) input('do'), [
+        'result_sendnow','result_dup','result_resched','result_cancel',
+        'dip_sendnow','dip_dup','dip_resched','dip_cancel'], true)) {
+    if (!csrf_check()) { flash('Сессия устарела.', 'error'); admin_redirect('applications'); }
+    require_once BASE_PATH . '/core/dispatch_ops.php';
+    $aid = (int) input('id');
+    $dt  = (string) input('scheduled_at');
+    $r = match ((string) input('do')) {
+        'result_sendnow' => dops_result_send_now($aid, false),
+        'result_dup'     => dops_result_send_now($aid, true),
+        'result_resched' => dops_result_resched($aid, $dt),
+        'result_cancel'  => dops_result_cancel($aid),
+        'dip_sendnow'    => dops_diplomas_send_now($aid, false),
+        'dip_dup'        => dops_diplomas_send_now($aid, true),
+        'dip_resched'    => dops_diplomas_resched($aid, $dt),
+        'dip_cancel'     => dops_diplomas_cancel($aid),
+    };
+    flash($r['msg'], $r['ok'] ? 'success' : 'error');
+    admin_redirect('applications', ['id' => $aid]);
+}
+
 /* ================= КАРТОЧКА ЗАЯВКИ ================= */
 if ($id = (int) input('id')) {
-    $a = one("SELECT a.*, c.name comp, c.slug comp_slug, c.is_paid comp_paid FROM applications a
+    require_once BASE_PATH . '/core/app_status.php';
+    require_once BASE_PATH . '/core/dispatch_ops.php';
+    $a = one("SELECT a.*, c.name comp, c.slug comp_slug, c.is_paid comp_paid, c.price comp_price,
+                     c.results_mode comp_results_mode, c.results_published_at comp_results_pub
+              FROM applications a
               LEFT JOIN competitions c ON c.id=a.competition_id WHERE a.id=?", [$id]);
     if (!$a) { flash('Заявка не найдена.', 'error'); admin_redirect('applications'); }
     $grades = all("SELECT g.*, u.full_name jury FROM jury_grades g LEFT JOIN users u ON u.id=g.jury_id
                    WHERE g.application_id=? ORDER BY g.id DESC", [$id]);
+
+    // Полная картина исполнения: результат, награды, доп. заказы, деньги.
+    $st       = app_state($a, true);
+    $paidSum  = (int) (scalar("SELECT COALESCE(SUM(amount),0) FROM payments
+                                WHERE application_id=? AND status IN ('succeeded','paid')", [$id]) ?? 0);
+    $isFree   = (int) ($a['comp_paid'] ?? 1) === 0;
+    $dipLbl   = ['main'=>'Основной диплом','extra'=>'Дополнительный диплом','named'=>'Именной диплом','thanks'=>'Благодарность педагогу'];
+    $ordLbl   = ['new'=>'Не оплачен','paid'=>'Оплачен','made'=>'Изготовлен','shipped'=>'Отправлен','delivered'=>'Доставлен'];
 
     ob_start(); ?>
     <div class="toolbar">
@@ -159,10 +203,155 @@ if ($id = (int) input('id')) {
       <?php /* Кнопка «Оценить» убрана намеренно (Даниэль): оценка ТОЛЬКО в разделах
               «Оценка коротких» / «Оценка длинных», короткие и длинные не пересекаются. */ ?>
     </div>
+    <!-- ====== ИСПОЛНЕНИЕ ЗАЯВКИ: статус, результат, награды, заказы ====== -->
+    <div class="card" style="margin-bottom:18px">
+      <div class="section-title" style="margin-bottom:6px">
+        <h3>Исполнение заявки</h3>
+        <span class="badge badge--<?= h($st['code']) ?>"><?= h($st['label']) ?></span>
+      </div>
+      <p class="small muted" style="margin:0 0 14px"><?= h($st['detail']) ?></p>
+
+      <dl class="kv" style="margin-bottom:16px">
+        <dt>Сумма участия</dt>
+        <dd><?= $isFree
+              ? '<span class="badge badge--muted">Бесплатно</span>'
+              : ($paidSum > 0
+                  ? '<b>' . number_format($paidSum, 0, '.', ' ') . ' ₽</b> · оплачено'
+                  : '<span class="muted">' . number_format((int)($a['comp_price'] ?? 0), 0, '.', ' ') . ' ₽ — не оплачено</span>') ?></dd>
+        <dt>Подана</dt><dd><?= h(date('d.m.Y H:i', strtotime((string)$a['created_at']))) ?></dd>
+        <?php if (!empty($a['graded_at'])): ?>
+          <dt>Оценена жюри</dt><dd><?= h(date('d.m.Y H:i', strtotime((string)$a['graded_at']))) ?></dd>
+        <?php endif; ?>
+      </dl>
+
+      <!-- ---- РЕЗУЛЬТАТ ---- -->
+      <div style="border:1px solid var(--a-line);border-radius:12px;padding:14px 16px;margin-bottom:14px">
+        <div style="display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap;align-items:center">
+          <div>
+            <b>Аттестационный результат</b><br>
+            <?php if (trim((string)$a['result']) !== ''): ?>
+              <span class="badge badge--gold"><?= h($a['result']) ?></span>
+              <?php if (!empty($a['extra_diploma'])): ?> <span class="badge badge--extra"><?= h($a['extra_diploma']) ?></span><?php endif; ?>
+            <?php else: ?><span class="muted small">не проставлен</span><?php endif; ?>
+          </div>
+          <div class="small">
+            <?php if ($st['result_sent_at'] !== ''): ?>
+              <span class="badge badge--made">Отправлен <?= h(dops_dt($st['result_sent_at'])) ?></span>
+            <?php elseif ($st['result_plan_at'] !== ''): ?>
+              <span class="badge badge--making">Придёт <?= h(dops_dt($st['result_plan_at'])) ?></span>
+            <?php elseif (trim((string)$a['result']) !== ''): ?>
+              <span class="badge badge--judging">Ожидает отправки</span>
+            <?php endif; ?>
+          </div>
+        </div>
+        <?php if (trim((string)$a['result']) !== ''): ?>
+          <form method="post" action="<?= url('/admin/?p=applications') ?>" class="disp-acts" style="margin-top:12px;display:flex;gap:6px;flex-wrap:wrap;align-items:center">
+            <?= csrf_field() ?><input type="hidden" name="id" value="<?= $id ?>">
+            <?php if ($st['result_sent_at'] === ''): ?>
+              <input type="datetime-local" name="scheduled_at" value="<?= h($st['result_plan_at'] ? date('Y-m-d\TH:i', strtotime($st['result_plan_at'])) : '') ?>">
+              <button class="btn btn--ghost btn--sm" name="do" value="result_resched">Перенести</button>
+              <button class="btn btn--primary btn--sm" name="do" value="result_sendnow"><?= admin_icon('send') ?>Отправить сейчас</button>
+              <button class="btn btn--ghost btn--sm" name="do" value="result_cancel" style="color:#C0392B;border-color:#C0392B"
+                      onclick="return confirm('Отменить плановую отправку результата?')">Отменить</button>
+            <?php else: ?>
+              <button class="btn btn--navy btn--sm" name="do" value="result_dup"
+                      onclick="return confirm('Отправить письмо с результатом ещё раз?')"><?= admin_icon('copy') ?>Продублировать результат</button>
+            <?php endif; ?>
+          </form>
+        <?php endif; ?>
+      </div>
+
+      <!-- ---- НАГРАДНЫЕ ДОКУМЕНТЫ ---- -->
+      <div style="border:1px solid var(--a-line);border-radius:12px;padding:14px 16px;margin-bottom:14px">
+        <div style="display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap;align-items:center">
+          <b>Наградные документы <span class="small muted">(<?= (int)$st['diplomas_sent'] ?> из <?= (int)$st['diplomas_total'] ?> отправлено)</span></b>
+          <?php if ($st['diplomas_total'] > 0): ?>
+            <span class="small">
+              <?php if ($st['diplomas_sent'] === $st['diplomas_total']): ?>
+                <span class="badge badge--made">Отправлены <?= h(dops_dt($st['diploma_sent_at'])) ?></span>
+              <?php elseif ($st['diploma_plan_at'] !== ''): ?>
+                <span class="badge badge--making">Придут <?= h(dops_dt($st['diploma_plan_at'])) ?></span>
+              <?php endif; ?>
+            </span>
+          <?php endif; ?>
+        </div>
+
+        <?php if (!$st['diplomas']): ?>
+          <p class="small muted" style="margin:10px 0 0">Документы ещё не сформированы — появятся после аттестации (создаёт cron/send_diplomas).</p>
+        <?php else: ?>
+          <div class="table-wrap" style="margin-top:10px"><table class="tbl">
+            <thead><tr><th>Документ</th><th>Номер</th><th>Состояние</th><th>Просмотр</th></tr></thead>
+            <tbody>
+            <?php foreach ($st['diplomas'] as $d):
+              $sent = trim((string)($d['sent_at'] ?? '')); $plan = trim((string)($d['scheduled_at'] ?? '')); ?>
+              <tr>
+                <td class="small"><b><?= h($dipLbl[(string)$d['type']] ?? (string)$d['type']) ?></b>
+                  <?php if (!empty($d['result'])): ?><br><span class="muted"><?= h($d['result']) ?></span><?php endif; ?></td>
+                <td class="small"><?= h((string)$d['number']) ?></td>
+                <td class="small">
+                  <?php if ($sent !== ''): ?><span class="badge badge--made">Отправлен <?= h(dops_dt($sent)) ?></span>
+                  <?php elseif ($plan !== ''): ?><span class="badge badge--making">Придёт <?= h(dops_dt($plan)) ?></span>
+                  <?php else: ?><span class="badge badge--judging">Без срока</span><?php endif; ?>
+                </td>
+                <td class="small">
+                  <a class="btn btn--ghost btn--sm" target="_blank" rel="noopener"
+                     href="<?= url('/diploma-view/' . rawurlencode((string)$d['number'])) ?>"><?= admin_icon('eye') ?>Предпросмотр</a>
+                </td>
+              </tr>
+            <?php endforeach; ?>
+            </tbody>
+          </table></div>
+
+          <form method="post" action="<?= url('/admin/?p=applications') ?>" style="margin-top:12px;display:flex;gap:6px;flex-wrap:wrap;align-items:center">
+            <?= csrf_field() ?><input type="hidden" name="id" value="<?= $id ?>">
+            <?php if ($st['diplomas_sent'] < $st['diplomas_total']): ?>
+              <input type="datetime-local" name="scheduled_at" value="<?= h($st['diploma_plan_at'] ? date('Y-m-d\TH:i', strtotime($st['diploma_plan_at'])) : '') ?>">
+              <button class="btn btn--ghost btn--sm" name="do" value="dip_resched">Перенести</button>
+              <button class="btn btn--primary btn--sm" name="do" value="dip_sendnow"><?= admin_icon('send') ?>Отправить сейчас</button>
+              <button class="btn btn--ghost btn--sm" name="do" value="dip_cancel" style="color:#C0392B;border-color:#C0392B"
+                      onclick="return confirm('Отменить плановую отправку наград? Документы будут пересозданы автоматически.')">Отменить</button>
+            <?php endif; ?>
+            <?php if ($st['diplomas_sent'] > 0): ?>
+              <button class="btn btn--navy btn--sm" name="do" value="dip_dup"
+                      onclick="return confirm('Отправить письмо со всеми наградами ещё раз?')"><?= admin_icon('copy') ?>Продублировать награды</button>
+            <?php endif; ?>
+          </form>
+        <?php endif; ?>
+      </div>
+
+      <!-- ---- ДОПОЛНИТЕЛЬНЫЕ ЗАКАЗЫ ---- -->
+      <div style="border:1px solid var(--a-line);border-radius:12px;padding:14px 16px">
+        <b>Дополнительные заказы наградного материала</b>
+        <?php if (!$st['orders']): ?>
+          <p class="small muted" style="margin:8px 0 0">Заказов нет.</p>
+        <?php else: ?>
+          <div class="table-wrap" style="margin-top:10px"><table class="tbl">
+            <thead><tr><th>№</th><th>Состав</th><th>Сумма</th><th>Статус</th><th>Оформлен</th><th></th></tr></thead>
+            <tbody>
+            <?php foreach ($st['orders'] as $o):
+              $its = json_decode((string)($o['items'] ?? '[]'), true);
+              $itsTxt = is_array($its)
+                ? implode(', ', array_map(fn($x) => (string)($x['item'] ?? '') . (($x['kind'] ?? '') === 'digital' ? ' (эл.)' : ''), $its))
+                : ''; ?>
+              <tr>
+                <td class="small">#<?= (int)$o['id'] ?></td>
+                <td class="small"><?= h($itsTxt ?: '—') ?><?= !empty($o['tracking']) ? '<br><span class="muted">трек: '.h((string)$o['tracking']).'</span>' : '' ?></td>
+                <td class="small"><b><?= number_format((int)$o['amount'], 0, '.', ' ') ?> ₽</b></td>
+                <td class="small"><span class="badge badge--<?= h((string)$o['status']) ?>"><?= h($ordLbl[(string)$o['status']] ?? (string)$o['status']) ?></span></td>
+                <td class="small"><?= h(date('d.m.Y', strtotime((string)$o['created_at']))) ?></td>
+                <td class="small"><a class="btn btn--ghost btn--sm" href="<?= a_link('orders', ['id'=>(int)$o['id']]) ?>">Открыть</a></td>
+              </tr>
+            <?php endforeach; ?>
+            </tbody>
+          </table></div>
+        <?php endif; ?>
+      </div>
+    </div>
+
     <div class="grid grid-2">
       <div class="card">
         <div class="section-title"><h3><?= h($a['number'] ?: '#'.$a['id']) ?></h3>
-          <span class="badge badge--<?= h($a['status']) ?>"><?= h(app_status_ru($a['status'])) ?></span></div>
+          <span class="badge badge--<?= h($st['code']) ?>"><?= h($st['label']) ?></span></div>
         <dl class="kv">
           <dt>Конкурс</dt><dd><?= h($a['comp']) ?></dd>
           <dt><?= $a['is_group'] ? 'Коллектив' : 'Участник' ?></dt><dd><?= h($a['is_group'] ? $a['group_name'] : $a['full_name']) ?></dd>
@@ -264,13 +453,21 @@ if ($id = (int) input('id')) {
 
 /* ================= СПИСОК С ФИЛЬТРАМИ ================= */
 [$where, $args] = apps_filter();
-$total = (int) scalar("SELECT COUNT(*) FROM applications a $where", $args);
+// JOIN нужен и в COUNT — поиск умеет искать по названию конкурса (c.name).
+$total = (int) scalar("SELECT COUNT(*) FROM applications a
+                       LEFT JOIN competitions c ON c.id=a.competition_id $where", $args);
 $page  = max(1, (int) input('pg', '1'));
 $per   = 50; $off = ($page - 1) * $per;
-$rows = all("SELECT a.*, c.name comp, c.is_paid comp_paid, u.role AS user_role FROM applications a
+// Сумма оплаты берётся из подтверждённых платежей по заявке; для бесплатных конкурсов
+// в колонке «Сумма» показывается «Бесплатно» (галочка/крестик там были неинформативны).
+$rows = all("SELECT a.*, c.name comp, c.is_paid comp_paid, c.price comp_price, u.role AS user_role,
+                    (SELECT COALESCE(SUM(p.amount),0) FROM payments p
+                      WHERE p.application_id=a.id AND p.status IN ('succeeded','paid')) AS paid_sum
+             FROM applications a
              LEFT JOIN competitions c ON c.id=a.competition_id
              LEFT JOIN users u ON u.id=a.user_id
              $where ORDER BY a.id DESC LIMIT $per OFFSET $off", $args);
+require_once BASE_PATH . '/core/app_status.php';
 $comps = all("SELECT id,name FROM competitions ORDER BY sort,name");
 $pages = (int) ceil($total / $per);
 $qs = fn(array $ex=[]) => a_link('applications', array_filter(array_merge($_GET, $ex, ['p'=>null]), fn($v)=>$v!==null && $v!==''));
@@ -283,7 +480,7 @@ ob_start(); ?>
 
 <form method="get" class="filters">
   <input type="hidden" name="p" value="applications">
-  <div class="field"><label>Поиск</label><input name="q" value="<?= h(input('q')) ?>" placeholder="ФИО, номер, email"></div>
+  <div class="field"><label>Поиск</label><input name="q" value="<?= h(input('q')) ?>" placeholder="ФИО, коллектив, номер, почта, телефон, номер программы, педагог, город, конкурс" style="min-width:260px"></div>
   <div class="field"><label>Конкурс</label><select name="competition"><option value="">Все</option>
     <?php foreach ($comps as $c): ?><option value="<?= $c['id'] ?>" <?= (int)input('competition')===(int)$c['id']?'selected':'' ?>><?= h($c['name']) ?></option><?php endforeach; ?>
   </select></div>
@@ -294,7 +491,7 @@ ob_start(); ?>
     <?php foreach (AGE_CATEGORIES() as $cat): ?><option value="<?= h($cat) ?>" <?= input('category')===$cat?'selected':'' ?>><?= h($cat) ?></option><?php endforeach; ?>
   </select></div>
   <div class="field"><label>Статус</label><select name="status"><option value="">Любой</option>
-    <?php foreach (['new','submitted','pending','paid','judging','graded','sent','done','rejected'] as $s): ?><option value="<?= $s ?>" <?= input('status')===$s?'selected':'' ?>><?= h(app_status_ru($s)) ?></option><?php endforeach; ?>
+    <?php foreach (['new','judging','graded','making','made','extra','done','rejected'] as $s): ?><option value="<?= $s ?>" <?= input('status')===$s?'selected':'' ?>><?= h(app_status_ru($s)) ?></option><?php endforeach; ?>
   </select></div>
   <div class="field"><label>С даты</label><input type="date" name="date_from" value="<?= h(input('date_from')) ?>"></div>
   <div class="field"><label>По дату</label><input type="date" name="date_to" value="<?= h(input('date_to')) ?>"></div>
@@ -324,20 +521,34 @@ ob_start(); ?>
     <table class="tbl">
       <thead><tr>
         <th class="checkbox-cell"><input type="checkbox" onclick="document.querySelectorAll('.rowchk').forEach(c=>c.checked=this.checked)"></th>
-        <th>Номер</th><th>Участник</th><th>Конкурс</th><th>Номинация</th><th>Статус</th><th>Опл.</th><th>Дата</th>
+        <th>От кого</th><th>Конкурсный номер</th><th>Конкурс</th><th>Статус</th><th>Сумма</th><th>Подана</th>
       </tr></thead>
       <tbody>
-        <?php if (!$rows): ?><tr><td colspan="8" class="muted" style="text-align:center;padding:28px">Заявок по фильтру нет</td></tr><?php endif; ?>
-        <?php foreach ($rows as $a): ?>
+        <?php if (!$rows): ?><tr><td colspan="7" class="muted" style="text-align:center;padding:28px">Заявок по фильтру нет</td></tr><?php endif; ?>
+        <?php foreach ($rows as $a):
+          $st = app_state($a, true);
+          // Сумма: бесплатный конкурс — «Бесплатно»; платный — фактически оплаченная
+          // сумма (со скидками), при её отсутствии — цена конкурса как ожидаемая.
+          $isFree  = (int)($a['comp_paid'] ?? 1) === 0;
+          $paidSum = (int)($a['paid_sum'] ?? 0);
+          if ($isFree)          $sumHtml = '<span class="badge badge--muted small">Бесплатно</span>';
+          elseif ($paidSum > 0) $sumHtml = '<b>' . number_format($paidSum, 0, '.', ' ') . ' ₽</b>';
+          else                  $sumHtml = '<span class="small muted">' . number_format((int)($a['comp_price'] ?? 0), 0, '.', ' ') . ' ₽ ожидается</span>';
+        ?>
           <tr>
             <td class="checkbox-cell"><input type="checkbox" class="rowchk" name="ids[]" value="<?= $a['id'] ?>"></td>
-            <td><a href="<?= a_link('applications', ['id'=>$a['id']]) ?>"><b><?= h($a['number'] ?: '#'.$a['id']) ?></b></a><?= $a['flag'] ? ' <span class="badge badge--rejected small">'.h($a['flag']).'</span>' : '' ?></td>
-            <td><?= h($a['is_group'] ? $a['group_name'] : $a['full_name']) ?><?= is_vip_user((int)($a['user_id']??0), (string)($a['user_role']??'')) ? vip_badge() : '' ?></td>
+            <td>
+              <a href="<?= a_link('applications', ['id'=>$a['id']]) ?>"><b><?= h($a['is_group'] ? $a['group_name'] : $a['full_name']) ?></b></a>
+              <?= is_vip_user((int)($a['user_id']??0), (string)($a['user_role']??'')) ? vip_badge() : '' ?>
+              <?= $a['flag'] ? ' <span class="badge badge--rejected small">'.h($a['flag']).'</span>' : '' ?>
+              <br><span class="small muted"><?= h($a['number'] ?: '#'.$a['id']) ?><?= $a['is_group'] ? ' · коллектив' : '' ?></span>
+            </td>
+            <td class="small"><?= h($a['work_title'] ?: '—') ?>
+              <?php if (!empty($a['nomination'])): ?><br><span class="muted"><?= h($a['nomination']) ?></span><?php endif; ?></td>
             <td class="small"><?= h($a['comp']) ?></td>
-            <td class="small"><?= h($a['nomination']) ?></td>
-            <td><span class="badge badge--<?= h($a['status']) ?>"><?= h(app_status_ru($a['status'])) ?></span></td>
-            <td><?= (int)($a['comp_paid'] ?? 1) === 0 ? '<span class="badge badge--muted small">беспл.</span>' : ($a['is_paid'] ? '✓' : '—') ?></td>
-            <td class="small"><?= h(date('d.m.y', strtotime($a['created_at']))) ?></td>
+            <td><span class="badge badge--<?= h($st['code']) ?>"><?= h($st['label']) ?></span></td>
+            <td class="small"><?= $sumHtml ?></td>
+            <td class="small"><?= h(date('d.m.Y', strtotime($a['created_at']))) ?><br><span class="muted"><?= h(date('H:i', strtotime($a['created_at']))) ?></span></td>
           </tr>
         <?php endforeach; ?>
       </tbody>

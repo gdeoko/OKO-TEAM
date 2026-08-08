@@ -197,9 +197,31 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $toMail = filter_var((string) $d['a_email'], FILTER_VALIDATE_EMAIL) ? (string) $d['a_email'] : (string) ($user['email'] ?? '');
             $subj   = 'Ваш диплом конкурса «' . (string) $d['comp_name'] . '» — № ' . $dn;
             $name   = (string) ($d['a_name'] ?: ($user['full_name'] ?? 'участник'));
-            mail_queue($toMail, $name, $subj, $html, ($pdfAbs !== '' && is_file($pdfAbs)) ? $pdfAbs : '');
-            if (input('ajax') === '1') json_out(['ok' => true, 'email' => $toMail, 'number' => (string) $dn]);
-            flash('Диплом отправлен на почту, указанную в заявке (' . h($toMail) . ').', 'success');
+            $attach = ($pdfAbs !== '' && is_file($pdfAbs)) ? $pdfAbs : '';
+
+            // МОМЕНТАЛЬНО: участник нажал «отправить на почту» — письмо уходит сразу,
+            // а не встаёт в очередь на минуты. Шаблон и отправитель те же, что при
+            // штатной рассылке дипломов (наградный отдел), т.е. это точный дубль.
+            $opt = [];
+            if (function_exists('mail_senders')) {
+                $nagradi = mail_senders()['nagradi'] ?? [];
+                if ($nagradi) { $opt['account'] = $nagradi; $opt['from_name'] = 'Наградный отдел «Музыкальный Мир»'; }
+            }
+            if ($attach !== '') $opt['attach'] = $attach;
+            $sentNow = false;
+            if (function_exists('mail_send')) {
+                try { $sentNow = (bool) mail_send($toMail, $subj, $html, $opt); } catch (\Throwable $e) { $sentNow = false; }
+            }
+            // Если моментальная отправка не удалась (SMTP недоступен) — кладём в очередь
+            // приоритетным письмом, чтобы оно ушло ближайшим тиком крона, а не потерялось.
+            if (!$sentNow) mail_queue($toMail, $name, $subj, $html, $attach);
+            audit('diploma_resend', 'diploma', (int) $d['id'], ['instant' => $sentNow, 'email' => $toMail]);
+
+            $msg = $sentNow
+                ? 'Диплом отправлен на ' . $toMail . ' — письмо уже в почте.'
+                : 'Диплом поставлен в приоритетную отправку на ' . $toMail . ' — придёт в течение минуты.';
+            if (input('ajax') === '1') json_out(['ok' => true, 'instant' => $sentNow, 'email' => $toMail, 'number' => (string) $dn, 'msg' => $msg]);
+            flash($msg, 'success');
         } elseif ($d) {
             if (input('ajax') === '1') json_out(['ok' => false, 'msg' => 'Диплом готов к скачиванию в разделе «Дипломы».']);
             flash('Диплом готов к скачиванию в разделе «Дипломы».', 'info');
@@ -211,7 +233,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     } elseif ($action === 'referral_create' && $isTeacher && user_can('teacher')) {
         if (is_file(BASE_PATH . '/core/loyalty.php')) require_once BASE_PATH . '/core/loyalty.php';
         if (function_exists('referral_create')) {
-            $ref = referral_create($uid, trim(input('code')), (int)input('percent', '5'), (int)input('reward_percent', '10'));
+            // Проценты фиксированы правилами программы: 5% приглашённому, 5% пригласившему.
+            $ref = referral_create($uid, trim(input('code')), REFERRAL_MAX_PCT, REFERRAL_REWARD_MAX_PCT);
             audit('referral_create', 'referrals', (int)($ref['id'] ?? 0), ['code' => $ref['code'] ?? '']);
             flash('Промокод «' . ($ref['code'] ?? '') . '» создан.', 'success');
         }
@@ -248,28 +271,41 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 // Колонка results_published_at может отсутствовать на старой БД — добавляем мягко,
 // чтобы запрос ниже не падал 500 (создаётся также в admin/longcomp.php).
 try { db()->exec("ALTER TABLE competitions ADD COLUMN results_published_at TEXT"); } catch (\Throwable $e) {}
+require_once BASE_PATH . '/core/app_status.php';
 $apps = all("SELECT a.*, c.name AS comp_name, c.slug AS comp_slug, c.is_paid AS comp_paid,
                     c.results_mode AS comp_results_mode, c.results_date AS comp_results_date,
                     c.results_published_at AS comp_results_pub
              FROM applications a LEFT JOIN competitions c ON c.id=a.competition_id
              WHERE a.user_id=? ORDER BY a.created_at DESC", [$uid]);
-// Длинный конкурс (results_mode='list'): участник НЕ видит звание и не заказывает
-// награды, пока результаты не опубликованы. Прячем результат до публикации.
+// ГЛАВНОЕ ПРАВИЛО КАБИНЕТА: участник видит ровно то, что уже пришло к нему на почту.
+// Пока письмо с результатом не отправлено (result_sent_at пуст) — ни звания, ни
+// «Оценена» в кабинете нет, даже если жюри уже проставило оценку в админке.
 foreach ($apps as &$_a) {
     $_longHidden = ((string)($_a['comp_results_mode'] ?? '') === 'list')
         && trim((string)($_a['comp_results_pub'] ?? '')) === '';
+    // Результат ещё не доставлен участнику — прячем так же, как длинный до публикации.
+    $_notDelivered = trim((string)($_a['result_sent_at'] ?? '')) === '';
+    $_hide = $_longHidden || $_notDelivered;
+
+    $_a['_state'] = app_state((array)$_a, false);        // состояние глазами участника
     $_a['_long_hidden'] = $_longHidden;
-    if ($_longHidden) { $_a['result'] = ''; $_a['extra_diploma'] = ''; }
-    // Длинный конкурс до публикации: НЕ показываем участнику «Оценена» — маскируем под «На оценке».
-    $_a['_disp_status'] = ($_longHidden && in_array((string)$_a['status'], ['graded','sent'], true))
-        ? 'judging' : (string)$_a['status'];
+    if ($_hide) { $_a['result'] = ''; $_a['extra_diploma'] = ''; }
+    $_a['_disp_status'] = (string) $_a['_state']['code'];
 }
 unset($_a);
+// Дипломы в кабинете — ТОЛЬКО реально отправленные на почту (d.sent_at заполнен).
+// Раньше показывались сразу после генерации: участник платного короткого конкурса
+// видел дипломы в кабинете, пока они ещё стояли в очереди на отправку.
 $diplomas = all("SELECT d.*, a.full_name, a.result AS app_result, c.name AS comp_name
                  FROM diplomas d
                  JOIN applications a ON a.id=d.application_id
                  LEFT JOIN competitions c ON c.id=a.competition_id
-                 WHERE a.user_id=? ORDER BY d.created_at DESC", [$uid]);
+                 WHERE a.user_id=? AND d.sent_at IS NOT NULL AND d.sent_at <> ''
+                 ORDER BY d.sent_at DESC, d.created_at DESC", [$uid]);
+// Сколько наградных документов уже в пути (для честной подписи в кабинете).
+$diplomasPending = (int) scalar(
+    "SELECT COUNT(*) FROM diplomas d JOIN applications a ON a.id=d.application_id
+      WHERE a.user_id=? AND (d.sent_at IS NULL OR d.sent_at='')", [$uid]);
 $orders = all("SELECT * FROM awards_orders WHERE user_id=? ORDER BY created_at DESC", [$uid]);
 $students = [];
 $refCodes = []; $refUses = 0; $refReward = 0;
@@ -286,20 +322,30 @@ if ($isTeacher) {
     }
 }
 
+// Карты статусов покрывают ВСЮ лестницу core/app_status.php — иначе заявка со
+// статусом making/made/extra/done рендерилась сырым кодом и выпадала из статистики.
 $appStatus = ['new'=>['Новая','info'],'paid'=>['Оплачена','info'],'judging'=>['На оценке','warning'],
-              'graded'=>['Оценена','success'],'sent'=>['Диплом отправлен','success'],'rejected'=>['Отклонена','error']];
+              'graded'=>['Оценена','success'],'making'=>['На изготовлении','warning'],
+              'made'=>['Изготовлена','success'],'extra'=>['Доп. заказ','info'],
+              'done'=>['Исполнена','success'],'sent'=>['Диплом отправлен','success'],
+              'submitted'=>['Подана','info'],'pending'=>['Ожидает оплаты','warning'],
+              'rejected'=>['Отклонена','error']];
 // Стеклянные статус-бейджи раздела «Мои заявки и результаты»: label + цвет рамки (gold|blue|bord).
 $appBadge = ['new'=>['Подана','blue'],'paid'=>['Оплачена','gold'],'judging'=>['На оценке','bord'],
-             'graded'=>['Оценена','gold'],'sent'=>['Диплом отправлен','gold'],'rejected'=>['Отклонена','bord']];
+             'graded'=>['Оценена','gold'],'making'=>['На изготовлении','bord'],
+             'made'=>['Изготовлена','gold'],'extra'=>['Доп. заказ','blue'],
+             'done'=>['Исполнена','gold'],'sent'=>['Диплом отправлен','gold'],
+             'submitted'=>['Подана','blue'],'pending'=>['Ожидает оплаты','bord'],
+             'rejected'=>['Отклонена','bord']];
 // Окно заказа наград: 60 дней от graded_at — только если такая колонка реально есть в БД.
 $hasGradedAt = $apps && array_key_exists('graded_at', $apps[0]);
 $orderStatus = ['new'=>['Оформлен','info'],'paid'=>['Оплачен','info'],'made'=>['Изготовлен','warning'],'shipped'=>['Отправлен','warning'],'delivered'=>['Доставлен','success']];
 // Конвейер статуса заказа оригиналов.
 $orderPipe   = ['paid','made','shipped','delivered'];
 $orderPipeL  = ['Оплачено','Изготовлено','Отправлено','Доставлено'];
-// Конвейер статуса заявки для инфографики-прогресса.
-$pipeline = ['new','paid','judging','graded','sent'];
-$pipeLabels = ['Подана','Оплата','Оценка','Оценена','Диплом'];
+// Конвейер статуса заявки для инфографики-прогресса — единая лестница статусов.
+$pipeline = ['new','judging','graded','making','made'];
+$pipeLabels = ['Подана','На оценке','Оценена','Изготовление','Награды'];
 $roleLabels = ['user'=>'Участник','teacher'=>'Педагог','jury'=>'Член жюри','designer'=>'Дизайнер',
                'accountant'=>'Бухгалтер','moderator'=>'Модератор','admin'=>'Администратор','owner'=>'Владелец'];
 
@@ -357,29 +403,43 @@ $phonePending = is_array($_SESSION['phone_bind'] ?? null) ? (string)($_SESSION['
 
 // Меню кабинета ($menuGroups) собирается ниже — после подсчёта достижений и статистики.
 
-/* --- Достижения (медали за прогресс, по образцу OKO app) --- */
-$countApps    = count($apps);
-$countDiplomas = count($diplomas);
+/* --- Достижения СЕЗОНА (сброс 1 января — каждый год новый сезон) --- */
+require_once BASE_PATH . '/core/loyalty.php';
+$season      = loyalty_season();
+$seasonStart = loyalty_season_start();
+$countApps    = count($apps);                                   // всего за всё время
+$countDiplomas = count($diplomas);                              // получено на почту, всего
+// Сезонные срезы — по ним и считаются достижения.
+$seasonApps = array_values(array_filter($apps, fn($a) => (string)($a['created_at'] ?? '') >= $seasonStart));
+$seasonDiplomas = array_values(array_filter($diplomas, fn($d) => (string)($d['sent_at'] ?? '') >= $seasonStart));
+$countAppsS = count($seasonApps);
+$countDipS  = count($seasonDiplomas);
 $countGP = 0; $countL1 = 0;
-foreach ($apps as $a) {
+foreach ($seasonApps as $a) {
     $r = mb_strtolower((string)($a['result'] ?? ''));
     if (str_contains($r, 'гран')) $countGP++;
     elseif (str_contains($r, 'i степ') || str_contains($r, '1 степ')) $countL1++;
 }
+// Скидка за достижения — максимум 5% и только в рамках сезона (core/loyalty.php).
+$achDiscount = loyalty_discount($uid, (string)($user['email'] ?? ''));
+$achTiers    = loyalty_tiers();
+$achNextTier = null;
+foreach ($achTiers as $t) { if ($countAppsS < $t['apps']) { $achNextTier = $t; break; } }
+
 $achievements = [
-  ['id'=>'first_step',  'title'=>'Первый шаг',        'desc'=>'Первая заявка на конкурс',            'done'=> $countApps >= 1,  'ic'=>'star'],
-  ['id'=>'first_prize', 'title'=>'Первая награда',    'desc'=>'Первый диплом получен',               'done'=> $countDiplomas >= 1, 'ic'=>'medal'],
-  ['id'=>'active_5',    'title'=>'Активный участник', 'desc'=>'5 заявок на конкурсы',                'done'=> $countApps >= 5,  'ic'=>'flame'],
-  ['id'=>'active_10',   'title'=>'Постоянный участник','desc'=>'10 заявок на конкурсы',              'done'=> $countApps >= 10, 'ic'=>'flame'],
+  ['id'=>'first_step',  'title'=>'Первый шаг',        'desc'=>'Первая заявка в сезоне ' . $season,   'done'=> $countAppsS >= 1,  'ic'=>'star'],
+  ['id'=>'first_prize', 'title'=>'Первая награда',    'desc'=>'Первый диплом получен в сезоне',      'done'=> $countDipS >= 1,   'ic'=>'medal'],
+  ['id'=>'active_3',    'title'=>'Активный участник', 'desc'=>'3 заявки в сезоне — скидка 3%',       'done'=> $countAppsS >= 3,  'ic'=>'flame'],
+  ['id'=>'active_5',    'title'=>'Постоянный участник','desc'=>'5 заявок в сезоне — скидка 5%',      'done'=> $countAppsS >= 5,  'ic'=>'flame'],
   ['id'=>'top_1',       'title'=>'Лауреат I',         'desc'=>'Диплом Лауреата I степени',           'done'=> $countL1 >= 1,    'ic'=>'trophy'],
   ['id'=>'grand_prix',  'title'=>'Гран-При',          'desc'=>'Абсолютная победа',                   'done'=> $countGP >= 1,    'ic'=>'crown'],
-  ['id'=>'legend',      'title'=>'Легенда',           'desc'=>'3+ Гран-При на конкурсах центра',     'done'=> $countGP >= 3,    'ic'=>'crown'],
+  ['id'=>'legend',      'title'=>'Легенда сезона',    'desc'=>'3+ Гран-При за сезон',                'done'=> $countGP >= 3,    'ic'=>'crown'],
   ['id'=>'reg',         'title'=>'Регистрация',       'desc'=>'Аккаунт создан — Добро пожаловать!', 'done'=> true,             'ic'=>'star'],
 ];
 $achDoneCount = 0; foreach ($achievements as $a) if ($a['done']) $achDoneCount++;
 
-// Уровень участника (grow by number of апробаций + weighted results)
-$levelPoints = $countApps * 5 + $countDiplomas * 10 + $countGP * 50 + $countL1 * 30;
+// Уровень участника — тоже по сезону, чтобы прогресс сбрасывался вместе с достижениями.
+$levelPoints = $countAppsS * 5 + $countDipS * 10 + $countGP * 50 + $countL1 * 30;
 $level = min(20, 1 + intdiv($levelPoints, 100));
 $nextLevelAt = $level * 100;
 $prevLevelAt = ($level - 1) * 100;
@@ -393,16 +453,27 @@ $achIcons = [
   'crown'  => '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M2 8l4 5 6-9 6 9 4-5v10H2z"/></svg>',
 ];
 
-/* --- Данные для панели «Статистика» (мини-аналитика по заявкам) --- */
+/* --- Данные для панели «Статистика» (мини-аналитика по заявкам) ---
+   Считаем по ВЫЧИСЛЕННОМУ состоянию ($a['_state']['code']), а не по сырой колонке
+   status: раньше коды making/made/extra/done/submitted в счётчик не попадали вовсе,
+   и сумма по статусам не сходилась с числом заявок. */
 $byMonth = [];
-$byStatus = ['new'=>0,'paid'=>0,'judging'=>0,'graded'=>0,'sent'=>0,'rejected'=>0];
+$byStatus = [];
+foreach (array_keys($appStatus) as $_k) $byStatus[$_k] = 0;
 $byResult = ['gp'=>0,'laur1'=>0,'laur2'=>0,'laur3'=>0,'dipl'=>0,'other'=>0];
 $totalPaid = 0;
+$cntGraded = 0;      // результат уже получен на почту
+$cntJudging = 0;     // на оценке / результат в пути
+$cntRejected = 0;
 foreach ($apps as $a) {
     $m = substr((string)($a['created_at'] ?? ''), 0, 7);
     if ($m !== '') $byMonth[$m] = ($byMonth[$m] ?? 0) + 1;
-    $st = (string)($a['status'] ?? '');
-    if (isset($byStatus[$st])) $byStatus[$st]++;
+    $st = (string)($a['_state']['code'] ?? $a['status'] ?? 'new');
+    if (!array_key_exists($st, $byStatus)) $byStatus[$st] = 0;
+    $byStatus[$st]++;
+    if (in_array($st, ['graded','making','made','extra','done'], true)) $cntGraded++;
+    elseif ($st === 'rejected') $cntRejected++;
+    elseif (in_array($st, ['new','judging','paid','submitted','pending'], true)) $cntJudging++;
     $r = mb_strtolower((string)($a['result'] ?? ''));
     if     (str_contains($r, 'гран')) $byResult['gp']++;
     elseif (str_contains($r, 'i степ') || str_contains($r, '1 степ')) $byResult['laur1']++;
@@ -410,8 +481,17 @@ foreach ($apps as $a) {
     elseif (str_contains($r, 'iii степ') || str_contains($r, '3 степ')) $byResult['laur3']++;
     elseif ($r !== '' && str_contains($r, 'дипл')) $byResult['dipl']++;
     elseif ($r !== '') $byResult['other']++;
-    if (in_array($st, ['paid','judging','graded','sent'], true)) $totalPaid += (int)($a['amount_paid'] ?? 0);
 }
+// Деньги участника: подтверждённые платежи за участие + оплаченные заказы наград.
+// Колонка applications.amount_paid не заполняется платёжным потоком, поэтому
+// раньше в кабинете всегда показывалось «0 ₽».
+$totalPaid = (int) (scalar("SELECT COALESCE(SUM(p.amount),0) FROM payments p
+                             JOIN applications a ON a.id=p.application_id
+                            WHERE a.user_id=? AND p.status IN ('succeeded','paid')", [$uid]) ?? 0);
+$totalPaid += (int) (scalar("SELECT COALESCE(SUM(amount),0) FROM awards_orders
+                              WHERE user_id=? AND status IN ('paid','made','shipped','delivered')", [$uid]) ?? 0);
+// Пустые статусы в разбивке не показываем — иначе колонки-нули засоряют график.
+$byStatus = array_filter($byStatus, fn($v) => $v > 0);
 ksort($byMonth);
 $monthLabels = array_slice(array_keys($byMonth), -6);
 $monthVals = array_values(array_intersect_key($byMonth, array_flip($monthLabels)));
@@ -803,7 +883,9 @@ ob_start(); ?>
                 <?php endif; ?>
                 <?php if ($canOrder): ?>
                   <div style="display:flex;gap:10px;flex-wrap:wrap;margin-top:14px">
-                    <a class="btn btn--primary" href="<?= url('/awards') ?>?comp=<?= (int)$a['competition_id'] ?>&amp;app=<?= (int)$a['id'] ?>">Заказать награды</a>
+                    <!-- Заказ строго по этой заявке: состав наград ограничивается её
+                         аттестационным результатом (кубок/статуэтка/медаль). -->
+                    <a class="btn btn--primary" href="<?= url('/order-awards') ?>?app=<?= (int)$a['id'] ?>">Заказать награды</a>
                     <span class="hint" style="align-self:center">Данные подставятся из заявки — вводить заново не нужно.</span>
                   </div>
                 <?php else: ?>
@@ -899,7 +981,34 @@ ob_start(); ?>
 
         <!-- Достижения (OKO-style) -->
         <div class="cab-panel" id="tab-achievements" role="tabpanel">
-          <h2>Достижения</h2>
+          <h2>Достижения · сезон <?= h($season) ?></h2>
+          <p class="cab-meta" style="margin:-6px 0 14px">
+            Достижения считаются в рамках сезона (календарный год) и обнуляются 1 января —
+            каждый год открываются заново.
+          </p>
+
+          <div class="cab-card" style="margin-bottom:14px">
+            <div class="cab-row">
+              <div style="min-width:0">
+                <span class="cab-ttl">Скидка за достижения</span>
+                <p class="cab-meta" style="margin:4px 0 0">
+                  <?php if ($achNextTier): ?>
+                    Ещё <?= (int)($achNextTier['apps'] - $countAppsS) ?> заявки в сезоне — и скидка станет <?= (int)$achNextTier['pct'] ?>%.
+                  <?php else: ?>
+                    Максимум сезона достигнут.
+                  <?php endif; ?>
+                </p>
+              </div>
+              <div style="text-align:right">
+                <span class="cab-status cab-status--gold">&minus;<?= (int)$achDiscount ?>%</span>
+              </div>
+            </div>
+            <p class="cab-meta" style="margin:12px 0 0">
+              Скидка за достижения — не более <?= (int)LOYALTY_MAX_PCT ?>%. Вместе с реферальной
+              суммарная скидка на аккаунт не превышает <?= (int)DISCOUNT_CAP_NO_CLUB ?>%
+              (участники ВИП-клуба — по условиям клуба).
+            </p>
+          </div>
 
           <div class="cab-card cab-level">
             <div class="cab-level-head">
@@ -946,9 +1055,17 @@ ob_start(); ?>
           <h2>Статистика и аналитика</h2>
           <div class="cab-kpis">
             <div class="cab-kpi"><b><?= (int)count($apps) ?></b><span>Всего заявок</span></div>
-            <div class="cab-kpi"><b><?= (int)count($diplomas) ?></b><span>Дипломов</span></div>
+            <div class="cab-kpi"><b><?= (int)$cntJudging ?></b><span>На оценке</span></div>
+            <div class="cab-kpi"><b><?= (int)$cntGraded ?></b><span>Оценено</span></div>
+            <div class="cab-kpi"><b><?= (int)count($diplomas) ?></b><span>Дипломов получено</span></div>
+            <?php if ($diplomasPending > 0): ?>
+              <div class="cab-kpi"><b><?= (int)$diplomasPending ?></b><span>Наград в пути</span></div>
+            <?php endif; ?>
             <div class="cab-kpi"><b><?= (int)$byResult['gp'] + (int)$byResult['laur1'] ?></b><span>Гран-При и I ст.</span></div>
             <div class="cab-kpi"><b><?= (int)$totalPaid ?> ₽</b><span>Оплачено всего</span></div>
+            <?php if ($cntRejected > 0): ?>
+              <div class="cab-kpi"><b><?= (int)$cntRejected ?></b><span>Отклонено</span></div>
+            <?php endif; ?>
           </div>
 
           <div class="cab-card">

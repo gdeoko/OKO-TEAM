@@ -19,6 +19,7 @@ require_once BASE_PATH . '/core/mailer.php';
 require_once BASE_PATH . '/core/telegram.php';
 require_once BASE_PATH . '/core/pdf_diploma.php';
 require_once BASE_PATH . '/core/diploma_render.php';
+require_once BASE_PATH . '/core/app_status.php';
 db();
 
 // Библиотечный режим: только функции (_diploma_email_html и пр.), крон не запускается.
@@ -95,6 +96,8 @@ if (function_exists('all')) {
             if (function_exists('result_mail_send')) { try { $ok = (bool) result_mail_send((int)$r['id']); } catch (\Throwable $e) {} }
             if ($ok) {
                 q("UPDATE applications SET result_sent_at=? WHERE id=?", [$now->format('Y-m-d H:i:s'), (int)$r['id']]);
+                // Результат дошёл до участника → статус «Оценена» (до этого — «На оценке»).
+                if (function_exists('app_status_sync')) app_status_sync((int)$r['id']);
                 if (!empty($r['user_id']) && function_exists('notify_user')) {
                     notify_user((int)$r['user_id'], 'Ваш результат готов',
                         'Жюри подвело итоги конкурса. Наградные дипломы придут на почту из заявки в ближайшие рабочие дни.',
@@ -201,7 +204,11 @@ foreach ($groups as $appId => $items) {
     }
     if ($ok) {
         foreach ($items as $it) update('diplomas', ['sent_at' => $now->format('Y-m-d H:i:s')], 'id=:id', ['id' => (int)$it['id']]);
-        q("UPDATE applications SET status='done' WHERE id=?", [(int)$appId]);
+        // Статус пересчитывается по фактам (core/app_status.php), а не проставляется
+        // вручную: жёсткое 'done' раньше не знали ни кабинет, ни фильтры админки,
+        // из-за чего заявка «пропадала» из списков и статистики.
+        if (function_exists('app_status_sync')) app_status_sync((int)$appId);
+        else q("UPDATE applications SET status='made' WHERE id=?", [(int)$appId]);
         $sentThisTick++;
     } else {
         // ВАЖНО: время отправки, заданное оргкомитетом, НЕ трогаем при сбое — иначе оно

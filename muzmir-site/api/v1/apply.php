@@ -124,6 +124,25 @@ if ($nomination === '') {
     $errors['nomination'] = 'Выберите номинацию из списка';
 }
 
+// Подраздел — строго из подразделов выбранной номинации (если у неё они есть).
+$subgroup = trim((string) input('subgroup'));
+if ($nomination !== '' && in_array($nomination, $nomList, true)) {
+    $subList = NOMINATIONS()[$nomination] ?? [];
+    if ($subList && $subgroup !== '' && !in_array($subgroup, $subList, true)) {
+        $errors['subgroup'] = 'Выберите подраздел из списка';
+    }
+}
+
+// Форма исполнения — строго из набора, допустимого для ВЫБРАННОЙ номинации.
+// Иначе в заявку попадал «Хор» у хореографии и «Ансамбль» у изобразительного искусства.
+$formation = trim((string) input('formation'));
+if ($formation === '') {
+    $errors['formation'] = 'Выберите форму исполнения';
+} elseif ($nomination !== '' && in_array($nomination, $nomList, true)
+          && !in_array($formation, FORMATIONS_FOR($nomination), true)) {
+    $errors['formation'] = 'Эта форма исполнения не подходит для номинации «' . $nomination . '»';
+}
+
 // Возрастная категория — по справочнику AGE_CATEGORIES() (если указана).
 $ageCategory = input('age_category');
 if ($ageCategory !== '' && !in_array($ageCategory, AGE_CATEGORIES(), true)) {
@@ -235,8 +254,8 @@ foreach ($comps as $ci) {
         'birth_date'     => input('birth_date'),
         'age_category'   => input('age_category'),
         'nomination'     => $nomination,
-        'subgroup'       => input('subgroup'),
-        'formation'      => input('formation'),
+        'subgroup'       => $subgroup,
+        'formation'      => $formation,
         'work_title'     => function_exists('quote_title') ? quote_title((string) input('work_title')) : input('work_title'),
         'teacher'        => input('teacher'),
         'institution'    => input('institution'),
@@ -297,9 +316,19 @@ if ($paidComps) {
     }
     $promoCode = strtoupper(preg_replace('/[^A-Z0-9]/', '', strtoupper(input('promo_code'))));
     $ref = $promoCode !== '' ? referral_lookup($promoCode) : null;
-    if ($ref && $uid && (int) $ref['teacher_user_id'] === (int) $uid) $ref = null;
-    $refPct = $ref ? (int) $ref['percent'] : 0;
-    $totalPct = min(40, max($loyaltyPct, $clubPct) + $refPct);
+    // Промокод — один раз на участника, максимум 5%. Свой собственный код не принимается.
+    [$refPct, $promoDeny] = referral_discount_for($ref, $uid, $email);
+    if ($refPct <= 0) $ref = null;
+
+    // Владелец промокода получил разовую скидку 5% за приглашённого — тратим её здесь,
+    // если участник не применяет чужой код (складывать две реферальные нельзя).
+    $creditPct = 0;
+    if ($refPct <= 0 && $uid) $creditPct = referral_credit_percent((int) $uid);
+    $effectiveRefPct = max($refPct, $creditPct);
+
+    // Потолки: без клуба суммарно ≤10%; с клубом — клуб + до 5% реферальных.
+    $disc = discount_breakdown($loyaltyPct, $effectiveRefPct, $clubPct);
+    $totalPct = (int) $disc['total'];
     $amount = loyalty_apply($basePriceSum, $totalPct);
 
     // Платный конкурс с нулевым итогом (price=0 у платного — мисконфиг) НЕ должен
@@ -316,14 +345,18 @@ if ($paidComps) {
     }
 
     $priceInfo = [
-        'base_price'    => $basePriceSum,
-        'paid_count'    => count($paidComps),
-        'free_count'    => $freeCount,
-        'loyalty_pct'   => $loyaltyPct,
-        'referral_pct'  => $refPct,
-        'promo_applied' => (bool) $ref,
-        'discount_pct'  => $totalPct,
-        'amount'        => $amount,
+        'base_price'     => $basePriceSum,
+        'paid_count'     => count($paidComps),
+        'free_count'     => $freeCount,
+        'loyalty_pct'    => (int) $disc['loyalty'],
+        'referral_pct'   => (int) $disc['referral'],
+        'club_pct'       => (int) $disc['club'],
+        'promo_applied'  => (bool) $ref,
+        'credit_applied' => $refPct <= 0 && $creditPct > 0,
+        'promo_denied'   => $promoDeny,          // причина, если код не сработал
+        'discount_pct'   => $totalPct,
+        'discount_cap'   => (int) $disc['cap'],
+        'amount'         => $amount,
     ];
 
     if ($amount > 0) {
@@ -360,6 +393,11 @@ if ($paidComps) {
         if ($ref) {
             $reward = referral_record_use($ref, $appId, $uid, $email, $amount);
             audit('referral_use', 'applications', $appId, ['code' => $ref['code'], 'reward' => $reward, 'amount' => $amount]);
+        } elseif ($creditPct > 0 && $uid) {
+            // Потрачена собственная разовая скидка приглашающего — списываем её.
+            if (referral_credit_spend((int) $uid, 'application:' . $appId)) {
+                audit('referral_credit_spend', 'applications', $appId, ['pct' => $creditPct]);
+            }
         }
     }
 }

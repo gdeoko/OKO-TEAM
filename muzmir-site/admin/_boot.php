@@ -72,6 +72,7 @@ function admin_modules(): array {
         // Скрыты из сайдбара (4-й флаг true), но доступны по ссылке из «Редактора наград».
         'diplomas'     => ['Дипломы',      'moderator', 'diplomas', true],
         'orders'       => ['Заказы оригиналов', 'moderator', 'trophy'],
+        'digital'      => ['Заказы электронных', 'moderator', 'diplomas'],
         'newsletter'   => ['Рассылки',     'moderator', 'newsletter'],
         'analytics'    => ['Аналитика',    'moderator', 'chart'],
         'cms'          => ['Контент',      'moderator', 'cms'],
@@ -140,8 +141,11 @@ function role_ru(string $role): string {
 
 /** Русское название статуса заявки. */
 function app_status_ru(string $s): string {
+    // Единая лестница (core/app_status.php): new → judging → graded → making → made → done.
+    // Старые значения submitted/pending/paid/sent оставлены для исторических записей.
     return ['new'=>'Новая','submitted'=>'Подана','pending'=>'Ожидает оплаты','paid'=>'Оплачена',
-            'judging'=>'На оценке','graded'=>'Оценена','sent'=>'Отправлена',
+            'judging'=>'На оценке','graded'=>'Оценена','making'=>'На изготовлении',
+            'made'=>'Изготовлена','extra'=>'Доп. заказ','sent'=>'Отправлена',
             'done'=>'Исполнена','rejected'=>'Отклонена'][$s] ?? $s;
 }
 function comp_status_ru(string $s): string {

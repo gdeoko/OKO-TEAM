@@ -122,15 +122,18 @@ function grading_queue_rows(int $comp = 0, string $order = 'old', string $q = ''
     // Неоплаченная платная заявка «не существует» и не оценивается.
     // ДЛИННЫЕ КОНКУРСЫ (results_mode='list') сюда НЕ попадают — они оцениваются
     // в отдельном разделе «Длинные конкурсы» (admin/longcomp.php).
-    $w = "a.status IN ('new','submitted','pending','paid','judging') AND a.is_paid=1
+    // Признак «ещё не оценена» — ПУСТОЙ result, а не колонка status: после введения
+    // единой лестницы статусов 'judging' означает «оценена, результат в пути», и по
+    // одному лишь статусу оценённые заявки возвращались бы в очередь на оценку.
+    $w = "a.status NOT IN ('rejected') AND (a.result IS NULL OR a.result='') AND a.is_paid=1
           AND (c.results_mode IS NULL OR c.results_mode <> 'list')"; $args = [];
     if ($comp) { $w .= " AND a.competition_id=?"; $args[] = $comp; }
     $q = trim($q);
     if ($q !== '') {
-        $w .= " AND (a.full_name LIKE ? OR a.group_name LIKE ? OR a.number LIKE ? OR a.email LIKE ?
-                     OR a.phone LIKE ? OR a.work_title LIKE ? OR c.name LIKE ?)";
-        $like = '%' . $q . '%';
-        array_push($args, $like, $like, $like, $like, $like, $like, $like);
+        // Регистронезависимо и по кириллице (search_like → mb_lower в SQLite).
+        [$sq, $sa] = search_like(['a.full_name','a.group_name','a.number','a.email','a.phone',
+                                  'a.work_title','a.teacher','a.institution','a.city','c.name'], $q);
+        if ($sq !== '') { $w .= " AND ($sq)"; $args = array_merge($args, $sa); }
     }
     $rows = all("SELECT a.*, c.name comp FROM applications a
                  LEFT JOIN competitions c ON c.id=a.competition_id
@@ -384,6 +387,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && input('do') === 'grade_result') {
                     url('/cabinet'), 'award');
             }
         }
+        // Статус — строго по фактам: пока письмо с результатом не ушло, заявка «На оценке»,
+        // и участник в кабинете не видит ни звания, ни дипломов. «Оценена» появится только
+        // после реальной отправки (здесь либо в cron/send_diplomas.php по расписанию).
+        require_once BASE_PATH . '/core/app_status.php';
+        app_status_sync($appId);
+
         audit('grade_result', 'application', $appId, ['result'=>$result,'extra'=>$extra,'result_at'=>$resultSendAt]);
         $flashWhen = $isLongComp ? 'публикуется пакетом'
             : ($dueNow ? 'результат отправлен сейчас' : ('результат ' . date('d.m.Y H:i', $resultAt->getTimestamp())));
@@ -886,9 +895,9 @@ $show = ($comp && input('show') === 'graded') ? 'graded' : '';
 if ($show === 'graded') {
     $gw = "a.competition_id=? AND a.result<>'' AND a.status<>'rejected'"; $gargs = [$comp];
     if ($qSearch !== '') {
-        $gw .= " AND (a.full_name LIKE ? OR a.group_name LIKE ? OR a.number LIKE ? OR a.email LIKE ?
-                      OR a.phone LIKE ? OR a.work_title LIKE ?)";
-        $gl = '%' . $qSearch . '%'; array_push($gargs, $gl, $gl, $gl, $gl, $gl, $gl);
+        [$sq, $sa] = search_like(['a.full_name','a.group_name','a.number','a.email','a.phone',
+                                  'a.work_title','a.teacher','a.result'], $qSearch);
+        if ($sq !== '') { $gw .= " AND ($sq)"; $gargs = array_merge($gargs, $sa); }
     }
     $rows = all("SELECT a.*, c.name comp, 1 grp_count, 0 grp_pos FROM applications a
                  LEFT JOIN competitions c ON c.id=a.competition_id

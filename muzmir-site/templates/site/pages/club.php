@@ -14,9 +14,11 @@ $uid = (int) ($u['id'] ?? 0);
 $isMember = $uid > 0 && function_exists('club_is_active') && club_is_active($uid);
 $status   = ($uid > 0 && function_exists('club_status')) ? club_status($uid)
                                                           : ['active' => false, 'expires_at' => null, 'started_at' => null, 'discount' => 0];
+// Размер клубной скидки — единый по всему проекту (mm_vip_discount): 20%.
+// Раньше здесь стояло 25% и расходилось с расчётом цены при подаче заявки.
+require_once BASE_PATH . '/core/mailer.php';
 $discount = (int) ($status['discount'] ?? 0);
-if ($discount <= 0) $discount = (int) setting('club_discount', '25');
-if ($discount <= 0) $discount = 25;
+if ($discount <= 0) $discount = mm_vip_discount();
 
 /* Полный список привилегий Клуба (10). Иконки — только SVG stroke=currentColor. */
 $benefits = [

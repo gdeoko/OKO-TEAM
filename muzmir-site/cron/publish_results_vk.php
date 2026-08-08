@@ -115,7 +115,10 @@ try {
 
         // Рассылка писем с результатами всем оценённым заявкам конкурса.
         $apps = all(
-            "SELECT id FROM applications WHERE competition_id=? AND status='graded' ORDER BY id ASC",
+            // Оценённые = есть результат (status может быть уже making/made/done).
+            "SELECT id FROM applications
+              WHERE competition_id=? AND status <> 'rejected'
+                AND result IS NOT NULL AND result <> '' ORDER BY id ASC",
             [$cid]
         );
         $mailed = 0;

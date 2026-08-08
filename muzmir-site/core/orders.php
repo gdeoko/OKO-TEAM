@@ -20,6 +20,91 @@ function orders_migrate(): void {
     try { db()->exec("ALTER TABLE awards_orders ADD COLUMN clean_pdfs TEXT DEFAULT ''"); } catch (\Throwable $e) {}
 }
 
+/* ==================== ПРАВИЛА СОСТАВА НАГРАДНОГО МАТЕРИАЛА ====================
+ * Требования владельца:
+ *  1) Трофей — строго по аттестационному результату заявки:
+ *       ГРАН-ПРИ → только кубок, ЛАУРЕАТ → только статуэтка, ДИПЛОМАНТ → только медаль.
+ *  2) ОРИГИНАЛЫ дипломов (основной, дополнительный, именной, благодарность) доступны
+ *     во ВСЕХ конкурсах, включая платные.
+ *  3) В ПЛАТНОМ конкурсе электронные основной и дополнительный дипломы НЕ заказываются:
+ *     они входят в оргвзнос и приходят автоматически после аттестации.
+ *  4) В бесплатном конкурсе заказывается всё — и оригиналы, и электронные.
+ * Правила применяются и на витрине, и на сервере (клиенту доверять нельзя).
+ */
+
+/** Трофей, положенный по результату: 'Кубок' | 'Статуэтка' | 'Медаль' | '' (нет результата). */
+function award_trophy_for_result(string $result): string {
+    $r = mb_strtoupper(trim($result), 'UTF-8');
+    if ($r === '') return '';
+    if (mb_strpos($r, 'ГРАН') !== false)      return 'Кубок';
+    if (mb_strpos($r, 'ЛАУРЕАТ') !== false)   return 'Статуэтка';
+    if (mb_strpos($r, 'ДИПЛОМАНТ') !== false) return 'Медаль';
+    return '';
+}
+
+/** Является ли позиция трофеем (кубок/статуэтка/медаль). */
+function award_is_trophy(string $item): bool {
+    $n = mb_strtolower(trim($item), 'UTF-8');
+    return mb_strpos($n, 'кубок') !== false
+        || mb_strpos($n, 'статуэт') !== false
+        || mb_strpos($n, 'медал') !== false;
+}
+
+/**
+ * Разрешена ли позиция к заказу по этой заявке.
+ *
+ * @param string $item   название позиции («Кубок», «Основной диплом», …)
+ * @param string $kind   'original' | 'digital'
+ * @param string $result аттестационный результат заявки
+ * @param bool   $compIsPaid платный ли конкурс
+ * @return array [bool разрешено, string причина отказа]
+ */
+function award_item_allowed(string $item, string $kind, string $result, bool $compIsPaid): array {
+    $itemN = trim($item);
+    $kind  = $kind === 'digital' ? 'digital' : 'original';
+
+    // 1) Трофеи — строго по результату, и только оригиналами.
+    if (award_is_trophy($itemN)) {
+        if ($kind !== 'original') return [false, 'Трофеи выпускаются только оригиналами.'];
+        $need = award_trophy_for_result($result);
+        if ($need === '') return [false, 'По заявке нет аттестационного результата.'];
+        $ok = mb_stripos($itemN, mb_strtolower($need, 'UTF-8')) !== false
+              || mb_stripos($need, mb_strtolower($itemN, 'UTF-8')) !== false;
+        if (!$ok) {
+            return [false, 'По результату «' . $result . '» доступен только этот трофей: ' . $need . '.'];
+        }
+        return [true, ''];
+    }
+
+    // 2) Электронные основной и дополнительный в ПЛАТНОМ конкурсе не заказываются —
+    //    они входят в стоимость участия и приходят автоматически.
+    if ($kind === 'digital' && $compIsPaid
+        && in_array($itemN, ['Основной диплом', 'Дополнительный диплом'], true)) {
+        return [false, 'В платном конкурсе этот электронный диплом входит в стоимость участия и приходит автоматически.'];
+    }
+
+    // 3) Остальное (оригиналы дипломов везде, электронные именной/благодарность,
+    //    в бесплатном — все электронные) разрешено.
+    return [true, ''];
+}
+
+/**
+ * Фильтрует прайс-лист под конкретную заявку.
+ * @param array $rows ['Item||kind' => price, ...]
+ * @return array тот же формат, только разрешённые позиции
+ */
+function award_filter_prices(array $rows, string $result, bool $compIsPaid): array {
+    $out = [];
+    foreach ($rows as $key => $price) {
+        $parts = explode('||', (string) $key, 2);
+        $item  = $parts[0] ?? '';
+        $kind  = $parts[1] ?? 'original';
+        [$ok] = award_item_allowed($item, $kind, $result, $compIsPaid);
+        if ($ok) $out[$key] = $price;
+    }
+    return $out;
+}
+
 /** Кэшированные чистые дипломы заказа (для админки): читает сохранённые, иначе генерит и кэширует. */
 function order_clean_pdfs(array $order, bool $regen = false): array {
     $oid = (int)($order['id'] ?? 0);

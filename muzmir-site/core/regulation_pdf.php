@@ -16,10 +16,16 @@ require_once __DIR__ . '/regulation_gen.php';
 
 /** Ключ кэша: PDF пересобирается только при изменении значимых полей конкурса. */
 function regulation_pdf_cache_key(array $c): string {
+    // Дата запуска входит в ключ: дата утверждения в шапке — 01 число месяца запуска,
+    // при переносе запуска положение обязано пересобраться (иначе останется старая шапка).
+    $approve = trim((string) ($c['launched_at'] ?? '')) !== '' ? (string) $c['launched_at']
+             : (string) ($c['start_date'] ?? '');
     return md5(implode('|', [
         (string) ($c['name'] ?? ''), (string) ($c['end_date'] ?? ''),
         (string) ($c['results_date'] ?? ''), (string) ($c['type'] ?? ''),
-        (string) ($c['is_paid'] ?? ''), 'soffice-v1',
+        (string) ($c['is_paid'] ?? ''),
+        date('01.m.Y', strtotime($approve) ?: time()),
+        'soffice-v2-approve-date',
     ]));
 }
 

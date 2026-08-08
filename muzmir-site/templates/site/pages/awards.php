@@ -236,61 +236,10 @@ ob_start(); ?>
 [data-theme="dark"] .dd-item small{color:#a9b4d6}
 [data-theme="dark"] .dd-item:hover,[data-theme="dark"] .dd-item.active{background:rgba(154,255,0,.20);color:#fff}
 </style>
-<script>
-(function(){
-  var TOKEN = <?= json_encode((string) cfgv('dadata_token', '')) ?>;
-  var input = document.getElementById('ord_addr');
-  var box = document.getElementById('ddSuggest');
-  var postal = document.getElementById('ord_postal');
-  if (!input || !box || !TOKEN) return; // без токена — обычное поле
-  var timer = null, items = [], active = -1;
-  function hide(){ box.hidden = true; box.innerHTML=''; items=[]; active=-1; }
-  function render(sugs){
-    items = sugs || [];
-    if (!items.length){ hide(); return; }
-    box.innerHTML = items.map(function(s,i){
-      var pc = (s.data && s.data.postal_code) ? s.data.postal_code + ', ' : '';
-      return '<div class="dd-item" data-i="'+i+'">'+ s.value.replace(/</g,'&lt;') +
-             (pc ? '<small>Индекс: '+pc.replace(/, $/,'')+'</small>':'') + '</div>';
-    }).join('');
-    box.hidden = false; active = -1;
-  }
-  function choose(i){
-    var s = items[i]; if (!s) return;
-    input.value = s.value;
-    if (postal && s.data && s.data.postal_code) postal.value = s.data.postal_code;
-    hide();
-  }
-  function query(q){
-    fetch('https://suggestions.dadata.ru/suggestions/api/4_1/rs/suggest/address', {
-      method:'POST',
-      headers:{'Content-Type':'application/json','Accept':'application/json','Authorization':'Token '+TOKEN},
-      body: JSON.stringify({ query:q, count:7 })
-    }).then(function(r){ return r.json(); })
-      .then(function(d){ render(d.suggestions||[]); })
-      .catch(function(){ hide(); });
-  }
-  input.addEventListener('input', function(){
-    var q = input.value.trim();
-    if (postal) postal.value='';
-    if (q.length < 3){ hide(); return; }
-    clearTimeout(timer); timer = setTimeout(function(){ query(q); }, 220);
-  });
-  box.addEventListener('mousedown', function(e){
-    var it = e.target.closest('.dd-item'); if (!it) return;
-    e.preventDefault(); choose(parseInt(it.getAttribute('data-i'),10));
-  });
-  input.addEventListener('keydown', function(e){
-    if (box.hidden) return;
-    if (e.key==='ArrowDown'){ e.preventDefault(); active=Math.min(active+1,items.length-1); }
-    else if (e.key==='ArrowUp'){ e.preventDefault(); active=Math.max(active-1,0); }
-    else if (e.key==='Enter' && active>=0){ e.preventDefault(); choose(active); return; }
-    else if (e.key==='Escape'){ hide(); return; } else return;
-    Array.prototype.forEach.call(box.children,function(c,i){ c.classList.toggle('active',i===active); });
-  });
-  document.addEventListener('click', function(e){ if (!e.target.closest('#addrField')) hide(); });
-})();
-</script>
+<?php /* Подсказки адреса вынесены в общий компонент assets/js/address.js:
+        запрос идёт через серверный прокси /api/v1/address_suggest, поэтому
+        токен DaData больше не попадает в исходник страницы, а подсказки
+        одинаково работают и здесь, и в форме заказа /order-awards. */ ?>
 
 <?php /* Модалка крупного просмотра образца награды (диплом/кубок/статуэтка/медаль) */ ?>
 <div class="aw-modal" id="awModal" hidden aria-modal="true" role="dialog">
@@ -419,9 +368,9 @@ ob_start(); ?>
       </div>
       <div class="field" id="addrField" style="position:relative">
         <label for="ord_addr">Адрес доставки (для оригиналов)</label>
-        <input type="text" id="ord_addr" name="address" placeholder="Начните вводить: город, улица, дом…" autocomplete="off">
+        <input type="text" id="ord_addr" name="address" placeholder="Начните вводить: город, улица, дом…"
+               autocomplete="off" data-address-suggest data-postal="#ord_postal">
         <input type="hidden" id="ord_postal" name="postal_index" value="">
-        <div id="ddSuggest" class="dd-suggest" hidden></div>
         <div class="hint">Начните вводить адрес — подскажем и подставим индекс. Доставка Почтой России.</div>
       </div>
       <button type="submit" class="btn btn--primary btn--block btn--lg" id="orderSubmit">Оплатить</button>

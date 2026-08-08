@@ -43,7 +43,10 @@ $dip_sent    = (int) scalar("SELECT COUNT(*) FROM diplomas WHERE sent_at IS NOT 
 $visits_day  = (int) scalar("SELECT COUNT(DISTINCT ip) FROM audit_log WHERE date(created_at)=date('now')");
 $pending_rev = (int) scalar("SELECT COUNT(*) FROM reviews WHERE status='pending'");
 $queue_wait  = (int) scalar("SELECT COUNT(*) FROM mail_queue WHERE status='queued'");
-$to_grade    = (int) scalar("SELECT COUNT(*) FROM applications WHERE status IN ('paid','judging')");
+// «На оценку» — принятые заявки БЕЗ проставленного результата. По колонке status
+// считать нельзя: 'judging' в единой лестнице означает «оценена, результат в пути».
+$to_grade    = (int) scalar("SELECT COUNT(*) FROM applications
+                              WHERE is_paid=1 AND status <> 'rejected' AND (result IS NULL OR result='')");
 
 /* ── Динамика за 14 дней (заявки и оплаты) ────────────────────── */
 $days = [];

@@ -125,6 +125,15 @@ function regulation_generate(int $competitionId): string {
     $resDate = $fmt(($c['results_date'] ?? null) ?: ($c['end_date'] ?? null));
     $isNational = (($c['type'] ?? 'international') === 'national');
 
+    // ДАТА УТВЕРЖДЕНИЯ в шапке («УТВЕРЖДАЮ … Ильясов А.И. <дата> год»).
+    // Правило владельца: всегда ПЕРВОЕ число месяца, в котором конкурс запущен.
+    // Раньше сюда попадала дата прямо из эталона (11.05.2026) — она и была «неверной
+    // датой в шапке» на всех положениях.
+    $approveBase = trim((string) ($c['launched_at'] ?? '')) !== '' ? (string) $c['launched_at']
+                 : (trim((string) ($c['start_date'] ?? '')) !== '' ? (string) $c['start_date'] : 'now');
+    $approveTs   = strtotime($approveBase) ?: time();
+    $approveDate = date('01.m.Y', $approveTs);          // всегда 01 число месяца запуска
+
     $nameHits = 0; $dateHits = 0; $misc = 0;
     if ($isPaid) {
         // etalon_2 «ЭВРИКА»: тематика уже «СВОБОДНАЯ», в титуле «Международный».
@@ -139,6 +148,12 @@ function regulation_generate(int $competitionId): string {
         if ($resDate !== '') $xml = reg_para_text_replace($xml, 'зультаты', '10.06.2026', $resDate, $dateHits);
         $xml = reg_run_replace_exact($xml, 'ПАТРИОТИЧЕСКАЯ (В СООТВЕТСТВИИ С НАЗВАНИЕМ КОНКУРСА)', 'СВОБОДНАЯ', $misc);
     }
+
+    // Дата утверждения в шапке — во всех эталонах строка «11.05.2026». В DOCX она
+    // склеена с соседним текстом («11.05.2026 год») и разбита по ранам, поэтому
+    // точное сравнение рана не срабатывает — заменяем на уровне абзаца.
+    $approveHits = 0;
+    $xml = reg_para_text_replace($xml, '11.05.2026', '11.05.2026', $approveDate, $approveHits);
 
     if ($nameUp !== '' && $nameHits === 0) {
         $zip->close(); @unlink($dest);

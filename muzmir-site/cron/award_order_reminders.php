@@ -175,8 +175,10 @@ try {
                 a.result, a.graded_at, a.created_at, c.name AS comp_name
            FROM applications a
            JOIN competitions c ON c.id = a.competition_id
-          WHERE a.status = 'graded'
-            AND a.result <> ''"
+          WHERE a.status <> 'rejected'
+            AND a.result IS NOT NULL AND a.result <> ''
+            -- напоминаем о заказе наград только тем, кто уже получил результат на почту
+            AND COALESCE(a.result_sent_at,'') <> ''"
     );
 
     $queued = 0; $expired = 0;

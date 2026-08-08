@@ -1,0 +1,202 @@
+<?php
+/**
+ * Операции над отправками: результат аттестации и наградные документы.
+ *
+ * Одна и та же логика нужна в трёх местах админки — «Заявки» (карточка),
+ * «Отправки» (живой пульт) и «Заказы электронных». Раньше она была написана
+ * только внутри admin/dispatch.php, поэтому из карточки заявки ничего нельзя
+ * было ни отправить, ни перенести, ни продублировать.
+ *
+ * Все функции возвращают ['ok'=>bool, 'msg'=>string] и ничего не печатают.
+ */
+declare(strict_types=1);
+
+require_once __DIR__ . '/db.php';
+require_once __DIR__ . '/mailer.php';
+require_once __DIR__ . '/app_status.php';
+
+/** Нормализует строку из datetime-local в 'Y-m-d H:i:s'. Пусто → ''. */
+function dops_norm_dt(string $dt): string {
+    $dt = trim($dt);
+    if ($dt === '') return '';
+    $ts = strtotime(str_replace('T', ' ', $dt));
+    return $ts ? date('Y-m-d H:i:s', $ts) : '';
+}
+
+/** Короткая русская дата-время. */
+function dops_dt(string $s): string {
+    $s = trim($s);
+    if ($s === '') return '—';
+    $ts = strtotime($s);
+    return $ts ? date('d.m.Y H:i', $ts) : $s;
+}
+
+/* ============================ РЕЗУЛЬТАТ АТТЕСТАЦИИ ============================ */
+
+/**
+ * Отправить результат участнику немедленно.
+ * $duplicate=true — повторная отправка уже отправленного (кнопка «Продублировать»).
+ */
+function dops_result_send_now(int $appId, bool $duplicate = false): array {
+    $a = one("SELECT * FROM applications WHERE id=?", [$appId]);
+    if (!$a) return ['ok' => false, 'msg' => 'Заявка не найдена.'];
+    if (trim((string) ($a['result'] ?? '')) === '') {
+        return ['ok' => false, 'msg' => 'По заявке ещё нет результата — отправлять нечего.'];
+    }
+    $already = trim((string) ($a['result_sent_at'] ?? '')) !== '';
+    if ($already && !$duplicate) {
+        return ['ok' => false, 'msg' => 'Результат уже отправлен. Используйте «Продублировать».'];
+    }
+
+    require_once BASE_PATH . '/core/result_mail.php';
+    if (is_file(BASE_PATH . '/core/notifications.php')) require_once BASE_PATH . '/core/notifications.php';
+
+    $ok = false;
+    try { $ok = function_exists('result_mail_send') ? (bool) result_mail_send($appId) : false; }
+    catch (\Throwable $e) { $ok = false; }
+
+    $now = date('Y-m-d H:i:s');
+    if (!$already) {
+        update('applications', ['result_sent_at' => $now, 'result_send_at' => $now], 'id=:id', ['id' => $appId]);
+        if (!empty($a['user_id']) && function_exists('notify_user')) {
+            notify_user((int) $a['user_id'], 'Ваш результат готов',
+                'Жюри подвело итоги: ' . (string) $a['result'] . '.', url('/cabinet'), 'award');
+        }
+    }
+    app_status_sync($appId);
+    audit($duplicate ? 'result_duplicate' : 'result_sendnow', 'application', $appId, ['ok' => $ok]);
+
+    return ['ok' => true, 'msg' => $ok
+        ? ($duplicate ? 'Письмо с результатом отправлено повторно.' : 'Результат отправлен участнику.')
+        : 'Результат помечен отправленным, письмо ушло в очередь (проверьте «Отправки»).'];
+}
+
+/** Перенести плановую отправку результата. */
+function dops_result_resched(int $appId, string $dt): array {
+    $norm = dops_norm_dt($dt);
+    if ($norm === '') return ['ok' => false, 'msg' => 'Укажите дату и время.'];
+    $a = one("SELECT result, result_sent_at FROM applications WHERE id=?", [$appId]);
+    if (!$a) return ['ok' => false, 'msg' => 'Заявка не найдена.'];
+    if (trim((string) ($a['result_sent_at'] ?? '')) !== '') {
+        return ['ok' => false, 'msg' => 'Результат уже отправлен — перенос невозможен.'];
+    }
+    update('applications', ['result_send_at' => $norm], 'id=:id', ['id' => $appId]);
+    app_status_sync($appId);
+    audit('result_resched', 'application', $appId, ['at' => $norm]);
+    return ['ok' => true, 'msg' => 'Отправка результата перенесена на ' . dops_dt($norm) . '.'];
+}
+
+/** Отменить плановую отправку результата (сама оценка сохраняется). */
+function dops_result_cancel(int $appId): array {
+    $a = one("SELECT result_sent_at FROM applications WHERE id=?", [$appId]);
+    if (!$a) return ['ok' => false, 'msg' => 'Заявка не найдена.'];
+    if (trim((string) ($a['result_sent_at'] ?? '')) !== '') {
+        return ['ok' => false, 'msg' => 'Результат уже отправлен — отменять нечего.'];
+    }
+    update('applications', ['result_send_at' => ''], 'id=:id', ['id' => $appId]);
+    app_status_sync($appId);
+    audit('result_cancel', 'application', $appId, []);
+    return ['ok' => true, 'msg' => 'Плановая отправка результата отменена.'];
+}
+
+/* ========================== НАГРАДНЫЕ ДОКУМЕНТЫ ========================== */
+
+/** Все дипломы заявки (осн./доп./именной/благодарность) в порядке показа. */
+function dops_diplomas(int $appId): array {
+    return all("SELECT * FROM diplomas WHERE application_id=?
+                 ORDER BY CASE type WHEN 'main' THEN 1 WHEN 'extra' THEN 2 WHEN 'named' THEN 3
+                                    WHEN 'thanks' THEN 4 ELSE 5 END, id", [$appId]);
+}
+
+/**
+ * Отправить наградные документы заявки ОДНИМ письмом прямо сейчас.
+ * $duplicate=true — повторная отправка уже отправленных.
+ * Используется общий рендер письма из cron/send_diplomas.php (тот же вид, что у участника).
+ */
+function dops_diplomas_send_now(int $appId, bool $duplicate = false): array {
+    $items = dops_diplomas($appId);
+    if (!$items) return ['ok' => false, 'msg' => 'По заявке нет наградных документов.'];
+
+    $pending = array_values(array_filter($items, fn($d) => trim((string) ($d['sent_at'] ?? '')) === ''));
+    $send    = $duplicate ? $items : $pending;
+    if (!$send) return ['ok' => false, 'msg' => 'Все документы уже отправлены. Используйте «Продублировать».'];
+
+    $a = one("SELECT a.*, c.name AS comp_name FROM applications a
+              LEFT JOIN competitions c ON c.id=a.competition_id WHERE a.id=?", [$appId]);
+    if (!$a) return ['ok' => false, 'msg' => 'Заявка не найдена.'];
+    $to = trim((string) ($a['email'] ?? ''));
+    if ($to === '' || !filter_var($to, FILTER_VALIDATE_EMAIL)) {
+        return ['ok' => false, 'msg' => 'В заявке нет корректного адреса почты.'];
+    }
+
+    // Библиотечный режим крона: берём его же сборку письма и вложений.
+    if (!function_exists('_diploma_group_html')) {
+        if (!defined('MM_EMAIL_TEST_LIB')) define('MM_EMAIL_TEST_LIB', 1);
+        if (is_file(BASE_PATH . '/cron/send_diplomas.php')) require_once BASE_PATH . '/cron/send_diplomas.php';
+    }
+
+    $attachments = []; $blocks = [];
+    foreach ($send as $d) {
+        $pdfAbs = ''; $imgUrl = '';
+        if (function_exists('_diploma_files')) [$pdfAbs, $imgUrl] = _diploma_files((array) $d);
+        if ($pdfAbs !== '') $attachments[] = $pdfAbs;
+        $blocks[] = ['type' => (string) ($d['type'] ?? 'main'), 'result' => (string) ($d['result'] ?? ''),
+                     'number' => (string) ($d['number'] ?? ''), 'img' => $imgUrl];
+    }
+
+    $cnt  = count($send);
+    $subj = ($cnt > 1 ? 'Ваши наградные документы конкурса «' : 'Ваш диплом конкурса «')
+          . (string) ($a['comp_name'] ?? '') . '» - заявка № ' . (string) ($a['number'] ?? '');
+    $html = function_exists('_diploma_group_html')
+        ? _diploma_group_html($blocks, (string) ($a['full_name'] ?? ''), (string) ($a['comp_name'] ?? ''))
+        : '<p>Ваши наградные документы во вложении.</p>';
+
+    $opt = [];
+    if (function_exists('mail_senders')) {
+        $nagradi = mail_senders()['nagradi'] ?? [];
+        if ($nagradi) { $opt['account'] = $nagradi; $opt['from_name'] = 'Наградный отдел «Музыкальный Мир»'; }
+    }
+    if ($attachments) $opt['attachments'] = $attachments;
+
+    $ok = false;
+    if (function_exists('mail_send')) {
+        try { $ok = (bool) mail_send($to, $subj, $html, $opt); } catch (\Throwable $e) { $ok = false; }
+    }
+    // Не ушло сейчас — кладём в очередь приоритетным, чтобы не потерялось.
+    if (!$ok && function_exists('mail_queue')) {
+        mail_queue($to, (string) ($a['full_name'] ?? ''), $subj, $html, $attachments[0] ?? '');
+    }
+
+    $now = date('Y-m-d H:i:s');
+    if (!$duplicate) {
+        foreach ($send as $d) {
+            update('diplomas', ['sent_at' => $now, 'send_tries' => 0], 'id=:id', ['id' => (int) $d['id']]);
+        }
+    }
+    app_status_sync($appId);
+    audit($duplicate ? 'diplomas_duplicate' : 'diplomas_sendnow', 'application', $appId, ['ok' => $ok, 'count' => $cnt]);
+
+    return ['ok' => true, 'msg' => ($duplicate ? 'Письмо с наградами отправлено повторно' : 'Наградные документы отправлены')
+        . ' (' . $cnt . ' шт., одним письмом на ' . $to . ')' . ($ok ? '.' : ' — через очередь.')];
+}
+
+/** Перенести отправку всех неотправленных наградных документов заявки. */
+function dops_diplomas_resched(int $appId, string $dt): array {
+    $norm = dops_norm_dt($dt);
+    if ($norm === '') return ['ok' => false, 'msg' => 'Укажите дату и время.'];
+    $n = q("UPDATE diplomas SET scheduled_at=?, send_tries=0
+             WHERE application_id=? AND (sent_at IS NULL OR sent_at='')", [$norm, $appId])->rowCount();
+    if ($n === 0) return ['ok' => false, 'msg' => 'Нет неотправленных документов для переноса.'];
+    app_status_sync($appId);
+    audit('diplomas_resched', 'application', $appId, ['at' => $norm, 'count' => $n]);
+    return ['ok' => true, 'msg' => 'Отправка наград перенесена на ' . dops_dt($norm) . ' (' . $n . ' шт.).'];
+}
+
+/** Отменить плановую отправку наградных документов (удаляет неотправленные). */
+function dops_diplomas_cancel(int $appId): array {
+    $n = q("DELETE FROM diplomas WHERE application_id=? AND (sent_at IS NULL OR sent_at='')", [$appId])->rowCount();
+    if ($n === 0) return ['ok' => false, 'msg' => 'Нет запланированных документов.'];
+    app_status_sync($appId);
+    audit('diplomas_cancel', 'application', $appId, ['count' => $n]);
+    return ['ok' => true, 'msg' => 'Плановая отправка наград отменена (' . $n . ' шт.). Документы пересоберутся автоматически.'];
+}

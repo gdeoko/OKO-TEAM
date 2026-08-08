@@ -62,7 +62,8 @@ if ((string) input('do') === 'email_preview_campaign') {
     [$subj, $body] = launch_email_build($ctype);
     // Оборачиваем в фирменный лейаут (как при отправке) + подставляем имя-образец.
     $body = str_replace('{{name}}', 'Анна', $body);
-    if (function_exists('nl_wrap_email')) echo nl_wrap_email($body, '#', '', $subj);
+    // В письме про клуб карточка клуба в подвале не нужна — она и так весь смысл письма.
+    if (function_exists('nl_wrap_email')) echo nl_wrap_email($body, '#', '', $subj, ['vip' => $ctype !== 'vip']);
     elseif (function_exists('mm_email_layout')) echo mm_email_layout($body, ['title' => $subj]);
     else echo $body;
     exit;
