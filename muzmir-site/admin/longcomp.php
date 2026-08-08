@@ -204,7 +204,7 @@ ob_start(); ?>
       <tbody>
         <?php foreach ($toGrade as $a): ?>
           <tr>
-            <td><?= h($whoName($a)) ?><br><span class="small muted"><?= h((string)$a['number']) ?></span></td>
+            <td><?= h($whoName($a)) ?><?= vip_mark((int)($a['user_id'] ?? 0), '', (string)($a['email'] ?? '')) ?><br><span class="small muted"><?= h((string)$a['number']) ?></span></td>
             <td class="small"><?= h((string)$a['work_title']) ?></td>
             <td class="small"><?= h($whoPlace($a)) ?></td>
             <td style="white-space:nowrap"><?= $rowActions($a) ?></td>
@@ -227,7 +227,7 @@ ob_start(); ?>
       <tbody>
         <?php foreach ($graded as $a): ?>
           <tr>
-            <td><?= h($whoName($a)) ?><br><span class="small muted"><?= h((string)$a['number']) ?></span></td>
+            <td><?= h($whoName($a)) ?><?= vip_mark((int)($a['user_id'] ?? 0), '', (string)($a['email'] ?? '')) ?><br><span class="small muted"><?= h((string)$a['number']) ?></span></td>
             <td class="small"><?= h((string)$a['work_title']) ?></td>
             <td class="small"><?= h($whoPlace($a)) ?></td>
             <td><span class="badge badge--gold"><?= h((string)$a['result']) ?></span>

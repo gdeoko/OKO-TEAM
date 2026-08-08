@@ -344,6 +344,32 @@ if ($paidComps) {
         $paidAppIds = [];
     }
 
+    /* Расшифровку цены сохраняем НА ЗАЯВКЕ. Без этого админка и кабинет видели голую
+       сумму и не могли объяснить, почему участник заплатил 400 вместо 500. Пишем долю
+       каждой платной заявки в общем чеке — при пакетной подаче суммы должны сходиться. */
+    $__nPaid = max(1, count($paidComps));
+    foreach ($comps as $__i => $__c) {
+        if (!(int) $__c['is_paid']) continue;
+        $__aid = (int) ($appIds[$__i] ?? 0);
+        if ($__aid <= 0) continue;
+        $__base  = (int) $__c['price'];
+        $__share = loyalty_apply($__base, $totalPct);
+        update('applications', [
+            'price_base'    => $__base,
+            'discount_pct'  => $totalPct,
+            'amount_paid'   => in_array($__aid, $freeAppIds, true) ? 0 : $__share,
+            'discount_info' => json_encode([
+                'loyalty_pct'    => (int) $disc['loyalty'],
+                'referral_pct'   => (int) $disc['referral'],
+                'club_pct'       => (int) $disc['club'],
+                'total_pct'      => $totalPct,
+                'promo_code'     => (string) ($ref['code'] ?? ''),
+                'credit_applied' => $refPct <= 0 && $creditPct > 0,
+                'batch'          => $__nPaid,
+            ], JSON_UNESCAPED_UNICODE),
+        ], 'id=:id', ['id' => $__aid]);
+    }
+
     $priceInfo = [
         'base_price'     => $basePriceSum,
         'paid_count'     => count($paidComps),

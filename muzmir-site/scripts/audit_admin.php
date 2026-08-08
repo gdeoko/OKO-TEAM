@@ -118,20 +118,79 @@ if ($dig > 0) {
 sec('ВИП-галочки: золотая у клуба, синяя у команды');
 require_once BASE_PATH . '/admin/_boot.php';
 chk('владелец → синяя (команда)', vip_kind(null, 'owner', 'zamis76@mail.ru') === 'team');
-chk('оргкомитет → синяя (команда)', vip_kind(null, '', 'okoteam.top@gmail.com') === 'team');
+chk('оргкомитет → галочка команды', vip_kind(null, '', 'okoteam.top@gmail.com') === 'team');
 $clubUid = (int) (scalar("SELECT user_id FROM club_members WHERE active=1 AND expires_at > datetime('now') LIMIT 1") ?? 0);
 if ($clubUid > 0) {
-    chk('участник клуба → золотая', vip_kind($clubUid, 'user', '') === 'club', vip_kind($clubUid, 'user', ''));
+    chk('участник клуба → галочка клуба', vip_kind($clubUid, 'user', '') === 'club', vip_kind($clubUid, 'user', ''));
 } else { ok('активных членов клуба в базе нет — пропуск'); }
 chk('обычный участник → без галочки', vip_kind(0, 'user', 'nobody@example.com') === '');
-chk('синяя галочка синего цвета', str_contains(vip_badge('team'), '2C7BE5'));
-chk('золотая галочка золотого цвета', str_contains(vip_badge('club'), 'C79322'));
+// ЦВЕТА (Даниэль): участник ВИП-клуба — СИНЯЯ галочка («проверенный»),
+// команда центра — золотая. Раньше было наоборот.
+chk('участник ВИП-клуба — синяя галочка', str_contains(vip_badge('club'), '2C7BE5'));
+chk('оргкомитет центра — золотая галочка', str_contains(vip_badge('team'), 'C79322'));
+chk('в подписи синей галочки написано про ВИП-клуб', str_contains(vip_badge('club'), 'Участник ВИП-клуба'));
 foreach (['applications' => 'Заявки', 'grading' => 'Оценка коротких', 'longcomp' => 'Оценка длинных',
-          'dispatch' => 'Отправки', 'users' => 'Пользователи'] as $p => $title) {
+          'dispatch' => 'Отправки', 'users' => 'Пользователи', 'orders' => 'Заказы',
+          'diplomas' => 'Дипломы'] as $p => $title) {
     $r = http($AJAR, $BASE . '/admin/?p=' . $p);
     chk("«{$title}»: разметка галочек присутствует",
         stripos($r['body'], 'C79322') !== false || stripos($r['body'], '2C7BE5') !== false
         || stripos($r['body'], 'vip') !== false);
+}
+
+/* ───────── деньги по заявке: правда, а не только касса ───────── */
+sec('Расшифровка оплаты заявки');
+require_once BASE_PATH . '/core/loyalty.php';
+// 1) Оплачено без чека ЮKassa (ручная отметка, пакет, старые данные) — раньше карточка
+//    писала «не оплачено», хотя is_paid=1.
+$pv = app_payment_view(['id' => 0, 'comp_paid' => 1, 'comp_price' => 500, 'is_paid' => 1,
+                        'amount_paid' => 400, 'price_base' => 500, 'discount_pct' => 20,
+                        'paid_sum' => 0,
+                        'discount_info' => json_encode(['club_pct' => 20])]);
+chk('оплаченная без чека — считается оплаченной', $pv['paid'] === true);
+chk('сумма берётся с заявки', $pv['amount'] === 400, (string) $pv['amount']);
+chk('видно, что отметили вручную', (bool) array_filter($pv['lines'], fn($l) => str_contains($l, 'вручную')));
+chk('в расшифровке названа причина скидки',
+    (bool) array_filter($pv['lines'], fn($l) => str_contains($l, 'ВИП-клуб')), implode(' | ', $pv['lines']));
+
+// 2) Скидка за достижения профиля и реферальный промокод — тоже подписаны.
+$pv2 = app_payment_view(['id' => 0, 'comp_paid' => 1, 'comp_price' => 500, 'is_paid' => 1,
+                         'amount_paid' => 0, 'paid_sum' => 475, 'price_base' => 500, 'discount_pct' => 5,
+                         'discount_info' => json_encode(['loyalty_pct' => 5])]);
+chk('скидка за достижения профиля подписана',
+    (bool) array_filter($pv2['lines'], fn($l) => str_contains($l, 'достижения')), implode(' | ', $pv2['lines']));
+chk('оплата через кассу помечена как подтверждённая',
+    (bool) array_filter($pv2['lines'], fn($l) => str_contains($l, 'кассой')));
+$pv3 = app_payment_view(['id' => 0, 'comp_paid' => 1, 'comp_price' => 500, 'is_paid' => 1,
+                         'amount_paid' => 0, 'paid_sum' => 475, 'price_base' => 500, 'discount_pct' => 5,
+                         'discount_info' => json_encode(['referral_pct' => 5, 'promo_code' => 'MUZ5'])]);
+chk('реферальный промокод назван в расшифровке',
+    (bool) array_filter($pv3['lines'], fn($l) => str_contains($l, 'MUZ5')), implode(' | ', $pv3['lines']));
+
+// 3) Заплатили полную сумму — «скидки» показывать нельзя (было «500 ₽, скидка 5%, к оплате 500 ₽»).
+$pv4 = app_payment_view(['id' => 0, 'comp_paid' => 1, 'comp_price' => 500, 'is_paid' => 1,
+                         'amount_paid' => 0, 'paid_sum' => 500, 'price_base' => 500, 'discount_pct' => 5,
+                         'discount_info' => json_encode(['loyalty_pct' => 5])]);
+chk('при полной оплате скидка не показывается', $pv4['pct'] === 0
+    && !array_filter($pv4['lines'], fn($l) => str_contains($l, 'Скидка')), implode(' | ', $pv4['lines']));
+
+// 4) Бесплатный конкурс и честное «не оплачено».
+$pv5 = app_payment_view(['id' => 0, 'comp_paid' => 0, 'comp_price' => 0, 'is_paid' => 1, 'paid_sum' => 0]);
+chk('бесплатный конкурс подписан как бесплатный', $pv5['free'] === true);
+$pv6 = app_payment_view(['id' => 0, 'comp_paid' => 1, 'comp_price' => 500, 'is_paid' => 0,
+                         'amount_paid' => 0, 'paid_sum' => 0]);
+chk('неоплаченная так и остаётся неоплаченной', $pv6['paid'] === false);
+
+// 5) Карточка заявки в админке: расшифровка на месте, нижний блок оценок убран.
+$appPaid = one("SELECT id FROM applications WHERE is_paid=1 ORDER BY id LIMIT 1");
+if ($appPaid) {
+    $r = http($AJAR, $BASE . '/admin/?p=applications&id=' . (int) $appPaid['id']);
+    chk('карточка заявки открывается', $r['code'] === 200, (string) $r['code']);
+    chk('в карточке есть блок «Сумма участия»', str_contains($r['body'], 'Сумма участия'));
+    chk('нижний блок «Оценки жюри» убран', !str_contains($r['body'], 'Оценки жюри'));
+    chk('в карточке показан аккаунт участника', str_contains($r['body'], '<dt>Аккаунт</dt>'));
+    chk('в карточке нет PHP-шума',
+        !preg_match('~Warning:|Fatal error|Undefined ~', $r['body']));
 }
 
 /* ───────── пульт управления запуском ───────── */

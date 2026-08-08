@@ -271,8 +271,18 @@ function payment_apply_status(string $paymentId, string $status, array $obj = []
 
     $email = ''; $name = '';
     if ($batchIds) {
-        foreach ($batchIds as $aid) {
-            update('applications', ['is_paid' => 1, 'status' => 'paid'], 'id=:id', ['id' => (int) $aid]);
+        // Сумму чека раскладываем по заявкам батча — чтобы «Сумма участия» в админке и
+        // кабинете была реальной у КАЖДОЙ заявки, а не только у первой (к ней привязан
+        // платёж). Остаток от деления отдаём первой заявке, чтобы итог сходился до рубля.
+        $__total = (int) round(((float) ($obj['amount']['value'] ?? 0)) * 100) / 100;
+        $__total = (int) $__total;
+        $__n     = count($batchIds);
+        $__share = $__n > 0 ? intdiv($__total, $__n) : 0;
+        $__rest  = $__total - $__share * $__n;
+        foreach ($batchIds as $__k => $aid) {
+            $__upd = ['is_paid' => 1, 'status' => 'paid'];
+            if ($__total > 0) $__upd['amount_paid'] = $__share + ($__k === 0 ? $__rest : 0);
+            update('applications', $__upd, 'id=:id', ['id' => (int) $aid]);
         }
         // Первая заявка — источник email/имени для письма
         $app = one("SELECT * FROM applications WHERE id=?", [(int) $batchIds[0]]);

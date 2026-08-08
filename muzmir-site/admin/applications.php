@@ -186,14 +186,22 @@ if ($id = (int) input('id')) {
               FROM applications a
               LEFT JOIN competitions c ON c.id=a.competition_id WHERE a.id=?", [$id]);
     if (!$a) { flash('Заявка не найдена.', 'error'); admin_redirect('applications'); }
-    $grades = all("SELECT g.*, u.full_name jury FROM jury_grades g LEFT JOIN users u ON u.id=g.jury_id
-                   WHERE g.application_id=? ORDER BY g.id DESC", [$id]);
+    // Живой профиль подателя: ФИО и фото берём ИЗ users, а не из заявки, — так админка
+    // всегда видит то же, что участник поменял у себя в кабинете. Данные самой заявки
+    // при этом не переписываем: в дипломе печатается ФИО, поданное на конкурс.
+    $acc = ((int) ($a['user_id'] ?? 0) > 0)
+        ? one("SELECT id, full_name, email, avatar, role FROM users WHERE id=?", [(int) $a['user_id']])
+        : null;
 
     // Полная картина исполнения: результат, награды, доп. заказы, деньги.
     $st       = app_state($a, true);
     $paidSum  = (int) (scalar("SELECT COALESCE(SUM(amount),0) FROM payments
                                 WHERE application_id=? AND status IN ('succeeded','paid')", [$id]) ?? 0);
     $isFree   = (int) ($a['comp_paid'] ?? 1) === 0;
+    // Единая расшифровка денег по заявке (core/loyalty.php): касса + сумма на заявке +
+    // из чего сложилась скидка. Раньше здесь смотрели ТОЛЬКО в payments, и заявка,
+    // оплаченная без чека ЮKassa, показывалась как «не оплачено».
+    $pv = app_payment_view($a);
     $dipLbl   = ['main'=>'Основной диплом','extra'=>'Дополнительный диплом','named'=>'Именной диплом','thanks'=>'Благодарность педагогу'];
     $ordLbl   = ['new'=>'Не оплачен','paid'=>'Оплачен','made'=>'Изготовлен','shipped'=>'Отправлен','delivered'=>'Доставлен'];
 
@@ -213,11 +221,21 @@ if ($id = (int) input('id')) {
 
       <dl class="kv" style="margin-bottom:16px">
         <dt>Сумма участия</dt>
-        <dd><?= $isFree
-              ? '<span class="badge badge--muted">Бесплатно</span>'
-              : ($paidSum > 0
-                  ? '<b>' . number_format($paidSum, 0, '.', ' ') . ' ₽</b> · оплачено'
-                  : '<span class="muted">' . number_format((int)($a['comp_price'] ?? 0), 0, '.', ' ') . ' ₽ — не оплачено</span>') ?></dd>
+        <dd>
+          <?php if ($pv['free']): ?>
+            <span class="badge badge--muted">Бесплатный конкурс</span>
+          <?php elseif ($pv['paid']): ?>
+            <b><?= $pv['amount'] > 0 ? number_format($pv['amount'], 0, '.', ' ') . ' ₽' : 'оплачено' ?></b>
+            <?= $pv['pct'] > 0 ? ' <span class="badge badge--paid">−' . (int) $pv['pct'] . '%</span>' : '' ?>
+          <?php else: ?>
+            <span class="muted"><?= number_format($pv['base'], 0, '.', ' ') ?> ₽ — не оплачено</span>
+          <?php endif; ?>
+          <?php if ($pv['lines']): ?>
+            <ul class="small muted" style="margin:6px 0 0;padding-left:18px;line-height:1.5">
+              <?php foreach ($pv['lines'] as $ln): ?><li><?= h($ln) ?></li><?php endforeach; ?>
+            </ul>
+          <?php endif; ?>
+        </dd>
         <dt>Подана</dt><dd><?= h(date('d.m.Y H:i', strtotime((string)$a['created_at']))) ?></dd>
         <?php if (!empty($a['graded_at'])): ?>
           <dt>Оценена жюри</dt><dd><?= h(date('d.m.Y H:i', strtotime((string)$a['graded_at']))) ?></dd>
@@ -354,6 +372,22 @@ if ($id = (int) input('id')) {
           <span class="badge badge--<?= h($st['code']) ?>"><?= h($st['label']) ?></span></div>
         <dl class="kv">
           <dt>Конкурс</dt><dd><?= h($a['comp']) ?></dd>
+          <?php if ($acc): ?>
+          <dt>Аккаунт</dt><dd style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
+            <?php $__av = trim((string)($acc['avatar'] ?? '')); ?>
+            <span style="width:28px;height:28px;border-radius:50%;overflow:hidden;flex:none;display:inline-flex;
+                         align-items:center;justify-content:center;background:var(--a-line);font-size:.72rem;font-weight:700">
+              <?php if ($__av !== ''): ?><img src="<?= h($__av) ?>" alt="" style="width:100%;height:100%;object-fit:cover">
+              <?php else: ?><?= h(mb_strtoupper(mb_substr(trim((string)($acc['full_name'] ?? '?')), 0, 1))) ?><?php endif; ?>
+            </span>
+            <a href="<?= a_link('users', ['action'=>'profile','id'=>(int)$acc['id']]) ?>"><?= h($acc['full_name'] ?: $acc['email']) ?></a>
+            <?= vip_mark((int)$acc['id'], (string)($acc['role'] ?? ''), (string)($acc['email'] ?? '')) ?>
+            <?php if (trim((string)$acc['full_name']) !== '' && trim((string)$a['full_name']) !== ''
+                      && mb_strtolower(trim((string)$acc['full_name'])) !== mb_strtolower(trim((string)$a['full_name']))): ?>
+              <span class="small muted">(в заявке подано «<?= h((string)$a['full_name']) ?>» — в дипломе печатается оно)</span>
+            <?php endif; ?>
+          </dd>
+          <?php endif; ?>
           <dt><?= $a['is_group'] ? 'Коллектив' : 'Участник' ?></dt><dd><?= h($a['is_group'] ? $a['group_name'] : $a['full_name']) ?></dd>
           <?php if ($a['is_group']): ?><dt>Контактное лицо</dt><dd><?= h($a['full_name']) ?></dd><?php endif; ?>
           <dt>Номинация</dt><dd><?= h($a['nomination']) ?><?= $a['subgroup'] ? ' · '.h($a['subgroup']) : '' ?></dd>
@@ -365,7 +399,10 @@ if ($id = (int) input('id')) {
           <dt>Город</dt><dd><?= h($a['city'] ?: '—') ?></dd>
           <dt>Email</dt><dd><a href="mailto:<?= h($a['email']) ?>"><?= h($a['email']) ?></a></dd>
           <dt>Телефон</dt><dd><?= h($a['phone'] ?: '—') ?></dd>
-          <dt>Оплата</dt><dd><?= (int)($a['comp_paid'] ?? 1) === 0 ? '<span class="badge badge--muted">Бесплатный конкурс</span>' : ($a['is_paid'] ? '<span class="badge badge--paid">Оплачено</span>' : '<span class="badge badge--muted">Не оплачено</span>') ?></dd>
+          <dt>Оплата</dt><dd><?= $pv['free'] ? '<span class="badge badge--muted">Бесплатный конкурс</span>'
+                : ($pv['paid'] ? '<span class="badge badge--paid">Оплачено</span>' : '<span class="badge badge--muted">Не оплачено</span>') ?><?php
+                if (!$pv['free'] && $pv['paid'] && $pv['amount'] > 0): ?> · <?= number_format($pv['amount'], 0, '.', ' ') ?> ₽<?php
+                if ($pv['pct'] > 0): ?> <span class="small muted">(−<?= (int)$pv['pct'] ?>%)</span><?php endif; endif; ?></dd>
           <?php if ($a['score'] !== null): ?><dt>Балл / результат</dt><dd><b><?= h((string)$a['score']) ?></b> · <?= h($a['result']) ?></dd><?php endif; ?>
           <?php if ($a['flag']): ?><dt>Метка</dt><dd><span class="badge badge--rejected"><?= h($a['flag']) ?></span></dd><?php endif; ?>
           <dt>Создана</dt><dd><?= h($a['created_at']) ?></dd>
@@ -435,14 +472,9 @@ if ($id = (int) input('id')) {
             <button class="btn btn--primary btn--sm"><?= admin_icon('check') ?>Сохранить данные</button>
           </form>
         </div>
-        <div class="card">
-          <h3>Оценки жюри</h3>
-          <?php if (!$grades): ?><p class="muted">Оценок пока нет.</p><?php else: ?>
-            <dl class="kv"><?php foreach ($grades as $g): ?>
-              <dt><?= h($g['jury'] ?: 'Жюри #'.$g['jury_id']) ?></dt><dd><b><?= h((string)$g['score']) ?></b><?= $g['note'] ? ' · <span class="small muted">'.h($g['note']).'</span>' : '' ?></dd>
-            <?php endforeach; ?></dl>
-          <?php endif; ?>
-        </div>
+        <?php /* Нижний блок «Оценки жюри» убран (Даниэль): у большинства заявок он писал
+                 «Оценок пока нет», а итоговый результат и так показан выше, в «Исполнении
+                 заявки». Сами оценки живут в разделах «Оценка коротких/длинных». */ ?>
       </div>
     </div>
     <?php
@@ -529,11 +561,14 @@ ob_start(); ?>
           $st = app_state($a, true);
           // Сумма: бесплатный конкурс — «Бесплатно»; платный — фактически оплаченная
           // сумма (со скидками), при её отсутствии — цена конкурса как ожидаемая.
-          $isFree  = (int)($a['comp_paid'] ?? 1) === 0;
-          $paidSum = (int)($a['paid_sum'] ?? 0);
-          if ($isFree)          $sumHtml = '<span class="badge badge--muted small">Бесплатно</span>';
-          elseif ($paidSum > 0) $sumHtml = '<b>' . number_format($paidSum, 0, '.', ' ') . ' ₽</b>';
-          else                  $sumHtml = '<span class="small muted">' . number_format((int)($a['comp_price'] ?? 0), 0, '.', ' ') . ' ₽ ожидается</span>';
+          // Единый разбор денег (core/loyalty.php) — тот же, что в карточке заявки:
+          // касса, сумма на заявке и скидка. Раньше смотрели только в payments, и
+          // оплаченная без чека заявка показывалась как «ожидается».
+          $pvRow = app_payment_view($a);
+          if ($pvRow['free'])       $sumHtml = '<span class="badge badge--muted small">Бесплатно</span>';
+          elseif ($pvRow['paid'])   $sumHtml = '<b>' . ($pvRow['amount'] > 0 ? number_format($pvRow['amount'], 0, '.', ' ') . ' ₽' : 'оплачено') . '</b>'
+                                             . ($pvRow['pct'] > 0 ? ' <span class="small muted">−' . (int)$pvRow['pct'] . '%</span>' : '');
+          else                      $sumHtml = '<span class="small muted">' . number_format($pvRow['base'], 0, '.', ' ') . ' ₽ ожидается</span>';
         ?>
           <tr>
             <td class="checkbox-cell"><input type="checkbox" class="rowchk" name="ids[]" value="<?= $a['id'] ?>"></td>

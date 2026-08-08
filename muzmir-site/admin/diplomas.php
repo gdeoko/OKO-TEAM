@@ -479,7 +479,7 @@ ob_start(); ?>
           <?php if (!$ready): ?><tr><td colspan="5" class="muted" style="text-align:center;padding:26px">Нет оценённых заявок без диплома. Дипломы генерируются после закрытия оценивания.</td></tr><?php endif; ?>
           <?php foreach ($ready as $a): ?>
             <tr><td class="checkbox-cell"><input type="checkbox" class="rowchk" name="ids[]" value="<?= $a['id'] ?>"></td>
-              <td><?= h($a['is_group']?$a['group_name']:$a['full_name']) ?></td>
+              <td><?= h($a['is_group']?$a['group_name']:$a['full_name']) ?><?= vip_mark((int)($a['user_id'] ?? 0), '', (string)($a['email'] ?? '')) ?></td>
               <td class="small"><?= h($a['nomination']) ?></td>
               <td><?= h((string)$a['score']) ?></td>
               <td><span class="badge badge--gold"><?= h($a['result']) ?></span></td></tr>
@@ -489,7 +489,7 @@ ob_start(); ?>
     </form>
 
   <?php else:
-    $dips = all("SELECT d.*, a.full_name, a.group_name, a.is_group, a.email
+    $dips = all("SELECT d.*, a.full_name, a.group_name, a.is_group, a.email, a.user_id
                  FROM diplomas d JOIN applications a ON a.id=d.application_id
                  WHERE a.competition_id=? ORDER BY d.id DESC", [$comp]); ?>
     <form method="post" action="<?= url('/admin/') ?>">
@@ -512,7 +512,7 @@ ob_start(); ?>
             <tr>
               <td class="checkbox-cell"><input type="checkbox" class="rowchk" name="dids[]" value="<?= $d['id'] ?>"></td>
               <td class="small"><?= h($d['number']) ?></td>
-              <td><?= h($d['is_group']?$d['group_name']:$d['full_name']) ?><br><span class="small muted"><?= h($d['email']) ?></span></td>
+              <td><?= h($d['is_group']?$d['group_name']:$d['full_name']) ?><?= vip_mark((int)($d['user_id'] ?? 0), '', (string)($d['email'] ?? '')) ?><br><span class="small muted"><?= h($d['email']) ?></span></td>
               <td><span class="badge badge--gold"><?= h($d['result']) ?></span></td>
               <td><?= $d['pdf_path'] ? '<a href="'.h(url($d['pdf_path'])).'" target="_blank">файл</a>' : '<span class="small muted">нет</span>' ?></td>
               <td class="small"><?= $d['sent_at'] ? h(date('d.m.y H:i', strtotime($d['sent_at']))) : '<span class="badge badge--muted">нет</span>' ?></td>

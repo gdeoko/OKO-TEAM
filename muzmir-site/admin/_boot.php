@@ -15,6 +15,8 @@ require_once BASE_PATH . '/core/db.php';
 require_once BASE_PATH . '/core/data.php';
 require_once BASE_PATH . '/core/helpers.php';
 require_once BASE_PATH . '/core/auth.php';
+// Расшифровка денег по заявке (app_payment_view) нужна и спискам, и карточке заявки.
+if (is_file(BASE_PATH . '/core/loyalty.php')) require_once BASE_PATH . '/core/loyalty.php';
 if (is_file(BASE_PATH . '/core/telegram.php')) require_once BASE_PATH . '/core/telegram.php';
 
 if (session_status() !== PHP_SESSION_ACTIVE) session_start();
@@ -83,9 +85,11 @@ function admin_modules(): array {
 
 /**
  * Тип галочки у пользователя:
- *   'team' — СИНЯЯ: владелец, оргкомитет, администраторы центра. У них безлимитный
- *            доступ ко всем привилегиям клуба (подписка не покупается и не истекает).
- *   'club' — ЗОЛОТАЯ: участник, оплативший членство в ВИП-клубе (пока подписка активна).
+ *   'club' — СИНЯЯ: участник ВИП-клуба (пока подписка активна). Синяя выбрана намеренно
+ *            (Даниэль): в списках админки она читается как «проверенный» — сразу видно,
+ *            что перед тобой член клуба со скидкой и ускоренными сроками.
+ *   'team' — ЗОЛОТАЯ: владелец, оргкомитет, администраторы центра. Привилегии клуба у них
+ *            безлимитные (подписка не покупается и не истекает) — это не участник.
  *   ''     — галочки нет.
  */
 function vip_kind(?int $uid, string $role = '', string $email = ''): string {
@@ -107,11 +111,11 @@ function is_vip_user(?int $uid, string $role = '', string $email = ''): bool {
 
 /**
  * Галочка для админ-списков.
- * Синяя — команда центра (безлимит), золотая — участник ВИП-клуба.
+ * СИНЯЯ — участник ВИП-клуба, ЗОЛОТАЯ — команда центра (безлимит).
  */
 function vip_badge(string $kind = 'club'): string {
     $isTeam = $kind === 'team';
-    $fill   = $isTeam ? '#2C7BE5' : '#C79322';
+    $fill   = $isTeam ? '#C79322' : '#2C7BE5';
     $title  = $isTeam ? 'Оргкомитет центра · безлимитный доступ' : 'Участник ВИП-клуба';
     return '<span title="' . $title . '" style="display:inline-flex;vertical-align:-3px;margin-left:4px">'
         . '<svg width="16" height="16" viewBox="0 0 24 24" fill="' . $fill . '">'

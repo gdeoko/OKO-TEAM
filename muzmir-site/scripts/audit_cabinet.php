@@ -263,6 +263,69 @@ foreach (club_staff_emails() as $se) {
 $anyOther = (int) scalar("SELECT COUNT(*) FROM subscribers WHERE active=1");
 chk('обычная база в рассылку попадает', count($vipList) > 0 || $anyOther === 0, count($vipList) . ' адресов');
 
+sec('Фото профиля: загрузка, показ и синхронизация');
+// Раньше фото готовилось только в браузере и уезжало строкой base64 внутри формы:
+// не было видно, что идёт загрузка, а на базе без колонок nickname/category весь
+// профиль вообще не сохранялся (500), включая ФИО.
+$setPage = http($UJAR, $BASE . '/cabinet?tab=settings');
+chk('настройки профиля открываются', $setPage['code'] === 200, (string) $setPage['code']);
+chk('поле выбора фото на месте', str_contains($setPage['body'], 'id="p_ava_file"'));
+chk('есть строка статуса загрузки', str_contains($setPage['body'], 'id="cabAvaMsg"'));
+chk('фото уходит на сервер сразу (эндпоинт в скрипте)',
+    str_contains($setPage['body'], '/api/v1/avatar'));
+chk('в подсказке сказано, что фото сохраняется сразу',
+    mb_stripos($setPage['body'], 'сохраняется сразу', 0, 'UTF-8') !== false);
+
+// Реальная загрузка файла через API: сервер должен вернуть короткий URL и записать его.
+$png = BASE_PATH . '/public/assets/img/logo_muzmir_256.png';
+if (is_file($png)) {
+    $tok = tok($UJAR, '/cabinet?tab=settings');
+    $ch = curl_init($BASE . '/api/v1/avatar');
+    curl_setopt_array($ch, [
+        CURLOPT_RETURNTRANSFER => true, CURLOPT_POST => true, CURLOPT_TIMEOUT => 40,
+        CURLOPT_COOKIEJAR => $UJAR, CURLOPT_COOKIEFILE => $UJAR, CURLOPT_PROXY => '',
+        CURLOPT_HTTPHEADER => ['Origin: ' . $BASE, 'Referer: ' . $BASE . '/cabinet'],
+        CURLOPT_POSTFIELDS => ['_csrf' => $tok, 'photo' => new CURLFile($png, 'image/png', 'ava.png')],
+    ]);
+    $raw = (string) curl_exec($ch);
+    curl_close($ch);
+    $j = json_decode($raw, true);
+    chk('загрузка фото принята сервером', is_array($j) && !empty($j['ok']), mb_substr($raw, 0, 120));
+    $newUrl = (string) ($j['url'] ?? '');
+    chk('вернулся короткий URL, а не строка base64',
+        $newUrl !== '' && !str_starts_with($newUrl, 'data:') && mb_strlen($newUrl) < 300, $newUrl);
+    $inDb = (string) (scalar("SELECT avatar FROM users WHERE id=?", [$uid]) ?? '');
+    chk('фото записано в профиль', $inDb === $newUrl);
+    $rel = parse_url($newUrl, PHP_URL_PATH) ?: '';
+    $file = BASE_PATH . '/public' . $rel;
+    chk('файл фото лежит на диске', is_file($file), $rel);
+    if (is_file($file)) {
+        $sz = getimagesize($file);
+        chk('фото уменьшено до 512px', $sz && (int) $sz[0] <= 512 && (int) $sz[1] <= 512,
+            $sz ? $sz[0] . 'x' . $sz[1] : '?');
+        chk('фото весит разумно (меньше 400 КБ)', filesize($file) < 400 * 1024, round(filesize($file) / 1024) . ' КБ');
+    }
+    // Синхронизация: то же фото должно показываться в кабинете и в админке.
+    $cab2 = http($UJAR, $BASE . '/cabinet');
+    chk('в кабинете показывается новое фото', str_contains($cab2['body'], $newUrl));
+    $appOfUser = one("SELECT id FROM applications WHERE user_id=? ORDER BY id DESC LIMIT 1", [$uid]);
+    if ($appOfUser) {
+        $admCard = http($AJAR ?? ($UJAR . '.adm'), $BASE . '/admin/?p=applications&id=' . (int) $appOfUser['id']);
+        // Админ-сессии тут может не быть — тогда просто пропускаем без провала.
+        if ($admCard['code'] === 200 && str_contains($admCard['body'], '<dt>Аккаунт</dt>')) {
+            chk('в админке у заявки видно то же фото профиля', str_contains($admCard['body'], $newUrl));
+        } else { ok('админ-сессии в этом прогоне нет — проверка фото в админке пропущена'); }
+    }
+}
+// ФИО правится и сразу видно в кабинете.
+$tok2 = tok($UJAR, '/cabinet?tab=settings');
+http($UJAR, $BASE . '/cabinet', ['_csrf' => $tok2, 'action' => 'profile',
+     'full_name' => 'Тестова Проверка Синхроновна', 'category' => 'participant']);
+$fioDb = (string) (scalar("SELECT full_name FROM users WHERE id=?", [$uid]) ?? '');
+chk('ФИО сохранилось в профиле', $fioDb === 'Тестова Проверка Синхроновна', $fioDb);
+$cab3 = http($UJAR, $BASE . '/cabinet');
+chk('новое ФИО показывается в кабинете', str_contains($cab3['body'], 'Тестова Проверка Синхроновна'));
+
 sec('ВИП-клуб: именная карта, сертификат и цены со скидкой');
 require_once BASE_PATH . '/core/club_cert.php';
 $cardNo = club_card_no($uid);

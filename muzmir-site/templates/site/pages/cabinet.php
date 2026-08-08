@@ -23,6 +23,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $nickname = trim(input('nickname'));
         $category = trim(input('category'));
         if (function_exists('v_fio') && $fio !== '') $fio = v_fio($fio);
+        // Мягкие столбцы профиля: на базе, отставшей по миграциям, UPDATE с ними падал
+        // 500-й и НИЧЕГО не сохранялось — ни ФИО, ни фото. Досоздаём идемпотентно.
+        foreach (['nickname', 'category', 'city', 'avatar'] as $__c) ensure_user_column($__c);
         $upd = ['full_name' => $fio, 'nickname' => $nickname];
         // Телефон из формы профиля больше не правится (привязка — через SMS-код в «Способах входа»),
         // но поле обновляем, если форма его прислала (обратная совместимость).
@@ -750,6 +753,22 @@ ob_start(); ?>
 /* --- Аватар-редактор в настройках --- */
 .cab-avaedit{display:flex;gap:16px;align-items:center;margin-bottom:18px}
 .cab-avaedit .cab-ava{width:60px;height:60px;border-radius:18px;font-size:1.5rem}
+/* Индикатор загрузки фото: крутящееся золотое кольцо поверх аватара + статус текстом,
+   чтобы было видно, что фото грузится, а не «ничего не происходит». */
+.cab-ava.is-loading::after{content:"";position:absolute;inset:0;border-radius:inherit;
+  background:rgba(20,26,52,.45);backdrop-filter:blur(1px)}
+.cab-ava.is-loading::before{content:"";position:absolute;z-index:2;top:50%;left:50%;width:24px;height:24px;
+  margin:-12px 0 0 -12px;border-radius:50%;border:2.5px solid rgba(255,255,255,.35);
+  border-top-color:var(--gold);animation:cabAvaSpin .7s linear infinite}
+@keyframes cabAvaSpin{to{transform:rotate(360deg)}}
+.cab-ava-msg{margin:0;font-size:.74rem;line-height:1.35;min-height:1.1em}
+.cab-ava-msg.is-busy{color:var(--gold-ink)}
+.cab-ava-msg.is-ok{color:#2f7d4f}
+.cab-ava-msg.is-err{color:#c1666b}
+[data-theme="dark"] .cab-ava-msg.is-busy{color:var(--gold)}
+[data-theme="dark"] .cab-ava-msg.is-ok{color:#6fce97}
+.btn.is-disabled{opacity:.55;pointer-events:none}
+@media(prefers-reduced-motion:reduce){.cab-ava.is-loading::before{animation:none}}
 /* --- Реферальные KPI --- */
 .cab-kpis{display:grid;grid-template-columns:repeat(2,1fr);gap:12px;margin-bottom:18px}
 .cab-kpi{position:relative;overflow:hidden;padding:20px 18px;border-radius:var(--radius-sm);
@@ -1333,9 +1352,10 @@ ob_start(); ?>
                         </div>
                         <div style="flex:1;min-width:0;display:flex;flex-direction:column;gap:8px">
                           <label class="btn btn--ghost btn--sm" for="p_ava_file" style="cursor:pointer;text-align:center">Загрузить фото</label>
-                          <input type="file" id="p_ava_file" accept="image/*" hidden>
+                          <input type="file" id="p_ava_file" accept="image/jpeg,image/png,image/webp,image/*" hidden>
                           <button type="button" class="btn btn--ghost btn--sm" id="p_ava_clear" style="min-height:36px;font-size:.82rem">Удалить фото</button>
-                          <div class="hint" style="font-size:.72rem;margin:0">JPG/PNG до 3 МБ. Сохранится в профиль.</div>
+                          <p class="cab-ava-msg" id="cabAvaMsg" role="status" aria-live="polite"></p>
+                          <div class="hint" style="font-size:.72rem;margin:0">JPG, PNG или WEBP до 12 МБ. Фото сохраняется сразу при выборе.</div>
                         </div>
                       </div>
 
@@ -1745,38 +1765,96 @@ ob_start(); ?>
       inp.closest('.cat-opt').classList.add('is-on');
     });
   });
-  // Аватар: загрузка файла → base64 → hidden input + предпросмотр
+  /* Аватар: файл уходит на сервер СРАЗУ при выборе (/api/v1/avatar).
+     Видно, что идёт загрузка, и фото появляется до нажатия «Сохранить»; сервер сам
+     уменьшает, поворачивает по EXIF и отдаёт короткий URL. Раньше фото готовилось
+     только в браузере и молча терялось, если картинка не декодировалась или
+     страница перезагружалась — и в форму уезжала строка base64 на сотни килобайт. */
   var avaFile = document.getElementById('p_ava_file');
   var avaHidden = document.getElementById('p_ava_hidden');
   var avaPrev = document.getElementById('cabAvaPreview');
   var avaClear = document.getElementById('p_ava_clear');
+  var avaMsg = document.getElementById('cabAvaMsg');
+  var avaBtn = document.querySelector('label[for="p_ava_file"]');
+
+  function avaSay(text, kind){
+    if (!avaMsg) return;
+    avaMsg.textContent = text || '';
+    avaMsg.className = 'cab-ava-msg' + (kind ? ' is-' + kind : '');
+  }
+  function avaBusy(on, label){
+    if (avaPrev) avaPrev.classList.toggle('is-loading', !!on);
+    if (avaBtn) { avaBtn.classList.toggle('is-disabled', !!on); avaBtn.setAttribute('aria-busy', on ? 'true' : 'false'); }
+    if (avaFile) avaFile.disabled = !!on;
+    if (on) avaSay(label || 'Загружаю фото…', 'busy');
+  }
+  function avaInitials(){
+    var fio = document.getElementById('p_fio');
+    return ((fio && fio.value) || '').split(/\s+/).map(function(w){return w[0]||'';}).join('').slice(0,2).toUpperCase() || '?';
+  }
+  function avaCsrf(){
+    var i = document.querySelector('#profileForm input[name="_csrf"]');
+    return i ? i.value : '';
+  }
+  /** Обновляет фото во ВСЕХ местах страницы разом (шапка кабинета и форма). */
+  function avaPaint(url){
+    if (avaHidden) avaHidden.value = url || '';
+    document.querySelectorAll('#cabAvaPreview, .cab-ava').forEach(function(box){
+      box.innerHTML = url
+        ? '<img src="' + url + '" alt="Фото профиля">'
+        : avaInitials();
+    });
+  }
+
   if (avaFile) avaFile.addEventListener('change', function(){
     var f = avaFile.files && avaFile.files[0]; if (!f) return;
-    if (f.size > 3*1024*1024) { alert('Файл слишком большой (макс 3 МБ)'); return; }
-    var fr = new FileReader();
-    fr.onload = function(){
-      // Сожмём через canvas до 512×512 max
-      var img = new Image();
-      img.onload = function(){
-        var c = document.createElement('canvas');
-        var s = Math.min(512, Math.max(img.width, img.height));
-        var scale = s / Math.max(img.width, img.height);
-        c.width = Math.round(img.width * scale);
-        c.height = Math.round(img.height * scale);
-        c.getContext('2d').drawImage(img, 0, 0, c.width, c.height);
-        var b64 = c.toDataURL('image/jpeg', .85);
-        avaHidden.value = b64;
-        avaPrev.innerHTML = '<img src="' + b64 + '" alt="Новое фото" loading="lazy">';
-      };
-      img.src = fr.result;
+    if (f.size > 12*1024*1024) { avaSay('Фото больше 12 МБ — выберите файл поменьше.', 'err'); avaFile.value=''; return; }
+    avaBusy(true, 'Загружаю фото…');
+    var fd = new FormData();
+    fd.append('photo', f);
+    fd.append('_csrf', avaCsrf());
+    var xhr = new XMLHttpRequest();
+    xhr.open('POST', <?= json_encode(url('/api/v1/avatar')) ?>, true);
+    xhr.withCredentials = true;
+    // Реальный процент отправки — на мобильном интернете это самое ожидание и видно.
+    if (xhr.upload) xhr.upload.onprogress = function(e){
+      if (!e.lengthComputable) return;
+      var pct = Math.round(e.loaded / e.total * 100);
+      avaSay(pct < 100 ? ('Загружаю фото… ' + pct + '%') : 'Обрабатываю фото…', 'busy');
     };
-    fr.readAsDataURL(f);
+    xhr.onload = function(){
+      avaBusy(false);
+      var d = null; try { d = JSON.parse(xhr.responseText); } catch(e){}
+      if (xhr.status === 200 && d && d.ok && d.url) {
+        avaPaint(d.url + (d.url.indexOf('?') > -1 ? '&' : '?') + 't=' + Date.now());
+        avaSay('Фото загружено и сохранено.', 'ok');
+      } else {
+        avaSay((d && d.error) || 'Не удалось загрузить фото. Попробуйте ещё раз.', 'err');
+      }
+      avaFile.value = '';
+    };
+    xhr.onerror = function(){
+      avaBusy(false);
+      avaSay('Нет связи с сервером — фото не загрузилось.', 'err');
+      avaFile.value = '';
+    };
+    xhr.send(fd);
   });
+
   if (avaClear) avaClear.addEventListener('click', function(){
     if (!confirm('Удалить фото профиля?')) return;
-    avaHidden.value = '';
-    var initials = (document.getElementById('p_fio').value || '').split(/\s+/).map(function(w){return w[0]||'';}).join('').slice(0,2).toUpperCase() || '?';
-    avaPrev.innerHTML = initials;
+    avaBusy(true, 'Удаляю фото…');
+    var fd = new FormData();
+    fd.append('action', 'delete');
+    fd.append('_csrf', avaCsrf());
+    fetch(<?= json_encode(url('/api/v1/avatar')) ?>, {method:'POST', body:fd, credentials:'same-origin'})
+      .then(function(r){ return r.json(); })
+      .then(function(d){
+        avaBusy(false);
+        if (d && d.ok) { avaPaint(''); avaSay('Фото удалено.', 'ok'); }
+        else avaSay((d && d.error) || 'Не удалось удалить фото.', 'err');
+      })
+      .catch(function(){ avaBusy(false); avaSay('Нет связи с сервером.', 'err'); });
   });
   // Theme-picker: тумблер темы в настройках профиля
   function applyTheme(t){

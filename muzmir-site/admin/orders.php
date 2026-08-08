@@ -194,10 +194,16 @@ ob_start(); ?>
         <!-- Получатель -->
         <div>
           <div class="small muted" style="text-transform:uppercase;letter-spacing:.06em;margin-bottom:6px;">Получатель</div>
-          <div><b><?= h((string)$o['full_name']) ?></b></div>
+          <div><b><?= h((string)$o['full_name']) ?></b><?= vip_mark((int)($o['user_id'] ?? 0)) ?></div>
           <div class="small">📍 <?= h((string)($o['address'] ?: '(адрес не указан — уточнить)')) ?></div>
           <div class="small">📞 <?= h((string)$o['phone']) ?> · ✉ <?= h((string)$o['email']) ?></div>
-          <div class="small muted" style="margin-top:4px;">Сумма: <?= h(function_exists('money') ? money((int)$o['amount']) : (int)$o['amount'].' ₽') ?></div>
+          <div class="small muted" style="margin-top:4px;">Сумма: <?= h(function_exists('money') ? money((int)$o['amount']) : (int)$o['amount'].' ₽') ?><?php
+            // Заказ мог быть оформлен со скидкой участника Клуба — показываем, с какой
+            // суммы и на сколько, иначе непонятно, почему в кассе меньше прайса.
+            $ofull = (int)($o['amount_full'] ?? 0); $opct = (int)($o['discount_pct'] ?? 0);
+            if ($ofull > (int)$o['amount']): ?> · было <s><?= number_format($ofull, 0, '.', ' ') ?> ₽</s><?php
+              if ($opct > 0): ?>, скидка <?= $opct ?>%<?= vip_kind((int)($o['user_id'] ?? 0)) === 'club' ? ' — участник ВИП-клуба' : '' ?><?php endif;
+            endif; ?></div>
           <div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:8px">
             <a class="btn btn--ghost btn--sm" href="<?= a_link('orders', ['do'=>'print','id'=>(int)$o['id']]) ?>" target="_blank" rel="noopener"><?= admin_icon('diplomas') ?? '' ?>Печать листа</a>
             <button type="button" class="btn btn--ghost btn--sm" onclick="var f=document.getElementById('oe<?= (int)$o['id'] ?>');f.style.display=f.style.display==='none'?'grid':'none'">Редактировать адрес</button>

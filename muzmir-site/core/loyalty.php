@@ -391,4 +391,92 @@ function referral_stats(int $teacherId): array {
     return $out;
 }
 
+/* ═══════════════════════════════════════════════════════════════════════════
+   РАСШИФРОВКА ОПЛАТЫ ЗАЯВКИ — один источник правды для админки и кабинета.
+   Раньше «Сумма участия» считалась ТОЛЬКО по таблице payments, поэтому у заявок,
+   оплаченных без чека ЮKassa (ручная отметка админом, нулевой итог, старые данные),
+   в карточке писало «не оплачено», хотя is_paid=1. И нигде не было видно, почему
+   участник заплатил 400 вместо 500.
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+/**
+ * Полная картина денег по заявке.
+ *
+ * @return array{
+ *   free:bool, paid:bool, base:int, amount:int, pct:int, source:string,
+ *   lines:array<int,string>, label:string
+ * }
+ */
+function app_payment_view(array $a): array {
+    $appId  = (int) ($a['id'] ?? 0);
+    $free   = (int) ($a['comp_paid'] ?? 1) === 0;
+    $base   = (int) ($a['price_base'] ?? 0) ?: (int) ($a['comp_price'] ?? 0);
+
+    // 1) Деньги, реально прошедшие через кассу. В списках сумма уже посчитана одним
+    //    запросом (a.paid_sum) — тогда второй раз в базу не ходим, иначе это N+1.
+    $payd = array_key_exists('paid_sum', $a)
+        ? (int) $a['paid_sum']
+        : (int) (scalar("SELECT COALESCE(SUM(amount),0) FROM payments
+                          WHERE application_id=? AND status IN ('succeeded','paid')", [$appId]) ?? 0);
+    // 2) Сумма, зафиксированная на самой заявке (пакетная оплата, ручная отметка).
+    $stored = (int) ($a['amount_paid'] ?? 0);
+
+    $amount = $payd > 0 ? $payd : $stored;
+    $source = $payd > 0 ? 'kassa' : ($stored > 0 ? 'app' : '');
+    $paid   = (int) ($a['is_paid'] ?? 0) === 1;
+
+    $pct  = (int) ($a['discount_pct'] ?? 0);
+    $info = json_decode((string) ($a['discount_info'] ?? ''), true);
+    if (!is_array($info)) $info = [];
+    // Если процент не сохранён (старые заявки) — выводим его из чисел.
+    if ($pct <= 0 && $base > 0 && $amount > 0 && $amount < $base) {
+        $pct = (int) round(($base - $amount) / $base * 100);
+    }
+    // Скидку показываем ТОЛЬКО если по факту заплачено меньше прайса. Иначе выходила
+    // бессмыслица вида «500 ₽, скидка 5%, к оплате 500 ₽»: расчётная скидка сохранена
+    // на заявке, а касса приняла полную сумму (доплата, пересчёт, старые данные).
+    $discountReal = $base > 0 && $amount > 0 && $amount < $base;
+    if (!$discountReal) { $pct = 0; $info = []; }
+
+    $lines = [];
+    if (!$free) {
+        if ($base > 0) $lines[] = 'Взнос по прайсу — ' . number_format($base, 0, '.', ' ') . ' ₽';
+        foreach (app_discount_reasons($info, $pct) as $why) $lines[] = $why;
+        if ($amount > 0) {
+            $lines[] = 'К оплате — ' . number_format($amount, 0, '.', ' ') . ' ₽'
+                     . ($source === 'kassa' ? ' (подтверждено кассой)' : ' (отмечено вручную)');
+        } elseif ($paid) {
+            $lines[] = 'Отмечено оплаченным без чека — суммы в кассе нет';
+        }
+    }
+
+    $label = $free ? 'Бесплатный конкурс'
+           : ($paid || $amount > 0
+               ? ($amount > 0 ? number_format($amount, 0, '.', ' ') . ' ₽ · оплачено' : 'оплачено')
+               : number_format($base, 0, '.', ' ') . ' ₽ — не оплачено');
+
+    return ['free' => $free, 'paid' => $paid || $amount > 0, 'base' => $base,
+            'amount' => $amount, 'pct' => $pct, 'source' => $source,
+            'lines' => $lines, 'label' => $label];
+}
+
+/** Человеческие причины скидки из сохранённого разбора. */
+function app_discount_reasons(array $info, int $pct): array {
+    $out = [];
+    $club  = (int) ($info['club_pct'] ?? 0);
+    $loy   = (int) ($info['loyalty_pct'] ?? 0);
+    $ref   = (int) ($info['referral_pct'] ?? 0);
+    if ($club > 0) $out[] = 'Скидка ' . $club . '% — участник ВИП-клуба';
+    if ($loy  > 0) $out[] = 'Скидка ' . $loy . '% — за достижения профиля';
+    if ($ref  > 0) {
+        $code = trim((string) ($info['promo_code'] ?? ''));
+        $out[] = 'Скидка ' . $ref . '% — ' . (!empty($info['credit_applied'])
+            ? 'бонус за приглашённого участника'
+            : ('реферальный промокод' . ($code !== '' ? ' ' . $code : '')));
+    }
+    // Разбор не сохранён (заявка до этой версии) — показываем хотя бы итог.
+    if (!$out && $pct > 0) $out[] = 'Скидка ' . $pct . '% (детали не сохранены)';
+    return $out;
+}
+
 loyalty_boot();

@@ -325,6 +325,12 @@ function db_migrate(PDO $pdo): void {
         ['applications', 'result_send_at',   "TEXT DEFAULT ''"],   // план отправки результата
         ['applications', 'result_sent_at',   "TEXT DEFAULT ''"],   // ФАКТ отправки результата
         ['applications', 'amount_paid',      'INTEGER DEFAULT 0'], // сколько реально оплачено за участие
+        // Расшифровка цены заявки: сколько стоило до скидок, сколько скидки и за что.
+        // Без этого админка показывала голую сумму (а то и «не оплачено»), и понять,
+        // почему участник заплатил 400 вместо 500, было неоткуда.
+        ['applications', 'price_base',       'INTEGER DEFAULT 0'], // взнос по прайсу, до скидок
+        ['applications', 'discount_pct',     'INTEGER DEFAULT 0'], // итоговый процент скидки
+        ['applications', 'discount_info',    "TEXT DEFAULT ''"],   // JSON: из чего сложилась скидка
 
         // Дипломы: расписание отправки и счётчик попыток.
         ['diplomas', 'scheduled_at',      'TEXT'],
