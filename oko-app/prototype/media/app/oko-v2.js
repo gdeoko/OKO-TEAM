@@ -1104,9 +1104,19 @@ window.okoHaptic = okoHaptic;
    ============================================================================ */
 (function v2avatar(){
   try{
-    /* --- 1. Фото основателя --- */
+    /* --- 1. Фото основателя ---
+       Даниэль прислал портрет 09.08 — он лежит в media/founder/ в четырёх
+       размерах (512/256/128/64) и в бренде мастером. Раньше файла не было,
+       поэтому модуль умел только подхватывать загруженный аватар из
+       редактора профиля. Теперь фото есть: оно и стоит по умолчанию, а
+       загруженный вручную аватар по-прежнему главнее — человек вправе
+       поставить своё. */
+    var ФОТО_ОСНОВАТЕЛЯ = 'media/founder/daniel-256.jpg';
     function ownerPhoto(){
-      try{ return (typeof PROFILE !== 'undefined' && PROFILE.avatar) || null; }catch(e){ return null; }
+      try{
+        if(typeof PROFILE !== 'undefined' && PROFILE.avatar) return PROFILE.avatar;
+      }catch(e){}
+      return ФОТО_ОСНОВАТЕЛЯ;
     }
     function syncFounder(){
       if(typeof CHATS === 'undefined' || !Array.isArray(CHATS)) return;

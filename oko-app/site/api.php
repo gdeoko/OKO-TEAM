@@ -411,38 +411,94 @@ case 'exportBase':
     foreach($rows as $r){ fputcsv($f,[$r['id'],$r['name'],$r['email'],$r['phone'],$r['tg'],$r['niche'],$r['status'],$r['products'],$r['paid'],$r['source'],$r['created_at']],';'); }
     fclose($f); exit;
 // ═════════════════════════════════════════════════════════════════
-// L5 — ОКО Ai: форвард в Claude через Cloudflare-прокси
-// POST {msg, history[]?, context?}   → {reply, usage}
+// L5 — ОКО Ai и все разговорные чаты: Gemini с ротацией ключей
+//
+// Решение Даниэля 09.08: Claude API не используем — дорого. Все чаты
+// (ОКО Ai, поддержка, Даниэль Ai, агенты в диалогах) идут на Gemini:
+// ключей четыре, они дешёвые, а на бесплатном тарифе ещё и квотируются
+// поштучно — поэтому ключи перебираются по кругу, и упор в лимит одного
+// не роняет ответ, а просто уводит запрос на следующий.
+//
+// POST {msg, history[]?, context?, persona?}   → {reply, usage}
 // ═════════════════════════════════════════════════════════════════
 case 'assistant':
     rate_limit('assistant',30,60);
     $msg = trim((string)($body['msg']??'')); if($msg==='') fail('empty');
-    $key  = (string)($C['anthropic_key'] ?? '');
-    $base = rtrim((string)($C['anthropic_base'] ?? 'https://api.anthropic.com'),'/');
-    $model= (string)($C['anthropic_model'] ?? 'claude-haiku-4-5-20250929');
-    if(!$key) fail('no anthropic key',500);
-    $hist = is_array($body['history']??null)?array_slice($body['history'],-8):[];
-    $ctx  = trim((string)($body['context']??''));
-    $sys  = "Ты — ОКО Ai. Отвечаешь по-русски, коротко и по делу, mobile-first. Помогаешь предпринимателю с ростом в соцсетях, продажами, контентом, автоматизацией. Не упоминай что ты нейросеть, Claude, OpenAI и т.п. Ты — OKO.";
+    $keys = $C['gemini_keys'] ?? [];
+    if(!$keys) fail('no gemini keys',500);
+    if(!is_array($keys)) $keys = [$keys];
+    $base  = rtrim((string)($C['gemini_base'] ?? 'https://generativelanguage.googleapis.com'),'/');
+    $model = (string)($C['gemini_chat_model'] ?? $C['gemini_model'] ?? 'gemini-flash-latest');
+    $hist  = is_array($body['history']??null)?array_slice($body['history'],-8):[];
+    $ctx   = trim((string)($body['context']??''));
+
+    /* Кто именно отвечает. Разные чаты — разный голос, но правила общие:
+       по-русски, коротко, без упоминания движка под капотом. */
+    $PERSONAS = [
+        'oko'     => "Ты — ОКО Ai, помощник внутри приложения OKO.",
+        'support' => "Ты — поддержка OKO. Отвечаешь как живой человек из команды: спокойно, по делу, без шаблонных фраз.",
+        'daniel'  => "Ты — ассистент Даниэля Ильясова, основателя OKO. Говоришь его тоном: прямо, без воды, по-деловому.",
+    ];
+    $persona = (string)($body['persona'] ?? 'oko');
+    $sys = ($PERSONAS[$persona] ?? $PERSONAS['oko'])
+         . " Отвечаешь по-русски, коротко и по делу, mobile-first. Помогаешь предпринимателю с ростом"
+         . " в соцсетях, продажами, контентом, автоматизацией."
+         . " Никогда не называй модель или движок, на котором работаешь, — ты OKO."
+         . " Если чего-то не знаешь или данных нет — скажи прямо, не выдумывай цифры и факты.";
     if($ctx) $sys .= "\n\nКонтекст пользователя:\n".mb_substr($ctx,0,1500);
-    $messages = [];
-    foreach($hist as $h){ $r=($h['role']??'')==='assistant'?'assistant':'user'; $t=trim((string)($h['text']??$h['content']??''));
-      if($t!=='') $messages[]=['role'=>$r,'content'=>$t]; }
-    $messages[] = ['role'=>'user','content'=>$msg];
-    $payload = ['model'=>$model,'max_tokens'=>800,'system'=>$sys,'messages'=>$messages];
-    $ch = curl_init($base.'/v1/messages');
-    curl_setopt_array($ch,[CURLOPT_POST=>true,CURLOPT_POSTFIELDS=>json_encode($payload,JSON_UNESCAPED_UNICODE),
-        CURLOPT_HTTPHEADER=>['Content-Type: application/json','x-api-key: '.$key,'anthropic-version: 2023-06-01'],
-        CURLOPT_RETURNTRANSFER=>true,CURLOPT_TIMEOUT=>45,CURLOPT_CONNECTTIMEOUT=>10]);
-    $raw = curl_exec($ch); $err=curl_error($ch); $code=curl_getinfo($ch,CURLINFO_HTTP_CODE); curl_close($ch);
-    if(!$raw) fail('upstream: '.$err,502);
-    $j = json_decode($raw,true);
-    if($code>=400) fail('claude '.$code.': '.(($j['error']['message']??'')?:mb_substr($raw,0,200)),502);
-    $reply=''; foreach(($j['content']??[]) as $b){ if(($b['type']??'')==='text') $reply.=$b['text']; }
+
+    /* История в формате Gemini: роли user / model. */
+    $contents = [];
+    foreach($hist as $h){
+        $r = (($h['role']??'')==='assistant' || ($h['role']??'')==='model') ? 'model' : 'user';
+        $t = trim((string)($h['text']??$h['content']??''));
+        if($t!=='') $contents[] = ['role'=>$r,'parts'=>[['text'=>$t]]];
+    }
+    $contents[] = ['role'=>'user','parts'=>[['text'=>$msg]]];
+
+    $payload = [
+        'contents'          => $contents,
+        'systemInstruction' => ['parts'=>[['text'=>$sys]]],
+        'generationConfig'  => ['temperature'=>0.7,'max_output_tokens'=>900],
+    ];
+
+    /* Перебор ключей: 429 и 5xx — повод взять следующий, 4xx по существу
+       (кривой запрос) повторять бессмысленно. Начинаем со случайного,
+       чтобы не выжигать первый ключ в списке. */
+    $n = count($keys);
+    $start = random_int(0, $n-1);
+    $reply = ''; $usage = null; $lastErr = ''; $lastCode = 0;
+    for($i=0; $i<$n; $i++){
+        $key = $keys[($start + $i) % $n];
+        $url = $base.'/v1beta/models/'.$model.':generateContent?key='.urlencode($key);
+        $ch = curl_init($url);
+        curl_setopt_array($ch,[CURLOPT_POST=>true,CURLOPT_POSTFIELDS=>json_encode($payload,JSON_UNESCAPED_UNICODE),
+            CURLOPT_HTTPHEADER=>['Content-Type: application/json'],
+            CURLOPT_RETURNTRANSFER=>true,CURLOPT_TIMEOUT=>45,CURLOPT_CONNECTTIMEOUT=>10]);
+        $raw = curl_exec($ch); $err = curl_error($ch); $code = curl_getinfo($ch,CURLINFO_HTTP_CODE); curl_close($ch);
+        if(!$raw){ $lastErr = 'сеть: '.$err; $lastCode = 502; continue; }
+        $j = json_decode($raw,true);
+        if($code >= 400){
+            $lastCode = $code;
+            $lastErr  = ($j['error']['message'] ?? '') ?: mb_substr($raw,0,200);
+            if($code === 429 || $code >= 500) continue;   /* лимит или сбой — следующий ключ */
+            break;                                        /* остальное повтором не лечится */
+        }
+        foreach(($j['candidates'][0]['content']['parts'] ?? []) as $part){
+            if(isset($part['text'])) $reply .= $part['text'];
+        }
+        $usage = [
+            'input_tokens'  => (int)($j['usageMetadata']['promptTokenCount'] ?? 0),
+            'output_tokens' => (int)($j['usageMetadata']['candidatesTokenCount'] ?? 0),
+        ];
+        break;
+    }
+    if($reply === '') fail('gemini '.$lastCode.': '.($lastErr ?: 'пустой ответ'), 502);
+
     db_exec("CREATE TABLE IF NOT EXISTS assistant_log (id INTEGER PRIMARY KEY AUTOINCREMENT, client_email TEXT, msg TEXT, reply TEXT, tokens_in INTEGER, tokens_out INTEGER, created_at TEXT DEFAULT (datetime('now','localtime')))");
     db_insert("INSERT INTO assistant_log (client_email,msg,reply,tokens_in,tokens_out) VALUES (?,?,?,?,?)",
-        [trim((string)($body['email']??'')), $msg, $reply, (int)($j['usage']['input_tokens']??0), (int)($j['usage']['output_tokens']??0)]);
-    out(['ok'=>true,'reply'=>$reply,'usage'=>$j['usage']??null]);
+        [trim((string)($body['email']??'')), $msg, $reply, (int)($usage['input_tokens']??0), (int)($usage['output_tokens']??0)]);
+    out(['ok'=>true,'reply'=>$reply,'usage'=>$usage]);
 
 // ═════════════════════════════════════════════════════════════════
 // L8 — Партнёрка: выдать оплаты-URL с реф-кодом + записать клик
