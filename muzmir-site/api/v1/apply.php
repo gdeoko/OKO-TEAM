@@ -149,16 +149,8 @@ if ($ageCategory !== '' && !in_array($ageCategory, AGE_CATEGORIES(), true)) {
     $errors['age_category'] = 'Выберите возрастную категорию из списка';
 }
 
-// Дата рождения — формат ГГГГ-ММ-ДД, не в будущем (если указана).
-$birthDate = input('birth_date');
-if ($birthDate !== '') {
-    $dt = DateTime::createFromFormat('Y-m-d', $birthDate);
-    if (!$dt || $dt->format('Y-m-d') !== $birthDate) {
-        $errors['birth_date'] = 'Проверьте дату рождения (ГГГГ-ММ-ДД)';
-    } elseif ($birthDate > date('Y-m-d')) {
-        $errors['birth_date'] = 'Дата рождения не может быть в будущем';
-    }
-}
+// Дату рождения (birth_date) больше не запрашиваем: работаем только с возрастной
+// категорией — именно она попадает в диплом и в правила номинаций.
 
 // Город/населённый пункт — ОБЯЗАТЕЛЕН. Авто-нормализация в «Страна, г. Город»
 // («Москва»→«Россия, г. Москва», «Минск»→«Республика Беларусь, г. Минск» и т.п.).
@@ -251,7 +243,7 @@ foreach ($comps as $ci) {
         'full_name'      => $full_name,
         'is_group'       => $isGroup,
         'group_name'     => $group_name,
-        'birth_date'     => input('birth_date'),
+        // birth_date убран: работаем только с возрастной категорией.
         'age_category'   => input('age_category'),
         'nomination'     => $nomination,
         'subgroup'       => $subgroup,

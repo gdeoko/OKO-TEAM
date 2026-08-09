@@ -294,7 +294,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             'is_group'     => $isGroup,
             'full_name'    => mb_substr(function_exists('v_fio') ? v_fio(input('full_name')) : trim((string) input('full_name')), 0, 200),
             'group_name'   => mb_substr(trim((string) input('group_name')), 0, 200),
-            'birth_date'   => mb_substr(trim((string) input('birth_date')), 0, 20),
+            // Дату рождения (birth_date) больше не запрашиваем: работаем только с
+            // возрастной категорией, которая и попадает в диплом и в номинации.
             'age_category' => $age,
             'nomination'   => $nomination,
             'subgroup'     => $subgroup,
@@ -926,7 +927,6 @@ ob_start(); ?>
             } else {
                 if (trim((string)($a['full_name'] ?? '')) !== '')  $info[] = ['ФИО участника', $a['full_name']];
             }
-            if (trim((string)($a['birth_date'] ?? '')) !== '')   $info[] = ['Дата рождения', ru_date(substr((string)$a['birth_date'], 0, 10))];
             if (trim((string)($a['age_category'] ?? '')) !== '') $info[] = ['Возрастная категория', $a['age_category']];
             if (trim((string)($a['nomination'] ?? '')) !== '')   $info[] = ['Номинация', $a['nomination']];
             if (trim((string)($a['subgroup'] ?? '')) !== '')     $info[] = ['Подраздел', $a['subgroup']];
@@ -986,7 +986,7 @@ ob_start(); ?>
                      участник знал правило до того, как решит нажимать «Изменить». -->
                 <p class="cab-edit-hint" style="margin:10px 0 0;font-size:.82rem;color:var(--muted);line-height:1.45">
                   <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;margin-right:4px;color:var(--gold-ink,#8B6F1F)"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>
-                  Заявку можно редактировать <b>2 рабочих дня</b> со дня подачи<?= $winUntil !== '' ? ' — до <b>' . h($winUntil) . '</b>' : '' ?>. Дальше материал уходит жюри.
+                  Редактирование заявки возможно только в течение <b>2 рабочих дней</b> со дня подачи заявки<?= $winUntil !== '' ? ' — до <b>' . h($winUntil) . '</b>' : '' ?>. Все указанные Вами данные будут отображены в наградных материалах.
                 </p>
                 <details class="cab-edit" style="margin-top:8px">
                   <summary style="cursor:pointer;color:var(--gold-ink,#8B6F1F);font-weight:700;font-size:.9rem;list-style:none">Изменить заявку</summary>
@@ -995,7 +995,7 @@ ob_start(); ?>
                     <input type="hidden" name="action" value="edit_app">
                     <input type="hidden" name="app_id" value="<?= (int)$a['id'] ?>">
 
-                    <p class="cab-edit-note">Изменить заявку можно только в течение <b>двух рабочих дней</b> со дня подачи<?= $winUntil !== '' ? ' — до <b>' . h($winUntil) . '</b>' : '' ?>. Дальше материал уходит жюри, и данные должны совпадать с тем, что будет напечатано в дипломе.</p>
+                    <p class="cab-edit-note">Редактирование заявки возможно только в течение <b>2 рабочих дней</b> со дня подачи заявки<?= $winUntil !== '' ? ' — до <b>' . h($winUntil) . '</b>' : '' ?>. Все указанные Вами данные будут отображены в наградных материалах.</p>
 
                     <div class="cab-seg">
                       <label class="<?= $editGroup ? '' : 'on' ?>"><input type="radio" name="is_group" value="0" <?= $editGroup ? '' : 'checked' ?>>Солист</label>
@@ -1005,7 +1005,6 @@ ob_start(); ?>
                     <div class="field" style="margin:0" data-when="solo" <?= $editGroup ? 'hidden' : '' ?>><label>Фамилия Имя Отчество участника</label><input type="text" name="full_name" value="<?= h($a['full_name'] ?? '') ?>"></div>
                     <div class="field" style="margin:0" data-when="group" <?= $editGroup ? '' : 'hidden' ?>><label>Название коллектива</label><input type="text" name="group_name" value="<?= h($a['group_name'] ?? '') ?>"></div>
 
-                    <div class="field" style="margin:0"><label>Дата рождения</label><input type="date" name="birth_date" value="<?= h(substr((string)($a['birth_date'] ?? ''), 0, 10)) ?>"></div>
                     <div class="field" style="margin:0"><label>Возрастная категория</label>
                       <select name="age_category">
                         <option value="">Выберите категорию</option>

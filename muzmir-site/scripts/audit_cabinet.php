@@ -85,8 +85,18 @@ if (!$app) {
     chk('свежая заявка редактируется', $w['can'], 'до ' . $w['until']);
     $cab = http($UJAR, $BASE . '/cabinet');
     chk('в кабинете видна кнопка «Изменить заявку»', stripos($cab['body'], 'Изменить заявку') !== false);
-    chk('показана надпись про два рабочих дня',
-        stripos($cab['body'], 'двух рабочих дней') !== false);
+    // Формулировка (Даниэль): «Редактирование заявки возможно только в течение
+    // 2 рабочих дней со дня подачи заявки — до … Все указанные Вами данные будут
+    // отображены в наградных материалах.»
+    // Тег <b> внутри — «в течение <b>2 рабочих дней</b>»; проверяем на чистом тексте.
+    // /u обязателен — без него preg_replace может обрезать многобайтные символы и
+    // «в течение» превращается в мусор.
+    $__plain = preg_replace('~<[^>]+>~u', ' ', $cab['body']);
+    $__plain = preg_replace('~\s+~u', ' ', (string) $__plain);
+    chk('показана надпись про 2 рабочих дня',
+        mb_stripos((string) $__plain, 'в течение 2 рабочих дней', 0, 'UTF-8') !== false);
+    chk('в надписи есть пояснение про наградные материалы',
+        mb_stripos((string) $__plain, 'в наградных материалах', 0, 'UTF-8') !== false);
     chk('в надписи указан крайний срок', stripos($cab['body'], app_state_dt($w['until'])) !== false,
         app_state_dt($w['until']));
 
@@ -102,7 +112,7 @@ if (!$app) {
     $newData = [
         '_csrf' => $t, 'csrf' => $t, 'action' => 'edit_app', 'app_id' => (string) $aid,
         'is_group' => '0', 'full_name' => 'Тестова Проверка Аудитовна',
-        'group_name' => '', 'birth_date' => '2011-03-02', 'age_category' => '13-15 лет',
+        'group_name' => '', 'age_category' => '13-15 лет',
         'nomination' => 'Хореография', 'subgroup' => 'Народный танец', 'formation' => 'Дуэт',
         'work_title' => 'Проверочный номер', 'teacher' => 'Аудитов Аудит Аудитович',
         'institution' => 'ДШИ Проверка', 'city' => 'Казань',
@@ -113,7 +123,7 @@ if (!$app) {
     http($UJAR, $BASE . '/cabinet', $newData);
     $after = one("SELECT * FROM applications WHERE id=?", [$aid]);
     foreach ([
-        'full_name' => 'Тестова Проверка Аудитовна', 'birth_date' => '2011-03-02',
+        'full_name' => 'Тестова Проверка Аудитовна',
         'age_category' => '13-15 лет', 'nomination' => 'Хореография', 'subgroup' => 'Народный танец',
         'formation' => 'Дуэт', 'work_title' => 'Проверочный номер', 'institution' => 'ДШИ Проверка',
         'phone' => '+79995048899', 'address' => 'г. Казань, ул. Баумана, д. 1',

@@ -38,7 +38,7 @@ $groupName = input('group_name');
 $institution = input('institution');
 $city = input('city');
 
-// --- строки учеников: rows[i][full_name|birth_date|age_category|nomination|video_url] ---
+// --- строки учеников: rows[i][full_name|age_category|nomination|video_url] ---
 $rowsIn = $_POST['rows'] ?? [];
 if (!is_array($rowsIn)) $rowsIn = [];
 
@@ -56,8 +56,7 @@ foreach (array_values($rowsIn) as $i => $r) {
     if ($age === '') { $errors[] = ['row' => $rowNum, 'message' => 'Не указана возрастная категория']; continue; }
     $nom = trim((string) ($r['nomination'] ?? ''));
     if ($nom === '') { $errors[] = ['row' => $rowNum, 'message' => 'Не указана номинация']; continue; }
-    $birth = trim((string) ($r['birth_date'] ?? ''));
-
+    // birth_date убран: в заявке остаётся только возрастная категория.
     $videoRaw = trim((string) ($r['video_url'] ?? ''));
     $video = ''; $platform = '';
     if ($videoRaw !== '') {
@@ -72,7 +71,7 @@ foreach (array_values($rowsIn) as $i => $r) {
     }
 
     $valid[] = [
-        'full_name' => $fullName, 'birth_date' => $birth, 'age_category' => $age,
+        'full_name' => $fullName, 'age_category' => $age,
         'nomination' => $nom, 'video_url' => $video, 'video_platform' => $platform,
     ];
 }
@@ -93,7 +92,6 @@ foreach ($valid as $row) {
         'full_name'      => $row['full_name'],
         'is_group'       => 1,
         'group_name'     => $groupName,
-        'birth_date'     => $row['birth_date'],
         'age_category'   => $row['age_category'],
         'nomination'     => $row['nomination'],
         'formation'      => $formation,

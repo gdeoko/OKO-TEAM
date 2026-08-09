@@ -99,7 +99,7 @@ function submit_app(string $jar, array $comp, string $fio, string $title): array
         '_csrf' => $tok, 'csrf' => $tok,
         'competition_id' => (string) $comp['id'], 'competition' => (string) $comp['slug'],
         'full_name' => $fio, 'email' => 'okoteam.top@gmail.com', 'phone' => '+79995048899',
-        'birth_date' => '2010-05-14', 'age_category' => '13-15 лет',
+        'age_category' => '13-15 лет',
         'nomination' => 'Хореография', 'subgroup' => 'Народный танец', 'formation' => 'Соло',
         'work_title' => $title, 'teacher' => 'Петрова Анна Сергеевна',
         'institution' => 'ДШИ №1', 'city' => 'Москва',

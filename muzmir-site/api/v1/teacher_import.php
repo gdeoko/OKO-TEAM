@@ -71,7 +71,7 @@ foreach ($lines as $i => $row) {
     $ageRaw = trim((string) ($row[1] ?? ''));
     $nomRaw = trim((string) ($row[2] ?? ''));
     $videoRaw = trim((string) ($row[3] ?? ''));
-    $birthRaw = trim((string) ($row[4] ?? ''));
+    // Дата рождения из импортируемого файла больше не нужна — оставляем только категорию.
 
     $fullName = function_exists('v_fio') && $fullNameRaw !== '' ? v_fio($fullNameRaw) : $fullNameRaw;
     if (mb_strlen($fullName) < 3) {
@@ -102,7 +102,6 @@ foreach ($lines as $i => $row) {
 
     $valid[] = [
         'full_name'    => $fullName,
-        'birth_date'   => $birthRaw,
         'age_category' => $ageRaw,
         'nomination'   => $nomRaw,
         'video_url'    => $video,
@@ -132,7 +131,6 @@ foreach ($valid as $row) {
         'competition_id' => (int) $comp['id'],
         'user_id'        => (int) $user['id'],
         'full_name'      => $row['full_name'],
-        'birth_date'     => $row['birth_date'],
         'age_category'   => $row['age_category'],
         'nomination'     => $row['nomination'],
         'teacher'        => $user['full_name'],

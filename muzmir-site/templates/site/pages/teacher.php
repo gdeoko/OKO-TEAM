@@ -444,7 +444,6 @@ ob_start(); ?>
             <div id="groupRows">
               <div class="row-grid" data-row>
                 <div class="field"><label>ФИО</label><input type="text" name="rows[0][full_name]" placeholder="Иванова Мария Петровна" required></div>
-                <div class="field"><label>Дата рождения</label><input type="date" name="rows[0][birth_date]" max="<?= date('Y-m-d') ?>"></div>
                 <div class="field"><label>Категория</label>
                   <select name="rows[0][age_category]" required>
                     <option value="">Выберите</option>
@@ -475,7 +474,6 @@ ob_start(); ?>
           <template id="groupRowTpl">
             <div class="row-grid" data-row>
               <div class="field"><label>ФИО</label><input type="text" name="rows[__I__][full_name]" placeholder="Иванова Мария Петровна" required></div>
-              <div class="field"><label>Дата рождения</label><input type="date" name="rows[__I__][birth_date]" max="<?= date('Y-m-d') ?>"></div>
               <div class="field"><label>Категория</label>
                 <select name="rows[__I__][age_category]" required>
                   <option value="">Выберите</option>
