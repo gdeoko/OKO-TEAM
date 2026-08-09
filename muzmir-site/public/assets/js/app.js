@@ -6,13 +6,17 @@
   var reduced = matchMedia('(prefers-reduced-motion: reduce)');
   function isReduced() { return reduced.matches; }
   var hoverCapable = matchMedia('(hover: hover)');
-  // «Мобильный» = узкий экран или тач без hover. На таких устройствах отключаем
-  // тяжёлую анимацию и оставляем контент видимым сразу: телефон часто «моргает»
-  // и подтормаживает, а «пустые Подробнее» на главной — это скрытые .reveal,
-  // которые ждут скролла. Устраняем корень: на мобилке — без ожидания observer.
-  var isNarrow = window.matchMedia && window.matchMedia('(max-width: 960px)').matches;
-  var isTouch  = window.matchMedia && !window.matchMedia('(hover: hover)').matches;
-  var lowPower = isNarrow || isTouch;
+  // «Мобильный» = тач-устройство ИЛИ узкий экран. Детекция ТОЛЬКО по ширине не
+  // работает: если пользователь включил на телефоне «Полная версия сайта / ПК-режим»,
+  // viewport становится 1024+ и media(max-width:960) больше не срабатывает — весь
+  // тяжёлый декор включается на слабом железе телефона, и всё лагает.
+  // Поэтому проверяем ЛЮБОЙ признак тач-устройства: pointer:coarse, hover:none,
+  // maxTouchPoints — эти сохраняются даже в ПК-режиме браузера.
+  var mm = window.matchMedia;
+  var isTouch  = (mm && (mm('(pointer: coarse)').matches || mm('(hover: none)').matches))
+              || (navigator.maxTouchPoints || 0) > 0;
+  var isNarrow = mm && mm('(max-width: 960px)').matches;
+  var lowPower = isTouch || isNarrow;
   if (lowPower) document.documentElement.classList.add('mz-low');
   // Включает JS-моушен (.reveal стартует скрытым только при наличии .js — иначе контент виден всегда).
   document.documentElement.classList.add('js');

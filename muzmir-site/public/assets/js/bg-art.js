@@ -10,14 +10,19 @@
   'use strict';
   var cv = document.getElementById('mzBgArt');
   if (!cv) return;
-  // Полный отказ от фон-канваса на мобильных, планшетах и с prefers-reduced-motion:
+  // Полный отказ от фон-канваса на тач-устройствах и с prefers-reduced-motion:
   // 12-26 нот + до 140 звёзд + кометы через requestAnimationFrame — это ощутимая
-  // нагрузка на CPU и GPU телефона. Владелец жаловался на «моргает и лагает» —
-  // это и был основной виновник вместе с 14 DOM-нотами в hero.
-  var narrow = window.matchMedia && window.matchMedia('(max-width: 960px)').matches;
-  var touchOnly = window.matchMedia && !window.matchMedia('(hover: hover)').matches;
-  var reduceMo = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-  if (narrow || touchOnly || reduceMo) {
+  // нагрузка на CPU и GPU телефона.
+  // Детектируем тач НЕ ТОЛЬКО по ширине: если пользователь включил «полную версию
+  // сайта» на телефоне, viewport становится 1024+ и max-width-проверка не сработает
+  // — canvas включится в полную силу и всё дико залагает. Поэтому надёжнее:
+  // pointer:coarse, hover:none, navigator.maxTouchPoints — сохраняются в ПК-режиме.
+  var mm = window.matchMedia;
+  var isTouch = (mm && (mm('(pointer: coarse)').matches || mm('(hover: none)').matches))
+             || (navigator.maxTouchPoints || 0) > 0;
+  var isNarrow = mm && mm('(max-width: 960px)').matches;
+  var reduceMo = mm && mm('(prefers-reduced-motion: reduce)').matches;
+  if (isTouch || isNarrow || reduceMo) {
     cv.style.display = 'none';
     return;
   }
