@@ -114,8 +114,18 @@ if ($groups) {
 }
 
 // Счётчики вкладок.
-$cntPending = (int) (scalar("SELECT COUNT(DISTINCT application_id) FROM diplomas WHERE sent_at IS NULL OR sent_at=''") ?? 0);
-$cntSent    = (int) (scalar("SELECT COUNT(DISTINCT application_id) FROM diplomas WHERE sent_at IS NOT NULL AND sent_at<>''") ?? 0);
+// Счётчики вкладок считаем ТЕМ ЖЕ запросом, что и список — с JOIN на заявки.
+// Иначе дипломы, чья заявка удалена, попадали в счётчик, но не в список, и вкладка
+// показывала «В изготовлении · 12» при пустом списке.
+$cntPending = (int) (scalar("SELECT COUNT(DISTINCT d.application_id) FROM diplomas d
+                             JOIN applications a ON a.id = d.application_id
+                            WHERE d.sent_at IS NULL OR d.sent_at=''") ?? 0);
+$cntSent    = (int) (scalar("SELECT COUNT(DISTINCT d.application_id) FROM diplomas d
+                             JOIN applications a ON a.id = d.application_id
+                            WHERE d.sent_at IS NOT NULL AND d.sent_at<>''") ?? 0);
+// Дипломы-сироты (заявка удалена) — чинить нечего, но админ должен о них знать.
+$cntOrphan  = (int) (scalar("SELECT COUNT(*) FROM diplomas d
+                              WHERE NOT EXISTS (SELECT 1 FROM applications a WHERE a.id = d.application_id)") ?? 0);
 
 ob_start(); ?>
 <div class="page-head">
@@ -142,6 +152,11 @@ ob_start(); ?>
        style="padding:7px 13px;border-radius:10px;<?= $f===$k?'background:var(--a-navy);color:#fff;':'' ?>"><?= h($lbl) ?></a>
   <?php endforeach; ?>
 </div>
+<?php if ($cntOrphan > 0): ?>
+  <p class="small muted" style="margin:-10px 0 16px">
+    Ещё <?= (int) $cntOrphan ?> шт. дипломов остались от удалённых заявок — в списке их нет и отправить их нельзя.
+  </p>
+<?php endif; ?>
 
 <?php if (!$groups): ?>
   <div class="card"><p class="muted">По этому фильтру ничего нет.</p></div>

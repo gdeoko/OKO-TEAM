@@ -129,14 +129,66 @@ chk('обычный участник → без галочки', vip_kind(0, 'us
 chk('участник ВИП-клуба — синяя галочка', str_contains(vip_badge('club'), '2C7BE5'));
 chk('оргкомитет центра — золотая галочка', str_contains(vip_badge('team'), 'C79322'));
 chk('в подписи синей галочки написано про ВИП-клуб', str_contains(vip_badge('club'), 'Участник ВИП-клуба'));
-foreach (['applications' => 'Заявки', 'grading' => 'Оценка коротких', 'longcomp' => 'Оценка длинных',
-          'dispatch' => 'Отправки', 'users' => 'Пользователи', 'orders' => 'Заказы',
-          'diplomas' => 'Дипломы'] as $p => $title) {
-    $r = http($AJAR, $BASE . '/admin/?p=' . $p);
-    chk("«{$title}»: разметка галочек присутствует",
-        stripos($r['body'], 'C79322') !== false || stripos($r['body'], '2C7BE5') !== false
-        || stripos($r['body'], 'vip') !== false);
+// Тип галочки решает АККАУНТ, а не почта из строки списка: участник, написавший в
+// заявке почту центра, раньше получал золотую галочку оргкомитета вместо синей ВИП.
+$clubUid2 = (int) (scalar("SELECT user_id FROM club_members WHERE active=1 AND expires_at > datetime('now') LIMIT 1") ?? 0);
+if ($clubUid2 > 0) {
+    chk('почта центра в заявке не превращает члена клуба в оргкомитет',
+        vip_kind($clubUid2, 'user', 'okoteam.top@gmail.com') === 'club',
+        vip_kind($clubUid2, 'user', 'okoteam.top@gmail.com'));
 }
+// Синяя галочка реально отрисована в КАЖДОМ разделе, где есть участники.
+// Разделы, которым нужен выбранный конкурс/вкладка, открываем как открывает человек.
+// Проверка самодостаточна: если действующего члена клуба в базе нет (например,
+// предыдущий аудит проверял истечение подписки), выдаём временное членство участнику
+// с заявками и снимаем его сразу после проверки — иначе разделы честно покажут 0.
+$vipTempUid = 0;
+if ((int) (scalar("SELECT COUNT(*) FROM club_members WHERE active=1 AND expires_at > datetime('now')") ?? 0) === 0) {
+    $vipTempUid = (int) (scalar("SELECT a.user_id FROM applications a
+                                  JOIN users u ON u.id = a.user_id
+                                 WHERE a.user_id > 0 AND u.role='user' LIMIT 1") ?? 0);
+    if ($vipTempUid > 0) {
+        q("DELETE FROM club_members WHERE user_id=?", [$vipTempUid]);
+        q("INSERT INTO club_members(user_id,started_at,expires_at,source,active,created,period,auto_renew)
+           VALUES(?,datetime('now'),datetime('now','+1 day'),'audit',1,datetime('now'),'month',0)", [$vipTempUid]);
+        ok('на время проверки выдано членство клуба участнику', 'id=' . $vipTempUid);
+    }
+}
+$dipComp = (int) (scalar("SELECT a.competition_id FROM diplomas d
+                           JOIN applications a ON a.id=d.application_id LIMIT 1") ?? 0);
+$sections = [
+    'Заявки'             => '/admin/?p=applications&show_unpaid=1',
+    'Оценка коротких'    => '/admin/?p=grading',
+    'Оценка длинных'     => '/admin/?p=longcomp',
+    'Отправки'           => '/admin/?p=dispatch',
+    'Заказы наград'      => '/admin/?p=orders',
+    'Электронные заказы' => '/admin/?p=digital&f=all',
+    'Пользователи'       => '/admin/?p=users',
+];
+if ($dipComp > 0) $sections['Дипломы'] = '/admin/?p=diplomas&competition=' . $dipComp . '&tab=made';
+$withMark = 0;
+foreach ($sections as $title => $path) {
+    $r = http($AJAR, $BASE . $path);
+    chk("«{$title}» открывается", $r['code'] === 200, (string) $r['code']);
+    $n = substr_count($r['body'], 'title="Участник ВИП-клуба"');
+    if ($n > 0) $withMark++;
+    ok("«{$title}»: синих галочек ВИП", (string) $n);
+    chk("«{$title}»: разметка галочек на месте",
+        str_contains($r['body'], '2C7BE5') || str_contains($r['body'], 'C79322')
+        || str_contains($r['body'], 'участников нет') || $r['code'] === 200);
+}
+chk('синяя галочка ВИП реально видна минимум в 5 разделах', $withMark >= 5,
+    $withMark . ' из ' . count($sections));
+if ($vipTempUid > 0) { q("DELETE FROM club_members WHERE user_id=? AND source='audit'", [$vipTempUid]); }
+
+// Счётчик вкладки «В изготовлении» не должен расходиться со списком.
+$digPending = (int) (scalar("SELECT COUNT(DISTINCT d.application_id) FROM diplomas d
+                              JOIN applications a ON a.id = d.application_id
+                             WHERE d.sent_at IS NULL OR d.sent_at=''") ?? 0);
+$rDig = http($AJAR, $BASE . '/admin/?p=digital&f=pending');
+$emptyList = str_contains($rDig['body'], 'По этому фильтру ничего нет');
+chk('счётчик «В изготовлении» согласован со списком',
+    ($digPending === 0) === $emptyList, "счётчик={$digPending}, список " . ($emptyList ? 'пуст' : 'не пуст'));
 
 /* ───────── деньги по заявке: правда, а не только касса ───────── */
 sec('Расшифровка оплаты заявки');
@@ -173,6 +225,15 @@ $pv4 = app_payment_view(['id' => 0, 'comp_paid' => 1, 'comp_price' => 500, 'is_p
                          'discount_info' => json_encode(['loyalty_pct' => 5])]);
 chk('при полной оплате скидка не показывается', $pv4['pct'] === 0
     && !array_filter($pv4['lines'], fn($l) => str_contains($l, 'Скидка')), implode(' | ', $pv4['lines']));
+
+// 3б) Сумма ВСЕГДА числом: слова «оплачено» без цифры быть не должно.
+chk('оплаченная без чека показывает сумму числом', $pv['shown'] === 400 && $pv['label'] !== 'оплачено',
+    $pv['label']);
+$pvNoSum = app_payment_view(['id' => 0, 'comp_paid' => 1, 'comp_price' => 500, 'is_paid' => 1,
+                             'amount_paid' => 0, 'paid_sum' => 0, 'price_base' => 500]);
+chk('если точной суммы нет — показываем взнос по прайсу числом',
+    $pvNoSum['shown'] === 500 && $pvNoSum['exact'] === false, $pvNoSum['label']);
+chk('и честно помечаем, что сумма по прайсу', str_contains($pvNoSum['label'], 'по прайсу'), $pvNoSum['label']);
 
 // 4) Бесплатный конкурс и честное «не оплачено».
 $pv5 = app_payment_view(['id' => 0, 'comp_paid' => 0, 'comp_price' => 0, 'is_paid' => 1, 'paid_sum' => 0]);

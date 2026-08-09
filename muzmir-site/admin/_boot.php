@@ -17,6 +17,8 @@ require_once BASE_PATH . '/core/helpers.php';
 require_once BASE_PATH . '/core/auth.php';
 // Расшифровка денег по заявке (app_payment_view) нужна и спискам, и карточке заявки.
 if (is_file(BASE_PATH . '/core/loyalty.php')) require_once BASE_PATH . '/core/loyalty.php';
+// Клуб: членство и галочки участников (vip_kind/vip_mark) — их зовут почти все разделы.
+if (is_file(BASE_PATH . '/core/club.php')) require_once BASE_PATH . '/core/club.php';
 if (is_file(BASE_PATH . '/core/telegram.php')) require_once BASE_PATH . '/core/telegram.php';
 
 if (session_status() !== PHP_SESSION_ACTIVE) session_start();
@@ -83,52 +85,8 @@ function admin_modules(): array {
     ];
 }
 
-/**
- * Тип галочки у пользователя:
- *   'club' — СИНЯЯ: участник ВИП-клуба (пока подписка активна). Синяя выбрана намеренно
- *            (Даниэль): в списках админки она читается как «проверенный» — сразу видно,
- *            что перед тобой член клуба со скидкой и ускоренными сроками.
- *   'team' — ЗОЛОТАЯ: владелец, оргкомитет, администраторы центра. Привилегии клуба у них
- *            безлимитные (подписка не покупается и не истекает) — это не участник.
- *   ''     — галочки нет.
- */
-function vip_kind(?int $uid, string $role = '', string $email = ''): string {
-    if (in_array($role, ['owner', 'admin', 'orgcom'], true)) return 'team';
-    // Аккаунты команды опознаём и по почте — на случай, если роль в базе ещё не выставлена.
-    if ($email !== '' && function_exists('club_is_staff_email') && club_is_staff_email($email)) return 'team';
-    if (!$uid || $uid <= 0) return '';
-    if (!function_exists('club_is_active') && is_file(BASE_PATH . '/core/club.php')) {
-        require_once BASE_PATH . '/core/club.php';
-    }
-    if (function_exists('club_is_staff') && club_is_staff((int) $uid)) return 'team';
-    return (function_exists('club_is_active') && club_is_active((int) $uid)) ? 'club' : '';
-}
-
-/** Есть ли у пользователя привилегии клуба (команда или оплаченное членство). */
-function is_vip_user(?int $uid, string $role = '', string $email = ''): bool {
-    return vip_kind($uid, $role, $email) !== '';
-}
-
-/**
- * Галочка для админ-списков.
- * СИНЯЯ — участник ВИП-клуба, ЗОЛОТАЯ — команда центра (безлимит).
- */
-function vip_badge(string $kind = 'club'): string {
-    $isTeam = $kind === 'team';
-    $fill   = $isTeam ? '#C79322' : '#2C7BE5';
-    $title  = $isTeam ? 'Оргкомитет центра · безлимитный доступ' : 'Участник ВИП-клуба';
-    return '<span title="' . $title . '" style="display:inline-flex;vertical-align:-3px;margin-left:4px">'
-        . '<svg width="16" height="16" viewBox="0 0 24 24" fill="' . $fill . '">'
-        . '<path d="M12 2l2.5 2.1 3.2-.5 1.1 3.1 3 1.3-1 3 1 3-3 1.3-1.1 3.1-3.2-.5L12 22l-2.5-2.1-3.2.5-1.1-3.1-3-1.3 1-3-1-3 3-1.3 1.1-3.1 3.2.5z"/>'
-        . '<path d="M8.3 12.4l2.4 2.4 4.6-4.9" stroke="#fff" stroke-width="2.1" fill="none" stroke-linecap="round" stroke-linejoin="round"/>'
-        . '</svg></span>';
-}
-
-/** Готовая галочка по пользователю: сама определяет цвет (или пустую строку). */
-function vip_mark(?int $uid, string $role = '', string $email = ''): string {
-    $k = vip_kind($uid, $role, $email);
-    return $k === '' ? '' : vip_badge($k);
-}
+/* Галочки ВИП/команды (vip_kind, vip_badge, vip_mark, is_vip_user) переехали в
+   core/club.php: ими пользуются не только админ-разделы, но и аудиты и сайт. */
 
 /** Проверка доступа к модулю по текущей роли. */
 function admin_can(string $module): bool {

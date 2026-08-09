@@ -438,25 +438,34 @@ function app_payment_view(array $a): array {
     $discountReal = $base > 0 && $amount > 0 && $amount < $base;
     if (!$discountReal) { $pct = 0; $info = []; }
 
+    // СУММА ВСЕГДА ЧИСЛОМ. Раньше при оплате без чека выводилось просто слово
+    // «оплачено» — по списку было не понять, сколько человек заплатил. Если точной
+    // суммы нет ни в кассе, ни на заявке, показываем взнос по прайсу и честно
+    // помечаем, что это ожидаемая сумма, а не подтверждённая.
+    $shown    = $amount > 0 ? $amount : ($paid ? $base : 0);
+    $exact    = $amount > 0;
+
     $lines = [];
     if (!$free) {
         if ($base > 0) $lines[] = 'Взнос по прайсу — ' . number_format($base, 0, '.', ' ') . ' ₽';
         foreach (app_discount_reasons($info, $pct) as $why) $lines[] = $why;
-        if ($amount > 0) {
+        if ($exact) {
             $lines[] = 'К оплате — ' . number_format($amount, 0, '.', ' ') . ' ₽'
                      . ($source === 'kassa' ? ' (подтверждено кассой)' : ' (отмечено вручную)');
         } elseif ($paid) {
-            $lines[] = 'Отмечено оплаченным без чека — суммы в кассе нет';
+            $lines[] = 'Отмечено оплаченным без чека — точной суммы в кассе нет,'
+                     . ' показан взнос по прайсу';
         }
     }
 
     $label = $free ? 'Бесплатный конкурс'
-           : ($paid || $amount > 0
-               ? ($amount > 0 ? number_format($amount, 0, '.', ' ') . ' ₽ · оплачено' : 'оплачено')
+           : (($paid || $amount > 0)
+               ? number_format($shown, 0, '.', ' ') . ' ₽' . ($exact ? '' : ' (по прайсу)')
                : number_format($base, 0, '.', ' ') . ' ₽ — не оплачено');
 
     return ['free' => $free, 'paid' => $paid || $amount > 0, 'base' => $base,
-            'amount' => $amount, 'pct' => $pct, 'source' => $source,
+            'amount' => $amount, 'shown' => $shown, 'exact' => $exact,
+            'pct' => $pct, 'source' => $source,
             'lines' => $lines, 'label' => $label];
 }
 

@@ -225,8 +225,9 @@ if ($id = (int) input('id')) {
           <?php if ($pv['free']): ?>
             <span class="badge badge--muted">Бесплатный конкурс</span>
           <?php elseif ($pv['paid']): ?>
-            <b><?= $pv['amount'] > 0 ? number_format($pv['amount'], 0, '.', ' ') . ' ₽' : 'оплачено' ?></b>
+            <b><?= number_format($pv['shown'], 0, '.', ' ') ?> ₽</b>
             <?= $pv['pct'] > 0 ? ' <span class="badge badge--paid">−' . (int) $pv['pct'] . '%</span>' : '' ?>
+            <?= $pv['exact'] ? '' : ' <span class="small muted">по прайсу</span>' ?>
           <?php else: ?>
             <span class="muted"><?= number_format($pv['base'], 0, '.', ' ') ?> ₽ — не оплачено</span>
           <?php endif; ?>
@@ -401,8 +402,9 @@ if ($id = (int) input('id')) {
           <dt>Телефон</dt><dd><?= h($a['phone'] ?: '—') ?></dd>
           <dt>Оплата</dt><dd><?= $pv['free'] ? '<span class="badge badge--muted">Бесплатный конкурс</span>'
                 : ($pv['paid'] ? '<span class="badge badge--paid">Оплачено</span>' : '<span class="badge badge--muted">Не оплачено</span>') ?><?php
-                if (!$pv['free'] && $pv['paid'] && $pv['amount'] > 0): ?> · <?= number_format($pv['amount'], 0, '.', ' ') ?> ₽<?php
-                if ($pv['pct'] > 0): ?> <span class="small muted">(−<?= (int)$pv['pct'] ?>%)</span><?php endif; endif; ?></dd>
+                if (!$pv['free'] && $pv['paid']): ?> · <?= number_format($pv['shown'], 0, '.', ' ') ?> ₽<?php
+                if ($pv['pct'] > 0): ?> <span class="small muted">(−<?= (int)$pv['pct'] ?>%)</span><?php endif;
+                if (!$pv['exact']): ?> <span class="small muted">по прайсу</span><?php endif; endif; ?></dd>
           <?php if ($a['score'] !== null): ?><dt>Балл / результат</dt><dd><b><?= h((string)$a['score']) ?></b> · <?= h($a['result']) ?></dd><?php endif; ?>
           <?php if ($a['flag']): ?><dt>Метка</dt><dd><span class="badge badge--rejected"><?= h($a['flag']) ?></span></dd><?php endif; ?>
           <dt>Создана</dt><dd><?= h($a['created_at']) ?></dd>
@@ -566,8 +568,9 @@ ob_start(); ?>
           // оплаченная без чека заявка показывалась как «ожидается».
           $pvRow = app_payment_view($a);
           if ($pvRow['free'])       $sumHtml = '<span class="badge badge--muted small">Бесплатно</span>';
-          elseif ($pvRow['paid'])   $sumHtml = '<b>' . ($pvRow['amount'] > 0 ? number_format($pvRow['amount'], 0, '.', ' ') . ' ₽' : 'оплачено') . '</b>'
-                                             . ($pvRow['pct'] > 0 ? ' <span class="small muted">−' . (int)$pvRow['pct'] . '%</span>' : '');
+          elseif ($pvRow['paid'])   $sumHtml = '<b>' . number_format($pvRow['shown'], 0, '.', ' ') . ' ₽</b>'
+                                             . ($pvRow['pct'] > 0 ? ' <span class="small muted">−' . (int)$pvRow['pct'] . '%</span>' : '')
+                                             . ($pvRow['exact'] ? '' : ' <span class="small muted">по прайсу</span>');
           else                      $sumHtml = '<span class="small muted">' . number_format($pvRow['base'], 0, '.', ' ') . ' ₽ ожидается</span>';
         ?>
           <tr>
