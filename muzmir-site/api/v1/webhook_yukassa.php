@@ -23,9 +23,16 @@ if ($secret) {
     if (!hash_equals($calc, $sig)) json_out(['ok' => false, 'error' => 'bad signature'], 403);
 } else {
     // Секрет не задан → допускаем callback только с известных IP-адресов ЮKassa.
-    // Дополнительная защита — сверка суммы с payments.amount в payment_apply_status().
-    if (!yukassa_ip_allowed(client_ip())) {
-        audit('yukassa_webhook_badip', '', null, ['ip' => client_ip()]);
+    //
+    // БЕРЁМ REMOTE_ADDR, А НЕ client_ip(). client_ip() первым читает заголовки
+    // X-Forwarded-For / CF-Connecting-IP, а их подставляет кто угодно: одним curl
+    // с чужим заголовком можно было выдать себя за ЮKassa и пометить оплаченными
+    // любые заявки (payment_apply_status идёт по metadata.application_ids).
+    // nginx проксирует в php-fpm напрямую, поэтому REMOTE_ADDR здесь — настоящий
+    // адрес отправителя, и подделать его нельзя.
+    $srcIp = (string) ($_SERVER['REMOTE_ADDR'] ?? '');
+    if (!yukassa_ip_allowed($srcIp)) {
+        audit('yukassa_webhook_badip', '', null, ['ip' => $srcIp, 'xff' => (string) ($_SERVER['HTTP_X_FORWARDED_FOR'] ?? '')]);
         json_out(['ok' => false, 'error' => 'forbidden'], 403);
     }
 }

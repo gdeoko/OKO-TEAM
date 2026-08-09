@@ -324,6 +324,16 @@ function payment_apply_status(string $paymentId, string $status, array $obj = []
 
     $pay = one("SELECT * FROM payments WHERE yukassa_id=?", [$paymentId]);
 
+    // ВТОРОЙ РУБЕЖ ЗАЩИТЫ: «оплачено» по НЕИЗВЕСТНОМУ нам payment_id не применяем никогда.
+    // Платёж всегда создаём мы сами (yukassa_create_payment пишет строку в payments), значит
+    // succeeded без такой строки — либо подделка, либо чужой магазин. Без этой проверки
+    // сверка суммы ниже просто пропускалась (она внутри `if (... && $pay)`), и вебхук
+    // применял что дают: помечал заявки из metadata.application_ids оплаченными.
+    if ($status === 'succeeded' && !$pay) {
+        if (function_exists('audit')) audit('payment_unknown_id', 'payments', null, ['yukassa_id' => $paymentId]);
+        return false;
+    }
+
     // --- Сверка суммы ПЕРЕД любыми изменениями (защита от подмены суммы в вебхуке) ---
     // Сравниваем object.amount.value (руб.) с сохранённой payments.amount. При расхождении —
     // НЕ помечаем оплаченным, логируем и выходим. Если суммы в объекте нет (напр. pull без

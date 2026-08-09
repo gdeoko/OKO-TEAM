@@ -273,8 +273,16 @@ function newsletter_enqueue(int $newsletterId): int {
             $subject = ($hasAB && ($i % 2 === 1)) ? $subjectB : $subjectA;
             $i++;
 
+            // Подстановка имени. Эталоны кампаний (campaign_inner) начинаются со строки
+            // «Здравствуйте, {{name}}!», а здесь тело раньше уходило как есть — вся база
+            // получала бы письмо с буквальным «{{name}}» в первой строке.
+            $nm   = trim((string) ($r['name'] ?? ''));
+            $nm   = $nm !== '' ? $nm : 'уважаемый участник';
+            $tok2 = ['{{name}}', '{{имя}}'];
+            $subject = str_replace($tok2, $nm, $subject);
+
             $unsubUrl = $base . '/api/v1/unsubscribe.php?token=' . urlencode($unsubToken);
-            $body = nl_rewrite_links($bodyRaw, $token);
+            $body = nl_rewrite_links(str_replace($tok2, h($nm), $bodyRaw), $token);
             $body = nl_wrap_email($body, $unsubUrl, nl_open_pixel($token), $preheader);
 
             insert('mail_queue', [

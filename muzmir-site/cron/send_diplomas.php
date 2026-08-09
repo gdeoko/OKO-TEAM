@@ -12,6 +12,7 @@
 declare(strict_types=1);
 if (!defined('BASE_PATH')) define('BASE_PATH', dirname(__DIR__));   // безопасно и в библиотечном режиме (из кабинета)
 if (empty($GLOBALS['CFG'])) { $CFG = require BASE_PATH . '/config.php'; $GLOBALS['CFG'] = $CFG; }
+require_once BASE_PATH . '/cron/_lib.php';
 require_once BASE_PATH . '/core/db.php';
 require_once BASE_PATH . '/core/data.php';
 require_once BASE_PATH . '/core/helpers.php';
@@ -20,6 +21,15 @@ require_once BASE_PATH . '/core/telegram.php';
 require_once BASE_PATH . '/core/pdf_diploma.php';
 require_once BASE_PATH . '/core/diploma_render.php';
 require_once BASE_PATH . '/core/app_status.php';
+
+// ЗАЩИТА ОТ НАЛОЖЕНИЯ. Крон идёт раз в минуту, а письмо с дипломами несёт 2-3 PDF
+// (до нескольких мегабайт): SMTP-загрузка легко переваливает за минуту, и следующий
+// запуск успевал подхватить те же дипломы — участник получал одно и то же письмо
+// «Ваши наградные документы» по два-три раза. Плюс раздел планирования без лока
+// слал рендер-серверу дубли заданий и падал на UNIQUE.
+// TTL 15 минут: если процесс убьют, лок протухнет и отправка продолжится сама.
+if (!cron_lock('send_diplomas', 900)) exit(0);
+register_shutdown_function(static function () { cron_unlock('send_diplomas'); });
 db();
 
 // Библиотечный режим: только функции (_diploma_email_html и пр.), крон не запускается.

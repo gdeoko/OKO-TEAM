@@ -129,9 +129,12 @@ if ($action === 'request') {
     // воркер попробовал ещё раз при первой возможности; всё равно уведомляем
     // участника honest'ом «Код отправлен», но помечаем sent=false для JS.
     if (!$sent && function_exists('mail_queue')) {
-        $qid = (int) mail_queue($email, (string) input('name'), $subject, $html);
-        // Ставим повышенный приоритет: OTP не должен тонуть между массовыми письмами.
-        if ($qid) { try { update('mail_queue', ['priority' => 5], 'id=:id', ['id' => $qid]); } catch (\Throwable $e) {} }
+        // ВАЖНО: НЕ трогаем priority. В этой системе priority = 0 означает «личное,
+        // отправить немедленно», а priority > 0 — «массовая рассылка, по дневной квоте
+        // и вне окна не уходит». Раньше здесь стояло priority=5 «чтобы не утонуло»:
+        // это отправляло код входа в ХВОСТ массовой очереди за 8000 писем волны, и
+        // 15-минутный код приходил бы через недели. mail_queue() и так ставит 0.
+        mail_queue($email, (string) input('name'), $subject, $html);
     }
 
     $out = ['ok' => true, 'sent' => $sent, 'need_verify' => true, 'message' => 'Код отправлен на почту'];
