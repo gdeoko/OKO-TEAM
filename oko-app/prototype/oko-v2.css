@@ -451,3 +451,96 @@ img, video, canvas, svg:not(.i) {
   background: rgba(255,255,255,.28);
 }
 :root[data-theme="light"] #msgMenu .mm-inner::before { background: rgba(0,0,0,.22); }
+
+/* ---------------------------------------------------------------------------
+   15. КОМПОЗЕР: понятные кнопки «микрофон» и «отправить»
+   Правка Даниэля: «голосовые сами кривые и кнопки отправки не удобные,
+   не понятно где находятся». Теперь это две разные кнопки, как в Telegram:
+   нейтральный микрофон и яркая лаймовая стрелка отправки.
+   --------------------------------------------------------------------------- */
+.composer .mic-btn{
+  width:44px; height:44px; border-radius:50%;
+  display:flex; align-items:center; justify-content:center;
+  flex-shrink:0;
+  background:transparent;
+  color:var(--dim);
+  border:1px solid var(--border);
+  transition:color .18s, background .18s, border-color .18s, transform .12s;
+}
+.composer .mic-btn svg.i{ width:21px; height:21px; }
+.composer .mic-btn:hover{ color:var(--accent); border-color:rgba(154,255,0,.35); }
+.composer .mic-btn:active{ transform:scale(.93); }
+
+/* во время записи микрофон становится красным и пульсирует */
+.composer .mic-btn.rec{
+  background:var(--danger);
+  border-color:var(--danger);
+  color:#fff;
+  animation:okoRecPulse 1.1s ease-in-out infinite;
+}
+@keyframes okoRecPulse{
+  0%,100%{ box-shadow:0 0 0 0 rgba(255,77,77,.45); }
+  50%    { box-shadow:0 0 0 9px rgba(255,77,77,0); }
+}
+.composer .mic-btn.pop{ animation:okoPop .28s cubic-bezier(.3,1.5,.4,1); }
+@keyframes okoPop{ 0%{transform:scale(.82)} 100%{transform:scale(1)} }
+
+/* Кнопка отправки: всегда узнаваемая лаймовая стрелка */
+.composer .send{
+  width:44px; height:44px; border-radius:50%;
+  background:var(--lime); color:#000;
+  flex-shrink:0;
+  display:flex; align-items:center; justify-content:center;
+  box-shadow:0 4px 16px rgba(154,255,0,.28);
+  transition:transform .12s, box-shadow .18s;
+}
+.composer .send svg.i{ width:20px; height:20px; }
+.composer .send:active{ transform:scale(.93); }
+
+/* во время записи стрелка отправки означает «завершить и отправить» */
+.composer.recording .send{ box-shadow:0 4px 18px rgba(154,255,0,.42); }
+
+/* ---------------------------------------------------------------------------
+   16. КНОПКА «НАЗАД» В ОБЩЕЙ ШАПКЕ (экраны без вкладки в нижнем меню)
+   --------------------------------------------------------------------------- */
+.oko-hdr-back{
+  width:34px; height:34px;
+  margin-right:2px;
+  border-radius:50%;
+  display:flex; align-items:center; justify-content:center;
+  flex:0 0 auto;
+  color:var(--text);
+  background:transparent;
+  transition:background .18s, color .18s, transform .12s;
+}
+.oko-hdr-back svg.i{ width:19px; height:19px; }
+.oko-hdr-back:hover{ background:var(--raised); color:var(--accent); }
+.oko-hdr-back:active{ transform:scale(.9); }
+
+/* ---------------------------------------------------------------------------
+   17. ПУСТЫЕ СОСТОЯНИЯ КОШЕЛЬКА (цели, история, приём платежа)
+   Пустой экран с одной кнопкой читался как недоделка. Теперь человек видит,
+   зачем раздел нужен.
+   --------------------------------------------------------------------------- */
+.wal-empty{
+  display:flex; flex-direction:column; align-items:center; text-align:center;
+  padding:34px 22px 22px;
+  gap:10px;
+}
+.wal-empty-ic{
+  width:64px; height:64px; border-radius:50%;
+  display:flex; align-items:center; justify-content:center;
+  background:var(--lime-dim);
+  color:var(--accent);
+  margin-bottom:4px;
+}
+.wal-empty-ic svg.i{ width:28px; height:28px; }
+.wal-empty h3{
+  font-family:var(--font-display);
+  font-size:22px; letter-spacing:.05em;
+  color:var(--text); margin:0;
+}
+.wal-empty p{
+  font-size:13px; line-height:1.55; color:var(--dim);
+  margin:0; max-width:34ch;
+}

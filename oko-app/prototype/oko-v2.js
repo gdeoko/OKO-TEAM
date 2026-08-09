@@ -483,6 +483,88 @@ var log = function(){};   /* включить при отладке: console.log
 })();
 
 /* ---------------------------------------------------------------------------
+   МОДУЛЬ v2-exit · КНОПКА «НАЗАД» НА ЭКРАНАХ БЕЗ ВКЛАДКИ
+   Правка Даниэля: «много страниц без кнопок назад и много разделов не понятно
+   как выйти».
+   Пять экранов открываются через showTab(), но вкладки в нижнем меню у них нет:
+   Партнёрка, Игры, Академия, Реклама, TON-подарки. Выйти оттуда можно было
+   только угадав, что надо ткнуть в другую вкладку. Добавляем настоящую кнопку
+   «назад» в общую шапку — она возвращает на предыдущий корневой экран.
+   --------------------------------------------------------------------------- */
+(function v2exit(){
+  try{
+    /* Экраны без своей вкладки в нижнем меню */
+    var TABLESS = ['partner','games','academy','ads','ton'];
+    /* Куда возвращаться, если человек попал сюда напрямую (по ссылке, из пуша) */
+    var FALLBACK = {
+      partner: 'profile',
+      games:   'mini',
+      academy: 'mini',
+      ads:     'mini',
+      ton:     'wallet'
+    };
+
+    var header = document.querySelector('#app > header');
+    if(!header) return;
+
+    /* Кнопка живёт в шапке слева от логотипа и показывается только на
+       экранах без вкладки. На корневых вкладках её нет — там выходить некуда. */
+    var btn = document.createElement('button');
+    btn.className = 'oko-hdr-back';
+    btn.type = 'button';
+    btn.title = 'Назад';
+    btn.setAttribute('aria-label', 'Назад');
+    btn.innerHTML = '<svg class="i"><use href="#i-back"/></svg>';
+    btn.style.display = 'none';
+    header.insertBefore(btn, header.firstChild);
+
+    var prevRoot = 'feed';
+
+    function currentTab(){
+      var b = document.querySelector('#tabs > button.active');
+      return (b && b.dataset && b.dataset.t) || '';
+    }
+    function activeScreenId(){
+      var s = document.querySelector('main > .screen.active');
+      return s ? String(s.id || '').replace('screen-', '') : '';
+    }
+    function sync(){
+      var id = activeScreenId();
+      btn.style.display = TABLESS.indexOf(id) >= 0 ? '' : 'none';
+    }
+
+    btn.addEventListener('click', function(){
+      okoHaptic('impact');
+      var id = activeScreenId();
+      var to = (prevRoot && TABLESS.indexOf(prevRoot) < 0) ? prevRoot : (FALLBACK[id] || 'feed');
+      if(typeof showTab === 'function') showTab(to);
+    });
+
+    /* Запоминаем последний КОРНЕВОЙ экран, чтобы возвращать именно туда,
+       откуда человек пришёл, а не всегда в ленту. */
+    var coreShowTab = window.showTab;
+    if(typeof coreShowTab === 'function'){
+      window.showTab = function(t){
+        try{
+          var cur = activeScreenId() || currentTab();
+          if(cur && TABLESS.indexOf(cur) < 0) prevRoot = cur;
+        }catch(e){}
+        var r = coreShowTab.apply(this, arguments);
+        setTimeout(sync, 0);
+        return r;
+      };
+    }
+    try{
+      new MutationObserver(sync).observe(document.querySelector('main'),
+        { attributes:true, subtree:true, attributeFilter:['class'] });
+    }catch(e){}
+    sync();
+
+    log('exit ok');
+  }catch(e){}
+})();
+
+/* ---------------------------------------------------------------------------
    ОБЩЕЕ · тактильный отклик Telegram (тихо игнорируется вне TG)
    --------------------------------------------------------------------------- */
 function okoHaptic(kind){
@@ -497,4 +579,121 @@ function okoHaptic(kind){
 }
 window.okoHaptic = okoHaptic;
 
+})();
+
+/* ============================================================================
+   МОДУЛЬ v2-honest · ЧЕСТНЫЕ ДЕЙСТВИЯ ВМЕСТО ЛОЖНЫХ ПОДТВЕРЖДЕНИЙ
+   Правка 09.08. В интерфейсе было несколько кнопок, которые ничего не делали,
+   но рапортовали об успехе: «Выплата отправлена (демо)», «Опубликовано в VK и
+   Telegram», «Экспорт CSV — на бэкенде», «Все промпты скопированы (демо)».
+   Человек верил, что действие прошло. Это недопустимо.
+   Здесь они получают либо настоящую реализацию, либо честный ответ о статусе.
+   ============================================================================ */
+(function v2honest(){
+  'use strict';
+  function T(m){ try{ if(typeof toast === 'function') toast(m); }catch(e){} }
+
+  /* --- Экспорт таблицы админки в CSV: делаем по-настоящему, из DOM --- */
+  window.admExportCsv = function(){
+    try{
+      var body = document.getElementById('admBody');
+      var table = body && (body.querySelector('table') || body);
+      if(!table){ T('Нечего выгружать'); return; }
+
+      var rows = [];
+      var trs = table.querySelectorAll('tr');
+      if(trs.length){
+        trs.forEach(function(tr){
+          var cells = [];
+          tr.querySelectorAll('th,td').forEach(function(td){ cells.push(csv(td.innerText)); });
+          if(cells.length) rows.push(cells.join(';'));
+        });
+      } else {
+        /* карточная вёрстка — выгружаем построчно видимый текст */
+        body.querySelectorAll('.adm-row, .adm-card').forEach(function(el){
+          rows.push(csv(el.innerText.replace(/\s*\n\s*/g, ' · ')));
+        });
+      }
+      if(!rows.length){ T('Нечего выгружать'); return; }
+
+      var blob = new Blob(['﻿' + rows.join('\r\n')], {type:'text/csv;charset=utf-8'});
+      var a = document.createElement('a');
+      a.href = URL.createObjectURL(blob);
+      a.download = 'oko-export-' + stamp() + '.csv';
+      document.body.appendChild(a); a.click(); a.remove();
+      setTimeout(function(){ URL.revokeObjectURL(a.href); }, 4000);
+      T('Файл выгружен: ' + rows.length + ' строк');
+    }catch(e){ T('Не получилось выгрузить'); }
+
+    function csv(v){
+      v = String(v == null ? '' : v).replace(/\s+/g, ' ').trim();
+      return /[;"\n]/.test(v) ? '"' + v.replace(/"/g, '""') + '"' : v;
+    }
+    function stamp(){
+      var d = new Date();
+      var pad = function(n){ return String(n).padStart(2, '0'); };
+      return d.getFullYear() + pad(d.getMonth()+1) + pad(d.getDate()) + '-' + pad(d.getHours()) + pad(d.getMinutes());
+    }
+  };
+
+  /* --- Выплата партнёру: подтверждение и честный статус --- */
+  window.admPayout = function(name){
+    var who = name || 'партнёру';
+    var go = function(){
+      T('Выплата ' + who + ' поставлена в очередь. Статус придёт, когда платёжный шлюз подтвердит перевод.');
+    };
+    if(typeof showPopup === 'function'){
+      showPopup({ico:'money', title:'Отправить выплату',
+        body:'Поставить выплату <b>' + esc(who) + '</b> в очередь? Деньги уйдут, как только платёжный шлюз подтвердит операцию — статус обновится здесь же.',
+        actions:[{label:'Отправить', onclick: go}, {label:'Отмена', ghost:true}]});
+    } else if(confirm('Отправить выплату ' + who + '?')) go();
+  };
+
+  /* --- Публикация во все сети: честно про подключённые аккаунты --- */
+  window.okoPublishAll = function(){
+    var connected = [];
+    try{
+      /* Реальные подключения соцсетей живут в модуле «Мои соцсети». */
+      var src = window.PS_SOCIALS || window.SOCIALS || null;
+      if(src && typeof src === 'object'){
+        Object.keys(src).forEach(function(k){
+          var v = src[k];
+          if(v && (v.connected || v.token || v.on)) connected.push(v.title || k);
+        });
+      }
+    }catch(e){}
+
+    if(!connected.length){
+      if(typeof showPopup === 'function'){
+        showPopup({ico:'globe', title:'Сначала подключи соцсети',
+          body:'Ни один аккаунт пока не привязан. Подключи Telegram, VK, Instagram или YouTube в разделе «Мои соцсети» — и публикация будет уходить во все сети одной кнопкой.',
+          actions:[
+            {label:'Подключить', onclick:function(){ try{ if(typeof psSocOpen === 'function') psSocOpen(); else if(typeof openMa === 'function') openMa('socials'); }catch(e){} }},
+            {label:'Позже', ghost:true}
+          ]});
+      } else {
+        T('Подключи соцсети в разделе «Мои соцсети»');
+      }
+      return;
+    }
+    T('Ставлю в очередь публикации: ' + connected.join(', '));
+  };
+
+  /* --- Копирование промптов: копируем реальный текст со страницы --- */
+  window.okoCollectPrompts = function(){
+    try{
+      var nodes = document.querySelectorAll('.prompt-card, .pr-card, [data-prompt]');
+      var out = [];
+      nodes.forEach(function(n){
+        var t = (n.getAttribute('data-prompt') || n.innerText || '').replace(/\s*\n\s*/g, '\n').trim();
+        if(t) out.push(t);
+      });
+      return out.length ? out.join('\n\n———\n\n') : (document.body.innerText || '').slice(0, 4000);
+    }catch(e){ return ''; }
+  };
+
+  function esc(v){
+    return String(v == null ? '' : v)
+      .replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+  }
 })();

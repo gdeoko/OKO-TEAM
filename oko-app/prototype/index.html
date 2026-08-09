@@ -1604,6 +1604,8 @@ button:focus-visible,a:focus-visible,input:focus-visible,textarea:focus-visible,
     <symbol id="i-rocket" viewBox="0 0 100 100"><path d="M50 12c14 8 22 24 22 42l-10 10H38l-10-10c0-18 8-34 22-42z"/><circle cx="50" cy="42" r="8"/><path d="M38 64l-12 14 16-4M62 64l12 14-16-4"/></symbol>
     <!-- Клипы: скруглённый кадр с диагональю и треугольником воспроизведения (метафора Reels) -->
     <symbol id="i-clips" viewBox="0 0 100 100"><rect x="14" y="14" width="72" height="72" rx="18"/><path d="M32 14 48 38M58 14 74 38M14 38h72"/><path d="M44 52v20l18-10z" fill="currentColor" stroke="none"/></symbol>
+    <!-- Видеокружок: камера, вписанная в круг (метафора кружочка Telegram) -->
+    <symbol id="i-video-note" viewBox="0 0 100 100"><circle cx="50" cy="50" r="34"/><path d="M38 40h16a5 5 0 0 1 5 5v10a5 5 0 0 1-5 5H38a5 5 0 0 1-5-5V45a5 5 0 0 1 5-5z"/><path d="M59 47l9-5v16l-9-5z"/></symbol>
     <!-- Обновить: круговая стрелка, разомкнутая сверху справа -->
     <symbol id="i-refresh" viewBox="0 0 100 100"><path d="M82 50a32 32 0 1 1-9.4-22.6"/><polyline points="82 16 82 32 66 32"/></symbol>
   </defs>
@@ -1756,7 +1758,14 @@ button:focus-visible,a:focus-visible,input:focus-visible,textarea:focus-visible,
             <button class="tool tool-clip" onclick="openSheet('attach')" title="Прикрепить" aria-label="Прикрепить"><svg class="i"><use href="#i-clip"/></svg></button>
             <video id="recPreview" playsinline muted style="display:none"></video>
             <div class="rec-timer" id="recTimer"><span class="dot"></span><span id="recTime">0:00</span></div>
-            <button class="send" id="sendBtn" aria-label="Кнопка"><svg class="i" id="sendIco"><use href="#i-mic"/></svg></button>
+            <!-- Две РАЗНЫЕ кнопки, как в Telegram (правка Даниэля 09.08:
+                 «кнопки отправки не удобные, не понятно где находятся»):
+                 • #micBtn — голосовое/кружок: тап переключает режим,
+                   удержание записывает;
+                 • #sendBtn — «Отправить», лаймовый круг со стрелкой.
+                   Появляется сразу с первым символом и во время записи. -->
+            <button class="mic-btn" id="micBtn" title="Голосовое сообщение" aria-label="Голосовое сообщение"><svg class="i" id="micIco"><use href="#i-mic"/></svg></button>
+            <button class="send" id="sendBtn" title="Отправить" aria-label="Отправить"><svg class="i fill" id="sendIco"><use href="#i-send"/></svg></button>
           </div>
         </div>
       </div>
@@ -4299,7 +4308,7 @@ function admUsers(){
       <span class="adm-main"><b>${esc(u.n)}</b><small>${esc(u.h)} · ${esc(u.when)}</small></span>
       <span class="adm-tag ${u.paid?'paid':'free'}">${esc(u.tier)}</span>
     </div>`).join('') +
-    `<div class="adm-acts"><button class="adm-btn" onclick="toast('Экспорт CSV — на бэкенде')">Экспорт CSV</button></div>`;
+    `<div class="adm-acts"><button class="adm-btn" onclick="admExportCsv()">Экспорт CSV</button></div>`;
 }
 function admPay(){
   return `<div class="adm-sec-h">Платежи</div>` + ADMIN.pay.map(p=>`
@@ -4314,7 +4323,7 @@ function admPartners(){
     <div class="adm-row">
       <span class="adm-ava">${esc(p.n[0])}</span>
       <span class="adm-main"><b>${esc(p.n)} · ${esc(p.earn)}</b><small>${esc(p.h)} · ${p.ref} рефералов</small></span>
-      <button class="adm-btn ${p.st==='wait'?'pri':''}" onclick="toast('${p.st==='wait'?'Выплата отправлена (демо)':'Уже выплачено'}')">${p.st==='wait'?'Выплатить':'Оплачено'}</button>
+      <button class="adm-btn ${p.st==='wait'?'pri':''}" onclick="admPayout('${p.n}')">${p.st==='wait'?'Выплатить':'Оплачено'}</button>
     </div>`).join('');
 }
 function admModer(){
@@ -4615,95 +4624,239 @@ function sendText(){
   }
 }
 let mediaRec = null, recChunks = [], recStream = null;
+let recStart = null, recInt = null, recArmed = false, recCancelled = false;
+
+/* ============================================================================
+   ЗАПИСЬ ГОЛОСОВЫХ И КРУЖОЧКОВ
+   Переписано 09.08 по правкам Даниэля: «голосовые сами кривые», «кнопки
+   отправки не удобные, не понятно где находятся».
+   Что изменено по сравнению со старой версией:
+     • отправка и микрофон — ДВЕ разные кнопки (как в Telegram);
+     • порог удержания поднят 230 -> 320 мс и отменяется, если палец поехал:
+       обычный чуть затянувшийся тап больше не запускает запись;
+     • таймер стартует ПОСЛЕ реального старта MediaRecorder, а не до запроса
+       доступа — раньше первые секунды речи терялись, а время врало;
+     • отказ в доступе к микрофону больше НЕ превращается в пустое «голосовое»:
+       показываем понятное объяснение и ничего не отправляем;
+     • при достижении лимита тарифа запись останавливается и отправляется
+       то, что успели записать, вместо молчаливого уничтожения;
+     • pointer capture: запись останавливается, даже если палец ушёл с кнопки.
+   ============================================================================ */
+
+function recUiOn(){
+  const inp = document.getElementById('msgInput');
+  const t   = document.getElementById('recTimer');
+  if(inp) inp.style.display = 'none';
+  if(t)   t.style.display = 'flex';
+  document.getElementById('micBtn')?.classList.add('rec');
+  document.querySelector('.composer')?.classList.add('recording');
+  syncComposer();
+}
+function recUiOff(){
+  const inp = document.getElementById('msgInput');
+  const t   = document.getElementById('recTimer');
+  if(inp) inp.style.display = '';
+  if(t)   t.style.display = 'none';
+  document.getElementById('micBtn')?.classList.remove('rec');
+  document.querySelector('.composer')?.classList.remove('recording');
+  const pv = document.getElementById('recPreview');
+  if(pv){ pv.style.display = 'none'; pv.srcObject = null; }
+  syncComposer();
+}
+function recTick(){
+  const sec = Math.floor((Date.now() - recStart) / 1000);
+  const el = document.getElementById('recTime');
+  if(el) el.textContent = Math.floor(sec/60) + ':' + String(sec%60).padStart(2,'0');
+  /* Лимит тарифа: не выбрасываем запись, а мягко завершаем и отправляем. */
+  const limit = (typeof okoLimits === 'function' && recMode === 'voice') ? okoLimits().voiceSec : 0;
+  if(limit && sec >= limit){
+    stopRec();
+    if(typeof toast === 'function') toast('Достигнут лимит длины на текущем тарифе — отправил записанное');
+  }
+}
+function recCleanup(){
+  if(recStream){ recStream.getTracks().forEach(t=>t.stop()); recStream = null; }
+  mediaRec = null; recChunks = [];
+}
+
 function startRec(){
-  if(!currentChat) return;
-  recStart = Date.now();
-  document.getElementById('msgInput').style.display='none';
-  document.getElementById('recTimer').style.display='flex';
-  document.getElementById('sendBtn').classList.add('rec');
-  recInt = setInterval(()=>{
-    const sec = Math.floor((Date.now()-recStart)/1000);
-    document.getElementById('recTime').textContent = `${Math.floor(sec/60)}:${String(sec%60).padStart(2,'0')}`;
-  }, 250);
-  // настоящая запись (голос — микрофон, кружок — камера+микрофон)
-  if(navigator.mediaDevices && navigator.mediaDevices.getUserMedia && window.MediaRecorder){
-    const constraints = recMode==='vnote' ? {video:{facingMode:'user'}, audio:true} : {audio:true};
-    navigator.mediaDevices.getUserMedia(constraints).then(stream=>{
-      if(recStart===null){ stream.getTracks().forEach(t=>t.stop()); return; } // уже отпустили
-      recStream = stream; recChunks = [];
-      // live-превью камеры в кружке записи
-      if(recMode==='vnote'){ const pv=document.getElementById('recPreview'); if(pv){ pv.srcObject=stream; pv.style.display='block'; pv.play&&pv.play().catch(()=>{}); } }
-      try{ mediaRec = new MediaRecorder(stream); }catch(e){ mediaRec=null; return; }
-      mediaRec.ondataavailable = e=>{ if(e.data && e.data.size) recChunks.push(e.data); };
-      mediaRec.start();
-    }).catch(()=>{ mediaRec=null; }); // отказ/нет доступа -> мок
+  if(!currentChat || recStart !== null || recArmed) return;
+  recArmed = true; recCancelled = false;
+
+  if(!(navigator.mediaDevices && navigator.mediaDevices.getUserMedia && window.MediaRecorder)){
+    recArmed = false;
+    if(typeof toast === 'function') toast('Запись недоступна в этом браузере');
+    return;
   }
+  const wantVideo = recMode === 'vnote';
+  const constraints = wantVideo ? {video:{facingMode:'user'}, audio:true} : {audio:true};
+
+  /* Пока идёт запрос доступа — показываем «подключаем», но НЕ считаем время. */
+  recUiOn();
+  const timeEl = document.getElementById('recTime');
+  if(timeEl) timeEl.textContent = 'подключаем…';
+
+  navigator.mediaDevices.getUserMedia(constraints).then(stream=>{
+    recArmed = false;
+    if(recCancelled){ stream.getTracks().forEach(t=>t.stop()); recUiOff(); return; }
+    recStream = stream; recChunks = [];
+    if(wantVideo){
+      const pv = document.getElementById('recPreview');
+      if(pv){ pv.srcObject = stream; pv.style.display = 'block'; pv.play && pv.play().catch(()=>{}); }
+    }
+    try{ mediaRec = new MediaRecorder(stream); }
+    catch(e){ recCleanup(); recUiOff(); if(typeof toast==='function') toast('Не удалось начать запись'); return; }
+    mediaRec.ondataavailable = e=>{ if(e.data && e.data.size) recChunks.push(e.data); };
+    mediaRec.start();
+    /* Только теперь время пошло — секунды соответствуют реальной записи. */
+    recStart = Date.now();
+    if(timeEl) timeEl.textContent = '0:00';
+    recInt = setInterval(recTick, 250);
+    if(window.okoHaptic) okoHaptic('impact');
+  }).catch(()=>{
+    recArmed = false;
+    recCleanup(); recUiOff();
+    const what = wantVideo ? 'камере и микрофону' : 'микрофону';
+    if(typeof showPopup === 'function'){
+      showPopup({ico:'mic', title:'Нужен доступ к ' + what,
+        body:'Браузер не дал записать. Разреши доступ к ' + what + ' в настройках сайта и попробуй ещё раз.',
+        actions:[{label:'Понятно'}]});
+    } else if(typeof toast === 'function'){
+      toast('Разреши доступ к ' + what);
+    }
+  });
 }
+
+function cancelRec(){
+  recCancelled = true;
+  if(recInt){ clearInterval(recInt); recInt = null; }
+  recStart = null; recArmed = false;
+  if(mediaRec && mediaRec.state && mediaRec.state !== 'inactive'){
+    try{ mediaRec.onstop = null; mediaRec.stop(); }catch(e){}
+  }
+  recCleanup(); recUiOff();
+  if(typeof toast === 'function') toast('Запись отменена');
+}
+
 function stopRec(){
-  const sec = Math.max(1, Math.floor((Date.now()-recStart)/1000));
-  clearInterval(recInt); recStart = null;
-  document.getElementById('msgInput').style.display='';
-  document.getElementById('recTimer').style.display='none';
-  document.getElementById('sendBtn').classList.remove('rec');
-  const dur = `${Math.floor(sec/60)}:${String(sec%60).padStart(2,'0')}`;
-  const cleanup = ()=>{ if(recStream){ recStream.getTracks().forEach(t=>t.stop()); recStream=null; } };
-  const isVideo = recMode==='vnote';
-  const pv = document.getElementById('recPreview'); if(pv){ pv.style.display='none'; pv.srcObject=null; }
-  // Лимит длины голосового на FREE: 5 минут
-  const voiceLimit = okoLimits().voiceSec;
-  if(!isVideo && sec > voiceLimit){
-    // отменяем отправку и предлагаем Premium
-    if(mediaRec && mediaRec.state && mediaRec.state!=='inactive'){ try{ mediaRec.onstop=null; mediaRec.stop(); }catch(e){} }
-    cleanup(); mediaRec = null; syncSendIcon();
-    okoOfferPremium('Голосовое <b>'+dur+'</b> длиннее лимита <b>'+Math.floor(voiceLimit/60)+' минут</b> на текущем тарифе.');
+  if(recStart === null){
+    /* отпустили до того, как микрофон успел включиться */
+    if(recArmed){ recCancelled = true; recArmed = false; recUiOff(); }
     return;
   }
-  if(mediaRec && mediaRec.state && mediaRec.state!=='inactive'){
+  const sec = Math.max(1, Math.floor((Date.now() - recStart) / 1000));
+  if(recInt){ clearInterval(recInt); recInt = null; }
+  recStart = null;
+  const dur = Math.floor(sec/60) + ':' + String(sec%60).padStart(2,'0');
+  const isVideo = recMode === 'vnote';
+  recUiOff();
+
+  if(mediaRec && mediaRec.state && mediaRec.state !== 'inactive'){
     mediaRec.onstop = ()=>{
-      const blob = new Blob(recChunks, {type: mediaRec.mimeType||(isVideo?'video/webm':'audio/webm')});
-      const url = recChunks.length ? URL.createObjectURL(blob) : null;
-      cleanup(); mediaRec = null;
+      const type = (mediaRec && mediaRec.mimeType) || (isVideo ? 'video/webm' : 'audio/webm');
+      const blob = new Blob(recChunks, {type});
+      const url  = recChunks.length ? URL.createObjectURL(blob) : null;
+      recCleanup();
+      if(!url){
+        if(typeof toast === 'function') toast('Запись получилась пустой');
+        syncComposer();
+        return;
+      }
       if(isVideo) pushMsg({in:0, t:nowT(), kind:'vnote', dur, video:url});
-      else pushMsg({in:0, t:nowT(), kind:'voice', dur, seed:sec, audio:url});
-      syncSendIcon();
+      else        pushMsg({in:0, t:nowT(), kind:'voice', dur, seed:sec, audio:url});
+      syncComposer();
+      if(window.okoHaptic) okoHaptic('success');
     };
-    try{ mediaRec.stop(); }catch(e){ cleanup(); mediaRec=null; pushMsg({in:0,t:nowT(),kind:isVideo?'vnote':'voice',dur,seed:sec}); syncSendIcon(); }
+    try{ mediaRec.stop(); }
+    catch(e){ recCleanup(); syncComposer(); }
     return;
   }
-  cleanup();
-  if(recMode==='voice') pushMsg({in:0, t:nowT(), kind:'voice', dur, seed:sec});
-  else pushMsg({in:0, t:nowT(), kind:'vnote', dur});
-  syncSendIcon();
+  /* Микрофон так и не завёлся — ничего не отправляем (раньше уходило пустое). */
+  recCleanup();
+  syncComposer();
 }
+
 function toggleRecMode(){
-  recMode = recMode==='voice' ? 'vnote' : 'voice';
-  syncSendIcon();
-  const b = document.getElementById('sendBtn');
-  b.classList.remove('pop'); void b.offsetWidth; b.classList.add('pop');
+  recMode = recMode === 'voice' ? 'vnote' : 'voice';
+  syncComposer();
+  const b = document.getElementById('micBtn');
+  if(b){ b.classList.remove('pop'); void b.offsetWidth; b.classList.add('pop'); }
+  if(typeof toast === 'function') toast(recMode === 'voice' ? 'Голосовое сообщение' : 'Видеокружок');
+  if(window.okoHaptic) okoHaptic('selection');
 }
-function syncSendIcon(){
-  const has = document.getElementById('msgInput').value.trim().length > 0;
-  const href = recStart ? '#i-send' : has ? '#i-send' : recMode==='voice' ? '#i-mic' : '#i-circle-play';
-  document.getElementById('sendIco').querySelector('use').setAttribute('href', href);
+
+/* Состояние композера: что показываем и чем. */
+function syncComposer(){
+  const inp  = document.getElementById('msgInput');
+  const send = document.getElementById('sendBtn');
+  const mic  = document.getElementById('micBtn');
+  if(!send || !mic) return;
+  const hasText   = !!(inp && inp.value.trim().length);
+  const recording = recStart !== null || recArmed;
+
+  /* Кнопка «Отправить» видна, когда есть что отправлять: текст или запись. */
+  send.style.display = (hasText || recording) ? '' : 'none';
+  /* Микрофон прячется, пока набирается текст — чтобы не путать две круглые кнопки. */
+  mic.style.display  = hasText ? 'none' : '';
+
+  const micIco = document.getElementById('micIco');
+  if(micIco){
+    const u = micIco.querySelector('use');
+    if(u) u.setAttribute('href', recMode === 'voice' ? '#i-mic' : '#i-video-note');
+  }
+  mic.title = mic.getAttribute('aria-label') === null ? mic.title : (recMode === 'voice' ? 'Голосовое сообщение' : 'Видеокружок');
 }
+/* совместимость: старое имя зовут из нескольких мест ядра */
+function syncSendIcon(){ syncComposer(); }
+
+/* ---------- события кнопок ---------- */
 {
-  const sb = document.getElementById('sendBtn');
-  sb.addEventListener('pointerdown', () => {
-    if(document.getElementById('msgInput').value.trim() || recStart) return;
-    holdStarted = false;
-    holdTimer = setTimeout(()=>{ holdStarted = true; startRec(); syncSendIcon(); }, 230);
+  const mic  = document.getElementById('micBtn');
+  const send = document.getElementById('sendBtn');
+  const HOLD_MS = 320;   /* было 230 — обычный тап успевал стартовать запись */
+  const MOVE_TOL = 10;   /* сдвиг пальца больше этого отменяет старт записи */
+  let holdT = null, holdStarted = false, sx = 0, sy = 0, capturedId = null;
+
+  function clearHold(){ if(holdT){ clearTimeout(holdT); holdT = null; } }
+
+  mic.addEventListener('pointerdown', e=>{
+    if(recStart !== null || recArmed) return;
+    holdStarted = false; sx = e.clientX; sy = e.clientY;
+    /* Захват указателя: отпускание поймаем, даже если палец ушёл с кнопки.
+       Без этого на мыши запись было невозможно остановить. */
+    try{ mic.setPointerCapture(e.pointerId); capturedId = e.pointerId; }catch(err){}
+    clearHold();
+    holdT = setTimeout(()=>{ holdStarted = true; startRec(); }, HOLD_MS);
   });
-  sb.addEventListener('pointerup', () => {
-    clearTimeout(holdTimer);
-    if(document.getElementById('msgInput').value.trim()){ sendText(); return; }
-    if(recStart){ stopRec(); }
-    else if(!holdStarted){ toggleRecMode(); }
+
+  mic.addEventListener('pointermove', e=>{
+    if(holdStarted || !holdT) return;
+    if(Math.abs(e.clientX - sx) > MOVE_TOL || Math.abs(e.clientY - sy) > MOVE_TOL) clearHold();
   });
-  sb.addEventListener('pointerleave', () => clearTimeout(holdTimer));
+
+  function finish(e){
+    clearHold();
+    if(capturedId !== null){ try{ mic.releasePointerCapture(capturedId); }catch(err){} capturedId = null; }
+    if(recStart !== null || recArmed){
+      /* Смахнул влево во время записи — отмена (подсказка так и написана). */
+      if(e && (sx - e.clientX) > 70) cancelRec();
+      else stopRec();
+      return;
+    }
+    if(!holdStarted) toggleRecMode();
+  }
+  mic.addEventListener('pointerup', finish);
+  mic.addEventListener('pointercancel', ()=>{ clearHold(); if(recStart!==null||recArmed) cancelRec(); });
+
+  send.addEventListener('click', ()=>{
+    if(recStart !== null || recArmed){ stopRec(); return; }
+    sendText();
+  });
 }
-let recStart = null, recInt = null;
-document.getElementById('msgInput').addEventListener('input', syncSendIcon);
+
+document.getElementById('msgInput').addEventListener('input', syncComposer);
 document.getElementById('msgInput').addEventListener('keydown', e=>{ if(e.key==='Enter') sendText(); });
+syncComposer();
 
 /* ================= BOTTOM SHEETS ================= */
 let newChatKind = null;
@@ -6189,7 +6342,7 @@ function sysMatBlocks(a){
   ];
 }
 function sysMatCopyAll(){
-  try{ navigator.clipboard && navigator.clipboard.writeText('Все промпты скопированы в буфер обмена (демо)'); }catch(e){}
+  try{ navigator.clipboard && navigator.clipboard.writeText(okoCollectPrompts()); }catch(e){}
   toast('Промпты скопированы');
 }
 function sysMatGenKPForm(){
@@ -7003,7 +7156,7 @@ function renderVcReport(){
     <div style="height:16px"></div>
     <button class="btn" onclick="toast('Обложка, субтитры и трек пересобраны — готовность 91%')"><svg class="i"><use href="#i-bolt"/></svg> Исправить одним кликом</button>
     <div style="height:10px"></div>
-    <button class="btn ghost" onclick="toast('Опубликовано в VK и Telegram')"><svg class="i"><use href="#i-send"/></svg> Опубликовать во все сети</button>
+    <button class="btn ghost" onclick="okoPublishAll()"><svg class="i"><use href="#i-send"/></svg> Опубликовать во все сети</button>
     <div style="height:10px"></div>
     <button class="btn ghost" onclick="vcReset()">Проверить другой ролик</button>`;
 }
@@ -7654,15 +7807,30 @@ function renderMyProfile(){
   document.getElementById('profAva').textContent = (PROFILE.name[0]||'O').toUpperCase();
   const bioEl = document.getElementById('profBio');
   if(bioEl){ bioEl.textContent = PROFILE.bio || ''; bioEl.style.display = PROFILE.bio ? '' : 'none'; }
-  // статистика: посты и реакции считаем из реального состояния приложения
+  /* Статистика считается из реального состояния (правка 09.08).
+     Раньше к постам молча прибавлялось 47, к реакциям 1280, а подписчики
+     и дни в OKO были литералами «2.4к» и «128» — у любого нового человека
+     в профиле висели чужие цифры. */
   const myPosts = POSTS.sub.filter(p => p.name === PROFILE.name);
-  const posts = 47 + myPosts.length;
-  const reacts = 1280 + myPosts.reduce((s,p)=>s+(p.likes||0),0);
+  const posts = myPosts.length;
+  const reacts = myPosts.reduce((s,p)=>s+(p.likes||0),0);
+  const followers = (PROFILE && PROFILE.followers) ? +PROFILE.followers : 0;
+  const daysInOko = (function(){
+    try{
+      let since = PROFILE && PROFILE.since ? +new Date(PROFILE.since) : null;
+      if(!since){
+        let st = localStorage.getItem('oko-first-seen');
+        if(!st){ st = String(Date.now()); localStorage.setItem('oko-first-seen', st); }
+        since = +st;
+      }
+      return Math.max(1, Math.floor((Date.now() - since) / 86400000) + 1);
+    }catch(e){ return 1; }
+  })();
   const stats = [
     {v: fmtN(posts), l:'постов'},
-    {v: '2.4к', l:'подписчиков'},
+    {v: fmtN(followers), l:'подписчиков'},
     {v: fmtN(reacts), l:'реакций'},
-    {v: '128', l:'дней в OKO'},
+    {v: String(daysInOko), l:'дней в OKO'},
   ];
   document.getElementById('profStats').innerHTML = stats.map(s =>
     `<div class="pstat"><div class="v">${s.v}</div><div class="l">${s.l}</div></div>`).join('');

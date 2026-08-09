@@ -3391,9 +3391,16 @@ function walRecvLink(){
   if(s.code && s.code !== 'RUB') p.set('cur', s.code);
   return base + '?' + p.toString();
 }
-function walRenderReceive(){
+/* Контейнер приходит аргументом (правка 09.08).
+   Раньше функция всегда искала #walRecvView по id, а таких элементов в
+   документе ДВА: скрытый внутри шторки и настоящий на подстранице «Приём
+   платежа». getElementById отдавал первый — шторку, и подстраница
+   оставалась пустым чёрным экраном. */
+function walRenderReceive(host){
   const s = walRecvState, m = WAL_CUR_META[s.code];
-  document.getElementById('walRecvView').innerHTML = `
+  const box = host || document.getElementById('walRecvView');
+  if(!box) return;
+  box.innerHTML = `
     <h3 style="margin-bottom:2px">Принять платёж</h3>
     <p class="dim" style="font-size:12.5px;margin:-2px 0 10px">Покажи QR — плательщик отсканирует и увидит счёт${s.code!=='RUB'?' в '+m.sym:''}</p>
     <div class="wal-recv">
@@ -3403,9 +3410,9 @@ function walRenderReceive(){
         <div class="wal-recv-sub">Счёт: <b>${WALLET.acc}</b>${s.note?'<br>«'+esc(s.note)+'»':''}</div>
         <div class="wal-recv-inputs">
           <input type="number" min="0" step="any" placeholder="Сумма ${m.sym}" value="${s.sum||''}"
-            oninput="walRecvState.sum=Math.max(0,Number(this.value)||0);walDrawRecvQR();walRenderReceiveText()">
+            oninput="walRecvState.sum=Math.max(0,Number(this.value)||0);walRecvRefresh(this)">
           <input placeholder="Комментарий" maxlength="40" value="${esc(s.note)}"
-            oninput="walRecvState.note=this.value;walDrawRecvQR();walRenderReceiveText()">
+            oninput="walRecvState.note=this.value;walRecvRefresh(this)">
         </div>
         <button class="wal-recv-link" onclick="walCopy(walRecvLink(),'Ссылка на приём скопирована')">
           <svg class="i"><use href="#i-copy"/></svg>
@@ -3418,17 +3425,28 @@ function walRenderReceive(){
       </div>
     </div>`;
 }
-function walRenderReceiveText(){
-  const el = document.getElementById('walRecvLink');
+/* Перерисовка QR и подписи строго в том экране, где человек сейчас находится
+   (шторка и подстраница «Приём платежа» содержат одинаковую разметку). */
+function walRecvRefresh(fromEl){
+  const scope = (fromEl && fromEl.closest) ? fromEl.closest('.wal-recv-host, #walRecvView, .sheet, .w2-page') : null;
+  walDrawRecvQR(scope);
+  walRenderReceiveText(scope);
+}
+function walRenderReceiveText(scope){
+  const root = scope || document;
+  const el = root.querySelector ? root.querySelector('#walRecvLink, .wal-recv-link span') : null;
   if(el) el.textContent = walRecvLink();
-  const sumEl = document.querySelector('.wal-recv-sum');
+  const sumEl = root.querySelector ? root.querySelector('.wal-recv-sum') : null;
   if(sumEl){
     const s = walRecvState, m = WAL_CUR_META[s.code];
     sumEl.textContent = s.sum ? walCurFmt(s.code, s.sum) : (s.code==='RUB'?'Любая сумма':'Любое количество '+m.sym);
   }
 }
-function walDrawRecvQR(){
-  const cv = document.getElementById('walRecvCanvas'); if(!cv) return;
+function walDrawRecvQR(scope){
+  /* Канва тоже дублируется в двух местах — ищем строго в нужном контейнере. */
+  const cv = (scope && scope.querySelector) ? scope.querySelector('#walRecvCanvas, .wal-recv-canvas')
+                                            : document.getElementById('walRecvCanvas');
+  if(!cv) return;
   const ctx = cv.getContext('2d');
   const W = cv.width, H = cv.height;
   ctx.fillStyle = '#fff'; ctx.fillRect(0,0,W,H);
@@ -3586,6 +3604,19 @@ function walRenderGoals(){
   const box = document.getElementById('walGoals');
   if(!box) return;
   const items = WAL_X.goals || [];
+  /* Пустой экран с одной кнопкой выглядел как недоделка (правка 09.08).
+     Даём человеку понять, зачем этот раздел вообще нужен. */
+  if(!items.length){
+    box.innerHTML = `
+      <div class="wal-empty">
+        <div class="wal-empty-ic">${I('target')}</div>
+        <h3>Копилка под мечту</h3>
+        <p>Поставь цель — камера, поездка, новый компьютер — и OKO будет откладывать
+           понемногу с каждого поступления и показывать, сколько осталось.</p>
+      </div>
+      <button class="wal-goal-add" onclick="walOpenGoal()"><svg class="i"><use href="#i-plus"/></svg>Поставить первую цель</button>`;
+    return;
+  }
   box.innerHTML = items.map(g=>{
     const pct = Math.min(100, Math.round((g.saved || 0) / (g.target || 1) * 100));
     const done = pct >= 100;
@@ -4184,11 +4215,11 @@ function w2RenderReceive(){
   const host = document.getElementById('w2RecvHost');
   if(!host) return;
   walRecvState = walRecvState || {sum:0, note:'', code:'RUB'};
-  /* временно подменяем контейнер, чтобы render-хелпер записал HTML в него */
-  const view = document.createElement('div'); view.id = 'walRecvView';
+  /* Контейнер отдаём явно — без подмены id, иначе рендер уходил в шторку. */
+  const view = document.createElement('div'); view.className = 'wal-recv-host';
   host.innerHTML = ''; host.appendChild(view);
-  walRenderReceive();
-  setTimeout(walDrawRecvQR, 60);
+  walRenderReceive(view);
+  setTimeout(()=>walDrawRecvQR(view), 60);
 }
 
 /* =========================================================================
@@ -34137,7 +34168,7 @@ function cpRecShow(){
   clearInterval(cpRecTimeInt);
   cpRecTimeInt = setInterval(cpRecTick, 200);
   /* отмена свайпом: слушаем на кнопке записи (у неё pointer capture) */
-  const sb = document.getElementById('sendBtn');
+  const sb = cpRecBtn();
   if(sb && !cpRecMoveH){
     cpRecMoveH = e=>{
       if(cpRecLocked) return;
@@ -34166,6 +34197,10 @@ function cpRecShow(){
     sb.addEventListener('pointermove', cpRecMoveH);
   }
 }
+/* Кнопка, на которой физически идёт запись. С 09.08 это отдельная #micBtn
+   (раньше запись и отправка жили на одной #sendBtn). Хелпер держит модуль
+   chats-plus совместимым с обоими вариантами разметки. */
+function cpRecBtn(){ return document.getElementById('micBtn') || document.getElementById('sendBtn'); }
 let cpRecTimeInt = null;
 function cpRecTick(){
   const src = document.getElementById('recTime'), dst = document.getElementById('cpRecTime');
@@ -34176,7 +34211,7 @@ function cpRecHide(){
   clearInterval(cpRecTimeInt); clearInterval(cpRecPvTry);
   cpRecWaveStop();
   const vid = document.getElementById('cpRecVid'); if(vid){ try{ vid.pause(); }catch(_){} vid.srcObject = null; }
-  const sb = document.getElementById('sendBtn');
+  const sb = cpRecBtn();
   if(sb && cpRecMoveH){ sb.removeEventListener('pointermove', cpRecMoveH); cpRecMoveH = null; }
   cpRecStartX = null; cpRecStartY = null; cpRecArmed = false; cpRecLocked = false;
 }
@@ -34217,7 +34252,7 @@ function cpCancelRec(){
   const mi = document.getElementById('msgInput'); if(mi) mi.style.display = '';
   const rt = document.getElementById('recTimer'); if(rt) rt.style.display = 'none';
   const pv = document.getElementById('recPreview'); if(pv){ pv.style.display = 'none'; pv.srcObject = null; }
-  const sb = document.getElementById('sendBtn'); if(sb) sb.classList.remove('rec');
+  const sb = cpRecBtn(); if(sb) sb.classList.remove('rec');
   cpRecHide();
   if(typeof syncSendIcon==='function') syncSendIcon();
   if(typeof toast==='function') toast('Запись отменена');
@@ -38691,7 +38726,63 @@ function psSocInjectEntry(){
   }
   window.pp2OpenStats = function(){ pp2Push({key:'stats', title:'Статистика', html: pp2StatsPageHtml}); };
   window.pp2OpenSettings = function(){ pp2Push({key:'set', title:'Настройки', html: pp2SetIndexHtml}); };
+  /* Уведомления и Приватность ведут в полную систему настроек ST2,
+     а не в урезанную легаси-шторку с четырьмя переключателями (правка 09.08). */
+
+/* --- Реальные значения вместо захардкоженных (правка 09.08) --- */
+function pp2Followers(){
+  try{
+    var n = 0;
+    if(typeof PS === 'object' && PS && PS.followers != null) n = +PS.followers || 0;
+    else if(typeof PROFILE === 'object' && PROFILE && PROFILE.followers != null) n = +PROFILE.followers || 0;
+    if(!n) return '0';
+    return n >= 1000 ? (Math.round(n/100)/10 + 'К') : String(n);
+  }catch(e){ return '0'; }
+}
+function pp2DaysInOko(){
+  try{
+    var since = null;
+    if(typeof PROFILE === 'object' && PROFILE && PROFILE.since) since = +new Date(PROFILE.since);
+    if(!since){
+      var st = localStorage.getItem('oko-first-seen');
+      if(!st){ st = String(Date.now()); localStorage.setItem('oko-first-seen', st); }
+      since = +st;
+    }
+    var d = Math.max(1, Math.floor((Date.now() - since) / 86400000) + 1);
+    return String(d);
+  }catch(e){ return '1'; }
+}
+function pp2ThisDevice(){
+  try{
+    var ua = navigator.userAgent || '';
+    var os = /Android/i.test(ua) ? 'Android'
+           : /iPhone|iPad|iPod/i.test(ua) ? 'iOS'
+           : /Macintosh/i.test(ua) ? 'macOS'
+           : /Windows/i.test(ua) ? 'Windows'
+           : /Linux/i.test(ua) ? 'Linux' : 'Устройство';
+    var br = /Telegram/i.test(ua) ? 'Telegram'
+           : /Edg\//i.test(ua) ? 'Edge'
+           : /OPR\//i.test(ua) ? 'Opera'
+           : /Chrome\//i.test(ua) ? 'Chrome'
+           : /Firefox\//i.test(ua) ? 'Firefox'
+           : /Safari\//i.test(ua) ? 'Safari' : 'Браузер';
+    try{
+      var tg = window.Telegram && window.Telegram.WebApp;
+      if(tg && tg.initData) br = 'Telegram';
+    }catch(e){}
+    return os + ' · ' + br;
+  }catch(e){ return 'Это устройство'; }
+}
   window.pp2OpenSettingsGroup = function(g){
+    try{
+      if(typeof st2Open === 'function' && typeof st2Push === 'function'){
+        st2Open(); st2Push(g === 'privacy' ? 'privacy' : 'notif');
+        return;
+      }
+    }catch(e){}
+    return pp2OpenSettingsGroupLegacy(g);
+  };
+  function pp2OpenSettingsGroupLegacy(g){
     if(typeof openSettings === 'function') openSettings(g);
     else if(g === 'notif' || g === 'privacy'){ T('Настройки скоро'); }
   };
@@ -38781,9 +38872,9 @@ function psSocInjectEntry(){
     const followers = Object.keys((typeof PS !== 'undefined' && PS.follow) || {}).length;
     const stat = '<div class="pp2-stat-row">'
       + '<div class="pp2-stat"><b>' + esc2(fn(posts)) + '</b><small>постов</small></div>'
-      + '<div class="pp2-stat"><b>2.4К</b><small>подписчиков</small></div>'
+      + '<div class="pp2-stat"><b>' + pp2Followers() + '</b><small>подписчиков</small></div>'
       + '<div class="pp2-stat"><b>' + esc2(fn(reacts)) + '</b><small>реакций</small></div>'
-      + '<div class="pp2-stat"><b>128</b><small>дней в OKO</small></div></div>';
+      + '<div class="pp2-stat"><b>' + pp2DaysInOko() + '</b><small>дней в OKO</small></div></div>';
     const rows = [
       pp2Row({ic:'compass', tone:'blue', t:'Аналитика ленты',
               s:'Показы, реакции, охваты по дням', onclick:'pp2OpenAcademy()'}),
@@ -38850,9 +38941,10 @@ function psSocInjectEntry(){
   /* --- Устройства и сессии (демо-список, честные названия) --- */
   function pp2DevicesHtml(){
     const items = [
-      {n:'iPhone 15 · Safari', l:'Москва · сейчас активно', cur:true},
-      {n:'MacBook Air · Chrome', l:'Москва · 2 часа назад', cur:false},
-      {n:'iPad · Safari', l:'Санкт-Петербург · 3 дня назад', cur:false},
+      /* Выдуманные устройства убраны 09.08: у нового человека в списке
+         висели чужие iPhone и MacBook. Показываем ровно то, что знаем —
+         текущее устройство. Остальные сессии добавит бэкенд. */
+      {n: pp2ThisDevice(), l:'Сейчас активно', cur:true},
     ];
     const rows = items.map(function(it){
       const chip = it.cur ? '<span class="pp2-chip">Текущее</span>' : '';
@@ -38909,7 +39001,19 @@ function psSocInjectEntry(){
     T('Свяжись с @okoappbot в Telegram');
   };
   window.pp2FAQ = function(){ T('FAQ скоро появится'); };
-  window.pp2Bug = function(){ T('Спасибо — сигнал ушёл команде'); };
+  /* Баг-репорт ведёт в реальную поддержку, а не в пустое «спасибо».
+     Ложное подтверждение убрано 09.08 — человек должен видеть, куда ушёл сигнал. */
+  window.pp2Bug = function(){
+    var build = '';
+    try{ var m = document.body.textContent.match(/сборка v([\d.]+)/); build = m ? ('v' + m[1]) : ''; }catch(e){}
+    var txt = 'Проблема в OKO' + (build ? ' (' + build + ')' : '') + ': ';
+    var url = 'https://t.me/okohelp?text=' + encodeURIComponent(txt);
+    try{
+      var tg = window.Telegram && window.Telegram.WebApp;
+      if(tg && tg.openTelegramLink){ tg.openTelegramLink(url); return; }
+    }catch(e){}
+    window.open(url, '_blank', 'noopener');
+  };
   window.pp2GoFollows = function(){
     if(typeof psOpenMyFollows === 'function') psOpenMyFollows();
     else T('Пусто');
