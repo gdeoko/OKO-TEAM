@@ -1207,3 +1207,15 @@ html.okg-pill-on main > .screen.active{ padding-bottom: calc(var(--oko-safe-bott
   letter-spacing: -.1px;
   max-width: 100%;
 }
+
+/* ============================================================================
+   40. Слой роста не лезет поверх полноэкранных панелей
+   Агент по Штабу поймал: чек-лист «СТАРТ В OKO» и всплывашка партнёрки
+   рисуются поверх админки владельца и штаба. Эти подсказки уместны на главных
+   вкладках, но не на полноэкранной панели — там они просто закрывают дело.
+   Класс ставит модуль v2avatar в oko-v2.js.
+   ============================================================================ */
+html.oko-panel-open .okg-ob,
+html.oko-panel-open .okg-pill,
+html.oko-panel-open .okg-nudge,
+html.oko-panel-open #okgShowcaseHost { display: none !important; }

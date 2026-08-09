@@ -1116,11 +1116,21 @@ window.okoHaptic = okoHaptic;
     document.addEventListener('click', function(){ setTimeout(syncFounder, 350); }, true);
     window.okoSyncFounderPhoto = syncFounder;
 
-    /* --- 2. Место под пилюлю --- */
+    /* --- 2. Место под пилюлю и уборка чек-листа с полноэкранных панелей ---
+       Чек-лист «СТАРТ В OKO» и всплывашка партнёрки — вещи для главных
+       вкладок. Поверх админки, штаба, настроек, страницы сущности и прочих
+       полноэкранных панелей они просто перекрывают содержимое. Пока такая
+       панель открыта, слой роста прячется целиком. */
+    var PANELS = '#adminView.open, #systemView.open, #searchView.open, #notifsView.open,' +
+                 '#editProfile.open, #regView.open, #legalView.open, #psView.open,' +
+                 '#psSocView.open, #hqEmbed.open, #okoSoc.open, #chView.open, #st2View.open,' +
+                 '.okr.on, .okorec.on';
     function pillSync(){
       var pill = document.querySelector('.okg-pill');
-      var on = !!(pill && !pill.hasAttribute('hidden') && getComputedStyle(pill).display !== 'none');
+      var panelOpen = !!document.querySelector(PANELS);
+      var on = !panelOpen && !!(pill && !pill.hasAttribute('hidden') && getComputedStyle(pill).display !== 'none');
       document.documentElement.classList.toggle('okg-pill-on', on);
+      document.documentElement.classList.toggle('oko-panel-open', panelOpen);
     }
     pillSync();
     try{
