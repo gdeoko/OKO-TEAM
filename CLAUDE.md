@@ -83,6 +83,17 @@
   ElevenLabs/Higgsfield на озвучку (кредит ≈ $0.066, ~$1/урок — дорого и лимитно на потоке).
 - Запуск: `python3 .claude/skills/oko-voice/scripts/oko_tts.py --textfile s.txt --out vo.wav --mp3`.
 
+## БЛОКЕР ЗАПУСКА: сжатие статики на VPS (найдено 09.08, НЕ ИСПРАВЛЕНО)
+okoteam.top отдаёт `app.js` РАЗЖАТЫМ — 4 885 578 байт, `app.css` — 1 135 409.
+При этом `index.html`, `oko-v2.js`, `oko-v2.css`, `oko-social.js` уходят с
+`Content-Encoding: gzip`, то есть gzip в nginx включён, но на эти файлы не
+распространяется. На телефоне это ~6 МБ вместо ~800 КБ — главная причина
+ощущения «приложение лагает» на первой загрузке.
+Готовый безопасный фикс: `oko-app/deploy/enable-gzip.sh` (бэкап + `nginx -t`
++ reload, повторный запуск идемпотентен). Запустить на VPS или через
+control-эндпоинт. **В этой сессии CONTROL_TOKEN отсутствует**, поэтому применить
+не смог — нужен токен или ручной запуск Даниэлем.
+
 ## ДЕПЛОЙ (обновлено 23.07 — ВСЁ на VPS/okoteam.top)
 Прод-домен: **https://okoteam.top** (VPS Timeweb 104.171.132.45). Зеркало: https://true-journey-418.higgsfield.app
 - **VPS без SSH** — через control-эндпоинт: `curl -X POST https://okoagents.okoteam.top/x -H "X-Token: <CONTROL_TOKEN>" --data '<bash>'` (токен в OKO_ACCESSES/secrets, НЕ в git).

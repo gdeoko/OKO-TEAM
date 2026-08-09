@@ -4734,6 +4734,14 @@ function gmPluralTk(n){
   if(b === 1) return 'билет';
   return 'билетов';
 }
+/* «крутка» с числительным: 1 бесплатная крутка / 2 крутки / 5 круток */
+function gmPluralSpin(n){
+  const a = Math.abs(n) % 100, b = a % 10;
+  if(a > 10 && a < 20) return 'бесплатных круток';
+  if(b === 1) return 'бесплатная крутка';
+  if(b > 1 && b < 5) return 'бесплатные крутки';
+  return 'бесплатных круток';
+}
 function gmPluralCheck(n){
   const a = Math.abs(n) % 100, b = a % 10;
   if(a > 10 && a < 20) return 'проверок';
@@ -6563,7 +6571,7 @@ function gmGiftsInvRender(){
    ============================================================ */
 const GM_MINI = [
   {id:'wheel',   n:'Колесо',        ic:'gm-gift',    s:'основная рулетка', fn:'gmScrollToWheel'},
-  {id:'scratch', n:'Скретч',        ic:'gm-scratch', s:'зaдизь пальцем',   fn:'gmScratchOpen'},
+  {id:'scratch', n:'Скретч',        ic:'gm-scratch', s:'сотри пальцем',     fn:'gmScratchOpen'},
   {id:'match3',  n:'Лайм-плитки',   ic:'gm-grid',    s:'три в ряд',        fn:'gmMatch3Open'},
   {id:'box',     n:'Коробка',       ic:'gm-box',     s:'крути и открой',   fn:'gmBoxOpen'}
 ];
@@ -6600,7 +6608,7 @@ function gmScratchRender(){
   el.innerHTML = `
     <div class="gm-sc-head">
       <b>Скретч-карта</b>
-      <small>1 билет · зaдизь пальцем поле, чтобы открыть приз</small>
+      <small>1 билет · сотри пальцем поле, чтобы открыть приз</small>
     </div>
     <div class="gm-sc-price"><span>Стоимость: 1 билет</span><span class="gm-tk-val">${GM_TICKETS}</span></div>
     <div class="gm-sc-card" id="gmScCard" data-prize='${JSON.stringify(prize).replace(/'/g,'&apos;')}'>
@@ -7112,12 +7120,12 @@ function gmVipBannerRender(){
   const t = gmVipTier();
   if(t === 'FREE'){
     el.innerHTML = `<button class="gm-vip-banner off" onclick="if(typeof showTab==='function')showTab('paywall')">
-      ${I('crown')}<div><b>VIP-кабинет закрыт</b><small>Активируй START/PRO/MAX и получи ×2 призы и +2 крутки в день</small></div>${I('chev','gm-bonus-chev')}
+      ${I('crown')}<div><b>VIP-кабинет закрыт</b><small>Активируй START, PRO или MAX — ×2 к призам и +2 бесплатные крутки в день</small></div>${I('chev','gm-bonus-chev')}
     </button>`;
   }else{
     const mul = gmVipMultiplier();
     el.innerHTML = `<button class="gm-vip-banner on" onclick="gmVipOpen()">
-      ${I('crown')}<div><b>VIP · ${t}</b><small>×${mul} к призам · +${gmVipExtraFree()} бесплатных круток в день · открыть</small></div>${I('chev','gm-bonus-chev')}
+      ${I('crown')}<div><b>VIP · ${t}</b><small>×${mul} к призам · +${gmVipExtraFree()} ${gmPluralSpin(gmVipExtraFree())} в день · открыть</small></div>${I('chev','gm-bonus-chev')}
     </button>`;
   }
 }
@@ -21805,7 +21813,7 @@ ADS.camps.forEach(c=>{
   if(c.status==='mod') setTimeout(()=>adsModerate(c.id), 3000);
 });
 adsRender();
-setInterval(adsTick, 5000);
+setInterval(function(){ (window.adsTick||adsTick)(); }, 5000);  /* поздний биндинг: слой oko-mini2.js подменяет adsTick */
 window.addEventListener('resize', ()=>{
   if(document.getElementById('screen-ads').classList.contains('active'))
     ADS.camps.forEach(c=>{ adsDrawSpark(c); if(adsOpenStats.has(c.id)) adsDrawDays(c); });
@@ -46916,20 +46924,12 @@ var PW_ASSET = {
     },
   ];
 
-  /* ---------- история начислений ---------- */
-  const HIST = [
-    {t:'PRO · год · 1-я линия',      p:'sistema', lvl:1, sum: 6350, st:'paid', at: Date.now() - 2*24*3600e3},
-    {t:'Контент-завод · мес · 1',    p:'zavod',   lvl:1, sum:  435, st:'paid', at: Date.now() - 3*24*3600e3},
-    {t:'Консалтинг · разбор · 2',    p:'consult', lvl:2, sum: 1500, st:'paid', at: Date.now() - 5*24*3600e3},
-    {t:'Система OKO · мес · 1',      p:'sistema', lvl:1, sum:  735, st:'hold', at: Date.now() - 8*3600e3, name:'Иван'},
-    {t:'Клуб OKO · мес · 1',         p:'club',    lvl:1, sum:  285, st:'paid', at: Date.now() - 6*24*3600e3},
-    {t:'Контент-завод · год · 1',    p:'zavod',   lvl:1, sum: 5220, st:'hold', at: Date.now() - 12*3600e3, name:'Елена'},
-    {t:'Клуб OKO · мес · 2',         p:'club',    lvl:2, sum:   95, st:'can',  at: Date.now() - 12*24*3600e3},
-    {t:'Система OKO · мес · 1',      p:'sistema', lvl:1, sum:  735, st:'paid', at: Date.now() - 15*24*3600e3},
-    {t:'Консалтинг · разбор · 1',    p:'consult', lvl:1, sum: 4500, st:'paid', at: Date.now() - 22*24*3600e3},
-    {t:'Контент-завод · год · 1',    p:'zavod',   lvl:1, sum: 5220, st:'paid', at: Date.now() - 29*24*3600e3},
-    {t:'Клуб OKO · год · 1',         p:'club',    lvl:1, sum: 3420, st:'paid', at: Date.now() - 34*24*3600e3},
-  ];
+  /* ---------- история начислений ----------
+     Одиннадцать выдуманных начислений (до 6 350 ₽, с «Иваном» и «Еленой»)
+     удалены 09.08: человек видел чужие деньги как свои. Реальные строки
+     приходят из партнёрского бэкенда — до тех пор список пуст, а честное
+     пустое состояние рисует слой oko-mini2.js. */
+  const HIST = [];
   const HIST_STATE = {status:'all', product:'all'};
 
   /* ---------- утилиты формата ---------- */
@@ -47066,7 +47066,9 @@ var PW_ASSET = {
     const deltaPct = PP.monthPrev ? Math.round(delta / PP.monthPrev * 100) : 0;
     const up = delta >= 0;
     const now = new Date();
-    const monthName = now.toLocaleDateString('ru-RU', {month:'long'});
+    /* предложный падеж: «в августе», а не «в август» */
+    const monthName = ['январе','феврале','марте','апреле','мае','июне','июле',
+                       'августе','сентябре','октябре','ноябре','декабре'][now.getMonth()];
 
     return `<div class="pp-hero">
       <div class="pp-hero-lbl">
@@ -52514,18 +52516,21 @@ window.chCompose = chCompose; window.chLessonDraft = chLessonDraft;
      10. Партнёрка · Referral squared (+3 / +10 клиентов → бонусы)
      ============================================================ */
   function refCounts(){
-    // считаем уникальных клиентов из HIST (партнёрка) + локально
+    /* Реальное число приведённых клиентов. Раньше при пустой истории
+       функция возвращала «2» — новому человеку рисовали чужой прогресс
+       по целям. Источник один: счётчик партнёрских целей (бэкенд). */
     let uniq = 0;
-    try{
-      if(typeof HIST !== 'undefined' && Array.isArray(HIST)){
-        const set = new Set();
-        HIST.forEach(h => { if(h && h.name) set.add(h.name); });
-        // если имени нет — считаем как «оплата = клиент»
-        uniq = set.size || HIST.filter(h => h.st === 'paid').length;
-      }
-    }catch(e){}
-    if(!uniq) uniq = 2;
-    return uniq;
+    try{ if(typeof window.ppGoalsGetCount === 'function') uniq = window.ppGoalsGetCount()|0; }catch(e){}
+    if(!uniq){
+      try{
+        if(typeof HIST !== 'undefined' && Array.isArray(HIST)){
+          const set = new Set();
+          HIST.forEach(h => { if(h && h.name) set.add(h.name); });
+          uniq = set.size || HIST.filter(h => h.st === 'paid').length;
+        }
+      }catch(e){}
+    }
+    return Math.max(0, uniq|0);
   }
   function refSquaredHtml(){
     const c = refCounts();
