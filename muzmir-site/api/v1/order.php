@@ -60,18 +60,36 @@ foreach ($items as $it) {
     }
 
     // Персональный прайс конкурса имеет приоритет над общим (competition_id IS NULL).
+    //
+    // Ищем и по присланному имени, и по КАНОНИЧЕСКОМУ (award_canon_item). В прайсе одна
+    // и та же награда заведена по-разному: у конкурсов 19 и 20 это «Кубок»/«Статуэтка»/
+    // «Медаль», у остальных и в общем прайсе — «Кубок Гран-при»/«Статуэтка лауреата»/
+    // «Медаль дипломанта». Форма заказа шлёт длинные имена, поэтому персональные цены
+    // конкурсов 19 и 20 не находились никогда: заказ молча уходил на общий прайс, и
+    // выставленная для конкурса цена игнорировалась.
+    if (!function_exists('award_canon_item') && is_file(BASE_PATH . '/core/orders.php')) {
+        require_once BASE_PATH . '/core/orders.php';
+    }
+    // Сравниваем по КАНОНУ с обеих сторон: и присланное имя, и имя строки прайса
+    // приводим к одному виду. Сопоставлять просто по строке нельзя — канонизация
+    // односторонняя (короткое → длинное), а в базе лежат оба варианта.
+    $canon = function_exists('award_canon_item') ? award_canon_item($itemName) : $itemName;
+
+    $pickPrice = static function (array $rows) use ($canon, $itemName): ?int {
+        foreach ($rows as $r) {
+            $it = (string) $r['item'];
+            $rc = function_exists('award_canon_item') ? award_canon_item($it) : $it;
+            if ($it === $itemName || $rc === $canon) return (int) $r['price'];
+        }
+        return null;
+    };
+
     $price = null;
     if ($compId !== null) {
-        $price = scalar(
-            "SELECT price FROM awards_prices WHERE competition_id=? AND item=? AND kind=? LIMIT 1",
-            [$compId, $itemName, $kind]
-        );
+        $price = $pickPrice(all("SELECT item, price FROM awards_prices WHERE competition_id=? AND kind=?", [$compId, $kind]));
     }
-    if ($price === null || $price === false) {
-        $price = scalar(
-            "SELECT price FROM awards_prices WHERE competition_id IS NULL AND item=? AND kind=? LIMIT 1",
-            [$itemName, $kind]
-        );
+    if ($price === null) {
+        $price = $pickPrice(all("SELECT item, price FROM awards_prices WHERE competition_id IS NULL AND kind=?", [$kind]));
     }
     if ($price === null || $price === false) {
         $badItems[] = $itemName . ' / ' . $kind;
@@ -86,7 +104,17 @@ foreach ($items as $it) {
         $price = 0;
     }
     $serverAmount += $price;
-    $normItems[] = ['item' => $itemName, 'kind' => $kind, 'price' => $price];
+    // ФИО получателя обязано дожить до состава заказа. core/orders.php читает его
+    // как $it['fio'] ($person) и печатает на именном дипломе и благодарности, а ещё
+    // строит по нему ключ дедупликации «тип + получатель». Раньше поле здесь молча
+    // терялось, поэтому: документы уходили с пустым ФИО, а заказ пяти именных
+    // дипломов схлопывался в ОДИН документ — у всех пяти ключ дедупа был одинаковый
+    // (тип + пустая строка). Правило владельца: одна благодарность = один педагог =
+    // одно ФИО, то есть заказали пять — должно получиться пять разных документов.
+    $ni = ['item' => $itemName, 'kind' => $kind, 'price' => $price];
+    $fio = trim((string) ($it['fio'] ?? ''));
+    if ($fio !== '') $ni['fio'] = mb_substr($fio, 0, 200);
+    $normItems[] = $ni;
 }
 
 if (!$normItems) {

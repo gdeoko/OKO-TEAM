@@ -199,6 +199,19 @@ foreach ($groups as $appId => $items) {
         if ($pdfAbs) $attachments[] = $pdfAbs;
         $blocks[] = ['type' => (string)($it['type'] ?? 'main'), 'result' => (string)($it['result'] ?? ''), 'number' => (string)($it['number'] ?? ''), 'img' => $imgUrl];
     }
+    // НЕ ОТПРАВЛЯЕМ ПУСТОЙ КОНВЕРТ. Если ни одного PDF собрать не удалось (бастион
+    // рендера недоступен, ключ доступа не подхватился, файл не создан), то письмо
+    // «Ваши наградные документы… файлы прикреплены» ушло бы вообще без вложений и
+    // диплом навсегда пометился бы отправленным — участник остался бы ни с чем.
+    // Считаем это неудачной попыткой: увеличиваем счётчик и ждём следующего тика.
+    if (!$attachments) {
+        foreach ($items as $it) {
+            update('diplomas', ['send_tries' => (int) ($it['send_tries'] ?? 0) + 1], 'id=:id', ['id' => (int) $it['id']]);
+        }
+        echo date('c') . " send_diplomas: заявка #$appId — ни одного PDF, отправку отложил\n";
+        continue;
+    }
+
     $cnt = count($items);
     $subject = ($cnt > 1 ? 'Ваши наградные документы конкурса «' : 'Ваш диплом конкурса «')
              . $first['comp_name'] . '» - заявка № ' . $first['app_number'];
