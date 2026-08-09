@@ -186,7 +186,12 @@ function injectCss(){
     '.soc-stats{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin:14px 0 4px}',
     '.soc-stat{background:var(--card);border:1px solid var(--border);border-radius:14px;padding:11px 6px;text-align:center;min-width:0}',
     '.soc-stat b{display:block;font:800 19px/1.1 var(--font-display,inherit);color:var(--text)}',
-    '.soc-stat small{display:block;color:var(--dim);font-size:11px;margin-top:3px;overflow-wrap:anywhere}',
+    '.soc-stat small{display:block;color:var(--dim);margin-top:3px;'
+    /* «подписчиков» — обычное слово, а не техническая строка: рвать его
+       нельзя. На 320 px оно не влезало и ломалось как «дписчико|в».
+       Теперь ужимается кегль, слово остаётся целым. */
+    + 'overflow-wrap:normal;word-break:normal;white-space:nowrap;'
+    + 'font-size:clamp(9px,3vw,11px)}',
 
     '.soc-bio{margin:12px 0 0;font-size:13.5px;line-height:1.5;color:var(--text);overflow-wrap:anywhere;white-space:pre-wrap}',
     '.soc-meta{margin-top:8px;color:var(--dim);font-size:11.5px;display:flex;align-items:center;gap:6px;flex-wrap:wrap}',
@@ -197,7 +202,11 @@ function injectCss(){
     '.soc-acts .soc-btn{flex:1 1 130px}',
     '.soc-btn{display:inline-flex;align-items:center;justify-content:center;gap:7px;min-height:44px;padding:10px 14px;',
     '  border-radius:14px;border:1px solid transparent;background:var(--lime);color:#0a0a0a;',
-    '  font:700 13.5px/1.2 inherit;cursor:pointer;text-align:center;overflow-wrap:anywhere}',
+    '  font:700 13.5px/1.2 inherit;cursor:pointer;text-align:center;'
+    /* «Опубликовать» и «Редактировать» на 320 px рвались посреди слова.
+       Подпись кнопки — не техническая строка: слово целое, кегль плавает. */
+    + 'overflow-wrap:normal;word-break:normal;white-space:nowrap;'
+    + 'font-size:clamp(11px,3.4vw,13.5px);font-weight:700;min-width:0}',
     '.soc-btn svg.i{width:17px;height:17px;flex-shrink:0}',
     '.soc-btn.ghost{background:var(--raised,var(--card));color:var(--text);border-color:var(--border)}',
     '.soc-btn.danger{background:transparent;color:#ff6a6a;border-color:rgba(255,106,106,.4)}',
@@ -205,10 +214,14 @@ function injectCss(){
     '.soc-grid2{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;margin-top:8px}',
     '.soc-mini{display:flex;align-items:center;gap:9px;min-height:46px;padding:10px 12px;border-radius:13px;',
     '  border:1px solid var(--border);background:var(--card);color:var(--text);font:600 12.5px/1.25 inherit;',
-    '  cursor:pointer;text-align:left;min-width:0;overflow-wrap:anywhere}',
+    '  cursor:pointer;text-align:left;min-width:0;'
+    /* Два столбца на 320 px оставляют подписи ~88 px, и «Скопировать»
+       ломалось как «опироват|ь». Это подпись кнопки, а не техническая
+       строка: переносим ТОЛЬКО между словами, кегль ужимаем. */
+    + 'overflow-wrap:normal;word-break:normal;hyphens:none}',
     '.soc-mini svg.i{width:17px;height:17px;color:var(--dim);flex-shrink:0}',
     '.soc-mini.on svg.i{color:var(--lime)}',
-    '.soc-mini span{min-width:0}',
+    '.soc-mini span{min-width:0;font-size:clamp(10.5px,3.3vw,12.5px);line-height:1.25}',
 
     /* ---- вкладки ---- */
     '.soc-tabs{display:flex;gap:6px;margin:18px 0 12px;border-bottom:1px solid var(--border)}',

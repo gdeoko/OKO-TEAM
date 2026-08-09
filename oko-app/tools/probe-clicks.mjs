@@ -77,27 +77,46 @@ const probeJs = `(() => {
       const intentional = cs.textOverflow === 'ellipsis' || cs.webkitLineClamp !== 'none';
       if (!intentional && el.scrollWidth > el.clientWidth + 2 && cs.overflow !== 'visible')
         out.clipped.push(txt.slice(0, 40));
-      /* Перенос посреди слова считаем ФАКТОМ, а не подозрением: берём самое
-         длинное слово без пробелов, меряем его настоящую ширину тем же
-         шрифтом и сравниваем с шириной ячейки. Проверка «стоит break-all и
-         элемент узкий» давала ложные срабатывания на «До 3 подписок» —
-         такой текст спокойно переносится по пробелу. */
-      /* offsetWidth, а не rect: у прямоугольника ширина считается ПОСЛЕ
-         transform, и панель, пойманная в середине выезда со scale(.9),
-         выглядит уже, чем она есть. Отсюда и брались 29 «переносов»,
-         которых при прямом замере после остановки анимаций нет. */
+      /* Перенос посреди слова НЕ вычисляем, а СМОТРИМ.
+
+         Прежний способ — измерить самое длинное слово канвасом и сравнить с
+         шириной ячейки — это догадка. Она не знает, как браузер на самом деле
+         разложил строки, и врёт: полный обход дал 18 таких «переносов», из
+         которых настоящих на 390 px не было НИ ОДНОГО.
+
+         Здесь берём текстовый узел, проходим по буквам через Range и смотрим
+         координаты каждой. Если строка сменилась между двумя буквами одного
+         слова — слово порвано, и это факт, а не оценка. Дорогая проверка
+         запускается только там, где дешёвая заподозрила неладное. */
       const шир = el.offsetWidth || Math.round(r.width);
       if ((cs.wordBreak === 'break-all' || cs.overflowWrap === 'anywhere') && шир < 200) {
         const word = txt.split(/\s+/).reduce((a, w) => w.length > a.length ? w : a, '');
-        if (word.length >= 6) {
-          /* У строчных элементов clientWidth всегда 0 — сравнение с ним
-             объявляло переносом любое слово в любом <span>. */
-          const avail = Math.max(el.clientWidth, шир);
-          if (avail > 4) {
-            out._cv = out._cv || document.createElement('canvas');
-            const g = out._cv.getContext('2d');
-            g.font = cs.fontWeight + ' ' + cs.fontSize + ' ' + cs.fontFamily;
-            if (g.measureText(word).width > avail + 1) out.midWord.push(word.slice(0, 30));
+        const avail = Math.max(el.clientWidth, шир);
+        if (word.length >= 6 && avail > 4) {
+          out._cv = out._cv || document.createElement('canvas');
+          const g = out._cv.getContext('2d');
+          g.font = cs.fontWeight + ' ' + cs.fontSize + ' ' + cs.fontFamily;
+          if (g.measureText(word).width > avail + 1) {
+            /* подозрение есть — теперь проверяем по настоящим строкам */
+            const n = el.firstChild;
+            if (n && n.nodeType === 3) {
+              const rng = document.createRange();
+              const t = n.nodeValue || '';
+              let низ = null, пред = '';
+              for (let k = 0; k < t.length; k++) {
+                const ch = t[k];
+                rng.setStart(n, k); rng.setEnd(n, k + 1);
+                const rc = rng.getClientRects();
+                if (!rc.length) { пред = ch; continue; }
+                const b2 = Math.round(rc[0].bottom);
+                if (низ !== null && b2 > низ + 2 &&
+                    /[\wа-яёА-ЯЁ]/.test(пред) && /[\wа-яёА-ЯЁ]/.test(ch)) {
+                  out.midWord.push(t.slice(Math.max(0, k - 8), k) + '|' + t.slice(k, k + 8));
+                  break;
+                }
+                низ = b2; пред = ch;
+              }
+            }
           }
         }
       }
