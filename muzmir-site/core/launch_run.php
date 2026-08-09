@@ -138,7 +138,11 @@ function launch_email_html(array $c, string $wave, array $siblings = []): string
     $cabUrl     = url('/cabinet');
     $reviewsUrl = url('/reviews');
     $compsUrl   = url('/konkursi');
-    $vipUrl     = url('/vip');
+    // Клуб постоянных участников живёт на /club. Раньше здесь стоял url('/vip') —
+    // такого роута в public/index.php нет, страница отдавала 404. Кнопка «ВИП-клуб»
+    // есть в КАЖДОМ письме запуска (кроме результатов), то есть в волне на всю базу
+    // 8286 подписчиков ссылка вела в никуда.
+    $vipUrl     = url('/club');
 
     $inner = '<div style="font-size:15px;line-height:1.7;color:#33406B;">' . $body . '</div>';
 
