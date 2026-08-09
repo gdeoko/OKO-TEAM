@@ -133,7 +133,10 @@ const b = await chromium.launch({
   args: ['--no-sandbox', '--use-gl=swiftshader', '--enable-unsafe-swiftshader'],
 });
 const c = await b.newContext({
-  viewport: { width: 390, height: 844 }, isMobile: true, hasTouch: true,
+  /* Ширина задаётся флагом --width. По умолчанию 390 (обычный телефон), но
+     типографика ломается на УЗКИХ: настоящие переносы посреди слова нашлись
+     только на 320 px, а на 390 их не было ни одного. Проверять надо обе. */
+  viewport: { width: +(args.width || 390), height: +(args.height || 844) }, isMobile: true, hasTouch: true,
   permissions: ['clipboard-read', 'clipboard-write'],
 });
 await c.addInitScript(CLEAN_START);
