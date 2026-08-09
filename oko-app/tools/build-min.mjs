@@ -148,10 +148,15 @@ function minifyCss(src) {
 
 const kb = n => (n / 1024).toFixed(0) + ' КБ';
 
-const targets = [
-  ...(await fs.readdir(DIR)).filter(f => /\.js$/.test(f) && !/\.min\.js$/.test(f) && f !== 'service-worker.js'),
-  ...(await fs.readdir(DIR)).filter(f => /\.css$/.test(f) && !/\.min\.css$/.test(f)),
-];
+/* Слои переехали в media/app (единственный путь, который доезжает на прод),
+   поэтому считаем и корень, и эту папку. */
+const собрать = async (под) => {
+  const список = await fs.readdir(path.join(DIR, под)).catch(() => []);
+  return список
+    .filter(f => /\.(js|css)$/.test(f) && !/\.min\.(js|css)$/.test(f) && f !== 'service-worker.js')
+    .map(f => (под ? под + '/' : '') + f);
+};
+const targets = [...await собрать(''), ...await собрать('media/app')];
 
 let было = 0, стало = 0, былоGz = 0, сталоGz = 0;
 const строки = [];
