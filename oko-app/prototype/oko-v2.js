@@ -1074,3 +1074,62 @@ window.okoHaptic = okoHaptic;
     log('identity ok');
   }catch(e){}
 })();
+
+/* ============================================================================
+   v2avatar — фото основателя и место под плавающую пилюлю
+
+   1. Фото Даниэля. Файла oko-founder.jpg в репозитории нет, выдумывать его
+      нельзя, а ссылка на него давала 404 при каждой загрузке. В приложении
+      уже есть рабочий загрузчик аватара (редактор профиля -> «Изменить фото»,
+      складывает dataURL в PROFILE.avatar). Этот модуль просто соединяет его
+      с личкой основателя: загрузил фото в профиле — оно появилось и в чате,
+      и в шапке, и в списке. Нет фото — везде честная буква «Д».
+   2. Пилюля онбординга. Она фиксированная и на скрине Даниэля перекрывала
+      карточку «Разблокируй всё на тарифе MAX». Вешаем на <html> класс, пока
+      пилюля видна, — CSS добавляет экрану нижний отступ ровно под неё.
+   ============================================================================ */
+(function v2avatar(){
+  try{
+    /* --- 1. Фото основателя --- */
+    function ownerPhoto(){
+      try{ return (typeof PROFILE !== 'undefined' && PROFILE.avatar) || null; }catch(e){ return null; }
+    }
+    function syncFounder(){
+      if(typeof CHATS === 'undefined' || !Array.isArray(CHATS)) return;
+      var photo = ownerPhoto();
+      for(var i = 0; i < CHATS.length; i++){
+        var c = CHATS[i];
+        if(c && c.founder){
+          if(c.avaImg !== photo){
+            c.avaImg = photo;
+            /* аватар мог быть отрисован со старым src — снимаем, перерисуется */
+            document.querySelectorAll('.oko-ava-img').forEach(function(img){
+              if(img.getAttribute('src') !== photo) img.remove();
+            });
+          }
+        }
+      }
+    }
+    syncFounder();
+    /* Профиль правится редко — хватает редких проверок вместо наблюдателя. */
+    [400, 1500, 4000].forEach(function(d){ setTimeout(syncFounder, d); });
+    document.addEventListener('click', function(){ setTimeout(syncFounder, 350); }, true);
+    window.okoSyncFounderPhoto = syncFounder;
+
+    /* --- 2. Место под пилюлю --- */
+    function pillSync(){
+      var pill = document.querySelector('.okg-pill');
+      var on = !!(pill && !pill.hasAttribute('hidden') && getComputedStyle(pill).display !== 'none');
+      document.documentElement.classList.toggle('okg-pill-on', on);
+    }
+    pillSync();
+    try{
+      new MutationObserver(pillSync).observe(document.body, {
+        childList: true, subtree: true, attributes: true, attributeFilter: ['hidden', 'style', 'class']
+      });
+    }catch(e){}
+    [500, 1600, 4000].forEach(function(d){ setTimeout(pillSync, d); });
+
+    log('avatar+pill ok');
+  }catch(e){}
+})();

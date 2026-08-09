@@ -1,0 +1,509 @@
+{
+  "at": "2026-08-09T04:51:22.677Z",
+  "viewport": "390x844",
+  "routes": [
+    {
+      "id": "root-feed",
+      "name": "Лента",
+      "root": true,
+      "problems": [
+        "на корневой вкладке есть кнопка назад: button.oko-back.oko-hdr-back"
+      ],
+      "buttons": 1,
+      "strays": [],
+      "stateBefore": "screen-feed§§§§home§cats"
+    },
+    {
+      "id": "root-chats",
+      "name": "Чаты",
+      "root": true,
+      "problems": [
+        "на корневой вкладке есть кнопка назад: button.oko-back.oko-hdr-back"
+      ],
+      "buttons": 1,
+      "strays": [],
+      "stateBefore": "screen-chats§§§§home§cats"
+    },
+    {
+      "id": "root-mini",
+      "name": "Мини-аппы",
+      "root": true,
+      "problems": [
+        "на корневой вкладке есть кнопка назад: button.oko-back.oko-hdr-back"
+      ],
+      "buttons": 1,
+      "strays": [],
+      "stateBefore": "screen-mini§§§§home§cats"
+    },
+    {
+      "id": "root-wallet",
+      "name": "Кошелёк",
+      "root": true,
+      "problems": [
+        "на корневой вкладке есть кнопка назад: button.oko-back.oko-hdr-back"
+      ],
+      "buttons": 1,
+      "strays": [],
+      "stateBefore": "screen-wallet§§§§home§cats"
+    },
+    {
+      "id": "root-profile",
+      "name": "Профиль",
+      "root": true,
+      "problems": [
+        "на корневой вкладке есть кнопка назад: button.oko-back.oko-hdr-back"
+      ],
+      "buttons": 1,
+      "strays": [],
+      "stateBefore": "screen-profile§§§§home§cats"
+    },
+    {
+      "id": "partner",
+      "name": "Партнёрка",
+      "root": false,
+      "problems": [
+        "падение маршрута"
+      ],
+      "fatal": "page.waitForTimeout: Target page, context or browser has been closed"
+    },
+    {
+      "id": "games",
+      "name": "Рулетка / Игры",
+      "root": false,
+      "problems": [
+        "падение маршрута"
+      ],
+      "fatal": "page.goto: Target page, context or browser has been closed"
+    },
+    {
+      "id": "academy",
+      "name": "Академия",
+      "root": false,
+      "problems": [
+        "падение маршрута"
+      ],
+      "fatal": "page.goto: Target page, context or browser has been closed"
+    },
+    {
+      "id": "ads",
+      "name": "Реклама",
+      "root": false,
+      "problems": [
+        "падение маршрута"
+      ],
+      "fatal": "page.goto: Target page, context or browser has been closed"
+    },
+    {
+      "id": "ton",
+      "name": "TON-подарки",
+      "root": false,
+      "problems": [
+        "падение маршрута"
+      ],
+      "fatal": "page.goto: Target page, context or browser has been closed"
+    },
+    {
+      "id": "ma-video",
+      "name": "Мини-апп · Проверка видео",
+      "root": false,
+      "problems": [
+        "падение маршрута"
+      ],
+      "fatal": "page.goto: Target page, context or browser has been closed"
+    },
+    {
+      "id": "ma-market",
+      "name": "Мини-апп · Биржа услуг",
+      "root": false,
+      "problems": [
+        "падение маршрута"
+      ],
+      "fatal": "page.goto: Target page, context or browser has been closed"
+    },
+    {
+      "id": "ma-system",
+      "name": "Мини-апп · Система роста",
+      "root": false,
+      "problems": [
+        "падение маршрута"
+      ],
+      "fatal": "page.goto: Target page, context or browser has been closed"
+    },
+    {
+      "id": "ma-factory",
+      "name": "Мини-апп · Контент-завод",
+      "root": false,
+      "problems": [
+        "падение маршрута"
+      ],
+      "fatal": "page.goto: Target page, context or browser has been closed"
+    },
+    {
+      "id": "ma-helper",
+      "name": "Мини-апп · Помощник OKO",
+      "root": false,
+      "problems": [
+        "падение маршрута"
+      ],
+      "fatal": "page.goto: Target page, context or browser has been closed"
+    },
+    {
+      "id": "ma-socials",
+      "name": "Мини-апп · Мои соцсети",
+      "root": false,
+      "problems": [
+        "падение маршрута"
+      ],
+      "fatal": "page.goto: Target page, context or browser has been closed"
+    },
+    {
+      "id": "ac-course",
+      "name": "Академия · курс",
+      "root": false,
+      "problems": [
+        "падение маршрута"
+      ],
+      "fatal": "page.goto: Target page, context or browser has been closed"
+    },
+    {
+      "id": "ac-lesson",
+      "name": "Академия · урок",
+      "root": false,
+      "problems": [
+        "падение маршрута"
+      ],
+      "fatal": "page.goto: Target page, context or browser has been closed"
+    },
+    {
+      "id": "w2-accounts",
+      "name": "Кошелёк · accounts",
+      "root": false,
+      "problems": [
+        "падение маршрута"
+      ],
+      "fatal": "page.goto: Target page, context or browser has been closed"
+    },
+    {
+      "id": "w2-transfers",
+      "name": "Кошелёк · transfers",
+      "root": false,
+      "problems": [
+        "падение маршрута"
+      ],
+      "fatal": "page.goto: Target page, context or browser has been closed"
+    },
+    {
+      "id": "w2-exchange",
+      "name": "Кошелёк · exchange",
+      "root": false,
+      "problems": [
+        "падение маршрута"
+      ],
+      "fatal": "page.goto: Target page, context or browser has been closed"
+    },
+    {
+      "id": "w2-autopay",
+      "name": "Кошелёк · autopay",
+      "root": false,
+      "problems": [
+        "падение маршрута"
+      ],
+      "fatal": "page.goto: Target page, context or browser has been closed"
+    },
+    {
+      "id": "w2-goals",
+      "name": "Кошелёк · goals",
+      "root": false,
+      "problems": [
+        "падение маршрута"
+      ],
+      "fatal": "page.goto: Target page, context or browser has been closed"
+    },
+    {
+      "id": "w2-analytics",
+      "name": "Кошелёк · analytics",
+      "root": false,
+      "problems": [
+        "падение маршрута"
+      ],
+      "fatal": "page.goto: Target page, context or browser has been closed"
+    },
+    {
+      "id": "w2-receive",
+      "name": "Кошелёк · receive",
+      "root": false,
+      "problems": [
+        "падение маршрута"
+      ],
+      "fatal": "page.goto: Target page, context or browser has been closed"
+    },
+    {
+      "id": "w2-history",
+      "name": "Кошелёк · history",
+      "root": false,
+      "problems": [
+        "падение маршрута"
+      ],
+      "fatal": "page.goto: Target page, context or browser has been closed"
+    },
+    {
+      "id": "w2-security",
+      "name": "Кошелёк · security",
+      "root": false,
+      "problems": [
+        "падение маршрута"
+      ],
+      "fatal": "page.goto: Target page, context or browser has been closed"
+    },
+    {
+      "id": "w2-help",
+      "name": "Кошелёк · help",
+      "root": false,
+      "problems": [
+        "падение маршрута"
+      ],
+      "fatal": "page.goto: Target page, context or browser has been closed"
+    },
+    {
+      "id": "wal-stmt",
+      "name": "Кошелёк · выписка",
+      "root": false,
+      "problems": [
+        "падение маршрута"
+      ],
+      "fatal": "page.goto: Target page, context or browser has been closed"
+    },
+    {
+      "id": "settings",
+      "name": "Настройки",
+      "root": false,
+      "problems": [
+        "падение маршрута"
+      ],
+      "fatal": "page.goto: Target page, context or browser has been closed"
+    },
+    {
+      "id": "legal-hub",
+      "name": "Документы · список",
+      "root": false,
+      "problems": [
+        "падение маршрута"
+      ],
+      "fatal": "page.goto: Target page, context or browser has been closed"
+    },
+    {
+      "id": "legal-doc",
+      "name": "Документы · оферта",
+      "root": false,
+      "problems": [
+        "падение маршрута"
+      ],
+      "fatal": "page.goto: Target page, context or browser has been closed"
+    },
+    {
+      "id": "notifs",
+      "name": "Уведомления",
+      "root": false,
+      "problems": [
+        "падение маршрута"
+      ],
+      "fatal": "page.goto: Target page, context or browser has been closed"
+    },
+    {
+      "id": "search",
+      "name": "Поиск",
+      "root": false,
+      "problems": [
+        "падение маршрута"
+      ],
+      "fatal": "page.goto: Target page, context or browser has been closed"
+    },
+    {
+      "id": "channels",
+      "name": "Каналы",
+      "root": false,
+      "problems": [
+        "падение маршрута"
+      ],
+      "fatal": "page.goto: Target page, context or browser has been closed"
+    },
+    {
+      "id": "pubprofile",
+      "name": "Публичный профиль",
+      "root": false,
+      "problems": [
+        "падение маршрута"
+      ],
+      "fatal": "page.goto: Target page, context or browser has been closed"
+    },
+    {
+      "id": "pssoc",
+      "name": "Мои соцсети (хаб)",
+      "root": false,
+      "problems": [
+        "падение маршрута"
+      ],
+      "fatal": "page.goto: Target page, context or browser has been closed"
+    },
+    {
+      "id": "editprof",
+      "name": "Редактор профиля",
+      "root": false,
+      "problems": [
+        "падение маршрута"
+      ],
+      "fatal": "page.goto: Target page, context or browser has been closed"
+    },
+    {
+      "id": "reg",
+      "name": "Регистрация",
+      "root": false,
+      "problems": [
+        "падение маршрута"
+      ],
+      "fatal": "page.goto: Target page, context or browser has been closed"
+    },
+    {
+      "id": "conv",
+      "name": "Диалог в чатах",
+      "root": false,
+      "problems": [
+        "падение маршрута"
+      ],
+      "fatal": "page.goto: Target page, context or browser has been closed"
+    },
+    {
+      "id": "sh-npost",
+      "name": "Шторка · новый пост",
+      "root": false,
+      "problems": [
+        "падение маршрута"
+      ],
+      "fatal": "page.goto: Target page, context or browser has been closed"
+    },
+    {
+      "id": "sh-newchat",
+      "name": "Шторка · новый чат",
+      "root": false,
+      "problems": [
+        "падение маршрута"
+      ],
+      "fatal": "page.goto: Target page, context or browser has been closed"
+    },
+    {
+      "id": "sh-adscreate",
+      "name": "Шторка · кампания",
+      "root": false,
+      "problems": [
+        "падение маршрута"
+      ],
+      "fatal": "page.goto: Target page, context or browser has been closed"
+    },
+    {
+      "id": "sh-gmdaily",
+      "name": "Шторка · задания дня",
+      "root": false,
+      "problems": [
+        "падение маршрута"
+      ],
+      "fatal": "page.goto: Target page, context or browser has been closed"
+    },
+    {
+      "id": "sh-gmbp",
+      "name": "Шторка · боевой пропуск",
+      "root": false,
+      "problems": [
+        "падение маршрута"
+      ],
+      "fatal": "page.goto: Target page, context or browser has been closed"
+    },
+    {
+      "id": "sh-topup",
+      "name": "Шторка · пополнение",
+      "root": false,
+      "problems": [
+        "падение маршрута"
+      ],
+      "fatal": "page.goto: Target page, context or browser has been closed"
+    },
+    {
+      "id": "sh-send",
+      "name": "Шторка · перевод",
+      "root": false,
+      "problems": [
+        "падение маршрута"
+      ],
+      "fatal": "page.goto: Target page, context or browser has been closed"
+    },
+    {
+      "id": "sh-payout",
+      "name": "Шторка · выплата",
+      "root": false,
+      "problems": [
+        "падение маршрута"
+      ],
+      "fatal": "page.goto: Target page, context or browser has been closed"
+    },
+    {
+      "id": "sh-vstopup",
+      "name": "Шторка · пополнить TON",
+      "root": false,
+      "problems": [
+        "падение маршрута"
+      ],
+      "fatal": "page.goto: Target page, context or browser has been closed"
+    },
+    {
+      "id": "sh-vsrecv",
+      "name": "Шторка · получить TON",
+      "root": false,
+      "problems": [
+        "падение маршрута"
+      ],
+      "fatal": "page.goto: Target page, context or browser has been closed"
+    },
+    {
+      "id": "sh-vshist",
+      "name": "Шторка · история TON",
+      "root": false,
+      "problems": [
+        "падение маршрута"
+      ],
+      "fatal": "page.goto: Target page, context or browser has been closed"
+    },
+    {
+      "id": "sh-vsmarket",
+      "name": "Шторка · биржа подарков",
+      "root": false,
+      "problems": [
+        "падение маршрута"
+      ],
+      "fatal": "page.goto: Target page, context or browser has been closed"
+    },
+    {
+      "id": "sh-lang",
+      "name": "Шторка · язык",
+      "root": false,
+      "problems": [
+        "падение маршрута"
+      ],
+      "fatal": "page.goto: Target page, context or browser has been closed"
+    }
+  ],
+  "visuals": {
+    "38px|38px|50%|flex|center|center": [
+      "root-feed button.oko-back.oko-hdr-back",
+      "root-chats button.oko-back.oko-hdr-back",
+      "root-mini button.oko-back.oko-hdr-back",
+      "root-wallet button.oko-back.oko-hdr-back",
+      "root-profile button.oko-back.oko-hdr-back"
+    ]
+  },
+  "summary": {
+    "routes": 53,
+    "withProblems": 53,
+    "problems": 53,
+    "distinctVisuals": 1,
+    "visualsMatch": true
+  }
+}

@@ -282,7 +282,7 @@ case 'exportBase':
     foreach($rows as $r){ fputcsv($f,[$r['id'],$r['name'],$r['email'],$r['phone'],$r['tg'],$r['niche'],$r['status'],$r['products'],$r['paid'],$r['source'],$r['created_at']],';'); }
     fclose($f); exit;
 // ═════════════════════════════════════════════════════════════════
-// L5 — Помощник OKO: форвард в Claude через Cloudflare-прокси
+// L5 — ОКО Ai: форвард в Claude через Cloudflare-прокси
 // POST {msg, history[]?, context?}   → {reply, usage}
 // ═════════════════════════════════════════════════════════════════
 case 'assistant':
@@ -294,7 +294,7 @@ case 'assistant':
     if(!$key) fail('no anthropic key',500);
     $hist = is_array($body['history']??null)?array_slice($body['history'],-8):[];
     $ctx  = trim((string)($body['context']??''));
-    $sys  = "Ты — Личный Помощник OKO. Отвечаешь по-русски, коротко и по делу, mobile-first. Помогаешь предпринимателю с ростом в соцсетях, продажами, контентом, автоматизацией. Не упоминай что ты нейросеть, Claude, OpenAI и т.п. Ты — OKO.";
+    $sys  = "Ты — ОКО Ai. Отвечаешь по-русски, коротко и по делу, mobile-first. Помогаешь предпринимателю с ростом в соцсетях, продажами, контентом, автоматизацией. Не упоминай что ты нейросеть, Claude, OpenAI и т.п. Ты — OKO.";
     if($ctx) $sys .= "\n\nКонтекст пользователя:\n".mb_substr($ctx,0,1500);
     $messages = [];
     foreach($hist as $h){ $r=($h['role']??'')==='assistant'?'assistant':'user'; $t=trim((string)($h['text']??$h['content']??''));

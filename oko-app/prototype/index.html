@@ -435,7 +435,7 @@ nav#tabs .nav-logo{display:none}
 .vc-sample-sec ul{margin:0;padding-left:20px}
 .vc-sample-sec li{font-size:12.5px;line-height:1.55;margin-bottom:4px;color:var(--fg)}
 .vc-sample-sec p{margin:0;font-size:12.5px;line-height:1.55;color:var(--fg)}
-/* --- Помощник OKO --- */
+/* --- ОКО Ai (бывш. «Помощник OKO») --- */
 #helperRoot{display:flex;flex-direction:column;gap:12px;min-height:60vh}
 .hp-hero{display:flex;align-items:center;gap:12px;padding:12px 14px;border-radius:14px;background:linear-gradient(135deg,rgba(154,255,0,.08),transparent);border:1px solid var(--border)}
 .hp-hero-ava{flex-shrink:0;width:44px;height:44px;border-radius:12px;background:var(--lime);color:#000;display:flex;align-items:center;justify-content:center}
@@ -1491,6 +1491,28 @@ button:focus-visible,a:focus-visible,input:focus-visible,textarea:focus-visible,
 <!-- Рост: онбординг первого дня, воронки вместо стены платежа,
      партнёрский двигатель, тихие уведомления возврата -->
 <script defer src="oko-growth.js"></script>
+<!-- Запись голосовых и кружков: одна модальная шторка с подписанными
+     «Отменить» и «Отправить» вместо двух конкурирующих оверлеев -->
+<script defer src="oko-rec.js"></script>
+<!-- Единая кнопка «назад» на всех экранах, подстраницах, мини-аппах и шторках -->
+<script defer src="oko-back.js"></script>
+<!-- Эмодзи и стикеры: панель ровно в высоту системной клавиатуры,
+     взаимоисключение с ней, категории, поиск, бренд-стикеры OKO -->
+<script defer src="oko-emoji.js"></script>
+<!-- Родные возможности Telegram: подтверждение закрытия, главная кнопка,
+     облачное хранилище аккаунта, шеринг через Telegram -->
+<script defer src="oko-tg.js"></script>
+<!-- Биржа: полноценный маркетплейс (каталог, карточка, мастер размещения,
+     «Мои объявления OKO», избранное, история, отклики и сделки) -->
+<script defer src="oko-market.js"></script>
+<!-- Социальный слой: единая страница сущности (профиль / канал / чат / клуб /
+     курс), вкладки «Посты» и «Ролики», публикация роликов 9:16 и 16:9,
+     создание каналов, чатов, клубов-супергрупп и курсов -->
+<script defer src="oko-social.js"></script>
+<!-- ОКО Ai: экран нейросети собран на родных классах личных сообщений
+     (.conv-head / .msgs / .msg / .composer) — композер прижат к низу, а не
+     висит поверх переписки. Грузится последним, перехватывает openMa('helper'). -->
+<script defer src="oko-ai.js"></script>
 <script>
 /* Обёртки над встроенными в base.html функциями — для авто-трека page_view / share.
    showTab существует в inline-скрипте base.html, поэтому оборачиваем по мере
@@ -1734,6 +1756,12 @@ button:focus-visible,a:focus-visible,input:focus-visible,textarea:focus-visible,
 <!-- Клипы: кадр плёнки с диагоналями и треугольником -->
 <symbol id="i-clips" viewBox="0 0 100 100"><rect x="16" y="16" width="68" height="68" rx="18"/><path d="M34 16 48 38M58 16 72 38M16 38h68"/><path d="M42 52v20l18-10z" fill="currentColor" stroke="none"/></symbol>
 
+<!-- Формат «вертикальный ролик 9:16»: узкий кадр с треугольником -->
+<symbol id="i-ratio-916" viewBox="0 0 100 100"><rect x="30" y="10" width="40" height="80" rx="9"/><path d="M44 40v20l16-10z" fill="currentColor" stroke="none"/></symbol>
+
+<!-- Формат «горизонтальный ролик 16:9»: широкий кадр с треугольником -->
+<symbol id="i-ratio-169" viewBox="0 0 100 100"><rect x="8" y="28" width="84" height="44" rx="9"/><path d="M44 40v20l16-10z" fill="currentColor" stroke="none"/></symbol>
+
 <!-- Воспроизвести: треугольник -->
 <symbol id="i-play" viewBox="0 0 100 100"><path d="M30 18 82 50 30 82z" fill="currentColor" stroke="none"/></symbol>
 
@@ -1935,7 +1963,52 @@ button:focus-visible,a:focus-visible,input:focus-visible,textarea:focus-visible,
     
     <!-- Получить перевод (копия i-download) -->
     <symbol id="i-vs-recv" viewBox="0 0 100 100"><path d="M50 16v46M28 44 50 66 72 44M16 82h68"/></symbol>
-    
+
+    <!-- Биржа: фильтры (ползунки) -->
+    <symbol id="i-mk-filter" viewBox="0 0 100 100"><path d="M16 30h68M16 50h68M16 70h68"/><circle cx="38" cy="30" r="8"/><circle cx="62" cy="50" r="8"/><circle cx="34" cy="70" r="8"/></symbol>
+
+    <!-- Биржа: сортировка (две стрелки) -->
+    <symbol id="i-mk-sort" viewBox="0 0 100 100"><path d="M30 84V22M16 36 30 22 44 36"/><path d="M70 16v62M56 64 70 78 84 64"/></symbol>
+
+    <!-- Биржа: архив (коробка с крышкой) -->
+    <symbol id="i-mk-archive" viewBox="0 0 100 100"><rect x="16" y="20" width="68" height="20" rx="6"/><path d="M24 40v34a8 8 0 0 0 8 8h36a8 8 0 0 0 8-8V40"/><path d="M42 56h16"/></symbol>
+
+    <!-- Биржа: ценник -->
+    <symbol id="i-mk-tag" viewBox="0 0 100 100"><path d="M50 14H22a8 8 0 0 0-8 8v28l36 36 36-36z"/><circle cx="34" cy="34" r="6"/></symbol>
+
+    <!-- ============ ПАНЕЛЬ ЭМОДЗИ И СТИКЕРОВ (oko-emoji.js) ============
+         Иконки вкладок панели. В интерфейсе OKO эмодзи запрещены — категории
+         подписываются только этими SVG. Сетка 100x100, штрих задаёт svg.i. -->
+
+    <!-- Категория «Смайлы и люди» -->
+    <symbol id="i-em-smile" viewBox="0 0 100 100"><circle cx="50" cy="50" r="34"/><circle cx="38" cy="42" r="4.5" fill="currentColor" stroke="none"/><circle cx="62" cy="42" r="4.5" fill="currentColor" stroke="none"/><path d="M34 59c9 11 23 11 32 0"/></symbol>
+
+    <!-- Категория «Животные и природа»: отпечаток лапы -->
+    <symbol id="i-em-paw" viewBox="0 0 100 100"><path d="M50 54c11 0 19 9 19 17a9 9 0 0 1-11 9 30 30 0 0 0-16 0 9 9 0 0 1-11-9c0-8 8-17 19-17z"/><ellipse cx="27" cy="45" rx="8" ry="10"/><ellipse cx="73" cy="45" rx="8" ry="10"/><ellipse cx="42" cy="27" rx="8" ry="10"/><ellipse cx="58" cy="27" rx="8" ry="10"/></symbol>
+
+    <!-- Категория «Еда»: чашка на подставке -->
+    <symbol id="i-em-food" viewBox="0 0 100 100"><path d="M20 32h46v22a23 23 0 0 1-46 0z"/><path d="M66 38h9a10 10 0 0 1 0 20h-9"/><path d="M16 84h60"/></symbol>
+
+    <!-- Категория «Активность»: мяч -->
+    <symbol id="i-em-ball" viewBox="0 0 100 100"><circle cx="50" cy="50" r="34"/><path d="M50 25 65 36l-6 18H41l-6-18z"/><path d="M41 54 33 71M59 54l8 17"/></symbol>
+
+    <!-- Категория «Путешествия»: самолёт -->
+    <symbol id="i-em-plane" viewBox="0 0 100 100"><path d="M50 12c4 0 7 6 7 13v17l27 16v9l-27-8v15l9 8v6l-16-5-16 5v-6l9-8V59l-27 8v-9l27-16V25c0-7 3-13 7-13z"/></symbol>
+
+    <!-- Категория «Предметы»: лампочка -->
+    <symbol id="i-em-bulb" viewBox="0 0 100 100"><path d="M50 14a24 24 0 0 1 15 43c-3 3-4 6-4 9H39c0-3-1-6-4-9a24 24 0 0 1 15-43z"/><path d="M41 78h18M45 88h10"/></symbol>
+
+    <!-- Категория «Символы»: решётка -->
+    <symbol id="i-em-sym" viewBox="0 0 100 100"><path d="M36 18 28 82M72 18l-8 64M18 38h64M14 62h64"/></symbol>
+
+    <!-- Вкладка GIF: кадр с треугольником воспроизведения -->
+    <symbol id="i-em-gif" viewBox="0 0 100 100"><rect x="12" y="24" width="76" height="52" rx="14"/><path d="M43 40v20l17-10z"/></symbol>
+
+    <!-- Стереть символ перед курсором -->
+    <symbol id="i-em-bksp" viewBox="0 0 100 100"><path d="M38 22h42a10 10 0 0 1 10 10v36a10 10 0 0 1-10 10H38L12 50z"/><path d="M48 40l20 20M68 40 48 60"/></symbol>
+
+    <!-- Добавить свой стикер -->
+    <symbol id="i-em-add" viewBox="0 0 100 100"><rect x="16" y="16" width="68" height="68" rx="18" stroke-dasharray="13 11"/><path d="M50 36v28M36 50h28"/></symbol>
 
 </defs>
 </svg>
@@ -2134,7 +2207,7 @@ button:focus-visible,a:focus-visible,input:focus-visible,textarea:focus-visible,
             <button class="svc" onclick="openMa('video')"><span class="svc-ic ic-video"><svg class="i"><use href="#i-camera"/></svg></span><span class="svc-label">Проверка видео</span></button>
             <button class="svc" onclick="openMa('market')"><span class="svc-ic ic-market"><svg class="i"><use href="#i-briefcase"/></svg></span><span class="svc-label">Биржа услуг</span></button>
             <button class="svc" onclick="showTab('partner')"><span class="svc-ic ic-partner"><svg class="i"><use href="#i-users"/></svg></span><span class="svc-label">Партнёрка</span></button>
-            <button class="svc" onclick="openMa('helper')"><span class="svc-ic ic-help"><svg class="i"><use href="#i-chat"/></svg></span><span class="svc-label">Помощник OKO</span></button>
+            <button class="svc" onclick="openMa('helper')"><span class="svc-ic ic-help"><svg class="i"><use href="#i-chat"/></svg></span><span class="svc-label">ОКО Ai</span></button>
             <button class="svc" onclick="openMa('socials')"><span class="svc-ic ic-socials"><svg class="i"><use href="#i-send"/></svg></span><span class="svc-label">Мои соцсети</span></button>
           </div>
           <p class="svc-note">Нажми на сервис, откроется внутри OKO</p>
@@ -2203,7 +2276,7 @@ button:focus-visible,a:focus-visible,input:focus-visible,textarea:focus-visible,
         </div>
         <div class="ma-view" id="ma-helper">
           <button class="btn ghost sm" onclick="closeMa()"><svg class="i"><use href="#i-back"/></svg> Назад</button>
-          <h2 class="section-h" style="margin-top:16px">Помощник OKO</h2>
+          <h2 class="section-h" style="margin-top:16px">ОКО Ai</h2>
           <div id="helperRoot"></div>
         </div>
         <div class="ma-view" id="ma-socials">
@@ -2298,19 +2371,19 @@ button:focus-visible,a:focus-visible,input:focus-visible,textarea:focus-visible,
             <span class="chip flag">Хит</span>
             <h3>PRO</h3>
             <div class="price"><b>4&nbsp;900&nbsp;₽</b><span>&nbsp;/мес</span></div>
-            <ul><li>Система Роста под ключ, 15 конкурентов</li><li>Личный помощник OKO: 300 обращений</li><li>Студия контента: 100 генераций</li><li>Проверка видео 100/мес + 20 автоправок</li></ul>
+            <ul><li>Система Роста под ключ, 15 конкурентов</li><li>ОКО Ai: 300 обращений</li><li>Студия контента: 100 генераций</li><li>Проверка видео 100/мес + 20 автоправок</li></ul>
             <button class="btn" onclick="openPay('PRO')">Выбрать</button>
           </div>
           <div class="plan">
             <h3>BUSINESS</h3>
             <div class="price"><b>19&nbsp;900&nbsp;₽</b><span>&nbsp;/мес</span></div>
-            <ul><li>Контент-завод: 30–50 роликов/мес</li><li>5 специалистов OKO под твой проект</li><li>Автопостинг во все сети + приоритет</li><li>Помощник 1000, проверка 300, автоправка 100</li></ul>
+            <ul><li>Контент-завод: 30–50 роликов/мес</li><li>5 специалистов OKO под твой проект</li><li>Автопостинг во все сети + приоритет</li><li>ОКО Ai 1000, проверка 300, автоправка 100</li></ul>
             <button class="btn ghost" onclick="openPay('BUSINESS')">Выбрать</button>
           </div>
           <div class="plan">
             <h3>BUSINESS&nbsp;PRO</h3>
             <div class="price"><b>49&nbsp;900&nbsp;₽</b><span>&nbsp;/мес</span></div>
-            <ul><li>Контент-завод: 100 роликов/мес</li><li>Персональный образ (двойник голоса и лица)</li><li>Помощник и Студия без лимитов</li><li>Бонус: лендинг + бот при годовой оплате</li></ul>
+            <ul><li>Контент-завод: 100 роликов/мес</li><li>Персональный образ (двойник голоса и лица)</li><li>ОКО Ai и Студия без лимитов</li><li>Бонус: лендинг + бот при годовой оплате</li></ul>
             <button class="btn ghost" onclick="openPay('BUSINESS_PRO')">Выбрать</button>
           </div>
           <div class="plan gold">
@@ -2699,7 +2772,7 @@ button:focus-visible,a:focus-visible,input:focus-visible,textarea:focus-visible,
   </div>
 </div>
 <div class="sheet" id="sheet-progress" style="max-height:78vh;overflow-y:auto">
-  <h3>Прогресс сборки OKO <span class="chip" style="font-size:10px;vertical-align:3px">сборка v2.13</span></h3>
+  <h3>Прогресс сборки OKO <span class="chip" style="font-size:10px;vertical-align:3px">сборка v2.15</span></h3>
   <p class="dim" style="font-size:12px;margin:-6px 0 10px">Запуск: 15 июля 2026. Обновляется с каждым этапом.</p>
   <div id="progressList"></div>
 </div>
@@ -4142,7 +4215,9 @@ const CHATS = [
    ]},
 
   /* 4. Личка с основателем — первое, что человек видит после регистрации */
-  {id:2, ava:'Д', avaImg:'oko-founder.jpg', name:'Даниэль Ильясов', kind:'direct',
+  /* avaImg берётся из PROFILE.avatar живьём (см. модуль v2avatar в oko-v2.js):
+     как только Даниэль загрузит фото в профиле, оно появится и здесь. */
+  {id:2, ava:'Д', avaImg:null, name:'Даниэль Ильясов', kind:'direct',
    nick:OKO_FOUNDER_NICK, kindIcon:null, official:true, founder:true, verified:true,
    preview:'Добро пожаловать в OKO', time:'', unread:1, online:false,
    msgs:[
@@ -7624,7 +7699,9 @@ function socialsAutopost(k){
   socialsRender();
   toast(st[k].autopost?'Автопостинг включён':'Автопостинг выключен');
 }
-/* ================= ПОМОЩНИК OKO (L5 frontend) =================
+/* ================= ОКО Ai (L5 frontend) =================
+   Экран целиком перерисовывает oko-ai.js — там ЛС-вёрстка (.conv-head/.msgs/.composer).
+   Функции ниже остаются как база данных истории и фолбэк.
    Backend endpoint: POST /api.php?action=assistant с {msg, history[]}
    Ключ живёт на VPS в config.php, не во фронте.
    Пока endpoint не активен: заглушка с реалистичным ответом-шаблоном. */
@@ -7642,7 +7719,7 @@ function helperHistory(){
 }
 function helperSave(h){ try{ localStorage.setItem(helperKey(), JSON.stringify(h.slice(-40))); }catch(e){} }
 function helperReset(){
-  if(!confirm('Очистить историю переписки с помощником?')) return;
+  if(!confirm('Очистить историю переписки с ОКО Ai?')) return;
   try{ localStorage.removeItem(helperKey()); }catch(e){}
   helperRender();
   toast('История очищена');
@@ -7663,13 +7740,13 @@ function helperRender(){
     </div>`).join('') : `
     <div class="hp-welcome">
       <div class="hp-w-ic">${I('rocket')}</div>
-      <b>Привет. Я твой персональный помощник OKO.</b>
+      <b>Привет. Я ОКО Ai.</b>
       <p>Помогу с контентом, продажами, стратегией и цифрами. Знаю твою нишу, тон и цели из анкеты. Спрашивай что угодно, отвечу подробно и с примерами.</p>
     </div>`;
   r.innerHTML = `
     <div class="hp-hero">
       <div class="hp-hero-ava">${I('rocket')}</div>
-      <div><b>Помощник OKO</b><small>${h.length?h.length+' сообщений в истории':'готов помочь'}</small></div>
+      <div><b>ОКО Ai</b><small>${h.length?h.length+' сообщений в истории':'готов помочь'}</small></div>
       ${h.length?`<button class="hp-reset" onclick="helperReset()" aria-label="Очистить">${I('trash')}</button>`:''}
     </div>
     <div class="hp-quick" ${h.length?'style="display:none"':''}>${quickHtml}</div>
@@ -7730,17 +7807,10 @@ function helperReceive(text){
   helperRender();
 }
 function helperMockReply(msg){
-  const a = (typeof aState!=='undefined'&&aState.answers)?aState.answers:{};
-  const niche = a.niche || 'твоей нише';
-  const aud = (a.audience||'клиентов').split(',')[0].trim();
-  const lc = msg.toLowerCase();
-  if(lc.includes('промпт')||lc.includes('картинк')) return `**Промпт под ${niche}** (Midjourney/Gemini):\n\nCinematic editorial photograph, ${niche}, subject centered, natural window light 45°, shallow depth of field f/1.8, warm skin tones, muted midtones, one lime accent (#9AFF00), Kinfolk magazine style, 9:16 vertical, 1080x1920. No text.\n\nСохрани в раздел **Материалы → Промпты** — там ещё 50 промптов под разные форматы (обложки, карусели, сторис).`;
-  if(lc.includes('сценар')||lc.includes('reels')||lc.includes('ролик')) return `**Сценарий Reels 30-45 сек** для ${niche}:\n\n0-3 сек: хук стоп-скролл. «97% ${aud} делают эту ошибку в первую неделю».\n3-15 сек: боль + обещание. Показать 1 конкретную боль + фразу «сейчас покажу как за 30 сек».\n15-35 сек: метод. 3 шага крупным планом, jump-cut между шагами.\n35-45 сек: CTA. «Пиши СИСТЕМА в директ, пришлю шаблон».\n\nПолный сценарий с планами кадра и субтитрами есть в **Системе Роста → Контент-план → любой день**.`;
-  if(lc.includes('холодк')||lc.includes('директ')||lc.includes('шаблон сообщ')) return `**Холодное сообщение** для ${niche}:\n\n«Привет! Увидел(а) тебя по хэштегу #${niche.replace(/\s+/g,'')}. Скажи, что для тебя сейчас самое сложное в теме ${niche}?»\n\nБез продажи. Только диагностика. Ждёшь ответа, потом квалификация: что уже пробовал / что мешает / какой результат нужен за 30 дней. По ответам сегмент + оффер.\n\nШаблоны разговора и дожима лежат в **Системе → Материалы → Скрипты и офферы продаж**.`;
-  if(lc.includes('цен')||lc.includes('маржа')||lc.includes('стоимость')) return `**Расчёт цены** с маржой 60% для ${niche}:\n\n1. Считаешь прямые расходы на 1 продажу: реклама + сервисы + доля команды.\n2. Умножаешь на 2.5 = минимальная цена с маржой 60%.\n3. Смотришь 3 прямых конкурента: их цены = коридор.\n4. Своя = верхняя треть коридора если есть сильный кейс + гарантия.\n\nБолее подробно с примерами и таблицей я разобрал в **Системе → Бизнес-план → Продукты, цены, маржа** (блок 03).`;
-  if(lc.includes('идеи')||lc.includes('услуг')) return `**5 идей услуг** под ${niche} которые можно продавать уже завтра:\n\n1. Разовая диагностика 60 минут за 5 000 ₽.\n2. Наставничество 4 недели за 19 900 ₽.\n3. Пакет контента (10 роликов) за 30 000 ₽.\n4. Аудит канала + план 30 дней за 9 900 ₽.\n5. Клуб OKO CLUB с ежемесячной подпиской 2 900 ₽.\n\nДля каждой идеи готов расписать оффер, аудиторию и воронку. Скажи какую разобрать первой.`;
-  if(lc.includes('пост')||lc.includes('разбер')) return `Скажи какой пост разобрать. Скинь текст или ссылку. Пройдусь по:\n- Сила хука в первых 3 сек\n- Структура тело поста (боль → инсайт → пример → CTA)\n- CTA (есть ли, конкретный ли, направлен ли в директ)\n- Ошибки грамотности и стилистики\n- Что можно улучшить точечно (2-3 конкретных изменения)`;
-  return `Понял вопрос. Готовлю ответ...\n\nЯ работаю в тестовом режиме. Полная база помощника подключается 1 августа. Пока могу подсказать по:\n- Сценариям контента и промптам\n- Расчёту цен и маржи\n- Скриптам продаж и холодным письмам\n- Идеям услуг под твою нишу\n- Разбору твоих постов\n\nТвой контекст: **${niche}**, аудитория **${aud}**. Спроси конкретнее, дам развёрнутый ответ.`;
+  /* Честный ответ вместо имитации ИИ (правило: никаких ложных подтверждений).
+     Настоящие ответы даёт /api.php?action=assistant. Если бэкенд недоступен —
+     говорим прямо, что запрос не ушёл, и не выдумываем «ответ нейросети». */
+  return 'Сейчас нет связи с сервером ОКО Ai — твой вопрос никуда не отправлен.\n\nОн сохранён в этой переписке: как только соединение вернётся, повтори отправку, и я отвечу по существу.';
 }
 function helperRenderMd(text){
   // Простой markdown: **bold** и переносы строк
@@ -8191,7 +8261,12 @@ const PROFILE = {
   verified: true,                       /* синяя галочка основателя */
   phone: '+7 977 995-55-66',
   email: 'okoteam.top@gmail.com',
-  avatar: 'oko-founder.jpg',            /* фото основателя, если файл есть */
+  /* Фото основателя. Файла в репозитории нет и выдумывать его нельзя —
+     ссылка на несуществующий oko-founder.jpg давала 404 на каждой загрузке.
+     Фото ставится самим Даниэлем через редактор профиля (аватар -> «Изменить
+     фото»), сохраняется как dataURL в PROFILE.avatar и переживает перезапуск.
+     Пока фото нет — везде показывается буква «Д» на фирменном фоне. */
+  avatar: null,
   since: '2026-07-15',                  /* дата запуска OKO — от неё считаются «дни в OKO» */
   security: { password: true, twoFA: true, phoneVerified: true, emailVerified: true },
   bio:   'Основатель OKO. Медийность, контент, маркетинг — в одном приложении.'

@@ -6,7 +6,7 @@
      • всё остальное → network-first + runtime кэш
    PHP-API (/api.php, *.php) вообще не кэшируем.
 */
-const VERSION = 'oko-sw-v2.0.0';
+const VERSION = 'oko-sw-v2.1.0';
 const CORE_CACHE    = `oko-core-${VERSION}`;
 const ASSET_CACHE   = `oko-assets-${VERSION}`;
 const RUNTIME_CACHE = `oko-runtime-${VERSION}`;
@@ -20,6 +20,13 @@ const CORE_ASSETS = [
   '/oko-v2.js',         /* слой полировки v2: 3D-запуск, чаты, воронки */
   '/oko-reels.js',      /* вертикальный видео-плеер «Клипы» */
   '/oko-growth.js',     /* онбординг, воронки, партнёрский двигатель */
+  '/oko-rec.js',        /* запись голосовых и кружков */
+  '/oko-back.js',       /* единая кнопка «назад» на всех экранах */
+  '/oko-emoji.js',      /* панель эмодзи, стикеров и GIF у поля ввода */
+  '/oko-tg.js',         /* родные возможности Telegram Mini App */
+  '/oko-market.js',     /* биржа: каталог, карточка, размещение, мои объявления */
+  '/oko-ai.js',         /* ОКО Ai: экран нейросети в вёрстке личного чата */
+  '/oko-social.js',     /* страницы сущностей, ролики 9:16/16:9, клубы и курсы */
   '/offline.html',
   '/oko-manifest.json',
   '/oko-icon-192.png',

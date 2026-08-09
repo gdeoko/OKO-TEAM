@@ -6446,15 +6446,11 @@ function gmFriendList(){
       });
     }
   }catch(e){}
-  if(fromChats.length) return fromChats;
-  return [
-    {n:'Марат К.', h:'@marat'},
-    {n:'Настя В.', h:'@nastya.vibe'},
-    {n:'Кирилл Т.', h:'@kirillt'},
-    {n:'Полина М.', h:'@polya'},
-    {n:'Артём В.', h:'@artem'},
-    {n:'Ксюша Р.', h:'@ksusha'}
-  ];
+  /* Правка Даниэля: ноль выдуманных людей. Раньше здесь возвращались
+     шесть придуманных друзей — человек видел «своих» контактов, которых
+     у него нет. Нет реальных контактов — значит список пуст, а экран
+     покажет честное «пока некому отправить». */
+  return fromChats;
 }
 function gmGiftSendTo(giftId, friendName){
   const g = giftId ? gmGiftById(giftId) : null;
@@ -6848,11 +6844,11 @@ const GM_LB_LEAGUES = [
   {id:'city',    n:'Твой город', ic:'gm-city'},
   {id:'world',   n:'Мир', ic:'gm-world'}
 ];
-const GM_LB_POOLS = {
-  friends: ['Марат К.','Настя В.','Кирилл Т.','ZONA_51','Полина М.','deniska_pro','Артём В.','lera.moon'],
-  city:    ['spb_ivan','msk_max','kzn_dm','ekb_lera','nsk_alex','nn_kate','krd_serg','vlg_yara','irk_dima','sam_alina','ufa_kirill','rst_pavel'],
-  world:   ['tokyo_ai','ny_hero','berlin_bob','miami_lux','dubai_sm','paris_mila','seoul_yj','sao_jorge','london_max','singh_ram','lima_dee','bali_su']
-};
+/* Таблицы лидеров были набиты ботами с выдуманными никами и случайными
+   очками — то есть человек соревновался с несуществующими людьми.
+   Пулы пусты: в таблице только реальные игроки. Пока их нет — честный
+   пустой экран, а не имитация конкуренции. */
+const GM_LB_POOLS = { friends: [], city: [], world: [] };
 function gmLbLeagueGet(id){
   const k = 'oko-games-lb-' + id + '-' + gmWeekKey();
   let cached = null;
@@ -18384,14 +18380,19 @@ function acProfileInject(){
     // синтетические, но стабильные данные (звёзды/учеников/уровень/длительность)
     const c = AC_COURSES[ci];
     const st = (typeof acCourseStats==='function') ? acCourseStats(ci) : {lessons:c.count, mins:c.count*8};
-    const rnd = apdDeterministicRnd(ci+1);
-    const rating = (4.4 + rnd()*0.55);
-    const students = 120 + Math.floor(rnd()*1180);
-    const level = ['Начинающий','Средний','Про'][Math.floor(rnd()*3)];
-    return {rating, ratingTxt: rating.toFixed(2).replace('.',','), students, level, mins:st.mins, lessons:st.lessons, slides:st.slides};
+    /* Рейтинг «4,73» и «847 учеников» здесь просто вычислялись из номера
+       курса. Красиво и полностью неправда. Пока нет реальных оценок и
+       учеников — отдаём нули, а карточка курса эти строки не рисует.
+       Уровень курса — настоящее свойство самого курса, а не случайность. */
+    const level = c.level || 'Для всех';
+    return {rating: 0, ratingTxt: null, students: 0, level, mins:st.mins, lessons:st.lessons, slides:st.slides};
   }
   function apdCourseReviews(ci){
-    // фиксированные отзывы под каждый курс (детерминированно)
+    /* Правка Даниэля: «никаких выдуманных отзывов». Здесь генерировались
+       отзывы от десяти несуществующих людей. Отзыв появится, когда его
+       реально напишет ученик. */
+    return [];
+    // eslint-disable-next-line no-unreachable
     const c = AC_COURSES[ci];
     const rnd = apdDeterministicRnd(ci+7);
     const names = ['Анна','Дмитрий','Ольга','Илья','Марина','Кирилл','София','Егор','Полина','Роман'];
@@ -18564,8 +18565,9 @@ function acProfileInject(){
         <h4>${esc(c.title)}</h4>
         <span class="acd-cat-card-auth">${esc(c.author||'—')}</span>
         <div class="acd-cat-card-meta">
-          <span class="stars">${I('star')} ${meta.ratingTxt}</span>
-          <span class="stud">${meta.students.toLocaleString('ru-RU')} учеников</span>
+          ${meta.ratingTxt ? `<span class="stars">${I('star')} ${meta.ratingTxt}</span>` : ''}
+          ${meta.students ? `<span class="stud">${meta.students.toLocaleString('ru-RU')} учеников</span>` : ''}
+          ${(!meta.ratingTxt && !meta.students) ? `<span class="stud">${meta.lessons} ${apdPlural(meta.lessons,['урок','урока','уроков'])}</span>` : ''}
         </div>
         <div class="acd-cat-card-price ${c.free?'free':''}">${priceTxt}</div>
       </div>
@@ -18805,8 +18807,8 @@ function acProfileInject(){
       <div class="acd-cp-fmt">${fmtChips}</div>
 
       <div class="acd-cp-stats">
-        <div class="acd-cp-stat"><span class="ic">${I('star')}</span><div class="m"><b>${avgStars.toFixed(1).replace('.',',')}</b><span>${reviews.length} ${apdPlural(reviews.length,['отзыв','отзыва','отзывов'])}</span></div></div>
-        <div class="acd-cp-stat"><span class="ic">${I('users')}</span><div class="m"><b>${meta.students.toLocaleString('ru-RU')}</b><span>учеников</span></div></div>
+        ${reviews.length ? `<div class="acd-cp-stat"><span class="ic">${I('star')}</span><div class="m"><b>${avgStars.toFixed(1).replace('.',',')}</b><span>${reviews.length} ${apdPlural(reviews.length,['отзыв','отзыва','отзывов'])}</span></div></div>` : ''}
+        ${meta.students ? `<div class="acd-cp-stat"><span class="ic">${I('users')}</span><div class="m"><b>${meta.students.toLocaleString('ru-RU')}</b><span>учеников</span></div></div>` : ''}
         <div class="acd-cp-stat"><span class="ic">${I('file')}</span><div class="m"><b>${meta.lessons}</b><span>${apdPlural(meta.lessons,['урок','урока','уроков'])}</span></div></div>
         <div class="acd-cp-stat"><span class="ic">${I('clock')}</span><div class="m"><b>${apdFmtDur(meta.mins)}</b><span>${esc(meta.level)}</span></div></div>
       </div>
@@ -18981,8 +18983,8 @@ function acProfileInject(){
         <div class="acd-a-card"><span class="lbl">Практика</span><span class="val">${taskDone}</span><span class="sub">${apdPlural(taskDone,['работа','работы','работ'])} зачтено</span></div>
         <div class="acd-a-card"><span class="lbl">Мини-игры</span><span class="val">${gamesDone}</span><span class="sub">пройдено</span></div>
         <div class="acd-a-card"><span class="lbl">Пройдено полностью</span><span class="val">${doneLessons}/${idx.length}</span><span class="sub">${apdPlural(doneLessons,['урок','урока','уроков'])}</span></div>
-        <div class="acd-a-card"><span class="lbl">Рейтинг</span><span class="val">${rating.toFixed(1).replace('.',',')}</span><span class="sub">${revs.length} ${apdPlural(revs.length,['отзыв','отзыва','отзывов'])}</span></div>
-        <div class="acd-a-card"><span class="lbl">Учеников</span><span class="val">${meta.students.toLocaleString('ru-RU')}</span><span class="sub">купили курс</span></div>
+        <div class="acd-a-card"><span class="lbl">Рейтинг</span><span class="val">${revs.length ? rating.toFixed(1).replace('.',',') : '—'}</span><span class="sub">${revs.length} ${apdPlural(revs.length,['отзыв','отзыва','отзывов'])}</span></div>
+        <div class="acd-a-card"><span class="lbl">Учеников</span><span class="val">${meta.students ? meta.students.toLocaleString('ru-RU') : '—'}</span><span class="sub">купили курс</span></div>
         <div class="acd-a-card"><span class="lbl">Повторные</span><span class="val">${rewatch}%</span><span class="sub">просмотры уроков</span></div>
       </div>
       <h3 style="margin:16px 0 8px;font-size:15px">Прогресс по урокам</h3>
@@ -19073,7 +19075,10 @@ function acProfileInject(){
 
   /* Участники — синтетический список (для UI) */
   function apdMembersOf(ci){
-    // детерминированные mock-участники: для админа не критично, что реальный список пустой
+    /* Список учеников состоял из выдуманных людей с городами. Админ-панель
+       должна показывать правду, даже если правда — «учеников пока нет». */
+    return [];
+    // eslint-disable-next-line no-unreachable
     const c = AC_COURSES[ci];
     const rnd = apdDeterministicRnd(ci+19);
     const names = [
@@ -21876,9 +21881,9 @@ ru: { title:'Публичная оферта', rev:'Редакция № 4', sec
 `<div class="lg-table-wrap"><table class="lg-table">
 <tr><th>Тариф</th><th>Цена / мес*</th><th>Состав</th></tr>
 <tr><td>START</td><td>990&nbsp;₽</td><td>Мессенджер Premium (файлы до 4 ГБ, транскрипция голосовых), магазин шаблонов, каталог трендов, 30 проверок видео в месяц, активация партнёрской программы.</td></tr>
-<tr><td>PRO</td><td>4&nbsp;900&nbsp;₽</td><td>Персональная система роста, личный помощник OKO (300 обращений), студия контента (100 генераций), 100 проверок видео и 20 автоправок в месяц, аналитика 3 каналов.</td></tr>
+<tr><td>PRO</td><td>4&nbsp;900&nbsp;₽</td><td>Персональная система роста, ОКО Ai (300 обращений), студия контента (100 генераций), 100 проверок видео и 20 автоправок в месяц, аналитика 3 каналов.</td></tr>
 <tr><td>BUSINESS</td><td>19&nbsp;900&nbsp;₽</td><td>Контент-производство 30–50 роликов в месяц, команда специалистов OKO под проект, автопостинг во все привязанные соцсети, приоритетная поддержка, командные аккаунты (до 3).</td></tr>
-<tr><td>BUSINESS&nbsp;PRO</td><td>49&nbsp;900&nbsp;₽</td><td>Контент-производство 100 роликов в месяц, персональный образ (двойник голоса и лица), безлимитные помощник и студия, API-доступ, до 5 командных аккаунтов, бонус: лендинг и бот при годовой оплате.</td></tr>
+<tr><td>BUSINESS&nbsp;PRO</td><td>49&nbsp;900&nbsp;₽</td><td>Контент-производство 100 роликов в месяц, персональный образ (двойник голоса и лица), безлимитные ОКО Ai и студия, API-доступ, до 5 командных аккаунтов, бонус: лендинг и бот при годовой оплате.</td></tr>
 <tr><td>MAX</td><td>149&nbsp;900&nbsp;₽</td><td>Контент-производство 300 роликов в месяц, полная команда специалистов OKO с персональным менеджером, полный digital-запуск (сайт, бот, автоматизации) при годовой оплате, до 15 командных аккаунтов, white-label.</td></tr>
 </table></div>
 <p class="lg-note">* Указана цена за месяц при оплате за год. Скидки периодов от базовой месячной цены: 3 месяца — 10%, 6 месяцев — 15%, 12 месяцев — 20%.</p>
@@ -23408,26 +23413,25 @@ function vsTonSave(){ try{ localStorage.setItem('oko-ton', JSON.stringify(VS_TON
     const al = 'ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz0123456789-_';
     let s = 'UQ'; for(let i=0;i<46;i++) s += al[Math.floor(Math.random()*al.length)];
     VS_TON.addr = s;
-    /* честный приветственный баланс прототипа, чтобы механика покупки работала */
-    if(VS_TON.balance === 0 && (!VS_TON.tx || !VS_TON.tx.length)){
-      VS_TON.balance = 3.5;
-      VS_TON.tx = [{ t:'+', ton:3.5, why:'Приветственный TON прототипа', at:Date.now() }];
-    }
+    /* Правка Даниэля 09.08: «ноль демо-данных». Раньше здесь начислялось
+       3,5 «приветственных» TON и в историю падала выдуманная транзакция —
+       человек видел деньги, которых у него нет. Кошелёк стартует с нуля,
+       пополнение — только явным действием через vsDoTopup(). */
   }
   vsTonSave();
 })();
 
 /* --- каталог подарков (эмодзи-подарки/кристаллы, часть — коллекционные PRO) --- */
 const VS_GIFTS = [
-  { id:'crystal', name:'Кристалл OKO',   art:'crystal', price:1.2, supply:15000, sold:8420 },
-  { id:'star',    name:'Звезда',         art:'star',    price:1.8, supply:20000, sold:14210 },
-  { id:'heart',   name:'Сердце-алмаз',   art:'heart',   price:2.4, supply:12000, sold:9310 },
-  { id:'potion',  name:'Эликсир',        art:'potion',  price:2.9, supply:9000,  sold:4700 },
-  { id:'ring',    name:'Кольцо',         art:'ring',    price:3.5, supply:8000,  sold:5210 },
-  { id:'rocket',  name:'Ракета',         art:'rocket',  price:4.2, supply:6000,  sold:3100 },
-  { id:'trophy',  name:'Кубок',          art:'trophy',  price:5,   supply:5000,  sold:2980 },
-  { id:'medal',   name:'Медальон OKO',   art:'medal',   price:8,   supply:2000,  sold:640,  premium:true },
-  { id:'crown',   name:'Корона',         art:'crown',   price:12,  supply:1000,  sold:210,  premium:true },
+  { id:'crystal', name:'Кристалл OKO',   art:'crystal', price:1.2, supply:15000, sold:0 },
+  { id:'star',    name:'Звезда',         art:'star',    price:1.8, supply:20000, sold:0 },
+  { id:'heart',   name:'Сердце-алмаз',   art:'heart',   price:2.4, supply:12000, sold:0 },
+  { id:'potion',  name:'Эликсир',        art:'potion',  price:2.9, supply:9000,  sold:0 },
+  { id:'ring',    name:'Кольцо',         art:'ring',    price:3.5, supply:8000,  sold:0 },
+  { id:'rocket',  name:'Ракета',         art:'rocket',  price:4.2, supply:6000,  sold:0 },
+  { id:'trophy',  name:'Кубок',          art:'trophy',  price:5,   supply:5000,  sold:0 },
+  { id:'medal',   name:'Медальон OKO',   art:'medal',   price:8,   supply:2000,  sold:0,  premium:true },
+  { id:'crown',   name:'Корона',         art:'crown',   price:12,  supply:1000,  sold:0,  premium:true },
 ];
 function vsGiftById(id){ for(let i=0;i<VS_GIFTS.length;i++) if(VS_GIFTS[i].id===id) return VS_GIFTS[i]; return null; }
 function vsOwnedTotal(){ let n=0; for(const k in VS_TON.owned) n += VS_TON.owned[k]||0; return n; }
@@ -24077,18 +24081,21 @@ function vsResend(idx){
 
 /* --- расширяем VS_GIFTS до 22 подарков + NFT-метаданные --- */
 VS_GIFTS.push(
-  { id:'flame',    name:'Огонёк',      art:'flame',    price:1.5, supply:15000, sold:9120  },
-  { id:'diamond',  name:'Алмаз',       art:'diamond',  price:6.0, supply:4000,  sold:2140  },
-  { id:'lightning',name:'Молния',      art:'lightning',price:2.2, supply:12000, sold:7480  },
-  { id:'moon',     name:'Луна',        art:'moon',     price:3.4, supply:9000,  sold:5330  },
-  { id:'sun',      name:'Солнце',      art:'sun',      price:4.1, supply:7000,  sold:4620  },
-  { id:'shield',   name:'Щит',         art:'shield',   price:2.8, supply:8000,  sold:5560  },
-  { id:'key',      name:'Ключ',        art:'key',      price:3.0, supply:8500,  sold:6320  },
-  { id:'skull',    name:'Череп',       art:'skull',    price:5.5, supply:5000,  sold:3260  },
-  { id:'phoenix',  name:'Феникс',      art:'phoenix',  price:15,  supply:500,   sold:118,  premium:true },
-  { id:'dragon',   name:'Дракон',      art:'dragon',   price:20,  supply:300,   sold:78,   premium:true },
-  { id:'giftbox',  name:'Подарок',     art:'giftbox',  price:1.9, supply:20000, sold:12550 },
-  { id:'nyeye',    name:'Ёлочный OKO', art:'nyeye',    price:9,   supply:2500,  sold:840,  event:{ id:'ny', label:'НОВЫЙ ГОД', endsAt: Date.now() + 3*86400000 } },
+  { id:'flame',    name:'Огонёк',      art:'flame',    price:1.5, supply:15000, sold:0  },
+  { id:'diamond',  name:'Алмаз',       art:'diamond',  price:6.0, supply:4000,  sold:0  },
+  { id:'lightning',name:'Молния',      art:'lightning',price:2.2, supply:12000, sold:0  },
+  { id:'moon',     name:'Луна',        art:'moon',     price:3.4, supply:9000,  sold:0  },
+  { id:'sun',      name:'Солнце',      art:'sun',      price:4.1, supply:7000,  sold:0  },
+  { id:'shield',   name:'Щит',         art:'shield',   price:2.8, supply:8000,  sold:0  },
+  { id:'key',      name:'Ключ',        art:'key',      price:3.0, supply:8500,  sold:0  },
+  { id:'skull',    name:'Череп',       art:'skull',    price:5.5, supply:5000,  sold:0  },
+  { id:'phoenix',  name:'Феникс',      art:'phoenix',  price:15,  supply:500,   sold:0,  premium:true },
+  { id:'dragon',   name:'Дракон',      art:'dragon',   price:20,  supply:300,   sold:0,   premium:true },
+  { id:'giftbox',  name:'Подарок',     art:'giftbox',  price:1.9, supply:20000, sold:0 },
+  { id:'nyeye',    name:'Ёлочный OKO', art:'nyeye',    price:9,   supply:2500,  sold:0 },
+  /* Правка Даниэля 09.08: у подарка был event с отсчётом «до Нового года»,
+     который просто отсчитывал 3 суток от запуска приложения. Выдуманных
+     событий быть не должно — баннер вернём, когда событие будет настоящим. */
 );
 /* NFT-метаданные для всех подарков (chain: TON, transferable:true, deterministic contract) */
 VS_GIFTS.forEach(function(g, i){
@@ -24310,20 +24317,21 @@ function vsActiveEvents(){
 }
 
 /* --- аукцион редкого (одиночный «Дракон») --- */
+/* Правка Даниэля 09.08: «ноль демо-данных, никаких выдуманных людей».
+   Здесь жил аукцион «Дракона» со ставкой 42 TON и пятью придуманными
+   участниками (Дарья К., Артём Н. и остальные). Реального аукциона нет —
+   значит и показывать нечего: пустая структура, карточка не рисуется,
+   пока настоящий аукцион не запустится с бэкенда. */
 var VS_AUCTION = {
-  giftId: 'dragon',
-  currentBid: 42,
-  bidders: 7,
-  endsAt: Date.now() + 6*3600000 + 24*60000,
-  bids: [
-    { who:'Дарья К.', amt:42, at: Date.now() - 4*60000 },
-    { who:'Артём Н.', amt:37, at: Date.now() - 25*60000 },
-    { who:'Кирилл Б.', amt:32, at: Date.now() - 68*60000 },
-    { who:'Марина Р.', amt:28, at: Date.now() - 130*60000 },
-    { who:'Иван М.', amt:25, at: Date.now() - 210*60000 }
-  ]
+  active: false,
+  giftId: null,
+  currentBid: 0,
+  bidders: 0,
+  endsAt: 0,
+  bids: []
 };
 function vsAuctionCard(){
+  if(!VS_AUCTION.active) return '';
   var g = vsGiftById(VS_AUCTION.giftId); if(!g) return '';
   var cd = vsCountdown(VS_AUCTION.endsAt);
   return '<div class="vs-auction-hero" onclick="vsOpenAuction()">'
@@ -25362,7 +25370,7 @@ const ST_DICT = {
   'Мои сертификаты':'My certificates',
   'Пройди направление целиком — получи официальный сертификат OKO с печатью и подписью. Он появится здесь.':'Complete a whole track to earn an official OKO certificate with seal and signature. It will appear here.',
   'Карта нейросетей 2026':'Neural network map 2026','Промпт-инжиниринг':'Prompt engineering',
-  'Генератор картинок':'Image generator','Видео-инструменты':'Video tools','Персональный помощник':'Personal assistant',
+  'Генератор картинок':'Image generator','Видео-инструменты':'Video tools','ОКО Ai':'OKO Ai',
   'формула промпта · few-shot · chain-of-thought':'prompt formula · few-shot · chain-of-thought',
   'агент под бизнес · RAG · Telegram':'business agent · RAG · Telegram','Слайды урока':'Lesson slides',
   'Тест по материалу':'Knowledge quiz','Практика':'Practice','Мини-игра':'Mini-game','мини-игра':'mini-game',
@@ -30277,9 +30285,14 @@ mpRenderCab = function(){
    ================================================================================ */
 
 /* ---------- флаг демо-режима: только владельцу или по явному опт-ину ---------- */
+/* ВОТ ПОЧЕМУ ДАНИЭЛЬ ВИДЕЛ ДЕМО-ДАННЫЕ ПОСЛЕ ЧИСТКИ.
+   Здесь стояло `if(isOwner()) return true` — то есть демо-режим был ВКЛЮЧЁН
+   именно у владельца. Я вычищал сиды, а на его телефоне всё продолжало
+   показываться, потому что этот флаг открывал их обратно.
+   Правило «ноль демо-данных» действует и для владельца: демо остаётся только
+   как явный отладочный переключатель, который никто не включает по умолчанию. */
 function mpIsDemo(){
   try{
-    if(typeof isOwner==='function' && isOwner()) return true;
     if(localStorage.getItem('oko-demo')==='1') return true;
   }catch(e){}
   return false;
@@ -30341,7 +30354,7 @@ function mpHasRealListings(){
 function mpCatsEmptyState(){
   const wrap = document.getElementById('marketRoot');
   if(!wrap) return;
-  if(mpIsDemo()) return;                 // владельцу — показать демо как было
+  if(mpIsDemo()) return;                 // только явный отладочный режим
   if(mpHasRealListings()) return;        // уже есть настоящие — не мешаем
   /* пустой стартовый экран биржи */
   wrap.innerHTML = `
@@ -31029,25 +31042,10 @@ const FA_POOL = []  /* демо-данные удалены 09.08: пул пос
     if(!p.topic && stamp[p.id]) p.topic = stamp[p.id].t;
   });
 
-  /* демо-треды: показать, что ответы и лайки комментариев реально работают */
-  const seedReplies = (pid, idx, likes, reps) => {
-    const pp = POSTS.rec.find(x => x.id === pid);
-    if(pp && pp.comments && pp.comments[idx]){
-      if(likes != null) pp.comments[idx].likes = likes;
-      if(reps) pp.comments[idx].replies = reps;
-    }
-  };
-  seedReplies(777004, 0, 24, [
-    {a:'РМ', n:'Reels-мастерская', t:'Соня, топ! Скинь пример в личку — добавим в подборку недели', likes:14},
-    {a:'В',  n:'Влад', t:'+1, тоже хочу глянуть на экспертном контенте'}]);
-  seedReplies(777004, 1, 8, [
-    {a:'РМ', n:'Reels-мастерская', t:'Для экспертного работает мягче: вопрос-провокация вместо движения', likes:11}]);
-  seedReplies(777007, 0, 31, [
-    {a:'ББ', n:'Бизнес без воды', t:'Пётр, ниша — онлайн-образование. В доставке заявка правда дороже', likes:19},
-    {a:'Р',  n:'Рома', t:'У нас в услугах вышло 520 ₽ — близко к вашим цифрам'}]);
-  seedReplies(777001, 0, 17);
-  seedReplies(777013, 0, 22, [
-    {a:'TR', n:'TON Radar', t:'Лев, разбор стейкинга уже в работе — выйдет на неделе', likes:9}]);
+  /* Здесь засевались демо-треды комментариев: Влад, Рома, Соня, Лев и
+     каналы-призраки спорили под несуществующими постами. Правка Даниэля —
+     ноль выдуманных людей и переписок. Ветки появляются, когда их пишут
+     живые люди; механика ответов и лайков от этого не пострадала. */
 })();
 
 /* ================= 2. СКОРИНГ (Instagram-like: engagement + time-decay) =================
@@ -33282,9 +33280,10 @@ function dcRenderAll(){
    (localStorage['oko-demo']==='1'). Новые юзеры не видят.
    ===================================================================== */
 
+/* Та же история, что и в mpIsDemo: владельцу демо-контент открывался
+   автоматически. Убрано — владелец видит ровно то же, что новый человек. */
 function dcExtraAllowed(){
   try{
-    if(typeof isOwner === 'function' && isOwner()) return true;
     if(typeof localStorage !== 'undefined' && localStorage.getItem('oko-demo') === '1') return true;
   }catch(e){}
   return false;
@@ -38836,11 +38835,11 @@ function pp2ThisDevice(){
     {k:'START',        f:'990 ₽',          cls:'',    flag:'Старт',
      feats:['Мессенджер Premium: файлы 4 ГБ','Магазин шаблонов + Каталог трендов','Аналитика 1 канала','Проверка видео 30/мес']},
     {k:'PRO',          f:'4 900 ₽',        cls:'',    flag:'Хит',
-     feats:['Система Роста под ключ, 15 конкурентов','Помощник OKO: 300 обращений','Студия контента: 100 генераций','Проверка 100/мес + 20 автоправок']},
+     feats:['Система Роста под ключ, 15 конкурентов','ОКО Ai: 300 обращений','Студия контента: 100 генераций','Проверка 100/мес + 20 автоправок']},
     {k:'BUSINESS',     f:'19 900 ₽',       cls:'',    flag:'Команда',
-     feats:['Контент-завод: 30–50 роликов/мес','5 специалистов OKO','Автопостинг во все сети','Помощник 1000, проверка 300']},
+     feats:['Контент-завод: 30–50 роликов/мес','5 специалистов OKO','Автопостинг во все сети','ОКО Ai 1000, проверка 300']},
     {k:'BUSINESS_PRO', f:'49 900 ₽',       cls:'',    flag:'Business Pro',
-     feats:['Контент-завод: 100 роликов/мес','Персональный образ (двойник)','Помощник и Студия без лимитов','Лендинг + бот при годовой оплате']},
+     feats:['Контент-завод: 100 роликов/мес','Персональный образ (двойник)','ОКО Ai и Студия без лимитов','Лендинг + бот при годовой оплате']},
     {k:'MAX',          f:'149 900 ₽',      cls:'max', flag:'Максимум',
      feats:['Контент-завод: 300 роликов/мес','10 специалистов + менеджер','Полный digital-запуск','White-label, мультиаккаунт до 15']},
   ];
@@ -38848,7 +38847,7 @@ function pp2ThisDevice(){
     const cur = pp2Tier();
     const hero = '<div class="pp2-tier-hero">'
       + '<h3>Один тариф — вместо целой команды</h3>'
-      + '<p>Приложение, ленты, монтаж, помощник, автопостинг и аналитика в одном месте. Скидки при оплате вперёд: 3 мес −10%, 6 мес −15%, год −20%.</p>'
+      + '<p>Приложение, ленты, монтаж, ОКО Ai, автопостинг и аналитика в одном месте. Скидки при оплате вперёд: 3 мес −10%, 6 мес −15%, год −20%.</p>'
       + '<div class="pp2-chips"><span class="pp2-chip">3 мес −10%</span><span class="pp2-chip">6 мес −15%</span><span class="pp2-chip gold">Год −20%</span></div>'
       + '</div>';
     const cards = '<div class="pp2-tiers">' + PP2_PLANS.map(function(p){
@@ -42327,6 +42326,13 @@ function st2InsertRow(){
   var SEEDED = false;
   function seedDemo(){
     if(SEEDED) return; SEEDED = true;
+    /* Дозасев уведомлений ОТКЛЮЧЁН (правка Даниэля: ноль демо-данных).
+       Ниже добавлялись «Маша С. написала», «Костя Р. прислал голосовое»,
+       «Оля Т. оценила твой пост» и заявки от несуществующих людей — по
+       одному примеру на каждую категорию. Человек открывал колокольчик и
+       видел чужую жизнь вместо своей. Пусто — значит пусто. */
+    return;
+    // eslint-disable-next-line no-unreachable
     // Дозасев: чтобы все категории имели живой пример.
     var haveCat = {};
     NOTIFS.forEach(function(n){ haveCat[catOf(n)] = true; });
@@ -45431,31 +45437,20 @@ var PW_ASSET = {
   }
 
   function pwLiveNumbers(){
-    var base = Math.floor(Date.now()/9000);
-    var joined = 2400 + (base % 60);
-    var pct = 92 + (base % 6);
-    var avg = 34 + (base % 5);
-    return [
-      {v: (joined).toLocaleString('ru-RU').replace(/,/g,' '), l:'на платных тарифах'},
-      {v: pct+'%', l:'продлевают PRO'},
-      {v: '+'+avg+'%', l:'к охватам за мес'}
-    ];
+    /* «2 437 на платных тарифах», «92% продлевают PRO», «+34% к охватам» —
+       все три цифры высчитывались из текущего времени и менялись каждые
+       девять секунд. Это выдуманная статистика на экране, где человек
+       достаёт деньги. Пока нет настоящих метрик — не показываем ничего. */
+    return [];
   }
 
-  /* ---- лента недавней активности: правдоподобно, спокойно, БЕЗ фейк-срочности ---- */
-  var PW_TICKER = [
-    ['Артём','оформил PRO'],
-    ['Студия Nova','продлила BUSINESS'],
-    ['Ирина','перешла на PRO'],
-    ['Максим','подключил START'],
-    ['MediaHub','взяли MAX · команда 5'],
-    ['Ольга','продлила PRO'],
-    ['Дамир','оформил PRO'],
-    ['Контент-цех','перешёл на BUSINESS'],
-    ['Настя','подключила START'],
-    ['Кирилл','продлил PRO']
-  ];
+  /* Здесь крутилась лента «Недавно в OKO»: Артём оформил PRO, Ирина перешла
+     на PRO и так далее — десять выдуманных покупок прямо на экране оплаты.
+     Это фальшивое социальное доказательство: людей нет, покупок не было.
+     Список пуст, блок не рисуется. Вернём, когда будут настоящие продажи. */
+  var PW_TICKER = [];
   function pwTickerHtml(){
+    if(!PW_TICKER.length) return '';
     /* дублируем список для бесшовной CSS-прокрутки (translateY -50%) */
     var rows = PW_TICKER.concat(PW_TICKER).map(function(x){
       return '<div class="pw-tick-row"><span class="pw-tick-dot"></span>'+

@@ -920,4 +920,223 @@ h1 .oko-vbadge, h2 .oko-vbadge { width: 20px !important; height: 20px !important
 
 /* Плавающая пилюля не садится на кнопку «+» в списке чатов */
 .okg-pill { right: calc(var(--oko-safe-right) + 12px) !important; }
-#screen-chats .fab { bottom: calc(var(--oko-safe-bottom) + 140px); }
+
+/* Кнопка «+» в списке чатов висела на `position:absolute` внутри .chat-col,
+   поэтому «низ» у неё был низом контейнера, а не экрана — на скрине она
+   оказывалась посреди списка и накрывала строку чата. Прижимаем к экрану.
+   На ПК приложение центрировано колонкой 1280px, поэтому правый отступ
+   считается от края этой колонки, а не от края монитора. */
+#screen-chats .fab{
+  position: fixed;
+  bottom: calc(var(--oko-safe-bottom) + 150px);
+  right: max(calc(var(--oko-safe-right) + 16px), calc(50vw - 640px + 16px));
+  z-index: 60;
+}
+
+/* ============================================================================
+   34. ЗАПИСЬ ГОЛОСОВЫХ И КРУЖКОВ — модальная панель (oko-rec.js)
+   Правка Даниэля 09.08: «не понятно как остановить и отправить», «снизу тень
+   и пропадает кнопка отправки», «запись висит поверх всех вкладок».
+   Решение: одна шторка поверх всего, две подписанные кнопки, фон закрыт
+   скримом, старая градиентная «тень» chats-plus удалена совсем.
+   ============================================================================ */
+
+/* Старая шторка chats-plus вырезана: именно её градиент читался как «тень
+   снизу» и прятал кнопку отправки. JS её удаляет, CSS страхует. */
+.cp-rec { display: none !important; }
+
+.okorec{
+  position: fixed; inset: 0; z-index: 4000;
+  display: none;
+}
+.okorec.on{ display: block; }
+
+.okorec-scrim{
+  position: absolute; inset: 0;
+  background: rgba(0,0,0,.62);
+  backdrop-filter: blur(3px); -webkit-backdrop-filter: blur(3px);
+  animation: okorecFade .16s ease;
+}
+:root[data-theme="light"] .okorec-scrim{ background: rgba(20,26,10,.42); }
+@keyframes okorecFade{ from{ opacity: 0 } to{ opacity: 1 } }
+
+.okorec-panel{
+  position: absolute;
+  left: calc(var(--oko-safe-left) + 10px);
+  right: calc(var(--oko-safe-right) + 10px);
+  bottom: calc(var(--oko-safe-bottom) + 10px);
+  max-width: 460px; margin: 0 auto;
+  background: var(--card, #12160c);
+  border: 1px solid var(--border, rgba(255,255,255,.1));
+  border-radius: 22px;
+  padding: 14px 14px 16px;
+  box-shadow: 0 -10px 44px rgba(0,0,0,.55), 0 0 0 1px rgba(154,255,0,.12);
+  display: flex; flex-direction: column; align-items: center; gap: 12px;
+  animation: okorecUp .2s cubic-bezier(.2,.8,.3,1);
+}
+@keyframes okorecUp{ from{ transform: translateY(24px); opacity: 0 } to{ transform: none; opacity: 1 } }
+.okorec-panel.nudge{ animation: okorecNudge .32s ease; }
+@keyframes okorecNudge{ 0%,100%{ transform: none } 25%{ transform: translateX(-7px) } 75%{ transform: translateX(7px) } }
+
+/* --- чипы режима --- */
+.okorec-modes{
+  display: flex; gap: 6px; width: 100%;
+  background: var(--raised, rgba(255,255,255,.05));
+  border-radius: 999px; padding: 4px;
+}
+.okorec-mode{
+  flex: 1; min-width: 0;
+  display: flex; align-items: center; justify-content: center; gap: 6px;
+  height: 34px; border: 0; border-radius: 999px;
+  background: transparent; color: var(--dim, #9aa08e);
+  font: 600 12.5px/1 'Montserrat', system-ui, sans-serif;
+  cursor: pointer; transition: background .16s, color .16s;
+  white-space: nowrap;
+}
+.okorec-mode svg.i{ width: 15px; height: 15px; flex: 0 0 auto; }
+.okorec-mode.on{ background: var(--lime, #9AFF00); color: #0a0d05; }
+.okorec-mode.on svg.i{ color: #0a0d05; }
+
+/* --- сцена: волна или круглое превью --- */
+.okorec-stage{
+  width: 100%; min-height: 92px;
+  display: flex; align-items: center; justify-content: center;
+}
+.okorec-round{
+  display: none;
+  width: 168px; height: 168px; border-radius: 50%;
+  overflow: hidden; position: relative;
+  border: 3px solid var(--lime, #9AFF00);
+  background: radial-gradient(circle at 38% 32%, #2a3d10, #0c1204 72%);
+  box-shadow: 0 0 40px rgba(154,255,0,.28);
+}
+.okorec-round video{ position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; transform: scaleX(-1); }
+.okorec.is-vnote .okorec-round{ display: block; }
+.okorec.is-vnote .okorec-wave{ display: none; }
+
+.okorec-wave{
+  display: flex; align-items: center; justify-content: center; gap: 3px;
+  height: 72px; width: 100%;
+}
+.okorec-wave i{
+  flex: 1; max-width: 6px; min-width: 2px; height: 100%;
+  border-radius: 99px;
+  background: linear-gradient(180deg, var(--lime, #9AFF00), #5fb000);
+  transform: scaleY(.12); transform-origin: center;
+}
+.okorec-wave.live i{ transition: transform .07s linear; animation: none; }
+.okorec-wave:not(.live) i{ animation: okorecIdle 1.4s ease-in-out infinite; }
+.okorec-wave:not(.live) i:nth-child(3n){ animation-delay: .18s }
+.okorec-wave:not(.live) i:nth-child(3n+1){ animation-delay: .36s }
+.okorec-wave:not(.live) i:nth-child(4n){ animation-delay: .52s }
+@keyframes okorecIdle{ 0%,100%{ transform: scaleY(.12) } 50%{ transform: scaleY(.5) } }
+:root[data-theme="light"] .okorec-wave i{ background: linear-gradient(180deg, #7ACC00, #4e9400); }
+
+/* --- таймер --- */
+.okorec-meter{ display: flex; align-items: center; gap: 8px; min-height: 18px; }
+.okorec-dot{
+  width: 9px; height: 9px; border-radius: 50%;
+  background: var(--danger, #ff4d4d);
+  animation: okorecBlink 1s steps(2,start) infinite;
+}
+@keyframes okorecBlink{ 50%{ opacity: .15 } }
+.okorec-time{ font: 700 16px/1 'Montserrat', system-ui, sans-serif; color: var(--text, #eef3e5); font-variant-numeric: tabular-nums; }
+.okorec-limit{ font-size: 12px; color: var(--dim, #9aa08e); }
+.okorec-limit.warn{ color: var(--danger, #ff4d4d); }
+
+/* --- подсказка --- */
+.okorec-hint{
+  font-size: 12.5px; line-height: 1.4; color: var(--dim, #9aa08e);
+  text-align: center; max-width: 320px;
+  overflow-wrap: break-word; word-break: normal; hyphens: none;
+  min-height: 2.8em;
+}
+
+/* --- кнопки: подписанные, крупные, всегда поверх скрима --- */
+.okorec-actions{ display: flex; gap: 10px; width: 100%; }
+.okorec-btn{
+  flex: 1; min-width: 0;
+  display: flex; align-items: center; justify-content: center; gap: 8px;
+  height: 52px; border-radius: 15px; border: 1px solid var(--border, rgba(255,255,255,.1));
+  font: 700 14px/1 'Montserrat', system-ui, sans-serif;
+  cursor: pointer; transition: transform .12s, background .16s, color .16s;
+  white-space: nowrap;
+}
+.okorec-btn:active{ transform: scale(.97); }
+.okorec-btn svg.i{ width: 19px; height: 19px; flex: 0 0 auto; }
+.okorec-cancel{ background: var(--raised, rgba(255,255,255,.05)); color: var(--dim, #9aa08e); }
+.okorec-cancel:hover{ color: var(--danger, #ff4d4d); border-color: var(--danger, #ff4d4d); }
+.okorec-send{ background: var(--lime, #9AFF00); color: #0a0d05; border-color: transparent; box-shadow: 0 6px 22px rgba(154,255,0,.3); }
+.okorec-send svg.i{ color: #0a0d05; }
+
+/* Взведённая отмена свайпом влево — панель честно краснеет. */
+.okorec-panel.arm-cancel{ box-shadow: 0 -10px 44px rgba(0,0,0,.55), 0 0 0 2px var(--danger, #ff4d4d); }
+.okorec-panel.arm-cancel .okorec-cancel{ background: var(--danger, #ff4d4d); color: #fff; border-color: transparent; }
+.okorec-panel.arm-cancel .okorec-wave i{ background: linear-gradient(180deg, var(--danger, #ff4d4d), #a11); }
+.okorec-panel.arm-cancel .okorec-round{ border-color: var(--danger, #ff4d4d); box-shadow: 0 0 40px rgba(255,77,77,.35); }
+
+/* Пока идёт запись — фон не трогаем и не листаем. */
+html.oko-recording body{ overflow: hidden; }
+
+@media (prefers-reduced-motion: reduce){
+  .okorec-panel, .okorec-scrim{ animation: none; }
+  .okorec-wave:not(.live) i{ animation: none; transform: scaleY(.3); }
+  .okorec-dot{ animation: none; }
+}
+
+/* ============================================================================
+   35. TON: подписи не вылезают за кнопки
+   Правка Даниэля 09.08: «в разделе тон на кнопках многих слова за рамки вылазят».
+   Причина: сетка была repeat(5, 1fr), а у 1fr минимальная ширина = ширине
+   содержимого. Колонка не могла сжаться, и слово «Отправить» выезжало наружу.
+   ============================================================================ */
+/* Пять кнопок в один ряд физически не вмещают слово «Пополнить»: на 360px
+   колонке достаётся 46px, а слову нужно 56px. Сжимать кегль до нечитаемого
+   или резать многоточием — оба варианта Даниэль назвал багом. Поэтому на
+   телефоне ряд переносится в сетку 3+2: места становится вдвое больше и
+   ни одно слово не обрезается. С 560px и шире всё влезает в один ряд. */
+.vs-ton-acts.vs-acts-5{ grid-template-columns: repeat(3, minmax(0, 1fr)) !important; }
+@media (min-width: 560px){
+  .vs-ton-acts.vs-acts-5{ grid-template-columns: repeat(5, minmax(0, 1fr)) !important; }
+}
+.vs-ton-acts{ min-width: 0; }
+.vs-ton-act{ min-width: 0; overflow: hidden; }
+.vs-ton-act span{
+  min-width: 0; max-width: 100%;
+  font-size: 10.5px; letter-spacing: 0;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  hyphens: none; word-break: normal;
+}
+/* Чипы и плашки внутри TON тоже не должны выходить за карточку. */
+#vsTonRoot [class^="vs-"], #vsTonRoot [class*=" vs-"]{ min-width: 0; }
+#vsTonRoot .vs-ton-badge, #vsTonRoot .vs-ton-conn{ white-space: nowrap; }
+
+/* ============================================================================
+   36. Плавающая пилюля онбординга не закрывает контент
+   На скрине Даниэля «СТАРТ 1/5» лежала поверх карточки «Разблокируй всё на
+   тарифе MAX». Пилюля фиксированная, поэтому её высоту нужно компенсировать
+   отступом снизу у прокручиваемых экранов — иначе последняя карточка всегда
+   оказывается под ней.
+   ============================================================================ */
+html.okg-pill-on main > .screen.active > .pad,
+html.okg-pill-on main > .screen.active{ padding-bottom: calc(var(--oko-safe-bottom) + 132px); }
+
+/* ============================================================================
+   37. Пилюля чек-листа — компактный круг вместо широкой плашки
+   На скрине Даниэля плашка «СТАРТ 1/5» лежала прямо поверх текста карточки.
+   Слово «СТАРТ» здесь ничего не сообщает — кольцо прогресса и счётчик
+   говорят всё сами. Сжимаем до круга: контента закрывает втрое меньше,
+   функция та же.
+   ============================================================================ */
+.okg-pill{
+  width: 54px; height: 54px;
+  padding: 0 !important;
+  border-radius: 50% !important;
+  flex-direction: column !important;
+  gap: 0 !important;
+  justify-content: center !important;
+}
+.okg-pill b{ display: none !important; }
+.okg-pill small{ font-size: 9.5px !important; line-height: 1; margin-top: 1px; }
+.okg-pill .okg-ring{ width: 24px !important; height: 24px !important; }
+.okg-pill .okg-ring svg{ width: 24px !important; height: 24px !important; }
