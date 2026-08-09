@@ -324,6 +324,52 @@ else {
     chk('изменение цены записано в audit_log с price_from/price_to', $hasLog > 0, (string) $hasLog);
 }
 
+sec('Отклонение заявки: письмо и текст в кабинете');
+$appR = one("SELECT a.*, c.slug comp_slug FROM applications a LEFT JOIN competitions c ON c.id=a.competition_id
+              WHERE a.user_id > 0 AND COALESCE(a.result,'')='' ORDER BY a.id DESC LIMIT 1");
+if ($appR) {
+    $rid = (int) $appR['id'];
+    q("UPDATE applications SET status='new', reject_reason='', is_paid=1 WHERE id=?", [$rid]);
+    q("DELETE FROM mail_queue WHERE subject LIKE '%устраните причину и подайте%'");
+    $tokR = tok($AJAR, '/admin/?p=grading&id=' . $rid);
+    $reason = 'Ссылка не на разрешённый интернет-ресурс. Принимаются только: RuTube, Google Диск, Яндекс Диск, ОК видео, ВК видео, Дзен видео (п. 8.8 положения).';
+    http($AJAR, $BASE . '/admin/?p=grading', ['_csrf' => $tokR, 'csrf' => $tokR,
+        'do' => 'reject', 'id' => (string) $rid, 'reject_reason' => $reason]);
+    $mail = one("SELECT to_email, subject, body FROM mail_queue WHERE subject LIKE '%устраните причину и подайте%' ORDER BY id DESC LIMIT 1");
+    chk('письмо об отклонении поставлено в очередь', $mail !== null);
+    if ($mail) {
+        $b = (string) $mail['body'];
+        foreach (['ФИО', 'Конкурс', 'Название учреждения', 'Форма исполнения', 'Ссылка на видео', 'E-mail', 'Телефон'] as $__lbl) {
+            chk("в письме есть поле «{$__lbl}»", str_contains($b, $__lbl));
+        }
+        chk('в письме — полный текст пункта 8.8 1:1', str_contains($b, 'п. 8.8 положения'));
+        chk('в письме заголовок «пункт положения 1:1»', str_contains($b, 'пункт положения 1:1'));
+        chk('в письме новая формулировка «Это не отказ навсегда»',
+            str_contains($b, 'Это не отказ навсегда') && str_contains($b, 'с радостью примем'));
+        chk('в письме есть кнопка «Подать заявку заново»', str_contains($b, 'Подать заявку заново'));
+        chk('тема письма правильная', mb_stripos((string) $mail['subject'], 'устраните причину и подайте заново', 0, 'UTF-8') !== false);
+    }
+    // Проверяем кабинет: текст и кнопка «Заново подать заявку»
+    q("UPDATE applications SET status='rejected', reject_reason=? WHERE id=?", [$reason, $rid]);
+    // Логинимся под этим участником через отдельный jar (не портим админский).
+    $__uEmail = (string) (scalar('SELECT email FROM users WHERE id=?', [(int) ($appR['user_id'] ?? 0)]) ?? '');
+    if ($__uEmail === 'user@test.local') {
+        $UJARr = sys_get_temp_dir() . '/muzmir_reject_user.txt'; @unlink($UJARr);
+        $tokU = tok($UJARr, '/login');
+        http($UJARr, $BASE . '/login', ['_csrf' => $tokU, 'csrf' => $tokU, 'do' => 'login',
+              'email' => 'user@test.local', 'password' => 'Test_12345']);
+        $cab = http($UJARr, $BASE . '/cabinet');
+        chk('кабинет: новый текст «Устраните причину отклонения»',
+            str_contains($cab['body'], 'Устраните причину отклонения'));
+        chk('кабинет: нет старого «Свяжитесь с нами для уточнения»',
+            !str_contains($cab['body'], 'Свяжитесь с нами для уточнения'));
+        chk('кабинет: кнопка «Заново подать заявку» с ссылкой на apply',
+            preg_match('~href="[^"]*/apply[^"]*"[^>]*>\s*Заново подать заявку~u', $cab['body']) === 1);
+        chk('кабинет: показана причина отклонения (пункт 8.8)',
+            str_contains($cab['body'], 'п. 8.8'));
+    } else { ok('пользователь user@test.local не автор — пропуск проверки кабинета'); }
+}
+
 /* ───────── пульт управления запуском ───────── */
 sec('Пульт запуска и стоп-кран');
 $r = http($AJAR, $BASE . '/admin/?p=launch');

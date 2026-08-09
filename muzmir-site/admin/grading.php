@@ -449,21 +449,38 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && input('do') === 'reject') {
         try {
             $name  = trim((string)$a['full_name']);
             $hello = $name !== '' ? 'Здравствуйте, ' . h($name) . '!' : 'Здравствуйте!';
+            // ПОЛНАЯ карточка заявки — участник должен видеть в письме ровно то,
+            // что оценивал бы жюри, а не только номер. Раньше в письме был только
+            // «Заявка №…», и было непонятно, о какой из своих заявок речь.
+            $__c = one("SELECT * FROM competitions WHERE id=?", [(int) $a['competition_id']]) ?: ['name' => (string) $a['comp']];
+            $card = rm_mail_app_card((array) $a, (array) $__c);
+            $extraRows = ''
+                . rm_card_row('Форма исполнения', (string) ($a['formation'] ?? ''))
+                . rm_card_row('Подраздел',        (string) ($a['subgroup'] ?? ''))
+                . rm_card_row('Город',            (string) ($a['city'] ?? ''))
+                . rm_card_row('E-mail',           (string) ($a['email'] ?? ''))
+                . rm_card_row('Телефон',          (string) ($a['phone'] ?? ''))
+                . rm_card_row('Ссылка на видео',  (string) ($a['video_url'] ?? ''));
+            // Дописываем дополнительные строки в существующую карточку, чтобы
+            // была одна таблица «Данные заявки», а не две подряд.
+            if ($extraRows !== '') $card = preg_replace('~</table>\s*</td></tr></table>~', $extraRows . '</table></td></tr></table>', $card, 1);
+
             $inner = '<h1 style="margin:0 0 16px;font-family:Georgia,\'Times New Roman\',serif;font-size:24px;line-height:1.3;font-weight:700;color:' . RM_NAVY . ';">Заявка №' . h((string)$a['number']) . ' не принята к участию</h1>'
                 . '<p style="margin:0 0 14px;">' . $hello . '</p>'
-                . '<p style="margin:0 0 18px;">К сожалению, Оргкомитет не может допустить Вашу заявку на конкурс «' . h((string)$a['comp']) . '» по следующей причине:</p>'
+                . '<p style="margin:0 0 18px;">К сожалению, Оргкомитет не может допустить Вашу заявку на конкурс «' . h((string)$a['comp']) . '» по указанной ниже причине. Ниже — полный состав Вашей заявки для сверки.</p>'
+                . $card
                 . '<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin:0 0 20px;background:#FDF1F1;border:1px solid #EBC7C7;border-radius:14px;">'
-                . '<tr><td style="padding:16px 22px;"><div style="font-size:12px;letter-spacing:.1em;text-transform:uppercase;color:#A0403E;margin-bottom:6px;">Причина отклонения</div>'
+                . '<tr><td style="padding:16px 22px;"><div style="font-size:12px;letter-spacing:.1em;text-transform:uppercase;color:#A0403E;margin-bottom:6px;">Причина отклонения (пункт положения 1:1)</div>'
                 . '<div style="font-size:14px;line-height:1.7;color:' . RM_INK . ';">' . nl2br(h($reason)) . '</div></td></tr></table>'
-                . '<p style="margin:0 0 14px;">Это не отказ навсегда: пожалуйста, устраните замечание (например, замените видеозапись или скорректируйте данные) и <b style="color:' . RM_NAVY . ';">подайте заявку заново</b> — мы с радостью примем её к аттестации.</p>'
+                . '<p style="margin:0 0 14px;">Это не отказ навсегда, пожалуйста, устраните причину отклонения и <b style="color:' . RM_NAVY . ';">подайте заявку заново</b> — мы с радостью примем её к аттестации!</p>'
                 . ($refunded
                     ? '<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin:0 0 18px;background:#EAF7EF;border:1px solid #BFE6CC;border-radius:14px;">'
                       . '<tr><td style="padding:16px 22px;"><div style="font-size:12px;letter-spacing:.1em;text-transform:uppercase;color:#1E7A44;margin-bottom:6px;">Возврат средств</div>'
                       . '<div style="font-size:14px;line-height:1.7;color:' . RM_INK . ';">Оргвзнос <b>' . $refundAmount . ' ₽</b> возвращён в полном объёме на ту же карту/способ оплаты. Зачисление обычно занимает до 3 рабочих дней (срок зависит от банка).</div></td></tr></table>'
                     : '<p style="margin:0 0 4px;color:' . RM_MUTED . ';font-size:13px;">Если был внесён оргвзнос, он возвращается в полном объёме (п. 7.6.1 положения).</p>')
-                . rm_mail_btn(url('/apply'), 'Подать заявку заново');
-            $html = rm_mail_layout($inner, 'Заявка №' . (string)$a['number'] . ': требуется исправление. Причина внутри — исправьте и подайте заново.');
-            $mailed = mail_queue((string)$a['email'], $name, 'Заявка №' . (string)$a['number'] . ' — требуется исправление', $html) > 0;
+                . rm_mail_btn(url('/apply?competition=' . rawurlencode((string) ($__c['slug'] ?? ''))), 'Подать заявку заново');
+            $html = rm_mail_layout($inner, 'Заявка №' . (string)$a['number'] . ': устраните причину и подайте заявку заново — мы с радостью примем её к аттестации.');
+            $mailed = mail_queue((string)$a['email'], $name, 'Заявка №' . (string)$a['number'] . ' — устраните причину и подайте заново', $html) > 0;
         } catch (\Throwable $e) { /* письмо не должно ломать отклонение */ }
     }
     $refundMsg = '';

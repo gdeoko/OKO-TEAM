@@ -1082,7 +1082,22 @@ ob_start(); ?>
                 <p class="cab-meta" style="margin-top:8px;opacity:.85"><?= h($win['reason']) ?></p>
               <?php endif; ?>
               <?php if ($isRej): ?>
-                <p class="cab-reject">Заявка отклонена. Свяжитесь с нами для уточнения.</p>
+                <div class="cab-reject-box" style="margin-top:14px;padding:14px 16px;border-radius:14px;
+                     background:#FDF1F1;border:1px solid #EBC7C7">
+                  <p class="cab-reject" style="margin:0 0 6px">Заявка отклонена.</p>
+                  <?php if (trim((string)($a['reject_reason'] ?? '')) !== ''): ?>
+                    <p class="small" style="margin:0 0 10px;color:#6B3335;line-height:1.5">
+                      <b style="color:#8B2F2F">Причина (пункт положения):</b> <?= nl2br(h((string) $a['reject_reason'])) ?>
+                    </p>
+                  <?php endif; ?>
+                  <p style="margin:0 0 12px;font-size:.92rem;color:var(--text);line-height:1.5">
+                    Устраните причину отклонения и подайте заявку заново — мы с радостью примем её к аттестации!
+                  </p>
+                  <a class="btn btn--primary btn--sm"
+                     href="<?= h(url('/apply' . (!empty($a['comp_slug']) ? '?competition=' . rawurlencode((string) $a['comp_slug']) : ''))) ?>">
+                    Заново подать заявку
+                  </a>
+                </div>
               <?php else: ?>
                 <div class="cab-steps">
                   <?php foreach ($pLabels as $pi => $pl): ?>
