@@ -116,13 +116,14 @@ const ROUTES = [
 const MEASURE = `(() => {
   const VW = innerWidth, VH = innerHeight;
 
-  /* элемент виден человеку: он сам и все предки не спрятаны */
+  /* элемент виден человеку: он сам и все предки не спрятаны, и он попадает
+     во вьюпорт. Закрытые оверлеи стоят за правым краем (translateX(100%)) —
+     их кнопки тоже имеют размеры, но человек их не видит. */
   const shown = el => {
     let n = el;
     while (n && n.nodeType === 1) {
       const cs = getComputedStyle(n);
       if (cs.display === 'none' || cs.visibility === 'hidden' || parseFloat(cs.opacity) === 0) return false;
-      if (cs.pointerEvents === 'none' && n !== el) return false;
       n = n.parentElement;
     }
     const r = el.getBoundingClientRect();
@@ -136,21 +137,7 @@ const MEASURE = `(() => {
     return el.tagName.toLowerCase() + id + cls;
   };
 
-  /* состояние приложения — по нему судим, что клик реально сработал */
-  const state = () => {
-    const s = document.querySelector('main > .screen.active');
-    let nv = [];
-    try { nv = nvStackLabels(); } catch (e) {}
-    const open = Array.from(document.querySelectorAll('.open, [style*="display: block"]'))
-      .filter(e => e.id).map(e => e.id).slice(0, 40).join(',');
-    let ma = '';
-    document.querySelectorAll('#screen-mini .ma-view').forEach(v => {
-      if (getComputedStyle(v).display !== 'none') ma = v.id;
-    });
-    const ac = (typeof acView !== 'undefined') ? acView : '';
-    const mk = (typeof mkView !== 'undefined') ? mkView : '';
-    return [s ? s.id : '', nv.join('|'), open, ma, ac, mk].join('§');
-  };
+  const state = () => window.__okoProbeState();
 
   const btns = [];
   document.querySelectorAll('button.oko-back').forEach(el => {
@@ -186,32 +173,52 @@ const MEASURE = `(() => {
       w: Math.round(r.width), h: Math.round(r.height), y: Math.round(r.top) });
   });
 
+  /* помечаем ту самую кнопку, которую человек нажал бы первой:
+     самая верхняя-левая из реально видимых */
+  document.querySelectorAll('[data-okoprobe]').forEach(e => e.removeAttribute('data-okoprobe'));
+  const pick = Array.from(document.querySelectorAll('button.oko-back'))
+    .filter(shown)
+    .sort((p, q) => {
+      const a = p.getBoundingClientRect(), b = q.getBoundingClientRect();
+      return (a.top - b.top) || (a.left - b.left);
+    })[0];
+  if (pick) pick.setAttribute('data-okoprobe', '1');
+
   return { state: state(), btns, strays, reloaded: !!window.__okoReloaded };
 })()`;
 
-const STATE = `(() => {
+/* Слепок состояния приложения. Кроме активного экрана и стека навигации
+   учитываем классы открытых контейнеров — внутри «Документов» шаг
+   «страница -> список» меняет только класс .doc/.hub. */
+const STATE_FN = `window.__okoProbeState = function(){
   const s = document.querySelector('main > .screen.active');
   let nv = [];
   try { nv = nvStackLabels(); } catch (e) {}
-  const open = Array.from(document.querySelectorAll('.open, [style*="display: block"]'))
-    .filter(e => e.id).map(e => e.id).slice(0, 40).join(',');
+  const open = Array.from(document.querySelectorAll('.open'))
+    .filter(e => e.id).map(e => e.id + '[' + e.className + ']').slice(0, 40).join(',');
   let ma = '';
   document.querySelectorAll('#screen-mini .ma-view').forEach(v => {
     if (getComputedStyle(v).display !== 'none') ma = v.id;
   });
   const ac = (typeof acView !== 'undefined') ? acView : '';
   const mk = (typeof mkView !== 'undefined') ? mkView : '';
-  return [s ? s.id : '', nv.join('|'), open, ma, ac, mk].join('§');
-})()`;
+  const soc = (document.getElementById('okoSoc') || {}).className || '';
+  return [s ? s.id : '', nv.join('|'), open, ma, ac, mk, soc].join('§');
+};`;
+
+const STATE = `(window.__okoProbeState ? window.__okoProbeState() : 'СТРАНИЦА ПЕРЕЗАГРУЖЕНА')`;
 
 async function main() {
   const browser = await chromium.launch({
     executablePath: process.env.OKO_CHROME || '/opt/pw-browsers/chromium-1194/chrome-linux/chrome',
-    args: ['--no-sandbox', '--disable-dev-shm-usage', '--use-gl=swiftshader', '--enable-unsafe-swiftshader'],
+    /* без GPU-эмуляции: 3D-знак и анимации в песочнице съедают все ядра и
+       обход растягивается на десятки минут. На проверку кнопок это не влияет. */
+    args: ['--no-sandbox', '--disable-dev-shm-usage', '--disable-gpu'],
   });
   const ctx = await browser.newContext({
     viewport: { width: 390, height: 844 },
     isMobile: true, hasTouch: true, deviceScaleFactor: 1,
+    reducedMotion: 'reduce',
     userAgent: 'Mozilla/5.0 (Linux; Android 14) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126 Mobile Safari/537.36',
   });
   await ctx.addInitScript(INIT);
@@ -241,6 +248,7 @@ async function main() {
       }
       await page.waitForTimeout(700);
 
+      await page.evaluate(STATE_FN);
       const m = await page.evaluate(MEASURE);
       rep.buttons = m.btns.length;
       rep.strays = m.strays;
@@ -261,23 +269,14 @@ async function main() {
           if (b.icon !== '#i-back') rep.problems.push('другой знак в кнопке: ' + b.icon);
 
           /* клик действительно уводит назад и не перезагружает страницу */
-          const marked = await page.evaluate(`(() => {
-            window.__okoNoReload = 1;
+          await page.evaluate(`window.__okoNoReload = 1;`);
+          const clicked = await page.evaluate(`(() => {
+            const el = document.querySelector('[data-okoprobe="1"]');
+            if (!el) return false;
+            el.click();
             return true;
           })()`);
-          const sel = 'button.oko-back';
-          const idx = m.btns.indexOf(b);
-          await page.evaluate(`(() => {
-            const list = Array.from(document.querySelectorAll('${sel}')).filter(el => {
-              const r = el.getBoundingClientRect();
-              return r.width > 0 && r.height > 0;
-            });
-            const el = list.sort((p,q)=>{
-              const a=p.getBoundingClientRect(), b=q.getBoundingClientRect();
-              return (a.top-b.top)||(a.left-b.left);
-            })[0];
-            if (el) el.click();
-          })()`);
+          if (!clicked) rep.problems.push('кнопку не удалось нажать');
           await page.waitForTimeout(650);
           const after = await page.evaluate(STATE);
           rep.stateAfter = after;

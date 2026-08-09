@@ -31320,15 +31320,24 @@ function faGoRec(){
   if(b) b.click();
 }
 function faRenderEmpty(list, kind){
+  /* Честный пустой экран (правка Даниэля: «никаких ложных подтверждений»).
+     Раньше здесь было написано «свежие посты закончились, обнови подборку —
+     алгоритм за секунду соберёт новую ленту». Собирать нечего: постов в
+     приложении пока нет вообще, и кнопка «Обновить» возвращала ту же
+     пустоту. Теперь объясняем, откуда лента берётся, и даём действия,
+     которые реально её наполняют. */
   const rec = kind === 'rec';
-  const title = rec ? 'Пока пусто' : 'Тут появятся посты';
+  const title = rec ? 'Лента пока пустая' : 'Ты пока ни на кого не подписан';
   const text  = rec
-    ? 'Свежие посты закончились. Обнови подборку — алгоритм за секунду соберёт новую ленту под твои интересы.'
-    : 'Подпишись на каналы и авторов — их посты появятся здесь. А пока загляни в рекомендации.';
-  const cta = rec
-    ? `<button class="fa-empty-cta" type="button" onclick="faRefresh()">${I('fa-refresh')}<span>Обновить подборку</span></button>`
-    : `<button class="fa-empty-cta" type="button" onclick="faGoRec()">${I('compass')}<span>Открыть рекомендации</span></button>`;
-  list.innerHTML = `<div class="fa-empty">${faEmptyArt()}<b>${title}</b><span>${text}</span>${cta}</div>`;
+    ? 'Сюда попадают ролики и посты из каналов OKO и тех, на кого ты подпишешься. Выложи свой первый ролик или подпишись на канал — лента начнёт расти.'
+    : 'В «Подписках» видно только тех, на кого ты подписался. Подпишись на канал OKO — и его посты появятся здесь первыми.';
+  const acts = [
+    `<button class="fa-empty-cta" type="button" onclick="showTab('chats'); if(typeof chOpen==='function') chOpen('list')">${I('megaphone')}<span>Найти каналы</span></button>`,
+    rec
+      ? `<button class="fa-empty-cta ghost" type="button" onclick="if(typeof okoOpenClips==='function') okoOpenClips()">${I('clips')}<span>Выложить ролик</span></button>`
+      : `<button class="fa-empty-cta ghost" type="button" onclick="faGoRec()">${I('compass')}<span>Открыть рекомендации</span></button>`
+  ].join('');
+  list.innerHTML = `<div class="fa-empty">${faEmptyArt()}<b>${title}</b><span>${text}</span><div class="fa-empty-acts">${acts}</div></div>`;
 }
 
 /* ---------- время публикации на карточке (короткий формат: «3 ч», «2 д») ---------- */
@@ -34611,6 +34620,14 @@ function cpDecorateCallButtons(){
   });
 
   let hostBtn = head.querySelector('.cp-call-host');
+  /* В шапке жили ДВЕ кнопки одного и того же группового созвона: эта и
+     более новая .cl-conv-start из модуля звонков. Две одинаковые кнопки
+     съедали 39px, из-за чего «Общий чат OKO» превращался в «Общий чат ОКО…».
+     Если новая кнопка уже стоит — эту не создаём. */
+  if(head.querySelector('.cl-conv-start')){
+    if(hostBtn) hostBtn.remove();
+    return;
+  }
   if(canHostCall){
     if(!hostBtn){
       hostBtn = document.createElement('button');
@@ -36184,7 +36201,17 @@ function clInjectStartBtn(){
   const existing = head.querySelector('.cl-conv-start');
 
   const isGroup = ch && (ch.kind==='group' || ch.kind==='channel');
-  const canAdmin = ch && (ch.managed || ch.owner || ch.kind==='channel'); /* демо: managed=admin */
+  /* Правка Даниэля: «обычные участники в общий чат око и в канал око не могут
+     звонить, да и в целом если не админы — звонить не могут».
+     Здесь стояло `ch.owner || ch.kind==='channel'`. Но `owner:true` у наших
+     чатов означает «этой сущностью владеет OKO», а не «этот человек — админ».
+     Из-за этого кнопка «Созвон» показывалась в общем чате и канале ВСЕМ.
+     Право начинать созвон есть только у того, кто чат создал (managed),
+     и у владельца приложения. */
+  const canAdmin = ch && (
+    ch.managed ||
+    (typeof cpCanManage === 'function' && cpCanManage())
+  );
 
   if(!isGroup || !canAdmin){
     if(existing) existing.remove();
@@ -36194,13 +36221,21 @@ function clInjectStartBtn(){
 
   const btn = document.createElement('button');
   btn.className = 'cl-conv-start'; btn.type = 'button';
-  btn.innerHTML = `<i class="cl-live"></i>Созвон`;
+  /* Иконка + подпись: на узкой шапке подпись прячется через CSS, чтобы
+     название чата не превращалось в «Общий ч...». */
+  btn.innerHTML = `<i class="cl-live"></i><span class="cl-conv-start-tx">Созвон</span>`;
   btn.title = 'Начать общий созвон';
+  btn.setAttribute('aria-label', 'Начать общий созвон');
   btn.onclick = ()=>{ callStartConf(ch.id, true, {chatName:ch.name}); };
   /* вставляем между инфо и родными кнопками звонка */
   const firstCall = head.querySelector('.ch-call');
   if(firstCall) head.insertBefore(btn, firstCall);
   else head.appendChild(btn);
+  /* Дубль убираем здесь, а не в cpDecorateCallButtons: тот отрабатывает
+     РАНЬШЕ этой вставки и ещё не видит новую кнопку. Две одинаковые кнопки
+     группового созвона съедали 39px шапки — из-за них имя чата обрезалось. */
+  const oldHost = head.querySelector('.cp-call-host');
+  if(oldHost) oldHost.remove();
 }
 
 /* хук на openConv/closeConv для перерисовки кнопки */

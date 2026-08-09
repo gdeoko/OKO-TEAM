@@ -11,12 +11,45 @@
    нет ошибок в консоли, скриншот в oko-app/tools/ai-screen.png.
 
    Запуск:  node oko-app/tools/probe-ai.mjs
-            (нужен локальный сервер: python3 -m http.server 8199 в oko-app/prototype)
+            (поднимает свой статический сервер на свободном порту — ничего запускать не нужно)
    ============================================================================ */
 import { chromium } from 'playwright-core';
+import http from 'node:http';
+import fs from 'node:fs';
+import fsp from 'node:fs/promises';
+import path from 'node:path';
 
-const BASE = process.env.OKO_BASE || 'http://127.0.0.1:8199/index.html';
+const ROOT = path.resolve('oko-app/prototype');
 const OUT  = process.env.OKO_SHOT || 'oko-app/tools/ai-screen.png';
+
+/* Свой статический сервер на случайном порту: пробник не зависит от чужого
+   http.server на 8199 (его делят другие прогоны) и запускается одной командой. */
+const MIME = {
+  '.html': 'text/html; charset=utf-8', '.js': 'text/javascript; charset=utf-8',
+  '.mjs': 'text/javascript; charset=utf-8', '.css': 'text/css; charset=utf-8',
+  '.json': 'application/json; charset=utf-8', '.png': 'image/png', '.jpg': 'image/jpeg',
+  '.svg': 'image/svg+xml', '.webp': 'image/webp', '.glb': 'model/gltf-binary',
+  '.woff2': 'font/woff2', '.ico': 'image/x-icon',
+};
+const SRV_LOG = !!process.env.OKO_SRV_LOG;
+const server = http.createServer((req, res) => {
+  if (SRV_LOG) console.error('[srv] ' + req.method + ' ' + req.url);
+  const rel = decodeURIComponent((req.url || '/').split('?')[0]);
+  const file = path.join(ROOT, rel === '/' ? '/index.html' : rel);
+  if (!file.startsWith(ROOT)) { res.writeHead(403).end(); return; }
+  fs.stat(file, (e, st) => {
+    if (e || !st.isFile()) { res.writeHead(404, { 'Content-Type': 'text/plain' }).end('404'); return; }
+    res.writeHead(200, { 'Content-Type': MIME[path.extname(file).toLowerCase()] || 'application/octet-stream',
+                         'Content-Length': st.size, 'Cache-Control': 'no-store' });
+    if (SRV_LOG) res.on('finish', () => console.error('[srv] done ' + req.url + ' (' + st.size + ')'));
+    const rs2 = fs.createReadStream(file);
+    rs2.on('error', err => { if (SRV_LOG) console.error('[srv] err ' + req.url + ' ' + err.message); res.end(); });
+    rs2.pipe(res);
+  });
+});
+await new Promise(r => server.listen(0, '127.0.0.1', r));
+const PORT = server.address().port;
+const BASE = process.env.OKO_BASE || `http://127.0.0.1:${PORT}/index.html`;
 
 const browser = await chromium.launch({
   executablePath: process.env.OKO_CHROME || '/opt/pw-browsers/chromium-1194/chrome-linux/chrome',
@@ -25,6 +58,8 @@ const browser = await chromium.launch({
 const ctx = await browser.newContext({
   viewport: { width: 390, height: 844 },
   isMobile: true, hasTouch: true, deviceScaleFactor: 2,
+  /* SW при обновлении перезагружает страницу и рвёт ожидание навигации — гасим */
+  serviceWorkers: 'block',
 });
 
 /* Пропуск авторизации — тот же приём, что в audit.mjs */
@@ -73,6 +108,18 @@ await page.route('**/api.php*', async route => {
   });
 });
 
+
+/* Навигация без гонок: ждём фиксацию документа, затем реальную готовность
+   ядра и слоя ОКО Ai. waitUntil:'domcontentloaded' тут ненадёжен — страница
+   успевает переинициализироваться, и ожидание срывается. */
+async function openApp(pg) {
+  await pg.goto(BASE, { waitUntil: 'commit', timeout: 60000 });
+  await pg.waitForFunction(
+    () => document.readyState !== 'loading' && typeof window.openMa === 'function' && !!window.okoAi,
+    null, { timeout: 60000 });
+  await pg.waitForTimeout(900);
+}
+
 const step = m => console.error('[probe] ' + m);
 const report = { base: BASE, checks: {}, fail: [], errors: [] };
 const check = (name, ok, extra) => {
@@ -81,15 +128,18 @@ const check = (name, ok, extra) => {
 };
 
 step('main: goto');
-await page.goto(BASE, { waitUntil: 'domcontentloaded' });
-await page.waitForTimeout(1800);
+await openApp(page);
 
 /* --- эталон: настоящий личный чат, с которым сравниваем ОКО Ai --- */
 step('main: measuring real DM');
 await page.evaluate(`okoSkipAuth(); showTab('chats');`);
 await page.waitForTimeout(500);
-await page.evaluate(`const r=document.querySelector('#chatList .chat-item, #chatList > *'); r&&r.click();`);
-await page.waitForTimeout(600);
+await page.evaluate(`const r=document.querySelector('#chatList .chat-item'); r&&r.click();`);
+await page.waitForTimeout(700);
+/* В ЛС кнопка отправки появляется вместе с первым символом — чтобы сравнивать
+   её с кнопкой ОКО Ai, надо сначала что-то напечатать. */
+await page.fill('#msgInput', 'x');
+await page.waitForTimeout(250);
 const dm = await page.evaluate(() => {
   const box = el => {
     if (!el) return null;
@@ -113,6 +163,8 @@ const dm = await page.evaluate(() => {
   const conv = document.getElementById('conv');
   return {
     opened: getComputedStyle(conv).display !== 'none',
+    convOpenClass: document.getElementById('app').classList.contains('conv-open'),
+    innerHeight: window.innerHeight,
     composer: box(conv.querySelector('.composer')),
     input: small(conv.querySelector('#msgInput')),
     send: small(conv.querySelector('#sendBtn')),
@@ -122,9 +174,13 @@ const dm = await page.evaluate(() => {
       return { paddingTop: cs.paddingTop, borderBottomWidth: cs.borderBottomWidth }; })(),
   };
 });
+await page.fill('#msgInput', '');
 await page.evaluate(`typeof closeConv==='function' && closeConv();`);
 await page.waitForTimeout(300);
-check('dm_reference_captured', dm.opened === true && !!dm.composer, { composerBottom: dm.composer && dm.composer.bottom });
+check('dm_reference_captured',
+  dm.opened === true && dm.convOpenClass === true && !!dm.composer && dm.send.w > 0,
+  { convOpenClass: dm.convOpenClass, composerBottom: dm.composer && dm.composer.bottom,
+    innerHeight: dm.innerHeight, sendW: dm.send && dm.send.w });
 
 /* --- открываем экран ровно так, как это делает человек --- */
 await page.evaluate(`okoSkipAuth(); showTab('mini'); openMa('helper');`);
@@ -419,6 +475,7 @@ await ctx.close();
 const TG_BOTTOM = 34;
 const tgCtx = await browser.newContext({
   viewport: { width: 390, height: 844 }, isMobile: true, hasTouch: true, deviceScaleFactor: 2,
+  serviceWorkers: 'block',
 });
 await tgCtx.addInitScript(`
   window.okoSkipAuth = function(){
@@ -456,8 +513,7 @@ await tgCtx.addInitScript(`
 step('tg: newPage');
 const tgPage = await tgCtx.newPage();
 step('tg: goto');
-await tgPage.goto(BASE, { waitUntil: 'domcontentloaded' });
-await tgPage.waitForTimeout(1800);
+await openApp(tgPage);
 step('tg: open screen');
 await tgPage.evaluate(`okoSkipAuth(); showTab('mini'); openMa('helper');`);
 await tgPage.waitForTimeout(700);
@@ -512,5 +568,6 @@ report.ok = report.fail.length === 0;
 
 step('closing browser');
 await browser.close();
+await new Promise(r => server.close(r));
 console.log(JSON.stringify(report, null, 2));
 process.exit(report.ok ? 0 : 1);

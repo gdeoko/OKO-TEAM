@@ -705,7 +705,7 @@ function pageHome() {
 
   h += '<div class="mk2-quick">' +
     qt('briefcase', 'Мои объявления', mine ? mine + ' ' + plural(mine, 'объявление', 'объявления', 'объявлений') : 'Пока ни одного', 'mine', 'mine') +
-    qt('heart', 'Избранное', favN ? favN + ' ' + plural(favN, 'карточка', 'карточки', 'карточек') : 'Пусто', 'fav', 'fav') +
+    qt('heart', 'Избранное', favN ? favN + ' ' + plural(favN, 'карточка', 'карточки', 'карточек') : 'Пусто', 'favpage', 'fav') +
     qt('swap', 'Отклики и сделки', respN + S.deals.length ? (respN + S.deals.length) + ' ' + plural(respN + S.deals.length, 'запись', 'записи', 'записей') : 'Пока пусто', 'deals', 'deals') +
     qt('clock', 'История просмотров', histN ? histN + ' ' + plural(histN, 'карточка', 'карточки', 'карточек') : 'Пусто', 'history', 'history') +
     '</div>';
@@ -1676,7 +1676,7 @@ var ACT = {
 
   /* --- управление своими --- */
   mine: function () { go('mine'); },
-  fav_page: function () { go('fav'); },
+  favpage: function () { go('fav'); },
   history: function () { go('history'); },
   deals: function () { dealsTab = 'resp'; go('deals'); },
   minetab: function (id, v) { mineTab = v; paint(true); },
@@ -2094,11 +2094,11 @@ function install() {
     renderMarketList: function () { paint(true); },
     renderMarketListSoft: function () { paint(true); },
     renderMarketCats: function () { paint(true); },
-    openMarketCat: function (k) { openMarket(); F.cat = k || ''; go('list', { cat: k || '' }); },
-    mkOpenSearch: function () { openMarket(); setTimeout(function () { var i = document.getElementById('mk2q'); if (i) i.focus(); }, 60); },
-    openListing: function (id) { openMarket(); openItem(id); },
-    openMyListings: function () { openMarket(); go('mine'); },
-    openListingForm: function (id) { openMarket(); startWizard(id || null, ''); },
+    openMarketCat: function (k) { openMarket(); enterMarket(); F.cat = k || ''; go('list', { cat: k || '' }); },
+    mkOpenSearch: function () { openMarket(); enterMarket(); setTimeout(function () { var i = document.getElementById('mk2q'); if (i) i.focus(); }, 60); },
+    openListing: function (id) { openMarket(); enterMarket(); openItem(id); },
+    openMyListings: function () { openMarket(); enterMarket(); go('mine'); },
+    openListingForm: function (id) { openMarket(); enterMarket(); startWizard(id || null, ''); },
     toggleFav: function (id) { ACT.fav(id); },
     contactSeller: function (id) { writeSeller(id); },
     orderListing: function (id) { openDealSheet(id); },
@@ -2112,7 +2112,7 @@ function install() {
     openPromo: function (id) { ACT.bump(id); },
     buyPromo: function (id) { ACT.bump(id); },
     renderListingFav: function () { paint(true); },
-    okoMarketOpen: function (id) { openMarket(); if (id) openItem(id); }
+    okoMarketOpen: function (id) { openMarket(); enterMarket(); if (id) openItem(id); }
   };
   for (var k in api) if (Object.prototype.hasOwnProperty.call(api, k)) {
     try { window[k] = api[k]; } catch (e) {}
@@ -2138,7 +2138,7 @@ function checkHash() {
     openMarket();
     enterMarket();
     if (find(id)) openItem(id);
-    else say('Объявление по ссылке не найдено на этом устройстве');
+    else say('Объявление по этой ссылке не найдено на этом устройстве');
   }, 600);
 }
 

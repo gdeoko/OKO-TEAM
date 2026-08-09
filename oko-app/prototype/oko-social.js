@@ -53,9 +53,20 @@ function FMT(n){
   n = +n || 0;
   return n >= 1000 ? (n / 1000).toFixed(1).replace('.0', '') + 'к' : String(n);
 }
+/* Ник и ссылка должны быть латиницей — как в Telegram: okoteam.top/c/klub_rosta,
+   а не /c/клуб_роста. Поэтому кириллицу транслитерируем, а не выбрасываем. */
+var TRANSLIT = {
+  а:'a', б:'b', в:'v', г:'g', д:'d', е:'e', ё:'e', ж:'zh', з:'z', и:'i', й:'y',
+  к:'k', л:'l', м:'m', н:'n', о:'o', п:'p', р:'r', с:'s', т:'t', у:'u', ф:'f',
+  х:'h', ц:'c', ч:'ch', ш:'sh', щ:'sch', ъ:'', ы:'y', ь:'', э:'e', ю:'yu', я:'ya'
+};
 function slug(s){
-  return String(s || '').toLowerCase().trim()
-    .replace(/[^a-zа-яё0-9]+/gi, '_').replace(/^_+|_+$/g, '').slice(0, 32) || 'oko';
+  var src = String(s || '').toLowerCase().trim(), out = '';
+  for(var i = 0; i < src.length; i++){
+    var c = src.charAt(i);
+    out += (TRANSLIT[c] != null) ? TRANSLIT[c] : c;
+  }
+  return out.replace(/[^a-z0-9]+/g, '_').replace(/^_+|_+$/g, '').slice(0, 32) || 'oko';
 }
 function P(){
   try{ if(typeof PROFILE === 'object' && PROFILE) return PROFILE; }catch(e){}
@@ -63,13 +74,38 @@ function P(){
 }
 function founderNick(){ try{ if(typeof OKO_FOUNDER_NICK === 'string') return OKO_FOUNDER_NICK; }catch(e){} return 'ktodaniel'; }
 function isFounder(){ var p = P(); return p.role === 'owner' || p.nick === founderNick(); }
-function CHm(){ try{ return (typeof CH === 'object' && CH) ? CH : null; }catch(e){ return null; } }
+/* ---- мост к разделу «Каналы» ------------------------------------------------
+   Модуль channels в app.js завёрнут в IIFE: наружу выведены только обработчики
+   (chOpen, chSubscribe, chUnsub, chDraft, chCreateChannel), а сама модель CH и
+   её хелперы — нет. Поэтому читаем каталог из того же localStorage, куда его
+   пишет chSave, и никогда не пишем в него сами: подписки идут через
+   экспортированные chSubscribe/chUnsub, всё своё живёт в SOC. Так две системы
+   не затирают друг друга. */
+function chStore(){
+  try{ var j = JSON.parse(localStorage.getItem('oko-channels')); return (j && typeof j === 'object') ? j : null; }
+  catch(e){ return null; }
+}
 function chRec(id){
-  var m = CHm(); if(!m || !id) return null;
-  try{ if(typeof chChannel === 'function') return chChannel(id); }catch(e){}
+  var m = chStore(); if(!m || !id) return null;
   var a = (m.mine || []).concat(m.disc || []);
   for(var i = 0; i < a.length; i++) if(a[i].id === id) return a[i];
   return null;
+}
+function chIsMineRec(id){
+  var m = chStore();
+  return !!(m && (m.mine || []).some(function(x){ return x.id === id; }));
+}
+function chSubbedRec(id){
+  var m = chStore();
+  return !!(m && m.sub && m.sub[id]);
+}
+function accessLine(rec){
+  if(!rec) return '';
+  var parts = [rec.access === 'closed' ? 'Закрытый' : 'Открытый'];
+  var price = +rec.price || 0;
+  if(rec.kind === 'course') parts.push(price ? price + ' ₽' : 'бесплатно');
+  else parts.push(price ? (price + ' ₽/мес') : 'Бесплатно');
+  return parts.join(' · ');
 }
 function chatRec(id){
   try{
@@ -78,7 +114,6 @@ function chatRec(id){
   }catch(e){}
   return null;
 }
-function chSaveSafe(){ try{ if(typeof chSave === 'function') chSave(); }catch(e){} }
 function dateRu(ts){
   if(!ts) return '';
   try{ return new Date(ts).toLocaleDateString('ru-RU', { day: 'numeric', month: 'long', year: 'numeric' }); }
@@ -298,9 +333,9 @@ var SOC_KEY = 'oko-social-v1';
 var SOC = (function(){
   try{ var j = JSON.parse(localStorage.getItem(SOC_KEY)); if(j && typeof j === 'object') return j; }catch(e){}
   return null;
-})() || { v: 1, seq: 0, feedSeq: 5000000, items: {}, subs: {}, notify: {}, meta: {}, reports: [] };
+})() || { v: 1, seq: 0, feedSeq: 5000000, items: {}, subs: {}, notify: {}, meta: {}, own: {}, reports: [] };
 SOC.items = SOC.items || {}; SOC.subs = SOC.subs || {}; SOC.notify = SOC.notify || {};
-SOC.meta = SOC.meta || {}; SOC.reports = SOC.reports || []; SOC.seq = SOC.seq || 0;
+SOC.meta = SOC.meta || {}; SOC.own = SOC.own || {}; SOC.reports = SOC.reports || []; SOC.seq = SOC.seq || 0;
 SOC.feedSeq = SOC.feedSeq || 5000000;
 
 function socSave(){
@@ -331,13 +366,13 @@ var TYPE_ICON = {
 
 function nickOf(o){
   if(!o) return '';
-  try{ if(typeof okoEntityNick === 'function') return okoEntityNick(o); }catch(e){}
   if(o.nick) return String(o.nick).replace(/^@/, '');
   return slug(o.name);
 }
 
 function keyOfChat(c){
   if(!c) return null;
+  if(c.socId) return 's:' + c.socId;
   if(c.chId) return 'c:' + c.chId;
   if(c.openChannel) return 'c:' + c.openChannel;
   if(c.kind === 'direct') return 'u:' + (nickOf(c) || slug(c.name));
@@ -347,12 +382,13 @@ function keyOfName(name){
   if(!name) return null;
   var p = P();
   if(name === p.name) return 'u:' + nickOf(p);
+  for(var id in SOC.own){ if(SOC.own[id] && SOC.own[id].name === name) return 's:' + id; }
   try{
     if(typeof CHATS !== 'undefined' && CHATS){
       for(var i = 0; i < CHATS.length; i++) if(CHATS[i].name === name) return keyOfChat(CHATS[i]);
     }
   }catch(e){}
-  var m = CHm();
+  var m = chStore();
   if(m){
     var a = (m.mine || []).concat(m.disc || []);
     for(var j = 0; j < a.length; j++) if(a[j].name === name) return 'c:' + a[j].id;
@@ -367,15 +403,27 @@ function entity(key){
   var p = P();
   var ent = null;
 
-  if(t === 'c'){
+  if(t === 's'){
+    var o = SOC.own[id];
+    if(!o) return null;
+    ent = {
+      key: key, type: o.kind || 'channel', name: meta.name || o.name, nick: o.nick,
+      bio: meta.bio != null ? meta.bio : (o.desc || ''),
+      avatarImg: meta.avatar || o.avatar || null, avaIcon: o.icon || null,
+      verifiedRaw: !!o.verified, official: false,
+      created: o.created || null, own: o, ch: null, chat: null, isMe: false,
+      accessLine: accessLine(o)
+    };
+  }else if(t === 'c'){
     var c = chRec(id);
     if(!c) return null;
     ent = {
-      key: key, type: c.kind || 'channel', name: c.name, nick: nickOf(c),
+      key: key, type: c.kind || 'channel', name: meta.name || c.name, nick: nickOf(c),
       bio: meta.bio != null ? meta.bio : (c.desc || ''),
       avatarImg: meta.avatar || c.avatar || null, avaIcon: c.icon || null,
       verifiedRaw: !!c.verified, official: !!c.official,
-      created: c.created || null, ch: c, chat: null, isMe: false
+      created: c.created || null, own: null, ch: c, chat: null, isMe: false,
+      accessLine: accessLine(c)
     };
   }else if(t === 'x'){
     var ch = chatRec(id);
@@ -386,7 +434,7 @@ function entity(key){
       bio: meta.bio != null ? meta.bio : (ch.about || ch.preview || ''),
       avatarImg: meta.avatar || ch.avaImg || null, avaIcon: ch.avaIcon || null,
       verifiedRaw: !!ch.verified, official: !!ch.official,
-      created: ch.created || null, ch: null, chat: ch, isMe: false
+      created: ch.created || null, own: null, ch: null, chat: ch, isMe: false
     };
   }else{
     var isMe = (id === nickOf(p));
@@ -408,7 +456,7 @@ function entity(key){
       verifiedRaw: isMe ? !!p.verified : !!(chd && chd.verified),
       official: !!(chd && chd.official),
       created: isMe ? (p.since ? +new Date(p.since) : null) : null,
-      ch: null, chat: chd, isMe: isMe
+      own: null, ch: null, chat: chd, isMe: isMe
     };
   }
 
@@ -420,13 +468,12 @@ function entity(key){
   return ent;
 }
 
-/* владелец/редактор: свой профиль, свои каналы, а Даниэль — все официальные */
+/* владелец/редактор: свой профиль, свои сущности, а Даниэль — все официальные */
 function ownedBy(ent){
   if(!ent) return false;
   if(ent.isMe) return true;
-  try{ if(ent.ch && typeof chIsMine === 'function' && chIsMine(ent.ch)) return true; }catch(e){}
-  var m = CHm();
-  if(ent.ch && m && (m.mine || []).some(function(x){ return x.id === ent.ch.id; })) return true;
+  if(ent.own) return true;                                   /* создано мной в этом слое */
+  if(ent.ch && chIsMineRec(ent.ch.id)) return true;          /* создано в разделе «Каналы» */
   if(isFounder() && (ent.official || (ent.ch && ent.ch.official) || (ent.chat && ent.chat.official))) return true;
   return false;
 }
@@ -446,55 +493,67 @@ function badge(ent){
 /* ==========================================================================
    4. СЧЁТЧИКИ И КОНТЕНТ — считаются только из реального состояния
    ========================================================================== */
+/* Публикации и ролики этого слоя живут в SOC — единым списком на любую
+   сущность. Записи, созданные старым разделом «Каналы», подмешиваем в ленту
+   постов только на чтение, чтобы страница показывала весь контент канала. */
 function itemsOf(ent){
-  if(ent.ch){ ent.ch.posts = ent.ch.posts || []; return ent.ch.posts; }
   SOC.items[ent.key] = SOC.items[ent.key] || [];
   return SOC.items[ent.key];
 }
-function saveItems(ent){ if(ent.ch) chSaveSafe(); socSave(); }
-function postsOf(ent){ return itemsOf(ent).filter(function(p){ return !p.reel; }); }
+function legacyPosts(ent){
+  if(!ent.ch || !Array.isArray(ent.ch.posts)) return [];
+  return ent.ch.posts.map(function(p, i){
+    return {
+      id: 'ro-' + (p.id || i), ro: true, txt: p.txt || '', img: p.img || null,
+      likes: +p.likes || 0, views: +p.views || 0, when: p.when || '', ts: 0
+    };
+  });
+}
+function saveItems(){ socSave(); }
+function postsOf(ent){
+  return itemsOf(ent).filter(function(p){ return !p.reel; }).concat(legacyPosts(ent));
+}
 function reelsOf(ent){ return itemsOf(ent).filter(function(p){ return !!p.reel; }); }
 
+/* данные управления: у своей сущности — прямо в записи, у чужой модели —
+   в собственном оверлее SOC.meta, чтобы ничего не затирать */
+function manageOf(ent){
+  if(ent.own) return ent.own;
+  SOC.meta[ent.key] = SOC.meta[ent.key] || {};
+  return SOC.meta[ent.key];
+}
+
 function isSubbed(ent){
-  if(ent.isMe) return false;
-  if(ent.ch){
-    var m = CHm();
-    try{ if(typeof chIsMine === 'function' && chIsMine(ent.ch)) return true; }catch(e){}
-    return !!(m && m.sub && m.sub[ent.ch.id]);
-  }
+  if(ent.isMe || ent.own) return false;
+  if(ent.ch) return chIsMineRec(ent.ch.id) || chSubbedRec(ent.ch.id);
   return !!SOC.subs[ent.key];
 }
 function subsCount(ent){
-  if(ent.ch) return +ent.ch.subs || 0;               /* модель CH сама ведёт счётчик */
+  if(ent.own) return +ent.own.subs || 0;
+  if(ent.ch) return +ent.ch.subs || 0;               /* счётчик ведёт раздел «Каналы» */
   var base = 0;
   if(ent.chat) base = NUM(ent.chat.subs) || NUM(ent.chat.members) || 0;
   return base + (SOC.subs[ent.key] ? 1 : 0);
 }
 function toggleSub(ent){
   if(ent.isMe){ T('Это твоя страница'); return; }
+  if(ent.own){ T('Ты владелец — отписаться нельзя'); return; }
   if(ent.ch){
-    var c = ent.ch, m = CHm(); if(!m) return;
-    m.sub = m.sub || {};
-    var mine = false;
-    try{ mine = (typeof chIsMine === 'function') && chIsMine(c); }catch(e){}
-    if(mine){ T('Ты владелец — отписаться нельзя'); return; }
-    if(m.sub[c.id]){
-      delete m.sub[c.id]; if(c.subs) c.subs--;
-      chSaveSafe(); T('Ты отписался от «' + c.name + '»');
-    }else{
-      var paid = false;
-      try{ paid = (typeof chPaid === 'function') && chPaid(c); }catch(e){}
-      if(paid && typeof chSubscribe === 'function'){ chSubscribe(c.id); render(); return; }
-      m.sub[c.id] = 1; c.subs = (c.subs || 0) + 1;
-      chSaveSafe(); T('Ты подписан на «' + c.name + '»');
-    }
-  }else{
-    if(SOC.subs[ent.key]){ delete SOC.subs[ent.key]; T('Ты отписался от «' + ent.name + '»'); }
-    else { SOC.subs[ent.key] = Date.now(); T('Ты подписан на «' + ent.name + '»'); }
-    socSave();
-    /* лента «Подписки» ядра знает автора по имени — держим её в курсе */
-    try{ if(ent.type === 'user' && typeof psSetFollow === 'function') psSetFollow(ent.name, !!SOC.subs[ent.key]); }catch(e){}
+    if(chIsMineRec(ent.ch.id)){ T('Ты владелец — отписаться нельзя'); return; }
+    /* подписка на каналы принадлежит разделу «Каналы» — зовём его же функции,
+       иначе два счётчика разъедутся */
+    try{
+      if(chSubbedRec(ent.ch.id)){ if(typeof chUnsub === 'function') chUnsub(ent.ch.id); }
+      else { if(typeof chSubscribe === 'function') chSubscribe(ent.ch.id); }
+    }catch(e){}
+    setTimeout(render, 60);
+    return;
   }
+  if(SOC.subs[ent.key]){ delete SOC.subs[ent.key]; T('Ты отписался от «' + ent.name + '»'); }
+  else { SOC.subs[ent.key] = Date.now(); T('Ты подписан на «' + ent.name + '»'); }
+  socSave();
+  /* лента «Подписки» ядра знает автора по имени — держим её в курсе */
+  try{ if(ent.type === 'user' && typeof psSetFollow === 'function') psSetFollow(ent.name, !!SOC.subs[ent.key]); }catch(e){}
   render();
 }
 
@@ -560,18 +619,38 @@ function ensureDom(){
 
 function isOpen(){ return !!(ROOT && ROOT.classList.contains('open')); }
 
+/* ---- аккуратная стыковка с навигационным стеком ядра ------------------------
+   nvPop делает history.back(), а nvPush — history.pushState. Если закрыть
+   вьюху и тут же открыть её снова (например «Создать» из уже открытой
+   страницы), запоздавший popstate закрывает только что открытый слой.
+   Поэтому снятие слоя откладываем на следующий тик: успели открыться заново —
+   снятие отменяется, слой остаётся ровно один. */
+var navRegistered = false, navPopTimer = null;
+function navPush(){
+  if(navPopTimer){ clearTimeout(navPopTimer); navPopTimer = null; }
+  if(navRegistered) return;
+  try{ if(typeof nvPush === 'function') nvPush('view:social', close, step); }catch(e){}
+  navRegistered = true;
+}
+function navPop(){
+  if(!navRegistered) return;
+  if(navPopTimer) clearTimeout(navPopTimer);
+  navPopTimer = setTimeout(function(){
+    navPopTimer = null;
+    if(isOpen()) return;                       /* уже открылись снова — слой нужен */
+    navRegistered = false;
+    try{ if(typeof nvPop === 'function') nvPop('view:social'); }catch(e){}
+  }, 0);
+}
+
 function open(key, page, arg){
   if(!key) return false;
   if(!entity(key)) return false;
   ensureDom();
-  var fresh = !isOpen();
-  if(fresh) NAV = [];
-  NAV.push({ page: page || 'entity', key: key, tab: 'posts', arg: arg || null });
+  NAV = [{ page: page || 'entity', key: key, tab: 'posts', arg: arg || null }];
   render();
-  if(fresh){
-    ROOT.classList.add('open');
-    try{ if(typeof nvPush === 'function') nvPush('view:social', close, step); }catch(e){}
-  }
+  ROOT.classList.add('open');
+  navPush();
   H('impact');
   return true;
 }
@@ -592,7 +671,7 @@ function back(){ if(NAV.length > 1){ NAV.pop(); render(); } else close(); }
 function close(){
   if(ROOT) ROOT.classList.remove('open');
   NAV = [];
-  try{ if(typeof nvPop === 'function') nvPop('view:social'); }catch(e){}
+  navPop();
 }
 function top_(){ return NAV[NAV.length - 1] || { page: 'entity', key: null, tab: 'posts' }; }
 
@@ -637,12 +716,20 @@ function render(){
   if(out.after) try{ out.after(); }catch(e){}
 }
 
-/* ---------- аватар ---------- */
+/* ---------- аватар: только чёрный и лаймовое семейство, обе темы ---------- */
+var AVA_GRADS = [
+  { g: 'linear-gradient(135deg,#c8ff5e,#9AFF00 52%,#6fd400)', c: '#0a0a0a', gl: 'linear-gradient(135deg,#c8ff5e,#9AFF00 52%,#7ad400)', cl: '#0a1400' },
+  { g: 'linear-gradient(135deg,#2c2c2c,#0d0d0d)',             c: '#9AFF00', gl: 'linear-gradient(135deg,#e9f5d2,#cfe9a4)',            cl: '#2e4d00' },
+  { g: 'linear-gradient(135deg,#9AFF00,#3a7a00)',             c: '#0a0a0a', gl: 'linear-gradient(135deg,#b6f56a,#6fc400)',            cl: '#0a1400' },
+  { g: 'linear-gradient(135deg,#14330a,#0a0a0a)',             c: '#9AFF00', gl: 'linear-gradient(135deg,#d9efb5,#add86e)',            cl: '#274500' },
+  { g: 'linear-gradient(135deg,#7ad400,#1f4d00)',             c: '#eaffcf', gl: 'linear-gradient(135deg,#9ee84a,#5fae10)',            cl: '#0a1400' },
+  { g: 'linear-gradient(135deg,#0a0a0a,#1a1a1a)',             c: '#9AFF00', gl: 'linear-gradient(135deg,#eef8db,#c6e792)',            cl: '#2b4a00' }
+];
 function avaStyle(ent){
-  try{
-    if(typeof chAvSeedStyle === 'function') return chAvSeedStyle(ent.nick || ent.name || ent.key);
-  }catch(e){}
-  return '';
+  var s = String((ent && (ent.nick || ent.name || ent.key)) || 'oko'), h = 0;
+  for(var i = 0; i < s.length; i++) h = (h * 31 + s.charCodeAt(i)) | 0;
+  var g = AVA_GRADS[Math.abs(h) % AVA_GRADS.length];
+  return '--av-g:' + g.g + ';--av-c:' + g.c + ';--av-gl:' + g.gl + ';--av-cl:' + g.cl + ';';
 }
 function avaHtml(ent, size, cls){
   var inner;
@@ -661,11 +748,7 @@ function pageEntity(ent, nav){
 
   var chips = ['<span class="soc-chip">' + SI(ent.typeIcon) + ent.typeLabel + '</span>'];
   if(ent.official) chips.push('<span class="soc-chip lime">' + SI('logo') + 'Официально OKO</span>');
-  if(ent.ch){
-    try{
-      if(typeof chAccessLine === 'function') chips.push('<span class="soc-chip">' + SI('lock') + E(chAccessLine(ent.ch)) + '</span>');
-    }catch(e){}
-  }
+  if(ent.accessLine) chips.push('<span class="soc-chip">' + SI('lock') + E(ent.accessLine) + '</span>');
   if(ent.owned) chips.push('<span class="soc-chip">' + SI('crown') + 'Ты владелец</span>');
 
   var head =

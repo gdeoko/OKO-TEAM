@@ -1,15 +1,13 @@
 {
-  "at": "2026-08-09T04:51:22.677Z",
+  "at": "2026-08-09T05:01:20.479Z",
   "viewport": "390x844",
   "routes": [
     {
       "id": "root-feed",
       "name": "Лента",
       "root": true,
-      "problems": [
-        "на корневой вкладке есть кнопка назад: button.oko-back.oko-hdr-back"
-      ],
-      "buttons": 1,
+      "problems": [],
+      "buttons": 0,
       "strays": [],
       "stateBefore": "screen-feed§§§§home§cats"
     },
@@ -17,10 +15,8 @@
       "id": "root-chats",
       "name": "Чаты",
       "root": true,
-      "problems": [
-        "на корневой вкладке есть кнопка назад: button.oko-back.oko-hdr-back"
-      ],
-      "buttons": 1,
+      "problems": [],
+      "buttons": 0,
       "strays": [],
       "stateBefore": "screen-chats§§§§home§cats"
     },
@@ -28,10 +24,8 @@
       "id": "root-mini",
       "name": "Мини-аппы",
       "root": true,
-      "problems": [
-        "на корневой вкладке есть кнопка назад: button.oko-back.oko-hdr-back"
-      ],
-      "buttons": 1,
+      "problems": [],
+      "buttons": 0,
       "strays": [],
       "stateBefore": "screen-mini§§§§home§cats"
     },
@@ -39,10 +33,8 @@
       "id": "root-wallet",
       "name": "Кошелёк",
       "root": true,
-      "problems": [
-        "на корневой вкладке есть кнопка назад: button.oko-back.oko-hdr-back"
-      ],
-      "buttons": 1,
+      "problems": [],
+      "buttons": 0,
       "strays": [],
       "stateBefore": "screen-wallet§§§§home§cats"
     },
@@ -50,10 +42,8 @@
       "id": "root-profile",
       "name": "Профиль",
       "root": true,
-      "problems": [
-        "на корневой вкладке есть кнопка назад: button.oko-back.oko-hdr-back"
-      ],
-      "buttons": 1,
+      "problems": [],
+      "buttons": 0,
       "strays": [],
       "stateBefore": "screen-profile§§§§home§cats"
     },
@@ -61,448 +51,1042 @@
       "id": "partner",
       "name": "Партнёрка",
       "root": false,
-      "problems": [
-        "падение маршрута"
-      ],
-      "fatal": "page.waitForTimeout: Target page, context or browser has been closed"
+      "problems": [],
+      "buttons": 2,
+      "strays": [],
+      "stateBefore": "screen-partner§sheet:pp-welcome§sheetOverlay,sheet-pp-welcome§§home§cats",
+      "back": {
+        "el": "button.oko-back.oko-hdr-back",
+        "w": 38,
+        "h": 38,
+        "x": 16,
+        "y": 10,
+        "css": "38px|38px|50%|flex|center|center",
+        "icon": "#i-back",
+        "label": "Назад"
+      },
+      "stateAfter": "screen-partner§§§§home§cats"
     },
     {
       "id": "games",
       "name": "Рулетка / Игры",
       "root": false,
-      "problems": [
-        "падение маршрута"
-      ],
-      "fatal": "page.goto: Target page, context or browser has been closed"
+      "problems": [],
+      "buttons": 1,
+      "strays": [],
+      "stateBefore": "screen-games§§§§home§cats",
+      "back": {
+        "el": "button.oko-back.oko-hdr-back",
+        "w": 38,
+        "h": 38,
+        "x": 16,
+        "y": 10,
+        "css": "38px|38px|50%|flex|center|center",
+        "icon": "#i-back",
+        "label": "Назад"
+      },
+      "stateAfter": "screen-feed§§§§home§cats"
     },
     {
       "id": "academy",
       "name": "Академия",
       "root": false,
-      "problems": [
-        "падение маршрута"
-      ],
-      "fatal": "page.goto: Target page, context or browser has been closed"
+      "problems": [],
+      "buttons": 1,
+      "strays": [],
+      "stateBefore": "screen-academy§§§§home§cats",
+      "back": {
+        "el": "button.oko-back.oko-hdr-back",
+        "w": 38,
+        "h": 38,
+        "x": 16,
+        "y": 10,
+        "css": "38px|38px|50%|flex|center|center",
+        "icon": "#i-back",
+        "label": "Назад"
+      },
+      "stateAfter": "screen-feed§§§§home§cats"
     },
     {
       "id": "ads",
       "name": "Реклама",
       "root": false,
-      "problems": [
-        "падение маршрута"
-      ],
-      "fatal": "page.goto: Target page, context or browser has been closed"
+      "problems": [],
+      "buttons": 1,
+      "strays": [],
+      "stateBefore": "screen-ads§§§§home§cats",
+      "back": {
+        "el": "button.oko-back.oko-hdr-back",
+        "w": 38,
+        "h": 38,
+        "x": 16,
+        "y": 10,
+        "css": "38px|38px|50%|flex|center|center",
+        "icon": "#i-back",
+        "label": "Назад"
+      },
+      "stateAfter": "screen-feed§§§§home§cats"
     },
     {
       "id": "ton",
       "name": "TON-подарки",
       "root": false,
-      "problems": [
-        "падение маршрута"
-      ],
-      "fatal": "page.goto: Target page, context or browser has been closed"
+      "problems": [],
+      "buttons": 1,
+      "strays": [],
+      "stateBefore": "screen-ton§§§§home§cats",
+      "back": {
+        "el": "button.oko-back.oko-hdr-back",
+        "w": 38,
+        "h": 38,
+        "x": 16,
+        "y": 10,
+        "css": "38px|38px|50%|flex|center|center",
+        "icon": "#i-back",
+        "label": "Назад"
+      },
+      "stateAfter": "screen-feed§§§§home§cats"
     },
     {
       "id": "ma-video",
       "name": "Мини-апп · Проверка видео",
       "root": false,
-      "problems": [
-        "падение маршрута"
-      ],
-      "fatal": "page.goto: Target page, context or browser has been closed"
+      "problems": [],
+      "buttons": 1,
+      "strays": [],
+      "stateBefore": "screen-mini§ma:video§ma-video§ma-video§home§cats",
+      "back": {
+        "el": "button.oko-back.oko-hdr-back",
+        "w": 38,
+        "h": 38,
+        "x": 16,
+        "y": 10,
+        "css": "38px|38px|50%|flex|center|center",
+        "icon": "#i-back",
+        "label": "Назад"
+      },
+      "stateAfter": "screen-mini§§§§home§cats"
     },
     {
       "id": "ma-market",
       "name": "Мини-апп · Биржа услуг",
       "root": false,
       "problems": [
-        "падение маршрута"
+        "не приведены к единому виду: button.mk2-back"
       ],
-      "fatal": "page.goto: Target page, context or browser has been closed"
+      "buttons": 1,
+      "strays": [
+        {
+          "el": "button.mk2-back",
+          "text": "К сервисам",
+          "w": 129,
+          "h": 38,
+          "y": 77
+        }
+      ],
+      "stateBefore": "screen-mini§ma:market§ma-market§ma-market§home§cats",
+      "back": {
+        "el": "button.oko-back.oko-hdr-back",
+        "w": 38,
+        "h": 38,
+        "x": 16,
+        "y": 10,
+        "css": "38px|38px|50%|flex|center|center",
+        "icon": "#i-back",
+        "label": "Назад"
+      },
+      "stateAfter": "screen-mini§§§§home§cats"
     },
     {
       "id": "ma-system",
       "name": "Мини-апп · Система роста",
       "root": false,
-      "problems": [
-        "падение маршрута"
-      ],
-      "fatal": "page.goto: Target page, context or browser has been closed"
+      "problems": [],
+      "buttons": 1,
+      "strays": [],
+      "stateBefore": "screen-mini§ma:system§ma-system§ma-system§home§cats",
+      "back": {
+        "el": "button.oko-back.oko-hdr-back",
+        "w": 38,
+        "h": 38,
+        "x": 16,
+        "y": 10,
+        "css": "38px|38px|50%|flex|center|center",
+        "icon": "#i-back",
+        "label": "Назад"
+      },
+      "stateAfter": "screen-mini§§§§home§cats"
     },
     {
       "id": "ma-factory",
       "name": "Мини-апп · Контент-завод",
       "root": false,
-      "problems": [
-        "падение маршрута"
-      ],
-      "fatal": "page.goto: Target page, context or browser has been closed"
+      "problems": [],
+      "buttons": 1,
+      "strays": [],
+      "stateBefore": "screen-mini§ma:factory§ma-factory§ma-factory§home§cats",
+      "back": {
+        "el": "button.oko-back.oko-hdr-back",
+        "w": 38,
+        "h": 38,
+        "x": 16,
+        "y": 10,
+        "css": "38px|38px|50%|flex|center|center",
+        "icon": "#i-back",
+        "label": "Назад"
+      },
+      "stateAfter": "screen-mini§§§§home§cats"
     },
     {
       "id": "ma-helper",
       "name": "Мини-апп · Помощник OKO",
       "root": false,
-      "problems": [
-        "падение маршрута"
-      ],
-      "fatal": "page.goto: Target page, context or browser has been closed"
+      "problems": [],
+      "buttons": 1,
+      "strays": [],
+      "stateBefore": "screen-mini§ma:helper§okoAiScreen§§home§cats",
+      "back": {
+        "el": "button#okoAiBack.back.oko-back",
+        "w": 38,
+        "h": 38,
+        "x": 14,
+        "y": 10,
+        "css": "38px|38px|50%|flex|center|center",
+        "icon": "#i-back",
+        "label": "Назад"
+      },
+      "stateAfter": "screen-mini§§§§home§cats"
     },
     {
       "id": "ma-socials",
       "name": "Мини-апп · Мои соцсети",
       "root": false,
-      "problems": [
-        "падение маршрута"
-      ],
-      "fatal": "page.goto: Target page, context or browser has been closed"
+      "problems": [],
+      "buttons": 1,
+      "strays": [],
+      "stateBefore": "screen-mini§ma:socials§ma-socials§ma-socials§home§cats",
+      "back": {
+        "el": "button.oko-back.oko-hdr-back",
+        "w": 38,
+        "h": 38,
+        "x": 16,
+        "y": 10,
+        "css": "38px|38px|50%|flex|center|center",
+        "icon": "#i-back",
+        "label": "Назад"
+      },
+      "stateAfter": "screen-mini§§§§home§cats"
     },
     {
       "id": "ac-course",
       "name": "Академия · курс",
       "root": false,
-      "problems": [
-        "падение маршрута"
-      ],
-      "fatal": "page.goto: Target page, context or browser has been closed"
+      "problems": [],
+      "buttons": 1,
+      "strays": [],
+      "stateBefore": "screen-academy§§§§course§cats",
+      "back": {
+        "el": "button.oko-back.oko-hdr-back",
+        "w": 38,
+        "h": 38,
+        "x": 16,
+        "y": 10,
+        "css": "38px|38px|50%|flex|center|center",
+        "icon": "#i-back",
+        "label": "Назад"
+      },
+      "stateAfter": "screen-feed§§§§course§cats"
     },
     {
       "id": "ac-lesson",
       "name": "Академия · урок",
       "root": false,
-      "problems": [
-        "падение маршрута"
-      ],
-      "fatal": "page.goto: Target page, context or browser has been closed"
+      "problems": [],
+      "stepError": "page.evaluate: ReferenceError: acOpen is not defined\n    at eval (eval at evaluate (:311:30), <anonymous>:1:53",
+      "buttons": 1,
+      "strays": [],
+      "stateBefore": "screen-academy§ac:lesson§§§lesson§cats",
+      "back": {
+        "el": "button.oko-back.oko-hdr-back",
+        "w": 38,
+        "h": 38,
+        "x": 16,
+        "y": 10,
+        "css": "38px|38px|50%|flex|center|center",
+        "icon": "#i-back",
+        "label": "Назад"
+      },
+      "stateAfter": "screen-academy§§§§course§cats"
     },
     {
       "id": "w2-accounts",
       "name": "Кошелёк · accounts",
       "root": false,
-      "problems": [
-        "падение маршрута"
-      ],
-      "fatal": "page.goto: Target page, context or browser has been closed"
+      "problems": [],
+      "buttons": 1,
+      "strays": [],
+      "stateBefore": "screen-wallet§w2-accounts§w2p-accounts§§home§cats",
+      "back": {
+        "el": "button.w2-bar-nav.oko-back",
+        "w": 38,
+        "h": 38,
+        "x": 14,
+        "y": 10,
+        "css": "38px|38px|50%|flex|center|center",
+        "icon": "#i-back",
+        "label": "Назад"
+      },
+      "stateAfter": "screen-wallet§§§§home§cats"
     },
     {
       "id": "w2-transfers",
       "name": "Кошелёк · transfers",
       "root": false,
-      "problems": [
-        "падение маршрута"
-      ],
-      "fatal": "page.goto: Target page, context or browser has been closed"
+      "problems": [],
+      "buttons": 1,
+      "strays": [],
+      "stateBefore": "screen-wallet§w2-transfers§w2p-transfers§§home§cats",
+      "back": {
+        "el": "button.w2-bar-nav.oko-back",
+        "w": 38,
+        "h": 38,
+        "x": 14,
+        "y": 10,
+        "css": "38px|38px|50%|flex|center|center",
+        "icon": "#i-back",
+        "label": "Назад"
+      },
+      "stateAfter": "screen-wallet§§§§home§cats"
     },
     {
       "id": "w2-exchange",
       "name": "Кошелёк · exchange",
       "root": false,
-      "problems": [
-        "падение маршрута"
-      ],
-      "fatal": "page.goto: Target page, context or browser has been closed"
+      "problems": [],
+      "buttons": 1,
+      "strays": [],
+      "stateBefore": "screen-wallet§w2-exchange§w2p-exchange§§home§cats",
+      "back": {
+        "el": "button.w2-bar-nav.oko-back",
+        "w": 38,
+        "h": 38,
+        "x": 14,
+        "y": 10,
+        "css": "38px|38px|50%|flex|center|center",
+        "icon": "#i-back",
+        "label": "Назад"
+      },
+      "stateAfter": "screen-wallet§§§§home§cats"
     },
     {
       "id": "w2-autopay",
       "name": "Кошелёк · autopay",
       "root": false,
-      "problems": [
-        "падение маршрута"
-      ],
-      "fatal": "page.goto: Target page, context or browser has been closed"
+      "problems": [],
+      "buttons": 1,
+      "strays": [],
+      "stateBefore": "screen-wallet§w2-autopay§w2p-autopay§§home§cats",
+      "back": {
+        "el": "button.w2-bar-nav.oko-back",
+        "w": 38,
+        "h": 38,
+        "x": 14,
+        "y": 10,
+        "css": "38px|38px|50%|flex|center|center",
+        "icon": "#i-back",
+        "label": "Назад"
+      },
+      "stateAfter": "screen-wallet§§§§home§cats"
     },
     {
       "id": "w2-goals",
       "name": "Кошелёк · goals",
       "root": false,
-      "problems": [
-        "падение маршрута"
-      ],
-      "fatal": "page.goto: Target page, context or browser has been closed"
+      "problems": [],
+      "buttons": 1,
+      "strays": [],
+      "stateBefore": "screen-wallet§w2-goals§w2p-goals§§home§cats",
+      "back": {
+        "el": "button.w2-bar-nav.oko-back",
+        "w": 38,
+        "h": 38,
+        "x": 14,
+        "y": 10,
+        "css": "38px|38px|50%|flex|center|center",
+        "icon": "#i-back",
+        "label": "Назад"
+      },
+      "stateAfter": "screen-wallet§§§§home§cats"
     },
     {
       "id": "w2-analytics",
       "name": "Кошелёк · analytics",
       "root": false,
-      "problems": [
-        "падение маршрута"
-      ],
-      "fatal": "page.goto: Target page, context or browser has been closed"
+      "problems": [],
+      "buttons": 1,
+      "strays": [],
+      "stateBefore": "screen-wallet§w2-analytics§w2p-analytics§§home§cats",
+      "back": {
+        "el": "button.w2-bar-nav.oko-back",
+        "w": 38,
+        "h": 38,
+        "x": 14,
+        "y": 10,
+        "css": "38px|38px|50%|flex|center|center",
+        "icon": "#i-back",
+        "label": "Назад"
+      },
+      "stateAfter": "screen-wallet§§§§home§cats"
     },
     {
       "id": "w2-receive",
       "name": "Кошелёк · receive",
       "root": false,
-      "problems": [
-        "падение маршрута"
-      ],
-      "fatal": "page.goto: Target page, context or browser has been closed"
+      "problems": [],
+      "buttons": 1,
+      "strays": [],
+      "stateBefore": "screen-wallet§w2-receive§w2p-receive§§home§cats",
+      "back": {
+        "el": "button.w2-bar-nav.oko-back",
+        "w": 38,
+        "h": 38,
+        "x": 14,
+        "y": 10,
+        "css": "38px|38px|50%|flex|center|center",
+        "icon": "#i-back",
+        "label": "Назад"
+      },
+      "stateAfter": "screen-wallet§§§§home§cats"
     },
     {
       "id": "w2-history",
       "name": "Кошелёк · history",
       "root": false,
-      "problems": [
-        "падение маршрута"
-      ],
-      "fatal": "page.goto: Target page, context or browser has been closed"
+      "problems": [],
+      "buttons": 1,
+      "strays": [],
+      "stateBefore": "screen-wallet§w2-history§w2p-history§§home§cats",
+      "back": {
+        "el": "button.w2-bar-nav.oko-back",
+        "w": 38,
+        "h": 38,
+        "x": 14,
+        "y": 10,
+        "css": "38px|38px|50%|flex|center|center",
+        "icon": "#i-back",
+        "label": "Назад"
+      },
+      "stateAfter": "screen-wallet§§§§home§cats"
     },
     {
       "id": "w2-security",
       "name": "Кошелёк · security",
       "root": false,
-      "problems": [
-        "падение маршрута"
-      ],
-      "fatal": "page.goto: Target page, context or browser has been closed"
+      "problems": [],
+      "buttons": 1,
+      "strays": [],
+      "stateBefore": "screen-wallet§w2-security§w2p-security§§home§cats",
+      "back": {
+        "el": "button.w2-bar-nav.oko-back",
+        "w": 38,
+        "h": 38,
+        "x": 14,
+        "y": 10,
+        "css": "38px|38px|50%|flex|center|center",
+        "icon": "#i-back",
+        "label": "Назад"
+      },
+      "stateAfter": "screen-wallet§§§§home§cats"
     },
     {
       "id": "w2-help",
       "name": "Кошелёк · help",
       "root": false,
-      "problems": [
-        "падение маршрута"
-      ],
-      "fatal": "page.goto: Target page, context or browser has been closed"
+      "problems": [],
+      "buttons": 1,
+      "strays": [],
+      "stateBefore": "screen-wallet§w2-help§w2p-help§§home§cats",
+      "back": {
+        "el": "button.w2-bar-nav.oko-back",
+        "w": 38,
+        "h": 38,
+        "x": 14,
+        "y": 10,
+        "css": "38px|38px|50%|flex|center|center",
+        "icon": "#i-back",
+        "label": "Назад"
+      },
+      "stateAfter": "screen-wallet§§§§home§cats"
     },
     {
       "id": "wal-stmt",
       "name": "Кошелёк · выписка",
       "root": false,
-      "problems": [
-        "падение маршрута"
-      ],
-      "fatal": "page.goto: Target page, context or browser has been closed"
+      "problems": [],
+      "buttons": 1,
+      "strays": [],
+      "stateBefore": "screen-wallet§wal-stmt§walStmt§§home§cats",
+      "back": {
+        "el": "button.wal-stmt-nav.oko-back",
+        "w": 38,
+        "h": 38,
+        "x": 14,
+        "y": 10,
+        "css": "38px|38px|50%|flex|center|center",
+        "icon": "#i-back",
+        "label": "Назад"
+      },
+      "stateAfter": "screen-wallet§§§§home§cats"
     },
     {
       "id": "settings",
       "name": "Настройки",
       "root": false,
-      "problems": [
-        "падение маршрута"
-      ],
-      "fatal": "page.goto: Target page, context or browser has been closed"
+      "problems": [],
+      "buttons": 1,
+      "strays": [],
+      "stateBefore": "screen-profile§view:st2§st2View§§home§cats",
+      "back": {
+        "el": "button#st2Back.ep-cancel.oko-back",
+        "w": 38,
+        "h": 38,
+        "x": 14,
+        "y": 10,
+        "css": "38px|38px|50%|flex|center|center",
+        "icon": "#i-back",
+        "label": "Назад"
+      },
+      "stateAfter": "screen-profile§§§§home§cats"
     },
     {
       "id": "legal-hub",
       "name": "Документы · список",
       "root": false,
-      "problems": [
-        "падение маршрута"
-      ],
-      "fatal": "page.goto: Target page, context or browser has been closed"
+      "problems": [],
+      "buttons": 1,
+      "strays": [],
+      "stateBefore": "screen-feed§view:legal§legalView§§home§cats",
+      "back": {
+        "el": "button.ep-cancel.oko-back",
+        "w": 38,
+        "h": 38,
+        "x": 14,
+        "y": 10,
+        "css": "38px|38px|50%|flex|center|center",
+        "icon": "#i-back",
+        "label": "Закрыть"
+      },
+      "stateAfter": "screen-feed§§§§home§cats"
     },
     {
       "id": "legal-doc",
       "name": "Документы · оферта",
       "root": false,
       "problems": [
-        "падение маршрута"
+        "клик не изменил экран"
       ],
-      "fatal": "page.goto: Target page, context or browser has been closed"
+      "buttons": 1,
+      "strays": [],
+      "stateBefore": "screen-feed§view:legal§legalView§§home§cats",
+      "back": {
+        "el": "button.ep-cancel.oko-back",
+        "w": 38,
+        "h": 38,
+        "x": 14,
+        "y": 10,
+        "css": "38px|38px|50%|flex|center|center",
+        "icon": "#i-back",
+        "label": "Закрыть"
+      },
+      "stateAfter": "screen-feed§view:legal§legalView§§home§cats"
     },
     {
       "id": "notifs",
       "name": "Уведомления",
       "root": false,
-      "problems": [
-        "падение маршрута"
-      ],
-      "fatal": "page.goto: Target page, context or browser has been closed"
+      "problems": [],
+      "buttons": 1,
+      "strays": [],
+      "stateBefore": "screen-feed§view:notifs§notifsView§§home§cats",
+      "back": {
+        "el": "button.ep-cancel.oko-back",
+        "w": 38,
+        "h": 38,
+        "x": 14,
+        "y": 10,
+        "css": "38px|38px|50%|flex|center|center",
+        "icon": "#i-back",
+        "label": "Назад"
+      },
+      "stateAfter": "screen-feed§§§§home§cats"
     },
     {
       "id": "search",
       "name": "Поиск",
       "root": false,
       "problems": [
-        "падение маршрута"
+        "клик не изменил экран"
       ],
-      "fatal": "page.goto: Target page, context or browser has been closed"
+      "buttons": 1,
+      "strays": [],
+      "stateBefore": "screen-feed§view:search§searchView§§home§cats",
+      "back": {
+        "el": "button.ep-cancel.oko-back",
+        "w": 38,
+        "h": 38,
+        "x": 14,
+        "y": 11,
+        "css": "38px|38px|50%|flex|center|center",
+        "icon": "#i-back",
+        "label": "Назад"
+      },
+      "stateAfter": "screen-feed§view:search§searchView§§home§cats"
     },
     {
       "id": "channels",
       "name": "Каналы",
       "root": false,
-      "problems": [
-        "падение маршрута"
-      ],
-      "fatal": "page.goto: Target page, context or browser has been closed"
+      "problems": [],
+      "buttons": 1,
+      "strays": [],
+      "stateBefore": "screen-feed§view:channels§chView§§home§cats",
+      "back": {
+        "el": "button.ch-back.oko-back",
+        "w": 38,
+        "h": 38,
+        "x": 16,
+        "y": 10,
+        "css": "38px|38px|50%|flex|center|center",
+        "icon": "#i-back",
+        "label": "Назад"
+      },
+      "stateAfter": "screen-feed§§§§home§cats"
     },
     {
       "id": "pubprofile",
       "name": "Публичный профиль",
       "root": false,
       "problems": [
-        "падение маршрута"
+        "кнопки «назад» нет",
+        "не приведены к единому виду: button#okoSocBack.soc-back"
       ],
-      "fatal": "page.goto: Target page, context or browser has been closed"
+      "buttons": 0,
+      "strays": [
+        {
+          "el": "button#okoSocBack.soc-back",
+          "text": "",
+          "w": 26,
+          "h": 26,
+          "y": 14
+        }
+      ],
+      "stateBefore": "screen-feed§view:social§okoSoc§§home§cats"
     },
     {
       "id": "pssoc",
       "name": "Мои соцсети (хаб)",
       "root": false,
-      "problems": [
-        "падение маршрута"
-      ],
-      "fatal": "page.goto: Target page, context or browser has been closed"
+      "problems": [],
+      "buttons": 1,
+      "strays": [],
+      "stateBefore": "screen-feed§view:psSoc§psSocView§§home§cats",
+      "back": {
+        "el": "button.ep-cancel.oko-back",
+        "w": 38,
+        "h": 38,
+        "x": 14,
+        "y": 10,
+        "css": "38px|38px|50%|flex|center|center",
+        "icon": "#i-back",
+        "label": "Назад"
+      },
+      "stateAfter": "screen-feed§§§§home§cats"
     },
     {
       "id": "editprof",
       "name": "Редактор профиля",
       "root": false,
       "problems": [
-        "падение маршрута"
+        "кнопки «назад» нет"
       ],
-      "fatal": "page.goto: Target page, context or browser has been closed"
+      "buttons": 0,
+      "strays": [],
+      "stateBefore": "screen-profile§view:editProfile§editProfile§§home§cats"
     },
     {
       "id": "reg",
       "name": "Регистрация",
       "root": false,
-      "problems": [
-        "падение маршрута"
-      ],
-      "fatal": "page.goto: Target page, context or browser has been closed"
+      "problems": [],
+      "buttons": 1,
+      "strays": [],
+      "stateBefore": "screen-feed§view:reg§regView§§home§cats",
+      "back": {
+        "el": "button.ep-cancel.oko-back",
+        "w": 38,
+        "h": 38,
+        "x": 14,
+        "y": 10,
+        "css": "38px|38px|50%|flex|center|center",
+        "icon": "#i-back",
+        "label": "Назад"
+      },
+      "stateAfter": "screen-feed§§§§home§cats"
     },
     {
       "id": "conv",
       "name": "Диалог в чатах",
       "root": false,
-      "problems": [
-        "падение маршрута"
-      ],
-      "fatal": "page.goto: Target page, context or browser has been closed"
+      "problems": [],
+      "buttons": 1,
+      "strays": [],
+      "stateBefore": "screen-chats§conv§§§home§cats",
+      "back": {
+        "el": "button.back.oko-back",
+        "w": 38,
+        "h": 38,
+        "x": 14,
+        "y": 10,
+        "css": "38px|38px|50%|flex|center|center",
+        "icon": "#i-back",
+        "label": "Назад"
+      },
+      "stateAfter": "screen-chats§§§§home§cats"
     },
     {
       "id": "sh-npost",
       "name": "Шторка · новый пост",
       "root": false,
       "problems": [
-        "падение маршрута"
+        "клик не изменил экран"
       ],
-      "fatal": "page.goto: Target page, context or browser has been closed"
+      "buttons": 1,
+      "strays": [],
+      "stateBefore": "screen-feed§sheet:npost§sheetOverlay,sheet-npost§§home§cats",
+      "back": {
+        "el": "button.oko-back.oko-back-sheet",
+        "w": 38,
+        "h": 38,
+        "x": 21,
+        "y": 551,
+        "css": "38px|38px|50%|flex|center|center",
+        "icon": "#i-back",
+        "label": "Назад"
+      },
+      "stateAfter": "screen-feed§sheet:npost§sheetOverlay,sheet-npost§§home§cats"
     },
     {
       "id": "sh-newchat",
       "name": "Шторка · новый чат",
       "root": false,
       "problems": [
-        "падение маршрута"
+        "клик не изменил экран"
       ],
-      "fatal": "page.goto: Target page, context or browser has been closed"
+      "buttons": 1,
+      "strays": [],
+      "stateBefore": "screen-chats§sheet:new-chat§sheetOverlay,sheet-new-chat§§home§cats",
+      "back": {
+        "el": "button.oko-back.oko-back-sheet",
+        "w": 38,
+        "h": 38,
+        "x": 21,
+        "y": 440,
+        "css": "38px|38px|50%|flex|center|center",
+        "icon": "#i-back",
+        "label": "Назад"
+      },
+      "stateAfter": "screen-chats§sheet:new-chat§sheetOverlay,sheet-new-chat§§home§cats"
     },
     {
       "id": "sh-adscreate",
       "name": "Шторка · кампания",
       "root": false,
-      "problems": [
-        "падение маршрута"
-      ],
-      "fatal": "page.goto: Target page, context or browser has been closed"
+      "problems": [],
+      "buttons": 2,
+      "strays": [],
+      "stateBefore": "screen-ads§sheet:ads-create§sheetOverlay,sheet-ads-create,adsStep1§§home§cats",
+      "back": {
+        "el": "button.oko-back.oko-hdr-back",
+        "w": 38,
+        "h": 38,
+        "x": 16,
+        "y": 10,
+        "css": "38px|38px|50%|flex|center|center",
+        "icon": "#i-back",
+        "label": "Назад"
+      },
+      "stateAfter": "screen-ads§§adsStep1§§home§cats"
     },
     {
       "id": "sh-gmdaily",
       "name": "Шторка · задания дня",
       "root": false,
-      "problems": [
-        "падение маршрута"
-      ],
-      "fatal": "page.goto: Target page, context or browser has been closed"
+      "problems": [],
+      "stepError": "page.evaluate: TypeError: Cannot read properties of undefined (reading 's')\n    at gmLbDrift (http://127.0.0.1",
+      "buttons": 1,
+      "strays": [],
+      "stateBefore": "screen-games§§§§home§cats",
+      "back": {
+        "el": "button.oko-back.oko-hdr-back",
+        "w": 38,
+        "h": 38,
+        "x": 16,
+        "y": 10,
+        "css": "38px|38px|50%|flex|center|center",
+        "icon": "#i-back",
+        "label": "Назад"
+      },
+      "stateAfter": "screen-feed§§§§home§cats"
     },
     {
       "id": "sh-gmbp",
       "name": "Шторка · боевой пропуск",
       "root": false,
-      "problems": [
-        "падение маршрута"
-      ],
-      "fatal": "page.goto: Target page, context or browser has been closed"
+      "problems": [],
+      "stepError": "page.evaluate: TypeError: Cannot read properties of undefined (reading 's')\n    at gmLbDrift (http://127.0.0.1",
+      "buttons": 1,
+      "strays": [],
+      "stateBefore": "screen-games§§§§home§cats",
+      "back": {
+        "el": "button.oko-back.oko-hdr-back",
+        "w": 38,
+        "h": 38,
+        "x": 16,
+        "y": 10,
+        "css": "38px|38px|50%|flex|center|center",
+        "icon": "#i-back",
+        "label": "Назад"
+      },
+      "stateAfter": "screen-feed§§§§home§cats"
     },
     {
       "id": "sh-topup",
       "name": "Шторка · пополнение",
       "root": false,
       "problems": [
-        "падение маршрута"
+        "клик не изменил экран"
       ],
-      "fatal": "page.goto: Target page, context or browser has been closed"
+      "buttons": 1,
+      "strays": [],
+      "stateBefore": "screen-wallet§sheet:walTopup§sheetOverlay,sheet-walTopup§§home§cats",
+      "back": {
+        "el": "button.oko-back.oko-back-sheet",
+        "w": 38,
+        "h": 38,
+        "x": 21,
+        "y": 187,
+        "css": "38px|38px|50%|flex|center|center",
+        "icon": "#i-back",
+        "label": "Назад"
+      },
+      "stateAfter": "screen-wallet§sheet:walTopup§sheetOverlay,sheet-walTopup§§home§cats"
     },
     {
       "id": "sh-send",
       "name": "Шторка · перевод",
       "root": false,
       "problems": [
-        "падение маршрута"
+        "клик не изменил экран"
       ],
-      "fatal": "page.goto: Target page, context or browser has been closed"
+      "buttons": 1,
+      "strays": [],
+      "stateBefore": "screen-wallet§sheet:walSend§sheetOverlay,sheet-walSend§§home§cats",
+      "back": {
+        "el": "button.oko-back.oko-back-sheet",
+        "w": 38,
+        "h": 38,
+        "x": 21,
+        "y": 284,
+        "css": "38px|38px|50%|flex|center|center",
+        "icon": "#i-back",
+        "label": "Назад"
+      },
+      "stateAfter": "screen-wallet§sheet:walSend§sheetOverlay,sheet-walSend§§home§cats"
     },
     {
       "id": "sh-payout",
       "name": "Шторка · выплата",
       "root": false,
-      "problems": [
-        "падение маршрута"
-      ],
-      "fatal": "page.goto: Target page, context or browser has been closed"
+      "problems": [],
+      "buttons": 2,
+      "strays": [],
+      "stateBefore": "screen-partner§sheet:payout§sheetOverlay,sheet-payout§§home§cats",
+      "back": {
+        "el": "button.oko-back.oko-hdr-back",
+        "w": 38,
+        "h": 38,
+        "x": 16,
+        "y": 10,
+        "css": "38px|38px|50%|flex|center|center",
+        "icon": "#i-back",
+        "label": "Назад"
+      },
+      "stateAfter": "screen-partner§§§§home§cats"
     },
     {
       "id": "sh-vstopup",
       "name": "Шторка · пополнить TON",
       "root": false,
-      "problems": [
-        "падение маршрута"
-      ],
-      "fatal": "page.goto: Target page, context or browser has been closed"
+      "problems": [],
+      "buttons": 2,
+      "strays": [],
+      "stateBefore": "screen-ton§sheet:vs-ton-topup§sheetOverlay,sheet-vs-ton-topup§§home§cats",
+      "back": {
+        "el": "button.oko-back.oko-hdr-back",
+        "w": 38,
+        "h": 38,
+        "x": 16,
+        "y": 10,
+        "css": "38px|38px|50%|flex|center|center",
+        "icon": "#i-back",
+        "label": "Назад"
+      },
+      "stateAfter": "screen-ton§§§§home§cats"
     },
     {
       "id": "sh-vsrecv",
       "name": "Шторка · получить TON",
       "root": false,
-      "problems": [
-        "падение маршрута"
-      ],
-      "fatal": "page.goto: Target page, context or browser has been closed"
+      "problems": [],
+      "buttons": 2,
+      "strays": [],
+      "stateBefore": "screen-ton§sheet:vs-ton-recv§sheetOverlay,sheet-vs-ton-recv§§home§cats",
+      "back": {
+        "el": "button.oko-back.oko-hdr-back",
+        "w": 38,
+        "h": 38,
+        "x": 16,
+        "y": 10,
+        "css": "38px|38px|50%|flex|center|center",
+        "icon": "#i-back",
+        "label": "Назад"
+      },
+      "stateAfter": "screen-ton§§§§home§cats"
     },
     {
       "id": "sh-vshist",
       "name": "Шторка · история TON",
       "root": false,
-      "problems": [
-        "падение маршрута"
-      ],
-      "fatal": "page.goto: Target page, context or browser has been closed"
+      "problems": [],
+      "buttons": 2,
+      "strays": [],
+      "stateBefore": "screen-ton§sheet:vs-ton-hist§sheetOverlay,sheet-vs-ton-hist§§home§cats",
+      "back": {
+        "el": "button.oko-back.oko-hdr-back",
+        "w": 38,
+        "h": 38,
+        "x": 16,
+        "y": 10,
+        "css": "38px|38px|50%|flex|center|center",
+        "icon": "#i-back",
+        "label": "Назад"
+      },
+      "stateAfter": "screen-ton§§§§home§cats"
     },
     {
       "id": "sh-vsmarket",
       "name": "Шторка · биржа подарков",
       "root": false,
-      "problems": [
-        "падение маршрута"
-      ],
-      "fatal": "page.goto: Target page, context or browser has been closed"
+      "problems": [],
+      "buttons": 2,
+      "strays": [],
+      "stateBefore": "screen-ton§sheet:vs-market§sheetOverlay,sheet-vs-market§§home§cats",
+      "back": {
+        "el": "button.oko-back.oko-hdr-back",
+        "w": 38,
+        "h": 38,
+        "x": 16,
+        "y": 10,
+        "css": "38px|38px|50%|flex|center|center",
+        "icon": "#i-back",
+        "label": "Назад"
+      },
+      "stateAfter": "screen-ton§§§§home§cats"
     },
     {
       "id": "sh-lang",
       "name": "Шторка · язык",
       "root": false,
       "problems": [
-        "падение маршрута"
+        "клик не изменил экран"
       ],
-      "fatal": "page.goto: Target page, context or browser has been closed"
+      "buttons": 1,
+      "strays": [],
+      "stateBefore": "screen-profile§sheet:stLang§sheetOverlay,sheet-stLang§§home§cats",
+      "back": {
+        "el": "button.oko-back.oko-back-sheet",
+        "w": 38,
+        "h": 38,
+        "x": 21,
+        "y": 700,
+        "css": "38px|38px|50%|flex|center|center",
+        "icon": "#i-back",
+        "label": "Назад"
+      },
+      "stateAfter": "screen-profile§sheet:stLang§sheetOverlay,sheet-stLang§§home§cats"
     }
   ],
   "visuals": {
     "38px|38px|50%|flex|center|center": [
-      "root-feed button.oko-back.oko-hdr-back",
-      "root-chats button.oko-back.oko-hdr-back",
-      "root-mini button.oko-back.oko-hdr-back",
-      "root-wallet button.oko-back.oko-hdr-back",
-      "root-profile button.oko-back.oko-hdr-back"
+      "partner button.oko-back.oko-hdr-back",
+      "partner button.oko-back.oko-back-sheet",
+      "games button.oko-back.oko-hdr-back",
+      "academy button.oko-back.oko-hdr-back",
+      "ads button.oko-back.oko-hdr-back",
+      "ton button.oko-back.oko-hdr-back",
+      "ma-video button.oko-back.oko-hdr-back",
+      "ma-market button.oko-back.oko-hdr-back",
+      "ma-system button.oko-back.oko-hdr-back",
+      "ma-factory button.oko-back.oko-hdr-back",
+      "ma-helper button#okoAiBack.back.oko-back",
+      "ma-socials button.oko-back.oko-hdr-back",
+      "ac-course button.oko-back.oko-hdr-back",
+      "ac-lesson button.oko-back.oko-hdr-back",
+      "w2-accounts button.w2-bar-nav.oko-back",
+      "w2-transfers button.w2-bar-nav.oko-back",
+      "w2-exchange button.w2-bar-nav.oko-back",
+      "w2-autopay button.w2-bar-nav.oko-back",
+      "w2-goals button.w2-bar-nav.oko-back",
+      "w2-analytics button.w2-bar-nav.oko-back",
+      "w2-receive button.w2-bar-nav.oko-back",
+      "w2-history button.w2-bar-nav.oko-back",
+      "w2-security button.w2-bar-nav.oko-back",
+      "w2-help button.w2-bar-nav.oko-back",
+      "wal-stmt button.wal-stmt-nav.oko-back",
+      "settings button#st2Back.ep-cancel.oko-back",
+      "legal-hub button.ep-cancel.oko-back",
+      "legal-doc button.ep-cancel.oko-back",
+      "notifs button.ep-cancel.oko-back",
+      "search button.ep-cancel.oko-back",
+      "channels button.ch-back.oko-back",
+      "pssoc button.ep-cancel.oko-back",
+      "reg button.ep-cancel.oko-back",
+      "conv button.back.oko-back",
+      "sh-npost button.oko-back.oko-back-sheet",
+      "sh-newchat button.oko-back.oko-back-sheet",
+      "sh-adscreate button.oko-back.oko-hdr-back",
+      "sh-adscreate button.oko-back.oko-back-sheet",
+      "sh-gmdaily button.oko-back.oko-hdr-back",
+      "sh-gmbp button.oko-back.oko-hdr-back",
+      "sh-topup button.oko-back.oko-back-sheet",
+      "sh-send button.oko-back.oko-back-sheet",
+      "sh-payout button.oko-back.oko-hdr-back",
+      "sh-payout button.oko-back.oko-back-sheet",
+      "sh-vstopup button.oko-back.oko-hdr-back",
+      "sh-vstopup button.oko-back.oko-back-sheet",
+      "sh-vsrecv button.oko-back.oko-hdr-back",
+      "sh-vsrecv button.oko-back.oko-back-sheet",
+      "sh-vshist button.oko-back.oko-hdr-back",
+      "sh-vshist button.oko-back.oko-back-sheet",
+      "sh-vsmarket button.oko-back.oko-hdr-back",
+      "sh-vsmarket button.oko-back.oko-back-sheet",
+      "sh-lang button.oko-back.oko-back-sheet"
     ]
   },
   "summary": {
     "routes": 53,
-    "withProblems": 53,
-    "problems": 53,
+    "withProblems": 10,
+    "problems": 11,
     "distinctVisuals": 1,
     "visualsMatch": true
   }

@@ -125,8 +125,67 @@ const LAYOUT_PROBE = `(() => {
   return out;
 })()`;
 
+/* Скрин с отключёнными анимациями: в ленте крутятся бесконечные CSS-анимации,
+   из-за них обычный screenshot ждёт стабильности до таймаута. */
+async function shot(page, path) {
+  try { await page.screenshot({ path, animations: 'disabled', caret: 'hide', timeout: 15000 }); }
+  catch (e) { errors.push('screenshot ' + path + ': ' + String(e).slice(0, 120)); }
+}
+
+/* Гасим всплывающие окна модуля роста и прочие оверлеи ядра — они не предмет
+   этой проверки, но перехватывают клики. */
+async function calm(page) {
+  await page.evaluate(() => {
+    document.querySelectorAll('.okg-scrim').forEach(n => {
+      const x = n.querySelector('.okg-x');
+      if (x) x.click(); else n.remove();
+    });
+    document.querySelectorAll('#msgMenu.open').forEach(n => n.classList.remove('open'));
+  });
+  await page.waitForTimeout(120);
+}
+
+/* Клик внутри вьюхи: сначала подтягиваем элемент в центр прокручиваемой
+   области (auto-scroll Playwright не всегда справляется с вложенным
+   скроллером), потом жмём. */
+async function tap(page, sel) {
+  await calm(page);
+  await page.waitForSelector(sel, { state: 'attached', timeout: 8000 });
+  await page.evaluate((s) => {
+    const el = document.querySelector(s);
+    if (el && el.scrollIntoView) el.scrollIntoView({ block: 'center', inline: 'nearest' });
+  }, sel);
+  await page.waitForTimeout(120);
+  await page.click(sel, { timeout: 8000 });
+}
+async function type(page, sel, val) {
+  await calm(page);
+  await page.waitForSelector(sel, { state: 'attached', timeout: 8000 });
+  await page.evaluate((s) => {
+    const el = document.querySelector(s);
+    if (el && el.scrollIntoView) el.scrollIntoView({ block: 'center', inline: 'nearest' });
+  }, sel);
+  await page.waitForTimeout(80);
+  await page.fill(sel, val);
+}
+/* Тап по круглому аватару канала OKO в списке чатов */
+async function tapChatAva(page, chatId) {
+  await calm(page);
+  const idx = await page.evaluate((id) => {
+    const items = Array.from(document.querySelectorAll('#chatList .chat-item'));
+    for (let i = 0; i < items.length; i++) {
+      const oc = items[i].getAttribute('onclick') || '';
+      if (oc.indexOf("'" + id + "'") >= 0 || oc.indexOf('(' + id + ')') >= 0) return i;
+    }
+    return -1;
+  }, chatId);
+  if (idx < 0) throw new Error('чат ' + chatId + ' не найден в списке');
+  await page.click(`#chatList .chat-item:nth-of-type(${idx + 1}) .ci-ava`);
+}
+
 const steps = [];
 async function layout(page, name) {
+  await calm(page);
   const r = await page.evaluate(LAYOUT_PROBE);
   const problems = [];
   if (r.overflowX > 1) problems.push('overflowX=' + r.overflowX);
@@ -159,6 +218,15 @@ async function makeCtx(width, height, isMobile) {
       localStorage.setItem('oko-tour-done','1');
       localStorage.setItem('oko-tour','1');
     }catch(e){}
+    /* Модуль роста показывает свои окна поверх всего. Они не предмет этой
+       проверки, но перехватывают клики — снимаем их на протяжении прогона. */
+    document.addEventListener('DOMContentLoaded', function(){
+      var kill = function(){
+        document.querySelectorAll('.okg-scrim,[data-okg="modal"]').forEach(function(n){ n.remove(); });
+      };
+      try{ new MutationObserver(kill).observe(document.body, { childList: true }); }catch(e){}
+      setInterval(kill, 250);
+    });
   `);
   return ctx;
 }
@@ -179,8 +247,8 @@ await page.waitForTimeout(600);
 OUT.moduleLoaded = await page.evaluate(`!!window.okoSocial`);
 
 /* ---- 1. страница канала OKO из списка чатов (тап по аватару) ---- */
-await page.click('#chatList .chat-item .ci-ava');
-await page.waitForTimeout(600);
+await tapChatAva(page, 'oko-channel');
+await page.waitForTimeout(650);
 OUT.entityPageOpened = await page.evaluate(`document.getElementById('okoSoc')?.classList.contains('open') === true`);
 OUT.entityTitle = await page.evaluate(`document.getElementById('okoSocTitle')?.textContent || ''`);
 OUT.entityKey = await page.evaluate(`(()=>{try{return window.okoSocial && document.querySelector('#okoSoc .soc-nick')?.textContent}catch(e){return null}})()`);
@@ -190,52 +258,53 @@ OUT.statsValues = await page.evaluate(`Array.from(document.querySelectorAll('#ok
 OUT.ownerCanPublish = await page.evaluate(`!!document.getElementById('socActPublish')`);
 OUT.ownerCanEdit = await page.evaluate(`!!document.getElementById('socActEdit')`);
 OUT.emptyPostsHonest = await page.evaluate(`(document.querySelector('#okoSocList .soc-empty p')?.textContent||'').trim()`);
-await page.screenshot({ path: 'oko-app/tools/social-01-entity.png' });
+await shot(page, 'oko-app/tools/social-01-entity.png');
 OUT.layout_entity = await layout(page, '01 страница канала OKO');
 
 /* вкладка «Ролики» пустая и честная */
-await page.click('#okoSocTabs button[data-v="reels"]');
+await tap(page, '#okoSocTabs button[data-v="reels"]');
 await page.waitForTimeout(350);
 OUT.emptyReelsHonest = await page.evaluate(`(document.querySelector('#okoSocList .soc-empty p')?.textContent||'').trim()`);
 OUT.noFakeNumbers = await page.evaluate(`
   Array.from(document.querySelectorAll('#okoSoc .soc-stat b')).every(e=>e.textContent.trim()==='0')`);
-await page.screenshot({ path: 'oko-app/tools/social-02-reels-empty.png' });
+await shot(page, 'oko-app/tools/social-02-reels-empty.png');
 OUT.layout_reelsEmpty = await layout(page, '02 вкладка «Ролики» пустая');
 
 /* ---- 2. публикация поста ---- */
-await page.click('#socActPublish');
+await tap(page, '#socActPublish');
 await page.waitForTimeout(400);
-await page.click('#socPubFmt button[data-v="post"]');
+await tap(page, '#socPubFmt button[data-v="post"]');
 await page.waitForTimeout(250);
-await page.fill('#socPubText', 'Проверка публикации поста социального слоя OKO');
+await type(page, '#socPubText', 'Проверка публикации поста социального слоя OKO');
 await page.waitForTimeout(200);
 OUT.pubBtnEnabledForPost = await page.evaluate(`document.getElementById('socPubGo')?.disabled === false`);
-await page.screenshot({ path: 'oko-app/tools/social-03-compose-post.png' });
+await shot(page, 'oko-app/tools/social-03-compose-post.png');
 OUT.layout_composePost = await layout(page, '03 форма публикации · пост');
 
-await page.click('#socPubGo');
+await tap(page, '#socPubGo');
 await page.waitForTimeout(700);
 OUT.afterPost_tab = await page.evaluate(`document.querySelector('#okoSocTabs .soc-tab.on')?.textContent.trim()`);
 OUT.afterPost_countPosts = await page.evaluate(`document.querySelectorAll('#okoSocList .soc-post').length`);
 OUT.afterPost_text = await page.evaluate(`document.querySelector('#okoSocList .soc-post .soc-post-t')?.textContent.trim()`);
 OUT.afterPost_stats = await page.evaluate(`Array.from(document.querySelectorAll('#okoSoc .soc-stat b')).map(e=>e.textContent)`);
-await page.screenshot({ path: 'oko-app/tools/social-04-post-published.png' });
+await shot(page, 'oko-app/tools/social-04-post-published.png');
 OUT.layout_postPublished = await layout(page, '04 пост опубликован');
 
 /* ---- 3. публикация ролика 9:16 ---- */
-await page.click('#socActPublish');
+await tap(page, '#socActPublish');
 await page.waitForTimeout(400);
-await page.click('#socPubFmt button[data-v="9:16"]');
+await tap(page, '#socPubFmt button[data-v="9:16"]');
 await page.waitForTimeout(300);
 OUT.reelBlockedWithoutMedia = await page.evaluate(`document.getElementById('socPubGo')?.disabled === true`);
-await page.fill('#socPubText', 'Вертикальный ролик 9:16 из социального слоя');
+await type(page, '#socPubText', 'Вертикальный ролик 9:16 из социального слоя');
+await calm(page);
 await page.setInputFiles('#socPubCover', { name: 'cover.png', mimeType: 'image/png', buffer: PNG_1x1 });
 await page.waitForTimeout(900);
 OUT.reelCoverAccepted = await page.evaluate(`document.getElementById('socPubGo')?.disabled === false`);
-await page.screenshot({ path: 'oko-app/tools/social-05-compose-reel.png' });
+await shot(page, 'oko-app/tools/social-05-compose-reel.png');
 OUT.layout_composeReel = await layout(page, '05 форма публикации · ролик 9:16');
 
-await page.click('#socPubGo');
+await tap(page, '#socPubGo');
 await page.waitForTimeout(800);
 OUT.afterReel_tab = await page.evaluate(`document.querySelector('#okoSocTabs .soc-tab.on')?.textContent.trim()`);
 OUT.afterReel_gridCount = await page.evaluate(`document.querySelectorAll('#okoSocList .soc-reels .soc-reel').length`);
@@ -244,18 +313,19 @@ OUT.afterReel_gridColumns = await page.evaluate(`
   (()=>{const g=document.querySelector('#okoSocList .soc-reels');
    return g?getComputedStyle(g).gridTemplateColumns.split(' ').length:0})()`);
 OUT.afterReel_stats = await page.evaluate(`Array.from(document.querySelectorAll('#okoSoc .soc-stat b')).map(e=>e.textContent)`);
-await page.screenshot({ path: 'oko-app/tools/social-06-reel-published.png' });
+await shot(page, 'oko-app/tools/social-06-reel-published.png');
 OUT.layout_reelPublished = await layout(page, '06 ролик 9:16 опубликован');
 
 /* ---- 3b. ролик 16:9 ---- */
-await page.click('#socActPublish');
+await tap(page, '#socActPublish');
 await page.waitForTimeout(400);
-await page.click('#socPubFmt button[data-v="16:9"]');
+await tap(page, '#socPubFmt button[data-v="16:9"]');
 await page.waitForTimeout(250);
-await page.fill('#socPubText', 'Горизонтальный ролик 16:9 из социального слоя');
+await type(page, '#socPubText', 'Горизонтальный ролик 16:9 из социального слоя');
+await calm(page);
 await page.setInputFiles('#socPubCover', { name: 'cover2.png', mimeType: 'image/png', buffer: PNG_1x1 });
 await page.waitForTimeout(900);
-await page.click('#socPubGo');
+await tap(page, '#socPubGo');
 await page.waitForTimeout(800);
 OUT.bothRatiosInGrid = await page.evaluate(`
   Array.from(document.querySelectorAll('#okoSocList .soc-reel-r')).map(e=>e.textContent).sort()`);
@@ -278,86 +348,86 @@ OUT.feedDomHasReelCards = await page.evaluate(`
    let n=0; arts.forEach(a=>{ if(a.querySelector('.media')) n++; }); return {cards:arts.length, withMedia:n};})()`);
 OUT.feedDomHasSocialText = await page.evaluate(`
   /Вертикальный ролик 9:16/.test(document.getElementById('feedList')?.textContent||'')`);
-await page.screenshot({ path: 'oko-app/tools/social-08-feed.png' });
+await shot(page, 'oko-app/tools/social-08-feed.png');
 OUT.feedOverflowX = await page.evaluate(`Math.max(0, document.documentElement.scrollWidth - document.documentElement.clientWidth)`);
 
 /* ---- 5. копирование ссылки и ника ---- */
 await page.evaluate(`showTab('chats');`);
 await page.waitForTimeout(400);
-await page.click('#chatList .chat-item .ci-ava');
-await page.waitForTimeout(500);
-await page.click('#socCopyLink');
+await tapChatAva(page, 'oko-channel');
+await page.waitForTimeout(550);
+await tap(page, '#socCopyLink');
 await page.waitForTimeout(500);
 OUT.clipboardLink = await page.evaluate(`navigator.clipboard.readText().catch(e=>'ошибка: '+e)`);
-await page.click('#socCopyNick');
+await tap(page, '#socCopyNick');
 await page.waitForTimeout(500);
 OUT.clipboardNick = await page.evaluate(`navigator.clipboard.readText().catch(e=>'ошибка: '+e)`);
 
 /* ---- 6. создание своего канала ---- */
 await page.evaluate(`okoSocial.close(); okoSocial.create('channel');`);
 await page.waitForTimeout(500);
-await page.fill('#socCrName', 'Мой тестовый канал');
-await page.fill('#socCrDesc', 'Канал, созданный пробником социального слоя');
+await type(page, '#socCrName', 'Мой тестовый канал');
+await type(page, '#socCrDesc', 'Канал, созданный пробником социального слоя');
 await page.waitForTimeout(250);
-await page.screenshot({ path: 'oko-app/tools/social-09-create.png' });
+await shot(page, 'oko-app/tools/social-09-create.png');
 OUT.layout_create = await layout(page, '09 форма создания');
-await page.click('#socCrGo');
+await tap(page, '#socCrGo');
 await page.waitForTimeout(800);
 OUT.createdChannel_title = await page.evaluate(`document.getElementById('okoSocTitle')?.textContent`);
 OUT.createdChannel_owner = await page.evaluate(`!!document.getElementById('socActPublish')`);
 OUT.createdChannel_manage = await page.evaluate(`!!document.getElementById('socManage')`);
 OUT.createdChannel_stats = await page.evaluate(`Array.from(document.querySelectorAll('#okoSoc .soc-stat b')).map(e=>e.textContent)`);
-await page.screenshot({ path: 'oko-app/tools/social-10-my-channel.png' });
+await shot(page, 'oko-app/tools/social-10-my-channel.png');
 OUT.layout_myChannel = await layout(page, '10 свой канал');
 
 /* ---- 7. создание клуба (супергруппа) ---- */
 await page.evaluate(`okoSocial.close(); okoSocial.create('club');`);
 await page.waitForTimeout(500);
-await page.fill('#socCrName', 'Клуб роста OKO');
-await page.fill('#socCrDesc', 'Клуб-супергруппа: роли, права, темы, закреп, приглашения');
+await type(page, '#socCrName', 'Клуб роста OKO');
+await type(page, '#socCrDesc', 'Клуб-супергруппа: роли, права, темы, закреп, приглашения');
 await page.waitForTimeout(250);
-await page.click('#socCrGo');
+await tap(page, '#socCrGo');
 await page.waitForTimeout(800);
 OUT.createdClub_title = await page.evaluate(`document.getElementById('okoSocTitle')?.textContent`);
 OUT.createdClub_kindChip = await page.evaluate(`
   Array.from(document.querySelectorAll('#okoSoc .soc-chip')).map(e=>e.textContent.trim())`);
-await page.screenshot({ path: 'oko-app/tools/social-11-club.png' });
+await shot(page, 'oko-app/tools/social-11-club.png');
 OUT.layout_club = await layout(page, '11 страница клуба');
 
 /* управление клубом: права, темы, закреп, приглашения */
-await page.click('#socManage');
+await tap(page, '#socManage');
 await page.waitForTimeout(600);
 OUT.clubManage_sections = await page.evaluate(`
   Array.from(document.querySelectorAll('#okoSoc .soc-sec')).map(e=>e.textContent.trim())`);
-await page.click('#okoSoc [data-a="permwrite"][data-v="admins"]');
+await tap(page, '#okoSoc [data-a="permwrite"][data-v="admins"]');
 await page.waitForTimeout(350);
 OUT.clubPermWrite = await page.evaluate(`
   (()=>{try{return okoSocial.entity(okoSocial.state && null)}catch(e){}
    const b=document.querySelector('#okoSoc [data-a="permwrite"].on'); return b?b.getAttribute('data-v'):null})()`);
-await page.fill('#socTopicName', 'Общая тема');
-await page.click('#okoSoc [data-a="topicadd"]');
+await type(page, '#socTopicName', 'Общая тема');
+await tap(page, '#okoSoc [data-a="topicadd"]');
 await page.waitForTimeout(450);
 OUT.clubTopicAdded = await page.evaluate(`/Общая тема/.test(document.getElementById('okoSocBody')?.textContent||'')`);
-await page.click('#okoSoc [data-a="inviteadd"]');
+await tap(page, '#okoSoc [data-a="inviteadd"]');
 await page.waitForTimeout(450);
 OUT.clubInviteCreated = await page.evaluate(`/okoteam\\.top\\/join\\//.test(document.getElementById('okoSocBody')?.textContent||'')`);
-await page.click('#okoSoc [data-a="invitecopy"]');
+await tap(page, '#okoSoc [data-a="invitecopy"]');
 await page.waitForTimeout(500);
 OUT.clipboardInvite = await page.evaluate(`navigator.clipboard.readText().catch(e=>'ошибка: '+e)`);
-await page.screenshot({ path: 'oko-app/tools/social-12-club-manage.png' });
+await shot(page, 'oko-app/tools/social-12-club-manage.png');
 OUT.layout_clubManage = await layout(page, '12 управление клубом');
 
 /* участники и роли */
-await page.click('#okoSocBack');
+await tap(page, '#okoSocBack');
 await page.waitForTimeout(400);
-await page.click('#socMembers');
+await tap(page, '#socMembers');
 await page.waitForTimeout(500);
 OUT.clubMembers = await page.evaluate(`document.querySelectorAll('#okoSoc .soc-row .soc-role').length`);
 OUT.clubOwnerRole = await page.evaluate(`document.querySelector('#okoSoc .soc-role')?.textContent.trim()`);
 OUT.layout_clubMembers = await layout(page, '13 участники и роли');
 
 /* ---- 8. выходы: назад / Escape ---- */
-await page.click('#okoSocBack');
+await tap(page, '#okoSocBack');
 await page.waitForTimeout(400);
 OUT.backReturnsToEntity = await page.evaluate(`!!document.getElementById('okoSocTabs')`);
 await page.keyboard.press('Escape');
@@ -368,8 +438,8 @@ OUT.appAliveAfterClose = await page.evaluate(`(()=>{ try{ showTab('feed'); retur
 /* ---- 9. курс: единая страница сущности ---- */
 await page.evaluate(`okoSocial.create('course');`);
 await page.waitForTimeout(500);
-await page.fill('#socCrName', 'Курс по рилсам');
-await page.click('#socCrGo');
+await type(page, '#socCrName', 'Курс по рилсам');
+await tap(page, '#socCrGo');
 await page.waitForTimeout(700);
 OUT.createdCourse_title = await page.evaluate(`document.getElementById('okoSocTitle')?.textContent`);
 OUT.createdCourse_tabs = await page.evaluate(`
@@ -386,12 +456,12 @@ await page.waitForTimeout(600);
 OUT.dmTitle = await page.evaluate(`document.getElementById('okoSocTitle')?.textContent`);
 OUT.dmHasFollow = await page.evaluate(`!!document.getElementById('socActFollow')`);
 OUT.dmHasMsg = await page.evaluate(`!!document.getElementById('socActMsg')`);
-await page.screenshot({ path: 'oko-app/tools/social-13-dm-profile.png' });
+await shot(page, 'oko-app/tools/social-13-dm-profile.png');
 OUT.layout_dm = await layout(page, '15 страница ЛС-собеседника');
 
 /* подписка реально считается */
 const beforeSub = await page.evaluate(`document.querySelector('#okoSoc .soc-stat b')?.textContent`);
-await page.click('#socActFollow');
+await tap(page, '#socActFollow');
 await page.waitForTimeout(500);
 const afterSub = await page.evaluate(`document.querySelector('#okoSoc .soc-stat b')?.textContent`);
 OUT.followCounts = { before: beforeSub, after: afterSub, changed: beforeSub !== afterSub };
@@ -412,7 +482,7 @@ await pageD.waitForTimeout(600);
 await pageD.evaluate(`okoSocial.open(okoSocial.keyOfChat(CHATS[0]))`);
 await pageD.waitForTimeout(600);
 OUT.desktop_opened = await pageD.evaluate(`document.getElementById('okoSoc')?.classList.contains('open') === true`);
-await pageD.screenshot({ path: 'oko-app/tools/social-14-desktop.png' });
+await shot(pageD, 'oko-app/tools/social-14-desktop.png');
 const rd = await pageD.evaluate(LAYOUT_PROBE);
 OUT.layout_desktop = {
   step: 'ПК 1440x900',

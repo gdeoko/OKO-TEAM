@@ -74,7 +74,8 @@ var CSS = [
 'header > button.oko-back{ margin-left:0; margin-right:2px; }',
 'button.oko-back > svg.i{',
 '  width:20px !important; height:20px !important;',
-'  stroke-width:7; color:inherit; vertical-align:middle;',
+'  stroke-width:7; color:inherit !important; vertical-align:middle;',
+'  transform:none !important;',   /* у части модулей знак был развёрнут на 180° */
 '}',
 'button.oko-back:hover{ background:var(--raised) !important; color:var(--accent) !important; }',
 'button.oko-back:active{ transform:scale(.9); }',
@@ -96,6 +97,7 @@ var CSS = [
 
 /* внутренние дубликаты «назад»: их работу делает единая кнопка в шапке */
 'body.oko-back-on #screen-mini .ma-view > button.oko-back-dup,',
+'body.oko-back-on #screen-mini .mk2-head > .mk2-back,',
 'body.oko-back-on #acRoot .ac-back,',
 'body.oko-back-on #marketRoot > .mk-back{ display:none !important; }',
 
@@ -192,16 +194,22 @@ function stepInsideTop(top){
 
 /* Шаг внутри РАЗДЕЛА, который ядро в стек не кладёт */
 function stepInsideSection(){
-  /* Биржа услуг: категория/список/избранное -> к категориям */
-  if(maOpenKey() === 'market' && typeof window.mkView !== 'undefined' &&
-     window.mkView && window.mkView !== 'cats' && fn('renderMarket')){
-    try{
-      window.mkView = 'cats';
-      window.mkCat = null;
-      window.mkSearchQ = '';
-      window.renderMarket();
-      return true;
-    }catch(e){}
+  /* Биржа услуг. У раздела своя многоуровневая навигация (каталог -> категория
+     -> карточка), и её знает сам модуль биржи. Его кнопку мы прячем как
+     дубликат, а шаг делаем через неё же — чтобы не расходиться в логике. */
+  if(maOpenKey() === 'market'){
+    var mb = document.querySelector('#ma-market .mk2-back');
+    if(mb){ mb.click(); return true; }
+    if(typeof window.mkView !== 'undefined' && window.mkView &&
+       window.mkView !== 'cats' && fn('renderMarket')){
+      try{
+        window.mkView = 'cats';
+        window.mkCat = null;
+        window.mkSearchQ = '';
+        window.renderMarket();
+        return true;
+      }catch(e){}
+    }
   }
   /* Академия: урок -> список уроков курса -> каталог курсов */
   if(activeScreenId() === 'academy' && typeof window.acView !== 'undefined' &&
@@ -290,6 +298,10 @@ window.okoGoBack = function(){ return okoBackTo(); };
 if(origNvBack) window.nvBack = function(){ return okoBackTo(); };
 /* попап истории ядра ходит мимо nvBack — отмечаем шаг, чтобы не удвоить */
 if(origNvBackTop) window.nvBackTop = function(){ stamp(); return origNvBackTop.apply(this, arguments); };
+/* Ядро «съедает» лишнюю запись истории программным history.back(). Такой
+   popstate — не жест человека, и второго шага назад по нему быть не должно. */
+var origNvDrop = fn('nvDropHistory');
+if(origNvDrop) window.nvDropHistory = function(){ stamp(); return origNvDrop.apply(this, arguments); };
 
 /* Telegram показывает свою кнопку «назад», пока есть куда возвращаться.
    Слой v2 спрашивает об этом okoHasOpenLayer — расширяем ответ, иначе на
@@ -427,14 +439,22 @@ function normalizeBars(){
 /* Отдельные кнопки вне перечисленных шапок, которые тоже обязаны выглядеть
    одинаково (кошелёк, документы, хлебная крошка биржи, Академия, мини-аппы). */
 var LOOSE = [
-  '.ep-cancel', '.w2-bar-nav', '.wal-stmt-nav', '.lg-back', '.mk-back', '.ac-back',
+  '.ep-cancel', '.w2-bar-nav', '.wal-stmt-nav',
+  /* любая кнопка «…back…» со знаком #i-back — модулей много и они растут,
+     поимённый список устарел бы на следующей же правке */
+  'button[class*="back"]', 'a[class*="back"]',
   '#screen-mini .ma-view > button.btn'
 ];
+/* Стрелки, которые «назад» НЕ означают: листание слайдов урока, стирание
+   символа в пин-коде, шаги мастеров, крестики подсказок. */
+var LOOSE_SKIP = /ac-arrow|ghosty|back-key|backspace|wal-live-x|mp-esc|mp-safety|acd-full|mp-mv-nav/;
+
 function normalizeLoose(){
   for(var i = 0; i < LOOSE.length; i++){
     var list = document.querySelectorAll(LOOSE[i]);
     for(var j = 0; j < list.length; j++){
       var el = list[j];
+      if(LOOSE_SKIP.test(String(el.className || ''))) continue;
       var forced = el.classList.contains('ep-cancel');
       if(!forced && !isBackIcon(el) && el.dataset.okoBack !== '1') continue;
       /* ghost-«Назад» и «Каталог» внутри контента прячем: их работу делает
@@ -528,8 +548,8 @@ function schedule(){
   if(queued) return;
   queued = true;
   /* приложение постоянно перерисовывает живые метрики — держим обход
-     не чаще ~10 раз в секунду, иначе наблюдатель греет процессор */
-  var wait = Math.max(0, 100 - (Date.now() - lastRun));
+     не чаще 5 раз в секунду, иначе наблюдатель греет процессор */
+  var wait = Math.max(0, 200 - (Date.now() - lastRun));
   setTimeout(function(){
     requestAnimationFrame(function(){
       queued = false;
@@ -554,7 +574,7 @@ function boot(){
     });
   }catch(e){}
   /* страховка на асинхронные вставки, которые наблюдатель мог проспать */
-  setInterval(run, 1200);
+  setInterval(run, 2000);
   [200, 700, 1600, 3200].forEach(function(d){ setTimeout(run, d); });
 }
 

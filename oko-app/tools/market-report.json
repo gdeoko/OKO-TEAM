@@ -1,0 +1,40 @@
+{
+  "at": "2026-08-09T05:06:18.564Z",
+  "base": "http://127.0.0.1:8211/index.html",
+  "modes": [
+    {
+      "mode": "phone",
+      "label": "Телефон 390×844",
+      "steps": [],
+      "errors": 0,
+      "consoleErrors": [],
+      "fatal": "TimeoutError: locator.waitFor: Timeout 10000ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('#ma-market [data-mk=\"mine\"]').first() to be visible\u001b[22m\n\u001b[2m    22 × locator resolved to hidden <button class=\"mk2-qt\" data-mk=\"mine\" data-mkact=\"mine\">…</button>\u001b[22m\n"
+    },
+    {
+      "mode": "narrow",
+      "label": "Узкий Android 360×740",
+      "steps": [],
+      "errors": 0,
+      "consoleErrors": [],
+      "fatal": "TimeoutError: page.goto: Timeout 40000ms exceeded.\nCall log:\n\u001b[2m  - navigating to \"http://127.0.0.1:8211/index.html\", waiting until \"domcontentloaded\"\u001b[22m\n"
+    },
+    {
+      "mode": "desktop",
+      "label": "ПК 1440×900",
+      "steps": [],
+      "errors": 0,
+      "consoleErrors": [],
+      "fatal": "TimeoutError: locator.waitFor: Timeout 10000ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('#ma-market [data-mk=\"mine\"]').first() to be visible\u001b[22m\n\u001b[2m    21 × locator resolved to hidden <button class=\"mk2-qt\" data-mk=\"mine\" data-mkact=\"mine\">…</button>\u001b[22m\n"
+    }
+  ],
+  "summary": {
+    "layoutErrors": 0,
+    "consoleErrors": 0,
+    "fatal": [
+      "phone",
+      "narrow",
+      "desktop"
+    ]
+  },
+  "verdict": "ЕСТЬ ЗАМЕЧАНИЯ"
+}

@@ -1140,3 +1140,34 @@ html.okg-pill-on main > .screen.active{ padding-bottom: calc(var(--oko-safe-bott
 .okg-pill small{ font-size: 9.5px !important; line-height: 1; margin-top: 1px; }
 .okg-pill .okg-ring{ width: 24px !important; height: 24px !important; }
 .okg-pill .okg-ring svg{ width: 24px !important; height: 24px !important; }
+
+/* Пустая лента: два действия в ряд, на узком экране — в столбик. */
+.fa-empty-acts{
+  display: flex; flex-wrap: wrap; gap: 8px;
+  justify-content: center; margin-top: 14px; width: 100%;
+}
+.fa-empty-acts .fa-empty-cta{ margin: 0; flex: 0 1 auto; min-width: 0; }
+.fa-empty-cta.ghost{ background: transparent; border: 1px solid var(--border); color: var(--text); }
+@media (max-width: 380px){
+  .fa-empty-acts{ flex-direction: column; align-items: stretch; }
+}
+
+/* ============================================================================
+   38. Шапка чата: название важнее кнопок
+   На светлой теме название «Общий чат OKO» превращалось в «Общий ч...» —
+   его вытесняли пилюля «Созвон» и две кнопки звонка. Приоритет отдаём имени:
+   на узком экране «Созвон» остаётся точкой-индикатором без подписи.
+   ============================================================================ */
+.conv-head .who{ min-width: 0; }
+.cl-conv-start{ flex: 0 0 auto; min-width: 0; }
+@media (max-width: 430px){
+  /* Прячем именно display:none, а не «визуально скрытым» приёмом: скрытый
+     через clip-path текст остаётся в потоке и аудит справедливо считает его
+     обрезанным. Доступное имя кнопки живёт в aria-label. */
+  .cl-conv-start .cl-conv-start-tx{ display: none; }
+  .cl-conv-start{
+    width: 34px; height: 34px; padding: 0 !important;
+    border-radius: 50%; display: inline-flex;
+    align-items: center; justify-content: center;
+  }
+}

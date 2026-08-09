@@ -30,7 +30,7 @@ const args = Object.fromEntries(
   process.argv.slice(2).join(' ').split('--').filter(Boolean)
     .map(s => { const [k, ...v] = s.trim().split(/\s+/); return [k, v.join(' ') || true]; })
 );
-const BASE = args.base || 'http://127.0.0.1:8199/index.html';
+const BASE = args.base || 'http://127.0.0.1:8211/index.html';
 const OUT = path.resolve('oko-app/tools');
 
 const MODES = [
@@ -53,6 +53,14 @@ const INIT = `
     localStorage.setItem('oko-tour-done','1');
     localStorage.setItem('oko-tour','1');
     localStorage.removeItem('oko-market-v3');
+    /* Слой роста (oko-growth.js) показывает модальные подсказки поверх всего.
+       Это его штатное поведение и отдельная подсистема — здесь мы проверяем
+       биржу, поэтому все поводы глушим через его же ключ «больше не показывать». */
+    localStorage.setItem('okg-state-v1', JSON.stringify({
+      off: { expiring:true, onboarding:true, partner:true, anketa:true, videofree:true,
+             lesson:true, video:true, autopost:true, factory:true, analytics:true, market:true },
+      refCopied: true
+    }));
   }catch(e){}
 `;
 
@@ -185,10 +193,14 @@ async function run(page, mode, rep) {
     };
   })()`;
 
-  const click = async (sel) => {
-    await page.waitForSelector(sel, { state: 'visible', timeout: 8000 });
-    await page.click(sel);
-    await page.waitForTimeout(220);
+  /* Клик всегда по первому видимому совпадению внутри мини-аппа биржи.
+     Модальные подсказки чужих подсистем закрываем, если всё-таки всплыли. */
+  const click = async (sel, scoped = true) => {
+    await page.evaluate(`document.querySelectorAll('.okg-scrim').forEach(function(s){ s.remove(); });`);
+    const loc = (scoped ? page.locator('#ma-market ' + sel) : page.locator(sel)).first();
+    await loc.waitFor({ state: 'visible', timeout: 10000 });
+    await loc.click({ timeout: 12000 });
+    await page.waitForTimeout(240);
   };
 
   /* 1. открыть биржу */
@@ -238,6 +250,11 @@ async function run(page, mode, rep) {
     expect: (s) => s.cards >= 1 ? '' : 'объявление не появилось в каталоге'
   });
 
+  /* 4b. открытие из каталога — считается просмотр и пишется история */
+  await click('[data-mk="card"]');
+  await check('10b. Карточка из каталога', { extra: STATE });
+  await page.evaluate(`okoMarketOpen()`);
+
   /* 5. мои объявления */
   await click('[data-mk="mine"]');
   await check('11. Мои объявления · активные', {
@@ -276,7 +293,7 @@ async function run(page, mode, rep) {
   await page.waitForTimeout(250);
   await click('[data-mk="delete"]');
   await check('16. Подтверждение удаления', { extra: STATE, shot: '10-delete' });
-  await click('[data-mk="delete-yes"]');
+  await click('[data-mk="delete-yes"]', false);
   await check('17. После удаления', {
     extra: STATE,
     expect: (s) => s.listings === 0 ? '' : `после удаления должно быть 0 объявлений, осталось ${s.listings}`
@@ -331,7 +348,7 @@ async function main() {
     console.log(`\n=== ${mode.label} ===`);
     const ctx = await browser.newContext({
       viewport: { width: mode.width, height: mode.height },
-      deviceScaleFactor: 2,
+      deviceScaleFactor: 1,
       isMobile: mode.mobile,
       hasTouch: mode.mobile,
       userAgent: mode.mobile

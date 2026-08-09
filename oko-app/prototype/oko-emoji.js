@@ -1456,7 +1456,24 @@
     if (typeof nvPush === 'function') nvPush('cp:panel', function () { close(true); });
   }
 
+  /* Стоит ли наш слой на вершине навигационного стека */
+  function onTopOfNav() {
+    try {
+      if (typeof nvStackLabels !== 'function') return false;
+      var l = nvStackLabels();
+      return l.length > 0 && l[l.length - 1] === 'cp:panel';
+    } catch (e) { return false; }
+  }
+
   function close(fromNav) {
+    /* Программное закрытие проводим через nvBack, а не через nvPop.
+       nvPop делает «тихий» history.back(); ядро его глотает, а oko-back.js
+       ловит popstate отдельно и, не зная о нашем шаге, делает ещё один —
+       закрывает весь диалог. nvBack ставит общий замок и шаг остаётся один. */
+    if (!fromNav && state.open && onTopOfNav() && typeof nvBack === 'function') {
+      nvBack();               /* -> nvBackTop -> close(true) */
+      return;
+    }
     var p = el();
     var was = state.open;
     state.open = false;
