@@ -713,3 +713,31 @@ main > .screen > .pad,
   .okg-pill{ bottom: calc(var(--oko-safe-bottom) + 20px) !important; }
   main > .screen > .pad{ padding-bottom: calc(40px + var(--oko-safe-bottom)); }
 }
+
+/* ---------------------------------------------------------------------------
+   25. ПИЛЮЛЯ РОСТА не спорит с открытыми шторками и модалками
+   --------------------------------------------------------------------------- */
+body:has(.sheet.open) .okg-pill,
+body:has(#sheetOverlay.open) .okg-pill,
+body:has(.okg-scrim) .okg-pill,
+body:has(#msgMenu.open) .okg-pill{
+  display:none !important;
+}
+
+/* ---------------------------------------------------------------------------
+   26. ЗАГОЛОВОК ЭКРАНА НЕ ОБРЕЗАЕТСЯ РЯДОМ С КНОПКОЙ «НАЗАД»
+   На экранах без вкладки в шапке стоят: назад + знак OKO + название +
+   три действия. На 390px «Партнёрская программа» не помещалась и резалась
+   до «Партнё…». Когда есть кнопка «назад», словесный логотип уступает место
+   заголовку — знак остаётся, название читается целиком.
+   --------------------------------------------------------------------------- */
+header:has(.oko-hdr-back:not([style*="display: none"])) .brand .logo{
+  display:none;
+}
+header .screen-title{
+  min-width:0;
+  font-size:clamp(14px, 4.2vw, 18px);
+  white-space:nowrap;
+  overflow:hidden;
+  text-overflow:ellipsis;
+}

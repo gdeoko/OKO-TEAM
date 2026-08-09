@@ -2222,9 +2222,9 @@ function walRenderCats(){
   const total = cats.reduce((s,c)=>s+c[1],0);
   const CAT_COLORS = ['#9AFF00','#7ECBEB','#FFB84A','#FF7EA6','#A980FF','#4EE2B8','#FFDF5C','#FF5C5C'];
   bar.innerHTML = cats.map(([,v],i)=>
-    `<i style="width:${(v/total*100).toFixed(1)}%;background:${CAT_COLORS[i%CAT_COLORS.length]};animation-delay:${i*70}ms"></i>`).join('');
+    `<i style="width:${total?(v/total*100).toFixed(1):0}%;background:${CAT_COLORS[i%CAT_COLORS.length]};animation-delay:${i*70}ms"></i>`).join('');
   wrap.innerHTML = cats.map(([k,v],i)=>{
-    const pct = Math.round(v / total * 100);
+    const pct = total ? Math.round(v / total * 100) : 0;
     const c = CAT_COLORS[i%CAT_COLORS.length];
     return `<span class="wal-cat" style="animation-delay:${i*60}ms"><span class="dot" style="background:${c};box-shadow:0 0 6px ${c}66"></span>${k}<b>${fmtMoney(v)}</b><span class="wal-cat-pct">${pct||'<1'}%</span></span>`;
   }).join('');
@@ -3528,7 +3528,7 @@ function walRenderPie(){
     return el;
   }).join('');
   const list = cats.slice(0, 6).map(([k,v],i)=>{
-    const pct = Math.round(v / total * 100);
+    const pct = total ? Math.round(v / total * 100) : 0;
     return `<div class="wal-pie-row" style="animation-delay:${i*60}ms">
       <span class="wal-pie-dot" style="background:${WAL_PIE_COLORS[i%WAL_PIE_COLORS.length]}"></span>
       <span class="wal-pie-nm">${esc(k)}</span>
@@ -26050,7 +26050,7 @@ function hqRevenueView(){
   const srcRows = srcs.map((s,i)=>`
     <div class="hq-src ${hqRevSrc===s.src?'on':''}" style="animation-delay:${i*0.05}s" onclick="hqRevFilter(${hqRevSrc===s.src?0:i+1})">
       <div class="hq-src-t"><b>${esc(s.src)}</b><span><i>${fmtMoney(Math.round(s.sum))}</i> · ${total?Math.round(s.sum/total*100):0}%</span></div>
-      <div class="hq-bar"><i style="width:${Math.max(3, s.sum/max*100)}%"></i></div>
+      <div class="hq-bar"><i style="width:${max ? Math.max(3, s.sum/max*100) : 0}%"></i></div>
     </div>`).join('');
 
   const ops = list.slice(0,30).map(r=>`
@@ -27097,7 +27097,7 @@ function hqFeatsBlock(){
       <span class="hq-feat-ic" style="color:${f.c};background:${f.c}1e">${I(f.ic)}</span>
       <span class="hq-feat-b">
         <span class="hq-feat-top"><b>${esc(f.n)}</b><span class="hq-feat-n">${f.n24}<em>${esc(f.sub)}</em></span></span>
-        <span class="hq-bar"><i style="width:${Math.round(f.n24/max*100)}%;background:linear-gradient(90deg,${f.c},${f.c}99)"></i></span>
+        <span class="hq-bar"><i style="width:${max ? Math.round(f.n24/max*100) : 0}%;background:linear-gradient(90deg,${f.c},${f.c}99)"></i></span>
       </span>
       <span class="hq-feat-dl ${f.up?'up':'dn'}">${esc(f.dl)}</span>
     </div>`).join('');
@@ -46696,13 +46696,17 @@ var PW_ASSET = {
   })();
 
   /* ---------- профиль партнёра ---------- */
+  /* Партнёрский профиль стартует с нуля (правка Даниэля 09.08).
+     Раньше здесь были выдуманные 47 350 ₽ «заработано в этом месяце»,
+     128 740 ₽ оборота и 12 780 ₽ «к выплате» — человек видел чужие деньги
+     как свои. Суммы приходят из партнёрского бэкенда. */
   const PP = {
-    nick: 'daniel7x',
-    monthEarned: 47350,      // ₽ заработано в этом месяце
-    monthPrev:   38120,      // ₽ за прошлый месяц
-    turnoverAll: 128740,     // ₽ всего оборота (для лестницы)
-    weekTurnover: 21980,     // ₽ за эту неделю (для wall of fame)
-    payoutAvail: 12780,      // ₽ доступно к выводу
+    nick: (typeof PROFILE !== 'undefined' && PROFILE.nick) ? String(PROFILE.nick).replace(/^@/, '') : '',
+    monthEarned: 0,          // ₽ заработано в этом месяце
+    monthPrev:   0,          // ₽ за прошлый месяц
+    turnoverAll: 0,          // ₽ всего оборота (для лестницы)
+    weekTurnover: 0,         // ₽ за эту неделю (для wall of fame)
+    payoutAvail: 0,          // ₽ доступно к выводу
     payoutMin:   1000,       // ₽ порог
     products: [
       {k:'all',    label:'Все', short:'all', dot:false},
@@ -46733,27 +46737,21 @@ var PW_ASSET = {
   }
 
   /* ---------- источники трафика (топ-3+) ---------- */
+  /* Каналы привлечения — справочник. Суммы обнулены 09.08: заполняются
+     реальной атрибуцией переходов по реф-ссылке. */
   const SOURCES = [
-    {k:'ig',  ic:'pp-ig',  name:'Instagram',      sum:19870, hint:'сторис · reels'},
-    {k:'tg',  ic:'pp-tg',  name:'Telegram-канал', sum:15420, hint:'посты · закреп'},
-    {k:'yt',  ic:'pp-yt',  name:'YouTube',        sum: 8460, hint:'обзоры · описание'},
-    {k:'vk',  ic:'pp-vk',  name:'VK',             sum: 2200, hint:'клипы · группа'},
-    {k:'dir', ic:'pp-link',name:'Прямые ссылки',  sum: 1400, hint:'визитка · QR'},
+    {k:'ig',  ic:'pp-ig',  name:'Instagram',      sum:0, hint:'сторис · reels'},
+    {k:'tg',  ic:'pp-tg',  name:'Telegram-канал', sum:0, hint:'посты · закреп'},
+    {k:'yt',  ic:'pp-yt',  name:'YouTube',        sum:0, hint:'обзоры · описание'},
+    {k:'vk',  ic:'pp-vk',  name:'VK',             sum:0, hint:'клипы · группа'},
+    {k:'dir', ic:'pp-link',name:'Прямые ссылки',  sum:0, hint:'визитка · QR'},
   ];
 
-  /* ---------- wall of fame (топ-10) ---------- */
-  const LEADERS = [
-    {nick:'anna.mkt',    sum:184300, tier:'legend'},
-    {nick:'kirill.pro',  sum:142650, tier:'pro'},
-    {nick:'vova.reels',  sum: 96420, tier:'senior'},
-    {nick:'lera.copy',   sum: 78900, tier:'senior'},
-    {nick:'ilya.growth', sum: 61200, tier:'senior'},
-    {nick:'masha.smm',   sum: 44580, tier:'middle'},
-    {nick:'daniel7x',    sum: PP.weekTurnover, tier:'middle'},
-    {nick:'tim.sales',   sum: 18740, tier:'middle'},
-    {nick:'nadya.blog',  sum: 14200, tier:'middle'},
-    {nick:'sasha.void',  sum:  9840, tier:'junior'},
-  ];
+  /* ---------- доска лидеров ----------
+     Десять выдуманных партнёров с оборотами до 184 300 ₽ удалены 09.08.
+     Доска наполняется реальными партнёрами; пока пусто — показываем
+     пустое состояние, а не чужие достижения. */
+  const LEADERS = [];
 
   /* ---------- промо-материалы (тексты, баннеры, reels) ---------- */
   const PROMO = [
@@ -46993,9 +46991,9 @@ var PW_ASSET = {
       <div class="pp-hero-spark" id="ppHeroSpark"></div>
 
       <div class="pp-microstat">
-        <div><div class="v">1 284</div><div class="l">клики</div></div>
-        <div><div class="v">167</div><div class="l">регистрации</div></div>
-        <div><div class="v">31</div><div class="l">оплаты</div></div>
+        <div><div class="v">${fmtNum(PP.clicks || 0)}</div><div class="l">клики</div></div>
+        <div><div class="v">${fmtNum(PP.regs || 0)}</div><div class="l">регистрации</div></div>
+        <div><div class="v">${fmtNum(PP.pays || 0)}</div><div class="l">оплаты</div></div>
         <div><div class="v lime">${fmtNum(PP.payoutAvail)}<span style="font-size:11px;margin-left:2px">₽</span></div><div class="l">к выплате</div></div>
       </div>
 
@@ -47019,6 +47017,17 @@ var PW_ASSET = {
     const sorted = SOURCES.slice().sort((a,b)=>b.sum-a.sum);
     const top3 = sorted.slice(0,3);
     const totalTop = top3.reduce((s,x)=>s+x.sum,0);
+    /* Пока переходов не было, ни один канал не «лидирует».
+       Раньше деление нуля на ноль давало NaN, и все полосы рисовались
+       полными — выглядело так, будто каждый канал отработал на 100%. */
+    if(!totalTop){
+      return top3.map(s=>`<div class="pp-src-row">
+        <div class="pp-src-ico s-${s.k}"><svg class="i"><use href="#i-${s.ic}"/></svg></div>
+        <div class="pp-src-name">${s.name}<span class="dim"> · ${s.hint}</span></div>
+        <div class="pp-src-sum dim">—</div>
+        <div class="pp-src-bar"><i style="width:0%"></i></div>
+      </div>`).join('');
+    }
     return top3.map(s=>{
       const pct = Math.round(s.sum/totalTop*100);
       return `<div class="pp-src-row">
