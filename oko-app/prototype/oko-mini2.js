@@ -1527,18 +1527,27 @@ var ADSM = (function(){
      не считаем принципиально — они зависят от оффера, а не от рекламы. */
   var CPM_LO = 22, CPM_HI = 38, CTR_LO = 0.8, CTR_HI = 3.0;
 
+  /* прикидка — не бухгалтерия: округляем, чтобы «78 947» не выглядело
+     точным расчётом там, где точности нет и быть не может */
+  function round2(n){
+    n = Math.max(0, Math.round(n));
+    if(n >= 10000) return Math.round(n / 1000) * 1000;
+    if(n >= 1000)  return Math.round(n / 100) * 100;
+    if(n >= 100)   return Math.round(n / 10) * 10;
+    return n;
+  }
   function calcOut(b){
-    var impsHi = Math.round(b / CPM_LO * 1000);
-    var impsLo = Math.round(b / CPM_HI * 1000);
-    var clicksLo = Math.round(impsLo * CTR_LO / 100);
-    var clicksHi = Math.round(impsHi * CTR_HI / 100);
-    var cpcLo = clicksHi ? Math.round(b / clicksHi) : 0;
-    var cpcHi = clicksLo ? Math.round(b / clicksLo) : 0;
+    var impsHi = round2(b / CPM_LO * 1000);
+    var impsLo = round2(b / CPM_HI * 1000);
+    var clicksLo = round2(impsLo * CTR_LO / 100);
+    var clicksHi = round2(impsHi * CTR_HI / 100);
+    var cpcLo = clicksHi ? Math.max(1, Math.round(b / clicksHi)) : 0;
+    var cpcHi = clicksLo ? Math.max(1, Math.round(b / clicksLo)) : 0;
     return '<div class="m2-row"><span>Показы при CPM ' + CPM_LO + '–' + CPM_HI + ' ₽</span>' +
         '<b>' + num(impsLo) + '–' + num(impsHi) + '</b></div>' +
       '<div class="m2-row"><span>Клики при CTR ' + CTR_LO + '–' + CTR_HI + '%</span>' +
         '<b>' + num(clicksLo) + '–' + num(clicksHi) + '</b></div>' +
-      '<div class="m2-row"><span>Цена клика</span><b>' + rub(cpcLo) + '–' + rub(cpcHi) + '</b></div>';
+      '<div class="m2-row"><span>Цена клика</span><b>' + num(cpcLo) + '–' + rub(cpcHi) + '</b></div>';
   }
 
   function calcHtml(){
