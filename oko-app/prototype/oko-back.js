@@ -68,9 +68,10 @@ var CSS = [
 '  -webkit-tap-highlight-color:transparent;',
 '  transition:background .18s, color .18s, transform .12s;',
 '}',
-/* левая безопасная зона (чёлка сбоку в ландшафте) */
-'button.oko-back{ margin-left:var(--oko-safe-left,0px); margin-right:8px; }',
-/* в общей шапке отступ уже даёт сама шапка — второй раз не добавляем */
+/* левая безопасная зона (чёлка сбоку в ландшафте). Справа отступа не даём:
+   у всех шапок свой gap, лишние пиксели съедали бы заголовок. */
+'button.oko-back{ margin-left:var(--oko-safe-left,0px); margin-right:0; }',
+/* в общей шапке безопасную зону уже учитывает сама шапка */
 'header > button.oko-back{ margin-left:0; margin-right:2px; }',
 'button.oko-back > svg.i{',
 '  width:20px !important; height:20px !important;',
@@ -83,8 +84,10 @@ var CSS = [
 /* скрытие — только атрибутом hidden: inline-стиль проиграл бы !important выше */
 'button.oko-back[hidden]{ display:none !important; }',
 
-/* строка с кнопкой в шторках, где своей шапки нет */
-'.oko-back-row{ display:flex; align-items:center; min-height:38px; margin:0 0 6px -8px; }',
+/* строка с кнопкой в шторках, где своей шапки нет.
+   Заголовок шторки переезжает в ту же строку — лишней высоты не появляется. */
+'.oko-back-row{ display:flex; align-items:center; gap:8px; min-height:38px; margin:0 0 8px -8px; }',
+'.oko-back-row > h3{ margin:0 !important; min-width:0; overflow-wrap:break-word; }',
 
 /* плавающая кнопка для широких экранов, где общая шапка скрыта версткой */
 '#app > button.oko-back.oko-back-float{',
@@ -476,6 +479,9 @@ function normalizeSheets(){
     row.className = 'oko-back-row';
     row.appendChild(makeBtn('oko-back-sheet'));
     sh.insertBefore(row, sh.firstChild);
+    /* заголовок шторки ставим рядом с кнопкой, а не под неё */
+    var h = sh.querySelector(':scope > h3');
+    if(h && h.previousElementSibling === row) row.appendChild(h);
   }
 }
 

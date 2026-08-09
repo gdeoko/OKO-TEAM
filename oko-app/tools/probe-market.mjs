@@ -24,14 +24,35 @@
    ============================================================================ */
 import { chromium } from 'playwright-core';
 import fs from 'node:fs/promises';
+import fss from 'node:fs';
+import http from 'node:http';
 import path from 'node:path';
 
 const args = Object.fromEntries(
   process.argv.slice(2).join(' ').split('--').filter(Boolean)
     .map(s => { const [k, ...v] = s.trim().split(/\s+/); return [k, v.join(' ') || true]; })
 );
-const BASE = args.base || 'http://127.0.0.1:8211/index.html';
 const OUT = path.resolve('oko-app/tools');
+const ROOT = path.resolve('oko-app/prototype');
+
+/* Свой статик-сервер на случайном порту: пробник ни от чего не зависит
+   и не конкурирует с другими прогонами за общий порт. */
+const MIME = {
+  '.html': 'text/html; charset=utf-8', '.js': 'text/javascript; charset=utf-8',
+  '.css': 'text/css; charset=utf-8', '.json': 'application/json; charset=utf-8',
+  '.png': 'image/png', '.jpg': 'image/jpeg', '.svg': 'image/svg+xml',
+  '.glb': 'model/gltf-binary', '.webp': 'image/webp', '.woff2': 'font/woff2'
+};
+const server = http.createServer((rq, rs) => {
+  const rel = decodeURIComponent((rq.url || '/').split('?')[0]);
+  const f = path.join(ROOT, rel === '/' ? '/index.html' : rel);
+  if (!f.startsWith(ROOT)) { rs.writeHead(403).end('403'); return; }
+  fss.stat(f, (e, st) => {
+    if (e || !st.isFile()) { rs.writeHead(404).end('404'); return; }
+    rs.writeHead(200, { 'Content-Type': MIME[path.extname(f).toLowerCase()] || 'application/octet-stream', 'Content-Length': st.size });
+    fss.createReadStream(f).pipe(rs);
+  });
+});
 
 const MODES = [
   { id: 'phone',   label: 'Телефон 390×844',      width: 390,  height: 844,  mobile: true },
@@ -90,10 +111,16 @@ const PROBE = `(() => {
   const host = document.getElementById('ma-market');
   const scope = (host && host.style.display === 'block') ? host : document.body;
 
-  /* кнопка «назад» на текущем экране биржи */
-  const backBtn = scope.querySelector('[data-mk="back"], .mk2-back');
-  out.hasBack = !!(backBtn && visible(backBtn));
-  out.backText = backBtn ? (backBtn.textContent || '').trim() : '';
+  /* Выход с экрана. Приложение перешло на единую кнопку «назад» в шапке
+     (oko-back.js, button.oko-back) и прячет внутренние дубликаты — годится
+     и она, и собственная кнопка биржи. */
+  const globalBack = document.querySelector('button.oko-back');
+  const innerBack = scope.querySelector('[data-mk="back"], .mk2-back');
+  const gOk = !!(globalBack && !globalBack.hidden && visible(globalBack));
+  const iOk = !!(innerBack && visible(innerBack));
+  out.hasBack = gOk || iOk;
+  out.backKind = gOk ? 'header' : (iOk ? 'inline' : 'none');
+  out.backText = gOk ? (globalBack.getAttribute('aria-label') || 'Назад') : (innerBack ? (innerBack.textContent || '').trim() : '');
   const t = document.getElementById('mk3Title');
   out.title = t ? (t.textContent || '').trim() : '';
   out.empty = !!scope.querySelector('.mk2-empty');
@@ -164,7 +191,7 @@ async function run(page, mode, rep) {
       if (bad) errors.push(bad);
     }
     steps.push({
-      n: stepNo, step: name, title: probe.title, back: probe.backText,
+      n: stepNo, step: name, title: probe.title, back: probe.backText, backKind: probe.backKind,
       overflowX: probe.overflowX, clipped: probe.clipped.length,
       offRight: probe.offRight.length, underNav: probe.underNav.length,
       hasBack: probe.hasBack, empty: probe.empty,
@@ -337,6 +364,11 @@ async function run(page, mode, rep) {
 }
 
 async function main() {
+  await new Promise(r => server.listen(0, '127.0.0.1', r));
+  const BASE = args.base && args.base !== true
+    ? String(args.base)
+    : `http://127.0.0.1:${server.address().port}/index.html`;
+
   const browser = await chromium.launch({
     executablePath: process.env.OKO_CHROME || '/opt/pw-browsers/chromium-1194/chrome-linux/chrome',
     args: ['--no-sandbox', '--disable-dev-shm-usage', '--use-gl=swiftshader', '--enable-unsafe-swiftshader']
@@ -351,6 +383,7 @@ async function main() {
       deviceScaleFactor: 1,
       isMobile: mode.mobile,
       hasTouch: mode.mobile,
+      serviceWorkers: 'block',
       userAgent: mode.mobile
         ? 'Mozilla/5.0 (Linux; Android 14) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126 Mobile Safari/537.36'
         : undefined
@@ -372,8 +405,13 @@ async function main() {
 
     const rep = { mode: mode.id, label: mode.label, steps: [], errors: 0, consoleErrors: [] };
     try {
-      await page.goto(BASE, { waitUntil: 'domcontentloaded', timeout: 40000 });
-      await page.waitForTimeout(1500);
+      await page.goto(BASE, { waitUntil: 'commit', timeout: 90000 });
+      await page.waitForFunction(
+        () => document.readyState !== 'loading' &&
+              typeof window.openMa === 'function' &&
+              typeof window.okoMarketOpen === 'function',
+        null, { timeout: 90000 });
+      await page.waitForTimeout(1200);
       await run(page, mode, rep);
     } catch (e) {
       rep.fatal = String(e).slice(0, 400);
@@ -385,6 +423,7 @@ async function main() {
   }
 
   await browser.close();
+  await new Promise(r => server.close(r));
 
   report.summary = {
     layoutErrors: report.modes.reduce((a, m) => a + (m.errors || 0), 0),

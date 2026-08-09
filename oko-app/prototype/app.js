@@ -52183,37 +52183,25 @@ window.chCompose = chCompose; window.chLessonDraft = chLessonDraft;
     upsert('twitter:card', 'summary_large_image');
   }
   function makePublicSample(slug){
-    // если это не мой профиль — рисуем сгенерированного «партнёра OKO»
-    const seed = Array.from(slug).reduce((s, c) => s + c.charCodeAt(0), 0);
-    const names = ['Анна Ковалёва','Кирилл Морозов','Лера Спицына','Илья Гришин','Маша Быкова','Тимур Сафин','Вова Кац','Настя Волошина'];
-    const bios  = [
-      'Автор в OKO. Помогаю экспертам расти в соцсетях без выгорания.',
-      'Веду продюсерский клуб OKO. Разбираю блогеров и коучей до чисел.',
-      'Копирайтер, автор писем и Reels-сценариев. Работаю через OKO.',
-      'Дизайнер-практик. Показываю, как собирать медиа-кит в OKO за час.',
-      'Эксперт по SMM для локального бизнеса. Продаю через партнёрку OKO.'
-    ];
+    /* Здесь генерировался «партнёр OKO»: восемь выдуманных имён (Анна Ковалёва,
+       Кирилл Морозов и так далее), выдуманные биографии, 400–12 000 подписчиков,
+       два сертификата с номерами и два канала с охватами — всё из суммы кодов
+       символов ника. Открыв чужую визитку, человек видел несуществующего
+       специалиста с готовым портфолио.
+       Правка Даниэля: ноль выдуманных людей. Мы честно знаем про этот профиль
+       ровно одно — ник. Всё остальное подтянется, когда появится бэкенд. */
     return {
-      name: names[seed % names.length],
+      name: '@' + slug,
       nick: slug,
-      bio: bios[seed % bios.length],
-      followers: 400 + (seed * 47) % 12000,
-      posts: 20 + (seed * 3) % 400,
-      streak: 3 + (seed % 60),
-      tier: (seed % 5 === 0) ? 'MAX' : (seed % 3 === 0 ? 'PRO' : 'FREE'),
-      certs: [
-        {t:'Маркетинг для нейроэксперта', d:'12.06.2026', no:'OKO-CERT-124903'},
-        {t:'Reels-конвейер: 30 роликов в месяц', d:'02.07.2026', no:'OKO-CERT-231544'}
-      ],
-      channels: [
-        {t:'Дневник эксперта OKO', s:'канал в OKO · заметки, кейсы', k:'2.4к'},
-        {t:'Reels-цитаты', s:'канал в OKO · 3 ролика в неделю', k:'1.1к'}
-      ],
-      socials: [
-        {id:'tg', ic:'i-vr-tg', label:'Telegram · @' + slug, href:'https://t.me/' + slug},
-        {id:'ig', ic:'i-vr-ig', label:'Instagram · @' + slug, href:'https://instagram.com/' + slug},
-        {id:'yt', ic:'i-vr-story', label:'YouTube · @' + slug, href:'https://youtube.com/@' + slug}
-      ]
+      bio: '',
+      followers: 0,
+      posts: 0,
+      streak: 0,
+      tier: 'FREE',
+      unknown: true,
+      certs: [],
+      channels: [],
+      socials: []
     };
   }
   function publicProfileData(slug){
@@ -52228,12 +52216,15 @@ window.chCompose = chCompose; window.chLessonDraft = chLessonDraft;
         name: PROFILE.name,
         nick: PROFILE.nick,
         bio: PROFILE.bio || '',
-        followers: 2400,
-        posts: 47,
-        streak: (typeof acS !== 'undefined' && acS && acS.streak) || 14,
+        /* Было: 2400 подписчиков, 47 постов, streak 14, «Канал Даниэля · 2.4к»
+           и сертификат-заглушка OKO-CERT-000001. Всё выдумано. Считаем то,
+           что действительно есть в состоянии, и не рисуем то, чего нет. */
+        followers: (typeof okoMyFollowers === 'function') ? okoMyFollowers() : 0,
+        posts: (typeof okoMyPostsCount === 'function') ? okoMyPostsCount() : 0,
+        streak: (typeof acS !== 'undefined' && acS && acS.streak) || 0,
         tier: PROFILE.tier,
-        certs: certs.length ? certs.slice(0, 4) : [{t:'Академия OKO', d:new Date().toLocaleDateString('ru-RU'), no:'OKO-CERT-000001'}],
-        channels: [{t:'Канал ' + PROFILE.name, s:'заметки · разборы', k:'2.4к'}],
+        certs: certs.slice(0, 4),
+        channels: (typeof okoMyChannels === 'function') ? okoMyChannels() : [],
         socials: [
           {id:'tg', ic:'i-vr-tg', label:'Telegram · @' + PROFILE.nick, href:'https://t.me/' + PROFILE.nick},
           {id:'ig', ic:'i-vr-ig', label:'Instagram · @' + PROFILE.nick, href:'https://instagram.com/' + PROFILE.nick}

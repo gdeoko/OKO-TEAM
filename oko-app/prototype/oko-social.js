@@ -788,7 +788,7 @@ function pageEntity(ent, nav){
     '<button class="soc-mini' + (SOC.notify[ent.key] ? ' on' : '') + '" id="socNotify" data-a="notify" type="button">' +
       SI('bell') + '<span>Уведомления: ' + (SOC.notify[ent.key] ? 'вкл' : 'выкл') + '</span></button>'
   ];
-  if(ent.owned && ent.ch){
+  if(ent.owned && (ent.own || ent.ch)){
     minis.push('<button class="soc-mini" id="socManage" data-a="manage" type="button">' + SI('gear') + '<span>Управление</span></button>');
     minis.push('<button class="soc-mini" id="socMembers" data-a="members" type="button">' + SI('users') + '<span>Участники и роли</span></button>');
   }
@@ -825,7 +825,7 @@ function postsHtml(ent, posts){
                  : 'Когда автор что-то опубликует, записи появятся здесь.') +
       '</small></div>';
   }
-  var pinned = ent.ch && ent.ch.pinned;
+  var pinned = manageOf(ent).pinned || null;
   var sorted = posts.slice().sort(function(a, b){
     var ap = (pinned && a.id === pinned) ? 1 : 0, bp = (pinned && b.id === pinned) ? 1 : 0;
     if(ap !== bp) return bp - ap;
@@ -833,6 +833,7 @@ function postsHtml(ent, posts){
   });
   return sorted.map(function(p){
     var liked = !!p._liked;
+    var own = ent.owned && !p.ro;
     return '<article class="soc-post" data-pid="' + E(p.id || '') + '">' +
       ((pinned && p.id === pinned) ? '<div class="soc-pin">' + SI('pin') + 'Закреплено</div>' : '') +
       '<div class="soc-post-h">' + avaHtml(ent, 34, 'sm') + '<b>' + E(ent.name) + '</b>' + badge(ent) +
@@ -840,13 +841,15 @@ function postsHtml(ent, posts){
       (p.txt ? '<div class="soc-post-t">' + E(p.txt) + '</div>' : '') +
       (p.img ? '<div class="soc-post-img"><img src="' + E(p.img) + '" alt=""></div>' : '') +
       '<div class="soc-post-a">' +
-        '<button data-a="like" data-v="' + E(p.id || '') + '" class="' + (liked ? 'on' : '') + '" type="button">' +
-          SI('heart') + (p.likes || 0) + '</button>' +
+        (p.ro ? '<span style="display:inline-flex;align-items:center;gap:5px;color:var(--dim);font-size:12px">' +
+            SI('heart') + (p.likes || 0) + '</span>'
+              : '<button data-a="like" data-v="' + E(p.id || '') + '" class="' + (liked ? 'on' : '') + '" type="button">' +
+                  SI('heart') + (p.likes || 0) + '</button>') +
         (commentTarget(ent) ? '<button data-a="comments" type="button">' + SI('comment') + 'Комментарии</button>' : '') +
         '<button data-a="sharepost" data-v="' + E(p.id || '') + '" type="button">' + SI('share') + 'Поделиться</button>' +
-        (ent.owned ? '<button data-a="pin" data-v="' + E(p.id || '') + '" type="button">' + SI('pin') +
+        (own ? '<button data-a="pin" data-v="' + E(p.id || '') + '" type="button">' + SI('pin') +
           ((pinned && p.id === pinned) ? 'Открепить' : 'Закрепить') + '</button>' : '') +
-        (ent.owned ? '<button data-a="del" data-v="' + E(p.id || '') + '" type="button">' + SI('trash') + '</button>' : '') +
+        (own ? '<button data-a="del" data-v="' + E(p.id || '') + '" type="button" aria-label="Удалить">' + SI('trash') + '</button>' : '') +
       '</div>' +
     '</article>';
   }).join('');
@@ -1069,7 +1072,8 @@ function pushToFeed(ent, item){
       topic: null,
       socKey: ent.key, socItem: item.id, socCover: cover,
       socRatio: item.reel ? item.reel.ratio : null,
-      chOrigin: ent.ch ? ent.ch.id : null
+      chOrigin: ent.ch ? ent.ch.id : null,
+      socOwnId: ent.own ? ent.own.id : null
     });
     socSave();
     if(typeof renderFeed === 'function' && typeof curFeedKind !== 'undefined' && curFeedKind === 'rec'){
@@ -1182,50 +1186,72 @@ function pageCreate(ent, arg){
 }
 
 function createEntity(){
-  var m = CHm();
-  if(!m){ T('Модель каналов недоступна'); return null; }
   var name = String(CRE.name || '').trim();
   if(!name){ T('Введи название'); return null; }
-  m.seq = (m.seq || 0) + 1;
   var kind = CRE.kind;
   var chatLike = (kind === 'chat' || kind === 'club');
-  var p = P();
+  var p = P(), myNick = nickOf(p);
 
+  /* уникальный ник: не даём двум сущностям одну ссылку */
+  var base = slug(name), nick = base, n = 1;
+  while(nickTaken(nick)){ nick = base + '_' + (++n); }
+
+  var id = 'soc' + (++SOC.seq) + '-' + Date.now().toString(36);
   var rec = {
-    id: 'ch-my-' + m.seq,
-    name: name,
-    nick: slug(name),
+    id: id, kind: kind, name: name, nick: nick,
     desc: String(CRE.desc || '').trim(),
-    icon: null, bg: 0,
-    avatar: CRE.avatar || null, cover: null,
-    kind: kind,
+    avatar: CRE.avatar || null, icon: null,
     access: (kind === 'course') ? 'closed' : CRE.access,
     price: (kind === 'course' && !CRE.price) ? 990 : (CRE.price || 0),
-    verified: false, official: false,
+    verified: false,
     created: Date.now(),
-    subs: 1, reactions: true, discussions: kind !== 'course',
-    whoPost: chatLike ? 'subs' : 'admins',
-    commentsOn: (kind === 'channel') ? true : undefined,
-    admins: [], gross: 0, black: [], invites: [],
-    members: [{ name: p.name, nick: nickOf(p), joined: 'сейчас' }],
-    roles: (function(){ var r = {}; r[nickOf(p)] = 'owner'; return r; })(),
+    subs: 1,                                    /* владелец — первый и единственный участник */
+    members: [{ name: p.name, nick: myNick, joined: 'сейчас' }],
+    roles: (function(){ var r = {}; r[myNick] = 'owner'; return r; })(),
     perms: { write: chatLike ? 'all' : 'admins', call: chatLike ? 'all' : 'admins', publish: 'admins' },
-    topics: [],
-    pinned: null,
-    posts: []
+    topics: [], invites: [], pinned: null
   };
-  try{ if(typeof chNormalize === 'function') chNormalize(rec); }catch(e){}
-  /* chNormalize может выставить свои дефолты — возвращаем наши осознанные значения */
-  rec.created = rec.created || Date.now();
-  rec.posts = rec.posts || [];
-
-  m.mine = m.mine || [];
-  m.mine.unshift(rec);
-  chSaveSafe();
-  try{ if(typeof chMirrorToChats === 'function') chMirrorToChats(rec); }catch(e){}
-
+  SOC.own[id] = rec;
+  socSave();
+  mirrorToChats(rec);
   CRE = { kind: 'channel', name: '', desc: '', access: 'open', price: 0, avatar: null };
   return rec;
+}
+function nickTaken(nick){
+  for(var id in SOC.own){ if(SOC.own[id] && SOC.own[id].nick === nick) return true; }
+  var m = chStore();
+  if(m){
+    var a = (m.mine || []).concat(m.disc || []);
+    for(var i = 0; i < a.length; i++) if(nickOf(a[i]) === nick) return true;
+  }
+  try{
+    if(typeof CHATS !== 'undefined' && CHATS){
+      for(var j = 0; j < CHATS.length; j++) if(nickOf(CHATS[j]) === nick) return true;
+    }
+  }catch(e){}
+  return false;
+}
+
+/* созданная сущность обязана быть настоящей — значит, видна в списке чатов */
+var MIRROR_KIND = { channel: 'channel', course: 'channel', club: 'group', chat: 'group' };
+var MIRROR_ICON = { channel: 'megaphone', course: 'circle-play', club: 'crown', chat: 'users' };
+function mirrorToChats(rec){
+  try{
+    if(typeof CHATS === 'undefined' || !CHATS) return;
+    for(var i = 0; i < CHATS.length; i++) if(CHATS[i].socId === rec.id) return;
+    var writeAll = (rec.kind === 'chat' || rec.kind === 'club');
+    CHATS.unshift({
+      id: 'soc_' + rec.id, socId: rec.id, name: rec.name,
+      kind: MIRROR_KIND[rec.kind] || 'channel', managed: true, writeAll: writeAll,
+      ava: (String(rec.name || 'O').charAt(0) || 'O').toUpperCase(),
+      avaImg: rec.avatar || null, avaIcon: null, kindIcon: MIRROR_ICON[rec.kind] || 'megaphone',
+      nick: rec.nick, subs: rec.subs || 0,
+      preview: (TYPE_LABEL[rec.kind] || 'Сущность') + ' создан' + (rec.kind === 'course' ? '' : ''),
+      time: (typeof nowT === 'function' ? nowT() : ''), unread: 0, online: false,
+      msgs: [{ kind: 'sys', body: (TYPE_LABEL[rec.kind] || 'Сущность') + ' «' + rec.name + '» создан. Открой страницу, чтобы публиковать и настраивать.' }]
+    });
+    if(typeof renderChatList === 'function') try{ renderChatList(); }catch(e){}
+  }catch(e){}
 }
 
 /* ==========================================================================
@@ -1235,11 +1261,11 @@ var ROLE_ORDER = ['member', 'mod', 'admin', 'owner'];
 var ROLE_LABEL = { owner: 'владелец', admin: 'админ', mod: 'модератор', member: 'участник' };
 
 function pageManage(ent){
-  if(!ent.owned || !ent.ch){
+  if(!ent.owned || !(ent.own || ent.ch)){
     return { title: 'Управление', html: '<div class="soc-empty">' + SI('lock') + '<p>Нет доступа</p>' +
       '<small>Управлять может владелец сущности.</small></div>' };
   }
-  var c = ent.ch;
+  var c = manageOf(ent);
   c.perms = c.perms || { write: 'admins', call: 'admins', publish: 'admins' };
   c.topics = c.topics || [];
   c.invites = Array.isArray(c.invites) ? c.invites : [];
@@ -1251,7 +1277,7 @@ function pageManage(ent){
   };
 
   var pinnedPost = null;
-  if(c.pinned) pinnedPost = (c.posts || []).filter(function(p){ return p.id === c.pinned; })[0] || null;
+  if(c.pinned) pinnedPost = postsOf(ent).filter(function(p){ return p.id === c.pinned; })[0] || null;
 
   var html =
     '<div class="soc-sec">' + SI('shield') + 'Права участников</div>' +
@@ -1295,9 +1321,11 @@ function pageManage(ent){
         }).join('') + '</div>'
       : '<div class="soc-note">Ссылок нет. Ссылка-приглашение открывает вход даже в закрытую сущность.</div>') +
 
-    '<div class="soc-sec">' + SI('gear') + 'Ещё</div>' +
-    '<button class="soc-mini" data-a="chadvanced" type="button" style="width:100%">' + SI('chart') +
-      '<span>Расширенные настройки в разделе «Каналы»: статистика, чёрный список, оформление</span></button>' +
+    (ent.ch
+      ? '<div class="soc-sec">' + SI('gear') + 'Ещё</div>' +
+        '<button class="soc-mini" data-a="chadvanced" type="button" style="width:100%">' + SI('chart') +
+          '<span>Расширенные настройки в разделе «Каналы»: статистика, чёрный список, оформление</span></button>'
+      : '') +
     '<div style="height:14px"></div>';
 
   return {
@@ -1311,11 +1339,11 @@ function pageManage(ent){
 }
 
 function pageMembers(ent){
-  if(!ent.owned || !ent.ch){
+  if(!ent.owned || !(ent.own || ent.ch)){
     return { title: 'Участники', html: '<div class="soc-empty">' + SI('lock') + '<p>Нет доступа</p><small>Список участников виден владельцу.</small></div>' };
   }
-  var c = ent.ch;
-  var members = Array.isArray(c.members) ? c.members : [];
+  var c = manageOf(ent);
+  var members = Array.isArray(c.members) ? c.members : (ent.ch && Array.isArray(ent.ch.members) ? ent.ch.members : []);
   c.roles = c.roles || {};
   if(!members.length){
     return { title: 'Участники', html: '<div class="soc-empty">' + SI('users') + '<p>Участников пока нет</p>' +
@@ -1323,7 +1351,7 @@ function pageMembers(ent){
   }
   var html = '<div class="soc-card">' + members.map(function(mm){
     var nk = nickOf(mm);
-    var role = c.roles[nk] || 'member';
+    var role = c.roles[nk] || ((nk === nickOf(P()) && ent.owned) ? 'owner' : 'member');
     var e2 = { name: mm.name, nick: nk, avaLetter: (String(mm.name || 'O').charAt(0) || 'O').toUpperCase(), avatarImg: null, avaIcon: null };
     return '<div class="soc-row">' + avaHtml(e2, 36, 'sm') +
       '<div class="soc-row-b"><b>' + E(mm.name) + '</b><small>@' + E(nk) + (mm.joined ? ' · с нами ' + E(mm.joined) : '') + '</small></div>' +
@@ -1370,28 +1398,30 @@ function pageEdit(ent){
 function saveEdit(ent){
   var name = String(EDT.name || '').trim();
   if(!name){ T('Название не может быть пустым'); return; }
-  if(ent.ch){
-    ent.ch.name = name; ent.ch.desc = EDT.bio;
-    if(EDT.avatar) ent.ch.avatar = EDT.avatar;
-    chSaveSafe();
-    try{
-      if(typeof CHATS !== 'undefined' && CHATS){
-        for(var i = 0; i < CHATS.length; i++) if(CHATS[i].chId === ent.ch.id){
-          CHATS[i].name = name; if(EDT.avatar) CHATS[i].avaImg = EDT.avatar;
-        }
-      }
-    }catch(e){}
+  if(ent.own){
+    ent.own.name = name; ent.own.desc = EDT.bio;
+    if(EDT.avatar) ent.own.avatar = EDT.avatar;
   }else{
+    /* чужую модель не трогаем — держим правки в собственном оверлее */
     SOC.meta[ent.key] = SOC.meta[ent.key] || {};
     SOC.meta[ent.key].name = name;
     SOC.meta[ent.key].bio = EDT.bio;
     if(EDT.avatar) SOC.meta[ent.key].avatar = EDT.avatar;
-    socSave();
-    if(ent.chat){ ent.chat.name = name; if(EDT.avatar) ent.chat.avaImg = EDT.avatar; }
-    if(ent.isMe){
-      try{ P().name = name; P().bio = EDT.bio; if(EDT.avatar) P().avatar = EDT.avatar; }catch(e){}
-      try{ if(typeof renderMyProfile === 'function') renderMyProfile(); }catch(e){}
+  }
+  socSave();
+  /* запись в списке чатов должна совпасть со страницей */
+  try{
+    if(typeof CHATS !== 'undefined' && CHATS){
+      for(var i = 0; i < CHATS.length; i++){
+        var c = CHATS[i];
+        var hit = (ent.own && c.socId === ent.own.id) || (ent.ch && c.chId === ent.ch.id) || (ent.chat && c === ent.chat);
+        if(hit){ c.name = name; if(EDT.avatar) c.avaImg = EDT.avatar; }
+      }
     }
+  }catch(e){}
+  if(ent.isMe){
+    try{ P().name = name; P().bio = EDT.bio; if(EDT.avatar) P().avatar = EDT.avatar; }catch(e){}
+    try{ if(typeof renderMyProfile === 'function') renderMyProfile(); }catch(e){}
   }
   try{ if(typeof renderChatList === 'function') renderChatList(); }catch(e){}
   EDT = { key: null, name: '', bio: '', avatar: null };
@@ -1496,22 +1526,24 @@ function act(a, v, el){
         }
         break;
       }
-      if(ent.ch && ent.ch.pinned === v) ent.ch.pinned = null;
+      if(manageOf(ent).pinned === v) manageOf(ent).pinned = null;
       saveItems(ent);
       render();
       T('Публикация удалена');
       break;
     }
 
-    case 'pin':
-      if(!ent.ch){ T('Закреп доступен у каналов, клубов и курсов'); return; }
-      ent.ch.pinned = (ent.ch.pinned === v) ? null : v;
-      chSaveSafe(); render();
-      T(ent.ch.pinned ? 'Публикация закреплена' : 'Закреп снят');
+    case 'pin': {
+      if(!ent.owned){ T('Закреплять может владелец'); return; }
+      var mg = manageOf(ent);
+      mg.pinned = (mg.pinned === v) ? null : v;
+      socSave(); render();
+      T(mg.pinned ? 'Публикация закреплена' : 'Закреп снят');
       break;
+    }
 
     case 'unpin':
-      if(ent.ch){ ent.ch.pinned = null; chSaveSafe(); render(); T('Закреп снят'); }
+      manageOf(ent).pinned = null; socSave(); render(); T('Закреп снят');
       break;
 
     case 'sharepost': {
@@ -1543,54 +1575,63 @@ function act(a, v, el){
       break;
     }
 
-    case 'permwrite': if(ent.ch){ ent.ch.perms = ent.ch.perms || {}; ent.ch.perms.write = v; ent.ch.whoPost = (v === 'all' ? 'subs' : 'admins'); chSaveSafe(); render(); } break;
-    case 'permcall':  if(ent.ch){ ent.ch.perms = ent.ch.perms || {}; ent.ch.perms.call = v; chSaveSafe(); render(); } break;
-    case 'permpub':   if(ent.ch){ ent.ch.perms = ent.ch.perms || {}; ent.ch.perms.publish = v; chSaveSafe(); render(); } break;
+    case 'permwrite': case 'permcall': case 'permpub': {
+      if(!ent.owned) return;
+      var mp = manageOf(ent);
+      mp.perms = mp.perms || {};
+      mp.perms[a === 'permwrite' ? 'write' : a === 'permcall' ? 'call' : 'publish'] = v;
+      socSave(); render();
+      break;
+    }
 
     case 'topicadd': {
-      if(!ent.ch) return;
+      if(!ent.owned) return;
       var inp = document.getElementById('socTopicName');
       var title = inp ? String(inp.value || '').trim() : '';
       if(!title){ T('Введи название темы'); return; }
-      ent.ch.topics = ent.ch.topics || [];
-      ent.ch.topics.push({ id: 't' + Date.now().toString(36), title: title });
-      chSaveSafe(); render(); T('Тема добавлена');
+      var mt = manageOf(ent);
+      mt.topics = mt.topics || [];
+      mt.topics.push({ id: 't' + Date.now().toString(36), title: title });
+      socSave(); render(); T('Тема добавлена');
       break;
     }
-    case 'topicdel':
-      if(!ent.ch) return;
-      ent.ch.topics = (ent.ch.topics || []).filter(function(x){ return x.id !== v; });
-      chSaveSafe(); render();
+    case 'topicdel': {
+      var md = manageOf(ent);
+      md.topics = (md.topics || []).filter(function(x){ return x.id !== v; });
+      socSave(); render();
       break;
+    }
 
     case 'inviteadd': {
-      if(!ent.ch) return;
+      if(!ent.owned) return;
       var code = Math.random().toString(36).slice(2, 10);
-      ent.ch.invites = Array.isArray(ent.ch.invites) ? ent.ch.invites : [];
-      ent.ch.invites.unshift({ code: code, link: 'https://okoteam.top/join/' + code, created: Date.now(), uses: 0 });
-      chSaveSafe(); render();
+      var mi = manageOf(ent);
+      mi.invites = Array.isArray(mi.invites) ? mi.invites : [];
+      mi.invites.unshift({ code: code, link: 'https://okoteam.top/join/' + code, created: Date.now(), uses: 0 });
+      socSave(); render();
       T('Ссылка-приглашение создана');
       break;
     }
     case 'invitecopy': {
-      if(!ent.ch) return;
-      var iv = (ent.ch.invites || []).filter(function(x){ return x.code === v; })[0];
+      var iv = (manageOf(ent).invites || []).filter(function(x){ return x.code === v; })[0];
       if(iv) copyText(iv.link, 'Приглашение скопировано');
       break;
     }
-    case 'invitedel':
-      if(!ent.ch) return;
-      ent.ch.invites = (ent.ch.invites || []).filter(function(x){ return x.code !== v; });
-      chSaveSafe(); render();
+    case 'invitedel': {
+      var mv = manageOf(ent);
+      mv.invites = (mv.invites || []).filter(function(x){ return x.code !== v; });
+      socSave(); render();
       break;
+    }
 
     case 'role': {
-      if(!ent.ch) return;
-      ent.ch.roles = ent.ch.roles || {};
-      var cur = ent.ch.roles[v] || 'member';
+      if(!ent.owned) return;
+      var mr = manageOf(ent);
+      mr.roles = mr.roles || {};
+      var cur = mr.roles[v] || ((v === nickOf(P())) ? 'owner' : 'member');
       var ix = ROLE_ORDER.indexOf(cur);
-      ent.ch.roles[v] = ROLE_ORDER[(ix + 1) % ROLE_ORDER.length];
-      chSaveSafe(); render();
+      mr.roles[v] = ROLE_ORDER[(ix + 1) % ROLE_ORDER.length];
+      socSave(); render();
       break;
     }
 
@@ -1608,10 +1649,13 @@ function openMessage(ent){
   /* канал/клуб с привязанным обсуждением — идём в него */
   var target = null;
   if(ent.chat) target = ent.chat;
-  if(ent.ch){
+  if(!target && (ent.ch || ent.own)){
     try{
       if(typeof CHATS !== 'undefined' && CHATS){
-        for(var i = 0; i < CHATS.length; i++) if(CHATS[i].chId === ent.ch.id){ target = CHATS[i]; break; }
+        for(var i = 0; i < CHATS.length; i++){
+          var cc = CHATS[i];
+          if((ent.ch && cc.chId === ent.ch.id) || (ent.own && cc.socId === ent.own.id)){ target = cc; break; }
+        }
       }
     }catch(e){}
   }
@@ -1777,6 +1821,9 @@ function injectProfileCta(){
 function boot(){
   injectCss();
   ensureDom();
+  /* CHATS собирается заново на каждой загрузке — возвращаем в список созданные
+     здесь каналы, чаты, клубы и курсы, иначе после перезагрузки они пропадают */
+  try{ for(var id in SOC.own){ if(SOC.own[id]) mirrorToChats(SOC.own[id]); } }catch(e){}
   injectProfileCta();
   decorateFeed();
   /* профиль отрисовывается лениво — дожидаемся его появления */

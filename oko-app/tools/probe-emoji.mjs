@@ -69,13 +69,17 @@ for (const vp of VIEWPORTS) {
   page.setDefaultNavigationTimeout(120000);
   page.setDefaultTimeout(45000);
   const errors = [];
-  page.on('pageerror', e => errors.push(String(e).slice(0, 200)));
+  page.on('pageerror', e => {
+    const t = String(e);
+    if (/Failed to fetch|NetworkError|ERR_CONNECTION/i.test(t)) return; /* CDN режет прокси */
+    errors.push(t.slice(0, 200));
+  });
   /* Сетевые 404/ERR_CONNECTION_RESET — это заблокированные прокси CDN аналитики,
      к панели эмодзи отношения не имеют. Ловим только ошибки JS. */
   page.on('console', m => {
     if (m.type() !== 'error') return;
     const t = m.text();
-    if (/Failed to load resource|ERR_CONNECTION|net::/i.test(t)) return;
+    if (/Failed to load resource|ERR_CONNECTION|net::|Failed to fetch|NetworkError/i.test(t)) return;
     errors.push('console: ' + t.slice(0, 160));
   });
 
@@ -149,7 +153,11 @@ for (const vp of VIEWPORTS) {
       overflowX: Math.max(0, de.scrollWidth-de.clientWidth),
       panelInViewport: p.left>=-1 && p.right<=innerWidth+1 && p.top>=-1,
       panelAboveComposer: Math.round((c.top - p.bottom)*100)/100,
-      panelOverNav: navR ? p.bottom > navR.top+1 : false,
+      /* На ПК нижнее меню — вертикальный сайдбар слева, поэтому пересечение
+         считаем по обеим осям, а не только по вертикали. */
+      panelOverNav: navR ? !(p.right<=navR.left+1 || p.left>=navR.right-1 ||
+                             p.bottom<=navR.top+1 || p.top>=navR.bottom-1) : false,
+      navBox: navR ? {t:Math.round(navR.top),l:Math.round(navR.left),r:Math.round(navR.right),b:Math.round(navR.bottom)} : null,
       composerBottomOk: Math.round((innerHeight - c.bottom)*100)/100,
       safeBottomVar: safeB,
       catsVisible: cats.height>20 && cats.bottom<=p.bottom+1,

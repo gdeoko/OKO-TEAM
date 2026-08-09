@@ -139,6 +139,9 @@ await page.waitForTimeout(700);
 /* В ЛС кнопка отправки появляется вместе с первым символом — чтобы сравнивать
    её с кнопкой ОКО Ai, надо сначала что-то напечатать. */
 await page.fill('#msgInput', 'x');
+/* Снимаем фокус: глобальное правило :focus-visible меняет радиус поля,
+   и сравнение поймало бы состояние фокуса, а не вёрстку. */
+await page.evaluate(`document.getElementById('msgInput').blur();`);
 await page.waitForTimeout(250);
 const dm = await page.evaluate(() => {
   const box = el => {

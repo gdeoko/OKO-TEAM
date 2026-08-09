@@ -1133,3 +1133,69 @@ window.okoHaptic = okoHaptic;
     log('avatar+pill ok');
   }catch(e){}
 })();
+
+/* ============================================================================
+   v2counts — настоящие счётчики вместо выдуманных
+   На публичной визитке стояли «2400 подписчиков», «47 постов» и канал
+   с охватом «2.4к» — цифры были вписаны руками. Теперь считаем то, что
+   реально лежит в состоянии приложения. Пусто — значит ноль, и интерфейс
+   такие блоки просто не рисует.
+   ============================================================================ */
+(function v2counts(){
+  try{
+    /* Подписчики: пока нет бэкенда, единственный честный источник — то, что
+       человек набрал внутри приложения на своих каналах. */
+    window.okoMyFollowers = function(){
+      var n = 0;
+      try{
+        var st = JSON.parse(localStorage.getItem('oko-channels') || 'null');
+        if(st && Array.isArray(st.mine)) st.mine.forEach(function(c){ n += (+c.subs || 0); });
+      }catch(e){}
+      return n;
+    };
+
+    /* Публикации: свои посты в ленте плюс посты своих каналов. */
+    window.okoMyPostsCount = function(){
+      var n = 0;
+      try{
+        var nick = (typeof PROFILE !== 'undefined' && PROFILE.nick) || '';
+        var name = (typeof PROFILE !== 'undefined' && PROFILE.name) || '';
+        if(typeof POSTS !== 'undefined'){
+          ['rec', 'sub'].forEach(function(k){
+            (POSTS[k] || []).forEach(function(p){
+              if(p && (p.mine || p.nick === nick || p.name === name)) n++;
+            });
+          });
+        }
+      }catch(e){}
+      try{
+        var st = JSON.parse(localStorage.getItem('oko-channels') || 'null');
+        if(st && Array.isArray(st.mine)) st.mine.forEach(function(c){
+          if(Array.isArray(c.posts)) n += c.posts.length;
+        });
+      }catch(e){}
+      return n;
+    };
+
+    /* Мои каналы для визитки — только настоящие, созданные человеком. */
+    window.okoMyChannels = function(){
+      var out = [];
+      try{
+        var st = JSON.parse(localStorage.getItem('oko-channels') || 'null');
+        if(st && Array.isArray(st.mine)){
+          st.mine.forEach(function(c){
+            if(!c || !c.name) return;
+            out.push({
+              t: c.name,
+              s: (c.kind === 'channel' ? 'канал в OKO' : 'чат в OKO') + (c.desc ? ' · ' + String(c.desc).slice(0, 40) : ''),
+              k: c.subs ? String(c.subs) : ''
+            });
+          });
+        }
+      }catch(e){}
+      return out;
+    };
+
+    log('counts ok');
+  }catch(e){}
+})();

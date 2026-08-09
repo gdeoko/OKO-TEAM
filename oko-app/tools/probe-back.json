@@ -1,5 +1,5 @@
 {
-  "at": "2026-08-09T05:01:20.479Z",
+  "at": "2026-08-09T05:09:49.931Z",
   "viewport": "390x844",
   "routes": [
     {
@@ -9,7 +9,7 @@
       "problems": [],
       "buttons": 0,
       "strays": [],
-      "stateBefore": "screen-feed§§§§home§cats"
+      "stateBefore": "screen-feed§§§§home§cats§"
     },
     {
       "id": "root-chats",
@@ -18,7 +18,7 @@
       "problems": [],
       "buttons": 0,
       "strays": [],
-      "stateBefore": "screen-chats§§§§home§cats"
+      "stateBefore": "screen-chats§§§§home§cats§"
     },
     {
       "id": "root-mini",
@@ -27,7 +27,7 @@
       "problems": [],
       "buttons": 0,
       "strays": [],
-      "stateBefore": "screen-mini§§§§home§cats"
+      "stateBefore": "screen-mini§§§§home§cats§"
     },
     {
       "id": "root-wallet",
@@ -36,7 +36,7 @@
       "problems": [],
       "buttons": 0,
       "strays": [],
-      "stateBefore": "screen-wallet§§§§home§cats"
+      "stateBefore": "screen-wallet§§§§home§cats§"
     },
     {
       "id": "root-profile",
@@ -45,7 +45,7 @@
       "problems": [],
       "buttons": 0,
       "strays": [],
-      "stateBefore": "screen-profile§§§§home§cats"
+      "stateBefore": "screen-profile§§§§home§cats§"
     },
     {
       "id": "partner",
@@ -54,7 +54,7 @@
       "problems": [],
       "buttons": 2,
       "strays": [],
-      "stateBefore": "screen-partner§sheet:pp-welcome§sheetOverlay,sheet-pp-welcome§§home§cats",
+      "stateBefore": "screen-partner§sheet:pp-welcome§sheetOverlay[sheet-overlay open],sheet-pp-welcome[sheet open]§§home§cats§",
       "back": {
         "el": "button.oko-back.oko-hdr-back",
         "w": 38,
@@ -65,7 +65,7 @@
         "icon": "#i-back",
         "label": "Назад"
       },
-      "stateAfter": "screen-partner§§§§home§cats"
+      "stateAfter": "screen-partner§§§§home§cats§"
     },
     {
       "id": "games",
@@ -74,7 +74,7 @@
       "problems": [],
       "buttons": 1,
       "strays": [],
-      "stateBefore": "screen-games§§§§home§cats",
+      "stateBefore": "screen-games§§§§home§cats§",
       "back": {
         "el": "button.oko-back.oko-hdr-back",
         "w": 38,
@@ -85,7 +85,7 @@
         "icon": "#i-back",
         "label": "Назад"
       },
-      "stateAfter": "screen-feed§§§§home§cats"
+      "stateAfter": "screen-feed§§§§home§cats§"
     },
     {
       "id": "academy",
@@ -94,7 +94,7 @@
       "problems": [],
       "buttons": 1,
       "strays": [],
-      "stateBefore": "screen-academy§§§§home§cats",
+      "stateBefore": "screen-academy§§§§home§cats§",
       "back": {
         "el": "button.oko-back.oko-hdr-back",
         "w": 38,
@@ -105,7 +105,7 @@
         "icon": "#i-back",
         "label": "Назад"
       },
-      "stateAfter": "screen-feed§§§§home§cats"
+      "stateAfter": "screen-feed§§§§home§cats§"
     },
     {
       "id": "ads",
@@ -114,7 +114,7 @@
       "problems": [],
       "buttons": 1,
       "strays": [],
-      "stateBefore": "screen-ads§§§§home§cats",
+      "stateBefore": "screen-ads§§§§home§cats§",
       "back": {
         "el": "button.oko-back.oko-hdr-back",
         "w": 38,
@@ -125,7 +125,7 @@
         "icon": "#i-back",
         "label": "Назад"
       },
-      "stateAfter": "screen-feed§§§§home§cats"
+      "stateAfter": "screen-feed§§§§home§cats§"
     },
     {
       "id": "ton",
@@ -134,7 +134,7 @@
       "problems": [],
       "buttons": 1,
       "strays": [],
-      "stateBefore": "screen-ton§§§§home§cats",
+      "stateBefore": "screen-ton§§§§home§cats§",
       "back": {
         "el": "button.oko-back.oko-hdr-back",
         "w": 38,
@@ -145,7 +145,7 @@
         "icon": "#i-back",
         "label": "Назад"
       },
-      "stateAfter": "screen-feed§§§§home§cats"
+      "stateAfter": "screen-feed§§§§home§cats§"
     },
     {
       "id": "ma-video",
@@ -154,7 +154,7 @@
       "problems": [],
       "buttons": 1,
       "strays": [],
-      "stateBefore": "screen-mini§ma:video§ma-video§ma-video§home§cats",
+      "stateBefore": "screen-mini§ma:video§§ma-video§home§cats§",
       "back": {
         "el": "button.oko-back.oko-hdr-back",
         "w": 38,
@@ -165,26 +165,16 @@
         "icon": "#i-back",
         "label": "Назад"
       },
-      "stateAfter": "screen-mini§§§§home§cats"
+      "stateAfter": "screen-mini§§§§home§cats§"
     },
     {
       "id": "ma-market",
       "name": "Мини-апп · Биржа услуг",
       "root": false,
-      "problems": [
-        "не приведены к единому виду: button.mk2-back"
-      ],
+      "problems": [],
       "buttons": 1,
-      "strays": [
-        {
-          "el": "button.mk2-back",
-          "text": "К сервисам",
-          "w": 129,
-          "h": 38,
-          "y": 77
-        }
-      ],
-      "stateBefore": "screen-mini§ma:market§ma-market§ma-market§home§cats",
+      "strays": [],
+      "stateBefore": "screen-mini§ma:market§§ma-market§home§cats§",
       "back": {
         "el": "button.oko-back.oko-hdr-back",
         "w": 38,
@@ -195,7 +185,7 @@
         "icon": "#i-back",
         "label": "Назад"
       },
-      "stateAfter": "screen-mini§§§§home§cats"
+      "stateAfter": "screen-mini§§§§home§cats§"
     },
     {
       "id": "ma-system",
@@ -204,7 +194,7 @@
       "problems": [],
       "buttons": 1,
       "strays": [],
-      "stateBefore": "screen-mini§ma:system§ma-system§ma-system§home§cats",
+      "stateBefore": "screen-mini§ma:system§§ma-system§home§cats§",
       "back": {
         "el": "button.oko-back.oko-hdr-back",
         "w": 38,
@@ -215,7 +205,7 @@
         "icon": "#i-back",
         "label": "Назад"
       },
-      "stateAfter": "screen-mini§§§§home§cats"
+      "stateAfter": "screen-mini§§§§home§cats§"
     },
     {
       "id": "ma-factory",
@@ -224,7 +214,7 @@
       "problems": [],
       "buttons": 1,
       "strays": [],
-      "stateBefore": "screen-mini§ma:factory§ma-factory§ma-factory§home§cats",
+      "stateBefore": "screen-mini§ma:factory§§ma-factory§home§cats§",
       "back": {
         "el": "button.oko-back.oko-hdr-back",
         "w": 38,
@@ -235,7 +225,7 @@
         "icon": "#i-back",
         "label": "Назад"
       },
-      "stateAfter": "screen-mini§§§§home§cats"
+      "stateAfter": "screen-mini§§§§home§cats§"
     },
     {
       "id": "ma-helper",
@@ -244,7 +234,7 @@
       "problems": [],
       "buttons": 1,
       "strays": [],
-      "stateBefore": "screen-mini§ma:helper§okoAiScreen§§home§cats",
+      "stateBefore": "screen-mini§ma:helper§okoAiScreen[oko-ai-screen open]§§home§cats§",
       "back": {
         "el": "button#okoAiBack.back.oko-back",
         "w": 38,
@@ -255,7 +245,7 @@
         "icon": "#i-back",
         "label": "Назад"
       },
-      "stateAfter": "screen-mini§§§§home§cats"
+      "stateAfter": "screen-mini§§§§home§cats§"
     },
     {
       "id": "ma-socials",
@@ -264,7 +254,7 @@
       "problems": [],
       "buttons": 1,
       "strays": [],
-      "stateBefore": "screen-mini§ma:socials§ma-socials§ma-socials§home§cats",
+      "stateBefore": "screen-mini§ma:socials§§ma-socials§home§cats§",
       "back": {
         "el": "button.oko-back.oko-hdr-back",
         "w": 38,
@@ -275,7 +265,7 @@
         "icon": "#i-back",
         "label": "Назад"
       },
-      "stateAfter": "screen-mini§§§§home§cats"
+      "stateAfter": "screen-mini§§§§home§cats§"
     },
     {
       "id": "ac-course",
@@ -284,7 +274,7 @@
       "problems": [],
       "buttons": 1,
       "strays": [],
-      "stateBefore": "screen-academy§§§§course§cats",
+      "stateBefore": "screen-academy§§§§course§cats§",
       "back": {
         "el": "button.oko-back.oko-hdr-back",
         "w": 38,
@@ -295,7 +285,7 @@
         "icon": "#i-back",
         "label": "Назад"
       },
-      "stateAfter": "screen-feed§§§§course§cats"
+      "stateAfter": "screen-feed§§§§course§cats§"
     },
     {
       "id": "ac-lesson",
@@ -305,7 +295,7 @@
       "stepError": "page.evaluate: ReferenceError: acOpen is not defined\n    at eval (eval at evaluate (:311:30), <anonymous>:1:53",
       "buttons": 1,
       "strays": [],
-      "stateBefore": "screen-academy§ac:lesson§§§lesson§cats",
+      "stateBefore": "screen-academy§ac:lesson§§§lesson§cats§",
       "back": {
         "el": "button.oko-back.oko-hdr-back",
         "w": 38,
@@ -316,7 +306,7 @@
         "icon": "#i-back",
         "label": "Назад"
       },
-      "stateAfter": "screen-academy§§§§course§cats"
+      "stateAfter": "screen-academy§§§§course§cats§"
     },
     {
       "id": "w2-accounts",
@@ -325,7 +315,7 @@
       "problems": [],
       "buttons": 1,
       "strays": [],
-      "stateBefore": "screen-wallet§w2-accounts§w2p-accounts§§home§cats",
+      "stateBefore": "screen-wallet§w2-accounts§w2p-accounts[w2-page open]§§home§cats§",
       "back": {
         "el": "button.w2-bar-nav.oko-back",
         "w": 38,
@@ -336,7 +326,7 @@
         "icon": "#i-back",
         "label": "Назад"
       },
-      "stateAfter": "screen-wallet§§§§home§cats"
+      "stateAfter": "screen-wallet§§§§home§cats§"
     },
     {
       "id": "w2-transfers",
@@ -345,7 +335,7 @@
       "problems": [],
       "buttons": 1,
       "strays": [],
-      "stateBefore": "screen-wallet§w2-transfers§w2p-transfers§§home§cats",
+      "stateBefore": "screen-wallet§w2-transfers§w2p-transfers[w2-page open]§§home§cats§",
       "back": {
         "el": "button.w2-bar-nav.oko-back",
         "w": 38,
@@ -356,7 +346,7 @@
         "icon": "#i-back",
         "label": "Назад"
       },
-      "stateAfter": "screen-wallet§§§§home§cats"
+      "stateAfter": "screen-wallet§§§§home§cats§"
     },
     {
       "id": "w2-exchange",
@@ -365,7 +355,7 @@
       "problems": [],
       "buttons": 1,
       "strays": [],
-      "stateBefore": "screen-wallet§w2-exchange§w2p-exchange§§home§cats",
+      "stateBefore": "screen-wallet§w2-exchange§w2p-exchange[w2-page open]§§home§cats§",
       "back": {
         "el": "button.w2-bar-nav.oko-back",
         "w": 38,
@@ -376,7 +366,7 @@
         "icon": "#i-back",
         "label": "Назад"
       },
-      "stateAfter": "screen-wallet§§§§home§cats"
+      "stateAfter": "screen-wallet§§§§home§cats§"
     },
     {
       "id": "w2-autopay",
@@ -385,7 +375,7 @@
       "problems": [],
       "buttons": 1,
       "strays": [],
-      "stateBefore": "screen-wallet§w2-autopay§w2p-autopay§§home§cats",
+      "stateBefore": "screen-wallet§w2-autopay§w2p-autopay[w2-page open]§§home§cats§",
       "back": {
         "el": "button.w2-bar-nav.oko-back",
         "w": 38,
@@ -396,7 +386,7 @@
         "icon": "#i-back",
         "label": "Назад"
       },
-      "stateAfter": "screen-wallet§§§§home§cats"
+      "stateAfter": "screen-wallet§§§§home§cats§"
     },
     {
       "id": "w2-goals",
@@ -405,7 +395,7 @@
       "problems": [],
       "buttons": 1,
       "strays": [],
-      "stateBefore": "screen-wallet§w2-goals§w2p-goals§§home§cats",
+      "stateBefore": "screen-wallet§w2-goals§w2p-goals[w2-page open]§§home§cats§",
       "back": {
         "el": "button.w2-bar-nav.oko-back",
         "w": 38,
@@ -416,7 +406,7 @@
         "icon": "#i-back",
         "label": "Назад"
       },
-      "stateAfter": "screen-wallet§§§§home§cats"
+      "stateAfter": "screen-wallet§§§§home§cats§"
     },
     {
       "id": "w2-analytics",
@@ -425,7 +415,7 @@
       "problems": [],
       "buttons": 1,
       "strays": [],
-      "stateBefore": "screen-wallet§w2-analytics§w2p-analytics§§home§cats",
+      "stateBefore": "screen-wallet§w2-analytics§w2p-analytics[w2-page open]§§home§cats§",
       "back": {
         "el": "button.w2-bar-nav.oko-back",
         "w": 38,
@@ -436,7 +426,7 @@
         "icon": "#i-back",
         "label": "Назад"
       },
-      "stateAfter": "screen-wallet§§§§home§cats"
+      "stateAfter": "screen-wallet§§§§home§cats§"
     },
     {
       "id": "w2-receive",
@@ -445,7 +435,7 @@
       "problems": [],
       "buttons": 1,
       "strays": [],
-      "stateBefore": "screen-wallet§w2-receive§w2p-receive§§home§cats",
+      "stateBefore": "screen-wallet§w2-receive§w2p-receive[w2-page open]§§home§cats§",
       "back": {
         "el": "button.w2-bar-nav.oko-back",
         "w": 38,
@@ -456,7 +446,7 @@
         "icon": "#i-back",
         "label": "Назад"
       },
-      "stateAfter": "screen-wallet§§§§home§cats"
+      "stateAfter": "screen-wallet§§§§home§cats§"
     },
     {
       "id": "w2-history",
@@ -465,7 +455,7 @@
       "problems": [],
       "buttons": 1,
       "strays": [],
-      "stateBefore": "screen-wallet§w2-history§w2p-history§§home§cats",
+      "stateBefore": "screen-wallet§w2-history§w2p-history[w2-page open]§§home§cats§",
       "back": {
         "el": "button.w2-bar-nav.oko-back",
         "w": 38,
@@ -476,7 +466,7 @@
         "icon": "#i-back",
         "label": "Назад"
       },
-      "stateAfter": "screen-wallet§§§§home§cats"
+      "stateAfter": "screen-wallet§§§§home§cats§"
     },
     {
       "id": "w2-security",
@@ -485,7 +475,7 @@
       "problems": [],
       "buttons": 1,
       "strays": [],
-      "stateBefore": "screen-wallet§w2-security§w2p-security§§home§cats",
+      "stateBefore": "screen-wallet§w2-security§w2p-security[w2-page open]§§home§cats§",
       "back": {
         "el": "button.w2-bar-nav.oko-back",
         "w": 38,
@@ -496,7 +486,7 @@
         "icon": "#i-back",
         "label": "Назад"
       },
-      "stateAfter": "screen-wallet§§§§home§cats"
+      "stateAfter": "screen-wallet§§§§home§cats§"
     },
     {
       "id": "w2-help",
@@ -505,7 +495,7 @@
       "problems": [],
       "buttons": 1,
       "strays": [],
-      "stateBefore": "screen-wallet§w2-help§w2p-help§§home§cats",
+      "stateBefore": "screen-wallet§w2-help§w2p-help[w2-page open]§§home§cats§",
       "back": {
         "el": "button.w2-bar-nav.oko-back",
         "w": 38,
@@ -516,7 +506,7 @@
         "icon": "#i-back",
         "label": "Назад"
       },
-      "stateAfter": "screen-wallet§§§§home§cats"
+      "stateAfter": "screen-wallet§§§§home§cats§"
     },
     {
       "id": "wal-stmt",
@@ -525,7 +515,7 @@
       "problems": [],
       "buttons": 1,
       "strays": [],
-      "stateBefore": "screen-wallet§wal-stmt§walStmt§§home§cats",
+      "stateBefore": "screen-wallet§wal-stmt§walStmt[wal-stmt open]§§home§cats§",
       "back": {
         "el": "button.wal-stmt-nav.oko-back",
         "w": 38,
@@ -536,7 +526,7 @@
         "icon": "#i-back",
         "label": "Назад"
       },
-      "stateAfter": "screen-wallet§§§§home§cats"
+      "stateAfter": "screen-wallet§§§§home§cats§"
     },
     {
       "id": "settings",
@@ -545,7 +535,7 @@
       "problems": [],
       "buttons": 1,
       "strays": [],
-      "stateBefore": "screen-profile§view:st2§st2View§§home§cats",
+      "stateBefore": "screen-profile§view:st2§st2View[open]§§home§cats§",
       "back": {
         "el": "button#st2Back.ep-cancel.oko-back",
         "w": 38,
@@ -556,7 +546,7 @@
         "icon": "#i-back",
         "label": "Назад"
       },
-      "stateAfter": "screen-profile§§§§home§cats"
+      "stateAfter": "screen-profile§§§§home§cats§"
     },
     {
       "id": "legal-hub",
@@ -565,7 +555,7 @@
       "problems": [],
       "buttons": 1,
       "strays": [],
-      "stateBefore": "screen-feed§view:legal§legalView§§home§cats",
+      "stateBefore": "screen-feed§view:legal§legalView[hub open]§§home§cats§",
       "back": {
         "el": "button.ep-cancel.oko-back",
         "w": 38,
@@ -576,18 +566,16 @@
         "icon": "#i-back",
         "label": "Закрыть"
       },
-      "stateAfter": "screen-feed§§§§home§cats"
+      "stateAfter": "screen-feed§§§§home§cats§"
     },
     {
       "id": "legal-doc",
       "name": "Документы · оферта",
       "root": false,
-      "problems": [
-        "клик не изменил экран"
-      ],
+      "problems": [],
       "buttons": 1,
       "strays": [],
-      "stateBefore": "screen-feed§view:legal§legalView§§home§cats",
+      "stateBefore": "screen-feed§view:legal§legalView[doc open]§§home§cats§",
       "back": {
         "el": "button.ep-cancel.oko-back",
         "w": 38,
@@ -598,7 +586,7 @@
         "icon": "#i-back",
         "label": "Закрыть"
       },
-      "stateAfter": "screen-feed§view:legal§legalView§§home§cats"
+      "stateAfter": "screen-feed§view:legal§legalView[open hub]§§home§cats§"
     },
     {
       "id": "notifs",
@@ -607,7 +595,7 @@
       "problems": [],
       "buttons": 1,
       "strays": [],
-      "stateBefore": "screen-feed§view:notifs§notifsView§§home§cats",
+      "stateBefore": "screen-feed§view:notifs§notifsView[open]§§home§cats§",
       "back": {
         "el": "button.ep-cancel.oko-back",
         "w": 38,
@@ -618,18 +606,16 @@
         "icon": "#i-back",
         "label": "Назад"
       },
-      "stateAfter": "screen-feed§§§§home§cats"
+      "stateAfter": "screen-feed§§§§home§cats§"
     },
     {
       "id": "search",
       "name": "Поиск",
       "root": false,
-      "problems": [
-        "клик не изменил экран"
-      ],
+      "problems": [],
       "buttons": 1,
       "strays": [],
-      "stateBefore": "screen-feed§view:search§searchView§§home§cats",
+      "stateBefore": "screen-feed§view:search§searchView[uic-qa open]§§home§cats§",
       "back": {
         "el": "button.ep-cancel.oko-back",
         "w": 38,
@@ -640,7 +626,7 @@
         "icon": "#i-back",
         "label": "Назад"
       },
-      "stateAfter": "screen-feed§view:search§searchView§§home§cats"
+      "stateAfter": "screen-feed§§§§home§cats§"
     },
     {
       "id": "channels",
@@ -649,7 +635,7 @@
       "problems": [],
       "buttons": 1,
       "strays": [],
-      "stateBefore": "screen-feed§view:channels§chView§§home§cats",
+      "stateBefore": "screen-feed§view:channels§chView[open]§§home§cats§",
       "back": {
         "el": "button.ch-back.oko-back",
         "w": 38,
@@ -660,27 +646,27 @@
         "icon": "#i-back",
         "label": "Назад"
       },
-      "stateAfter": "screen-feed§§§§home§cats"
+      "stateAfter": "screen-feed§§§§home§cats§"
     },
     {
       "id": "pubprofile",
       "name": "Публичный профиль",
       "root": false,
-      "problems": [
-        "кнопки «назад» нет",
-        "не приведены к единому виду: button#okoSocBack.soc-back"
-      ],
-      "buttons": 0,
-      "strays": [
-        {
-          "el": "button#okoSocBack.soc-back",
-          "text": "",
-          "w": 26,
-          "h": 26,
-          "y": 14
-        }
-      ],
-      "stateBefore": "screen-feed§view:social§okoSoc§§home§cats"
+      "problems": [],
+      "buttons": 1,
+      "strays": [],
+      "stateBefore": "screen-feed§view:social§okoSoc[open]§§home§cats§open",
+      "back": {
+        "el": "button#okoSocBack.soc-back.oko-back",
+        "w": 38,
+        "h": 38,
+        "x": 16,
+        "y": 14,
+        "css": "38px|38px|50%|flex|center|center",
+        "icon": "#i-back",
+        "label": "Назад"
+      },
+      "stateAfter": "screen-feed§§§§home§cats§"
     },
     {
       "id": "pssoc",
@@ -689,7 +675,7 @@
       "problems": [],
       "buttons": 1,
       "strays": [],
-      "stateBefore": "screen-feed§view:psSoc§psSocView§§home§cats",
+      "stateBefore": "screen-feed§view:psSoc§psSocView[open]§§home§cats§",
       "back": {
         "el": "button.ep-cancel.oko-back",
         "w": 38,
@@ -700,18 +686,27 @@
         "icon": "#i-back",
         "label": "Назад"
       },
-      "stateAfter": "screen-feed§§§§home§cats"
+      "stateAfter": "screen-feed§§§§home§cats§"
     },
     {
       "id": "editprof",
       "name": "Редактор профиля",
       "root": false,
-      "problems": [
-        "кнопки «назад» нет"
-      ],
-      "buttons": 0,
+      "problems": [],
+      "buttons": 1,
       "strays": [],
-      "stateBefore": "screen-profile§view:editProfile§editProfile§§home§cats"
+      "stateBefore": "screen-profile§view:editProfile§editProfile[open]§§home§cats§",
+      "back": {
+        "el": "button.ep-cancel.oko-back",
+        "w": 38,
+        "h": 38,
+        "x": 14,
+        "y": 10,
+        "css": "38px|38px|50%|flex|center|center",
+        "icon": "#i-back",
+        "label": "Отмена"
+      },
+      "stateAfter": "screen-profile§§§§home§cats§"
     },
     {
       "id": "reg",
@@ -720,7 +715,7 @@
       "problems": [],
       "buttons": 1,
       "strays": [],
-      "stateBefore": "screen-feed§view:reg§regView§§home§cats",
+      "stateBefore": "screen-feed§view:reg§regView[open]§§home§cats§",
       "back": {
         "el": "button.ep-cancel.oko-back",
         "w": 38,
@@ -731,7 +726,7 @@
         "icon": "#i-back",
         "label": "Назад"
       },
-      "stateAfter": "screen-feed§§§§home§cats"
+      "stateAfter": "screen-feed§§§§home§cats§"
     },
     {
       "id": "conv",
@@ -740,7 +735,7 @@
       "problems": [],
       "buttons": 1,
       "strays": [],
-      "stateBefore": "screen-chats§conv§§§home§cats",
+      "stateBefore": "screen-chats§conv§§§home§cats§",
       "back": {
         "el": "button.back.oko-back",
         "w": 38,
@@ -751,18 +746,16 @@
         "icon": "#i-back",
         "label": "Назад"
       },
-      "stateAfter": "screen-chats§§§§home§cats"
+      "stateAfter": "screen-chats§§§§home§cats§"
     },
     {
       "id": "sh-npost",
       "name": "Шторка · новый пост",
       "root": false,
-      "problems": [
-        "клик не изменил экран"
-      ],
+      "problems": [],
       "buttons": 1,
       "strays": [],
-      "stateBefore": "screen-feed§sheet:npost§sheetOverlay,sheet-npost§§home§cats",
+      "stateBefore": "screen-feed§sheet:npost§sheetOverlay[sheet-overlay open],sheet-npost[sheet open]§§home§cats§",
       "back": {
         "el": "button.oko-back.oko-back-sheet",
         "w": 38,
@@ -773,18 +766,16 @@
         "icon": "#i-back",
         "label": "Назад"
       },
-      "stateAfter": "screen-feed§sheet:npost§sheetOverlay,sheet-npost§§home§cats"
+      "stateAfter": "screen-feed§§§§home§cats§"
     },
     {
       "id": "sh-newchat",
       "name": "Шторка · новый чат",
       "root": false,
-      "problems": [
-        "клик не изменил экран"
-      ],
+      "problems": [],
       "buttons": 1,
       "strays": [],
-      "stateBefore": "screen-chats§sheet:new-chat§sheetOverlay,sheet-new-chat§§home§cats",
+      "stateBefore": "screen-chats§sheet:new-chat§sheetOverlay[sheet-overlay open],sheet-new-chat[sheet open]§§home§cats§",
       "back": {
         "el": "button.oko-back.oko-back-sheet",
         "w": 38,
@@ -795,7 +786,7 @@
         "icon": "#i-back",
         "label": "Назад"
       },
-      "stateAfter": "screen-chats§sheet:new-chat§sheetOverlay,sheet-new-chat§§home§cats"
+      "stateAfter": "screen-chats§§§§home§cats§"
     },
     {
       "id": "sh-adscreate",
@@ -804,7 +795,7 @@
       "problems": [],
       "buttons": 2,
       "strays": [],
-      "stateBefore": "screen-ads§sheet:ads-create§sheetOverlay,sheet-ads-create,adsStep1§§home§cats",
+      "stateBefore": "screen-ads§sheet:ads-create§sheetOverlay[sheet-overlay open],sheet-ads-create[sheet open]§§home§cats§",
       "back": {
         "el": "button.oko-back.oko-hdr-back",
         "w": 38,
@@ -815,7 +806,7 @@
         "icon": "#i-back",
         "label": "Назад"
       },
-      "stateAfter": "screen-ads§§adsStep1§§home§cats"
+      "stateAfter": "screen-ads§§§§home§cats§"
     },
     {
       "id": "sh-gmdaily",
@@ -825,7 +816,7 @@
       "stepError": "page.evaluate: TypeError: Cannot read properties of undefined (reading 's')\n    at gmLbDrift (http://127.0.0.1",
       "buttons": 1,
       "strays": [],
-      "stateBefore": "screen-games§§§§home§cats",
+      "stateBefore": "screen-games§§§§home§cats§",
       "back": {
         "el": "button.oko-back.oko-hdr-back",
         "w": 38,
@@ -836,7 +827,7 @@
         "icon": "#i-back",
         "label": "Назад"
       },
-      "stateAfter": "screen-feed§§§§home§cats"
+      "stateAfter": "screen-feed§§§§home§cats§"
     },
     {
       "id": "sh-gmbp",
@@ -846,7 +837,7 @@
       "stepError": "page.evaluate: TypeError: Cannot read properties of undefined (reading 's')\n    at gmLbDrift (http://127.0.0.1",
       "buttons": 1,
       "strays": [],
-      "stateBefore": "screen-games§§§§home§cats",
+      "stateBefore": "screen-games§§§§home§cats§",
       "back": {
         "el": "button.oko-back.oko-hdr-back",
         "w": 38,
@@ -857,18 +848,16 @@
         "icon": "#i-back",
         "label": "Назад"
       },
-      "stateAfter": "screen-feed§§§§home§cats"
+      "stateAfter": "screen-feed§§§§home§cats§"
     },
     {
       "id": "sh-topup",
       "name": "Шторка · пополнение",
       "root": false,
-      "problems": [
-        "клик не изменил экран"
-      ],
+      "problems": [],
       "buttons": 1,
       "strays": [],
-      "stateBefore": "screen-wallet§sheet:walTopup§sheetOverlay,sheet-walTopup§§home§cats",
+      "stateBefore": "screen-wallet§sheet:walTopup§sheetOverlay[sheet-overlay open],sheet-walTopup[sheet open]§§home§cats§",
       "back": {
         "el": "button.oko-back.oko-back-sheet",
         "w": 38,
@@ -879,18 +868,16 @@
         "icon": "#i-back",
         "label": "Назад"
       },
-      "stateAfter": "screen-wallet§sheet:walTopup§sheetOverlay,sheet-walTopup§§home§cats"
+      "stateAfter": "screen-wallet§§§§home§cats§"
     },
     {
       "id": "sh-send",
       "name": "Шторка · перевод",
       "root": false,
-      "problems": [
-        "клик не изменил экран"
-      ],
+      "problems": [],
       "buttons": 1,
       "strays": [],
-      "stateBefore": "screen-wallet§sheet:walSend§sheetOverlay,sheet-walSend§§home§cats",
+      "stateBefore": "screen-wallet§sheet:walSend§sheetOverlay[sheet-overlay open],sheet-walSend[sheet open]§§home§cats§",
       "back": {
         "el": "button.oko-back.oko-back-sheet",
         "w": 38,
@@ -901,7 +888,7 @@
         "icon": "#i-back",
         "label": "Назад"
       },
-      "stateAfter": "screen-wallet§sheet:walSend§sheetOverlay,sheet-walSend§§home§cats"
+      "stateAfter": "screen-wallet§§§§home§cats§"
     },
     {
       "id": "sh-payout",
@@ -910,7 +897,7 @@
       "problems": [],
       "buttons": 2,
       "strays": [],
-      "stateBefore": "screen-partner§sheet:payout§sheetOverlay,sheet-payout§§home§cats",
+      "stateBefore": "screen-partner§sheet:payout§sheetOverlay[sheet-overlay open],sheet-payout[sheet open]§§home§cats§",
       "back": {
         "el": "button.oko-back.oko-hdr-back",
         "w": 38,
@@ -921,7 +908,7 @@
         "icon": "#i-back",
         "label": "Назад"
       },
-      "stateAfter": "screen-partner§§§§home§cats"
+      "stateAfter": "screen-partner§§§§home§cats§"
     },
     {
       "id": "sh-vstopup",
@@ -930,7 +917,7 @@
       "problems": [],
       "buttons": 2,
       "strays": [],
-      "stateBefore": "screen-ton§sheet:vs-ton-topup§sheetOverlay,sheet-vs-ton-topup§§home§cats",
+      "stateBefore": "screen-ton§sheet:vs-ton-topup§sheetOverlay[sheet-overlay open],sheet-vs-ton-topup[sheet open]§§home§cats§",
       "back": {
         "el": "button.oko-back.oko-hdr-back",
         "w": 38,
@@ -941,7 +928,7 @@
         "icon": "#i-back",
         "label": "Назад"
       },
-      "stateAfter": "screen-ton§§§§home§cats"
+      "stateAfter": "screen-ton§§§§home§cats§"
     },
     {
       "id": "sh-vsrecv",
@@ -950,7 +937,7 @@
       "problems": [],
       "buttons": 2,
       "strays": [],
-      "stateBefore": "screen-ton§sheet:vs-ton-recv§sheetOverlay,sheet-vs-ton-recv§§home§cats",
+      "stateBefore": "screen-ton§sheet:vs-ton-recv§sheetOverlay[sheet-overlay open],sheet-vs-ton-recv[sheet open]§§home§cats§",
       "back": {
         "el": "button.oko-back.oko-hdr-back",
         "w": 38,
@@ -961,7 +948,7 @@
         "icon": "#i-back",
         "label": "Назад"
       },
-      "stateAfter": "screen-ton§§§§home§cats"
+      "stateAfter": "screen-ton§§§§home§cats§"
     },
     {
       "id": "sh-vshist",
@@ -970,7 +957,7 @@
       "problems": [],
       "buttons": 2,
       "strays": [],
-      "stateBefore": "screen-ton§sheet:vs-ton-hist§sheetOverlay,sheet-vs-ton-hist§§home§cats",
+      "stateBefore": "screen-ton§sheet:vs-ton-hist§sheetOverlay[sheet-overlay open],sheet-vs-ton-hist[sheet open]§§home§cats§",
       "back": {
         "el": "button.oko-back.oko-hdr-back",
         "w": 38,
@@ -981,7 +968,7 @@
         "icon": "#i-back",
         "label": "Назад"
       },
-      "stateAfter": "screen-ton§§§§home§cats"
+      "stateAfter": "screen-ton§§§§home§cats§"
     },
     {
       "id": "sh-vsmarket",
@@ -990,7 +977,7 @@
       "problems": [],
       "buttons": 2,
       "strays": [],
-      "stateBefore": "screen-ton§sheet:vs-market§sheetOverlay,sheet-vs-market§§home§cats",
+      "stateBefore": "screen-ton§sheet:vs-market§sheetOverlay[sheet-overlay open],sheet-vs-market[sheet open]§§home§cats§",
       "back": {
         "el": "button.oko-back.oko-hdr-back",
         "w": 38,
@@ -1001,18 +988,16 @@
         "icon": "#i-back",
         "label": "Назад"
       },
-      "stateAfter": "screen-ton§§§§home§cats"
+      "stateAfter": "screen-ton§§§§home§cats§"
     },
     {
       "id": "sh-lang",
       "name": "Шторка · язык",
       "root": false,
-      "problems": [
-        "клик не изменил экран"
-      ],
+      "problems": [],
       "buttons": 1,
       "strays": [],
-      "stateBefore": "screen-profile§sheet:stLang§sheetOverlay,sheet-stLang§§home§cats",
+      "stateBefore": "screen-profile§sheet:stLang§sheetOverlay[sheet-overlay open],sheet-stLang[sheet open]§§home§cats§",
       "back": {
         "el": "button.oko-back.oko-back-sheet",
         "w": 38,
@@ -1023,7 +1008,7 @@
         "icon": "#i-back",
         "label": "Назад"
       },
-      "stateAfter": "screen-profile§sheet:stLang§sheetOverlay,sheet-stLang§§home§cats"
+      "stateAfter": "screen-profile§§§§home§cats§"
     }
   ],
   "visuals": {
@@ -1059,7 +1044,9 @@
       "notifs button.ep-cancel.oko-back",
       "search button.ep-cancel.oko-back",
       "channels button.ch-back.oko-back",
+      "pubprofile button#okoSocBack.soc-back.oko-back",
       "pssoc button.ep-cancel.oko-back",
+      "editprof button.ep-cancel.oko-back",
       "reg button.ep-cancel.oko-back",
       "conv button.back.oko-back",
       "sh-npost button.oko-back.oko-back-sheet",
@@ -1085,8 +1072,8 @@
   },
   "summary": {
     "routes": 53,
-    "withProblems": 10,
-    "problems": 11,
+    "withProblems": 0,
+    "problems": 0,
     "distinctVisuals": 1,
     "visualsMatch": true
   }

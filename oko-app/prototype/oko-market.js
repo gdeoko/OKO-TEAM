@@ -2120,12 +2120,13 @@ function install() {
 }
 
 function openMarket() {
-  if (typeof window.showTab === 'function') window.showTab('mini');
-  if (typeof window.openMa === 'function') {
-    var host = document.getElementById('ma-market');
-    if (!host || host.style.display !== 'block') window.openMa('market');
-  }
   injectCSS();
+  /* переключаем вкладку только если мы не на ней: повторный showTab у части
+     слоёв приложения закрывает открытый мини-апп на следующем кадре */
+  var sm = document.getElementById('screen-mini');
+  if (typeof window.showTab === 'function' && !(sm && sm.classList.contains('active'))) window.showTab('mini');
+  if (typeof window.openMa === 'function') window.openMa('market');
+  else { var host = document.getElementById('ma-market'); if (host) host.style.display = 'block'; }
   mount();
 }
 
