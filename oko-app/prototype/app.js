@@ -5382,6 +5382,21 @@ function gmJackpot(){
    и двигают позицию. Персист под 'oko-games-lb', сброс каждую неделю. */
 const GM_LB_NAMES = []  /* демо-данные удалены 09.08: боты таблицы лидеров — источник только API */;
 let GM_LB = (()=>{ try{ return JSON.parse(localStorage.getItem('oko-games-lb'))||null; }catch(e){ return null; } })();
+/* На устройствах, где приложение уже запускалось, таблица лидеров с ботами
+   лежит в localStorage и переживает удаление сидов: gmLbEnsure() не трогает
+   запись, если неделя совпадает. Разовая чистка — иначе Даниэль снова увидел
+   бы выдуманных игроков после «удаления демо-данных». */
+(function gmWipeDemoLb(){
+  try{
+    if(localStorage.getItem('oko-lb-reset-v1') === '1') return;
+    localStorage.removeItem('oko-games-lb');
+    Object.keys(localStorage).forEach(function(k){
+      if(k.indexOf('oko-games-lb-') === 0) localStorage.removeItem(k);
+    });
+    localStorage.setItem('oko-lb-reset-v1', '1');
+    GM_LB = null;
+  }catch(e){}
+})();
 
 function gmWeekKey(){
   const d = new Date();
@@ -5424,9 +5439,13 @@ function gmLbAddWin(sum){
   gmLbRender();
   if(GM_LB.my >= 5000 && typeof gmAchUnlock === 'function') gmAchUnlock('rich');
 }
-/* «живая» таблица: при заходе на экран кто-то из мок-игроков иногда выигрывает */
+/* Раньше здесь «оживала» таблица: случайный мок-игрок время от времени
+   набирал очки. Мок-игроков больше нет (правка Даниэля: ноль выдуманных
+   людей), поэтому дрейфовать нечему — и без этой проверки функция падала
+   на пустом массиве при каждом переходе на вкладку. */
 function gmLbDrift(){
   gmLbEnsure();
+  if(!GM_LB || !Array.isArray(GM_LB.bots) || !GM_LB.bots.length) return;
   if(Math.random() < 0.45){
     const b = GM_LB.bots[Math.floor(Math.random() * GM_LB.bots.length)];
     b.s += Math.round((40 + Math.random()*550)/10)*10;

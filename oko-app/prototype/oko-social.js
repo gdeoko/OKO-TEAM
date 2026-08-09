@@ -317,7 +317,18 @@ function injectCss(){
     '#okoSoc .oko-ident{margin-top:12px}',
 
     /* ---- кнопки входа в профиле ---- */
-    '.soc-profile-cta{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;margin:12px 0 4px}',
+    '.soc-profile-cta{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;margin:8px 0 4px}',
+    '.soc-me-main{margin:12px 0 0}',
+    '.soc-me-main .soc-btn{width:100%}',
+    '.soc-me .soc-btn{white-space:nowrap;overflow-wrap:normal;word-break:keep-all;-webkit-hyphens:none;hyphens:none}',
+    /* Личный кабинет: подписчики, публикации и ролики прямо на вкладке «Профиль» */
+    '.soc-me{margin:14px 0 4px}',
+    '.soc-me-stats{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}',
+    '.soc-me-stat{display:flex;flex-direction:column;align-items:center;gap:2px;min-width:0;',
+    '  padding:12px 6px;border-radius:14px;background:var(--raised);border:1px solid var(--border);cursor:pointer}',
+    '.soc-me-stat b{font-family:var(--font-display);font-size:20px;line-height:1;color:var(--text)}',
+    '.soc-me-stat small{font-size:11px;color:var(--dim);text-align:center;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:100%}',
+    '.soc-me-stat:active{transform:scale(.97)}',
 
     /* ---- обложки соц-роликов в общей ленте ---- */
     '#feedList .media.soc-cover{background-size:cover !important;background-position:center !important}',
@@ -336,6 +347,7 @@ var SOC = (function(){
 })() || { v: 1, seq: 0, feedSeq: 5000000, items: {}, subs: {}, notify: {}, meta: {}, own: {}, reports: [] };
 SOC.items = SOC.items || {}; SOC.subs = SOC.subs || {}; SOC.notify = SOC.notify || {};
 SOC.meta = SOC.meta || {}; SOC.own = SOC.own || {}; SOC.reports = SOC.reports || []; SOC.seq = SOC.seq || 0;
+SOC.blocked = SOC.blocked || {};
 SOC.feedSeq = SOC.feedSeq || 5000000;
 
 function socSave(){
@@ -353,15 +365,18 @@ function socSave(){
    ========================================================================== */
 var TYPE_LABEL = {
   user: 'Профиль', channel: 'Канал', group: 'Групповой чат', chat: 'Чат',
-  sgroup: 'Супергруппа', club: 'Клуб', course: 'Курс', direct: 'Личный чат'
+  sgroup: 'Супергруппа', club: 'Клуб', course: 'Курс', direct: 'Личный чат',
+  dm: 'Личный чат', support: 'Поддержка'
 };
 var TYPE_SHORT = {
   user: 'профиль', channel: 'канал', group: 'чат', chat: 'чат',
-  sgroup: 'супергруппа', club: 'клуб', course: 'курс', direct: 'личный чат'
+  sgroup: 'супергруппа', club: 'клуб', course: 'курс', direct: 'личный чат',
+  dm: 'личный чат', support: 'поддержка'
 };
 var TYPE_ICON = {
   user: 'user', channel: 'megaphone', group: 'users', chat: 'users',
-  sgroup: 'users', club: 'crown', course: 'circle-play', direct: 'user'
+  sgroup: 'users', club: 'crown', course: 'circle-play', direct: 'user',
+  dm: 'chat', support: 'shield'
 };
 
 function nickOf(o){
@@ -375,7 +390,12 @@ function keyOfChat(c){
   if(c.socId) return 's:' + c.socId;
   if(c.chId) return 'c:' + c.chId;
   if(c.openChannel) return 'c:' + c.openChannel;
-  if(c.kind === 'direct') return 'u:' + (nickOf(c) || slug(c.name));
+  /* Личный чат — это не профиль автора, а карточка переписки. Раньше оба
+     жили под ключом 'u:<ник>', и на устройстве Даниэля личка с ним самим
+     совпадала с его личным кабинетом: в «чате с основателем» появлялись
+     подписчики, «Посты» и «Ролики». Отдельное пространство ключей 'd:'
+     разводит их окончательно. */
+  if(c.kind === 'direct') return 'd:' + (nickOf(c) || slug(c.name));
   return 'x:' + c.id;
 }
 function keyOfName(name){
@@ -425,6 +445,24 @@ function entity(key){
       created: c.created || null, own: null, ch: c, chat: null, isMe: false,
       accessLine: accessLine(c)
     };
+  }else if(t === 'd'){
+    /* Карточка личной переписки: только то, что относится к диалогу. */
+    var dch = null;
+    try{
+      if(typeof CHATS !== 'undefined' && CHATS){
+        for(var q = 0; q < CHATS.length; q++){
+          if(CHATS[q].kind === 'direct' && (nickOf(CHATS[q]) === id || slug(CHATS[q].name) === id)){ dch = CHATS[q]; break; }
+        }
+      }
+    }catch(e){}
+    if(!dch) return null;
+    ent = {
+      key: key, type: 'dm', name: meta.name || dch.name, nick: nickOf(dch),
+      bio: meta.bio != null ? meta.bio : (dch.about || ''),
+      avatarImg: meta.avatar || dch.avaImg || null, avaIcon: dch.avaIcon || null,
+      verifiedRaw: !!dch.verified, official: !!dch.official,
+      created: null, own: null, ch: null, chat: dch, isMe: false
+    };
   }else if(t === 'x'){
     var ch = chatRec(id);
     if(!ch) return null;
@@ -462,6 +500,22 @@ function entity(key){
 
   ent.avaLetter = (String(ent.name || 'O').trim().charAt(0) || 'O').toUpperCase();
   ent.owned = ownedBy(ent);
+
+  /* ПРАВКА ДАНИЭЛЯ: «поддержка око и Даниэль Ильясов — это не массовые чаты
+     или каналы с подписчиками, там не должно быть постов и роликов, это же
+     как ЛС чат поддержки. Про посты и ролики я имел в виду личный кабинет
+     в профиле у каждого обычного пользователя.»
+     Поэтому страница собеседника из ЛС — карточка чата, а не витрина автора:
+     без подписчиков, без вкладок «Посты» и «Ролики», без «Подписаться» и
+     «Опубликовать». Витрина остаётся у личного кабинета, каналов, чатов,
+     клубов и курсов.
+     Сервисный аккаунт (поддержка) — карточка чата всегда.
+     Обычный человек из лички получит витрину только когда у него реально
+     появятся публикации: пустые вкладки «Посты 0 / Ролики 0» на странице
+     собеседника — это мусор. */
+  ent.isService = !!(ent.chat && (ent.chat.agent || ent.chat.nick === 'okohelp'));
+  ent.isDM = (ent.type === 'dm');
+  if(ent.isService) ent.type = 'support';
   ent.typeLabel = TYPE_LABEL[ent.type] || 'Страница';
   ent.typeShort = TYPE_SHORT[ent.type] || 'страница';
   ent.typeIcon = TYPE_ICON[ent.type] || 'user';
@@ -746,10 +800,25 @@ function pageEntity(ent, nav){
   var subbed = isSubbed(ent);
   var tab = nav.tab || 'posts';
 
+
+  /* Витрина автора = подписчики + вкладки «Посты» и «Ролики».
+     Кому она положена:
+       • личному кабинету — всегда, иначе публиковать неоткуда;
+       • каналам, чатам, клубам, курсам — всегда, это площадки для публикаций;
+       • человеку (личка или чужой профиль) — только когда ему есть что
+         показать: пустые «Посты 0 / Ролики 0» на карточке собеседника это
+         мусор, а не функция;
+       • поддержке — никогда, это служебный чат. */
+  var personal = (ent.type === 'dm' || ent.type === 'user' || ent.type === 'support');
+  var hasContent = (posts.length + reels.length) > 0 || subs > 0;
+  var showcase = ent.isMe || (!ent.isService && (!personal || hasContent));
+
   var chips = ['<span class="soc-chip">' + SI(ent.typeIcon) + ent.typeLabel + '</span>'];
   if(ent.official) chips.push('<span class="soc-chip lime">' + SI('logo') + 'Официально OKO</span>');
   if(ent.accessLine) chips.push('<span class="soc-chip">' + SI('lock') + E(ent.accessLine) + '</span>');
-  if(ent.owned) chips.push('<span class="soc-chip">' + SI('crown') + 'Ты владелец</span>');
+  /* «Ты владелец» уместно на площадке, но не на карточке личного чата:
+     в переписке с поддержкой эта плашка только сбивает с толку. */
+  if(ent.owned && !personal) chips.push('<span class="soc-chip">' + SI('crown') + 'Ты владелец</span>');
 
   var head =
     '<div class="soc-id">' +
@@ -759,12 +828,13 @@ function pageEntity(ent, nav){
       '<div class="soc-kindrow">' + chips.join('') + '</div>' +
     '</div>';
 
-  var stats =
-    '<div class="soc-stats">' +
-      '<div class="soc-stat" id="socStatSubs"><b>' + FMT(subs) + '</b><small>подписчиков</small></div>' +
-      '<div class="soc-stat" id="socStatPosts"><b>' + FMT(posts.length) + '</b><small>публикаций</small></div>' +
-      '<div class="soc-stat" id="socStatReels"><b>' + FMT(reels.length) + '</b><small>роликов</small></div>' +
-    '</div>';
+  var stats = showcase
+    ? '<div class="soc-stats">' +
+        '<div class="soc-stat" id="socStatSubs"><b>' + FMT(subs) + '</b><small>подписчиков</small></div>' +
+        '<div class="soc-stat" id="socStatPosts"><b>' + FMT(posts.length) + '</b><small>публикаций</small></div>' +
+        '<div class="soc-stat" id="socStatReels"><b>' + FMT(reels.length) + '</b><small>роликов</small></div>' +
+      '</div>'
+    : '';
 
   var bio = ent.bio ? '<div class="soc-bio">' + E(ent.bio) + '</div>' : '';
   var meta = ent.created ? '<div class="soc-meta">' + SI('clock') + 'Создан ' + E(dateRu(ent.created)) + '</div>' : '';
@@ -772,11 +842,15 @@ function pageEntity(ent, nav){
   /* --- действия --- */
   var acts = [];
   if(!ent.isMe){
-    acts.push('<button class="soc-btn' + (subbed ? ' ghost' : '') + '" id="socActFollow" data-a="follow" type="button">' +
-      SI(subbed ? 'check' : 'plus') + (subbed ? 'Отписаться' : 'Подписаться') + '</button>');
-    acts.push('<button class="soc-btn ghost" id="socActMsg" data-a="msg" type="button">' + SI('chat') + 'Написать</button>');
+    /* На подписку зовут только там, где есть на что подписываться. */
+    if(showcase){
+      acts.push('<button class="soc-btn' + (subbed ? ' ghost' : '') + '" id="socActFollow" data-a="follow" type="button">' +
+        SI(subbed ? 'check' : 'plus') + (subbed ? 'Отписаться' : 'Подписаться') + '</button>');
+    }
+    acts.push('<button class="soc-btn' + (showcase ? ' ghost' : '') + '" id="socActMsg" data-a="msg" type="button">' +
+      SI('chat') + (ent.isService ? 'Написать в поддержку' : 'Написать') + '</button>');
   }
-  if(ent.owned){
+  if(ent.owned && showcase){
     acts.push('<button class="soc-btn" id="socActPublish" data-a="publish" type="button">' + SI('plus') + 'Опубликовать</button>');
     acts.push('<button class="soc-btn ghost" id="socActEdit" data-a="edit" type="button">' + SI('edit') + 'Редактировать</button>');
   }
@@ -792,20 +866,42 @@ function pageEntity(ent, nav){
     minis.push('<button class="soc-mini" id="socManage" data-a="manage" type="button">' + SI('gear') + '<span>Управление</span></button>');
     minis.push('<button class="soc-mini" id="socMembers" data-a="members" type="button">' + SI('users') + '<span>Участники и роли</span></button>');
   }
+  /* С карточки лички можно уйти в профиль человека — но только если он там
+     действительно что-то опубликовал. Пустой профиль предлагать незачем. */
+  if(ent.isDM && !ent.isService && ent.nick){
+    var au = entity('u:' + ent.nick);
+    if(au && (postsOf(au).length + reelsOf(au).length) > 0){
+      minis.push('<button class="soc-mini" id="socOpenAuthor" data-a="author" type="button">' +
+        SI('user') + '<span>Профиль автора</span></button>');
+    }
+  }
+  /* Личная переписка: вместо витрины автора — то, что нужно в чате. */
+  if(!showcase && !ent.isMe){
+    minis.push('<button class="soc-mini" id="socDmMedia" data-a="dmmedia" type="button">' + SI('photo') + '<span>Медиа, файлы, ссылки</span></button>');
+    minis.push('<button class="soc-mini" id="socDmSearch" data-a="dmsearch" type="button">' + SI('search') + '<span>Поиск по переписке</span></button>');
+    if(!ent.isService){
+      minis.push('<button class="soc-mini" id="socDmBlock" data-a="dmblock" type="button">' + SI('lock') + '<span>Заблокировать</span></button>');
+    }
+  }
   if(!ent.isMe){
     minis.push('<button class="soc-mini" id="socReport" data-a="report" type="button">' + SI('flag') + '<span>Пожаловаться</span></button>');
   }
 
   /* --- вкладки --- */
-  var tabs =
-    '<div class="soc-tabs" id="okoSocTabs">' +
-      '<button class="soc-tab ' + (tab === 'posts' ? 'on' : '') + '" data-a="tab" data-v="posts" type="button">' +
-        SI('feed') + 'Посты <i>' + posts.length + '</i></button>' +
-      '<button class="soc-tab ' + (tab === 'reels' ? 'on' : '') + '" data-a="tab" data-v="reels" type="button">' +
-        SI('clips') + 'Ролики <i>' + reels.length + '</i></button>' +
-    '</div>';
+  var tabs = showcase
+    ? '<div class="soc-tabs" id="okoSocTabs">' +
+        '<button class="soc-tab ' + (tab === 'posts' ? 'on' : '') + '" data-a="tab" data-v="posts" type="button">' +
+          SI('feed') + 'Посты <i>' + posts.length + '</i></button>' +
+        '<button class="soc-tab ' + (tab === 'reels' ? 'on' : '') + '" data-a="tab" data-v="reels" type="button">' +
+          SI('clips') + 'Ролики <i>' + reels.length + '</i></button>' +
+      '</div>'
+    : '';
 
-  var list = '<div id="okoSocList">' + (tab === 'reels' ? reelsHtml(ent, reels) : postsHtml(ent, posts)) + '</div>';
+  var list = showcase
+    ? '<div id="okoSocList">' + (tab === 'reels' ? reelsHtml(ent, reels) : postsHtml(ent, posts)) + '</div>'
+    : '<div class="soc-note">' + (ent.isService
+        ? 'Это чат поддержки OKO. Пиши сюда про оплату, доступы и любые сбои — отвечаем в переписке.'
+        : 'Это личная переписка. Публикации и подписчики живут в профиле — здесь только ваш диалог.') + '</div>';
 
   return {
     title: ent.name,
@@ -1463,6 +1559,43 @@ function act(a, v, el){
       socSave(); render();
       break;
 
+    case 'author':
+      if(ent.nick) go(null, 'u:' + ent.nick);
+      break;
+
+    /* --- действия личной переписки (вместо витрины автора) --- */
+    case 'dmmedia':
+      openMessage(ent);
+      /* Медиа живут внутри самого чата — открываем его и сразу показываем
+         вложения, а не рисуем вторую, неполную галерею на этой странице. */
+      setTimeout(function(){
+        if(typeof window.cpOpenMedia === 'function'){ window.cpOpenMedia(); return; }
+        if(typeof window.openSheet === 'function'){ window.openSheet('attach'); return; }
+        T('Вложения этого чата — во вкладке «Прикрепить» внутри переписки');
+      }, 260);
+      break;
+
+    case 'dmsearch':
+      openMessage(ent);
+      setTimeout(function(){
+        if(typeof window.cpConvSearch === 'function'){ window.cpConvSearch(); return; }
+        if(typeof window.openSearch === 'function'){ window.openSearch(); return; }
+        T('Поиск по переписке откроется внутри чата');
+      }, 260);
+      break;
+
+    case 'dmblock':
+      SOC.blocked = SOC.blocked || {};
+      if(SOC.blocked[ent.key]){
+        delete SOC.blocked[ent.key];
+        T('Разблокирован — сообщения снова доходят');
+      }else{
+        SOC.blocked[ent.key] = 1;
+        T('Заблокирован локально. Когда подключим бэкенд, блокировка уйдёт на сервер');
+      }
+      socSave(); render();
+      break;
+
     case 'report':
       SOC.reports.push({ key: ent.key, name: ent.name, ts: Date.now() });
       socSave();
@@ -1794,24 +1927,73 @@ document.addEventListener('click', function(e){
   }
 }, true);
 
-/* --- профиль: кнопки «Моя страница» и «Создать» --- */
+/* --- ЛИЧНЫЙ КАБИНЕТ: подписчики, посты и ролики ---
+   Правка Даниэля: «про посты и ролики я имел в виду в личном кабинете
+   в профиле у каждого обычного пользователя». Значит их место — прямо на
+   вкладке «Профиль», а не только на отдельной странице. Здесь живые
+   счётчики и три входа: свои посты, свои ролики и публикация.
+   Блок перерисовывается при каждом изменении, чтобы цифры не врали. */
+function myBlockHtml(){
+  var me = entity('u:' + nickOf(P()));
+  if(!me) return '';
+  var posts = postsOf(me), reels = reelsOf(me), subs = subsCount(me);
+  return '' +
+    '<div class="soc-me-stats">' +
+      '<button class="soc-me-stat" data-my="subs" type="button"><b>' + FMT(subs) + '</b><small>подписчиков</small></button>' +
+      '<button class="soc-me-stat" data-my="posts" type="button"><b>' + FMT(posts.length) + '</b><small>публикаций</small></button>' +
+      '<button class="soc-me-stat" data-my="reels" type="button"><b>' + FMT(reels.length) + '</b><small>роликов</small></button>' +
+    '</div>' +
+    /* «Опубликовать» — главное действие и самое длинное слово: в колонке
+       шириной 114px оно рвалось как «Опубли/ковать». Даём ему всю ширину,
+       остальные два действия — в два столбца. Ничего не переносится. */
+    '<div class="soc-me-main">' +
+      '<button class="soc-btn" data-my="publish" type="button">' + SI('plus') + 'Опубликовать</button>' +
+    '</div>' +
+    '<div class="soc-profile-cta">' +
+      '<button class="soc-btn ghost" data-my="page" type="button">' + SI('user') + 'Моя страница</button>' +
+      '<button class="soc-btn ghost" data-my="create" type="button">' + SI('plus') + 'Создать</button>' +
+    '</div>';
+}
+
 function injectProfileCta(){
   try{
     var sc = document.getElementById('screen-profile');
-    if(!sc || sc.querySelector('.soc-profile-cta')) return;
-    var anchor = sc.querySelector('#profAch') || sc.querySelector('#profStats');
+    if(!sc) return;
+    /* Профиль перерисовывается модулем pp2: исходные #profStats/#profAch
+       из index.html к этому моменту уже заменены на .pp2-wrap. Цепляемся к
+       тому, что есть на самом деле, и держим запасные варианты. */
+    var anchor =
+      sc.querySelector('.pp2-quick') ||
+      sc.querySelector('.pp2-top') ||
+      sc.querySelector('#profAch') ||
+      sc.querySelector('#profStats') ||
+      sc.querySelector('.pad > *');
     if(!anchor) return;
-    var wrap = document.createElement('div');
-    wrap.className = 'soc-profile-cta';
-    wrap.innerHTML =
-      '<button class="soc-btn" id="socMyPage" type="button">' + SI('user') + 'Моя страница</button>' +
-      '<button class="soc-btn ghost" id="socNewEntity" type="button">' + SI('plus') + 'Создать</button>';
-    anchor.parentNode.insertBefore(wrap, anchor.nextSibling);
-    wrap.querySelector('#socMyPage').addEventListener('click', function(){ open('u:' + nickOf(P())); });
-    wrap.querySelector('#socNewEntity').addEventListener('click', function(){
-      CRE = { kind: 'channel', name: '', desc: '', access: 'open', price: 0, avatar: null };
-      open('u:' + nickOf(P()), 'create');
-    });
+
+    var wrap = sc.querySelector('.soc-me');
+    if(!wrap){
+      wrap = document.createElement('div');
+      wrap.className = 'soc-me';
+      anchor.parentNode.insertBefore(wrap, anchor.nextSibling);
+      wrap.addEventListener('click', function(e){
+        var b = e.target.closest('[data-my]');
+        if(!b) return;
+        var k = b.getAttribute('data-my'), key = 'u:' + nickOf(P());
+        if(k === 'publish'){ resetPub(key); open(key); go('publish', key); return; }
+        if(k === 'create'){
+          CRE = { kind: 'channel', name: '', desc: '', access: 'open', price: 0, avatar: null };
+          open(key, 'create'); return;
+        }
+        if(k === 'reels'){ open(key); var t = top_(); if(t){ t.tab = 'reels'; render(); } return; }
+        open(key);
+        if(k === 'posts'){ var tp = top_(); if(tp){ tp.tab = 'posts'; render(); } }
+      });
+    }
+    var html = myBlockHtml();
+    if(wrap.getAttribute('data-sig') !== html){
+      wrap.innerHTML = html;
+      wrap.setAttribute('data-sig', html);
+    }
   }catch(e){}
 }
 

@@ -89,9 +89,11 @@ var CSS = [
 '.oko-back-row{ display:flex; align-items:center; gap:8px; min-height:38px; margin:0 0 8px -8px; }',
 '.oko-back-row > h3{ margin:0 !important; min-width:0; overflow-wrap:break-word; }',
 
-/* плавающая кнопка для широких экранов, где общая шапка скрыта версткой */
+/* плавающая кнопка для широких экранов, где общая шапка скрыта вёрсткой
+   (нижнее меню там превращается в боковое). Позицию по горизонтали ставит JS
+   по левому краю области контента, чтобы не лечь поверх бокового меню. */
 '#app > button.oko-back.oko-back-float{',
-'  position:absolute; top:14px; left:14px; z-index:36;',
+'  position:fixed; top:14px; left:14px; z-index:36;',
 '  margin:0;',
 '  background:var(--surface) !important;',
 '  box-shadow:0 2px 10px rgba(0,0,0,.18);',

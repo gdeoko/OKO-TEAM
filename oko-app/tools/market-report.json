@@ -1,14 +1,639 @@
 {
-  "at": "2026-08-09T05:06:18.564Z",
-  "base": "http://127.0.0.1:8211/index.html",
+  "at": "2026-08-09T05:13:47.794Z",
+  "base": "http://127.0.0.1:36713/index.html",
   "modes": [
     {
       "mode": "phone",
       "label": "Телефон 390×844",
-      "steps": [],
-      "errors": 0,
-      "consoleErrors": [],
-      "fatal": "TimeoutError: locator.waitFor: Timeout 10000ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('#ma-market [data-mk=\"mine\"]').first() to be visible\u001b[22m\n\u001b[2m    22 × locator resolved to hidden <button class=\"mk2-qt\" data-mk=\"mine\" data-mkact=\"mine\">…</button>\u001b[22m\n"
+      "steps": [
+        {
+          "n": 1,
+          "step": "1. Биржа · пустой каталог",
+          "title": "Биржа OKO",
+          "back": "",
+          "backKind": "none",
+          "overflowX": 0,
+          "clipped": 0,
+          "offRight": 0,
+          "underNav": 0,
+          "hasBack": false,
+          "empty": true,
+          "state": {
+            "listings": 0,
+            "active": 0,
+            "archived": 0,
+            "favs": 0,
+            "cards": 0,
+            "hasEmpty": true,
+            "title": "Биржа OKO"
+          },
+          "errors": [
+            "нет кнопки «назад»"
+          ]
+        },
+        {
+          "n": 2,
+          "step": "2. Мастер · шаг 1 категория",
+          "title": "Новое объявление",
+          "back": "",
+          "backKind": "none",
+          "overflowX": 0,
+          "clipped": 0,
+          "offRight": 0,
+          "underNav": 0,
+          "hasBack": false,
+          "empty": false,
+          "state": {
+            "listings": 0,
+            "active": 0,
+            "archived": 0,
+            "favs": 0,
+            "cards": 0,
+            "hasEmpty": false,
+            "title": "Новое объявление"
+          },
+          "errors": [
+            "нет кнопки «назад»"
+          ]
+        },
+        {
+          "n": 3,
+          "step": "3. Мастер · шаг 2 фото",
+          "title": "Новое объявление",
+          "back": "",
+          "backKind": "none",
+          "overflowX": 0,
+          "clipped": 0,
+          "offRight": 0,
+          "underNav": 0,
+          "hasBack": false,
+          "empty": false,
+          "state": {
+            "listings": 0,
+            "active": 0,
+            "archived": 0,
+            "favs": 0,
+            "cards": 0,
+            "hasEmpty": false,
+            "title": "Новое объявление"
+          },
+          "errors": [
+            "нет кнопки «назад»"
+          ]
+        },
+        {
+          "n": 4,
+          "step": "4. Мастер · шаг 3 заголовок",
+          "title": "Новое объявление",
+          "back": "",
+          "backKind": "none",
+          "overflowX": 0,
+          "clipped": 0,
+          "offRight": 0,
+          "underNav": 0,
+          "hasBack": false,
+          "empty": false,
+          "state": {
+            "listings": 0,
+            "active": 0,
+            "archived": 0,
+            "favs": 0,
+            "cards": 0,
+            "hasEmpty": false,
+            "title": "Новое объявление"
+          },
+          "errors": [
+            "нет кнопки «назад»"
+          ]
+        },
+        {
+          "n": 5,
+          "step": "5. Мастер · шаг 4 описание",
+          "title": "Новое объявление",
+          "back": "",
+          "backKind": "none",
+          "overflowX": 0,
+          "clipped": 0,
+          "offRight": 0,
+          "underNav": 0,
+          "hasBack": false,
+          "empty": false,
+          "state": {
+            "listings": 0,
+            "active": 0,
+            "archived": 0,
+            "favs": 0,
+            "cards": 0,
+            "hasEmpty": false,
+            "title": "Новое объявление"
+          },
+          "errors": [
+            "нет кнопки «назад»"
+          ]
+        },
+        {
+          "n": 6,
+          "step": "6. Мастер · шаг 5 цена",
+          "title": "Новое объявление",
+          "back": "",
+          "backKind": "none",
+          "overflowX": 0,
+          "clipped": 0,
+          "offRight": 0,
+          "underNav": 0,
+          "hasBack": false,
+          "empty": false,
+          "state": {
+            "listings": 0,
+            "active": 0,
+            "archived": 0,
+            "favs": 0,
+            "cards": 0,
+            "hasEmpty": false,
+            "title": "Новое объявление"
+          },
+          "errors": [
+            "нет кнопки «назад»"
+          ]
+        },
+        {
+          "n": 7,
+          "step": "7. Мастер · шаг 6 условия",
+          "title": "Новое объявление",
+          "back": "",
+          "backKind": "none",
+          "overflowX": 0,
+          "clipped": 0,
+          "offRight": 0,
+          "underNav": 0,
+          "hasBack": false,
+          "empty": false,
+          "state": {
+            "listings": 0,
+            "active": 0,
+            "archived": 0,
+            "favs": 0,
+            "cards": 0,
+            "hasEmpty": false,
+            "title": "Новое объявление"
+          },
+          "errors": [
+            "нет кнопки «назад»"
+          ]
+        },
+        {
+          "n": 8,
+          "step": "8. Мастер · шаг 7 предпросмотр",
+          "title": "Новое объявление",
+          "back": "",
+          "backKind": "none",
+          "overflowX": 0,
+          "clipped": 0,
+          "offRight": 0,
+          "underNav": 0,
+          "hasBack": false,
+          "empty": false,
+          "state": {
+            "listings": 0,
+            "active": 0,
+            "archived": 0,
+            "favs": 0,
+            "cards": 0,
+            "hasEmpty": false,
+            "title": "Новое объявление"
+          },
+          "errors": [
+            "нет кнопки «назад»"
+          ]
+        },
+        {
+          "n": 9,
+          "step": "9. Карточка после публикации",
+          "title": "Биржа OKO",
+          "back": "",
+          "backKind": "none",
+          "overflowX": 0,
+          "clipped": 0,
+          "offRight": 0,
+          "underNav": 0,
+          "hasBack": false,
+          "empty": false,
+          "state": {
+            "listings": 1,
+            "active": 1,
+            "archived": 0,
+            "favs": 0,
+            "cards": 1,
+            "hasEmpty": false,
+            "title": "Биржа OKO"
+          },
+          "errors": [
+            "нет кнопки «назад»"
+          ]
+        },
+        {
+          "n": 10,
+          "step": "10. Каталог · объявление видно",
+          "title": "Биржа OKO",
+          "back": "",
+          "backKind": "none",
+          "overflowX": 0,
+          "clipped": 0,
+          "offRight": 0,
+          "underNav": 0,
+          "hasBack": false,
+          "empty": false,
+          "state": {
+            "listings": 1,
+            "active": 1,
+            "archived": 0,
+            "favs": 0,
+            "cards": 1,
+            "hasEmpty": false,
+            "title": "Биржа OKO"
+          },
+          "errors": [
+            "нет кнопки «назад»"
+          ]
+        },
+        {
+          "n": 11,
+          "step": "10b. Карточка из каталога",
+          "title": "Объявление",
+          "back": "",
+          "backKind": "none",
+          "overflowX": 0,
+          "clipped": 0,
+          "offRight": 0,
+          "underNav": 0,
+          "hasBack": false,
+          "empty": false,
+          "state": {
+            "listings": 1,
+            "active": 1,
+            "archived": 0,
+            "favs": 0,
+            "cards": 0,
+            "hasEmpty": false,
+            "title": "Объявление"
+          },
+          "errors": [
+            "нет кнопки «назад»"
+          ]
+        },
+        {
+          "n": 12,
+          "step": "11. Мои объявления · активные",
+          "title": "Мои объявления OKO",
+          "back": "",
+          "backKind": "none",
+          "overflowX": 0,
+          "clipped": 0,
+          "offRight": 0,
+          "underNav": 0,
+          "hasBack": false,
+          "empty": false,
+          "state": {
+            "listings": 1,
+            "active": 1,
+            "archived": 0,
+            "favs": 0,
+            "cards": 1,
+            "hasEmpty": false,
+            "title": "Мои объявления OKO"
+          },
+          "errors": [
+            "нет кнопки «назад»"
+          ]
+        },
+        {
+          "n": 13,
+          "step": "12. Карточка объявления",
+          "title": "Объявление",
+          "back": "",
+          "backKind": "none",
+          "overflowX": 0,
+          "clipped": 0,
+          "offRight": 0,
+          "underNav": 0,
+          "hasBack": false,
+          "empty": false,
+          "state": {
+            "listings": 1,
+            "active": 1,
+            "archived": 0,
+            "favs": 0,
+            "cards": 0,
+            "hasEmpty": false,
+            "title": "Объявление"
+          },
+          "errors": [
+            "нет кнопки «назад»"
+          ]
+        },
+        {
+          "n": 14,
+          "step": "13. Добавлено в избранное",
+          "title": "Объявление",
+          "back": "",
+          "backKind": "none",
+          "overflowX": 0,
+          "clipped": 0,
+          "offRight": 0,
+          "underNav": 0,
+          "hasBack": false,
+          "empty": false,
+          "state": {
+            "listings": 1,
+            "active": 1,
+            "archived": 0,
+            "favs": 1,
+            "cards": 0,
+            "hasEmpty": false,
+            "title": "Объявление"
+          },
+          "errors": [
+            "нет кнопки «назад»"
+          ]
+        },
+        {
+          "n": 15,
+          "step": "14. Снято с публикации",
+          "title": "Объявление",
+          "back": "",
+          "backKind": "none",
+          "overflowX": 0,
+          "clipped": 0,
+          "offRight": 0,
+          "underNav": 0,
+          "hasBack": false,
+          "empty": false,
+          "state": {
+            "listings": 1,
+            "active": 0,
+            "archived": 1,
+            "favs": 1,
+            "cards": 0,
+            "hasEmpty": false,
+            "title": "Объявление"
+          },
+          "errors": [
+            "нет кнопки «назад»"
+          ]
+        },
+        {
+          "n": 16,
+          "step": "15. Каталог снова пуст",
+          "title": "Биржа OKO",
+          "back": "",
+          "backKind": "none",
+          "overflowX": 0,
+          "clipped": 0,
+          "offRight": 0,
+          "underNav": 0,
+          "hasBack": false,
+          "empty": true,
+          "state": {
+            "listings": 1,
+            "active": 0,
+            "archived": 1,
+            "favs": 1,
+            "cards": 0,
+            "hasEmpty": true,
+            "title": "Биржа OKO"
+          },
+          "errors": [
+            "нет кнопки «назад»"
+          ]
+        },
+        {
+          "n": 17,
+          "step": "16. Подтверждение удаления",
+          "title": "Мои объявления OKO",
+          "back": "",
+          "backKind": "none",
+          "overflowX": 0,
+          "clipped": 0,
+          "offRight": 0,
+          "underNav": 0,
+          "hasBack": false,
+          "empty": false,
+          "state": {
+            "listings": 1,
+            "active": 0,
+            "archived": 1,
+            "favs": 1,
+            "cards": 1,
+            "hasEmpty": false,
+            "title": "Мои объявления OKO"
+          },
+          "errors": [
+            "нет кнопки «назад»"
+          ]
+        },
+        {
+          "n": 18,
+          "step": "17. После удаления",
+          "title": "Мои объявления OKO",
+          "back": "",
+          "backKind": "none",
+          "overflowX": 0,
+          "clipped": 0,
+          "offRight": 0,
+          "underNav": 0,
+          "hasBack": false,
+          "empty": true,
+          "state": {
+            "listings": 0,
+            "active": 0,
+            "archived": 0,
+            "favs": 0,
+            "cards": 0,
+            "hasEmpty": true,
+            "title": "Мои объявления OKO"
+          },
+          "errors": [
+            "нет кнопки «назад»"
+          ]
+        },
+        {
+          "n": 19,
+          "step": "18. Биржа снова пуста",
+          "title": "Биржа OKO",
+          "back": "",
+          "backKind": "none",
+          "overflowX": 0,
+          "clipped": 0,
+          "offRight": 0,
+          "underNav": 0,
+          "hasBack": false,
+          "empty": true,
+          "state": {
+            "listings": 0,
+            "active": 0,
+            "archived": 0,
+            "favs": 0,
+            "cards": 0,
+            "hasEmpty": true,
+            "title": "Биржа OKO"
+          },
+          "errors": [
+            "нет кнопки «назад»"
+          ]
+        },
+        {
+          "n": 20,
+          "step": "19. Избранное",
+          "title": "Избранное",
+          "back": "",
+          "backKind": "none",
+          "overflowX": 0,
+          "clipped": 0,
+          "offRight": 0,
+          "underNav": 0,
+          "hasBack": false,
+          "empty": true,
+          "state": {
+            "listings": 0,
+            "active": 0,
+            "archived": 0,
+            "favs": 0,
+            "cards": 0,
+            "hasEmpty": true,
+            "title": "Избранное"
+          },
+          "errors": [
+            "нет кнопки «назад»"
+          ]
+        },
+        {
+          "n": 21,
+          "step": "20. История просмотров",
+          "title": "История просмотров",
+          "back": "",
+          "backKind": "none",
+          "overflowX": 0,
+          "clipped": 0,
+          "offRight": 0,
+          "underNav": 0,
+          "hasBack": false,
+          "empty": true,
+          "state": {
+            "listings": 0,
+            "active": 0,
+            "archived": 0,
+            "favs": 0,
+            "cards": 0,
+            "hasEmpty": true,
+            "title": "История просмотров"
+          },
+          "errors": [
+            "нет кнопки «назад»"
+          ]
+        },
+        {
+          "n": 22,
+          "step": "21. Отклики и сделки",
+          "title": "Отклики и сделки",
+          "back": "",
+          "backKind": "none",
+          "overflowX": 0,
+          "clipped": 0,
+          "offRight": 0,
+          "underNav": 0,
+          "hasBack": false,
+          "empty": true,
+          "state": {
+            "listings": 0,
+            "active": 0,
+            "archived": 0,
+            "favs": 0,
+            "cards": 0,
+            "hasEmpty": true,
+            "title": "Отклики и сделки"
+          },
+          "errors": [
+            "нет кнопки «назад»"
+          ]
+        },
+        {
+          "n": 23,
+          "step": "22. Шторка фильтров",
+          "title": "Биржа OKO",
+          "back": "",
+          "backKind": "none",
+          "overflowX": 0,
+          "clipped": 0,
+          "offRight": 0,
+          "underNav": 0,
+          "hasBack": false,
+          "empty": true,
+          "state": {
+            "listings": 0,
+            "active": 0,
+            "archived": 0,
+            "favs": 0,
+            "cards": 0,
+            "hasEmpty": true,
+            "title": "Биржа OKO"
+          },
+          "errors": [
+            "нет кнопки «назад»"
+          ]
+        },
+        {
+          "n": 24,
+          "step": "23. Escape закрыл шторку",
+          "title": "Биржа OKO",
+          "back": "",
+          "backKind": "none",
+          "overflowX": 0,
+          "clipped": 0,
+          "offRight": 0,
+          "underNav": 0,
+          "hasBack": false,
+          "empty": true,
+          "state": {
+            "listings": 0,
+            "active": 0,
+            "archived": 0,
+            "favs": 0,
+            "cards": 0,
+            "hasEmpty": true,
+            "title": "Биржа OKO"
+          },
+          "errors": [
+            "нет кнопки «назад»"
+          ]
+        },
+        {
+          "n": 25,
+          "step": "24. Системная «назад» вернула на биржу",
+          "title": "Биржа OKO",
+          "back": "",
+          "backKind": "none",
+          "overflowX": 0,
+          "clipped": 0,
+          "offRight": 0,
+          "underNav": 0,
+          "hasBack": false,
+          "empty": true,
+          "state": {
+            "listings": 0,
+            "active": 0,
+            "archived": 0,
+            "favs": 0,
+            "cards": 0,
+            "hasEmpty": true,
+            "title": "Биржа OKO"
+          },
+          "errors": [
+            "нет кнопки «назад»"
+          ]
+        }
+      ],
+      "errors": 25,
+      "consoleErrors": []
     },
     {
       "mode": "narrow",
@@ -16,7 +641,7 @@
       "steps": [],
       "errors": 0,
       "consoleErrors": [],
-      "fatal": "TimeoutError: page.goto: Timeout 40000ms exceeded.\nCall log:\n\u001b[2m  - navigating to \"http://127.0.0.1:8211/index.html\", waiting until \"domcontentloaded\"\u001b[22m\n"
+      "fatal": "TimeoutError: locator.waitFor: Timeout 10000ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('#ma-market .mk2-catrow[data-val=\"video\"]').first() to be visible\u001b[22m\n"
     },
     {
       "mode": "desktop",
@@ -24,14 +649,13 @@
       "steps": [],
       "errors": 0,
       "consoleErrors": [],
-      "fatal": "TimeoutError: locator.waitFor: Timeout 10000ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('#ma-market [data-mk=\"mine\"]').first() to be visible\u001b[22m\n\u001b[2m    21 × locator resolved to hidden <button class=\"mk2-qt\" data-mk=\"mine\" data-mkact=\"mine\">…</button>\u001b[22m\n"
+      "fatal": "TimeoutError: locator.click: Timeout 12000ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('#ma-market [data-mk=\"mine\"]').first()\u001b[22m\n\u001b[2m    - locator resolved to <button class=\"mk2-qt\" data-mk=\"mine\" data-mkact=\"mine\">…</button>\u001b[22m\n\u001b[2m  - attempting click action\u001b[22m\n\u001b[2m    - waiting for element to be visible, enabled and stable\u001b[22m\n"
     }
   ],
   "summary": {
-    "layoutErrors": 0,
+    "layoutErrors": 25,
     "consoleErrors": 0,
     "fatal": [
-      "phone",
       "narrow",
       "desktop"
     ]

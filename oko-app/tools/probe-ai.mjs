@@ -112,11 +112,27 @@ await page.route('**/api.php*', async route => {
 /* Навигация без гонок: ждём фиксацию документа, затем реальную готовность
    ядра и слоя ОКО Ai. waitUntil:'domcontentloaded' тут ненадёжен — страница
    успевает переинициализироваться, и ожидание срывается. */
-async function openApp(pg) {
-  await pg.goto(BASE, { waitUntil: 'commit', timeout: 60000 });
-  await pg.waitForFunction(
-    () => document.readyState !== 'loading' && typeof window.openMa === 'function' && !!window.okoAi,
-    null, { timeout: 60000 });
+const READY = () => document.readyState !== 'loading'
+  && typeof window.openMa === 'function' && !!window.okoAi;
+
+async function openApp(pg, attempt = 1) {
+  try {
+    await pg.goto(BASE, { waitUntil: 'commit', timeout: 45000 });
+    await pg.waitForFunction(READY, null, { timeout: 45000 });
+  } catch (e) {
+    /* Сборка тяжёлая (3D, ~6 МБ скриптов) и песочница делится с другими прогонами —
+       один промах по времени не должен валить проверку. Диагностируем и пробуем ещё раз. */
+    const state = await pg.evaluate(() => ({
+      readyState: document.readyState,
+      hasOpenMa: typeof window.openMa === 'function',
+      hasOkoAi: !!window.okoAi,
+      url: location.href,
+    })).catch(err => ({ evalFailed: String(err).slice(0, 120) }));
+    console.error('[probe] openApp attempt ' + attempt + ' failed: ' + JSON.stringify(state));
+    if (attempt >= 3) throw e;
+    await pg.waitForTimeout(1500);
+    return openApp(pg, attempt + 1);
+  }
   await pg.waitForTimeout(900);
 }
 
