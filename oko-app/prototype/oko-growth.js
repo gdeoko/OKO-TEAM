@@ -245,6 +245,12 @@ function injectCSS(){
 'svg.okg-i{ width:16px; height:16px; max-width:none; flex:0 0 auto;',
 '  fill:none; stroke:currentColor; stroke-width:7; stroke-linecap:round; stroke-linejoin:round; }',
 
+'/* Тост ядра живёт на z-index:70 и на bottom:84px — ровно там, где стоит наш',
+'   чек-лист (9300), и глубоко под нашими окнами (100040). Получалось глухо:',
+'   слой роста говорит «Ссылка скопирована», а сообщения не видно. Поднимаем тост',
+'   над всем — он маленький, pointer-events:none и по смыслу всегда верхний. */',
+'#toast{ z-index:100060; }',
+
 '/* ---- общая оболочка окна ---- */',
 '.okg-scrim{ position:fixed; inset:0; z-index:100040; background:var(--okg-scrim);',
 '  backdrop-filter:blur(6px); -webkit-backdrop-filter:blur(6px);',
@@ -569,6 +575,14 @@ function busy(opt){
     /* открытый плеер Клипов */
     try{ if(window.okoReels && window.okoReels.isOpen && window.okoReels.isOpen()) return no('Клипы'); }catch(e){}
 
+    /* Полоски PWA от ядра. Они стоят на том же нижнем краю (bottom 74px) и выше
+       нас по слою (9800–9860), поэтому вдвоём получается каша. Пока висит
+       предложение установить приложение или обновиться — чек-лист ждёт. */
+    var pwa = ['pwa-install','pwa-ios','pwa-update'];
+    for(var p=0; p<pwa.length; p++){
+      if(visible(document.getElementById(pwa[p]))) return no('полоса PWA: ' + pwa[p]);
+    }
+
     /* полноэкранные «ворота» ядра: заставка, свой онбординг, вход, регистрация,
        звонок, попап. Пока человек проходит их, наш слой молчит совсем —
        иначе два онбординга наезжают друг на друга. */
@@ -764,12 +778,21 @@ function killOnboard(){
 
 function renderOnboard(force){
   try{
-    var done = doneCount(), total = STEPS.length, pct = Math.round(done / total * 100);
+    var total = STEPS.length;
+    var flags = STEPS.map(function(s){ return stepDone(s.id) ? 1 : 0; });
+    var done = 0;
+    flags.forEach(function(f){ done += f; });
+    var pct = Math.round(done / total * 100);
 
     /* всё сделано или человек закрыл — снимаем совсем */
-    if((allDone() || S.ob.closed) && !force){ killOnboard(); return; }
+    if((done === total || S.ob.closed) && !force){ killOnboard(); return; }
     /* пока идёт звонок / Клипы / запись / открыт оверлей — прячем, но не убиваем */
     var hide = busy({ soft:true }) && !force;
+
+    /* Сторож дёргает нас каждые 4 секунды. Если ничего не поменялось, разметку
+       не трогаем: перезапись innerHTML сбрасывала наведение, фокус и анимацию
+       полосы прогресса — карточка мигала сама по себе. Сравниваем отпечаток. */
+    var sig = (S.ob.collapsed ? 'p' : 'c') + flags.join('');
 
     if(S.ob.collapsed){
       killOnboardCard();
@@ -785,12 +808,15 @@ function renderOnboard(force){
         });
         document.body.appendChild(pillEl);
       }
-      pillEl.innerHTML =
-        '<span class="okg-ring"><svg viewBox="0 0 28 28">' +
-          '<circle class="bg" cx="14" cy="14" r="' + r + '"></circle>' +
-          '<circle class="fg" cx="14" cy="14" r="' + r + '" stroke-dasharray="' + c.toFixed(1) + '" stroke-dashoffset="' + off.toFixed(1) + '"></circle>' +
-        '</svg></span>' +
-        '<b>СТАРТ</b><small>' + done + ' / ' + total + '</small>';
+      if(pillEl.getAttribute('data-okg-sig') !== sig){
+        pillEl.innerHTML =
+          '<span class="okg-ring"><svg viewBox="0 0 28 28">' +
+            '<circle class="bg" cx="14" cy="14" r="' + r + '"></circle>' +
+            '<circle class="fg" cx="14" cy="14" r="' + r + '" stroke-dasharray="' + c.toFixed(1) + '" stroke-dashoffset="' + off.toFixed(1) + '"></circle>' +
+          '</svg></span>' +
+          '<b>СТАРТ</b><small>' + done + ' / ' + total + '</small>';
+        pillEl.setAttribute('data-okg-sig', sig);
+      }
       pillEl.hidden = hide;
       return;
     }
@@ -804,6 +830,7 @@ function renderOnboard(force){
       obEl.setAttribute('aria-label','Старт в OKO');
       document.body.appendChild(obEl);
     }
+    if(obEl.getAttribute('data-okg-sig') === sig){ obEl.hidden = hide; return; }
     var left = total - done;
     var head =
       '<div class="okg-ob-head">' +
@@ -817,7 +844,7 @@ function renderOnboard(force){
       '<div class="okg-bar"><i style="width:' + pct + '%"></i></div>';
 
     var rows = STEPS.map(function(s, i){
-      var d = stepDone(s.id);
+      var d = !!flags[i];
       return '<button class="okg-step' + (d ? ' done' : '') + '" type="button" data-okg-step="' + s.id + '">' +
         '<span class="okg-step-n">' + (d ? ico('check') : (i + 1)) + '</span>' +
         '<span class="okg-step-b"><b>' + esc(s.t) + '</b><small>' + esc(s.s) + '</small></span>' +
@@ -826,6 +853,7 @@ function renderOnboard(force){
     }).join('');
 
     obEl.innerHTML = head + '<div class="okg-steps">' + rows + '</div>';
+    obEl.setAttribute('data-okg-sig', sig);
     obEl.hidden = hide;
 
     obEl.querySelector('[data-okg="collapse"]').addEventListener('click', function(){
@@ -861,7 +889,7 @@ function okgOnboardOpen(){
         id:'onboard-done',
         title:'Старт пройден',
         html:'<span class="okg-chip">' + ico('check') + 'Старт пройден</span>' +
-             '<h1 class="okg-h">ВСЁ ПЯТЬ ШАГОВ ЗАКРЫТЫ</h1>' +
+             '<h1 class="okg-h">ВСЕ ПЯТЬ ШАГОВ ЗАКРЫТЫ</h1>' +
              '<p class="okg-sub">Профиль на месте, канал читаешь, первый урок за плечами, ссылка на руках, ' +
              'ролик проверен. Дальше — витрина роста: она подскажет, что сделать, чтобы тебя начали находить.</p>',
         actions:[
