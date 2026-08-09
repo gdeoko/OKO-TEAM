@@ -658,13 +658,17 @@ var GAMES = (function(){
     return 'Ты';
   }
   function leagueLabel(){
+    /* GM_LB_LEAGUE объявлена через let — на window её нет, только в общей
+       лексической области классических скриптов. Читаем по имени. */
+    var id = 'friends';
+    try{ if(typeof GM_LB_LEAGUE !== 'undefined' && GM_LB_LEAGUE) id = GM_LB_LEAGUE; }catch(e){}
     try{
       if(typeof GM_LB_LEAGUES !== 'undefined' && GM_LB_LEAGUES && GM_LB_LEAGUES.find){
-        var l = GM_LB_LEAGUES.find(function(x){ return x.id === (window.GM_LB_LEAGUE || 'friends'); });
+        var l = GM_LB_LEAGUES.find(function(x){ return x.id === id; });
         if(l) return l.n;
       }
     }catch(e){}
-    return 'Друзья';
+    return {friends:'Друзья', city:'Твой город', world:'Мир'}[id] || 'Друзья';
   }
   function daysLeft(){
     var d = 7 - ((new Date().getDay() + 6) % 7);

@@ -38779,9 +38779,13 @@ function psSocInjectEntry(){
     /* подписать актуальную версию сборки в футер */
     const verEl = wrap.querySelector('#pp2VerLb');
     if(verEl){
-      const chip = document.querySelector('.build-chip, [data-build]');
-      const ver = (chip && (chip.textContent || '').match(/v[0-9.]+/)) ? chip.textContent.match(/v[0-9.]+/)[0] : '';
-      verEl.textContent = 'сборка ' + (ver || 'dev');
+      /* Искали .build-chip / [data-build] — таких классов в разметке нет,
+         поэтому в подвале профиля всегда стояло «сборка dev». Чип версии
+         помечен data-build, плюс запасной путь через текст страницы. */
+      const chip = document.querySelector('[data-build]');
+      let ver = chip ? (chip.textContent || '').match(/v[0-9.]+/) : null;
+      if(!ver) ver = (document.body.textContent || '').match(/сборка (v[0-9.]+)/);
+      verEl.textContent = 'сборка ' + (ver ? (ver[1] || ver[0]) : '—');
     }
   }
   window.pp2Rebuild = pp2Rebuild;

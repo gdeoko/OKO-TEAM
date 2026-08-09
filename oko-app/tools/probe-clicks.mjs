@@ -84,10 +84,17 @@ const probeJs = `(() => {
       if ((cs.wordBreak === 'break-all' || cs.overflowWrap === 'anywhere') && r.width < 200) {
         const word = txt.split(/\s+/).reduce((a, w) => w.length > a.length ? w : a, '');
         if (word.length >= 6) {
-          out._cv = out._cv || document.createElement('canvas');
-          const g = out._cv.getContext('2d');
-          g.font = cs.fontWeight + ' ' + cs.fontSize + ' ' + cs.fontFamily;
-          if (g.measureText(word).width > el.clientWidth + 1) out.midWord.push(word.slice(0, 30));
+          /* У строчных элементов clientWidth всегда 0 — сравнение с ним
+             объявляло переносом любое слово в любом <span>. Берём реальную
+             ширину прямоугольника, а clientWidth используем только когда он
+             осмысленный (блочные элементы). */
+          const avail = Math.max(el.clientWidth, Math.round(r.width));
+          if (avail > 4) {
+            out._cv = out._cv || document.createElement('canvas');
+            const g = out._cv.getContext('2d');
+            g.font = cs.fontWeight + ' ' + cs.fontSize + ' ' + cs.fontFamily;
+            if (g.measureText(word).width > avail + 1) out.midWord.push(word.slice(0, 30));
+          }
         }
       }
     }

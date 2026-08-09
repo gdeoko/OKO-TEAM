@@ -274,12 +274,28 @@ const AUDIT = () => {
     const padR = parseFloat(cs.paddingRight) || 0, bR = parseFloat(cs.borderRightWidth) || 0;
     const padL = parseFloat(cs.paddingLeft) || 0,  bL = parseFloat(cs.borderLeftWidth) || 0;
     const inR = r.right - bR - padR + 1.5, inL = r.left + bL + padL - 1.5;
+    /* Считаем только текст в обычном потоке. Значки и бейджи, которые
+       дизайнер сам прижал к краю через position:absolute, дефектом не
+       являются — они там и должны быть. */
     let tr = null;
     try{
+      const walker = document.createTreeWalker(el, NodeFilter.SHOW_TEXT, null);
       const range = document.createRange();
-      range.selectNodeContents(el);
-      tr = range.getBoundingClientRect();
-      range.detach && range.detach();
+      let n;
+      while((n = walker.nextNode())){
+        if(!n.textContent.trim()) continue;
+        let abs = false;
+        for(let p = n.parentElement; p && p !== el; p = p.parentElement){
+          const ps = getComputedStyle(p).position;
+          if(ps === 'absolute' || ps === 'fixed'){ abs = true; break; }
+        }
+        if(abs) continue;
+        range.selectNodeContents(n);
+        const rr = range.getBoundingClientRect();
+        if(rr.width < 0.5) continue;
+        tr = tr ? {left:Math.min(tr.left, rr.left), right:Math.max(tr.right, rr.right),
+                   width:1} : {left:rr.left, right:rr.right, width:rr.width};
+      }
     }catch(e){ tr = null; }
     if(tr && tr.width > 1 && (tr.right > inR || tr.left < inL))
       add('button-label-overflow',
