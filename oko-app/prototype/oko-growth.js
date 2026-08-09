@@ -64,9 +64,17 @@ function say(msg){
 function tap(kind){ try{ if(typeof okoHaptic === 'function') okoHaptic(kind || 'selection'); }catch(e){} }
 function track(ev, props){ try{ if(typeof window.okoTrack === 'function') window.okoTrack(ev, props || {}); }catch(e){} }
 
+/* Все пробелы внутри суммы и перед ₽ — неразрывные. Раньше здесь стояло
+   обратное: locale отдавал NBSP, а мы меняли его на обычный пробел. Из-за
+   этого сумма рвалась на переносе — «3 920» на одной строке, «₽ в месяц»
+   на другой. Заодно накрываем узкий NBSP (U+202F) и запятую тех локалей,
+   где разделитель групп другой. */
 function rub(n){
-  try{ return Math.round(n).toLocaleString('ru-RU').replace(/ /g,' ').replace(/,/g,' ') + ' ₽'; }
-  catch(e){ return Math.round(n) + ' ₽'; }
+  /* NaN.toLocaleString('ru-RU') выдаёт «не число» — в интерфейсе это читается
+     как поломка. Честный ноль рядом со знаком рубля выглядит куда лучше. */
+  if(typeof n !== 'number' || !isFinite(n)) n = 0;
+  try{ return Math.round(n).toLocaleString('ru-RU').replace(/[\s,\u00a0\u202f]/g,' ') + ' ₽'; }
+  catch(e){ return Math.round(n) + ' ₽'; }
 }
 /* «5 человек» / «21 человек» / «3 человека» — без этого текст выглядит машинным */
 function plural(n, one, few, many){
@@ -121,8 +129,22 @@ var S = (function loadState(){
   };
   try{
     var raw = JSON.parse(localStorage.getItem(LS_KEY) || 'null');
-    if(raw && typeof raw === 'object'){
-      for(var k in base) if(!(k in raw)) raw[k] = base[k];
+    if(raw && typeof raw === 'object' && !Array.isArray(raw)){
+      /* Проверяем не только наличие ключа, но и его тип. Модуль работает под
+         'use strict': если из старой сборки прилетит steps в виде строки, то
+         S.steps[id] = ... бросит TypeError, boot() свалится в catch — и весь
+         слой роста молча не появится. Всё сомнительное меняем на заводское. */
+      for(var k in base){
+        var want = base[k], got = raw[k];
+        var ok;
+        if(Array.isArray(want))              ok = Array.isArray(got);
+        else if(want && typeof want === 'object') ok = !!got && typeof got === 'object' && !Array.isArray(got);
+        else                                  ok = (typeof got === typeof want);
+        if(!ok) raw[k] = want;
+      }
+      /* ob мог приехать объектом без полей — дозаполняем поштучно */
+      if(typeof raw.ob.collapsed !== 'boolean') raw.ob.collapsed = false;
+      if(typeof raw.ob.closed    !== 'boolean') raw.ob.closed    = false;
       return raw;
     }
   }catch(e){}
@@ -266,6 +288,9 @@ function injectCSS(){
 '  box-shadow:var(--okg-shadow); position:relative;',
 '  transform:translateY(14px) scale(.98); transition:transform .24s cubic-bezier(.3,1,.4,1); }',
 '.okg-scrim.on .okg-card{ transform:none; }',
+'/* Фокус на карточку ставим кодом, ради Escape и возврата фокуса. Обводку',
+'   при этом рисовать незачем — она читается как «поле для ввода». */',
+'.okg-card:focus{ outline:none; }',
 '.okg-card::before{ content:""; position:absolute; inset:0; border-radius:inherit; pointer-events:none;',
 '  background:radial-gradient(120% 90% at 100% -10%, var(--okg-soft), transparent 60%); }',
 
@@ -399,6 +424,9 @@ function injectCSS(){
 '.okg-link-btns .okg-btn{ min-height:42px; padding:10px 12px; font-size:13px; }',
 
 '.okg-qr{ margin-top:12px; display:flex; flex-direction:column; align-items:center; gap:10px; }',
+'/* Единственное место, где цвет прибит гвоздями и это правильно: подложке кода',
+'   положено быть чисто белой в обеих темах. На лайме или на чёрном камера',
+'   перестаёт его читать, поэтому var(--surface) сюда ставить нельзя. */',
 '.okg-qr-box{ padding:12px; border-radius:16px; background:#fff; line-height:0;',
 '  box-shadow:0 6px 20px rgba(0,0,0,.22); }',
 '.okg-qr canvas{ display:block; width:168px; height:168px; image-rendering:pixelated; }',
@@ -496,13 +524,13 @@ function injectCSS(){
 
    Две строгости:
      busy()             — для всплывающих окон. Плюс тишина первые 20 секунд.
-     busy({soft:true})  — для чек-листа. Он не перебивает, а лежит в углу,
+     busy({soft:true})  — для чек-листа. Он лежит в углу и никого не перебивает,
                           поэтому ждёт только 4 секунды и уступает тем же
                           настоящим помехам: звонку, записи, Клипам, оверлеям.
    =========================================================================== */
 
 /* Действительно ли элемент сейчас на экране.
-   Половина оверлеев ядра не прячется через display, а уезжает трансформом
+   Половина оверлеев ядра прячется трансформом, минуя display
    (#regView — translateX(100%), шиты — translateY(105%)). Такие элементы
    всегда имеют размер, поэтому одного getComputedStyle мало: смотрим,
    пересекает ли прямоугольник видимую область. */
@@ -626,6 +654,7 @@ function okgModal(o){
 
   var card = document.createElement('div');
   card.className = 'okg-card';
+  card.tabIndex = -1;
 
   var x = document.createElement('button');
   x.className = 'okg-x';
@@ -642,6 +671,11 @@ function okgModal(o){
   scrim.appendChild(card);
   document.body.appendChild(scrim);
 
+  /* Куда вернуть фокус, когда окно уйдёт. Без этого после Escape фокус падает
+     на <body>, и следующий Tab начинает обход интерфейса с самого начала. */
+  var focusBack = null;
+  try{ focusBack = document.activeElement; }catch(e){}
+
   var closed = false;
   function close(how){
     if(closed) return;
@@ -649,6 +683,9 @@ function okgModal(o){
     try{ document.removeEventListener('keydown', onKey, true); }catch(e){}
     scrim.classList.remove('on');
     setTimeout(function(){ try{ scrim.remove(); }catch(e){} }, 220);
+    try{
+      if(focusBack && focusBack.focus && document.contains(focusBack)) focusBack.focus();
+    }catch(e){}
     try{ if(o.onClose) o.onClose(how || 'close'); }catch(e){}
   }
   function onKey(ev){
@@ -698,7 +735,11 @@ function okgModal(o){
     body.appendChild(m);
   }
 
-  requestAnimationFrame(function(){ scrim.classList.add('on'); });
+  requestAnimationFrame(function(){
+    scrim.classList.add('on');
+    /* preventScroll — чтобы экран под окном не дёрнулся к началу карточки */
+    try{ card.focus({ preventScroll:true }); }catch(e){ try{ card.focus(); }catch(e2){} }
+  });
   try{ if(o.onMount) o.onMount(api); }catch(e){}
   track('okg_modal_open', { id:o.id || 'modal' });
   return api;
@@ -706,8 +747,8 @@ function okgModal(o){
 
 /* ===========================================================================
    6 · ОНБОРДИНГ ПЕРВОГО ДНЯ
-   Не карусель на семь экранов, а чек-лист: пять понятных дел, каждое —
-   одно нажатие до нужного места.
+   Вместо карусели на семь экранов — чек-лист: пять понятных дел, каждое
+   в одно нажатие до нужного места.
    =========================================================================== */
 
 var STEPS = [
@@ -947,7 +988,11 @@ var FEATURES = {
     get:['30 готовых роликов в месяц', 'Сценарий, монтаж, обложка, субтитры', 'Своя озвучка и свой голос',
          'Публикация прямо из завода'],
     num:'30 роликов',
-    numS:'в месяц под ключ. У монтажёра на фрилансе это от 60 000 ₽. PRO стоит 3 920 ₽ в месяц.'
+    /* Цену не пишем строкой: rub() ставит неразрывные пробелы, и «3 920 ₽»
+       руками рядом с «3 920 ₽» из rub() выглядели по-разному и рвались на
+       переносе. Плюс при смене PRO_MO цифра поедет сама. */
+    numS:'в месяц под ключ. У монтажёра на фрилансе это от ' + rub(60000) +
+         '. PRO стоит ' + rub(PRO_YEAR_MO) + ' в месяц.'
   },
   analytics: {
     chip:'Аналитика',
@@ -978,7 +1023,7 @@ var FEATURE_DEFAULT = {
   have:['Мессенджер и лента без ограничений', 'Чтение клуба и часть Академии', 'Одна проверка видео в месяц'],
   get:['Без лимитов на проверки и публикации', 'Контент-завод и автопостинг', 'Полная Академия и все курсы',
        'Приоритет в бирже услуг'],
-  num:'3 920 ₽',
+  num:rub(PRO_YEAR_MO),
   numS:'в месяц при оплате за год. Меньше, чем один час работы монтажёра.'
 };
 
@@ -1289,21 +1334,21 @@ var QR = (function(){
 function materials(link){
   return [
     { id:'story', who:'Сторис', t:'Для блогеров — короткая сторис',
-      text:'Перевела монтаж, аналитику и продажи в одно приложение.\n\n' +
-           'OKO разбирает ролик по секундам и говорит, где люди уходят. Плюс канал, клуб и приём оплат — ' +
+      text:'Монтаж, аналитика и продажи теперь в одном приложении.\n\n' +
+           'OKO разбирает ролик по секундам и показывает, где люди уходят. Плюс канал, клуб и приём оплат — ' +
            'всё в одном месте, без десяти вкладок.\n\n' +
            'Кто хочет попробовать — вот ссылка: ' + link },
 
     { id:'post', who:'Пост', t:'Для экспертов — пост в канал',
-      text:'Год я собирал аудиторию в одном месте, продавал в другом, а считал в третьем. ' +
-           'Теперь всё держу в OKO.\n\n' +
+      text:'Год аудитория жила в одном сервисе, продажи шли во втором, деньги считались в третьем. ' +
+           'Теперь всё в OKO.\n\n' +
            'Что там: канал и закрытый клуб с оплатой внутри, разбор роликов на удержание, ' +
            'биржа услуг, кошелёк. Free-тариф даёт попробовать, дальше — по желанию.\n\n' +
            'Если тоже устали от зоопарка сервисов: ' + link },
 
     { id:'dm', who:'Личка', t:'В личку — без давления',
-      text:'Привет! Помню, ты жаловался, что ролики не заходят и непонятно почему.\n\n' +
-           'Я сейчас сижу в OKO — там проверка видео показывает посекундно, на какой фразе люди уходят. ' +
+      text:'Привет! Помню наш разговор: ролики выходят, а почему не заходят — непонятно.\n\n' +
+           'Я сейчас в OKO — там проверка видео показывает посекундно, на какой фразе люди уходят. ' +
            'Мне это закрыло вопрос за один вечер.\n\n' +
            'Держи, посмотри: ' + link },
 
@@ -1589,13 +1634,16 @@ var NUDGES = {
     show: function(){
       var left = STEPS.filter(function(s){ return !stepDone(s.id); });
       var next = left[0];
+      /* when() уже проверил, что шаги остались, но между проверкой и показом
+         ядро могло закрыть последний. Без этой строчки было бы next.t по undefined. */
+      if(!next) return null;
       return okgModal({
         id:'nudge-onboarding',
         title:'Старт в OKO',
         muteKind:'onboarding',
         html:'<span class="okg-chip">' + ico('rocket') + 'Старт в OKO</span>' +
              '<h1 class="okg-h">ОСТАЛОСЬ ' + left.length + ' ' + plural(left.length,'ШАГ','ШАГА','ШАГОВ').toUpperCase() + '</h1>' +
-             '<p class="okg-sub">Ты прошёл ' + doneCount() + ' из ' + STEPS.length +
+             '<p class="okg-sub">Позади ' + doneCount() + ' из ' + STEPS.length +
                '. Следующий — «' + esc(next.t) + '». ' + esc(next.s) + '.</p>' +
              '<div class="okg-bar" style="margin-top:16px;border-radius:3px"><i style="width:' +
                Math.round(doneCount() / STEPS.length * 100) + '%"></i></div>',
@@ -1618,8 +1666,8 @@ var NUDGES = {
         muteKind:'anketa',
         html:'<span class="okg-chip">' + ico('rocket') + 'Система роста</span>' +
              '<h1 class="okg-h">АНКЕТА ОСТАЛАСЬ НЕДОПИСАННОЙ</h1>' +
-             '<p class="okg-sub">Ты ответил на ' + n + ' ' + plural(n,'вопрос','вопроса','вопросов') +
-               ' и вышел. Осталось немного — на выходе получишь стратегию под свою нишу: ' +
+             '<p class="okg-sub">Позади ' + n + ' ' + plural(n,'вопрос','вопроса','вопросов') +
+               ', дальше пауза. Осталось немного — на выходе получишь стратегию под свою нишу: ' +
                'что снимать, как часто и что продавать.</p>' +
              '<div class="okg-num"><b>10 минут</b><span>столько занимает быстрая анкета. ' +
                'Ответы сохранятся, второй раз заполнять не придётся.</span></div>',
@@ -1647,7 +1695,7 @@ var NUDGES = {
         html:'<span class="okg-chip">' + ico('camera') + 'Бесплатно' + '</span>' +
              '<h1 class="okg-h">У ТЕБЯ ЛЕЖИТ НЕИСПОЛЬЗОВАННАЯ ПРОВЕРКА</h1>' +
              '<p class="okg-sub">На FREE даётся одна проверка видео в месяц. Она не переносится: ' +
-               'не потратил — сгорела. Загрузи любой свой ролик, разбор придёт за пару минут.</p>' +
+               'месяц закончился — сгорела. Загрузи любой свой ролик, разбор придёт за пару минут.</p>' +
              '<ul class="okg-list get">' +
                '<li>' + ico('bolt') + '<span>Где зритель уходит — посекундно</span></li>' +
                '<li>' + ico('bolt') + '<span>Работают ли первые три секунды</span></li>' +
@@ -1673,7 +1721,7 @@ var NUDGES = {
       var r = partnerMath(10);
       var why = S.paid
         ? 'Ты уже на платном тарифе — значит, знаешь, за что здесь платят. Расскажи своим: '
-        : 'Ты в OKO третий день и уже освоился. Дальше приложение может само себя окупать: ';
+        : 'Ты в OKO третий день, основное уже понятно. Дальше приложение может само себя окупать: ';
       return okgModal({
         id:'nudge-partner',
         title:'Партнёрка',
@@ -1755,6 +1803,13 @@ var NUDGES = {
 var okgQueue = (function(){
   var pending = [];
   var timer = null;
+  var tries = 0;
+  /* Сколько раз пробуем показать повод, прежде чем отступить. 45 попыток по
+     8 секунд — это шесть минут. За это время человек либо освободился, либо
+     занят по-настоящему, и дальше долбиться незачем: каждая попытка проходит
+     по всем детям <body> через getComputedStyle, а это не бесплатно.
+     Новый вызов okgNudge() снова заводит планировщик. */
+  var MAX_TRIES = 45;
 
   function eligible(kind){
     var n = NUDGES[kind];
@@ -1768,14 +1823,17 @@ var okgQueue = (function(){
   function push(kind){
     if(!NUDGES[kind]) return false;
     if(pending.indexOf(kind) === -1) pending.push(kind);
+    tries = 0;
     schedule();
     return true;
   }
 
   function schedule(){
     if(timer) return;
+    if(sessionPopupShown || !pending.length) return;
     timer = setInterval(function(){
-      if(sessionPopupShown){ stop(); return; }
+      if(sessionPopupShown || !pending.length){ stop(); return; }
+      if(++tries > MAX_TRIES){ stop(); return; }
       drain();
     }, 8000);
   }
@@ -1792,12 +1850,19 @@ var okgQueue = (function(){
       ready.sort(function(a, b){ return (NUDGES[b].pri || 0) - (NUDGES[a].pri || 0); });
       var kind = ready[0];
 
+      /* Повод из очереди убираем в любом случае — второй раз за сессию он не нужен.
+         А вот «одно окно за сессию» и остывание засчитываем только если окно
+         правда открылось: если show() вернул пусто или упал, человек ничего не
+         увидел, и сжигать единственный показ на пустоту нечестно. */
+      pending = pending.filter(function(k){ return k !== kind; });
+      var shown = null;
+      try{ shown = NUDGES[kind].show(); }catch(e){ log('nudge fail', e); }
+      if(!shown) return false;
+
       sessionPopupShown = true;
       S.nudge[kind] = now();
       save();
-      pending = pending.filter(function(k){ return k !== kind; });
       track('okg_nudge', { kind:kind });
-      NUDGES[kind].show();
       stop();
       return true;
     }catch(e){ log('drain fail', e); return false; }
@@ -1905,8 +1970,17 @@ function mountAll(){
   /* партнёрский двигатель — в начало «Партнёрского кабинета» */
   try{
     var pScreen = document.querySelector('#screen-partner .pad');
-    if(pScreen && !document.getElementById('okgPartnerHost')){
+    var already = document.getElementById('okgPartnerHost');
+    /* Ник приходит из профиля и может дозагрузиться уже после сборки виджета.
+       Тогда внутри останется ссылка на «oko», и QR уведёт человека не туда.
+       Держим ник на хосте и пересобираем виджет, как только он поменялся. */
+    if(already && already.getAttribute('data-okg-nick') !== nick()){
+      already.setAttribute('data-okg-nick', nick());
+      okgPartnerWidget(already);
+    }
+    if(pScreen && !already){
       var ph = document.createElement('div');
+      ph.setAttribute('data-okg-nick', nick());
       ph.id = 'okgPartnerHost';
       ph.style.margin = '0 0 16px';
       /* В партнёрском кабинете виджет уместен сверху — это и есть суть экрана.
@@ -1937,7 +2011,7 @@ function mountAll(){
       sh.style.margin = '4px 0 20px';
       /* Профиль собирает модуль pp2 — он кладёт всё в .pp2-wrap. Витрину
          ставим ПОСЛЕ него, иначе она вытесняет аватар, имя и настройки
-         в самый низ, и человек видит на входе не свой профиль, а советы. */
+         в самый низ, и человек видит на входе советы вместо своего профиля. */
       var anchor = prScreen.querySelector('.pp2-wrap') || prScreen.querySelector('.prof-ach')
                 || prScreen.querySelector('.profile-top');
       if(anchor && anchor.nextSibling) prScreen.insertBefore(sh, anchor.nextSibling);
@@ -1996,10 +2070,14 @@ function boot(){
     /* первая попытка — ровно после окна тишины */
     setTimeout(function(){ try{ okgQueue.drain(); }catch(e){} }, SILENCE + 500);
 
-    /* лёгкий сторож: перерисовать чек-лист, когда человек занят/освободился,
-       и поймать смену тарифа. 4 секунды — незаметно для батареи. */
+    /* Лёгкий сторож: перерисовать чек-лист, когда человек занят/освободился,
+       и поймать смену тарифа. 4 секунды — незаметно для батареи.
+       Когда вкладка ушла в фон, не делаем ничего: замеры геометрии в скрытой
+       вкладке всё равно врут, а батарею жрут. Разметку сторож теперь не
+       переписывает без нужды — renderOnboard сравнивает отпечаток. */
     setInterval(function(){
       try{
+        if(document.hidden) return;
         watchTier();
         if(obEl || pillEl) renderOnboard();
         else if(!S.ob.closed && !allDone()) renderOnboard();

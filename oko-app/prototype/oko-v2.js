@@ -16,6 +16,25 @@
 var log = function(){};   /* включить при отладке: console.log.bind(console,'[oko-v2]') */
 
 /* ---------------------------------------------------------------------------
+   СТАРТ БЕЗ ДЁРГАНИЯ
+   Класс oko-ready включает анимации выезжающих панелей. До него они просто
+   стоят за краем экрана: на первой отрисовке ничего не «выезжает» и не мигает.
+   --------------------------------------------------------------------------- */
+(function markReady(){
+  var go = function(){
+    requestAnimationFrame(function(){
+      requestAnimationFrame(function(){
+        try{ document.documentElement.classList.add('oko-ready'); }catch(e){}
+      });
+    });
+  };
+  if(document.readyState === 'complete') setTimeout(go, 120);
+  else window.addEventListener('load', function(){ setTimeout(go, 120); });
+  /* страховка, если load почему-то не придёт */
+  setTimeout(function(){ try{ document.documentElement.classList.add('oko-ready'); }catch(e){} }, 2500);
+})();
+
+/* ---------------------------------------------------------------------------
    МОДУЛЬ v2-nav · НИЖНЕЕ МЕНЮ
    Симптомы у Даниэля: «при клике везде обновляет страницу, меняет позицию,
    прыгает, поднимается, дёргается».

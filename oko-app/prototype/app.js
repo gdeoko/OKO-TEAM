@@ -46878,6 +46878,9 @@ var PW_ASSET = {
     }
     // нормируем сумму к monthEarned
     const total = arr.reduce((s,v)=>s+v,0);
+    /* Пока заработка нет, шкалировать не на что: нулевое деление давало NaN,
+       и график рисовался битыми путями. Ровная линия по нулю — честно. */
+    if(!total || !PP.monthEarned) return arr.map(()=>0);
     const scale = PP.monthEarned / total;
     return arr.map(v => Math.round(v * scale));
   }

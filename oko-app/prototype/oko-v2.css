@@ -668,6 +668,16 @@ img, video, canvas, svg:not(.i) {
 #searchView, #notifsView, #adminView, #systemView, #editProfile,
 #regView, #legalView, #psView, #psSocView, #hqEmbed {
   visibility: hidden;
+  /* Анимация выезда включается только после того, как страница встала на ноги.
+     Иначе на самой первой отрисовке панели заметно «выезжают» из экрана:
+     они стартуют на месте и анимированно уходят вправо, а на широком экране
+     ещё и подглядывают краем. */
+  transition: none;
+}
+html.oko-ready #searchView, html.oko-ready #notifsView, html.oko-ready #adminView,
+html.oko-ready #systemView, html.oko-ready #editProfile, html.oko-ready #regView,
+html.oko-ready #legalView, html.oko-ready #psView, html.oko-ready #psSocView,
+html.oko-ready #hqEmbed {
   transition: transform .3s cubic-bezier(.3, 1, .4, 1), visibility 0s linear .3s;
 }
 #searchView.open, #notifsView.open, #adminView.open, #systemView.open,
