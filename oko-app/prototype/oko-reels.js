@@ -42,10 +42,41 @@ function esc(s){
   d.textContent = String(s == null ? '' : s);
   return d.innerHTML;
 }
-function attr(s){ return String(s == null ? '' : s).replace(/"/g, '&quot;'); }
+/* значение внутрь HTML-атрибута: & экранируем первым, иначе присланный из
+   данных «&quot;» раскроется в живую кавычку и разорвёт атрибут */
+function attr(s){
+  return String(s == null ? '' : s)
+    .replace(/&/g, '&amp;')
+    .replace(/"/g, '&quot;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;');
+}
+/* Мост к ядру. Важно: часть помощников ядро объявляет как top-level const
+   (fmtN, postById в index.html). Такие имена живут в глобальной лексической
+   области и на window НЕ попадают — window.postById здесь всегда undefined.
+   Обычный (не модульный) скрипт видит их по цепочке областей, поэтому
+   спрашиваем сначала window, потом голое имя. Имя 'toast' сюда не берём:
+   в этом файле есть свой toast и получилась бы бесконечная рекурсия. */
+function coreRef(name){
+  try{ if(typeof window[name] === 'function') return window[name]; }catch(e){}
+  try{
+    switch(name){
+      case 'fmtN':         if(typeof fmtN === 'function') return fmtN; break;
+      case 'postById':     if(typeof postById === 'function') return postById; break;
+      case 'likePost':     if(typeof likePost === 'function') return likePost; break;
+      case 'toggleSave':   if(typeof toggleSave === 'function') return toggleSave; break;
+      case 'openComments': if(typeof openComments === 'function') return openComments; break;
+      case 'repost':       if(typeof repost === 'function') return repost; break;
+      case 'openPostMenu': if(typeof openPostMenu === 'function') return openPostMenu; break;
+      case 'showTab':      if(typeof showTab === 'function') return showTab; break;
+    }
+  }catch(e){}
+  return null;
+}
 function num(n){
   try{
-    if(typeof window.fmtN === 'function') return window.fmtN(n || 0);
+    var f = coreRef('fmtN');
+    if(f) return String(f(n || 0));
   }catch(e){}
   n = n || 0;
   return n >= 1000 ? (n / 1000).toFixed(1).replace('.0', '') + 'к' : String(n);
@@ -157,7 +188,7 @@ function okoClipsSource(){
       var dom = document.querySelectorAll('#feedList article.post');
       for(var d = 0; d < dom.length; d++){
         var pid = pidOfCard(dom[d]);
-        var p = (pid != null && typeof window.postById === 'function') ? window.postById(pid) : null;
+        var p = (pid != null) ? corePost(pid) : null;
         if(p && hasClip(p) && !seen[p.id]){ seen[p.id] = 1; var n1 = normalize(p, j++); if(n1) res.push(n1); }
       }
       /* добор из модели */
@@ -199,7 +230,12 @@ var CSS = [
 /* старая сторис-оболочка выключена, но не удалена */
 '#faReels{display:none!important}',
 
-'.okr{position:fixed;left:0;top:0;width:100%;height:100%;z-index:39;background:#000;color:#fff;',
+/* Плеер намеренно всегда тёмный — как у Reels, Shorts и TikTok: под видео
+   светлая подложка не нужна ни в одной теме. Поэтому чёрный и белый тут
+   заданы прямо, а единственный бренд-цвет живёт в переменных: --lime для
+   сплошной заливки и --okr-lime-rgb для полупрозрачных слоёв. */
+'.okr{--okr-lime-rgb:154,255,0;',
+'  position:fixed;left:0;top:0;width:100%;height:100%;z-index:39;background:#000;color:#fff;',
 '  font-family:var(--font-body);-webkit-tap-highlight-color:transparent;',
 '  display:flex;align-items:center;justify-content:center;contain:layout paint;isolation:isolate}',
 '.okr[hidden]{display:none!important}',
@@ -225,9 +261,9 @@ var CSS = [
 '.okr-poster{position:absolute;inset:0;background-position:center;background-size:cover;background-repeat:no-repeat}',
 '.okr-fallback{position:absolute;inset:0;background:linear-gradient(160deg,var(--okr-g1,#16240a),var(--okr-g2,#04060a) 74%)}',
 '.okr-fallback::before{content:"";position:absolute;inset:0;',
-'  background:radial-gradient(130% 80% at 50% -6%,rgba(154,255,0,.18),transparent 56%)}',
+'  background:radial-gradient(130% 80% at 50% -6%,rgba(var(--okr-lime-rgb),.18),transparent 56%)}',
 '.okr-fallback::after{content:"";position:absolute;inset:0;opacity:.45;',
-'  background:repeating-linear-gradient(122deg,transparent 0,transparent 26px,rgba(154,255,0,.03) 27px,transparent 28px)}',
+'  background:repeating-linear-gradient(122deg,transparent 0,transparent 26px,rgba(var(--okr-lime-rgb),.03) 27px,transparent 28px)}',
 /* мягкий знак «медиа» на пустом кадре — без крупного текста */
 '.okr-nomedia{position:absolute;left:50%;top:46%;transform:translate(-50%,-50%);z-index:2;',
 '  width:74px;height:74px;border-radius:50%;display:flex;align-items:center;justify-content:center;',
@@ -252,7 +288,7 @@ var CSS = [
 
 /* двойной тап — сердце в точке касания */
 '.okr-heart{position:absolute;z-index:7;pointer-events:none;color:var(--lime);',
-'  filter:drop-shadow(0 10px 26px rgba(154,255,0,.55));',
+'  filter:drop-shadow(0 10px 26px rgba(var(--okr-lime-rgb),.55));',
 '  animation:okr-heart .8s cubic-bezier(.2,.9,.3,1.35) forwards}',
 '.okr-heart .okr-i{width:104px;height:104px;fill:var(--lime);stroke:none}',
 '@keyframes okr-heart{',
@@ -276,10 +312,10 @@ var CSS = [
 '.okr-act .okr-bub .okr-i{width:23px;height:23px;transition:transform .16s}',
 '.okr-act b{font-size:11.5px;font-weight:700;letter-spacing:.01em;font-variant-numeric:tabular-nums;',
 '  text-shadow:0 2px 8px rgba(0,0,0,.65);line-height:1.1}',
-'.okr-act:hover .okr-bub{border-color:rgba(154,255,0,.42)}',
+'.okr-act:hover .okr-bub{border-color:rgba(var(--okr-lime-rgb),.42)}',
 '.okr-act:hover .okr-bub .okr-i{transform:scale(1.08)}',
 '.okr-act:focus-visible .okr-bub{outline:2px solid var(--lime);outline-offset:2px}',
-'.okr-act.on .okr-bub{background:rgba(154,255,0,.16);border-color:rgba(154,255,0,.5)}',
+'.okr-act.on .okr-bub{background:rgba(var(--okr-lime-rgb),.16);border-color:rgba(var(--okr-lime-rgb),.5)}',
 '.okr-act.on .okr-bub .okr-i{fill:var(--lime);stroke:none;color:var(--lime)}',
 '.okr-act.on b{color:var(--lime)}',
 '.okr-act.okr-pop .okr-bub .okr-i{animation:okr-pop .42s cubic-bezier(.2,.9,.3,1.5)}',
@@ -293,7 +329,7 @@ var CSS = [
 '.okr-auth{display:flex;align-items:center;gap:9px;min-width:0}',
 '.okr-ava{width:36px;height:36px;border-radius:50%;flex:none;overflow:hidden;display:flex;',
 '  align-items:center;justify-content:center;font-weight:700;font-size:14px;color:#000;',
-'  background:var(--lime);box-shadow:0 3px 12px rgba(154,255,0,.28)}',
+'  background:var(--lime);box-shadow:0 3px 12px rgba(var(--okr-lime-rgb),.28)}',
 '.okr-ava img{width:100%;height:100%;object-fit:cover;display:block}',
 '.okr-who{min-width:0;display:flex;flex-direction:column;gap:1px}',
 '.okr-nm{font-size:14px;font-weight:700;color:#fff;white-space:nowrap;overflow:hidden;',
@@ -369,20 +405,21 @@ var CSS = [
 '.okr-empty{position:absolute;inset:0;z-index:2;display:flex;flex-direction:column;',
 '  align-items:center;justify-content:center;text-align:center;gap:14px;',
 '  padding:calc(var(--oko-safe-top) + 60px) 30px calc(var(--oko-safe-bottom) + 40px);',
-'  background:radial-gradient(120% 70% at 50% 8%,rgba(154,255,0,.13),transparent 58%),#000}',
+'  background:radial-gradient(120% 70% at 50% 8%,rgba(var(--okr-lime-rgb),.13),transparent 58%),#000}',
 '.okr-empty-ic{width:78px;height:78px;border-radius:50%;display:flex;align-items:center;justify-content:center;',
-'  color:var(--lime);border:1px solid rgba(154,255,0,.32);background:rgba(154,255,0,.07)}',
+'  color:var(--lime);border:1px solid rgba(var(--okr-lime-rgb),.32);background:rgba(var(--okr-lime-rgb),.07)}',
 '.okr-empty-ic .okr-i{width:34px;height:34px}',
 '.okr-empty h3{font-family:var(--font-display);font-weight:400;letter-spacing:.02em;',
 '  font-size:clamp(26px,7vw,34px);line-height:1.05;color:#fff;text-transform:uppercase;margin:2px 0 0}',
 '.okr-empty p{font-size:13.5px;line-height:1.55;color:rgba(255,255,255,.62);max-width:30ch;margin:0}',
 '.okr-empty button{margin-top:6px;font-family:var(--font-body);font-size:13.5px;font-weight:700;color:#000;',
 '  background:var(--lime);border:0;border-radius:99px;padding:12px 26px;cursor:pointer;',
-'  box-shadow:0 8px 26px rgba(154,255,0,.3);transition:transform .12s}',
+'  box-shadow:0 8px 26px rgba(var(--okr-lime-rgb),.3);transition:transform .12s}',
 '.okr-empty button:active{transform:scale(.95)}',
 '.okr-empty button:focus-visible{outline:2px solid #fff;outline-offset:3px}',
-/* на пустом экране прогресс и звук не нужны — остаётся только крестик */
+/* на пустом экране прогресс, звук и стрелки не нужны — остаётся крестик */
 '.okr.okr-blank .okr-prog,.okr.okr-blank .okr-snd{display:none}',
+'.okr.okr-blank .okr-arrows{display:none!important}',
 
 /* базовая геометрия иконок спрайта */
 '.okr-i{width:1.25em;height:1.25em;fill:none;stroke:currentColor;stroke-width:7;',
@@ -600,7 +637,7 @@ function emptyHTML(){
   return '<div class="okr-empty">' +
     '<span class="okr-empty-ic">' + ic('circle-play') + '</span>' +
     '<h3>Клипов пока нет</h3>' +
-    '<p>Первый ролик появится здесь, как только авторы начнут публиковать</p>' +
+    '<p>Как только авторы выложат первые ролики, они появятся здесь</p>' +
     '<button class="okr-to-feed" type="button">В ленту</button>' +
   '</div>';
 }
@@ -642,7 +679,9 @@ function mount(i){
           nm.innerHTML = ic('circle-play');
           el.insertBefore(nm, fb.nextSibling);
         }
-        setProg(0, true);
+        /* полосу гасим только если сломался ИМЕННО текущий слайд:
+           соседи монтируются заранее и не должны сбивать прогресс */
+        if(el.classList.contains('is-on')) setProg(0, true);
       }catch(e2){}
     });
   }
@@ -692,6 +731,16 @@ function syncWindow(center){
 function activeVideo(){
   var el = slideAt(S.idx);
   return el ? el.querySelector('video') : null;
+}
+
+/* остановить и разгрузить все видео плеера (закрытие и пересборка списка) */
+function stopAllVideo(){
+  try{
+    var vids = S.scroll ? S.scroll.querySelectorAll('video') : [];
+    for(var i = 0; i < vids.length; i++){
+      try{ vids[i].pause(); vids[i].removeAttribute('src'); vids[i].load(); }catch(e){}
+    }
+  }catch(e){}
 }
 
 function setActive(i, force){
@@ -777,7 +826,10 @@ function flashBig(el, big, name){
    6. ДЕЙСТВИЯ (лайк/коммент/шер/сейв/ещё/подписка)
    --------------------------------------------------------------------------- */
 function corePost(id){
-  try{ if(typeof window.postById === 'function') return window.postById(id); }catch(e){}
+  try{
+    var f = coreRef('postById');
+    if(f) return f(id) || null;
+  }catch(e){}
   return null;
 }
 
@@ -789,8 +841,9 @@ function doLike(i, viaDoubleTap){
   if(viaDoubleTap && c.liked) { pulse(btn); return; }   /* двойной тап не снимает лайк */
 
   var p = corePost(c.id);
-  if(p && typeof window.likePost === 'function'){
-    try{ window.likePost(c.id); }catch(e){}
+  var fLike = p ? coreRef('likePost') : null;
+  if(fLike){
+    try{ fLike(c.id); }catch(e){}
     c.liked = !!p.liked;
     c.likes = +p.likes || 0;
   }else{
@@ -819,8 +872,9 @@ function doSave(i){
   var el = slideAt(i); if(!el) return;
   var btn = el.querySelector('.okr-a-save');
   var p = corePost(c.id);
-  if(p && typeof window.toggleSave === 'function'){
-    try{ window.toggleSave(c.id); }catch(e){}
+  var fSave = p ? coreRef('toggleSave') : null;
+  if(fSave){
+    try{ fSave(c.id); }catch(e){}
     c.saved = !!p.saved;
   }else{
     c.saved = !c.saved;
@@ -838,10 +892,11 @@ function doSave(i){
 
 function doComment(i){
   var c = S.clips[i]; if(!c) return;
-  if(corePost(c.id) && typeof window.openComments === 'function'){
-    try{ window.openComments(c.id); return; }catch(e){}
+  var f = corePost(c.id) ? coreRef('openComments') : null;
+  if(f){
+    try{ f(c.id); return; }catch(e){}
   }
-  toast('Комментарии откроются, когда клип появится в ленте');
+  toast('Комментарии к этому клипу пока закрыты');
 }
 
 function doShare(i){
@@ -856,8 +911,9 @@ function doShare(i){
       return;
     }catch(e){}
   }
-  if(corePost(c.id) && typeof window.repost === 'function'){
-    try{ window.repost(c.id); haptic('selection'); return; }catch(e){}
+  var fRep = corePost(c.id) ? coreRef('repost') : null;
+  if(fRep){
+    try{ fRep(c.id); haptic('selection'); return; }catch(e){}
   }
   try{
     if(navigator.clipboard && navigator.clipboard.writeText){
@@ -871,10 +927,11 @@ function doShare(i){
 
 function doMore(i){
   var c = S.clips[i]; if(!c) return;
-  if(corePost(c.id) && typeof window.openPostMenu === 'function'){
-    try{ window.openPostMenu(c.id); return; }catch(e){}
+  var f = corePost(c.id) ? coreRef('openPostMenu') : null;
+  if(f){
+    try{ f(c.id); return; }catch(e){}
   }
-  toast('Меню клипа появится вместе с публикацией');
+  toast('Для этого клипа меню недоступно');
 }
 
 function doFollow(i, btn){
@@ -889,7 +946,7 @@ function doFollow(i, btn){
   btn.setAttribute('aria-pressed', on ? 'true' : 'false');
   btn.setAttribute('aria-label', on ? 'Отписаться' : 'Подписаться');
   haptic('selection');
-  toast(on ? 'Подписка оформлена' : 'Вы отписались');
+  toast(on ? 'Подписались на ' + (c.author || 'автора') : 'Отписались');
 }
 
 /* ---------------------------------------------------------------------------
@@ -961,7 +1018,7 @@ function wire(){
       if(t.closest('.okr-down')){ next(); return; }
       if(t.closest('.okr-to-feed')){
         close();
-        try{ if(typeof window.showTab === 'function') window.showTab('feed'); }catch(e2){}
+        try{ var st = coreRef('showTab'); if(st) st('feed'); }catch(e2){}
         return;
       }
 
@@ -1158,6 +1215,11 @@ function bindKeys(){
       var sheet = document.getElementById('sheet-comments');
       if(sheet && sheet.classList.contains('open')) return;
 
+      /* фокус стоит на подписи — Enter и пробел разворачивают её,
+         играть/ставить на паузу этими клавишами тут не нужно */
+      if(t && t.classList && t.classList.contains('okr-cap') &&
+         (e.key === 'Enter' || e.key === ' ' || e.key === 'Spacebar')) return;
+
       if(e.key === 'Escape'){ e.preventDefault(); close(); return; }
       if(e.key === 'ArrowDown' || e.key === 'PageDown' || e.key === 'j'){ e.preventDefault(); next(); return; }
       if(e.key === 'ArrowUp' || e.key === 'PageUp' || e.key === 'k'){ e.preventDefault(); prev(); return; }
@@ -1203,9 +1265,17 @@ function open(startId){
 
     S.clips = okoClipsSource();
 
+    /* refresh() зовёт open() на живом плеере — гасим то, что уже играет,
+       иначе оторванный от DOM <video> может доигрывать звук */
+    stopAllVideo();
+
     /* --- пустое состояние --- */
     if(!S.clips.length){
+      /* сначала отпускаем наблюдатель: иначе он держит ссылки на секции,
+         которые сейчас уедут из DOM вместе с innerHTML */
+      if(S.io) try{ S.io.disconnect(); }catch(e1){}
       S.scroll.innerHTML = '';
+      S.idx = 0;
       var e0 = S.root.querySelector('.okr-empty');
       if(e0) e0.remove();
       S.stage.insertAdjacentHTML('beforeend', emptyHTML());
@@ -1220,6 +1290,7 @@ function open(startId){
     var old = S.root.querySelector('.okr-empty');
     if(old) old.remove();
     S.root.classList.remove('okr-blank');
+    if(S.io) try{ S.io.disconnect(); }catch(e1){}
 
     /* каркас слайдов: все существуют (высота ленты честная), контент — по окну */
     var h = '';
@@ -1243,7 +1314,6 @@ function open(startId){
 
     /* наблюдаем все слайды (элементы лёгкие — пустые секции) */
     if(S.io){
-      S.io.disconnect();
       var kids = S.scroll.children;
       for(var m = 0; m < kids.length; m++) S.io.observe(kids[m]);
     }
@@ -1264,7 +1334,9 @@ function open(startId){
 
 function showRoot(){
   try{
-    S.restoreFocus = document.activeElement;
+    /* refresh() дергает open() на уже открытом плеере — тогда точку возврата
+       фокуса не перезаписываем, иначе она уедет на кнопку внутри плеера */
+    if(!S.open) S.restoreFocus = document.activeElement;
     S.root.hidden = false;
     S.root.setAttribute('aria-hidden', 'false');
     S.root.classList.add('okr-in');
@@ -1286,11 +1358,7 @@ function showRoot(){
 function close(){
   try{
     if(!S.root) return;
-    /* снять все видео */
-    var vids = S.scroll ? S.scroll.querySelectorAll('video') : [];
-    for(var i = 0; i < vids.length; i++){
-      try{ vids[i].pause(); vids[i].removeAttribute('src'); vids[i].load(); }catch(e){}
-    }
+    stopAllVideo();
     if(S.io) try{ S.io.disconnect(); }catch(e){}
     if(S.scroll){ S.scroll.innerHTML = ''; S.scroll.scrollTop = 0; }
     var em = S.root.querySelector('.okr-empty'); if(em) em.remove();

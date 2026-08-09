@@ -8,11 +8,15 @@ const SEAL_B64 = 'iVBORw0KGgoAAAANSUhEUgAAASwAAAEsCAYAAAB5fY51AAEAAElEQVR42ux9eX
    Все модули опираются на эти API. */
 
 /* ---------- КОШЕЛЁК / ЛИЦЕВОЙ СЧЁТ ---------- */
+/* Счёт открывается ПУСТЫМ (правка Даниэля 09.08: ноль демо-данных).
+   Раньше прототип сразу рисовал 2 500 ₽ «приветственного бонуса» — человек
+   видел на балансе деньги, которых у него нет. Пополнение и партнёрские
+   начисления кладут сюда реальные суммы. */
 const WALLET = (()=>{ try{ return JSON.parse(localStorage.getItem('oko-wallet'))||null; }catch(e){ return null; } })() || {
   acc: 'OKO-' + String(Math.floor(1e7 + Math.random()*9e7)),
-  balance: 2500,            // стартовый бонус прототипа
+  balance: 0,
   hold: 0,
-  ledger: [ {t:'+', sum:2500, why:'Приветственный бонус OKO', at: Date.now()} ]
+  ledger: []
 };
 function walletSave(){ try{ localStorage.setItem('oko-wallet', JSON.stringify(WALLET)); }catch(e){} }
 function fmtMoney(n){ return (Math.round(n*100)/100).toLocaleString('ru-RU').replace(/,/g,' ') + ' ₽'; }
@@ -3091,9 +3095,10 @@ const WAL_CUR_META = {
 };
 /* стартовые балансы — демо только для владельца, гостям — по нулям (правка 29.07) */
 if(!WAL_X.balances){
-  WAL_X.balances = walIsOwner()
-    ? {USDT_TON: 42.15, USDT_TRC: 108.30, TON: 12.4, XP: 8420}
-    : {USDT_TON: 0, USDT_TRC: 0, TON: 0, XP: 0};
+  /* Все валютные счета стартуют с нуля. Демо-остатки владельца (42.15 USDT,
+     12.4 TON, 8 420 XP) удалены 09.08 — токены приходят только с внешнего
+     кошелька, XP начисляется за реальную активность. */
+  WAL_X.balances = {USDT_TON: 0, USDT_TRC: 0, TON: 0, XP: 0};
   walXSave();
 }
 function walCurBal(code){ return code === 'RUB' ? WALLET.balance : (WAL_X.balances[code] || 0); }
@@ -3590,14 +3595,12 @@ function walUpdateAvg(){
     В среднем в день: <b>${sign} ${fmtMoney(Math.abs(avg))}</b> · за ${days} дн: ${sign} ${fmtMoney(Math.abs(net))}`;
 }
 
-/* ---------- ФИНАНСОВЫЕ ЦЕЛИ (демо-цели только у владельца, правка 29.07) ---------- */
+/* ---------- ФИНАНСОВЫЕ ЦЕЛИ ----------
+   Демо-цели владельца («Копим на PRO», «Камера для съёмок» с уже
+   отложенными 24 500 ₽) удалены 09.08. Раздел открывается пустым состоянием
+   и первой целью, которую человек ставит сам. */
 if(!WAL_X.goals){
-  WAL_X.goals = walIsOwner()
-    ? [
-        {id:'g_pro', name:'Копим на PRO', target: walProPrice(), saved: Math.round(walProPrice()*0.32), ic:'crown'},
-        {id:'g_camera', name:'Камера для съёмок', target: 89000, saved: 24500, ic:'photo'},
-      ]
-    : [];
+  WAL_X.goals = [];
   walXSave();
 }
 function walRenderGoals(){
@@ -3692,11 +3695,12 @@ function walDeleteGoal(){
   toast('Цель удалена');
 }
 
-/* ---------- АВТОПОПОЛНЕНИЯ (демо-правило только у владельца, правка 29.07) ---------- */
+/* ---------- АВТОПОПОЛНЕНИЯ ----------
+   Демо-правило владельца («пополнять на 5 000 ₽, когда баланс ниже 1 000»)
+   удалено 09.08: правила создаёт сам человек, и первое из них не должно
+   появляться из воздуха. */
 if(!WAL_X.autoRules){
-  WAL_X.autoRules = walIsOwner()
-    ? [{id:'ar_1', below: 1000, sum: 5000, method:'card', on: true}]
-    : [];
+  WAL_X.autoRules = [];
   walXSave();
 }
 function walRenderAutoRules(){
