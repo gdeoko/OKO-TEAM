@@ -254,6 +254,29 @@ if ($appPaid) {
         !preg_match('~Warning:|Fatal error|Undefined ~', $r['body']));
 }
 
+sec('Пакетная оплата: N заявок одним чеком');
+$batchTag = 'audit_batch_' . substr(bin2hex(random_bytes(3)), 0, 6);
+$appsForBatch = array_map('intval', array_column(all("SELECT id FROM applications ORDER BY id LIMIT 3"), 'id'));
+if (count($appsForBatch) === 3) {
+    $in = implode(',', $appsForBatch);
+    $infoJson = json_encode(['loyalty_pct' => 10, 'referral_pct' => 5, 'total_pct' => 15, 'promo_code' => 'AUD5'], JSON_UNESCAPED_UNICODE);
+    q("UPDATE applications SET is_paid=1, status='paid', batch_id=?, payment_id=999, price_base=500, discount_pct=15, amount_paid=425, discount_info=? WHERE id IN ($in)", [$batchTag, $infoJson]);
+    require_once BASE_PATH . '/core/loyalty.php';
+    $one = one("SELECT a.*, c.is_paid comp_paid, c.price comp_price FROM applications a LEFT JOIN competitions c ON c.id=a.competition_id WHERE a.id=?", [$appsForBatch[0]]);
+    $pv = app_payment_view($one);
+    chk('пакет: доля каждой заявки — 425 ₽', $pv['shown'] === 425, (string) $pv['shown']);
+    chk('пакет: скидка 15%', $pv['pct'] === 15, (string) $pv['pct']);
+    chk('пакет: размер = 3', $pv['batch']['size'] === 3, (string) $pv['batch']['size']);
+    chk('пакет: общий чек = 1275 ₽', $pv['batch']['total'] === 1275, (string) $pv['batch']['total']);
+    chk('пакет: 2 соседа известны', count($pv['batch']['siblings']) === 2);
+    chk('пакет: в расшифровке видно «Пакет из 3 заявок»', (bool) array_filter($pv['lines'], fn($l) => str_contains($l, 'Пакет из 3')));
+    chk('пакет: показана сумма пакета по прайсу 1500 ₽', (bool) array_filter($pv['lines'], fn($l) => str_contains($l, '1 500') && str_contains($l, 'пакета')));
+    chk('пакет: подписан промокод AUD5', (bool) array_filter($pv['lines'], fn($l) => str_contains($l, 'AUD5')));
+    $listResp = http($AJAR, $BASE . '/admin/?p=applications&id=' . $appsForBatch[0]);
+    chk('карточка заявки: блок пакета с ссылками на соседей', str_contains($listResp['body'], 'Пакет из 3 заявок') && str_contains($listResp['body'], 'этого пакета'));
+    q("UPDATE applications SET batch_id='', payment_id=0 WHERE batch_id=?", [$batchTag]);
+} else { ok('в базе меньше 3 заявок — пропуск'); }
+
 /* ───────── пульт управления запуском ───────── */
 sec('Пульт запуска и стоп-кран');
 $r = http($AJAR, $BASE . '/admin/?p=launch');

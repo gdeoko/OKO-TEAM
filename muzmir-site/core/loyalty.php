@@ -404,13 +404,27 @@ function referral_stats(int $teacherId): array {
  *
  * @return array{
  *   free:bool, paid:bool, base:int, amount:int, pct:int, source:string,
- *   lines:array<int,string>, label:string
+ *   lines:array<int,string>, label:string, batch:array
  * }
  */
 function app_payment_view(array $a): array {
     $appId  = (int) ($a['id'] ?? 0);
     $free   = (int) ($a['comp_paid'] ?? 1) === 0;
     $base   = (int) ($a['price_base'] ?? 0) ?: (int) ($a['comp_price'] ?? 0);
+
+    // Пакет: если у заявки есть batch_id — считаем размер пакета и общий чек.
+    // Так админка и кабинет видят «часть пакета из 3 заявок, общий чек 1275 ₽»,
+    // а не только долю этой заявки без контекста.
+    $batchId = trim((string) ($a['batch_id'] ?? ''));
+    $batch   = ['size' => 1, 'total' => 0, 'siblings' => []];
+    if ($batchId !== '') {
+        $sibs = all("SELECT id, number FROM applications WHERE batch_id=? ORDER BY id", [$batchId]);
+        if (count($sibs) > 1) {
+            $batch['size']  = count($sibs);
+            $batch['total'] = (int) (scalar("SELECT COALESCE(SUM(amount_paid),0) FROM applications WHERE batch_id=?", [$batchId]) ?? 0);
+            $batch['siblings'] = array_values(array_filter($sibs, fn($s) => (int) $s['id'] !== $appId));
+        }
+    }
 
     // 1) Деньги, реально прошедшие через кассу. В списках сумма уже посчитана одним
     //    запросом (a.paid_sum) — тогда второй раз в базу не ходим, иначе это N+1.
@@ -421,8 +435,10 @@ function app_payment_view(array $a): array {
     // 2) Сумма, зафиксированная на самой заявке (пакетная оплата, ручная отметка).
     $stored = (int) ($a['amount_paid'] ?? 0);
 
-    $amount = $payd > 0 ? $payd : $stored;
-    $source = $payd > 0 ? 'kassa' : ($stored > 0 ? 'app' : '');
+    // Приоритет: сумма НА ЗАЯВКЕ, если это пакет (payd в списках может показать весь
+    // чек, который привязан только к первой заявке); иначе — реальная касса.
+    $amount = ($batch['size'] > 1 && $stored > 0) ? $stored : ($payd > 0 ? $payd : $stored);
+    $source = $stored > 0 ? ($batch['size'] > 1 ? 'batch' : ($payd > 0 ? 'kassa' : 'app')) : ($payd > 0 ? 'kassa' : '');
     $paid   = (int) ($a['is_paid'] ?? 0) === 1;
 
     $pct  = (int) ($a['discount_pct'] ?? 0);
@@ -447,14 +463,24 @@ function app_payment_view(array $a): array {
 
     $lines = [];
     if (!$free) {
-        if ($base > 0) $lines[] = 'Взнос по прайсу — ' . number_format($base, 0, '.', ' ') . ' ₽';
-        foreach (app_discount_reasons($info, $pct) as $why) $lines[] = $why;
-        if ($exact) {
-            $lines[] = 'К оплате — ' . number_format($amount, 0, '.', ' ') . ' ₽'
-                     . ($source === 'kassa' ? ' (подтверждено кассой)' : ' (отмечено вручную)');
-        } elseif ($paid) {
-            $lines[] = 'Отмечено оплаченным без чека — точной суммы в кассе нет,'
-                     . ' показан взнос по прайсу';
+        if ($batch['size'] > 1) {
+            $lines[] = 'Пакет из ' . $batch['size'] . ' заявок одним чеком';
+            $lines[] = 'Взнос по прайсу — ' . number_format($base, 0, '.', ' ') . ' ₽ (доля этой заявки)';
+            $sumBase = (int) (scalar("SELECT COALESCE(SUM(price_base),0) FROM applications WHERE batch_id=?", [$batchId]) ?? 0);
+            if ($sumBase > 0) $lines[] = 'Сумма пакета по прайсу — ' . number_format($sumBase, 0, '.', ' ') . ' ₽';
+            foreach (app_discount_reasons($info, $pct) as $why) $lines[] = $why;
+            if ($batch['total'] > 0) $lines[] = 'Оплачено по пакету — ' . number_format($batch['total'], 0, '.', ' ') . ' ₽ (подтверждено кассой)';
+            if ($exact) $lines[] = 'Доля этой заявки — ' . number_format($amount, 0, '.', ' ') . ' ₽';
+        } else {
+            if ($base > 0) $lines[] = 'Взнос по прайсу — ' . number_format($base, 0, '.', ' ') . ' ₽';
+            foreach (app_discount_reasons($info, $pct) as $why) $lines[] = $why;
+            if ($exact) {
+                $lines[] = 'К оплате — ' . number_format($amount, 0, '.', ' ') . ' ₽'
+                         . ($source === 'kassa' ? ' (подтверждено кассой)' : ' (отмечено вручную)');
+            } elseif ($paid) {
+                $lines[] = 'Отмечено оплаченным без чека — точной суммы в кассе нет,'
+                         . ' показан взнос по прайсу';
+            }
         }
     }
 
@@ -465,7 +491,7 @@ function app_payment_view(array $a): array {
 
     return ['free' => $free, 'paid' => $paid || $amount > 0, 'base' => $base,
             'amount' => $amount, 'shown' => $shown, 'exact' => $exact,
-            'pct' => $pct, 'source' => $source,
+            'pct' => $pct, 'source' => $source, 'batch' => $batch,
             'lines' => $lines, 'label' => $label];
 }
 

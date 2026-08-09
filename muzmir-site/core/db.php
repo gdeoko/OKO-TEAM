@@ -331,6 +331,11 @@ function db_migrate(PDO $pdo): void {
         ['applications', 'price_base',       'INTEGER DEFAULT 0'], // взнос по прайсу, до скидок
         ['applications', 'discount_pct',     'INTEGER DEFAULT 0'], // итоговый процент скидки
         ['applications', 'discount_info',    "TEXT DEFAULT ''"],   // JSON: из чего сложилась скидка
+        // Пакетная оплата: id платежа, покрывающего эту заявку, и общий id пакета
+        // (одинаковый у всех заявок в одном чеке). Без этого админка видела платёж
+        // только у ПЕРВОЙ заявки батча, а остальные считались неоплаченными.
+        ['applications', 'payment_id',       'INTEGER DEFAULT 0'], // id из payments — единственный чек за эту заявку
+        ['applications', 'batch_id',         "TEXT DEFAULT ''"],   // общий id пакета (yukassa_id платежа)
 
         // Дипломы: расписание отправки и счётчик попыток.
         ['diplomas', 'scheduled_at',      'TEXT'],

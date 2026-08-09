@@ -279,8 +279,13 @@ function payment_apply_status(string $paymentId, string $status, array $obj = []
         $__n     = count($batchIds);
         $__share = $__n > 0 ? intdiv($__total, $__n) : 0;
         $__rest  = $__total - $__share * $__n;
+        // batch_id — идентификатор пакета, одинаковый у всех заявок одного чека.
+        // Берём yukassa_id платежа: он гарантированно уникален и позволяет по любой
+        // заявке батча найти всех «соседей» без обращения к metadata ЮKassa.
+        $__batchId = (string) ($pay['yukassa_id'] ?? $paymentId);
+        $__payId   = (int) ($pay['id'] ?? 0);
         foreach ($batchIds as $__k => $aid) {
-            $__upd = ['is_paid' => 1, 'status' => 'paid'];
+            $__upd = ['is_paid' => 1, 'status' => 'paid', 'batch_id' => $__batchId, 'payment_id' => $__payId];
             if ($__total > 0) $__upd['amount_paid'] = $__share + ($__k === 0 ? $__rest : 0);
             update('applications', $__upd, 'id=:id', ['id' => (int) $aid]);
         }

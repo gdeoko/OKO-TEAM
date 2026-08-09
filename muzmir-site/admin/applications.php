@@ -236,6 +236,15 @@ if ($id = (int) input('id')) {
               <?php foreach ($pv['lines'] as $ln): ?><li><?= h($ln) ?></li><?php endforeach; ?>
             </ul>
           <?php endif; ?>
+          <?php if ($pv['batch']['size'] > 1 && $pv['batch']['siblings']): ?>
+            <div class="small" style="margin-top:8px;padding:8px 10px;border:1px dashed var(--a-line);border-radius:8px">
+              <b>Пакет из <?= (int) $pv['batch']['size'] ?> заявок</b>, оплаченных одним чеком.
+              Другие заявки этого пакета:
+              <?php foreach ($pv['batch']['siblings'] as $__k => $__sib): ?>
+                <?= $__k > 0 ? ', ' : '' ?><a href="<?= a_link('applications', ['id' => (int) $__sib['id']]) ?>"><?= h($__sib['number']) ?></a>
+              <?php endforeach; ?>.
+            </div>
+          <?php endif; ?>
         </dd>
         <dt>Подана</dt><dd><?= h(date('d.m.Y H:i', strtotime((string)$a['created_at']))) ?></dd>
         <?php if (!empty($a['graded_at'])): ?>
@@ -568,9 +577,19 @@ ob_start(); ?>
           // оплаченная без чека заявка показывалась как «ожидается».
           $pvRow = app_payment_view($a);
           if ($pvRow['free'])       $sumHtml = '<span class="badge badge--muted small">Бесплатно</span>';
-          elseif ($pvRow['paid'])   $sumHtml = '<b>' . number_format($pvRow['shown'], 0, '.', ' ') . ' ₽</b>'
-                                             . ($pvRow['pct'] > 0 ? ' <span class="small muted">−' . (int)$pvRow['pct'] . '%</span>' : '')
-                                             . ($pvRow['exact'] ? '' : ' <span class="small muted">по прайсу</span>');
+          elseif ($pvRow['paid']) {
+              // Пакетная оплата: показываем долю этой заявки и бейдж «пакет ×N»,
+              // чтобы админ сразу видел, что чек был общий.
+              $sumHtml = '<b>' . number_format($pvRow['shown'], 0, '.', ' ') . ' ₽</b>'
+                       . ($pvRow['pct'] > 0 ? ' <span class="small muted">−' . (int)$pvRow['pct'] . '%</span>' : '')
+                       . ($pvRow['exact'] ? '' : ' <span class="small muted">по прайсу</span>')
+                       . ($pvRow['batch']['size'] > 1
+                           ? '<br><span class="badge badge--muted small" title="Оплачено одним чеком с ещё '
+                             . ($pvRow['batch']['size'] - 1) . ' заявками">пакет ×'
+                             . (int) $pvRow['batch']['size'] . ' · всего '
+                             . number_format((int) $pvRow['batch']['total'], 0, '.', ' ') . ' ₽</span>'
+                           : '');
+          }
           else                      $sumHtml = '<span class="small muted">' . number_format($pvRow['base'], 0, '.', ' ') . ' ₽ ожидается</span>';
         ?>
           <tr>
