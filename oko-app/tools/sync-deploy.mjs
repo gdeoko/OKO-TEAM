@@ -31,14 +31,18 @@ const SRC   = 'oko-app/prototype';
 const DST   = 'oko-app/site';
 const CHECK = process.argv.includes('--check');
 
-/* Что синхронизируем. app.js / app.css / index.html здесь НЕТ намеренно:
-   их cron копирует отдельно и они на проде совпадают байт в байт. */
+/* Что синхронизируем.
+   Пробами 09.08 выяснено точно: из `site/` на прод попадают только те
+   пути, что уже были в списке cron, и ЛЮБАЯ вложенность внутри `media/`
+   (файл `site/media/_probe/x.txt` приехал, `site/_probe-root.txt` — нет).
+   Поэтому слои живут в `prototype/media/app/` и едут как `media/app/*.js`.
+
+   app.js / app.css / index.html здесь НЕТ намеренно: их cron копирует
+   отдельно и на проде они совпадают с локальными байт в байт. */
 const ФАЙЛЫ = [
-  /\.js$/,      /* oko-*.js — все слои полировки + service-worker.js */
-  /\.css$/,     /* oko-v2.css и прочие слои стилей */
-  /\.svg$/,     /* oko-icons.svg — исходник спрайта */
+  /^service-worker\.js$/,   /* единственный файл из корня site/, что реально доезжает */
 ];
-const ПАПКИ = ['media'];               /* media/paywall, media/cert */
+const ПАПКИ = ['media'];    /* media/app — слои, media/paywall, media/cert */
 const НЕ_БРАТЬ = new Set(['app.js', 'app.css']);   /* едут своим путём */
 const НЕ_БРАТЬ_RX = [/\.min\.(js|css)$/];          /* сборка build-min.mjs */
 

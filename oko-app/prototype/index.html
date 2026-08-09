@@ -1482,68 +1482,68 @@ button:focus-visible,a:focus-visible,input:focus-visible,textarea:focus-visible,
 <noscript><link rel="stylesheet" href="app.css"></noscript>
 <!-- Слой полировки v2: грузится ПОСЛЕ ядра и перекрывает его точечные стили.
      Здесь адаптация под Telegram/мобильный/ПК, типографика, хром, Reels, воронки. -->
-<link rel="stylesheet" href="oko-v2.css" media="print" onload="this.media='all'">
-<noscript><link rel="stylesheet" href="oko-v2.css"></noscript>
+<link rel="stylesheet" href="media/app/oko-v2.css" media="print" onload="this.media='all'">
+<noscript><link rel="stylesheet" href="media/app/oko-v2.css"></noscript>
 <script defer src="app.js"></script>
-<script defer src="oko-v2.js"></script>
+<script defer src="media/app/oko-v2.js"></script>
 <!-- Клипы: настоящий вертикальный видео-плеер вместо сторис-обёртки -->
-<script defer src="oko-reels.js"></script>
+<script defer src="media/app/oko-reels.js"></script>
 <!-- Рост: онбординг первого дня, воронки вместо стены платежа,
      партнёрский двигатель, тихие уведомления возврата -->
-<script defer src="oko-growth.js"></script>
+<script defer src="media/app/oko-growth.js"></script>
 <!-- Запись голосовых и кружков: одна модальная шторка с подписанными
      «Отменить» и «Отправить» вместо двух конкурирующих оверлеев -->
-<script defer src="oko-rec.js"></script>
+<script defer src="media/app/oko-rec.js"></script>
 <!-- Единая кнопка «назад» на всех экранах, подстраницах, мини-аппах и шторках -->
-<script defer src="oko-back.js"></script>
+<script defer src="media/app/oko-back.js"></script>
 <!-- Эмодзи и стикеры: панель ровно в высоту системной клавиатуры,
      взаимоисключение с ней, категории, поиск, бренд-стикеры OKO -->
-<script defer src="oko-emoji.js"></script>
+<script defer src="media/app/oko-emoji.js"></script>
 <!-- Родные возможности Telegram: подтверждение закрытия, главная кнопка,
      облачное хранилище аккаунта, шеринг через Telegram -->
-<script defer src="oko-tg.js"></script>
+<script defer src="media/app/oko-tg.js"></script>
 <!-- Сигналы удержания: время просмотра, досмотр, повторы и ранний отвал.
      Раньше в формуле ранжирования вместо удержания стояла длительность
      ролика — длинное видео выигрывало просто за длину -->
-<script defer src="oko-signals.js"></script>
+<script defer src="media/app/oko-signals.js"></script>
 <!-- Биржа: полноценный маркетплейс (каталог, карточка, мастер размещения,
      «Мои объявления OKO», избранное, история, отклики и сделки) -->
-<script defer src="oko-market.js"></script>
+<script defer src="media/app/oko-market.js"></script>
 <!-- Социальный слой: единая страница сущности (профиль / канал / чат / клуб /
      курс), вкладки «Посты» и «Ролики», публикация роликов 9:16 и 16:9,
      создание каналов, чатов, клубов-супергрупп и курсов -->
-<script defer src="oko-social.js"></script>
+<script defer src="media/app/oko-social.js"></script>
 <!-- ОКО Ai: экран нейросети собран на родных классах личных сообщений
      (.conv-head / .msgs / .msg / .composer) — композер прижат к низу, а не
      висит поверх переписки. Грузится последним, перехватывает openMa('helper'). -->
-<script defer src="oko-ai.js"></script>
+<script defer src="media/app/oko-ai.js"></script>
 <!-- Академия OKO: доводка всех экранов — оглавление урока с прогрессом, закладки,
      конспект-заметки, поиск по курсам и урокам, время урока по скорости чтения,
      офлайн-конспекты пройденного, «следующий урок» без возврата в каталог,
      мягкий стрик и честная практика без выдуманного куратора -->
-<script defer src="oko-academy2.js"></script>
+<script defer src="media/app/oko-academy2.js"></script>
 <!-- Кошелёк и оплата: честные деньги (ноль выдуманных сумм, реквизитов и курсов),
      Lava.top вместо фальшивых «Оплачено», страница тарифов, лимиты и комиссии,
      шаблоны переводов, выписка за период, чек по операции, настоящий QR -->
-<script defer src="oko-wallet2.js"></script>
+<script defer src="media/app/oko-wallet2.js"></script>
 <!-- Штаб OKO (HQ) и админка владельца: честные состояния агентов, постановка
      задач, лента реальных отчётов и разделы владельца без выдуманных метрик -->
-<script defer src="oko-hq2.js"></script>
+<script defer src="media/app/oko-hq2.js"></script>
 <!-- НАСТРОЙКИ И БЕЗОПАСНОСТЬ: честная защита владельца (пароль только флагом,
      2FA, резервные коды, подтверждённые контакты, код-пароль, биометрия,
      устройства и сессии), реальные цифры хранилища, экспорт своих данных,
      «О приложении». Грузится после ядра и переопределяет панели st2. -->
-<script defer src="oko-settings2.js"></script>
+<script defer src="media/app/oko-settings2.js"></script>
 <!-- ЧАТЫ уровня Telegram: эмодзи-реакции с автором, свайп-ответ и переход по
      цитате, закреп по правам, разделитель непрочитанного, поиск по чату,
      пересылка, честные статусы, мультивыбор, папки и ветки обсуждения.
      Грузится последним — только chain-патчи поверх ядра и app.js. -->
-<script defer src="oko-chat2.js"></script>
+<script defer src="media/app/oko-chat2.js"></script>
 <!-- ПЕРВЫЙ ВХОД, ПОИСК И УВЕДОМЛЕНИЯ: честные способы входа (Google/Apple не
      притворяются рабочими), знакомство из трёх вопросов с понятным первым
      шагом, глобальный поиск по реальному состоянию и рабочий центр
      уведомлений с категориями. Грузится последним — только слой поверх ядра. -->
-<script defer src="oko-onb2.js"></script>
+<script defer src="media/app/oko-onb2.js"></script>
 <!-- ИГРЫ И РУЛЕТКА, ПАРТНЁРКА, РЕКЛАМА, ДОКУМЕНТЫ и TON — доведение до запуска:
      понятные правила рулетки и честная таблица лидеров («пока никто не играл»),
      партнёрская ссылка с настоящим сканируемым QR, калькулятор с открытой
@@ -1551,7 +1551,7 @@ button:focus-visible,a:focus-visible,input:focus-visible,textarea:focus-visible,
      рекламный кабинет в режиме черновиков (ноль накрученных показов и списаний),
      единая кнопка «назад» в документах, TON без выдуманного адреса кошелька.
      Грузится последним — только патчи поверх ядра, ядро не переписывает. -->
-<script defer src="oko-mini2.js"></script>
+<script defer src="media/app/oko-mini2.js"></script>
 
 <!-- oko-channels2.js — раздел «Каналы» под запуск: каталог с живым поиском и
      категориями, честные подписка/отписка прямо из карточки, ноль выдуманных
@@ -1559,7 +1559,7 @@ button:focus-visible,a:focus-visible,input:focus-visible,textarea:focus-visible,
      реальным числам (иначе прочерк с объяснением), проверка занятости @ника
      при создании, рабочий архив, удаление канала с перечислением последствий,
      честные «поделиться» и «копировать ссылку». Слой поверх ядра. -->
-<script defer src="oko-channels2.js"></script>
+<script defer src="media/app/oko-channels2.js"></script>
 
 <!-- oko-calls.js — звонки под запуск: личный аудио/видеозвонок, экран входящего,
      групповой созвон с сеткой участников, счётчиком и модерацией у ведущего.
@@ -1568,7 +1568,7 @@ button:focus-visible,a:focus-visible,input:focus-visible,textarea:focus-visible,
      с таймером. Соединение с человеком честно объявляется недоступным, пока не
      подключён сигнальный сервер WebRTC — никаких «собеседник подключился».
      Право начинать созвон — только у создателя чата и владельца приложения. -->
-<script defer src="oko-calls.js"></script>
+<script defer src="media/app/oko-calls.js"></script>
 
 <!-- oko-factory2.js — КОНТЕНТ-ЗАВОД и ПРОВЕРКА ВИДЕО под запуск. Убирает из
      ядра фальшивый конвейер (стадии Сценарий→…→«Опубликовано» по таймеру,
@@ -1581,7 +1581,7 @@ button:focus-visible,a:focus-visible,input:focus-visible,textarea:focus-visible,
      в браузере: длительность, кадр, вес, тип, битрейт, частота кадров,
      звук, яркость по снятым кадрам — и сверяет с требованиями площадки.
      Никаких баллов виральности. Слой поверх ядра, ядро не переписывает. -->
-<script defer src="oko-factory2.js"></script>
+<script defer src="media/app/oko-factory2.js"></script>
 
 <!-- oko-system2.js — СИСТЕМА РОСТА и МОИ СОЦСЕТИ под запуск. Убирает из ядра
      экран «Анкета принята, команда OKO приступила · готовность 4–6 часов»
@@ -1597,13 +1597,13 @@ button:focus-visible,a:focus-visible,input:focus-visible,textarea:focus-visible,
      подключение и какой ключ нужен; Telegram-вход показан правдиво по
      initData; ручные ссылки на профили сохраняются и уходят в визитку.
      Слой поверх ядра, ядро не переписывает. -->
-<script defer src="oko-system2.js"></script>
+<script defer src="media/app/oko-system2.js"></script>
 
 <!-- Слой доступности: имена для кнопок-иконок, фирменный фокус-ринг, ловушка
      фокуса и возврат фокуса в шторках, роли и живые области, поднятый контраст
      светлой темы, цели нажатия 44×44, уважение к prefers-reduced-motion и
      prefers-contrast. Грузится последним — только добавляет атрибуты и стили. -->
-<script defer src="oko-a11y.js"></script>
+<script defer src="media/app/oko-a11y.js"></script>
 <script>
 /* Обёртки над встроенными в base.html функциями — для авто-трека page_view / share.
    showTab существует в inline-скрипте base.html, поэтому оборачиваем по мере

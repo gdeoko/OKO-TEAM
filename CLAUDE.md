@@ -138,11 +138,19 @@ Cron `/root/oko-deploy.sh` копирует в `/var/www/okoteam` **НЕ всю 
 index.html — это SPA-фолбэк nginx на 404, статус при этом 200, поэтому
 `curl` без проверки `Content-Type` врёт, что файл есть.
 
-**Правило: любой новый файл в `prototype/` (кроме index.html, app.js, app.css)
-должен быть продублирован в `oko-app/site/`.** Делает это
-`node oko-app/tools/sync-deploy.mjs` (есть `--check`) — гонять перед каждым
-коммитом, который трогает слои. Копии настоящие, не симлинки: `cp -r`
-на сервере перенёс бы ссылку как ссылку.
+Пробами выяснено точно: из `site/` доезжают только пути, уже бывшие в списке
+cron, **и любая вложенность внутри `media/`** (`site/media/_probe/x.txt`
+приехал, `site/_probe-root.txt` — нет).
+
+**Поэтому все слои живут в `oko-app/prototype/media/app/`** и подключаются как
+`media/app/oko-v2.js`. Это единственный источник правды — копий в корне
+`prototype/` больше нет. Проверено: `/media/app/oko-v2.js` отдаётся с
+`Content-Type: application/javascript`.
+
+**Правило: после правки любого слоя гнать
+`node oko-app/tools/sync-deploy.mjs`** (есть `--check`) — он раскладывает
+`prototype/media/**` и `service-worker.js` в `oko-app/site/`. Копии настоящие,
+не симлинки: `cp -r` на сервере перенёс бы ссылку как ссылку.
 
 **Как проверять прод честно:** `curl -s -o /dev/null -w "%{content_type} %{size_download}"`.
 Если у `.js` приходит `text/html` и размер ≈ размеру index.html — файла нет.
