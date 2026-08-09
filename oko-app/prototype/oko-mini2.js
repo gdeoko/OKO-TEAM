@@ -410,6 +410,9 @@ var CSS = [
 '  white-space:normal; overflow:visible; text-overflow:clip;',
 '  height:auto; min-height:44px; line-height:1.25;',
 '  overflow-wrap:break-word; word-break:normal; hyphens:none;',
+/* «Скопировать» и «Отмена» вылезали на 3 px: боковым полям хватает 12 px,
+   и одно слово перестаёт упираться в край */
+'  padding-left:12px; padding-right:12px;',
 '}',
 /* мелкие подписи под цифрами в шапке партнёрки («регистрации», «к выплате») */
 '#screen-partner .pp-microstat .l, #screen-partner .pp-hero .l{',
