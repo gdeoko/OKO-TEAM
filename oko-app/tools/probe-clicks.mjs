@@ -20,6 +20,7 @@
    ============================================================================ */
 import { chromium } from 'playwright-core';
 import fs from 'node:fs/promises';
+import { CLEAN_START, CLOSE_OVERLAYS } from './clean-start.mjs';
 
 const args = Object.fromEntries(
   process.argv.slice(2).join(' ').split('--').filter(Boolean)
@@ -116,22 +117,7 @@ const c = await b.newContext({
   viewport: { width: 390, height: 844 }, isMobile: true, hasTouch: true,
   permissions: ['clipboard-read', 'clipboard-write'],
 });
-await c.addInitScript(`
-  window.okoSkipAuth = function(){
-    try{ localStorage.setItem('oko-auth','tg'); }catch(e){}
-    var a=document.getElementById('authScreen'); if(a){a.classList.add('hidden'); a.style.display='none';}
-    var s=document.getElementById('splash'); if(s){s.classList.add('gone'); s.style.display='none';}
-    var o=document.getElementById('onboard'); if(o){o.classList.add('hidden'); o.style.display='none';}
-  };
-  try{
-    localStorage.setItem('oko-onboard-done','1');
-    localStorage.setItem('oko-stories-seen','1');
-    localStorage.setItem('oko-tour-done','1');
-    localStorage.setItem('oko-tour','1');
-  }catch(e){}
-  /* confirm/alert в автотесте всегда «да», иначе обход виснет */
-  window.confirm = () => true; window.alert = () => {}; window.prompt = () => '';
-`);
+await c.addInitScript(CLEAN_START);
 const page = await c.newPage();
 let errors = [];
 page.on('pageerror', e => errors.push(String(e).split('\n')[0].slice(0, 160)));
@@ -195,6 +181,10 @@ for (const [name, goto] of SCREENS) {
     })()`).catch(() => false);
     if (!ok) continue;
     res.clicked++;
+    /* Снимаем всё, что могло всплыть поверх: «Знакомство», тур, сторис,
+       попап. Без этого обход меряет чужой экран — ровно так аудит 36
+       проверил онбординг 33 раза вместо настоящих экранов. */
+    await page.evaluate(CLOSE_OVERLAYS).catch(() => []);
     /* Ждём, пока закончатся анимации выезда панелей: замер в середине
        перехода ловит промежуточную геометрию и выдаёт несуществующие
        «переносы посреди слова». Прямая проверка тех же экранов после
