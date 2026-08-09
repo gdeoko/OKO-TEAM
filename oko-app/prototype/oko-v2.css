@@ -692,3 +692,24 @@ img, video, canvas, svg:not(.i) {
   overflow:visible;
 }
 #screen-academy .pad > *, #acRoot .pad > *{ min-width:0; max-width:100%; }
+
+/* ---------------------------------------------------------------------------
+   24. СВЁРНУТАЯ ПИЛЮЛЯ «СТАРТ В OKO» не наезжает на контент
+   Она висела над нижним меню и накрывала последнюю карточку экрана.
+   Поднимаем её выше и добавляем экранам запас снизу, чтобы под пилюлей
+   всегда было пусто.
+   --------------------------------------------------------------------------- */
+.okg-pill{
+  bottom: calc(var(--oko-safe-bottom) + 76px) !important;
+  opacity: .96;
+}
+/* запас снизу под пилюлю на прокручиваемых экранах */
+main > .screen > .pad,
+#feedList, #chatList{
+  padding-bottom: calc(96px + var(--oko-safe-bottom));
+}
+/* на ПК пилюля не нужна над вертикальным баром — прижимаем к правому краю окна */
+@media (min-width: 900px){
+  .okg-pill{ bottom: calc(var(--oko-safe-bottom) + 20px) !important; }
+  main > .screen > .pad{ padding-bottom: calc(40px + var(--oko-safe-bottom)); }
+}
