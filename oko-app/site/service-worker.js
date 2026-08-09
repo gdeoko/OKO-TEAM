@@ -6,57 +6,46 @@
      • всё остальное → network-first + runtime кэш
    PHP-API (/api.php, *.php) вообще не кэшируем.
 */
-const VERSION = 'oko-sw-v2.3.0';
+const VERSION = 'oko-sw-v2.4.0';
 const CORE_CACHE    = `oko-core-${VERSION}`;
 const ASSET_CACHE   = `oko-assets-${VERSION}`;
 const RUNTIME_CACHE = `oko-runtime-${VERSION}`;
 
+/* ПОЧЕМУ ЭТОТ СПИСОК ТАКОЙ КОРОТКИЙ.
+   Раньше здесь лежали все 30+ файлов приложения, и install тянул каждый через
+   `cache: 'reload'` — то есть в обход HTTP-кэша, гарантированно из сети. А
+   страница в этот самый момент качала те же файлы сама. На первом заходе
+   человек платил за приложение ДВАЖДЫ: ~10 МБ на отрисовку и ещё ~10 МБ на
+   прогрев кэша, одновременно, деля и без того узкий мобильный канал.
+
+   Теперь на install кладём только оболочку офлайна — то, без чего нечего
+   показать при обрыве связи. Всё остальное (app.js, app.css, слои, glb,
+   three.js) само осядет в кэше при первом же обращении: обработчик fetch
+   ниже кладёт любой статический файл в ASSET_CACHE по стратегии
+   cache-first + фоновая ревалидация. Второй заход всё так же мгновенный,
+   а первый стал вдвое дешевле. */
 const CORE_ASSETS = [
   '/',
   '/index.html',
-  '/app.js',            /* split-bundle: модульный JS (defer) */
-  '/app.css',           /* split-bundle: модульный CSS (non-blocking) */
-  '/media/app/oko-v2.css',        /* слой полировки v2: адаптация, типографика, TG-инсеты */
-  '/media/app/oko-v2.js',         /* слой полировки v2: 3D-запуск, чаты, воронки */
-  '/media/app/oko-reels.js',      /* вертикальный видео-плеер «Клипы» */
-  '/media/app/oko-growth.js',     /* онбординг, воронки, партнёрский двигатель */
-  '/media/app/oko-rec.js',        /* запись голосовых и кружков */
-  '/media/app/oko-back.js',       /* единая кнопка «назад» на всех экранах */
-  '/media/app/oko-emoji.js',      /* панель эмодзи, стикеров и GIF у поля ввода */
-  '/media/app/oko-tg.js',         /* родные возможности Telegram Mini App */
-  '/media/app/oko-signals.js',    /* сигналы удержания для ленты рекомендаций */
-  '/media/app/oko-market.js',     /* биржа: каталог, карточка, размещение, мои объявления */
-  '/media/app/oko-ai.js',         /* ОКО Ai: экран нейросети в вёрстке личного чата */
-  '/media/app/oko-hq2.js',        /* штаб OKO (агенты, задачи, отчёты) + админка владельца */
-  '/media/app/oko-social.js',     /* страницы сущностей, ролики 9:16/16:9, клубы и курсы */
-  '/media/app/oko-academy2.js',   /* Академия: оглавление, закладки, поиск, офлайн-конспекты */
-  '/media/app/oko-wallet2.js',    /* кошелёк и оплата: честные деньги, Lava.top, тарифы, чеки, QR */
-  '/media/app/oko-settings2.js',  /* настройки и безопасность: честная защита аккаунта */
-  '/media/app/oko-chat2.js',      /* чаты уровня Telegram: реакции, ветки, папки, мультивыбор */
-  '/media/app/oko-onb2.js',       /* первый вход, знакомство, глобальный поиск, уведомления */
-  '/media/app/oko-mini2.js',      /* игры и рулетка, партнёрка, реклама, документы и TON */
-  '/media/app/oko-channels2.js',  /* каналы: каталог с поиском, честная статистика, управление */
-  '/media/app/oko-calls.js',      /* звонки: личный, входящий, созвон; честно без сигналинга */
-  '/media/app/oko-factory2.js',   /* контент-завод как честный трекер + настоящий разбор видео в браузере */
-  '/media/app/oko-system2.js',    /* система роста из ответов анкеты + честные «Мои соцсети» */
-  '/media/app/oko-a11y.js',       /* доступность: имена, фокус, роли, контраст, цели нажатия */
   '/offline.html',
   '/oko-manifest.json',
   '/oko-icon-192.png',
   '/oko-icon-512.png',
   '/oko-maskable-192.png',
-  '/oko-maskable-512.png',
-  '/oko-logo-512.png',
-  '/oko-eye.glb'
+  '/oko-maskable-512.png'
 ];
 
-/* ---------- install: прекэш ядра ---------- */
+/* ---------- install: прекэш оболочки офлайна ---------- */
 self.addEventListener('install', event => {
   event.waitUntil((async () => {
     const cache = await caches.open(CORE_CACHE);
-    await Promise.all(CORE_ASSETS.map(u =>
-      cache.add(new Request(u, { cache: 'reload' })).catch(() => null)
-    ));
+    /* index.html берём свежим — он меняется каждый деплой и именно по нему
+       страница узнаёт про новые файлы. Иконки и манифест пусть приходят
+       из HTTP-кэша, если они там уже есть: заново качать их незачем. */
+    await Promise.all(CORE_ASSETS.map(u => {
+      const свежим = (u === '/' || u === '/index.html');
+      return cache.add(свежим ? new Request(u, { cache: 'reload' }) : u).catch(() => null);
+    }));
     self.skipWaiting();
   })());
 });
