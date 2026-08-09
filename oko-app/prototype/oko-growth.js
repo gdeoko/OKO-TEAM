@@ -36,6 +36,8 @@ var log = function(){};   /* отладка: console.log.bind(console,'[okg]') *
 var LS_KEY   = 'okg-state-v1';
 var DAY      = 86400000;
 var OKO_CH   = 'ch-disc-4';          /* канал «OKO Новости» из ядра */
+/* Полноэкранные экраны ядра, поверх которых наш слой не показывается никогда. */
+var GATES    = ['splash','onboard','authScreen','regView','callScreen'];
 var SILENCE  = 20000;                /* тишина перед всплывающими окнами, мс */
 var CARD_DELAY = 4000;               /* чек-лист не перебивает — ему хватает 4 сек */
 var COOLDOWN = 2 * DAY;              /* один повод — не чаще раза в 2 дня */
@@ -499,18 +501,18 @@ function busy(opt){
       return no('тишина в начале сессии');
     if(document.hidden) return no('вкладка не на экране');
 
-    /* звонок */
-    if(visible(document.getElementById('callScreen'))) return no('звонок');
-
     /* запись голосового */
     if(document.querySelector('.composer.recording')) return no('запись голосового');
 
     /* открытый плеер Клипов */
     try{ if(window.okoReels && window.okoReels.isOpen && window.okoReels.isOpen()) return no('Клипы'); }catch(e){}
 
-    /* экран входа / регистрации */
-    var auth = document.getElementById('authScreen');
-    if(auth && !auth.classList.contains('hidden')) return no('вход');
+    /* полноэкранные «ворота» ядра: заставка, свой онбординг, вход, регистрация.
+       Пока человек проходит их, наш слой молчит совсем — иначе два онбординга
+       наезжают друг на друга. */
+    for(var g=0; g<GATES.length; g++){
+      if(visible(document.getElementById(GATES[g]))) return no('экран ядра: ' + GATES[g]);
+    }
 
     /* наше окно уже висит — оно и так закрывает чек-лист собой */
     if(!opt.soft && document.querySelector('.okg-scrim')) return no('окно уже открыто');
@@ -1805,10 +1807,22 @@ function mountAll(){
       var ph = document.createElement('div');
       ph.id = 'okgPartnerHost';
       ph.style.margin = '0 0 16px';
-      var anchor = pScreen.querySelector('.section-h');
+      /* В партнёрском кабинете виджет уместен сверху — это и есть суть экрана.
+         Но если кабинет собирает модуль pp (partner-plus), встаём после его шапки. */
+      var anchor = pScreen.querySelector('.pp-head') || pScreen.querySelector('.section-h');
       if(anchor && anchor.nextSibling) pScreen.insertBefore(ph, anchor.nextSibling);
       else pScreen.insertBefore(ph, pScreen.firstChild);
       okgPartnerWidget(ph);
+
+      /* В кабинете уже была карточка «Твоя реф-ссылка». Теперь она внутри виджета,
+         поэтому старую прячем — две одинаковые ссылки подряд выглядят как баг.
+         Не удаляем: если слой роста отключат, карточка вернётся сама. */
+      var oldRef = document.getElementById('refInput');
+      var oldCard = oldRef && oldRef.closest ? oldRef.closest('.card') : null;
+      if(oldCard && !oldCard.hasAttribute('data-okg-hidden')){
+        oldCard.setAttribute('data-okg-hidden','1');
+        oldCard.style.display = 'none';
+      }
     }
   }catch(e){}
 
@@ -1819,9 +1833,14 @@ function mountAll(){
       var sh = document.createElement('div');
       sh.id = 'okgShowcaseHost';
       sh.style.margin = '4px 0 20px';
-      var top = prScreen.querySelector('.profile-top');
-      if(top && top.nextSibling) prScreen.insertBefore(sh, top.nextSibling);
-      else prScreen.insertBefore(sh, prScreen.firstChild);
+      /* Профиль собирает модуль pp2 — он кладёт всё в .pp2-wrap. Витрину
+         ставим ПОСЛЕ него, иначе она вытесняет аватар, имя и настройки
+         в самый низ, и человек видит на входе не свой профиль, а советы. */
+      var anchor = prScreen.querySelector('.pp2-wrap') || prScreen.querySelector('.prof-ach')
+                || prScreen.querySelector('.profile-top');
+      if(anchor && anchor.nextSibling) prScreen.insertBefore(sh, anchor.nextSibling);
+      else if(anchor) prScreen.appendChild(sh);
+      else prScreen.appendChild(sh);
       okgShowcase(sh);
     } else if(document.getElementById('okgShowcaseHost')){
       okgShowcase(document.getElementById('okgShowcaseHost'));
