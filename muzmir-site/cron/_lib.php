@@ -36,8 +36,18 @@ function cron_lock(string $job, int $ttl = 3600): bool {
     $dir = BASE_PATH . '/data/logs';
     if (!is_dir($dir)) @mkdir($dir, 0775, true);
     $file = $dir . '/.lock_' . preg_replace('/[^a-z0-9_]/i', '', $job);
-    if (is_file($file) && (time() - (int) @filemtime($file)) < $ttl) return false;
-    @file_put_contents($file, (string) time());
+
+    // Протухший лок (процесс убит) снимаем — иначе задание встанет навсегда.
+    if (is_file($file) && (time() - (int) @filemtime($file)) >= $ttl) @unlink($file);
+
+    // ЗАХВАТ ОБЯЗАН БЫТЬ АТОМАРНЫМ. Раньше было «проверили is_file → записали файл»:
+    // два запуска крона стартуют в одну и ту же секунду, оба видят, что файла нет,
+    // и оба заходят внутрь. Режим 'x' у fopen — единственная системная операция:
+    // файл создаётся ТОЛЬКО если его не было, второй процесс получает false.
+    $fh = @fopen($file, 'x');
+    if ($fh === false) return false;
+    @fwrite($fh, (string) time());
+    @fclose($fh);
     return true;
 }
 function cron_unlock(string $job): void {

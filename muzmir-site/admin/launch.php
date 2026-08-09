@@ -268,7 +268,10 @@ if (in_array((string) input('do'), ['ctl_mass','ctl_now','ctl_move','ctl_cancel'
 
     if ($do === 'ctl_restore') {
         $at = $norm !== '' ? $norm : date('Y-m-d H:i:s', strtotime('+1 hour'));
-        $n = q("UPDATE launch_jobs SET status='scheduled', run_at=? WHERE wave=? AND status='cancelled'", [$at, $wave])->rowCount();
+        // 'failed' тоже возвращаем: волна, упавшая на середине, помечается сбоем и
+        // НЕ переигрывается автоматически (иначе задвоились бы уже ушедшие посты).
+        // Решение о повторе принимает человек — этой самой кнопкой.
+        $n = q("UPDATE launch_jobs SET status='scheduled', run_at=?, started_at=NULL WHERE wave=? AND status IN ('cancelled','failed')", [$at, $wave])->rowCount();
         audit('launch_wave_restore', 'competition', 0, ['wave' => $wave, 'at' => $at, 'count' => $n]);
         flash($n ? ('Волна возвращена в план на ' . lc_dt($at) . '.') : 'Нечего возвращать.', $n ? 'success' : 'info');
         admin_redirect('launch');

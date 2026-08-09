@@ -206,9 +206,32 @@ function nl_admin_wrap(string $bodyHtml, string $unsubUrl, string $pixel, string
  * трекингом и отпиской. Идемпотентно: удаляет прежние ещё не отправленные письма
  * этой рассылки. Возвращает число поставленных писем.
  */
+/**
+ * ПЕРСОНАЛЬНАЯ ВОЛНА ЗАПУСКА — её нельзя трогать обычными кнопками рассылок.
+ *
+ * Волна запуска (audience = 'combo:ГГГГ-ММ') собирается ПОД КАЖДОГО получателя:
+ * в письме личный временный пароль от кабинета, и другой копии этого пароля нигде
+ * нет — в users лежит только хеш. Обычные действия раздела «Рассылки» устроены так,
+ * что сначала стирают неотправленные письма кампании: «Отправить сейчас» — чтобы
+ * пересобрать очередь, «Удалить» — вместе с рассылкой. Для волны запуска это значит
+ * стереть тысячи писем с паролями, которые уже нельзя восстановить: люди остались бы
+ * с изменённым паролем и без письма.
+ *
+ * Поэтому такие рассылки в этом разделе только показываются. Управление ими —
+ * в пульте запуска.
+ */
+function nl_is_launch_campaign(array $n): bool {
+    return str_starts_with((string) ($n['audience'] ?? ''), 'combo:');
+}
+
 function nl_admin_enqueue(int $id): int {
     $n = one("SELECT * FROM newsletters WHERE id=?", [$id]);
     if (!$n) return 0;
+    if (nl_is_launch_campaign($n)) {
+        flash('Это волна запуска: письма персональные, с временными паролями. '
+            . 'Пересобрать её здесь нельзя — управление в разделе «Запуск».', 'error');
+        admin_redirect('newsletter');
+    }
 
     $audience = (string) ($n['audience'] ?? 'all');
     $subjectA = (string) ($n['subject'] ?? '');
@@ -426,6 +449,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
     if ($do === 'delete') {
         $id = (int) input('id');
+        $nRow = one("SELECT * FROM newsletters WHERE id=?", [$id]);
+        if ($nRow && nl_is_launch_campaign($nRow)) {
+            flash('Это волна запуска: в её письмах личные временные пароли, другой копии нет. '
+                . 'Удаление стёрло бы неотправленные письма без возможности восстановить. '
+                . 'Остановить волну можно в разделе «Запуск».', 'error');
+            admin_redirect('newsletter');
+        }
         q("DELETE FROM mail_queue WHERE newsletter_id=? AND status='queued'", [$id]);
         q("DELETE FROM newsletters WHERE id=?", [$id]);
         audit('newsletter_delete', 'newsletter', $id);

@@ -275,6 +275,14 @@ function launch_migrate(): void {
             done_at TEXT
         )");
     } catch (\Throwable $e) {}
+    // started_at — момент атомарного захвата задания планировщиком (см. launch_run_due()).
+    // Нужен, чтобы (а) второй крон не подхватил уже выполняющуюся волну,
+    // (б) «зависшее» задание (процесс убит) можно было вернуть в очередь через 30 минут.
+    try {
+        $cols = [];
+        foreach (all("PRAGMA table_info(launch_jobs)") as $r) $cols[] = (string) ($r['name'] ?? '');
+        if (!in_array('started_at', $cols, true)) db()->exec("ALTER TABLE launch_jobs ADD COLUMN started_at TEXT");
+    } catch (\Throwable $e) {}
 }
 
 /**
@@ -802,9 +810,13 @@ function launch_panel_html(): string {
             'Одно письмо на человека, три блока подряд: конкурсы месяца → доступ в личный кабинет (логин и временный пароль) → приглашение в клуб. '
             . 'Блок кабинета уходит ТОЛЬКО тем, кто ещё ни разу не входил (у действующих участников свой пароль, его не трогаем). '
             . 'Блок клуба — только тем, кто в клубе не состоит. Ниже показан полный вариант со всеми тремя блоками; '
-            . '{{login}} и {{password}} подставляются каждому автоматически.',
+            . 'метки {{name}}, {{login}} и {{password}} подставляются каждому получателю автоматически — '
+            . 'их нужно оставить как есть.',
             'nl_split_konkurs', 400,
-            str_replace('{{name}}', 'Имя', (string) $comboPreview)
+            // ВАЖНО: метки НЕ подменяем примерами. Отредактированный здесь текст
+            // сохраняется как шаблон волны; подставь мы сюда «Имя», в сохранённом
+            // шаблоне осталось бы именно оно, и все получили бы «Здравствуйте, Имя!».
+            (string) $comboPreview
         );
         ?>
 
@@ -963,24 +975,65 @@ function launch_run_due(): int {
     launch_migrate();
     $now = new \DateTime('now');
     $h = (int) $now->format('G');
-    $isSunday = ((int) $now->format('w') === 0);
     // Рабочее окно 09:00–18:00 включительно (18:00 — момент закрытия приёма).
-    $inWindow = (!$isSunday && $h >= 9 && $h <= 18);
-    if (!$inWindow) return 0;   // вне рабочего окна ничего не публикуем
+    // Воскресенье РАЗРЕШЕНО (правило владельца, август 2026): публикации и рассылки
+    // в выходной идут как обычно. Раньше воскресенье исключалось, и волна, попавшая
+    // на него, молча простаивала до понедельника.
+    if ($h < 9 || $h > 18) return 0;   // вне рабочего окна ничего не публикуем
 
-    $due = all("SELECT * FROM launch_jobs WHERE status='scheduled' AND run_at <= ? ORDER BY run_at ASC", [$now->format('Y-m-d H:i:s')]);
+    // Зависшие задания: если процесс умер посреди волны, задание осталось в 'running'
+    // и больше никогда бы не выполнилось. Через 30 минут возвращаем его в очередь.
+    try {
+        q("UPDATE launch_jobs SET status='scheduled'
+            WHERE status='running' AND COALESCE(started_at,'') <> ''
+              AND started_at < ?", [(new \DateTime('-2 hours'))->format('Y-m-d H:i:s')]);
+    } catch (\Throwable $e) { /* колонки может не быть на старой БД — не мешаем работе */ }
+
+    // ORDER BY ... id ASC обязателен: у всех волн одного запуска одинаковый run_at,
+    // и без вторичной сортировки порядок не определён. Нужен именно порядок вставки —
+    // сначала посты ВК (быстрые), потом почтовая волна (она идёт минутами).
+    $due = all("SELECT * FROM launch_jobs WHERE status='scheduled' AND run_at <= ? ORDER BY run_at ASC, id ASC",
+               [$now->format('Y-m-d H:i:s')]);
     $done = 0;
     foreach ($due as $j) {
+        $jid  = (int) $j['id'];
         $wave = (string) $j['wave'];
+
+        // АТОМАРНЫЙ ЗАХВАТ ЗАДАНИЯ ДО ОТПРАВКИ.
+        // Раньше статус менялся только ПОСЛЕ успешной отправки. Если launch_fire падал
+        // на середине (например, пост в ВК уже ушёл, а на письмах вылетело исключение),
+        // задание оставалось 'scheduled' — и следующая минута публиковала тот же пост
+        // ВТОРОЙ раз. Файловый лок крона от этого не защищает: он снимается по выходе.
+        // Теперь помечаем 'running' одним UPDATE с условием на прежний статус: если
+        // строк не изменилось, задание уже взял кто-то другой — пропускаем.
+        try {
+            $claim = q("UPDATE launch_jobs SET status='running', started_at=? WHERE id=? AND status='scheduled'",
+                       [$now->format('Y-m-d H:i:s'), $jid]);
+            $taken = is_object($claim) && method_exists($claim, 'rowCount') ? (int) $claim->rowCount() : 1;
+            if ($taken < 1) continue;
+        } catch (\Throwable $e) { continue; }
+
         $channels = array_filter(array_map('trim', explode(',', (string) $j['channels'])));
-        $res = launch_fire((int) $j['competition_id'], $wave, $channels, '', false);
-        update('launch_jobs', [
-            'status' => 'done', 'done_at' => $now->format('Y-m-d H:i:s'),
-            'report' => json_encode($res['report'] ?? [], JSON_UNESCAPED_UNICODE),
-        ], 'id=:id', ['id' => (int) $j['id']]);
+        try {
+            $res = launch_fire((int) $j['competition_id'], $wave, $channels, '', false);
+            update('launch_jobs', [
+                'status' => 'done', 'done_at' => $now->format('Y-m-d H:i:s'),
+                'report' => json_encode($res['report'] ?? [], JSON_UNESCAPED_UNICODE),
+            ], 'id=:id', ['id' => $jid]);
+            $done++;
+        } catch (\Throwable $e) {
+            // Помечаем СБОЕМ, а не возвращаем в очередь: часть волны могла уже уйти,
+            // и повтор задвоил бы посты. Разбирается вручную из пульта запуска.
+            update('launch_jobs', [
+                'status' => 'failed', 'done_at' => $now->format('Y-m-d H:i:s'),
+                'report' => json_encode(['error' => $e->getMessage()], JSON_UNESCAPED_UNICODE),
+            ], 'id=:id', ['id' => $jid]);
+            error_log('launch_run_due: волна ' . $wave . ' #' . $jid . ' — ' . $e->getMessage());
+            continue;
+        }
+
         // Волна «приём закрыт» → авто-закрытие приёма заявок и афиш.
         if ($wave === 'closed') { try { launch_close_intake(); } catch (\Throwable $e) { error_log('launch_close_intake: ' . $e->getMessage()); } }
-        $done++;
     }
     return $done;
 }

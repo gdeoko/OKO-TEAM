@@ -67,8 +67,19 @@ function emit_event(string $type, array $data): void {
 
         // Параллельно — автопост в ВК-сообщество (если vk_token задан).
         // Тихо, чтобы не ломать основной emit.
+        //
+        // СТОП-КРАН ОБЯЗАТЕЛЕН И ЗДЕСЬ. Событие рождается от обычного действия в
+        // админке (например, смены статуса конкурса) — и пост улетал на стену
+        // мгновенно, мимо пульта запуска и мимо рабочего окна публикаций. То есть
+        // ночная правка карточки выкладывала пост в сообщество среди ночи, а при
+        // выключенных массовых коммуникациях — вообще до старта кампании.
         try {
-            if ((string)cfgv('vk_token') !== '') {
+            $massOff = false;
+            if (!function_exists('mass_sending_enabled') && is_file(BASE_PATH . '/core/newsletter.php')) {
+                require_once BASE_PATH . '/core/newsletter.php';
+            }
+            if (function_exists('mass_sending_enabled')) $massOff = !mass_sending_enabled();
+            if (!$massOff && (string)cfgv('vk_token') !== '') {
                 require_once BASE_PATH . '/core/vk.php';
                 $vkMsg = _vk_message_from_event($type, $data);
                 if ($vkMsg !== '') vk_wall_post($vkMsg);

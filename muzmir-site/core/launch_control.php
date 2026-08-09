@@ -24,7 +24,7 @@ require_once __DIR__ . '/launch_run.php';
 /** Идёт ли сейчас кампания: есть выполненные или запланированные задания. */
 function launch_campaign_active(): bool {
     launch_migrate();
-    return (int) scalar("SELECT COUNT(*) FROM launch_jobs WHERE status IN ('scheduled','done')") > 0;
+    return (int) scalar("SELECT COUNT(*) FROM launch_jobs WHERE status IN ('scheduled','done','running','failed')") > 0;
 }
 
 /** Дата старта текущей кампании (первое выполненное задание) или ''. */
@@ -67,16 +67,21 @@ function launch_jobs_grouped(): array {
     launch_migrate();
     $rows = all("SELECT j.*, c.name AS comp_name
                    FROM launch_jobs j LEFT JOIN competitions c ON c.id = j.competition_id
-                  WHERE j.status IN ('scheduled','done','cancelled')
+                  WHERE j.status IN ('scheduled','done','cancelled','running','failed')
                   ORDER BY j.run_at ASC, j.id ASC");
     $order = ['launch_vk' => 1, 'launch_mail' => 2, 'campaign_vip' => 3, 'campaign_kabinet' => 4,
               'launch' => 5, 'd3' => 6, 'last' => 7, 'closed' => 8, 'results' => 9];
     $g = [];
     foreach ($rows as $r) {
         $w = (string) $r['wave'];
-        if (!isset($g[$w])) $g[$w] = ['wave' => $w, 'items' => [], 'done' => 0, 'scheduled' => 0, 'cancelled' => 0, 'run_at' => (string) $r['run_at']];
+        // running/failed обязаны быть видны в пульте: волна, упавшая на середине,
+        // не должна молча исчезать из списка — её разбирают руками.
+        if (!isset($g[$w])) $g[$w] = ['wave' => $w, 'items' => [], 'done' => 0, 'scheduled' => 0,
+                                      'cancelled' => 0, 'running' => 0, 'failed' => 0, 'run_at' => (string) $r['run_at']];
         $g[$w]['items'][] = $r;
-        $g[$w][(string) $r['status']]++;
+        $stKey = (string) $r['status'];
+        if (!isset($g[$w][$stKey])) $g[$w][$stKey] = 0;
+        $g[$w][$stKey]++;
         if ((string) $r['status'] === 'scheduled' && (string) $r['run_at'] < $g[$w]['run_at']) $g[$w]['run_at'] = (string) $r['run_at'];
     }
     uasort($g, fn($a, $b) => ($order[$a['wave']] ?? 99) <=> ($order[$b['wave']] ?? 99));
@@ -215,10 +220,16 @@ function launch_control_html(): string {
   <?php if (!$groups): ?>
     <p class="muted">Кампания ещё не запланирована.</p>
   <?php else: foreach ($groups as $w => $g):
-    $isDone = $g['done'] > 0 && $g['scheduled'] === 0;
-    $isCancelled = $g['cancelled'] > 0 && $g['done'] === 0 && $g['scheduled'] === 0;
-    $tone = $isDone ? 'made' : ($isCancelled ? 'rejected' : 'making');
-    $lbl  = $isDone ? 'Выполнено' : ($isCancelled ? 'Убрано из плана' : 'В плане');
+    $nRun  = (int) ($g['running'] ?? 0);
+    $nFail = (int) ($g['failed'] ?? 0);
+    $isDone = $g['done'] > 0 && $g['scheduled'] === 0 && $nRun === 0 && $nFail === 0;
+    $isCancelled = $g['cancelled'] > 0 && $g['done'] === 0 && $g['scheduled'] === 0 && $nRun === 0 && $nFail === 0;
+    if ($nRun > 0)       { $tone = 'making';   $lbl = 'Выполняется сейчас'; }
+    elseif ($nFail > 0)  { $tone = 'rejected'; $lbl = 'Сбой — нужен разбор'; }
+    else {
+        $tone = $isDone ? 'made' : ($isCancelled ? 'rejected' : 'making');
+        $lbl  = $isDone ? 'Выполнено' : ($isCancelled ? 'Убрано из плана' : 'В плане');
+    }
     $first = $g['items'][0]; ?>
     <div style="border:1px solid var(--a-line);border-radius:12px;padding:14px 16px;margin-bottom:12px">
       <div style="display:flex;gap:12px;flex-wrap:wrap;align-items:flex-start;justify-content:space-between">
@@ -242,10 +253,10 @@ function launch_control_html(): string {
           </div>
         </div>
 
-        <?php if (!$isDone): ?>
+        <?php if (!$isDone && $nRun === 0): ?>
         <form method="post" action="<?= url('/admin/?p=launch') ?>" style="display:flex;gap:6px;flex-wrap:wrap;align-items:center">
           <?= $csrf ?><input type="hidden" name="wave" value="<?= h($w) ?>">
-          <?php if (!$isCancelled): ?>
+          <?php if (!$isCancelled && $nFail === 0): ?>
             <input type="datetime-local" name="run_at" value="<?= h(date('Y-m-d\TH:i', strtotime((string) $g['run_at']) ?: time())) ?>">
             <button name="do" value="ctl_move" class="btn btn--ghost btn--sm">Перенести</button>
             <button name="do" value="ctl_now" class="btn btn--primary btn--sm"

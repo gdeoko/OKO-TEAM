@@ -58,6 +58,21 @@ function kabinet_onboarding_enqueue(int $limit = 20000): int {
     if (function_exists('nl_ensure_campaign_type_col')) nl_ensure_campaign_type_col();
     try { db()->exec("ALTER TABLE mail_queue ADD COLUMN priority INTEGER DEFAULT 0"); } catch (\Throwable $e) {}
 
+    // ПОКА ИДЁТ ВОЛНА ЗАПУСКА — ЭТА ОТДЕЛЬНАЯ ВОЛНА НЕ РАБОТАЕТ.
+    // С августа 2026 доступ в кабинет выдаётся третьим блоком объединённого письма
+    // запуска. Обе волны выдают ВРЕМЕННЫЙ ПАРОЛЬ одним и тем же людям: запустить
+    // вторую поверх первой — значит сменить пароль у тех, кому письмо с прежним
+    // паролем ещё не доехало, и обесценить тысячи уже отправленных писем.
+    try {
+        $pending = (int) scalar(
+            "SELECT COUNT(*) FROM mail_queue q JOIN newsletters n ON n.id = q.newsletter_id
+              WHERE n.audience LIKE 'combo:%' AND q.status IN ('queued','paused')");
+        if ($pending > 0) {
+            if (function_exists('nl_log')) nl_log("kabinet: волна запуска ещё не доехала ($pending писем) — отдельную волну кабинета не запускаем");
+            return 0;
+        }
+    } catch (\Throwable $e) { /* нет таблиц — работаем как раньше */ }
+
     // Кандидаты: зарег. пользователи с почтой, не заблокированные, ни разу не входившие,
     // которым ещё не ставили онбординг кабинета (нет kabinet-письма в очереди/архиве).
     $rows = all(

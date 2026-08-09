@@ -30,6 +30,28 @@ require_once __DIR__ . '/newsletter.php';
 require_once __DIR__ . '/mail_campaigns.php';
 require_once __DIR__ . '/kabinet_onboarding.php';
 
+// Метки условных блоков письма. Нужны, чтобы «кому что показывать» решалось
+// при отправке КАЖДОМУ человеку, а не при сборке эталона: тогда логика переживает
+// и шаблон, отредактированный в пульте запуска.
+const LC_CAB_OPEN  = '<!--БЛОК:КАБИНЕТ-->';
+const LC_CAB_CLOSE = '<!--/БЛОК:КАБИНЕТ-->';
+const LC_VIP_OPEN  = '<!--БЛОК:КЛУБ-->';
+const LC_VIP_CLOSE = '<!--/БЛОК:КЛУБ-->';
+
+/**
+ * Оставить или вырезать помеченный блок письма.
+ * Метки убираются в любом случае — в письмо они не попадают.
+ * Если меток нет (старый сохранённый шаблон) — тело возвращается как есть.
+ */
+function lc_block(string $html, string $open, string $close, bool $keep): string {
+    $i = mb_strpos($html, $open);
+    if ($i === false) return $html;
+    $j = mb_strpos($html, $close, $i);
+    if ($j === false) return str_replace($open, '', $html);
+    $body = mb_substr($html, $i + mb_strlen($open), $j - $i - mb_strlen($open));
+    return mb_substr($html, 0, $i) . ($keep ? $body : '') . mb_substr($html, $j + mb_strlen($close));
+}
+
 /** Тема объединённого письма (переопределяется в пульте: launch_mail_subject:combo). */
 function launch_combo_subject(): string {
     $ov = trim((string) setting('launch_mail_subject:combo', ''));
@@ -59,15 +81,24 @@ function launch_combo_inner(bool $withCabinet, bool $withVip, string $email, str
         $inner = campaign_inner('new_competitions');
 
         // 2. Личный кабинет с доступом — только тем, кто ещё ни разу не входил.
-        if ($withCabinet) {
-            $inner .= '<div style="height:1px;background:#E8DFC8;margin:26px 0"></div>' . kabinet_onboarding_inner();
-        }
+        $inner .= LC_CAB_OPEN
+                . '<div style="height:1px;background:#E8DFC8;margin:26px 0"></div>' . kabinet_onboarding_inner()
+                . LC_CAB_CLOSE;
 
         // 3. Клуб постоянных участников — только тем, кто ещё не состоит.
-        if ($withVip) {
-            $inner .= '<div style="height:1px;background:#E8DFC8;margin:26px 0"></div>' . campaign_inner('vip');
-        }
+        $inner .= LC_VIP_OPEN
+                . '<div style="height:1px;background:#E8DFC8;margin:26px 0"></div>' . campaign_inner('vip')
+                . LC_VIP_CLOSE;
     }
+
+    // УСЛОВНЫЕ БЛОКИ ВЫРЕЗАЮТСЯ ЗДЕСЬ, А НЕ ПРИ СБОРКЕ.
+    // Так персонализация переживает шаблон, сохранённый в пульте запуска: раньше
+    // сохранённый оверрайд шёл всем целиком, и человек с рабочим паролем получал
+    // блок «ваш пароль: » с пустым местом, а член клуба — приглашение вступить в клуб.
+    // Метки — HTML-комментарии: в почтовом клиенте их не видно, при правке текста
+    // в пульте они сохраняются вместе с разметкой.
+    $inner = lc_block($inner, LC_CAB_OPEN, LC_CAB_CLOSE, $withCabinet);
+    $inner = lc_block($inner, LC_VIP_OPEN, LC_VIP_CLOSE, $withVip);
 
     return str_replace(
         ['{{name}}', '{{login}}', '{{password}}'],
@@ -110,12 +141,27 @@ function launch_combo_enqueue(bool $dry = false, int $limit = 20000): array {
     nl_ensure_campaign_type_col();
     try { db()->exec("ALTER TABLE mail_queue ADD COLUMN priority INTEGER DEFAULT 0"); } catch (\Throwable $e) {}
 
+    // ИНДЕКСЫ ГОРЯЧЕГО ПУТИ ВОЛНЫ. На каждого из 8200 получателей делается два поиска:
+    // проверка дубля в mail_queue и поиск учётной записи по адресу. Без индексов оба
+    // шли полным сканом таблиц — это десятки миллионов чтений и волна длиной в полчаса
+    // вместо нескольких минут. С индексами оба поиска мгновенные.
+    try { db()->exec("CREATE INDEX IF NOT EXISTS idx_queue_nl_email ON mail_queue(newsletter_id, to_email)"); } catch (\Throwable $e) {}
+    try { db()->exec("CREATE INDEX IF NOT EXISTS idx_users_email_lc ON users(LOWER(email))"); } catch (\Throwable $e) {}
+    try { db()->exec("CREATE INDEX IF NOT EXISTS idx_subs_email_active ON subscribers(email, active)"); } catch (\Throwable $e) {}
+
     $subject = launch_combo_subject();
 
     // Одна строка кампании на месяц — она же ключ идемпотентности.
+    // ИЩЕМ ТОЛЬКО ПО ТЕГУ МЕСЯЦА, БЕЗ ТЕМЫ. Тема считается из числа открытых конкурсов
+    // («…4 конкурса…»), и стоило закрыть или добавить один — она менялась, старая
+    // кампания переставала находиться, заводилась новая, и вся база проходилась
+    // ВТОРОЙ раз: второе письмо каждому и второй сброс восьми тысяч паролей.
     $tag = 'combo:' . date('Y-m');
-    $nl  = one("SELECT * FROM newsletters WHERE subject = ? AND audience = ?", [$subject, $tag]);
+    $nl  = one("SELECT * FROM newsletters WHERE audience = ? ORDER BY id ASC LIMIT 1", [$tag]);
     $nid = (int) ($nl['id'] ?? 0);
+    // Если кампания уже заведена — держимся её темы, чтобы письма одной волны
+    // не разъезжались по теме и попадали в один тред у получателя.
+    if ($nid && trim((string) ($nl['subject'] ?? '')) !== '') $subject = (string) $nl['subject'];
     if (!$nid && !$dry) {
         $nid = (int) insert('newsletters', [
             'subject'       => $subject,
@@ -161,19 +207,27 @@ function launch_combo_enqueue(bool $dry = false, int $limit = 20000): array {
         }
 
         // Кому нужен доступ в кабинет: аккаунт есть, но ни разу не входил.
-        $u = one("SELECT id, full_name, last_login FROM users WHERE LOWER(email) = ?", [$email]);
+        // Служебные роли и заблокированных ИСКЛЮЧАЕМ ЗДЕСЬ, а не только в выборке
+        // получателей: сотрудник мог попасть в волну через таблицу подписчиков,
+        // и тогда ему сбросили бы рабочий пароль от админки.
+        $u = one("SELECT id, full_name, last_login FROM users
+                   WHERE LOWER(email) = ? AND COALESCE(blocked,0) = 0
+                     AND COALESCE(role,'user') NOT IN ('owner','admin','orgcom','moderator','jury','designer')",
+                 [$email]);
         $needCabinet = $u && ($u['last_login'] === null || trim((string) $u['last_login']) === '');
         $needVip     = !isset($clubEmails[$email]);
 
         $name = trim((string) ($r['name'] ?? '')) ?: trim((string) ($u['full_name'] ?? ''));
         $pass = '';
 
-        if ($needCabinet) {
+        // Пароль ГОТОВИМ, но в базу пока НЕ пишем.
+        // Порядок важен: сначала письмо должно лечь в очередь, и только потом
+        // меняется пароль. Иначе сбой на вставке письма оставлял человека
+        // с новым паролем, которого он нигде не увидит, и без доступа в кабинет.
+        $newHash = '';
+        if ($needCabinet && !$dry) {          // при сухом прогоне пароли не считаем: это минуты работы впустую
             $pass = kabinet_gen_password();
-            if (!$dry) {
-                try { update('users', ['password_hash' => password_hash($pass, PASSWORD_DEFAULT)], 'id=:id', ['id' => (int) $u['id']]); }
-                catch (\Throwable $e) { $needCabinet = false; $pass = ''; }
-            }
+            $newHash = password_hash($pass, PASSWORD_DEFAULT);
         }
 
         if ($needCabinet) $withCab++;
@@ -198,6 +252,16 @@ function launch_combo_enqueue(bool $dry = false, int $limit = 20000): array {
                 'priority'      => 5,
             ]);
             $queued++;
+            // Письмо в очереди — теперь можно менять пароль.
+            if ($needCabinet && $newHash !== '') {
+                try { update('users', ['password_hash' => $newHash], 'id=:id', ['id' => (int) $u['id']]); }
+                catch (\Throwable $e) {
+                    // Пароль не сменился, а письмо с ним уже стоит в очереди — снимаем его,
+                    // чтобы человек не получил пароль, который никуда не подходит.
+                    try { q("UPDATE mail_queue SET status='cancelled' WHERE newsletter_id=? AND to_email=?", [$nid, $email]); } catch (\Throwable $e2) {}
+                    $queued--; $withCab--;
+                }
+            }
         } catch (\Throwable $e) { /* сбойную строку пропускаем, волну не роняем */ }
     }
 

@@ -237,6 +237,16 @@ function newsletter_enqueue(int $newsletterId): int {
     $n = one("SELECT * FROM newsletters WHERE id = ?", [$newsletterId]);
     if (!$n) { nl_log("enqueue: рассылка #$newsletterId не найдена"); return 0; }
 
+    // ВОЛНА ЗАПУСКА СОБИРАЕТСЯ НЕ ЗДЕСЬ. Её письма персональные (личный временный
+    // пароль у каждого), их ставит launch_combo_enqueue(). Обычная постановка ниже
+    // сначала СТИРАЕТ неотправленные письма рассылки, а потом кладёт всем одно и то же
+    // тело — то есть уничтожила бы тысячи писем с паролями и разослала бы вместо них
+    // служебную заглушку «(персональное письмо: собирается под каждого получателя)».
+    if (str_starts_with((string) ($n['audience'] ?? ''), 'combo:')) {
+        nl_log("enqueue: #$newsletterId — волна запуска, обычная постановка запрещена (её ведёт launch_combo_enqueue)");
+        return 0;
+    }
+
     $audience = (string) ($n['audience'] ?? 'all');
     $source   = str_starts_with($audience, 'competition:') ? 'competition' : 'newsletter';
     $recips   = nl_resolve_recipients($audience);
@@ -450,15 +460,68 @@ function nl_mark_bounced(string $email, string $reason = 'bounce'): void {
     nl_log('bounce: ' . $email . ' → выведен из базы (' . $reason . ')');
 }
 
-/** Прунит адреса, письма которым окончательно провалились (status=failed). */
+/**
+ * ОТКАЗ АДРЕСАТА ИЛИ НАШ СОБСТВЕННЫЙ СБОЙ?
+ *
+ * Отличать обязательно. «Ящика не существует» — вина адреса, его надо вывести из базы.
+ * «Не смогли залогиниться на SMTP», «превышен суточный лимит», «нет связи» — наша
+ * собственная проблема, адрес живой. Раньше разницы не было: часовой сбой почтовика
+ * НАВСЕГДА выключал бы до 400 живых подписчиков в день — и они больше никогда
+ * не получили бы ни одной рассылки.
+ *
+ * @return string 'hard' — виноват адрес; 'soft' — виноваты мы (или временная причина).
+ */
+function nl_failure_kind(string $err): string {
+    $e = mb_strtolower($err);
+    // Наша сторона / временное — ни при каких условиях не выводим адрес из базы.
+    foreach (['ни один из', 'не настроен ни один', 'authentication', 'auth', 'password',
+               'пароль', 'соединен', 'connect', 'timeout', 'таймаут', 'timed out',
+               'quota', 'лимит', 'limit exceeded', 'too many', 'try again', 'temporar',
+               'greylist', '421', '450', '451', '452', '4.7.', '4.3.', 'ssl', 'tls',
+               'network', 'refused'] as $w) {
+        if (mb_strpos($e, $w) !== false) return 'soft';
+    }
+    // Явный отказ по адресату.
+    foreach (['no such user', 'user unknown', 'unknown user', 'mailbox not found',
+              'mailbox unavailable', 'does not exist', 'no mailbox', 'recipient rejected',
+              'invalid recipient', 'address rejected', 'некорректный адрес',
+              '550', '551', '553', '5.1.1', '5.1.0', '5.1.2'] as $w) {
+        if (mb_strpos($e, $w) !== false) return 'hard';
+    }
+    return 'soft';   // сомнение — в пользу адреса
+}
+
+/**
+ * Разбирает массовые письма, которые окончательно не ушли (status=failed).
+ *
+ * Отказ по адресату — адрес выводится из базы (иначе дневная квота тратится впустую).
+ * Наш собственный сбой — письмо ВОЗВРАЩАЕТСЯ в очередь (до 5 попыток), подписчик
+ * остаётся активным: человек не виноват, что у нас упал SMTP.
+ *
+ * @return int сколько адресов реально выведено из базы
+ */
 function nl_prune_failed(): int {
-    $rows = all("SELECT DISTINCT to_email FROM mail_queue WHERE status='failed' AND COALESCE(priority,0)>0");
-    $n = 0;
+    try { db()->exec("ALTER TABLE mail_queue ADD COLUMN soft_tries INTEGER DEFAULT 0"); } catch (\Throwable $e) {}
+    $rows = all("SELECT id, to_email, COALESCE(error,'') AS error, COALESCE(soft_tries,0) AS soft_tries
+                   FROM mail_queue WHERE status='failed' AND COALESCE(priority,0)>0");
+    $n = 0; $back = 0;
     foreach ($rows as $r) {
         $e = mb_strtolower(trim((string) $r['to_email']));
-        $sub = one("SELECT active FROM subscribers WHERE email=?", [$e]);
-        if ($sub && (int) $sub['active'] === 1) { nl_mark_bounced($e, 'smtp-failed'); $n++; }
+        if ($e === '') continue;
+        if (nl_failure_kind((string) $r['error']) === 'hard') {
+            $sub = one("SELECT active FROM subscribers WHERE email=?", [$e]);
+            if ($sub && (int) $sub['active'] === 1) { nl_mark_bounced($e, 'отказ адресата'); $n++; }
+            continue;
+        }
+        // Наш сбой: возвращаем письмо в очередь, подписчика не трогаем.
+        $st = (int) $r['soft_tries'];
+        if ($st < 5) {
+            update('mail_queue', ['status' => 'queued', 'tries' => 0, 'soft_tries' => $st + 1],
+                   'id=:id', ['id' => (int) $r['id']]);
+            $back++;
+        }
     }
+    if ($back > 0) nl_log("process: вернули в очередь после НАШЕГО сбоя — $back (адреса живые, из базы не выводим)");
     return $n;
 }
 
@@ -556,6 +619,14 @@ function newsletter_process_queue(int $limit): int {
         $opt = [];
         if (!empty($row['attach'])) $opt['attach'] = (string) $row['attach'];
         if ($account) $opt['account'] = $account;
+        // ПРИОРИТЕТ ОБЯЗАН ДОЙТИ ДО mail_send_failover.
+        // Внутри него пул письма считается заново: mail_pool_for(['priority'=>…,'subject'=>…]).
+        // Без priority он всегда видел 0 и определял пул ПО ТЕМЕ. Тема волны запуска —
+        // «Открыт приём заявок — 4 конкурса с наградами и дипломами» — содержит «наград»
+        // и «диплом», поэтому пул выходил 'awards', а выбранный ротацией ящик news@
+        // в awards-пуле отсутствует и молча выбрасывался: вся волна ушла бы с наградного
+        // ящика и официальной почты центра, мимо ротации и мимо лимита 200/ящик.
+        $opt['priority'] = (int) ($row['priority'] ?? 0);
         $ok = false;
         // Автозамена ящика: если основной не принял — письмо уйдёт со следующей почты.
         try {
@@ -624,6 +695,24 @@ function newsletter_process_queue(int $limit): int {
     //    nl_per_box_cap (200) с каждого: иначе весь объём уходил через первый ящик
     //    пула и упирался в суточный лимит провайдера.
     nl_ensure_campaign_type_col();
+
+    // ПРОСРОЧЕННАЯ ВОЛНА ЗАПУСКА НЕ УХОДИТ В СЛЕДУЮЩИЙ МЕСЯЦ.
+    // Письмо запуска зовёт подать заявку на конкурсы ЭТОГО месяца — приём закрывается
+    // 25-го. Что не успело уйти до конца месяца, в следующем стало бы приглашением на
+    // уже закрытый конкурс, с кнопкой «подать заявку», которая никуда не ведёт.
+    // Такие письма снимаем: этих людей подхватит волна нового месяца — с актуальными
+    // конкурсами и свежим паролем.
+    try {
+        $stale = q("UPDATE mail_queue SET status='cancelled',
+                        error='снято: волна прошлого месяца, конкурсы уже закрыты'
+                     WHERE status IN ('queued','paused') AND COALESCE(priority,0)>0
+                       AND newsletter_id IN (SELECT id FROM newsletters
+                                              WHERE audience LIKE 'combo:%' AND audience < ?)",
+                   ['combo:' . date('Y-m')]);
+        $nStale = is_object($stale) && method_exists($stale, 'rowCount') ? (int) $stale->rowCount() : 0;
+        if ($nStale > 0) nl_log("process: снято писем прошлых волн запуска — $nStale (их получатели войдут в волну текущего месяца)");
+    } catch (\Throwable $e) {}
+
     $globalRemaining = $dailyLimit - nl_bulk_sent_today();
     if ($globalRemaining > 0) {
         $split = nl_daily_split();                       // ['konkurs'=>,'vip'=>,'kabinet'=>]

@@ -54,6 +54,33 @@ try {
         exit(0);
     }
 
+    // СТОП-КРАН. Пока массовые коммуникации выключены в пульте запуска, наружу
+    // не уходит ничего массового — итоги в ВК и письма участникам в том числе.
+    if (!function_exists('mass_sending_enabled') && is_file(BASE_PATH . '/core/newsletter.php')) {
+        require_once BASE_PATH . '/core/newsletter.php';
+    }
+    if (function_exists('mass_sending_enabled') && !mass_sending_enabled()) {
+        cron_log(JOB, 'массовые коммуникации выключены стоп-краном - выход');
+        cron_unlock(JOB);
+        exit(0);
+    }
+
+    // ЧЬЯ ЭТО РАБОТА. С августа 2026 итоги 28-го числа публикует волна 'results'
+    // пульта запуска (launch_jobs) — она же рассылает персональные письма участникам.
+    // Этот крон стоит в расписании на 07:00, волна пульта — на 09:00: без проверки
+    // пост об итогах вышел бы на стену дважды, а участники получили бы по два письма.
+    try {
+        $panelOwns = (int) scalar(
+            "SELECT COUNT(*) FROM launch_jobs
+              WHERE wave = 'results' AND status IN ('scheduled','running','done')
+                AND strftime('%Y-%m', run_at) = ?", [date('Y-m')]) > 0;
+    } catch (\Throwable $e) { $panelOwns = false; }
+    if ($panelOwns) {
+        cron_log(JOB, 'итоги месяца публикует волна пульта запуска - выход, чтобы не задвоить пост и письма');
+        cron_unlock(JOB);
+        exit(0);
+    }
+
     if (trim((string) cfgv('vk_token', '')) === '') {
         cron_log(JOB, 'vk_token (MUZMIR_VK_TOKEN) не настроен - выход');
         cron_unlock(JOB);
