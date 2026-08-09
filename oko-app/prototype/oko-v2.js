@@ -697,3 +697,123 @@ window.okoHaptic = okoHaptic;
       .replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
   }
 })();
+
+/* ============================================================================
+   МОДУЛЬ v2-profile · ПРОФИЛИ ОТДЕЛЬНОЙ СТРАНИЦЕЙ + КОПИРОВАНИЕ ССЫЛКИ
+   Правка Даниэля: «просмотр профиля ЛС и каналов и чатов и курсов в отдельной
+   странице, копирование ссылки, ника и тд — многое не доработано детально».
+
+   Было: тап по шапке диалога открывал НИЖНЮЮ ШТОРКУ с обрезанной карточкой.
+   Стало: для личного чата открывается полноценная страница профиля (#psView),
+   для канала и группы — страница канала. Везде есть строка «@ник · копировать»
+   и «Ссылка на профиль · копировать».
+   ============================================================================ */
+(function v2profile(){
+  'use strict';
+  try{
+    /* ---------- универсальное копирование с честным откликом ---------- */
+    function copy(text, okMsg){
+      var done = function(){ try{ if(typeof toast==='function') toast(okMsg||'Скопировано'); }catch(e){} okoHaptic('success'); };
+      try{
+        if(navigator.clipboard && navigator.clipboard.writeText){
+          navigator.clipboard.writeText(text).then(done, fallback);
+          return;
+        }
+      }catch(e){}
+      fallback();
+      function fallback(){
+        try{
+          var ta = document.createElement('textarea');
+          ta.value = text;
+          ta.style.cssText = 'position:fixed;left:-9999px;top:0';
+          document.body.appendChild(ta); ta.select();
+          document.execCommand('copy'); ta.remove();
+          done();
+        }catch(e){ try{ if(typeof toast==='function') toast('Не удалось скопировать'); }catch(_){} }
+      }
+    }
+    window.okoCopy = copy;
+
+    function nickOf(c){
+      if(!c) return '';
+      if(c.nick) return String(c.nick).replace(/^@/, '');
+      return String(c.name || '').toLowerCase().replace(/[^a-zа-я0-9]+/gi, '_').replace(/^_|_$/g, '');
+    }
+    function linkOf(c){
+      var n = nickOf(c);
+      if(!n) return 'https://okoteam.top';
+      return (c && (c.kind === 'channel' || c.kind === 'group'))
+        ? 'https://okoteam.top/c/' + n
+        : 'https://okoteam.top/@' + n;
+    }
+    window.okoEntityLink = linkOf;
+    window.okoEntityNick = nickOf;
+
+    /* ---------- блок «ник и ссылка» для любой страницы сущности ---------- */
+    window.okoIdentityBlock = function(c){
+      var n = nickOf(c), l = linkOf(c);
+      if(!n) return '';
+      return ''
+        + '<div class="oko-ident">'
+        +   '<button class="oko-ident-row" type="button" onclick="okoCopy(\'@' + n + '\',\'Ник скопирован\')">'
+        +     '<svg class="i"><use href="#i-user"/></svg>'
+        +     '<span class="oko-ident-t">@' + n + '</span>'
+        +     '<svg class="i oko-ident-c"><use href="#i-copy"/></svg>'
+        +   '</button>'
+        +   '<button class="oko-ident-row" type="button" onclick="okoCopy(\'' + l + '\',\'Ссылка скопирована\')">'
+        +     '<svg class="i"><use href="#i-link"/></svg>'
+        +     '<span class="oko-ident-t oko-breakable">' + l.replace(/^https:\/\//, '') + '</span>'
+        +     '<svg class="i oko-ident-c"><use href="#i-copy"/></svg>'
+        +   '</button>'
+        + '</div>';
+    };
+
+    /* ---------- профиль открывается СТРАНИЦЕЙ, а не шторкой ---------- */
+    var coreOpenProfile = window.openProfile;
+    window.openProfile = function(){
+      var c = (typeof currentChat !== 'undefined') ? currentChat : null;
+      if(!c) return;
+      okoHaptic('impact');
+
+      /* Канал или группа — открываем страницу канала со всей начинкой. */
+      if((c.kind === 'channel' || c.kind === 'group') && typeof chOpen === 'function'){
+        try{ chOpen('channel', c.id); return; }catch(e){}
+      }
+      /* Личный чат — полноценная страница профиля собеседника. */
+      if(c.kind === 'direct' && typeof psOpenProfile === 'function' && c.name){
+        try{ psOpenProfile(c.name); setTimeout(injectIdentity, 60); return; }catch(e){}
+      }
+      /* Всё остальное — как было. */
+      if(typeof coreOpenProfile === 'function') coreOpenProfile.apply(this, arguments);
+    };
+
+    /* Дописываем блок с ником и ссылкой в открытую страницу профиля. */
+    function injectIdentity(){
+      try{
+        var v = document.getElementById('psView');
+        if(!v || !v.classList.contains('open')) return;
+        if(v.querySelector('.oko-ident')) return;
+        var c = (typeof currentChat !== 'undefined') ? currentChat : null;
+        var host = v.querySelector('.sv-body') || v;
+        var name = (typeof PS === 'object' && PS && PS.cur) ? PS.cur : (c && c.name);
+        var ent = c && c.name === name ? c : { name: name, nick: (c && c.nick) || '' };
+        var html = window.okoIdentityBlock(ent);
+        if(!html) return;
+        var wrap = document.createElement('div');
+        wrap.innerHTML = html;
+        var first = host.firstElementChild;
+        if(first) host.insertBefore(wrap.firstChild, first.nextSibling);
+        else host.appendChild(wrap.firstChild);
+      }catch(e){}
+    }
+    /* Страница профиля может открыться и другими путями — следим. */
+    try{
+      var pv = document.getElementById('psView');
+      if(pv) new MutationObserver(function(){
+        if(pv.classList.contains('open')) setTimeout(injectIdentity, 40);
+      }).observe(pv, { attributes:true, attributeFilter:['class'] });
+    }catch(e){}
+
+    log('profile ok');
+  }catch(e){}
+})();

@@ -544,3 +544,81 @@ img, video, canvas, svg:not(.i) {
   font-size:13px; line-height:1.55; color:var(--dim);
   margin:0; max-width:34ch;
 }
+
+/* ---------------------------------------------------------------------------
+   18. РЕКЛАМНЫЙ КАБИНЕТ: плитки быстрых действий не вылезают за экран
+   Сетка 1fr 1fr не давала ячейкам сжиматься (min-width у grid-элемента по
+   умолчанию auto), и длинная подпись выталкивала плитку за правый край.
+   --------------------------------------------------------------------------- */
+.ads-quick{ grid-template-columns:repeat(2, minmax(0, 1fr)); }
+.ads-quick-b{ min-width:0; overflow:hidden; }
+.ads-quick-b span{
+  min-width:0;
+  overflow:hidden;
+  text-overflow:ellipsis;
+  white-space:nowrap;
+  font-size:clamp(11px, 3.2vw, 12.5px);
+}
+.ads-quick-b em{ min-width:0; overflow:hidden; text-overflow:ellipsis; }
+
+/* Ячейка сетки обязана уметь сжиматься. По умолчанию у grid-элемента
+   min-width:auto — он не может стать уже своего содержимого, и длинное слово
+   выталкивает колонку за правый край. Число колонок НЕ трогаем, только
+   разрешаем сжатие: это самая частая причина «вылезает за экран». */
+.stat-grid{ grid-template-columns:repeat(2, minmax(0, 1fr)); }
+.svc-grid > *, .ads-quick > *, .stat-grid > *,
+.w2-grid > *, .pp2-stats > *, .gm-grid > *,
+.wal-acts > *, .w2-qs > * { min-width:0; }
+
+/* Академия на узких экранах: круговой прогресс не выходит за край */
+#screen-academy svg, #acRoot svg{ max-width:100%; }
+
+/* ---------------------------------------------------------------------------
+   19. НИК И ССЫЛКА НА СТРАНИЦЕ ПРОФИЛЯ / КАНАЛА
+   Копируются в один тап — это базовая вещь для роста: человек делится собой.
+   --------------------------------------------------------------------------- */
+.oko-ident{
+  display:flex; flex-direction:column; gap:1px;
+  margin:10px 0 14px;
+  border-radius:var(--r-md);
+  overflow:hidden;
+  background:var(--surface);
+  border:1px solid var(--border);
+}
+.oko-ident-row{
+  display:flex; align-items:center; gap:10px;
+  width:100%;
+  padding:12px 14px;
+  background:transparent;
+  color:var(--text);
+  text-align:left;
+  transition:background .16s;
+}
+.oko-ident-row + .oko-ident-row{ border-top:1px solid var(--border); }
+.oko-ident-row:hover{ background:var(--raised); }
+.oko-ident-row:active{ background:var(--raised); }
+.oko-ident-row > svg.i{ width:18px; height:18px; color:var(--accent); flex:0 0 auto; }
+.oko-ident-t{
+  flex:1 1 auto; min-width:0;
+  font-size:13.5px; font-weight:600;
+  overflow:hidden; text-overflow:ellipsis; white-space:nowrap;
+}
+.oko-ident-c{ color:var(--dim) !important; width:16px !important; height:16px !important; }
+.oko-ident-row:hover .oko-ident-c{ color:var(--accent) !important; }
+
+/* ---------------------------------------------------------------------------
+   20. СТОРИС ОСНОВАТЕЛЯ И ТУР: кнопки не упираются в нижний край
+   --------------------------------------------------------------------------- */
+#trStories .btn,
+#trStories .ts-cta,
+.ts-wrap .btn{
+  margin-bottom: max(var(--oko-safe-bottom), 8px);
+}
+#trStories, .ts-wrap{
+  padding-top: var(--oko-safe-top);
+  padding-bottom: var(--oko-safe-bottom);
+  box-sizing: border-box;
+}
+
+/* Список чатов: плавающая кнопка «+» не должна накрывать последнюю строку */
+#chatList{ padding-bottom: calc(84px + var(--oko-safe-bottom)); }

@@ -1,0 +1,317 @@
+<svg xmlns="http://www.w3.org/2000/svg" style="display:none" aria-hidden="true"><defs>
+
+<!-- ==========================================================================
+     OKO ICON SET v2 — единая оптическая система
+     Сетка 100x100. Основная масса вписана в квадрат 68x68 (отступ 16).
+     Штрих задаётся снаружи правилом svg.i: stroke-width 7, cap/join round.
+     Класс .fill переключает символ на заливку.
+     Симметричные знаки симметричны точно относительно x=50.
+     i-logo НЕ входит в этот файл — остаётся в index.html из мастер-файла.
+     ========================================================================== -->
+
+<!-- ========================= НАВИГАЦИЯ И БАЗА ========================= -->
+
+<!-- Шеврон вправо: раскрытие списка, стрелка «дальше» -->
+<symbol id="i-chev" viewBox="0 0 100 100"><path d="M34 18 66 50 34 82"/></symbol>
+
+<!-- Назад: тот же шеврон, зеркально -->
+<symbol id="i-back" viewBox="0 0 100 100"><path d="M66 18 34 50 66 82"/></symbol>
+
+<!-- Стрелка вверх -->
+<symbol id="i-arrow-up" viewBox="0 0 100 100"><path d="M50 84V18M26 42 50 18 74 42"/></symbol>
+
+<!-- Стрелка вниз -->
+<symbol id="i-arrow-down" viewBox="0 0 100 100"><path d="M50 16v66M26 58 50 82 74 58"/></symbol>
+
+<!-- Крестик закрытия -->
+<symbol id="i-x" viewBox="0 0 100 100"><path d="M26 26 74 74M74 26 26 74"/></symbol>
+
+<!-- Плюс: добавить -->
+<symbol id="i-plus" viewBox="0 0 100 100"><path d="M50 18v64M18 50h64"/></symbol>
+
+<!-- Галочка: доставлено -->
+<symbol id="i-check" viewBox="0 0 100 100"><path d="M20 52 40 72 80 28"/></symbol>
+
+<!-- Двойная галочка: прочитано (параллельные хвосты, как в Telegram) -->
+<symbol id="i-check2" viewBox="0 0 100 100"><path d="M16 52 34 70 64 32M46 66 54 74 84 36"/></symbol>
+
+<!-- Меню «ещё»: три точки по вертикали -->
+<symbol id="i-more" viewBox="0 0 100 100"><circle cx="50" cy="24" r="6.5" fill="currentColor" stroke="none"/><circle cx="50" cy="50" r="6.5" fill="currentColor" stroke="none"/><circle cx="50" cy="76" r="6.5" fill="currentColor" stroke="none"/></symbol>
+
+<!-- Меню «ещё»: три точки по горизонтали -->
+<symbol id="i-dots-h" viewBox="0 0 100 100"><circle cx="24" cy="50" r="6.5" fill="currentColor" stroke="none"/><circle cx="50" cy="50" r="6.5" fill="currentColor" stroke="none"/><circle cx="76" cy="50" r="6.5" fill="currentColor" stroke="none"/></symbol>
+
+<!-- Поиск: лупа с ручкой по диагонали 45° -->
+<symbol id="i-search" viewBox="0 0 100 100"><circle cx="46" cy="46" r="26"/><path d="M65 65 82 82"/></symbol>
+
+<!-- Обновить: круговая стрелка, разомкнутая справа сверху -->
+<symbol id="i-refresh" viewBox="0 0 100 100"><path d="M83 50a33 33 0 1 1-9.7-23.3"/><path d="M83 18v16H67"/></symbol>
+
+<!-- Настройки: шестерня с восемью зубьями -->
+<symbol id="i-gear" viewBox="0 0 100 100"><circle cx="50" cy="50" r="13"/><circle cx="50" cy="50" r="27"/><path d="M50 16v7M50 77v7M16 50h7M77 50h7M26 26l5 5M69 69l5 5M74 26l-5 5M31 69l-5 5"/></symbol>
+
+<!-- Информация: круг, точка и вертикальная черта -->
+<symbol id="i-info" viewBox="0 0 100 100"><circle cx="50" cy="50" r="34"/><path d="M50 46v24"/><circle cx="50" cy="32" r="4" fill="currentColor" stroke="none"/></symbol>
+
+<!-- Внимание: треугольник с восклицательным знаком -->
+<symbol id="i-warning" viewBox="0 0 100 100"><path d="M50 19 84 80H16z"/><path d="M50 44v16"/><circle cx="50" cy="71" r="3.5" fill="currentColor" stroke="none"/></symbol>
+
+<!-- Защита: щит -->
+<symbol id="i-shield" viewBox="0 0 100 100"><path d="M50 14 20 27v25c0 17 12 27 30 32 18-5 30-15 30-32V27z"/></symbol>
+
+<!-- Цель: мишень из трёх колец -->
+<symbol id="i-target" viewBox="0 0 100 100"><circle cx="50" cy="50" r="34"/><circle cx="50" cy="50" r="19"/><circle cx="50" cy="50" r="6" fill="currentColor" stroke="none"/></symbol>
+
+<!-- Ссылка: два звена цепи под 45° -->
+<symbol id="i-link" viewBox="0 0 100 100"><path d="M36 26 46 16a22 22 0 0 1 31 31L67 57"/><path d="M64 74 54 84a22 22 0 0 1-31-31L33 43"/><path d="M42 58 58 42"/></symbol>
+
+<!-- Скачать: стрелка вниз на подставке -->
+<symbol id="i-download" viewBox="0 0 100 100"><path d="M50 16v46M28 44 50 66 72 44M16 82h68"/></symbol>
+
+<!-- Скачать (алиас для выписок и CSV) -->
+<symbol id="i-dl" viewBox="0 0 100 100"><path d="M50 16v46M28 44 50 66 72 44M16 82h68"/></symbol>
+
+<!-- Поделиться: стрелка вверх из контейнера -->
+<symbol id="i-share" viewBox="0 0 100 100"><path d="M32 32 50 14 68 32M50 14v46"/><path d="M26 52v24a8 8 0 0 0 8 8h32a8 8 0 0 0 8-8V52"/></symbol>
+
+<!-- Копировать: два скруглённых листа со сдвигом -->
+<symbol id="i-copy" viewBox="0 0 100 100"><rect x="34" y="34" width="50" height="50" rx="12"/><path d="M22 66a6 6 0 0 1-6-6V22a6 6 0 0 1 6-6h38a6 6 0 0 1 6 6"/></symbol>
+
+<!-- Редактировать: карандаш по диагонали -->
+<symbol id="i-edit" viewBox="0 0 100 100"><path d="M64 18 82 36 40 78 18 84 24 62z"/><path d="M58 24 76 42"/></symbol>
+
+<!-- Удалить: корзина с крышкой и двумя рёбрами -->
+<symbol id="i-trash" viewBox="0 0 100 100"><path d="M20 28h60"/><path d="M40 28V20a4 4 0 0 1 4-4h12a4 4 0 0 1 4 4v8"/><path d="M28 28 31 78a6 6 0 0 0 6 6h26a6 6 0 0 0 6-6l3-50"/><path d="M43 44v26M57 44v26"/></symbol>
+
+<!-- Сохранить: закладка с вырезом -->
+<symbol id="i-bookmark" viewBox="0 0 100 100"><path d="M26 22a8 8 0 0 1 8-8h32a8 8 0 0 1 8 8v62L50 69 26 84z"/></symbol>
+
+<!-- Закрепить: канцелярская кнопка, вид сбоку -->
+<symbol id="i-pin" viewBox="0 0 100 100"><path d="M36 16h28"/><path d="M40 16v22L28 52v6h44v-6L60 38V16"/><path d="M50 58v26"/></symbol>
+
+<!-- Флаг: жалоба, отметка -->
+<symbol id="i-flag" viewBox="0 0 100 100"><path d="M26 84V16"/><path d="M26 20h46L62 35l10 15H26"/></symbol>
+
+<!-- Звезда: пятиконечная, точная геометрия -->
+<symbol id="i-star" viewBox="0 0 100 100"><path d="M50 18 58.5 40.3 82.3 41.5 63.8 56.5 70 79.5 50 66.5 30 79.5 36.2 56.5 17.7 41.5 41.5 40.3z"/></symbol>
+
+<!-- Сердце: симметричное, для лайков (класс .fill заливает) -->
+<symbol id="i-heart" viewBox="0 0 100 100"><path d="M50 84C24 64 16 52 16 39c0-10 8-18 18-18 7 0 13 4 16 10 3-6 9-10 16-10 10 0 18 8 18 18 0 13-8 25-34 45z"/></symbol>
+
+<!-- Просмотр: глаз со зрачком -->
+<symbol id="i-eye" viewBox="0 0 100 100"><path d="M50 26c-16 0-29 10-34 24 5 14 18 24 34 24s29-10 34-24c-5-14-18-24-34-24z"/><circle cx="50" cy="50" r="11"/></symbol>
+
+<!-- Замок: закрытый, дужка по центру -->
+<symbol id="i-lock" viewBox="0 0 100 100"><rect x="20" y="44" width="60" height="40" rx="12"/><path d="M34 44V32a16 16 0 0 1 32 0v12"/></symbol>
+
+<!-- Отпечаток пальца: вложенные дуги -->
+<symbol id="i-fingerprint" viewBox="0 0 100 100"><path d="M50 80a12 12 0 0 1-12-12V46a12 12 0 0 1 24 0v12"/><path d="M26 70V46a24 24 0 0 1 48 0v18"/><path d="M16 56V46a34 34 0 0 1 68 0v12"/></symbol>
+
+<!-- Глобус: сеть, экватор и меридиан -->
+<symbol id="i-globe" viewBox="0 0 100 100"><circle cx="50" cy="50" r="34"/><path d="M16 50h68"/><path d="M50 16c9 9 14 21 14 34s-5 25-14 34c-9-9-14-21-14-34s5-25 14-34z"/></symbol>
+
+<!-- Часы: циферблат со стрелками -->
+<symbol id="i-clock" viewBox="0 0 100 100"><circle cx="50" cy="50" r="34"/><path d="M50 30v22l15 9"/></symbol>
+
+<!-- Уведомления: колокол с язычком -->
+<symbol id="i-bell" viewBox="0 0 100 100"><path d="M50 16a22 22 0 0 0-22 22v16l-8 14h60l-8-14V38a22 22 0 0 0-22-22z"/><path d="M40 68a10 10 0 0 0 20 0"/></symbol>
+
+<!-- Светлая тема: солнце с восемью лучами -->
+<symbol id="i-sun" viewBox="0 0 100 100"><circle cx="50" cy="50" r="17"/><path d="M50 16v9M50 75v9M16 50h9M75 50h9M26 26l6 6M68 68l6 6M74 26l-6 6M32 68l-6 6"/></symbol>
+
+<!-- Тёмная тема: месяц -->
+<symbol id="i-moon" viewBox="0 0 100 100"><path d="M80 58A32 32 0 1 1 42 20a27 27 0 0 0 38 38z"/></symbol>
+
+<!-- Выйти: дверь со стрелкой наружу -->
+<symbol id="i-logout" viewBox="0 0 100 100"><path d="M42 18H26a8 8 0 0 0-8 8v48a8 8 0 0 0 8 8h16"/><path d="M62 32 80 50 62 68M80 50H38"/></symbol>
+
+<!-- ========================= ЧАТЫ И СООБЩЕНИЯ ========================= -->
+
+<!-- Чаты: овальный пузырь с хвостом -->
+<symbol id="i-chat" viewBox="0 0 100 100"><path d="M50 18c-19 0-34 12-34 28 0 9 5 17 12 22l-3 14 16-8c3 .7 6 1 9 1 19 0 34-12 34-29S69 18 50 18z"/></symbol>
+
+<!-- Комментарий: прямоугольный пузырь с хвостом слева -->
+<symbol id="i-comment" viewBox="0 0 100 100"><path d="M16 32a14 14 0 0 1 14-14h40a14 14 0 0 1 14 14v22a14 14 0 0 1-14 14H42L22 84V66a14 14 0 0 1-6-12z"/></symbol>
+
+<!-- Отправить: бумажный самолётик с внутренним сгибом крыла -->
+<symbol id="i-send" viewBox="0 0 100 100"><path d="M84 18 16 50l26 8 18 26z"/><path d="M42 58 84 18"/></symbol>
+
+<!-- Микрофон: капсула, дуга-приёмник, стойка и подставка -->
+<symbol id="i-mic" viewBox="0 0 100 100"><rect x="38" y="16" width="24" height="42" rx="12"/><path d="M28 50v4a22 22 0 0 0 44 0v-4"/><path d="M50 76v8M36 84h28"/></symbol>
+
+<!-- Микрофон выключен: та же капсула, перечёркнута -->
+<symbol id="i-mic-off" viewBox="0 0 100 100"><rect x="38" y="16" width="24" height="42" rx="12"/><path d="M28 50v4a22 22 0 0 0 44 0v-4"/><path d="M50 76v8M36 84h28"/><path d="M18 18 82 82"/></symbol>
+
+<!-- Скрепка: два витка под 45° -->
+<symbol id="i-clip" viewBox="0 0 100 100"><path d="M84 47.5 48.5 83a23 23 0 0 1-32.5-33L49 17a15.5 15.5 0 1 1 22 22L37.5 72a7.6 7.6 0 0 1-10.5-11l32.5-32.5"/></symbol>
+
+<!-- Файл: лист с загнутым уголком -->
+<symbol id="i-file" viewBox="0 0 100 100"><path d="M30 16h26l20 20v48a6 6 0 0 1-6 6H30a6 6 0 0 1-6-6V22a6 6 0 0 1 6-6z"/><path d="M56 16v20h20"/></symbol>
+
+<!-- Фото: кадр с солнцем и горой -->
+<symbol id="i-photo" viewBox="0 0 100 100"><rect x="16" y="20" width="68" height="60" rx="14"/><circle cx="36" cy="40" r="6"/><path d="M16 66 36 48l14 12 14-10 20 16"/></symbol>
+
+<!-- Прикрепить фото: кадр с плюсом -->
+<symbol id="i-attach-photo" viewBox="0 0 100 100"><path d="M60 78H28a12 12 0 0 1-12-12V30a12 12 0 0 1 12-12h36a12 12 0 0 1 12 12v18"/><circle cx="35" cy="37" r="5.5"/><path d="M16 62 34 46l14 12"/><path d="M72 58v20M62 68h20"/></symbol>
+
+<!-- Видеокамера: корпус и объектив-клин -->
+<symbol id="i-camera" viewBox="0 0 100 100"><rect x="16" y="30" width="48" height="40" rx="11"/><path d="M64 44 84 32v36L64 56z"/></symbol>
+
+<!-- Видео выключено: та же камера, перечёркнута -->
+<symbol id="i-cam-off" viewBox="0 0 100 100"><rect x="16" y="30" width="48" height="40" rx="11"/><path d="M64 44 84 32v36L64 56z"/><path d="M18 18 82 82"/></symbol>
+
+<!-- Кружок: видеосообщение, кольцо с точкой записи -->
+<symbol id="i-video-note" viewBox="0 0 100 100"><circle cx="50" cy="50" r="33"/><circle cx="50" cy="50" r="11" fill="currentColor" stroke="none"/></symbol>
+
+<!-- Стикер: квадрат со срезанным углом -->
+<symbol id="i-sticker" viewBox="0 0 100 100"><path d="M56 16H32a16 16 0 0 0-16 16v36a16 16 0 0 0 16 16h22l30-30V32a16 16 0 0 0-16-16z"/><path d="M54 84V62a8 8 0 0 1 8-8h22"/></symbol>
+
+<!-- Опрос: три столбца разной высоты -->
+<symbol id="i-poll" viewBox="0 0 100 100"><path d="M28 84V52M50 84V16M72 84V38"/></symbol>
+
+<!-- Ответить: стрелка влево с изгибом -->
+<symbol id="i-reply" viewBox="0 0 100 100"><path d="M40 22 16 48l24 26V60c21 0 33 8 39 24 3-32-11-48-39-48z"/></symbol>
+
+<!-- Переслать: та же стрелка вправо -->
+<symbol id="i-forward" viewBox="0 0 100 100"><path d="M60 22 84 48 60 74V60c-21 0-33 8-39 24-3-32 11-48 39-48z"/></symbol>
+
+<!-- Клипы: кадр плёнки с диагоналями и треугольником -->
+<symbol id="i-clips" viewBox="0 0 100 100"><rect x="16" y="16" width="68" height="68" rx="18"/><path d="M34 16 48 38M58 16 72 38M16 38h68"/><path d="M42 52v20l18-10z" fill="currentColor" stroke="none"/></symbol>
+
+<!-- Воспроизвести: треугольник -->
+<symbol id="i-play" viewBox="0 0 100 100"><path d="M30 18 82 50 30 82z" fill="currentColor" stroke="none"/></symbol>
+
+<!-- Пауза: две скруглённые полосы -->
+<symbol id="i-pause" viewBox="0 0 100 100"><rect x="30" y="20" width="14" height="60" rx="5" fill="currentColor" stroke="none"/><rect x="56" y="20" width="14" height="60" rx="5" fill="currentColor" stroke="none"/></symbol>
+
+<!-- Плей в круге: кольцо и треугольник -->
+<symbol id="i-circle-play" viewBox="0 0 100 100"><circle cx="50" cy="50" r="34"/><path d="M43 37 68 50 43 63z" fill="currentColor" stroke="none"/></symbol>
+
+<!-- ========================= ЗВОНКИ ========================= -->
+
+<!-- Позвонить: трубка -->
+<symbol id="i-phone" viewBox="0 0 100 100"><path d="M82 66v9a8 8 0 0 1-9 8A64 64 0 0 1 17 27a8 8 0 0 1 8-9h9a8 8 0 0 1 8 7c.5 5 1.5 9 3 13a8 8 0 0 1-2 8l-4 4a52 52 0 0 0 20 20l4-4a8 8 0 0 1 8-2c4 1.5 8 2.5 13 3a8 8 0 0 1 7 8z"/></symbol>
+
+<!-- Входящий звонок: трубка и стрелка внутрь -->
+<symbol id="i-call-in" viewBox="0 0 100 100"><path d="M76 68v7a8 8 0 0 1-9 8A62 62 0 0 1 13 29a8 8 0 0 1 8-9h7a8 8 0 0 1 8 7c.4 4 1.2 8 2.4 11a8 8 0 0 1-1.8 8l-4 4a50 50 0 0 0 19 19l4-4a8 8 0 0 1 8-1.8c3 1.2 7 2 11 2.4a8 8 0 0 1 7 8z"/><path d="M84 16 62 38M62 20v18h18"/></symbol>
+
+<!-- Сбросить: трубка положена (жест «отбой») -->
+<symbol id="i-call-end" viewBox="0 0 100 100"><path d="M50 30c-13 0-26 3-34 9v13a6 6 0 0 0 7 6l10-2a6 6 0 0 0 5-6v-6a68 68 0 0 1 24 0v6a6 6 0 0 0 5 6l10 2a6 6 0 0 0 7-6V39c-8-6-21-9-34-9z"/><path d="M32 72 68 72"/></symbol>
+
+<!-- Громкая связь: динамик с двумя волнами -->
+<symbol id="i-speaker" viewBox="0 0 100 100"><path d="M20 38h12l18-16v56L32 62H20a4 4 0 0 1-4-4V42a4 4 0 0 1 4-4z"/><path d="M64 36a20 20 0 0 1 0 28M78 24a36 36 0 0 1 0 52"/></symbol>
+
+<!-- Звук выключен: динамик с крестиком -->
+<symbol id="i-speaker-off" viewBox="0 0 100 100"><path d="M20 38h12l18-16v56L32 62H20a4 4 0 0 1-4-4V42a4 4 0 0 1 4-4z"/><path d="M64 40 84 60M84 40 64 60"/></symbol>
+
+<!-- Громкоговоритель: рупор для анонсов -->
+<symbol id="i-megaphone" viewBox="0 0 100 100"><path d="M16 40v20a6 6 0 0 0 6 6h10l34 16V18L32 34H22a6 6 0 0 0-6 6z"/><path d="M78 40a14 14 0 0 1 0 20"/></symbol>
+
+<!-- ========================= ЛЮДИ И ЛЕНТА ========================= -->
+
+<!-- Профиль: голова и плечи -->
+<symbol id="i-user" viewBox="0 0 100 100"><circle cx="50" cy="34" r="16"/><path d="M18 84c0-17 14-28 32-28s32 11 32 28"/></symbol>
+
+<!-- Люди: две фигуры -->
+<symbol id="i-users" viewBox="0 0 100 100"><circle cx="39" cy="34" r="15"/><path d="M14 84c0-15 11-25 25-25s25 10 25 25"/><circle cx="70" cy="37" r="11"/><path d="M70 59c9 1 16 10 16 21"/></symbol>
+
+<!-- Лента: карточка со строками текста -->
+<symbol id="i-feed" viewBox="0 0 100 100"><rect x="16" y="20" width="68" height="62" rx="14"/><path d="M30 35h40M30 51h40M30 67h22"/></symbol>
+
+<!-- Молния: энергия, быстрые действия -->
+<symbol id="i-bolt" viewBox="0 0 100 100"><path d="M56 14 26 54h18l-4 32 34-44H52z"/></symbol>
+
+<!-- Огонь: тренд, серия -->
+<symbol id="i-fire" viewBox="0 0 100 100"><path d="M50 84c-15 0-27-11-27-25 0-11 7-19 13-26 2 8 5 12 9 14-2-12 2-24 13-31-2 12 4 17 10 23 6 6 9 12 9 20 0 14-12 25-27 25z"/></symbol>
+
+<!-- Серия дней: простое пламя -->
+<symbol id="i-gm-flame" viewBox="0 0 100 100"><path d="M50 14c-3 12-10 16-16 24-4 6-6 12-6 18a22 22 0 0 0 44 0c0-14-14-24-22-42z"/></symbol>
+
+<!-- Лайк: палец вверх -->
+<symbol id="i-thumb" viewBox="0 0 100 100"><path d="M18 46h16v38H18z"/><path d="M34 50 48 20c7 0 11 5 10 12l-2 12h20c7 0 11 6 9 12l-8 22c-2 4-6 6-10 6H34"/></symbol>
+
+<!-- Реакция «смех» -->
+<symbol id="i-laugh" viewBox="0 0 100 100"><circle cx="50" cy="50" r="34"/><path d="M32 58h36a18 18 0 0 1-36 0z" fill="currentColor" stroke="none"/><path d="M34 42h10M56 42h10"/></symbol>
+
+<!-- Реакция «удивление» -->
+<symbol id="i-wow" viewBox="0 0 100 100"><circle cx="50" cy="50" r="34"/><circle cx="38" cy="42" r="3.5" fill="currentColor" stroke="none"/><circle cx="62" cy="42" r="3.5" fill="currentColor" stroke="none"/><ellipse cx="50" cy="64" rx="8" ry="10"/></symbol>
+
+<!-- Реакция «грусть» -->
+<symbol id="i-sad" viewBox="0 0 100 100"><circle cx="50" cy="50" r="34"/><circle cx="38" cy="42" r="3.5" fill="currentColor" stroke="none"/><circle cx="62" cy="42" r="3.5" fill="currentColor" stroke="none"/><path d="M34 68c8-10 24-10 32 0"/></symbol>
+
+<!-- Геометка: булавка на карте -->
+<symbol id="i-pos" viewBox="0 0 100 100"><path d="M50 14c-16 0-28 12-28 28 0 20 28 44 28 44s28-24 28-44c0-16-12-28-28-28z"/><circle cx="50" cy="42" r="10"/></symbol>
+
+<!-- ========================= БИЗНЕС И ПРОГРЕСС ========================= -->
+
+<!-- Портфель: работа, услуги -->
+<symbol id="i-briefcase" viewBox="0 0 100 100"><rect x="16" y="32" width="68" height="48" rx="12"/><path d="M38 32v-6a8 8 0 0 1 8-8h8a8 8 0 0 1 8 8v6M16 52h68"/></symbol>
+
+<!-- Компас: навигация, поиск направления -->
+<symbol id="i-compass" viewBox="0 0 100 100"><circle cx="50" cy="50" r="34"/><path d="M66 34 58 58 34 66l8-24z"/></symbol>
+
+<!-- Ракета: запуск, продвижение -->
+<symbol id="i-rocket" viewBox="0 0 100 100"><path d="M50 14c13 9 21 25 21 42l-9 10H38l-9-10c0-17 8-33 21-42z"/><circle cx="50" cy="42" r="9"/><path d="M38 66 26 80l14-4M62 66l12 14-14-4"/></symbol>
+
+<!-- Корона: премиум-статус -->
+<symbol id="i-crown" viewBox="0 0 100 100"><path d="M18 74V34l16 14 16-24 16 24 16-14v40a6 6 0 0 1-6 6H24a6 6 0 0 1-6-6z"/></symbol>
+
+<!-- Устройство: телефон -->
+<symbol id="i-device" viewBox="0 0 100 100"><rect x="28" y="16" width="44" height="68" rx="10"/><path d="M42 72h16"/></symbol>
+
+<!-- График: оси и линия роста -->
+<symbol id="i-chart" viewBox="0 0 100 100"><path d="M20 16v58a10 10 0 0 0 10 10h54"/><path d="M34 64 48 48l12 10 22-24"/></symbol>
+
+<!-- Статистика: столбцы в рамке -->
+<symbol id="i-gm-chart" viewBox="0 0 100 100"><rect x="16" y="16" width="68" height="68" rx="16"/><path d="M34 66V46M50 66V32M66 66V54"/></symbol>
+
+<!-- Шансы: весы -->
+<symbol id="i-gm-scales" viewBox="0 0 100 100"><path d="M50 22v58M34 82h32M24 32h52"/><path d="M24 32 16 54h16z"/><path d="M76 32 68 54h16z"/></symbol>
+
+<!-- Билет: талон с перфорацией -->
+<symbol id="i-gm-ticket" viewBox="0 0 100 100"><path d="M16 34a8 8 0 0 1 8-8h52a8 8 0 0 1 8 8v8a8 8 0 0 0 0 16v8a8 8 0 0 1-8 8H24a8 8 0 0 1-8-8v-8a8 8 0 0 0 0-16z"/><path d="M58 34v4M58 48v4M58 62v4"/></symbol>
+
+<!-- Очки опыта: медаль с лентами -->
+<symbol id="i-xp" viewBox="0 0 100 100"><circle cx="50" cy="38" r="22"/><path d="M36 56 28 84l22-12 22 12-8-28"/></symbol>
+
+<!-- Подарок: коробка с бантом -->
+<symbol id="i-gift" viewBox="0 0 100 100"><rect x="16" y="34" width="68" height="18" rx="6"/><path d="M24 52v24a8 8 0 0 0 8 8h36a8 8 0 0 0 8-8V52M50 34v50"/><path d="M50 34c-4-10-10-16-17-16a9 9 0 0 0 0 18M50 34c4-10 10-16 17-16a9 9 0 0 1 0 18"/></symbol>
+
+<!-- ========================= ДЕНЬГИ ========================= -->
+
+<!-- Карта: банковская карта с полосой -->
+<symbol id="i-card" viewBox="0 0 100 100"><rect x="16" y="24" width="68" height="52" rx="12"/><path d="M16 42h68M30 62h16"/></symbol>
+
+<!-- Деньги: купюра с номиналом -->
+<symbol id="i-money" viewBox="0 0 100 100"><rect x="16" y="26" width="68" height="48" rx="10"/><circle cx="50" cy="50" r="12"/></symbol>
+
+<!-- Кошелёк: корпус с отделением под карту -->
+<symbol id="i-wallet" viewBox="0 0 100 100"><rect x="16" y="26" width="68" height="56" rx="14"/><path d="M84 46H66a8 8 0 0 0 0 16h18"/></symbol>
+
+<!-- Обмен валют: две встречные стрелки -->
+<symbol id="i-swap" viewBox="0 0 100 100"><path d="M22 36h54M60 20 76 36 60 52"/><path d="M78 64H24M40 48 24 64 40 80"/></symbol>
+
+<!-- Крипто-адрес: ромб TON -->
+<symbol id="i-ton" viewBox="0 0 100 100"><path d="M20 30h60L50 84z"/><path d="M50 84V30M20 30 50 52 80 30"/></symbol>
+
+<!-- QR-код: три метки и модули -->
+<symbol id="i-qr" viewBox="0 0 100 100"><rect x="16" y="16" width="24" height="24" rx="6"/><rect x="60" y="16" width="24" height="24" rx="6"/><rect x="16" y="60" width="24" height="24" rx="6"/><path d="M60 60h8M76 60h8M60 76v8M76 76h8"/></symbol>
+
+<!-- ========================= ТЕКСТ И ФИРМЕННЫЕ ЗНАКИ ========================= -->
+
+<!-- Выравнивание по левому краю -->
+<symbol id="i-sp-al" viewBox="0 0 100 100"><path d="M18 26h64M18 42h40M18 58h64M18 74h40"/></symbol>
+
+<!-- Выравнивание по центру -->
+<symbol id="i-sp-ac" viewBox="0 0 100 100"><path d="M18 26h64M30 42h40M18 58h64M30 74h40"/></symbol>
+
+<!-- Выравнивание по правому краю -->
+<symbol id="i-sp-ar" viewBox="0 0 100 100"><path d="M18 26h64M42 42h40M18 58h64M42 74h40"/></symbol>
+
+<!-- Apple: фирменный знак, заливка -->
+<symbol id="i-apple" viewBox="0 0 100 100"><path d="M64 27c-6 0-9 4-14 4s-8-4-14-4c-9 0-19 10-19 25 0 16 11 32 19 32 4 0 7-3 12-3s8 3 12 3c8 0 19-16 19-24-8-3-13-9-13-17 0-6 3-11 8-14-3-2-6-2-10-2z" fill="currentColor" stroke="none"/><path d="M58 21c3-4 4-9 3-13-4 1-8 4-11 8-2 4-3 9-2 12 4 0 8-3 10-7z" fill="currentColor" stroke="none"/></symbol>
+
+<!-- Google: буква G -->
+<symbol id="i-google" viewBox="0 0 100 100"><path d="M50 46h32v4a32 32 0 1 1-9.5-22.5"/></symbol>
+
+</defs></svg>

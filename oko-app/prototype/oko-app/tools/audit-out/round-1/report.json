@@ -1,0 +1,1976 @@
+{
+  "round": "1",
+  "at": "2026-08-09T00:45:38.636Z",
+  "modes": [
+    {
+      "mode": "tg",
+      "label": "Telegram Mini App",
+      "routes": [
+        {
+          "route": "01-splash",
+          "name": "Экран запуска",
+          "errors": [],
+          "overflowX": 0,
+          "offRight": [],
+          "clipped": [],
+          "underTop": [],
+          "underBottom": [
+            {
+              "el": "div#splash",
+              "bottom": 788
+            },
+            {
+              "el": "section#authScreen",
+              "bottom": 788
+            }
+          ],
+          "empty": false,
+          "midWordBreak": [],
+          "fullscreenRequested": false,
+          "activeScreen": "screen-feed",
+          "activeText": "Рекомендации\nПодписки\nПОКА ПУСТО\nСвежие посты закончились. О",
+          "consoleErrors": [],
+          "shot": "oko-app/tools/audit-out/round-1/tg__01-splash.png"
+        },
+        {
+          "route": "02-auth",
+          "name": "Вход и регистрация",
+          "errors": [],
+          "overflowX": 0,
+          "offRight": [],
+          "clipped": [],
+          "underTop": [],
+          "underBottom": [
+            {
+              "el": "section#authScreen",
+              "bottom": 788
+            }
+          ],
+          "empty": false,
+          "midWordBreak": [],
+          "fullscreenRequested": false,
+          "activeScreen": "screen-feed",
+          "activeText": "Рекомендации\nПодписки\nПОКА ПУСТО\nСвежие посты закончились. О",
+          "consoleErrors": [],
+          "shot": "oko-app/tools/audit-out/round-1/tg__02-auth.png"
+        },
+        {
+          "route": "03-feed-rec",
+          "name": "Лента · Рекомендации",
+          "errors": [],
+          "overflowX": 0,
+          "offRight": [],
+          "clipped": [],
+          "underTop": [],
+          "underBottom": [],
+          "empty": false,
+          "midWordBreak": [],
+          "fullscreenRequested": false,
+          "activeScreen": "screen-feed",
+          "activeText": "Рекомендации\nПодписки\nПОКА ПУСТО\nСвежие посты закончились. О",
+          "consoleErrors": [],
+          "shot": "oko-app/tools/audit-out/round-1/tg__03-feed-rec.png"
+        },
+        {
+          "route": "04-feed-sub",
+          "name": "Лента · Подписки",
+          "errors": [],
+          "overflowX": 0,
+          "offRight": [],
+          "clipped": [],
+          "underTop": [],
+          "underBottom": [],
+          "empty": false,
+          "midWordBreak": [],
+          "fullscreenRequested": false,
+          "activeScreen": "screen-feed",
+          "activeText": "Рекомендации\nПодписки\nПОКА ПУСТО\nСвежие посты закончились. О",
+          "consoleErrors": [],
+          "shot": "oko-app/tools/audit-out/round-1/tg__04-feed-sub.png"
+        },
+        {
+          "route": "05-chats",
+          "name": "Список чатов",
+          "errors": [],
+          "overflowX": 0,
+          "offRight": [],
+          "clipped": [],
+          "underTop": [],
+          "underBottom": [],
+          "empty": false,
+          "midWordBreak": [],
+          "fullscreenRequested": false,
+          "activeScreen": "screen-chats",
+          "activeText": "Каталог\nВсе\nЛичные\nГруппы\nКаналы\nУправление\n0\nO\nОбщий чат OK",
+          "consoleErrors": [
+            "TypeError: Failed to fetch\n    at http://127.0.0.1:8199/index.html:3720:2872\n    at Lr (http://127.0.0.1:8199/index.html:3720:9390)\n    at Y (http://127.0.0.1:8199/index.html:3720:9132)\n    at Di.sign"
+          ],
+          "shot": "oko-app/tools/audit-out/round-1/tg__05-chats.png"
+        },
+        {
+          "route": "06-conv",
+          "name": "Диалог",
+          "errors": [],
+          "overflowX": 0,
+          "offRight": [],
+          "clipped": [],
+          "underTop": [],
+          "underBottom": [],
+          "empty": false,
+          "midWordBreak": [],
+          "fullscreenRequested": false,
+          "activeScreen": "screen-chats",
+          "activeText": "O\nОбщий чат OKO\nв сети\nОбщий чат сообщества OKO. Здесь живое",
+          "consoleErrors": [
+            "TypeError: Failed to fetch\n    at http://127.0.0.1:8199/index.html:3720:2872\n    at Lr (http://127.0.0.1:8199/index.html:3720:9390)\n    at Y (http://127.0.0.1:8199/index.html:3720:9132)\n    at Di.sign"
+          ],
+          "shot": "oko-app/tools/audit-out/round-1/tg__06-conv.png"
+        },
+        {
+          "route": "07-mini",
+          "name": "Мини-аппы",
+          "errors": [],
+          "overflowX": 0,
+          "offRight": [],
+          "clipped": [],
+          "underTop": [],
+          "underBottom": [],
+          "empty": false,
+          "midWordBreak": [],
+          "fullscreenRequested": false,
+          "activeScreen": "screen-mini",
+          "activeText": "Сервисы OKO\n\nМессенджер, лента, биржа и инструменты для рост",
+          "consoleErrors": [
+            "TypeError: Failed to fetch\n    at http://127.0.0.1:8199/index.html:3720:2872\n    at Lr (http://127.0.0.1:8199/index.html:3720:9390)\n    at Y (http://127.0.0.1:8199/index.html:3720:9132)\n    at Di.sign"
+          ],
+          "shot": "oko-app/tools/audit-out/round-1/tg__07-mini.png"
+        },
+        {
+          "route": "08-wallet",
+          "name": "Кошелёк",
+          "errors": [],
+          "overflowX": 0,
+          "offRight": [],
+          "clipped": [],
+          "underTop": [],
+          "underBottom": [],
+          "empty": false,
+          "midWordBreak": [],
+          "fullscreenRequested": false,
+          "activeScreen": "screen-wallet",
+          "activeText": "OKO PAY\nДОСТУПНО\n2 500 ₽\n·· ·· ·· ··\n6586\nOKO-18686586\nПопол",
+          "consoleErrors": [
+            "TypeError: Failed to fetch\n    at http://127.0.0.1:8199/index.html:3720:2872\n    at Lr (http://127.0.0.1:8199/index.html:3720:9390)\n    at Y (http://127.0.0.1:8199/index.html:3720:9132)\n    at Di.sign"
+          ],
+          "shot": "oko-app/tools/audit-out/round-1/tg__08-wallet.png"
+        },
+        {
+          "route": "09-profile",
+          "name": "Профиль",
+          "errors": [],
+          "overflowX": 0,
+          "offRight": [],
+          "clipped": [],
+          "underTop": [],
+          "underBottom": [],
+          "empty": false,
+          "midWordBreak": [],
+          "fullscreenRequested": false,
+          "activeScreen": "screen-profile",
+          "activeText": "Д\nДаниэль\n@ktodaniel·в сети\n\nОснователь OKO. Медийность, кон",
+          "consoleErrors": [
+            "TypeError: Failed to fetch\n    at http://127.0.0.1:8199/index.html:3720:2872\n    at Lr (http://127.0.0.1:8199/index.html:3720:9390)\n    at Y (http://127.0.0.1:8199/index.html:3720:9132)\n    at Di.sign"
+          ],
+          "shot": "oko-app/tools/audit-out/round-1/tg__09-profile.png"
+        },
+        {
+          "route": "10-partner",
+          "name": "Партнёрка",
+          "errors": [],
+          "overflowX": 0,
+          "offRight": [],
+          "clipped": [],
+          "underTop": [],
+          "underBottom": [],
+          "empty": false,
+          "midWordBreak": [],
+          "fullscreenRequested": false,
+          "activeScreen": "screen-partner",
+          "activeText": "Партнёрская программа\n15% · 5% СВЕРХУ\nЗаработано в август\nАК",
+          "consoleErrors": [
+            "TypeError: Failed to fetch\n    at http://127.0.0.1:8199/index.html:3720:2872\n    at Lr (http://127.0.0.1:8199/index.html:3720:9390)\n    at Y (http://127.0.0.1:8199/index.html:3720:9132)\n    at Di.sign"
+          ],
+          "shot": "oko-app/tools/audit-out/round-1/tg__10-partner.png"
+        },
+        {
+          "route": "11-academy",
+          "name": "Академия",
+          "errors": [],
+          "overflowX": 0,
+          "offRight": [],
+          "clipped": [],
+          "underTop": [],
+          "underBottom": [],
+          "empty": false,
+          "midWordBreak": [],
+          "fullscreenRequested": false,
+          "activeScreen": "screen-academy",
+          "activeText": "Академия OKO\n\nКурсы полного формата · официальные сертификат",
+          "consoleErrors": [
+            "TypeError: Failed to fetch\n    at http://127.0.0.1:8199/index.html:3720:2872\n    at Lr (http://127.0.0.1:8199/index.html:3720:9390)\n    at Y (http://127.0.0.1:8199/index.html:3720:9132)\n    at Di.sign"
+          ],
+          "shot": "oko-app/tools/audit-out/round-1/tg__11-academy.png"
+        },
+        {
+          "route": "12-games",
+          "name": "Игры",
+          "errors": [],
+          "overflowX": 0,
+          "offRight": [],
+          "clipped": [],
+          "underTop": [],
+          "underBottom": [],
+          "empty": false,
+          "midWordBreak": [],
+          "fullscreenRequested": false,
+          "activeScreen": "screen-games",
+          "activeText": "Рулетка OKO\nКрути колесо, каждая крутка даёт приз\n0\n2 500 ₽\n",
+          "consoleErrors": [
+            "TypeError: Failed to fetch\n    at http://127.0.0.1:8199/index.html:3720:2872\n    at Lr (http://127.0.0.1:8199/index.html:3720:9390)\n    at Y (http://127.0.0.1:8199/index.html:3720:9132)\n    at Di.sign"
+          ],
+          "shot": "oko-app/tools/audit-out/round-1/tg__12-games.png"
+        },
+        {
+          "route": "13-ads",
+          "name": "Реклама",
+          "errors": [],
+          "overflowX": 0,
+          "offRight": [
+            {
+              "el": "button.ads-quick-b.boost",
+              "right": 413,
+              "vw": 390
+            },
+            {
+              "el": "em",
+              "right": 399,
+              "vw": 390
+            }
+          ],
+          "clipped": [],
+          "underTop": [],
+          "underBottom": [],
+          "empty": false,
+          "midWordBreak": [],
+          "fullscreenRequested": false,
+          "activeScreen": "screen-ads",
+          "activeText": "Рекламный кабинет\nМЕТРИКИ LIVE\n0 ₽\nПОТРАЧЕНО\n0\nПОКАЗЫ\n0\nКЛИК",
+          "consoleErrors": [
+            "TypeError: Failed to fetch\n    at http://127.0.0.1:8199/index.html:3720:2872\n    at Lr (http://127.0.0.1:8199/index.html:3720:9390)\n    at Y (http://127.0.0.1:8199/index.html:3720:9132)\n    at Di.sign"
+          ],
+          "shot": "oko-app/tools/audit-out/round-1/tg__13-ads.png"
+        },
+        {
+          "route": "14-notifs",
+          "name": "Уведомления",
+          "errors": [],
+          "overflowX": 0,
+          "offRight": [],
+          "clipped": [],
+          "underTop": [],
+          "underBottom": [
+            {
+              "el": "div#notifsView.open",
+              "bottom": 788
+            }
+          ],
+          "empty": false,
+          "midWordBreak": [],
+          "fullscreenRequested": false,
+          "activeScreen": "screen-feed",
+          "activeText": "Рекомендации\nПодписки\nПОКА ПУСТО\nСвежие посты закончились. О",
+          "consoleErrors": [
+            "TypeError: Failed to fetch\n    at http://127.0.0.1:8199/index.html:3720:2872\n    at Lr (http://127.0.0.1:8199/index.html:3720:9390)\n    at Y (http://127.0.0.1:8199/index.html:3720:9132)\n    at Di.sign"
+          ],
+          "shot": "oko-app/tools/audit-out/round-1/tg__14-notifs.png"
+        },
+        {
+          "route": "15-search",
+          "name": "Поиск",
+          "errors": [],
+          "overflowX": 0,
+          "offRight": [],
+          "clipped": [],
+          "underTop": [],
+          "underBottom": [
+            {
+              "el": "div#searchView.uic-qa.open",
+              "bottom": 788
+            }
+          ],
+          "empty": false,
+          "midWordBreak": [],
+          "fullscreenRequested": false,
+          "activeScreen": "screen-feed",
+          "activeText": "Рекомендации\nПодписки\nПОКА ПУСТО\nСвежие посты закончились. О",
+          "consoleErrors": [
+            "TypeError: Failed to fetch\n    at http://127.0.0.1:8199/index.html:3720:2872\n    at Lr (http://127.0.0.1:8199/index.html:3720:9390)\n    at Y (http://127.0.0.1:8199/index.html:3720:9132)\n    at Di.sign"
+          ],
+          "shot": "oko-app/tools/audit-out/round-1/tg__15-search.png"
+        },
+        {
+          "route": "16-settings",
+          "name": "Настройки",
+          "errors": [],
+          "overflowX": 0,
+          "offRight": [],
+          "clipped": [],
+          "underTop": [],
+          "underBottom": [],
+          "empty": false,
+          "midWordBreak": [],
+          "fullscreenRequested": false,
+          "activeScreen": "screen-profile",
+          "activeText": "Д\nДаниэль\n@ktodaniel·в сети\n\nОснователь OKO. Медийность, кон",
+          "consoleErrors": [
+            "TypeError: Failed to fetch\n    at http://127.0.0.1:8199/index.html:3720:2872\n    at Lr (http://127.0.0.1:8199/index.html:3720:9390)\n    at Y (http://127.0.0.1:8199/index.html:3720:9132)\n    at Di.sign"
+          ],
+          "shot": "oko-app/tools/audit-out/round-1/tg__16-settings.png"
+        },
+        {
+          "route": "17-wallet-hist",
+          "name": "История операций",
+          "errors": [],
+          "overflowX": 0,
+          "offRight": [],
+          "clipped": [],
+          "underTop": [],
+          "underBottom": [],
+          "empty": false,
+          "midWordBreak": [],
+          "fullscreenRequested": false,
+          "activeScreen": "screen-wallet",
+          "activeText": "OKO PAY\nДОСТУПНО\n2 500 ₽\n·· ·· ·· ··\n7111\nOKO-66367111\nПопол",
+          "consoleErrors": [
+            "TypeError: Failed to fetch\n    at http://127.0.0.1:8199/index.html:3720:2872\n    at Lr (http://127.0.0.1:8199/index.html:3720:9390)\n    at Y (http://127.0.0.1:8199/index.html:3720:9132)\n    at Di.sign"
+          ],
+          "shot": "oko-app/tools/audit-out/round-1/tg__17-wallet-hist.png"
+        },
+        {
+          "route": "18-wallet-tr",
+          "name": "Переводы",
+          "errors": [],
+          "overflowX": 0,
+          "offRight": [],
+          "clipped": [],
+          "underTop": [],
+          "underBottom": [
+            {
+              "el": "div#w2p-transfers.w2-page.open",
+              "bottom": 788
+            }
+          ],
+          "empty": false,
+          "midWordBreak": [],
+          "fullscreenRequested": false,
+          "activeScreen": "screen-wallet",
+          "activeText": "OKO PAY\nДОСТУПНО\n2 500 ₽\n·· ·· ·· ··\n8869\nOKO-47778869\nПопол",
+          "consoleErrors": [
+            "TypeError: Failed to fetch\n    at http://127.0.0.1:8199/index.html:3720:2872\n    at Lr (http://127.0.0.1:8199/index.html:3720:9390)\n    at Y (http://127.0.0.1:8199/index.html:3720:9132)\n    at Di.sign"
+          ],
+          "shot": "oko-app/tools/audit-out/round-1/tg__18-wallet-tr.png"
+        },
+        {
+          "route": "19-wallet-ex",
+          "name": "Обмен валют",
+          "errors": [],
+          "overflowX": 0,
+          "offRight": [],
+          "clipped": [],
+          "underTop": [],
+          "underBottom": [
+            {
+              "el": "div#w2p-exchange.w2-page.open",
+              "bottom": 788
+            }
+          ],
+          "empty": false,
+          "midWordBreak": [],
+          "fullscreenRequested": false,
+          "activeScreen": "screen-wallet",
+          "activeText": "OKO PAY\nДОСТУПНО\n2 500 ₽\n·· ·· ·· ··\n0541\nOKO-11710541\nПопол",
+          "consoleErrors": [
+            "TypeError: Failed to fetch\n    at http://127.0.0.1:8199/index.html:3720:2872\n    at Lr (http://127.0.0.1:8199/index.html:3720:9390)\n    at Y (http://127.0.0.1:8199/index.html:3720:9132)\n    at Di.sign"
+          ],
+          "shot": "oko-app/tools/audit-out/round-1/tg__19-wallet-ex.png"
+        },
+        {
+          "route": "20-wallet-sec",
+          "name": "Безопасность",
+          "errors": [],
+          "overflowX": 0,
+          "offRight": [],
+          "clipped": [],
+          "underTop": [],
+          "underBottom": [],
+          "empty": false,
+          "midWordBreak": [],
+          "fullscreenRequested": false,
+          "activeScreen": "screen-wallet",
+          "activeText": "OKO PAY\nДОСТУПНО\n2 500 ₽\n·· ·· ·· ··\n9509\nOKO-60129509\nПопол",
+          "consoleErrors": [
+            "TypeError: Failed to fetch\n    at http://127.0.0.1:8199/index.html:3720:2872\n    at Lr (http://127.0.0.1:8199/index.html:3720:9390)\n    at Y (http://127.0.0.1:8199/index.html:3720:9132)\n    at Di.sign"
+          ],
+          "shot": "oko-app/tools/audit-out/round-1/tg__20-wallet-sec.png"
+        }
+      ]
+    },
+    {
+      "mode": "mobile",
+      "label": "Мобильный браузер",
+      "routes": [
+        {
+          "route": "01-splash",
+          "name": "Экран запуска",
+          "errors": [],
+          "overflowX": 0,
+          "offRight": [],
+          "clipped": [],
+          "underTop": [],
+          "underBottom": [],
+          "empty": false,
+          "midWordBreak": [],
+          "fullscreenRequested": false,
+          "activeScreen": "screen-feed",
+          "activeText": "Рекомендации\nПодписки\nПОКА ПУСТО\nСвежие посты закончились. О",
+          "consoleErrors": [],
+          "shot": "oko-app/tools/audit-out/round-1/mobile__01-splash.png"
+        },
+        {
+          "route": "02-auth",
+          "name": "Вход и регистрация",
+          "errors": [],
+          "overflowX": 0,
+          "offRight": [],
+          "clipped": [],
+          "underTop": [],
+          "underBottom": [],
+          "empty": false,
+          "midWordBreak": [],
+          "fullscreenRequested": false,
+          "activeScreen": "screen-feed",
+          "activeText": "Рекомендации\nПодписки\nПОКА ПУСТО\nСвежие посты закончились. О",
+          "consoleErrors": [],
+          "shot": "oko-app/tools/audit-out/round-1/mobile__02-auth.png"
+        },
+        {
+          "route": "03-feed-rec",
+          "name": "Лента · Рекомендации",
+          "errors": [],
+          "overflowX": 0,
+          "offRight": [],
+          "clipped": [],
+          "underTop": [],
+          "underBottom": [],
+          "empty": false,
+          "midWordBreak": [],
+          "fullscreenRequested": false,
+          "activeScreen": "screen-feed",
+          "activeText": "Рекомендации\nПодписки\nПОКА ПУСТО\nСвежие посты закончились. О",
+          "consoleErrors": [],
+          "shot": "oko-app/tools/audit-out/round-1/mobile__03-feed-rec.png"
+        },
+        {
+          "route": "04-feed-sub",
+          "name": "Лента · Подписки",
+          "errors": [],
+          "overflowX": 0,
+          "offRight": [],
+          "clipped": [],
+          "underTop": [],
+          "underBottom": [],
+          "empty": false,
+          "midWordBreak": [],
+          "fullscreenRequested": false,
+          "activeScreen": "screen-feed",
+          "activeText": "Рекомендации\nПодписки\nПОКА ПУСТО\nСвежие посты закончились. О",
+          "consoleErrors": [],
+          "shot": "oko-app/tools/audit-out/round-1/mobile__04-feed-sub.png"
+        },
+        {
+          "route": "05-chats",
+          "name": "Список чатов",
+          "errors": [],
+          "overflowX": 0,
+          "offRight": [],
+          "clipped": [],
+          "underTop": [],
+          "underBottom": [],
+          "empty": false,
+          "midWordBreak": [],
+          "fullscreenRequested": false,
+          "activeScreen": "screen-chats",
+          "activeText": "Каталог\nВсе\nЛичные\nГруппы\nКаналы\nУправление\n0\nO\nОбщий чат OK",
+          "consoleErrors": [
+            "TypeError: Failed to fetch\n    at http://127.0.0.1:8199/index.html:3720:2872\n    at Lr (http://127.0.0.1:8199/index.html:3720:9390)\n    at Y (http://127.0.0.1:8199/index.html:3720:9132)\n    at Di.sign"
+          ],
+          "shot": "oko-app/tools/audit-out/round-1/mobile__05-chats.png"
+        },
+        {
+          "route": "06-conv",
+          "name": "Диалог",
+          "errors": [],
+          "overflowX": 0,
+          "offRight": [],
+          "clipped": [],
+          "underTop": [],
+          "underBottom": [],
+          "empty": false,
+          "midWordBreak": [],
+          "fullscreenRequested": false,
+          "activeScreen": "screen-chats",
+          "activeText": "O\nОбщий чат OKO\nв сети\nОбщий чат сообщества OKO. Здесь живое",
+          "consoleErrors": [
+            "TypeError: Failed to fetch\n    at http://127.0.0.1:8199/index.html:3720:2872\n    at Lr (http://127.0.0.1:8199/index.html:3720:9390)\n    at Y (http://127.0.0.1:8199/index.html:3720:9132)\n    at Di.sign"
+          ],
+          "shot": "oko-app/tools/audit-out/round-1/mobile__06-conv.png"
+        },
+        {
+          "route": "07-mini",
+          "name": "Мини-аппы",
+          "errors": [],
+          "overflowX": 0,
+          "offRight": [],
+          "clipped": [],
+          "underTop": [],
+          "underBottom": [],
+          "empty": false,
+          "midWordBreak": [],
+          "fullscreenRequested": false,
+          "activeScreen": "screen-mini",
+          "activeText": "Сервисы OKO\n\nМессенджер, лента, биржа и инструменты для рост",
+          "consoleErrors": [
+            "TypeError: Failed to fetch\n    at http://127.0.0.1:8199/index.html:3720:2872\n    at Lr (http://127.0.0.1:8199/index.html:3720:9390)\n    at Y (http://127.0.0.1:8199/index.html:3720:9132)\n    at Di.sign"
+          ],
+          "shot": "oko-app/tools/audit-out/round-1/mobile__07-mini.png"
+        },
+        {
+          "route": "08-wallet",
+          "name": "Кошелёк",
+          "errors": [],
+          "overflowX": 0,
+          "offRight": [],
+          "clipped": [],
+          "underTop": [],
+          "underBottom": [],
+          "empty": false,
+          "midWordBreak": [],
+          "fullscreenRequested": false,
+          "activeScreen": "screen-wallet",
+          "activeText": "OKO PAY\nДОСТУПНО\n2 500 ₽\n·· ·· ·· ··\n6207\nOKO-86056207\nПопол",
+          "consoleErrors": [
+            "TypeError: Failed to fetch\n    at http://127.0.0.1:8199/index.html:3720:2872\n    at Lr (http://127.0.0.1:8199/index.html:3720:9390)\n    at Y (http://127.0.0.1:8199/index.html:3720:9132)\n    at Di.sign"
+          ],
+          "shot": "oko-app/tools/audit-out/round-1/mobile__08-wallet.png"
+        },
+        {
+          "route": "09-profile",
+          "name": "Профиль",
+          "errors": [],
+          "overflowX": 0,
+          "offRight": [],
+          "clipped": [],
+          "underTop": [],
+          "underBottom": [],
+          "empty": false,
+          "midWordBreak": [],
+          "fullscreenRequested": false,
+          "activeScreen": "screen-profile",
+          "activeText": "Д\nДаниэль\n@ktodaniel·в сети\n\nОснователь OKO. Медийность, кон",
+          "consoleErrors": [
+            "TypeError: Failed to fetch\n    at http://127.0.0.1:8199/index.html:3720:2872\n    at Lr (http://127.0.0.1:8199/index.html:3720:9390)\n    at Y (http://127.0.0.1:8199/index.html:3720:9132)\n    at Di.sign"
+          ],
+          "shot": "oko-app/tools/audit-out/round-1/mobile__09-profile.png"
+        },
+        {
+          "route": "10-partner",
+          "name": "Партнёрка",
+          "errors": [],
+          "overflowX": 0,
+          "offRight": [],
+          "clipped": [],
+          "underTop": [],
+          "underBottom": [],
+          "empty": false,
+          "midWordBreak": [],
+          "fullscreenRequested": false,
+          "activeScreen": "screen-partner",
+          "activeText": "Партнёрская программа\n15% · 5% СВЕРХУ\nЗаработано в август\nАК",
+          "consoleErrors": [
+            "TypeError: Failed to fetch\n    at http://127.0.0.1:8199/index.html:3720:2872\n    at Lr (http://127.0.0.1:8199/index.html:3720:9390)\n    at Y (http://127.0.0.1:8199/index.html:3720:9132)\n    at Di.sign"
+          ],
+          "shot": "oko-app/tools/audit-out/round-1/mobile__10-partner.png"
+        },
+        {
+          "route": "11-academy",
+          "name": "Академия",
+          "errors": [],
+          "overflowX": 0,
+          "offRight": [],
+          "clipped": [],
+          "underTop": [],
+          "underBottom": [],
+          "empty": false,
+          "midWordBreak": [],
+          "fullscreenRequested": false,
+          "activeScreen": "screen-academy",
+          "activeText": "Академия OKO\n\nКурсы полного формата · официальные сертификат",
+          "consoleErrors": [
+            "TypeError: Failed to fetch\n    at http://127.0.0.1:8199/index.html:3720:2872\n    at Lr (http://127.0.0.1:8199/index.html:3720:9390)\n    at Y (http://127.0.0.1:8199/index.html:3720:9132)\n    at Di.sign"
+          ],
+          "shot": "oko-app/tools/audit-out/round-1/mobile__11-academy.png"
+        },
+        {
+          "route": "12-games",
+          "name": "Игры",
+          "errors": [],
+          "stepError": "Error: page.evaluate: TypeError: Cannot read properties of undefined (reading 's')\n    at gmLbDrift (http://127.0.0.1:8199/app.js:5380:5)\n    at showTab (http:/",
+          "overflowX": 0,
+          "offRight": [],
+          "clipped": [],
+          "underTop": [],
+          "underBottom": [],
+          "empty": false,
+          "midWordBreak": [],
+          "fullscreenRequested": false,
+          "activeScreen": "screen-games",
+          "activeText": "Рулетка OKO\nКрути колесо, каждая крутка даёт приз\n0\n2 500 ₽\n",
+          "consoleErrors": [
+            "TypeError: Failed to fetch\n    at http://127.0.0.1:8199/index.html:3720:2872\n    at Lr (http://127.0.0.1:8199/index.html:3720:9390)\n    at Y (http://127.0.0.1:8199/index.html:3720:9132)\n    at Di.sign"
+          ],
+          "shot": "oko-app/tools/audit-out/round-1/mobile__12-games.png"
+        },
+        {
+          "route": "13-ads",
+          "name": "Реклама",
+          "errors": [],
+          "overflowX": 0,
+          "offRight": [
+            {
+              "el": "button.ads-quick-b.boost",
+              "right": 413,
+              "vw": 390
+            },
+            {
+              "el": "em",
+              "right": 399,
+              "vw": 390
+            }
+          ],
+          "clipped": [],
+          "underTop": [],
+          "underBottom": [],
+          "empty": false,
+          "midWordBreak": [],
+          "fullscreenRequested": false,
+          "activeScreen": "screen-ads",
+          "activeText": "Рекламный кабинет\nМЕТРИКИ LIVE\n0 ₽\nПОТРАЧЕНО\n0\nПОКАЗЫ\n0\nКЛИК",
+          "consoleErrors": [
+            "TypeError: Failed to fetch\n    at http://127.0.0.1:8199/index.html:3720:2872\n    at Lr (http://127.0.0.1:8199/index.html:3720:9390)\n    at Y (http://127.0.0.1:8199/index.html:3720:9132)\n    at Di.sign"
+          ],
+          "shot": "oko-app/tools/audit-out/round-1/mobile__13-ads.png"
+        },
+        {
+          "route": "14-notifs",
+          "name": "Уведомления",
+          "errors": [],
+          "overflowX": 0,
+          "offRight": [],
+          "clipped": [],
+          "underTop": [],
+          "underBottom": [],
+          "empty": false,
+          "midWordBreak": [],
+          "fullscreenRequested": false,
+          "activeScreen": "screen-feed",
+          "activeText": "Рекомендации\nПодписки\nПОКА ПУСТО\nСвежие посты закончились. О",
+          "consoleErrors": [
+            "TypeError: Failed to fetch\n    at http://127.0.0.1:8199/index.html:3720:2872\n    at Lr (http://127.0.0.1:8199/index.html:3720:9390)\n    at Y (http://127.0.0.1:8199/index.html:3720:9132)\n    at Di.sign"
+          ],
+          "shot": "oko-app/tools/audit-out/round-1/mobile__14-notifs.png"
+        },
+        {
+          "route": "15-search",
+          "name": "Поиск",
+          "errors": [],
+          "overflowX": 0,
+          "offRight": [],
+          "clipped": [],
+          "underTop": [],
+          "underBottom": [],
+          "empty": false,
+          "midWordBreak": [],
+          "fullscreenRequested": false,
+          "activeScreen": "screen-feed",
+          "activeText": "Рекомендации\nПодписки\nПОКА ПУСТО\nСвежие посты закончились. О",
+          "consoleErrors": [
+            "TypeError: Failed to fetch\n    at http://127.0.0.1:8199/index.html:3720:2872\n    at Lr (http://127.0.0.1:8199/index.html:3720:9390)\n    at Y (http://127.0.0.1:8199/index.html:3720:9132)\n    at Di.sign"
+          ],
+          "shot": "oko-app/tools/audit-out/round-1/mobile__15-search.png"
+        },
+        {
+          "route": "16-settings",
+          "name": "Настройки",
+          "errors": [],
+          "overflowX": 0,
+          "offRight": [],
+          "clipped": [],
+          "underTop": [],
+          "underBottom": [],
+          "empty": false,
+          "midWordBreak": [],
+          "fullscreenRequested": false,
+          "activeScreen": "screen-profile",
+          "activeText": "Д\nДаниэль\n@ktodaniel·в сети\n\nОснователь OKO. Медийность, кон",
+          "consoleErrors": [
+            "TypeError: Failed to fetch\n    at http://127.0.0.1:8199/index.html:3720:2872\n    at Lr (http://127.0.0.1:8199/index.html:3720:9390)\n    at Y (http://127.0.0.1:8199/index.html:3720:9132)\n    at Di.sign"
+          ],
+          "shot": "oko-app/tools/audit-out/round-1/mobile__16-settings.png"
+        },
+        {
+          "route": "17-wallet-hist",
+          "name": "История операций",
+          "errors": [],
+          "overflowX": 0,
+          "offRight": [],
+          "clipped": [],
+          "underTop": [],
+          "underBottom": [],
+          "empty": false,
+          "midWordBreak": [],
+          "fullscreenRequested": false,
+          "activeScreen": "screen-wallet",
+          "activeText": "OKO PAY\nДОСТУПНО\n2 500 ₽\n·· ·· ·· ··\n0700\nOKO-56920700\nПопол",
+          "consoleErrors": [
+            "TypeError: Failed to fetch\n    at http://127.0.0.1:8199/index.html:3720:2872\n    at Lr (http://127.0.0.1:8199/index.html:3720:9390)\n    at Y (http://127.0.0.1:8199/index.html:3720:9132)\n    at Di.sign"
+          ],
+          "shot": "oko-app/tools/audit-out/round-1/mobile__17-wallet-hist.png"
+        },
+        {
+          "route": "18-wallet-tr",
+          "name": "Переводы",
+          "errors": [],
+          "overflowX": 0,
+          "offRight": [],
+          "clipped": [],
+          "underTop": [],
+          "underBottom": [],
+          "empty": false,
+          "midWordBreak": [],
+          "fullscreenRequested": false,
+          "activeScreen": "screen-wallet",
+          "activeText": "OKO PAY\nДОСТУПНО\n2 500 ₽\n·· ·· ·· ··\n3070\nOKO-71643070\nПопол",
+          "consoleErrors": [
+            "TypeError: Failed to fetch\n    at http://127.0.0.1:8199/index.html:3720:2872\n    at Lr (http://127.0.0.1:8199/index.html:3720:9390)\n    at Y (http://127.0.0.1:8199/index.html:3720:9132)\n    at Di.sign"
+          ],
+          "shot": "oko-app/tools/audit-out/round-1/mobile__18-wallet-tr.png"
+        },
+        {
+          "route": "19-wallet-ex",
+          "name": "Обмен валют",
+          "errors": [],
+          "overflowX": 0,
+          "offRight": [],
+          "clipped": [],
+          "underTop": [],
+          "underBottom": [],
+          "empty": false,
+          "midWordBreak": [],
+          "fullscreenRequested": false,
+          "activeScreen": "screen-wallet",
+          "activeText": "OKO PAY\nДОСТУПНО\n2 500 ₽\n·· ·· ·· ··\n5487\nOKO-65435487\nПопол",
+          "consoleErrors": [
+            "TypeError: Failed to fetch\n    at http://127.0.0.1:8199/index.html:3720:2872\n    at Lr (http://127.0.0.1:8199/index.html:3720:9390)\n    at Y (http://127.0.0.1:8199/index.html:3720:9132)\n    at Di.sign"
+          ],
+          "shot": "oko-app/tools/audit-out/round-1/mobile__19-wallet-ex.png"
+        },
+        {
+          "route": "20-wallet-sec",
+          "name": "Безопасность",
+          "errors": [],
+          "overflowX": 0,
+          "offRight": [],
+          "clipped": [],
+          "underTop": [],
+          "underBottom": [],
+          "empty": false,
+          "midWordBreak": [],
+          "fullscreenRequested": false,
+          "activeScreen": "screen-wallet",
+          "activeText": "OKO PAY\nДОСТУПНО\n2 500 ₽\n·· ·· ·· ··\n9922\nOKO-14769922\nПопол",
+          "consoleErrors": [
+            "TypeError: Failed to fetch\n    at http://127.0.0.1:8199/index.html:3720:2872\n    at Lr (http://127.0.0.1:8199/index.html:3720:9390)\n    at Y (http://127.0.0.1:8199/index.html:3720:9132)\n    at Di.sign"
+          ],
+          "shot": "oko-app/tools/audit-out/round-1/mobile__20-wallet-sec.png"
+        }
+      ]
+    },
+    {
+      "mode": "narrow",
+      "label": "Узкий Android",
+      "routes": [
+        {
+          "route": "01-splash",
+          "name": "Экран запуска",
+          "errors": [],
+          "overflowX": 0,
+          "offRight": [],
+          "clipped": [],
+          "underTop": [],
+          "underBottom": [],
+          "empty": false,
+          "midWordBreak": [],
+          "fullscreenRequested": false,
+          "activeScreen": "screen-feed",
+          "activeText": "Рекомендации\nПодписки\nПОКА ПУСТО\nСвежие посты закончились. О",
+          "consoleErrors": [],
+          "shot": "oko-app/tools/audit-out/round-1/narrow__01-splash.png"
+        },
+        {
+          "route": "02-auth",
+          "name": "Вход и регистрация",
+          "errors": [],
+          "overflowX": 0,
+          "offRight": [],
+          "clipped": [],
+          "underTop": [],
+          "underBottom": [],
+          "empty": false,
+          "midWordBreak": [],
+          "fullscreenRequested": false,
+          "activeScreen": "screen-feed",
+          "activeText": "Рекомендации\nПодписки\nПОКА ПУСТО\nСвежие посты закончились. О",
+          "consoleErrors": [],
+          "shot": "oko-app/tools/audit-out/round-1/narrow__02-auth.png"
+        },
+        {
+          "route": "03-feed-rec",
+          "name": "Лента · Рекомендации",
+          "errors": [],
+          "overflowX": 0,
+          "offRight": [],
+          "clipped": [],
+          "underTop": [],
+          "underBottom": [],
+          "empty": false,
+          "midWordBreak": [],
+          "fullscreenRequested": false,
+          "activeScreen": "screen-feed",
+          "activeText": "Рекомендации\nПодписки\nПОКА ПУСТО\nСвежие посты закончились. О",
+          "consoleErrors": [],
+          "shot": "oko-app/tools/audit-out/round-1/narrow__03-feed-rec.png"
+        },
+        {
+          "route": "04-feed-sub",
+          "name": "Лента · Подписки",
+          "errors": [],
+          "overflowX": 0,
+          "offRight": [],
+          "clipped": [],
+          "underTop": [],
+          "underBottom": [],
+          "empty": false,
+          "midWordBreak": [],
+          "fullscreenRequested": false,
+          "activeScreen": "screen-feed",
+          "activeText": "Рекомендации\nПодписки\nПОКА ПУСТО\nСвежие посты закончились. О",
+          "consoleErrors": [],
+          "shot": "oko-app/tools/audit-out/round-1/narrow__04-feed-sub.png"
+        },
+        {
+          "route": "05-chats",
+          "name": "Список чатов",
+          "errors": [],
+          "overflowX": 0,
+          "offRight": [],
+          "clipped": [],
+          "underTop": [],
+          "underBottom": [],
+          "empty": false,
+          "midWordBreak": [],
+          "fullscreenRequested": false,
+          "activeScreen": "screen-chats",
+          "activeText": "Каталог\nВсе\nЛичные\nГруппы\nКаналы\nУправление\n0\nO\nОбщий чат OK",
+          "consoleErrors": [
+            "TypeError: Failed to fetch\n    at http://127.0.0.1:8199/index.html:3720:2872\n    at Lr (http://127.0.0.1:8199/index.html:3720:9390)\n    at Y (http://127.0.0.1:8199/index.html:3720:9132)\n    at Di.sign"
+          ],
+          "shot": "oko-app/tools/audit-out/round-1/narrow__05-chats.png"
+        },
+        {
+          "route": "06-conv",
+          "name": "Диалог",
+          "errors": [],
+          "overflowX": 0,
+          "offRight": [],
+          "clipped": [],
+          "underTop": [],
+          "underBottom": [],
+          "empty": false,
+          "midWordBreak": [],
+          "fullscreenRequested": false,
+          "activeScreen": "screen-chats",
+          "activeText": "O\nОбщий чат OKO\nв сети\nОбщий чат сообщества OKO. Здесь живое",
+          "consoleErrors": [
+            "TypeError: Failed to fetch\n    at http://127.0.0.1:8199/index.html:3720:2872\n    at Lr (http://127.0.0.1:8199/index.html:3720:9390)\n    at Y (http://127.0.0.1:8199/index.html:3720:9132)\n    at Di.sign"
+          ],
+          "shot": "oko-app/tools/audit-out/round-1/narrow__06-conv.png"
+        },
+        {
+          "route": "07-mini",
+          "name": "Мини-аппы",
+          "errors": [],
+          "overflowX": 0,
+          "offRight": [],
+          "clipped": [],
+          "underTop": [],
+          "underBottom": [],
+          "empty": false,
+          "midWordBreak": [],
+          "fullscreenRequested": false,
+          "activeScreen": "screen-mini",
+          "activeText": "Сервисы OKO\n\nМессенджер, лента, биржа и инструменты для рост",
+          "consoleErrors": [
+            "TypeError: Failed to fetch\n    at http://127.0.0.1:8199/index.html:3720:2872\n    at Lr (http://127.0.0.1:8199/index.html:3720:9390)\n    at Y (http://127.0.0.1:8199/index.html:3720:9132)\n    at Di.sign"
+          ],
+          "shot": "oko-app/tools/audit-out/round-1/narrow__07-mini.png"
+        },
+        {
+          "route": "08-wallet",
+          "name": "Кошелёк",
+          "errors": [],
+          "overflowX": 0,
+          "offRight": [],
+          "clipped": [],
+          "underTop": [],
+          "underBottom": [],
+          "empty": false,
+          "midWordBreak": [],
+          "fullscreenRequested": false,
+          "activeScreen": "screen-wallet",
+          "activeText": "OKO PAY\nДОСТУПНО\n2 500 ₽\n·· ·· ·· ··\n3653\nOKO-90013653\nПопол",
+          "consoleErrors": [
+            "TypeError: Failed to fetch\n    at http://127.0.0.1:8199/index.html:3720:2872\n    at Lr (http://127.0.0.1:8199/index.html:3720:9390)\n    at Y (http://127.0.0.1:8199/index.html:3720:9132)\n    at Di.sign"
+          ],
+          "shot": "oko-app/tools/audit-out/round-1/narrow__08-wallet.png"
+        },
+        {
+          "route": "09-profile",
+          "name": "Профиль",
+          "errors": [],
+          "overflowX": 0,
+          "offRight": [],
+          "clipped": [],
+          "underTop": [],
+          "underBottom": [],
+          "empty": false,
+          "midWordBreak": [],
+          "fullscreenRequested": false,
+          "activeScreen": "screen-profile",
+          "activeText": "Д\nДаниэль\n@ktodaniel·в сети\n\nОснователь OKO. Медийность, кон",
+          "consoleErrors": [
+            "TypeError: Failed to fetch\n    at http://127.0.0.1:8199/index.html:3720:2872\n    at Lr (http://127.0.0.1:8199/index.html:3720:9390)\n    at Y (http://127.0.0.1:8199/index.html:3720:9132)\n    at Di.sign"
+          ],
+          "shot": "oko-app/tools/audit-out/round-1/narrow__09-profile.png"
+        },
+        {
+          "route": "10-partner",
+          "name": "Партнёрка",
+          "errors": [],
+          "overflowX": 0,
+          "offRight": [],
+          "clipped": [],
+          "underTop": [],
+          "underBottom": [],
+          "empty": false,
+          "midWordBreak": [],
+          "fullscreenRequested": false,
+          "activeScreen": "screen-partner",
+          "activeText": "Партнёрская программа\n15% · 5% СВЕРХУ\nЗаработано в август\nАК",
+          "consoleErrors": [
+            "TypeError: Failed to fetch\n    at http://127.0.0.1:8199/index.html:3720:2872\n    at Lr (http://127.0.0.1:8199/index.html:3720:9390)\n    at Y (http://127.0.0.1:8199/index.html:3720:9132)\n    at Di.sign"
+          ],
+          "shot": "oko-app/tools/audit-out/round-1/narrow__10-partner.png"
+        },
+        {
+          "route": "11-academy",
+          "name": "Академия",
+          "errors": [],
+          "overflowX": 0,
+          "offRight": [
+            {
+              "el": "circle",
+              "right": 362,
+              "vw": 360
+            }
+          ],
+          "clipped": [],
+          "underTop": [],
+          "underBottom": [],
+          "empty": false,
+          "midWordBreak": [],
+          "fullscreenRequested": false,
+          "activeScreen": "screen-academy",
+          "activeText": "Академия OKO\n\nКурсы полного формата · официальные сертификат",
+          "consoleErrors": [
+            "TypeError: Failed to fetch\n    at http://127.0.0.1:8199/index.html:3720:2872\n    at Lr (http://127.0.0.1:8199/index.html:3720:9390)\n    at Y (http://127.0.0.1:8199/index.html:3720:9132)\n    at Di.sign"
+          ],
+          "shot": "oko-app/tools/audit-out/round-1/narrow__11-academy.png"
+        },
+        {
+          "route": "12-games",
+          "name": "Игры",
+          "errors": [],
+          "overflowX": 0,
+          "offRight": [],
+          "clipped": [],
+          "underTop": [],
+          "underBottom": [],
+          "empty": false,
+          "midWordBreak": [],
+          "fullscreenRequested": false,
+          "activeScreen": "screen-games",
+          "activeText": "Рулетка OKO\nКрути колесо, каждая крутка даёт приз\n0\n2 500 ₽\n",
+          "consoleErrors": [
+            "TypeError: Failed to fetch\n    at http://127.0.0.1:8199/index.html:3720:2872\n    at Lr (http://127.0.0.1:8199/index.html:3720:9390)\n    at Y (http://127.0.0.1:8199/index.html:3720:9132)\n    at Di.sign"
+          ],
+          "shot": "oko-app/tools/audit-out/round-1/narrow__12-games.png"
+        },
+        {
+          "route": "13-ads",
+          "name": "Реклама",
+          "errors": [],
+          "overflowX": 0,
+          "offRight": [
+            {
+              "el": "button.ads-quick-b.boost",
+              "right": 409,
+              "vw": 360
+            },
+            {
+              "el": "span",
+              "right": 370,
+              "vw": 360
+            }
+          ],
+          "clipped": [],
+          "underTop": [],
+          "underBottom": [],
+          "empty": false,
+          "midWordBreak": [],
+          "fullscreenRequested": false,
+          "activeScreen": "screen-ads",
+          "activeText": "Рекламный кабинет\nМЕТРИКИ LIVE\n0 ₽\nПОТРАЧЕНО\n0\nПОКАЗЫ\n0\nКЛИК",
+          "consoleErrors": [
+            "TypeError: Failed to fetch\n    at http://127.0.0.1:8199/index.html:3720:2872\n    at Lr (http://127.0.0.1:8199/index.html:3720:9390)\n    at Y (http://127.0.0.1:8199/index.html:3720:9132)\n    at Di.sign"
+          ],
+          "shot": "oko-app/tools/audit-out/round-1/narrow__13-ads.png"
+        },
+        {
+          "route": "14-notifs",
+          "name": "Уведомления",
+          "errors": [],
+          "overflowX": 0,
+          "offRight": [],
+          "clipped": [],
+          "underTop": [],
+          "underBottom": [],
+          "empty": false,
+          "midWordBreak": [],
+          "fullscreenRequested": false,
+          "activeScreen": "screen-feed",
+          "activeText": "Рекомендации\nПодписки\nПОКА ПУСТО\nСвежие посты закончились. О",
+          "consoleErrors": [
+            "TypeError: Failed to fetch\n    at http://127.0.0.1:8199/index.html:3720:2872\n    at Lr (http://127.0.0.1:8199/index.html:3720:9390)\n    at Y (http://127.0.0.1:8199/index.html:3720:9132)\n    at Di.sign"
+          ],
+          "shot": "oko-app/tools/audit-out/round-1/narrow__14-notifs.png"
+        },
+        {
+          "route": "15-search",
+          "name": "Поиск",
+          "errors": [],
+          "overflowX": 0,
+          "offRight": [],
+          "clipped": [],
+          "underTop": [],
+          "underBottom": [],
+          "empty": false,
+          "midWordBreak": [],
+          "fullscreenRequested": false,
+          "activeScreen": "screen-feed",
+          "activeText": "Рекомендации\nПодписки\nПОКА ПУСТО\nСвежие посты закончились. О",
+          "consoleErrors": [
+            "TypeError: Failed to fetch\n    at http://127.0.0.1:8199/index.html:3720:2872\n    at Lr (http://127.0.0.1:8199/index.html:3720:9390)\n    at Y (http://127.0.0.1:8199/index.html:3720:9132)\n    at Di.sign"
+          ],
+          "shot": "oko-app/tools/audit-out/round-1/narrow__15-search.png"
+        },
+        {
+          "route": "16-settings",
+          "name": "Настройки",
+          "errors": [],
+          "overflowX": 0,
+          "offRight": [],
+          "clipped": [],
+          "underTop": [],
+          "underBottom": [],
+          "empty": false,
+          "midWordBreak": [],
+          "fullscreenRequested": false,
+          "activeScreen": "screen-profile",
+          "activeText": "Д\nДаниэль\n@ktodaniel·в сети\n\nОснователь OKO. Медийность, кон",
+          "consoleErrors": [
+            "TypeError: Failed to fetch\n    at http://127.0.0.1:8199/index.html:3720:2872\n    at Lr (http://127.0.0.1:8199/index.html:3720:9390)\n    at Y (http://127.0.0.1:8199/index.html:3720:9132)\n    at Di.sign"
+          ],
+          "shot": "oko-app/tools/audit-out/round-1/narrow__16-settings.png"
+        },
+        {
+          "route": "17-wallet-hist",
+          "name": "История операций",
+          "errors": [],
+          "overflowX": 0,
+          "offRight": [],
+          "clipped": [],
+          "underTop": [],
+          "underBottom": [],
+          "empty": false,
+          "midWordBreak": [],
+          "fullscreenRequested": false,
+          "activeScreen": "screen-wallet",
+          "activeText": "OKO PAY\nДОСТУПНО\n2 500 ₽\n·· ·· ·· ··\n7213\nOKO-85027213\nПопол",
+          "consoleErrors": [
+            "TypeError: Failed to fetch\n    at http://127.0.0.1:8199/index.html:3720:2872\n    at Lr (http://127.0.0.1:8199/index.html:3720:9390)\n    at Y (http://127.0.0.1:8199/index.html:3720:9132)\n    at Di.sign"
+          ],
+          "shot": "oko-app/tools/audit-out/round-1/narrow__17-wallet-hist.png"
+        },
+        {
+          "route": "18-wallet-tr",
+          "name": "Переводы",
+          "errors": [],
+          "overflowX": 0,
+          "offRight": [],
+          "clipped": [],
+          "underTop": [],
+          "underBottom": [],
+          "empty": false,
+          "midWordBreak": [],
+          "fullscreenRequested": false,
+          "activeScreen": "screen-wallet",
+          "activeText": "OKO PAY\nДОСТУПНО\n2 500 ₽\n·· ·· ·· ··\n7003\nOKO-18557003\nПопол",
+          "consoleErrors": [
+            "TypeError: Failed to fetch\n    at http://127.0.0.1:8199/index.html:3720:2872\n    at Lr (http://127.0.0.1:8199/index.html:3720:9390)\n    at Y (http://127.0.0.1:8199/index.html:3720:9132)\n    at Di.sign"
+          ],
+          "shot": "oko-app/tools/audit-out/round-1/narrow__18-wallet-tr.png"
+        },
+        {
+          "route": "19-wallet-ex",
+          "name": "Обмен валют",
+          "errors": [],
+          "overflowX": 0,
+          "offRight": [],
+          "clipped": [],
+          "underTop": [],
+          "underBottom": [],
+          "empty": false,
+          "midWordBreak": [],
+          "fullscreenRequested": false,
+          "activeScreen": "screen-wallet",
+          "activeText": "OKO PAY\nДОСТУПНО\n2 500 ₽\n·· ·· ·· ··\n4192\nOKO-40624192\nПопол",
+          "consoleErrors": [
+            "TypeError: Failed to fetch\n    at http://127.0.0.1:8199/index.html:3720:2872\n    at Lr (http://127.0.0.1:8199/index.html:3720:9390)\n    at Y (http://127.0.0.1:8199/index.html:3720:9132)\n    at Di.sign"
+          ],
+          "shot": "oko-app/tools/audit-out/round-1/narrow__19-wallet-ex.png"
+        },
+        {
+          "route": "20-wallet-sec",
+          "name": "Безопасность",
+          "errors": [],
+          "overflowX": 0,
+          "offRight": [],
+          "clipped": [],
+          "underTop": [],
+          "underBottom": [],
+          "empty": false,
+          "midWordBreak": [],
+          "fullscreenRequested": false,
+          "activeScreen": "screen-wallet",
+          "activeText": "OKO PAY\nДОСТУПНО\n2 500 ₽\n·· ·· ·· ··\n5843\nOKO-59015843\nПопол",
+          "consoleErrors": [
+            "TypeError: Failed to fetch\n    at http://127.0.0.1:8199/index.html:3720:2872\n    at Lr (http://127.0.0.1:8199/index.html:3720:9390)\n    at Y (http://127.0.0.1:8199/index.html:3720:9132)\n    at Di.sign"
+          ],
+          "shot": "oko-app/tools/audit-out/round-1/narrow__20-wallet-sec.png"
+        }
+      ]
+    },
+    {
+      "mode": "tablet",
+      "label": "Планшет",
+      "routes": [
+        {
+          "route": "01-splash",
+          "name": "Экран запуска",
+          "errors": [],
+          "overflowX": 0,
+          "offRight": [],
+          "clipped": [],
+          "underTop": [],
+          "underBottom": [],
+          "empty": false,
+          "midWordBreak": [],
+          "fullscreenRequested": false,
+          "activeScreen": "screen-feed",
+          "activeText": "Рекомендации\nПодписки\nПОКА ПУСТО\nСвежие посты закончились. О",
+          "consoleErrors": [],
+          "shot": "oko-app/tools/audit-out/round-1/tablet__01-splash.png"
+        },
+        {
+          "route": "02-auth",
+          "name": "Вход и регистрация",
+          "errors": [],
+          "overflowX": 0,
+          "offRight": [],
+          "clipped": [],
+          "underTop": [],
+          "underBottom": [],
+          "empty": false,
+          "midWordBreak": [],
+          "fullscreenRequested": false,
+          "activeScreen": "screen-feed",
+          "activeText": "Рекомендации\nПодписки\nПОКА ПУСТО\nСвежие посты закончились. О",
+          "consoleErrors": [],
+          "shot": "oko-app/tools/audit-out/round-1/tablet__02-auth.png"
+        },
+        {
+          "route": "03-feed-rec",
+          "name": "Лента · Рекомендации",
+          "errors": [],
+          "overflowX": 0,
+          "offRight": [],
+          "clipped": [],
+          "underTop": [],
+          "underBottom": [],
+          "empty": false,
+          "midWordBreak": [],
+          "fullscreenRequested": false,
+          "activeScreen": "screen-feed",
+          "activeText": "Рекомендации\nПодписки\nПОКА ПУСТО\nСвежие посты закончились. О",
+          "consoleErrors": [],
+          "shot": "oko-app/tools/audit-out/round-1/tablet__03-feed-rec.png"
+        },
+        {
+          "route": "04-feed-sub",
+          "name": "Лента · Подписки",
+          "errors": [],
+          "overflowX": 0,
+          "offRight": [],
+          "clipped": [],
+          "underTop": [],
+          "underBottom": [],
+          "empty": false,
+          "midWordBreak": [],
+          "fullscreenRequested": false,
+          "activeScreen": "screen-feed",
+          "activeText": "Рекомендации\nПодписки\nПОКА ПУСТО\nСвежие посты закончились. О",
+          "consoleErrors": [],
+          "shot": "oko-app/tools/audit-out/round-1/tablet__04-feed-sub.png"
+        },
+        {
+          "route": "05-chats",
+          "name": "Список чатов",
+          "errors": [],
+          "overflowX": 0,
+          "offRight": [],
+          "clipped": [],
+          "underTop": [],
+          "underBottom": [],
+          "empty": false,
+          "midWordBreak": [],
+          "fullscreenRequested": false,
+          "activeScreen": "screen-chats",
+          "activeText": "Каталог\nВсе\nЛичные\nГруппы\nКаналы\nУправление\n0\nO\nОбщий чат OK",
+          "consoleErrors": [
+            "TypeError: Failed to fetch\n    at http://127.0.0.1:8199/index.html:3720:2872\n    at Lr (http://127.0.0.1:8199/index.html:3720:9390)\n    at Y (http://127.0.0.1:8199/index.html:3720:9132)\n    at Di.sign"
+          ],
+          "shot": "oko-app/tools/audit-out/round-1/tablet__05-chats.png"
+        },
+        {
+          "route": "06-conv",
+          "name": "Диалог",
+          "errors": [],
+          "overflowX": 0,
+          "offRight": [],
+          "clipped": [],
+          "underTop": [],
+          "underBottom": [],
+          "empty": false,
+          "midWordBreak": [],
+          "fullscreenRequested": false,
+          "activeScreen": "screen-chats",
+          "activeText": "O\nОбщий чат OKO\nв сети\nОбщий чат сообщества OKO. Здесь живое",
+          "consoleErrors": [
+            "TypeError: Failed to fetch\n    at http://127.0.0.1:8199/index.html:3720:2872\n    at Lr (http://127.0.0.1:8199/index.html:3720:9390)\n    at Y (http://127.0.0.1:8199/index.html:3720:9132)\n    at Di.sign"
+          ],
+          "shot": "oko-app/tools/audit-out/round-1/tablet__06-conv.png"
+        },
+        {
+          "route": "07-mini",
+          "name": "Мини-аппы",
+          "errors": [],
+          "overflowX": 0,
+          "offRight": [],
+          "clipped": [],
+          "underTop": [],
+          "underBottom": [],
+          "empty": false,
+          "midWordBreak": [],
+          "fullscreenRequested": false,
+          "activeScreen": "screen-mini",
+          "activeText": "Сервисы OKO\n\nМессенджер, лента, биржа и инструменты для рост",
+          "consoleErrors": [
+            "TypeError: Failed to fetch\n    at http://127.0.0.1:8199/index.html:3720:2872\n    at Lr (http://127.0.0.1:8199/index.html:3720:9390)\n    at Y (http://127.0.0.1:8199/index.html:3720:9132)\n    at Di.sign"
+          ],
+          "shot": "oko-app/tools/audit-out/round-1/tablet__07-mini.png"
+        },
+        {
+          "route": "08-wallet",
+          "name": "Кошелёк",
+          "errors": [],
+          "overflowX": 0,
+          "offRight": [],
+          "clipped": [],
+          "underTop": [],
+          "underBottom": [],
+          "empty": false,
+          "midWordBreak": [],
+          "fullscreenRequested": false,
+          "activeScreen": "screen-wallet",
+          "activeText": "OKO PAY\nДОСТУПНО\n2 500 ₽\n·· ·· ·· ··\n2866\nOKO-44572866\nПопол",
+          "consoleErrors": [
+            "TypeError: Failed to fetch\n    at http://127.0.0.1:8199/index.html:3720:2872\n    at Lr (http://127.0.0.1:8199/index.html:3720:9390)\n    at Y (http://127.0.0.1:8199/index.html:3720:9132)\n    at Di.sign"
+          ],
+          "shot": "oko-app/tools/audit-out/round-1/tablet__08-wallet.png"
+        },
+        {
+          "route": "09-profile",
+          "name": "Профиль",
+          "errors": [],
+          "overflowX": 0,
+          "offRight": [],
+          "clipped": [],
+          "underTop": [],
+          "underBottom": [],
+          "empty": false,
+          "midWordBreak": [],
+          "fullscreenRequested": false,
+          "activeScreen": "screen-profile",
+          "activeText": "Д\nДаниэль\n@ktodaniel·в сети\n\nОснователь OKO. Медийность, кон",
+          "consoleErrors": [
+            "TypeError: Failed to fetch\n    at http://127.0.0.1:8199/index.html:3720:2872\n    at Lr (http://127.0.0.1:8199/index.html:3720:9390)\n    at Y (http://127.0.0.1:8199/index.html:3720:9132)\n    at Di.sign"
+          ],
+          "shot": "oko-app/tools/audit-out/round-1/tablet__09-profile.png"
+        },
+        {
+          "route": "10-partner",
+          "name": "Партнёрка",
+          "errors": [],
+          "overflowX": 0,
+          "offRight": [],
+          "clipped": [],
+          "underTop": [],
+          "underBottom": [],
+          "empty": false,
+          "midWordBreak": [],
+          "fullscreenRequested": false,
+          "activeScreen": "screen-partner",
+          "activeText": "Партнёрская программа\n15% · 5% СВЕРХУ\nЗаработано в август\nАК",
+          "consoleErrors": [
+            "TypeError: Failed to fetch\n    at http://127.0.0.1:8199/index.html:3720:2872\n    at Lr (http://127.0.0.1:8199/index.html:3720:9390)\n    at Y (http://127.0.0.1:8199/index.html:3720:9132)\n    at Di.sign"
+          ],
+          "shot": "oko-app/tools/audit-out/round-1/tablet__10-partner.png"
+        },
+        {
+          "route": "11-academy",
+          "name": "Академия",
+          "errors": [],
+          "overflowX": 0,
+          "offRight": [],
+          "clipped": [],
+          "underTop": [],
+          "underBottom": [],
+          "empty": false,
+          "midWordBreak": [],
+          "fullscreenRequested": false,
+          "activeScreen": "screen-academy",
+          "activeText": "Академия OKO\n\nКурсы полного формата · официальные сертификат",
+          "consoleErrors": [
+            "TypeError: Failed to fetch\n    at http://127.0.0.1:8199/index.html:3720:2872\n    at Lr (http://127.0.0.1:8199/index.html:3720:9390)\n    at Y (http://127.0.0.1:8199/index.html:3720:9132)\n    at Di.sign"
+          ],
+          "shot": "oko-app/tools/audit-out/round-1/tablet__11-academy.png"
+        },
+        {
+          "route": "12-games",
+          "name": "Игры",
+          "errors": [],
+          "overflowX": 0,
+          "offRight": [],
+          "clipped": [],
+          "underTop": [],
+          "underBottom": [],
+          "empty": false,
+          "midWordBreak": [],
+          "fullscreenRequested": false,
+          "activeScreen": "screen-games",
+          "activeText": "Рулетка OKO\nКрути колесо, каждая крутка даёт приз\n0\n2 500 ₽\n",
+          "consoleErrors": [
+            "TypeError: Failed to fetch\n    at http://127.0.0.1:8199/index.html:3720:2872\n    at Lr (http://127.0.0.1:8199/index.html:3720:9390)\n    at Y (http://127.0.0.1:8199/index.html:3720:9132)\n    at Di.sign"
+          ],
+          "shot": "oko-app/tools/audit-out/round-1/tablet__12-games.png"
+        },
+        {
+          "route": "13-ads",
+          "name": "Реклама",
+          "errors": [],
+          "overflowX": 0,
+          "offRight": [],
+          "clipped": [],
+          "underTop": [],
+          "underBottom": [],
+          "empty": false,
+          "midWordBreak": [],
+          "fullscreenRequested": false,
+          "activeScreen": "screen-ads",
+          "activeText": "Рекламный кабинет\nМЕТРИКИ LIVE\n0 ₽\nПОТРАЧЕНО\n0\nПОКАЗЫ\n0\nКЛИК",
+          "consoleErrors": [
+            "TypeError: Failed to fetch\n    at http://127.0.0.1:8199/index.html:3720:2872\n    at Lr (http://127.0.0.1:8199/index.html:3720:9390)\n    at Y (http://127.0.0.1:8199/index.html:3720:9132)\n    at Di.sign"
+          ],
+          "shot": "oko-app/tools/audit-out/round-1/tablet__13-ads.png"
+        },
+        {
+          "route": "14-notifs",
+          "name": "Уведомления",
+          "errors": [],
+          "overflowX": 0,
+          "offRight": [],
+          "clipped": [],
+          "underTop": [],
+          "underBottom": [],
+          "empty": false,
+          "midWordBreak": [],
+          "fullscreenRequested": false,
+          "activeScreen": "screen-feed",
+          "activeText": "Рекомендации\nПодписки\nПОКА ПУСТО\nСвежие посты закончились. О",
+          "consoleErrors": [
+            "TypeError: Failed to fetch\n    at http://127.0.0.1:8199/index.html:3720:2872\n    at Lr (http://127.0.0.1:8199/index.html:3720:9390)\n    at Y (http://127.0.0.1:8199/index.html:3720:9132)\n    at Di.sign"
+          ],
+          "shot": "oko-app/tools/audit-out/round-1/tablet__14-notifs.png"
+        },
+        {
+          "route": "15-search",
+          "name": "Поиск",
+          "errors": [],
+          "overflowX": 0,
+          "offRight": [],
+          "clipped": [],
+          "underTop": [],
+          "underBottom": [],
+          "empty": false,
+          "midWordBreak": [],
+          "fullscreenRequested": false,
+          "activeScreen": "screen-feed",
+          "activeText": "Рекомендации\nПодписки\nПОКА ПУСТО\nСвежие посты закончились. О",
+          "consoleErrors": [
+            "TypeError: Failed to fetch\n    at http://127.0.0.1:8199/index.html:3720:2872\n    at Lr (http://127.0.0.1:8199/index.html:3720:9390)\n    at Y (http://127.0.0.1:8199/index.html:3720:9132)\n    at Di.sign"
+          ],
+          "shot": "oko-app/tools/audit-out/round-1/tablet__15-search.png"
+        },
+        {
+          "route": "16-settings",
+          "name": "Настройки",
+          "errors": [],
+          "overflowX": 0,
+          "offRight": [],
+          "clipped": [],
+          "underTop": [],
+          "underBottom": [],
+          "empty": false,
+          "midWordBreak": [],
+          "fullscreenRequested": false,
+          "activeScreen": "screen-profile",
+          "activeText": "Д\nДаниэль\n@ktodaniel·в сети\n\nОснователь OKO. Медийность, кон",
+          "consoleErrors": [
+            "TypeError: Failed to fetch\n    at http://127.0.0.1:8199/index.html:3720:2872\n    at Lr (http://127.0.0.1:8199/index.html:3720:9390)\n    at Y (http://127.0.0.1:8199/index.html:3720:9132)\n    at Di.sign"
+          ],
+          "shot": "oko-app/tools/audit-out/round-1/tablet__16-settings.png"
+        },
+        {
+          "route": "17-wallet-hist",
+          "name": "История операций",
+          "errors": [],
+          "overflowX": 0,
+          "offRight": [],
+          "clipped": [],
+          "underTop": [],
+          "underBottom": [],
+          "empty": false,
+          "midWordBreak": [],
+          "fullscreenRequested": false,
+          "activeScreen": "screen-wallet",
+          "activeText": "OKO PAY\nДОСТУПНО\n2 500 ₽\n·· ·· ·· ··\n1797\nOKO-93101797\nПопол",
+          "consoleErrors": [
+            "TypeError: Failed to fetch\n    at http://127.0.0.1:8199/index.html:3720:2872\n    at Lr (http://127.0.0.1:8199/index.html:3720:9390)\n    at Y (http://127.0.0.1:8199/index.html:3720:9132)\n    at Di.sign"
+          ],
+          "shot": "oko-app/tools/audit-out/round-1/tablet__17-wallet-hist.png"
+        },
+        {
+          "route": "18-wallet-tr",
+          "name": "Переводы",
+          "errors": [],
+          "overflowX": 0,
+          "offRight": [],
+          "clipped": [],
+          "underTop": [],
+          "underBottom": [],
+          "empty": false,
+          "midWordBreak": [],
+          "fullscreenRequested": false,
+          "activeScreen": "screen-wallet",
+          "activeText": "OKO PAY\nДОСТУПНО\n2 500 ₽\n·· ·· ·· ··\n2568\nOKO-42982568\nПопол",
+          "consoleErrors": [
+            "TypeError: Failed to fetch\n    at http://127.0.0.1:8199/index.html:3720:2872\n    at Lr (http://127.0.0.1:8199/index.html:3720:9390)\n    at Y (http://127.0.0.1:8199/index.html:3720:9132)\n    at Di.sign"
+          ],
+          "shot": "oko-app/tools/audit-out/round-1/tablet__18-wallet-tr.png"
+        },
+        {
+          "route": "19-wallet-ex",
+          "name": "Обмен валют",
+          "errors": [],
+          "overflowX": 0,
+          "offRight": [],
+          "clipped": [],
+          "underTop": [],
+          "underBottom": [],
+          "empty": false,
+          "midWordBreak": [],
+          "fullscreenRequested": false,
+          "activeScreen": "screen-wallet",
+          "activeText": "OKO PAY\nДОСТУПНО\n2 500 ₽\n·· ·· ·· ··\n4776\nOKO-15254776\nПопол",
+          "consoleErrors": [
+            "TypeError: Failed to fetch\n    at http://127.0.0.1:8199/index.html:3720:2872\n    at Lr (http://127.0.0.1:8199/index.html:3720:9390)\n    at Y (http://127.0.0.1:8199/index.html:3720:9132)\n    at Di.sign"
+          ],
+          "shot": "oko-app/tools/audit-out/round-1/tablet__19-wallet-ex.png"
+        },
+        {
+          "route": "20-wallet-sec",
+          "name": "Безопасность",
+          "errors": [],
+          "overflowX": 0,
+          "offRight": [],
+          "clipped": [],
+          "underTop": [],
+          "underBottom": [],
+          "empty": false,
+          "midWordBreak": [],
+          "fullscreenRequested": false,
+          "activeScreen": "screen-wallet",
+          "activeText": "OKO PAY\nДОСТУПНО\n2 500 ₽\n·· ·· ·· ··\n5602\nOKO-59345602\nПопол",
+          "consoleErrors": [
+            "TypeError: Failed to fetch\n    at http://127.0.0.1:8199/index.html:3720:2872\n    at Lr (http://127.0.0.1:8199/index.html:3720:9390)\n    at Y (http://127.0.0.1:8199/index.html:3720:9132)\n    at Di.sign"
+          ],
+          "shot": "oko-app/tools/audit-out/round-1/tablet__20-wallet-sec.png"
+        }
+      ]
+    },
+    {
+      "mode": "desktop",
+      "label": "ПК",
+      "routes": [
+        {
+          "route": "01-splash",
+          "name": "Экран запуска",
+          "errors": [],
+          "overflowX": 0,
+          "offRight": [],
+          "clipped": [],
+          "underTop": [],
+          "underBottom": [],
+          "empty": false,
+          "midWordBreak": [],
+          "fullscreenRequested": false,
+          "activeScreen": "screen-feed",
+          "activeText": "Рекомендации\nПодписки\nПОКА ПУСТО\nСвежие посты закончились. О",
+          "consoleErrors": [],
+          "shot": "oko-app/tools/audit-out/round-1/desktop__01-splash.png"
+        },
+        {
+          "route": "02-auth",
+          "name": "Вход и регистрация",
+          "errors": [],
+          "overflowX": 0,
+          "offRight": [],
+          "clipped": [],
+          "underTop": [],
+          "underBottom": [],
+          "empty": false,
+          "midWordBreak": [],
+          "fullscreenRequested": false,
+          "activeScreen": "screen-feed",
+          "activeText": "Рекомендации\nПодписки\nПОКА ПУСТО\nСвежие посты закончились. О",
+          "consoleErrors": [
+            "THREE.GLTFLoader: Couldn't load texture blob:http://127.0.0.1:8199/388dc231-8c3b-42b3-9392-e9e90e4e453c",
+            "THREE.GLTFLoader: Couldn't load texture blob:http://127.0.0.1:8199/b068650b-3486-46b9-997f-842947aa0ef4",
+            "THREE.GLTFLoader: Couldn't load texture blob:http://127.0.0.1:8199/34dc44bb-6679-475f-9484-f45b95aca682",
+            "THREE.GLTFLoader: Couldn't load texture blob:http://127.0.0.1:8199/3e3982e4-de95-4487-9a12-150a8ed21277"
+          ],
+          "shot": "oko-app/tools/audit-out/round-1/desktop__02-auth.png"
+        },
+        {
+          "route": "03-feed-rec",
+          "name": "Лента · Рекомендации",
+          "errors": [],
+          "overflowX": 0,
+          "offRight": [],
+          "clipped": [],
+          "underTop": [],
+          "underBottom": [],
+          "empty": false,
+          "midWordBreak": [],
+          "fullscreenRequested": false,
+          "activeScreen": "screen-feed",
+          "activeText": "Рекомендации\nПодписки\nПОКА ПУСТО\nСвежие посты закончились. О",
+          "consoleErrors": [],
+          "shot": "oko-app/tools/audit-out/round-1/desktop__03-feed-rec.png"
+        },
+        {
+          "route": "04-feed-sub",
+          "name": "Лента · Подписки",
+          "errors": [],
+          "overflowX": 0,
+          "offRight": [],
+          "clipped": [],
+          "underTop": [],
+          "underBottom": [],
+          "empty": false,
+          "midWordBreak": [],
+          "fullscreenRequested": false,
+          "activeScreen": "screen-feed",
+          "activeText": "Рекомендации\nПодписки\nПОКА ПУСТО\nСвежие посты закончились. О",
+          "consoleErrors": [],
+          "shot": "oko-app/tools/audit-out/round-1/desktop__04-feed-sub.png"
+        },
+        {
+          "route": "05-chats",
+          "name": "Список чатов",
+          "errors": [],
+          "overflowX": 0,
+          "offRight": [],
+          "clipped": [],
+          "underTop": [],
+          "underBottom": [],
+          "empty": false,
+          "midWordBreak": [],
+          "fullscreenRequested": false,
+          "activeScreen": "screen-chats",
+          "activeText": "Каталог\nВсе\nЛичные\nГруппы\nКаналы\nУправление\n0\nO\nОбщий чат OK",
+          "consoleErrors": [
+            "TypeError: Failed to fetch\n    at http://127.0.0.1:8199/index.html:3720:2872\n    at Lr (http://127.0.0.1:8199/index.html:3720:9390)\n    at Y (http://127.0.0.1:8199/index.html:3720:9132)\n    at Di.sign"
+          ],
+          "shot": "oko-app/tools/audit-out/round-1/desktop__05-chats.png"
+        },
+        {
+          "route": "06-conv",
+          "name": "Диалог",
+          "errors": [],
+          "overflowX": 0,
+          "offRight": [],
+          "clipped": [],
+          "underTop": [],
+          "underBottom": [],
+          "empty": false,
+          "midWordBreak": [],
+          "fullscreenRequested": false,
+          "activeScreen": "screen-chats",
+          "activeText": "Каталог\nВсе\nЛичные\nГруппы\nКаналы\nУправление\n0\nO\nОбщий чат OK",
+          "consoleErrors": [
+            "TypeError: Failed to fetch\n    at http://127.0.0.1:8199/index.html:3720:2872\n    at Lr (http://127.0.0.1:8199/index.html:3720:9390)\n    at Y (http://127.0.0.1:8199/index.html:3720:9132)\n    at Di.sign"
+          ],
+          "shot": "oko-app/tools/audit-out/round-1/desktop__06-conv.png"
+        },
+        {
+          "route": "07-mini",
+          "name": "Мини-аппы",
+          "errors": [],
+          "overflowX": 0,
+          "offRight": [],
+          "clipped": [],
+          "underTop": [],
+          "underBottom": [],
+          "empty": false,
+          "midWordBreak": [],
+          "fullscreenRequested": false,
+          "activeScreen": "screen-mini",
+          "activeText": "Сервисы OKO\n\nМессенджер, лента, биржа и инструменты для рост",
+          "consoleErrors": [
+            "TypeError: Failed to fetch\n    at http://127.0.0.1:8199/index.html:3720:2872\n    at Lr (http://127.0.0.1:8199/index.html:3720:9390)\n    at Y (http://127.0.0.1:8199/index.html:3720:9132)\n    at Di.sign"
+          ],
+          "shot": "oko-app/tools/audit-out/round-1/desktop__07-mini.png"
+        },
+        {
+          "route": "08-wallet",
+          "name": "Кошелёк",
+          "errors": [],
+          "overflowX": 0,
+          "offRight": [],
+          "clipped": [],
+          "underTop": [],
+          "underBottom": [],
+          "empty": false,
+          "midWordBreak": [],
+          "fullscreenRequested": false,
+          "activeScreen": "screen-wallet",
+          "activeText": "OKO PAY\nДОСТУПНО\n2 500 ₽\n·· ·· ·· ··\n3012\nOKO-35393012\nПопол",
+          "consoleErrors": [
+            "TypeError: Failed to fetch\n    at http://127.0.0.1:8199/index.html:3720:2872\n    at Lr (http://127.0.0.1:8199/index.html:3720:9390)\n    at Y (http://127.0.0.1:8199/index.html:3720:9132)\n    at Di.sign"
+          ],
+          "shot": "oko-app/tools/audit-out/round-1/desktop__08-wallet.png"
+        },
+        {
+          "route": "09-profile",
+          "name": "Профиль",
+          "errors": [],
+          "overflowX": 0,
+          "offRight": [],
+          "clipped": [],
+          "underTop": [],
+          "underBottom": [],
+          "empty": false,
+          "midWordBreak": [],
+          "fullscreenRequested": false,
+          "activeScreen": "screen-profile",
+          "activeText": "Д\nДаниэль\n@ktodaniel·в сети\n\nОснователь OKO. Медийность, кон",
+          "consoleErrors": [
+            "TypeError: Failed to fetch\n    at http://127.0.0.1:8199/index.html:3720:2872\n    at Lr (http://127.0.0.1:8199/index.html:3720:9390)\n    at Y (http://127.0.0.1:8199/index.html:3720:9132)\n    at Di.sign"
+          ],
+          "shot": "oko-app/tools/audit-out/round-1/desktop__09-profile.png"
+        },
+        {
+          "route": "10-partner",
+          "name": "Партнёрка",
+          "errors": [],
+          "overflowX": 0,
+          "offRight": [],
+          "clipped": [],
+          "underTop": [],
+          "underBottom": [],
+          "empty": false,
+          "midWordBreak": [],
+          "fullscreenRequested": false,
+          "activeScreen": "screen-partner",
+          "activeText": "Партнёрская программа\n15% · 5% СВЕРХУ\nЗаработано в август\nАК",
+          "consoleErrors": [
+            "TypeError: Failed to fetch\n    at http://127.0.0.1:8199/index.html:3720:2872\n    at Lr (http://127.0.0.1:8199/index.html:3720:9390)\n    at Y (http://127.0.0.1:8199/index.html:3720:9132)\n    at Di.sign"
+          ],
+          "shot": "oko-app/tools/audit-out/round-1/desktop__10-partner.png"
+        },
+        {
+          "route": "11-academy",
+          "name": "Академия",
+          "errors": [],
+          "overflowX": 0,
+          "offRight": [],
+          "clipped": [],
+          "underTop": [],
+          "underBottom": [],
+          "empty": false,
+          "midWordBreak": [],
+          "fullscreenRequested": false,
+          "activeScreen": "screen-academy",
+          "activeText": "Академия OKO\n\nКурсы полного формата · официальные сертификат",
+          "consoleErrors": [
+            "TypeError: Failed to fetch\n    at http://127.0.0.1:8199/index.html:3720:2872\n    at Lr (http://127.0.0.1:8199/index.html:3720:9390)\n    at Y (http://127.0.0.1:8199/index.html:3720:9132)\n    at Di.sign"
+          ],
+          "shot": "oko-app/tools/audit-out/round-1/desktop__11-academy.png"
+        },
+        {
+          "route": "12-games",
+          "name": "Игры",
+          "errors": [],
+          "stepError": "Error: page.evaluate: TypeError: Cannot read properties of undefined (reading 's')\n    at gmLbDrift (http://127.0.0.1:8199/app.js:5411:5)\n    at showTab (http:/",
+          "overflowX": 0,
+          "offRight": [],
+          "clipped": [],
+          "underTop": [],
+          "underBottom": [],
+          "empty": false,
+          "midWordBreak": [],
+          "fullscreenRequested": false,
+          "activeScreen": "screen-games",
+          "activeText": "Рулетка OKO\nКрути колесо, каждая крутка даёт приз\n0\n2 500 ₽\n",
+          "consoleErrors": [
+            "TypeError: Failed to fetch\n    at http://127.0.0.1:8199/index.html:3720:2872\n    at Lr (http://127.0.0.1:8199/index.html:3720:9390)\n    at Y (http://127.0.0.1:8199/index.html:3720:9132)\n    at Di.sign"
+          ],
+          "shot": "oko-app/tools/audit-out/round-1/desktop__12-games.png"
+        },
+        {
+          "route": "13-ads",
+          "name": "Реклама",
+          "errors": [],
+          "overflowX": 0,
+          "offRight": [],
+          "clipped": [],
+          "underTop": [],
+          "underBottom": [],
+          "empty": false,
+          "midWordBreak": [],
+          "fullscreenRequested": false,
+          "activeScreen": "screen-ads",
+          "activeText": "Рекламный кабинет\nМЕТРИКИ LIVE\n0 ₽\nПОТРАЧЕНО\n0\nПОКАЗЫ\n0\nКЛИК",
+          "consoleErrors": [
+            "TypeError: Failed to fetch\n    at http://127.0.0.1:8199/index.html:3720:2872\n    at Lr (http://127.0.0.1:8199/index.html:3720:9390)\n    at Y (http://127.0.0.1:8199/index.html:3720:9132)\n    at Di.sign"
+          ],
+          "shot": "oko-app/tools/audit-out/round-1/desktop__13-ads.png"
+        },
+        {
+          "route": "14-notifs",
+          "name": "Уведомления",
+          "errors": [],
+          "overflowX": 0,
+          "offRight": [],
+          "clipped": [],
+          "underTop": [],
+          "underBottom": [],
+          "empty": false,
+          "midWordBreak": [],
+          "fullscreenRequested": false,
+          "activeScreen": "screen-feed",
+          "activeText": "Рекомендации\nПодписки\nПОКА ПУСТО\nСвежие посты закончились. О",
+          "consoleErrors": [
+            "TypeError: Failed to fetch\n    at http://127.0.0.1:8199/index.html:3720:2872\n    at Lr (http://127.0.0.1:8199/index.html:3720:9390)\n    at Y (http://127.0.0.1:8199/index.html:3720:9132)\n    at Di.sign"
+          ],
+          "shot": "oko-app/tools/audit-out/round-1/desktop__14-notifs.png"
+        },
+        {
+          "route": "15-search",
+          "name": "Поиск",
+          "errors": [],
+          "overflowX": 0,
+          "offRight": [],
+          "clipped": [],
+          "underTop": [],
+          "underBottom": [],
+          "empty": false,
+          "midWordBreak": [],
+          "fullscreenRequested": false,
+          "activeScreen": "screen-feed",
+          "activeText": "Рекомендации\nПодписки\nПОКА ПУСТО\nСвежие посты закончились. О",
+          "consoleErrors": [
+            "TypeError: Failed to fetch\n    at http://127.0.0.1:8199/index.html:3720:2872\n    at Lr (http://127.0.0.1:8199/index.html:3720:9390)\n    at Y (http://127.0.0.1:8199/index.html:3720:9132)\n    at Di.sign"
+          ],
+          "shot": "oko-app/tools/audit-out/round-1/desktop__15-search.png"
+        },
+        {
+          "route": "16-settings",
+          "name": "Настройки",
+          "errors": [],
+          "overflowX": 0,
+          "offRight": [],
+          "clipped": [],
+          "underTop": [],
+          "underBottom": [],
+          "empty": false,
+          "midWordBreak": [],
+          "fullscreenRequested": false,
+          "activeScreen": "screen-profile",
+          "activeText": "Д\nДаниэль\n@ktodaniel·в сети\n\nОснователь OKO. Медийность, кон",
+          "consoleErrors": [
+            "TypeError: Failed to fetch\n    at http://127.0.0.1:8199/index.html:3720:2872\n    at Lr (http://127.0.0.1:8199/index.html:3720:9390)\n    at Y (http://127.0.0.1:8199/index.html:3720:9132)\n    at Di.sign"
+          ],
+          "shot": "oko-app/tools/audit-out/round-1/desktop__16-settings.png"
+        },
+        {
+          "route": "17-wallet-hist",
+          "name": "История операций",
+          "errors": [],
+          "overflowX": 0,
+          "offRight": [],
+          "clipped": [],
+          "underTop": [],
+          "underBottom": [],
+          "empty": false,
+          "midWordBreak": [],
+          "fullscreenRequested": false,
+          "activeScreen": "screen-wallet",
+          "activeText": "OKO PAY\nДОСТУПНО\n2 500 ₽\n·· ·· ·· ··\n2630\nOKO-81572630\nПопол",
+          "consoleErrors": [
+            "TypeError: Failed to fetch\n    at http://127.0.0.1:8199/index.html:3720:2872\n    at Lr (http://127.0.0.1:8199/index.html:3720:9390)\n    at Y (http://127.0.0.1:8199/index.html:3720:9132)\n    at Di.sign"
+          ],
+          "shot": "oko-app/tools/audit-out/round-1/desktop__17-wallet-hist.png"
+        },
+        {
+          "route": "18-wallet-tr",
+          "name": "Переводы",
+          "errors": [],
+          "overflowX": 0,
+          "offRight": [],
+          "clipped": [],
+          "underTop": [],
+          "underBottom": [],
+          "empty": false,
+          "midWordBreak": [],
+          "fullscreenRequested": false,
+          "activeScreen": "screen-wallet",
+          "activeText": "OKO PAY\nДОСТУПНО\n2 500 ₽\n·· ·· ·· ··\n2216\nOKO-30912216\nПопол",
+          "consoleErrors": [
+            "TypeError: Failed to fetch\n    at http://127.0.0.1:8199/index.html:3720:2872\n    at Lr (http://127.0.0.1:8199/index.html:3720:9390)\n    at Y (http://127.0.0.1:8199/index.html:3720:9132)\n    at Di.sign"
+          ],
+          "shot": "oko-app/tools/audit-out/round-1/desktop__18-wallet-tr.png"
+        },
+        {
+          "route": "19-wallet-ex",
+          "name": "Обмен валют",
+          "errors": [],
+          "overflowX": 0,
+          "offRight": [],
+          "clipped": [],
+          "underTop": [],
+          "underBottom": [],
+          "empty": false,
+          "midWordBreak": [],
+          "fullscreenRequested": false,
+          "activeScreen": "screen-wallet",
+          "activeText": "OKO PAY\nДОСТУПНО\n2 500 ₽\n·· ·· ·· ··\n0685\nOKO-22220685\nПопол",
+          "consoleErrors": [
+            "TypeError: Failed to fetch\n    at http://127.0.0.1:8199/index.html:3720:2872\n    at Lr (http://127.0.0.1:8199/index.html:3720:9390)\n    at Y (http://127.0.0.1:8199/index.html:3720:9132)\n    at Di.sign"
+          ],
+          "shot": "oko-app/tools/audit-out/round-1/desktop__19-wallet-ex.png"
+        },
+        {
+          "route": "20-wallet-sec",
+          "name": "Безопасность",
+          "errors": [],
+          "overflowX": 0,
+          "offRight": [],
+          "clipped": [],
+          "underTop": [],
+          "underBottom": [],
+          "empty": false,
+          "midWordBreak": [],
+          "fullscreenRequested": false,
+          "activeScreen": "screen-wallet",
+          "activeText": "OKO PAY\nДОСТУПНО\n2 500 ₽\n·· ·· ·· ··\n8103\nOKO-40588103\nПопол",
+          "consoleErrors": [
+            "TypeError: Failed to fetch\n    at http://127.0.0.1:8199/index.html:3720:2872\n    at Lr (http://127.0.0.1:8199/index.html:3720:9390)\n    at Y (http://127.0.0.1:8199/index.html:3720:9132)\n    at Di.sign"
+          ],
+          "shot": "oko-app/tools/audit-out/round-1/desktop__20-wallet-sec.png"
+        }
+      ]
+    }
+  ]
+}

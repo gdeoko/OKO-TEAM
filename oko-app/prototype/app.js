@@ -26966,9 +26966,12 @@ function hqCrisisOpen(){
 const HQ_FEED_POOL = []  /* демо-данные удалены 09.08: 3D-штаб — источник только API */;
 const HQ_FEED_LABEL = {reg:'РЕГИСТРАЦИЯ', pay:'ПЛАТЁЖ', out:'ВЫВОД', deal:'СДЕЛКА', churn:'ОТПИСКА', mod:'МОДЕРАЦИЯ', ref:'ПАРТНЁРКА'};
 const HQ_FEED_NICKS = []  /* демо-данные удалены 09.08: 3D-штаб — источник только API */;
-const HQ_FEED_NAMES = ['Марина К.','Игорь В.','Алина Р.','Пётр С.','Анна Л.','Дмитрий О.','Ксения В.','Роман Т.','Ольга М.','Никита Ш.','Елена Д.'];
+const HQ_FEED_NAMES = [];  /* демо-имена удалены 09.08 */
 function hqFeedRandom(kind){
+  /* Шаблоны событий штаба вычищены 09.08: лента наполняется реальными
+     событиями. Без пула ничего не выдумываем. */
   const p = HQ_FEED_POOL.find(x=>x.k===kind) || HQ_FEED_POOL[0];
+  if(!p || !Array.isArray(p.tpl) || !p.tpl.length) return '';
   const t = p.tpl[Math.floor(Math.random()*p.tpl.length)];
   return t
     .replace('{nick}', HQ_FEED_NICKS[Math.floor(Math.random()*HQ_FEED_NICKS.length)])
@@ -34401,30 +34404,11 @@ function cpChatUnlocked(c){ return !!(c && CP.unlocked[c.id]); }
 function cpChatLocked(c){ const a = cpAcc(c); return a.type==='paid' && !cpChatUnlocked(c); }
 function cpChatSlug(c){ return String((c&&(c.nick||c.name))||'chat').toLowerCase().replace(/[^a-zа-я0-9_]/gi,'').replace(/ё/g,'е').slice(0,18) || 'chat'; }
 
-/* демо-чаты: закрытый платный клуб + приватная комната (реальные данные, не заглушки) */
-function cpSeedChats(){
-  if(typeof CHATS==='undefined' || !Array.isArray(CHATS)) return;
-  if(CHATS.some(c=>c.id==='cp-paid')) return;
-  CHATS.push({
-    id:'cp-paid', ava:'PRO', name:'OKO PRO · Закрытый клуб', kind:'channel', kindIcon:'crown',
-    nick:'okopro', cpType:'paid', cpPrice:490, online:true, time:'', unread:0,
-    preview:'Доступ по подписке · инсайды и разборы',
-    msgs:[
-      {kind:'sys', body:'Закрытый клуб OKO PRO — доступ открывается после оплаты'},
-      {in:1, t:'09:00', kind:'text', who:'Даниэль', body:'Внутри клуба: живые разборы кейсов, приватные стратегии продвижения и ранний доступ к новым фичам OKO.'},
-      {in:1, t:'09:02', kind:'voice', dur:'0:38', seed:5},
-      {in:1, t:'09:05', kind:'text', who:'Даниэль', body:'Каждую неделю — новый разбор канала участника с планом роста на 30 дней.'},
-    ]});
-  CHATS.push({
-    id:'cp-priv', ava:'VIP', name:'Приватная комната', kind:'group', kindIcon:'lock',
-    nick:'viproom', cpType:'private', online:false, time:'', unread:0,
-    preview:'Только по ссылке-приглашению',
-    msgs:[
-      {kind:'sys', body:'Приватный чат — попасть можно только по ссылке-приглашению'},
-      {in:1, t:'вчера', kind:'text', who:'Аня', body:'Скинула инвайт троим, остальным дам ссылку вручную.'},
-      {in:1, t:'вчера', kind:'text', who:'Аня', body:'Тут обсуждаем закрытые запуски — ничего наружу.'},
-    ]});
-}
+/* Стартовых демо-чатов больше нет (правка Даниэля 09.08).
+   Раньше в список добавлялись «OKO PRO · Закрытый клуб» и «Приватная комната»
+   с выдуманной перепиской. Платные клубы и приватные комнаты человек создаёт
+   сам — вся механика их отображения ниже осталась нетронутой. */
+function cpSeedChats(){ /* пусто: демо-чаты удалены */ }
 
 /* ---- бейджи/замки в списке чатов ---- */
 function cpPaintChatBadges(){
@@ -42360,6 +42344,7 @@ function st2InsertRow(){
   function livePush(){
     var view = document.getElementById('notifsView'); if(!view) return;
     if(!view.classList.contains('open')) return;
+    if(!LIVE_POOL.length) return;   /* пул вычищен 09.08 — событий из демо больше нет */
     var p = LIVE_POOL[Math.floor(Math.random()*LIVE_POOL.length)];
     var n = {id:nextId(), ic:p.ic, who:p.who, t:p.t, time:'только что', g:'Сегодня', unread:true, act:function(){}};
     n.cat = catOf(n);
@@ -43092,6 +43077,10 @@ function st2InsertRow(){
   ================================================================ */
   var globalT = null;
   function globalTick(){
+    /* Пул выдуманных уведомлений вычищен 09.08 — «живые» события приходят
+       только из Realtime. Пока пула нет, таймер просто ничего не показывает
+       (раньше здесь падало обращение к undefined). */
+    if(!LIVE_POOL.length){ globalT = setTimeout(globalTick, 60000); return; }
     if(!isSilent() && document.visibilityState !== 'hidden'){
       var p = LIVE_POOL[Math.floor(Math.random()*LIVE_POOL.length)];
       var n = {id:nextId(), ic:p.ic, who:p.who, t:p.t, time:'только что', g:'Сегодня', unread:true, act:function(){}};
@@ -48001,84 +47990,34 @@ let CH = (()=>{ try{ return JSON.parse(localStorage.getItem('oko-channels'))||nu
 function chSave(){ try{ localStorage.setItem('oko-channels', JSON.stringify(CH)); }catch(e){} }
 
 function chSeed(){
-  const mine = [
-    { id:'ch-own-1', name:'OKO Инсайды', desc:'Личный канал: как я строю бизнес внутри OKO. Разборы, цифры, кейсы — без воды.',
-      icon:'bolt', bg:0, type:'free', price:0, verified:true, subs:2140, reactions:true, discussions:true,
-      admins:[{name:'Марина К.',nick:'marina_k'}], gross:0,
-      members:chMockMembers(6), black:[],
-      posts:[
-        {txt:'Запустил платный канал внутри OKO — за первую неделю 68 подписчиков по 299 ₽. Расклад по цифрам ниже.', likes:184, views:5120, when:'2 ч', media:'poll'},
-        {txt:'Правило, которое изменило мой контент: снимай не «что умеешь», а «что у аудитории болит».', likes:97, views:3040, when:'вчера'},
-      ]},
-    { id:'ch-own-2', name:'Клуб роста · PRO', desc:'Закрытый платный клуб: ежедневные задания, живые разборы, чат участников и доступ к базе шаблонов. Первые 100 участников — по спец-цене.',
-      icon:'crown', bg:5, kind:'club', access:'closed', type:'paid', price:299, verified:true, subs:342, reactions:true, discussions:true,
-      admins:[{name:'Игорь В.',nick:'igor_v'},{name:'Алина Р.',nick:'alina_r'}], gross:61200,
-      members:chMockMembers(9), black:[{name:'Спам-бот 24',nick:'spam24'}],
-      posts:[
-        {txt:'Разбор недели: как участник клуба сделал 214 000 ₽ на одном запуске. Полная воронка внутри.', likes:220, views:1980, when:'4 ч', media:'circle-play'},
-        {txt:'Задание дня: собери оффер по формуле «результат + срок + гарантия». Скидывай в чат клуба.', likes:88, views:1240, when:'сегодня'},
-      ]},
-    { id:'ch-own-3', name:'Reels под ключ · курс', desc:'Авторский видео-курс: от идеи до вирусного ролика. 8 уроков, шаблоны, разбор твоих работ. Доступ навсегда.',
-      icon:'rocket', bg:3, type:'course', price:1490, verified:false, subs:57, reactions:true, discussions:false,
-      admins:[], gross:76140,
-      members:chMockMembers(5), black:[],
-      lessons:[
-        {id:'l1', title:'Введение: как устроен вирус', dur:'6:20'},
-        {id:'l2', title:'Хук за 3 секунды', dur:'8:05'},
-        {id:'l3', title:'Сценарий по формуле AIDA', dur:'7:40'},
-        {id:'l4', title:'Съёмка на телефон: свет и звук', dur:'9:15'},
-        {id:'l5', title:'Монтаж и караоке-субтитры', dur:'11:30'},
-        {id:'l6', title:'Музыка и звуковые акценты', dur:'6:50'},
-        {id:'l7', title:'Публикация и алгоритмы', dur:'8:20'},
-        {id:'l8', title:'Разбор ошибок и рост канала', dur:'10:10'},
-      ],
-      posts:[]},
-  ];
+  /* СТАРТОВЫЙ НАБОР КАНАЛОВ.
+     Правка Даниэля 09.08: «оставь только официальные чаты и каналы OKO,
+     остальное уже будут создавать люди». Убраны выдуманные авторские каналы
+     («Клуб роста · PRO», «Reels под ключ · курс», «Трафик и деньги»,
+     «Нейро-дизайн PRO», «Python с нуля») вместе с фейковыми подписчиками,
+     оборотами и отзывами.
+     Остаются два официальных канала OKO. Своих каналов у нового человека нет —
+     он создаёт их сам кнопкой «Создать канал». */
+  const mine = [];
+
   const disc = [
-    { id:'ch-disc-1', name:'Трафик и деньги', desc:'Платный канал про платный трафик: связки, креативы, окупаемость. Каждую неделю — свежая рабочая связка с цифрами и скринами кабинета.',
-      icon:'fire', bg:4, type:'paid', price:199, verified:true, subs:8420, reactions:true, discussions:true, owner:'Артём Долев', ownerNick:'artem_traffic',
-      posts:[
-        {txt:'Связка недели: Reels → бот → прогрев → продажа курса. ROI 340%. Полная схема и креативы для подписчиков.', likes:0, views:0, when:'1 ч', media:'poll'},
-        {txt:'Разбор: почему твои креативы не окупаются — 5 ошибок на конкретных примерах.', likes:0, views:0, when:'вчера'},
-        {txt:'Обновил таблицу связок за месяц: 12 рабочих, 4 выгоревших. Смотри в закрепе.', likes:0, views:0, when:'2 дня'},
-      ]},
-    { id:'ch-disc-2', name:'Нейро-дизайн PRO', desc:'Платный канал по AI-дизайну: Midjourney, nano-banana, обложки, оформление профиля. Промпты и исходники прикладываю к каждому посту.',
-      icon:'star', bg:8, type:'paid', price:249, verified:true, subs:5310, reactions:true, discussions:true, owner:'Kate Design', ownerNick:'kate_design',
-      posts:[
-        {txt:'10 промптов для обложек в фирменном стиле — забирай, тестируй, адаптируй под свой бренд.', likes:0, views:0, when:'3 ч', media:'photo'},
-        {txt:'Как за 5 минут собрать оформление профиля, которое продаёт. Разбор + исходники.', likes:0, views:0, when:'вчера'},
-      ]},
-    { id:'ch-disc-3', name:'Python с нуля · курс', desc:'Пошаговый видео-курс программирования: 10 уроков от переменных до первого бота. Практика после каждого урока, поддержка в чате.',
-      icon:'compass', bg:2, type:'course', price:990, verified:false, subs:1204, reactions:true, discussions:true, owner:'Дмитрий Код', ownerNick:'dmitry_code',
-      lessons:[
-        {id:'l1', title:'Установка и первая программа', dur:'7:00'},
-        {id:'l2', title:'Переменные и типы данных', dur:'9:30'},
-        {id:'l3', title:'Условия и циклы', dur:'11:00'},
-        {id:'l4', title:'Функции', dur:'10:20'},
-        {id:'l5', title:'Списки и словари', dur:'12:10'},
-        {id:'l6', title:'Работа с файлами', dur:'8:40'},
-        {id:'l7', title:'Модули и библиотеки', dur:'9:00'},
-        {id:'l8', title:'API и запросы', dur:'13:15'},
-        {id:'l9', title:'Первый Telegram-бот', dur:'15:40'},
-        {id:'l10', title:'Деплой и что дальше', dur:'10:05'},
-      ],
-      posts:[]},
-    { id:'ch-disc-4', name:'OKO Новости', desc:'Официальный канал обновлений OKO: релизы, фичи, розыгрыши. Бесплатно для всех.',
-      icon:'megaphone', bg:6, kind:'channel', access:'open', type:'free', price:0, verified:true, subs:48200, reactions:true, discussions:false, owner:'Команда OKO', ownerNick:'okonews',
-      posts:[
-        {txt:'Вышли платные каналы и курсы: создавай, продавай, зарабатывай. Комиссия OKO всего 10%.', likes:1240, views:41000, when:'1 ч', media:'circle-play'},
-        {txt:'Розыгрыш PRO-подписки среди активных авторов недели. Условия внутри.', likes:820, views:33000, when:'вчера'},
-      ]},
-    { id:'ch-disc-5', name:'Инсайдеры OKO', desc:'Закрытый бесплатный канал для активных участников: ранний доступ к новым фичам, закрытые созвоны с командой и прямое влияние на дорожную карту. Вступление — по заявке, бесплатно.',
-      icon:'star', bg:2, kind:'channel', access:'closed', type:'free', price:0, verified:true, subs:1870, reactions:true, discussions:true, owner:'Команда OKO', ownerNick:'oko_insiders',
-      posts:[
-        {txt:'Открыли ранний доступ к рекламному кабинету для инсайдеров. Тестируйте и пишите фидбек в обсуждениях.', likes:0, views:0, when:'2 ч', media:'photo'},
-        {txt:'Созвон с командой в пятницу 19:00 МСК. Разберём дорожную карту и ответим на вопросы.', likes:0, views:0, when:'вчера'},
-      ]},
+    { id:'ch-disc-4', name:'OKO Новости',
+      desc:'Официальный канал обновлений OKO: релизы, новые возможности, важное для авторов. Бесплатно для всех.',
+      icon:'megaphone', bg:6, kind:'channel', access:'open', type:'free', price:0,
+      verified:true, official:true, subs:0, reactions:true, discussions:false,
+      owner:'Команда OKO', ownerNick:'okonews', posts:[] },
+
+    { id:'ch-disc-5', name:'Инсайдеры OKO',
+      desc:'Закрытый бесплатный канал для активных участников: ранний доступ к новым возможностям, созвоны с командой и влияние на дорожную карту. Вступление по заявке.',
+      icon:'star', bg:2, kind:'channel', access:'closed', type:'free', price:0,
+      verified:true, official:true, subs:0, reactions:true, discussions:true,
+      owner:'Команда OKO', ownerNick:'oko_insiders', posts:[] },
   ];
-  return { v:2, seq:0, pseq:0, mine, disc, sub:{}, prog:{}, likes:{}, cmt:{} };
+
+  return { v:3, seq:0, pseq:0, mine, disc, sub:{}, prog:{}, likes:{}, cmt:{} };
 }
-if(!CH || !CH.v){ CH = chSeed(); chSave(); }
+/* v3 = чистка демо-каналов 09.08: старые сохранённые каталоги пересобираем. */
+if(!CH || !CH.v || CH.v < 3){ CH = chSeed(); chSave(); }
 CH.sub = CH.sub||{}; CH.prog = CH.prog||{}; CH.likes = CH.likes||{}; CH.votes = CH.votes||{}; CH.notify = CH.notify||{};
 CH.cmt = CH.cmt||{}; CH.pseq = CH.pseq||0;   // cmt: комментарии по стабильному id поста; pseq: счётчик id постов
 /* стабильный id поста (не зависит от позиции в массиве — лайки/голоса/комменты не «съезжают» после публикации) */

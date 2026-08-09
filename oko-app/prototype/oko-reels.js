@@ -323,6 +323,10 @@ var CSS = [
 '  animation:okr-mq 18s linear infinite;animation-play-state:paused}',
 '.okr-slide.is-on .okr-mq{animation-play-state:running}',
 '.okr-mq i{font-style:normal;padding-right:34px}',
+/* название звука влезло целиком — бегущую строку не гоняем, дубль и маску убираем */
+'.okr-mq.okr-static{animation:none!important;will-change:auto;max-width:100%}',
+'.okr-mq.okr-static i{padding-right:0;overflow:hidden;text-overflow:ellipsis}',
+'.okr-mqw.okr-fit{flex:0 1 auto;-webkit-mask-image:none;mask-image:none}',
 '@keyframes okr-mq{from{transform:translateX(0)}to{transform:translateX(-50%)}}',
 /* мини-эквалайзер */
 '.okr-eq{display:inline-flex;align-items:flex-end;gap:2px;height:12px;flex:none}',
@@ -377,6 +381,8 @@ var CSS = [
 '  box-shadow:0 8px 26px rgba(154,255,0,.3);transition:transform .12s}',
 '.okr-empty button:active{transform:scale(.95)}',
 '.okr-empty button:focus-visible{outline:2px solid #fff;outline-offset:3px}',
+/* на пустом экране прогресс и звук не нужны — остаётся только крестик */
+'.okr.okr-blank .okr-prog,.okr.okr-blank .okr-snd{display:none}',
 
 /* базовая геометрия иконок спрайта */
 '.okr-i{width:1.25em;height:1.25em;fill:none;stroke:currentColor;stroke-width:7;',
@@ -389,8 +395,12 @@ var CSS = [
 /* ---- планшет / ПК: колонка 9:16 по центру на затемнённом фоне ---- */
 '@media (min-width:760px) and (min-height:520px){',
 '  .okr{background:rgba(0,0,0,.93);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);padding:22px}',
-'  .okr-stage{width:min(calc((100vh - 44px) * 0.5625),430px);height:min(calc(100vh - 44px),820px);',
+'  .okr-stage{height:min(100%,820px);width:auto;aspect-ratio:9/16;max-width:calc(100vw - 44px);',
 '    border-radius:20px;box-shadow:0 34px 90px rgba(0,0,0,.65),0 0 0 1px rgba(255,255,255,.08)}',
+/* запасной вариант для браузеров без aspect-ratio */
+'  @supports not (aspect-ratio:9/16){',
+'    .okr-stage{width:min(calc((100vh - 44px) * 0.5625),430px);height:min(calc(100vh - 44px),764px)}',
+'  }',
 '  .okr-arrows{display:flex}',
 '  .okr-rail{right:10px}',
 '  .okr-info{left:16px;right:84px}',
@@ -611,6 +621,7 @@ function mount(i){
   if(!c) return;
   el.innerHTML = slideInner(c);
   el.dataset.mounted = '1';
+  fitMarquee(el);
   var v = el.querySelector('video');
   if(v){
     v.muted = !S.sound;
@@ -635,6 +646,26 @@ function mount(i){
       }catch(e2){}
     });
   }
+}
+
+/* бегущая строка звука нужна, только если название не влезает целиком */
+function fitMarquee(el){
+  try{
+    var mq = el.querySelector('.okr-mq');
+    if(!mq) return;
+    requestAnimationFrame(function(){
+      try{
+        var wrap = mq.parentNode, one = mq.firstElementChild;
+        if(!wrap || !one) return;
+        var textW = one.offsetWidth - 34;          /* минус хвостовой отступ между копиями */
+        if(textW <= wrap.clientWidth){
+          mq.classList.add('okr-static');
+          wrap.classList.add('okr-fit');       /* без маски — первая буква не должна таять */
+          if(mq.children[1]) mq.children[1].remove();
+        }
+      }catch(e){}
+    });
+  }catch(e){}
 }
 
 function unmount(i){
@@ -1178,6 +1209,7 @@ function open(startId){
       var e0 = S.root.querySelector('.okr-empty');
       if(e0) e0.remove();
       S.stage.insertAdjacentHTML('beforeend', emptyHTML());
+      S.root.classList.add('okr-blank');
       showRoot();
       setProg(0, true);
       var fb = S.root.querySelector('.okr-to-feed');
@@ -1187,6 +1219,7 @@ function open(startId){
 
     var old = S.root.querySelector('.okr-empty');
     if(old) old.remove();
+    S.root.classList.remove('okr-blank');
 
     /* каркас слайдов: все существуют (высота ленты честная), контент — по окну */
     var h = '';
@@ -1264,7 +1297,7 @@ function close(){
 
     S.root.hidden = true;
     S.root.setAttribute('aria-hidden', 'true');
-    S.root.classList.remove('okr-in', 'okr-paused', 'okr-dragging');
+    S.root.classList.remove('okr-in', 'okr-paused', 'okr-dragging', 'okr-blank');
     S.root.style.background = '';
     if(S.stage) S.stage.style.transform = '';
     document.documentElement.classList.remove('okr-lock');
@@ -1408,4 +1441,6 @@ if(document.readyState === 'loading'){
        (var(--oko-safe-top) / var(--oko-safe-bottom)).
    16. Ошибка видео. Подсунуть битый src — слайд падает на постер или на
        фирменный градиент, подпись остаётся внизу мелкой, ничего не ломается.
+   17. Строка звука. Короткое название стоит на месте (без дубля и без
+       растворённой первой буквы), длинное — едет бегущей строкой.
    ============================================================================ */

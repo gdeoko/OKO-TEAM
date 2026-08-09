@@ -17,7 +17,8 @@ const CORE_ASSETS = [
   '/app.js',            /* split-bundle: модульный JS (defer) */
   '/app.css',           /* split-bundle: модульный CSS (non-blocking) */
   '/oko-v2.css',        /* слой полировки v2: адаптация, типографика, TG-инсеты */
-  '/oko-v2.js',         /* слой полировки v2: 3D-запуск, Reels, чаты, воронки */
+  '/oko-v2.js',         /* слой полировки v2: 3D-запуск, чаты, воронки */
+  '/oko-reels.js',      /* вертикальный видео-плеер «Клипы» */
   '/offline.html',
   '/oko-manifest.json',
   '/oko-icon-192.png',

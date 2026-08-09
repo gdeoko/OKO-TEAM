@@ -63,6 +63,10 @@ const ROUTES = [
   { id: '18-wallet-tr',  name: 'Переводы',             step: `okoSkipAuth(); showTab('wallet'); typeof w2Open==='function'&&w2Open('transfers');` },
   { id: '19-wallet-ex',  name: 'Обмен валют',          step: `okoSkipAuth(); showTab('wallet'); typeof w2Open==='function'&&w2Open('exchange');` },
   { id: '20-wallet-sec', name: 'Безопасность',         step: `okoSkipAuth(); showTab('wallet'); typeof w2Open==='function'&&w2Open('security');` },
+  { id: '21-clips',      name: 'Клипы (Reels)',        wait: 1400, step: `okoSkipAuth(); showTab('feed'); typeof okoOpenClips==='function'&&okoOpenClips();` },
+  { id: '22-tour',       name: 'Сторис основателя',    wait: 1600, step: `okoSkipAuth(); typeof trStoriesStart==='function'&&trStoriesStart(null);` },
+  { id: '23-channels',   name: 'Каналы',               step: `okoSkipAuth(); typeof chOpen==='function'&&chOpen('list');` },
+  { id: '24-profile-pub',name: 'Публичный профиль',    step: `okoSkipAuth(); typeof psOpenProfile==='function'&&psOpenProfile('Поддержка OKO');` },
 ];
 
 /* Скрипт, который выполняется ДО загрузки страницы каждого прогона. */
@@ -75,7 +79,15 @@ function initScript(mode) {
       var s=document.getElementById('splash'); if(s){s.classList.add('gone'); s.style.display='none';}
       var o=document.getElementById('onboard'); if(o){o.classList.add('hidden'); o.style.display='none';}
     };
-    try{ localStorage.setItem('oko-onboard-done','1'); }catch(e){}
+    try{
+      localStorage.setItem('oko-onboard-done','1');
+      /* Первый заход показывает сторис основателя и тур — это штатное
+         поведение. Для обхода внутренних экранов помечаем их просмотренными,
+         иначе тур перекрывает всё. Сам тур проверяется отдельным маршрутом. */
+      localStorage.setItem('oko-stories-seen','1');
+      localStorage.setItem('oko-tour-done','1');
+      localStorage.setItem('oko-tour','1');
+    }catch(e){}
 
     ${mode.telegram ? `
     /* ---- Эмуляция Telegram Mini App ---- */
@@ -197,7 +209,12 @@ const PROBE = `(() => {
        домашнего индикатора высотой safeAreaInset.bottom. */
     if (cs.position === 'fixed' || cs.position === 'sticky') {
       if (r.top < -1 && r.bottom > 2) out.underTop.push({ el: label(el), top: Math.round(r.top) });
-      if (tg && r.bottom > VH - BOT + 1 && r.top < VH - 2 && cs.zIndex !== 'auto' && +cs.zIndex > 40)
+      /* Полноэкранная подложка (inset:0) законно занимает весь вьюпорт —
+         это фон оверлея, а не контент. Считаем дефектом только то, что
+         НАЧИНАЕТСЯ выше нижней полосы и в неё заезжает. */
+      const fullBleed = r.top <= 1 && r.bottom >= VH - 1;
+      if (tg && !fullBleed && r.bottom > VH - BOT + 1 && r.top < VH - 2 &&
+          cs.zIndex !== 'auto' && +cs.zIndex > 40)
         out.underBottom.push({ el: label(el), bottom: Math.round(r.bottom) });
     }
   }

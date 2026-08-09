@@ -1,0 +1,69 @@
+{
+  "name": "OKO — экосистема роста",
+  "short_name": "OKO",
+  "description": "Мессенджер, лента, Биржа, Академия и инструменты роста — в одном приложении.",
+  "id": "/",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "display_override": ["window-controls-overlay", "standalone"],
+  "orientation": "portrait",
+  "theme_color": "#0d0d0d",
+  "background_color": "#0d0d0d",
+  "lang": "ru",
+  "dir": "ltr",
+  "categories": ["business", "social", "productivity"],
+  "prefer_related_applications": false,
+  "icons": [
+    { "src": "/oko-icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "/oko-icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
+    { "src": "/oko-maskable-192.png", "sizes": "192x192", "type": "image/png", "purpose": "maskable" },
+    { "src": "/oko-maskable-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ],
+  "shortcuts": [
+    {
+      "name": "Лента",
+      "short_name": "Лента",
+      "description": "Умная лента постов и историй",
+      "url": "/?tab=feed",
+      "icons": [{ "src": "/oko-icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" }]
+    },
+    {
+      "name": "Чаты",
+      "short_name": "Чаты",
+      "description": "Мессенджер, звонки и каналы",
+      "url": "/?tab=chats",
+      "icons": [{ "src": "/oko-icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" }]
+    },
+    {
+      "name": "Кошелёк",
+      "short_name": "Кошелёк",
+      "description": "Баланс, платежи, партнёрка",
+      "url": "/?tab=wallet",
+      "icons": [{ "src": "/oko-icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" }]
+    },
+    {
+      "name": "Академия",
+      "short_name": "Академия",
+      "description": "Курсы, уроки, сертификаты",
+      "url": "/?tab=academy",
+      "icons": [{ "src": "/oko-icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" }]
+    }
+  ],
+  "screenshots": [
+    {
+      "src": "/oko-icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "form_factor": "narrow",
+      "label": "OKO — стартовый экран"
+    },
+    {
+      "src": "/oko-icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "form_factor": "narrow",
+      "label": "OKO — экосистема роста"
+    }
+  ]
+}
