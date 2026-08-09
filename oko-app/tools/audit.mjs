@@ -18,6 +18,8 @@
 import { chromium } from 'playwright-core';
 import fs from 'node:fs/promises';
 import path from 'node:path';
+import crypto from 'node:crypto';
+import { CLEAN_START, CLOSE_OVERLAYS, OVERLAY_VISIBLE } from './clean-start.mjs';
 
 const args = Object.fromEntries(
   process.argv.slice(2).join(' ').split('--').filter(Boolean)
@@ -76,22 +78,13 @@ const ROUTES = [
 /* Скрипт, который выполняется ДО загрузки страницы каждого прогона. */
 function initScript(mode) {
   return `
-    /* Пропуск экрана входа для внутренних маршрутов */
-    window.okoSkipAuth = function(){
-      try{ localStorage.setItem('oko-auth','tg'); }catch(e){}
-      var a=document.getElementById('authScreen'); if(a){a.classList.add('hidden'); a.style.display='none';}
-      var s=document.getElementById('splash'); if(s){s.classList.add('gone'); s.style.display='none';}
-      var o=document.getElementById('onboard'); if(o){o.classList.add('hidden'); o.style.display='none';}
-    };
-    try{
-      localStorage.setItem('oko-onboard-done','1');
-      /* Первый заход показывает сторис основателя и тур — это штатное
-         поведение. Для обхода внутренних экранов помечаем их просмотренными,
-         иначе тур перекрывает всё. Сам тур проверяется отдельным маршрутом. */
-      localStorage.setItem('oko-stories-seen','1');
-      localStorage.setItem('oko-tour-done','1');
-      localStorage.setItem('oko-tour','1');
-    }catch(e){}
+    /* Первый заход показывает сторис, тур и «Знакомство» — это штатное
+       поведение приложения, но для обхода внутренних экранов всё это надо
+       пометить просмотренным, иначе оно перекроет собой проверяемый экран.
+       Список ключей — общий для всех проверок, см. clean-start.mjs: раньше
+       он был копией в каждом файле, и появление oko-onb2.js со своим ключом
+       незаметно превратило аудит в проверку одного и того же онбординга. */
+    ${CLEAN_START}
 
     ${mode.telegram ? `
     /* ---- Эмуляция Telegram Mini App ---- */
@@ -295,6 +288,17 @@ async function main() {
         }
         if (mode.telegram) await page.evaluate(TG_CHROME);
 
+        /* Перед замером снимаем всё, что могло всплыть поверх экрана:
+           «Знакомство», тур, сторис, попап. Иначе меряется не тот экран —
+           именно так аудит 36 проверил онбординг 33 раза вместо кошелька,
+           клипов, каналов и настроек, и отрапортовал «0 замечаний». */
+        rep.снятоПоверх = await page.evaluate(CLOSE_OVERLAYS).catch(() => []);
+        if (rep.снятоПоверх.length) await page.waitForTimeout(250);
+
+        /* Если что-то всё равно закрывает больше 40% экрана — замер
+           недействителен, и об этом надо сказать вслух, а не молча зачесть. */
+        rep.экранПодменён = await page.evaluate(OVERLAY_VISIBLE).catch(() => '');
+
         const probe = await page.evaluate(PROBE);
         Object.assign(rep, probe);
         rep.consoleErrors = consoleErrors.slice(0, 6);
@@ -321,6 +325,7 @@ async function main() {
         rep.empty ? 'EMPTY' : '',
         rep.consoleErrors?.length ? `err=${rep.consoleErrors.length}` : '',
         rep.fatal ? 'FATAL' : '',
+        rep.экранПодменён ? `ПОДМЕНЁН ${rep.экранПодменён}` : '',
       ].filter(Boolean).join(' ');
       console.log(`${mode.id.padEnd(8)} ${route.id.padEnd(16)} ${flags || 'ok'}`);
     }
@@ -354,6 +359,25 @@ async function main() {
   console.log(`  ошибки в коде:      ${other}`);
   console.log(`  бэкенд недоступен:  ${backend} (ожидаемо: api.php только на VPS)`);
   for (const [msg, n] of [...otherMsgs.entries()].slice(0, 8)) console.log(`    ${n}× ${msg}`);
+
+  /* --- одинаковые кадры = экран не открылся --------------------------------
+     Самая коварная поломка проверки: маршрут не сработал, поверх остался
+     прошлый экран или оболочка, замеры сняты с него и все зелёные. Ловится
+     только сверкой самих картинок. Аудит 36 так и прошёл: в «десктопе»
+     16 кадров из 24 были одной и той же картинкой. */
+  const кадры = new Map();
+  for (const f of (await fs.readdir(OUT)).filter(f => f.endsWith('.png'))) {
+    const h = crypto.createHash('md5').update(await fs.readFile(path.join(OUT, f))).digest('hex');
+    if (!кадры.has(h)) кадры.set(h, []);
+    кадры.get(h).push(f);
+  }
+  const повторы = [...кадры.values()].filter(g => g.length > 1);
+  const вПовторах = повторы.reduce((n, g) => n + g.length, 0);
+  console.log(`  одинаковых кадров:  ${вПовторах}${вПовторах ? '   ← эти экраны НЕ открылись, замеры по ним недействительны' : ''}`);
+  for (const g of повторы.sort((a, b) => b.length - a.length).slice(0, 5)) {
+    console.log(`    ${g.length}× ${g.slice(0, 4).join(', ')}${g.length > 4 ? ' …' : ''}`);
+  }
+
   console.log(`  отчёт: ${path.join(OUT, 'report.json')}`);
 }
 
