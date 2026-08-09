@@ -331,14 +331,30 @@ async function main() {
   await browser.close();
   await fs.writeFile(path.join(OUT, 'report.json'), JSON.stringify(report, null, 2));
 
-  /* сводка */
-  let issues = 0;
+  /* Сводка. Вёрстку и шум консоли считаем ОТДЕЛЬНО: локально всегда падает
+     запрос к api.php (PHP-бэкенд живёт только на VPS), и раньше эти сотни
+     одинаковых 404 подмешивались в общее число — выходило «332 замечания»
+     при нулевых дефектах вёрстки. Теперь видно, что именно чинить. */
+  let layout = 0, fatal = 0, backend = 0, other = 0;
+  const otherMsgs = new Map();
   for (const m of report.modes) for (const r of m.routes) {
-    issues += (r.overflowX > 0 ? 1 : 0) + (r.offRight?.length || 0) + (r.clipped?.length || 0) +
-              (r.underTop?.length || 0) + (r.underBottom?.length || 0) + (r.empty ? 1 : 0) +
-              (r.fatal ? 1 : 0) + (r.consoleErrors?.length || 0);
+    layout += (r.overflowX > 0 ? 1 : 0) + (r.offRight?.length || 0) + (r.clipped?.length || 0) +
+              (r.underTop?.length || 0) + (r.underBottom?.length || 0) +
+              (r.midWordBreak?.length || 0) + (r.empty ? 1 : 0);
+    if (r.fatal) fatal++;
+    for (const e of (r.consoleErrors || [])) {
+      const s = String(e);
+      if (/api\.php|Failed to fetch|ERR_CONNECTION|404 \(File not found\)/i.test(s)) backend++;
+      else { other++; otherMsgs.set(s.slice(0, 120), (otherMsgs.get(s.slice(0, 120)) || 0) + 1); }
+    }
   }
-  console.log(`\nРАУНД ${ROUND}: всего замечаний ${issues}. Отчёт: ${path.join(OUT, 'report.json')}`);
+  console.log(`\nРАУНД ${ROUND}`);
+  console.log(`  вёрстка:            ${layout}`);
+  console.log(`  падения маршрутов:  ${fatal}`);
+  console.log(`  ошибки в коде:      ${other}`);
+  console.log(`  бэкенд недоступен:  ${backend} (ожидаемо: api.php только на VPS)`);
+  for (const [msg, n] of [...otherMsgs.entries()].slice(0, 8)) console.log(`    ${n}× ${msg}`);
+  console.log(`  отчёт: ${path.join(OUT, 'report.json')}`);
 }
 
 main().catch(e => { console.error(e); process.exit(1); });

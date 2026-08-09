@@ -832,7 +832,7 @@ function pageEntity(ent, nav){
     ? '<div class="soc-stats">' +
         '<div class="soc-stat" id="socStatSubs"><b>' + FMT(subs) + '</b><small>подписчиков</small></div>' +
         '<div class="soc-stat" id="socStatPosts"><b>' + FMT(posts.length) + '</b><small>публикаций</small></div>' +
-        '<div class="soc-stat" id="socStatReels"><b>' + FMT(reels.length) + '</b><small>роликов</small></div>' +
+        '<div class="soc-stat" id="socStatReels"><b>' + FMT(reels.length) + '</b><small>клипов</small></div>' +
       '</div>'
     : '';
 
@@ -893,7 +893,7 @@ function pageEntity(ent, nav){
         '<button class="soc-tab ' + (tab === 'posts' ? 'on' : '') + '" data-a="tab" data-v="posts" type="button">' +
           SI('feed') + 'Посты <i>' + posts.length + '</i></button>' +
         '<button class="soc-tab ' + (tab === 'reels' ? 'on' : '') + '" data-a="tab" data-v="reels" type="button">' +
-          SI('clips') + 'Ролики <i>' + reels.length + '</i></button>' +
+          SI('clips') + 'Клипы <i>' + reels.length + '</i></button>' +
       '</div>'
     : '';
 
@@ -955,16 +955,16 @@ function postsHtml(ent, posts){
 function reelsHtml(ent, reels){
   if(!reels.length){
     return '<div class="soc-empty">' + SI('clips') +
-      '<p>Роликов пока нет</p><small>' +
-      (ent.owned ? 'Нажми «Опубликовать» и выбери формат 9:16 или 16:9 — ролик встанет в эту сетку, в ленту рекомендаций и в плеер клипов.'
-                 : 'Когда автор выложит ролик, он появится в этой сетке.') +
+      '<p>Клипов пока нет</p><small>' +
+      (ent.owned ? 'Нажми «Опубликовать» и выбери формат 9:16 или 16:9 — клип встанет в эту сетку, в ленту рекомендаций и в плеер клипов.'
+                 : 'Когда автор выложит клип, он появится в этой сетке.') +
       '</small></div>';
   }
   var sorted = reels.slice().sort(function(a, b){ return (b.ts || 0) - (a.ts || 0); });
   return '<div class="soc-reels">' + sorted.map(function(p){
     var cover = p.cover ? ' style="background-image:url(' + E(p.cover) + ')"' : '';
     return '<button class="soc-reel" data-a="reel" data-v="' + E(p.id || '') + '" type="button" ' +
-      'aria-label="Ролик ' + E(p.reel.ratio) + '">' +
+      'aria-label="Клип ' + E(p.reel.ratio) + '">' +
       '<span class="soc-reel-c"' + cover + '></span>' +
       '<span class="soc-reel-sh"></span>' +
       '<span class="soc-reel-r">' + E(p.reel.ratio) + '</span>' +
@@ -1010,7 +1010,7 @@ function pagePublish(ent){
         '<input type="file" id="socPubVideo" accept="video/*"></label>' +
       '<div style="height:8px"></div>' +
       '<label class="soc-file">' + SI('photo') +
-        '<span>' + (PUB.cover ? 'Обложка выбрана — заменить' : 'Обложка ролика') + '</span>' +
+        '<span>' + (PUB.cover ? 'Обложка выбрана — заменить' : 'Обложка клипа') + '</span>' +
         '<input type="file" id="socPubCover" accept="image/*"></label>'
     : '<label class="soc-file">' + SI('photo') +
         '<span>' + (PUB.cover ? 'Фото выбрано — заменить' : 'Фото к посту') + '</span>' +
@@ -1020,16 +1020,16 @@ function pagePublish(ent){
     '<div class="soc-sec">' + SI('bolt') + 'Формат публикации</div>' +
     '<div class="soc-fmt" id="socPubFmt">' +
       '<button data-a="fmt" data-v="9:16" class="' + (PUB.fmt === '9:16' ? 'on' : '') + '" type="button">' +
-        SI('ratio-916') + 'Ролик 9:16</button>' +
+        SI('ratio-916') + 'Клип 9:16</button>' +
       '<button data-a="fmt" data-v="16:9" class="' + (PUB.fmt === '16:9' ? 'on' : '') + '" type="button">' +
-        SI('ratio-169') + 'Ролик 16:9</button>' +
+        SI('ratio-169') + 'Клип 16:9</button>' +
       '<button data-a="fmt" data-v="post" class="' + (PUB.fmt === 'post' ? 'on' : '') + '" type="button">' +
         SI('feed') + 'Пост</button>' +
     '</div>' +
 
-    '<label class="soc-lab" for="socPubText">' + (isReel ? 'Подпись к ролику' : 'Текст поста') + '</label>' +
+    '<label class="soc-lab" for="socPubText">' + (isReel ? 'Подпись к клипу' : 'Текст поста') + '</label>' +
     '<textarea class="soc-ta" id="socPubText" maxlength="900" placeholder="' +
-      (isReel ? 'О чём ролик — коротко и по делу' : 'Что нового? Поделись пользой с подписчиками') +
+      (isReel ? 'О чём клип — коротко и по делу' : 'Что нового? Поделись пользой с подписчиками') +
       '">' + E(PUB.text) + '</textarea>' +
 
     '<div class="soc-sec">' + SI('photo') + (isReel ? 'Видео и обложка' : 'Фото') + '</div>' +
@@ -1041,7 +1041,7 @@ function pagePublish(ent){
       SI('send') + 'Опубликовать</button>' +
     '<div class="soc-note">' +
       (isReel
-        ? 'Ролик встанет в раздел «Ролики» этой страницы, в ленту рекомендаций OKO и в плеер клипов. Нужно приложить видео или обложку — пустой ролик не публикуем.'
+        ? 'Клип встанет в раздел «Клипы» этой страницы, в ленту рекомендаций OKO и в плеер клипов. Нужно приложить видео или обложку — пустой клип не публикуем.'
         : 'Пост встанет в раздел «Посты» этой страницы и в ленту рекомендаций OKO.') +
     '</div>';
 
@@ -1114,7 +1114,7 @@ function publish(){
   if(!ent || !ent.owned){ T('Нет прав на публикацию'); return false; }
   var isReel = (PUB.fmt === '9:16' || PUB.fmt === '16:9');
   var txt = String(PUB.text || '').trim();
-  if(isReel && !PUB.cover && !PUB.video){ T('Приложи видео или обложку ролика'); return false; }
+  if(isReel && !PUB.cover && !PUB.video){ T('Приложи видео или обложку клипа'); return false; }
   if(!isReel && !txt && !PUB.cover){ T('Добавь текст или фото'); return false; }
 
   var item = {
@@ -1141,7 +1141,7 @@ function publish(){
   var t = top_(); t.tab = wasReel ? 'reels' : 'posts';
   render();
   T(wasReel
-    ? 'Ролик опубликован: раздел «Ролики», лента рекомендаций и клипы'
+    ? 'Клип опубликован: раздел «Клипы», лента рекомендаций и плеер клипов'
     : 'Пост опубликован: раздел «Посты» и лента рекомендаций');
   H('success');
   return true;
@@ -1207,7 +1207,7 @@ function decorateFeed(){
 var CRE = { kind: 'channel', name: '', desc: '', access: 'open', price: 0, avatar: null };
 
 var CREATE_KINDS = [
-  ['channel', 'megaphone', 'Канал', 'Лента постов и роликов. Публикует владелец, читают все.'],
+  ['channel', 'megaphone', 'Канал', 'Лента постов и клипов. Публикует владелец, читают все.'],
   ['chat',    'users',     'Чат',   'Общая беседа: пишут все участники, роли и модерация.'],
   ['club',    'crown',     'Клуб',  'Супергруппа: роли, права, темы, закреп, вход по ссылке.'],
   ['course',  'circle-play', 'Курс', 'Уроки с прогрессом. Всегда закрытый, доступ после оплаты.']
@@ -1256,7 +1256,7 @@ function pageCreate(ent, arg){
     '<div style="height:18px"></div>' +
     '<button class="soc-btn" id="socCrGo" data-a="crgo" type="button"' + (CRE.name.trim() ? '' : ' disabled') + '>' +
       SI('plus') + 'Создать</button>' +
-    '<div class="soc-note">После создания откроется страница сущности: подписчики, посты, ролики, ссылка и приглашения.' +
+    '<div class="soc-note">После создания откроется страница сущности: подписчики, посты, клипы, ссылка и приглашения.' +
       (CRE.kind === 'club' ? ' У клуба сразу будут роли, права, темы и закреп — как в супергруппе Telegram.' : '') + '</div>';
 
   return {
@@ -1382,7 +1382,7 @@ function pageManage(ent){
       seg('permwrite', c.perms.write, [['all', 'Все'], ['admins', 'Админы']]) +
       '<div class="soc-row"><div class="soc-row-b"><b>Кто звонит</b><small>Голосовые и видеозвонки внутри</small></div></div>' +
       seg('permcall', c.perms.call, [['all', 'Все'], ['admins', 'Админы'], ['off', 'Выключено']]) +
-      '<div class="soc-row" style="border-bottom:0"><div class="soc-row-b"><b>Кто публикует</b><small>Посты и ролики 9:16 / 16:9</small></div></div>' +
+      '<div class="soc-row" style="border-bottom:0"><div class="soc-row-b"><b>Кто публикует</b><small>Посты и клипы 9:16 / 16:9</small></div></div>' +
       seg('permpub', c.perms.publish, [['all', 'Все'], ['admins', 'Админы']]) +
     '</div>' +
 
@@ -1703,7 +1703,7 @@ function act(a, v, el){
         try{ if(typeof showTab === 'function') showTab('feed'); }catch(e){}
         try{ window.okoReels.open(r.feedId); }catch(e){}
       }else{
-        T('Ролик ещё не попал в плеер — обнови ленту');
+        T('Клип ещё не попал в плеер — обнови ленту');
       }
       break;
     }
@@ -1941,7 +1941,7 @@ function myBlockHtml(){
     '<div class="soc-me-stats">' +
       '<button class="soc-me-stat" data-my="subs" type="button"><b>' + FMT(subs) + '</b><small>подписчиков</small></button>' +
       '<button class="soc-me-stat" data-my="posts" type="button"><b>' + FMT(posts.length) + '</b><small>публикаций</small></button>' +
-      '<button class="soc-me-stat" data-my="reels" type="button"><b>' + FMT(reels.length) + '</b><small>роликов</small></button>' +
+      '<button class="soc-me-stat" data-my="reels" type="button"><b>' + FMT(reels.length) + '</b><small>клипов</small></button>' +
     '</div>' +
     /* «Опубликовать» — главное действие и самое длинное слово: в колонке
        шириной 114px оно рвалось как «Опубли/ковать». Даём ему всю ширину,
