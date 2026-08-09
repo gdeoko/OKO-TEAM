@@ -1,0 +1,1867 @@
+{
+  "round": "3",
+  "base": "http://127.0.0.1:8291/index.html",
+  "at": "2026-08-09T08:06:23.568Z",
+  "viewports": [
+    {
+      "id": "phone",
+      "label": "Телефон 390×844",
+      "screens": [
+        {
+          "id": "gm-01-main",
+          "section": "Игры",
+          "name": "Рулетка · главный",
+          "issues": []
+        },
+        {
+          "id": "gm-02-odds",
+          "section": "Игры",
+          "name": "Таблица шансов",
+          "issues": []
+        },
+        {
+          "id": "gm-03-stats",
+          "section": "Игры",
+          "name": "Твоя статистика",
+          "issues": []
+        },
+        {
+          "id": "gm-04-prizes",
+          "section": "Игры",
+          "name": "Мои призы",
+          "issues": []
+        },
+        {
+          "id": "gm-05-daily",
+          "section": "Игры",
+          "name": "Задания дня",
+          "issues": []
+        },
+        {
+          "id": "gm-06-bp",
+          "section": "Игры",
+          "name": "Боевой пропуск",
+          "issues": []
+        },
+        {
+          "id": "gm-07-shop",
+          "section": "Игры",
+          "name": "Витрина подарков",
+          "issues": []
+        },
+        {
+          "id": "gm-08-inv",
+          "section": "Игры",
+          "name": "Мои подарки (игры)",
+          "issues": []
+        },
+        {
+          "id": "gm-09-streak",
+          "section": "Игры",
+          "name": "Серия заходов",
+          "issues": []
+        },
+        {
+          "id": "gm-10-lbworld",
+          "section": "Игры",
+          "name": "Лидеры · Мир",
+          "issues": []
+        },
+        {
+          "id": "gm-12-rules",
+          "section": "Игры",
+          "name": "Правила рулетки",
+          "issues": []
+        },
+        {
+          "id": "gm-13-ach",
+          "section": "Игры",
+          "name": "Достижения",
+          "issues": []
+        },
+        {
+          "id": "pp-01-main",
+          "section": "Партнёрка",
+          "name": "Кабинет партнёра",
+          "issues": []
+        },
+        {
+          "id": "pp-02-calc",
+          "section": "Партнёрка",
+          "name": "Калькулятор · 40 клиентов",
+          "issues": []
+        },
+        {
+          "id": "pp-03-qr",
+          "section": "Партнёрка",
+          "name": "Ссылка и QR",
+          "issues": []
+        },
+        {
+          "id": "pp-04-terms",
+          "section": "Партнёрка",
+          "name": "Условия программы",
+          "issues": []
+        },
+        {
+          "id": "pp-05-hist",
+          "section": "Партнёрка",
+          "name": "История начислений",
+          "issues": []
+        },
+        {
+          "id": "pp-06-payout",
+          "section": "Партнёрка",
+          "name": "Выплаты",
+          "issues": []
+        },
+        {
+          "id": "pp-07-promo",
+          "section": "Партнёрка",
+          "name": "Промо-материалы",
+          "issues": []
+        },
+        {
+          "id": "pp-08-refqr",
+          "section": "Партнёрка",
+          "name": "QR-шторка ядра",
+          "issues": []
+        },
+        {
+          "id": "ad-01-main",
+          "section": "Реклама",
+          "name": "Кабинет · черновики",
+          "issues": []
+        },
+        {
+          "id": "ad-01b-calc",
+          "section": "Реклама",
+          "name": "Расчёт бюджета",
+          "issues": []
+        },
+        {
+          "id": "ad-01c-list",
+          "section": "Реклама",
+          "name": "Список черновиков",
+          "issues": []
+        },
+        {
+          "id": "ad-02-create1",
+          "section": "Реклама",
+          "name": "Мастер · шаг 1",
+          "issues": []
+        },
+        {
+          "id": "ad-03-create2",
+          "section": "Реклама",
+          "name": "Мастер · креатив",
+          "issues": []
+        },
+        {
+          "id": "ad-04-create3",
+          "section": "Реклама",
+          "name": "Мастер · аудитория",
+          "issues": []
+        },
+        {
+          "id": "ad-05-create4",
+          "section": "Реклама",
+          "name": "Мастер · бюджет",
+          "issues": []
+        },
+        {
+          "id": "ad-06-bill",
+          "section": "Реклама",
+          "name": "Биллинг",
+          "issues": []
+        },
+        {
+          "id": "ad-07-auds",
+          "section": "Реклама",
+          "name": "Аудитории",
+          "issues": []
+        },
+        {
+          "id": "ad-08-draft",
+          "section": "Реклама",
+          "name": "Сохранённый черновик",
+          "issues": []
+        },
+        {
+          "id": "dc-01-hub",
+          "section": "Документы",
+          "name": "Список документов",
+          "issues": []
+        },
+        {
+          "id": "dc-02-offer",
+          "section": "Документы",
+          "name": "Публичная оферта",
+          "issues": []
+        },
+        {
+          "id": "dc-03-privacy",
+          "section": "Документы",
+          "name": "Политика конфиденциальности",
+          "issues": []
+        },
+        {
+          "id": "dc-04-terms",
+          "section": "Документы",
+          "name": "Пользовательское соглашение",
+          "issues": []
+        },
+        {
+          "id": "dc-05-refund",
+          "section": "Документы",
+          "name": "Политика возврата",
+          "issues": []
+        },
+        {
+          "id": "dc-06-license",
+          "section": "Документы",
+          "name": "Лицензия на ПО",
+          "issues": []
+        },
+        {
+          "id": "dc-07-consent",
+          "section": "Документы",
+          "name": "Согласие на обработку ПД",
+          "issues": []
+        },
+        {
+          "id": "dc-08-en",
+          "section": "Документы",
+          "name": "Оферта · EN",
+          "issues": []
+        },
+        {
+          "id": "tn-01-shop",
+          "section": "TON",
+          "name": "Магазин подарков",
+          "issues": [
+            {
+              "type": "button-label-overflow",
+              "detail": "112>109 · «РЕДКИЙ\nСердце-алмаз\n2,4»",
+              "sel": "div.vs-gcard.vs-rar-rare"
+            },
+            {
+              "type": "button-label-overflow",
+              "detail": "112>109 · «РЕДКИЙ\nЭликсир\n2,9»",
+              "sel": "div.vs-gcard.vs-rar-rare"
+            },
+            {
+              "type": "button-label-overflow",
+              "detail": "112>109 · «РЕДКИЙ\nКольцо\n3,5»",
+              "sel": "div.vs-gcard.vs-rar-rare"
+            },
+            {
+              "type": "button-label-overflow",
+              "detail": "112>109 · «ЭПИЧЕСКИЙ\nРакета\n4,2»",
+              "sel": "div.vs-gcard.vs-rar-epic"
+            },
+            {
+              "type": "button-label-overflow",
+              "detail": "112>109 · «ЭПИЧЕСКИЙ\nКубок\n5»",
+              "sel": "div.vs-gcard.vs-rar-epic"
+            },
+            {
+              "type": "button-label-overflow",
+              "detail": "112>109 · «ЛЕГЕНДАРНЫЙ\nМедальон OKO\n8»",
+              "sel": "div.vs-gcard.vs-rar-legendary.vs-nft"
+            },
+            {
+              "type": "button-label-overflow",
+              "detail": "112>109 · «ЛЕГЕНДАРНЫЙ\nКорона\n12»",
+              "sel": "div.vs-gcard.vs-rar-legendary.vs-nft"
+            },
+            {
+              "type": "button-label-overflow",
+              "detail": "112>109 · «ЭПИЧЕСКИЙ\nАлмаз\n6»",
+              "sel": "div.vs-gcard.vs-rar-epic"
+            },
+            {
+              "type": "button-label-overflow",
+              "detail": "112>109 · «РЕДКИЙ\nМолния\n2,2»",
+              "sel": "div.vs-gcard.vs-rar-rare"
+            },
+            {
+              "type": "button-label-overflow",
+              "detail": "112>109 · «РЕДКИЙ\nЛуна\n3,4»",
+              "sel": "div.vs-gcard.vs-rar-rare"
+            },
+            {
+              "type": "button-label-overflow",
+              "detail": "112>109 · «РЕДКИЙ\nСолнце\n4,1»",
+              "sel": "div.vs-gcard.vs-rar-rare"
+            },
+            {
+              "type": "button-label-overflow",
+              "detail": "112>109 · «РЕДКИЙ\nЩит\n2,8»",
+              "sel": "div.vs-gcard.vs-rar-rare"
+            },
+            {
+              "type": "button-label-overflow",
+              "detail": "112>109 · «РЕДКИЙ\nКлюч\n3»",
+              "sel": "div.vs-gcard.vs-rar-rare"
+            },
+            {
+              "type": "button-label-overflow",
+              "detail": "112>109 · «ЭПИЧЕСКИЙ\nЧереп\n5,5»",
+              "sel": "div.vs-gcard.vs-rar-epic"
+            },
+            {
+              "type": "button-label-overflow",
+              "detail": "112>109 · «ЛЕГЕНДАРНЫЙ\nФеникс\n15»",
+              "sel": "div.vs-gcard.vs-rar-legendary.vs-nft"
+            },
+            {
+              "type": "button-label-overflow",
+              "detail": "112>109 · «ЛЕГЕНДАРНЫЙ\nДракон\n20»",
+              "sel": "div.vs-gcard.vs-rar-legendary.vs-nft"
+            },
+            {
+              "type": "button-label-overflow",
+              "detail": "112>109 · «ЭПИЧЕСКИЙ\nЁлочный OKO\n9»",
+              "sel": "div.vs-gcard.vs-rar-epic"
+            }
+          ]
+        },
+        {
+          "id": "tn-01b-what",
+          "section": "TON",
+          "name": "Что уже работает",
+          "issues": [
+            {
+              "type": "button-label-overflow",
+              "detail": "112>109 · «РЕДКИЙ\nСердце-алмаз\n2,4»",
+              "sel": "div.vs-gcard.vs-rar-rare"
+            },
+            {
+              "type": "button-label-overflow",
+              "detail": "112>109 · «РЕДКИЙ\nЭликсир\n2,9»",
+              "sel": "div.vs-gcard.vs-rar-rare"
+            },
+            {
+              "type": "button-label-overflow",
+              "detail": "112>109 · «РЕДКИЙ\nКольцо\n3,5»",
+              "sel": "div.vs-gcard.vs-rar-rare"
+            },
+            {
+              "type": "button-label-overflow",
+              "detail": "112>109 · «ЭПИЧЕСКИЙ\nРакета\n4,2»",
+              "sel": "div.vs-gcard.vs-rar-epic"
+            },
+            {
+              "type": "button-label-overflow",
+              "detail": "112>109 · «ЭПИЧЕСКИЙ\nКубок\n5»",
+              "sel": "div.vs-gcard.vs-rar-epic"
+            },
+            {
+              "type": "button-label-overflow",
+              "detail": "112>109 · «ЛЕГЕНДАРНЫЙ\nМедальон OKO\n8»",
+              "sel": "div.vs-gcard.vs-rar-legendary.vs-nft"
+            },
+            {
+              "type": "button-label-overflow",
+              "detail": "112>109 · «ЛЕГЕНДАРНЫЙ\nКорона\n12»",
+              "sel": "div.vs-gcard.vs-rar-legendary.vs-nft"
+            },
+            {
+              "type": "button-label-overflow",
+              "detail": "112>109 · «ЭПИЧЕСКИЙ\nАлмаз\n6»",
+              "sel": "div.vs-gcard.vs-rar-epic"
+            },
+            {
+              "type": "button-label-overflow",
+              "detail": "112>109 · «РЕДКИЙ\nМолния\n2,2»",
+              "sel": "div.vs-gcard.vs-rar-rare"
+            },
+            {
+              "type": "button-label-overflow",
+              "detail": "112>109 · «РЕДКИЙ\nЛуна\n3,4»",
+              "sel": "div.vs-gcard.vs-rar-rare"
+            },
+            {
+              "type": "button-label-overflow",
+              "detail": "112>109 · «РЕДКИЙ\nСолнце\n4,1»",
+              "sel": "div.vs-gcard.vs-rar-rare"
+            },
+            {
+              "type": "button-label-overflow",
+              "detail": "112>109 · «РЕДКИЙ\nЩит\n2,8»",
+              "sel": "div.vs-gcard.vs-rar-rare"
+            },
+            {
+              "type": "button-label-overflow",
+              "detail": "112>109 · «РЕДКИЙ\nКлюч\n3»",
+              "sel": "div.vs-gcard.vs-rar-rare"
+            },
+            {
+              "type": "button-label-overflow",
+              "detail": "112>109 · «ЭПИЧЕСКИЙ\nЧереп\n5,5»",
+              "sel": "div.vs-gcard.vs-rar-epic"
+            },
+            {
+              "type": "button-label-overflow",
+              "detail": "112>109 · «ЛЕГЕНДАРНЫЙ\nФеникс\n15»",
+              "sel": "div.vs-gcard.vs-rar-legendary.vs-nft"
+            },
+            {
+              "type": "button-label-overflow",
+              "detail": "112>109 · «ЛЕГЕНДАРНЫЙ\nДракон\n20»",
+              "sel": "div.vs-gcard.vs-rar-legendary.vs-nft"
+            },
+            {
+              "type": "button-label-overflow",
+              "detail": "112>109 · «ЭПИЧЕСКИЙ\nЁлочный OKO\n9»",
+              "sel": "div.vs-gcard.vs-rar-epic"
+            }
+          ]
+        },
+        {
+          "id": "tn-09-market",
+          "section": "TON",
+          "name": "Прайс подарков (биржа)",
+          "issues": [
+            {
+              "type": "button-label-overflow",
+              "detail": "112>109 · «РЕДКИЙ\nСердце-алмаз\n2,4»",
+              "sel": "div.vs-gcard.vs-rar-rare"
+            },
+            {
+              "type": "button-label-overflow",
+              "detail": "112>109 · «РЕДКИЙ\nЭликсир\n2,9»",
+              "sel": "div.vs-gcard.vs-rar-rare"
+            },
+            {
+              "type": "button-label-overflow",
+              "detail": "112>109 · «РЕДКИЙ\nКольцо\n3,5»",
+              "sel": "div.vs-gcard.vs-rar-rare"
+            },
+            {
+              "type": "button-label-overflow",
+              "detail": "112>109 · «ЭПИЧЕСКИЙ\nРакета\n4,2»",
+              "sel": "div.vs-gcard.vs-rar-epic"
+            },
+            {
+              "type": "button-label-overflow",
+              "detail": "112>109 · «ЭПИЧЕСКИЙ\nКубок\n5»",
+              "sel": "div.vs-gcard.vs-rar-epic"
+            },
+            {
+              "type": "button-label-overflow",
+              "detail": "112>109 · «ЛЕГЕНДАРНЫЙ\nМедальон OKO\n8»",
+              "sel": "div.vs-gcard.vs-rar-legendary.vs-nft"
+            },
+            {
+              "type": "button-label-overflow",
+              "detail": "112>109 · «ЛЕГЕНДАРНЫЙ\nКорона\n12»",
+              "sel": "div.vs-gcard.vs-rar-legendary.vs-nft"
+            },
+            {
+              "type": "button-label-overflow",
+              "detail": "112>109 · «ЭПИЧЕСКИЙ\nАлмаз\n6»",
+              "sel": "div.vs-gcard.vs-rar-epic"
+            },
+            {
+              "type": "button-label-overflow",
+              "detail": "112>109 · «РЕДКИЙ\nМолния\n2,2»",
+              "sel": "div.vs-gcard.vs-rar-rare"
+            },
+            {
+              "type": "button-label-overflow",
+              "detail": "112>109 · «РЕДКИЙ\nЛуна\n3,4»",
+              "sel": "div.vs-gcard.vs-rar-rare"
+            },
+            {
+              "type": "button-label-overflow",
+              "detail": "112>109 · «РЕДКИЙ\nСолнце\n4,1»",
+              "sel": "div.vs-gcard.vs-rar-rare"
+            },
+            {
+              "type": "button-label-overflow",
+              "detail": "112>109 · «РЕДКИЙ\nЩит\n2,8»",
+              "sel": "div.vs-gcard.vs-rar-rare"
+            },
+            {
+              "type": "button-label-overflow",
+              "detail": "112>109 · «РЕДКИЙ\nКлюч\n3»",
+              "sel": "div.vs-gcard.vs-rar-rare"
+            },
+            {
+              "type": "button-label-overflow",
+              "detail": "112>109 · «ЭПИЧЕСКИЙ\nЧереп\n5,5»",
+              "sel": "div.vs-gcard.vs-rar-epic"
+            },
+            {
+              "type": "button-label-overflow",
+              "detail": "112>109 · «ЛЕГЕНДАРНЫЙ\nФеникс\n15»",
+              "sel": "div.vs-gcard.vs-rar-legendary.vs-nft"
+            },
+            {
+              "type": "button-label-overflow",
+              "detail": "112>109 · «ЛЕГЕНДАРНЫЙ\nДракон\n20»",
+              "sel": "div.vs-gcard.vs-rar-legendary.vs-nft"
+            },
+            {
+              "type": "button-label-overflow",
+              "detail": "112>109 · «ЭПИЧЕСКИЙ\nЁлочный OKO\n9»",
+              "sel": "div.vs-gcard.vs-rar-epic"
+            }
+          ]
+        },
+        {
+          "id": "tn-10-offers",
+          "section": "TON",
+          "name": "Ордера по подарку",
+          "issues": [
+            {
+              "type": "button-label-overflow",
+              "detail": "112>109 · «РЕДКИЙ\nСердце-алмаз\n2,4»",
+              "sel": "div.vs-gcard.vs-rar-rare"
+            },
+            {
+              "type": "button-label-overflow",
+              "detail": "112>109 · «РЕДКИЙ\nЭликсир\n2,9»",
+              "sel": "div.vs-gcard.vs-rar-rare"
+            },
+            {
+              "type": "button-label-overflow",
+              "detail": "112>109 · «РЕДКИЙ\nКольцо\n3,5»",
+              "sel": "div.vs-gcard.vs-rar-rare"
+            },
+            {
+              "type": "button-label-overflow",
+              "detail": "112>109 · «ЭПИЧЕСКИЙ\nРакета\n4,2»",
+              "sel": "div.vs-gcard.vs-rar-epic"
+            },
+            {
+              "type": "button-label-overflow",
+              "detail": "112>109 · «ЭПИЧЕСКИЙ\nКубок\n5»",
+              "sel": "div.vs-gcard.vs-rar-epic"
+            },
+            {
+              "type": "button-label-overflow",
+              "detail": "112>109 · «ЛЕГЕНДАРНЫЙ\nМедальон OKO\n8»",
+              "sel": "div.vs-gcard.vs-rar-legendary.vs-nft"
+            },
+            {
+              "type": "button-label-overflow",
+              "detail": "112>109 · «ЛЕГЕНДАРНЫЙ\nКорона\n12»",
+              "sel": "div.vs-gcard.vs-rar-legendary.vs-nft"
+            },
+            {
+              "type": "button-label-overflow",
+              "detail": "112>109 · «ЭПИЧЕСКИЙ\nАлмаз\n6»",
+              "sel": "div.vs-gcard.vs-rar-epic"
+            },
+            {
+              "type": "button-label-overflow",
+              "detail": "112>109 · «РЕДКИЙ\nМолния\n2,2»",
+              "sel": "div.vs-gcard.vs-rar-rare"
+            },
+            {
+              "type": "button-label-overflow",
+              "detail": "112>109 · «РЕДКИЙ\nЛуна\n3,4»",
+              "sel": "div.vs-gcard.vs-rar-rare"
+            },
+            {
+              "type": "button-label-overflow",
+              "detail": "112>109 · «РЕДКИЙ\nСолнце\n4,1»",
+              "sel": "div.vs-gcard.vs-rar-rare"
+            },
+            {
+              "type": "button-label-overflow",
+              "detail": "112>109 · «РЕДКИЙ\nЩит\n2,8»",
+              "sel": "div.vs-gcard.vs-rar-rare"
+            },
+            {
+              "type": "button-label-overflow",
+              "detail": "112>109 · «РЕДКИЙ\nКлюч\n3»",
+              "sel": "div.vs-gcard.vs-rar-rare"
+            },
+            {
+              "type": "button-label-overflow",
+              "detail": "112>109 · «ЭПИЧЕСКИЙ\nЧереп\n5,5»",
+              "sel": "div.vs-gcard.vs-rar-epic"
+            },
+            {
+              "type": "button-label-overflow",
+              "detail": "112>109 · «ЛЕГЕНДАРНЫЙ\nФеникс\n15»",
+              "sel": "div.vs-gcard.vs-rar-legendary.vs-nft"
+            },
+            {
+              "type": "button-label-overflow",
+              "detail": "112>109 · «ЛЕГЕНДАРНЫЙ\nДракон\n20»",
+              "sel": "div.vs-gcard.vs-rar-legendary.vs-nft"
+            },
+            {
+              "type": "button-label-overflow",
+              "detail": "112>109 · «ЭПИЧЕСКИЙ\nЁлочный OKO\n9»",
+              "sel": "div.vs-gcard.vs-rar-epic"
+            }
+          ]
+        },
+        {
+          "id": "tn-11-nft",
+          "section": "TON",
+          "name": "Данные NFT",
+          "issues": [
+            {
+              "type": "button-label-overflow",
+              "detail": "112>109 · «РЕДКИЙ\nСердце-алмаз\n2,4»",
+              "sel": "div.vs-gcard.vs-rar-rare"
+            },
+            {
+              "type": "button-label-overflow",
+              "detail": "112>109 · «РЕДКИЙ\nЭликсир\n2,9»",
+              "sel": "div.vs-gcard.vs-rar-rare"
+            },
+            {
+              "type": "button-label-overflow",
+              "detail": "112>109 · «РЕДКИЙ\nКольцо\n3,5»",
+              "sel": "div.vs-gcard.vs-rar-rare"
+            },
+            {
+              "type": "button-label-overflow",
+              "detail": "112>109 · «ЭПИЧЕСКИЙ\nРакета\n4,2»",
+              "sel": "div.vs-gcard.vs-rar-epic"
+            },
+            {
+              "type": "button-label-overflow",
+              "detail": "112>109 · «ЭПИЧЕСКИЙ\nКубок\n5»",
+              "sel": "div.vs-gcard.vs-rar-epic"
+            },
+            {
+              "type": "button-label-overflow",
+              "detail": "112>109 · «ЛЕГЕНДАРНЫЙ\nМедальон OKO\n8»",
+              "sel": "div.vs-gcard.vs-rar-legendary.vs-nft"
+            },
+            {
+              "type": "button-label-overflow",
+              "detail": "112>109 · «ЛЕГЕНДАРНЫЙ\nКорона\n12»",
+              "sel": "div.vs-gcard.vs-rar-legendary.vs-nft"
+            },
+            {
+              "type": "button-label-overflow",
+              "detail": "112>109 · «ЭПИЧЕСКИЙ\nАлмаз\n6»",
+              "sel": "div.vs-gcard.vs-rar-epic"
+            },
+            {
+              "type": "button-label-overflow",
+              "detail": "112>109 · «РЕДКИЙ\nМолния\n2,2»",
+              "sel": "div.vs-gcard.vs-rar-rare"
+            },
+            {
+              "type": "button-label-overflow",
+              "detail": "112>109 · «РЕДКИЙ\nЛуна\n3,4»",
+              "sel": "div.vs-gcard.vs-rar-rare"
+            },
+            {
+              "type": "button-label-overflow",
+              "detail": "112>109 · «РЕДКИЙ\nСолнце\n4,1»",
+              "sel": "div.vs-gcard.vs-rar-rare"
+            },
+            {
+              "type": "button-label-overflow",
+              "detail": "112>109 · «РЕДКИЙ\nЩит\n2,8»",
+              "sel": "div.vs-gcard.vs-rar-rare"
+            },
+            {
+              "type": "button-label-overflow",
+              "detail": "112>109 · «РЕДКИЙ\nКлюч\n3»",
+              "sel": "div.vs-gcard.vs-rar-rare"
+            },
+            {
+              "type": "button-label-overflow",
+              "detail": "112>109 · «ЭПИЧЕСКИЙ\nЧереп\n5,5»",
+              "sel": "div.vs-gcard.vs-rar-epic"
+            },
+            {
+              "type": "button-label-overflow",
+              "detail": "112>109 · «ЛЕГЕНДАРНЫЙ\nФеникс\n15»",
+              "sel": "div.vs-gcard.vs-rar-legendary.vs-nft"
+            },
+            {
+              "type": "button-label-overflow",
+              "detail": "112>109 · «ЛЕГЕНДАРНЫЙ\nДракон\n20»",
+              "sel": "div.vs-gcard.vs-rar-legendary.vs-nft"
+            },
+            {
+              "type": "button-label-overflow",
+              "detail": "112>109 · «ЭПИЧЕСКИЙ\nЁлочный OKO\n9»",
+              "sel": "div.vs-gcard.vs-rar-epic"
+            }
+          ]
+        },
+        {
+          "id": "tn-02-mine",
+          "section": "TON",
+          "name": "Мои подарки",
+          "issues": []
+        },
+        {
+          "id": "tn-03-topup",
+          "section": "TON",
+          "name": "Пополнить",
+          "issues": []
+        },
+        {
+          "id": "tn-04-recv",
+          "section": "TON",
+          "name": "Получить",
+          "issues": []
+        },
+        {
+          "id": "tn-05-send",
+          "section": "TON",
+          "name": "Отправить TON",
+          "issues": []
+        },
+        {
+          "id": "tn-06-hist",
+          "section": "TON",
+          "name": "История операций",
+          "issues": []
+        },
+        {
+          "id": "tn-07-buy",
+          "section": "TON",
+          "name": "Карточка подарка",
+          "issues": []
+        },
+        {
+          "id": "tn-08-conn",
+          "section": "TON",
+          "name": "TON Connect",
+          "issues": []
+        },
+        {
+          "id": "gm-99-spin",
+          "section": "Игры",
+          "name": "После бесплатной крутки",
+          "issues": []
+        }
+      ],
+      "jsErrors": [
+        "console: Failed to load resource: the server responded with a status of 404 (File not found)",
+        "console: Failed to load resource: net::ERR_CONNECTION_RESET"
+      ]
+    },
+    {
+      "id": "narrow",
+      "label": "Узкий Android 360×740",
+      "screens": [
+        {
+          "id": "gm-01-main",
+          "section": "Игры",
+          "name": "Рулетка · главный",
+          "issues": []
+        },
+        {
+          "id": "gm-02-odds",
+          "section": "Игры",
+          "name": "Таблица шансов",
+          "empty": true,
+          "issues": [
+            {
+              "type": "audit-timeout",
+              "detail": "аудит не уложился в 25 с",
+              "sel": ""
+            }
+          ]
+        },
+        {
+          "id": "gm-03-stats",
+          "section": "Игры",
+          "name": "Твоя статистика",
+          "issues": []
+        },
+        {
+          "id": "gm-04-prizes",
+          "section": "Игры",
+          "name": "Мои призы",
+          "issues": []
+        },
+        {
+          "id": "gm-05-daily",
+          "section": "Игры",
+          "name": "Задания дня",
+          "issues": []
+        },
+        {
+          "id": "gm-06-bp",
+          "section": "Игры",
+          "name": "Боевой пропуск",
+          "issues": []
+        },
+        {
+          "id": "gm-07-shop",
+          "section": "Игры",
+          "name": "Витрина подарков",
+          "issues": []
+        },
+        {
+          "id": "gm-08-inv",
+          "section": "Игры",
+          "name": "Мои подарки (игры)",
+          "issues": []
+        },
+        {
+          "id": "gm-09-streak",
+          "section": "Игры",
+          "name": "Серия заходов",
+          "issues": []
+        },
+        {
+          "id": "gm-10-lbworld",
+          "section": "Игры",
+          "name": "Лидеры · Мир",
+          "issues": [
+            {
+              "type": "text-clipped-x",
+              "detail": "146>136 · «Первый среди друзей»",
+              "sel": "b"
+            }
+          ]
+        },
+        {
+          "id": "gm-12-rules",
+          "section": "Игры",
+          "name": "Правила рулетки",
+          "issues": []
+        },
+        {
+          "id": "gm-13-ach",
+          "section": "Игры",
+          "name": "Достижения",
+          "issues": [
+            {
+              "type": "text-clipped-x",
+              "detail": "146>136 · «Первый среди друзей»",
+              "sel": "b"
+            }
+          ]
+        },
+        {
+          "id": "pp-01-main",
+          "section": "Партнёрка",
+          "name": "Кабинет партнёра",
+          "issues": []
+        },
+        {
+          "id": "pp-02-calc",
+          "section": "Партнёрка",
+          "name": "Калькулятор · 40 клиентов",
+          "issues": []
+        },
+        {
+          "id": "pp-03-qr",
+          "section": "Партнёрка",
+          "name": "Ссылка и QR",
+          "issues": []
+        },
+        {
+          "id": "pp-04-terms",
+          "section": "Партнёрка",
+          "name": "Условия программы",
+          "issues": []
+        },
+        {
+          "id": "pp-05-hist",
+          "section": "Партнёрка",
+          "name": "История начислений",
+          "issues": []
+        },
+        {
+          "id": "pp-06-payout",
+          "section": "Партнёрка",
+          "name": "Выплаты",
+          "issues": []
+        },
+        {
+          "id": "pp-07-promo",
+          "section": "Партнёрка",
+          "name": "Промо-материалы",
+          "issues": []
+        },
+        {
+          "id": "pp-08-refqr",
+          "section": "Партнёрка",
+          "name": "QR-шторка ядра",
+          "issues": []
+        },
+        {
+          "id": "ad-01-main",
+          "section": "Реклама",
+          "name": "Кабинет · черновики",
+          "issues": []
+        },
+        {
+          "id": "ad-01b-calc",
+          "section": "Реклама",
+          "name": "Расчёт бюджета",
+          "issues": []
+        },
+        {
+          "id": "ad-01c-list",
+          "section": "Реклама",
+          "name": "Список черновиков",
+          "issues": []
+        },
+        {
+          "id": "ad-02-create1",
+          "section": "Реклама",
+          "name": "Мастер · шаг 1",
+          "issues": []
+        },
+        {
+          "id": "ad-03-create2",
+          "section": "Реклама",
+          "name": "Мастер · креатив",
+          "issues": []
+        },
+        {
+          "id": "ad-04-create3",
+          "section": "Реклама",
+          "name": "Мастер · аудитория",
+          "issues": []
+        },
+        {
+          "id": "ad-05-create4",
+          "section": "Реклама",
+          "name": "Мастер · бюджет",
+          "issues": []
+        },
+        {
+          "id": "ad-06-bill",
+          "section": "Реклама",
+          "name": "Биллинг",
+          "issues": []
+        },
+        {
+          "id": "ad-07-auds",
+          "section": "Реклама",
+          "name": "Аудитории",
+          "issues": []
+        },
+        {
+          "id": "ad-08-draft",
+          "section": "Реклама",
+          "name": "Сохранённый черновик",
+          "issues": []
+        },
+        {
+          "id": "dc-01-hub",
+          "section": "Документы",
+          "name": "Список документов",
+          "issues": []
+        },
+        {
+          "id": "dc-02-offer",
+          "section": "Документы",
+          "name": "Публичная оферта",
+          "issues": []
+        },
+        {
+          "id": "dc-03-privacy",
+          "section": "Документы",
+          "name": "Политика конфиденциальности",
+          "issues": []
+        },
+        {
+          "id": "dc-04-terms",
+          "section": "Документы",
+          "name": "Пользовательское соглашение",
+          "issues": []
+        },
+        {
+          "id": "dc-05-refund",
+          "section": "Документы",
+          "name": "Политика возврата",
+          "issues": []
+        },
+        {
+          "id": "dc-06-license",
+          "section": "Документы",
+          "name": "Лицензия на ПО",
+          "issues": []
+        },
+        {
+          "id": "dc-07-consent",
+          "section": "Документы",
+          "name": "Согласие на обработку ПД",
+          "issues": []
+        },
+        {
+          "id": "dc-08-en",
+          "section": "Документы",
+          "name": "Оферта · EN",
+          "issues": []
+        },
+        {
+          "id": "tn-01-shop",
+          "section": "TON",
+          "name": "Магазин подарков",
+          "issues": [
+            {
+              "type": "button-label-overflow",
+              "detail": "109>102 · «РЕДКИЙ\nСердце-алмаз\n2,4»",
+              "sel": "div.vs-gcard.vs-rar-rare"
+            },
+            {
+              "type": "button-label-overflow",
+              "detail": "109>102 · «РЕДКИЙ\nЭликсир\n2,9»",
+              "sel": "div.vs-gcard.vs-rar-rare"
+            },
+            {
+              "type": "button-label-overflow",
+              "detail": "109>102 · «РЕДКИЙ\nКольцо\n3,5»",
+              "sel": "div.vs-gcard.vs-rar-rare"
+            },
+            {
+              "type": "button-label-overflow",
+              "detail": "109>102 · «ЭПИЧЕСКИЙ\nРакета\n4,2»",
+              "sel": "div.vs-gcard.vs-rar-epic"
+            },
+            {
+              "type": "button-label-overflow",
+              "detail": "109>102 · «ЭПИЧЕСКИЙ\nКубок\n5»",
+              "sel": "div.vs-gcard.vs-rar-epic"
+            },
+            {
+              "type": "button-label-overflow",
+              "detail": "109>102 · «ЛЕГЕНДАРНЫЙ\nМедальон OKO\n8»",
+              "sel": "div.vs-gcard.vs-rar-legendary.vs-nft"
+            },
+            {
+              "type": "button-label-overflow",
+              "detail": "109>102 · «ЛЕГЕНДАРНЫЙ\nКорона\n12»",
+              "sel": "div.vs-gcard.vs-rar-legendary.vs-nft"
+            },
+            {
+              "type": "button-label-overflow",
+              "detail": "109>102 · «ЭПИЧЕСКИЙ\nАлмаз\n6»",
+              "sel": "div.vs-gcard.vs-rar-epic"
+            },
+            {
+              "type": "button-label-overflow",
+              "detail": "109>102 · «РЕДКИЙ\nМолния\n2,2»",
+              "sel": "div.vs-gcard.vs-rar-rare"
+            },
+            {
+              "type": "button-label-overflow",
+              "detail": "109>102 · «РЕДКИЙ\nЛуна\n3,4»",
+              "sel": "div.vs-gcard.vs-rar-rare"
+            },
+            {
+              "type": "button-label-overflow",
+              "detail": "109>102 · «РЕДКИЙ\nСолнце\n4,1»",
+              "sel": "div.vs-gcard.vs-rar-rare"
+            },
+            {
+              "type": "button-label-overflow",
+              "detail": "109>102 · «РЕДКИЙ\nЩит\n2,8»",
+              "sel": "div.vs-gcard.vs-rar-rare"
+            },
+            {
+              "type": "button-label-overflow",
+              "detail": "109>102 · «РЕДКИЙ\nКлюч\n3»",
+              "sel": "div.vs-gcard.vs-rar-rare"
+            },
+            {
+              "type": "button-label-overflow",
+              "detail": "109>102 · «ЭПИЧЕСКИЙ\nЧереп\n5,5»",
+              "sel": "div.vs-gcard.vs-rar-epic"
+            },
+            {
+              "type": "button-label-overflow",
+              "detail": "109>102 · «ЛЕГЕНДАРНЫЙ\nФеникс\n15»",
+              "sel": "div.vs-gcard.vs-rar-legendary.vs-nft"
+            },
+            {
+              "type": "button-label-overflow",
+              "detail": "113>102 · «ЛЕГЕНДАРНЫЙ\nДракон\n20»",
+              "sel": "div.vs-gcard.vs-rar-legendary.vs-nft"
+            },
+            {
+              "type": "button-label-overflow",
+              "detail": "109>102 · «ЭПИЧЕСКИЙ\nЁлочный OKO\n9»",
+              "sel": "div.vs-gcard.vs-rar-epic"
+            }
+          ]
+        },
+        {
+          "id": "tn-01b-what",
+          "section": "TON",
+          "name": "Что уже работает",
+          "issues": [
+            {
+              "type": "button-label-overflow",
+              "detail": "109>102 · «РЕДКИЙ\nСердце-алмаз\n2,4»",
+              "sel": "div.vs-gcard.vs-rar-rare"
+            },
+            {
+              "type": "button-label-overflow",
+              "detail": "109>102 · «РЕДКИЙ\nЭликсир\n2,9»",
+              "sel": "div.vs-gcard.vs-rar-rare"
+            },
+            {
+              "type": "button-label-overflow",
+              "detail": "109>102 · «РЕДКИЙ\nКольцо\n3,5»",
+              "sel": "div.vs-gcard.vs-rar-rare"
+            },
+            {
+              "type": "button-label-overflow",
+              "detail": "109>102 · «ЭПИЧЕСКИЙ\nРакета\n4,2»",
+              "sel": "div.vs-gcard.vs-rar-epic"
+            },
+            {
+              "type": "button-label-overflow",
+              "detail": "109>102 · «ЭПИЧЕСКИЙ\nКубок\n5»",
+              "sel": "div.vs-gcard.vs-rar-epic"
+            },
+            {
+              "type": "button-label-overflow",
+              "detail": "109>102 · «ЛЕГЕНДАРНЫЙ\nМедальон OKO\n8»",
+              "sel": "div.vs-gcard.vs-rar-legendary.vs-nft"
+            },
+            {
+              "type": "button-label-overflow",
+              "detail": "109>102 · «ЛЕГЕНДАРНЫЙ\nКорона\n12»",
+              "sel": "div.vs-gcard.vs-rar-legendary.vs-nft"
+            },
+            {
+              "type": "button-label-overflow",
+              "detail": "109>102 · «ЭПИЧЕСКИЙ\nАлмаз\n6»",
+              "sel": "div.vs-gcard.vs-rar-epic"
+            },
+            {
+              "type": "button-label-overflow",
+              "detail": "109>102 · «РЕДКИЙ\nМолния\n2,2»",
+              "sel": "div.vs-gcard.vs-rar-rare"
+            },
+            {
+              "type": "button-label-overflow",
+              "detail": "109>102 · «РЕДКИЙ\nЛуна\n3,4»",
+              "sel": "div.vs-gcard.vs-rar-rare"
+            },
+            {
+              "type": "button-label-overflow",
+              "detail": "109>102 · «РЕДКИЙ\nСолнце\n4,1»",
+              "sel": "div.vs-gcard.vs-rar-rare"
+            },
+            {
+              "type": "button-label-overflow",
+              "detail": "109>102 · «РЕДКИЙ\nЩит\n2,8»",
+              "sel": "div.vs-gcard.vs-rar-rare"
+            },
+            {
+              "type": "button-label-overflow",
+              "detail": "109>102 · «РЕДКИЙ\nКлюч\n3»",
+              "sel": "div.vs-gcard.vs-rar-rare"
+            },
+            {
+              "type": "button-label-overflow",
+              "detail": "109>102 · «ЭПИЧЕСКИЙ\nЧереп\n5,5»",
+              "sel": "div.vs-gcard.vs-rar-epic"
+            },
+            {
+              "type": "button-label-overflow",
+              "detail": "109>102 · «ЛЕГЕНДАРНЫЙ\nФеникс\n15»",
+              "sel": "div.vs-gcard.vs-rar-legendary.vs-nft"
+            },
+            {
+              "type": "button-label-overflow",
+              "detail": "109>102 · «ЛЕГЕНДАРНЫЙ\nДракон\n20»",
+              "sel": "div.vs-gcard.vs-rar-legendary.vs-nft"
+            },
+            {
+              "type": "button-label-overflow",
+              "detail": "109>102 · «ЭПИЧЕСКИЙ\nЁлочный OKO\n9»",
+              "sel": "div.vs-gcard.vs-rar-epic"
+            }
+          ]
+        },
+        {
+          "id": "tn-09-market",
+          "section": "TON",
+          "name": "Прайс подарков (биржа)",
+          "issues": [
+            {
+              "type": "button-label-overflow",
+              "detail": "109>102 · «РЕДКИЙ\nСердце-алмаз\n2,4»",
+              "sel": "div.vs-gcard.vs-rar-rare"
+            },
+            {
+              "type": "button-label-overflow",
+              "detail": "109>102 · «РЕДКИЙ\nЭликсир\n2,9»",
+              "sel": "div.vs-gcard.vs-rar-rare"
+            },
+            {
+              "type": "button-label-overflow",
+              "detail": "109>102 · «РЕДКИЙ\nКольцо\n3,5»",
+              "sel": "div.vs-gcard.vs-rar-rare"
+            },
+            {
+              "type": "button-label-overflow",
+              "detail": "109>102 · «ЭПИЧЕСКИЙ\nРакета\n4,2»",
+              "sel": "div.vs-gcard.vs-rar-epic"
+            },
+            {
+              "type": "button-label-overflow",
+              "detail": "109>102 · «ЭПИЧЕСКИЙ\nКубок\n5»",
+              "sel": "div.vs-gcard.vs-rar-epic"
+            },
+            {
+              "type": "button-label-overflow",
+              "detail": "109>102 · «ЛЕГЕНДАРНЫЙ\nМедальон OKO\n8»",
+              "sel": "div.vs-gcard.vs-rar-legendary.vs-nft"
+            },
+            {
+              "type": "button-label-overflow",
+              "detail": "109>102 · «ЛЕГЕНДАРНЫЙ\nКорона\n12»",
+              "sel": "div.vs-gcard.vs-rar-legendary.vs-nft"
+            },
+            {
+              "type": "button-label-overflow",
+              "detail": "109>102 · «ЭПИЧЕСКИЙ\nАлмаз\n6»",
+              "sel": "div.vs-gcard.vs-rar-epic"
+            },
+            {
+              "type": "button-label-overflow",
+              "detail": "109>102 · «РЕДКИЙ\nМолния\n2,2»",
+              "sel": "div.vs-gcard.vs-rar-rare"
+            },
+            {
+              "type": "button-label-overflow",
+              "detail": "109>102 · «РЕДКИЙ\nЛуна\n3,4»",
+              "sel": "div.vs-gcard.vs-rar-rare"
+            },
+            {
+              "type": "button-label-overflow",
+              "detail": "109>102 · «РЕДКИЙ\nСолнце\n4,1»",
+              "sel": "div.vs-gcard.vs-rar-rare"
+            },
+            {
+              "type": "button-label-overflow",
+              "detail": "109>102 · «РЕДКИЙ\nЩит\n2,8»",
+              "sel": "div.vs-gcard.vs-rar-rare"
+            },
+            {
+              "type": "button-label-overflow",
+              "detail": "109>102 · «РЕДКИЙ\nКлюч\n3»",
+              "sel": "div.vs-gcard.vs-rar-rare"
+            },
+            {
+              "type": "button-label-overflow",
+              "detail": "109>102 · «ЭПИЧЕСКИЙ\nЧереп\n5,5»",
+              "sel": "div.vs-gcard.vs-rar-epic"
+            },
+            {
+              "type": "button-label-overflow",
+              "detail": "109>102 · «ЛЕГЕНДАРНЫЙ\nФеникс\n15»",
+              "sel": "div.vs-gcard.vs-rar-legendary.vs-nft"
+            },
+            {
+              "type": "button-label-overflow",
+              "detail": "112>102 · «ЛЕГЕНДАРНЫЙ\nДракон\n20»",
+              "sel": "div.vs-gcard.vs-rar-legendary.vs-nft"
+            },
+            {
+              "type": "button-label-overflow",
+              "detail": "109>102 · «ЭПИЧЕСКИЙ\nЁлочный OKO\n9»",
+              "sel": "div.vs-gcard.vs-rar-epic"
+            }
+          ]
+        },
+        {
+          "id": "tn-10-offers",
+          "section": "TON",
+          "name": "Ордера по подарку",
+          "issues": [
+            {
+              "type": "button-label-overflow",
+              "detail": "109>102 · «РЕДКИЙ\nСердце-алмаз\n2,4»",
+              "sel": "div.vs-gcard.vs-rar-rare"
+            },
+            {
+              "type": "button-label-overflow",
+              "detail": "109>102 · «РЕДКИЙ\nЭликсир\n2,9»",
+              "sel": "div.vs-gcard.vs-rar-rare"
+            },
+            {
+              "type": "button-label-overflow",
+              "detail": "109>102 · «РЕДКИЙ\nКольцо\n3,5»",
+              "sel": "div.vs-gcard.vs-rar-rare"
+            },
+            {
+              "type": "button-label-overflow",
+              "detail": "109>102 · «ЭПИЧЕСКИЙ\nРакета\n4,2»",
+              "sel": "div.vs-gcard.vs-rar-epic"
+            },
+            {
+              "type": "button-label-overflow",
+              "detail": "109>102 · «ЭПИЧЕСКИЙ\nКубок\n5»",
+              "sel": "div.vs-gcard.vs-rar-epic"
+            },
+            {
+              "type": "button-label-overflow",
+              "detail": "109>102 · «ЛЕГЕНДАРНЫЙ\nМедальон OKO\n8»",
+              "sel": "div.vs-gcard.vs-rar-legendary.vs-nft"
+            },
+            {
+              "type": "button-label-overflow",
+              "detail": "109>102 · «ЛЕГЕНДАРНЫЙ\nКорона\n12»",
+              "sel": "div.vs-gcard.vs-rar-legendary.vs-nft"
+            },
+            {
+              "type": "button-label-overflow",
+              "detail": "109>102 · «ЭПИЧЕСКИЙ\nАлмаз\n6»",
+              "sel": "div.vs-gcard.vs-rar-epic"
+            },
+            {
+              "type": "button-label-overflow",
+              "detail": "109>102 · «РЕДКИЙ\nМолния\n2,2»",
+              "sel": "div.vs-gcard.vs-rar-rare"
+            },
+            {
+              "type": "button-label-overflow",
+              "detail": "109>102 · «РЕДКИЙ\nЛуна\n3,4»",
+              "sel": "div.vs-gcard.vs-rar-rare"
+            },
+            {
+              "type": "button-label-overflow",
+              "detail": "109>102 · «РЕДКИЙ\nСолнце\n4,1»",
+              "sel": "div.vs-gcard.vs-rar-rare"
+            },
+            {
+              "type": "button-label-overflow",
+              "detail": "109>102 · «РЕДКИЙ\nЩит\n2,8»",
+              "sel": "div.vs-gcard.vs-rar-rare"
+            },
+            {
+              "type": "button-label-overflow",
+              "detail": "109>102 · «РЕДКИЙ\nКлюч\n3»",
+              "sel": "div.vs-gcard.vs-rar-rare"
+            },
+            {
+              "type": "button-label-overflow",
+              "detail": "109>102 · «ЭПИЧЕСКИЙ\nЧереп\n5,5»",
+              "sel": "div.vs-gcard.vs-rar-epic"
+            },
+            {
+              "type": "button-label-overflow",
+              "detail": "109>102 · «ЛЕГЕНДАРНЫЙ\nФеникс\n15»",
+              "sel": "div.vs-gcard.vs-rar-legendary.vs-nft"
+            },
+            {
+              "type": "button-label-overflow",
+              "detail": "111>102 · «ЛЕГЕНДАРНЫЙ\nДракон\n20»",
+              "sel": "div.vs-gcard.vs-rar-legendary.vs-nft"
+            },
+            {
+              "type": "button-label-overflow",
+              "detail": "109>102 · «ЭПИЧЕСКИЙ\nЁлочный OKO\n9»",
+              "sel": "div.vs-gcard.vs-rar-epic"
+            }
+          ]
+        },
+        {
+          "id": "tn-11-nft",
+          "section": "TON",
+          "name": "Данные NFT",
+          "issues": [
+            {
+              "type": "button-label-overflow",
+              "detail": "109>102 · «РЕДКИЙ\nСердце-алмаз\n2,4»",
+              "sel": "div.vs-gcard.vs-rar-rare"
+            },
+            {
+              "type": "button-label-overflow",
+              "detail": "109>102 · «РЕДКИЙ\nЭликсир\n2,9»",
+              "sel": "div.vs-gcard.vs-rar-rare"
+            },
+            {
+              "type": "button-label-overflow",
+              "detail": "109>102 · «РЕДКИЙ\nКольцо\n3,5»",
+              "sel": "div.vs-gcard.vs-rar-rare"
+            },
+            {
+              "type": "button-label-overflow",
+              "detail": "109>102 · «ЭПИЧЕСКИЙ\nРакета\n4,2»",
+              "sel": "div.vs-gcard.vs-rar-epic"
+            },
+            {
+              "type": "button-label-overflow",
+              "detail": "109>102 · «ЭПИЧЕСКИЙ\nКубок\n5»",
+              "sel": "div.vs-gcard.vs-rar-epic"
+            },
+            {
+              "type": "button-label-overflow",
+              "detail": "109>102 · «ЛЕГЕНДАРНЫЙ\nМедальон OKO\n8»",
+              "sel": "div.vs-gcard.vs-rar-legendary.vs-nft"
+            },
+            {
+              "type": "button-label-overflow",
+              "detail": "109>102 · «ЛЕГЕНДАРНЫЙ\nКорона\n12»",
+              "sel": "div.vs-gcard.vs-rar-legendary.vs-nft"
+            },
+            {
+              "type": "button-label-overflow",
+              "detail": "109>102 · «ЭПИЧЕСКИЙ\nАлмаз\n6»",
+              "sel": "div.vs-gcard.vs-rar-epic"
+            },
+            {
+              "type": "button-label-overflow",
+              "detail": "109>102 · «РЕДКИЙ\nМолния\n2,2»",
+              "sel": "div.vs-gcard.vs-rar-rare"
+            },
+            {
+              "type": "button-label-overflow",
+              "detail": "109>102 · «РЕДКИЙ\nЛуна\n3,4»",
+              "sel": "div.vs-gcard.vs-rar-rare"
+            },
+            {
+              "type": "button-label-overflow",
+              "detail": "109>102 · «РЕДКИЙ\nСолнце\n4,1»",
+              "sel": "div.vs-gcard.vs-rar-rare"
+            },
+            {
+              "type": "button-label-overflow",
+              "detail": "109>102 · «РЕДКИЙ\nЩит\n2,8»",
+              "sel": "div.vs-gcard.vs-rar-rare"
+            },
+            {
+              "type": "button-label-overflow",
+              "detail": "109>102 · «РЕДКИЙ\nКлюч\n3»",
+              "sel": "div.vs-gcard.vs-rar-rare"
+            },
+            {
+              "type": "button-label-overflow",
+              "detail": "109>102 · «ЭПИЧЕСКИЙ\nЧереп\n5,5»",
+              "sel": "div.vs-gcard.vs-rar-epic"
+            },
+            {
+              "type": "button-label-overflow",
+              "detail": "109>102 · «ЛЕГЕНДАРНЫЙ\nФеникс\n15»",
+              "sel": "div.vs-gcard.vs-rar-legendary.vs-nft"
+            },
+            {
+              "type": "button-label-overflow",
+              "detail": "113>102 · «ЛЕГЕНДАРНЫЙ\nДракон\n20»",
+              "sel": "div.vs-gcard.vs-rar-legendary.vs-nft"
+            },
+            {
+              "type": "button-label-overflow",
+              "detail": "109>102 · «ЭПИЧЕСКИЙ\nЁлочный OKO\n9»",
+              "sel": "div.vs-gcard.vs-rar-epic"
+            }
+          ]
+        },
+        {
+          "id": "tn-02-mine",
+          "section": "TON",
+          "name": "Мои подарки",
+          "issues": []
+        },
+        {
+          "id": "tn-03-topup",
+          "section": "TON",
+          "name": "Пополнить",
+          "issues": []
+        },
+        {
+          "id": "tn-04-recv",
+          "section": "TON",
+          "name": "Получить",
+          "issues": []
+        },
+        {
+          "id": "tn-05-send",
+          "section": "TON",
+          "name": "Отправить TON",
+          "issues": []
+        },
+        {
+          "id": "tn-06-hist",
+          "section": "TON",
+          "name": "История операций",
+          "issues": []
+        },
+        {
+          "id": "tn-07-buy",
+          "section": "TON",
+          "name": "Карточка подарка",
+          "issues": []
+        },
+        {
+          "id": "tn-08-conn",
+          "section": "TON",
+          "name": "TON Connect",
+          "issues": []
+        },
+        {
+          "id": "gm-99-spin",
+          "section": "Игры",
+          "name": "После бесплатной крутки",
+          "issues": [
+            {
+              "type": "text-clipped-x",
+              "detail": "146>136 · «Первый среди друзей»",
+              "sel": "b"
+            }
+          ]
+        }
+      ],
+      "jsErrors": [
+        "console: Failed to load resource: the server responded with a status of 404 (File not found)",
+        "console: Failed to load resource: net::ERR_CONNECTION_RESET"
+      ]
+    },
+    {
+      "id": "desktop",
+      "label": "ПК 1440×900",
+      "screens": [
+        {
+          "id": "gm-01-main",
+          "section": "Игры",
+          "name": "Рулетка · главный",
+          "issues": []
+        },
+        {
+          "id": "gm-02-odds",
+          "section": "Игры",
+          "name": "Таблица шансов",
+          "issues": []
+        },
+        {
+          "id": "gm-03-stats",
+          "section": "Игры",
+          "name": "Твоя статистика",
+          "issues": []
+        },
+        {
+          "id": "gm-04-prizes",
+          "section": "Игры",
+          "name": "Мои призы",
+          "issues": []
+        },
+        {
+          "id": "gm-05-daily",
+          "section": "Игры",
+          "name": "Задания дня",
+          "issues": []
+        },
+        {
+          "id": "gm-06-bp",
+          "section": "Игры",
+          "name": "Боевой пропуск",
+          "issues": []
+        },
+        {
+          "id": "gm-07-shop",
+          "section": "Игры",
+          "name": "Витрина подарков",
+          "stepError": "step-timeout",
+          "empty": true,
+          "issues": [
+            {
+              "type": "audit-timeout",
+              "detail": "аудит не уложился в 25 с",
+              "sel": ""
+            }
+          ]
+        },
+        {
+          "id": "gm-08-inv",
+          "section": "Игры",
+          "name": "Мои подарки (игры)",
+          "stepError": "step-timeout",
+          "empty": true,
+          "issues": [
+            {
+              "type": "audit-timeout",
+              "detail": "аудит не уложился в 25 с",
+              "sel": ""
+            }
+          ]
+        },
+        {
+          "id": "gm-09-streak",
+          "section": "Игры",
+          "name": "Серия заходов",
+          "issues": []
+        },
+        {
+          "id": "gm-10-lbworld",
+          "section": "Игры",
+          "name": "Лидеры · Мир",
+          "issues": []
+        },
+        {
+          "id": "gm-12-rules",
+          "section": "Игры",
+          "name": "Правила рулетки",
+          "issues": []
+        },
+        {
+          "id": "gm-13-ach",
+          "section": "Игры",
+          "name": "Достижения",
+          "issues": []
+        },
+        {
+          "id": "pp-01-main",
+          "section": "Партнёрка",
+          "name": "Кабинет партнёра",
+          "issues": []
+        },
+        {
+          "id": "pp-02-calc",
+          "section": "Партнёрка",
+          "name": "Калькулятор · 40 клиентов",
+          "issues": []
+        },
+        {
+          "id": "pp-03-qr",
+          "section": "Партнёрка",
+          "name": "Ссылка и QR",
+          "issues": []
+        },
+        {
+          "id": "pp-04-terms",
+          "section": "Партнёрка",
+          "name": "Условия программы",
+          "issues": []
+        },
+        {
+          "id": "pp-05-hist",
+          "section": "Партнёрка",
+          "name": "История начислений",
+          "issues": []
+        },
+        {
+          "id": "pp-06-payout",
+          "section": "Партнёрка",
+          "name": "Выплаты",
+          "issues": []
+        },
+        {
+          "id": "pp-07-promo",
+          "section": "Партнёрка",
+          "name": "Промо-материалы",
+          "issues": []
+        },
+        {
+          "id": "pp-08-refqr",
+          "section": "Партнёрка",
+          "name": "QR-шторка ядра",
+          "issues": []
+        },
+        {
+          "id": "ad-01-main",
+          "section": "Реклама",
+          "name": "Кабинет · черновики",
+          "issues": []
+        },
+        {
+          "id": "ad-01b-calc",
+          "section": "Реклама",
+          "name": "Расчёт бюджета",
+          "issues": []
+        },
+        {
+          "id": "ad-01c-list",
+          "section": "Реклама",
+          "name": "Список черновиков",
+          "issues": []
+        },
+        {
+          "id": "ad-02-create1",
+          "section": "Реклама",
+          "name": "Мастер · шаг 1",
+          "issues": []
+        },
+        {
+          "id": "ad-03-create2",
+          "section": "Реклама",
+          "name": "Мастер · креатив",
+          "issues": []
+        },
+        {
+          "id": "ad-04-create3",
+          "section": "Реклама",
+          "name": "Мастер · аудитория",
+          "issues": []
+        },
+        {
+          "id": "ad-05-create4",
+          "section": "Реклама",
+          "name": "Мастер · бюджет",
+          "issues": []
+        },
+        {
+          "id": "ad-06-bill",
+          "section": "Реклама",
+          "name": "Биллинг",
+          "issues": []
+        },
+        {
+          "id": "ad-07-auds",
+          "section": "Реклама",
+          "name": "Аудитории",
+          "issues": []
+        },
+        {
+          "id": "ad-08-draft",
+          "section": "Реклама",
+          "name": "Сохранённый черновик",
+          "issues": []
+        },
+        {
+          "id": "dc-01-hub",
+          "section": "Документы",
+          "name": "Список документов",
+          "issues": []
+        },
+        {
+          "id": "dc-02-offer",
+          "section": "Документы",
+          "name": "Публичная оферта",
+          "issues": []
+        },
+        {
+          "id": "dc-03-privacy",
+          "section": "Документы",
+          "name": "Политика конфиденциальности",
+          "issues": []
+        },
+        {
+          "id": "dc-04-terms",
+          "section": "Документы",
+          "name": "Пользовательское соглашение",
+          "issues": []
+        },
+        {
+          "id": "dc-05-refund",
+          "section": "Документы",
+          "name": "Политика возврата",
+          "issues": []
+        },
+        {
+          "id": "dc-06-license",
+          "section": "Документы",
+          "name": "Лицензия на ПО",
+          "issues": []
+        },
+        {
+          "id": "dc-07-consent",
+          "section": "Документы",
+          "name": "Согласие на обработку ПД",
+          "issues": []
+        },
+        {
+          "id": "dc-08-en",
+          "section": "Документы",
+          "name": "Оферта · EN",
+          "issues": []
+        },
+        {
+          "id": "tn-01-shop",
+          "section": "TON",
+          "name": "Магазин подарков",
+          "issues": []
+        },
+        {
+          "id": "tn-01b-what",
+          "section": "TON",
+          "name": "Что уже работает",
+          "issues": []
+        },
+        {
+          "id": "tn-09-market",
+          "section": "TON",
+          "name": "Прайс подарков (биржа)",
+          "issues": []
+        },
+        {
+          "id": "tn-10-offers",
+          "section": "TON",
+          "name": "Ордера по подарку",
+          "issues": []
+        },
+        {
+          "id": "tn-11-nft",
+          "section": "TON",
+          "name": "Данные NFT",
+          "issues": []
+        },
+        {
+          "id": "tn-02-mine",
+          "section": "TON",
+          "name": "Мои подарки",
+          "issues": []
+        },
+        {
+          "id": "tn-03-topup",
+          "section": "TON",
+          "name": "Пополнить",
+          "issues": []
+        },
+        {
+          "id": "tn-04-recv",
+          "section": "TON",
+          "name": "Получить",
+          "issues": []
+        },
+        {
+          "id": "tn-05-send",
+          "section": "TON",
+          "name": "Отправить TON",
+          "issues": []
+        },
+        {
+          "id": "tn-06-hist",
+          "section": "TON",
+          "name": "История операций",
+          "issues": []
+        },
+        {
+          "id": "tn-07-buy",
+          "section": "TON",
+          "name": "Карточка подарка",
+          "issues": []
+        },
+        {
+          "id": "tn-08-conn",
+          "section": "TON",
+          "name": "TON Connect",
+          "issues": []
+        },
+        {
+          "id": "gm-99-spin",
+          "section": "Игры",
+          "name": "После бесплатной крутки",
+          "issues": []
+        }
+      ],
+      "jsErrors": [
+        "console: Failed to load resource: the server responded with a status of 404 (File not found)",
+        "console: Failed to load resource: net::ERR_CONNECTION_RESET"
+      ]
+    }
+  ],
+  "totals": {
+    "screens": 153,
+    "issues": 176,
+    "byType": {
+      "button-label-overflow": 170,
+      "audit-timeout": 3,
+      "text-clipped-x": 3
+    },
+    "jsErrors": 6,
+    "shots": 51
+  }
+}

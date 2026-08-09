@@ -1,0 +1,673 @@
+{
+  "at": "2026-08-09T08:15:25.903Z",
+  "base": "http://127.0.0.1:8199/index.html",
+  "runs": [
+    {
+      "scenario": "reg-mail",
+      "name": "Регистрация по почте до конца",
+      "viewport": "phone",
+      "steps": [
+        {
+          "id": "01-auth",
+          "name": "Экран входа",
+          "shot": "onb2-reg-mail-phone-01-auth.png",
+          "overflowX": 0,
+          "scope": "section#authScreen",
+          "exits": 1,
+          "visibleText": 283,
+          "issues": [],
+          "expect": null
+        },
+        {
+          "id": "02-form",
+          "name": "Контакт и пароль",
+          "shot": "onb2-reg-mail-phone-02-form.png",
+          "overflowX": 0,
+          "scope": "section#authScreen",
+          "exits": 1,
+          "visibleText": 270,
+          "issues": [],
+          "expect": {
+            "rg2": true
+          }
+        },
+        {
+          "id": "03-code",
+          "name": "Код на экране",
+          "shot": "onb2-reg-mail-phone-03-code.png",
+          "overflowX": 0,
+          "scope": "section#authScreen",
+          "exits": 1,
+          "visibleText": 214,
+          "issues": [],
+          "expect": {
+            "hint": true,
+            "sub": "Аккаунт p***e@oko.test"
+          }
+        },
+        {
+          "id": "04-profile",
+          "name": "Профиль",
+          "shot": "onb2-reg-mail-phone-04-profile.png",
+          "overflowX": 0,
+          "scope": "section#authScreen",
+          "exits": 1,
+          "visibleText": 176,
+          "issues": [],
+          "expect": {
+            "step3": true
+          }
+        },
+        {
+          "id": "05-tier",
+          "name": "Тариф",
+          "shot": "onb2-reg-mail-phone-05-tier.png",
+          "overflowX": 0,
+          "scope": "section#authScreen",
+          "exits": 1,
+          "visibleText": 674,
+          "issues": [],
+          "expect": {
+            "step4": true
+          }
+        },
+        {
+          "id": "06-finish",
+          "name": "Готово — знакомство",
+          "shot": "onb2-reg-mail-phone-06-finish.png",
+          "overflowX": 0,
+          "scope": "div#onb2Intro.on",
+          "exits": 1,
+          "visibleText": 448,
+          "issues": [],
+          "expect": {
+            "intro": true,
+            "authed": true,
+            "head": "КТО ТЫ СЕЙЧАС"
+          }
+        },
+        {
+          "id": "07-skip",
+          "name": "Знакомство пропускается",
+          "shot": "onb2-reg-mail-phone-07-skip.png",
+          "overflowX": 0,
+          "scope": "section#screen-feed..creen active",
+          "exits": 1,
+          "visibleText": 212,
+          "issues": [],
+          "expect": {
+            "closed": true,
+            "skipped": true
+          }
+        }
+      ],
+      "errors": []
+    },
+    {
+      "scenario": "reg-mail",
+      "name": "Регистрация по почте до конца",
+      "viewport": "narrow",
+      "steps": [
+        {
+          "id": "01-auth",
+          "name": "Экран входа",
+          "shot": "onb2-reg-mail-narrow-01-auth.png",
+          "overflowX": 0,
+          "scope": "section#authScreen",
+          "exits": 1,
+          "visibleText": 283,
+          "issues": [],
+          "expect": null
+        },
+        {
+          "id": "02-form",
+          "name": "Контакт и пароль",
+          "shot": "onb2-reg-mail-narrow-02-form.png",
+          "overflowX": 0,
+          "scope": "section#authScreen",
+          "exits": 1,
+          "visibleText": 270,
+          "issues": [],
+          "expect": {
+            "rg2": true
+          }
+        },
+        {
+          "id": "03-code",
+          "name": "Код на экране",
+          "shot": "onb2-reg-mail-narrow-03-code.png",
+          "overflowX": 0,
+          "scope": "section#authScreen",
+          "exits": 1,
+          "visibleText": 214,
+          "issues": [],
+          "expect": {
+            "hint": true,
+            "sub": "Аккаунт p***e@oko.test"
+          }
+        },
+        {
+          "id": "04-profile",
+          "name": "Профиль",
+          "shot": "onb2-reg-mail-narrow-04-profile.png",
+          "overflowX": 0,
+          "scope": "section#authScreen",
+          "exits": 1,
+          "visibleText": 176,
+          "issues": [],
+          "expect": {
+            "step3": true
+          }
+        },
+        {
+          "id": "05-tier",
+          "name": "Тариф",
+          "shot": "onb2-reg-mail-narrow-05-tier.png",
+          "overflowX": 0,
+          "scope": "section#authScreen",
+          "exits": 1,
+          "visibleText": 674,
+          "issues": [],
+          "expect": {
+            "step4": true
+          }
+        },
+        {
+          "id": "06-finish",
+          "name": "Готово — знакомство",
+          "shot": "onb2-reg-mail-narrow-06-finish.png",
+          "overflowX": 0,
+          "scope": "div#onb2Intro.on",
+          "exits": 1,
+          "visibleText": 448,
+          "issues": [],
+          "expect": {
+            "intro": true,
+            "authed": true,
+            "head": "КТО ТЫ СЕЙЧАС"
+          }
+        },
+        {
+          "id": "07-skip",
+          "name": "Знакомство пропускается",
+          "shot": "onb2-reg-mail-narrow-07-skip.png",
+          "overflowX": 0,
+          "scope": "section#screen-feed..creen active",
+          "exits": 1,
+          "visibleText": 212,
+          "issues": [],
+          "expect": {
+            "closed": true,
+            "skipped": true
+          }
+        }
+      ],
+      "errors": []
+    },
+    {
+      "scenario": "search",
+      "name": "Глобальный поиск",
+      "viewport": "phone",
+      "steps": [
+        {
+          "id": "01-empty",
+          "name": "Поиск · пустой запрос",
+          "shot": "onb2-search-phone-01-empty.png",
+          "overflowX": 0,
+          "scope": "div#searchView.uic-qa open",
+          "exits": 1,
+          "visibleText": 475,
+          "issues": [],
+          "expect": {
+            "open": true,
+            "quick": 8,
+            "note": true,
+            "chips": 8
+          }
+        },
+        {
+          "id": "02-people",
+          "name": "Поиск · люди",
+          "shot": "onb2-search-phone-02-people.png",
+          "overflowX": 0,
+          "scope": "div#searchView.open onb2-ha.-q",
+          "exits": 1,
+          "visibleText": 201,
+          "issues": [],
+          "expect": {
+            "sections": [
+              "Люди:1",
+              "Чаты и сообщения:1"
+            ],
+            "hits": 2,
+            "first": "Даниэль Ильясов"
+          }
+        },
+        {
+          "id": "03-channel",
+          "name": "Поиск · каналы",
+          "shot": "onb2-search-phone-03-channel.png",
+          "overflowX": 0,
+          "scope": "div#searchView.open onb2-ha.-q",
+          "exits": 1,
+          "visibleText": 990,
+          "issues": [],
+          "expect": {
+            "sections": [
+              "Люди:2",
+              "Каналы и клубы:4",
+              "Чаты и сообщения:3",
+              "Академия:3",
+              "Разделы приложения:1"
+            ],
+            "hits": 13,
+            "first": "Поддержка OKO"
+          }
+        },
+        {
+          "id": "04-academy",
+          "name": "Поиск · Академия",
+          "shot": "onb2-search-phone-04-academy.png",
+          "overflowX": 0,
+          "scope": "div#searchView.open onb2-ha.-q",
+          "exits": 1,
+          "visibleText": 144,
+          "issues": [],
+          "expect": {
+            "sections": [
+              "Академия:1"
+            ],
+            "hits": 1,
+            "first": "Мышление и старт"
+          }
+        },
+        {
+          "id": "05-section",
+          "name": "Поиск · разделы",
+          "shot": "onb2-search-phone-05-section.png",
+          "overflowX": 0,
+          "scope": "div#searchView.open onb2-ha.-q",
+          "exits": 1,
+          "visibleText": 113,
+          "issues": [],
+          "expect": {
+            "sections": [
+              "Разделы приложения:1"
+            ],
+            "hits": 1,
+            "first": "Кошелёк"
+          }
+        },
+        {
+          "id": "06-market",
+          "name": "Поиск · Биржа",
+          "shot": "onb2-search-phone-06-market.png",
+          "overflowX": 0,
+          "scope": "div#searchView.open onb2-ha.-q",
+          "exits": 1,
+          "visibleText": 121,
+          "issues": [],
+          "expect": {
+            "sections": [
+              "Разделы приложения:1"
+            ],
+            "hits": 1,
+            "first": "Биржа услуг"
+          }
+        },
+        {
+          "id": "07-chat",
+          "name": "Поиск · сообщения",
+          "shot": "onb2-search-phone-07-chat.png",
+          "overflowX": 0,
+          "scope": "div#searchView.open onb2-ha.-q",
+          "exits": 1,
+          "visibleText": 233,
+          "issues": [],
+          "expect": {
+            "sections": [
+              "Люди:1",
+              "Чаты и сообщения:1"
+            ],
+            "hits": 2,
+            "first": "Поддержка OKO"
+          }
+        },
+        {
+          "id": "08-filter",
+          "name": "Поиск · фильтр по типу",
+          "shot": "onb2-search-phone-08-filter.png",
+          "overflowX": 0,
+          "scope": "div#searchView.open onb2-ha.-q",
+          "exits": 1,
+          "visibleText": 197,
+          "issues": [],
+          "expect": {
+            "sections": [],
+            "hits": 0,
+            "first": ""
+          }
+        },
+        {
+          "id": "09-nothing",
+          "name": "Поиск · ничего не нашли",
+          "shot": "onb2-search-phone-09-nothing.png",
+          "overflowX": 0,
+          "scope": "div#searchView.open onb2-ha.-q",
+          "exits": 1,
+          "visibleText": 327,
+          "issues": [],
+          "expect": {
+            "empty": true,
+            "text": "Ничего не нашлось по «ъыфячсмить» Поиск смотрит только по тому, что уже есть в приложении: твои чаты и каналы, курсы и уроки Академии, объяв",
+            "hits": 0
+          }
+        },
+        {
+          "id": "10-recent",
+          "name": "Поиск · недавние запросы",
+          "shot": "onb2-search-phone-10-recent.png",
+          "overflowX": 0,
+          "scope": "div#searchView.open uic-qa",
+          "exits": 1,
+          "visibleText": 536,
+          "issues": [],
+          "expect": {
+            "recent": 4,
+            "list": [
+              "ъыфячсмить",
+              "поддержка",
+              "кошел",
+              "Даниэль"
+            ]
+          }
+        },
+        {
+          "id": "11-filter-empty",
+          "name": "Поиск · фильтр прячет результат честно",
+          "shot": "onb2-search-phone-11-filter-empty.png",
+          "overflowX": 0,
+          "scope": "div#searchView.open onb2-ha.-q",
+          "exits": 1,
+          "visibleText": 192,
+          "issues": [],
+          "expect": {
+            "empty": true,
+            "text": "Ничего не нашлось по «кошел»\n\nВ фильтре «Академия» пусто, зато в других разделах есть 1. Сними фильтр — покажем всё.\n\nИскать во всём",
+            "resetBtn": true
+          }
+        },
+        {
+          "id": "12-open-hit",
+          "name": "Поиск · переход по результату",
+          "shot": "onb2-search-phone-12-open-hit.png",
+          "overflowX": 0,
+          "scope": "section#screen-wallet..creen active wm-tab-in-right",
+          "exits": 1,
+          "visibleText": 926,
+          "issues": [],
+          "expect": {
+            "searchClosed": true,
+            "wallet": true
+          }
+        },
+        {
+          "id": "13-light",
+          "name": "Поиск · светлая тема",
+          "shot": "onb2-search-phone-13-light.png",
+          "overflowX": 0,
+          "scope": "div.okg-.crim on",
+          "exits": 1,
+          "visibleText": 364,
+          "issues": [],
+          "expect": {
+            "theme": "light",
+            "hits": 13
+          }
+        }
+      ],
+      "errors": []
+    },
+    {
+      "scenario": "search",
+      "name": "Глобальный поиск",
+      "viewport": "narrow",
+      "steps": [
+        {
+          "id": "01-empty",
+          "name": "Поиск · пустой запрос",
+          "shot": "onb2-search-narrow-01-empty.png",
+          "overflowX": 0,
+          "scope": "div#searchView.uic-qa open",
+          "exits": 1,
+          "visibleText": 475,
+          "issues": [],
+          "expect": {
+            "open": true,
+            "quick": 8,
+            "note": true,
+            "chips": 8
+          }
+        },
+        {
+          "id": "02-people",
+          "name": "Поиск · люди",
+          "shot": "onb2-search-narrow-02-people.png",
+          "overflowX": 0,
+          "scope": "div#searchView.open onb2-ha.-q",
+          "exits": 1,
+          "visibleText": 201,
+          "issues": [],
+          "expect": {
+            "sections": [
+              "Люди:1",
+              "Чаты и сообщения:1"
+            ],
+            "hits": 2,
+            "first": "Даниэль Ильясов"
+          }
+        },
+        {
+          "id": "03-channel",
+          "name": "Поиск · каналы",
+          "shot": "onb2-search-narrow-03-channel.png",
+          "overflowX": 0,
+          "scope": "div#searchView.open onb2-ha.-q",
+          "exits": 1,
+          "visibleText": 990,
+          "issues": [],
+          "expect": {
+            "sections": [
+              "Люди:2",
+              "Каналы и клубы:4",
+              "Чаты и сообщения:3",
+              "Академия:3",
+              "Разделы приложения:1"
+            ],
+            "hits": 13,
+            "first": "Поддержка OKO"
+          }
+        },
+        {
+          "id": "04-academy",
+          "name": "Поиск · Академия",
+          "shot": "onb2-search-narrow-04-academy.png",
+          "overflowX": 0,
+          "scope": "div#searchView.open onb2-ha.-q",
+          "exits": 1,
+          "visibleText": 144,
+          "issues": [],
+          "expect": {
+            "sections": [
+              "Академия:1"
+            ],
+            "hits": 1,
+            "first": "Мышление и старт"
+          }
+        },
+        {
+          "id": "05-section",
+          "name": "Поиск · разделы",
+          "shot": "onb2-search-narrow-05-section.png",
+          "overflowX": 0,
+          "scope": "div#searchView.open onb2-ha.-q",
+          "exits": 1,
+          "visibleText": 113,
+          "issues": [],
+          "expect": {
+            "sections": [
+              "Разделы приложения:1"
+            ],
+            "hits": 1,
+            "first": "Кошелёк"
+          }
+        },
+        {
+          "id": "06-market",
+          "name": "Поиск · Биржа",
+          "shot": "onb2-search-narrow-06-market.png",
+          "overflowX": 0,
+          "scope": "div#searchView.open onb2-ha.-q",
+          "exits": 1,
+          "visibleText": 121,
+          "issues": [],
+          "expect": {
+            "sections": [
+              "Разделы приложения:1"
+            ],
+            "hits": 1,
+            "first": "Биржа услуг"
+          }
+        },
+        {
+          "id": "07-chat",
+          "name": "Поиск · сообщения",
+          "shot": "onb2-search-narrow-07-chat.png",
+          "overflowX": 0,
+          "scope": "div#searchView.open onb2-ha.-q",
+          "exits": 1,
+          "visibleText": 233,
+          "issues": [],
+          "expect": {
+            "sections": [
+              "Люди:1",
+              "Чаты и сообщения:1"
+            ],
+            "hits": 2,
+            "first": "Поддержка OKO"
+          }
+        },
+        {
+          "id": "08-filter",
+          "name": "Поиск · фильтр по типу",
+          "shot": "onb2-search-narrow-08-filter.png",
+          "overflowX": 0,
+          "scope": "div#searchView.open onb2-ha.-q",
+          "exits": 1,
+          "visibleText": 197,
+          "issues": [],
+          "expect": {
+            "sections": [],
+            "hits": 0,
+            "first": ""
+          }
+        },
+        {
+          "id": "09-nothing",
+          "name": "Поиск · ничего не нашли",
+          "shot": "onb2-search-narrow-09-nothing.png",
+          "overflowX": 0,
+          "scope": "div#searchView.open onb2-ha.-q",
+          "exits": 1,
+          "visibleText": 327,
+          "issues": [],
+          "expect": {
+            "empty": true,
+            "text": "Ничего не нашлось по «ъыфячсмить» Поиск смотрит только по тому, что уже есть в приложении: твои чаты и каналы, курсы и уроки Академии, объяв",
+            "hits": 0
+          }
+        },
+        {
+          "id": "10-recent",
+          "name": "Поиск · недавние запросы",
+          "shot": "onb2-search-narrow-10-recent.png",
+          "overflowX": 0,
+          "scope": "div#searchView.open uic-qa",
+          "exits": 1,
+          "visibleText": 532,
+          "issues": [],
+          "expect": {
+            "recent": 4,
+            "list": [
+              "ъыфячсмить",
+              "поддержка",
+              "кошел",
+              "OKO"
+            ]
+          }
+        },
+        {
+          "id": "11-filter-empty",
+          "name": "Поиск · фильтр прячет результат честно",
+          "shot": "onb2-search-narrow-11-filter-empty.png",
+          "overflowX": 0,
+          "scope": "div#searchView.open onb2-ha.-q",
+          "exits": 1,
+          "visibleText": 192,
+          "issues": [],
+          "expect": {
+            "empty": true,
+            "text": "Ничего не нашлось по «кошел»\n\nВ фильтре «Академия» пусто, зато в других разделах есть 1. Сними фильтр — покажем всё.\n\nИскать во всём",
+            "resetBtn": true
+          }
+        },
+        {
+          "id": "12-open-hit",
+          "name": "Поиск · переход по результату",
+          "shot": "onb2-search-narrow-12-open-hit.png",
+          "overflowX": 0,
+          "scope": "section#screen-wallet..creen active wm-tab-in-right",
+          "exits": 1,
+          "visibleText": 926,
+          "issues": [],
+          "expect": {
+            "searchClosed": true,
+            "wallet": true
+          }
+        },
+        {
+          "id": "13-light",
+          "name": "Поиск · светлая тема",
+          "shot": "onb2-search-narrow-13-light.png",
+          "overflowX": 0,
+          "scope": "div#searchView.open onb2-ha.-q",
+          "exits": 1,
+          "visibleText": 990,
+          "issues": [],
+          "expect": {
+            "theme": "light",
+            "hits": 13
+          }
+        }
+      ],
+      "errors": []
+    }
+  ],
+  "summary": {
+    "overflowX": [],
+    "clipped": [],
+    "breakAll": [],
+    "underTg": [],
+    "noExit": [],
+    "emptyScreen": [],
+    "failed": [],
+    "jsErrors": []
+  },
+  "foreign": {
+    "clipped": [],
+    "breakAll": [],
+    "underTg": [],
+    "other": []
+  },
+  "verdict": "ЧИСТО"
+}

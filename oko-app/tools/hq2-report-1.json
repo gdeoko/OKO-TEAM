@@ -1,0 +1,2961 @@
+{
+  "round": "1",
+  "at": "2026-08-09T08:08:42.568Z",
+  "viewports": [
+    {
+      "viewport": "phone",
+      "size": "390x844",
+      "routes": [
+        {
+          "route": "adm-open",
+          "name": "Админка открыта",
+          "overflowX": 0,
+          "offRight": [],
+          "clipped": [],
+          "midWordBreak": [],
+          "badNumbers": [],
+          "back": true,
+          "empty": false,
+          "textLen": 573,
+          "layer": "div#adminView.open",
+          "layerRect": {
+            "l": 0,
+            "r": 390,
+            "w": 390
+          },
+          "layerTransform": "none",
+          "backRect": {
+            "l": 14,
+            "w": 38
+          },
+          "notSettled": false,
+          "consoleErrors": [],
+          "shot": "hq2-adm-open.png"
+        },
+        {
+          "route": "tab-overview",
+          "name": "Вкладка overview",
+          "overflowX": 0,
+          "offRight": [],
+          "clipped": [],
+          "midWordBreak": [],
+          "badNumbers": [],
+          "back": true,
+          "empty": false,
+          "textLen": 573,
+          "layer": "div#adminView.open",
+          "layerRect": {
+            "l": 0,
+            "r": 390,
+            "w": 390
+          },
+          "layerTransform": "none",
+          "backRect": {
+            "l": 14,
+            "w": 38
+          },
+          "notSettled": false,
+          "consoleErrors": [],
+          "shot": "hq2-tab-overview.png"
+        },
+        {
+          "route": "tab-hq",
+          "name": "Вкладка hq",
+          "overflowX": 0,
+          "offRight": [],
+          "clipped": [],
+          "midWordBreak": [],
+          "badNumbers": [],
+          "back": true,
+          "empty": false,
+          "textLen": 3045,
+          "layer": "div#adminView.open",
+          "layerRect": {
+            "l": 0,
+            "r": 390,
+            "w": 390
+          },
+          "layerTransform": "none",
+          "backRect": {
+            "l": 14,
+            "w": 38
+          },
+          "notSettled": false,
+          "consoleErrors": [],
+          "shot": "hq2-tab-hq.png"
+        },
+        {
+          "route": "tab-users",
+          "name": "Вкладка users",
+          "overflowX": 0,
+          "offRight": [],
+          "clipped": [],
+          "midWordBreak": [],
+          "badNumbers": [],
+          "back": true,
+          "empty": false,
+          "textLen": 371,
+          "layer": "div#adminView.open",
+          "layerRect": {
+            "l": 0,
+            "r": 390,
+            "w": 390
+          },
+          "layerTransform": "none",
+          "backRect": {
+            "l": 14,
+            "w": 38
+          },
+          "notSettled": false,
+          "consoleErrors": [],
+          "shot": "hq2-tab-users.png"
+        },
+        {
+          "route": "tab-pay",
+          "name": "Вкладка pay",
+          "overflowX": 0,
+          "offRight": [],
+          "clipped": [],
+          "midWordBreak": [],
+          "badNumbers": [],
+          "back": true,
+          "empty": false,
+          "textLen": 537,
+          "layer": "div#adminView.open",
+          "layerRect": {
+            "l": 0,
+            "r": 390,
+            "w": 390
+          },
+          "layerTransform": "none",
+          "backRect": {
+            "l": 14,
+            "w": 38
+          },
+          "notSettled": false,
+          "consoleErrors": [],
+          "shot": "hq2-tab-pay.png"
+        },
+        {
+          "route": "tab-plans",
+          "name": "Вкладка plans",
+          "overflowX": 0,
+          "offRight": [],
+          "clipped": [],
+          "midWordBreak": [],
+          "badNumbers": [],
+          "back": true,
+          "empty": false,
+          "textLen": 645,
+          "layer": "div#adminView.open",
+          "layerRect": {
+            "l": 0,
+            "r": 390,
+            "w": 390
+          },
+          "layerTransform": "none",
+          "backRect": {
+            "l": 14,
+            "w": 38
+          },
+          "notSettled": false,
+          "consoleErrors": [],
+          "shot": "hq2-tab-plans.png"
+        },
+        {
+          "route": "tab-content",
+          "name": "Вкладка content",
+          "overflowX": 0,
+          "offRight": [],
+          "clipped": [],
+          "midWordBreak": [],
+          "badNumbers": [],
+          "back": true,
+          "empty": false,
+          "textLen": 268,
+          "layer": "div#adminView.open",
+          "layerRect": {
+            "l": 0,
+            "r": 390,
+            "w": 390
+          },
+          "layerTransform": "none",
+          "backRect": {
+            "l": 14,
+            "w": 38
+          },
+          "notSettled": false,
+          "consoleErrors": [],
+          "shot": "hq2-tab-content.png"
+        },
+        {
+          "route": "tab-moder",
+          "name": "Вкладка moder",
+          "overflowX": 0,
+          "offRight": [],
+          "clipped": [],
+          "midWordBreak": [],
+          "badNumbers": [],
+          "back": true,
+          "empty": false,
+          "textLen": 261,
+          "layer": "div#adminView.open",
+          "layerRect": {
+            "l": 0,
+            "r": 390,
+            "w": 390
+          },
+          "layerTransform": "none",
+          "backRect": {
+            "l": 14,
+            "w": 38
+          },
+          "notSettled": false,
+          "consoleErrors": [],
+          "shot": "hq2-tab-moder.png"
+        },
+        {
+          "route": "tab-flags",
+          "name": "Вкладка flags",
+          "overflowX": 0,
+          "offRight": [],
+          "clipped": [],
+          "midWordBreak": [],
+          "badNumbers": [],
+          "back": true,
+          "empty": false,
+          "textLen": 925,
+          "layer": "div#adminView.open",
+          "layerRect": {
+            "l": 0,
+            "r": 390,
+            "w": 390
+          },
+          "layerTransform": "none",
+          "backRect": {
+            "l": 14,
+            "w": 38
+          },
+          "notSettled": false,
+          "consoleErrors": [],
+          "shot": "hq2-tab-flags.png"
+        },
+        {
+          "route": "tab-export",
+          "name": "Вкладка export",
+          "overflowX": 0,
+          "offRight": [],
+          "clipped": [],
+          "midWordBreak": [],
+          "badNumbers": [],
+          "back": true,
+          "empty": false,
+          "textLen": 670,
+          "layer": "div#adminView.open",
+          "layerRect": {
+            "l": 0,
+            "r": 390,
+            "w": 390
+          },
+          "layerTransform": "none",
+          "backRect": {
+            "l": 14,
+            "w": 38
+          },
+          "notSettled": false,
+          "consoleErrors": [],
+          "shot": "hq2-tab-export.png"
+        },
+        {
+          "route": "agent-ceo",
+          "name": "Агент ceo",
+          "overflowX": 0,
+          "offRight": [],
+          "clipped": [],
+          "midWordBreak": [],
+          "badNumbers": [],
+          "back": true,
+          "empty": false,
+          "textLen": 1431,
+          "layer": "div#h2View.open",
+          "layerRect": {
+            "l": 0,
+            "r": 390,
+            "w": 390
+          },
+          "layerTransform": "none",
+          "backRect": {
+            "l": 14,
+            "w": 38
+          },
+          "notSettled": false,
+          "consoleErrors": [],
+          "shot": "hq2-agent-ceo.png"
+        },
+        {
+          "route": "agent-assist",
+          "name": "Агент assist",
+          "overflowX": 0,
+          "offRight": [],
+          "clipped": [],
+          "midWordBreak": [],
+          "badNumbers": [],
+          "back": true,
+          "empty": false,
+          "textLen": 1216,
+          "layer": "div#h2View.open",
+          "layerRect": {
+            "l": 0,
+            "r": 390,
+            "w": 390
+          },
+          "layerTransform": "none",
+          "backRect": {
+            "l": 14,
+            "w": 38
+          },
+          "notSettled": false,
+          "consoleErrors": [],
+          "shot": "hq2-agent-assist.png"
+        },
+        {
+          "route": "agent-sales",
+          "name": "Агент sales",
+          "overflowX": 0,
+          "offRight": [],
+          "clipped": [],
+          "midWordBreak": [],
+          "badNumbers": [],
+          "back": true,
+          "empty": false,
+          "textLen": 1361,
+          "layer": "div#h2View.open",
+          "layerRect": {
+            "l": 0,
+            "r": 390,
+            "w": 390
+          },
+          "layerTransform": "none",
+          "backRect": {
+            "l": 14,
+            "w": 38
+          },
+          "notSettled": false,
+          "consoleErrors": [],
+          "shot": "hq2-agent-sales.png"
+        },
+        {
+          "route": "agent-manager",
+          "name": "Агент manager",
+          "overflowX": 0,
+          "offRight": [],
+          "clipped": [],
+          "midWordBreak": [],
+          "badNumbers": [],
+          "back": true,
+          "empty": false,
+          "textLen": 1370,
+          "layer": "div#h2View.open",
+          "layerRect": {
+            "l": 0,
+            "r": 390,
+            "w": 390
+          },
+          "layerTransform": "none",
+          "backRect": {
+            "l": 14,
+            "w": 38
+          },
+          "notSettled": false,
+          "consoleErrors": [],
+          "shot": "hq2-agent-manager.png"
+        },
+        {
+          "route": "agent-factory",
+          "name": "Агент factory",
+          "overflowX": 0,
+          "offRight": [],
+          "clipped": [],
+          "midWordBreak": [],
+          "badNumbers": [],
+          "back": true,
+          "empty": false,
+          "textLen": 1404,
+          "layer": "div#h2View.open",
+          "layerRect": {
+            "l": 0,
+            "r": 390,
+            "w": 390
+          },
+          "layerTransform": "none",
+          "backRect": {
+            "l": 14,
+            "w": 38
+          },
+          "notSettled": false,
+          "consoleErrors": [],
+          "shot": "hq2-agent-factory.png"
+        },
+        {
+          "route": "agent-editor",
+          "name": "Агент editor",
+          "overflowX": 0,
+          "offRight": [],
+          "clipped": [],
+          "midWordBreak": [],
+          "badNumbers": [],
+          "back": true,
+          "empty": false,
+          "textLen": 985,
+          "layer": "div#h2View.open",
+          "layerRect": {
+            "l": 0,
+            "r": 390,
+            "w": 390
+          },
+          "layerTransform": "none",
+          "backRect": {
+            "l": 14,
+            "w": 38
+          },
+          "notSettled": false,
+          "consoleErrors": [],
+          "shot": "hq2-agent-editor.png"
+        },
+        {
+          "route": "agent-designer",
+          "name": "Агент designer",
+          "overflowX": 0,
+          "offRight": [],
+          "clipped": [],
+          "midWordBreak": [],
+          "badNumbers": [],
+          "back": true,
+          "empty": false,
+          "textLen": 1135,
+          "layer": "div#h2View.open",
+          "layerRect": {
+            "l": 0,
+            "r": 390,
+            "w": 390
+          },
+          "layerTransform": "none",
+          "backRect": {
+            "l": 14,
+            "w": 38
+          },
+          "notSettled": false,
+          "consoleErrors": [],
+          "shot": "hq2-agent-designer.png"
+        },
+        {
+          "route": "agent-copy",
+          "name": "Агент copy",
+          "overflowX": 0,
+          "offRight": [],
+          "clipped": [],
+          "midWordBreak": [],
+          "badNumbers": [],
+          "back": true,
+          "empty": false,
+          "textLen": 1030,
+          "layer": "div#h2View.open",
+          "layerRect": {
+            "l": 0,
+            "r": 390,
+            "w": 390
+          },
+          "layerTransform": "none",
+          "backRect": {
+            "l": 14,
+            "w": 38
+          },
+          "notSettled": false,
+          "consoleErrors": [],
+          "shotSkipped": "TimeoutError: page.screenshot: Timeout 15000ms exceeded.\nCal"
+        },
+        {
+          "route": "agent-analyst",
+          "name": "Агент analyst",
+          "overflowX": 0,
+          "offRight": [],
+          "clipped": [],
+          "midWordBreak": [],
+          "badNumbers": [],
+          "back": true,
+          "empty": false,
+          "textLen": 1363,
+          "layer": "div#h2View.open",
+          "layerRect": {
+            "l": 0,
+            "r": 390,
+            "w": 390
+          },
+          "layerTransform": "none",
+          "backRect": {
+            "l": 14,
+            "w": 38
+          },
+          "notSettled": false,
+          "consoleErrors": [],
+          "shot": "hq2-agent-analyst.png"
+        },
+        {
+          "route": "agent-support",
+          "name": "Агент support",
+          "overflowX": 0,
+          "offRight": [],
+          "clipped": [],
+          "midWordBreak": [],
+          "badNumbers": [],
+          "back": true,
+          "empty": false,
+          "textLen": 1370,
+          "layer": "div#h2View.open",
+          "layerRect": {
+            "l": 0,
+            "r": 390,
+            "w": 390
+          },
+          "layerTransform": "none",
+          "backRect": {
+            "l": 14,
+            "w": 38
+          },
+          "notSettled": false,
+          "consoleErrors": [],
+          "shot": "hq2-agent-support.png"
+        },
+        {
+          "route": "agent-legal",
+          "name": "Агент legal",
+          "overflowX": 0,
+          "offRight": [],
+          "clipped": [],
+          "midWordBreak": [],
+          "badNumbers": [],
+          "back": true,
+          "empty": false,
+          "textLen": 1164,
+          "layer": "div#h2View.open",
+          "layerRect": {
+            "l": 0,
+            "r": 390,
+            "w": 390
+          },
+          "layerTransform": "none",
+          "backRect": {
+            "l": 14,
+            "w": 38
+          },
+          "notSettled": false,
+          "consoleErrors": [],
+          "shot": "hq2-agent-legal.png"
+        },
+        {
+          "route": "room-ops",
+          "name": "Отдел ops",
+          "overflowX": 0,
+          "offRight": [],
+          "clipped": [],
+          "midWordBreak": [],
+          "badNumbers": [],
+          "back": true,
+          "empty": false,
+          "textLen": 845,
+          "layer": "div#h2View.open",
+          "layerRect": {
+            "l": 0,
+            "r": 390,
+            "w": 390
+          },
+          "layerTransform": "none",
+          "backRect": {
+            "l": 14,
+            "w": 38
+          },
+          "notSettled": false,
+          "consoleErrors": [],
+          "shot": "hq2-room-ops.png"
+        },
+        {
+          "route": "room-sales",
+          "name": "Отдел sales",
+          "overflowX": 0,
+          "offRight": [],
+          "clipped": [],
+          "midWordBreak": [],
+          "badNumbers": [],
+          "back": true,
+          "empty": false,
+          "textLen": 815,
+          "layer": "div#h2View.open",
+          "layerRect": {
+            "l": 0,
+            "r": 390,
+            "w": 390
+          },
+          "layerTransform": "none",
+          "backRect": {
+            "l": 14,
+            "w": 38
+          },
+          "notSettled": false,
+          "consoleErrors": [],
+          "shot": "hq2-room-sales.png"
+        },
+        {
+          "route": "room-content",
+          "name": "Отдел content",
+          "overflowX": 0,
+          "offRight": [],
+          "clipped": [],
+          "midWordBreak": [],
+          "badNumbers": [],
+          "back": true,
+          "empty": false,
+          "textLen": 1136,
+          "layer": "div#h2View.open",
+          "layerRect": {
+            "l": 0,
+            "r": 390,
+            "w": 390
+          },
+          "layerTransform": "none",
+          "backRect": {
+            "l": 14,
+            "w": 38
+          },
+          "notSettled": false,
+          "consoleErrors": [],
+          "shot": "hq2-room-content.png"
+        },
+        {
+          "route": "room-research",
+          "name": "Отдел research",
+          "overflowX": 0,
+          "offRight": [],
+          "clipped": [],
+          "midWordBreak": [],
+          "badNumbers": [],
+          "back": true,
+          "empty": false,
+          "textLen": 606,
+          "layer": "div#h2View.open",
+          "layerRect": {
+            "l": 0,
+            "r": 390,
+            "w": 390
+          },
+          "layerTransform": "none",
+          "backRect": {
+            "l": 14,
+            "w": 38
+          },
+          "notSettled": false,
+          "consoleErrors": [],
+          "shot": "hq2-room-research.png"
+        },
+        {
+          "route": "room-comms",
+          "name": "Отдел comms",
+          "overflowX": 0,
+          "offRight": [],
+          "clipped": [],
+          "midWordBreak": [],
+          "badNumbers": [],
+          "back": true,
+          "empty": false,
+          "textLen": 624,
+          "layer": "div#h2View.open",
+          "layerRect": {
+            "l": 0,
+            "r": 390,
+            "w": 390
+          },
+          "layerTransform": "none",
+          "backRect": {
+            "l": 14,
+            "w": 38
+          },
+          "notSettled": false,
+          "consoleErrors": [],
+          "shot": "hq2-room-comms.png"
+        },
+        {
+          "route": "room-legal",
+          "name": "Отдел legal",
+          "overflowX": 0,
+          "offRight": [],
+          "clipped": [],
+          "midWordBreak": [],
+          "badNumbers": [],
+          "back": true,
+          "empty": false,
+          "textLen": 564,
+          "layer": "div#h2View.open",
+          "layerRect": {
+            "l": 0,
+            "r": 390,
+            "w": 390
+          },
+          "layerTransform": "none",
+          "backRect": {
+            "l": 14,
+            "w": 38
+          },
+          "notSettled": false,
+          "consoleErrors": [],
+          "shot": "hq2-room-legal.png"
+        },
+        {
+          "route": "room-finance",
+          "name": "Отдел finance",
+          "overflowX": 0,
+          "offRight": [],
+          "clipped": [],
+          "midWordBreak": [],
+          "badNumbers": [],
+          "back": true,
+          "empty": false,
+          "textLen": 524,
+          "layer": "div#h2View.open",
+          "layerRect": {
+            "l": 0,
+            "r": 390,
+            "w": 390
+          },
+          "layerTransform": "none",
+          "backRect": {
+            "l": 14,
+            "w": 38
+          },
+          "notSettled": false,
+          "consoleErrors": [],
+          "shot": "hq2-room-finance.png"
+        },
+        {
+          "route": "room-security",
+          "name": "Отдел security",
+          "overflowX": 0,
+          "offRight": [],
+          "clipped": [],
+          "midWordBreak": [],
+          "badNumbers": [],
+          "back": true,
+          "empty": false,
+          "textLen": 519,
+          "layer": "div#h2View.open",
+          "layerRect": {
+            "l": 0,
+            "r": 390,
+            "w": 390
+          },
+          "layerTransform": "none",
+          "backRect": {
+            "l": 14,
+            "w": 38
+          },
+          "notSettled": false,
+          "consoleErrors": [],
+          "shot": "hq2-room-security.png"
+        },
+        {
+          "route": "task-add",
+          "name": "Постановка задачи",
+          "overflowX": 0,
+          "offRight": [],
+          "clipped": [],
+          "midWordBreak": [],
+          "badNumbers": [],
+          "back": true,
+          "empty": false,
+          "textLen": 1512,
+          "layer": "div#h2View.open",
+          "layerRect": {
+            "l": 0,
+            "r": 390,
+            "w": 390
+          },
+          "layerTransform": "none",
+          "backRect": {
+            "l": 14,
+            "w": 38
+          },
+          "notSettled": false,
+          "consoleErrors": [],
+          "shotSkipped": "TimeoutError: page.screenshot: Timeout 15000ms exceeded.\nCal"
+        },
+        {
+          "route": "hq-with-log",
+          "name": "Штаб с отчётом",
+          "overflowX": 0,
+          "offRight": [],
+          "clipped": [],
+          "midWordBreak": [],
+          "badNumbers": [],
+          "back": true,
+          "empty": false,
+          "textLen": 3089,
+          "layer": "div#adminView.open",
+          "layerRect": {
+            "l": 0,
+            "r": 390,
+            "w": 390
+          },
+          "layerTransform": "none",
+          "backRect": {
+            "l": 14,
+            "w": 38
+          },
+          "notSettled": false,
+          "consoleErrors": [],
+          "shot": "hq2-hq-with-log.png"
+        },
+        {
+          "route": "task-done",
+          "name": "Задача закрыта вручную",
+          "overflowX": 0,
+          "offRight": [],
+          "clipped": [],
+          "midWordBreak": [],
+          "badNumbers": [],
+          "back": true,
+          "empty": false,
+          "textLen": 1431,
+          "layer": "div#h2View.open",
+          "layerRect": {
+            "l": 0,
+            "r": 390,
+            "w": 390
+          },
+          "layerTransform": "none",
+          "backRect": {
+            "l": 14,
+            "w": 38
+          },
+          "notSettled": false,
+          "consoleErrors": [],
+          "shot": "hq2-task-done.png"
+        },
+        {
+          "route": "task-drop-modal",
+          "name": "Снятие задачи · модалка",
+          "overflowX": 0,
+          "offRight": [],
+          "clipped": [],
+          "midWordBreak": [],
+          "badNumbers": [],
+          "back": true,
+          "empty": false,
+          "textLen": 1410,
+          "layer": "div#h2View.open",
+          "layerRect": {
+            "l": 0,
+            "r": 390,
+            "w": 390
+          },
+          "layerTransform": "none",
+          "backRect": {
+            "l": 14,
+            "w": 38
+          },
+          "notSettled": false,
+          "extra": {
+            "modal": true
+          },
+          "consoleErrors": [],
+          "shot": "hq2-task-drop-modal.png"
+        },
+        {
+          "route": "exp-tab",
+          "name": "Экспорт с данными",
+          "overflowX": 0,
+          "offRight": [],
+          "clipped": [],
+          "midWordBreak": [],
+          "badNumbers": [],
+          "back": true,
+          "empty": false,
+          "textLen": 670,
+          "layer": "div#adminView.open",
+          "layerRect": {
+            "l": 0,
+            "r": 390,
+            "w": 390
+          },
+          "layerTransform": "none",
+          "backRect": {
+            "l": 14,
+            "w": 38
+          },
+          "notSettled": false,
+          "consoleErrors": [],
+          "shot": "hq2-exp-tab.png"
+        },
+        {
+          "route": "back-from-agent",
+          "name": "Возврат из карточки агента",
+          "overflowX": 0,
+          "offRight": [],
+          "clipped": [],
+          "midWordBreak": [],
+          "badNumbers": [],
+          "back": true,
+          "empty": false,
+          "textLen": 3045,
+          "layer": "div#adminView.open",
+          "layerRect": {
+            "l": 0,
+            "r": 390,
+            "w": 390
+          },
+          "layerTransform": "none",
+          "backRect": {
+            "l": 14,
+            "w": 38
+          },
+          "notSettled": false,
+          "extra": {
+            "viewClosed": true,
+            "adminOpen": true
+          },
+          "consoleErrors": [],
+          "shot": "hq2-back-from-agent.png"
+        },
+        {
+          "route": "sysback-from-agent",
+          "name": "Системная «назад» из агента",
+          "overflowX": 0,
+          "offRight": [],
+          "clipped": [],
+          "midWordBreak": [],
+          "badNumbers": [],
+          "back": true,
+          "empty": false,
+          "textLen": 3045,
+          "layer": "div#adminView.open",
+          "layerRect": {
+            "l": 0,
+            "r": 390,
+            "w": 390
+          },
+          "layerTransform": "none",
+          "backRect": {
+            "l": 14,
+            "w": 38
+          },
+          "notSettled": false,
+          "extra": {
+            "viewClosed": true,
+            "adminOpen": true
+          },
+          "consoleErrors": [],
+          "shot": "hq2-sysback-from-agent.png"
+        },
+        {
+          "route": "esc-from-room",
+          "name": "Escape закрывает отдел",
+          "overflowX": 0,
+          "offRight": [],
+          "clipped": [],
+          "midWordBreak": [],
+          "badNumbers": [],
+          "back": true,
+          "empty": false,
+          "textLen": 3045,
+          "layer": "div#adminView.open",
+          "layerRect": {
+            "l": 0,
+            "r": 390,
+            "w": 390
+          },
+          "layerTransform": "none",
+          "backRect": {
+            "l": 14,
+            "w": 38
+          },
+          "notSettled": false,
+          "extra": {
+            "viewClosed": true,
+            "adminOpen": true
+          },
+          "consoleErrors": [],
+          "shot": "hq2-esc-from-room.png"
+        },
+        {
+          "route": "not-owner",
+          "name": "Не владелец: раздела нет",
+          "overflowX": 0,
+          "offRight": [],
+          "clipped": [],
+          "midWordBreak": [],
+          "badNumbers": [],
+          "back": false,
+          "empty": true,
+          "textLen": 0,
+          "layer": "none",
+          "notSettled": false,
+          "extra": {
+            "rowsHidden": true,
+            "adminOpen": false
+          },
+          "consoleErrors": [],
+          "backNotRequired": true,
+          "emptyOk": true,
+          "shot": "hq2-not-owner.png"
+        }
+      ]
+    },
+    {
+      "viewport": "narrow",
+      "size": "360x740",
+      "routes": [
+        {
+          "route": "adm-open",
+          "name": "Админка открыта",
+          "overflowX": 0,
+          "offRight": [],
+          "clipped": [],
+          "midWordBreak": [],
+          "badNumbers": [],
+          "back": true,
+          "empty": false,
+          "textLen": 573,
+          "layer": "div#adminView.open",
+          "layerRect": {
+            "l": 0,
+            "r": 360,
+            "w": 360
+          },
+          "layerTransform": "none",
+          "backRect": {
+            "l": 14,
+            "w": 38
+          },
+          "notSettled": false,
+          "consoleErrors": []
+        },
+        {
+          "route": "tab-overview",
+          "name": "Вкладка overview",
+          "overflowX": 0,
+          "offRight": [],
+          "clipped": [],
+          "midWordBreak": [],
+          "badNumbers": [],
+          "back": true,
+          "empty": false,
+          "textLen": 573,
+          "layer": "div#adminView.open",
+          "layerRect": {
+            "l": 0,
+            "r": 360,
+            "w": 360
+          },
+          "layerTransform": "none",
+          "backRect": {
+            "l": 14,
+            "w": 38
+          },
+          "notSettled": false,
+          "consoleErrors": []
+        },
+        {
+          "route": "tab-hq",
+          "name": "Вкладка hq",
+          "overflowX": 0,
+          "offRight": [],
+          "clipped": [],
+          "midWordBreak": [],
+          "badNumbers": [],
+          "back": true,
+          "empty": false,
+          "textLen": 3045,
+          "layer": "div#adminView.open",
+          "layerRect": {
+            "l": 0,
+            "r": 360,
+            "w": 360
+          },
+          "layerTransform": "none",
+          "backRect": {
+            "l": 14,
+            "w": 38
+          },
+          "notSettled": false,
+          "consoleErrors": []
+        },
+        {
+          "route": "tab-users",
+          "name": "Вкладка users",
+          "overflowX": 0,
+          "offRight": [],
+          "clipped": [],
+          "midWordBreak": [],
+          "badNumbers": [],
+          "back": true,
+          "empty": false,
+          "textLen": 371,
+          "layer": "div#adminView.open",
+          "layerRect": {
+            "l": 0,
+            "r": 360,
+            "w": 360
+          },
+          "layerTransform": "none",
+          "backRect": {
+            "l": 14,
+            "w": 38
+          },
+          "notSettled": false,
+          "consoleErrors": []
+        },
+        {
+          "route": "tab-pay",
+          "name": "Вкладка pay",
+          "overflowX": 0,
+          "offRight": [],
+          "clipped": [],
+          "midWordBreak": [],
+          "badNumbers": [],
+          "back": true,
+          "empty": false,
+          "textLen": 537,
+          "layer": "div#adminView.open",
+          "layerRect": {
+            "l": 0,
+            "r": 360,
+            "w": 360
+          },
+          "layerTransform": "none",
+          "backRect": {
+            "l": 14,
+            "w": 38
+          },
+          "notSettled": false,
+          "consoleErrors": []
+        },
+        {
+          "route": "tab-plans",
+          "name": "Вкладка plans",
+          "overflowX": 0,
+          "offRight": [],
+          "clipped": [],
+          "midWordBreak": [],
+          "badNumbers": [],
+          "back": true,
+          "empty": false,
+          "textLen": 645,
+          "layer": "div#adminView.open",
+          "layerRect": {
+            "l": 0,
+            "r": 360,
+            "w": 360
+          },
+          "layerTransform": "none",
+          "backRect": {
+            "l": 14,
+            "w": 38
+          },
+          "notSettled": false,
+          "consoleErrors": []
+        },
+        {
+          "route": "tab-content",
+          "name": "Вкладка content",
+          "overflowX": 0,
+          "offRight": [],
+          "clipped": [],
+          "midWordBreak": [],
+          "badNumbers": [],
+          "back": true,
+          "empty": false,
+          "textLen": 268,
+          "layer": "div#adminView.open",
+          "layerRect": {
+            "l": 0,
+            "r": 360,
+            "w": 360
+          },
+          "layerTransform": "none",
+          "backRect": {
+            "l": 14,
+            "w": 38
+          },
+          "notSettled": false,
+          "consoleErrors": []
+        },
+        {
+          "route": "tab-moder",
+          "name": "Вкладка moder",
+          "overflowX": 0,
+          "offRight": [],
+          "clipped": [],
+          "midWordBreak": [],
+          "badNumbers": [],
+          "back": true,
+          "empty": false,
+          "textLen": 261,
+          "layer": "div#adminView.open",
+          "layerRect": {
+            "l": 0,
+            "r": 360,
+            "w": 360
+          },
+          "layerTransform": "none",
+          "backRect": {
+            "l": 14,
+            "w": 38
+          },
+          "notSettled": false,
+          "consoleErrors": []
+        },
+        {
+          "route": "tab-flags",
+          "name": "Вкладка flags",
+          "overflowX": 0,
+          "offRight": [],
+          "clipped": [],
+          "midWordBreak": [],
+          "badNumbers": [],
+          "back": true,
+          "empty": false,
+          "textLen": 925,
+          "layer": "div#adminView.open",
+          "layerRect": {
+            "l": 0,
+            "r": 360,
+            "w": 360
+          },
+          "layerTransform": "none",
+          "backRect": {
+            "l": 14,
+            "w": 38
+          },
+          "notSettled": false,
+          "consoleErrors": []
+        },
+        {
+          "route": "tab-export",
+          "name": "Вкладка export",
+          "overflowX": 0,
+          "offRight": [],
+          "clipped": [],
+          "midWordBreak": [],
+          "badNumbers": [],
+          "back": true,
+          "empty": false,
+          "textLen": 670,
+          "layer": "div#adminView.open",
+          "layerRect": {
+            "l": 0,
+            "r": 360,
+            "w": 360
+          },
+          "layerTransform": "none",
+          "backRect": {
+            "l": 14,
+            "w": 38
+          },
+          "notSettled": false,
+          "consoleErrors": []
+        },
+        {
+          "route": "agent-ceo",
+          "name": "Агент ceo",
+          "overflowX": 0,
+          "offRight": [],
+          "clipped": [],
+          "midWordBreak": [],
+          "badNumbers": [],
+          "back": true,
+          "empty": false,
+          "textLen": 1431,
+          "layer": "div#h2View.open",
+          "layerRect": {
+            "l": 0,
+            "r": 360,
+            "w": 360
+          },
+          "layerTransform": "none",
+          "backRect": {
+            "l": 14,
+            "w": 38
+          },
+          "notSettled": false,
+          "consoleErrors": []
+        },
+        {
+          "route": "agent-assist",
+          "name": "Агент assist",
+          "overflowX": 0,
+          "offRight": [],
+          "clipped": [],
+          "midWordBreak": [],
+          "badNumbers": [],
+          "back": true,
+          "empty": false,
+          "textLen": 1216,
+          "layer": "div#h2View.open",
+          "layerRect": {
+            "l": 0,
+            "r": 360,
+            "w": 360
+          },
+          "layerTransform": "none",
+          "backRect": {
+            "l": 14,
+            "w": 38
+          },
+          "notSettled": false,
+          "consoleErrors": []
+        },
+        {
+          "route": "agent-sales",
+          "name": "Агент sales",
+          "overflowX": 0,
+          "offRight": [],
+          "clipped": [],
+          "midWordBreak": [],
+          "badNumbers": [],
+          "back": true,
+          "empty": false,
+          "textLen": 1361,
+          "layer": "div#h2View.open",
+          "layerRect": {
+            "l": 0,
+            "r": 360,
+            "w": 360
+          },
+          "layerTransform": "none",
+          "backRect": {
+            "l": 14,
+            "w": 38
+          },
+          "notSettled": false,
+          "consoleErrors": []
+        },
+        {
+          "route": "agent-manager",
+          "name": "Агент manager",
+          "overflowX": 0,
+          "offRight": [],
+          "clipped": [],
+          "midWordBreak": [],
+          "badNumbers": [],
+          "back": true,
+          "empty": false,
+          "textLen": 1370,
+          "layer": "div#h2View.open",
+          "layerRect": {
+            "l": 0,
+            "r": 360,
+            "w": 360
+          },
+          "layerTransform": "none",
+          "backRect": {
+            "l": 14,
+            "w": 38
+          },
+          "notSettled": false,
+          "consoleErrors": []
+        },
+        {
+          "route": "agent-factory",
+          "name": "Агент factory",
+          "overflowX": 0,
+          "offRight": [],
+          "clipped": [],
+          "midWordBreak": [],
+          "badNumbers": [],
+          "back": true,
+          "empty": false,
+          "textLen": 1404,
+          "layer": "div#h2View.open",
+          "layerRect": {
+            "l": 0,
+            "r": 360,
+            "w": 360
+          },
+          "layerTransform": "none",
+          "backRect": {
+            "l": 14,
+            "w": 38
+          },
+          "notSettled": false,
+          "consoleErrors": []
+        },
+        {
+          "route": "agent-editor",
+          "name": "Агент editor",
+          "overflowX": 0,
+          "offRight": [],
+          "clipped": [],
+          "midWordBreak": [],
+          "badNumbers": [],
+          "back": true,
+          "empty": false,
+          "textLen": 985,
+          "layer": "div#h2View.open",
+          "layerRect": {
+            "l": 0,
+            "r": 360,
+            "w": 360
+          },
+          "layerTransform": "none",
+          "backRect": {
+            "l": 14,
+            "w": 38
+          },
+          "notSettled": false,
+          "consoleErrors": []
+        },
+        {
+          "route": "agent-designer",
+          "name": "Агент designer",
+          "overflowX": 0,
+          "offRight": [],
+          "clipped": [],
+          "midWordBreak": [],
+          "badNumbers": [],
+          "back": true,
+          "empty": false,
+          "textLen": 1135,
+          "layer": "div#h2View.open",
+          "layerRect": {
+            "l": 0,
+            "r": 360,
+            "w": 360
+          },
+          "layerTransform": "none",
+          "backRect": {
+            "l": 14,
+            "w": 38
+          },
+          "notSettled": false,
+          "consoleErrors": []
+        },
+        {
+          "route": "agent-copy",
+          "name": "Агент copy",
+          "overflowX": 0,
+          "offRight": [],
+          "clipped": [],
+          "midWordBreak": [],
+          "badNumbers": [],
+          "back": true,
+          "empty": false,
+          "textLen": 1030,
+          "layer": "div#h2View.open",
+          "layerRect": {
+            "l": 0,
+            "r": 360,
+            "w": 360
+          },
+          "layerTransform": "none",
+          "backRect": {
+            "l": 14,
+            "w": 38
+          },
+          "notSettled": false,
+          "consoleErrors": []
+        },
+        {
+          "route": "agent-analyst",
+          "name": "Агент analyst",
+          "overflowX": 0,
+          "offRight": [],
+          "clipped": [],
+          "midWordBreak": [],
+          "badNumbers": [],
+          "back": true,
+          "empty": false,
+          "textLen": 1363,
+          "layer": "div#h2View.open",
+          "layerRect": {
+            "l": 0,
+            "r": 360,
+            "w": 360
+          },
+          "layerTransform": "none",
+          "backRect": {
+            "l": 14,
+            "w": 38
+          },
+          "notSettled": false,
+          "consoleErrors": []
+        },
+        {
+          "route": "agent-support",
+          "name": "Агент support",
+          "overflowX": 0,
+          "offRight": [],
+          "clipped": [],
+          "midWordBreak": [],
+          "badNumbers": [],
+          "back": true,
+          "empty": false,
+          "textLen": 1370,
+          "layer": "div#h2View.open",
+          "layerRect": {
+            "l": 0,
+            "r": 360,
+            "w": 360
+          },
+          "layerTransform": "none",
+          "backRect": {
+            "l": 14,
+            "w": 38
+          },
+          "notSettled": false,
+          "consoleErrors": []
+        },
+        {
+          "route": "agent-legal",
+          "name": "Агент legal",
+          "overflowX": 0,
+          "offRight": [],
+          "clipped": [],
+          "midWordBreak": [],
+          "badNumbers": [],
+          "back": true,
+          "empty": false,
+          "textLen": 1164,
+          "layer": "div#h2View.open",
+          "layerRect": {
+            "l": 0,
+            "r": 360,
+            "w": 360
+          },
+          "layerTransform": "none",
+          "backRect": {
+            "l": 14,
+            "w": 38
+          },
+          "notSettled": false,
+          "consoleErrors": []
+        },
+        {
+          "route": "room-ops",
+          "name": "Отдел ops",
+          "overflowX": 0,
+          "offRight": [],
+          "clipped": [],
+          "midWordBreak": [],
+          "badNumbers": [],
+          "back": true,
+          "empty": false,
+          "textLen": 845,
+          "layer": "div#h2View.open",
+          "layerRect": {
+            "l": 0,
+            "r": 360,
+            "w": 360
+          },
+          "layerTransform": "none",
+          "backRect": {
+            "l": 14,
+            "w": 38
+          },
+          "notSettled": false,
+          "consoleErrors": []
+        },
+        {
+          "route": "room-sales",
+          "name": "Отдел sales",
+          "overflowX": 0,
+          "offRight": [],
+          "clipped": [],
+          "midWordBreak": [],
+          "badNumbers": [],
+          "back": true,
+          "empty": false,
+          "textLen": 815,
+          "layer": "div#h2View.open",
+          "layerRect": {
+            "l": 0,
+            "r": 360,
+            "w": 360
+          },
+          "layerTransform": "none",
+          "backRect": {
+            "l": 14,
+            "w": 38
+          },
+          "notSettled": false,
+          "consoleErrors": []
+        },
+        {
+          "route": "room-content",
+          "name": "Отдел content",
+          "overflowX": 0,
+          "offRight": [],
+          "clipped": [],
+          "midWordBreak": [],
+          "badNumbers": [],
+          "back": true,
+          "empty": false,
+          "textLen": 1136,
+          "layer": "div#h2View.open",
+          "layerRect": {
+            "l": 0,
+            "r": 360,
+            "w": 360
+          },
+          "layerTransform": "none",
+          "backRect": {
+            "l": 14,
+            "w": 38
+          },
+          "notSettled": false,
+          "consoleErrors": []
+        },
+        {
+          "route": "room-research",
+          "name": "Отдел research",
+          "overflowX": 0,
+          "offRight": [],
+          "clipped": [],
+          "midWordBreak": [],
+          "badNumbers": [],
+          "back": true,
+          "empty": false,
+          "textLen": 606,
+          "layer": "div#h2View.open",
+          "layerRect": {
+            "l": 0,
+            "r": 360,
+            "w": 360
+          },
+          "layerTransform": "none",
+          "backRect": {
+            "l": 14,
+            "w": 38
+          },
+          "notSettled": false,
+          "consoleErrors": []
+        },
+        {
+          "route": "room-comms",
+          "name": "Отдел comms",
+          "overflowX": 0,
+          "offRight": [],
+          "clipped": [],
+          "midWordBreak": [],
+          "badNumbers": [],
+          "back": true,
+          "empty": false,
+          "textLen": 624,
+          "layer": "div#h2View.open",
+          "layerRect": {
+            "l": 0,
+            "r": 360,
+            "w": 360
+          },
+          "layerTransform": "none",
+          "backRect": {
+            "l": 14,
+            "w": 38
+          },
+          "notSettled": false,
+          "consoleErrors": []
+        },
+        {
+          "route": "room-legal",
+          "name": "Отдел legal",
+          "overflowX": 0,
+          "offRight": [],
+          "clipped": [],
+          "midWordBreak": [],
+          "badNumbers": [],
+          "back": true,
+          "empty": false,
+          "textLen": 564,
+          "layer": "div#h2View.open",
+          "layerRect": {
+            "l": 0,
+            "r": 360,
+            "w": 360
+          },
+          "layerTransform": "none",
+          "backRect": {
+            "l": 14,
+            "w": 38
+          },
+          "notSettled": false,
+          "consoleErrors": []
+        },
+        {
+          "route": "room-finance",
+          "name": "Отдел finance",
+          "overflowX": 0,
+          "offRight": [],
+          "clipped": [],
+          "midWordBreak": [],
+          "badNumbers": [],
+          "back": true,
+          "empty": false,
+          "textLen": 524,
+          "layer": "div#h2View.open",
+          "layerRect": {
+            "l": 0,
+            "r": 360,
+            "w": 360
+          },
+          "layerTransform": "none",
+          "backRect": {
+            "l": 14,
+            "w": 38
+          },
+          "notSettled": false,
+          "consoleErrors": []
+        },
+        {
+          "route": "room-security",
+          "name": "Отдел security",
+          "overflowX": 0,
+          "offRight": [],
+          "clipped": [],
+          "midWordBreak": [],
+          "badNumbers": [],
+          "back": true,
+          "empty": false,
+          "textLen": 519,
+          "layer": "div#h2View.open",
+          "layerRect": {
+            "l": 0,
+            "r": 360,
+            "w": 360
+          },
+          "layerTransform": "none",
+          "backRect": {
+            "l": 14,
+            "w": 38
+          },
+          "notSettled": false,
+          "consoleErrors": []
+        },
+        {
+          "route": "task-add",
+          "name": "Постановка задачи",
+          "overflowX": 0,
+          "offRight": [],
+          "clipped": [],
+          "midWordBreak": [],
+          "badNumbers": [],
+          "back": true,
+          "empty": false,
+          "textLen": 1512,
+          "layer": "div#h2View.open",
+          "layerRect": {
+            "l": 0,
+            "r": 360,
+            "w": 360
+          },
+          "layerTransform": "none",
+          "backRect": {
+            "l": 14,
+            "w": 38
+          },
+          "notSettled": false,
+          "consoleErrors": []
+        },
+        {
+          "route": "hq-with-log",
+          "name": "Штаб с отчётом",
+          "overflowX": 0,
+          "offRight": [],
+          "clipped": [],
+          "midWordBreak": [],
+          "badNumbers": [],
+          "back": true,
+          "empty": false,
+          "textLen": 3089,
+          "layer": "div#adminView.open",
+          "layerRect": {
+            "l": 0,
+            "r": 360,
+            "w": 360
+          },
+          "layerTransform": "none",
+          "backRect": {
+            "l": 14,
+            "w": 38
+          },
+          "notSettled": false,
+          "consoleErrors": []
+        },
+        {
+          "route": "task-done",
+          "name": "Задача закрыта вручную",
+          "overflowX": 0,
+          "offRight": [],
+          "clipped": [],
+          "midWordBreak": [],
+          "badNumbers": [],
+          "back": true,
+          "empty": false,
+          "textLen": 1431,
+          "layer": "div#h2View.open",
+          "layerRect": {
+            "l": 0,
+            "r": 360,
+            "w": 360
+          },
+          "layerTransform": "none",
+          "backRect": {
+            "l": 14,
+            "w": 38
+          },
+          "notSettled": false,
+          "consoleErrors": []
+        },
+        {
+          "route": "task-drop-modal",
+          "name": "Снятие задачи · модалка",
+          "overflowX": 0,
+          "offRight": [],
+          "clipped": [],
+          "midWordBreak": [],
+          "badNumbers": [],
+          "back": true,
+          "empty": false,
+          "textLen": 1410,
+          "layer": "div#h2View.open",
+          "layerRect": {
+            "l": 0,
+            "r": 360,
+            "w": 360
+          },
+          "layerTransform": "none",
+          "backRect": {
+            "l": 14,
+            "w": 38
+          },
+          "notSettled": false,
+          "extra": {
+            "modal": true
+          },
+          "consoleErrors": []
+        },
+        {
+          "route": "exp-tab",
+          "name": "Экспорт с данными",
+          "overflowX": 0,
+          "offRight": [],
+          "clipped": [],
+          "midWordBreak": [],
+          "badNumbers": [],
+          "back": true,
+          "empty": false,
+          "textLen": 670,
+          "layer": "div#adminView.open",
+          "layerRect": {
+            "l": 0,
+            "r": 360,
+            "w": 360
+          },
+          "layerTransform": "none",
+          "backRect": {
+            "l": 14,
+            "w": 38
+          },
+          "notSettled": false,
+          "consoleErrors": []
+        },
+        {
+          "route": "back-from-agent",
+          "name": "Возврат из карточки агента",
+          "overflowX": 0,
+          "offRight": [],
+          "clipped": [],
+          "midWordBreak": [],
+          "badNumbers": [],
+          "back": true,
+          "empty": false,
+          "textLen": 3045,
+          "layer": "div#adminView.open",
+          "layerRect": {
+            "l": 0,
+            "r": 360,
+            "w": 360
+          },
+          "layerTransform": "none",
+          "backRect": {
+            "l": 14,
+            "w": 38
+          },
+          "notSettled": false,
+          "extra": {
+            "viewClosed": true,
+            "adminOpen": true
+          },
+          "consoleErrors": []
+        },
+        {
+          "route": "sysback-from-agent",
+          "name": "Системная «назад» из агента",
+          "overflowX": 0,
+          "offRight": [],
+          "clipped": [],
+          "midWordBreak": [],
+          "badNumbers": [],
+          "back": true,
+          "empty": false,
+          "textLen": 3045,
+          "layer": "div#adminView.open",
+          "layerRect": {
+            "l": 0,
+            "r": 360,
+            "w": 360
+          },
+          "layerTransform": "none",
+          "backRect": {
+            "l": 14,
+            "w": 38
+          },
+          "notSettled": false,
+          "extra": {
+            "viewClosed": true,
+            "adminOpen": true
+          },
+          "consoleErrors": []
+        },
+        {
+          "route": "esc-from-room",
+          "name": "Escape закрывает отдел",
+          "overflowX": 0,
+          "offRight": [],
+          "clipped": [],
+          "midWordBreak": [],
+          "badNumbers": [],
+          "back": true,
+          "empty": false,
+          "textLen": 3045,
+          "layer": "div#adminView.open",
+          "layerRect": {
+            "l": 0,
+            "r": 360,
+            "w": 360
+          },
+          "layerTransform": "none",
+          "backRect": {
+            "l": 14,
+            "w": 38
+          },
+          "notSettled": false,
+          "extra": {
+            "viewClosed": true,
+            "adminOpen": true
+          },
+          "consoleErrors": []
+        },
+        {
+          "route": "not-owner",
+          "name": "Не владелец: раздела нет",
+          "overflowX": 0,
+          "offRight": [],
+          "clipped": [],
+          "midWordBreak": [],
+          "badNumbers": [],
+          "back": false,
+          "empty": true,
+          "textLen": 0,
+          "layer": "none",
+          "notSettled": false,
+          "extra": {
+            "rowsHidden": true,
+            "adminOpen": false
+          },
+          "consoleErrors": [],
+          "backNotRequired": true,
+          "emptyOk": true
+        }
+      ]
+    },
+    {
+      "viewport": "desktop",
+      "size": "1440x900",
+      "routes": [
+        {
+          "route": "adm-open",
+          "name": "Админка открыта",
+          "overflowX": 0,
+          "offRight": [],
+          "clipped": [],
+          "midWordBreak": [],
+          "badNumbers": [],
+          "back": true,
+          "empty": false,
+          "textLen": 573,
+          "layer": "div#adminView.open",
+          "layerRect": {
+            "l": 80,
+            "r": 1360,
+            "w": 1280
+          },
+          "layerTransform": "none",
+          "backRect": {
+            "l": 94,
+            "w": 38
+          },
+          "notSettled": false,
+          "consoleErrors": []
+        },
+        {
+          "route": "tab-overview",
+          "name": "Вкладка overview",
+          "overflowX": 0,
+          "offRight": [],
+          "clipped": [],
+          "midWordBreak": [],
+          "badNumbers": [],
+          "back": true,
+          "empty": false,
+          "textLen": 573,
+          "layer": "div#adminView.open",
+          "layerRect": {
+            "l": 80,
+            "r": 1360,
+            "w": 1280
+          },
+          "layerTransform": "none",
+          "backRect": {
+            "l": 94,
+            "w": 38
+          },
+          "notSettled": false,
+          "consoleErrors": []
+        },
+        {
+          "route": "tab-hq",
+          "name": "Вкладка hq",
+          "overflowX": 0,
+          "offRight": [],
+          "clipped": [],
+          "midWordBreak": [],
+          "badNumbers": [],
+          "back": true,
+          "empty": false,
+          "textLen": 3045,
+          "layer": "div#adminView.open",
+          "layerRect": {
+            "l": 80,
+            "r": 1360,
+            "w": 1280
+          },
+          "layerTransform": "none",
+          "backRect": {
+            "l": 94,
+            "w": 38
+          },
+          "notSettled": false,
+          "consoleErrors": []
+        },
+        {
+          "route": "tab-users",
+          "name": "Вкладка users",
+          "overflowX": 0,
+          "offRight": [],
+          "clipped": [],
+          "midWordBreak": [],
+          "badNumbers": [],
+          "back": true,
+          "empty": false,
+          "textLen": 371,
+          "layer": "div#adminView.open",
+          "layerRect": {
+            "l": 80,
+            "r": 1360,
+            "w": 1280
+          },
+          "layerTransform": "none",
+          "backRect": {
+            "l": 94,
+            "w": 38
+          },
+          "notSettled": false,
+          "consoleErrors": []
+        },
+        {
+          "route": "tab-pay",
+          "name": "Вкладка pay",
+          "overflowX": 0,
+          "offRight": [],
+          "clipped": [],
+          "midWordBreak": [],
+          "badNumbers": [],
+          "back": true,
+          "empty": false,
+          "textLen": 537,
+          "layer": "div#adminView.open",
+          "layerRect": {
+            "l": 80,
+            "r": 1360,
+            "w": 1280
+          },
+          "layerTransform": "none",
+          "backRect": {
+            "l": 94,
+            "w": 38
+          },
+          "notSettled": false,
+          "consoleErrors": []
+        },
+        {
+          "route": "tab-plans",
+          "name": "Вкладка plans",
+          "overflowX": 0,
+          "offRight": [],
+          "clipped": [],
+          "midWordBreak": [],
+          "badNumbers": [],
+          "back": true,
+          "empty": false,
+          "textLen": 645,
+          "layer": "div#adminView.open",
+          "layerRect": {
+            "l": 80,
+            "r": 1360,
+            "w": 1280
+          },
+          "layerTransform": "none",
+          "backRect": {
+            "l": 94,
+            "w": 38
+          },
+          "notSettled": false,
+          "consoleErrors": []
+        },
+        {
+          "route": "tab-content",
+          "name": "Вкладка content",
+          "overflowX": 0,
+          "offRight": [],
+          "clipped": [],
+          "midWordBreak": [],
+          "badNumbers": [],
+          "back": true,
+          "empty": false,
+          "textLen": 268,
+          "layer": "div#adminView.open",
+          "layerRect": {
+            "l": 80,
+            "r": 1360,
+            "w": 1280
+          },
+          "layerTransform": "none",
+          "backRect": {
+            "l": 94,
+            "w": 38
+          },
+          "notSettled": false,
+          "consoleErrors": []
+        },
+        {
+          "route": "tab-moder",
+          "name": "Вкладка moder",
+          "overflowX": 0,
+          "offRight": [],
+          "clipped": [],
+          "midWordBreak": [],
+          "badNumbers": [],
+          "back": true,
+          "empty": false,
+          "textLen": 261,
+          "layer": "div#adminView.open",
+          "layerRect": {
+            "l": 80,
+            "r": 1360,
+            "w": 1280
+          },
+          "layerTransform": "none",
+          "backRect": {
+            "l": 94,
+            "w": 38
+          },
+          "notSettled": false,
+          "consoleErrors": []
+        },
+        {
+          "route": "tab-flags",
+          "name": "Вкладка flags",
+          "overflowX": 0,
+          "offRight": [],
+          "clipped": [],
+          "midWordBreak": [],
+          "badNumbers": [],
+          "back": true,
+          "empty": false,
+          "textLen": 925,
+          "layer": "div#adminView.open",
+          "layerRect": {
+            "l": 80,
+            "r": 1360,
+            "w": 1280
+          },
+          "layerTransform": "none",
+          "backRect": {
+            "l": 94,
+            "w": 38
+          },
+          "notSettled": false,
+          "consoleErrors": []
+        },
+        {
+          "route": "tab-export",
+          "name": "Вкладка export",
+          "overflowX": 0,
+          "offRight": [],
+          "clipped": [],
+          "midWordBreak": [],
+          "badNumbers": [],
+          "back": true,
+          "empty": false,
+          "textLen": 670,
+          "layer": "div#adminView.open",
+          "layerRect": {
+            "l": 80,
+            "r": 1360,
+            "w": 1280
+          },
+          "layerTransform": "none",
+          "backRect": {
+            "l": 94,
+            "w": 38
+          },
+          "notSettled": false,
+          "consoleErrors": []
+        },
+        {
+          "route": "agent-ceo",
+          "name": "Агент ceo",
+          "overflowX": 0,
+          "offRight": [],
+          "clipped": [],
+          "midWordBreak": [],
+          "badNumbers": [],
+          "back": true,
+          "empty": false,
+          "textLen": 1431,
+          "layer": "div#h2View.open",
+          "layerRect": {
+            "l": 80,
+            "r": 1360,
+            "w": 1280
+          },
+          "layerTransform": "none",
+          "backRect": {
+            "l": 94,
+            "w": 38
+          },
+          "notSettled": false,
+          "consoleErrors": []
+        },
+        {
+          "route": "agent-assist",
+          "name": "Агент assist",
+          "overflowX": 0,
+          "offRight": [],
+          "clipped": [],
+          "midWordBreak": [],
+          "badNumbers": [],
+          "back": true,
+          "empty": false,
+          "textLen": 1216,
+          "layer": "div#h2View.open",
+          "layerRect": {
+            "l": 80,
+            "r": 1360,
+            "w": 1280
+          },
+          "layerTransform": "none",
+          "backRect": {
+            "l": 94,
+            "w": 38
+          },
+          "notSettled": false,
+          "consoleErrors": []
+        },
+        {
+          "route": "agent-sales",
+          "name": "Агент sales",
+          "overflowX": 0,
+          "offRight": [],
+          "clipped": [],
+          "midWordBreak": [],
+          "badNumbers": [],
+          "back": true,
+          "empty": false,
+          "textLen": 1361,
+          "layer": "div#h2View.open",
+          "layerRect": {
+            "l": 80,
+            "r": 1360,
+            "w": 1280
+          },
+          "layerTransform": "none",
+          "backRect": {
+            "l": 94,
+            "w": 38
+          },
+          "notSettled": false,
+          "consoleErrors": []
+        },
+        {
+          "route": "agent-manager",
+          "name": "Агент manager",
+          "overflowX": 0,
+          "offRight": [],
+          "clipped": [],
+          "midWordBreak": [],
+          "badNumbers": [],
+          "back": true,
+          "empty": false,
+          "textLen": 1370,
+          "layer": "div#h2View.open",
+          "layerRect": {
+            "l": 80,
+            "r": 1360,
+            "w": 1280
+          },
+          "layerTransform": "none",
+          "backRect": {
+            "l": 94,
+            "w": 38
+          },
+          "notSettled": false,
+          "consoleErrors": []
+        },
+        {
+          "route": "agent-factory",
+          "name": "Агент factory",
+          "overflowX": 0,
+          "offRight": [],
+          "clipped": [],
+          "midWordBreak": [],
+          "badNumbers": [],
+          "back": true,
+          "empty": false,
+          "textLen": 1404,
+          "layer": "div#h2View.open",
+          "layerRect": {
+            "l": 80,
+            "r": 1360,
+            "w": 1280
+          },
+          "layerTransform": "none",
+          "backRect": {
+            "l": 94,
+            "w": 38
+          },
+          "notSettled": false,
+          "consoleErrors": []
+        },
+        {
+          "route": "agent-editor",
+          "name": "Агент editor",
+          "overflowX": 0,
+          "offRight": [],
+          "clipped": [],
+          "midWordBreak": [],
+          "badNumbers": [],
+          "back": true,
+          "empty": false,
+          "textLen": 985,
+          "layer": "div#h2View.open",
+          "layerRect": {
+            "l": 80,
+            "r": 1360,
+            "w": 1280
+          },
+          "layerTransform": "none",
+          "backRect": {
+            "l": 94,
+            "w": 38
+          },
+          "notSettled": false,
+          "consoleErrors": []
+        },
+        {
+          "route": "agent-designer",
+          "name": "Агент designer",
+          "overflowX": 0,
+          "offRight": [],
+          "clipped": [],
+          "midWordBreak": [],
+          "badNumbers": [],
+          "back": true,
+          "empty": false,
+          "textLen": 1135,
+          "layer": "div#h2View.open",
+          "layerRect": {
+            "l": 80,
+            "r": 1360,
+            "w": 1280
+          },
+          "layerTransform": "none",
+          "backRect": {
+            "l": 94,
+            "w": 38
+          },
+          "notSettled": false,
+          "consoleErrors": []
+        },
+        {
+          "route": "agent-copy",
+          "name": "Агент copy",
+          "overflowX": 0,
+          "offRight": [],
+          "clipped": [],
+          "midWordBreak": [],
+          "badNumbers": [],
+          "back": true,
+          "empty": false,
+          "textLen": 1030,
+          "layer": "div#h2View.open",
+          "layerRect": {
+            "l": 80,
+            "r": 1360,
+            "w": 1280
+          },
+          "layerTransform": "none",
+          "backRect": {
+            "l": 94,
+            "w": 38
+          },
+          "notSettled": false,
+          "consoleErrors": []
+        },
+        {
+          "route": "agent-analyst",
+          "name": "Агент analyst",
+          "overflowX": 0,
+          "offRight": [],
+          "clipped": [],
+          "midWordBreak": [],
+          "badNumbers": [],
+          "back": true,
+          "empty": false,
+          "textLen": 1363,
+          "layer": "div#h2View.open",
+          "layerRect": {
+            "l": 80,
+            "r": 1360,
+            "w": 1280
+          },
+          "layerTransform": "none",
+          "backRect": {
+            "l": 94,
+            "w": 38
+          },
+          "notSettled": false,
+          "consoleErrors": []
+        },
+        {
+          "route": "agent-support",
+          "name": "Агент support",
+          "overflowX": 0,
+          "offRight": [],
+          "clipped": [],
+          "midWordBreak": [],
+          "badNumbers": [],
+          "back": true,
+          "empty": false,
+          "textLen": 1370,
+          "layer": "div#h2View.open",
+          "layerRect": {
+            "l": 80,
+            "r": 1360,
+            "w": 1280
+          },
+          "layerTransform": "none",
+          "backRect": {
+            "l": 94,
+            "w": 38
+          },
+          "notSettled": false,
+          "consoleErrors": []
+        },
+        {
+          "route": "agent-legal",
+          "name": "Агент legal",
+          "overflowX": 0,
+          "offRight": [],
+          "clipped": [],
+          "midWordBreak": [],
+          "badNumbers": [],
+          "back": true,
+          "empty": false,
+          "textLen": 1164,
+          "layer": "div#h2View.open",
+          "layerRect": {
+            "l": 80,
+            "r": 1360,
+            "w": 1280
+          },
+          "layerTransform": "none",
+          "backRect": {
+            "l": 94,
+            "w": 38
+          },
+          "notSettled": false,
+          "consoleErrors": []
+        },
+        {
+          "route": "room-ops",
+          "name": "Отдел ops",
+          "overflowX": 0,
+          "offRight": [],
+          "clipped": [],
+          "midWordBreak": [],
+          "badNumbers": [],
+          "back": true,
+          "empty": false,
+          "textLen": 845,
+          "layer": "div#h2View.open",
+          "layerRect": {
+            "l": 80,
+            "r": 1360,
+            "w": 1280
+          },
+          "layerTransform": "none",
+          "backRect": {
+            "l": 94,
+            "w": 38
+          },
+          "notSettled": false,
+          "consoleErrors": []
+        },
+        {
+          "route": "room-sales",
+          "name": "Отдел sales",
+          "overflowX": 0,
+          "offRight": [],
+          "clipped": [],
+          "midWordBreak": [],
+          "badNumbers": [],
+          "back": true,
+          "empty": false,
+          "textLen": 815,
+          "layer": "div#h2View.open",
+          "layerRect": {
+            "l": 80,
+            "r": 1360,
+            "w": 1280
+          },
+          "layerTransform": "none",
+          "backRect": {
+            "l": 94,
+            "w": 38
+          },
+          "notSettled": false,
+          "consoleErrors": []
+        },
+        {
+          "route": "room-content",
+          "name": "Отдел content",
+          "overflowX": 0,
+          "offRight": [],
+          "clipped": [],
+          "midWordBreak": [],
+          "badNumbers": [],
+          "back": true,
+          "empty": false,
+          "textLen": 1136,
+          "layer": "div#h2View.open",
+          "layerRect": {
+            "l": 80,
+            "r": 1360,
+            "w": 1280
+          },
+          "layerTransform": "none",
+          "backRect": {
+            "l": 94,
+            "w": 38
+          },
+          "notSettled": false,
+          "consoleErrors": []
+        },
+        {
+          "route": "room-research",
+          "name": "Отдел research",
+          "overflowX": 0,
+          "offRight": [],
+          "clipped": [],
+          "midWordBreak": [],
+          "badNumbers": [],
+          "back": true,
+          "empty": false,
+          "textLen": 606,
+          "layer": "div#h2View.open",
+          "layerRect": {
+            "l": 80,
+            "r": 1360,
+            "w": 1280
+          },
+          "layerTransform": "none",
+          "backRect": {
+            "l": 94,
+            "w": 38
+          },
+          "notSettled": false,
+          "consoleErrors": []
+        },
+        {
+          "route": "room-comms",
+          "name": "Отдел comms",
+          "overflowX": 0,
+          "offRight": [],
+          "clipped": [],
+          "midWordBreak": [],
+          "badNumbers": [],
+          "back": true,
+          "empty": false,
+          "textLen": 624,
+          "layer": "div#h2View.open",
+          "layerRect": {
+            "l": 80,
+            "r": 1360,
+            "w": 1280
+          },
+          "layerTransform": "none",
+          "backRect": {
+            "l": 94,
+            "w": 38
+          },
+          "notSettled": false,
+          "consoleErrors": []
+        },
+        {
+          "route": "room-legal",
+          "name": "Отдел legal",
+          "overflowX": 0,
+          "offRight": [],
+          "clipped": [],
+          "midWordBreak": [],
+          "badNumbers": [],
+          "back": true,
+          "empty": false,
+          "textLen": 564,
+          "layer": "div#h2View.open",
+          "layerRect": {
+            "l": 80,
+            "r": 1360,
+            "w": 1280
+          },
+          "layerTransform": "none",
+          "backRect": {
+            "l": 94,
+            "w": 38
+          },
+          "notSettled": false,
+          "consoleErrors": []
+        },
+        {
+          "route": "room-finance",
+          "name": "Отдел finance",
+          "overflowX": 0,
+          "offRight": [],
+          "clipped": [],
+          "midWordBreak": [],
+          "badNumbers": [],
+          "back": true,
+          "empty": false,
+          "textLen": 524,
+          "layer": "div#h2View.open",
+          "layerRect": {
+            "l": 80,
+            "r": 1360,
+            "w": 1280
+          },
+          "layerTransform": "none",
+          "backRect": {
+            "l": 94,
+            "w": 38
+          },
+          "notSettled": false,
+          "consoleErrors": []
+        },
+        {
+          "route": "room-security",
+          "name": "Отдел security",
+          "overflowX": 0,
+          "offRight": [],
+          "clipped": [],
+          "midWordBreak": [],
+          "badNumbers": [],
+          "back": true,
+          "empty": false,
+          "textLen": 519,
+          "layer": "div#h2View.open",
+          "layerRect": {
+            "l": 80,
+            "r": 1360,
+            "w": 1280
+          },
+          "layerTransform": "none",
+          "backRect": {
+            "l": 94,
+            "w": 38
+          },
+          "notSettled": false,
+          "consoleErrors": []
+        },
+        {
+          "route": "task-add",
+          "name": "Постановка задачи",
+          "overflowX": 0,
+          "offRight": [],
+          "clipped": [],
+          "midWordBreak": [],
+          "badNumbers": [],
+          "back": true,
+          "empty": false,
+          "textLen": 1512,
+          "layer": "div#h2View.open",
+          "layerRect": {
+            "l": 80,
+            "r": 1360,
+            "w": 1280
+          },
+          "layerTransform": "none",
+          "backRect": {
+            "l": 94,
+            "w": 38
+          },
+          "notSettled": false,
+          "consoleErrors": []
+        },
+        {
+          "route": "hq-with-log",
+          "name": "Штаб с отчётом",
+          "overflowX": 0,
+          "offRight": [],
+          "clipped": [],
+          "midWordBreak": [],
+          "badNumbers": [],
+          "back": true,
+          "empty": false,
+          "textLen": 3089,
+          "layer": "div#adminView.open",
+          "layerRect": {
+            "l": 80,
+            "r": 1360,
+            "w": 1280
+          },
+          "layerTransform": "none",
+          "backRect": {
+            "l": 94,
+            "w": 38
+          },
+          "notSettled": false,
+          "consoleErrors": []
+        },
+        {
+          "route": "task-done",
+          "name": "Задача закрыта вручную",
+          "overflowX": 0,
+          "offRight": [],
+          "clipped": [],
+          "midWordBreak": [],
+          "badNumbers": [],
+          "back": true,
+          "empty": false,
+          "textLen": 1431,
+          "layer": "div#h2View.open",
+          "layerRect": {
+            "l": 80,
+            "r": 1360,
+            "w": 1280
+          },
+          "layerTransform": "none",
+          "backRect": {
+            "l": 94,
+            "w": 38
+          },
+          "notSettled": false,
+          "consoleErrors": []
+        },
+        {
+          "route": "task-drop-modal",
+          "name": "Снятие задачи · модалка",
+          "overflowX": 0,
+          "offRight": [],
+          "clipped": [],
+          "midWordBreak": [],
+          "badNumbers": [],
+          "back": true,
+          "empty": false,
+          "textLen": 1410,
+          "layer": "div#h2View.open",
+          "layerRect": {
+            "l": 80,
+            "r": 1360,
+            "w": 1280
+          },
+          "layerTransform": "none",
+          "backRect": {
+            "l": 94,
+            "w": 38
+          },
+          "notSettled": false,
+          "extra": {
+            "modal": true
+          },
+          "consoleErrors": []
+        },
+        {
+          "route": "exp-tab",
+          "name": "Экспорт с данными",
+          "overflowX": 0,
+          "offRight": [],
+          "clipped": [],
+          "midWordBreak": [],
+          "badNumbers": [],
+          "back": true,
+          "empty": false,
+          "textLen": 670,
+          "layer": "div#adminView.open",
+          "layerRect": {
+            "l": 80,
+            "r": 1360,
+            "w": 1280
+          },
+          "layerTransform": "none",
+          "backRect": {
+            "l": 94,
+            "w": 38
+          },
+          "notSettled": false,
+          "consoleErrors": []
+        },
+        {
+          "route": "back-from-agent",
+          "name": "Возврат из карточки агента",
+          "overflowX": 0,
+          "offRight": [],
+          "clipped": [],
+          "midWordBreak": [],
+          "badNumbers": [],
+          "back": true,
+          "empty": false,
+          "textLen": 3045,
+          "layer": "div#adminView.open",
+          "layerRect": {
+            "l": 80,
+            "r": 1360,
+            "w": 1280
+          },
+          "layerTransform": "none",
+          "backRect": {
+            "l": 94,
+            "w": 38
+          },
+          "notSettled": false,
+          "extra": {
+            "viewClosed": true,
+            "adminOpen": true
+          },
+          "consoleErrors": []
+        },
+        {
+          "route": "sysback-from-agent",
+          "name": "Системная «назад» из агента",
+          "overflowX": 0,
+          "offRight": [],
+          "clipped": [],
+          "midWordBreak": [],
+          "badNumbers": [],
+          "back": true,
+          "empty": false,
+          "textLen": 3045,
+          "layer": "div#adminView.open",
+          "layerRect": {
+            "l": 80,
+            "r": 1360,
+            "w": 1280
+          },
+          "layerTransform": "none",
+          "backRect": {
+            "l": 94,
+            "w": 38
+          },
+          "notSettled": false,
+          "extra": {
+            "viewClosed": true,
+            "adminOpen": true
+          },
+          "consoleErrors": []
+        },
+        {
+          "route": "esc-from-room",
+          "name": "Escape закрывает отдел",
+          "overflowX": 0,
+          "offRight": [],
+          "clipped": [],
+          "midWordBreak": [],
+          "badNumbers": [],
+          "back": true,
+          "empty": false,
+          "textLen": 3045,
+          "layer": "div#adminView.open",
+          "layerRect": {
+            "l": 80,
+            "r": 1360,
+            "w": 1280
+          },
+          "layerTransform": "none",
+          "backRect": {
+            "l": 94,
+            "w": 38
+          },
+          "notSettled": false,
+          "extra": {
+            "viewClosed": true,
+            "adminOpen": true
+          },
+          "consoleErrors": []
+        },
+        {
+          "route": "not-owner",
+          "name": "Не владелец: раздела нет",
+          "overflowX": 0,
+          "offRight": [],
+          "clipped": [],
+          "midWordBreak": [],
+          "badNumbers": [],
+          "back": false,
+          "empty": true,
+          "textLen": 0,
+          "layer": "none",
+          "notSettled": false,
+          "extra": {
+            "rowsHidden": true,
+            "adminOpen": false
+          },
+          "consoleErrors": [],
+          "backNotRequired": true,
+          "emptyOk": true
+        }
+      ]
+    }
+  ],
+  "totals": {
+    "routes": 114,
+    "overflowX": 0,
+    "offRight": 0,
+    "clipped": 0,
+    "midWordBreak": 0,
+    "badNumbers": 0,
+    "noBack": 0,
+    "empty": 0,
+    "consoleErrors": 0,
+    "stepErrors": 0,
+    "fatal": 0,
+    "behaviour": 0
+  },
+  "problems": [],
+  "clean": true
+}

@@ -33,10 +33,14 @@ const BASE  = args.base || 'http://127.0.0.1:8199/index.html';
 const ROUND = String(args.round || '1');
 const OUT   = path.resolve('oko-app/tools');
 const SHOTS = !(args.noshots);
+/* Скриншоты по умолчанию снимаем на телефоне: остальные вьюпорты нужны для
+   замеров, а лишние кадры в перегруженной песочнице стоят минут. */
+const SHOT_VP = (args.shots && args.shots !== true) ? String(args.shots) : 'phone';
 
 const VIEWPORTS = [
   { id: 'phone',   label: 'Телефон 390',  width: 390,  height: 844, mobile: true  },
   { id: 'narrow',  label: 'Узкий 360',    width: 360,  height: 740, mobile: true  },
+  { id: 'tablet',  label: 'Планшет 820',  width: 820,  height: 1180, mobile: false },
   { id: 'desktop', label: 'ПК 1440',      width: 1440, height: 900, mobile: false },
 ];
 
@@ -53,13 +57,40 @@ const INIT = `
     localStorage.setItem('oko-stories-seen','1');
     localStorage.setItem('oko-tour-done','1');
     localStorage.setItem('oko-tour','1');
+    localStorage.setItem('oko-owner','1');           /* админ-панель курса — только владельцу */
+    localStorage.setItem('oko-onboarded','1');
+    localStorage.setItem('oko-onb2-intro', JSON.stringify({done:true, skipped:true}));
     /* Оба премиум-направления открываем как купленные — иначе за гейт не пройти
-       и половину экранов Академии просто не увидеть. */
+       и половину экранов Академии просто не увидеть. Первое направление
+       («Медийность», 45 уроков) проходим целиком: нужны экраны «курс пройден»,
+       выдача сертификата и низ урока без «следующего». */
+    var lessons = {};
+    for(var i = 0; i < 45; i++)
+      lessons[i] = { video:true, slides:true, test:true, testScore:90, task:true,
+                     taskText:'Ответ ученика для проверки вёрстки экрана практики.',
+                     game:true, gameWrong:0, slideMax:99, cert:null, mastered:true };
     localStorage.setItem('oko-academy', JSON.stringify({
-      lessons:{}, certs:[], owned:{media:true, marketing:true, ai:true}
+      lessons: lessons, certs: [], owned:{media:true, marketing:true, ai:true},
+      streak:{last:'', days:4, best:6}
     }));
   }catch(e){}
 `;
+
+/* Сброс состояния Академии между маршрутами (без перезагрузки страницы). */
+const RESET = `(() => {
+  try{ okoSkipAuth(); }catch(e){}
+  /* попапы и подсказки соседних модулей (рост, viral) к Академии отношения
+     не имеют, но перекрывают экран — убираем перед замером */
+  try{ document.querySelectorAll('#okoPopup, .ac-master, #acBurst, .oko-toast, .okg-scrim, .okg-ob, .vr-nudge').forEach(e=>e.remove()); }catch(e){}
+  try{ if(window.apdFullClose) apdFullClose(); }catch(e){}
+  try{ if(window.apdNotesClose) apdNotesClose(); }catch(e){}
+  try{ const f=document.getElementById('ac2Full'); if(f) f.classList.remove('open'); }catch(e){}
+  try{ const c=document.getElementById('acCertFull'); if(c) c.classList.remove('open'); }catch(e){}
+  try{ if(typeof showTab==='function') showTab('academy'); }catch(e){}
+  try{ for(let k=0;k<3;k++){ if(window.acView && window.acView!=='home' && window.acBackHome) acBackHome(); } }catch(e){}
+  try{ document.querySelectorAll('main, main > .screen').forEach(s=>{ s.scrollTop = 0; }); }catch(e){}
+  return true;
+})()`;
 
 /* ---- Детектор дефектов, выполняется в странице ---- */
 const PROBE = `(() => {
@@ -94,6 +125,15 @@ const PROBE = `(() => {
     if(ib){ out.back = true; out.backKind = label(ib); }
   }
 
+  if(!out.back){
+    out.backDbg = Array.from(document.querySelectorAll('button.oko-back')).map(b=>{
+      const r = b.getBoundingClientRect(), cs = getComputedStyle(b);
+      return { hidden:b.hasAttribute('hidden'), d:cs.display, v:cs.visibility, o:cs.opacity,
+               rect:[Math.round(r.left),Math.round(r.top),Math.round(r.width),Math.round(r.height)],
+               cls:String(b.className||'') };
+    });
+  }
+
   /* область, где сейчас смотрит человек: открытый оверлей или экран Академии */
   const layer = document.querySelector('.ac2-full.open, .acd-full.open, #acCertFull.open')
              || document.getElementById('screen-academy');
@@ -103,10 +143,12 @@ const PROBE = `(() => {
   out.text = t.length;
   out.empty = t.length < 20;
 
-  /* нижний бар: под него не должен заезжать контент */
+  /* нижний бар: на него не должно ложиться ничего плавающего.
+     Обычный контент живёт внутри main и физически обрезан его границей,
+     поэтому проверяем именно fixed/sticky-слои (кнопки, панели, шторки). */
   const bar = document.getElementById('tabs');
-  const barTop = (bar && getComputedStyle(bar).display !== 'none' && !layer)
-    ? bar.getBoundingClientRect().top : VH + 999;
+  const barRect = (bar && getComputedStyle(bar).display !== 'none' && !layer)
+    ? bar.getBoundingClientRect() : null;
 
   const all = Array.from(scope.querySelectorAll('*')).slice(0, 5000);
   for(const el of all){
@@ -135,13 +177,12 @@ const PROBE = `(() => {
         out.midWordBreak.push({ el: label(el), text: txt.slice(0,40) });
     }
 
-    /* текстовый контент под нижним баром (плавающие кнопки — отдельно ниже) */
-    if(cs.position !== 'fixed' && cs.position !== 'sticky' && el.children.length === 0 && txt){
-      if(r.top > barTop + 2 && r.bottom > barTop + 2 && r.top < VH)
-        out.underBottom.push({ el: label(el), top: Math.round(r.top), bar: Math.round(barTop), text: txt.slice(0,30) });
+    if(cs.position === 'fixed' || cs.position === 'sticky'){
+      if(r.top < -1 && r.bottom > 2) out.underTop.push({ el: label(el), top: Math.round(r.top) });
+      const fullBleed = r.top <= 1 && r.bottom >= VH - 1 && r.left <= 1 && r.right >= VW - 1;
+      if(barRect && !fullBleed && r.bottom > barRect.top + 2 && r.top < barRect.bottom - 2)
+        out.underBottom.push({ el: label(el), bottom: Math.round(r.bottom), bar: Math.round(barRect.top) });
     }
-    if((cs.position === 'fixed' || cs.position === 'sticky') && r.top < -1 && r.bottom > 2)
-      out.underTop.push({ el: label(el), top: Math.round(r.top) });
   }
 
   /* столкновение плавающих кнопок: две фиксированные кнопки не должны перекрываться */
@@ -165,7 +206,7 @@ const PROBE = `(() => {
 /* Маршруты. step — что выполнить в странице, чтобы попасть на экран. */
 function routes(){
   const R = [];
-  const go = (id, name, step, wait) => R.push({ id, name, step, wait });
+  const go = (id, name, step, wait, post) => R.push({ id, name, step, wait, post });
 
   go('01-catalog',  'Каталог Академии', `okoSkipAuth(); showTab('academy');`, 1000);
   go('02-search',   'Поиск по Академии', `okoSkipAuth(); showTab('academy'); ac2Search && ac2Search.open('пост');`, 700);
@@ -188,17 +229,31 @@ function routes(){
     });
   }
 
-  /* прогресс/сертификат: доводим один курс до конца программно */
-  go('30-done-course', 'Курс пройден · сертификат',
-     `okoSkipAuth(); showTab('academy'); window.ac2TestFill && ac2TestFill(0); acOpenCourse(0);`, 1100);
+  /* прогресс/сертификат: первое направление пройдено целиком через localStorage */
+  go('30-done-course', 'Курс пройден · страница курса',
+     `okoSkipAuth(); showTab('academy'); acOpenCourse(0);`, 1100);
   go('31-cert',        'Сертификат · документ',
-     `okoSkipAuth(); showTab('academy'); window.ac2TestFill && ac2TestFill(0); acOpenLesson(0); typeof acIssueCert==='function' && acIssueCert();`, 1600);
+     `okoSkipAuth(); showTab('academy'); acOpenLesson(0); typeof acIssueCert==='function' && acIssueCert();`, 1800);
   go('32-notes',       'Заметки к уроку',
      `okoSkipAuth(); showTab('academy'); acOpenLesson(0); typeof apdNotesOpen==='function' && apdNotesOpen();`, 700);
   go('33-admin',       'Админ-панель курса',
-     `okoSkipAuth(); showTab('academy'); window.ac2ForceOwner && ac2ForceOwner(); apdAdminOpen(0);`, 900);
-  go('34-lesson-end',  'Урок · низ страницы (переход дальше)',
-     `okoSkipAuth(); showTab('academy'); acOpenLesson(1); const m=document.querySelector('main'); if(m) m.scrollTop = m.scrollHeight;`, 900);
+     `okoSkipAuth(); showTab('academy'); apdAdminOpen(0);`, 900);
+  go('34-admin-mem',   'Админ · участники',
+     `okoSkipAuth(); showTab('academy'); apdAdminOpen(0); apdAdminTab('members');`, 900);
+  /* прокрутка живёт на <section class="screen">, а не на <main> */
+  const BOX = `(document.querySelector('main > .screen.active') || document.querySelector('main'))`;
+  const toBottom = `(()=>{const s=${BOX}; if(s) s.scrollTop = s.scrollHeight;})()`;
+  go('35-lesson-end',  'Урок · низ страницы (переход дальше)',
+     `okoSkipAuth(); showTab('academy'); acOpenLesson(1);`, 900, toBottom);
+  go('36-lesson-last', 'Последний урок направления',
+     `okoSkipAuth(); showTab('academy'); acOpenLesson(44);`, 900, toBottom);
+  go('37-toc',         'Урок · оглавление раскрыто',
+     `okoSkipAuth(); showTab('academy'); acOpenLesson(50); window.ac2Toc && ac2Toc();`, 800);
+  go('38-task',        'Урок · практика',
+     `okoSkipAuth(); showTab('academy'); acOpenLesson(0);`, 800,
+     `(()=>{const b=document.getElementById('acTaskBox'); const s=${BOX}; if(b&&s) s.scrollTop = s.scrollTop + b.getBoundingClientRect().top - 90;})()`);
+  go('39-catalog-end', 'Каталог · низ страницы',
+     `okoSkipAuth(); showTab('academy');`, 900, toBottom);
   return R;
 }
 
@@ -218,6 +273,9 @@ async function main(){
     const ctx = await browser.newContext({
       viewport: { width: vp.width, height: vp.height },
       deviceScaleFactor: 1,
+      /* песочница делит процессор с другими прогонами: без анимаций страница
+         отвечает мгновенно, а замеры вёрстки от этого только точнее */
+      reducedMotion: 'reduce',
       isMobile: vp.mobile, hasTouch: vp.mobile,
       userAgent: vp.mobile
         ? 'Mozilla/5.0 (Linux; Android 14) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126 Mobile Safari/537.36'
@@ -225,29 +283,59 @@ async function main(){
     });
     await ctx.addInitScript(INIT);
     const page = await ctx.newPage();
+    /* 3D-знак и three.js жгут процессор через программный GL и к Академии
+       отношения не имеют. В песочнице это единственная причина, по которой
+       страница отвечает секундами вместо миллисекунд. */
+    await page.route('**/oko-eye.glb', r => r.abort());
+    await page.route('**/vendor/**', r => r.abort());
 
     const errs = [];
     const NOISE = /ERR_CONNECTION_RESET|ERR_NAME_NOT_RESOLVED|ERR_BLOCKED|net::ERR_|api\.php|Failed to fetch|404/i;
     page.on('console', m => { if(m.type()==='error'){ const t=m.text().slice(0,180); if(!NOISE.test(t)) errs.push(t); } });
     page.on('pageerror', e => errs.push('PAGEERROR: ' + String(e).slice(0,180)));
 
+    /* Одна загрузка на вьюпорт: app.js весит мегабайты, а песочница делится
+       процессором с другими прогонами. Между маршрутами возвращаем Академию
+       в исходное состояние скриптом RESET — это и быстрее, и стабильнее. */
+    let loaded = false;
+    async function ensure(force){
+      if(loaded && !force) return;
+      await page.goto(BASE, { waitUntil:'domcontentloaded', timeout:120000 });
+      await page.waitForTimeout(1500);
+      loaded = true;
+    }
     for(const route of R){
       const rep = { route: route.id, name: route.name };
       try{
         errs.length = 0;
-        await page.goto(BASE, { waitUntil:'domcontentloaded', timeout:30000 });
-        await page.waitForTimeout(1200);
+        await ensure(false);
+        try{ await page.evaluate(RESET); }catch(e){ await ensure(true); }
+        /* apdFullClose чистит слой отложенно — даём ему договорить, иначе
+           следующий маршрут открывает слой и тут же получает пустую разметку */
+        await page.waitForTimeout(340);
         try{ await page.evaluate(route.step); }
         catch(e){ rep.stepError = String(e).slice(0,160); }
         await page.waitForTimeout(route.wait || 700);
+        /* выезжающие слои анимируются 260 мс; под нагрузкой rAF задерживается,
+           и замер мог попасть в середину анимации — ждём, пока трансформ уляжется */
+        try{
+          await page.waitForFunction(() => {
+            const f = document.querySelector('.ac2-full.open');
+            return !f || getComputedStyle(f).transform === 'none';
+          }, null, { timeout: 6000 });
+        }catch(e){}
+        if(route.post){
+          try{ await page.evaluate(route.post); }catch(e){ rep.postError = String(e).slice(0,120); }
+          await page.waitForTimeout(500);
+        }
         Object.assign(rep, await page.evaluate(PROBE));
         rep.consoleErrors = errs.slice(0, 5);
-        if(SHOTS){
+        if(SHOTS && (SHOT_VP === 'all' || SHOT_VP === vp.id)){
           const file = path.join(OUT, `academy2-${vp.id}-${route.id}.png`);
           try{ await page.screenshot({ path:file, timeout:15000 }); rep.shot = path.basename(file); }
           catch(e){ rep.shotSkipped = String(e).slice(0,60); }
         }
-      }catch(e){ rep.fatal = String(e).slice(0,200); }
+      }catch(e){ rep.fatal = String(e).slice(0,200); loaded = false; }
       vRep.routes.push(rep);
       const flags = [
         rep.overflowX > 0 ? `overflowX=${rep.overflowX}` : '',

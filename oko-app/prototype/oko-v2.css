@@ -671,7 +671,11 @@ img, video, canvas, svg:not(.i) {
    гарантированно ничего не рисует.
    --------------------------------------------------------------------------- */
 #searchView, #notifsView, #adminView, #systemView, #editProfile,
-#regView, #legalView, #psView, #psSocView, #hqEmbed {
+#regView, #legalView, #psView, #psSocView, #hqEmbed,
+/* Добавлено 09.08: те же выезжающие панели из новых модулей и из ядра.
+   #okoSoc (страница сущности) на экране шире 1280 торчал справа полосой
+   собственной шапки поверх любого экрана — ровно та же болезнь. */
+#okoSoc, #chView, #st2View {
   visibility: hidden;
   /* Анимация выезда включается только после того, как страница встала на ноги.
      Иначе на самой первой отрисовке панели заметно «выезжают» из экрана:
@@ -682,12 +686,13 @@ img, video, canvas, svg:not(.i) {
 html.oko-ready #searchView, html.oko-ready #notifsView, html.oko-ready #adminView,
 html.oko-ready #systemView, html.oko-ready #editProfile, html.oko-ready #regView,
 html.oko-ready #legalView, html.oko-ready #psView, html.oko-ready #psSocView,
-html.oko-ready #hqEmbed {
+html.oko-ready #hqEmbed, html.oko-ready #okoSoc, html.oko-ready #chView,
+html.oko-ready #st2View {
   transition: transform .3s cubic-bezier(.3, 1, .4, 1), visibility 0s linear .3s;
 }
 #searchView.open, #notifsView.open, #adminView.open, #systemView.open,
 #editProfile.open, #regView.open, #legalView.open, #psView.open,
-#psSocView.open, #hqEmbed.open {
+#psSocView.open, #hqEmbed.open, #okoSoc.open, #chView.open, #st2View.open {
   visibility: visible;
   transition: transform .3s cubic-bezier(.3, 1, .4, 1), visibility 0s;
 }

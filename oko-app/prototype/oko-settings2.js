@@ -102,6 +102,9 @@
   var CSS = [
     /* --- безопасные зоны: только через переменные OKO --- */
     '#st2View{box-sizing:border-box;padding-bottom:var(--oko-safe-bottom,0px)}',
+    /* Вьюха ограничена 1280px и центрирована — на широком мониторе по краям
+       просвечивал экран под ней. Заливаем поля фоном страницы. */
+    '#st2View.open{box-shadow:0 0 0 100vmax var(--bg)}',
     '#st2View .sv-head{padding-top:max(var(--oko-safe-top,0px),10px);',
     '  padding-left:max(var(--oko-safe-left,0px),14px);padding-right:max(var(--oko-safe-right,0px),14px);',
     '  gap:8px;min-height:52px}',
@@ -145,10 +148,16 @@
     '.s2-row2{display:flex;align-items:center;gap:12px;width:100%;text-align:left}',
     '.s2-row2 .s2-row2-b{flex:1;min-width:0}',
     '.s2-row2 .s2-row2-b b{display:block;font-size:14px;font-weight:600;line-height:1.25}',
+    '.s2-row2 .s2-row2-t{display:flex;align-items:center;gap:8px;flex-wrap:wrap}',
+    '.s2-row2 .s2-row2-t .chip{margin-left:0}',
     '.s2-row2 .s2-row2-b small{display:block;color:var(--dim);font-size:11.5px;margin-top:3px;line-height:1.45;white-space:normal}',
     '.s2-row2>svg.i{flex:none;width:18px;height:18px;color:var(--accent)}',
     '.s2-row2 .switch,.s2-row2 .chev,.s2-row2 .chip{flex:none}',
     '#st2View .prow.s2-prow{align-items:flex-start;padding-top:12px;padding-bottom:12px;height:auto;min-height:0}',
+    /* Значение справа: ядро стилизует .st2-val только внутри .st2-card — чиним для групп */
+    '#st2View .st2-grp .prow .st2-val{margin-left:auto;color:var(--dim);font-size:12.5px;font-weight:600;',
+    '  max-width:44%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;flex:none}',
+    '#st2View .st2-grp .prow .st2-val~.chev,#st2View .st2-grp .prow .st2-val~.switch{margin-left:8px}',
     '#st2View .prow.s2-prow[disabled]{opacity:.55;cursor:default}',
     '#st2View .prow.s2-prow[disabled]:hover{background:none;transform:none}',
 
@@ -196,7 +205,7 @@
     '.s2-kv{display:flex;gap:10px;align-items:baseline;padding:9px 4px;border-bottom:1px solid var(--border);font-size:12.5px}',
     '.s2-kv:last-child{border-bottom:none}',
     '.s2-kv i{font-style:normal;color:var(--dim);flex:none}',
-    '.s2-kv b{margin-left:auto;font-weight:600;text-align:right;min-width:0;overflow-wrap:anywhere}',
+    '.s2-kv b{margin-left:auto;font-weight:600;text-align:right;min-width:0;overflow-wrap:break-word}',
 
     /* --- экспорт --- */
     '.s2-exp{display:flex;gap:12px;align-items:flex-start;width:100%;text-align:left}',
@@ -209,6 +218,18 @@
     '  font-size:13.5px;cursor:pointer;transition:background .2s,transform .12s;line-height:1.35}',
     '.s2-danger-btn:hover{background:color-mix(in srgb,var(--danger) 20%,transparent)}',
     '.s2-danger-btn:active{transform:scale(.985)}',
+
+    /* --- поля времени (тихие часы, расписание темы): не вылезают на узком --- */
+    '#st2View .st2-quiet-times{flex-wrap:wrap;gap:8px;max-width:100%}',
+    '#st2View .st2-time{flex:1 1 45%;min-width:0;max-width:100%;box-sizing:border-box;gap:8px}',
+    '#st2View .st2-time>span{flex:none;white-space:nowrap}',
+    '#st2View .st2-time input{min-width:0;width:100%;max-width:100%;box-sizing:border-box;',
+    '  font-size:clamp(15px,4.4vw,20px)}',
+    '#st2View .st2-quiet-arrow{flex:none}',
+    '@media(max-width:479px){',
+    '  #st2View .st2-quiet-times{flex-direction:column;align-items:stretch}',
+    '  #st2View .st2-time{flex:0 0 auto;width:100%}',
+    '  #st2View .st2-quiet-arrow{align-self:center;transform:rotate(90deg)}}',
 
     /* --- адаптив --- */
     '@media(max-width:379px){.s2-sec-hero{gap:11px;padding:13px 13px}',
@@ -234,18 +255,20 @@
   function s2PurgeSecrets() {
     var dirty = false;
     var sec = ST2.sec;
-    if (sec.pin != null) {
-      var oldPin = String(sec.pin);
+    var has = function (k) { return Object.prototype.hasOwnProperty.call(sec, k); };
+    /* Поля pin и secret не должны существовать вовсе — даже пустыми. */
+    if (has('pin')) {
+      var oldPin = sec.pin;
       delete sec.pin;
       dirty = true;
-      if (!sec.pinHash) {
+      if (oldPin != null && !sec.pinHash) {
         var salt = s2Hex(s2Rand(8));
-        s2Hash(oldPin, salt, function (h) {
+        s2Hash(String(oldPin), salt, function (h) {
           ST2.sec.pinSalt = salt; ST2.sec.pinHash = h; s2Save();
         });
       }
     }
-    if (sec.secret != null) { delete sec.secret; dirty = true; }
+    if (has('secret')) { delete sec.secret; dirty = true; }
     /* На всякий случай — если кто-то когда-то положил сам пароль. */
     ['password', 'pass', 'pwd'].forEach(function (k) {
       if (typeof sec[k] === 'string') { delete sec[k]; dirty = true; }
@@ -290,6 +313,7 @@
 
   /* Замер реального хранилища. Никаких выдуманных «217 МБ». */
   var S2_STORE = { ls: 0, total: 0, quota: 0, exact: false, ready: false };
+  var s2StoreAsked = false;   /* защита от повторного ре-рендера панели «Данные» */
   function s2StorageRefresh(cb) {
     var ls = s2LsBytes();
     function done(total, quota, exact) {
@@ -413,18 +437,23 @@
       '<div class="s2-sec-hero-b"><h4>Защита аккаунта</h4><p>' + s2Esc(txt) + '</p></div></div>';
   }
 
-  /* Строка на две строки текста: заголовок + честное пояснение. */
+  /* Строка на две строки текста: заголовок + честное пояснение.
+     Чип-состояние («подтверждён», «включена») встаёт рядом с заголовком —
+     тогда пояснению достаётся вся ширина и оно не превращается в столбик. */
   function s2Row(o) {
     /* o: {ico,title,sub,right,onclick,disabled,chev} */
     var tag = o.onclick && !o.disabled ? 'button' : 'div';
     var attrs = 'class="prow s2-prow"' + (o.disabled ? ' disabled' : '');
     if (o.onclick && !o.disabled) attrs += ' onclick="' + o.onclick + '"';
     else if (tag === 'div') attrs += ' style="cursor:default"';
+    var right = o.right || '';
+    var inline = '';
+    if (right.indexOf('class="chip') > -1) { inline = right; right = ''; }
     return '<' + tag + ' ' + attrs + '><span class="s2-row2">' +
       s2Ico(o.ico) +
-      '<span class="s2-row2-b"><b>' + s2Esc(o.title) + '</b>' +
+      '<span class="s2-row2-b"><b class="s2-row2-t"><span>' + s2Esc(o.title) + '</span>' + inline + '</b>' +
       (o.sub ? '<small>' + o.sub + '</small>' : '') + '</span>' +
-      (o.right || '') +
+      right +
       (o.chev ? '<span class="chev">' + s2Ico('chev') + '</span>' : '') +
       '</span></' + tag + '>';
   }
@@ -461,7 +490,7 @@
           onclick: 'st2ChangePass()', chev: true
         }) +
         '</div>' +
-        s2Note('<b>Как устроено.</b> Приложение не знает и не может узнать ваш пароль: он не лежит ни в коде, ни в памяти устройства, ни в этой странице. Хранится только отметка «пароль установлен».') +
+        s2Note('<b>Как устроено.</b> Приложение не знает и не может узнать твой пароль: он не лежит ни в коде, ни в памяти устройства, ни в этой странице. Хранится только отметка «пароль установлен».') +
         '</div>' +
 
         /* ---- двухфакторная защита ---- */
@@ -572,7 +601,7 @@
     showPopup({
       ico: 'file', title: 'Резервные коды',
       body: html +
-        '<div class="st2-note"><b>Честно:</b> коды сгенерированы прямо здесь, на устройстве, и <b>нигде не сохранены</b> — ни в приложении, ни на сервере. Пока бэкенд 2FA не подключён, войти по ним нельзя: это заготовка, которую сервер должен принять при регистрации второго фактора. Сохраните их только если понимаете этот статус.</div>',
+        '<div class="st2-note"><b>Честно:</b> коды сгенерированы прямо здесь, на устройстве, и <b>нигде не сохранены</b> — ни в приложении, ни на сервере. Пока бэкенд 2FA не подключён, войти по ним нельзя: это заготовка, которую сервер должен принять при регистрации второго фактора. Сохраняй их только если понимаешь этот статус.</div>',
       actions: [
         { label: 'Закрыть', ghost: true },
         {
@@ -674,11 +703,11 @@
         var vCur = cur ? cur.value : '';
         var vNew = nw ? nw.value : '';
         var vRep = rep ? rep.value : '';
-        if (!vCur) return fail('Введите текущий пароль');
+        if (!vCur) return fail('Введи текущий пароль');
         if (vNew.length < 8) return fail('Новый пароль короче 8 символов');
         if (vNew === vCur) return fail('Новый пароль совпадает с текущим');
         if (vNew !== vRep) return fail('Повтор не совпадает с новым паролем');
-        if (s2PwScore(vNew) < 2) return fail('Слишком простой пароль — добавьте длину, цифры или знаки');
+        if (s2PwScore(vNew) < 2) return fail('Слишком простой пароль — добавь длину, цифры или знаки');
         /* Затираем поля и ссылки до закрытия попапа. */
         vCur = vNew = vRep = '';
         s2WipePw();
@@ -703,12 +732,26 @@
      7. КОД-ПАРОЛЬ: ХРАНИМ СОЛЬ И ХЕШ, НЕ САМ КОД
      ========================================================================== */
 
+  W.st2PinSet1 = function (err) {
+    st2Prompt({
+      ico: 'lock', title: 'Код-пароль', err: err, mode: 'num', max: 4,
+      note: 'Придумай 4 цифры — их будет спрашивать приложение на этом устройстве. Сам код никуда не записывается.',
+      ph: '4 цифры', saveLabel: 'Далее',
+      save: function (v) {
+        try { if (_st2Inp) _st2Inp.value = ''; } catch (e) { }
+        if (!/^\d{4}$/.test(v)) return W.st2PinSet1('Нужно ровно 4 цифры');
+        W.st2PinSet2(v);
+      }
+    });
+  };
   W.st2PinSet2 = function (first, err) {
     st2Prompt({
       ico: 'lock', title: 'Повторите код', err: err, mode: 'num', max: 4,
-      note: 'Введите код ещё раз. Само значение не сохраняется — приложение запомнит только его хеш.',
+      note: 'Введи код ещё раз. Само значение не сохраняется — приложение запомнит только его хеш.',
       ph: '4 цифры', saveLabel: 'Включить',
       save: function (v) {
+        /* Поле ядра держит ссылку на инпут — вычищаем значение сразу. */
+        try { if (_st2Inp) _st2Inp.value = ''; } catch (e) { }
         if (v !== first) return W.st2PinSet2(first, 'Коды не совпадают');
         var salt = s2Hex(s2Rand(8));
         s2Hash(v, salt, function (h) {
@@ -768,7 +811,7 @@
     var secret = (typeof st2GenSecret === 'function') ? st2GenSecret() : s2Hex(s2Rand(10)).toUpperCase();
     showPopup({
       ico: 'st2-shield', title: 'Двухфакторная защита',
-      body: '<p style="margin-bottom:10px;font-size:12.5px;line-height:1.55">Откройте аутентификатор (Google Authenticator, 1Password, Aegis) и добавьте ключ вручную:</p>' +
+      body: '<p style="margin-bottom:10px;font-size:12.5px;line-height:1.55">Открой аутентификатор (Google Authenticator, 1Password, Aegis) и добавь ключ вручную:</p>' +
         '<div class="st2-2fa-key s2-mono">' + s2Esc(secret) + '</div>' +
         '<div class="st2-note"><b>Честно:</b> ключ сгенерирован на устройстве и <b>нигде не сохраняется</b> — ни в приложении, ни в памяти браузера. ' +
         'Сверять коды умеет только сервер, а бэкенд TOTP ещё не подключён. Дальше приложение просто запомнит отметку «второй фактор включён», ' +
@@ -782,7 +825,7 @@
   W.st2TwoFACode = function (err) {
     st2Prompt({
       ico: 'st2-shield', title: 'Код из аутентификатора', err: err, mode: 'num',
-      note: 'Введите 6 цифр. В этой сборке код не сверяется с сервером — сохраняется только отметка «второй фактор включён».',
+      note: 'Введи 6 цифр. В этой сборке код не сверяется с сервером — сохраняется только отметка «второй фактор включён».',
       ph: '000000', saveLabel: 'Включить',
       save: function (v) {
         if (!/^\d{6}$/.test(v)) return W.st2TwoFACode('Нужно ровно 6 цифр');
@@ -825,7 +868,7 @@
       note: 'Отправка SMS и привязка номера к аккаунту — операции сервера. Здесь номер меняется только для показа на этом устройстве.',
       val: ST2.phone, ph: '+7 900 000-00-00',
       save: function (v) {
-        if (!/^\+?[\d\s()-]{10,18}$/.test(v)) return W.st2EditPhone('Проверьте номер — нужен формат +7 …');
+        if (!/^\+?[\d\s()-]{10,18}$/.test(v)) return W.st2EditPhone('Проверь номер — нужен формат +7 …');
         var same = v === ST2.phone;
         ST2.phone = v;
         if (!same) ST2.sec.phoneVerified = false;
@@ -968,26 +1011,50 @@
      11. ПАНЕЛЬ «ДАННЫЕ И ПАМЯТЬ» — РЕАЛЬНЫЕ ЦИФРЫ
      ========================================================================== */
 
+  /* Своя диаграмма: в центре — читаемый размер, а не «0 МБ» от округления. */
+  function s2Pie(parts, bytes) {
+    var total = parts.reduce(function (s, x) { return s + x.v; }, 0) || 1;
+    var R = 42, C = 2 * Math.PI * R, off = 0;
+    var arcs = parts.map(function (p) {
+      var dash = p.v / total * C;
+      var seg = '<circle cx="50" cy="50" r="' + R + '" fill="none" stroke="' + p.color + '" stroke-width="12" ' +
+        'stroke-dasharray="' + dash.toFixed(2) + ' ' + (C - dash).toFixed(2) + '" ' +
+        'stroke-dashoffset="' + (-off).toFixed(2) + '" transform="rotate(-90 50 50)" stroke-linecap="butt"/>';
+      off += dash;
+      return seg;
+    }).join('');
+    var txt = s2FmtSize(bytes).split(' ');
+    return '<svg class="st2-pie st2-pie-anim" viewBox="0 0 100 100" aria-label="Сколько занято на устройстве">' +
+      '<circle class="st2-pie-bg" cx="50" cy="50" r="42" fill="none" stroke-width="12"/>' + arcs +
+      '<text class="st2-pie-cx" x="50" y="52" text-anchor="middle">' + s2Esc(txt[0]) + '</text>' +
+      '<text class="st2-pie-cu" x="50" y="64" text-anchor="middle">' + s2Esc(txt[1] || '') + '</text></svg>';
+  }
+  function s2Pct(part, whole) {
+    if (!whole) return '';
+    var p = part / whole * 100;
+    if (p > 0 && p < 0.1) return 'меньше 0,1%';
+    return p.toFixed(1).replace('.', ',') + '%';
+  }
+
   ST2_PANELS.data = {
     title: 'Данные и память',
     render: function () {
       var parts = st2StorageParts();
       var total = S2_STORE.total || S2_STORE.ls;
       var quota = S2_STORE.quota;
-      var pct = quota ? Math.min(100, total / quota * 100) : 0;
       return '<p class="st2-panel-desc">Сколько места приложение реально занимает на устройстве, как загружать медиа и когда чистить кэш.</p>' +
 
         '<div class="st2-storage" id="s2StoreBox">' +
-        (typeof st2PieSvg === 'function' ? st2PieSvg(parts) : '') +
+        s2Pie(parts, total) +
         '<div class="st2-pie-legend">' +
         parts.map(function (p) {
           return '<div class="st2-pie-row"><span class="st2-pie-dot" style="background:' + p.color + '"></span>' +
             s2Esc(p.label) + '<b>' + s2FmtSize(p.v * 1048576) + '</b></div>';
         }).join('') +
-        (quota ? '<div class="st2-pie-row"><span class="st2-pie-dot" style="background:var(--border)"></span>Доступно браузером<b>' + s2FmtSize(quota) + '</b></div>' : '') +
+        (quota ? '<div class="st2-pie-row"><span class="st2-pie-dot" style="background:var(--border)"></span>Лимит браузера<b>' + s2FmtSize(quota) + '</b></div>' : '') +
         '</div></div>' +
         s2Note(S2_STORE.exact
-          ? 'Цифры взяты у браузера (Storage API) — это фактический объём, занятый OKO на устройстве' + (quota ? ', занято ' + pct.toFixed(1) + '% доступной квоты' : '') + '.'
+          ? 'Цифры взяты у браузера через Storage API — это фактический объём, занятый OKO на устройстве' + (quota ? '. От разрешённого лимита израсходовано ' + s2Pct(total, quota) : '') + '.'
           : 'Браузер не сообщает полный объём хранилища, поэтому показан только замеренный размер локальных настроек и данных.') +
 
         '<div class="st2-panel-sec"><div class="st2-panel-h">' + s2Ico('trash') + ' Очистка</div>' +
@@ -1005,7 +1072,7 @@
         '<div class="st2-range-ticks"><span>100</span><span>500</span><span>1 ГБ</span><span>2 ГБ</span></div>' +
         '</div></div>' +
         '</div>' +
-        s2Note('Предел кэша сохраняется как ваше пожелание. <b>Пока он ни на что не влияет</b>: объёмом кэша управляет сервис-воркер, ограничение подключается вместе с ним.') +
+        s2Note('Предел кэша сохраняется как твоё пожелание. <b>Пока он ни на что не влияет</b>: объёмом кэша управляет сервис-воркер, ограничение подключается вместе с ним.') +
         '</div>' +
 
         '<div class="st2-panel-sec"><div class="st2-panel-h">' + s2Ico('st2-wifi') + ' Автозагрузка медиа</div>' +
@@ -1040,13 +1107,14 @@
         '</div></div>';
     },
     after: function () {
-      /* Досчитываем реальный объём и обновляем панель, когда браузер ответит. */
-      if (!S2_STORE.ready || !S2_STORE.exact) {
-        s2StorageRefresh(function () {
-          var top = (typeof st2CurPanel === 'function') ? st2CurPanel() : null;
-          if (top && top.id === 'data') s2Rerender();
-        });
-      }
+      /* Досчитываем реальный объём один раз: повторный ре-рендер запрещён,
+         иначе панель зациклится там, где браузер не отдаёт Storage API. */
+      if (S2_STORE.ready || s2StoreAsked) return;
+      s2StoreAsked = true;
+      s2StorageRefresh(function () {
+        var top = (typeof st2CurPanel === 'function') ? st2CurPanel() : null;
+        if (top && top.id === 'data') s2Rerender();
+      });
     }
   };
 
@@ -1105,7 +1173,7 @@
   ST2_PANELS['export'] = {
     title: 'Экспорт своих данных',
     render: function () {
-      return '<p class="st2-panel-desc">Копия всего, что приложение знает о вас на этом устройстве. Файл собирается прямо здесь и никуда не отправляется.</p>' +
+      return '<p class="st2-panel-desc">Копия всего, что приложение знает о тебе на этом устройстве. Файл собирается прямо здесь и никуда не отправляется.</p>' +
         '<div class="st2-panel-sec"><div class="st2-panel-h">' + s2Ico('download') + ' Формат выгрузки</div>' +
         '<div class="st2-grp">' +
         s2Row({
@@ -1125,7 +1193,7 @@
         '<div class="s2-fact s2-fact-no">' + s2Ico('x') + '<div><b>Код-пароль и ключ 2FA</b><span>В выгрузку идут только флаги «включено», без соли, хеша и секретов.</span></div></div>' +
         '<div class="s2-fact s2-fact-no">' + s2Ico('x') + '<div><b>Серверная история</b><span>Всё, что живёт только на сервере, выгружается по запросу в поддержку.</span></div></div>' +
         '</div></div></div>' +
-        s2Note('Файл формируется в браузере и сразу отдаётся вам. Ни один байт выгрузки не уходит в сеть.');
+        s2Note('Файл формируется в браузере и сразу отдаётся тебе. Ни один байт выгрузки не уходит в сеть.');
     }
   };
 
@@ -1215,7 +1283,7 @@
     title: 'О приложении',
     render: function () {
       var sw = ('serviceWorker' in navigator) ? 'подключён' : 'недоступен';
-      return '<p class="st2-panel-desc">Что это за сборка, где живут ваши данные и какие части уже работают без сервера.</p>' +
+      return '<p class="st2-panel-desc">Что это за сборка, где живут твои данные и какие части уже работают без сервера.</p>' +
 
         '<div class="st2-panel-sec"><div class="st2-panel-h">' + s2Ico('info') + ' Сборка</div>' +
         '<div class="st2-grp"><div class="s2-facts">' +
@@ -1227,7 +1295,7 @@
 
         '<div class="st2-panel-sec"><div class="st2-panel-h">' + s2Ico('check') + ' Что уже работает без сервера</div>' +
         '<div class="st2-grp"><div class="s2-facts">' +
-        '<div class="s2-fact s2-fact-yes">' + s2Ico('check') + '<div><b>Все настройки этого раздела</b><span>Тема, шрифт, приватность, уведомления, язык — сохраняются на устройстве и применяются сразу.</span></div></div>' +
+        '<div class="s2-fact s2-fact-yes">' + s2Ico('check') + '<div><b>Тема, шрифт, доступность и язык</b><span>Применяются к интерфейсу сразу и переживают перезапуск. Приватность и уведомления сохраняются, но исполняет их сервер.</span></div></div>' +
         '<div class="s2-fact s2-fact-yes">' + s2Ico('check') + '<div><b>Код-пароль и чёрный список</b><span>Живут локально; код хранится только как соль и хеш.</span></div></div>' +
         '<div class="s2-fact s2-fact-yes">' + s2Ico('check') + '<div><b>Экспорт данных и очистка кэша</b><span>Выполняются в браузере, реальными операциями.</span></div></div>' +
         '</div></div></div>' +
@@ -1278,7 +1346,7 @@
       }).catch(function () {
         showPopup({
           ico: 'warning', title: 'Не удалось проверить',
-          body: 'Запрос к серверу не прошёл — вероятно, нет сети. Попробуйте позже.',
+          body: 'Запрос к серверу не прошёл — вероятно, нет сети. Попробуй позже.',
           actions: [{ label: 'Понятно' }]
         });
       });
@@ -1304,7 +1372,7 @@
         ico: 'copy', title: 'Диагностика',
         body: '<div class="st2-2fa-key s2-mono" style="text-align:left;font-size:11.5px;letter-spacing:0">' +
           s2Esc(lines).replace(/\n/g, '<br>') + '</div>' +
-          '<div class="st2-note">Скопировать автоматически не вышло — выделите текст вручную и пришлите в поддержку.</div>',
+          '<div class="st2-note">Скопировать автоматически не вышло — выдели текст вручную и пришли в поддержку.</div>',
         actions: [{ label: 'Закрыть' }]
       });
     }
@@ -1319,14 +1387,25 @@
      15. ЧЕСТНАЯ ПОДДЕРЖКА И БАГРЕПОРТ
      ========================================================================== */
 
+  /* Открываем настоящий диалог поддержки из списка чатов, а не показываем тост. */
   W.st2OpenSupport = function () {
-    if (typeof openChatByName === 'function') {
-      try { openChatByName('Поддержка OKO'); st2Close(); return; } catch (e) { }
-      try { openChatByName('OKO Support'); st2Close(); return; } catch (e) { }
+    var chat = null;
+    try {
+      if (typeof CHATS !== 'undefined' && Array.isArray(CHATS)) {
+        chat = CHATS.find(function (c) { return c && /поддержк/i.test(String(c.name || '')); });
+      }
+    } catch (e) { }
+    if (chat && typeof openConv === 'function' && typeof showTab === 'function') {
+      try {
+        st2Close();
+        showTab('chats');
+        setTimeout(function () { try { openConv(chat.id); } catch (e) { } }, 60);
+        return;
+      } catch (e) { }
     }
     showPopup({
       ico: 'chat', title: 'Чат поддержки',
-      body: 'Открыть чат отсюда не получилось. Напишите в «Сообщения» → <b>Поддержка OKO</b> — это тот же диалог.',
+      body: 'Открыть диалог отсюда не вышло. Зайди во вкладку «Сообщения» и выбери <b>Поддержка OKO</b> — это тот же чат.',
       actions: [{ label: 'Понятно' }]
     });
   };
@@ -1335,31 +1414,120 @@
     showPopup({
       ico: 'flag', title: 'Сообщить о проблеме',
       body: '<p style="margin-bottom:10px;font-size:12.5px;line-height:1.55;color:var(--dim)">' +
-        'Опишите, что пошло не так. Текст вместе с диагностикой ляжет в буфер обмена — останется вставить его в чат поддержки.</p>' +
-        '<div class="st2-pin"><textarea id="s2Bug" placeholder="Что случилось и что вы делали до этого" ' +
+        'Опиши, что пошло не так. Текст вместе с диагностикой ляжет в буфер обмена — останется вставить его в чат поддержки.</p>' +
+        '<div class="st2-pin"><textarea id="s2Bug" placeholder="Что случилось и что ты делал до этого" ' +
         'style="width:100%;min-height:110px;background:var(--raised);border:1px solid var(--border);border-radius:var(--r-md);padding:12px;font:inherit;color:var(--text);resize:vertical;text-align:left"></textarea></div>' +
-        '<div class="st2-note">Автоматической отправки нет: сервер приёма багрепортов ещё не подключён, и делать вид, что письмо ушло, мы не будем.</div>',
-      actions: [
-        { label: 'Отмена', ghost: true },
-        {
-          label: 'Скопировать', onclick: function () {
-            var el = document.getElementById('s2Bug');
-            var v = el ? el.value.trim() : '';
-            if (v.length < 10) { s2Toast('Слишком коротко — расскажите подробнее'); return W.st2Bugreport(); }
-            var txt = 'OKO · сообщение о проблеме\n\n' + v + '\n\n---\nВерсия: ' + s2Build() +
-              '\nОболочка: ' + s2AppKind() + '\nЭкран: ' + W.innerWidth + '×' + W.innerHeight +
-              '\nUA: ' + (navigator.userAgent || '');
-            if (navigator.clipboard && navigator.clipboard.writeText) {
-              navigator.clipboard.writeText(txt)
-                .then(function () { s2Toast('Текст в буфере — вставьте его в чат поддержки'); })
-                .catch(function () { s2Toast('Скопировать не вышло — перенесите текст вручную'); });
-            } else s2Toast('Буфер обмена недоступен — перенесите текст вручную');
-          }
-        }
-      ]
+        '<div class="st2-note">Автоматической отправки нет: сервер приёма сообщений ещё не подключён, и делать вид, что письмо ушло, мы не будем.</div>' +
+        '<div class="st2-perr" id="s2BugErr" style="display:none"></div>' +
+        '<button class="btn s2-pw-save" id="s2BugGo" type="button">Скопировать для поддержки</button>',
+      actions: [{ label: 'Закрыть', ghost: true }]
     });
     var el = document.getElementById('s2Bug');
+    var go = document.getElementById('s2BugGo');
+    var errBox = document.getElementById('s2BugErr');
+    if (go) {
+      /* Кнопка внутри тела: текст не теряется, попап закрываем сами. */
+      go.onclick = function () {
+        var v = el ? el.value.trim() : '';
+        if (v.length < 10) {
+          if (errBox) { errBox.textContent = 'Слишком коротко — расскажите подробнее'; errBox.style.display = ''; }
+          if (el) try { el.focus(); } catch (e) { }
+          return;
+        }
+        var txt = 'OKO · сообщение о проблеме\n\n' + v + '\n\n---\nВерсия: ' + s2Build() +
+          '\nОболочка: ' + s2AppKind() + '\nЭкран: ' + W.innerWidth + '×' + W.innerHeight +
+          '\nUA: ' + (navigator.userAgent || '');
+        if (typeof closePopup === 'function') closePopup();
+        if (navigator.clipboard && navigator.clipboard.writeText) {
+          navigator.clipboard.writeText(txt)
+            .then(function () { s2Toast('Текст в буфере — вставь его в чат поддержки'); })
+            .catch(function () { s2Toast('Скопировать не вышло — перенеси текст вручную'); });
+        } else s2Toast('Буфер обмена недоступен — перенеси текст вручную');
+      };
+    }
     if (el) setTimeout(function () { try { el.focus(); } catch (e) { } }, 60);
+  };
+
+  /* ==========================================================================
+     15б. ПАНЕЛЬ «ПОМОЩЬ» — актуальная навигация и никаких обещаний по срокам
+     ========================================================================== */
+
+  ST2_PANELS.help = {
+    title: 'Помощь и обратная связь',
+    render: function () {
+      var faq = [
+        ['Как переключиться между аккаунтами?',
+          'Открой «Профиль → Аккаунты на устройстве» и нажми «Войти» рядом с нужным. Активный отмечен зелёной галочкой. Имя, ник, фото и обложка меняются сразу.'],
+        ['Где посмотреть, сколько места занимает приложение?',
+          '«Данные и память». Цифры берутся у браузера через Storage API — это фактический объём, а не оценка. Там же кнопка очистки кэша офлайн-режима.'],
+        ['Как включить двухфакторную защиту?',
+          '«Аккаунт и вход → Безопасность → Вход с одноразовым кодом». Приложение покажет ключ для аутентификатора. Честно: сверять коды умеет только сервер, а бэкенд TOTP пока не подключён — сохраняется лишь отметка «включено».'],
+        ['Почему пароль нельзя посмотреть в приложении?',
+          'Потому что приложение его не знает. Пароль живёт на сервере в виде хеша; здесь хранится только отметка «пароль установлен». Это не ограничение сборки, а нормальное устройство защиты.'],
+        ['Что такое «тихие часы»?',
+          'Расписание для входящих уведомлений: в указанный интервал пуши приходят без звука и вибрации. Настраивается в «Уведомления → Тихие часы».'],
+        ['Где скачать выгрузку своих данных?',
+          '«Данные и память → Экспорт своих данных» (тот же пункт продублирован перед удалением аккаунта). Файл собирается в браузере и никуда не отправляется.'],
+        ['Как удалить аккаунт?',
+          '«Опасная зона → Удаление аккаунта». Перед удалением стоит выгрузить данные. Отметка ставится с отсрочкой 14 дней и снимается в любой момент.']
+      ];
+      return '<div class="st2-help-hero">' +
+        '<h4>' + s2Ico('st2-life') + ' Поддержка OKO</h4>' +
+        '<p>Опиши проблему в чате поддержки — приложи скриншот и шаги, после которых всё пошло не так.</p>' +
+        '<button class="st2-help-btn" onclick="st2OpenSupport()">' + s2Ico('chat') + ' Открыть чат поддержки</button>' +
+        '</div>' +
+        '<div class="st2-panel-sec"><div class="st2-panel-h">' + s2Ico('st2-tune') + ' Быстрые действия</div>' +
+        '<div class="st2-grp">' +
+        s2Row({ ico: 'flag', title: 'Сообщить о проблеме', sub: 'Текст с диагностикой ляжет в буфер обмена — вставь его в чат поддержки.', onclick: 'st2Bugreport()', chev: true }) +
+        s2Row({ ico: 'copy', title: 'Скопировать диагностику', sub: 'Версия, устройство, тема, объём хранилища.', onclick: 'st2CopyDiag()', chev: true }) +
+        s2Row({ ico: 'info', title: 'О приложении', sub: 'Что работает без сервера, а что появится вместе с ним.', onclick: 'st2Push(\'about\')', chev: true }) +
+        '</div></div>' +
+        '<div class="st2-panel-sec"><div class="st2-panel-h">' + s2Ico('st2-help-circle') + ' Частые вопросы</div>' +
+        '<div class="st2-faq">' +
+        faq.map(function (f) {
+          return '<details><summary>' + s2Esc(f[0]) + '</summary><div class="st2-faq-body">' + s2Esc(f[1]) + '</div></details>';
+        }).join('') +
+        '</div></div>';
+    }
+  };
+
+  /* ==========================================================================
+     15в. ПАНЕЛЬ «ПРОФИЛЬ» — публичная ссылка на реальном домене
+     ========================================================================== */
+
+  function s2PublicUrl() {
+    return 'https://okoteam.top/@' + ((typeof st2Nick === 'function') ? st2Nick() : '');
+  }
+
+  ST2_PANELS.profile = {
+    title: 'Профиль',
+    render: function () {
+      var p = (typeof PROFILE !== 'undefined') ? PROFILE : { name: '—', tier: '' };
+      return '<p class="st2-panel-desc">Как тебя видят другие в OKO: имя, ник, био, фото и обложка.</p>' +
+        '<div class="st2-panel-sec"><div class="st2-panel-h">' + s2Ico('user') + ' Публичное</div>' +
+        '<div class="st2-grp">' +
+        s2Row({ ico: 'camera', title: 'Фото профиля', sub: 'Загружается с устройства, сжимается и хранится локально.', onclick: 'st2AvatarMenu()', chev: true }) +
+        s2Row({ ico: 'st2-image', title: 'Обложка', sub: 'Широкое полотно в шапке профиля.', onclick: 'st2CoverMenu()', chev: true }) +
+        s2Row({ ico: 'edit', title: 'Имя, био и статус', sub: s2Esc(p.name || '—'), onclick: 'st2OpenEdit()', chev: true }) +
+        s2Row({ ico: 'st2-key', title: 'Ник', sub: '@' + s2Esc((typeof st2Nick === 'function') ? st2Nick() : ''), onclick: 'st2EditNick()', chev: true }) +
+        s2Row({ ico: 'share', title: 'Публичная ссылка', sub: s2Esc(s2PublicUrl()), onclick: 'st2CopyPublic()', chev: true }) +
+        '</div>' +
+        s2Note('Ссылка копируется по-настоящему. Открываться она начнёт, когда публичные страницы профилей выложат на okoteam.top.') +
+        '</div>' +
+        '<div class="st2-panel-sec"><div class="st2-panel-h">' + s2Ico('crown') + ' Тариф</div>' +
+        '<div class="st2-grp">' +
+        s2Row({ ico: 'crown', title: 'Текущий тариф', sub: 'Что входит и как сменить — на экране профиля.', right: '<span class="st2-val">' + s2Esc(p.tier || 'FREE') + '</span>', onclick: 'st2GoPlans()', chev: true }) +
+        '</div></div>';
+    }
+  };
+
+  W.st2CopyPublic = function () {
+    var url = s2PublicUrl();
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(url)
+        .then(function () { s2Toast('Ссылка скопирована: ' + url); })
+        .catch(function () { s2Toast('Твоя ссылка: ' + url); });
+    } else s2Toast('Твоя ссылка: ' + url);
   };
 
   /* ==========================================================================
@@ -1426,7 +1594,7 @@
 
         '</div>' +
         '<div class="st2-search-empty" id="st2SearchEmpty">' + s2Ico('st2-search') +
-        '<p>Ничего не найдено</p><span>Попробуйте другой запрос: «пароль», «тема», «кэш»</span></div>' +
+        '<p>Ничего не найдено</p><span>Попробуй другой запрос: «пароль», «тема», «кэш»</span></div>' +
         '<div class="st2-foot">OKO · настройки хранятся на этом устройстве · сборка ' + s2Esc(s2Build()) + '</div>';
     },
     after: function () {
@@ -1467,7 +1635,7 @@
         '<div class="st2-grp st2-danger">' +
         '<div class="s2-facts" style="padding-top:8px">' +
         '<div class="s2-fact s2-fact-no">' + s2Ico('x') + '<div><b>Профиль и подписчики</b><span>Имя, ник, обложка, вся аудитория.</span></div></div>' +
-        '<div class="s2-fact s2-fact-no">' + s2Ico('x') + '<div><b>Чаты, каналы и истории</b><span>Переписка удаляется у вас; у собеседников остаются их копии.</span></div></div>' +
+        '<div class="s2-fact s2-fact-no">' + s2Ico('x') + '<div><b>Чаты, каналы и истории</b><span>Переписка удаляется у тебя; у собеседников остаются их копии.</span></div></div>' +
         '<div class="s2-fact s2-fact-no">' + s2Ico('x') + '<div><b>Кошелёк и операции</b><span>Остаток нужно вывести заранее — после удаления доступа к нему нет.</span></div></div>' +
         '<div class="s2-fact s2-fact-no">' + s2Ico('x') + '<div><b>Сертификаты Академии</b><span>Прогресс и выданные сертификаты аннулируются.</span></div></div>' +
         '</div>' +
@@ -1479,6 +1647,172 @@
         '</div>' +
         s2Note('Отметка ставится на этом устройстве. <b>Само удаление выполняет сервер</b> — он же и отсчитывает 14 дней. Отменить можно в любой момент до конца отсчёта.', 'warn') +
         '</div>';
+    }
+  };
+
+  /* ==========================================================================
+     17б. ЧЕСТНЫЕ ПОДПИСИ К ПАНЕЛЯМ ЯДРА
+     --------------------------------------------------------------------------
+     Панели уведомлений, приватности, языка и аккаунтов оставляем как есть,
+     но дописываем внизу правду о том, что уже работает, а что ждёт сервер.
+     ========================================================================== */
+
+  function s2AppendNote(id, noteHtml) {
+    var orig = ST2_PANELS[id];
+    if (!orig || orig.__s2noted) return;
+    ST2_PANELS[id] = {
+      title: orig.title,
+      render: function (ctx) { return orig.render(ctx) + noteHtml; },
+      after: orig.after ? function () { return orig.after.apply(orig, arguments); } : undefined,
+      __s2noted: true
+    };
+  }
+
+  s2AppendNote('notif', s2Note(
+    'Настройки сохраняются на устройстве и сразу меняют то, что рисует приложение. ' +
+    '<b>Системные пуши включает сервер</b> — пока бэкенд не подключён, телефон уведомления не покажет, ' +
+    'а тихие часы и настройки каналов ждут его в готовом виде.'));
+
+  s2AppendNote('privacy', s2Note(
+    'Выбор сохраняется на устройстве и уже влияет на то, что показывает приложение. ' +
+    '<b>Окончательно правила соблюдает сервер</b>: кто увидит профиль и сможет написать первым, ' +
+    'решает он. До подключения бэкенда это твои предпочтения, а не запрет для других.'));
+
+  s2AppendNote('lang', s2Note(
+    'Язык интерфейса переключается сразу. Формат времени и начало недели сохранены, ' +
+    'но применяются пока не на всех экранах — их переводят на общие настройки постепенно.'));
+
+  s2AppendNote('accounts', s2Note(
+    'Список аккаунтов живёт на этом устройстве. <b>Настоящий вход выполняет сервер</b> — ' +
+    'пока бэкенд не подключён, добавленная запись остаётся локальной ячейкой, а не вторым аккаунтом OKO.'));
+
+  s2AppendNote('a11y', s2Note(
+    'Все переключатели этого раздела работают по-настоящему и применяются к интерфейсу сразу, без сервера.'));
+
+  /* ==========================================================================
+     17в. ЧЕСТНЫЕ ИТОГИ ДЕЙСТВИЙ, КОТОРЫЕ РАНЬШЕ «ПОДТВЕРЖДАЛИ» ЛИШНЕЕ
+     ========================================================================== */
+
+  /* Привязка Telegram: локальная запись, а не реальная привязка через бота. */
+  W.st2LinkTg = function (err) {
+    if (ST2.tg) {
+      showPopup({
+        ico: 'send', title: 'Убрать привязку Telegram?',
+        body: 'Ник <b>' + s2Esc(ST2.tg) + '</b> исчезнет из настроек этого устройства. ' +
+          'На вход через Telegram это не повлияет: связку аккаунта с ботом держит сервер.',
+        actions: [
+          { label: 'Отмена', ghost: true },
+          { label: 'Убрать', onclick: function () { ST2.tg = null; s2Save(); s2Rerender(); s2Toast('Ник Telegram убран'); } }
+        ]
+      });
+      s2PopDanger(1);
+      return;
+    }
+    st2Prompt({
+      ico: 'send', title: 'Telegram', err: err,
+      note: 'Укажи свой @ник в Telegram. Настоящая привязка идёт через @okoappbot и сервер — здесь ник просто сохранится в настройках.',
+      ph: '@nickname', saveLabel: 'Сохранить',
+      save: function (v) {
+        v = v.replace(/^@/, '').trim();
+        if (!/^[a-zA-Z0-9_]{4,32}$/.test(v)) return W.st2LinkTg('Ник Telegram: 4–32 латинских символа, цифры или _');
+        ST2.tg = '@' + v; s2Save(); s2Rerender();
+        showPopup({
+          ico: 'send', title: 'Ник сохранён',
+          body: 'Записали <b>@' + s2Esc(v) + '</b> в настройки устройства. ' +
+            '<b>Привязки к аккаунту не произошло</b>: её подтверждает @okoappbot вместе с сервером, а бэкенд ещё не подключён.',
+          actions: [{ label: 'Понятно' }]
+        });
+      }
+    });
+  };
+
+  /* Смена ника: реально меняется в приложении, но не на сервере. */
+  W.st2EditNick = function (err) {
+    st2Prompt({
+      ico: 'edit', title: 'Ник', err: err,
+      note: '3–16 символов: латиница, цифры, подчёркивание. Ник сразу обновится в профиле, ленте и чатах на этом устройстве.',
+      val: (typeof st2Nick === 'function') ? st2Nick() : '', ph: 'nickname',
+      save: function (v) {
+        v = v.replace(/^@/, '');
+        if (!/^[a-z0-9_]{3,16}$/i.test(v)) return W.st2EditNick('Недопустимый ник — проверь формат');
+        ST2.nick = v;
+        if (typeof PROFILE !== 'undefined') {
+          PROFILE.nick = v;
+          if (typeof renderMyProfile === 'function') renderMyProfile();
+        }
+        if (typeof st2SyncActiveFromProfile === 'function') st2SyncActiveFromProfile();
+        s2Save(); s2Rerender();
+        s2Toast('Ник в приложении: @' + v + ' · на сервере закрепится с бэкендом');
+      }
+    });
+  };
+
+  /* Добавление аккаунта: честно называем вещи локальной ячейкой. */
+  W.st2AddAccount = function (err) {
+    st2Prompt({
+      ico: 'plus', title: 'Добавить аккаунт', err: err,
+      note: 'Введи ник второго аккаунта OKO. Настоящий вход выполняет сервер — сейчас на устройстве заведётся локальная ячейка для переключения.',
+      ph: 'nickname', saveLabel: 'Добавить',
+      save: function (v) {
+        v = v.replace(/^@/, '');
+        if (!/^[a-z0-9_]{3,16}$/i.test(v)) return W.st2AddAccount('Недопустимый ник — проверь формат');
+        if (ST2.accounts.some(function (a) { return (a.nick || '').toLowerCase() === v.toLowerCase(); }))
+          return W.st2AddAccount('Такая ячейка уже есть');
+        var id = 'acc' + Date.now();
+        ST2.accounts.push({ id: id, name: '@' + v, nick: v, tier: 'FREE', role: 'user', bio: '' });
+        s2Save();
+        if (typeof st2SwitchAccount === 'function') st2SwitchAccount(id);
+        showPopup({
+          ico: 'users', title: 'Ячейка создана',
+          body: 'На устройстве появился слот <b>@' + s2Esc(v) + '</b> — между слотами можно переключаться. ' +
+            '<b>Входа в аккаунт не было</b>: пароль и данные проверяет сервер, а бэкенд ещё не подключён, ' +
+            'поэтому чаты и кошелёк второго аккаунта не подтянутся.',
+          actions: [{ label: 'Понятно' }]
+        });
+      }
+    });
+  };
+
+  /* Пометка на удаление — локальная. Говорим это прямо в итоге. */
+  W.st2DeleteConfirm = function (err) {
+    var nick = (typeof st2Nick === 'function') ? st2Nick() : '';
+    st2Prompt({
+      ico: 'trash', title: 'Последний шаг', danger: true, err: err,
+      note: 'Введи свой ник <b>@' + s2Esc(nick) + '</b> для подтверждения.',
+      ph: '@' + nick, saveLabel: 'Пометить на удаление',
+      save: function (v) {
+        if (v.replace(/^@/, '').toLowerCase() !== nick.toLowerCase())
+          return W.st2DeleteConfirm('Ник не совпадает — аккаунт не помечен');
+        ST2.delAt = Date.now() + 14 * 24 * 3600 * 1000;
+        s2Save(); s2Rerender();
+        showPopup({
+          ico: 'trash', title: 'Отметка поставлена',
+          body: 'Аккаунт помечен на удаление, отсчёт — 14 дней. ' +
+            '<b>Отметка пока хранится на этом устройстве</b>: стирает данные сервер, и он же начнёт отсчёт, ' +
+            'когда бэкенд подключат. Снять отметку можно в любой момент в этом же разделе.',
+          actions: [{ label: 'Понятно' }]
+        });
+      }
+    });
+  };
+
+  /* ==========================================================================
+     17г. ЕДИНАЯ ТОЧКА ВХОДА
+     --------------------------------------------------------------------------
+     На экране профиля остались кнопки «Уведомления» и «Конфиденциальность»,
+     которые открывали старые шиты ядра с четырьмя тумблерами. Это второй,
+     рассинхронизированный набор настроек. Уводим их в полноценный раздел.
+     ========================================================================== */
+
+  W.openSettings = function (group) {
+    if (typeof st2Open === 'function' && typeof st2Push === 'function') {
+      st2Open();
+      st2Push(group === 'privacy' ? 'privacy' : 'notif');
+      return;
+    }
+    /* запасной путь ядра, если слой настроек почему-то не поднялся */
+    if (typeof renderSettings === 'function' && typeof openSheet === 'function') {
+      renderSettings(group); openSheet(group);
     }
   };
 
@@ -1533,6 +1867,100 @@
       st2Back();
     }
   }, true);
+
+  /* ==========================================================================
+     19б. ПОЧИНКА СПРАЙТА: возвращаем пропавшие иконки i-st2-*
+     --------------------------------------------------------------------------
+     Ядро добавляет свои символы функцией st2AddIcons(), но она выходит сразу,
+     если в спрайте уже есть #i-gear — а он там есть с самого начала. Из-за
+     этого ВСЕ иконки i-st2-* (щит, ключ, конверт, устройства, лупа, часы…)
+     никогда не создавались и рисовались пустыми местами. Снимаем блокировку:
+     временно переименовываем спрайтовую шестерёнку, даём ядру создать свои
+     символы, затем убираем её дубликат и возвращаем оригинал.
+     ========================================================================== */
+
+  function s2FixIcons() {
+    if (document.getElementById('i-st2-shield')) return;      /* уже на месте */
+    if (typeof st2AddIcons !== 'function') return;
+    var sprite = document.getElementById('i-gear');
+    if (sprite) sprite.id = 'i-gear-sprite';
+    try { st2AddIcons(); } catch (e) { }
+    if (sprite) {
+      var made = document.getElementById('i-gear');
+      if (made && made !== sprite) made.remove();             /* дубликат не нужен */
+      sprite.id = 'i-gear';
+    }
+  }
+  s2FixIcons();
+  /* Спрайт может встать позже ядра — подстрахуемся после полной загрузки. */
+  if (document.readyState !== 'complete') {
+    W.addEventListener('load', function () {
+      s2FixIcons();
+      try {
+        var v = document.getElementById('st2View');
+        if (v && v.classList.contains('open')) s2Rerender();
+      } catch (e) { }
+    }, { once: true });
+  }
+
+  /* ==========================================================================
+     19в. ШИРОКИЙ ЭКРАН: убираем полоски чужих закрытых вьюх у правого края
+     --------------------------------------------------------------------------
+     Полноэкранные вьюхи приложения ограничены 1280px и центрированы, а в
+     закрытом состоянии «припаркованы» справа через translateX(100%). На
+     мониторе шире 1280 их левый край попадает обратно в кадр и торчит
+     полоской поверх настроек. Пока раздел открыт — прячем именно такие
+     полоски и возвращаем всё как было при закрытии. Чужие файлы не трогаем.
+     ========================================================================== */
+
+  var s2Hidden = [];
+  function s2ShowPeekers() {
+    for (var i = 0; i < s2Hidden.length; i++) {
+      try { s2Hidden[i][0].style.visibility = s2Hidden[i][1] || ''; } catch (e) { }
+    }
+    s2Hidden = [];
+  }
+  function s2HidePeekers() {
+    s2ShowPeekers();
+    if (W.innerWidth <= 1280) return;
+    var view = document.getElementById('st2View');
+    var list = document.querySelectorAll('body > div');
+    for (var i = 0; i < list.length; i++) {
+      var el = list[i];
+      if (el === view || el.id === 'okoPopup' || el.id === 'app') continue;
+      var cs = getComputedStyle(el);
+      if (cs.position !== 'fixed' || cs.visibility === 'hidden' || cs.display === 'none') continue;
+      var r = el.getBoundingClientRect();
+      if (r.width < 40 || r.height < 40) continue;
+      /* признак «припаркована справа»: начинается у самого края и уходит за экран */
+      if (r.left > W.innerWidth * 0.8 && r.right > W.innerWidth + 40) {
+        s2Hidden.push([el, el.style.visibility]);
+        el.style.visibility = 'hidden';
+      }
+    }
+  }
+
+  (function wrapOpenClose() {
+    var open = W.st2Open, close = W.st2Close;
+    if (typeof open === 'function') {
+      W.st2Open = function () {
+        var r = open.apply(this, arguments);
+        try { s2HidePeekers(); } catch (e) { }
+        return r;
+      };
+    }
+    if (typeof close === 'function') {
+      W.st2Close = function () {
+        try { s2ShowPeekers(); } catch (e) { }
+        return close.apply(this, arguments);
+      };
+    }
+    W.addEventListener('resize', function () {
+      var v = document.getElementById('st2View');
+      if (v && v.classList.contains('open')) { try { s2HidePeekers(); } catch (e) { } }
+      else s2ShowPeekers();
+    });
+  })();
 
   /* ==========================================================================
      20. ИНИЦИАЛИЗАЦИЯ

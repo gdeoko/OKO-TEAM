@@ -1,0 +1,756 @@
+{
+  "at": "2026-08-09T07:58:49.866Z",
+  "base": "http://127.0.0.1:8199/index.html",
+  "runs": [
+    {
+      "scenario": "first-run",
+      "name": "Чистый первый вход",
+      "viewport": "tablet",
+      "steps": [
+        {
+          "id": "01-auth",
+          "name": "Экран запуска и вход",
+          "shot": null,
+          "overflowX": 0,
+          "scope": "section#authScreen",
+          "exits": 1,
+          "visibleText": 283,
+          "issues": [],
+          "expect": null
+        },
+        {
+          "id": "02-google-soon",
+          "name": "Google: честный отказ",
+          "shot": "onb2-first-run-tablet-02-google-soon.png",
+          "overflowX": 0,
+          "scope": "div.onb2-.crim on",
+          "exits": 1,
+          "visibleText": 322,
+          "issues": [],
+          "expect": {
+            "sheet": true,
+            "text": "Вход через Google пока не подключён\n\nМы включим его вместе с серверной частью OKO — пока кнопка ничего не подпишет и аккаунт не создаст, поэтому и не делаем вид",
+            "falseLogin": false
+          }
+        },
+        {
+          "id": "03-google-close",
+          "name": "Отказ закрывается",
+          "shot": "onb2-first-run-tablet-03-google-close.png",
+          "overflowX": 0,
+          "scope": "section#authScreen",
+          "exits": 1,
+          "visibleText": 283,
+          "issues": [],
+          "expect": {
+            "sheetGone": true
+          }
+        },
+        {
+          "id": "04-apple-soon",
+          "name": "Apple: честный отказ",
+          "shot": "onb2-first-run-tablet-04-apple-soon.png",
+          "overflowX": 0,
+          "scope": "div.onb2-.crim on",
+          "exits": 1,
+          "visibleText": 321,
+          "issues": [],
+          "expect": {
+            "sheet": true
+          }
+        },
+        {
+          "id": "05-phone",
+          "name": "Телефон или почта",
+          "shot": "onb2-first-run-tablet-05-phone.png",
+          "overflowX": 0,
+          "scope": "section#authScreen",
+          "exits": 1,
+          "visibleText": 270,
+          "issues": [],
+          "expect": {
+            "rg2": true
+          }
+        },
+        {
+          "id": "06-code",
+          "name": "Честная подсказка про код",
+          "shot": "onb2-first-run-tablet-06-code.png",
+          "overflowX": 0,
+          "scope": "section#authScreen",
+          "exits": 1,
+          "visibleText": 214,
+          "issues": [],
+          "expect": {
+            "hint": true,
+            "text": "SMS и письма ещё не подключены — код не уйдёт ни в сообщение, ни на почту. Вот он, введи его в поля выше: 653963"
+          }
+        },
+        {
+          "id": "07-tg-login",
+          "name": "Вход через Telegram",
+          "shot": "onb2-first-run-tablet-07-tg-login.png",
+          "overflowX": 0,
+          "scope": "div#onboard",
+          "exits": 1,
+          "visibleText": 163,
+          "issues": [],
+          "expect": {
+            "authHidden": true,
+            "onboard": true
+          }
+        },
+        {
+          "id": "08-onboard",
+          "name": "Онбординг ядра",
+          "shot": "onb2-first-run-tablet-08-onboard.png",
+          "overflowX": 0,
+          "scope": "div#onboard",
+          "exits": 1,
+          "visibleText": 163,
+          "issues": [],
+          "expect": null
+        },
+        {
+          "id": "09-intro",
+          "name": "Знакомство · вопрос 1",
+          "shot": "onb2-first-run-tablet-09-intro.png",
+          "overflowX": 0,
+          "scope": "div#onb2Intro.on",
+          "exits": 1,
+          "visibleText": 448,
+          "issues": [],
+          "expect": {
+            "intro": true,
+            "head": "КТО ТЫ СЕЙЧАС"
+          }
+        },
+        {
+          "id": "10-intro-2",
+          "name": "Знакомство · вопрос 2",
+          "shot": "onb2-first-run-tablet-10-intro-2.png",
+          "overflowX": 0,
+          "scope": "div#onb2Intro.on",
+          "exits": 2,
+          "visibleText": 270,
+          "issues": [],
+          "expect": {
+            "head": "ЧТО ТЕБЕ ИНТЕРЕСНО"
+          }
+        },
+        {
+          "id": "11-intro-3",
+          "name": "Знакомство · вопрос 3",
+          "shot": "onb2-first-run-tablet-11-intro-3.png",
+          "overflowX": 0,
+          "scope": "div#onb2Intro.on",
+          "exits": 2,
+          "visibleText": 488,
+          "issues": [],
+          "expect": {
+            "head": "ЧЕГО ЖДЁШЬ ОТ OKO"
+          }
+        },
+        {
+          "id": "12-intro-plan",
+          "name": "Знакомство · первый шаг",
+          "shot": "onb2-first-run-tablet-12-intro-plan.png",
+          "overflowX": 0,
+          "scope": "div#onb2Intro.on",
+          "exits": 3,
+          "visibleText": 504,
+          "issues": [],
+          "expect": {
+            "plan": true,
+            "text": "Проверить своё видео перед публикацией Покажет, где ролик теряет зрителя"
+          }
+        },
+        {
+          "id": "12b-light",
+          "name": "Знакомство · светлая тема",
+          "shot": "onb2-first-run-tablet-12b-light.png",
+          "overflowX": 0,
+          "scope": "div#onb2Intro.on",
+          "exits": 3,
+          "visibleText": 504,
+          "issues": [],
+          "expect": {
+            "theme": "light",
+            "intro": true
+          }
+        },
+        {
+          "id": "12c-dark",
+          "name": "Знакомство · тёмная тема",
+          "shot": "onb2-first-run-tablet-12c-dark.png",
+          "overflowX": 0,
+          "scope": "div#onb2Intro.on",
+          "exits": 3,
+          "visibleText": 504,
+          "issues": [],
+          "expect": {
+            "theme": "dark"
+          }
+        },
+        {
+          "id": "13-feed",
+          "name": "Дошли до ленты",
+          "shot": "onb2-first-run-tablet-13-feed.png",
+          "overflowX": 0,
+          "scope": "section#screen-feed..creen active",
+          "exits": 1,
+          "visibleText": 212,
+          "issues": [],
+          "expect": {
+            "feedActive": true,
+            "introSaved": true,
+            "goal": "grow",
+            "interests": [
+              "content",
+              "ai"
+            ],
+            "introOpen": false
+          }
+        }
+      ],
+      "errors": []
+    },
+    {
+      "scenario": "reg-mail",
+      "name": "Регистрация по почте до конца",
+      "viewport": "tablet",
+      "steps": [
+        {
+          "id": "01-auth",
+          "name": "Экран входа",
+          "shot": "onb2-reg-mail-tablet-01-auth.png",
+          "overflowX": 0,
+          "scope": "section#authScreen",
+          "exits": 1,
+          "visibleText": 283,
+          "issues": [],
+          "expect": null
+        },
+        {
+          "id": "02-form",
+          "name": "Контакт и пароль",
+          "shot": "onb2-reg-mail-tablet-02-form.png",
+          "overflowX": 0,
+          "scope": "section#authScreen",
+          "exits": 1,
+          "visibleText": 270,
+          "issues": [],
+          "expect": {
+            "rg2": true
+          }
+        },
+        {
+          "id": "03-code",
+          "name": "Код на экране",
+          "shot": "onb2-reg-mail-tablet-03-code.png",
+          "overflowX": 0,
+          "scope": "section#authScreen",
+          "exits": 1,
+          "visibleText": 214,
+          "issues": [],
+          "expect": {
+            "hint": true,
+            "sub": "Аккаунт p***e@oko.test"
+          }
+        },
+        {
+          "id": "04-profile",
+          "name": "Профиль",
+          "shot": "onb2-reg-mail-tablet-04-profile.png",
+          "overflowX": 0,
+          "scope": "section#authScreen",
+          "exits": 1,
+          "visibleText": 176,
+          "issues": [],
+          "expect": {
+            "step3": true
+          }
+        },
+        {
+          "id": "05-tier",
+          "name": "Тариф",
+          "shot": "onb2-reg-mail-tablet-05-tier.png",
+          "overflowX": 0,
+          "scope": "section#authScreen",
+          "exits": 1,
+          "visibleText": 674,
+          "issues": [],
+          "expect": {
+            "step4": true
+          }
+        },
+        {
+          "id": "06-finish",
+          "name": "Готово — знакомство",
+          "shot": "onb2-reg-mail-tablet-06-finish.png",
+          "overflowX": 0,
+          "scope": "div#onb2Intro.on",
+          "exits": 1,
+          "visibleText": 448,
+          "issues": [],
+          "expect": {
+            "intro": true,
+            "authed": true,
+            "head": "КТО ТЫ СЕЙЧАС"
+          }
+        },
+        {
+          "id": "07-skip",
+          "name": "Знакомство пропускается",
+          "shot": "onb2-reg-mail-tablet-07-skip.png",
+          "overflowX": 0,
+          "scope": "section#screen-feed..creen active",
+          "exits": 1,
+          "visibleText": 212,
+          "issues": [],
+          "expect": {
+            "closed": true,
+            "skipped": true
+          }
+        }
+      ],
+      "errors": []
+    },
+    {
+      "scenario": "no-telegram",
+      "name": "Первый вход без Telegram",
+      "viewport": "tablet",
+      "steps": [
+        {
+          "id": "01-auth",
+          "name": "Экран входа в браузере",
+          "shot": "onb2-no-telegram-tablet-01-auth.png",
+          "overflowX": 0,
+          "scope": "section#authScreen",
+          "exits": 1,
+          "visibleText": 283,
+          "issues": [],
+          "expect": {
+            "note": "Google и Apple пока не подключены. Работают Telegram и вход по телефону или почте.",
+            "soon": 2
+          }
+        },
+        {
+          "id": "02-tg-note",
+          "name": "Telegram: честный отказ",
+          "shot": "onb2-no-telegram-tablet-02-tg-note.png",
+          "overflowX": 0,
+          "scope": "div.onb2-.crim on",
+          "exits": 1,
+          "visibleText": 320,
+          "issues": [],
+          "expect": {
+            "sheet": true,
+            "falseLogin": false,
+            "text": "Telegram здесь не найден OKO открыт в обычном браузере, а не внутри Telegram, поэтому взять твой Telegram-аккаунт неоткуда — вход через него"
+          }
+        },
+        {
+          "id": "03-escape",
+          "name": "Escape закрывает",
+          "shot": "onb2-no-telegram-tablet-03-escape.png",
+          "overflowX": 0,
+          "scope": "section#authScreen",
+          "exits": 1,
+          "visibleText": 283,
+          "issues": [],
+          "expect": {
+            "sheetGone": true
+          }
+        },
+        {
+          "id": "04-offline",
+          "name": "Нет сети",
+          "shot": "onb2-no-telegram-tablet-04-offline.png",
+          "overflowX": 0,
+          "scope": "section#authScreen",
+          "exits": 1,
+          "visibleText": 283,
+          "issues": [],
+          "expect": {
+            "sheet": true,
+            "offBar": false,
+            "text": "Нет соединения Сеть недоступна, поэтому вход сейчас не пройдёт: приложению некуда отправить запрос. Проверь ин"
+          }
+        }
+      ],
+      "errors": []
+    },
+    {
+      "scenario": "search",
+      "name": "Глобальный поиск",
+      "viewport": "tablet",
+      "steps": [
+        {
+          "id": "01-empty",
+          "name": "Поиск · пустой запрос",
+          "shot": "onb2-search-tablet-01-empty.png",
+          "overflowX": 0,
+          "scope": "div#searchView.uic-qa open",
+          "exits": 1,
+          "visibleText": 475,
+          "issues": [],
+          "expect": {
+            "open": true,
+            "quick": 8,
+            "note": true,
+            "chips": 8
+          }
+        },
+        {
+          "id": "02-people",
+          "name": "Поиск · люди",
+          "shot": "onb2-search-tablet-02-people.png",
+          "overflowX": 0,
+          "scope": "div#searchView.open onb2-ha.-q",
+          "exits": 1,
+          "visibleText": 201,
+          "issues": [],
+          "expect": {
+            "sections": [
+              "Люди:1",
+              "Чаты и сообщения:1"
+            ],
+            "hits": 2,
+            "first": "Даниэль Ильясов"
+          }
+        },
+        {
+          "id": "03-channel",
+          "name": "Поиск · каналы",
+          "shot": "onb2-search-tablet-03-channel.png",
+          "overflowX": 0,
+          "scope": "div#searchView.open onb2-ha.-q",
+          "exits": 1,
+          "visibleText": 990,
+          "issues": [],
+          "expect": {
+            "sections": [
+              "Люди:2",
+              "Каналы и клубы:4",
+              "Чаты и сообщения:3",
+              "Академия:3",
+              "Разделы приложения:1"
+            ],
+            "hits": 13,
+            "first": "Поддержка OKO"
+          }
+        },
+        {
+          "id": "04-academy",
+          "name": "Поиск · Академия",
+          "shot": "onb2-search-tablet-04-academy.png",
+          "overflowX": 0,
+          "scope": "div#searchView.open onb2-ha.-q",
+          "exits": 1,
+          "visibleText": 144,
+          "issues": [],
+          "expect": {
+            "sections": [
+              "Академия:1"
+            ],
+            "hits": 1,
+            "first": "Мышление и старт"
+          }
+        },
+        {
+          "id": "05-section",
+          "name": "Поиск · разделы",
+          "shot": "onb2-search-tablet-05-section.png",
+          "overflowX": 0,
+          "scope": "div#searchView.open onb2-ha.-q",
+          "exits": 1,
+          "visibleText": 113,
+          "issues": [],
+          "expect": {
+            "sections": [
+              "Разделы приложения:1"
+            ],
+            "hits": 1,
+            "first": "Кошелёк"
+          }
+        },
+        {
+          "id": "06-market",
+          "name": "Поиск · Биржа",
+          "shot": "onb2-search-tablet-06-market.png",
+          "overflowX": 0,
+          "scope": "div#searchView.open onb2-ha.-q",
+          "exits": 1,
+          "visibleText": 121,
+          "issues": [],
+          "expect": {
+            "sections": [
+              "Разделы приложения:1"
+            ],
+            "hits": 1,
+            "first": "Биржа услуг"
+          }
+        },
+        {
+          "id": "07-chat",
+          "name": "Поиск · сообщения",
+          "shot": "onb2-search-tablet-07-chat.png",
+          "overflowX": 0,
+          "scope": "div#searchView.open onb2-ha.-q",
+          "exits": 1,
+          "visibleText": 233,
+          "issues": [],
+          "expect": {
+            "sections": [
+              "Люди:1",
+              "Чаты и сообщения:1"
+            ],
+            "hits": 2,
+            "first": "Поддержка OKO"
+          }
+        },
+        {
+          "id": "08-filter",
+          "name": "Поиск · фильтр по типу",
+          "shot": "onb2-search-tablet-08-filter.png",
+          "overflowX": 0,
+          "scope": "div#searchView.open onb2-ha.-q",
+          "exits": 1,
+          "visibleText": 197,
+          "issues": [],
+          "expect": {
+            "sections": [],
+            "hits": 0,
+            "first": ""
+          }
+        },
+        {
+          "id": "09-nothing",
+          "name": "Поиск · ничего не нашли",
+          "shot": "onb2-search-tablet-09-nothing.png",
+          "overflowX": 0,
+          "scope": "div#searchView.open onb2-ha.-q",
+          "exits": 1,
+          "visibleText": 327,
+          "issues": [],
+          "expect": {
+            "empty": true,
+            "text": "Ничего не нашлось по «ъыфячсмить» Поиск смотрит только по тому, что уже есть в приложении: твои чаты и каналы, курсы и уроки Академии, объяв",
+            "hits": 0
+          }
+        },
+        {
+          "id": "10-recent",
+          "name": "Поиск · недавние запросы",
+          "shot": "onb2-search-tablet-10-recent.png",
+          "overflowX": 0,
+          "scope": "div#searchView.open uic-qa",
+          "exits": 1,
+          "visibleText": 534,
+          "issues": [],
+          "expect": {
+            "recent": 4,
+            "list": [
+              "ъыфячсмить",
+              "поддержка",
+              "OKO",
+              "Даниэль"
+            ]
+          }
+        },
+        {
+          "id": "11-open-hit",
+          "name": "Поиск · переход по результату",
+          "shot": "onb2-search-tablet-11-open-hit.png",
+          "overflowX": 0,
+          "scope": "div#searchView.open onb2-ha.-q",
+          "exits": 1,
+          "visibleText": 192,
+          "issues": [],
+          "expect": {
+            "searchClosed": false,
+            "wallet": false
+          }
+        },
+        {
+          "id": "12-light",
+          "name": "Поиск · светлая тема",
+          "shot": "onb2-search-tablet-12-light.png",
+          "overflowX": 0,
+          "scope": "div#searchView.open onb2-ha.-q",
+          "exits": 1,
+          "visibleText": 990,
+          "issues": [],
+          "expect": {
+            "theme": "light",
+            "hits": 13
+          }
+        }
+      ],
+      "errors": []
+    },
+    {
+      "scenario": "notifs",
+      "name": "Центр уведомлений",
+      "viewport": "tablet",
+      "steps": [
+        {
+          "id": "01-empty",
+          "name": "Уведомления · честно пусто",
+          "shot": "onb2-notifs-tablet-01-empty.png",
+          "overflowX": 0,
+          "scope": "div#notifsView.open",
+          "exits": 1,
+          "visibleText": 110,
+          "issues": [],
+          "expect": {
+            "open": true,
+            "empty": true,
+            "text": "Пока тихо Тут появятся лайки, заявки, начисления и уроки.",
+            "rows": 0
+          }
+        },
+        {
+          "id": "02-filled",
+          "name": "Уведомления · реальные события",
+          "shot": "onb2-notifs-tablet-02-filled.png",
+          "overflowX": 0,
+          "scope": "div#notifsView.open",
+          "exits": 1,
+          "visibleText": 481,
+          "issues": [],
+          "expect": {
+            "rows": 5,
+            "groups": [
+              "Сегодня",
+              "Вчера",
+              "На этой неделе"
+            ],
+            "quick": [
+              "Открыть"
+            ],
+            "done": "Прочитать всё"
+          }
+        },
+        {
+          "id": "03-filter",
+          "name": "Уведомления · фильтр «Партнёрка»",
+          "shot": "onb2-notifs-tablet-03-filter.png",
+          "overflowX": 0,
+          "scope": "div#notifsView.open",
+          "exits": 1,
+          "visibleText": 153,
+          "issues": [],
+          "expect": {
+            "visible": 1,
+            "text": "СЕГОДНЯ Прочитано Отклонить OKO Bank зачисление 1 200 ₽ на счёт 5 мин Оплатить"
+          }
+        },
+        {
+          "id": "04-settings",
+          "name": "Уведомления · настройки категорий",
+          "shot": "onb2-notifs-tablet-04-settings.png",
+          "overflowX": 0,
+          "scope": "div#notifsView.open np-.etting.-on",
+          "exits": 1,
+          "visibleText": 1088,
+          "issues": [],
+          "expect": {
+            "cats": 5,
+            "panel": true
+          }
+        },
+        {
+          "id": "05-mute",
+          "name": "Уведомления · выключить категорию",
+          "shot": "onb2-notifs-tablet-05-mute.png",
+          "overflowX": 0,
+          "scope": "div#notifsView.open np-.etting.-on",
+          "exits": 1,
+          "visibleText": 1055,
+          "issues": [],
+          "expect": {
+            "hidden": 1,
+            "note": true,
+            "noteText": "Скрыто 1 уведомление: выключены категории «Игры».\nВключить все категории"
+          }
+        },
+        {
+          "id": "06-unmute",
+          "name": "Уведомления · вернуть категории",
+          "shot": "onb2-notifs-tablet-06-unmute.png",
+          "overflowX": 0,
+          "scope": "div#notifsView.open np-.etting.-on",
+          "exits": 1,
+          "visibleText": 1075,
+          "issues": [],
+          "expect": {
+            "hidden": 0,
+            "note": false
+          }
+        },
+        {
+          "id": "07-readall",
+          "name": "Уведомления · прочитать всё",
+          "shot": "onb2-notifs-tablet-07-readall.png",
+          "overflowX": 0,
+          "scope": "div#notifsView.open",
+          "exits": 1,
+          "visibleText": 462,
+          "issues": [],
+          "expect": {
+            "unread": 0,
+            "doneVisible": false
+          }
+        },
+        {
+          "id": "08-tap",
+          "name": "Уведомления · переход к источнику",
+          "shot": "onb2-notifs-tablet-08-tap.png",
+          "overflowX": 0,
+          "scope": "section#screen-wallet..creen active wm-tab-in-right",
+          "exits": 1,
+          "visibleText": 926,
+          "issues": [],
+          "expect": {
+            "closed": true,
+            "wallet": true
+          }
+        },
+        {
+          "id": "09-light",
+          "name": "Уведомления · светлая тема",
+          "shot": "onb2-notifs-tablet-09-light.png",
+          "overflowX": 0,
+          "scope": "div#notifsView.open",
+          "exits": 1,
+          "visibleText": 462,
+          "issues": [],
+          "expect": {
+            "theme": "light",
+            "rows": 5
+          }
+        }
+      ],
+      "errors": []
+    }
+  ],
+  "summary": {
+    "overflowX": [],
+    "clipped": [],
+    "breakAll": [],
+    "underTg": [],
+    "noExit": [],
+    "emptyScreen": [],
+    "failed": [],
+    "jsErrors": []
+  },
+  "foreign": {
+    "clipped": [],
+    "breakAll": [],
+    "underTg": [],
+    "other": []
+  },
+  "verdict": "ЧИСТО"
+}

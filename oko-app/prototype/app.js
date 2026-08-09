@@ -5063,11 +5063,11 @@ function gmStreakNote(){
   if(extra > 0){
     msg = `Бесплатных круток в копилке · <b>${extra}</b>. Жми «Крутить бесплатно»`;
   }else if(n <= 0){
-    msg = 'Заходи каждый день · через 7 дней подряд открой +2 бесплатных крутки';
+    msg = 'Заходи каждый день · через 7 дней подряд открой +2 бесплатные крутки';
   }else{
     const milestones = [3, 7, 14, 30];
     const next = milestones.find(m => m > n) || (n + (7 - n % 7));
-    const reward = next === 7 ? '+2 бесплатных крутки' : `+${GM_STREAK_MILE[next] || 5} ${gmPluralTk(GM_STREAK_MILE[next] || 5)}`;
+    const reward = next === 7 ? '+2 бесплатные крутки' : `+${GM_STREAK_MILE[next] || 5} ${gmPluralTk(GM_STREAK_MILE[next] || 5)}`;
     msg = `Серия <b>${n}</b> ${gmPluralDay(n)} · ещё ${next - n} ${gmPluralDay(next - n)} до ${reward}`;
   }
 
@@ -17251,10 +17251,14 @@ function acMakeCert(cert, cb){
     const gi = (typeof cert.lesson === 'number' ? cert.lesson : 0);
     const lessonNo = cert.localNo || (acLocalNo ? acLocalNo(gi) : gi+1);
     const courseTitle = cert.courseTitle || AC_COURSES[acCourseOf(gi)].title;
-    const lessonTitle = '«' + (cert.lessonTitle || AC_COURSE[0].title).toUpperCase() + '»';
+    /* Сертификат выдаётся ЗА ВСЁ НАПРАВЛЕНИЕ (cert.dir), а документ печатал
+       «успешно прошёл урок 1» и название первого урока — неправда на бланке.
+       Старые одноурочные сертификаты (без cert.dir) печатаются как раньше. */
+    const isDir = !!cert.dir;
+    const lessonTitle = '«' + (isDir ? courseTitle : (cert.lessonTitle || AC_COURSE[0].title)).toUpperCase() + '»';
     ctx.fillStyle = 'rgba(255,255,255,.6)';
     ctx.font = '500 26px Montserrat, Arial';
-    ctx.fillText('успешно прошёл урок ' + lessonNo, W/2, 566);
+    ctx.fillText(isDir ? 'успешно прошёл направление' : ('успешно прошёл урок ' + lessonNo), W/2, 566);
     ctx.fillStyle = lime;
     let fs = 64;
     ctx.font = fs + 'px "Bebas Neue", Impact, sans-serif';
@@ -17265,7 +17269,8 @@ function acMakeCert(cert, cb){
     ctx.fillText(lessonTitle, W/2, 646);
     ctx.fillStyle = 'rgba(255,255,255,.6)';
     ctx.font = '500 24px Montserrat, Arial';
-    ctx.fillText('курса «' + courseTitle + '» Академии OKO', W/2, 696);
+    ctx.fillText(isDir ? 'все уроки направления пройдены · Академия OKO'
+                       : ('курса «' + courseTitle + '» Академии OKO'), W/2, 696);
     // чип результата
     const chipT = 'Результат теста: ' + cert.score + '%';
     ctx.font = '700 26px Montserrat, Arial';

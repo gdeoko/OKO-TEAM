@@ -14,7 +14,13 @@
           не проводится: курса нет — значит калькулятор с честной пометкой;
         • вывод не рисует фальшивый статус «Зачислено» по таймеру;
         • «TON-кошелёк подключён» без TON Connect — убрано;
-        • плановые списания (3 000 ₽ 5 октября и т.п.) — выдумка, удалены.
+        • плановые списания (3 000 ₽ 5 октября и т.п.) — выдумка, удалены;
+        • автопополнение больше не дорисовывает баланс, а автопродление PRO
+          не списывает деньги втихую — и то и другое стало напоминанием;
+        • «сканер отпечатка» со случайным успехом заменён настоящим замком
+          кошелька по ПИН-коду;
+        • приветственные 2 500 ₽ на счёте нового человека убраны (правка в
+          app.js — три точки, где они начислялись и объявлялись).
      2. ОПЛАТА LAVA.TOP. Отдельная страница тарифов: что входит, чем отличаются,
         как отменить. Кнопка ведёт на реальную ссылку из конфига VPS
         (api.php?action=pay_url / wallet_topup). Нет ссылки — честный текст,
@@ -107,19 +113,19 @@ var CSS = [
 '  min-width:0; padding:0 2px;',
 '}',
 '.w2-page .w2-bar{ gap:8px; align-items:flex-start; }',
+/* подписи пунктов меню кошелька переносятся, а не режутся многоточием */
+'#screen-wallet .w2-menu-t b, #screen-wallet .w2-menu-t em,',
+'.w2-page .w2-menu-t b, .w2-page .w2-menu-t em, .w2-page .w2-acc-body b, .w2-page .w2-acc-body em{',
+'  white-space:normal !important; overflow:visible !important; text-overflow:clip !important;',
+'  overflow-wrap:break-word; hyphens:none; }',
 '.w2-page .w2-bar .w2-bar-nav,.w2-page .w2-bar .w2-bar-sp{ margin-top:1px; }',
 '.w2-page .w2-body{ padding-left:max(var(--oko-safe-left),14px); padding-right:max(var(--oko-safe-right),14px); }',
 '.w2-page .w2-body{ padding-bottom:calc(28px + var(--oko-safe-bottom)); }',
 
-/* --- шапка внутри шторки: та же кнопка «назад», что и на подстраницах --- */
-'.w2-sh{ display:flex; align-items:center; gap:9px; margin:-2px -4px 10px; min-height:38px; }',
-'.w2-sh-t{ flex:1 1 auto; min-width:0; font-family:var(--font-display); letter-spacing:.05em;',
-'  font-size:clamp(15px,4.3vw,19px); line-height:1.15; color:var(--text);',
+/* --- шапка шторки: кнопку ставит oko-back.js, нам важно, чтобы заголовок
+       рядом с ней не рвался и не обрезался --- */
+'.sheet .oko-back-row > h3{ font-size:clamp(16px,4.6vw,21px); line-height:1.16;',
 '  white-space:normal; overflow-wrap:break-word; hyphens:none; }',
-'.w2-sh-x{ width:38px;height:38px;border-radius:50%;background:var(--surface);border:1px solid var(--border);',
-'  display:flex;align-items:center;justify-content:center;color:var(--text);flex:0 0 auto;cursor:pointer }',
-'.w2-sh-x svg.i{ width:16px;height:16px }',
-'.w2-sh-x:active{ transform:scale(.92) }',
 
 /* --- честные плашки --- */
 '.w2-note{ display:flex; gap:10px; align-items:flex-start; border-radius:14px; padding:12px 13px;',
@@ -316,8 +322,13 @@ var CSS = [
 '.w2-fine{ font-size:11.5px; color:var(--dim); line-height:1.6; margin:12px 0 4px;',
 '  overflow-wrap:break-word; hyphens:none }',
 '.w2-page .btn{ width:100% }',
-/* нижняя страховка: контент главного экрана кошелька не уходит под меню */
-'#screen-wallet > .pad{ padding-bottom:calc(96px + var(--oko-safe-bottom)) }'
+/* замок кошелька */
+'.w2-lock{ position:fixed; inset:0; z-index:130; background:var(--bg); display:none; flex-direction:column }',
+'.w2-lock.open{ display:flex }',
+'.w2-lock-body{ flex:1; overflow-y:auto; padding:8px max(var(--oko-safe-left),14px) calc(20px + var(--oko-safe-bottom)) max(var(--oko-safe-right),14px) }',
+/* Нижнее меню лежит ПОД скроллом (flex-колонка #app), под него ничего не
+   заезжает. Нужен только небольшой воздух в конце списка. */
+'#screen-wallet > .pad{ padding-bottom:22px }'
 ].join('\n');
 
 (function injectCss(){
@@ -531,17 +542,22 @@ var QR = (function(){
       for (i = 0; i < size; i++) cand.push(mat[i].slice());
       for (i = 0; i < size; i++) for (j = 0; j < size; j++)
         if (!rsv[i][j] && maskAt(m, i, j)) cand[i][j] ^= 1;
+      /* Формат-информация: 15 бит двумя копиями.
+         Первая копия — колонка 8 сверху вниз и строка 8 справа налево от угла,
+         вторая — строка 8 у правого края и колонка 8 у нижнего.
+         Индексация здесь [строка][колонка], в спецификации — (x=колонка, y=строка). */
       var f = fmtBits(m);
       for (i = 0; i < 15; i++){
         var b2 = (f >> i) & 1;
-        if (i < 6) cand[8][i] = b2;
-        else if (i < 8) cand[8][i + 1] = b2;
-        else if (i === 8) cand[7][8] = b2;
-        else cand[14 - i][8] = b2;
-        if (i < 8) cand[size - 1 - i][8] = b2;
-        else cand[8][size - 15 + i] = b2;
+        if (i < 6)        cand[i][8] = b2;                 /* (8, i) */
+        else if (i === 6) cand[7][8] = b2;                 /* (8, 7) */
+        else if (i === 7) cand[8][8] = b2;                 /* (8, 8) */
+        else if (i === 8) cand[8][7] = b2;                 /* (7, 8) */
+        else              cand[8][14 - i] = b2;            /* (14-i, 8) */
+        if (i < 8) cand[8][size - 1 - i] = b2;             /* (size-1-i, 8) */
+        else       cand[size - 15 + i][8] = b2;            /* (8, size-15+i) */
       }
-      cand[size - 8][8] = 1;
+      cand[size - 8][8] = 1;                               /* тёмный модуль (8, size-8) */
       if (ver >= 7){
         var vb = VBITS[ver];
         for (i = 0; i < 18; i++){
@@ -577,30 +593,12 @@ function qrSvg(text){
 window.okoQrSvg = qrSvg;
 
 /* ===========================================================================
-   3. ЕДИНАЯ КНОПКА «НАЗАД» В ШТОРКАХ КОШЕЛЬКА
+   3. ВЫХОД ИЗ ШТОРОК
+   Кнопку «назад» в шторках ставит oko-back.js: он вставляет .oko-back-row
+   первым элементом и переносит туда родной <h3>. Своей кнопки здесь не рисуем —
+   иначе на экране оказывались две стрелки подряд. Наша задача — следить, чтобы
+   у каждой шторки кошелька был заголовок <h3>, за который зацепится oko-back.
    =========================================================================== */
-function sheetHead(viewId, title){
-  var v = $(viewId);
-  if (!v || v.querySelector('.w2-sh')) return;
-  var h = D.createElement('div');
-  h.className = 'w2-sh';
-  h.innerHTML = '<button class="w2-sh-x" type="button" aria-label="Назад">' + ic('back') + '</button>' +
-                '<span class="w2-sh-t">' + esc2(title) + '</span>';
-  h.querySelector('button').onclick = function(){ if (has('closeSheet')) closeSheet(); };
-  v.insertBefore(h, v.firstChild);
-  /* родной <h3> дублирует заголовок — убираем, чтобы не было двух одинаковых строк */
-  var h3 = v.querySelector(':scope > h3');
-  if (h3 && h3.textContent.trim() === String(title).trim()) h3.remove();
-}
-function wrapRender(name, viewId, title){
-  var prev = window[name];
-  if (typeof prev !== 'function') return;
-  window[name] = function(){
-    var r = prev.apply(this, arguments);
-    try { sheetHead(viewId, title); } catch(e){}
-    return r;
-  };
-}
 
 /* ===========================================================================
    4. НОВЫЕ ПОДСТРАНИЦЫ
@@ -608,7 +606,6 @@ function wrapRender(name, viewId, title){
 var PAGES = [
   ['topup',     'Пополнение счёта'],
   ['withdraw',  'Вывод средств'],
-  ['send',      'Перевод по нику'],
   ['templates', 'Шаблоны переводов'],
   ['tx',        'Операция'],
   ['receipt',   'Чек по операции'],
@@ -659,27 +656,54 @@ function close(id){ if (has('w2Close')) w2Close(id); }
    5. ЧЕСТНОСТЬ ДЕНЕГ
    =========================================================================== */
 
+/* --- 5.0 Обезвреживаем фоновые «начисления» ядра ----------------------------
+   В app.js два самозапускающихся блока переводили деньги без оплаты:
+     • walAutoRuleTick  — при балансе ниже порога делал walletAdd(сумма) и писал
+       «Автопополнение: +5 000 ₽». Никакого платежа при этом не происходило.
+     • walAutoChargeDue — списывал стоимость PRO и объявлял «Тариф PRO продлён»,
+       хотя на сервере подписка не включалась.
+   Оба читают WAL_X.autoRules и WAL_X.autopay при загрузке app.js, то есть ДО
+   этого файла. Поэтому переносим настройки в собственные ключи (autoRulesV2 и
+   autopayV2), а старые оставляем пустыми — тогда фоновые блоки просто не
+   находят, что списать или начислить. Правила становятся честными
+   напоминаниями, автопродление — напоминанием об окончании срока. */
+(function defuseCore(){
+  if (typeof WAL_X === 'undefined') return;
+  try {
+    if (!Array.isArray(WAL_X.autoRulesV2)){
+      WAL_X.autoRulesV2 = Array.isArray(WAL_X.autoRules) ? WAL_X.autoRules.slice() : [];
+    }
+    if (typeof WAL_X.autopayV2 === 'undefined') WAL_X.autopayV2 = !!WAL_X.autopay;
+    WAL_X.autoRules = [];
+    WAL_X.autopay = false;
+    walXSave();
+  } catch(e){}
+})();
+function rulesV2(){
+  try { return Array.isArray(WAL_X.autoRulesV2) ? WAL_X.autoRulesV2 : []; } catch(e){ return []; }
+}
+
 /* --- 5.1 Плановые списания: только реальные, выдуманные удалены ------------ */
 if (typeof walPlannedItems === 'function'){
   walPlannedItems = function(){
     var out = [];
     try {
-      if (WAL_X && WAL_X.autopay && WAL_X.nextAt){
+      if (WAL_X && WAL_X.autopayV2 && WAL_X.nextAt){
         out.push({
           ic: 'crown',
-          title: 'Автопродление PRO',
+          title: 'Подписка заканчивается',
           date: (has('walDMY') ? walDMY(WAL_X.nextAt) : ''),
-          sum: (has('walProPrice') ? walProPrice() : 0),
-          sub: 'Списание с лицевого счёта'
+          sum: 0,
+          sub: 'Напомним заранее, продление — на Lava.top'
         });
       }
-      (WAL_X && WAL_X.autoRules || []).filter(function(r){ return r.on; }).forEach(function(r){
+      rulesV2().filter(function(r){ return r.on; }).forEach(function(r){
         out.push({
-          ic: 'plus',
-          title: 'Автопополнение по правилу',
+          ic: 'bell',
+          title: 'Напоминание о пополнении',
           date: 'при балансе ниже ' + money(r.below),
-          sum: r.sum,
-          sub: 'Сработает автоматически'
+          sum: 0,
+          sub: 'Подскажем пополнить на ' + money(r.sum)
         });
       });
     } catch(e){}
@@ -699,14 +723,14 @@ if (typeof walRenderPlanned === 'function'){
         'Ничего не спишется без твоего согласия.</p></div>';
       return;
     }
-    var total = items.reduce(function(s, it){ return s + (Number(it.sum) || 0); }, 0);
     box.innerHTML = items.map(function(it, i){
       return '<div class="wal-plan-row" style="animation-delay:' + (i * 50) + 'ms">' +
         '<div class="wal-plan-ic">' + ic(it.ic) + '</div>' +
         '<div class="wal-plan-b"><b>' + esc2(it.title) + '</b><span>' + esc2(it.sub) + ', ' + esc2(it.date) + '</span></div>' +
-        '<div class="wal-plan-sum">− ' + money(it.sum) + '</div></div>';
+        '<div class="wal-plan-sum" style="color:var(--dim);font-size:12px">напоминание</div></div>';
     }).join('') +
-      '<div class="wal-plan-total"><span>Итого запланировано</span><b>− ' + money(total) + '</b></div>';
+      '<p class="w2-fine" style="padding:0 2px">Автоматических списаний с лицевого счёта нет: ' +
+      'OKO ничего не спишет само. Здесь только напоминания, которые ты включил.</p>';
   };
 }
 
@@ -715,13 +739,72 @@ if (typeof walSafetyChecks === 'function'){
   walSafetyChecks = function(){
     var x = (typeof WAL_X !== 'undefined') ? WAL_X : {};
     return [
-      {ok: !!x.pin,  name: 'ПИН-код на вывод и крупные переводы'},
-      {ok: !!x.bio,  name: 'Быстрая разблокировка кошелька'},
-      {ok: !!myEmail(), name: 'Email привязан — счёт на сервере'},
-      {ok: true,     name: 'Подтверждение переводов от ' + money(10000)}
+      {ok: !!x.pin,      name: 'ПИН-код на вывод и крупные переводы'},
+      {ok: !!x.lock,     name: 'ПИН при входе в кошелёк'},
+      {ok: !!myEmail(),  name: 'Email привязан — счёт живёт на сервере'},
+      {ok: true,         name: 'Подтверждение переводов от ' + money(10000)}
     ];
   };
 }
+
+/* --- 5.2.1 Замок кошелька. Вместо «сканера отпечатка» со случайным успехом
+   (он ничего не проверял) — настоящая блокировка экрана кошелька ПИН-кодом. -- */
+var unlocked = false;
+
+function lockNeeded(){
+  try { return !!(WAL_X && WAL_X.lock && WAL_X.pin) && !unlocked; } catch(e){ return false; }
+}
+function lockShow(){
+  var el = $('w2Lock');
+  if (!el){
+    el = D.createElement('div');
+    el.id = 'w2Lock';
+    el.className = 'w2-lock';
+    el.innerHTML =
+      '<div class="w2-bar">' +
+        '<button class="w2-bar-nav" type="button" id="w2LockExit" aria-label="Выйти из кошелька">' + ic('back') + '</button>' +
+        '<span class="w2-bar-t">Кошелёк заблокирован</span>' +
+        '<span class="w2-bar-sp"></span>' +
+      '</div>' +
+      '<div class="w2-lock-body" id="w2LockView"></div>';
+    D.body.appendChild(el);
+    $('w2LockExit').onclick = function(){ lockHide(); if (has('showTab')) showTab('feed'); };
+  }
+  el.classList.add('open');
+  if (has('walPinOpen')) walPinOpen('confirm', 'w2LockView', function(){ unlocked = true; lockHide(); });
+}
+function lockHide(){
+  var el = $('w2Lock');
+  if (el) el.classList.remove('open');
+}
+function lockToggle(){
+  if (typeof WAL_X === 'undefined') return;
+  if (WAL_X.lock){
+    WAL_X.lock = false; walXSave();
+    if (has('walRenderSec')) walRenderSec();
+    if (has('walRenderSafety')) walRenderSafety();
+    say('Кошелёк больше не спрашивает ПИН при входе');
+    return;
+  }
+  if (!WAL_X.pin){
+    pop({ico: 'lock', title: 'Сначала ПИН-код',
+      body: 'Замок кошелька работает на том же ПИН-коде, что и вывод средств. ' +
+            'Задай ПИН — и включим блокировку входа.',
+      actions: [
+        {label: 'Задать ПИН-код', onclick: function(){ if (has('walTogglePin')) walTogglePin(); }},
+        {label: 'Отмена', ghost: true}
+      ]});
+    return;
+  }
+  WAL_X.lock = true; walXSave();
+  unlocked = true;                       /* сейчас человек уже внутри — не выгоняем */
+  if (has('walRenderSec')) walRenderSec();
+  if (has('walRenderSafety')) walRenderSafety();
+  say('Кошелёк будет спрашивать ПИН при входе');
+}
+if (typeof walToggleBio === 'function') walToggleBio = lockToggle;
+if (typeof walOpenBio === 'function') walOpenBio = function(){ lockToggle(); };
+if (typeof walBioScan === 'function') walBioScan = function(){};
 
 /* --- 5.3 Статус вывода: без фальшивого «Зачислено» по таймеру -------------- */
 if (typeof walWdStage === 'function'){
@@ -742,6 +825,142 @@ if (typeof walWdTimelineHtml === 'function'){
         '<span class="wal-tl-dot">' + ic(s[3] === 'done' ? 'check' : s[0]) + '</span>' +
         '<span class="wal-tl-b"><b>' + s[1] + '</b><span>' + s[2] + '</span></span></div>';
     }).join('') + '</div>';
+  };
+}
+
+/* --- 5.3.1 Автоправила = напоминания, а не выдуманные пополнения ----------- */
+if (typeof walRenderAutoRules === 'function'){
+  walRenderAutoRules = function(){
+    var box = $('walAutoRules');
+    if (!box) return;
+    var rules = rulesV2();
+    box.innerHTML =
+      '<p class="w2-fine" style="margin:2px 2px 10px">Правило следит за балансом и напоминает пополнить счёт. ' +
+      'Само оно денег не переводит: списать с карты без твоего подтверждения OKO не может.</p>' +
+      (rules.length
+        ? rules.map(function(r){
+            return '<div class="wal-autor-r" style="opacity:' + (r.on ? 1 : 0.55) + '">' +
+              '<div class="wal-autor-ic">' + ic('bell') + '</div>' +
+              '<div class="wal-autor-b"><b>Если баланс меньше ' + money(r.below) + '</b>' +
+              '<span>Напомнить пополнить на <b style="color:var(--accent)">' + money(r.sum) + '</b> · ' +
+              (r.on ? 'включено' : 'выключено') + '</span></div>' +
+              '<button class="wal-autor-x" type="button" onclick="okoW2.ruleToggle(\'' + r.id + '\')" aria-label="' +
+                (r.on ? 'Выключить' : 'Включить') + '">' + ic(r.on ? 'check' : 'plus') + '</button>' +
+              '<button class="wal-autor-x" type="button" onclick="okoW2.ruleDel(\'' + r.id + '\')" aria-label="Удалить">' + ic('trash') + '</button>' +
+            '</div>';
+          }).join('')
+        : '<div class="wal-autor-empty">Напоминаний нет. Заведи — и баланс не окажется нулевым в самый неподходящий момент.</div>') +
+      '<button class="wal-autor-add" type="button" onclick="walOpenAutoRule()">' + ic('plus') + 'Новое напоминание</button>';
+  };
+}
+if (typeof walToggleAutoRule === 'function'){
+  walToggleAutoRule = function(id){
+    var r = rulesV2().find(function(x){ return x.id === id; });
+    if (!r) return;
+    r.on = !r.on; walXSave(); walRenderAutoRules();
+    say('Напоминание ' + (r.on ? 'включено' : 'выключено'));
+  };
+}
+if (typeof walDeleteAutoRule === 'function'){
+  walDeleteAutoRule = function(id){
+    WAL_X.autoRulesV2 = rulesV2().filter(function(x){ return x.id !== id; });
+    walXSave(); walRenderAutoRules(); say('Напоминание удалено');
+  };
+}
+if (typeof walSaveAutoRule === 'function'){
+  walSaveAutoRule = function(){
+    var r = (typeof walAutoRuleEdit !== 'undefined') ? walAutoRuleEdit : null;
+    if (!r) return;
+    if (!r.sum || r.sum <= 0){ say('Укажи сумму, о которой напомнить'); return; }
+    WAL_X.autoRulesV2 = rulesV2().concat([{id: r.id, below: r.below, sum: r.sum, on: true}]);
+    walXSave();
+    if (has('closeSheet')) closeSheet();
+    walRenderAutoRules();
+    if (has('walRenderPlanned')) walRenderPlanned();
+    say('Напомним, когда баланс упадёт ниже ' + money(r.below));
+  };
+}
+if (typeof walRenderAutoRule === 'function'){
+  walRenderAutoRule = function(){
+    var r = (typeof walAutoRuleEdit !== 'undefined') ? walAutoRuleEdit : null;
+    if (!r) return;
+    var v = $('walAutoRuleView');
+    if (!v) return;
+    v.innerHTML =
+      '<h3>Напоминание о пополнении</h3>' +
+      '<p class="dim" style="font-size:12.5px;margin:-4px 0 12px">Подскажем пополнить счёт, когда денег останется мало</p>' +
+      '<div class="wal-autor-form">' +
+        '<div><span class="wal-autor-lbl">Напомнить, если баланс меньше, ₽</span>' +
+        '<input class="wal-autor-inp" type="number" inputmode="numeric" min="0" value="' + r.below + '" ' +
+        'oninput="walAutoRuleEdit.below=Math.max(0,Number(this.value)||0)"></div>' +
+        '<div><span class="wal-autor-lbl">Какую сумму предложить, ₽</span>' +
+        '<input class="wal-autor-inp" type="number" inputmode="numeric" min="1" value="' + r.sum + '" ' +
+        'oninput="walAutoRuleEdit.sum=Math.max(0,Number(this.value)||0)"></div>' +
+      '</div>' +
+      '<button class="btn" type="button" onclick="walSaveAutoRule()">' + ic('check') + ' Сохранить напоминание</button>' +
+      '<div style="height:8px"></div>' +
+      '<button class="btn ghost" type="button" onclick="closeSheet()">Отмена</button>' +
+      '<p class="dim" style="font-size:11px;text-align:center;margin-top:9px">Ни рубля не спишется без твоего подтверждения: ' +
+      'напоминание только откроет экран пополнения.</p>';
+  };
+}
+
+/* --- 5.3.2 Автопродление: напоминание, а не тихое списание ----------------- */
+if (typeof walRenderAutopay === 'function'){
+  walRenderAutopay = function(){
+    var sw = $('walAutoSw'), sub = $('walAutoSub');
+    var on = !!(typeof WAL_X !== 'undefined' && WAL_X.autopayV2);
+    if (sw) sw.classList.toggle('on', on);
+    if (sub) sub.textContent = on
+      ? 'Напомним за 3 дня до конца оплаченного срока'
+      : 'Напоминание об окончании подписки выключено';
+    var card = $('walAutoCard');
+    if (card){
+      var b = card.querySelector('.wal-auto-b b');
+      if (b) b.textContent = 'Напоминать о продлении';
+    }
+    var host = card && card.parentElement;
+    if (host && !$('w2AutoNote')){
+      var n = D.createElement('div');
+      n.id = 'w2AutoNote';
+      n.className = 'w2-note';
+      n.innerHTML = '<span class="w2-note-ic">' + ic('shield') + '</span>' +
+        '<span><b>OKO не списывает деньги сам.</b> Регулярное списание, если оно нужно, ' +
+        'настраивается на стороне Lava.top при оплате подписки — и отменяется там же. ' +
+        'Здесь можно включить только напоминание.</span>';
+      host.insertBefore(n, card.nextSibling);
+    }
+  };
+}
+if (typeof walToggleAutopay === 'function'){
+  walToggleAutopay = function(){
+    if (typeof WAL_X === 'undefined') return;
+    if (WAL_X.autopayV2){
+      WAL_X.autopayV2 = false; walXSave();
+      walRenderAutopay(); if (has('walRenderPlanned')) walRenderPlanned();
+      say('Напоминание о продлении выключено');
+      return;
+    }
+    WAL_X.autopayV2 = true;
+    if (!WAL_X.nextAt) WAL_X.nextAt = Date.now() + 30 * 864e5;
+    walXSave();
+    walRenderAutopay(); if (has('walRenderPlanned')) walRenderPlanned();
+    say('Напомним об окончании подписки ' + (has('walDMY') ? walDMY(WAL_X.nextAt) : ''));
+  };
+}
+
+/* --- 5.3.3 Цели: копилка честная, автооткладывания нет --------------------- */
+if (typeof walRenderGoals === 'function'){
+  var prevGoals = walRenderGoals;
+  walRenderGoals = function(){
+    var r = prevGoals.apply(this, arguments);
+    try {
+      var p = D.querySelector('#walGoals .wal-empty p');
+      if (p) p.textContent = 'Поставь цель — камера, поездка, новый компьютер — и отмечай, ' +
+        'сколько уже отложено. OKO посчитает, сколько осталось, и покажет прогресс. ' +
+        'Деньги со счёта при этом никуда не перекладываются.';
+    } catch(e){}
+    return r;
   };
 }
 
@@ -856,10 +1075,11 @@ if (typeof w2RenderExchange === 'function'){
 if (typeof walRenderExchange === 'function'){
   walRenderExchange = function(){
     var box = $('walExView');
-    if (box) box.innerHTML = '<div class="w2-blank"><div class="w2-blank-ic">' + ic('swap') + '</div>' +
-      '<b>Обмен валют подключается</b><p>Курса и обменника пока нет. Как только подключим биржевого ' +
+    /* <h3> оставляем: за него цепляется кнопка «назад» из oko-back.js */
+    if (box) box.innerHTML = '<h3>Обмен валют</h3>' +
+      '<div class="w2-blank" style="margin-top:10px"><div class="w2-blank-ic">' + ic('swap') + '</div>' +
+      '<b>Обмен подключается</b><p>Курса и обменника пока нет. Как только подключим биржевого ' +
       'партнёра, обмен появится здесь.</p></div>';
-    try { sheetHead('walExView', 'Обмен валют'); } catch(e){}
   };
 }
 if (typeof w2DoExchange === 'function'){
@@ -1170,8 +1390,13 @@ function renderTransfersExtra(){
   if (!host){
     host = D.createElement('div');
     host.id = 'w2TplBlock';
-    var recentH = bodyEl.querySelector('#w2Recent');
-    if (recentH && recentH.parentElement) recentH.parentElement.insertBefore(host, recentH);
+    /* ставим перед заголовком «Недавние получатели», а не между ним и списком */
+    var recent = bodyEl.querySelector('#w2Recent');
+    var anchor = recent;
+    if (recent && recent.previousElementSibling &&
+        recent.previousElementSibling.classList.contains('w2-section-h'))
+      anchor = recent.previousElementSibling;
+    if (anchor && anchor.parentElement) anchor.parentElement.insertBefore(host, anchor);
     else bodyEl.appendChild(host);
   }
   var list = tplAll().slice(0, 4);
@@ -1201,6 +1426,8 @@ function renderTransfersExtra(){
     var em = b.querySelector('.w2-menu-t em');
     if (/карту/i.test(t.textContent) && em) em.textContent = 'Заявка в поддержку, вручную · комиссия 2%';
     if (/крипто/i.test(t.textContent) && em) em.textContent = 'Подключается — нужен TON Connect';
+    /* перевод по нику идёт через бэкенд с комиссией 1%, «без комиссии» — неправда */
+    if (/по нику/i.test(t.textContent) && em) em.textContent = 'Мгновенно, комиссия OKO 1%';
   });
 }
 
@@ -2012,7 +2239,7 @@ if (typeof walOpenReceive === 'function'){
    =========================================================================== */
 function refreshMainMeta(){
   var m = {
-    walMenuAccSub: 'Рубли — рабочий счёт, крипта подключается',
+    walMenuAccSub: 'Рубли работают, крипта подключается',
     walMenuGoalsSub: null,
     walMenuAutoSub: null,
     walMenuSecSub: null
@@ -2061,6 +2288,92 @@ function refreshMainMeta(){
   }
 }
 
+/* --- 12.1 Советы по защите: под новый список мер ---------------------------- */
+if (typeof walSafetyTips === 'function'){
+  walSafetyTips = function(){
+    var off = walSafetyChecks().filter(function(c){ return !c.ok; });
+    var tips = {
+      'ПИН-код на вывод и крупные переводы': 'Включи ПИН ниже, в блоке «Настройки безопасности». Четыре цифры спросят при выводе и при переводе от ' + money(10000) + '.',
+      'Быстрая разблокировка кошелька': 'Включи ниже — кошелёк будет открываться без ввода ПИН-кода каждый раз.',
+      'Email привязан — счёт на сервере': 'Добавь почту в профиле. Без неё кошелёк живёт только на этом устройстве: ни переводов, ни пополнения, ни восстановления.'
+    };
+    var body = off.length
+      ? '<b>Что стоит включить:</b><br>' + off.map(function(c, i){
+          return '<b>' + (i + 1) + '.</b> ' + c.name + '<br><span style="color:var(--dim);font-size:12px">' +
+            (tips[c.name] || 'Включается в настройках профиля.') + '</span>';
+        }).join('<br><br>')
+      : 'Все доступные меры включены. Дальше защиту усилят вход по устройству и двухфакторное ' +
+        'подтверждение — они подключаются вместе с серверной авторизацией.';
+    pop({ico: 'lock', title: 'Как защитить счёт', body: body, actions: [{label: 'Понятно'}]});
+  };
+}
+
+/* --- 12.2 Помощь: FAQ без обещаний, которых код не выполняет ---------------- */
+function refreshHelp(){
+  var page = $('w2p-help');
+  if (!page) return;
+  var faq = page.querySelector('.w2-faq');
+  if (!faq) return;
+  var qa = [
+    ['Что уже работает в кошельке?',
+     'Рублёвый лицевой счёт, пополнение через <b>Lava.top</b>, переводы по нику внутри OKO ' +
+     '(комиссия 1%), история операций, выписка и чеки, QR на приём перевода.'],
+    ['Что ещё подключается?',
+     'Обмен валют, крипто-счета TON и USDT, автоматический вывод на карту. Пока их нет, ' +
+     'приложение не показывает ни курса, ни адресов и не проводит такие операции — ' +
+     'вместо этого честно пишет «подключается».'],
+    ['Откуда берётся баланс?',
+     'Только из реальных операций: пополнение, подтверждённое платёжным шлюзом, входящие ' +
+     'переводы и заработок внутри OKO. Приложение не начисляет деньги само.'],
+    ['Что такое XP?',
+     'XP — очки активности, а не валюта. Их нельзя вывести и обменять на рубли. ' +
+     'Тратятся в Играх и Академии.'],
+    ['Какие лимиты и комиссии?',
+     'Суточный лимит вывода зависит от тарифа: FREE — 50 000 ₽, START — 100 000 ₽, ' +
+     'PRO — 300 000 ₽, BUSINESS — 1 000 000 ₽, MAX — 5 000 000 ₽. Перевод по нику — 1%, ' +
+     'вывод — 2%, пополнение — без комиссии OKO. Подробнее в разделе «Лимиты и комиссии».'],
+    ['Деньги ушли, а на счёте их нет',
+     'Напиши <b>@okohelp</b> и приложи чек из платёжного шлюза. Разберём вручную: ' +
+     'номер операции и время видны в истории.']
+  ];
+  faq.innerHTML = qa.map(function(x){
+    return '<p class="w2-faq-q">' + x[0] + '</p><p class="w2-faq-a">' + x[1] + '</p>';
+  }).join('') +
+    '<div style="height:6px"></div>' +
+    '<button class="btn ghost" type="button" onclick="okoW2.support()">' + ic('comment') + ' Написать в поддержку</button>';
+}
+
+/* --- 12.3 Мелкие честные правки в родной разметке --------------------------- */
+function patchNativeCopy(){
+  /* «Всего эквивалент» → просто сумма на счетах: эквивалента без курса не бывает */
+  var lbl = D.querySelector('#w2p-accounts .w2-card-lbl');
+  if (lbl) lbl.textContent = 'Всего на счетах';
+
+  /* кнопки в шапке истории: честные подписи и переход на страницу выписки */
+  var acts = D.querySelector('#w2p-history .wal-hist-acts');
+  if (acts && !acts.dataset.w2){
+    acts.dataset.w2 = '1';
+    acts.innerHTML = '<button class="wal-stmt-btn" type="button" aria-label="Выписка за период">' +
+      ic('file') + 'Выписка</button>';
+    acts.querySelector('button').onclick = function(){ renderStatement(); open('statement'); };
+  }
+  /* «Покупки без подтверждения» — цифра должна совпадать с реальным порогом ПИН,
+     «Вход по отпечатку» — это теперь настоящий замок кошелька по ПИН-коду */
+  D.querySelectorAll('#w2p-security .wal-sec-b b').forEach(function(b){
+    var s = b.parentElement.querySelector('span');
+    if (/Покупки без подтверждения/i.test(b.textContent) && s)
+      s.textContent = 'До ' + money(10000) + ' сразу, выше — с подтверждением ПИН-кодом';
+    if (/отпечатк|Face-ID/i.test(b.textContent)){
+      b.textContent = 'ПИН при входе в кошелёк';
+      if (s) s.id = 'walBioSub';
+      var row = b.closest('.wal-sec-row');
+      var iconWrap = row && row.querySelector('.wal-sec-ic');
+      if (iconWrap) iconWrap.innerHTML = ic('shield');
+    }
+  });
+  refreshHelp();
+}
+
 /* ===========================================================================
    13. ПОДКЛЮЧЕНИЕ К НАВИГАЦИИ
    =========================================================================== */
@@ -2077,9 +2390,8 @@ if (typeof w2Open === 'function'){
     if (id === 'limits')    renderLimits();
     if (id === 'tx')        renderTx();
     if (id === 'receipt')   renderReceipt();
-    if (id === 'send'){
-      if (has('walOpenSend')) { walOpenSend(''); return; }
-    }
+    /* «Перевод по нику» живёт в шторке — отдельной подстраницы у него нет */
+    if (id === 'send' && has('walOpenSend')) return walOpenSend('');
     var r = prevW2Open.apply(this, arguments);
     if (id === 'transfers') renderTransfersExtra();
     if (id === 'history')   renderHistExtra();
@@ -2090,11 +2402,24 @@ if (typeof w2Open === 'function'){
 }
 
 /* Шторки кошелька получают шапку с «назад» */
-wrapRender('walRenderSend',     'walSendView',      'Перевод по нику');
-wrapRender('walRenderGoal',     'walGoalView',      'Финансовая цель');
-wrapRender('walRenderAutoRule', 'walAutoRuleView',  'Правило автопополнения');
-wrapRender('walRenderTopup',    'walTopupView',     'Пополнение счёта');
-wrapRender('walRenderWithdraw', 'walWdView',        'Вывод средств');
+
+/* Пополнение и вывод переехали на подстраницы — родные рендеры ведут туда же,
+   иначе после отмены ПИН-кода экран оставался пустым. */
+if (typeof walRenderTopup === 'function')    walRenderTopup = function(){ renderTopup(); };
+if (typeof walRenderWithdraw === 'function') walRenderWithdraw = function(){ renderWithdraw(); };
+
+/* Отмена ввода ПИН-кода возвращает туда, откуда его спросили */
+if (typeof walPinCancel === 'function'){
+  walPinCancel = function(){
+    var c = (typeof walPinCtx !== 'undefined') ? walPinCtx : null;
+    walPinCtx = null;
+    var target = c && c.targetId;
+    if (target === 'w2LockView'){ lockHide(); if (has('showTab')) showTab('feed'); return; }
+    if (target === 'w2b-withdraw'){ renderWithdraw(); return; }
+    if (target === 'walSendView'){ if (has('walRenderSend')) walRenderSend(); return; }
+    if (has('closeSheet')) closeSheet();
+  };
+}
 
 /* Кнопка «сохранить в шаблоны» в форме перевода */
 (function sendTemplateBtn(){
@@ -2104,6 +2429,33 @@ wrapRender('walRenderWithdraw', 'walWdView',        'Вывод средств')
     var r = prev.apply(this, arguments);
     try {
       var v = $('walSendView');
+      /* «без комиссии» — неправда: бэкенд удерживает 1% сверх суммы */
+      if (v) v.querySelectorAll('p').forEach(function(p){
+        if (/без комиссии|комиссии нет/i.test(p.textContent))
+          p.innerHTML = p.innerHTML
+            .replace(/Перевод внутри OKO — мгновенно и без комиссии/i, 'Перевод внутри OKO — мгновенно, комиссия OKO 1%')
+            .replace(/·\s*комиссии нет\s*·/i, '· комиссия 1% сверх суммы ·');
+      });
+      /* «Недавние» у нового человека пустые — вместо голого заголовка
+         показываем сохранённые шаблоны, а если и их нет, убираем блок */
+      if (v){
+        var quick = v.querySelector('.wal-send-quick');
+        if (quick && !quick.children.length){
+          var list = tplAll().slice(0, 4);
+          var lab = quick.previousElementSibling;
+          if (list.length){
+            if (lab) lab.textContent = 'Шаблоны';
+            quick.innerHTML = list.map(function(t){
+              return '<button class="wal-send-qi" type="button" onclick="okoW2.tplUse(\'' + t.id + '\')">' +
+                '<span class="wal-send-av">' + esc2(t.nick.charAt(0).toUpperCase()) + '</span>' +
+                '<span>' + esc2(t.nick.length > 10 ? t.nick.slice(0, 10) + '…' : t.nick) + '</span></button>';
+            }).join('');
+          } else {
+            quick.remove();
+            if (lab && /недавние/i.test(lab.textContent)) lab.remove();
+          }
+        }
+      }
       if (v && !$('w2SendTpl')){
         var b = D.createElement('button');
         b.id = 'w2SendTpl';
@@ -2122,6 +2474,39 @@ wrapRender('walRenderWithdraw', 'walWdView',        'Вывод средств')
     } catch(e){}
     return r;
   };
+})();
+
+/* Переключатель «ПИН при входе» показывает состояние замка, а не бывшего Face-ID */
+(function hookSec(){
+  var prev = window.walRenderSec;
+  if (typeof prev !== 'function') return;
+  window.walRenderSec = function(){
+    var r = prev.apply(this, arguments);
+    try {
+      var on = !!(typeof WAL_X !== 'undefined' && WAL_X.lock);
+      var sw = $('walBioSw'), sub = $('walBioSub');
+      if (sw) sw.classList.toggle('on', on);
+      if (sub) sub.textContent = on
+        ? 'Включён — при входе в кошелёк спросим ПИН-код'
+        : 'Выключен, кошелёк открывается сразу';
+    } catch(e){}
+    return r;
+  };
+})();
+
+/* Замок кошелька: спрашиваем ПИН при заходе на вкладку */
+(function hookLock(){
+  var prev = window.showTab;
+  if (typeof prev !== 'function') return;
+  window.showTab = function(t){
+    var r = prev.apply(this, arguments);
+    try {
+      if (t === 'wallet' && lockNeeded()) lockShow();
+      if (t !== 'wallet') lockHide();
+    } catch(e){}
+    return r;
+  };
+  try { showTab = window.showTab; } catch(e){}
 })();
 
 /* Обновление подписей после каждого рендера кошелька */
@@ -2160,6 +2545,8 @@ window.okoW2 = {
   /* переводы */
   send: function(){ if (has('walOpenSend')) walOpenSend(''); },
   tplUse: tplUse, tplDel: tplDel, newTemplate: newTemplate,
+  ruleToggle: function(id){ if (has('walToggleAutoRule')) walToggleAutoRule(id); },
+  ruleDel: function(id){ if (has('walDeleteAutoRule')) walDeleteAutoRule(id); },
   /* история */
   histCat: setHistCat, tx: openTx,
   stPeriod: setStPeriod, stCsv: stCsv, stTxt: stTxt,
@@ -2175,8 +2562,35 @@ window.okoW2 = {
 /* ===========================================================================
    15. СТАРТ
    =========================================================================== */
+/* Напоминание о низком балансе — то самое «правило», но честное:
+   ничего не списывает и не начисляет, просто предлагает пополнить. */
+var remindShown = false;
+function lowBalanceReminder(){
+  if (remindShown) return;
+  var hit = rulesV2().filter(function(r){ return r.on && balance() < r.below; })[0];
+  if (!hit) return;
+  remindShown = true;
+  setTimeout(function(){
+    pop({
+      ico: 'bell', title: 'Баланс ниже ' + money(hit.below),
+      body: 'Ты просил напомнить, когда на счёте останется меньше <b>' + money(hit.below) + '</b>. ' +
+            'Сейчас на счёте <b>' + money(balance()) + '</b>.<br><br>' +
+            'Автоматически OKO ничего не спишет и не пополнит — решение за тобой.',
+      actions: [
+        {label: 'Пополнить на ' + money(hit.sum), onclick: function(){
+          if (has('showTab')) showTab('wallet');
+          if (has('walOpenTopup')) walOpenTopup(hit.sum);
+        }},
+        {label: 'Не сейчас', ghost: true}
+      ]
+    });
+  }, 1200);
+}
+
 function boot(){
   try { refreshMainMeta(); } catch(e){}
+  try { lowBalanceReminder(); } catch(e){}
+  try { patchNativeCopy(); } catch(e){}
   try { renderTransfersExtra(); } catch(e){}
   try { if (has('walRenderPlanned')) walRenderPlanned(); } catch(e){}
   try { if (has('walRenderSafety')) walRenderSafety(); } catch(e){}

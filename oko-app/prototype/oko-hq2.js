@@ -50,6 +50,38 @@ function say(msg){
 function fn(name){ return (typeof window[name] === 'function') ? window[name] : null; }
 function arr(x){ return Array.isArray(x) ? x : []; }
 
+/* --------------------------------------------------------------------------
+   Доступ к состоянию ядра.
+   Важно: ядро объявляет ADMIN, PLANS, PROFILE и прочее через const/let на
+   верхнем уровне классического скрипта. Такие имена НЕ становятся свойствами
+   window — читать их можно только как обычные идентификаторы, поэтому здесь
+   для каждого свой аккуратный геттер с проверкой typeof.
+   -------------------------------------------------------------------------- */
+function gADMIN(){    try{ return (typeof ADMIN !== 'undefined' && ADMIN) ? ADMIN : null; }catch(e){ return null; } }
+function gPROFILE(){  try{ return (typeof PROFILE !== 'undefined' && PROFILE) ? PROFILE : null; }catch(e){ return null; } }
+function gPLANS(){    try{ return (typeof PLANS !== 'undefined' && PLANS) ? PLANS : null; }catch(e){ return null; } }
+function gPERIODS(){  try{ return (typeof PAY_PERIODS !== 'undefined' && PAY_PERIODS) ? PAY_PERIODS : []; }catch(e){ return []; } }
+function gPOSTS(){    try{ return (typeof POSTS !== 'undefined' && POSTS) ? POSTS : null; }catch(e){ return null; } }
+function gCHATS(){    try{ return (typeof CHATS !== 'undefined' && CHATS) ? CHATS : []; }catch(e){ return []; } }
+function gLISTINGS(){ try{ return (typeof LISTINGS !== 'undefined' && LISTINGS) ? LISTINGS : []; }catch(e){ return []; } }
+function gREVENUE(){  try{ return (typeof OKO_REVENUE !== 'undefined' && OKO_REVENUE) ? OKO_REVENUE : []; }catch(e){ return []; } }
+function gWALLET(){   try{ return (typeof WALLET !== 'undefined' && WALLET) ? WALLET : null; }catch(e){ return null; } }
+function gCOURSES(){  try{ return (typeof AC_COURSES !== 'undefined' && AC_COURSES) ? AC_COURSES : []; }catch(e){ return []; } }
+function gADS(){      try{ return (typeof ADS !== 'undefined' && ADS) ? ADS : null; }catch(e){ return null; } }
+function gSB(){       try{ return (typeof sb !== 'undefined') ? sb : null; }catch(e){ return null; } }
+function gHQSTATE(){  try{ return (typeof HQ_STATE !== 'undefined' && HQ_STATE) ? HQ_STATE : null; }catch(e){ return null; } }
+function gHQADREV(){  try{ return (typeof HQ_ADREV !== 'undefined' && HQ_ADREV) ? HQ_ADREV : null; }catch(e){ return null; } }
+function gHQMOD(){    try{ return (typeof HQ_MOD !== 'undefined' && HQ_MOD) ? HQ_MOD : null; }catch(e){ return null; } }
+function gHQREPORTS(){try{ return (typeof HQ_REPORTS !== 'undefined' && HQ_REPORTS) ? HQ_REPORTS : []; }catch(e){ return []; } }
+/* Каналы живут внутри своего IIFE и наружу не видны — считаем из хранилища. */
+function gChannels(){
+  try{
+    var c = JSON.parse(localStorage.getItem('oko-channels'));
+    if(!c) return 0;
+    return arr(c.mine).length + arr(c.disc).length;
+  }catch(e){ return 0; }
+}
+
 /* Число для интерфейса. Ни при каких данных не должно получиться
    NaN / undefined / Infinity — вместо них честный прочерк. */
 function num(v){
@@ -83,7 +115,8 @@ function uid(p){ return (p || 'h2') + '-' + Date.now().toString(36) + '-' + Math
 function isOwnerNow(){
   var f = fn('isOwner');
   if(f){ try{ return !!f(); }catch(e){} }
-  try{ return !!(window.PROFILE && window.PROFILE.role === 'owner'); }catch(e){ return false; }
+  var p = gPROFILE();
+  return !!(p && p.role === 'owner');
 }
 
 /* ==========================================================================
@@ -123,33 +156,30 @@ function logAdd(agentId, text){
    раз и помечаем, чтобы не трогать реальные операции, которые появятся позже.
    -------------------------------------------------------------------------- */
 (function purgeSeededDemo(){
-  var HS = window.HQ_STATE;
-  if(!HS || typeof HS !== 'object') return;
-  if(HS.hq2Purged) return;
+  var HS = gHQSTATE();
+  if(!HS || HS.hq2Purged) return;
 
   /* демо-выручка (32 записи сидера admin-hq) */
   try{
-    if(HS.revSeeded && Array.isArray(window.OKO_REVENUE)){
-      window.OKO_REVENUE.length = 0;
-      localStorage.setItem('oko-revenue', JSON.stringify(window.OKO_REVENUE));
+    var rev = gREVENUE();
+    if(HS.revSeeded && Array.isArray(rev)){
+      rev.length = 0;
+      localStorage.setItem('oko-revenue', JSON.stringify(rev));
     }
   }catch(e){}
 
   /* демо-очередь рекламной модерации */
-  try{ if(Array.isArray(window.HQ_ADREV)) window.HQ_ADREV.length = 0; }catch(e){}
+  try{ var ad = gHQADREV(); if(Array.isArray(ad)) ad.length = 0; }catch(e){}
   try{ HS.adRev = []; }catch(e){}
 
   /* демо-счётчики модератора */
   try{
-    if(window.HQ_MOD && typeof window.HQ_MOD === 'object'){
-      window.HQ_MOD.spam = 0; window.HQ_MOD.scam = 0;
-      window.HQ_MOD.adult = 0; window.HQ_MOD.drugs = 0; window.HQ_MOD.checked = 0;
-    }
-    HS.mod = window.HQ_MOD;
+    var m = gHQMOD();
+    if(m){ m.spam = 0; m.scam = 0; m.adult = 0; m.drugs = 0; m.checked = 0; HS.mod = m; }
   }catch(e){}
 
   HS.hq2Purged = 1;
-  try{ if(typeof window.hqSave === 'function') window.hqSave(); }catch(e){}
+  var sv = fn('hqSave'); if(sv){ try{ sv(); }catch(e){} }
 })();
 
 /* Живые таймеры старого штаба (случайный лог, случайный «онлайн»,
@@ -196,9 +226,7 @@ function integOn(k){
       return !!(tg && tg.initData && String(tg.initData).length > 0);
     }catch(e){ return false; }
   }
-  if(k === 'db'){
-    try{ return !!(typeof window.sb !== 'undefined' && window.sb); }catch(e){ return false; }
-  }
+  if(k === 'db') return !!gSB();
   return false;
 }
 function integLabel(k){ return (INTEG[k] && INTEG[k].n) || k; }
@@ -636,24 +664,57 @@ function viewEl(){
     '</div>' +
     '<div class="sv-body" id="h2Body"></div>';
   document.body.appendChild(el);
+
+  /* Регистрация в общем стеке навигации — тем же способом, что и остальные
+     fullscreen-вьюхи ядра: наблюдатель за классом .open. Через наблюдатель,
+     а не прямым nvPush, специально: иначе подвид попадает в стек РАНЬШЕ
+     админки (её наблюдатель срабатывает микрозадачей позже), и системная
+     «назад» закрывала бы админку из-под открытого подвида. */
+  try{
+    new MutationObserver(syncNv).observe(el, {attributes:true, attributeFilter:['class']});
+  }catch(e){}
   return el;
+}
+function syncNv(){
+  var el = document.getElementById('h2View');
+  var open = !!(el && el.classList.contains('open'));
+  var push = fn('nvPush'), pop = fn('nvPop'), find = fn('nvFind');
+  if(open){
+    if(push && (!find || !find('view:h2'))){ try{ push('view:h2', viewClose); }catch(e){} }
+  } else if(pop){
+    try{ pop('view:h2'); }catch(e){}   /* записи нет — тихий no-op */
+  }
+}
+/* Страховка от «зависшего» перехода. На перегруженном телефоне (и в свёрнутой
+   вкладке) браузер иногда не доводит transform до конца, и панель остаётся
+   висеть за краем экрана — человек видит пустоту вместо экрана. Через 420 мс
+   (переход длится 280 мс) снимаем анимацию на один кадр: элемент мгновенно
+   встаёт в своё конечное положение, каким бы оно ни было. */
+function settleSoon(){
+  setTimeout(function(){
+    var el = document.getElementById('h2View');
+    if(!el) return;
+    var tr = '';
+    try{ tr = getComputedStyle(el).transform; }catch(e){ return; }
+    var atRest = (!tr || tr === 'none' || tr === 'matrix(1, 0, 0, 1, 0, 0)');
+    var wantOpen = el.classList.contains('open');
+    if(wantOpen === atRest) return;          /* уже там, где должен быть */
+    el.style.transition = 'none';
+    void el.offsetWidth;                     /* принудительный пересчёт стиля */
+    el.style.transition = '';
+  }, 420);
 }
 function viewOpen(kind, id){
   view = {kind:kind, id:id};
   var el = viewEl();
   viewRender();
   el.classList.add('open');
-  var f = fn('nvPush');
-  if(f){ try{ f('view:h2', viewClose); }catch(e){} }
+  settleSoon();
 }
 function viewClose(){
   var el = document.getElementById('h2View');
-  if(el){ el.classList.remove('open'); }
-  if(view){
-    view = null;
-    var p = fn('nvPop');
-    if(p){ try{ p('view:h2'); }catch(e){} }
-  }
+  if(el){ el.classList.remove('open'); settleSoon(); }
+  view = null;
   /* админка под подвидом могла измениться (новая задача) — обновляем */
   if(admOpen()) render();
 }
@@ -978,12 +1039,11 @@ function curTab(){
 
 /* ---------- реальное состояние приложения ---------- */
 function stateSnapshot(){
-  var A = (window.ADMIN && typeof window.ADMIN === 'object') ? window.ADMIN : {};
-  var rev = Array.isArray(window.OKO_REVENUE) ? window.OKO_REVENUE : [];
-  var w = (window.WALLET && typeof window.WALLET === 'object') ? window.WALLET : null;
-  var ch = (window.CH && typeof window.CH === 'object') ? window.CH : null;
-  var posts = (window.POSTS && typeof window.POSTS === 'object') ? window.POSTS : {rec:[], sub:[]};
-  var ads = (window.ADS && typeof window.ADS === 'object') ? window.ADS : {camps:[]};
+  var A = gADMIN() || {};
+  var rev = arr(gREVENUE());
+  var w = gWALLET();
+  var posts = gPOSTS() || {rec:[], sub:[]};
+  var ads = gADS() || {camps:[]};
   return {
     users:    arr(A.users),
     pay:      arr(A.pay),
@@ -994,14 +1054,14 @@ function stateSnapshot(){
     revTotal: rev.reduce(function(s,r){ var v = Number(r && r.sum); return s + (isFinite(v) ? v : 0); }, 0),
     wallet:   w,
     ledger:   w ? arr(w.ledger) : [],
-    listings: arr(window.LISTINGS),
+    listings: arr(gLISTINGS()),
     posts:    arr(posts.rec).length + arr(posts.sub).length,
-    chats:    arr(window.CHATS).length,
-    channels: ch ? (arr(ch.mine).length + arr(ch.disc).length) : 0,
-    courses:  arr(window.AC_COURSES).length,
+    chats:    arr(gCHATS()).length,
+    channels: gChannels(),
+    courses:  arr(gCOURSES()).length,
     adsPend:  arr(ads.camps).filter(function(c){ return c && c.status === 'mod'; }),
     adsAll:   arr(ads.camps),
-    reports:  arr(window.HQ_REPORTS).filter(function(r){ return r && !r.done; })
+    reports:  arr(gHQREPORTS()).filter(function(r){ return r && !r.done; })
   };
 }
 /* Сервер данных пока не отдаёт: пользователи, платежи, партнёрка и метрики
@@ -1030,7 +1090,7 @@ function viewOverview(){
   var rows =
     row('users', 'Пользователи', serverOn() ? (s.users.length + ' в списке') : 'сервер не подключён', q(String(s.users.length)), 'tab', 'users') +
     row('card', 'Оплаты', s.ledger.length + ' операций в кошельке владельца', money(s.revTotal), 'tab', 'pay') +
-    row('crown', 'Тарифы', Object.keys(window.PLANS || {}).length + ' тарифов в витрине', '', 'tab', 'plans') +
+    row('crown', 'Тарифы', Object.keys(gPLANS() || {}).length + ' тарифов в витрине', '', 'tab', 'plans') +
     row('feed', 'Контент', s.posts + ' постов · ' + s.listings.length + ' объявлений · ' + s.channels + ' каналов', '', 'tab', 'content') +
     row('shield', 'Модерация', (s.moder.length + s.reports.length + s.adsPend.length) + ' в очереди', '', 'tab', 'moder') +
     row('eye', 'Штаб OKO', AGENTS.length + ' агентов · ' + queued + ' задач в очереди', '', 'tab', 'hq');
@@ -1052,7 +1112,7 @@ function row(icon, title, sub, val, act, id){
 /* ---------- ПОЛЬЗОВАТЕЛИ ---------- */
 function viewUsers(){
   var s = stateSnapshot();
-  var P = window.PROFILE || {};
+  var P = gPROFILE() || {};
   var me = '<div class="h2-row">' +
     '<span class="h2-row-ic">' + ic('crown') + '</span>' +
     '<span class="h2-row-b"><b>' + esc(P.name || 'Владелец') + '</b>' +
@@ -1133,9 +1193,9 @@ function viewPay(){
 
 /* ---------- ТАРИФЫ ---------- */
 function viewPlans(){
-  var P = (window.PLANS && typeof window.PLANS === 'object') ? window.PLANS : {};
-  var periods = Array.isArray(window.PAY_PERIODS) ? window.PAY_PERIODS : [];
-  var mine = (window.PROFILE && window.PROFILE.tier) ? String(window.PROFILE.tier) : '';
+  var P = gPLANS() || {};
+  var periods = arr(gPERIODS());
+  var mine = (gPROFILE() && gPROFILE().tier) ? String(gPROFILE().tier) : '';
   var keys = Object.keys(P);
 
   if(!keys.length){
@@ -1147,7 +1207,8 @@ function viewPlans(){
     var mo = Number(p.mo);
     var yearly = '';
     var y = periods.filter(function(x){ return x && x[0] === 12; })[0];
-    if(y && isFinite(mo)){
+    /* Для бесплатного тарифа годовой расчёт со скидкой — бессмыслица, не пишем. */
+    if(y && isFinite(mo) && mo > 0){
       var disc = Number(y[2]) || 0;
       yearly = ' · год ' + money(Math.round(mo * 12 * (1 - disc/100))) + (disc ? ' (−' + disc + '%)' : '');
     }

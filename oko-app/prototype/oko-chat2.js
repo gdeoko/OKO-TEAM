@@ -106,7 +106,9 @@ function canDeleteForAll(c, m){
 .ch2-chip:active{transform:scale(.94)}
 .msg.in .ch2-chip{background:var(--lime-dim);color:var(--accent)}
 .ch2-chip.on{border-color:var(--lime);background:var(--lime-dim);color:var(--accent)}
-.msg.out .ch2-chip.on{background:rgba(0,0,0,.28);color:#000;border-color:rgba(0,0,0,.45)}
+/* на лаймовом пузыре лаймовая подсветка не читается — своя реакция обводится чёрным */
+.msg.out .ch2-chip{background:rgba(0,0,0,.13);color:#000}
+.msg.out .ch2-chip.on{background:rgba(0,0,0,.2);color:#000;border-color:rgba(0,0,0,.62)}
 .ch2-chip .ch2-em{font-size:13px;line-height:1}
 .ch2-chip b{font-weight:700;font-variant-numeric:tabular-nums}
 
@@ -158,12 +160,17 @@ function canDeleteForAll(c, m){
   text-align:center;font-variant-numeric:tabular-nums}
 
 /* ---------- полоса ветки обсуждения ---------- */
+/* На ПК колонка диалога — flex-элемент без min-width:0, поэтому длинный
+   заголовок ветки раздувал её и выталкивал за край приложения. Страхуем
+   и колонку, и саму полосу. */
+#conv{min-width:0}
 .ch2-thbar{display:none;align-items:center;gap:10px;padding:7px 14px;flex-shrink:0;
-  border-bottom:1px solid var(--border);background:var(--surface)}
+  min-width:0;overflow:hidden;border-bottom:1px solid var(--border);background:var(--surface)}
 .ch2-thbar.on{display:flex}
 .ch2-thbar .ch2-th-ic{width:20px;height:20px;color:var(--accent);flex-shrink:0}
 .ch2-thbar .ch2-th-ic svg.i{width:20px;height:20px}
-.ch2-thbar .ch2-th-txt{flex:1;min-width:0;border-left:2px solid var(--lime);padding-left:9px}
+.ch2-thbar .ch2-th-txt{flex:1 1 0;min-width:0;overflow:hidden;
+  border-left:2px solid var(--lime);padding-left:9px}
 .ch2-thbar .ch2-th-txt b{display:block;font-size:12px;color:var(--accent)}
 .ch2-thbar .ch2-th-txt small{display:block;font-size:12px;color:var(--dim);
   white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
@@ -188,6 +195,14 @@ function canDeleteForAll(c, m){
 /* ---------- цитата-ответ: кликабельна ---------- */
 .msg-quote{cursor:pointer}
 .msg-quote span{max-width:100%;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+/* В исходящем пузыре фон лаймовый — лаймовые имя автора и полоска цитаты
+   на нём просто исчезали. Внутри «своего» пузыря всё контрастное — чёрным. */
+.msg.out .msg-quote{border-left-color:rgba(0,0,0,.5)}
+.msg.out .msg-quote b{color:rgba(0,0,0,.72)}
+.msg.out .msg-quote span{color:rgba(0,0,0,.82)}
+.msg.out .mwho{color:rgba(0,0,0,.72)}
+.msg.out .cp-fwd-tag{color:rgba(0,0,0,.72)}
+.msg.out .cp-fwd-tag b{color:#000}
 .msg.ch2-flash{animation:ch2Flash 1.25s ease}
 @keyframes ch2Flash{0%,100%{box-shadow:none}
   18%{box-shadow:0 0 0 3px var(--lime)}70%{box-shadow:0 0 0 3px rgba(154,255,0,.18)}}
@@ -244,6 +259,9 @@ function canDeleteForAll(c, m){
   background:transparent;border-radius:13px;cursor:pointer;text-align:left;color:var(--text);
   font:500 14px/1.35 var(--font-body,inherit)}
 .ch2-row:hover,.ch2-row:active{background:var(--raised)}
+/* строка-справка (кто поставил реакцию) — не кнопка, вести себя как кнопка не должна */
+.ch2-row.static{cursor:default}
+.ch2-row.static:hover,.ch2-row.static:active{background:transparent}
 .ch2-row.danger{color:var(--danger)}
 .ch2-row>svg.i,.ch2-row .ch2-r-ic svg.i{width:19px;height:19px;flex-shrink:0}
 .ch2-row .ch2-r-ic{width:36px;height:36px;border-radius:50%;background:var(--lime-dim);
@@ -261,9 +279,12 @@ function canDeleteForAll(c, m){
 .ch2-row .ch2-box svg.i{width:12px;height:12px;color:#000;opacity:0}
 .ch2-row.on .ch2-box{border-color:var(--lime);background:var(--lime)}
 .ch2-row.on .ch2-box svg.i{opacity:1}
+/* цитата в шапке шторки: осознанное сокращение до трёх строк, не обрезка «в никуда» */
 .ch2-quote{margin:0 16px 10px;padding:8px 11px;border-left:2px solid var(--lime);
   background:var(--raised);border-radius:0 10px 10px 0;color:var(--dim);font-size:12.5px;
-  line-height:1.45;max-height:78px;overflow:hidden;overflow-wrap:anywhere}
+  line-height:1.45;overflow-wrap:anywhere}
+.ch2-quote span{display:-webkit-box;-webkit-line-clamp:3;line-clamp:3;
+  -webkit-box-orient:vertical;overflow:hidden}
 .ch2-empty{padding:22px 18px;text-align:center;color:var(--dim);font-size:13px;line-height:1.5}
 .ch2-inp{width:100%;background:var(--raised);border:1px solid var(--border);border-radius:12px;
   padding:11px 13px;color:var(--text);font-size:14px;outline:none;
@@ -280,6 +301,8 @@ function canDeleteForAll(c, m){
   letter-spacing:.08em;text-transform:uppercase}
 
 /* ---------- папки ---------- */
+/* папок стало больше — чипы не имеют права ужиматься и резать текст */
+.folders button{flex:0 0 auto}
 .folders .ch2-fnew{color:var(--accent)}
 .folders .ch2-fnew svg.i{width:14px;height:14px}
 .ch2-fempty{padding:26px 20px;text-align:center;color:var(--dim);font-size:13px;line-height:1.55}
@@ -400,7 +423,7 @@ function openReactors(idx){
       const r = rx[em];
       body += `<p class="ch2-grp">${E(em)} · ${r.n}</p>`;
       r.who.forEach(w => {
-        body += `<div class="ch2-row" role="listitem"><span class="ch2-r-ic">${E((w[0]||'?').toUpperCase())}</span>` +
+        body += `<div class="ch2-row static"><span class="ch2-r-ic">${E((w[0]||'?').toUpperCase())}</span>` +
                 `<span class="ch2-r-tx"><b>${E(w)}</b>${w === 'Ты' ? '<small>твоя реакция</small>' : ''}</span>` +
                 `<span class="ch2-r-em">${E(em)}</span></div>`;
       });
@@ -463,7 +486,10 @@ function palShow(msg, idx){
     p.style.top = top + 'px';
     p.classList.toggle('cp-rp-below', below);
   };
-  requestAnimationFrame(()=>{ place(); p.classList.add('on'); });
+  /* Показ синхронно, через принудительный reflow: requestAnimationFrame в
+     фоновой вкладке и в headless приходит с задержкой, и палитра успевала
+     «зависнуть» полупрозрачной. */
+  place(); void p.offsetWidth; p.classList.add('on');
 
   p.addEventListener('click', ev => {
     const b = ev.target.closest('.cp-rp-btn, .cp-rp-more');
@@ -640,6 +666,32 @@ function flashAt(i){
   node.classList.remove('ch2-flash'); void node.offsetWidth; node.classList.add('ch2-flash');
   setTimeout(()=>node.classList.remove('ch2-flash'), 1400);
 }
+
+/* ---- редактировать можно только СВОЙ текст (как в Telegram) ---- */
+if(typeof editMsg === 'function'){
+  const prev = editMsg;
+  window.editMsg = function(idx){
+    const c = chat(); const m = c && c.msgs[idx];
+    if(!m) return;
+    if(m.in){
+      try{ if(typeof closeMsgMenu === 'function') closeMsgMenu(); }catch(e){}
+      say('Редактировать можно только свои сообщения');
+      return;
+    }
+    if(m.kind && m.kind !== 'text'){
+      try{ if(typeof closeMsgMenu === 'function') closeMsgMenu(); }catch(e){}
+      say('Редактируется только текст');
+      return;
+    }
+    return prev.apply(this, arguments);
+  };
+}
+
+/* ---- НОЛЬ ДЕМО-ДАННЫХ: выдуманный собеседник больше не отвечает ----
+   Ядро подставляло автоответы «живого демо-собеседника» (SIM_REPLY) в личные
+   чаты. Это выдуманные сообщения от реального человека из списка — прямое
+   нарушение правила «ноль демо-данных». Глушим: пусто значит пусто. */
+if(typeof simReply === 'function') window.simReply = function(){};
 
 /* ===========================================================================
    5. ЗАКРЕП: право закреплять + переход к закреплённому
@@ -1066,12 +1118,15 @@ function doForward(list, from, target){
     return cl;
   });
   selOff();
-  try{ if(typeof openConv === 'function') openConv(target.id); }catch(e){}
+  /* Переход делаем ПОСЛЕ того, как шторка снялась и слой навигации отработал
+     свой шаг «назад»: иначе на телефоне общий обработчик успевал закрыть
+     только что открытый чат, и человек оказывался в списке. */
   setTimeout(()=>{
+    try{ if(typeof openConv === 'function') openConv(target.id); }catch(e){}
     clones.forEach(cl => { try{ if(typeof pushMsg === 'function') pushMsg(cl); }catch(e){} });
     afterRender();
     say('Переслано в «' + (target.name || 'чат') + '»');
-  }, 90);
+  }, 160);
 }
 /* Пересылка одного сообщения из меню — наш общий путь. */
 if(typeof forwardMsg === 'function'){
@@ -1088,6 +1143,8 @@ if(typeof forwardMsg === 'function'){
    ======================================================================== */
 const isMyFolder = f => f === 'unread' || (typeof f === 'string' && f.indexOf('f:') === 0);
 const coreFolder = f => isMyFolder(f) ? 'all' : f;
+/* чужие чипы ряда папок — запоминаем узлы, чтобы возвращать после перерисовки */
+const folderGuests = [];
 
 window.renderFolders = function(){
   const box = byId('folders'); if(!box) return;
@@ -1100,6 +1157,14 @@ window.renderFolders = function(){
 
   let unread = 0;
   try{ unread = chats().filter(c => (c.unread || 0) > 0).length; }catch(e){}
+
+  /* Соседние модули досаживают в этот ряд свои чипы (например «Каталог»
+     платных каналов из app.js). Мы ряд перерисовываем целиком, поэтому их
+     узлы запоминаем один раз и возвращаем при каждой перерисовке — так чип
+     не исчезает, даже если чужая функция-вставщик недоступна. */
+  [...box.children].filter(n => /chip/i.test(n.className || '')).forEach(n => {
+    if(!folderGuests.some(g => g.className === n.className)) folderGuests.push(n);
+  });
 
   box.innerHTML = items.map(([f, label, icn]) => {
     const on = ST.folder === f ? 'on' : '';
@@ -1124,6 +1189,22 @@ window.renderFolders = function(){
         b.addEventListener(ev, ()=>clearTimeout(t)));
     }
   });
+  /* возвращаем чужие чипы в начало ряда, порядок сохраняем */
+  for(let i = folderGuests.length - 1; i >= 0; i--){
+    try{ box.insertBefore(folderGuests[i], box.firstChild); }catch(e){}
+  }
+  try{ if(typeof chInsertCatalogChip === 'function') chInsertCatalogChip(); }catch(e){}
+  /* Папок больше, чем влезает в строку: активную подтягиваем в видимую часть,
+     иначе человек не понимает, какой фильтр включён. */
+  try{
+    const on = box.querySelector('button.on');
+    if(on){
+      const l = on.offsetLeft, r = l + on.offsetWidth;
+      if(l < box.scrollLeft + 4) box.scrollTo({left: Math.max(0, l - 14), behavior:'smooth'});
+      else if(r > box.scrollLeft + box.clientWidth - 4)
+        box.scrollTo({left: r - box.clientWidth + 14, behavior:'smooth'});
+    }
+  }catch(e){}
 };
 window.setFolder = function(f){
   ST.folder = f; stSave();
@@ -1175,7 +1256,7 @@ function folderEditor(id){
 
   sheet({
     title: f ? 'Папка «' + f.name + '»' : 'Новая папка',
-    head: `<div style="padding:0 4px 10px"><input class="ch2-inp" id="ch2FName" maxlength="24" ` +
+    head: `<div style="padding:0 16px 10px"><input class="ch2-inp" id="ch2FName" maxlength="24" ` +
           `placeholder="Название папки" value="${E(f ? f.name : '')}"></div>`,
     body: rows,
     foot: `<div class="ch2-actions">` +
@@ -1303,14 +1384,14 @@ function sheet(o){
     `<div class="ch2-card">` +
       `<div class="ch2-ch"><h4>${E(o.title || '')}</h4>` +
       `<button type="button" class="ch2-ch-x" data-x="1" title="Закрыть" aria-label="Закрыть">${ico('x')}</button></div>` +
-      (o.quote ? `<div class="ch2-quote">${o.quote}</div>` : '') +
+      (o.quote ? `<div class="ch2-quote"><span>${o.quote}</span></div>` : '') +
       (o.head || '') +
       `<div class="ch2-cb">${o.body || ''}</div>` +
       (o.foot || '') +
     `</div>`;
   document.body.appendChild(wrap);
   sheetEl = wrap;
-  requestAnimationFrame(()=>wrap.classList.add('on'));
+  void wrap.offsetWidth; wrap.classList.add('on');
 
   wrap.addEventListener('click', e => {
     if(e.target === wrap){ closeSheet2(); return; }
@@ -1322,8 +1403,15 @@ function sheet(o){
     if(o.onAct) close = o.onAct(b.dataset.a, wrap) !== false;
     if(close) closeSheet2();
   });
-  const esc2 = e => { if(e.key === 'Escape'){ e.preventDefault(); closeSheet2(); } };
-  document.addEventListener('keydown', esc2);
+  /* Escape ловим в фазе перехвата и гасим дальше: иначе тот же жест обработает
+     ещё и общий стек навигации, и назад уедут сразу два слоя. */
+  const esc2 = e => {
+    if(e.key !== 'Escape') return;
+    e.preventDefault(); e.stopPropagation();
+    if(e.stopImmediatePropagation) e.stopImmediatePropagation();
+    closeSheet2();
+  };
+  document.addEventListener('keydown', esc2, true);
   wrap._esc = esc2;
   try{ if(typeof nvPush === 'function') nvPush('ch2:sheet', ()=>closeSheet2(true)); }catch(e){}
   const first = wrap.querySelector('input, button');
@@ -1332,7 +1420,7 @@ function sheet(o){
 function closeSheet2(fromNav){
   const w = sheetEl; if(!w) return;
   sheetEl = null;
-  if(w._esc) document.removeEventListener('keydown', w._esc);
+  if(w._esc) document.removeEventListener('keydown', w._esc, true);
   w.classList.remove('on');
   setTimeout(()=>{ try{ w.remove(); }catch(e){} }, 200);
   if(!fromNav){ try{ if(typeof nvPop === 'function') nvPop('ch2:sheet'); }catch(e){} }
@@ -1406,7 +1494,9 @@ if(typeof openConv === 'function'){
       const u = c.unread || 0;
       c.ch2ub = u > 0 ? Math.max(0, (c.msgs || []).length - u) : null;
       c.ch2new = 0;
-      if(pendingThread) c.ch2th = pendingThread;
+      /* ветка живёт ровно один заход: вошли из «Комментариев» — она есть,
+         открыли чат из списка — обычная переписка целиком */
+      c.ch2th = pendingThread || null;
       pendingThread = null;
     }
     const r = prev.apply(this, arguments);
@@ -1580,14 +1670,18 @@ if(typeof openConv === 'function'){
 /* ===========================================================================
    19. КЛАВИАТУРА: Escape закрывает слои чата
    ======================================================================== */
+/* Перехват — до общего стека навигации, чтобы один Escape закрывал ровно один
+   слой чата, а не уводил ещё и с экрана. */
 document.addEventListener('keydown', e => {
   if(e.key !== 'Escape') return;
   if(sheetEl) return;                       /* у шторки свой обработчик */
-  if(pal){ e.preventDefault(); palHide(); return; }
-  if(selMode){ e.preventDefault(); selOff(); return; }
+  const stop = () => { e.preventDefault(); e.stopPropagation();
+    if(e.stopImmediatePropagation) e.stopImmediatePropagation(); };
+  if(pal){ stop(); palHide(); return; }
+  if(selMode){ stop(); selOff(); return; }
   const c = chat();
-  if(c && c.ch2th){ e.preventDefault(); exitThread(); return; }
-});
+  if(c && c.ch2th){ stop(); exitThread(); return; }
+}, true);
 
 /* ===========================================================================
    20. СТАРТ
