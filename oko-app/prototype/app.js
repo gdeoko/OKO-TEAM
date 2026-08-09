@@ -505,15 +505,16 @@ function regFinish(){
   regClose();
   _regPrevDoLogin(REG.method); /* оригинальный вход: oko-auth, скрыть auth, initLive, онбординг */
 
-  /* welcome-попап + реальное начисление бонуса — один раз после первой регистрации */
+  /* welcome-попап — один раз после первой регистрации.
+     Начисление 2 500 ₽ убрано 09.08: деньги на счёте нового человека были
+     выдуманными (правило «ноль демо-данных»). Кошелёк стартует с нуля. */
   if(!regPopupsSeen().welcome){
     regPopupMark('welcome');
-    try{ if(typeof walletAdd === 'function') walletAdd(2500, 'Приветственный бонус'); }catch(e){}
     setTimeout(()=>{
       showPopup({ico:'logo', title: regWelcomeTitle(name),
         body: regWelcomeBody(name),
         actions:[
-          {label:'Забрать бонус', onclick:()=>{ if(document.getElementById('screen-wallet') && typeof showTab === 'function') showTab('wallet'); else toast('2 500 ₽ зачислены на лицевой счёт'); }},
+          {label:'Открыть кошелёк', onclick:()=>{ if(document.getElementById('screen-wallet') && typeof showTab === 'function') showTab('wallet'); }},
           {label:'Позже', ghost:true},
         ]});
     }, 700);
@@ -624,9 +625,9 @@ function regWelcomeBody(name){
     ${regRefNotice()}
     <p class="reg-pop-lead">Аккаунт создан. Ты в OKO — экосистеме, где контент, бизнес и заработок в одном месте.</p>
     <div class="reg-pop-bonus">
-      <span class="reg-pop-bonus-ico">${I('money')}</span>
-      <div><b>2 500 ₽</b><small>уже на лицевом счёте</small></div>
-      <span class="reg-pop-bonus-tag">Подарок</span>
+      <span class="reg-pop-bonus-ico">${I('wallet')}</span>
+      <div><b>Кошелёк открыт</b><small>лицевой счёт готов к пополнению</small></div>
+      <span class="reg-pop-bonus-tag">Старт</span>
     </div>
     <div class="reg-pop-qa-lab">С чего начать</div>
     ${regQuickActions()}
@@ -749,7 +750,7 @@ const RG2 = {
 const RG2_ADMIN_EMAIL = (typeof ADMIN_EMAIL !== 'undefined') ? ADMIN_EMAIL : 'okoteam.top@gmail.com';
 const RG2_TAKEN_NICKS = ['oko','okoteam','oko_official','daniel','ktodaniel','admin','support','team','ceo','help'];
 const RG2_TIERS = [
-  {id:'FREE',     name:'Free',     price:0,     line:'Старт бесплатно',           feats:['Лента и чаты','2 500 ₽ бонус','Базовые инструменты']},
+  {id:'FREE',     name:'Free',     price:0,     line:'Старт бесплатно',           feats:['Лента и чаты','Кошелёк и переводы','Базовые инструменты']},
   {id:'START',    name:'Start',    price:990,   line:'Первые системные инструменты', feats:['Автопостинг в 2 сети','Файлы до 300 МБ','Скидка 5% на рекламу']},
   {id:'PRO',      name:'Pro',      price:4900,  line:'Максимум возможностей',      feats:['Проверка видео: безлимит','Система роста','Все соцсети, файлы до 2 ГБ','Скидка 10% на рекламу'], reco:true},
   {id:'BUSINESS', name:'Business', price:19900, line:'Команда и конвейер',         feats:['Контент-завод под ключ','Рекламный кабинет PRO','Менеджер и API']},
@@ -1391,12 +1392,9 @@ function rg2FinishFlow(openPaySheet){
   try{ if(typeof stopParticles === 'function') stopParticles(); }catch(e){}
   try{ if(typeof initLive === 'function') initLive(); }catch(e){}
   try{ if(typeof renderMyProfile === 'function') renderMyProfile(); }catch(e){}
-  /* приветственный бонус + попап (используем существующие премиум-функции) */
-  try{
-    if(typeof walletAdd === 'function' && !regPopupsSeen().welcome){
-      walletAdd(2500, 'Приветственный бонус');
-    }
-  }catch(e){}
+  /* приветственный попап (используем существующие премиум-функции).
+     Начисление 2 500 ₽ убрано 09.08 — выдуманных денег на счёте нового
+     человека быть не должно. */
   if(!regPopupsSeen().welcome){
     regPopupMark('welcome');
     setTimeout(()=>{
@@ -15270,6 +15268,10 @@ AC_DIRS.forEach(d=>{
     sub:`${nb} ${acPlural(nb,['блок','блока','блоков'])} · ${count} ${acPlural(count,['урок','урока','уроков'])} · сертификат за направление`,
   });
 });
+/* Публикуем данные Академии наружу: AC_COURSE/AC_COURSES/AC_BLOCKS объявлены
+   через const и в window сами не попадают, а слою полировки (oko-academy2.js)
+   нужен доступ для поиска по урокам, оглавления и офлайн-конспектов. */
+try{ window.AC_COURSE = AC_COURSE; window.AC_COURSES = AC_COURSES; window.AC_BLOCKS = AC_BLOCKS; }catch(e){}
 /* блоки конкретного курса */
 function acCourseBlocks(ci){ const id=AC_COURSES[ci].id; return AC_BLOCKS.filter(b=>b.dir===id); }
 const AC_FEE = 0.10;   // комиссия платформы OKO с продажи курса (как в каналах)
@@ -15562,6 +15564,10 @@ function acBadgesGridHtml(){
 function acRender(){
   const root = document.getElementById('acRoot');
   if(!root) return;
+  /* Зеркала состояния наружу. acView/acL/acCourse/acS объявлены через let/const
+     и в window не попадают, а единая кнопка «назад» (oko-back.js) читает именно
+     window.acView, чтобы шагать урок → курс → каталог. */
+  try{ window.acView = acView; window.acL = acL; window.acCourse = acCourse; window.acS = acS; }catch(e){}
   acBadgeSync();  // до построения HTML — чтобы pop-анимация новых наград попала в разметку
   root.innerHTML = acView === 'lesson' ? acLessonHtml() : acView === 'course' ? acCourseHtml() : acHomeHtml();
   root.classList.remove('fade-in'); void root.offsetWidth; root.classList.add('fade-in');

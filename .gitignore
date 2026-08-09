@@ -40,3 +40,5 @@ oko-app/tools/audit-out/
 # Скриншоты пробников (генерируются локально, в репозиторий не нужны)
 oko-app/tools/shots/
 oko-app/tools/*.png
+oko-app/tools/clicks-out/
+oko-app/tools/*-report.json

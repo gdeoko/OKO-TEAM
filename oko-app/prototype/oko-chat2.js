@@ -116,13 +116,19 @@ function canDeleteForAll(c, m){
   box-shadow:0 14px 34px rgba(0,0,0,.45);opacity:0;transform:scale(.86) translateY(6px);
   transition:opacity .16s ease,transform .18s cubic-bezier(.2,1.2,.4,1);pointer-events:auto}
 .ch2-pal.on{opacity:1;transform:none}
-.ch2-pal .cp-rp-btn,.ch2-pal .cp-rp-more{width:38px;height:38px;border:0;background:transparent;
-  border-radius:50%;display:flex;align-items:center;justify-content:center;cursor:pointer;
-  font-size:21px;line-height:1;color:var(--text);transition:transform .14s,background .14s}
+/* ряд эмодзи-кнопок: и в плавающей палитре, и в шапке меню сообщения */
+.ch2-pal .cp-rp-btn,.ch2-pal .cp-rp-more,
+.ch2-mmreacts .cp-rp-btn,.ch2-mmreacts .cp-rp-more{width:38px;height:38px;border:0;
+  background:transparent;border-radius:50%;display:flex;align-items:center;justify-content:center;
+  cursor:pointer;font-size:21px;line-height:1;color:var(--text);flex:0 0 auto;
+  transition:transform .14s,background .14s}
 .ch2-pal .cp-rp-btn:hover,.ch2-pal .cp-rp-btn.hot,
-.ch2-pal .cp-rp-more:hover,.ch2-pal .cp-rp-more.hot{background:var(--lime-dim);transform:scale(1.16)}
+.ch2-pal .cp-rp-more:hover,.ch2-pal .cp-rp-more.hot,
+.ch2-mmreacts .cp-rp-btn:hover,.ch2-mmreacts .cp-rp-btn.hot{background:var(--lime-dim);transform:scale(1.16)}
 .ch2-pal .cp-rp-more svg.i{width:19px;height:19px;color:var(--accent)}
-.ch2-pal .cp-rp-btn.mine{background:var(--lime-dim);box-shadow:inset 0 0 0 1px var(--lime)}
+.ch2-pal .cp-rp-btn.mine,.ch2-mmreacts .cp-rp-btn.mine{background:var(--lime-dim);
+  box-shadow:inset 0 0 0 1px var(--lime)}
+.ch2-mmreacts{display:flex;flex-wrap:wrap;gap:2px;justify-content:center}
 .ch2-fly{position:fixed;z-index:98;font-size:24px;pointer-events:none;
   animation:ch2Fly .85s cubic-bezier(.2,.8,.3,1) forwards}
 @keyframes ch2Fly{0%{opacity:1;transform:translate(-50%,-50%) scale(.7)}
@@ -414,11 +420,14 @@ function openReactors(idx){
    Переопределяем функции палитры app.js, оставляя те же имена классов —
    тач-обработчики ядра (drag-to-pick) продолжают работать.
    ======================================================================== */
+/* Своё состояние палитры. В cpPalette зеркалим ради тач-обработчиков app.js
+   (drag-to-pick), но никогда не зависим от того, что он вообще существует. */
+let pal = null;
 function palHide(fromNav){
-  let p = null;
-  try{ if(typeof cpPalette !== 'undefined' && cpPalette) p = cpPalette.el; }catch(e){}
-  if(!p) return;
+  const p = pal && pal.el;
+  pal = null;
   try{ cpPalette = null; }catch(e){}
+  if(!p) return;
   p.classList.remove('on');
   if(p._off) try{ document.removeEventListener('pointerdown', p._off, true); }catch(e){}
   if(p._res){ try{ window.removeEventListener('resize', p._res); }catch(e){}
@@ -439,7 +448,8 @@ function palShow(msg, idx){
       `data-r="${E(em)}" aria-label="Реакция ${E(em)}">${E(em)}</button>`).join('') +
     `<button type="button" class="cp-rp-more" aria-label="Ещё действия">${ico('more')}</button>`;
   document.body.appendChild(p);
-  try{ cpPalette = {el:p, msg:msg, idx:idx}; }catch(e){}
+  pal = {el:p, msg:msg, idx:idx};
+  try{ cpPalette = pal; }catch(e){}
 
   const place = () => {
     const r = msg.getBoundingClientRect();
@@ -467,14 +477,14 @@ function palShow(msg, idx){
     document.addEventListener('pointerdown', off, true);
     p._off = off;
   }, 0);
-  const res = () => { try{ if(cpPalette) place(); }catch(e){} };
+  const res = () => { if(pal) place(); };
   window.addEventListener('resize', res);
   window.addEventListener('orientationchange', res);
   p._res = res;
   try{ if(typeof nvPush === 'function') nvPush('cp:pal', ()=>palHide(true)); }catch(e){}
 }
 function palPick(btn){
-  let st = null; try{ st = cpPalette; }catch(e){}
+  const st = pal;
   if(!st) return;
   const idx = st.idx;
   if(btn.classList.contains('cp-rp-more')){
@@ -1485,7 +1495,7 @@ function enhanceMenu(idx){
   const row = byId('mmReacts');
   if(row){
     row.style.display = 'flex';
-    row.classList.add('ch2-pal');
+    row.classList.add('ch2-mmreacts');
     row.innerHTML = QUICK.concat(MORE.slice(0, 4)).map(em =>
       `<button type="button" class="cp-rp-btn${rx[em] && rx[em].mine ? ' mine' : ''}" ` +
       `data-r="${E(em)}" aria-label="Реакция ${E(em)}">${E(em)}</button>`).join('');
@@ -1573,7 +1583,6 @@ if(typeof openConv === 'function'){
 document.addEventListener('keydown', e => {
   if(e.key !== 'Escape') return;
   if(sheetEl) return;                       /* у шторки свой обработчик */
-  let pal = null; try{ pal = cpPalette; }catch(_){}
   if(pal){ e.preventDefault(); palHide(); return; }
   if(selMode){ e.preventDefault(); selOff(); return; }
   const c = chat();
@@ -1636,7 +1645,7 @@ window.okoChat2 = {
       folder: ST.folder,
       pinned: !!(c && c.cpPin),
       sheet: !!sheetEl,
-      palette: (function(){ try{ return !!cpPalette; }catch(e){ return false; } })()
+      palette: !!pal
     };
   }
 };

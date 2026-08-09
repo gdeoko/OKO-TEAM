@@ -3,23 +3,17 @@ const b = await chromium.launch({ executablePath: '/opt/pw-browsers/chromium-119
 const ctx = await b.newContext({ viewport:{width:390,height:844} });
 const p = await ctx.newPage();
 p.on('pageerror', e => console.log('PAGEERR', String(e).slice(0,300)));
+await p.addInitScript(`try{ localStorage.setItem('oko-auth','tg'); localStorage.setItem('oko-onboarded','1'); localStorage.setItem('oko-stories-seen','1'); localStorage.setItem('oko-tour-done','1'); localStorage.setItem('oko-tour','1'); }catch(e){}`);
 await p.goto('http://127.0.0.1:8199/index.html', { waitUntil:'load' });
-await p.waitForTimeout(3200);
-const snap = async (tag) => {
-  const s = await p.evaluate(() => ({
-    auth: (()=>{ const a=document.getElementById('authScreen'); return a? (a.classList.contains('hidden')?'hidden':'visible'):'none'; })(),
-    splash: (()=>{ const a=document.getElementById('splash'); return a? (a.classList.contains('gone')?'gone':'visible'):'removed'; })(),
-    onboard: (()=>{ const a=document.getElementById('onboard'); return a? (a.classList.contains('hidden')?'hidden':'visible'):'none'; })(),
-    rg2: !!document.querySelector('#rg2Shell.open'),
-    ls: Object.keys(localStorage),
-    topText: (document.body.innerText||'').slice(0,300).replace(/\n+/g,' | ')
-  }));
-  console.log(tag, JSON.stringify(s).slice(0,700));
-  await p.screenshot({ path: `/home/user/OKO-TEAM/oko-app/tools/_base-${tag}.png` });
-};
-await snap('01-auth');
-// tap google
-await p.evaluate(() => doLogin('google'));
-await p.waitForTimeout(1500);
-await snap('02-after-google');
+await p.waitForTimeout(2600);
+const out = await p.evaluate(() => {
+  const r = {};
+  r.svc = [...document.querySelectorAll('#maGrid .svc')].map(b=>b.id + ' :: ' + b.textContent.trim() + ' :: ' + (b.getAttribute('onclick')||'js'));
+  r.nav = [...document.querySelectorAll('nav button, .tabbar button, footer button')].map(b=>(b.getAttribute('onclick')||'')+' | '+b.textContent.trim()).slice(0,20);
+  r.screens = [...document.querySelectorAll('main > .screen')].map(s=>s.id);
+  r.openMa = (()=>{ try{ return String(openMa).slice(0,400); }catch(e){ return 'n/a'; } })();
+  r.maViews = [...document.querySelectorAll('#screen-mini .ma-view')].map(v=>v.id);
+  return r;
+});
+console.log(JSON.stringify(out, null, 1).slice(0, 8000));
 await b.close();
