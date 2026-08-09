@@ -38,13 +38,15 @@ if ($was === '1') {
     echo "[$now] launch_go: СТОП-КРАН СНЯТ — массовые рассылки и посты пошли\n";
 }
 
-// Старт кампании: включает прогревочную кривую дневных квот.
-$campStart = trim((string) setting('nl_campaign_start', ''));
+// Старт кампании: включает прогревочную кривую дневных квот (60→90→…→потолок).
+// ВАЖНО: ключ настройки именно 'bulk_campaign_start' — его читает nl_campaign_start().
+// Без него nl_campaign_day() = 0 и кривая не работает: потолок застревает на ручных 130/день.
+$campStart = nl_campaign_start();
 if ($campStart === '') {
-    set_setting('nl_campaign_start', date('Y-m-d'));
-    echo "[$now] launch_go: nl_campaign_start = " . date('Y-m-d') . " (прогрев квот включён)\n";
+    set_setting('bulk_campaign_start', date('Y-m-d'));
+    echo "[$now] launch_go: bulk_campaign_start = " . date('Y-m-d') . " (прогрев квот включён)\n";
 } else {
-    echo "[$now] launch_go: nl_campaign_start уже стоит ($campStart)\n";
+    echo "[$now] launch_go: старт кампании уже стоит ($campStart)\n";
 }
 
 echo "[$now] launch_go: дневная квота сегодня = " . nl_daily_cap()

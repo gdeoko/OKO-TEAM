@@ -51,6 +51,17 @@ if ((string) input('do') === 'email_preview') {
 if ((string) input('do') === 'email_preview_campaign') {
     $ctype = (string) input('ctype');
     header('Content-Type: text/html; charset=utf-8');
+    // Объединённое письмо запуска — ровно то, что уходит участнику: конкурсы месяца,
+    // затем доступ в кабинет, затем клуб. Показываем полный вариант (все три блока).
+    if ($ctype === 'combo') {
+        if (!function_exists('launch_combo_inner')) require_once BASE_PATH . '/core/launch_combo.php';
+        $inner = launch_combo_inner(true, true, 'ivanova@example.ru', 'Анна', 'a7k3m9x2p');
+        $subj  = launch_combo_subject();
+        if (function_exists('nl_wrap_email'))      echo nl_wrap_email($inner, '#', '', $subj, ['vip' => false]);
+        elseif (function_exists('mm_email_layout')) echo mm_email_layout($inner, ['title' => $subj]);
+        else echo $inner;
+        exit;
+    }
     if ($ctype === 'kabinet') {
         if (!function_exists('kabinet_onboarding_html') && is_file(BASE_PATH . '/core/kabinet_onboarding.php')) require_once BASE_PATH . '/core/kabinet_onboarding.php';
         echo function_exists('kabinet_onboarding_html')
@@ -74,7 +85,9 @@ if ((string) input('do') === 'mail_block_save') {
     header('Content-Type: application/json; charset=utf-8');
     if (!csrf_check() || !user_can('admin')) json_out(['ok' => false, 'msg' => 'Нет доступа'], 403);
     $ctype = (string) input('ctype');
-    if (!in_array($ctype, ['konkurs', 'vip', 'kabinet'], true)) json_out(['ok' => false, 'msg' => 'Неизвестный блок'], 422);
+    // 'combo' — объединённое письмо запуска (основной блок пульта с августа 2026).
+    // 'konkurs'/'vip'/'kabinet' оставлены для разовых кампаний, запускаемых руками.
+    if (!in_array($ctype, ['combo', 'konkurs', 'vip', 'kabinet'], true)) json_out(['ok' => false, 'msg' => 'Неизвестный блок'], 422);
     set_setting('launch_mail_subject:' . $ctype, trim((string) input('subject')));
     // Визуально отредактированное тело письма (contenteditable). Пусто — не трогаем.
     $html = (string) input('html');
@@ -93,7 +106,9 @@ if ((string) input('do') === 'mail_block_reset') {
     header('Content-Type: application/json; charset=utf-8');
     if (!csrf_check() || !user_can('admin')) json_out(['ok' => false, 'msg' => 'Нет доступа'], 403);
     $ctype = (string) input('ctype');
-    if (!in_array($ctype, ['konkurs', 'vip', 'kabinet'], true)) json_out(['ok' => false, 'msg' => 'Неизвестный блок'], 422);
+    // 'combo' — объединённое письмо запуска (основной блок пульта с августа 2026).
+    // 'konkurs'/'vip'/'kabinet' оставлены для разовых кампаний, запускаемых руками.
+    if (!in_array($ctype, ['combo', 'konkurs', 'vip', 'kabinet'], true)) json_out(['ok' => false, 'msg' => 'Неизвестный блок'], 422);
     set_setting('launch_mail_html:' . $ctype, '');
     set_setting('launch_mail_subject:' . $ctype, '');
     set_setting('launch_mail_lead:' . $ctype, '');

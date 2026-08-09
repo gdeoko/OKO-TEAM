@@ -365,18 +365,22 @@ function nl_ramp_peak(): int { return (int) cfgv('mail_daily_max', 300); }
 
 /**
  * Дневное распределение массовой рассылки по типам кампаний (в успешных письмах/день).
- * СЕЙЧАС (пока идёт разовая рассылка про личный кабинет): 150 конкурсы + 75 ВИП + 75 кабинет.
- * ДАЛЕЕ (кабинета больше нет): 200 конкурсы + 100 ВИП. Итого всегда 300 успешных/день.
- * Переключатель: settings.nl_kabinet_phase = '1' (сейчас) | '0' (обычный режим).
- * Возвращает ['konkurs'=>N, 'vip'=>N, 'kabinet'=>N] (kabinet=0 в обычном режиме).
+ *
+ * С августа 2026 волна ОДНА (правило владельца): объединённое письмо запуска —
+ * конкурсы месяца + личный кабинет с доступом + приглашение в клуб. Поэтому весь
+ * дневной объём отдан типу 'konkurs' (400/день = 200 на каждый из двух ящиков),
+ * а 'vip' и 'kabinet' обнулены: отдельных волн больше нет.
+ *
+ * Раньше объём делился на три (200 конкурсы + 100 ВИП + 100 кабинет), и человек
+ * получал три письма подряд, а база проходилась больше двух месяцев вместо одного.
+ *
+ * Типы 'vip' и 'kabinet' сохранены в коде: если из пульта руками запустить
+ * отдельную кампанию, ей нужно выдать квоту через nl_split_vip / nl_split_kabinet.
  */
 function nl_daily_split(): array {
-    // Значения можно переопределить в settings (nl_split_konkurs / nl_split_vip / nl_split_kabinet)
-    // из блоков пульта запуска. По умолчанию: база 200/день, ВИП 100/день, кабинет 100/день.
-    $phase = (string) setting('nl_kabinet_phase', '1'); // '1' — идёт разовая волна «личный кабинет»
-    $k  = (int) setting('nl_split_konkurs', '200');
-    $v  = (int) setting('nl_split_vip',     '100');
-    $kb = (int) setting('nl_split_kabinet', $phase === '1' ? '100' : '0');
+    $k  = (int) setting('nl_split_konkurs', '400');
+    $v  = (int) setting('nl_split_vip',     '0');
+    $kb = (int) setting('nl_split_kabinet', '0');
     return ['konkurs' => max(0, $k), 'vip' => max(0, $v), 'kabinet' => max(0, $kb)];
 }
 
@@ -475,6 +479,55 @@ function mass_sending_set(bool $on): void {
     set_setting('mass_sending_changed_at', date('Y-m-d H:i:s'));
 }
 
+/**
+ * ОКНО МАССОВЫХ РАССЫЛОК (правило владельца, август 2026).
+ *
+ * Массовое уходит только с 1-го по 24-е число месяца и только с 09:00 до 18:00 МСК.
+ * Воскресенье РАЗРЕШЕНО — в отличие от общего рабочего календаря (st_is_workday),
+ * который воскресенье исключает: тот календарь про сроки оценки и наградные
+ * документы, а рассылку по базе в выходной слать можно и нужно.
+ *
+ * Личные (транзакционные) письма это окно НЕ ограничивает: результат, диплом,
+ * счёт и восстановление пароля уходят в любое время суток.
+ *
+ * Переопределяется настройками nl_window_day_from / nl_window_day_to /
+ * nl_window_hour_from / nl_window_hour_to.
+ */
+function nl_bulk_window_open(?\DateTime $at = null): array {
+    $t   = $at ?: new \DateTime('now');
+    $day = (int) $t->format('j');
+    $h   = (int) $t->format('G');
+
+    $dFrom = (int) setting('nl_window_day_from', '1');
+    $dTo   = (int) setting('nl_window_day_to',   '24');
+    $hFrom = (int) setting('nl_window_hour_from', '9');
+    $hTo   = (int) setting('nl_window_hour_to',  '18');
+
+    if ($day < $dFrom || $day > $dTo) {
+        return ['open' => false, 'why' => "рассылка идёт с {$dFrom}-го по {$dTo}-е число, сегодня {$day}-е"];
+    }
+    if ($h < $hFrom || $h >= $hTo) {
+        return ['open' => false, 'why' => "рассылка идёт с {$hFrom}:00 до {$hTo}:00 МСК, сейчас " . $t->format('H:i')];
+    }
+    return ['open' => true, 'why' => ''];
+}
+
+/** Суточный лимит массовых НА ОДИН ящик (чтобы не упереться в лимит провайдера). */
+function nl_per_box_cap(): int { return max(1, (int) setting('nl_per_box_cap', '200')); }
+
+/** Сколько массовых ушло сегодня с конкретного ящика. */
+function nl_box_sent_today(string $box): int {
+    if ($box === '') return 0;
+    try {
+        return (int) scalar(
+            "SELECT COUNT(*) FROM mail_queue
+              WHERE status='sent' AND COALESCE(priority,0) > 0
+                AND sent_at >= ? AND LOWER(COALESCE(sent_via,'')) = ?",
+            [date('Y-m-d 00:00:00'), mb_strtolower($box)]
+        );
+    } catch (\Throwable $e) { return 0; }
+}
+
 function newsletter_process_queue(int $limit): int {
     $dailyLimit = nl_daily_cap();
     $gap        = max(0, (int) cfgv('mail_send_gap', 30));   // антибан-пауза для МАССОВЫХ
@@ -483,6 +536,9 @@ function newsletter_process_queue(int $limit): int {
     // scheduled_at — плановое время отправки. NULL/пусто = сразу. Позволяет админу из
     // «живого пульта» (admin/dispatch.php) отложить письмо или задержать его.
     try { db()->exec("ALTER TABLE mail_queue ADD COLUMN scheduled_at TEXT"); } catch (\Throwable $e) {}
+    // sent_via — каким ящиком реально ушло письмо. Без этой отметки нельзя считать
+    // суточный лимит на КАЖДЫЙ ящик и раскладывать нагрузку между ними поровну.
+    try { db()->exec("ALTER TABLE mail_queue ADD COLUMN sent_via TEXT DEFAULT ''"); } catch (\Throwable $e) {}
     $nowTs = date('Y-m-d H:i:s');
 
     // Отправка одного письма очереди с обновлением статуса.
@@ -507,7 +563,10 @@ function newsletter_process_queue(int $limit): int {
                 update('mail_queue', ['error' => 'Отправлено с резервной почты: ' . $sw], 'id=:id', ['id' => $id]);
                 nl_log('process: #' . $id . ' ушло с резервной почты ' . $sw);
             }
-            update('mail_queue', ['status' => 'sent', 'sent_at' => date('Y-m-d H:i:s'), 'tries' => (int) $row['tries'] + 1], 'id=:id', ['id' => $id]);
+            // Каким ящиком реально ушло: при подмене — резервным, иначе выбранным.
+            // Эту отметку читает nl_box_sent_today() для лимита на каждый ящик.
+            $via = $sw !== '' ? $sw : (string) ($account['user'] ?? '');
+            update('mail_queue', ['status' => 'sent', 'sent_at' => date('Y-m-d H:i:s'), 'sent_via' => mb_strtolower($via), 'tries' => (int) $row['tries'] + 1], 'id=:id', ['id' => $id]);
             if (!empty($row['newsletter_id'])) q("UPDATE newsletters SET stats_sent = stats_sent + 1 WHERE id = ?", [(int) $row['newsletter_id']]);
         } else {
             $tries = (int) $row['tries'] + 1;
@@ -546,8 +605,16 @@ function newsletter_process_queue(int $limit): int {
         nl_log('process: массовые рассылки выключены стоп-краном (пульт запуска) — отправлены только личные письма');
         return $sent;
     }
-    //    Через news@музыкальный-мир.рф, в рамках дневного лимита И с СОБЛЮДЕНИЕМ
-    //    per-type квот (конкурсы/ВИП/кабинет = 200/100/100, масштабируется прогревом).
+    //    Окно рассылки: 1-24 число, 09:00-18:00 МСК (воскресенье разрешено).
+    //    Вне окна массовые ждут в очереди — личные письма выше уже ушли.
+    $win = nl_bulk_window_open();
+    if (!$win['open']) {
+        nl_log('process: массовые вне окна отправки — ' . $win['why']);
+        return $sent;
+    }
+    //    Нагрузка раскладывается ПОРОВНУ между ящиками bulk-пула, не больше
+    //    nl_per_box_cap (200) с каждого: иначе весь объём уходил через первый ящик
+    //    пула и упирался в суточный лимит провайдера.
     nl_ensure_campaign_type_col();
     $globalRemaining = $dailyLimit - nl_bulk_sent_today();
     if ($globalRemaining > 0) {
@@ -574,13 +641,38 @@ function newsletter_process_queue(int $limit): int {
                   ORDER BY q.id ASC LIMIT ?",
                 array_merge([$nowTs], $allowed, [max(1, $budget * 4)])
             );
+            // Ящики bulk-пула и их остаток на сегодня: раскладываем нагрузку поровну.
+            $boxes = function_exists('mail_fallback_accounts') ? mail_fallback_accounts([], 'bulk') : [];
+            $boxLeft = [];
+            foreach ($boxes as $bi => $b) {
+                $u = mb_strtolower((string) ($b['user'] ?? ''));
+                if ($u !== '') $boxLeft[$bi] = max(0, nl_per_box_cap() - nl_box_sent_today($u));
+            }
+            if ($boxes && array_sum($boxLeft) <= 0) {
+                nl_log('process: суточный лимит исчерпан на ВСЕХ ящиках пула (по ' . nl_per_box_cap() . ' на ящик)');
+                $bulk = [];
+            }
+
             $i = 0; $bulkSent = 0;
             foreach ($bulk as $row) {
                 if ($bulkSent >= $budget) break;                      // не больше бюджета за один прогон
                 $ct = (string) ($row['ctype'] ?? 'konkurs');
                 if (($typeLeft[$ct] ?? 0) <= 0) continue;             // квота типа исчерпана
+
+                // Круговая выборка ящика: берём тот, у кого больше остаток на сегодня.
+                $pick = null;
+                if ($boxes) {
+                    arsort($boxLeft);
+                    foreach ($boxLeft as $bi => $left) { if ($left > 0) { $pick = $bi; break; } }
+                    if ($pick === null) { nl_log('process: свободных ящиков не осталось'); break; }
+                }
+                $acc = $pick !== null ? $boxes[$pick] : $route($row);
+
                 if ($i++ > 0 && $gap > 0) sleep($gap);
-                if ($sendRow($row, $route($row))) { $sent++; $bulkSent++; $typeLeft[$ct]--; }
+                if ($sendRow($row, $acc)) {
+                    $sent++; $bulkSent++; $typeLeft[$ct]--;
+                    if ($pick !== null) $boxLeft[$pick]--;
+                }
             }
         } else {
             nl_log('process: суточные квоты всех типов (konkurs/vip/kabinet) на сегодня исчерпаны');

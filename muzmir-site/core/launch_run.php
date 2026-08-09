@@ -433,17 +433,20 @@ function launch_fire(int $compId, string $wave, array $channels, string $when = 
                 } catch (\Throwable $e) { $report['email'] = 'ошибка: ' . $e->getMessage(); }
             }
         } else {
-            // Открытие (launch/launch_mail) — ОДНО красивое письмо со всеми конкурсами (без цен),
-            // общая массовая рассылка по базе (квота «konkurs», 200/день).
-            [$ksubj, $kbody] = launch_email_build('konkurs');
-            if ($dry) { $report['email'] = 'newsletter «' . $ksubj . '» → прогрев-очередь (конкурсы, до 200/день)'; }
-            else {
-                try {
-                    $nid = insert('newsletters', ['subject' => $ksubj, 'body' => $kbody, 'audience' => 'all', 'campaign_type' => 'konkurs', 'status' => 'draft']);
-                    $queued = function_exists('newsletter_enqueue') ? newsletter_enqueue((int) $nid) : 0;
-                    $report['email'] = 'в очередь поставлено писем: ' . (int) $queued;
-                } catch (\Throwable $e) { $report['email'] = 'ошибка: ' . $e->getMessage(); }
-            }
+            // Открытие (launch/launch_mail) — ОДНО ОБЪЕДИНЁННОЕ письмо на человека:
+            // конкурсы месяца + личный кабинет с логином/паролем (только тем, кто ни разу
+            // не входил) + приглашение в клуб (только тем, кто не состоит).
+            // Раньше это были три отдельные волны: 3 × 8200 = 24 600 писем, то есть больше
+            // двух месяцев при квоте 400/день. Теперь 8200 — около 21 рабочего дня.
+            if (!function_exists('launch_combo_enqueue')) require_once BASE_PATH . '/core/launch_combo.php';
+            try {
+                $res = launch_combo_enqueue($dry);
+                $report['email'] = $dry
+                    ? sprintf('объединённое письмо → получателей: %d (из них с доступом в кабинет: %d, с приглашением в клуб: %d), квота 400/день',
+                              $res['queued'], $res['with_cabinet'], $res['with_vip'])
+                    : sprintf('в очередь поставлено писем: %d (с доступом в кабинет: %d, с приглашением в клуб: %d)',
+                              $res['queued'], $res['with_cabinet'], $res['with_vip']);
+            } catch (\Throwable $e) { $report['email'] = 'ошибка: ' . $e->getMessage(); }
         }
     }
     // ---- In-app всем ----
@@ -550,19 +553,13 @@ function launch_schedule_all(string $launchDate, string $launchTime, array $chan
         $planned['launch_mail'] = ['run_at' => $runLaunch, 'channels' => $mailCh];
     }
 
-    // 3) Кампании ВИП-клуб и «личный кабинет» — только e-mail, по своей аудитории/квоте.
-    if ($hasEmail) {
-        $vipAt = (clone $slot); $vipAt->modify('+15 min');
-        $vipSlot = function_exists('next_working_slot') ? next_working_slot($vipAt) : $vipAt;
-        insert('launch_jobs', ['competition_id' => $rep, 'wave' => 'campaign_vip',
-            'channels' => 'email', 'run_at' => $vipSlot->format('Y-m-d H:i:s'), 'status' => 'scheduled']);
-        $kabAt = (clone $slot); $kabAt->modify('+30 min');
-        $kabSlot = function_exists('next_working_slot') ? next_working_slot($kabAt) : $kabAt;
-        insert('launch_jobs', ['competition_id' => $rep, 'wave' => 'campaign_kabinet',
-            'channels' => 'email', 'run_at' => $kabSlot->format('Y-m-d H:i:s'), 'status' => 'scheduled']);
-        $planned['campaign_vip']     = ['run_at' => $vipSlot->format('Y-m-d H:i:s')];
-        $planned['campaign_kabinet'] = ['run_at' => $kabSlot->format('Y-m-d H:i:s')];
-    }
+    // 3) Отдельных волн «ВИП-клуб» и «личный кабинет» БОЛЬШЕ НЕТ (правило владельца,
+    //    август 2026): оба блока входят в объединённое письмо волны launch_mail.
+    //    Раньше здесь заводились ещё два задания (+15 и +30 минут), и человек получал
+    //    три письма подряд, а база проходилась за два с лишним месяца вместо одного.
+    //    Волны campaign_vip / campaign_kabinet остаются в коде launch_fire — их можно
+    //    запустить руками из пульта, если понадобится разовая отдельная кампания,
+    //    но в АВТОМАТИЧЕСКОМ плане следующих месяцев они не появляются.
 
     // 4) Общие посты месяца — стена+сторис + рассылка ВК в личку + in-app (БЕЗ e-mail).
     $ly = (int) date('Y', $lt); $lm = (int) date('n', $lt);
@@ -790,13 +787,25 @@ function launch_panel_html(): string {
             </div>
             <?php return (string) ob_get_clean();
         };
-        [, $konkBody] = launch_email_build('konkurs');
-        [, $vipBody]  = launch_email_build('vip');
-        $kabBody = function_exists('kabinet_onboarding_inner') ? kabinet_onboarding_inner()
-                 : ((is_file(BASE_PATH . '/core/kabinet_onboarding.php') && (require_once BASE_PATH . '/core/kabinet_onboarding.php') && function_exists('kabinet_onboarding_inner')) ? kabinet_onboarding_inner() : '');
-        echo $mailBlock('konkurs', 'Общее письмо по базе — все конкурсы в одном', 'Красивое письмо со всеми конкурсами (без цен), уходит по всей базе почт. Дублируется в приложение (in-app) и колокольчик. Правьте текст/кнопки/картинки прямо в письме.', 'nl_split_konkurs', 200, str_replace('{{name}}', 'Имя', (string) $konkBody));
-        echo $mailBlock('vip', 'Письмо ВИП-клуб', 'Красивое письмо как раздел «ВИП-клуб» на сайте (без цен), CTA «Вступить» вверху и внизу. Аудитория — члены клуба.', 'nl_split_vip', 100, str_replace('{{name}}', 'Имя', (string) $vipBody));
-        echo $mailBlock('kabinet', 'Письмо «Личный кабинет» (логин + пароль)', 'Персональный онбординг по утверждённому эталону. Поля {{login}} и {{password}} подставятся каждому автоматически. Разовая волна по базе.', 'nl_split_kabinet', 100, str_replace('{{name}}', 'Имя', (string) $kabBody));
+        // ОДНО ОБЪЕДИНЁННОЕ ПИСЬМО (правило владельца, август 2026).
+        // Отдельные блоки «ВИП-клуб» и «Личный кабинет» из пульта убраны: теперь это
+        // три части одного письма, и редактируются они в одном месте — иначе легко
+        // отредактировать шаблон, который никуда не уходит.
+        if (!function_exists('launch_combo_inner')) require_once BASE_PATH . '/core/launch_combo.php';
+        // В РЕДАКТОРЕ токены оставляем токенами: если подставить сюда образцовые логин
+        // и пароль, админ сохранит шаблон с зашитым чужим паролем навсегда.
+        // Живые значения показываются только в «Предпросмотре письма».
+        $comboPreview = launch_combo_inner(true, true, '{{login}}', '{{name}}', '{{password}}');
+        echo $mailBlock(
+            'combo',
+            'Письмо запуска: конкурсы + личный кабинет + клуб',
+            'Одно письмо на человека, три блока подряд: конкурсы месяца → доступ в личный кабинет (логин и временный пароль) → приглашение в клуб. '
+            . 'Блок кабинета уходит ТОЛЬКО тем, кто ещё ни разу не входил (у действующих участников свой пароль, его не трогаем). '
+            . 'Блок клуба — только тем, кто в клубе не состоит. Ниже показан полный вариант со всеми тремя блоками; '
+            . '{{login}} и {{password}} подставляются каждому автоматически.',
+            'nl_split_konkurs', 400,
+            str_replace('{{name}}', 'Имя', (string) $comboPreview)
+        );
         ?>
 
         <div class="lp2-group-t" style="margin-top:18px">Общие посты по всем конкурсам (афиша — авто-композит со всеми афишами и надписью, можно заменить)</div>
