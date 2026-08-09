@@ -219,9 +219,15 @@ nav#tabs > button:active {
 /* ---------------------------------------------------------------------------
    7. ГОРИЗОНТАЛЬНОЕ ПЕРЕПОЛНЕНИЕ: страница не ездит вбок никогда
    --------------------------------------------------------------------------- */
-html, body, #app {
+html, body {
   overflow-x: hidden;
   max-width: 100%;
+}
+/* У #app свой предел ширины на ПК (1280px по центру) — не перебиваем его,
+   иначе на широком экране раскладка расползается и правый край диалога
+   уходит за пределы видимой области. Только запрещаем боковой скролл. */
+#app {
+  overflow-x: hidden;
 }
 main > .screen {
   max-width: 100%;
@@ -649,3 +655,28 @@ img, video, canvas, svg:not(.i) {
    Реальные классы модуля роста: .okg-ob (чек-лист) и .okg-pill (свёрнутая пилюля). */
 #app.conv-open .okg-ob,
 #app.conv-open .okg-pill{ display:none !important; }
+
+/* ---------------------------------------------------------------------------
+   22. ПК: закрытые выезжающие панели не должны «подглядывать» справа
+   Все боковые вьюхи сделаны как position:fixed; inset:0; max-width:1280px;
+   margin:0 auto; transform:translateX(100%). На экране шире 1280 такой сдвиг
+   уводит панель только на её собственную ширину — и правая часть остаётся
+   в поле зрения: у края экрана висел кусок чужой шапки с кнопкой «назад».
+   Гасим их видимостью: анимация выезда сохраняется, а закрытая панель
+   гарантированно ничего не рисует.
+   --------------------------------------------------------------------------- */
+#searchView, #notifsView, #adminView, #systemView, #editProfile,
+#regView, #legalView, #psView, #psSocView, #hqEmbed {
+  visibility: hidden;
+  transition: transform .3s cubic-bezier(.3, 1, .4, 1), visibility 0s linear .3s;
+}
+#searchView.open, #notifsView.open, #adminView.open, #systemView.open,
+#editProfile.open, #regView.open, #legalView.open, #psView.open,
+#psSocView.open, #hqEmbed.open {
+  visibility: visible;
+  transition: transform .3s cubic-bezier(.3, 1, .4, 1), visibility 0s;
+}
+@media (prefers-reduced-motion: reduce) {
+  #searchView, #notifsView, #adminView, #systemView, #editProfile,
+  #regView, #legalView, #psView, #psSocView, #hqEmbed { transition: none; }
+}
