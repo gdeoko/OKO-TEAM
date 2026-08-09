@@ -247,6 +247,7 @@ a{color:inherit;text-decoration:none}
     <div class="nav-i" data-p="moderation" onclick="go('moderation')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><path d="m9 12 2 2 4-4"/></svg><span class="lbl">Модерация</span></div>
     <div class="nav-i" data-p="finance" onclick="go('finance')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 21V3h6a5 5 0 0 1 0 10H6M3 13h10M3 17h10"/></svg><span class="lbl">Финансы</span></div>
     <div class="nav-i" data-p="anketas" onclick="go('anketas')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="4" y="3" width="16" height="18" rx="2"/><path d="M8 8h8M8 12h8M8 16h5"/></svg><span class="lbl">Анкеты</span></div>
+    <div class="nav-i" data-p="dossier" onclick="go('dossier')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 4h6l2 2h8v12a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2z"/><path d="M8 13h8M8 17h5"/></svg><span class="lbl">Материалы</span></div>
     <div class="nav-i" data-p="dialogs" onclick="go('dialogs')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H8l-4 4V5a2 2 0 0 1 2-2h13a2 2 0 0 1 2 2z"/></svg><span class="lbl">Диалоги</span></div>
     <div class="nav-i" data-p="deals" onclick="go('deals')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 7 12 3 4 7v10l8 4 8-4z"/></svg><span class="lbl">Сделки</span></div>
     <div class="nav-i" data-p="vacancies" onclick="go('vacancies')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="7" width="18" height="13" rx="2"/><path d="M8 7V5a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg><span class="lbl">Вакансии</span></div>
@@ -347,6 +348,7 @@ function logout(){localStorage.removeItem('okoKey');location.reload()}
 const TITLES={
   dashboard:['Дашборд','Обзор в реальном времени'],
   clients:['Клиенты','CRM · база клиентов и лидов'],
+  dossier:['Материалы','КП, Системы, договоры и оплата по каждому клиенту'],
   feed:['Live-лента','События по мере поступления'],
   manualpay:['Ручная оплата','Провести платёж в обход webhook'],
   agents:['Агенты','Sub-агенты OKO'],
@@ -381,6 +383,12 @@ document.addEventListener('visibilitychange',()=>{if(!document.hidden && REFRESH
 function toggleSide(){document.getElementById('side').classList.toggle('open')}
 function markUpd(){document.getElementById('lastUpd').textContent=new Date().toLocaleTimeString('ru-RU')}
 
+function renderDossier(box){
+  // Материалы собирает сервер: он один знает и досье от агентов, и ссылки.
+  box.innerHTML='<iframe id="dossierFrame" style="width:100%;min-height:78vh;border:0;'
+    +'border-radius:12px;background:#0d0d0d" src="/api.php?action=dossierPage&key='
+    +encodeURIComponent(adminKey||localStorage.getItem('okoKey')||'')+'"></iframe>';
+}
 async function loadPage(p,silent){
   const box=document.getElementById('content');
   if(!silent) box.innerHTML='<div class="spin"></div>';
@@ -392,6 +400,7 @@ async function loadPage(p,silent){
   if(p==='moderation')return renderModeration(box);
   if(p==='finance')return renderFinance(box);
   if(p==='clients')return renderClients(box);
+  if(p==='dossier')return renderDossier(box);
   if(p==='anketas')return renderAnketasList(box);
   if(p==='dialogs')return renderList(box,'getDialogs','dialogs',renderDialog,'Диалогов пока нет');
   if(p==='deals')return renderList(box,'getStats','deals',renderDeal,'Сделок пока нет');

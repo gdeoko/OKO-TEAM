@@ -122,6 +122,75 @@ case 'uploadAnketaFile':
         [$sid,$fn,"/uploads/$sid/$fn",$mime,filesize("$dir/$fn"),now()]);
     out(['ok'=>true,'filename'=>$fn,'size'=>filesize("$dir/$fn"),'mime'=>$mime]);
 
+case 'agentDossier':
+    // Досье клиента от агента: всё, что конвейер по нему сделал — карточка,
+    // тарифы с ценами, ссылки на КП, Систему, договоры и оплату, стадия и
+    // дожимы. Раньше эти материалы жили только на стороне агента, и владелец
+    // видел куски вместо целого.
+    require_agent();
+    $uid=preg_replace('/[^\w.\-]+/','',(string)($body['uid']??''));
+    if(!$uid) out(['ok'=>false,'error'=>'нет uid'],400);
+    $dir=__DIR__.'/data/dossiers'; if(!is_dir($dir)) @mkdir($dir,0755,true);
+    file_put_contents("$dir/$uid.json",json_encode($body,JSON_UNESCAPED_UNICODE));
+    out(['ok'=>true,'uid'=>$uid]);
+
+case 'dossiers':
+    require_admin();
+    $dir=__DIR__.'/data/dossiers'; $rows=[];
+    foreach(glob("$dir/*.json") as $f){
+        $d=json_decode((string)file_get_contents($f),true);
+        if($d) $rows[]=$d;
+    }
+    usort($rows,fn($a,$b)=>(int)($b['updated_at']??0)<=>(int)($a['updated_at']??0));
+    out(['ok'=>true,'count'=>count($rows),'dossiers'=>array_slice($rows,0,300)]);
+
+case 'dossierPage':
+    // Готовая страница раздела: админка показывает её во вкладке «Материалы».
+    // Собирается на сервере — так раздел не зависит от правок в 84 КБ вёрстки.
+    require_admin();
+    $dir=__DIR__.'/data/dossiers'; $rows=[];
+    foreach(glob("$dir/*.json") as $f){ $d=json_decode((string)file_get_contents($f),true); if($d)$rows[]=$d; }
+    usort($rows,fn($a,$b)=>(int)($b['updated_at']??0)<=>(int)($a['updated_at']??0));
+    $e=fn($x)=>htmlspecialchars((string)$x,ENT_QUOTES,'UTF-8');
+    $money=fn($n)=>number_format((int)$n,0,'.',' ');
+    $cards='';
+    foreach($rows as $d){
+        $t='';
+        foreach(($d['tariffs']??[]) as $x){
+            $pay=($x['pay_url']??'')?'<a href="'.$e($x['pay_url']).'">оплата</a>':'<i>оплаты нет</i>';
+            $doc=($x['contract_url']??'')?'<a href="'.$e($x['contract_url']).'">договор</a>':'<i>договора нет</i>';
+            $t.='<div class="t"><b>'.$e($x['name']??'').'</b> '.$money($x['price_rub']??0).' ₽ · '.$pay.' · '.$doc.'</div>';
+        }
+        $L=$d['links']??[];
+        $links='';
+        foreach(['kp'=>'КП','sistema'=>'Система','anketa'=>'Анкета'] as $k=>$lbl)
+            if(!empty($L[$k])) $links.='<a href="'.$e($L[$k]).'">'.$lbl.'</a> ';
+        if(!empty($L['workchat_branch'])) $links.='<span class="br">'.$e($L['workchat_branch']).'</span>';
+        $soc=implode(' · ',array_map(fn($k,$v)=>$e($k).':'.$e($v),
+              array_keys($d['socials']??[]),array_values($d['socials']??[])));
+        $cards.='<div class="c"><div class="h">'.$e($d['brand']??$d['uid']??'').
+            '<span class="s">'.$e($d['niche']??'').' · '.$e($d['city']??$d['country']??'').
+            ' · стадия: '.$e($d['stage']?:'—').' · дожимов '.(int)($d['followups']??0).'/3</span></div>'.
+            ($soc?'<div class="m">'.$soc.($d['site']??''?' · '.$e($d['site']):'').'</div>':'').
+            ($d['pains']??[]?'<div class="m">боли: '.$e(implode(', ',$d['pains'])).'</div>':'').
+            ($d['budget_rub']??0?'<div class="m">бюджет: '.$money($d['budget_rub']).' ₽</div>':'').
+            ($d['competitors']??0?'<div class="m">конкурентов '.(int)$d['competitors'].', роликов '.(int)($d['competitor_videos']??0).'</div>':'').
+            $t.'<div class="l">'.$links.'</div></div>';
+    }
+    if(!$cards) $cards='<p class="none">Пока пусто. Материалы появятся, как только агент соберёт первому клиенту КП.</p>';
+    header('Content-Type: text/html; charset=utf-8');
+    echo '<!doctype html><html lang="ru"><meta charset="utf-8">'
+      .'<meta name="viewport" content="width=device-width,initial-scale=1"><style>'
+      .'body{margin:0;padding:16px;background:#0d0d0d;color:#eaeaea;font:14px/1.5 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif}'
+      .'.c{background:#151515;border-radius:12px;padding:14px;margin-bottom:12px}'
+      .'.h{font-size:16px;font-weight:600}.h .s{display:block;font-size:12px;color:#9a9a9a;font-weight:400;margin-top:2px}'
+      .'.m{font-size:12px;color:#b5b5b5;margin-top:6px}'
+      .'.t{margin-top:8px;font-size:13px}.l{margin-top:10px;display:flex;gap:10px;flex-wrap:wrap}'
+      .'a{color:#9AFF00;text-decoration:none}i{color:#7a7a7a;font-style:normal}'
+      .'.br{color:#7a7a7a;font-size:12px}.none{color:#9a9a9a}'
+      .'</style><h2 style="margin:0 0 14px">Материалы клиентов — '.count($rows).'</h2>'.$cards.'</html>';
+    exit;
+
 case 'saveAnketa':
     rate_limit('saveAnketa',20,60);
     $sid=$body['anketa_id']??('ank_'.time().'_'.substr(md5(mt_rand()),0,6));
