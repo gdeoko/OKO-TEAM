@@ -102,18 +102,36 @@ if ($action === 'request') {
     $code = auth_gen_code(6);
     auth_store_code('email', $email, $code, 900);
 
+    // OTP-код живёт 15 минут — гнать его через воркер очереди (крон раз в минуту)
+    // рискованно: если очередь встанет или отправитель уйдёт в карантин, участник
+    // будет ждать несколько минут. Ящик gmail в этот момент часто уже не примет
+    // просроченный код, а на mail.ru просто «письмо не пришло». Поэтому шлём
+    // синхронно через mail_send_failover — с фолбэком по всему пулу tx — и только
+    // если не удалось живьём, кладём в очередь как резервный путь.
+    if (!function_exists('mail_send_failover')) require_once BASE_PATH . '/core/mailer.php';
+
+    $subject = 'Код для входа: ' . $code . ' — Культурный центр «Музыкальный Мир»';
+    $html = function_exists('mail_template')
+        ? mail_template('otp_code', [
+            'name'        => (string) input('name'),
+            'code'        => $code,
+            'ttl_minutes' => 15,
+            'preheader'   => 'Ваш код для входа на сайт центра. Действует 15 минут.',
+          ])
+        : '<p>Код для входа: <b style="font-size:28px;letter-spacing:6px;">' . h($code) . '</b>. Действует 15 минут.</p>';
+
     $sent = false;
-    if (function_exists('mail_queue')) {
-        // Фирменное письмо с крупным кодом в рамке (шаблон otp_code, единый лейаут).
-        $html = function_exists('mail_template')
-            ? mail_template('otp_code', [
-                'name'        => (string) input('name'),
-                'code'        => $code,
-                'ttl_minutes' => 15,
-                'preheader'   => 'Ваш код для входа на сайт центра. Действует 15 минут.',
-              ])
-            : '<p>Код для входа: <b style="font-size:28px;letter-spacing:6px;">' . h($code) . '</b>. Действует 15 минут.</p>';
-        $sent = (bool) mail_queue($email, input('name'), 'Код для входа — Культурного центра «Музыкальный Мир»', $html);
+    try {
+        $sent = (bool) mail_send_failover($email, $subject, $html, ['pool' => 'tx']);
+    } catch (\Throwable $e) { $sent = false; }
+
+    // Если синхронно не удалось (все ящики отказали) — ставим в очередь, чтобы
+    // воркер попробовал ещё раз при первой возможности; всё равно уведомляем
+    // участника honest'ом «Код отправлен», но помечаем sent=false для JS.
+    if (!$sent && function_exists('mail_queue')) {
+        $qid = (int) mail_queue($email, (string) input('name'), $subject, $html);
+        // Ставим повышенный приоритет: OTP не должен тонуть между массовыми письмами.
+        if ($qid) { try { update('mail_queue', ['priority' => 5], 'id=:id', ['id' => $qid]); } catch (\Throwable $e) {} }
     }
 
     $out = ['ok' => true, 'sent' => $sent, 'need_verify' => true, 'message' => 'Код отправлен на почту'];

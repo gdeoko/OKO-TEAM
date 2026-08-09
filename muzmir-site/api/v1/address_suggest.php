@@ -17,7 +17,11 @@ declare(strict_types=1);
 require __DIR__ . '/_boot.php';
 
 $q = trim((string) input('q'));
-if (mb_strlen($q) < 3) json_out(['ok' => true, 'suggestions' => []]);
+// Режим city: пользователь ищет только город/населённый пункт (шаг «Город» в заявке).
+// Для города достаточно 2 символов, для полного адреса — 3.
+$mode = (string) input('mode');
+$minLen = ($mode === 'city') ? 2 : 3;
+if (mb_strlen($q) < $minLen) json_out(['ok' => true, 'suggestions' => []]);
 
 // Защита от перебора чужим ключом: не больше 60 запросов в минуту с адреса.
 if (function_exists('rate_ok') && !rate_ok('addr:' . client_ip(), 60, 60)) {
@@ -30,10 +34,18 @@ if ($token === '') {
     json_out(['ok' => true, 'suggestions' => [], 'reason' => 'no_token']);
 }
 
+$payload = ['query' => $q, 'count' => 7];
+// В режиме city ограничиваем поиск DaData уровнем «город» — иначе первыми в списке
+// оказываются улицы того же города, и участник промахивается мимо своего города.
+if ($mode === 'city') {
+    $payload['from_bound'] = ['value' => 'city'];
+    $payload['to_bound']   = ['value' => 'settlement'];
+}
+
 $ch = curl_init('https://suggestions.dadata.ru/suggestions/api/4_1/rs/suggest/address');
 curl_setopt_array($ch, [
     CURLOPT_POST           => true,
-    CURLOPT_POSTFIELDS     => json_encode(['query' => $q, 'count' => 7], JSON_UNESCAPED_UNICODE),
+    CURLOPT_POSTFIELDS     => json_encode($payload, JSON_UNESCAPED_UNICODE),
     CURLOPT_HTTPHEADER     => [
         'Content-Type: application/json',
         'Accept: application/json',

@@ -21,7 +21,7 @@ $forms = FORMATIONS();
 // Пре-заполнение из последней заявки авторизованного пользователя (быстрая повторная подача)
 $prefill = [
     'full_name' => '', 'phone' => '', 'email' => '', 'teacher' => '',
-    'institution' => '', 'city' => '', 'address' => '', 'postal_index' => '',
+    'institution' => '', 'city' => '', 'country' => 'Россия', 'address' => '', 'postal_index' => '',
     'group_name' => '', 'is_group' => 0,
 ];
 $_prefUser = current_user();
@@ -423,12 +423,16 @@ ob_start(); ?>
             <div class="hint">Например, детская школа искусств №1.</div>
           </div>
           <div class="field ff">
-            <input type="text" id="city" name="city" placeholder=" " list="dlCity" required value="<?= h($prefill['city']) ?>">
-            <?php $dlCity = all("SELECT DISTINCT city FROM applications WHERE city<>'' ORDER BY city LIMIT 80"); ?>
-            <datalist id="dlCity"><?php foreach ($dlCity as $r): ?><option value="<?= h($r['city']) ?>"><?php endforeach; ?></datalist>
+            <input type="text" id="city" name="city" placeholder=" " required value="<?= h($prefill['city']) ?>"
+                   data-address-suggest data-suggest-mode="city" data-country="#country_display">
             <label for="city">Город / населённый пункт *</label>
-            <div class="hint">Обязательно. Впишите город — страна подставится сама: «Москва» → «Россия, г. Москва».</div>
+            <div class="hint">Обязательно. Начните вводить — подскажем город и подставим страну: «Каз» → «г. Казань» (Россия).</div>
             <div class="err-msg">Укажите город или населённый пункт.</div>
+          </div>
+          <div class="field ff">
+            <input type="text" id="country_display" name="country" placeholder=" " value="<?= h($prefill['country'] ?? 'Россия') ?>" readonly>
+            <label for="country_display">Страна</label>
+            <div class="hint">Заполняется автоматически по выбранному городу.</div>
           </div>
           <div class="astep-nav">
             <button type="button" class="btn btn--ghost back" data-back>Назад</button>

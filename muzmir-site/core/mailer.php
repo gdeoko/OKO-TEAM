@@ -332,7 +332,16 @@ function mail_build_mime(string $fromName, string $fromEmail, string $to, string
     if ($replyTo !== '') $headers .= 'Reply-To: ' . $replyTo . $eol;
     $headers .= 'Subject: ' . mail_encode_header($subject) . $eol;
     $headers .= 'Date: ' . date('r') . $eol;
-    $headers .= 'Message-ID: <' . bin2hex(random_bytes(12)) . '@musmir>' . $eol;
+    // Message-ID должен нести реальный домен, а не строку 'musmir' — иначе
+    // gmail и yandex понижают репутацию письма и часто отправляют его в спам.
+    // Берём домен из адреса отправителя, если он не пуст, иначе — из HTTP_HOST.
+    $midHost = 'muzmir.local';
+    if ($fromEmail !== '' && ($atPos = strrpos($fromEmail, '@')) !== false) {
+        $midHost = substr($fromEmail, $atPos + 1);
+    } elseif (!empty($_SERVER['HTTP_HOST'])) {
+        $midHost = (string) $_SERVER['HTTP_HOST'];
+    }
+    $headers .= 'Message-ID: <' . bin2hex(random_bytes(12)) . '@' . $midHost . '>' . $eol;
     $headers .= 'MIME-Version: 1.0' . $eol;
 
     // Текстовая версия — грубый фолбэк из HTML.

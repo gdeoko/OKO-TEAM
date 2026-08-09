@@ -1072,12 +1072,12 @@ ob_start(); ?>
                     <div class="field" style="margin:0"><label>Название конкурсного номера</label><input type="text" name="work_title" value="<?= h($a['work_title'] ?? '') ?>"></div>
                     <div class="field" style="margin:0"><label>ФИО руководителя или педагога</label><input type="text" name="teacher" value="<?= h($a['teacher'] ?? '') ?>"></div>
                     <div class="field" style="margin:0"><label>Учреждение</label><input type="text" name="institution" value="<?= h($a['institution'] ?? '') ?>"></div>
-                    <div class="field" style="margin:0"><label>Город / населённый пункт</label><input type="text" name="city" value="<?= h($a['city'] ?? '') ?>"></div>
+                    <div class="field" style="margin:0"><label>Город / населённый пункт</label><input type="text" name="city" data-address-suggest data-suggest-mode="city" value="<?= h($a['city'] ?? '') ?>"></div>
 
                     <div class="field" style="margin:0"><label>E-mail для результатов</label><input type="email" name="email" value="<?= h($a['email'] ?? '') ?>"></div>
                     <div class="field" style="margin:0"><label>Телефон</label><input type="tel" name="phone" value="<?= h($a['phone'] ?? '') ?>"></div>
-                    <div class="field" style="margin:0"><label>Почтовый адрес (для оригиналов)</label><input type="text" name="address" data-address-suggest value="<?= h($a['address'] ?? '') ?>"></div>
-                    <div class="field" style="margin:0"><label>Почтовый индекс</label><input type="text" name="postal_index" value="<?= h($a['postal_index'] ?? '') ?>"></div>
+                    <div class="field" style="margin:0"><label>Почтовый адрес (для оригиналов)</label><input type="text" name="address" data-address-suggest data-postal="#edit_pi_<?= (int)$a['id'] ?>" value="<?= h($a['address'] ?? '') ?>"></div>
+                    <div class="field" style="margin:0"><label>Почтовый индекс</label><input type="text" id="edit_pi_<?= (int)$a['id'] ?>" name="postal_index" value="<?= h($a['postal_index'] ?? '') ?>"></div>
                     <div class="field" style="margin:0"><label>Ссылка на конкурсный материал</label><input type="url" name="video_url" value="<?= h($a['video_url'] ?? '') ?>" placeholder="https://..."></div>
 
                     <button type="submit" class="btn btn--primary btn--sm">Сохранить изменения</button>
@@ -1461,7 +1461,7 @@ ob_start(); ?>
                       </div>
                       <div class="field">
                         <label for="p_city">Город</label>
-                        <input type="text" id="p_city" name="city" value="<?= h($user['city'] ?? '') ?>" placeholder="Москва" maxlength="80">
+                        <input type="text" id="p_city" name="city" value="<?= h($user['city'] ?? '') ?>" placeholder="Москва" maxlength="80" data-address-suggest data-suggest-mode="city">
                         <div class="hint">Помогает нам приглашать Вас на очные события Вашего региона.</div>
                       </div>
                       <div class="field">
