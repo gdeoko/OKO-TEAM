@@ -45,7 +45,7 @@ ob_start(); ?>
           <?php endif; ?>
         </div>
 
-        <?php if ($vkReady || $maxReady): ?><div class="auth-sep"><span>или почта / телефон</span></div><?php endif; ?>
+        <?php if ($vkReady || $maxReady): ?><div class="auth-sep"><span>или по почте</span></div><?php endif; ?>
 
         <form id="regEmailForm" novalidate>
           <div class="field">
@@ -56,17 +56,9 @@ ob_start(); ?>
           <button class="btn btn--primary btn--block btn--lg" type="submit"><?= $svgMail ?> Отправить код</button>
         </form>
 
-        <details class="reg-phone">
-          <summary><?= $svgPhone ?> Регистрация по телефону</summary>
-          <form id="regPhoneForm" novalidate style="margin-top:10px">
-            <div class="field">
-              <label for="reg_phone">Номер телефона</label>
-              <input type="tel" id="reg_phone" name="phone" placeholder="+7 (___) ___-__-__" autocomplete="tel" inputmode="tel">
-              <div class="hint">Мы отправим SMS с кодом.</div>
-            </div>
-            <button class="btn btn--primary btn--block" type="submit"><?= $svgPhone ?> Отправить SMS</button>
-          </form>
-        </details>
+        <!-- Регистрация по телефону временно недоступна: SMS-провайдер восстанавливается.
+             До запуска остаётся вход через ВКонтакте и почту. -->
+
 
         <p class="auth-note" style="text-align:center;margin-top:16px;color:var(--muted);font-size:.8rem">
           Нажимая, Вы принимаете <a href="<?= url('/agreement') ?>">пользовательское соглашение</a> и <a href="<?= url('/privacy') ?>">политику конфиденциальности</a>.
@@ -264,4 +256,4 @@ ob_start(); ?>
 </script>
 <?php
 $content = ob_get_clean();
-render_page('Регистрация', $content, ['active' => '/register', 'meta' => 'Регистрация в Культурного центра «Музыкальный Мир»: код на почту без пароля, ВК, MAX, телефон. Профиль за 30 секунд.']);
+render_page('Регистрация', $content, ['active' => '/register', 'meta' => 'Регистрация в Культурного центра «Музыкальный Мир»: код на почту без пароля или вход через ВКонтакте. Профиль за 30 секунд.']);

@@ -87,21 +87,8 @@ ob_start(); ?>
         </button>
       </form>
 
-      <div style="margin-top:14px">
-        <button type="button" class="auth-btn auth-btn--phone" data-phone-toggle aria-expanded="false" aria-controls="authPhoneForm"><?= $svgPhone ?><span>Войти по телефону</span></button>
-      </div>
-
-      <form id="authPhoneForm" novalidate hidden style="margin-top:4px">
-        <div class="field">
-          <label for="phone">Номер телефона</label>
-          <input type="tel" id="phone" name="phone" placeholder="+7 900 000-00-00" autocomplete="tel" inputmode="tel">
-        </div>
-        <div class="field" data-otp-field hidden>
-          <label for="phoneCode">Код из SMS</label>
-          <input type="text" id="phoneCode" name="code" placeholder="Код из сообщения" inputmode="numeric" autocomplete="one-time-code" maxlength="6">
-        </div>
-        <button class="btn btn--primary btn--block btn--lg" type="submit" data-phase="request">Получить код</button>
-      </form>
+      <!-- Вход по телефону скрыт до восстановления SMS-провайдера (запуск 10:00 МСК).
+           Оставляем только почту и ВКонтакте. -->
 
       <p style="text-align:center;margin:22px 0 0;color:var(--muted);font-size:.9rem">
         Нет аккаунта? <a href="<?= url('/register') ?>">Зарегистрируйтесь</a>
@@ -176,44 +163,7 @@ ob_start(); ?>
     });
   }
 
-  // --- Телефон: раскрытие + OTP ---
-  var toggle = document.querySelector('[data-phone-toggle]');
-  var pff = document.getElementById('authPhoneForm');
-  if (toggle && pff) {
-    toggle.addEventListener('click', function () {
-      var open = pff.hidden;
-      pff.hidden = !open;
-      toggle.setAttribute('aria-expanded', open ? 'true' : 'false');
-      if (open) { var i = pff.querySelector('#phone'); if (i) i.focus(); }
-    });
-    var otp = pff.querySelector('[data-otp-field]');
-    var pbtn = pff.querySelector('button[type="submit"]');
-    pff.addEventListener('submit', function (e) {
-      e.preventDefault();
-      var ph = pff.phone.value.trim();
-      if (!ph) { toast('Введите номер телефона.', 'error'); return; }
-      var phase = pbtn.getAttribute('data-phase');
-      if (phase === 'request') {
-        load(pbtn, true);
-        api('/api/v1/auth_phone', { action: 'request', phone: ph }).then(function (res) {
-          load(pbtn, false);
-          if (res.ok && res.data && res.data.ok !== false && !res.data.sms_unavailable) {
-            otp.hidden = false; pbtn.setAttribute('data-phase', 'verify'); pbtn.textContent = 'Подтвердить и войти';
-            var c = document.getElementById('phoneCode'); if (c) c.focus();
-            toast('Код отправлен по SMS.', 'success');
-          } else if (res.data && res.data.sms_unavailable) {
-            toast(res.data.message || 'SMS-вход временно недоступен. Войдите через ВКонтакте или почту.', 'error');
-          } else { fail(res, 'Не удалось отправить код.'); }
-        }).catch(function () { load(pbtn, false); toast('Сеть недоступна.', 'error'); });
-      } else {
-        load(pbtn, true);
-        api('/api/v1/auth_phone', { action: 'verify', phone: ph, code: document.getElementById('phoneCode').value.trim() }).then(function (res) {
-          load(pbtn, false);
-          if (res.ok && res.data && res.data.ok === true) done(res); else fail(res);
-        }).catch(function () { load(pbtn, false); toast('Сеть недоступна.', 'error'); });
-      }
-    });
-  }
+  // Вход по телефону временно отключён (SMS-провайдер не работает, запуск завтра).
 })();
 </script>
 <?php

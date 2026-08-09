@@ -6,6 +6,14 @@
   var reduced = matchMedia('(prefers-reduced-motion: reduce)');
   function isReduced() { return reduced.matches; }
   var hoverCapable = matchMedia('(hover: hover)');
+  // «Мобильный» = узкий экран или тач без hover. На таких устройствах отключаем
+  // тяжёлую анимацию и оставляем контент видимым сразу: телефон часто «моргает»
+  // и подтормаживает, а «пустые Подробнее» на главной — это скрытые .reveal,
+  // которые ждут скролла. Устраняем корень: на мобилке — без ожидания observer.
+  var isNarrow = window.matchMedia && window.matchMedia('(max-width: 960px)').matches;
+  var isTouch  = window.matchMedia && !window.matchMedia('(hover: hover)').matches;
+  var lowPower = isNarrow || isTouch;
+  if (lowPower) document.documentElement.classList.add('mz-low');
   // Включает JS-моушен (.reveal стартует скрытым только при наличии .js — иначе контент виден всегда).
   document.documentElement.classList.add('js');
 
@@ -115,7 +123,13 @@
     try { staggerChildren(el); } catch (err) {}   // никогда не блокируем показ
     el.classList.add('in');
   }
-  if ('IntersectionObserver' in window) {
+  // На мобилке (или при reduce-motion) — показываем ВСЕ .reveal сразу, без ожидания
+  // скролла. Раньше на телефоне пользователь видел «пустые Подробнее» — карточки
+  // конкурсов ниже сгиба зависали на opacity:0, потому что IntersectionObserver
+  // не всегда срабатывает при быстрой прокрутке / в PWA-режиме.
+  if (lowPower || isReduced()) {
+    $$('.reveal').forEach(function (el) { revealEl(el); });
+  } else if ('IntersectionObserver' in window) {
     var vh = window.innerHeight || document.documentElement.clientHeight || 800;
     var io = new IntersectionObserver(function (entries) {
       entries.forEach(function (e) {
@@ -127,8 +141,8 @@
       if (r.top < vh * 0.94) { revealEl(el); }   // выше/на сгибе — сразу, без ожидания
       else io.observe(el);
     });
-    // Гарантия: ничто не остаётся скрытым дольше 3с (защита от сбоя observer/скрытых вкладок)
-    setTimeout(function () { $$('.reveal').forEach(function (el) { if (!el.classList.contains('in')) revealEl(el); }); }, 3000);
+    // Гарантия: ничто не остаётся скрытым дольше 1.2с (было 3с — слишком долго).
+    setTimeout(function () { $$('.reveal').forEach(function (el) { if (!el.classList.contains('in')) revealEl(el); }); }, 1200);
 
     // Счётчики — на сгибе/выше сгиба запускаем сразу (без «0»-мигания и без ожидания observer)
     var cio = new IntersectionObserver(function (entries) {
@@ -345,8 +359,10 @@
   }
 
   /* ---------- Плавающие ноты в hero ---------- */
+  // На мобильных и с reduce-motion не создаём 14 бесконечно летающих DOM-нот:
+  // они и красивый фон-canvas bg-art.js вместе давали ощутимый лаг на телефонах.
   var notesBox = $('.hero-notes');
-  if (notesBox && !isReduced()) {
+  if (notesBox && !isReduced() && !lowPower) {
     var glyphs = ['♪', '♫', '♩', '𝄞'];
     for (var i = 0; i < 14; i++) {
       var n = document.createElement('span');

@@ -92,50 +92,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         audit('privacy_update', 'user', $uid, $priv);
         flash('Настройки конфиденциальности сохранены.', 'success');
         redirect('/cabinet#settings');
-    } elseif ($action === 'phone_request') {
-        // Привязка телефона: шаг 1 — SMS-код на номер. Без SMS-провайдера честно сообщаем.
-        $phoneIn = input('phone');
-        $digits = preg_replace('/\D+/', '', $phoneIn);
-        if (strlen($digits) === 11 && ($digits[0] === '8' || $digits[0] === '7')) $digits = '7' . substr($digits, 1);
-        elseif (strlen($digits) === 10) $digits = '7' . $digits;
-        $vp = function_exists('v_phone') ? v_phone($phoneIn) : ['ok' => strlen($digits) === 11, 'formatted' => $phoneIn];
-        if (!($vp['ok'] ?? false) || strlen($digits) !== 11 || $digits[0] !== '7') {
-            flash('Проверьте номер телефона — нужен российский номер из 11 цифр.', 'error');
-        } elseif (one("SELECT id FROM users WHERE (phone=? OR phone=?) AND phone_verified=1 AND id<>?",
-                      [(string)($vp['formatted'] ?? ('+' . $digits)), $digits, $uid])) {
-            flash('Этот номер уже привязан к другому аккаунту.', 'error');
-        } elseif (!rate_ok('phone_bind:' . $uid, 5, 900)) {
-            flash('Слишком часто. Подождите пару минут и попробуйте снова.', 'error');
-        } else {
-            $code = auth_gen_code(5);
-            auth_store_code('phone_bind', $digits, $code, 600); // TTL 10 минут
-            $sent = auth_send_sms($digits, 'Код привязки телефона на сайте Музыкальный Мир: ' . $code);
-            if ($sent || cfgv('debug')) {
-                $_SESSION['phone_bind'] = ['digits' => $digits, 'formatted' => (string)($vp['formatted'] ?? ('+' . $digits))];
-                flash($sent ? 'Код отправлен по SMS на ' . ($vp['formatted'] ?? $phoneIn) . '. Введите его ниже.'
-                            : 'SMS-провайдер не настроен (режим отладки). Код: ' . $code, $sent ? 'success' : 'info');
-            } else {
-                flash('SMS временно недоступна. Попробуйте позже или привяжите вход через ВКонтакте.', 'error');
-            }
-        }
-        redirect('/cabinet#settings');
-    } elseif ($action === 'phone_verify') {
-        // Привязка телефона: шаг 2 — проверка кода, номер закрепляется за текущим аккаунтом.
-        $pb = $_SESSION['phone_bind'] ?? null;
-        $code = trim((string)($_POST['code'] ?? ''));
-        if (!is_array($pb) || ($pb['digits'] ?? '') === '') {
-            flash('Сначала запросите код на номер телефона.', 'error');
-        } elseif ($code === '' || !auth_check_code('phone_bind', (string)$pb['digits'], $code)) {
-            flash('Неверный или просроченный код. Запросите новый.', 'error');
-        } elseif (one("SELECT id FROM users WHERE (phone=? OR phone=?) AND phone_verified=1 AND id<>?",
-                      [(string)$pb['formatted'], (string)$pb['digits'], $uid])) {
-            flash('Этот номер уже привязан к другому аккаунту.', 'error');
-        } else {
-            update('users', ['phone' => (string)$pb['formatted'], 'phone_verified' => 1], 'id=:id', ['id' => $uid]);
-            unset($_SESSION['phone_bind']);
-            audit('phone_bind', 'user', $uid, ['phone' => (string)$pb['formatted']]);
-            flash('Телефон привязан к Вашему аккаунту.', 'success');
-        }
+    } elseif ($action === 'phone_request' || $action === 'phone_verify') {
+        // Привязка телефона по SMS временно отключена (провайдер восстанавливается).
+        // Отвечаем корректно — на случай прямого POST от старой открытой вкладки.
+        unset($_SESSION['phone_bind']);
+        flash('Привязка телефона по SMS временно недоступна. Используйте ВКонтакте или почту.', 'error');
         redirect('/cabinet#settings');
     } elseif ($action === 'phone_cancel') {
         unset($_SESSION['phone_bind']);
@@ -1498,7 +1459,10 @@ ob_start(); ?>
                   <?php endif; ?>
                 </div>
 
-                <!-- Телефон -->
+                <!-- Телефон: привязка по SMS временно отключена до восстановления
+                     провайдера (запуск 10:00 МСК завтра). Уже подтверждённый номер
+                     показываем (это данные для дипломов и связи), но новые привязки
+                     не предлагаем — оставляем только почту и ВКонтакте. -->
                 <?php $phoneLinked = trim((string)($user['phone'] ?? '')) !== '' && !empty($user['phone_verified']); ?>
                 <?php if ($phoneLinked): ?>
                 <div class="cab-srow" style="--ic:#2E7D4F">
@@ -1511,47 +1475,6 @@ ob_start(); ?>
                     <button type="submit" class="btn btn--ghost btn--sm" style="min-height:34px">Отвязать</button>
                   </form>
                 </div>
-                <?php else: ?>
-                <details class="cab-set" <?= $phonePending !== '' ? 'open' : '' ?>>
-                  <summary style="--ic:#2E7D4F">
-                    <span class="cab-item-ic"><?= $icon('<path d="M5 4h4l2 5-2.5 1.5a11 11 0 0 0 5 5L16 13l5 2v4a1 1 0 0 1-1 1A17 17 0 0 1 4 5a1 1 0 0 1 1-1z"/>') ?></span>
-                    <span class="cab-item-lbl">Телефон<span class="cab-sub"><?= trim((string)($user['phone'] ?? '')) !== '' ? h($user['phone']) . ' — не подтверждён' : 'Не привязан' ?></span></span>
-                    <span class="cab-link-no">Привязать</span>
-                    <svg class="cab-item-chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m9 6 6 6-6 6"/></svg>
-                  </summary>
-                  <div class="cab-set-body">
-                    <?php if ($phonePending !== ''): ?>
-                      <p class="hint" style="margin:0 0 12px">Код из SMS отправлен на <strong><?= h($phonePending) ?></strong>. Введите его в течение 10 минут.</p>
-                      <form method="post" action="<?= url('/cabinet') ?>">
-                        <?= csrf_field() ?>
-                        <input type="hidden" name="action" value="phone_verify">
-                        <div class="field">
-                          <label for="ph_code">Код из SMS</label>
-                          <input type="text" id="ph_code" name="code" inputmode="numeric" autocomplete="one-time-code" maxlength="6" placeholder="•••••" required>
-                        </div>
-                        <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:center">
-                          <button class="btn btn--primary" type="submit">Подтвердить</button>
-                        </div>
-                      </form>
-                      <form method="post" action="<?= url('/cabinet') ?>" style="margin-top:10px">
-                        <?= csrf_field() ?>
-                        <input type="hidden" name="action" value="phone_cancel">
-                        <button type="submit" class="btn btn--ghost btn--sm" style="min-height:34px">Изменить номер</button>
-                      </form>
-                    <?php else: ?>
-                      <form method="post" action="<?= url('/cabinet') ?>">
-                        <?= csrf_field() ?>
-                        <input type="hidden" name="action" value="phone_request">
-                        <div class="field">
-                          <label for="ph_num">Номер телефона</label>
-                          <input type="tel" id="ph_num" name="phone" value="<?= h($user['phone'] ?? '') ?>" placeholder="+7 (___) ___-__-__" required>
-                        </div>
-                        <button class="btn btn--primary" type="submit">Получить код по SMS</button>
-                        <p class="hint" style="margin:10px 0 0">Пришлём SMS с кодом подтверждения. После привязки сможете входить по номеру телефона.</p>
-                      </form>
-                    <?php endif; ?>
-                  </div>
-                </details>
                 <?php endif; ?>
 
                 <!-- ВКонтакте -->

@@ -10,11 +10,22 @@
   'use strict';
   var cv = document.getElementById('mzBgArt');
   if (!cv) return;
+  // Полный отказ от фон-канваса на мобильных, планшетах и с prefers-reduced-motion:
+  // 12-26 нот + до 140 звёзд + кометы через requestAnimationFrame — это ощутимая
+  // нагрузка на CPU и GPU телефона. Владелец жаловался на «моргает и лагает» —
+  // это и был основной виновник вместе с 14 DOM-нотами в hero.
+  var narrow = window.matchMedia && window.matchMedia('(max-width: 960px)').matches;
+  var touchOnly = window.matchMedia && !window.matchMedia('(hover: hover)').matches;
+  var reduceMo = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  if (narrow || touchOnly || reduceMo) {
+    cv.style.display = 'none';
+    return;
+  }
   var ctx = cv.getContext('2d', { alpha: true });
   var DPR = Math.min(window.devicePixelRatio || 1, 2);
   var W = 0, H = 0, lastSeedW = 0;
   var theme = document.documentElement.dataset.theme === 'dark' ? 'dark' : 'light';
-  var reduce = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  var reduce = reduceMo;
 
   var notes = [], stars = [], comets = [], sparks = [];
   function rnd(a, b) { return a + Math.random() * (b - a); }
