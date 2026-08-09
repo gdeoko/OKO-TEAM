@@ -37,7 +37,7 @@ var LS_KEY   = 'okg-state-v1';
 var DAY      = 86400000;
 var OKO_CH   = 'ch-disc-4';          /* канал «OKO Новости» из ядра */
 /* Полноэкранные экраны ядра, поверх которых наш слой не показывается никогда. */
-var GATES    = ['splash','onboard','authScreen','regView','callScreen'];
+var GATES    = ['splash','onboard','authScreen','regView','callScreen','okoPopup'];
 var SILENCE  = 20000;                /* тишина перед всплывающими окнами, мс */
 var CARD_DELAY = 4000;               /* чек-лист не перебивает — ему хватает 4 сек */
 var COOLDOWN = 2 * DAY;              /* один повод — не чаще раза в 2 дня */
@@ -234,8 +234,12 @@ function injectCSS(){
 '  --okg-on-lime: #0a1002;',
 '}',
 
-'.okg-i{ width:16px; height:16px; flex:0 0 auto; fill:none; stroke:currentColor; stroke-width:2;',
-'  stroke-linecap:round; stroke-linejoin:round; }',
+'/* Селектор именно svg.okg-i, а не просто .okg-i: в oko-v2.css лежит',
+'   `img, video, canvas, svg:not(.i) { height:auto }`. У него специфичность выше,',
+'   чем у одного класса, и наши иконки растягивало до 150 пикселей.',
+'   Тут вес равный, а наш <style> подключается последним — значит, выигрываем мы. */',
+'svg.okg-i{ width:16px; height:16px; max-width:none; flex:0 0 auto;',
+'  fill:none; stroke:currentColor; stroke-width:2; stroke-linecap:round; stroke-linejoin:round; }',
 
 '/* ---- общая оболочка окна ---- */',
 '.okg-scrim{ position:fixed; inset:0; z-index:100040; background:var(--okg-scrim);',
@@ -503,6 +507,35 @@ function visible(el){
   }catch(e){ return false; }
 }
 
+/* Любой полноэкранный оверлей ядра — даже тот, о котором мы ещё не знаем.
+   У ядра их полтора десятка (#okoPopup, #chView, #psView, #legalView, #trStories…),
+   и список будет расти, поэтому ищем по признакам, а не по именам:
+   fixed, накрывает больше половины экрана и ловит нажатия.
+   Прозрачные подложки вроде #pp2Nav (pointer-events:none) не в счёт —
+   они висят всегда и ничего не перекрывают. */
+function coreOverlayUp(){
+  try{
+    var kids = document.body.children;
+    var vw = window.innerWidth || 0, vh = window.innerHeight || 0;
+    for(var i=0;i<kids.length;i++){
+      var el = kids[i];
+      if(el.nodeType !== 1) continue;
+      if(el.hasAttribute && el.hasAttribute('data-okg')) continue;   /* это мы сами */
+      var tag = el.tagName;
+      if(tag === 'STYLE' || tag === 'SCRIPT' || tag === 'LINK' || tag === 'TEMPLATE') continue;
+      var cs = getComputedStyle(el);
+      if(cs.position !== 'fixed') continue;
+      if(cs.pointerEvents === 'none') continue;
+      if(cs.display === 'none' || cs.visibility === 'hidden' || parseFloat(cs.opacity) < 0.05) continue;
+      var r = el.getBoundingClientRect();
+      if(r.width < vw * 0.6 || r.height < vh * 0.4) continue;
+      if(r.right <= 1 || r.bottom <= 1 || r.left >= vw - 1 || r.top >= vh - 1) continue;
+      return el.id || (typeof el.className === 'string' ? el.className : tag);
+    }
+  }catch(e){}
+  return null;
+}
+
 function busy(opt){
   opt = opt || {};
   function no(r){ if(opt.out) opt.out.why = r; return true; }
@@ -514,15 +547,28 @@ function busy(opt){
     /* запись голосового */
     if(document.querySelector('.composer.recording')) return no('запись голосового');
 
+    /* ОТКРЫТЫЙ ДИАЛОГ (правка Даниэля 09.08). Переписка — работа, а не пауза:
+       окна не имеют права её накрывать. Ждём, пока человек выйдет из чата. */
+    var appEl = document.getElementById('app');
+    if(appEl && appEl.classList.contains('conv-open')) return no('открыт диалог');
+
+    /* активный звонок */
+    if(document.querySelector('#cl-personal.open, #cl-conf.open')) return no('идёт звонок');
+
+    /* контекстное меню сообщения */
+    if(document.querySelector('#msgMenu.open')) return no('меню сообщения');
+
     /* открытый плеер Клипов */
     try{ if(window.okoReels && window.okoReels.isOpen && window.okoReels.isOpen()) return no('Клипы'); }catch(e){}
 
-    /* полноэкранные «ворота» ядра: заставка, свой онбординг, вход, регистрация.
-       Пока человек проходит их, наш слой молчит совсем — иначе два онбординга
-       наезжают друг на друга. */
+    /* полноэкранные «ворота» ядра: заставка, свой онбординг, вход, регистрация,
+       звонок, попап. Пока человек проходит их, наш слой молчит совсем —
+       иначе два онбординга наезжают друг на друга. */
     for(var g=0; g<GATES.length; g++){
       if(visible(document.getElementById(GATES[g]))) return no('экран ядра: ' + GATES[g]);
     }
+    var over = coreOverlayUp();
+    if(over) return no('оверлей ядра: ' + over);
 
     /* наше окно уже висит — оно и так закрывает чек-лист собой */
     if(!opt.soft && document.querySelector('.okg-scrim')) return no('окно уже открыто');
@@ -551,6 +597,7 @@ function okgModal(o){
   o = o || {};
   var scrim = document.createElement('div');
   scrim.className = 'okg-scrim';
+  scrim.setAttribute('data-okg','modal');
   scrim.setAttribute('role','dialog');
   scrim.setAttribute('aria-modal','true');
   if(o.title) scrim.setAttribute('aria-label', String(o.title));
@@ -723,6 +770,7 @@ function renderOnboard(force){
         pillEl = document.createElement('button');
         pillEl.type = 'button';
         pillEl.className = 'okg-pill';
+        pillEl.setAttribute('data-okg','pill');
         pillEl.setAttribute('aria-label','Открыть чек-лист «Старт в OKO»');
         pillEl.addEventListener('click', function(){
           tap('selection'); S.ob.collapsed = false; save(); renderOnboard(true);
@@ -744,6 +792,7 @@ function renderOnboard(force){
     if(!obEl){
       obEl = document.createElement('section');
       obEl.className = 'okg-ob';
+      obEl.setAttribute('data-okg','onboard');
       obEl.setAttribute('aria-label','Старт в OKO');
       document.body.appendChild(obEl);
     }

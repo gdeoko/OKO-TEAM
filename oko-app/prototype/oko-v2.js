@@ -831,3 +831,107 @@ window.okoHaptic = okoHaptic;
     log('profile ok');
   }catch(e){}
 })();
+
+/* ============================================================================
+   МОДУЛЬ v2-polite · ЭТИКЕТ ВСПЛЫВАЮЩИХ ОКОН
+   Правка Даниэля 09.08: окна не должны наваливаться друг на друга и лезть
+   поверх работы. Единый привратник на всё приложение:
+
+     • пока открыт диалог, идёт звонок, пишется голосовое, крутятся клипы
+       или уже открыто другое окно — новое окно НЕ показывается, а встаёт
+       в очередь и выходит, когда экран освободится;
+     • не больше одного окна за раз;
+     • первые 20 секунд сессии тихо — человек осматривается.
+   Не заменяет окна, а лишь выбирает момент: ни одно сообщение не теряется.
+   ============================================================================ */
+(function v2polite(){
+  'use strict';
+  try{
+    var STARTED = Date.now();
+    var QUIET_MS = 20000;
+    var queue = [];
+    var draining = false;
+
+    function busy(){
+      try{
+        var app = document.getElementById('app');
+        if(app && app.classList.contains('conv-open')) return true;          // открыт диалог
+        if(document.getElementById('okoPopup')) return true;                  // уже есть окно
+        if(document.querySelector('.okg-modal.open')) return true;
+        if(document.querySelector('.sheet.open')) return true;                // открыта шторка
+        if(document.querySelector('#msgMenu.open')) return true;
+        if(document.querySelector('#cl-personal.open, #cl-conf.open')) return true;  // звонок
+        if(document.querySelector('#storyViewer.open, #trStories.open')) return true; // сторис
+        if(window.okoReels && window.okoReels.isOpen && window.okoReels.isOpen()) return true;
+        if(typeof window.recStart !== 'undefined' && window.recStart) return true;    // запись
+        var auth = document.getElementById('authScreen');
+        if(auth && !auth.classList.contains('hidden') && getComputedStyle(auth).display !== 'none') return true;
+        var sp = document.getElementById('splash');
+        if(sp && !sp.classList.contains('gone')) return true;
+      }catch(e){}
+      return false;
+    }
+
+    function ready(){ return (Date.now() - STARTED > QUIET_MS) && !busy(); }
+
+    function drain(){
+      if(draining) return;
+      draining = true;
+      var tick = function(){
+        if(!queue.length){ draining = false; return; }
+        if(!ready()){ setTimeout(tick, 1500); return; }
+        var job = queue.shift();
+        try{ job(); }catch(e){}
+        setTimeout(tick, 2500);   /* пауза между окнами: не серия, а по одному */
+      };
+      setTimeout(tick, 400);
+    }
+
+    /* Обёртка над ядровым showPopup: если сейчас неуместно — откладываем. */
+    var core = window.showPopup;
+    if(typeof core === 'function'){
+      window.showPopup = function(){
+        var args = arguments, self = this;
+        if(ready()) return core.apply(self, args);
+        /* Окна с явным флагом now — критичные подтверждения — не откладываем. */
+        try{ if(args[0] && args[0].now) return core.apply(self, args); }catch(e){}
+        if(queue.length < 4) queue.push(function(){ core.apply(self, args); });
+        drain();
+        return null;
+      };
+    }
+
+    /* Карточка онбординга тоже ждёт своей очереди */
+    try{
+      var ob = window.okgOnboardOpen;
+      if(typeof ob === 'function'){
+        window.okgOnboardOpen = function(){
+          var a = arguments, s = this;
+          if(ready()) return ob.apply(s, a);
+          if(queue.length < 4) queue.push(function(){ ob.apply(s, a); });
+          drain();
+          return null;
+        };
+      }
+    }catch(e){}
+
+    /* Пока диалог открыт — прячем плавающие карточки роста, чтобы они не
+       наезжали на переписку. Возвращаем, когда человек вышел из чата. */
+    try{
+      var app = document.getElementById('app');
+      if(app){
+        var sync = function(){
+          var inConv = app.classList.contains('conv-open');
+          document.querySelectorAll('.okg-ob, .okg-pill').forEach(function(el){
+            el.style.visibility = inConv ? 'hidden' : '';
+            el.style.pointerEvents = inConv ? 'none' : '';
+          });
+        };
+        new MutationObserver(sync).observe(app, { attributes:true, attributeFilter:['class'] });
+        sync();
+      }
+    }catch(e){}
+
+    log('polite ok');
+  }catch(e){}
+})();

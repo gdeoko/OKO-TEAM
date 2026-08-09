@@ -47648,8 +47648,22 @@ var PW_ASSET = {
   function maybeShowWelcome(){
     try{
       if(localStorage.getItem(WELCOME_KEY) === '1') return;
-      // задержка · чтобы welcome не мешал открытию экрана
-      setTimeout(showWelcome, 350);
+      /* Показываем ТОЛЬКО когда человек реально стоит на экране партнёрки
+         и экран ничем не занят (правка 09.08). Раньше окно всплывало через
+         350 мс после инициализации модуля — и накрывало чат, ленту, что
+         угодно, да ещё вместе со вторым окном «награда за партнёрство». */
+      var tries = 0;
+      var tick = function(){
+        if(localStorage.getItem(WELCOME_KEY) === '1') return;
+        if(++tries > 40) return;                       /* минуты через две сдаёмся */
+        var scr = document.getElementById('screen-partner');
+        var onPartner = scr && scr.classList.contains('active');
+        var busy = document.querySelector('.sheet.open, #msgMenu.open, #okoPopup, .okg-modal.open')
+                || (document.getElementById('app') || {classList:{contains:function(){return false;}}}).classList.contains('conv-open');
+        if(onPartner && !busy){ showWelcome(); return; }
+        setTimeout(tick, 3000);
+      };
+      setTimeout(tick, 1200);
     }catch(e){}
   }
   function showWelcome(){
@@ -47701,18 +47715,11 @@ var PW_ASSET = {
   };
 
   /* ================= Live-уведомление ================= */
-  const LIVE_MSGS = [
-    {t:'+735 ₽ от клиента Иван',    s:'Система OKO · мес · 1-я линия'},
-    {t:'+1 500 ₽ от Елены',         s:'Консалтинг · 2-я линия'},
-    {t:'+435 ₽ от Максима',         s:'Контент-завод · мес'},
-    {t:'+6 350 ₽ от Ольги',         s:'PRO год · крупная оплата'},
-  ];
-  function scheduleLiveNotif(){
-    if(window.__ppLivePlanned) return;
-    window.__ppLivePlanned = true;
-    setTimeout(()=>showLive(LIVE_MSGS[0]), 8000);
-    setTimeout(()=>showLive(LIVE_MSGS[Math.floor(Math.random()*LIVE_MSGS.length)]), 45000);
-  }
+  /* Выдуманные поступления удалены 09.08. Раньше через 8 секунд после входа
+     всплывало «+735 ₽ от клиента Иван» — человек видел деньги, которых нет.
+     Механика showLive() оставлена: её вызовет реальное начисление партнёрки. */
+  const LIVE_MSGS = [];
+  function scheduleLiveNotif(){ /* по расписанию ничего не показываем */ }
   function showLive(msg){
     const el = document.getElementById('ppLive');
     if(!el) return;
@@ -47797,8 +47804,10 @@ var PW_ASSET = {
       var v = parseInt(localStorage.getItem(COUNT_KEY)||'',10);
       if(!isNaN(v) && v>=0) return v;
     }catch(e){}
-    /* демо-значение — 4 клиента, чтобы был виден прогресс к 10 */
-    return 4;
+    /* Пока партнёрский бэкенд не отдал число — ноль.
+       Раньше здесь возвращалось 4, и новому человеку показывали чужой
+       прогресс, а затем «награду» за цель, которую он не выполнял. */
+    return 0;
   }
   function saveCount(n){ try{ localStorage.setItem(COUNT_KEY, String(n)); }catch(e){} }
   function loadClaimed(){
