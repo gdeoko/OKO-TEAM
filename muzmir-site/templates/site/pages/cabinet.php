@@ -257,6 +257,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         require_once BASE_PATH . '/core/app_status.php';
         require_once BASE_PATH . '/core/send_timing.php';
         require_once BASE_PATH . '/core/data.php';
+        // ВАЖНО: в подаче заявки эти модули подключает api/v1/_boot.php, а сюда
+        // (обработчик формы кабинета) их никто не тянет — из-за этого v_fio /
+        // quote_title / collective_normalize молча пропускались, и «ИВАНОВ ИВАН»
+        // сохранялся капсом вместо «Иванов Иван».
+        require_once BASE_PATH . '/core/validator.php';
+        require_once BASE_PATH . '/core/text_format.php';
         $appId = (int) input('app_id');
         $app = one("SELECT * FROM applications WHERE id=? AND user_id=?", [$appId, $uid]);
         if (!$app) {
@@ -290,18 +296,37 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $city = trim((string) input('city'));
         if (function_exists('city_normalize') && ($cn = city_normalize($city)) !== '') $city = $cn;
 
+        // Нормализация регистра — та же, что при первичной подаче:
+        //   ФИО участника/педагога — Каждое Слово С Заглавной;
+        //   название коллектива     — «ЁЛОЧКИ» с типом-приставкой ('вокальный ансамбль «Ремарка»');
+        //   название номера         — «Ёлочки»; ВСЁ КАПСОМ приводится к нормальному;
+        //   город                   — 'Россия, г. Москва' (city_normalize);
+        //   учреждение              — НЕ трогаем: там аббревиатуры (МБОУ ДО «ДШИ №1»).
+        $__inFio = static function (string $key): string {
+            return function_exists('v_fio') ? v_fio(input($key)) : trim((string) input($key));
+        };
+        $__inTitle = static function (string $key): string {
+            return function_exists('quote_title') ? quote_title((string) input($key)) : trim((string) input($key));
+        };
+        $__inGroup = static function (string $key): string {
+            $s = trim((string) input($key));
+            return function_exists('collective_normalize') ? collective_normalize($s) : $s;
+        };
+
         $data = [
             'is_group'     => $isGroup,
-            'full_name'    => mb_substr(function_exists('v_fio') ? v_fio(input('full_name')) : trim((string) input('full_name')), 0, 200),
-            'group_name'   => mb_substr(trim((string) input('group_name')), 0, 200),
+            'full_name'    => mb_substr($__inFio('full_name'), 0, 200),
+            'group_name'   => mb_substr($__inGroup('group_name'), 0, 200),
             // Дату рождения (birth_date) больше не запрашиваем: работаем только с
             // возрастной категорией, которая и попадает в диплом и в номинации.
             'age_category' => $age,
             'nomination'   => $nomination,
             'subgroup'     => $subgroup,
             'formation'    => $formation,
-            'work_title'   => mb_substr(function_exists('quote_title') ? quote_title((string) input('work_title')) : trim((string) input('work_title')), 0, 200),
-            'teacher'      => mb_substr(function_exists('v_fio') ? v_fio(input('teacher')) : trim((string) input('teacher')), 0, 200),
+            'work_title'   => mb_substr($__inTitle('work_title'), 0, 200),
+            'teacher'      => mb_substr($__inFio('teacher'), 0, 200),
+            // Учреждение НЕ капитализируем автоматически: там 'МБОУ ДО', 'ГБУ', 'ФГБОУ ВО'
+            // и другие аббревиатуры, которые нельзя портить smart_title'ом.
             'institution'  => mb_substr(trim((string) input('institution')), 0, 200),
             'city'         => mb_substr($city, 0, 120),
             'email'        => mb_substr($email, 0, 190),

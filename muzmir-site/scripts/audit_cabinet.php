@@ -125,7 +125,9 @@ if (!$app) {
     foreach ([
         'full_name' => 'Тестова Проверка Аудитовна',
         'age_category' => '13-15 лет', 'nomination' => 'Хореография', 'subgroup' => 'Народный танец',
-        'formation' => 'Дуэт', 'work_title' => 'Проверочный номер', 'institution' => 'ДШИ Проверка',
+        // Название номера теперь автоматически заключается в «ёлочки» (quote_title
+        // работает и при правке из кабинета, а не только на первичной подаче).
+        'formation' => 'Дуэт', 'work_title' => '«Проверочный номер»', 'institution' => 'ДШИ Проверка',
         'phone' => '+79995048899', 'address' => 'г. Казань, ул. Баумана, д. 1',
         'postal_index' => '420111', 'video_url' => 'https://vk.com/video-211325055_456239018',
     ] as $f => $exp) {
@@ -134,6 +136,40 @@ if (!$app) {
     chk('правка сохранила «teacher»', str_contains((string) $after['teacher'], 'Аудит'), (string) $after['teacher']);
     chk('правка сохранила «city»', str_contains((string) $after['city'], 'Казань'), (string) $after['city']);
     chk('правка сохранила «email»', (string) $after['email'] === 'okoteam.top@gmail.com', (string) $after['email']);
+
+    // в3) Капслок в форме правки должен приводиться к нормальному виду,
+    //      как при первичной подаче: ФИО → 'Иванов Иван', название номера в
+    //      «ёлочках», коллектив → 'Тип «Имя»'. Учреждение — НЕ трогаем
+    //      (аббревиатуры типа 'МБОУ ДО ДШИ №1' портить нельзя).
+    $t = tok($UJAR, '/cabinet');
+    http($UJAR, $BASE . '/cabinet', array_merge($newData, [
+        '_csrf' => $t, 'csrf' => $t, 'is_group' => '0',
+        'full_name'   => 'ИВАНОВ ИВАН ВЛАДИМИРОВИЧ',
+        'teacher'     => 'ПЕТРОВА АННА СЕРГЕЕВНА',
+        'work_title'  => 'ПОЛЁТ ЖАВОРОНКА',
+        'institution' => 'МБОУ ДО ДШИ №1',
+        'city'        => 'казань',
+    ]));
+    $normed = one('SELECT full_name,teacher,work_title,institution,city FROM applications WHERE id=?', [$aid]);
+    chk('правка: ФИО из капса → «Иванов Иван Владимирович»',
+        (string) $normed['full_name'] === 'Иванов Иван Владимирович', (string) $normed['full_name']);
+    chk('правка: педагог тоже нормализован',
+        (string) $normed['teacher'] === 'Петрова Анна Сергеевна', (string) $normed['teacher']);
+    chk('правка: название номера в «ёлочках» и нормальным регистром',
+        (string) $normed['work_title'] === '«Полёт жаворонка»', (string) $normed['work_title']);
+    chk('правка: учреждение с аббревиатурой сохранено как ввели',
+        (string) $normed['institution'] === 'МБОУ ДО ДШИ №1', (string) $normed['institution']);
+    chk('правка: город нормализован (Россия, г. Казань)',
+        str_contains((string) $normed['city'], 'Казань'), (string) $normed['city']);
+    // Коллектив — «Тип «Имя»» через collective_normalize
+    $t = tok($UJAR, '/cabinet');
+    http($UJAR, $BASE . '/cabinet', array_merge($newData, [
+        '_csrf' => $t, 'csrf' => $t, 'is_group' => '1',
+        'group_name' => 'вокальный ансамбль светелка',
+    ]));
+    $normed = one('SELECT group_name FROM applications WHERE id=?', [$aid]);
+    chk('правка: коллектив «Вокальный ансамбль «Светелка»»',
+        (string) $normed['group_name'] === 'Вокальный ансамбль «Светелка»', (string) $normed['group_name']);
 
     // г) чужие значения справочников не принимаются
     $t = tok($UJAR, '/cabinet');
