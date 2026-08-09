@@ -31,3 +31,6 @@ OKO_MASTER_VAULT.md.b64
 # python cache
 __pycache__/
 *.pyc
+
+# Аудит-скриншоты (генерируются локально, в репозиторий не нужны)
+oko-app/tools/audit-out/

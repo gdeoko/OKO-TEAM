@@ -1,0 +1,453 @@
+/* ============================================================================
+   OKO · СЛОЙ ПОЛИРОВКИ v2
+   Грузится ПОСЛЕ app.css. Здесь живут сквозные правила адаптации, типографики
+   и хрома, которые обязаны перекрывать точечные стили ядра.
+
+   Принципы:
+     1. Безопасные зоны — только через --oko-safe-*. Никаких голых env().
+     2. Ни один текст не обрезается и не рвётся посреди слова.
+     3. Ни один блок не залезает под интерфейс Telegram сверху и снизу.
+     4. Одинаковое поведение: Telegram Mini App, мобильный браузер, планшет, ПК.
+   ============================================================================ */
+
+/* ---------------------------------------------------------------------------
+   1. ТИПОГРАФИКА: запрет разрывов посреди слова
+   Причина бага «Пополнит / ь», «Перевест / и»: узкие flex-ячейки + унаследованный
+   word-break:break-all. Ставим нормальный перенос по словам, а неразрывные
+   куски (адреса кошельков, хеши) отдельно помечаем классом .oko-breakable.
+   --------------------------------------------------------------------------- */
+button, .btn, .chip, .svc-label, .tab-btn, .chip-btn,
+nav#tabs > button, nav#tabs > button span,
+.wal-act span, .wal-act b, .w2-row b, .w2-row span,
+label, .lbl, h1, h2, h3, h4, h5, b, strong {
+  word-break: normal;
+  overflow-wrap: break-word;
+  -webkit-hyphens: none;
+  hyphens: none;
+}
+/* Технические строки, которые рвать МОЖНО и НУЖНО (иначе ломают вёрстку) */
+.oko-breakable, .wal-addr span, .ads-rv-link span, .wal-recv-link span {
+  word-break: break-all;
+  overflow-wrap: anywhere;
+}
+
+/* Подписи кнопок быстрых действий кошелька (ряд из четырёх) — одна строка,
+   кегль ужимается под ширину ячейки. Слово не рвётся никогда. */
+.wal-act span, .wal-acts span {
+  white-space: nowrap;
+  font-size: clamp(9px, 2.8vw, 11.5px);
+  letter-spacing: 0;
+  line-height: 1.2;
+  max-width: 100%;
+}
+
+/* Подписи плиток сервисов — до двух строк ЦЕЛИКОМ, без многоточия.
+   «Проверка видео» и «Система роста» должны читаться полностью. */
+.svc-label {
+  white-space: normal;
+  overflow-wrap: break-word;
+  word-break: normal;
+  -webkit-hyphens: none;
+  hyphens: none;
+  font-size: clamp(9.5px, 2.9vw, 11px);
+  line-height: 1.18;
+  min-height: 2.4em;
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+  text-align: center;
+  overflow: visible;
+  text-overflow: clip;
+}
+
+/* ---------------------------------------------------------------------------
+   2. ЗАГОЛОВКИ ПОДСТРАНИЦ: не обрезаются и не уезжают под шапку Telegram
+   Раньше «история оп...», «Автоплатежи и подпи...», «Устройства и сесси[и]»
+   резались по ширине, а сами шапки лежали под интерфейсом Telegram.
+   --------------------------------------------------------------------------- */
+.sv-head, .ep-head, .search-head, .w2-bar, .wal-stmt-head,
+.hq-emb-head, .lg-tabs, .conv-head {
+  padding-top: max(var(--oko-safe-top), 10px);
+  padding-left: max(var(--oko-safe-left), 14px);
+  padding-right: max(var(--oko-safe-right), 14px);
+  box-sizing: border-box;
+}
+
+/* Сам заголовок: две строки максимум, кегль подстраивается под ширину,
+   переносы только по словам. Никаких многоточий посреди фразы. */
+.sv-head > b, .sv-head > .sv-title,
+.w2-bar > b, .w2-bar > .w2-title,
+.ep-head > b, .wal-stmt-head > b {
+  flex: 1 1 auto;
+  min-width: 0;
+  font-size: clamp(14px, 4.1vw, 18px);
+  line-height: 1.18;
+  white-space: normal;
+  word-break: normal;
+  overflow-wrap: break-word;
+  -webkit-hyphens: none;
+  hyphens: none;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  text-align: center;
+}
+
+/* Кнопки в шапке не сжимаются — иначе заголовок наезжает на них */
+.sv-head > button, .w2-bar > button, .ep-head > button,
+.sv-head > .ep-cancel, .sv-head > .ep-done {
+  flex: 0 0 auto;
+}
+
+/* ---------------------------------------------------------------------------
+   3. ФИКСИРОВАННЫЕ ОВЕРЛЕИ: сверху и снизу под инсеты
+   Всё, что живёт ВНЕ #app, должно само уважать безопасные зоны.
+   --------------------------------------------------------------------------- */
+#searchView, #notifsView, #adminView, #systemView, #regView, #legalView,
+#profileEditor, #storyViewer, #hqEmbed {
+  padding-top: var(--oko-safe-top);
+  padding-bottom: var(--oko-safe-bottom);
+  box-sizing: border-box;
+}
+/* у них своя внутренняя шапка — двойной отступ убираем */
+#searchView .sv-head, #notifsView .sv-head, #adminView .sv-head,
+#systemView .sv-head, #regView .ep-head {
+  padding-top: 10px;
+}
+
+/* Тосты и «живые» плашки — под шапку Telegram, а не поверх неё */
+.wal-live, .cp-callpill, .fa-newpill, .oko-toast, .toast, #toastHost > * {
+  top: calc(var(--oko-safe-top) + 10px) !important;
+}
+
+/* Нижние листы и модалки — над домашним индикатором */
+.sheet, .bottom-sheet, .modal-card, .oko-sheet {
+  padding-bottom: max(var(--oko-safe-bottom), 12px);
+}
+
+/* ---------------------------------------------------------------------------
+   4. НИЖНЯЯ НАВИГАЦИЯ: не прыгает, не дёргается, не меняет высоту
+   Причина прыжков: высота бара зависела от длины подписи и от появления
+   индикатора. Фиксируем геометрию — тогда переключение вкладок не двигает
+   контент и не вызывает reflow всей страницы.
+   --------------------------------------------------------------------------- */
+nav#tabs {
+  /* жёсткая высота: контент + safe-area. Меняться она не может ни от чего. */
+  height: calc(56px + var(--oko-safe-bottom));
+  min-height: calc(56px + var(--oko-safe-bottom));
+  padding-bottom: var(--oko-safe-bottom);
+  box-sizing: border-box;
+  contain: layout paint;
+  will-change: auto;
+}
+nav#tabs > button {
+  height: 56px;
+  padding: 8px 2px 6px;
+  justify-content: center;
+  gap: 3px;
+  /* фиксируем размер подписи, чтобы активная вкладка не «толстела» и не двигала соседей */
+  font-size: 10px;
+  font-weight: 600;
+  line-height: 1;
+  white-space: nowrap;
+  -webkit-tap-highlight-color: transparent;
+  touch-action: manipulation;
+  contain: layout;
+}
+nav#tabs > button svg.i {
+  width: 22px;
+  height: 22px;
+  flex: 0 0 auto;
+}
+/* Активная вкладка меняет ТОЛЬКО цвет и лёгкий подъём иконки — без изменения
+   размеров бокса. Раньше scale(1.1) на иконке толкал подпись и бар «дышал». */
+nav#tabs > button.active svg.i {
+  transform: translateY(-1px);
+  filter: drop-shadow(0 0 6px rgba(154, 255, 0, .5));
+}
+nav#tabs > button:active {
+  transform: none;
+}
+
+/* На ПК бар вертикальный — высоту не навязываем */
+@media (min-width: 900px) {
+  nav#tabs {
+    height: auto;
+    min-height: 0;
+  }
+  nav#tabs > button {
+    height: auto;
+  }
+}
+
+/* ---------------------------------------------------------------------------
+   5. ПУЗЫРИ СООБЩЕНИЙ: текст не режется по правому краю
+   На скринах текст обрывался («именной сертификат с п...чатью») — пузырь
+   выходил за границу списка из-за фиксированной max-width в px.
+   --------------------------------------------------------------------------- */
+.msgs {
+  padding-left: max(var(--oko-safe-left), 10px);
+  padding-right: max(var(--oko-safe-right), 10px);
+  box-sizing: border-box;
+  overflow-x: hidden;
+}
+.msg, .bubble, .msg .bubble {
+  max-width: min(78%, 560px);
+  box-sizing: border-box;
+  overflow-wrap: break-word;
+  word-break: normal;
+  -webkit-hyphens: none;
+  hyphens: none;
+}
+.msg .tx, .bubble .tx {
+  white-space: pre-wrap;
+  overflow-wrap: break-word;
+  word-break: normal;
+}
+
+/* ---------------------------------------------------------------------------
+   6. КОМПОЗЕР: не наезжает на нижний бар Telegram и на клавиатуру
+   --------------------------------------------------------------------------- */
+.composer {
+  padding-bottom: max(var(--oko-safe-bottom), 8px);
+  padding-left: max(var(--oko-safe-left), 8px);
+  padding-right: max(var(--oko-safe-right), 8px);
+  box-sizing: border-box;
+}
+
+/* ---------------------------------------------------------------------------
+   7. ГОРИЗОНТАЛЬНОЕ ПЕРЕПОЛНЕНИЕ: страница не ездит вбок никогда
+   --------------------------------------------------------------------------- */
+html, body, #app {
+  overflow-x: hidden;
+  max-width: 100%;
+}
+main > .screen {
+  max-width: 100%;
+  overflow-x: hidden;
+}
+/* Ряды чипов и фильтров скроллятся внутри себя, а не растягивают страницу */
+.folders, .adm-tabs, .chips-row, .filters-row {
+  max-width: 100%;
+  overflow-x: auto;
+  overflow-y: hidden;
+  scrollbar-width: none;
+  -webkit-overflow-scrolling: touch;
+}
+.folders::-webkit-scrollbar, .adm-tabs::-webkit-scrollbar,
+.chips-row::-webkit-scrollbar, .filters-row::-webkit-scrollbar {
+  display: none;
+}
+
+/* ---------------------------------------------------------------------------
+   8. КАРТИНКИ И МЕДИА: никогда не шире контейнера
+   --------------------------------------------------------------------------- */
+img, video, canvas, svg:not(.i) {
+  max-width: 100%;
+  height: auto;
+}
+
+/* ---------------------------------------------------------------------------
+   9. ЖИВОЙ 3D-ЗНАК: экран запуска и вход
+   Правка Даниэля: убрать «ужасное свечение» и поставить 3D-глаз из КП.
+   Плоский знак виден мгновенно, 3D плавно подменяет его, когда готов.
+   --------------------------------------------------------------------------- */
+.oko-eye3d-host{
+  position:absolute; inset:0;
+  pointer-events:none;
+  opacity:0;
+  transition:opacity .6s ease;
+  z-index:3;
+}
+.oko-3d-on > .oko-eye3d-host{ opacity:1; }
+
+/* Плоская подложка уходит, когда поднялся 3D — но остаётся, если 3D не завёлся */
+.oko-3d-on > .auth-logo,
+.oko-3d-on > .eye{
+  opacity:0;
+  transition:opacity .6s ease;
+}
+
+/* ЗНАК ЦЕЛИКОМ, БЕЗ ОБРЕЗАНИЙ (правка: «узкое лого вначале при запуске»).
+   Раньше .eye был квадратом 120x120 с filter-свечением, и на узких экранах
+   знак поджимался. Теперь размер считается от ширины экрана с потолком. */
+#splash .eye-wrap{
+  position:relative;
+  width:min(46vw, 200px);
+  height:min(46vw, 200px);
+  display:flex; align-items:center; justify-content:center;
+}
+#splash .eye{
+  width:100%; height:100%;
+  display:flex; align-items:center; justify-content:center;
+}
+#splash .eye svg{ width:100%; height:100%; object-fit:contain; }
+
+/* СВЕЧЕНИЕ: вместо двух блюрных ореолов на пол-экрана — один аккуратный
+   контактный ореол под знаком. Он читается как объём, а не как «пятно». */
+.auth-logo-wrap::before,
+.auth-logo-wrap::after{
+  content:none !important;
+}
+.auth-logo-wrap{
+  position:relative;
+  width:min(56vw, 230px);
+  height:min(56vw, 230px);
+  animation:none;
+}
+.auth-logo{
+  filter:none;
+  animation:none;
+  width:100%; height:100%; object-fit:contain;
+}
+/* аккуратный ореол: узкий, тёплый по бренду, дышит медленно */
+.auth-logo-wrap > .oko-eye3d-halo,
+.auth-logo-wrap::marker{ display:none; }
+#authScreen .auth-logo-wrap{
+  filter:drop-shadow(0 10px 34px rgba(154,255,0,.22));
+}
+#splash .eye-wrap{
+  filter:drop-shadow(0 8px 28px rgba(154,255,0,.20));
+}
+/* Убираем старый пульсирующий halo из ui-chrome — он и был «ужасным свечением» */
+#splash .eye::after{ content:none !important; }
+
+/* ---------------------------------------------------------------------------
+   10. ШАПКА ЛЕНТЫ: «Рекомендации · Подписки · клипы · обновить» в один ряд
+   Требование Даниэля: одна строка, без обрезаний и переносов, иконки справа.
+   --------------------------------------------------------------------------- */
+#screen-feed .feed-tabs{
+  display:flex;
+  align-items:center;
+  gap:clamp(10px, 3.2vw, 20px);
+  /* правый отступ учитывает и safe-area, и «дыхание» до края экрана */
+  padding:8px max(var(--oko-safe-right), 12px) 6px max(var(--oko-safe-left), 14px);
+  justify-content:flex-start;
+  flex-wrap:nowrap;
+  white-space:nowrap;
+  overflow:visible;              /* ряд не скроллится — он обязан помещаться */
+  border-bottom:1px solid var(--border);
+  background:var(--bg);
+  box-sizing:border-box;
+  width:100%;
+  max-width:100%;
+}
+/* Текстовые вкладки при нехватке места ужимаются кеглем, а не уезжают за край.
+   Иконки справа не сжимаются никогда — они всегда целиком на экране. */
+#screen-feed .feed-tabs button[data-fk]{
+  flex:0 1 auto;
+  min-width:0;
+  white-space:nowrap;
+  font-size:clamp(12.5px, 3.9vw, 15.5px);
+  padding:8px 0 10px;
+}
+/* распорка: текстовые вкладки слева, иконки прижаты вправо */
+#screen-feed .feed-tabs .ft-sp{ flex:1 1 auto; min-width:8px; }
+
+#screen-feed .feed-tabs .ft-ico{
+  flex:0 0 auto;
+  width:34px; height:34px;
+  display:inline-flex; align-items:center; justify-content:center;
+  padding:0;
+  border:1px solid var(--border);
+  border-radius:50%;
+  background:transparent;
+  color:var(--dim);
+  transition:color .18s, border-color .18s, background .18s, transform .12s;
+}
+#screen-feed .feed-tabs .ft-ico svg.i{ width:18px; height:18px; }
+#screen-feed .feed-tabs .ft-ico:active{ transform:scale(.92); }
+#screen-feed .feed-tabs .ft-ico:hover{ color:var(--accent); border-color:rgba(154,255,0,.4); }
+/* у иконок не должно быть подчёркивания активной вкладки */
+#screen-feed .feed-tabs .ft-ico.on::after,
+#screen-feed .feed-tabs .ft-ico::after{ content:none; }
+
+/* вращение иконки обновления на время пересборки подборки */
+#screen-feed .feed-tabs .ft-ico.ft-spin svg.i{ animation:okoSpin .7s cubic-bezier(.4,0,.2,1); }
+@keyframes okoSpin{ to{ transform:rotate(360deg); } }
+
+/* Дублирующая шапка «Умная лента» внутри списка больше не нужна:
+   обновление переехало в единый верхний ряд. Оставляем только пояснение (i). */
+#feedList .fa-bar > .fa-refresh{ display:none; }
+#feedList .fa-bar > .fa-clips{ display:none; }
+
+/* ---------------------------------------------------------------------------
+   11. КОШЕЛЁК: подписи быстрых действий не рвутся посреди слова
+   Реальный класс ряда — .w2-q (а не .wal-act). Именно здесь получалось
+   «Пополнит / ь» и «Перевест / и».
+   --------------------------------------------------------------------------- */
+.w2-q, .w2-q span, .w2-q b {
+  overflow-wrap: normal;
+  word-break: keep-all;
+  -webkit-hyphens: none;
+  hyphens: none;
+}
+.w2-q span {
+  white-space: nowrap;
+  font-size: clamp(9.5px, 3vw, 11.5px);
+  line-height: 1.15;
+  letter-spacing: 0;
+}
+.w2-qs, .w2-quick, .w2-q-row {
+  gap: 8px;
+}
+.w2-q { padding: 12px 3px 10px; min-width: 0; }
+
+/* ---------------------------------------------------------------------------
+   12. ПУЗЫРИ И ГОЛОСОВЫЕ: ничего не режется по правому краю
+   .msg{max-width:78%} считался от .msgs с боковыми отступами, а голосовое
+   держало жёсткие 190px — вместе они выталкивали пузырь за границу списка.
+   --------------------------------------------------------------------------- */
+.msgs .msg {
+  max-width: min(78%, calc(100% - 52px));
+  min-width: 0;
+}
+.msg .voice, .voice {
+  min-width: 0;
+  width: 100%;
+  max-width: 100%;
+  flex-wrap: wrap;
+}
+.voice .voice-tr, .voice .wave { min-width: 0; flex: 1 1 auto; }
+
+/* ---------------------------------------------------------------------------
+   13. БЕЗОПАСНЫЕ ЗОНЫ У ОСТАВШИХСЯ ОВЕРЛЕЕВ
+   Просмотр сторис, редактор истории, сертификат, медиа биржи, выписка —
+   их шапки лежали в самом верху вебвью без учёта инсетов.
+   --------------------------------------------------------------------------- */
+.sp-bars       { top: calc(var(--oko-safe-top) + 10px) !important; }
+.sp-actions    { top: calc(var(--oko-safe-top) + 34px) !important; }
+.sv-close      { top: calc(var(--oko-safe-top) + 26px) !important; }
+.sp-ed-head    { padding-top: calc(var(--oko-safe-top) + 10px); }
+.ac-cert-close { top: calc(var(--oko-safe-top) + 16px) !important; }
+.mp-mv-x       { top: calc(var(--oko-safe-top) + 14px) !important; }
+.wal-stmt-bar  { padding-top: calc(var(--oko-safe-top) + 10px); }
+.ch-head       { padding-top: calc(var(--oko-safe-top) + 10px); }
+.pp2-head      { padding-top: calc(var(--oko-safe-top) + 10px); }
+.gm-head, .ads-head { padding-top: calc(var(--oko-safe-top) + 8px); }
+
+/* ---------------------------------------------------------------------------
+   14. КОНТЕКСТНОЕ МЕНЮ СООБЩЕНИЯ: появляется свободное поле для закрытия
+   Раньше .mm-inner растягивался почти на весь экран, и тапнуть «в пустое
+   место» было физически некуда — меню выглядело неубиваемым.
+   --------------------------------------------------------------------------- */
+#msgMenu { align-items: flex-end; padding: 24px 12px calc(24px + var(--oko-safe-bottom)); }
+#msgMenu .mm-inner {
+  width: 100%;
+  max-width: 460px;
+  margin: 0 auto;
+  max-height: 74vh;          /* сверху всегда остаётся зона для закрытия */
+  overflow-y: auto;
+  overscroll-behavior: contain;
+}
+/* подсказка «тапни, чтобы закрыть» — маленькая ручка над карточкой */
+#msgMenu .mm-inner::before {
+  content: '';
+  display: block;
+  width: 40px; height: 4px;
+  margin: 0 auto 10px;
+  border-radius: 99px;
+  background: rgba(255,255,255,.28);
+}
+:root[data-theme="light"] #msgMenu .mm-inner::before { background: rgba(0,0,0,.22); }

@@ -32,6 +32,15 @@
   --r-sm:8px; --r-md:14px; --r-lg:22px;
   --font-display:'Bebas Neue', Impact, sans-serif;
   --font-body:'Montserrat', -apple-system, 'Segoe UI', sans-serif;
+  /* БЕЗОПАСНЫЕ ЗОНЫ — единый источник правды (правка Даниэля 09.08).
+     Вне Telegram работает системный env(); внутри Telegram эти же переменные
+     перезаписывает JS значениями safeAreaInset + contentSafeAreaInset.
+     Весь CSS обязан считать отступы ТОЛЬКО от них — тогда ни одна шапка,
+     модалка, тост или композер не залезет под интерфейс Telegram. */
+  --oko-safe-top:env(safe-area-inset-top,0px);
+  --oko-safe-bottom:env(safe-area-inset-bottom,0px);
+  --oko-safe-left:env(safe-area-inset-left,0px);
+  --oko-safe-right:env(safe-area-inset-right,0px);
 }
 :root[data-theme="light"]{
   --bg:#fff; --surface:#f7f9f4; --raised:#eef3e8; --border:#e1e8d9;
@@ -57,7 +66,7 @@ svg.i.fill{fill:currentColor;stroke:none}
 /* ============ APP SHELL ============ */
 #app{display:flex;flex-direction:column;height:100%;max-width:1280px;margin:0 auto}
 @supports(height:100dvh){#app{height:100dvh}}
-header{display:flex;align-items:center;gap:12px;min-height:58px;padding:10px 16px;padding-top:max(10px,env(safe-area-inset-top));border-bottom:1px solid var(--border);flex-shrink:0;background:linear-gradient(180deg,rgba(154,255,0,.035),transparent 70%),var(--bg)}
+header{display:flex;align-items:center;gap:12px;min-height:58px;padding:10px 16px;padding-top:max(10px,var(--oko-safe-top));border-bottom:1px solid var(--border);flex-shrink:0;background:linear-gradient(180deg,rgba(154,255,0,.035),transparent 70%),var(--bg)}
 :root[data-theme="light"] header{background:linear-gradient(180deg,rgba(110,200,0,.05),transparent 70%),var(--bg)}
 header .brand{display:flex;align-items:center;gap:9px}
 header .brand svg{width:29px;height:29px;color:var(--accent);filter:drop-shadow(0 0 5px rgba(154,255,0,.4))}
@@ -70,7 +79,7 @@ header .screen-title::before{content:'';position:absolute;left:0;top:50%;transfo
 .theme-btn:hover{color:var(--accent);background:var(--lime-dim)}
 .theme-btn:active{transform:scale(.9)}
 main{flex:1;overflow-y:auto;overflow-x:hidden;overscroll-behavior:contain;position:relative}
-nav#tabs{display:flex;border-top:1px solid var(--border);flex-shrink:0;background:var(--surface);padding-bottom:var(--oko-safe-bottom, env(safe-area-inset-bottom))}
+nav#tabs{display:flex;border-top:1px solid var(--border);flex-shrink:0;background:var(--surface);padding-bottom:var(--oko-safe-bottom, var(--oko-safe-bottom))}
 nav#tabs>button{flex:1;padding:10px 4px 8px;display:flex;flex-direction:column;align-items:center;gap:4px;color:var(--dim);font-size:10.5px;letter-spacing:.02em;transition:color .18s}
 nav#tabs>button.active{color:var(--accent)}
 nav#tabs svg.i{width:21px;height:21px}
@@ -121,7 +130,7 @@ nav#tabs .nav-logo{display:none}
 /* bottom sheet */
 .sheet-overlay{position:fixed;inset:0;background:rgba(0,0,0,.55);display:none;z-index:40}
 .sheet-overlay.open{display:block;animation:fade .2s ease}
-.sheet{position:fixed;left:50%;transform:translateX(-50%) translateY(105%);bottom:0;width:100%;max-width:480px;background:var(--surface);border:1px solid var(--border);border-radius:var(--r-lg) var(--r-lg) 0 0;padding:10px 18px calc(18px + env(safe-area-inset-bottom));z-index:41;transition:transform .28s cubic-bezier(.3,1,.4,1);max-height:86dvh;overflow-y:auto}
+.sheet{position:fixed;left:50%;transform:translateX(-50%) translateY(105%);bottom:0;width:100%;max-width:480px;background:var(--surface);border:1px solid var(--border);border-radius:var(--r-lg) var(--r-lg) 0 0;padding:10px 18px calc(18px + var(--oko-safe-bottom));z-index:41;transition:transform .28s cubic-bezier(.3,1,.4,1);max-height:86dvh;overflow-y:auto}
 .sheet::before{content:'';display:block;width:38px;height:4px;border-radius:2px;background:var(--border);margin:2px auto 12px}
 .sheet.open{transform:translateX(-50%) translateY(0)}
 .sheet h3{font-size:22px;margin-bottom:12px}
@@ -140,7 +149,7 @@ nav#tabs .nav-logo{display:none}
 .searchbar input::placeholder{color:rgba(255,255,255,.4)}
 :root[data-theme="light"] .searchbar input::placeholder{color:var(--dim)}
 .searchbar svg.i{width:17px;height:17px}
-.chat-list{flex:1;overflow-y:auto;padding-bottom:calc(96px + env(safe-area-inset-bottom))}
+.chat-list{flex:1;overflow-y:auto;padding-bottom:calc(96px + var(--oko-safe-bottom))}
 .chat-item{display:flex;gap:12px;padding:12px 16px;border-bottom:1px solid var(--border);cursor:pointer;transition:background .15s}
 /* индикатор «в сети» на аватаре списка чатов (как в Telegram) — только для личных онлайн-контактов */
 .ci-ava{position:relative;flex-shrink:0}
@@ -212,7 +221,7 @@ nav#tabs .nav-logo{display:none}
 :root[data-theme="light"] .gal-thumb{background:linear-gradient(135deg,#eaf6d9,#dcefc2) !important}
 .photomsg svg.i{width:34px;height:34px}
 /* composer */
-.composer{display:flex;gap:8px;padding:12px 14px;padding-bottom:calc(12px + var(--oko-safe-bottom, env(safe-area-inset-bottom)));border-top:1px solid var(--border);flex-shrink:0;align-items:center;background:var(--surface)}
+.composer{display:flex;gap:8px;padding:12px 14px;padding-bottom:calc(12px + var(--oko-safe-bottom, var(--oko-safe-bottom)));border-top:1px solid var(--border);flex-shrink:0;align-items:center;background:var(--surface)}
 .composer .tool{width:40px;height:40px;border-radius:50%;display:flex;align-items:center;justify-content:center;color:rgba(255,255,255,.66);flex-shrink:0}
 .composer .tool:hover,.composer .tool:active{color:var(--accent)}
 :root[data-theme="light"] .composer .tool{color:var(--dim)}
@@ -242,7 +251,7 @@ nav#tabs .nav-logo{display:none}
   #screen-feed{max-width:820px;margin:0 auto;width:100%}
 }
 /* последний пост/чат не должен прятаться под плавающей кнопкой */
-#feedList{padding-bottom:calc(96px + env(safe-area-inset-bottom))}
+#feedList{padding-bottom:calc(96px + var(--oko-safe-bottom))}
 @media(min-width:900px){
   #feedList{padding-bottom:24px}
   /* сторис на десктопе: правый край подтаивает — видно, что ряд листается (не «обрезан») */
@@ -461,7 +470,7 @@ nav#tabs .nav-logo{display:none}
 .hp-typing .hp-msg-b span:nth-child(2){animation-delay:.2s}
 .hp-typing .hp-msg-b span:nth-child(3){animation-delay:.4s}
 @keyframes hpBlink{0%,60%,100%{opacity:.3;transform:translateY(0)}30%{opacity:1;transform:translateY(-3px)}}
-.hp-input{display:flex;align-items:flex-end;gap:8px;padding:10px 12px;border-radius:14px;background:var(--surface);border:1px solid var(--border);position:sticky;bottom:calc(72px + env(safe-area-inset-bottom));z-index:5}
+.hp-input{display:flex;align-items:flex-end;gap:8px;padding:10px 12px;border-radius:14px;background:var(--surface);border:1px solid var(--border);position:sticky;bottom:calc(72px + var(--oko-safe-bottom));z-index:5}
 .hp-input textarea{flex:1;background:none;border:none;outline:none;resize:none;color:var(--fg);font-size:14px;font-family:inherit;line-height:1.4;padding:6px 4px;max-height:120px;min-height:24px}
 .hp-input textarea::placeholder{color:var(--dim)}
 .hp-send{flex-shrink:0;width:38px;height:38px;border-radius:12px;background:var(--lime);color:#000;display:flex;align-items:center;justify-content:center;border:none;transition:transform .12s}
@@ -718,11 +727,11 @@ label.f-lab{display:block}
 .prof-bio{font-size:13.5px;line-height:1.5;color:var(--fg);margin:12px 0 2px}
 #editProfile{position:fixed;inset:0;z-index:72;background:var(--bg);display:flex;flex-direction:column;transform:translateX(100%);transition:transform .3s cubic-bezier(.3,1,.4,1);max-width:1280px;margin:0 auto}
 #editProfile.open{transform:none}
-.ep-head{display:flex;align-items:center;justify-content:space-between;padding:14px 18px calc(14px);padding-top:max(14px,env(safe-area-inset-top));border-bottom:1px solid var(--border);flex-shrink:0}
+.ep-head{display:flex;align-items:center;justify-content:space-between;padding:14px 18px calc(14px);padding-top:max(14px,var(--oko-safe-top));border-bottom:1px solid var(--border);flex-shrink:0}
 .ep-head b{font-size:16px;font-weight:700}
 .ep-cancel{color:var(--dim);font-size:14.5px}
 .ep-done{color:var(--accent);font-size:14.5px;font-weight:700}
-.ep-body{flex:1;overflow-y:auto;padding:24px 20px calc(30px + env(safe-area-inset-bottom))}
+.ep-body{flex:1;overflow-y:auto;padding:24px 20px calc(30px + var(--oko-safe-bottom))}
 .ep-avawrap{position:relative;width:104px;height:104px;margin:0 auto 8px}
 .ep-ava{width:104px;height:104px;font-size:42px}
 .ep-avabtn{position:absolute;right:-2px;bottom:-2px;width:36px;height:36px;border-radius:50%;background:var(--lime);color:#000;display:flex;align-items:center;justify-content:center;border:3px solid var(--bg)}
@@ -780,7 +789,7 @@ label.f-lab{display:block}
 .ch-call{width:38px;height:38px;border-radius:50%;display:flex;align-items:center;justify-content:center;color:var(--accent);flex-shrink:0}
 .ch-call:active{background:var(--lime-dim)}
 .ch-call svg.i{width:20px;height:20px}
-#callScreen{position:fixed;inset:0;z-index:95;background:#000;background:radial-gradient(circle at 50% 30%,#12240a,#000 75%),#000;display:none;flex-direction:column;align-items:center;justify-content:space-between;padding:calc(60px + env(safe-area-inset-top)) 24px calc(40px + env(safe-area-inset-bottom))}
+#callScreen{position:fixed;inset:0;z-index:95;background:#000;background:radial-gradient(circle at 50% 30%,#12240a,#000 75%),#000;display:none;flex-direction:column;align-items:center;justify-content:space-between;padding:calc(60px + var(--oko-safe-top)) 24px calc(40px + var(--oko-safe-bottom))}
 #callScreen.open{display:flex;animation:fade .3s}
 .call-bg{position:absolute;inset:0;background:linear-gradient(160deg,#1a3310,#050505 70%);opacity:0;transition:opacity .3s;z-index:-1}
 #callScreen.video .call-bg{opacity:1;background:linear-gradient(160deg,#152608,#0a0f04)}
@@ -790,7 +799,7 @@ label.f-lab{display:block}
 #callScreen.video .call-ava{width:96px;height:96px;font-size:36px}
 .call-name{font-size:24px;font-weight:800;color:#fff;max-width:82%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;text-align:center}
 .call-status{font-size:14px;color:rgba(255,255,255,.65)}
-.call-self{position:absolute;top:calc(20px + env(safe-area-inset-top));right:18px;width:84px;height:118px;border-radius:16px;background:linear-gradient(160deg,#1d2b08,#0b0f04);border:1px solid var(--border);display:none;align-items:center;justify-content:center;color:var(--accent);z-index:3}
+.call-self{position:absolute;top:calc(20px + var(--oko-safe-top));right:18px;width:84px;height:118px;border-radius:16px;background:linear-gradient(160deg,#1d2b08,#0b0f04);border:1px solid var(--border);display:none;align-items:center;justify-content:center;color:var(--accent);z-index:3}
 .call-self svg.i{width:30px;height:30px;opacity:.6}
 .call-controls{display:flex;gap:18px;align-items:center}
 .call-btn{width:60px;height:60px;border-radius:50%;background:rgba(255,255,255,.12);backdrop-filter:blur(6px);display:flex;align-items:center;justify-content:center;color:#fff;transition:transform .12s,background .2s}
@@ -803,10 +812,10 @@ label.f-lab{display:block}
 /* ===== Превью системы роста ===== */
 #systemView{position:fixed;inset:0;z-index:73;background:var(--bg);display:flex;flex-direction:column;transform:translateX(100%);transition:transform .3s cubic-bezier(.3,1,.4,1);max-width:1280px;margin:0 auto}
 #systemView.open{transform:none}
-.sv-head{display:flex;align-items:center;justify-content:space-between;padding:14px 18px;padding-top:max(14px,env(safe-area-inset-top));border-bottom:1px solid var(--border);flex-shrink:0}
+.sv-head{display:flex;align-items:center;justify-content:space-between;padding:14px 18px;padding-top:max(14px,var(--oko-safe-top));border-bottom:1px solid var(--border);flex-shrink:0}
 .sv-head b{font-size:16px;font-weight:700}
 .sv-head .ep-cancel svg.i{width:22px;height:22px}
-.sv-body{flex:1;overflow-y:auto;padding:20px 18px calc(30px + env(safe-area-inset-bottom))}
+.sv-body{flex:1;overflow-y:auto;padding:20px 18px calc(30px + var(--oko-safe-bottom))}
 .sys-hero{text-align:center;padding:14px 0 22px}
 .sys-badge{width:64px;height:64px;border-radius:20px;background:var(--lime-dim);border:1px solid rgba(154,255,0,.3);display:flex;align-items:center;justify-content:center;color:var(--accent);margin:0 auto 14px}
 .sys-badge svg.i{width:32px;height:32px}
@@ -1083,7 +1092,7 @@ label.f-lab{display:block}
 /* ===== Глобальный поиск ===== */
 #searchView{position:fixed;inset:0;z-index:74;background:var(--bg);display:flex;flex-direction:column;transform:translateX(100%);transition:transform .3s cubic-bezier(.3,1,.4,1);max-width:1280px;margin:0 auto}
 #searchView.open{transform:none}
-.search-head{display:flex;align-items:center;gap:8px;padding:12px 14px;padding-top:max(12px,env(safe-area-inset-top));border-bottom:1px solid var(--border);flex-shrink:0}
+.search-head{display:flex;align-items:center;gap:8px;padding:12px 14px;padding-top:max(12px,var(--oko-safe-top));border-bottom:1px solid var(--border);flex-shrink:0}
 .search-head .ep-cancel{flex-shrink:0;padding:4px}
 .search-head .ep-cancel svg.i{width:22px;height:22px}
 .search-field{flex:1;display:flex;align-items:center;gap:9px;background:var(--surface);border:1px solid var(--border);border-radius:99px;padding:10px 15px}
@@ -1154,7 +1163,7 @@ label.f-lab{display:block}
 .ch-stat .v{font-size:19px;font-weight:800;letter-spacing:-.01em}
 .ch-stat .l{font-size:10.5px;color:var(--dim);margin-top:2px}
 /* Лента: FAB, комментарии, тост */
-.fab{position:absolute;right:16px;bottom:calc(16px + env(safe-area-inset-bottom));width:52px;height:52px;border-radius:50%;background:var(--lime);color:#000;display:flex;align-items:center;justify-content:center;box-shadow:0 8px 24px rgba(154,255,0,.35);z-index:20;transition:transform .14s}
+.fab{position:absolute;right:16px;bottom:calc(16px + var(--oko-safe-bottom));width:52px;height:52px;border-radius:50%;background:var(--lime);color:#000;display:flex;align-items:center;justify-content:center;box-shadow:0 8px 24px rgba(154,255,0,.35);z-index:20;transition:transform .14s}
 .fab:active{transform:scale(.9)}
 .fab .i{width:26px;height:26px}
 .post .acts button.liked{color:var(--accent)}
@@ -1262,11 +1271,11 @@ label.f-lab{display:block}
 .pay-ok{width:60px;height:60px;border-radius:50%;background:var(--lime);color:#000;display:flex;align-items:center;justify-content:center;margin:0 auto}
 .pay-ok .i{width:34px;height:34px;fill:currentColor}
 /* Онбординг */
-#onboard{position:fixed;inset:0;z-index:70;background:radial-gradient(circle at 50% 32%,#0b1204,#000 72%);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:26px;padding:32px 26px calc(30px + env(safe-area-inset-bottom));transition:opacity .4s ease}
+#onboard{position:fixed;inset:0;z-index:70;background:radial-gradient(circle at 50% 32%,#0b1204,#000 72%);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:26px;padding:32px 26px calc(30px + var(--oko-safe-bottom));transition:opacity .4s ease}
 #onboard.hidden{display:none}
 #onboard.closing{opacity:0}
 #onboard .btn{max-width:420px}
-.ob-skip{position:absolute;top:calc(16px + env(safe-area-inset-top));right:20px;color:var(--dim);font-size:13px;font-weight:600;padding:8px}
+.ob-skip{position:absolute;top:calc(16px + var(--oko-safe-top));right:20px;color:var(--dim);font-size:13px;font-weight:600;padding:8px}
 .ob-stage{text-align:center;max-width:440px;animation:obIn .4s cubic-bezier(.3,1,.4,1)}
 @keyframes obIn{from{opacity:0;transform:translateY(14px)}to{opacity:1;transform:none}}
 .ob-ico{width:96px;height:96px;margin:0 auto 26px;border-radius:28px;background:var(--lime-dim);border:1px solid rgba(154,255,0,.3);display:flex;align-items:center;justify-content:center;color:var(--accent)}
@@ -1462,10 +1471,21 @@ button:focus-visible,a:focus-visible,input:focus-visible,textarea:focus-visible,
   *,*::before,*::after{animation-duration:.01ms!important;animation-iteration-count:1!important;transition-duration:.01ms!important;scroll-behavior:auto!important}
 }
 </style>
+<!-- ============ 3D-ЗНАК OKO: карта модулей three.js (локальные копии из КП) ============
+     Нужна для ленивого import('./oko-eye3d.js') на экране запуска и входа.
+     Сам three.js НЕ грузится, пока модуль не понадобится. -->
+<script type="importmap">
+{"imports":{"three":"./vendor/three.module.min.js","three/addons/":"./vendor/jsm/"}}
+</script>
 <!-- ============ OKO LAZY BUNDLE LOADER ============ -->
 <link rel="stylesheet" href="app.css" media="print" onload="this.media='all'">
 <noscript><link rel="stylesheet" href="app.css"></noscript>
+<!-- Слой полировки v2: грузится ПОСЛЕ ядра и перекрывает его точечные стили.
+     Здесь адаптация под Telegram/мобильный/ПК, типографика, хром, Reels, воронки. -->
+<link rel="stylesheet" href="oko-v2.css" media="print" onload="this.media='all'">
+<noscript><link rel="stylesheet" href="oko-v2.css"></noscript>
 <script defer src="app.js"></script>
+<script defer src="oko-v2.js"></script>
 <script>
 /* Обёртки над встроенными в base.html функциями — для авто-трека page_view / share.
    showTab существует в inline-скрипте base.html, поэтому оборачиваем по мере
@@ -1582,6 +1602,10 @@ button:focus-visible,a:focus-visible,input:focus-visible,textarea:focus-visible,
     <symbol id="i-sticker" viewBox="0 0 100 100"><path d="M58 14H30a16 16 0 0 0-16 16v40a16 16 0 0 0 16 16h28l28-28V30a16 16 0 0 0-16-16z"/><path d="M58 86V66a8 8 0 0 1 8-8h20"/></symbol>
     <symbol id="i-more" viewBox="0 0 100 100"><circle cx="50" cy="24" r="7" fill="currentColor" stroke="none"/><circle cx="50" cy="50" r="7" fill="currentColor" stroke="none"/><circle cx="50" cy="76" r="7" fill="currentColor" stroke="none"/></symbol>
     <symbol id="i-rocket" viewBox="0 0 100 100"><path d="M50 12c14 8 22 24 22 42l-10 10H38l-10-10c0-18 8-34 22-42z"/><circle cx="50" cy="42" r="8"/><path d="M38 64l-12 14 16-4M62 64l12 14-16-4"/></symbol>
+    <!-- Клипы: скруглённый кадр с диагональю и треугольником воспроизведения (метафора Reels) -->
+    <symbol id="i-clips" viewBox="0 0 100 100"><rect x="14" y="14" width="72" height="72" rx="18"/><path d="M32 14 48 38M58 14 74 38M14 38h72"/><path d="M44 52v20l18-10z" fill="currentColor" stroke="none"/></symbol>
+    <!-- Обновить: круговая стрелка, разомкнутая сверху справа -->
+    <symbol id="i-refresh" viewBox="0 0 100 100"><path d="M82 50a32 32 0 1 1-9.4-22.6"/><polyline points="82 16 82 32 66 32"/></symbol>
   </defs>
 </svg>
 
@@ -1628,8 +1652,11 @@ button:focus-visible,a:focus-visible,input:focus-visible,textarea:focus-visible,
   <textarea id="stStoryText" rows="2" placeholder="Текст истории (необязательно)" style="width:100%;resize:none;margin-top:6px"></textarea>
   <button class="btn" onclick="createTextStory()">Опубликовать текст</button>
 </div>
-<div id="msgMenu" onclick="closeMsgMenu()" role="button" tabindex="0">
-  <div class="mm-inner" onclick="event.stopPropagation()" role="button" tabindex="0">
+<!-- Закрытие тапом по свободному месту: обработчик на подложке проверяет,
+     что клик пришёлся именно в неё, а не в карточку. Раньше .mm-inner гасил
+     всплытие и одновременно занимал почти весь экран — закрыть было нечем. -->
+<div id="msgMenu" onclick="if(event.target===this)closeMsgMenu()" role="dialog" aria-modal="true" aria-label="Действия с сообщением">
+  <div class="mm-inner" role="group">
     <div class="mm-reacts" id="mmReacts"></div>
     <div class="mm-preview" id="mmPreview"></div>
     <div class="mm-actions" id="mmActions"></div>
@@ -1741,9 +1768,15 @@ button:focus-visible,a:focus-visible,input:focus-visible,textarea:focus-visible,
            только «Рекомендации» и «Подписки»). Сторис показываются в
            отдельных модулях stories-plus и tour, не в шапке ленты. -->
       <div class="stories" id="storiesRow" style="display:none"></div>
-      <div class="feed-tabs">
-        <button class="on" onclick="feedTab(this,'sub')">Подписки</button>
-        <button onclick="feedTab(this,'rec')">Рекомендации</button>
+      <!-- Шапка ленты (правка Даниэля 09.08): строго один ряд, строго в порядке
+           «Рекомендации · Подписки · клипы · обновить». По умолчанию открыты
+           Рекомендации. Иконки — справа, текст никогда не переносится. -->
+      <div class="feed-tabs" id="feedTabs">
+        <button class="on" data-fk="rec" onclick="feedTab(this,'rec')">Рекомендации</button>
+        <button data-fk="sub" onclick="feedTab(this,'sub')">Подписки</button>
+        <span class="ft-sp"></span>
+        <button class="ft-ico" type="button" onclick="okoOpenClips()" title="Клипы" aria-label="Клипы"><svg class="i"><use href="#i-clips"/></svg></button>
+        <button class="ft-ico" type="button" onclick="okoFeedRefresh(this)" title="Обновить" aria-label="Обновить"><svg class="i"><use href="#i-refresh"/></svg></button>
       </div>
       <div id="feedList"></div>
       <!-- Кнопка «Новый пост» убрана по правке Даниэля от 29.07 (лента только для потребления, публикация из мини-аппа) -->
@@ -2328,7 +2361,7 @@ button:focus-visible,a:focus-visible,input:focus-visible,textarea:focus-visible,
   </div>
 </div>
 <div class="sheet" id="sheet-progress" style="max-height:78vh;overflow-y:auto">
-  <h3>Прогресс сборки OKO <span class="chip" style="font-size:10px;vertical-align:3px">сборка v1.97</span></h3>
+  <h3>Прогресс сборки OKO <span class="chip" style="font-size:10px;vertical-align:3px">сборка v2.00</span></h3>
   <p class="dim" style="font-size:12px;margin:-6px 0 10px">Запуск: 15 июля 2026. Обновляется с каждым этапом.</p>
   <div id="progressList"></div>
 </div>
@@ -3710,7 +3743,10 @@ try{ applyTheme(localStorage.getItem('oko-theme')||'dark'); }catch(e){}
       var tg=window.Telegram&&window.Telegram.WebApp;
       if(tg&&tg.initData){
         var sa=tg.safeAreaInset||{}, ca=tg.contentSafeAreaInset||{};
-        set((sa.top||0)+(ca.top||0), Math.max(sa.bottom||0,ca.bottom||0),
+        /* fullsize: Telegram сам держит место под шапку -> верхний инсет 0,
+           иначе получаем двойной отступ. Суммируем только в фуллскрине. */
+        var fs=tg.isFullscreen===true;
+        set(fs?((sa.top||0)+(ca.top||0)):0, Math.max(sa.bottom||0,ca.bottom||0),
             (sa.left||0)+(ca.left||0), (sa.right||0)+(ca.right||0));
       }
     }catch(e){}
@@ -3729,55 +3765,52 @@ const WAVE = seed => { // детерминированная волна голо
   let h=''; for(let k=0;k<24;k++){ const v=6+((seed*31+k*17)%19); h+=`<i style="height:${v}px"></i>`; } return h;
 };
 
-/* ================= МОК-ДАННЫЕ ================= */
 /* kind: text | voice | vnote | file | photo */
+/* ================= СТАРТОВЫЕ ЧАТЫ =================
+   Правка Даниэля 09.08: у нового человека в списке ТОЛЬКО официальные
+   сущности OKO и личка с основателем. Никаких выдуманных собеседников,
+   групп и «моих» каналов — их люди создают сами.
+   Всё остальное подтягивается из Supabase по мере реальной активности. */
 const LIVE_ID = '00000000-0000-0000-0000-00000000c0de';
+const OKO_FOUNDER_NICK = 'ktodaniel';
+
 const CHATS = [
+  /* 1. Живой общий чат — настоящий Supabase Realtime, сообщения реальные */
   {id:'live', cid:LIVE_ID, ava:'O', name:'Общий чат OKO', kind:'group', kindIcon:'globe', live:true,
-   preview:'Настоящий чат — пиши, увидят все', time:'', unread:0, online:true, msgs:[
-     {kind:'sys', body:'Это живой чат через Supabase Realtime — сообщения настоящие'},
-   ]},
-  {id:1, avaIcon:'logo', name:'Поддержка OKO', kind:'direct', nick:'okohelp', kindIcon:null, preview:'Подписка активна до 15.08', time:'12:40', unread:0, online:true,
+   official:true, preview:'Общий чат сообщества — пиши, увидят все', time:'', unread:0, online:true,
    msgs:[
-     {in:1, t:'12:38', kind:'text', body:'Привет! Я поддержка OKO. Отвечаю из базы знаний, деньги и возвраты — сразу к менеджеру. Кнопка «позвать менеджера» всегда рядом.'},
-     {in:0, t:'12:39', kind:'text', body:'До какого числа у меня подписка?'},
-     {in:1, t:'12:40', kind:'text', body:'Подписка PRO активна до 15.08.2026. Продление за год даст −20%. Чем ещё помочь?'},
+     {kind:'sys', body:'Общий чат сообщества OKO. Здесь живое общение — сообщения видят все участники.'},
    ]},
-  {id:2, cid:'00000000-0000-0000-0000-000000000002', ava:'К', name:'Клуб OKO · Рост', kind:'channel', managed:true, subs:'12.4к', writeAll:false, kindIcon:'megaphone', preview:'Голосовое сообщение', time:'11:05', unread:3, online:false,
+
+  /* 2. Поддержка — реальный ИИ-агент с эскалацией на человека в @okohelp */
+  {id:1, avaIcon:'logo', name:'Поддержка OKO', kind:'direct', nick:'okohelp', kindIcon:null,
+   official:true, agent:'support', preview:'Отвечаем 24/7', time:'', unread:0, online:true,
    msgs:[
-     {in:1, t:'10:58', kind:'text', body:'Сегодня разбор: как ролик на 40к просмотров принёс 12 заявок.'},
-     {in:1, t:'11:02', kind:'voice', dur:'0:47', seed:7},
-     {in:1, t:'11:05', kind:'vnote', dur:'0:31'},
+     {in:1, t:'', kind:'text', body:'Привет. Я поддержка OKO — отвечаю круглосуточно по базе знаний: тарифы, лимиты, партнёрка, мини-аппы, оплата. Вопросы по деньгам и возвратам сразу передаю живому менеджеру, кнопка «позвать человека» всегда рядом.'},
    ]},
-  {id:3, cid:'00000000-0000-0000-0000-000000000003', ava:'З', name:'Мой контент-завод', kind:'group', managed:true, members:8, kindIcon:'bolt', preview:'отчёт-июль.pdf', time:'09:12', unread:1, online:true,
+
+  /* 3. Личка с основателем — первое, что человек видит после регистрации */
+  {id:2, ava:'Д', name:'Даниэль Ильясов', kind:'direct', nick:OKO_FOUNDER_NICK, kindIcon:null,
+   official:true, founder:true, preview:'Добро пожаловать в OKO', time:'', unread:1, online:false,
    msgs:[
-     {in:1, t:'08:00', kind:'text', body:'План на неделю: 5 роликов. Сценарии готовы, рендер в очереди.'},
-     {in:1, t:'09:10', kind:'photo'},
-     {in:1, t:'09:12', kind:'file', fname:'отчёт-июль.pdf', fsize:'2.4 МБ'},
-   ]},
-  {id:4, cid:'00000000-0000-0000-0000-000000000004', ava:'КМ', name:'Команда', kind:'group', managed:true, members:5, kindIcon:'users', preview:'Аня: макеты обложек в фигме', time:'вчера', unread:0, online:false,
-   msgs:[{in:1, t:'вчера', kind:'text', body:'Макеты обложек в фигме, глянь когда будет минута.'}]},
-  {id:5, cid:'00000000-0000-0000-0000-000000000005', ava:'А', name:'Аня', kind:'direct', nick:'anya_des', kindIcon:null, preview:'Опрос', time:'вчера', unread:0, online:true,
-   msgs:[
-     {in:1, t:'вчера', kind:'text', body:'Какую обложку берём для клуба?'},
-     {in:1, t:'вчера', kind:'poll', q:'Обложка для клуба', opts:['Тёмная с глазом','Лаймовая с сеткой','Минимализм'], votes:[7,4,2], voted:0},
+     {in:1, t:'', kind:'text', body:'Привет. Я Даниэль, основатель OKO. Рад, что ты здесь.'},
+     {in:1, t:'', kind:'text', body:'С чего начать: загляни в «Мини-аппы» — там Система роста по анкете и проверка видео. В «Академии» лежат курсы, в «Партнёрке» — твоя ссылка и проценты с приведённых людей. Если что-то непонятно или сломалось — пиши прямо сюда, читаю лично.'},
    ]},
 ];
 
-const POSTS = {
-  sub:[
-    {id:101, ava:'O', name:'OKO · Официальный', sub:'канал · 12.4к', body:'Обновление премодератора: теперь показываем силу хука по первым 3 секундам и риски по авторским. Проверка занимает ~40 секунд.', media:'0:32', likes:214, views:15200, liked:false, saved:false, reposts:18,
-     comments:[{a:'А', n:'Артём', t:'Огонь, давно ждал проверку по хукам'},{a:'Л', n:'Лиза', t:'А по музыке авторку ловит?'}]},
-    {id:102, ava:'Д', name:'Даниэль / рост', sub:'канал · 8.1к', body:'Правило простое: пока конкуренты спорят про алгоритмы — ты выкладываешь 30 роликов в месяц на автомате и собираешь заявки. Система решает, не вдохновение.', media:null, likes:389, views:8400, liked:false, saved:false, reposts:44,
-     comments:[{a:'С', n:'Сергей', t:'Система > мотивация. Факт'}]},
-  ],
-  rec:[
-    {id:201, ava:'КН', name:'Кейс недели', sub:'рекомендация', body:'С нуля до 900 подписчиков за 3 недели на контент-заводе: 21 ролик, 2 залетели, 47 заявок в CRM. Скоринг: свежесть + вовлечённость.', media:'1/5', likes:97, views:21400, liked:false, saved:false, reposts:9, promoted:true, comments:[]},
-    {id:202, ava:'П', name:'OKO Партнёрам', sub:'рекомендация', body:'Топ-партнёр июля заработал $1 240 на 15%/5%. Реф-ссылка + сторис раз в день. Всё.', media:null, likes:152, views:9800, liked:false, saved:false, reposts:21, comments:[]},
-  ]
-};
+/* Себе в личку человек не пишет: у основателя этот чат из списка убирается. */
+try{
+  if(typeof PROFILE === 'object' && PROFILE && PROFILE.nick === OKO_FOUNDER_NICK){
+    const k = CHATS.findIndex(c => c.founder);
+    if(k >= 0) CHATS.splice(k, 1);
+  }
+}catch(e){}
+
+
+const POSTS = {sub: [], rec: []}  /* демо-посты удалены 09.08 — лента из API */;
 const postById = id => [...POSTS.sub, ...POSTS.rec].find(p => p.id === id);
-let curFeedKind = 'sub';
+/* По умолчанию открыта лента РЕКОМЕНДАЦИЙ (правка Даниэля 09.08). */
+let curFeedKind = 'rec';
 
 /* ================= НАВИГАЦИЯ ================= */
 const TITLES = {chats:'Чаты', feed:'Лента', mini:'Мини-аппы', partner:'Партнёрка', profile:'Профиль'};
@@ -3964,6 +3997,14 @@ function openConv(id){
   renderChatList(document.getElementById('chatSearch').value);
 }
 function closeConv(){
+  /* Выходя из диалога, гасим всё, что могло остаться поверх: шторку
+     «Прикрепить», панель вложений, меню сообщения. Иначе после возврата
+     в список чатов сверху висел неубираемый оверлей. */
+  try{ if(typeof closeSheet === 'function') closeSheet(); }catch(e){}
+  try{ if(typeof cpClosePanel === 'function') cpClosePanel(); }catch(e){}
+  try{ if(typeof cpCloseMore === 'function') cpCloseMore(); }catch(e){}
+  try{ if(typeof closeMsgMenu === 'function') closeMsgMenu(); }catch(e){}
+
   document.querySelector('.chat-col').style.display='';
   document.getElementById('conv').style.display='';
   document.getElementById('convBody').style.display='none';
@@ -4077,7 +4118,14 @@ function refreshMsg(idx){
 /* ===== Контекстное меню сообщения (Telegram-уровень) ===== */
 const REACTIONS = ['heart','fire','thumb','laugh','wow','sad','star','crown'];
 let msgMenuIdx = null, replyState = null, editState = null;
-function reactBar(ev, idx){ ev.stopPropagation(); openMsgMenu(idx); }
+/* Одиночный тап по сообщению больше НЕ открывает контекстное меню
+   (правка Даниэля 09.08: «нажимаю на сообщение — выходит эта плашка, и оттуда
+   как выйти»). Меню теперь только по долгому нажатию и правой кнопке — как в
+   Telegram. Обычный тап просто закрывает то, что открыто. */
+function reactBar(ev, idx){
+  if(ev && ev.stopPropagation) ev.stopPropagation();
+  try{ if(window.okoCloseTopLayer) window.okoCloseTopLayer(); }catch(e){}
+}
 function openMsgMenu(idx){
   msgMenuIdx = idx;
   const m = currentChat.msgs[idx];
@@ -4181,15 +4229,7 @@ function renderSearch(){
 }
 
 /* ===== Центр уведомлений ===== */
-let NOTIFS = [
-  {ic:'heart',   who:'Лиза Кот',      t:'оценила твой пост «Правило простое…»', time:'2 мин', g:'Сегодня', unread:true, act:()=>{showTab('feed')}},
-  {ic:'comment', who:'Артём Слов',    t:'прокомментировал: «Огонь, давно ждал»', time:'14 мин', g:'Сегодня', unread:true, act:()=>{showTab('feed')}},
-  {ic:'briefcase',who:'Биржа OKO',    t:'новая заявка по объявлению «Монтаж Reels»', time:'40 мин', g:'Сегодня', unread:true, act:()=>{showTab('mini');openMa('market')}},
-  {ic:'users',   who:'+3 подписчика', t:'подписались на твой канал', time:'1 ч', g:'Сегодня', unread:false, act:()=>{}},
-  {ic:'money',   who:'Партнёрка',     t:'начисление +$70.35 за оплату PRO', time:'3 ч', g:'Сегодня', unread:false, act:()=>{showTab('partner')}},
-  {ic:'star',    who:'Сергей Дан',    t:'поставил 5 звёзд за твою услугу', time:'вчера', g:'Ранее', unread:false, act:()=>{}},
-  {ic:'rocket',  who:'OKO',           t:'твой пост в топе рекомендаций — охват вырос', time:'вчера', g:'Ранее', unread:false, act:()=>{showTab('feed')}},
-];
+let NOTIFS = []  /* демо-данные удалены 09.08: демо-уведомления ядра — источник только API */;
 function updateNotifDot(){ const n=NOTIFS.filter(x=>x.unread).length; const d=document.getElementById('notifDot'); if(d) d.style.display=n?'block':'none'; }
 function openNotifs(){ renderNotifs(); document.getElementById('notifsView').classList.add('open'); }
 function closeNotifs(){ document.getElementById('notifsView').classList.remove('open'); }
@@ -4200,42 +4240,22 @@ const ADMIN_TABS = [
   {k:'partners', t:'Партнёрка'}, {k:'moder', t:'Модерация'}, {k:'agents', t:'Агенты OKO'}, {k:'flags', t:'Флаги'},
 ];
 let admTab = 'overview';
+/* Админка OKO. Форма объекта сохранена (её ждут admOverview/admUsers/admPay
+   и т.д.), но все демо-записи убраны 09.08 — данные приходят из API.
+   Пока бэкенд не отдал цифры, разделы честно показывают нули и пустые списки. */
 const ADMIN = {
-  kpi: {users:1284, dau:412, mrr:3960, payouts:842, moder:7, churn:2.1},
-  users: [
-    {n:'Марина К.', h:'@marina_smm', tier:'PRO', paid:true, when:'сегодня'},
-    {n:'Игорь В.', h:'@igorvideo', tier:'BUSINESS', paid:true, when:'вчера'},
-    {n:'Гость-8842', h:'аноним', tier:'FREE', paid:false, when:'2 дня назад'},
-    {n:'Алина Р.', h:'@alina.grow', tier:'START', paid:true, when:'3 дня назад'},
-    {n:'Гость-1197', h:'аноним', tier:'FREE', paid:false, when:'4 дня назад'},
-  ],
-  pay: [
-    {n:'Игорь В.', sum:'$199', plan:'BUSINESS · год', st:'ok', when:'вчера 14:20'},
-    {n:'Марина К.', sum:'$49', plan:'PRO · мес', st:'ok', when:'сегодня 09:11'},
-    {n:'Пётр С.', sum:'$15', plan:'START · мес', st:'wait', when:'сегодня 10:02'},
-    {n:'Алина Р.', sum:'$39', plan:'PRO · год', st:'ok', when:'3 дня назад'},
-  ],
-  partners: [
-    {n:'Марина К.', h:'@marina_smm', ref:34, earn:'$412', st:'ok'},
-    {n:'Дмитрий О.', h:'@dmitrymarketing', ref:19, earn:'$228', st:'wait'},
-    {n:'Алина Р.', h:'@alina.grow', ref:8, earn:'$96', st:'ok'},
-  ],
-  moder: [
-    {t:'Объявление: «Монтаж Reels под ключ»', by:'@editor_pro', kind:'Биржа'},
-    {t:'Ролик на премодерации: фитнес-хук 15 сек', by:'@fitmax', kind:'Видео'},
-    {t:'Объявление: «Таргет ВК + запуск»', by:'@target_alena', kind:'Биржа'},
-  ],
-  agents: [
-    {a:'Поддержка', q:'Как активировать партнёрку?', esc:false, when:'2 мин назад'},
-    {a:'Поддержка', q:'Верните деньги за подписку', esc:true, when:'8 мин назад'},
-    {a:'Ассистент', q:'Утренний отчёт за сутки', esc:false, when:'сегодня 09:00'},
-    {a:'Поддержка', q:'Не приходит код входа', esc:true, when:'21 мин назад'},
-  ],
+  kpi:      {users:0, dau:0, mrr:0, payouts:0, moder:0, churn:0},
+  users:    [],
+  pay:      [],
+  partners: [],
+  moder:    [],
+  agents:   [],
+  /* Фиче-флаги — не демо, а реальные переключатели готовности подсистем. */
   flags: [
     {t:'Контент-завод', d:'Мини-апп конвейера роликов (Business/Scale)', on:true},
     {t:'Видео-премодератор OKO', d:'Реальный анализ загруженных роликов', on:false},
-    {t:'Telegram Login', d:'Вход через @okoappbot initData', on:false},
-    {t:'Оплата Lava.top', d:'Вебхуки → мгновенная активация тарифа', on:false},
+    {t:'Telegram Login', d:'Вход через @okoappbot initData', on:true},
+    {t:'Оплата Lava.top', d:'Вебхуки — мгновенная активация тарифа', on:false},
     {t:'Звонки LiveKit', d:'Аудио/видео 1-на-1 и групповые', on:false},
   ],
 };
@@ -4688,8 +4708,21 @@ document.getElementById('msgInput').addEventListener('keydown', e=>{ if(e.key===
 /* ================= BOTTOM SHEETS ================= */
 let newChatKind = null;
 function openSheet(id){
+  /* Защита от повисших шторок (правка 09.08):
+     1) если шторки с таким id нет — раньше падало исключение и на экране
+        оставался тёмный оверлей без содержимого («Язык интерфейса»);
+     2) если уже открыта другая шторка — она закрывается, иначе они
+        накладываются друг на друга и «Прикрепить» зависает поверх чата. */
+  const el = document.getElementById('sheet-' + id);
+  if(!el){
+    if(typeof toast === 'function') toast('Раздел ещё готовится');
+    return;
+  }
+  document.querySelectorAll('.sheet.open').forEach(s=>{
+    if(s !== el){ s.classList.remove('open'); s.style.transform=''; s.style.transition=''; }
+  });
   document.getElementById('sheetOverlay').classList.add('open');
-  document.getElementById('sheet-'+id).classList.add('open');
+  el.classList.add('open');
 }
 function closeSheet(){
   document.querySelectorAll('.sheet').forEach(s=>{ s.classList.remove('open'); s.style.transform=''; s.style.transition=''; });
@@ -4892,8 +4925,11 @@ function addComment(){
   if(cc) cc.textContent = p.comments.length; else renderFeed(curFeedKind);
 }
 function feedTab(btn, kind){
-  document.querySelectorAll('.feed-tabs button').forEach(b=>b.classList.remove('on'));
-  btn.classList.add('on'); renderFeed(kind);
+  /* подсветку носят только текстовые вкладки [data-fk]; иконки клипов и
+     обновления живут в том же ряду, но состояния «активна» у них нет. */
+  document.querySelectorAll('.feed-tabs button[data-fk]').forEach(b=>b.classList.remove('on'));
+  if(btn) btn.classList.add('on');
+  renderFeed(kind);
 }
 function createPost(){
   const t = document.getElementById('npBody').value.trim(); if(!t) return;
@@ -7412,13 +7448,7 @@ else startParticles();
 })();
 
 /* ================= СТОРИС ================= */
-const STORIES = [
-  {add:true, name:'Твоя'},
-  {avaIcon:'logo', name:'OKO', text:'Обновление v0.4: лента теперь первая, вход через Telegram, Google и Apple.'},
-  {ava:'Д', name:'Даниэль', text:'Разбор в 19:00: как система приносит заявки на автомате.'},
-  {ava:'К', name:'Клуб', text:'Кейс дня: 21 ролик за неделю, 47 заявок в CRM.'},
-  {ava:'З', name:'Завод', text:'Ролик №14 в топе рекомендаций. Метрики через 24 часа.'},
-];
+const STORIES = []  /* демо-данные удалены 09.08: демо-сторис ядра — источник только API */;
 function renderStories(){
   document.getElementById('storiesRow').innerHTML = STORIES.map((st, i) => st.add
     ? `<div class="story add" onclick="openStoryCreate()"><div class="ring"><div class="ava">${I('plus')}</div></div><small>${st.name}</small></div>`
@@ -7871,45 +7901,7 @@ const catName = k => (MK_CATS.find(c=>c.k===k)||{}).name || 'Услуги';
 const catIco  = k => (MK_CATS.find(c=>c.k===k)||{}).ic || 'briefcase';
 const MK_SORTS = [['pop','Популярные'],['cheap','Сначала дешевле'],['exp','Сначала дороже'],['rating','По рейтингу'],['new','Сначала новые']];
 const rv = (n,r,t)=>({n,r,t});
-let LISTINGS = [
-  {id:1, cat:'video', type:'service', t:'Монтаж Reels и Shorts под ключ', p:500, pt:'от 500 ₽', ds:'Динамичный монтаж, субтитры, обложка, звук. Срок — 24 часа. Правки бесплатно.', a:'М', n:'Марк Волков', r:4.9, deals:127, city:'Онлайн', term:'1 день', views:2140, favs:64, contacts:88, promo:'up', fav:false, my:false, st:'act', seed:12,
-    reviews:[rv('Ольга',5,'Сделал за день, огонь монтаж'),rv('Игорь',5,'Хуки на месте, рекомендую')]},
-  {id:2, cat:'design', type:'service', t:'Дизайн обложек и карточек товара', p:300, pt:'от 300 ₽', ds:'Обложки для Reels/YouTube, карточки для маркетплейсов, фирменный стиль под ключ.', a:'Л', n:'Лиза Кот', r:5.0, deals:89, city:'Онлайн', term:'2 дня', views:1780, favs:52, contacts:61, promo:'vip', fav:false, my:false, st:'act', seed:31,
-    reviews:[rv('Дана',5,'Карточки подняли CTR в 2 раза')]},
-  {id:3, cat:'ads', type:'service', t:'Настройка таргета VK и Telegram Ads', p:5000, pt:'от 5 000 ₽', ds:'Приведу заявки. Аудит, стратегия, креативы, ведение 2 недели включено.', a:'С', n:'Сергей Дан', r:4.8, deals:64, city:'Москва', term:'от 3 дней', views:980, favs:20, contacts:34, promo:null, fav:false, my:false, st:'act', seed:7,
-    reviews:[rv('Пётр',5,'Заявки пошли на 4-й день'),rv('Аня',4,'Норм, но дороговато')]},
-  {id:4, cat:'sites', type:'service', t:'Сайт-визитка и лендинг за 3 дня', p:15000, pt:'от 15 000 ₽', ds:'Адаптивный сайт под ключ: дизайн, домен, подключение аналитики и форм.', a:'И', n:'Ирина Веб', r:4.9, deals:41, city:'Онлайн', term:'3 дня', views:1320, favs:38, contacts:29, promo:'turbo', fav:false, my:false, st:'act', seed:22,
-    reviews:[rv('Максим',5,'Сайт за 3 дня, всё чётко')]},
-  {id:5, cat:'text', type:'service', t:'Продающие тексты и сценарии прогревов', p:1000, pt:'от 1 000 ₽', ds:'Сценарии прогревов, посты, лендинги под вашу нишу. Первый текст — тест бесплатно.', a:'А', n:'Артём Слов', r:4.7, deals:112, city:'Онлайн', term:'1–2 дня', views:1590, favs:44, contacts:52, promo:null, fav:false, my:false, st:'act', seed:41,
-    reviews:[rv('Вика',5,'Прогрев зашёл, продажи выросли')]},
-  {id:6, cat:'smm', type:'service', t:'Ведение соцсетей под ключ', p:20000, pt:'от 20 000 ₽/мес', ds:'Контент-план, съёмка, монтаж, постинг, аналитика. Полное ведение аккаунта.', a:'К', n:'Катя SMM', r:4.9, deals:73, city:'СПб', term:'помесячно', views:860, favs:31, contacts:40, promo:'up', fav:false, my:false, st:'act', seed:5,
-    reviews:[rv('Рома',5,'Сняли с меня всю рутину')]},
-  {id:7, cat:'audio', type:'service', t:'Нейроозвучка и звук для роликов', p:400, pt:'от 400 ₽', ds:'Русская нейроозвучка, чистка звука, музыка, синхрон под видео.', a:'Д', n:'Денис Аудио', r:4.8, deals:58, city:'Онлайн', term:'1 день', views:720, favs:18, contacts:22, promo:null, fav:false, my:false, st:'act', seed:18,
-    reviews:[rv('Лена',5,'Голос как у диктора')]},
-  {id:8, cat:'3d', type:'service', t:'3D-графика и анимация логотипа', p:3000, pt:'от 3 000 ₽', ds:'3D-логотип, интро, продуктовая визуализация, motion-графика.', a:'Н', n:'Ник 3D', r:5.0, deals:37, city:'Онлайн', term:'от 2 дней', views:640, favs:27, contacts:19, promo:'vip', fav:false, my:false, st:'act', seed:27,
-    reviews:[rv('Стас',5,'Интро: космос')]},
-  /* ---- глубина каталога: 2-3 объявления в каждой категории (ощущение живой биржи) ---- */
-  {id:9, cat:'video', type:'service', t:'Вертикальные ролики для Reels пачкой', p:1200, pt:'от 1 200 ₽/ролик', ds:'Серия роликов под ключ: сценарий, стоки 4K, караоке-субтитры, звук. Скидка от 10 штук.', a:'Т', n:'Тимур Кадр', r:4.8, deals:203, city:'Онлайн', term:'2 дня', views:3010, favs:96, contacts:120, promo:'up', fav:false, my:false, st:'act', seed:52,
-    reviews:[rv('Марина',5,'Взяла пакет на месяц — удобно'),rv('Влад',5,'Стабильно вывозит объём')]},
-  {id:10, cat:'design', type:'service', t:'Брендбук и фирменный стиль', p:12000, pt:'от 12 000 ₽', ds:'Логотип, палитра, шрифты, гайд по применению. Исходники в подарок.', a:'Ю', n:'Юля Бренд', r:4.9, deals:54, city:'Москва', term:'от 5 дней', views:1140, favs:47, contacts:33, promo:null, fav:false, my:false, st:'act', seed:63,
-    reviews:[rv('Кирилл',5,'Стиль узнают с первого кадра')]},
-  {id:11, cat:'ads', type:'service', t:'Реклама у блогеров и посевы', p:8000, pt:'от 8 000 ₽', ds:'Подбор каналов под нишу, закуп, контроль выходов и отчёт по охватам.', a:'Р', n:'Роман Трафик', r:4.7, deals:81, city:'Онлайн', term:'от 4 дней', views:1260, favs:29, contacts:44, promo:'up', fav:false, my:false, st:'act', seed:71,
-    reviews:[rv('Настя',5,'Посевы окупились с первого')]},
-  {id:12, cat:'sites', type:'service', t:'Telegram-бот и мини-приложение', p:25000, pt:'от 25 000 ₽', ds:'Бот с оплатой, CRM и рассылками. Мини-апп на React под ваш бренд.', a:'Д', n:'Дмитрий Код', r:5.0, deals:33, city:'Онлайн', term:'от 7 дней', views:970, favs:41, contacts:26, promo:'vip', fav:false, my:false, st:'act', seed:82,
-    reviews:[rv('Олег',5,'Бот сам продаёт, красота')]},
-  {id:13, cat:'text', type:'service', t:'SEO-статьи и наполнение сайта', p:600, pt:'от 600 ₽/текст', ds:'Тексты под поиск, карточки, описания. Уникальность и структура под ТЗ.', a:'Е', n:'Елена Слово', r:4.8, deals:167, city:'Онлайн', term:'1 день', views:1420, favs:36, contacts:58, promo:null, fav:false, my:false, st:'act', seed:93,
-    reviews:[rv('Гриша',5,'Тексты в топе за месяц')]},
-  {id:14, cat:'smm', type:'service', t:'Контент-план на месяц + рубрики', p:4000, pt:'от 4 000 ₽', ds:'Стратегия, 30 идей, рубрикатор, сетка постинга под вашу нишу.', a:'В', n:'Вера План', r:4.9, deals:98, city:'Онлайн', term:'2 дня', views:1080, favs:39, contacts:47, promo:'up', fav:false, my:false, st:'act', seed:104,
-    reviews:[rv('Тоня',5,'Наконец-то система, а не хаос')]},
-  {id:15, cat:'audio', type:'service', t:'Клон голоса и озвучка от диктора', p:900, pt:'от 900 ₽', ds:'Живая озвучка или клон вашего голоса. Расстановка ударений, паузы, интонация.', a:'Г', n:'Глеб Голос', r:5.0, deals:44, city:'Онлайн', term:'1 день', views:690, favs:24, contacts:20, promo:'vip', fav:false, my:false, st:'act', seed:115,
-    reviews:[rv('Соня',5,'Не отличить от живого')]},
-  {id:16, cat:'3d', type:'service', t:'Товар в 3D для маркетплейса', p:2500, pt:'от 2 500 ₽', ds:'Фотореалистичный рендер товара, поворотное видео, инфографика для карточки.', a:'П', n:'Павел Рендер', r:4.8, deals:61, city:'Онлайн', term:'от 2 дней', views:820, favs:30, contacts:23, promo:null, fav:false, my:false, st:'act', seed:126,
-    reviews:[rv('Инна',5,'Карточка ожила, конверсия вверх')]},
-  {id:17, cat:'consult', type:'service', t:'Стратегия запуска с нуля до заявок', p:10000, pt:'от 10 000 ₽', ds:'Разбор ниши, воронка, контент-система и план на 30 дней. Личное сопровождение.', a:'Д', n:'Даниэль Р.', r:5.0, deals:76, city:'Онлайн', term:'от 3 дней', views:1650, favs:71, contacts:63, promo:'turbo', fav:false, my:false, st:'act', seed:137,
-    reviews:[rv('Максим',5,'За месяц вышел на первые продажи'),rv('Оля',5,'Разложил всё по полочкам')]},
-  {id:18, cat:'consult', type:'service', t:'Наставник по нейросетям и автоматизации', p:6000, pt:'от 6 000 ₽', ds:'Внедрю ИИ в ваши задачи: генерация, автоответы, контент-конвейер. Практика на ваших кейсах.', a:'А', n:'Алекс ИИ', r:4.9, deals:52, city:'Онлайн', term:'помесячно', views:1210, favs:48, contacts:37, promo:'up', fav:false, my:false, st:'act', seed:148,
-    reviews:[rv('Женя',5,'Автоматизировал полдня работы')]},
-];
+let LISTINGS = []  /* демо-данные удалены 09.08: демо-объявления Биржи — источник только API */;
 let mkView = 'cats';      // cats | list | fav
 let mkCat = null;
 let mkSort = 'pop';

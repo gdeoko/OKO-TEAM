@@ -6,7 +6,7 @@
      • всё остальное → network-first + runtime кэш
    PHP-API (/api.php, *.php) вообще не кэшируем.
 */
-const VERSION = 'oko-sw-v1.0.0';
+const VERSION = 'oko-sw-v2.0.0';
 const CORE_CACHE    = `oko-core-${VERSION}`;
 const ASSET_CACHE   = `oko-assets-${VERSION}`;
 const RUNTIME_CACHE = `oko-runtime-${VERSION}`;
@@ -16,6 +16,8 @@ const CORE_ASSETS = [
   '/index.html',
   '/app.js',            /* split-bundle: модульный JS (defer) */
   '/app.css',           /* split-bundle: модульный CSS (non-blocking) */
+  '/oko-v2.css',        /* слой полировки v2: адаптация, типографика, TG-инсеты */
+  '/oko-v2.js',         /* слой полировки v2: 3D-запуск, Reels, чаты, воронки */
   '/offline.html',
   '/oko-manifest.json',
   '/oko-icon-192.png',
