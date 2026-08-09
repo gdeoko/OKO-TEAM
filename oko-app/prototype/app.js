@@ -7382,7 +7382,7 @@ window.AC_PACK = Object.assign(window.AC_PACK||{}, {
   }
 },
 {
-  title:'Кринж-этап и первые ролики',
+  title:'Кринж-этап и первые клипы',
   sub:'3:20 · видео (голос Даниэля) + тест + игра', dur:'3:20',
   videoUrl:'https://okoteam.top/media/oko_m1_3.mp4',
   c1:'КРИНЖ', c2:'ЭТАП',
@@ -13868,7 +13868,7 @@ const AC_COURSE_AI = [
     'Субтитры обязательны: большинство смотрит без звука',
     'Лучше генерить сразу 9:16, а не спасать горизонталь reframe-ом'],
    svg:'<svg viewBox="0 0 120 70" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><rect x="44" y="4" width="32" height="62" rx="8"/><path d="M55 26v14l12-7z" fill="currentColor" stroke="none"/><path d="M52 52h16M52 58h10" opacity=".8"/><path d="M20 22c4 8 4 18 0 26M12 28c2.5 5 2.5 9 0 14" opacity=".6"/><path d="M100 22c-4 8-4 18 0 26M108 28c-2.5 5-2.5 9 0 14" opacity=".6"/></svg>'},
-  {t:'Пайплайн ролика', pts:[
+  {t:'Пайплайн клипа', pts:[
     '<b>Сценарий → раскадровка → кадры-картинки → i2v-клипы → монтаж</b>',
     'Один клип — 5–8 секунд: дальше модель «плывёт»',
     'Озвучка и субтитры — после сборки видеоряда',
@@ -14002,7 +14002,7 @@ const AC_COURSE_REELS = [
   dur:'', videoUrl:'',
   c1:'ВИРУСНЫЙ', c2:'СЦЕНАРИЙ',
   slides:[
-  {t:'Анатомия вирусного ролика', pts:[
+  {t:'Анатомия вирусного клипа', pts:[
     'Сначала <b>структура</b>, потом съёмка — не наоборот',
     'Четыре блока: <b>хук → удержание → развязка → CTA</b>',
     'Один ролик — одна мысль, всё лишнее режь',
@@ -27969,7 +27969,7 @@ function mpSeedDeals(){
   const now = Date.now(), H = MP_H;
   return [
     {id:'d0', t:'Пакет: 15 Shorts для запуска',       n:'Тимур Н.',   sum:12000, st:'new',  dir:'in',  at:now-40*60e3, lid:901},
-    {id:'d1', t:'Контент-завод: 30 роликов в месяц',  n:'Марина К.',  sum:45000, st:'work', dir:'in',  at:now-26*H, lid:901},
+    {id:'d1', t:'Контент-завод: 30 клипов в месяц',  n:'Марина К.',  sum:45000, st:'work', dir:'in',  at:now-26*H, lid:901},
     {id:'d2', t:'Лендинг под ключ за 5 дней',         n:'Игорь В.',   sum:19000, st:'wait', dir:'in',  at:now-4*H,  lid:902},
     {id:'d3', t:'Разбор и стратегия роста канала',    n:'Алина Р.',   sum:8000,  st:'done', dir:'in',  at:now-70*H, lid:903, rev:5},
     {id:'d4', t:'Дизайн обложек и карточек товара',   n:'Лиза Кот',   sum:300,   st:'wait', dir:'out', at:now-9*H,  lid:2, held:false},
@@ -27999,7 +27999,7 @@ const mpBal = () => Math.round(MP.gross * (1 - MP_FEE));
   if(LISTINGS.some(l=>l.my)) return;
   const rv = (n,r,t)=>({n,r,t});
   LISTINGS.push(
-    {id:901, cat:'video', type:'service', t:'Контент-завод: 30 роликов в месяц', p:45000, pt:'от 45 000 ₽/мес',
+    {id:901, cat:'video', type:'service', t:'Контент-завод: 30 клипов в месяц', p:45000, pt:'от 45 000 ₽/мес',
      ds:'Полный цикл: сценарии, съёмка, монтаж, караоке-субтитры, обложки, автопостинг и аналитика. Команда OKO Production.',
      a:'Д', n:PROFILE.name, r:4.9, deals:23, city:'Онлайн', term:'помесячно', views:3120, favs:97, contacts:141,
      promo:'turbo', fav:false, my:true, st:'act', seed:52,
@@ -31367,12 +31367,12 @@ function faRenderEmpty(list, kind){
   const rec = kind === 'rec';
   const title = rec ? 'Лента пока пустая' : 'Ты пока ни на кого не подписан';
   const text  = rec
-    ? 'Сюда попадают ролики и посты из каналов OKO и тех, на кого ты подпишешься. Выложи свой первый ролик или подпишись на канал — лента начнёт расти.'
+    ? 'Сюда попадают клипы и посты из каналов OKO и тех, на кого ты подпишешься. Выложи свой первый клип или подпишись на канал — лента начнёт расти.'
     : 'В «Подписках» видно только тех, на кого ты подписался. Подпишись на канал OKO — и его посты появятся здесь первыми.';
   const acts = [
     `<button class="fa-empty-cta" type="button" onclick="showTab('chats'); if(typeof chOpen==='function') chOpen('list')">${I('megaphone')}<span>Найти каналы</span></button>`,
     rec
-      ? `<button class="fa-empty-cta ghost" type="button" onclick="if(typeof okoOpenClips==='function') okoOpenClips()">${I('clips')}<span>Выложить ролик</span></button>`
+      ? `<button class="fa-empty-cta ghost" type="button" onclick="if(typeof okoOpenClips==='function') okoOpenClips()">${I('clips')}<span>Выложить клип</span></button>`
       : `<button class="fa-empty-cta ghost" type="button" onclick="faGoRec()">${I('compass')}<span>Открыть рекомендации</span></button>`
   ].join('');
   list.innerHTML = `<div class="fa-empty">${faEmptyArt()}<b>${title}</b><span>${text}</span><div class="fa-empty-acts">${acts}</div></div>`;
@@ -37312,7 +37312,7 @@ function mpShowHtml(){
   const hasPosts = my.cnt > 0;
   const cards = [
     {
-      k:'reels', ic:'circle-play', t:'Мои лучшие ролики',
+      k:'reels', ic:'circle-play', t:'Мои лучшие клипы',
       v: hasPosts ? nf(my.views) + ' просмотров' : 'Пока пусто',
       s: hasPosts ? my.cnt + ' ' + (my.cnt === 1 ? 'ролик' : (my.cnt < 5 ? 'ролика' : 'роликов')) : 'Опубликуй первый',
       onclick: `mpGo('feed')`
@@ -45177,19 +45177,19 @@ var PW_ASSET = {
       {t:'Все соцсети и реклама −10%', s:'подключай Instagram, TikTok, YouTube'}
     ],
     BUSINESS: [
-      {t:'Контент-завод 30 роликов/мес', s:'производство видео на конвейере'},
+      {t:'Контент-завод 30 клипов/мес', s:'производство видео на конвейере'},
       {t:'Академия премиум', s:'закрытые курсы, менторы, разборы'},
       {t:'Белый лейбл', s:'публикуй под своим брендом без пометок OKO'},
       {t:'Реклама −20%', s:'самое выгодное продвижение в кабинете'}
     ],
     BUSINESS_PRO: [
-      {t:'Контент-завод 100 роликов/мес', s:'три ролика в день без пауз'},
+      {t:'Контент-завод 100 клипов/мес', s:'три ролика в день без пауз'},
       {t:'Голос-клон и студия', s:'озвучка твоим голосом, редактор шоу'},
       {t:'API OKO', s:'интеграции с CRM, сайтом, автоматизации'},
       {t:'Команда до 5 мест', s:'общий штаб, роли и распределение задач'}
     ],
     MAX: [
-      {t:'Контент-завод 500 роликов/мес', s:'полностью автоматический медиа-поток'},
+      {t:'Контент-завод 500 клипов/мес', s:'полностью автоматический медиа-поток'},
       {t:'Higgsfield-безлимит', s:'генерация видео и картинок без квот'},
       {t:'Личный ассистент', s:'выделенный менеджер и команда 24/7'},
       {t:'Бренд-агентство', s:'логотип, гайдлайн, лендинг, боты — под ключ'}

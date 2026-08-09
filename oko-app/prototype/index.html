@@ -5975,7 +5975,7 @@ const SYS_ARCHETYPES = [
 ];
 /* Типы контента (точки на календаре и item'ы в модалке дня) */
 const SYS_CTYPES = {
-  reels:    {n:'Ролик',       ic:'circle-play', color:'#9AFF00'},
+  reels:    {n:'Клип',       ic:'circle-play', color:'#9AFF00'},
   tg:       {n:'TG-пост',     ic:'send',        color:'#7ecfff'},
   carousel: {n:'Карусель',    ic:'photo',       color:'#ffb84a'},
   stories:  {n:'Сторис',      ic:'star',        color:'#ff7ea6'},
@@ -7674,7 +7674,7 @@ function vcStart(){
       renderVcReport();
       document.getElementById('vcResult').style.display='block';
       try{ const avg=Math.round(VC_METRICS.reduce((s,m)=>s+m.v,0)/VC_METRICS.length);
-        vcHistAdd({name:'Ролик '+new Date().toLocaleString('ru-RU',{day:'2-digit',month:'short',hour:'2-digit',minute:'2-digit'}), at:new Date().toLocaleDateString('ru-RU'), summary:'2 риска, 4 правки', score:avg});
+        vcHistAdd({name:'Клип '+new Date().toLocaleString('ru-RU',{day:'2-digit',month:'short',hour:'2-digit',minute:'2-digit'}), at:new Date().toLocaleDateString('ru-RU'), summary:'2 риска, 4 правки', score:avg});
       }catch(e){}
       return; }
     bar.style.width = steps[i][0]+'%'; stage.textContent = steps[i][1]; i++;

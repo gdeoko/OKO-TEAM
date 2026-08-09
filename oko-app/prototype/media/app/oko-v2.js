@@ -443,7 +443,7 @@ var log = function(){};   /* включить при отладке: console.log
       try{
         if(typeof faReelsOpenFirst === 'function'){ faReelsOpenFirst(); return; }
       }catch(e){}
-      try{ if(typeof toast === 'function') toast('Клипы появятся, когда авторы опубликуют первые ролики'); }catch(e){}
+      try{ if(typeof toast === 'function') toast('Клипы появятся, когда авторы опубликуют первые клипы'); }catch(e){}
     };
 
     /* --- Иконка «Обновить»: пересобрать подборку, с анимацией вращения --- */

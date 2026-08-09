@@ -1702,7 +1702,7 @@ var NUDGES = {
                '<li>' + ico('bolt') + '<span>Что переснять, а что оставить</span></li>' +
              '</ul>',
         actions:[
-          { label:'Проверить ролик', icon:'camera', onClick:function(){
+          { label:'Проверить клип', icon:'camera', onClick:function(){
               try{
                 if(typeof showTab === 'function') showTab('mini');
                 setTimeout(function(){ try{ if(typeof openMa === 'function') openMa('video'); }catch(e){} }, 240);

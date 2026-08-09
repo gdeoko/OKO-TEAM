@@ -637,7 +637,7 @@ function emptyHTML(){
   return '<div class="okr-empty">' +
     '<span class="okr-empty-ic">' + ic('circle-play') + '</span>' +
     '<h3>Клипов пока нет</h3>' +
-    '<p>Как только авторы выложат первые ролики, они появятся здесь</p>' +
+    '<p>Как только авторы выложат первые клипы, они появятся здесь</p>' +
     '<button class="okr-to-feed" type="button">В ленту</button>' +
   '</div>';
 }
