@@ -158,23 +158,24 @@ $myRows   = all("SELECT a.*, c.is_paid comp_paid, c.price comp_price, c.results_
 $myApps   = count($myRows);
 $myDips   = (int) scalar("SELECT COUNT(*) FROM diplomas d JOIN applications a ON a.id=d.application_id
                            WHERE a.user_id=?", [$uid]);
-// Кабинет считает не по «есть результат в базе», а по СОСТОЯНИЮ заявки: пока письмо с
-// итогом не ушло, участник видит «на оценке». Сверяемся по той же логике (core/app_status.php),
-// иначе аудит ловит несуществующее расхождение.
-$cntGraded = 0; $cntJudging = 0; $cntNew = 0;
+// Кабинет считает по СОСТОЯНИЮ заявки (core/app_status.php), а не по сырой колонке status.
+// С августа 2026 «Оценено» = все заявки, по которым жюри уже проставило оценку (включая
+// judging — оценка есть, письмо ещё в пути); «На оценке» = new/paid/submitted/pending
+// (жюри ещё не подвело итог). Плитку «Ждут жюри» из кабинета убрали.
+$cntGraded = 0; $cntPending = 0;
 foreach ($myRows as $r) {
     $st = (string) (app_state($r, false)['code'] ?? $r['status'] ?? 'new');
-    if (in_array($st, ['graded','making','made','extra','done'], true)) $cntGraded++;
-    elseif ($st === 'judging') $cntJudging++;
-    elseif (in_array($st, ['new','paid','submitted','pending'], true)) $cntNew++;
+    if (in_array($st, ['judging','graded','making','made','extra','done'], true)) $cntGraded++;
+    elseif (in_array($st, ['new','paid','submitted','pending'], true)) $cntPending++;
 }
 chk('в кабинете видно число заявок участника', has_num($c, $myApps), (string) $myApps);
-chk('в кабинете видно «Оценено» тем же числом, что даёт логика статусов',
+chk('в кабинете видно «Оценено» тем же числом (включая judging)',
     has_num($c, $cntGraded), (string) $cntGraded);
-chk('в кабинете видно «На оценке» тем же числом', has_num($c, $cntJudging), (string) $cntJudging);
+chk('в кабинете видно «На оценке» тем же числом', has_num($c, $cntPending), (string) $cntPending);
+chk('плитки «Ждут жюри» в кабинете больше нет', !preg_match('~Ждут\s+жюри~u', $c));
 chk('счётчики не превышают общее число заявок',
-    $cntGraded + $cntJudging + $cntNew <= $myApps,
-    "$cntGraded+$cntJudging+$cntNew из $myApps");
+    $cntGraded + $cntPending <= $myApps,
+    "$cntGraded+$cntPending из $myApps");
 ok('дипломов у участника в базе', (string) $myDips);
 chk('в кабинете нет PHP-шума', !preg_match('~Warning:|Fatal error|Undefined ~', $cab['body']));
 

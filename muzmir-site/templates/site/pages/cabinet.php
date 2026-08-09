@@ -552,9 +552,15 @@ $byStatus = [];
 foreach (array_keys($appStatus) as $_k) $byStatus[$_k] = 0;
 $byResult = ['gp'=>0,'laur1'=>0,'laur2'=>0,'laur3'=>0,'dipl'=>0,'other'=>0];
 $totalPaid = 0;
-$cntGraded = 0;      // результат уже получен на почту
-$cntJudging = 0;     // оценка проставлена, письмо с результатом в пути
-$cntNew = 0;         // подана, жюри ещё не подвело итог
+// Правило владельца (август 2026): в статистике кабинета всего ДВЕ ветки —
+//   «На оценке» — жюри ещё не подвело итог (new/paid/submitted/pending).
+//   «Оценено»  — жюри уже проставило результат (даже если письмо ещё в пути),
+//                а также все последующие стадии: изготовление, отправка, исполнена.
+// Раньше между ними стояла лишняя плитка «Ждут жюри», а judging (оценка есть,
+// но письмо ещё не дошло) не попадал в «Оценено» — участник с одной оценённой
+// заявкой видел «Оценено 0». Больше не путаем.
+$cntGraded  = 0;   // жюри проставило оценку (включая judging/making/made/extra/done)
+$cntPending = 0;   // жюри ещё не подвело итог (new/paid/submitted/pending)
 $cntRejected = 0;
 foreach ($apps as $a) {
     $m = substr((string)($a['created_at'] ?? ''), 0, 7);
@@ -562,10 +568,9 @@ foreach ($apps as $a) {
     $st = (string)($a['_state']['code'] ?? $a['status'] ?? 'new');
     if (!array_key_exists($st, $byStatus)) $byStatus[$st] = 0;
     $byStatus[$st]++;
-    if (in_array($st, ['graded','making','made','extra','done'], true)) $cntGraded++;
+    if (in_array($st, ['judging','graded','making','made','extra','done'], true)) $cntGraded++;
     elseif ($st === 'rejected') $cntRejected++;
-    elseif ($st === 'judging') $cntJudging++;
-    elseif (in_array($st, ['new','paid','submitted','pending'], true)) $cntNew++;
+    elseif (in_array($st, ['new','paid','submitted','pending'], true)) $cntPending++;
     $r = mb_strtolower((string)($a['result'] ?? ''));
     if     (str_contains($r, 'гран')) $byResult['gp']++;
     elseif (str_contains($r, 'i степ') || str_contains($r, '1 степ')) $byResult['laur1']++;
@@ -1301,10 +1306,7 @@ ob_start(); ?>
           <h2>Статистика и аналитика</h2>
           <div class="cab-kpis">
             <div class="cab-kpi"><b><?= (int)count($apps) ?></b><span>Всего заявок</span></div>
-            <?php if ($cntNew > 0): ?>
-              <div class="cab-kpi"><b><?= (int)$cntNew ?></b><span>Ждут жюри</span></div>
-            <?php endif; ?>
-            <div class="cab-kpi"><b><?= (int)$cntJudging ?></b><span>На оценке</span></div>
+            <div class="cab-kpi"><b><?= (int)$cntPending ?></b><span>На оценке</span></div>
             <div class="cab-kpi"><b><?= (int)$cntGraded ?></b><span>Оценено</span></div>
             <div class="cab-kpi"><b><?= (int)count($diplomas) ?></b><span>Дипломов получено</span></div>
             <?php if ($diplomasPending > 0): ?>
