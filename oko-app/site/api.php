@@ -535,6 +535,25 @@ case 'wallet_topup':
     db_insert("INSERT INTO wallet_topup_requests (email,amount,method,url) VALUES (?,?,?,?)", [$email,$amount,$method,$url]);
     out(['ok'=>true, 'url'=>$url, 'amount'=>$amount, 'method'=>$method]);
 
+// ── Состояние интеграций для Штаба OKO ──────────────────────────
+// Штаб показывает по каждому ИИ-агенту, чего не хватает для запуска.
+// Отдаём ТОЛЬКО факт «ключ настроен / не настроен» — ни значений, ни
+// префиксов, ни длины. Иначе панель превратится в способ вытащить секреты.
+case 'integrations':
+    rate_limit('integrations', 30, 60);
+    $has = function($v){
+        if (is_array($v)) { foreach($v as $x){ if (trim((string)$x) !== '') return true; } return false; }
+        return trim((string)$v) !== '';
+    };
+    out(['ok'=>true, 'integrations'=>[
+        'anthropic' => ['name'=>'Claude API',      'env'=>'ANTHROPIC_API_KEY', 'ready'=>$has($C['anthropic_key'] ?? ''),  'what'=>'ответы ОКО Ai и разбор контента'],
+        'gemini'    => ['name'=>'Gemini',          'env'=>'GEMINI_API_KEY',    'ready'=>$has($C['gemini_keys'] ?? ''),    'what'=>'проверка видео и генерация текста'],
+        'telegram'  => ['name'=>'Telegram-бот',    'env'=>'TELEGRAM_BOT_TOKEN','ready'=>$has($C['tg_bot_token'] ?? ''),   'what'=>'вход, уведомления, приглашения'],
+        'lava'      => ['name'=>'Lava.top',        'env'=>'LAVA_API_KEY',      'ready'=>$has($C['lava_api_key'] ?? ''),   'what'=>'оплата тарифов и пополнение счёта'],
+        'mail'      => ['name'=>'Почта',           'env'=>'GMAIL_APP_PASS',    'ready'=>$has($C['gmail_pass'] ?? ''),     'what'=>'письма, коды подтверждения, рассылки'],
+        'push'      => ['name'=>'Web Push',        'env'=>'VAPID_PRIVATE',     'ready'=>$has($C['vapid_private'] ?? ''),  'what'=>'уведомления вне приложения'],
+    ], 'checked_at'=>date('c')]);
+
 // ── Web Push (VAPID) ────────────────────────────────────────────
 // Таблица подписок создаётся лениво при первом обращении.
 case 'push_subscribe':

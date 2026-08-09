@@ -192,7 +192,23 @@ for (const [name, goto] of SCREENS) {
     })()`).catch(() => false);
     if (!ok) continue;
     res.clicked++;
-    await page.waitForTimeout(320);
+    /* Ждём, пока закончатся анимации выезда панелей: замер в середине
+       перехода ловит промежуточную геометрию и выдаёт несуществующие
+       «переносы посреди слова». Прямая проверка тех же экранов после
+       остановки анимаций даёт ноль. */
+    await page.waitForTimeout(260);
+    await page.evaluate(`(() => new Promise(res => {
+      let n = 0;
+      const tick = () => {
+        n++;
+        let running = 0;
+        try { running = document.getAnimations().filter(a => a.playState === 'running').length; } catch(e){}
+        if (!running || n > 20) return res(n);
+        setTimeout(tick, 40);
+      };
+      tick();
+    }))()`).catch(() => {});
+    await page.waitForTimeout(120);
 
     const p = await page.evaluate(probeJs).catch(() => null);
     const after = await page.evaluate(`location.href`).catch(() => before);
