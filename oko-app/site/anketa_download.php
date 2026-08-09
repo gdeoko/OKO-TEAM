@@ -148,10 +148,21 @@ function download_anketa_zip(string $sid) {
     $meta = ['submission_id'=>$sid,'client_name'=>$a['client_name'],'service_type'=>$a['service_type'],
              'email'=>$a['email'],'created_at'=>$a['created_at'],'completed_at'=>$a['completed_at']];
 
-    if (!class_exists('ZipArchive')) {   // fallback — отдаём JSON, если zip недоступен
-        header('Content-Type: application/json; charset=utf-8');
-        header('Content-Disposition: attachment; filename="anketa_'.$sid.'.json"');
-        echo json_encode(['meta'=>$meta,'answers'=>$ordered], JSON_UNESCAPED_UNICODE|JSON_PRETTY_PRINT);
+    // Если на сервере нет расширения zip, архив не собрать. Раньше в этом случае
+    // уходил сырой JSON — владелец видел «просто символы» и ни одного вложения,
+    // и выглядело это как сломанная анкета. Теперь отдаём читаемую страницу со
+    // ссылками на файлы: она открывается, даже когда собрать архив нечем.
+    if (!class_exists('ZipArchive')) {
+        $dir = __DIR__ . "/uploads/$sid";
+        $files = [];
+        if (is_dir($dir)) foreach (glob("$dir/*") as $f) {
+            if (is_file($f)) $files[] = ['path'=>$f, 'name'=>basename($f), 'size'=>filesize($f)];
+        }
+        $html = anketa_html($ordered, $meta, $files);
+        // файлы лежат на сайте, а не рядом со страницей — чиним пути
+        $html = str_replace('"files/', '"/uploads/' . rawurlencode($sid) . '/', $html);
+        header('Content-Type: text/html; charset=utf-8');
+        echo $html;
         return;
     }
 
