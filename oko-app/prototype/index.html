@@ -1589,7 +1589,7 @@ button:focus-visible,a:focus-visible,input:focus-visible,textarea:focus-visible,
 <symbol id="i-check" viewBox="0 0 100 100"><path d="M20 52 40 72 80 28"/></symbol>
 
 <!-- Двойная галочка: прочитано (параллельные хвосты, как в Telegram) -->
-<symbol id="i-check2" viewBox="0 0 100 100"><path d="M16 52 34 70 64 32M46 66 54 74 84 36"/></symbol>
+<symbol id="i-check2" viewBox="0 0 100 100"><path d="M16 52 34 70 64 32M46 62 54 70 84 32"/></symbol>
 
 <!-- Меню «ещё»: три точки по вертикали -->
 <symbol id="i-more" viewBox="0 0 100 100"><circle cx="50" cy="24" r="6.5" fill="currentColor" stroke="none"/><circle cx="50" cy="50" r="6.5" fill="currentColor" stroke="none"/><circle cx="50" cy="76" r="6.5" fill="currentColor" stroke="none"/></symbol>
@@ -1601,7 +1601,7 @@ button:focus-visible,a:focus-visible,input:focus-visible,textarea:focus-visible,
 <symbol id="i-search" viewBox="0 0 100 100"><circle cx="46" cy="46" r="26"/><path d="M65 65 82 82"/></symbol>
 
 <!-- Обновить: круговая стрелка, разомкнутая справа сверху -->
-<symbol id="i-refresh" viewBox="0 0 100 100"><path d="M83 50a33 33 0 1 1-9.7-23.3"/><path d="M83 18v16H67"/></symbol>
+<symbol id="i-refresh" viewBox="0 0 100 100"><path d="M83 50a33 33 0 1 1-9.7-23.3"/><path d="M73.3 13.7v13H60.3"/></symbol>
 
 <!-- Настройки: шестерня с восемью зубьями -->
 <symbol id="i-gear" viewBox="0 0 100 100"><circle cx="50" cy="50" r="13"/><circle cx="50" cy="50" r="27"/><path d="M50 16v7M50 77v7M16 50h7M77 50h7M26 26l5 5M69 69l5 5M74 26l-5 5M31 69l-5 5"/></symbol>
@@ -1781,7 +1781,7 @@ button:focus-visible,a:focus-visible,input:focus-visible,textarea:focus-visible,
 <symbol id="i-fire" viewBox="0 0 100 100"><path d="M50 84c-15 0-27-11-27-25 0-11 7-19 13-26 2 8 5 12 9 14-2-12 2-24 13-31-2 12 4 17 10 23 6 6 9 12 9 20 0 14-12 25-27 25z"/></symbol>
 
 <!-- Серия дней: простое пламя -->
-<symbol id="i-gm-flame" viewBox="0 0 100 100"><path d="M50 14c-3 12-10 16-16 24-4 6-6 12-6 18a22 22 0 0 0 44 0c0-14-14-24-22-42z"/></symbol>
+<symbol id="i-gm-flame" viewBox="0 0 100 100"><path d="M50 13c3 11 0 18-6 25-8 9-18 13-18 21a24 24 0 0 0 48 0c0-9-6-15-11-21-2 4-5 7-9 8 5-12 3-24-4-33z"/></symbol>
 
 <!-- Лайк: палец вверх -->
 <symbol id="i-thumb" viewBox="0 0 100 100"><path d="M18 46h16v38H18z"/><path d="M34 50 48 20c7 0 11 5 10 12l-2 12h20c7 0 11 6 9 12l-8 22c-2 4-6 6-10 6H34"/></symbol>
@@ -1869,6 +1869,73 @@ button:focus-visible,a:focus-visible,input:focus-visible,textarea:focus-visible,
 
 <!-- Google: буква G -->
 <symbol id="i-google" viewBox="0 0 100 100"><path d="M50 46h32v4a32 32 0 1 1-9.5-22.5"/></symbol>
+    <!-- ========================= НЕДОСТАЮЩИЕ ЗНАКИ =========================
+         app.js ссылается на эти id через <use>, но их не было ни здесь, ни в
+         index.html — 31 место в интерфейсе рисовало пустоту.
+         Часть знаков повторяет геометрию базовых (i-crown, i-fire, i-qr, i-gift,
+         i-share, i-arrow-up, i-shield, i-download). Геометрия скопирована, а не
+         подключена вложенным <use>: вложенный use ломается в части WebView,
+         и это вернуло бы ровно ту же пустоту. Когда в app.js подчистят имена —
+         дубли ниже можно снять, оставив базовые id.
+         ===================================================================== -->
+    
+    <!-- Подтверждённый профиль: круг с галочкой -->
+    <symbol id="i-verified" viewBox="0 0 100 100"><circle cx="50" cy="50" r="30"/><path d="M36 51 46 61 65 40"/></symbol>
+    
+    <!-- Партнёрский бейдж (тот же знак подтверждения) -->
+    <symbol id="i-vr-badge" viewBox="0 0 100 100"><circle cx="50" cy="50" r="30"/><path d="M36 51 46 61 65 40"/></symbol>
+    
+    <!-- Подписка активна (тот же знак подтверждения) -->
+    <symbol id="i-pp-badge-check" viewBox="0 0 100 100"><circle cx="50" cy="50" r="30"/><path d="M36 51 46 61 65 40"/></symbol>
+    
+    <!-- Калькулятор дохода: экран и шесть клавиш -->
+    <symbol id="i-pp-calc" viewBox="0 0 100 100"><rect x="26" y="16" width="48" height="68" rx="11"/><path d="M38 32h24"/><circle cx="38" cy="52" r="3.5" fill="currentColor" stroke="none"/><circle cx="50" cy="52" r="3.5" fill="currentColor" stroke="none"/><circle cx="62" cy="52" r="3.5" fill="currentColor" stroke="none"/><circle cx="38" cy="68" r="3.5" fill="currentColor" stroke="none"/><circle cx="50" cy="68" r="3.5" fill="currentColor" stroke="none"/><circle cx="62" cy="68" r="3.5" fill="currentColor" stroke="none"/></symbol>
+    
+    <!-- Stories: кадр с объективом -->
+    <symbol id="i-vr-story" viewBox="0 0 100 100"><rect x="16" y="16" width="68" height="68" rx="20"/><circle cx="50" cy="50" r="17"/><circle cx="69" cy="31" r="4" fill="currentColor" stroke="none"/></symbol>
+    
+    <!-- Telegram: самолётик с провалом хвоста -->
+    <symbol id="i-vr-tg" viewBox="0 0 100 100"><path d="M84 20 16 47l23 8 7 22 12-13 18 12z"/><path d="M39 55 84 20"/></symbol>
+    
+    <!-- TikTok: нота с флажком -->
+    <symbol id="i-vr-tt" viewBox="0 0 100 100"><path d="M62 16v44a16 16 0 1 1-16-16"/><path d="M62 26c3 9 11 15 20 15"/></symbol>
+    
+    <!-- VK: буквы VK штрихом -->
+    <symbol id="i-vr-vk" viewBox="0 0 100 100"><path d="M18 28 32 72 46 28"/><path d="M56 28v44M82 28 62 50 82 72"/></symbol>
+    
+    <!-- WhatsApp: пузырь с трубкой -->
+    <symbol id="i-vr-wa" viewBox="0 0 100 100"><path d="M50 16a34 34 0 0 0-29 52l-5 16 16-5a34 34 0 1 0 18-63z"/><path d="M38 41c0 13 8 21 21 21 3 0 5-2 5-5v-3l-8-3-4 4a24 24 0 0 1-7-7l4-4-3-8h-3c-3 0-5 2-5 5z"/></symbol>
+    
+    <!-- Уровень (копия i-crown) -->
+    <symbol id="i-vr-crown" viewBox="0 0 100 100"><path d="M18 74V34l16 14 16-24 16 24 16-14v40a6 6 0 0 1-6 6H24a6 6 0 0 1-6-6z"/></symbol>
+    
+    <!-- Серия дней в виральном блоке (копия i-fire) -->
+    <symbol id="i-vr-fire" viewBox="0 0 100 100"><path d="M50 84c-15 0-27-11-27-25 0-11 7-19 13-26 2 8 5 12 9 14-2-12 2-24 13-31-2 12 4 17 10 23 6 6 9 12 9 20 0 14-12 25-27 25z"/></symbol>
+    
+    <!-- QR виральной ссылки (копия i-qr) -->
+    <symbol id="i-vr-qr" viewBox="0 0 100 100"><rect x="16" y="16" width="24" height="24" rx="6"/><rect x="60" y="16" width="24" height="24" rx="6"/><rect x="16" y="60" width="24" height="24" rx="6"/><path d="M60 60h8M76 60h8M60 76v8M76 76h8"/></symbol>
+    
+    <!-- QR реферальной ссылки (копия i-qr) -->
+    <symbol id="i-pp-qr" viewBox="0 0 100 100"><rect x="16" y="16" width="24" height="24" rx="6"/><rect x="60" y="16" width="24" height="24" rx="6"/><rect x="16" y="60" width="24" height="24" rx="6"/><path d="M60 60h8M76 60h8M60 76v8M76 76h8"/></symbol>
+    
+    <!-- Бонус подписки (копия i-gift) -->
+    <symbol id="i-pp-gift" viewBox="0 0 100 100"><rect x="16" y="34" width="68" height="18" rx="6"/><path d="M24 52v24a8 8 0 0 0 8 8h36a8 8 0 0 0 8-8V52M50 34v50"/><path d="M50 34c-4-10-10-16-17-16a9 9 0 0 0 0 18M50 34c4-10 10-16 17-16a9 9 0 0 1 0 18"/></symbol>
+    
+    <!-- Поделиться рефссылкой (копия i-share) -->
+    <symbol id="i-pp-share" viewBox="0 0 100 100"><path d="M32 32 50 14 68 32M50 14v46"/><path d="M26 52v24a8 8 0 0 0 8 8h32a8 8 0 0 0 8-8V52"/></symbol>
+    
+    <!-- Рост показателя, крутится на 180° для падения (копия i-arrow-up) -->
+    <symbol id="i-pp-up" viewBox="0 0 100 100"><path d="M50 84V18M26 42 50 18 74 42"/></symbol>
+    
+    <!-- Новые посты в ленте (копия i-arrow-up) -->
+    <symbol id="i-fa-up" viewBox="0 0 100 100"><path d="M50 84V18M26 42 50 18 74 42"/></symbol>
+    
+    <!-- Уровень продавца на маркетплейсе (копия i-shield) -->
+    <symbol id="i-mpshield" viewBox="0 0 100 100"><path d="M50 14 20 27v25c0 17 12 27 30 32 18-5 30-15 30-32V27z"/></symbol>
+    
+    <!-- Получить перевод (копия i-download) -->
+    <symbol id="i-vs-recv" viewBox="0 0 100 100"><path d="M50 16v46M28 44 50 66 72 44M16 82h68"/></symbol>
+    
 
 </defs>
 </svg>

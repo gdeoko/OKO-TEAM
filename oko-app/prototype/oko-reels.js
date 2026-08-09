@@ -1202,7 +1202,26 @@ function popHeart(slide, cx, cy){
 /* ---------------------------------------------------------------------------
    10. КЛАВИАТУРА + ФОКУС-ЛОВУШКА
    --------------------------------------------------------------------------- */
-var FOCUSABLE = 'button:not([disabled]),[href],[tabindex]:not([tabindex="-1"]),.okr-cap';
+/* Именно a[href], а НЕ [href]: иначе под селектор попадают <use href="#i-…">
+   из спрайта иконок. Такие узлы фокус не принимают, но становятся первым и
+   последним элементом списка — и ловушка перестаёт срабатывать.
+   Видимость меряем по getClientRects(): у SVG нет offsetParent (там undefined,
+   а не null), поэтому старая проверка пропускала скрытые стрелки. */
+var FOCUSABLE = 'button:not([disabled]),a[href],[tabindex]:not([tabindex="-1"])';
+
+function focusables(){
+  var out = [];
+  try{
+    var nodes = S.root.querySelectorAll(FOCUSABLE);
+    for(var i = 0; i < nodes.length; i++){
+      var n = nodes[i];
+      if(!n || typeof n.focus !== 'function' || n.disabled) continue;
+      if(!n.getClientRects().length) continue;
+      out.push(n);
+    }
+  }catch(e){}
+  return out;
+}
 
 function bindKeys(){
   if(S.keyH) return;
@@ -1229,19 +1248,25 @@ function bindKeys(){
 
       /* фокус-ловушка */
       if(e.key === 'Tab'){
-        var nodes = S.root.querySelectorAll(FOCUSABLE);
-        var list = [];
-        for(var i = 0; i < nodes.length; i++){
-          var n = nodes[i];
-          if(n.offsetParent !== null || n === document.activeElement) list.push(n);
-        }
+        var list = focusables();
         if(!list.length){ e.preventDefault(); return; }
         var first = list[0], last = list[list.length - 1];
-        if(e.shiftKey && (document.activeElement === first || !S.root.contains(document.activeElement))){
-          e.preventDefault(); last.focus();
-        }else if(!e.shiftKey && (document.activeElement === last || !S.root.contains(document.activeElement))){
-          e.preventDefault(); first.focus();
+        var a = document.activeElement;
+
+        /* фокус ушёл из плеера — забираем обратно на нужный край */
+        if(!S.root.contains(a)){
+          e.preventDefault();
+          (e.shiftKey ? last : first).focus();
+          return;
         }
+        /* фокус внутри, но на элементе вне списка (например .okr-scroll) —
+           тоже заворачиваем, иначе следующий Tab уведёт наружу */
+        var at = -1;
+        for(var q = 0; q < list.length; q++){ if(list[q] === a){ at = q; break; } }
+        if(at === -1){ e.preventDefault(); (e.shiftKey ? last : first).focus(); return; }
+
+        if(e.shiftKey && a === first){ e.preventDefault(); last.focus(); return; }
+        if(!e.shiftKey && a === last){ e.preventDefault(); first.focus(); return; }
       }
     }catch(err){}
   };
@@ -1511,4 +1536,9 @@ if(document.readyState === 'loading'){
        фирменный градиент, подпись остаётся внизу мелкой, ничего не ломается.
    17. Строка звука. Короткое название стоит на месте (без дубля и без
        растворённой первой буквы), длинное — едет бегущей строкой.
+   18. Мост к ядру. В консоли: window.postById === undefined (так и должно
+       быть — ядро объявляет его через top-level const). При этом лайк и
+       «сохранить» в плеере меняют тот же пост в ленте, а «комментарии»
+       открывают штатную шторку. Если начнёт показывать заглушку-тост —
+       кто-то вернул обращение через window.*, чинить в coreRef().
    ============================================================================ */

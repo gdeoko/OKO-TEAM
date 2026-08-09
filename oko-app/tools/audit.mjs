@@ -43,7 +43,11 @@ const MODES = [
 
 /* Маршруты обхода. step: что сделать в браузере, чтобы попасть на экран. */
 const ROUTES = [
-  { id: '01-splash',     name: 'Экран запуска',        wait: 200,  step: null },
+  /* Слой полировки грузится как non-blocking стиль (media=print -> all).
+     На 200 мс он ещё не применён, и закрытые выезжающие панели успевали
+     попасть в замер. Даём стилям встать — иначе меряем не то состояние,
+     которое человек видит. */
+  { id: '01-splash',     name: 'Экран запуска',        wait: 1400, step: null },
   { id: '02-auth',       name: 'Вход и регистрация',   wait: 1200, step: `document.getElementById('splash')?.classList.add('gone'); document.getElementById('authScreen')?.classList.remove('hidden');` },
   { id: '03-feed-rec',   name: 'Лента · Рекомендации', step: `okoSkipAuth(); showTab('feed');` },
   { id: '04-feed-sub',   name: 'Лента · Подписки',     step: `okoSkipAuth(); showTab('feed'); const b=document.querySelector('.feed-tabs button[data-fk="sub"]'); b&&b.click();` },
