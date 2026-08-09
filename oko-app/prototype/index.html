@@ -1880,7 +1880,7 @@ button:focus-visible,a:focus-visible,input:focus-visible,textarea:focus-visible,
          ===================================================================== -->
     
     <!-- Подтверждённый профиль: круг с галочкой -->
-    <symbol id="i-verified" viewBox="0 0 100 100"><circle cx="50" cy="50" r="30"/><path d="M36 51 46 61 65 40"/></symbol>
+    <symbol id="i-verified" viewBox="0 0 100 100"><path d="M50 8l9.6 7.4 12-2.1 4.6 11.3 11.3 4.6-2.1 12L92.8 50l-7.4 9.6 2.1 12-11.3 4.6-4.6 11.3-12-2.1L50 92.8l-9.6-7.4-12 2.1-4.6-11.3-11.3-4.6 2.1-12L7.2 50l7.4-9.6-2.1-12 11.3-4.6 4.6-11.3 12 2.1z" fill="currentColor" stroke="none"/><polyline points="34 51 45 62 67 40" fill="none" stroke="#fff" stroke-width="9" stroke-linecap="round" stroke-linejoin="round"/></symbol>
     
     <!-- Партнёрский бейдж (тот же знак подтверждения) -->
     <symbol id="i-vr-badge" viewBox="0 0 100 100"><circle cx="50" cy="50" r="30"/><path d="M36 51 46 61 65 40"/></symbol>
@@ -4113,28 +4113,69 @@ const LIVE_ID = '00000000-0000-0000-0000-00000000c0de';
 const OKO_FOUNDER_NICK = 'ktodaniel';
 
 const CHATS = [
-  /* 1. Живой общий чат — настоящий Supabase Realtime, сообщения реальные */
-  {id:'live', cid:LIVE_ID, ava:'O', name:'Общий чат OKO', kind:'group', kindIcon:'globe', live:true,
-   official:true, preview:'Общий чат сообщества — пиши, увидят все', time:'', unread:0, online:true,
+  /* 1. Официальный канал OKO. Публикует команда, комментарии обсуждаются
+        в привязанном общем чате — как канал и чат в Telegram. */
+  {id:'oko-channel', avaIcon:'logo', avaImg:'oko-icon-192.png', name:'OKO', kind:'channel',
+   kindIcon:'megaphone', nick:'oko', official:true, verified:true, owner:true,
+   linkedChat:'live', subs:0, writeAll:false,
+   preview:'Официальный канал OKO', time:'', unread:0, online:true,
    msgs:[
-     {kind:'sys', body:'Общий чат сообщества OKO. Здесь живое общение — сообщения видят все участники.'},
+     {in:1, t:'', kind:'text', who:'OKO',
+      body:'Официальный канал OKO. Здесь релизы, новые возможности и всё важное для авторов. Обсуждение каждой записи — в общем чате, кнопка «Комментарии» под постом.'},
    ]},
 
-  /* 2. Поддержка — реальный ИИ-агент с эскалацией на человека в @okohelp */
-  {id:1, avaIcon:'logo', name:'Поддержка OKO', kind:'direct', nick:'okohelp', kindIcon:null,
-   official:true, agent:'support', preview:'Отвечаем 24/7', time:'', unread:0, online:true,
+  /* 2. Общий чат сообщества — он же комментарии к каналу (Supabase Realtime) */
+  {id:'live', cid:LIVE_ID, avaIcon:'logo', avaImg:'oko-icon-192.png', name:'Общий чат OKO',
+   kind:'group', kindIcon:'globe', live:true, official:true, verified:true, owner:true,
+   linkedChannel:'oko-channel', members:0,
+   preview:'Общий чат сообщества — пиши, увидят все', time:'', unread:0, online:true,
+   msgs:[
+     {kind:'sys', body:'Общий чат сообщества OKO. Здесь живое общение и комментарии к записям канала.'},
+   ]},
+
+  /* 3. Поддержка — ИИ-агент с эскалацией на человека в @okohelp */
+  {id:1, avaIcon:'logo', avaImg:'oko-icon-192.png', name:'Поддержка OKO', kind:'direct',
+   nick:'okohelp', kindIcon:null, official:true, verified:true, agent:'support',
+   preview:'Отвечаем 24/7', time:'', unread:0, online:true,
    msgs:[
      {in:1, t:'', kind:'text', body:'Привет. Я поддержка OKO — отвечаю круглосуточно по базе знаний: тарифы, лимиты, партнёрка, мини-аппы, оплата. Вопросы по деньгам и возвратам сразу передаю живому менеджеру, кнопка «позвать человека» всегда рядом.'},
    ]},
 
-  /* 3. Личка с основателем — первое, что человек видит после регистрации */
-  {id:2, ava:'Д', name:'Даниэль Ильясов', kind:'direct', nick:OKO_FOUNDER_NICK, kindIcon:null,
-   official:true, founder:true, preview:'Добро пожаловать в OKO', time:'', unread:1, online:false,
+  /* 4. Личка с основателем — первое, что человек видит после регистрации */
+  {id:2, ava:'Д', avaImg:'oko-founder.jpg', name:'Даниэль Ильясов', kind:'direct',
+   nick:OKO_FOUNDER_NICK, kindIcon:null, official:true, founder:true, verified:true,
+   preview:'Добро пожаловать в OKO', time:'', unread:1, online:false,
    msgs:[
      {in:1, t:'', kind:'text', body:'Привет. Я Даниэль, основатель OKO. Рад, что ты здесь.'},
      {in:1, t:'', kind:'text', body:'С чего начать: загляни в «Мини-аппы» — там Система роста по анкете и проверка видео. В «Академии» лежат курсы, в «Партнёрке» — твоя ссылка и проценты с приведённых людей. Если что-то непонятно или сломалось — пиши прямо сюда, читаю лично.'},
    ]},
 ];
+
+/* Себе в личку человек не пишет: у основателя этот чат из списка убирается. */
+try{
+  if(typeof PROFILE === 'object' && PROFILE && PROFILE.nick === OKO_FOUNDER_NICK){
+    const k = CHATS.findIndex(c => c.founder);
+    if(k >= 0) CHATS.splice(k, 1);
+  }
+}catch(e){}
+
+/* Канал и чат связаны в обе стороны: под записью канала есть «Комментарии»,
+   которые открывают привязанный чат — ровно как в Telegram. */
+function okoLinkedChat(chan){
+  try{ return CHATS.find(c => c.id === (chan && chan.linkedChat)) || null; }catch(e){ return null; }
+}
+function okoLinkedChannel(chat){
+  try{ return CHATS.find(c => c.id === (chat && chat.linkedChannel)) || null; }catch(e){ return null; }
+}
+function okoOpenComments(chanId){
+  try{
+    const chan = CHATS.find(c => c.id === chanId);
+    const chat = okoLinkedChat(chan);
+    if(chat && typeof openConv === 'function'){ openConv(chat.id); return true; }
+  }catch(e){}
+  return false;
+}
+
 
 /* Себе в личку человек не пишет: у основателя этот чат из списка убирается. */
 try{
@@ -8137,7 +8178,43 @@ async function liveSend(text){
 }
 
 /* ================= МОЙ ПРОФИЛЬ ================= */
-const PROFILE = {name:'Даниэль', nick:'ktodaniel', tier:'MAX', status:null, role:'owner', bio:'Основатель OKO. Медийность, контент, маркетинг — в одном приложении.'};
+/* ПРОФИЛЬ ВЛАДЕЛЬЦА.
+   Контакты и защита заданы Даниэлем 09.08. Пароль в коде НЕ хранится —
+   он живёт только на сервере в виде хеша; здесь помечаем, что он задан,
+   и что включена двухфакторная защита. */
+const PROFILE = {
+  name:  'Даниэль Ильясов',
+  nick:  'ktodaniel',
+  tier:  'MAX',
+  status: null,
+  role:  'owner',
+  verified: true,                       /* синяя галочка основателя */
+  phone: '+7 977 995-55-66',
+  email: 'okoteam.top@gmail.com',
+  avatar: 'oko-founder.jpg',            /* фото основателя, если файл есть */
+  since: '2026-07-15',                  /* дата запуска OKO — от неё считаются «дни в OKO» */
+  security: { password: true, twoFA: true, phoneVerified: true, emailVerified: true },
+  bio:   'Основатель OKO. Медийность, контент, маркетинг — в одном приложении.'
+};
+
+/* ВЕРИФИКАЦИЯ.
+   Галочку получают официальные сущности OKO и все, кто перешагнул порог
+   аудитории. Порог один на всё приложение — меняется здесь. */
+const VERIFY_MIN_SUBS = 10000;
+function okoIsVerified(ent){
+  if(!ent) return false;
+  if(ent.verified === true || ent.official === true) return true;
+  const n = Number(String(ent.subs || ent.subscribers || ent.followers || 0)
+                    .toString().replace(/[^\d.]/g, '')) || 0;
+  const k = /к|k/i.test(String(ent.subs || '')) ? 1000 : 1;
+  return n * k >= VERIFY_MIN_SUBS;
+}
+/* Значок для подстановки в разметку рядом с именем */
+function okoVerifyBadge(ent){
+  return okoIsVerified(ent)
+    ? '<svg class="i oko-vbadge" aria-label="Подтверждённый аккаунт"><use href="#i-verified"/></svg>'
+    : '';
+}
 const STATUS_ICONS = ['fire','star','bolt','heart','thumb','crown'];
 let editStatus = null;
 function renderMyProfile(){

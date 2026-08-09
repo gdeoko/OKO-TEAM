@@ -12,6 +12,23 @@ const SEAL_B64 = 'iVBORw0KGgoAAAANSUhEUgAAASwAAAEsCAYAAAB5fY51AAEAAElEQVR42ux9eX
    Раньше прототип сразу рисовал 2 500 ₽ «приветственного бонуса» — человек
    видел на балансе деньги, которых у него нет. Пополнение и партнёрские
    начисления кладут сюда реальные суммы. */
+/* МИГРАЦИЯ 09.08: у тех, кто заходил в прототип раньше, в localStorage лежат
+   демо-суммы (2 500 ₽ приветственного бонуса, накрученные переводы, XP и
+   токены). Один раз чистим их, иначе человек продолжает видеть деньги,
+   которых нет. Метку ставим, чтобы не стирать реальные операции повторно. */
+(function okoWipeDemoMoney(){
+  try{
+    if(localStorage.getItem('oko-money-reset-v1') === '1') return;
+    localStorage.removeItem('oko-wallet');
+    localStorage.removeItem('oko-wallet-x');
+    localStorage.removeItem('oko-wallet-demo');
+    localStorage.removeItem('oko-pp-goal-months-pro');
+    localStorage.removeItem('pp-count');
+    localStorage.removeItem('pp-claimed');
+    localStorage.setItem('oko-money-reset-v1', '1');
+  }catch(e){}
+})();
+
 const WALLET = (()=>{ try{ return JSON.parse(localStorage.getItem('oko-wallet'))||null; }catch(e){ return null; } })() || {
   acc: 'OKO-' + String(Math.floor(1e7 + Math.random()*9e7)),
   balance: 0,
@@ -44378,16 +44395,37 @@ if(typeof mpOpenPackages === 'function'){
   /* СИНХРОНИЗАЦИЯ ВЫСОТЫ: убирает «пустоту» при скролле — высота приложения
      жёстко равна видимой области (visualViewport), а не 100dvh, который
      в Telegram-фуллскрине может считаться неверно. Работает и вне Telegram. */
-  let _okoLastH = 0, _okoVhRaf = 0, _okoResizeOff = 0;
+  let _okoLastH = 0, _okoVhRaf = 0, _okoResizeOff = 0, _okoMaxH = 0;
   function _okoApplyVh(){
     _okoVhRaf = 0;
     try{
       const h = Math.round((window.visualViewport && window.visualViewport.height) || window.innerHeight);
-      if(!h || h === _okoLastH) return;   // не трогаем DOM, если высота не изменилась — убирает лишние reflow/моргание
+      if(!h) return;
+      if(h > _okoMaxH) _okoMaxH = h;      // самая большая виденная высота = экран без клавиатуры
+
+      /* ЖЁСТКИЕ ПИКСЕЛЬНЫЕ ВЫСОТЫ — ТОЛЬКО ПОД КЛАВИАТУРУ (правка Даниэля 09.08).
+         Раньше высота html/body/#app переписывалась на КАЖДОЕ изменение
+         вьюпорта. В Telegram вьюпорт меняется постоянно: при прокрутке
+         клиент подбирает свою шапку, при переключении вкладки, при появлении
+         полосы. Каждое такое событие двигало нижнее меню — оно «поднималось
+         и дёргалось». Теперь пиксельные высоты ставим, только когда экран
+         реально сильно уменьшился (открыта клавиатура), а в обычном
+         состоянии отдаём управление CSS: height 100% / 100dvh. */
+      const keyboardOpen = _okoMaxH && (_okoMaxH - h) > 90;
+      const app = document.getElementById('app');
+
+      if(!keyboardOpen){
+        if(_okoLastH === 0) return;       // высоты и не ставили — нечего снимать
+        _okoLastH = 0;
+        document.documentElement.style.height = '';
+        document.body.style.height = '';
+        if(app) app.style.height = '';
+        return;
+      }
+      if(h === _okoLastH) return;         // ничего не изменилось — не трогаем DOM
       _okoLastH = h;
       document.documentElement.style.height = h + 'px';
       document.body.style.height = h + 'px';
-      const app = document.getElementById('app');
       if(app) app.style.height = h + 'px';
     }catch(e){}
   }
@@ -50720,6 +50758,15 @@ window.chCompose = chCompose; window.chLessonDraft = chLessonDraft;
       return -1;
     }
     function snapshotActiveScreen(){
+      /* ОТКЛЮЧЕНО 09.08 по правке Даниэля: «при клике меню все страницы
+         обновляются, дёргаются, меню поднимается и лагает».
+         Здесь клонировался ВЕСЬ активный экран в фиксированный оверлей и
+         500 мс жил поверх нового экрана. На телефоне это давало ровно то,
+         что видно на скринах: текст и кнопки нарисованы дважды со сдвигом.
+         Плюс cloneNode сотен узлов на каждый тап — источник подтормаживания.
+         Переход теперь один короткий фейд, без клонов и без слайдов. */
+      return;
+      /* eslint-disable no-unreachable */
       if(REDUCED) return;
       var main = doc.querySelector('main');
       if(!main) return;

@@ -969,3 +969,108 @@ window.okoHaptic = okoHaptic;
     log('polite ok');
   }catch(e){}
 })();
+
+/* ============================================================================
+   МОДУЛЬ v2-identity · АВАТАРЫ И ГАЛОЧКИ
+   Правки Даниэля 09.08:
+     • у канала OKO, общего чата и поддержки — фирменный знак на аватаре;
+     • у основателя — его фото;
+     • официальные сущности и все, кто перешагнул 10 000 подписчиков,
+       получают синюю галочку рядом с именем;
+     • аватар всегда круглый, без квадратной подложки.
+   Работает поверх готовой разметки: ядро рисует список как раньше, а модуль
+   доклеивает картинку и значок. Так не нужно трогать десяток мест рендера.
+   ============================================================================ */
+(function v2identity(){
+  'use strict';
+  try{
+    function entityByName(name){
+      try{
+        if(typeof CHATS === 'undefined') return null;
+        return CHATS.find(function(c){ return c && c.name === name; }) || null;
+      }catch(e){ return null; }
+    }
+
+    /* Подставляем картинку в аватар и вешаем галочку рядом с именем */
+    function decorate(root){
+      var scope = root && root.querySelectorAll ? root : document;
+
+      /* --- список чатов --- */
+      scope.querySelectorAll('.chat-item').forEach(function(row){
+        if(row.dataset.okoIdent === '1') return;
+        /* имя лежит в .row1 > .name > .ci-txt; ниже в превью тот же класс,
+           поэтому берём строго первый .name */
+        var nameBox = row.querySelector('.name');
+        var nameEl  = nameBox && nameBox.querySelector('.ci-txt');
+        if(!nameEl) return;
+        var ent = entityByName((nameEl.textContent || '').trim());
+        if(!ent) return;
+        row.dataset.okoIdent = '1';
+        paintAva(row.querySelector('.ci-ava .ava') || row.querySelector('.ci-ava'), ent);
+        paintBadge(nameBox, ent);
+      });
+
+      /* --- шапка открытого диалога --- */
+      var head = scope.querySelector ? scope.querySelector('#convBody .conv-head') : null;
+      if(head){
+        var who = head.querySelector('.who');
+        var cur = (typeof currentChat !== 'undefined') ? currentChat : null;
+        if(who && cur && head.dataset.okoIdent !== String(cur.id)){
+          head.dataset.okoIdent = String(cur.id);
+          paintAva(head.querySelector('.ava'), cur);
+          paintBadge(who, cur);
+        }
+      }
+    }
+
+    function paintAva(el, ent){
+      if(!el || !ent) return;
+      el.style.borderRadius = '50%';
+      el.style.overflow = 'hidden';
+      if(!ent.avaImg) return;
+      if(el.querySelector('img.oko-ava-img')) return;
+      var img = new Image();
+      img.className = 'oko-ava-img';
+      img.alt = '';
+      img.decoding = 'async';
+      img.loading = 'lazy';
+      /* Если файла нет (фото основателя ещё не залито) — молча оставляем букву. */
+      img.onerror = function(){ try{ img.remove(); }catch(e){} };
+      img.onload = function(){
+        el.classList.add('oko-ava-hasimg');
+      };
+      img.src = ent.avaImg;
+      el.appendChild(img);
+    }
+
+    function paintBadge(el, ent){
+      if(!el || !ent) return;
+      if(el.querySelector('.oko-vbadge')) return;
+      if(typeof okoIsVerified !== 'function' || !okoIsVerified(ent)) return;
+      var svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+      svg.setAttribute('class', 'i oko-vbadge');
+      svg.setAttribute('aria-label', 'Подтверждённый аккаунт');
+      var use = document.createElementNS('http://www.w3.org/2000/svg', 'use');
+      use.setAttribute('href', '#i-verified');
+      svg.appendChild(use);
+      el.appendChild(svg);
+    }
+
+    /* Перерисовки списка чатов частые — следим за DOM, но экономно. */
+    var pending = false;
+    function schedule(){
+      if(pending) return;
+      pending = true;
+      requestAnimationFrame(function(){
+        pending = false;
+        try{ decorate(document); }catch(e){}
+      });
+    }
+    try{
+      new MutationObserver(schedule).observe(document.body, { childList:true, subtree:true });
+    }catch(e){}
+    [200, 700, 1800, 3500].forEach(function(d){ setTimeout(schedule, d); });
+
+    log('identity ok');
+  }catch(e){}
+})();

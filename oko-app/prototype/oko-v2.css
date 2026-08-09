@@ -42,8 +42,15 @@ label, .lbl, h1, h2, h3, h4, h5, b, strong {
 }
 
 /* Подписи плиток сервисов — до двух строк ЦЕЛИКОМ, без многоточия.
-   «Проверка видео» и «Система роста» должны читаться полностью. */
+   «Проверка видео» и «Система роста» должны читаться полностью.
+   display:block обязателен: с flex ячейка переставала ограничивать ширину,
+   и подписи соседних плиток слипались в «Система ростаКонтент-завод». */
 .svc-label {
+  display: block;
+  width: 100%;
+  max-width: 100%;
+  box-sizing: border-box;
+  padding: 0 2px;
   white-space: normal;
   overflow-wrap: break-word;
   word-break: normal;
@@ -52,13 +59,11 @@ label, .lbl, h1, h2, h3, h4, h5, b, strong {
   font-size: clamp(9.5px, 2.9vw, 11px);
   line-height: 1.18;
   min-height: 2.4em;
-  display: flex;
-  align-items: flex-start;
-  justify-content: center;
   text-align: center;
-  overflow: visible;
-  text-overflow: clip;
+  overflow: hidden;
 }
+/* Сама плитка тоже не должна выпускать содержимое наружу */
+.svc { min-width: 0; max-width: 100%; overflow: hidden; }
 
 /* ---------------------------------------------------------------------------
    2. ЗАГОЛОВКИ ПОДСТРАНИЦ: не обрезаются и не уезжают под шапку Telegram
@@ -751,3 +756,168 @@ header .screen-title{
   overflow:hidden;
   text-overflow:ellipsis;
 }
+
+/* ============================================================================
+   27. ПЕРЕКЛЮЧЕНИЕ ВКЛАДОК: один короткий фейд вместо четырёх анимаций
+   Правка Даниэля 09.08: «при клике меню все страницы обновляются, дёргаются,
+   меню поднимается и лагает, и всё приложение лагает из-за меню».
+   На каждый тап работало сразу четыре вещи:
+     screenIn (0.3s, сдвиг по Y) + wmScreenIn (0.34s, сдвиг и масштаб)
+     + wmTabInRight/Left (0.24s, сдвиг на 10% по X)
+     + клон всего экрана в оверлее (150 мс поверх нового экрана)
+   Отсюда и «двоение» текста на скринах, и подтормаживание.
+   Оставляем ровно один дешёвый фейд по прозрачности — без сдвигов,
+   без масштабов, без клонов. Переход читается, но ничего не ползает.
+   ============================================================================ */
+.screen.active,
+html.wm-on .screen.active,
+html.wm-on .screen.active.wm-tab-in-right,
+html.wm-on .screen.active.wm-tab-in-left {
+  animation: okoScreenFade .14s ease-out both !important;
+}
+@keyframes okoScreenFade { from { opacity: .55; } to { opacity: 1; } }
+
+/* Клон уходящего экрана больше не создаётся, но если он где-то останется —
+   не показываем его никогда. */
+.wm-tab-overlay { display: none !important; }
+
+@media (prefers-reduced-motion: reduce) {
+  .screen.active,
+  html.wm-on .screen.active { animation: none !important; }
+}
+
+/* Тень под шапкой при прокрутке — без перехода: анимировать inset-тень на
+   скролл-контейнере значит перерисовывать его на каждом кадре прокрутки. */
+main { transition: none !important; }
+
+/* ---------------------------------------------------------------------------
+   28. ШАПКА: название раздела помещается целиком
+   «Мини-аппы» резалось до «Мини-ап…». Даём заголовку приоритет: словесный
+   логотип рядом со знаком прячется на узких экранах, кнопки действий ужимаются.
+   --------------------------------------------------------------------------- */
+@media (max-width: 430px) {
+  header .brand .logo { display: none; }        /* остаётся сам знак OKO */
+  header .screen-title { font-size: clamp(15px, 4.6vw, 18px); }
+  header .hdr-actions { gap: 2px; }
+  header .theme-btn { width: 34px; height: 34px; }
+  header .theme-btn svg.i { width: 19px; height: 19px; }
+}
+header { gap: 8px; }
+header .brand { flex: 0 0 auto; }
+header .screen-title { flex: 1 1 auto; }
+header .hdr-actions { flex: 0 0 auto; }
+
+/* ---------------------------------------------------------------------------
+   29. АВАТАРЫ: строго круг, без квадратной подложки
+   На скринах вокруг круглых аватаров видна квадратная рамка — читается как баг.
+   --------------------------------------------------------------------------- */
+.ava, .ci-ava, .conv-head .ava, .chat-item .ava,
+.pp2-ava, .ps-ava, .okg-ava {
+  border-radius: 50% !important;
+  overflow: hidden;
+  background-clip: padding-box;
+  isolation: isolate;
+}
+.ava > img, .ci-ava > img, .pp2-ava > img {
+  width: 100%; height: 100%;
+  object-fit: cover;
+  border-radius: 50%;
+  display: block;
+}
+/* Псевдоэлементы-подложки под аватаром тоже круглые, иначе торчат углы */
+.ava::before, .ava::after,
+.ci-ava::before, .ci-ava::after { border-radius: 50%; }
+
+/* ---------------------------------------------------------------------------
+   30. РЯД БЫСТРЫХ ДЕЙСТВИЙ ПРОФИЛЯ: подписи не режутся
+   «Поделии…», «Статист…», «Настро…» — пять кнопок в ряд на 390px.
+   Разрешаем две строки и уменьшаем кегль вместо многоточия.
+   --------------------------------------------------------------------------- */
+.pp2-acts, .pp2-quick, .ps-acts { gap: 6px; }
+.pp2-acts > *, .pp2-quick > *, .ps-acts > * { min-width: 0; }
+.pp2-acts span, .pp2-quick span, .ps-acts span,
+.pp2-act-t, .pp2-quick-t {
+  display: block;
+  white-space: normal;
+  overflow: hidden;
+  text-overflow: clip;
+  font-size: clamp(9px, 2.7vw, 11px);
+  line-height: 1.15;
+  text-align: center;
+  word-break: normal;
+  -webkit-hyphens: none;
+  hyphens: none;
+}
+
+/* ---------------------------------------------------------------------------
+   31. ЧЁРНАЯ ТЕНЬ СВЕРХУ (жалоба «сверху какая-то тень чёрная»)
+   Это inset-тень скролла на main. В Telegram она читается как грязная полоса
+   под шапкой. Делаем её едва заметной и только на тёмной теме.
+   --------------------------------------------------------------------------- */
+main.wm-scrolled { box-shadow: inset 0 6px 8px -8px rgba(0, 0, 0, .28) !important; }
+:root[data-theme="light"] main.wm-scrolled { box-shadow: none !important; }
+
+/* ---------------------------------------------------------------------------
+   32. ЗНАЧОК ПОДТВЕРЖДЁННОГО АККАУНТА
+   Синяя галочка у официальных сущностей OKO и у всех, кто перешагнул
+   10 000 подписчиков. Ставится рядом с именем, не ломает строку.
+   --------------------------------------------------------------------------- */
+/* svg.i задаёт fill:none; stroke:currentColor — CSS бьёт presentation-атрибуты
+   внутри символа, поэтому заливку и обводку галочки задаём здесь явно. */
+.oko-vbadge {
+  width: 15px !important;
+  height: 15px !important;
+  color: #3AA3FF !important;
+  flex: 0 0 auto;
+  vertical-align: -.18em;
+  margin-left: 5px;
+  fill: currentColor !important;
+  stroke: none !important;
+}
+.oko-vbadge path   { fill: currentColor !important; stroke: none !important; }
+.oko-vbadge polyline {
+  fill: none !important;
+  stroke: #fff !important;
+  stroke-width: 9 !important;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+.conv-head .oko-vbadge { width: 14px !important; height: 14px !important; }
+h1 .oko-vbadge, h2 .oko-vbadge { width: 20px !important; height: 20px !important; }
+:root[data-theme="light"] .oko-vbadge { color: #1D8AF0; }
+
+/* Фото/знак внутри круглого аватара */
+.ava .oko-ava-img, .ci-ava .oko-ava-img {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  border-radius: 50%;
+  display: block;
+}
+.ava.oko-ava-hasimg, .ci-ava.oko-ava-hasimg { color: transparent; position: relative; }
+.ava, .ci-ava { position: relative; }
+/* Фирменный знак на аватаре официальных сущностей вписан с полями */
+.ava.oko-ava-hasimg .oko-ava-img[src*="oko-logo"] { object-fit: contain; padding: 18%; box-sizing: border-box; }
+
+/* ---------------------------------------------------------------------------
+   33. АВАТАР ОФИЦИАЛЬНОЙ СУЩНОСТИ: знак читается
+   Лаймовый знак на тёмном круге сливался. Даём официальным аватарам светлую
+   фирменную подложку — знак становится контрастным, как иконка приложения.
+   --------------------------------------------------------------------------- */
+/* Официальные аватары используют готовую иконку приложения: лаймовый знак
+   на фирменном тёмном круге. Заливку убираем — картинка сама несёт фон. */
+.ava.oko-ava-hasimg {
+  background: #0d0d0d !important;
+  border: 1px solid rgba(154, 255, 0, .32) !important;
+  box-shadow: 0 2px 10px rgba(154, 255, 0, .12);
+}
+.ava.oko-ava-hasimg .oko-ava-img { object-fit: cover; }
+:root[data-theme="light"] .ava.oko-ava-hasimg {
+  border-color: rgba(83, 168, 0, .28) !important;
+}
+
+/* Плавающая пилюля не садится на кнопку «+» в списке чатов */
+.okg-pill { right: calc(var(--oko-safe-right) + 12px) !important; }
+#screen-chats .fab { bottom: calc(var(--oko-safe-bottom) + 140px); }
