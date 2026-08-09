@@ -104,8 +104,20 @@ case 'uploadAnketaFile':
     rate_limit('uploadAnketaFile',200,60);
     $sid=preg_replace('/[^\w.\-]+/','',$_POST['anketa_id']??$_GET['anketa_id']??'');
     if(!$sid) out(['ok'=>false,'error'=>'нет anketa_id'],400);
-    if(empty($_FILES['file']['tmp_name'])||!is_uploaded_file($_FILES['file']['tmp_name']))
-        out(['ok'=>false,'error'=>'файл не пришёл'],400);
+    // Причину надо называть: «файл не пришёл» одинаково звучало и когда PHP
+    // резал файл по своему лимиту, и когда его не выбрали. Из-за этого лимит в
+    // 2 МБ прятался за общей фразой, и видео молча терялись.
+    $UPERR=[UPLOAD_ERR_INI_SIZE=>'файл больше лимита сервера',
+            UPLOAD_ERR_FORM_SIZE=>'файл больше лимита формы',
+            UPLOAD_ERR_PARTIAL=>'файл дошёл не целиком',
+            UPLOAD_ERR_NO_FILE=>'файл не выбран',
+            UPLOAD_ERR_NO_TMP_DIR=>'на сервере нет временной папки',
+            UPLOAD_ERR_CANT_WRITE=>'сервер не смог записать файл',
+            UPLOAD_ERR_EXTENSION=>'загрузку остановило расширение PHP'];
+    $uerr=(int)($_FILES['file']['error']??UPLOAD_ERR_NO_FILE);
+    if($uerr!==UPLOAD_ERR_OK||empty($_FILES['file']['tmp_name'])||!is_uploaded_file($_FILES['file']['tmp_name']))
+        out(['ok'=>false,'error'=>($UPERR[$uerr]??'файл не пришёл'),
+             'limit'=>ini_get('upload_max_filesize')],400);
     $orig=(string)($_FILES['file']['name']??'file');
     if(((int)($_FILES['file']['size']??0))> 400*1024*1024) out(['ok'=>false,'error'=>'файл больше 400 МБ'],413);
     $dir=__DIR__."/uploads/$sid"; if(!is_dir($dir)) @mkdir($dir,0755,true);
