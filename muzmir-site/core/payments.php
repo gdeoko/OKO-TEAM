@@ -139,13 +139,38 @@ function yukassa_get_payment(string $id): ?array {
 
 /**
  * Находит УСПЕШНЫЙ платёж, покрывающий заявку (для возврата при отклонении).
- * Прямое совпадение payments.application_id. Возвращает строку payments или null.
+ *
+ * Работает и в пакетной оплате: если чек оформлен на 3 заявки, платёж в
+ * payments привязан только к первой (application_id=1st), а у остальных двух
+ * прямой связи нет. Но в момент подтверждения оплаты каждой заявке пакета
+ * проставляется applications.payment_id = payments.id и применяется amount_paid.
+ * Здесь сначала пробуем прямую связь, потом фолбэк по applications.payment_id.
  */
 function payment_for_application(int $appId): ?array {
     if ($appId <= 0 || !function_exists('tbl_exists') || !tbl_exists('payments')) return null;
-    // Успешный, ещё не возвращённый платёж по этой заявке.
+    // 1) Прямая связь: платёж сам ссылается на эту заявку.
     $p = one("SELECT * FROM payments WHERE application_id=? AND status='succeeded'
               AND (yukassa_id<>'' AND yukassa_id NOT LIKE 'stub-%') ORDER BY id DESC LIMIT 1", [$appId]);
+    if ($p) return $p;
+
+    // 2) Пакетная оплата: у заявки есть payment_id, ведущий к payments.id.
+    $app = one("SELECT payment_id FROM applications WHERE id=?", [$appId]);
+    $pid = (int) ($app['payment_id'] ?? 0);
+    if ($pid > 0) {
+        $p = one("SELECT * FROM payments WHERE id=? AND status='succeeded'
+                  AND (yukassa_id<>'' AND yukassa_id NOT LIKE 'stub-%')", [$pid]);
+        if ($p) return $p;
+    }
+    return null;
+}
+
+/**
+ * Находит УСПЕШНЫЙ платёж по заказу оригиналов наград (для возврата при отмене).
+ */
+function payment_for_order(int $orderId): ?array {
+    if ($orderId <= 0 || !function_exists('tbl_exists') || !tbl_exists('payments')) return null;
+    $p = one("SELECT * FROM payments WHERE order_id=? AND status='succeeded'
+              AND (yukassa_id<>'' AND yukassa_id NOT LIKE 'stub-%') ORDER BY id DESC LIMIT 1", [$orderId]);
     return $p ?: null;
 }
 
@@ -194,27 +219,95 @@ function yukassa_refund(string $paymentId, float $amountRub, string $reason = ''
 
 /**
  * Полный сценарий возврата по заявке при отклонении платного конкурса.
- * Находит платёж, вызывает возврат, помечает payments.status='refunded', пишет audit.
+ *
+ * Пакетные оплаты: если чек оформлен на несколько заявок, возвращаем ТОЛЬКО долю
+ * этой заявки (applications.amount_paid), а не всю сумму — иначе отклонение одной
+ * из трёх заявок вернуло бы деньги за все три. ЮKassa поддерживает несколько
+ * частичных возвратов по одному платежу; статус payments.status='refunded'
+ * ставим только тогда, когда суммарно возвращена вся сумма (все члены пакета
+ * отклонены). Идемпотентно: повторный вызов на уже возвращённой заявке отдаёт
+ * already=true и не создаёт лишний возврат в ЮKassa (Idempotence-Key внутри
+ * yukassa_refund всё равно защитит от двойного списания).
+ *
  * @return array ['ok'=>bool, 'amount'=>int, 'error'=>?string, 'refund_id'=>?string]
  */
 function refund_application(int $appId, string $reason = ''): array {
     $pay = payment_for_application($appId);
     if (!$pay) return ['ok' => false, 'amount' => 0, 'error' => 'Успешный платёж по заявке не найден (возможно, бесплатный конкурс или оплата вручную).'];
     if ((string) ($pay['status'] ?? '') === 'refunded') {
+        // Пакет уже полностью возвращён — этой конкретной заявке возвращать нечего.
+        return ['ok' => true, 'amount' => 0, 'already' => true, 'refund_id' => ''];
+    }
+    // Сумма к возврату — доля именно этой заявки в чеке (для пакетов — 1/N).
+    // Если amount_paid не заполнено (старые заявки), делим полную сумму платежа
+    // на число «братьев» по batch_id или payment_id, оставшихся неотклонёнными.
+    $app = one("SELECT id, amount_paid, batch_id, payment_id FROM applications WHERE id=?", [$appId]);
+    $share = (int) ($app['amount_paid'] ?? 0);
+    if ($share <= 0) {
+        $total = (int) ($pay['amount'] ?? 0);
+        $siblings = 1;
+        $batchId = (string) ($app['batch_id'] ?? '');
+        $paymentId = (int) ($app['payment_id'] ?? 0);
+        if ($batchId !== '') {
+            $siblings = (int) scalar("SELECT COUNT(*) FROM applications WHERE batch_id=?", [$batchId]);
+        } elseif ($paymentId > 0) {
+            $siblings = (int) scalar("SELECT COUNT(*) FROM applications WHERE payment_id=?", [$paymentId]);
+        }
+        if ($siblings < 1) $siblings = 1;
+        $share = (int) round($total / $siblings);
+    }
+    if ($share <= 0) {
+        return ['ok' => true, 'amount' => 0, 'error' => null, 'refund_id' => ''];
+    }
+
+    // Разные Idempotence-Key на каждую заявку пакета — иначе ЮKassa вернёт один
+    // и тот же refund на все вызовы и остальные заявки останутся без возврата.
+    $desc = $reason !== '' ? ('Возврат оргвзноса: ' . $reason) : 'Возврат оргвзноса по отклонённой заявке';
+    $desc .= ' [app#' . $appId . ']';
+    $res = yukassa_refund((string) $pay['yukassa_id'], (float) $share, $desc);
+    if (!$res['ok']) {
+        if (function_exists('audit')) audit('refund_failed', 'payments', (int) $pay['id'], ['app' => $appId, 'error' => $res['error'] ?? '', 'yukassa_id' => $pay['yukassa_id'], 'amount' => $share]);
+        return ['ok' => false, 'amount' => $share, 'error' => $res['error'] ?? 'Не удалось выполнить возврат.'];
+    }
+
+    // Заявке ставим отметку, что её доля возвращена (чтобы не возвращать повторно).
+    try { update('applications', ['amount_paid' => 0, 'is_paid' => 0], 'id=:id', ['id' => $appId]); } catch (\Throwable $e) {}
+    // Пакет считаем полностью возвращённым только когда у ВСЕХ его членов share=0.
+    $stillPaid = 0;
+    if (!empty($app['batch_id'])) {
+        $stillPaid = (int) scalar("SELECT COALESCE(SUM(amount_paid),0) FROM applications WHERE batch_id=? AND id<>?", [(string) $app['batch_id'], $appId]);
+    } elseif (!empty($app['payment_id'])) {
+        $stillPaid = (int) scalar("SELECT COALESCE(SUM(amount_paid),0) FROM applications WHERE payment_id=? AND id<>?", [(int) $app['payment_id'], $appId]);
+    }
+    if ($stillPaid <= 0) {
+        update('payments', ['status' => 'refunded'], 'id=:id', ['id' => (int) $pay['id']]);
+    }
+    if (function_exists('audit')) audit('refund_succeeded', 'payments', (int) $pay['id'], ['app' => $appId, 'amount' => $share, 'refund_id' => $res['id'], 'yukassa_id' => $pay['yukassa_id']]);
+    return ['ok' => true, 'amount' => $share, 'error' => null, 'refund_id' => (string) $res['id']];
+}
+
+/**
+ * Полный сценарий возврата по заказу оригиналов наград при отмене.
+ * Ищет платёж по order_id, возвращает всю сумму (заказы не делятся на батчи),
+ * помечает payments.status='refunded', пишет audit.
+ * @return array ['ok'=>bool, 'amount'=>int, 'error'=>?string, 'refund_id'=>?string]
+ */
+function refund_award_order(int $orderId, string $reason = ''): array {
+    $pay = payment_for_order($orderId);
+    if (!$pay) return ['ok' => false, 'amount' => 0, 'error' => 'Успешный платёж по заказу не найден (возможно, ещё не оплачен или оплачен вручную).'];
+    if ((string) ($pay['status'] ?? '') === 'refunded') {
         return ['ok' => true, 'amount' => (int) ($pay['amount'] ?? 0), 'already' => true, 'refund_id' => ''];
     }
     $amount = (float) (int) ($pay['amount'] ?? 0);
-    if ($amount <= 0) {
-        // Сумма 0 (бесплатно) — возвращать нечего, но не ошибка.
-        return ['ok' => true, 'amount' => 0, 'error' => null, 'refund_id' => ''];
-    }
-    $res = yukassa_refund((string) $pay['yukassa_id'], $amount, $reason !== '' ? ('Возврат оргвзноса: ' . $reason) : 'Возврат оргвзноса по отклонённой заявке');
+    if ($amount <= 0) return ['ok' => true, 'amount' => 0, 'error' => null, 'refund_id' => ''];
+    $desc = $reason !== '' ? ('Возврат за заказ №' . $orderId . ': ' . $reason) : ('Возврат за отменённый заказ №' . $orderId);
+    $res = yukassa_refund((string) $pay['yukassa_id'], $amount, $desc);
     if (!$res['ok']) {
-        if (function_exists('audit')) audit('refund_failed', 'payments', (int) $pay['id'], ['app' => $appId, 'error' => $res['error'] ?? '', 'yukassa_id' => $pay['yukassa_id']]);
+        if (function_exists('audit')) audit('refund_failed', 'payments', (int) $pay['id'], ['order' => $orderId, 'error' => $res['error'] ?? '', 'yukassa_id' => $pay['yukassa_id']]);
         return ['ok' => false, 'amount' => (int) $amount, 'error' => $res['error'] ?? 'Не удалось выполнить возврат.'];
     }
     update('payments', ['status' => 'refunded'], 'id=:id', ['id' => (int) $pay['id']]);
-    if (function_exists('audit')) audit('refund_succeeded', 'payments', (int) $pay['id'], ['app' => $appId, 'amount' => (int) $amount, 'refund_id' => $res['id'], 'yukassa_id' => $pay['yukassa_id']]);
+    if (function_exists('audit')) audit('refund_succeeded', 'payments', (int) $pay['id'], ['order' => $orderId, 'amount' => (int) $amount, 'refund_id' => $res['id'], 'yukassa_id' => $pay['yukassa_id']]);
     return ['ok' => true, 'amount' => (int) $amount, 'error' => null, 'refund_id' => (string) $res['id']];
 }
 

@@ -89,6 +89,64 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         flash('Чистые дипломы заказа №' . $oid . ' перегенерированы.', 'success');
         admin_redirect('orders');
     }
+
+    if ($do === 'cancel_refund' && $oid) {
+        // Отмена заказа оригиналов с автоматическим возвратом средств в ЮKassa.
+        // Возврат безопасен: yukassa_refund идемпотентен по Idempotence-Key,
+        // повторный клик не создаст второго refund.
+        $order = one("SELECT * FROM awards_orders WHERE id=?", [$oid]);
+        if (!$order) { flash('Заказ №' . $oid . ' не найден.', 'error'); admin_redirect('orders'); }
+        if (in_array((string) ($order['status'] ?? ''), ['shipped', 'delivered'], true)) {
+            flash('Заказ №' . $oid . ' уже отправлен/доставлен — отменить нельзя.', 'error');
+            admin_redirect('orders');
+        }
+        $reason = trim((string) input('cancel_reason'));
+        if (!function_exists('refund_award_order') && is_file(BASE_PATH . '/core/payments.php')) require_once BASE_PATH . '/core/payments.php';
+
+        $refund = ['ok' => false, 'amount' => 0, 'error' => null];
+        try { $refund = refund_award_order($oid, $reason); } catch (\Throwable $e) { $refund = ['ok' => false, 'error' => $e->getMessage()]; }
+
+        update('awards_orders', [
+            'status'         => 'canceled',
+            'canceled_at'    => date('Y-m-d H:i:s'),
+            'cancel_reason'  => mb_substr($reason, 0, 500),
+            'refund_amount'  => (int) ($refund['amount'] ?? 0),
+            'refund_id'      => (string) ($refund['refund_id'] ?? ''),
+        ], 'id=:id', ['id' => $oid]);
+        audit('order_cancel_refund', 'awards_orders', $oid, [
+            'refund_ok' => !empty($refund['ok']), 'amount' => (int) ($refund['amount'] ?? 0),
+            'error'     => $refund['error'] ?? null,
+        ]);
+
+        // Письмо участнику о возврате.
+        if (!function_exists('mail_send_failover') && is_file(BASE_PATH . '/core/mailer.php')) {
+            require_once BASE_PATH . '/core/mailer.php';
+        }
+        if (function_exists('mail_send_failover')) {
+            $to = (string) ($order['email'] ?? '');
+            if ($to !== '' && filter_var($to, FILTER_VALIDATE_EMAIL)) {
+                $body = '<p>Здравствуйте'
+                      . (trim((string) ($order['full_name'] ?? '')) !== '' ? ', ' . h((string) $order['full_name']) : '')
+                      . '!</p><p>Заказ наградных материалов <b>№' . $oid . '</b> отменён'
+                      . ($reason !== '' ? ' по причине: <i>' . h($reason) . '</i>' : '') . '.</p>';
+                if (!empty($refund['ok']) && (int) $refund['amount'] > 0) {
+                    $body .= '<p>Сумма <b>' . (int) $refund['amount'] . ' ₽</b> возвращена на ту же карту/способ оплаты. Зачисление обычно занимает до 3 рабочих дней (срок зависит от банка).</p>';
+                } elseif (!empty($refund['already'])) {
+                    $body .= '<p>Возврат по этому заказу уже был выполнен ранее.</p>';
+                } elseif ((int) ($order['amount'] ?? 0) > 0) {
+                    $body .= '<p><b>Внимание:</b> автоматический возврат не прошёл. Мы вернём деньги вручную и напишем вам отдельно.</p>';
+                }
+                mail_send_failover($to, 'Заказ №' . $oid . ' отменён — возврат средств', $body, ['pool' => 'tx']);
+            }
+        }
+
+        $msg = 'Заказ №' . $oid . ' отменён.';
+        if (!empty($refund['ok']) && (int) $refund['amount'] > 0) $msg .= ' Возврат ' . (int) $refund['amount'] . ' ₽ отправлен в ЮKassa.';
+        elseif (!empty($refund['already']))                        $msg .= ' Возврат уже был выполнен ранее.';
+        elseif (!empty($refund['error']))                          $msg .= ' ВНИМАНИЕ: автовозврат не прошёл (' . $refund['error'] . ') — верните вручную в ЛК ЮKassa.';
+        flash($msg, !empty($refund['ok']) || (int) ($order['amount'] ?? 0) === 0 ? 'success' : 'error');
+        admin_redirect('orders');
+    }
 }
 
 /* ------------------------------- Данные --------------------------------- */
@@ -98,12 +156,13 @@ $params = [];
 if ($filter === 'archive') {
     // АРХИВ: заказ, по которому введён трек-номер, уходит из работы сюда.
     $where .= " AND status IN ('shipped','delivered')";
-} elseif (in_array($filter, ['new','paid','made','shipped','delivered'], true)) {
+} elseif (in_array($filter, ['new','paid','made','shipped','delivered','canceled'], true)) {
     $where .= " AND status=?"; $params[] = $filter;
 } else {
     // РАБОЧИЙ СПИСОК (правило владельца): только то, что реально нужно сделать —
     // распечатать и отправить. Неоплаченные скрыты («до оплаты заказа не существует»),
-    // а отправленные уходят в архив сразу после ввода трек-номера, чтобы не мешались.
+    // отправленные уходят в архив сразу после трек-номера, отменённые — в отдельную
+    // вкладку «Отменённые», чтобы не смешивались с рабочим списком.
     $where .= " AND status IN ('paid','made')";
 }
 // Поиск по заказам (раньше его не было вовсе — заказ искали глазами по всему списку).
@@ -124,7 +183,7 @@ $counts = [];
 foreach (all("SELECT status, COUNT(*) c FROM awards_orders WHERE items NOT LIKE '%\"kind\":\"club\"%' GROUP BY status") as $r) {
     $counts[(string)$r['status']] = (int)$r['c'];
 }
-$STAT = ['paid'=>'К изготовлению','made'=>'Изготовлено','shipped'=>'Отправлено','delivered'=>'Доставлено','new'=>'Ожидает оплаты'];
+$STAT = ['paid'=>'К изготовлению','made'=>'Изготовлено','shipped'=>'Отправлено','delivered'=>'Доставлено','new'=>'Ожидает оплаты','canceled'=>'Отменён'];
 $STEPS = ['paid'=>1,'made'=>2,'shipped'=>3,'delivered'=>4];
 
 ob_start(); ?>
@@ -174,7 +233,7 @@ ob_start(); ?>
         <div class="small"><?= h((string)$o['competition']) ?> · <b><?= h((string)$o['result']) ?></b></div>
       </div>
       <div>
-        <?php $badge = ['paid'=>'#C79322','made'=>'#2C7BE5','shipped'=>'#17307A','delivered'=>'#1E9E5A','new'=>'#8892B0'][$st] ?? '#8892B0'; ?>
+        <?php $badge = ['paid'=>'#C79322','made'=>'#2C7BE5','shipped'=>'#17307A','delivered'=>'#1E9E5A','new'=>'#8892B0','canceled'=>'#8B2F2F'][$st] ?? '#8892B0'; ?>
         <span style="display:inline-block;padding:5px 12px;border-radius:999px;background:<?= $badge ?>;color:#fff;font-weight:700;font-size:12px;"><?= h($STAT[$st] ?? $st) ?></span>
       </div>
     </div>
@@ -279,10 +338,35 @@ ob_start(); ?>
         <?php if ($st === 'delivered'): ?>
           <span class="small" style="color:#1E9E5A;font-weight:700;">✓ Доставлено<?= !empty($o['delivered_at']) ? ' · '.h((string)$o['delivered_at']) : '' ?></span>
         <?php endif; ?>
+        <?php if ($st === 'canceled'): ?>
+          <span class="small" style="color:#8B2F2F;font-weight:700;">✕ Отменён<?= !empty($o['canceled_at']) ? ' · '.h((string)$o['canceled_at']) : '' ?><?php if ((int)($o['refund_amount'] ?? 0) > 0): ?> · возврат <?= (int)$o['refund_amount'] ?> ₽<?php endif; ?></span>
+          <?php if (trim((string)($o['cancel_reason'] ?? '')) !== ''): ?>
+            <span class="small muted" style="width:100%;margin-top:4px">Причина: <?= h((string)$o['cancel_reason']) ?></span>
+          <?php endif; ?>
+        <?php endif; ?>
         <form method="post" action="<?= url('/admin/') ?>" style="display:inline;margin-left:auto;"><?= csrf_field() ?>
           <input type="hidden" name="do" value="redispatch"><input type="hidden" name="order" value="<?= $oid ?>">
           <button class="btn btn--ghost btn--sm" type="submit"><?= admin_icon('send') ?>В Telegram-производство</button>
         </form>
+        <?php if (in_array($st, ['paid','made','new'], true)): ?>
+          <!-- Отмена заказа с автоматическим возвратом средств в ЮKassa.
+               Если заказ уже отправлен/доставлен — кнопка не показывается: возврат
+               после отправки Почтой — только вручную по обращению. -->
+          <button type="button" class="btn btn--ghost btn--sm" style="color:#8B2F2F;border-color:#EBC7C7"
+                  onclick="var f=document.getElementById('cr<?= $oid ?>');f.style.display=f.style.display==='none'?'flex':'none'">
+            <?= admin_icon('trash') ?>Отменить с возвратом
+          </button>
+          <form method="post" action="<?= url('/admin/') ?>" id="cr<?= $oid ?>"
+                style="display:none;flex-basis:100%;flex-wrap:wrap;gap:6px;margin-top:8px;padding:12px;background:#FDF1F1;border:1px solid #EBC7C7;border-radius:10px"
+                onsubmit="return confirm('Отменить заказ №<?= $oid ?> и вернуть <?= (int)$o['amount'] ?> ₽ в ЮKassa? Возврат необратим.');">
+            <?= csrf_field() ?>
+            <input type="hidden" name="do" value="cancel_refund">
+            <input type="hidden" name="order" value="<?= $oid ?>">
+            <input type="text" name="cancel_reason" placeholder="Причина отмены (для участника и в audit)" required
+                   style="flex:1;padding:8px 12px;border:1px solid #EBC7C7;border-radius:9px;min-width:260px;background:#fff">
+            <button class="btn btn--danger btn--sm" type="submit">Отменить и вернуть <?= (int)$o['amount'] ?> ₽</button>
+          </form>
+        <?php endif; ?>
       </div>
     </div>
   </div>

@@ -358,6 +358,10 @@ function db_migrate(PDO $pdo): void {
         ['awards_orders', 'discount_pct',  'INTEGER DEFAULT 0'],       // применённая скидка ВИП, %
         ['awards_orders', 'scheduled_at',  'TEXT'],                    // план отправки электронных
         ['awards_orders', 'sent_at',       'TEXT'],                    // факт отправки электронных
+        ['awards_orders', 'canceled_at',   'TEXT'],                    // время отмены (админ)
+        ['awards_orders', 'cancel_reason', "TEXT DEFAULT ''"],         // причина отмены
+        ['awards_orders', 'refund_amount', 'INTEGER DEFAULT 0'],       // возвращённая сумма, ₽
+        ['awards_orders', 'refund_id',     "TEXT DEFAULT ''"],         // id refund в ЮKassa
 
         ['users',   'blocked',     'INTEGER DEFAULT 0'],
         ['reviews', 'attachments', "TEXT DEFAULT ''"],

@@ -65,10 +65,29 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && input('do') === 'bulk') {
         // все неоценённые заявки автоматически (admin/grading.php).
         $map = ['mark_paid'=>['is_paid'=>1,'status'=>'paid'], 'reject'=>['status'=>'rejected']];
         if (isset($map[$act])) {
+            // Массовое «reject»: перед сменой статуса запускаем возврат по каждой
+            // оплаченной заявке. grading.php делает это же для одиночного отклонения,
+            // здесь дублируем для bulk, чтобы деньги не «зависали» на кассе.
+            $refunds = ['ok' => 0, 'sum' => 0, 'failed' => []];
+            if ($act === 'reject') {
+                if (!function_exists('refund_application') && is_file(BASE_PATH . '/core/payments.php')) require_once BASE_PATH . '/core/payments.php';
+                foreach ($ids as $__aid) {
+                    $__a = one("SELECT is_paid FROM applications WHERE id=?", [(int) $__aid]);
+                    if (!$__a || (int) ($__a['is_paid'] ?? 0) !== 1) continue;
+                    try { $r = refund_application((int) $__aid, 'Массовое отклонение админом'); } catch (\Throwable $e) { $r = ['ok' => false, 'error' => $e->getMessage()]; }
+                    if (!empty($r['ok']) && (int) ($r['amount'] ?? 0) > 0) { $refunds['ok']++; $refunds['sum'] += (int) $r['amount']; }
+                    elseif (!empty($r['error']))                            { $refunds['failed'][] = "#$__aid: " . $r['error']; }
+                }
+            }
             $set = implode(',', array_map(fn($k)=>"$k=?", array_keys($map[$act])));
             q("UPDATE applications SET $set WHERE id IN ($in)", array_merge(array_values($map[$act]), $ids));
-            audit('applications_bulk', 'application', null, ['action'=>$act,'ids'=>$ids]);
-            flash('Обновлено заявок: ' . count($ids) . '.', 'success');
+            audit('applications_bulk', 'application', null, ['action'=>$act,'ids'=>$ids,'refunds'=>$refunds]);
+            $msg = 'Обновлено заявок: ' . count($ids) . '.';
+            if ($act === 'reject') {
+                if ($refunds['ok'] > 0) $msg .= ' Возврат выполнен: ' . $refunds['ok'] . ' шт на ' . $refunds['sum'] . ' ₽.';
+                if (!empty($refunds['failed'])) $msg .= ' Не удалось: ' . implode('; ', $refunds['failed']);
+            }
+            flash($msg, empty($refunds['failed']) ? 'success' : 'error');
         } elseif ($act === 'mark_new') {
             // Вернуть в «новые» и снять оценку (исправление ошибочно оценённых).
             q("UPDATE applications SET status='new',score=NULL,result='',graded_at=NULL,jury_comment='' WHERE id IN ($in)", $ids);
@@ -94,12 +113,25 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && input('do') === 'set_status') {
     $id = (int) input('id');
     $st = input('status');
     if (in_array($st, ['new','submitted','pending','paid','judging','graded','sent','done','rejected'], true)) {
+        // Ручное отклонение через set_status тоже обязано вернуть деньги (иначе получим
+        // отклонённую и оплаченную заявку без возврата — деньги остаются на кассе).
+        $refundMsg = '';
+        if ($st === 'rejected') {
+            $__cur = one("SELECT is_paid FROM applications WHERE id=?", [$id]);
+            if ($__cur && (int) ($__cur['is_paid'] ?? 0) === 1) {
+                if (!function_exists('refund_application') && is_file(BASE_PATH . '/core/payments.php')) require_once BASE_PATH . '/core/payments.php';
+                try { $r = refund_application($id, 'Смена статуса на «Отклонена» админом'); } catch (\Throwable $e) { $r = ['ok' => false, 'error' => $e->getMessage()]; }
+                if (!empty($r['ok']) && (int) ($r['amount'] ?? 0) > 0) $refundMsg = ' Возврат ' . (int) $r['amount'] . ' ₽ отправлен в ЮKassa.';
+                elseif (!empty($r['already']))                          $refundMsg = ' Возврат уже был выполнен ранее.';
+                elseif (!empty($r['error']))                            $refundMsg = ' ВНИМАНИЕ: автовозврат не прошёл (' . $r['error'] . ') — верните вручную в ЛК ЮKassa.';
+            }
+        }
         $extra = $st === 'paid' ? ',is_paid=1' : '';
         // Возврат в «до-аттестации» — снимаем оценку/результат (это исправляет ошибочно оценённые заявки).
         if (in_array($st, ['new','submitted','pending','judging'], true)) $extra .= ",score=NULL,result='',graded_at=NULL,jury_comment=''";
         q("UPDATE applications SET status=? $extra WHERE id=?", [$st, $id]);
         audit('application_status', 'application', $id, ['status'=>$st]);
-        flash('Статус заявки обновлён.', 'success');
+        flash('Статус заявки обновлён.' . $refundMsg, 'success');
     }
     admin_redirect('applications', ['id' => $id]);
 }
