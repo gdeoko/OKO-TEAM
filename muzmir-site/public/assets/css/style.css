@@ -710,25 +710,16 @@ pre,code{overflow-wrap:anywhere;white-space:pre-wrap}
   .container{padding:0 16px}
 }
 /* ══════════════════════════════ MOBILE PERFORMANCE (mz-low) ══════════════════════════════
-   Класс .mz-low ставится в app.js на всех touch-устройствах и узких экранах (<960px).
-   Владелец жаловался: «на телефоне всё моргает, дёргается, летает». Причина — декоративный
-   слой: canvas #mzBgArt (12-26 нот + до 140 звёзд + кометы), 14 DOM-нот в hero, glow/rings,
-   .reveal-опкасити, hover-only анимации на touch-устройствах. Здесь всё это выключаем. */
+   Класс .mz-low ставится в app.js на touch-устройствах и узких экранах (<960px).
+   Точечно выключаем только то, что реально жгло CPU и вызывало jank/моргание:
+     — canvas #mzBgArt (12-26 нот + до 140 звёзд + кометы через requestAnimationFrame),
+     — 14 плавающих DOM-нот в hero (.hero-notes) — тоже вечная CSS-анимация,
+     — .reveal opacity:0 → карточки конкурсов не «пустеют» до IntersectionObserver.
+   ВИЗУАЛ НЕ ТРОГАЕМ: видео Земли (bg-earth), светлое небо (bg-sky), облака
+   (bg-clouds), hero-glow/rings, mz-divider, bg-fx, hero-eq и карточные подъёмы
+   остаются как есть — это статичные градиенты/видео/лёгкие CSS, они не лагали. */
 html.mz-low .hero-notes,
-html.mz-low .hero-glow,
-html.mz-low .hero-ring,
-html.mz-low .hero-media::before,
-html.mz-low .hero-media::after,
-html.mz-low .hero-eq,
-html.mz-low #mzBgArt,
-html.mz-low .mz-divider,
-html.mz-low .bg-fx,
-html.mz-low .bg-earth,
-html.mz-low .bg-sky,
-html.mz-low .bg-clouds{display:none !important}
-html.mz-low .hero-logo{animation:none}
-html.mz-low .btn--primary::after{display:none}
-html.mz-low .card,html.mz-low .card--3d,html.mz-low .card--feature,html.mz-low .card--gold{transform:none !important}
+html.mz-low #mzBgArt{display:none !important}
 /* На мобилке .reveal НЕ прячет контент: карточки конкурсов «пустые Подробнее» больше
    не появляются, пока IntersectionObserver думает — контент виден сразу. */
 html.mz-low .js .reveal,
