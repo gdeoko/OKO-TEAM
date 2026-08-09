@@ -1484,6 +1484,10 @@ button:focus-visible,a:focus-visible,input:focus-visible,textarea:focus-visible,
      Здесь адаптация под Telegram/мобильный/ПК, типографика, хром, Reels, воронки. -->
 <link rel="stylesheet" href="media/app/oko-v2.css" media="print" onload="this.media='all'">
 <noscript><link rel="stylesheet" href="media/app/oko-v2.css"></noscript>
+<!-- oko-ui3.css — правки Даниэля 09.08: пустые чёрные поля снизу кошелька и
+     мини-аппов, обрезание сверху, бейджи профиля без горизонтального скролла. -->
+<link rel="stylesheet" href="media/app/oko-ui3.css" media="print" onload="this.media='all'">
+<noscript><link rel="stylesheet" href="media/app/oko-ui3.css"></noscript>
 <script defer src="app.js"></script>
 <script defer src="media/app/oko-v2.js"></script>
 <!-- Клипы: настоящий вертикальный видео-плеер вместо сторис-обёртки -->
@@ -1603,6 +1607,11 @@ button:focus-visible,a:focus-visible,input:focus-visible,textarea:focus-visible,
      фокуса и возврат фокуса в шторках, роли и живые области, поднятый контраст
      светлой темы, цели нажатия 44×44, уважение к prefers-reduced-motion и
      prefers-contrast. Грузится последним — только добавляет атрибуты и стили. -->
+<script defer src="media/app/oko-profile3.js"></script>
+
+<!-- oko-tariffs3.js — тарифы как раньше: выделенная строка сверху и
+     анимационные карточки в попапе, а не плоский список. -->
+<script defer src="media/app/oko-tariffs3.js"></script>
 <script defer src="media/app/oko-a11y.js"></script>
 <script>
 /* Обёртки над встроенными в base.html функциями — для авто-трека page_view / share.
