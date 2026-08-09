@@ -26514,12 +26514,7 @@ const HQ_MOD = HQ_STATE.mod || {spam:46, scam:12, adult:7, drugs:3, checked:8214
 HQ_STATE.mod = HQ_MOD; hqSave();
 const HQ_MOD_FEED = []  /* демо-данные удалены 09.08: 3D-штаб — источник только API */;
 /* ---- жалобы пользователей (персист oko-admin-hq.reports) ---- */
-const HQ_REPORTS = (HQ_STATE.reports && Array.isArray(HQ_STATE.reports)) ? HQ_STATE.reports : [
-  {id:'r1', kind:'Профиль',    tgt:'Гость-8842',       by:'@marina_smm',       reason:'выдаёт себя за поддержку OKO, выманивает коды входа', ago:9,  done:0},
-  {id:'r2', kind:'Пост',       tgt:'@fastcash_pro',    by:'@igorvideo',        reason:'финансовая пирамида в рекомендациях ленты',          ago:24, done:0},
-  {id:'r3', kind:'Объявление', tgt:'«iPhone 15 за 9900»', by:'@alina.grow',    reason:'товар-приманка, продавец без единой сделки',         ago:52, done:0},
-  {id:'r4', kind:'Канал',      tgt:'«Сигналы OKO PRO»',by:'@dmitrymarketing',  reason:'платный канал обещает доход 300% в месяц',           ago:88, done:0},
-];
+const HQ_REPORTS = (HQ_STATE.reports && Array.isArray(HQ_STATE.reports)) ? HQ_STATE.reports : [];  /* демо-жалобы удалены 09.08 — модерация приходит из Supabase */
 HQ_STATE.reports = HQ_REPORTS; hqSave();
 const HQ_REP_ICO = {'Профиль':'user','Пост':'feed','Объявление':'briefcase','Канал':'crown'};
 const HQ_REP_DONE = {ban:{l:'заблокирован', cls:'no'}, warn:{l:'предупреждён', cls:'wait'}, ok:{l:'отклонена', cls:'ok'}};
@@ -33231,7 +33226,7 @@ function dcSeed(){
     POSTS.rec.push(...DC_POSTS_REC);
 
   /* уведомления, непрочитанные, в начало */
-  if(typeof NOTIFS !== 'undefined' && !NOTIFS.some(n=>n.who==='Марк Волков'))
+  if(typeof NOTIFS !== 'undefined' && !NOTIFS.length)
     NOTIFS.unshift(...DC_NOTIFS);
 
   return true;
