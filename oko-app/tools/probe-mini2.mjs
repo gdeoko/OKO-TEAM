@@ -268,21 +268,22 @@ const AUDIT = () => {
         add('button-label-overflow', `${el.scrollWidth}>${el.clientWidth} · «${t.slice(0, 44)}»`, el);
       return;
     }
+    /* Меряем именно набранный текст (Range по содержимому), а не рамку
+       кнопки: её border-box по определению шире внутреннего поля. */
     const r = el.getBoundingClientRect();
     const padR = parseFloat(cs.paddingRight) || 0, bR = parseFloat(cs.borderRightWidth) || 0;
     const padL = parseFloat(cs.paddingLeft) || 0,  bL = parseFloat(cs.borderLeftWidth) || 0;
-    const inR = r.right - bR - padR + 1, inL = r.left + bL + padL - 1;
-    const kids = [el, ...el.querySelectorAll('*')].filter(k =>
-      [...k.childNodes].some(n => n.nodeType === 3 && n.textContent.trim().length > 0));
-    for(const k of kids){
-      const kr = k.getBoundingClientRect();
-      if(kr.width < 1) continue;
-      if(kr.right > inR || kr.left < inL){
-        add('button-label-overflow',
-          `текст за полем кнопки · «${(k.innerText || '').trim().slice(0, 40)}»`, el);
-        break;
-      }
-    }
+    const inR = r.right - bR - padR + 1.5, inL = r.left + bL + padL - 1.5;
+    let tr = null;
+    try{
+      const range = document.createRange();
+      range.selectNodeContents(el);
+      tr = range.getBoundingClientRect();
+      range.detach && range.detach();
+    }catch(e){ tr = null; }
+    if(tr && tr.width > 1 && (tr.right > inR || tr.left < inL))
+      add('button-label-overflow',
+        `текст на ${Math.round(Math.max(tr.right - inR, inL - tr.left))} px за полем · «${t.slice(0, 40)}»`, el);
   });
 
   /* 5) кнопка «назад» — есть и одного вида */
