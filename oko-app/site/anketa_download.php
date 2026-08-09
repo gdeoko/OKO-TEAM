@@ -33,6 +33,10 @@ function anketa_qlabels(): array {
         'qX1'=>'Название проекта','qX1b'=>'Название (своё)','qX2'=>'Стиль общения (ты/вы)','qX3'=>'Фирменные фразы',
         'qX4'=>'Входной продукт','qX5'=>'Правовая форма','qX5b'=>'Правовая форма (своя)','qX6'=>'HeyGen',
         'qX7'=>'Часовой пояс','qX8'=>'Готовый контент','qFINAL-text'=>'Дополнение клиента',
+        // Поля текущего флоу анкеты: без них ответы уезжали в конец без названий.
+        'nm'=>'Имя','email'=>'Email','service'=>'Услуга','links'=>'Ссылки клиента',
+        'extra'=>'Что ещё важно','contact'=>'Как связаться','calltime'=>'Удобное время',
+        'files_uploaded'=>'Файлы в архиве',
     ];
 }
 
@@ -54,6 +58,11 @@ function anketa_ordered(array $answers): array {
     return $ordered;
 }
 
+// Windows открывает .txt в cp1251, если в начале нет метки кодировки, и русский
+// текст превращается в набор символов — именно это владелец и видел, скачав
+// анкету. Метка UTF-8 (BOM) в начале файла лечит это во всех редакторах.
+const UTF8_BOM = "\xEF\xBB\xBF";
+
 function anketa_txt(array $ordered, array $meta): string {
     $t = "АНКЕТА OKO — {$meta['client_name']}\n";
     $t .= "Услуга: {$meta['service_type']} · {$meta['created_at']}\n";
@@ -66,15 +75,71 @@ function anketa_txt(array $ordered, array $meta): string {
     return $t;
 }
 
-function download_anketa_zip(string $sid) {
-    // По умолчанию — красивый HTML/PDF-отчёт (открывается в браузере, печатается в PDF).
-    // Для отладки / машинной обработки — старый ZIP+JSON включается флагом ?raw=1.
-    if (empty($_GET['raw'])) {
-        $key = $_GET['key'] ?? '';
-        $qs = 'action=downloadAnketaPdf&id=' . rawurlencode($sid) . '&key=' . rawurlencode((string)$key);
-        header('Location: /api.php?' . $qs, true, 302);
-        return;
+function human_size(int $b): string {
+    if ($b >= 1048576) return round($b / 1048576, 1) . ' МБ';
+    return max(1, (int)round($b / 1024)) . ' КБ';
+}
+
+// Читаемая анкета: открывается двойным кликом, ничего не устанавливая.
+// Фото видно, видео и голосовые играют — раньше вложения лежали мёртвым грузом
+// в папке, и владелец не понимал, пришли они вообще или нет.
+function anketa_html(array $ordered, array $meta, array $files): string {
+    $esc = fn($s) => htmlspecialchars((string)$s, ENT_QUOTES, 'UTF-8');
+    $rows = '';
+    foreach ($ordered as $row) {
+        $ans = is_array($row['answer']) ? implode(', ', $row['answer']) : (string)$row['answer'];
+        $ans = str_replace('|||', ' · ', trim($ans));
+        if ($ans === '') continue;
+        $val = nl2br($esc($ans));
+        $val = preg_replace('#(https?://[^\s<]+)#u', '<a href="$1">$1</a>', $val);
+        $rows .= '<div class="r"><div class="q">' . $esc($row['question']) . '</div>'
+               . '<div class="a">' . $val . '</div></div>';
     }
+    $media = '';
+    foreach ($files as $f) {
+        $n = $esc($f['name']);
+        $src = 'files/' . rawurlencode($f['name']);
+        $ext = strtolower(pathinfo($f['name'], PATHINFO_EXTENSION));
+        if (in_array($ext, ['jpg', 'jpeg', 'png', 'webp', 'gif', 'heic'])) {
+            $body = '<img src="' . $src . '" alt="' . $n . '">';
+        // .webm бывает и видео, и голосовым — различаем по имени, которое даёт
+        // диктофон анкеты, иначе голосовое открывается чёрным прямоугольником.
+        } elseif (in_array($ext, ['mp3', 'ogg', 'oga', 'wav', 'm4a', 'opus'])
+                  || ($ext === 'webm' && preg_match('/golosov|voice|audio/i', $f['name']))) {
+            $body = '<audio src="' . $src . '" controls></audio>';
+        } elseif (in_array($ext, ['mp4', 'mov', 'webm', 'm4v'])) {
+            $body = '<video src="' . $src . '" controls preload="metadata"></video>';
+        } else {
+            $body = '<a class="dl" href="' . $src . '">скачать файл</a>';
+        }
+        $media .= '<figure><figcaption>' . $n . ' · ' . human_size((int)$f['size'])
+                . '</figcaption>' . $body . '</figure>';
+    }
+    $mediaBlock = $files
+        ? '<h2>Вложения — ' . count($files) . '</h2><div class="media">' . $media . '</div>'
+        : '<h2>Вложения</h2><p class="none">Клиент ничего не прикрепил.</p>';
+    return '<!doctype html><html lang="ru"><meta charset="utf-8">'
+        . '<meta name="viewport" content="width=device-width,initial-scale=1">'
+        . '<title>Анкета — ' . $esc($meta['client_name']) . '</title><style>'
+        . 'body{margin:0;padding:28px 18px;background:#0d0d0d;color:#eaeaea;'
+        . 'font:15px/1.55 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif}'
+        . '.w{max-width:820px;margin:0 auto}h1{font-size:24px;margin:0 0 4px}'
+        . '.sub{color:#9a9a9a;margin-bottom:26px}h2{font-size:17px;margin:34px 0 12px;color:#9AFF00}'
+        . '.r{padding:11px 0;border-bottom:1px solid #1f1f1f}'
+        . '.q{color:#8f8f8f;font-size:13px;margin-bottom:3px}.a{white-space:normal}'
+        . 'a{color:#9AFF00}.none{color:#8f8f8f}'
+        . '.media{display:grid;gap:16px;grid-template-columns:repeat(auto-fill,minmax(240px,1fr))}'
+        . 'figure{margin:0;background:#151515;border-radius:10px;padding:10px}'
+        . 'figcaption{font-size:12px;color:#9a9a9a;margin-bottom:8px;word-break:break-all}'
+        . 'img,video{width:100%;border-radius:6px;display:block}audio{width:100%}'
+        . '.dl{display:inline-block;padding:8px 12px;background:#1f1f1f;border-radius:6px}'
+        . '</style><div class="w"><h1>' . $esc($meta['client_name'] ?: 'Анкета') . '</h1>'
+        . '<div class="sub">' . $esc($meta['service_type']) . ' · ' . $esc($meta['created_at'])
+        . ' · ' . $esc($meta['submission_id']) . '</div>'
+        . '<h2>Ответы</h2>' . $rows . $mediaBlock . '</div></html>';
+}
+
+function download_anketa_zip(string $sid) {
     $a = db_one("SELECT * FROM anketa_submissions WHERE submission_id=? OR id=?", [$sid, (int)$sid]);
     if (!$a) { http_response_code(404); echo 'Анкета не найдена'; return; }
     $sid = $a['submission_id'];
@@ -90,19 +155,26 @@ function download_anketa_zip(string $sid) {
         return;
     }
 
+    // Файлы клиента собираем ДО архива: их список нужен и в HTML, и в описи.
+    $dir = __DIR__ . "/uploads/$sid";
+    $files = [];
+    if (is_dir($dir)) {
+        foreach (glob("$dir/*") as $f) {
+            if (is_file($f)) $files[] = ['path' => $f, 'name' => basename($f),
+                                         'size' => filesize($f)];
+        }
+    }
+
     $zipPath = tempnam(sys_get_temp_dir(), 'anketa_') . '.zip';
     $zip = new ZipArchive();
     $zip->open($zipPath, ZipArchive::CREATE);
+    // Главный файл архива — HTML: он открывается двойным кликом в любой системе,
+    // показывает фото, проигрывает видео и голосовые прямо из папки files/.
+    $zip->addFromString('АНКЕТА.html', anketa_html($ordered, $meta, $files));
     $zip->addFromString('answers.json', json_encode($ordered, JSON_UNESCAPED_UNICODE|JSON_PRETTY_PRINT));
-    $zip->addFromString('answers.txt', anketa_txt($ordered, $meta));
+    $zip->addFromString('answers.txt', UTF8_BOM . anketa_txt($ordered, $meta));
     $zip->addFromString('metadata.json', json_encode($meta, JSON_UNESCAPED_UNICODE|JSON_PRETTY_PRINT));
-    // Файлы клиента
-    $dir = __DIR__ . "/uploads/$sid";
-    if (is_dir($dir)) {
-        foreach (glob("$dir/*") as $f) {
-            if (is_file($f)) $zip->addFile($f, 'files/' . basename($f));
-        }
-    }
+    foreach ($files as $f) $zip->addFile($f['path'], 'files/' . $f['name']);
     $zip->close();
 
     $safeName = preg_replace('/[^\w\-]+/u', '_', $a['client_name'] ?: 'client');

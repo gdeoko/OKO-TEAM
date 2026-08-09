@@ -55,6 +55,7 @@ textarea{min-height:120px;resize:vertical;line-height:1.5}
   <div class="logo">ОКО<span> TEAM</span> · Анкета</div>
   <div class="bar"><div class="bar-fill" id="bar"></div></div>
   <div class="bar-lbl"><span id="stepLbl">Шаг 1</span><span id="pct">0%</span></div>
+  <div id="who" style="display:none;color:#9AFF00;font-size:13px;margin-top:6px"></div>
 </div>
 
 <div class="wrap"><div id="screen"></div></div>
@@ -136,7 +137,8 @@ const BRANCH = {
   ],
 };
 const FINAL = [
-  {id:'files',t:'Прикрепите файлы',hint:'Лого, скрины, ТЗ, референсы — по желанию',type:'file'},
+  {id:'files',t:'Прикрепите материалы',hint:'Лого, скрины, ТЗ, референсы, фото, видео, голосовые — сколько угодно и любого размера',type:'file'},
+  {id:'links',t:'Ссылки',hint:'Соцсети, сайт, папка на диске, примеры — по одной в строке, сколько нужно',type:'textarea',ph:'https://...'},
   {id:'extra',t:'Что-то важное, о чём мы не спросили?',type:'textarea'},
   {id:'contact',t:'Как удобнее связаться дальше?',type:'radio',opts:['Созвон','Переписка','Встреча']},
   {id:'calltime',t:'Когда удобно созвониться?',type:'radio',opts:['Утро','День','Вечер']},
@@ -146,12 +148,28 @@ const FINAL = [
 // ── ДВИЖОК ─────────────────────────────────────────────────────
 const ANSWERS = {}; let MEDIA = []; let idx = 0;
 const anketaId = 'ank_' + Date.now() + '_' + Math.random().toString(36).slice(2,8);
+// Персональная ссылка okoteam.top/anketa-<имя>: анкета знает, для кого она,
+// и подставляет имя с услугой — человек не заполняет то, что мы уже знаем.
+const SLUG = (location.pathname.match(/^\/anketa-([\w-]+)$/) || [])[1] || '';
+async function loadSlug(){
+  if(!SLUG) return;
+  try{
+    const r = await fetch('/api.php?action=anketaSlug&slug=' + encodeURIComponent(SLUG));
+    const d = await r.json();
+    if(!d || !d.ok) return;
+    if(d.name){ ANSWERS.nm = d.name; }
+    if(d.email){ ANSWERS.email = d.email; }
+    if(d.service){ ANSWERS.service = d.service; }
+    const h = document.getElementById('who');
+    if(h && d.name){ h.textContent = 'Анкета для ' + d.name; h.style.display = ''; }
+  }catch(e){}
+}
 
 function flow(){ // текущий список вопросов = common + branch(service) + final
   const svc = ANSWERS.service;
   return COMMON.concat(svc && BRANCH[svc] ? BRANCH[svc] : [], svc ? FINAL : []);
 }
-function totalSteps(){ const svc=ANSWERS.service; return 8 + (svc?12:0) + (svc?5:0) + 1; } // +1 сводка
+function totalSteps(){ const svc=ANSWERS.service; return 8 + (svc?12:0) + (svc?FINAL.length:0) + 1; } // +1 сводка
 
 function render(){
   const F = flow();
@@ -169,7 +187,10 @@ function render(){
   else if (q.type==='checkbox'){const arr=val||[];
     html += `<div class="opts">${q.opts.map(o=>`<div class="opt check ${arr.includes(o)?'sel':''}" onclick="pickMulti('${q.id}','${o}')"><span class="dot"></span>${o}</div>`).join('')}</div>`;}
   else if (q.type==='file')
-    html += `<div class="file-drop" onclick="document.getElementById('fi').click()">📎 Нажмите, чтобы прикрепить файлы</div><input type="file" id="fi" multiple style="display:none" onchange="addFiles(this)"><div class="file-list" id="fl"></div>`;
+    html += `<div class="file-drop" onclick="document.getElementById('fi').click()">📎 Нажмите, чтобы прикрепить файлы — фото, видео, документы</div>`
+          + `<input type="file" id="fi" multiple style="display:none" onchange="addFiles(this)">`
+          + `<div class="file-drop" id="rec" onclick="toggleRec()">🎤 Записать голосовое</div>`
+          + `<div class="file-list" id="fl"></div>`;
   else if (q.type==='consent')
     html += `<div class="opts"><div class="opt check ${val?'sel':''}" onclick="pick('consent',${val?'0':'1'},0)"><span class="dot"></span>Согласен на обработку персональных данных</div></div>`;
   html += `<div class="err" id="err">Заполните поле</div></div>`;
@@ -189,16 +210,71 @@ function syncNav(){document.getElementById('next').disabled=!valid();}
 function nextStep(){if(!valid()){const e=document.getElementById('err');if(e)e.style.display='block';return;}idx++;render();window.scrollTo(0,0);}
 function prev(){if(idx>0){idx--;render();window.scrollTo(0,0);}}
 
-// ── Файлы → base64 ──
-function addFiles(input){[...input.files].forEach(file=>{if(file.size>15*1024*1024){alert('Файл '+file.name+' больше 15 МБ');return;}const r=new FileReader();r.onload=e=>{MEDIA.push({name:file.name,mimeType:file.type,dataUrl:e.target.result});renderFiles();};r.readAsDataURL(file);});input.value='';}
-function renderFiles(){const el=document.getElementById('fl');if(!el)return;el.innerHTML=MEDIA.map((m,i)=>`<div class="file-item"><span>📄 ${esc(m.name)}</span><b onclick="MEDIA.splice(${i},1);renderFiles()">удалить</b></div>`).join('');}
+// ── Файлы: грузим СРАЗУ и по одному ──
+// Раньше файлы ехали внутри анкеты в base64: видео и голосовые раздувались в
+// полтора раза, запрос упирался в лимит, и клиент видел «отправлено», а в
+// архиве вложений не было. Теперь каждый файл уходит своим запросом, и его
+// размер анкете больше не мешает.
+const MAX_MB = 400;
+function icon(t){t=t||'';return t.startsWith('image')?'🖼':t.startsWith('video')?'🎬':t.startsWith('audio')?'🎧':'📄';}
+function human(b){return b>=1048576?(b/1048576).toFixed(1)+' МБ':Math.max(1,Math.round(b/1024))+' КБ';}
+
+function addFiles(input){[...input.files].forEach(f=>uploadOne(f));input.value='';}
+
+function uploadOne(file,label){
+  if(file.size> MAX_MB*1024*1024){alert('Файл '+file.name+' больше '+MAX_MB+' МБ — пришлите ссылкой');return;}
+  const item={name:label||file.name,mimeType:file.type,size:file.size,pct:0,state:'идёт'};
+  MEDIA.push(item);renderFiles();
+  const fd=new FormData();fd.append('anketa_id',anketaId);fd.append('file',file,item.name);
+  const xhr=new XMLHttpRequest();
+  xhr.open('POST','/api.php?action=uploadAnketaFile');
+  xhr.upload.onprogress=e=>{if(e.lengthComputable){item.pct=Math.round(e.loaded/e.total*100);renderFiles();}};
+  xhr.onload=()=>{let r={};try{r=JSON.parse(xhr.responseText||'{}')}catch(e){}
+    if(r.ok){item.state='загружен';item.pct=100;item.server=r.filename;}
+    else{item.state='ошибка';item.err=r.error||('код '+xhr.status);}
+    renderFiles();syncNav();};
+  xhr.onerror=()=>{item.state='ошибка';item.err='нет связи';renderFiles();};
+  xhr.send(fd);
+}
+
+function renderFiles(){const el=document.getElementById('fl');if(!el)return;
+  el.innerHTML=MEDIA.map((m,i)=>{
+    const tail=m.state==='загружен'?human(m.size)
+      :m.state==='ошибка'?('не ушёл: '+esc(m.err||''))
+      :(m.pct||0)+'%';
+    return `<div class="file-item"><span>${icon(m.mimeType)} ${esc(m.name)} · ${tail}</span>`
+         + `<b onclick="dropFile(${i})">удалить</b></div>`;}).join('');}
+
+function dropFile(i){MEDIA.splice(i,1);renderFiles();syncNav();}
+
+// ── Голосовое прямо со страницы ──
+let REC=null, CHUNKS=[];
+async function toggleRec(){
+  const btn=document.getElementById('rec');
+  if(REC&&REC.state==='recording'){REC.stop();return;}
+  try{
+    const stream=await navigator.mediaDevices.getUserMedia({audio:true});
+    CHUNKS=[];REC=new MediaRecorder(stream);
+    REC.ondataavailable=e=>{if(e.data.size)CHUNKS.push(e.data);};
+    REC.onstop=()=>{
+      stream.getTracks().forEach(t=>t.stop());
+      const blob=new Blob(CHUNKS,{type:REC.mimeType||'audio/webm'});
+      const ext=(REC.mimeType||'audio/webm').includes('mp4')?'m4a':'webm';
+      uploadOne(new File([blob],'golosovoe_'+Date.now()+'.'+ext,{type:blob.type}));
+      if(btn){btn.textContent='🎤 Записать голосовое';btn.style.color='';}
+    };
+    REC.start();
+    if(btn){btn.textContent='⏹ Остановить запись';btn.style.color='#9AFF00';}
+  }catch(e){alert('Не получилось включить микрофон — прикрепите голосовое файлом');}
+}
 
 // ── Сводка ──
 function LABELS(){const m={};COMMON.concat(...Object.values(BRANCH),FINAL).forEach(q=>m[q.id]=q.t);return m;}
 function renderSummary(){
   const L=LABELS();let rows='';
   for(const[k,v]of Object.entries(ANSWERS)){if(k==='consent')continue;const val=Array.isArray(v)?v.join(', '):v;if(!val)continue;const svcMap={sistema:'Система Роста',web:'Сайт',zavod:'Контент-завод',complex:'Комплекс'};rows+=`<div class="sum-row"><div class="k">${L[k]||k}</div><div class="v">${esc(k==='service'?(svcMap[val]||val):val)}</div></div>`;}
-  if(MEDIA.length)rows+=`<div class="sum-row"><div class="k">Файлы</div><div class="v">${MEDIA.length} шт.</div></div>`;
+  const okN=MEDIA.filter(m=>m.state==='загружен').length, badN=MEDIA.length-okN;
+  if(MEDIA.length)rows+=`<div class="sum-row"><div class="k">Файлы</div><div class="v">${okN} загружено${badN?', '+badN+' не ушло':''}</div></div>`;
   document.getElementById('screen').innerHTML=`<div class="step"><div class="q-num">ПОЧТИ ГОТОВО</div><div class="q-title">Проверьте данные</div><div class="q-hint">Всё верно? Отправляем.</div>${rows}</div>`;
   document.getElementById('back').style.display='';document.getElementById('next').textContent='Отправить';document.getElementById('next').disabled=false;document.getElementById('next').onclick=submitAnketa;
   updateBar();document.getElementById('bar').style.width='100%';document.getElementById('pct').textContent='100%';
@@ -206,10 +282,12 @@ function renderSummary(){
 }
 async function submitAnketa(){
   const btn=document.getElementById('next');btn.disabled=true;btn.textContent='Отправляем…';
-  const answers={...ANSWERS};if(MEDIA.length)answers.__media__items=MEDIA;
+  const answers={...ANSWERS};
+  const ok=MEDIA.filter(m=>m.state==='загружен');
+  if(ok.length)answers.files_uploaded=ok.map(m=>`${m.server||m.name} (${human(m.size)})`).join('\n');
   try{
     await fetch('/api.php?action=saveAnketa',{method:'POST',headers:{'Content-Type':'application/json'},
-      body:JSON.stringify({anketa_id:anketaId,product:ANSWERS.service||'sistema',name:ANSWERS.nm||'',email:ANSWERS.email||'',
+      body:JSON.stringify({anketa_id:anketaId,slug:SLUG,product:ANSWERS.service||'sistema',name:ANSWERS.nm||'',email:ANSWERS.email||'',
         answers,progress:Object.keys(ANSWERS).length,total:totalSteps(),complete:true,send_notifications:true,ts:new Date().toISOString()})});
     renderDone();
   }catch(e){btn.disabled=false;btn.textContent='Отправить';alert('Ошибка отправки, попробуйте ещё раз');}
@@ -219,7 +297,9 @@ function renderDone(){
   document.getElementById('screen').innerHTML=`<div class="done"><div class="ic"><svg width="34" height="34" viewBox="0 0 24 24" fill="none" stroke="#9AFF00" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg></div><div class="q-title">Анкета отправлена!</div><div class="q-hint">Даниэль уже видит ваши ответы и скоро выйдет на связь.</div><a href="https://t.me/ktodaniel" style="display:inline-block;margin-top:16px;background:#9AFF00;color:#000;text-decoration:none;padding:14px 26px;border-radius:14px;font-family:Unbounded;font-weight:700;font-size:13px">Написать Даниэлю</a></div>`;
   window.scrollTo(0,0);
 }
-render();
+// Персональную ссылку читаем ДО первого экрана, иначе имя подставится
+// уже после того, как человек его руками ввёл.
+loadSlug().then(render);
 /* Маячок визитов → аналитика админки (тихо, не мешает странице) */
 try{fetch('/api.php?action=track',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({page:'anketa',ref:document.referrer||''})}).catch(function(){});}catch(e){}
 </script>

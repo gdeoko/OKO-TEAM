@@ -83,6 +83,45 @@ case 'saveLead':
         $tg?[[['text'=>"Написать $name",'url'=>"https://t.me/$tg"]]]:[], topic_thread('hot_leads'));
     out(['ok'=>true]);
 
+case 'anketaSlug':
+    // Персональная ссылка okoteam.top/anketa-<имя>. Реестр пишет агент, когда
+    // готовит клиенту КП: анкета сразу знает имя и услугу, и человек не
+    // заполняет заново то, что мы уже выяснили в переписке.
+    $slug=preg_replace('/[^\w\-]+/','',$_GET['slug']??'');
+    if(!$slug) out(['ok'=>false,'error'=>'нет slug'],400);
+    $reg=__DIR__.'/data/anketa_slugs.json';
+    $map=is_file($reg)?(json_decode((string)file_get_contents($reg),true)?:[]):[];
+    $rec=$map[$slug]??null;
+    if(!$rec) out(['ok'=>false,'error'=>'ссылка не зарегистрирована']);
+    out(['ok'=>true,'slug'=>$slug,'name'=>$rec['name']??'','email'=>$rec['email']??'',
+         'service'=>$rec['service']??'','uid'=>$rec['uid']??'']);
+
+case 'uploadAnketaFile':
+    // Вложения грузятся ОТДЕЛЬНО от анкеты, а не внутри JSON в base64.
+    // Прежняя схема физически не пропускала видео и голосовые: base64 раздувает
+    // файл в полтора раза, и весь POST упирался в лимит — клиент видел «отправлено»,
+    // а файлов в архиве не было. Теперь каждый файл идёт своим запросом.
+    rate_limit('uploadAnketaFile',200,60);
+    $sid=preg_replace('/[^\w.\-]+/','',$_POST['anketa_id']??$_GET['anketa_id']??'');
+    if(!$sid) out(['ok'=>false,'error'=>'нет anketa_id'],400);
+    if(empty($_FILES['file']['tmp_name'])||!is_uploaded_file($_FILES['file']['tmp_name']))
+        out(['ok'=>false,'error'=>'файл не пришёл'],400);
+    $orig=(string)($_FILES['file']['name']??'file');
+    if(((int)($_FILES['file']['size']??0))> 400*1024*1024) out(['ok'=>false,'error'=>'файл больше 400 МБ'],413);
+    $dir=__DIR__."/uploads/$sid"; if(!is_dir($dir)) @mkdir($dir,0755,true);
+    $fn=preg_replace('/[^\w.\-]+/u','_',$orig);
+    $ext=strtolower(pathinfo($fn,PATHINFO_EXTENSION));
+    // Исполняемое на сервере не принимаем ни под каким видом.
+    if(in_array($ext,['php','phtml','php3','php4','php5','phar','cgi','pl','py','sh','htaccess']))
+        out(['ok'=>false,'error'=>'такой тип файла не принимаем'],415);
+    if(file_exists("$dir/$fn")) $fn=pathinfo($fn,PATHINFO_FILENAME).'_'.substr(md5(mt_rand()),0,5).($ext?".$ext":'');
+    if(!move_uploaded_file($_FILES['file']['tmp_name'],"$dir/$fn"))
+        out(['ok'=>false,'error'=>'не удалось сохранить'],500);
+    $mime=(string)($_FILES['file']['type']??'application/octet-stream');
+    db_insert("INSERT INTO anketa_files (submission_id,filename,path,mime,size_bytes,created_at) VALUES (?,?,?,?,?,?)",
+        [$sid,$fn,"/uploads/$sid/$fn",$mime,filesize("$dir/$fn"),now()]);
+    out(['ok'=>true,'filename'=>$fn,'size'=>filesize("$dir/$fn"),'mime'=>$mime]);
+
 case 'saveAnketa':
     rate_limit('saveAnketa',20,60);
     $sid=$body['anketa_id']??('ank_'.time().'_'.substr(md5(mt_rand()),0,6));
@@ -98,6 +137,15 @@ case 'saveAnketa':
     $aniche=trim($answers['niche']??($answers['q2']??($answers['q3']??'')));
     $cid = ($email||$name) ? client_upsert(['name'=>$name,'email'=>$email,'tg'=>$atg,
             'niche'=>$aniche,'status'=>'anketa','source'=>'anketa']) : null;
+    // Пришли по персональной ссылке — кладём метку в ответы, чтобы анкета
+    // сошлась с клиентом в админке, даже если он ввёл другое имя.
+    $aslug=preg_replace('/[^\w\-]+/','',(string)($body['slug']??''));
+    if($aslug) $answers['__slug']=$aslug;
+    // Файлы уже лежат на диске (грузились отдельными запросами) — вписываем их
+    // в ответы, чтобы в скачанной анкете было видно, что именно прислал клиент.
+    $onDisk=db_all("SELECT filename,size_bytes FROM anketa_files WHERE submission_id=?",[$sid]);
+    if($onDisk) $answers['files_uploaded']=implode("\n",array_map(
+        fn($r)=>$r['filename'].' ('.max(1,(int)round($r['size_bytes']/1024)).' КБ)',$onDisk));
     db_exec("INSERT INTO anketa_submissions (submission_id,client_id,service_type,client_name,email,tg,answers,progress,total,complete,started_at,completed_at,created_at)
         VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?)
         ON CONFLICT(submission_id) DO UPDATE SET answers=excluded.answers, progress=excluded.progress, complete=excluded.complete, completed_at=excluded.completed_at",
