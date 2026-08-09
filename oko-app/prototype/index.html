@@ -4551,7 +4551,7 @@ function openConv(id){
   document.getElementById('convBody').style.display='flex';
   document.getElementById('convName').textContent = currentChat.name;
   document.getElementById('convAva').outerHTML = avaHtml(currentChat).replace('class="ava','id="convAva" class="ava');
-  document.getElementById('convStatus').textContent = currentChat.online ? 'онлайн' : 'был(а) недавно';
+  document.getElementById('convStatus').textContent = convSubtitle(currentChat);
   if(currentChat.cid && window.updateOnlineUI) updateOnlineUI();
   renderMsgs();
   if(matchMedia('(max-width:899px)').matches){
@@ -5034,7 +5034,7 @@ function showTyping(){
 }
 function hideTyping(){
   document.getElementById('typingMsg')?.remove();
-  if(currentChat) document.getElementById('convStatus').textContent = currentChat.online ? 'онлайн' : 'был(а) недавно';
+  if(currentChat) document.getElementById('convStatus').textContent = convSubtitle(currentChat);
 }
 /* ===== Живой ответ демо-собеседника (1:1 чаты без реального Supabase-пира) =====
    Делает мессенджер «живым» на демо/у инвесторов: пишешь человеку — он видит
@@ -8362,10 +8362,50 @@ async function initLive(){
     if(inp && !inp._typingBound){ inp._typingBound = true; inp.addEventListener('input', sendTyping); }
   }catch(e){ /* офлайн или блокировка — чаты остаются мок-режимом */ }
 }
+/* Подпись под названием в шапке диалога.
+
+   Раньше здесь стояло `currentChat.online ? 'онлайн' : 'был(а) недавно'` —
+   присутствие, которого неоткуда взять: сервера присутствия нет, а флаг
+   online просто лежит в объекте чата. У групп и каналов присутствия не
+   бывает в принципе, и «Общий чат OKO · в сети» читалось как неправда.
+
+   Теперь подпись — факт: у группы число участников, у канала подписчики,
+   у избранного «только ты», у личного чата ник. Настоящий онлайн подставит
+   updateOnlineUI, когда подключится живой канал и придёт реальный счётчик. */
+function convSubtitle(c){
+  if(!c) return '';
+  var n = function(v){ return (typeof v === 'number' && isFinite(v)) ? v : null; };
+  /* своё склонение: одноимённая функция ядра лежит в замыкании и берёт
+     три отдельных аргумента — снаружи её не позвать */
+  var скл = function(k, a){
+    var d = k % 10, dd = k % 100;
+    if(d === 1 && dd !== 11) return a[0];
+    if(d >= 2 && d <= 4 && (dd < 10 || dd >= 20)) return a[1];
+    return a[2];
+  };
+  if(c.kind === 'group'){
+    var m = n(c.members);
+    return m ? m + ' ' + скл(m, ['участник','участника','участников']) : 'групповой чат';
+  }
+  if(c.kind === 'channel'){
+    var s = n(c.subs);
+    return s ? s + ' ' + скл(s, ['подписчик','подписчика','подписчиков']) : 'канал';
+  }
+  if(c.kind === 'saved')   return 'только ты';
+  if(c.kind === 'support') return 'поддержка OKO';
+  return c.nick ? '@' + c.nick : '';
+}
 let liveChannel = null, onlineCount = 0, lastTypingSent = 0, liveTypingTimer = null;
 function updateOnlineUI(){
   const st = document.getElementById('convStatus');
-  if(st && currentChat && currentChat.cid) st.textContent = onlineCount > 1 ? onlineCount + ' в сети' : 'в сети';
+  if(!st || !currentChat || !currentChat.cid) return;
+  /* Раньше здесь при onlineCount <= 1 писалось «в сети» — то есть присутствие
+     объявлялось даже тогда, когда живой канал никого не насчитал. Из-за этого
+     «Общий чат OKO» всегда показывал «в сети», хотя там не было никого.
+     Пишем только реальный счётчик; нет счётчика — оставляем честную подпись
+     (участники, подписчики, ник), которую поставил convSubtitle. */
+  if(onlineCount > 0) st.textContent = onlineCount + ' в сети';
+  else st.textContent = convSubtitle(currentChat);
 }
 function sendTyping(){
   if(!liveChannel || !currentChat || !currentChat.cid) return;
@@ -8601,10 +8641,8 @@ function openProfile(){
     if(c.managed){
       extra = `
       <div class="ch-stats">
-        <div class="ch-stat"><div class="v">${c.subs||'12.4к'}</div><div class="l">подписчиков</div></div>
-        <div class="ch-stat"><div class="v">34.2к</div><div class="l">охват/нед</div></div>
-        <div class="ch-stat"><div class="v">+840</div><div class="l">новых/нед</div></div>
-        <div class="ch-stat"><div class="v">6.2%</div><div class="l">вовлечённость</div></div>
+        <div class="ch-stat"><div class="v">${c.subs||0}</div><div class="l">подписчиков</div></div>
+        <div class="ch-stat"><div class="v">${c.msgs?c.msgs.length:0}</div><div class="l">записей</div></div>
       </div>
       <button class="btn" style="margin:6px 0 10px" onclick="closeSheet();openPromoteChannel()">${I('rocket')} Продвинуть канал</button>
       <button class="prow" onclick="toggleWrite()">${I('chat')} Кто может писать
@@ -8622,13 +8660,13 @@ function openProfile(){
       <div class="ch-stats">
         <div class="ch-stat"><div class="v">${c.members||5}</div><div class="l">участников</div></div>
         <div class="ch-stat"><div class="v">${c.msgs?c.msgs.length:0}+</div><div class="l">сообщений</div></div>
-        <div class="ch-stat"><div class="v">Вкл</div><div class="l">антиспам</div></div>
+
       </div>
       <button class="prow" onclick="toast('Управление участниками подключится с бэкендом')">${I('users')} Участники и роли <span class="chev">${I('chev')}</span></button>
       <button class="prow" style="border-bottom:none" onclick="copyInvite()">${I('share')} Ссылка-приглашение <span class="chev">${I('copy')}</span></button>`;
   } else {
     sub = '@' + (c.nick||'user') + ' · ' + (c.online ? 'в сети' : 'недавно');
-    extra = `<div class="pv-stats"><span class="chip">Медиа 24</span><span class="chip">Файлы 8</span><span class="chip">Ссылки 12</span></div>`;
+    extra = '';
   }
   document.getElementById('profileView').innerHTML = `
     <div class="pv-top">${avaHtml(c)}<h3>${c.name}</h3><div class="sub">${sub}</div></div>
