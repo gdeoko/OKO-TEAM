@@ -277,6 +277,53 @@ if (count($appsForBatch) === 3) {
     q("UPDATE applications SET batch_id='', payment_id=0 WHERE batch_id=?", [$batchTag]);
 } else { ok('в базе меньше 3 заявок — пропуск'); }
 
+sec('Цена конкурса: сохраняется и не откатывается сама');
+$compForPrice = one("SELECT id, name, slug, code, price, is_paid FROM competitions WHERE is_paid=1 LIMIT 1");
+if (!$compForPrice) { ok('в базе нет платных конкурсов — пропуск'); }
+else {
+    $cid = (int) $compForPrice['id']; $oldPrice = (int) $compForPrice['price'];
+    // Логинимся админом (уже есть $AJAR), берём CSRF со страницы edit
+    $rEdit = http($AJAR, $BASE . '/admin/?p=competitions&id=' . $cid . '&action=edit');
+    chk('форма редактирования открывается', $rEdit['code'] === 200, (string) $rEdit['code']);
+    preg_match('~name="_csrf"\s+value="([^"]+)"~', $rEdit['body'], $mCsrf);
+    $csrf = $mCsrf[1] ?? '';
+    chk('CSRF-токен найден на странице', $csrf !== '');
+    // Пробуем 3 разные цены подряд
+    $testPrices = [1, 750, 500];
+    foreach ($testPrices as $tp) {
+        http($AJAR, $BASE . '/admin/?p=competitions', [
+            '_csrf' => $csrf, 'csrf' => $csrf, 'do' => 'save', 'id' => (string) $cid,
+            'slug' => (string) $compForPrice['slug'], 'code' => (string) $compForPrice['code'],
+            'name' => (string) $compForPrice['name'], 'type' => 'international',
+            'direction' => 'multi', 'duration' => 'short', 'is_paid' => '1',
+            'price' => (string) $tp, 'results_mode' => 'email', 'status' => 'open', 'sort' => '0',
+        ]);
+        $now = (int) scalar("SELECT price FROM competitions WHERE id=?", [$cid]);
+        chk("после сохранения price={$tp}: в базе {$now}", $now === $tp, (string) $now);
+    }
+    // Между запросами ничего не должно откатывать цену — проверяем через 1 сек ожидания
+    sleep(1);
+    $stillSet = (int) scalar("SELECT price FROM competitions WHERE id=?", [$cid]);
+    chk('цена не откатывается сама через секунду', $stillSet === 500, (string) $stillSet);
+    // Скидка ВИП-клуба применяется к НОВОЙ цене — 20% от 500 = 400
+    require_once BASE_PATH . '/core/loyalty.php';
+    $clubPrice = loyalty_apply(500, 20);
+    chk('скидка ВИП-клуба пересчитывается от свежей цены (500 → 400)', $clubPrice === 400, (string) $clubPrice);
+    // Возвращаем исходную
+    http($AJAR, $BASE . '/admin/?p=competitions', [
+        '_csrf' => $csrf, 'csrf' => $csrf, 'do' => 'save', 'id' => (string) $cid,
+        'slug' => (string) $compForPrice['slug'], 'code' => (string) $compForPrice['code'],
+        'name' => (string) $compForPrice['name'], 'type' => 'international',
+        'direction' => 'multi', 'duration' => 'short', 'is_paid' => '1',
+        'price' => (string) $oldPrice, 'results_mode' => 'email', 'status' => 'open', 'sort' => '0',
+    ]);
+    $restored = (int) scalar("SELECT price FROM competitions WHERE id=?", [$cid]);
+    chk('цена восстановлена', $restored === $oldPrice, (string) $restored);
+    // audit_log записал new/old price
+    $hasLog = (int) (scalar("SELECT COUNT(*) FROM audit_log WHERE action='competition_update' AND entity_id=? AND meta LIKE '%price_from%'", [$cid]) ?? 0);
+    chk('изменение цены записано в audit_log с price_from/price_to', $hasLog > 0, (string) $hasLog);
+}
+
 /* ───────── пульт управления запуском ───────── */
 sec('Пульт запуска и стоп-кран');
 $r = http($AJAR, $BASE . '/admin/?p=launch');

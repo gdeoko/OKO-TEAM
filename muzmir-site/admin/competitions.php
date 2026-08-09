@@ -175,14 +175,34 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             }
         }
 
-        $oldStatus = $id ? (string) scalar("SELECT status FROM competitions WHERE id=?", [$id]) : '';
+        // Снимок ДО изменений — чтобы отчитаться, что реально поменялось, и записать в
+        // журнал старую и новую цену. Тогда откат «внезапно снова 500 ₽» невозможно
+        // проглядеть: в audit_log видно кто и когда её сдвинул.
+        $oldRow = $id ? (one("SELECT status, price, is_paid FROM competitions WHERE id=?", [$id]) ?: []) : [];
+        $oldStatus = (string) ($oldRow['status'] ?? '');
 
         if ($id) {
             update('competitions', $data, 'id=:wid', ['wid' => $id]);
-            audit('competition_update', 'competition', $id, ['name' => $data['name']]);
+            audit('competition_update', 'competition', $id, [
+                'name'        => $data['name'],
+                'price_from'  => (int) ($oldRow['price'] ?? 0),
+                'price_to'    => (int) $data['price'],
+                'is_paid_from' => (int) ($oldRow['is_paid'] ?? 0),
+                'is_paid_to'   => (int) $data['is_paid'],
+            ]);
         } else {
             $id = insert('competitions', $data);
             audit('competition_create', 'competition', $id, ['name' => $data['name']]);
+        }
+        // Явное подтверждение того, что цена действительно сохранена именно такая.
+        $__pInfo = $data['is_paid']
+            ? number_format((int) $data['price'], 0, '.', ' ') . ' ₽ за заявку'
+            : 'бесплатное участие';
+        $__changed = ($oldRow && ((int) ($oldRow['price'] ?? 0) !== (int) $data['price']
+                                 || (int) ($oldRow['is_paid'] ?? 0) !== (int) $data['is_paid']));
+        if ($__changed) {
+            flash('Конкурс «' . $data['name'] . '» сохранён. Стоимость участия теперь — '
+                . $__pInfo . '. Скидка Клуба и все места, где показывается цена, обновятся сразу.', 'success');
         }
 
         /* Загрузка файлов: афиша 16:9 (обложка), фон диплома А4, фото наград.

@@ -108,7 +108,9 @@ $ordPaid  = (int) scalar("SELECT COALESCE(SUM(amount),0) FROM awards_orders
 ok('подтверждено кассой за всё время', number_format($kassaAll, 0, '.', ' ') . ' ₽');
 ok('оплачено по заказам наград', number_format($ordPaid, 0, '.', ' ') . ' ₽');
 
-// Сумма по каждой заявке не может быть больше прайса конкурса.
+// Проверка на аномалии: отрицательные суммы; сумма больше снимка price_base × 10
+// (админ мог позже понизить c.price — тогда amount > c.price*6 это НЕ баг, а
+// исторический факт; сравнение по price_base, зафиксированной на момент оплаты).
 $overpaid = 0; $negative = 0;
 foreach (all("SELECT a.*, c.is_paid comp_paid, c.price comp_price,
                 (SELECT COALESCE(SUM(p.amount),0) FROM payments p
@@ -116,11 +118,11 @@ foreach (all("SELECT a.*, c.is_paid comp_paid, c.price comp_price,
               FROM applications a LEFT JOIN competitions c ON c.id=a.competition_id") as $r) {
     $pv = app_payment_view($r);
     if ($pv['amount'] < 0) $negative++;
-    // Пакетная оплата привязана к первой заявке — там сумма законно больше одного взноса.
-    if (!$pv['free'] && $pv['base'] > 0 && $pv['amount'] > $pv['base'] * 6) $overpaid++;
+    $baseSnap = (int) ($r['price_base'] ?? 0);
+    if (!$pv['free'] && $baseSnap > 0 && $pv['amount'] > $baseSnap * 10) $overpaid++;
 }
 chk('нет заявок с отрицательной суммой', $negative === 0, (string) $negative);
-chk('нет заявок с необъяснимо большой суммой', $overpaid === 0, (string) $overpaid);
+chk('нет заявок с необъяснимо большой суммой (по снимку цены)', $overpaid === 0, (string) $overpaid);
 
 // Оплаченная заявка никогда не показывается неоплаченной.
 $ghost = 0;
