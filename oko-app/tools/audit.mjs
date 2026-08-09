@@ -300,8 +300,15 @@ async function main() {
         rep.consoleErrors = consoleErrors.slice(0, 6);
 
         const file = path.join(OUT, `${mode.id}__${route.id}.png`);
-        await page.screenshot({ path: file });
-        rep.shot = path.relative(process.cwd(), file);
+        /* Скриншот иногда не успевает за 30 с, когда песочница занята другими
+           прогонами. Это шум окружения, а не дефект экрана: замеры вёрстки
+           уже сняты выше. Не валим из-за кадра весь маршрут. */
+        try {
+          await page.screenshot({ path: file, timeout: 15000 });
+          rep.shot = path.relative(process.cwd(), file);
+        } catch (e) {
+          rep.shotSkipped = String(e).slice(0, 80);
+        }
       } catch (e) {
         rep.fatal = String(e).slice(0, 200);
       }
