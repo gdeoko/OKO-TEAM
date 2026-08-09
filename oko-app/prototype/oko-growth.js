@@ -483,13 +483,23 @@ function injectCSS(){
                           настоящим помехам: звонку, записи, Клипам, оверлеям.
    =========================================================================== */
 
+/* Действительно ли элемент сейчас на экране.
+   Половина оверлеев ядра не прячется через display, а уезжает трансформом
+   (#regView — translateX(100%), шиты — translateY(105%)). Такие элементы
+   всегда имеют размер, поэтому одного getComputedStyle мало: смотрим,
+   пересекает ли прямоугольник видимую область. */
 function visible(el){
   if(!el) return false;
   try{
     if(el.hidden) return false;
     var cs = getComputedStyle(el);
     if(cs.display === 'none' || cs.visibility === 'hidden' || parseFloat(cs.opacity) < 0.05) return false;
-    return el.offsetWidth > 0 || el.offsetHeight > 0;
+    var r = el.getBoundingClientRect();
+    if(r.width < 1 || r.height < 1) return false;
+    var vw = window.innerWidth || document.documentElement.clientWidth || 0;
+    var vh = window.innerHeight || document.documentElement.clientHeight || 0;
+    if(r.right <= 1 || r.bottom <= 1 || r.left >= vw - 1 || r.top >= vh - 1) return false;
+    return true;
   }catch(e){ return false; }
 }
 
