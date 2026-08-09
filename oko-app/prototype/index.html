@@ -4850,10 +4850,20 @@ function voiceTranscribe(idx){
     toast('Голосовое расшифровано');
   }, 1200);
 }
-function okoOfferPremium(reason){
+function okoOfferPremium(reason, feature){
+  /* Единая воронка ценности вместо голой стены платежа (правка 09.08).
+     Модуль роста показывает: что человек уже получил, что откроется,
+     конкретную цифру выгоды и цену в месяц при годовой оплате.
+     Если слой роста почему-то не загрузился — работает прежнее окно. */
+  try{
+    if(typeof okgPaywall === 'function'){
+      const r = okgPaywall(feature || 'default');
+      if(r !== null) return;   /* null = человек попросил не показывать */
+    }
+  }catch(e){}
   const body = reason + '<br><br>Подключи <b>START за 990 ₽/мес</b> — файлы до 4 ГБ, голосовые без лимита, транскрипция и эксклюзивные эмодзи OKO.';
   if(typeof showPopup==='function'){
-    showPopup({ico:'crown', title:'Функция Premium',  body,
+    showPopup({ico:'crown', title:'Больше возможностей',  body,
       actions:[{label:'Подключить START', onclick:()=>{ closePopup&&closePopup(); openPay('START'); }}, {label:'Позже', ghost:true}]});
   } else {
     toast('Функция доступна с тарифа START (990 ₽/мес)');

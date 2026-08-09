@@ -470,9 +470,23 @@ var log = function(){};   /* включить при отладке: console.log
         if(now - lastAt < 700) return;
         lastAt = now; busy = true;
         try{
-          /* 1. Родная догрузка ядра, если есть */
+          var kind = (typeof curFeedKind !== 'undefined') ? curFeedKind : 'rec';
+
+          /* ЛЕНТА ПО КРУГУ. Ядро останавливает догрузку на FA.maxPages —
+             человек упирается в конец. Даниэль просил бесконечную ленту:
+             когда страницы кончились, поднимаем потолок и меняем seed
+             ранжирования. Алгоритм пересобирает ту же базу в новом порядке —
+             лента продолжается с начала, но выглядит свежей, а не повтором. */
+          if(kind === 'rec' && typeof FA === 'object' && FA){
+            if(FA.page >= FA.maxPages){
+              FA.maxPages = FA.maxPages + 3;
+              FA.seed = (Math.random() * 4294967295) >>> 0;
+              FA.now  = Date.now();
+            }
+          }
+
           if(typeof faLoadMore === 'function'){ faLoadMore(); }
-          else if(typeof faRefresh === 'function' && curFeedKind === 'rec'){ faRefresh(); }
+          else if(typeof faRefresh === 'function' && kind === 'rec'){ faRefresh(); }
         }catch(e){}
         setTimeout(function(){ busy = false; }, 700);
       }, { passive:true });
