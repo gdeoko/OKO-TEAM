@@ -254,6 +254,11 @@ async function main() {
 
   const report = { round: ROUND, at: new Date().toISOString(), modes: [] };
   const only = args.only && args.only !== true ? String(args.only) : null;
+  /* Отбор экранов: без него точечная проверка одного маршрута гоняет все 120
+     и упирается в таймаут. Принимает часть имени: --screens feed,wallet */
+  const маски = args.screens && args.screens !== true
+    ? String(args.screens).split(',').map(s => s.trim()).filter(Boolean) : null;
+  const нужен = r => !маски || маски.some(m => r.id.includes(m));
 
   for (const mode of MODES) {
     if (only && mode.id !== only) continue;
@@ -282,6 +287,7 @@ async function main() {
     page.on('pageerror', e => consoleErrors.push('PAGEERROR: ' + String(e).slice(0, 200)));
 
     for (const route of ROUTES) {
+      if (!нужен(route)) continue;
       const rep = { route: route.id, name: route.name, errors: [] };
       try {
         consoleErrors.length = 0;
