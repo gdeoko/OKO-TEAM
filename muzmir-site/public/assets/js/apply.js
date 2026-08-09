@@ -394,7 +394,7 @@
       panels[step].classList.add('active');
     }
     renderProgress();
-    if (step === 'consent') { buildSummary(); updateConsentBtnLabel(); }
+    if (step === 'consent') { buildSummary(); fillPayAmount(); updateConsentBtnLabel(); }
     if (step === 'pay') fillPayAmount();
     // Скроллим к форме ТОЛЬКО если её верх ушёл за пределы экрана — не дёргаем на каждом шаге.
     var r = form.getBoundingClientRect();
@@ -554,14 +554,33 @@
       var p = parseInt(c.getAttribute('data-price'), 10) || 0;
       if (c.getAttribute('data-paid') === '1') { total += p; paidCount++; } else { freeCount++; }
     });
-    // Скидка ВИП-клуба (20%): показываем перечёркнутую полную цену и цену участника.
-    var clubPct = parseInt(CFG.clubPct, 10) || 0;
-    var pay = clubPct > 0 ? Math.max(0, Math.round(total * (100 - clubPct) / 100)) : total;
+    // Полный расклад скидок участника: клуб + достижения профиля + реферальный
+    // промокод/бонус приглашающего. Без него шаг 6 показывал 500 ₽ вместо 450 ₽,
+    // когда скидка не клубная, а «за достижения» — и цена расходилась с суммой в кассе.
+    var d = CFG.discount || { total: (parseInt(CFG.clubPct, 10) || 0),
+                              club: (parseInt(CFG.clubPct, 10) || 0),
+                              loyalty: 0, referral: 0, credit: 0 };
+    // Промокод участник ещё введёт на шаге 7 — если поле уже заполнено, добавим 5%.
+    var promoField = $('#promo_code');
+    var promoTyped = promoField && promoField.value.trim().length >= 4;
+    var extraRef = (promoTyped && !d.referral) ? 5 : 0;
+    var totPct = Math.min((d.club > 0 ? d.club + 5 : 10), (d.total || 0) + extraRef);
+    var pay = totPct > 0 ? Math.max(0, Math.round(total * (100 - totPct) / 100)) : total;
+
     function rub(n) { return n.toLocaleString('ru-RU') + ' ₽'; }
     function priceHtml(full, my) {
-      return (clubPct > 0 && my < full)
+      return (my < full)
         ? '<s style="opacity:.55;font-weight:400;margin-right:7px">' + rub(full) + '</s>' + rub(my)
         : rub(full);
+    }
+    // Подписи «за что скидка», как в наградах и /club.
+    function reasons() {
+      var out = [];
+      if (d.club > 0)      out.push('ВИП-клуб −' + d.club + '%');
+      if (d.loyalty > 0)   out.push('Достижения −' + d.loyalty + '%');
+      if (d.referral > 0)  out.push((d.credit > 0 ? 'Бонус приглашающего' : 'Промокод') + ' −' + d.referral + '%');
+      if (extraRef > 0 && d.referral === 0) out.push('Промокод −' + extraRef + '% (после подачи)');
+      return out;
     }
 
     var el = $('[data-pay-amount]');
@@ -570,16 +589,28 @@
         var txt = priceHtml(total, pay);
         if (paidCount > 1) txt += ' <small style="color:var(--muted);font-weight:400">за ' + paidCount + ' участия</small>';
         if (freeCount > 0) txt += ' <small style="color:var(--muted);font-weight:400"> + ' + freeCount + ' бесплатн.</small>';
-        if (clubPct > 0 && pay < total) txt += '<small style="display:block;color:var(--gold-2,#C79322);font-weight:700">ВИП-клуб −' + clubPct + '%</small>';
+        var rs = reasons();
+        if (rs.length) txt += '<small style="display:block;color:var(--gold-2,#C79322);font-weight:700;margin-top:4px">'
+                          + rs.join(' · ') + '</small>';
         el.innerHTML = txt;
       } else {
         el.textContent = 'по положению';
       }
     }
-    // Обновляем счётчик в шапке шага 1
+    // Итог в шапке шага 1 и «Итого» на шаге 6 (сводка) — та же формула.
     var totBox = document.getElementById('mzApplyTotal');
     if (totBox) totBox.innerHTML = 'Выбрано: <b>' + chosen.length + '</b> · <b>' +
       (total > 0 ? priceHtml(total, pay) : (freeCount > 0 ? 'бесплатно' : '0 ₽')) + '</b>';
+    // Шаг 6 «Проверка»: строка «К оплате» под сводкой заявки, если есть платные.
+    var sumTot = document.getElementById('applySummaryTotal');
+    if (sumTot) {
+      if (total > 0) {
+        var l = priceHtml(total, pay);
+        var rs2 = reasons();
+        sumTot.innerHTML = '<div class="row" style="margin-top:6px"><span><b>К оплате</b></span><span><b>' + l + '</b></span></div>'
+          + (rs2.length ? '<div class="row"><span style="color:var(--muted)">Скидка</span><span style="color:var(--gold-2,#C79322);font-weight:700">' + rs2.join(' · ') + '</span></div>' : '');
+      } else { sumTot.innerHTML = ''; }
+    }
   }
 
   /* ---------- Согласие: 3 галочки сразу доступны, БЕЗ таймера ---------- */

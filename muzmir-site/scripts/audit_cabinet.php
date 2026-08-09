@@ -326,6 +326,55 @@ chk('ФИО сохранилось в профиле', $fioDb === 'Тестов�
 $cab3 = http($UJAR, $BASE . '/cabinet');
 chk('новое ФИО показывается в кабинете', str_contains($cab3['body'], 'Тестова Проверка Синхроновна'));
 
+sec('Скидки: подача, оплата из ЛК, показ');
+require_once BASE_PATH . '/core/loyalty.php';
+// Готовим неоплаченную заявку у user@test.local на платный конкурс с ценой 500.
+$cid = (int) (scalar("SELECT id FROM competitions WHERE is_paid=1 ORDER BY id LIMIT 1") ?? 0);
+if ($cid > 0) {
+    q("UPDATE competitions SET price=500 WHERE id=?", [$cid]);
+    // Свежая тестовая неоплаченная заявка
+    q("INSERT INTO applications(user_id,competition_id,number,full_name,email,status,is_paid,created_at)
+       VALUES(?,?,?,?,?,'new',0,datetime('now'))",
+      [$uid, $cid, 'AUDIT-PAY-' . substr(bin2hex(random_bytes(3)), 0, 6), 'Тест Правка', 'user@test.local']);
+    $aid = (int) db()->lastInsertId();
+
+    // Скидка за достижения профиля у этого пользователя должна попасть в APPLY_CONFIG.
+    $applyPage = http($UJAR, $BASE . '/apply');
+    chk('apply.php: конфиг APPLY_CONFIG содержит блок discount',
+        preg_match('~APPLY_CONFIG\s*=\s*\{.*?"discount"~', $applyPage['body']) === 1);
+    chk('apply.php: на 6 шаге есть контейнер applySummaryTotal (для строки К оплате со скидкой)',
+        str_contains($applyPage['body'], 'id="applySummaryTotal"'));
+
+    // Оплата из ЛК: /pay?t=app&id=X должен применить актуальную скидку
+    $rPay = http($UJAR, $BASE . '/pay?t=app&id=' . $aid);
+    chk('/pay открывается для своей заявки', $rPay['code'] === 200, (string) $rPay['code']);
+    $lastPay = one('SELECT amount, application_id, status FROM payments WHERE application_id=? ORDER BY id DESC LIMIT 1', [$aid]);
+    chk('оплата из ЛК создана', $lastPay !== null);
+    // Сумма — 400 (клуб 20%) или 475 (достижения 5%), но точно НЕ полная 500.
+    // Приоритет: клуб замещает loyalty (см. discount_breakdown в core/loyalty.php).
+    chk('сумма в ЮKassa со скидкой (не полная 500)',
+        (int) ($lastPay['amount'] ?? 0) < 500 && (int) ($lastPay['amount'] ?? 0) > 0,
+        (string) ($lastPay['amount'] ?? 0));
+    $afterApp = one('SELECT price_base, discount_pct, discount_info FROM applications WHERE id=?', [$aid]);
+    chk('на заявке сохранена база 500', (int) $afterApp['price_base'] === 500);
+    chk('на заявке сохранён итоговый процент скидки (>0)', (int) $afterApp['discount_pct'] > 0,
+        (string) $afterApp['discount_pct']);
+    chk('в discount_info раскрыта причина (club_pct или loyalty_pct)',
+        preg_match('~"(club_pct|loyalty_pct)":\s*[1-9]~', (string) $afterApp['discount_info']) === 1);
+
+    // Удаляем тестовую заявку и созданный ей платёж
+    q('DELETE FROM payments WHERE application_id=?', [$aid]);
+    q('DELETE FROM applications WHERE id=?', [$aid]);
+} else { ok('в базе нет платных конкурсов — пропуск'); }
+
+// Кабинет: подпись про 2 рабочих дня и все поля заявки видны
+$cab2 = http($UJAR, $BASE . '/cabinet');
+chk('в кабинете сразу видна подпись про 2 рабочих дня',
+    str_contains($cab2['body'], 'cab-edit-hint') || str_contains($cab2['body'], 'Заявку можно редактировать'));
+foreach (['Название номера','Форма исполнения','Ссылка на выступление','Педагог','Учреждение','Город','E-mail для результата','Телефон'] as $__fld) {
+    chk("в карточке заявки видно поле «{$__fld}»", str_contains($cab2['body'], $__fld));
+}
+
 sec('ВИП-клуб: именная карта, сертификат и цены со скидкой');
 require_once BASE_PATH . '/core/club_cert.php';
 $cardNo = club_card_no($uid);

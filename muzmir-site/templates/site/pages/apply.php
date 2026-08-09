@@ -1,6 +1,10 @@
 <?php
 /** Страница «Подать заявку» — умная многошаговая форма (8 шагов). */
 
+// Расчёт скидок в APPLY_CONFIG.discount требует loyalty_discount/discount_breakdown
+// из core/loyalty.php — раньше он подключался только на других страницах.
+require_once BASE_PATH . '/core/loyalty.php';
+
 // ГЕЙТ ЗАПУСКА: заявку можно подать только на ЗАПУЩЕННЫЕ конкурсы (launched=1).
 $comps = all("SELECT id,slug,code,name,type,is_paid,price,diploma_bg FROM competitions
               WHERE status='open' AND COALESCE(launched,0) = 1 ORDER BY sort");
@@ -47,6 +51,33 @@ $jsCfg = [
         if (!$u || !is_file(BASE_PATH . '/core/club.php')) return 0;
         require_once BASE_PATH . '/core/club.php';
         return function_exists('club_discount_percent') ? (int) club_discount_percent((int) $u['id']) : 0;
+    })(),
+    // Полный расклад скидок участника, чтобы шаг 6/7 показывал 500 ₽ зачёркнутыми
+    // → 450 ₽ (или сколько выходит) и объяснял, за что: «Клуб −20%», «Достижения −5%»,
+    // «Промокод/бонус приглашающего −5%». Без этого JS видел только клуб.
+    'discount'     => (function () {
+        $u = current_user();
+        $uid = (int) ($u['id'] ?? 0);
+        $email = mb_strtolower((string) ($u['email'] ?? ''));
+        $loy = ($uid > 0 || $email !== '') ? (int) loyalty_discount($uid, $email) : 0;
+        $club = 0;
+        if ($uid > 0 && is_file(BASE_PATH . '/core/club.php')) {
+            require_once BASE_PATH . '/core/club.php';
+            if (function_exists('club_is_active') && club_is_active($uid)) {
+                $club = (int) club_discount_percent($uid);
+            }
+        }
+        $cred = ($uid > 0 && function_exists('referral_credit_percent'))
+            ? (int) referral_credit_percent($uid) : 0;
+        $d = discount_breakdown($loy, $cred, $club);
+        return [
+            'loyalty'  => (int) $d['loyalty'],
+            'referral' => (int) $d['referral'],
+            'club'     => (int) $d['club'],
+            'credit'   => $cred > 0 && $d['referral'] === $cred ? $cred : 0,
+            'total'    => (int) $d['total'],
+            'cap'      => (int) $d['cap'],
+        ];
     })(),
     'formationsDefault' => FORMATIONS_FOR(''),
     'allowed'   => ALLOWED_PLATFORMS(),
@@ -483,6 +514,9 @@ ob_start(); ?>
             Проверьте данные заявки
           </div>
           <div class="summary" id="applySummary"></div>
+          <!-- Строка «К оплате N ₽» и подписи скидок под сводкой (заполняет apply.js/fillPayAmount).
+               Показывается только если среди выбранных есть платные конкурсы. -->
+          <div class="summary" id="applySummaryTotal" style="margin-top:8px"></div>
 
           <div class="consent-note">
             <a href="#" target="_blank" rel="noopener" id="regLink" data-reg-link>Открыть положение конкурса</a>

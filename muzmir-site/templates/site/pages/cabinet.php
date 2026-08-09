@@ -915,15 +915,31 @@ ob_start(); ?>
             $cur = array_search($dispStatus, $pipe, true);
             if ($cur === false) $cur = 0;
             $pct = $isRej ? 100 : (int)round(($cur + 1) / count($pipe) * 100);
-            // ФИО / Коллектив / Возрастная категория / Номинация / Преподаватель / Учреждение / Конкурсный номер
+            // ВСЕ данные заявки — участник должен видеть ровно то, что попадёт в диплом
+            // и что жюри увидит перед оценкой. Раньше показывались только 6 полей, из-за
+            // чего казалось, что «часть данных потеряна».
             $info = [];
-            if (trim((string)($a['full_name'] ?? '')) !== '')    $info[] = ['ФИО', $a['full_name']];
-            if (trim((string)($a['group_name'] ?? '')) !== '')   $info[] = ['Коллектив', $a['group_name']];
+            if (trim((string)($a['number'] ?? '')) !== '')       $info[] = ['Конкурсный номер', $a['number']];
+            if ((int)($a['is_group'] ?? 0) === 1) {
+                if (trim((string)($a['group_name'] ?? '')) !== '') $info[] = ['Коллектив', $a['group_name']];
+                if (trim((string)($a['full_name'] ?? '')) !== '')  $info[] = ['Контактное лицо', $a['full_name']];
+            } else {
+                if (trim((string)($a['full_name'] ?? '')) !== '')  $info[] = ['ФИО участника', $a['full_name']];
+            }
+            if (trim((string)($a['birth_date'] ?? '')) !== '')   $info[] = ['Дата рождения', ru_date(substr((string)$a['birth_date'], 0, 10))];
             if (trim((string)($a['age_category'] ?? '')) !== '') $info[] = ['Возрастная категория', $a['age_category']];
             if (trim((string)($a['nomination'] ?? '')) !== '')   $info[] = ['Номинация', $a['nomination']];
-            if (trim((string)($a['teacher'] ?? '')) !== '')      $info[] = ['Преподаватель', $a['teacher']];
+            if (trim((string)($a['subgroup'] ?? '')) !== '')     $info[] = ['Подраздел', $a['subgroup']];
+            if (trim((string)($a['formation'] ?? '')) !== '')    $info[] = ['Форма исполнения', $a['formation']];
+            if (trim((string)($a['work_title'] ?? '')) !== '')   $info[] = ['Название номера', '«' . $a['work_title'] . '»'];
+            if (trim((string)($a['video_url'] ?? '')) !== '')    $info[] = ['Ссылка на выступление', $a['video_url']];
+            if (trim((string)($a['teacher'] ?? '')) !== '')      $info[] = ['Педагог / руководитель', $a['teacher']];
             if (trim((string)($a['institution'] ?? '')) !== '')  $info[] = ['Учреждение', $a['institution']];
-            if (trim((string)($a['number'] ?? '')) !== '')       $info[] = ['Конкурсный номер', $a['number']];
+            if (trim((string)($a['city'] ?? '')) !== '')         $info[] = ['Город', $a['city']];
+            if (trim((string)($a['email'] ?? '')) !== '')        $info[] = ['E-mail для результата', $a['email']];
+            if (trim((string)($a['phone'] ?? '')) !== '')        $info[] = ['Телефон', $a['phone']];
+            if (trim((string)($a['address'] ?? '')) !== '')      $info[] = ['Адрес доставки', $a['address']];
+            if (trim((string)($a['postal_index'] ?? '')) !== '') $info[] = ['Почтовый индекс', $a['postal_index']];
             // Кнопка «Заказать награды»: результат есть и не прошло 60 дней от graded_at (если колонка есть).
             $canOrder = !empty($a['result']);
             if ($canOrder && $hasGradedAt && trim((string)($a['graded_at'] ?? '')) !== '') {
@@ -966,6 +982,12 @@ ob_start(); ?>
                 $eSubs = NOMINATIONS()[$eNom] ?? [];
               ?>
               <?php if ($win['can']): ?>
+                <!-- Подпись про срок редактирования ВСЕГДА видна снаружи details, чтобы
+                     участник знал правило до того, как решит нажимать «Изменить». -->
+                <p class="cab-edit-hint" style="margin:10px 0 0;font-size:.82rem;color:var(--muted);line-height:1.45">
+                  <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;margin-right:4px;color:var(--gold-ink,#8B6F1F)"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>
+                  Заявку можно редактировать <b>2 рабочих дня</b> со дня подачи<?= $winUntil !== '' ? ' — до <b>' . h($winUntil) . '</b>' : '' ?>. Дальше материал уходит жюри.
+                </p>
                 <details class="cab-edit" style="margin-top:8px">
                   <summary style="cursor:pointer;color:var(--gold-ink,#8B6F1F);font-weight:700;font-size:.9rem;list-style:none">Изменить заявку</summary>
                   <form method="post" action="<?= url('/cabinet') ?>" class="cab-edit-form" data-edit-form style="margin-top:12px;display:grid;gap:10px">
