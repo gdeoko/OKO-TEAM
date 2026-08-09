@@ -5655,7 +5655,13 @@ function createPost(){
   POSTS.sub.unshift({id:Date.now(), ava:PROFILE.name[0], name:PROFILE.name, sub:'ты · только что',
     body:t, media:null, likes:0, views:1, liked:false, saved:false, reposts:0, comments:[]});
   document.getElementById('npBody').value=''; closeSheet();
-  document.querySelector('.feed-tabs button').click(); // вернуть на «Подписки»
+  /* Пост уходит в POSTS.sub, значит показать надо «Подписки». Раньше здесь
+     жалась ПЕРВАЯ кнопка ряда — и это работало ровно до перестановки вкладок
+     09.08, когда первой стала «Рекомендации». С тех пор человек публиковал
+     пост, видел «Пост опубликован» и попадал на вкладку, где его поста нет.
+     Теперь вкладка выбирается по data-fk, а не по порядку. */
+  var _subTab = document.querySelector('.feed-tabs button[data-fk="sub"]');
+  if(_subTab) _subTab.click();
   toast('Пост опубликован');
 }
 

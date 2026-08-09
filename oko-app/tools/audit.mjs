@@ -52,7 +52,12 @@ const ROUTES = [
   { id: '01-splash',     name: 'Экран запуска',        wait: 1400, step: null },
   { id: '02-auth',       name: 'Вход и регистрация',   wait: 1200, step: `document.getElementById('splash')?.classList.add('gone'); document.getElementById('authScreen')?.classList.remove('hidden');` },
   { id: '03-feed-rec',   name: 'Лента · Рекомендации', step: `okoSkipAuth(); showTab('feed');` },
-  { id: '04-feed-sub',   name: 'Лента · Подписки',     step: `okoSkipAuth(); showTab('feed'); const b=document.querySelector('.feed-tabs button[data-fk="sub"]'); b&&b.click();` },
+  /* Пауза перед кликом обязательна: вход в ленту через 20 мс форсит
+     «Рекомендации» (лента по умолчанию всегда открывается на них), и клик в
+     том же тике затирается. Человек в это окно не попадает физически, а
+     маршрут попадал — и снимал «Подписки», которые на деле остались
+     «Рекомендациями». Два одинаковых кадра в раунде 37 — ровно отсюда. */
+  { id: '04-feed-sub',   name: 'Лента · Подписки',     step: `okoSkipAuth(); showTab('feed'); new Promise(r => setTimeout(r, 350)).then(() => { const b=document.querySelector('.feed-tabs button[data-fk="sub"]'); b&&b.click(); })` },
   { id: '05-chats',      name: 'Список чатов',         step: `okoSkipAuth(); showTab('chats');` },
   { id: '06-conv',       name: 'Диалог',               step: `okoSkipAuth(); showTab('chats'); const r=document.querySelector('#chatList .ci, #chatList > *'); r&&r.click();` },
   { id: '07-mini',       name: 'Мини-аппы',            step: `okoSkipAuth(); showTab('mini');` },
