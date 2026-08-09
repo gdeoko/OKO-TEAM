@@ -42,3 +42,7 @@ oko-app/tools/shots/
 oko-app/tools/*.png
 oko-app/tools/clicks-out/
 oko-app/tools/*-report.json
+
+# выводы новых проверок (скрины и json — не в репозиторий)
+oko-app/tools/*-out/
+oko-app/tools/probe-*.json

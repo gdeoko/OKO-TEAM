@@ -81,14 +81,17 @@ const probeJs = `(() => {
          шрифтом и сравниваем с шириной ячейки. Проверка «стоит break-all и
          элемент узкий» давала ложные срабатывания на «До 3 подписок» —
          такой текст спокойно переносится по пробелу. */
-      if ((cs.wordBreak === 'break-all' || cs.overflowWrap === 'anywhere') && r.width < 200) {
+      /* offsetWidth, а не rect: у прямоугольника ширина считается ПОСЛЕ
+         transform, и панель, пойманная в середине выезда со scale(.9),
+         выглядит уже, чем она есть. Отсюда и брались 29 «переносов»,
+         которых при прямом замере после остановки анимаций нет. */
+      const шир = el.offsetWidth || Math.round(r.width);
+      if ((cs.wordBreak === 'break-all' || cs.overflowWrap === 'anywhere') && шир < 200) {
         const word = txt.split(/\s+/).reduce((a, w) => w.length > a.length ? w : a, '');
         if (word.length >= 6) {
           /* У строчных элементов clientWidth всегда 0 — сравнение с ним
-             объявляло переносом любое слово в любом <span>. Берём реальную
-             ширину прямоугольника, а clientWidth используем только когда он
-             осмысленный (блочные элементы). */
-          const avail = Math.max(el.clientWidth, Math.round(r.width));
+             объявляло переносом любое слово в любом <span>. */
+          const avail = Math.max(el.clientWidth, шир);
           if (avail > 4) {
             out._cv = out._cv || document.createElement('canvas');
             const g = out._cv.getContext('2d');

@@ -61,7 +61,10 @@ for (const [name, goto] of SCREENS) {
   try { await p.evaluate(goto); } catch (e) { continue; }
   await p.waitForTimeout(600);
 
-  const targets = await p.evaluate(([src, flags]) => {
+  /* Пометить опасные кнопки на текущем экране. Вынесено в функцию: после
+     перезагрузки страницы метки исчезают и их надо расставить заново, иначе
+     все оставшиеся кнопки экрана просто не найдутся и уйдут из проверки. */
+  const пометить = () => p.evaluate(([src, flags]) => {
     const rx = new RegExp(src, flags);
     const out = [];
     document.querySelectorAll('button, [role="button"], .prow, .soc-mini, .pp2-row, .st2-row').forEach((el, i) => {
@@ -75,7 +78,9 @@ for (const [name, goto] of SCREENS) {
       out.push({ i, label: label.slice(0, 50) });
     });
     return out;
-  }, [DANGER.source, DANGER.flags]);
+  }, [DANGER.source, DANGER.flags]).catch(() => []);
+
+  const targets = await пометить();
 
   for (const t of targets) {
     const before = await p.evaluate(`(() => {
@@ -90,22 +95,45 @@ for (const [name, goto] of SCREENS) {
     report.проверено++;
     await p.waitForTimeout(500);
 
-    const after = await p.evaluate(`(() => {
-      /* Диалог приложения: попап, шторка подтверждения, модалка */
-      const dlg = document.querySelector('#okoPopup.on, .popup.on, .oko-popup.on, .sheet.open, [role="alertdialog"], .soc-confirm');
-      return {
-        спросили: window.__okoAsked > 0 || !!dlg,
-        текстДиалога: dlg ? (dlg.innerText || '').replace(/\\s+/g,' ').trim().slice(0, 90) : '',
-        auth: localStorage.getItem('oko-auth'),
-        keys: Object.keys(localStorage).length
-      };
-    })()`);
+    /* Кнопка могла перезагрузить страницу — это само по себе замечание:
+       ушла из приложения молча, ничего не спросив. Контекст при этом
+       уничтожается, поэтому evaluate падает, и падать целиком нельзя. */
+    let after, ушлаВПерезагрузку = false;
+    try {
+      after = await p.evaluate(`(() => {
+        /* Диалог приложения: попап, шторка подтверждения, модалка */
+        const dlg = document.querySelector(/* showPopup создаёт #okoPopup и удаляет его при закрытии — класса .on у него
+   нет, само наличие узла и означает открытый вопрос. */
+      '#okoPopup, .popup.on, .oko-popup.on, .sheet.open, [role="alertdialog"], .soc-confirm');
+        return {
+          спросили: window.__okoAsked > 0 || !!dlg,
+          текстДиалога: dlg ? (dlg.innerText || '').replace(/\\s+/g,' ').trim().slice(0, 90) : '',
+          auth: localStorage.getItem('oko-auth'),
+          keys: Object.keys(localStorage).length
+        };
+      })()`);
+    } catch (e) {
+      ушлаВПерезагрузку = true;
+      await p.waitForLoadState('domcontentloaded').catch(() => {});
+      await p.waitForTimeout(1500);
+      await p.evaluate(`try{ okoSkipAuth() }catch(e){}`).catch(() => {});
+      /* возвращаемся на тот же экран и заново метим кнопки */
+      await p.evaluate(goto).catch(() => {});
+      await p.waitForTimeout(600);
+      await пометить();
+      after = { спросили: false, текстДиалога: '', auth: null, keys: 0 };
+    }
 
-    const данныеИзменились = after.auth !== before.auth || after.keys < before.keys;
+    const данныеИзменились = ушлаВПерезагрузку || after.auth !== before.auth || after.keys < before.keys;
     if (after.спросили) {
       report.сПодтверждением.push({ экран: name, кнопка: t.label, диалог: after.текстДиалога });
     } else if (данныеИзменились) {
-      report.безПодтверждения.push({ экран: name, кнопка: t.label, что: 'сработала молча и изменила данные' });
+      report.безПодтверждения.push({
+        экран: name, кнопка: t.label,
+        что: ушлаВПерезагрузку
+          ? 'молча перезагрузила страницу — человека выкинуло без вопроса'
+          : 'сработала молча и изменила данные'
+      });
     } else {
       report.сПодтверждением.push({ экран: name, кнопка: t.label, диалог: '(без диалога, но данные не тронуты)' });
     }

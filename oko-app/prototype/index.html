@@ -1560,6 +1560,50 @@ button:focus-visible,a:focus-visible,input:focus-visible,textarea:focus-visible,
      при создании, рабочий архив, удаление канала с перечислением последствий,
      честные «поделиться» и «копировать ссылку». Слой поверх ядра. -->
 <script defer src="oko-channels2.js"></script>
+
+<!-- oko-calls.js — звонки под запуск: личный аудио/видеозвонок, экран входящего,
+     групповой созвон с сеткой участников, счётчиком и модерацией у ведущего.
+     Работает по-настоящему всё, что может работать без сервера: микрофон, камера,
+     реальный уровень своего голоса, смена камеры, показ экрана, свёрнутая плашка
+     с таймером. Соединение с человеком честно объявляется недоступным, пока не
+     подключён сигнальный сервер WebRTC — никаких «собеседник подключился».
+     Право начинать созвон — только у создателя чата и владельца приложения. -->
+<script defer src="oko-calls.js"></script>
+
+<!-- oko-factory2.js — КОНТЕНТ-ЗАВОД и ПРОВЕРКА ВИДЕО под запуск. Убирает из
+     ядра фальшивый конвейер (стадии Сценарий→…→«Опубликовано» по таймеру,
+     «В эфире» без единой публикации) и фальшивый видео-разбор (зашитые
+     баллы 81/64/88, «вероятность рекомендаций 62%», «исправить одним
+     кликом»). Завод стал честным трекером: бриф, ручной сценарий, чек-лист
+     из шести шагов с ручными галочками, экспорт и журнал — всё из реального
+     состояния. Генерация честно объявлена недоступной с именами переменных
+     окружения, которых не хватает. Проверка видео разбирает НАСТОЯЩИЙ файл
+     в браузере: длительность, кадр, вес, тип, битрейт, частота кадров,
+     звук, яркость по снятым кадрам — и сверяет с требованиями площадки.
+     Никаких баллов виральности. Слой поверх ядра, ядро не переписывает. -->
+<script defer src="oko-factory2.js"></script>
+
+<!-- oko-system2.js — СИСТЕМА РОСТА и МОИ СОЦСЕТИ под запуск. Убирает из ядра
+     экран «Анкета принята, команда OKO приступила · готовность 4–6 часов»
+     (никуда ничего не отправлялось), выдуманную персональную ссылку
+     okoteam.top/s/xxxxxx и кнопку «Скачать PDF», которая ничего не делала;
+     зашитые деньги бизнес-плана («М3 — 372 500 ₽») и прогноз «М24 — 6M+»,
+     не связанные с ответами; выдуманные кейсы в темах контента («+438% к
+     выручке», «проверено на 47 клиентах») и эмодзи в интерфейсе. Анкета
+     получила черновик, номера блоков, валидацию по типу поля и выход на
+     каждом шаге. План считается из ответов, а всё, что требует сервера,
+     названо вместе с недостающим доступом. «Мои соцсети» больше не пишут
+     «подключено» после ввода ника: по каждой сети сказано, что даст
+     подключение и какой ключ нужен; Telegram-вход показан правдиво по
+     initData; ручные ссылки на профили сохраняются и уходят в визитку.
+     Слой поверх ядра, ядро не переписывает. -->
+<script defer src="oko-system2.js"></script>
+
+<!-- Слой доступности: имена для кнопок-иконок, фирменный фокус-ринг, ловушка
+     фокуса и возврат фокуса в шторках, роли и живые области, поднятый контраст
+     светлой темы, цели нажатия 44×44, уважение к prefers-reduced-motion и
+     prefers-contrast. Грузится последним — только добавляет атрибуты и стили. -->
+<script defer src="oko-a11y.js"></script>
 <script>
 /* Обёртки над встроенными в base.html функциями — для авто-трека page_view / share.
    showTab существует в inline-скрипте base.html, поэтому оборачиваем по мере
@@ -2822,7 +2866,7 @@ button:focus-visible,a:focus-visible,input:focus-visible,textarea:focus-visible,
   </div>
 </div>
 <div class="sheet" id="sheet-progress" style="max-height:78vh;overflow-y:auto">
-  <h3>Прогресс сборки OKO <span class="chip" data-build style="font-size:10px;vertical-align:3px">сборка v2.17</span></h3>
+  <h3>Прогресс сборки OKO <span class="chip" data-build style="font-size:10px;vertical-align:3px">сборка v2.18</span></h3>
   <p class="dim" style="font-size:12px;margin:-6px 0 10px">Запуск: 15 июля 2026. Обновляется с каждым этапом.</p>
   <div id="progressList"></div>
 </div>
@@ -3782,6 +3826,23 @@ button:focus-visible,a:focus-visible,input:focus-visible,textarea:focus-visible,
     <!-- Рука (поднять) -->
     <symbol id="cl-i-hand" viewBox="0 0 64 64">
       <path d="M18 14v18M28 8v24M38 12v20M48 22v14c0 12-8 20-18 20s-16-6-18-14l-6-14c-1-3 1-6 4-6s5 2 6 5l4 6" fill="none" stroke="currentColor" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"/>
+    </symbol>
+    <!-- Инфо (честное пояснение на экране звонка) -->
+    <symbol id="cl-i-info" viewBox="0 0 64 64">
+      <circle cx="32" cy="32" r="24" fill="none" stroke="currentColor" stroke-width="5"/>
+      <line x1="32" y1="29" x2="32" y2="45" stroke="currentColor" stroke-width="5" stroke-linecap="round"/>
+      <line x1="32" y1="19" x2="32" y2="20" stroke="currentColor" stroke-width="6" stroke-linecap="round"/>
+    </symbol>
+    <!-- Ссылка-приглашение -->
+    <symbol id="cl-i-link" viewBox="0 0 64 64">
+      <path d="M27 37l10-10" fill="none" stroke="currentColor" stroke-width="5" stroke-linecap="round"/>
+      <path d="M33 19l5-5a11 11 0 0 1 15 15l-5 5" fill="none" stroke="currentColor" stroke-width="5" stroke-linecap="round"/>
+      <path d="M31 45l-5 5a11 11 0 0 1-15-15l5-5" fill="none" stroke="currentColor" stroke-width="5" stroke-linecap="round"/>
+    </symbol>
+    <!-- Повторить попытку -->
+    <symbol id="cl-i-refresh" viewBox="0 0 64 64">
+      <path d="M52 32a20 20 0 1 1-6-14" fill="none" stroke="currentColor" stroke-width="5" stroke-linecap="round"/>
+      <path d="M50 8v12H38" fill="none" stroke="currentColor" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"/>
     </symbol>
   </defs>
 </svg>
@@ -6135,7 +6196,7 @@ function sysDayHtml(n){
       </div>
       <div class="sys-day-foot">
         <button class="btn ghost" onclick="sysDayClose();sysGoto('checklist');sysCheckDayOpen(${n})" style="flex:1">${I('check2')} Чек-лист дня</button>
-        <button class="btn" style="flex:1" onclick="sysDayClose();closeSystemView();showTab('mini');openMa('factory');toast('День ${n} добавлен в контент-завод')">${I('bolt')} В производство</button>
+        <button class="btn" style="flex:1" onclick="sysDayClose();closeSystemView();showTab('mini');openMa('factory');window.fxImportDay&&fxImportDay(${n}, ${esc(JSON.stringify(topic))})">${I('bolt')} В производство</button>
       </div>
     </div>`;
 }
@@ -7447,9 +7508,12 @@ function closeMa(){
   document.getElementById('maGrid').style.display='';
   var _h=document.getElementById('maHero'); if(_h)_h.style.display='';
   document.querySelectorAll('.ma-view').forEach(v=>v.style.display='none');
-  document.getElementById('vcUpload').style.display='';
-  document.getElementById('vcProgress').style.display='none';
-  document.getElementById('vcResult').style.display='none';
+  /* Блоки vcUpload/vcProgress/vcResult принадлежали старой «проверке видео»
+     с фальшивым прогрессом. Слой oko-factory2.js их удаляет и рисует свой
+     экран, поэтому обращаемся к ним только если они ещё существуют. */
+  var _vu=document.getElementById('vcUpload');   if(_vu)_vu.style.display='';
+  var _vp=document.getElementById('vcProgress'); if(_vp)_vp.style.display='none';
+  var _vr=document.getElementById('vcResult');   if(_vr)_vr.style.display='none';
   if(fxTimer){ clearInterval(fxTimer); fxTimer=null; }
 }
 
@@ -7999,9 +8063,32 @@ function obFinish(){
   ob.classList.add('closing');
   setTimeout(()=>{ ob.classList.add('hidden'); ob.classList.remove('closing'); }, 400);
 }
-function doLogout(){
+/* Выход из аккаунта — только после вопроса.
+   Раньше doLogout() снимал вход и сразу перезагружал страницу: один
+   промах пальцем по строке «Выйти» выкидывал человека на экран входа
+   без единого слова. Теперь doLogout() спрашивает, а сам выход делает
+   doLogoutNow() — его зовут те места, где вопрос уже задан (настройки
+   с несколькими аккаунтами). */
+function doLogoutNow(){
   try{ localStorage.removeItem('oko-auth'); }catch(e){}
   location.reload();
+}
+function doLogout(){
+  /* Мы снимаем только признак входа: переписка, настройки и черновики
+     остаются на устройстве. Так и говорим, без пугалок и без вранья. */
+  var body = 'Вы вернётесь на экран входа. Переписка, настройки и черновики останутся на этом устройстве — войдите снова, и всё будет на месте.';
+  if(typeof showPopup === 'function'){
+    showPopup({
+      /* now: вопрос показываем сразу, минуя очередь «тихих» окон */
+      now:true, ico:'logout', title:'Выйти из аккаунта?', body: body,
+      actions:[
+        {label:'Отмена', ghost:true},
+        {label:'Выйти', onclick: doLogoutNow},
+      ],
+    });
+    return;
+  }
+  if(confirm('Выйти из аккаунта?\n\n' + body)) doLogoutNow();
 }
 
 /* частицы на экране входа */

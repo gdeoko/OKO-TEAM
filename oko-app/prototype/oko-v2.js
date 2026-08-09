@@ -921,14 +921,28 @@ window.okoHaptic = okoHaptic;
       setTimeout(tick, 400);
     }
 
+    /* Окно СПРАШИВАЕТ, а не сообщает? Тогда откладывать его нельзя.
+       Признак вопроса — выбор из нескольких действий («Отмена» / «Выйти»).
+       Такое окно всегда — ответ на только что нажатую кнопку: человек ждёт
+       его сию секунду. Если отложить, получится худшее из возможного —
+       нажал «Выйти», ничего не произошло, а через пару секунд посреди
+       другого экрана всплывает «Выйти из аккаунта?». Уведомления с одной
+       кнопкой «Понятно» подождать могут, вопросы — нет. */
+    function вопрос(o){
+      try{
+        if(!o) return false;
+        if(o.now) return true;                                   /* явный флаг */
+        return Array.isArray(o.actions) && o.actions.length > 1;  /* есть выбор */
+      }catch(e){ return true; }   /* сомневаешься — показывай, а не глотай */
+    }
+
     /* Обёртка над ядровым showPopup: если сейчас неуместно — откладываем. */
     var core = window.showPopup;
     if(typeof core === 'function'){
       window.showPopup = function(){
         var args = arguments, self = this;
         if(ready()) return core.apply(self, args);
-        /* Окна с явным флагом now — критичные подтверждения — не откладываем. */
-        try{ if(args[0] && args[0].now) return core.apply(self, args); }catch(e){}
+        if(вопрос(args[0])) return core.apply(self, args);
         if(queue.length < 4) queue.push(function(){ core.apply(self, args); });
         drain();
         return null;

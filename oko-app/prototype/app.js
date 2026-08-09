@@ -42009,7 +42009,9 @@ function st2DoLogoutAccount(){
   const goneId = ST2.activeAcc;
   const others = ST2.accounts.filter(a => a.id !== goneId);
   if(!others.length){
-    if(typeof doLogout === 'function') doLogout();
+    /* Вопрос уже задан в st2LogoutAccount — зовём выход напрямую,
+       иначе человек увидит два одинаковых окна подряд. */
+    if(typeof doLogoutNow === 'function') doLogoutNow();
     else { try{ localStorage.removeItem('oko-auth'); }catch(e){} location.reload(); }
     return;
   }
