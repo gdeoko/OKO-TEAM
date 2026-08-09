@@ -2,12 +2,18 @@
 # ============================================================================
 # OKO · включить сжатие статики в nginx на VPS
 #
-# ЗАЧЕМ. Замер 09.08: okoteam.top отдаёт app.js РАЗЖАТЫМ — 4 885 578 байт.
-# app.css — ещё 1 135 409 байт. При этом index.html, oko-v2.js, oko-v2.css и
-# oko-social.js отдаются с Content-Encoding: gzip, то есть gzip в конфиге
-# включён, но именно на эти файлы не распространяется.
-# На телефоне это ~6 МБ вместо ~800 КБ: первая загрузка в Telegram занимает
-# секунды, и это главная причина ощущения «всё лагает».
+# ЗАЧЕМ. Замер 09.08 (probe-prod.mjs): первая загрузка okoteam.top весит
+# 10,5 МБ, из них 12 файлов едут БЕЗ СЖАТИЯ — app.js 3955 КБ, app.css 1109 КБ,
+# three.module.min.js 655 КБ, oko-eye.glb 484 КБ и крупные слои из media/app.
+# Под gzip те же исходники сжимаются с 5858 КБ до 1814 КБ — минус 69%.
+#
+# Диагноз точный: gzip в nginx включён, но с типами по умолчанию, а это
+# только text/html. Поэтому index.html приезжает сжатым, а весь JS и CSS —
+# нет. Лечится добавлением gzip_types.
+#
+# (Прежняя версия этой шапки утверждала, что oko-v2.js и oko-social.js едут
+# сжатыми. Это было враньё SPA-фолбэка: файлов на сервере не было вовсе,
+# nginx отдавал вместо них index.html — сжатый и со статусом 200.)
 #
 # ЧТО ДЕЛАЕТ. Дописывает в vhost директивы gzip для текстовых типов, проверяет
 # конфиг через `nginx -t` и только после успешной проверки перезагружает nginx.
@@ -79,7 +85,8 @@ fi
 
 echo
 echo "Проверка (должно появиться Content-Encoding: gzip):"
-for f in app.js app.css index.html service-worker.js; do
+for f in app.js app.css index.html service-worker.js \
+         media/app/oko-wallet2.js media/app/oko-v2.css media/vendor/three.module.min.js; do
   printf '  %-20s' "$f"
   curl -sI -H 'Accept-Encoding: gzip' "https://okoteam.top/$f" \
     | grep -iE 'content-encoding|content-length' | tr -d '\r' | paste -sd' ' || echo '—'

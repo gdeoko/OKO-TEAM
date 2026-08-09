@@ -29,6 +29,23 @@ const html = await fs.readFile('oko-app/prototype/index.html', 'utf-8');
 const пути = new Set(['app.js', 'app.css', 'service-worker.js', 'oko-manifest.json', 'oko-eye.glb']);
 for (const m of html.matchAll(/<script[^>]+src="([^"]+)"/g)) пути.add(m[1]);
 for (const m of html.matchAll(/<link[^>]+href="([^"]+\.css)"/g)) пути.add(m[1]);
+for (const m of html.matchAll(/<img[^>]+src="([^"]+)"/g)) пути.add(m[1]);
+
+/* importmap: через него грузится Three.js для 3D-знака. Его адреса не
+   видны ни в script src, ни в link href — именно поэтому пропажа vendor/
+   с прода не всплывала до проверки зеркала. */
+for (const m of html.matchAll(/<script[^>]*type="importmap"[^>]*>([\s\S]*?)<\/script>/g)) {
+  try {
+    const imports = JSON.parse(m[1]).imports || {};
+    for (const v of Object.values(imports)) {
+      /* «three/addons/» → папка: проверяем файл, который точно оттуда берут */
+      пути.add(String(v).endsWith('/') ? v + 'loaders/GLTFLoader.js' : v);
+    }
+  } catch (e) { console.log('  (importmap не разобрался — проверь вручную)'); }
+}
+
+/* пути в коде слоёв, которые грузятся во время работы */
+for (const доп of ['oko-eye.glb', 'media/paywall/start.webp', 'media/cert/seal.png']) пути.add(доп);
 
 /* внешние адреса не наши — не проверяем */
 const список = [...пути].filter(p => !/^https?:|^\/\//.test(p)).sort();
