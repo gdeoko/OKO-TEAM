@@ -172,6 +172,11 @@ const PROBE = `(() => {
   const all = Array.from(document.body.querySelectorAll('*')).slice(0, 4000);
   for (const el of all) {
     if (el.id === 'okoTgChrome' || el.closest('#okoTgChrome')) continue;
+    /* Внутренности SVG (circle/path/rect) не участвуют в раскладке страницы:
+       за размер отвечает сам <svg>, а декоративная геометрия внутри почти
+       всегда обрезана контейнером с overflow:hidden. Их bounding box давал
+       ложные срабатывания «вылезает за правый край». */
+    if (el.ownerSVGElement) continue;
     if (!visible(el)) continue;
     const r = el.getBoundingClientRect();
     const cs = getComputedStyle(el);

@@ -435,10 +435,14 @@ function injectCSS(){
 
 '/* ---- 5 · ВИТРИНА «КАК ТЕБЯ НАЙДУТ» ---- */',
 '.okg-show{ display:flex; flex-direction:column; gap:10px; }',
-'.okg-show-h{ display:flex; align-items:baseline; justify-content:space-between; gap:10px; }',
+'/* Поля по бокам свои: на части экранов у ядра .pad без горизонтального поля,',
+'   и заголовок упирался в самый край стекла. У карточек поле внутреннее,',
+'   поэтому равняем заголовок по нему. */',
+'.okg-show-h{ display:flex; align-items:baseline; justify-content:space-between; gap:10px;',
+'  padding:0 14px; }',
 '.okg-show-h h3{ font-family:var(--font-display); font-size:24px; letter-spacing:.04em; margin:0;',
-'  color:var(--text); }',
-'.okg-show-h span{ font-size:11.5px; color:var(--dim); }',
+'  color:var(--text); min-width:0; }',
+'.okg-show-h span{ font-size:11.5px; color:var(--dim); flex:0 0 auto; }',
 '.okg-tip{ display:flex; align-items:flex-start; gap:12px; width:100%; text-align:left;',
 '  padding:14px; border-radius:16px; background:var(--surface); border:1px solid var(--border);',
 '  transition:border-color .18s ease, transform .12s ease; }',
@@ -1827,6 +1831,13 @@ function bridges(){
     if(typeof window.showTab === 'function'){
       var coreTab = window.showTab;
       window.showTab = function(t){
+        /* Развёрнутый чек-лист занимает пол-экрана. На своём экране это нормально,
+           но как только человек уходит на другую вкладку — он мешает читать.
+           Поэтому при переходе сворачиваем его в пилюлю: никуда не делся,
+           но и не закрывает содержимое. */
+        try{
+          if(!S.ob.closed && !S.ob.collapsed && obEl){ S.ob.collapsed = true; save(); }
+        }catch(e){}
         var r = coreTab.apply(this, arguments);
         setTimeout(function(){
           try{ mountAll(); renderOnboard(); }catch(e){}

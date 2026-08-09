@@ -680,3 +680,15 @@ img, video, canvas, svg:not(.i) {
   #searchView, #notifsView, #adminView, #systemView, #editProfile,
   #regView, #legalView, #psView, #psSocView, #hqEmbed { transition: none; }
 }
+
+/* ---------------------------------------------------------------------------
+   23. АКАДЕМИЯ НА УЗКИХ ЭКРАНАХ: кольцо прогресса не выходит за край
+   На 360px круговой индикатор давал два пикселя переполнения справа.
+   --------------------------------------------------------------------------- */
+#screen-academy, #acRoot{ overflow-x:hidden; }
+#screen-academy svg, #acRoot svg,
+#screen-academy .ac-ring, #acRoot .ac-ring{
+  max-width:100%;
+  overflow:visible;
+}
+#screen-academy .pad > *, #acRoot .pad > *{ min-width:0; max-width:100%; }

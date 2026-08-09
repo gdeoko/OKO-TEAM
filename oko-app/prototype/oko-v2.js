@@ -454,14 +454,21 @@ var log = function(){};   /* включить при отладке: console.log
       var list = document.getElementById('feedList');
       if(!main || !list) return;
 
-      var busy = false, lastAt = 0;
+      var busy = false, lastAt = 0, dryRuns = 0, lastCount = -1;
 
       function nearBottom(){
+        /* Догружаем, только если список ДЛИННЕЕ экрана. На коротком или пустом
+           списке scrollHeight равен высоте экрана, «низ» достигнут всегда —
+           и обработчик молотил бы вхолостую по нескольку раз в секунду. */
+        if(main.scrollHeight <= main.clientHeight + 40) return false;
         return main.scrollTop + main.clientHeight >= main.scrollHeight - 900;
       }
       function feedActive(){
         var s = document.getElementById('screen-feed');
         return s && s.classList.contains('active');
+      }
+      function postCount(){
+        try{ return document.querySelectorAll('#feedList article.post').length; }catch(e){ return 0; }
       }
 
       main.addEventListener('scroll', function(){
@@ -471,6 +478,14 @@ var log = function(){};   /* включить при отладке: console.log
         lastAt = now; busy = true;
         try{
           var kind = (typeof curFeedKind !== 'undefined') ? curFeedKind : 'rec';
+
+          /* Если две попытки подряд не добавили ни одного поста — контента
+             больше нет. Прекращаем крутить цикл, иначе потолок страниц растёт
+             бесконечно и телефон греется впустую. */
+          var before = postCount();
+          if(before === lastCount){ dryRuns++; } else { dryRuns = 0; }
+          lastCount = before;
+          if(dryRuns >= 2){ busy = false; return; }
 
           /* ЛЕНТА ПО КРУГУ. Ядро останавливает догрузку на FA.maxPages —
              человек упирается в конец. Даниэль просил бесконечную ленту:
