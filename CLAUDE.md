@@ -128,6 +128,25 @@
   ElevenLabs/Higgsfield на озвучку (кредит ≈ $0.066, ~$1/урок — дорого и лимитно на потоке).
 - Запуск: `python3 .claude/skills/oko-voice/scripts/oko_tts.py --textfile s.txt --out vo.wav --mp3`.
 
+## КАНАЛ ДОСТАВКИ НА ПРОД — ЧИТАТЬ ПЕРЕД ЛЮБЫМ ДЕПЛОЕМ (проверено 09.08)
+Cron `/root/oko-deploy.sh` копирует в `/var/www/okoteam` **НЕ всю папку
+`oko-app/prototype`**, а короткий список — `index.html`, `app.js`, `app.css` —
+**плюс всё содержимое `oko-app/site/*`**.
+
+Из-за этого весь слой полировки (24 файла `oko-*.js`, `oko-v2.css`, спрайт
+иконок) на okoteam.top не приезжал НИКОГДА: любой `oko-*.js` отдавался как
+index.html — это SPA-фолбэк nginx на 404, статус при этом 200, поэтому
+`curl` без проверки `Content-Type` врёт, что файл есть.
+
+**Правило: любой новый файл в `prototype/` (кроме index.html, app.js, app.css)
+должен быть продублирован в `oko-app/site/`.** Делает это
+`node oko-app/tools/sync-deploy.mjs` (есть `--check`) — гонять перед каждым
+коммитом, который трогает слои. Копии настоящие, не симлинки: `cp -r`
+на сервере перенёс бы ссылку как ссылку.
+
+**Как проверять прод честно:** `curl -s -o /dev/null -w "%{content_type} %{size_download}"`.
+Если у `.js` приходит `text/html` и размер ≈ размеру index.html — файла нет.
+
 ## БЛОКЕР ЗАПУСКА: сжатие статики на VPS (найдено 09.08, НЕ ИСПРАВЛЕНО)
 okoteam.top отдаёт `app.js` РАЗЖАТЫМ — 4 885 578 байт, `app.css` — 1 135 409.
 При этом `index.html`, `oko-v2.js`, `oko-v2.css`, `oko-social.js` уходят с
