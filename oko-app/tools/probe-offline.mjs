@@ -26,21 +26,34 @@ const b = await chromium.launch({
 const c = await b.newContext({ viewport: { width: 390, height: 844 }, isMobile: true, hasTouch: true });
 const p = await c.newPage();
 
-/* --- считаем байты по сети --- */
-let байт = 0, запросов = 0;
+/* --- считаем байты, отделяя сеть от кэша ---------------------------------
+   Событие response срабатывает и на ответы, которые отдал service worker
+   из кэша: по объёму они выглядят как настоящая загрузка, хотя в сеть не
+   ходили. Различаем по fromServiceWorker() — иначе второй заход покажет
+   тот же вес, что и первый, и замер будет бессмысленным. */
+let байт = 0, запросов = 0, изКэша = 0, кэшБайт = 0;
 const учёт = async r => {
-  запросов++;
+  let размер = 0;
   try {
     const l = r.headers()['content-length'];
-    байт += l ? +l : (await r.body().catch(() => Buffer.alloc(0))).length;
+    размер = l ? +l : (await r.body().catch(() => Buffer.alloc(0))).length;
   } catch (e) {}
+  let свой = false;
+  try { свой = r.fromServiceWorker(); } catch (e) {}
+  if (свой) { изКэша++; кэшБайт += размер; }
+  else { запросов++; байт += размер; }
 };
 p.on('response', учёт);
+const снять = () => {
+  const r = { изСети: { запросов, вес: kb(байт) }, изКэша: { ответов: изКэша, вес: kb(кэшБайт) } };
+  байт = 0; запросов = 0; изКэша = 0; кэшБайт = 0;
+  return r;
+};
 
 await p.goto(БАЗА, { waitUntil: 'load' });
 /* ждём, пока SW встанет и доработает install */
 await p.waitForTimeout(6000);
-const первый = { байт, запросов };
+const первый = снять();
 
 const sw = await p.evaluate(`(async () => {
   if (!('serviceWorker' in navigator)) return { есть: false };
@@ -49,13 +62,12 @@ const sw = await p.evaluate(`(async () => {
 })()`);
 
 /* --- второй заход: сколько ушло в сеть, когда кэш уже прогрет --- */
-байт = 0; запросов = 0;
 await p.reload({ waitUntil: 'load' });
 await p.waitForTimeout(3000);
-const второй = { байт, запросов };
+const второй = снять();
 
 /* --- третий заход: без сети --- */
-байт = 0; запросов = 0;
+снять();
 await c.setOffline(true);
 let офлайнОшибка = '';
 const ошибки = [];
@@ -76,8 +88,8 @@ await c.setOffline(false);
 await b.close();
 
 console.log(JSON.stringify({
-  первыйЗаход:  { запросов: первый.запросов, вес: kb(первый.байт) },
-  второйЗаход:  { запросов: второй.запросов, вес: kb(второй.байт) },
+  первыйЗаход:  первый,
+  второйЗаход:  второй,
   serviceWorker: sw,
   безСети: { ...офлайн, ошибкаПерезагрузки: офлайнОшибка || 'нет', ошибкиJS: [...new Set(ошибки)].slice(0, 3) },
 }, null, 2));
