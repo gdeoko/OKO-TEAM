@@ -21268,6 +21268,14 @@ function adsRenderPreview(){
 let adsReachCur = 0, adsReachRaf = 0;
 const ADS_REACH_MAX = 92000000;
 function adsCalcReach(){
+  /* adsDraft заводится в adsDraftReset() при открытии мастера, а до этого он
+     пустой объект. Если сюда попасть раньше — падало на adsDraft.cities.length.
+     Человек так пройти не может (шторка закрыта), но одна перестановка вызова
+     превращает это в белый экран, поэтому проверяем явно. */
+  if(!adsDraft || !Array.isArray(adsDraft.cities)){
+    if(typeof adsDraftReset === 'function') adsDraftReset();
+    if(!adsDraft || !Array.isArray(adsDraft.cities)) return;
+  }
   const geoBase = {'РФ':11800000, 'СНГ':26400000, 'Весь мир':92000000}[adsDraft.geo] || 11800000;
   let base = geoBase;
   if(adsDraft.cities.length && ADS_CITIES[adsDraft.geo]){

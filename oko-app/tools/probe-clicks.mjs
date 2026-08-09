@@ -154,7 +154,28 @@ for (const [name, goto] of SCREENS) {
 
   const targets = await page.evaluate(`(() => {
     const sel = 'button, [role="button"], a[href], .prow, .svc, .ci, .soc-mini, .soc-btn, .mm-act, .pp2-row, .nt-item';
-    const vis = el => { const cs = getComputedStyle(el); if(cs.display==='none'||cs.visibility==='hidden'||+cs.opacity===0) return false; const r = el.getBoundingClientRect(); return r.width>8 && r.height>8 && r.top>=0 && r.bottom<=innerHeight+400; };
+    /* Закрытая шторка в этом коде не прячется через display:none — она
+       уезжает трансформом за нижний край. Прежний допуск «до 400 px ниже
+       экрана» пускал такие кнопки в обход: палец до них не дотянется
+       (elementFromPoint отвечает «вне экрана»), а el.click() срабатывает.
+       Так обход нашёл падение шага 2 создания рекламы, куда человек попасть
+       не может: черновик заводится при открытии шторки, а её никто не
+       открывал. Поэтому мимо закрытых контейнеров теперь проходим. */
+    const закрытыйКонтейнер = el => {
+      for (let p = el.parentElement; p; p = p.parentElement) {
+        const c = typeof p.className === 'string' ? p.className : '';
+        if (!/\\b(sheet|modal|popup|drawer|overlay)\\b/.test(c)) continue;
+        return !/\\b(open|on|active|shown)\\b/.test(c);   /* нет признака «открыт» */
+      }
+      return false;
+    };
+    const vis = el => {
+      const cs = getComputedStyle(el);
+      if(cs.display==='none'||cs.visibility==='hidden'||+cs.opacity===0) return false;
+      const r = el.getBoundingClientRect();
+      if(!(r.width>8 && r.height>8 && r.top>=0 && r.bottom<=innerHeight+400)) return false;
+      return !закрытыйКонтейнер(el);
+    };
     const out = [];
     document.querySelectorAll(sel).forEach((el, i) => {
       if (!vis(el)) return;
