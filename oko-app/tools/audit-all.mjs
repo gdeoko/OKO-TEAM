@@ -399,10 +399,23 @@ const детектор = (сверху0, конец, ширина) => `(() => {
 
   document.querySelectorAll('button, [role="button"], .prow, .pp2-row').forEach(el => {
     if (out.наложения.length >= 5) return;
+    /* Само затемнение проверять на перекрытие бессмысленно: карточка окна
+       стоит на нём по определению. Семь замечаний в раунде 54 были именно
+       про это — «sheet-overlay закрыт кнопкой окна». */
+    if (el === поверх) return;
     if (!видим(el) || !виден(el) || мимоПальца(el)) return;
     const экран = el.closest('.screen');
     if (экран && !экран.classList.contains('active')) return;
-    const r = el.getBoundingClientRect();
+    /* Щупаем ТОЛЬКО видимую часть кнопки.
+
+       Прямоугольник элемента живёт по своим координатам и после обрезки
+       контейнером: строка, уехавшая вверх под шапку, формально всё ещё
+       лежит там, где лежала. Точки, взятые по нему, попадают в шапку — и
+       рождается «строка настроек закрыта заголовком», хотя закрыта она
+       краем собственного списка. Семь таких замечаний пришло из режима
+       Telegram в раунде 54. */
+    const r = кадрированный(el);
+    if (r.width < 4 || r.height < 4) return;
     if (r.left < 0 || r.top < 0 || r.right > innerWidth + 1 || r.bottom > innerHeight + 1) return;
     const dx = Math.min(6, r.width / 3), dy = Math.min(6, r.height / 3);
     const точки = [
