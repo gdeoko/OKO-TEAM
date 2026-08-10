@@ -317,8 +317,14 @@ const детектор = (сверху0, конец, ширина) => `(() => {
           g.font = cs.fontWeight + ' ' + cs.fontSize + ' ' + cs.fontFamily;
           if (g.measureText(слово).width > Math.max(el.clientWidth, шир) + 1) {
             const n = el.firstChild;
-            if (n && n.nodeType === 3) {
-              const rng = document.createRange(), t = n.nodeValue || '';
+            /* Посимвольный обход через Range заставляет браузер пересчитывать
+               раскладку на каждой букве. На коротких подписях это незаметно,
+               а на странице приёма платежа обход встал намертво: восемь минут
+               на один экран, и прогон пришлось убивать. Ограничиваем длину —
+               перенос посреди слова, если он есть, виден в первых полутора
+               сотнях знаков, а дальше идёт та же строка. */
+            if (n && n.nodeType === 3 && (n.nodeValue || '').length <= 400) {
+              const rng = document.createRange(), t = (n.nodeValue || '').slice(0, 150);
               let низ = null, пред = '';
               for (let k = 0; k < t.length; k++) {
                 const ch = t[k];
