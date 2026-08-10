@@ -659,8 +659,96 @@ function mail_switched(?string $set = null): string {
     return $acc;
 }
 
+/**
+ * ОТПРАВКА ЧЕРЕЗ UNISENDER GO (HTTP API).
+ *
+ * Почему не SMTP: хостер сайта режет исходящие 25/465/587 на чужие хосты —
+ * с сервера не открывается ни один порт Unisender. Их Web API работает по 443
+ * и проходит без вопросов.
+ *
+ * Зачем вообще сервис: собственный домен на Яндексе отдаёт около сотни писем
+ * в сутки и дальше отвечает отказом на всё подряд. Для рассылки по базе из
+ * тысяч адресов нужна прогретая инфраструктура.
+ *
+ * Вложения поддерживаются (base64). Возвращает true, если письмо принято.
+ */
+function mail_send_unisender(string $to, string $subject, string $html, array $opt = []): bool {
+    $key = trim((string) cfgv('unisender_api_key', ''));
+    if ($key === '') { mail_last_error('Не задан ключ Unisender Go (unisender_api_key).'); return false; }
+
+    $fromAddr = (string) ($opt['from_addr'] ?? cfgv('unisender_from', ''));
+    if ($fromAddr === '') $fromAddr = (string) cfgv('smtp_user', '');
+    $fromName = (string) ($opt['from_name'] ?? cfgv('mail_from_name', 'Культурный центр «Музыкальный Мир»'));
+
+    $msg = [
+        'recipients' => [['email' => $to]],
+        'body'       => ['html' => $html, 'plaintext' => trim(strip_tags(str_replace(['<br>', '</p>'], "\n", $html)))],
+        'subject'    => $subject,
+        'from_email' => $fromAddr,
+        'from_name'  => $fromName,
+    ];
+    // Вложения (дипломы) — файлами в base64.
+    if (!empty($opt['attach'])) {
+        $files = is_array($opt['attach']) ? $opt['attach'] : [$opt['attach']];
+        $att = [];
+        foreach ($files as $f) {
+            $f = (string) $f;
+            if ($f === '' || !is_file($f)) continue;
+            $att[] = ['type' => mail_mime_type($f), 'name' => basename($f), 'content' => base64_encode((string) file_get_contents($f))];
+        }
+        if ($att) $msg['attachments'] = $att;
+    }
+
+    $payload = json_encode(['api_key' => $key, 'message' => $msg], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
+    $url = rtrim((string) cfgv('unisender_api_url', 'https://go2.unisender.ru/ru/transactional/api/v1'), '/') . '/email/send.json';
+
+    $ch = curl_init($url);
+    curl_setopt_array($ch, [
+        CURLOPT_POST           => true,
+        CURLOPT_POSTFIELDS     => $payload,
+        CURLOPT_HTTPHEADER     => ['Content-Type: application/json'],
+        CURLOPT_RETURNTRANSFER => true,
+        CURLOPT_TIMEOUT        => 60,
+        CURLOPT_CONNECTTIMEOUT => 15,
+    ]);
+    $raw = curl_exec($ch);
+    $err = curl_error($ch);
+    curl_close($ch);
+
+    if ($raw === false) { mail_last_error('Unisender: связь не установлена — ' . $err); mail_log('FAIL(uni) to ' . $to . ' | ' . $err); return false; }
+    $d = json_decode((string) $raw, true);
+    if (is_array($d) && (string) ($d['status'] ?? '') === 'success') {
+        mail_log('SENT(uni) to ' . $to . ' | ' . $subject);
+        return true;
+    }
+    $why = is_array($d) ? trim(((string) ($d['code'] ?? '')) . ' ' . (string) ($d['message'] ?? '')) : mb_substr((string) $raw, 0, 200);
+    mail_last_error('Unisender: ' . $why);
+    mail_log('FAIL(uni) to ' . $to . ' | ' . $why);
+    return false;
+}
+
+/** MIME-тип файла вложения (для Unisender API). */
+function mail_mime_type(string $path): string {
+    $ext = mb_strtolower(pathinfo($path, PATHINFO_EXTENSION));
+    return [
+        'pdf' => 'application/pdf', 'jpg' => 'image/jpeg', 'jpeg' => 'image/jpeg',
+        'png' => 'image/png', 'zip' => 'application/zip', 'docx' => 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+        'xlsx' => 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+    ][$ext] ?? 'application/octet-stream';
+}
+
 function mail_send(string $to, string $subject, string $html, array $opt = []): bool {
     mail_last_error('');
+    // Ящик может быть «виртуальным»: не SMTP, а сервис рассылок. Тогда письмо
+    // уходит по HTTP API, а не через почтовый порт.
+    $accT = is_array($opt['account'] ?? null) ? $opt['account'] : [];
+    if ((string) ($accT['transport'] ?? '') === 'unisender') {
+        return mail_send_unisender($to, $subject, $html, [
+            'attach'    => $opt['attach'] ?? null,
+            'from_addr' => $accT['from_addr'] ?? null,
+            'from_name' => $opt['from_name'] ?? ($accT['from_name'] ?? null),
+        ]);
+    }
     $to = trim($to);
     if ($to === '' || !filter_var($to, FILTER_VALIDATE_EMAIL)) {
         mail_log('SKIP bad recipient: ' . $to);
