@@ -15,13 +15,22 @@
       разумный дефолт min(46vh, 320px), но не меньше 260px.
       Панель встроена в поток НАД композером, поэтому сам композер при открытии
       и закрытии панели не сдвигается ни на пиксель — «не прыгает».
-   3. КОНТЕНТ. Восемь категорий настоящих эмодзи + «Недавние» (копятся реально),
-      поиск по русским и английским ключам, горизонтальные вкладки категорий
-      (только SVG из спрайта index.html — эмодзи в интерфейсе запрещены),
-      бренд-стикеры OKO (лайм на чёрном, знак глаза из мастер-логотипа),
-      свои стикеры из файла и честный empty-state на вкладке GIF.
-   4. ВЫХОД ОТОВСЮДУ: Escape, системная «назад» (nvPush), тап вне панели,
-      повторный тап по кнопке-смайлу.
+   3. СНАЧАЛА РАЗДЕЛ, ПОТОМ СОДЕРЖИМОЕ (правка Даниэля 10.08: «чтобы не листать
+      все эмодзи чтобы дойти до стикеров и гиф»). Сверху компактный ряд из
+      четырёх текстовых ярлыков — Эмодзи · Стикеры · ГИФ · TON. Выбрал раздел —
+      видишь только его: нижняя лента категорий и строка поиска принадлежат
+      разделу «Эмодзи» и в остальных просто исчезают. Раньше стикеры и GIF
+      стояли в хвосте той же нижней ленты, и до них надо было доскроллить
+      мимо девяти эмодзи-категорий.
+   4. КОНТЕНТ. Восемь категорий настоящих эмодзи + «Недавние» (копятся реально),
+      поиск по русским и английским ключам; ярлыки и иконки интерфейса — только
+      текст и SVG из спрайта index.html (эмодзи в интерфейсе запрещены, сами
+      символы внутри раздела «Эмодзи» — это содержимое); наборы стикеров OKO и
+      TON (каждый стикер — своя векторная композиция в лайме на чёрном, знак
+      глаза только из мастер-логотипа), свои стикеры из файла и честный
+      empty-state на разделе ГИФ.
+   5. ВЫХОД ОТОВСЮДУ: Escape, системная «назад» (nvPush), тап вне панели,
+      крестик в шапке панели, повторный тап по кнопке-смайлу.
 
    Файл перехватывает старую панель chats-plus (#cpPanel / #cpSmile из app.js):
    удаляет её узлы и подменяет глобальные cpBuildPanel / cpOpenPanel /
@@ -38,7 +47,9 @@
   var LS_KB   = 'oko-emoji-kbh';     /* измеренная высота клавиатуры, px      */
   var LS_REC  = 'oko-emoji-recent';  /* недавние эмодзи                       */
   var LS_MY   = 'oko-emoji-mystk';   /* свои стикеры (dataURL)                */
-  var LS_TAB  = 'oko-emoji-tab';     /* последняя открытая вкладка            */
+  var LS_TAB  = 'oko-emoji-tab';     /* последняя категория внутри «Эмодзи»   */
+  var LS_SEC  = 'oko-emoji-sec';     /* последний раздел: emoji|stk|gif|ton   */
+  var LS_PACK = 'oko-emoji-pack';    /* последний набор стикеров: oko|my      */
 
   function lsGet(k, def) {
     try { var v = localStorage.getItem(k); return v == null ? def : JSON.parse(v); }
@@ -1164,44 +1175,256 @@
   function catById(id) { for (var i = 0; i < CATS.length; i++) if (CATS[i].id === id) return CATS[i]; return null; }
 
   /* ======================================================================
-     2. БРЕНД-СТИКЕРЫ OKO
-     Лайм #9AFF00 на чёрной плашке. Знак глаза — только официальный мастер
-     из спрайта (<use href="#i-logo">), от руки логотип не рисуем.
+     2. СТИКЕРЫ: НАБОР OKO И НАБОР TON
+
+     Правка Даниэля 10.08: «стикеры красивые были а сейчас гавно».
+     Старый набор был одним шаблоном — чёрная плашка + тонкий контурный
+     значок + подпись снизу; двенадцать почти одинаковых картинок.
+
+     Теперь каждый стикер — своя композиция: где-то заливка лаймом с чёрным
+     знаком, где-то чёрная сцена со свечением, звездой-печатью, диагональной
+     плашкой или крупной типографикой Bebas. Знак глаза берём только из
+     мастер-спрайта (<use href="#i-logo">) — руками логотип не рисуем.
+
+     ID стикеров сохранены: уже отправленные сообщения продолжают рисоваться.
      ==================================================================== */
+  var LIME  = '#9AFF00';
+  var INK   = '#0B0B0B';
+  var BEBAS = "'Bebas Neue',Impact,'Arial Narrow',sans-serif";
+
+  /* Уникальные id для градиентов: на экране одновременно живут десятки SVG. */
+  var _uid = 0;
+  function uid() { return 'oes' + (++_uid); }
+
+  /* Тёмная подложка: вертикальный градиент + волосяная лаймовая рамка. */
+  function darkPlate(u) {
+    return '<defs><linearGradient id="p' + u + '" x1="0" y1="0" x2="0" y2="1">' +
+      '<stop offset="0" stop-color="#191C10"/><stop offset="1" stop-color="#070803"/>' +
+      '</linearGradient></defs>' +
+      '<rect x="2" y="2" width="116" height="116" rx="30" fill="url(#p' + u + ')"/>' +
+      '<rect x="2.9" y="2.9" width="114.2" height="114.2" rx="29.1" fill="none" ' +
+      'stroke="' + LIME + '" stroke-opacity=".24" stroke-width="1.6"/>';
+  }
+  /* Лаймовая подложка для «громких» стикеров. */
+  function limePlate(u) {
+    return '<defs><linearGradient id="l' + u + '" x1="0" y1="0" x2=".35" y2="1">' +
+      '<stop offset="0" stop-color="#C6FF5E"/><stop offset="1" stop-color="#83DC00"/>' +
+      '</linearGradient></defs>' +
+      '<rect x="2" y="2" width="116" height="116" rx="30" fill="url(#l' + u + ')"/>';
+  }
+  /* Мягкое лаймовое свечение под знаком. */
+  function glow(u, cx, cy, r, op) {
+    op = op == null ? 0.45 : op;
+    return '<defs><radialGradient id="g' + u + '" cx="50%" cy="50%" r="50%">' +
+      '<stop offset="0" stop-color="' + LIME + '" stop-opacity="' + op + '"/>' +
+      '<stop offset="58%" stop-color="' + LIME + '" stop-opacity="' + (op * 0.2).toFixed(3) + '"/>' +
+      '<stop offset="100%" stop-color="' + LIME + '" stop-opacity="0"/>' +
+      '</radialGradient></defs>' +
+      '<circle cx="' + cx + '" cy="' + cy + '" r="' + r + '" fill="url(#g' + u + ')"/>';
+  }
+  /* Надпись Bebas по центру. */
+  function tx(o) {
+    return '<text x="' + (o.x == null ? 60 : o.x) + '" y="' + o.y + '" text-anchor="middle" ' +
+      'font-family="' + BEBAS + '" font-size="' + (o.size || 18) + '" ' +
+      'letter-spacing="' + (o.ls == null ? 1.6 : o.ls) + '" ' +
+      'fill="' + (o.fill || LIME) + '">' + o.t + '</text>';
+  }
+  /* Правильный многоугольник / звезда: точки через запятую для polygon. */
+  function poly(cx, cy, n, r1, r2, turn) {
+    var p = [], i, a, r;
+    for (i = 0; i < n; i++) {
+      a = (i * (360 / n) + (turn || -90)) * Math.PI / 180;
+      r = (r2 && i % 2) ? r2 : r1;
+      p.push((cx + Math.cos(a) * r).toFixed(1) + ',' + (cy + Math.sin(a) * r).toFixed(1));
+    }
+    return p.join(' ');
+  }
+  /* Лучи по кругу. */
+  function rays(cx, cy, n, r1, r2) {
+    var d = '', i, a;
+    for (i = 0; i < n; i++) {
+      a = i * (360 / n) * Math.PI / 180;
+      d += 'M' + (cx + Math.cos(a) * r1).toFixed(1) + ' ' + (cy + Math.sin(a) * r1).toFixed(1) +
+           'L' + (cx + Math.cos(a) * r2).toFixed(1) + ' ' + (cy + Math.sin(a) * r2).toFixed(1);
+    }
+    return d;
+  }
+
   var STK = [
-    { id: 'oko',     label: 'OKO',       logo: '<use href="#i-logo" x="26" y="10" width="68" height="68"/>', g: '', t: 'OKO' },
-    { id: 'watch',   label: 'Смотрим',   logo: '<use href="#i-logo" x="40" y="26" width="40" height="40"/>',
-      g: '<circle cx="60" cy="46" r="31"/><path d="M60 5v9M60 78v9M15 46h9M96 46h9"/>', t: 'СМОТРИМ' },
-    { id: 'yes',     label: 'Да',        logo: '', g: '<circle cx="60" cy="48" r="31"/><path d="M45 48l11 12 21-24"/>', t: 'ДА' },
-    { id: 'no',      label: 'Нет',       logo: '', g: '<circle cx="60" cy="48" r="31"/><path d="M48 36l24 24M72 36 48 60"/>', t: 'НЕТ' },
-    { id: 'top',     label: 'Топ',       logo: '', g: '<path d="M60 82V20M38 42 60 20l22 22M32 92h56"/>', t: 'ТОП' },
-    { id: 'power',   label: 'Мощь',      logo: '',
-      g: '<path d="M70 12 40 54h17l-5 32 31-44H64z" fill="#9AFF00" stroke="#9AFF00" stroke-width="4"/>', t: 'МОЩЬ' },
-    { id: 'wait',    label: 'Жду',       logo: '', g: '<circle cx="60" cy="48" r="31"/><path d="M60 28v22l14 8"/>', t: 'ЖДУ' },
-    { id: 'hundred', label: 'В точку',   logo: '', g: '', big: '100%', t: 'В ТОЧКУ' },
-    { id: 'deal',    label: 'В деле',    logo: '<use href="#i-logo" x="44" y="12" width="32" height="32"/>',
-      g: '<path d="M26 82h68"/>', big: 'В ДЕЛЕ', bigY: 70, t: '' },
-    { id: 'online',  label: 'На связи',  logo: '<use href="#i-logo" x="42" y="24" width="36" height="36"/>',
-      g: '<path d="M28 30a34 34 0 0 0 0 48M92 30a34 34 0 0 1 0 48M16 20a48 48 0 0 0 0 68M104 20a48 48 0 0 1 0 68"/>', t: 'НА СВЯЗИ' },
-    { id: 'secret',  label: 'Секрет',    logo: '',
-      g: '<rect x="34" y="44" width="52" height="38" rx="10"/><path d="M46 44V34a14 14 0 0 1 28 0v10"/><path d="M60 58v10"/>', t: 'СЕКРЕТ' },
-    { id: 'team',    label: 'OKO TEAM',  logo: '<use href="#i-logo" x="45" y="10" width="30" height="30"/>',
-      g: '', big: 'TEAM', bigY: 70, t: 'OKO TEAM' }
+    /* ---------------------- НАБОР OKO (12 штук) ---------------------- */
+    { id: 'oko', pack: 'oko', label: 'OKO', art: function (u) {
+      return darkPlate(u) + glow(u, 60, 58, 54, .6) +
+        '<circle cx="60" cy="58" r="47" fill="none" stroke="' + LIME + '" stroke-opacity=".13" stroke-width="1.6"/>' +
+        '<circle cx="60" cy="58" r="39" fill="none" stroke="' + LIME + '" stroke-opacity=".3" stroke-width="1.6"/>' +
+        '<use href="#i-logo" x="24" y="22" width="72" height="72"/>';
+    } },
+
+    { id: 'watch', pack: 'oko', label: 'Смотрим', art: function (u) {
+      return darkPlate(u) + glow(u, 60, 49, 44, .4) +
+        '<g fill="none" stroke="' + LIME + '" stroke-width="5" stroke-linecap="round" stroke-linejoin="round">' +
+          '<path d="M20 33V25a7 7 0 0 1 7-7h9"/><path d="M100 33v-8a7 7 0 0 0-7-7h-9"/>' +
+          '<path d="M20 65v8a7 7 0 0 0 7 7h9"/><path d="M100 65v8a7 7 0 0 1-7 7h-9"/></g>' +
+        '<g stroke="' + LIME + '" stroke-opacity=".5" stroke-width="3" stroke-linecap="round">' +
+          '<path d="M60 11v7M60 80v7M11 49h7M102 49h7"/></g>' +
+        '<use href="#i-logo" x="37" y="26" width="46" height="46"/>' +
+        tx({ t: 'СМОТРИМ', y: 105, size: 18 });
+    } },
+
+    { id: 'yes', pack: 'oko', label: 'Да', art: function (u) {
+      return limePlate(u) +
+        '<path d="M31 60 51 80 90 34" fill="none" stroke="' + INK + '" stroke-width="13" ' +
+        'stroke-linecap="round" stroke-linejoin="round"/>' +
+        tx({ t: 'ДА', y: 107, size: 22, ls: 3.5, fill: INK });
+    } },
+
+    { id: 'no', pack: 'oko', label: 'Нет', art: function (u) {
+      return darkPlate(u) + glow(u, 60, 52, 42, .32) +
+        '<circle cx="60" cy="52" r="35" fill="none" stroke="' + LIME + '" stroke-opacity=".42" ' +
+        'stroke-width="3" stroke-dasharray="7 9" stroke-linecap="round"/>' +
+        '<path d="M46 38 74 66M74 38 46 66" fill="none" stroke="' + LIME + '" stroke-width="11" stroke-linecap="round"/>' +
+        tx({ t: 'НЕТ', y: 105, size: 18 });
+    } },
+
+    { id: 'top', pack: 'oko', label: 'Топ', art: function (u) {
+      return darkPlate(u) +
+        '<g fill="' + LIME + '">' +
+          '<rect x="21" y="62" width="19" height="24" rx="5" opacity=".33"/>' +
+          '<rect x="50" y="50" width="19" height="36" rx="5" opacity=".62"/>' +
+          '<rect x="79" y="34" width="19" height="52" rx="5"/></g>' +
+        '<g fill="none" stroke="' + LIME + '" stroke-width="5" stroke-linecap="round" stroke-linejoin="round">' +
+          '<path d="M22 47 44 30 61 40 91 15"/><path d="M77 13h16v16"/></g>' +
+        tx({ t: 'ТОП', y: 105, size: 18 });
+    } },
+
+    { id: 'power', pack: 'oko', label: 'Мощь', art: function (u) {
+      return darkPlate(u) + glow(u, 60, 48, 46, .5) +
+        '<g stroke="' + LIME + '" stroke-opacity=".38" stroke-width="4" stroke-linecap="round">' +
+          '<path d="' + rays(60, 48, 8, 34, 43) + '"/></g>' +
+        '<path d="M72 8 34 56h18l-6 32 34-46H62z" fill="' + LIME + '"/>' +
+        tx({ t: 'МОЩЬ', y: 106, size: 18 });
+    } },
+
+    { id: 'wait', pack: 'oko', label: 'Жду', art: function (u) {
+      return darkPlate(u) + glow(u, 60, 50, 40, .3) +
+        '<circle cx="60" cy="50" r="36" fill="none" stroke="' + LIME + '" stroke-width="5"/>' +
+        '<g stroke="' + LIME + '" stroke-opacity=".4" stroke-width="3" stroke-linecap="round">' +
+          '<path d="' + rays(60, 50, 12, 26, 30) + '"/></g>' +
+        '<path d="M60 28v22l15 9" fill="none" stroke="' + LIME + '" stroke-width="6" ' +
+        'stroke-linecap="round" stroke-linejoin="round"/>' +
+        '<circle cx="60" cy="50" r="4.5" fill="' + LIME + '"/>' +
+        tx({ t: 'ЖДУ', y: 105, size: 18 });
+    } },
+
+    { id: 'hundred', pack: 'oko', label: 'В точку', art: function (u) {
+      return darkPlate(u) + glow(u, 60, 46, 44, .38) +
+        tx({ t: '100', y: 62, size: 58, ls: 1 }) +
+        '<g stroke="' + LIME + '" stroke-linecap="round">' +
+          '<path d="M25 76h70" stroke-width="6"/><path d="M32 88h56" stroke-width="5" stroke-opacity=".4"/></g>' +
+        tx({ t: 'В ТОЧКУ', y: 106, size: 15 });
+    } },
+
+    { id: 'deal', pack: 'oko', label: 'В деле', art: function (u) {
+      return darkPlate(u) +
+        '<polygon points="' + poly(60, 48, 24, 42, 34) + '" fill="' + LIME + '"/>' +
+        '<circle cx="60" cy="48" r="29" fill="' + INK + '"/>' +
+        '<circle cx="60" cy="48" r="29" fill="none" stroke="' + LIME + '" stroke-opacity=".3" stroke-width="1.5"/>' +
+        '<use href="#i-logo" x="46" y="34" width="28" height="28"/>' +
+        tx({ t: 'В ДЕЛЕ', y: 105, size: 17, ls: 1.4 });
+    } },
+
+    { id: 'online', pack: 'oko', label: 'На связи', art: function (u) {
+      return darkPlate(u) + glow(u, 60, 47, 42, .4) +
+        '<g fill="none" stroke="' + LIME + '" stroke-linecap="round" stroke-width="5">' +
+          '<path d="M33 29a30 30 0 0 0 0 40"/><path d="M87 29a30 30 0 0 1 0 40"/>' +
+          '<path d="M20 17a46 46 0 0 0 0 62" stroke-opacity=".4"/>' +
+          '<path d="M100 17a46 46 0 0 1 0 62" stroke-opacity=".4"/></g>' +
+        '<use href="#i-logo" x="42" y="31" width="36" height="36"/>' +
+        tx({ t: 'НА СВЯЗИ', y: 105, size: 17, ls: 1.4 });
+    } },
+
+    { id: 'secret', pack: 'oko', label: 'Секрет', art: function (u) {
+      return darkPlate(u) + glow(u, 60, 56, 40, .28) +
+        '<path d="M45 47V36a15 15 0 0 1 30 0v11" fill="none" stroke="' + LIME + '" stroke-width="8" stroke-linecap="round"/>' +
+        '<rect x="29" y="45" width="62" height="44" rx="13" fill="' + LIME + '"/>' +
+        '<circle cx="60" cy="62" r="6.5" fill="' + INK + '"/>' +
+        '<path d="M60 63v11" stroke="' + INK + '" stroke-width="7" stroke-linecap="round"/>' +
+        tx({ t: 'СЕКРЕТ', y: 106, size: 16 });
+    } },
+
+    { id: 'team', pack: 'oko', label: 'OKO TEAM', art: function (u) {
+      return darkPlate(u) + glow(u, 60, 32, 38, .35) +
+        '<use href="#i-logo" x="38" y="10" width="44" height="44"/>' +
+        '<rect x="11" y="64" width="98" height="32" rx="11" fill="' + LIME + '"/>' +
+        tx({ t: 'OKO TEAM', y: 87, size: 20, ls: 2, fill: INK });
+    } },
+
+    /* ---------------------- НАБОР TON (6 штук) ----------------------- */
+    { id: 'ton', pack: 'ton', label: 'TON', art: function (u) {
+      return darkPlate(u) + glow(u, 60, 46, 44, .45) +
+        '<polygon points="60,12 94,42 60,84 26,42" fill="' + LIME + '" fill-opacity=".13" ' +
+        'stroke="' + LIME + '" stroke-width="5" stroke-linejoin="round"/>' +
+        '<g fill="none" stroke="' + LIME + '" stroke-opacity=".55" stroke-width="3" stroke-linejoin="round">' +
+          '<path d="M26 42h68"/><path d="M60 12 46 42l14 42"/><path d="M60 12l14 30-14 42"/></g>' +
+        tx({ t: 'TON', y: 105, size: 17 });
+    } },
+
+    { id: 'ton-coin', pack: 'ton', label: 'Монета', art: function (u) {
+      return darkPlate(u) + glow(u, 60, 52, 42, .4) +
+        '<circle cx="60" cy="52" r="35" fill="none" stroke="' + LIME + '" stroke-width="6"/>' +
+        '<circle cx="60" cy="52" r="27" fill="none" stroke="' + LIME + '" stroke-opacity=".32" stroke-width="2"/>' +
+        '<polygon points="60,33 77,52 60,73 43,52" fill="' + LIME + '"/>' +
+        tx({ t: 'МОНЕТА', y: 106, size: 16 });
+    } },
+
+    { id: 'ton-wallet', pack: 'ton', label: 'Кошелёк', art: function (u) {
+      return darkPlate(u) +
+        '<rect x="18" y="30" width="84" height="56" rx="15" fill="' + LIME + '"/>' +
+        '<rect x="58" y="47" width="40" height="22" rx="11" fill="' + INK + '"/>' +
+        '<circle cx="78" cy="58" r="5.5" fill="' + LIME + '"/>' +
+        '<polygon points="39,41 51,53 39,65 27,53" fill="' + INK + '" fill-opacity=".2"/>' +
+        tx({ t: 'КОШЕЛЁК', y: 106, size: 16 });
+    } },
+
+    { id: 'ton-gift', pack: 'ton', label: 'Подарок', art: function (u) {
+      return darkPlate(u) + glow(u, 60, 54, 42, .3) +
+        '<path d="M60 33c-9 0-19-4-19-13a9 9 0 0 1 18 0c0 9 1 13 1 13z" fill="' + LIME + '"/>' +
+        '<path d="M60 33c9 0 19-4 19-13a9 9 0 0 0-18 0c0 9-1 13-1 13z" fill="' + LIME + '"/>' +
+        '<rect x="19" y="33" width="82" height="19" rx="7" fill="' + LIME + '"/>' +
+        '<rect x="27" y="52" width="66" height="38" rx="9" fill="' + LIME + '" fill-opacity=".82"/>' +
+        '<rect x="53" y="33" width="14" height="57" fill="' + INK + '"/>' +
+        tx({ t: 'ПОДАРОК', y: 106, size: 16 });
+    } },
+
+    { id: 'ton-rocket', pack: 'ton', label: 'Поехали', art: function (u) {
+      return darkPlate(u) + glow(u, 60, 48, 42, .35) +
+        '<polygon points="50,66 60,90 70,66" fill="' + LIME + '" fill-opacity=".42"/>' +
+        '<path d="M60 8c13 12 19 27 19 43v19H41V51c0-16 6-31 19-43z" fill="' + LIME + '"/>' +
+        '<circle cx="60" cy="42" r="8.5" fill="' + INK + '"/>' +
+        '<path d="M41 56 27 79l14-7zM79 56l14 23-14-7z" fill="' + LIME + '" fill-opacity=".68"/>' +
+        tx({ t: 'ПОЕХАЛИ', y: 106, size: 16 });
+    } },
+
+    { id: 'ton-chain', pack: 'ton', label: 'Блокчейн', art: function (u) {
+      return darkPlate(u) +
+        '<path d="M30 42 60 62 90 42" fill="none" stroke="' + LIME + '" stroke-opacity=".42" ' +
+        'stroke-width="4" stroke-linecap="round"/>' +
+        '<polygon points="' + poly(30, 42, 6, 17) + '" fill="none" stroke="' + LIME + '" stroke-width="5" stroke-linejoin="round"/>' +
+        '<polygon points="' + poly(90, 42, 6, 17) + '" fill="none" stroke="' + LIME + '" stroke-width="5" stroke-linejoin="round"/>' +
+        '<polygon points="' + poly(60, 63, 6, 20) + '" fill="' + LIME + '"/>' +
+        tx({ t: 'БЛОКЧЕЙН', y: 106, size: 15, ls: 1.2 });
+    } }
   ];
-  var LIME = '#9AFF00';
+
   function stkById(id) { for (var i = 0; i < STK.length; i++) if (STK[i].id === id) return STK[i]; return null; }
   function stkSvg(id, size) {
     var s = stkById(id); if (!s) return '';
-    var big = s.big
-      ? '<text x="60" y="' + (s.bigY || 60) + '" text-anchor="middle" font-family="\'Bebas Neue\',Impact,sans-serif" ' +
-        'font-size="34" letter-spacing="1" fill="' + LIME + '">' + s.big + '</text>' : '';
-    var cap = s.t
-      ? '<text x="60" y="107" text-anchor="middle" font-family="\'Bebas Neue\',Impact,sans-serif" ' +
-        'font-size="17" letter-spacing="1.6" fill="' + LIME + '">' + s.t + '</text>' : '';
-    return '<svg class="okoem-stkart" viewBox="0 0 120 120" width="' + size + '" height="' + size + '" role="img" aria-label="Стикер ' + s.label + '">' +
-      '<rect x="3" y="3" width="114" height="114" rx="26" fill="#0b0b0b" stroke="' + LIME + '" stroke-width="2"/>' +
-      (s.g ? '<g fill="none" stroke="' + LIME + '" stroke-width="6" stroke-linecap="round" stroke-linejoin="round">' + s.g + '</g>' : '') +
-      s.logo + big + cap + '</svg>';
+    return '<svg class="okoem-stkart" viewBox="0 0 120 120" width="' + size + '" height="' + size +
+      '" role="img" aria-label="Стикер ' + escHtml(s.label) + '">' + s.art(uid()) + '</svg>';
+  }
+  function stkPack(pack) {
+    var a = [];
+    for (var i = 0; i < STK.length; i++) if (STK[i].pack === pack) a.push(STK[i]);
+    return a;
   }
 
   /* Свои стикеры пользователя */
@@ -1219,26 +1442,53 @@
 .okoem.on{pointer-events:auto}
 @media(prefers-reduced-motion:reduce){.okoem{transition:none}}
 
-.okoem-top{flex:0 0 auto;display:flex;align-items:center;gap:7px;padding:8px 12px 5px}
-.okoem-find{flex:1;min-width:0;display:flex;align-items:center;gap:7px;height:34px;padding:0 10px;
-  background:var(--raised);border:1px solid var(--border);border-radius:12px}
+/* --- ряд разделов: Эмодзи · Стикеры · ГИФ · TON. Всегда сверху, всегда виден.
+   Раньше стикеры и GIF стояли в хвосте нижней ленты категорий: чтобы до них
+   дойти на телефоне, надо было пролистать девять эмодзи-категорий. --- */
+.okoem-nav{flex:0 0 auto;display:flex;align-items:center;gap:6px;padding:7px 10px 6px}
+.okoem-seg{flex:1 1 auto;min-width:0;display:flex;align-items:center;gap:2px;padding:2px;
+  background:var(--raised);border:1px solid var(--border);border-radius:12px;
+  overflow-x:auto;overflow-y:hidden;scrollbar-width:none;-webkit-overflow-scrolling:touch}
+.okoem-seg::-webkit-scrollbar{display:none}
+/* min-width:max-content — гарантия, что ярлык раздела не обрежется никогда:
+   кнопки тянутся по ширине, но ниже своего текста не сжимаются. */
+.okoem-sw{flex:1 1 auto;min-width:max-content;height:28px;padding:0 8px;border:0;background:none;
+  border-radius:10px;cursor:pointer;color:var(--dim);font-family:inherit;font-size:11px;
+  font-weight:800;letter-spacing:.03em;text-transform:uppercase;white-space:nowrap;
+  display:flex;align-items:center;justify-content:center;transition:color .15s,background .15s}
+.okoem-sw:hover{color:var(--text)}
+.okoem-sw.on{color:#0b0b0b;background:var(--lime);box-shadow:0 2px 10px -5px rgba(154,255,0,.9)}
+@media(max-width:359px){.okoem-sw{font-size:10px;padding:0 6px;letter-spacing:.01em}}
+
+/* Контекстная строка раздела: поиск для эмодзи, наборы для стикеров.
+   У ГИФ и TON её нет вовсе — панель становится ещё компактнее. */
+.okoem-sub{flex:0 0 auto;display:flex;align-items:center;gap:6px;padding:0 10px 6px}
+.okoem-sub[hidden]{display:none}
+.okoem-find{flex:1;min-width:0;display:flex;align-items:center;gap:7px;height:32px;padding:0 10px;
+  background:var(--raised);border:1px solid var(--border);border-radius:11px}
 .okoem-find svg.i{width:15px;height:15px;color:var(--dim);stroke-width:8}
-.okoem-find input{flex:1;min-width:0;height:32px;background:none;border:0;outline:none;
+.okoem-find input{flex:1;min-width:0;height:30px;background:none;border:0;outline:none;
   color:var(--text);font-family:inherit;font-size:13.5px}
 .okoem-find input::placeholder{color:var(--dim)}
-.okoem-act{flex:0 0 auto;width:34px;height:34px;border-radius:11px;display:flex;align-items:center;
+.okoem-act{flex:0 0 auto;width:32px;height:32px;border-radius:11px;display:flex;align-items:center;
   justify-content:center;color:var(--dim);background:var(--raised);border:1px solid var(--border);
   padding:0;cursor:pointer;transition:color .14s,background .14s}
-.okoem-act svg.i{width:17px;height:17px}
+.okoem-act svg.i{width:16px;height:16px}
 .okoem-act:hover{color:var(--text)}
 .okoem-act:active{color:var(--accent);background:var(--lime-dim)}
+.okoem-pack{flex:0 1 auto;min-width:max-content;height:28px;padding:0 12px;border-radius:10px;
+  border:1px solid var(--border);background:var(--raised);color:var(--dim);cursor:pointer;
+  font-family:inherit;font-size:11px;font-weight:800;letter-spacing:.03em;text-transform:uppercase;
+  white-space:nowrap;display:flex;align-items:center;transition:color .14s,background .14s,border-color .14s}
+.okoem-pack.on{color:var(--accent);border-color:var(--lime);background:var(--lime-dim)}
 
 .okoem-body{flex:1 1 auto;min-height:0;overflow-y:auto;overflow-x:hidden;overscroll-behavior:contain;
   -webkit-overflow-scrolling:touch;padding:2px 10px 10px;scrollbar-width:thin}
 .okoem-body::-webkit-scrollbar{width:5px}
 .okoem-body::-webkit-scrollbar-thumb{background:var(--border);border-radius:9px}
 .okoem-sec{font-size:10.5px;font-weight:800;color:var(--dim);text-transform:uppercase;
-  letter-spacing:.06em;margin:9px 2px 6px}
+  letter-spacing:.06em;margin:7px 2px 5px}
+.okoem-note{font-size:11.5px;line-height:1.45;color:var(--dim);margin:0 2px 8px}
 .okoem-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(38px,1fr));gap:1px}
 .okoem-e{height:40px;min-width:0;border:0;background:none;padding:0;border-radius:10px;cursor:pointer;
   display:flex;align-items:center;justify-content:center;line-height:1;font-size:24px;
@@ -1247,24 +1497,26 @@
 .okoem-e:hover{background:var(--lime-dim)}
 .okoem-e:active{transform:scale(1.22);background:var(--lime-dim)}
 
-.okoem-stkgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(74px,1fr));gap:8px}
-.okoem-stk{position:relative;display:flex;flex-direction:column;align-items:center;gap:4px;
-  padding:6px 2px;border:0;background:none;border-radius:14px;cursor:pointer;
+/* Стикеры крупные и без подписей: смысл написан прямо в картинке (Bebas),
+   поэтому ничего не приходится обрезать многоточием. */
+.okoem-stkgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(84px,1fr));gap:8px}
+.okoem-stk{position:relative;display:flex;align-items:center;justify-content:center;
+  padding:3px;border:0;background:none;border-radius:18px;cursor:pointer;
   transition:background .14s,transform .12s}
 .okoem-stk:hover{background:var(--lime-dim)}
-.okoem-stk:active{transform:scale(.93)}
-.okoem-stk .okoem-stkart,.okoem-stk img{width:64px;height:64px;display:block;object-fit:contain}
-.okoem-stk small{font-size:9.5px;font-weight:700;color:var(--dim);text-align:center;line-height:1.2;
-  max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.okoem-stk:active{transform:scale(.92)}
+.okoem-stk .okoem-stkart,.okoem-stk img{width:100%;max-width:104px;height:auto;aspect-ratio:1/1;
+  display:block;object-fit:contain}
 .okoem-del{position:absolute;top:0;right:0;width:20px;height:20px;border-radius:50%;padding:0;
   background:var(--raised);border:1px solid var(--border);color:var(--dim);
   display:flex;align-items:center;justify-content:center;cursor:pointer}
 .okoem-del svg.i{width:9px;height:9px;stroke-width:11}
-.okoem-add{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:5px;
-  min-height:74px;border-radius:14px;border:0;background:none;color:var(--dim);cursor:pointer;
-  font-size:9.5px;font-weight:700;transition:color .14s,background .14s}
-.okoem-add svg.i{width:30px;height:30px}
-.okoem-add:hover{color:var(--accent);background:var(--lime-dim)}
+.okoem-add{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;
+  min-height:78px;border-radius:18px;border:1px dashed var(--border);background:none;
+  color:var(--dim);cursor:pointer;font-family:inherit;font-size:9.5px;font-weight:800;
+  letter-spacing:.05em;transition:color .14s,background .14s,border-color .14s}
+.okoem-add svg.i{width:28px;height:28px}
+.okoem-add:hover{color:var(--accent);background:var(--lime-dim);border-color:var(--lime)}
 
 .okoem-empty{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:9px;
   text-align:center;color:var(--dim);font-size:12.5px;line-height:1.45;padding:22px 16px;
@@ -1275,17 +1527,21 @@
   background:var(--raised);color:var(--text);font-family:inherit;font-size:12.5px;font-weight:700;cursor:pointer}
 .okoem-mini:active{border-color:var(--lime);color:var(--accent)}
 
-.okoem-cats{flex:0 0 auto;display:flex;align-items:center;gap:2px;overflow-x:auto;overflow-y:hidden;
-  padding:5px 8px;box-shadow:inset 0 1px 0 var(--border);scrollbar-width:none;
+/* Нижняя лента — теперь ТОЛЬКО категории эмодзи, без стикеров и GIF в хвосте.
+   Слой доступности растит иконки до 44×44, поэтому на телефоне лента всё ещё
+   листается вбок, но за ней больше не прячутся другие разделы, а выбранную
+   категорию подтягивает в кадр markCats(). В остальных разделах лента скрыта. */
+.okoem-cats{flex:0 0 auto;display:flex;align-items:center;gap:1px;overflow-x:auto;overflow-y:hidden;
+  padding:4px 8px;box-shadow:inset 0 1px 0 var(--border);scrollbar-width:none;
   -webkit-overflow-scrolling:touch}
+.okoem-cats[hidden]{display:none}
 .okoem-cats::-webkit-scrollbar{display:none}
-.okoem-cat{flex:0 0 auto;width:38px;height:34px;border-radius:10px;border:0;background:none;padding:0;
-  cursor:pointer;color:var(--dim);display:flex;align-items:center;justify-content:center;
-  transition:color .14s,background .14s}
-.okoem-cat svg.i{width:19px;height:19px}
+.okoem-cat{flex:1 1 auto;min-width:31px;max-width:44px;height:30px;border-radius:9px;border:0;
+  background:none;padding:0;cursor:pointer;color:var(--dim);display:flex;align-items:center;
+  justify-content:center;transition:color .14s,background .14s}
+.okoem-cat svg.i{width:18px;height:18px}
 .okoem-cat:hover{color:var(--text)}
 .okoem-cat.on{color:var(--accent);background:var(--lime-dim)}
-.okoem-divi{flex:0 0 auto;width:1px;height:20px;background:var(--border);margin:0 5px}
 
 #okoEmBtn.on{color:var(--accent)}
 .okoem-hidden{position:absolute;width:1px;height:1px;opacity:0;pointer-events:none}
@@ -1351,9 +1607,27 @@
   /* ======================================================================
      5. СОСТОЯНИЕ И DOM
      ==================================================================== */
-  var state = { open: false, tab: lsGet(LS_TAB, 'recent') || 'recent', q: '', caret: 0 };
-  var TABS_OK = { recent: 1, smile: 1, nature: 1, food: 1, act: 1, travel: 1, obj: 1, sym: 1, flag: 1, 'stk:oko': 1, 'stk:my': 1, gif: 1 };
+  /* Разделы верхнего ряда. Сначала выбираешь раздел — потом видишь только его.
+     Ярлыки текстовые (эмодзи в интерфейсе запрещены; сами символы — контент). */
+  var SECS = [
+    { id: 'emoji', name: 'Эмодзи' },
+    { id: 'stk',   name: 'Стикеры' },
+    { id: 'gif',   name: 'ГИФ' },
+    { id: 'ton',   name: 'TON' }
+  ];
+  var SECS_OK = { emoji: 1, stk: 1, gif: 1, ton: 1 };
+  var TABS_OK = { recent: 1, smile: 1, nature: 1, food: 1, act: 1, travel: 1, obj: 1, sym: 1, flag: 1 };
+
+  var state = {
+    open: false,
+    sec:  lsGet(LS_SEC, 'emoji') || 'emoji',   /* раздел: emoji | stk | gif | ton  */
+    tab:  lsGet(LS_TAB, 'recent') || 'recent', /* категория внутри «Эмодзи»        */
+    pack: lsGet(LS_PACK, 'oko') || 'oko',      /* набор внутри «Стикеры»: oko | my */
+    q: '', caret: 0
+  };
+  if (!SECS_OK[state.sec]) state.sec = 'emoji';
   if (!TABS_OK[state.tab]) state.tab = 'recent';
+  if (state.pack !== 'my') state.pack = 'oko';
 
   function el() { return document.getElementById('okoEm'); }
   function btn() { return document.getElementById('okoEmBtn'); }
@@ -1394,36 +1668,56 @@
       p.id = 'okoEm';
       p.setAttribute('aria-hidden', 'true');
       p.innerHTML =
-        '<div class="okoem-top">' +
-          '<label class="okoem-find">' + ico('search') +
-            '<input id="okoEmQ" type="search" autocomplete="off" placeholder="Поиск эмодзи" aria-label="Поиск эмодзи">' +
-          '</label>' +
-          '<button type="button" class="okoem-act" id="okoEmBksp" title="Стереть символ" aria-label="Стереть символ">' + ico('em-bksp') + '</button>' +
+        '<div class="okoem-nav">' +
+          '<div class="okoem-seg" id="okoEmSeg" role="tablist" aria-label="Разделы"></div>' +
           '<button type="button" class="okoem-act" id="okoEmClose" title="Закрыть панель" aria-label="Закрыть панель">' + ico('x') + '</button>' +
         '</div>' +
+        '<div class="okoem-sub" id="okoEmSub"></div>' +
         '<div class="okoem-body" id="okoEmBody"></div>' +
-        '<div class="okoem-cats" id="okoEmCats" role="tablist"></div>' +
+        '<div class="okoem-cats" id="okoEmCats" role="tablist" aria-label="Категории эмодзи"></div>' +
         '<input type="file" id="okoEmFile" class="okoem-hidden" accept="image/png,image/jpeg,image/webp,image/svg+xml" tabindex="-1">';
       composer.parentNode.insertBefore(p, composer);
 
+      renderSeg();
       renderCats();
-      p.querySelector('#okoEmQ').addEventListener('input', function () {
-        state.q = this.value.trim().toLowerCase();
+
+      /* Ряд разделов. */
+      p.querySelector('#okoEmSeg').addEventListener('click', function (ev) {
+        var b = ev.target && ev.target.closest ? ev.target.closest('.okoem-sw') : null;
+        if (!b) return;
+        ev.preventDefault();
+        setSec(b.getAttribute('data-sec'));
+      });
+
+      /* Контекстная строка: содержимое меняется, поэтому слушаем делегированно. */
+      var sub = p.querySelector('#okoEmSub');
+      sub.addEventListener('input', function (ev) {
+        if (!ev.target || ev.target.id !== 'okoEmQ') return;
+        state.q = ev.target.value.trim().toLowerCase();
         render();
       });
       /* Enter в поиске — вставить первый найденный эмодзи, как в Telegram. */
-      p.querySelector('#okoEmQ').addEventListener('keydown', function (e) {
-        if (e.key !== 'Enter') return;
-        e.preventDefault();
+      sub.addEventListener('keydown', function (ev) {
+        if (!ev.target || ev.target.id !== 'okoEmQ' || ev.key !== 'Enter') return;
+        ev.preventDefault();
         var first = bodyEl() && bodyEl().querySelector('.okoem-e');
         if (first) pick(first.getAttribute('data-e'));
       });
-      p.querySelector('#okoEmBksp').addEventListener('click', function (e) { e.preventDefault(); backspace(); });
+      sub.addEventListener('click', function (ev) {
+        var t = ev.target;
+        if (!t || !t.closest) return;
+        if (t.closest('#okoEmBksp')) { ev.preventDefault(); backspace(); return; }
+        var pk = t.closest('[data-pack]');
+        if (pk) { ev.preventDefault(); setPack(pk.getAttribute('data-pack')); }
+      });
+
       p.querySelector('#okoEmClose').addEventListener('click', function (e) { e.preventDefault(); close(); });
       p.querySelector('#okoEmFile').addEventListener('change', onFile);
 
       bodyEl().addEventListener('click', onBodyClick);
       document.getElementById('okoEmCats').addEventListener('click', onCatsClick);
+
+      applySec();
     }
   }
 
@@ -1451,7 +1745,7 @@
     p.style.height = targetH() + 'px';
     var b = btn(); if (b) { b.classList.add('on'); b.setAttribute('aria-expanded', 'true'); }
     syncLegacyFlag(true);
-    render();
+    applySec();
     scrollMsgs();
     if (typeof nvPush === 'function') nvPush('cp:panel', function () { close(true); });
   }
@@ -1496,6 +1790,59 @@
      ==================================================================== */
   function recent() { var v = lsGet(LS_REC, []); return Array.isArray(v) ? v : []; }
 
+  /* --- ряд разделов ------------------------------------------------- */
+  function renderSeg() {
+    var wrap = document.getElementById('okoEmSeg'); if (!wrap) return;
+    var html = '';
+    for (var i = 0; i < SECS.length; i++) {
+      html += '<button type="button" class="okoem-sw" role="tab" data-sec="' + SECS[i].id +
+              '" title="' + escHtml(SECS[i].name) + '">' + escHtml(SECS[i].name) + '</button>';
+    }
+    wrap.innerHTML = html;
+  }
+  function markSeg() {
+    var wrap = document.getElementById('okoEmSeg'); if (!wrap) return;
+    var kids = wrap.querySelectorAll('.okoem-sw');
+    for (var i = 0; i < kids.length; i++) {
+      var on = kids[i].getAttribute('data-sec') === state.sec;
+      kids[i].classList.toggle('on', on);
+      kids[i].setAttribute('aria-selected', on ? 'true' : 'false');
+    }
+  }
+
+  /* --- контекстная строка раздела ----------------------------------- */
+  function renderSub() {
+    var s = document.getElementById('okoEmSub'); if (!s) return;
+    if (state.sec === 'emoji') {
+      if (s.getAttribute('data-mode') !== 'emoji') {
+        s.setAttribute('data-mode', 'emoji');
+        s.innerHTML =
+          '<label class="okoem-find">' + ico('search') +
+            '<input id="okoEmQ" type="search" autocomplete="off" placeholder="Поиск эмодзи" aria-label="Поиск эмодзи">' +
+          '</label>' +
+          '<button type="button" class="okoem-act" id="okoEmBksp" title="Стереть символ" aria-label="Стереть символ">' + ico('em-bksp') + '</button>';
+      } else {
+        var q = document.getElementById('okoEmQ');
+        if (q && q.value && !state.q) q.value = '';
+      }
+      s.hidden = false;
+      return;
+    }
+    if (state.sec === 'stk') {
+      s.setAttribute('data-mode', 'stk');
+      s.innerHTML =
+        '<button type="button" class="okoem-pack' + (state.pack === 'oko' ? ' on' : '') + '" data-pack="oko">Набор OKO</button>' +
+        '<button type="button" class="okoem-pack' + (state.pack === 'my'  ? ' on' : '') + '" data-pack="my">Мои</button>';
+      s.hidden = false;
+      return;
+    }
+    /* ГИФ и TON обходятся без второй строки — панель короче. */
+    s.setAttribute('data-mode', 'none');
+    s.innerHTML = '';
+    s.hidden = true;
+  }
+
+  /* --- нижняя лента: только категории эмодзи ------------------------ */
   function renderCats() {
     var wrap = document.getElementById('okoEmCats'); if (!wrap) return;
     var html = '';
@@ -1504,21 +1851,33 @@
       html += '<button type="button" class="okoem-cat" role="tab" data-tab="' + c.id + '" title="' + escHtml(c.name) +
               '" aria-label="' + escHtml(c.name) + '">' + ico(c.ic) + '</button>';
     }
-    html += '<span class="okoem-divi"></span>' +
-      '<button type="button" class="okoem-cat" role="tab" data-tab="stk:oko" title="Стикеры OKO" aria-label="Стикеры OKO">' + ico('sticker') + '</button>' +
-      '<button type="button" class="okoem-cat" role="tab" data-tab="stk:my" title="Мои стикеры" aria-label="Мои стикеры">' + ico('em-add') + '</button>' +
-      '<span class="okoem-divi"></span>' +
-      '<button type="button" class="okoem-cat" role="tab" data-tab="gif" title="GIF" aria-label="GIF">' + ico('em-gif') + '</button>';
     wrap.innerHTML = html;
+  }
+
+  /* Собрать хром панели под текущий раздел и перерисовать содержимое. */
+  function applySec() {
+    markSeg();
+    renderSub();
+    var cats = document.getElementById('okoEmCats');
+    if (cats) cats.hidden = state.sec !== 'emoji';
+    render();
   }
 
   function markCats() {
     var wrap = document.getElementById('okoEmCats'); if (!wrap) return;
     var kids = wrap.querySelectorAll('.okoem-cat');
     for (var i = 0; i < kids.length; i++) {
-      var on = kids[i].getAttribute('data-tab') === state.tab && !state.q;
+      var on = state.sec === 'emoji' && !state.q && kids[i].getAttribute('data-tab') === state.tab;
       kids[i].classList.toggle('on', on);
       kids[i].setAttribute('aria-selected', on ? 'true' : 'false');
+      /* Слой доступности растит иконки категорий до 44×44, и девять штук в
+         строку на телефоне уже не влезают. Значит, выбранную подтягиваем в
+         видимую часть ленты — иначе активная категория остаётся за краем. */
+      if (on) {
+        var l = kids[i].offsetLeft, r = l + kids[i].offsetWidth;
+        if (l < wrap.scrollLeft) wrap.scrollLeft = Math.max(0, l - 8);
+        else if (r > wrap.scrollLeft + wrap.clientWidth) wrap.scrollLeft = r - wrap.clientWidth + 8;
+      }
     }
   }
 
@@ -1549,13 +1908,28 @@
     return '<div class="okoem-sec">Найдено: ' + res.length + '</div>' + gridHtml(res);
   }
 
-  function stkOkoHtml() {
-    var h = '';
-    for (var i = 0; i < STK.length; i++) {
-      h += '<button type="button" class="okoem-stk" data-stk="' + STK[i].id + '" title="' + escHtml(STK[i].label) + '">' +
-        stkSvg(STK[i].id, 64) + '<small>' + escHtml(STK[i].label) + '</small></button>';
+  /* Кнопки стикеров одного набора. Подписи не рисуем: смысл написан внутри
+     самой картинки, поэтому нечему обрезаться многоточием. */
+  function stkBtns(pack) {
+    var list = stkPack(pack), h = '';
+    for (var i = 0; i < list.length; i++) {
+      h += '<button type="button" class="okoem-stk" data-stk="' + list[i].id +
+        '" title="' + escHtml(list[i].label) + '" aria-label="Стикер ' + escHtml(list[i].label) + '">' +
+        stkSvg(list[i].id, 96) + '</button>';
     }
-    return '<div class="okoem-sec">Стикеры OKO</div><div class="okoem-stkgrid">' + h + '</div>';
+    return h;
+  }
+
+  function stkOkoHtml() {
+    return '<div class="okoem-sec">Набор OKO · ' + stkPack('oko').length + '</div>' +
+      '<div class="okoem-stkgrid">' + stkBtns('oko') + '</div>';
+  }
+
+  function stkTonHtml() {
+    return '<div class="okoem-sec">Набор TON · ' + stkPack('ton').length + '</div>' +
+      '<div class="okoem-note">Знаки сети TON в фирменном стиле OKO. ' +
+      'Отправляются как обычные стикеры — к кошельку и переводам не привязаны.</div>' +
+      '<div class="okoem-stkgrid">' + stkBtns('ton') + '</div>';
   }
 
   function stkMyHtml() {
@@ -1583,11 +1957,18 @@
 
   function render() {
     var b = bodyEl(); if (!b) return;
+    markSeg();
     markCats();
+
+    if (state.sec === 'stk') {
+      b.innerHTML = state.pack === 'my' ? stkMyHtml() : stkOkoHtml();
+      b.scrollTop = 0; return;
+    }
+    if (state.sec === 'ton') { b.innerHTML = stkTonHtml(); b.scrollTop = 0; return; }
+    if (state.sec === 'gif') { b.innerHTML = gifHtml();    b.scrollTop = 0; return; }
+
+    /* Раздел «Эмодзи» */
     if (state.q) { b.innerHTML = searchHtml(); b.scrollTop = 0; return; }
-    if (state.tab === 'stk:oko') { b.innerHTML = stkOkoHtml(); b.scrollTop = 0; return; }
-    if (state.tab === 'stk:my')  { b.innerHTML = stkMyHtml();  b.scrollTop = 0; return; }
-    if (state.tab === 'gif')     { b.innerHTML = gifHtml();    b.scrollTop = 0; return; }
     if (state.tab === 'recent') {
       var r = recent();
       if (!r.length) {
@@ -1605,15 +1986,53 @@
     b.scrollTop = 0;
   }
 
+  /* Смена раздела верхнего ряда. */
+  function setSec(id) {
+    if (!SECS_OK[id]) id = 'emoji';
+    state.sec = id;
+    state.q = '';
+    lsSet(LS_SEC, id);
+    applySec();
+    if (window.okoHaptic) try { okoHaptic('selection'); } catch (_) {}
+  }
+
+  /* Смена набора внутри «Стикеров». */
+  function setPack(id) {
+    state.pack = id === 'my' ? 'my' : 'oko';
+    lsSet(LS_PACK, state.pack);
+    if (state.sec !== 'stk') { setSec('stk'); return; }
+    renderSub();
+    render();
+  }
+
+  /* Совместимость: ядро и пробники продолжают звать setTab со старыми ключами
+     ('stk:oko', 'stk:my', 'gif', 'ton', id категории). Раскладываем их на
+     раздел + категорию/набор. */
   function setTab(id) {
+    if (id === 'stk:oko' || id === 'stickers' || id === 'oko' ||
+        id === 'stk:my'  || id === 'my') {
+      state.pack = (id === 'stk:my' || id === 'my') ? 'my' : 'oko';
+      lsSet(LS_PACK, state.pack);
+      setSec('stk');
+      return;
+    }
+    if (id === 'gif')  { setSec('gif'); return; }
+    if (id === 'ton')  { setSec('ton'); return; }
+    if (id === 'emoji') { setSec('emoji'); return; }
     if (!TABS_OK[id]) id = 'recent';
     state.tab = id;
+    state.q = '';
     lsSet(LS_TAB, id);
-    var q = document.getElementById('okoEmQ');
-    if (q && q.value) { q.value = ''; state.q = ''; }
-    var p = el();
-    if (q) q.placeholder = (id === 'stk:oko' || id === 'stk:my') ? 'Поиск эмодзи' : 'Поиск эмодзи';
+    if (state.sec !== 'emoji') { setSec('emoji'); return; }
+    renderSub();
     render();
+  }
+
+  /* Ключ вкладки в старом формате — для внешних проверок. */
+  function legacyTab() {
+    if (state.sec === 'stk') return 'stk:' + state.pack;
+    if (state.sec === 'emoji') return state.tab;
+    return state.sec;
   }
 
   /* ======================================================================
@@ -1853,16 +2272,19 @@
   window.cpOpenPanel   = open;
   window.cpClosePanel  = function (fromNav) { close(fromNav); };
   window.cpTogglePanel = toggle;
-  window.cpPanelTab    = function (t) {
-    setTab(t === 'emoji' ? 'recent' : (t === 'stickers' || t === 'oko' || t === 'ton') ? 'stk:oko' : t);
-  };
+  window.cpPanelTab    = function (t) { setTab(t); };
 
   /* Публичный API (используется пробником oko-app/tools/probe-emoji.mjs). */
   window.okoEmoji = {
     open: open, close: close, toggle: toggle,
     isOpen: function () { return state.open; },
-    tab: function () { return state.tab; },
+    tab: legacyTab,
     setTab: setTab,
+    section: function () { return state.sec; },
+    setSection: setSec,
+    pack: function () { return state.pack; },
+    setPack: setPack,
+    sections: function () { return SECS.map(function (s) { return s.id; }); },
     targetHeight: targetH,
     availHeight: availH,
     savedKb: savedKb,
@@ -1870,7 +2292,9 @@
     recent: recent,
     insert: insert,
     count: function () { var n = 0; for (var i = 1; i < CATS.length; i++) n += CATS[i].items.length; return n; },
-    stickers: function () { return STK.length; }
+    stickers: function () { return STK.length; },
+    stickerIds: function () { return STK.map(function (s) { return s.id; }); },
+    stickerSvg: stkSvg
   };
 
   function boot() {

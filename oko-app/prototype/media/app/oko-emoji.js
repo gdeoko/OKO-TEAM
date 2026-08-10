@@ -1499,13 +1499,13 @@
 
 /* Стикеры крупные и без подписей: смысл написан прямо в картинке (Bebas),
    поэтому ничего не приходится обрезать многоточием. */
-.okoem-stkgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(78px,1fr));gap:8px}
+.okoem-stkgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(84px,1fr));gap:8px}
 .okoem-stk{position:relative;display:flex;align-items:center;justify-content:center;
   padding:3px;border:0;background:none;border-radius:18px;cursor:pointer;
   transition:background .14s,transform .12s}
 .okoem-stk:hover{background:var(--lime-dim)}
 .okoem-stk:active{transform:scale(.92)}
-.okoem-stk .okoem-stkart,.okoem-stk img{width:100%;max-width:96px;height:auto;aspect-ratio:1/1;
+.okoem-stk .okoem-stkart,.okoem-stk img{width:100%;max-width:104px;height:auto;aspect-ratio:1/1;
   display:block;object-fit:contain}
 .okoem-del{position:absolute;top:0;right:0;width:20px;height:20px;border-radius:50%;padding:0;
   background:var(--raised);border:1px solid var(--border);color:var(--dim);
@@ -1527,8 +1527,10 @@
   background:var(--raised);color:var(--text);font-family:inherit;font-size:12.5px;font-weight:700;cursor:pointer}
 .okoem-mini:active{border-color:var(--lime);color:var(--accent)}
 
-/* Нижняя лента — теперь ТОЛЬКО категории эмодзи (9 штук влезают в 320px
-   без горизонтального листания). В остальных разделах она скрыта. */
+/* Нижняя лента — теперь ТОЛЬКО категории эмодзи, без стикеров и GIF в хвосте.
+   Слой доступности растит иконки до 44×44, поэтому на телефоне лента всё ещё
+   листается вбок, но за ней больше не прячутся другие разделы, а выбранную
+   категорию подтягивает в кадр markCats(). В остальных разделах лента скрыта. */
 .okoem-cats{flex:0 0 auto;display:flex;align-items:center;gap:1px;overflow-x:auto;overflow-y:hidden;
   padding:4px 8px;box-shadow:inset 0 1px 0 var(--border);scrollbar-width:none;
   -webkit-overflow-scrolling:touch}
@@ -1868,6 +1870,14 @@
       var on = state.sec === 'emoji' && !state.q && kids[i].getAttribute('data-tab') === state.tab;
       kids[i].classList.toggle('on', on);
       kids[i].setAttribute('aria-selected', on ? 'true' : 'false');
+      /* Слой доступности растит иконки категорий до 44×44, и девять штук в
+         строку на телефоне уже не влезают. Значит, выбранную подтягиваем в
+         видимую часть ленты — иначе активная категория остаётся за краем. */
+      if (on) {
+        var l = kids[i].offsetLeft, r = l + kids[i].offsetWidth;
+        if (l < wrap.scrollLeft) wrap.scrollLeft = Math.max(0, l - 8);
+        else if (r > wrap.scrollLeft + wrap.clientWidth) wrap.scrollLeft = r - wrap.clientWidth + 8;
+      }
     }
   }
 
