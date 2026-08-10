@@ -38723,8 +38723,15 @@ function psSocInjectEntry(){
       g2.push(pp2Row({ic:'globe', tone:'teal', t:'Внешние ссылки',
               s:'Мини-сайт-визитка · до 5 ссылок', onclick:'pp2OpenExtLinks()'}));
     }
+    /* Подпись «5 подключено · автопостинг» была враньём в двух словах сразу:
+       у нового человека не подключено ничего, а автопостинга в приложении
+       нет вовсе — ни один пост никуда не уходит. Считаем по факту. */
+    const socN = (typeof psSocConnected === 'function') ? psSocConnected().length : 0;
+    const socВсего = (typeof PS_SOC_PLATS !== 'undefined' && PS_SOC_PLATS) ? PS_SOC_PLATS.length : 0;
     g2.push(pp2Row({ic:'send', tone:'blue', t:'Мои соцсети',
-            s:'5 подключено · автопостинг', onclick:'pp2OpenSocials()'}));
+            s: socN ? (socN + ' из ' + socВсего + ' подключено')
+                    : (socВсего ? ('Ни одна из ' + socВсего + ' не подключена') : 'Площадки и ссылки'),
+            onclick:'pp2OpenSocials()'}));
     g2.push(pp2Row({ic:'users', tone:'violet', t:'Партнёрская программа',
             s:'Лидерборд, промо, выплаты', onclick:'pp2OpenPartner()'}));
     g2.push(pp2Row({ic:'star', tone:'gold', t:'Академия OKO',
