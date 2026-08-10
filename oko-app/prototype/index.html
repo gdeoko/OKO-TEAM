@@ -1438,8 +1438,24 @@ main>.screen{position:relative;z-index:1}
 <link rel="dns-prefetch" href="https://mc.yandex.ru">
 <link rel="dns-prefetch" href="https://cdn.amplitude.com">
 <link rel="dns-prefetch" href="https://browser.sentry-cdn.com">
-<link rel="preload" as="script" href="app.js">
-<link rel="preload" as="style" href="app.css">
+<!-- Ядро приложения грузится из media/app/app.min.js и app.min.css — это те же
+     app.js и app.css без комментариев и отступов, собранные sync-deploy.mjs.
+
+     Причина не в красоте, а в весе на телефоне. На okoteam.top nginx отдаёт
+     app.js и app.css БЕЗ сжатия: 4 050 821 и 1 135 409 байт. Включается это
+     одной строкой в конфиге (готовый скрипт — oko-app/deploy/enable-gzip.sh),
+     но доступа к серверу из этой сессии нет. Пока сжатия нет, снимаем то,
+     что можно снять на своей стороне: 5.19 МБ → 4.33 МБ.
+
+     Минификация только пробельная: имена не переименовываются (иначе
+     развалятся onclick в разметке), синтаксис не переписывается. Исходники
+     остаются читаемыми и правятся как раньше — минифицированные копии
+     пересобираются из них.
+
+     Когда gzip на сервере включат, эти пять ссылок можно вернуть на app.js
+     и app.css: выигрыш от сжатия перекрывает минификацию с запасом. -->
+<link rel="preload" as="script" href="media/app/app.min.js">
+<link rel="preload" as="style" href="media/app/app.min.css">
 
 <!-- ============ OKO ANALYTICS (Yandex Metrika + Amplitude + Sentry) ============ -->
 <script>
@@ -1478,8 +1494,8 @@ button:focus-visible,a:focus-visible,input:focus-visible,textarea:focus-visible,
 {"imports":{"three":"./media/vendor/three.module.min.js","three/addons/":"./media/vendor/jsm/"}}
 </script>
 <!-- ============ OKO LAZY BUNDLE LOADER ============ -->
-<link rel="stylesheet" href="app.css" media="print" onload="this.media='all'">
-<noscript><link rel="stylesheet" href="app.css"></noscript>
+<link rel="stylesheet" href="media/app/app.min.css" media="print" onload="this.media='all'">
+<noscript><link rel="stylesheet" href="media/app/app.min.css"></noscript>
 <!-- Слой полировки v2: грузится ПОСЛЕ ядра и перекрывает его точечные стили.
      Здесь адаптация под Telegram/мобильный/ПК, типографика, хром, Reels, воронки. -->
 <link rel="stylesheet" href="media/app/oko-v2.css" media="print" onload="this.media='all'">
@@ -1488,7 +1504,7 @@ button:focus-visible,a:focus-visible,input:focus-visible,textarea:focus-visible,
      мини-аппов, обрезание сверху, бейджи профиля без горизонтального скролла. -->
 <link rel="stylesheet" href="media/app/oko-ui3.css" media="print" onload="this.media='all'">
 <noscript><link rel="stylesheet" href="media/app/oko-ui3.css"></noscript>
-<script defer src="app.js"></script>
+<script defer src="media/app/app.min.js"></script>
 <script defer src="media/app/oko-v2.js"></script>
 <!-- Клипы: настоящий вертикальный видео-плеер вместо сторис-обёртки -->
 <script defer src="media/app/oko-reels.js"></script>

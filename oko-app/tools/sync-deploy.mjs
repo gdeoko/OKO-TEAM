@@ -26,10 +26,25 @@
    ============================================================================ */
 import fs from 'node:fs/promises';
 import path from 'node:path';
+import { execFileSync } from 'node:child_process';
 
 const SRC   = 'oko-app/prototype';
 const DST   = 'oko-app/site';
 const CHECK = process.argv.includes('--check');
+
+/* Облегчённое ядро пересобираем ПЕРЕД раскладкой, иначе на прод уедет
+   вчерашний app.min.js, а index.html ссылается именно на него — правка в
+   app.js просто не доедет до человека и будет казаться пропавшей. */
+try {
+  execFileSync('node', ['oko-app/tools/build-min.mjs', ...(CHECK ? ['--check'] : [])],
+    { stdio: 'inherit' });
+} catch (e) {
+  console.error('\nСборка облегчённого ядра не прошла — раскладку не делаю.');
+  console.error('index.html грузит media/app/app.min.js: разложить старую копию значит');
+  console.error('выкатить на прод неактуальное ядро.');
+  process.exit(1);
+}
+console.log('');
 
 /* Что синхронизируем.
    Пробами 09.08 выяснено точно: из `site/` на прод попадают только те

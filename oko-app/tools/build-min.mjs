@@ -1,189 +1,100 @@
 /* ============================================================================
-   OKO · СБОРКА ОБЛЕГЧЁННОЙ ВЕРСИИ
+   OKO · ОБЛЕГЧЁННОЕ ЯДРО ДЛЯ ПРОДА
 
-   Зачем. Замер показал: okoteam.top отдаёт app.js разжатым — 4,9 МБ, app.css —
-   1,1 МБ. Правильное лекарство одно: включить gzip в nginx (готовый скрипт
-   лежит в oko-app/deploy/enable-gzip.sh). Но пока к VPS нет доступа, вес можно
-   заметно срезать прямо в исходниках — код написан с очень подробными
-   комментариями, и они едут на телефон вместе с логикой.
+   Зачем. okoteam.top отдаёт app.js и app.css БЕЗ сжатия — 4 050 821 и
+   1 135 409 байт. Правильное лекарство одно: включить gzip в nginx, готовый
+   скрипт лежит в oko-app/deploy/enable-gzip.sh. Пока доступа к серверу нет,
+   снимаем то, что можно снять со своей стороны: комментарии и отступы.
+   Их тут много — код написан подробно, и все эти строки едут на телефон
+   вместе с логикой.
 
-   Что делает. Убирает комментарии и лишние пробелы, НЕ переименовывая ничего.
-   Это принципиально: файлы приложения ссылаются друг на друга по именам
-   глобальных функций и переменных (`typeof recStream !== 'undefined'`,
-   `window.okoSocial`, chain-патчи вида `const prev = window.feedScore`).
-   Любое переименование идентификаторов сломает эти связи, поэтому его здесь
-   нет и быть не должно.
+   Куда пишем и почему именно туда. Cron копирует на прод только index.html,
+   app.js, app.css и всё содержимое site/media/**. Файл в корне prototype/
+   с новым именем на сервер не доедет, поэтому облегчённое ядро кладётся в
+   prototype/media/app/ — тот единственный путь, который доезжает. Оттуда
+   sync-deploy.mjs разложит его в site/, а index.html уже на него ссылается.
 
-   Что НЕ делает. Не трогает исходники: результат кладётся рядом с суффиксом
-   `.min.js` / `.min.css`. Переключение приложения на облегчённые файлы —
-   отдельное осознанное действие, не побочный эффект сборки.
+   Чего здесь НЕТ и не будет: переименования идентификаторов. Разметка зовёт
+   глобальные функции по именам прямо из onclick, слои цепляются друг за друга
+   через `typeof recStream !== 'undefined'` и `window.okoSocial`. Любое
+   переименование это разорвёт. Поэтому minifyIdentifiers и minifySyntax
+   выключены: esbuild только перепечатывает разобранный код без пробелов.
+
+   Ещё одна ловушка, на которую уже наступили: charset. По умолчанию esbuild
+   экранирует всё за пределами ASCII в \\uXXXX — кириллица раздувается вшестеро,
+   и «облегчённый» app.js получился в полтора раза ТЯЖЕЛЕЕ исходного. Нужен
+   charset:'utf8'.
+
+   Исходники не трогаются: править по-прежнему app.js и app.css, а эта сборка
+   гоняется перед деплоем (её зовёт sync-deploy.mjs).
 
    Запуск:
-     node oko-app/tools/build-min.mjs            — собрать и показать выигрыш
-     node oko-app/tools/build-min.mjs --check    — только показать, ничего не писать
+     node oko-app/tools/build-min.mjs
+     node oko-app/tools/build-min.mjs --check    — посчитать, ничего не писать
    ============================================================================ */
 import fs from 'node:fs/promises';
 import path from 'node:path';
 import zlib from 'node:zlib';
 import { promisify } from 'node:util';
+import esbuild from 'esbuild';
 
 const gzip = promisify(zlib.gzip);
 const DIR = 'oko-app/prototype';
+const ВЫХОД = path.join(DIR, 'media', 'app');
 const CHECK = process.argv.includes('--check');
 
-/* --------------------------------------------------------------------------
-   Удаление комментариев из JS с уважением к строкам, шаблонам и регулярным
-   выражениям. Наивный поиск `//` и `/*` разрушил бы адреса вида https://,
-   регулярки и содержимое шаблонных строк — а в этом коде их много.
-   -------------------------------------------------------------------------- */
-function stripJsComments(src) {
-  let out = '';
-  let i = 0;
-  const n = src.length;
-  /* Отличить деление от начала регулярного выражения можно только по
-     предыдущему значимому символу: после значения идёт деление, после
-     оператора или открывающей скобки — регулярка. */
-  let prevMeaningful = '';
-
-  while (i < n) {
-    const c = src[i], c2 = src[i + 1];
-
-    /* строка в одинарных или двойных кавычках */
-    if (c === '"' || c === "'") {
-      const q = c;
-      let j = i + 1;
-      while (j < n) {
-        if (src[j] === '\\') { j += 2; continue; }
-        if (src[j] === q) break;
-        j++;
-      }
-      out += src.slice(i, j + 1);
-      prevMeaningful = q;
-      i = j + 1;
-      continue;
-    }
-
-    /* шаблонная строка: внутри могут быть вложенные ${ ... } с чем угодно */
-    if (c === '`') {
-      let j = i + 1, depth = 0;
-      while (j < n) {
-        if (src[j] === '\\') { j += 2; continue; }
-        if (src[j] === '$' && src[j + 1] === '{') { depth++; j += 2; continue; }
-        if (depth > 0 && src[j] === '}') { depth--; j++; continue; }
-        if (depth === 0 && src[j] === '`') break;
-        j++;
-      }
-      out += src.slice(i, j + 1);
-      prevMeaningful = '`';
-      i = j + 1;
-      continue;
-    }
-
-    /* однострочный комментарий */
-    if (c === '/' && c2 === '/') {
-      let j = i + 2;
-      while (j < n && src[j] !== '\n') j++;
-      i = j;
-      continue;
-    }
-
-    /* блочный комментарий */
-    if (c === '/' && c2 === '*') {
-      let j = i + 2;
-      while (j < n && !(src[j] === '*' && src[j + 1] === '/')) j++;
-      /* перенос строки вместо комментария: иначе склеятся соседние строки и
-         сломается автоматическая расстановка точек с запятой */
-      out += '\n';
-      i = j + 2;
-      continue;
-    }
-
-    /* регулярное выражение */
-    if (c === '/' && /[=(,:[!&|?{};+\-*%~^<>\n]/.test(prevMeaningful || '\n')) {
-      let j = i + 1, cls = false, ok = false;
-      while (j < n) {
-        const ch = src[j];
-        if (ch === '\\') { j += 2; continue; }
-        if (ch === '[') cls = true;
-        else if (ch === ']') cls = false;
-        else if (ch === '/' && !cls) { ok = true; break; }
-        else if (ch === '\n') break;
-        j++;
-      }
-      if (ok) {
-        let k = j + 1;
-        while (k < n && /[a-z]/.test(src[k])) k++;   /* флаги */
-        out += src.slice(i, k);
-        prevMeaningful = '/';
-        i = k;
-        continue;
-      }
-    }
-
-    out += c;
-    if (!/\s/.test(c)) prevMeaningful = c;
-    i++;
-  }
-  return out;
-}
-
-/* Схлопываем отступы и пустые строки. Переносы строк сохраняем — код
-   местами полагается на автоматическую расстановку точек с запятой. */
-function squeezeJs(src) {
-  return src
-    .split('\n')
-    .map(l => l.replace(/[ \t]+/g, ' ').trim())
-    .filter(l => l.length)
-    .join('\n');
-}
-
-function minifyCss(src) {
-  return src
-    .replace(/\/\*[\s\S]*?\*\//g, '')
-    .replace(/\s*([{}:;,>~+])\s*/g, '$1')
-    .replace(/;}/g, '}')
-    .replace(/\s+/g, ' ')
-    .trim();
-}
+const ЦЕЛИ = [
+  { из: 'app.js', в: 'app.min.js', loader: 'js' },
+  { из: 'app.css', в: 'app.min.css', loader: 'css' },
+];
 
 const kb = n => (n / 1024).toFixed(0) + ' КБ';
+const B = s => Buffer.byteLength(s, 'utf8');
 
-/* Слои переехали в media/app (единственный путь, который доезжает на прод),
-   поэтому считаем и корень, и эту папку. */
-const собрать = async (под) => {
-  const список = await fs.readdir(path.join(DIR, под)).catch(() => []);
-  return список
-    .filter(f => /\.(js|css)$/.test(f) && !/\.min\.(js|css)$/.test(f) && f !== 'service-worker.js')
-    .map(f => (под ? под + '/' : '') + f);
-};
-const targets = [...await собрать(''), ...await собрать('media/app')];
+await fs.mkdir(ВЫХОД, { recursive: true });
 
 let было = 0, стало = 0, былоGz = 0, сталоGz = 0;
 const строки = [];
+let сломалось = false;
 
-for (const f of targets) {
-  const p = path.join(DIR, f);
-  const src = await fs.readFile(p, 'utf-8');
-  const min = f.endsWith('.css') ? minifyCss(src) : squeezeJs(stripJsComments(src));
-
-  /* Страховка: если результат подозрительно мал, значит разбор сломался —
-     такой файл не пишем и говорим об этом вслух. */
-  if (min.length < src.length * 0.2) {
-    строки.push(`  ${f.padEnd(22)} ПРОПУЩЕН: разбор дал ${kb(min.length)} из ${kb(src.length)} — похоже на ошибку`);
+for (const ц of ЦЕЛИ) {
+  const src = await fs.readFile(path.join(DIR, ц.из), 'utf-8');
+  let код;
+  try {
+    код = esbuild.transformSync(src, {
+      loader: ц.loader,
+      minifyWhitespace: true,
+      minifySyntax: false,
+      minifyIdentifiers: false,
+      legalComments: 'none',
+      charset: 'utf8',
+    }).code;
+  } catch (e) {
+    строки.push(`  ${ц.из.padEnd(10)} ОШИБКА разбора: ${String(e).split('\n')[0].slice(0, 90)}`);
+    сломалось = true;
     continue;
   }
 
-  const gzA = (await gzip(src)).length;
-  const gzB = (await gzip(min)).length;
-  было += src.length; стало += min.length; былоGz += gzA; сталоGz += gzB;
+  /* Страховка от тихой поломки: результат меньше пятой части исходника или
+     больше самого исходника — значит что-то пошло не так, и такой файл на
+     прод отправлять нельзя. */
+  if (B(код) < B(src) * 0.2 || B(код) > B(src)) {
+    строки.push(`  ${ц.из.padEnd(10)} ПРОПУЩЕН: ${kb(B(src))} → ${kb(B(код))}, похоже на ошибку`);
+    сломалось = true;
+    continue;
+  }
 
-  const out = p.replace(/\.(js|css)$/, '.min.$1');
-  if (!CHECK) await fs.writeFile(out, min);
-  строки.push(`  ${f.padEnd(22)} ${kb(src.length).padStart(9)} → ${kb(min.length).padStart(9)}   (gzip ${kb(gzA)} → ${kb(gzB)})`);
+  const gzA = (await gzip(src)).length, gzB = (await gzip(код)).length;
+  было += B(src); стало += B(код); былоGz += gzA; сталоGz += gzB;
+  if (!CHECK) await fs.writeFile(path.join(ВЫХОД, ц.в), код);
+  строки.push(`  ${ц.из.padEnd(10)} ${kb(B(src)).padStart(9)} → ${kb(B(код)).padStart(9)}   (под gzip было бы ${kb(gzB)})`);
 }
 
 console.log(строки.join('\n'));
-console.log('\nВСЕГО:');
-console.log(`  без сжатия: ${kb(было)} → ${kb(стало)}  (минус ${(100 - стало / было * 100).toFixed(0)}%)`);
-console.log(`  под gzip:   ${kb(былоGz)} → ${kb(сталоGz)}  (минус ${(100 - сталоGz / былоGz * 100).toFixed(0)}%)`);
-console.log(CHECK ? '\n(--check: файлы не записаны)' : '\nОблегчённые файлы записаны рядом с исходниками.');
+if (было) {
+  console.log(`\n  ВСЕГО: ${kb(было)} → ${kb(стало)}  (минус ${(100 - стало / было * 100).toFixed(0)}%)`);
+  console.log(`  Для сравнения, если включить gzip на сервере: ${kb(сталоGz)} — минус ${(100 - сталоGz / былоGz * 100).toFixed(0)}%.`);
+  console.log('  Минификация не заменяет сжатие, а лишь смягчает его отсутствие.');
+}
+console.log(CHECK ? '\n(--check: файлы не записаны)' : '\nОблегчённое ядро в prototype/media/app/.');
+process.exit(сломалось ? 1 : 0);
