@@ -64,6 +64,14 @@ export const CLOSE_OVERLAYS = `(() => {
   try{ if(typeof trClose === 'function'){ trClose(); снято.push('tour'); } }catch(e){}
   try{ if(typeof tsClose === 'function'){ tsClose(); снято.push('stories'); } }catch(e){}
   try{ var p = document.getElementById('okoPopup'); if(p){ p.remove(); снято.push('popup'); } }catch(e){}
+  /* Окна удержания из oko-growth (.okg-scrim) выпрыгивают поверх вкладок сами:
+     «ТВОЯ ССЫЛКА ЛЕЖИТ БЕЗ ДЕЛА» закрыла профиль целиком, и аудит вместо
+     профиля мерил её. Публичной функции закрытия у слоя нет — close живёт
+     внутри okgModal, — поэтому снимаем подложку напрямую. */
+  try{
+    document.querySelectorAll('.okg-scrim').forEach(function(s){ s.remove(); снято.push('okg'); });
+    document.body.classList.remove('okg-lock');
+  }catch(e){}
   return снято;
 })()`;
 
