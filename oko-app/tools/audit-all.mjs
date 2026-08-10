@@ -118,6 +118,28 @@ const детектор = (сверху0, конец, ширина) => `(() => {
     if (!(r.width > 3 && r.height > 3 && r.bottom > 0 && r.top < innerHeight)) return false;
     return вКадре(el);
   };
+
+  /* Сколько от элемента ВИДНО после всех обрезаний.
+
+     Для переполнения этого мало — знать, что элемент пересекает своего
+     обрезающего предка. Декоративное свечение на карточке TON выходит за её
+     правый край на 54 пикселя, но у карточки overflow:hidden — за экран не
+     торчит ничего, а детектор рапортовал «переполнение 52». Поэтому берём
+     пересечение прямоугольника со ВСЕМИ обрезающими предками и меряем уже
+     его. */
+  const кадрированный = el => {
+    let r = el.getBoundingClientRect();
+    let l = r.left, t = r.top, rr = r.right, bb = r.bottom;
+    for (let q = el.parentElement; q && q !== document.body; q = q.parentElement) {
+      const cs = getComputedStyle(q);
+      if (cs.overflow === 'visible' && cs.overflowX === 'visible' && cs.overflowY === 'visible') continue;
+      const b = q.getBoundingClientRect();
+      if (b.width < 1 || b.height < 1) continue;
+      l = Math.max(l, b.left); t = Math.max(t, b.top);
+      rr = Math.min(rr, b.right); bb = Math.min(bb, b.bottom);
+    }
+    return { left: l, top: t, right: rr, bottom: bb, width: rr - l, height: bb - t };
+  };
   /* Пальцем до элемента не добраться, если он сам или любой предок выключен
      из попадания. Проверять такое на перекрытие бессмысленно. */
   const мимоПальца = el => {
@@ -177,10 +199,11 @@ const детектор = (сверху0, конец, ширина) => `(() => {
     const свой = el.children.length === 0;
     const txt = (el.textContent || '').trim();
 
-    /* Что-то торчит за правым краем. Считаем только неклипнутое: элемент,
-       обрезанный своим контейнером, за край не вылезает. */
-    if (r.right > VW + 2 && r.width < VW * 3)
-      out.переполнение = Math.max(out.переполнение, Math.round(r.right - VW));
+    /* Что-то торчит за правым краем — по видимой части, а не по бумажной:
+       обрезанный контейнером элемент за край не вылезает. */
+    const вид = кадрированный(el);
+    if (вид.right > VW + 2 && вид.width > 1 && вид.width < VW * 3)
+      out.переполнение = Math.max(out.переполнение, Math.round(вид.right - VW));
 
     if (свой && txt) {
       пусто.push(1);
