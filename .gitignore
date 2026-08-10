@@ -46,3 +46,8 @@ oko-app/tools/*-report.json
 # выводы новых проверок (скрины и json — не в репозиторий)
 oko-app/tools/*-out/
 oko-app/tools/probe-*.json
+
+# временные тесты агентов (_t-*, _v-*) — не в репозиторий
+oko-app/tools/_t-*.mjs
+oko-app/tools/_v-*.mjs
+oko-app/tools/routes.json
