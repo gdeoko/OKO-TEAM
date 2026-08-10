@@ -1,7 +1,7 @@
 <?php
 /**
  * Единый почасовой крон маркетинговых рассылок Культурного центра «Музыкальный Мир»:
- * запуск конкурсов, дедлайны приёма заявок, ВИП-клуб. Каналы: письма всей базе
+ * запуск конкурсов и дедлайны приёма заявок. Каналы: письма всей базе
  * (subscribers + users, дедуп по email) через очередь mail_queue, пост на стену
  * сообщества ВК (core/vk.php -> vk_wall_post), in-app уведомления (notify_user).
  *
@@ -14,8 +14,12 @@
  *     заявок» всей базе + пост ВК + in-app всем пользователям.
  *  2. «Осталось 3 дня до конца приёма» (10:00-11:00 мск): end_date - 3 = сегодня.
  *  3. «Последний день приёма» (9:00-10:00 мск): end_date = сегодня.
- *  4. ВИП-РАССЫЛКА (10 числа месяца, 10:00-11:00 мск): письмо о Клубе постоянных
- *     участников всем, кто ещё не в клубе, + пост ВК. Раз в месяц (ref = Y-m).
+ *
+ * Отдельного письма о ВИП-клубе здесь больше нет: приглашение в клуб идёт третьим
+ * блоком объединённого письма запуска (core/launch_combo.php).
+ *
+ * Пока кампанией месяца управляет пульт запуска (launch_jobs), этот крон вообще
+ * не работает — иначе те же волны выходили бы дважды.
  *
  * Антидубль: таблица mailing_log(kind, ref, sent_at) + UNIQUE(kind, ref) —
  * создаётся мягко, повторный запуск безопасен. Письма — фирменный лейаут
@@ -510,99 +514,14 @@ try {
         }
     }
 
-    /* ============ 4. ВИП-РАССЫЛКА о Клубе (10 числа, 10:00-11:00 мск) ============ */
-    if ($day === 10 && $hour === 10 && !mailing_sent('vip_club', date('Y-m'))) {
-        // Не шлём тем, у кого членство клуба уже активно.
-        $memberEmails = [];
-        try {
-            club_boot();
-            foreach (all(
-                "SELECT u.email FROM users u
-                   JOIN club_members m ON m.user_id = u.id
-                  WHERE m.active = 1 AND m.expires_at IS NOT NULL AND m.expires_at > datetime('now')
-                    AND u.email IS NOT NULL AND u.email <> ''"
-            ) as $m) {
-                $memberEmails[mb_strtolower(trim((string) $m['email']))] = true;
-            }
-        } catch (\Throwable $e) { /* таблицы клуба может не быть */ }
-        $vipRecipients = array_diff_key($recipients, $memberEmails);
+    /* ============ 4. ВИП-РАССЫЛКА о Клубе — УБРАНА НАВСЕГДА ============
+     * Правило владельца (август 2026): отдельного письма о Клубе не существует.
+     * Приглашение в клуб — третий блок объединённого письма запуска
+     * (core/launch_combo.php), и уходит только тем, кто в клубе не состоит.
+     * Этот блок срабатывал 10-го числа в 10:00 — ровно в минуту запуска — и слал
+     * всей базе второе письмо о том же самом плюс пост в ВК.
+     */
 
-        $navy = RM_NAVY; $navy2 = RM_NAVY_2; $gold = RM_GOLD; $muted = RM_MUTED; $card = RM_CARD; $line = RM_LINE;
-        $clubUrl = url('/club');
-        $perkRow = static function (string $title, string $text) use ($navy, $muted): string {
-            return '<tr><td style="padding:10px 0;border-bottom:1px solid ' . RM_LINE . ';">'
-                . '<div style="font-size:15px;font-weight:700;color:' . $navy . ';margin-bottom:2px;">' . h($title) . '</div>'
-                . '<div style="font-size:14px;line-height:1.6;color:' . $muted . ';">' . h($text) . '</div>'
-                . '</td></tr>';
-        };
-        $inner = '<h1 style="margin:0 0 16px;font-family:Georgia,\'Times New Roman\',serif;font-size:26px;line-height:1.25;font-weight:700;color:' . $navy . ';">Клуб постоянных участников</h1>'
-            . '<p style="margin:0 0 14px;">Здравствуйте!</p>'
-            . '<p style="margin:0 0 20px;">Приглашаем Вас в Клуб постоянных участников культурного центра «Музыкальный Мир» — '
-            . 'закрытое сообщество конкурсантов с особыми привилегиями.</p>'
-            // Плашка-акцент на синем градиенте.
-            . '<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin:0 0 20px;border-radius:16px;overflow:hidden;">'
-            . '<tr><td style="background:' . $navy . ';background:linear-gradient(135deg,' . $navy . ' 0%,' . $navy2 . ' 100%);padding:24px 26px;text-align:center;">'
-            . '<div style="font-size:12px;letter-spacing:.2em;text-transform:uppercase;color:rgba(255,255,255,.75);margin-bottom:8px;">Главная привилегия</div>'
-            . '<div style="font-family:Georgia,\'Times New Roman\',serif;font-size:28px;line-height:1.25;font-weight:800;color:' . $gold . ';letter-spacing:.03em;">Скидка 25% на всё</div>'
-            . '</td></tr></table>'
-            // Карточка привилегий.
-            . '<table role="presentation" width="100%" cellpadding="0" cellspacing="0" '
-            . 'style="margin:0 0 8px;background:' . $card . ';border:1px solid ' . $line . ';border-radius:14px;">'
-            . '<tr><td style="padding:18px 24px;">'
-            . '<div style="font-size:12px;letter-spacing:.1em;text-transform:uppercase;color:' . $muted . ';margin-bottom:8px;">Привилегии членов клуба</div>'
-            . '<table role="presentation" width="100%" cellpadding="0" cellspacing="0">'
-            . $perkRow('Скидка 25% на всё', 'Участие в конкурсах и наградная продукция — со скидкой для членов клуба.')
-            . $perkRow('Результаты за 3 дня', 'Итоги Ваших выступлений — в приоритетном порядке, всего за три дня.')
-            . $perkRow('Бесплатный конкурс каждый месяц', 'Ежемесячно один конкурс на выбор — бесплатно.')
-            . '</table>'
-            . '</td></tr></table>'
-            . rm_mail_btn($clubUrl, 'Вступить в клуб')
-            . '<p style="margin:14px 0 0;font-size:13px;color:' . $muted . ';">Подробности и условия членства — на странице клуба.</p>';
-        $html = rm_mail_layout($inner, 'Клуб постоянных участников: скидка 25% на всё, результаты за 3 дня, бесплатный конкурс каждый месяц.');
-
-        // По календарю владельца: массовой почты о клубе нет (персональные письма
-        // уходят каждому новому через 5 дней — cron/drip.php, шаг vip_d5).
-        $queued = 0;
-        $inAppVip = mailings_notify_all('Клуб постоянных участников',
-            'Скидка 25% на всё, результаты за 3 дня, бесплатный конкурс каждый месяц. Вступайте!',
-            url('/club'), 'star');
-
-        $vkOk = false;
-        if (trim((string) cfgv('vk_token', '')) !== '') {
-            $r = vk_wall_post(
-                "КЛУБ ПОСТОЯННЫХ УЧАСТНИКОВ. Для тех, кто выступает с нами регулярно:\n\n"
-                . "- скидка 25% на все конкурсы и наградную продукцию;\n"
-                . "- результаты выступлений за 3 дня;\n"
-                . "- один бесплатный конкурс каждый месяц.\n\n"
-                . 'Вступайте: ' . $clubUrl
-            );
-            $vkOk = !isset($r['error']);
-            if (!$vkOk) {
-                cron_log(JOB, 'vip_club: wall.post ОШИБКА: ' . (string) ($r['error']['error_msg'] ?? '?'));
-            } elseif (function_exists('vk_broadcast')) {
-                $bc = vk_broadcast(
-                    "КЛУБ ПОСТОЯННЫХ УЧАСТНИКОВ. Для тех, кто выступает с нами регулярно:\n\n"
-                    . "- скидка 25% на все конкурсы и наградную продукцию;\n"
-                    . "- результаты выступлений за 3 дня;\n"
-                    . "- один бесплатный конкурс каждый месяц.\n\n"
-                    . 'Вступайте: ' . $clubUrl,
-                    vk_dm_wall_attachment($r));
-                cron_log(JOB, 'vip_club: рассылка подписчикам — ' . ($bc['ok'] ? 'OK id=' . $bc['id'] : 'нет: ' . $bc['error']));
-            }
-        } else {
-            cron_log(JOB, 'vip_club: vk_token не настроен - ВК-пост пропущен');
-        }
-
-        if ($inAppVip > 0 || $vkOk) {
-            mailing_mark('vip_club', date('Y-m'));
-            cron_log(JOB, 'vip_club ' . date('Y-m') . ': in-app ' . $inAppVip
-                . ', ВК ' . ($vkOk ? 'OK' : 'нет') . ' (почта — персонально через drip)');
-        } else {
-            cron_log(JOB, 'vip_club: ни один канал не сработал - без отметки, повторим в следующем месяце в окно');
-        }
-    }
-
-    cron_log(JOB, 'проход завершён');
 } catch (\Throwable $e) {
     cron_log(JOB, 'ОШИБКА: ' . $e->getMessage());
 } finally {

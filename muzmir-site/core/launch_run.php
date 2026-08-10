@@ -639,6 +639,22 @@ function launch_close_intake(): void {
  * планирование и отмена — тут же. После запуска показывается запланированное/выполненное.
  * Все AJAX уходят на ?p=launch (обработчики в admin/launch.php). $postUrl передаётся сам.
  */
+/**
+ * Что показывать в колонке «Конкурс» плана.
+ *
+ * Волны «3 дня», «последний день» и «приём закрыт» — ОБЩИЕ: один пост про все
+ * конкурсы месяца сразу. В задании у них стоит первый конкурс — просто как
+ * держатель строки, и панель честно печатала его название («Мировые Таланты»),
+ * из-за чего казалось, будто напоминание уйдёт только по одному конкурсу.
+ *
+ * Персональные волны (пост ВК по каждому конкурсу, результаты длинного) — там
+ * название конкурса настоящее и его надо показывать.
+ */
+function lp_wave_scope(string $wave, string $compName): string {
+    if (in_array($wave, ['d3', 'last', 'closed', 'launch_mail'], true)) return 'все конкурсы месяца';
+    return $compName !== '' ? $compName : '—';
+}
+
 function launch_panel_html(): string {
     launch_migrate();
     $openComps = launch_open_comps();
@@ -711,7 +727,7 @@ function launch_panel_html(): string {
           <?php foreach ($sched as $j): ?>
             <tr><td><b><?= h(date('d.m.Y H:i', strtotime((string) $j['run_at']))) ?></b></td>
               <td><?= h($waveShort[$j['wave']] ?? $j['wave']) ?></td>
-              <td><?= h((string) ($j['comp'] ?? '—')) ?></td>
+              <td><?= h(lp_wave_scope((string) $j['wave'], (string) ($j['comp'] ?? ''))) ?></td>
               <td class="small muted"><?= h((string) $j['channels']) ?></td></tr>
           <?php endforeach; ?>
         </tbody></table>
@@ -726,7 +742,7 @@ function launch_panel_html(): string {
           <?php foreach (array_slice(array_reverse($doneJobs), 0, 30) as $j): ?>
             <tr><td><?= h(date('d.m H:i', strtotime((string) ($j['done_at'] ?: $j['run_at'])))) ?></td>
               <td><?= h($waveShort[$j['wave']] ?? $j['wave']) ?></td>
-              <td><?= h((string) ($j['comp'] ?? '—')) ?></td></tr>
+              <td><?= h(lp_wave_scope((string) $j['wave'], (string) ($j['comp'] ?? ''))) ?></td></tr>
           <?php endforeach; ?>
         </tbody></table>
       </div>
@@ -753,16 +769,39 @@ function launch_panel_html(): string {
 
       <div class="card">
         <h3 style="margin:0 0 4px">Тексты постов и писем</h3>
-        <p class="small muted" style="margin:0 0 14px">Всё уже составлено по эталонам — правьте и сохраняйте. Изменённый текст уйдёт при запуске.</p>
+        <p class="small muted" style="margin:0 0 14px">Всё уже составлено по эталонам — правьте и сохраняйте. Опубликованные посты из списка убираются: изменить вышедший пост можно только во ВКонтакте. Письмо правится и во время рассылки.</p>
 
-        <?php $rep = (int) $openComps[0]['id']; $sib = $openComps; ?>
+        <?php
+        $rep = (int) $openComps[0]['id']; $sib = $openComps;
+
+        // УЖЕ ОПУБЛИКОВАННОЕ НЕ РЕДАКТИРУЕТСЯ.
+        // Пост, который вчера вышел на стену сообщества, правкой текста в пульте
+        // не изменить — редактор для него только сбивает с толку. Показываем
+        // редакторы лишь тех волн, которые ещё впереди.
+        $firedWaves = [];
+        try {
+            foreach (all("SELECT DISTINCT wave FROM launch_jobs WHERE status IN ('done','running')
+                           AND strftime('%Y-%m', run_at) = ?", [date('Y-m')]) as $w) {
+                $firedWaves[(string) $w['wave']] = true;
+            }
+        } catch (\Throwable $e) {}
+        $vkFired = isset($firedWaves['launch_vk']);
+        ?>
+        <?php if (!$vkFired): ?>
         <div class="lp2-group-t">Посты ВКонтакте — отдельный пост по каждому конкурсу (стена + сторис + рассылка в личку по всем)</div>
         <?php foreach ($openComps as $c):
             echo $editor((int) $c['id'], 'launch', 'Пост ВК «' . $c['name'] . '»',
                 launch_wave_text($c, 'launch', [$c]), $coverDisp($c, 'launch', [$c]), false);
         endforeach; ?>
+        <?php else: ?>
+        <div class="lp2-group-t">Посты ВКонтакте — опубликованы</div>
+        <p class="small muted" style="margin:-4px 0 14px">Посты уже вышли на стену сообщества <?= h(date('d.m.Y')) ?>, править их здесь нельзя —
+        правка в пульте меняет только то, что ещё не опубликовано. Изменить вышедший пост можно прямо во ВКонтакте.</p>
+        <?php endif; ?>
 
-        <div class="lp2-group-t" style="margin-top:18px">Массовые письма — редактируются ВИЗУАЛЬНО прямо в письме (текст, кнопки, картинки), с количеством в день (уходят при запуске)</div>
+        <div class="lp2-group-t" style="margin-top:18px">Массовое письмо — правится в любой момент, в том числе во время рассылки</div>
+        <p class="small muted" style="margin:-4px 0 14px">Письмо собирается в момент отправки каждому человеку, поэтому исправленный текст
+        уходит всем, кому письмо ещё не доставлено — ждать следующего месяца не нужно. Тем, кто уже получил, письмо не меняется.</p>
         <?php
         // Три email-блока с ВИЗУАЛЬНЫМ редактором (contenteditable, как в «Отправках»):
         // общая база (200/день), ВИП-клуб (100/день), личный кабинет (100/день).
@@ -823,9 +862,10 @@ function launch_panel_html(): string {
         <div class="lp2-group-t" style="margin-top:18px">Общие посты по всем конкурсам (афиша — авто-композит со всеми афишами и надписью, можно заменить)</div>
         <?php
         $repComp = launch_norm_comp($openComps[0]);
-        echo $editor($rep, 'd3', 'Осталось 3 дня (22-е, 09:00)', launch_wave_text($repComp, 'd3', $sib), $coverDisp($repComp, 'd3', $sib), false);
-        echo $editor($rep, 'last', 'Последний день (25-е, 09:00)', launch_wave_text($repComp, 'last', $sib), $coverDisp($repComp, 'last', $sib), false);
-        echo $editor($rep, 'closed', 'Приём закрыт (25-е, 18:00)', launch_wave_text($repComp, 'closed', $sib), $coverDisp($repComp, 'closed', $sib), false);
+        // Каждый из трёх — один общий пост про ВСЕ конкурсы месяца. Отработавшие прячем.
+        if (!isset($firedWaves['d3']))     echo $editor($rep, 'd3', 'Осталось 3 дня (22-е, 09:00) — общий пост по всем конкурсам', launch_wave_text($repComp, 'd3', $sib), $coverDisp($repComp, 'd3', $sib), false);
+        if (!isset($firedWaves['last']))   echo $editor($rep, 'last', 'Последний день (25-е, 09:00) — общий пост по всем конкурсам', launch_wave_text($repComp, 'last', $sib), $coverDisp($repComp, 'last', $sib), false);
+        if (!isset($firedWaves['closed'])) echo $editor($rep, 'closed', 'Приём закрыт (25-е, 18:00) — общий пост по всем конкурсам', launch_wave_text($repComp, 'closed', $sib), $coverDisp($repComp, 'closed', $sib), false);
         ?>
 
         <?php $longComps = array_values(array_filter($openComps, fn($c) => function_exists('vkt_is_long') && vkt_is_long($c))); ?>

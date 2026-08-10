@@ -378,8 +378,8 @@ function nl_ramp_curve(): array {
     ]; // с 15-го дня и далее — потолок (nl_ramp_peak)
 }
 
-/** Абсолютный безопасный потолок массовых на один ящик news@ в сутки (по умолчанию 300). */
-function nl_ramp_peak(): int { return (int) cfgv('mail_daily_max', 300); }
+/** Абсолютный потолок массовых в сутки — сумма дневных лимитов ящиков пула. */
+function nl_ramp_peak(): int { return nl_daily_cap(); }
 
 /**
  * Дневное распределение массовой рассылки по типам кампаний (в успешных письмах/день).
@@ -434,13 +434,14 @@ function nl_campaign_day(): int {
 
 /** Дневной потолок массовых с учётом прогрева. */
 function nl_daily_cap(): int {
-    $day = nl_campaign_day();
-    if ($day === 0) {                          // план не запущен — ручной лимит
-        return max(1, (int) cfgv('mail_daily_limit', 130));
-    }
-    $curve = nl_ramp_curve();
-    $cap = $day >= 15 ? nl_ramp_peak() : ($curve[$day] ?? nl_ramp_peak());
-    return min($cap, nl_ramp_peak());
+    // ПРОГРЕВА БОЛЬШЕ НЕТ (правило владельца, август 2026): полный темп с первого дня.
+    // Дневной потолок = сумма лимитов ящиков пула, по 200 на каждый → 400 в день.
+    // Так база из 8200 адресов проходится за 21 рабочий день, а не за два месяца.
+    // Ровность обеспечивает не урезанная квота, а пауза 2,5 минуты на ящик
+    // (nl_box_gap_sec) — письма идут ниточкой, а не пачками.
+    $boxes = function_exists('mail_fallback_accounts') ? count(mail_fallback_accounts([], 'bulk')) : 0;
+    if ($boxes < 1) $boxes = 1;
+    return $boxes * nl_per_box_cap();
 }
 
 /**
@@ -481,14 +482,21 @@ function nl_failure_kind(string $err): string {
                'network', 'refused'] as $w) {
         if (mb_strpos($e, $w) !== false) return 'soft';
     }
-    // Явный отказ по адресату.
+    // ГОЛЫЙ КОД 550 — НЕ ДОКАЗАТЕЛЬСТВО. Тем же 550 почтовик отвечает и на «такого
+    // ящика нет», и на «мы не принимаем от тебя рассылку»: Gmail именно так рубит
+    // наш собственный отправляющий аккаунт («DATA failed: 550»). Раз ошибка названа
+    // вместе с ИМЕНЕМ НАШЕГО SMTP-сервера — виноваты мы, а не человек.
+    foreach (['smtp.gmail.com', 'smtp.yandex.ru', 'smtp.mail.ru', 'data failed'] as $w) {
+        if (mb_strpos($e, $w) !== false) return 'soft';
+    }
+    // Явный отказ по адресату — только по недвусмысленным формулировкам и кодам 5.1.x.
     foreach (['no such user', 'user unknown', 'unknown user', 'mailbox not found',
               'mailbox unavailable', 'does not exist', 'no mailbox', 'recipient rejected',
               'invalid recipient', 'address rejected', 'некорректный адрес',
-              '550', '551', '553', '5.1.1', '5.1.0', '5.1.2'] as $w) {
+              'нет такого', 'не существует', '5.1.1', '5.1.0', '5.1.2', '5.1.3'] as $w) {
         if (mb_strpos($e, $w) !== false) return 'hard';
     }
-    return 'soft';   // сомнение — в пользу адреса
+    return 'soft';   // сомнение — всегда в пользу человека: живой адрес дороже квоты
 }
 
 /**
@@ -586,6 +594,92 @@ function nl_bulk_window_open(?\DateTime $at = null): array {
 /** Суточный лимит массовых НА ОДИН ящик (чтобы не упереться в лимит провайдера). */
 function nl_per_box_cap(): int { return max(1, (int) setting('nl_per_box_cap', '200')); }
 
+/**
+ * Пауза между двумя письмами С ОДНОГО ящика, в секундах.
+ *
+ * 150 секунд = 2,5 минуты (правило владельца). За рабочее окно 9:00-18:00 это
+ * 540 / 2,5 = 216 слотов на ящик — с запасом покрывает дневной лимит 200.
+ * Ровный темп важнее скорости: письма, уходящие пачкой, почтовики режут как спам.
+ */
+function nl_box_gap_sec(): int { return max(5, (int) setting('nl_box_gap_sec', '150')); }
+
+/** Метка времени последней успешной отправки с ящика (unix, 0 — сегодня ещё не слал). */
+function nl_box_last_sent_ts(string $box): int {
+    $box = mb_strtolower(trim($box));
+    if ($box === '') return 0;
+    $v = (string) setting('nl_box_last:' . $box, '');
+    $ts = $v !== '' ? (int) $v : 0;
+    // Отметка живёт в настройках: это дешевле, чем каждую минуту искать MAX(sent_at)
+    // по очереди в сотни тысяч строк.
+    return $ts;
+}
+
+/** Отметить, что ящик только что отправил письмо (запускает его паузу). */
+function nl_box_touch(string $box): void {
+    $box = mb_strtolower(trim($box));
+    if ($box !== '') set_setting('nl_box_last:' . $box, (string) time());
+}
+
+/**
+ * ПОЛНОЕ УДАЛЕНИЕ ЧЕЛОВЕКА ПО НЕДОСТАВКЕ (правило владельца, август 2026).
+ *
+ * Если ящик не существует или заблокирован — адрес больше никогда не примет письмо.
+ * Держать его в базе бессмысленно: он съедает место в дневной квоте и портит
+ * репутацию отправителя. Поэтому вычищаем везде: подписка, очередь писем,
+ * учётная запись с кабинетом.
+ *
+ * ВАЖНО: сюда попадают ТОЛЬКО отказы адресата (nl_failure_kind() === 'hard').
+ * Наш собственный сбой SMTP человека не трогает — письмо просто вернётся в очередь.
+ *
+ * Учётную запись не удаляем, если за человеком числятся заявки или заказы: это
+ * живая история участия, её нельзя стирать из-за сломанной почты. Такой аккаунт
+ * только отвязывается от рассылок.
+ *
+ * @return bool true, если человек действительно вычищен
+ */
+function nl_purge_person(string $email, string $reason = 'недоставка'): bool {
+    $email = mb_strtolower(trim($email));
+    if ($email === '') return false;
+    $hard = false;
+    try {
+        // 1. Подписка — вон.
+        $sub = one("SELECT id FROM subscribers WHERE LOWER(email)=?", [$email]);
+        if ($sub) { q("DELETE FROM subscribers WHERE id=?", [(int) $sub['id']]); $hard = true; }
+
+        // 2. Неотправленные письма этому адресу — снять с очереди.
+        q("UPDATE mail_queue SET status='cancelled', error=? WHERE LOWER(to_email)=? AND status IN ('queued','paused')",
+          [mb_substr('снято: ' . $reason, 0, 300), $email]);
+
+        // 3. Учётная запись с кабинетом.
+        $u = one("SELECT id, role FROM users WHERE LOWER(email)=?", [$email]);
+        if ($u) {
+            $uid  = (int) $u['id'];
+            $role = (string) ($u['role'] ?? 'user');
+            $staff = in_array($role, ['owner', 'admin', 'orgcom', 'moderator', 'jury', 'designer'], true);
+            $apps  = (int) (scalar("SELECT COUNT(*) FROM applications WHERE user_id=?", [$uid]) ?? 0);
+            $ords  = 0;
+            try { $ords = (int) (scalar("SELECT COUNT(*) FROM award_orders WHERE user_id=?", [$uid]) ?? 0); } catch (\Throwable $e) {}
+            if ($staff || $apps > 0 || $ords > 0) {
+                // История участия дороже почты: аккаунт оставляем, но от рассылок отвязываем.
+                try { update('users', ['notify_email' => 0], 'id=:id', ['id' => $uid]); } catch (\Throwable $e) {}
+                nl_log("purge: $email — аккаунт сохранён (заявок $apps, заказов $ords, роль $role), отписан от рассылок");
+            } else {
+                foreach (['notifications' => 'user_id', 'sessions' => 'user_id', 'club_members' => 'user_id'] as $t => $col) {
+                    try { q("DELETE FROM $t WHERE $col=?", [$uid]); } catch (\Throwable $e) {}
+                }
+                q("DELETE FROM users WHERE id=?", [$uid]);
+                $hard = true;
+                nl_log("purge: $email — учётная запись и кабинет удалены ($reason)");
+            }
+        }
+    } catch (\Throwable $e) {
+        nl_log('purge: ошибка на ' . $email . ' — ' . $e->getMessage());
+        return false;
+    }
+    if ($hard) nl_log("purge: $email вычищен из базы ($reason)");
+    return $hard;
+}
+
 /** Сколько массовых ушло сегодня с конкретного ящика. */
 function nl_box_sent_today(string $box): int {
     if ($box === '') return 0;
@@ -599,6 +693,87 @@ function nl_box_sent_today(string $box): int {
     } catch (\Throwable $e) { return 0; }
 }
 
+/**
+ * СБОРКА ПЕРСОНАЛЬНОГО ПИСЬМА В МОМЕНТ ОТПРАВКИ.
+ *
+ * В очереди у таких писем пустое тело и «рецепт» в колонке build:
+ *   {"kind":"combo","nlid":12}
+ *
+ * Что это даёт:
+ *   • текст, поправленный в пульте запуска, уходит всем, кому письмо ещё не ушло;
+ *   • блоки «кабинет» и «клуб» решаются по СЕГОДНЯШНЕМУ состоянию человека:
+ *     вошёл в кабинет за эту неделю — блок с паролем ему уже не нужен;
+ *   • временный пароль рождается в секунду отправки, поэтому до самого письма
+ *     человек спокойно пользуется прежним паролем;
+ *   • очередь весит килобайты вместо сотен мегабайт вёрстки.
+ *
+ * @return array{subject:string,body:string,after:?callable}|null null — собрать не вышло
+ */
+function nl_build_body(array $row): ?array {
+    $spec = json_decode((string) ($row['build'] ?? ''), true);
+    if (!is_array($spec)) return null;
+    $kind  = (string) ($spec['kind'] ?? '');
+    $email = mb_strtolower(trim((string) $row['to_email']));
+    if ($email === '') return null;
+
+    if ($kind !== 'combo') return null;
+
+    foreach (['launch_combo', 'person_name', 'kabinet_onboarding', 'mail_campaigns'] as $m) {
+        $p = BASE_PATH . '/core/' . $m . '.php';
+        if (is_file($p)) require_once $p;
+    }
+    if (!function_exists('launch_combo_inner')) return null;
+
+    // Состояние человека НА СЕЙЧАС.
+    $u = one("SELECT id, full_name, last_login FROM users
+               WHERE LOWER(email) = ? AND COALESCE(blocked,0) = 0
+                 AND COALESCE(role,'user') NOT IN ('owner','admin','orgcom','moderator','jury','designer')",
+             [$email]);
+    $needCabinet = $u && trim((string) ($u['last_login'] ?? '')) === '';
+
+    $inClub = false;
+    try {
+        $inClub = (bool) one(
+            "SELECT 1 FROM club_members m JOIN users u2 ON u2.id = m.user_id
+              WHERE LOWER(u2.email) = ? AND COALESCE(m.active,1) = 1
+                AND (m.expires_at IS NULL OR m.expires_at = '' OR m.expires_at > datetime('now'))",
+            [$email]);
+    } catch (\Throwable $e) {}
+    $needVip = !$inClub;
+
+    // Имя: своё, иначе распознанное по адресу.
+    $stored = trim((string) ($row['to_name'] ?? '')) ?: trim((string) ($u['full_name'] ?? ''));
+    $name = function_exists('person_greeting_name') ? person_greeting_name($email, $stored) : $stored;
+
+    // Пароль — только если блок кабинета нужен. Хеш применим ПОСЛЕ отправки.
+    $pass = ''; $after = null;
+    if ($needCabinet && function_exists('kabinet_gen_password')) {
+        $pass = kabinet_gen_password();
+        $hash = password_hash($pass, PASSWORD_DEFAULT);
+        $uid  = (int) $u['id'];
+        $after = static function () use ($uid, $hash): void {
+            update('users', ['password_hash' => $hash], 'id=:id', ['id' => $uid]);
+        };
+    }
+
+    $inner = launch_combo_inner($needCabinet, $needVip, $email, $name, $pass);
+
+    $nid   = (int) ($spec['nlid'] ?? 0);
+    $token = $nid ? nl_track_token($nid) : '';
+    $pixel = $token !== '' ? nl_open_pixel($token) : '';
+    if ($token !== '') $inner = nl_rewrite_links($inner, $token);
+
+    [$unsubToken, ] = nl_ensure_subscriber($email, $name, 'newsletter');
+    $unsub = rtrim((string) cfgv('base_url'), '/') . '/api/v1/unsubscribe.php?token=' . urlencode((string) $unsubToken);
+
+    $body = nl_wrap_email($inner, $unsub, $pixel, mb_substr(trim(strip_tags($inner)), 0, 120), ['vip' => !$needVip]);
+
+    // Тема тоже берётся свежая — её тоже правят в пульте.
+    $subject = function_exists('launch_combo_subject') ? launch_combo_subject() : (string) $row['subject'];
+
+    return ['subject' => $subject, 'body' => $body, 'after' => $after];
+}
+
 function newsletter_process_queue(int $limit): int {
     $dailyLimit = nl_daily_cap();
     $gap        = max(0, (int) cfgv('mail_send_gap', 30));   // антибан-пауза для МАССОВЫХ
@@ -610,6 +785,9 @@ function newsletter_process_queue(int $limit): int {
     // sent_via — каким ящиком реально ушло письмо. Без этой отметки нельзя считать
     // суточный лимит на КАЖДЫЙ ящик и раскладывать нагрузку между ними поровну.
     try { db()->exec("ALTER TABLE mail_queue ADD COLUMN sent_via TEXT DEFAULT ''"); } catch (\Throwable $e) {}
+    // build — «рецепт» письма для персональных волн: тело собирается в момент
+    // отправки, а не при постановке (см. nl_build_body ниже).
+    try { db()->exec("ALTER TABLE mail_queue ADD COLUMN build TEXT"); } catch (\Throwable $e) {}
     $nowTs = date('Y-m-d H:i:s');
 
     // Отправка одного письма очереди с обновлением статуса.
@@ -619,6 +797,22 @@ function newsletter_process_queue(int $limit): int {
         $opt = [];
         if (!empty($row['attach'])) $opt['attach'] = (string) $row['attach'];
         if ($account) $opt['account'] = $account;
+
+        // ТЕЛО ПЕРСОНАЛЬНОГО ПИСЬМА СОБИРАЕТСЯ ЗДЕСЬ, В СЕКУНДУ ОТПРАВКИ.
+        // Поэтому текст, поправленный в пульте, догоняет всех, кому ещё не ушло,
+        // а временный пароль выдаётся ровно тому, кто письмо сейчас получит.
+        $afterSend = null;                      // что сделать ПОСЛЕ успешной отправки
+        if (trim((string) ($row['build'] ?? '')) !== '') {
+            $built = nl_build_body($row);
+            if ($built === null) {
+                // Собрать не удалось — письмо не теряем, попробуем в следующий раз.
+                update('mail_queue', ['error' => 'сборка письма не удалась, попробуем позже'], 'id=:id', ['id' => $id]);
+                return false;
+            }
+            $row['subject'] = $built['subject'];
+            $row['body']    = $built['body'];
+            $afterSend      = $built['after'] ?? null;
+        }
         // ПРИОРИТЕТ ОБЯЗАН ДОЙТИ ДО mail_send_failover.
         // Внутри него пул письма считается заново: mail_pool_for(['priority'=>…,'subject'=>…]).
         // Без priority он всегда видел 0 и определял пул ПО ТЕМЕ. Тема волны запуска —
@@ -646,6 +840,8 @@ function newsletter_process_queue(int $limit): int {
             // Эту отметку читает nl_box_sent_today() для лимита на каждый ящик.
             $via = $sw !== '' ? $sw : (string) ($account['user'] ?? '');
             update('mail_queue', ['status' => 'sent', 'sent_at' => date('Y-m-d H:i:s'), 'sent_via' => mb_strtolower($via), 'tries' => (int) $row['tries'] + 1], 'id=:id', ['id' => $id]);
+            // Пароль меняем ТОЛЬКО теперь: письмо с ним уже у человека.
+            if (is_callable($afterSend)) { try { $afterSend(); } catch (\Throwable $e) { nl_log('post-send #' . $id . ': ' . $e->getMessage()); } }
             if (!empty($row['newsletter_id'])) q("UPDATE newsletters SET stats_sent = stats_sent + 1 WHERE id = ?", [(int) $row['newsletter_id']]);
         } else {
             $tries = (int) $row['tries'] + 1;
@@ -713,22 +909,52 @@ function newsletter_process_queue(int $limit): int {
         if ($nStale > 0) nl_log("process: снято писем прошлых волн запуска — $nStale (их получатели войдут в волну текущего месяца)");
     } catch (\Throwable $e) {}
 
+    // ── ТЕМП ОТПРАВКИ ────────────────────────────────────────────────────────
+    // Правило владельца (август 2026): 400 УСПЕШНЫХ писем в день — по 200 с каждого
+    // из двух ящиков, ровным темпом одно письмо в 2,5 минуты с ящика, с 9:00 до 18:00.
+    // 9 часов = 540 минут; 540 / 2,5 = 216 слотов на ящик — с запасом на 200 писем.
+    //
+    // Темп держится НЕ паузой внутри прогона (крон идёт раз в минуту, спать в нём
+    // нельзя — заблокирует и личные письма), а отметкой времени последней отправки
+    // каждого ящика: ящик участвует в прогоне, только если с его прошлого письма
+    // прошло достаточно времени.
+    //
+    // Считаем только УСПЕШНЫЕ. Если письмо не ушло, слот ящика не тратится: берём
+    // следующего получателя тут же, в этом же прогоне.
     $globalRemaining = $dailyLimit - nl_bulk_sent_today();
     if ($globalRemaining > 0) {
-        $split = nl_daily_split();                       // ['konkurs'=>,'vip'=>,'kabinet'=>]
-        $peak  = max(1, nl_ramp_peak());                 // потолок (300)
-        $scale = min(1.0, $dailyLimit / $peak);          // прогрев: доля от полного плана
-        // Остаток квоты по каждому типу на сегодня (масштабирован прогревом).
+        $split = nl_daily_split();
         $typeLeft = [];
         foreach (['konkurs', 'vip', 'kabinet'] as $t) {
-            $cap = (int) floor(($split[$t] ?? 0) * $scale);
-            if (($split[$t] ?? 0) > 0 && $cap < 1) $cap = 1;         // не «зануляем» тип на раннем прогреве
-            $typeLeft[$t] = max(0, $cap - nl_bulk_sent_today_type($t));
+            $typeLeft[$t] = max(0, (int) ($split[$t] ?? 0) - nl_bulk_sent_today_type($t));
         }
         $allowed = array_keys(array_filter($typeLeft, fn($n) => $n > 0));
-        $budget  = min(max(1, $perRun), $globalRemaining);
-        if ($allowed) {
+
+        // Ящики: у каждого свой дневной остаток и свой слот по времени.
+        $boxes   = function_exists('mail_fallback_accounts') ? mail_fallback_accounts([], 'bulk') : [];
+        $gapSec  = nl_box_gap_sec();
+        $ready   = [];      // индексы ящиков, которым сейчас можно отправлять
+        foreach ($boxes as $bi => $b) {
+            $u = mb_strtolower((string) ($b['user'] ?? ''));
+            if ($u === '') continue;
+            if (nl_box_sent_today($u) >= nl_per_box_cap()) continue;          // дневной лимит ящика выбран
+            // Ящик, который подряд отказывает (почтовик срезал его как спамера),
+            // слот не получает: каждая попытка с него — выброшенные секунды и лишний
+            // повод для почтовика. Первый успешный ответ обнуляет счётчик сам.
+            if (function_exists('mail_account_penalty') && mail_account_penalty($b)) continue;
+            $last = nl_box_last_sent_ts($u);
+            if ($last > 0 && (time() - $last) < $gapSec) continue;            // слот ещё не подошёл
+            $ready[$bi] = $u;
+        }
+
+        if (!$allowed) {
+            nl_log('process: суточные квоты всех типов (konkurs/vip/kabinet) на сегодня исчерпаны');
+        } elseif (!$ready) {
+            // Это нормальное состояние между слотами — в лог не шумим каждую минуту.
+        } else {
             $ph   = implode(',', array_fill(0, count($allowed), '?'));
+            // Берём с запасом: часть писем может не уйти (мёртвые адреса), и тогда
+            // мы сразу пробуем следующее тем же ящиком, не теряя слот.
             $bulk = all(
                 "SELECT q.*, COALESCE(q.campaign_type, n.campaign_type, 'konkurs') AS ctype
                    FROM mail_queue q LEFT JOIN newsletters n ON n.id = q.newsletter_id
@@ -736,43 +962,45 @@ function newsletter_process_queue(int $limit): int {
                     AND (q.scheduled_at IS NULL OR q.scheduled_at='' OR q.scheduled_at<=?)
                     AND COALESCE(q.campaign_type, n.campaign_type, 'konkurs') IN ($ph)
                   ORDER BY q.id ASC LIMIT ?",
-                array_merge([$nowTs], $allowed, [max(1, $budget * 4)])
+                array_merge([$nowTs], $allowed, [max(20, count($ready) * 20)])
             );
-            // Ящики bulk-пула и их остаток на сегодня: раскладываем нагрузку поровну.
-            $boxes = function_exists('mail_fallback_accounts') ? mail_fallback_accounts([], 'bulk') : [];
-            $boxLeft = [];
-            foreach ($boxes as $bi => $b) {
-                $u = mb_strtolower((string) ($b['user'] ?? ''));
-                if ($u !== '') $boxLeft[$bi] = max(0, nl_per_box_cap() - nl_box_sent_today($u));
-            }
-            if ($boxes && array_sum($boxLeft) <= 0) {
-                nl_log('process: суточный лимит исчерпан на ВСЕХ ящиках пула (по ' . nl_per_box_cap() . ' на ящик)');
-                $bulk = [];
-            }
 
-            $i = 0; $bulkSent = 0;
-            foreach ($bulk as $row) {
-                if ($bulkSent >= $budget) break;                      // не больше бюджета за один прогон
-                $ct = (string) ($row['ctype'] ?? 'konkurs');
-                if (($typeLeft[$ct] ?? 0) <= 0) continue;             // квота типа исчерпана
-
-                // Круговая выборка ящика: берём тот, у кого больше остаток на сегодня.
-                $pick = null;
-                if ($boxes) {
-                    arsort($boxLeft);
-                    foreach ($boxLeft as $bi => $left) { if ($left > 0) { $pick = $bi; break; } }
-                    if ($pick === null) { nl_log('process: свободных ящиков не осталось'); break; }
+            $bulkSent = 0;
+            foreach ($ready as $bi => $boxUser) {
+                if ($globalRemaining - $bulkSent <= 0) break;
+                $acc  = $boxes[$bi];
+                $done = false;
+                // Один УСПЕШНЫЙ отправленный на слот ящика. Неудачные не считаются:
+                // мёртвый адрес выводится из базы, и мы сразу берём следующего.
+                foreach ($bulk as $k => $row) {
+                    if ($done) break;
+                    if (!isset($bulk[$k])) continue;
+                    $ct = (string) ($row['ctype'] ?? 'konkurs');
+                    if (($typeLeft[$ct] ?? 0) <= 0) continue;
+                    unset($bulk[$k]);                       // письмо занято этим прогоном
+                    if ($sendRow($row, $acc)) {
+                        $sent++; $bulkSent++; $typeLeft[$ct]--;
+                        // Слот ставим ТОМУ ящику, который реально отправил. Если выбранный
+                        // отказал и сработала автозамена, паузу должен получить заменивший,
+                        // иначе он отправит два письма подряд без выдержки.
+                        $really = function_exists('mail_switched') ? mb_strtolower(mail_switched()) : '';
+                        nl_box_touch($really !== '' ? $really : $boxUser);
+                        $done = true;
+                    } else {
+                        // Не ушло. Разбираем причину сразу: отказ адресата — человека
+                        // вычищаем отовсюду и идём к следующему, наш сбой — письмо
+                        // вернётся в очередь позже (nl_prune_failed).
+                        $why = function_exists('mail_last_error') ? mail_last_error() : '';
+                        if (nl_failure_kind($why) === 'hard') {
+                            nl_purge_person((string) $row['to_email'], 'отказ адресата: ' . mb_substr($why, 0, 120));
+                        }
+                    }
                 }
-                $acc = $pick !== null ? $boxes[$pick] : $route($row);
-
-                if ($i++ > 0 && $gap > 0) sleep($gap);
-                if ($sendRow($row, $acc)) {
-                    $sent++; $bulkSent++; $typeLeft[$ct]--;
-                    if ($pick !== null) $boxLeft[$pick]--;
-                }
             }
-        } else {
-            nl_log('process: суточные квоты всех типов (konkurs/vip/kabinet) на сегодня исчерпаны');
+            if ($bulkSent > 0) {
+                nl_log('process: отправлено массовых за прогон — ' . $bulkSent
+                     . ' (ящики: ' . implode(', ', $ready) . ')');
+            }
         }
     } else {
         nl_log('process: дневной лимит массовых исчерпан (транзакционные отправлены)');

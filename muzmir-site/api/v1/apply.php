@@ -199,13 +199,34 @@ $uid = current_user()['id'] ?? null;
 // Гость подаёт заявку — авто-создаём профиль (без пароля), логиним, отправляем письмо с
 // одноразовой ссылкой для установки пароля. Учаcтник сразу попадёт в кабинет.
 if (!$uid && $email !== '') {
-    $existing = one("SELECT * FROM users WHERE email=?", [$email]);
+    // КАБИНЕТ ПОЯВЛЯЕТСЯ СРАЗУ И С ПАРОЛЕМ.
+    // Раньше учётная запись создавалась без пароля, и человеку приходило письмо
+    // «установите пароль» — лишний шаг, на котором часть людей отваливалась.
+    // Теперь выдаём готовый логин и временный пароль тем же блоком, что и в
+    // письме запуска: зашёл — и весь кабинет доступен, а имя, фото, пароль и
+    // подтверждение почты меняются уже внутри.
+    foreach (['kabinet_onboarding', 'person_name'] as $__m) {
+        $__p = BASE_PATH . '/core/' . $__m . '.php';
+        if (is_file($__p)) require_once $__p;
+    }
+    $existing = one("SELECT * FROM users WHERE LOWER(email)=?", [mb_strtolower($email)]);
+    $freshPass = '';
     if ($existing) {
         $uid = (int) $existing['id'];
+        // Аккаунт есть, но человек ни разу не входил — значит доступа у него на руках нет.
+        // Выдаём временный пароль: своим он ещё не пользовался, терять нечего.
+        $neverLoggedIn = trim((string) ($existing['last_login'] ?? '')) === '';
+        $noPass = trim((string) ($existing['password_hash'] ?? '')) === '';
+        if (($neverLoggedIn || $noPass) && function_exists('kabinet_gen_password')) {
+            $freshPass = kabinet_gen_password();
+            update('users', ['password_hash' => password_hash($freshPass, PASSWORD_DEFAULT)], 'id=:id', ['id' => $uid]);
+        }
+        if (function_exists('login_user')) login_user($uid);
     } else {
+        $freshPass = function_exists('kabinet_gen_password') ? kabinet_gen_password() : bin2hex(random_bytes(4));
         $uid = (int) insert('users', [
             'email'         => $email,
-            'password_hash' => '',
+            'password_hash' => password_hash($freshPass, PASSWORD_DEFAULT),
             'full_name'     => $full_name,
             'phone'         => $phone,
             'role'          => 'user',
@@ -213,23 +234,33 @@ if (!$uid && $email !== '') {
             'category'      => 'participant',
         ]);
         if (function_exists('login_user')) login_user($uid);
-        if (function_exists('mail_queue')) {
-            $link = rtrim((string) cfgv('base_url'), '/') . '/cabinet#settings';
-            $html = function_exists('mail_template')
-                ? mail_template('generic', [
-                    'title'     => 'Ваш личный кабинет создан',
-                    'name'      => $full_name,
-                    'message'   => 'Мы создали для Вас личный кабинет на сайте центра — там Ваши заявки, статусы, оплаты и дипломы. Осталось установить пароль для входа.',
-                    'cta_url'   => $link,
-                    'cta_text'  => 'Установить пароль',
-                    'preheader' => 'Личный кабинет создан — установите пароль для входа.',
-                  ])
-                : '<p>Здравствуйте, ' . h($full_name) . '.</p><p>Мы создали для Вас личный кабинет — установите пароль для входа в разделе настроек кабинета на сайте центра.</p>';
-            mail_queue($email, $full_name, 'Ваш кабинет создан — Культурного центра «Музыкальный Мир»', $html);
-        }
         audit('auto_register_on_apply', 'user', $uid, ['email' => $email]);
     }
+
+    // Отдельное письмо о кабинете — только если пароль реально выдан.
+    // У того, кто уже пользуется кабинетом, ничего не меняется и письма нет.
+    if ($freshPass !== '' && function_exists('mail_queue')) {
+        $inner = function_exists('kabinet_onboarding_inner') ? kabinet_onboarding_inner() : '';
+        if ($inner !== '') {
+            $inner = str_replace(
+                ['{{name}}', '{{login}}', '{{password}}'],
+                [h($full_name !== '' ? $full_name : 'участник'), h($email), h($freshPass)],
+                $inner
+            );
+            $html = function_exists('nl_wrap_email')
+                ? nl_wrap_email($inner, '', '', 'Личный кабинет создан: логин и пароль внутри')
+                : $inner;
+        } else {
+            $link = rtrim((string) cfgv('base_url'), '/') . '/login';
+            $html = '<p>Здравствуйте, ' . h($full_name) . '.</p>'
+                  . '<p>Для Вас создан личный кабинет на сайте центра — там заявки, статусы, оплаты и дипломы.</p>'
+                  . '<p>Логин: <b>' . h($email) . '</b><br>Временный пароль: <b>' . h($freshPass) . '</b></p>'
+                  . '<p><a href="' . h($link) . '">Войти в кабинет</a>. Пароль, имя и фото можно поменять в настройках кабинета.</p>';
+        }
+        mail_queue($email, $full_name, 'Ваш личный кабинет создан — логин и пароль внутри', $html);
+    }
 }
+
 $numbers = [];
 $appIds  = [];
 $appMap  = []; // number -> comp_name

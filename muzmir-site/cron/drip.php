@@ -43,6 +43,22 @@ if (function_exists('mass_sending_enabled') && !mass_sending_enabled()) {
 /** Максимум писем на один шаг за запуск (суточный лимит Gmail всё равно держит воркер очереди). */
 const DRIP_CAP = 200;
 
+// ПОКА ИДЁТ ВОЛНА ЗАПУСКА — ЦЕПОЧКА МОЛЧИТ.
+// Правило владельца (август 2026): по базе идёт ОДНО письмо — конкурсы месяца +
+// доступ в кабинет + приглашение в клуб. Эта цепочка задумана для НОВЫХ подписчиков,
+// но вся импортированная база тоже старше её порогов: она ставила по 200 писем на шаг
+// в день тем же людям, кто ещё ждёт письма запуска, и съедала его дневную квоту.
+// Когда база пройдена волной, цепочка снова включится сама — уже для реально новых.
+try {
+    $waveLeft = (int) scalar(
+        "SELECT COUNT(*) FROM mail_queue q JOIN newsletters n ON n.id = q.newsletter_id
+          WHERE n.audience LIKE 'combo:%' AND q.status IN ('queued','paused')");
+    if ($waveLeft > 0) {
+        cron_log(JOB, "волна запуска ещё идёт ($waveLeft писем в очереди) — цепочка не работает, чтобы не слать второе письмо и не есть квоту");
+        exit(0);
+    }
+} catch (\Throwable $e) { /* нет таблиц — работаем как раньше */ }
+
 if (!cron_lock(JOB, 3600 * 6)) {
     cron_log(JOB, 'предыдущий запуск ещё выполняется, выход');
     exit(0);
@@ -245,58 +261,15 @@ try {
         cron_log(JOB, "шаг день-7 (действующие конкурсы): поставлено в очередь $sent7");
     }
 
-    /* ----- Шаг 4 (день 5): приглашение в Клуб постоянных участников ----- */
-    // Календарь владельца: массовой почты о ВИП-клубе нет — вместо неё каждому
-    // новому в базе через 5 дней уходит персональное приглашение (антидубль vip_d5).
+    /* ----- Шаг 4 (ВИП-клуб) УБРАН НАВСЕГДА -----
+     * Правило владельца (август 2026): отдельного письма о Клубе не существует.
+     * Приглашение в клуб идёт третьим блоком объединённого письма запуска
+     * (core/launch_combo.php) — тому, кто в клубе ещё не состоит. Этот шаг слал
+     * второе письмо о том же самом тем же людям и съедал дневную квоту волны.
+     */
     $sentVip = 0;
-    try {
-        $clubMembers = [];
-        try {
-            foreach (all(
-                "SELECT lower(u.email) e FROM users u
-                   JOIN club_members m ON m.user_id = u.id
-                  WHERE m.active = 1 AND m.expires_at > datetime('now') AND u.email <> ''"
-            ) as $m) { $clubMembers[(string)$m['e']] = true; }
-        } catch (\Throwable $e) { /* клуба может не быть */ }
 
-        $rows = all(
-            "SELECT id, email, name, unsub_token, tags
-               FROM subscribers
-              WHERE active = 1 AND email <> ''
-                AND created_at <= datetime('now', '-5 days')
-                AND (tags IS NULL OR tags NOT LIKE '%vip_d5%')
-              ORDER BY id
-              LIMIT ?",
-            [DRIP_CAP]
-        );
-        $clubUrl = url('/club');
-        foreach ($rows as $s) {
-            if (drip_has_tag((string)($s['tags'] ?? ''), 'vip_d5')) continue;
-            if (isset($clubMembers[mb_strtolower(trim((string)$s['email']))])) {
-                drip_tag_add((int)$s['id'], 'vip_d5');
-                continue;
-            }
-            $inner = '<p style="margin:0 0 14px;font-size:15px;color:#2a2a3a;">Здравствуйте! Для тех, кто выступает с нами'
-                . ' регулярно, работает Клуб постоянных участников — закрытое сообщество с особыми привилегиями:</p>'
-                . '<div style="margin:0 0 14px;padding:16px 18px;border:1.5px solid #C79322;border-radius:12px;background:#FCF9F0;">'
-                . '<div style="font-size:15px;color:#2a2a3a;line-height:1.8;">'
-                . '<b style="color:#17307A;">Скидка 25% на всё</b> — конкурсы и наградная продукция<br>'
-                . '<b style="color:#17307A;">Результаты за 3 рабочих дня</b> — в приоритетном порядке<br>'
-                . '<b style="color:#17307A;">Бесплатный конкурс каждый месяц</b> — одна заявка с электронным дипломом<br>'
-                . '<b style="color:#17307A;">Знак верификации</b> — золотая отметка в личном кабинете</div></div>'
-                . mm_email_btn($clubUrl, 'Узнать о клубе и вступить');
-            $body = mm_email_layout($inner, ['title' => 'Клуб постоянных участников']);
-            $id = insert('mail_queue', ['to_email' => (string)$s['email'], 'to_name' => (string)($s['name'] ?? ''),
-                'subject' => 'Клуб постоянных участников — привилегии для Вас',
-                'body' => $body, 'status' => 'queued', 'priority' => 10]);
-            if ($id) { drip_tag_add((int)$s['id'], 'vip_d5'); $sentVip++; }
-        }
-        cron_log(JOB, "шаг день-5 (ВИП-клуб): поставлено в очередь $sentVip");
-    } catch (\Throwable $e) {
-        cron_log(JOB, 'шаг день-5 ОШИБКА: ' . $e->getMessage());
-    }
-
-    cron_log(JOB, "готово: день-3=$sent3, день-5(вип)=$sentVip, день-7=$sent7");
+    cron_log(JOB, "готово: день-3=$sent3, день-7=$sent7");
 } catch (\Throwable $e) {
     cron_log(JOB, 'ОШИБКА: ' . $e->getMessage());
 } finally {

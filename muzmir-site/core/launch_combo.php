@@ -199,6 +199,14 @@ function launch_combo_enqueue(bool $dry = false, int $limit = 20000): array {
         // Отписавшиеся и подавленные (bounced/invalid/alias/role) — мимо.
         [$unsubToken, $active] = nl_ensure_subscriber($email, (string) ($r['name'] ?? ''), 'newsletter');
         if (!$active) { $skipped++; continue; }
+        // Имя: что человек указал сам, иначе — распознанное по адресу («Светлана»
+        // из nelaeva.svetlana@…). Кладём его и в подписку, и в учётную запись,
+        // чтобы обращение было одинаковым в письме, в кабинете и в админке.
+        $name = person_greeting_name($email, (string) ($r['name'] ?? ''));
+        if ($name !== '' && trim((string) ($r['name'] ?? '')) === '') {
+            try { q("UPDATE subscribers SET name=? WHERE LOWER(email)=? AND COALESCE(name,'')=''", [$name, $email]); } catch (\Throwable $e) {}
+            try { q("UPDATE users SET full_name=? WHERE LOWER(email)=? AND COALESCE(full_name,'')=''", [$name, $email]); } catch (\Throwable $e) {}
+        }
 
         // Идемпотентность: одному адресу — одно письмо кампании месяца.
         if ($nid) {
@@ -206,62 +214,47 @@ function launch_combo_enqueue(bool $dry = false, int $limit = 20000): array {
             if ($dup) { $skipped++; continue; }
         }
 
-        // Кому нужен доступ в кабинет: аккаунт есть, но ни разу не входил.
-        // Служебные роли и заблокированных ИСКЛЮЧАЕМ ЗДЕСЬ, а не только в выборке
-        // получателей: сотрудник мог попасть в волну через таблицу подписчиков,
-        // и тогда ему сбросили бы рабочий пароль от админки.
-        $u = one("SELECT id, full_name, last_login FROM users
-                   WHERE LOWER(email) = ? AND COALESCE(blocked,0) = 0
-                     AND COALESCE(role,'user') NOT IN ('owner','admin','orgcom','moderator','jury','designer')",
-                 [$email]);
-        $needCabinet = $u && ($u['last_login'] === null || trim((string) $u['last_login']) === '');
-        $needVip     = !isset($clubEmails[$email]);
+        // Прикидка для отчёта волны: кому в письме будут блоки кабинета и клуба.
+        // Окончательное решение примет сборщик в момент отправки — за неделю
+        // человек мог и войти в кабинет, и вступить в клуб.
+        $uGuess = one("SELECT last_login FROM users
+                        WHERE LOWER(email) = ? AND COALESCE(blocked,0) = 0
+                          AND COALESCE(role,'user') NOT IN ('owner','admin','orgcom','moderator','jury','designer')",
+                      [$email]);
+        $needCabinetGuess = $uGuess && trim((string) ($uGuess['last_login'] ?? '')) === '';
+        $needVipGuess     = !isset($clubEmails[$email]);
 
-        $name = trim((string) ($r['name'] ?? '')) ?: trim((string) ($u['full_name'] ?? ''));
-        $pass = '';
-
-        // Пароль ГОТОВИМ, но в базу пока НЕ пишем.
-        // Порядок важен: сначала письмо должно лечь в очередь, и только потом
-        // меняется пароль. Иначе сбой на вставке письма оставлял человека
-        // с новым паролем, которого он нигде не увидит, и без доступа в кабинет.
-        $newHash = '';
-        if ($needCabinet && !$dry) {          // при сухом прогоне пароли не считаем: это минуты работы впустую
-            $pass = kabinet_gen_password();
-            $newHash = password_hash($pass, PASSWORD_DEFAULT);
-        }
-
-        if ($needCabinet) $withCab++;
-        if ($needVip)     $withVip++;
-
-        if ($dry) { $queued++; continue; }
-
-        $inner    = launch_combo_inner($needCabinet, $needVip, $email, $name, $pass);
-        $unsubUrl = $base . '/api/v1/unsubscribe.php?token=' . urlencode($unsubToken);
-        $body     = nl_wrap_email(nl_rewrite_links($inner, nl_track_token($nid)), $unsubUrl, $pixel,
-                                  mb_substr(trim(strip_tags($inner)), 0, 120), ['vip' => !$needVip]);
+        // ТЕЛО ПИСЬМА ЗДЕСЬ НЕ СОБИРАЕТСЯ.
+        //
+        // В очередь кладётся только «рецепт»: кому и какой волной. Само письмо
+        // собирается в момент отправки (nl_build_body в core/newsletter.php).
+        // Три причины, и все важные:
+        //
+        //   1. Правки текста в пульте применяются к тем, кому ещё не ушло. Раньше
+        //      тело фиксировалось при постановке, и правка догоняла бы базу только
+        //      в следующем месяце.
+        //   2. Временный пароль не лежит в очереди неделями. Он выдаётся в секунду
+        //      отправки — значит человек до самого письма спокойно пользуется своим
+        //      прежним паролем, а не теряет доступ заранее.
+        //   3. Очередь перестала весить 200 МБ: вместо 24 КБ вёрстки на каждого —
+        //      строчка рецепта.
+        if ($dry) { $queued++; if ($needCabinetGuess) $withCab++; if ($needVipGuess) $withVip++; continue; }
 
         try {
             insert('mail_queue', [
                 'to_email'      => $email,
                 'to_name'       => $name,
                 'subject'       => $subject,
-                'body'          => $body,
+                'body'          => '',
+                'build'         => json_encode(['kind' => 'combo', 'nlid' => $nid], JSON_UNESCAPED_UNICODE),
                 'newsletter_id' => $nid,
                 'campaign_type' => 'konkurs',   // одна квота на всю объединённую волну
                 'status'        => 'queued',
                 'priority'      => 5,
             ]);
             $queued++;
-            // Письмо в очереди — теперь можно менять пароль.
-            if ($needCabinet && $newHash !== '') {
-                try { update('users', ['password_hash' => $newHash], 'id=:id', ['id' => (int) $u['id']]); }
-                catch (\Throwable $e) {
-                    // Пароль не сменился, а письмо с ним уже стоит в очереди — снимаем его,
-                    // чтобы человек не получил пароль, который никуда не подходит.
-                    try { q("UPDATE mail_queue SET status='cancelled' WHERE newsletter_id=? AND to_email=?", [$nid, $email]); } catch (\Throwable $e2) {}
-                    $queued--; $withCab--;
-                }
-            }
+            if ($needCabinetGuess) $withCab++;
+            if ($needVipGuess)     $withVip++;
         } catch (\Throwable $e) { /* сбойную строку пропускаем, волну не роняем */ }
     }
 

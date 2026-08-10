@@ -114,7 +114,7 @@ $ok(count($chain) >= 2, 'ящиков в цепочке', implode(' → ', $chai
 $perDay = nl_ramp_peak();
 $days = $perDay > 0 ? (int) ceil($q / $perDay) : 0;
 printf("        при потолке %d писем/день база пройдётся за ~%d дней отправки\n", $perDay, $days);
-printf("        прогрев: %s\n", json_encode(nl_ramp_curve(), JSON_UNESCAPED_UNICODE));
+printf("        темп: одно письмо в %d сек с каждого ящика, по %d на ящик в день\n", nl_box_gap_sec(), nl_per_box_cap());
 
 // ── 5. Смежная автоматика не должна дублировать волны ───────────────────────
 echo "\n5. Старая автоматика уступает пульту\n";
