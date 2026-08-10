@@ -33793,11 +33793,21 @@ function cpOpenMore(){
   if(!wrap || !menu || !btn) return;
   if(wrap.classList.contains('on')){ cpCloseMore(); return; }
   const its = cpMoreItems();
+  /* Пустое меню открывать нельзя. Подложка #cpMore ловит нажатия во весь
+     экран, и без единого пункта человек получал невидимый глухой слой
+     поверх приложения: тапы никуда не попадают, а закрыть нечего — окно
+     не видно. Нет пунктов — нет и меню. */
+  if(!its.length) return;
+  /* Меню якорится под кнопкой «ещё». Если кнопки на экране нет (диалог не
+     открыт), её прямоугольник — нули, и меню уезжает за левый край: подложка
+     во весь экран ловит нажатия, а показать нечего. Нет якоря — нет меню. */
+  const якорь = btn.getBoundingClientRect();
+  if(якорь.width < 2 || якорь.height < 2) return;
   menu.innerHTML = its.map((it,i)=>
     `<button class="cp-more-item" style="--cp-i:${i}" role="menuitem">${I(it.ic)}<span>${cpEsc(it.label)}</span></button>`).join('');
   [...menu.children].forEach((el,i)=>{ const it = its[i]; el.onclick = ()=>{ cpCloseMore(); if(it && it.act) try{ it.act(); }catch(e){} }; });
   /* якорим меню под кнопкой, справа */
-  const r = btn.getBoundingClientRect();
+  const r = якорь;
   menu.style.top = Math.round(r.bottom + 6) + 'px';
   menu.style.right = Math.round(window.innerWidth - r.right) + 'px';
   wrap.classList.add('on');
