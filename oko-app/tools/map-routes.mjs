@@ -118,7 +118,7 @@ const НАЙТИ_ВХОДЫ = (сел, опасно) => `(() => {
     el.setAttribute('data-oko-route', String(i));
     out.push({ i, label });
   });
-  return out.slice(0, 40);
+  return out.slice(0, 14);
 })()`;
 
 const b = await chromium.launch({
@@ -138,7 +138,7 @@ async function успокоить() {
   await p.evaluate(CLOSE_OVERLAYS).catch(() => {});
   await p.evaluate(`(() => new Promise(r => { let n = 0; const t = () => { n++;
     let run = 0; try { run = document.getAnimations().filter(a => a.playState === 'running').length; } catch(e){}
-    if (!run || n > 20) return r(n); setTimeout(t, 40); }; t(); }))()`).catch(() => {});
+    if (!run || n > 8) return r(n); setTimeout(t, 30); }; t(); }))()`).catch(() => {});
 }
 
 async function пройти(путь) {
@@ -151,15 +151,17 @@ async function пройти(путь) {
     try{ if(typeof closeSheet==='function') closeSheet(); }catch(e){}
     try{ if(typeof closeMa==='function') closeMa(); }catch(e){}
   })()`).catch(() => {});
-  await p.waitForTimeout(150);
+  await p.waitForTimeout(90);
   for (const шаг of путь) {
     await p.evaluate(шаг).catch(() => {});
-    await p.waitForTimeout(700);
+    await p.waitForTimeout(320);
   }
   await успокоить();
-  await p.waitForTimeout(250);
+  await p.waitForTimeout(120);
 }
 
+const БЮДЖЕТ = +(args.minutes || 22) * 60000;   /* сколько максимум обходить */
+const СТАРТ = Date.now();
 const карта = [];              /* найденные маршруты */
 const виденные = new Set();    /* отпечатки, чтобы не дублировать экраны */
 let очередь = [];
@@ -190,7 +192,11 @@ while (очередь.length) {
       });
     }
   }
-  if (карта.length > 400) break;   /* страховка от разрастания */
+  /* Пишем карту по ходу: прошлый обход убил таймаут, и всё найденное
+     пропало, потому что запись была одна и в самом конце. */
+  if (карта.length % 10 === 0) await fs.writeFile(ВЫХОД, JSON.stringify(карта, null, 1));
+  if (карта.length > 400) break;                 /* страховка от разрастания */
+  if (Date.now() - СТАРТ > БЮДЖЕТ) { console.log('\n  (бюджет времени вышел — сохраняю найденное)'); break; }
 }
 
 console.log('\n');
