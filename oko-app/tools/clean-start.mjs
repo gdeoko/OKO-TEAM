@@ -67,6 +67,46 @@ export const CLOSE_OVERLAYS = `(() => {
   return снято;
 })()`;
 
+/* Полный сброс между маршрутами.
+
+   Зачем понадобился. Подстраницы кошелька открываются классом .open и никогда
+   не закрывают друг друга: в жизни это правильно (уходишь с них кнопкой
+   «назад»), но обход маршрутов открывал их подряд. После «Лимитов» страница
+   так и висела сверху, и следующие восемь маршрутов аудит мерил по ней —
+   восемь экранов кошелька в отчёте были одним и тем же экраном.
+
+   То же с полноэкранными панелями: каналы, настройки, поиск, ОКО Ai, клипы,
+   редактор, шторки игр. Гасим их все, а не перечисляем по одной функции:
+   список панелей растёт с каждым слоем, а забытая панель молча портит замер.
+
+   Гасим только то, что само себя объявило панелью (класс .w2-page, .sheet,
+   id начинается на sheet-) или лежит прямо в body поверх приложения. Экраны
+   вкладок (main > .screen) не трогаем — их переключает showTab. */
+export const RESET_ALL = `(() => {
+  var снято = [];
+  ['closeConv','closeSheet','closeMa','closePopup','closeSystemView','w2CloseAll']
+    .forEach(function(f){ try{ if(typeof window[f] === 'function'){ window[f](); снято.push(f); } }catch(e){} });
+  try{ if(window.okoSocial && okoSocial.isOpen && okoSocial.isOpen()) okoSocial.close(); }catch(e){}
+
+  document.querySelectorAll('.w2-page.open').forEach(function(p){
+    p.classList.remove('open'); снято.push(p.id || 'w2-page');
+  });
+  document.querySelectorAll('.sheet.open, [id^="sheet-"].open, .sheet.on, [id^="sheet-"].on')
+    .forEach(function(p){ p.classList.remove('open'); p.classList.remove('on'); снято.push(p.id || 'sheet'); });
+
+  /* Полноэкранные панели поверх приложения: у всех своя разметка, но общий
+     признак — прямой ребёнок body с классом open/on, который закрывает экран. */
+  Array.prototype.forEach.call(document.body.children, function(el){
+    if (!el.classList || !(el.classList.contains('open') || el.classList.contains('on'))) return;
+    if (el.tagName === 'MAIN' || el.tagName === 'HEADER' || el.tagName === 'NAV') return;
+    var r = el.getBoundingClientRect();
+    if (r.width * r.height < innerWidth * innerHeight * 0.3) return;
+    el.classList.remove('open'); el.classList.remove('on');
+    снято.push(el.id || el.className.split(/\\s+/)[0]);
+  });
+  return снято;
+})()`;
+
 /* Что считать «экран подменён чужим слоем». Зовётся после перехода:
    если true — переход не удался и мерить нечего. */
 export const OVERLAY_VISIBLE = `(() => {

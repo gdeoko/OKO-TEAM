@@ -507,5 +507,14 @@
    "(()=>{const e=document.querySelector('[data-oko-deep=\"5\"]'); e&&e.click();})()"
   ],
   "глубина": 2
+ },
+ {
+  "id": "r063",
+  "имя": "st2OpenSupport › Политика конфиденциальностиКак обрабатывае",
+  "путь": [
+   "typeof st2OpenSupport==='function' && st2OpenSupport()",
+   "(()=>{const e=document.querySelector('[data-oko-deep=\"81\"]'); e&&e.click();})()"
+  ],
+  "глубина": 2
  }
 ]

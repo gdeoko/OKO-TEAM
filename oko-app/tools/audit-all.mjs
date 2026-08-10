@@ -33,7 +33,7 @@ import { chromium } from 'playwright-core';
 import fs from 'node:fs/promises';
 import path from 'node:path';
 import crypto from 'node:crypto';
-import { CLEAN_START, CLOSE_OVERLAYS, OVERLAY_VISIBLE } from './clean-start.mjs';
+import { CLEAN_START, CLOSE_OVERLAYS, OVERLAY_VISIBLE, RESET_ALL } from './clean-start.mjs';
 
 const args = Object.fromEntries(
   process.argv.slice(2).join(' ').split('--').filter(Boolean)
@@ -51,34 +51,136 @@ const РЕЖИМЫ = [
   { id: '1440', w: 1440, h: 900, tg: false },
 ].filter(m => !args.only || args.only === true || String(args.only).split(',').includes(m.id));
 
-/* --------------------------------------------------------------- детектор */
-const ПРОВЕРКА = `(() => {
+/* --------------------------------------------------------------- детектор
+
+   Принимает признак «экран в самом верху»: часть проверок имеет смысл только
+   там. Прокрученный экран обязан заезжать под липкую шапку — ловить это как
+   дефект значит завалить отчёт сотней выдуманных замечаний, что и случилось
+   в раундах 40 и 41. */
+const детектор = (сверху0, конец, ширина) => `(() => {
+  const ВЕРХ = ${сверху0 ? 'true' : 'false'};
+  const КОНЕЦ = ${конец ? 'true' : 'false'};
   const out = { переполнение: 0, обрезано: [], разрывы: [], подШапкой: [], пусто: false,
                 наложения: [], фейк: [], эмодзи: [] };
-  const VW = innerWidth;
-  out.переполнение = Math.max(0, document.documentElement.scrollWidth - VW);
+  /* Ширину окна берём ту, что задал прогон, а НЕ innerWidth.
 
-  const видим = el => {
-    const cs = getComputedStyle(el);
-    if (cs.display === 'none' || cs.visibility === 'hidden' || +cs.opacity === 0) return false;
-    const r = el.getBoundingClientRect();
-    return r.width > 3 && r.height > 3 && r.bottom > 0 && r.top < innerHeight;
+     Две ловушки сразу. Во-первых, scrollWidth документа тут бесполезен:
+     у корня overflow-x:hidden, и он рапортует ноль, что бы ни торчало.
+     Во-вторых, innerWidth врёт ровно в том случае, ради которого проверка и
+     нужна: широкий элемент раздвигает область просмотра, innerWidth
+     вырастает вместе с ним, и переполнение «исчезает». Самопроверка это
+     поймала — подсаженный элемент шириной 510 при окне 390 не находился.
+     Поэтому эталон ширины приходит снаружи. */
+  const VW = ${+ширина || 0} || innerWidth;
+  out.переполнение = 0;
+
+  /* Видимость меряем ПО ВСЕЙ ЦЕПОЧКЕ предков.
+
+     Раньше смотрели только сам элемент — и в отчёт лезли кнопки из закрытых
+     панелей: у кнопки opacity 1, а у панели над ней 0. Так набралось 220
+     «наложений» из 220: одни и те же sp-qr-btn и mp-mv-x на каждом экране.
+     display и visibility наследуются вычисленным стилем, а opacity — нет,
+     её и добираем обходом вверх. Смещение трансформом ловится сразу:
+     getBoundingClientRect его уже учёл. */
+  const прозрачен = el => {
+    for (let p = el; p && p !== document.documentElement; p = p.parentElement) {
+      const cs = getComputedStyle(p);
+      if (cs.display === 'none' || cs.visibility === 'hidden') return true;
+      if (+cs.opacity < 0.05) return true;
+      if (cs.contentVisibility === 'hidden') return true;
+    }
+    return false;
   };
+  /* Элемент виден, только если он попадает в окно КАЖДОГО своего обрезающего
+     предка, а не просто в окно браузера.
+
+     На этом детектор врал. Экран-вкладка начинается под шапкой, на y = 65, и
+     всё, что уехало выше при прокрутке, браузер обрезает — но
+     getBoundingClientRect по-прежнему возвращает старые координаты. Чип
+     баланса, укатившийся на y = 13, формально лежал в окне и формально был
+     «перекрыт шапкой». Отсюда брались «наложения» на вкладке мини-аппов,
+     в играх и в академии: ни одного видимого элемента, три замечания. */
+  const вКадре = el => {
+    const r = el.getBoundingClientRect();
+    for (let q = el.parentElement; q && q !== document.body; q = q.parentElement) {
+      const cs = getComputedStyle(q);
+      if (cs.overflow === 'visible' && cs.overflowX === 'visible' && cs.overflowY === 'visible') continue;
+      const b = q.getBoundingClientRect();
+      if (b.width < 1 || b.height < 1) continue;
+      if (r.bottom <= b.top + 1 || r.top >= b.bottom - 1) return false;
+      if (r.right <= b.left + 1 || r.left >= b.right - 1) return false;
+    }
+    return true;
+  };
+  const видим = el => {
+    if (прозрачен(el)) return false;
+    const r = el.getBoundingClientRect();
+    if (!(r.width > 3 && r.height > 3 && r.bottom > 0 && r.top < innerHeight)) return false;
+    return вКадре(el);
+  };
+  /* Пальцем до элемента не добраться, если он сам или любой предок выключен
+     из попадания. Проверять такое на перекрытие бессмысленно. */
+  const мимоПальца = el => {
+    for (let p = el; p && p !== document.documentElement; p = p.parentElement) {
+      if (getComputedStyle(p).pointerEvents === 'none') return true;
+      if (p.hasAttribute && (p.hasAttribute('inert') || p.getAttribute('aria-hidden') === 'true')) return true;
+    }
+    return false;
+  };
+
+  /* Что человек СЕЙЧАС видит.
+
+     Поверх вкладки может стоять полноэкранная панель: клипы, шторка
+     партнёрской программы, мини-апп. Тогда всё, что под ней, человеку
+     недоступно — и мерить его нельзя: получаются «наложения» вида
+     «кнопка темы закрыта лентой клипов», хотя закрыта она правильно.
+     Ищем самый верхний крупный позиционированный слой, который не является
+     самим экраном и не лежит внутри него. Нашли — аудируем только его. */
+  const активный = document.querySelector('main > .screen.active');
+  const поверх = (() => {
+    let лучший = null, макс = -1;
+    document.querySelectorAll('body *').forEach(el => {
+      const cs = getComputedStyle(el);
+      if (cs.position !== 'fixed' && cs.position !== 'absolute') return;
+      if (активный && (el === активный || el.contains(активный) || активный.contains(el))) return;
+      if (!видим(el)) return;
+      /* Прозрачная подложка не закрывает ничего: #pp2Nav — пустой div с
+         pointer-events:none во весь экран, и он ловился как «панель поверх»
+         на 37 экранах из 63, а следом каждый такой экран объявлялся пустым. */
+      if (мимоПальца(el)) return;
+      if (!(el.textContent || '').trim()) return;
+      const r = el.getBoundingClientRect();
+      if (r.width * r.height < innerWidth * innerHeight * 0.55) return;
+      const z = parseInt(cs.zIndex, 10) || 0;
+      if (z >= макс) { макс = z; лучший = el; }
+    });
+    return лучший;
+  })();
+  out.поверх = поверх
+    ? (поверх.id ? '#' + поверх.id
+      : поверх.tagName.toLowerCase() + '.' + String(поверх.className).trim().split(/\\s+/)[0])
+    : '';
+  const виден = el => !поверх || поверх.contains(el);
 
   /* шапка приложения — под неё ничего не должно уезжать */
   const шапка = document.querySelector('header, .app-head, #okoHead, .hd');
-  const низШапки = шапка && видим(шапка) ? шапка.getBoundingClientRect().bottom : 0;
+  const низШапки = шапка && видим(шапка) && виден(шапка) ? шапка.getBoundingClientRect().bottom : 0;
 
   const ЭМОДЗИ = /[\\u{1F300}-\\u{1FAFF}\\u{2600}-\\u{27BF}\\u{FE0F}]/u;
   const ФЕЙК = /(\\d+[.,]?\\d*\\s*(к|k|м|m)\\s*(подписчик|просмотр|охват))|(\\+\\d{2,}%\\s*к\\s)|(проверено на \\d+)/i;
 
   const пусто = [];
   document.querySelectorAll('body *').forEach(el => {
-    if (el.ownerSVGElement || !видим(el)) return;
+    if (el.ownerSVGElement || !видим(el) || !виден(el)) return;
     const cs = getComputedStyle(el);
     const r  = el.getBoundingClientRect();
     const свой = el.children.length === 0;
     const txt = (el.textContent || '').trim();
+
+    /* Что-то торчит за правым краем. Считаем только неклипнутое: элемент,
+       обрезанный своим контейнером, за край не вылезает. */
+    if (r.right > VW + 2 && r.width < VW * 3)
+      out.переполнение = Math.max(out.переполнение, Math.round(r.right - VW));
 
     if (свой && txt) {
       пусто.push(1);
@@ -88,15 +190,30 @@ const ПРОВЕРКА = `(() => {
       if (!намеренно && el.scrollWidth > el.clientWidth + 1 && cs.overflow !== 'visible')
         if (out.обрезано.length < 8) out.обрезано.push(txt.slice(0, 38));
 
-      /* Под шапкой — но не САМА шапка.
-         Первый прогон дал 141 замечание, и все были заголовками вроде
-         «Лента», «Чаты», «Кошелёк»: они лежат ВНУТРИ шапки, поэтому их верх
-         всегда выше её низа. Проверять надо только то, что шапке не
-         принадлежит. Прокрутка тоже не в счёт: содержимое обязано уезжать
-         под липкую шапку, это не дефект, а её смысл. */
-      if (низШапки && r.top < низШапки - 1 && r.bottom > 2 &&
-          !(шапка && шапка.contains(el)) && r.bottom > низШапки)
-        if (out.подШапкой.length < 6) out.подШапкой.push(txt.slice(0, 30));
+      /* Обрезано сверху.
+
+         Жалоба Даниэля «сверху обрезается» — про это: экран только открылся,
+         прокрутка в нуле, а верхняя строка уже наполовину за верхним краем
+         своего контейнера. Прокруткой её не достать, вверх идти некуда.
+
+         Прежняя формулировка проверки («текст залез под шапку») в этой
+         вёрстке недостижима: шапка — обычный flex-сосед, панели рисуются
+         поверх неё. Она давала 141 и 104 выдуманных замечания и ни одного
+         настоящего, потому что ловила заголовки внутри самой шапки и
+         нормальную прокрутку под липкий слой. */
+      if (ВЕРХ) {
+        for (let q = el.parentElement; q && q !== document.body; q = q.parentElement) {
+          const qs = getComputedStyle(q);
+          if (qs.overflowY === 'visible' && qs.overflow === 'visible') continue;
+          if (q.scrollTop > 1) break;                 /* прокручено — не в счёт */
+          const b = q.getBoundingClientRect();
+          if (b.height < 40) continue;
+          if (r.top < b.top - 1 && r.bottom > b.top + 1) {
+            if (out.подШапкой.length < 6) out.подШапкой.push(txt.slice(0, 30));
+          }
+          break;
+        }
+      }
 
       /* эмодзи в интерфейсе */
       if (ЭМОДЗИ.test(txt) && !el.closest('.emj-grid, .emj-list, [data-emoji-content]'))
@@ -148,34 +265,66 @@ const ПРОВЕРКА = `(() => {
     }
   });
 
-  /* наложение: центр кнопки перекрыт чужим узлом */
-  /* Закрытая шторка не прячется через display:none — она уезжает
-     трансформом за край. Её кнопки «перекрыты» чем угодно, но пальцем до них
-     всё равно не добраться. Первый прогон дал 196 наложений, и почти все
-     были такими: sp-qr-btn и mp-mv-x из закрытых панелей. */
-  const вЗакрытом = el => {
-    for (let p = el.parentElement; p; p = p.parentElement) {
-      const c = typeof p.className === 'string' ? p.className : '';
-      if (!/\\b(sheet|modal|popup|drawer|overlay)\\b/.test(c)) continue;
-      return !/\\b(open|on|active|shown)\\b/.test(c);
+  /* Наложение: до кнопки не дотянуться пальцем, потому что сверху чужой узел.
+
+     Настоящий дефект здесь редок, а ложных срабатываний легко набрать сотни —
+     раунды 40 и 41 дали 196 и 220, и настоящих среди них не было ни одного.
+     Поэтому три отсева и строгий замер:
+
+       • кнопка из закрытой панели не в счёт — она уже отсеяна видимостью
+         по цепочке предков (панель с opacity 0) и рамкой окна;
+       • кнопка, выключенная из попадания (pointer-events, inert, aria-hidden),
+         не в счёт: её никто и не собирался нажимать;
+       • перекрытие считается настоящим, только если чужой узел лежит НАД
+         ВСЕЙ кнопкой. Мерим пять точек — центр и четыре вдавленных угла.
+         Один-два перекрытых угла — это соседняя карточка или тень, палец
+         всё равно попадёт. */
+  const своё = (el, кто) => !кто || кто === el || el.contains(кто) || кто.contains(el)
+    || кто.closest('button, [role="button"], .prow, .pp2-row') === el
+    || el.closest('button, [role="button"]') === кто.closest('button, [role="button"]');
+
+  /* Плавающий слой — шапка или нижнее меню — перекрывает содержимое по ходу
+     прокрутки, и это норма: докрутил, и кнопка вышла из-под него. Дефект тут
+     ровно один — когда крутить больше некуда, а кнопка всё ещё под меню.
+     Поэтому шапку не считаем никогда, а нижнее меню — только на последнем
+     шаге прокрутки. Без этого правила каждая липкая шапка приносила по
+     несколько выдуманных наложений на экран. */
+  const плавает = el => {
+    for (let q = el; q && q !== document.documentElement; q = q.parentElement) {
+      const ps = getComputedStyle(q).position;
+      if (ps === 'fixed' || ps === 'sticky') return q;
     }
-    return false;
+    return null;
   };
+
   document.querySelectorAll('button, [role="button"], .prow, .pp2-row').forEach(el => {
-    if (!видим(el) || out.наложения.length >= 5) return;
-    if (вЗакрытом(el)) return;
-    /* элемент с неактивного экрана нас не касается */
+    if (out.наложения.length >= 5) return;
+    if (!видим(el) || !виден(el) || мимоПальца(el)) return;
     const экран = el.closest('.screen');
     if (экран && !экран.classList.contains('active')) return;
     const r = el.getBoundingClientRect();
-    const cx = r.left + r.width / 2, cy = r.top + r.height / 2;
-    if (cx < 0 || cy < 0 || cx > innerWidth || cy > innerHeight) return;
-    const сверху = document.elementFromPoint(cx, cy);
-    if (!сверху || сверху === el || el.contains(сверху) || сверху.contains(el)) return;
-    /* вложенные кнопки — не дефект */
-    if (сверху.closest('button, [role="button"]') === el) return;
-    out.наложения.push(((el.textContent || '').trim().slice(0, 24) || el.className) +
-      ' ← ' + сверху.tagName.toLowerCase() + '.' + String(сверху.className).trim().split(/\\s+/)[0]);
+    if (r.left < 0 || r.top < 0 || r.right > innerWidth + 1 || r.bottom > innerHeight + 1) return;
+    const dx = Math.min(6, r.width / 3), dy = Math.min(6, r.height / 3);
+    const точки = [
+      [r.left + r.width / 2, r.top + r.height / 2],
+      [r.left + dx, r.top + dy], [r.right - dx, r.top + dy],
+      [r.left + dx, r.bottom - dy], [r.right - dx, r.bottom - dy]
+    ];
+    let чужой = null;
+    for (const [x, y] of точки) {
+      const кто = document.elementFromPoint(x, y);
+      if (своё(el, кто)) return;          /* хоть одна точка своя — попадём */
+      чужой = чужой || кто;
+    }
+    const пл = плавает(чужой);
+    if (пл && !плавает(el)) {
+      const пр = пл.getBoundingClientRect();
+      const сверхуЛи = пр.top + пр.height / 2 < r.top + r.height / 2;
+      if (сверхуЛи) return;               /* шапка: прокрутил — и открылось */
+      if (!КОНЕЦ) return;                 /* нижнее меню: крутить ещё есть куда */
+    }
+    out.наложения.push(((el.textContent || '').trim().replace(/\\s+/g, ' ').slice(0, 24) || el.className) +
+      ' ← ' + чужой.tagName.toLowerCase() + '.' + String(чужой.className).trim().split(/\\s+/)[0]);
   });
 
   out.пусто = пусто.length < 3;
@@ -230,11 +379,9 @@ for (const m of РЕЖИМЫ) {
     try {
       /* сброс и проход маршрута с нуля */
       for (let i = 0; i < 4; i++) { await p.keyboard.press('Escape').catch(() => {}); await p.waitForTimeout(50); }
-      await p.evaluate(`(()=>{ try{ if(window.okoSocial&&okoSocial.isOpen&&okoSocial.isOpen()) okoSocial.close(); }catch(e){}
-        try{ if(typeof closeConv==='function') closeConv(); }catch(e){}
-        try{ if(typeof closeSheet==='function') closeSheet(); }catch(e){}
-        try{ if(typeof closeMa==='function') closeMa(); }catch(e){} })()`).catch(() => {});
-      await p.waitForTimeout(150);
+      await p.evaluate(RESET_ALL).catch(() => {});
+      await p.evaluate(`(()=>{ try{ showTab('profile'); }catch(e){} })()`).catch(() => {});
+      await p.waitForTimeout(200);
       for (const шаг of r.путь) { await p.evaluate(шаг).catch(() => {}); await p.waitForTimeout(650); }
 
       await p.evaluate(CLOSE_OVERLAYS).catch(() => {});
@@ -249,7 +396,7 @@ for (const m of РЕЖИМЫ) {
       const г = await p.evaluate(ГЕОМЕТРИЯ).catch(() => ({ высота: 0, окно: m.h }));
       const шагов = Math.max(1, Math.min(12, Math.ceil((г.высота || m.h) / Math.max(200, (г.окно || m.h) * 0.85))));
       const собрано = { обрезано: new Set(), разрывы: new Set(), подШапкой: new Set(), наложения: new Set(), фейк: new Set(), эмодзи: new Set() };
-      let переполнение = 0, пустых = 0;
+      let переполнение = 0, пустых = 0, поверх = '';
 
       for (let s = 0; s < шагов; s++) {
         if (s) {
@@ -262,13 +409,18 @@ for (const m of РЕЖИМЫ) {
           })()`).catch(() => {});
           await p.waitForTimeout(320);
         }
-        const пр = await p.evaluate(ПРОВЕРКА).catch(() => null);
+        const пр = await p.evaluate(детектор(s === 0, s === шагов - 1, m.w)).catch(() => null);
         if (!пр) continue;
         переполнение = Math.max(переполнение, пр.переполнение);
         if (пр.пусто) пустых++;
+        if (!s && пр.поверх) поверх = пр.поверх;
         ['обрезано','разрывы','подШапкой','наложения','фейк','эмодзи'].forEach(k => пр[k].forEach(v => собрано[k].add(v)));
       }
 
+      /* Панель поверх вкладки — не дефект сама по себе, но замеры относятся
+         к ней, а не к экрану из карты. Пишем это прямо, чтобы отчёт не
+         выдавал чужой экран за проверенный. */
+      if (поверх) зам.поверх = поверх;
       if (переполнение > 1) зам.замечания.push('горизонтальное переполнение ' + переполнение + 'px');
       if (пустых === шагов) зам.замечания.push('экран пустой');
       Object.entries(собрано).forEach(([k, v]) => {
@@ -295,16 +447,34 @@ for (const m of РЕЖИМЫ) {
 }
 await b.close();
 
-/* --- одинаковые кадры: значит переход не сработал --- */
+/* --- Одинаковые кадры: значит переход не сработал ---
+   Считаем только совпадения ВНУТРИ одного режима: один и тот же экран в
+   320 и в 1440 совпасть не может, а вот два разных маршрута с одинаковым
+   кадром — это два несработавших перехода. Группы выписываем поимённо,
+   иначе число «46 повторов» нечего чинить. */
 let повторов = 0;
+const группы = [];
 if (СНИМАТЬ) {
+  const имена = new Map(маршруты.map(r => [r.id, r.имя]));
   const кадры = new Map();
   for (const f of (await fs.readdir(OUT)).filter(f => f.endsWith('.png'))) {
-    const h = crypto.createHash('md5').update(await fs.readFile(path.join(OUT, f))).digest('hex');
+    const режим = f.split('__')[0];
+    const h = режим + ':' + crypto.createHash('md5').update(await fs.readFile(path.join(OUT, f))).digest('hex');
     if (!кадры.has(h)) кадры.set(h, []);
     кадры.get(h).push(f);
   }
-  повторов = [...кадры.values()].filter(g => g.length > 1).reduce((n, g) => n + g.length, 0);
+  for (const [h, g] of кадры) {
+    if (g.length < 2) continue;
+    повторов += g.length;
+    группы.push({
+      режим: h.split(':')[0],
+      экраны: g.map(f => {
+        const id = f.split('__')[1].replace('.png', '');
+        return id + ' ' + (имена.get(id) || '');
+      })
+    });
+  }
+  отчёт.одинаковые = группы;
 }
 
 await fs.writeFile(path.join(OUT, 'report.json'), JSON.stringify(отчёт, null, 1));
@@ -318,4 +488,5 @@ console.log(`║ экранов проверено: ${маршруты.length} �
 console.log(`║ всего замечаний:   ${всегоЗамечаний}`);
 Object.entries(поВидам).sort((a, b) => b[1] - a[1]).forEach(([k, v]) => console.log(`║   ${k.padEnd(24)} ${v}`));
 console.log(`║ одинаковых кадров: ${повторов}${повторов ? '  ← эти экраны не открылись' : ''}`);
+группы.slice(0, 14).forEach(g => console.log(`║   [${g.режим}] ${g.экраны.join('  ==  ').slice(0, 110)}`));
 console.log(`╚ отчёт: ${path.join(OUT, 'report.json')}`);
