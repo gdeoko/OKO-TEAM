@@ -1,0 +1,306 @@
+[
+ {
+  "id": "r001",
+  "имя": "вкладка feed",
+  "путь": [
+   "showTab('feed')"
+  ],
+  "глубина": 1
+ },
+ {
+  "id": "r002",
+  "имя": "вкладка chats",
+  "путь": [
+   "showTab('chats')"
+  ],
+  "глубина": 1
+ },
+ {
+  "id": "r003",
+  "имя": "вкладка mini",
+  "путь": [
+   "showTab('mini')"
+  ],
+  "глубина": 1
+ },
+ {
+  "id": "r004",
+  "имя": "вкладка wallet",
+  "путь": [
+   "showTab('wallet')"
+  ],
+  "глубина": 1
+ },
+ {
+  "id": "r005",
+  "имя": "вкладка academy",
+  "путь": [
+   "showTab('academy')"
+  ],
+  "глубина": 1
+ },
+ {
+  "id": "r006",
+  "имя": "вкладка partner",
+  "путь": [
+   "showTab('partner')"
+  ],
+  "глубина": 1
+ },
+ {
+  "id": "r007",
+  "имя": "вкладка games",
+  "путь": [
+   "showTab('games')"
+  ],
+  "глубина": 1
+ },
+ {
+  "id": "r008",
+  "имя": "вкладка ads",
+  "путь": [
+   "showTab('ads')"
+  ],
+  "глубина": 1
+ },
+ {
+  "id": "r009",
+  "имя": "вкладка ton",
+  "путь": [
+   "showTab('ton')"
+  ],
+  "глубина": 1
+ },
+ {
+  "id": "r010",
+  "имя": "ac2OpenLibrary()",
+  "путь": [
+   "try{ ac2OpenLibrary() }catch(e){}"
+  ],
+  "глубина": 1
+ },
+ {
+  "id": "r011",
+  "имя": "adsOpenCreate()",
+  "путь": [
+   "try{ adsOpenCreate() }catch(e){}"
+  ],
+  "глубина": 1
+ },
+ {
+  "id": "r012",
+  "имя": "bndOpenBundles()",
+  "путь": [
+   "try{ bndOpenBundles() }catch(e){}"
+  ],
+  "глубина": 1
+ },
+ {
+  "id": "r013",
+  "имя": "gmBpOpen()",
+  "путь": [
+   "try{ gmBpOpen() }catch(e){}"
+  ],
+  "глубина": 1
+ },
+ {
+  "id": "r014",
+  "имя": "gmDailyOpen()",
+  "путь": [
+   "try{ gmDailyOpen() }catch(e){}"
+  ],
+  "глубина": 1
+ },
+ {
+  "id": "r015",
+  "имя": "gmGiftsShopOpen()",
+  "путь": [
+   "try{ gmGiftsShopOpen() }catch(e){}"
+  ],
+  "глубина": 1
+ },
+ {
+  "id": "r016",
+  "имя": "gmOddsOpen()",
+  "путь": [
+   "try{ gmOddsOpen() }catch(e){}"
+  ],
+  "глубина": 1
+ },
+ {
+  "id": "r017",
+  "имя": "gmPrizesOpen()",
+  "путь": [
+   "try{ gmPrizesOpen() }catch(e){}"
+  ],
+  "глубина": 1
+ },
+ {
+  "id": "r018",
+  "имя": "gmScratchOpen()",
+  "путь": [
+   "try{ gmScratchOpen() }catch(e){}"
+  ],
+  "глубина": 1
+ },
+ {
+  "id": "r019",
+  "имя": "gmStatsOpen()",
+  "путь": [
+   "try{ gmStatsOpen() }catch(e){}"
+  ],
+  "глубина": 1
+ },
+ {
+  "id": "r020",
+  "имя": "gmStreakOpen()",
+  "путь": [
+   "try{ gmStreakOpen() }catch(e){}"
+  ],
+  "глубина": 1
+ },
+ {
+  "id": "r021",
+  "имя": "gmVipOpen()",
+  "путь": [
+   "try{ gmVipOpen() }catch(e){}"
+  ],
+  "глубина": 1
+ },
+ {
+  "id": "r022",
+  "имя": "mkOpenSearch()",
+  "путь": [
+   "try{ mkOpenSearch() }catch(e){}"
+  ],
+  "глубина": 1
+ },
+ {
+  "id": "r023",
+  "имя": "mpOpenWizard()",
+  "путь": [
+   "try{ mpOpenWizard() }catch(e){}"
+  ],
+  "глубина": 1
+ },
+ {
+  "id": "r024",
+  "имя": "mpOpenWizardCat('${c.k}')",
+  "путь": [
+   "try{ mpOpenWizardCat('${c.k}') }catch(e){}"
+  ],
+  "глубина": 1
+ },
+ {
+  "id": "r025",
+  "имя": "openLegalDoc('privacy')",
+  "путь": [
+   "try{ openLegalDoc('privacy') }catch(e){}"
+  ],
+  "глубина": 1
+ },
+ {
+  "id": "r026",
+  "имя": "openLegalDoc('terms')",
+  "путь": [
+   "try{ openLegalDoc('terms') }catch(e){}"
+  ],
+  "глубина": 1
+ },
+ {
+  "id": "r027",
+  "имя": "openListingForm()",
+  "путь": [
+   "try{ openListingForm() }catch(e){}"
+  ],
+  "глубина": 1
+ },
+ {
+  "id": "r028",
+  "имя": "openMa('helper')",
+  "путь": [
+   "try{ openMa('helper') }catch(e){}"
+  ],
+  "глубина": 1
+ },
+ {
+  "id": "r029",
+  "имя": "openMarketCat('${c.k}')",
+  "путь": [
+   "try{ openMarketCat('${c.k}') }catch(e){}"
+  ],
+  "глубина": 1
+ },
+ {
+  "id": "r030",
+  "имя": "openMyListings()",
+  "путь": [
+   "try{ openMyListings() }catch(e){}"
+  ],
+  "глубина": 1
+ },
+ {
+  "id": "r031",
+  "имя": "openNotifs()",
+  "путь": [
+   "try{ openNotifs() }catch(e){}"
+  ],
+  "глубина": 1
+ },
+ {
+  "id": "r032",
+  "имя": "psSocOpen()",
+  "путь": [
+   "try{ psSocOpen() }catch(e){}"
+  ],
+  "глубина": 1
+ },
+ {
+  "id": "r033",
+  "имя": "pwOpenTiers()",
+  "путь": [
+   "try{ pwOpenTiers() }catch(e){}"
+  ],
+  "глубина": 1
+ },
+ {
+  "id": "r034",
+  "имя": "showTab('feed')",
+  "путь": [
+   "try{ showTab('feed') }catch(e){}"
+  ],
+  "глубина": 1
+ },
+ {
+  "id": "r035",
+  "имя": "showTab('mini')",
+  "путь": [
+   "try{ showTab('mini') }catch(e){}"
+  ],
+  "глубина": 1
+ },
+ {
+  "id": "r036",
+  "имя": "showTab('profile')",
+  "путь": [
+   "try{ showTab('profile') }catch(e){}"
+  ],
+  "глубина": 1
+ },
+ {
+  "id": "r037",
+  "имя": "st2OpenSupport()",
+  "путь": [
+   "try{ st2OpenSupport() }catch(e){}"
+  ],
+  "глубина": 1
+ },
+ {
+  "id": "r038",
+  "имя": "sysGoto('home')",
+  "путь": [
+   "try{ sysGoto('home') }catch(e){}"
+  ],
+  "глубина": 1
+ }
+]

@@ -761,8 +761,13 @@ case 'integrations':
         return trim((string)$v) !== '';
     };
     out(['ok'=>true, 'integrations'=>[
-        'anthropic' => ['name'=>'Claude API',      'env'=>'ANTHROPIC_API_KEY', 'ready'=>$has($C['anthropic_key'] ?? ''),  'what'=>'ответы ОКО Ai и разбор контента'],
-        'gemini'    => ['name'=>'Gemini',          'env'=>'GEMINI_API_KEY',    'ready'=>$has($C['gemini_keys'] ?? ''),    'what'=>'проверка видео и генерация текста'],
+        // Все чаты приложения — поддержка, Daniel Ai, агенты в диалогах —
+        // отвечают через Gemini: решение Даниэля от 09.08, Claude API для
+        // потока сообщений слишком дорог. Строку про Claude оставляем, но
+        // честную: приложение к нему не обращается, ключ нужен только мосту
+        // в Claude Code, где собираются мини-аппы и контент.
+        'gemini'    => ['name'=>'Gemini',          'env'=>'GEMINI_API_KEY',    'ready'=>$has($C['gemini_keys'] ?? ''),    'what'=>'все чаты, ответы ОКО Ai, разбор контента и видео'],
+        'anthropic' => ['name'=>'Claude API',      'env'=>'ANTHROPIC_API_KEY', 'ready'=>$has($C['anthropic_key'] ?? ''),  'what'=>'только мост в Claude Code — сборки мини-аппов; чаты приложения его не используют'],
         'telegram'  => ['name'=>'Telegram-бот',    'env'=>'TELEGRAM_BOT_TOKEN','ready'=>$has($C['tg_bot_token'] ?? ''),   'what'=>'вход, уведомления, приглашения'],
         'lava'      => ['name'=>'Lava.top',        'env'=>'LAVA_API_KEY',      'ready'=>$has($C['lava_api_key'] ?? ''),   'what'=>'оплата тарифов и пополнение счёта'],
         'mail'      => ['name'=>'Почта',           'env'=>'GMAIL_APP_PASS',    'ready'=>$has($C['gmail_pass'] ?? ''),     'what'=>'письма, коды подтверждения, рассылки'],
