@@ -474,37 +474,29 @@ function nl_mark_bounced(string $email, string $reason = 'bounce'): void {
  */
 function nl_failure_kind(string $err): string {
     $e = mb_strtolower($err);
-    if (trim($e) === '') return 'soft';          // причины нет — человека не трогаем
+    if (trim($e) === '') return 'soft';
 
-    // 1. ЯВНЫЙ ОТКАЗ ПО ПОЛУЧАТЕЛЮ. Такие формулировки не спутать ни с чем.
-    foreach (['no such user', 'user unknown', 'unknown user', 'mailbox not found',
-              'mailbox unavailable', 'no such mailbox', 'does not exist', 'no mailbox',
-              'recipient rejected', 'invalid recipient', 'address rejected',
-              'unrouteable address', 'некорректный адрес', 'нет такого', 'не существует',
+    // ВЫВОДИМ АДРЕС ИЗ БАЗЫ ТОЛЬКО ПО ПРЯМОМУ ТЕКСТУ ПОЧТОВИКА О ПОЛУЧАТЕЛЕ.
+    //
+    // 10 августа 2026 сюда попадал и голый код 5xx — и это стоило базе 2695 живых
+    //人. Яндекс упёрся в суточный лимит домена и отвечал «554» вообще на всё,
+    // включая ящик владельца, а мы читали это как «адресата не существует».
+    // Вывод: КОД БЕЗ ПОЯСНЕНИЯ НИЧЕГО НЕ ДОКАЗЫВАЕТ. Нужен текст про ящик.
+    foreach (['no such user', 'user unknown', 'unknown user', 'user not found',
+              'mailbox not found', 'mailbox unavailable', 'no such mailbox',
+              'mailbox does not exist', 'account does not exist', 'no mailbox',
+              'recipient rejected', 'invalid recipient', 'unrouteable address',
+              'address rejected', 'некорректный адрес', 'нет такого', 'не существует',
               '5.1.1', '5.1.0', '5.1.2', '5.1.3', '5.1.6'] as $w) {
         if (mb_strpos($e, $w) !== false) return 'hard';
     }
 
-    // 2. ВРЕМЕННОЕ И НАШЕ. Сеть, авторизация, квоты, серые списки — адрес живой.
-    //    Сюда же «data failed»: на этапе DATA почтовик отвергает НАШЕ ПИСЬМО
-    //    (спам-фильтр, репутация отправителя), а не ящик получателя.
-    foreach (['data failed', 'ни один из', 'не настроен ни один',
-              'authentication', 'auth', 'password', 'пароль', 'login',
-              'соединен', 'connect', 'refused', 'timeout', 'таймаут', 'timed out',
-              'network', 'ssl', 'tls', 'certificate',
-              'quota', 'лимит', 'limit exceeded', 'too many', 'rate',
-              'try again', 'temporar', 'greylist', 'deferred',
-              '421', '450', '451', '452', '4.7.', '4.3.', '4.4.'] as $w) {
-        if (mb_strpos($e, $w) !== false) return 'soft';
-    }
-
-    // 3. ОСТАЛЬНЫЕ ПОСТОЯННЫЕ ОТКАЗЫ (5xx без пояснения). На этапе RCPT почтовик
-    //    именно так отвечает про несуществующий ящик — самый частый случай
-    //    в импортированной базе. Пункты 1-2 выше уже отсеяли нашу вину.
-    if (preg_match('~\b5[0-9]{2}\b~', $e)) return 'hard';
-
-    return 'soft';   // сомнение — всегда в пользу человека: живой адрес дороже квоты
+    // Всё остальное — наша сторона или временное: сеть, авторизация, суточные
+    // лимиты отправителя, репутация домена, спам-фильтр, серые списки.
+    // Человек в этом не виноват, письмо просто вернётся в очередь.
+    return 'soft';
 }
+
 
 
 /**
@@ -603,6 +595,40 @@ function nl_bulk_window_open(?\DateTime $at = null): array {
 function nl_per_box_cap(): int { return max(1, (int) setting('nl_per_box_cap', '200')); }
 
 /**
+ * СКОЛЬКО ПИСЕМ ЯЩИК ДОЛЖЕН БЫЛ ОТПРАВИТЬ К ЭТОЙ МИНУТЕ.
+ *
+ * Дневная норма ящика растянута ровно по рабочему окну: к его началу — ноль,
+ * к концу — все 200. Отправляем, только пока факт отстаёт от этого графика,
+ * поэтому письма идут ниточкой, а не пачкой.
+ *
+ * Почему не «пауза N секунд», как было сначала: крон просыпается раз в минуту,
+ * и пауза 150 секунд превращалась в реальные 180 — три минуты вместо двух с
+ * половиной. За девятичасовое окно это 180 писем с ящика вместо 200, то есть
+ * 360 в день вместо 400. График от этого не зависит: он считает, сколько
+ * ДОЛЖНО быть отправлено, а не сколько прошло с прошлого письма.
+ *
+ * Второе достоинство — догон. Если ящик простоял час (карантин, сбой сети),
+ * по паузе этот час терялся навсегда; по графику он наверстается — но не
+ * залпом, а по нескольку писем за прогон (см. nl_box_burst_cap).
+ */
+function nl_box_due_by_now(): int {
+    $from = max(0, min(23, (int) setting('nl_window_hour_from', '9')));
+    $to   = max(0, min(23, (int) setting('nl_window_hour_to',  '18')));
+    if ($to <= $from) return nl_per_box_cap();
+
+    $winMin = ($to - $from) * 60;
+    $nowMin = ((int) date('G') - $from) * 60 + (int) date('i');
+    if ($nowMin < 0) return 0;
+    if ($nowMin >= $winMin) return nl_per_box_cap();
+
+    // Первое письмо уходит сразу в начале окна, дальше — равномерно.
+    return (int) max(1, ceil(nl_per_box_cap() * ($nowMin + 1) / $winMin));
+}
+
+/** Сколько писем ящик может отправить за ОДИН прогон крона, когда догоняет график. */
+function nl_box_burst_cap(): int { return max(1, (int) setting('nl_box_burst', '3')); }
+
+/**
  * Пауза между двумя письмами С ОДНОГО ящика, в секундах.
  *
  * 150 секунд = 2,5 минуты (правило владельца). За рабочее окно 9:00-18:00 это
@@ -620,6 +646,34 @@ function nl_box_last_sent_ts(string $box): int {
     // Отметка живёт в настройках: это дешевле, чем каждую минуту искать MAX(sent_at)
     // по очереди в сотни тысяч строк.
     return $ts;
+}
+
+/**
+ * СЧЁТЧИК ОТКАЗОВ ПОДРЯД по вине отправителя (суточный лимит, репутация, спам-фильтр).
+ * Достигнув порога, ящик молчит до конца суток: продолжать стучаться в закрытую
+ * дверь бесполезно и вредно — почтовик считает это поведением спамера.
+ */
+function nl_box_fail_add(string $box): bool {
+    $box = mb_strtolower(trim($box));
+    if ($box === '') return false;
+    $k = 'nl_box_softfail:' . $box . ':' . date('Y-m-d');
+    $n = (int) setting($k, '0') + 1;
+    set_setting($k, (string) $n);
+    $limit = max(2, (int) setting('nl_box_softfail_limit', '5'));
+    if ($n >= $limit) { set_setting('nl_box_stop:' . $box, date('Y-m-d')); return true; }
+    return false;
+}
+
+/** Успешная отправка — счётчик отказов подряд обнуляется. */
+function nl_box_fail_reset(string $box): void {
+    $box = mb_strtolower(trim($box));
+    if ($box !== '') set_setting('nl_box_softfail:' . $box . ':' . date('Y-m-d'), '0');
+}
+
+/** Замолчал ли ящик до конца суток. */
+function nl_box_blocked_today(string $box): bool {
+    $box = mb_strtolower(trim($box));
+    return $box !== '' && (string) setting('nl_box_stop:' . $box, '') === date('Y-m-d');
 }
 
 /** Отметить, что ящик только что отправил письмо (запускает его паузу). */
@@ -954,19 +1008,26 @@ function newsletter_process_queue(int $limit): int {
 
         // Ящики: у каждого свой дневной остаток и свой слот по времени.
         $boxes   = function_exists('mail_fallback_accounts') ? mail_fallback_accounts([], 'bulk') : [];
-        $gapSec  = nl_box_gap_sec();
-        $ready   = [];      // индексы ящиков, которым сейчас можно отправлять
+        $ready    = [];     // индексы ящиков, которым сейчас можно отправлять
+        $quotaBox = [];     // сколько писем каждый из них может отправить в этот прогон
         foreach ($boxes as $bi => $b) {
             $u = mb_strtolower((string) ($b['user'] ?? ''));
             if ($u === '') continue;
-            if (nl_box_sent_today($u) >= nl_per_box_cap()) continue;          // дневной лимит ящика выбран
-            // Ящик, который подряд отказывает (почтовик срезал его как спамера),
-            // слот не получает: каждая попытка с него — выброшенные секунды и лишний
-            // повод для почтовика. Первый успешный ответ обнуляет счётчик сам.
+            $sentBox = nl_box_sent_today($u);
+            if ($sentBox >= nl_per_box_cap()) continue;                       // дневная норма ящика выбрана
+            // Ящик, который подряд отказывает, писем не получает.
             if (function_exists('mail_account_penalty') && mail_account_penalty($b)) continue;
-            $last = nl_box_last_sent_ts($u);
-            if ($last > 0 && (time() - $last) < $gapSec) continue;            // слот ещё не подошёл
+            // СУТОЧНЫЙ ЛИМИТ ОТПРАВИТЕЛЯ. Когда почтовик упирается в свой предел,
+            // он отвечает отказом на КАЖДУЮ попытку — и на чужие адреса, и на наши
+            // собственные. Долбиться в него бессмысленно и вредно: 10 августа так
+            // набежало 10 780 отказов за день, а это прямой удар по репутации домена.
+            // После нескольких отказов подряд ящик замолкает до завтра.
+            if (nl_box_blocked_today($u)) continue;
+            // Сколько ящик должен по графику минус сколько уже ушло.
+            $behind = nl_box_due_by_now() - $sentBox;
+            if ($behind < 1) continue;                                        // идём по графику — ждём
             $ready[$bi] = $u;
+            $quotaBox[$bi] = min($behind, nl_box_burst_cap(), nl_per_box_cap() - $sentBox);
         }
 
         if (!$allowed) {
@@ -991,11 +1052,13 @@ function newsletter_process_queue(int $limit): int {
             foreach ($ready as $bi => $boxUser) {
                 if ($globalRemaining - $bulkSent <= 0) break;
                 $acc  = $boxes[$bi];
-                $done = false;
-                // Один УСПЕШНЫЙ отправленный на слот ящика. Неудачные не считаются:
-                // мёртвый адрес выводится из базы, и мы сразу берём следующего.
+                $need = (int) ($quotaBox[$bi] ?? 1);
+                $gotBox = 0;
+                // Отправляем столько, на сколько ящик отстал от графика (не больше
+                // nl_box_burst_cap за прогон). Неудачные не считаются: мёртвый адрес
+                // выводится из базы, и мы сразу берём следующего получателя.
                 foreach ($bulk as $k => $row) {
-                    if ($done) break;
+                    if ($gotBox >= $need) break;
                     if (!isset($bulk[$k])) continue;
                     $ct = (string) ($row['ctype'] ?? 'konkurs');
                     if (($typeLeft[$ct] ?? 0) <= 0) continue;
@@ -1007,14 +1070,23 @@ function newsletter_process_queue(int $limit): int {
                         // иначе он отправит два письма подряд без выдержки.
                         $really = function_exists('mail_switched') ? mb_strtolower(mail_switched()) : '';
                         nl_box_touch($really !== '' ? $really : $boxUser);
-                        $done = true;
+                        nl_box_fail_reset($really !== '' ? $really : $boxUser);
+                        $gotBox++;
                     } else {
-                        // Не ушло. Разбираем причину сразу: отказ адресата — человека
-                        // вычищаем отовсюду и идём к следующему, наш сбой — письмо
-                        // вернётся в очередь позже (nl_prune_failed).
+                        // Не ушло. Разбираем причину сразу.
                         $why = function_exists('mail_last_error') ? mail_last_error() : '';
                         if (nl_failure_kind($why) === 'hard') {
+                            // Почтовик прямым текстом сказал, что такого ящика нет.
                             nl_purge_person((string) $row['to_email'], 'отказ адресата: ' . mb_substr($why, 0, 120));
+                            nl_box_fail_reset($boxUser);
+                        } else {
+                            // Отказ на нашей стороне. Считаем подряд идущие: несколько
+                            // таких — значит ящик упёрся в суточный предел, и на сегодня
+                            // он замолкает. Письмо вернётся в очередь само.
+                            if (nl_box_fail_add($boxUser)) {
+                                nl_log("process: ящик $boxUser отвечает отказом подряд — до завтра его не трогаем ($why)");
+                                break 2;
+                            }
                         }
                     }
                 }
