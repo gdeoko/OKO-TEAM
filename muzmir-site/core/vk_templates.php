@@ -21,7 +21,7 @@ const VKT_SITE  = 'музыкальный-мир.рф';
 const VKT_VK    = 'vk.ru/music_world.online';
 const VKT_MAIL_MAIN   = 'kulturniy.centr.mir@gmail.com';
 const VKT_MAIL_NEWS   = 'news@музыкальный-мир.рф';
-const VKT_MAIL_AWARDS = 'nagradi@музыкальный-мир.рф';
+const VKT_MAIL_AWARDS = 'nagradi.on@музыкальный-мир.рф';
 
 /** Телефон колл-центра. ЕДИНЫЙ по всему проекту. */
 function vkt_phone(): string { return function_exists('cfgv') ? (string) cfgv('org_phone', '+7(999)504-88-99') : '+7(999)504-88-99'; }

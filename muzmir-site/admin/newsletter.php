@@ -34,27 +34,42 @@ function nl_base_stats(): array {
 }
 
 /**
- * Прогноз завершения массовой рассылки: сколько дней и до какой даты уйдёт $remaining
- * писем при кривой прогрева, начиная с СЕГОДНЯШНЕГО дня кампании (с учётом уже отправленного сегодня).
+ * Прогноз завершения массовой рассылки.
+ *
+ * Прогрева больше нет: темп ровный с первого дня — до nl_daily_cap() успешных
+ * писем в сутки (по 200 с каждого рассылочного ящика). Считаем от остатка
+ * ёмкости на сегодня и дальше по полной дневной норме, пропуская дни вне
+ * окна рассылки (1-24 число).
+ *
  * @return array{days:int,date:string,perday:array<int,int>}
  */
 function nl_plan_projection(int $remaining): array {
     if ($remaining <= 0) return ['days' => 0, 'date' => date('d.m.Y'), 'perday' => []];
-    $day = function_exists('nl_campaign_day') ? max(1, nl_campaign_day()) : 1;
+    $cap       = function_exists('nl_daily_cap') ? max(1, nl_daily_cap()) : 400;
     $sentToday = function_exists('nl_bulk_sent_today') ? nl_bulk_sent_today() : 0;
-    $curve = function_exists('nl_ramp_curve') ? nl_ramp_curve() : [];
-    $peak  = function_exists('nl_ramp_peak') ? nl_ramp_peak() : 480;
-    $left = $remaining; $d = $day; $extraDays = 0; $perday = [];
-    // Остаток ёмкости на сегодня.
-    $capToday = $d >= 15 ? $peak : ($curve[$d] ?? $peak);
-    $todayLeft = max(0, $capToday - $sentToday);
-    if ($todayLeft > 0) { $take = min($left, $todayLeft); $left -= $take; $perday[$d] = $take; }
-    while ($left > 0 && $extraDays < 60) {
-        $extraDays++; $d++;
-        $cap = $d >= 15 ? $peak : ($curve[$d] ?? $peak);
-        $take = min($left, $cap); $left -= $take; $perday[$d] = ($perday[$d] ?? 0) + $take;
+
+    $left   = $remaining;
+    $perday = [];
+    $ts     = time();
+    $d      = 0;
+
+    // Сегодняшний остаток.
+    $todayLeft = max(0, $cap - $sentToday);
+    if ($todayLeft > 0) { $take = min($left, $todayLeft); $left -= $take; $perday[1] = $take; }
+
+    // Дальше — по полной норме, только в дни окна рассылки.
+    $guard = 0;
+    while ($left > 0 && $guard < 200) {
+        $guard++;
+        $ts += 86400;
+        $day = (int) date('j', $ts);
+        if ($day < 1 || $day > 24) continue;     // вне окна рассылки писем нет
+        $d++;
+        $take = min($left, $cap);
+        $left -= $take;
+        $perday[$d + 1] = $take;
     }
-    return ['days' => $extraDays, 'date' => date('d.m.Y', time() + $extraDays * 86400), 'perday' => $perday];
+    return ['days' => $d, 'date' => date('d.m.Y', $ts), 'perday' => $perday];
 }
 
 /* =====================================================================
@@ -678,14 +693,14 @@ $planActive= $planDay > 0;
     <div class="stat"><div class="stat__label">В очереди (массовые)</div><div class="stat__value"><?= number_format($bulkQueued,0,',',' ') ?></div><div class="stat__sub"><?= $bulkPaused>0 ? ('заморожено: '.$bulkPaused) : ('отправлено всего: '.$bulkSentA) ?></div></div>
     <div class="stat"><div class="stat__label">Прогноз финиша</div><div class="stat__value"><?= $proj['days'] > 0 ? ('~'.$proj['days'].' дн.') : '—' ?></div><div class="stat__sub"><?= $proj['days'] > 0 ? ('к '.$proj['date']) : 'нет активной очереди' ?></div></div>
   </div>
-  <div class="hint" style="margin-bottom:12px">Массовые письма (новые конкурсы, ВИП-клуб, новости) уходят ТОЛЬКО с news@ плавно по кривой прогрева: 60→90→120…→480 писем/день. Транзакционные (заявки, результаты, дипломы) идут отдельно и мгновенно. Отказавшие адреса автоматически выводятся из базы.</div>
+  <div class="hint" style="margin-bottom:12px">Массовые письма уходят только с рассылочных ящиков news@ и novosti@ — по одному письму раз в 2,5 минуты с каждого, с 9:00 до 18:00, до 200 с ящика в день (итого 400). Личные письма (заявки, результаты, дипломы) идут отдельно и мгновенно, лимитом не ограничены. Адрес, который не существует или заблокирован, вычищается из базы вместе с кабинетом.</div>
   <form method="post" action="<?= url('/admin/') ?>" style="display:flex;gap:8px;flex-wrap:wrap;align-items:center">
     <?= csrf_field() ?>
     <?php if (!$planActive): ?>
       <select name="preset" style="max-width:280px">
         <?php foreach (campaign_types() as $ck => $cl): ?><option value="<?= h($ck) ?>"><?= h($cl) ?></option><?php endforeach; ?>
       </select>
-      <button class="btn btn--primary btn--sm" name="do" value="start_plan" onclick="return confirm('Запустить план рассылки по всей базе? Отправка начнётся плавно (прогрев). Массовые письма пойдут только с news@.')"><?= admin_icon('send') ?>Запустить план по базе</button>
+      <button class="btn btn--primary btn--sm" name="do" value="start_plan" onclick="return confirm('Запустить план рассылки по всей базе? Письма пойдут ровным темпом с рассылочных ящиков — до 400 в день.')"><?= admin_icon('send') ?>Запустить план по базе</button>
     <?php else: ?>
       <?php if ($bulkPaused > 0): ?>
         <button class="btn btn--primary btn--sm" name="do" value="resume_plan"><?= admin_icon('send') ?>Возобновить</button>
