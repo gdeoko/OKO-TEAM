@@ -78,5 +78,181 @@
    "showTab('ton')"
   ],
   "глубина": 1
+ },
+ {
+  "id": "r011",
+  "имя": "ac2OpenLibrary()",
+  "путь": [
+   "try{ ac2OpenLibrary() }catch(e){}"
+  ],
+  "глубина": 1
+ },
+ {
+  "id": "r012",
+  "имя": "adsOpenCreate()",
+  "путь": [
+   "try{ adsOpenCreate() }catch(e){}"
+  ],
+  "глубина": 1
+ },
+ {
+  "id": "r013",
+  "имя": "bndOpenBundles()",
+  "путь": [
+   "try{ bndOpenBundles() }catch(e){}"
+  ],
+  "глубина": 1
+ },
+ {
+  "id": "r014",
+  "имя": "gmBpOpen()",
+  "путь": [
+   "try{ gmBpOpen() }catch(e){}"
+  ],
+  "глубина": 1
+ },
+ {
+  "id": "r015",
+  "имя": "gmDailyOpen()",
+  "путь": [
+   "try{ gmDailyOpen() }catch(e){}"
+  ],
+  "глубина": 1
+ },
+ {
+  "id": "r016",
+  "имя": "gmGiftsShopOpen()",
+  "путь": [
+   "try{ gmGiftsShopOpen() }catch(e){}"
+  ],
+  "глубина": 1
+ },
+ {
+  "id": "r017",
+  "имя": "gmOddsOpen()",
+  "путь": [
+   "try{ gmOddsOpen() }catch(e){}"
+  ],
+  "глубина": 1
+ },
+ {
+  "id": "r018",
+  "имя": "gmPrizesOpen()",
+  "путь": [
+   "try{ gmPrizesOpen() }catch(e){}"
+  ],
+  "глубина": 1
+ },
+ {
+  "id": "r019",
+  "имя": "gmScratchOpen()",
+  "путь": [
+   "try{ gmScratchOpen() }catch(e){}"
+  ],
+  "глубина": 1
+ },
+ {
+  "id": "r020",
+  "имя": "gmStatsOpen()",
+  "путь": [
+   "try{ gmStatsOpen() }catch(e){}"
+  ],
+  "глубина": 1
+ },
+ {
+  "id": "r021",
+  "имя": "gmStreakOpen()",
+  "путь": [
+   "try{ gmStreakOpen() }catch(e){}"
+  ],
+  "глубина": 1
+ },
+ {
+  "id": "r022",
+  "имя": "gmVipOpen()",
+  "путь": [
+   "try{ gmVipOpen() }catch(e){}"
+  ],
+  "глубина": 1
+ },
+ {
+  "id": "r023",
+  "имя": "mkOpenSearch()",
+  "путь": [
+   "try{ mkOpenSearch() }catch(e){}"
+  ],
+  "глубина": 1
+ },
+ {
+  "id": "r024",
+  "имя": "mpEscInfoOpen()",
+  "путь": [
+   "try{ mpEscInfoOpen() }catch(e){}"
+  ],
+  "глубина": 1
+ },
+ {
+  "id": "r025",
+  "имя": "okoOpenClips()",
+  "путь": [
+   "try{ okoOpenClips() }catch(e){}"
+  ],
+  "глубина": 1
+ },
+ {
+  "id": "r026",
+  "имя": "openAdmin()",
+  "путь": [
+   "try{ openAdmin() }catch(e){}"
+  ],
+  "глубина": 1
+ },
+ {
+  "id": "r027",
+  "имя": "openLegalDoc('privacy')",
+  "путь": [
+   "try{ openLegalDoc('privacy') }catch(e){}"
+  ],
+  "глубина": 1
+ },
+ {
+  "id": "r028",
+  "имя": "openLegalDoc('terms')",
+  "путь": [
+   "try{ openLegalDoc('terms') }catch(e){}"
+  ],
+  "глубина": 1
+ },
+ {
+  "id": "r029",
+  "имя": "openListingForm()",
+  "путь": [
+   "try{ openListingForm() }catch(e){}"
+  ],
+  "глубина": 1
+ },
+ {
+  "id": "r030",
+  "имя": "openMa('helper')",
+  "путь": [
+   "try{ openMa('helper') }catch(e){}"
+  ],
+  "глубина": 1
+ },
+ {
+  "id": "r031",
+  "имя": "openMyListings()",
+  "путь": [
+   "try{ openMyListings() }catch(e){}"
+  ],
+  "глубина": 1
+ },
+ {
+  "id": "r032",
+  "имя": "openSheet('progress')",
+  "путь": [
+   "try{ openSheet('progress') }catch(e){}"
+  ],
+  "глубина": 1
  }
 ]
