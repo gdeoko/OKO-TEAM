@@ -494,16 +494,28 @@
   function growIfRoom(el) {
     var p = el.parentElement;
     if (!p) return;
+    var pcs = getComputedStyle(p);
+    var scroller = pcs.overflowX === 'auto' || pcs.overflowX === 'scroll';
+
+    /* В ряду, который листается вбок, расти НЕЛЬЗЯ.
+       Прежнее правило считало наоборот: раз родитель и так прокручивается,
+       переполнение не страшно — и оставляло рост. На деле это делало ленту
+       длиннее, и то, что было за краем, уезжало ещё дальше. В панели эмодзи
+       из-за этого лента категорий требовала 396 px при 374 доступных, и
+       стикеры с ГИФ прятались за правым краем — та самая беда, из-за которой
+       Даниэль и просил переделать панель.
+       Правило OKO: ничего не прячем за краем. Область нажатия таким кнопкам
+       расширит невидимый расширитель ниже — палец попадёт, вид не поедет. */
+    if (scroller) return;
+
     var prevW = el.style.minWidth, prevH = el.style.minHeight;
     var before = p.scrollWidth - p.clientWidth;
     el.style.minWidth = MIN_TARGET + 'px';
     el.style.minHeight = MIN_TARGET + 'px';
-    var pcs = getComputedStyle(p);
-    var scroller = pcs.overflowX === 'auto' || pcs.overflowX === 'scroll';
     var after = p.scrollWidth - p.clientWidth;
     var de = document.documentElement;
     var rootOverflow = de.scrollWidth - de.clientWidth;
-    if ((!scroller && after > Math.max(1, before)) || rootOverflow > 1) {
+    if (after > Math.max(1, before) || rootOverflow > 1) {
       el.style.minWidth = prevW;
       el.style.minHeight = prevH;
     }

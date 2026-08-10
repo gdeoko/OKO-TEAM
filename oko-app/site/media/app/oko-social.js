@@ -7,6 +7,14 @@
       отдельно; клубы и курсы создавать; у чата, канала, ЛС, клуба, курса —
       отдельная страница с инфой, подписчиками, копировать ссылку, поделиться».
 
+   Правка Даниэля 10.08:
+     «с чата можно перейти в профиль посмотреть ролики посты подписчиков и тд».
+     Тап по аватару или по имени в шапке диалога открывает профиль собеседника
+     с тремя вкладками: «Посты», «Клипы», «Подписчики». Служебные и
+     официальные аккаунты (Поддержка OKO, Даниэль Ильясов), «Избранное»
+     и общий чат сообщества остаются карточкой переписки — постов, клипов
+     и подписчиков у них не бывает.
+
    Что здесь:
      1. ЕДИНАЯ СТРАНИЦА СУЩНОСТИ #okoSoc — один шаблон на профиль человека,
         канал, групповой чат, ЛС-собеседника, клуб и курс.
@@ -185,6 +193,8 @@ function injectCss(){
     /* ---- счётчики ---- */
     '.soc-stats{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin:14px 0 4px}',
     '.soc-stat{background:var(--card);border:1px solid var(--border);border-radius:14px;padding:11px 6px;text-align:center;min-width:0}',
+    'button.soc-stat{font:inherit;cursor:pointer;width:100%;display:block}',
+    'button.soc-stat:active{opacity:.75}',
     '.soc-stat b{display:block;font:800 19px/1.1 var(--font-display,inherit);color:var(--text)}',
     '.soc-stat small{display:block;color:var(--dim);margin-top:3px;'
     /* «подписчиков» — обычное слово, а не техническая строка: рвать его
@@ -223,12 +233,18 @@ function injectCss(){
     '.soc-mini.on svg.i{color:var(--lime)}',
     '.soc-mini span{min-width:0;font-size:clamp(10.5px,3.3vw,12.5px);line-height:1.25}',
 
-    /* ---- вкладки ---- */
-    '.soc-tabs{display:flex;gap:6px;margin:18px 0 12px;border-bottom:1px solid var(--border)}',
-    '.soc-tab{flex:1;display:inline-flex;align-items:center;justify-content:center;gap:7px;padding:11px 6px;',
+    /* ---- вкладки ----
+       Их три: «Посты», «Клипы», «Подписчики». Самая длинная подпись на 320 px
+       не влезала в свою треть и вылезала за край, поэтому кегль плавает, а на
+       узких экранах иконка вкладки уходит: слово важнее значка и рвать его
+       нельзя. */
+    '.soc-tabs{display:flex;gap:2px;margin:18px 0 12px;border-bottom:1px solid var(--border)}',
+    '.soc-tab{flex:1 1 0;display:inline-flex;align-items:center;justify-content:center;gap:5px;padding:11px 2px;',
     '  background:none;border:0;border-bottom:2px solid transparent;color:var(--dim);',
-    '  font:700 13px/1.2 inherit;cursor:pointer;min-width:0}',
-    '.soc-tab svg.i{width:16px;height:16px}',
+    '  font:700 clamp(9.8px,3.05vw,13px)/1.2 inherit;cursor:pointer;min-width:0;',
+    '  white-space:nowrap;overflow-wrap:normal;word-break:normal;-webkit-hyphens:none;hyphens:none}',
+    '.soc-tab svg.i{width:16px;height:16px;flex-shrink:0}',
+    '@media (max-width:420px){.soc-tab svg.i{display:none}}',
     '.soc-tab.on{color:var(--text);border-bottom-color:var(--lime)}',
     '.soc-tab i{font-style:normal;color:var(--dim);font-weight:700}',
 
@@ -321,6 +337,11 @@ function injectCss(){
     '.soc-row-b small{display:block;color:var(--dim);font-size:11.5px;line-height:1.4;margin-top:2px;overflow-wrap:anywhere}',
     '.soc-row-x{background:none;border:0;color:var(--dim);cursor:pointer;padding:6px;display:inline-flex;flex-shrink:0}',
     '.soc-row-x svg.i{width:17px;height:17px}',
+    /* строка-кнопка: подписчик открывается тапом по всей строке */
+    'button.soc-row{width:100%;background:none;border:0;border-bottom:1px solid var(--border);',
+    '  color:var(--text);font:inherit;text-align:left;cursor:pointer;min-height:56px}',
+    'button.soc-row:last-child{border-bottom:0}',
+    'button.soc-row:active{opacity:.7}',
     '.soc-card{background:var(--card);border:1px solid var(--border);border-radius:16px;padding:4px 14px}',
     '.soc-role{font-size:10.5px;font-weight:800;letter-spacing:.03em;padding:3px 8px;border-radius:99px;',
     '  border:1px solid var(--border);color:var(--dim);background:none;cursor:pointer;flex-shrink:0}',
@@ -328,6 +349,12 @@ function injectCss(){
 
     /* ---- блок «ник и ссылка» из v2 (страховка, если модуль не поднялся) ---- */
     '#okoSoc .oko-ident{margin-top:12px}',
+    /* На 320 px длинная ссылка (okoteam.top/c/obschiy_chat_oko) обрезалась
+       многоточием. Это техническая строка с классом .oko-breakable — ей
+       разрешено переноситься по символам, и лучше показать её целиком,
+       чем спрятать хвост. Правка только внутри страницы сущности. */
+    '#okoSoc .oko-ident-t.oko-breakable{white-space:normal;overflow:visible;text-overflow:clip;',
+    '  word-break:break-all;line-height:1.35}',
 
     /* ---- кнопки входа в профиле ---- */
     '.soc-profile-cta{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;margin:8px 0 4px}',
@@ -379,18 +406,21 @@ function socSave(){
 var TYPE_LABEL = {
   user: 'Профиль', channel: 'Канал', group: 'Групповой чат', chat: 'Чат',
   sgroup: 'Супергруппа', club: 'Клуб', course: 'Курс', direct: 'Личный чат',
-  dm: 'Личный чат', support: 'Поддержка'
+  dm: 'Личный чат', support: 'Поддержка', saved: 'Избранное'
 };
 var TYPE_SHORT = {
   user: 'профиль', channel: 'канал', group: 'чат', chat: 'чат',
   sgroup: 'супергруппа', club: 'клуб', course: 'курс', direct: 'личный чат',
-  dm: 'личный чат', support: 'поддержка'
+  dm: 'личный чат', support: 'поддержка', saved: 'избранное'
 };
 var TYPE_ICON = {
   user: 'user', channel: 'megaphone', group: 'users', chat: 'users',
   sgroup: 'users', club: 'crown', course: 'circle-play', direct: 'user',
-  dm: 'chat', support: 'shield'
+  dm: 'chat', support: 'shield', saved: 'bookmark'
 };
+/* Тип чата из CHATS → тип страницы. Раньше всё, что не канал и не группа,
+   сваливалось в 'user', и «Избранное» открывалось с чипом «Профиль». */
+var CHAT_TYPE = { channel: 'channel', group: 'group', saved: 'saved', direct: 'dm' };
 
 function nickOf(o){
   if(!o) return '';
@@ -411,6 +441,23 @@ function keyOfChat(c){
   if(c.kind === 'direct') return 'd:' + (nickOf(c) || slug(c.name));
   return 'x:' + c.id;
 }
+/* Куда ведёт тап по шапке диалога и по аватару в списке чатов.
+   Правка Даниэля 10.08: «с чата можно перейти в профиль посмотреть ролики
+   посты подписчиков и тд». Значит из лички с обычным человеком открываем
+   ЕГО ПРОФИЛЬ ('u:<ник>' — посты, клипы, подписчики), а не карточку
+   переписки. Служебные и официальные аккаунты (поддержка, основатель) —
+   по-прежнему карточка переписки: у них ни постов, ни подписчиков нет. */
+function profileKeyOfChat(c){
+  if(!c) return null;
+  var base = keyOfChat(c);
+  if(!base || base.slice(0, 2) !== 'd:') return base;
+  if(c.agent || c.bot || c.official || c.founder || c.cpSaved) return base;
+  var nick = nickOf(c);
+  if(!nick) return base;
+  var prof = 'u:' + nick;
+  return entity(prof) ? prof : base;
+}
+
 function keyOfName(name){
   if(!name) return null;
   var p = P();
@@ -479,7 +526,7 @@ function entity(key){
   }else if(t === 'x'){
     var ch = chatRec(id);
     if(!ch) return null;
-    var ty = ch.kind === 'channel' ? 'channel' : ch.kind === 'group' ? 'group' : 'user';
+    var ty = CHAT_TYPE[ch.kind] || 'user';
     ent = {
       key: key, type: ty, name: meta.name || ch.name, nick: nickOf(ch),
       bio: meta.bio != null ? meta.bio : (ch.about || ch.preview || ''),
@@ -514,21 +561,34 @@ function entity(key){
   ent.avaLetter = (String(ent.name || 'O').trim().charAt(0) || 'O').toUpperCase();
   ent.owned = ownedBy(ent);
 
-  /* ПРАВКА ДАНИЭЛЯ: «поддержка око и Даниэль Ильясов — это не массовые чаты
-     или каналы с подписчиками, там не должно быть постов и роликов, это же
-     как ЛС чат поддержки. Про посты и ролики я имел в виду личный кабинет
+  /* ДВА ПРОСТРАНСТВА КЛЮЧЕЙ, НЕ ПУТАТЬ (урок 09.08, пункт 7):
+       'd:<ник>' — карточка переписки: только диалог, без подписчиков,
+                   постов и клипов;
+       'u:<ник>' — профиль человека: посты, клипы, подписчики.
+
+     ПРАВКА ДАНИЭЛЯ 09.08: «поддержка око и Даниэль Ильясов — это не массовые
+     чаты или каналы с подписчиками, там не должно быть постов и роликов, это
+     же как ЛС чат поддержки. Про посты и ролики я имел в виду личный кабинет
      в профиле у каждого обычного пользователя.»
-     Поэтому страница собеседника из ЛС — карточка чата, а не витрина автора:
-     без подписчиков, без вкладок «Посты» и «Ролики», без «Подписаться» и
-     «Опубликовать». Витрина остаётся у личного кабинета, каналов, чатов,
-     клубов и курсов.
-     Сервисный аккаунт (поддержка) — карточка чата всегда.
-     Обычный человек из лички получит витрину только когда у него реально
-     появятся публикации: пустые вкладки «Посты 0 / Ролики 0» на странице
-     собеседника — это мусор. */
-  ent.isService = !!(ent.chat && (ent.chat.agent || ent.chat.nick === 'okohelp'));
+     ПРАВКА ДАНИЭЛЯ 10.08: «с чата можно перейти в профиль посмотреть ролики
+     посты подписчиков и тд».
+     Вместе это значит: из лички с ОБЫЧНЫМ человеком шапка ведёт в его
+     профиль ('u:'), где вкладки есть всегда — пусто значит нули и честный
+     empty-state. Служебные и официальные аккаунты (поддержка, основатель),
+     «Избранное» и общий чат остаются карточкой переписки: витрина у них
+     появится только вместе с настоящими публикациями. Флаги ниже — ровно
+     об этом. */
+  ent.isService = !!(ent.chat && (ent.chat.agent || ent.chat.bot || ent.chat.nick === 'okohelp'));
+  ent.isSaved = (ent.type === 'saved') || !!(ent.chat && (ent.chat.cpSaved || ent.chat.kind === 'saved'));
   ent.isDM = (ent.type === 'dm');
-  if(ent.isService) ent.type = 'support';
+  /* Официальный аккаунт в личке (поддержка, основатель) — это служебная
+     переписка, а не витрина автора. Пока он ничего не опубликовал, вкладок
+     «Посты / Клипы / Подписчики» у него нет; появятся сами, если появится
+     настоящий контент. */
+  ent.isOfficialPerson = !ent.isMe && !!(ent.chat && (ent.chat.official || ent.chat.founder) &&
+    (ent.chat.kind === 'direct' || ent.type === 'dm' || ent.type === 'user'));
+  if(ent.isSaved) ent.type = 'saved';
+  else if(ent.isService) ent.type = 'support';
   ent.typeLabel = TYPE_LABEL[ent.type] || 'Страница';
   ent.typeShort = TYPE_SHORT[ent.type] || 'страница';
   ent.typeIcon = TYPE_ICON[ent.type] || 'user';
@@ -814,17 +874,30 @@ function pageEntity(ent, nav){
   var tab = nav.tab || 'posts';
 
 
-  /* Витрина автора = подписчики + вкладки «Посты» и «Ролики».
+  /* Витрина автора = подписчики + вкладки «Посты», «Клипы», «Подписчики».
      Кому она положена:
        • личному кабинету — всегда, иначе публиковать неоткуда;
-       • каналам, чатам, клубам, курсам — всегда, это площадки для публикаций;
-       • человеку (личка или чужой профиль) — только когда ему есть что
-         показать: пустые «Посты 0 / Ролики 0» на карточке собеседника это
-         мусор, а не функция;
-       • поддержке — никогда, это служебный чат. */
-  var personal = (ent.type === 'dm' || ent.type === 'user' || ent.type === 'support');
+       • профилю обычного человека — всегда: именно за этим из чата в него
+         и заходят (правка Даниэля 10.08). Пусто — честный empty-state
+         и нули, а не выдуманные подписчики;
+       • каналам, клубам, курсам и созданным здесь площадкам — всегда;
+       • карточке личной переписки ('d:'), «Избранному» и поддержке —
+         никогда: это ЛС и служебные чаты, публикаций у них не бывает;
+       • общему чату и любой группе, которую человек не создавал, — только
+         если там реально что-то есть: «Посты 0 / Клипы 0» в переписке
+         сообщества это мусор;
+       • официальному аккаунту в личке (основатель, поддержка) — только
+         когда у него появится настоящий контент. */
   var hasContent = (posts.length + reels.length) > 0 || subs > 0;
-  var showcase = ent.isMe || (!ent.isService && (!personal || hasContent));
+  var isPlatform = !!(ent.own || ent.ch) ||
+    ent.type === 'channel' || ent.type === 'club' || ent.type === 'course' || ent.type === 'sgroup';
+  var showcase;
+  if(ent.isMe) showcase = true;
+  else if(ent.isSaved || ent.isService || ent.isDM) showcase = false;
+  else if(ent.type === 'user') showcase = !ent.isOfficialPerson || hasContent;
+  else showcase = isPlatform || hasContent;
+  var personal = (ent.type === 'dm' || ent.type === 'user' || ent.type === 'support' || ent.type === 'saved');
+  var followers = showcase ? knownSubs(ent) : [];
 
   var chips = ['<span class="soc-chip">' + SI(ent.typeIcon) + ent.typeLabel + '</span>'];
   if(ent.official) chips.push('<span class="soc-chip lime">' + SI('logo') + 'Официально OKO</span>');
@@ -841,11 +914,16 @@ function pageEntity(ent, nav){
       '<div class="soc-kindrow">' + chips.join('') + '</div>' +
     '</div>';
 
+  /* Счётчик — это вход в свою вкладку: тап по «подписчикам» открывает список
+     подписчиков, по «публикациям» — посты, по «клипам» — сетку клипов. */
   var stats = showcase
     ? '<div class="soc-stats">' +
-        '<div class="soc-stat" id="socStatSubs"><b>' + FMT(subs) + '</b><small>подписчиков</small></div>' +
-        '<div class="soc-stat" id="socStatPosts"><b>' + FMT(posts.length) + '</b><small>публикаций</small></div>' +
-        '<div class="soc-stat" id="socStatReels"><b>' + FMT(reels.length) + '</b><small>клипов</small></div>' +
+        '<button class="soc-stat" id="socStatSubs" data-a="tab" data-v="subs" type="button">' +
+          '<b>' + FMT(subs) + '</b><small>подписчиков</small></button>' +
+        '<button class="soc-stat" id="socStatPosts" data-a="tab" data-v="posts" type="button">' +
+          '<b>' + FMT(posts.length) + '</b><small>публикаций</small></button>' +
+        '<button class="soc-stat" id="socStatReels" data-a="tab" data-v="reels" type="button">' +
+          '<b>' + FMT(reels.length) + '</b><small>клипов</small></button>' +
       '</div>'
     : '';
 
@@ -860,15 +938,22 @@ function pageEntity(ent, nav){
       acts.push('<button class="soc-btn' + (subbed ? ' ghost' : '') + '" id="socActFollow" data-a="follow" type="button">' +
         SI(subbed ? 'check' : 'plus') + (subbed ? 'Отписаться' : 'Подписаться') + '</button>');
     }
+    /* Из профиля всегда есть путь обратно в переписку, из которой сюда
+       пришли: кнопка открывает тот же чат. */
+    var msgLabel = ent.isService ? 'Написать в поддержку'
+      : ent.isSaved ? 'Открыть избранное'
+      : (ent.type === 'user' && ent.chat) ? 'Открыть переписку'
+      : 'Написать';
     acts.push('<button class="soc-btn' + (showcase ? ' ghost' : '') + '" id="socActMsg" data-a="msg" type="button">' +
-      SI('chat') + (ent.isService ? 'Написать в поддержку' : 'Написать') + '</button>');
+      SI('chat') + msgLabel + '</button>');
   }
   if(ent.owned && showcase){
     acts.push('<button class="soc-btn" id="socActPublish" data-a="publish" type="button">' + SI('plus') + 'Опубликовать</button>');
     acts.push('<button class="soc-btn ghost" id="socActEdit" data-a="edit" type="button">' + SI('edit') + 'Редактировать</button>');
   }
 
-  var minis = [
+  /* «Избранное» — своя папка, а не аккаунт: ни ссылки, ни ника, ни жалоб. */
+  var minis = ent.isSaved ? [] : [
     '<button class="soc-mini" id="socActShare" data-a="share" type="button">' + SI('share') + '<span>Поделиться</span></button>',
     '<button class="soc-mini" id="socCopyLink" data-a="copylink" type="button">' + SI('link') + '<span>Скопировать ссылку</span></button>',
     '<button class="soc-mini" id="socCopyNick" data-a="copynick" type="button">' + SI('user') + '<span>Скопировать ник</span></button>',
@@ -880,7 +965,8 @@ function pageEntity(ent, nav){
     minis.push('<button class="soc-mini" id="socMembers" data-a="members" type="button">' + SI('users') + '<span>Участники и роли</span></button>');
   }
   /* С карточки лички можно уйти в профиль человека — но только если он там
-     действительно что-то опубликовал. Пустой профиль предлагать незачем. */
+     действительно что-то опубликовал. Пустой профиль официального аккаунта
+     предлагать незачем: у поддержки и основателя постов не бывает. */
   if(ent.isDM && !ent.isService && ent.nick){
     var au = entity('u:' + ent.nick);
     if(au && (postsOf(au).length + reelsOf(au).length) > 0){
@@ -888,33 +974,45 @@ function pageEntity(ent, nav){
         SI('user') + '<span>Профиль автора</span></button>');
     }
   }
-  /* Личная переписка: вместо витрины автора — то, что нужно в чате. */
+  /* Личная переписка, служебный чат, «Избранное», общий чат: вместо витрины
+     автора — то, что нужно в самой переписке. */
   if(!showcase && !ent.isMe){
     minis.push('<button class="soc-mini" id="socDmMedia" data-a="dmmedia" type="button">' + SI('photo') + '<span>Медиа, файлы, ссылки</span></button>');
     minis.push('<button class="soc-mini" id="socDmSearch" data-a="dmsearch" type="button">' + SI('search') + '<span>Поиск по переписке</span></button>');
-    if(!ent.isService){
+    /* Заблокировать можно человека, а не свою папку и не общий чат. */
+    if(ent.isDM && !ent.isService && !ent.isSaved){
       minis.push('<button class="soc-mini" id="socDmBlock" data-a="dmblock" type="button">' + SI('lock') + '<span>Заблокировать</span></button>');
     }
   }
-  if(!ent.isMe){
+  /* На себя и на собственную папку «Избранное» не жалуются. */
+  if(!ent.isMe && !ent.isSaved){
     minis.push('<button class="soc-mini" id="socReport" data-a="report" type="button">' + SI('flag') + '<span>Пожаловаться</span></button>');
   }
 
-  /* --- вкладки --- */
+  /* --- вкладки: посты, клипы, подписчики --- */
+  if(tab !== 'posts' && tab !== 'reels' && tab !== 'subs') tab = 'posts';
   var tabs = showcase
     ? '<div class="soc-tabs" id="okoSocTabs">' +
         '<button class="soc-tab ' + (tab === 'posts' ? 'on' : '') + '" data-a="tab" data-v="posts" type="button">' +
           SI('feed') + 'Посты <i>' + posts.length + '</i></button>' +
         '<button class="soc-tab ' + (tab === 'reels' ? 'on' : '') + '" data-a="tab" data-v="reels" type="button">' +
           SI('clips') + 'Клипы <i>' + reels.length + '</i></button>' +
+        '<button class="soc-tab ' + (tab === 'subs' ? 'on' : '') + '" data-a="tab" data-v="subs" type="button">' +
+          SI('users') + 'Подписчики <i>' + subs + '</i></button>' +
       '</div>'
     : '';
 
   var list = showcase
-    ? '<div id="okoSocList">' + (tab === 'reels' ? reelsHtml(ent, reels) : postsHtml(ent, posts)) + '</div>'
+    ? '<div id="okoSocList">' + (tab === 'reels' ? reelsHtml(ent, reels)
+        : tab === 'subs' ? subsHtml(ent, followers, subs)
+        : postsHtml(ent, posts)) + '</div>'
     : '<div class="soc-note">' + (ent.isService
         ? 'Это чат поддержки OKO. Пиши сюда про оплату, доступы и любые сбои — отвечаем в переписке.'
-        : 'Это личная переписка. Публикации и подписчики живут в профиле — здесь только ваш диалог.') + '</div>';
+        : ent.isSaved
+        ? 'Это «Избранное» — твоя личная папка с сохранёнными сообщениями. Публикаций, клипов и подписчиков здесь не бывает.'
+        : (ent.type === 'group' || ent.type === 'chat')
+        ? 'Это общий чат сообщества. Публикации, клипы и подписчики живут в профилях и каналах — здесь только переписка.'
+        : 'Это личная переписка. Публикации, клипы и подписчики живут в профиле — здесь только ваш диалог.') + '</div>';
 
   return {
     title: ent.name,
@@ -985,6 +1083,63 @@ function reelsHtml(ent, reels){
       (p.txt ? '<span class="soc-reel-cap">' + E(p.txt) + '</span>' : '') +
     '</button>';
   }).join('') + '</div>';
+}
+
+/* ---------- подписчики: только настоящие, без единого выдуманного ----------
+   Приложение знает по имени лишь тех, кто реально записан в сущности
+   (участники созданного канала/клуба) и себя самого, если подписан.
+   Всё остальное — работа бэкенда, и об этом говорим честно. */
+function knownSubs(ent){
+  var out = [], seen = {}, me = P(), myNick = nickOf(me);
+  function add(name, nick, note){
+    name = String(name || '').trim();
+    nick = nick || slug(name);
+    if(!name || seen[nick]) return;
+    seen[nick] = 1;
+    out.push({ name: name, nick: nick, note: note || '', avatar: (nick === myNick ? (me.avatar || null) : null) });
+  }
+  var src = ent.own || ent.ch || SOC.meta[ent.key] || {};
+  var members = Array.isArray(src.members) ? src.members : [];
+  var roles = src.roles || {};
+  for(var i = 0; i < members.length; i++){
+    var m = members[i];
+    if(!m || !m.name) continue;
+    var nk = nickOf(m);
+    add(m.name, nk, ROLE_LABEL[roles[nk]] || (m.joined ? 'с нами ' + m.joined : ''));
+  }
+  if(isSubbed(ent)) add(me.name, myNick, 'ты подписан');
+  return out;
+}
+
+function subsHtml(ent, list, count){
+  if(!list.length){
+    return '<div class="soc-empty">' + SI('users') +
+      '<p>Подписчиков пока нет</p><small>' +
+      (ent.isMe
+        ? 'Публикуй посты и клипы — те, кто подпишется, появятся здесь. Выдуманных людей в этом списке не будет никогда.'
+        : ent.owned
+        ? 'Как только на страницу подпишутся, список заполнится настоящими людьми.'
+        : 'Никто ещё не подписан. Нажми «Подписаться» — и увидишь себя первым в списке.') +
+      '</small></div>';
+  }
+  var rows = list.map(function(s){
+    var e2 = {
+      name: s.name, nick: s.nick, key: 'u:' + s.nick,
+      avaLetter: (String(s.name || 'O').trim().charAt(0) || 'O').toUpperCase(),
+      avatarImg: s.avatar || null, avaIcon: null
+    };
+    return '<button class="soc-row" data-a="opensub" data-v="' + E(s.nick) + '" type="button">' +
+      avaHtml(e2, 36, 'sm') +
+      '<span class="soc-row-b"><b>' + E(s.name) + '</b>' +
+      '<small>@' + E(s.nick) + (s.note ? ' · ' + E(s.note) : '') + '</small></span>' +
+      '<span class="soc-row-x" aria-hidden="true">' + SI('chev') + '</span></button>';
+  }).join('');
+  var rest = Math.max(0, (+count || 0) - list.length);
+  return '<div class="soc-card">' + rows + '</div>' +
+    (rest
+      ? '<div class="soc-note">Ещё ' + FMT(rest) + ' — имён у приложения пока нет: список подписчиков целиком придёт с бэкендом, ' +
+        'здесь видно только тех, кого приложение знает на этом устройстве.</div>'
+      : '');
 }
 
 function commentTarget(ent){
@@ -1576,6 +1731,14 @@ function act(a, v, el){
       if(ent.nick) go(null, 'u:' + ent.nick);
       break;
 
+    /* тап по подписчику — его профиль, с тем же «назад» */
+    case 'opensub':
+      if(!v) return;
+      if(v === ent.nick){ T('Это та же страница'); return; }
+      if(!entity('u:' + v)){ T('Профиль пока недоступен'); return; }
+      go(null, 'u:' + v);
+      break;
+
     /* --- действия личной переписки (вместо витрины автора) --- */
     case 'dmmedia':
       openMessage(ent);
@@ -1857,14 +2020,19 @@ function bindRoot(){
    12. ТОЧКИ ВХОДА
    ========================================================================== */
 
-/* --- шапка диалога: тап по аватару/имени --- */
+/* --- шапка диалога: тап по аватару ИЛИ по имени ---
+   В index.html аватар и имя лежат в одном контейнере с onclick="openProfile()",
+   поэтому достаточно перехватить саму функцию: сработает и тап по кружку,
+   и тап по имени, и тап по строке статуса. Страховка ниже (делегирование по
+   #convAva / #convName) нужна на случай, если какой-то слой перерисует шапку
+   и потеряет обработчик. */
 (function hookOpenProfile(){
   var prev = window.openProfile;
   window.openProfile = function(){
     try{
       var c = (typeof currentChat !== 'undefined') ? currentChat : null;
       if(c){
-        var k = keyOfChat(c);
+        var k = profileKeyOfChat(c);
         if(k && open(k)) return;
       }
     }catch(e){}
@@ -1872,12 +2040,51 @@ function bindRoot(){
   };
 })();
 
-/* --- публичный профиль автора (лента, посты, упоминания) --- */
+/* Страховка на случай перерисованной шапки: аватар и имя открывают то же
+   самое. Если родительский onclick уцелел — он отработает сам, и повторно
+   мы ничего не делаем (проверка isOpen). */
+document.addEventListener('click', function(e){
+  var t = e.target;
+  if(!t || !t.closest) return;
+  var hit = t.closest('#convAva, #convName, #convStatus');
+  if(!hit) return;
+  if(isOpen()) return;
+  var c = null;
+  try{ c = (typeof currentChat !== 'undefined') ? currentChat : null; }catch(err){}
+  if(!c) return;
+  var k = profileKeyOfChat(c);
+  if(!k || !entity(k)) return;
+  /* Ждём тик: если родительский onclick уже открыл страницу — не мешаем. */
+  setTimeout(function(){ if(!isOpen()) open(k); }, 0);
+}, false);
+
+/* --- публичный профиль автора (лента, посты, упоминания, аватар в шапке) ---
+   Ядро (psConvAvaTap в app.js) перехватывает тап по аватару в шапке диалога
+   и зовёт psOpenProfile(имя). Значит и здесь «профиль автора» обязан вести
+   в ПРОФИЛЬ человека, а не в карточку переписки — иначе тап по аватару и тап
+   по имени в одной шапке открывают разные страницы. Служебные и официальные
+   аккаунты по-прежнему остаются карточкой (см. profileKeyOfChat). */
+function chatByName(name){
+  try{
+    if(typeof CHATS !== 'undefined' && CHATS){
+      for(var i = 0; i < CHATS.length; i++) if(CHATS[i].name === name) return CHATS[i];
+    }
+  }catch(e){}
+  return null;
+}
+function authorKeyOfName(name){
+  var k = keyOfName(name);
+  if(k && k.slice(0, 2) === 'd:'){
+    var c = chatByName(name);
+    if(c) k = profileKeyOfChat(c) || k;
+  }
+  return k;
+}
 (function hookPsProfile(){
   var prev = window.psOpenProfile;
   window.psOpenProfile = function(name){
     try{
-      var k = keyOfName(name);
+      var k = authorKeyOfName(name);
       if(k && open(k)) return;
     }catch(e){}
     if(typeof prev === 'function') return prev.apply(this, arguments);
@@ -1910,7 +2117,7 @@ document.addEventListener('click', function(e){
       if(raw != null){
         var id = /^-?\d+$/.test(String(raw).trim()) ? +raw : String(raw).trim();
         var chat = chatRec(id);
-        var k = chat ? keyOfChat(chat) : null;
+        var k = chat ? profileKeyOfChat(chat) : null;
         if(k && entity(k)){
           e.preventDefault(); e.stopPropagation();
           if(e.stopImmediatePropagation) e.stopImmediatePropagation();
@@ -1931,7 +2138,7 @@ document.addEventListener('click', function(e){
     var key = null;
     if(p && p.socKey) key = p.socKey;
     else if(p && p.chOrigin) key = 'c:' + p.chOrigin;
-    else if(p && p.name) key = keyOfName(p.name);
+    else if(p && p.name) key = authorKeyOfName(p.name);
     if(key && entity(key)){
       e.preventDefault(); e.stopPropagation();
       if(e.stopImmediatePropagation) e.stopImmediatePropagation();
@@ -1997,9 +2204,10 @@ function injectProfileCta(){
           CRE = { kind: 'channel', name: '', desc: '', access: 'open', price: 0, avatar: null };
           open(key, 'create'); return;
         }
-        if(k === 'reels'){ open(key); var t = top_(); if(t){ t.tab = 'reels'; render(); } return; }
         open(key);
-        if(k === 'posts'){ var tp = top_(); if(tp){ tp.tab = 'posts'; render(); } }
+        /* счётчик открывает свою вкладку: подписчики, посты или клипы */
+        var TABOF = { subs: 'subs', posts: 'posts', reels: 'reels' };
+        if(TABOF[k]){ var t = top_(); if(t){ t.tab = TABOF[k]; render(); } }
       });
     }
     var html = myBlockHtml();
