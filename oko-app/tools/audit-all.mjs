@@ -88,8 +88,14 @@ const ПРОВЕРКА = `(() => {
       if (!намеренно && el.scrollWidth > el.clientWidth + 1 && cs.overflow !== 'visible')
         if (out.обрезано.length < 8) out.обрезано.push(txt.slice(0, 38));
 
-      /* под шапкой */
-      if (низШапки && r.top < низШапки - 1 && r.bottom > 2)
+      /* Под шапкой — но не САМА шапка.
+         Первый прогон дал 141 замечание, и все были заголовками вроде
+         «Лента», «Чаты», «Кошелёк»: они лежат ВНУТРИ шапки, поэтому их верх
+         всегда выше её низа. Проверять надо только то, что шапке не
+         принадлежит. Прокрутка тоже не в счёт: содержимое обязано уезжать
+         под липкую шапку, это не дефект, а её смысл. */
+      if (низШапки && r.top < низШапки - 1 && r.bottom > 2 &&
+          !(шапка && шапка.contains(el)) && r.bottom > низШапки)
         if (out.подШапкой.length < 6) out.подШапкой.push(txt.slice(0, 30));
 
       /* эмодзи в интерфейсе */
@@ -100,9 +106,18 @@ const ПРОВЕРКА = `(() => {
       if (ФЕЙК.test(txt))
         if (out.фейк.length < 6) out.фейк.push(txt.slice(0, 44));
 
-      /* перенос посреди слова — замер по настоящим строкам */
+      /* Перенос посреди слова — замер по настоящим строкам.
+
+         Технические строки рвать МОЖНО: реф-ссылка, адрес кошелька, хеш,
+         код платежа. Для них в проекте есть класс .oko-breakable, и ловить
+         их как дефект — врать: разрыв там сделан нарочно, иначе строка
+         вылезет за карточку. Отдельно отсеиваем то, что выглядит как ссылка
+         или код, даже если класс забыли повесить. */
       const шир = el.offsetWidth || Math.round(r.width);
-      if ((cs.wordBreak === 'break-all' || cs.overflowWrap === 'anywhere') && шир < 240) {
+      const техническая = el.closest('.oko-breakable, .wal-addr, .ads-rv-link, .wal-recv-link, .w2-qr-link, .pp-qr-url, .pp2-qr-link, .ps-sharelink, .ps-soc-pub-url')
+        || /https?:\\/\\/|[?&][a-z_]+=|^[A-Z0-9-]{10,}$|@[a-z0-9_]{3,}/i.test(txt.trim());
+      if (!техническая &&
+          (cs.wordBreak === 'break-all' || cs.overflowWrap === 'anywhere') && шир < 240) {
         const слово = txt.split(/\\s+/).reduce((a, w) => w.length > a.length ? w : a, '');
         if (слово.length >= 6) {
           const cv = document.createElement('canvas'), g = cv.getContext('2d');
@@ -134,8 +149,24 @@ const ПРОВЕРКА = `(() => {
   });
 
   /* наложение: центр кнопки перекрыт чужим узлом */
+  /* Закрытая шторка не прячется через display:none — она уезжает
+     трансформом за край. Её кнопки «перекрыты» чем угодно, но пальцем до них
+     всё равно не добраться. Первый прогон дал 196 наложений, и почти все
+     были такими: sp-qr-btn и mp-mv-x из закрытых панелей. */
+  const вЗакрытом = el => {
+    for (let p = el.parentElement; p; p = p.parentElement) {
+      const c = typeof p.className === 'string' ? p.className : '';
+      if (!/\\b(sheet|modal|popup|drawer|overlay)\\b/.test(c)) continue;
+      return !/\\b(open|on|active|shown)\\b/.test(c);
+    }
+    return false;
+  };
   document.querySelectorAll('button, [role="button"], .prow, .pp2-row').forEach(el => {
     if (!видим(el) || out.наложения.length >= 5) return;
+    if (вЗакрытом(el)) return;
+    /* элемент с неактивного экрана нас не касается */
+    const экран = el.closest('.screen');
+    if (экран && !экран.classList.contains('active')) return;
     const r = el.getBoundingClientRect();
     const cx = r.left + r.width / 2, cy = r.top + r.height / 2;
     if (cx < 0 || cy < 0 || cx > innerWidth || cy > innerHeight) return;

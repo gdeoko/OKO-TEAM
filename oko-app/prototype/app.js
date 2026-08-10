@@ -18814,7 +18814,11 @@ function acProfileInject(){
 
     // Отзывы
     const revHtml = reviews.map(r=>{
-      const stars = '★'.repeat(r.stars||5) + '☆'.repeat(5-(r.stars||5));
+      /* Звёзды — векторные из спрайта. Глиф ★ в шрифте рисуется по-разному
+         на Android и iOS и в интерфейсе OKO запрещён. */
+      const n = Math.max(0, Math.min(5, r.stars || 5));
+      const stars = Array.from({length:5}, (_,i)=>
+        `<svg class="i${i < n ? ' on' : ''}"><use href="#i-star"/></svg>`).join('');
       return `<div class="acd-cp-review">
         <div class="acd-cp-review-h">
           <span class="ava">${esc((r.name||'?').charAt(0).toUpperCase())}</span>
@@ -18892,7 +18896,8 @@ function acProfileInject(){
       body:`<div style="text-align:left">
         <label style="font-size:11px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;color:var(--dim);display:block;margin-bottom:6px">Оценка</label>
         <select id="apdRevStars" style="width:100%;background:var(--raised);border:1px solid var(--border);border-radius:9px;color:var(--text);padding:9px 11px;font-size:13px;margin-bottom:10px">
-          ${[5,4,3,2,1].map(n=>`<option value="${n}" ${n===5?'selected':''}>${'★'.repeat(n)}${'☆'.repeat(5-n)} — ${n} из 5</option>`).join('')}
+          ${[[5,'Отлично'],[4,'Хорошо'],[3,'Нормально'],[2,'Слабо'],[1,'Плохо']]
+              .map(([n,t])=>`<option value="${n}" ${n===5?'selected':''}>${n} из 5 — ${t}</option>`).join('')}
         </select>
         <label style="font-size:11px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;color:var(--dim);display:block;margin-bottom:6px">Отзыв</label>
         <textarea id="apdRevTxt" placeholder="Что понравилось, что вынес из курса…" style="width:100%;background:var(--raised);border:1px solid var(--border);border-radius:9px;color:var(--text);padding:9px 11px;font-size:13px;min-height:80px;resize:vertical"></textarea>
@@ -35056,7 +35061,9 @@ function cpSeedSaved(){
   if(typeof CHATS==='undefined' || !Array.isArray(CHATS)) return;
   if(CHATS.some(c=>c.id==='cp-saved')) return;
   CHATS.unshift({
-    id:'cp-saved', ava:'★', name:'Избранное', kind:'saved', kindIcon:'bookmark',
+    /* Аватар «Избранного» — SVG-закладка из спрайта, а не глиф ★:
+       в интерфейсе OKO иконки только векторные. */
+    id:'cp-saved', avaIcon:'bookmark', name:'Избранное', kind:'saved', kindIcon:'bookmark',
     nick:'saved', preview:'Твоя личная папка — сохраняй важное',
     time:'', unread:0, online:false, cpSaved:true,
     msgs: cpBuildSavedMsgs()

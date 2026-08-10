@@ -1,0 +1,448 @@
+[
+ {
+  "id": "r001",
+  "имя": "вкладка feed",
+  "путь": [
+   "showTab('feed')"
+  ],
+  "глубина": 1
+ },
+ {
+  "id": "r002",
+  "имя": "вкладка chats",
+  "путь": [
+   "showTab('chats')"
+  ],
+  "глубина": 1
+ },
+ {
+  "id": "r003",
+  "имя": "вкладка mini",
+  "путь": [
+   "showTab('mini')"
+  ],
+  "глубина": 1
+ },
+ {
+  "id": "r004",
+  "имя": "вкладка wallet",
+  "путь": [
+   "showTab('wallet')"
+  ],
+  "глубина": 1
+ },
+ {
+  "id": "r005",
+  "имя": "вкладка academy",
+  "путь": [
+   "showTab('academy')"
+  ],
+  "глубина": 1
+ },
+ {
+  "id": "r006",
+  "имя": "вкладка partner",
+  "путь": [
+   "showTab('partner')"
+  ],
+  "глубина": 1
+ },
+ {
+  "id": "r007",
+  "имя": "вкладка games",
+  "путь": [
+   "showTab('games')"
+  ],
+  "глубина": 1
+ },
+ {
+  "id": "r008",
+  "имя": "вкладка ads",
+  "путь": [
+   "showTab('ads')"
+  ],
+  "глубина": 1
+ },
+ {
+  "id": "r009",
+  "имя": "вкладка ton",
+  "путь": [
+   "showTab('ton')"
+  ],
+  "глубина": 1
+ },
+ {
+  "id": "r010",
+  "имя": "мини-апп factory",
+  "путь": [
+   "showTab('mini'); openMa('factory')"
+  ],
+  "глубина": 1
+ },
+ {
+  "id": "r011",
+  "имя": "мини-апп helper",
+  "путь": [
+   "showTab('mini'); openMa('helper')"
+  ],
+  "глубина": 1
+ },
+ {
+  "id": "r012",
+  "имя": "мини-апп market",
+  "путь": [
+   "showTab('mini'); openMa('market')"
+  ],
+  "глубина": 1
+ },
+ {
+  "id": "r013",
+  "имя": "мини-апп socials",
+  "путь": [
+   "showTab('mini'); openMa('socials')"
+  ],
+  "глубина": 1
+ },
+ {
+  "id": "r014",
+  "имя": "мини-апп system",
+  "путь": [
+   "showTab('mini'); openMa('system')"
+  ],
+  "глубина": 1
+ },
+ {
+  "id": "r015",
+  "имя": "мини-апп video",
+  "путь": [
+   "showTab('mini'); openMa('video')"
+  ],
+  "глубина": 1
+ },
+ {
+  "id": "r016",
+  "имя": "кошелёк topup",
+  "путь": [
+   "showTab('wallet'); typeof w2Open==='function'&&w2Open('topup')"
+  ],
+  "глубина": 1
+ },
+ {
+  "id": "r017",
+  "имя": "кошелёк withdraw",
+  "путь": [
+   "showTab('wallet'); typeof w2Open==='function'&&w2Open('withdraw')"
+  ],
+  "глубина": 1
+ },
+ {
+  "id": "r018",
+  "имя": "кошелёк tx",
+  "путь": [
+   "showTab('wallet'); typeof w2Open==='function'&&w2Open('tx')"
+  ],
+  "глубина": 1
+ },
+ {
+  "id": "r019",
+  "имя": "кошелёк statement",
+  "путь": [
+   "showTab('wallet'); typeof w2Open==='function'&&w2Open('statement')"
+  ],
+  "глубина": 1
+ },
+ {
+  "id": "r020",
+  "имя": "кошелёк templates",
+  "путь": [
+   "showTab('wallet'); typeof w2Open==='function'&&w2Open('templates')"
+  ],
+  "глубина": 1
+ },
+ {
+  "id": "r021",
+  "имя": "кошелёк limits",
+  "путь": [
+   "showTab('wallet'); typeof w2Open==='function'&&w2Open('limits')"
+  ],
+  "глубина": 1
+ },
+ {
+  "id": "r022",
+  "имя": "кошелёк autopay",
+  "путь": [
+   "showTab('wallet'); typeof w2Open==='function'&&w2Open('autopay')"
+  ],
+  "глубина": 1
+ },
+ {
+  "id": "r023",
+  "имя": "кошелёк paypick",
+  "путь": [
+   "showTab('wallet'); typeof w2Open==='function'&&w2Open('paypick')"
+  ],
+  "глубина": 1
+ },
+ {
+  "id": "r024",
+  "имя": "кошелёк receive",
+  "путь": [
+   "showTab('wallet'); typeof w2Open==='function'&&w2Open('receive')"
+  ],
+  "глубина": 1
+ },
+ {
+  "id": "r025",
+  "имя": "кошелёк receipt",
+  "путь": [
+   "showTab('wallet'); typeof w2Open==='function'&&w2Open('receipt')"
+  ],
+  "глубина": 1
+ },
+ {
+  "id": "r026",
+  "имя": "кошелёк tariffs",
+  "путь": [
+   "showTab('wallet'); typeof w2Open==='function'&&w2Open('tariffs')"
+  ],
+  "глубина": 1
+ },
+ {
+  "id": "r027",
+  "имя": "каналы list",
+  "путь": [
+   "typeof chOpen==='function'&&chOpen('list')"
+  ],
+  "глубина": 1
+ },
+ {
+  "id": "r028",
+  "имя": "каналы catalog",
+  "путь": [
+   "typeof chOpen==='function'&&chOpen('catalog')"
+  ],
+  "глубина": 1
+ },
+ {
+  "id": "r029",
+  "имя": "каналы create",
+  "путь": [
+   "typeof chOpen==='function'&&chOpen('create')"
+  ],
+  "глубина": 1
+ },
+ {
+  "id": "r030",
+  "имя": "диалог",
+  "путь": [
+   "showTab('chats'); (document.querySelector('#chatList .ci, #chatList > *')||{click(){}}).click()"
+  ],
+  "глубина": 1
+ },
+ {
+  "id": "r031",
+  "имя": "клипы",
+  "путь": [
+   "typeof okoOpenClips==='function'&&okoOpenClips()"
+  ],
+  "глубина": 1
+ },
+ {
+  "id": "r032",
+  "имя": "поиск",
+  "путь": [
+   "typeof openSearch==='function'&&openSearch('')"
+  ],
+  "глубина": 1
+ },
+ {
+  "id": "r033",
+  "имя": "настройки",
+  "путь": [
+   "showTab('profile'); typeof st2Open==='function'&&st2Open()"
+  ],
+  "глубина": 1
+ },
+ {
+  "id": "r034",
+  "имя": "_vsOpenStickers2",
+  "путь": [
+   "typeof _vsOpenStickers2==='function' && _vsOpenStickers2()"
+  ],
+  "глубина": 1
+ },
+ {
+  "id": "r035",
+  "имя": "adsOpenCreate",
+  "путь": [
+   "typeof adsOpenCreate==='function' && adsOpenCreate()"
+  ],
+  "глубина": 1
+ },
+ {
+  "id": "r036",
+  "имя": "apdCatalogOpen",
+  "путь": [
+   "typeof apdCatalogOpen==='function' && apdCatalogOpen()"
+  ],
+  "глубина": 1
+ },
+ {
+  "id": "r037",
+  "имя": "apdNotesOpen",
+  "путь": [
+   "typeof apdNotesOpen==='function' && apdNotesOpen()"
+  ],
+  "глубина": 1
+ },
+ {
+  "id": "r038",
+  "имя": "gmBpOpen",
+  "путь": [
+   "typeof gmBpOpen==='function' && gmBpOpen()"
+  ],
+  "глубина": 1
+ },
+ {
+  "id": "r039",
+  "имя": "gmDailyOpen",
+  "путь": [
+   "typeof gmDailyOpen==='function' && gmDailyOpen()"
+  ],
+  "глубина": 1
+ },
+ {
+  "id": "r040",
+  "имя": "gmGiftsShopOpen",
+  "путь": [
+   "typeof gmGiftsShopOpen==='function' && gmGiftsShopOpen()"
+  ],
+  "глубина": 1
+ },
+ {
+  "id": "r041",
+  "имя": "gmMatch3Open",
+  "путь": [
+   "typeof gmMatch3Open==='function' && gmMatch3Open()"
+  ],
+  "глубина": 1
+ },
+ {
+  "id": "r042",
+  "имя": "gmOddsOpen",
+  "путь": [
+   "typeof gmOddsOpen==='function' && gmOddsOpen()"
+  ],
+  "глубина": 1
+ },
+ {
+  "id": "r043",
+  "имя": "gmScratchOpen",
+  "путь": [
+   "typeof gmScratchOpen==='function' && gmScratchOpen()"
+  ],
+  "глубина": 1
+ },
+ {
+  "id": "r044",
+  "имя": "gmStatsOpen",
+  "путь": [
+   "typeof gmStatsOpen==='function' && gmStatsOpen()"
+  ],
+  "глубина": 1
+ },
+ {
+  "id": "r045",
+  "имя": "gmStreakOpen",
+  "путь": [
+   "typeof gmStreakOpen==='function' && gmStreakOpen()"
+  ],
+  "глубина": 1
+ },
+ {
+  "id": "r046",
+  "имя": "gmVipOpen",
+  "путь": [
+   "typeof gmVipOpen==='function' && gmVipOpen()"
+  ],
+  "глубина": 1
+ },
+ {
+  "id": "r047",
+  "имя": "pp2OpenAcademy",
+  "путь": [
+   "typeof pp2OpenAcademy==='function' && pp2OpenAcademy()"
+  ],
+  "глубина": 1
+ },
+ {
+  "id": "r048",
+  "имя": "spOpenEditor",
+  "путь": [
+   "typeof spOpenEditor==='function' && spOpenEditor()"
+  ],
+  "глубина": 1
+ },
+ {
+  "id": "r049",
+  "имя": "st2OpenSupport",
+  "путь": [
+   "typeof st2OpenSupport==='function' && st2OpenSupport()"
+  ],
+  "глубина": 1
+ },
+ {
+  "id": "r050",
+  "имя": "вкладка mini › Документы",
+  "путь": [
+   "showTab('mini')",
+   "(()=>{const e=document.querySelector('[data-oko-deep=\"31\"]'); e&&e.click();})()"
+  ],
+  "глубина": 2
+ },
+ {
+  "id": "r051",
+  "имя": "каналы list › 0подписчиков",
+  "путь": [
+   "typeof chOpen==='function'&&chOpen('list')",
+   "(()=>{const e=document.querySelector('[data-oko-deep=\"47\"]'); e&&e.click();})()"
+  ],
+  "глубина": 2
+ },
+ {
+  "id": "r052",
+  "имя": "каналы list › Опубликовать",
+  "путь": [
+   "typeof chOpen==='function'&&chOpen('list')",
+   "(()=>{const e=document.querySelector('[data-oko-deep=\"50\"]'); e&&e.click();})()"
+  ],
+  "глубина": 2
+ },
+ {
+  "id": "r053",
+  "имя": "каналы list › Создать",
+  "путь": [
+   "typeof chOpen==='function'&&chOpen('list')",
+   "(()=>{const e=document.querySelector('[data-oko-deep=\"52\"]'); e&&e.click();})()"
+  ],
+  "глубина": 2
+ },
+ {
+  "id": "r054",
+  "имя": "диалог › Эмодзи",
+  "путь": [
+   "showTab('chats'); (document.querySelector('#chatList .ci, #chatList > *')||{click(){}}).click()",
+   "(()=>{const e=document.querySelector('[data-oko-deep=\"8\"]'); e&&e.click();})()"
+  ],
+  "глубина": 2
+ },
+ {
+  "id": "r055",
+  "имя": "клипы › УведомленияПуши, email, тишина",
+  "путь": [
+   "typeof okoOpenClips==='function'&&okoOpenClips()",
+   "(()=>{const e=document.querySelector('[data-oko-deep=\"61\"]'); e&&e.click();})()"
+  ],
+  "глубина": 2
+ }
+]
