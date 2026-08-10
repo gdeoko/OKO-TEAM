@@ -18,7 +18,7 @@
    ============================================================================ */
 import { chromium } from 'playwright-core';
 import fs from 'node:fs/promises';
-import { CLEAN_START, CLOSE_OVERLAYS } from './clean-start.mjs';
+import { CLEAN_START, CLOSE_OVERLAYS, RESET_ALL } from './clean-start.mjs';
 
 const args = Object.fromEntries(process.argv.slice(2).join(' ').split('--').filter(Boolean)
   .map(s => { const [k, ...v] = s.trim().split(/\s+/); return [k, v.join(' ') || true]; }));
@@ -94,18 +94,16 @@ await p.goto(БАЗА, { waitUntil: 'domcontentloaded' });
 await p.waitForTimeout(3000);
 await p.evaluate('okoSkipAuth()');
 
+/* Сброс общий с аудитом: свой список функций закрытия здесь уже подводил —
+   подстраницы кошелька открываются классом .open и не закрывают друг друга,
+   и разведка находила «новые экраны», которые на деле были прошлой панелью
+   с новым содержимым под ней. */
 async function сброс() {
   for (let i = 0; i < 3; i++) { await p.keyboard.press('Escape').catch(() => {}); await p.waitForTimeout(35); }
-  await p.evaluate(`(()=>{
-    try{ if(window.okoSocial&&okoSocial.isOpen&&okoSocial.isOpen()) okoSocial.close(); }catch(e){}
-    try{ if(typeof closeConv==='function') closeConv(); }catch(e){}
-    try{ if(typeof closeSheet==='function') closeSheet(); }catch(e){}
-    try{ if(typeof closeMa==='function') closeMa(); }catch(e){}
-    try{ if(typeof closePopup==='function') closePopup(); }catch(e){}
-    try{ showTab('profile'); }catch(e){}
-  })()`).catch(() => {});
+  await p.evaluate(RESET_ALL).catch(() => {});
+  await p.evaluate(`(()=>{ try{ showTab('profile'); }catch(e){} })()`).catch(() => {});
   await p.evaluate(CLOSE_OVERLAYS).catch(() => {});
-  await p.waitForTimeout(150);
+  await p.waitForTimeout(180);
 }
 
 /* Отпечатки уже известных экранов, чтобы не записывать их снова. */
@@ -145,8 +143,11 @@ for (const r of исходная) {
     await p.waitForTimeout(430);
     await p.evaluate(CLOSE_OVERLAYS).catch(() => {});
     await p.waitForTimeout(90);
+    const отп1 = await p.evaluate(ОТПЕЧАТОК).catch(() => '');
+    await p.waitForTimeout(400);
     const отп = await p.evaluate(ОТПЕЧАТОК).catch(() => '');
-    if (!отп || виденные.has(отп)) continue;
+    /* экран, закрывшийся сам за полсекунды, экраном не считается */
+    if (!отп || отп !== отп1 || виденные.has(отп)) continue;
     виденные.add(отп);
     карта.push({
       id: 'r' + String(карта.length + 1).padStart(3, '0'),
