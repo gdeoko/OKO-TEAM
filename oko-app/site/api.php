@@ -17,6 +17,10 @@ $action = $_GET['action'] ?? $body['action'] ?? '';
 function out($d) { echo json_encode($d, JSON_UNESCAPED_UNICODE); exit; }
 function fail($m, $c = 400) { http_response_code($c); out(['ok'=>false,'error'=>$m]); }
 function admin_ok(): bool { $C=cfg(); $k=$_GET['key']??($_SERVER['HTTP_X_ADMIN_KEY']??($GLOBALS['body']['key']??'')); return $k!=='' && hash_equals((string)$C['admin_password'],(string)$k); }
+// Подпись на одну анкету вместо пароля админки в ссылке: пароль в кнопке
+// телеграм-сообщения означает полный доступ у всех, кто видел этот чат.
+function anketa_sig(string $sid): string { $C=cfg(); return substr(hash_hmac('sha256',$sid,(string)$C['admin_password']),0,32); }
+function anketa_sig_ok(string $sid, string $sig): bool { return $sig!=='' && hash_equals(anketa_sig($sid),$sig); }
 function require_admin(){ if(!admin_ok()) fail('Unauthorized',403); }
 function agent_ok(): bool { $C=cfg(); $t=$_SERVER['HTTP_X_AGENT_TOKEN']??($GLOBALS['body']['agent_token']??''); return $t!=='' && hash_equals((string)($C['agent_token']??''),(string)$t); }
 function require_agent(){ if(!agent_ok()) fail('Unauthorized',403); }
@@ -205,7 +209,11 @@ case 'dossierPage':
 
 case 'saveAnketa':
     rate_limit('saveAnketa',20,60);
-    $sid=$body['anketa_id']??('ank_'.time().'_'.substr(md5(mt_rand()),0,6));
+    // Идентификатор приходит из браузера и попадает в путь на диске.
+    // Строка вида ../.. писала файл клиента куда угодно по сайту.
+    $sid=preg_replace('/[^A-Za-z0-9_\-]+/','',(string)($body['anketa_id']??''));
+    $sid=substr($sid,0,64);
+    if($sid==='') $sid='ank_'.time().'_'.substr(md5(mt_rand()),0,6);
     $name=$body['name']??''; $email=$body['email']??''; $answers=$body['answers']??[];
     $svc=in_array($body['product']??'sistema',['sistema','web','zavod','complex'])?$body['product']:'sistema';
     $complete=!empty($body['complete'])||(($body['progress']??0)>=($body['total']??999));
@@ -234,7 +242,7 @@ case 'saveAnketa':
          $body['progress']??0,$body['total']??0,$complete?1:0,$body['ts']??now(),$complete?now():null,now()]);
     if($complete && !empty($body['send_notifications']))
         tg_send($C['daniel_tg'],"📋 <b>Новая анкета</b> ($svc)\n\n👤 ".htmlspecialchars($name).($email?"\n📧 $email":''),
-            [[['text'=>'📥 Скачать анкету','url'=>$C['site_url'].'/api.php?action=downloadAnketa&id='.urlencode($sid).'&key='.urlencode($C['admin_password'])]]], topic_thread('hot_leads'));
+            [[['text'=>'📥 Скачать анкету','url'=>$C['site_url'].'/api.php?action=downloadAnketa&id='.urlencode($sid).'&sig='.anketa_sig($sid)]]], topic_thread('hot_leads'));
     out(['ok'=>true,'id'=>$sid]);
 
 case 'checkPaid':
@@ -342,7 +350,9 @@ case 'sendNewsletter':
     out(['ok'=>true,'sent'=>$sent,'failed'=>$failed]);
 
 case 'downloadAnketa':
-    require_admin(); require __DIR__.'/anketa_download.php'; download_anketa_zip($_GET['id']??''); exit;
+    $__id=(string)($_GET['id']??'');
+    if(!admin_ok() && !anketa_sig_ok($__id,(string)($_GET['sig']??''))) fail('Unauthorized',403);
+    // require __DIR__.'/anketa_download.php'; download_anketa_zip($_GET['id']??''); exit;
 
 case 'downloadAnketaPdf':
     require_admin(); require __DIR__.'/anketa_report.php'; render_anketa_report($_GET['id']??''); exit;
