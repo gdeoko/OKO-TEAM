@@ -36,6 +36,20 @@ try{
   localStorage.setItem('oko-onb2-intro', JSON.stringify({
     done: true, skipped: false, role: null, interests: [], goal: null, at: 0
   }));
+
+  /* Слой удержания (oko-growth) сам выбрасывает окна поверх вкладок по
+     таймеру — «ТВОЯ ССЫЛКА ЛЕЖИТ БЕЗ ДЕЛА» закрыла профиль целиком, и аудит
+     снимал её вместо профиля. Гасить постфактум бесполезно: окно всплывает
+     уже после того, как проверка сняла оверлеи. Поэтому глушим на входе,
+     через его же поле off: там перечислены виды подсказок, помеченные
+     «больше не показывать». Само окно проверяется отдельно — probe-signals. */
+  localStorage.setItem('okg-state-v1', JSON.stringify({
+    steps: {}, ob: { collapsed: true, closed: true }, nudge: {},
+    off: { partner: true, paywall: true, academy: true, factory: true,
+           channels: true, market: true, system: true, video: true,
+           reels: true, wallet: true, profile: true, onboard: true },
+    snooze: {}, refCopied: true, paid: false, lastTier: 'FREE', partnerOn: false
+  }));
 }catch(e){}
 
 /* Ручное снятие заставки и экрана входа — на случай, если что-то не успело */
