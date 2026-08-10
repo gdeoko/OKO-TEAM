@@ -508,10 +508,46 @@ function nl_failure_kind(string $err): string {
  *
  * @return int сколько адресов реально выведено из базы
  */
+/**
+ * ПРЕДОХРАНИТЕЛЬ ОТ МАССОВОГО ВЫВОДА ЖИВЫХ АДРЕСОВ.
+ *
+ * Здоровая база даёт единицы процентов отказов. Если вдруг «не существует» говорит
+ * каждый пятый адрес — врёт не база, а канал: упёрлись в суточный лимит домена,
+ * попали в чёрный список, сломался ящик. Именно так 10 августа 2026 из базы ушли
+ * 2695 живых человек.
+ *
+ * Поэтому: пока отказов мало — работаем как обычно. Как только их доля переходит
+ * порог на заметном объёме — НИКОГО не выводим, глушим массовую отправку и оставляем
+ * след в журнале, чтобы человек разобрался. Ложное срабатывание стоит паузы,
+ * пропуск — стоит базы.
+ */
+function nl_purge_guard_tripped(int $hardNow = 0): bool {
+    $sentToday = (int) (scalar("SELECT COUNT(*) FROM mail_queue
+                                 WHERE status='sent' AND COALESCE(priority,0)>0
+                                   AND date(sent_at)=date('now')") ?? 0);
+    $failToday = (int) (scalar("SELECT COUNT(*) FROM mail_queue
+                                 WHERE status='failed' AND COALESCE(priority,0)>0") ?? 0);
+    $total = $sentToday + $failToday;
+    if ($hardNow < 50 || $total < 100) return false;      // мало данных — не судим
+    return ($hardNow / max(1, $total)) > 0.20;            // каждый пятый — это канал, не адреса
+}
+
 function nl_prune_failed(): int {
     try { db()->exec("ALTER TABLE mail_queue ADD COLUMN soft_tries INTEGER DEFAULT 0"); } catch (\Throwable $e) {}
     $rows = all("SELECT id, to_email, COALESCE(error,'') AS error, COALESCE(soft_tries,0) AS soft_tries
                    FROM mail_queue WHERE status='failed' AND COALESCE(priority,0)>0");
+
+    // Сначала считаем, сколько отказов набралось, и только потом решаем, трогать ли базу.
+    $hard = 0;
+    foreach ($rows as $r) if (nl_failure_kind((string) $r['error']) === 'hard') $hard++;
+    if (nl_purge_guard_tripped($hard)) {
+        mass_sending_set(false);
+        nl_log("СТОП: отказов $hard — это слишком много для живой базы. "
+             . "Похоже на сбой канала, а не на плохие адреса. Никого не выводим, "
+             . "массовая отправка остановлена — нужен разбор.");
+        return 0;
+    }
+
     $n = 0; $back = 0;
     foreach ($rows as $r) {
         $e = mb_strtolower(trim((string) $r['to_email']));
@@ -934,6 +970,9 @@ function newsletter_process_queue(int $limit): int {
     };
 
     $sent = 0;
+    // Отказы адресатов за этот прогон. Живая база столько подряд не даёт — если
+    // счётчик разогнался, значит врёт канал, и выводить людей из базы нельзя.
+    $hardRun = 0;
 
     // Маршрутизация по категориям (mail_route_account):
     //   заявки/результаты/уведомления → официальная Gmail (аккаунт по умолчанию);
@@ -1077,6 +1116,15 @@ function newsletter_process_queue(int $limit): int {
                         $why = function_exists('mail_last_error') ? mail_last_error() : '';
                         if (nl_failure_kind($why) === 'hard') {
                             // Почтовик прямым текстом сказал, что такого ящика нет.
+                            // Но если такое «нет ящика» звучит подряд десятками —
+                            // верить нельзя: так выглядит упёршийся в лимит канал.
+                            if (++$hardRun > 30) {
+                                mass_sending_set(false);
+                                nl_log("СТОП: $hardRun отказов адресатов за один прогон — "
+                                     . "это не база, это канал. Из базы никого не выводим, "
+                                     . "массовая отправка остановлена ($why)");
+                                break 2;
+                            }
                             nl_purge_person((string) $row['to_email'], 'отказ адресата: ' . mb_substr($why, 0, 120));
                             nl_box_fail_reset($boxUser);
                         } else {
