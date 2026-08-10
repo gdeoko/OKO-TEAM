@@ -76,14 +76,18 @@ const ОПЫТЫ = [
     })()`
   },
   {
-    имя: 'горизонтальное переполнение',
+    /* Текст, срезанный сбоку насовсем: контейнер с overflow-x:hidden уже, чем
+       строка. Человек не увидит хвост и не сможет до него доскроллить. */
+    имя: 'текст срезан сбоку',
     ключ: 'переполнение',
     посадить: `(() => {
-      const d = document.createElement('div');
-      d.id = 'stDefect';
-      d.style.cssText = 'position:absolute;left:0;top:400px;width:' + (innerWidth + 120) + 'px;'
-        + 'height:20px;background:#050;z-index:9';
-      document.body.appendChild(d);
+      const w = document.createElement('div');
+      w.id = 'stDefect';
+      w.style.cssText = 'position:fixed;left:20px;top:540px;width:120px;height:30px;'
+        + 'overflow:hidden;z-index:9;background:#000';
+      w.innerHTML = '<div style="white-space:nowrap;width:400px;color:#fff;font:14px sans-serif">'
+        + 'Очень длинная строка, которая не помещается</div>';
+      document.body.appendChild(w);
     })()`
   },
   {

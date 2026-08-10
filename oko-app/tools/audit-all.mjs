@@ -74,80 +74,110 @@ const детектор = (сверху0, конец, ширина) => `(() => {
   const VW = ${+ширина || 0} || innerWidth;
   out.переполнение = 0;
 
-  /* Видимость меряем ПО ВСЕЙ ЦЕПОЧКЕ предков.
+  /* --- Всё, что ниже, считается с памятью ---------------------------------
 
-     Раньше смотрели только сам элемент — и в отчёт лезли кнопки из закрытых
+     Первый прогон по 116 экранам шёл со скоростью 50 секунд на экран: шесть
+     с половиной часов. Причина в том, что каждая проверка лезла вверх по
+     цепочке предков и на каждом шаге звала getComputedStyle заново. При
+     тридцати тысячах элементов и глубине вложенности под десяток это сотни
+     тысяч пересчётов стиля на один замер, а замеров на экран двенадцать.
+
+     Лечится памятью: стиль элемента считается один раз, а свойства, которые
+     наследуются по цепочке (прозрачность, обрезающая рамка), считаются
+     рекурсивно с запоминанием — каждый элемент обрабатывается ровно раз.
+     ------------------------------------------------------------------------ */
+  const СТ = new Map();
+  const ст = el => { let v = СТ.get(el); if (!v) { v = getComputedStyle(el); СТ.set(el, v); } return v; };
+  const БОКС = new Map();
+  const бокс = el => { let v = БОКС.get(el); if (!v) { v = el.getBoundingClientRect(); БОКС.set(el, v); } return v; };
+
+  /* Прозрачность — по ВСЕЙ цепочке предков.
+
+     Раньше смотрели только сам элемент, и в отчёт лезли кнопки из закрытых
      панелей: у кнопки opacity 1, а у панели над ней 0. Так набралось 220
-     «наложений» из 220: одни и те же sp-qr-btn и mp-mv-x на каждом экране.
-     display и visibility наследуются вычисленным стилем, а opacity — нет,
-     её и добираем обходом вверх. Смещение трансформом ловится сразу:
-     getBoundingClientRect его уже учёл. */
+     «наложений» из 220. display и visibility наследуются вычисленным стилем,
+     а opacity — нет, её и добираем обходом вверх. Смещение трансформом
+     ловится сразу: getBoundingClientRect его уже учёл. */
+  const ПРОЗР = new Map();
   const прозрачен = el => {
-    for (let p = el; p && p !== document.documentElement; p = p.parentElement) {
-      const cs = getComputedStyle(p);
-      if (cs.display === 'none' || cs.visibility === 'hidden') return true;
-      if (+cs.opacity < 0.05) return true;
-      if (cs.contentVisibility === 'hidden') return true;
-    }
-    return false;
+    if (!el || el === document.documentElement) return false;
+    const был = ПРОЗР.get(el); if (был !== undefined) return был;
+    const cs = ст(el);
+    let r = cs.display === 'none' || cs.visibility === 'hidden'
+      || +cs.opacity < 0.05 || cs.contentVisibility === 'hidden';
+    if (!r) r = прозрачен(el.parentElement);
+    ПРОЗР.set(el, r);
+    return r;
   };
-  /* Элемент виден, только если он попадает в окно КАЖДОГО своего обрезающего
-     предка, а не просто в окно браузера.
 
-     На этом детектор врал. Экран-вкладка начинается под шапкой, на y = 65, и
-     всё, что уехало выше при прокрутке, браузер обрезает — но
-     getBoundingClientRect по-прежнему возвращает старые координаты. Чип
-     баланса, укатившийся на y = 13, формально лежал в окне и формально был
-     «перекрыт шапкой». Отсюда брались «наложения» на вкладке мини-аппов,
-     в играх и в академии: ни одного видимого элемента, три замечания. */
-  const вКадре = el => {
-    const r = el.getBoundingClientRect();
-    for (let q = el.parentElement; q && q !== document.body; q = q.parentElement) {
-      const cs = getComputedStyle(q);
-      if (cs.overflow === 'visible' && cs.overflowX === 'visible' && cs.overflowY === 'visible') continue;
-      const b = q.getBoundingClientRect();
-      if (b.width < 1 || b.height < 1) continue;
-      if (r.bottom <= b.top + 1 || r.top >= b.bottom - 1) return false;
-      if (r.right <= b.left + 1 || r.left >= b.right - 1) return false;
+  /* Обрезающая рамка предков — тоже с памятью.
+
+     Экран-вкладка начинается под шапкой, на y = 65, и всё, что уехало выше
+     при прокрутке, браузер обрезает — но getBoundingClientRect по-прежнему
+     возвращает старые координаты. Чип баланса, укатившийся на y = 13,
+     формально лежал в окне и формально был «перекрыт шапкой». Отсюда брались
+     «наложения» на вкладке мини-аппов, в играх и в академии: ни одного
+     видимого элемента, три замечания. */
+  const БЕЗ_РАМКИ = { left: -1e7, top: -1e7, right: 1e7, bottom: 1e7, режет: false, правыйРез: 1e7 };
+  const РАМКА = new Map();
+  const рамка = el => {                     /* во что обрезают ПРЕДКИ элемента */
+    if (!el || el === document.body || !el.parentElement) return БЕЗ_РАМКИ;
+    const был = РАМКА.get(el); if (был) return был;
+    const p = el.parentElement;
+    let r = рамка(p);
+    const cs = ст(p);
+    if (!(cs.overflow === 'visible' && cs.overflowX === 'visible' && cs.overflowY === 'visible')) {
+      const b = бокс(p);
+      if (b.width >= 1 && b.height >= 1) {
+        /* Лента, которую можно листать вбок, ничего не теряет: содержимое за
+           её краем достаётся пальцем. А вот overflow-x:hidden режет насовсем —
+           это и есть «текст обрезается». Признак запоминаем вместе с рамкой. */
+        const листается = cs.overflowX === 'auto' || cs.overflowX === 'scroll';
+        r = { left: Math.max(r.left, b.left), top: Math.max(r.top, b.top),
+              right: Math.min(r.right, b.right), bottom: Math.min(r.bottom, b.bottom),
+              режет: r.режет || !листается,
+              правыйРез: листается ? r.правыйРез : Math.min(r.правыйРез, b.right) };
+      }
     }
-    return true;
+    РАМКА.set(el, r);
+    return r;
+  };
+  const вКадре = el => {
+    const r = бокс(el), k = рамка(el);
+    return r.bottom > k.top + 1 && r.top < k.bottom - 1
+        && r.right > k.left + 1 && r.left < k.right - 1;
   };
   const видим = el => {
     if (прозрачен(el)) return false;
-    const r = el.getBoundingClientRect();
+    const r = бокс(el);
     if (!(r.width > 3 && r.height > 3 && r.bottom > 0 && r.top < innerHeight)) return false;
     return вКадре(el);
   };
 
   /* Сколько от элемента ВИДНО после всех обрезаний.
 
-     Для переполнения этого мало — знать, что элемент пересекает своего
-     обрезающего предка. Декоративное свечение на карточке TON выходит за её
-     правый край на 54 пикселя, но у карточки overflow:hidden — за экран не
-     торчит ничего, а детектор рапортовал «переполнение 52». Поэтому берём
-     пересечение прямоугольника со ВСЕМИ обрезающими предками и меряем уже
-     его. */
+     Знать, что элемент пересекает обрезающего предка, для переполнения мало.
+     Декоративное свечение на карточке TON выходит за её правый край на 54
+     пикселя, но у карточки overflow:hidden — за экран не торчит ничего, а
+     детектор рапортовал «переполнение 52». Меряем пересечение. */
   const кадрированный = el => {
-    let r = el.getBoundingClientRect();
-    let l = r.left, t = r.top, rr = r.right, bb = r.bottom;
-    for (let q = el.parentElement; q && q !== document.body; q = q.parentElement) {
-      const cs = getComputedStyle(q);
-      if (cs.overflow === 'visible' && cs.overflowX === 'visible' && cs.overflowY === 'visible') continue;
-      const b = q.getBoundingClientRect();
-      if (b.width < 1 || b.height < 1) continue;
-      l = Math.max(l, b.left); t = Math.max(t, b.top);
-      rr = Math.min(rr, b.right); bb = Math.min(bb, b.bottom);
-    }
+    const r = бокс(el), k = рамка(el);
+    const l = Math.max(r.left, k.left), t = Math.max(r.top, k.top);
+    const rr = Math.min(r.right, k.right), bb = Math.min(r.bottom, k.bottom);
     return { left: l, top: t, right: rr, bottom: bb, width: rr - l, height: bb - t };
   };
+
   /* Пальцем до элемента не добраться, если он сам или любой предок выключен
      из попадания. Проверять такое на перекрытие бессмысленно. */
+  const МИМО = new Map();
   const мимоПальца = el => {
-    for (let p = el; p && p !== document.documentElement; p = p.parentElement) {
-      if (getComputedStyle(p).pointerEvents === 'none') return true;
-      if (p.hasAttribute && (p.hasAttribute('inert') || p.getAttribute('aria-hidden') === 'true')) return true;
-    }
-    return false;
+    if (!el || el === document.documentElement) return false;
+    const был = МИМО.get(el); if (был !== undefined) return был;
+    let r = ст(el).pointerEvents === 'none'
+      || (el.hasAttribute && (el.hasAttribute('inert') || el.getAttribute('aria-hidden') === 'true'));
+    if (!r) r = мимоПальца(el.parentElement);
+    МИМО.set(el, r);
+    return r;
   };
 
   /* Что человек СЕЙЧАС видит.
@@ -162,7 +192,7 @@ const детектор = (сверху0, конец, ширина) => `(() => {
   const поверх = (() => {
     let лучший = null, макс = -1;
     document.querySelectorAll('body *').forEach(el => {
-      const cs = getComputedStyle(el);
+      const cs = ст(el);
       if (cs.position !== 'fixed' && cs.position !== 'absolute') return;
       if (активный && (el === активный || el.contains(активный) || активный.contains(el))) return;
       if (!видим(el)) return;
@@ -171,7 +201,7 @@ const детектор = (сверху0, конец, ширина) => `(() => {
          на 37 экранах из 63, а следом каждый такой экран объявлялся пустым. */
       if (мимоПальца(el)) return;
       if (!(el.textContent || '').trim()) return;
-      const r = el.getBoundingClientRect();
+      const r = бокс(el);
       if (r.width * r.height < innerWidth * innerHeight * 0.55) return;
       const z = parseInt(cs.zIndex, 10) || 0;
       if (z >= макс) { макс = z; лучший = el; }
@@ -186,7 +216,7 @@ const детектор = (сверху0, конец, ширина) => `(() => {
 
   /* шапка приложения — под неё ничего не должно уезжать */
   const шапка = document.querySelector('header, .app-head, #okoHead, .hd');
-  const низШапки = шапка && видим(шапка) && виден(шапка) ? шапка.getBoundingClientRect().bottom : 0;
+  const низШапки = шапка && видим(шапка) && виден(шапка) ? бокс(шапка).bottom : 0;
 
   const ЭМОДЗИ = /[\\u{1F300}-\\u{1FAFF}\\u{2600}-\\u{27BF}\\u{FE0F}]/u;
   const ФЕЙК = /(\\d+[.,]?\\d*\\s*(к|k|м|m)\\s*(подписчик|просмотр|охват))|(\\+\\d{2,}%\\s*к\\s)|(проверено на \\d+)/i;
@@ -194,16 +224,32 @@ const детектор = (сверху0, конец, ширина) => `(() => {
   const пусто = [];
   document.querySelectorAll('body *').forEach(el => {
     if (el.ownerSVGElement || !видим(el) || !виден(el)) return;
-    const cs = getComputedStyle(el);
-    const r  = el.getBoundingClientRect();
+    const cs = ст(el);
+    const r  = бокс(el);
     const свой = el.children.length === 0;
     const txt = (el.textContent || '').trim();
 
-    /* Что-то торчит за правым краем — по видимой части, а не по бумажной:
-       обрезанный контейнером элемент за край не вылезает. */
+    /* Уехало вбок. Две разные беды под одним счётчиком:
+
+       1) элемент виден и торчит за правый край окна — страницу можно
+          утащить вбок;
+       2) элемент срезан контейнером с overflow-x:hidden — за край он не
+          торчит, зато часть его человек не увидит никогда.
+
+       Второе считаем только для того, что несёт текст: декоративное свечение
+       на карточке TON тоже срезано её рамкой, и это ровно так и задумано. */
     const вид = кадрированный(el);
     if (вид.right > VW + 2 && вид.width > 1 && вид.width < VW * 3)
       out.переполнение = Math.max(out.переполнение, Math.round(вид.right - VW));
+    if (свой && txt) {
+      const k = рамка(el);
+      if (k.режет && r.right > k.правыйРез + 2 && r.width < VW * 3) {
+        out.переполнение = Math.max(out.переполнение, Math.round(r.right - k.правыйРез));
+        /* Само число «21px» чинить нечего — нужен текст, который срезан. */
+        if (out.обрезано.length < 8)
+          out.обрезано.push('сбоку ' + Math.round(r.right - k.правыйРез) + 'px: ' + txt.slice(0, 34));
+      }
+    }
 
     if (свой && txt) {
       пусто.push(1);
@@ -226,7 +272,7 @@ const детектор = (сверху0, конец, ширина) => `(() => {
          нормальную прокрутку под липкий слой. */
       if (ВЕРХ) {
         for (let q = el.parentElement; q && q !== document.body; q = q.parentElement) {
-          const qs = getComputedStyle(q);
+          const qs = ст(q);
           if (qs.overflowY === 'visible' && qs.overflow === 'visible') continue;
           if (q.scrollTop > 1) break;                 /* прокручено — не в счёт */
           const b = q.getBoundingClientRect();
@@ -314,7 +360,7 @@ const детектор = (сверху0, конец, ширина) => `(() => {
      несколько выдуманных наложений на экран. */
   const плавает = el => {
     for (let q = el; q && q !== document.documentElement; q = q.parentElement) {
-      const ps = getComputedStyle(q).position;
+      const ps = ст(q).position;
       if (ps === 'fixed' || ps === 'sticky') return q;
     }
     return null;
