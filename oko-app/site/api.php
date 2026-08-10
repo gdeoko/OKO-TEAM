@@ -472,38 +472,58 @@ case 'assistant':
         'generationConfig'  => ['temperature'=>0.7,'max_output_tokens'=>900],
     ];
 
-    /* Перебор ключей: 429 и 5xx — повод взять следующий, 4xx по существу
-       (кривой запрос) повторять бессмысленно. Начинаем со случайного,
-       чтобы не выжигать первый ключ в списке. */
+    /* Модели по убыванию качества. Замер 09.08: у флагманской flash на
+       бесплатном тарифе лимит 20 запросов — этого не хватает и на одного
+       человека, не то что на поток. Поэтому если все ключи упёрлись в 429,
+       спускаемся на модель полегче: у неё квота в разы больше, а для
+       коротких ответов в чате её хватает с запасом. */
+    $models = array_values(array_unique(array_filter([
+        $model,
+        (string)($C['gemini_chat_fallback'] ?? 'gemini-flash-lite-latest'),
+    ])));
+
+    /* Перебор ключ × модель: 429 и 5xx — повод взять следующий ключ, а когда
+       кончились ключи — следующую модель. Осмысленный 4xx (кривой запрос)
+       повтором не лечится и возвращается сразу. Начинаем со случайного
+       ключа, чтобы не выжигать первый в списке. */
     $n = count($keys);
     $start = random_int(0, $n-1);
-    $reply = ''; $usage = null; $lastErr = ''; $lastCode = 0;
-    for($i=0; $i<$n; $i++){
-        $key = $keys[($start + $i) % $n];
-        $url = $base.'/v1beta/models/'.$model.':generateContent?key='.urlencode($key);
-        $ch = curl_init($url);
-        curl_setopt_array($ch,[CURLOPT_POST=>true,CURLOPT_POSTFIELDS=>json_encode($payload,JSON_UNESCAPED_UNICODE),
-            CURLOPT_HTTPHEADER=>['Content-Type: application/json'],
-            CURLOPT_RETURNTRANSFER=>true,CURLOPT_TIMEOUT=>45,CURLOPT_CONNECTTIMEOUT=>10]);
-        $raw = curl_exec($ch); $err = curl_error($ch); $code = curl_getinfo($ch,CURLINFO_HTTP_CODE); curl_close($ch);
-        if(!$raw){ $lastErr = 'сеть: '.$err; $lastCode = 502; continue; }
-        $j = json_decode($raw,true);
-        if($code >= 400){
-            $lastCode = $code;
-            $lastErr  = ($j['error']['message'] ?? '') ?: mb_substr($raw,0,200);
-            if($code === 429 || $code >= 500) continue;   /* лимит или сбой — следующий ключ */
-            break;                                        /* остальное повтором не лечится */
+    $reply = ''; $usage = null; $lastErr = ''; $lastCode = 0; $использована = '';
+    foreach($models as $m){
+        for($i=0; $i<$n; $i++){
+            $key = $keys[($start + $i) % $n];
+            $url = $base.'/v1beta/models/'.$m.':generateContent?key='.urlencode($key);
+            $ch = curl_init($url);
+            curl_setopt_array($ch,[CURLOPT_POST=>true,CURLOPT_POSTFIELDS=>json_encode($payload,JSON_UNESCAPED_UNICODE),
+                CURLOPT_HTTPHEADER=>['Content-Type: application/json'],
+                CURLOPT_RETURNTRANSFER=>true,CURLOPT_TIMEOUT=>45,CURLOPT_CONNECTTIMEOUT=>10]);
+            $raw = curl_exec($ch); $err = curl_error($ch); $code = curl_getinfo($ch,CURLINFO_HTTP_CODE); curl_close($ch);
+            if(!$raw){ $lastErr = 'сеть: '.$err; $lastCode = 502; continue; }
+            $j = json_decode($raw,true);
+            if($code >= 400){
+                $lastCode = $code;
+                $lastErr  = ($j['error']['message'] ?? '') ?: mb_substr($raw,0,200);
+                if($code === 429 || $code >= 500) continue;   /* лимит или сбой — следующий ключ */
+                break 2;                                      /* остальное повтором не лечится */
+            }
+            foreach(($j['candidates'][0]['content']['parts'] ?? []) as $part){
+                if(isset($part['text'])) $reply .= $part['text'];
+            }
+            $usage = [
+                'input_tokens'  => (int)($j['usageMetadata']['promptTokenCount'] ?? 0),
+                'output_tokens' => (int)($j['usageMetadata']['candidatesTokenCount'] ?? 0),
+            ];
+            $использована = $m;
+            break 2;
         }
-        foreach(($j['candidates'][0]['content']['parts'] ?? []) as $part){
-            if(isset($part['text'])) $reply .= $part['text'];
-        }
-        $usage = [
-            'input_tokens'  => (int)($j['usageMetadata']['promptTokenCount'] ?? 0),
-            'output_tokens' => (int)($j['usageMetadata']['candidatesTokenCount'] ?? 0),
-        ];
-        break;
     }
-    if($reply === '') fail('gemini '.$lastCode.': '.($lastErr ?: 'пустой ответ'), 502);
+    if($reply === ''){
+        /* Человеку — по-русски и по делу, без кодов и ссылок на биллинг. */
+        $видимо = ($lastCode === 429)
+            ? 'Сегодняшний лимит бесплатных запросов исчерпан. Ответы вернутся, как только лимит обновится.'
+            : 'ОКО Ai сейчас не отвечает. Это на нашей стороне, попробуй чуть позже.';
+        out(['ok'=>false,'error'=>$видимо,'detail'=>'gemini '.$lastCode.': '.mb_substr((string)$lastErr,0,180)], 200);
+    }
 
     db_exec("CREATE TABLE IF NOT EXISTS assistant_log (id INTEGER PRIMARY KEY AUTOINCREMENT, client_email TEXT, msg TEXT, reply TEXT, tokens_in INTEGER, tokens_out INTEGER, created_at TEXT DEFAULT (datetime('now','localtime')))");
     db_insert("INSERT INTO assistant_log (client_email,msg,reply,tokens_in,tokens_out) VALUES (?,?,?,?,?)",
