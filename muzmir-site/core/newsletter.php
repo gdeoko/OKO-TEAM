@@ -474,30 +474,38 @@ function nl_mark_bounced(string $email, string $reason = 'bounce'): void {
  */
 function nl_failure_kind(string $err): string {
     $e = mb_strtolower($err);
-    // Наша сторона / временное — ни при каких условиях не выводим адрес из базы.
-    foreach (['ни один из', 'не настроен ни один', 'authentication', 'auth', 'password',
-               'пароль', 'соединен', 'connect', 'timeout', 'таймаут', 'timed out',
-               'quota', 'лимит', 'limit exceeded', 'too many', 'try again', 'temporar',
-               'greylist', '421', '450', '451', '452', '4.7.', '4.3.', 'ssl', 'tls',
-               'network', 'refused'] as $w) {
-        if (mb_strpos($e, $w) !== false) return 'soft';
-    }
-    // ГОЛЫЙ КОД 550 — НЕ ДОКАЗАТЕЛЬСТВО. Тем же 550 почтовик отвечает и на «такого
-    // ящика нет», и на «мы не принимаем от тебя рассылку»: Gmail именно так рубит
-    // наш собственный отправляющий аккаунт («DATA failed: 550»). Раз ошибка названа
-    // вместе с ИМЕНЕМ НАШЕГО SMTP-сервера — виноваты мы, а не человек.
-    foreach (['smtp.gmail.com', 'smtp.yandex.ru', 'smtp.mail.ru', 'data failed'] as $w) {
-        if (mb_strpos($e, $w) !== false) return 'soft';
-    }
-    // Явный отказ по адресату — только по недвусмысленным формулировкам и кодам 5.1.x.
+    if (trim($e) === '') return 'soft';          // причины нет — человека не трогаем
+
+    // 1. ЯВНЫЙ ОТКАЗ ПО ПОЛУЧАТЕЛЮ. Такие формулировки не спутать ни с чем.
     foreach (['no such user', 'user unknown', 'unknown user', 'mailbox not found',
-              'mailbox unavailable', 'does not exist', 'no mailbox', 'recipient rejected',
-              'invalid recipient', 'address rejected', 'некорректный адрес',
-              'нет такого', 'не существует', '5.1.1', '5.1.0', '5.1.2', '5.1.3'] as $w) {
+              'mailbox unavailable', 'no such mailbox', 'does not exist', 'no mailbox',
+              'recipient rejected', 'invalid recipient', 'address rejected',
+              'unrouteable address', 'некорректный адрес', 'нет такого', 'не существует',
+              '5.1.1', '5.1.0', '5.1.2', '5.1.3', '5.1.6'] as $w) {
         if (mb_strpos($e, $w) !== false) return 'hard';
     }
+
+    // 2. ВРЕМЕННОЕ И НАШЕ. Сеть, авторизация, квоты, серые списки — адрес живой.
+    //    Сюда же «data failed»: на этапе DATA почтовик отвергает НАШЕ ПИСЬМО
+    //    (спам-фильтр, репутация отправителя), а не ящик получателя.
+    foreach (['data failed', 'ни один из', 'не настроен ни один',
+              'authentication', 'auth', 'password', 'пароль', 'login',
+              'соединен', 'connect', 'refused', 'timeout', 'таймаут', 'timed out',
+              'network', 'ssl', 'tls', 'certificate',
+              'quota', 'лимит', 'limit exceeded', 'too many', 'rate',
+              'try again', 'temporar', 'greylist', 'deferred',
+              '421', '450', '451', '452', '4.7.', '4.3.', '4.4.'] as $w) {
+        if (mb_strpos($e, $w) !== false) return 'soft';
+    }
+
+    // 3. ОСТАЛЬНЫЕ ПОСТОЯННЫЕ ОТКАЗЫ (5xx без пояснения). На этапе RCPT почтовик
+    //    именно так отвечает про несуществующий ящик — самый частый случай
+    //    в импортированной базе. Пункты 1-2 выше уже отсеяли нашу вину.
+    if (preg_match('~\b5[0-9]{2}\b~', $e)) return 'hard';
+
     return 'soft';   // сомнение — всегда в пользу человека: живой адрес дороже квоты
 }
+
 
 /**
  * Разбирает массовые письма, которые окончательно не ушли (status=failed).
@@ -729,7 +737,10 @@ function nl_build_body(array $row): ?array {
                WHERE LOWER(email) = ? AND COALESCE(blocked,0) = 0
                  AND COALESCE(role,'user') NOT IN ('owner','admin','orgcom','moderator','jury','designer')",
              [$email]);
-    $needCabinet = $u && trim((string) ($u['last_login'] ?? '')) === '';
+    // Блок «личный кабинет» рассылается по базе ОДИН РАЗ — в первый месяц.
+    // Дальше доступ человек получает при подаче заявки (см. cron/monthly_launch.php).
+    $cabinetAllowed = (string) setting('combo_cabinet_block', '1') === '1';
+    $needCabinet = $cabinetAllowed && $u && trim((string) ($u['last_login'] ?? '')) === '';
     // Доступ уже отправляли лично — при подаче заявки. Повторять его в письме волны
     // нельзя: новый пароль обесценит тот, что человек получил пару дней назад
     // и, возможно, ещё не успел применить.

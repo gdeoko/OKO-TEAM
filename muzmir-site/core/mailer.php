@@ -632,8 +632,20 @@ function mail_send_failover(string $to, string $subject, string $html, array $op
             }
             return true;
         }
-        mail_account_fail((string) ($acc['user'] ?? ''));      // отказ — ближе к карантину
-        $errors[] = (string) ($acc['user'] ?? 'основной') . ': ' . mail_last_error();
+        // ЧЕЙ ЭТО ОТКАЗ. Если почтовик отверг ПОЛУЧАТЕЛЯ (нет такого ящика,
+        // 5.1.x), наш ящик ни при чём: штрафовать его нельзя и перебирать
+        // остальные бессмысленно — они получат тот же ответ. Раньше каждый
+        // битый адрес из базы накручивал счётчик отказов ВСЕМ ящикам пула,
+        // и через полсотни таких адресов оба здоровых ящика уезжали
+        // в карантин, а рассылка вставала.
+        $lastErr = mail_last_error();
+        $recipientFault = function_exists('nl_failure_kind') && nl_failure_kind($lastErr) === 'hard';
+        if ($recipientFault) {
+            mail_log('RCPT REJECT ' . $to . ' — ' . $lastErr . ' (ящик не виноват, перебор прекращён)');
+            return false;
+        }
+        mail_account_fail((string) ($acc['user'] ?? ''));      // наш отказ — ближе к карантину
+        $errors[] = (string) ($acc['user'] ?? 'основной') . ': ' . $lastErr;
     }
     mail_last_error('Ни один из ' . count($accounts) . ' ящиков пула «' . $pool . '» не принял письмо. ' . implode(' | ', $errors));
     mail_switched('');
@@ -727,16 +739,22 @@ function mail_send(string $to, string $subject, string $html, array $opt = []): 
         CURLOPT_SSL_VERIFYHOST => 2,
     ]);
 
-    $ok  = curl_exec($ch) !== false;
-    $err = curl_error($ch);
+    $ok   = curl_exec($ch) !== false;
+    $err  = curl_error($ch);
+    // КОД ОТВЕТА SMTP-СЕРВЕРА. Без него причина отказа терялась: curl_error()
+    // на отвергнутом получателе часто пуст, и в лог шло голое «FAIL to …| »,
+    // а разобрать «ящика не существует» и «нас не пускают» было нечем.
+    $code = (int) curl_getinfo($ch, CURLINFO_RESPONSE_CODE);
     curl_close($ch);
     if (is_resource($stream)) fclose($stream);
 
     if ($ok) {
         mail_log('SENT to ' . $to . ' | ' . $subject);
     } else {
-        mail_log('FAIL to ' . $to . ' | ' . $subject . ' | ' . $err);
-        mail_last_error('SMTP ' . $host . ':' . $port . ' — ' . ($err !== '' ? $err : 'сервер отклонил письмо'));
+        $why = trim(($code ? $code . ' ' : '') . $err);
+        if ($why === '') $why = 'сервер отклонил письмо без объяснения';
+        mail_log('FAIL to ' . $to . ' | ' . $subject . ' | ' . $why);
+        mail_last_error('SMTP ' . $host . ':' . $port . ' — ' . $why);
     }
     // Дублируем письмо в приложение как уведомление — но НЕ для писем из очереди
     // (у них уведомление уже создано в mail_queue(), иначе был бы дубль).
