@@ -730,6 +730,17 @@ function nl_build_body(array $row): ?array {
                  AND COALESCE(role,'user') NOT IN ('owner','admin','orgcom','moderator','jury','designer')",
              [$email]);
     $needCabinet = $u && trim((string) ($u['last_login'] ?? '')) === '';
+    // Доступ уже отправляли лично — при подаче заявки. Повторять его в письме волны
+    // нельзя: новый пароль обесценит тот, что человек получил пару дней назад
+    // и, возможно, ещё не успел применить.
+    if ($needCabinet) {
+        try {
+            $already = one("SELECT 1 FROM mail_queue
+                             WHERE LOWER(to_email) = ? AND status = 'sent'
+                               AND subject LIKE '%личный кабинет создан%'", [$email]);
+            if ($already) $needCabinet = false;
+        } catch (\Throwable $e) {}
+    }
 
     $inClub = false;
     try {
