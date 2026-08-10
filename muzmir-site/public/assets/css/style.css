@@ -338,8 +338,17 @@ p{margin:0 0 1em}
 .partners a:hover img{transform:scale(1.06);opacity:1;filter:none}
 
 /* ══════════════════════════════ КАРТОЧКА КОНКУРСА ══════════════════════════════ */
-.comp-card{padding:0}
-.comp-card .cc-body{padding:22px}
+.comp-card{padding:0;position:relative;display:flex;flex-direction:column}
+.comp-card .cc-body{padding:22px;display:flex;flex-direction:column;flex:1}
+
+/* Карточка конкурса на главной кликабельна целиком, но внутри живут две кнопки —
+   «Подать заявку» и «Положение», как в календаре. Вложить ссылку в ссылку нельзя,
+   поэтому карточку растягивает невидимая накладка от заголовка, а кнопки лежат
+   поверх неё. */
+.comp-card .cc-link{color:inherit;text-decoration:none}
+.comp-card .cc-link::after{content:"";position:absolute;inset:0;z-index:1}
+.comp-card .cc-actions{position:relative;z-index:2;display:flex;gap:10px;flex-wrap:wrap;margin-top:auto;padding-top:16px}
+.comp-card .cc-actions .btn{flex:1 1 auto;justify-content:center;white-space:nowrap}
 .comp-card .cc-cover{aspect-ratio:16/9;background:var(--grad-gold);display:flex;align-items:center;justify-content:center;
   color:var(--gold-fg);font-family:var(--ff-display);font-weight:800;font-size:clamp(1.1rem,4vw,1.7rem);line-height:1.05;
   word-break:break-word;text-align:center;padding:18px;position:relative;overflow:hidden}

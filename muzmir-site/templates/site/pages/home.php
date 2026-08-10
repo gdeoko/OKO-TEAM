@@ -128,7 +128,7 @@ ob_start(); ?>
           $isOpen = $c['status'] === 'open';
           $dirName = ['multi' => 'Многожанровый', 'patriotic' => 'Патриотический', 'thematic' => 'Тематический'][$c['direction'] ?? 'multi'] ?? 'Многожанровый';
         ?>
-        <a class="card card--3d comp-card reveal" href="<?= url('/competition/'.$c['slug']) ?>">
+        <div class="card card--3d comp-card reveal">
           <div class="cc-cover cc-cover--s<?= $cvSeed ?>">
             <span class="cc-fallback" aria-hidden="true">
               <span class="cc-fallback-glow"></span>
@@ -149,11 +149,19 @@ ob_start(); ?>
             <div class="cc-badges">
               <span class="badge badge--intl"><?= $c['type'] === 'international' ? 'Международный' : 'Всероссийский' ?></span>
             </div>
-            <h3><?= h($cvName) ?></h3>
+            <h3><a class="cc-link" href="<?= url('/competition/'.$c['slug']) ?>"><?= h($cvName) ?></a></h3>
             <div class="cc-meta"><span><?= h($dirName) ?></span><?php if (!empty($c['end_date'])): ?><span>приём до <?= h(ru_date($c['end_date'])) ?></span><?php endif; ?></div>
-            <span class="btn btn--ghost btn--block">Подробнее</span>
+            <?php /* Кнопки те же, что в календаре: подать заявку и посмотреть положение.
+                     Раньше здесь было безадресное «Подробнее» — лишний шаг между
+                     человеком и заявкой. */ ?>
+            <div class="cc-actions">
+              <?php if ($isOpen): ?>
+                <a class="btn btn--primary btn--sm" href="<?= url('/apply') . '?competition=' . rawurlencode($c['slug']) ?>">Подать заявку</a>
+              <?php endif; ?>
+              <a class="btn btn--ghost btn--sm" href="<?= url('/competition/' . $c['slug'] . '/regulation.pdf') ?>">Положение</a>
+            </div>
           </div>
-        </a>
+        </div>
       <?php endforeach; ?>
     </div>
     <?php else: ?>
