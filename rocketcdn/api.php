@@ -1,0 +1,375 @@
+<?php
+/* ══════════════════════════════════════════════════════════
+   Rocket CDN · API сайта и админки
+   Публичное: lead, callback, track, content
+   По ключу:  stats, leads, lead_status, lead_delete, content_save,
+              nodes_save, export, errors, settings
+   ══════════════════════════════════════════════════════════ */
+
+require __DIR__ . '/config.php';
+
+header('Content-Type: application/json; charset=UTF-8');
+header('X-Content-Type-Options: nosniff');
+if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') { http_response_code(204); exit; }
+
+$action = $_GET['action'] ?? $_POST['action'] ?? '';
+$raw    = file_get_contents('php://input');
+$body   = $raw ? (json_decode($raw, true) ?: []) : [];
+
+function out($d) { echo json_encode($d, JSON_UNESCAPED_UNICODE); exit; }
+function inp($k, $d = '') {
+    global $body;
+    $v = $body[$k] ?? $_POST[$k] ?? $_GET[$k] ?? $d;
+    return is_string($v) ? trim($v) : $v;
+}
+function need_key() {
+    $k = inp('key');
+    if (!hash_equals((string)rc_cfg('admin_key'), (string)$k)) out(['ok' => false, 'error' => 'auth']);
+}
+function client_ip() {
+    foreach (['HTTP_CF_CONNECTING_IP', 'HTTP_X_REAL_IP', 'HTTP_X_FORWARDED_FOR', 'REMOTE_ADDR'] as $h) {
+        if (!empty($_SERVER[$h])) return trim(explode(',', $_SERVER[$h])[0]);
+    }
+    return '';
+}
+function device_of($ua) {
+    $ua = strtolower($ua);
+    if (strpos($ua, 'ipad') !== false || strpos($ua, 'tablet') !== false) return 'tablet';
+    if (preg_match('~iphone|android|mobile|phone~', $ua)) return 'mobile';
+    return 'desktop';
+}
+function os_of($ua) {
+    $ua = strtolower($ua);
+    if (strpos($ua, 'iphone') !== false || strpos($ua, 'ipad') !== false) return 'iOS';
+    if (strpos($ua, 'android') !== false) return 'Android';
+    if (strpos($ua, 'windows') !== false) return 'Windows';
+    if (strpos($ua, 'mac os') !== false)  return 'macOS';
+    if (strpos($ua, 'linux') !== false)   return 'Linux';
+    return 'другое';
+}
+function stat_file($day = null) { return RC_STATS . '/' . ($day ?: date('Y-m-d')) . '.json'; }
+
+/* Ограничение частоты: не более N обращений с адреса за окно */
+function rate_ok($bucket, $limit, $window) {
+    $f = RC_DATA . '/rate_' . $bucket . '.json';
+    $ip = client_ip() ?: 'na';
+    $now = time();
+    $hit = false;
+    rc_json_update($f, function ($d) use ($ip, $now, $limit, $window, &$hit) {
+        foreach ($d as $k => $v) if ($v['t'] < $now - $window) unset($d[$k]);
+        $rec = $d[$ip] ?? ['t' => $now, 'n' => 0];
+        if ($rec['t'] < $now - $window) $rec = ['t' => $now, 'n' => 0];
+        $rec['n']++;
+        $hit = $rec['n'] <= $limit;
+        $d[$ip] = $rec;
+        return $d;
+    });
+    return $hit;
+}
+
+/* ══ Приём события аналитики ══════════════════════════════ */
+if ($action === 'track') {
+    $events = $body['events'] ?? [];
+    if (!is_array($events) || !count($events)) out(['ok' => true]);
+    if (!rate_ok('track', 400, 300)) out(['ok' => true]);
+
+    $ua  = substr($_SERVER['HTTP_USER_AGENT'] ?? '', 0, 300);
+    $sid = substr((string)($body['sid'] ?? ''), 0, 40);
+    $ref = substr((string)($body['ref'] ?? ''), 0, 200);
+    $refHost = $ref ? (parse_url($ref, PHP_URL_HOST) ?: '') : '';
+    $self = parse_url(rc_cfg('site_url'), PHP_URL_HOST);
+    if ($refHost === $self) $refHost = '';
+
+    rc_json_update(stat_file(), function ($d) use ($events, $ua, $sid, $refHost) {
+        $d['day']      = $d['day']      ?? date('Y-m-d');
+        $d['views']    = $d['views']    ?? 0;
+        $d['uniq']     = $d['uniq']     ?? [];
+        $d['events']   = $d['events']   ?? [];
+        $d['hours']    = $d['hours']    ?? [];
+        $d['devices']  = $d['devices']  ?? [];
+        $d['os']       = $d['os']       ?? [];
+        $d['refs']     = $d['refs']     ?? [];
+        $d['scroll']   = $d['scroll']   ?? [];
+        $d['nodes']    = $d['nodes']    ?? [];
+        $d['searches'] = $d['searches'] ?? [];
+        $d['errors']   = $d['errors']   ?? [];
+
+        $isNew = $sid && !isset($d['uniq'][$sid]);
+        if ($isNew) $d['uniq'][$sid] = 1;
+
+        foreach ($events as $e) {
+            $type  = substr((string)($e['t'] ?? ''), 0, 20);
+            $label = substr((string)($e['l'] ?? ''), 0, 80);
+            if ($type === '') continue;
+            $d['events'][$type] = ($d['events'][$type] ?? 0) + 1;
+
+            if ($type === 'view') {
+                $d['views']++;
+                $h = date('H');
+                $d['hours'][$h] = ($d['hours'][$h] ?? 0) + 1;
+                if ($isNew) {
+                    $dev = device_of($ua);
+                    $d['devices'][$dev] = ($d['devices'][$dev] ?? 0) + 1;
+                    $o = os_of($ua);
+                    $d['os'][$o] = ($d['os'][$o] ?? 0) + 1;
+                    $r = $refHost ?: 'прямой заход';
+                    $d['refs'][$r] = ($d['refs'][$r] ?? 0) + 1;
+                }
+            }
+            if ($type === 'scroll') $d['scroll'][$label] = ($d['scroll'][$label] ?? 0) + 1;
+            if ($type === 'node')   $d['nodes'][$label]  = ($d['nodes'][$label] ?? 0) + 1;
+            if ($type === 'search' && $label !== '') $d['searches'][$label] = ($d['searches'][$label] ?? 0) + 1;
+            if ($type === 'jserr') {
+                $d['errors'][$label] = ($d['errors'][$label] ?? 0) + 1;
+                /* Новую ошибку сразу показываем команде */
+                if ($d['errors'][$label] === 1) {
+                    rc_notify("<b>Ошибка на сайте</b>\n<code>" . htmlspecialchars($label) . "</code>", null, 'tg_topic_error');
+                }
+            }
+        }
+        /* Список уникальных не должен разрастаться бесконечно */
+        if (count($d['uniq']) > 20000) $d['uniq'] = array_slice($d['uniq'], -12000, null, true);
+        return $d;
+    });
+    out(['ok' => true]);
+}
+
+/* ══ Заявка с сайта или обратный звонок ═══════════════════ */
+if ($action === 'lead' || $action === 'callback') {
+    if (!rate_ok('lead', 8, 3600)) out(['ok' => false, 'error' => 'too_many']);
+
+    $kind    = inp('kind', $action === 'callback' ? 'callback' : 'lead');
+    $name    = mb_substr(inp('name'), 0, 80);
+    $contact = mb_substr(inp('contact'), 0, 120);
+    $company = mb_substr(inp('company'), 0, 120);
+    $topic   = mb_substr(inp('topic'), 0, 60);
+    $task    = mb_substr(inp('task'), 0, 2000);
+    $consent = (int)inp('consent', 0);
+    $trap    = inp('website');           /* ловушка для ботов */
+
+    if ($trap !== '')            out(['ok' => true]);
+    if ($name === '')            out(['ok' => false, 'error' => 'name']);
+    $isMail  = (bool)filter_var($contact, FILTER_VALIDATE_EMAIL);
+    $isPhone = strlen(preg_replace('~\D~', '', $contact)) >= 10;
+    if (!$isMail && !$isPhone)   out(['ok' => false, 'error' => 'contact']);
+    if (!$consent)               out(['ok' => false, 'error' => 'consent']);
+
+    $lead = [
+        'id'      => substr(md5($contact . microtime(true)), 0, 10),
+        'kind'    => $kind === 'callback' ? 'callback' : 'lead',
+        'name'    => $name,
+        'contact' => $contact,
+        'company' => $company,
+        'topic'   => $topic,
+        'task'    => $task,
+        'lang'    => inp('lang', 'ru'),
+        'status'  => 'new',
+        'ts'      => date('Y-m-d H:i:s'),
+        'ip'      => client_ip(),
+        'ua'      => substr($_SERVER['HTTP_USER_AGENT'] ?? '', 0, 200),
+        'page'    => mb_substr(inp('page'), 0, 120),
+    ];
+
+    rc_json_update(RC_LEADS, function ($d) use ($lead) {
+        $d['items'] = $d['items'] ?? [];
+        $d['items'][] = $lead;
+        return $d;
+    });
+    rc_json_update(stat_file(), function ($d) use ($lead) {
+        /* Заявки с формы и заявки на звонок считаем раздельно, чтобы не задваивать */
+        if ($lead['kind'] === 'callback') $d['callbacks'] = ($d['callbacks'] ?? 0) + 1;
+        else                              $d['leads']     = ($d['leads'] ?? 0) + 1;
+        return $d;
+    });
+
+    /* В Телеграм */
+    $title = $lead['kind'] === 'callback' ? 'Заявка на звонок' : 'Новая заявка с сайта';
+    $txt = "<b>{$title}</b>\n\n"
+         . "Имя: <b>" . htmlspecialchars($name) . "</b>\n"
+         . "Контакт: <code>" . htmlspecialchars($contact) . "</code>\n"
+         . ($company ? "Компания: " . htmlspecialchars($company) . "\n" : '')
+         . ($topic   ? "Направление: " . htmlspecialchars($topic) . "\n" : '')
+         . ($task    ? "\n" . htmlspecialchars($task) . "\n" : '')
+         . "\nВремя: " . date('d.m.Y H:i');
+
+    $kb = [];
+    if ($isPhone) $kb[] = [['text' => 'Позвонить', 'url' => 'tel:' . preg_replace('~[^\d+]~', '', $contact)]];
+    if ($isMail)  $kb[] = [['text' => 'Ответить письмом', 'url' => 'mailto:' . $contact]];
+    $kb[] = [['text' => 'В работе', 'callback_data' => 'lead_work_' . $lead['id']],
+             ['text' => 'Закрыть',  'callback_data' => 'lead_done_' . $lead['id']]];
+    rc_notify($txt, ['inline_keyboard' => $kb], 'tg_topic_form');
+
+    /* Письмо себе */
+    $rows = [
+        'Имя'         => $name,
+        'Контакт'     => $contact,
+        'Компания'    => $company,
+        'Направление' => $topic,
+        'Задача'      => $task,
+        'Страница'    => $lead['page'],
+    ];
+    rc_mail(rc_cfg('mail_to'), $title . ': ' . $name, rc_mail_tpl($title, $rows));
+
+    /* Письмо клиенту, если оставил почту */
+    if ($isMail) {
+        $hi = $lead['lang'] === 'en'
+            ? ['Request received', 'We have your request and will reply shortly. Meanwhile you can create an account and look around the dashboard.', 'Open the dashboard']
+            : ['Заявка принята', 'Мы получили обращение и скоро свяжемся. Пока можно завести аккаунт и осмотреться в личном кабинете.', 'Открыть личный кабинет'];
+        rc_mail($contact, $hi[0] . ' · Rocket CDN', rc_mail_tpl(
+            $hi[0],
+            ['Имя' => $name, 'Контакт' => $contact, 'Направление' => $topic],
+            $hi[1],
+            ['text' => $hi[2], 'url' => rc_cfg('lk_url')]
+        ));
+    }
+
+    out(['ok' => true, 'id' => $lead['id']]);
+}
+
+/* ══ Контент сайта для фронта ═════════════════════════════ */
+if ($action === 'content') {
+    $c = rc_json_read(RC_CONTENT, []);
+    out(['ok' => true, 'content' => $c ?: null]);
+}
+
+/* ══════════ Дальше только с ключом администратора ════════ */
+
+if ($action === 'login') {
+    need_key();
+    out(['ok' => true, 'brand' => rc_cfg('brand')]);
+}
+
+/* Сводка аналитики за N дней */
+if ($action === 'stats') {
+    need_key();
+    $days = max(1, min(90, (int)inp('days', 14)));
+    $series = [];
+    $tot = ['views' => 0, 'uniq' => 0, 'leads' => 0, 'callbacks' => 0, 'register' => 0, 'connect' => 0];
+    $devices = []; $os = []; $refs = []; $nodes = []; $searches = []; $scroll = []; $hours = []; $errors = [];
+
+    for ($i = $days - 1; $i >= 0; $i--) {
+        $day = date('Y-m-d', strtotime("-{$i} day"));
+        $d = rc_json_read(stat_file($day), []);
+        $ev = $d['events'] ?? [];
+        $row = [
+            'day'       => $day,
+            'views'     => (int)($d['views'] ?? 0),
+            'uniq'      => count($d['uniq'] ?? []),
+            'leads'     => (int)($d['leads'] ?? 0),
+            'callbacks' => (int)($d['callbacks'] ?? 0),
+            'register'  => (int)($ev['register'] ?? 0),
+            'connect'   => (int)($ev['connect'] ?? 0),
+        ];
+        foreach ($tot as $k => $v) $tot[$k] += $row[$k];
+        $series[] = $row;
+
+        foreach (['devices' => &$devices, 'os' => &$os, 'refs' => &$refs, 'nodes' => &$nodes,
+                  'searches' => &$searches, 'scroll' => &$scroll, 'hours' => &$hours, 'errors' => &$errors] as $k => &$acc) {
+            foreach (($d[$k] ?? []) as $kk => $vv) $acc[$kk] = ($acc[$kk] ?? 0) + $vv;
+        }
+        unset($acc);
+    }
+    arsort($refs); arsort($nodes); arsort($searches); arsort($errors); arsort($os);
+    ksort($hours); ksort($scroll);
+
+    $conv = $tot['uniq'] > 0 ? round(($tot['leads'] + $tot['callbacks']) / $tot['uniq'] * 100, 2) : 0;
+    $ctr  = $tot['uniq'] > 0 ? round($tot['register'] / $tot['uniq'] * 100, 2) : 0;
+
+    out([
+        'ok' => true, 'days' => $days, 'series' => $series, 'total' => $tot,
+        'conv' => $conv, 'ctr' => $ctr,
+        'devices' => $devices, 'os' => $os,
+        'refs' => array_slice($refs, 0, 12, true),
+        'nodes' => array_slice($nodes, 0, 12, true),
+        'searches' => array_slice($searches, 0, 12, true),
+        'errors' => array_slice($errors, 0, 12, true),
+        'scroll' => $scroll, 'hours' => $hours,
+    ]);
+}
+
+if ($action === 'leads') {
+    need_key();
+    $d = rc_json_read(RC_LEADS, []);
+    $items = array_reverse($d['items'] ?? []);
+    out(['ok' => true, 'items' => $items, 'count' => count($items)]);
+}
+
+if ($action === 'lead_status') {
+    need_key();
+    $id = inp('id'); $st = inp('status', 'new');
+    if (!in_array($st, ['new', 'work', 'done', 'spam'], true)) out(['ok' => false, 'error' => 'status']);
+    $found = false;
+    rc_json_update(RC_LEADS, function ($d) use ($id, $st, &$found) {
+        foreach (($d['items'] ?? []) as $i => $it) {
+            if (($it['id'] ?? '') === $id) { $d['items'][$i]['status'] = $st; $found = true; }
+        }
+        return $d;
+    });
+    out(['ok' => $found]);
+}
+
+if ($action === 'lead_delete') {
+    need_key();
+    $id = inp('id');
+    rc_json_update(RC_LEADS, function ($d) use ($id) {
+        $d['items'] = array_values(array_filter($d['items'] ?? [], fn($x) => ($x['id'] ?? '') !== $id));
+        return $d;
+    });
+    out(['ok' => true]);
+}
+
+if ($action === 'export') {
+    need_key();
+    $d = rc_json_read(RC_LEADS, []);
+    header('Content-Type: text/csv; charset=UTF-8');
+    header('Content-Disposition: attachment; filename="rocketcdn-leads-' . date('Y-m-d') . '.csv"');
+    $out = fopen('php://output', 'w');
+    fwrite($out, "\xEF\xBB\xBF");
+    fputcsv($out, ['Дата', 'Тип', 'Имя', 'Контакт', 'Компания', 'Направление', 'Задача', 'Статус'], ';');
+    foreach (array_reverse($d['items'] ?? []) as $x) {
+        fputcsv($out, [$x['ts'] ?? '', $x['kind'] ?? '', $x['name'] ?? '', $x['contact'] ?? '',
+                       $x['company'] ?? '', $x['topic'] ?? '', $x['task'] ?? '', $x['status'] ?? ''], ';');
+    }
+    fclose($out);
+    exit;
+}
+
+/* Правка текстов сайта из админки */
+if ($action === 'content_save') {
+    need_key();
+    $c = $body['content'] ?? null;
+    if (!is_array($c)) out(['ok' => false, 'error' => 'content']);
+    rc_json_write(RC_CONTENT, $c);
+    out(['ok' => true]);
+}
+
+if ($action === 'content_reset') {
+    need_key();
+    @unlink(RC_CONTENT);
+    out(['ok' => true]);
+}
+
+if ($action === 'errors') {
+    need_key();
+    $log = is_file(RC_LOG) ? array_slice(file(RC_LOG), -200) : [];
+    out(['ok' => true, 'log' => array_reverse($log)]);
+}
+
+/* Проверка почты и телеграма прямо из админки */
+if ($action === 'selftest') {
+    need_key();
+    $res = [];
+    $res['mail_configured'] = (bool)rc_cfg('mail_user') && (bool)rc_cfg('mail_pass');
+    $res['tg_configured']   = (bool)rc_cfg('tg_token');
+    $res['chat_bound']      = (bool)rc_cfg('tg_chat');
+    $res['data_writable']   = is_writable(RC_DATA);
+    if (inp('send')) {
+        $res['mail_sent'] = rc_mail(rc_cfg('mail_to'), 'Проверка связи · Rocket CDN',
+            rc_mail_tpl('Проверка связи', ['Статус' => 'Почта настроена и работает'], 'Письмо отправлено из админки сайта.'));
+        rc_notify("<b>Проверка связи</b>\nАдминка сайта на связи, уведомления доходят.", null, 'tg_topic_error');
+        $res['tg_sent'] = true;
+    }
+    out(['ok' => true] + $res);
+}
+
+out(['ok' => false, 'error' => 'unknown_action']);

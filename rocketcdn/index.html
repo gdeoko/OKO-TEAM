@@ -1,0 +1,475 @@
+<!DOCTYPE html>
+<html lang="ru" data-theme="dark">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#050C15">
+<title>Rocket CDN - доставка контента на сверхскорости</title>
+<meta name="description" content="Rocket CDN объединяет собственную инфраструктуру и глобальное edge-покрытие: 218 точек присутствия, три собственных ЦОД, SLA 99,9% и пропускная способность более 3 Тбит/с по России.">
+<meta name="keywords" content="CDN, сеть доставки контента, стриминг, видеохостинг, edge, дата-центр, защита от DDoS, облако, Rocket CDN">
+<link rel="canonical" href="https://rocketcdn.ru/">
+<meta name="robots" content="index, follow, max-image-preview:large">
+
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="Rocket CDN">
+<meta property="og:locale" content="ru_RU">
+<meta property="og:title" content="Rocket CDN - доставка контента на сверхскорости">
+<meta property="og:description" content="Глобальная сеть доставки контента: 218 точек присутствия, собственные ЦОД в Москве, Казахстане и Праге, SLA 99,9%.">
+<meta property="og:url" content="https://rocketcdn.ru/">
+<meta property="og:image" content="https://rocketcdn.ru/assets/og.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="Rocket CDN - доставка контента на сверхскорости">
+<meta name="twitter:description" content="Глобальная сеть доставки контента и медиа-инфраструктура для бизнеса.">
+<meta name="twitter:image" content="https://rocketcdn.ru/assets/og.png">
+
+<link rel="icon" type="image/png" href="assets/favicon.png">
+<link rel="apple-touch-icon" href="assets/apple-touch-icon.png">
+<link rel="manifest" href="manifest.webmanifest">
+
+<link rel="preload" href="assets/fonts/golos-cyr.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="stylesheet" href="assets/rc-fonts.css">
+<link rel="stylesheet" href="assets/rc.css">
+
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "Organization",
+  "name": "Rocket CDN",
+  "url": "https://rocketcdn.ru",
+  "logo": "https://rocketcdn.ru/assets/logo.png",
+  "slogan": "Fast. Reliable. Global.",
+  "description": "Глобальная сеть доставки контента и медиа-инфраструктура для бизнеса.",
+  "sameAs": ["https://lk.rocketcdn.ru"],
+  "contactPoint": [{
+    "@type": "ContactPoint",
+    "contactType": "customer support",
+    "email": "info@rocketcdn.ru",
+    "availableLanguage": ["Russian", "English"]
+  }]
+}
+</script>
+</head>
+<body>
+
+<!-- Прелоадер -->
+<div class="preload" id="preload">
+  <div class="preload-in">
+    <img src="assets/mark.png" alt="Rocket CDN" width="108" height="101">
+    <div class="preload-bar"><i id="preloadBar"></i></div>
+  </div>
+</div>
+
+<div class="prog" id="prog"></div>
+
+<!-- Шапка -->
+<header class="hdr" id="hdr">
+  <div class="wrap hdr-in">
+    <a href="#top" class="logo" aria-label="Rocket CDN">
+      <img class="lg-dark"  src="assets/logo-h.png"       alt="Rocket CDN" width="172" height="34">
+      <img class="lg-light" src="assets/logo-h-light.png" alt="Rocket CDN" width="172" height="34">
+    </a>
+
+    <nav class="nav" aria-label="Основная навигация">
+      <a href="#products"  data-i18n="nav.products">Продукты</a>
+      <a href="#infra"     data-i18n="nav.infra">Инфраструктура</a>
+      <a href="#adv"       data-i18n="nav.adv">Преимущества</a>
+      <a href="#how"       data-i18n="nav.how">Как работает</a>
+      <a href="#faq"       data-i18n="nav.faq">Вопросы</a>
+      <a href="#contact"   data-i18n="nav.contact">Контакты</a>
+    </nav>
+
+    <div class="hdr-act">
+      <div class="lang" role="group" aria-label="Язык">
+        <button type="button" data-lang="ru" class="on">RU</button>
+        <button type="button" data-lang="en">EN</button>
+      </div>
+      <button type="button" class="icon-btn js-theme" aria-label="Сменить тему"></button>
+      <a class="btn btn-p btn-sm js-reg" data-place="header" href="https://lk.rocketcdn.ru" target="_blank" rel="noopener">
+        <span data-i18n="cta.register">Регистрация</span>
+      </a>
+      <button type="button" class="icon-btn burger" id="burger" aria-label="Открыть меню" aria-expanded="false"></button>
+    </div>
+  </div>
+</header>
+
+<!-- Мобильное меню -->
+<nav class="drawer" id="drawer" aria-label="Меню">
+  <a href="#products" data-i18n="nav.products">Продукты</a>
+  <a href="#infra"    data-i18n="nav.infra">Инфраструктура</a>
+  <a href="#adv"      data-i18n="nav.adv">Преимущества</a>
+  <a href="#how"      data-i18n="nav.how">Как работает</a>
+  <a href="#cases"    data-i18n="nav.cases">Сценарии</a>
+  <a href="#faq"      data-i18n="nav.faq">Вопросы</a>
+  <a href="#contact"  data-i18n="nav.contact">Контакты</a>
+  <a class="btn btn-p js-reg" data-place="drawer" href="https://lk.rocketcdn.ru" target="_blank" rel="noopener">
+    <span data-i18n="cta.register2">Зарегистрироваться</span>
+  </a>
+  <div class="lang" style="margin-top:14px;align-self:flex-start" role="group" aria-label="Язык">
+    <button type="button" data-lang="ru" class="on">Русский</button>
+    <button type="button" data-lang="en">English</button>
+  </div>
+</nav>
+
+<main id="top">
+
+<!-- ═══ Герой ═══ -->
+<section class="hero" id="hero">
+  <div class="hero-bg"></div>
+  <div class="hero-globe"><canvas id="globeHero" aria-hidden="true"></canvas></div>
+  <div class="wrap">
+    <div class="hero-in">
+      <div class="hero-chips">
+        <span class="chip"><i class="dot-live"></i><span data-i18n="hero.chip1">сеть работает</span></span>
+        <span class="chip"><b>218</b> <span data-i18n="hero.chip2">точек присутствия</span></span>
+        <span class="chip"><b>3</b> <span data-i18n="hero.chip3">собственных ЦОД</span></span>
+      </div>
+      <h1>
+        <span data-i18n="hero.h1a">Доставка контента</span><br>
+        <span class="grad-tx" data-i18n="hero.h1b">на сверхскорости</span>
+      </h1>
+      <p class="hero-sub" data-i18n="hero.sub">Rocket CDN объединяет собственную инфраструктуру и глобальное edge-покрытие, чтобы контент находился ближе к пользователю. Быстро, стабильно и предсказуемо.</p>
+      <div class="btn-row">
+        <a class="btn btn-p btn-lg js-reg" data-place="hero" href="https://lk.rocketcdn.ru" target="_blank" rel="noopener">
+          <span data-i18n="cta.register2">Зарегистрироваться</span>
+        </a>
+        <a class="btn btn-g btn-lg js-connect" data-place="hero" href="#contact">
+          <span data-i18n="cta.connect">Запросить подключение</span>
+        </a>
+      </div>
+      <div class="hero-marks" id="heroMarks"></div>
+    </div>
+  </div>
+  <div class="scroll-hint"><span data-i18n="hero.scroll">Листайте вниз</span><i></i></div>
+</section>
+
+<!-- ═══ Показатели ═══ -->
+<section id="kpi" style="padding-top:0">
+  <div class="wrap">
+    <div class="kpi rv">
+      <div>
+        <div class="kpi-n grad-tx" data-i18n="kpi.1n">99,9%</div>
+        <div class="kpi-l" data-i18n="kpi.1l">Доступность по SLA</div>
+      </div>
+      <div>
+        <div class="kpi-n grad-tx"><span data-count="218">218</span></div>
+        <div class="kpi-l" data-i18n="kpi.2l">Узлов CDN по всему миру</div>
+      </div>
+      <div>
+        <div class="kpi-n grad-tx" data-i18n="kpi.3n">3 Тбит/с</div>
+        <div class="kpi-l" data-i18n="kpi.3l">Пропускная способность в России</div>
+      </div>
+      <div>
+        <div class="kpi-n grad-tx" data-i18n="kpi.4n">1,5 млн</div>
+        <div class="kpi-l" data-i18n="kpi.4l">Зрителей одновременно</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══ Что это ═══ -->
+<section id="what">
+  <div class="wrap">
+    <div class="sec-head rv">
+      <div class="sec-tag" data-i18n="what.tag">Простыми словами</div>
+      <h2 class="sec-h" data-i18n="what.h">Что такое Rocket CDN</h2>
+      <p class="sec-p" data-i18n="what.p">Сеть серверов, расположенных рядом с вашей аудиторией.</p>
+    </div>
+
+    <div class="flow rv rv-d1">
+      <div class="flow-node">
+        <div class="card-ico" data-ico="storage"></div>
+        <h4 data-i18n="what.n1h">Ваш origin</h4>
+        <p data-i18n="what.n1p">Сайт, видеоплатформа или хранилище.</p>
+      </div>
+      <div class="flow-link"><i></i></div>
+      <div class="flow-node hot">
+        <div class="card-ico" data-ico="globe"></div>
+        <h4 data-i18n="what.n2h">Edge-узлы Rocket CDN</h4>
+        <p data-i18n="what.n2p">218 точек присутствия кэшируют контент.</p>
+      </div>
+      <div class="flow-link"><i></i></div>
+      <div class="flow-node">
+        <div class="card-ico" data-ico="user"></div>
+        <h4 data-i18n="what.n3h">Пользователь</h4>
+        <p data-i18n="what.n3p">Получает данные с ближайшего узла.</p>
+      </div>
+    </div>
+
+    <div class="hero-marks rv rv-d2" style="justify-content:center;margin-top:34px" id="whatMarks"></div>
+  </div>
+</section>
+
+<!-- ═══ Продукты ═══ -->
+<section id="products">
+  <div class="wrap">
+    <div class="sec-head rv">
+      <div class="sec-tag" data-i18n="prod.tag">Продукты</div>
+      <h2 class="sec-h" data-i18n="prod.h">Инфраструктура под любую задачу</h2>
+      <p class="sec-p" data-i18n="prod.p">Всё, что нужно для доставки контента и работы медиа-сервисов, в одном личном кабинете.</p>
+    </div>
+    <div class="grid g-3" id="gridProducts"></div>
+  </div>
+</section>
+
+<!-- ═══ Преимущества ═══ -->
+<section id="adv">
+  <div class="wrap">
+    <div class="sec-head rv">
+      <div class="sec-tag" data-i18n="adv.tag">Преимущества</div>
+      <h2 class="sec-h" data-i18n="adv.h">Почему выбирают Rocket CDN</h2>
+      <p class="sec-p" data-i18n="adv.p">Собственное железо, собственные каналы и инженеры на связи круглосуточно.</p>
+    </div>
+    <div class="grid g-3" id="gridAdv"></div>
+  </div>
+</section>
+
+<!-- ═══ Инфраструктура ═══ -->
+<section id="infra">
+  <div class="wrap">
+    <div class="sec-head rv">
+      <div class="sec-tag" data-i18n="infra.tag">Инфраструктура</div>
+      <h2 class="sec-h" data-i18n="infra.h">Глобальная сеть присутствия</h2>
+      <p class="sec-p" data-i18n="infra.p">Точки присутствия на пяти континентах и три собственных дата-центра.</p>
+    </div>
+
+    <div class="infra">
+      <div class="rv">
+        <div class="map-wrap"><canvas id="globeMap"></canvas></div>
+        <div class="map-legend">
+          <span class="leg"><i style="background:#42B2DC"></i><span data-i18n="infra.leg1">Узел CDN</span></span>
+          <span class="leg"><i style="background:#8A59F6"></i><span data-i18n="infra.leg2">Облако и защита</span></span>
+          <span class="leg"><i style="background:#64748B"></i><span data-i18n="infra.leg3">Скоро в сети</span></span>
+          <span class="leg"><i style="background:#B8ECFF;box-shadow:0 0 0 3px rgba(66,178,220,.28)"></i><span data-i18n="infra.leg4">Собственный ЦОД</span></span>
+        </div>
+      </div>
+
+      <div class="rv rv-d1">
+        <div class="reg-tabs" id="regTabs"></div>
+        <div class="search">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.6-3.6"/></svg>
+          <input type="search" id="nodeSearch" data-i18n="infra.search" data-i18n-attr="placeholder" placeholder="Поиск города или региона" aria-label="Поиск города">
+        </div>
+        <div class="node-list" id="nodeList"></div>
+        <p style="font-size:13px;color:var(--tx-3);margin-top:10px">
+          <span data-i18n="infra.found">Найдено точек</span>: <b id="nodeCount" style="color:var(--cyan)">218</b>
+        </p>
+      </div>
+    </div>
+
+    <div class="sec-head rv" style="margin:clamp(44px,6vw,74px) 0 0">
+      <h3 class="sec-h" style="font-size:clamp(22px,3vw,34px)" data-i18n="infra.dch">Три собственных дата-центра</h3>
+      <p class="sec-p" data-i18n="infra.dcp">Своё оборудование, свои каналы и полный контроль над маршрутами.</p>
+    </div>
+    <div class="dc-grid" id="dcGrid"></div>
+  </div>
+</section>
+
+<!-- ═══ Как работает ═══ -->
+<section id="how">
+  <div class="wrap">
+    <div class="sec-head rv">
+      <div class="sec-tag" data-i18n="how.tag">Как это работает</div>
+      <h2 class="sec-h" data-i18n="how.h">Путь запроса за 40 миллисекунд</h2>
+      <p class="sec-p" data-i18n="how.p">Маршрут строится автоматически.</p>
+    </div>
+    <div class="grid g-4" id="howGrid"></div>
+  </div>
+</section>
+
+<!-- ═══ Сценарии ═══ -->
+<section id="cases">
+  <div class="wrap">
+    <div class="sec-head rv">
+      <div class="sec-tag" data-i18n="case.tag">Сценарии</div>
+      <h2 class="sec-h" data-i18n="case.h">Под какие задачи берут Rocket CDN</h2>
+      <p class="sec-p" data-i18n="case.p">От разовой трансляции до постоянной раздачи терабайтов.</p>
+    </div>
+    <div class="grid g-3" id="gridCases"></div>
+  </div>
+</section>
+
+<!-- ═══ Надёжность ═══ -->
+<section id="reliability">
+  <div class="wrap">
+    <div class="sec-head rv">
+      <div class="sec-tag" data-i18n="rel.tag">Надёжность</div>
+      <h2 class="sec-h" data-i18n="rel.h">Работает, когда на вас смотрят</h2>
+      <p class="sec-p" data-i18n="rel.p">Резервирование на каждом уровне и мониторинг в реальном времени.</p>
+    </div>
+    <div class="grid g-4" id="relGrid"></div>
+  </div>
+</section>
+
+<!-- ═══ FAQ ═══ -->
+<section id="faq">
+  <div class="wrap">
+    <div class="sec-head rv">
+      <div class="sec-tag" data-i18n="faq.tag">Вопросы и ответы</div>
+      <h2 class="sec-h" data-i18n="faq.h">Коротко о главном</h2>
+    </div>
+    <div class="faq rv rv-d1" id="faqList"></div>
+  </div>
+</section>
+
+<!-- ═══ Контакты и заявка ═══ -->
+<section id="contact">
+  <div class="wrap">
+    <div class="contact">
+      <div class="rv">
+        <div class="sec-tag" data-i18n="ct.tag">Подключение</div>
+        <h2 class="sec-h" data-i18n="ct.h">Расскажите о проекте</h2>
+        <p class="sec-p" data-i18n="ct.p">Опишите задачу, и мы подберём конфигурацию с расчётом стоимости.</p>
+
+        <div class="contact-list">
+          <a href="mailto:info@rocketcdn.ru" data-ico="mail"><span>info@rocketcdn.ru</span></a>
+          <a href="https://t.me/rocket_cdn_bot" target="_blank" rel="noopener" data-ico="tg"><span>@rocket_cdn_bot</span></a>
+          <a href="https://lk.rocketcdn.ru" target="_blank" rel="noopener" class="js-reg" data-place="contacts" data-ico="globe"><span data-i18n="ct.lk">Личный кабинет</span></a>
+          <div data-ico="clock"><span data-i18n="ct.time">Поддержка круглосуточно</span></div>
+        </div>
+
+        <div class="btn-row" style="margin-top:26px">
+          <button type="button" class="btn btn-g js-callback">
+            <span data-i18n="cta.callback">Перезвоните мне</span>
+          </button>
+        </div>
+      </div>
+
+      <form class="form-card rv rv-d1" id="leadForm" novalidate>
+        <div class="form-msg"></div>
+        <div class="form-2">
+          <div class="field">
+            <label for="lfName" data-i18n="ct.name">Как к вам обращаться</label>
+            <input id="lfName" name="name" required data-i18n="ct.namep" data-i18n-attr="placeholder" placeholder="Имя" autocomplete="name">
+            <span class="err" data-i18n="ct.req">Заполните поле</span>
+          </div>
+          <div class="field">
+            <label for="lfContact" data-i18n="ct.contact">Телефон или почта</label>
+            <input id="lfContact" name="contact" required data-kind="contact" data-i18n="ct.contactp" data-i18n-attr="placeholder" placeholder="+7 900 000-00-00 или mail@company.ru" autocomplete="email">
+            <span class="err" data-i18n="ct.badcontact">Укажите телефон или почту</span>
+          </div>
+        </div>
+        <div class="field">
+          <label for="lfCompany" data-i18n="ct.company">Компания</label>
+          <input id="lfCompany" name="company" data-i18n="ct.companyp" data-i18n-attr="placeholder" placeholder="Название организации" autocomplete="organization">
+        </div>
+        <div class="field">
+          <label for="lfTopic" data-i18n="ct.topic">Направление</label>
+          <select id="lfTopic" name="topic">
+            <option>CDN</option>
+            <option>Стриминг</option>
+            <option>Медиа-хранилище</option>
+            <option>Плеер</option>
+            <option>Облако</option>
+            <option>Безопасность</option>
+            <option>Виртуальный диктор</option>
+          </select>
+        </div>
+        <div class="field">
+          <label for="lfTask" data-i18n="ct.task">Задача</label>
+          <textarea id="lfTask" name="task" data-i18n="ct.taskp" data-i18n-attr="placeholder" placeholder="Что нужно раздавать, какой объём трафика"></textarea>
+        </div>
+        <label class="consent">
+          <input type="checkbox" name="consent" required checked>
+          <span>
+            <span data-i18n="ct.consent">Соглашаюсь с обработкой персональных данных</span>
+            <a href="privacy.html" target="_blank" data-i18n="ct.policy">Политика конфиденциальности</a>
+          </span>
+        </label>
+        <button type="submit" class="btn btn-p" style="width:100%">
+          <span data-i18n="ct.send">Отправить заявку</span>
+        </button>
+      </form>
+    </div>
+  </div>
+</section>
+
+</main>
+
+<!-- Подвал -->
+<footer class="ftr">
+  <div class="wrap">
+    <div class="ftr-top">
+      <div class="ftr-brand">
+        <img class="lg-dark"  src="assets/logo.png"       alt="Rocket CDN" width="68" height="46">
+        <img class="lg-light" src="assets/logo-light.png" alt="Rocket CDN" width="68" height="46" style="display:none">
+        <p data-i18n="ftr.about">Глобальная сеть доставки контента и медиа-инфраструктура для бизнеса.</p>
+        <div class="soc" style="margin-top:16px">
+          <a href="https://t.me/rocket_cdn_bot" target="_blank" rel="noopener" aria-label="Telegram" data-ico="tg"></a>
+          <a href="mailto:info@rocketcdn.ru" aria-label="Email" data-ico="mail"></a>
+        </div>
+      </div>
+      <div>
+        <h5 data-i18n="ftr.nav">Навигация</h5>
+        <ul>
+          <li><a href="#products" data-i18n="nav.products">Продукты</a></li>
+          <li><a href="#infra"    data-i18n="nav.infra">Инфраструктура</a></li>
+          <li><a href="#adv"      data-i18n="nav.adv">Преимущества</a></li>
+          <li><a href="#cases"    data-i18n="nav.cases">Сценарии</a></li>
+          <li><a href="#faq"      data-i18n="nav.faq">Вопросы</a></li>
+        </ul>
+      </div>
+      <div>
+        <h5 data-i18n="ftr.prod">Продукты</h5>
+        <ul id="ftrProducts"></ul>
+      </div>
+      <div>
+        <h5 data-i18n="ftr.doc">Документы</h5>
+        <ul>
+          <li><a href="privacy.html" data-i18n="ftr.policy">Политика конфиденциальности</a></li>
+          <li><a href="offer.html"   data-i18n="ftr.oferta">Публичная оферта</a></li>
+          <li><a href="#faq"         data-i18n="ftr.sla">Условия SLA</a></li>
+          <li><a href="https://lk.rocketcdn.ru" target="_blank" rel="noopener" class="js-reg" data-place="footer" data-i18n="ct.lk">Личный кабинет</a></li>
+        </ul>
+      </div>
+    </div>
+    <div class="ftr-bot">
+      <span>&copy; <span id="year">2026</span> Rocket CDN. <span data-i18n="ftr.rights">Все права защищены</span>.</span>
+      <span data-i18n="ftr.made">Сделано в OKO TEAM</span>
+    </div>
+  </div>
+</footer>
+
+<!-- Окно обратного звонка -->
+<div class="modal" id="cbModal" role="dialog" aria-modal="true" aria-labelledby="cbTitle">
+  <div class="modal-box" style="position:relative">
+    <button type="button" class="icon-btn modal-x js-modal-close" aria-label="Закрыть">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M6 6l12 12M18 6 6 18"/></svg>
+    </button>
+    <h3 id="cbTitle" data-i18n="cb.h">Перезвоните мне</h3>
+    <p class="sub" data-i18n="cb.p">Оставьте номер, инженер перезвонит и ответит на вопросы.</p>
+    <form id="cbForm" novalidate>
+      <div class="form-msg"></div>
+      <div class="field">
+        <label for="cbName" data-i18n="ct.name">Как к вам обращаться</label>
+        <input id="cbName" name="name" required data-i18n="ct.namep" data-i18n-attr="placeholder" placeholder="Имя" autocomplete="name">
+        <span class="err" data-i18n="ct.req">Заполните поле</span>
+      </div>
+      <div class="field">
+        <label for="cbPhone" data-i18n="cb.phone">Телефон</label>
+        <input id="cbPhone" name="contact" required data-kind="phone" type="tel" placeholder="+7 900 000-00-00" autocomplete="tel">
+        <span class="err" data-i18n="ct.badcontact">Укажите телефон</span>
+      </div>
+      <label class="consent">
+        <input type="checkbox" name="consent" required checked>
+        <span data-i18n="ct.consent">Соглашаюсь с обработкой персональных данных</span>
+      </label>
+      <button type="submit" class="btn btn-p" style="width:100%">
+        <span data-i18n="cb.send">Жду звонка</span>
+      </button>
+    </form>
+  </div>
+</div>
+
+<button type="button" class="totop" id="toTop" aria-label="Наверх">
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M12 19V5M6 11l6-6 6 6"/></svg>
+</button>
+
+<script src="assets/rc-geo.js"></script>
+<script src="assets/rc-i18n.js"></script>
+<script src="assets/rc-globe.js"></script>
+<script src="assets/rc-app.js"></script>
+<script src="assets/rc-fill.js"></script>
+</body>
+</html>

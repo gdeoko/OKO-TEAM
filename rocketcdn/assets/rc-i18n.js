@@ -1,0 +1,363 @@
+/* RocketCDN · весь текст сайта в одном месте, два языка.
+   Разделы, которые редактируются из админки, приходят с сервера и
+   перекрывают эти значения (см. rc-app.js → applyContent). */
+(function (g) {
+"use strict";
+
+var RU = {
+  /* Навигация и общее */
+  "nav.products":  "Продукты",
+  "nav.infra":     "Инфраструктура",
+  "nav.adv":       "Преимущества",
+  "nav.how":       "Как работает",
+  "nav.cases":     "Сценарии",
+  "nav.faq":       "Вопросы",
+  "nav.contact":   "Контакты",
+  "cta.register":  "Регистрация",
+  "cta.register2": "Зарегистрироваться",
+  "cta.connect":   "Запросить подключение",
+  "cta.callback":  "Перезвоните мне",
+  "cta.consult":   "Получить консультацию",
+  "cta.all":       "Все точки присутствия",
+  "theme.toggle":  "Сменить тему",
+  "menu.open":     "Открыть меню",
+  "menu.close":    "Закрыть меню",
+
+  /* Герой */
+  "hero.h1a":      "Доставка контента",
+  "hero.h1b":      "на сверхскорости",
+  "hero.sub":      "Rocket CDN объединяет собственную инфраструктуру и глобальное edge-покрытие, чтобы контент находился ближе к пользователю. Быстро, стабильно и предсказуемо.",
+  "hero.chip1":    "сеть работает",
+  "hero.chip2":    "точек присутствия",
+  "hero.chip3":    "собственных ЦОД",
+  "hero.mark1":    "Подключение за один день",
+  "hero.mark2":    "Поддержка 24/7 без выходных",
+  "hero.mark3":    "Оплата по факту трафика",
+  "hero.scroll":   "Листайте вниз",
+
+  /* Показатели */
+  "kpi.tag":       "Ключевые показатели",
+  "kpi.1n":        "99,9%",
+  "kpi.1l":        "Доступность по SLA",
+  "kpi.2l":        "Узлов CDN по всему миру",
+  "kpi.3n":        "3 Тбит/с",
+  "kpi.3l":        "Пропускная способность в России",
+  "kpi.4n":        "1,5 млн",
+  "kpi.4l":        "Зрителей одновременно",
+
+  /* Что это такое */
+  "what.tag":      "Простыми словами",
+  "what.h":        "Что такое Rocket CDN",
+  "what.p":        "Сеть серверов, расположенных рядом с вашей аудиторией. Контент отдаётся с ближайшего узла, а не с одного сервера на другом конце страны. Пользователь получает видео и страницы быстрее, ваш origin разгружается, а нагрузка перестаёт зависеть от всплесков трафика.",
+  "what.n1h":      "Ваш origin",
+  "what.n1p":      "Сайт, видеоплатформа или хранилище. Отдаёт контент один раз.",
+  "what.n2h":      "Edge-узлы Rocket CDN",
+  "what.n2p":      "218 точек присутствия кэшируют контент и держат его рядом с людьми.",
+  "what.n3h":      "Пользователь",
+  "what.n3p":      "Получает данные с ближайшего узла за десятки миллисекунд.",
+  "what.b1":       "Разгрузка origin до 95%",
+  "what.b2":       "Меньше задержка и буферизация",
+  "what.b3":       "Пики трафика без падений",
+
+  /* Продукты */
+  "prod.tag":      "Продукты",
+  "prod.h":        "Инфраструктура под любую задачу",
+  "prod.p":        "Всё, что нужно для доставки контента и работы медиа-сервисов, в одном личном кабинете.",
+
+  /* Преимущества */
+  "adv.tag":       "Преимущества",
+  "adv.h":         "Почему выбирают Rocket CDN",
+  "adv.p":         "Собственное железо, собственные каналы и инженеры на связи круглосуточно.",
+
+  /* Инфраструктура */
+  "infra.tag":     "Инфраструктура",
+  "infra.h":       "Глобальная сеть присутствия",
+  "infra.p":       "Точки присутствия на пяти континентах и три собственных дата-центра. Покрутите глобус или найдите нужный город в списке.",
+  "infra.search":  "Поиск города или региона",
+  "infra.all":     "Все регионы",
+  "infra.found":   "Найдено точек",
+  "infra.none":    "Ничего не нашлось. Попробуйте другой запрос.",
+  "infra.leg1":    "Узел CDN",
+  "infra.leg2":    "Облако и защита",
+  "infra.leg3":    "Скоро в сети",
+  "infra.leg4":    "Собственный ЦОД",
+  "infra.dc":      "Собственный дата-центр",
+  "infra.dch":     "Три собственных дата-центра",
+  "infra.dcp":     "Своё оборудование, свои каналы и полный контроль над маршрутами. Не арендуем чужие мощности под критичную нагрузку.",
+  "dc1p":          "Основная площадка. Облако, защита от атак и точка обмена трафиком.",
+  "dc2p":          "Опорный узел для Центральной Азии. Облако и низкая задержка для региона.",
+  "dc3p":          "Европейская площадка. Облако и стык с магистральными операторами.",
+
+  /* Как работает */
+  "how.tag":       "Как это работает",
+  "how.h":         "Путь запроса за 40 миллисекунд",
+  "how.p":         "Маршрут строится автоматически. Вам не нужно думать о географии пользователей.",
+  "how.s1h":       "Запрос пользователя",
+  "how.s1p":       "Браузер или плеер запрашивает файл по вашему домену.",
+  "how.s2h":       "Anycast-маршрутизация",
+  "how.s2p":       "Сеть сама выбирает ближайший работающий узел по задержке и загрузке.",
+  "how.s3h":       "Отдача из кэша",
+  "how.s3p":       "Файл уже лежит на узле и уходит пользователю без обращения к origin.",
+  "how.s4h":       "Промах кэша",
+  "how.s4p":       "Если файла нет, узел забирает его с origin по оптимизированному каналу и кладёт в кэш.",
+
+  /* Сценарии */
+  "case.tag":      "Сценарии",
+  "case.h":        "Под какие задачи берут Rocket CDN",
+  "case.p":        "От разовой трансляции до постоянной раздачи терабайтов.",
+
+  /* Надёжность */
+  "rel.tag":       "Надёжность",
+  "rel.h":         "Работает, когда на вас смотрят",
+  "rel.p":         "Резервирование на каждом уровне, мониторинг в реальном времени и инженеры, которые отвечают, а не пересылают тикет.",
+  "rel.1h":        "SLA 99,9%",
+  "rel.1p":        "Доступность закреплена договором. Не уложились - компенсируем.",
+  "rel.2h":        "Поддержка 24/7",
+  "rel.2p":        "Дежурная смена инженеров круглосуточно, включая выходные и праздники.",
+  "rel.3h":        "Защита от атак",
+  "rel.3p":        "Фильтрация L3-L7 на узлах с меткой «Защита», без переноса трафика на сторону.",
+  "rel.4h":        "Прозрачная статистика",
+  "rel.4p":        "Трафик, запросы, коды ответов и география в личном кабинете в реальном времени.",
+
+  /* FAQ */
+  "faq.tag":       "Вопросы и ответы",
+  "faq.h":         "Коротко о главном",
+
+  /* Контакты и форма */
+  "ct.tag":        "Подключение",
+  "ct.h":          "Расскажите о проекте",
+  "ct.p":          "Опишите задачу, и мы подберём конфигурацию с расчётом стоимости. Отвечаем в рабочее время в течение часа.",
+  "ct.name":       "Как к вам обращаться",
+  "ct.namep":      "Имя",
+  "ct.contact":    "Телефон или почта",
+  "ct.contactp":   "+7 900 000-00-00 или mail@company.ru",
+  "ct.company":    "Компания",
+  "ct.companyp":   "Название организации",
+  "ct.task":       "Задача",
+  "ct.taskp":      "Что нужно раздавать, какой объём трафика, есть ли текущий провайдер",
+  "ct.topic":      "Направление",
+  "ct.send":       "Отправить заявку",
+  "ct.sending":    "Отправляем",
+  "ct.ok":         "Заявка принята. Свяжемся с вами в ближайшее время.",
+  "ct.err":        "Не удалось отправить. Напишите нам на почту или в Телеграм.",
+  "ct.consent":    "Соглашаюсь с обработкой персональных данных",
+  "ct.policy":     "Политика конфиденциальности",
+  "ct.req":        "Заполните поле",
+  "ct.badcontact": "Укажите телефон или почту",
+  "cb.h":          "Перезвоните мне",
+  "cb.p":          "Оставьте номер, инженер перезвонит и ответит на вопросы.",
+  "cb.phone":      "Телефон",
+  "cb.send":       "Жду звонка",
+  "cb.ok":         "Записали. Скоро наберём вас.",
+  "ct.mail":       "Почта",
+  "ct.tg":         "Телеграм",
+  "ct.lk":         "Личный кабинет",
+  "ct.time":       "Поддержка круглосуточно",
+
+  /* Подвал */
+  "ftr.about":     "Глобальная сеть доставки контента и медиа-инфраструктура для бизнеса.",
+  "ftr.nav":       "Навигация",
+  "ftr.prod":      "Продукты",
+  "ftr.doc":       "Документы",
+  "ftr.oferta":    "Публичная оферта",
+  "ftr.policy":    "Политика конфиденциальности",
+  "ftr.sla":       "Условия SLA",
+  "ftr.rights":    "Все права защищены",
+  "ftr.made":      "Сделано в OKO TEAM",
+
+  /* Служебное */
+  "toast.copy":    "Скопировано"
+};
+
+/* Блочный контент: продукты, преимущества, сценарии, вопросы */
+var BLOCKS_RU = {
+  products: [
+    { icon: "cdn",     h: "CDN",                 p: "Кэширование и раздача статики, видео и больших файлов с ближайшего к пользователю узла.",
+      li: ["Статика и большие файлы", "Гибкие правила кэша", "Своя SSL и свой домен"] },
+    { icon: "stream",  h: "Стриминг",            p: "Живые трансляции и видео по запросу на аудиторию любого размера, на все известные устройства.",
+      li: ["Live и VOD", "Транскодирование", "Низкая задержка"] },
+    { icon: "storage", h: "Медиа-хранилище",     p: "Объектное хранилище для видео и файлов с прямой отдачей в сеть доставки.",
+      li: ["S3-совместимый доступ", "Хранение без лимитов", "Отдача сразу через CDN"] },
+    { icon: "player",  h: "Плеер",               p: "Готовый плеер с адаптивным качеством, вашим брендом и аналитикой просмотров.",
+      li: ["Адаптивный битрейт", "Оформление под бренд", "Статистика просмотров"] },
+    { icon: "cloud",   h: "Облако",              p: "Виртуальные машины на процессорах нового поколения AMD и Intel, а для Big Data и AI - ARM и GPU.",
+      li: ["AMD, Intel, ARM", "Графические ускорители", "Масштабирование за минуты"] },
+    { icon: "shield",  h: "Безопасность",        p: "Фильтрация атак на уровне сети и приложения, доступ по правилам и защита origin.",
+      li: ["Защита L3-L7", "Правила доступа", "Origin закрыт от прямых запросов"] },
+    { icon: "voice",   h: "Виртуальный диктор",  p: "Синтез речи для озвучки роликов, объявлений и медиа-контента.",
+      li: ["Естественные голоса", "Пакетная обработка", "Готовый файл в хранилище"] }
+  ],
+  advantages: [
+    { icon: "cpu",    h: "Процессоры нового поколения", p: "Виртуальные машины на базе AMD и Intel последних поколений. Ресурсы выделяются честно, без переподписки." },
+    { icon: "gpu",    h: "ARM и GPU для Big Data и AI", p: "Для расчётов, обучения моделей и обработки медиа доступны ARM-процессоры и графические ускорители." },
+    { icon: "stream", h: "Трансляции любого масштаба",  p: "Качественные трансляции на аудиторию любого размера, на все известные устройства, в короткие сроки и по доступным ценам." },
+    { icon: "support",h: "Поддержка круглосуточно",     p: "Инженеры на связи 24/7. Отвечает человек, который разбирается в сети, а не робот с шаблоном." },
+    { icon: "load",   h: "1 500 000 зрителей и 1 Тб",   p: "Сеть держит более полутора миллионов зрителей одновременно и свыше терабайта нагрузки." },
+    { icon: "speed",  h: "3 Тбит/с по России",          p: "Пропускная способность сети внутри России превышает 3 Тбит/с и растёт вместе с вашим трафиком." }
+  ],
+  cases: [
+    { h: "Видеосервисы и OTT",       p: "Раздача VOD-библиотек и живых каналов без буферизации в часы пик." },
+    { h: "Медиа и новости",          p: "Мгновенная отдача фото, видео и страниц при всплесках посещаемости." },
+    { h: "E-commerce",               p: "Быстрые карточки товаров и каталоги. Скорость страницы напрямую влияет на конверсию." },
+    { h: "Игры и приложения",        p: "Раздача обновлений и патчей на миллионы устройств без просадки канала." },
+    { h: "SaaS и B2B-платформы",     p: "Стабильная работа интерфейса для клиентов в разных странах и часовых поясах." },
+    { h: "Образование и вебинары",   p: "Трансляции на большие аудитории с записью и хранением материалов." }
+  ],
+  faq: [
+    { q: "Сколько времени занимает подключение?",
+      a: "Технически ресурс создаётся в личном кабинете за несколько минут. С учётом согласования домена, выпуска сертификата и проверки настроек боевой трафик обычно переключают в течение одного рабочего дня." },
+    { q: "Можно ли использовать свой домен и сертификат?",
+      a: "Да. Вы указываете свой домен, а сертификат либо выпускается автоматически, либо загружается ваш собственный. Раздел SSL-сертификатов есть в личном кабинете." },
+    { q: "Как считается стоимость?",
+      a: "По фактически отданному трафику и используемым ресурсам. Чем больше объём, тем ниже цена за единицу. Точный расчёт под ваш профиль нагрузки подготовим после короткого разговора." },
+    { q: "Что происходит, если узел недоступен?",
+      a: "Маршрутизация автоматически уводит запросы на соседний работающий узел. Пользователь этого не замечает, а мы видим событие в мониторинге и разбираемся с причиной." },
+    { q: "Есть ли защита от атак?",
+      a: "На узлах с меткой «Защита» работает фильтрация на уровнях L3-L7. Origin при этом закрывается от прямых обращений, снаружи видна только сеть доставки." },
+    { q: "Подходит ли сеть для живых трансляций?",
+      a: "Да, это один из основных сценариев. Сеть рассчитана на более чем полтора миллиона одновременных зрителей и свыше терабайта нагрузки." },
+    { q: "Где находятся собственные дата-центры?",
+      a: "В Москве, Казахстане и Праге. Остальные точки присутствия построены на партнёрских площадках и точках обмена трафиком." },
+    { q: "Какая статистика доступна?",
+      a: "Трафик, число запросов, коды ответов, доля попаданий в кэш и география аудитории. Данные обновляются в реальном времени в разделе «Статистика»." }
+  ]
+};
+
+var EN = {
+  "nav.products": "Products", "nav.infra": "Infrastructure", "nav.adv": "Advantages",
+  "nav.how": "How it works", "nav.cases": "Use cases", "nav.faq": "FAQ", "nav.contact": "Contacts",
+  "cta.register": "Sign up", "cta.register2": "Create an account", "cta.connect": "Request access",
+  "cta.callback": "Request a call", "cta.consult": "Get a consultation", "cta.all": "All locations",
+  "theme.toggle": "Switch theme", "menu.open": "Open menu", "menu.close": "Close menu",
+
+  "hero.h1a": "Content delivery", "hero.h1b": "at maximum speed",
+  "hero.sub": "Rocket CDN combines its own infrastructure with global edge coverage, so content sits closer to the user. Fast, stable and predictable.",
+  "hero.chip1": "network is live", "hero.chip2": "points of presence", "hero.chip3": "own data centers",
+  "hero.mark1": "Connected within a day", "hero.mark2": "24/7 support, no days off",
+  "hero.mark3": "You pay for actual traffic", "hero.scroll": "Scroll down",
+
+  "kpi.tag": "Key numbers", "kpi.1n": "99.9%", "kpi.1l": "Availability under SLA",
+  "kpi.2l": "CDN nodes worldwide", "kpi.3n": "3 Tbps", "kpi.3l": "Network capacity in Russia",
+  "kpi.4n": "1.5M", "kpi.4l": "Concurrent viewers",
+
+  "what.tag": "In plain words", "what.h": "What Rocket CDN is",
+  "what.p": "A network of servers placed next to your audience. Content is served from the nearest node instead of a single origin far away. Users get pages and video faster, your origin is offloaded, and traffic spikes stop being a problem.",
+  "what.n1h": "Your origin", "what.n1p": "Website, video platform or storage. Serves the content once.",
+  "what.n2h": "Rocket CDN edge", "what.n2p": "218 points of presence cache the content and keep it near people.",
+  "what.n3h": "End user", "what.n3p": "Receives data from the closest node within tens of milliseconds.",
+  "what.b1": "Up to 95% origin offload", "what.b2": "Lower latency and no buffering", "what.b3": "Traffic peaks without downtime",
+
+  "prod.tag": "Products", "prod.h": "Infrastructure for any workload",
+  "prod.p": "Everything you need to deliver content and run media services, in a single dashboard.",
+
+  "adv.tag": "Advantages", "adv.h": "Why teams choose Rocket CDN",
+  "adv.p": "Our own hardware, our own channels and engineers online around the clock.",
+
+  "infra.tag": "Infrastructure", "infra.h": "Global network presence",
+  "infra.p": "Points of presence across five continents and three of our own data centers. Spin the globe or find your city in the list.",
+  "infra.search": "Search a city or region", "infra.all": "All regions", "infra.found": "Locations found",
+  "infra.none": "Nothing found. Try another query.",
+  "infra.leg1": "CDN node", "infra.leg2": "Cloud and shield", "infra.leg3": "Coming soon", "infra.leg4": "Own data center",
+  "infra.dc": "Own data center", "infra.dch": "Three data centers of our own",
+  "infra.dcp": "Our own hardware, our own channels and full control over routing. We do not rent someone else's capacity for critical load.",
+  "dc1p": "Main site. Cloud, DDoS protection and a traffic exchange point.",
+  "dc2p": "Backbone node for Central Asia. Cloud and low latency across the region.",
+  "dc3p": "European site. Cloud and peering with tier-1 carriers.",
+
+  "how.tag": "How it works", "how.h": "A request takes 40 milliseconds",
+  "how.p": "Routing is automatic. You never have to think about where your users are.",
+  "how.s1h": "User request", "how.s1p": "A browser or player asks for a file on your domain.",
+  "how.s2h": "Anycast routing", "how.s2p": "The network picks the nearest healthy node by latency and load.",
+  "how.s3h": "Served from cache", "how.s3p": "The file is already on the node and goes straight to the user.",
+  "how.s4h": "Cache miss", "how.s4p": "If the file is missing, the node pulls it from origin over an optimized channel and caches it.",
+
+  "case.tag": "Use cases", "case.h": "What people run on Rocket CDN",
+  "case.p": "From a one-off broadcast to constant delivery of terabytes.",
+
+  "rel.tag": "Reliability", "rel.h": "It holds when everyone is watching",
+  "rel.p": "Redundancy at every layer, real-time monitoring and engineers who answer instead of forwarding a ticket.",
+  "rel.1h": "99.9% SLA", "rel.1p": "Availability is fixed in the contract. If we miss it, you get compensation.",
+  "rel.2h": "24/7 support", "rel.2p": "An on-duty shift of engineers around the clock, weekends and holidays included.",
+  "rel.3h": "Attack mitigation", "rel.3p": "L3-L7 filtering on nodes marked Shield, without rerouting your traffic elsewhere.",
+  "rel.4h": "Transparent stats", "rel.4p": "Traffic, requests, response codes and geography in your dashboard in real time.",
+
+  "faq.tag": "FAQ", "faq.h": "The short answers",
+
+  "ct.tag": "Get started", "ct.h": "Tell us about your project",
+  "ct.p": "Describe the task and we will put together a configuration with pricing. We reply within an hour during business hours.",
+  "ct.name": "Your name", "ct.namep": "Name",
+  "ct.contact": "Phone or email", "ct.contactp": "+7 900 000-00-00 or mail@company.com",
+  "ct.company": "Company", "ct.companyp": "Organisation name",
+  "ct.task": "Task", "ct.taskp": "What you need to deliver, traffic volume, current provider if any",
+  "ct.topic": "Direction", "ct.send": "Send request", "ct.sending": "Sending",
+  "ct.ok": "Request received. We will get back to you shortly.",
+  "ct.err": "Could not send. Please email us or write on Telegram.",
+  "ct.consent": "I agree to the processing of personal data", "ct.policy": "Privacy policy",
+  "ct.req": "Please fill this in", "ct.badcontact": "Enter a phone number or email",
+  "cb.h": "Request a call", "cb.p": "Leave your number and an engineer will call you back.",
+  "cb.phone": "Phone", "cb.send": "Call me back", "cb.ok": "Got it. We will call you shortly.",
+  "ct.mail": "Email", "ct.tg": "Telegram", "ct.lk": "Dashboard", "ct.time": "Support around the clock",
+
+  "ftr.about": "A global content delivery network and media infrastructure for business.",
+  "ftr.nav": "Navigation", "ftr.prod": "Products", "ftr.doc": "Documents",
+  "ftr.oferta": "Public offer", "ftr.policy": "Privacy policy", "ftr.sla": "SLA terms",
+  "ftr.rights": "All rights reserved", "ftr.made": "Built by OKO TEAM",
+  "toast.copy": "Copied"
+};
+
+var BLOCKS_EN = {
+  products: [
+    { icon: "cdn",     h: "CDN",             p: "Caching and delivery of static files, video and large objects from the node closest to the user.",
+      li: ["Static and large files", "Flexible cache rules", "Your own SSL and domain"] },
+    { icon: "stream",  h: "Streaming",       p: "Live broadcasts and video on demand for any audience size, on every known device.",
+      li: ["Live and VOD", "Transcoding", "Low latency"] },
+    { icon: "storage", h: "Media storage",   p: "Object storage for video and files, served straight into the delivery network.",
+      li: ["S3-compatible access", "No storage limits", "Delivered through the CDN"] },
+    { icon: "player",  h: "Player",          p: "A ready player with adaptive bitrate, your branding and viewing analytics.",
+      li: ["Adaptive bitrate", "Custom branding", "Viewing statistics"] },
+    { icon: "cloud",   h: "Cloud",           p: "Virtual machines on latest generation AMD and Intel CPUs, plus ARM and GPU for Big Data and AI.",
+      li: ["AMD, Intel, ARM", "GPU accelerators", "Scales in minutes"] },
+    { icon: "shield",  h: "Security",        p: "Attack filtering at network and application level, access rules and origin protection.",
+      li: ["L3-L7 protection", "Access rules", "Origin hidden from direct requests"] },
+    { icon: "voice",   h: "Virtual speaker", p: "Speech synthesis for voicing clips, announcements and media content.",
+      li: ["Natural voices", "Batch processing", "Output file in your storage"] }
+  ],
+  advantages: [
+    { icon: "cpu",    h: "Latest generation CPUs",     p: "Virtual machines on recent AMD and Intel processors. Resources are allocated honestly, with no overselling." },
+    { icon: "gpu",    h: "ARM and GPU for Big Data, AI",p: "ARM processors and GPU accelerators are available for computation, model training and media processing." },
+    { icon: "stream", h: "Broadcasts at any scale",    p: "High quality broadcasts for any audience size, on every known device, delivered quickly and affordably." },
+    { icon: "support",h: "Support around the clock",   p: "Engineers online 24/7. A human who knows the network answers, not a bot with a template." },
+    { icon: "load",   h: "1,500,000 viewers and 1 TB", p: "The network handles more than one and a half million concurrent viewers and over a terabyte of load." },
+    { icon: "speed",  h: "3 Tbps across Russia",       p: "Network capacity inside Russia exceeds 3 Tbps and grows together with your traffic." }
+  ],
+  cases: [
+    { h: "Video services and OTT", p: "VOD libraries and live channels with no buffering at peak hours." },
+    { h: "Media and news",         p: "Instant delivery of photo, video and pages during traffic spikes." },
+    { h: "E-commerce",             p: "Fast product pages and catalogues. Page speed directly drives conversion." },
+    { h: "Games and apps",         p: "Updates and patches delivered to millions of devices without saturating the channel." },
+    { h: "SaaS and B2B platforms", p: "A stable interface for customers across countries and time zones." },
+    { h: "Education and webinars", p: "Broadcasts for large audiences with recording and storage included." }
+  ],
+  faq: [
+    { q: "How long does it take to get connected?",
+      a: "Technically a resource is created in the dashboard within minutes. Including domain approval, certificate issuing and a settings review, production traffic is usually switched over within one business day." },
+    { q: "Can I use my own domain and certificate?",
+      a: "Yes. You point your own domain, and the certificate is either issued automatically or uploaded by you. There is an SSL certificates section in the dashboard." },
+    { q: "How is the price calculated?",
+      a: "By traffic actually delivered and resources used. The larger the volume, the lower the unit price. We prepare an exact quote for your load profile after a short call." },
+    { q: "What happens if a node goes down?",
+      a: "Routing moves requests to the nearest healthy node automatically. The user never notices, while we see the event in monitoring and deal with the cause." },
+    { q: "Is there DDoS protection?",
+      a: "Nodes marked Shield run filtering at L3-L7. The origin is closed to direct requests, so only the delivery network is visible from outside." },
+    { q: "Does the network fit live streaming?",
+      a: "Yes, that is one of the primary use cases. The network is built for more than one and a half million concurrent viewers and over a terabyte of load." },
+    { q: "Where are your own data centers?",
+      a: "In Moscow, Kazakhstan and Prague. Other points of presence are built on partner sites and internet exchanges." },
+    { q: "What statistics do I get?",
+      a: "Traffic, request counts, response codes, cache hit ratio and audience geography. Data updates in real time in the Statistics section." }
+  ]
+};
+
+g.RC_I18N = { ru: RU, en: EN };
+g.RC_BLOCKS = { ru: BLOCKS_RU, en: BLOCKS_EN };
+})(window);

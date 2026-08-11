@@ -1,0 +1,738 @@
+<!DOCTYPE html>
+<html lang="ru" data-theme="dark">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="theme-color" content="#050C15">
+<meta name="robots" content="noindex, nofollow">
+<title>Админка · Rocket CDN</title>
+<link rel="icon" type="image/png" href="assets/favicon.png">
+<link rel="stylesheet" href="assets/rc-fonts.css">
+<link rel="stylesheet" href="assets/rc.css">
+<style>
+  body { padding-bottom: 60px; }
+  .a-hdr {
+    position: sticky; top: 0; z-index: 50; background: var(--head-bg);
+    backdrop-filter: blur(16px); border-bottom: 1px solid var(--line);
+  }
+  .a-hdr-in { display: flex; align-items: center; gap: 12px; height: 62px; }
+  .a-hdr img { height: 28px; }
+  .a-badge {
+    font-size: 10.5px; font-weight: 700; letter-spacing: .12em; text-transform: uppercase;
+    padding: 4px 9px; border-radius: var(--r-full); background: var(--grad-soft);
+    color: var(--cyan); border: 1px solid var(--line);
+  }
+  .a-tabs { display: flex; gap: 6px; overflow-x: auto; padding: 14px 0; scrollbar-width: none; }
+  .a-tabs::-webkit-scrollbar { display: none }
+  .a-tabs button {
+    padding: 9px 16px; border-radius: var(--r-full); font-size: 13.5px; font-weight: 600;
+    background: var(--surface); border: 1px solid var(--line); color: var(--tx-2);
+    cursor: pointer; white-space: nowrap; transition: all var(--fast);
+  }
+  .a-tabs button.on { background: var(--grad); border-color: transparent; color: #fff; }
+  .pane { display: none; padding: 0 0 44px; }
+  .pane.on { display: block; }
+
+  .stat-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 12px; }
+  .stat {
+    background: var(--surface); border: 1px solid var(--line); border-radius: var(--r-md);
+    padding: 16px 18px;
+  }
+  .stat .v { font-size: clamp(22px, 3vw, 30px); font-weight: 700; letter-spacing: -.03em; line-height: 1.1; }
+  .stat .k { font-size: 12px; color: var(--tx-2); margin-top: 5px; }
+  .stat .d { font-size: 11.5px; margin-top: 4px; font-weight: 600; }
+  .d.up { color: #34D399 } .d.down { color: #F87171 } .d.flat { color: var(--tx-3) }
+
+  .panel {
+    background: var(--surface); border: 1px solid var(--line); border-radius: var(--r-lg);
+    padding: clamp(16px, 2.4vw, 24px); margin-top: 16px;
+  }
+  .panel h3 { font-size: 15px; font-weight: 650; margin-bottom: 14px; display: flex; align-items: center; gap: 10px; justify-content: space-between; }
+  .chart { width: 100%; height: 240px; }
+  .bars { display: grid; gap: 9px; }
+  .bar-row { display: grid; grid-template-columns: minmax(90px, 34%) 1fr auto; gap: 10px; align-items: center; font-size: 13px; }
+  .bar-row .nm { color: var(--tx-2); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .bar-row .tr { height: 8px; border-radius: 4px; background: var(--bg-3); overflow: hidden; }
+  .bar-row .tr i { display: block; height: 100%; border-radius: 4px; background: var(--grad); }
+  .bar-row .vv { font-weight: 700; font-size: 12.5px; min-width: 34px; text-align: right; }
+
+  table { width: 100%; border-collapse: collapse; font-size: 13.5px; }
+  th { text-align: left; font-size: 11px; letter-spacing: .1em; text-transform: uppercase; color: var(--tx-3); padding: 0 10px 10px; font-weight: 700; }
+  td { padding: 12px 10px; border-top: 1px solid var(--line); vertical-align: top; }
+  .tbl-wrap { overflow-x: auto; }
+  .st { font-size: 10.5px; font-weight: 700; text-transform: uppercase; padding: 3px 8px; border-radius: var(--r-full); letter-spacing: .04em; }
+  .st-new  { background: rgba(66,178,220,.18); color: var(--cyan) }
+  .st-work { background: rgba(138,89,246,.18); color: var(--violet) }
+  .st-done { background: rgba(52,211,153,.16); color: #34D399 }
+  .st-spam { background: rgba(248,113,113,.14); color: #F87171 }
+  .row-act { display: flex; gap: 6px; flex-wrap: wrap; }
+  .mini { padding: 6px 10px; font-size: 12px; border-radius: var(--r-xs); background: var(--surface-2); border: 1px solid var(--line); color: var(--tx-2); cursor: pointer; transition: all var(--fast); }
+  .mini:hover { border-color: var(--cyan); color: var(--cyan) }
+  .mini.danger:hover { border-color: #F87171; color: #F87171 }
+
+  .login { min-height: 100svh; display: grid; place-items: center; padding: var(--pad); }
+  .login .form-card { width: 100%; max-width: 380px; }
+  .login img { height: 46px; margin: 0 auto 22px; }
+  .hint { font-size: 12.5px; color: var(--tx-3); line-height: 1.7; }
+  .kv { display: grid; grid-template-columns: auto 1fr; gap: 8px 14px; font-size: 13.5px; }
+  .kv b { color: var(--tx-2); font-weight: 600 }
+  .ok-dot, .bad-dot { display: inline-block; width: 8px; height: 8px; border-radius: 50%; margin-right: 7px }
+  .ok-dot { background: #34D399 } .bad-dot { background: #F87171 }
+  textarea.code { font-family: var(--mono); font-size: 12.5px; min-height: 320px; line-height: 1.6 }
+  .toast {
+    position: fixed; left: 50%; bottom: 22px; transform: translate(-50%, 20px);
+    background: var(--bg-2); border: 1px solid var(--line-2); color: var(--tx);
+    padding: 12px 20px; border-radius: var(--r-md); font-size: 14px; z-index: 500;
+    opacity: 0; visibility: hidden; transition: all .3s var(--ease); box-shadow: var(--shadow);
+  }
+  .toast.on { opacity: 1; visibility: visible; transform: translate(-50%, 0) }
+  .seg { display: flex; gap: 6px; flex-wrap: wrap }
+  .seg button { padding: 7px 13px; font-size: 12.5px; border-radius: var(--r-sm); background: var(--surface-2); border: 1px solid var(--line); color: var(--tx-2); cursor: pointer }
+  .seg button.on { background: var(--grad); color: #fff; border-color: transparent }
+  @media (max-width: 640px) {
+    .a-hdr-in { height: 56px }
+    .chart { height: 200px }
+    td, th { padding-left: 6px; padding-right: 6px }
+  }
+</style>
+</head>
+<body>
+
+<!-- Вход -->
+<div class="login" id="login">
+  <form class="form-card" id="loginForm">
+    <img src="assets/logo-h.png" alt="Rocket CDN">
+    <h3 style="font-size:19px;font-weight:700;margin-bottom:6px">Панель управления</h3>
+    <p class="hint" style="margin-bottom:20px">Введите пароль администратора.</p>
+    <div class="form-msg"></div>
+    <div class="field">
+      <label for="key">Пароль</label>
+      <input id="key" type="password" autocomplete="current-password" required>
+      <span class="err">Введите пароль</span>
+    </div>
+    <button type="submit" class="btn btn-p" style="width:100%">Войти</button>
+  </form>
+</div>
+
+<!-- Панель -->
+<div id="app" style="display:none">
+  <header class="a-hdr">
+    <div class="wrap a-hdr-in">
+      <img class="lg-dark" src="assets/logo-h.png" alt="Rocket CDN">
+      <img class="lg-light" src="assets/logo-h-light.png" alt="Rocket CDN" style="display:none">
+      <span class="a-badge">админка</span>
+      <div style="margin-left:auto;display:flex;gap:8px;align-items:center">
+        <button type="button" class="icon-btn js-theme" aria-label="Сменить тему"></button>
+        <a class="mini" href="index.html" target="_blank">Сайт</a>
+        <button type="button" class="mini" id="logout">Выйти</button>
+      </div>
+    </div>
+  </header>
+
+  <div class="wrap">
+    <div class="a-tabs" id="tabs">
+      <button data-p="dash" class="on">Аналитика</button>
+      <button data-p="leads">Заявки</button>
+      <button data-p="net">Сеть</button>
+      <button data-p="content">Тексты сайта</button>
+      <button data-p="sys">Состояние</button>
+    </div>
+
+    <!-- Аналитика -->
+    <section class="pane on" id="p-dash">
+      <div class="seg" style="margin-bottom:14px">
+        <button data-d="1">Сегодня</button>
+        <button data-d="7" class="on">7 дней</button>
+        <button data-d="14">14 дней</button>
+        <button data-d="30">30 дней</button>
+        <button data-d="90">90 дней</button>
+      </div>
+      <div class="stat-grid" id="statGrid"></div>
+
+      <div class="panel">
+        <h3><span>Посещения, клики и заявки по дням</span></h3>
+        <canvas class="chart" id="chart"></canvas>
+        <div style="display:flex;gap:18px;flex-wrap:wrap;margin-top:12px;font-size:12.5px;color:var(--tx-3)">
+          <span class="leg"><i style="background:#42B2DC;width:9px;height:9px;border-radius:50%;display:inline-block;margin-right:6px"></i>уникальные</span>
+          <span class="leg"><i style="background:#8A59F6;width:9px;height:9px;border-radius:50%;display:inline-block;margin-right:6px"></i>клики «Регистрация»</span>
+          <span class="leg"><i style="background:#34D399;width:9px;height:9px;border-radius:50%;display:inline-block;margin-right:6px"></i>заявки</span>
+        </div>
+      </div>
+
+      <div class="grid g-2" style="margin-top:16px">
+        <div class="panel" style="margin:0"><h3>Источники переходов</h3><div class="bars" id="barRefs"></div></div>
+        <div class="panel" style="margin:0"><h3>Устройства и системы</h3><div class="bars" id="barDev"></div></div>
+        <div class="panel" style="margin:0"><h3>Глубина прочтения</h3><div class="bars" id="barScroll"></div></div>
+        <div class="panel" style="margin:0"><h3>Искали города на карте</h3><div class="bars" id="barNodes"></div></div>
+        <div class="panel" style="margin:0"><h3>Поисковые запросы по сети</h3><div class="bars" id="barSearch"></div></div>
+        <div class="panel" style="margin:0"><h3>Ошибки у посетителей</h3><div class="bars" id="barErr"></div></div>
+      </div>
+    </section>
+
+    <!-- Заявки -->
+    <section class="pane" id="p-leads">
+      <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin-bottom:14px">
+        <div class="seg" id="leadFilter">
+          <button data-f="all" class="on">Все</button>
+          <button data-f="new">Новые</button>
+          <button data-f="work">В работе</button>
+          <button data-f="done">Закрытые</button>
+          <button data-f="callback">Звонки</button>
+        </div>
+        <a class="mini" id="csv" style="margin-left:auto" href="#">Скачать CSV</a>
+      </div>
+      <div class="panel" style="margin:0">
+        <div class="tbl-wrap">
+          <table>
+            <thead><tr><th>Когда</th><th>Кто</th><th>Контакт</th><th>Задача</th><th>Статус</th><th></th></tr></thead>
+            <tbody id="leadRows"></tbody>
+          </table>
+        </div>
+        <p class="hint" id="leadEmpty" style="display:none;text-align:center;padding:26px 0">Заявок пока нет.</p>
+      </div>
+    </section>
+
+    <!-- Сеть -->
+    <section class="pane" id="p-net">
+      <div class="stat-grid" id="netStats"></div>
+      <div class="panel">
+        <h3>Точки присутствия по регионам</h3>
+        <div class="bars" id="netRegions"></div>
+      </div>
+      <div class="panel">
+        <h3><span>Список узлов</span></h3>
+        <div class="search" style="margin-bottom:12px">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.6-3.6"/></svg>
+          <input type="search" id="netSearch" placeholder="Поиск города">
+        </div>
+        <div class="node-list" id="netList" style="max-height:420px"></div>
+        <p class="hint" style="margin-top:12px">
+          Список узлов хранится в файле <code>assets/rc-geo.js</code>. Чтобы добавить город,
+          допишите строку вида <code>["Город", широта, долгота, регион, флаги]</code>.
+          Регион: 0 Россия и СНГ, 1 Азия и Восток, 2 Европа, 3 Северная Америка, 4 Южная Америка.
+          Флаги складываются: 1 облако, 2 защита, 4 скоро.
+        </p>
+      </div>
+    </section>
+
+    <!-- Тексты -->
+    <section class="pane" id="p-content">
+      <div class="panel" style="margin-top:0">
+        <h3>Главные надписи</h3>
+        <div class="form-msg" id="cMsg"></div>
+        <div id="cFields"></div>
+        <div class="btn-row" style="margin-top:8px">
+          <button type="button" class="btn btn-p btn-sm" id="cSave">Сохранить</button>
+          <button type="button" class="btn btn-g btn-sm" id="cReset">Вернуть исходные</button>
+        </div>
+        <p class="hint" style="margin-top:12px">
+          Правки применяются к сайту сразу, страницу у посетителей обновит первый же заход.
+          Пустое поле означает «оставить исходный текст».
+        </p>
+      </div>
+      <div class="panel">
+        <h3>Блоки: продукты, преимущества, сценарии, вопросы</h3>
+        <p class="hint" style="margin-bottom:12px">
+          Формат JSON. Скопируйте исходный набор кнопкой ниже, поправьте и сохраните.
+        </p>
+        <div class="btn-row" style="margin-bottom:12px">
+          <button type="button" class="mini" id="bLoadRu">Взять текущие (RU)</button>
+          <button type="button" class="mini" id="bLoadEn">Взять текущие (EN)</button>
+        </div>
+        <div class="field"><textarea class="code" id="bJson" spellcheck="false"></textarea></div>
+        <div class="seg" style="margin-bottom:12px">
+          <button data-l="ru" class="on">Сохранить как RU</button>
+          <button data-l="en">Сохранить как EN</button>
+        </div>
+        <div class="form-msg" id="bMsg"></div>
+      </div>
+    </section>
+
+    <!-- Состояние -->
+    <section class="pane" id="p-sys">
+      <div class="panel" style="margin-top:0">
+        <h3>Проверка связи</h3>
+        <div class="kv" id="sysKv"></div>
+        <div class="btn-row" style="margin-top:16px">
+          <button type="button" class="btn btn-g btn-sm" id="sysTest">Отправить тестовое письмо и сообщение</button>
+        </div>
+        <div class="form-msg" id="sysMsg"></div>
+      </div>
+      <div class="panel">
+        <h3>Журнал ошибок сервера</h3>
+        <div class="field"><textarea class="code" id="sysLog" readonly style="min-height:260px"></textarea></div>
+      </div>
+      <div class="panel">
+        <h3>Подсказки по запуску</h3>
+        <p class="hint">
+          Ежедневный отчёт в Телеграм собирает <code>cron.php</code>, бот работает через <code>bot.php</code>.
+          Расписание на сервере:<br><br>
+          <code>* * * * * /usr/bin/php /var/www/rocketcdn/bot.php</code><br>
+          <code>0 * * * * /usr/bin/php /var/www/rocketcdn/cron.php</code><br><br>
+          Чтобы уведомления шли в общий чат, добавьте бота в чат и напишите там <code>/bindchat</code>.
+          Для отдельных тем: <code>/bindtopic forms</code>, <code>/bindtopic errors</code>, <code>/bindtopic stats</code>.
+        </p>
+      </div>
+    </section>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script src="assets/rc-geo.js"></script>
+<script src="assets/rc-i18n.js"></script>
+<script>
+(function () {
+"use strict";
+var $ = function (s, r) { return (r || document).querySelector(s); };
+var $$ = function (s, r) { return Array.prototype.slice.call((r || document).querySelectorAll(s)); };
+var API = "api.php";
+var KEY = localStorage.getItem("rc_admin_key") || "";
+var days = 7, stats = null, leads = [], leadFilter = "all", content = null;
+
+/* ── Тема ── */
+var ICO = {
+  sun: '<circle cx="12" cy="12" r="4.2"/><path d="M12 2v2.4M12 19.6V22M2 12h2.4M19.6 12H22M4.9 4.9l1.7 1.7M17.4 17.4l1.7 1.7M19.1 4.9l-1.7 1.7M6.6 17.4l-1.7 1.7"/>',
+  moon: '<path d="M20 14.5A8.5 8.5 0 0 1 9.5 4a8.5 8.5 0 1 0 10.5 10.5Z"/>'
+};
+function applyTheme(v) {
+  document.documentElement.setAttribute("data-theme", v);
+  localStorage.setItem("rc_theme", v);
+  $$(".js-theme").forEach(function (b) {
+    b.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">' + ICO[v === "light" ? "moon" : "sun"] + "</svg>";
+  });
+  $$(".lg-dark").forEach(function (i) { i.style.display = v === "light" ? "none" : "block"; });
+  $$(".lg-light").forEach(function (i) { i.style.display = v === "light" ? "block" : "none"; });
+  if (stats) drawChart();
+}
+applyTheme(localStorage.getItem("rc_theme") || "dark");
+$$(".js-theme").forEach(function (b) {
+  b.addEventListener("click", function () {
+    applyTheme(document.documentElement.getAttribute("data-theme") === "light" ? "dark" : "light");
+  });
+});
+
+function toast(m) {
+  var t = $("#toast");
+  t.textContent = m;
+  t.classList.add("on");
+  clearTimeout(t._x);
+  t._x = setTimeout(function () { t.classList.remove("on"); }, 2600);
+}
+function esc(s) {
+  return String(s == null ? "" : s).replace(/[&<>"]/g, function (c) {
+    return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c];
+  });
+}
+function api(action, payload, method) {
+  var url = API + "?action=" + action;
+  var opt = { method: method || "POST", headers: { "Content-Type": "application/json" } };
+  opt.body = JSON.stringify(Object.assign({ key: KEY }, payload || {}));
+  return fetch(url, opt).then(function (r) { return r.json(); });
+}
+
+/* ── Вход ── */
+$("#loginForm").addEventListener("submit", function (e) {
+  e.preventDefault();
+  var v = $("#key").value.trim(), msg = $("#loginForm .form-msg");
+  if (!v) return;
+  KEY = v;
+  api("login").then(function (r) {
+    if (r && r.ok) {
+      localStorage.setItem("rc_admin_key", v);
+      start();
+    } else {
+      msg.className = "form-msg bad";
+      msg.textContent = "Пароль не подошёл.";
+    }
+  }).catch(function () {
+    msg.className = "form-msg bad";
+    msg.textContent = "Сервер не ответил. Проверьте, что сайт открыт по http, а не как файл.";
+  });
+});
+$("#logout").addEventListener("click", function () {
+  localStorage.removeItem("rc_admin_key");
+  location.reload();
+});
+
+/* ── Табы ── */
+$("#tabs").addEventListener("click", function (e) {
+  var b = e.target.closest("button");
+  if (!b) return;
+  $$("#tabs button").forEach(function (x) { x.classList.remove("on"); });
+  b.classList.add("on");
+  $$(".pane").forEach(function (p) { p.classList.remove("on"); });
+  $("#p-" + b.dataset.p).classList.add("on");
+  if (b.dataset.p === "sys") loadSys();
+  if (b.dataset.p === "dash" && stats) drawChart();
+});
+
+/* ── Аналитика ── */
+$$("#p-dash .seg button").forEach(function (b) {
+  b.addEventListener("click", function () {
+    $$("#p-dash .seg button").forEach(function (x) { x.classList.remove("on"); });
+    b.classList.add("on");
+    days = +b.dataset.d;
+    loadStats();
+  });
+});
+
+function delta(now, was) {
+  if (!was) return now ? { c: "up", t: "+" + now } : { c: "flat", t: "" };
+  var p = Math.round((now - was) / was * 100);
+  return { c: p > 0 ? "up" : p < 0 ? "down" : "flat", t: (p > 0 ? "+" : "") + p + "%" };
+}
+
+function loadStats() {
+  api("stats", { days: days }).then(function (r) {
+    if (!r.ok) return;
+    stats = r;
+    var half = Math.floor(r.series.length / 2);
+    function sum(arr, k) { return arr.reduce(function (a, x) { return a + x[k]; }, 0); }
+    var A = r.series.slice(half), B = r.series.slice(0, half);
+    var cards = [
+      ["Уникальные посетители", r.total.uniq, delta(sum(A, "uniq"), sum(B, "uniq"))],
+      ["Просмотры страницы", r.total.views, delta(sum(A, "views"), sum(B, "views"))],
+      ["Клики «Регистрация»", r.total.register, delta(sum(A, "register"), sum(B, "register"))],
+      ["Переходы к подключению", r.total.connect, null],
+      ["Заявки с формы", r.total.leads, delta(sum(A, "leads"), sum(B, "leads"))],
+      ["Заявки на звонок", r.total.callbacks, null],
+      ["Конверсия в заявку", r.conv + "%", null],
+      ["Доля кликнувших регистрацию", r.ctr + "%", null]
+    ];
+    $("#statGrid").innerHTML = cards.map(function (c) {
+      var d = c[2] && c[2].t ? '<div class="d ' + c[2].c + '">' + c[2].t + " к прошлому периоду</div>" : "";
+      return '<div class="stat"><div class="v">' + esc(c[1]) + '</div><div class="k">' + esc(c[0]) + "</div>" + d + "</div>";
+    }).join("");
+
+    bars("#barRefs", r.refs);
+    var dev = {};
+    Object.keys(r.devices || {}).forEach(function (k) {
+      dev[{ mobile: "телефон", tablet: "планшет", desktop: "компьютер" }[k] || k] = r.devices[k];
+    });
+    Object.keys(r.os || {}).forEach(function (k) { dev[k] = r.os[k]; });
+    bars("#barDev", dev);
+    var sc = {};
+    Object.keys(r.scroll || {}).sort(function (a, b) { return a - b; }).forEach(function (k) { sc["до " + k + "%"] = r.scroll[k]; });
+    bars("#barScroll", sc);
+    bars("#barNodes", r.nodes);
+    bars("#barSearch", r.searches);
+    bars("#barErr", r.errors);
+    drawChart();
+  });
+}
+
+function bars(sel, obj) {
+  var el = $(sel);
+  var keys = Object.keys(obj || {});
+  if (!keys.length) { el.innerHTML = '<p class="hint">Пока нет данных.</p>'; return; }
+  var max = Math.max.apply(null, keys.map(function (k) { return obj[k]; }));
+  el.innerHTML = keys.slice(0, 12).map(function (k) {
+    return '<div class="bar-row"><span class="nm" title="' + esc(k) + '">' + esc(k) + '</span>' +
+      '<span class="tr"><i style="width:' + Math.max(3, obj[k] / max * 100) + '%"></i></span>' +
+      '<span class="vv">' + obj[k] + "</span></div>";
+  }).join("");
+}
+
+function drawChart() {
+  var cv = $("#chart");
+  if (!cv || !stats) return;
+  var r = cv.getBoundingClientRect(), dpr = Math.min(2, window.devicePixelRatio || 1);
+  cv.width = r.width * dpr; cv.height = r.height * dpr;
+  var c = cv.getContext("2d");
+  c.setTransform(dpr, 0, 0, dpr, 0, 0);
+  var W = r.width, H = r.height, pad = { l: 34, r: 10, t: 12, b: 24 };
+  var light = document.documentElement.getAttribute("data-theme") === "light";
+  var grid = light ? "rgba(9,19,32,.10)" : "rgba(226,232,240,.10)";
+  var txc = light ? "rgba(9,19,32,.5)" : "rgba(226,232,240,.45)";
+  c.clearRect(0, 0, W, H);
+
+  var S = stats.series;
+  var keys = ["uniq", "register", "leads"], cols = ["#42B2DC", "#8A59F6", "#34D399"];
+  var max = 1;
+  S.forEach(function (x) { keys.forEach(function (k) { if (x[k] > max) max = x[k]; }); });
+  max = Math.ceil(max * 1.15) || 1;
+
+  c.strokeStyle = grid; c.lineWidth = 1;
+  c.font = "11px Golos Text, sans-serif"; c.fillStyle = txc;
+  for (var i = 0; i <= 4; i++) {
+    var y = pad.t + (H - pad.t - pad.b) * i / 4;
+    c.beginPath(); c.moveTo(pad.l, y); c.lineTo(W - pad.r, y); c.stroke();
+    c.textAlign = "right"; c.textBaseline = "middle";
+    c.fillText(String(Math.round(max * (1 - i / 4))), pad.l - 8, y);
+  }
+  var n = S.length, iw = (W - pad.l - pad.r) / Math.max(1, n);
+  function xAt(i) { return pad.l + iw * (i + 0.5); }
+  function yAt(v) { return pad.t + (H - pad.t - pad.b) * (1 - v / max); }
+
+  c.textAlign = "center"; c.textBaseline = "top";
+  var stepL = Math.ceil(n / 8);
+  S.forEach(function (x, i) {
+    if (i % stepL) return;
+    var d = x.day.slice(8) + "." + x.day.slice(5, 7);
+    c.fillText(d, xAt(i), H - pad.b + 6);
+  });
+
+  keys.forEach(function (k, ki) {
+    /* Заливка под линией */
+    var g = c.createLinearGradient(0, pad.t, 0, H - pad.b);
+    g.addColorStop(0, cols[ki] + "44");
+    g.addColorStop(1, cols[ki] + "00");
+    c.beginPath();
+    c.moveTo(xAt(0), yAt(S[0][k]));
+    S.forEach(function (x, i) { c.lineTo(xAt(i), yAt(x[k])); });
+    c.lineTo(xAt(n - 1), H - pad.b);
+    c.lineTo(xAt(0), H - pad.b);
+    c.closePath();
+    c.fillStyle = g; c.fill();
+
+    c.beginPath();
+    S.forEach(function (x, i) { i ? c.lineTo(xAt(i), yAt(x[k])) : c.moveTo(xAt(i), yAt(x[k])); });
+    c.strokeStyle = cols[ki]; c.lineWidth = 2; c.lineJoin = "round"; c.stroke();
+
+    if (n <= 32) {
+      S.forEach(function (x, i) {
+        c.beginPath(); c.arc(xAt(i), yAt(x[k]), 2.8, 0, Math.PI * 2);
+        c.fillStyle = cols[ki]; c.fill();
+      });
+    }
+  });
+}
+window.addEventListener("resize", function () { if (stats) drawChart(); });
+
+/* ── Заявки ── */
+$("#leadFilter").addEventListener("click", function (e) {
+  var b = e.target.closest("button");
+  if (!b) return;
+  $$("#leadFilter button").forEach(function (x) { x.classList.remove("on"); });
+  b.classList.add("on");
+  leadFilter = b.dataset.f;
+  renderLeads();
+});
+$("#csv").addEventListener("click", function (e) {
+  e.preventDefault();
+  window.open(API + "?action=export&key=" + encodeURIComponent(KEY), "_blank");
+});
+
+function loadLeads() {
+  api("leads").then(function (r) {
+    if (!r.ok) return;
+    leads = r.items || [];
+    renderLeads();
+  });
+}
+var ST = { new: "новая", work: "в работе", done: "закрыта", spam: "спам" };
+function renderLeads() {
+  var rows = leads.filter(function (x) {
+    if (leadFilter === "all") return true;
+    if (leadFilter === "callback") return x.kind === "callback";
+    return (x.status || "new") === leadFilter;
+  });
+  $("#leadEmpty").style.display = rows.length ? "none" : "block";
+  $("#leadRows").innerHTML = rows.map(function (x) {
+    var st = x.status || "new";
+    var contact = esc(x.contact || "");
+    var link = /@/.test(x.contact || "") ? "mailto:" + contact : "tel:" + (x.contact || "").replace(/[^\d+]/g, "");
+    return "<tr>" +
+      "<td style='white-space:nowrap'>" + esc((x.ts || "").slice(5, 16)) + "<br><span class='hint'>" + (x.kind === "callback" ? "звонок" : "заявка") + "</span></td>" +
+      "<td><b>" + esc(x.name || "") + "</b>" + (x.company ? "<br><span class='hint'>" + esc(x.company) + "</span>" : "") + "</td>" +
+      "<td><a href='" + link + "' style='color:var(--cyan)'>" + contact + "</a></td>" +
+      "<td style='max-width:280px'>" + (x.topic ? "<b>" + esc(x.topic) + "</b><br>" : "") + esc(x.task || "") + "</td>" +
+      "<td><span class='st st-" + st + "'>" + ST[st] + "</span></td>" +
+      "<td><div class='row-act'>" +
+        "<button class='mini' data-s='work' data-id='" + esc(x.id) + "'>В работу</button>" +
+        "<button class='mini' data-s='done' data-id='" + esc(x.id) + "'>Закрыть</button>" +
+        "<button class='mini' data-s='spam' data-id='" + esc(x.id) + "'>Спам</button>" +
+        "<button class='mini danger' data-del='" + esc(x.id) + "'>Удалить</button>" +
+      "</div></td></tr>";
+  }).join("");
+}
+$("#leadRows").addEventListener("click", function (e) {
+  var b = e.target.closest("button");
+  if (!b) return;
+  if (b.dataset.s) {
+    api("lead_status", { id: b.dataset.id, status: b.dataset.s }).then(function (r) {
+      if (r.ok) { toast("Статус обновлён"); loadLeads(); }
+    });
+  }
+  if (b.dataset.del) {
+    if (!confirm("Удалить заявку без возможности вернуть?")) return;
+    api("lead_delete", { id: b.dataset.del }).then(function (r) {
+      if (r.ok) { toast("Удалено"); loadLeads(); }
+    });
+  }
+});
+
+/* ── Сеть ── */
+function loadNet() {
+  var G = window.RC_GEO;
+  if (!G) return;
+  var cloud = 0, shield = 0, soon = 0, reg = {};
+  G.NODES.forEach(function (n) {
+    if (n[4] & 1) cloud++;
+    if (n[4] & 2) shield++;
+    if (n[4] & 4) soon++;
+    var r = G.REGIONS[n[3]].ru;
+    reg[r] = (reg[r] || 0) + 1;
+  });
+  $("#netStats").innerHTML = [
+    ["Всего точек", G.NODES.length], ["Собственных ЦОД", G.DC.length],
+    ["Облачные площадки", cloud], ["С защитой от атак", shield], ["Готовятся к запуску", soon]
+  ].map(function (c) {
+    return '<div class="stat"><div class="v">' + c[1] + '</div><div class="k">' + c[0] + "</div></div>";
+  }).join("");
+  bars("#netRegions", reg);
+  renderNetList("");
+}
+function renderNetList(q) {
+  var G = window.RC_GEO;
+  q = (q || "").toLowerCase();
+  var rows = G.NODES.filter(function (n) {
+    return !q || n[0].toLowerCase().indexOf(q) >= 0 || G.REGIONS[n[3]].ru.toLowerCase().indexOf(q) >= 0;
+  });
+  $("#netList").innerHTML = rows.length ? rows.map(function (n) {
+    var tags = "";
+    if (n[4] & 1) tags += '<span class="tag tag-cloud">облако</span>';
+    if (n[4] & 2) tags += '<span class="tag tag-shield">защита</span>';
+    if (n[4] & 4) tags += '<span class="tag tag-soon">скоро</span>';
+    return '<div class="node-row"><span class="nm">' + esc(n[0]) + "</span>" + tags +
+      '<span class="rg">' + esc(G.REGIONS[n[3]].ru) + " · " + n[1].toFixed(2) + ", " + n[2].toFixed(2) + "</span></div>";
+  }).join("") : '<div class="node-empty">Ничего не нашлось.</div>';
+}
+$("#netSearch").addEventListener("input", function () { renderNetList(this.value); });
+
+/* ── Тексты ── */
+var C_FIELDS = [
+  ["hero.h1a", "Заголовок, первая строка"],
+  ["hero.h1b", "Заголовок, вторая строка"],
+  ["hero.sub", "Подзаголовок в шапке"],
+  ["kpi.1n", "Показатель 1: значение"],
+  ["kpi.1l", "Показатель 1: подпись"],
+  ["kpi.2l", "Показатель 2: подпись"],
+  ["kpi.3n", "Показатель 3: значение"],
+  ["kpi.3l", "Показатель 3: подпись"],
+  ["kpi.4n", "Показатель 4: значение"],
+  ["kpi.4l", "Показатель 4: подпись"],
+  ["what.h", "Заголовок «Что такое»"],
+  ["what.p", "Текст «Что такое»"],
+  ["prod.h", "Заголовок «Продукты»"],
+  ["adv.h", "Заголовок «Преимущества»"],
+  ["infra.h", "Заголовок «Инфраструктура»"],
+  ["how.h", "Заголовок «Как работает»"],
+  ["case.h", "Заголовок «Сценарии»"],
+  ["ct.h", "Заголовок формы"],
+  ["ct.p", "Текст над формой"],
+  ["ftr.about", "Описание в подвале"]
+];
+function loadContent() {
+  fetch(API + "?action=content").then(function (r) { return r.json(); }).then(function (r) {
+    content = (r && r.content) || {};
+    var i18n = (content.i18n && content.i18n.ru) || {};
+    $("#cFields").innerHTML = C_FIELDS.map(function (f) {
+      var base = (window.RC_I18N.ru[f[0]] || "");
+      var val = i18n[f[0]] || "";
+      var long = base.length > 70;
+      return '<div class="field"><label>' + esc(f[1]) + "</label>" +
+        (long
+          ? '<textarea data-k="' + f[0] + '" placeholder="' + esc(base) + '">' + esc(val) + "</textarea>"
+          : '<input data-k="' + f[0] + '" placeholder="' + esc(base) + '" value="' + esc(val) + '">') +
+        "</div>";
+    }).join("");
+  });
+}
+$("#cSave").addEventListener("click", function () {
+  var i18n = {};
+  $$("#cFields [data-k]").forEach(function (el) {
+    var v = el.value.trim();
+    if (v) i18n[el.dataset.k] = v;
+  });
+  content = content || {};
+  content.i18n = content.i18n || {};
+  content.i18n.ru = i18n;
+  api("content_save", { content: content }).then(function (r) {
+    var m = $("#cMsg");
+    m.className = r.ok ? "form-msg ok" : "form-msg bad";
+    m.textContent = r.ok ? "Сохранено. Сайт уже отдаёт новые тексты." : "Не сохранилось, проверьте права на папку data.";
+    if (r.ok) toast("Тексты обновлены");
+  });
+});
+$("#cReset").addEventListener("click", function () {
+  if (!confirm("Вернуть все исходные тексты?")) return;
+  api("content_reset").then(function (r) {
+    if (r.ok) { toast("Исходные тексты возвращены"); loadContent(); }
+  });
+});
+$("#bLoadRu").addEventListener("click", function () {
+  $("#bJson").value = JSON.stringify((content && content.blocks && content.blocks.ru) || window.RC_BLOCKS.ru, null, 2);
+});
+$("#bLoadEn").addEventListener("click", function () {
+  $("#bJson").value = JSON.stringify((content && content.blocks && content.blocks.en) || window.RC_BLOCKS.en, null, 2);
+});
+$$("#p-content .seg button").forEach(function (b) {
+  b.addEventListener("click", function () {
+    var m = $("#bMsg"), lang = b.dataset.l;
+    var txt = $("#bJson").value.trim();
+    if (!txt) { m.className = "form-msg bad"; m.textContent = "Пусто. Нажмите «Взять текущие» и поправьте."; return; }
+    var parsed;
+    try { parsed = JSON.parse(txt); }
+    catch (err) { m.className = "form-msg bad"; m.textContent = "JSON с ошибкой: " + err.message; return; }
+    content = content || {};
+    content.blocks = content.blocks || {};
+    content.blocks[lang] = parsed;
+    api("content_save", { content: content }).then(function (r) {
+      m.className = r.ok ? "form-msg ok" : "form-msg bad";
+      m.textContent = r.ok ? "Блоки сохранены для языка " + lang.toUpperCase() + "." : "Не сохранилось.";
+      if (r.ok) toast("Блоки обновлены");
+    });
+  });
+});
+
+/* ── Состояние ── */
+function loadSys() {
+  api("selftest").then(function (r) {
+    if (!r.ok) return;
+    var items = [
+      ["Почта настроена", r.mail_configured],
+      ["Бот настроен", r.tg_configured],
+      ["Чат для уведомлений привязан", r.chat_bound],
+      ["Папка data доступна для записи", r.data_writable]
+    ];
+    $("#sysKv").innerHTML = items.map(function (i) {
+      return "<b>" + esc(i[0]) + '</b><span><i class="' + (i[1] ? "ok-dot" : "bad-dot") + '"></i>' + (i[1] ? "да" : "нет") + "</span>";
+    }).join("");
+  });
+  api("errors").then(function (r) {
+    if (r.ok) $("#sysLog").value = (r.log || []).join("") || "Пусто, ошибок не было.";
+  });
+}
+$("#sysTest").addEventListener("click", function () {
+  var m = $("#sysMsg");
+  m.className = "form-msg";
+  api("selftest", { send: 1 }).then(function (r) {
+    m.className = r.mail_sent ? "form-msg ok" : "form-msg bad";
+    m.textContent = r.mail_sent
+      ? "Письмо ушло, сообщение в Телеграм отправлено."
+      : "Письмо не ушло. Проверьте ящик и пароль приложения в config.local.php.";
+    loadSys();
+  });
+});
+
+/* ── Запуск ── */
+function start() {
+  $("#login").style.display = "none";
+  $("#app").style.display = "block";
+  applyTheme(localStorage.getItem("rc_theme") || "dark");
+  loadStats();
+  loadLeads();
+  loadNet();
+  loadContent();
+}
+if (KEY) {
+  api("login").then(function (r) {
+    if (r && r.ok) start();
+  }).catch(function () {});
+}
+})();
+</script>
+</body>
+</html>
