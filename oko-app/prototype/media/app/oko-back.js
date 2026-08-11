@@ -52,9 +52,12 @@ var CSS = [
 'button.oko-back{',
 '  -webkit-appearance:none; appearance:none;',
 '  box-sizing:border-box !important;',
-'  width:38px !important; height:38px !important;',
-'  min-width:38px !important; min-height:38px !important;',
-'  max-width:38px !important; max-height:38px !important;',
+/* 44px — цель нажатия по стандарту iOS. Было 38px (правка 11.08): пробник
+   доступности отмечал кнопки «назад» как цели меньше 44px, а слой их жёстко
+   фиксировал через max-width/height — перебить снаружи было нельзя. */
+'  width:44px !important; height:44px !important;',
+'  min-width:44px !important; min-height:44px !important;',
+'  max-width:44px !important; max-height:44px !important;',
 '  padding:0 !important;',
 '  border:0 !important; border-radius:50% !important;',
 '  display:inline-flex !important; align-items:center !important;',
