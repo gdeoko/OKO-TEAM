@@ -365,3 +365,12 @@
 /* Глазок «скрыть баланс» (32px) и «тихий режим» (36px) — до 44px. */
 #walEye.wal-eye,
 .np-hb{ min-width:44px !important; min-height:44px !important; }
+
+/* 14.1 Поле глобального поиска: сам <input> был 18px (только строка текста),
+   тап-цель — обёртка. Растягиваем input на всю высоту поля и доводим поле до
+   44px, чтобы и измеритель, и палец попадали в честные 44px. */
+.search-field{ padding:13px 15px !important; }
+.search-field input{ align-self:stretch !important; min-height:0; }
+#gSearchInput{ min-height:18px; }
+/* 14.2 «Закрыть клипы» (okr-x) был 38px — до 44px. Прочие okr-rnd не трогаем. */
+.okr-rnd.okr-x{ width:44px !important; height:44px !important; }
