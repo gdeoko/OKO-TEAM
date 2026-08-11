@@ -20,12 +20,19 @@ chat_ensure_schema();
 
 /* ---------- История сессии ---------- */
 if ($action === 'history') {
+    // since — id последнего сообщения, которое уже показано в окне чата. Так вкладка
+    // добирает только новое и может опрашивать часто, не перекачивая переписку целиком.
+    // Именно этим ответ оператора из админки доходит до человека: он лежит в той же
+    // истории, и вкладка подхватывает его следующим же опросом.
+    $since = (int) input('since', 0);
     $rows = [];
     try {
-        $rows = all(
-            "SELECT role, text, file, created_at FROM chat_messages WHERE session_key=? ORDER BY id ASC LIMIT 100",
-            [$sessionKey]
-        );
+        $rows = $since > 0
+            ? all("SELECT id, role, text, file, created_at FROM chat_messages
+                    WHERE session_key=? AND id>? ORDER BY id ASC LIMIT 100", [$sessionKey, $since])
+            : all("SELECT id, role, text, file, created_at FROM chat_messages
+                    WHERE session_key=? ORDER BY id DESC LIMIT 100", [$sessionKey]);
+        if ($since <= 0) $rows = array_reverse($rows);   // последние 100, в прямом порядке
     } catch (\Throwable $e) { $rows = []; }
     json_out(['ok' => true, 'session' => $sessionKey, 'messages' => $rows]);
 }

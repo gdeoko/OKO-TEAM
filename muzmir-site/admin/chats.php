@@ -13,6 +13,7 @@ declare(strict_types=1);
 
 require_once BASE_PATH . '/core/chat_ops.php';
 require_once BASE_PATH . '/core/chat_brain.php';
+require_once BASE_PATH . '/core/chat_learn.php';
 if (is_file(BASE_PATH . '/core/vk.php')) require_once BASE_PATH . '/core/vk.php';
 chat_ops_boot();
 
@@ -49,7 +50,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         if ($text === '') { flash('Пустой ответ.', 'error'); admin_redirect('chats', $back); }
         if (mb_strlen($text) > 4000) $text = mb_substr($text, 0, 4000);
         // Кладём в историю как сообщение ассистента (участник видит его как ответ центра).
-        try { insert('chat_messages', ['user_id' => null, 'session_key' => $sk, 'role' => 'assistant', 'text' => $text, 'file' => '']); } catch (\Throwable $e) {}
+        // И помечаем как написанное человеком: такие ответы потом служат ассистенту
+        // образцом того, как в центре разговаривают на самом деле.
+        try {
+            $mid = (int) insert('chat_messages', ['user_id' => null, 'session_key' => $sk,
+                                                  'role' => 'assistant', 'text' => $text, 'file' => '']);
+            if (function_exists('chat_learn_mark_operator')) chat_learn_mark_operator($mid);
+        } catch (\Throwable $e) {}
         // Доставка в канал: ВК — сразу сообщением; сайт — участник подхватит опросом истории.
         $sent = chat_channel_send($sk, $text);
         // Ручной перехват: бот молчит следующие 5–10 минут.
@@ -67,8 +74,19 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $mid = (int) input('mid');
         $text = trim((string) input('text'));
         if ($mid > 0) {
-            $row = one("SELECT session_key FROM chat_messages WHERE id=?", [$mid]);
-            if ($row) { update('chat_messages', ['text' => mb_substr($text, 0, 4000)], 'id=:id', ['id' => $mid]); flash('Сообщение изменено.', 'success'); $back['s'] = $row['session_key']; }
+            $row = one("SELECT session_key, text, role FROM chat_messages WHERE id=?", [$mid]);
+            if ($row) {
+                $before = (string) $row['text'];
+                $new    = mb_substr($text, 0, 4000);
+                update('chat_messages', ['text' => $new], 'id=:id', ['id' => $mid]);
+                // Правка ответа бота — это указание «так неправильно, а так правильно».
+                // Запоминаем обе версии: в следующий раз ассистент увидит исправленную.
+                if ((string) $row['role'] === 'assistant' && function_exists('chat_learn_lesson')) {
+                    chat_learn_lesson($mid, $before, $new);
+                }
+                flash('Сообщение изменено.', 'success');
+                $back['s'] = $row['session_key'];
+            }
         }
         admin_redirect('chats', $back);
     }
@@ -136,12 +154,35 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
 /* --------------------------- Просмотр одного диалога --------------------------- */
 $sk = trim((string) input('s'));
+
+/* Живое обновление: вкладка раз в несколько секунд спрашивает, не появилось ли
+   нового, и дорисовывает разницу. Без этого оператор видит переписку такой, какой
+   она была на момент загрузки страницы, и отвечает вслепую. */
+if ($sk !== '' && input('ajax') === '1') {
+    $since = (int) input('since', 0);
+    $rows = [];
+    try {
+        $rows = all("SELECT id, role, text, file, created_at FROM chat_messages
+                      WHERE session_key=? AND id>? AND role IN ('user','assistant')
+                   ORDER BY id ASC LIMIT 100", [$sk, $since]);
+    } catch (\Throwable $e) {}
+    header('Content-Type: application/json; charset=utf-8');
+    echo json_encode(['ok' => true, 'messages' => $rows], JSON_UNESCAPED_UNICODE);
+    exit;
+}
+
 if ($sk !== '') {
     $d = chat_dialog_get($sk);
     $title = chats_title($d);
     $chan  = chats_channel($sk);
+    // Берём ПОСЛЕДНИЕ 500 сообщений, а не первые: в длинной переписке важен свежий
+    // конец, а не то, с чего разговор начинался год назад.
     $msgs = [];
-    try { $msgs = all("SELECT id, role, text, file, created_at FROM chat_messages WHERE session_key=? ORDER BY id ASC LIMIT 500", [$sk]); } catch (\Throwable $e) {}
+    try {
+        $msgs = array_reverse(all(
+            "SELECT id, role, text, file, created_at FROM chat_messages
+              WHERE session_key=? ORDER BY id DESC LIMIT 500", [$sk]));
+    } catch (\Throwable $e) {}
     $botOn   = (int) ($d['bot_enabled'] ?? 1) === 1;
     $blocked = (int) ($d['blocked'] ?? 0) === 1;
     $opUntil = trim((string) ($d['operator_until'] ?? ''));
@@ -166,7 +207,8 @@ if ($sk !== '') {
       <form method="post" action="<?= url('/admin/') ?>" style="display:inline" onsubmit="return confirm('Удалить диалог полностью?')"><?= csrf_field() ?><input type="hidden" name="do" value="del_dialog"><input type="hidden" name="session_key" value="<?= h($sk) ?>"><button class="btn btn--ghost" style="padding:6px 10px;color:#c0392b">Удалить диалог</button></form>
     </div>
 
-    <div class="card" style="padding:14px;max-height:60vh;overflow:auto;background:var(--a-bg,#f7f8fa)">
+    <div class="card chat-log" id="chatLog" data-sk="<?= h($sk) ?>"
+         style="padding:14px;height:min(62vh,560px);overflow-y:auto;background:var(--a-bg,#f7f8fa)">
       <?php if (!$msgs): ?>
         <p class="muted">Сообщений пока нет.</p>
       <?php else: foreach ($msgs as $m):
@@ -178,12 +220,12 @@ if ($sk !== '') {
           $mine = $role === 'assistant';
           $txt  = trim((string) $m['text']);
           $file = trim((string) ($m['file'] ?? '')); ?>
-        <div style="display:flex;justify-content:<?= $mine ? 'flex-end' : 'flex-start' ?>;margin:8px 0">
+        <div class="chat-row" data-mid="<?= (int) $m['id'] ?>" style="display:flex;justify-content:<?= $mine ? 'flex-end' : 'flex-start' ?>;margin:8px 0">
           <div style="max-width:78%;padding:9px 12px;border-radius:12px;background:<?= $mine ? '#d9f0e0' : '#fff' ?>;border:1px solid #e4e7ec">
             <div style="font-size:11px;color:#888;margin-bottom:3px"><?= $mine ? 'Центр' : h($title) ?> · <?= h(date('d.m H:i', strtotime((string) $m['created_at']))) ?></div>
             <?php if ($file !== ''): ?><div style="margin:4px 0"><a href="<?= h(url($file)) ?>" target="_blank">📎 вложение</a></div><?php endif; ?>
             <?php if ($txt !== ''): ?><div style="white-space:pre-wrap;word-break:break-word"><?= nl2br(h($txt)) ?></div><?php endif; ?>
-            <div style="margin-top:5px;display:flex;gap:8px">
+            <div class="chat-tools" style="margin-top:5px;display:flex;gap:8px">
               <button type="button" class="lnk" style="font-size:11px;color:#2C7BE5;background:none;border:0;cursor:pointer;padding:0" onclick="chatEdit(<?= (int) $m['id'] ?>, this)">изменить</button>
               <form method="post" action="<?= url('/admin/') ?>" style="display:inline" onsubmit="return confirm('Удалить это сообщение?')"><?= csrf_field() ?><input type="hidden" name="do" value="del_msg"><input type="hidden" name="mid" value="<?= (int) $m['id'] ?>"><button style="font-size:11px;color:#c0392b;background:none;border:0;cursor:pointer;padding:0">удалить</button></form>
             </div>
@@ -200,17 +242,92 @@ if ($sk !== '') {
       <?php endforeach; endif; ?>
     </div>
 
-    <form method="post" action="<?= url('/admin/') ?>" style="margin-top:14px"><?= csrf_field() ?>
+    <form method="post" action="<?= url('/admin/') ?>" class="chat-reply" style="margin-top:14px"><?= csrf_field() ?>
       <input type="hidden" name="do" value="reply"><input type="hidden" name="session_key" value="<?= h($sk) ?>">
-      <textarea name="text" rows="3" placeholder="Ответить участнику от имени центра…" style="width:100%;box-sizing:border-box;padding:10px;border-radius:10px;border:1px solid #d0d5dd" required></textarea>
+      <textarea name="text" rows="3" placeholder="Ответить участнику от имени центра…" required></textarea>
       <div style="display:flex;justify-content:space-between;align-items:center;margin-top:8px;flex-wrap:wrap;gap:8px">
-        <span class="muted small">Ответ уйдёт участнику <?= $chan === 'vk' ? 'во ВКонтакте' : 'в чат сайта' ?>. После вашего ответа бот молчит 5–10 минут.</span>
+        <span class="muted small">Ответ уйдёт участнику <?= $chan === 'vk' ? 'во ВКонтакте сообщением сообщества' : 'в чат на сайте' ?>. Ctrl+Enter — отправить. После вашего ответа бот молчит 5–10 минут.</span>
         <button class="btn btn--primary"><?= admin_icon('send') ?> Отправить</button>
       </div>
     </form>
 
+    <style>
+      .chat-log{scroll-behavior:smooth}
+      .chat-log .chat-row .chat-tools{opacity:0;transition:opacity .15s}
+      .chat-log .chat-row:hover .chat-tools{opacity:1}
+      @media (hover:none){.chat-log .chat-row .chat-tools{opacity:1}}
+      .chat-reply textarea{width:100%;box-sizing:border-box;padding:10px;border-radius:10px;border:1px solid #d0d5dd;font:inherit;resize:vertical}
+      @media (max-width:640px){
+        .chat-log{height:min(54vh,420px)}
+        .chat-log .chat-row > div{max-width:92% !important}
+      }
+    </style>
     <script>
     function chatEdit(id, btn){ var f=document.getElementById('edit'+id); if(f) f.style.display = f.style.display==='none'?'block':'none'; }
+    (function(){
+      var log = document.getElementById('chatLog');
+      if (!log) return;
+
+      // Открываем диалог на последнем сообщении: оператору нужен свежий конец
+      // переписки, а не её начало. Первый показ — без анимации, чтобы не мелькало.
+      var sb = log.style.scrollBehavior; log.style.scrollBehavior = 'auto';
+      log.scrollTop = log.scrollHeight;
+      setTimeout(function(){ log.style.scrollBehavior = sb || 'smooth'; }, 60);
+
+      var rows = log.querySelectorAll('.chat-row');
+      var lastId = rows.length ? parseInt(rows[rows.length-1].getAttribute('data-mid'), 10) || 0 : 0;
+      var sk = log.getAttribute('data-sk') || '';
+
+      // Прокрутил вверх — читает старое; дёргать его вниз при новом сообщении нельзя.
+      function atBottom(){ return log.scrollHeight - log.scrollTop - log.clientHeight < 60; }
+
+      function draw(m){
+        var mine = m.role === 'assistant';
+        var row = document.createElement('div');
+        row.className = 'chat-row'; row.setAttribute('data-mid', m.id);
+        row.style.cssText = 'display:flex;justify-content:' + (mine?'flex-end':'flex-start') + ';margin:8px 0';
+        var b = document.createElement('div');
+        b.style.cssText = 'max-width:78%;padding:9px 12px;border-radius:12px;border:1px solid #e4e7ec;background:' +
+                          (mine ? '#d9f0e0' : '#fff');
+        var head = document.createElement('div');
+        head.style.cssText = 'font-size:11px;color:#888;margin-bottom:3px';
+        head.textContent = (mine ? 'Центр' : 'Участник') + ' · ' + String(m.created_at || '').slice(5,16).replace('-','.');
+        b.appendChild(head);
+        if (m.file){
+          var a = document.createElement('a');
+          a.href = m.file; a.target = '_blank'; a.textContent = 'вложение';
+          a.style.cssText = 'display:block;margin:4px 0';
+          b.appendChild(a);
+        }
+        if (m.text){
+          var t = document.createElement('div');
+          t.style.cssText = 'white-space:pre-wrap;word-break:break-word';
+          t.textContent = m.text;
+          b.appendChild(t);
+        }
+        row.appendChild(b); log.appendChild(row);
+      }
+
+      setInterval(function(){
+        if (document.hidden) return;
+        var stick = atBottom();
+        fetch(location.pathname + '?p=chats&ajax=1&s=' + encodeURIComponent(sk) + '&since=' + lastId,
+              {credentials:'same-origin'})
+          .then(function(r){ return r.json(); })
+          .then(function(d){
+            var list = (d && d.messages) || [];
+            if (!list.length) return;
+            for (var i=0;i<list.length;i++){ draw(list[i]); lastId = Math.max(lastId, list[i].id|0); }
+            if (stick) log.scrollTop = log.scrollHeight;
+          }).catch(function(){});
+      }, 6000);
+
+      // Ctrl+Enter отправляет ответ — привычно всем, кто много переписывается.
+      var ta = document.querySelector('.chat-reply textarea');
+      if (ta) ta.addEventListener('keydown', function(e){
+        if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') this.form.requestSubmit();
+      });
+    })();
     </script>
     <?php
     admin_layout('Чат-бот · ' . $title, ob_get_clean(), 'chats');

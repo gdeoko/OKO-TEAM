@@ -150,6 +150,9 @@ return [
     // («User location is not supported») — на проде ставится воркер-прокси OKO
     // MUZMIR_GEMINI_BASE=https://gemini-proxy.okoteam.workers.dev (тот же путь API).
     'gemini_api_key'  => cfg('MUZMIR_GEMINI_KEY', ''),
+    // Несколько ключей через запятую: бесплатная квота у каждого маленькая, и
+    // упёршийся в лимит уступает следующему — иначе бот замолкает в час пик.
+    'gemini_api_keys' => cfg('MUZMIR_GEMINI_KEYS', ''),
     'gemini_model'    => cfg('MUZMIR_GEMINI_MODEL', 'gemini-2.5-flash'),
     'gemini_base_url' => cfg('MUZMIR_GEMINI_BASE', 'https://generativelanguage.googleapis.com'),
 

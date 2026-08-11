@@ -421,12 +421,46 @@
     requestAnimationFrame(function () { box.classList.add('open'); });
     var log = $('#mc-log', box);
     var sendBtn = $('#mc-form button', box);
-    addMsg('Здравствуйте! Чем можем помочь? Задайте вопрос о конкурсах, заявках или наградах.', 'bot');
+    var lastId = 0, greeted = false, poller = null;
+
+    // Переписка живёт на сервере, а не в этом окне: человек мог закрыть вкладку,
+    // вернуться завтра, а из админки ему тем временем ответил живой оператор.
+    // Поэтому окно сначала подтягивает историю, а потом раз в несколько секунд
+    // добирает всё новое — так ответ оператора доходит без перезагрузки страницы.
+    function pull(first) {
+      fetch(location.origin + '/api/v1/chat', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'history', since: lastId })
+      }).then(function (r) { return r.json(); }).then(function (d) {
+        var list = (d && d.messages) || [];
+        if (list.length) dropTemp();
+        for (var i = 0; i < list.length; i++) {
+          var m = list[i];
+          if (m.id && m.id > lastId) lastId = m.id;
+          var role = String(m.role || '');
+          if (role !== 'user' && role !== 'assistant') continue;
+          addMsg(m.text || '', role === 'user' ? 'me' : 'bot', m.file || '');
+          greeted = true;
+        }
+        if (first && !greeted) {
+          addMsg('Здравствуйте! Чем можем помочь? Задайте вопрос о конкурсах, заявках или наградах.', 'bot');
+        }
+      }).catch(function () {
+        if (first && !greeted) addMsg('Здравствуйте! Чем можем помочь?', 'bot');
+      });
+    }
+    pull(true);
+    poller = setInterval(function () { if (box.style.display !== 'none') pull(false); }, 7000);
+    box.addEventListener('muzmir-chat-destroy', function () { clearInterval(poller); });
+
     $('#mc-form', box).addEventListener('submit', function (ev) {
       ev.preventDefault();
       var inp = $('#mc-in', box), text = inp.value.trim();
       if (!text) return;
-      addMsg(text, 'me'); inp.value = '';
+      // Своё сообщение показываем сразу — ждать ответа сервера, глядя в пустоту,
+      // неприятно. Пузырь помечен как временный: когда придёт история, он уступит
+      // место записи с сервера, и повтора на экране не будет.
+      addMsg(text, 'me', '', true); inp.value = '';
       var typing = showTyping();
       sendBtn.classList.add('is-loading');
       sendBtn.disabled = true;
@@ -439,8 +473,8 @@
         method: 'POST', headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ text: text })
       }).then(function (r) { return r.json(); })
-        .then(function (d) { done(); addMsg(d.reply || 'Спасибо! Мы ответим в ближайшее время.', 'bot'); })
-        .catch(function () { done(); addMsg('Спасибо! Мы свяжемся с Вами.', 'bot'); });
+        .then(function () { done(); pull(false); })
+        .catch(function () { done(); addMsg('Не получилось отправить. Проверьте связь и попробуйте ещё раз.', 'bot'); });
     });
     function showTyping() {
       var m = document.createElement('div');
@@ -450,11 +484,25 @@
       return m;
     }
     function removeTyping(el) { if (el && el.parentNode) el.parentNode.removeChild(el); }
-    function addMsg(t, who) {
+    function dropTemp() {
+      var t = log.querySelectorAll('[data-temp]');
+      for (var i = 0; i < t.length; i++) t[i].parentNode.removeChild(t[i]);
+    }
+    function addMsg(t, who, file, temp) {
+      if (!t && !file) return;
       var m = document.createElement('div');
-      m.style.cssText = 'margin:8px 0;max-width:82%;padding:9px 13px;border-radius:12px;' +
+      m.style.cssText = 'margin:8px 0;max-width:82%;padding:9px 13px;border-radius:12px;white-space:pre-wrap;' +
+        'word-break:break-word;' +
         (who === 'me' ? 'margin-left:auto;background:#C9A84C;color:#fff' : 'background:#F9F2E4;color:#1B2340');
-      m.textContent = t; log.appendChild(m); log.scrollTop = log.scrollHeight;
+      if (temp) m.setAttribute('data-temp', '1');
+      m.textContent = t || '';
+      if (file) {
+        var a = document.createElement('a');
+        a.href = file; a.target = '_blank'; a.textContent = 'вложение';
+        a.style.cssText = 'display:block;margin-top:5px;color:inherit;text-decoration:underline';
+        m.appendChild(a);
+      }
+      log.appendChild(m); log.scrollTop = log.scrollHeight;
     }
     window.MuzmirChat = { toggle: function () {
       var vis = box.style.display === 'none';
