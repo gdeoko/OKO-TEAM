@@ -38,6 +38,14 @@ if ($token !== '') {
             // И в профиль сайта: иначе адрес возвращается в базу рассылки через users.
             try { q("UPDATE users SET notify_email = 0 WHERE LOWER(email) = ?", [$email]); } catch (\Throwable $e) {}
 
+            // И в базу учреждений: приглашения шлются оттуда отдельным списком, и
+            // без этой строки учреждение, нажавшее «Отказаться», получило бы
+            // приглашение снова в следующую волну.
+            if (is_file(BASE_PATH . '/core/institutions.php')) {
+                require_once BASE_PATH . '/core/institutions.php';
+                try { inst_unsubscribe($email); } catch (\Throwable $e) {}
+            }
+
             if (function_exists('audit')) audit('unsubscribe', 'subscribers', (int) $sub['id'], ['email' => $sub['email']]);
             $state = 'done';
         }

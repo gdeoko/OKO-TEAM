@@ -78,6 +78,9 @@ function admin_modules(): array {
         'orders'       => ['Заказы оригиналов', 'moderator', 'trophy'],
         'digital'      => ['Заказы электронных', 'moderator', 'diplomas'],
         'newsletter'   => ['Рассылки',     'moderator', 'newsletter'],
+        // База учреждений — школы искусств, дома культуры, центры творчества.
+        // Отсюда идут приглашения педагогам: именно они приводят детей на конкурсы.
+        'institutions' => ['База учреждений', 'admin',  'users'],
         'analytics'    => ['Аналитика',    'moderator', 'chart'],
         'cms'          => ['Контент',      'moderator', 'cms'],
         'users'        => ['Пользователи', 'admin',     'users'],
