@@ -118,10 +118,10 @@ function application_mail_send(int $appId, bool $paid = false): bool {
         . $paidBadge
         . '<p style="margin:0 0 20px;">' . $lead . '</p>'
         . rm_mail_app_card($a, $c)
-        . '<p style="margin:0 0 4px;color:' . $muted . ';font-size:14px;">Статус заявки, оплата и дипломы — в Вашем личном кабинете. '
-        . 'Вы можете принять участие и в других конкурсах центра — заявки объединяются в одну оплату.</p>';
+        . '<p style="margin:0 0 4px;color:' . $muted . ';font-size:14px;">Статус заявки, оплата и дипломы - в Вашем личном кабинете. '
+        . 'Вы можете принять участие и в других конкурсах центра - заявки объединяются в одну оплату.</p>';
 
-    $subject = 'Заявка №' . $num . ' принята — Культурный центр «Музыкальный Мир»';
+    $subject = 'Заявка №' . $num . ' принята - Культурный центр «Музыкальный Мир»';
 
     // Если конкурс платный, а взнос ещё не поступил — главная кнопка письма ведёт
     // ПРЯМО на оплату этой заявки (форма ЮKassa), а не в общий кабинет: искать свой
@@ -133,7 +133,7 @@ function application_mail_send(int $appId, bool $paid = false): bool {
         : mm_cta_primary(url('/cabinet'), 'Открыть личный кабинет', 'Статус заявки · оплата · дипломы');
 
     $html = mm_email_tx($inner, [
-        'preheader' => 'Заявка №' . $num . ($paid ? ' оплачена и принята.' : ' зарегистрирована.') . ' Детали и статус — в личном кабинете.',
+        'preheader' => 'Заявка №' . $num . ($paid ? ' оплачена и принята.' : ' зарегистрирована.') . ' Детали и статус - в личном кабинете.',
         'hero'      => $hero,
         // «Другие конкурсы» убрана — в подвале письма уже есть кнопка «Другие конкурсы центра».
         'actions'   => $needsPay
@@ -157,9 +157,9 @@ function rm_award_name(string $result): string {
 /** Подсказка по наградам в зависимости от результата (для платных конкурсов). */
 function rm_award_hint(string $result): string {
     $r = mb_strtoupper($result);
-    if (str_contains($r, 'ГРАН-ПРИ'))  return 'Обладателям Гран-при — наградной кубок в честь высшей награды конкурса.';
-    if (str_contains($r, 'ЛАУРЕАТ'))   return 'Лауреатам конкурса — памятная статуэтка в честь Вашего звания.';
-    if (str_contains($r, 'ДИПЛОМАНТ')) return 'Дипломантам конкурса — наградная медаль в честь Вашего звания.';
+    if (str_contains($r, 'ГРАН-ПРИ'))  return 'Обладателям Гран-при - наградной кубок в честь высшей награды конкурса.';
+    if (str_contains($r, 'ЛАУРЕАТ'))   return 'Лауреатам конкурса - памятная статуэтка в честь Вашего звания.';
+    if (str_contains($r, 'ДИПЛОМАНТ')) return 'Дипломантам конкурса - наградная медаль в честь Вашего звания.';
     return 'Для участников доступны памятные наградные материалы конкурса.';
 }
 
@@ -195,8 +195,8 @@ function result_mail_send(int $appId): bool {
             . '<tr><td style="width:4px;background:#C0392B;border-radius:14px 0 0 14px;"></td>'
             . '<td style="padding:14px 20px;font-size:13.5px;line-height:1.6;color:#7A2E22;">'
             . '<b style="color:#C0392B;letter-spacing:.04em;">ВНИМАНИЕ.</b> Рассылка наградного материала (электронный основной диплом, '
-            . 'электронный дополнительный — при наличии), включённого в стоимость участия (оргвзнос), осуществляется в течение '
-            . '<b>5 рабочих дней</b> на электронную почту, указанную в заявке. По желанию — оригиналы наград (кубок/статуэтка/медаль, '
+            . 'электронный дополнительный - при наличии), включённого в стоимость участия (оргвзнос), осуществляется в течение '
+            . '<b>5 рабочих дней</b> на электронную почту, указанную в заявке. По желанию - оригиналы наград (кубок/статуэтка/медаль, '
             . 'диплом и благодарность педагогу) Почтой России.</td></tr></table>';
     }
 
@@ -243,10 +243,10 @@ function result_mail_send(int $appId): bool {
         $awardsUrl = url('/awards') . '?comp=' . (int) $a['competition_id'] . '&app=' . $appId;
         $inner .= '<p style="margin:0 0 14px;">Наградные дипломы придут на эту почту в течение '
             . '<b style="color:' . $navy . ';">5 рабочих дней</b> и появятся в личном кабинете.</p>'
-            . '<p style="margin:0 0 6px;font-weight:600;color:' . $navy . ';">Оригиналы наград — Почтой России:</p>'
+            . '<p style="margin:0 0 6px;font-weight:600;color:' . $navy . ';">Оригиналы наград - Почтой России:</p>'
             . '<p style="margin:0 0 8px;font-size:14px;color:' . RM_INK . ';line-height:1.65;">' . h(rm_award_hint($result))
-            . ' Также доступна благодарность педагогу за подготовку. Оригиналы — на плотной дизайнерской бумаге, '
-            . 'с голографическими логотипами, живыми подписями и печатями. Награда с Вашим именем — памятное подтверждение успеха для дома, сцены и портфолио.</p>';
+            . ' Также доступна благодарность педагогу за подготовку. Оригиналы - на плотной дизайнерской бумаге, '
+            . 'с голографическими логотипами, живыми подписями и печатями. Награда с Вашим именем - памятное подтверждение успеха для дома, сцены и портфолио.</p>';
         $hero = mm_cta_primary($awardsUrl, 'Заказать награды', 'По результату: ' . rm_award_name($result));
         // Кнопки как в ручном письме центра: Образцы наград ЭТОГО конкурса / Сроки / Отзыв.
         $awardsSamplesUrl = url('/awards') . '?comp=' . (int) $a['competition_id'];
@@ -254,12 +254,12 @@ function result_mail_send(int $appId): bool {
     } else {
         // Бесплатный конкурс: страница результатов.
         $resultsUrl = url('/results/' . (string) ($c['slug'] ?? ''));
-        $inner .= '<p style="margin:0 0 4px;color:' . $muted . ';font-size:14px;">Полный протокол конкурса — на странице результатов.</p>';
+        $inner .= '<p style="margin:0 0 4px;color:' . $muted . ';font-size:14px;">Полный протокол конкурса - на странице результатов.</p>';
         $hero = mm_cta_primary($resultsUrl, 'Посмотреть результаты конкурса', 'Протокол и звания участников');
         $actions = [['Личный кабинет', $cabinetUrl], ['Оставить отзыв', $reviewsUrl]];
     }
 
-    $subject = 'Ваш результат — ' . $result;
+    $subject = 'Ваш результат - ' . $result;
     $pre  = 'Итоги конкурса «' . (string) ($c['name'] ?? '') . '»: ' . $result
         . ($extra !== '' ? ' + ' . $extra : '') . '.';
     $html = mm_email_tx($inner, [
@@ -280,7 +280,7 @@ function result_mail_send(int $appId): bool {
         $nBody = 'Конкурс «' . (string) ($c['name'] ?? '') . '», заявка №' . (string) $a['number'] . '.'
             . ($extra !== '' ? ' Дополнительный диплом: ' . $extra . '.' : '');
         $nUrl = $isPaid ? url('/cabinet#apps') : url('/results/' . (string) ($c['slug'] ?? ''));
-        notify_user($uid, 'Ваш результат — ' . $result, $nBody, $nUrl, 'diploma');
+        notify_user($uid, 'Ваш результат - ' . $result, $nBody, $nUrl, 'diploma');
     }
 
     return $queued;
@@ -316,8 +316,8 @@ function results_long_mail_send(int $appId, string $vkUrl = '', string $docxAbs 
     // In-app + колокол.
     $uid = (int) ($a['user_id'] ?? 0);
     if ($uid > 0) {
-        notify_user($uid, 'Результаты конкурса «' . (string) ($c['name'] ?? '') . '» — ' . $result,
-            'Заявка №' . (string) $a['number'] . '. Списки результатов — на сайте и в ВК. Можно заказать наградной материал.',
+        notify_user($uid, 'Результаты конкурса «' . (string) ($c['name'] ?? '') . '» - ' . $result,
+            'Заявка №' . (string) $a['number'] . '. Списки результатов - на сайте и в ВК. Можно заказать наградной материал.',
             url('/results/' . (string) ($c['slug'] ?? '')), 'trophy');
     }
     return $queued;
@@ -356,7 +356,7 @@ function results_long_mail_html(array $a, array $c, string $vkUrl = '', string $
             . '</td></tr></table>';
     }
     $inner .= rm_mail_app_card($a, $c);
-    $inner .= '<p style="margin:14px 0 0;color:' . RM_MUTED . ';font-size:14px;">Полный список результатов конкурса — на сайте, в нашем сообществе ВКонтакте и во вложении к этому письму.</p>';
+    $inner .= '<p style="margin:14px 0 0;color:' . RM_MUTED . ';font-size:14px;">Полный список результатов конкурса - на сайте, в нашем сообществе ВКонтакте и во вложении к этому письму.</p>';
 
     // Кнопки: заказать награды (hero) + список на сайте + список в ВК + скачать файл.
     $awardsUrl  = url('/awards') . '?comp=' . (int) $a['competition_id'];
@@ -367,7 +367,7 @@ function results_long_mail_html(array $a, array $c, string $vkUrl = '', string $
     if ($docxUrl !== '') $actions[] = ['Скачать список результатов (DOCX)', $docxUrl];
     $actions[] = ['Оставить отзыв', url('/reviews')];
 
-    $subject = 'Результаты конкурса «' . (string) ($c['name'] ?? '') . '» — ' . $result;
+    $subject = 'Результаты конкурса «' . (string) ($c['name'] ?? '') . '» - ' . $result;
     $html = mm_email_tx($inner, [
         'preheader' => 'Итоги конкурса «' . (string) ($c['name'] ?? '') . '»: ' . $result . '.',
         'hero'      => $hero,

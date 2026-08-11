@@ -295,7 +295,7 @@ function auth_ensure_account(string $email, string $name = ''): int {
             $inner = '<p style="margin:0 0 14px;font-size:15px;color:#2a2a3a;">Здравствуйте'
                 . ($name !== '' ? ', ' . h($name) : '') . '! Мы открыли для Вас личный кабинет'
                 . ' на сайте Культурного центра «Музыкальный Мир»: заявки, результаты,'
-                . ' электронные дипломы и заказ наград — в одном месте.</p>'
+                . ' электронные дипломы и заказ наград - в одном месте.</p>'
                 . '<div style="margin:0 0 16px;padding:16px 18px;border:1.5px solid #C79322;border-radius:12px;background:#FCF9F0;text-align:center;">'
                 . '<div style="font-size:13px;color:#6b5d3f;margin-bottom:6px;">Ваш логин</div>'
                 . '<div style="font-size:16px;font-weight:bold;color:#17307A;margin-bottom:10px;">' . h($email) . '</div>'
@@ -307,7 +307,7 @@ function auth_ensure_account(string $email, string $name = ''): int {
             $html = mm_email_layout($inner, ['title' => 'Ваш личный кабинет открыт']);
             try { db()->exec("ALTER TABLE mail_queue ADD COLUMN priority INTEGER DEFAULT 0"); } catch (\Throwable $e) {}
             insert('mail_queue', ['to_email' => $email, 'to_name' => $name,
-                'subject' => 'Ваш личный кабинет — «Музыкальный Мир»',
+                'subject' => 'Ваш личный кабинет - «Музыкальный Мир»',
                 'body' => $html, 'status' => 'queued', 'priority' => 5]);
         } catch (\Throwable $e) { /* письмо не должно ломать основной сценарий */ }
     }

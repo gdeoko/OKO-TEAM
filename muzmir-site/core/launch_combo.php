@@ -57,7 +57,7 @@ function launch_combo_subject(): string {
     $ov = trim((string) setting('launch_mail_subject:combo', ''));
     if ($ov !== '') return $ov;
     $s = campaign_subject('new_competitions');
-    return $s !== '' ? $s : 'Открыт приём заявок — конкурсы месяца';
+    return $s !== '' ? $s : 'Открыт приём заявок - конкурсы месяца';
 }
 
 /**
@@ -293,7 +293,7 @@ function launch_combo_body(string $name, string $email, string $pass): string {
     $out = '<h1 style="margin:0 0 6px;font:700 24px/1.3 Georgia,\'Times New Roman\',serif;color:' . $navy . '">'
          . 'Здравствуйте, {{name}}!</h1>'
          . '<div style="font:15px/1.6 Arial,sans-serif;color:' . $muted . ';margin:0 0 18px">'
-         . 'Открыт приём заявок на конкурсы' . ($endRu !== '' ? ' — до ' . h($endRu) : '') . '</div>';
+         . 'Открыт приём заявок на конкурсы' . ($endRu !== '' ? ' - до ' . h($endRu) : '') . '</div>';
 
     $out .= $p('Международные и всероссийские творческие конкурсы с настоящими наградами, '
         . 'официальными и аттестационными дипломами. Участие дистанционное: работа принимается '
@@ -304,7 +304,7 @@ function launch_combo_body(string $name, string $email, string $pass): string {
         $out .= '<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin:4px 0 20px">'
              . '<tr><td style="background:' . $card . ';border-left:4px solid ' . MM_GOLD . ';'
              . 'border-radius:0 10px 10px 0;padding:14px 18px;font:15px/1.6 Arial,sans-serif;color:' . $ink . '">'
-             . '<b>Участие в ' . h(implode(', ', $names)) . ' — бесплатное.</b> '
+             . '<b>Участие в ' . h(implode(', ', $names)) . ' - бесплатное.</b> '
              . 'Диплом с результатом аттестации жюри приходит на почту всем участникам.'
              . '</td></tr></table>';
     }
@@ -318,7 +318,7 @@ function launch_combo_body(string $name, string $email, string $pass): string {
     $out .= LC_CAB_OPEN
          . '<div style="height:1px;background:' . $line . ';margin:26px 0"></div>'
          . '<h2 style="margin:0 0 10px;font:700 19px/1.3 Georgia,serif;color:' . $navy . '">Личный кабинет открыт</h2>'
-         . $p('Заявки, результаты, электронные дипломы и заказ наград — в одном месте.')
+         . $p('Заявки, результаты, электронные дипломы и заказ наград - в одном месте.')
          . '<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin:0 0 16px">'
          . '<tr><td style="background:' . MM_IVORY . ';border:1px solid ' . $line . ';border-radius:12px;padding:16px 18px">'
          . '<div style="font:12px/1.4 Arial,sans-serif;color:' . $muted . ';text-transform:uppercase;letter-spacing:.06em">Логин</div>'
@@ -337,7 +337,7 @@ function launch_combo_body(string $name, string $email, string $pass): string {
     $out .= LC_VIP_OPEN
          . '<div style="height:1px;background:' . $line . ';margin:26px 0"></div>'
          . '<h2 style="margin:0 0 10px;font:700 19px/1.3 Georgia,serif;color:' . $navy . '">Клуб постоянных участников</h2>'
-         . $p('Для педагогов и активных участников — привилегии, ранние результаты и особые условия.')
+         . $p('Для педагогов и активных участников - привилегии, ранние результаты и особые условия.')
          . '<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin:0 0 16px">'
          . lc_perk('Скидка ' . $disc . '% на всё', 'участие и наградные материалы')
          . lc_perk('Результаты за 3 рабочих дня', 'вместо обычных пяти')

@@ -383,6 +383,7 @@ function lm_mail_thanks(array $inst, string $number, int $works = 0, array $teac
     $year = date('Y');
 
     $doc = lm_render($number, [
+        'kind'       => 'thanks',
         'title'      => 'Благодарственное письмо',
         'addressee'  => array_values(array_filter(['Руководителю ' . $org, $fio])),
         'salutation' => lm_salut($fio),

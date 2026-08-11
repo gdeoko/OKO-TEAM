@@ -21,7 +21,7 @@ function kabinet_onboarding_inner(): string {
     if (!function_exists('mm_email_btn')) require_once __DIR__ . '/mailer.php';
     return '<p style="margin:0 0 14px;font-size:15px;color:#2a2a3a;">Здравствуйте, {{name}}! Мы открыли для Вас личный кабинет'
         . ' на сайте Культурного центра «Музыкальный Мир»: заявки, результаты,'
-        . ' электронные дипломы и заказ наград — всё в одном месте.</p>'
+        . ' электронные дипломы и заказ наград - всё в одном месте.</p>'
         . '<div style="margin:0 0 16px;padding:16px 18px;border:1.5px solid #C79322;border-radius:12px;background:#FCF9F0;text-align:center;">'
         . '<div style="font-size:13px;color:#6b5d3f;margin-bottom:6px;">Ваш логин</div>'
         . '<div style="font-size:16px;font-weight:bold;color:#17307A;margin-bottom:10px;">{{login}}</div>'
@@ -68,7 +68,7 @@ function kabinet_onboarding_enqueue(int $limit = 20000): int {
     // раз: у тех, кому письмо с прежним паролем ещё не доехало, пароль в письме
     // переставал бы подходить. Функция оставлена как заглушка, чтобы старые вызовы
     // (пульт, скрипты) не падали.
-    if (function_exists('nl_log')) nl_log('kabinet: отдельная массовая волна кабинета отключена — доступ выдаётся письмом запуска и при подаче заявки');
+    if (function_exists('nl_log')) nl_log('kabinet: отдельная массовая волна кабинета отключена - доступ выдаётся письмом запуска и при подаче заявки');
     return 0;
 
     /** @noinspection PhpUnreachableStatementInspection — код ниже сохранён для истории */
@@ -108,7 +108,7 @@ function kabinet_onboarding_enqueue(int $limit = 20000): int {
             insert('mail_queue', [
                 'to_email'      => $email,
                 'to_name'       => (string) ($r['name'] ?? ''),
-                'subject'       => 'Ваш личный кабинет — Культурный центр «Музыкальный Мир»',
+                'subject'       => 'Ваш личный кабинет - Культурный центр «Музыкальный Мир»',
                 'body'          => kabinet_onboarding_html($email, (string) ($r['name'] ?? ''), $pass),
                 'campaign_type' => 'kabinet',
                 'status'        => 'queued',

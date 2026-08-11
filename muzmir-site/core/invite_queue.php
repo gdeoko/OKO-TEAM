@@ -385,6 +385,7 @@ function invite_thanks_teacher_pdf(string $org, string $teacher, int $works): st
             'season'      => date('Y'),
         ]);
         return pdf_official_letter([
+            'kind'       => 'thanks',
             'number'     => (string) $L['number'],
             'title'      => 'Благодарственное письмо',
             'addressee'  => array_values(array_filter(['Преподавателю ' . $org, $teacher])),

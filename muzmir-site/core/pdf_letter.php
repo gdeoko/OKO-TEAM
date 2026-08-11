@@ -103,7 +103,16 @@ function pdf_official_letter(array $o): string {
 
     $dir = BASE_PATH . '/data/letters';
     if (!is_dir($dir)) @mkdir($dir, 0775, true);
-    $path = $dir . '/obrashchenie-' . preg_replace('~[^0-9]~', '-', $number) . '.pdf';
+    // Имя файла адресат видит во вложении, поэтому номер сохраняем как есть,
+    // убирая только то, что нельзя класть в имя файла. Прежняя замена «всё,
+    // кроме цифр, на дефис» превращала «МM-2026/0001» в частокол дефисов.
+    $slug = preg_replace('~[^A-Za-z0-9]+~', '-', $number);
+    $slug = trim((string) $slug, '-');
+    // Во вложении к благодарности лежало «obrashchenie-…», хотя это не
+    // обращение: получатель не должен гадать, что ему прислали.
+    $kind = (string) ($o['kind'] ?? '');
+    $head = $kind === 'thanks' ? 'blagodarnost' : 'obrashchenie';
+    $path = $dir . '/' . $head . '-' . ($slug !== '' ? $slug : date('Ymd-His')) . '.pdf';
 
     $W = 1240; $H = 1754;                                 // A4 @150dpi
     $mL = 104; $mR = 104;

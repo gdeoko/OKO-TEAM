@@ -269,7 +269,7 @@ function newsletter_enqueue(int $newsletterId): int {
     // тело — то есть уничтожила бы тысячи писем с паролями и разослала бы вместо них
     // служебную заглушку «(персональное письмо: собирается под каждого получателя)».
     if (str_starts_with((string) ($n['audience'] ?? ''), 'combo:')) {
-        nl_log("enqueue: #$newsletterId — волна запуска, обычная постановка запрещена (её ведёт launch_combo_enqueue)");
+        nl_log("enqueue: #$newsletterId - волна запуска, обычная постановка запрещена (её ведёт launch_combo_enqueue)");
         return 0;
     }
 
@@ -306,7 +306,7 @@ function newsletter_enqueue(int $newsletterId): int {
             $already[mb_strtolower(trim((string) $s['to_email']))] = true;
         }
     } catch (\Throwable $e) {}
-    if ($already) nl_log("enqueue #$newsletterId: уже получили ранее — " . count($already) . ", им не дублируем");
+    if ($already) nl_log("enqueue #$newsletterId: уже получили ранее - " . count($already) . ", им не дублируем");
 
     $queued = 0;
     $i = 0;
@@ -633,9 +633,9 @@ function nl_prune_failed(): int {
     foreach ($rows as $r) if (nl_failure_kind((string) $r['error']) === 'hard') $hard++;
     if (nl_purge_guard_tripped($hard)) {
         mass_sending_set(false, 'guard_fail_rate');
-        nl_log("СТОП: отказов $hard — это слишком много для живой базы. "
+        nl_log("СТОП: отказов $hard - это слишком много для живой базы. "
              . "Похоже на сбой канала, а не на плохие адреса. Никого не выводим, "
-             . "массовая отправка остановлена — нужен разбор.");
+             . "массовая отправка остановлена - нужен разбор.");
         return 0;
     }
 
@@ -656,7 +656,7 @@ function nl_prune_failed(): int {
             $back++;
         }
     }
-    if ($back > 0) nl_log("process: вернули в очередь после НАШЕГО сбоя — $back (адреса живые, из базы не выводим)");
+    if ($back > 0) nl_log("process: вернули в очередь после НАШЕГО сбоя - $back (адреса живые, из базы не выводим)");
     return $n;
 }
 
@@ -956,18 +956,18 @@ function nl_purge_person(string $email, string $reason = 'недоставка')
             if ($staff || $apps > 0 || $ords > 0) {
                 // История участия дороже почты: аккаунт оставляем, но от рассылок отвязываем.
                 try { update('users', ['notify_email' => 0], 'id=:id', ['id' => $uid]); } catch (\Throwable $e) {}
-                nl_log("purge: $email — аккаунт сохранён (заявок $apps, заказов $ords, роль $role), отписан от рассылок");
+                nl_log("purge: $email - аккаунт сохранён (заявок $apps, заказов $ords, роль $role), отписан от рассылок");
             } else {
                 foreach (['notifications' => 'user_id', 'sessions' => 'user_id', 'club_members' => 'user_id'] as $t => $col) {
                     try { q("DELETE FROM $t WHERE $col=?", [$uid]); } catch (\Throwable $e) {}
                 }
                 q("DELETE FROM users WHERE id=?", [$uid]);
                 $hard = true;
-                nl_log("purge: $email — учётная запись и кабинет удалены ($reason)");
+                nl_log("purge: $email - учётная запись и кабинет удалены ($reason)");
             }
         }
     } catch (\Throwable $e) {
-        nl_log('purge: ошибка на ' . $email . ' — ' . $e->getMessage());
+        nl_log('purge: ошибка на ' . $email . ' - ' . $e->getMessage());
         return false;
     }
     if ($hard) nl_log("purge: $email вычищен из базы ($reason)");
@@ -1171,7 +1171,7 @@ function newsletter_process_queue(int $limit): int {
                 ? mail_send_failover((string) $row['to_email'], (string) $row['subject'], (string) $row['body'], $opt)
                 : mail_send((string) $row['to_email'], (string) $row['subject'], (string) $row['body'], $opt);
         }
-        catch (\Throwable $e) { nl_log('process: исключение #' . $id . ' — ' . $e->getMessage()); }
+        catch (\Throwable $e) { nl_log('process: исключение #' . $id . ' - ' . $e->getMessage()); }
         if ($ok) {
             // Если сработала резервная почта — фиксируем это в письме очереди.
             $sw = function_exists('mail_switched') ? mail_switched() : '';
@@ -1223,14 +1223,14 @@ function newsletter_process_queue(int $limit): int {
     // 2) МАССОВЫЕ (priority>0) — только когда массовые коммуникации включены в пульте.
     //    До старта они просто ждут в очереди: ничего не теряется и никуда не уходит.
     if (!mass_sending_enabled()) {
-        nl_log('process: массовые рассылки выключены стоп-краном (пульт запуска) — отправлены только личные письма');
+        nl_log('process: массовые рассылки выключены стоп-краном (пульт запуска) - отправлены только личные письма');
         return $sent;
     }
     //    Окно рассылки: 1-24 число, 09:00-18:00 МСК (воскресенье разрешено).
     //    Вне окна массовые ждут в очереди — личные письма выше уже ушли.
     $win = nl_bulk_window_open();
     if (!$win['open']) {
-        nl_log('process: массовые вне окна отправки — ' . $win['why']);
+        nl_log('process: массовые вне окна отправки - ' . $win['why']);
         return $sent;
     }
     //    Нагрузка раскладывается ПОРОВНУ между ящиками bulk-пула, не больше
@@ -1252,7 +1252,7 @@ function newsletter_process_queue(int $limit): int {
                                               WHERE audience LIKE 'combo:%' AND audience < ?)",
                    ['combo:' . date('Y-m')]);
         $nStale = is_object($stale) && method_exists($stale, 'rowCount') ? (int) $stale->rowCount() : 0;
-        if ($nStale > 0) nl_log("process: снято писем прошлых волн запуска — $nStale (их получатели войдут в волну текущего месяца)");
+        if ($nStale > 0) nl_log("process: снято писем прошлых волн запуска - $nStale (их получатели войдут в волну текущего месяца)");
     } catch (\Throwable $e) {}
 
     // ── ТЕМП ОТПРАВКИ ────────────────────────────────────────────────────────
@@ -1356,7 +1356,7 @@ function newsletter_process_queue(int $limit): int {
                             // верить нельзя: так выглядит упёршийся в лимит канал.
                             if (++$hardRun > 30) {
                                 mass_sending_set(false, 'guard_hard_streak');
-                                nl_log("СТОП: $hardRun отказов адресатов за один прогон — "
+                                nl_log("СТОП: $hardRun отказов адресатов за один прогон - "
                                      . "это не база, это канал. Из базы никого не выводим, "
                                      . "массовая отправка остановлена ($why)");
                                 break 2;
@@ -1368,7 +1368,7 @@ function newsletter_process_queue(int $limit): int {
                             // таких — значит ящик упёрся в суточный предел, и на сегодня
                             // он замолкает. Письмо вернётся в очередь само.
                             if (nl_box_fail_add($boxUser)) {
-                                nl_log("process: ящик $boxUser отвечает отказом подряд — до завтра его не трогаем ($why)");
+                                nl_log("process: ящик $boxUser отвечает отказом подряд - до завтра его не трогаем ($why)");
                                 break 2;
                             }
                         }
@@ -1376,7 +1376,7 @@ function newsletter_process_queue(int $limit): int {
                 }
             }
             if ($bulkSent > 0) {
-                nl_log('process: отправлено массовых за прогон — ' . $bulkSent
+                nl_log('process: отправлено массовых за прогон - ' . $bulkSent
                      . ' (ящики: ' . implode(', ', $ready) . ')');
             }
         }
@@ -1386,7 +1386,7 @@ function newsletter_process_queue(int $limit): int {
 
     // Чистим базу от адресов, письма которым окончательно провалились на SMTP.
     $pruned = nl_prune_failed();
-    if ($pruned > 0) nl_log("process: выведено из базы (SMTP-отказ) — $pruned");
+    if ($pruned > 0) nl_log("process: выведено из базы (SMTP-отказ) - $pruned");
 
     // Рассылки без остатка в очереди помечаем как отправленные.
     q("UPDATE newsletters SET status = 'sent', sent_at = COALESCE(sent_at, datetime('now'))
