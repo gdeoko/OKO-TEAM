@@ -74,6 +74,20 @@ if ($type === 'app') {
               [['Личный кабинет', url('/cabinet')]]);
         return;
     }
+    // Отклонённую заявку оплатить нельзя. Возврат обнуляет is_paid, и до этой
+    // проверки старая кнопка «Оплатить участие» из письма спокойно открывала кассу
+    // человеку, которому центр уже отказал и вернул деньги.
+    if ((string) ($a['status'] ?? '') === 'rejected') {
+        $refunded = (int) ($a['amount_refunded'] ?? 0);
+        $show('Заявка отклонена',
+              'По заявке <b>№' . h((string) $a['number']) . '</b> оплата не требуется.'
+              . ($refunded > 0
+                  ? ' Оргвзнос ' . $refunded . ' ₽ возвращён на карту, которой вы платили — банк зачисляет возврат до нескольких рабочих дней.'
+                  : ' Если оргвзнос был внесён, он возвращён на карту, которой вы платили.')
+              . ' Подать работу заново можно в любой момент.',
+              [['Подать заявку', url('/apply')], ['Личный кабинет', url('/cabinet')]]);
+        return;
+    }
     if ((int) ($a['comp_paid'] ?? 0) !== 1 || (int) ($a['comp_price'] ?? 0) <= 0) {
         $show('Оплата не требуется',
               'Участие в конкурсе «' . h((string) $a['comp_name']) . '» бесплатное — заявка уже принята.',
@@ -81,46 +95,16 @@ if ($type === 'app') {
         return;
     }
 
-    // Сумма к оплате должна совпасть с тем, что уже посчитано на подаче: если у
-    // заявки сохранён discount_pct/amount_paid — берём его; иначе пересчитываем на
-    // лету по актуальным скидкам участника (клуб, достижения, реферальный кредит).
-    // Без этого «Оплатить» из кабинета открывал ЮKassa на полную цену, а в письме
-    // и уведомлении красовалась цена со скидкой — расхождение.
-    $__stored = (int) ($a['amount_paid'] ?? 0);
-    if ($__stored > 0) {
-        $amount = $__stored;
-    } else {
-        require_once BASE_PATH . '/core/loyalty.php';
-        $__base   = (int) ($a['price_base'] ?? 0) ?: (int) ($a['comp_price'] ?? 0);
-        $__uid    = (int) ($a['user_id'] ?? 0);
-        $__email  = mb_strtolower((string) ($a['email'] ?? ''));
-        $__loyPct = ($__uid > 0 || $__email !== '') ? (int) loyalty_discount($__uid, $__email) : 0;
-        $__clubPct = 0;
-        if ($__uid > 0 && is_file(BASE_PATH . '/core/club.php')) {
-            require_once BASE_PATH . '/core/club.php';
-            if (function_exists('club_is_active') && club_is_active($__uid)) {
-                $__clubPct = (int) club_discount_percent($__uid);
-            }
-        }
-        // Разовая скидка приглашающего, если ей ещё можно воспользоваться.
-        $__credPct = ($__uid > 0 && function_exists('referral_credit_percent'))
-            ? (int) referral_credit_percent($__uid) : 0;
-        $__disc  = discount_breakdown($__loyPct, $__credPct, $__clubPct);
-        $amount  = loyalty_apply($__base, (int) $__disc['total']);
-        // Сохраняем разбор на заявку, чтобы webhook кассы разложил сумму корректно
-        // и последующие показы (в кабинете/админке) уже видели тот же расклад.
-        update('applications', [
-            'price_base'    => $__base,
-            'discount_pct'  => (int) $__disc['total'],
-            'discount_info' => json_encode([
-                'loyalty_pct' => (int) $__disc['loyalty'],
-                'referral_pct' => (int) $__disc['referral'],
-                'club_pct'    => (int) $__disc['club'],
-                'total_pct'   => (int) $__disc['total'],
-                'credit_applied' => $__credPct > 0,
-            ], JSON_UNESCAPED_UNICODE),
-        ], 'id=:id', ['id' => $id]);
-    }
+    // Сумма к оплате — через общий расчёт application_amount_due(): уважает уже
+    // зафиксированную сумму, иначе применяет скидки участника (достижения, клуб,
+    // реферальный кредит) и сохраняет разбор на заявку. Один и тот же расчёт зовут
+    // подача, кабинет и эта страница — иначе в письме одна цифра, а в кассе другая.
+    require_once BASE_PATH . '/core/loyalty.php';
+    $amount = (int) application_amount_due($a)['amount'];
+
+    // Прежний счёт по этой заявке гасим В КАССЕ, а не только у себя в базе: иначе
+    // ссылка из старого письма остаётся оплачиваемой и заявку платят дважды.
+    try { yukassa_cancel_open_for_app($id); } catch (\Throwable $e) {}
 
     $payment = yukassa_create_payment($amount, 'Оргвзнос за участие: ' . (string) $a['comp_name'], [
         'application_ids' => (string) $id,
@@ -162,6 +146,9 @@ if ($type === 'order') {
               [['Личный кабинет', url('/cabinet')]]);
         return;
     }
+    // Старый счёт заказа — тоже гасим в кассе до создания нового.
+    try { yukassa_cancel_open_for_order($id); } catch (\Throwable $e) {}
+
     $payment = yukassa_create_payment($amount, 'Наградные материалы, заказ №' . $id, [
         'order_id' => $id,
         'email'    => mb_strtolower((string) ($o['email'] ?? '')),

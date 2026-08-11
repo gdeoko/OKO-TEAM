@@ -11,19 +11,24 @@
   var last = 0; try { last = parseInt(localStorage.getItem(LS_LAST)||'0',10)||0; } catch(e){}
   var DAY = 86400*1000;
 
-  var path = location.pathname;
-  // На форме и в кабинете — не отвлекаем
-  // Страницы оформления помечены data-nopopup (layout.php): награды, заказ, оплата,
-  // клуб, подача. Там воронку не показываем — модалка перекрывала каталог наград
-  // и съедала клики по кнопке «В корзину».
-  var skipPage = /^\/(apply|cabinet|admin|api|login|register)/.test(path)
-              || document.documentElement.dataset.nopopup === '1';
+  // ПУТЬ И ЗАПРЕТ ПЕРЕСЧИТЫВАЕМ КАЖДЫЙ РАЗ, А НЕ ОДИН РАЗ НА СТАРТЕ.
+  // Скрипт живёт вне <main> и выполняется единожды за сессию, а SPA подменяет
+  // только <main>. Из-за этого path и skipPage навсегда оставались от той страницы,
+  // с которой человек начал: перейдя на /apply, он через 45 секунд получал поверх
+  // формы заявки модалку «Подать заявку на конкурс», закрывающую половину экрана.
+  function curPath() { return location.pathname; }
+  function isSkipPage() {
+    return /^\/(apply|cabinet|admin|api|login|register)/.test(curPath())
+        || document.documentElement.dataset.nopopup === '1';
+  }
+  // Замороженных path/skipPage больше нет намеренно: любое условие обязано
+  // спрашивать текущий адрес в момент показа.
 
   var OFFERS = [
     {
       id: 'apply_intro',
       trigger: 'time', delay: 45000,          // через 45 сек после захода
-      cond: function(){ return path === '/' && !document.body.classList.contains('is-auth'); },
+      cond: function(){ return curPath() === '/' && !document.body.classList.contains('is-auth'); },
       title: 'Подать заявку на конкурс',
       text: '4 действующих конкурса — Международные и Всероссийские, приём открыт. Диплом на почту через 5 рабочих дней.',
       cta: 'Подать заявку', href: '/apply',
@@ -32,7 +37,7 @@
     {
       id: 'menu_hint',
       trigger: 'scroll', ratio: 0.75,          // при скролле до 75% страницы
-      cond: function(){ return path === '/'; },
+      cond: function(){ return curPath() === '/'; },
       title: 'Все разделы — в меню',
       text: 'В нижнем меню — «Афиша», «Подать заявку», «Награды», «Профиль». Плюс полный список — в шапке через иконку.',
       cta: 'Открыть меню', href: '/menu'
@@ -40,7 +45,7 @@
     {
       id: 'multi_apply',
       trigger: 'time', delay: 30000,
-      cond: function(){ return path === '/competitions'; },
+      cond: function(){ return curPath() === '/competitions'; },
       title: 'Один чек за несколько конкурсов',
       text: 'Отметьте сразу несколько конкурсов в заявке — оплата пройдёт одним платежом ЮKassa.',
       cta: 'Начать', href: '/apply'
@@ -48,7 +53,7 @@
     {
       id: 'exit_intent',
       trigger: 'exit',                          // мышь ушла к верху окна (desktop)
-      cond: function(){ return path === '/' && window.innerWidth > 900; },
+      cond: function(){ return curPath() === '/' && window.innerWidth > 900; },
       title: 'Прежде чем закрыть',
       text: 'Оставьте почту — сообщим о новых конкурсах и наградах первыми.',
       cta: 'Подписаться', href: '/#footerSubscribe',
@@ -57,7 +62,7 @@
     {
       id: 'award_upsell',
       trigger: 'time', delay: 12000,
-      cond: function(){ return path === '/awards'; },
+      cond: function(){ return curPath() === '/awards'; },
       title: 'Хотите оригинал награды?',
       text: 'Кубки, статуэтки, медали с гравировкой имени и результата. Заказ — за 2 минуты.',
       cta: 'Заказать', href: '/awards'
@@ -67,7 +72,7 @@
   function markSeen(id){ seen[id] = Date.now(); last = Date.now();
     try { localStorage.setItem(LS_SEEN, JSON.stringify(seen)); localStorage.setItem(LS_LAST, String(last)); } catch(e){} }
   function canShow(o){
-    if (skipPage) return false;
+    if (isSkipPage()) return false;
     if (Date.now() - last < 3*60*1000) return false;     // не чаще 1 раза в 3 минуты
     if (seen[o.id] && (Date.now() - seen[o.id]) < DAY) return false;
     return !o.cond || !!o.cond();

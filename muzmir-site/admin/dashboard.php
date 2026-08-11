@@ -45,8 +45,20 @@ $pending_rev = (int) scalar("SELECT COUNT(*) FROM reviews WHERE status='pending'
 $queue_wait  = (int) scalar("SELECT COUNT(*) FROM mail_queue WHERE status='queued'");
 // «На оценку» — принятые заявки БЕЗ проставленного результата. По колонке status
 // считать нельзя: 'judging' в единой лестнице означает «оценена, результат в пути».
-$to_grade    = (int) scalar("SELECT COUNT(*) FROM applications
-                              WHERE is_paid=1 AND status <> 'rejected' AND (result IS NULL OR result='')");
+// Длинные конкурсы (results_mode='list') сюда НЕ входят: они оцениваются в отдельном
+// разделе «Оценка длинных». Без этого условия счётчик считал весь месячный пул
+// «Величия России», кнопка «Оценивание (N)» вела в очередь коротких — и там было
+// пусто. Длинные показываем отдельным числом, чтобы они не терялись совсем.
+$to_grade    = (int) scalar("SELECT COUNT(*) FROM applications a
+                              LEFT JOIN competitions c ON c.id=a.competition_id
+                             WHERE a.is_paid=1 AND a.status <> 'rejected'
+                               AND (a.result IS NULL OR a.result='')
+                               AND (c.results_mode IS NULL OR c.results_mode <> 'list')");
+$to_grade_long = (int) scalar("SELECT COUNT(*) FROM applications a
+                                JOIN competitions c ON c.id=a.competition_id
+                               WHERE a.is_paid=1 AND a.status <> 'rejected'
+                                 AND (a.result IS NULL OR a.result='')
+                                 AND c.results_mode='list'");
 
 /* ── Динамика за 14 дней (заявки и оплаты) ────────────────────── */
 $days = [];
@@ -62,8 +74,15 @@ foreach (all("SELECT date(created_at) d, COALESCE(SUM(amount),0) s FROM payments
 }
 
 /* ── Распределения (пончики) ──────────────────────────────────── */
+// Группируем по ВЫЧИСЛЕННОМУ состоянию — тому же, что показывает бейдж в списке
+// заявок. По колонке status считать нельзя: в ней лежат легаси-коды ('paid','sent'),
+// а актуальные состояния (making, made, extra, done) туда вообще не пишутся, и
+// пончик терял заявки — в центре стояло 3 при пяти заявках в базе.
+if (!function_exists('app_state_sql')) require_once BASE_PATH . '/core/app_status.php';
 $appByStatus = [];
-foreach (all("SELECT status, COUNT(*) c FROM applications GROUP BY status") as $r) $appByStatus[$r['status']] = (int)$r['c'];
+foreach (all("SELECT (" . app_state_sql('a') . ") st, COUNT(*) c FROM applications a GROUP BY st") as $r) {
+    $appByStatus[(string) $r['st']] = (int) $r['c'];
+}
 $compByStatus = [];
 foreach (all("SELECT status, COUNT(*) c FROM competitions GROUP BY status") as $r) $compByStatus[$r['status']] = (int)$r['c'];
 
@@ -172,14 +191,26 @@ if (!function_exists('dash_delta_chip')) {
 }
 
 /* Палитры распределений (согласованы с .badge--*) */
-$appPal  = ['new' => '#3a5f8f', 'paid' => '#2e7d4f', 'judging' => '#9a6b12', 'graded' => '#6a4bb0', 'sent' => '#1c8a72', 'rejected' => '#b3403f'];
+$appPal  = ['new' => '#3a5f8f', 'judging' => '#9a6b12', 'graded' => '#6a4bb0',
+            'making' => '#2f7f9a', 'made' => '#1c8a72', 'extra' => '#7a6fb8',
+            'done' => '#2e7d4f', 'rejected' => '#b3403f'];
 $compPal = ['draft' => '#8a8a8a', 'open' => '#2e7d4f', 'closed' => '#b3403f', 'judging' => '#9a6b12', 'finished' => '#3a5f8f'];
 $paySt   = ['paid' => ['Оплачено', 'badge--paid'], 'succeeded' => ['Оплачено', 'badge--paid'],
             'pending' => ['Ожидает', 'badge--judging'], 'canceled' => ['Отменён', 'badge--rejected'],
             'failed' => ['Ошибка', 'badge--rejected'], 'refunded' => ['Возврат', 'badge--muted']];
 
+// Обходим РЕЗУЛЬТАТ ЗАПРОСА, а не палитру: код, которого нет в палитре, получает
+// серый цвет и всё равно попадает в пончик. Иначе «ВСЕГО» в центре молча
+// расходится с карточкой «Заявки» на том же экране.
 $appSlices = [];
-foreach ($appPal as $k => $col) if (($appByStatus[$k] ?? 0) > 0) $appSlices[] = ['label' => app_status_ru($k), 'value' => $appByStatus[$k], 'color' => $col];
+foreach ($appByStatus as $k => $n) {
+    if ($n <= 0) continue;
+    $appSlices[] = [
+        'label' => function_exists('app_state_ru') ? app_state_ru((string) $k) : app_status_ru((string) $k),
+        'value' => $n,
+        'color' => $appPal[$k] ?? '#8a8a8a',
+    ];
+}
 $compSlices = [];
 foreach ($compPal as $k => $col) if (($compByStatus[$k] ?? 0) > 0) $compSlices[] = ['label' => comp_status_ru($k), 'value' => $compByStatus[$k], 'color' => $col];
 
@@ -408,6 +439,9 @@ if (function_exists('tbl_exists') && tbl_exists('jury_comment_requests')) {
         <?php endif; ?>
         <?php if (admin_can('grading')): ?>
           <a class="btn btn--navy btn--block" href="<?= a_link('grading') ?>"><?= admin_icon('grading') ?>Оценивание (<?= $to_grade ?>)</a>
+          <?php if ($to_grade_long > 0): ?>
+            <a class="btn btn--ghost btn--block" href="<?= a_link('longcomp') ?>"><?= admin_icon('grading') ?>Оценка длинных (<?= $to_grade_long ?>)</a>
+          <?php endif; ?>
         <?php endif; ?>
         <?php if (admin_can('newsletter')): ?>
           <a class="btn btn--ghost btn--block" href="<?= a_link('newsletter', ['action' => 'new']) ?>"><?= admin_icon('send') ?>Новая рассылка</a>

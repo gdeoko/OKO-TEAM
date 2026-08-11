@@ -324,7 +324,10 @@ function _diploma_email_html(array $d): string {
     $res  = (string)($d['result'] ?? '');
     $isExtra = (string)($d['type'] ?? 'main') === 'extra';
     $base = rtrim((string) cfgv('base_url', 'https://xn----7sbugdeiegh1b0a9hen.xn--p1ai'), '/');
-    $downloadUrl = $base . '/diploma/' . rawurlencode($num) . '.pdf';
+    // Ссылка ПОДПИСАНА: маршрут диплома закрыт от перебора чужих номеров, а
+    // участник должен открывать свой документ прямо из письма, без входа в кабинет.
+    if (!function_exists('diploma_link')) require_once BASE_PATH . '/core/paylink.php';
+    $downloadUrl = diploma_link($num);
     $orderUrl    = $base . '/awards';
     $verifyUrl   = $base . '/verify/' . rawurlencode($num);
     $reviewUrl   = $base . '/reviews';
@@ -457,17 +460,31 @@ function _diploma_files(array $d): array {
 function _send_original_to_orders_bot(array $a, array $comp): void {
     $ordersChat = (string) cfgv('tg_orders_chat', '');
     if ($ordersChat === '') return; // не сконфигурировано - тихо пропускаем
-    if (!function_exists('pdf_diploma')) return;
-    // Генерируем «чистую» версию (без подписи и печати)
+    // «ЧИСТАЯ» ВЕРСИЯ — ЧЕРЕЗ БОЕВОЙ ШАБЛОН, А НЕ ЧЕРЕЗ ТИП 'main_clean'.
+    // Такого типа генератор не знает: он считал 'main_clean' названием спец-награды
+    // и печатал на бланке крупным золотом «MAIN_CLEAN», причём с подписью, печатью и
+    // номером вне реестра. Именно этот файл уходил в типографию как образец для
+    // оригинала. Режим clean поддерживает diploma_pdf_html — им и пользуемся.
     $clean = null;
-    try { $clean = pdf_diploma($a, 'main_clean'); } catch (\Throwable $e) { $clean = null; }
+    try {
+        if (function_exists('diploma_pdf_html')) $clean = diploma_pdf_html($a, ['clean' => true]);
+    } catch (\Throwable $e) { $clean = null; }
+    if (!$clean && function_exists('pdf_diploma')) {
+        // Фолбэк — обычный основной бланк. Он с подписью, но хотя бы без надписи
+        // «MAIN_CLEAN» и с правильным номером.
+        try { $clean = pdf_diploma($a, 'main'); } catch (\Throwable $e) { $clean = null; }
+    }
     $line = "Заказ оригинала — Заявка № {$a['number']}\n"
           . "Конкурс: {$comp['name']}\n"
           . "Участник: {$a['full_name']}\n"
           . "Результат: {$a['result']}\n"
           . "Адрес: " . ($a['address'] ?: '(не указан — уточнить)') . "\n"
           . "E-mail: {$a['email']}\nТелефон: {$a['phone']}";
-    if ($clean && is_file($clean) && function_exists('tg_send_photo')) {
+    // Отправляем ДОКУМЕНТОМ, а не фото: Telegram сжимает фото и режет разрешение,
+    // а типографии нужен исходный PDF, с которого печатают оригинал.
+    if ($clean && is_file($clean) && function_exists('tg_send_document')) {
+        tg_send_document($ordersChat, $clean, ['caption' => $line]);
+    } elseif ($clean && is_file($clean) && function_exists('tg_send_photo')) {
         tg_send_photo($ordersChat, $clean, ['caption' => $line]);
     } elseif (function_exists('tg_send')) {
         tg_send($ordersChat, $line);

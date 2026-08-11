@@ -239,9 +239,14 @@ function pdf_diploma(array $application, string $type = 'main'): string {
         // Титул спец-награды: явный special_award → переданный result → сам $type → дефолт.
         $specialSrc = (string)($application['special_award'] ?? '');
         if ($specialSrc === '') {
-            if (!in_array($type, $knownTypes, true) && $type !== '') $specialSrc = $type;
-            elseif ($result !== '')                                  $specialSrc = $result;
-            else                                                     $specialSrc = 'За артистизм';
+            // СЫРОЙ КОД ТИПА НА БЛАНК НЕ ПЕЧАТАЕМ. Раньше сюда попадало само значение
+            // $type — и на диплом крупным золотом выходило «MAIN_CLEAN», потому что
+            // такого типа генератор не знает. Технический идентификатор не может быть
+            // названием награды: берём результат заявки, а его нет — общее звание.
+            $looksLikeCode = $type === '' || (bool) preg_match('~^[a-z0-9_\-]+$~', $type);
+            if (!$looksLikeCode && !in_array($type, $knownTypes, true)) $specialSrc = $type;
+            elseif ($result !== '')                                     $specialSrc = $result;
+            else                                                        $specialSrc = 'За артистизм';
         }
         $special = mb_strtoupper($specialSrc, 'UTF-8');
 

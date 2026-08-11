@@ -482,21 +482,45 @@ function launch_fire(int $compId, string $wave, array $channels, string $when = 
  *  которое оргкомитет явно создаёт кнопкой «Запланировать всё» в разделе «Запуск».
  * ===================================================================== */
 
-/** Дата/время в рабочем окне: воскресенье → переносим на понедельник, время сохраняем. */
+/**
+ * Дата/время волны запуска.
+ *
+ * ВОСКРЕСЕНЬЕ РАЗРЕШЕНО (правило владельца, август 2026). Раньше здесь стоял сдвиг
+ * вс → пн, и правило было внедрено только в исполнителе: launch_run_due() и окно
+ * рассылок воскресенье пропускали, а планировщик всё так же двигал даты волн на
+ * понедельник. Из-за этого «последний день приёма» 25-го, выпавшего на воскресенье,
+ * планировался на 26-е — то есть на день, когда приём уже закрыт: письмо звало
+ * подать заявку в закрытый конкурс.
+ *
+ * Рабочие дни остаются там, ради чего и написаны — сроки оценки и наградных
+ * документов (st_is_workday / next_working_slot в core/send_timing.php).
+ */
 function launch_workday_at(int $y, int $m, int $d, int $hh, int $mi): string {
     $t = new \DateTime(sprintf('%04d-%02d-%02d %02d:%02d:00', $y, $m, $d, $hh, $mi));
-    while ((int) $t->format('w') === 0) { $t->modify('+1 day'); }   // вс — нерабочий
     return $t->format('Y-m-d H:i:s');
 }
 
-/** Дата запуска по умолчанию: 1-е число (если вс — 2-е). Если 1-е уже прошло — след. месяц. */
+/** Дата запуска по умолчанию: 1-е число. Если 1-е уже прошло — следующий месяц. */
 function launch_default_date(): string {
     $now = new \DateTime('now');
     $y = (int) $now->format('Y'); $m = (int) $now->format('n'); $d = (int) $now->format('j');
     if ($d > 1) { $m++; if ($m > 12) { $m = 1; $y++; } }
-    $t = new \DateTime(sprintf('%04d-%02d-01 00:00:00', $y, $m));
-    if ((int) $t->format('w') === 0) $t->modify('+1 day');          // 1-е вс → 2-е
-    return $t->format('Y-m-d');
+    // Воскресенье не сдвигаем: 1-е число — это 1-е число, в какой бы день недели
+    // оно ни выпало. Кампания месяца не может стартовать вторым числом.
+    return (new \DateTime(sprintf('%04d-%02d-01 00:00:00', $y, $m)))->format('Y-m-d');
+}
+
+/**
+ * Ближайший слот в окне отправки 09:00–18:00 — БЕЗ переноса выходных.
+ * Ровно то же окно, что у nl_bulk_window_open(): раньше на этом месте звали
+ * next_working_slot(), и запуск, назначенный на воскресенье, уезжал на понедельник.
+ */
+function launch_send_slot(\DateTime $from): \DateTime {
+    $t = clone $from;
+    $h = (int) $t->format('G');
+    if ($h < 9)  { $t->setTime(9, (int) $t->format('i') % 10); return $t; }
+    if ($h >= 18) { $t->modify('+1 day'); $t->setTime(9, 0); }
+    return $t;
 }
 
 /**
@@ -519,7 +543,21 @@ function launch_schedule_all(string $launchDate, string $launchTime, array $chan
     $comps = launch_open_comps();
     if (!$comps) return ['ok' => false, 'msg' => 'Нет открытых конкурсов (status=open) для запуска'];
 
-    q("UPDATE launch_jobs SET status='cancelled' WHERE status='scheduled'");
+    // ОТМЕНЯЕМ ТОЛЬКО СВОЙ ПЛАН — С МЕСЯЦА ЗАПУСКА И ДАЛЬШЕ.
+    // Раньше здесь снималось ВСЁ незавершённое без разбора месяца. Планировщик
+    // нового месяца вызывается 1-го числа в 09:00 — то есть до того, как отработает
+    // волна результатов прошлого месяца (28-е, а при задержке — начало следующего).
+    // Она молча уезжала в 'cancelled', и участники прошлого сезона не получали
+    // ни постов с итогами, ни писем с результатами: работа жюри уходила в никуда.
+    $__planMonth = substr($launchDate, 0, 7);
+    q("UPDATE launch_jobs SET status='cancelled'
+        WHERE status='scheduled' AND strftime('%Y-%m', run_at) >= ?", [$__planMonth]);
+
+    // Хвосты прошлых месяцев не выполняем (их время ушло), но и не выдаём за отмену
+    // оргкомитетом: помечаем отдельным статусом, чтобы в журнале было видно, что
+    // волна не отработала в срок.
+    q("UPDATE launch_jobs SET status='expired'
+        WHERE status='scheduled' AND strftime('%Y-%m', run_at) < ?", [$__planMonth]);
 
     // Идеальные наборы каналов по волнам (правило владельца, «как надо»):
     //   • ВСЕ посты ВК (запуск по каждому конкурсу, 3 дня, последний, закрытие, результаты)
@@ -534,12 +572,13 @@ function launch_schedule_all(string $launchDate, string $launchTime, array $chan
     $hasEmail = in_array('email', $channels, true);
     $hasInapp = in_array('inapp', $channels, true);
 
-    // Время запуска → ближайший рабочий слот (ночь/вс → 09:0x ближайшего рабочего дня).
+    // Время запуска → ближайший слот окна 09:00–18:00. Выходные НЕ переносим:
+    // воскресенье разрешено (правило владельца), а next_working_slot() уводил
+    // воскресный запуск на понедельник вопреки выставленной в пульте дате.
     $lt = strtotime($launchDate . ' ' . ($launchTime ?: '09:00'));
     if (!$lt) $lt = time();
     $fromDt = (new \DateTime())->setTimestamp($lt);
-    $slot = function_exists('next_working_slot') ? next_working_slot($fromDt) : $fromDt;
-    $runLaunch = $slot->format('Y-m-d H:i:s');
+    $runLaunch = launch_send_slot($fromDt)->format('Y-m-d H:i:s');
     $rep = (int) $comps[0]['id'];
     $planned = [];
 
@@ -1029,11 +1068,33 @@ function launch_run_due(): int {
               AND started_at < ?", [(new \DateTime('-2 hours'))->format('Y-m-d H:i:s')]);
     } catch (\Throwable $e) { /* колонки может не быть на старой БД — не мешаем работе */ }
 
+    // ПРОТУХШИЕ ЗАДАНИЯ НЕ ВЫПОЛНЯЮТСЯ.
+    // Условие было одно — «run_at <= сейчас», то есть наступившей считалась любая
+    // прошедшая дата, хоть 1970 года. В базе такие строки реально лежат (волны
+    // 'closed' и 'results' с run_at='1970-01-01'), и держал их от выполнения только
+    // опущенный стоп-кран: как только массовые включат, вся эта древность улетела бы
+    // разом — «приём закрыт» и итоги месяца, которого не было.
+    //
+    // Догон просрочки нужен (крон мог не работать сутки), но у него должен быть срок.
+    // Двое суток — предел: волна старше этого уже не про сегодняшнюю кампанию.
+    $staleBefore = (new \DateTime('-2 days'))->format('Y-m-d H:i:s');
+    try {
+        $st = q("UPDATE launch_jobs SET status='expired'
+                  WHERE status='scheduled' AND run_at < ?", [$staleBefore]);
+        $nSt = is_object($st) && method_exists($st, 'rowCount') ? (int) $st->rowCount() : 0;
+        if ($nSt > 0) {
+            error_log('launch_run_due: протухшие волны сняты (старше 2 суток): ' . $nSt);
+            if (function_exists('nl_log')) nl_log("запуск: протухшие волны сняты (старше 2 суток) — $nSt");
+        }
+    } catch (\Throwable $e) {}
+
     // ORDER BY ... id ASC обязателен: у всех волн одного запуска одинаковый run_at,
     // и без вторичной сортировки порядок не определён. Нужен именно порядок вставки —
     // сначала посты ВК (быстрые), потом почтовая волна (она идёт минутами).
-    $due = all("SELECT * FROM launch_jobs WHERE status='scheduled' AND run_at <= ? ORDER BY run_at ASC, id ASC",
-               [$now->format('Y-m-d H:i:s')]);
+    $due = all("SELECT * FROM launch_jobs
+                 WHERE status='scheduled' AND run_at <= ? AND run_at >= ?
+                 ORDER BY run_at ASC, id ASC",
+               [$now->format('Y-m-d H:i:s'), $staleBefore]);
     $done = 0;
     foreach ($due as $j) {
         $jid  = (int) $j['id'];

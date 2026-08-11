@@ -58,3 +58,30 @@ function pay_path_app(int $appId): string {
 function pay_path_order(int $orderId): string {
     return '/pay?t=order&id=' . $orderId . '&s=' . pay_sign('order', $orderId);
 }
+
+/**
+ * ПОДПИСАННАЯ ССЫЛКА НА ДИПЛОМ.
+ *
+ * Маршрут /diploma/{номер}.pdf был открыт всем: номера дипломов идут строго подряд,
+ * и перебором соседних выкачивались документы чужих детей — с ФИО, учреждением,
+ * городом, педагогом и званием. Теперь маршрут требует либо владельца заявки, либо
+ * сотрудника, либо вот эту подпись — её несёт ссылка из письма участнику, чтобы
+ * диплом открывался в один клик и без входа в кабинет.
+ *
+ * Подпись бессрочная намеренно: письмо с дипломом человек хранит годами и должен
+ * иметь возможность открыть документ и через сезон.
+ */
+function diploma_sign(string $number): string {
+    return substr(hash_hmac('sha256', 'diploma:' . mb_strtoupper(trim($number)), pay_secret()), 0, 32);
+}
+
+function diploma_sign_ok(string $number, string $sig): bool {
+    if ($sig === '' || trim($number) === '') return false;
+    return hash_equals(diploma_sign($number), $sig);
+}
+
+/** Абсолютная ссылка на PDF диплома с подписью (для писем и уведомлений). */
+function diploma_link(string $number): string {
+    return rtrim((string) cfgv('base_url', ''), '/')
+         . '/diploma/' . rawurlencode($number) . '.pdf?s=' . diploma_sign($number);
+}

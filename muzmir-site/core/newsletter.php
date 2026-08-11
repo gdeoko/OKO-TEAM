@@ -181,13 +181,39 @@ function newsletter_track_open(string $token): void {
     if ($id) q("UPDATE newsletters SET stats_open = stats_open + 1 WHERE id = ?", [$id]);
 }
 
-/** Инкремент кликов, возврат безопасного целевого URL для редиректа. */
+/**
+ * Инкремент кликов и возврат целевого URL для редиректа.
+ *
+ * РЕДИРЕКТ ТОЛЬКО НА СВОИ ДОМЕНЫ. Единственной проверкой было «начинается с http»,
+ * то есть /api/v1/track?e=c&u=<base64 любого адреса> уводил куда угодно с
+ * официального домена центра. Такую ссылку удобно рассылать от имени «Музыкального
+ * Мира»: почтовые фильтры и человек видят знакомый адрес, а открывается чужой сайт.
+ * Всё, что не наше, отправляем на главную.
+ */
 function newsletter_track_click(string $token, string $url = ''): string {
     $id = nl_newsletter_by_track($token);
     if ($id) q("UPDATE newsletters SET stats_click = stats_click + 1 WHERE id = ?", [$id]);
-    $url = trim($url);
-    if ($url !== '' && preg_match('#^https?://#i', $url)) return $url;
-    return rtrim((string) cfgv('base_url'), '/') . '/';
+
+    $home = rtrim((string) cfgv('base_url'), '/') . '/';
+    $url  = trim($url);
+    if ($url === '' || !preg_match('#^https?://#i', $url)) return $home;
+
+    $host = mb_strtolower((string) (parse_url($url, PHP_URL_HOST) ?: ''));
+    if ($host === '') return $home;
+
+    $own = [];
+    foreach (['base_url', 'domain', 'domain_puny'] as $k) {
+        $v = (string) cfgv($k, '');
+        if ($v === '') continue;
+        $h = mb_strtolower((string) (parse_url(str_contains($v, '://') ? $v : 'https://' . $v, PHP_URL_HOST) ?: ''));
+        if ($h !== '') $own[] = $h;
+    }
+    $own = array_values(array_unique($own));
+
+    foreach ($own as $h) {
+        if ($host === $h || str_ends_with($host, '.' . $h)) return $url;
+    }
+    return $home;
 }
 
 /* =====================================================================
@@ -264,8 +290,23 @@ function newsletter_enqueue(int $newsletterId): int {
     $base     = rtrim((string) cfgv('base_url'), '/');
     $preheader = mb_substr(trim(strip_tags($bodyRaw)), 0, 120);
 
-    // Идемпотентность: убираем прежние неотправленные письма этой рассылки.
-    q("DELETE FROM mail_queue WHERE newsletter_id = ? AND status = 'queued'", [$newsletterId]);
+    // Идемпотентность: убираем прежние НЕотправленные письма этой рассылки —
+    // и поставленные, и приостановленные (paused раньше оставался и потом уходил
+    // вторым экземпляром).
+    q("DELETE FROM mail_queue WHERE newsletter_id = ? AND status IN ('queued','paused')", [$newsletterId]);
+
+    // А тем, кому письмо этой рассылки УЖЕ ушло, второй раз не отправляем.
+    // Повторная постановка — обычное дело: рассылку правят и запускают снова,
+    // крон запуска может сработать дважды. Без этой проверки половина базы
+    // получала одно и то же письмо по второму разу, и это прямой путь в спам.
+    $already = [];
+    try {
+        foreach (all("SELECT DISTINCT to_email FROM mail_queue
+                       WHERE newsletter_id = ? AND status IN ('sent','sending')", [$newsletterId]) as $s) {
+            $already[mb_strtolower(trim((string) $s['to_email']))] = true;
+        }
+    } catch (\Throwable $e) {}
+    if ($already) nl_log("enqueue #$newsletterId: уже получили ранее — " . count($already) . ", им не дублируем");
 
     $queued = 0;
     $i = 0;
@@ -275,6 +316,7 @@ function newsletter_enqueue(int $newsletterId): int {
         foreach ($recips as $r) {
             $email = mb_strtolower(trim((string) ($r['email'] ?? '')));
             if ($email === '' || !filter_var($email, FILTER_VALIDATE_EMAIL)) continue;
+            if (isset($already[$email])) continue;   // это письмо ему уже уходило
 
             [$unsubToken, $active] = nl_ensure_subscriber($email, (string) ($r['name'] ?? ''), $source);
             if (!$active) continue; // отписавшихся не трогаем
@@ -489,7 +531,15 @@ function nl_failure_kind(string $err): string {
               'mailbox does not exist', 'account does not exist', 'no mailbox',
               'recipient rejected', 'invalid recipient', 'unrouteable address',
               'address rejected', 'некорректный адрес', 'нет такого', 'не существует',
-              '5.1.1', '5.1.0', '5.1.2', '5.1.3', '5.1.6'] as $w) {
+              '5.1.1', '5.1.0', '5.1.2', '5.1.3', '5.1.6',
+              // Причины Unisender Go (mail_send_unisender разбирает failed_emails).
+              // Это уже вердикт СЕРВИСА по конкретному адресу, а не общий код 5xx:
+              // invalid — адреса не существует; permanent_unavailable — ящик закрыт
+              // навсегда; unsubscribed/complained — человек отписался или пожаловался,
+              // писать ему нельзя; blocked — адрес в глобальном стоп-листе.
+              'отклонил адрес: invalid', 'отклонил адрес: permanent_unavailable',
+              'отклонил адрес: unsubscribed', 'отклонил адрес: complained',
+              'отклонил адрес: blocked'] as $w) {
         if (mb_strpos($e, $w) !== false) return 'hard';
     }
 
@@ -527,8 +577,14 @@ function nl_purge_guard_tripped(int $hardNow = 0): bool {
     $sentToday = (int) (scalar("SELECT COUNT(*) FROM mail_queue
                                  WHERE status='sent' AND COALESCE(priority,0)>0
                                    AND date(sent_at)=date('now')") ?? 0);
+    // ЗА СУТКИ — значит за сутки. Раньше в этом запросе не было фильтра по дате, и в
+    // знаменатель шла ВСЯ история отказов: строки status='failed' не удаляются никогда,
+    // так что через месяц работы там копятся тысячи записей. На их фоне доля сегодняшних
+    // отказов всегда оказывалась ниже порога, и предохранитель, поставленный после
+    // потери 2695 живых адресов, не сработал бы ни разу.
     $failToday = (int) (scalar("SELECT COUNT(*) FROM mail_queue
-                                 WHERE status='failed' AND COALESCE(priority,0)>0") ?? 0);
+                                 WHERE status='failed' AND COALESCE(priority,0)>0
+                                   AND date(COALESCE(NULLIF(sent_at,''), created_at))=date('now')") ?? 0);
     $total = $sentToday + $failToday;
     if ($hardNow < 50 || $total < 100) return false;      // мало данных — не судим
     return ($hardNow / max(1, $total)) > 0.20;            // каждый пятый — это канал, не адреса
@@ -536,14 +592,20 @@ function nl_purge_guard_tripped(int $hardNow = 0): bool {
 
 function nl_prune_failed(): int {
     try { db()->exec("ALTER TABLE mail_queue ADD COLUMN soft_tries INTEGER DEFAULT 0"); } catch (\Throwable $e) {}
+    // Берём только СВЕЖИЕ отказы и ограниченной пачкой. Строки status='failed' живут
+    // в очереди вечно, и без этих рамок каждый прогон крона перечитывал всю историю
+    // разом — и по мере роста базы становился всё тяжелее.
     $rows = all("SELECT id, to_email, COALESCE(error,'') AS error, COALESCE(soft_tries,0) AS soft_tries
-                   FROM mail_queue WHERE status='failed' AND COALESCE(priority,0)>0");
+                   FROM mail_queue
+                  WHERE status='failed' AND COALESCE(priority,0)>0
+                    AND date(COALESCE(NULLIF(sent_at,''), created_at)) >= date('now','-2 day')
+                  ORDER BY id DESC LIMIT 2000");
 
     // Сначала считаем, сколько отказов набралось, и только потом решаем, трогать ли базу.
     $hard = 0;
     foreach ($rows as $r) if (nl_failure_kind((string) $r['error']) === 'hard') $hard++;
     if (nl_purge_guard_tripped($hard)) {
-        mass_sending_set(false);
+        mass_sending_set(false, 'guard_fail_rate');
         nl_log("СТОП: отказов $hard — это слишком много для живой базы. "
              . "Похоже на сбой канала, а не на плохие адреса. Никого не выводим, "
              . "массовая отправка остановлена — нужен разбор.");
@@ -591,9 +653,18 @@ function mass_sending_enabled(): bool {
 }
 
 /** Включить/выключить массовые коммуникации (пульт запуска). */
-function mass_sending_set(bool $on): void {
+/**
+ * @param string $reason почему опущен стоп-кран. ОБЯЗАТЕЛЕН при выключении:
+ *   без него аварийная остановка автоматикой защиты неотличима от штатного
+ *   «Завершить кампанию», и месячный крон 1-го числа поднимал бы кран, не
+ *   разобравшись, — то есть защита переставала бы работать.
+ *   Штатное завершение кампании — 'campaign_finished'.
+ */
+function mass_sending_set(bool $on, string $reason = ''): void {
     set_setting('mass_sending', $on ? '1' : '0');
     set_setting('mass_sending_changed_at', date('Y-m-d H:i:s'));
+    if (!$on) set_setting('mass_sending_off_reason', $reason !== '' ? $reason : 'unknown');
+    else      set_setting('mass_sending_off_reason', '');
 }
 
 /**
@@ -933,6 +1004,15 @@ function newsletter_process_queue(int $limit): int {
     // $account — необязательный аккаунт-отправитель (для массовых рассылок из пула).
     $sendRow = function (array $row, array $account = []): bool {
         $id = (int) $row['id'];
+
+        // ЧУЖУЮ ПРИЧИНУ ОТКАЗА СЮДА НЕ ПУСКАЕМ.
+        // mail_last_error() — статик на весь процесс, и сбрасывается он только внутри
+        // mail_send(). Если это письмо провалилось ДО отправки (не собралось тело,
+        // упало исключение в выборе ящика), в mail_last_error() оставалась причина
+        // ПРЕДЫДУЩЕГО письма — например «no such user». Вызывающий код читал её и
+        // вычёркивал из базы ни в чём не повинного получателя. Чистим на входе.
+        if (function_exists('mail_last_error')) mail_last_error('');
+
         $opt = [];
         if (!empty($row['attach'])) $opt['attach'] = (string) $row['attach'];
         if ($account) $opt['account'] = $account;
@@ -945,6 +1025,8 @@ function newsletter_process_queue(int $limit): int {
             $built = nl_build_body($row);
             if ($built === null) {
                 // Собрать не удалось — письмо не теряем, попробуем в следующий раз.
+                // Причину ставим ЯВНО и мягкую: это наш сбой, а не плохой адрес.
+                if (function_exists('mail_last_error')) mail_last_error('сборка письма не удалась (наша сторона)');
                 update('mail_queue', ['error' => 'сборка письма не удалась, попробуем позже'], 'id=:id', ['id' => $id]);
                 return false;
             }
@@ -960,6 +1042,22 @@ function newsletter_process_queue(int $limit): int {
         // в awards-пуле отсутствует и молча выбрасывался: вся волна ушла бы с наградного
         // ящика и официальной почты центра, мимо ротации и мимо лимита 200/ящик.
         $opt['priority'] = (int) ($row['priority'] ?? 0);
+
+        // Заголовок List-Unsubscribe — только для массовых. У личных писем (код входа,
+        // диплом, чек) кнопки «Отписаться» быть не должно: от них не отписываются,
+        // они приходят в ответ на собственное действие человека.
+        if ($opt['priority'] > 0) {
+            try {
+                $__sub = one("SELECT unsub_token FROM subscribers WHERE email=?",
+                             [mb_strtolower(trim((string) $row['to_email']))]);
+                $__tok = (string) ($__sub['unsub_token'] ?? '');
+                if ($__tok !== '') {
+                    $opt['unsubscribe_url'] = rtrim((string) cfgv('base_url'), '/')
+                                            . '/api/v1/unsubscribe.php?token=' . urlencode($__tok);
+                }
+            } catch (\Throwable $e) {}
+        }
+
         $ok = false;
         // Автозамена ящика: если основной не принял — письмо уйдёт со следующей почты.
         try {
@@ -1080,7 +1178,10 @@ function newsletter_process_queue(int $limit): int {
             $u = mb_strtolower((string) ($b['user'] ?? ''));
             if ($u === '') continue;
             $sentBox = nl_box_sent_today($u);
-            if ($sentBox >= nl_per_box_cap($boxUser)) continue;                       // дневная норма ящика выбрана
+            // Норма считается по ЭТОМУ ящику ($u). Раньше здесь стояло $boxUser —
+            // переменная из другого, ещё не начавшегося цикла: на первом же ящике
+            // это strict_types-фатал, и массовая рассылка не отправляла ничего.
+            if ($sentBox >= nl_per_box_cap($u)) continue;                       // дневная норма ящика выбрана
             // Ящик, который подряд отказывает, писем не получает.
             if (function_exists('mail_account_penalty') && mail_account_penalty($b)) continue;
             // СУТОЧНЫЙ ЛИМИТ ОТПРАВИТЕЛЯ. Когда почтовик упирается в свой предел,
@@ -1090,10 +1191,10 @@ function newsletter_process_queue(int $limit): int {
             // После нескольких отказов подряд ящик замолкает до завтра.
             if (nl_box_blocked_today($u)) continue;
             // Сколько ящик должен по графику минус сколько уже ушло.
-            $behind = nl_box_due_by_now($boxUser) - $sentBox;
+            $behind = nl_box_due_by_now($u) - $sentBox;
             if ($behind < 1) continue;                                        // идём по графику — ждём
             $ready[$bi] = $u;
-            $quotaBox[$bi] = min($behind, nl_box_burst_cap(), nl_per_box_cap($boxUser) - $sentBox);
+            $quotaBox[$bi] = min($behind, nl_box_burst_cap(), nl_per_box_cap($u) - $sentBox);
         }
 
         if (!$allowed) {
@@ -1146,7 +1247,7 @@ function newsletter_process_queue(int $limit): int {
                             // Но если такое «нет ящика» звучит подряд десятками —
                             // верить нельзя: так выглядит упёршийся в лимит канал.
                             if (++$hardRun > 30) {
-                                mass_sending_set(false);
+                                mass_sending_set(false, 'guard_hard_streak');
                                 nl_log("СТОП: $hardRun отказов адресатов за один прогон — "
                                      . "это не база, это канал. Из базы никого не выводим, "
                                      . "массовая отправка остановлена ($why)");

@@ -118,17 +118,13 @@ body:has(.shop-cart-fab:not([hidden])) .mz-cookie{bottom:calc(164px + env(safe-a
   function mark(k){ try{LS.setItem(k,'1');}catch(e){} }
   function toast(msg){ var t=document.getElementById('mzToast'); if(!t)return; t.textContent=msg; t.classList.add('on'); setTimeout(function(){t.classList.remove('on');},2200); }
 
-  /* ---- 3. Глобальный «Поделиться» ---- */
-  document.addEventListener('click', function(e){
-    var b = e.target.closest('[data-share]'); if(!b) return;
-    e.preventDefault();
-    var dsv = b.getAttribute('data-share') || '';           // некоторые кнопки хранят URL прямо в data-share="..."
-    var url = b.getAttribute('data-share-url') || b.getAttribute('data-url') || (/^https?:/.test(dsv) ? dsv : '') || location.href;
-    var title = b.getAttribute('data-share-title') || b.getAttribute('data-title') || document.title;
-    if(navigator.share){ navigator.share({title:title,url:url}).catch(function(){}); return; }
-    if(navigator.clipboard){ navigator.clipboard.writeText(url).then(function(){toast('Ссылка скопирована');},function(){toast(url);}); }
-    else { toast(url); }
-  }, false);
+  /* ---- 3. «Поделиться» ----
+     Обработчик отсюда УБРАН намеренно. Их было два: этот и в motion.js, оба на
+     document и оба без stopPropagation — на каждый клик отрабатывали подряд.
+     На телефоне это выглядело так: открывалось системное окно «Поделиться», а
+     под ним вторым срабатывал фолбэк и перебивал буфер обмена. Шеринг ведёт
+     motion.js: там и Web Share API, и нормальный фолбэк с ВК, Telegram и
+     копированием ссылки. */
 
   /* ---- 1. Cookie 152-ФЗ ---- */
   var ck = document.getElementById('mzCookie');
@@ -170,8 +166,16 @@ body:has(.shop-cart-fab:not([hidden])) .mz-cookie{bottom:calc(164px + env(safe-a
       var fd=new FormData(f), btn=f.querySelector('button[type=submit]');
       if(btn){btn.disabled=true;btn.textContent='Отправляем…';}
       fetch('<?= url('/api/v1/subscribe') ?>', {method:'POST', body:fd, headers:{'X-Requested-With':'fetch'}})
-        .then(function(r){return r.json().catch(function(){return{};});})
-        .then(function(d){
+        // Тот же изъян, что был в форме контактов: экран «Готово» показывался при
+        // любом ответе, включая отказ. Человек думал, что подписался, а адрес в базу
+        // не попадал.
+        .then(function(r){return r.json().catch(function(){return{};}).then(function(d){return {ok:r.ok,d:d||{}};});})
+        .then(function(res){
+          if (!res.ok || res.d.ok === false) {
+            if(btn){btn.disabled=false;btn.textContent='Получить чек-лист';}
+            toast(res.d.error || 'Не удалось отправить. Проверьте адрес и попробуйте ещё раз.');
+            return;
+          }
           f.style.display='none';
           var ok=document.getElementById('mzLeadOk'); if(ok) ok.hidden=false;
           setTimeout(closeLead, 2600);

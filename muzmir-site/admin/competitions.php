@@ -142,7 +142,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             'start_date'    => input('start_date') ?: null,
             'end_date'      => input('end_date') ?: null,
             'results_date'  => input('results_date') ?: null,
-            'results_mode'  => input('results_mode') ?: 'email',
+            // Белый список: что не из него — 'email'. Раньше сюда попадало любое
+            // значение из формы, а форма про режим 'list' не знала вовсе.
+            'results_mode'  => in_array(input('results_mode'), ['email', 'list'], true) ? input('results_mode') : 'email',
             'status'        => in_array(input('status'), ['draft','open','closed','judging','finished'], true) ? input('status') : 'draft',
             'nominations'   => json_encode(array_values($_POST['noms'] ?? []), JSON_UNESCAPED_UNICODE),
             'diploma_theme' => $diplomaTheme,
@@ -635,9 +637,14 @@ if ($action === 'edit') {
           </div>
           <div class="form-row">
             <div class="field"><label>Дата результатов</label><input type="date" name="results_date" value="<?= h($c['results_date']) ?>"></div>
+            <?php /* Варианта «list» в этом списке не было, хотя именно он включает
+                     раздел «Оценка длинных»: любое сохранение конкурса молча
+                     переводило его в 'email', и очередь оценки длинного конкурса
+                     опустевала. Вариант «На сайте» убран — в коде он нигде не
+                     обрабатывается и означал ровно то же, что «На почту». */ ?>
             <div class="field"><label>Выдача результатов</label><select name="results_mode">
-              <option value="email" <?= $c['results_mode']==='email'?'selected':'' ?>>На почту</option>
-              <option value="site" <?= $c['results_mode']==='site'?'selected':'' ?>>На сайте</option>
+              <option value="email" <?= $c['results_mode']==='email'?'selected':'' ?>>На почту (по каждой заявке)</option>
+              <option value="list"  <?= $c['results_mode']==='list' ?'selected':'' ?>>Списком (длинный конкурс)</option>
             </select></div>
           </div>
           <hr>

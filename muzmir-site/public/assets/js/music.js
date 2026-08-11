@@ -13,10 +13,15 @@
   const SS_TRACK  = 'mz-music-track-idx';
   let audio, playlist = null, mode = 'stream', tries = 0, started = false;
 
-  // Чистим возможный залипший флаг «выключено» от старого плеера (был баг с паузой).
-  try { localStorage.removeItem('mz-music-off'); } catch (e) {}
-  // Выключить музыку можно ТОЛЬКО в настройках профиля (стамп window.MZ_MUSIC_OFF из PHP).
-  let userWantsOn = window.MZ_MUSIC_OFF !== true;
+  // ВЫБОР ЧЕЛОВЕКА ЖИВЁТ МЕЖДУ СТРАНИЦАМИ.
+  // Раньше выключить фоновую музыку можно было только в настройках профиля — то есть
+  // гостю сайта вообще нечем: звук играл на каждой странице и остановить его было
+  // нельзя. Теперь есть видимая кнопка (см. .mz-radio в layout.php), а её состояние
+  // запоминается: нажал «выключить» — тишина и на всех следующих страницах.
+  const LS_OFF = 'mz-music-off';
+  let offByUser = false;
+  try { offByUser = localStorage.getItem(LS_OFF) === '1'; } catch (e) {}
+  let userWantsOn = window.MZ_MUSIC_OFF !== true && !offByUser;
 
   function ensureAudio() {
     if (audio) return;
@@ -110,7 +115,10 @@
 
   // Гарантированный старт с первого взаимодействия — синхронно в обработчике жеста.
   function armGesture() {
-    const evs = ['pointerdown', 'touchstart', 'touchend', 'click', 'keydown', 'scroll', 'wheel', 'mousemove'];
+    // ТОЛЬКО ЯВНОЕ ДЕЙСТВИЕ. 'scroll', 'wheel' и особенно 'mousemove' — это не
+    // намерение включить звук: музыка начинала играть от одного движения мышью,
+    // когда человек просто читал страницу.
+    const evs = ['pointerdown', 'touchstart', 'touchend', 'click', 'keydown'];
     function go() {
       if (!userWantsOn) { cleanup(); return; }
       unmuteNow();                       // снимаем mute с уже играющего потока (мгновенный звук)
@@ -163,16 +171,47 @@
     window.addEventListener('pagehide', function () { try { if (audio) audio.pause(); } catch (e) {} });
   }
 
-  // Для настроек профиля: включить/выключить фоновую музыку на лету.
+  // Включить/выключить фоновую музыку на лету (кнопка на странице и настройки профиля).
   function setEnabled(on) {
     userWantsOn = !!on;
-    if (on) { tries = 0; play(); }
+    try { localStorage.setItem(LS_OFF, on ? '0' : '1'); } catch (e) {}
+    if (on) { tries = 0; ensureAudio(); if (!playlist) { init(); } else { setSrc(); audio.muted = false; play(); } }
     else if (audio) { fade(0, 300); setTimeout(function () { try { audio.pause(); } catch (e) {} }, 320); }
+    syncWidget();
   }
 
-  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', init);
-  else init();
+  /* ── Видимый переключатель на странице ────────────────────────────────────
+     Звук, который нельзя остановить, — это не только раздражение, но и прямое
+     нарушение доступности: человеку со скринридером фоновая музыка перекрывает
+     речь синтезатора, и уйти со страницы он может только закрыв вкладку. */
+  function syncWidget() {
+    var w = document.getElementById('mzRadio');
+    if (!w) return;
+    var on = userWantsOn && !!(audio && !audio.paused);
+    w.setAttribute('data-on', on ? '1' : '0');
+    var b = w.querySelector('.mz-radio-btn');
+    if (b) b.setAttribute('aria-label', on ? 'Выключить фоновую музыку' : 'Включить фоновую музыку');
+  }
 
-  window.MzMusic = { play: play, next: next, setEnabled: setEnabled,
+  function mountWidget() {
+    var w = document.getElementById('mzRadio');
+    if (!w) return;
+    var b = w.querySelector('.mz-radio-btn');
+    if (b && !b.dataset.bound) {
+      b.dataset.bound = '1';
+      b.addEventListener('click', function () { setEnabled(!userWantsOn || !(audio && !audio.paused)); });
+    }
+    if (audio) {
+      audio.addEventListener('playing', syncWidget);
+      audio.addEventListener('pause', syncWidget);
+    }
+    syncWidget();
+  }
+
+  function boot() { init(); setTimeout(mountWidget, 60); }
+  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', boot);
+  else boot();
+
+  window.MzMusic = { play: play, next: next, setEnabled: setEnabled, sync: syncWidget,
     isPlaying: function () { return !!(audio && !audio.paused && audio.currentTime > 0); } };
 })();

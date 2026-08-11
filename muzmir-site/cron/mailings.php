@@ -121,23 +121,76 @@ function mailings_recipients(): array {
 /**
  * Кладёт письмо всем адресатам в mail_queue батчами по MAILINGS_BATCH
  * (одна транзакция на батч — быстро и не блокирует крон на SMTP).
+ *
+ * Письмо здесь МАССОВОЕ, и в очередь оно кладётся именно как массовое:
+ *   priority = 5      — воркер отдаёт его bulk-пулу (unisender), по дневной норме,
+ *                       ровным темпом и только в окно отправки;
+ *   campaign_type     — тип для суточной квоты (konkurs/vip/kabinet).
+ *
+ * Раньше строкой ниже стоял mail_queue(), который ставит priority = 0. Нуль в этой
+ * системе значит «личное письмо, отправить немедленно»: вся база (тысячи адресов)
+ * уходила бы залпом через транзакционные ящики центра — те самые, которыми идут
+ * коды входа и дипломы. Это и суточный лимит Яндекса за минуты, и карантин домена,
+ * и коды подтверждения, которые перестают доходить участникам.
+ *
+ * Отписка обязательна: rm_mail_layout своего отказа не несёт, а без неё массовое
+ * письмо законно считается спамом. Каждому подставляется персональная ссылка;
+ * отписавшиеся (active=0) пропускаются молча.
+ *
  * @param array $recipients результат mailings_recipients()
  * @return int сколько писем поставлено в очередь
  */
-function mailings_queue_all(array $recipients, string $subject, string $html): int {
+function mailings_queue_all(array $recipients, string $subject, string $html, string $campaignType = 'konkurs'): int {
     $queued = 0;
+    $base   = rtrim((string) cfgv('base_url'), '/');
+    $canUnsub = function_exists('nl_ensure_subscriber');
+    if (function_exists('nl_ensure_campaign_type_col')) nl_ensure_campaign_type_col();
+
     $chunks = array_chunk(array_values($recipients), MAILINGS_BATCH);
     foreach ($chunks as $chunk) {
         $inTx = false;
         try { $inTx = db()->beginTransaction(); } catch (\Throwable $e) { /* без транзакции */ }
         foreach ($chunk as $r) {
-            if (mail_queue($r['email'], $r['name'], $subject, $html) > 0) $queued++;
+            $email = mb_strtolower(trim((string) $r['email']));
+            if ($email === '') continue;
+
+            $body = $html;
+            if ($canUnsub) {
+                [$token, $active] = nl_ensure_subscriber($email, (string) $r['name'], 'newsletter');
+                if (!$active) continue;                       // отписался — не трогаем
+                $body = mailings_with_unsub($html, $base . '/api/v1/unsubscribe.php?token=' . urlencode($token));
+            }
+
+            try {
+                $id = insert('mail_queue', [
+                    'to_email'      => $email,
+                    'to_name'       => (string) $r['name'],
+                    'subject'       => $subject,
+                    'body'          => $body,
+                    'status'        => 'queued',
+                    'priority'      => 5,
+                    'campaign_type' => $campaignType,
+                ]);
+            } catch (\Throwable $e) { $id = 0; }
+            if ($id > 0) $queued++;
         }
         if ($inTx) {
             try { db()->commit(); } catch (\Throwable $e) { /* уже закрыта */ }
         }
     }
     return $queued;
+}
+
+/** Приписывает к готовому письму строку отказа от рассылки. */
+function mailings_with_unsub(string $html, string $unsubUrl): string {
+    $foot = '<div style="margin:18px auto 0;max-width:600px;padding:0 16px 20px;'
+          . 'font:13px/1.6 Arial,Helvetica,sans-serif;color:#8a8f9e;text-align:center">'
+          . 'Вы получаете это письмо, потому что подписаны на новости конкурсов Культурного центра «Музыкальный Мир». '
+          . '<a href="' . h($unsubUrl) . '" style="color:#8a8f9e;text-decoration:underline">Отказаться от рассылки</a>'
+          . '</div>';
+    // Вставляем перед закрытием body, если оно есть; иначе просто в конец.
+    $pos = mb_strripos($html, '</body>');
+    return $pos === false ? $html . $foot : mb_substr($html, 0, $pos) . $foot . mb_substr($html, $pos);
 }
 
 /** In-app уведомление всем пользователям сайта. Возвращает число созданных. */

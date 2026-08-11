@@ -4,10 +4,41 @@ declare(strict_types=1);
 
 function h($s): string { return htmlspecialchars((string)$s, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8'); }
 
+/**
+ * Значение настройки: сначала окружение (config.php), потом таблица настроек.
+ *
+ * Раздел «Настройки» в админке сохранял значения в таблицу settings, а весь код
+ * читал их через cfgv(), которая смотрела ТОЛЬКО в config.php. Из двадцати полей
+ * реально работали два: остальные восемнадцать — телефон оргкомитета, почта, ключи
+ * кассы, токен ВК, реквизиты SMTP — сохранялись, показывались как сохранённые и не
+ * влияли ни на что. Владелец менял телефон в админке и не понимал, почему на сайте
+ * остаётся старый.
+ *
+ * Приоритет остаётся за окружением: боевые ключи задаются переменными окружения и
+ * из админки их не перебить. Таблица — фолбэк для того, что в окружении не задано.
+ */
 function cfgv(string $key, $default = null) {
-    static $c = null;
+    static $c = null, $s = null;
     if ($c === null) $c = $GLOBALS['CFG'] ?? require BASE_PATH . '/config.php';
-    return $c[$key] ?? $default;
+
+    $v = $c[$key] ?? null;
+    if ($v !== null && $v !== '') return $v;
+
+    // Таблицу читаем один раз за запрос: cfgv() зовётся сотни раз на страницу.
+    // Пока core/db.php не подключён, $s остаётся null и попытка повторится позже —
+    // иначе первый же ранний вызов (url() из шапки) навсегда закрыл бы фолбэк.
+    if ($s === null && function_exists('db')) {
+        try {
+            $tmp = [];
+            foreach (db()->query("SELECT key, value FROM settings") as $r) {
+                $tmp[(string) $r['key']] = (string) $r['value'];
+            }
+            $s = $tmp;
+        } catch (\Throwable $e) { $s = []; }   // таблицы нет — больше не пробуем
+    }
+    if (is_array($s) && isset($s[$key]) && $s[$key] !== '') return $s[$key];
+
+    return $v ?? $default;
 }
 
 function url(string $path = ''): string {
@@ -55,8 +86,19 @@ function csrf_token(): string {
     return $_SESSION['csrf'];
 }
 function csrf_field(): string { return '<input type="hidden" name="_csrf" value="' . h(csrf_token()) . '">'; }
+/**
+ * Проверка CSRF-токена.
+ *
+ * Было fail-open: если в сессии токена ещё нет (а это обычное состояние — cookie
+ * авторизации живёт 30 дней, а PHP-сессия истекает через 24 минуты), сравнение
+ * пустого с пустым давало true. То есть достаточно было прислать `_csrf=` пустым —
+ * и защита пропускала запрос. Теперь пустой или несовпадающий токен отклоняется
+ * всегда: нет токена в сессии — нет и разрешения.
+ */
 function csrf_check(): bool {
-    return isset($_POST['_csrf']) && hash_equals($_SESSION['csrf'] ?? '', $_POST['_csrf']);
+    $sess = (string) ($_SESSION['csrf'] ?? '');
+    $got  = $_POST['_csrf'] ?? '';
+    return $sess !== '' && is_string($got) && $got !== '' && hash_equals($sess, $got);
 }
 
 /** Flash-сообщения. */
@@ -95,8 +137,40 @@ function rate_ok(string $key, int $limit, int $window = 3600): bool {
     return $hits <= $limit;
 }
 
+/**
+ * АДРЕС ПОСЕТИТЕЛЯ — ТОЛЬКО ИЗ ДОВЕРЕННОГО ИСТОЧНИКА.
+ *
+ * Раньше функция безоговорочно верила заголовкам CF-Connecting-IP и X-Forwarded-For,
+ * хотя перед PHP никакого доверенного прокси нет — nginx отдаёт запрос напрямую.
+ * Заголовок ставит кто угодно, а на этой функции держатся ВСЕ ограничения частоты:
+ * подбор пароля к кабинету и к админке становился безлимитным — достаточно менять
+ * X-Forwarded-For на каждой попытке. По той же причине в журнале аудита оказывались
+ * выдуманные адреса.
+ *
+ * Теперь берём REMOTE_ADDR, а заголовки читаем, только если сам REMOTE_ADDR входит
+ * в список доверенных прокси (cfgv('trusted_proxies') — строка адресов через запятую,
+ * пусто = не доверяем никому).
+ */
 function client_ip(): string {
-    return $_SERVER['HTTP_CF_CONNECTING_IP'] ?? $_SERVER['HTTP_X_FORWARDED_FOR'] ?? $_SERVER['REMOTE_ADDR'] ?? '';
+    $remote = (string) ($_SERVER['REMOTE_ADDR'] ?? '');
+
+    $trustedRaw = (string) (function_exists('cfgv') ? (cfgv('trusted_proxies', '') ?? '') : '');
+    $trusted = array_values(array_filter(array_map('trim', preg_split('~[,\s]+~', $trustedRaw) ?: [])));
+    if ($remote === '' || !$trusted || !in_array($remote, $trusted, true)) {
+        return $remote;
+    }
+
+    // Запрос действительно пришёл от нашего прокси — можно верить его заголовкам.
+    $cf = trim((string) ($_SERVER['HTTP_CF_CONNECTING_IP'] ?? ''));
+    if ($cf !== '' && filter_var($cf, FILTER_VALIDATE_IP)) return $cf;
+
+    $xff = (string) ($_SERVER['HTTP_X_FORWARDED_FOR'] ?? '');
+    if ($xff !== '') {
+        // Первый адрес в цепочке — исходный клиент.
+        $first = trim((string) (explode(',', $xff)[0] ?? ''));
+        if ($first !== '' && filter_var($first, FILTER_VALIDATE_IP)) return $first;
+    }
+    return $remote;
 }
 
 function audit(string $action, string $entity = '', ?int $entity_id = null, array $meta = []): void {

@@ -230,6 +230,74 @@ body.mz-kb .chat-inputbar{bottom:calc(10px + env(safe-area-inset-bottom,0px))}
   hist.forEach(render);
   scrollDown();
 
+  /* ─────────── ОПРОС СЕРВЕРНОЙ ИСТОРИИ ───────────
+     Лента рисовалась ТОЛЬКО из localStorage, и серверная история со страницы не
+     запрашивалась ни разу. Из-за этого ответ живого оператора, отправленный из
+     админки, не доходил до участника никогда: он лежал в chat_messages, а вкладка
+     о нём не спрашивала. Человек писал в пустоту и уходил.
+
+     Теперь localStorage — только кэш для мгновенной отрисовки при открытии, а
+     источником правды становится сервер: добираем всё, что появилось после
+     последнего показанного id. */
+  var lastId = 0;
+  try { lastId = parseInt(localStorage.getItem(LSKEY + ':lastId') || '0', 10) || 0; } catch(e){}
+
+  function setLastId(v){
+    lastId = v;
+    try { localStorage.setItem(LSKEY + ':lastId', String(v)); } catch(e){}
+  }
+
+  var seenKeys = {};
+  hist.forEach(function(it){ if (it && it.sid) seenKeys[it.sid] = true; });
+
+  /* Сообщение уже показано локально? Своё отправленное и ответ бота рисуются сразу,
+     а через секунды приходят из истории — без этой сверки переписка задваивалась бы.
+     Ищем среди последних записей ту же роль и тот же текст без серверного id. */
+  function adoptLocal(role, text, id){
+    var r = role === 'user' ? 'u' : 'a';
+    var t = (text || '').trim();
+    for (var i = hist.length - 1, n = 0; i >= 0 && n < 24; i--, n++) {
+      var it = hist[i];
+      if (!it || it.sid || it.r !== r) continue;
+      if ((it.t || '').trim() === t) { it.sid = id; saveHist(hist); return true; }
+    }
+    return false;
+  }
+
+  function pollHistory(first){
+    // Только POST: эндпоинт чата принимает исключительно POST (require_post),
+    // а тело читается и как JSON (см. api/v1/_boot.php).
+    return fetch(API, {
+        method: 'POST',
+        credentials: 'same-origin',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({action:'history', since: first ? 0 : lastId, _csrf: CSRF})
+      })
+      .then(function(r){ return r.json(); })
+      .then(function(d){
+        if (!d || !d.ok || !d.messages || !d.messages.length) return;
+        d.messages.forEach(function(m){
+          var id = parseInt(m.id, 10) || 0;
+          if (id > lastId) setLastId(id);
+          if (seenKeys[id]) return;
+          if (m.role !== 'user' && m.role !== 'assistant') return;   // служебные строки не показываем
+          var txt = m.text || '', fl = m.file || '';
+          if (!txt && !fl) return;
+          seenKeys[id] = true;
+          if (adoptLocal(m.role, txt, id)) return;                   // это наше же сообщение
+          var item = {r: m.role === 'user' ? 'u' : 'a', t: txt, f: fl,
+                      ts: m.created_at ? Date.parse(String(m.created_at).replace(' ', 'T')) : Date.now(), sid: id};
+          pushHist(item); render(item);
+        });
+      })
+      .catch(function(){ /* сеть моргнула — попробуем на следующем тике */ });
+  }
+
+  // Первый опрос сразу, дальше — раз в 6 секунд, пока вкладка видима.
+  pollHistory(true);
+  setInterval(function(){ if (!document.hidden) pollHistory(false); }, 6000);
+  document.addEventListener('visibilitychange', function(){ if (!document.hidden) pollHistory(false); });
+
   var typingEl = null;
   function showTyping(){
     hideTyping();
@@ -354,7 +422,21 @@ body.mz-kb .chat-inputbar{bottom:calc(10px + env(safe-area-inset-bottom,0px))}
     .then(function(r){ return r.json(); })
     .then(function(d){
       hideTyping();
-      addAgent((d && (d.reply || d.error)) || 'Не удалось получить ответ. Попробуйте ещё раз.', d && d.actions, d && d.image);
+      // С человеком работает живой оператор (ручной перехват, блокировка бота или
+      // бот выключен) — сервер намеренно отдаёт пустой reply. Раньше пустая строка
+      // считалась сбоем, и участник получал «Не удалось получить ответ» от имени
+      // «Помощника» ровно в тот момент, когда ему уже писал сотрудник центра.
+      if (d && d.muted) {
+        addAgent('Сотрудник центра подключился к переписке и ответит здесь.');
+        pollHistory(false);
+        return;
+      }
+      if (d && (d.reply || d.error)) {
+        addAgent(d.reply || d.error, d.actions, d.image);
+      } else {
+        addAgent('Не удалось получить ответ. Попробуйте ещё раз.');
+      }
+      pollHistory(false);
     })
     .catch(function(){
       hideTyping();

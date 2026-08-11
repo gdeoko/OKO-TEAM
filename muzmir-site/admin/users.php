@@ -44,6 +44,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         if ($target && $target['role'] !== 'owner' && $uid !== $me) {
             $b = $do === 'block_user' ? 1 : 0;
             update('users', ['blocked'=>$b], 'id=:wid', ['wid'=>$uid]);
+            // Блокировка обязана действовать НЕМЕДЛЕННО: живые сессии рвём.
+            // Без этого у заблокированного оставалась рабочая кука на 30 дней.
+            if ($b) { try { q("DELETE FROM sessions WHERE user_id=?", [$uid]); } catch (\Throwable $e) {} }
             audit($b ? 'user_block' : 'user_unblock', 'user', $uid);
             flash($b ? 'Пользователь заблокирован.' : 'Пользователь разблокирован.', 'success');
         } else flash('Этого пользователя изменить нельзя.', 'warning');
@@ -75,6 +78,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $dupe = one("SELECT id FROM users WHERE lower(email)=? AND id<>?", [$email, $uid]);
         if ($dupe) { flash('Этот email уже занят другим аккаунтом.', 'error'); admin_redirect('users', ['tab'=>'users']); }
 
+        // Колонок nickname и category в таблице users может не быть: они появились
+        // позже формы и в общий список миграций не попали. Без этой строки любое
+        // сохранение профиля из админки валилось фатальной ошибкой «no such column»,
+        // и отредактировать участника было нельзя вообще.
+        foreach (['nickname', 'category'] as $__c) {
+            if (function_exists('ensure_user_column')) ensure_user_column($__c);
+        }
+
         $data = [
             'full_name' => input('full_name'),
             'email'     => $email,
@@ -97,7 +108,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             }
         }
 
-        update('users', $data, 'id=:wid', ['wid'=>$uid]);
+        try {
+            update('users', $data, 'id=:wid', ['wid'=>$uid]);
+        } catch (\Throwable $e) {
+            // Лучше внятный отказ, чем белый экран с фаталом посреди админки.
+            flash('Не удалось сохранить профиль: ' . $e->getMessage(), 'error');
+            admin_redirect('users', input('back_profile') === '1' ? ['action'=>'profile','id'=>$uid] : ['tab'=>'users']);
+        }
         audit('user_edit', 'user', $uid, ['fields'=>array_keys($data)]);
         flash('Профиль участника обновлён.', 'success');
         admin_redirect('users', input('back_profile') === '1' ? ['action'=>'profile','id'=>$uid] : ['tab'=>'users']);
@@ -167,6 +184,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $pw = (string) ($_POST['new_password'] ?? '');
             if (mb_strlen($pw) < 6) { flash('Пароль минимум 6 символов.', 'error'); admin_redirect('users', $backP); }
             update('users', ['password_hash' => password_hash($pw, PASSWORD_DEFAULT)], 'id=:id', ['id'=>$uid]);
+            // Пароль меняют, когда его могли узнать чужие. Значит, и все прежние
+            // сессии этого аккаунта нужно завершить — иначе тот, кто уже вошёл,
+            // так и останется внутри, сколько пароль ни меняй.
+            try { q("DELETE FROM sessions WHERE user_id=?", [$uid]); } catch (\Throwable $e) {}
             audit('user_pass_reset', 'user', $uid);
             flash('Пароль пользователя изменён.', 'success');
             admin_redirect('users', $backP);

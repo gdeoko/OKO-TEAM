@@ -68,6 +68,19 @@
       if (req.aborted) return true;
       if (!res.ok) throw new Error('HTTP ' + res.status);
       var html = await res.text();
+      // АДРЕС БЕРЁМ ФИНАЛЬНЫЙ, А НЕ ИСХОДНЫЙ.
+      // fetch по умолчанию идёт по редиректам, поэтому в main вставлялась страница
+      // назначения, а в адресную строку писался URL из клика. Ссылка на конкурс
+      // (/competition/slug → 301 → /apply?competition=slug) оставляла в адресе
+      // старый путь: обновление страницы или «поделиться ссылкой» вели человека по
+      // кругу через редирект, а SPA-состояние расходилось с URL.
+      var finalUrl = url;
+      try {
+        if (res.redirected && res.url) {
+          var u = new URL(res.url);
+          finalUrl = u.pathname + u.search + u.hash;
+        }
+      } catch (_) {}
       var doc = new DOMParser().parseFromString(html, 'text/html');
       var newMain = doc.querySelector('main');
       if (!newMain) { window.location.href = url; return true; }
@@ -105,9 +118,17 @@
         } catch (_) {}
         progressDone();
         // Событие для сторонних скриптов (аналитика/микроанимации)
-        document.dispatchEvent(new CustomEvent('mz-spa-navigate', { detail: { url: url } }));
+        // Признак «здесь всплывашки не показываем» живёт на <html> и ставится сервером.
+        // При SPA-переходе он оставался от ПРЕДЫДУЩЕЙ страницы: воронка всплывала
+        // поверх формы подачи заявки и перекрывала её.
+        try {
+          var np = doc.documentElement.dataset.nopopup;
+          if (np === undefined) delete document.documentElement.dataset.nopopup;
+          else document.documentElement.dataset.nopopup = np;
+        } catch (_) {}
+        document.dispatchEvent(new CustomEvent('mz-spa-navigate', { detail: { url: finalUrl } }));
       }, 190);
-      if (push) history.pushState({ mz: 1 }, '', url);
+      if (push) history.pushState({ mz: 1 }, '', finalUrl);
       return true;
     } catch (e) {
       progressDone();

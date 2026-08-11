@@ -31,17 +31,27 @@ if ($type === 'confirmation') {
     vk_cb_out((string) cfgv('vk_confirm', ''));
 }
 
-// --- Проверка секрета (если задан в настройках Callback) ---
+// --- Проверка секрета ---
+// СЕКРЕТ ОБЯЗАТЕЛЕН. Раньше проверка стояла под условием «если секрет задан»:
+// стоило его не заполнить (или случайно затереть в настройках Callback API), и
+// ручка становилась анонимной — кто угодно мог слать сюда события от имени
+// сообщества, отвечать за бота и заводить диалоги. Незаполненный секрет — это не
+// «проверка отключена», это открытая дверь.
 $secret = (string) cfgv('vk_callback_secret', '');
-if ($secret !== '' && (string) input('secret') !== $secret) {
+if ($secret === '') {
+    error_log('webhook_vk: vk_callback_secret не задан — приём событий закрыт');
+    http_response_code(403);
+    vk_cb_out('forbidden');
+}
+if (!hash_equals($secret, (string) input('secret'))) {
     http_response_code(403);
     vk_cb_out('forbidden');
 }
 
 // --- Только своё сообщество ---
+// Поблажка «$reqGid !== 0» убрана: событие без group_id — это не наше событие.
 $gid = (int) cfgv('vk_group_id', 211325055);
-$reqGid = (int) input('group_id');
-if ($reqGid !== 0 && $reqGid !== $gid) {
+if ((int) input('group_id') !== $gid) {
     vk_cb_out('ok');
 }
 
@@ -149,10 +159,13 @@ function vk_cb_ack_then_process(string $type): void {
                 insert('chat_messages', ['user_id' => null, 'session_key' => $sessionKey, 'role' => 'assistant', 'text' => $tpl, 'file' => '']);
                 chat_dialog_set($sessionKey, ['pending_offhours' => 1, 'offhours_at' => date('Y-m-d H:i:s'), 'title' => $nm]);
                 vk_typing($peer);
-                $cmd = 'php ' . escapeshellarg(BASE_PATH . '/cron/vk_send_delayed.php')
-                     . ' ' . (int) $peer . ' ' . random_int(4, 9) . ' ' . escapeshellarg(base64_encode($tpl))
-                     . ' >/dev/null 2>&1 &';
-                exec($cmd);
+                if (!_vk_spawn_delayed($peer, random_int(4, 9), $tpl)) {
+                    $r = vk_dm_send($peer, $tpl, '', random_int(1, 2000000000));
+                    if (!isset($r['response'])) {
+                        _vk_log('offhours peer=' . $peer . ' НЕ ДОСТАВЛЕНО: '
+                                . json_encode($r['error'] ?? $r, JSON_UNESCAPED_UNICODE));
+                    }
+                }
                 _vk_log('offhours template peer=' . $peer);
             } else {
                 _vk_log('offhours (pending) peer=' . $peer . ' — молчим до утра');
@@ -278,14 +291,51 @@ function vk_cb_ack_then_process(string $type): void {
         // (пул из 5 — иначе подвиснет весь сайт). Индикатор «печатает…» уже показан выше.
         $target = $short ? random_int(8, 14) : random_int(20, 30);
         $target = (int) max(3, $target - (time() - $t0)); // вычесть уже потраченное на генерацию
-        $cmd = 'php ' . escapeshellarg(BASE_PATH . '/cron/vk_send_delayed.php')
-             . ' ' . (int) $peer . ' ' . (int) $target . ' ' . escapeshellarg(base64_encode($reply))
-             . ' >/dev/null 2>&1 &';
-        exec($cmd);
+        // Отсоединённый процесс запускаем ЯВНЫМ бинарником PHP и проверяем, что он
+        // вообще стартовал. Голое 'php …' зависело от PATH процесса php-fpm — в нём
+        // php может отсутствовать вовсе, и тогда ответ бота не уходил никуда, а в
+        // логе стояло бодрое «bot reply». Если запустить не удалось — отправляем
+        // синхронно, без человеческой паузы: лучше мгновенный ответ, чем никакого.
+        if (!_vk_spawn_delayed($peer, $target, $reply)) {
+            _vk_log('bot reply peer=' . $peer . ': фоновый процесс не запустился — шлю синхронно');
+            $r = vk_dm_send($peer, $reply, '', random_int(1, 2000000000));
+            if (!isset($r['response'])) {
+                _vk_log('bot reply peer=' . $peer . ' НЕ ДОСТАВЛЕНО: '
+                        . json_encode($r['error'] ?? $r, JSON_UNESCAPED_UNICODE));
+            }
+        }
         _vk_log('bot reply peer=' . $peer . ' greet=' . (int) $greet . ' short=' . (int) $short . ' delay=' . $target . 's len=' . mb_strlen($reply));
     } catch (\Throwable $e) {
         _vk_log('bot error peer=' . $peer . ': ' . $e->getMessage());
     }
+}
+
+/**
+ * Запуск отсоединённого процесса «печатает… → отправить».
+ *
+ * Путь к PHP берём из настройки php_bin, иначе — из PHP_BINARY текущего процесса.
+ * Голое слово 'php' полагалось на PATH php-fpm, а там его может не быть: команда
+ * молча падала, ответ бота не уходил, и понять это по логам было нельзя.
+ *
+ * @return bool удалось ли запустить (false — вызывающий шлёт синхронно)
+ */
+function _vk_spawn_delayed(int $peer, int $delay, string $text): bool {
+    if (!function_exists('exec')) return false;
+    $bin = trim((string) cfgv('php_bin', ''));
+    if ($bin === '' || !is_executable($bin)) $bin = PHP_BINARY ?: 'php';
+    // php-fpm отдаёт PHP_BINARY вида /usr/sbin/php-fpm8.3 — им скрипт не запустить.
+    if (str_contains(basename($bin), 'fpm')) {
+        foreach (['/usr/bin/php', '/usr/local/bin/php'] as $cand) {
+            if (is_executable($cand)) { $bin = $cand; break; }
+        }
+        if (str_contains(basename($bin), 'fpm')) return false;
+    }
+    $cmd = escapeshellarg($bin) . ' ' . escapeshellarg(BASE_PATH . '/cron/vk_send_delayed.php')
+         . ' ' . $peer . ' ' . $delay . ' ' . escapeshellarg(base64_encode($text))
+         . ' >/dev/null 2>&1 &';
+    $out = []; $rc = 0;
+    @exec($cmd, $out, $rc);
+    return $rc === 0;
 }
 
 /** Гарантируем наличие таблицы chat_messages (та же, что у веб-чата). */
@@ -316,7 +366,14 @@ function _vk_extract_media(array $msg): array {
         if (($a['type'] ?? '') === 'audio_message') {
             $am = $a['audio_message'] ?? [];
             $tr = trim((string) ($am['transcript'] ?? ''));
-            if ($tr !== '' && (int) ($am['transcript_state'] ?? 1) !== 0) return ['audio', '', $tr];
+            // transcript_state у ВК — СТРОКА ('in_progress' | 'done'). Здесь стояло
+            // сравнение (int)… !== 0, а (int)'done' === 0, поэтому условие не
+            // выполнялось никогда: готовая и бесплатная расшифровка ВК отбрасывалась,
+            // и каждое голосовое шло на распознавание в Gemini — лишние секунды
+            // задержки и лишний расход квоты.
+            if ($tr !== '' && (string) ($am['transcript_state'] ?? 'done') !== 'in_progress') {
+                return ['audio', '', $tr];
+            }
             $url = (string) ($am['link_ogg'] ?? $am['link_mp3'] ?? '');
             if ($url !== '') return ['audio', $url, ''];
         }

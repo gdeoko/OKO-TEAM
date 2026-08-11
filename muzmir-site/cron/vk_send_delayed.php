@@ -27,4 +27,14 @@ while (time() - $start < $delay) {
     vk_typing($peer);
     sleep((int) max(1, min(7, $delay - (time() - $start))));
 }
-vk_dm_send($peer, $text, '', random_int(1, 2000000000));
+// РЕЗУЛЬТАТ ОТПРАВКИ ПРОВЕРЯЕМ. Раньше возврат просто отбрасывался, а vk_api
+// логирует только временные коды (1/6/9/10/29). Постоянные отказы — запрет
+// сообщений от сообщества (901/902), недействительный токен, 914 — уходили молча:
+// человек в ВК не получал ответа, а в логах не было ни строчки, почему.
+$r = vk_dm_send($peer, $text, '', random_int(1, 2000000000));
+if (!isset($r['response'])) {
+    $why = json_encode($r['error'] ?? $r, JSON_UNESCAPED_UNICODE);
+    if (function_exists('_vk_log')) _vk_log("vk_send_delayed peer=$peer НЕ ДОСТАВЛЕНО: $why");
+    error_log("vk_send_delayed peer=$peer не доставлено: $why");
+    exit(1);
+}

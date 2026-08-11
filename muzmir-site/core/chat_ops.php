@@ -143,7 +143,18 @@ function chat_channel_send(string $sessionKey, string $text, int $peer = 0): boo
         if (!function_exists('vk_dm_send') && is_file(BASE_PATH . '/core/vk.php')) require_once BASE_PATH . '/core/vk.php';
         if (!function_exists('vk_dm_send')) return false;
         $p = $peer ?: (int) substr($sessionKey, 3);
-        try { $r = vk_dm_send($p, $text); return !isset($r['error']); }
+        try {
+            $r = vk_dm_send($p, $text);
+            // Успех — это наличие response с id сообщения. Проверка «нет ключа error»
+            // считала успехом и пустой ответ, и ответ неизвестной формы: оператор
+            // видел зелёное «отправлено» там, где ВК ничего не принял.
+            $ok = isset($r['response']);
+            if (!$ok && function_exists('_vk_log')) {
+                _vk_log('chat_channel_send peer=' . $p . ' не доставлено: '
+                        . json_encode($r['error'] ?? $r, JSON_UNESCAPED_UNICODE));
+            }
+            return $ok;
+        }
         catch (\Throwable $e) { return false; }
     }
     return true; // web: доставка через историю

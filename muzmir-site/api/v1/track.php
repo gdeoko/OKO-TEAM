@@ -50,9 +50,17 @@ if ($event === 'c') {
         $b64 = strtr($enc, '-_', '+/') . ($pad ? str_repeat('=', 4 - $pad) : '');
         $url = (string) base64_decode($b64, true);
     }
+    // core/newsletter.php здесь НЕ подключался, поэтому newsletter_track_click()
+    // не существовала, и работал фолбэк — «любой http(s) адрес годится». То есть
+    // проверка домена, написанная в newsletter_track_click, не применялась ни разу:
+    // ссылка вида /api/v1/track?e=c&u=<чужой сайт> уводила куда угодно с
+    // официального домена центра, и в письме она выглядит как наша.
+    if (!function_exists('newsletter_track_click')) {
+        require_once BASE_PATH . '/core/newsletter.php';
+    }
     $target = function_exists('newsletter_track_click')
         ? newsletter_track_click($token, $url)
-        : (preg_match('#^https?://#i', $url) ? $url : rtrim((string) cfgv('base_url'), '/') . '/');
+        : rtrim((string) cfgv('base_url'), '/') . '/';   // без проверки домена — только на главную
     header('Location: ' . $target, true, 302);
     exit;
 }

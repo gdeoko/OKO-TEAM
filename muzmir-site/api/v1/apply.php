@@ -3,6 +3,7 @@
 declare(strict_types=1);
 require __DIR__ . '/_boot.php';
 require_once BASE_PATH . '/core/loyalty.php';
+require_once BASE_PATH . '/core/paylink.php';   // pay_link_app() — запасная ссылка на оплату
 require_post();
 
 // --- Строгая проверка источника (Origin/Referer принадлежит своему домену) + CSRF-токен ---
@@ -212,16 +213,18 @@ if (!$uid && $email !== '') {
     $existing = one("SELECT * FROM users WHERE LOWER(email)=?", [mb_strtolower($email)]);
     $freshPass = '';
     if ($existing) {
+        // ЧУЖОЙ АККАУНТ ЗДЕСЬ НЕ ОТКРЫВАЕТСЯ.
+        //
+        // Раньше на этом месте стояли выдача нового пароля и login_user(): человек
+        // назвал в форме адрес — и получал сессию его владельца. Форму может
+        // отправить кто угодно и без всякой проверки почты, так что достаточно
+        // было знать адрес администратора, чтобы войти в админку со всеми
+        // заявками, платежами и рассылками. Адрес центра указан на самом сайте.
+        //
+        // Заявку к найденной учётной записи привязываем — это тот же человек по
+        // адресу, и его заявки должны быть в его кабинете. Но доступ выдаётся
+        // только через вход с паролем: подача заявки владения почтой не доказывает.
         $uid = (int) $existing['id'];
-        // Аккаунт есть, но человек ни разу не входил — значит доступа у него на руках нет.
-        // Выдаём временный пароль: своим он ещё не пользовался, терять нечего.
-        $neverLoggedIn = trim((string) ($existing['last_login'] ?? '')) === '';
-        $noPass = trim((string) ($existing['password_hash'] ?? '')) === '';
-        if (($neverLoggedIn || $noPass) && function_exists('kabinet_gen_password')) {
-            $freshPass = kabinet_gen_password();
-            update('users', ['password_hash' => password_hash($freshPass, PASSWORD_DEFAULT)], 'id=:id', ['id' => $uid]);
-        }
-        if (function_exists('login_user')) login_user($uid);
     } else {
         $freshPass = function_exists('kabinet_gen_password') ? kabinet_gen_password() : bin2hex(random_bytes(4));
         $uid = (int) insert('users', [
@@ -435,6 +438,19 @@ if ($paidComps) {
                 'yukassa_id'     => $payment['id'],
                 'purpose'        => count($appIds) > 1 ? 'application_batch' : 'application',
             ]);
+            // ПАКЕТ ПОМЕЧАЕТСЯ СРАЗУ, А НЕ ПОСЛЕ ОПЛАТЫ. Раньше batch_id проставлялся
+            // только в момент подтверждения платежа, и до оплаты связь «эти заявки
+            // оплачиваются одним чеком» жила исключительно в metadata ЮKassa. Из-за
+            // этого сайт не знал о пакете: удаление одной заявки из кабинета сносило
+            // платёжную строку всего чека, а остальные заявки оставались с живым, но
+            // уже ничьим счётом.
+            $__ids = $paidAppIds ?: $appIds;
+            if (count($__ids) > 1) {
+                try {
+                    $__in = implode(',', array_map('intval', $__ids));
+                    q("UPDATE applications SET batch_id=? WHERE id IN ($__in)", [(string) $payment['id']]);
+                } catch (\Throwable $e) {}
+            }
         }
         $confirmationUrl = $payment['confirmation_url'] ?? null;
 
@@ -540,6 +556,21 @@ if ($uid && is_file(BASE_PATH . '/core/notifications.php')) {
 }
 
 $resp = ['ok' => true, 'number' => $number, 'numbers' => $numbers, 'batch' => count($numbers) > 1];
+
+// ПЛАТЁЖНАЯ ФОРМА НЕ ОТКРЫЛАСЬ — ЧЕЛОВЕК ДОЛЖЕН ОБ ЭТОМ УЗНАТЬ.
+// Заявки пишутся в базу до создания платежа, и если касса не ответила (сеть, тайм-аут,
+// неверные ключи), confirmation_url остаётся пустым. Раньше ответ всё равно был
+// «ok: true», клиент показывал экран «Заявка принята. Подтверждение направлено на Вашу
+// электронную почту» — и на этом всё заканчивалось: письма нет (по платным заявкам оно
+// уходит только после оплаты), редиректа нет, счёта нет. Человек уходил в полной
+// уверенности, что подал работу.
+if ($hasPaidPending && !$confirmationUrl) {
+    $resp['payment_error'] = true;
+    $resp['pay_url']       = function_exists('pay_link_app') ? pay_link_app((int) ($paidAppIds[0] ?? $appId)) : url('/cabinet#apps');
+    $resp['message']       = 'Заявка сохранена, но платёжная форма не открылась. '
+                           . 'Оплатить оргвзнос можно из личного кабинета — заявка ждёт оплаты и никуда не денется.';
+}
+
 if ($priceInfo !== null) $resp['price'] = $priceInfo;
 if ($payment !== null) {
     $resp['payment'] = [

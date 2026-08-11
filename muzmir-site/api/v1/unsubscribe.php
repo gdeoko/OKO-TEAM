@@ -20,6 +20,24 @@ if ($token !== '') {
             $state = 'already';
         } else {
             update('subscribers', ['active' => 0], 'id=:id', ['id' => $sub['id']]);
+
+            // Отписка должна останавливать письма СЕЙЧАС, а не со следующей рассылки.
+            // В очереди у человека может лежать несколько сотен писем текущей волны
+            // (массовые уходят неделями по дневной норме) — раньше они спокойно
+            // доходили уже после того, как он нажал «Отказаться», и это выглядело
+            // издевательством. Снимаем всё массовое, что ещё не ушло.
+            // Личные письма (priority = 0: коды входа, дипломы, чеки) не трогаем —
+            // отписка от рассылки не отменяет ответов на его же действия.
+            $email = mb_strtolower(trim((string) $sub['email']));
+            try {
+                q("UPDATE mail_queue SET status='cancelled', error='снято: получатель отписался'
+                    WHERE LOWER(to_email) = ? AND status IN ('queued','paused') AND COALESCE(priority,0) > 0",
+                  [$email]);
+            } catch (\Throwable $e) {}
+
+            // И в профиль сайта: иначе адрес возвращается в базу рассылки через users.
+            try { q("UPDATE users SET notify_email = 0 WHERE LOWER(email) = ?", [$email]); } catch (\Throwable $e) {}
+
             if (function_exists('audit')) audit('unsubscribe', 'subscribers', (int) $sub['id'], ['email' => $sub['email']]);
             $state = 'done';
         }

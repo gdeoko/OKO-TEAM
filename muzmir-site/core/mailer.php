@@ -322,7 +322,7 @@ function mail_encode_header(string $s): string {
 /** Собирает готовое MIME-письмо (multipart) с HTML и вложением(ями).
  *  $attach — путь (строка) ИЛИ массив путей (несколько вложений). */
 function mail_build_mime(string $fromName, string $fromEmail, string $to, string $replyTo,
-                         string $subject, string $html, $attach = ''): string {
+                         string $subject, string $html, $attach = '', string $unsubUrl = ''): string {
     $eol = "\r\n";
     $boundary = 'mm_' . bin2hex(random_bytes(12));
     $fromH = mail_encode_header($fromName) . ' <' . $fromEmail . '>';
@@ -342,6 +342,19 @@ function mail_build_mime(string $fromName, string $fromEmail, string $to, string
         $midHost = (string) $_SERVER['HTTP_HOST'];
     }
     $headers .= 'Message-ID: <' . bin2hex(random_bytes(12)) . '@' . $midHost . '>' . $eol;
+
+    // ОТПИСКА КНОПКОЙ ПОЧТОВОГО КЛИЕНТА.
+    // Ссылка отписки была только в подвале письма. Gmail, Mail.ru и Яндекс рисуют
+    // штатную кнопку «Отписаться» рядом с отправителем лишь при этих заголовках.
+    // Без неё человек, которому надоела рассылка, жмёт «Спам» — и это бьёт по
+    // репутации домена сильнее, чем сама отписка.
+    if ($unsubUrl !== '') {
+        $mailto = trim((string) cfgv('org_email', ''));
+        $headers .= 'List-Unsubscribe: <' . $unsubUrl . '>'
+                  . ($mailto !== '' ? ', <mailto:' . $mailto . '?subject=unsubscribe>' : '') . $eol;
+        $headers .= 'List-Unsubscribe-Post: List-Unsubscribe=One-Click' . $eol;
+    }
+
     $headers .= 'MIME-Version: 1.0' . $eol;
 
     // Текстовая версия — грубый фолбэк из HTML.
@@ -724,6 +737,20 @@ function mail_send_unisender(string $to, string $subject, string $html, array $o
         'from_email' => $fromAddr,
         'from_name'  => $fromName,
     ];
+
+    // ОДНОКЛИКОВАЯ ОТПИСКА В ИНТЕРФЕЙСЕ ПОЧТЫ.
+    // Ссылка отписки была только в подвале письма. Gmail и Mail.ru показывают
+    // штатную кнопку «Отписаться» рядом с адресом отправителя лишь при наличии
+    // этих заголовков; без них человек, которому надоела рассылка, жмёт «Спам» —
+    // а это бьёт по репутации домена куда сильнее, чем сама отписка.
+    $unsub = trim((string) ($opt['unsubscribe_url'] ?? ''));
+    if ($unsub !== '') {
+        $mailto = trim((string) cfgv('org_email', ''));
+        $msg['headers'] = [
+            'List-Unsubscribe' => '<' . $unsub . '>' . ($mailto !== '' ? ', <mailto:' . $mailto . '?subject=unsubscribe>' : ''),
+            'List-Unsubscribe-Post' => 'List-Unsubscribe=One-Click',
+        ];
+    }
     // Вложения (дипломы) — файлами в base64.
     if (!empty($opt['attach'])) {
         $files = is_array($opt['attach']) ? $opt['attach'] : [$opt['attach']];
@@ -748,14 +775,44 @@ function mail_send_unisender(string $to, string $subject, string $html, array $o
         CURLOPT_TIMEOUT        => 60,
         CURLOPT_CONNECTTIMEOUT => 15,
     ]);
-    $raw = curl_exec($ch);
-    $err = curl_error($ch);
+    $raw  = curl_exec($ch);
+    $err  = curl_error($ch);
+    $code = (int) curl_getinfo($ch, CURLINFO_RESPONSE_CODE);
     curl_close($ch);
 
     if ($raw === false) { mail_last_error('Unisender: связь не установлена — ' . $err); mail_log('FAIL(uni) to ' . $to . ' | ' . $err); return false; }
     $d = json_decode((string) $raw, true);
+
+    if ($code >= 400) {
+        $why = 'Unisender: HTTP ' . $code . ' ' . mb_substr(trim((string) $raw), 0, 200);
+        mail_last_error($why);
+        mail_log('FAIL(uni) to ' . $to . ' | ' . $why);
+        return false;
+    }
+
     if (is_array($d) && (string) ($d['status'] ?? '') === 'success') {
-        mail_log('SENT(uni) to ' . $to . ' | ' . $subject);
+        // «success» относится к ЗАПРОСУ, а не к письму. Unisender возвращает рядом
+        // failed_emails — карту «адрес → причина», и раз получатель здесь ровно один,
+        // попадание его в этот список означает, что письмо не ушло вообще. Раньше
+        // такие письма отмечались как доставленные: у массового канала не было
+        // обратной связи по недоставке ни в каком виде, и мёртвые адреса копились
+        // в базе, продолжая тянуть репутацию вниз.
+        $failed = (array) ($d['failed_emails'] ?? []);
+        $reason = '';
+        foreach ($failed as $addr => $r) {
+            if (mb_strtolower(trim((string) $addr)) === mb_strtolower(trim($to))) { $reason = (string) $r; break; }
+        }
+        if ($reason !== '') {
+            // Причины в формате, который понимает разбор отказов (nl_failure_kind):
+            // invalid / permanent_unavailable / blocked / complained / unsubscribed —
+            // жёсткие, адрес выводится из базы; temporary_unavailable — мягкая.
+            $why = 'Unisender отклонил адрес: ' . $reason;
+            mail_last_error($why);
+            mail_log('FAIL(uni) to ' . $to . ' | ' . $why);
+            return false;
+        }
+        mail_log('SENT(uni) to ' . $to . ' | ' . $subject
+                 . (!empty($d['job_id']) ? ' | job=' . (string) $d['job_id'] : ''));
         return true;
     }
     $why = is_array($d) ? trim(((string) ($d['code'] ?? '')) . ' ' . (string) ($d['message'] ?? '')) : mb_substr((string) $raw, 0, 200);
@@ -781,9 +838,10 @@ function mail_send(string $to, string $subject, string $html, array $opt = []): 
     $accT = is_array($opt['account'] ?? null) ? $opt['account'] : [];
     if ((string) ($accT['transport'] ?? '') === 'unisender') {
         return mail_send_unisender($to, $subject, $html, [
-            'attach'    => $opt['attach'] ?? null,
-            'from_addr' => $accT['from_addr'] ?? null,
-            'from_name' => $opt['from_name'] ?? ($accT['from_name'] ?? null),
+            'attach'          => $opt['attach'] ?? null,
+            'from_addr'       => $accT['from_addr'] ?? null,
+            'from_name'       => $opt['from_name'] ?? ($accT['from_name'] ?? null),
+            'unsubscribe_url' => $opt['unsubscribe_url'] ?? '',
         ]);
     }
     $to = trim($to);
@@ -836,7 +894,8 @@ function mail_send(string $to, string $subject, string $html, array $opt = []): 
         if ($easc) $envelopeFrom = $elp . '@' . $easc;
     }
 
-    $mime = mail_build_mime($fromName, $fromAddr, $to, $replyTo, $subject, $html, $attach);
+    $mime = mail_build_mime($fromName, $fromAddr, $to, $replyTo, $subject, $html, $attach,
+                            (string) ($opt['unsubscribe_url'] ?? ''));
 
     // Тело письма читаем cURL'ом из потока в памяти.
     $stream = fopen('php://temp', 'r+');

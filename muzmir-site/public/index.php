@@ -198,6 +198,24 @@ if (preg_match('#^/diploma/([A-Za-z0-9\-]+)\.pdf$#', $route, $m)) {
     $d = one("SELECT * FROM diplomas WHERE number=?", [$m[1]]);
     if (!$d) { http_response_code(404); echo 'Диплом не найден'; exit; }
     $app = one("SELECT * FROM applications WHERE id=?", [(int) $d['application_id']]);
+
+    // ЧУЖОЙ ДИПЛОМ ПО ССЫЛКЕ НЕ СКАЧИВАЕТСЯ.
+    // Номера идут строго подряд (MM-2026-00001, -00002, …), а свой номер участник
+    // узнаёт сразу при подаче. Значит, перебором соседних номеров можно было выкачать
+    // дипломы всех детей центра: ФИО, учреждение, город, педагог, звание. Открытым
+    // маршрут остаётся только для владельца заявки, оргкомитета и обладателя
+    // подписанной ссылки из письма (по ней диплом и приходит участнику).
+    $__me   = function_exists('current_user') ? current_user() : null;
+    $__mine = $app && $__me && (int) ($app['user_id'] ?? 0) === (int) $__me['id'];
+    $__staff = function_exists('user_can') && $__me && user_can('jury');
+    require_once BASE_PATH . '/core/paylink.php';   // diploma_sign_ok()
+    $__sig   = (string) ($_GET['s'] ?? '');
+    $__sigOk = $__sig !== '' && diploma_sign_ok((string) $d['number'], $__sig);
+    if (!$__mine && !$__staff && !$__sigOk) {
+        http_response_code(403);
+        echo 'Этот документ доступен только участнику. Войдите в личный кабинет — все Ваши дипломы там.';
+        exit;
+    }
     require_once BASE_PATH . '/core/diploma_render.php';
 
     $file = '';
@@ -235,6 +253,20 @@ if (preg_match('#^/diploma-view/([A-Za-z0-9\-]+)$#', $route, $m)) {
     $d = one("SELECT * FROM diplomas WHERE number=?", [$m[1]]);
     if (!$d) { http_response_code(404); echo 'Диплом не найден'; exit; }
     $app = one("SELECT * FROM applications WHERE id=?", [(int) $d['application_id']]);
+
+    // Тот же замок, что и на PDF: это полный бланк с ФИО, учреждением и городом,
+    // а номера перебираются подряд. Открыт владельцу, сотруднику и подписанной
+    // ссылке из письма.
+    require_once BASE_PATH . '/core/paylink.php';
+    $__me    = function_exists('current_user') ? current_user() : null;
+    $__mine  = $app && $__me && (int) ($app['user_id'] ?? 0) === (int) $__me['id'];
+    $__staff = function_exists('user_can') && $__me && user_can('jury');
+    $__sig   = (string) ($_GET['s'] ?? '');
+    if (!$__mine && !$__staff && !($__sig !== '' && diploma_sign_ok((string) $d['number'], $__sig))) {
+        http_response_code(403);
+        echo 'Этот документ доступен только участнику. Проверить подлинность диплома по номеру можно на странице «Проверка документа».';
+        exit;
+    }
     $c   = $app ? one("SELECT * FROM competitions WHERE id=?", [(int) $app['competition_id']]) : null;
     require_once BASE_PATH . '/core/diploma_html.php';
     // Тип диплома → правильная награда: основной=result, доп=спец-номинация,

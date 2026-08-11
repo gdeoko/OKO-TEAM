@@ -586,10 +586,19 @@ ob_start(); ?>
             <h2>Заявка принята</h2>
             <p style="color:var(--muted)">Номер Вашей заявки</p>
             <div class="done-number" data-app-number>-</div>
-            <p style="color:var(--muted);max-width:460px;margin:12px auto 0">
+            <p style="color:var(--muted);max-width:460px;margin:12px auto 0" data-done-note>
               Подтверждение направлено на Вашу электронную почту. Следить за статусом можно в
               <a href="<?= url('/cabinet') ?>">личном кабинете</a>.</p>
+
+            <!-- Показывается, только если касса не открылась: заявка сохранена, но
+                 оргвзнос не внесён. Молчать об этом нельзя — человек уйдёт уверенным,
+                 что всё готово, и работа до жюри не дойдёт. -->
+            <div data-pay-fallback hidden style="max-width:460px;margin:14px auto 0;padding:14px 16px;
+                 border-radius:14px;background:var(--gold-soft,#FFF6E9);color:var(--gold-ink,#8B6F1F);
+                 font-size:.95rem;line-height:1.6"></div>
+
             <div style="margin-top:22px;display:flex;gap:12px;justify-content:center;flex-wrap:wrap">
+              <a class="btn btn--primary" data-pay-retry hidden href="#">Оплатить оргвзнос</a>
               <a class="btn btn--ghost" href="<?= url('/competitions') ?>">К конкурсам</a>
               <a class="btn btn--primary" href="<?= url('/') ?>">На главную</a>
             </div>

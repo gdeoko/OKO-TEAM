@@ -106,12 +106,26 @@ if (!function_exists('video_verify')) {
         $host = preg_replace('~^www\.~', '', $host);
 
         // Явно запрещённые площадки.
+        // Хост сверяем ЦЕЛИКОМ, а не подстрокой: str_contains пропускал адреса
+        // вида rutube.ru.attacker.net и 127.0.0.1/?x=vk.com — то есть наш сервер
+        // шёл curl'ом куда укажут, включая внутреннюю сеть.
+        $hostIs = function (string $dom) use ($host): bool {
+            return $host === $dom || str_ends_with($host, '.' . $dom);
+        };
         foreach (['youtube.com','youtu.be','instagram.com','facebook.com','fb.watch','tiktok.com'] as $b) {
-            if (str_contains($host, $b)) return _lc_bad('', 'Эта платформа не принимается. Разрешены: RuTube, VK, Яндекс.Диск, Google Диск, ОК, Дзен.');
+            if ($hostIs($b)) return _lc_bad('', 'Эта платформа не принимается. Разрешены: RuTube, VK, Яндекс.Диск, Google Диск, ОК, Дзен.');
+        }
+        // Ни одна известная площадка не совпала — дальше не идём и НИКУДА не ходим.
+        $known = ['rutube.ru','vk.com','vkvideo.ru','disk.yandex.ru','disk.yandex.com','yadi.sk',
+                  'drive.google.com','docs.google.com','cloud.mail.ru','ok.ru','dzen.ru','zen.yandex.ru'];
+        $okHost = false;
+        foreach ($known as $k) { if ($hostIs($k)) { $okHost = true; break; } }
+        if (!$okHost) {
+            return _lc_bad('', 'Эта платформа не принимается. Разрешены: RuTube, VK, Яндекс.Диск, Google Диск, Облако Mail.ru, ОК, Дзен.');
         }
 
         /* ---- RuTube ---- */
-        if (str_contains($host, 'rutube.ru')) {
+        if ($hostIs('rutube.ru')) {
             if (!preg_match('#rutube\.ru/(?:video|shorts|play/embed)/([a-z0-9]+)#i', $url, $m)) {
                 return _lc_bad('RuTube', 'Дайте ссылку на конкретное видео RuTube (rutube.ru/video/…), а не на канал.');
             }
@@ -126,7 +140,7 @@ if (!function_exists('video_verify')) {
         }
 
         /* ---- VK Видео ---- */
-        if (str_contains($host, 'vk.com') || str_contains($host, 'vkvideo.ru')) {
+        if ($hostIs('vk.com') || $hostIs('vkvideo.ru')) {
             if (!preg_match('#video(-?\d+_\d+)#', $url, $m)) {
                 return _lc_bad('VK Видео', 'Дайте ссылку на видео VK вида …/video-123_456.');
             }
@@ -149,7 +163,7 @@ if (!function_exists('video_verify')) {
         }
 
         /* ---- Яндекс.Диск ---- */
-        if (str_contains($host, 'disk.yandex') || $host === 'yadi.sk') {
+        if ($hostIs('disk.yandex.ru') || $hostIs('disk.yandex.com') || $hostIs('yadi.sk')) {
             $api = 'https://cloud-api.yandex.net/v1/disk/public/resources?public_key='
                  . rawurlencode($url) . '&fields=name,created,modified,type,media_type';
             $j = _lc_http_json($api);
@@ -169,7 +183,7 @@ if (!function_exists('video_verify')) {
         }
 
         /* ---- Google Диск ---- */
-        if (str_contains($host, 'drive.google.com') || str_contains($host, 'docs.google.com')) {
+        if ($hostIs('drive.google.com') || $hostIs('docs.google.com')) {
             if (!preg_match('#/d/([a-zA-Z0-9_-]{10,})#', $url, $m) && !preg_match('#[?&]id=([a-zA-Z0-9_-]{10,})#', $url, $m)) {
                 return _lc_bad('Google Диск', 'Дайте прямую ссылку на файл Google Диска (…/file/d/…/view).');
             }
@@ -183,8 +197,29 @@ if (!function_exists('video_verify')) {
             return _lc_result('Google Диск', _lc_html_date($body)); // дату Drive обычно не отдаёт
         }
 
+        /* ---- Облако Mail.ru ---- */
+        // Публичного API у облака нет, поэтому проверяем то, что можно: страница
+        // открывается и это не папка. Ссылка на папку — самая частая ошибка: человек
+        // делится всей папкой с работами, а жюри нужен конкретный файл.
+        if ($hostIs('cloud.mail.ru')) {
+            if (!preg_match('#cloud\.mail\.ru/public/#i', $url)) {
+                return _lc_bad('Облако Mail.ru', 'Дайте публичную ссылку из Облака Mail.ru (cloud.mail.ru/public/…), '
+                    . 'полученную кнопкой «Поделиться».');
+            }
+            [$code, $body] = _lc_http_get($url, 9);
+            if ($code === 404 || $code === 410) return _lc_bad('Облако Mail.ru', 'Файл в Облаке Mail.ru не найден или удалён.');
+            if ($code === 0) return _lc_result('Облако Mail.ru', null);   // сеть — не караем
+            if (stripos($body, 'Файл не найден') !== false || stripos($body, 'ссылка недействительна') !== false) {
+                return _lc_bad('Облако Mail.ru', 'Ссылка на Облако Mail.ru недействительна. Создайте публичную ссылку заново.');
+            }
+            if (preg_match('#"type"\s*:\s*"folder"#i', $body) || stripos($body, 'Общая папка') !== false) {
+                return _lc_bad('Облако Mail.ru', 'Ссылка ведёт на папку, а не на конкурсное видео. Дайте ссылку на сам видеофайл.');
+            }
+            return _lc_result('Облако Mail.ru', _lc_html_date($body));
+        }
+
         /* ---- ОК Видео ---- */
-        if (str_contains($host, 'ok.ru')) {
+        if ($hostIs('ok.ru')) {
             if (!preg_match('#ok\.ru/(?:video|videoembed|live)/(\d+)#i', $url, $m)) {
                 return _lc_bad('ОК Видео', 'Дайте ссылку на конкретное видео ОК (ok.ru/video/…).');
             }
@@ -199,7 +234,7 @@ if (!function_exists('video_verify')) {
         }
 
         /* ---- Дзен Видео ---- */
-        if (str_contains($host, 'dzen.ru') || str_contains($host, 'zen.yandex')) {
+        if ($hostIs('dzen.ru') || $hostIs('zen.yandex.ru')) {
             [$code, $body] = _lc_http_get($url, 9);
             if ($code === 404) return _lc_bad('Дзен Видео', 'Видео в Дзене не найдено (404).');
             if ($code === 0) return _lc_result('Дзен Видео', null);

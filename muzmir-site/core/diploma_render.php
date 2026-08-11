@@ -47,7 +47,10 @@ function diploma_pdf_html(array $app, array $opt = []): ?string {
           . ($person !== '' ? '&person=' . rawurlencode($person) : ($pidx > 0 ? '&pidx=' . $pidx : ''))
           . ($clean ? '&clean=1' : '');
 
-    $num  = (string) ($app['number'] ?? ('APP' . $appId));
+    // Имя файла строим от КАНОНИЧЕСКОГО номера диплома, а не от номера заявки:
+    // у одной заявки бывает основной, именной, благодарность и несколько спец-наград,
+    // и все они писались бы в один и тот же файл, затирая друг друга.
+    $num  = (string) ($app['diploma_number'] ?? $app['number'] ?? ('APP' . $appId));
     // В имени файла учитываем получателя: у двух педагогов — две разные благодарности.
     $tag  = $person !== '' ? substr(md5($person), 0, 6) : ($pidx > 0 ? 'p' . $pidx : '');
     $slug = trim(strtolower((string) preg_replace('/[^a-z0-9]+/i', '-',
@@ -55,14 +58,19 @@ function diploma_pdf_html(array $app, array $opt = []): ?string {
     $outDir = BASE_PATH . '/public/diplomas/';
     if (!is_dir($outDir)) @mkdir($outDir, 0775, true);
     $out = $outDir . 'diploma_' . $slug . '.pdf';
-    @unlink($out);
+    // ГОТОВЫЙ ДИПЛОМ НЕ СНОСИМ ДО УСПЕХА.
+    // Здесь стоял @unlink($out) перед рендером: если бастион не отвечал, участник
+    // оставался вообще без файла — письмо уходило с пустым вложением, а в кабинете
+    // ломалась ссылка. Пишем рядом и подменяем оригинал только после проверки.
+    $stage = $outDir . 'diploma_' . $slug . '.new.pdf';
+    @unlink($stage);
 
     $tmp = '/tmp/dip_' . $appId . '_' . substr(bin2hex(random_bytes(4)), 0, 8) . '.pdf';
     $cmd = 'cd /opt/oko-poster && NODE_PATH=/opt/oko-poster/node_modules node render_diploma.js '
          . escapeshellarg($url) . ' ' . escapeshellarg($tmp)
          . ' && export SSHPASS=' . escapeshellarg($sshPas)
          . '; sshpass -e scp -o StrictHostKeyChecking=no ' . escapeshellarg($tmp)
-         . ' root@176.124.200.169:' . escapeshellarg($out)
+         . ' root@176.124.200.169:' . escapeshellarg($stage)
          . ' && rm -f ' . escapeshellarg($tmp) . ' && echo RENDER_OK';
 
     $ch = curl_init($poster);
@@ -77,10 +85,20 @@ function diploma_pdf_html(array $app, array $opt = []): ?string {
     curl_close($ch);
     if (!is_string($resp) || !str_contains($resp, 'RENDER_OK')) {
         error_log('diploma_pdf_html(' . $appId . '): bastion render failed: ' . substr((string)$resp, 0, 300));
-        return null;
+        @unlink($stage);
+        // Прежний файл цел — им и продолжаем пользоваться, если он был.
+        clearstatcache(true, $out);
+        return (is_file($out) && filesize($out) > 20000) ? $out : null;
     }
+    clearstatcache(true, $stage);
+    if (!is_file($stage) || filesize($stage) <= 20000) {
+        @unlink($stage);
+        clearstatcache(true, $out);
+        return (is_file($out) && filesize($out) > 20000) ? $out : null;
+    }
+    // Рендер удался — только теперь заменяем боевой файл.
+    if (!@rename($stage, $out)) { @unlink($stage); return null; }
     clearstatcache(true, $out);
-    if (!is_file($out) || filesize($out) <= 20000) return null;
 
     // Сжатие PDF (Ghostscript): фон-фото даунсемплится до 150dpi, ТЕКСТ и QR остаются
     // векторными/резкими. Тяжёлый диплом ~4МБ → ~0.8-1.2МБ, чтобы 3 файла (осн+доп+

@@ -115,6 +115,85 @@ function yukassa_charge_saved(int $amount, string $paymentMethodId, string $desc
 }
 
 /**
+ * ОТМЕНА НЕОПЛАЧЕННОГО СЧЁТА В ЮKASSA: POST /v3/payments/{id}/cancel.
+ *
+ * Раньше такой функции в проекте не было вовсе, и «гашение» прежних счетов сводилось
+ * к UPDATE payments SET status='canceled' в своей же базе. Для кассы счёт при этом
+ * оставался живым: у участника на руках две рабочие ссылки — из кабинета и из письма-
+ * напоминания, — и он мог оплатить одну заявку дважды. Деньги приходили, а вторая
+ * оплата возвращалась только вручную и только если её заметили.
+ *
+ * Отменять можно лишь платёж в статусе pending; на waiting_for_capture ЮKassa
+ * отвечает отказом — это нормально, такой платёж уже держит деньги и разбирается
+ * возвратом. Ошибки наружу не бросаем: отмена — сопутствующее действие, из-за неё
+ * нельзя срывать создание нового счёта.
+ *
+ * @return bool удалось ли отменить в кассе
+ */
+function yukassa_cancel_payment(string $id): bool {
+    $shop = cfgv('yukassa_shop');
+    $secret = cfgv('yukassa_secret');
+    if (!$shop || !$secret || $id === '' || str_starts_with($id, 'stub-')) return false;
+    $ch = curl_init('https://api.yookassa.ru/v3/payments/' . rawurlencode($id) . '/cancel');
+    curl_setopt_array($ch, [
+        CURLOPT_RETURNTRANSFER => true,
+        CURLOPT_POST           => true,
+        CURLOPT_POSTFIELDS     => '{}',
+        CURLOPT_USERPWD        => $shop . ':' . $secret,
+        CURLOPT_HTTPHEADER     => ['Content-Type: application/json', 'Idempotence-Key: ' . bin2hex(random_bytes(16))],
+        CURLOPT_TIMEOUT        => 12,
+    ]);
+    $resp = curl_exec($ch); $err = curl_errno($ch); curl_close($ch);
+    if ($err || !$resp) return false;
+    $d = json_decode($resp, true);
+    return is_array($d) && (string) ($d['status'] ?? '') === 'canceled';
+}
+
+/**
+ * Гасит все живые счета по заявке — и в кассе, и у себя. Зовётся перед созданием
+ * нового счёта на ту же заявку.
+ * @return int сколько счетов снято
+ */
+function yukassa_cancel_open_for_app(int $appId): int {
+    if ($appId <= 0 || !tbl_exists('payments')) return 0;
+    $n = 0;
+    try {
+        $rows = all("SELECT id, yukassa_id FROM payments
+                      WHERE application_id = ? AND status IN ('pending','waiting_for_capture','')
+                        AND COALESCE(yukassa_id,'') <> ''", [$appId]);
+    } catch (\Throwable $e) { $rows = []; }
+    foreach ($rows as $r) {
+        // Если касса отменила — гасим и у себя. Если НЕ отменила (сеть, статус
+        // waiting_for_capture), строку оставляем как есть: счёт остаётся живым, и
+        // реконсилер должен продолжать за ним следить, иначе оплату по нему
+        // никто не заметит.
+        if (yukassa_cancel_payment((string) $r['yukassa_id'])) {
+            $n++;
+            try { update('payments', ['status' => 'canceled'], 'id=:id', ['id' => (int) $r['id']]); } catch (\Throwable $e) {}
+        }
+    }
+    return $n;
+}
+
+/** То же для заказа наградных материалов. */
+function yukassa_cancel_open_for_order(int $orderId): int {
+    if ($orderId <= 0 || !tbl_exists('payments')) return 0;
+    $n = 0;
+    try {
+        $rows = all("SELECT id, yukassa_id FROM payments
+                      WHERE order_id = ? AND status IN ('pending','waiting_for_capture','')
+                        AND COALESCE(yukassa_id,'') <> ''", [$orderId]);
+    } catch (\Throwable $e) { $rows = []; }
+    foreach ($rows as $r) {
+        if (yukassa_cancel_payment((string) $r['yukassa_id'])) {
+            $n++;
+            try { update('payments', ['status' => 'canceled'], 'id=:id', ['id' => (int) $r['id']]); } catch (\Throwable $e) {}
+        }
+    }
+    return $n;
+}
+
+/**
  * Запрос статуса платежа в ЮKassa: GET /v3/payments/{id}.
  * @return array|null полный объект платежа или null при недоступности/stub.
  */
@@ -271,7 +350,23 @@ function refund_application(int $appId, string $reason = ''): array {
     }
 
     // Заявке ставим отметку, что её доля возвращена (чтобы не возвращать повторно).
-    try { update('applications', ['amount_paid' => 0, 'is_paid' => 0], 'id=:id', ['id' => $appId]); } catch (\Throwable $e) {}
+    // Сам факт возврата пишем ОТДЕЛЬНЫМИ полями. Раньше единственным следом был
+    // is_paid=0 — то есть возвращённая заявка выглядела как «просто неоплаченная»:
+    // она выпадала из списка админки (там фильтр по is_paid=1), а старая кнопка
+    // «Оплатить» из письма снова открывала кассу на ту же сумму.
+    foreach ([['refunded_at', "TEXT DEFAULT ''"], ['amount_refunded', 'INTEGER DEFAULT 0']] as [$col, $decl]) {
+        try { db()->exec("ALTER TABLE applications ADD COLUMN $col $decl"); } catch (\Throwable $e) {}
+    }
+    try {
+        update('applications', [
+            'amount_paid'     => 0,
+            'is_paid'         => 0,
+            'refunded_at'     => date('Y-m-d H:i:s'),
+            'amount_refunded' => $share,
+        ], 'id=:id', ['id' => $appId]);
+    } catch (\Throwable $e) {
+        try { update('applications', ['amount_paid' => 0, 'is_paid' => 0], 'id=:id', ['id' => $appId]); } catch (\Throwable $e2) {}
+    }
     // Пакет считаем полностью возвращённым только когда у ВСЕХ его членов share=0.
     $stillPaid = 0;
     if (!empty($app['batch_id'])) {

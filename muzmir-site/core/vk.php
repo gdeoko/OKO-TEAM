@@ -364,7 +364,13 @@ function vk_dm_send(int $peer, string $message, string $attachment = '', int $ra
     $params = [
         'group_id'  => (int) cfgv('vk_group_id', 211325055),
         'peer_id'   => $peer,
-        'random_id' => $randomId ?: $peer,
+        // random_id ДОЛЖЕН БЫТЬ РАЗНЫМ У РАЗНЫХ СООБЩЕНИЙ.
+        // Здесь по умолчанию подставлялся peer_id — то есть один и тот же ключ на
+        // все сообщения этому собеседнику. ВКонтакте дедуплицирует messages.send по
+        // паре (отправитель, random_id): первое сообщение уходило, а КАЖДОЕ следующее
+        // молча возвращало id первого. Оператор отвечал из админки, видел «отправлено»,
+        // и человек в ВК не получал ничего, начиная со второй реплики.
+        'random_id' => $randomId ?: random_int(1, 2000000000),
         'message'   => $message,
     ];
     if ($attachment !== '') $params['attachment'] = $attachment;

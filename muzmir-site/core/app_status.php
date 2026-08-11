@@ -33,6 +33,39 @@ function app_state_pipeline(): array {
     return ['new', 'judging', 'graded', 'making', 'made', 'done'];
 }
 
+/**
+ * ТО ЖЕ ВЫЧИСЛЕНИЕ СТАТУСА, НО НА SQL.
+ *
+ * Бейдж в списке заявок строился функцией app_state() (по фактам), а фильтр «Статус»
+ * в той же таблице — по хранимой колонке applications.status. Два разных источника,
+ * которые ничем не синхронизировались: админ видел «Оценена», выбирал в фильтре
+ * «Оценена» и получал пустой список. Тем же расхождением болел пончик на дашборде.
+ *
+ * Выражение ниже повторяет лестницу app_state() слово в слово, поэтому фильтр,
+ * группировка и бейдж всегда показывают одно и то же. Правило про длинные конкурсы
+ * (results_mode='list') здесь не применяется намеренно: оно скрывает результат от
+ * УЧАСТНИКА, а в админке результат виден всегда.
+ *
+ * @param string $a алиас таблицы applications в запросе
+ */
+function app_state_sql(string $a = 'a'): string {
+    if (!preg_match('/^[a-z_][a-z0-9_]*$/i', $a)) $a = 'a';
+    $dipT = "(SELECT COUNT(*) FROM diplomas d WHERE d.application_id=$a.id)";
+    $dipS = "(SELECT COUNT(*) FROM diplomas d WHERE d.application_id=$a.id AND COALESCE(d.sent_at,'')<>'')";
+    $ordT = "(SELECT COUNT(*) FROM awards_orders o WHERE o.application_id=$a.id)";
+    $ordO = "(SELECT COUNT(*) FROM awards_orders o WHERE o.application_id=$a.id AND o.status IN ('paid','made','shipped'))";
+    return "CASE
+        WHEN $a.status='rejected' THEN 'rejected'
+        WHEN COALESCE($a.state_override,'')<>'' THEN $a.state_override
+        WHEN COALESCE($a.result,'')='' THEN 'new'
+        WHEN COALESCE($a.result_sent_at,'')='' THEN 'judging'
+        WHEN $dipT>0 AND $dipS=$dipT AND $ordT>0 AND $ordO=0 THEN 'done'
+        WHEN $ordO>0 THEN 'extra'
+        WHEN $dipT>0 AND $dipS=$dipT THEN 'made'
+        WHEN $dipT>0 AND $dipS<$dipT THEN 'making'
+        ELSE 'graded' END";
+}
+
 /** Человеческие метки + тон бейджа (gold|blue|bord|success|warning|error|info). */
 function app_state_labels(): array {
     return [
@@ -130,6 +163,25 @@ function app_state(array $app, bool $forAdmin = false): array {
         $st = (string) ($o['status'] ?? '');
         if (in_array($st, ['paid', 'made', 'shipped'], true)) $out['orders_open']++;
         if (in_array($st, ['paid', 'made', 'shipped', 'delivered'], true)) $out['amount_paid'] += (int) ($o['amount'] ?? 0);
+    }
+
+    // --- Ручное переопределение из админки ---
+    // Форма «Статус» в карточке заявки писала applications.status, а бейдж читал
+    // только факты — админ жал «Сохранить», получал зелёное «Статус обновлён» и
+    // ровно ничего не менялось на экране. Аварийно перевести заявку в нужное
+    // состояние было нельзя вообще. Теперь у админки есть отдельное поле, и оно
+    // уважается везде: и здесь, и в SQL-выражении app_state_sql().
+    $__ovr = trim((string) ($app['state_override'] ?? ''));
+    if ($__ovr !== '' && isset(app_state_labels()[$__ovr])) {
+        [$lbl, $tone] = app_state_labels()[$__ovr];
+        $pipe = app_state_pipeline();
+        $idx  = array_search($__ovr === 'extra' ? 'made' : $__ovr, $pipe, true);
+        return array_merge($out, [
+            'code' => $__ovr, 'label' => $lbl, 'tone' => $tone,
+            'step' => $idx === false ? 0 : (int) $idx,
+            'detail' => 'Состояние выставлено оргкомитетом вручную.',
+            'manual' => true,
+        ]);
     }
 
     // --- Определение состояния (сверху вниз, первое совпадение) ---

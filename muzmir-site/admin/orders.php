@@ -296,16 +296,24 @@ ob_start(); ?>
       </div>
 
       <!-- Чистые дипломы для печати -->
-      <?php if ($cleans): ?>
+      <?php /* Блок показывается ВСЕГДА, когда в заказе есть оригиналы: раньше при
+               пустом списке исчезала и кнопка «Перегенерировать», и получить дипломы
+               было нечем — а список пуст ровно тогда, когда генерация не удалась.
+               Сама генерация в отрисовке больше не запускается (см. order_clean_pdfs):
+               она вешала раздел на две минуты на каждый заказ. */ ?>
+      <?php if ($cleans || order_has_originals($o)): ?>
         <div style="margin-top:14px;padding-top:12px;border-top:1px dashed var(--a-line);">
           <div class="small muted" style="text-transform:uppercase;letter-spacing:.06em;margin-bottom:8px;">Дипломы для печати (чистые, с номером+QR)</div>
-          <div style="display:flex;flex-wrap:wrap;gap:8px;">
+          <div style="display:flex;flex-wrap:wrap;gap:8px;align-items:center">
             <?php foreach ($cleans as $c): ?>
               <a class="btn btn--ghost btn--sm" href="<?= h($c['url']) ?>" target="_blank"><?= admin_icon('download') ?><span><?= h($c['label']) ?></span></a>
             <?php endforeach; ?>
+            <?php if (!$cleans): ?>
+              <span class="small muted">Ещё не подготовлены — нажмите «Подготовить».</span>
+            <?php endif; ?>
             <form method="post" action="<?= url('/admin/') ?>" style="display:inline;"><?= csrf_field() ?>
               <input type="hidden" name="do" value="regen"><input type="hidden" name="order" value="<?= $oid ?>">
-              <button class="btn btn--ghost btn--sm" type="submit">Перегенерировать</button>
+              <button class="btn btn--ghost btn--sm" type="submit"><?= $cleans ? 'Перегенерировать' : 'Подготовить' ?></button>
             </form>
           </div>
         </div>

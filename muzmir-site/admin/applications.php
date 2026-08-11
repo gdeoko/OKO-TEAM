@@ -8,7 +8,14 @@ function apps_filter(): array {
     if ($c = (int) input('competition')) { $w[] = 'a.competition_id=?'; $a[] = $c; }
     if ($n = input('nomination')) { $w[] = 'a.nomination=?'; $a[] = $n; }
     if ($cat = input('category')) { $w[] = 'a.age_category=?'; $a[] = $cat; }
-    if ($s = input('status')) { $w[] = 'a.status=?'; $a[] = $s; }
+    // Фильтр «Статус» ищет по ТОМУ ЖЕ вычислению, что рисует бейдж в таблице.
+    // Раньше фильтр смотрел в колонку a.status, а бейдж — в факты: админ выбирал
+    // «Оценена» и получал пустой список при полной таблице «Оценена» на экране.
+    if ($s = input('status')) {
+        if (!function_exists('app_state_sql')) require_once BASE_PATH . '/core/app_status.php';
+        $w[] = '(' . app_state_sql('a') . ')=?';
+        $a[] = $s;
+    }
     if ($d1 = input('date_from')) { $w[] = 'date(a.created_at)>=?'; $a[] = $d1; }
     if ($d2 = input('date_to')) { $w[] = 'date(a.created_at)<=?'; $a[] = $d2; }
     // Поиск: регистронезависимый для кириллицы (search_like → mb_lower), по всем
@@ -26,7 +33,12 @@ function apps_filter(): array {
     // скрыты — «до оплаты заявки не существует для админов». is_paid=1 у всех
     // бесплатных (ставится сразу) и у оплаченных платных. Чекбокс «Ожидают оплаты»
     // (show_unpaid=1) раскрывает их для поддержки/диагностики без потери данных.
-    if (input('show_unpaid') !== '1') { $w[] = 'a.is_paid=1'; }
+    // ИСКЛЮЧЕНИЕ — ОТКЛОНЁННЫЕ. При отклонении оплаченной заявки центр возвращает
+    // деньги, а возврат ставит is_paid=0. Из-за этого заявка, которую сам центр и
+    // отклонил, исчезала из списка и из выгрузки CSV: найти её можно было только
+    // чекбоксом «Ожидают оплаты», подписанным совсем про другое. История отказов
+    // должна быть видна всегда.
+    if (input('show_unpaid') !== '1') { $w[] = "(a.is_paid=1 OR a.status='rejected')"; }
     return [$w ? 'WHERE ' . implode(' AND ', $w) : '', $a];
 }
 
@@ -129,8 +141,24 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && input('do') === 'set_status') {
         $extra = $st === 'paid' ? ',is_paid=1' : '';
         // Возврат в «до-аттестации» — снимаем оценку/результат (это исправляет ошибочно оценённые заявки).
         if (in_array($st, ['new','submitted','pending','judging'], true)) $extra .= ",score=NULL,result='',graded_at=NULL,jury_comment=''";
-        q("UPDATE applications SET status=? $extra WHERE id=?", [$st, $id]);
-        audit('application_status', 'application', $id, ['status'=>$st]);
+
+        // РУЧНОЕ СОСТОЯНИЕ. Бейдж заявки вычисляется из фактов, поэтому запись
+        // одной колонки status ничего на экране не меняла: админ жал «Сохранить»,
+        // видел зелёное «Статус обновлён» и тот же самый бейдж. Движение ВПЕРЁД
+        // («Оценена», «Изготовлена», «Исполнена») фиксируем отдельным полем, которое
+        // уважают и карточка, и список, и фильтр. Откат назад и отклонение работают
+        // по фактам, поэтому переопределение там снимаем.
+        $ovr = '';
+        if (function_exists('app_state_labels') && isset(app_state_labels()[$st])
+            && !in_array($st, ['new', 'judging', 'rejected'], true)) {
+            $ovr = $st;
+        }
+        // Легаси-коды формы приводим к лестнице состояний.
+        if ($ovr === '' && $st === 'sent') $ovr = 'made';
+        if ($ovr === '' && $st === 'done') $ovr = 'done';
+
+        q("UPDATE applications SET status=?, state_override=? $extra WHERE id=?", [$st, $ovr, $id]);
+        audit('application_status', 'application', $id, ['status'=>$st, 'override'=>$ovr]);
         flash('Статус заявки обновлён.' . $refundMsg, 'success');
     }
     admin_redirect('applications', ['id' => $id]);

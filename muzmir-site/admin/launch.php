@@ -294,7 +294,9 @@ if (in_array((string) input('do'), ['ctl_mass','ctl_now','ctl_move','ctl_cancel'
 
     if ($do === 'ctl_finish') {
         $n = launch_cancel_all();
-        mass_sending_set(false);
+        // Штатное завершение кампании — единственная причина, при которой месячный
+        // крон вправе поднять стоп-кран сам (см. cron/monthly_launch.php, шаг 4).
+        mass_sending_set(false, 'campaign_finished');
         q("UPDATE mail_queue SET status='paused' WHERE status='queued' AND COALESCE(priority,0) > 0");
         audit('launch_campaign_finish', 'competition', 0, ['cancelled' => $n]);
         flash('Кампания завершена. Пульт вернулся в режим подготовки запуска.', 'success');

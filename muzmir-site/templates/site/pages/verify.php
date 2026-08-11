@@ -2,14 +2,47 @@
 /** Публичная проверка подлинности диплома. Переменная $number задана роутером. */
 $number = trim((string)($number ?? ''));
 
+/* ЭТА СТРАНИЦА ПОДТВЕРЖДАЕТ ПОДЛИННОСТЬ — И ТОЛЬКО.
+ *
+ * Номера дипломов идут строго подряд, страница открыта всем и раньше отдавала по
+ * каждому номеру полную карточку: ФИО ребёнка, педагога, учреждение и город. То есть
+ * перебором MM-2026-00001…00500 выгружалась вся база участников с их школами.
+ *
+ * Что осталось: конкурс, тип, номинация, звание, дата выдачи, номер — этого хватает,
+ * чтобы работодатель или аттестационная комиссия убедились в подлинности документа,
+ * который им и так показали на руках. Персональные данные третьих лиц (педагог,
+ * учреждение, город) со страницы убраны, ФИО участника показывается сокращённо.
+ * Плюс ограничение частоты: перебор становится бессмысленным.
+ */
 $d = null;
+$verifyLimited = false;
 if ($number !== '') {
-    $d = one("SELECT d.*, a.full_name, a.nomination, a.work_title, a.teacher, a.institution, a.city,
-                     a.result AS app_result, c.name AS comp_name, c.type AS comp_type
-              FROM diplomas d
-              JOIN applications a ON a.id=d.application_id
-              LEFT JOIN competitions c ON c.id=a.competition_id
-              WHERE d.number=?", [$number]);
+    // 40 проверок с адреса в час — живому человеку хватает с запасом.
+    if (function_exists('rate_ok') && !rate_ok('verify:' . client_ip(), 40, 3600)) {
+        $verifyLimited = true;
+    } else {
+        $d = one("SELECT d.*, a.full_name, a.nomination, a.work_title, a.user_id,
+                         a.result AS app_result, c.name AS comp_name, c.type AS comp_type
+                  FROM diplomas d
+                  JOIN applications a ON a.id=d.application_id
+                  LEFT JOIN competitions c ON c.id=a.competition_id
+                  WHERE d.number=?", [$number]);
+        // Документ, который ещё не выдан участнику, в реестре не подтверждаем:
+        // иначе через реестр можно узнать результат раньше самого участника.
+        if ($d && trim((string) ($d['sent_at'] ?? '')) === '') $d = null;
+    }
+}
+
+/** ФИО для публичного реестра: «Иванов И. И.» — узнаваемо, но не выгружаемо списком. */
+function verify_short_name(string $full): string {
+    $p = preg_split('~\s+~u', trim($full)) ?: [];
+    if (count($p) < 2) return trim($full);
+    $out = $p[0];
+    for ($i = 1; $i < min(3, count($p)); $i++) {
+        $ini = mb_substr($p[$i], 0, 1);
+        if ($ini !== '') $out .= ' ' . mb_strtoupper($ini) . '.';
+    }
+    return $out;
 }
 
 if ($d) {
@@ -289,16 +322,16 @@ ob_start(); ?>
           </div>
 
           <?php if ($result): ?><div class="cert-result"><?= h($result) ?></div><?php endif; ?>
-          <div class="cert-name"><?= h($d['full_name']) ?></div>
+          <div class="cert-name"><?= h(verify_short_name((string) $d['full_name'])) ?></div>
           <?php if ($d['work_title']): ?><p class="cert-work">«<?= h($d['work_title']) ?>»</p><?php endif; ?>
 
           <div class="cert-grid">
             <div class="fld"><span>Конкурс</span><strong><?= h($d['comp_name'] ?: 'Конкурс Культурного центра «Музыкальный Мир»') ?></strong></div>
             <div class="fld"><span>Тип</span><strong><?= $d['comp_type']==='national' ? 'Всероссийский' : 'Международный' ?></strong></div>
             <?php if ($d['nomination']): ?><div class="fld"><span>Номинация</span><strong><?= h($d['nomination']) ?></strong></div><?php endif; ?>
-            <?php if ($d['teacher']): ?><div class="fld"><span>Педагог</span><strong><?= h($d['teacher']) ?></strong></div><?php endif; ?>
-            <?php if ($d['institution']): ?><div class="fld"><span>Учреждение</span><strong><?= h($d['institution']) ?></strong></div><?php endif; ?>
-            <?php if ($d['city']): ?><div class="fld"><span>Город</span><strong><?= h($d['city']) ?></strong></div><?php endif; ?>
+            <?php /* Педагог, учреждение и город здесь больше не печатаются: это
+                     персональные данные третьих лиц, а для подтверждения подлинности
+                     они не нужны — документ и так на руках у того, кто проверяет. */ ?>
             <?php if ($issued): ?><div class="fld"><span>Дата выдачи</span><strong><?= h($issued) ?></strong></div><?php endif; ?>
             <div class="fld mono"><span>Номер</span><strong><?= h($d['number']) ?></strong></div>
           </div>
@@ -309,7 +342,21 @@ ob_start(); ?>
         </div>
       </div>
 
-      <!-- Визуальный просмотр самого диплома (реальный шаблон) -->
+      <?php
+      /* ПОЛНЫЙ БЛАНК ЗДЕСЬ БОЛЬШЕ НЕ ПОКАЗЫВАЕМ.
+         На бланке напечатаны ФИО ребёнка, педагог, учреждение и город — то есть
+         ровно то, что мы только что убрали из карточки выше. Оставить рядом врезку
+         с самим документом означало бы не закрыть утечку, а просто перенести её
+         на строку ниже. Свой диплом участник открывает в личном кабинете или по
+         подписанной ссылке из письма; для проверки подлинности достаточно карточки.
+         Сотруднику и владельцу заявки просмотр по-прежнему доступен. */
+      $__me = function_exists('current_user') ? current_user() : null;
+      $__canSeeBlank = $__me && (
+          (function_exists('user_can') && user_can('jury'))
+          || (int) ($d['user_id'] ?? 0) === (int) $__me['id']
+      );
+      ?>
+      <?php if ($__canSeeBlank): ?>
       <div class="dip-visual reveal">
         <h2 class="dip-visual-h">Так выглядит сам диплом</h2>
         <div class="dip-embed" id="dipEmbed">
@@ -317,6 +364,7 @@ ob_start(); ?>
         </div>
         <a class="btn btn--ghost btn--sm" href="<?= url('/diploma-view/'.$d['number']) ?>" target="_blank" rel="noopener" style="margin-top:12px">Открыть в полном размере</a>
       </div>
+      <?php endif; ?>
 
       <div class="cert-meta">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M20 6 9 17l-5-5"/></svg>
@@ -359,8 +407,10 @@ ob_start(); ?>
             <path class="vfy-cross b" d="M65 39 39 65"/>
           </svg>
         </div>
-        <h1>Диплом не найден</h1>
-        <p>В реестре нет документа с таким номером.</p>
+        <h1><?= $verifyLimited ? 'Слишком много проверок' : 'Диплом не найден' ?></h1>
+        <p><?= $verifyLimited
+              ? 'С этого адреса за последний час было слишком много обращений к реестру. Повторите проверку немного позже.'
+              : 'В реестре нет документа с таким номером — либо он ещё не выдан участнику.' ?></p>
         <div class="num">№ <?= h($number ?: '-') ?></div>
       </div>
 

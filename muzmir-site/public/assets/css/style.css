@@ -8,7 +8,10 @@
      Текст — глубокий сапфирово-синий. Никакого грязного оливкового золота. */
   --bg:#FAF4E6; --bg-2:#F1E6C9; --panel:rgba(255,255,255,.82); --panel-solid:#FFFDF7; --parchment:#F6EDD6;
   --glass:rgba(255,255,255,.72); --glass-brd:rgba(180,130,28,.30);
-  --text:#15224C; --text-dim:#3c456e; --muted:#6a7096; --navy:#15224C;
+  /* --muted затемнён с #6a7096 до #5A6080: на фоне светлой темы прежний давал
+     контраст ниже нормы AA, а этим цветом набраны подписи нижнего меню и лид
+     на главной — то есть текст, который читают в первую очередь. */
+  --text:#15224C; --text-dim:#3c456e; --muted:#5A6080; --navy:#15224C;
   /* Королевский синий (акцент с логотипа) */
   --royal:#17307A; --royal-2:#2247A8; --royal-soft:rgba(23,48,122,.10);
   --grad-royal:linear-gradient(135deg,#2A57C6 0%,#17307A 100%);
@@ -1728,8 +1731,12 @@ body::before,body::after{display:none !important}
   background:color-mix(in srgb,var(--panel-solid,#fff) 80%,transparent);border:1px solid var(--line);
   color:var(--text);text-decoration:none;box-shadow:0 4px 14px rgba(139,111,31,.08);
   backdrop-filter:blur(8px);transition:transform .2s cubic-bezier(.2,.8,.2,1),box-shadow .22s,border-color .22s;
-  opacity:0;transform:translateY(12px);animation:menuTileIn .42s cubic-bezier(.2,.85,.25,1) forwards;
-  animation-delay:calc(var(--i,0)*22ms);position:relative;overflow:hidden}
+  /* opacity/transform/animation здесь НЕ повторяем: они уже заданы выше, а это
+     правило стоит ПОСЛЕ страховки @media(prefers-reduced-motion) и с той же
+     специфичностью — то есть перебивало её. У всех, кто отключил анимации в
+     системе (а на iOS это делают ради экономии батареи), страница /menu была
+     полностью пустой: плитки оставались с opacity:0 навсегда. */
+  position:relative;overflow:hidden}
 [data-theme="dark"] .menu-tile{background:color-mix(in srgb,#231b18 78%,transparent);border-color:rgba(232,194,90,.16)}
 .menu-tile-ic{flex:none;width:40px;height:40px;border-radius:11px;display:flex;align-items:center;justify-content:center;
   background:var(--grad-gold);color:var(--gold-fg);box-shadow:0 5px 12px rgba(201,168,76,.28)}
@@ -2563,3 +2570,19 @@ html body nav.appnav, .appnav-inner, .appnav a.appnav-cta{overflow:visible !impo
 .addr-item small{display:block;margin-top:3px;font-size:.78rem;color:var(--muted,#6B7699)}
 .addr-item:hover,.addr-item.active{background:var(--gold-soft,rgba(199,147,34,.14))}
 @media (max-width:640px){.addr-item{padding:13px 14px}}
+
+
+/* ══════════════════════════════════════════════════════════════════════════
+   СТРАХОВКА ОТ ПУСТЫХ ЭКРАНОВ ПРИ ОТКЛЮЧЁННЫХ АНИМАЦИЯХ.
+   Стоит в самом конце файла намеренно: любой элемент, который стартует с
+   opacity:0 и проявляется анимацией, при «уменьшить движение» обязан быть
+   виден сразу. Иначе достаточно одного дублирующего правила ниже по файлу —
+   и целый раздел сайта становится пустым белым листом.
+   ══════════════════════════════════════════════════════════════════════════ */
+@media (prefers-reduced-motion: reduce) {
+  .menu-tile, .reveal, .cab-card, .comp-card {
+    animation: none !important;
+    opacity: 1 !important;
+    transform: none !important;
+  }
+}

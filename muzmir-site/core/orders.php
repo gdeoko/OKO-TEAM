@@ -240,18 +240,45 @@ function award_filter_prices(array $rows, string $result, bool $compIsPaid): arr
     return $out;
 }
 
-/** Кэшированные чистые дипломы заказа (для админки): читает сохранённые, иначе генерит и кэширует. */
+/**
+ * Чистые дипломы заказа для админки.
+ *
+ * ГЕНЕРАЦИЯ ЗДЕСЬ НЕ ПРОИСХОДИТ САМА ПО СЕБЕ. Раньше происходила — и это вешало
+ * раздел «Заказы»: пустой результат сохранялся как "[]", а проверка кэша требовала
+ * НЕпустой массив, поэтому такой заказ на КАЖДОЙ отрисовке списка снова уходил на
+ * бастион с таймаутом 120 секунд на каждый тип диплома. Стоило бастиону сломаться —
+ * и страница заказов переставала открываться вообще, причём чинилось это только
+ * починкой бастиона: сам кэш никогда не заполнялся.
+ *
+ * Теперь: показываем то, что уже сохранено (пустой список — тоже валидный ответ),
+ * а генерация запускается только явно — кнопкой «Перегенерировать» ($regen) или при
+ * отправке заказа в производство.
+ */
 function order_clean_pdfs(array $order, bool $regen = false): array {
     $oid = (int)($order['id'] ?? 0);
-    $cached = json_decode((string)($order['clean_pdfs'] ?? ''), true);
-    if (!$regen && is_array($cached) && $cached) {
-        // проверяем, что файлы на месте
-        $ok = true;
-        foreach ($cached as $c) { if (empty($c['url'])) { $ok = false; break; } }
-        if ($ok) return $cached;
+    $raw = trim((string)($order['clean_pdfs'] ?? ''));
+    $cached = json_decode($raw, true);
+
+    if (!$regen && is_array($cached)) {
+        // Отсеиваем записи, чей файл уже удалён с диска, — остальное отдаём как есть.
+        $live = [];
+        foreach ($cached as $c) {
+            $url = (string) ($c['url'] ?? '');
+            if ($url === '') continue;
+            $abs = BASE_PATH . '/public/diplomas/' . basename(parse_url($url, PHP_URL_PATH) ?: $url);
+            if (is_file($abs)) $live[] = $c;
+        }
+        // Кэш посчитан (строка непустая) — возвращаем результат, даже если он пуст.
+        if ($raw !== '') return $live;
     }
+
+    if (!$regen) return [];   // ещё не считали — но и бастион в цикле вывода не дёргаем
+
     $pdfs = order_generate_clean_pdfs($order);
-    $store = array_map(fn($p) => ['label' => $p['label'], 'url' => $p['url'], 'type' => $p['type']], $pdfs);
+    $store = array_map(
+        fn($p) => ['label' => $p['label'], 'url' => $p['url'], 'type' => $p['type'], 'fio' => $p['fio'] ?? ''],
+        $pdfs
+    );
     if ($oid > 0) update('awards_orders', ['clean_pdfs' => json_encode($store, JSON_UNESCAPED_UNICODE)], 'id=:id', ['id' => $oid]);
     return $store;
 }
@@ -303,7 +330,16 @@ function order_items_parse(array $order): array {
         $name = trim((string)($it['item'] ?? ''));
         $kind = trim((string)($it['kind'] ?? 'original'));
         if ($name === '' || $kind === 'club') continue;
-        $key = $kind . '|' . $name;
+        // ИМЕННЫЕ ПОЗИЦИИ НЕ СХЛОПЫВАЕМ.
+        // Именной диплом и благодарность выписываются на КОНКРЕТНОЕ ФИО — витрина
+        // и требует его на каждый экземпляр. Раньше ключ агрегации был «вид|название»,
+        // и пять благодарностей пяти разным педагогам превращались в одну строку
+        // «Благодарность × 5» с потерянными ФИО: в производство уходил один бланк,
+        // пустой. Такие позиции держим по строке на экземпляр, различая по ФИО.
+        $fio   = trim((string)($it['fio'] ?? ''));
+        $dtype = $kind === 'original' ? order_item_diploma_type($name) : '';
+        $named = in_array($dtype, ['named', 'thanks'], true);
+        $key = $kind . '|' . $name . ($named ? '|' . mb_strtolower($fio) . '|' . count($agg) : '');
         if (!isset($agg[$key])) {
             $slug = order_item_photo_slug($name);
             $photo = '';
@@ -315,7 +351,8 @@ function order_items_parse(array $order): array {
                 'item' => $name, 'kind' => $kind, 'count' => 0,
                 'price' => (int)($it['price'] ?? 0),
                 'photo' => $photo,
-                'dtype' => $kind === 'original' ? order_item_diploma_type($name) : '',
+                'fio'   => $fio,          // на кого выписывается (именные позиции)
+                'dtype' => $dtype,
                 'physical' => $kind === 'original' && order_item_diploma_type($name) === '' && mb_strpos(mb_strtolower($name), 'доставк') === false,
             ];
         }
@@ -343,26 +380,42 @@ function order_generate_clean_pdfs(array $order): array {
     if (!$app) return [];
     if (!function_exists('diploma_pdf_html')) require_once BASE_PATH . '/core/diploma_render.php';
 
-    // Какие типы дипломов заказаны (оригиналы).
-    $types = [];
+    // ИДЁМ ПО ЭКЗЕМПЛЯРАМ, А НЕ ПО ТИПАМ.
+    // Здесь стояло $types[$p['dtype']] = $p['item'] — карта «тип → название», которая
+    // схлопывала N заказанных именных документов в один. Заказ пяти благодарностей на
+    // пятерых педагогов давал ОДИН бланк без ФИО, и в типографию уезжал именно он.
+    $jobs = [];
     foreach (order_items_parse($order) as $p) {
-        if ($p['kind'] === 'original' && $p['dtype'] !== '') $types[$p['dtype']] = $p['item'];
+        if ($p['kind'] !== 'original' || $p['dtype'] === '') continue;
+        $named = in_array($p['dtype'], ['named', 'thanks'], true);
+        $n = $named ? max(1, (int) $p['count']) : 1;   // неименные печатаются одним образцом
+        for ($i = 0; $i < $n; $i++) {
+            $jobs[] = ['type' => $p['dtype'], 'item' => $p['item'], 'fio' => (string) ($p['fio'] ?? '')];
+        }
     }
     // Если оригиналы (кубок/статуэтка/медаль) без явного диплома — всё равно кладём основной.
-    if (!$types && order_has_originals($order)) $types['main'] = 'Основной диплом';
+    if (!$jobs && order_has_originals($order)) $jobs[] = ['type' => 'main', 'item' => 'Основной диплом', 'fio' => ''];
 
     $labels = ['main' => 'Основной диплом', 'extra' => 'Дополнительный диплом', 'named' => 'Именной диплом', 'thanks' => 'Благодарность'];
     $out = [];
     $base = rtrim((string) cfgv('base_url', ''), '/');
-    foreach ($types as $t => $itemName) {
+    foreach ($jobs as $idx => $j) {
+        $t = $j['type'];
         $opt = ['clean' => true];
         if ($t === 'extra')  $opt['extra']  = true;
         if ($t === 'named')  $opt['named']  = true;
         if ($t === 'thanks') $opt['thanks'] = true;
+        // ФИО получателя — в рендер: без него благодарность печатается пустой.
+        if ($j['fio'] !== '') $opt['person'] = $j['fio'];
+        else if (in_array($t, ['named', 'thanks'], true)) $opt['person_idx'] = $idx + 1;
+
         $pdf = null;
         try { $pdf = diploma_pdf_html((array)$app, $opt); } catch (\Throwable $e) { $pdf = null; }
         if ($pdf && is_file($pdf)) {
-            $out[] = ['label' => $labels[$t] ?? $itemName, 'path' => $pdf, 'url' => $base . '/diplomas/' . basename($pdf), 'type' => $t];
+            $label = $labels[$t] ?? $j['item'];
+            if ($j['fio'] !== '') $label .= ' — ' . $j['fio'];
+            $out[] = ['label' => $label, 'path' => $pdf, 'url' => $base . '/diplomas/' . basename($pdf),
+                      'type' => $t, 'fio' => $j['fio']];
         }
     }
     return $out;
@@ -372,7 +425,10 @@ function order_generate_clean_pdfs(array $order): array {
 function order_items_summary(array $order): string {
     $lines = [];
     foreach (order_items_parse($order) as $p) {
-        $lines[] = '• ' . $p['item'] . ' × ' . $p['count'];
+        // У именных позиций показываем, на кого выписывается: без этого сборщик
+        // заказа не знает, чьё имя печатать.
+        $fio = trim((string) ($p['fio'] ?? ''));
+        $lines[] = '• ' . $p['item'] . ($fio !== '' ? ' — ' . $fio : '') . ' × ' . $p['count'];
     }
     return implode("\n", $lines);
 }

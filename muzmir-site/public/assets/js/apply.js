@@ -705,7 +705,26 @@
           clearSubmitLoading();
           show('done', 'next');
           renderSuccessCheck();
-          notify('Заявка отправлена. Номер: ' + num, 'success');
+
+          // Касса не открылась. Заявка сохранена, но не оплачена — и говорить в этот
+          // момент «Подтверждение направлено на почту» нельзя: письмо по платной
+          // заявке уходит только после оплаты, и человек уйдёт ни с чем.
+          var note = $('[data-done-note]'), box = $('[data-pay-fallback]'), retry = $('[data-pay-retry]');
+          if (d.payment_error) {
+            if (note) note.hidden = true;
+            if (box) {
+              box.hidden = false;
+              box.textContent = d.message || 'Заявка сохранена, но платёжная форма не открылась. '
+                + 'Оплатить оргвзнос можно из личного кабинета — заявка ждёт оплаты и никуда не денется.';
+            }
+            if (retry && d.pay_url) { retry.hidden = false; retry.setAttribute('href', d.pay_url); }
+            notify('Заявка ' + num + ' сохранена, но оплата не открылась. Оплатите из кабинета.', 'error');
+          } else {
+            if (note) note.hidden = false;
+            if (box) box.hidden = true;
+            if (retry) retry.hidden = true;
+            notify('Заявка отправлена. Номер: ' + num, 'success');
+          }
         } else {
           throw new Error(d.message || d.error || 'Не удалось отправить заявку.');
         }

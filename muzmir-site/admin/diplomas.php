@@ -214,7 +214,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && input('do') === 'generate') {
         if (is_file(BASE_PATH . '/core/diploma_render.php')) require_once BASE_PATH . '/core/diploma_render.php';
         if (function_exists('diploma_pdf_html')) {
             try {
-                $rp = diploma_pdf_html($app, ['thanks' => ($dtype === 'thanks')]);
+                // ПОЛНЫЙ НАБОР ФЛАГОВ. Передавался только 'thanks', поэтому именной
+                // диплом и спец-награда рендерились как ОСНОВНОЙ: участник получал
+                // три одинаковых бланка вместо трёх разных документов.
+                $rp = diploma_pdf_html($app, [
+                    'thanks' => $dtype === 'thanks',
+                    'extra'  => $dtype === 'extra',
+                    'named'  => $dtype === 'named',
+                ]);
                 if ($rp && is_file($rp)) { $pdfPath = '/diplomas/' . basename($rp); $pdfok++; }
             } catch (Throwable $e) { $pdfPath = ''; }
         }
@@ -240,6 +247,17 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && input('do') === 'send') {
     }
     $ids = array_map('intval', $_POST['dids'] ?? []);
     $queued = 0;
+    $noFile = 0;
+    // ВЛОЖЕНИЕ ДОЛЖНО БЫТЬ ФАЙЛОМ НА ДИСКЕ.
+    // В diplomas.pdf_path лежит то веб-путь («/diplomas/x.pdf»), то абсолютный путь —
+    // как записал тот, кто диплом создал. Раньше это значение клалось в mail_queue.attach
+    // как есть: почтовик молча отбрасывал несуществующий файл (фильтр is_file), письмо
+    // уходило ПУСТЫМ, а диплом помечался отправленным. Участник получал поздравление
+    // без документа, и повторно ему уже ничего не слали.
+    // Разворачиваем путь тем же кодом, что и крон.
+    if (!defined('MM_EMAIL_TEST_LIB')) define('MM_EMAIL_TEST_LIB', 1);
+    require_once BASE_PATH . '/cron/send_diplomas.php';
+
     foreach ($ids as $did) {
         $d = one("SELECT d.*, a.email, a.full_name, a.group_name, a.is_group, c.name comp
                   FROM diplomas d JOIN applications a ON a.id=d.application_id
@@ -257,13 +275,26 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && input('do') === 'send') {
                 'preheader'      => 'Ваш диплом готов и приложен к письму.',
               ])
             : '<p>Здравствуйте, ' . h($name) . '.</p><p>Поздравляем с результатом «' . h($d['result']) . '» в конкурсе «' . h($d['comp']) . '». Ваш диплом № ' . h($d['number']) . ' во вложении.</p>';
-        insert('mail_queue', ['to_email'=>$d['email'],'to_name'=>$name,'subject'=>$subject,'body'=>$body,'attach'=>$d['pdf_path'] ?: '']);
+        $pdfAbs = '';
+        if (function_exists('_diploma_files')) { [$pdfAbs] = _diploma_files($d); }
+        if ($pdfAbs === '') {
+            // Файла нет — письмо не ставим и отправленным диплом НЕ помечаем,
+            // иначе он навсегда выпадет из очереди на отправку.
+            $noFile++;
+            continue;
+        }
+        insert('mail_queue', ['to_email'=>$d['email'],'to_name'=>$name,'subject'=>$subject,'body'=>$body,'attach'=>$pdfAbs]);
         q("UPDATE diplomas SET sent_at=datetime('now') WHERE id=?", [$did]);
         q("UPDATE applications SET status='sent' WHERE id=?", [$d['application_id']]);
         $queued++;
     }
-    audit('diplomas_send', 'diploma', null, ['queued'=>$queued]);
-    flash("Поставлено в очередь писем: $queued.", 'success');
+    audit('diplomas_send', 'diploma', null, ['queued'=>$queued, 'no_file'=>$noFile]);
+    if ($noFile > 0) {
+        flash("Поставлено в очередь писем: $queued. НЕ отправлено: $noFile — у этих дипломов нет готового PDF. "
+            . "Нажмите «Сгенерировать» и повторите отправку.", 'warning');
+    } else {
+        flash("Поставлено в очередь писем: $queued.", 'success');
+    }
     admin_redirect('diplomas', array_filter(['competition'=>$comp,'tab'=>'sent']));
 }
 
@@ -284,7 +315,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && input('do') === 'resend') {
                 'preheader' => 'Диплом № ' . $d['number'] . ' — во вложении.',
               ])
             : '<p>Здравствуйте, ' . h($name) . '.</p><p>Повторно направляем Ваш диплом № ' . h($d['number']) . ' по конкурсу «' . h($d['comp']) . '».</p>';
-        insert('mail_queue', ['to_email'=>$d['email'],'to_name'=>$name,'subject'=>'Ваш диплом (повторно) · '.$d['comp'],'body'=>$body,'attach'=>$d['pdf_path'] ?: '']);
+        if (!defined('MM_EMAIL_TEST_LIB')) define('MM_EMAIL_TEST_LIB', 1);
+        require_once BASE_PATH . '/cron/send_diplomas.php';
+        $pdfAbs = '';
+        if (function_exists('_diploma_files')) { [$pdfAbs] = _diploma_files($d); }
+        if ($pdfAbs === '') {
+            flash('У этого диплома нет готового PDF — письмо не отправлено. Сгенерируйте документ и повторите.', 'error');
+            admin_redirect('diplomas', array_filter(['competition'=>$comp,'tab'=>'sent']));
+        }
+        insert('mail_queue', ['to_email'=>$d['email'],'to_name'=>$name,'subject'=>'Ваш диплом (повторно) · '.$d['comp'],'body'=>$body,'attach'=>$pdfAbs]);
         q("UPDATE diplomas SET sent_at=datetime('now') WHERE id=?", [$did]);
         audit('diploma_resend', 'diploma', $did);
         flash('Диплом повторно поставлен в очередь.', 'success');

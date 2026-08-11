@@ -515,3 +515,68 @@ function app_discount_reasons(array $info, int $pct): array {
 }
 
 loyalty_boot();
+
+/**
+ * СКОЛЬКО ЧЕЛОВЕК ДОЛЖЕН ЗА ЗАЯВКУ — ОДИН ОТВЕТ НА ВЕСЬ САЙТ.
+ *
+ * Сумма участия считалась в трёх местах отдельно: на подаче (api/v1/apply.php),
+ * на странице счёта (/pay) и в кнопке «Оплатить» в кабинете (api/v1/app_pay.php).
+ * В последней скидок не было вовсе: участнику клуба писали 400 ₽ в кабинете и в
+ * письме, а касса открывалась на 500 ₽. Человек либо переплачивал, либо закрывал
+ * форму и не платил вообще.
+ *
+ * Порядок ровно один:
+ *   1. Уже зафиксированная сумма (amount_paid) — закон. Она названа участнику,
+ *      с ней ушло письмо, её нельзя пересчитывать задним числом.
+ *   2. Иначе база = price_base заявки, а если её нет — цена конкурса.
+ *   3. К базе применяются скидки участника: достижения, клуб, реферальный кредит.
+ *   4. Расклад сохраняется на заявку — чтобы webhook кассы и все показы дальше
+ *      видели то же самое.
+ *
+ * @return array ['amount'=>int, 'base'=>int, 'pct'=>int, 'stored'=>bool]
+ */
+function application_amount_due(array $a, bool $persist = true): array {
+    $appId  = (int) ($a['id'] ?? 0);
+    $stored = (int) ($a['amount_paid'] ?? 0);
+    $base   = (int) ($a['price_base'] ?? 0) ?: (int) ($a['comp_price'] ?? 0);
+    if ($base <= 0 && (int) ($a['competition_id'] ?? 0) > 0) {
+        $base = (int) (scalar("SELECT price FROM competitions WHERE id=?", [(int) $a['competition_id']]) ?? 0);
+    }
+    if ($stored > 0) return ['amount' => $stored, 'base' => $base ?: $stored, 'pct' => 0, 'stored' => true];
+
+    $uid   = (int) ($a['user_id'] ?? 0);
+    $email = mb_strtolower(trim((string) ($a['email'] ?? '')));
+
+    $loyPct = ($uid > 0 || $email !== '') ? (int) loyalty_discount($uid, $email) : 0;
+
+    $clubPct = 0;
+    if ($uid > 0 && is_file(BASE_PATH . '/core/club.php')) {
+        require_once BASE_PATH . '/core/club.php';
+        if (function_exists('club_is_active') && club_is_active($uid) && function_exists('club_discount_percent')) {
+            $clubPct = (int) club_discount_percent($uid);
+        }
+    }
+
+    $credPct = ($uid > 0 && function_exists('referral_credit_percent')) ? (int) referral_credit_percent($uid) : 0;
+
+    $disc   = discount_breakdown($loyPct, $credPct, $clubPct);
+    $amount = loyalty_apply($base, (int) $disc['total']);
+
+    if ($persist && $appId > 0) {
+        try {
+            update('applications', [
+                'price_base'    => $base,
+                'discount_pct'  => (int) $disc['total'],
+                'discount_info' => json_encode([
+                    'loyalty_pct'    => (int) $disc['loyalty'],
+                    'referral_pct'   => (int) $disc['referral'],
+                    'club_pct'       => (int) $disc['club'],
+                    'total_pct'      => (int) $disc['total'],
+                    'credit_applied' => $credPct > 0,
+                ], JSON_UNESCAPED_UNICODE),
+            ], 'id=:id', ['id' => $appId]);
+        } catch (\Throwable $e) { /* расчёт важнее записи */ }
+    }
+
+    return ['amount' => $amount, 'base' => $base, 'pct' => (int) $disc['total'], 'stored' => false];
+}

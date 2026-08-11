@@ -8,8 +8,13 @@ function current_user(): ?array {
     $u = null;
     $token = $_COOKIE['muzmir_sess'] ?? '';
     if ($token) {
+        // ЗАБЛОКИРОВАННЫЙ АККАУНТ НЕ АВТОРИЗУЕТСЯ. Здесь не было условия по blocked,
+        // и блокировка в админке ни на что не влияла: у человека оставалась живая
+        // сессия на 30 дней, и он спокойно продолжал работать — включая админку,
+        // если у него была роль. Блокировка «срабатывала» только при новом входе.
         $row = one("SELECT u.* FROM sessions s JOIN users u ON u.id=s.user_id
-                    WHERE s.token=? AND (s.expires_at IS NULL OR s.expires_at > datetime('now'))", [$token]);
+                    WHERE s.token=? AND (s.expires_at IS NULL OR s.expires_at > datetime('now'))
+                      AND COALESCE(u.blocked,0)=0", [$token]);
         if ($row) $u = $row;
     }
     return $u;

@@ -162,7 +162,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             }
             $html = function_exists('_diploma_email_html')
                 ? _diploma_email_html($row)
-                : ('<p>Здравствуйте! Ваш диплом № ' . h($dn) . ' — <a href="' . h(url('/diploma/' . $dn . '.pdf')) . '">скачать PDF</a>.</p>');
+                : ('<p>Здравствуйте! Ваш диплом № ' . h($dn) . ' — <a href="' . h(function_exists('diploma_link') ? diploma_link($dn) : url('/diploma/' . $dn . '.pdf')) . '">скачать PDF</a>.</p>');
             // На e-mail из заявки (фолбэк — почта аккаунта).
             $toMail = filter_var((string) $d['a_email'], FILTER_VALIDATE_EMAIL) ? (string) $d['a_email'] : (string) ($user['email'] ?? '');
             $subj   = 'Ваш диплом конкурса «' . (string) $d['comp_name'] . '» — № ' . $dn;
@@ -386,16 +386,24 @@ $hasGradedAt = $apps && array_key_exists('graded_at', $apps[0]);
 // ОРИГИНАЛЫ (правило владельца): участнику на почту они не отправляются никогда —
 // в кабинете видны ТОЛЬКО стадии изготовления и доставки: изготовление → отправка →
 // прибыло. Файлы оригиналов участнику не показываются и не скачиваются.
+// 'canceled' и 'refunded' здесь не было вовсе, а отменённые заказы из списка не
+// убираются — участник видел латинское «canceled» бейджем и активную стадию
+// «Изготовление» у заказа, деньги за который ему уже вернули.
 $orderStatus = ['new'=>['Ожидает оплаты','warning'],'paid'=>['Изготовление','info'],'made'=>['Изготовление','info'],
-                'shipped'=>['Отправка','warning'],'delivered'=>['Прибыло','success']];
+                'shipped'=>['Отправка','warning'],'delivered'=>['Прибыло','success'],
+                'canceled'=>['Отменён','error'],'cancelled'=>['Отменён','error'],
+                'refunded'=>['Возврат оформлен','error']];
 // Конвейер статуса заказа оригиналов.
 // Три стадии, как просил владелец. 'paid' и 'made' — одна стадия «Изготовление»:
 // для участника разницы нет, заказ в работе.
 $orderPipe   = ['paid', 'shipped', 'delivered'];
 $orderPipeL  = ['Изготовление', 'Отправка', 'Прибыло'];
 // Конвейер статуса заявки для инфографики-прогресса — единая лестница статусов.
-$pipeline = ['new','judging','graded','making','made'];
-$pipeLabels = ['Подана','На оценке','Оценена','Изготовление','Награды'];
+// Лестница должна совпадать с app_state_pipeline(): состояний 'extra' и 'done' здесь
+// не было, и заявка, дошедшая до конца пути, откатывалась на экране в «Подана» (20%).
+// Человек видел, что его законченная работа будто бы только что подана.
+$pipeline = ['new','judging','graded','making','made','done'];
+$pipeLabels = ['Подана','На оценке','Оценена','Изготовление','Награды','Исполнена'];
 $roleLabels = ['user'=>'Участник','teacher'=>'Педагог','jury'=>'Член жюри','designer'=>'Дизайнер',
                'accountant'=>'Бухгалтер','moderator'=>'Модератор','admin'=>'Администратор','owner'=>'Владелец'];
 
@@ -902,9 +910,13 @@ ob_start(); ?>
             $isRej = $a['status'] === 'rejected';
             // Бесплатный конкурс — БЕЗ шага «Оплата» (её нет, статус не может быть выполнен).
             $isFreeComp = isset($a['comp_paid']) && (int)$a['comp_paid'] !== 1;
-            $pipe    = $isFreeComp ? ['new','judging','graded','sent'] : $pipeline;
-            $pLabels = $isFreeComp ? ['Подана','Оценка','Оценена','Диплом'] : $pipeLabels;
-            $cur = array_search($dispStatus, $pipe, true);
+            // Кода 'sent' app_state не возвращает никогда — из-за него бесплатные
+            // конкурсы застревали на первом шаге. Берём реальные коды лестницы.
+            $pipe    = $isFreeComp ? ['new','judging','graded','making','made'] : $pipeline;
+            $pLabels = $isFreeComp ? ['Подана','Оценка','Оценена','Диплом','Награды'] : $pipeLabels;
+            // 'extra' (доп. заказ в работе) — это уже стадия «Награды», а не начало пути.
+            $dispForPipe = $dispStatus === 'extra' ? 'made' : $dispStatus;
+            $cur = array_search($dispForPipe, $pipe, true);
             if ($cur === false) $cur = 0;
             $pct = $isRej ? 100 : (int)round(($cur + 1) / count($pipe) * 100);
             // ВСЕ данные заявки — участник должен видеть ровно то, что попадёт в диплом
@@ -1154,8 +1166,11 @@ ob_start(); ?>
             [$sl,$st] = $orderStatus[$o['status']] ?? [$o['status'],'info'];
             // 'made' показываем на той же стадии, что и 'paid' — «Изготовление».
             $ostat = (string)$o['status'] === 'made' ? 'paid' : (string)$o['status'];
+            // Отменённому заказу конвейер не рисуем вовсе: у него нет «следующей стадии».
+            $isCanceledOrder = in_array((string)$o['status'], ['canceled','cancelled','refunded'], true);
             $ocur = array_search($ostat, $orderPipe, true);
             if ($ocur === false) $ocur = ((string)$o['status'] === 'new') ? -1 : 0;
+            if ($isCanceledOrder) $ocur = -1;
             $track = trim((string)($o['tracking'] ?? ''));
             $trackUrl = $track !== '' ? 'https://www.pochta.ru/tracking#' . rawurlencode($track) : '';
             $isClubOrder = strpos((string)($o['items'] ?? ''), '"kind":"club"') !== false; ?>
@@ -1169,7 +1184,18 @@ ob_start(); ?>
                 </div>
                 <div style="text-align:right"><?= $badge($sl,$st) ?></div>
               </div>
-              <?php if (!$isClubOrder): ?>
+              <?php if ($isCanceledOrder): ?>
+                <?php /* Отменённому заказу конвейер не рисуем: показываем, что произошло. */ ?>
+                <p class="cab-meta" style="margin-top:12px">
+                  Заказ отменён<?php
+                    $__cr = trim((string) ($o['cancel_reason'] ?? ''));
+                    if ($__cr !== '') echo ': ' . h($__cr);
+                    $__ra = (int) ($o['refund_amount'] ?? 0);
+                    if ($__ra > 0) echo '. Возврат ' . $__ra . ' ₽ отправлен на карту, которой Вы оплачивали — банк зачисляет его до нескольких рабочих дней';
+                    elseif ((int) ($o['amount'] ?? 0) > 0) echo '. Если оплата проходила, деньги возвращены на карту';
+                  ?>.
+                </p>
+              <?php elseif (!$isClubOrder): ?>
                 <div class="cab-steps" style="margin-top:14px">
                   <?php foreach ($orderPipeL as $pi => $pl): ?>
                     <div class="cab-step <?= $pi <= $ocur ? 'done' : '' ?> <?= $pi === $ocur ? 'here' : '' ?>"><span class="cab-dot"></span><small><?= h($pl) ?></small></div>

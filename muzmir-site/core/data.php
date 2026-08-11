@@ -82,8 +82,13 @@ function score_to_result(?float $score): string {
 
 /** Платформы конкурсных ссылок. */
 function ALLOWED_PLATFORMS(): array {
+    // Cloud Mail назван в подсказке под полем ссылки и в положениях конкурсов, но в
+    // этом списке его не было: участник загружал работу в Облако Mail.ru, вставлял
+    // ссылку и намертво застревал на шаге «Конкурсный номер» с надписью «Платформа
+    // не в списке разрешённых». Заявка не отправлялась вообще.
     return ['rutube.ru'=>'RuTube','disk.yandex.ru'=>'Яндекс Диск','yadi.sk'=>'Яндекс Диск',
-            'drive.google.com'=>'Google Диск',
+            'drive.google.com'=>'Google Диск','docs.google.com'=>'Google Диск',
+            'cloud.mail.ru'=>'Облако Mail.ru',
             'vk.com'=>'VK Видео','vkvideo.ru'=>'VK Видео','ok.ru'=>'ОК Видео','dzen.ru'=>'Дзен Видео'];
 }
 function BLOCKED_PLATFORMS(): array {

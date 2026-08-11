@@ -30,10 +30,59 @@ if ((int) $a['is_paid'] === 1) {
     json_out(['ok' => false, 'error' => 'Эта заявка уже оплачена.'], 409);
 }
 
+// ОТКЛОНЁННУЮ ЗАЯВКУ ОПЛАТИТЬ НЕЛЬЗЯ. После возврата денег заявка снова выглядит
+// неоплаченной (is_paid=0), и раньше кнопка «Оплатить» на ней исправно работала:
+// человек, которому центр отказал и вернул деньги, платил второй раз.
+if ((string) ($a['status'] ?? '') === 'rejected') {
+    json_out(['ok' => false, 'error' => 'Заявка отклонена — оплата по ней не требуется. '
+        . 'Если оргвзнос был внесён, он возвращён на карту.'], 409);
+}
+
 if ($action === 'delete') {
+    require_once BASE_PATH . '/core/payments.php';
+
+    // ЧЕК ПАКЕТА НЕ УДАЛЯЕТСЯ ВСЛЕПУЮ.
+    // При пакетной подаче на весь чек создаётся ОДНА строка payments, привязанная
+    // к первой заявке пакета. Раньше здесь стоял «DELETE FROM payments WHERE
+    // application_id=?» — и удаление одной своей заявки сносило платёжную строку
+    // всего пакета: остальные заявки оставались неоплаченными и без счёта, а сам
+    // счёт в кассе продолжал жить, так что деньги по нему приходили уже ни за что.
+    //
+    // Правильное поведение: состав пакета изменился — прежний счёт недействителен.
+    // Гасим его в ЮKassa (не только у себя), а соседей по пакету отвязываем, чтобы
+    // каждый из них платился отдельной кнопкой в кабинете.
+    $batch = trim((string) ($a['batch_id'] ?? ''));
+    $siblings = [];
+    if ($batch !== '') {
+        try {
+            $siblings = all("SELECT id FROM applications WHERE batch_id=? AND id<>? AND is_paid=0", [$batch, $appId]);
+        } catch (\Throwable $e) { $siblings = []; }
+    }
+
+    // Гасим живые счета этой заявки в кассе (для пакета счёт висит на первой заявке).
+    $holder = $appId;
+    if ($batch !== '' && tbl_exists('payments')) {
+        $row = one("SELECT application_id FROM payments WHERE yukassa_id=? LIMIT 1", [$batch]);
+        if ($row) $holder = (int) $row['application_id'];
+    }
+    try { yukassa_cancel_open_for_app($holder); } catch (\Throwable $e) {}
+
     q("DELETE FROM applications WHERE id=? AND user_id=? AND is_paid=0", [$appId, $uid]);
-    if (tbl_exists('payments')) q("DELETE FROM payments WHERE application_id=? AND status IN ('pending','')", [$appId]);
-    audit('application_delete_self', 'applications', $appId, ['user' => $uid]);
+
+    if ($siblings) {
+        $in = implode(',', array_map(fn($s) => (int) $s['id'], $siblings));
+        try { q("UPDATE applications SET batch_id='' WHERE id IN ($in)"); } catch (\Throwable $e) {}
+    }
+    // Строку платежа не стираем — она нужна реконсилеру и истории. Помечаем снятой,
+    // и только ту, что относится к удаляемой одиночной заявке.
+    if (tbl_exists('payments')) {
+        q("UPDATE payments SET status='canceled'
+            WHERE application_id=? AND status IN ('pending','waiting_for_capture','')", [$holder]);
+    }
+
+    audit('application_delete_self', 'applications', $appId, [
+        'user' => $uid, 'batch' => $batch, 'siblings_unlinked' => count($siblings),
+    ]);
     json_out(['ok' => true, 'deleted' => true]);
 }
 
@@ -41,8 +90,21 @@ if ($action === 'pay') {
     if ((int) $a['comp_paid'] !== 1) {
         json_out(['ok' => false, 'error' => 'Участие в этом конкурсе бесплатное — оплата не требуется.'], 400);
     }
-    $amount = (int) $a['comp_price'];
+    // Сумма — только через общий расчёт: со скидкой клуба, достижений и реферального
+    // кредита, и с уважением к уже зафиксированной сумме заявки. Раньше здесь стояла
+    // голая цена конкурса, и участник клуба видел в кабинете 400 ₽, а кассу получал
+    // на 500 ₽.
+    require_once BASE_PATH . '/core/loyalty.php';
+    $due    = application_amount_due($a);
+    $amount = (int) $due['amount'];
     if ($amount <= 0) json_out(['ok' => false, 'error' => 'Сумма участия нулевая — оплата не требуется.'], 400);
+
+    // Прежний счёт гасим В КАССЕ до создания нового. Точек оплаты у одной заявки
+    // две — кнопка в кабинете и ссылка из письма-напоминания, — и обе раньше просто
+    // создавали новый платёж. Старая confirmation_url при этом оставалась рабочей,
+    // так что заявку можно было оплатить дважды.
+    require_once BASE_PATH . '/core/payments.php';
+    try { yukassa_cancel_open_for_app($appId); } catch (\Throwable $e) {}
 
     $payment = yukassa_create_payment($amount, 'Оргвзнос за участие: ' . (string) $a['comp_name'], [
         'application_ids' => (string) $appId,

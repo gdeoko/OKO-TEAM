@@ -202,13 +202,25 @@ function muzmirFeedback(e) {
     else alert(msg);
   }
   if (btn) { btn.classList.add('is-loading'); btn.disabled = true; }
+  // ОТВЕТ СЕРВЕРА ЧИТАЕМ ЧЕСТНО.
+  // Раньше «Спасибо, сообщение отправлено» показывалось при ЛЮБОМ ответе, включая
+  // отказ 403/422/429: fetch не реджектится на 4xx. Человек уходил уверенным, что
+  // написал в центр, а обращение никуда не попадало — и даже текст его стирался
+  // вызовом f.reset(). Теперь при отказе показываем причину и текст сохраняем.
   fetch(f.action, { method: 'POST', body: new FormData(f) })
-    .then(function (r) { return r.json().catch(function () { return {}; }); })
-    .then(function (d) {
-      notify((d && d.message) || 'Спасибо! Ваше сообщение отправлено.', 'success');
-      f.reset();
+    .then(function (r) {
+      return r.json().catch(function () { return {}; }).then(function (d) { return { ok: r.ok, d: d || {} }; });
     })
-    .catch(function () { notify('Спасибо! Мы свяжемся с Вами.', 'success'); })
+    .then(function (res) {
+      var d = res.d;
+      if (res.ok && d.ok !== false) {
+        notify(d.message || 'Спасибо! Ваше сообщение отправлено.', 'success');
+        f.reset();
+      } else {
+        notify(d.error || d.message || 'Не удалось отправить сообщение. Проверьте поля и попробуйте ещё раз.', 'error');
+      }
+    })
+    .catch(function () { notify('Нет связи с сервером. Проверьте интернет и попробуйте ещё раз.', 'error'); })
     .then(function () { if (btn) { btn.classList.remove('is-loading'); btn.disabled = false; } });
   return false;
 }
