@@ -20,7 +20,8 @@
 | CLOUDFLARE_API_TOKEN + CLOUDFLARE_ACCOUNT_ID | Cloudflare | Хостинг Pages | ОТЛОЖЕНО решением Даниэля 07.07: токену не хватает прав, не поднимать тему |
 | HF_S3_ENDPOINT + HF_S3_ACCESS_KEY_ID + HF_S3_SECRET_ACCESS_KEY | HF S3 | Хранилище файлов okoteam (boto3, verify=/root/.ccr/ca-bundle.crt) | list_buckets |
 | TIMEWEB_API_TOKEN | Timeweb Cloud (аккаунт yi865413) | Панель VPS через API: список и состояние серверов, диски, бэкапы, SSH-ключи, перезагрузка | `curl -H "Authorization: Bearer $TIMEWEB_API_TOKEN" https://api.timeweb.cloud/api/v1/servers` |
-| YOOKASSA_SHOP_ID + YOOKASSA_SECRET_KEY | ЮKassa (боевой магазин 1092130, ИНН Даниэля) | Настоящие платежи: карта, СБП, SberPay, ЮMoney. API api.yookassa.ru/v3, HTTP Basic (shop_id:secret). Платёжный контур приложения: `okoteam.top/api.php?action=yk_create/yk_status/pay` | `curl -u "$YOOKASSA_SHOP_ID:$YOOKASSA_SECRET_KEY" https://api.yookassa.ru/v3/me` → account_status enabled. На VPS ключи живут в `/var/www/okoteam/config-pay.php` (оверлей cfg()), в вебруте не светятся |
+| ЮKassa магазин OKO | shopId **1432931** (сайт okoteam.top) | Настоящие платежи OKO: карта, СБП, SberPay, ЮMoney. Секретный ключ — ТОЛЬКО на VPS в `/var/www/okoteam/config-pay.php` (в git НЕ кладём: боевой ключ = платежи+возвраты). Вебхук: `okoteam.top/api.php?action=yk_webhook`. Контур: `okoteam.top/api.php?action=yk_create/yk_status/pay` | `curl -u 1432931:<secret> https://api.yookassa.ru/v3/me` → enabled. Доступ агентам/чатам — через серверный эндпоинт домена, не через раздачу ключа |
+| ЮKassa магазин 1092130 | «Музыкальный мир» (запасной) | Прежний магазин, вебхук на музыкальный-мир.рф | переключение = один файл config-pay.php |
 
 Правила: ключи НЕ вписывать в код сайтов и не отдавать в браузер. Сеть — только
 curl (urllib и node fetch ходят мимо прокси). Новый ключ: дописать в secrets.env,
