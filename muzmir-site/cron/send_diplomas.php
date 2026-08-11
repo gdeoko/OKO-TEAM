@@ -171,6 +171,23 @@ foreach ($fresh as $a) {
     _send_original_to_orders_bot((array)$a, (array)$comp);
 }
 
+// 2г. Педагоги, приведшие класс. Дипломы учеников готовы — значит пора поблагодарить
+//     того, кто их подготовил. Документ уходит сам и бесплатно: преподаватель и есть
+//     тот канал, по которому в конкурс приходят сразу десять участников.
+if (is_file(BASE_PATH . '/core/curator_awards.php')) {
+    require_once BASE_PATH . '/core/curator_awards.php';
+    $compIds = [];
+    foreach ($fresh as $a) $compIds[(int) $a['competition_id']] = true;
+    foreach (array_keys($compIds) as $cid) {
+        try {
+            [$g, $s] = curator_process_competition($cid);
+            if ($g > 0) cron_log('send_diplomas', "благодарности педагогам конкурса #$cid: выдано $g, отправлено $s");
+        } catch (\Throwable $e) {
+            cron_log('send_diplomas', 'благодарности педагогам #' . $cid . ': ' . $e->getMessage());
+        }
+    }
+}
+
 // 3) Шлём то, что подошло по расписанию (окно ±60 сек), интервал 1 мин между заявками.
 $dueList = all("SELECT d.*, a.email, a.full_name, a.number AS app_number, c.name AS comp_name
                 FROM diplomas d
