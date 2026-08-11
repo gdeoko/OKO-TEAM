@@ -2,14 +2,17 @@
 EXORA Telegram Bot — обмен криптовалют
 aiogram 3.x, long-polling, SQLite для заявок, курс Binance/CoinGecko.
 
-Запуск:
-    export EXORA_BOT_TOKEN=8896081639:AAG0W8CNdCD-cRL-GtcSN6BNiHShoCyL6fU
-    export EXORA_MINIAPP_URL=https://exora-app.higgsfield.app
+Запуск (значения — из окружения, секреты в файл не вписывать):
+    export EXORA_BOT_TOKEN=<токен @exorappbot из vault>
+    export EXORA_API_TOKEN=<ключ доступа к панели из vault>
+    export EXORA_MINIAPP_URL=https://exora-app.higgsfield.app/miniapp/
     export EXORA_ADMIN_IDS=123456789,987654321
     export EXORA_SUPPORT=@exora_support
     python3 bot.py
+
+Боевые значения лежат в /opt/oko-poster/exora-bot/keepalive.sh на VPS.
 """
-import os, json, asyncio, sqlite3, logging, time, re, urllib.parse, smtplib, ssl
+import os, json, asyncio, sqlite3, logging, time, re, urllib.parse, smtplib, ssl, hmac, hashlib, secrets
 from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
 from datetime import datetime, timezone, timedelta
@@ -31,6 +34,7 @@ from aiogram.types import (
 # ----- config -----
 BOT_TOKEN     = os.environ["EXORA_BOT_TOKEN"]
 MINIAPP_URL   = os.environ.get("EXORA_MINIAPP_URL", "https://exora-app.higgsfield.app")
+ADMIN_URL     = os.environ.get("EXORA_ADMIN_URL", "https://exora-app.higgsfield.app/admin/")
 SEED_ADMIN_IDS= [int(x) for x in os.environ.get("EXORA_ADMIN_IDS", "").split(",") if x.strip().isdigit()]
 SUPPORT_HANDLE= os.environ.get("EXORA_SUPPORT", "@exora_support")
 BRAND_NAME    = os.environ.get("EXORA_BRAND", "Exora")
@@ -40,7 +44,10 @@ DB_PATH       = Path(os.environ.get("EXORA_DB", "/opt/exora-bot/data/exora.sqlit
 DB_PATH.parent.mkdir(parents=True, exist_ok=True)
 
 API_PORT      = int(os.environ.get("EXORA_API_PORT", "8093"))
-API_TOKEN     = os.environ.get("EXORA_API_TOKEN", "exora-admin-2026")
+#: Значение, которое раньше стояло по умолчанию и лежало прямо в HTML админки.
+#: Считаем его скомпрометированным: с ним админский API не отвечает никому.
+DEFAULT_INSECURE_TOKEN = "exora-admin-2026"
+API_TOKEN     = os.environ.get("EXORA_API_TOKEN", "")
 
 GMAIL_USER    = os.environ.get("GMAIL_USER", "")
 GMAIL_PASS    = os.environ.get("GMAIL_PASS", "")
@@ -134,6 +141,15 @@ def db_init():
         "max_usdt":    "100000",
         "welcome_text": "",
         "about_text":   "",
+        # Режим курса: auto — берём с биржи, manual — курс задаёт оператор в админке.
+        "rate_mode":   "auto",
+        "rate_manual": "",
+        # Реквизиты компании для приёма средств (показываются клиенту оператором).
+        "wallet_trc20": "",
+        "wallet_erc20": "",
+        "wallet_bep20": "",
+        "wallet_ton":   "",
+        "wallet_rub":   "",
     }
     for k, v in defaults.items():
         con.execute("INSERT OR IGNORE INTO settings(key,value) VALUES(?,?)", (k, v))
@@ -191,14 +207,42 @@ def upsert_user(u: types.User, source: str = "", ref_by: Optional[int] = None):
     con.commit()
     con.close()
 
-def save_order(order: dict, tg_id: int) -> str:
-    oid = order.get("id") or ("EX-" + hex(int(time.time()))[2:].upper())
+def upsert_user_raw(user: dict):
+    """Как upsert_user, но для данных из initData (там нет объекта aiogram)."""
+    now = int(time.time())
     con = db_conn()
     con.execute("""
-        INSERT OR REPLACE INTO orders(id, tg_id, created_at, direction, network,
+        INSERT INTO users(tg_id, username, first_name, last_name, created_at, last_seen, source)
+        VALUES(?,?,?,?,?,?,?)
+        ON CONFLICT(tg_id) DO UPDATE SET
+          username=excluded.username, first_name=excluded.first_name, last_seen=excluded.last_seen
+    """, (int(user.get("id") or 0), user.get("username") or "", user.get("first_name") or "",
+          user.get("last_name") or "", now, now, "miniapp"))
+    con.commit(); con.close()
+
+
+def save_order(order: dict, tg_id: int) -> str:
+    """Сохранить заявку под НОВЫМ идентификатором, выданным сервером.
+
+    Идентификатор больше не берётся из данных клиента: раньше его присылал
+    мини-апп, а запись шла через INSERT OR REPLACE — двое клиентов в одну
+    секунду (или подделанный id) молча затирали чужую заявку.
+    """
+    con = db_conn()
+    now = int(time.time())
+    oid = ""
+    for _ in range(12):
+        candidate = "EX-" + secrets.token_hex(3).upper()
+        if not con.execute("SELECT 1 FROM orders WHERE id=?", (candidate,)).fetchone():
+            oid = candidate
+            break
+    if not oid:
+        oid = "EX-" + secrets.token_hex(5).upper()
+    con.execute("""
+        INSERT INTO orders(id, tg_id, created_at, direction, network,
             give_amount, give_cur, get_amount, get_cur, rate, wallet, contact, status, raw)
         VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?)
-    """, (oid, tg_id, int(time.time()),
+    """, (oid, tg_id, now,
           order.get("direction"), order.get("network"),
           float(order.get("give") or 0), order.get("giveCur"),
           float(order.get("get") or 0), order.get("getCur"),
@@ -207,6 +251,64 @@ def save_order(order: dict, tg_id: int) -> str:
     con.commit()
     con.close()
     return oid
+
+
+ORDER_ADDR_RE = {
+    "TRC20": re.compile(r"^T[a-km-zA-HJ-NP-Z1-9]{33}$"),
+    "ERC20": re.compile(r"^0x[a-fA-F0-9]{40}$"),
+    "BEP20": re.compile(r"^0x[a-fA-F0-9]{40}$"),
+    "TON":   re.compile(r"^(?:UQ|EQ)[A-Za-z0-9_-]{46}$"),
+}
+
+async def normalize_order(raw: dict) -> tuple[dict, str]:
+    """Привести заявку к доверенному виду.
+
+    Суммы и курс приходят из браузера клиента, поэтому пересчитываем их сами
+    по актуальному курсу и наценкам. Возвращает (заявка, текст ошибки).
+    """
+    direction = "sell" if str(raw.get("direction")) == "sell" else "buy"
+    network = str(raw.get("network") or "TRC20").upper()
+    if network not in ORDER_ADDR_RE:
+        return {}, "Неизвестная сеть"
+
+    wallet = str(raw.get("wallet") or "").strip()
+    contact = str(raw.get("contact") or "").strip()
+    if not wallet:
+        return {}, "Не указаны реквизиты"
+    if len(wallet) > 200 or len(contact) > 120:
+        return {}, "Слишком длинные реквизиты"
+    if direction == "buy" and not ORDER_ADDR_RE[network].match(wallet):
+        return {}, f"Адрес не похож на {net_ru(network)}"
+
+    base, _ = await effective_rate()
+    mb, ms = markups()
+    lo, hi = limits()
+    price = base * (mb if direction == "buy" else ms)
+    if price <= 0:
+        return {}, "Курс временно недоступен, попробуйте позже"
+
+    try:
+        give = float(raw.get("give") or 0)
+    except (TypeError, ValueError):
+        return {}, "Некорректная сумма"
+    if give <= 0:
+        return {}, "Некорректная сумма"
+
+    # USDT-объём сделки считаем сами и по нему же проверяем лимиты.
+    usdt = give / price if direction == "buy" else give
+    if usdt < lo:
+        return {}, f"Минимальная сумма — {fmt_money(lo)} USDT"
+    if usdt > hi:
+        return {}, f"Максимальная сумма — {fmt_money(hi)} USDT"
+
+    get_amount = usdt if direction == "buy" else give * price
+    return {
+        "direction": direction, "network": network,
+        "give": round(give, 2), "giveCur": "RUB" if direction == "buy" else "USDT",
+        "get": round(get_amount, 2 if direction == "sell" else 4),
+        "getCur": "USDT" if direction == "buy" else "RUB",
+        "rate": round(price, 4), "wallet": wallet, "contact": contact,
+    }, ""
 
 def list_orders(tg_id: Optional[int] = None, limit: int = 20):
     con = db_conn()
@@ -228,6 +330,42 @@ def set_setting(key, value):
     con.execute("INSERT INTO settings(key,value) VALUES(?,?) ON CONFLICT(key) DO UPDATE SET value=excluded.value", (key, str(value)))
     con.commit()
     con.close()
+
+#: Настройки, которые разрешено менять из бота и админки, с правилами проверки.
+#: Всё остальное отвергаем — иначе опечатка в ключе молча уходит в базу,
+#: а мусор в значении ломает расчёт курса уже у клиента.
+SETTING_RULES = {
+    "markup_buy":   "number_pos",
+    "markup_sell":  "number_pos",
+    "min_usdt":     "number_pos",
+    "max_usdt":     "number_pos",
+    "rate_manual":  "number_pos",
+    "rate_mode":    ("auto", "manual"),
+    "welcome_text": "text",
+    "about_text":   "text",
+    "wallet_trc20": "text",
+    "wallet_erc20": "text",
+    "wallet_bep20": "text",
+    "wallet_ton":   "text",
+    "wallet_rub":   "text",
+}
+
+def validate_setting(key: str, value: str) -> str:
+    """Возвращает текст ошибки, либо '' если значение допустимо."""
+    rule = SETTING_RULES.get(key)
+    if rule is None:
+        return f"Неизвестная настройка «{key}». Доступны: " + ", ".join(sorted(SETTING_RULES))
+    if isinstance(rule, tuple):
+        return "" if str(value) in rule else f"«{key}» принимает только: " + " / ".join(rule)
+    if rule == "number_pos":
+        try:
+            if float(str(value).replace(",", ".").strip()) > 0:
+                return ""
+        except (TypeError, ValueError):
+            pass
+        return f"«{key}» — нужно положительное число (например 1.02)"
+    return ""
+
 
 def admin_log(admin_id: int, action: str, target_id: str = "", meta: dict = None):
     try:
@@ -288,7 +426,50 @@ async def fetch_rate() -> tuple[float, str]:
                 _rate_cache.update(ts=now, value=v, src="CoinGecko"); return v, "CoinGecko"
         except Exception as e:
             log.warning(f"coingecko fail: {e}")
-    return _rate_cache["value"] or 100.0, _rate_cache["src"] or "резерв"
+    # Обе биржи молчат. Раньше здесь возвращалось 100.0 — выдуманный курс уходил
+    # клиенту как настоящий и по нему же срабатывали уведомления о курсе.
+    # Отдаём последнее реально известное значение, а если его нет — ноль,
+    # и вызывающий сам решает, что показать.
+    return _rate_cache["value"] or 0.0, _rate_cache["src"] or ""
+
+
+async def effective_rate() -> tuple[float, str]:
+    """Курс, который видит клиент.
+
+    rate_mode=manual — курс задан оператором в админке и биржа игнорируется.
+    rate_mode=auto   — берём с биржи. Если ручной курс задан некорректно,
+    молча падаем обратно на биржевой, чтобы клиент никогда не увидел 0.
+    """
+    if get_setting("rate_mode", "auto") == "manual":
+        try:
+            v = float(str(get_setting("rate_manual", "")).replace(",", ".").strip())
+            if v > 0:
+                return v, "Курс Exora"
+        except (TypeError, ValueError):
+            log.warning("rate_manual некорректен, откат на биржевой курс")
+    return await fetch_rate()
+
+
+def markups() -> tuple[float, float]:
+    """Наценки buy/sell из настроек с защитой от мусора в базе."""
+    def one(key, dflt):
+        try:
+            v = float(str(get_setting(key, dflt)).replace(",", ".").strip())
+            return v if v > 0 else float(dflt)
+        except (TypeError, ValueError):
+            return float(dflt)
+    return one("markup_buy", "1.02"), one("markup_sell", "0.98")
+
+
+def limits() -> tuple[float, float]:
+    """Лимиты min/max USDT из настроек — единый источник для бота и мини-аппа."""
+    def one(key, dflt):
+        try:
+            v = float(str(get_setting(key, dflt)).replace(",", ".").strip())
+            return v if v > 0 else float(dflt)
+        except (TypeError, ValueError):
+            return float(dflt)
+    return one("min_usdt", "300"), one("max_usdt", "100000")
 
 # ----- keyboards -----
 def kb_main() -> ReplyKeyboardMarkup:
@@ -307,6 +488,15 @@ def kb_open_app() -> InlineKeyboardMarkup:
         [InlineKeyboardButton(text="💱 Открыть Exora", web_app=WebAppInfo(url=MINIAPP_URL))],
         [InlineKeyboardButton(text="💬 Поддержка", url=f"https://t.me/{SUPPORT_HANDLE.lstrip('@')}")],
     ])
+
+def kb_admin_panel() -> InlineKeyboardMarkup:
+    """Кнопка панели. Открытая так, она получает подписанный initData
+    и пускает оператора без ввода ключа."""
+    return InlineKeyboardMarkup(inline_keyboard=[
+        [InlineKeyboardButton(text="⚙️ Открыть панель управления",
+                              web_app=WebAppInfo(url=ADMIN_URL))],
+    ])
+
 
 def kb_admin_order(order_id: str) -> InlineKeyboardMarkup:
     return InlineKeyboardMarkup(inline_keyboard=[
@@ -328,6 +518,14 @@ def fmt_money(n, d=2):
 
 def net_ru(n): return {"TRC20":"TRC-20","ERC20":"ERC-20","BEP20":"BEP-20","TON":"TON"}.get(n, n)
 
+def html_escape(s) -> str:
+    """Экранирование для HTML-сообщений Telegram и писем.
+
+    Реквизиты и имя клиента приходят извне: символ < в них ломал разметку,
+    и уведомление о заявке не доходило до оператора."""
+    return (str(s or "").replace("&", "&amp;").replace("<", "&lt;")
+            .replace(">", "&gt;").replace('"', "&quot;"))
+
 def welcome_text(user: types.User, rate: float, src: str) -> str:
     hi = f"Здравствуйте, <b>{user.first_name or 'друг'}</b>! 👋"
     custom = get_setting("welcome_text", "")
@@ -339,7 +537,9 @@ def welcome_text(user: types.User, rate: float, src: str) -> str:
         f"📍 <b>Где мы:</b> {COMPANY_ADDR}\n"
         f"🕐 <b>Режим работы:</b> 24/7, без выходных\n"
         f"💵 <b>Работаем с:</b> RUB / USDT (TRC-20, ERC-20, BEP-20, TON)\n"
-        f"📈 <b>Лучший курс:</b> {fmt_money(rate)} ₽ за 1 USDT · <i>{src}</i>\n"
+        + (f"📈 <b>Лучший курс:</b> {fmt_money(rate)} ₽ за 1 USDT · <i>{src}</i>\n"
+           if rate > 0 else "📈 <b>Курс:</b> обновляется, загляните через минуту\n")
+        +
         f"💯 <b>Комиссия сервиса:</b> 0%\n"
         f"⚡ <b>Скорость обмена:</b> 10–30 минут\n\n"
         f"👇 Нажмите <b>«💱 Обмен USDT»</b>, чтобы создать заявку в мини-приложении.\n"
@@ -349,6 +549,7 @@ def welcome_text(user: types.User, rate: float, src: str) -> str:
 def about_text() -> str:
     custom = get_setting("about_text", "")
     if custom.strip(): return custom
+    lo, hi = limits()
     return (
         f"<b>{BRAND_NAME}</b> — сервис быстрого обмена криптовалют.\n\n"
         f"🕐 Работаем 24/7\n"
@@ -358,8 +559,8 @@ def about_text() -> str:
         f"⚡ Оператор, а не бот\n"
         f"🌐 Сети: TRC-20, ERC-20, BEP-20, TON\n\n"
         f"<b>Лимиты:</b>\n"
-        f"• Мин. сумма: 300 USDT\n"
-        f"• Макс. сумма: 100 000 USDT\n\n"
+        f"• Мин. сумма: {fmt_money(lo)} USDT\n"
+        f"• Макс. сумма: {fmt_money(hi)} USDT\n\n"
         f"<b>Поддержка:</b> {SUPPORT_HANDLE}"
     )
 
@@ -375,7 +576,7 @@ def order_client_text(o: dict, oid: str) -> str:
         f"<b>Получаете:</b> {fmt_money(o.get('get'), 4 if get_cur!='RUB' else 2)} {get_cur}\n"
         f"<b>Курс:</b> {fmt_money(o.get('rate'))} ₽/USDT\n\n"
         f"⏱ <b>Оператор свяжется с вами в течение 5–15 минут</b>\n"
-        f"через: <code>{o.get('contact','')}</code>\n\n"
+        f"через: <code>{html_escape(o.get('contact',''))}</code>\n\n"
         f"⚠️ <b>Важно:</b>\n"
         f"• Не переводите средства до подтверждения оператором\n"
         f"• Проверьте адрес и сеть — ошибка приведёт к потере средств\n\n"
@@ -389,13 +590,13 @@ def order_admin_text(o: dict, oid: str, user: dict) -> str:
     return (
         f"🔔 <b>НОВАЯ ЗАЯВКА #{oid}</b>\n\n"
         f"<b>{dir_ru}</b>\n"
-        f"<b>Клиент:</b> {fname} ({uname}, <code>{user.get('id')}</code>)\n"
+        f"<b>Клиент:</b> {html_escape(fname)} ({html_escape(uname)}, <code>{user.get('id')}</code>)\n"
         f"<b>Сеть:</b> {net_ru(o.get('network'))}\n\n"
         f"<b>Отдаёт:</b> {fmt_money(o.get('give'), 4 if o.get('giveCur')!='RUB' else 2)} {o.get('giveCur','')}\n"
         f"<b>Получает:</b> {fmt_money(o.get('get'), 4 if o.get('getCur')!='RUB' else 2)} {o.get('getCur','')}\n"
         f"<b>Курс:</b> {fmt_money(o.get('rate'))} ₽/USDT\n\n"
-        f"<b>Реквизиты клиента:</b>\n<code>{o.get('wallet','')}</code>\n\n"
-        f"<b>Контакт:</b> <code>{o.get('contact','')}</code>\n"
+        f"<b>Реквизиты клиента:</b>\n<code>{html_escape(o.get('wallet',''))}</code>\n\n"
+        f"<b>Контакт:</b> <code>{html_escape(o.get('contact',''))}</code>\n"
         f"<i>{datetime.now(timezone(timedelta(hours=3))).strftime('%d.%m.%Y %H:%M МСК')}</i>"
     )
 
@@ -421,9 +622,53 @@ async def cmd_start(msg: Message, command: CommandObject = None):
         else:
             source = args[:32]
     upsert_user(msg.from_user, source=source, ref_by=ref_by)
-    r, src = await fetch_rate()
+    r, src = await effective_rate()
     await msg.answer(welcome_text(msg.from_user, r, src), reply_markup=kb_main())
     await msg.answer("Готовы обменять USDT? Нажмите кнопку ниже 👇", reply_markup=kb_open_app())
+
+
+async def accept_order(raw: dict, user: dict) -> tuple[str, str, dict]:
+    """Принять заявку из любого канала: сохранить и разослать уведомления.
+
+    Возвращает (id заявки, текст ошибки, пересчитанная заявка). Общая точка для
+    web_app_data и для POST /api/orders, чтобы пути не расходились в поведении.
+    """
+    order, err = await normalize_order(raw)
+    if err:
+        return "", err, {}
+
+    uid = int(user.get("id") or 0)
+    oid = save_order(order, uid)
+
+    admin_text = order_admin_text(order, oid, user)
+    delivered = 0
+    for aid in get_admin_ids():
+        try:
+            await bot.send_message(aid, admin_text, reply_markup=kb_admin_order(oid))
+            delivered += 1
+        except Exception as e:
+            log.warning(f"admin notify {aid}: {e}")
+    if not delivered:
+        # Заявка есть в базе, но оператор о ней не знает — это надо видеть в логах.
+        log.error(f"order {oid}: ни один админ не получил уведомление")
+
+    try:
+        uname = user.get("username") or ("id" + str(uid))
+        html = f"""
+        <h2>Новая заявка #{oid}</h2>
+        <p><b>Клиент:</b> {html_escape(user.get('first_name') or '')} (@{html_escape(uname)})</p>
+        <p><b>{'Купить' if order['direction']=='buy' else 'Продать'} USDT</b> · {net_ru(order['network'])}</p>
+        <p><b>Отдаёт:</b> {fmt_money(order['give'])} {order['giveCur']}<br/>
+           <b>Получает:</b> {fmt_money(order['get'])} {order['getCur']}<br/>
+           <b>Курс:</b> {fmt_money(order['rate'])} ₽</p>
+        <p><b>Реквизиты клиента:</b> <code>{html_escape(order['wallet'])}</code></p>
+        <p><b>Контакт:</b> {html_escape(order['contact'])}</p>
+        <p><a href="{ADMIN_URL}">Открыть в панели</a></p>
+        """
+        asyncio.create_task(asyncio.to_thread(send_email, f"Exora: заявка #{oid}", html))
+    except Exception as e:
+        log.warning(f"email schedule: {e}")
+    return oid, "", order
 
 
 @router.message(F.web_app_data)
@@ -436,34 +681,14 @@ async def h_web_app(msg: Message):
     if data.get("type") != "order":
         await msg.answer("Действие принято.")
         return
-    o = data.get("order") or {}
     upsert_user(msg.from_user)
-    oid = save_order(o, msg.from_user.id)
-    # Ответ клиенту
-    await msg.answer(order_client_text(o, oid))
-    # Уведомление админам
-    user = {"id": msg.from_user.id, "username": msg.from_user.username, "first_name": msg.from_user.first_name}
-    for aid in get_admin_ids():
-        try:
-            await bot.send_message(aid, order_admin_text(o, oid, user), reply_markup=kb_admin_order(oid))
-        except Exception as e:
-            log.warning(f"admin notify {aid}: {e}")
-    # Email notify
-    try:
-        html = f"""
-        <h2>Новая заявка #{oid}</h2>
-        <p><b>Клиент:</b> {msg.from_user.first_name} (@{msg.from_user.username or 'id'+str(msg.from_user.id)})</p>
-        <p><b>{'Купить' if o.get('direction')=='buy' else 'Продать'} USDT</b> · {net_ru(o.get('network'))}</p>
-        <p><b>Отдаёт:</b> {fmt_money(o.get('give'))} {o.get('giveCur','')}<br/>
-           <b>Получает:</b> {fmt_money(o.get('get'))} {o.get('getCur','')}<br/>
-           <b>Курс:</b> {fmt_money(o.get('rate'))} ₽</p>
-        <p><b>Реквизиты клиента:</b> <code>{o.get('wallet','')}</code></p>
-        <p><b>Контакт:</b> {o.get('contact','')}</p>
-        <p><a href="https://exora-app.higgsfield.app/admin/">Открыть в админке</a></p>
-        """
-        asyncio.create_task(asyncio.to_thread(send_email, f"Exora: заявка #{oid}", html))
-    except Exception as e:
-        log.warning(f"email schedule: {e}")
+    user = {"id": msg.from_user.id, "username": msg.from_user.username,
+            "first_name": msg.from_user.first_name}
+    oid, err, order = await accept_order(data.get("order") or {}, user)
+    if err:
+        await msg.answer(f"⚠️ Заявку не удалось создать: {err}\n\nНапишите нам: {SUPPORT_HANDLE}")
+        return
+    await msg.answer(order_client_text(order, oid))
 
 
 # ============================================================
@@ -477,7 +702,7 @@ async def h_alert(msg: Message, command: CommandObject):
         con = db_conn()
         rows = con.execute("SELECT * FROM rate_alerts WHERE tg_id=? AND active=1 ORDER BY id DESC", (msg.from_user.id,)).fetchall()
         con.close()
-        r, _ = await fetch_rate()
+        r, _ = await effective_rate()
         txt = [f"🔔 <b>Уведомления о курсе</b>\n\nТекущий курс: <b>{fmt_money(r)} ₽</b>\n"]
         if not rows:
             txt.append("У вас нет активных уведомлений.\n\n<b>Как создать:</b>\n"
@@ -497,7 +722,7 @@ async def h_alert(msg: Message, command: CommandObject):
         await msg.answer("Формат: <code>/alert 95</code> или <code>/alert &gt;100</code> / <code>/alert &lt;90</code>")
         return
     op, val = m.group(1), float(m.group(2).replace(",", "."))
-    r, _ = await fetch_rate()
+    r, _ = await effective_rate()
     if not op:
         direction = "up" if val > r else "down"
     else:
@@ -533,7 +758,13 @@ async def bg_rate_alerts():
     """Каждую минуту проверять курс и триггерить активные alerts."""
     while True:
         try:
-            r, _ = await fetch_rate()
+            r, _ = await effective_rate()
+            if r <= 0:
+                # Курс неизвестен. Без этой проверки каждое уведомление «курс упал
+                # до X» срабатывало бы разом, потому что 0 меньше любого порога.
+                log.warning("rate_alerts: курс недоступен, цикл пропущен")
+                await asyncio.sleep(60)
+                continue
             con = db_conn()
             rows = con.execute("SELECT * FROM rate_alerts WHERE active=1").fetchall()
             for a in rows:
@@ -611,16 +842,25 @@ async def bg_order_followup():
 @router.message(F.text == "📊 Курс")
 async def h_rate(msg: Message):
     await bot.send_chat_action(msg.chat.id, ChatAction.TYPING)
-    r, src = await fetch_rate()
+    r, src = await effective_rate()
+    if r <= 0:
+        await msg.answer(
+            "📊 <b>Курс временно недоступен</b>\n\n"
+            "Биржа не отвечает — обновим в течение пары минут.\n"
+            f"Если нужно срочно, напишите нам: {SUPPORT_HANDLE}",
+            reply_markup=kb_open_app())
+        return
     now = datetime.now(timezone(timedelta(hours=3))).strftime('%H:%M МСК')
+    mb, ms = markups()
+    manual = get_setting("rate_mode", "auto") == "manual"
     txt = (
         f"📊 <b>Актуальный курс {BRAND_NAME}</b>\n\n"
         f"🪙 <b>1 USDT = {fmt_money(r)} ₽</b>\n"
-        f"📈 Покупка (клиент отдаёт RUB): {fmt_money(r * float(get_setting('markup_buy','1.02')))} ₽\n"
-        f"📉 Продажа (клиент получает RUB): {fmt_money(r * float(get_setting('markup_sell','0.98')))} ₽\n\n"
+        f"📈 Покупка (клиент отдаёт RUB): {fmt_money(r * mb)} ₽\n"
+        f"📉 Продажа (клиент получает RUB): {fmt_money(r * ms)} ₽\n\n"
         f"<i>Обновлено {now} · источник: {src}</i>\n\n"
         f"💯 Комиссия сервиса — 0%\n"
-        f"⚡ Курс обновляется каждые 30 секунд"
+        + ("⚡ Курс устанавливает оператор" if manual else "⚡ Курс обновляется каждые 30 секунд")
     )
     await msg.answer(txt, reply_markup=kb_open_app())
 
@@ -668,12 +908,23 @@ async def h_support(msg: Message):
 @router.message(Command("aml"))
 @router.message(F.text == "🛡 AML проверка")
 async def h_aml(msg: Message, command: CommandObject = None):
-    args = (command.args if command else "").strip() if command else ""
-    if not args and msg.text and " " in msg.text:
-        args = msg.text.split(maxsplit=1)[1].strip()
+    # Аргумент берём только у команды /aml. Раньше текст резался по первому
+    # пробелу, и нажатие кнопки «🛡 AML проверка» уходило на проверку
+    # несуществующего кошелька с названием «AML проверка».
+    args = (command.args or "").strip() if command else ""
     if args:
-        result = await aml_check_full(args)
-        await msg.answer(format_aml_result(args, result), disable_web_page_preview=True)
+        net, addr = detect_address(args)
+        if not addr:
+            await msg.answer(
+                "Не похоже на адрес кошелька.\n\n"
+                "Пришлите адрес в одной из сетей:\n"
+                "• <b>TRC-20</b> — начинается с <code>T</code>\n"
+                "• <b>ERC-20 / BEP-20</b> — начинается с <code>0x</code>\n"
+                "• <b>TON</b> — начинается с <code>UQ</code> или <code>EQ</code>")
+            return
+        await bot.send_chat_action(msg.chat.id, ChatAction.TYPING)
+        result = await aml_check_full(addr, net)
+        await msg.answer(format_aml_result(addr, result), disable_web_page_preview=True)
         return
     await msg.answer(
         "🛡 <b>AML проверка кошелька — автоматически</b>\n\n"
@@ -703,8 +954,13 @@ async def aml_check_full(address: str, network: str = None) -> dict:
     """Auto AML check via public APIs. Returns {risk:0-100, age_days, tx_count, balance, source, verdict}."""
     if not network:
         net, addr = detect_address(address)
-        network = net or "TRC20"
-        address = addr or address
+        if not addr:
+            # Адрес не распознан. Возвращать «риск 50%» по неизвестной строке —
+            # значит выдать выдуманную проверку за настоящую.
+            return {"risk": None, "age_days": None, "tx_count": None, "balance": None,
+                    "source": "", "verdict": "unknown", "network": "", "address": address,
+                    "error": "Адрес не распознан"}
+        network, address = net, addr
 
     result = {"risk": 50, "age_days": None, "tx_count": None, "balance": None,
               "source": "unknown", "verdict": "unknown", "network": network, "address": address}
@@ -782,7 +1038,7 @@ async def aml_check_full(address: str, network: str = None) -> dict:
 def format_aml_result(query: str, r: dict) -> str:
     if r.get("error") or not r.get("source"):
         return (f"🛡 <b>AML проверка</b>\n\n"
-                f"<code>{query}</code>\n\n"
+                f"<code>{html_escape(query)}</code>\n\n"
                 f"Не удалось получить данные из открытых источников. "
                 f"Пришлите адрес в поддержку {SUPPORT_HANDLE} — оператор проверит через профессиональный сервис.")
     verdict = r.get("verdict", "unknown")
@@ -791,8 +1047,8 @@ def format_aml_result(query: str, r: dict) -> str:
     net = r.get("network", "?")
     risk = r.get("risk", 0)
     lines = [f"🛡 <b>AML проверка · {net}</b>\n",
-             f"<code>{r.get('address', query)}</code>\n",
-             f"{emoji} <b>{label}</b>  ·  риск <b>{risk}%</b>\n"]
+             f"<code>{html_escape(r.get('address') or query)}</code>\n",
+             f"{emoji} <b>{label}</b>" + (f"  ·  риск <b>{risk}%</b>\n" if risk is not None else "\n")]
     if r.get("age_days") is not None:
         lines.append(f"📅 Возраст: <b>{r['age_days']} дней</b>")
     if r.get("tx_count") is not None:
@@ -960,20 +1216,23 @@ async def h_admin(msg: Message):
     stats = con.execute("SELECT COUNT(*) c, SUM(CASE WHEN status='new' THEN 1 ELSE 0 END) new_c, SUM(CASE WHEN status='completed' THEN 1 ELSE 0 END) done_c FROM orders").fetchone()
     users = con.execute("SELECT COUNT(*) c FROM users").fetchone()
     con.close()
-    r, src = await fetch_rate()
+    r, src = await effective_rate()
     await msg.answer(
         f"👨‍💻 <b>Админ-панель {BRAND_NAME}</b>\n\n"
         f"👥 Пользователей: <b>{users['c']}</b>\n"
         f"📋 Заявок всего: <b>{stats['c']}</b>\n"
         f"🆕 Новых: <b>{stats['new_c'] or 0}</b>\n"
         f"✅ Выполнено: <b>{stats['done_c'] or 0}</b>\n\n"
-        f"💵 Текущий курс: <b>{fmt_money(r)} ₽</b> ({src})\n"
-        f"📈 Наценка buy: <b>{get_setting('markup_buy','1.02')}</b>\n"
+        f"💵 Текущий курс: <b>{fmt_money(r)} ₽</b> ({src})"
+        + (" · <i>задан вручную</i>\n" if get_setting("rate_mode", "auto") == "manual" else "\n")
+        + f"📈 Наценка buy: <b>{get_setting('markup_buy','1.02')}</b>\n"
         f"📉 Наценка sell: <b>{get_setting('markup_sell','0.98')}</b>\n\n"
         f"Команды:\n"
+        f"/admin_rate 95.5 — свой курс, /admin_rate auto — биржевой\n"
         f"/admin_orders — все заявки\n"
         f"/admin_set markup_buy 1.02 — правка настройки\n"
-        f"/admin_broadcast — рассылка\n"
+        f"/admin_broadcast — рассылка\n",
+        reply_markup=kb_admin_panel()
     )
 
 
@@ -999,8 +1258,51 @@ async def h_admin_set(msg: Message, command: CommandObject):
     parts = command.args.strip().split(maxsplit=1)
     if len(parts) != 2: await msg.answer("Нужно ключ и значение"); return
     k, v = parts
+    err = validate_setting(k, v)
+    if err:
+        await msg.answer(f"⚠️ {err}"); return
     set_setting(k, v)
+    admin_log(msg.from_user.id, "set_setting", k, {"value": v})
     await msg.answer(f"✅ <code>{k}</code> = <code>{v}</code>")
+
+
+@router.message(Command("admin_rate"))
+async def h_admin_rate(msg: Message, command: CommandObject):
+    """Ручной курс одной командой: /admin_rate 95.5 — поставить, /admin_rate auto — вернуть биржевой."""
+    if not is_admin(msg.from_user.id): return
+    arg = (command.args or "").strip().lower().replace(",", ".")
+    if not arg:
+        mode = get_setting("rate_mode", "auto")
+        r, src = await effective_rate()
+        await msg.answer(
+            f"📊 <b>Режим курса:</b> {'ручной' if mode == 'manual' else 'автоматический (биржа)'}\n"
+            f"Сейчас: <b>{fmt_money(r)} ₽</b> · {src}\n\n"
+            f"<code>/admin_rate 95.5</code> — поставить свой курс\n"
+            f"<code>/admin_rate auto</code> — вернуть биржевой"
+        )
+        return
+    if arg in ("auto", "авто", "off"):
+        set_setting("rate_mode", "auto")
+        admin_log(msg.from_user.id, "rate_mode", "auto")
+        r, src = await effective_rate()
+        await msg.answer(f"✅ Курс снова автоматический: <b>{fmt_money(r)} ₽</b> · {src}")
+        return
+    try:
+        v = float(arg)
+        if v <= 0: raise ValueError
+    except ValueError:
+        await msg.answer("Нужно число, например <code>/admin_rate 95.5</code>, либо <code>auto</code>"); return
+    set_setting("rate_manual", str(v))
+    set_setting("rate_mode", "manual")
+    admin_log(msg.from_user.id, "rate_manual", str(v))
+    mb, ms = markups()
+    await msg.answer(
+        f"✅ <b>Курс установлен вручную: {fmt_money(v)} ₽</b>\n\n"
+        f"📈 Покупка: {fmt_money(v * mb)} ₽\n"
+        f"📉 Продажа: {fmt_money(v * ms)} ₽\n\n"
+        f"Клиенты видят его в боте и в мини-приложении.\n"
+        f"Вернуть биржевой: <code>/admin_rate auto</code>"
+    )
 
 
 @router.message(Command("admin_broadcast"))
@@ -1079,13 +1381,59 @@ async def setup_bot_meta():
 #  REST API for admin panel
 # ============================================================
 
+def check_telegram_init_data(init_data: str, max_age: int = 86400) -> Optional[dict]:
+    """Проверка подписи Telegram WebApp initData.
+
+    Подпись считается на токене бота, подделать её снаружи нельзя. Возвращает
+    объект пользователя или None. Так админка, открытая внутри Telegram, узнаёт
+    оператора без всяких паролей.
+    """
+    if not init_data:
+        return None
+    try:
+        pairs = urllib.parse.parse_qsl(init_data, keep_blank_values=True)
+        data = dict(pairs)
+        their_hash = data.pop("hash", "")
+        if not their_hash:
+            return None
+        check_string = "\n".join(f"{k}={v}" for k, v in sorted(data.items()))
+        secret = hmac.new(b"WebAppData", BOT_TOKEN.encode(), hashlib.sha256).digest()
+        calc = hmac.new(secret, check_string.encode(), hashlib.sha256).hexdigest()
+        if not hmac.compare_digest(calc, their_hash):
+            return None
+        if max_age:
+            try:
+                if int(time.time()) - int(data.get("auth_date", "0")) > max_age:
+                    return None
+            except ValueError:
+                return None
+        return json.loads(data.get("user", "{}")) or None
+    except Exception as e:
+        log.warning(f"initData check failed: {e}")
+        return None
+
+
 def _auth(request: web.Request) -> bool:
+    """Доступ к админскому API.
+
+    Два пути: подписанный Telegram initData (оператор открыл панель из бота)
+    либо секретный токен для обычного браузера. Токен обязан быть задан в
+    окружении — со значением по умолчанию админка не пускает никого,
+    иначе панель, лежащая по публичной ссылке, открыта всему интернету.
+    """
+    init = request.headers.get("X-Telegram-Init-Data", "")
+    if init:
+        user = check_telegram_init_data(init)
+        if user and is_admin(int(user.get("id", 0) or 0)):
+            return True
     tok = request.headers.get("X-Admin-Token") or request.query.get("token")
-    return bool(tok) and tok == API_TOKEN
+    if not tok or API_TOKEN in ("", DEFAULT_INSECURE_TOKEN):
+        return False
+    return hmac.compare_digest(str(tok), str(API_TOKEN))
 
 def _cors(resp: web.Response) -> web.Response:
     resp.headers["Access-Control-Allow-Origin"] = "*"
-    resp.headers["Access-Control-Allow-Headers"] = "Content-Type, X-Admin-Token"
+    resp.headers["Access-Control-Allow-Headers"] = "Content-Type, X-Admin-Token, X-Telegram-Init-Data"
     resp.headers["Access-Control-Allow-Methods"] = "GET, POST, PUT, PATCH, DELETE, OPTIONS"
     return resp
 
@@ -1107,7 +1455,7 @@ async def api_stats(request):
         FROM orders WHERE created_at>=?""", (week,)).fetchone()
     vol = vol_row["v"] or 0
     con.close()
-    r, src = await fetch_rate()
+    r, src = await effective_rate()
     return _cors(web.json_response({
         "users": users, "orders_total": tot, "orders_new": new_c,
         "orders_done": done, "orders_today": today, "volume_7d": vol,
@@ -1171,9 +1519,16 @@ async def api_settings_get(request):
 async def api_setting_put(request):
     if not _auth(request): return _cors(web.json_response({"error":"auth"}, status=401))
     key = request.match_info["key"]
-    body = await request.json()
-    set_setting(key, str(body.get("value", "")))
-    return _cors(web.json_response({"ok": True, "key": key}))
+    try:
+        body = await request.json()
+    except Exception:
+        return _cors(web.json_response({"error": "bad json"}, status=400))
+    value = str(body.get("value", ""))
+    err = validate_setting(key, value)
+    if err:
+        return _cors(web.json_response({"error": err}, status=400))
+    set_setting(key, value)
+    return _cors(web.json_response({"ok": True, "key": key, "value": value}))
 
 async def api_broadcast(request):
     if not _auth(request): return _cors(web.json_response({"error":"auth"}, status=401))
@@ -1200,6 +1555,96 @@ async def api_broadcast(request):
 
 async def api_health(request):
     return _cors(web.json_response({"ok": True, "service": "exora-bot", "ts": int(time.time())}))
+
+
+async def api_public_config(request):
+    """PUBLIC: единый источник правды для мини-аппа.
+
+    Раньше мини-апп держал курс, наценки и лимиты своими константами и игнорировал
+    настройки из админки — оператор менял наценку, а клиент видел старую цифру.
+    Теперь всё считается здесь.
+    """
+    r, src = await effective_rate()
+    mb, ms = markups()
+    lo, hi = limits()
+    return _cors(web.json_response({
+        "rate": r,
+        "rate_source": src,
+        "rate_mode": get_setting("rate_mode", "auto"),
+        "markup_buy": mb,
+        "markup_sell": ms,
+        "rate_buy": round(r * mb, 4),
+        "rate_sell": round(r * ms, 4),
+        "min_usdt": lo,
+        "max_usdt": hi,
+        "support": SUPPORT_HANDLE,
+        "ts": int(time.time()),
+    }))
+
+
+async def api_public_stats(request):
+    """PUBLIC: реальная статистика обменника для витрины в мини-аппе.
+
+    Мини-апп раньше рисовал захардкоженные 128 420 USDT / 246 заявок при пустой базе.
+    Отдаём настоящие числа.
+    """
+    con = db_conn()
+    week = int(time.time()) - 7 * 86400
+    done = con.execute("SELECT COUNT(*) c FROM orders WHERE status='completed'").fetchone()["c"]
+    total = con.execute("SELECT COUNT(*) c FROM orders").fetchone()["c"]
+    vol = con.execute("""SELECT COALESCE(SUM(CASE WHEN get_cur='USDT' THEN get_amount
+                                                  WHEN give_cur='USDT' THEN give_amount ELSE 0 END),0) v
+                         FROM orders WHERE created_at>=? AND status='completed'""", (week,)).fetchone()["v"] or 0
+    users = con.execute("SELECT COUNT(*) c FROM users").fetchone()["c"]
+    # Динамика за 7 дней — для столбиков на витрине. Рисуем то, что есть на самом деле.
+    msk = timezone(timedelta(hours=3))
+    buckets = {}
+    for i in range(6, -1, -1):
+        key = datetime.fromtimestamp(int(time.time()) - i * 86400, msk).strftime("%Y-%m-%d")
+        buckets[key] = 0
+    for row in con.execute("SELECT created_at FROM orders WHERE created_at>=?", (week,)).fetchall():
+        key = datetime.fromtimestamp(row["created_at"], msk).strftime("%Y-%m-%d")
+        if key in buckets:
+            buckets[key] += 1
+    con.close()
+    return _cors(web.json_response({
+        "volume_7d": round(vol, 2), "orders_total": total,
+        "orders_done": done, "users": users,
+        "daily": [{"date": k, "count": v} for k, v in sorted(buckets.items())],
+    }))
+
+
+async def api_order_create(request):
+    """PUBLIC (с подписью Telegram): создание заявки из мини-аппа.
+
+    Основной канал доставки. Прежний путь — tg.sendData — работает только когда
+    мини-апп открыт из кнопки reply-клавиатуры; при запуске из кнопки меню чата
+    или из inline-кнопки заявка молча исчезала, а клиент видел «заявка создана».
+    Личность берём из подписанного initData, а не из данных, присланных клиентом.
+    """
+    try:
+        body = await request.json()
+    except Exception:
+        return _cors(web.json_response({"error": "bad json"}, status=400))
+
+    init = request.headers.get("X-Telegram-Init-Data", "") or body.get("initData", "")
+    tg_user = check_telegram_init_data(init)
+    if not tg_user or not tg_user.get("id"):
+        return _cors(web.json_response(
+            {"error": "Откройте приложение из бота Exora — так мы поймём, чья это заявка"},
+            status=401))
+
+    user = {"id": int(tg_user["id"]), "username": tg_user.get("username") or "",
+            "first_name": tg_user.get("first_name") or ""}
+    upsert_user_raw(user)
+    oid, err, order = await accept_order(body.get("order") or {}, user)
+    if err:
+        return _cors(web.json_response({"error": err}, status=400))
+    try:
+        await bot.send_message(user["id"], order_client_text(order, oid))
+    except Exception as e:
+        log.warning(f"client confirm {user['id']}: {e}")
+    return _cors(web.json_response({"ok": True, "id": oid, "order": order}))
 
 
 async def api_aml_check(request):
@@ -1297,6 +1742,9 @@ def build_api_app() -> web.Application:
     app = web.Application()
     app.router.add_route("OPTIONS", "/{tail:.*}", api_options)
     app.router.add_get ("/api/health",           api_health)
+    app.router.add_get ("/api/public/config",     api_public_config)
+    app.router.add_get ("/api/public/stats",      api_public_stats)
+    app.router.add_post("/api/orders",            api_order_create)
     app.router.add_get ("/api/aml-check",        api_aml_check)
     app.router.add_get ("/api/order/{oid}/timeline", api_order_timeline)
     app.router.add_get ("/api/admin/log",        api_admin_log)
@@ -1314,6 +1762,9 @@ def build_api_app() -> web.Application:
 async def main():
     db_init()
     log.info(f"Exora bot starting. Mini-app: {MINIAPP_URL}. Admins: {get_admin_ids()}. DB: {DB_PATH}")
+    if not API_TOKEN or API_TOKEN == DEFAULT_INSECURE_TOKEN:
+        log.warning("EXORA_API_TOKEN не задан или скомпрометирован — "
+                    "админский API доступен только через Telegram (initData).")
     await bot.delete_webhook(drop_pending_updates=False)
     await setup_bot_meta()
 

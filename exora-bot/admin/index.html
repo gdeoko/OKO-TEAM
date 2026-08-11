@@ -4,7 +4,7 @@
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
 <title>Exora Admin</title>
-<meta name="build" content="exora-admin-v4" />
+<meta name="build" content="exora-admin-v6" />
 <script src="https://telegram.org/js/telegram-web-app.js"></script>
 <style>
   :root{
@@ -47,7 +47,7 @@
   .h{display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;gap:10px;flex-wrap:wrap}
   .brand{display:flex;align-items:center;gap:12px;min-width:0;flex:1}
   .logo{width:42px;height:42px;border-radius:12px;display:grid;place-items:center;flex-shrink:0;overflow:hidden;filter:drop-shadow(0 6px 16px rgba(94,210,156,.35))}
-  .logo img{width:100%;height:100%;object-fit:contain;display:block}
+  .logo img,.logo svg{width:100%;height:100%;object-fit:contain;display:block}
   .brand-t{min-width:0}
   .brand-t .n{font-size:17px;font-weight:800;letter-spacing:-.02em;line-height:1.1}
   .brand-t .s{font-size:11.5px;color:var(--muted);margin-top:3px;letter-spacing:.01em;line-height:1;display:flex;align-items:center;gap:5px}
@@ -73,7 +73,7 @@
   /* TABS */
   .tabs{display:flex;gap:4px;margin-bottom:14px;background:var(--card);border:1px solid var(--line);border-radius:14px;padding:4px;overflow-x:auto;-webkit-overflow-scrolling:touch;backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px)}
   .tabs::-webkit-scrollbar{display:none}
-  .tab{flex:1 0 auto;min-width:0;padding:10px 14px;border-radius:10px;text-align:center;font-weight:700;font-size:13px;color:var(--muted);transition:.15s;white-space:nowrap;letter-spacing:-.005em}
+  .tab{flex:1 0 auto;min-width:0;min-height:44px;display:flex;align-items:center;justify-content:center;gap:7px;padding:10px 14px;border-radius:10px;text-align:center;font-weight:700;font-size:13px;color:var(--muted);transition:.15s;white-space:nowrap;letter-spacing:-.005em}
   .tab.active{background:var(--card-hi);color:var(--text)}
   .panel{display:none}
   .panel.active{display:block}
@@ -81,7 +81,7 @@
   /* TOOLBAR */
   .toolbar{display:flex;gap:6px;margin-bottom:14px;overflow-x:auto;-webkit-overflow-scrolling:touch;padding-bottom:2px}
   .toolbar::-webkit-scrollbar{display:none}
-  .filt{padding:8px 12px;border-radius:100px;background:var(--card);border:1px solid var(--line);color:var(--muted);font-size:12.5px;font-weight:700;transition:.15s;letter-spacing:-.005em;white-space:nowrap;flex-shrink:0;backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px)}
+  .filt{min-height:44px;display:inline-flex;align-items:center;gap:6px;padding:8px 14px;border-radius:100px;background:var(--card);border:1px solid var(--line);color:var(--muted);font-size:12.5px;font-weight:700;transition:.15s;letter-spacing:-.005em;white-space:nowrap;flex-shrink:0;backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px)}
   .filt.active{background:var(--brand);color:#062018;border-color:var(--brand)}
   .filt.g{border-color:var(--line-hi);color:var(--text)}
 
@@ -164,7 +164,17 @@
 
 <div class="h">
   <div class="brand">
-    <div class="logo"><img src="/exora-logo.svg" alt="Exora" width="42" height="42"/></div>
+    <div class="logo">
+      <svg viewBox="0 0 512 512" role="img" aria-label="Exora"><g transform="translate(256 256)">
+        <g fill="#2E8B57">
+          <rect x="-124" y="-124" width="96" height="96" rx="11" transform="rotate(45 -76 -76)"/>
+          <rect x="28" y="-124" width="96" height="96" rx="11" transform="rotate(45 76 -76)"/>
+          <rect x="-124" y="28" width="96" height="96" rx="11" transform="rotate(45 -76 76)"/>
+          <rect x="28" y="28" width="96" height="96" rx="11" transform="rotate(45 76 76)"/>
+        </g>
+        <rect x="-19" y="-19" width="38" height="38" rx="5" transform="rotate(45)" fill="#8FE3A6"/>
+      </g></svg>
+    </div>
     <div class="brand-t">
       <div class="n">Exora · Admin</div>
       <div class="s"><span class="dot"></span>Панель управления обменником</div>
@@ -215,23 +225,23 @@
 </div>
 
 <div class="tabs">
-  <button class="tab active" data-tab="orders">📋 Заявки</button>
-  <button class="tab" data-tab="analytics">📊 Аналитика</button>
-  <button class="tab" data-tab="alerts">🔔 Алерты</button>
-  <button class="tab" data-tab="log">📜 Лог</button>
-  <button class="tab" data-tab="settings">⚙ Настройки</button>
-  <button class="tab" data-tab="broadcast">📢 Рассылка</button>
-  <button class="tab" data-tab="texts">📝 Тексты</button>
+  <button class="tab active" data-tab="orders"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:16px;height:16px;flex-shrink:0"><path d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2"/><rect x="9" y="3" width="6" height="4" rx="1"/></svg><span>Заявки</span></button>
+  <button class="tab" data-tab="analytics"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:16px;height:16px;flex-shrink:0"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg><span>Аналитика</span></button>
+  <button class="tab" data-tab="alerts"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:16px;height:16px;flex-shrink:0"><path d="M18 8A6 6 0 006 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.7 21a2 2 0 01-3.4 0"/></svg><span>Алерты</span></button>
+  <button class="tab" data-tab="log"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:16px;height:16px;flex-shrink:0"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="8" y1="13" x2="16" y2="13"/><line x1="8" y1="17" x2="13" y2="17"/></svg><span>Лог</span></button>
+  <button class="tab" data-tab="settings"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:16px;height:16px;flex-shrink:0"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 11-2.83 2.83l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-4 0v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 11-2.83-2.83l.06-.06a1.65 1.65 0 00.33-1.82 1.65 1.65 0 00-1.51-1H3a2 2 0 010-4h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 112.83-2.83l.06.06A1.65 1.65 0 009 4.6 1.65 1.65 0 0010 3.09V3a2 2 0 014 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 112.83 2.83l-.06.06A1.65 1.65 0 0019.4 9V9a1.65 1.65 0 001.51 1H21a2 2 0 010 4h-.09a1.65 1.65 0 00-1.51 1z"/></svg><span>Настройки</span></button>
+  <button class="tab" data-tab="broadcast"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:16px;height:16px;flex-shrink:0"><path d="M3 11l18-8-8 18-2-7-8-3z"/></svg><span>Рассылка</span></button>
+  <button class="tab" data-tab="texts"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:16px;height:16px;flex-shrink:0"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/><path d="M18.5 2.5a2.12 2.12 0 013 3L12 15l-4 1 1-4z"/></svg><span>Тексты</span></button>
 </div>
 
 <!-- ORDERS -->
 <div class="panel active" id="tab-orders">
   <div class="toolbar">
     <button class="filt active" data-flt="all">Все</button>
-    <button class="filt" data-flt="new">🆕 Новые</button>
+    <button class="filt" data-flt="new"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:16px;height:16px;flex-shrink:0"><circle cx="12" cy="12" r="9"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg><span>Новые</span></button>
     <button class="filt" data-flt="processing">⏳ В работе</button>
-    <button class="filt" data-flt="completed">✅ Готово</button>
-    <button class="filt" data-flt="cancelled">❌ Отменено</button>
+    <button class="filt" data-flt="completed"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:16px;height:16px;flex-shrink:0"><polyline points="20 6 9 17 4 12"/></svg><span>Готово</span></button>
+    <button class="filt" data-flt="cancelled"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:16px;height:16px;flex-shrink:0"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg><span>Отменено</span></button>
     <span style="flex:1"></span>
     <button class="filt g" onclick="exportCsv()">⬇ CSV</button>
     <button class="filt g" onclick="loadOrders()">↻ Обновить</button>
@@ -286,15 +296,35 @@
   <div class="row">
     <div class="box">
       <div class="box-h"><h3>Курс и наценки</h3></div>
+
+      <div class="field">
+        <label>Источник курса</label>
+        <div style="display:flex;gap:8px;margin-bottom:6px">
+          <button type="button" class="filt rate-mode active" data-mode="auto"
+            style="flex:1;text-align:center;padding:12px">С биржи</button>
+          <button type="button" class="filt rate-mode" data-mode="manual"
+            style="flex:1;text-align:center;padding:12px">Свой курс</button>
+        </div>
+        <div class="field-h">«С биржи» — курс тянется автоматически. «Свой курс» — вы задаёте его сами,
+          биржа не учитывается.</div>
+      </div>
+
+      <div class="field" id="manualRateField" style="display:none">
+        <label>Свой курс, ₽ за 1 USDT</label>
+        <input type="number" step="0.01" id="rateManual" placeholder="например 95.50" />
+        <div class="field-h">Клиенты увидят этот курс в боте и в приложении.
+          В боте: <span class="cmd">/admin_rate 95.5</span></div>
+      </div>
+
       <div class="field">
         <label>Наценка на покупку USDT</label>
         <input type="number" step="0.001" id="markupBuy" value="1.02" />
-        <div class="field-h">1.02 = +2% к курсу Binance. В боте: <span class="cmd">/admin_set markup_buy 1.02</span></div>
+        <div class="field-h">1.02 = +2% к курсу. В боте: <span class="cmd">/admin_set markup_buy 1.02</span></div>
       </div>
       <div class="field">
         <label>Наценка на продажу USDT</label>
         <input type="number" step="0.001" id="markupSell" value="0.98" />
-        <div class="field-h">0.98 = −2% от курса Binance. В боте: <span class="cmd">/admin_set markup_sell 0.98</span></div>
+        <div class="field-h">0.98 = −2% от курса. В боте: <span class="cmd">/admin_set markup_sell 0.98</span></div>
       </div>
       <div class="field">
         <label>Мин. сумма (USDT)</label>
@@ -330,11 +360,11 @@
     <div class="box-h"><h3>Рассылка по пользователям</h3></div>
     <div class="field">
       <label>Текст сообщения (поддерживает HTML: &lt;b&gt;жирный&lt;/b&gt;, &lt;i&gt;курсив&lt;/i&gt;, &lt;a&gt;ссылки&lt;/a&gt;)</label>
-      <textarea id="bcText" placeholder="Здравствуйте! Обновили курсы...&#10;&#10;Проверьте — стало ещё выгоднее 💯"></textarea>
+      <textarea id="bcText" placeholder="Здравствуйте! Обновили курсы...&#10;&#10;Проверьте — стало ещё выгоднее"></textarea>
       <div class="field-h">В боте: <span class="cmd">/admin_broadcast Ваш текст</span></div>
     </div>
     <div style="display:flex;gap:8px;flex-wrap:wrap">
-      <button class="btn" onclick="sendBroadcast('all')">📢 Отправить всем</button>
+      <button class="btn" onclick="sendBroadcast('all')">Отправить всем</button>
       <button class="btn gh" onclick="sendBroadcast('active')">Только активным (30д)</button>
     </div>
   </div>
@@ -374,43 +404,98 @@
 const $ = (s,r=document) => r.querySelector(s);
 const $$ = (s,r=document) => Array.from(r.querySelectorAll(s));
 
+// Данные заявок приходят от клиентов: адрес, реквизиты и имя в Telegram
+// человек пишет сам. Без экранирования такой текст исполнялся бы как разметка
+// прямо в панели оператора, где открыт доступ к API.
+const esc = v => String(v ?? '').replace(/[&<>"']/g, c =>
+  ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+
 // TG admin auth
 const tg = window.Telegram && window.Telegram.WebApp;
 try { tg && tg.ready(); tg && tg.expand(); } catch(_){}
 
 /* API config — hardcoded default + optional ?api= override */
 const API_META = document.querySelector('meta[name="exora-api"]');
-const DEFAULT_API = 'https://height-amend-communications-cds.trycloudflare.com';
-const DEFAULT_TOKEN = 'exora-admin-2026';
+const DEFAULT_API = 'https://okoteam.top/exora-api';
 const qs = new URLSearchParams(location.search);
 const API_BASE = qs.get('api') || (API_META && API_META.content) || DEFAULT_API;
-const ADMIN_TOKEN = qs.get('token') || DEFAULT_TOKEN;
+
+/* Доступ к панели.
+   Ключ больше не зашит в страницу: раньше он лежал прямо здесь, и любой,
+   кто открыл публичную ссылку админки, видел заявки клиентов и мог менять курс.
+   Внутри Telegram оператор опознаётся подписанным initData, в обычном
+   браузере — одноразовым вводом ключа, который остаётся только в этом браузере. */
+const TOKEN_KEY = 'exora_admin_token';
+let ADMIN_TOKEN = qs.get('token') || localStorage.getItem(TOKEN_KEY) || '';
+if (qs.get('token')) {
+  localStorage.setItem(TOKEN_KEY, qs.get('token'));
+  // Ключ из адресной строки убираем, чтобы он не остался в истории и ссылках.
+  history.replaceState(null, '', location.pathname);
+}
+const TG_INIT = (tg && tg.initData) ? tg.initData : '';
+
+function authHeaders(){
+  const h = {};
+  if (TG_INIT) h['X-Telegram-Init-Data'] = TG_INIT;
+  if (ADMIN_TOKEN) h['X-Admin-Token'] = ADMIN_TOKEN;
+  return h;
+}
 
 async function api(path, opts={}){
   if (!API_BASE) throw new Error('API not configured');
   const r = await fetch(API_BASE.replace(/\/$/,'') + path, {
     ...opts,
-    headers: { 'Content-Type':'application/json', 'X-Admin-Token': ADMIN_TOKEN, ...(opts.headers||{}) }
+    headers: { 'Content-Type':'application/json', ...authHeaders(), ...(opts.headers||{}) }
   });
+  if (r.status === 401) { showLogin(); throw new Error('AUTH'); }
   if (!r.ok) throw new Error('HTTP ' + r.status);
   return r.json();
 }
 
-/* Demo data */
-const DEMO = {
-  orders: [
-    {id:'EX-8T3F2A', ts:Date.now()-1000*60*8,   user:'@angelinaiged', uid:353975080, direction:'buy',  network:'TRC20', give:15000, giveCur:'RUB', get:143.5, getCur:'USDT', wallet:'TXYZabcdefghijklmnopqrstuv123456', status:'new'},
-    {id:'EX-8T3E19', ts:Date.now()-1000*60*45,  user:'@user1',        uid:1234567, direction:'buy',  network:'TRC20', give:50000, giveCur:'RUB', get:478.3, getCur:'USDT', wallet:'TRXaBcDeFgHiJkLmNoPqRsTuVwXyZ12345', status:'processing'},
-    {id:'EX-8T3D02', ts:Date.now()-1000*60*90,  user:'@crypt0trader', uid:2345678, direction:'sell', network:'ERC20', give:500,   giveCur:'USDT', get:51200, getCur:'RUB', wallet:'СБП +7 999 123-45-67', status:'completed'},
-    {id:'EX-8T3B77', ts:Date.now()-1000*3600*4, user:'@vasya',        uid:3456789, direction:'buy',  network:'BEP20', give:100000,giveCur:'RUB', get:956.7, getCur:'USDT', wallet:'0x742d35Cc6634C0532925a3b844Bc9e7595f7fAbc', status:'completed'},
-    {id:'EX-8T3A5C', ts:Date.now()-1000*3600*8, user:'@petr',         uid:4567890, direction:'sell', network:'TON',   give:1200,  giveCur:'USDT', get:122800,getCur:'RUB', wallet:'Карта Сбер 4276...', status:'cancelled'},
-  ]
-};
+function showLogin(msg){
+  if ($('#loginOverlay')) { if (msg) $('#loginErr').textContent = msg; return; }
+  const el = document.createElement('div');
+  el.id = 'loginOverlay';
+  el.style.cssText = 'position:fixed;inset:0;z-index:9999;background:#080D16;display:grid;'
+    + 'place-items:center;padding:24px';
+  el.innerHTML = `
+    <div style="max-width:380px;width:100%;text-align:center">
+      <div style="font-size:20px;font-weight:800;color:#E8F0EA;margin-bottom:8px">Панель Exora</div>
+      <div style="font-size:14px;color:#8A9A90;margin-bottom:20px;line-height:1.5">
+        Откройте панель из бота @exorappbot — вход произойдёт автоматически.<br>
+        Либо введите ключ доступа.
+      </div>
+      <input id="loginInput" type="password" placeholder="Ключ доступа" autocomplete="current-password"
+        style="width:100%;padding:14px 16px;border-radius:12px;border:1px solid #223026;
+               background:#0E1620;color:#E8F0EA;font-size:16px;margin-bottom:10px">
+      <div id="loginErr" style="color:#FF6B6B;font-size:13px;min-height:18px;margin-bottom:10px"></div>
+      <button id="loginBtn" style="width:100%;padding:14px;border-radius:12px;border:0;
+        background:#2E8B57;color:#fff;font-size:16px;font-weight:700;cursor:pointer">Войти</button>
+    </div>`;
+  document.body.appendChild(el);
+  const submit = async () => {
+    const v = $('#loginInput').value.trim();
+    if (!v) return;
+    ADMIN_TOKEN = v;
+    try {
+      await api('/api/stats');
+      localStorage.setItem(TOKEN_KEY, v);
+      el.remove();
+      boot();
+    } catch(_) {
+      ADMIN_TOKEN = '';
+      $('#loginErr').textContent = 'Ключ не подошёл';
+    }
+  };
+  $('#loginBtn').addEventListener('click', submit);
+  $('#loginInput').addEventListener('keydown', e => { if (e.key === 'Enter') submit(); });
+  $('#loginInput').focus();
+}
 
 /* State */
 let currentOrders = [];
 let currentFilter = 'all';
-let usingDemo = true;
+let loadError = '';
 
 /* TABS */
 $$('.tab').forEach(t => t.addEventListener('click', () => {
@@ -438,7 +523,7 @@ function timeAgo(ts){
   return Math.floor(s/86400)+' дн назад';
 }
 function net(n){ return ({TRC20:'TRC-20',ERC20:'ERC-20',BEP20:'BEP-20',TON:'TON'})[n]||n; }
-function statusRu(s){ return ({new:'🆕 Новая',processing:'⏳ В работе',completed:'✅ Готово',cancelled:'❌ Отмена'})[s]||s; }
+function statusRu(s){ return ({new:'Новая',processing:'В работе',completed:'Готово',cancelled:'Отмена'})[s]||s; }
 
 function toast(msg, kind){
   const el = $('#toast');
@@ -451,11 +536,14 @@ function toast(msg, kind){
 async function loadOrders(){
   try {
     const r = await api('/api/orders?limit=50');
-    if (r && r.orders) { currentOrders = r.orders; usingDemo = false; $('#modeBadge').textContent='live'; $('#modeBadge').classList.remove('w'); }
-    else { currentOrders = DEMO.orders; usingDemo = true; $('#modeBadge').textContent='demo'; $('#modeBadge').classList.add('w'); }
+    currentOrders = (r && r.orders) ? r.orders : [];
+    loadError = '';
+    $('#modeBadge').textContent='live'; $('#modeBadge').classList.remove('w');
   } catch(e){
-    currentOrders = DEMO.orders; usingDemo = true;
-    $('#modeBadge').textContent='demo'; $('#modeBadge').classList.add('w');
+    // Показывать вымышленные заявки вместо недоступных данных нельзя —
+    // оператор принял бы их за настоящие.
+    currentOrders = []; loadError = 'Нет связи с ботом';
+    $('#modeBadge').textContent='нет связи'; $('#modeBadge').classList.add('w');
   }
   renderOrders();
   populateStats();
@@ -480,36 +568,36 @@ function renderOrders(){
     el.className = 'oc';
     const actions = o.status === 'new' || o.status === 'processing' ? `
       <div class="oc-actions">
-        <button class="oc-act proc" onclick="setStatus('${o.id}', 'processing')">⏳ В работу</button>
-        <button class="oc-act done" onclick="setStatus('${o.id}', 'completed')">✅ Готово</button>
-        <button class="oc-act cancel" onclick="setStatus('${o.id}', 'cancelled')">❌ Отмена</button>
+        <button class="oc-act proc" data-oid="${esc(o.id)}" data-st="processing">В работу</button>
+        <button class="oc-act done" data-oid="${esc(o.id)}" data-st="completed">Готово</button>
+        <button class="oc-act cancel" data-oid="${esc(o.id)}" data-st="cancelled">Отмена</button>
       </div>` : '';
     el.innerHTML = `
       <div class="oc-h">
         <div>
-          <div class="oc-id">#${o.id}</div>
+          <div class="oc-id">#${esc(o.id)}</div>
           <div class="oc-time">${timeAgo(o.ts)}</div>
         </div>
-        <div class="stpl st-${o.status}">${statusRu(o.status)}</div>
+        <div class="stpl st-${esc(o.status)}">${esc(statusRu(o.status))}</div>
       </div>
       <div class="oc-body">
         <div>
-          <div class="oc-am">${fmt(o.give, o.giveCur==='RUB'?2:4)} ${o.giveCur}</div>
+          <div class="oc-am">${fmt(o.give, o.giveCur==='RUB'?2:4)} ${esc(o.giveCur)}</div>
           <div class="oc-side" style="${dirCls};font-weight:700">${dir}</div>
         </div>
         <div class="oc-arr">→</div>
         <div style="text-align:right">
-          <div class="oc-am g">${fmt(o.get, o.getCur==='RUB'?2:4)} ${o.getCur}</div>
+          <div class="oc-am g">${fmt(o.get, o.getCur==='RUB'?2:4)} ${esc(o.getCur)}</div>
           <div class="oc-side">курс ${o.rate ? fmt(o.rate) + ' ₽' : '—'}</div>
         </div>
       </div>
-      <div class="oc-wallet" title="Реквизиты клиента">${o.wallet||'—'}</div>
+      <div class="oc-wallet" title="Реквизиты клиента">${esc(o.wallet)||'—'}</div>
       <div class="oc-u">
-        <span>👤</span>
-        <span class="u">${o.user||'без ника'}</span>
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" style="width:13px;height:13px;flex-shrink:0"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+        <span class="u">${esc(o.user)||'без ника'}</span>
         <span>·</span>
-        <span>id ${o.uid||o.tg_id||'—'}</span>
-        <span class="oc-net">${net(o.network)}</span>
+        <span>id ${esc(o.uid||o.tg_id)||'—'}</span>
+        <span class="oc-net">${esc(net(o.network))}</span>
       </div>
       ${actions}
     `;
@@ -518,13 +606,6 @@ function renderOrders(){
 }
 
 async function setStatus(id, status){
-  if (usingDemo){
-    const o = currentOrders.find(x => x.id === id);
-    if (o) o.status = status;
-    renderOrders(); populateStats();
-    toast('Демо: статус обновлён локально', 'ok');
-    return;
-  }
   try {
     await api('/api/orders/' + encodeURIComponent(id), { method:'PATCH', body: JSON.stringify({ status }) });
     await loadOrders();
@@ -533,10 +614,17 @@ async function setStatus(id, status){
 }
 window.setStatus = setStatus;
 
+// Обработчики вешаем делегированием: идентификатор заявки больше не попадает
+// внутрь строки onclick, где кавычка в нём ломала бы разметку.
+document.addEventListener('click', e => {
+  const b = e.target.closest('.oc-act[data-oid]');
+  if (b) setStatus(b.dataset.oid, b.dataset.st);
+});
+
 function populateStats(){
   const orders = currentOrders;
   const s = window._stats || {};
-  $('#statUsers').textContent = s.users ?? (usingDemo ? '134' : '—');
+  $('#statUsers').textContent = s.users ?? '—';
   $('#statToday').textContent = s.orders_today ?? orders.filter(o => Date.now() - o.ts < 86400000).length;
   $('#statNew').textContent = s.orders_new ?? orders.filter(o => o.status === 'new').length;
   $('#statDone').textContent = s.orders_done ?? orders.filter(o => o.status === 'completed').length;
@@ -560,19 +648,33 @@ window.exportCsv = () => {
 
 /* SETTINGS SAVE — всегда через API */
 async function saveSettings(){
+  const mode = $('.rate-mode.active') ? $('.rate-mode.active').dataset.mode : 'auto';
   const data = {
     markup_buy:  $('#markupBuy').value,
     markup_sell: $('#markupSell').value,
     min_usdt:    $('#minU').value,
     max_usdt:    $('#maxU').value,
   };
+  if (mode === 'manual') {
+    const v = parseFloat(String($('#rateManual').value).replace(',', '.'));
+    if (!(v > 0)) { toast('Укажите свой курс числом, например 95.5', 'er'); return; }
+    data.rate_manual = String(v);
+  }
+  data.rate_mode = mode;
   try {
     for (const [k,v] of Object.entries(data)){
       await api('/api/settings/' + k, { method:'PUT', body: JSON.stringify({ value: v }) });
     }
-    toast('✅ Настройки сохранены', 'ok');
+    toast('Настройки сохранены', 'ok');
+    loadRate();
   } catch(e){ toast('Ошибка API: ' + e.message, 'er'); }
 }
+
+function applyRateMode(mode){
+  $$('.rate-mode').forEach(b => b.classList.toggle('active', b.dataset.mode === mode));
+  $('#manualRateField').style.display = mode === 'manual' ? '' : 'none';
+}
+$$('.rate-mode').forEach(b => b.addEventListener('click', () => applyRateMode(b.dataset.mode)));
 window.saveSettings = saveSettings;
 
 async function saveWallets(){
@@ -587,7 +689,7 @@ async function saveWallets(){
     for (const [k,v] of Object.entries(data)){
       await api('/api/settings/' + k, { method:'PUT', body: JSON.stringify({ value: v }) });
     }
-    toast('✅ Кошельки сохранены', 'ok');
+    toast('Кошельки сохранены', 'ok');
   } catch(e){ toast('Ошибка API: ' + e.message, 'er'); }
 }
 window.saveWallets = saveWallets;
@@ -596,7 +698,7 @@ async function saveText(key){
   const val = key === 'welcome_text' ? $('#welcomeText').value : $('#aboutText').value;
   try {
     await api('/api/settings/' + key, { method:'PUT', body: JSON.stringify({ value: val }) });
-    toast('✅ Текст сохранён', 'ok');
+    toast('Текст сохранён', 'ok');
   } catch(e){ toast('Ошибка API: ' + e.message, 'er'); }
 }
 window.saveText = saveText;
@@ -608,22 +710,26 @@ async function sendBroadcast(target){
   try {
     toast('Рассылка запущена…', 'ok');
     const r = await api('/api/broadcast', { method:'POST', body: JSON.stringify({ text, target }) });
-    toast('✅ Готово: ' + (r.ok||0) + ' успешно, ' + (r.fail||0) + ' ошибок', 'ok');
+    toast('Готово: ' + (r.ok||0) + ' успешно, ' + (r.fail||0) + ' ошибок', 'ok');
   } catch(e){ toast('Ошибка API: ' + e.message, 'er'); }
 }
 window.sendBroadcast = sendBroadcast;
 
 /* LIVE RATE */
 async function loadRate(){
+  // Берём тот же курс, что видит клиент. Раньше панель спрашивала Binance напрямую
+  // и показывала биржевой курс даже когда оператор задал свой — отсюда и жалоба,
+  // что «курс не меняется».
   try {
-    const r = await fetch('https://api.binance.com/api/v3/ticker/price?symbol=USDTRUB', {cache:'no-store'});
+    const r = await fetch(API_BASE.replace(/\/$/,'') + '/api/public/config', {cache:'no-store'});
     const j = await r.json();
-    const v = parseFloat(j.price);
-    $('#rateNow').textContent = fmt(v);
-    $('#rateSrc').textContent = 'Binance · ' + new Date().toLocaleTimeString('ru-RU',{hour:'2-digit',minute:'2-digit'});
+    if (!j || !j.rate) throw new Error('no rate');
+    $('#rateNow').textContent = fmt(j.rate);
+    const when = new Date().toLocaleTimeString('ru-RU',{hour:'2-digit',minute:'2-digit'});
+    $('#rateSrc').textContent = (j.rate_mode === 'manual' ? 'ваш курс' : (j.rate_source || 'биржа')) + ' · ' + when;
   } catch(e){
     $('#rateNow').textContent = '—';
-    $('#rateSrc').textContent = 'ошибка загрузки';
+    $('#rateSrc').textContent = 'нет связи с ботом';
   }
 }
 
@@ -639,6 +745,8 @@ async function loadSettings(){
     const r = await api('/api/settings');
     if (r){
       const s = r.settings || {};
+      applyRateMode(s.rate_mode === 'manual' ? 'manual' : 'auto');
+      if (s.rate_manual) $('#rateManual').value = s.rate_manual;
       if (s.markup_buy)  $('#markupBuy').value  = s.markup_buy;
       if (s.markup_sell) $('#markupSell').value = s.markup_sell;
       if (s.min_usdt)    $('#minU').value       = s.min_usdt;
@@ -797,7 +905,7 @@ function renderTopClients(){
   c.innerHTML = sorted.map((u,i) => `
     <div style="display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid var(--line)">
       <div style="width:24px;height:24px;border-radius:50%;background:${['#FFD700','#C0C0C0','#CD7F32','#6B7280','#6B7280'][i]};color:#062018;display:grid;place-items:center;font-weight:800;font-size:11px">${i+1}</div>
-      <div style="flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap"><b>${u.user}</b> <span style="color:var(--muted);font-size:11.5px">· ${u.count} шт</span></div>
+      <div style="flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap"><b>${esc(u.user)}</b> <span style="color:var(--muted);font-size:11.5px">· ${u.count} шт</span></div>
       <div style="color:var(--brand);font-weight:700;font-variant-numeric:tabular-nums">${fmt(u.volume)}</div>
     </div>
   `).join('');
@@ -811,11 +919,11 @@ async function loadAlerts(){
     if (!r || !r.alerts || !r.alerts.length) { c.innerHTML='<div class="empty"><div class="empty-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M15 17h5l-1.4-1.4A2 2 0 0118 14.2V11a6 6 0 00-4-5.7V5a2 2 0 10-4 0v.3A6 6 0 006 11v3.2c0 .5-.2 1-.6 1.4L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"/></svg></div><h3>Уведомлений нет</h3><p>Клиенты пока не подписывались на курс</p></div>'; return; }
     c.innerHTML = r.alerts.map(a => {
       const arrow = a.direction === 'up' ? '↑' : '↓';
-      const state = a.active ? '🟢 активно' : (a.triggered_at ? '✅ сработало' : '⚪ отключено');
+      const state = a.active ? 'активно' : (a.triggered_at ? 'сработало' : 'отключено');
       return `
         <div style="display:grid;grid-template-columns:auto 1fr auto auto;gap:10px;padding:10px 0;border-bottom:1px solid var(--line);align-items:center;font-size:13.5px">
           <div style="width:32px;height:32px;border-radius:8px;background:rgba(94,210,156,.14);color:var(--brand);display:grid;place-items:center;font-weight:800">${arrow}</div>
-          <div><b>${fmt(a.target,2)} ₽</b><div style="color:var(--muted);font-size:11.5px;margin-top:2px">${a.username?'@'+a.username:'id '+a.tg_id} · ${new Date(a.created_at).toLocaleString('ru-RU',{day:'2-digit',month:'short',hour:'2-digit',minute:'2-digit'})}</div></div>
+          <div><b>${fmt(a.target,2)} ₽</b><div style="color:var(--muted);font-size:11.5px;margin-top:2px">${a.username?'@'+esc(a.username):'id '+esc(a.tg_id)} · ${new Date(a.created_at).toLocaleString('ru-RU',{day:'2-digit',month:'short',hour:'2-digit',minute:'2-digit'})}</div></div>
           <div style="font-size:11.5px;color:var(--muted)">${state}</div>
         </div>`;
     }).join('');
@@ -832,7 +940,7 @@ async function loadAdminLog(){
       <div style="padding:8px 12px;border-bottom:1px solid var(--line);display:grid;grid-template-columns:auto auto 1fr auto;gap:12px;align-items:center">
         <span style="color:var(--muted)">${new Date(e.ts).toLocaleString('ru-RU',{day:'2-digit',month:'short',hour:'2-digit',minute:'2-digit'})}</span>
         <span style="color:var(--cyan)">id ${e.admin_id}</span>
-        <span><b>${e.action}</b>${e.target_id?' · '+e.target_id:''} ${e.meta?.status?' → '+e.meta.status:''}</span>
+        <span><b>${esc(e.action)}</b>${e.target_id?' · '+esc(e.target_id):''} ${e.meta?.status?' → '+esc(e.meta.status):''}</span>
       </div>
     `).join('');
   } catch(e){ document.getElementById('logList').innerHTML = '<div style="color:var(--danger);padding:10px">Ошибка: '+e.message+'</div>'; }
@@ -846,12 +954,19 @@ document.querySelectorAll('.tab').forEach(t => t.addEventListener('click', () =>
   if (tab === 'log') loadAdminLog();
 }));
 
-loadOrders();
-loadRate();
-loadStats();
-loadSettings();
-setInterval(loadRate, 30000);
-setInterval(loadOrders, 45000);
+function boot(){
+  loadOrders();
+  loadRate();
+  loadStats();
+  loadSettings();
+}
+
+// Внутри Telegram оператор опознаётся автоматически; в браузере просим ключ.
+if (TG_INIT || ADMIN_TOKEN) boot();
+else showLogin();
+
+setInterval(() => { if (TG_INIT || ADMIN_TOKEN) loadRate(); }, 30000);
+setInterval(() => { if (TG_INIT || ADMIN_TOKEN) loadOrders(); }, 45000);
 </script>
 </body>
 </html>

@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- EXORA · знак для тёмного фона. Тот же ромб, осветлённая палитра,
+     чтобы держать контраст на тёмной теме мини-аппа. -->
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512" role="img" aria-label="Exora">
+  <g transform="translate(256 256)">
+    <g fill="#2E8B57">
+      <rect x="-124" y="-124" width="96" height="96" rx="11" transform="rotate(45 -76 -76)"/>
+      <rect x="28"   y="-124" width="96" height="96" rx="11" transform="rotate(45  76 -76)"/>
+      <rect x="-124" y="28"   width="96" height="96" rx="11" transform="rotate(45 -76  76)"/>
+      <rect x="28"   y="28"   width="96" height="96" rx="11" transform="rotate(45  76  76)"/>
+    </g>
+    <rect x="-19" y="-19" width="38" height="38" rx="5" transform="rotate(45)" fill="#8FE3A6"/>
+  </g>
+</svg>

@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- EXORA · знак (mark). Концепт A · Exchange Diamond, выбран клиентом.
+     4 плашки образуют ромб — «две валюты меняются местами», центральный акцент.
+     Прозрачный фон, квадратный viewBox — годится для иконки, шапки, favicon. -->
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512" role="img" aria-label="Exora">
+  <g transform="translate(256 256)">
+    <g fill="#1B5E3A">
+      <rect x="-124" y="-124" width="96" height="96" rx="11" transform="rotate(45 -76 -76)"/>
+      <rect x="28"   y="-124" width="96" height="96" rx="11" transform="rotate(45  76 -76)"/>
+      <rect x="-124" y="28"   width="96" height="96" rx="11" transform="rotate(45 -76  76)"/>
+      <rect x="28"   y="28"   width="96" height="96" rx="11" transform="rotate(45  76  76)"/>
+    </g>
+    <rect x="-19" y="-19" width="38" height="38" rx="5" transform="rotate(45)" fill="#7CC576"/>
+  </g>
+</svg>
