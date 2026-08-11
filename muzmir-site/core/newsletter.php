@@ -692,6 +692,17 @@ function mass_sending_set(bool $on, string $reason = ''): void {
     set_setting('mass_sending_changed_at', date('Y-m-d H:i:s'));
     if (!$on) set_setting('mass_sending_off_reason', $reason !== '' ? $reason : 'unknown');
     else      set_setting('mass_sending_off_reason', '');
+
+    // ПРОГРЕВ ОТСЧИТЫВАЕТСЯ ОТ ПЕРВОЙ РЕАЛЬНОЙ ОТПРАВКИ, А НЕ ОТ НАСТРОЙКИ.
+    // Если проставить дату старта заранее и запустить рассылку через три недели,
+    // лесенка к тому моменту «состарится» и первый же день даст десять тысяч
+    // писем с домена, который до этого не слал ничего. Это ровно тот сценарий,
+    // на котором центр уже потерял два ящика. Поэтому отсчёт начинается в момент,
+    // когда стоп-кран поднимают.
+    if ($on && trim((string) setting('nl_warmup_started', '')) === '') {
+        set_setting('nl_warmup_started', date('Y-m-d'));
+        nl_log('прогрев отправителя начат ' . date('Y-m-d') . ': сегодня потолок ' . nl_service_cap_today() . ' писем');
+    }
 }
 
 /**
@@ -802,7 +813,10 @@ function nl_warmup_touch(): void {
 
 /** Отправитель — сервис рассылок, а не наш почтовый ящик? */
 function nl_box_is_service(string $box): bool {
-    return mb_strtolower(trim($box)) === 'unisender';
+    // Сервис рассылок заведён дважды — под свою базу и под холодную. Прогрев и
+    // темп у обоих одинаковые: канал-то один, разделены обратный адрес и норма.
+    $b = mb_strtolower(trim($box));
+    return $b === 'unisender' || $b === 'unisender-cold';
 }
 
 /**

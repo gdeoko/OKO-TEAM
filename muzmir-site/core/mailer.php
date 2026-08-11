@@ -530,7 +530,7 @@ function mail_pool_names(string $pool): array {
     // его в очереди — это лучше, чем биться в закрытую дверь.
     return match ($pool) {
         'bulk'   => ['unisender'],                         // рассылки своей базе
-        'cold'   => ['unisender'],                         // первое письмо в школу/сад/ДК
+        'cold'   => ['unisender-cold'],                    // первое письмо в школу/сад/ДК
         'awards' => ['nagradi', 'main'],                   // наградной, резерв — официальная почта
         default  => ['main', 'nagradi'],                   // официальная почта, резерв — наградной
     };
@@ -543,10 +543,25 @@ function mail_account_by_name(string $name): array {
     // кода он выглядит обычным отправителем, поэтому и живёт в общем списке.
     // Именно он вытянул массовые рассылки, когда Яндекс забанил news@ и novosti@
     // за спам: репутация наших ящиков на его доставку не влияет.
-    if ($name === 'unisender') {
+    // Сервис рассылок заводится ДВАЖДЫ, под разными обратными адресами.
+    //
+    //   unisender      — своя база: люди сами подписались, и отвечают они на
+    //                    рассылочный адрес центра;
+    //   unisender-cold — холодный охват учреждений (семьдесят тысяч адресов).
+    //                    По незнакомому адресу всегда прилетают жалобы, и пусть
+    //                    они прилетают на отдельный ящик. Репутация адреса,
+    //                    которым мы пишем своим участникам, от этого отгорожена.
+    //
+    // Канал у них общий — другого для массовых нет: Яндекс забанил наши ящики
+    // после первой же большой рассылки. Разделён именно ОБРАТНЫЙ АДРЕС, и
+    // разделены суточные нормы: поле user у них разное, а по нему считается темп.
+    if ($name === 'unisender' || $name === 'unisender-cold') {
+        $cold = $name === 'unisender-cold';
         $key = trim((string) cfgv('unisender_api_key', ''));
         if ($key === '') return [];
-        $from = trim((string) cfgv('unisender_from', ''));
+        $from = trim((string) cfgv($cold ? 'unisender_from_cold' : 'unisender_from', ''));
+        // Отдельного адреса для холодной базы может ещё не быть — тогда честнее
+        // не слать вовсе, чем подставить рассылочный адрес своей базы.
         if ($from === '') return [];
         // user здесь — не почтовый логин, а опознавательный знак отправителя: по нему
         // считаются дневная норма и темп. Он НАМЕРЕННО не равен адресу «от кого»:
@@ -556,10 +571,11 @@ function mail_account_by_name(string $name): array {
             'transport'  => 'unisender',
             'host'       => 'go2.unisender.ru',
             'port'       => 443,
-            'user'       => 'unisender',
+            'user'       => $name,
             'pass'       => $key,
             'from_addr'  => $from,
-            'from_name'  => (string) cfgv('mail_from_name', 'Культурный центр «Музыкальный Мир»'),
+            'from_name'  => (string) cfgv($cold ? 'mail_from_name_cold' : 'mail_from_name',
+                                          'Культурный центр «Музыкальный Мир»'),
         ];
     }
     if ($name === 'main') {
@@ -582,7 +598,16 @@ function mail_account_by_name(string $name): array {
  */
 function mail_pool_for(array $row): string {
     // Холодный охват учреждений помечается типом кампании при постановке в очередь.
-    if ((string) ($row['campaign_type'] ?? '') === 'cold') return 'cold';
+    // 'inst' — тот же холодный охват; тип появился позже, когда письмам
+    // учреждениям понадобилась отдельная суточная доля, и он ОБЯЗАН попадать в
+    // тот же пул: иначе семьдесят тысяч холодных писем пошли бы с обратного
+    // адреса, которым мы пишем своим участникам, и жалобы прилетели бы туда же.
+    $ct = (string) ($row['campaign_type'] ?? '');
+    if ($ct === 'cold' || $ct === 'inst') return 'cold';
+    // Официальные обращения в ведомства идут ТОЛЬКО с официальной почты центра:
+    // письмо в министерство с рассылочного адреса регистрируют как спам, и
+    // отвечать на него некуда.
+    if ($ct === 'official') return 'tx';
     if ((int) ($row['priority'] ?? 0) > 0) return 'bulk';
     $subj = mb_strtolower((string) ($row['subject'] ?? ''));
     foreach (['диплом', 'наград', 'кубок', 'статуэт', 'медал', 'благодарн'] as $w) {
@@ -866,10 +891,18 @@ function mail_send(string $to, string $subject, string $html, array $opt = []): 
 
     $fromName = (string) ($opt['from_name'] ?? $acc['from_name'] ?? cfgv('mail_from_name', 'Культурного центра «Музыкальный Мир»'));
     $replyTo  = (string) ($opt['reply_to'] ?? cfgv('mail_reply_to', ''));
-    // Вложения: 'attachments' (массив путей) имеет приоритет, иначе одиночный 'attach'.
-    $attach   = isset($opt['attachments']) && is_array($opt['attachments'])
-                  ? $opt['attachments']
-                  : (string) ($opt['attach'] ?? '');
+    // Вложения: 'attachments' (массив путей) имеет приоритет, иначе 'attach'.
+    // В 'attach' может прийти И строка (одно вложение), И массив: очередь хранит
+    // несколько путей строкой JSON и разворачивает её перед отправкой. Раньше
+    // массив здесь молча приводился к строке — PHP отдавал «Array», и к письму
+    // не прикреплялось НИЧЕГО: официальное обращение уходило без документа,
+    // положения, афиши и логотипа, то есть пустым по смыслу.
+    if (isset($opt['attachments']) && is_array($opt['attachments'])) {
+        $attach = $opt['attachments'];
+    } else {
+        $a = $opt['attach'] ?? '';
+        $attach = is_array($a) ? array_values(array_filter($a, 'is_string')) : (string) $a;
+    }
     // Адрес в заголовке From. ВАЖНО: домен обязан быть в PUNYCODE (ASCII).
     // Сырой кириллический адрес (news@музыкальный-мир.рф) RFC-невалиден
     // (нет SMTPUTF8/EAI) и Яндекс метит письмо как СПАМ (554 5.7.1). Поэтому
