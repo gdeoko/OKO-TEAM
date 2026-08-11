@@ -121,6 +121,33 @@ function min_email_ascii(string $e): string {
  * Пустые поля заполняем, заполненные не трогаем: адрес, проверенный руками,
  * не должен затираться результатом автоматического обхода.
  */
+/**
+ * КУДА ОБРАЩЕНИЕ ПРОСТО НЕ ПИШУТ.
+ *
+ * Правило владельца: структуры при Президенте, аппараты и приёмные обращений
+ * граждан из рассылки исключены. Причина не в вежливости. Письмо туда попадает
+ * не в отдел по работе со СМИ, а в реестр обращений по 59-ФЗ: его обязаны
+ * зарегистрировать, поставить срок и дать формальный ответ. Информационной
+ * поддержки конкурса это не даёт, зато создаёт переписку с госорганом на ровном
+ * месте.
+ *
+ * Профильные министерства культуры и образования сюда НЕ относятся: ради них
+ * рассылка и затевалась, и у них есть отделы, которые такие письма как раз ждут.
+ *
+ * Регистр приводим в PHP: SQLite умеет LOWER() только для латиницы, и проверка
+ * прямо в SQL молча пропускала бы «Президентский» с заглавной буквы.
+ */
+function min_is_forbidden(string $org, string $email = ''): bool {
+    static $stop = [
+        'президент', 'администрация президента', 'аппарат ', 'полпред', 'полномочн',
+        'уполномоч', 'омбудсм', 'общественная палата', 'прокурат', 'следственн',
+        'государственная дума', 'совет федерации', 'росгвард',
+    ];
+    $hay = mb_strtolower($org . ' ' . $email);
+    foreach ($stop as $s) if (mb_strpos($hay, $s) !== false) return true;
+    return false;
+}
+
 function min_add(array $d): int {
     min_migrate();
 
@@ -129,6 +156,7 @@ function min_add(array $d): int {
 
     $org = trim((string) ($d['org'] ?? ''));
     if ($org === '') return 0;
+    if (min_is_forbidden($org, $email)) return 0;
 
     $row = one("SELECT * FROM ministries WHERE email=?", [$email]);
 
@@ -163,7 +191,11 @@ function min_add(array $d): int {
 /** Кому сейчас можно писать: адрес живой, отписки и отказа не было. */
 function min_recipients(string $branch = ''): array {
     min_migrate();
-    $sql = "SELECT * FROM ministries WHERE email<>'' AND status NOT IN ('unsub','bounced','declined')";
+    // excluded — адресат снят владельцем насовсем. Так помечены структуры при
+    // Президенте и Общественная палата: это приёмные обращений граждан, а не
+    // адресаты информационной поддержки конкурса. Ответа по существу оттуда не
+    // будет, а обращение уйдёт в реестр со сроками и последствиями.
+    $sql = "SELECT * FROM ministries WHERE email<>'' AND status NOT IN ('unsub','bounced','declined','excluded')";
     $a = [];
     if ($branch !== '') { $sql .= " AND branch=?"; $a[] = $branch; }
     $sql .= " ORDER BY CASE kind WHEN 'federal' THEN 0 WHEN 'union' THEN 1 WHEN 'media' THEN 2 ELSE 3 END, org";
