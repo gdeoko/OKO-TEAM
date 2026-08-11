@@ -69,6 +69,12 @@ function fill(t, blocks) {
     return '<li><a href="#products">' + esc(p.h) + "</a></li>";
   }).join("");
 
+  /* Состав подключения */
+  var inc = $("#incGrid");
+  if (inc) inc.innerHTML = [1,2,3,4,5,6,7,8,9].map(function (n) {
+    return '<div class="inc-item">' + svg("check") + "<span>" + esc(t("inc." + n)) + "</span></div>";
+  }).join("");
+
   var y = $("#year");
   if (y) y.textContent = new Date().getFullYear();
 }

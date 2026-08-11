@@ -189,6 +189,19 @@ var RU = {
   "reg.t2":        "Континента в покрытии",
   "reg.t3":        "Нагрузки одновременно",
 
+  "inc.tag":       "Что входит",
+  "inc.h":         "Включено в подключение",
+  "inc.p":         "Базовый набор доступен сразу, без отдельной платы за каждую опцию.",
+  "inc.1":         "HTTP/2 и HTTP/3",
+  "inc.2":         "Шилдинг источника",
+  "inc.3":         "Гибкие правила кэширования",
+  "inc.4":         "Запросы без ограничений: GET, POST, PUT",
+  "inc.5":         "Хранилище от 5 ГБ",
+  "inc.6":         "Расширенная статистика",
+  "inc.7":         "Доступ к логам",
+  "inc.8":         "Персональный менеджер",
+  "inc.9":         "SLA 99,9%",
+
   /* Служебное */
   "toast.copy":    "Скопировано"
 };
@@ -221,11 +234,17 @@ var BLOCKS_RU = {
   ],
   cases: [
     { h: "Видеосервисы и OTT",       p: "Раздача VOD-библиотек и живых каналов без буферизации в часы пик." },
+    { h: "Телеканалы",               p: "Круглосуточное вещание с резервированием потока и записью эфира." },
     { h: "Медиа и новости",          p: "Мгновенная отдача фото, видео и страниц при всплесках посещаемости." },
     { h: "E-commerce",               p: "Быстрые карточки товаров и каталоги. Скорость страницы напрямую влияет на конверсию." },
     { h: "Игры и приложения",        p: "Раздача обновлений и патчей на миллионы устройств без просадки канала." },
+    { h: "Концерты и конференции",   p: "Разовые трансляции на десятки тысяч зрителей, без подготовки своей инфраструктуры." },
+    { h: "Образование и вебинары",   p: "Трансляции на большие аудитории с записью и хранением материалов." },
     { h: "SaaS и B2B-платформы",     p: "Стабильная работа интерфейса для клиентов в разных странах и часовых поясах." },
-    { h: "Образование и вебинары",   p: "Трансляции на большие аудитории с записью и хранением материалов." }
+    { h: "Недвижимость",             p: "Тяжёлые планировки, туры и видео объектов открываются без ожидания." },
+    { h: "Туризм",                   p: "Каталоги и галереи грузятся одинаково быстро из любой страны." },
+    { h: "Госсектор",                p: "Порталы и трансляции мероприятий, устойчивые к нагрузке и атакам." },
+    { h: "Сайты под нагрузкой",      p: "Любой проект, где всплеск посещаемости не должен ронять сервер." }
   ],
   faq: [
     { q: "Сколько времени занимает подключение?",
@@ -338,6 +357,11 @@ var EN = {
   "topo.p": "Your server on the left, our own data centers in the middle, edge nodes next to the audience on the right.",
   "reg.h": "Points of presence by region", "reg.h2": "Our own capacity",
   "reg.t1": "Own data centers", "reg.t2": "Continents covered", "reg.t3": "Simultaneous load",
+  "inc.tag": "What you get", "inc.h": "Included in every connection",
+  "inc.p": "The base set is available from day one, with no separate fee per option.",
+  "inc.1": "HTTP/2 and HTTP/3", "inc.2": "Origin shielding", "inc.3": "Flexible cache rules",
+  "inc.4": "Unlimited requests: GET, POST, PUT", "inc.5": "Storage from 5 GB",
+  "inc.6": "Extended statistics", "inc.7": "Log access", "inc.8": "Personal manager", "inc.9": "99.9% SLA",
   "toast.copy": "Copied"
 };
 
@@ -368,11 +392,17 @@ var BLOCKS_EN = {
   ],
   cases: [
     { h: "Video services and OTT", p: "VOD libraries and live channels with no buffering at peak hours." },
+    { h: "TV channels",            p: "Round the clock broadcasting with stream redundancy and recording." },
     { h: "Media and news",         p: "Instant delivery of photo, video and pages during traffic spikes." },
     { h: "E-commerce",             p: "Fast product pages and catalogues. Page speed directly drives conversion." },
     { h: "Games and apps",         p: "Updates and patches delivered to millions of devices without saturating the channel." },
+    { h: "Concerts and conferences", p: "One-off broadcasts for tens of thousands of viewers with no infrastructure of your own." },
+    { h: "Education and webinars", p: "Broadcasts for large audiences with recording and storage included." },
     { h: "SaaS and B2B platforms", p: "A stable interface for customers across countries and time zones." },
-    { h: "Education and webinars", p: "Broadcasts for large audiences with recording and storage included." }
+    { h: "Real estate",            p: "Heavy floor plans, tours and property videos open without waiting." },
+    { h: "Travel",                 p: "Catalogues and galleries load equally fast from any country." },
+    { h: "Public sector",          p: "Portals and event broadcasts that hold up under load and attacks." },
+    { h: "Sites under load",       p: "Any project where a traffic spike must not bring the server down." }
   ],
   faq: [
     { q: "How long does it take to get connected?",

@@ -789,3 +789,18 @@ body::after {
   .btn-p::before, .sep-line i { animation: none; }
   body::after { display: none; }
 }
+
+/* Состав подключения */
+.inc-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; }
+.inc-item {
+  display: flex; align-items: center; gap: 12px; padding: 16px 18px;
+  background: var(--surface); border: 1px solid var(--line); border-radius: var(--r-md);
+  font-size: 14.5px; transition: border-color var(--fast), background var(--fast), transform var(--fast);
+}
+.inc-item:hover { border-color: var(--line-2); background: var(--surface-2); transform: translateY(-2px); }
+.inc-item svg {
+  width: 18px; height: 18px; flex: none; color: var(--cyan);
+  padding: 3px; border-radius: 50%; background: var(--grad-soft); box-sizing: content-box;
+}
+@media (max-width: 900px) { .inc-grid { grid-template-columns: repeat(2, 1fr) } }
+@media (max-width: 560px) { .inc-grid { grid-template-columns: 1fr } }
