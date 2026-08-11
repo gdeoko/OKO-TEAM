@@ -341,9 +341,10 @@
    !important обязателен: базовый `.theme-btn{width:38px}` живёт в инлайн-<style>
    в <head>, а слои-стили грузятся асинхронно (media=print→all) — без
    !important на узком экране база успевает перебить наше правило. */
-.theme-btn{ width:40px !important; height:40px !important; }
-/* Все кнопки «назад» в шапках подстраниц — единый минимум 40px. Классов много
-   (каждый раздел завёл свой), перечисляем известные из разметки и слоёв. */
+.theme-btn{ width:44px !important; height:44px !important; }
+/* Все кнопки «назад» в шапках подстраниц — единый минимум 44px (стандарт iOS
+   nav bar). Классов много (каждый раздел завёл свой), перечисляем известные
+   из разметки и слоёв. */
 .oko-back,
 .oko-hdr-back,
 .ep-cancel,
@@ -356,8 +357,8 @@
 .cl-i-back,
 .w2-bar-nav,
 #st2Back{
-  min-width:40px !important; min-height:40px !important;
+  min-width:44px !important; min-height:44px !important;
 }
-/* Глазок «скрыть баланс» (32px) и «тихий режим» (36px) — до 40px. */
+/* Глазок «скрыть баланс» (32px) и «тихий режим» (36px) — до 44px. */
 #walEye.wal-eye,
-.np-hb{ min-width:40px !important; min-height:40px !important; }
+.np-hb{ min-width:44px !important; min-height:44px !important; }
