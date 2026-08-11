@@ -2619,28 +2619,22 @@ function walSyncTopupBtn(){
   const el = document.getElementById('walTopBtnSum');
   if(el) el.textContent = 'Пополнить на ' + fmtMoney(walTopupState.sum);
 }
-/* ПОПОЛНЕНИЕ · честный отказ вместо поддельного платежа.
+/* ПОПОЛНЕНИЕ · честный отказ на уровне ядра.
 
-   Было так: человек вводил сумму, видел спиннер «Создаём платёж… защищённое
-   соединение», а через 1,1 секунды таймер сам дорисовывал деньги на баланс и
-   писал «Счёт пополнен». Никакого платежа не происходило — ни списания, ни
-   запроса, ни платёжного шлюза. Человек уходил с экрана уверенный, что у него
-   на счету есть деньги; дальше он на них «покупал» тариф и продвижение.
-
-   Правило Даниэля прямое: деньги не появляются без оплаты, а реквизиты и
-   платёж приходят только с бэкенда. Бэкенда платежей пока нет — значит
-   единственный честный ответ здесь «оплата недоступна», и никаких цифр на
-   балансе. Когда шлюз появится, эта функция станет вызовом к нему. */
+   Настоящий платёж через ЮKassa живёт в слое oko-wallet2.js (topGo): он
+   грузится ПОСЛЕ ядра и перезаписывает window.walDoTopup своей версией,
+   которая создаёт счёт на сервере и зачисляет ТОЛЬКО после подтверждённой
+   оплаты. Эта ядровая версия — запасная на случай, если слой не загрузился:
+   она честно говорит, что оплата недоступна, и ничего не рисует на балансе. */
 function walDoTopup(){
   const s = walTopupState;
   if(!s.sum || s.sum <= 0){ toast('Укажи сумму пополнения'); return; }
   const v = document.getElementById('walTopupView');
-  v.innerHTML = `<div class="wal-ok-wrap" style="text-align:center;padding:10px 0">
-    <p style="font-weight:800;font-size:18px;margin-top:6px">Пополнение пока недоступно</p>
+  if(v) v.innerHTML = `<div class="wal-ok-wrap" style="text-align:center;padding:10px 0">
+    <p style="font-weight:800;font-size:18px;margin-top:6px">Пополнение сейчас недоступно</p>
     <p class="dim" style="font-size:13px;margin-top:8px;line-height:1.5">
-      Приём платежей ещё не подключён: ${WAL_M_LABEL[s.method]} появится вместе
-      с платёжным шлюзом OKO. Мы не станем рисовать сумму на балансе, которой
-      на самом деле нет.</p>
+      Платёжный модуль не загрузился. Мы не станем рисовать сумму на балансе,
+      которой на самом деле нет — попробуй перезайти чуть позже.</p>
     <div style="height:16px"></div>
     <button class="btn" onclick="closeSheet()">Понятно</button></div>`;
 }
@@ -2681,7 +2675,9 @@ function walSyncWdCalc(){
 function walDoWithdraw(){
   const s = walWdState;
   if(!s.sum || s.sum <= 0){ toast('Укажи сумму вывода'); return; }
-  if(s.sum > WALLET.balance){ toast('Сумма больше баланса — максимум ' + fmtMoney(WALLET.balance)); return; }
+  /* Локальный баланс тут не арбитр: реальные деньги лежат на серверном счёте
+     (пополнения ЮKassa, переводы), и именно сервер проверит, хватает ли их.
+     Локальная цифра могла разойтись — например, на новом устройстве. */
   if(s.method === 'ton' && !WAL_X.ton){ toast('Сначала подключи TON-кошелёк'); return; }
   const used = walWdUsedToday(), lim = walWdLimit();
   if(used + s.sum > lim){
@@ -2691,30 +2687,20 @@ function walDoWithdraw(){
   if(WAL_X.pin){ walPinOpen('confirm', 'walWdView', walExecWithdraw); return; }
   walExecWithdraw();
 }
+/* ВЫВОД · запасная ядровая версия.
+
+   Настоящий вывод (заявка на сервер wd_request + Telegram Даниэлю) живёт в
+   слое oko-wallet2.js (wdGo), который перезаписывает window.walExecWithdraw.
+   Эта версия — на случай, если слой не загрузился: честно говорит, что вывод
+   временно недоступен, и НИЧЕГО не списывает. */
 function walExecWithdraw(){
-  const s = walWdState;
-  const fee = walWdFee(s.sum), get = s.sum - fee;
-  if(!walletCharge(s.sum, 'Вывод средств · ' + WAL_M_LABEL[s.method])){ return; }
-  okoEarn(fee, 'Комиссия вывода');
-  const today = new Date().toDateString();
-  if(WAL_X.wdDay !== today){ WAL_X.wdDay = today; WAL_X.wdSum = 0; }
-  WAL_X.wdSum += s.sum; walXSave();
   const v = document.getElementById('walWdView');
-  v.innerHTML = `<div style="text-align:center;padding:22px 0">
-    <div class="spin"></div><p style="font-weight:700;margin-top:14px">Оформляем заявку…</p></div>`;
-  setTimeout(()=>{
-    v.innerHTML = `<div class="wal-ok-wrap">
-      <div class="wal-ok">${I('check')}</div>
-      <p style="font-weight:800;font-size:19px;margin-top:14px">Заявка на вывод создана</p>
-      <p class="dim" style="font-size:13px;margin-top:6px">${fmtMoney(get)} придут на ${WAL_M_LABEL[s.method]} в течение 1–3 дней.<br>Комиссия 2%: ${fmtMoney(fee)}</p>
-      <div class="wal-tx-tl-h" style="justify-content:center">${I('clock')}<span>Статус вывода</span></div>
-      <div style="text-align:left;max-width:300px;margin:0 auto">${walWdTimelineHtml(Date.now())}</div>
-      <div style="height:14px"></div>
-      <button class="btn" onclick="closeSheet()">Готово</button></div>`;
-    renderWallet();
-    walFlash('out');
-    toast('Вывод ' + fmtMoney(s.sum) + ' оформлен');
-  }, 900);
+  if(v) v.innerHTML = `<div class="wal-ok-wrap" style="text-align:center;padding:8px 0">
+    <p style="font-weight:800;font-size:18px;margin-top:6px">Вывод временно недоступен</p>
+    <p class="dim" style="font-size:13px;margin-top:8px;line-height:1.5">Платёжный модуль не
+      загрузился. Деньги на месте — попробуй перезайти чуть позже.</p>
+    <div style="height:14px"></div>
+    <button class="btn" onclick="walRenderWithdraw()">Назад</button></div>`;
 }
 
 /* ---------- ВЫПИСКА: документ с печатью + скачивание .txt ---------- */
@@ -4597,8 +4583,9 @@ function w2RenderReceive(){
   window.walDoTopup = async function(){
     const email = w2OwnerEmail();
     const s = walTopupState;
-    // если гость или не банковский метод — старая мок-логика (usdt/ton — реквизиты)
-    if(!email || (s.method !== 'card' && s.method !== 'lava')){
+    /* Карта теперь идёт через ЮKassa (ядро walDoTopup) — Lava остаётся
+       только при явном выборе метода Lava.top и настроенном lava_api_key. */
+    if(!email || s.method !== 'lava'){
       return _prevWalDoTopup();
     }
     if(!s.sum || s.sum <= 0){ toast('Укажи сумму пополнения'); return; }

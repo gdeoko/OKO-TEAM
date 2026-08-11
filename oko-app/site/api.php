@@ -34,6 +34,121 @@ function tg_send($chat,$text,$btns=[],$thread=null){ $C=cfg(); if(empty($C['tg_b
     curl_setopt_array($ch,[CURLOPT_POST=>true,CURLOPT_POSTFIELDS=>json_encode($d),CURLOPT_HTTPHEADER=>['Content-Type: application/json'],CURLOPT_RETURNTRANSFER=>true,CURLOPT_TIMEOUT=>6]); curl_exec($ch); curl_close($ch); }
 function topic_thread($n){ $r=db_one("SELECT thread_id FROM team_chat_topics WHERE topic_name=?",[$n]); return $r?(int)$r['thread_id']:null; }
 
+// ═════════════════════════════════════════════════════════════════
+// ЮKassa (боевой магазин). Ключи ТОЛЬКО на VPS: config-pay.php
+// возвращает ['yk_shop_id'=>..., 'yk_secret'=>...] и подхватывается
+// оверлеем в cfg(). В git — ни ключей, ни их кусков.
+//
+// Правда о платеже — ТОЛЬКО ответ API ЮKassa. Вебхук приходит без
+// подписи, поэтому его телу не верим: по любому уведомлению заново
+// спрашиваем /v3/payments/{id} и действуем по ответу. Тот же путь
+// использует и опрос статуса из приложения — деньги на счёте
+// появляются исключительно после подтверждённого «succeeded».
+// ═════════════════════════════════════════════════════════════════
+function yk_keys(): array {
+    $C=cfg();
+    $sid=trim((string)($C['yk_shop_id']??'')); $sec=trim((string)($C['yk_secret']??''));
+    /* Заглушка из config.example.php — то же самое, что «ключа нет»: иначе
+       yk_ping рапортует «настроено» на сервере без ключей. */
+    if($sid==='PUT_ON_VPS') $sid=''; if($sec==='PUT_ON_VPS') $sec='';
+    return [$sid,$sec];
+}
+function yk_api(string $method, string $path, ?array $payload=null, string $idem=''): array {
+    [$sid,$sec]=yk_keys();
+    if($sid===''||$sec==='') fail('ЮKassa не настроена на сервере (нет config-pay.php)',503);
+    $hdr=['Content-Type: application/json'];
+    if($idem!=='') $hdr[]='Idempotence-Key: '.$idem;
+    $ch=curl_init('https://api.yookassa.ru/v3/'.$path);
+    curl_setopt_array($ch,[CURLOPT_CUSTOMREQUEST=>$method, CURLOPT_USERPWD=>$sid.':'.$sec,
+        CURLOPT_HTTPHEADER=>$hdr, CURLOPT_RETURNTRANSFER=>true, CURLOPT_TIMEOUT=>20, CURLOPT_CONNECTTIMEOUT=>8]);
+    if($payload!==null) curl_setopt($ch,CURLOPT_POSTFIELDS,json_encode($payload,JSON_UNESCAPED_UNICODE));
+    $raw=curl_exec($ch); $code=curl_getinfo($ch,CURLINFO_HTTP_CODE); $err=curl_error($ch); curl_close($ch);
+    if($raw===false) fail('ЮKassa недоступна: '.$err,502);
+    $j=json_decode((string)$raw,true);
+    if($code>=400) fail('ЮKassa '.$code.': '.(string)($j['description']??mb_substr((string)$raw,0,180)),502);
+    return is_array($j)?$j:[];
+}
+function yk_table(): void {
+    db_exec("CREATE TABLE IF NOT EXISTS yk_payments (
+        id INTEGER PRIMARY KEY AUTOINCREMENT, payment_id TEXT UNIQUE, email TEXT,
+        amount INTEGER, purpose TEXT, status TEXT, credited INTEGER DEFAULT 0,
+        url TEXT, meta TEXT, created_at TEXT DEFAULT (datetime('now','localtime')), updated_at TEXT)");
+}
+// Зачисление на серверный кошелёк В УЖЕ ОТКРЫТОЙ транзакции (баланс + история).
+// Своей транзакции не открывает: захват платежа (credited 0→1) и само
+// зачисление обязаны быть атомарны, иначе при сбое зачисления остаётся
+// credited=1 без денег — и платёж уже никогда не зачислится.
+function wallet_credit_tx(PDO $pdo, string $email, int $amount, string $why, string $tx): void {
+    $now=now();
+    $pdo->prepare("UPDATE wallet_accounts SET balance=balance+?, updated_at=? WHERE client_email=?")->execute([$amount,$now,$email]);
+    $pdo->prepare("INSERT INTO wallet_ledger (from_email,to_email,amount,direction,comment,tx_id,status,created_at) VALUES ('yookassa',?,?,'topup',?,?,'ok',?)")
+        ->execute([$email,$amount,$why,$tx,$now]);
+}
+// Создать платёж в ЮKassa и записать его у себя. Возвращает [payment_id, url, status].
+function yk_create_payment(int $amount, string $email, string $purpose, string $desc, string $return): array {
+    $C=cfg();
+    if($amount<10)     fail('Минимальная сумма — 10 ₽');
+    if($amount>300000) fail('Максимальная сумма — 300 000 ₽');
+    $site=(string)($C['site_url']??'https://okoteam.top');
+    if(!preg_match('~^https://(okoteam\.top|t\.me)(/|$)~',$return)) $return=$site.'/?pay=done';
+    yk_table();
+    $p=yk_api('POST','payments',[
+        'amount'=>['value'=>number_format($amount,2,'.',''),'currency'=>'RUB'],
+        'capture'=>true,
+        'confirmation'=>['type'=>'redirect','return_url'=>$return],
+        'description'=>mb_substr($desc!==''?$desc:'OKO · пополнение кошелька',0,120),
+        'metadata'=>['purpose'=>$purpose,'email'=>$email,'src'=>'oko-app'],
+    ], bin2hex(random_bytes(16)));
+    $pid=(string)($p['id']??''); $url=(string)($p['confirmation']['confirmation_url']??'');
+    if($pid===''||$url==='') fail('ЮKassa не вернула ссылку на оплату',502);
+    db_exec("INSERT OR IGNORE INTO yk_payments (payment_id,email,amount,purpose,status,url) VALUES (?,?,?,?,?,?)",
+        [$pid,$email,$amount,$purpose,(string)($p['status']??'pending'),$url]);
+    return [$pid,$url,(string)($p['status']??'pending')];
+}
+// Сверить платёж с ЮKassa и, если оплата подтверждена, один раз зачислить.
+function yk_sync(string $pid): array {
+    yk_table();
+    $p=yk_api('GET','payments/'.rawurlencode($pid));
+    $status=(string)($p['status']??'unknown'); $paid=!empty($p['paid']);
+    $row=db_one("SELECT * FROM yk_payments WHERE payment_id=?",[$pid]);
+    if($row){
+        db_exec("UPDATE yk_payments SET status=?, updated_at=? WHERE payment_id=?",[$status,now(),$pid]);
+        if($status==='succeeded' && $paid && (string)$row['email']!=='' && (string)$row['purpose']==='topup'){
+            /* Захват платежа и зачисление — В ОДНОЙ транзакции. Условный UPDATE
+               credited 0→1 внутри неё решает гонку (вебхук и опрос приходят
+               разом): захватить успеет один, второй увидит rowCount=0. Если
+               зачисление упадёт — откатится и credited, платёж останется
+               незачисленным и повторится при следующем опросе. */
+            wallet_ensure_account((string)$row['email']);   // DDL/INSERT — до денежной транзакции
+            $pdo=db(); $pdo->beginTransaction();
+            $начислено=false;
+            try{
+                $claim=$pdo->prepare("UPDATE yk_payments SET credited=1 WHERE payment_id=? AND credited=0");
+                $claim->execute([$pid]);
+                if($claim->rowCount()>0){
+                    wallet_credit_tx($pdo,(string)$row['email'],(int)$row['amount'],'Пополнение · ЮKassa','YK-'.$pid);
+                    $начислено=true;
+                }
+                $pdo->commit();
+            }catch(Throwable $e){ try{$pdo->rollBack();}catch(Throwable $e2){} throw $e; }
+            if($начислено){
+                $C=cfg();
+                tg_send($C['daniel_tg'],"<b>Оплата ЮKassa</b>\n+".number_format((int)$row['amount'],0,'.',' ')." ₽ · "
+                    .htmlspecialchars((string)$row['email'])."\n<code>".htmlspecialchars($pid)."</code>");
+            }
+        }
+    }
+    return ['payment_id'=>$pid,'status'=>$status,'paid'=>$paid,
+            'amount'=>(float)($p['amount']['value']??0),
+            'credited'=>$row?((int)db_val("SELECT credited FROM yk_payments WHERE payment_id=?",[$pid])===1):false];
+}
+function wd_table(): void {
+    db_exec("CREATE TABLE IF NOT EXISTS wallet_withdrawals (
+        id INTEGER PRIMARY KEY AUTOINCREMENT, email TEXT, amount INTEGER, fee INTEGER,
+        method TEXT, requisites TEXT, status TEXT DEFAULT 'pending', note TEXT,
+        created_at TEXT DEFAULT (datetime('now','localtime')), updated_at TEXT)");
+}
+
 // ── Продукты и тарифы (для рассылок/уведомлений) ──
 $GLOBALS['PRODUCTS']=[
   'sistema'=>['name'=>'СИСТЕМА OKO','emoji'=>'🧠'],'zavod'=>['name'=>'Контент-завод','emoji'=>'🏭'],
@@ -707,9 +822,11 @@ case 'wallet_history':
     if(!$email) fail('no email');
     wallet_ensure_account($email);
     // отдаём все касающиеся юзера строки (send/fee исходящие + receive входящие + topup зачисления)
+    /* wd_hold/wd_back больше не пишутся: заявка на вывод баланс не трогает,
+       списание — только wd_paid при подтверждённой выплате. */
     $rows = db_all("SELECT id, from_email, to_email, amount, direction, comment, tx_id, status, created_at
         FROM wallet_ledger
-        WHERE (from_email=? AND direction IN ('send','fee','topup_charge'))
+        WHERE (from_email=? AND direction IN ('send','fee','topup_charge','wd_paid'))
            OR (to_email=?   AND direction IN ('receive','topup'))
         ORDER BY id DESC LIMIT ".$limit, [$email, $email]);
     out(['ok'=>true, 'email'=>$email, 'items'=>$rows]);
@@ -749,6 +866,132 @@ case 'wallet_topup':
     db_exec("CREATE TABLE IF NOT EXISTS wallet_topup_requests (id INTEGER PRIMARY KEY AUTOINCREMENT, email TEXT, amount INTEGER, method TEXT, url TEXT, status TEXT DEFAULT 'pending', created_at TEXT DEFAULT (datetime('now','localtime')))");
     db_insert("INSERT INTO wallet_topup_requests (email,amount,method,url) VALUES (?,?,?,?)", [$email,$amount,$method,$url]);
     out(['ok'=>true, 'url'=>$url, 'amount'=>$amount, 'method'=>$method]);
+
+// ═════════════════════════════════════════════════════════════════
+// ЮKassa: создание платежа, статус, вебхук, платёжные ссылки через
+// домен okoteam.top и заявки на вывод средств.
+// ═════════════════════════════════════════════════════════════════
+
+// Проверка деплоя и конфигурации. Никаких значений ключей — только факт.
+case 'yk_ping':
+    [$ykSid,$ykSec]=yk_keys();
+    out(['ok'=>true,'v'=>'pay-1','yk_configured'=>($ykSid!==''&&$ykSec!=='')]);
+
+// Создать платёж: POST {amount, email, purpose?, desc?, return_url?}
+case 'yk_create':
+    rate_limit('yk_create',30,60);
+    $amount=(int)round((float)($body['amount']??0));
+    $email=strtolower(trim((string)($body['email']??'')));
+    if($email==='') fail('no email');
+    $purpose=preg_replace('/[^a-z0-9_-]/','',strtolower((string)($body['purpose']??'topup'))) ?: 'topup';
+    [$pid,$url,$st]=yk_create_payment($amount,$email,$purpose,
+        trim((string)($body['desc']??'')), trim((string)($body['return_url']??'')));
+    out(['ok'=>true,'payment_id'=>$pid,'url'=>$url,'status'=>$st,'amount'=>$amount]);
+
+// Статус платежа (и зачисление после подтверждённой оплаты).
+case 'yk_status':
+    rate_limit('yk_status',120,60);
+    $pid=trim((string)($_GET['id']??$body['payment_id']??''));
+    if($pid==='') fail('no payment id');
+    out(['ok'=>true]+yk_sync($pid));
+
+// Вебхук ЮKassa. Телу не верим — только повод свериться с API.
+case 'yk_webhook':
+    $pid=(string)($body['object']['id']??'');
+    if($pid!=='' && preg_match('/^[a-z0-9-]{16,64}$/i',$pid)){ try{ yk_sync($pid); }catch(Throwable $e){} }
+    out(['ok'=>true]);
+
+// Платёжная ссылка через домен — для агентов, рассылок и кнопок:
+//   https://okoteam.top/api.php?action=pay&kind=yk&sum=500&d=Описание&email=...
+//   https://okoteam.top/api.php?action=pay&kind=lava&to=sistema
+// Открывший ссылку сразу попадает на страницу оплаты.
+case 'pay':
+    rate_limit('pay_link',30,60);
+    $kind=(string)($_GET['kind']??'yk');
+    if($kind==='lava'){
+        $to=preg_replace('/[^a-z0-9_-]/','',strtolower((string)($_GET['to']??'sistema')));
+        $url=(string)($C['lava'][$to]??'');
+        if($url==='') fail('unknown lava product');
+        header('Location: '.$url,true,302); exit;
+    }
+    $amount=(int)round((float)($_GET['sum']??0));
+    $email=strtolower(trim((string)($_GET['email']??'')));
+    if($email==='') $email='link@okoteam.top';   // безадресная ссылка: платёж без автозачисления на кошелёк
+    $purpose=$email==='link@okoteam.top'?'link':(preg_replace('/[^a-z0-9_-]/','',strtolower((string)($_GET['purpose']??'topup'))) ?: 'topup');
+    [$pid,$url,$st]=yk_create_payment($amount,$email,$purpose,
+        trim((string)($_GET['d']??'Оплата OKO TEAM')), trim((string)($_GET['back']??'')));
+    header('Location: '.$url,true,302); exit;
+
+// Заявка на вывод: POST {email, amount, method, requisites?}
+//
+// ВАЖНО про безопасность. У сайта нет пользовательских сессий: email
+// приходит из тела запроса, доказать владение счётом клиент не может.
+// Поэтому заявка НЕ трогает баланс — иначе кто угодно замораживал бы чужой
+// счёт, подставив чужой email (DoS), и подсовывал бы свои реквизиты на
+// выплату. Заявка только фиксируется как pending и уходит Даниэлю. Реальное
+// списание — в момент одобрения (wd_done), где сумма ещё раз сверяется со
+// счётом в транзакции. Двойной траты это не открывает: выплату всё равно
+// подтверждает человек, а на момент подтверждения баланс проверяется заново.
+case 'wd_request':
+    rate_limit('wd_request',10,60);
+    $email=strtolower(trim((string)($body['email']??'')));
+    $amount=(int)round((float)($body['amount']??0));
+    $method=preg_replace('/[^a-z]/','',strtolower((string)($body['method']??'card')));
+    $req=mb_substr(trim((string)($body['requisites']??'')),0,140);
+    if($email==='') fail('no email');
+    if($amount<100) fail('Минимальный вывод — 100 ₽');
+    if($amount>1000000) fail('Слишком большая сумма для одной заявки');
+    wd_table(); wallet_ensure_account($email);
+    $bal=(int)db_val("SELECT balance FROM wallet_accounts WHERE client_email=?",[$email]);
+    if($bal<$amount) fail('Недостаточно средств: на счёте '.$bal.' ₽');
+    $fee=(int)floor($amount*0.02);
+    $wid=db_insert("INSERT INTO wallet_withdrawals (email,amount,fee,method,requisites) VALUES (?,?,?,?,?)",[$email,$amount,$fee,$method,$req]);
+    tg_send($C['daniel_tg'],"<b>Заявка на вывод #{$wid}</b>\n".htmlspecialchars($email)." · баланс ".number_format($bal,0,'.',' ')." ₽\n"
+        ."К выводу: ".number_format($amount,0,'.',' ')." ₽ · $method (после списания останется ".number_format($bal-$amount,0,'.',' ')." ₽)".($req?"\nРеквизиты: <code>".htmlspecialchars($req)."</code>":'')
+        ."\n\nПодтвердить: api wd_done?id={$wid}&key=… — деньги спишутся при подтверждении.");
+    out(['ok'=>true,'id'=>$wid,'amount'=>$amount,'fee'=>$fee,'status'=>'pending']);
+
+case 'wd_list':
+    require_admin(); wd_table();
+    out(['ok'=>true,'items'=>db_all("SELECT * FROM wallet_withdrawals ORDER BY id DESC LIMIT 200")]);
+
+// Выплата подтверждена: СПИСАТЬ деньги со счёта (баланс при заявке не трогали).
+// Гонку двойного подтверждения закрывает UPDATE ... WHERE status='pending' с
+// проверкой rowCount ВНУТРИ транзакции: захватить заявку успеет только один.
+case 'wd_done': {
+    require_admin(); wd_table();
+    $id=(int)($_GET['id']??$body['id']??0);
+    $pdo=db(); $pdo->beginTransaction();
+    try{
+        $claim=$pdo->prepare("UPDATE wallet_withdrawals SET status='paying', updated_at=? WHERE id=? AND status='pending'");
+        $claim->execute([now(),$id]);
+        if($claim->rowCount()===0){ $pdo->rollBack(); fail('заявка не найдена или уже обработана',404); }
+        $w=$pdo->query("SELECT email,amount FROM wallet_withdrawals WHERE id=".(int)$id)->fetch();
+        $bal=(int)$pdo->query("SELECT balance FROM wallet_accounts WHERE client_email=".$pdo->quote($w['email']))->fetchColumn();
+        if($bal<(int)$w['amount']){
+            $pdo->prepare("UPDATE wallet_withdrawals SET status='pending', updated_at=? WHERE id=?")->execute([now(),$id]);
+            $pdo->commit();
+            fail('На счёте недостаточно средств ('.$bal.' ₽) — заявка возвращена в очередь');
+        }
+        $now=now();
+        $pdo->prepare("UPDATE wallet_accounts SET balance=balance-?, updated_at=? WHERE client_email=?")->execute([(int)$w['amount'],$now,$w['email']]);
+        $pdo->prepare("UPDATE wallet_withdrawals SET status='paid', updated_at=? WHERE id=?")->execute([$now,$id]);
+        $pdo->prepare("INSERT INTO wallet_ledger (from_email,to_email,amount,direction,comment,tx_id,status,created_at) VALUES (?,'oko-payout',?,'wd_paid','Вывод выплачен',?,'ok',?)")
+            ->execute([$w['email'],(int)$w['amount'],'WD-'.$id,$now]);
+        $pdo->commit();
+    }catch(Throwable $e){ try{$pdo->rollBack();}catch(Throwable $e2){} fail('tx error: '.$e->getMessage(),500); }
+    out(['ok'=>true,'id'=>$id,'status'=>'paid']);
+}
+
+// Отказ по заявке. Баланс при заявке не трогали — возвращать нечего,
+// просто помечаем rejected (тоже атомарно, через захват pending).
+case 'wd_reject': {
+    require_admin(); wd_table();
+    $id=(int)($_GET['id']??$body['id']??0);
+    $n=db_exec("UPDATE wallet_withdrawals SET status='rejected', updated_at=? WHERE id=? AND status='pending'",[now(),$id]);
+    if($n===0) fail('заявка не найдена или уже обработана',404);
+    out(['ok'=>true,'id'=>$id,'status'=>'rejected']);
+}
 
 // ── Состояние интеграций для Штаба OKO ──────────────────────────
 // Штаб показывает по каждому ИИ-агенту, чего не хватает для запуска.

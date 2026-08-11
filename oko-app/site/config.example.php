@@ -16,6 +16,14 @@ return [
     'gmail_name' => 'OKO TEAM · Даниэль Ильясов',
     'daniel_fio' => 'Ильясов Даниэль Альбертович',
     'daniel_inn' => '682016634349',
+    // ЮKassa. Реальные значения — ТОЛЬКО на VPS в отдельном файле
+    // config-pay.php (оверлей в cfg()), чтобы добавлять их одной командой:
+    //   cat > /var/www/okoteam/config-pay.php <<'EOF'
+    //   <?php
+    //   return ['yk_shop_id'=>'<shop_id>','yk_secret'=>'<live_secret>'];
+    //   EOF
+    'yk_shop_id' => 'PUT_ON_VPS',                         // идентификатор магазина
+    'yk_secret'  => 'PUT_ON_VPS',                         // секретный ключ live_
     // Оплаты Lava.top (готовые продукты)
     'lava' => ['sistema'=>'PUT_ON_VPS','zavod'=>'PUT_ON_VPS','consult'=>'PUT_ON_VPS'],
     'lava_api_key'      => 'PUT_ON_VPS',                  // динамические счета

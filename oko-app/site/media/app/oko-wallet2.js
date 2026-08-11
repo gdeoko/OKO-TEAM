@@ -1099,9 +1099,9 @@ function renderTopup(){
   var s = topState;
   box.innerHTML =
     '<div class="w2-note"><span class="w2-note-ic">' + ic('shield') + '</span>' +
-      '<span><b>Как это работает.</b> OKO создаёт счёт в платёжном шлюзе <b>Lava.top</b> и ' +
-      'открывает его страницу. Карту, СБП или крипту выбираешь там. Баланс в приложении ' +
-      'вырастет только после того, как шлюз подтвердит оплату — не раньше.</span></div>' +
+      '<span><b>Как это работает.</b> OKO создаёт счёт в <b>ЮKassa</b> и открывает ' +
+      'её страницу. Карту, СБП, SberPay или ЮMoney выбираешь там. Баланс в приложении ' +
+      'вырастет только после того, как ЮKassa подтвердит оплату — не раньше.</span></div>' +
 
     '<span class="w2-lbl">Сумма пополнения</span>' +
     '<div class="w2-qs">' + TOP_SUMS.map(function(v){
@@ -1147,39 +1147,125 @@ function topGo(){
   s.busy = true;
   var box = body('topup');
   box.innerHTML = '<div style="text-align:center;padding:40px 0"><div class="spin"></div>' +
-    '<p style="font-weight:700;margin-top:14px">Создаём счёт на Lava.top…</p>' +
+    '<p style="font-weight:700;margin-top:14px">Создаём счёт в ЮKassa…</p>' +
     '<p class="w2-fine" style="text-align:center">Это займёт пару секунд</p></div>';
   var ctrl = new AbortController();
   var to = setTimeout(function(){ ctrl.abort(); }, 15000);
-  fetch(apiBase() + '?action=wallet_topup', {
+  fetch(apiBase(), {
     method: 'POST', headers: {'Content-Type': 'application/json'}, signal: ctrl.signal,
-    body: JSON.stringify({email: email, amount: s.sum, method: 'lava'})
+    body: JSON.stringify({action: 'yk_create', amount: s.sum, email: email,
+      purpose: 'topup', desc: 'OKO · пополнение кошелька',
+      return_url: 'https://okoteam.top/?pay=done'})
   })
     .then(function(r){ return r.json(); })
     .then(function(j){
       clearTimeout(to); s.busy = false;
-      if (j && j.ok && j.url) return topLink(j.url, j.amount || s.sum);
+      if (j && j.ok && j.url) return topLink(j.url, j.amount || s.sum, j.payment_id);
       topUnavailable(j && j.error);
     })
     .catch(function(){ clearTimeout(to); s.busy = false; topUnavailable('нет связи с сервером оплаты'); });
 }
-function topLink(url, sum){
+
+/* Незавершённый платёж помним между сессиями: Telegram уводит человека на
+   страницу оплаты и возвращает позже — зачисление догоним при следующем
+   открытии кошелька (topResume). */
+var TOP_PEND = 'oko-yk-pending';
+function topRemember(pid, sum){
+  try { localStorage.setItem(TOP_PEND, JSON.stringify({id: pid, sum: sum, at: Date.now()})); } catch(e){}
+}
+function topForget(){ try { localStorage.removeItem(TOP_PEND); } catch(e){} }
+
+var topPoll = {timer: 0, gen: 0};
+function topWatch(pid){
+  var gen = ++topPoll.gen;          /* новый опрос отменяет предыдущий */
+  clearTimeout(topPoll.timer);
+  var began = Date.now();
+  var tick = function(){
+    if (gen !== topPoll.gen) return;                 /* нас сменил новый платёж */
+    fetch(apiBase() + '?action=yk_status&id=' + encodeURIComponent(pid))
+      .then(function(r){ return r.json(); })
+      .then(function(j){
+        if (gen !== topPoll.gen) return;
+        if (!j || !j.ok) throw 0;
+        if (j.status === 'succeeded' && j.paid){
+          topForget();
+          /* Баланс НЕ дорисовываем — сервер уже зачислил после подтверждённой
+             оплаты, тянем настоящую цифру. */
+          if (has('w2WalletSync')) window.w2WalletSync(true);
+          var box = body('topup');
+          if (box) box.innerHTML =
+            '<div class="w2-blank"><div class="w2-blank-ic">' + ic('check') + '</div>' +
+              '<b>Оплата подтверждена</b><p>Счёт пополнен на ' + money(j.amount || 0) +
+              '. Баланс уже обновлён — деньги пришли на лицевой счёт.</p></div>' +
+            '<div style="height:12px"></div>' +
+            '<button class="btn" type="button" onclick="okoW2.open(\'wallet\')">' + ic('wallet') + ' К кошельку</button>';
+          say('Кошелёк пополнен');
+          return;
+        }
+        if (j.status === 'canceled'){
+          topForget();
+          var b2 = body('topup');
+          if (b2) b2.innerHTML =
+            '<div class="w2-blank"><div class="w2-blank-ic">' + ic('warning') + '</div>' +
+              '<b>Платёж отменён</b><p>Оплата не прошла или была отменена — деньги не списаны. ' +
+              'Можно попробовать ещё раз.</p></div>' +
+            '<div style="height:12px"></div>' +
+            '<button class="btn" type="button" onclick="okoW2.topBack()">' + ic('refresh') + ' Попробовать снова</button>';
+          return;
+        }
+        if (Date.now() - began < 15 * 60 * 1000) topPoll.timer = setTimeout(tick, 4000);
+      })
+      .catch(function(){ if (gen === topPoll.gen && Date.now() - began < 15 * 60 * 1000) topPoll.timer = setTimeout(tick, 7000); });
+  };
+  tick();
+}
+
+/* Догоняющее зачисление платежа из прошлой сессии. Зовётся при загрузке. */
+function topResume(){
+  var p = null;
+  try { p = JSON.parse(localStorage.getItem(TOP_PEND) || 'null'); } catch(e){}
+  if (!p || !p.id) return;
+  if (Date.now() - (p.at || 0) > 24 * 3600 * 1000){ topForget(); return; }
+  fetch(apiBase() + '?action=yk_status&id=' + encodeURIComponent(p.id))
+    .then(function(r){ return r.json(); })
+    .then(function(j){
+      if (!j || !j.ok) return;
+      if (j.status === 'succeeded' && j.paid){ topForget(); if (has('w2WalletSync')) window.w2WalletSync(true); say('Оплата подтверждена: +' + money(j.amount || p.sum)); }
+      else if (j.status === 'canceled'){ topForget(); }
+    })
+    .catch(function(){});
+}
+setTimeout(topResume, 4500);
+
+function topLink(url, sum, pid){
+  if (pid) topRemember(pid, sum);
   var box = body('topup');
   box.innerHTML =
     '<div class="w2-blank">' +
       '<div class="w2-blank-ic">' + ic('bolt') + '</div>' +
       '<b>Счёт на ' + money(sum) + ' создан</b>' +
-      '<p>Оплата откроется на Lava.top. Баланс в OKO обновится после подтверждения от шлюза — ' +
-      'обычно это меньше минуты. Пока подтверждения нет, деньги на счёт не зачисляются.</p>' +
+      '<p>Оплата откроется в ЮKassa — карта, СБП, SberPay или ЮMoney. Баланс в OKO ' +
+      'обновится сам после подтверждения оплаты, обычно меньше минуты. Пока подтверждения ' +
+      'нет, деньги на счёт не зачисляются.</p>' +
     '</div>' +
     '<div style="height:12px"></div>' +
-    '<a class="btn" href="' + esc2(url) + '" target="_blank" rel="noopener" style="text-decoration:none">' +
-      ic('bolt') + ' Перейти к оплате</a>' +
+    '<a class="btn" href="' + esc2(url) + '" target="_blank" rel="noopener" style="text-decoration:none" ' +
+      'onclick="okoW2.payOpen(this.href);return false;">' + ic('bolt') + ' Перейти к оплате</a>' +
     '<div style="height:9px"></div>' +
     '<button class="btn ghost" type="button" onclick="okoW2.topBack()">Вернуться к пополнению</button>' +
     '<p class="w2-fine">Ссылка одноразовая и действует ограниченное время. Если страница не ' +
     'открылась — скопируй адрес и открой в браузере.</p>';
-  try { window.open(url, '_blank', 'noopener'); } catch(e){}
+  if (pid) topWatch(pid);
+  payOpen(url);
+}
+/* Открываем оплату правильным способом: внутри Telegram — через openLink,
+   иначе — новой вкладкой. */
+function payOpen(url){
+  try {
+    var tg = window.Telegram && window.Telegram.WebApp;
+    if (tg && tg.openLink){ tg.openLink(url); return; }
+  } catch(e){}
+  try { window.open(url, '_blank', 'noopener'); } catch(e){ location.href = url; }
 }
 function topUnavailable(reason){
   var box = body('topup');
@@ -1216,10 +1302,10 @@ function renderWithdraw(){
   var bal = balance();
   var s = wdState;
   box.innerHTML =
-    '<div class="w2-note warn"><span class="w2-note-ic">' + ic('warning') + '</span>' +
-      '<span><b>Выплаты подключаются.</b> Автоматического вывода на карту у OKO пока нет. ' +
-      'Заявка отсюда уходит в поддержку и обрабатывается вручную в течение рабочего дня. ' +
-      'До подтверждения деньги остаются на счёте — мы их не списываем.</span></div>' +
+    '<div class="w2-note"><span class="w2-note-ic">' + ic('shield') + '</span>' +
+      '<span><b>Как это работает.</b> Заявка уходит команде OKO, выплату проводят вручную ' +
+      'в течение рабочего дня. Деньги на счёте не трогаются, пока выплату не подтвердят — ' +
+      'и списываются ровно в момент выплаты.</span></div>' +
 
     '<div class="w2-calc">' +
       '<div class="w2-calc-r"><span>Доступно на счёте</span><b>' + money(bal) + '</b></div>' +
@@ -1241,9 +1327,9 @@ function renderWithdraw(){
         '<input class="w2-fld" type="text" placeholder="Номер карты, телефон для СБП или адрес кошелька" ' +
           'value="' + esc2(s.dest) + '" oninput="okoW2.wdDest(this.value)">' +
         '<div class="w2-calc" id="w2WdCalc"></div>' +
-        '<button class="btn" type="button" onclick="okoW2.wdGo()">' + ic('file') + ' Отправить заявку в поддержку</button>' +
-        '<p class="w2-fine">Кнопка не переводит деньги. Она формирует заявку с суммой и реквизитами, ' +
-        'которую разбирает человек из OKO. Пока заявку не подтвердят, баланс не меняется.</p>');
+        '<button class="btn" type="button" onclick="okoW2.wdGo()">' + ic('file') + ' Отправить заявку на вывод</button>' +
+        '<p class="w2-fine">Кнопка отправляет заявку с суммой и реквизитами команде OKO. ' +
+        'Пока выплату не подтвердят, баланс не меняется.</p>');
   wdCalc();
 }
 function wdCalc(){
@@ -1267,37 +1353,68 @@ function wdGo(){
     say('Суточный лимит вывода на тарифе ' + (has('walTier') ? walTier() : 'FREE') + ' — ' + money(lim));
     return;
   }
+  var email = myEmail();
+  if (!email){
+    pop({ico: 'warning', title: 'Сначала email',
+      body: 'Вывод оформляется по email из профиля — по нему заявку видит команда OKO ' +
+            'и по нему же считается баланс. Добавь почту в профиле и вернись сюда.',
+      actions: [{label: 'Понятно'}]});
+    return;
+  }
   var send = function(){
-    var txt = 'Заявка на вывод из OKO\nСчёт: ' + acc() + '\nНик: @' + myNick() +
-      '\nСумма: ' + money(s.sum) + '\nРеквизиты: ' + s.dest;
-    try { navigator.clipboard.writeText(txt); } catch(e){}
     var box = body('withdraw');
-    box.innerHTML =
-      '<div class="w2-blank">' +
-        '<div class="w2-blank-ic">' + ic('file') + '</div>' +
-        '<b>Заявка готова к отправке</b>' +
-        '<p>Текст заявки скопирован в буфер. Отправь его в поддержку <b>@okohelp</b> — ' +
-        'выплату проведут вручную и напишут в ответ. Баланс сейчас не изменился и не изменится, ' +
-        'пока деньги не уйдут получателю.</p>' +
-      '</div>' +
-      '<div style="height:12px"></div>' +
-      '<div class="w2-kv">' +
-        '<div class="w2-kv-r"><span>Сумма</span><b>' + money(s.sum) + '</b></div>' +
-        '<div class="w2-kv-r"><span>Реквизиты</span><b class="oko-breakable">' + esc2(s.dest) + '</b></div>' +
-        '<div class="w2-kv-r"><span>Счёт</span><b>' + esc2(acc()) + '</b></div>' +
-      '</div>' +
-      '<div style="height:12px"></div>' +
-      '<button class="btn" type="button" onclick="okoW2.support()">' + ic('comment') + ' Открыть поддержку</button>' +
-      '<div style="height:9px"></div>' +
-      '<button class="btn ghost" type="button" onclick="okoW2.wdBack()">Назад к выводу</button>' +
-      '<div style="height:12px"></div>' + walWdTimelineHtml();
-    say('Текст заявки скопирован');
+    if (box) box.innerHTML = '<div style="text-align:center;padding:40px 0"><div class="spin"></div>' +
+      '<p style="font-weight:700;margin-top:14px">Отправляем заявку…</p></div>';
+    var ctrl = new AbortController();
+    var to = setTimeout(function(){ ctrl.abort(); }, 15000);
+    /* Настоящая заявка на сервер: деньги на счёте НЕ трогаются, заявка уходит
+       команде OKO в Telegram, списание — только при подтверждённой выплате.
+       Сервер сам сверит сумму с реальным счётом. */
+    fetch(apiBase(), {
+      method: 'POST', headers: {'Content-Type': 'application/json'}, signal: ctrl.signal,
+      body: JSON.stringify({action: 'wd_request', email: email, amount: s.sum,
+        method: 'card', requisites: s.dest})
+    })
+      .then(function(r){ return r.json(); })
+      .then(function(j){
+        clearTimeout(to);
+        if (!j || !j.ok){ wdFailed(j && j.error); return; }
+        var box2 = body('withdraw');
+        if (box2) box2.innerHTML =
+          '<div class="w2-blank">' +
+            '<div class="w2-blank-ic">' + ic('check') + '</div>' +
+            '<b>Заявка №' + esc2(String(j.id)) + ' принята</b>' +
+            '<p>Заявку на вывод ' + money(s.sum) + ' уже видит команда OKO. Выплату проведут ' +
+            'вручную, обычно в течение рабочего дня. Баланс спишется в момент выплаты, не раньше — ' +
+            'сейчас деньги на месте.</p>' +
+          '</div>' +
+          '<div style="height:12px"></div>' +
+          '<div class="w2-kv">' +
+            '<div class="w2-kv-r"><span>Сумма</span><b>' + money(s.sum) + '</b></div>' +
+            '<div class="w2-kv-r"><span>Комиссия 2%</span><b>' + money(j.fee || 0) + '</b></div>' +
+            '<div class="w2-kv-r"><span>Реквизиты</span><b class="oko-breakable">' + esc2(s.dest) + '</b></div>' +
+          '</div>' +
+          '<div style="height:12px"></div>' +
+          '<button class="btn ghost" type="button" onclick="okoW2.wdBack()">Готово</button>';
+        say('Заявка на вывод №' + j.id + ' отправлена');
+      })
+      .catch(function(){ clearTimeout(to); wdFailed('нет связи с сервером'); });
   };
   if (typeof WAL_X !== 'undefined' && WAL_X.pin && has('walPinOpen')){
     walPinOpen('confirm', 'w2b-withdraw', function(){ send(); });
     return;
   }
   send();
+}
+function wdFailed(reason){
+  var r = String(reason || 'сервер не ответил').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').slice(0, 180);
+  var box = body('withdraw');
+  if (box) box.innerHTML =
+    '<div class="w2-blank"><div class="w2-blank-ic">' + ic('warning') + '</div>' +
+      '<b>Заявка не оформлена</b><p>' + r + '. Деньги на счёте не тронуты — ' +
+      'можно попробовать ещё раз.</p></div>' +
+    '<div style="height:12px"></div>' +
+    '<button class="btn" type="button" onclick="okoW2.wdBack()">' + ic('refresh') + ' Назад к выводу</button>';
 }
 function wdBack(){ renderWithdraw(); }
 
@@ -2539,7 +2656,7 @@ window.okoW2 = {
   cryptoInfo: cryptoInfo,
   freeInfo: freeInfo,
   /* пополнение */
-  topSum: topSum, topInput: topInput, topGo: topGo, topBack: topBack,
+  topSum: topSum, topInput: topInput, topGo: topGo, topBack: topBack, payOpen: payOpen,
   /* вывод */
   wdInput: wdInput, wdDest: wdDest, wdGo: wdGo, wdBack: wdBack,
   /* переводы */

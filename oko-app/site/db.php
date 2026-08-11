@@ -10,6 +10,16 @@ function cfg(): array {
     if ($c === null) {
         $path = __DIR__ . '/config.php';
         $c = file_exists($path) ? require $path : require __DIR__ . '/config.example.php';
+        /* Платёжные ключи (ЮKassa) живут в ОТДЕЛЬНОМ файле-оверлее, чтобы их
+           можно было добавить на VPS одной командой в веб-консоли, не редактируя
+           большой config.php руками. Файл возвращает массив и накрывает базовый
+           конфиг. Наружу не отдаётся: nginx исполняет *.php, а `return` ничего
+           не печатает. В git этого файла нет — только на VPS. */
+        $ov = __DIR__ . '/config-pay.php';
+        if (file_exists($ov)) {
+            $o = @require $ov;
+            if (is_array($o)) $c = array_replace($c, $o);
+        }
     }
     return $c;
 }
