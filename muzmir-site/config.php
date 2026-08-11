@@ -149,6 +149,12 @@ return [
     // gemini_base_url: с российского VPS прямой API геоблокирован Google
     // («User location is not supported») — на проде ставится воркер-прокси OKO
     // MUZMIR_GEMINI_BASE=https://gemini-proxy.okoteam.workers.dev (тот же путь API).
+    // Unisender Go — сервис рассылок. Массовые письма уходят через него по HTTP API:
+    // свои ящики Яндекс забанил за спам после первой большой рассылки, и повторять
+    // этот путь нельзя. unisender_from — адрес на нашем подтверждённом домене.
+    'unisender_api_key' => cfg('MUZMIR_UNISENDER_KEY', ''),
+    'unisender_from'    => cfg('MUZMIR_UNISENDER_FROM', 'news@xn----7sbugdeiegh1b0a9hen.xn--p1ai'),
+    'unisender_api_url' => cfg('MUZMIR_UNISENDER_URL', 'https://go2.unisender.ru/ru/transactional/api/v1'),
     'gemini_api_key'  => cfg('MUZMIR_GEMINI_KEY', ''),
     // Несколько ключей через запятую: бесплатная квота у каждого маленькая, и
     // упёршийся в лимит уступает следующему — иначе бот замолкает в час пик.

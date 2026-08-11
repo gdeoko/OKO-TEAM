@@ -439,9 +439,11 @@ function nl_daily_cap(): int {
     // Так база из 8200 адресов проходится за 21 рабочий день, а не за два месяца.
     // Ровность обеспечивает не урезанная квота, а пауза 2,5 минуты на ящик
     // (nl_box_gap_sec) — письма идут ниточкой, а не пачками.
-    $boxes = function_exists('mail_fallback_accounts') ? count(mail_fallback_accounts([], 'bulk')) : 0;
-    if ($boxes < 1) $boxes = 1;
-    return $boxes * nl_per_box_cap();
+    $accs = function_exists('mail_fallback_accounts') ? mail_fallback_accounts([], 'bulk') : [];
+    if (!$accs) return nl_per_box_cap();
+    $sum = 0;
+    foreach ($accs as $a) $sum += nl_per_box_cap((string) ($a['user'] ?? ''));
+    return max(1, $sum);
 }
 
 /**
@@ -628,7 +630,25 @@ function nl_bulk_window_open(?\DateTime $at = null): array {
 }
 
 /** Суточный лимит массовых НА ОДИН ящик (чтобы не упереться в лимит провайдера). */
-function nl_per_box_cap(): int { return max(1, (int) setting('nl_per_box_cap', '200')); }
+/**
+ * Дневная норма отправителя.
+ *
+ * У обычного почтового ящика она маленькая: Яндекс режет домен, который вдруг
+ * начал слать помногу, — на этом мы уже обожглись и потеряли два ящика. Сервис
+ * рассылок живёт по другим правилам: у него свои прогретые серверы и оплаченный
+ * объём, поэтому его норма считается отдельно и в разы больше.
+ */
+function nl_per_box_cap(string $box = ''): int {
+    if ($box !== '' && nl_box_is_service($box)) {
+        return max(1, (int) setting('nl_service_cap', '1000'));
+    }
+    return max(1, (int) setting('nl_per_box_cap', '200'));
+}
+
+/** Отправитель — сервис рассылок, а не наш почтовый ящик? */
+function nl_box_is_service(string $box): bool {
+    return mb_strtolower(trim($box)) === 'unisender';
+}
 
 /**
  * СКОЛЬКО ПИСЕМ ЯЩИК ДОЛЖЕН БЫЛ ОТПРАВИТЬ К ЭТОЙ МИНУТЕ.
@@ -647,18 +667,19 @@ function nl_per_box_cap(): int { return max(1, (int) setting('nl_per_box_cap', '
  * по паузе этот час терялся навсегда; по графику он наверстается — но не
  * залпом, а по нескольку писем за прогон (см. nl_box_burst_cap).
  */
-function nl_box_due_by_now(): int {
+function nl_box_due_by_now(string $box = ''): int {
+    $cap  = nl_per_box_cap($box);
     $from = max(0, min(23, (int) setting('nl_window_hour_from', '9')));
     $to   = max(0, min(23, (int) setting('nl_window_hour_to',  '18')));
-    if ($to <= $from) return nl_per_box_cap();
+    if ($to <= $from) return $cap;
 
     $winMin = ($to - $from) * 60;
     $nowMin = ((int) date('G') - $from) * 60 + (int) date('i');
     if ($nowMin < 0) return 0;
-    if ($nowMin >= $winMin) return nl_per_box_cap();
+    if ($nowMin >= $winMin) return $cap;
 
     // Первое письмо уходит сразу в начале окна, дальше — равномерно.
-    return (int) max(1, ceil(nl_per_box_cap() * ($nowMin + 1) / $winMin));
+    return (int) max(1, ceil($cap * ($nowMin + 1) / $winMin));
 }
 
 /** Сколько писем ящик может отправить за ОДИН прогон крона, когда догоняет график. */
@@ -671,7 +692,13 @@ function nl_box_burst_cap(): int { return max(1, (int) setting('nl_box_burst', '
  * 540 / 2,5 = 216 слотов на ящик — с запасом покрывает дневной лимит 200.
  * Ровный темп важнее скорости: письма, уходящие пачкой, почтовики режут как спам.
  */
-function nl_box_gap_sec(): int { return max(5, (int) setting('nl_box_gap_sec', '150')); }
+function nl_box_gap_sec(string $box = ''): int {
+    // Сервису рассылок долгая пауза не нужна: он сам разводит поток по своим
+    // серверам. Держим короткую — только чтобы дневной объём растянулся по окну,
+    // а не ушёл одним залпом за полчаса.
+    if ($box !== '' && nl_box_is_service($box)) return max(1, (int) setting('nl_service_gap_sec', '25'));
+    return max(5, (int) setting('nl_box_gap_sec', '150'));
+}
 
 /** Метка времени последней успешной отправки с ящика (unix, 0 — сегодня ещё не слал). */
 function nl_box_last_sent_ts(string $box): int {
@@ -1053,7 +1080,7 @@ function newsletter_process_queue(int $limit): int {
             $u = mb_strtolower((string) ($b['user'] ?? ''));
             if ($u === '') continue;
             $sentBox = nl_box_sent_today($u);
-            if ($sentBox >= nl_per_box_cap()) continue;                       // дневная норма ящика выбрана
+            if ($sentBox >= nl_per_box_cap($boxUser)) continue;                       // дневная норма ящика выбрана
             // Ящик, который подряд отказывает, писем не получает.
             if (function_exists('mail_account_penalty') && mail_account_penalty($b)) continue;
             // СУТОЧНЫЙ ЛИМИТ ОТПРАВИТЕЛЯ. Когда почтовик упирается в свой предел,
@@ -1063,10 +1090,10 @@ function newsletter_process_queue(int $limit): int {
             // После нескольких отказов подряд ящик замолкает до завтра.
             if (nl_box_blocked_today($u)) continue;
             // Сколько ящик должен по графику минус сколько уже ушло.
-            $behind = nl_box_due_by_now() - $sentBox;
+            $behind = nl_box_due_by_now($boxUser) - $sentBox;
             if ($behind < 1) continue;                                        // идём по графику — ждём
             $ready[$bi] = $u;
-            $quotaBox[$bi] = min($behind, nl_box_burst_cap(), nl_per_box_cap() - $sentBox);
+            $quotaBox[$bi] = min($behind, nl_box_burst_cap(), nl_per_box_cap($boxUser) - $sentBox);
         }
 
         if (!$allowed) {
