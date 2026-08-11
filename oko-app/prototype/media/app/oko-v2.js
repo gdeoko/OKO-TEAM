@@ -267,9 +267,18 @@ var log = function(){};   /* включить при отладке: console.log
       }
     }catch(e){}
 
-    /* Наблюдаем за DOM — состояние кнопки всегда соответствует экрану */
+    /* Наблюдаем за DOM — состояние кнопки всегда соответствует экрану.
+       Пачки схлопываем в один вызов на кадр: фильтр ловит class и style во всём
+       документе, а переключение вкладки меняет их сотнями. В браузере syncTgBack
+       выходит сразу (Telegram нет), а внутри Telegram — где приложение и живёт —
+       каждый вызов обходит экраны через inSubview(). */
     try{
-      var mo = new MutationObserver(function(){ syncTgBack(); });
+      var tgWait = false;
+      var mo = new MutationObserver(function(){
+        if(tgWait) return;
+        tgWait = true;
+        requestAnimationFrame(function(){ tgWait = false; syncTgBack(); });
+      });
       mo.observe(document.documentElement, { attributes:true, subtree:true, attributeFilter:['class','style'] });
     }catch(e){}
     setInterval(syncTgBack, 900);
@@ -1083,14 +1092,21 @@ window.okoHaptic = okoHaptic;
       el.appendChild(svg);
     }
 
-    /* Перерисовки списка чатов частые — следим за DOM, но экономно. */
-    var pending = false;
+    /* Перерисовки списка чатов частые — следим за DOM, но экономно.
+       decorate сама вставляет узлы (картинку аватара, значок подтверждения),
+       наблюдатель это видит и просит следующий проход — и так по кругу, пока
+       список не устаканится. Флаг «рисую» разрывает петлю: мутации, которые
+       сделал сам проход, поводом для нового не считаются. */
+    var pending = false, рисую = false;
     function schedule(){
-      if(pending) return;
+      if(pending || рисую) return;
       pending = true;
       requestAnimationFrame(function(){
         pending = false;
+        рисую = true;
         try{ decorate(document); }catch(e){}
+        /* Снимаем флаг после того, как наблюдатель разберёт нашу же пачку. */
+        requestAnimationFrame(function(){ рисую = false; });
       });
     }
     try{
@@ -1170,8 +1186,20 @@ window.okoHaptic = okoHaptic;
       document.documentElement.classList.toggle('oko-panel-open', panelOpen);
     }
     pillSync();
+    /* Наблюдатель смотрит на class и style во всём body, а переключение вкладки
+       и выезд шторки меняют классы сотнями. Раньше pillSync звался синхронно на
+       каждую пачку и каждый раз дёргал getComputedStyle — то есть заставлял
+       браузер пересчитывать стили посреди анимации. Замер: 682 мс из 1241 мс
+       занятого потока на шести переключениях приходилось на этот слой.
+       Теперь пачки схлопываются в один вызов на кадр. */
+    var pillWait = false;
+    function pillSchedule(){
+      if(pillWait) return;
+      pillWait = true;
+      requestAnimationFrame(function(){ pillWait = false; pillSync(); });
+    }
     try{
-      new MutationObserver(pillSync).observe(document.body, {
+      new MutationObserver(pillSchedule).observe(document.body, {
         childList: true, subtree: true, attributes: true, attributeFilter: ['hidden', 'style', 'class']
       });
     }catch(e){}

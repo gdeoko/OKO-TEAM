@@ -128,12 +128,19 @@ function onTab(fn){ tabHooks.push(fn); }
       return;
     }
     var prev = window.showTab;
+    /* Повторы через 80 и 420 мс нужны потому, что часть содержимого экрана
+       дорисовывают другие слои уже после showTab. Но если человек листает
+       меню быстро, догоняющие проходы от предыдущей вкладки бессмысленны —
+       они считают то, чего уже нет на экране. Отменяем их при новом переходе. */
+    var догон = [];
     window.showTab = function(t){
       var r = prev.apply(this, arguments);
+      догон.forEach(clearTimeout);
+      догон.length = 0;
       tabHooks.forEach(function(f){
         try{ f(t); }catch(e){}
-        setTimeout(function(){ try{ f(t); }catch(e){} }, 80);
-        setTimeout(function(){ try{ f(t); }catch(e){} }, 420);
+        догон.push(setTimeout(function(){ try{ f(t); }catch(e){} }, 80));
+        догон.push(setTimeout(function(){ try{ f(t); }catch(e){} }, 420));
       });
       return r;
     };

@@ -876,26 +876,58 @@
      11. ЗАПУСК И НАБЛЮДЕНИЕ
      ========================================================================== */
 
-  var pending = false;
-  function scan() {
-    pending = false;
-    try { landmarks(); } catch (e) { }
-    try { runNaming(document); } catch (e) { }
-    try { syncStates(document); } catch (e) { }
-    try { syncLive(); } catch (e) { }
-    try { syncDialogs(); } catch (e) { }
-    try { runTargets(document); } catch (e) { }
-    if (document.documentElement.classList.contains('oko-a-motion')) killEndlessAnimations();
+  /* Проход сам меняет DOM (aria-label, min-width у мелких кнопок), а наблюдатель
+     смотрит на style и class — то есть каждый проход будит следующий. Раньше это
+     гасил только флаг pending, который снимался в начале прохода: за одно
+     переключение вкладки набегало по восемь пар отложенных проходов, а каждый
+     проход — это обход всех 5700 узлов документа. Замер: 379 мс занятого потока
+     после каждого тапа по нижнему меню (до 779 мс на кошельке).
+
+     Теперь три ограничителя:
+       • дебаунс с отменой — пачка мутаций схлопывается в один отложенный
+         проход после ПОСЛЕДНЕЙ из них, а не копится парами;
+       • грязно — фоновый тик молчит, пока в документе ничего не менялось;
+       • сканирую — защита от повторного входа (тик и okoA11y.scan() могут
+         совпасть). Петлю «проход → мутация → проход» он НЕ разрывает:
+         колбэк наблюдателя приходит микрозадачей уже после того, как проход
+         снял флаг. Петля затухает сама, потому что второй проход ничего не
+         меняет — aria-label и data-oko-hit уже проставлены. Замер
+         tools/probe-a11y-cost.mjs: 1–3 прохода на переключение вместо ~16. */
+  var сканирую = false, грязно = true, т1 = 0, т2 = 0;
+
+  /* Счётчик времени по частям прохода: включается из пробника
+     (okoA11y.часы = {}), в обычной работе не стоит ничего. */
+  var часы = null;
+  function шаг(имя, fn) {
+    if (!часы) { try { fn(); } catch (e) { } return; }
+    var t = performance.now();
+    try { fn(); } catch (e) { }
+    часы[имя] = (часы[имя] || 0) + (performance.now() - t);
   }
+
+  function scan() {
+    if (сканирую) return;
+    сканирую = true;
+    грязно = false;
+    if (часы) часы.проходов = (часы.проходов || 0) + 1;
+    шаг('landmarks', function () { landmarks(); });
+    шаг('runNaming', function () { runNaming(document); });
+    шаг('syncStates', function () { syncStates(document); });
+    шаг('syncLive', function () { syncLive(); });
+    шаг('syncDialogs', function () { syncDialogs(); });
+    шаг('runTargets', function () { runTargets(document); });
+    if (document.documentElement.classList.contains('oko-a-motion')) killEndlessAnimations();
+    сканирую = false;
+  }
+
   function schedule() {
-    if (pending) return;
-    pending = true;
-    requestAnimationFrame(function () {
-      setTimeout(scan, 200);
-      /* Шторки выезжают анимацией: на первом проходе их ещё не видно.
-         Добираем состояние, когда движение закончилось. */
-      setTimeout(scan, 700);
-    });
+    if (сканирую) return;
+    грязно = true;
+    clearTimeout(т1); clearTimeout(т2);
+    т1 = setTimeout(scan, 200);
+    /* Шторки выезжают анимацией: на первом проходе их ещё не видно.
+       Добираем состояние, когда движение закончилось. */
+    т2 = setTimeout(scan, 700);
   }
 
   function boot() {
@@ -907,8 +939,10 @@
       attributeFilter: ['class', 'style', 'hidden', 'aria-hidden', 'placeholder']
     });
     /* Переходы между экранами и анимации шторок происходят без мутаций DOM —
-       короткий тик добирает то, что наблюдатель не видит. */
-    setInterval(scan, 900);
+       короткий тик добирает то, что наблюдатель не видит. Когда документ не
+       менялся, добирать нечего: пустой обход всего дерева каждые 0,9 с — это
+       ровно тот фон, из-за которого приложение «нагревалось» к концу сессии. */
+    setInterval(function () { if (грязно) scan(); }, 900);
     addEventListener('resize', schedule);
     addEventListener('transitionend', schedule, true);
     addEventListener('animationend', schedule, true);
@@ -921,6 +955,15 @@
   window.okoA11y = {
     scan: scan,
     accName: accName,
+    /* Секундомер по частям прохода: okoA11y.часы(true) включает,
+       okoA11y.часы() отдаёт накопленное и обнуляет. */
+    часы: function (вкл) {
+      if (вкл) { часы = {}; return null; }
+      var с = часы; часы = null;
+      if (!с) return null;
+      var о = {}; Object.keys(с).forEach(function (k) { о[k] = Math.round(с[k]); });
+      return о;
+    },
     /* Живая сводка нарушений на текущем экране. */
     /* Отладка распознавания шторок — нужна пробнику, чтобы объяснить,
        почему конкретный оверлей не считается модальным. */
