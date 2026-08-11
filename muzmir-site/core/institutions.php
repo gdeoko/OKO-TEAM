@@ -332,10 +332,25 @@ function inst_pick_for_invite(int $limit = 500): array {
     $limit = max(1, min(5000, $limit));
     try {
         return all(
-            "SELECT * FROM institutions
-              WHERE email <> ''
-                AND status = 'new'
-                AND COALESCE(bounce_count,0) < 2
+            // НАШИХ ЛЮДЕЙ ХОЛОДНЫМ ПИСЬМОМ НЕ БЕСПОКОИМ.
+            // Триста с лишним адресов есть и в базе учреждений, и в списке
+            // подписчиков: педагог подписался сам, а его школа попала в выгрузку
+            // Минкультуры. Такой человек получил бы в один день и рассылку, и
+            // «здравствуйте, приглашаем ваше учреждение» — как будто мы не знаем,
+            // с кем уже общаемся. Ему идёт обычная рассылка, холодное обращение — нет.
+            //
+            // Оговорка про source='institution': такого подписчика заводим мы сами
+            // при постановке холодного письма, ради рабочей ссылки отписки. Он не
+            // признак знакомства и учреждение из выборки не убирает — иначе после
+            // первой же волны база опустела бы целиком.
+            "SELECT * FROM institutions i
+              WHERE i.email <> ''
+                AND i.status = 'new'
+                AND COALESCE(i.bounce_count,0) < 2
+                AND NOT EXISTS (SELECT 1 FROM subscribers s
+                                 WHERE LOWER(s.email) = LOWER(i.email)
+                                   AND COALESCE(s.active,1) = 1
+                                   AND COALESCE(s.source,'') <> 'institution')
               ORDER BY CASE WHEN COALESCE(director,'') <> '' THEN 0 ELSE 1 END,
                        CASE kind
                          WHEN 'dshi'   THEN 1
