@@ -102,7 +102,10 @@ function invite_queue_institutions(int $limit = 500): array {
                 'body'          => (string) $mail['html'],
                 'status'        => 'queued',
                 'priority'      => 5,          // МАССОВОЕ: пойдёт через bulk-пул по норме
-                'campaign_type' => 'konkurs',
+                // Свой тип кампании: у писем учреждениям отдельная суточная доля,
+                // иначе они встали бы в очередь ЗА волной по своей базе и начали
+                // уходить через две недели — когда приём уже закрыт.
+                'campaign_type' => 'inst',
             ]);
             // Реестр исходящих узнаёт, каким письмом ушло обращение: пока письмо
             // не отправлено, страница проверки подлинности по его номеру молчит.
@@ -207,7 +210,7 @@ function invite_requeue_institutions(int $limit = 500, int $months = 3): array {
                 'body'          => (string) $mail['html'],
                 'status'        => 'queued',
                 'priority'      => 5,
-                'campaign_type' => 'konkurs',
+                'campaign_type' => 'inst',
             ]);
             if ($letter && $qid > 0) {
                 try {

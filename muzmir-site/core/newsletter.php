@@ -438,11 +438,38 @@ function nl_ramp_peak(): int { return nl_daily_cap(); }
  * отдельную кампанию, ей нужно выдать квоту через nl_split_vip / nl_split_kabinet.
  */
 function nl_daily_split(): array {
-    $k  = (int) setting('nl_split_konkurs', '400');
-    $v  = (int) setting('nl_split_vip',     '0');
-    $kb = (int) setting('nl_split_kabinet', '0');
-    return ['konkurs' => max(0, $k), 'vip' => max(0, $v), 'kabinet' => max(0, $kb)];
+    // Доли задаются В ПРОЦЕНТАХ, а не письмами. Раньше здесь стояло жёсткое
+    // «400 писем на конкурсы», и это был потолок сильнее всех остальных: сколько
+    // бы ни разрешал прогрев, больше четырёхсот в день не уходило никогда, а
+    // рост лесенки до десяти тысяч просто не имел смысла.
+    //
+    // Две волны идут одновременно и поровну. Своей базе — потому что эти люди
+    // сами подписались и ждут. Учреждениям — потому что заявку приносит педагог,
+    // и одно письмо в школу искусств стоит десятков писем родителям. Если пустить
+    // их подряд, а не параллельно, вторая волна начнётся через две недели, когда
+    // приём уже закроется.
+    $cap = function_exists('nl_daily_cap') ? nl_daily_cap() : 500;
+
+    $pct = [
+        'konkurs' => (int) setting('nl_split_konkurs_pct', '50'),   // своя база
+        'inst'    => (int) setting('nl_split_inst_pct',    '50'),   // учреждения
+        'vip'     => (int) setting('nl_split_vip_pct',     '0'),
+        'kabinet' => (int) setting('nl_split_kabinet_pct', '0'),
+    ];
+
+    $out = [];
+    foreach ($pct as $k => $p) $out[$k] = max(0, (int) floor($cap * max(0, $p) / 100));
+
+    // Остаток от округления отдаём конкурсам, чтобы дневной потолок выбирался
+    // целиком, а не терял по несколько писем каждый день.
+    $sum = array_sum($out);
+    if ($sum < $cap) $out['konkurs'] += $cap - $sum;
+
+    return $out;
 }
+
+/** Типы кампаний, у которых есть своя суточная квота. */
+function nl_campaign_types(): array { return ['konkurs', 'inst', 'vip', 'kabinet']; }
 
 /**
  * Сколько писем конкретной кампании (newsletter_id) уже успешно ушло сегодня —
@@ -1230,7 +1257,7 @@ function newsletter_process_queue(int $limit): int {
     if ($globalRemaining > 0) {
         $split = nl_daily_split();
         $typeLeft = [];
-        foreach (['konkurs', 'vip', 'kabinet'] as $t) {
+        foreach (nl_campaign_types() as $t) {
             $typeLeft[$t] = max(0, (int) ($split[$t] ?? 0) - nl_bulk_sent_today_type($t));
         }
         $allowed = array_keys(array_filter($typeLeft, fn($n) => $n > 0));
@@ -1263,7 +1290,7 @@ function newsletter_process_queue(int $limit): int {
         }
 
         if (!$allowed) {
-            nl_log('process: суточные квоты всех типов (konkurs/vip/kabinet) на сегодня исчерпаны');
+            nl_log('process: суточные квоты всех типов (' . implode('/', nl_campaign_types()) . ') на сегодня исчерпаны');
         } elseif (!$ready) {
             // Это нормальное состояние между слотами — в лог не шумим каждую минуту.
         } else {
