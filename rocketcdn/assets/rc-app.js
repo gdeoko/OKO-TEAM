@@ -245,7 +245,8 @@ function renderNodes() {
 function initGlobes() {
   if (!window.RCGlobe || !GEO) return;
   var land = GEO.landPoints();
-  window.__globes = [];
+  /* Список общий с rc-scroll: создаёт тот, кто пришёл первым */
+  window.__globes = window.__globes || [];
 
   var heroCv = $("#globeHero");
   if (heroCv) {
@@ -393,6 +394,9 @@ function boot() {
   function setDrawer(on) {
     if (!drawer) return;
     drawer.classList.toggle("on", on);
+    /* Закрытое меню не должно ловить фокус и читаться скринридером */
+    if ("inert" in HTMLElement.prototype) drawer.inert = !on;
+    drawer.setAttribute("aria-hidden", on ? "false" : "true");
     document.body.style.overflow = on ? "hidden" : "";
     if (burger) {
       burger.innerHTML = svg(on ? "close" : "burger");
@@ -400,6 +404,7 @@ function boot() {
       burger.setAttribute("aria-expanded", on ? "true" : "false");
     }
   }
+  setDrawer(false);
   if (burger) burger.addEventListener("click", function () { setDrawer(!drawer.classList.contains("on")); });
   $$("#drawer a").forEach(function (a) { a.addEventListener("click", function () { setDrawer(false); }); });
 

@@ -23,14 +23,28 @@ function inp($k, $d = '') {
     return is_string($v) ? trim($v) : $v;
 }
 function need_key() {
-    $k = inp('key');
-    if (!hash_equals((string)rc_cfg('admin_key'), (string)$k)) out(['ok' => false, 'error' => 'auth']);
-}
-function client_ip() {
-    foreach (['HTTP_CF_CONNECTING_IP', 'HTTP_X_REAL_IP', 'HTTP_X_FORWARDED_FOR', 'REMOTE_ADDR'] as $h) {
-        if (!empty($_SERVER[$h])) return trim(explode(',', $_SERVER[$h])[0]);
+    $real = (string)rc_cfg('admin_key');
+    /* Пока пароль не сменили, закрытые разделы не работают вовсе:
+       иначе заявки с персональными данными открыты всему интернету. */
+    if ($real === '' || $real === 'rocket2026') {
+        out(['ok' => false, 'error' => 'default_key',
+             'message' => 'Смените admin_key в config.local.php, пароль по умолчанию заблокирован.']);
     }
-    return '';
+    $k = inp('key');
+    if (!hash_equals($real, (string)$k)) out(['ok' => false, 'error' => 'auth']);
+}
+/* Заголовки пересылки подделываются одной строкой в curl, поэтому
+   доверяем им только когда запрос действительно пришёл от нашего
+   прокси (список задаётся ключом trusted_proxies в config.local.php). */
+function client_ip() {
+    $remote = $_SERVER['REMOTE_ADDR'] ?? '';
+    $trusted = (array)rc_cfg('trusted_proxies', []);
+    if ($remote !== '' && in_array($remote, $trusted, true)) {
+        foreach (['HTTP_CF_CONNECTING_IP', 'HTTP_X_REAL_IP', 'HTTP_X_FORWARDED_FOR'] as $h) {
+            if (!empty($_SERVER[$h])) return trim(explode(',', $_SERVER[$h])[0]);
+        }
+    }
+    return $remote;
 }
 function device_of($ua) {
     $ua = strtolower($ua);
@@ -67,10 +81,27 @@ function rate_ok($bucket, $limit, $window) {
     return $hit;
 }
 
+/* Общий предел, без привязки к адресу */
+function rate_global($bucket, $limit, $window) {
+    $f = RC_DATA . '/rate_' . $bucket . '.json';
+    $now = time();
+    $ok = false;
+    rc_json_update($f, function ($d) use ($now, $limit, $window, &$ok) {
+        if (($d['t'] ?? 0) < $now - $window) $d = ['t' => $now, 'n' => 0];
+        $d['n'] = ($d['n'] ?? 0) + 1;
+        $ok = $d['n'] <= $limit;
+        return $d;
+    });
+    return $ok;
+}
+
 /* ══ Приём события аналитики ══════════════════════════════ */
 if ($action === 'track') {
     $events = $body['events'] ?? [];
     if (!is_array($events) || !count($events)) out(['ok' => true]);
+    /* Пачку режем: иначе одним запросом можно накрутить счётчики
+       и завалить чат уведомлениями об ошибках. */
+    if (count($events) > 25) $events = array_slice($events, 0, 25);
     if (!rate_ok('track', 400, 300)) out(['ok' => true]);
 
     $ua  = substr($_SERVER['HTTP_USER_AGENT'] ?? '', 0, 300);
@@ -80,7 +111,8 @@ if ($action === 'track') {
     $self = parse_url(rc_cfg('site_url'), PHP_URL_HOST);
     if ($refHost === $self) $refHost = '';
 
-    rc_json_update(stat_file(), function ($d) use ($events, $ua, $sid, $refHost) {
+    $fresh = [];
+    rc_json_update(stat_file(), function ($d) use ($events, $ua, $sid, $refHost, &$fresh) {
         $d['day']      = $d['day']      ?? date('Y-m-d');
         $d['views']    = $d['views']    ?? 0;
         $d['uniq']     = $d['uniq']     ?? [];
@@ -120,23 +152,33 @@ if ($action === 'track') {
             if ($type === 'node')   $d['nodes'][$label]  = ($d['nodes'][$label] ?? 0) + 1;
             if ($type === 'search' && $label !== '') $d['searches'][$label] = ($d['searches'][$label] ?? 0) + 1;
             if ($type === 'jserr') {
+                /* Разных текстов ошибок за сутки держим не больше сорока,
+                   иначе подделанным потоком раздувается файл статистики. */
+                if (!isset($d['errors'][$label]) && count($d['errors']) >= 40) continue;
                 $d['errors'][$label] = ($d['errors'][$label] ?? 0) + 1;
-                /* Новую ошибку сразу показываем команде */
-                if ($d['errors'][$label] === 1) {
-                    rc_notify("<b>Ошибка на сайте</b>\n<code>" . htmlspecialchars($label) . "</code>", null, 'tg_topic_error');
-                }
+                if ($d['errors'][$label] === 1) $fresh[] = $label;
             }
         }
         /* Список уникальных не должен разрастаться бесконечно */
         if (count($d['uniq']) > 20000) $d['uniq'] = array_slice($d['uniq'], -12000, null, true);
         return $d;
     });
+
+    /* Уведомление шлём уже вне блокировки файла и не чаще пяти раз в час,
+       чтобы всплеск ошибок не превратился в поток сообщений. */
+    if ($fresh && rate_ok('errnotify', 5, 3600)) {
+        $list = array_slice($fresh, 0, 5);
+        rc_notify("<b>Ошибка на сайте</b>\n<code>" . htmlspecialchars(implode("\n", $list)) . "</code>", null, 'tg_topic_error');
+    }
     out(['ok' => true]);
 }
 
 /* ══ Заявка с сайта или обратный звонок ═══════════════════ */
 if ($action === 'lead' || $action === 'callback') {
     if (!rate_ok('lead', 8, 3600)) out(['ok' => false, 'error' => 'too_many']);
+    /* Предел на весь сайт, а не только на адрес: с ботнета адреса разные,
+       а письма и сообщения уходят с нашего ящика. */
+    if (!rate_global('lead_total', 120, 86400)) out(['ok' => false, 'error' => 'too_many']);
 
     $kind    = inp('kind', $action === 'callback' ? 'callback' : 'lead');
     $name    = mb_substr(inp('name'), 0, 80);
@@ -319,6 +361,9 @@ if ($action === 'lead_delete') {
 }
 
 if ($action === 'export') {
+    /* Пароль принимаем только телом запроса: в адресной строке он
+       оседает в журналах сервера и в истории браузера. */
+    if (($_SERVER['REQUEST_METHOD'] ?? '') !== 'POST') out(['ok' => false, 'error' => 'post_only']);
     need_key();
     $d = rc_json_read(RC_LEADS, []);
     header('Content-Type: text/csv; charset=UTF-8');

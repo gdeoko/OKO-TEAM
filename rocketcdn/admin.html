@@ -341,6 +341,9 @@ $("#loginForm").addEventListener("submit", function (e) {
     if (r && r.ok) {
       localStorage.setItem("rc_admin_key", v);
       start();
+    } else if (r && r.error === "default_key") {
+      msg.className = "form-msg bad";
+      msg.textContent = r.message || "Смените admin_key в config.local.php.";
     } else {
       msg.className = "form-msg bad";
       msg.textContent = "Пароль не подошёл.";
@@ -511,7 +514,18 @@ $("#leadFilter").addEventListener("click", function (e) {
 });
 $("#csv").addEventListener("click", function (e) {
   e.preventDefault();
-  window.open(API + "?action=export&key=" + encodeURIComponent(KEY), "_blank");
+  /* Пароль отправляем телом формы: в адресной строке он остаётся
+     в журналах сервера и в истории браузера. */
+  var f = document.createElement("form");
+  f.method = "POST";
+  f.action = API + "?action=export";
+  f.target = "_blank";
+  var i = document.createElement("input");
+  i.type = "hidden"; i.name = "key"; i.value = KEY;
+  f.appendChild(i);
+  document.body.appendChild(f);
+  f.submit();
+  setTimeout(function () { f.remove(); }, 1000);
 });
 
 function loadLeads() {

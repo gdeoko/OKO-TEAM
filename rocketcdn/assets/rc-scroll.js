@@ -20,8 +20,7 @@ var rocket = null, loopTop = 0, lock = false, lastY = 0, vel = 0;
 /* ── Клон первого экрана в конце страницы ────────────────── */
 function buildClone() {
   var hero = $("#hero");
-  var main = $("main");
-  if (!hero || !main || $("#heroClone")) return;
+  if (!hero || $("#heroClone")) return;
 
   var clone = hero.cloneNode(true);
   clone.id = "heroClone";
@@ -35,8 +34,11 @@ function buildClone() {
   });
   /* Клон не должен попадать в навигацию и фокус */
   $$("a, button, input", clone).forEach(function (el) { el.setAttribute("tabindex", "-1"); });
+  if ("inert" in HTMLElement.prototype) clone.inert = true;
 
-  main.appendChild(clone);
+  /* Клон ставим ПОСЛЕ подвала, а не внутрь main: точка склейки
+     считается по нему, и всё, что ниже, становится недостижимым. */
+  document.body.appendChild(clone);
 }
 
 /* ── Бесшовный цикл ──────────────────────────────────────── */
@@ -45,7 +47,7 @@ function buildClone() {
    не там, где нужно. */
 function measure() {
   var clone = $("#heroClone");
-  var v = clone ? clone.offsetTop : 0;
+  var v = clone ? Math.round(clone.getBoundingClientRect().top + (g.scrollY || g.pageYOffset || 0)) : 0;
   /* Страховка: точка склейки не может быть больше доступной прокрутки */
   var maxScroll = document.documentElement.scrollHeight - innerHeight;
   loopTop = (v > 0 && v <= maxScroll) ? v : 0;
@@ -260,11 +262,14 @@ function onScroll() {
 }
 
 /* ── Запуск ──────────────────────────────────────────────── */
-function boot() {
+/* Клон строим, когда первый экран уже наполнен переводом и иконками,
+   иначе в копию попадают пустые блоки. */
+function setupClone() {
+  if ($("#heroClone")) return;
   buildClone();
 
-  /* Глобус для клона первого экрана, чтобы стык был незаметен */
-  /* На телефоне второй глобус не рисуем: он виден доли секунды на стыке */
+  /* Глобус для клона, чтобы стык был незаметен.
+     На телефоне второй глобус не рисуем: он виден доли секунды. */
   var cloneCv = innerWidth > 760 ? $("#globeHeroClone") : null;
   if (cloneCv && g.RCGlobe && g.RC_GEO) {
     try {
@@ -273,10 +278,15 @@ function boot() {
         theme: document.documentElement.getAttribute("data-theme") || "dark",
         radius: 0.4, speed: 2.6
       });
-      if (g.__globes) g.__globes.push(gl);
+      /* Список общий: его создаёт тот, кто пришёл первым */
+      (g.__globes = g.__globes || []).push(gl);
     } catch (e) {}
   }
+  measure();
+  splitWords();
+}
 
+function boot() {
   measure();
   watchLayout();
   collectParallax();
@@ -318,8 +328,15 @@ function boot() {
   tilt();
   buildRing();
   splitWords();
-  document.addEventListener("rc:lang", function () { setTimeout(splitWords, 30); });
-  addEventListener("load", function () { setTimeout(splitWords, 60); });
+
+  /* Клон снимаем с уже наполненного первого экрана */
+  document.addEventListener("rc:lang", function () {
+    setTimeout(function () { splitWords(); setupClone(); }, 40);
+  });
+  addEventListener("load", function () {
+    setTimeout(function () { splitWords(); setupClone(); measure(); }, 80);
+  });
+  setTimeout(setupClone, 1200);
   onScroll();
 }
 

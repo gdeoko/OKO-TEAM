@@ -11,7 +11,23 @@ var $  = function (s, r) { return (r || document).querySelector(s); };
 var $$ = function (s, r) { return Array.prototype.slice.call((r || document).querySelectorAll(s)); };
 var REDUCE = matchMedia("(prefers-reduced-motion: reduce)").matches;
 
+/* Переводчик приходит из rc-app вместе с событием смены языка.
+   До первого события берём русский словарь напрямую. */
+var TR = null;
+function t(key, fallback) {
+  if (TR) { var v = TR(key); if (v && v !== key) return v; }
+  var d = g.RC_I18N && g.RC_I18N[document.documentElement.lang === "en" ? "en" : "ru"];
+  if (d && d[key]) return d[key];
+  return fallback != null ? fallback : key;
+}
+function lang() { return document.documentElement.lang === "en" ? "en" : "ru"; }
+
 function ease(t) { return 1 - Math.pow(1 - t, 3); }
+function esc(s) {
+  return String(s == null ? "" : s).replace(/[&<>"]/g, function (c) {
+    return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c];
+  });
+}
 function themeLight() { return document.documentElement.getAttribute("data-theme") === "light"; }
 
 /* Запуск один раз при появлении в экране */
@@ -39,19 +55,21 @@ function anim(dur, step, done) {
 }
 
 function fmt(n, dec) {
-  return dec ? n.toFixed(dec).replace(".", ",") : Math.round(n).toLocaleString("ru-RU");
+  var ru = lang() === "ru";
+  if (dec) return ru ? n.toFixed(dec).replace(".", ",") : n.toFixed(dec);
+  return Math.round(n).toLocaleString(ru ? "ru-RU" : "en-US");
 }
 
 /* ── 1. Сравнение задержки ───────────────────────────────── */
 function latency(box) {
   var rows = [
-    { k: "direct", label: box.dataset.l1 || "Без сети доставки", ms: 340, cls: "bad" },
-    { k: "cdn",    label: box.dataset.l2 || "Через Rocket CDN",  ms: 28,  cls: "good" }
+    { k: "direct", label: t("viz.lat1", box.dataset.l1), ms: 340, cls: "bad" },
+    { k: "cdn",    label: t("viz.lat2", box.dataset.l2), ms: 28,  cls: "good" }
   ];
   var max = 380;
   box.innerHTML = rows.map(function (r) {
     return '<div class="lat-row ' + r.cls + '">' +
-      '<div class="lat-top"><span>' + r.label + '</span><b data-ms="' + r.ms + '">0 мс</b></div>' +
+      '<div class="lat-top"><span>' + r.label + '</span><b data-ms="' + r.ms + '">0 ' + t("viz.ms") + '</b></div>' +
       '<div class="lat-track"><i style="width:0"></i></div></div>';
   }).join("");
 
@@ -61,7 +79,7 @@ function latency(box) {
       var ms = +b.dataset.ms;
       setTimeout(function () {
         anim(1300, function (k) {
-          b.textContent = fmt(ms * k) + " мс";
+          b.textContent = fmt(ms * k) + " " + t("viz.ms");
           bar.style.width = (ms / max * 100 * k).toFixed(2) + "%";
         });
       }, i * 260);
@@ -82,7 +100,7 @@ function donut(box) {
       '<circle cx="70" cy="70" r="' + R + '" class="dn-val" stroke="url(#dgr' + box.id + ')" ' +
         'stroke-dasharray="' + C2 + '" stroke-dashoffset="' + C2 + '"/>' +
     '</svg>' +
-    '<div class="dn-mid"><b>0%</b><span>' + (box.dataset.caption || "попаданий в кэш") + "</span></div>";
+    '<div class="dn-mid"><b>0%</b><span>' + esc(t("viz.cache", box.dataset.caption)) + "</span></div>";
 
   var ring = $(".dn-val", box), num = $(".dn-mid b", box);
   onView(box, function () {
@@ -115,7 +133,7 @@ function gauge(box) {
       '<path d="' + arc(A0, A1) + '" class="ga-val" stroke="url(#ggr' + box.id + ')"/>' +
       '<circle class="ga-dot" r="6" cx="' + (cx + Math.cos(A0) * R) + '" cy="' + (cy + Math.sin(A0) * R) + '"/>' +
     "</svg>" +
-    '<div class="ga-mid"><b>0%</b><span>' + (box.dataset.caption || "доступность по SLA") + "</span></div>";
+    '<div class="ga-mid"><b>0%</b><span>' + esc(t("viz.sla", box.dataset.caption)) + "</span></div>";
 
   var path = $(".ga-val", box), dot = $(".ga-dot", box), num = $(".ga-mid b", box);
   var len = path.getTotalLength();
@@ -142,11 +160,12 @@ function wave(box) {
   box.appendChild(cv);
   var readout = document.createElement("div");
   readout.className = "wave-read";
-  readout.innerHTML = '<b>0</b><span>Гбит/с сейчас</span>';
+  readout.innerHTML = '<b>0</b><span>' + esc(t("viz.gbps")) + "</span>";
   box.appendChild(readout);
 
   var x = cv.getContext("2d");
-  var N = 120, data = new Array(N).fill(0.5), t = 0, running = false, raf = 0;
+  /* Время держим в tm: имя t занято функцией перевода */
+  var N = 120, data = new Array(N).fill(0.5), tm = 0, running = false, raf = 0;
   var num = $("b", readout);
 
   function size() {
@@ -162,12 +181,12 @@ function wave(box) {
 
   function frame() {
     if (!running) return;
-    t += 0.032;
+    tm += 0.032;
     /* Складываем несколько синусов и лёгкий шум - выглядит как живой трафик */
     var v = 0.52
-      + Math.sin(t * 0.9) * 0.16
-      + Math.sin(t * 2.3 + 1.1) * 0.09
-      + Math.sin(t * 5.1 + 0.4) * 0.05
+      + Math.sin(tm * 0.9) * 0.16
+      + Math.sin(tm * 2.3 + 1.1) * 0.09
+      + Math.sin(tm * 5.1 + 0.4) * 0.05
       + (Math.random() - 0.5) * 0.05;
     v = Math.max(0.08, Math.min(0.96, v));
     data.push(v); data.shift();
@@ -222,6 +241,7 @@ function wave(box) {
     if (running) frame();
     else { cancelAnimationFrame(raf); }
   }, false);
+  box._stop = function () { running = false; cancelAnimationFrame(raf); };
 
   if (REDUCE) { running = true; frame(); running = false; }
 }
@@ -264,7 +284,7 @@ function topology(box) {
   });
 
   var nodes = '<g class="tp-origin"><rect x="' + (origin.x - 30) + '" y="' + (origin.y - 26) + '" width="60" height="52" rx="12"/>' +
-    '<text x="' + origin.x + '" y="' + (origin.y + 46) + '">' + (box.dataset.origin || "Ваш origin") + "</text></g>";
+    '<text x="' + origin.x + '" y="' + (origin.y + 46) + '">' + esc(t("viz.origin", box.dataset.origin)) + "</text></g>";
   dcs.forEach(function (d) {
     nodes += '<g class="tp-dc"><circle cx="' + d.x + '" cy="' + d.y + '" r="17"/>' +
       '<circle class="tp-ring" cx="' + d.x + '" cy="' + d.y + '" r="17"/>' +
@@ -295,6 +315,7 @@ function ticker(box) {
   var dec  = +(box.dataset.dec || 0);
   var drift = +(box.dataset.drift || 0);
   var suffix = box.dataset.suffix || "";
+  if (suffix === " Тбит/с" || suffix === " Tbps") suffix = t("viz.tbps");
   var out = document.createElement("b");
   out.textContent = fmt(from, dec) + suffix;
   box.insertBefore(out, box.firstChild);
@@ -305,10 +326,11 @@ function ticker(box) {
     }, function () {
       if (!drift || REDUCE) return;
       /* Лёгкое живое дрожание, чтобы цифра не выглядела мёртвой */
-      setInterval(function () {
+      var iv = setInterval(function () {
         var v = to + (Math.random() - 0.5) * drift;
         out.textContent = fmt(v, dec) + suffix;
       }, 2400);
+      box._stop = function () { clearInterval(iv); };
     });
   });
 }
@@ -360,9 +382,16 @@ g.RC_VIZ = { init: init };
 if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", function () { init(); });
 else init();
 /* Пересобираем то, что зависит от языка */
-document.addEventListener("rc:lang", function () {
-  ["marquee", "bars"].forEach(function (kind) {
-    $$('[data-viz="' + kind + '"]').forEach(function (el) { el._viz = false; el.innerHTML = ""; });
+document.addEventListener("rc:lang", function (e) {
+  TR = e && e.detail && e.detail.t ? e.detail.t : TR;
+  /* Перестраиваем всё, где есть текст: иначе половина подписей
+     остаётся на прежнем языке */
+  ["marquee", "bars", "latency", "donut", "gauge", "wave", "topology", "ticker"].forEach(function (kind) {
+    $$('[data-viz="' + kind + '"]').forEach(function (el) {
+      if (el._stop) { try { el._stop(); } catch (err) {} }
+      el._viz = false;
+      el.innerHTML = "";
+    });
   });
   init();
 });

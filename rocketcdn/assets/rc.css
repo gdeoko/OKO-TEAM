@@ -42,7 +42,7 @@
   --line-2:    rgba(226,232,240,.17);
   --tx:        #E2E8F0;
   --tx-2:      rgba(226,232,240,.66);
-  --tx-3:      rgba(226,232,240,.42);
+  --tx-3:      rgba(226,232,240,.58);
   --glow:      0 0 40px rgba(66,178,220,.22);
   --shadow:    0 24px 60px -20px rgba(0,0,0,.75);
   --head-bg:   rgba(5,12,21,.72);
@@ -61,7 +61,7 @@
   --line-2:    rgba(9,19,32,.18);
   --tx:        #091320;
   --tx-2:      rgba(9,19,32,.66);
-  --tx-3:      rgba(9,19,32,.45);
+  --tx-3:      rgba(9,19,32,.62);
   --glow:      0 0 40px rgba(66,178,220,.20);
   --shadow:    0 20px 48px -20px rgba(9,19,32,.24);
   --head-bg:   rgba(243,247,251,.78);
@@ -196,9 +196,10 @@ section { position: relative; padding: var(--sec) 0; }
 .hdr-in { display: flex; align-items: center; gap: 16px; height: 70px; }
 .logo { display: flex; align-items: center; gap: 10px; flex: none; }
 .logo img { height: 32px; width: auto; }
-.logo .lg-light { display: none; }
-[data-theme="light"] .logo .lg-dark  { display: none; }
-[data-theme="light"] .logo .lg-light { display: block; }
+/* Переключение вариантов логотипа работает и в шапке, и в подвале */
+.lg-light { display: none; }
+[data-theme="light"] .lg-dark  { display: none; }
+[data-theme="light"] .lg-light { display: block; }
 .nav { display: flex; gap: 4px; margin-left: auto; }
 .nav a {
   position: relative; padding: 9px 13px; border-radius: var(--r-sm);
@@ -211,7 +212,7 @@ section { position: relative; padding: var(--sec) 0; }
   height: 2px; border-radius: 2px; background: var(--grad);
 }
 .hdr-act { display: flex; align-items: center; gap: 8px; margin-left: auto; }
-.nav + .hdr-act { margin-left: 8px; }
+@media (min-width: 901px) { .nav + .hdr-act { margin-left: 8px; } }
 .icon-btn {
   width: 38px; height: 38px; display: grid; place-items: center; flex: none;
   background: var(--surface); border: 1px solid var(--line); border-radius: var(--r-sm);
@@ -234,9 +235,11 @@ section { position: relative; padding: var(--sec) 0; }
 .drawer {
   position: fixed; inset: 0; z-index: 199; background: var(--bg);
   padding: 90px var(--pad) 40px; display: flex; flex-direction: column; gap: 6px;
-  transform: translateX(100%); transition: transform .42s var(--ease); overflow-y: auto;
+  transform: translateX(100%); visibility: hidden;
+  transition: transform .42s var(--ease), visibility .42s var(--ease);
+  overflow-y: auto;
 }
-.drawer.on { transform: none; }
+.drawer.on { transform: none; visibility: visible; }
 .drawer a {
   padding: 15px 4px; font-size: 19px; font-weight: 600; border-bottom: 1px solid var(--line);
   display: flex; justify-content: space-between; align-items: center; color: var(--tx-2);
@@ -639,6 +642,8 @@ section { position: relative; padding: var(--sec) 0; }
 
 /* График трафика */
 .wave-wrap { position: relative; }
+/* Точка отсчёта для показания - сам блок графика, иначе оно ложится на заголовок */
+[data-viz="wave"] { position: relative; }
 .wave-cv { width: 100%; height: 150px; display: block; }
 .wave-read { position: absolute; left: 0; top: 0; display: flex; align-items: baseline; gap: 7px; }
 .wave-read b { font-size: 26px; font-weight: 700; letter-spacing: -.03em; font-variant-numeric: tabular-nums; }

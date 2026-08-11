@@ -28,6 +28,8 @@
 <link rel="apple-touch-icon" href="assets/apple-touch-icon.png">
 <link rel="manifest" href="manifest.webmanifest">
 
+<script>/* Тема до первой отрисовки: без этого страница моргает и клон первого экрана строится не в той теме */
+try{var _t=localStorage.getItem("rc_theme");if(_t==="light"||_t==="dark")document.documentElement.setAttribute("data-theme",_t);}catch(e){}</script>
 <link rel="preload" href="assets/fonts/golos-cyr.woff2" as="font" type="font/woff2" crossorigin>
 <link rel="stylesheet" href="assets/rc-fonts.css">
 <link rel="stylesheet" href="assets/rc.css">
@@ -501,7 +503,7 @@
     <div class="ftr-top">
       <div class="ftr-brand">
         <img class="lg-dark"  src="assets/logo.png"       alt="Rocket CDN" width="68" height="46">
-        <img class="lg-light" src="assets/logo-light.png" alt="Rocket CDN" width="68" height="46" style="display:none">
+        <img class="lg-light" src="assets/logo-light.png" alt="Rocket CDN" width="68" height="46">
         <p data-i18n="ftr.about">Глобальная сеть доставки контента и медиа-инфраструктура для бизнеса.</p>
         <div class="soc" style="margin-top:16px">
           <a href="https://t.me/rocket_cdn_bot" target="_blank" rel="noopener" aria-label="Telegram" data-ico="tg"></a>

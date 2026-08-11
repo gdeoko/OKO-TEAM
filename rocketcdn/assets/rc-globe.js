@@ -38,6 +38,7 @@ function Globe(canvas, opts) {
   this.filter = null;      /* индекс региона или null */
   this.focus = null;       /* {lat,lon} - плавный доворот к точке */
   this.running = false;
+  this._inView = false;
   this.dragging = false;
   this.theme = opts.theme || "dark";
   this.quality = 1;
@@ -157,7 +158,9 @@ Globe.prototype.draw = function (dt) {
     c.ellipse(cx, cy - yy * ct * R, rr, Math.max(1, rr * Math.abs(st)) , 0, 0, TAU);
     c.stroke();
   }
-  for (i = 0; i < 180; i += 30) {
+  /* Полный круг меридианов: половина сетки иначе пропадает
+     на части оборота */
+  for (i = 0; i < 360; i += 30) {
     c.beginPath();
     for (var s = -90; s <= 90; s += 6) {
       p = this._pt(s, i);
@@ -403,12 +406,16 @@ Globe.prototype._bind = function () {
   /* Спим, когда глобус за пределами экрана или вкладка неактивна */
   if (window.IntersectionObserver) {
     new IntersectionObserver(function (ents) {
-      ents[0].isIntersecting ? self.start() : self.stop();
+      self._inView = ents[0].isIntersecting;
+      self._inView && !document.hidden ? self.start() : self.stop();
     }, { threshold: 0.02 }).observe(cv);
-  } else self.start();
+  } else { self._inView = true; self.start(); }
 
+  /* Возврат во вкладку не должен будить глобус, который за экраном:
+     наблюдатель повторно не сработает, и он рисовал бы вхолостую. */
   document.addEventListener("visibilitychange", function () {
-    document.hidden ? self.stop() : self.start();
+    if (document.hidden) self.stop();
+    else if (self._inView) self.start();
   });
 
   var rt;

@@ -202,6 +202,17 @@ var RU = {
   "inc.8":         "Персональный менеджер",
   "inc.9":         "SLA 99,9%",
 
+  /* Подписи внутри инфографики */
+  "viz.lat1":      "Без сети доставки",
+  "viz.lat2":      "Через Rocket CDN",
+  "viz.ms":        "мс",
+  "viz.cache":     "попаданий в кэш",
+  "viz.sla":       "доступность по SLA",
+  "viz.gbps":      "Гбит/с сейчас",
+  "viz.origin":    "Ваш origin",
+  "viz.tbps":      " Тбит/с",
+  "viz.none":      "Пока нет данных.",
+
   /* Служебное */
   "toast.copy":    "Скопировано"
 };
@@ -362,6 +373,9 @@ var EN = {
   "inc.1": "HTTP/2 and HTTP/3", "inc.2": "Origin shielding", "inc.3": "Flexible cache rules",
   "inc.4": "Unlimited requests: GET, POST, PUT", "inc.5": "Storage from 5 GB",
   "inc.6": "Extended statistics", "inc.7": "Log access", "inc.8": "Personal manager", "inc.9": "99.9% SLA",
+  "viz.lat1": "Without a delivery network", "viz.lat2": "Through Rocket CDN", "viz.ms": "ms",
+  "viz.cache": "cache hit ratio", "viz.sla": "availability under SLA", "viz.gbps": "Gbps right now",
+  "viz.origin": "Your origin", "viz.tbps": " Tbps", "viz.none": "No data yet.",
   "toast.copy": "Copied"
 };
 
