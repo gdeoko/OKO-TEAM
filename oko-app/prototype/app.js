@@ -2619,25 +2619,30 @@ function walSyncTopupBtn(){
   const el = document.getElementById('walTopBtnSum');
   if(el) el.textContent = 'Пополнить на ' + fmtMoney(walTopupState.sum);
 }
+/* ПОПОЛНЕНИЕ · честный отказ вместо поддельного платежа.
+
+   Было так: человек вводил сумму, видел спиннер «Создаём платёж… защищённое
+   соединение», а через 1,1 секунды таймер сам дорисовывал деньги на баланс и
+   писал «Счёт пополнен». Никакого платежа не происходило — ни списания, ни
+   запроса, ни платёжного шлюза. Человек уходил с экрана уверенный, что у него
+   на счету есть деньги; дальше он на них «покупал» тариф и продвижение.
+
+   Правило Даниэля прямое: деньги не появляются без оплаты, а реквизиты и
+   платёж приходят только с бэкенда. Бэкенда платежей пока нет — значит
+   единственный честный ответ здесь «оплата недоступна», и никаких цифр на
+   балансе. Когда шлюз появится, эта функция станет вызовом к нему. */
 function walDoTopup(){
   const s = walTopupState;
   if(!s.sum || s.sum <= 0){ toast('Укажи сумму пополнения'); return; }
   const v = document.getElementById('walTopupView');
-  v.innerHTML = `<div style="text-align:center;padding:22px 0">
-    <div class="spin"></div><p style="font-weight:700;margin-top:14px">Создаём платёж…</p>
-    <p class="dim" style="font-size:12px;margin-top:5px">${WAL_M_LABEL[s.method]} · защищённое соединение</p></div>`;
-  setTimeout(()=>{
-    walletAdd(s.sum, 'Пополнение · ' + WAL_M_LABEL[s.method]);
-    v.innerHTML = `<div class="wal-ok-wrap">
-      <div class="wal-ok">${I('check')}</div>
-      <p style="font-weight:800;font-size:19px;margin-top:14px">+ ${fmtMoney(s.sum)}</p>
-      <p class="dim" style="font-size:13px;margin-top:6px">Счёт пополнен через ${WAL_M_LABEL[s.method]}.<br>Баланс: ${fmtMoney(WALLET.balance)}</p>
-      <div style="height:16px"></div>
-      <button class="btn" onclick="closeSheet()">Отлично</button></div>`;
-    renderWallet();
-    walFlash('in');
-    toast('Кошелёк пополнен на ' + fmtMoney(s.sum));
-  }, 1100);
+  v.innerHTML = `<div class="wal-ok-wrap" style="text-align:center;padding:10px 0">
+    <p style="font-weight:800;font-size:18px;margin-top:6px">Пополнение пока недоступно</p>
+    <p class="dim" style="font-size:13px;margin-top:8px;line-height:1.5">
+      Приём платежей ещё не подключён: ${WAL_M_LABEL[s.method]} появится вместе
+      с платёжным шлюзом OKO. Мы не станем рисовать сумму на балансе, которой
+      на самом деле нет.</p>
+    <div style="height:16px"></div>
+    <button class="btn" onclick="closeSheet()">Понятно</button></div>`;
 }
 
 /* ---------- вывод (комиссия 2%, суточный лимит, ПИН) ---------- */
@@ -3790,10 +3795,13 @@ function walSaveAutoRule(){
   const rules = (WAL_X.autoRules || []).filter(r=>r.on && WALLET.balance < r.below);
   if(!rules.length) return;
   if(Date.now() - WAL_X.autoRuleLast < 30 * 60 * 1000) return;
+  /* Автопополнение по таймеру отключено 11.08. Правило само по себе законное,
+     но выполнить его нечем: платёжного шлюза нет, а значит «сработавшее»
+     правило просто дорисовывало деньги на баланс без оплаты. Пока шлюза нет,
+     правило только напоминает, что баланс низкий. */
   const r = rules[0];
-  walletAdd(r.sum, 'Автопополнение · правило (' + WAL_M_LABEL[r.method] + ')');
   WAL_X.autoRuleLast = Date.now(); walXSave();
-  setTimeout(()=>toast('Автопополнение: +' + fmtMoney(r.sum) + ' — баланс был ниже ' + fmtMoney(r.below)), 500);
+  setTimeout(()=>toast('Баланс ниже ' + fmtMoney(r.below) + ' — автопополнение сработает, когда подключим оплату'), 500);
 })();
 
 /* ---------- FACE-ID / ОТПЕЧАТОК (эмуляция) ---------- */
@@ -5243,12 +5251,12 @@ function gmSpinRun(mode, payTicket){
 }
 function gmPrizeSub(p){
   switch(p.t){
-    case 'money':   return 'зачислено на кошелёк';
+    case 'money':   return 'ждёт зачисления — подтвердит сервер';
     case 'ticket':  return 'билеты — валюта круток';
     case 'check':   return 'бонусные проверки видео — в «Мои призы»';
     case 'disc':    return 'промокод в «Мои призы» — применится при оплате тарифа';
     case 'boost':   return 'умножит следующий денежный приз в рулетке';
-    case 'tier':    return 'тариф активирован на месяц';
+    case 'tier':    return 'ждёт подключения — подтвердит сервер';
     case 'service': return 'услуга активна — код в «Мои призы»';
   }
   return '';
@@ -5274,9 +5282,13 @@ function gmGrant(p, mode, payTicket){
   let title = '', prize = null;
   switch(p.t){
     case 'money':{
+      /* Деньги на счёт НЕ начисляем. Бесплатная дневная крутка рисовала на
+         настоящем балансе от 50 до 5 000 ₽ — деньги из ниоткуда, без оплаты
+         и без ведома сервера. Выигрыш записываем как ожидающий: он ляжет на
+         счёт, когда его подтвердит бэкенд. Пока бэкенда нет — и зачисления
+         нет, но и обмана нет. */
       const amt = gmApplyBoost(p.v);
-      walletAdd(amt, 'Приз рулетки OKO');
-      prize = {type:'money', val:amt, status:'done'};
+      prize = {type:'money', val:amt, status:'pending'};
       title = `+ ${fmtMoney(amt)}`; break;
     }
     case 'ticket':
@@ -5292,8 +5304,10 @@ function gmGrant(p, mode, payTicket){
       gmBoostSet(p.v); prize = {type:'boost', val:p.v, status:'active'};
       title = `Буст ×${p.v} к призу`; break;
     case 'tier':
-      if(typeof PROFILE !== 'undefined'){ PROFILE.tier = p.v; if(typeof renderMyProfile === 'function') renderMyProfile(); }
-      prize = {type:'tier', val:p.v, status:'active'};
+      /* Тариф НЕ включаем: платный план, поднятый круткой без оплаты, — это
+         та же ложь, что и деньги из воздуха, только дороже. Записываем как
+         ожидающий подтверждения. */
+      prize = {type:'tier', val:p.v, status:'pending'};
       title = `Тариф ${p.v} на месяц`; break;
     case 'service':{
       const sv = GM_SERVICES[p.v] || {};
@@ -5303,8 +5317,9 @@ function gmGrant(p, mode, payTicket){
   }
   /* доход OKO — маржа платной крутки (за вычетом денежного приза) */
   if(mode !== 'free' && !payTicket && gmPaidCost > 0){
-    const moneyOut = p.t === 'money' ? prize.val : 0;
-    const net = gmPaidCost - moneyOut;
+    /* Денежный приз пока не выплачивается, поэтому и из дохода его не
+       вычитаем: иначе в отчётах появился бы расход, которого не было. */
+    const net = gmPaidCost;
     if(net > 0) okoEarn(net, 'Игры: рулетка OKO');
   }
   gmPrizeAdd(prize);
@@ -5499,7 +5514,9 @@ function gmPrizesOpen(){ openSheet('gmPrizes'); gmPrizesRender(); }
 function gmPrizeRow(p){
   let ic = 'gm-gift', cat = 'Приз', title = '', extra = '', badge = '', bcls = 'active';
   switch(p.type){
-    case 'money':  ic='money';       cat='Деньги';         title=`+ ${fmtMoney(p.val)}`;            badge='Начислено'; bcls='done'; break;
+    case 'money':  ic='money';       cat='Деньги';         title=`+ ${fmtMoney(p.val)}`;
+      badge = p.status==='pending' ? 'Ждёт зачисления' : 'Начислено';
+      bcls  = p.status==='pending' ? 'active' : 'done'; break;
     case 'ticket': ic='gm-ticket';   cat='Билеты';         title=`+ ${p.val} ${gmPluralTk(p.val)}`; badge='Начислено'; bcls='done'; break;
     case 'check':  ic='gm-checkvid'; cat='Проверки видео'; title=`${p.val} ${gmPluralCheck(p.val)}`; badge=p.status==='used'?'Использовано':'Доступно'; bcls=p.status==='used'?'used':'active'; break;
     case 'discount':
@@ -5508,7 +5525,8 @@ function gmPrizeRow(p){
       else { badge='Использована'; bcls='used'; extra=`<span class="gm-code used">${p.code}</span>`; }
       break;
     case 'boost':  ic='gm-boost'; cat='Буст к призу'; title=`Буст ×${p.val} к призу`; badge=p.status==='used'?'Использован':'Активен'; bcls=p.status==='used'?'used':'active'; break;
-    case 'tier':   ic='crown';    cat='Тариф на месяц'; title=`Тариф ${p.val} на месяц`; badge='Активен'; bcls='active'; break;
+    case 'tier':   ic='crown';    cat='Тариф на месяц'; title=`Тариф ${p.val} на месяц`;
+      badge = p.status==='pending' ? 'Ждёт подключения' : 'Активен'; bcls='active'; break;
     case 'service':{
       const sv = GM_SERVICES[p.val] || {};
       ic = sv.ic || 'gm-gift'; cat = 'Услуга OKO'; title = sv.label || 'Услуга OKO';
@@ -6697,12 +6715,13 @@ function gmScratchDone(){
   const pseudoGrant = ()=>{
     let prize = null, title = '';
     switch(p.t){
-      case 'money':  walletAdd(p.v, 'Скретч-карта OKO'); prize = {type:'money', val:p.v, status:'done'}; title = '+ ' + fmtMoney(p.v); break;
+      /* Как и в рулетке: на счёт не начисляем, ждём подтверждения сервера. */
+      case 'money':  prize = {type:'money', val:p.v, status:'pending'}; title = '+ ' + fmtMoney(p.v); break;
       case 'ticket': gmTicketsAdd(p.v); prize = {type:'ticket', val:p.v, status:'done'}; title = `+ ${p.v} ${gmPluralTk(p.v)}`; break;
       case 'check':  gmChecksAdd(p.v); prize = {type:'check', val:p.v, status:'active'}; title = `+ ${p.v} проверки видео`; break;
       case 'disc':   prize = {type:'discount', val:p.v, code:gmMakeCode(), status:'active'}; title = `Скидка −${p.v}% на тариф`; break;
       case 'boost':  gmBoostSet(p.v); prize = {type:'boost', val:p.v, status:'active'}; title = `Буст ×${p.v}`; break;
-      case 'tier':   if(typeof PROFILE!=='undefined'){ PROFILE.tier = p.v; } prize = {type:'tier', val:p.v, status:'active'}; title = `Тариф ${p.v} на месяц`; break;
+      case 'tier':   prize = {type:'tier', val:p.v, status:'pending'}; title = `Тариф ${p.v} на месяц`; break;
       case 'service':prize = {type:'service', val:p.v, code:gmMakeCode(), status:'active'}; title = (GM_SERVICES[p.v]||{}).label||'Услуга OKO'; break;
     }
     gmPrizeAdd(prize);
@@ -23050,33 +23069,32 @@ function vsRenderVerify(){
     ${action}`;
 }
 
+/* ВЕРИФИКАЦИЯ · без поддельной модерации.
+
+   Было так: кнопка «Подать заявку» ставила локальный статус «на рассмотрении»
+   и говорила «Заявка отправлена на модерацию» — хотя не уходило ничего, ни
+   одного запроса. Дальше таймер на пять секунд ИГРАЛ модератора: при тарифе
+   PRO/BUSINESS ставил «Верифицирован», добавлял имя в VERIFIED и рисовал
+   синюю галочку в профиле, ленте и чатах; иначе показывал «Заявка отклонена»
+   и предлагал оформить PRO.
+
+   Синяя галочка — это утверждение «OKO проверил, что человек настоящий».
+   Выдавать её таймером нельзя: это подделка статуса и ложное подтверждение
+   разом. Проверять аккаунты может только живой модератор через сервер.
+
+   Пока сервера нет — говорим правду и не трогаем ни статус, ни галочку.
+   Когда появится, здесь будет отправка заявки и опрос её состояния. */
 function vsApply(){
   if(VS_VERIFY.status !== 'none') return;
-  VS_VERIFY.status = 'pending'; vsSave();
-  vsUpdateProw(); vsRenderVerify();
-  toast('Заявка отправлена на модерацию');
-  setTimeout(()=>{
-    if(VS_VERIFY.status !== 'pending') return;
-    if(vsPremiumOk()){
-      VS_VERIFY.status = 'approved'; VS_VERIFY.name = PROFILE.name; vsSave();
-      if(typeof VERIFIED !== 'undefined') VERIFIED.add(PROFILE.name);
-      if(typeof showPopup === 'function') showPopup({
-        ico:'verified', title:'Аккаунт верифицирован',
-        body:`Поздравляем, ${esc(PROFILE.name)}! Синяя галочка теперь рядом с твоим именем — в профиле, ленте и чатах.`,
-        actions:[{label:'Красота'}]
-      });
-      if(typeof renderMyProfile === 'function') renderMyProfile();
-      vsDecorateAll();
-    } else {
-      VS_VERIFY.status = 'none'; vsSave();
-      if(typeof showPopup === 'function') showPopup({
-        ico:'lock', title:'Заявка отклонена',
-        body:'Для верификации нужен активный тариф PRO или BUSINESS либо подтверждённый официальный бизнес. Оформи PRO, и подай заявку снова.',
-        actions:[{label:'Оформить PRO', onclick:()=>openPay('PRO')},{label:'Позже', ghost:true}]
-      });
-    }
-    vsUpdateProw(); vsRenderVerify();
-  }, 5000);
+  if(typeof showPopup !== 'function'){
+    if(typeof toast === 'function') toast('Проверка аккаунтов пока недоступна');
+    return;
+  }
+  showPopup({
+    ico:'clock', title:'Проверка пока недоступна',
+    body:'Заявки на верификацию принимает живой модератор OKO — эта часть заработает вместе с сервером. Мы не станем ставить галочку автоматически: она означает, что аккаунт действительно проверили.',
+    actions:[{label:'Понятно'}]
+  });
 }
 
 /* ---------- 2. ГАЛОЧКИ У ИМЁН (DOM-декораторы + chain-патчи) ---------- */
@@ -26753,17 +26771,19 @@ admOverview = function(){
   const quick = `
     <div class="adm-sec-h">Быстро · действия владельца</div>
     <div class="hq-quick">
-      <button class="hq-qbtn" onclick="hqQuickMoney()"><span class="hq-qic">${I('money')}</span><b>+10 000 ₽</b><small>тестовые на кошелёк</small></button>
       <button class="hq-qbtn" onclick="hqExportReport()"><span class="hq-qic">${I('file')}</span><b>Отчёт .txt</b><small>полная сводка</small></button>
       <button class="hq-qbtn dng" onclick="hqResetDemo()"><span class="hq-qic">${I('trash')}</span><b>Сброс демо</b><small>очистить oko-данные</small></button>
     </div>`;
   return html.replace('<div class="adm-kpis">', '<div class="adm-kpis">'+kpi) + quick;
 };
-function hqQuickMoney(){
-  if(typeof walletAdd !== 'function'){ toast('Кошелёк недоступен'); return; }
-  walletAdd(10000, 'Тестовое начисление владельца');
-  toast('+10 000 ₽ зачислено на кошелёк (тест)');
-}
+/* Кнопка «+10 000 ₽ · тестовые на кошелёк» убрана 11.08.
+
+   Одним тапом она рисовала 10 000 ₽ на НАСТОЯЩЕМ балансе кошелька и писала
+   «зачислено». Именно от таких начислений владелец потом видел в кошельке
+   деньги, которых никто не платил, и переставал доверять цифрам. Деньги в
+   OKO появляются только после оплаты — другого пути быть не должно.
+   Если нужно проверить вёрстку кошелька с ненулевым балансом, это делается
+   пробником, а не кнопкой в живой админке. */
 function hqResetDemo(){
   showPopup({
     ico:'trash', title:'Сбросить демо-данные?',
@@ -27581,7 +27601,6 @@ function hqQuickBlock(){
       <button class="hq-qbtn" onclick="hqQuickPro()"><span class="hq-qic">${I('megaphone')}</span><b>Письмо PRO</b><small>рассылка всем</small></button>
       <button class="hq-qbtn dng" onclick="hqQuickBan()"><span class="hq-qic">${I('lock')}</span><b>Бан юзера</b><small>по @нику</small></button>
       <button class="hq-qbtn" onclick="hqQuickRefund()"><span class="hq-qic">${I('card')}</span><b>Возврат</b><small>выбрать платёж</small></button>
-      <button class="hq-qbtn" onclick="hqQuickMoney()"><span class="hq-qic">${I('money')}</span><b>+10 000 ₽</b><small>тест на кошелёк</small></button>
       <button class="hq-qbtn" onclick="hqExportMenu()"><span class="hq-qic">${I('file')}</span><b>Экспорт</b><small>CSV / PDF / TXT</small></button>
     </div>`;
 }
@@ -39072,9 +39091,25 @@ function pp2ThisDevice(){
         + '<span class="pp2-item-b"><b>' + esc2(it.n) + '</b><small>' + esc2(it.l) + '</small></span>'
         + chip + '</div>';
     }).join('');
-    const foot = '<button class="pp2-btn-plain danger" onclick="toast(\'Все другие сессии завершены\')">' + safeI('logout') + '<span>Завершить все другие</span></button>';
+    /* Кнопка говорила «Все другие сессии завершены» голым тостом: ни записи в
+       состояние, ни запроса, ни одной закрытой сессии. Хуже места для лжи не
+       придумаешь — человек считал, что выкинул чужой вход из своего аккаунта.
+       Список выше показывает только текущее устройство, то есть завершать и
+       правда нечего; так и пишем. Настоящее завершение чужих сессий отдаёт
+       сервер (образец honest-реализации — media/app/oko-settings2.js). */
+    const foot = '<button class="pp2-btn-plain danger" onclick="pp2KillOther()">' + safeI('logout') + '<span>Завершить все другие</span></button>';
     return '<div style="display:flex;flex-direction:column;gap:8px">' + rows + '</div>' + foot;
   }
+
+  /* Других сессий в приложении нет: список устройств строится из текущего
+     входа, а реестр чужих сессий может вести только сервер. Пока его нет —
+     честно об этом говорим и ничего не «завершаем». */
+  window.pp2KillOther = function(){
+    if(typeof showPopup !== 'function'){ if(typeof toast === 'function') toast('Других активных сессий нет'); return; }
+    showPopup({ico:'lock', title:'Других сессий нет',
+      body:'Сейчас в аккаунт выполнен вход только с этого устройства. Список чужих входов и их завершение появятся вместе с сервером OKO.',
+      actions:[{label:'Понятно'}]});
+  };
 
   /* --- Помощь и поддержка --- */
   function pp2SupportHtml(){
@@ -43588,7 +43623,10 @@ function st2InsertRow(){
      2) TOUR — интерактивный тур: спотлайт вокруг реального элемента
         (дыра box-shadow по getBoundingClientRect), карточка с текстом +
         стрелка, точки-прогресс, Далее/Пропустить.
-     3) FINAL — попап «Готово! 2 500 ₽ уже на счёте — попробуй продвижение».
+     3) FINAL — попап «Готово! Попробуй продвижение».
+        (Было «2 500 ₽ уже на счёте» — приветственное начисление убрано 09.08,
+        и попап противоречил сам себе, подставляя рядом настоящий нулевой
+        баланс. Текст исправлен.)
    Единый ключ persistent-state: `oko-tour-done` (сохраняем back-compat со
    старым ключом `oko-tour`). Строгий одноразовый гейт: если ключ выставлен,
    ни сторис, ни тур автоматически больше не запускаются. */
@@ -43615,8 +43653,10 @@ const TR_STORIES = [
   {key:'plans', ico:'crown', tone:'dark',
    tag:{ru:'Тарифы', en:'Plans'},
    title:{ru:'Три плана — под любые задачи', en:'Three plans — for every need'},
-   body:{ru:'Free для старта, PRO для роста и BUSINESS для команд. Первые 2 500 ₽ на балансе — тратятся на любые тарифы и продвижение.',
-         en:'Free to start, PRO to grow and BUSINESS for teams. First 2,500 ₽ on your balance covers any plan or promotion.'},
+   /* Было «Первые 2 500 ₽ на балансе». Таких денег нет — новый кошелёк
+      стартует с нуля. Обещание от лица Даниэля тем более недопустимо. */
+   body:{ru:'Free для старта, PRO для роста и BUSINESS для команд. Начинай на Free и переходи выше, когда почувствуешь, что упёрся в потолок.',
+         en:'Free to start, PRO to grow and BUSINESS for teams. Begin on Free and move up when you hit its ceiling.'},
    meta:{ru:'Даниэль · тарифы OKO', en:'Daniel · OKO plans'}},
   {key:'partner', ico:'heart', tone:'lime',
    tag:{ru:'Партнёрка', en:'Partners'},
@@ -43662,8 +43702,9 @@ const TR_STEPS = [
    pad:6, round:'18px', clamp:true},
   {tab:'feed', sel:'#screen-feed .fab', ico:'plus',
    title:{ru:'Создавай посты', en:'Create posts'},
-   text:{ru:'Лаймовая кнопка — новый пост: текст, фото, видео или опрос. Опубликуй и сразу продвинь его за счёт стартового бонуса на счёте.',
-         en:'The lime button starts a new post: text, photo, video or poll. Publish and promote it right away with your starter bonus.'},
+   /* Было «за счёт стартового бонуса на счёте» — бонуса не существует. */
+   text:{ru:'Лаймовая кнопка — новый пост: текст, фото, видео или опрос. Опубликуй, а потом при желании продвинь его из ленты.',
+         en:'The lime button starts a new post: text, photo, video or poll. Publish it, then boost it from the feed if you want.'},
    pad:8, round:'50%'},
   {tab:'profile', sel:'#screen-profile .profile-top', ico:'user',
    title:{ru:'Профиль и настройки', en:'Profile & settings'},
@@ -43950,8 +43991,12 @@ function trDonePopup(){
     ? trT(` Сейчас на балансе — ${fmtMoney(WALLET.balance)}.`, ` Your balance is now ${fmtMoney(WALLET.balance)}.`) : '';
   if(typeof showPopup !== 'function'){ if(typeof toast === 'function') toast(trT('Тур завершён','Tour complete')); return; }
   showPopup({ico:'rocket', title:trT('Готово!','All set!'),
-    body:trT('2 500 ₽ уже на счёте — попробуй продвижение: запусти первую кампанию в рекламном кабинете или продвинь пост из ленты.',
-             '2,500 ₽ is already in your account — try promotion: launch your first campaign in Ads Manager or boost a post from the feed.') + bal,
+    /* Здесь было «2 500 ₽ уже на счёте». Приветственное начисление убрано
+       09.08, баланс нового аккаунта — ноль, и попап противоречил сам себе:
+       строкой ниже он же подставлял настоящий баланс «Сейчас на балансе — 0 ₽».
+       Обещать деньги, которых нет, нельзя. */
+    body:trT('Осмотрелся — теперь попробуй продвижение: запусти первую кампанию в рекламном кабинете или продвинь пост из ленты.',
+             'You have had a look around — now try promotion: launch your first campaign in Ads Manager or boost a post from the feed.') + bal,
     actions:[
       {label:trT('Попробовать продвижение','Try promotion'), onclick:()=>{
         if(typeof showTab !== 'function') return;
@@ -47578,7 +47623,22 @@ var PW_ASSET = {
     try{ navigator.clipboard.writeText(text); }catch(e){}
     if(typeof toast === 'function') toast('Скопировано в буфер');
   };
-  window.ppSavePromo = function(){
+  /* Было: голый тост «Сохранено в избранное» — ни массива, ни localStorage,
+     ни запроса. Человек «сохранял» промо, возвращался и не находил его.
+     Теперь сохраняем по-настоящему, в localStorage, и говорим правду —
+     в том числе когда материал уже был сохранён. */
+  window.ppFavPromo = function(){
+    try{ return JSON.parse(localStorage.getItem('oko-pp-promo-fav') || '[]'); }catch(e){ return []; }
+  };
+  window.ppSavePromo = function(i){
+    const idx = Number(i);
+    const p = (typeof PROMO !== 'undefined') ? PROMO[idx] : null;
+    if(!p){ if(typeof toast === 'function') toast('Материал не найден'); return; }
+    const fav = window.ppFavPromo();
+    if(fav.indexOf(idx) >= 0){ if(typeof toast === 'function') toast('Уже в избранном'); return; }
+    fav.push(idx);
+    try{ localStorage.setItem('oko-pp-promo-fav', JSON.stringify(fav)); }
+    catch(e){ if(typeof toast === 'function') toast('Не удалось сохранить'); return; }
     if(typeof toast === 'function') toast('Сохранено в избранное');
   };
 

@@ -441,7 +441,14 @@ async function main() {
       const NOISE = /ERR_CONNECTION_RESET|ERR_NAME_NOT_RESOLVED|ERR_BLOCKED|net::ERR_|api\.php|404 \(File not found\)|Failed to load resource/i;
       /* Недоступная сеть — состояние песочницы, а не поломка кода. */
       const СЕТЕВОЕ = /Failed to fetch|NetworkError|Load failed|ERR_CONNECTION|ERR_NETWORK|ERR_INTERNET/i;
-      page.on('console', m => { if (m.type() === 'error' && !NOISE.test(m.text())) jsErrors.push(m.text().slice(0,160)); });
+
+      page.on('console', m => {
+        const т = m.text();
+        /* Библиотека Supabase логирует отказ сети через console.error сама —
+           текст «TypeError: Failed to fetch» приходил сюда, а не в pageerror,
+           и NOISE его не ловил. */
+        if (m.type() === 'error' && !NOISE.test(т) && !СЕТЕВОЕ.test(т)) jsErrors.push(т.slice(0,160));
+      });
       /* Тот же фильтр шума обязан работать и здесь.
 
          Раньше pageerror писался без разбора, и отчёт показывал 108 «ошибок
