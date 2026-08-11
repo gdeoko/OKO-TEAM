@@ -367,10 +367,12 @@
 .np-hb{ min-width:44px !important; min-height:44px !important; }
 
 /* 14.1 Поле глобального поиска: сам <input> был 18px (только строка текста),
-   тап-цель — обёртка. Растягиваем input на всю высоту поля и доводим поле до
-   44px, чтобы и измеритель, и палец попадали в честные 44px. */
-.search-field{ padding:13px 15px !important; }
-.search-field input{ align-self:stretch !important; min-height:0; }
-#gSearchInput{ min-height:18px; }
+   тап-цель — вся обёртка .search-field. Даём высоту САМОМУ input (иначе
+   padding обёртки съедает высоту, оставляя input 18px внутри) — так и палец,
+   и измеритель попадают в честные 44px. */
+.search-field{ padding:0 15px !important; }
+.search-field input{ align-self:stretch !important; min-height:44px !important; }
 /* 14.2 «Закрыть клипы» (okr-x) был 38px — до 44px. Прочие okr-rnd не трогаем. */
 .okr-rnd.okr-x{ width:44px !important; height:44px !important; }
+/* 14.3 «Ещё» в шапке чата (cp-more-btn, 30x32) — до 44px. */
+#cpMoreBtn.cp-more-btn{ min-width:44px !important; min-height:44px !important; }
