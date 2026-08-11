@@ -439,8 +439,24 @@ async function main() {
       /* Шум песочницы, а не дефект приложения: внешние CDN режет прокси, а
          локальная статика не отдаёт api.php — бэкенда тут просто нет. */
       const NOISE = /ERR_CONNECTION_RESET|ERR_NAME_NOT_RESOLVED|ERR_BLOCKED|net::ERR_|api\.php|404 \(File not found\)|Failed to load resource/i;
+      /* Недоступная сеть — состояние песочницы, а не поломка кода. */
+      const СЕТЕВОЕ = /Failed to fetch|NetworkError|Load failed|ERR_CONNECTION|ERR_NETWORK|ERR_INTERNET/i;
       page.on('console', m => { if (m.type() === 'error' && !NOISE.test(m.text())) jsErrors.push(m.text().slice(0,160)); });
-      page.on('pageerror', e => jsErrors.push('PAGEERROR: ' + String(e).slice(0,160)));
+      /* Тот же фильтр шума обязан работать и здесь.
+
+         Раньше pageerror писался без разбора, и отчёт показывал 108 «ошибок
+         приложения» — все до одной «TypeError: Failed to fetch» из библиотеки
+         Supabase, которой прокси песочницы режет выход наружу. Проверено
+         слушателями внутри страницы: ни unhandledrejection, ни window.onerror
+         НЕ срабатывают — библиотека обрабатывает отказ сама, а Playwright
+         считает промис, который был необработан лишь на мгновение
+         (exceptionRevoked он не слушает). То есть это не дефект приложения
+         и даже не его ошибка. */
+      page.on('pageerror', e => {
+        const т = String(e);
+        if (СЕТЕВОЕ.test(т)) return;
+        jsErrors.push('PAGEERROR: ' + т.slice(0,160));
+      });
 
       for (const route of ROUTES) {
         const rep = { vp: vp.id, theme, route: route.id, name: route.name };

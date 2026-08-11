@@ -51,7 +51,7 @@ const EXITINFO = `(() => {
     const cls = String(el.className && el.className.baseVal !== undefined ? el.className.baseVal : (el.className||''));
     if(/\\boko-back\\b|\\bep-cancel\\b|-close\\b|\\bclose\\b|\\b\\w+-x\\b|\\bcls\\b|\\bback\\b/.test(cls)) return true;
     const lab = ((el.getAttribute('aria-label')||'')+' '+(el.getAttribute('title')||'')+' '+(el.textContent||'')).slice(0,60);
-    if(/наза[дт]|закры|отмен|выйти|понятн|готов|к спис|позже|скрыть|свернуть|покинуть|отличн|забрать/i.test(lab)) return true;
+    if(/наза[дт]|закры|отмен|выйти|понятн|готов|к спис|позже|свернуть|покинуть|отличн|забрать/i.test(lab)) return true;
     const u = el.querySelector && el.querySelector('use');
     if(u && /#i-back|#i-plus|#cl-i-min/.test(String(u.getAttribute('href')||''))) return true;
     return false;

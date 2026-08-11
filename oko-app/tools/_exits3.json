@@ -1,0 +1,142 @@
+[
+ {
+  "name": "сертификат Академии",
+  "verdict": "ok:кнопка",
+  "detail": "oko-back oko-hdr-back oko-hit-a|Назад",
+  "fp": "nv:|scr:screen-academy",
+  "top": ""
+ },
+ {
+  "name": "просмотр медиа биржи",
+  "verdict": "ok:кнопка",
+  "detail": "mp-mv-x|Закрыть",
+  "fp": "mp-mv-slide:374x675|mpMediaViewer:390x844|nv:ma:market|scr:screen-mini",
+  "top": "mpMediaViewer"
+ },
+ {
+  "name": "экран эскроу биржи",
+  "verdict": "ok:кнопка",
+  "detail": "oko-back oko-hdr-back oko-hit-a|Назад",
+  "fp": "nv:ma:market|scr:screen-mini",
+  "top": ""
+ },
+ {
+  "name": "чужой профиль",
+  "verdict": "ok:кнопка",
+  "detail": "soc-back oko-back oko-hit-a|Назад",
+  "fp": "nv:view:social|okoSoc:390x844|scr:screen-feed",
+  "top": "okoSoc"
+ },
+ {
+  "name": "мои соцсети",
+  "verdict": "ok:кнопка",
+  "detail": "oko-back oko-hdr-back oko-hit-a|Назад",
+  "fp": "nv:ma:socials|scr:screen-mini",
+  "top": ""
+ },
+ {
+  "name": "соцслой: сущность",
+  "verdict": "ok:кнопка",
+  "detail": "soc-back oko-back oko-hit-a|Назад",
+  "fp": "nv:view:social|okoSoc:390x844|scr:screen-feed",
+  "top": "okoSoc"
+ },
+ {
+  "name": "канал",
+  "verdict": "ok:кнопка",
+  "detail": "ch-back oko-back oko-hit-a|Назад",
+  "fp": "chView:390x844|nv:view:channels|scr:screen-feed",
+  "top": "chView"
+ },
+ {
+  "name": "редактор сторис",
+  "verdict": "ok:кнопка",
+  "detail": "sp-ed-ic|Назад",
+  "fp": "nv:view:sp-editor|scr:screen-feed|spEditor:390x844",
+  "top": "spEditor"
+ },
+ {
+  "name": "выписка кошелька",
+  "verdict": "ok:кнопка",
+  "detail": "wal-stmt-nav oko-back oko-hit-a|Назад",
+  "fp": "nv:wal-stmt|scr:screen-wallet|walStmt:390x844",
+  "top": "walStmt"
+ },
+ {
+  "name": "подстраница истории",
+  "verdict": "ok:кнопка",
+  "detail": "w2-bar-nav oko-back oko-hit-a|Назад",
+  "fp": "nv:w2-history|scr:screen-wallet|w2p-history:390x844",
+  "top": "w2p-history"
+ },
+ {
+  "name": "замок кошелька",
+  "verdict": "ПЛОХО:кнопка не закрывает",
+  "detail": "wal-eye|Скрыть или показать баланс",
+  "fp": "nv:|scr:screen-wallet",
+  "top": ""
+ },
+ {
+  "name": "пейволл PRO",
+  "verdict": "ok:нижнее меню",
+  "detail": "",
+  "fp": "nv:|scr:screen-feed",
+  "top": ""
+ },
+ {
+  "name": "штаб: карточка агента",
+  "verdict": "ok:кнопка",
+  "detail": "ep-cancel oko-back oko-hit-a|Назад",
+  "fp": "adminView:390x844|nv:view:admin|scr:screen-profile",
+  "top": "adminView"
+ },
+ {
+  "name": "звонок: участники",
+  "verdict": "ok:кнопка",
+  "detail": "ch2-fnew oko-hit-a|Своя папка",
+  "fp": "nv:|scr:screen-chats",
+  "top": ""
+ },
+ {
+  "name": "полный слой Академии-2",
+  "verdict": "ok:кнопка",
+  "detail": "ac2-full-close|Назад",
+  "fp": "ac2Full:390x844|nv:ac2:full|scr:screen-academy",
+  "top": "ac2Full"
+ },
+ {
+  "name": "ОКО Ai",
+  "verdict": "ok:кнопка",
+  "detail": "back oko-back oko-hit-a|Назад",
+  "fp": "nv:ma:helper|okoAiScreen:390x844|scr:screen-mini",
+  "top": "okoAiScreen"
+ },
+ {
+  "name": "клипы",
+  "verdict": "ok:кнопка",
+  "detail": "okr-rnd okr-x|Закрыть клипы",
+  "fp": "nv:reels|scr:screen-feed",
+  "top": "okoReels"
+ },
+ {
+  "name": "тур",
+  "verdict": "ok:Escape",
+  "detail": "",
+  "fp": "nv:view:tour|scr:screen-feed|trOverlay:390x844",
+  "top": "trOverlay"
+ },
+ {
+  "name": "сторис основателя",
+  "verdict": "ok:кнопка",
+  "detail": "ts-close|Закрыть",
+  "fp": "nv:view:stories|scr:screen-feed",
+  "top": "trStories"
+ },
+ {
+  "name": "документы OKO",
+  "verdict": "ok:кнопка",
+  "detail": "ep-cancel oko-back oko-hit-a|Назад",
+  "fp": "legalView:390x844|nv:view:legal|scr:screen-feed",
+  "top": "legalView"
+ }
+]

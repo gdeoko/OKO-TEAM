@@ -28,9 +28,20 @@ try{
     'oko-stories-seen':  '1',
     'oko-tour-done':     '1',
     'oko-tour':          '1',
-    'oko-demo':          '0'
+    'oko-demo':          '0',
+    /* Приглашение Академии («Начни урок 1 — Мышление и старт») всплывает
+       поверх любого экрана через несколько секунд после старта. Гасится
+       СВОИМ ключом, не через okg-state: в аудите оно давало единственное
+       замечание «экран подменён: #okoPopup», а в пробнике доступности
+       перекрывало панель настроек — и та не успевала стать диалогом. */
+    'oko-academy-invite-seen': '1'
   };
   for (var k in ст) localStorage.setItem(k, ст[k]);
+
+  /* Приветственные окна регистрации: помечаем все известные как показанные. */
+  localStorage.setItem('oko-reg-popups', JSON.stringify({
+    welcome: 1, pro: 1, notif: 1, academy: 1, partner: 1
+  }));
 
   /* oko-onb2.js читает объект и смотрит на done/skipped */
   localStorage.setItem('oko-onb2-intro', JSON.stringify({
