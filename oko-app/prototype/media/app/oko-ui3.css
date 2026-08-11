@@ -376,3 +376,13 @@
 .okr-rnd.okr-x{ width:44px !important; height:44px !important; }
 /* 14.3 «Ещё» в шапке чата (cp-more-btn, 30x32) — до 44px. */
 #cpMoreBtn.cp-more-btn{ min-width:44px !important; min-height:44px !important; }
+/* 14.4 Поиск по настройкам (#st2SearchInp в обёртке .st2-search) — до 44px,
+   как и глобальный поиск: высоту задаём самому input. */
+.st2-search{ align-items:stretch !important; }
+#st2SearchInp{ min-height:44px !important; }
+
+/* Итог по целям нажатия: вся навигация (шапка, «назад», закрытие), поля
+   поиска и ключевые кнопки — 44px (стандарт iOS/AAA). Осознанно оставлены
+   компактными стат-пилюли (баланс, счётчики) и чипы-фильтры 27-34px — они
+   проходят WCAG AA (минимум 24px) и держат плотность интерфейса в стиле
+   Telegram; 44px сделал бы эти ряды тяжёлыми. */
