@@ -476,10 +476,10 @@ function nl_campaign_day(): int {
 
 /** Дневной потолок массовых с учётом прогрева. */
 function nl_daily_cap(): int {
-    // ПРОГРЕВА БОЛЬШЕ НЕТ (правило владельца, август 2026): полный темп с первого дня.
-    // Дневной потолок = сумма лимитов ящиков пула, по 200 на каждый → 400 в день.
-    // Так база из 8200 адресов проходится за 21 рабочий день, а не за два месяца.
-    // Ровность обеспечивает не урезанная квота, а пауза 2,5 минуты на ящик
+    // Дневной потолок = сумма норм ящиков пула. У сервиса рассылок норма своя и
+    // растущая (nl_service_cap_today): полный темп с первого дня годится для наших
+    // почтовых ящиков, но не для домена, который только начал слать помногу.
+    // Ровность обеспечивает не урезанная квота, а пауза между письмами
     // (nl_box_gap_sec) — письма идут ниточкой, а не пачками.
     $accs = function_exists('mail_fallback_accounts') ? mail_fallback_accounts([], 'bulk') : [];
     if (!$accs) return nl_per_box_cap();
@@ -711,9 +711,66 @@ function nl_bulk_window_open(?\DateTime $at = null): array {
  */
 function nl_per_box_cap(string $box = ''): int {
     if ($box !== '' && nl_box_is_service($box)) {
-        return max(1, (int) setting('nl_service_cap', '1000'));
+        return nl_service_cap_today();
     }
     return max(1, (int) setting('nl_per_box_cap', '200'));
+}
+
+/**
+ * ДНЕВНАЯ НОРМА СЕРВИСА РАССЫЛОК — С ПРОГРЕВОМ.
+ *
+ * Почему нельзя просто выставить десять тысяч в день. Домен центра только что
+ * переехал на сервис рассылок, и для почтовиков он — новый отправитель. Домен,
+ * который вчера слал сотню писем, а сегодня десять тысяч, отправляется в спам
+ * целиком: и приглашения, и коды входа, и дипломы. Отмывать репутацию потом
+ * месяцами. Именно так центр уже потерял два ящика на Яндексе.
+ *
+ * Поэтому норма растёт по расписанию: первый день — 500, дальше примерно
+ * в полтора раза за сутки, до потолка. Пятнадцати дней приёма хватает, чтобы
+ * выйти на десять тысяч в день и обойти всю базу учреждений.
+ *
+ * Рост ОСТАНАВЛИВАЕТСЯ САМ, если почта начала возвращаться: держим текущий
+ * уровень, пока причина не разобрана. Наращивать объём на плохой доставляемости
+ * — верный способ угробить домен.
+ *
+ * Отключить прогрев: настройка nl_warmup = '0' (тогда берётся nl_service_cap).
+ */
+function nl_service_cap_today(): int {
+    $flat = max(1, (int) setting('nl_service_cap', '1000'));
+    if ((string) setting('nl_warmup', '1') !== '1') return $flat;
+
+    // День прогрева считаем от первой массовой отправки через сервис.
+    $since = trim((string) setting('nl_warmup_started', ''));
+    if ($since === '') return min($flat, 500);           // ещё не начинали
+    $days = (int) floor((time() - strtotime($since)) / 86400);
+
+    $ladder = [500, 800, 1200, 1800, 2600, 3800, 5500, 8000, 10000];
+    $cap = $ladder[min($days, count($ladder) - 1)];
+
+    // Потолок из настроек: владелец может ограничить рост, если тариф сервиса
+    // не тянет, — тогда nl_service_cap работает как максимум, а не как норма.
+    $ceil = max(1, (int) setting('nl_warmup_max', '10000'));
+    $cap = min($cap, $ceil);
+
+    // Доставляемость плохая — не растём. Считаем только сегодняшние массовые.
+    $sentToday = (int) (scalar("SELECT COUNT(*) FROM mail_queue
+                                 WHERE status='sent' AND COALESCE(priority,0)>0
+                                   AND date(sent_at)=date('now')") ?? 0);
+    $failToday = (int) (scalar("SELECT COUNT(*) FROM mail_queue
+                                 WHERE status='failed' AND COALESCE(priority,0)>0
+                                   AND date(COALESCE(NULLIF(sent_at,''), created_at))=date('now')") ?? 0);
+    if ($sentToday + $failToday >= 200 && $failToday > ($sentToday + $failToday) * 0.05) {
+        $prev = $ladder[max(0, min($days - 1, count($ladder) - 1))];
+        return min($cap, $prev);
+    }
+    return $cap;
+}
+
+/** Отмечает начало прогрева при первой же массовой отправке. */
+function nl_warmup_touch(): void {
+    if (trim((string) setting('nl_warmup_started', '')) === '') {
+        set_setting('nl_warmup_started', date('Y-m-d H:i:s'));
+    }
 }
 
 /** Отправитель — сервис рассылок, а не наш почтовый ящик? */
@@ -1238,6 +1295,8 @@ function newsletter_process_queue(int $limit): int {
                         $really = function_exists('mail_switched') ? mb_strtolower(mail_switched()) : '';
                         nl_box_touch($really !== '' ? $really : $boxUser);
                         nl_box_fail_reset($really !== '' ? $really : $boxUser);
+                        // Первое ушедшее массовое письмо — точка отсчёта прогрева.
+                        nl_warmup_touch();
                         $gotBox++;
                     } else {
                         // Не ушло. Разбираем причину сразу.
