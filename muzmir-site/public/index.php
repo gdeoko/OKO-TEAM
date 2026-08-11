@@ -130,6 +130,13 @@ function serve(string $file, array $vars = []): void {
 }
 
 // Динамические маршруты
+// Проверка подлинности официального обращения — сюда ведёт QR с бланка.
+// Номер вида 11082026/001, поэтому в шаблоне допускаем цифры и косую черту.
+if ($route === '/letter') serve('letter', ['number' => (string) input('n')]);
+if (preg_match('#^/letter/([0-9]{6,8})/([0-9]{1,6})$#', $route, $m)) {
+    serve('letter', ['number' => $m[1] . '/' . $m[2]]);
+}
+
 if ($route === '/verify') serve('verify', ['number' => '']);
 if (preg_match('#^/verify/([A-Za-zА-Яа-я0-9\-]+)$#u', $route, $m)) serve('verify', ['number' => $m[1]]);
 // Внутренняя страница конкурса упразднена: вся информация — на афише в календаре,
@@ -279,6 +286,79 @@ if (preg_match('#^/diploma-view/([A-Za-z0-9\-]+)$#', $route, $m)) {
     echo diploma_html($c ?: [], $app ?: [], $opt);
     exit;
 }
+// ОФИЦИАЛЬНОЕ ОБРАЩЕНИЕ: просмотр и приватный рендер под печать.
+//
+// /letter-view/<номер>?s=<подпись> — готовый документ на бланке. Подпись обязательна:
+// в обращении есть ФИО и должность адресата, а номера идут подряд — без замка
+// весь реестр выгружался бы перебором. Ссылку с подписью несёт письмо адресату.
+// Страница /letter/<номер> (проверка подлинности) остаётся открытой всем: там
+// только факт выдачи, дата и название организации.
+if (preg_match('#^/letter-view/([0-9]{6,8})/([0-9]{1,6})$#', $route, $m)) {
+    require_once BASE_PATH . '/core/letter_texts.php';
+    ol_migrate();
+    $__num = $m[1] . '/' . $m[2];
+    $__row = one("SELECT * FROM official_letters WHERE number=?", [$__num]);
+    if (!$__row) { http_response_code(404); echo 'Документ не найден'; exit; }
+
+    $__me    = function_exists('current_user') ? current_user() : null;
+    $__staff = function_exists('user_can') && $__me && user_can('moderator');
+    $__sig   = (string) ($_GET['s'] ?? '');
+    if (!$__staff && !($__sig !== '' && hash_equals(ol_sign($__num), $__sig))) {
+        http_response_code(403);
+        echo 'Документ доступен по ссылке из письма. Проверить его подлинность по номеру можно на странице «Проверка документа».';
+        exit;
+    }
+    $__html = ol_html_for($__num, [
+        'kind'        => (string) $__row['kind'],
+        'org'         => (string) $__row['org'],
+        'person'      => (string) $__row['person'],
+        'person_role' => (string) $__row['person_role'],
+        'region'      => (string) $__row['region'],
+    ]);
+    render_page('Обращение № ' . $__num,
+        '<section class="section"><div class="container" style="max-width:900px">'
+        . '<div class="ol-actions" style="display:flex;gap:10px;justify-content:center;margin-bottom:16px">'
+        . '<button type="button" class="btn btn--primary" onclick="window.print()">Распечатать</button>'
+        . '<a class="btn btn--ghost" href="' . h(url('/apply')) . '">Подать заявку</a>'
+        . '</div>' . $__html . '</div></section>',
+        ['active' => '/contacts', 'meta' => 'Официальное обращение Культурного центра «Музыкальный Мир».']);
+    exit;
+}
+
+// Приватный рендер обращения для печати в PDF бастионом (тот же ключ, что у дипломов).
+// Отдаём голый документ без шапки сайта и меню: на лист попадает только бланк.
+if (preg_match('#^/letter-render/([0-9]{6,8})/([0-9]{1,6})$#', $route, $m)) {
+    $key  = (string) ($_GET['key'] ?? '');
+    $good = (string) setting('diploma_render_key', '');
+    if ($good === '' || $key === '' || !hash_equals($good, $key)) { http_response_code(404); echo 'Не найдено'; exit; }
+
+    require_once BASE_PATH . '/core/letter_texts.php';
+    ol_migrate();
+    $__num = $m[1] . '/' . $m[2];
+    $__row = one("SELECT * FROM official_letters WHERE number=?", [$__num]);
+    if (!$__row) { http_response_code(404); echo 'Не найдено'; exit; }
+
+    $__html = ol_html_for($__num, [
+        'kind'        => (string) $__row['kind'],
+        'org'         => (string) $__row['org'],
+        'person'      => (string) $__row['person'],
+        'person_role' => (string) $__row['person_role'],
+        'region'      => (string) $__row['region'],
+        // ?light=1 — картинки ссылками, а не base64. Нужно, чтобы документ можно
+        // было быстро посмотреть или переслать: со встроенными картинками файл
+        // весит под мегабайт, и это оправдано только при печати в PDF.
+        'embed'       => empty($_GET['light']),
+    ]);
+    header('Content-Type: text/html; charset=utf-8');
+    echo '<!doctype html><html lang="ru"><head><meta charset="utf-8">'
+       . '<title>Обращение № ' . h($__num) . '</title>'
+       . '<style>@page{size:A4;margin:0}html,body{margin:0;padding:0;background:#fff}'
+       . '.ol-sheet{border:0 !important;box-shadow:none !important;border-radius:0 !important;'
+       . 'max-width:none !important;margin:0 !important}</style></head><body>'
+       . $__html . '</body></html>';
+    exit;
+}
+
 // Приватный рендер боевого диплома для PDF-печати бастионом (ключ в settings).
 if (preg_match('#^/diploma-render/(\d+)$#', $route, $m)) {
     $key  = (string)($_GET['key'] ?? '');
