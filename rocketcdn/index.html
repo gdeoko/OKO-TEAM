@@ -63,6 +63,9 @@
 
 <div class="prog" id="prog"></div>
 
+<!-- 3D-ракета, летит по скроллу через весь сайт -->
+<canvas id="rocketCanvas" aria-hidden="true"></canvas>
+
 <!-- Шапка -->
 <header class="hdr" id="hdr">
   <div class="wrap hdr-in">
@@ -106,9 +109,12 @@
   <a class="btn btn-p js-reg" data-place="drawer" href="https://lk.rocketcdn.ru" target="_blank" rel="noopener">
     <span data-i18n="cta.register2">Зарегистрироваться</span>
   </a>
-  <div class="lang" style="margin-top:14px;align-self:flex-start" role="group" aria-label="Язык">
-    <button type="button" data-lang="ru" class="on">Русский</button>
-    <button type="button" data-lang="en">English</button>
+  <div class="drawer-tools">
+    <button type="button" class="icon-btn js-theme" aria-label="Сменить тему"></button>
+    <div class="lang" role="group" aria-label="Язык">
+      <button type="button" data-lang="ru" class="on">Русский</button>
+      <button type="button" data-lang="en">English</button>
+    </div>
   </div>
 </nav>
 
@@ -168,10 +174,63 @@
   </div>
 </section>
 
+<!-- ═══ Что даёт сеть ═══ -->
+<section id="effect">
+  <div class="wrap">
+    <div class="sec-head rv" data-par="0.03">
+      <div class="sec-tag" data-i18n="eff.tag">Эффект</div>
+      <h2 class="sec-h" data-i18n="eff.h">Что меняется после подключения</h2>
+      <p class="sec-p" data-i18n="eff.p">Цифры с боевых площадок: контент отдаётся с ближайшего узла, origin разгружается, пики перестают быть проблемой.</p>
+    </div>
+
+    <div class="viz-grid">
+      <article class="viz-card rv">
+        <h3 data-i18n="eff.c1h">Задержка до пользователя</h3>
+        <div data-viz="latency" data-l1="Без сети доставки" data-l2="Через Rocket CDN"></div>
+        <p data-i18n="eff.c1p">Запрос идёт до ближайшей точки присутствия, а не через полстраны.</p>
+      </article>
+
+      <article class="viz-card rv rv-d1">
+        <h3 data-i18n="eff.c2h">Разгрузка origin</h3>
+        <div class="dn-wrap" data-viz="donut" data-value="94" data-caption="попаданий в кэш"></div>
+        <p data-i18n="eff.c2p">Почти весь трафик отдают узлы сети. Ваш сервер занимается делом, а не раздачей файлов.</p>
+      </article>
+
+      <article class="viz-card rv rv-d2">
+        <h3 data-i18n="eff.c3h">Доступность</h3>
+        <div class="ga-wrap" data-viz="gauge" data-value="99.9" data-min="99" data-caption="доступность по SLA"></div>
+        <p data-i18n="eff.c3p">Уровень закреплён договором. Резервирование на каждом участке маршрута.</p>
+      </article>
+    </div>
+
+    <div class="viz-grid rv rv-d1" style="margin-top:var(--gap)">
+      <article class="viz-card viz-wide wave-wrap">
+        <h3 data-i18n="live.h">Трафик сети прямо сейчас</h3>
+        <div data-viz="wave"></div>
+        <p data-i18n="live.p">Совокупная отдача по всем точкам присутствия. Обновляется в реальном времени.</p>
+      </article>
+      <article class="viz-card">
+        <div class="tick" data-viz="ticker" data-from="0" data-to="218" data-drift="0">
+          <span data-i18n="tick.1">Точек присутствия</span>
+        </div>
+        <div class="tick" data-viz="ticker" data-from="0" data-to="1500000" data-drift="900">
+          <span data-i18n="tick.2">Зрителей одновременно</span>
+        </div>
+        <div class="tick" data-viz="ticker" data-from="0" data-to="3" data-dec="0" data-suffix=" Тбит/с">
+          <span data-i18n="tick.3">Пропускная способность в России</span>
+        </div>
+        <div class="tick" data-viz="ticker" data-from="0" data-to="24" data-suffix="/7">
+          <span data-i18n="tick.4">Дежурство инженеров</span>
+        </div>
+      </article>
+    </div>
+  </div>
+</section>
+
 <!-- ═══ Что это ═══ -->
 <section id="what">
   <div class="wrap">
-    <div class="sec-head rv">
+    <div class="sec-head rv" data-par="0.03">
       <div class="sec-tag" data-i18n="what.tag">Простыми словами</div>
       <h2 class="sec-h" data-i18n="what.h">Что такое Rocket CDN</h2>
       <p class="sec-p" data-i18n="what.p">Сеть серверов, расположенных рядом с вашей аудиторией.</p>
@@ -204,7 +263,7 @@
 <!-- ═══ Продукты ═══ -->
 <section id="products">
   <div class="wrap">
-    <div class="sec-head rv">
+    <div class="sec-head rv" data-par="0.03">
       <div class="sec-tag" data-i18n="prod.tag">Продукты</div>
       <h2 class="sec-h" data-i18n="prod.h">Инфраструктура под любую задачу</h2>
       <p class="sec-p" data-i18n="prod.p">Всё, что нужно для доставки контента и работы медиа-сервисов, в одном личном кабинете.</p>
@@ -216,7 +275,7 @@
 <!-- ═══ Преимущества ═══ -->
 <section id="adv">
   <div class="wrap">
-    <div class="sec-head rv">
+    <div class="sec-head rv" data-par="0.03">
       <div class="sec-tag" data-i18n="adv.tag">Преимущества</div>
       <h2 class="sec-h" data-i18n="adv.h">Почему выбирают Rocket CDN</h2>
       <p class="sec-p" data-i18n="adv.p">Собственное железо, собственные каналы и инженеры на связи круглосуточно.</p>
@@ -228,7 +287,7 @@
 <!-- ═══ Инфраструктура ═══ -->
 <section id="infra">
   <div class="wrap">
-    <div class="sec-head rv">
+    <div class="sec-head rv" data-par="0.03">
       <div class="sec-tag" data-i18n="infra.tag">Инфраструктура</div>
       <h2 class="sec-h" data-i18n="infra.h">Глобальная сеть присутствия</h2>
       <p class="sec-p" data-i18n="infra.p">Точки присутствия на пяти континентах и три собственных дата-центра.</p>
@@ -263,25 +322,52 @@
       <p class="sec-p" data-i18n="infra.dcp">Своё оборудование, свои каналы и полный контроль над маршрутами.</p>
     </div>
     <div class="dc-grid" id="dcGrid"></div>
+
+    <div class="mq rv" data-viz="marquee" style="margin-top:clamp(30px,4vw,48px)"></div>
+
+    <div class="viz-grid rv rv-d1" style="margin-top:var(--gap)">
+      <article class="viz-card viz-wide">
+        <h3 data-i18n="reg.h">Точки присутствия по регионам</h3>
+        <div data-viz="bars"></div>
+      </article>
+      <article class="viz-card">
+        <h3 data-i18n="reg.h2">Свои мощности</h3>
+        <div class="tick" data-viz="ticker" data-from="0" data-to="3">
+          <span data-i18n="reg.t1">Собственных дата-центра</span>
+        </div>
+        <div class="tick" data-viz="ticker" data-from="0" data-to="5">
+          <span data-i18n="reg.t2">Континента в покрытии</span>
+        </div>
+        <div class="tick" data-viz="ticker" data-from="0" data-to="1" data-suffix=" Тб">
+          <span data-i18n="reg.t3">Нагрузки одновременно</span>
+        </div>
+      </article>
+    </div>
   </div>
 </section>
 
 <!-- ═══ Как работает ═══ -->
 <section id="how">
   <div class="wrap">
-    <div class="sec-head rv">
+    <div class="sec-head rv" data-par="0.03">
       <div class="sec-tag" data-i18n="how.tag">Как это работает</div>
       <h2 class="sec-h" data-i18n="how.h">Путь запроса за 40 миллисекунд</h2>
       <p class="sec-p" data-i18n="how.p">Маршрут строится автоматически.</p>
     </div>
     <div class="grid g-4" id="howGrid"></div>
+
+    <div class="viz-card rv rv-d1" style="margin-top:var(--gap)">
+      <h3 data-i18n="topo.h">Маршрут от origin до пользователя</h3>
+      <div data-viz="topology" data-origin="Ваш origin" data-dc1="Москва" data-dc2="Алматы" data-dc3="Прага"></div>
+      <p data-i18n="topo.p">Слева ваш сервер, в центре собственные дата-центры, справа edge-узлы рядом с аудиторией.</p>
+    </div>
   </div>
 </section>
 
 <!-- ═══ Сценарии ═══ -->
 <section id="cases">
   <div class="wrap">
-    <div class="sec-head rv">
+    <div class="sec-head rv" data-par="0.03">
       <div class="sec-tag" data-i18n="case.tag">Сценарии</div>
       <h2 class="sec-h" data-i18n="case.h">Под какие задачи берут Rocket CDN</h2>
       <p class="sec-p" data-i18n="case.p">От разовой трансляции до постоянной раздачи терабайтов.</p>
@@ -293,7 +379,7 @@
 <!-- ═══ Надёжность ═══ -->
 <section id="reliability">
   <div class="wrap">
-    <div class="sec-head rv">
+    <div class="sec-head rv" data-par="0.03">
       <div class="sec-tag" data-i18n="rel.tag">Надёжность</div>
       <h2 class="sec-h" data-i18n="rel.h">Работает, когда на вас смотрят</h2>
       <p class="sec-p" data-i18n="rel.p">Резервирование на каждом уровне и мониторинг в реальном времени.</p>
@@ -305,7 +391,7 @@
 <!-- ═══ FAQ ═══ -->
 <section id="faq">
   <div class="wrap">
-    <div class="sec-head rv">
+    <div class="sec-head rv" data-par="0.03">
       <div class="sec-tag" data-i18n="faq.tag">Вопросы и ответы</div>
       <h2 class="sec-h" data-i18n="faq.h">Коротко о главном</h2>
     </div>
@@ -471,5 +557,9 @@
 <script src="assets/rc-globe.js"></script>
 <script src="assets/rc-app.js"></script>
 <script src="assets/rc-fill.js"></script>
+<script src="assets/rc-viz.js"></script>
+<script defer src="assets/vendor/three.min.js"></script>
+<script defer src="assets/rc-rocket.js"></script>
+<script defer src="assets/rc-scroll.js"></script>
 </body>
 </html>

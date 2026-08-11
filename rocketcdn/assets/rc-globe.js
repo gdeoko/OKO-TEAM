@@ -43,7 +43,21 @@ function Globe(canvas, opts) {
   this.quality = 1;
   this._t = 0;
   this._acc = 0;
+  /* Саморегулировка: если устройство не успевает, снижаем детализацию */
+  this._step = 0;          /* 0 - выбрать по ширине экрана */
+  this._avg = 16;
+  this._tune = 0;
   this._proj = [];
+  /* Точки суши не меняются, поэтому раскладываем их один раз.
+     В кадре остаётся поворот на четыре умножения вместо тригонометрии. */
+  var L = this.land.length;
+  this._lv = new Float32Array(L * 3);
+  for (var li = 0; li < L; li++) {
+    var la = this.land[li][0] * RAD, lo = this.land[li][1] * RAD, cl = Math.cos(la);
+    this._lv[li * 3]     = cl * Math.sin(lo);   /* a */
+    this._lv[li * 3 + 1] = Math.sin(la);        /* y */
+    this._lv[li * 3 + 2] = cl * Math.cos(lo);   /* b */
+  }
   this._bind();
   this.resize();
   this.seedArcs();
@@ -64,10 +78,10 @@ Globe.prototype.setTheme = function (t) { this.theme = t; this.draw(0); };
 Globe.prototype.resize = function () {
   var r = this.cv.getBoundingClientRect(),
       w = Math.max(1, r.width), h = Math.max(1, r.height),
-      dpr = clamp(window.devicePixelRatio || 1, 1, 2);
+      dpr = clamp(window.devicePixelRatio || 1, 1, w < 760 ? 1.25 : 1.5);
   /* На узких экранах режем плотность точек - так глобус не лагает на телефоне */
   this.quality = w < 520 ? 0.45 : w < 900 ? 0.7 : 1;
-  if (w * dpr > 1600) dpr = 1600 / w;
+  if (w * dpr > 1400) dpr = 1400 / w;
   this.dpr = dpr;
   this.cv.width = Math.round(w * dpr);
   this.cv.height = Math.round(h * dpr);
@@ -153,23 +167,33 @@ Globe.prototype.draw = function (dt) {
     c.stroke();
   }
 
-  /* Суша точками */
-  var step = this.quality >= 1 ? 1 : this.quality >= 0.7 ? 2 : 3,
+  /* Суша точками. Один путь на всю сушу и никакой тригонометрии
+     внутри цикла: на телефоне это разница в разы. */
+  var step = this._step || (this.quality >= 1 ? 2 : this.quality >= 0.7 ? 3 : 4),
       ds = Math.max(1, R * 0.0125);
+  var sp = this.spin * RAD, CS = Math.cos(sp), SS = Math.sin(sp);
+  var CT = Math.cos(this.tilt), ST = Math.sin(this.tilt);
+  var lv = this._lv, ln = lv.length / 3;
   c.fillStyle = P.land;
-  for (i = 0; i < this.land.length; i += step) {
-    p = this._pt(this.land[i][0], this.land[i][1]);
-    if (p[2] <= 0.02) continue;
-    var sz = ds * (0.55 + p[2] * 0.65);
-    c.fillRect(p[0] - sz / 2, p[1] - sz / 2, sz, sz);
+  c.beginPath();
+  for (i = 0; i < ln; i += step) {
+    var a = lv[i * 3], yv = lv[i * 3 + 1], bb = lv[i * 3 + 2];
+    var vx = a * CS + bb * SS;
+    var vz = bb * CS - a * SS;
+    var y2 = yv * CT - vz * ST;
+    var z2 = yv * ST + vz * CT;
+    if (z2 <= 0.02) continue;
+    var sz = ds * (0.55 + z2 * 0.65);
+    c.rect(cx + vx * R - sz / 2, cy - y2 * R - sz / 2, sz, sz);
   }
+  c.fill();
 
   /* Дуги трафика */
   c.lineCap = "round";
   for (i = 0; i < this.arcs.length; i++) {
     var A = this.arcs[i], na = this.nodes[A.a], nb = this.nodes[A.b];
     var va = vec(na[1], na[2] + this.spin), vb = vec(nb[1], nb[2] + this.spin);
-    var segs = this.quality >= 1 ? 30 : 20, pts = [], vis = 0;
+    var segs = this.quality >= 1 ? 26 : 16, pts = [], vis = 0;
     for (var k = 0; k <= segs; k++) {
       var t = k / segs, m = slerp(va, vb, t), lift = 1 + 0.19 * Math.sin(Math.PI * t);
       var pp = this._project([m[0] * lift, m[1] * lift, m[2] * lift]);
@@ -212,6 +236,7 @@ Globe.prototype.draw = function (dt) {
   for (i = 0; i < this.nodes.length; i++) {
     var n = this.nodes[i];
     if (this.filter != null && n[3] !== this.filter) continue;
+    if (this.quality < 0.7 && (n[4] & 4)) continue;
     p = this._pt(n[1], n[2]);
     if (p[2] <= 0.02) continue;
     this._proj.push([p[0], p[1], i, p[2]]);
@@ -277,6 +302,17 @@ Globe.prototype.tick = function (ts) {
   var dt = this._last ? Math.min(0.05, (ts - this._last) / 1000) : 0.016;
   this._last = ts;
   this._t += dt;
+
+  /* Скользящее среднее длительности кадра и мягкая подстройка качества */
+  this._avg = this._avg * 0.9 + (dt * 1000) * 0.1;
+  this._tune += dt;
+  if (this._tune > 1.2) {
+    this._tune = 0;
+    var cur = this._step || (this.quality >= 1 ? 2 : this.quality >= 0.7 ? 3 : 4);
+    if (this._avg > 26 && cur < 8) this._step = cur + 1;
+    else if (this._avg < 14 && cur > 1) this._step = cur - 1;
+  }
+
   if (!this.dragging) {
     if (this.focus) {
       /* Плавный доворот к выбранному городу */

@@ -165,6 +165,30 @@ var RU = {
   "ftr.rights":    "Все права защищены",
   "ftr.made":      "Сделано в OKO TEAM",
 
+  /* Эффект и инфографика */
+  "eff.tag":       "Эффект",
+  "eff.h":         "Что меняется после подключения",
+  "eff.p":         "Контент отдаётся с ближайшего узла, origin разгружается, пики трафика перестают быть проблемой.",
+  "eff.c1h":       "Задержка до пользователя",
+  "eff.c1p":       "Запрос идёт до ближайшей точки присутствия, а не через полстраны.",
+  "eff.c2h":       "Разгрузка origin",
+  "eff.c2p":       "Почти весь трафик отдают узлы сети. Ваш сервер занимается делом, а не раздачей файлов.",
+  "eff.c3h":       "Доступность",
+  "eff.c3p":       "Уровень закреплён договором. Резервирование на каждом участке маршрута.",
+  "live.h":        "Трафик сети прямо сейчас",
+  "live.p":        "Совокупная отдача по всем точкам присутствия.",
+  "tick.1":        "Точек присутствия",
+  "tick.2":        "Зрителей одновременно",
+  "tick.3":        "Пропускная способность в России",
+  "tick.4":        "Дежурство инженеров",
+  "topo.h":        "Маршрут от origin до пользователя",
+  "topo.p":        "Слева ваш сервер, в центре собственные дата-центры, справа edge-узлы рядом с аудиторией.",
+  "reg.h":         "Точки присутствия по регионам",
+  "reg.h2":        "Свои мощности",
+  "reg.t1":        "Собственных дата-центра",
+  "reg.t2":        "Континента в покрытии",
+  "reg.t3":        "Нагрузки одновременно",
+
   /* Служебное */
   "toast.copy":    "Скопировано"
 };
@@ -302,6 +326,18 @@ var EN = {
   "ftr.nav": "Navigation", "ftr.prod": "Products", "ftr.doc": "Documents",
   "ftr.oferta": "Public offer", "ftr.policy": "Privacy policy", "ftr.sla": "SLA terms",
   "ftr.rights": "All rights reserved", "ftr.made": "Built by OKO TEAM",
+  "eff.tag": "Impact", "eff.h": "What changes once you connect",
+  "eff.p": "Content is served from the nearest node, the origin is offloaded and traffic peaks stop being a problem.",
+  "eff.c1h": "Latency to the user", "eff.c1p": "The request reaches the nearest point of presence instead of crossing the country.",
+  "eff.c2h": "Origin offload", "eff.c2p": "Almost all traffic is served by the network. Your server does its job instead of shipping files.",
+  "eff.c3h": "Availability", "eff.c3p": "The level is fixed in the contract. Redundancy at every hop of the route.",
+  "live.h": "Network traffic right now", "live.p": "Combined delivery across every point of presence.",
+  "tick.1": "Points of presence", "tick.2": "Concurrent viewers",
+  "tick.3": "Network capacity in Russia", "tick.4": "Engineers on duty",
+  "topo.h": "The route from origin to user",
+  "topo.p": "Your server on the left, our own data centers in the middle, edge nodes next to the audience on the right.",
+  "reg.h": "Points of presence by region", "reg.h2": "Our own capacity",
+  "reg.t1": "Own data centers", "reg.t2": "Continents covered", "reg.t3": "Simultaneous load",
   "toast.copy": "Copied"
 };
 
