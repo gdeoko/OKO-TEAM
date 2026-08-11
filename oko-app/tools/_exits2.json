@@ -1,0 +1,16 @@
+[
+ {
+  "id": "r003",
+  "имя": "вкладка mini",
+  "путь": [
+   "showTab('mini')"
+  ],
+  "info": {
+   "top": "pp2Nav",
+   "topz": 67,
+   "exits": [],
+   "tabsVis": false
+  },
+  "fp": "nv:|scr:screen-mini"
+ }
+]
