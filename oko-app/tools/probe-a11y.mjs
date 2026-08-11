@@ -271,6 +271,15 @@ const PROBE = `(() => {
     }
     if (el.dataset.a11yTargetOk === '1') continue;   /* явное освобождение */
     const r = el.getBoundingClientRect();
+    /* Перекрытые элементы не считаем: маленькая кнопка ПОД полноэкранным
+       оверлетом (например, шапка-шелл под экраном входа, ужатая анимацией
+       перехода до 36px) человеку недоступна — тапнуть по ней нельзя. Берём
+       только то, что реально сверху. Тот же принцип, что occlusion в аудите. */
+    const cx = r.left + r.width / 2, cy = r.top + r.height / 2;
+    if (cx >= 0 && cy >= 0 && cx < VW && cy < VH) {
+      const top = document.elementFromPoint(cx, cy);
+      if (top && top !== el && !el.contains(top) && !top.contains(el)) continue;
+    }
     /* Учитываем невидимые расширители области нажатия: псевдоэлемент
        ::before/::after с отрицательными отступами и дочерний .oko-hitpad.
        Меряем по реальным геометриям, а не по названиям классов. */
