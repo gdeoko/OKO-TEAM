@@ -238,10 +238,18 @@ try{var _t=localStorage.getItem("rc_theme");if(_t==="light"||_t==="dark")documen
 <!-- ═══ Что это ═══ -->
 <section id="what">
   <div class="wrap">
-    <div class="sec-head rv" data-par="0.03">
-      <div class="sec-tag" data-i18n="what.tag">Простыми словами</div>
-      <h2 class="sec-h" data-i18n="what.h">Что такое Rocket CDN</h2>
-      <p class="sec-p" data-i18n="what.p">Сеть серверов, расположенных рядом с вашей аудиторией.</p>
+    <div class="what-top">
+      <div class="sec-head rv" data-par="0.03" style="margin-bottom:0">
+        <div class="sec-tag" data-i18n="what.tag">Простыми словами</div>
+        <h2 class="sec-h" data-i18n="what.h">Что такое Rocket CDN</h2>
+        <p class="sec-p" data-i18n="what.p">Сеть серверов, расположенных рядом с вашей аудиторией.</p>
+        <div class="hero-marks" id="whatMarks" style="margin-top:22px"></div>
+      </div>
+
+      <div class="rack rv rv-d1">
+        <canvas id="rackCv" aria-label="Стойка дата-центра Rocket CDN в объёме"></canvas>
+        <div class="rack-hint"><span data-i18n="what.spin">Покрутите стойку</span></div>
+      </div>
     </div>
 
     <div class="flow rv rv-d1">
@@ -264,7 +272,6 @@ try{var _t=localStorage.getItem("rc_theme");if(_t==="light"||_t==="dark")documen
       </div>
     </div>
 
-    <div class="hero-marks rv rv-d2" style="justify-content:center;margin-top:34px" id="whatMarks"></div>
   </div>
 </section>
 
@@ -555,6 +562,7 @@ try{var _t=localStorage.getItem("rc_theme");if(_t==="light"||_t==="dark")documen
 <script src="assets/rc-viz.js"></script>
 <script defer src="assets/vendor/three.min.js"></script>
 <script defer src="assets/rc-globe3d.js"></script>
+<script defer src="assets/rc-rack.js"></script>
 <script defer src="assets/rc-rocket.js"></script>
 <script defer src="assets/rc-scroll.js"></script>
 </body>

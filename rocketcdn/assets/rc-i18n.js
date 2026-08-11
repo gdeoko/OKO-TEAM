@@ -58,6 +58,15 @@ var RU = {
   "what.b1":       "Разгрузка origin до 95%",
   "what.b2":       "Меньше задержка и буферизация",
   "what.b3":       "Пики трафика без падений",
+  "what.spin":     "Покрутите стойку",
+  "what.r1":       "Кэш и раздача",
+  "what.r2":       "Видеостриминг",
+  "what.r3":       "Защита от DDoS",
+  "what.r4":       "Объектное хранилище",
+  "what.r5":       "Транскодирование",
+  "what.r6":       "Балансировка нагрузки",
+  "what.r7":       "Логи и метрики",
+  "what.r8":       "Резервное питание",
 
   /* Продукты */
   "prod.tag":      "Продукты",
@@ -300,6 +309,9 @@ var EN = {
   "what.n2h": "Rocket CDN edge", "what.n2p": "218 points of presence cache the content and keep it near people.",
   "what.n3h": "End user", "what.n3p": "Receives data from the closest node within tens of milliseconds.",
   "what.b1": "Up to 95% origin offload", "what.b2": "Lower latency and no buffering", "what.b3": "Traffic peaks without downtime",
+  "what.spin": "Spin the rack", "what.r1": "Cache and delivery", "what.r2": "Video streaming",
+  "what.r3": "DDoS protection", "what.r4": "Object storage", "what.r5": "Transcoding",
+  "what.r6": "Load balancing", "what.r7": "Logs and metrics", "what.r8": "Backup power",
 
   "prod.tag": "Products", "prod.h": "Infrastructure for any workload",
   "prod.p": "Everything you need to deliver content and run media services, in a single dashboard.",

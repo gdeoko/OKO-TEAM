@@ -271,6 +271,32 @@ function initGlobes() {
     globe = made || new RCGlobe(mapCv, opts);
     window.__globes.push(globe);
   }
+  initRack();
+}
+
+/* ═══ Стойка дата-центра в объёме ════════════════════════ */
+var rack = null;
+function rackLabels() {
+  var out = [];
+  for (var i = 1; i <= 8; i++) out.push(t("what.r" + i));
+  return out;
+}
+function initRack() {
+  var cv = $("#rackCv");
+  if (!cv || rack) return;
+  /* Ракета уже держит один контекст WebGL, третий берём только там,
+     где машина это тянет */
+  var weak = (navigator.deviceMemory || 4) <= 2 || (navigator.hardwareConcurrency || 4) <= 2;
+  if (!window.RCRack || !window.THREE || weak) {
+    var box = cv.parentElement;
+    if (box) box.remove();
+    return;
+  }
+  rack = window.RCRack.create(cv, { labels: rackLabels() });
+  if (!rack) { if (cv.parentElement) cv.parentElement.remove(); return; }
+  rack.start();
+  window.__rack = rack;
+  addEventListener("rc:lang", function () { rack.setLabels(rackLabels()); });
 }
 
 /* ═══ Появление блоков и счётчики ════════════════════════ */
