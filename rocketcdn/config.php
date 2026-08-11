@@ -119,22 +119,30 @@ function rc_log($msg) {
 }
 
 /* ── Телеграм ────────────────────────────────────────────── */
-function rc_tg($method, $params = []) {
+function rc_tg($method, $params = [], $tries = 2) {
     $token = rc_cfg('tg_token');
     if (!$token) return null;
-    $ch = curl_init('https://api.telegram.org/bot' . $token . '/' . $method);
-    curl_setopt_array($ch, [
-        CURLOPT_POST           => true,
-        CURLOPT_POSTFIELDS     => json_encode($params, JSON_UNESCAPED_UNICODE),
-        CURLOPT_HTTPHEADER     => ['Content-Type: application/json'],
-        CURLOPT_RETURNTRANSFER => true,
-        CURLOPT_TIMEOUT        => 15,
-    ]);
-    $r = curl_exec($ch);
-    $err = curl_error($ch);
-    curl_close($ch);
-    if ($err) { rc_log('TG ' . $method . ': ' . $err); return null; }
-    return json_decode($r, true);
+    $err = '';
+    for ($i = 0; $i < max(1, $tries); $i++) {
+        $ch = curl_init('https://api.telegram.org/bot' . $token . '/' . $method);
+        curl_setopt_array($ch, [
+            CURLOPT_POST           => true,
+            CURLOPT_POSTFIELDS     => json_encode($params, JSON_UNESCAPED_UNICODE),
+            CURLOPT_HTTPHEADER     => ['Content-Type: application/json'],
+            CURLOPT_RETURNTRANSFER => true,
+            CURLOPT_TIMEOUT        => 25,
+            CURLOPT_CONNECTTIMEOUT => 10,
+        ]);
+        $r = curl_exec($ch);
+        $err = curl_error($ch);
+        curl_close($ch);
+        if (!$err) return json_decode($r, true);
+        if ($i === 0) usleep(400000);
+    }
+    /* Связь с Телеграмом иногда моргает. В журнал пишем только то,
+       что не прошло и со второй попытки. */
+    rc_log('TG ' . $method . ': ' . $err);
+    return null;
 }
 
 function rc_tg_send($chat, $text, $markup = null, $topic = null) {

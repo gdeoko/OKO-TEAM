@@ -719,3 +719,73 @@ section { position: relative; padding: var(--sec) 0; }
 }
 .drawer-tools { display: flex; gap: 10px; align-items: center; margin-top: 18px; }
 .drawer-tools .icon-btn { width: 44px; height: 44px; }
+
+/* ═══════════════════════════════════════════════════════════
+   Премиальные мелочи: зерно, разделители, вскрытие заголовков,
+   наклон карточек, живая рамка у главной кнопки
+   ═══════════════════════════════════════════════════════════ */
+
+/* Тонкое зерно поверх всего: убирает пластиковость градиентов */
+body::after {
+  content: ''; position: fixed; inset: 0; z-index: 3; pointer-events: none;
+  opacity: .035; mix-blend-mode: overlay;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='3'/%3E%3C/filter%3E%3Crect width='160' height='160' filter='url(%23n)'/%3E%3C/svg%3E");
+}
+[data-theme="light"] body::after { opacity: .022; }
+
+/* Разделитель секций */
+.sep-line {
+  position: relative; height: 1px; margin: 0 auto; max-width: var(--maxw);
+  background: linear-gradient(90deg, transparent, var(--line-2) 22%, var(--line-2) 78%, transparent);
+}
+.sep-line i {
+  position: absolute; left: 50%; top: 50%; width: 7px; height: 7px; margin: -3.5px 0 0 -3.5px;
+  border-radius: 50%; background: var(--cyan);
+  box-shadow: 0 0 10px rgba(66,178,220,.8), 0 0 26px rgba(66,178,220,.35);
+  animation: sepPulse 3s ease-in-out infinite;
+}
+@keyframes sepPulse { 0%, 100% { transform: scale(1); opacity: .85 } 50% { transform: scale(1.5); opacity: 1 } }
+
+/* Заголовки вскрываются по словам */
+.sec-h .w, .hero h1 .w { display: inline-block; overflow: hidden; vertical-align: bottom; }
+.sec-h .w > i, .hero h1 .w > i {
+  display: inline-block; font-style: inherit;
+  transform: translateY(105%); opacity: 0;
+  transition: transform .8s var(--ease), opacity .8s var(--ease);
+}
+.rv.on .sec-h .w > i, .hero h1.words-in .w > i { transform: none; opacity: 1; }
+.sec-h .w > i { transition-delay: calc(var(--i, 0) * 55ms); }
+.hero h1 .w > i { transition-delay: calc(var(--i, 0) * 70ms + 200ms); }
+
+/* Наклон карточек под курсором */
+@media (hover: hover) and (pointer: fine) {
+  .card, .viz-card, .dc {
+    transform-style: preserve-3d;
+    transition: transform .35s var(--ease), border-color var(--fast), box-shadow var(--fast), background var(--fast);
+  }
+  .card.tilt, .viz-card.tilt, .dc.tilt { transition: transform .12s linear; }
+}
+
+/* Живая рамка у главной кнопки */
+.btn-p::before {
+  content: ''; position: absolute; inset: -1px; border-radius: inherit; padding: 1px;
+  background: linear-gradient(120deg, rgba(255,255,255,.7), rgba(127,216,250,.15) 30%, rgba(138,89,246,.65) 55%, rgba(255,255,255,.55));
+  background-size: 260% 100%;
+  -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+  -webkit-mask-composite: xor; mask-composite: exclude;
+  opacity: .55; animation: btnEdge 5.5s linear infinite; pointer-events: none;
+}
+.btn-p:hover::before { opacity: .95; }
+@keyframes btnEdge { to { background-position: 260% 0 } }
+
+/* Кольцо прогресса вокруг кнопки «наверх» */
+.totop svg.ring { position: absolute; inset: -5px; width: 54px; height: 54px; transform: rotate(-90deg); }
+.totop svg.ring circle { fill: none; stroke-width: 2; }
+.totop svg.ring .bg { stroke: rgba(255,255,255,.22); }
+.totop svg.ring .fg { stroke: #fff; stroke-linecap: round; transition: stroke-dashoffset .12s linear; }
+
+@media (prefers-reduced-motion: reduce) {
+  .sec-h .w > i, .hero h1 .w > i { transform: none; opacity: 1; }
+  .btn-p::before, .sep-line i { animation: none; }
+  body::after { display: none; }
+}

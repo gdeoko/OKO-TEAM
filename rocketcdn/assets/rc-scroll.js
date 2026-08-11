@@ -177,6 +177,74 @@ function cursor() {
    прокрутка ведёт себя предсказуемо, а плавность даёт
    scroll-behavior и сами анимации. */
 
+
+/* ── Заголовки вскрываются по словам ─────────────────────── */
+function escHtml(t) {
+  return String(t).replace(/[&<>"]/g, function (c) {
+    return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c];
+  });
+}
+function splitWords() {
+  if (REDUCE) return;
+  $$(".sec-h[data-i18n], .hero h1 [data-i18n], #heroClone h1 span").forEach(function (el) {
+    var text = (el.textContent || "").trim();
+    /* Перевод перезаписывает textContent и стирает разбивку, поэтому
+       смотрим не только на текст, но и на то, жива ли она сейчас */
+    if (!text) return;
+    if (el._split === text && el.querySelector(".w")) return;
+    el._split = text;
+    el.innerHTML = text.split(/\s+/).map(function (w, i) {
+      return '<span class="w" style="--i:' + i + '"><i>' + escHtml(w) + "</i></span>";
+    }).join(" ");
+  });
+  /* Первый экран запускаем сразу после раскладки */
+  $$(".hero h1").forEach(function (h) {
+    if (h.classList.contains("words-in")) return;
+    void h.offsetWidth;
+    requestAnimationFrame(function () { h.classList.add("words-in"); });
+  });
+}
+
+/* ── Наклон карточек под курсором ────────────────────────── */
+function tilt() {
+  if (!FINE || REDUCE) return;
+  document.addEventListener("mousemove", function (e) {
+    var c = e.target.closest && e.target.closest(".card, .viz-card, .dc");
+    if (!c) return;
+    var r = c.getBoundingClientRect();
+    var dx = (e.clientX - (r.left + r.width / 2)) / (r.width / 2);
+    var dy = (e.clientY - (r.top + r.height / 2)) / (r.height / 2);
+    c.classList.add("tilt");
+    c.style.transform = "perspective(900px) rotateX(" + (-dy * 3).toFixed(2) + "deg) rotateY(" +
+      (dx * 3.4).toFixed(2) + "deg) translateY(-4px)";
+  }, { passive: true });
+  document.addEventListener("mouseout", function (e) {
+    var c = e.target.closest && e.target.closest(".card, .viz-card, .dc");
+    if (!c || (e.relatedTarget && c.contains(e.relatedTarget))) return;
+    c.classList.remove("tilt");
+    c.style.transform = "";
+  }, { passive: true });
+}
+
+/* ── Кольцо прогресса вокруг кнопки «наверх» ─────────────── */
+var ringEl = null, ringLen = 0;
+function buildRing() {
+  var btn = $("#toTop");
+  if (!btn || $("svg.ring", btn)) return;
+  var R = 24, C2 = 2 * Math.PI * R;
+  btn.insertAdjacentHTML("afterbegin",
+    '<svg class="ring" viewBox="0 0 54 54" aria-hidden="true">' +
+      '<circle class="bg" cx="27" cy="27" r="' + R + '"/>' +
+      '<circle class="fg" cx="27" cy="27" r="' + R + '" stroke-dasharray="' + C2 + '" stroke-dashoffset="' + C2 + '"/>' +
+    "</svg>");
+  ringEl = $("svg.ring .fg", btn);
+  ringLen = C2;
+}
+function updateRing(p) {
+  if (!ringEl) return;
+  ringEl.style.strokeDashoffset = (ringLen - ringLen * Math.min(1, Math.max(0, p))).toFixed(2);
+}
+
 /* ── Общий обработчик прокрутки ──────────────────────────── */
 var ticking = false;
 function onScroll() {
@@ -187,6 +255,7 @@ function onScroll() {
     loopCheck();
     pushProgress();
     applyParallax();
+    updateRing(progress());
   });
 }
 
@@ -246,6 +315,11 @@ function boot() {
 
   magnetics();
   cursor();
+  tilt();
+  buildRing();
+  splitWords();
+  document.addEventListener("rc:lang", function () { setTimeout(splitWords, 30); });
+  addEventListener("load", function () { setTimeout(splitWords, 60); });
   onScroll();
 }
 
