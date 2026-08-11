@@ -180,6 +180,41 @@ function cursor() {
    scroll-behavior и сами анимации. */
 
 
+
+/* ── Горизонтальная лента: вертикальный скролл двигает вбок ─ */
+var hsList = [];
+function collectHS() {
+  hsList = $$(".hs").map(function (sec) {
+    return { sec: sec, track: $(".hs-track", sec), bar: $(".hs-bar i", sec) };
+  }).filter(function (h) { return h.track; });
+  sizeHS();
+}
+function sizeHS() {
+  if (innerWidth <= 900) {
+    hsList.forEach(function (h) { h.sec.style.height = ""; h.track.style.transform = ""; });
+    return;
+  }
+  hsList.forEach(function (h) {
+    var over = Math.max(0, h.track.scrollWidth - innerWidth);
+    h.span = over;
+    /* Высота секции задаёт, сколько прокрутки уходит на проезд ленты */
+    h.sec.style.height = (innerHeight + over * 0.9) + "px";
+  });
+}
+function applyHS() {
+  if (innerWidth <= 900) return;
+  for (var i = 0; i < hsList.length; i++) {
+    var h = hsList[i];
+    if (!h.span) continue;
+    var r = h.sec.getBoundingClientRect();
+    if (r.bottom < 0 || r.top > innerHeight) continue;
+    var total = h.sec.offsetHeight - innerHeight;
+    var p = total > 0 ? Math.min(1, Math.max(0, -r.top / total)) : 0;
+    h.track.style.transform = "translate3d(" + (-p * h.span).toFixed(1) + "px,0,0)";
+    if (h.bar) h.bar.style.setProperty("--p", (8 + p * 92).toFixed(1) + "%");
+  }
+}
+
 /* ── Заголовки вскрываются по словам ─────────────────────── */
 function escHtml(t) {
   return String(t).replace(/[&<>"]/g, function (c) {
@@ -257,6 +292,7 @@ function onScroll() {
     loopCheck();
     pushProgress();
     applyParallax();
+    applyHS();
     updateRing(progress());
   });
 }
@@ -290,6 +326,7 @@ function boot() {
   measure();
   watchLayout();
   collectParallax();
+  collectHS();
 
   var cv = $("#rocketCanvas");
   if (cv && g.RCRocket) {
@@ -317,7 +354,7 @@ function boot() {
   var rt;
   addEventListener("resize", function () {
     clearTimeout(rt);
-    rt = setTimeout(function () { measure(); collectParallax(); onScroll(); }, 200);
+    rt = setTimeout(function () { sizeHS(); measure(); collectParallax(); onScroll(); }, 200);
   });
 
   /* Затухание скорости, чтобы факел плавно успокаивался */
@@ -331,10 +368,10 @@ function boot() {
 
   /* Клон снимаем с уже наполненного первого экрана */
   document.addEventListener("rc:lang", function () {
-    setTimeout(function () { splitWords(); setupClone(); }, 40);
+    setTimeout(function () { splitWords(); collectHS(); setupClone(); measure(); }, 60);
   });
   addEventListener("load", function () {
-    setTimeout(function () { splitWords(); setupClone(); measure(); }, 80);
+    setTimeout(function () { splitWords(); collectHS(); setupClone(); measure(); }, 100);
   });
   setTimeout(setupClone, 1200);
   onScroll();

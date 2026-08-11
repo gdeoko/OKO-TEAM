@@ -63,12 +63,6 @@ function fill(t, blocks) {
       "<p>" + esc(t("rel." + n + "p")) + "</p></article>";
   }).join("");
 
-  /* Список продуктов в подвале */
-  var fp = $("#ftrProducts");
-  if (fp && blocks) fp.innerHTML = blocks().products.map(function (p) {
-    return '<li><a href="#products">' + esc(p.h) + "</a></li>";
-  }).join("");
-
   /* Состав подключения */
   var inc = $("#incGrid");
   if (inc) inc.innerHTML = [1,2,3,4,5,6,7,8,9].map(function (n) {

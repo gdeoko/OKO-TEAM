@@ -545,8 +545,15 @@ function Rocket(canvas) {
   this.path = buildPath();
   this._tmpA = new T.Vector3();
   this._tmpB = new T.Vector3();
+  this._tmpC = new T.Vector3();
   this._q = new T.Quaternion();
   this._up = new T.Vector3(0, 1, 0);
+
+  /* Уступает дорогу тексту: корпус белый, буквы белые, поверх читать нельзя */
+  this._veil = 1;
+  this._veilGoal = 1;
+  this._veilT = 0;
+  canvas.classList.add("rk-soft");
 
   this.bind();
   this.resize();
@@ -595,6 +602,49 @@ Rocket.prototype.layout = function (p) {
   this.pivot.scale.setScalar(s);
 };
 
+/* Крупный читаемый текст: только он лежит на прозрачном фоне,
+   у карточек своя подложка и ракета за ней и так не видна */
+var READ_SEL = ".hero h1,.hero-sub,.sec-h,.sec-p,.sec-tag,.kpi-n,.kpi-l,.hs-h,.legal";
+
+Rocket.prototype.readables = function () {
+  if (!this._reads || this._readsAt !== document.body.childElementCount) {
+    this._reads = [].slice.call(document.querySelectorAll(READ_SEL));
+    this._readsAt = document.body.childElementCount;
+  }
+  return this._reads;
+};
+
+/* Раз в сто миллисекунд смотрим, не наехала ли ракета на слова */
+Rocket.prototype.veil = function (dt) {
+  this._veilT += dt;
+  if (this._veilT >= 0.1) {
+    this._veilT = 0;
+    var v = this._tmpC.copy(this.pivot.position).project(this.cam);
+    var w = this.canvas.clientWidth || innerWidth;
+    var h = this.canvas.clientHeight || innerHeight;
+    var cx = (v.x * 0.5 + 0.5) * w;
+    var cy = (-v.y * 0.5 + 0.5) * h;
+    var rad = Math.min(w, h) * (this.C.mobile ? 0.20 : 0.17);
+    var rr = rad * rad;
+    var list = this.readables();
+    var hit = false;
+    for (var i = 0; i < list.length; i++) {
+      var b = list[i].getBoundingClientRect();
+      if (b.width < 6 || b.bottom < -40 || b.top > h + 40) continue;
+      var dx = Math.max(b.left - cx, 0, cx - b.right);
+      var dy = Math.max(b.top - cy, 0, cy - b.bottom);
+      if (dx * dx + dy * dy < rr) { hit = true; break; }
+    }
+    this._veilGoal = hit ? 0.17 : 1;
+  }
+  var light = document.documentElement.getAttribute("data-theme") === "light";
+  var d = this._veilGoal - this._veil;
+  if (Math.abs(d) > 0.004) this._veil += d * Math.min(1, dt * 4.5);
+  else if (light === this._wasLight) return;
+  this._wasLight = light;
+  this.canvas.style.opacity = (this._veil * (light ? 0.92 : 1)).toFixed(3);
+};
+
 Rocket.prototype.setProgress = function (p, velocity) {
   this.progress = p;
   this.power = Math.max(0.32, Math.min(1, 0.36 + Math.abs(velocity || 0) * 0.05));
@@ -631,6 +681,7 @@ Rocket.prototype.frame = function (dt) {
     this.shown = Math.min(1, this.shown + dt * 0.7);
     this.pivot.scale.multiplyScalar(0.4 + this.shown * 0.6);
   }
+  this.veil(dt);
 
   this.r.render(this.scene, this.cam);
 };
@@ -684,7 +735,9 @@ g.RCRocket = {
     } catch (e) { return null; }
     if (matchMedia("(prefers-reduced-motion: reduce)").matches) return null;
     try {
-      return new Rocket(canvas);
+      var made = new Rocket(canvas);
+      g.RC_ROCKET = made;
+      return made;
     } catch (e) {
       if (g.RC_track) g.RC_track("jserr", "rocket: " + (e.message || e), true);
       return null;

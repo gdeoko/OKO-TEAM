@@ -295,11 +295,13 @@ section { position: relative; padding: var(--sec) 0; }
 .hero-marks { display: flex; flex-wrap: wrap; gap: 10px 26px; margin-top: 38px; }
 .hero-mark { display: flex; align-items: center; gap: 9px; font-size: 13px; color: var(--tx-3); }
 .hero-mark svg { width: 15px; height: 15px; color: var(--cyan); flex: none; }
+/* Подсказка стоит у правого края: по центру она наезжала на строку отметок */
 .scroll-hint {
-  position: absolute; bottom: 26px; left: 50%; transform: translateX(-50%); z-index: 3;
+  position: absolute; bottom: 26px; right: var(--pad); z-index: 3;
   display: grid; justify-items: center; gap: 7px; font-size: 11px; letter-spacing: .16em;
   text-transform: uppercase; color: var(--tx-3);
 }
+@media (max-width: 1180px) { .scroll-hint { display: none } }
 .scroll-hint i { display: block; width: 1px; height: 34px; background: linear-gradient(var(--cyan), transparent); animation: hintY 1.9s ease-in-out infinite; }
 @keyframes hintY { 0%,100% { transform: scaleY(.3); transform-origin: top } 50% { transform: scaleY(1); transform-origin: top } }
 
@@ -574,9 +576,10 @@ section { position: relative; padding: var(--sec) 0; }
   opacity: 0; transition: opacity 1.2s var(--ease);
 }
 .has-rocket #rocketCanvas { opacity: 1; }
-/* Под текстом ракета приглушается, чтобы не мешать читать */
 [data-theme="light"] #rocketCanvas { opacity: 0; }
 [data-theme="light"].has-rocket #rocketCanvas { opacity: .92; }
+/* Наехала на слова - гаснет сама, прозрачность ведёт скрипт */
+.has-rocket #rocketCanvas.rk-soft { transition: opacity .28s linear; }
 
 #heroClone { pointer-events: none; }
 #heroClone .scroll-hint { display: none; }
@@ -789,6 +792,10 @@ body::after {
 .totop svg.ring .bg { stroke: rgba(255,255,255,.22); }
 .totop svg.ring .fg { stroke: #fff; stroke-linecap: round; transition: stroke-dashoffset .12s linear; }
 
+/* Страховка: заголовок не должен остаться невидимым, если блок
+   почему-то не получил класс появления */
+.sec-h:not(.rv .sec-h) .w > i { transform: none; opacity: 1; }
+
 @media (prefers-reduced-motion: reduce) {
   .sec-h .w > i, .hero h1 .w > i { transform: none; opacity: 1; }
   .btn-p::before, .sep-line i { animation: none; }
@@ -809,3 +816,94 @@ body::after {
 }
 @media (max-width: 900px) { .inc-grid { grid-template-columns: repeat(2, 1fr) } }
 @media (max-width: 560px) { .inc-grid { grid-template-columns: 1fr } }
+
+/* ═══════════════════════════════════════════════════════════
+   Компактнее и живее: парящее лого, горизонтальная лента,
+   плотные отступы, компактная правовая строка
+   ═══════════════════════════════════════════════════════════ */
+
+/* Плотнее по вертикали: длинные блоки читались как простыня */
+:root { --sec: clamp(52px, 6.4vw, 96px); }
+.sec-head { margin-bottom: clamp(24px, 3.4vw, 40px); }
+.sec-h { font-size: clamp(25px, 3.6vw, 42px); margin-bottom: 12px; }
+.sec-p { font-size: clamp(14px, 1.35vw, 16px); max-width: 58ch; }
+.card { padding: clamp(18px, 2.1vw, 24px); }
+.card h3 { font-size: 17px; margin-bottom: 7px; }
+.card p { font-size: 14px; line-height: 1.6; }
+.card-ico { width: 42px; height: 42px; border-radius: 12px; margin-bottom: 14px; }
+.card-ico svg { width: 21px; height: 21px; }
+.viz-card { padding: clamp(18px, 2.2vw, 26px); gap: 13px; }
+.prod-card ul { margin-top: 11px; gap: 5px; }
+.prod-card li { font-size: 13px; }
+.inc-item { padding: 13px 15px; font-size: 14px; }
+.kpi > div { padding: clamp(17px, 2.4vw, 26px) clamp(13px, 1.8vw, 22px); }
+.faq-q { padding: clamp(14px, 1.8vw, 18px) clamp(15px, 2vw, 22px); }
+.faq-a p { padding: 0 clamp(15px, 2vw, 22px) clamp(15px, 2vw, 20px); }
+
+/* Парящее лого в первом экране */
+.hero-logo { margin: 0 0 22px; }
+.hero-logo img {
+  width: clamp(190px, 22vw, 280px); height: auto;
+  filter: drop-shadow(0 0 34px rgba(66,178,220,.45)) drop-shadow(0 0 72px rgba(138,89,246,.20));
+  animation: heroFloat 6.5s ease-in-out infinite;
+  will-change: transform;
+}
+[data-theme="light"] .hero-logo img {
+  filter: drop-shadow(0 10px 26px rgba(9,19,32,.16)) drop-shadow(0 0 46px rgba(66,178,220,.28));
+}
+@keyframes heroFloat {
+  0%, 100% { transform: translateY(0) rotate(0deg) }
+  50%      { transform: translateY(-13px) rotate(-1.1deg) }
+}
+
+/* Горизонтальная лента, которую двигает вертикальный скролл */
+.hs { padding: 0; }
+.hs-stage { position: sticky; top: 0; height: 100svh; display: flex; flex-direction: column; justify-content: center; gap: clamp(18px, 3vw, 34px); overflow: hidden; }
+.hs-head { flex: none; margin-bottom: 0; }
+.hs-view { width: 100%; overflow: hidden; }
+.hs-track {
+  display: flex; gap: var(--gap); padding: 4px var(--pad);
+  width: max-content; will-change: transform;
+}
+.hs-track > * { width: clamp(250px, 26vw, 330px); flex: none; }
+.hs-bar { flex: none; }
+.hs-bar i {
+  display: block; height: 3px; border-radius: 3px; background: var(--line);
+  position: relative; overflow: hidden;
+}
+.hs-bar i::after {
+  content: ''; position: absolute; left: 0; top: 0; bottom: 0;
+  width: var(--p, 8%); border-radius: 3px; background: var(--grad);
+  transition: width .1s linear;
+}
+
+/* Правовая строка вместо подвала */
+.legal {
+  display: flex; flex-wrap: wrap; gap: 8px 20px; align-items: center;
+  margin-top: 30px; padding-top: 20px; border-top: 1px solid var(--line);
+  font-size: 12.5px; color: var(--tx-3);
+}
+.legal a { color: var(--tx-2); transition: color var(--fast); }
+.legal a:hover { color: var(--cyan); }
+
+@media (max-width: 900px) {
+  /* На телефоне лента просто листается пальцем: закреплять экран неудобно */
+  .hs-stage { position: static; height: auto; padding: var(--sec) 0; }
+  .hs-view { overflow-x: auto; scroll-snap-type: x mandatory; -webkit-overflow-scrolling: touch; scrollbar-width: none; }
+  .hs-view::-webkit-scrollbar { display: none }
+  .hs-track { transform: none !important; }
+  .hs-track > * { width: 76vw; scroll-snap-align: center; }
+  .hs-bar { display: none }
+  .hero-logo img { width: clamp(170px, 52vw, 230px) }
+}
+
+/* Подпись города над трёхмерным глобусом */
+.g3-label {
+  position: absolute; left: 0; top: 0; transform: translate(-50%, 0);
+  padding: 6px 11px; border-radius: 9px; font-size: 12.5px; font-weight: 600;
+  background: var(--bg-2); border: 1px solid var(--line-2); color: var(--tx);
+  pointer-events: none; white-space: nowrap; opacity: 0;
+  transition: opacity .18s var(--ease); z-index: 4; box-shadow: var(--shadow);
+}
+.map-wrap { position: relative; }
+.map-wrap canvas { touch-action: pan-y; }

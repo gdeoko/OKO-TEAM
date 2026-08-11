@@ -128,6 +128,10 @@ try{var _t=localStorage.getItem("rc_theme");if(_t==="light"||_t==="dark")documen
   <div class="hero-globe"><canvas id="globeHero" aria-hidden="true"></canvas></div>
   <div class="wrap">
     <div class="hero-in">
+      <div class="hero-logo rv">
+        <img class="lg-dark"  src="assets/logo.png"       alt="Rocket CDN" width="300" height="204">
+        <img class="lg-light" src="assets/logo-light.png" alt="Rocket CDN" width="300" height="204">
+      </div>
       <div class="hero-chips">
         <span class="chip"><i class="dot-live"></i><span data-i18n="hero.chip1">сеть работает</span></span>
         <span class="chip"><b>218</b> <span data-i18n="hero.chip2">точек присутствия</span></span>
@@ -387,14 +391,17 @@ try{var _t=localStorage.getItem("rc_theme");if(_t==="light"||_t==="dark")documen
 </section>
 
 <!-- ═══ Сценарии ═══ -->
-<section id="cases">
-  <div class="wrap">
-    <div class="sec-head rv" data-par="0.03">
+<section id="cases" class="hs">
+  <div class="hs-stage">
+    <div class="wrap hs-head sec-head rv" data-par="0.02">
       <div class="sec-tag" data-i18n="case.tag">Сценарии</div>
       <h2 class="sec-h" data-i18n="case.h">Под какие задачи берут Rocket CDN</h2>
       <p class="sec-p" data-i18n="case.p">От разовой трансляции до постоянной раздачи терабайтов.</p>
     </div>
-    <div class="grid g-3" id="gridCases"></div>
+    <div class="hs-view">
+      <div class="hs-track" id="gridCases"></div>
+    </div>
+    <div class="wrap hs-bar"><i></i></div>
   </div>
 </section>
 
@@ -443,6 +450,14 @@ try{var _t=localStorage.getItem("rc_theme");if(_t==="light"||_t==="dark")documen
           <button type="button" class="btn btn-g js-callback">
             <span data-i18n="cta.callback">Перезвоните мне</span>
           </button>
+        </div>
+
+        <div class="legal">
+          <a href="privacy.html" data-i18n="ftr.policy">Политика конфиденциальности</a>
+          <a href="offer.html" data-i18n="ftr.oferta">Публичная оферта</a>
+          <a href="#faq" data-i18n="ftr.sla">Условия SLA</a>
+          <span>&copy; <span id="year">2026</span> Rocket CDN</span>
+          <span data-i18n="ftr.made">Сделано в OKO TEAM</span>
         </div>
       </div>
 
@@ -497,50 +512,6 @@ try{var _t=localStorage.getItem("rc_theme");if(_t==="light"||_t==="dark")documen
 
 </main>
 
-<!-- Подвал -->
-<footer class="ftr">
-  <div class="wrap">
-    <div class="ftr-top">
-      <div class="ftr-brand">
-        <img class="lg-dark"  src="assets/logo.png"       alt="Rocket CDN" width="68" height="46">
-        <img class="lg-light" src="assets/logo-light.png" alt="Rocket CDN" width="68" height="46">
-        <p data-i18n="ftr.about">Глобальная сеть доставки контента и медиа-инфраструктура для бизнеса.</p>
-        <div class="soc" style="margin-top:16px">
-          <a href="https://t.me/rocket_cdn_bot" target="_blank" rel="noopener" aria-label="Telegram" data-ico="tg"></a>
-          <a href="mailto:info@rocketcdn.ru" aria-label="Email" data-ico="mail"></a>
-        </div>
-      </div>
-      <div>
-        <h5 data-i18n="ftr.nav">Навигация</h5>
-        <ul>
-          <li><a href="#products" data-i18n="nav.products">Продукты</a></li>
-          <li><a href="#infra"    data-i18n="nav.infra">Инфраструктура</a></li>
-          <li><a href="#adv"      data-i18n="nav.adv">Преимущества</a></li>
-          <li><a href="#cases"    data-i18n="nav.cases">Сценарии</a></li>
-          <li><a href="#faq"      data-i18n="nav.faq">Вопросы</a></li>
-        </ul>
-      </div>
-      <div>
-        <h5 data-i18n="ftr.prod">Продукты</h5>
-        <ul id="ftrProducts"></ul>
-      </div>
-      <div>
-        <h5 data-i18n="ftr.doc">Документы</h5>
-        <ul>
-          <li><a href="privacy.html" data-i18n="ftr.policy">Политика конфиденциальности</a></li>
-          <li><a href="offer.html"   data-i18n="ftr.oferta">Публичная оферта</a></li>
-          <li><a href="#faq"         data-i18n="ftr.sla">Условия SLA</a></li>
-          <li><a href="https://lk.rocketcdn.ru" target="_blank" rel="noopener" class="js-reg" data-place="footer" data-i18n="ct.lk">Личный кабинет</a></li>
-        </ul>
-      </div>
-    </div>
-    <div class="ftr-bot">
-      <span>&copy; <span id="year">2026</span> Rocket CDN. <span data-i18n="ftr.rights">Все права защищены</span>.</span>
-      <span data-i18n="ftr.made">Сделано в OKO TEAM</span>
-    </div>
-  </div>
-</footer>
-
 <!-- Окно обратного звонка -->
 <div class="modal" id="cbModal" role="dialog" aria-modal="true" aria-labelledby="cbTitle">
   <div class="modal-box" style="position:relative">
@@ -583,6 +554,7 @@ try{var _t=localStorage.getItem("rc_theme");if(_t==="light"||_t==="dark")documen
 <script src="assets/rc-fill.js"></script>
 <script src="assets/rc-viz.js"></script>
 <script defer src="assets/vendor/three.min.js"></script>
+<script defer src="assets/rc-globe3d.js"></script>
 <script defer src="assets/rc-rocket.js"></script>
 <script defer src="assets/rc-scroll.js"></script>
 </body>

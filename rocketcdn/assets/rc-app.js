@@ -255,10 +255,20 @@ function initGlobes() {
   }
   var mapCv = $("#globeMap");
   if (mapCv) {
-    globe = new RCGlobe(mapCv, {
+    /* Главный глобус - настоящий 3D, если браузер тянет WebGL.
+       Плоская версия остаётся запасным вариантом. */
+    var opts = {
       nodes: GEO.NODES, land: land, dc: GEO.DC, theme: state.theme, radius: 0.44, speed: 3.4,
       onPick: function (i) { if (i >= 0) track("node", GEO.NODES[i][0]); }
-    });
+    };
+    var made = null;
+    /* На совсем слабых устройствах два контекста WebGL сразу (ракета и
+       глобус) не тянутся, поэтому там остаётся плоская версия. */
+    var weak = (navigator.deviceMemory || 4) <= 2 || (navigator.hardwareConcurrency || 4) <= 2;
+    if (window.RCGlobe3D && window.THREE && !weak) {
+      try { made = new window.RCGlobe3D(mapCv, opts); } catch (e) { made = null; }
+    }
+    globe = made || new RCGlobe(mapCv, opts);
     window.__globes.push(globe);
   }
 }
