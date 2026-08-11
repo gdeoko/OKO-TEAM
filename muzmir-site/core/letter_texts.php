@@ -318,17 +318,9 @@ function ol_html_for(string $number, array $o): string {
     // Обращение по имени и отчеству, если они известны. «Уважаемый коллега!»
     // ставим только когда ФИО нет: безличное обращение к человеку, чьё имя мы
     // знаем, выглядит небрежностью.
-    $salut = '';
-    if ($person !== '') {
-        $parts = preg_split('~\s+~u', $person) ?: [];
-        if (count($parts) >= 3) {
-            // «Иванов Иван Иванович» → «Уважаемый Иван Иванович!»
-            $salut = ol_salut_word($parts[2]) . ' ' . $parts[1] . ' ' . $parts[2] . '!';
-        } elseif (count($parts) === 2) {
-            $salut = ol_salut_word($parts[1]) . ' ' . $parts[1] . '!';
-        }
-    }
-    if ($salut === '') $salut = $kind === 'institution' ? 'Уважаемые коллеги!' : 'Уважаемый руководитель!';
+    $fallback = $kind === 'institution' ? 'Уважаемые коллеги!' : 'Уважаемый руководитель!';
+    // «Иванов Иван Иванович» → «Уважаемый Иван Иванович!»
+    $salut = $person !== '' ? ol_salutation($person, $fallback) : $fallback;
 
     if ($kind === 'thanks') {
         $body  = ol_body_thanks($o);
@@ -371,20 +363,62 @@ function ol_html_for(string $number, array $o): string {
 }
 
 /**
- * «Уважаемый» или «Уважаемая», по отчеству.
+ * Род адресата по ФИО: 'f', 'm' или '' (не определили).
  *
  * Ошибиться здесь дороже, чем кажется: официальное письмо, где к женщине
- * обращаются в мужском роде, читают как небрежность и дальше не читают. Отчество
- * даёт род однозначно; когда его нет, обращаемся нейтрально по должности.
+ * обращаются в мужском роде, читают как небрежность и дальше не читают.
+ * Поэтому смотрим по очереди на отчество (даёт род однозначно), затем на
+ * фамилию, затем на имя — в базе учреждений сплошь и рядом лежит только
+ * «Иванова Мария», без отчества, и по одному отчеству род не вывести.
  */
-function ol_salut_word(string $patronymic): string {
-    $p = mb_strtolower(trim($patronymic));
-    if ($p === '') return 'Уважаемый';
-    if (mb_substr($p, -3) === 'вна' || mb_substr($p, -4) === 'чна' || mb_substr($p, -4) === 'нична') {
-        return 'Уважаемая';
+function ol_gender(string $fio): string {
+    $s = mb_strtolower(trim(str_replace(['ё', 'Ё'], ['е', 'Е'], $fio)));
+    $parts = array_values(array_filter(preg_split('~\s+~u', $s) ?: [], static fn($x) => $x !== ''));
+
+    // 1. Отчество.
+    if (isset($parts[2])) {
+        if (preg_match('~(вна|чна|шна)$~u', $parts[2])) return 'f';
+        if (preg_match('~(ич|ыч)$~u', $parts[2]))       return 'm';
     }
-    if (mb_substr($p, -2) === 'ич' || mb_substr($p, -2) === 'ыч') return 'Уважаемый';
-    return 'Уважаемый';
+    // 2. Фамилия. Несклоняемые («Шевченко», «Гурулёв оглы») сюда не попадают.
+    if (isset($parts[0])) {
+        if (preg_match('~(ова|ева|ина|ына|ская|цкая|жская)$~u', $parts[0])) return 'f';
+        if (preg_match('~(ов|ев|ин|ын|ский|цкий|жский)$~u', $parts[0]))     return 'm';
+    }
+    // 3. Имя. Мужские имена на «-а/-я» перечислены поимённо: их немного, а
+    //    ошибка на них самая заметная.
+    if (isset($parts[1]) && mb_strlen($parts[1]) > 2) {
+        static $male = [
+            'никита', 'илья', 'кузьма', 'лука', 'савва', 'фома', 'данила',
+            'гаврила', 'сила', 'вавила', 'мина', 'аника', 'ерема', 'добрыня',
+            'мирза', 'муса', 'иса', 'вилья', 'жора', 'гоша',
+        ];
+        if (in_array($parts[1], $male, true))          return 'm';
+        if (preg_match('~(а|я)$~u', $parts[1]))        return 'f';
+        if (preg_match('~[бвгдджзклмнпрстфхцчшщй]$~u', $parts[1])) return 'm';
+    }
+    return '';
+}
+
+/** «Уважаемый» / «Уважаемая» по полному ФИО (можно передать одно отчество). */
+function ol_salut_word(string $fio): string {
+    return ol_gender($fio) === 'f' ? 'Уважаемая' : 'Уважаемый';
+}
+
+/**
+ * Готовое обращение: «Уважаемая Мария Петровна!».
+ *
+ * Единая точка на все письма — обращения, благодарности, письма в ведомства.
+ * Без ФИО обращаемся к коллективу, а не к безымянному «руководителю»: письмо
+ * в учреждение читает не один человек.
+ */
+function ol_salutation(string $fio, string $fallback = 'Уважаемые коллеги!'): string {
+    $parts = array_values(array_filter(preg_split('~\s+~u', trim($fio)) ?: [], static fn($x) => $x !== ''));
+    $w = ol_salut_word($fio);
+    if (count($parts) >= 3) return $w . ' ' . $parts[1] . ' ' . $parts[2] . '!';
+    if (count($parts) === 2) return $w . ' ' . $parts[1] . '!';
+    if (count($parts) === 1) return $fallback;
+    return $fallback;
 }
 
 /**

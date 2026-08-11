@@ -291,6 +291,41 @@ gdeoko/oko-magic-skill — витрина скиллов OKO (MIT), два ск�
 Создать НОВЫЙ репо через сессию нельзя (GitHub App без прав, «sessions bound to repos»).
 Публиковать сюда: `add_repo gdeoko/oko-magic-skill` → clone → добавить в `skills/` → push main.
 
+## 5б. ЯНДЕКС 360 — бизнес-аккаунт «Музыкальный Мир» (постоянный доступ, 11.08.2026)
+
+Доступ есть В КАЖДОМ ЧАТЕ, спрашивать у Даниэля ничего не нужно.
+
+**Ключи.** Переменные приезжают SessionStart-хуком: `YANDEX360_LOGIN`,
+`YANDEX360_PASSWORD`, `YANDEX360_ORG_UID`, `YANDEX360_DNS_URL`,
+`YANDEX_SMTP_NEWS_USER/PASS`, `YANDEX_SMTP_NAGRADI_USER/PASS`. Полное описание —
+раздел 13 мастер-хранилища (`~/OKO_MASTER_VAULT.md`).
+
+**Как зайти.** Вход по паролю НЕ проходит без SMS-кода на телефон Даниэля,
+поэтому на мосту `104.171.132.45` живёт Chrome с уже выполненным входом:
+
+```bash
+# открыть любую страницу админки Яндекса и получить её текст
+bash scratchpad/pexec.sh <(echo '/opt/oko-poster/yandex.sh "https://admin.yandex.ru/domains?uid=2409379622"')
+# скриншот страницы: /opt/oko-poster/browser/ya.jpg  (забрать через pget.sh)
+```
+
+- Профиль: `/opt/oko-poster/browser/live`, бэкап `/opt/oko-poster/cfg/yandex-profile.tgz`.
+- Сторож `/opt/oko-poster/chrome_live.sh` в cron (`@reboot` + каждые 5 минут)
+  поднимает Chrome и разворачивает профиль из бэкапа, если тот пропал.
+- CDP: `http://127.0.0.1:9222`, playwright — `/opt/oko-poster/node_modules/playwright`.
+- Свой сценарий: `chromium.connectOverCDP('http://127.0.0.1:9222')`.
+
+**Грабли.** Поля SMS-кода принимают только `keyboard.type()` посимвольно. Меню
+строки DNS открывается настоящим кликом мыши (`mouse.down/up`), синтетические
+события Яндекс игнорирует; окно ставить 1400×1600, иначе пункт меню уезжает за
+нижний край. После правки зоны `dig` несколько минут отдаёт старое значение —
+верить панели.
+
+**Unisender Go** (рассылки): `UNISENDER_LOGIN/PASSWORD/ACCOUNT_ID/API_KEY`,
+кабинет `https://go2.unisender.ru`. Регистратор домена — `NETHOUSE_LOGIN/PASSWORD`,
+панель `domains.nethouse.ru`. Серверы: `MUZMIR_VPS_IP/ROOT_PASS`,
+`OKO_VPS_IP/ROOT_PASS`.
+
 ## 6. Как это попадает в каждый чат
 
 1. Файлы `secrets.env.b64` + `.claude/settings.json` (хук) + `.claude/skills/` +

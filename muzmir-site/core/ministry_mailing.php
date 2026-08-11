@@ -171,10 +171,7 @@ function mm_wrap(string $inner): string {
 
 /** «Уважаемая Мария Петровна!» по полному ФИО. */
 function mm_salutation(string $fio): string {
-    $parts = preg_split('~\s+~u', trim($fio)) ?: [];
-    if (count($parts) >= 3) return ol_salut_word($parts[2]) . ' ' . $parts[1] . ' ' . $parts[2] . '!';
-    if (count($parts) === 2) return ol_salut_word($parts[1]) . ' ' . $parts[1] . '!';
-    return 'Уважаемые коллеги!';
+    return ol_salutation($fio);
 }
 
 /**

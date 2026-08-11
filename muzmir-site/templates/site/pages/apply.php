@@ -9,10 +9,17 @@ require_once BASE_PATH . '/core/loyalty.php';
 $comps = all("SELECT id,slug,code,name,type,is_paid,price,diploma_bg FROM competitions
               WHERE status='open' AND COALESCE(launched,0) = 1 ORDER BY sort");
 
-// Предвыбор конкурса из ?competition=slug
+// Предвыбор конкурса из ?competition=slug или ?comp=id.
+// Второй вид ссылки уже разослан письмами и стоит в очереди, поэтому он тоже
+// обязан работать: иначе человек с письма попадает на форму без выбранного
+// конкурса и решает, что «ничего не открылось».
 $preSlug = preg_replace('/[^a-z0-9\-]/', '', (string)input('competition', ''));
 $preId = 0;
 foreach ($comps as $c) { if ($c['slug'] === $preSlug) { $preId = (int)$c['id']; break; } }
+if (!$preId) {
+    $preCid = (int) input('comp', 0);
+    foreach ($comps as $c) { if ((int)$c['id'] === $preCid) { $preId = (int)$c['id']; break; } }
+}
 
 $noms = NOMINATIONS();
 $ages = AGE_CATEGORIES();

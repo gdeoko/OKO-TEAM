@@ -453,10 +453,7 @@ function lm_mail_thanks(array $inst, string $number, int $works = 0, array $teac
 
 /** «Уважаемая Мария Петровна!» по полному ФИО; без ФИО — нейтрально. */
 function lm_salut(string $fio): string {
-    $parts = preg_split('~\s+~u', trim($fio)) ?: [];
-    if (count($parts) >= 3) return ol_salut_word($parts[2]) . ' ' . $parts[1] . ' ' . $parts[2] . '!';
-    if (count($parts) === 2) return ol_salut_word($parts[1]) . ' ' . $parts[1] . '!';
-    return 'Уважаемые коллеги!';
+    return ol_salutation($fio);
 }
 
 /** «Иванова Мария Петровна» → «Мария Петровна» (для темы письма). */

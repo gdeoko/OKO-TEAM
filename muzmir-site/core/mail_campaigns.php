@@ -150,7 +150,11 @@ function mmc_competition_card(array $c): string {
     $end   = trim((string) ($c['end_date'] ?? ''));
     $endL  = $end !== '' ? ('Приём заявок до ' . date('d.m.Y', strtotime($end))) : '';
 
-    $applyUrl = $base . '/apply?comp=' . (int) ($c['id'] ?? 0);
+    // Форма подачи ждёт ?competition=<slug>; ссылку по id она понимает как
+    // запасной вариант, но канонический адрес — со слагом.
+    $applyUrl = $slug !== ''
+        ? $base . '/apply?competition=' . rawurlencode($slug)
+        : $base . '/apply?comp=' . (int) ($c['id'] ?? 0);
     $regUrl   = $base . '/competition/' . rawurlencode($slug) . '/regulation.pdf';
 
     $img = $cover !== ''
