@@ -9,6 +9,10 @@
 
 if (!defined('RC_ROOT')) define('RC_ROOT', __DIR__);
 
+/* Файлы данных пишет и веб-сервер, и бот из расписания. Групповая
+   запись нужна, чтобы они не мешали друг другу. */
+umask(0002);
+
 /* ── Значения по умолчанию ───────────────────────────────── */
 $RC = [
     /* Сайт */
@@ -47,16 +51,12 @@ if (empty($RC['mail_to'])) $RC['mail_to'] = $RC['mail_user'];
 
 date_default_timezone_set($RC['tz']);
 
-/* Привязки чата и тем бот записывает сам по команде /bindchat,
-   поэтому руками их в конфиг вносить не нужно. */
-$__bind = __DIR__ . '/data/bindings.json';
-if (is_file($__bind)) {
-    $b = json_decode((string)@file_get_contents($__bind), true);
-    if (is_array($b)) foreach ($b as $k => $v) if ($v !== '' && $v !== null) $RC[$k] = $v;
-}
 
-/* ── Хранилище ───────────────────────────────────────────── */
-define('RC_DATA',   RC_ROOT . '/data');
+/* ── Хранилище ───────────────────────────────────────────────
+   По умолчанию данные лежат рядом с сайтом в папке data и закрыты
+   правилами веб-сервера. Если сервер настроить не получается, задайте
+   в config.local.php ключ data_dir и уведите папку выше корня сайта. */
+define('RC_DATA',   !empty($RC['data_dir']) ? rtrim($RC['data_dir'], '/') : RC_ROOT . '/data');
 define('RC_STATS',  RC_DATA . '/stats');
 define('RC_LEADS',  RC_DATA . '/leads.json');
 define('RC_CONTENT',RC_DATA . '/content.json');
@@ -65,6 +65,14 @@ define('RC_LOG',    RC_DATA . '/errors.log');
 
 foreach ([RC_DATA, RC_STATS] as $dir) {
     if (!is_dir($dir)) @mkdir($dir, 0775, true);
+}
+
+/* Привязки чата и тем бот записывает сам по команде /bindchat,
+   поэтому руками их в конфиг вносить не нужно. */
+$__bind = RC_DATA . '/bindings.json';
+if (is_file($__bind)) {
+    $b = json_decode((string)@file_get_contents($__bind), true);
+    if (is_array($b)) foreach ($b as $k => $v) if ($v !== '' && $v !== null) $RC[$k] = $v;
 }
 
 /* ── Мелкие помощники ────────────────────────────────────── */
