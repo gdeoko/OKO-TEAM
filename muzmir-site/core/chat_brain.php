@@ -235,20 +235,51 @@ function chat_official_kb(): string {
  * Та же база знаний (chat_system_prompt) через systemInstruction.
  * Тихий фолбэк на null при любой ошибке — дальше Claude/агент/rule-based.
  */
+/** Короткая метка ключа для журнала и настроек — сам ключ никуда не пишем. */
+function chat_gemini_tag(string $key): string { return 'gemquota:' . substr(md5($key), 0, 10); }
+
+/**
+ * Отметить, что у ключа кончилась квота.
+ *
+ * Суточные лимиты Gemini обнуляются по календарным суткам, поэтому и метка живёт
+ * до конца дня: завтра ключ снова пробуется первым.
+ */
+function chat_gemini_mark_exhausted(string $key): void {
+    if (!function_exists('set_setting')) return;
+    try { set_setting(chat_gemini_tag($key), date('Y-m-d')); } catch (\Throwable $e) {}
+}
+
+/** Исчерпан ли ключ сегодня. */
+function chat_gemini_is_exhausted(string $key): bool {
+    if (!function_exists('setting')) return false;
+    try { return (string) setting(chat_gemini_tag($key), '') === date('Y-m-d'); }
+    catch (\Throwable $e) { return false; }
+}
+
 /**
  * Ключи Gemini в том порядке, в каком их пробовать.
  *
  * Порядок здесь — не формальность, а деньги. Первым идёт ключ с бесплатной квотой:
- * пока она есть, центр не платит ни копейки. Когда бесплатный упрётся в лимит и
- * ответит отказом, очередь дойдёт до оплаченного, и разговор с участником не
- * прервётся. Поэтому список берётся как записан, без перетасовки.
+ * пока она есть, центр не платит ни копейки. Когда бесплатный упрётся в лимит,
+ * очередь доходит до оплаченного, и разговор с участником не прерывается.
+ *
+ * Но ходить в выбитый ключ на каждом сообщении — значит дарить участнику лишние
+ * секунды ожидания и без толку долбить Google отказами. Поэтому исчерпанный ключ
+ * до конца суток уходит в конец очереди, а назавтра возвращается на первое место
+ * сам: суточные лимиты обнуляются по календарю.
+ *
+ * Если выбитыми оказались все — пробуем всё равно: вдруг лимит уже сброшен.
  */
 function chat_gemini_keys(): array {
     $raw = trim((string) (cfgv('gemini_api_keys') ?: ''));
     $keys = $raw !== '' ? preg_split('~[,\s]+~', $raw) : [];
     $one = trim((string) (cfgv('gemini_api_key') ?: ''));
     if ($one !== '') $keys[] = $one;
-    return array_values(array_unique(array_filter(array_map('trim', $keys))));
+    $keys = array_values(array_unique(array_filter(array_map('trim', $keys))));
+
+    $fresh = []; $spent = [];
+    foreach ($keys as $k) { chat_gemini_is_exhausted($k) ? $spent[] = $k : $fresh[] = $k; }
+    return array_merge($fresh, $spent);
 }
 
 function chat_gemini_reply(string $apiKey, string $sessionKey, string $text): ?string {
@@ -292,6 +323,9 @@ function chat_gemini_reply(string $apiKey, string $sessionKey, string $text): ?s
     $err  = curl_errno($ch);
     $code = (int) curl_getinfo($ch, CURLINFO_RESPONSE_CODE);
     curl_close($ch);
+    // 429 — квота кончилась. Запоминаем, чтобы до завтра не тратить на этот ключ
+    // время каждого сообщения, а сразу идти к следующему.
+    if ($code === 429) chat_gemini_mark_exhausted($apiKey);
     if ($err || !$resp || $code >= 400) return null;
 
     $d = json_decode((string) $resp, true);
