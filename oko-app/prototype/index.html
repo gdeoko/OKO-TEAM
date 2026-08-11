@@ -1471,14 +1471,53 @@ window.okoTrack = function(event, props){
   try{ window.amplitude && amplitude.track && amplitude.track(event, props||{}); }catch(e){}
   try{ window.Sentry && Sentry.addBreadcrumb && Sentry.addBreadcrumb({category:'oko', message:event, level:'info', data:props||{}}); }catch(e){}
 };
-/* Yandex Metrika (загружает mc.yandex.ru асинхронно) */
-(function(m,e,t,r,i,k,a){m[i]=m[i]||function(){(m[i].a=m[i].a||[]).push(arguments)};m[i].l=1*new Date();for(var j=0;j<document.scripts.length;j++){if(document.scripts[j].src===r){return;}}k=e.createElement(t),a=e.getElementsByTagName(t)[0],k.async=1,k.src=r,a.parentNode.insertBefore(k,a)})(window,document,'script','https://mc.yandex.ru/metrika/tag.js','ym');
-try{ ym(window.OKO_ANALYTICS.ymk, 'init', {clickmap:true,trackLinks:true,accurateTrackBounce:true,webvisor:true}); }catch(e){}
+
+/* Ключей ещё нет — значит и грузить нечего.
+
+   Раньше все три библиотеки тянулись безусловно: около 200 КБ стороннего
+   кода и три запроса на чужие домены при каждом старте, причём Метрика
+   инициализировалась строкой 'YOUR_YMK_ID' и всё равно ходила на
+   mc.yandex.ru. Человек за это платил трафиком и задержкой, а взамен не
+   получал ничего — счётчика с таким идентификатором не существует.
+
+   Теперь загрузчик проверяет ключ. Как только Даниэль подставит настоящие
+   значения в window.OKO_ANALYTICS (до этого <script> или через config на
+   сервере), аналитика включится сама — менять здесь ничего не придётся. */
+(function(){
+  var К = window.OKO_ANALYTICS || {};
+  var задан = function(v){
+    return !!v && typeof v === 'string' && v.indexOf('YOUR_') !== 0 && v.length > 4;
+  };
+  var догрузить = function(src, onload){
+    var s = document.createElement('script');
+    s.async = true; s.src = src;
+    if (src.indexOf('sentry-cdn') >= 0) s.crossOrigin = 'anonymous';
+    s.onload = onload;
+    document.head.appendChild(s);
+  };
+
+  /* Яндекс.Метрика.
+     ВНИМАНИЕ: webvisor записывает экран целиком — вместе с личными
+     сообщениями, кошельком и настройками. Включать только осознанно
+     и только предупредив людей в политике конфиденциальности. */
+  if (задан(К.ymk)) {
+    (function(m,e,t,r,i,k,a){m[i]=m[i]||function(){(m[i].a=m[i].a||[]).push(arguments)};m[i].l=1*new Date();for(var j=0;j<document.scripts.length;j++){if(document.scripts[j].src===r){return;}}k=e.createElement(t),a=e.getElementsByTagName(t)[0],k.async=1,k.src=r,a.parentNode.insertBefore(k,a)})(window,document,'script','https://mc.yandex.ru/metrika/tag.js','ym');
+    try{ ym(К.ymk, 'init', {clickmap:true,trackLinks:true,accurateTrackBounce:true,webvisor:false}); }catch(e){}
+  }
+
+  if (задан(К.amp)) {
+    догрузить('https://cdn.amplitude.com/libs/analytics-browser-2.0.0-min.js.gz', function(){
+      try{ window.amplitude && amplitude.init(К.amp); }catch(e){}
+    });
+  }
+
+  if (задан(К.sentry)) {
+    догрузить('https://browser.sentry-cdn.com/7.x/bundle.min.js', function(){
+      try{ window.Sentry && Sentry.init({dsn: К.sentry, tracesSampleRate: 0.1}); }catch(e){}
+    });
+  }
+})();
 </script>
-<script async src="https://cdn.amplitude.com/libs/analytics-browser-2.0.0-min.js.gz"
-  onload="try{window.amplitude && amplitude.init(window.OKO_ANALYTICS.amp);}catch(e){}"></script>
-<script async src="https://browser.sentry-cdn.com/7.x/bundle.min.js" crossorigin="anonymous"
-  onload="try{window.Sentry && Sentry.init({dsn:window.OKO_ANALYTICS.sentry, tracesSampleRate:0.1});}catch(e){}"></script>
 
 <style>
 /* ============ OKO A11Y polish ============ */
