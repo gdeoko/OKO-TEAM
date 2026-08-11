@@ -245,16 +245,19 @@
    инлайновый стиль, обычное правило его не перебьёт.
    ============================================================================ */
 @media (max-width: 360px){
-  header .hdr-actions{ gap: 0 !important; }
+  /* Держим 44px даже на узких экранах: две-три иконки по 44px + заголовок
+     помещаются в ~328px шапки. Прежнее ужимание до 36px нарушало цель
+     нажатия (обновлено 11.08 — было width:36px). */
+  header .hdr-actions{ gap: 2px !important; }
   header .hdr-actions > button,
   header .theme-btn,
   header .notif-btn{
-    width: 36px !important;
-    min-width: 36px !important;
-    height: 36px !important;
-    min-height: 36px !important;
+    width: 44px !important;
+    min-width: 44px !important;
+    height: 44px !important;
+    min-height: 44px !important;
   }
-  header .hdr-actions svg.i{ width: 18px; height: 18px; }
+  header .hdr-actions svg.i{ width: 19px; height: 19px; }
   header .screen-title{ font-size: clamp(14px, 4.4vw, 17px); }
 }
 
