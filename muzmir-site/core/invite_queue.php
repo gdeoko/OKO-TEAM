@@ -87,24 +87,28 @@ function invite_queue_institutions(int $limit = 500): array {
         $letter = null;
         $fio = trim((string) ($r['director'] ?? ''));
         if ($fio !== '') {
-            $letter = invite_official_letter($r, $fio);
+            $letter = invite_official_letter($r, $fio, $comps, $unsub);
         }
 
         $mail = $letter
-            ? ['subject' => $letter['subject'], 'html' => $letter['html'] . invite_unsub_line($unsub)]
+            ? ['subject' => $letter['subject'], 'html' => $letter['html']]
             : invite_institution_email($comps, $unsub, ['deadline' => $deadlineHuman]);
 
         try {
+            $pdf = $letter ? (string) ($letter['pdf'] ?? '') : '';
             $qid = (int) insert('mail_queue', [
                 'to_email'      => mb_strtolower($email),
                 'to_name'       => (string) $r['name'],
                 'subject'       => (string) $mail['subject'],
                 'body'          => (string) $mail['html'],
+                // Документ уходит файлом: его распечатывают и подшивают, а из тела
+                // письма подшить нечего.
+                'attach'        => $pdf !== '' && is_file($pdf) ? $pdf : '',
                 'status'        => 'queued',
                 'priority'      => 5,          // МАССОВОЕ: пойдёт через bulk-пул по норме
                 // Свой тип кампании: у писем учреждениям отдельная суточная доля,
                 // иначе они встали бы в очередь ЗА волной по своей базе и начали
-                // уходить через две недели — когда приём уже закрыт.
+                // уходить через две недели, когда приём уже закрыт.
                 'campaign_type' => 'inst',
             ]);
             // Реестр исходящих узнаёт, каким письмом ушло обращение: пока письмо
@@ -126,40 +130,41 @@ function invite_queue_institutions(int $limit = 500): array {
 }
 
 /**
- * Официальное обращение в учреждение — бланком прямо в теле письма.
+ * Официальное обращение в учреждение — письмом с ИЗОБРАЖЕНИЕМ документа.
  *
- * Вложением PDF здесь НЕ отправляем сознательно. Во-первых, тридцать тысяч
- * писем с гигабайтами вложений — это часы отправки и почти гарантированный
- * спам-фильтр. Во-вторых, вложение надо открыть, а бланк в теле виден сразу,
- * с логотипом, подписью, печатью, исходящим номером и QR-кодом проверки.
- * Картинки идут ссылками на наш сайт, поэтому письмо весит килобайты.
+ * Раньше бланк вставлялся в тело письма разметкой. В браузере он выглядел
+ * ровным листом А4, а в почте разваливался: клиенты не поддерживают ни grid,
+ * ни flex, ни миллиметры — печать растягивалась во весь экран, QR занимал
+ * пол-письма. Теперь лист рисуется картинкой и вставляется одним изображением,
+ * а вокруг идёт обычный фирменный шаблон письма с кнопками и текстом.
  */
-function invite_official_letter(array $inst, string $fio): ?array {
-    if (!function_exists('ol_create'))  require_once __DIR__ . '/letter_texts.php';
-    if (!function_exists('ol_migrate')) require_once __DIR__ . '/official_letter.php';
+function invite_official_letter(array $inst, string $fio, array $comps, string $unsub = ''): ?array {
+    if (!function_exists('ol_create'))          require_once __DIR__ . '/letter_texts.php';
+    if (!function_exists('lm_mail_institution')) require_once __DIR__ . '/letter_mail.php';
 
-    $city = trim((string) ($inst['city'] ?? ''));
     $o = [
         'kind'        => 'institution',
         'org'         => (string) ($inst['name'] ?? ''),
         'person'      => $fio,
         'person_role' => 'Руководителю ' . (string) ($inst['name'] ?? ''),
         'region'      => (string) ($inst['region'] ?? ''),
-        'city'        => $city,
+        'city'        => trim((string) ($inst['city'] ?? '')),
         'email'       => (string) ($inst['email'] ?? ''),
-        'embed'       => false,          // картинки ссылками — письмо лёгкое
     ];
 
     try { $L = ol_create($o); } catch (\Throwable $e) { return null; }
 
-    $parts = preg_split('~\s+~u', $fio) ?: [];
-    $name  = count($parts) >= 3 ? ($parts[1] . ' ' . $parts[2]) : $fio;
+    $inst['director'] = $fio;
+    try {
+        $mail = lm_mail_institution($inst, (string) $L['number'], $comps, $unsub);
+    } catch (\Throwable $e) { return null; }
 
     return [
         'id'      => (int) $L['id'],
         'number'  => (string) $L['number'],
-        'subject' => $name . ', приглашаем учреждение к участию в конкурсах (исх. №' . $L['number'] . ')',
-        'html'    => (string) $L['html'],
+        'subject' => (string) $mail['subject'],
+        'html'    => (string) $mail['html'],
+        'pdf'     => (string) ($mail['pdf'] ?? ''),
     ];
 }
 
@@ -197,17 +202,19 @@ function invite_requeue_institutions(int $limit = 500, int $months = 3): array {
         $unsub = $base . '/api/v1/unsubscribe.php?token=' . urlencode($token);
 
         $fio    = trim((string) ($r['director'] ?? ''));
-        $letter = $fio !== '' ? invite_official_letter($r, $fio) : null;
+        $letter = $fio !== '' ? invite_official_letter($r, $fio, $comps, $unsub) : null;
         $mail   = $letter
-            ? ['subject' => $letter['subject'], 'html' => $letter['html'] . invite_unsub_line($unsub)]
+            ? ['subject' => $letter['subject'], 'html' => $letter['html']]
             : invite_institution_email($comps, $unsub, []);
 
         try {
+            $pdf = $letter ? (string) ($letter['pdf'] ?? '') : '';
             $qid = (int) insert('mail_queue', [
                 'to_email'      => mb_strtolower($email),
                 'to_name'       => (string) $r['name'],
                 'subject'       => (string) $mail['subject'],
                 'body'          => (string) $mail['html'],
+                'attach'        => $pdf !== '' && is_file($pdf) ? $pdf : '',
                 'status'        => 'queued',
                 'priority'      => 5,
                 'campaign_type' => 'inst',
@@ -238,11 +245,17 @@ function invite_requeue_institutions(int $limit = 500, int $months = 3): array {
  */
 function invite_queue_thanks(int $limit = 200): array {
     inst_migrate();
-    if (!function_exists('ol_create')) require_once __DIR__ . '/letter_texts.php';
+    if (!function_exists('ol_create'))     require_once __DIR__ . '/letter_texts.php';
+    if (!function_exists('lm_mail_thanks')) require_once __DIR__ . '/letter_mail.php';
     if (!function_exists('nl_ensure_campaign_type_col')) require_once __DIR__ . '/newsletter.php';
     nl_ensure_campaign_type_col();
 
     $season = date('Y');
+
+    // БЛАГОДАРИМ ТОЛЬКО ТЕХ, КТО ДЕЙСТВИТЕЛЬНО УЧАСТВОВАЛ ИЛИ ОТВЕТИЛ.
+    // Разослать благодарность «за поддержку» тому, кто нам ни разу не ответил и
+    // никого не выставил, значит соврать в документе с печатью. Такое письмо
+    // обесценивает все остальные и злит адресата.
     $rows = [];
     try {
         $rows = all(
@@ -258,6 +271,12 @@ function invite_queue_thanks(int $limit = 200): array {
     $queued = 0;
     foreach ($rows as $r) {
         $fio = trim((string) ($r['director'] ?? ''));
+
+        // Кто из педагогов этого учреждения выставлял учеников. Название
+        // учреждения участник вписывает руками, поэтому сравниваем по нормали:
+        // без кавычек, регистра и лишних пробелов.
+        [$teachers, $works] = invite_thanks_teachers((string) $r['name']);
+
         $o = [
             'kind'        => 'thanks',
             'org'         => (string) $r['name'],
@@ -266,17 +285,33 @@ function invite_queue_thanks(int $limit = 200): array {
             'region'      => (string) $r['region'],
             'email'       => (string) $r['email'],
             'season'      => $season,
-            'embed'       => false,
+            'teachers'    => $teachers,
+            'works'       => $works,
         ];
 
         try { $L = ol_create($o); } catch (\Throwable $e) { continue; }
+
+        try { $mail = lm_mail_thanks($r + ['director' => $fio], (string) $L['number'], $works, $teachers); }
+        catch (\Throwable $e) { continue; }
+
+        // К письму директору прикладываем и его благодарность, и персональные
+        // благодарности каждому педагогу: их вручают на педсовете.
+        $files = [];
+        $pdf = (string) ($mail['pdf'] ?? '');
+        if ($pdf !== '' && is_file($pdf)) $files[] = $pdf;
+        foreach ($teachers as $t) {
+            $f = invite_thanks_teacher_pdf((string) $r['name'], (string) ($t['name'] ?? ''), (int) ($t['works'] ?? 0));
+            if ($f !== '') $files[] = $f;
+        }
 
         try {
             $qid = (int) insert('mail_queue', [
                 'to_email'      => mb_strtolower((string) $r['email']),
                 'to_name'       => (string) $r['name'],
-                'subject'       => 'Благодарственное письмо Культурного центра «Музыкальный Мир» (исх. №' . $L['number'] . ')',
-                'body'          => (string) $L['html'],
+                'subject'       => (string) $mail['subject'],
+                'body'          => (string) $mail['html'],
+                'attach'        => $files
+                    ? json_encode($files, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES) : '',
                 'status'        => 'queued',
                 'priority'      => 0,          // это личное письмо, а не рассылка
                 'campaign_type' => 'official',
@@ -290,6 +325,74 @@ function invite_queue_thanks(int $limit = 200): array {
     }
 
     return ['queued' => $queued, 'candidates' => count($rows)];
+}
+
+/** Название учреждения без кавычек, регистра и сокращений, для сравнения. */
+function invite_norm_org(string $s): string {
+    $s = mb_strtolower(trim($s));
+    $s = str_replace(['«', '»', '"', "'", '.', ','], ' ', $s);
+    $s = preg_replace('~\b(мбу|мау|мбоу|маоу|гбу|гау|моу|му|до|дод|оу)\b~u', ' ', $s) ?? $s;
+    return trim(preg_replace('~\s+~u', ' ', $s) ?? $s);
+}
+
+/**
+ * Педагоги учреждения, чьи ученики прошли аттестацию, и общее число работ.
+ *
+ * @return array{0: array<int, array{name:string, works:int}>, 1: int}
+ */
+function invite_thanks_teachers(string $org): array {
+    $key = invite_norm_org($org);
+    if ($key === '') return [[], 0];
+
+    $rows = [];
+    try {
+        $rows = all("SELECT teacher, institution FROM applications
+                      WHERE COALESCE(teacher,'') <> '' AND COALESCE(institution,'') <> ''
+                        AND COALESCE(status,'') NOT IN ('rejected','draft')");
+    } catch (\Throwable $e) { return [[], 0]; }
+
+    $by = []; $works = 0;
+    foreach ($rows as $r) {
+        if (invite_norm_org((string) $r['institution']) !== $key) continue;
+        $t = trim((string) $r['teacher']);
+        if ($t === '') continue;
+        $k = mb_strtolower($t);
+        if (!isset($by[$k])) $by[$k] = ['name' => $t, 'works' => 0];
+        $by[$k]['works']++;
+        $works++;
+    }
+
+    usort($by, fn($a, $b) => $b['works'] <=> $a['works']);
+    return [array_values($by), $works];
+}
+
+/**
+ * Персональная благодарность педагогу файлом.
+ * Возвращает путь к PDF или пустую строку.
+ */
+function invite_thanks_teacher_pdf(string $org, string $teacher, int $works): string {
+    $teacher = trim($teacher);
+    if ($teacher === '') return '';
+    if (!function_exists('pdf_official_letter')) require_once __DIR__ . '/pdf_letter.php';
+    if (!function_exists('ol_create'))           require_once __DIR__ . '/letter_texts.php';
+
+    try {
+        $L = ol_create([
+            'kind'        => 'thanks',
+            'org'         => $org,
+            'person'      => $teacher,
+            'person_role' => 'Преподавателю ' . $org,
+            'season'      => date('Y'),
+        ]);
+        return pdf_official_letter([
+            'number'     => (string) $L['number'],
+            'title'      => 'Благодарственное письмо',
+            'addressee'  => array_values(array_filter(['Преподавателю ' . $org, $teacher])),
+            'salutation' => lm_salut($teacher),
+            'body'       => ol_body_teacher($teacher, $org, $works),
+            'no_approve' => true,
+        ]);
+    } catch (\Throwable $e) { return ''; }
 }
 
 /** Строка отписки под бланком — обязательна даже в официальном письме. */

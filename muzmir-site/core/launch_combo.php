@@ -77,18 +77,8 @@ function launch_combo_inner(bool $withCabinet, bool $withVip, string $email, str
     if ($ov !== '') {
         $inner = $ov;
     } else {
-        // 1. Конкурсы месяца — эталон кампании «новые конкурсы» (с афишами и кнопками).
-        $inner = campaign_inner('new_competitions');
-
-        // 2. Личный кабинет с доступом — только тем, кто ещё ни разу не входил.
-        $inner .= LC_CAB_OPEN
-                . '<div style="height:1px;background:#E8DFC8;margin:26px 0"></div>' . kabinet_onboarding_inner()
-                . LC_CAB_CLOSE;
-
-        // 3. Клуб постоянных участников — только тем, кто ещё не состоит.
-        $inner .= LC_VIP_OPEN
-                . '<div style="height:1px;background:#E8DFC8;margin:26px 0"></div>' . campaign_inner('vip')
-                . LC_VIP_CLOSE;
+        // Единое письмо, а не три склеенных: см. launch_combo_body().
+        $inner = launch_combo_body($name, $email, $pass);
     }
 
     // УСЛОВНЫЕ БЛОКИ ВЫРЕЗАЮТСЯ ЗДЕСЬ, А НЕ ПРИ СБОРКЕ.
@@ -265,4 +255,105 @@ function launch_combo_enqueue(bool $dry = false, int $limit = 20000): array {
 
     return ['queued' => $queued, 'with_cabinet' => $withCab, 'with_vip' => $withVip,
             'skipped' => $skipped, 'newsletter_id' => $nid];
+}
+
+/**
+ * ЕДИНОЕ ПИСЬМО ЗАПУСКА — конкурсы, кабинет и клуб одним текстом.
+ *
+ * Первая версия склеивала три готовых письма подряд, и получалось ровно то, что
+ * склеено: три приветствия «Здравствуйте, Мария Петровна!», дважды одна и та же
+ * плашка про информационную поддержку, три кнопки «Вступить в Клуб» и девять
+ * тысяч точек длины. Человек до конца такого письма не доходит.
+ *
+ * Здесь письмо написано как одно письмо: одно приветствие, одна плашка, конкурсы,
+ * одно действие. Доступ в кабинет и приглашение в клуб — короткими блоками в
+ * конце, и только тем, кому они нужны (метки LC_CAB_* и LC_VIP_* вырезаются
+ * вызывающим кодом).
+ */
+function launch_combo_body(string $name, string $email, string $pass): string {
+    $navy = MM_NAVY; $ink = MM_INK; $muted = MM_MUTED; $line = MM_LINE; $card = MM_CARD;
+    $base = mmc_base();
+
+    try {
+        $comps = all("SELECT id, name, slug, cover, type, is_paid, price, end_date
+                        FROM competitions WHERE status='open' ORDER BY is_paid ASC, sort ASC, id ASC");
+    } catch (\Throwable $e) { $comps = []; }
+
+    $free = array_values(array_filter($comps, fn($c) => (int) ($c['is_paid'] ?? 0) !== 1));
+    $end  = '';
+    foreach ($comps as $c) {
+        $e = trim((string) ($c['end_date'] ?? ''));
+        if ($e !== '' && ($end === '' || $e < $end)) $end = $e;
+    }
+    $endRu = $end !== '' ? (function_exists('ru_date') ? ru_date($end) : date('d.m.Y', strtotime($end))) : '';
+
+    $p = fn(string $t) => '<p style="margin:0 0 14px;font:16px/1.65 Arial,sans-serif;color:' . $ink . '">' . $t . '</p>';
+
+    /* Приветствие — ровно одно на письмо. */
+    $out = '<h1 style="margin:0 0 6px;font:700 24px/1.3 Georgia,\'Times New Roman\',serif;color:' . $navy . '">'
+         . 'Здравствуйте, {{name}}!</h1>'
+         . '<div style="font:15px/1.6 Arial,sans-serif;color:' . $muted . ';margin:0 0 18px">'
+         . 'Открыт приём заявок на конкурсы' . ($endRu !== '' ? ' — до ' . h($endRu) : '') . '</div>';
+
+    $out .= $p('Международные и всероссийские творческие конкурсы с настоящими наградами, '
+        . 'официальными и аттестационными дипломами. Участие дистанционное: работа принимается '
+        . 'видеозаписью или изображением по ссылке, приезжать никуда не нужно.');
+
+    if ($free) {
+        $names = array_map(fn($c) => '«' . (string) $c['name'] . '»', $free);
+        $out .= '<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin:4px 0 20px">'
+             . '<tr><td style="background:' . $card . ';border-left:4px solid ' . MM_GOLD . ';'
+             . 'border-radius:0 10px 10px 0;padding:14px 18px;font:15px/1.6 Arial,sans-serif;color:' . $ink . '">'
+             . '<b>Участие в ' . h(implode(', ', $names)) . ' — бесплатное.</b> '
+             . 'Диплом с результатом аттестации жюри приходит на почту всем участникам.'
+             . '</td></tr></table>';
+    }
+
+    /* Конкурсы карточками — по одной, без повторов вокруг. */
+    foreach ($comps as $c) $out .= mmc_competition_card($c);
+
+    $out .= mm_email_btn($base . '/apply', 'Подать заявку', 'gold');
+
+    /* Кабинет — только тем, кто ещё не заходил. */
+    $out .= LC_CAB_OPEN
+         . '<div style="height:1px;background:' . $line . ';margin:26px 0"></div>'
+         . '<h2 style="margin:0 0 10px;font:700 19px/1.3 Georgia,serif;color:' . $navy . '">Личный кабинет открыт</h2>'
+         . $p('Заявки, результаты, электронные дипломы и заказ наград — в одном месте.')
+         . '<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin:0 0 16px">'
+         . '<tr><td style="background:' . MM_IVORY . ';border:1px solid ' . $line . ';border-radius:12px;padding:16px 18px">'
+         . '<div style="font:12px/1.4 Arial,sans-serif;color:' . $muted . ';text-transform:uppercase;letter-spacing:.06em">Логин</div>'
+         . '<div style="font:700 15px/1.5 Arial,sans-serif;color:' . $navy . ';margin-bottom:10px">{{login}}</div>'
+         . '<div style="font:12px/1.4 Arial,sans-serif;color:' . $muted . ';text-transform:uppercase;letter-spacing:.06em">Временный пароль</div>'
+         . '<div style="font:700 20px/1.4 \'Courier New\',monospace;color:' . $navy . ';letter-spacing:.06em">{{password}}</div>'
+         . '<div style="font:12px/1.5 Arial,sans-serif;color:' . $muted . ';margin-top:8px">Пароль можно сменить в настройках кабинета.</div>'
+         . '</td></tr></table>'
+         . mm_email_btn($base . '/cabinet', 'Войти в кабинет', 'navy')
+         . LC_CAB_CLOSE;
+
+    /* Клуб — только тем, кто ещё не состоит. Коротко: четыре причины и одна кнопка. */
+    // Процент берём из настройки напрямую: club_discount_percent() считает скидку
+    // КОНКРЕТНОГО человека и требует его id, а здесь речь о размере скидки вообще.
+    $disc = max(1, (int) setting('club_discount', '20'));
+    $out .= LC_VIP_OPEN
+         . '<div style="height:1px;background:' . $line . ';margin:26px 0"></div>'
+         . '<h2 style="margin:0 0 10px;font:700 19px/1.3 Georgia,serif;color:' . $navy . '">Клуб постоянных участников</h2>'
+         . $p('Для педагогов и активных участников — привилегии, ранние результаты и особые условия.')
+         . '<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin:0 0 16px">'
+         . lc_perk('Скидка ' . $disc . '% на всё', 'участие и наградные материалы')
+         . lc_perk('Результаты за 3 рабочих дня', 'вместо обычных пяти')
+         . lc_perk('Бесплатный конкурс каждый месяц', 'одна заявка в номинацию')
+         . lc_perk('Приоритетная поддержка', 'ответ в течение суток')
+         . '</table>'
+         . mm_email_btn($base . '/club', 'Вступить в Клуб', 'navy')
+         . LC_VIP_CLOSE;
+
+    return $out;
+}
+
+/** Строка списка привилегий клуба: название и пояснение под ним. */
+function lc_perk(string $title, string $note): string {
+    return '<tr><td style="padding:9px 0;border-bottom:1px solid ' . MM_LINE . '">'
+         . '<div style="font:700 15px/1.4 Arial,sans-serif;color:' . MM_INK . '">' . h($title) . '</div>'
+         . '<div style="font:13px/1.5 Arial,sans-serif;color:' . MM_MUTED . '">' . h($note) . '</div>'
+         . '</td></tr>';
 }

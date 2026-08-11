@@ -223,29 +223,19 @@ function mm_queue_all(bool $activate = false, int $limit = 0): array {
             'email'       => $email,
         ];
 
+        // Письмо собирается новым шаблоном: фирменный лейаут, изображение
+        // документа внутри и тот же PDF отдельным вложением. Бланк, вставленный
+        // в тело письма разметкой, в почтовых клиентах разваливается.
+        if (!function_exists('lm_mail_support')) require_once __DIR__ . '/letter_mail.php';
+
         $L = ol_create($o);
         $number = (string) $L['number'];
 
-        // Документ одним файлом — так его регистрируют во входящих.
-        $pdf = '';
-        try {
-            $pdf = pdf_official_letter([
-                'number'      => $number,
-                'title'       => 'Обращение',
-                'addressee'   => array_values(array_filter([
-                    (string) $r['person_role'] !== '' ? (string) $r['person_role'] : (string) $r['org'],
-                    (string) $r['person'],
-                ])),
-                'salutation'  => mm_salutation((string) $r['person']),
-                'body'        => ol_body_support($free, $o),
-                'attachments' => [
-                    'Положение о конкурсе (бесплатное участие).',
-                    'Афиша конкурса.',
-                    'Логотип Культурного центра «Музыкальный Мир».',
-                ],
-            ]);
-        } catch (\Throwable $e) { $pdf = ''; }
+        $r['branch'] = (string) ($r['branch'] ?? 'main');
+        try { $mail = lm_mail_support($r, $number, $free); }
+        catch (\Throwable $e) { $skipped++; continue; }
 
+        $pdf   = (string) ($mail['pdf'] ?? '');
         $files = $pdf !== '' && is_file($pdf) ? array_merge([$pdf], $att) : $att;
 
         $id = 0;
@@ -253,8 +243,8 @@ function mm_queue_all(bool $activate = false, int $limit = 0): array {
             $id = (int) insert('mail_queue', [
                 'to_email'      => mb_strtolower(min_email_ascii($email)),
                 'to_name'       => (string) $r['org'],
-                'subject'       => mm_subject($number),
-                'body'          => mm_cover_html($r, $number, $free, $press),
+                'subject'       => (string) $mail['subject'],
+                'body'          => (string) $mail['html'],
                 'attach'        => json_encode($files, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES),
                 'status'        => $status,
                 'priority'      => 0,                 // официальная почта центра, не рассылка

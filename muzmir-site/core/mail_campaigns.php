@@ -168,7 +168,10 @@ function mmc_competition_card(array $c): string {
         . '<tr><td style="padding:16px 18px 18px;">'
         . '<div style="display:inline-block;background:' . $card . ';color:' . $navy . ';font-size:11px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;padding:4px 10px;border-radius:20px;margin-bottom:8px;">' . h($typeL) . '</div>'
         . '<div style="font-family:Georgia,serif;font-size:19px;font-weight:700;color:' . $navy . ';line-height:1.25;">' . h($name) . '</div>'
-        . ($endL !== '' ? '<div style="font-size:13px;color:' . $muted . ';margin-top:6px;">📅 ' . h($endL) . '</div>' : '')
+        // Эмодзи в письмах центра не используем: часть почтовых клиентов рисует
+        // их чёрно-белым квадратом, а на бланке официального центра это выглядит
+        // несерьёзно. Дату выделяем шрифтом, а не картинкой.
+        . ($endL !== '' ? '<div style="font-size:13px;color:' . $muted . ';margin-top:6px;font-weight:600;">' . h($endL) . '</div>' : '')
         . $btns
         . '</td></tr></table>';
 }
