@@ -773,16 +773,64 @@ function nl_per_box_cap(string $box = ''): int {
  *
  * Отключить прогрев: настройка nl_warmup = '0' (тогда берётся nl_service_cap).
  */
+/**
+ * ОСТАТОК ОПЛАЧЕННОГО ОБЪЁМА СЕРВИСА НА ЭТОТ МЕСЯЦ.
+ *
+ * У тарифа рассылок есть месячная квота, и она кончается раньше, чем база.
+ * Без этой проверки конец квоты выглядел бы как massовый сбой отправки: сервис
+ * начал бы отбивать письма ошибкой, очередь — считать их неудачами, а адреса
+ * рисковали бы уехать в отказники по чужой вине.
+ *
+ * Поэтому объём считается сами и заканчивается тихо: дневная норма опускается до
+ * остатка, а на нуле отправка через сервис просто останавливается.
+ *
+ * nl_service_month_cap = 0 снимает ограничение (безлимитный тариф).
+ */
+function nl_service_month_left(): int {
+    $cap = (int) setting('nl_service_month_cap', '0');
+    if ($cap <= 0) return PHP_INT_MAX;
+
+    $sent = (int) (scalar("SELECT COUNT(*) FROM mail_queue
+                            WHERE status='sent' AND COALESCE(priority,0) > 0
+                              AND sent_at >= date('now','start of month')") ?? 0);
+    return max(0, $cap - $sent);
+}
+
+/** Израсходовано за месяц и сколько всего оплачено — для админки и отчётов. */
+function nl_service_month_usage(): array {
+    $cap  = (int) setting('nl_service_month_cap', '0');
+    $sent = (int) (scalar("SELECT COUNT(*) FROM mail_queue
+                            WHERE status='sent' AND COALESCE(priority,0) > 0
+                              AND sent_at >= date('now','start of month')") ?? 0);
+    return [
+        'cap'  => $cap,
+        'sent' => $sent,
+        'left' => $cap > 0 ? max(0, $cap - $sent) : -1,
+        'pct'  => $cap > 0 ? (int) round($sent * 100 / $cap) : 0,
+    ];
+}
+
 function nl_service_cap_today(): int {
     $flat = max(1, (int) setting('nl_service_cap', '1000'));
-    if ((string) setting('nl_warmup', '1') !== '1') return $flat;
+    // Месячная квота сильнее любой дневной нормы: платим за месяц, а не за день.
+    $left = nl_service_month_left();
+    if ($left <= 0) return 0;
+    if ((string) setting('nl_warmup', '1') !== '1') return min($flat, $left);
 
     // День прогрева считаем от первой массовой отправки через сервис.
     $since = trim((string) setting('nl_warmup_started', ''));
     if ($since === '') return min($flat, 500);           // ещё не начинали
     $days = (int) floor((time() - strtotime($since)) / 86400);
 
+    // Лесенку можно задать настройкой: владелец решает, насколько быстро
+    // разгоняться, потому что это его домен и его риск. По умолчанию —
+    // осторожная, с полуторакратным ростом.
     $ladder = [500, 800, 1200, 1800, 2600, 3800, 5500, 8000, 10000];
+    $custom = trim((string) setting('nl_warmup_ladder', ''));
+    if ($custom !== '') {
+        $parsed = array_values(array_filter(array_map('intval', preg_split('~[^0-9]+~', $custom) ?: []), fn($n) => $n > 0));
+        if ($parsed) $ladder = $parsed;
+    }
     $cap = $ladder[min($days, count($ladder) - 1)];
 
     // Потолок из настроек: владелец может ограничить рост, если тариф сервиса
@@ -799,9 +847,9 @@ function nl_service_cap_today(): int {
                                    AND date(COALESCE(NULLIF(sent_at,''), created_at))=date('now')") ?? 0);
     if ($sentToday + $failToday >= 200 && $failToday > ($sentToday + $failToday) * 0.05) {
         $prev = $ladder[max(0, min($days - 1, count($ladder) - 1))];
-        return min($cap, $prev);
+        return min($cap, $prev, $left);
     }
-    return $cap;
+    return min($cap, $left);
 }
 
 /** Отмечает начало прогрева при первой же массовой отправке. */
