@@ -17,6 +17,7 @@
 import { chromium } from 'playwright-core';
 import fs from 'node:fs/promises';
 import path from 'node:path';
+import { CLEAN_START, CLOSE_OVERLAYS, RESET_ALL } from './clean-start.mjs';
 
 const args = Object.fromEntries(
   process.argv.slice(2).join(' ').split('--').filter(Boolean)
@@ -62,21 +63,18 @@ const ROUTES = [
 ];
 
 /* Скрипт до загрузки страницы (совпадает с audit.mjs). */
+/* Чистый старт берём общий, а не свой.
+
+   Свой был стар: он гасил splash, authScreen и старый #onboard, но не знал
+   про слой onb2 и про подсказки роста. Из-за этого пробник обходил экраны с
+   открытым окном «Знакомство с OKO» и мерил ЕГО: три «провала ловушки
+   фокуса» относились к окну знакомства, а самой частой мелкой целью с
+   29 попаданиями оказалась кнопка «Пропустить» из онбординга. Тот же урок,
+   что и в аудите (памятка, пункты 18 и 20): список экранов и список ключей
+   тишины руками не поддерживаются — они живут в clean-start.mjs. */
 function initScript(theme) {
-  return `
-    window.okoSkipAuth = function(){
-      try{ localStorage.setItem('oko-auth','tg'); }catch(e){}
-      var a=document.getElementById('authScreen'); if(a){a.classList.add('hidden'); a.style.display='none';}
-      var s=document.getElementById('splash'); if(s){s.classList.add('gone'); s.style.display='none';}
-      var o=document.getElementById('onboard'); if(o){o.classList.add('hidden'); o.style.display='none';}
-    };
-    try{
-      localStorage.setItem('oko-onboard-done','1');
-      localStorage.setItem('oko-stories-seen','1');
-      localStorage.setItem('oko-tour-done','1');
-      localStorage.setItem('oko-tour','1');
-      localStorage.setItem('oko-theme','${theme}');
-    }catch(e){}
+  return CLEAN_START + `
+    ;try{ localStorage.setItem('oko-theme','${theme}'); }catch(e){}
     document.addEventListener('DOMContentLoaded', function(){
       try{ document.documentElement.setAttribute('data-theme','${theme}'); }catch(e){}
     });
@@ -430,6 +428,12 @@ async function main() {
           jsErrors.length = 0;
           await page.goto(BASE, { waitUntil: 'domcontentloaded', timeout: 40000 });
           await page.waitForTimeout(route.wait || 900);
+          /* Гасим всё, что успело всплыть само: подсказки роста, приветствия,
+             оставшиеся открытыми подстраницы. Иначе следующий маршрут мерится
+             по чужому экрану. */
+          await page.evaluate(RESET_ALL).catch(() => {});
+          await page.evaluate(CLOSE_OVERLAYS).catch(() => {});
+          await page.waitForTimeout(200);
           if (route.step) {
             try { await page.evaluate(route.step); } catch (e) { rep.stepError = String(e).slice(0,140); }
             await page.waitForTimeout(700);
@@ -480,6 +484,11 @@ async function main() {
           smallTarget: rep.counts?.smallTarget || 0,
           noFocusRing: rep.focusRing?.noRingCount ?? null,
           jsErrors: (rep.jsErrors || []).length,
+          /* Тексты, а не только счёт: по числу «JS=1» чинить нечего, а без
+             сообщения непонятно даже, одна это ошибка на всех экранах или
+             девяносто шесть разных. */
+          jsErrorTexts: (rep.jsErrors || []).slice(0, 5),
+          smallTargetList: (rep.targets || rep.smallTargets || []).slice(0, 8),
           fatal: rep.fatal || undefined, stepError: rep.stepError || undefined,
         });
 
