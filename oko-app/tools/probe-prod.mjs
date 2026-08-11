@@ -20,6 +20,7 @@
      node oko-app/tools/probe-prod.mjs https://okoteam.top
    ============================================================================ */
 import fs from 'node:fs/promises';
+import { execFileSync } from 'node:child_process';
 
 const БАЗА = (process.argv[2] || 'https://okoteam.top').replace(/\/$/, '');
 const kb = n => (n / 1024).toFixed(0) + ' КБ';
@@ -68,7 +69,7 @@ const корень = await fetch(БАЗА + '/', { redirect: 'follow' }).catch((
 const индексРазмер = корень ? (await корень.arrayBuffer()).byteLength : 0;
 
 const строки = [];
-let подменено = 0, безСжатия = 0, вес = 0, ошибок = 0;
+let подменено = 0, безСжатия = 0, вес = 0, поПроводу = 0, ошибок = 0;
 
 for (const путь of список) {
   const url = БАЗА + '/' + путь.replace(/^\//, '');
@@ -93,9 +94,19 @@ for (const путь of список) {
   if (r.status !== 200) { ошибок++; строки.push(`  ✗ ${путь.padEnd(30)} статус ${r.status}`); continue; }
 
   вес += тело;
+  /* fetch распаковывает ответ молча, и «вес» получался распакованный: 7866 КБ
+     там, где по проводу летит 2603. Content-length при сжатии тоже не приходит
+     (ответ идёт chunked), поэтому настоящие байты спрашиваем у curl — он
+     без --compressed отдаёт ровно то, что пришло по проводу. */
+  let сжатыхБайт = тело;
+  try {
+    сжатыхБайт = +execFileSync('curl', ['-s', '-o', '/dev/null', '-H', 'Accept-Encoding: gzip, br',
+      '-w', '%{size_download}', БАЗА + '/' + путь, '--max-time', '40'], { encoding: 'utf-8' }).trim() || тело;
+  } catch (e) {}
+  поПроводу += сжатыхБайт;
   const крупный = тело > 100 * 1024;
   if (!сжат && крупный && /\.(js|css|json|svg|html)$/.test(путь)) безСжатия++;
-  строки.push(`  ✓ ${путь.padEnd(30)} ${тип.padEnd(26)} ${kb(тело).padStart(9)}${сжат ? '  ' + сжат : (крупный ? '  БЕЗ СЖАТИЯ' : '')}`);
+  строки.push(`  ✓ ${путь.padEnd(30)} ${тип.padEnd(22)} ${kb(сжатыхБайт).padStart(8)} по проводу${сжат ? '' : (крупный ? '   БЕЗ СЖАТИЯ' : '')}`);
 }
 
 console.log(`ПРОД: ${БАЗА}   (index.html = ${kb(индексРазмер)})\n`);
@@ -105,5 +116,5 @@ console.log(`  проверено файлов:      ${список.length}`);
 console.log(`  подменено фолбэком:    ${подменено}${подменено ? '   ← этих файлов на сервере НЕТ' : ''}`);
 console.log(`  не ответили / не 200:  ${ошибок}`);
 console.log(`  едут без сжатия:       ${безСжатия}`);
-console.log(`  вес первой загрузки:   ${kb(вес)}`);
+console.log(`  вес первой загрузки:   ${kb(поПроводу)} по проводу  (${kb(вес)} после распаковки)`);
 process.exit(подменено || ошибок ? 1 : 0);
