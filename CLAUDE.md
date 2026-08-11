@@ -311,6 +311,32 @@ cron, **и любая вложенность внутри `media/`** (`site/medi
 - nginx vhost: `/etc/nginx/sites-enabled/okoteam` (правки — только через `nginx -t` + reload, бэкапы в /root/okoteam.vhost.bak*). Контрол-эндпоинт — отдельный vhost `okoagents`, его не трогать (это lifeline).
 - Секреты сайта в `oko-app/site/config.example.php` (заглушки); реальный `config.php` на VPS. Платежи сайта — **Lava.top** (ссылки в config).
 
+## МОСТ В CLAUDE CODE ПОД MINI-APP — очередь тяжёлых задач (сделано 11.08)
+Мини-аппы кладут тяжёлую задачу (картинка/видео/клип/обложка/сайт/пост/письмо)
+в очередь, выполняет её сессия Claude Code («сливщик»). Мгновенный ИИ-чат —
+отдельно (`api.php?action=assistant`), работает всегда. Ядро агентов
+(`oko-agents`, платящие клиенты) НЕ трогается: очередь в своей SQLite сайта
+(`app_tasks`), www-data пишет напрямую, без контрол-эндпоинта и токенов на бэке.
+- **Клиент**: слой `media/app/oko-bridge.js` → `window.okoBridge.submit/status/
+  mine/watch/run`. Любой мини-апп зовёт его. В ОКО Ai подключено командой
+  `/картинка …` (ставит в очередь, результат приходит картинкой в переписку).
+  Никакой подделки «готово»: ждём реальный статус `done` с сервера.
+- **Сервер** (`api.php`): `oko_task` (поставить, публично, пинг Даниэлю в TG),
+  `oko_task_status?uid=` / `oko_task_mine?user=` (публично), `oko_task_pull` +
+  `oko_task_result` (нужен токен). `drainer_ok()` = admin | agent | **queue_token**.
+- **Сливщик**: `node oko-app/tools/oko-queue.mjs pull|result`, runbook —
+  `oko-app/docs/BRIDGE_DRAIN.md`. Проверено на проде 11.08: submit/status/mine
+  работают, pull/result без токена → 403, `oko-bridge.js` отдаётся как JS.
+- **НУЖНО ОТ ДАНИЭЛЯ (один раз, как config-pay.php):** в
+  `/var/www/okoteam/config.php` (или оверлеем в `config-pay.php`) добавить
+  строку `'queue_token'=>'<openssl rand -hex 24>'` и тот же токен положить в
+  Environment variables окружений Claude Code как `OKO_QUEUE_TOKEN` — тогда
+  сессии смогут сливать очередь. Без него submit работает, но выполнить
+  задачу некому (лежит pending, Даниэлю падает уведомление в TG).
+- **Автосливщик (по желанию):** Routine раз в N минут поднимает свежую
+  сессию с командой «слей очередь по BRIDGE_DRAIN.md». По умолчанию НЕ включён
+  (холостые опросы жгут токены) — включать явным решением.
+
 ## ПУБЛИКАЦИЯ И ЗЕРКАЛА (обновлено 29.07)
 
 **Higgsfield-зеркало ОТКЛЮЧЕНО навсегда** (правка Даниэля 29.07:
