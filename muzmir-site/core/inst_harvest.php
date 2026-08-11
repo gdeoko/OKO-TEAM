@@ -502,3 +502,150 @@ function ih_osm_regions(): array {
         'Ямало-Ненецкий автономный округ',
     ];
 }
+
+/* =====================================================================
+ *  4. Портал открытых данных Министерства культуры — opendata.mkrf.ru
+ * ===================================================================== */
+
+/**
+ * ОФИЦИАЛЬНЫЙ РЕЕСТР УЧРЕЖДЕНИЙ КУЛЬТУРЫ — САМЫЙ ТОЧНЫЙ ИСТОЧНИК.
+ *
+ * Здесь лежат карточки, которые учреждения сами подают в министерство: название,
+ * регион, тип, сайт, телефон, электронная почта и — что для нас важнее всего —
+ * ФИО руководителя. Обращение «Уважаемая Мария Петровна» вместо «Уважаемые
+ * коллеги» меняет судьбу письма: первое читают, второе удаляют.
+ *
+ * ПРО «ЗАКРЫТЫЙ» API. Запрос к /v2/ без подготовки отвечает 401, и это выглядит
+ * как требование ключа. Ключ не нужен: портал выдаёт cookie apisid обычным
+ * заходом на страницу каталога, и дальше API отвечает всем. Никакой защиты мы не
+ * обходим — просто повторяем то, что делает браузер, открывая тот же каталог.
+ *
+ * Наборы и их содержимое:
+ *   organizations          — 94 289 карточек, плоская схема, почта у 93%;
+ *                            data.orgkind: «ДШИ» (≈5 тыс.), «КДУ» (клубы, ≈41 тыс.);
+ *   education              — 6 040 образовательных учреждений, вложенная схема;
+ *   culture_palaces_clubs  — 24 429 домов культуры и клубов.
+ */
+function ih_mkrf_session(): ?string {
+    static $cookie = null;
+    if ($cookie !== null) return $cookie ?: null;
+
+    $jar = '/tmp/mkrf_cookies_' . getmypid() . '.txt';
+    $ch = curl_init('https://opendata.mkrf.ru/opendata');
+    curl_setopt_array($ch, [
+        CURLOPT_RETURNTRANSFER => true,
+        CURLOPT_FOLLOWLOCATION => true,
+        CURLOPT_COOKIEJAR      => $jar,
+        CURLOPT_COOKIEFILE     => $jar,
+        CURLOPT_TIMEOUT        => 30,
+        CURLOPT_USERAGENT      => 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0 Safari/537.36',
+    ]);
+    curl_exec($ch);
+    $code = (int) curl_getinfo($ch, CURLINFO_RESPONSE_CODE);
+    // В PHP 8 curl_close ничего не закрывает — дескриптор живёт, пока жива
+    // переменная, а файл с cookie дописывается именно при его уничтожении.
+    // Без unset() файла нет, и портал отвечает 401 «нужен ключ».
+    curl_close($ch);
+    unset($ch);
+    if ($code !== 200 || !is_file($jar)) { $cookie = ''; return null; }
+    return $cookie = $jar;
+}
+
+/** Один запрос к API портала. Возвращает разобранный JSON или null. */
+function ih_mkrf_get(string $url): ?array {
+    $jar = ih_mkrf_session();
+    if ($jar === null) return null;
+    $ch = curl_init($url);
+    curl_setopt_array($ch, [
+        CURLOPT_RETURNTRANSFER => true,
+        CURLOPT_FOLLOWLOCATION => true,
+        CURLOPT_COOKIEFILE     => $jar,
+        CURLOPT_TIMEOUT        => 120,
+        CURLOPT_USERAGENT      => 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0 Safari/537.36',
+        CURLOPT_HTTPHEADER     => ['Accept: application/json', 'Referer: https://opendata.mkrf.ru/opendata'],
+    ]);
+    $raw = curl_exec($ch);
+    $code = (int) curl_getinfo($ch, CURLINFO_RESPONSE_CODE);
+    curl_close($ch);
+    if ($code !== 200 || !is_string($raw)) return null;
+    $d = json_decode($raw, true);
+    return is_array($d) ? $d : null;
+}
+
+/**
+ * Забирает одну страницу набора и складывает записи в базу.
+ *
+ * @param string $entity   organizations | education | culture_palaces_clubs
+ * @param string $orgkind  фильтр по типу для organizations («ДШИ», «КДУ»); '' — без фильтра
+ * @param string $next     курсор следующей страницы (из прошлого вызова)
+ * @return array ['added'=>int, 'seen'=>int, 'next'=>string, 'total'=>int]
+ */
+function ih_harvest_mkrf(string $entity, string $orgkind = '', string $next = '', int $limit = 500): array {
+    $url = $next !== '' ? $next
+        : 'https://opendata.mkrf.ru/v2/' . rawurlencode($entity) . '/$?l=' . max(1, min(500, $limit))
+          . ($orgkind !== '' ? '&f=' . rawurlencode(json_encode(['data.orgkind' => $orgkind], JSON_UNESCAPED_UNICODE)) : '');
+
+    $d = ih_mkrf_get($url);
+    if (!$d) return ['added' => 0, 'seen' => 0, 'next' => '', 'total' => 0, 'error' => 'нет ответа'];
+
+    $rows  = (array) ($d['data'] ?? []);
+    $added = 0;
+
+    foreach ($rows as $r) {
+        $g = (array) ($r['data'] ?? []);
+
+        // Схема у наборов разная: плоская у organizations, вложенная у остальных.
+        $gen  = (array) ($g['general'] ?? []);
+        $cont = (array) ($gen['contacts'] ?? []);
+
+        $name = trim((string) ($g['adesc'] ?? $gen['name'] ?? ''));
+        if ($name === '') continue;
+
+        $mailRaw = (string) ($g['E-mail'] ?? $g['email'] ?? $cont['email'] ?? '');
+        $emails  = ih_extract_emails($mailRaw);
+
+        $site = trim((string) ($g['website'] ?? $gen['site'] ?? ''));
+        if ($site !== '' && !preg_match('~^https?://~i', $site)) $site = 'https://' . $site;
+
+        $phone = (string) ($g['phone'] ?? '');
+        if ($phone === '' && !empty($cont['phones'])) {
+            $ph = (array) $cont['phones'];
+            $phone = (string) ($ph[0]['value'] ?? $ph[0] ?? '');
+        }
+
+        // Сообщество ВК из блока соцсетей (есть у education и culture_palaces_clubs).
+        $vkId = 0;
+        foreach ((array) ($gen['organization']['socialGroups'] ?? $gen['socialGroups'] ?? []) as $sg) {
+            if (!is_array($sg)) continue;
+            if (mb_strtolower((string) ($sg['network'] ?? '')) !== 'vk') continue;
+            if (!empty($sg['isPersonal'])) continue;
+            $vkId = (int) ($sg['networkId'] ?? 0);
+            if ($vkId > 0) break;
+        }
+
+        $region = trim((string) ($g['territory'] ?? $gen['address']['region'] ?? ''));
+        $addr   = trim((string) ($g['address'] ?? $gen['address']['fullAddress'] ?? ''));
+
+        $added += inst_add([
+            'name'      => $name,
+            'region'    => $region,
+            'city'      => trim((string) ($gen['address']['city'] ?? '')),
+            'emails'    => $emails,
+            'site'      => $site,
+            'vk_id'     => $vkId,
+            'vk'        => $vkId > 0 ? ('club' . $vkId) : '',
+            'phone'     => $phone,
+            'address'   => $addr,
+            'director'  => (string) ($g['director'] ?? $gen['director'] ?? ''),
+            'source'    => 'mkrf',
+            'source_id' => (string) ($r['nativeId'] ?? $r['_id'] ?? ''),
+        ]) > 0 ? 1 : 0;
+    }
+
+    return [
+        'added' => $added,
+        'seen'  => count($rows),
+        'next'  => (string) ($d['nextPage'] ?? ''),
+        'total' => (int) ($d['total'] ?? 0),
+    ];
+}

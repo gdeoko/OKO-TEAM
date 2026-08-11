@@ -43,6 +43,7 @@ function inst_migrate(): void {
             vk_id INTEGER DEFAULT 0,
             phone TEXT DEFAULT '',
             address TEXT DEFAULT '',
+            director TEXT DEFAULT '',       -- ФИО руководителя (для обращения по имени)
             source TEXT DEFAULT '',         -- откуда взято
             source_id TEXT DEFAULT '',      -- идентификатор в источнике
             status TEXT DEFAULT 'new',      -- new|invited|replied|bounced|unsubscribed|banned
@@ -64,6 +65,8 @@ function inst_migrate(): void {
         db()->exec("CREATE INDEX IF NOT EXISTS idx_inst_kind   ON institutions(kind)");
         db()->exec("CREATE INDEX IF NOT EXISTS idx_inst_region ON institutions(region)");
     } catch (\Throwable $e) { /* уже есть */ }
+    // Колонка появилась позже таблицы — добавляем мягко, чтобы старые базы ожили.
+    try { db()->exec("ALTER TABLE institutions ADD COLUMN director TEXT DEFAULT ''"); } catch (\Throwable $e) {}
 }
 
 /* =====================================================================
@@ -99,6 +102,42 @@ function inst_email_ok(string $email): bool {
         if ($domain === $bad || str_ends_with($domain, '.' . $bad)) return false;
     }
     return true;
+}
+
+/**
+ * ФИО руководителя из открытых реестров — в человеческий вид.
+ *
+ * В выгрузках оно приходит как попало: «ИВАНОВА МАРИЯ ПЕТРОВНА», «Иванова М.П.»,
+ * «и.о. директора Иванова Мария Петровна», иногда с должностью и запятыми.
+ * Обращение в официальном письме строится по отчеству, поэтому капслок и мусор
+ * надо снять: «Уважаемая МАРИЯ ПЕТРОВНА!» выглядит как крик, а не как обращение.
+ */
+function inst_clean_fio(string $fio): string {
+    $t = trim($fio);
+    if ($t === '') return '';
+    // Должности и приставки — прочь.
+    $t = preg_replace('~\b(и\.?о\.?|врио|директор[а]?|руководител[ья]|заведующ(ий|ая|ей)|начальник[а]?|г-?н|г-?жа)\b~ui', ' ', $t) ?? $t;
+    $t = trim(preg_replace('~[,;()"«»]+~u', ' ', $t) ?? $t);
+    // Точки и тире, оставшиеся от вычеркнутой должности («и.о. директора Петров»
+    // после вырезания приставок превращается в «. Петров»).
+    $t = trim(preg_replace('~^[\s.\-–—]+|[\s.\-–—]+$~u', '', $t) ?? $t);
+    $t = trim(preg_replace('~\s+~u', ' ', $t) ?? $t);
+    if ($t === '' || mb_strlen($t) > 90) return '';
+
+    // Сплошной капслок приводим к «Фамилия Имя Отчество».
+    if ($t === mb_strtoupper($t)) {
+        $t = implode(' ', array_map(
+            fn($w) => mb_strtoupper(mb_substr($w, 0, 1)) . mb_strtolower(mb_substr($w, 1)),
+            preg_split('~\s+~u', $t) ?: []
+        ));
+    }
+    // Инициалы вместо имени («Иванова М.П.») для обращения не годятся: по ним
+    // нельзя ни назвать человека по имени, ни определить род.
+    if (preg_match('~[А-ЯЁ]\.\s*[А-ЯЁ]?\.?~u', $t)) return '';
+    // Нужны минимум три слова — фамилия, имя, отчество.
+    $parts = preg_split('~\s+~u', $t) ?: [];
+    if (count($parts) < 3) return '';
+    return $t;
 }
 
 /** Приводит адрес к каноническому виду для дедупа. */
@@ -204,6 +243,7 @@ function inst_add(array $row): int {
         'vk_id'     => $vkId,
         'phone'     => trim((string) ($row['phone'] ?? '')),
         'address'   => trim((string) ($row['address'] ?? '')),
+        'director'  => inst_clean_fio((string) ($row['director'] ?? '')),
         'source'    => trim((string) ($row['source'] ?? '')),
         'source_id' => trim((string) ($row['source_id'] ?? '')),
     ];
@@ -222,7 +262,7 @@ function inst_add(array $row): int {
     if ($exist) {
         // Дополняем пустые поля, ничего не затирая.
         $upd = [];
-        foreach (['region', 'city', 'email', 'site', 'vk', 'phone', 'address'] as $f) {
+        foreach (['region', 'city', 'email', 'site', 'vk', 'phone', 'address', 'director'] as $f) {
             if ($data[$f] !== '' && trim((string) ($exist[$f] ?? '')) === '') $upd[$f] = $data[$f];
         }
         if ($vkId > 0 && (int) ($exist['vk_id'] ?? 0) === 0) $upd['vk_id'] = $vkId;
@@ -296,7 +336,8 @@ function inst_pick_for_invite(int $limit = 500): array {
               WHERE email <> ''
                 AND status = 'new'
                 AND COALESCE(bounce_count,0) < 2
-              ORDER BY CASE kind
+              ORDER BY CASE WHEN COALESCE(director,'') <> '' THEN 0 ELSE 1 END,
+                       CASE kind
                          WHEN 'dshi'   THEN 1
                          WHEN 'center' THEN 2
                          WHEN 'college' THEN 3
@@ -305,6 +346,46 @@ function inst_pick_for_invite(int $limit = 500): array {
                          ELSE 6 END,
                        id ASC
               LIMIT ?", [$limit]
+        );
+    } catch (\Throwable $e) { return []; }
+}
+
+/**
+ * КОМУ ПИСАТЬ ПОВТОРНО.
+ *
+ * Владелец спрашивал, как правильно: один раз, каждый месяц или как-то ещё.
+ * Правильно — раз в квартал и не больше четырёх писем за всё время.
+ *
+ * Почему не каждый месяц. Холодный адрес, который двенадцать раз в год получает
+ * письмо от одного отправителя, начинает помечаться как спам — сначала людьми,
+ * потом автоматикой почтовой службы. Репутация домена общая: за холодную базу
+ * расплачиваются письма участникам с дипломами и результатами. Три месяца —
+ * интервал, при котором письмо воспринимается как напоминание о новом сезоне,
+ * а не как назойливость.
+ *
+ * Почему вообще повторять. Первое письмо в сентябре могло прийти в день, когда
+ * директору было не до конкурсов. Второе, с новыми конкурсами и живыми итогами
+ * прошлого сезона, попадает в другой момент — и это единственная причина писать
+ * снова. Поэтому повтор идёт только если с прошлого письма сменился сезон.
+ *
+ * Тех, кто отказался или чей адрес дважды отверг почтовик, здесь нет никогда.
+ */
+function inst_pick_for_reinvite(int $limit = 500, int $months = 3, int $maxLetters = 4): array {
+    inst_migrate();
+    $limit = max(1, min(5000, $limit));
+    try {
+        return all(
+            "SELECT * FROM institutions
+              WHERE email <> ''
+                AND status = 'invited'
+                AND COALESCE(bounce_count,0) < 2
+                AND COALESCE(invited_count,1) < ?
+                AND invited_at <> ''
+                AND invited_at < datetime('now', ?)
+              ORDER BY CASE WHEN COALESCE(director,'') <> '' THEN 0 ELSE 1 END,
+                       invited_at ASC
+              LIMIT ?",
+            [$maxLetters, '-' . max(1, $months) . ' months', $limit]
         );
     } catch (\Throwable $e) { return []; }
 }

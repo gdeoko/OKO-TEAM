@@ -48,6 +48,14 @@ function ol_migrate(): void {
             created_at TEXT DEFAULT (datetime('now')),
             sent_at TEXT DEFAULT ''
         )");
+        // Файл документа и строка очереди — добавлены позже, поэтому мягко.
+        // file     — готовый PDF обращения (data/letters), он же уходит вложением;
+        // queue_id — письмо в mail_queue, по нему проставляется реальная дата
+        //            отправки: до неё страница проверки подлинности пуста.
+        foreach (["ALTER TABLE official_letters ADD COLUMN file TEXT DEFAULT ''",
+                  "ALTER TABLE official_letters ADD COLUMN queue_id INTEGER DEFAULT 0"] as $sql) {
+            try { db()->exec($sql); } catch (\Throwable $e) {}
+        }
         db()->exec("CREATE INDEX IF NOT EXISTS idx_ol_kind   ON official_letters(kind)");
         db()->exec("CREATE INDEX IF NOT EXISTS idx_ol_season ON official_letters(season)");
         db()->exec("CREATE INDEX IF NOT EXISTS idx_ol_status ON official_letters(status)");
@@ -139,11 +147,34 @@ function ol_asset(string $light, string $fallback): string {
     return is_file(BASE_PATH . '/public/assets/img/letter/' . $light) ? 'letter/' . $light : $fallback;
 }
 
-/** QR-код как SVG. */
+/**
+ * QR-код для бланка — картинкой, не встроенным SVG.
+ *
+ * Две причины. Почтовые службы вырезают из письма встроенный SVG (Gmail — всегда),
+ * то есть код проверки подлинности адресат просто не увидел бы. И вес: один QR в
+ * SVG — это двадцать пять килобайт разметки, два кода на бланке съедали три
+ * четверти письма, а тридцать тысяч таких писем — это два гигабайта в очереди.
+ * PNG весит около килобайта, пишется один раз на каждый номер и дальше отдаётся
+ * из кэша браузера.
+ */
 function ol_qr(string $data): string {
-    if (!function_exists('qr_svg') && is_file(BASE_PATH . '/core/qr.php')) require_once BASE_PATH . '/core/qr.php';
-    if (!function_exists('qr_svg')) return '';
-    try { return qr_svg($data); } catch (\Throwable $e) { return ''; }
+    if (!function_exists('qr_png') && is_file(BASE_PATH . '/core/qr.php')) require_once BASE_PATH . '/core/qr.php';
+    if (!function_exists('qr_png')) return '';
+
+    $key = substr(sha1($data), 0, 20);
+    $dir = BASE_PATH . '/public/assets/qr';
+    $abs = $dir . '/' . $key . '.png';
+
+    if (!is_file($abs)) {
+        if (!is_dir($dir) && !@mkdir($dir, 0775, true)) return '';
+        try { qr_png($data, $abs, 6, 2); } catch (\Throwable $e) { return ''; }
+        if (!is_file($abs)) return '';
+        @chmod($abs, 0664);
+    }
+
+    $url = rtrim((string) cfgv('base_url', ''), '/') . '/assets/qr/' . $key . '.png';
+    return '<img src="' . h($url) . '" alt="QR-код проверки подлинности" '
+         . 'style="width:100%;height:auto;display:block;image-rendering:pixelated">';
 }
 
 /** Ряд эмблем ведомств — тот же набор, что на дипломах центра. */
@@ -243,7 +274,7 @@ function ol_render(array $o): string {
   .ol-appr .num b{color:var(--ol-navy)}
 
   .ol-qr-top{position:absolute;top:0;right:0;text-align:center}
-  .ol-qr-top svg{width:17mm;height:17mm;display:block}
+  .ol-qr-top svg,.ol-qr-top img{width:17mm;height:17mm;display:block}
   .ol-qr-top small{display:block;font-size:6.4pt;color:#6a6a75;margin-top:.6mm}
 
   /* ── Правовое основание + эмблемы ── */
@@ -281,7 +312,7 @@ function ol_render(array $o): string {
   .ol-sign img.sg{position:absolute;left:6mm;bottom:4mm;height:15mm;object-fit:contain;opacity:.95}
   .ol-sign img.sl{position:absolute;left:34mm;bottom:-3mm;height:31mm;object-fit:contain;opacity:.88}
   .ol-verify{text-align:center;flex:none}
-  .ol-verify svg{width:22mm;height:22mm;display:block;margin:0 auto}
+  .ol-verify svg,.ol-verify img{width:22mm;height:22mm;display:block;margin:0 auto}
   .ol-verify small{display:block;font-size:6.8pt;color:#6a6a75;margin-top:1mm;line-height:1.3}
   .ol-verify .no{font-family:'Courier New',monospace;font-size:8pt;color:var(--ol-navy);letter-spacing:.02em}
 
@@ -327,7 +358,7 @@ function ol_render(array $o): string {
       <?php if ($qrSite !== ''): ?>
         <div class="ol-qr-top"><?= $qrSite ?><small>сайт центра</small></div>
       <?php endif; ?>
-      <div class="word">УТВЕРЖДАЮ</div>
+      <?php if (empty($o['no_approve'])): ?><div class="word">УТВЕРЖДАЮ</div><?php endif; ?>
       <div class="who">Генеральный директор<br>Культурного центра<br>«Музыкальный Мир»</div>
       <div class="sigrow">
         <?php if ($sig !== ''): ?><img src="<?= h($sig) ?>" alt=""><?php endif; ?>

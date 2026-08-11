@@ -1071,7 +1071,15 @@ function newsletter_process_queue(int $limit): int {
         if (function_exists('mail_last_error')) mail_last_error('');
 
         $opt = [];
-        if (!empty($row['attach'])) $opt['attach'] = (string) $row['attach'];
+        if (!empty($row['attach'])) {
+            // Обычно вложение одно и в колонке лежит путь. У официальных обращений
+            // их четыре — документ, положение, афиша, логотип, — и они хранятся
+            // строкой JSON. Разбираем только то, что действительно похоже на список:
+            // путь к файлу с квадратной скобки не начинается.
+            $a = trim((string) $row['attach']);
+            $list = ($a !== '' && $a[0] === '[') ? json_decode($a, true) : null;
+            $opt['attach'] = is_array($list) ? array_values(array_filter($list, 'is_string')) : $a;
+        }
         if ($account) $opt['account'] = $account;
 
         // ТЕЛО ПЕРСОНАЛЬНОГО ПИСЬМА СОБИРАЕТСЯ ЗДЕСЬ, В СЕКУНДУ ОТПРАВКИ.

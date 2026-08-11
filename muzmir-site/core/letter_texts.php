@@ -22,7 +22,10 @@ if (!function_exists('ol_render')) require_once __DIR__ . '/official_letter.php'
 /** Конкурсы месяца. $onlyFree — только бесплатные (для писем в ведомства). */
 function ol_comps(bool $onlyFree = false): array {
     try {
-        $rows = all("SELECT name, is_paid, price, slug, end_date, start_date, direction, description
+        // id и cover нужны письмам в ведомства: по ним берутся афиша и положение,
+        // которые уходят приложением к обращению.
+        $rows = all("SELECT id, name, is_paid, price, slug, cover, end_date, start_date,
+                            direction, description, results_date, nominations
                        FROM competitions WHERE status='open' ORDER BY is_paid ASC, sort ASC, id ASC");
     } catch (\Throwable $e) { return []; }
     if (!$onlyFree) return $rows;
@@ -189,6 +192,75 @@ function ol_body_institution(array $comps, array $o = []): string {
 }
 
 /* =====================================================================
+ *  3. Благодарственное письмо учреждению
+ * ===================================================================== */
+
+/**
+ * БЛАГОДАРНОСТЬ УЧРЕЖДЕНИЮ, КОТОРОЕ ОТКЛИКНУЛОСЬ.
+ *
+ * Стоит нам ноль, а для учреждения это документ в годовой отчёт о работе с
+ * одарёнными детьми и в портфолио — там благодарности от сторонних организаций
+ * считаются. Поэтому она выдаётся сама и бесплатно: тому, кто ответил на
+ * обращение, разместил информацию или чьи педагоги привели участников.
+ *
+ * И вторая, более важная причина. Человек, которому один раз сказали спасибо
+ * документом с печатью, в следующем сезоне открывает письмо от нас первым.
+ *
+ * @param array $o ['org'=>учреждение, 'person'=>ФИО, 'works'=>сколько работ, 'season'=>год]
+ */
+function ol_body_thanks(array $o = []): string {
+    $site  = (string) cfgv('domain', 'музыкальный-мир.рф');
+    $works = (int) ($o['works'] ?? 0);
+    $year  = (string) ($o['season'] ?? date('Y'));
+    $org   = trim((string) ($o['org'] ?? 'Вашего учреждения'));
+
+    ob_start(); ?>
+<p>
+  Культурный центр «Музыкальный Мир» выражает искреннюю благодарность коллективу
+  <b><?= h($org) ?></b> за поддержку творческих конкурсов центра и внимание к
+  дистанционным формам работы с одарёнными детьми в <?= h($year) ?> году.
+</p>
+
+<?php if ($works > 0): ?>
+<p>
+  Обучающиеся Вашего учреждения представили на аттестацию жюри
+  <b><?= $works ?></b> <?= ol_plural($works, 'конкурсную работу', 'конкурсные работы', 'конкурсных работ') ?>.
+  Каждая из них получила профессиональную оценку и наградной документ.
+</p>
+<?php endif; ?>
+
+<div class="ol-box">
+  <b>Педагогам Вашего учреждения.</b> Преподаватели, подготовившие участников,
+  получают благодарственные письма центра и дипломы кураторов — отдельным
+  документом на каждого, бесплатно и без заказа. Документы принимаются в
+  аттестационное портфолио.
+</div>
+
+<p>
+  Отдельно благодарим за содействие в информировании педагогов и родителей.
+  Именно позиция учреждения делает участие в конкурсах доступным для детей,
+  которым поездка на очный конкурс не по силам или не по средствам.
+</p>
+
+<p class="noind">
+  Надеемся на продолжение сотрудничества. Положения конкурсов нового сезона
+  и образцы наградных документов — на официальном сайте <b><?= h($site) ?></b>.
+</p>
+    <?php
+    return (string) ob_get_clean();
+}
+
+/** «1 работу / 2 работы / 5 работ» — счётная форма для русского текста. */
+function ol_plural(int $n, string $one, string $few, string $many): string {
+    $n = abs($n) % 100;
+    $d = $n % 10;
+    if ($n > 10 && $n < 20) return $many;
+    if ($d > 1 && $d < 5)   return $few;
+    if ($d === 1)           return $one;
+    return $many;
+}
+
+/* =====================================================================
  *  Сборка готового документа
  * ===================================================================== */
 
@@ -200,7 +272,8 @@ function ol_body_institution(array $comps, array $o = []): string {
  */
 function ol_create(array $o): array {
     ol_migrate();
-    $kind = ((string) ($o['kind'] ?? 'support')) === 'institution' ? 'institution' : 'support';
+    $kind = (string) ($o['kind'] ?? 'support');
+    if (!in_array($kind, ['support', 'institution', 'thanks'], true)) $kind = 'support';
 
     $number = ol_next_number();
     $id = 0;
@@ -224,7 +297,8 @@ function ol_create(array $o): array {
 
 /** Готовый HTML обращения по номеру и данным адресата (без записи в реестр). */
 function ol_html_for(string $number, array $o): string {
-    $kind = ((string) ($o['kind'] ?? 'support')) === 'institution' ? 'institution' : 'support';
+    $kind = (string) ($o['kind'] ?? 'support');
+    if (!in_array($kind, ['support', 'institution', 'thanks'], true)) $kind = 'support';
 
     $org    = trim((string) ($o['org'] ?? ''));
     $person = trim((string) ($o['person'] ?? ''));
@@ -252,7 +326,13 @@ function ol_html_for(string $number, array $o): string {
     }
     if ($salut === '') $salut = $kind === 'institution' ? 'Уважаемые коллеги!' : 'Уважаемый руководитель!';
 
-    if ($kind === 'institution') {
+    if ($kind === 'thanks') {
+        $body  = ol_body_thanks($o);
+        $title = 'Благодарственное письмо';
+        $att   = [];
+        // У благодарности «УТВЕРЖДАЮ» неуместно: это не распорядительный документ,
+        // а письмо. Гриф убирается в бланке по этому же признаку.
+    } elseif ($kind === 'institution') {
         $comps = ol_comps(false);
         $body  = ol_body_institution($comps, $o);
         $title = 'Обращение';
@@ -276,6 +356,10 @@ function ol_html_for(string $number, array $o): string {
         'body'        => $body,
         'attachments' => $att,
         'paper'       => 'beige',
+        // Гриф «УТВЕРЖДАЮ» ставится на документе, который что-то утверждает.
+        // Благодарственное письмо ничего не утверждает — там он выглядел бы
+        // канцелярской нелепостью, поэтому в этом виде его нет.
+        'no_approve'  => $kind === 'thanks',
         // Встраивание картинок нужно только для печати в PDF и для вложения:
         // на обычной странице они идут ссылками и кэшируются браузером.
         'embed'       => !empty($o['embed']),

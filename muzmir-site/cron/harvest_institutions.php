@@ -12,6 +12,7 @@
  *
  * Вручную:
  *   php cron/harvest_institutions.php vk        — один шаг по ВКонтакте
+ *   php cron/harvest_institutions.php mkrf      — страницы реестра Минкультуры
  *   php cron/harvest_institutions.php sites     — добрать почту с сайтов
  *   php cron/harvest_institutions.php osm       — один регион OpenStreetMap
  *   php cron/harvest_institutions.php stats     — что уже собрано
@@ -134,9 +135,73 @@ function hv_step_osm(): void {
     hv_cursor_set('osm_region', $i + 1);
 }
 
+/* ── Реестр Минкультуры ─────────────────────────────────────────────────── */
+
+/**
+ * Наборы портала в порядке ценности для нас.
+ *
+ * Сначала школы искусств — это прямая аудитория конкурсов. Потом клубные
+ * учреждения и дома культуры: там работают те же преподаватели и там же висят
+ * афиши. Образовательные организации идут последними — их много, но профильных
+ * среди них меньше.
+ *
+ * [набор, фильтр по типу, человеческое название]
+ */
+function hv_mkrf_sets(): array {
+    return [
+        ['organizations',         'ДШИ', 'школы искусств'],
+        ['organizations',         'КДУ', 'клубные учреждения'],
+        ['culture_palaces_clubs', '',    'дома культуры и клубы'],
+        ['education',             '',    'образовательные организации'],
+    ];
+}
+
+/**
+ * Один шаг по реестру: несколько страниц подряд.
+ *
+ * Портал отдаёт до 500 карточек за запрос и возвращает курсор следующей
+ * страницы. Курсор храним в настройках — прогон обрывается по крону, а обход
+ * продолжается ровно с того места, где закончили.
+ */
+function hv_step_mkrf(int $pages = 4): void {
+    $sets = hv_mkrf_sets();
+    $i    = hv_cursor('mkrf_set');
+    if ($i >= count($sets)) { ih_log('Минкультуры: все наборы пройдены'); return; }
+
+    [$entity, $kindFilter, $human] = $sets[$i];
+    $next  = (string) setting('harvest_mkrf_next', '');
+    $added = 0; $seen = 0; $total = 0; $done = 0;
+
+    for ($n = 0; $n < max(1, $pages); $n++) {
+        $r = ih_harvest_mkrf($entity, $kindFilter, $next, 500);
+        if (!empty($r['error'])) { ih_log("Минкультуры «$human»: " . $r['error']); break; }
+
+        $added += (int) $r['added'];
+        $seen  += (int) $r['seen'];
+        $total  = (int) $r['total'];
+        $done++;
+        $next   = (string) $r['next'];
+
+        // Пустая страница или отсутствие курсора — набор кончился.
+        if ($next === '' || (int) $r['seen'] === 0) {
+            hv_cursor_set('mkrf_set', $i + 1);
+            set_setting('harvest_mkrf_next', '');
+            ih_log("Минкультуры «$human»: набор пройден целиком");
+            $next = '';
+            break;
+        }
+        set_setting('harvest_mkrf_next', $next);
+        usleep(400000);            // портал государственный, частить незачем
+    }
+
+    ih_log(sprintf('Минкультуры «%s»: страниц %d, карточек %d, новых %d (в наборе всего %d)',
+        $human, $done, $seen, $added, $total));
+}
+
 /* ── Что делаем в этот прогон ───────────────────────────────────────────── */
 switch ($mode) {
     case 'vk':    hv_step_vk((int) ($argv[2] ?? 8)); break;
+    case 'mkrf':  hv_step_mkrf((int) ($argv[2] ?? 4)); break;
     case 'sites':
         $pause = trim((string) setting('harvest_sites_pause_until', ''));
         if ($pause !== '' && $pause > date('Y-m-d H:i:s')) { ih_log("Сайты: пауза до $pause"); break; }
@@ -151,7 +216,11 @@ switch ($mode) {
         $tick = hv_cursor('tick');
         hv_cursor_set('tick', $tick + 1);
 
-        if ($tick % 6 === 5)      hv_step_osm();
+        // Реестр Минкультуры идёт первым, пока не вычитан: там ФИО директоров,
+        // без которых именное обращение не составить, и почта у девяти карточек
+        // из десяти. Как только наборы кончатся, шаг сам себя выключит.
+        if (hv_cursor('mkrf_set') < count(hv_mkrf_sets())) hv_step_mkrf(4);
+        elseif ($tick % 6 === 5)  hv_step_osm();
         elseif ($tick % 2 === 0)  hv_step_vk(8);
         else {
             $pause = trim((string) setting('harvest_sites_pause_until', ''));
