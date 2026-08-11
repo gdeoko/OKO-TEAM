@@ -2227,7 +2227,11 @@ button:focus-visible,a:focus-visible,input:focus-visible,textarea:focus-visible,
 <!-- Закрытие тапом по свободному месту: обработчик на подложке проверяет,
      что клик пришёлся именно в неё, а не в карточку. Раньше .mm-inner гасил
      всплытие и одновременно занимал почти весь экран — закрыть было нечем. -->
-<div id="msgMenu" onclick="if(event.target===this)closeMsgMenu()" role="dialog" aria-modal="true" aria-label="Действия с сообщением">
+<!-- aria-modal НЕ ставим в разметке: атрибут означает «сейчас открыт модальный
+     диалог, остальная страница недоступна». У скрытой панели он висел всегда,
+     и скринридер считал, что модалка открыта постоянно. Ставит и снимает его
+     слой oko-a11y.js по факту открытия. -->
+<div id="msgMenu" onclick="if(event.target===this)closeMsgMenu()" role="dialog" aria-label="Действия с сообщением">
   <div class="mm-inner" role="group">
     <div class="mm-reacts" id="mmReacts"></div>
     <div class="mm-preview" id="mmPreview"></div>
@@ -3768,7 +3772,7 @@ button:focus-visible,a:focus-visible,input:focus-visible,textarea:focus-visible,
      Полноэкранный оверлей поверх контента, но НИЖЕ шторки комментариев (z-index 39),
      чтобы существующий sheet «Комментарии» открывался поверх клипа. Слайды строятся
      в JS (faReels*), здесь — только статичная оболочка: трек + верхний хром. -->
-<div id="faReels" class="far" hidden aria-hidden="true" role="dialog" aria-modal="true" aria-label="Клипы">
+<div id="faReels" class="far" hidden aria-hidden="true" role="dialog" aria-label="Клипы">
   <div class="far-track" id="farTrack"></div>
 
   <!-- верхний хром: сегменты прогресса + заголовок + закрыть -->
@@ -3922,7 +3926,7 @@ button:focus-visible,a:focus-visible,input:focus-visible,textarea:focus-visible,
 </svg>
 
 <!-- ============= 1. Групповая конференция (Zoom-like) ============= -->
-<div id="cl-conf" role="dialog" aria-modal="true" aria-hidden="true">
+<div id="cl-conf" role="dialog" aria-hidden="true">
   <div class="cl-conf-top">
     <button class="cl-top-btn" id="cl-conf-min" title="Свернуть" aria-label="Свернуть"><svg class="cl-i"><use href="#cl-i-min"/></svg></button>
     <div class="cl-conf-title">
@@ -3971,7 +3975,7 @@ button:focus-visible,a:focus-visible,input:focus-visible,textarea:focus-visible,
 </div>
 
 <!-- ============= 2. Личный звонок (аудио/видео) ============= -->
-<div id="cl-personal" role="dialog" aria-modal="true" aria-hidden="true">
+<div id="cl-personal" role="dialog" aria-hidden="true">
   <div class="cl-pers-bg" id="cl-pers-bg"></div>
 
   <button class="cl-top-btn cl-pers-min" id="cl-pers-min" title="Свернуть" aria-label="Свернуть"><svg class="cl-i"><use href="#cl-i-min"/></svg></button>

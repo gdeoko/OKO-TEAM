@@ -372,11 +372,31 @@ const TRAP_CASES = [
   { id: 'search', name: 'Поиск', open: `okoSkipAuth(); typeof openSearch==='function'&&openSearch();` },
 ];
 
+/* Одна и та же выборка «открытой шторки» для всех проверок ловушки.
+
+   Раньше каждая проверка искала шторку по-своему, и две из трёх брали
+   `getComputedStyle(x).position === 'fixed'` — а у скрытого через display:none
+   элемента position всё равно возвращается 'fixed'. Плюс `.pop()` берёт
+   ПОСЛЕДНЮЮ в разметке. В итоге проверки мерили не открытую панель, а
+   скрытый #cl-personal в конце документа, и рапортовали «фокус не внутри,
+   30 утечек Tab». Живой опыт показал обратное: фокус в панели и после
+   шести Tab остаётся в ней. */
+const ОТКРЫТАЯ_ШТОРКА = `(() => {
+  const годится = e => {
+    if (e.closest('[inert]')) return false;
+    const cs = getComputedStyle(e);
+    if (cs.display === 'none' || cs.visibility === 'hidden' || +cs.opacity === 0) return false;
+    const r = e.getBoundingClientRect();
+    return r.width > 2 && r.height > 2;
+  };
+  return Array.from(document.querySelectorAll('[role="dialog"],[role="alertdialog"]')).filter(годится).pop() || null;
+})()`;
+
 function trapScript() {
   return `(() => {
     ${HELPERS}
     /* Ищем видимую модальную шторку */
-    const dlg = Array.from(document.querySelectorAll('[role="dialog"],[role="alertdialog"]')).filter(visible).pop();
+    const dlg = ${ОТКРЫТАЯ_ШТОРКА};
     if (!dlg) return { found: false };
     const inside = interactiveEls().filter(el => dlg.contains(el));
     return { found: true, el: labelOf(dlg), ariaModal: dlg.getAttribute('aria-modal'),
@@ -553,8 +573,7 @@ async function main() {
             if (info.found) {
               /* фокус должен уехать внутрь шторки */
               t.focusMovedInside = await page.evaluate(`(() => {
-                const d = Array.from(document.querySelectorAll('[role="dialog"],[role="alertdialog"]'))
-                  .filter(x => x.offsetParent !== null || getComputedStyle(x).position === 'fixed').pop();
+                const d = ${ОТКРЫТАЯ_ШТОРКА};
                 return !!(d && d.contains(document.activeElement));
               })()`);
               /* 30 нажатий Tab — фокус обязан остаться внутри */
@@ -562,8 +581,7 @@ async function main() {
               for (let i = 0; i < 30; i++) {
                 await page.keyboard.press('Tab');
                 const inside = await page.evaluate(`(() => {
-                  const d = Array.from(document.querySelectorAll('[role="dialog"],[role="alertdialog"]'))
-                    .filter(x => getComputedStyle(x).display !== 'none').pop();
+                  const d = ${ОТКРЫТАЯ_ШТОРКА};
                   if (!d) return true;
                   return d.contains(document.activeElement);
                 })()`);
