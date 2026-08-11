@@ -223,7 +223,9 @@ control-эндпоинт. **В этой сессии CONTROL_TOKEN отсутс�
 
 ## ДЕПЛОЙ (обновлено 23.07 — ВСЁ на VPS/okoteam.top)
 Прод-домен: **https://okoteam.top** (VPS Timeweb 104.171.132.45). Зеркало: https://true-journey-418.higgsfield.app
-- **VPS без SSH** — через control-эндпоинт: `curl -X POST https://okoagents.okoteam.top/x -H "X-Token: <CONTROL_TOKEN>" --data '<bash>'` (токен в OKO_ACCESSES/secrets, НЕ в git).
+- **VPS без SSH** — через control-эндпоинт: `curl -X POST https://okoagents.okoteam.top/x -H "X-Token: <CONTROL_TOKEN>" --data '<bash>'`. Эндпоинт жив (без токена 403), но САМОГО ТОКЕНА нигде нет — ни в secrets, ни в окружении. Проверено 11.08.
+- **Панель Timeweb — через API, а не через кабинет.** `TIMEWEB_API_TOKEN` лежит в `secrets.env.b64` и поднимается хуком в каждом чате. Даёт серверы, диски, бэкапы, SSH-ключи, перезагрузку: `curl -H "Authorization: Bearer $TIMEWEB_API_TOKEN" https://api.timeweb.cloud/api/v1/servers`. Серверы: `8569557 oko-app` (104.171.132.45, прод) и `8648267 MUZMIR` (176.124.200.169). Логин на самих серверах — **root**.
+- **SSH из облачной сессии не работает вообще:** порт 22 режет egress-прокси, клиента `ssh` в образе нет. Не тратить время на попытки — только HTTPS.
 - Что где на okoteam.top: `/` = приложение (index.html), `/anketa` `/admin` `/resume` = PHP-сайт (static HTML + `api.php` на php-fpm, SQLite `data/oko.db`), `/hq.html` = 3D-хаб. `config.php` (секреты) — только на VPS, отдаётся 403.
 - **Авто-деплой**: cron на VPS `*/3 * * * * /root/oko-deploy.sh` тянет ветку `claude/new-session-w2ptqy` из GitHub → копирует `oko-app/prototype/index.html` + `oko-app/site/*` в `/var/www/okoteam`. То есть **любой push в ветку сам уезжает на okoteam.top за ≤3 мин.**
 - Higgsfield-зеркало обновлять `mcp__Higgsfield__deploy_website` website_id `5426760c-...` (разрешён в settings, звать после пуша).

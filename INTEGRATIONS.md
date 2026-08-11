@@ -19,6 +19,7 @@
 | TWENTY_FIRST_API_KEY | 21st.dev Magic | Библиотека wow-компонентов UI | POST api.21st.dev/api/search, заголовок x-api-key |
 | CLOUDFLARE_API_TOKEN + CLOUDFLARE_ACCOUNT_ID | Cloudflare | Хостинг Pages | ОТЛОЖЕНО решением Даниэля 07.07: токену не хватает прав, не поднимать тему |
 | HF_S3_ENDPOINT + HF_S3_ACCESS_KEY_ID + HF_S3_SECRET_ACCESS_KEY | HF S3 | Хранилище файлов okoteam (boto3, verify=/root/.ccr/ca-bundle.crt) | list_buckets |
+| TIMEWEB_API_TOKEN | Timeweb Cloud (аккаунт yi865413) | Панель VPS через API: список и состояние серверов, диски, бэкапы, SSH-ключи, перезагрузка | `curl -H "Authorization: Bearer $TIMEWEB_API_TOKEN" https://api.timeweb.cloud/api/v1/servers` |
 
 Правила: ключи НЕ вписывать в код сайтов и не отдавать в браузер. Сеть — только
 curl (urllib и node fetch ходят мимо прокси). Новый ключ: дописать в secrets.env,
@@ -104,6 +105,28 @@ Config-переменные см. `secrets.env` (OKO_TTS_ENGINE / OKO_TTS_VOICE)
   fetch->blob, иначе Safari не играет.
 - Прод PandaGo: FastPanel клиента, zip в чат (config.php с сервера не перезаписывать).
 - Supabase: база OKO, 28 таблиц. SQL только через Management API (порт 5432 закрыт).
+
+### VPS Timeweb — что известно точно (проверено 11.08 по API)
+
+| ID | Имя | IP | ОС | Ресурсы | Что на нём |
+|---|---|---|---|---|---|
+| 8569557 | oko-app | 104.171.132.45 | Ubuntu 26.04 | 8 CPU / 16 GB | прод okoteam.top, cron-деплой, nginx |
+| 8648267 | MUZMIR | 176.124.200.169 | Ubuntu 24.04 | 2 CPU / 2 GB | музыкальный-мир.рф |
+
+- Пользователь на самих серверах — **root**: cron лежит в `/root/oko-deploy.sh`,
+  бэкапы vhost в `/root/okoteam.vhost.bak*`.
+- **SSH из облачной сессии Claude не работает**: egress-прокси пропускает только
+  HTTPS, порт 22 закрыт, клиента `ssh` в образе нет. Проверено. Поэтому всё
+  управление сервером — либо через `api.timeweb.cloud`, либо через
+  control-эндпоинт.
+- Control-эндпоинт `https://okoagents.okoteam.top/x` **жив** (без токена отвечает
+  403). Выполняет bash по заголовку `X-Token`. Сам токен в secrets НЕ лежит —
+  без него команду на сервере выполнить нельзя, и это единственное, что мешает
+  включить gzip (см. `oko-app/deploy/enable-gzip.sh`).
+- Панель Timeweb заведена НЕ на okoteam.top@gmail.com: в этом ящике нет ни одного
+  письма от Timeweb за всю историю, а форма входа здоровается «С возвращением,
+  Михаил». Вход в панель восстанавливать через поддержку, но для работы он не
+  нужен — хватает TIMEWEB_API_TOKEN.
 
 ## 6. Как это попадает в каждый чат
 
