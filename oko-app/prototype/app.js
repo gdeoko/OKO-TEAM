@@ -1910,9 +1910,12 @@ function walTier(){
 }
 function walWdLimit(){ return WAL_WD_LIMITS[walTier()] || WAL_WD_DAY_LIMIT; }
 const WAL_NOCONF_LIMIT = 5000;          // покупки без подтверждения
-const WAL_CARD_NUM = '2200 7007 1234 5566';
-const WAL_USDT_ADDR = 'TQoKo4fHFYyeJtsDdD7TgKLxAV1mFJnEok';
-const WAL_TON_ADDR = 'UQAoKoAppTonWa11etMockAddr9hfP2vXqLmTz4A';
+/* УРОК №2 (навсегда): никаких платёжных реквизитов в коде. Выдуманные карта
+   и крипто-адреса были показаны как «переведи сюда» — по ним человек мог
+   отправить реальные деньги в никуда. Реквизитов в приложении нет: оплата
+   идёт только через защищённый шлюз (ЮKassa/Lava). Слой oko-wallet2.js тоже
+   перекрывает walTopReqHtml честной версией — здесь дублируем на случай, если
+   слой не успел загрузиться. */
 
 /* доп-настройки кошелька (персист): автопродление, ПИН, суточный вывод */
 const WAL_X = (()=>{ try{ return JSON.parse(localStorage.getItem('oko-wallet-x'))||{}; }catch(e){ return {}; } })();
@@ -2557,38 +2560,16 @@ function walQrSvg(seed, size){
     <g fill="#111">${cells}</g>${fp(0,0)}${fp(0,14)}${fp(14,0)}</svg>`;
 }
 
-/* ---------- реквизиты пополнения по способу ---------- */
+/* ---------- реквизиты пополнения: НЕ показываем (урок №2) ----------
+   Никакой копируемой карты/крипто-адреса «переведи сюда». Оплата — только
+   через защищённый шлюз (счёт открывается по кнопке «Пополнить»). Слой
+   oko-wallet2.js перекрывает эту функцию своей честной версией; базовая
+   версия тоже честная — на случай, если слой не загрузился. */
 function walTopReqHtml(m){
-  if(m === 'card') return `
-    <div class="wal-mockcard fade-in">
-      <div class="wal-mc-row">
-        <svg class="wal-mc-chip" viewBox="0 0 44 32"><rect x="1" y="1" width="42" height="30" rx="6" fill="none" stroke="currentColor" stroke-width="2.4"/><path d="M1 12h14M1 20h14M29 12h14M29 20h14M15 5v22M29 5v22" stroke="currentColor" stroke-width="2.4" fill="none"/></svg>
-        <span class="wal-mc-sys">МИР · СБП</span>
-      </div>
-      <button class="wal-mc-num" onclick="walCopy(WAL_CARD_NUM,'Номер карты скопирован')">${WAL_CARD_NUM}${I('copy')}</button>
-      <div class="wal-mc-bot"><span>OKO PAY · перевод по номеру</span><span>Т-Банк</span></div>
-    </div>
-    <div class="wal-req-qr fade-in">
-      ${walQrSvg('oko-card-' + WALLET.acc, 88)}
-      <div><b>QR для оплаты</b><span>Отсканируй в приложении банка — сумма и назначение платежа подставятся сами. Зачисление мгновенно.</span></div>
-    </div>`;
-  if(m === 'usdt') return `
-    <div class="wal-req fade-in">
-      <div class="wal-req-h">${I('money')}<span>Адрес USDT · сеть <b>TRC20</b></span></div>
-      <button class="wal-addr" onclick="walCopy(WAL_USDT_ADDR,'Адрес USDT скопирован')"><span>${WAL_USDT_ADDR}</span>${I('copy')}</button>
-      <p class="wal-req-warn">Отправляй только USDT в сети TRC20 — перевод в другой сети будет потерян. Курс фиксируется в момент зачисления.</p>
-    </div>`;
-  if(m === 'ton') return `
-    ${walTonSurface('topup')}
-    <div class="wal-req fade-in">
-      <div class="wal-req-h">${I('ton')}<span>Адрес кошелька <b>TON</b></span></div>
-      <button class="wal-addr" onclick="walCopy(WAL_TON_ADDR,'Адрес TON скопирован')"><span>${WAL_TON_ADDR}</span>${I('copy')}</button>
-      <p class="wal-req-warn" style="color:var(--dim)">Переводи Toncoin из любого TON-кошелька — зачисление за 1–2 минуты по текущему курсу.</p>
-    </div>`;
   return `
     <div class="wal-req fade-in">
-      <div class="wal-req-h">${I('bolt')}<span>Оплата через Lava.top</span></div>
-      <p class="wal-req-warn" style="color:var(--dim);margin-top:7px">Счёт откроется в защищённом шлюзе после нажатия «Пополнить» — карты любой страны, СБП и крипта.</p>
+      <div class="wal-req-h">${I('bolt')}<span>Оплата в защищённом шлюзе</span></div>
+      <p class="wal-req-warn" style="color:var(--dim);margin-top:7px">Счёт откроется после нажатия «Пополнить»: карта, СБП или крипта выбираются уже в шлюзе. Реквизиты внутри приложения не показываем — их нельзя проверить, по ним легко потерять деньги.</p>
     </div>`;
 }
 
@@ -2933,14 +2914,12 @@ function walFlash(kind){
 
 /* ---------- TON CONNECT: подключение внешнего TON-кошелька (персист) ---------- */
 /* мок-адрес пользовательского кошелька (детерминированный от лицевого счёта) */
-function walTonMyAddr(){
-  let h = 2166136261; const seed = 'ton-' + WALLET.acc;
-  for(let i = 0; i < seed.length; i++){ h ^= seed.charCodeAt(i); h = Math.imul(h, 16777619) >>> 0; }
-  let s = '';
-  for(let i = 0; i < 34; i++){ h ^= h << 13; h >>>= 0; h ^= h >>> 17; h ^= h << 5; h >>>= 0;
-    s += 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789abcdefghijkmnopqrstuvwxyz'[h % 56]; }
-  return 'UQ' + s;
-}
+/* УРОК №4 (навсегда): не изображаем подключение, которого нет, и не выдумываем
+   адрес. TON Connect в приложении пока не включён. Слой oko-wallet2.js
+   показывает подробное честное окно; базовые версии тоже честные — на случай,
+   если слой не загрузился. Адрес НЕ фабрикуем: по фейковому адресу человек
+   мог бы отправить монеты в никуда. */
+function walTonMyAddr(){ return ''; }
 function walTonReRender(){
   const tv = document.getElementById('sheet-walTopup');
   if(tv && tv.classList.contains('open')){ const r = document.getElementById('walTopReq'); if(r) r.innerHTML = walTopReqHtml(walTopupState.method); }
@@ -2948,31 +2927,21 @@ function walTonReRender(){
   if(wv && wv.classList.contains('open')) walRenderWithdraw();
 }
 function walTonConnect(){
-  const btn = event && event.currentTarget;
-  if(btn){ btn.innerHTML = '<span class="spin" style="width:20px;height:20px"></span><span><b>Подключаем…</b><em>TON Connect · подтверди в кошельке</em></span>'; }
-  setTimeout(()=>{
-    WAL_X.ton = walTonMyAddr(); walXSave();
-    walTonReRender();
-    toast('TON-кошелёк подключён');
-  }, 700);
+  if(typeof showPopup === 'function'){
+    showPopup({ico:'ton', title:'TON-кошелёк ещё не подключён',
+      body:'TON Connect в приложении пока не включён — ни подключить кошелёк, ни отправить Toncoin отсюда нельзя, и мы не делаем вид, что можно. Переводи крипту напрямую в Tonkeeper, TON Wallet или MyTonWallet.',
+      actions:[{label:'Понятно'}]});
+  } else { toast('TON Connect пока не подключён'); }
 }
 function walTonDisconnect(){
   WAL_X.ton = null; walXSave();
   walTonReRender();
-  toast('TON-кошелёк отключён');
 }
 function walTonSurface(ctx){
-  if(WAL_X.ton){
-    const a = WAL_X.ton;
-    return `<div class="wal-ton-conn fade-in">
-      <div class="wal-ton-badge">${I('ton')}</div>
-      <div class="wal-ton-b"><b>TON-кошелёк подключён</b><span>${a.slice(0,6)}…${a.slice(-6)}</span></div>
-      <button class="wal-ton-x" onclick="walTonDisconnect()">Отключить</button>
-    </div>`;
-  }
-  const sub = ctx === 'withdraw' ? 'Нужен для вывода Toncoin — Tonkeeper · Wallet · MyTonWallet'
-                                 : 'Пополняй в один тап — Tonkeeper · Wallet · MyTonWallet';
-  return `<button class="wal-ton-connect fade-in" type="button" onclick="walTonConnect()">${I('ton')}<span><b>Подключить TON-кошелёк</b><em>${sub}</em></span>${I('chev')}</button>`;
+  const sub = ctx === 'withdraw' ? 'Для вывода Toncoin переводи через свой внешний кошелёк'
+                                 : 'Крипту переводи напрямую в Tonkeeper · TON Wallet · MyTonWallet';
+  return `<div class="wal-req fade-in"><div class="wal-req-h">${I('ton')}<span>Крипта — через внешний кошелёк</span></div>
+    <p class="wal-req-warn" style="color:var(--dim);margin-top:6px">TON Connect пока не включён, адрес для приёма не показываем — чтобы никто не отправил монеты в никуда. ${sub}.</p></div>`;
 }
 
 /* ---------- СТАТУС ВЫВОДА: живой таймлайн (мок реального процессинга) ---------- */
@@ -33489,7 +33458,11 @@ function cpPaintStatuses(){
 }
 function cpPaintIf(chat){ if(typeof currentChat!=='undefined' && currentChat===chat) cpPaintStatuses(); }
 
-/* мок-жизнь статусов: sent -> delivered (~1 c) -> read (2–5 c, если чат онлайн) */
+/* Статусы исходящих: sent -> delivered (сообщение ушло из клиента). Вторую
+   галочку «прочитано» по таймеру НЕ ставим (урок №4: это ложь интерфейса —
+   никто сообщение в этот момент не читал). «Прочитано» появляется только по
+   реальному сигналу второй стороны — это делает слой oko-chat2.js
+   (markReadByIncoming: пришло входящее в живой комнате → наши прочитаны). */
 if(typeof pushMsg === 'function'){
   const _cpPrevPushMsg = pushMsg;
   pushMsg = function(m){
@@ -33498,8 +33471,6 @@ if(typeof pushMsg === 'function'){
     const chat = currentChat;
     m.cpSt = 'sent'; cpPaintIf(chat);
     setTimeout(()=>{ if(m.cpSt==='sent'){ m.cpSt='delivered'; cpPaintIf(chat); } }, 600 + Math.random()*600);
-    if(chat.online)
-      setTimeout(()=>{ m.cpSt='read'; cpPaintIf(chat); }, 2000 + Math.random()*3000);
   };
 }
 
