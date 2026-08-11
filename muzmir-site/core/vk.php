@@ -396,3 +396,81 @@ function _vk_log(string $line): void {
     if (!is_dir($dir)) @mkdir($dir, 0775, true);
     @file_put_contents($dir . '/vk.log', date('Y-m-d H:i:s') . ' ' . $line . "\n", FILE_APPEND);
 }
+
+/* =====================================================================
+ *  РАСПРОСТРАНЕНИЕ ЗА ПРЕДЕЛЫ СОБСТВЕННОГО СООБЩЕСТВА
+ *
+ *  Своих подписчиков центр уже собрал, и их число само по себе не растёт.
+ *  Новые участники приходят оттуда, где сидят педагоги: из сообществ школ
+ *  искусств, домов культуры, методических объединений. Написать им сообщением
+ *  ВКонтакте нельзя — сообщество не может первым postучаться в другое
+ *  сообщество, а человеку пишет только если он сам начал диалог. Остаются два
+ *  честных пути: репост (когда о нас упомянули или мы договорились о взаимном
+ *  размещении) и поиск подходящих сообществ, чтобы было с кем договариваться.
+ * ===================================================================== */
+
+/**
+ * Репост записи на стену нашего сообщества.
+ *
+ * $postUrl — ссылка вида https://vk.com/wall-12345_678 или готовый object
+ * «wall-12345_678». Возвращает ['ok'=>bool, ...].
+ */
+function vk_repost(string $postUrl, string $comment = ''): array {
+    $obj = trim($postUrl);
+    if (preg_match('~wall(-?\d+_\d+)~', $obj, $m)) $obj = 'wall' . $m[1];
+    if (!preg_match('~^wall-?\d+_\d+$~', $obj)) {
+        return ['ok' => false, 'error' => 'не разобрал ссылку на запись: ' . $postUrl];
+    }
+    $gid = (int) cfgv('vk_group_id', 211325055);
+    $p = ['object' => $obj, 'group_id' => $gid];
+    if ($comment !== '') $p['message'] = $comment;
+
+    $r = vk_api('wall.repost', $p);
+    if (isset($r['error'])) {
+        _vk_log('repost ERR: ' . json_encode($r['error'], JSON_UNESCAPED_UNICODE));
+        return ['ok' => false, 'error' => (string) ($r['error']['error_msg'] ?? 'unknown')];
+    }
+    _vk_log('repost OK ' . $obj);
+    return ['ok' => true, 'post_id' => (int) ($r['response']['post_id'] ?? 0)];
+}
+
+/**
+ * Поиск профильных сообществ — кандидатов на взаимное размещение.
+ *
+ * Отдаёт только то, с чем есть смысл работать: открытые сообщества с живой
+ * аудиторией. Совсем мелкие отсеиваются — размещение у них не окупает переписки;
+ * совсем крупные обычно продают рекламу и на взаимность не идут, но их оставляем:
+ * решать человеку.
+ *
+ * @return array список ['id','name','members','link'], отсортированный по размеру
+ */
+function vk_find_communities(string $query, int $limit = 40, int $minMembers = 300): array {
+    // fields обязателен: без него ВК не отдаёт members_count, и любой отбор по
+    // размеру аудитории молча выбрасывает вообще всё.
+    // type не указываем намеренно: ВКонтакте принимает там ровно одно значение, а
+    // на «group,page» отвечает пустым списком без всякой ошибки — ищем по всем видам.
+    $r = vk_api('groups.search', [
+        'q'      => $query,
+        'count'  => max(1, min(100, $limit)),
+        'sort'   => 0,
+        'fields' => 'members_count,city,description',
+    ]);
+    if (isset($r['error'])) {
+        _vk_log('groups.search ERR: ' . json_encode($r['error'], JSON_UNESCAPED_UNICODE));
+        return [];
+    }
+    $out = [];
+    foreach (($r['response']['items'] ?? []) as $g) {
+        $members = (int) ($g['members_count'] ?? 0);
+        if ($members < $minMembers) continue;
+        if ((int) ($g['is_closed'] ?? 0) !== 0) continue;   // в закрытое не постучаться
+        $out[] = [
+            'id'      => (int) ($g['id'] ?? 0),
+            'name'    => (string) ($g['name'] ?? ''),
+            'members' => $members,
+            'link'    => 'https://vk.com/' . (string) ($g['screen_name'] ?? ('club' . (int) ($g['id'] ?? 0))),
+        ];
+    }
+    usort($out, fn($a, $b) => $b['members'] <=> $a['members']);
+    return $out;
+}
