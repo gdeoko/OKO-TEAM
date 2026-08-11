@@ -104,6 +104,13 @@ function db_schema(PDO $pdo): void {
     CREATE TABLE IF NOT EXISTS team_chat_topics (
       id INTEGER PRIMARY KEY AUTOINCREMENT, topic_name TEXT UNIQUE, chat_id TEXT, thread_id INTEGER, description TEXT, active INTEGER DEFAULT 1);
     CREATE TABLE IF NOT EXISTS settings (k TEXT PRIMARY KEY, v TEXT, updated_at TEXT);
+    CREATE TABLE IF NOT EXISTS app_tasks (
+      id INTEGER PRIMARY KEY AUTOINCREMENT, uid TEXT UNIQUE, kind TEXT, title TEXT,
+      payload TEXT, source TEXT, user_ref TEXT, status TEXT DEFAULT 'pending',
+      result TEXT, error TEXT, taken_by TEXT,
+      created_at TEXT DEFAULT (datetime('now','localtime')), updated_at TEXT);
+    CREATE INDEX IF NOT EXISTS idx_app_tasks_status ON app_tasks(status);
+    CREATE INDEX IF NOT EXISTS idx_app_tasks_uid ON app_tasks(uid);
     CREATE TABLE IF NOT EXISTS visits (
       id INTEGER PRIMARY KEY AUTOINCREMENT, page TEXT, ref TEXT, ua TEXT, ip TEXT,
       created_at TEXT DEFAULT (datetime('now','localtime')));

@@ -251,6 +251,7 @@
              '<h3>ОКО Ai</h3>' +
              '<p>Нейросеть OKO прямо в приложении. Спроси про контент, продажи, цены или стратегию — отвечу здесь, в переписке.</p>' +
              '<p>Переписка пустая. Напиши первое сообщение или начни с готового запроса.</p>' +
+             '<p class="oko-ai-hint">Нужна картинка? Напиши «/картинка …» — поставлю в очередь генератора OKO и пришлю результат сюда.</p>' +
              '<div class="oko-ai-chips">' + chips + '</div>' +
            '</div>';
   }
@@ -326,12 +327,93 @@
     send(t);
   }
 
+  /* Вставить «богатый» пузырь ИИ с готовой разметкой (картинка/ссылка). */
+  function appendRich(html) {
+    if (!refs.msgs) return;
+    if (refs.msgs.querySelector('.oko-ai-empty')) refs.msgs.innerHTML = '';
+    var node = document.createElement('div');
+    node.className = 'msg in msg-enter';
+    node.innerHTML = html + '<span class="t">' + esc(now()) + '</span>';
+    refs.msgs.appendChild(node);
+    scrollDown();
+  }
+
+  /* Явное намерение сгенерировать медиа (тяжёлая задача → через мост,
+     а не через чат-ассистента). Только однозначные команды, чтобы не
+     ловить обычную беседу. */
+  function mediaIntent(text) {
+    var s = text.trim();
+    var m;
+    if ((m = s.match(/^\/(?:картинк\w*|обложк\w*|image|cover)\s+([\s\S]+)/i))) return { kind: /обложк|cover/i.test(m[0]) ? 'cover' : 'image', prompt: m[1].trim() };
+    if ((m = s.match(/^\/(?:видео|клип|video|clip)\s+([\s\S]+)/i)))         return { kind: /клип|clip/i.test(m[0]) ? 'clip' : 'video', prompt: m[1].trim() };
+    if ((m = s.match(/^(?:нарисуй|сгенерируй|сделай)\s+(?:мне\s+)?(картинк\w+|обложк\w+|изображени\w+)\s+([\s\S]+)/i)))
+      return { kind: /обложк/i.test(m[1]) ? 'cover' : 'image', prompt: m[2].trim() };
+    return null;
+  }
+
+  function kindWord(kind) {
+    return kind === 'cover' ? 'обложки' : (kind === 'video' || kind === 'clip') ? 'видео' : 'картинки';
+  }
+
+  /* Отрисовать результат задачи. Драйнер кладёт result как URL или объект
+     { url, type }. Картинку показываем прямо в переписке. */
+  function renderResult(kind, result) {
+    var url = '';
+    if (typeof result === 'string') url = result;
+    else if (result && typeof result === 'object') url = result.url || result.src || result.href || '';
+    var isImg = url && (/\.(png|jpe?g|webp|gif|avif)(\?|$)/i.test(url) || kind === 'image' || kind === 'cover');
+    if (url && isImg) {
+      return { text: 'Готово: ' + url, html: '<div>Готово — ' + esc(kindWord(kind).replace('ы', 'а')) + ':</div>' +
+        '<a href="' + esc(url) + '" target="_blank" rel="noopener"><img src="' + esc(url) + '" alt="" style="max-width:100%;border-radius:12px;margin-top:6px;display:block"></a>' };
+    }
+    if (url) return { text: 'Готово: ' + url, html: '<div>Готово. <a href="' + esc(url) + '" target="_blank" rel="noopener">Открыть результат</a></div>' };
+    var txt = (result && result.text) ? String(result.text) : (typeof result === 'string' ? result : 'Готово.');
+    return { text: txt, html: md(txt) };
+  }
+
+  function sendMedia(kind, prompt) {
+    showTyping();
+    setStatus('ставлю задачу…');
+    window.okoBridge.run(kind, prompt, {
+      source: 'oko-ai',
+      title: prompt.slice(0, 80),
+      onQueued: function () {
+        hideTyping();
+        busy = false; /* задача в очереди — освобождаем ввод, ждём в фоне */
+        var t = 'Задача на генерацию ' + kindWord(kind) + ' в очереди OKO. Придёт сюда, как только освободится генератор — можно продолжать переписку.';
+        push('ai', t); appendBubble('ai', t); setStatus('в очереди');
+      }
+    }).then(function (s) {
+      if (s && s.status === 'done') {
+        var out = renderResult(kind, s.result);
+        push('ai', out.text); appendRich(out.html);
+      } else {
+        var e = 'Не удалось выполнить задачу' + (s && s.error ? ': ' + s.error : '') + '.';
+        push('ai', e); appendBubble('ai', e);
+      }
+      setStatus('на связи');
+    }).catch(function () {
+      var e = 'Генератор OKO пока не отозвался — задача осталась в очереди. Загляни позже, результат придёт сюда.';
+      push('ai', e); appendBubble('ai', e); setStatus('на связи');
+    });
+  }
+
   function send(text) {
     text = String(text || '').trim();
     if (!text || busy) return;
     build();
-    busy = true;
 
+    /* Тяжёлая генерация медиа идёт через мост okoBridge (очередь → сессия
+       Claude Code), а не через чат-ассистента. Только по явной команде. */
+    var mi = window.okoBridge ? mediaIntent(text) : null;
+    if (mi && mi.prompt) {
+      busy = true;
+      push('user', text); appendBubble('user', text);
+      sendMedia(mi.kind, mi.prompt);
+      return;
+    }
+
+    busy = true;
     push('user', text);
     appendBubble('user', text);
     showTyping();

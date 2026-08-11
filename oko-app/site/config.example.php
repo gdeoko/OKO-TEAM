@@ -9,6 +9,10 @@ return [
     'team_chat_id' => '-1002971919136',
     'admin_password' => 'PUT_ON_VPS',                     // /admin
     'agent_token'    => 'PUT_ON_VPS',                     // агент↔сайт (X-Agent-Token)
+    'queue_token'    => 'PUT_ON_VPS',                     // ТОЛЬКО очередь задач мини-аппов
+    //   (oko_task_pull/oko_task_result). Наименьшие права: ни диалогов, ни денег,
+    //   ни админки — можно раздать всем сессиям-сливщикам Claude Code. Сгенерировать:
+    //   openssl rand -hex 24  → вписать сюда (или в config-pay.php оверлеем).
     'control_url'    => 'https://okoagents.okoteam.top',
     'control_token'  => 'PUT_ON_VPS',
     'gmail'      => 'daniel.okoteam@gmail.com',

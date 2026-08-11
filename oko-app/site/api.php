@@ -24,6 +24,11 @@ function anketa_sig_ok(string $sid, string $sig): bool { return $sig!=='' && has
 function require_admin(){ if(!admin_ok()) fail('Unauthorized',403); }
 function agent_ok(): bool { $C=cfg(); $t=$_SERVER['HTTP_X_AGENT_TOKEN']??($GLOBALS['body']['agent_token']??''); return $t!=='' && hash_equals((string)($C['agent_token']??''),(string)$t); }
 function require_agent(){ if(!agent_ok()) fail('Unauthorized',403); }
+// Токен только для очереди задач (oko_task_pull/result) — наименьшие права:
+// ни диалогов, ни денег, ни админки. Такой токен можно безопасно раздать
+// всем сессиям-сливщикам Claude Code. Задаётся в config: 'queue_token'.
+function queue_ok(): bool { $C=cfg(); $t=$_SERVER['HTTP_X_QUEUE_TOKEN']??($_GET['qt']??($GLOBALS['body']['queue_token']??'')); $want=(string)($C['queue_token']??''); return $want!=='' && $t!=='' && hash_equals($want,(string)$t); }
+function drainer_ok(): bool { return admin_ok() || agent_ok() || queue_ok(); }
 function rate_limit($b,$max,$win){ $ip=$_SERVER['REMOTE_ADDR']??'0'; $f=sys_get_temp_dir().'/oko_rl_'.md5($b.$ip); $n=time();
     $h=file_exists($f)?array_filter(json_decode(file_get_contents($f),true)?:[],fn($t)=>$t>$n-$win):[]; if(count($h)>=$max) fail('Слишком часто, подождите',429); $h[]=$n; @file_put_contents($f,json_encode(array_values($h))); }
 
@@ -991,6 +996,94 @@ case 'wd_reject': {
     $n=db_exec("UPDATE wallet_withdrawals SET status='rejected', updated_at=? WHERE id=? AND status='pending'",[now(),$id]);
     if($n===0) fail('заявка не найдена или уже обработана',404);
     out(['ok'=>true,'id'=>$id,'status'=>'rejected']);
+}
+
+// ═════════════════════════════════════════════════════════════════
+// МОСТ В CLAUDE CODE ПОД КАЖДЫЙ MINI-APP (очередь тяжёлых задач).
+//
+// Мини-аппы OKO (Клипы, маркетинг, академия, обложки) кладут тяжёлую
+// задачу — генерацию картинки/видео/сайта/поста — в очередь. Обрабатывает
+// её сессия Claude Code («сливщик»): забирает pending через oko_task_pull
+// (нужен admin/agent-токен), делает работу своими MCP-инструментами и
+// возвращает результат через oko_task_result. Приложение опрашивает
+// oko_task_status по публичному uid.
+//
+// Честно: задача выполняется, КОГДА работает сессия-сливщик. Мгновенный
+// ИИ-ответ (чат) идёт отдельно, через action=assistant, и работает всегда.
+// Токенов на VPS для этого не нужно — вся очередь в своей SQLite.
+// ═════════════════════════════════════════════════════════════════
+case 'oko_task': {
+    rate_limit('oko_task',20,60);
+    $KINDS=['image','video','clip','cover','site','post','email','content','other'];
+    $kind=preg_replace('/[^a-z_]/','',strtolower((string)($body['kind']??'')));
+    if(!in_array($kind,$KINDS,true)) $kind='other';
+    $title=mb_substr(trim((string)($body['title']??'')),0,160);
+    $source=preg_replace('/[^a-z0-9_\-]/i','',(string)($body['source']??''));
+    $user=mb_substr(trim((string)($body['user']??$body['user_ref']??'')),0,80);
+    $p=$body['payload']??'';
+    $payload=is_string($p)?mb_substr($p,0,20000):mb_substr(json_encode($p,JSON_UNESCAPED_UNICODE),0,20000);
+    if($payload==='' && $title==='') fail('пустая задача');
+    // Слишком много pending от одного — защита от заваливания очереди.
+    if($user!==''){ $open=(int)db_val("SELECT COUNT(*) FROM app_tasks WHERE user_ref=? AND status IN ('pending','working')",[$user]);
+        if($open>=20) fail('Слишком много задач в очереди, дождитесь результата',429); }
+    $uid=bin2hex(random_bytes(9));
+    $id=db_insert("INSERT INTO app_tasks (uid,kind,title,payload,source,user_ref,status,created_at,updated_at) VALUES (?,?,?,?,?,?,'pending',?,?)",
+        [$uid,$kind,$title,$payload,$source,$user,now(),now()]);
+    tg_send($C['daniel_tg']??'',"<b>Задача в очереди #{$id}</b> · {$kind}".($title?"\n".htmlspecialchars($title):'')
+        .($source?"\nИсточник: ".htmlspecialchars($source):'').($user?"\nОт: ".htmlspecialchars($user):''));
+    out(['ok'=>true,'uid'=>$uid,'id'=>$id,'status'=>'pending']);
+}
+
+case 'oko_task_status': {
+    $uid=preg_replace('/[^a-f0-9]/','',(string)($_GET['uid']??$body['uid']??''));
+    if($uid==='') fail('no uid');
+    $t=db_one("SELECT uid,kind,title,status,result,error,created_at,updated_at FROM app_tasks WHERE uid=?",[$uid]);
+    if(!$t) fail('not found',404);
+    $res=$t['result']; $dec=json_decode((string)$res,true); if(json_last_error()===JSON_ERROR_NONE) $res=$dec;
+    out(['ok'=>true,'uid'=>$t['uid'],'kind'=>$t['kind'],'title'=>$t['title'],'status'=>$t['status'],
+        'result'=>$res,'error'=>$t['error'],'created_at'=>$t['created_at'],'updated_at'=>$t['updated_at']]);
+}
+
+// Список задач пользователя (для экрана «Очередь» в приложении).
+case 'oko_task_mine': {
+    $user=mb_substr(trim((string)($_GET['user']??$body['user']??'')),0,80);
+    if($user==='') fail('no user');
+    $rows=db_all("SELECT uid,kind,title,status,error,created_at,updated_at FROM app_tasks WHERE user_ref=? ORDER BY id DESC LIMIT 50",[$user]);
+    out(['ok'=>true,'items'=>$rows]);
+}
+
+// ── Сторона сливщика (Claude Code / агенты) — нужен admin- или agent-токен ──
+// Атомарный захват: пометить pending → working своим клеймом, потом отдать
+// именно свои. Два сливщика не возьмут одну задачу.
+case 'oko_task_pull': {
+    if(!drainer_ok()) fail('Unauthorized',403);
+    $limit=max(1,min(20,(int)($_GET['limit']??$body['limit']??5)));
+    $kindF=preg_replace('/[^a-z_]/','',strtolower((string)($_GET['kind']??$body['kind']??'')));
+    $claim='c'.bin2hex(random_bytes(6));
+    $pdo=db(); $pdo->beginTransaction();
+    try{
+        $where="status='pending'".($kindF?" AND kind=".$pdo->quote($kindF):'');
+        $pdo->prepare("UPDATE app_tasks SET status='working', taken_by=?, updated_at=? WHERE id IN (SELECT id FROM app_tasks WHERE $where ORDER BY id LIMIT $limit)")
+            ->execute([$claim,now()]);
+        $pdo->commit();
+    }catch(Throwable $e){ try{$pdo->rollBack();}catch(Throwable $e2){} fail('pull error: '.$e->getMessage(),500); }
+    $rows=db_all("SELECT uid,kind,title,payload,source,user_ref,created_at FROM app_tasks WHERE taken_by=? AND status='working' ORDER BY id",[$claim]);
+    foreach($rows as &$r){ $d=json_decode((string)$r['payload'],true); if(json_last_error()===JSON_ERROR_NONE) $r['payload']=$d; }
+    out(['ok'=>true,'claim'=>$claim,'items'=>$rows]);
+}
+
+case 'oko_task_result': {
+    if(!drainer_ok()) fail('Unauthorized',403);
+    $uid=preg_replace('/[^a-f0-9]/','',(string)($_GET['uid']??$body['uid']??''));
+    if($uid==='') fail('no uid');
+    $status=(string)($body['status']??$_GET['status']??'done');
+    $status=in_array($status,['done','failed','working','pending'],true)?$status:'done';
+    $r=$body['result']??$_GET['result']??'';
+    $result=is_string($r)?mb_substr($r,0,100000):mb_substr(json_encode($r,JSON_UNESCAPED_UNICODE),0,100000);
+    $error=mb_substr(trim((string)($body['error']??$_GET['error']??'')),0,500);
+    $n=db_exec("UPDATE app_tasks SET status=?, result=?, error=?, updated_at=? WHERE uid=?",[$status,$result,$error,now(),$uid]);
+    if($n===0) fail('not found',404);
+    out(['ok'=>true,'uid'=>$uid,'status'=>$status]);
 }
 
 // ── Состояние интеграций для Штаба OKO ──────────────────────────
