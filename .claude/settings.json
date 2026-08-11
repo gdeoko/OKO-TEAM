@@ -1,6 +1,9 @@
 {
   "permissions": {
     "defaultMode": "bypassPermissions",
+    "deny": [
+      "AskUserQuestion"
+    ],
     "allow": [
       "Bash",
       "WebSearch",
