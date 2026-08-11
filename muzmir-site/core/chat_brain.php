@@ -236,23 +236,19 @@ function chat_official_kb(): string {
  * Тихий фолбэк на null при любой ошибке — дальше Claude/агент/rule-based.
  */
 /**
- * Ключи Gemini для перебора.
+ * Ключи Gemini в том порядке, в каком их пробовать.
  *
- * Берём и список (gemini_api_keys, через запятую), и одиночный ключ — какой из них
- * заполнен на конкретной установке, тот и сработает. Сдвиг по часу нужен, чтобы
- * первый ключ не принимал на себя весь поток и не выгорал первым каждый день.
+ * Порядок здесь — не формальность, а деньги. Первым идёт ключ с бесплатной квотой:
+ * пока она есть, центр не платит ни копейки. Когда бесплатный упрётся в лимит и
+ * ответит отказом, очередь дойдёт до оплаченного, и разговор с участником не
+ * прервётся. Поэтому список берётся как записан, без перетасовки.
  */
 function chat_gemini_keys(): array {
     $raw = trim((string) (cfgv('gemini_api_keys') ?: ''));
     $keys = $raw !== '' ? preg_split('~[,\s]+~', $raw) : [];
     $one = trim((string) (cfgv('gemini_api_key') ?: ''));
     if ($one !== '') $keys[] = $one;
-    $keys = array_values(array_unique(array_filter(array_map('trim', $keys))));
-    if (count($keys) > 1) {
-        $shift = (int) date('G') % count($keys);
-        $keys = array_merge(array_slice($keys, $shift), array_slice($keys, 0, $shift));
-    }
-    return $keys;
+    return array_values(array_unique(array_filter(array_map('trim', $keys))));
 }
 
 function chat_gemini_reply(string $apiKey, string $sessionKey, string $text): ?string {
