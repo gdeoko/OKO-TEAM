@@ -1,0 +1,212 @@
+/* ╔══════════════════════════════════════════════════════════════╗
+   ║  OKO · ВИЗУАЛЬНЫЙ СЛОЙ                                          ║
+   ║  Пустые состояния из серых квадратиков превращаются в живой     ║
+   ║  бренд-знак: дышащее свечение, орбита, вращающееся кольцо.      ║
+   ║  Плюс сквозная система анимаций: появление списков, отклик на   ║
+   ║  нажатие, мерцание скелетонов.                                  ║
+   ║                                                                ║
+   ║  ПРАВИЛА, КОТОРЫЕ ЗДЕСЬ СОБЛЮДЕНЫ:                              ║
+   ║  · анимируем ТОЛЬКО transform и opacity - это не вызывает       ║
+   ║    пересчёт вёрстки, поэтому меню не начнёт лагать (урок 22);   ║
+   ║  · всё гаснет при prefers-reduced-motion;                       ║
+   ║  · работает в ОБЕИХ темах - цвета только через переменные;      ║
+   ║  · ноль эмодзи, вся графика - CSS и SVG в стиле бренда.         ║
+   ╚══════════════════════════════════════════════════════════════╝ */
+
+/* ─────────────────────────────────────────── 1. ПУСТЫЕ СОСТОЯНИЯ */
+
+/* Оболочка вокруг иконки пустого состояния. Сама иконка остаётся той же -
+   мы только добавляем вокруг неё свет, кольцо и орбиту. */
+.okv-halo{
+  position:relative;
+  isolation:isolate;
+}
+
+/* Мягкое дыхание света под иконкой. */
+.okv-halo::before{
+  content:'';
+  position:absolute;
+  left:50%; top:50%;
+  width:210%; height:210%;
+  transform:translate(-50%,-50%) scale(.82);
+  border-radius:50%;
+  background:radial-gradient(circle,
+    color-mix(in srgb, var(--lime, #9AFF00) 26%, transparent) 0%,
+    color-mix(in srgb, var(--lime, #9AFF00) 9%, transparent) 42%,
+    transparent 70%);
+  opacity:.55;
+  z-index:-2;
+  pointer-events:none;
+  animation:okvBreathe 4.2s ease-in-out infinite;
+}
+
+/* Тонкое пунктирное кольцо, медленно вращается - «сканирующий глаз». */
+.okv-halo::after{
+  content:'';
+  position:absolute;
+  left:50%; top:50%;
+  width:158%; height:158%;
+  margin:0;
+  transform:translate(-50%,-50%);
+  border-radius:50%;
+  border:1.5px dashed color-mix(in srgb, var(--lime, #9AFF00) 38%, transparent);
+  opacity:.5;
+  z-index:-1;
+  pointer-events:none;
+  animation:okvSpin 18s linear infinite;
+}
+
+/* Точка на орбите - живой признак, что экран не «сломан», а просто пуст. */
+.okv-orbit{
+  position:absolute;
+  left:50%; top:50%;
+  width:158%; height:158%;
+  transform:translate(-50%,-50%);
+  border-radius:50%;
+  pointer-events:none;
+  z-index:-1;
+  animation:okvSpin 7.5s linear infinite;
+}
+.okv-orbit::before{
+  content:'';
+  position:absolute;
+  top:-3px; left:50%;
+  width:6px; height:6px;
+  margin-left:-3px;
+  border-radius:50%;
+  background:var(--lime, #9AFF00);
+  box-shadow:0 0 10px 2px color-mix(in srgb, var(--lime, #9AFF00) 65%, transparent);
+}
+
+/* Сама иконка внутри - чуть крупнее и с мягким подъёмом. */
+.okv-halo > svg,
+.okv-halo > svg.i{
+  position:relative;
+  z-index:1;
+  animation:okvFloat 5.5s ease-in-out infinite;
+}
+
+@keyframes okvBreathe{
+  0%,100%{ transform:translate(-50%,-50%) scale(.82); opacity:.42 }
+  50%    { transform:translate(-50%,-50%) scale(1);   opacity:.72 }
+}
+@keyframes okvSpin{
+  from{ transform:translate(-50%,-50%) rotate(0deg) }
+  to  { transform:translate(-50%,-50%) rotate(360deg) }
+}
+@keyframes okvFloat{
+  0%,100%{ transform:translateY(0) }
+  50%    { transform:translateY(-3px) }
+}
+
+/* Текст пустого состояния: заголовок весомее, подпись спокойнее. */
+.okv-empty-title{
+  font-family:'Bebas Neue', Montserrat, system-ui, sans-serif;
+  letter-spacing:.02em;
+}
+
+/* Главное пустое состояние приложения (.empty-state - «Чаты», поиск,
+   уведомления) было серой коробкой с СЕРОЙ иконкой: ни капли бренда там,
+   где человек оказывается в первые десять секунд. Возвращаем лайм и
+   убираем глухую заливку - вместо неё работает наше свечение. */
+.empty-state .es-ico.okv-halo{
+  background:color-mix(in srgb, var(--lime, #9AFF00) 10%, transparent);
+  border-color:color-mix(in srgb, var(--lime, #9AFF00) 26%, transparent);
+  color:var(--lime, #9AFF00);
+  width:66px; height:66px;
+  border-radius:22px;
+}
+.empty-state .es-ico.okv-halo .i{ width:32px; height:32px }
+
+/* ───────────────────────────────────── 2. ПОЯВЛЕНИЕ ЭЛЕМЕНТОВ */
+
+/* Карточки и строки списков всплывают снизу, когда попадают в кадр.
+   Ставится через IntersectionObserver, поэтому ничего не считается,
+   пока элемент не виден. */
+.okv-rise{
+  opacity:0;
+  transform:translate3d(0,14px,0);
+  will-change:opacity, transform;
+}
+.okv-rise.okv-on{
+  opacity:1;
+  transform:none;
+  transition:opacity .42s cubic-bezier(.22,1,.32,1),
+             transform .42s cubic-bezier(.22,1,.32,1);
+}
+/* will-change снимаем после проигрыша, иначе слой висит в памяти зря */
+.okv-rise.okv-done{ will-change:auto }
+
+/* ─────────────────────────────────────── 3. ОТКЛИК НА НАЖАТИЕ */
+
+/* Мгновенная физическая отдача: палец жмёт - элемент проседает.
+   Только transform, поэтому дёшево. */
+.okv-press{ transition:transform .13s cubic-bezier(.3,1,.4,1) }
+.okv-press:active{ transform:scale(.972) }
+
+/* ──────────────────────────────────────────── 4. СКЕЛЕТОНЫ */
+
+/* Пока данные едут - мягкое мерцание вместо пустоты и прыжка вёрстки. */
+.okv-skel{
+  position:relative;
+  overflow:hidden;
+  background:var(--raised, rgba(255,255,255,.05));
+  border-radius:10px;
+}
+.okv-skel::after{
+  content:'';
+  position:absolute;
+  inset:0;
+  transform:translateX(-100%);
+  background:linear-gradient(90deg,
+    transparent,
+    color-mix(in srgb, var(--lime, #9AFF00) 12%, transparent),
+    transparent);
+  animation:okvShimmer 1.35s ease-in-out infinite;
+}
+@keyframes okvShimmer{
+  to{ transform:translateX(100%) }
+}
+
+/* ──────────────────────────── 5. АКЦЕНТ НА ГЛАВНОЙ КНОПКЕ */
+
+/* Живой блик по главной кнопке экрана - взгляд цепляется за действие.
+   Блик идёт поверх, но не мешает нажатию. */
+.okv-shine{ position:relative; overflow:hidden }
+.okv-shine::after{
+  content:'';
+  position:absolute;
+  top:0; bottom:0; left:-60%;
+  width:45%;
+  transform:skewX(-18deg);
+  background:linear-gradient(90deg,
+    transparent,
+    rgba(255,255,255,.22),
+    transparent);
+  pointer-events:none;
+  animation:okvShine 4.6s ease-in-out infinite;
+}
+@keyframes okvShine{
+  0%,72%{ left:-60% }
+  100%  { left:130% }
+}
+
+/* ─────────────────────────────── 6. ПОКОЙ ПО ЖЕЛАНИЮ ЧЕЛОВЕКА */
+
+/* Если человек попросил систему меньше двигаться - двигаться перестаём.
+   Не «почти», а полностью: пустое состояние остаётся красивым и статичным. */
+@media (prefers-reduced-motion:reduce){
+  .okv-halo::before,
+  .okv-halo::after,
+  .okv-orbit,
+  .okv-halo > svg,
+  .okv-halo > svg.i,
+  .okv-skel::after,
+  .okv-shine::after{
+    animation:none !important;
+  }
+  .okv-rise{ opacity:1; transform:none }
+  .okv-rise.okv-on{ transition:none }
+  .okv-press{ transition:none }
+  .okv-press:active{ transform:none }
+}

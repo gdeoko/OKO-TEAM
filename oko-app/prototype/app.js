@@ -15574,13 +15574,35 @@ function acCourseCover(ci, hero){
     <text x="26" y="118" font-family="'Bebas Neue',Impact,sans-serif" font-size="26" fill="#fff" letter-spacing="1">${esc(c.c1)}</text>
     <text x="26" y="152" font-family="'Bebas Neue',Impact,sans-serif" font-size="${c2Size}" fill="#9AFF00" letter-spacing="${c2Space}">${esc(c.c2)}</text>
     <text x="26" y="176" font-family="Montserrat,sans-serif" font-size="9" font-weight="600" fill="rgba(255,255,255,.5)" letter-spacing="3">АКАДЕМИЯ OKO</text>`;
+  /* Своя обложка на каждое направление. До этого все курсы рисовались ОДНОЙ
+     процедурной картинкой (сетка + круг + знак), и в режиме hero, где текст не
+     выводится, три курса выглядели пиксель-в-пиксель одинаково - на витрине,
+     по которой человек выбирает платное обучение. Теперь у каждого направления
+     свой кадр: «Медийность» - профиль в рамке телефона и волны охвата,
+     «Маркетинг» - воронка из частиц, «Нейросети» - нейросеть со знаком-глазом.
+     Кадры сгенерированы и приведены к точному бренд-лайму, вес 10-40 КБ.
+     Если файла нет - остаётся прежняя сетка, поэтому ничего не ломается. */
+  const ART = {media:'course-media', marketing:'course-marketing', ai:'course-ai'}[c.id];
+  const art = ART
+    ? `<image href="media/img/${ART}.webp" x="0" y="0" width="320" height="190"
+             preserveAspectRatio="xMidYMid slice" opacity=".92"/>
+       <rect width="320" height="190" fill="url(#acCovFade)"/>`
+    : '';
   return `<svg class="ac-cover-svg" viewBox="0 0 320 190" preserveAspectRatio="xMidYMid slice" aria-hidden="true">
+    <defs>
+      <linearGradient id="acCovFade" x1="0" y1="1" x2="0" y2="0">
+        <stop offset="0" stop-color="#050705" stop-opacity=".88"/>
+        <stop offset=".55" stop-color="#050705" stop-opacity=".25"/>
+        <stop offset="1" stop-color="#050705" stop-opacity="0"/>
+      </linearGradient>
+    </defs>
     <rect width="320" height="190" fill="#070a04"/>
-    <g stroke="rgba(154,255,0,.10)" stroke-width="1">
+    ${art}
+    <g stroke="rgba(154,255,0,${ART ? '.05' : '.10'})" stroke-width="1">
       ${[40,80,120,160,200,240,280].map(x=>`<line x1="${x}" y1="0" x2="${x}" y2="190"/>`).join('')}
       ${[38,76,114,152].map(y=>`<line x1="0" y1="${y}" x2="320" y2="${y}"/>`).join('')}
     </g>
-    <circle cx="266" cy="44" r="70" fill="rgba(154,255,0,.09)"/>
+    ${ART ? '' : '<circle cx="266" cy="44" r="70" fill="rgba(154,255,0,.09)"/>'}
     <use href="#i-logo" x="238" y="16" width="64" height="64"/>${bigText}
   </svg>`;
 }
@@ -50825,7 +50847,19 @@ window.chCore = {
     // ------------------------------------------------------------------
     // 1) SPLASH-SHOT
     // ------------------------------------------------------------------
+    /* ОТКЛЮЧЁН НАВСЕГДА. Здесь рисовался «глаз» от руки: эллипс, кружок-радужка,
+       зрачок, блик и два прямоугольника-века. Это нарушало правило бренда
+       («логотип OKO - только из brand/, от руки в SVG не рисовать») и было
+       ПЕРВЫМ кадром приложения. Прятать его стилем оказалось мало: правило
+       `#wm-splash{display:none}` приезжает из слоя, который грузится асинхронно,
+       и замер показал, что на первых ~150 мс самодельный знак ВИДЕН, а следом
+       появляется настоящий - двойная вспышка с разными пропорциями знака.
+       Настоящий сплэш (#splash в index.html) показывает мастер-знак #i-logo -
+       его и оставляем единственным. */
     function buildSplash(){
+      return null;
+    }
+    function buildSplashLegacy(){
       if(REDUCED) return null;
       if(doc.getElementById('wm-splash')) return doc.getElementById('wm-splash');
       var el = doc.createElement('div');
