@@ -264,7 +264,26 @@ function initGlobes() {
     window.__globes.push(gh);
   }
   var mapCv = $("#globeMap");
-  if (mapCv) {
+  /* Глобус в разделе сети ждёт объёмный слой: он далеко внизу, время есть.
+     Не дождались за шесть секунд - показываем плоский, лишь бы не пусто. */
+  if (mapCv && window.RC_GL && window.RC_GL.want3d && !window.RCGlobe3D) {
+    var made2 = false;
+    var build = function () {
+      if (made2) return;
+      made2 = true;
+      buildMapGlobe(mapCv);
+    };
+    addEventListener("rc:3d", build);
+    addEventListener("rc:no3d", build);
+    setTimeout(build, 6000);
+    return;
+  }
+  if (mapCv) buildMapGlobe(mapCv);
+}
+
+function buildMapGlobe(mapCv) {
+  var land = GEO.landPoints();
+  {
     /* Главный глобус - настоящий 3D, если браузер тянет WebGL.
        Плоская версия остаётся запасным вариантом. */
     var opts = {

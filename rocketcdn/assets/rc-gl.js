@@ -66,7 +66,86 @@ g.RC_GL = {
     }, false);
   },
 
+  /* Потолок по устройству: нужен и загрузчику ниже */
+  budget: budget,
+
   /* Сколько сцен сейчас живо: пригодилось в проверках */
   stats: function () { return { used: used, budget: budget(), scenes: scenes.length }; }
 };
+
+/* ── Подгрузка трёхмерного слоя по необходимости ─────────────
+   three.js весит семьсот килобайт. Первому экрану он не нужен:
+   там плоский глобус на обычном холсте. Поэтому библиотеку и три
+   сцены тянем после загрузки страницы и только там, где они
+   вообще будут показаны. Кому 3D не положено - не платит за него
+   ни байтом. */
+(function () {
+  var base = (function () {
+    var me = document.currentScript;
+    if (me && me.src) return me.src.replace(/[^/]+$/, "");
+    return "assets/";
+  })();
+
+  function ok3d() {
+    if (matchMedia("(prefers-reduced-motion: reduce)").matches) return false;
+    if (g.RC_GL.budget() < 2) return false;
+    try {
+      var c = document.createElement("canvas");
+      return !!(c.getContext("webgl2") || c.getContext("webgl"));
+    } catch (e) { return false; }
+  }
+
+  var want = ok3d();
+  g.RC_GL.want3d = want;
+  g.RC_GL.ready3d = false;
+
+  function fire(name) {
+    try { dispatchEvent(new CustomEvent(name)); } catch (e) {}
+    try { document.dispatchEvent(new CustomEvent(name)); } catch (e) {}
+  }
+
+  if (!want) {
+    /* Ждём, пока подпишутся, и сообщаем: объёмного слоя не будет */
+    setTimeout(function () { fire("rc:no3d"); }, 0);
+    return;
+  }
+
+  var FILES = ["vendor/three.min.js", "rc-globe3d.js", "rc-rack.js", "rc-rocket.js"];
+  var started = false;
+
+  function load(i) {
+    if (i >= FILES.length) {
+      g.RC_GL.ready3d = true;
+      fire("rc:3d");
+      return;
+    }
+    var sc = document.createElement("script");
+    sc.src = base + FILES[i];
+    sc.async = false;
+    sc.onload = function () { load(i + 1); };
+    sc.onerror = function () {
+      /* Не дотянулись - живём без объёма, страница целая */
+      g.RC_GL.want3d = false;
+      fire("rc:no3d");
+    };
+    document.head.appendChild(sc);
+  }
+
+  function go() {
+    if (started) return;
+    started = true;
+    load(0);
+  }
+
+  /* Как только страница отрисовалась и браузер освободился */
+  function arm() {
+    if (g.requestIdleCallback) g.requestIdleCallback(go, { timeout: 1500 });
+    else setTimeout(go, 400);
+  }
+  if (document.readyState === "complete") arm();
+  else addEventListener("load", arm);
+  /* Тронулись раньше - не ждём простоя */
+  addEventListener("scroll", go, { once: true, passive: true });
+  addEventListener("pointerdown", go, { once: true, passive: true });
+})();
 })(window);

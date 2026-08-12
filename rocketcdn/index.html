@@ -52,6 +52,172 @@ try{var _t=localStorage.getItem("rc_theme");if(_t==="light"||_t==="dark")documen
   }]
 }
 </script>
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "WebSite",
+  "name": "Rocket CDN",
+  "url": "https://rocketcdn.ru/",
+  "inLanguage": [
+    "ru",
+    "en"
+  ],
+  "publisher": {
+    "@type": "Organization",
+    "name": "Rocket CDN",
+    "url": "https://rocketcdn.ru"
+  }
+}
+</script>
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "Service",
+  "serviceType": "Сеть доставки контента",
+  "provider": {
+    "@type": "Organization",
+    "name": "Rocket CDN",
+    "url": "https://rocketcdn.ru"
+  },
+  "areaServed": [
+    {
+      "@type": "Country",
+      "name": "Россия"
+    },
+    {
+      "@type": "Place",
+      "name": "Мир"
+    }
+  ],
+  "hasOfferCatalog": {
+    "@type": "OfferCatalog",
+    "name": "Продукты Rocket CDN",
+    "itemListElement": [
+      {
+        "@type": "Offer",
+        "itemOffered": {
+          "@type": "Service",
+          "name": "CDN"
+        }
+      },
+      {
+        "@type": "Offer",
+        "itemOffered": {
+          "@type": "Service",
+          "name": "Стриминг"
+        }
+      },
+      {
+        "@type": "Offer",
+        "itemOffered": {
+          "@type": "Service",
+          "name": "Медиа-хранилище"
+        }
+      },
+      {
+        "@type": "Offer",
+        "itemOffered": {
+          "@type": "Service",
+          "name": "Плеер"
+        }
+      },
+      {
+        "@type": "Offer",
+        "itemOffered": {
+          "@type": "Service",
+          "name": "Облако"
+        }
+      },
+      {
+        "@type": "Offer",
+        "itemOffered": {
+          "@type": "Service",
+          "name": "Безопасность"
+        }
+      },
+      {
+        "@type": "Offer",
+        "itemOffered": {
+          "@type": "Service",
+          "name": "Виртуальный диктор"
+        }
+      }
+    ]
+  }
+}
+</script>
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "FAQPage",
+  "mainEntity": [
+    {
+      "@type": "Question",
+      "name": "Сколько времени занимает подключение?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "Технически ресурс создаётся в личном кабинете за несколько минут. С учётом согласования домена, выпуска сертификата и проверки настроек боевой трафик обычно переключают в течение одного рабочего дня."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "Можно ли использовать свой домен и сертификат?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "Да. Вы указываете свой домен, а сертификат либо выпускается автоматически, либо загружается ваш собственный. Раздел SSL-сертификатов есть в личном кабинете."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "Как считается стоимость?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "По фактически отданному трафику и используемым ресурсам. Чем больше объём, тем ниже цена за единицу. Точный расчёт под ваш профиль нагрузки подготовим после короткого разговора."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "Что происходит, если узел недоступен?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "Маршрутизация автоматически уводит запросы на соседний работающий узел. Пользователь этого не замечает, а мы видим событие в мониторинге и разбираемся с причиной."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "Есть ли защита от атак?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "На узлах с меткой «Защита» работает фильтрация на уровнях L3-L7. Origin при этом закрывается от прямых обращений, снаружи видна только сеть доставки."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "Подходит ли сеть для живых трансляций?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "Да, это один из основных сценариев. Сеть рассчитана на более чем полтора миллиона одновременных зрителей и свыше терабайта нагрузки."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "Где находятся собственные дата-центры?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "В Москве, Казахстане и Праге. Остальные точки присутствия построены на партнёрских площадках и точках обмена трафиком."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "Какая статистика доступна?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "Трафик, число запросов, коды ответов, доля попаданий в кэш и география аудитории. Данные обновляются в реальном времени в разделе «Статистика»."
+      }
+    }
+  ]
+}
+</script>
 </head>
 <body>
 
@@ -591,11 +757,9 @@ try{var _t=localStorage.getItem("rc_theme");if(_t==="light"||_t==="dark")documen
 <script src="assets/rc-app.js"></script>
 <script src="assets/rc-fill.js"></script>
 <script src="assets/rc-viz.js"></script>
+<!-- Объёмный слой (three.js и три сцены) подтягивает rc-gl.js
+     после загрузки и только там, где он вообще будет показан -->
 <script src="assets/rc-gl.js"></script>
-<script defer src="assets/vendor/three.min.js"></script>
-<script defer src="assets/rc-globe3d.js"></script>
-<script defer src="assets/rc-rack.js"></script>
-<script defer src="assets/rc-rocket.js"></script>
 <script defer src="assets/rc-scroll.js"></script>
 </body>
 </html>

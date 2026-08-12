@@ -54,6 +54,9 @@
   --pill-hover:#E2E8F0;
   --tab-on:    #E2E8F0;
   --tab-on-tx: #091320;
+  --ico-bg:    rgba(138,89,246,.14);
+  --ico-bg-2:  rgba(138,89,246,.22);
+  --ico-line:  rgba(138,89,246,.26);
 }
 
 /* ── Светлая тема ─────────────────────────────────────────── */
@@ -81,12 +84,18 @@
   --pill-hover:#fff;
   --tab-on:    #091320;
   --tab-on-tx: #fff;
+  --ico-bg:    rgba(138,89,246,.10);
+  --ico-bg-2:  rgba(138,89,246,.16);
+  --ico-line:  rgba(138,89,246,.22);
 }
 
 html {
   scroll-behavior: smooth;
   scroll-padding-top: 88px;
   -webkit-text-size-adjust: 100%;
+  /* Айфон подсвечивает нажатие серым прямоугольником поверх наших
+     собственных состояний - выключаем */
+  -webkit-tap-highlight-color: transparent;
 }
 body {
   background: var(--bg);
@@ -95,7 +104,7 @@ body {
   font-size: 16px;
   line-height: 1.62;
   overflow-x: hidden;
-  min-height: 100vh;
+  min-height: 100svh;
   -webkit-font-smoothing: antialiased;
   transition: background .45s var(--ease), color .45s var(--ease);
 }
@@ -173,7 +182,7 @@ section { position: relative; padding: var(--sec) 0; }
 /* ── Карточки ─────────────────────────────────────────────── */
 .card {
   position: relative; background: var(--surface); border: 1px solid var(--line);
-  border-radius: var(--r-lg); padding: clamp(20px, 2.6vw, 30px);
+  border-radius: var(--r-md); padding: clamp(19px, 2.4vw, 27px);
   transition: transform var(--fast), border-color var(--fast), background var(--fast), box-shadow var(--fast);
   height: 100%;
 }
@@ -185,11 +194,16 @@ section { position: relative; padding: var(--sec) 0; }
 }
 .card:hover { transform: translateY(-4px); border-color: var(--line-2); box-shadow: var(--shadow); }
 .card:hover::before { opacity: 1; }
+/* Значок карточки: фиолетовая плашка, как в их дизайн-системе.
+   Циан и градиент оставляем бренду, данным и кнопкам, иначе сайт
+   становится одноцветным. */
 .card-ico {
-  width: 48px; height: 48px; border-radius: 14px; display: grid; place-items: center;
-  background: var(--grad-soft); border: 1px solid var(--line);
-  color: var(--cyan); margin-bottom: 18px; flex: none;
+  width: 46px; height: 46px; border-radius: 13px; display: grid; place-items: center;
+  background: var(--ico-bg); border: 1px solid var(--ico-line);
+  color: var(--violet); margin-bottom: 16px; flex: none;
+  transition: background var(--fast), border-color var(--fast), color var(--fast);
 }
+.card:hover .card-ico { background: var(--ico-bg-2); border-color: var(--violet); }
 .card-ico svg { width: 24px; height: 24px; }
 .card h3 { font-size: 18px; font-weight: 650; letter-spacing: -.015em; margin-bottom: 9px; }
 .card p  { font-size: 14.5px; color: var(--tx-2); line-height: 1.68; }
@@ -201,6 +215,7 @@ section { position: relative; padding: var(--sec) 0; }
 /* ── Шапка ────────────────────────────────────────────────── */
 .hdr {
   position: fixed; top: 0; left: 0; right: 0; z-index: 200;
+  padding-top: env(safe-area-inset-top, 0px);
   background: var(--head-bg); backdrop-filter: blur(18px) saturate(1.5);
   border-bottom: 1px solid transparent;
   transition: border-color var(--fast), background var(--fast), transform .4s var(--ease);
@@ -275,7 +290,9 @@ section { position: relative; padding: var(--sec) 0; }
 /* Мобильное меню */
 .drawer {
   position: fixed; inset: 0; z-index: 199; background: var(--bg);
-  padding: 90px var(--pad) 40px; display: flex; flex-direction: column; gap: 6px;
+  padding: calc(90px + env(safe-area-inset-top, 0px)) var(--pad)
+           calc(40px + env(safe-area-inset-bottom, 0px));
+  -webkit-overflow-scrolling: touch; display: flex; flex-direction: column; gap: 6px;
   transform: translateX(100%); visibility: hidden;
   transition: transform .42s var(--ease), visibility .42s var(--ease);
   overflow-y: auto;
@@ -564,6 +581,7 @@ section { position: relative; padding: var(--sec) 0; }
 
 /* ── Кнопка «наверх» ──────────────────────────────────────── */
 .totop {
+  margin-bottom: env(safe-area-inset-bottom, 0px);
   position: fixed; right: 18px; bottom: 18px; z-index: 180;
   width: 44px; height: 44px; border-radius: 50%; display: grid; place-items: center;
   background: var(--grad); color: #fff; border: 0; cursor: pointer;

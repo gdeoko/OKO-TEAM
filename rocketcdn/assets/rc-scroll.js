@@ -375,11 +375,21 @@ function boot() {
   collectParallax();
   collectHS();
 
+  /* Ракету заводим, когда объёмный слой доехал: библиотека тянется
+     после загрузки страницы, чтобы первый экран не платил за неё */
   var cv = $("#rocketCanvas");
-  if (cv && g.RCRocket) {
+  function makeRocket() {
+    if (!cv || rocket || !g.RCRocket) return;
     rocket = g.RCRocket.create(cv);
     if (rocket) { rocket.start(); document.documentElement.classList.add("has-rocket"); }
     else cv.style.display = "none";
+  }
+  function noRocket() { if (cv && !rocket) cv.style.display = "none"; }
+  if (g.RCRocket) makeRocket();
+  else {
+    addEventListener("rc:3d", makeRocket);
+    addEventListener("rc:no3d", noRocket);
+    if (g.RC_GL && !g.RC_GL.want3d) noRocket();
   }
 
   addEventListener("scroll", function () {
