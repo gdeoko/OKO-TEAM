@@ -990,16 +990,26 @@ async def aml_check_full(address: str, network: str = None) -> dict:
                     return result
 
             if network in ("ERC20", "BEP20"):
-                # GoPlus Security
-                chain = "1" if network == "ERC20" else "56"
-                async with s.get(f"https://api.gopluslabs.io/api/v1/address_security/{address}?chain_id={chain}") as r:
-                    j = await r.json()
-                    d = j.get("result", {}) if j else {}
-                    risk = 5
-                    flags = ["blacklist_doubt", "blackmail_activities", "cybercrime",
-                             "darkweb_transactions", "money_laundering", "phishing_activities",
-                             "sanctioned", "stealing_attack", "financial_crime"]
+                # Адрес 0x… существует в обеих сетях, и по нему самому не понять,
+                # где именно он «грязный». Спрашиваем и Ethereum, и BSC,
+                # а клиенту показываем худший из результатов.
+                flags = ["blacklist_doubt", "blackmail_activities", "cybercrime",
+                         "darkweb_transactions", "money_laundering", "phishing_activities",
+                         "sanctioned", "stealing_attack", "financial_crime"]
+                worst_risk, worst_flags, checked = None, [], []
+                for chain, label in (("1", "Ethereum"), ("56", "BSC")):
+                    try:
+                        async with s.get(
+                            f"https://api.gopluslabs.io/api/v1/address_security/{address}?chain_id={chain}"
+                        ) as r:
+                            j = await r.json()
+                    except Exception as e:
+                        log.warning(f"goplus {label} {address}: {e}")
+                        continue
+                    d = (j or {}).get("result") or {}
+                    checked.append(label)
                     matched = [f for f in flags if str(d.get(f, "0")) == "1"]
+                    risk = 5
                     if matched:
                         risk = 95
                     elif str(d.get("honeypot_related_address", "0")) == "1":
@@ -1008,12 +1018,16 @@ async def aml_check_full(address: str, network: str = None) -> dict:
                         risk = 60
                     elif str(d.get("mixer", "0")) == "1":
                         risk = 55
-                    result.update({
-                        "risk": risk, "source": "GoPlus",
-                        "flags": matched,
-                        "verdict": "danger" if risk >= 65 else ("warn" if risk >= 30 else "safe"),
-                    })
-                    return result
+                    if worst_risk is None or risk > worst_risk:
+                        worst_risk, worst_flags = risk, matched
+                if worst_risk is None:
+                    return result   # обе сети недоступны — отдадим «данных нет»
+                result.update({
+                    "risk": worst_risk, "source": "GoPlus (" + " + ".join(checked) + ")",
+                    "flags": worst_flags,
+                    "verdict": "danger" if worst_risk >= 65 else ("warn" if worst_risk >= 30 else "safe"),
+                })
+                return result
 
             if network == "TON":
                 # TON Center
@@ -1315,14 +1329,16 @@ async def h_admin_broadcast(msg: Message, command: CommandObject):
     rows = con.execute("SELECT tg_id FROM users").fetchall()
     con.close()
     ok, fail = 0, 0
+    safe = html_escape(text)  # «<» в тексте иначе делает сообщение невалидным
     await msg.answer(f"Рассылка на <b>{len(rows)}</b> пользователей…")
     for r in rows:
         try:
-            await bot.send_message(r["tg_id"], text)
+            await bot.send_message(r["tg_id"], safe)
             ok += 1
-            await asyncio.sleep(0.05)  # rate-limit
-        except Exception:
+            await asyncio.sleep(0.06)  # запас по лимиту Telegram
+        except Exception as e:
             fail += 1
+            log.warning(f"broadcast {r['tg_id']}: {e}")
     await msg.answer(f"✅ Готово: {ok} отправлено, {fail} ошибок")
 
 
@@ -1543,14 +1559,20 @@ async def api_broadcast(request):
     else:
         rows = con.execute("SELECT tg_id FROM users").fetchall()
     con.close()
+    # Бот отправляет с разметкой HTML, поэтому «<» в обычном тексте рассылки
+    # (например «курс < 90») делал сообщение невалидным и оно не уходило никому.
+    safe = html_escape(text)
     ok, fail = 0, 0
     for r in rows:
         try:
-            await bot.send_message(r["tg_id"], text)
+            await bot.send_message(r["tg_id"], safe)
             ok += 1
-            await asyncio.sleep(0.05)
-        except Exception:
+            # Telegram допускает ~30 сообщений в секунду; идём с запасом,
+            # иначе бот ловит 429 и часть получателей теряется.
+            await asyncio.sleep(0.06)
+        except Exception as e:
             fail += 1
+            log.warning(f"broadcast {r['tg_id']}: {e}")
     return _cors(web.json_response({"ok": ok, "fail": fail, "total": len(rows)}))
 
 async def api_health(request):
@@ -1658,12 +1680,21 @@ async def api_aml_check(request):
 
 
 async def api_order_timeline(request):
-    """PUBLIC: получить прогресс заявки по её ID (для клиента в mini-app)."""
+    """Прогресс заявки — только её владельцу.
+
+    Раньше эндпоинт был полностью публичным: зная или подобрав номер заявки,
+    посторонний мог следить за чужими обменами.
+    """
     oid = request.match_info["oid"]
+    tg_user = check_telegram_init_data(request.headers.get("X-Telegram-Init-Data", ""))
+    if not tg_user or not tg_user.get("id"):
+        return _cors(web.json_response({"error": "auth"}, status=401))
     con = db_conn()
     row = con.execute("SELECT * FROM orders WHERE id=?", (oid,)).fetchone()
     con.close()
     if not row:
+        return _cors(web.json_response({"error": "not found"}, status=404))
+    if row["tg_id"] and int(row["tg_id"]) != int(tg_user["id"]) and not is_admin(int(tg_user["id"])):
         return _cors(web.json_response({"error": "not found"}, status=404))
     order_ts = row["created_at"]
     steps = [

@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no" />
 <title>Exora — обмен криптовалют</title>
 <meta name="theme-color" content="#04070E" />
-<meta name="build" content="exora-miniapp-v10" />
+<meta name="build" content="exora-miniapp-v11" />
 <link rel="manifest" href="/exora.webmanifest" />
 <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
 <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32.png" />
@@ -46,7 +46,7 @@
     --shadow-2:0 20px 60px rgba(0,0,0,.5);
     --shadow-brand:0 20px 40px -12px rgba(94,210,156,.5);
 
-    --font:'Inter','SF Pro Text','Segoe UI',system-ui,-apple-system,sans-serif;
+    --font:-apple-system,'SF Pro Text',system-ui,'Segoe UI',Roboto,'Inter',sans-serif;
   }
   *,*::before,*::after{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
   html,body{background:var(--bg-0);color:var(--text);font-family:var(--font);-webkit-font-smoothing:antialiased;text-rendering:optimizeLegibility;overscroll-behavior:none;font-feature-settings:"cv11","ss01","ss03"}
@@ -607,9 +607,10 @@
 <body>
 
 <div class="bg" aria-hidden="true">
-  <video class="bg-video" autoplay muted loop playsinline preload="auto">
-    <source src="https://d8j0ntlcm91z4.cloudfront.net/user_38xzZboKViGWJOttwIXH07lWA1P/hf_20260423_161253_c72b1869-400f-45ed-ac0c-52f68c2ed5bd.mp4" type="video/mp4" />
-  </video>
+  <!-- Фоновое видео весит 5 МБ и лежит под затемнением. Грузим его только там,
+       где это не бьёт по трафику клиента: адрес подставляется скриптом ниже. -->
+  <video class="bg-video" muted loop playsinline preload="none"
+         data-src="https://d8j0ntlcm91z4.cloudfront.net/user_38xzZboKViGWJOttwIXH07lWA1P/hf_20260423_161253_c72b1869-400f-45ed-ac0c-52f68c2ed5bd.mp4"></video>
   <canvas class="bg-canvas" id="bgCanvas"></canvas>
   <div class="bg-overlay"></div>
   <div class="bg-grain"></div>
@@ -790,6 +791,8 @@
   </section>
 
   <!-- ============ EXCHANGE ============ -->
+  <section class="screen" id="scr-done"></section>
+
   <section class="screen" id="scr-exchange">
     <div class="dir-tabs">
       <button class="dir-tab active" data-dir="buy">Купить USDT</button>
@@ -1182,6 +1185,15 @@
   const API = "https://okoteam.top/exora-api";
   const SUPPORT_URL = "https://t.me/c333crypto";
 
+  // fetch без ограничения по времени может висеть бесконечно: при блокировке или
+  // «залипшем» соединении приложение навсегда оставалось на «Загрузка курса…».
+  async function fetchT(url, opts = {}, ms = 7000) {
+    const ctrl = new AbortController();
+    const t = setTimeout(() => ctrl.abort(), ms);
+    try { return await fetch(url, { ...opts, signal: ctrl.signal }); }
+    finally { clearTimeout(t); }
+  }
+
   const CURRENCIES = {
     RUB:  {name:'Российский рубль', short:'₽', bg:'linear-gradient(135deg,#8892A6,#5a6272)'},
     USDT: {name:'Tether',           short:'U', bg:'linear-gradient(135deg,#26A17B,#1e7c5e)'},
@@ -1237,6 +1249,23 @@
     toastEl.className = 'toast show ' + (kind||'');
     clearTimeout(toastTimer); toastTimer = setTimeout(()=>{ toastEl.className='toast'; }, 2400);
   }
+
+  /* ---- ФОНОВОЕ ВИДЕО (по возможности сети) ---- */
+  (function initBgVideo(){
+    const v = document.querySelector('.bg-video');
+    if (!v || !v.dataset.src) return;
+    const c = navigator.connection || {};
+    const slow = c.saveData === true || /(^|-)(2g|3g)$/.test(c.effectiveType || '');
+    const reduced = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    if (slow || reduced) return;   // остаётся градиентный фон — выглядит так же
+    // Ждём, пока интерфейс отрисуется, и только потом тянем тяжёлый файл.
+    const start = () => {
+      v.src = v.dataset.src;
+      v.play().catch(() => {});
+    };
+    if ('requestIdleCallback' in window) requestIdleCallback(start, { timeout: 3000 });
+    else setTimeout(start, 1500);
+  })();
 
   /* ---- BG PARTICLES (canvas) ---- */
   (function initParticles(){
@@ -1312,7 +1341,7 @@
     // 1. Курс и наценки оператора — главный источник. Если оператор поставил курс
     // вручную в админке, клиент обязан видеть именно его, а не биржевой.
     try {
-      const r = await fetch(API + '/api/public/config', {cache:'no-store'});
+      const r = await fetchT(API + '/api/public/config', {cache:'no-store'});
       if (r.ok) {
         const j = await r.json();
         if (j && j.rate > 0) {
@@ -1326,12 +1355,12 @@
       }
     } catch(_){}
     try {
-      const r = await fetch('https://api.binance.com/api/v3/ticker/24hr?symbol=USDTRUB',{cache:'no-store'});
+      const r = await fetchT('https://api.binance.com/api/v3/ticker/24hr?symbol=USDTRUB',{cache:'no-store'});
       const j = await r.json();
       if (j && j.lastPrice) return { rate: parseFloat(j.lastPrice), change: parseFloat(j.priceChangePercent||0), source:'Binance' };
     } catch(_){}
     try {
-      const r = await fetch('https://api.coingecko.com/api/v3/simple/price?ids=tether&vs_currencies=rub&include_24hr_change=true',{cache:'no-store'});
+      const r = await fetchT('https://api.coingecko.com/api/v3/simple/price?ids=tether&vs_currencies=rub&include_24hr_change=true',{cache:'no-store'});
       const j = await r.json();
       if (j && j.tether) return { rate: parseFloat(j.tether.rub), change: parseFloat(j.tether.rub_24h_change||0), source:'CoinGecko' };
     } catch(_){}
@@ -1341,7 +1370,7 @@
   }
   async function fetchPrices(){
     try {
-      const r = await fetch('https://api.binance.com/api/v3/ticker/24hr?symbols='+encodeURIComponent('["BTCUSDT","ETHUSDT","TONUSDT"]'),{cache:'no-store'});
+      const r = await fetchT('https://api.binance.com/api/v3/ticker/24hr?symbols='+encodeURIComponent('["BTCUSDT","ETHUSDT","TONUSDT"]'),{cache:'no-store'});
       const arr = await r.json();
       const out = {};
       if (Array.isArray(arr)) for (const t of arr) out[t.symbol.replace('USDT','')] = { price:parseFloat(t.lastPrice), change:parseFloat(t.priceChangePercent) };
@@ -1434,7 +1463,7 @@
   async function animateBars(){
     let stats = null;
     try {
-      const r = await fetch(API + '/api/public/stats', {cache:'no-store'});
+      const r = await fetchT(API + '/api/public/stats', {cache:'no-store'});
       if (r.ok) stats = await r.json();
     } catch(_){}
 
@@ -1572,6 +1601,13 @@
   };
 
   /* ---- EXCHANGE ---- */
+  function resetExchangeForm(){
+    state.give = ''; state.get = ''; state.wallet = ''; state.contact = '';
+    state.lastEdit = 'give';
+    ['#giveIn','#getIn','#walletIn','#contactIn'].forEach(sel => { const el = $(sel); if (el) el.value = ''; });
+    recalc(); validate();
+  }
+
   function setDirection(dir){
     const changed = state.direction !== dir;
     state.direction = dir;
@@ -1644,7 +1680,7 @@
 
   /* ---- AUTO AML CHECK ---- */
   const AML_API = API;
-  let amlTimer=null, amlLastAddr='';
+  let amlTimer=null, amlLastAddr='', amlAttempt=0;
   function scheduleAmlCheck(){
     clearTimeout(amlTimer);
     const box = $('#amlBox');
@@ -1662,9 +1698,14 @@
     box.classList.add('show');
     badge.className = 'aml-b loading'; badge.textContent = 'проверяем…';
     bar.style.width = '0%'; meta.innerHTML = '';
+    // Пока идёт запрос, клиент может доправить адрес. Помечаем попытку и
+    // отбрасываем устаревший ответ — иначе вердикт по старому адресу
+    // перетирал результат по новому.
+    const attempt = ++amlAttempt;
     try {
-      const r = await fetch(AML_API + '/api/aml-check?address=' + encodeURIComponent(addr) + '&network=' + net, { cache:'no-store' });
+      const r = await fetchT(AML_API + '/api/aml-check?address=' + encodeURIComponent(addr) + '&network=' + net, { cache:'no-store' }, 12000);
       const j = await r.json();
+      if (attempt !== amlAttempt) return;
       if (j.error) throw new Error(j.error);
       const risk = Math.max(0, Math.min(100, j.risk||0));
       bar.style.width = risk + '%';
@@ -1679,6 +1720,7 @@
       if (j.source) parts.push(`<span style="opacity:.6">Источник: ${j.source}</span>`);
       meta.innerHTML = parts.join('');
     } catch(e){
+      if (attempt !== amlAttempt) return;
       badge.className = 'aml-b warn'; badge.textContent = 'нет данных';
       meta.innerHTML = '<span>Проверка вручную оператором</span>';
     }
@@ -1756,7 +1798,7 @@
     // всё равно показывался.
     let saved = null, failure = '';
     try {
-      const r = await fetch(API + '/api/orders', {
+      const r = await fetchT(API + '/api/orders', {
         method: 'POST',
         headers: { 'Content-Type':'application/json',
                    'X-Telegram-Init-Data': (tg && tg.initData) || '' },
@@ -1818,7 +1860,10 @@
     $('#modalBack').classList.add('open');
   }
   function showSuccess(order){
-    const scr = $('#scr-exchange');
+    // Раньше разметка успеха записывалась поверх формы обмена: форма исчезала
+    // навсегда, второй заказ был невозможен без перезагрузки. Держим отдельный экран.
+    const scr = $('#scr-done');
+    goto('done');
     scr.innerHTML = `
       <div class="success">
         <div class="success-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg></div>
@@ -1840,9 +1885,13 @@
         </div>
       </div>
     `;
-    $('#newOrder').addEventListener('click', () => location.reload());
+    $('#newOrder').addEventListener('click', () => {
+      resetExchangeForm();
+      goto('exchange');
+    });
     $('#toOrders').addEventListener('click', () => goto('orders'));
-    setTimeout(() => { if (tg && tg.close) { try { tg.close(); } catch(_){} } }, 5500);
+    // Приложение больше не закрывается само через 5 секунд: клиент не успевал
+    // дочитать реквизиты и не мог оформить второй обмен.
   }
 
   /* ---- CONFETTI ---- */
@@ -1996,7 +2045,8 @@
     `;
     $('#modalBack').classList.add('open');
     try {
-      const r = await fetch(API + '/api/order/' + encodeURIComponent(o.id) + '/timeline', {cache:'no-store'});
+      const r = await fetchT(API + '/api/order/' + encodeURIComponent(o.id) + '/timeline',
+        {cache:'no-store', headers:{'X-Telegram-Init-Data': (tg && tg.initData) || ''}});
       const j = await r.json();
       if (j.steps) renderTimeline(j.steps, j.status);
     } catch(e){
