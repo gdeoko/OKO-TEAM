@@ -1084,3 +1084,12 @@ body::after {
 @media (prefers-reduced-motion: reduce) {
   .d3, .d3 > * { transform: none !important; }
 }
+
+/* ── Живой космос на фоне ─────────────────────────────────── */
+#spaceBg {
+  position: fixed; inset: 0; z-index: 0; pointer-events: none;
+  opacity: 0; transition: opacity 1.4s var(--ease);
+}
+#spaceBg.on { opacity: 1; }
+/* Тело больше не глухая заливка: сквозь секции виден космос */
+body { background: var(--bg); }

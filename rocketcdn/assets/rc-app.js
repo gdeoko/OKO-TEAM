@@ -115,6 +115,7 @@ function applyTheme(v, silent) {
     b.setAttribute("aria-pressed", on ? "true" : "false");
   });
   if (window.__globes) window.__globes.forEach(function (g) { g.setTheme(v); });
+  if (window.__space) window.__space.setTheme(v);
   if (!silent) track("theme", v);
 }
 
@@ -250,6 +251,16 @@ function renderNodes() {
     row.addEventListener("click", go);
     row.addEventListener("keydown", function (e) { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); go(); } });
   });
+}
+
+/* Космос на фоне: заводим рано, он лёгкий и задаёт настроение */
+function initSpace() {
+  var cv = document.getElementById("spaceBg");
+  if (!cv || !window.RCSpace) return;
+  var s = window.RCSpace.create(cv);
+  if (!s) { cv.style.display = "none"; return; }
+  requestAnimationFrame(function () { cv.classList.add("on"); });
+  window.__space = s;
 }
 
 function initGlobes() {
@@ -440,6 +451,7 @@ function applyContent() {
 
 /* ═══ Запуск ═════════════════════════════════════════════ */
 function boot() {
+  initSpace();
   applyTheme(state.theme, true);
   applyLang(state.lang, true);
   initGlobes();
