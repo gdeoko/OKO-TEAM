@@ -399,6 +399,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && input('do') === 'grade_result') {
             : ($dueNow ? 'результат отправлен сейчас' : ('результат ' . date('d.m.Y H:i', $resultAt->getTimestamp())));
         flash('Итог сохранён: ' . $result . ($extra !== '' ? ' · доп: ' . $extra : '')
             . ' · ' . $flashWhen . '. Наградные дипломы — через ' . $wdays . ' раб. дней от подачи.', 'success');
+        // Правку итога можно начать из карточки заявки — тогда и возвращаемся туда,
+        // а не в очередь оценки: администратор пришёл поправить одну заявку, а не
+        // судить следующую.
+        if ((string) input('back') === 'applications') {
+            admin_redirect('applications', ['id' => $appId]);
+        }
         // Длинный конкурс — возвращаемся в его раздел (список аттестации/оценённых).
         if (!empty($isLongComp)) {
             admin_redirect('longcomp', ['competition' => (int) $cur['competition_id']]);
@@ -408,6 +414,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && input('do') === 'grade_result') {
         admin_redirect('grading', array_filter(['competition'=>$comp,'order'=>$order]));
     }
     flash('Выберите итоговый результат из списка.', 'error');
+    if ((string) input('back') === 'applications') admin_redirect('applications', ['id' => $appId]);
     admin_redirect('grading', array_filter(['id'=>$appId,'competition'=>$comp,'order'=>$order]));
 }
 

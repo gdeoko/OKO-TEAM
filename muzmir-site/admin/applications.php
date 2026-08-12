@@ -192,7 +192,23 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && input('do') === 'edit_app') {
         'institution'  => trim((string) input('institution')),
         'city'         => trim((string) input('city')),
         'age_category' => trim((string) input('age_category')),
+        // Контакты и ссылка на выступление правятся здесь же: ошибка в почте
+        // означает, что диплом уйдёт в никуда, а неверная ссылка — что жюри
+        // нечего смотреть. Раньше эти поля можно было поправить только в базе.
+        'formation'    => trim((string) input('formation')),
+        'video_url'    => trim((string) input('video_url')),
+        'email'        => mb_strtolower(trim((string) input('email'))),
+        'phone'        => trim((string) input('phone')),
+        'address'      => trim((string) input('address')),
+        'postal_index' => trim((string) input('postal_index')),
     ];
+    if ($data['email'] !== '' && !filter_var($data['email'], FILTER_VALIDATE_EMAIL)) {
+        flash('Почта указана с ошибкой — заявка не сохранена.', 'error');
+        admin_redirect('applications', ['id' => $id]);
+    }
+    if ($data['formation'] !== '' && !in_array($data['formation'], ['solo','duet','ensemble','choir'], true)) {
+        $data['formation'] = (string) ($cur['formation'] ?? '');
+    }
 
     // Валидация по справочникам (если доступны). Пустое значение допустимо.
     if ($data['nomination'] !== '' && function_exists('NOMINATIONS')
@@ -349,6 +365,67 @@ if ($id = (int) input('id')) {
             <?php endif; ?>
           </form>
         <?php endif; ?>
+
+        <?php
+        /* ПРАВКА ИТОГА ПРЯМО ЗДЕСЬ.
+           Форма шлёт в раздел оценки тем же действием grade_result: там уже вся
+           логика переоценки — снос неотправленного диплома, пересчёт срока и
+           повторная отправка результата, если он менялся. Дублировать её здесь
+           значило бы завести вторую правду о том, что происходит при смене итога. */
+        // Списки званий и спец-номинаций живут в core/presets.php. Раньше здесь
+        // подключался data.php — там их нет, и страница обрывалась на первом же
+        // вызове RESULT_PRESETS(): карточка заявки открывалась наполовину.
+        if (!function_exists('RESULT_PRESETS')) require_once BASE_PATH . '/core/presets.php';
+        $curExtra = trim((string) ($a['extra_diploma'] ?? ''));
+        $extraKnown = function_exists('EXTRA_PRESETS') ? EXTRA_PRESETS() : [];
+        ?>
+        <details style="margin-top:12px">
+          <summary class="small" style="cursor:pointer;color:var(--a-navy)">
+            <?= trim((string) $a['result']) !== '' ? 'Изменить результат' : 'Проставить результат' ?>
+          </summary>
+          <form method="post" action="<?= url('/admin/?p=grading') ?>" style="margin-top:10px">
+            <?= csrf_field() ?>
+            <input type="hidden" name="p" value="grading">
+            <input type="hidden" name="do" value="grade_result">
+            <input type="hidden" name="id" value="<?= $id ?>">
+            <input type="hidden" name="back" value="applications">
+
+            <label class="small muted">Звание</label>
+            <select name="result" style="width:100%;margin:4px 0 10px">
+              <?php foreach (RESULT_PRESETS() as $rp): ?>
+                <option value="<?= h($rp) ?>" <?= (string) $a['result'] === $rp ? 'selected' : '' ?>><?= h($rp) ?></option>
+              <?php endforeach; ?>
+            </select>
+
+            <label class="small muted">Дополнительный диплом</label>
+            <select name="extra_diploma" style="width:100%;margin:4px 0 10px">
+              <option value="">— без дополнительного диплома —</option>
+              <?php foreach ($extraKnown as $ep): ?>
+                <option value="<?= h($ep) ?>" <?= $curExtra === $ep ? 'selected' : '' ?>><?= h($ep) ?></option>
+              <?php endforeach; ?>
+              <?php if ($curExtra !== '' && !in_array($curExtra, $extraKnown, true)): ?>
+                <option value="<?= h($curExtra) ?>" selected><?= h($curExtra) ?></option>
+              <?php endif; ?>
+            </select>
+
+            <label class="small muted">Комментарий жюри (виден участнику)</label>
+            <textarea name="jury_comment" rows="2" style="width:100%;margin:4px 0 10px"><?= h((string) ($a['jury_comment'] ?? '')) ?></textarea>
+
+            <label class="small muted">Когда отправить результат участнику</label>
+            <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin:4px 0 10px">
+              <label class="small"><input type="checkbox" name="auto_send" value="1" checked> по сроку (5 раб. дней от подачи, ВИП — 3)</label>
+              <input type="datetime-local" name="send_at" title="Или точное время">
+            </div>
+
+            <button class="btn btn--primary btn--sm" name="save" value="1">Сохранить итог</button>
+            <button class="btn btn--ghost btn--sm" name="send_now" value="1"
+                    onclick="return confirm('Сохранить итог и отправить результат участнику прямо сейчас?')">Сохранить и отправить сейчас</button>
+            <div class="small muted" style="margin-top:8px">
+              Если итог изменится, а результат участнику ещё не ушёл — неотправленный диплом
+              будет пересоздан с новым званием. Уже отправленные документы не трогаются.
+            </div>
+          </form>
+        </details>
       </div>
 
       <!-- ---- НАГРАДНЫЕ ДОКУМЕНТЫ ---- -->
@@ -542,6 +619,23 @@ if ($id = (int) input('id')) {
               <input name="institution" value="<?= h((string)$a['institution']) ?>"></div>
             <div class="field"><label>Город</label>
               <input name="city" value="<?= h((string)$a['city']) ?>"></div>
+            <div class="field"><label>Форма выступления</label>
+              <select name="formation">
+                <option value="">— не указана —</option>
+                <?php foreach (['solo'=>'Соло','duet'=>'Дуэт','ensemble'=>'Ансамбль','choir'=>'Хор'] as $fk => $fl): ?>
+                  <option value="<?= h($fk) ?>" <?= (string)($a['formation'] ?? '')===$fk?'selected':'' ?>><?= h($fl) ?></option>
+                <?php endforeach; ?>
+              </select></div>
+            <div class="field"><label>Ссылка на выступление</label>
+              <input name="video_url" value="<?= h((string)($a['video_url'] ?? '')) ?>"></div>
+            <div class="field"><label>Почта участника</label>
+              <input name="email" type="email" value="<?= h((string)($a['email'] ?? '')) ?>"></div>
+            <div class="field"><label>Телефон</label>
+              <input name="phone" value="<?= h((string)($a['phone'] ?? '')) ?>"></div>
+            <div class="field"><label>Адрес доставки оригиналов</label>
+              <input name="address" value="<?= h((string)($a['address'] ?? '')) ?>"></div>
+            <div class="field"><label>Почтовый индекс</label>
+              <input name="postal_index" value="<?= h((string)($a['postal_index'] ?? '')) ?>"></div>
             <button class="btn btn--primary btn--sm"><?= admin_icon('check') ?>Сохранить данные</button>
           </form>
         </div>

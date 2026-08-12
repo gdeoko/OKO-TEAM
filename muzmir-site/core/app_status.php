@@ -48,17 +48,22 @@ function app_state_pipeline(): array {
  *
  * @param string $a алиас таблицы applications в запросе
  */
-function app_state_sql(string $a = 'a'): string {
+function app_state_sql(string $a = 'a', bool $forAdmin = true): string {
     if (!preg_match('/^[a-z_][a-z0-9_]*$/i', $a)) $a = 'a';
     $dipT = "(SELECT COUNT(*) FROM diplomas d WHERE d.application_id=$a.id)";
     $dipS = "(SELECT COUNT(*) FROM diplomas d WHERE d.application_id=$a.id AND COALESCE(d.sent_at,'')<>'')";
     $ordT = "(SELECT COUNT(*) FROM awards_orders o WHERE o.application_id=$a.id)";
     $ordO = "(SELECT COUNT(*) FROM awards_orders o WHERE o.application_id=$a.id AND o.status IN ('paid','made','shipped'))";
+    // В админке заявка становится «Оценена» сразу после оценки, у участника —
+    // только когда письмо дошло. Это условие обязано совпадать с развилкой в
+    // app_state(), иначе фильтр «Статус» снова начнёт расходиться с бейджем:
+    // админ выберет «Оценена» и получит пустой список.
+    $judging = $forAdmin ? "1=0" : "COALESCE($a.result_sent_at,'')=''";
     return "CASE
         WHEN $a.status='rejected' THEN 'rejected'
         WHEN COALESCE($a.state_override,'')<>'' THEN $a.state_override
         WHEN COALESCE($a.result,'')='' THEN 'new'
-        WHEN COALESCE($a.result_sent_at,'')='' THEN 'judging'
+        WHEN $judging THEN 'judging'
         WHEN $dipT>0 AND $dipS=$dipT AND $ordT>0 AND $ordO=0 THEN 'done'
         WHEN $ordO>0 THEN 'extra'
         WHEN $dipT>0 AND $dipS=$dipT THEN 'made'
@@ -66,9 +71,19 @@ function app_state_sql(string $a = 'a'): string {
         ELSE 'graded' END";
 }
 
-/** Человеческие метки + тон бейджа (gold|blue|bord|success|warning|error|info). */
-function app_state_labels(): array {
-    return [
+/**
+ * Человеческие метки + тон бейджа (gold|blue|bord|success|warning|error|info).
+ *
+ * Названия зависят от того, кто смотрит. Участнику важно, что он получил:
+ * «Изготовлена» — документы у него на почте. Оргкомитету важно, что сделано и
+ * что осталось: «Дипломы готовы» значит собраны, но ещё не ушли, «Дипломы
+ * отправлены» — ушли. Одно и то же состояние, разный вопрос к нему.
+ *
+ * Метки обязаны быть общими для бейджа и для фильтра «Статус»: иначе в списке
+ * одно слово, в выпадающем списке другое, и админ ищет несуществующее.
+ */
+function app_state_labels(bool $forAdmin = false): array {
+    $l = [
         'new'      => ['Новая',           'blue'],
         'judging'  => ['На оценке',       'bord'],
         'graded'   => ['Оценена',         'gold'],
@@ -78,11 +93,16 @@ function app_state_labels(): array {
         'done'     => ['Исполнена',       'gold'],
         'rejected' => ['Отклонена',       'bord'],
     ];
+    if ($forAdmin) {
+        $l['making'] = ['Дипломы готовы',     'bord'];
+        $l['made']   = ['Дипломы отправлены', 'gold'];
+    }
+    return $l;
 }
 
 /** Русское название вычисленного состояния. */
-function app_state_ru(string $code): string {
-    return app_state_labels()[$code][0] ?? $code;
+function app_state_ru(string $code, bool $forAdmin = false): string {
+    return app_state_labels($forAdmin)[$code][0] ?? $code;
 }
 
 /**
@@ -191,10 +211,28 @@ function app_state(array $app, bool $forAdmin = false): array {
     $dipPlanned  = $out['diplomas_total'] > 0 && $out['diplomas_sent'] < $out['diplomas_total'];
     $ordersDone  = $out['orders'] && $out['orders_open'] === 0;
 
+    // ДВА РАЗНЫХ ВЗГЛЯДА НА ОДНУ ЗАЯВКУ.
+    //
+    // Админка показывает СДЕЛАННОЕ: жюри проставило оценку — заявка «Оценена»,
+    // дипломы созданы — «На изготовлении», ушли — «Изготовлена». Оргкомитету
+    // важно видеть свою работу сразу, иначе оценённая утром заявка весь день
+    // висит «На оценке» и непонятно, сделана она или забыта.
+    //
+    // Участник видит ДОШЕДШЕЕ: пока письмо с результатом не легло к нему в почту,
+    // для него ничего не произошло. Иначе он увидит «Оценена» в кабинете, полезет
+    // в почту, ничего там не найдёт и напишет в поддержку.
+    //
+    // Отсюда развилка: у админа отправка результата не влияет на статус, у
+    // участника она — обязательное условие перехода.
+    $resultShown = $forAdmin ? $hasResult : $resultSent;
+    $dipAllSent  = $forAdmin
+        ? ($out['diplomas_total'] > 0 && $out['diplomas_sent'] === $out['diplomas_total'])
+        : $dipAllSent;
+
     if (!$hasResult) {
         $out['code'] = 'new';
         $out['detail'] = 'Заявка принята, ожидает аттестации жюри.';
-    } elseif (!$resultSent) {
+    } elseif (!$resultShown) {
         // Оценка есть, но письмо участнику ещё не ушло — участник видит «На оценке».
         $out['code'] = 'judging';
         $out['detail'] = $out['result_plan_at'] !== ''
@@ -216,10 +254,19 @@ function app_state(array $app, bool $forAdmin = false): array {
             : 'Наградные документы готовятся к отправке.';
     } else {
         $out['code'] = 'graded';
-        $out['detail'] = 'Результат отправлен ' . app_state_dt($out['result_sent_at']) . '. Наградные документы готовятся.';
+        $out['detail'] = $out['result_sent_at'] !== ''
+            ? 'Результат отправлен ' . app_state_dt($out['result_sent_at']) . '. Наградные документы готовятся.'
+            : ($out['result_plan_at'] !== ''
+                ? 'Оценка проставлена. Результат уйдёт участнику ' . app_state_dt($out['result_plan_at']) . '.'
+                : 'Оценка проставлена, отправка результата готовится.');
     }
 
-    [$lbl, $tone] = app_state_labels()[$out['code']] ?? [$out['code'], 'blue'];
+    // Названия состояний в админке говорят о наших действиях, а у участника —
+    // о том, что он получил. «Изготовлена» оргкомитету ничего не сообщает: надо
+    // ли ещё что-то делать или всё уже ушло. Поэтому в админке те же состояния
+    // называются по факту: дипломы готовы / дипломы отправлены.
+    $labels = app_state_labels($forAdmin);
+    [$lbl, $tone] = $labels[$out['code']] ?? [$out['code'], 'blue'];
     $out['label'] = $lbl;
     $out['tone']  = $tone;
     $pipe = app_state_pipeline();
