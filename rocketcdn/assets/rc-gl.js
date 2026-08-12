@@ -137,15 +137,10 @@ g.RC_GL = {
     load(0);
   }
 
-  /* Как только страница отрисовалась и браузер освободился */
-  function arm() {
-    if (g.requestIdleCallback) g.requestIdleCallback(go, { timeout: 1500 });
-    else setTimeout(go, 400);
-  }
-  if (document.readyState === "complete") arm();
-  else addEventListener("load", arm);
-  /* Тронулись раньше - не ждём простоя */
-  addEventListener("scroll", go, { once: true, passive: true });
-  addEventListener("pointerdown", go, { once: true, passive: true });
+  /* Тянем сразу: ракета нужна с первых секунд, а на мобильной связи
+     семьсот килобайт после события load приезжают слишком поздно и
+     человек успевает решить, что ракеты нет вовсе. Экономия остаётся
+     там, где она честная: кому объём не положен, тот не качает ничего. */
+  go();
 })();
 })(window);

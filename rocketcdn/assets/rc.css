@@ -581,8 +581,8 @@ section { position: relative; padding: var(--sec) 0; }
 
 /* ── Кнопка «наверх» ──────────────────────────────────────── */
 .totop {
-  margin-bottom: env(safe-area-inset-bottom, 0px);
-  position: fixed; right: 18px; bottom: 18px; z-index: 180;
+  position: fixed; right: 18px; z-index: 180;
+  bottom: calc(18px + env(safe-area-inset-bottom, 0px));
   width: 44px; height: 44px; border-radius: 50%; display: grid; place-items: center;
   background: var(--grad); color: #fff; border: 0; cursor: pointer;
   box-shadow: 0 10px 26px -8px rgba(10,88,151,.8);
@@ -800,9 +800,11 @@ section { position: relative; padding: var(--sec) 0; }
    ═══════════════════════════════════════════════════════════ */
 
 /* Тонкое зерно поверх всего: убирает пластиковость градиентов */
+/* Зерно лежит НАД фоном, но ПОД содержимым и ракетой: поверх всего
+   оно глушило анимацию и делало картинку тусклой */
 body::after {
-  content: ''; position: fixed; inset: 0; z-index: 3; pointer-events: none;
-  opacity: .035; mix-blend-mode: overlay;
+  content: ''; position: fixed; inset: 0; z-index: 0; pointer-events: none;
+  opacity: .028; mix-blend-mode: overlay;
   background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='3'/%3E%3C/filter%3E%3Crect width='160' height='160' filter='url(%23n)'/%3E%3C/svg%3E");
 }
 [data-theme="light"] body::after { opacity: .022; }

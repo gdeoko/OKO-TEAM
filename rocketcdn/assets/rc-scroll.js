@@ -50,7 +50,7 @@ function measure() {
   var v = clone ? Math.round(clone.getBoundingClientRect().top + (g.scrollY || g.pageYOffset || 0)) : 0;
   /* Страховка: точка склейки не может быть больше доступной прокрутки */
   var maxScroll = document.documentElement.scrollHeight - innerHeight;
-  loopTop = (v > 0 && v <= maxScroll) ? v : 0;
+  loopTop = (LOOP && v > 0 && v <= maxScroll) ? v : 0;
 }
 
 function watchLayout() {
@@ -86,12 +86,14 @@ function jumpTo(y) {
 function pos() { return g.scrollY || g.pageYOffset || 0; }
 
 function loopCheck() {
+  if (!LOOP) return;
   if (lock || loopTop < innerHeight * 2) return;
   var y = pos();
   if (y >= loopTop) jumpTo(y - loopTop);
 }
 
 function loopUp(delta) {
+  if (!LOOP) return;
   if (lock || loopTop < innerHeight * 2) return;
   if (pos() <= 1 && delta < 0) jumpTo(loopTop - 2);
 }
@@ -99,7 +101,7 @@ function loopUp(delta) {
 /* ── Прогресс для ракеты ─────────────────────────────────── */
 function progress() {
   var y = pos();
-  var span = loopTop || (document.documentElement.scrollHeight - innerHeight) || 1;
+  var span = (LOOP && loopTop) || (document.documentElement.scrollHeight - innerHeight) || 1;
   return (y / span) % 1;
 }
 
@@ -347,7 +349,13 @@ function onScroll() {
 /* ── Запуск ──────────────────────────────────────────────── */
 /* Клон строим, когда первый экран уже наполнен переводом и иконками,
    иначе в копию попадают пустые блоки. */
+/* Клиент попросил убрать зацикленность: страница кончается внизу,
+   дальше работает кнопка «наверх». Клон первого экрана и телепорт
+   на стыке больше не нужны, но код оставлен - вдруг вернут. */
+var LOOP = false;
+
 function setupClone() {
+  if (!LOOP) { measure(); watchLayout(); return; }
   if ($("#heroClone")) return;
   buildClone();
 
