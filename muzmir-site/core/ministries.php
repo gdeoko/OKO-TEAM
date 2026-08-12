@@ -302,7 +302,71 @@ function min_recipients(string $branch = ''): array {
 
     // Свежесть сверки проверяем в PHP: условие «не старше N дней» в SQLite пришлось
     // бы дублировать вместе с правилом уверенности, а правило одно — min_is_verified().
-    return array_values(array_filter($rows, 'min_is_verified'));
+    $rows = array_values(array_filter($rows, 'min_is_verified'));
+
+    // ОДНО ВЕДОМСТВО — ОДНО ПИСЬМО.
+    return min_dedupe_by_org($rows);
+}
+
+/**
+ * ОДНО ВЕДОМСТВО — ОДНО ПИСЬМО.
+ *
+ * В базе у одного ведомства бывает несколько ящиков: у департамента культуры
+ * Брянской области их два (dep.kult32@ и upr.kult32@), у Забайкалья тоже два.
+ * Реестр собирал все адреса подряд, и обращение уходило в одно ведомство дважды
+ * — с разными исходящими номерами. Для делопроизводителя это два разных
+ * документа, которые он обязан зарегистрировать оба.
+ *
+ * Здесь на каждое ведомство остаётся ровно один адресат. Выбираем лучший:
+ *
+ *   1. адрес на домене ведомства или органа власти (.gov.ru, mos.ru, belgov.ru)
+ *      — он переживёт смену подрядчика и точно принимает почту;
+ *   2. любой адрес не на бесплатном почтовике;
+ *   3. что осталось.
+ *
+ * Пресс-служба (branch='press') — ОТДЕЛЬНЫЙ адресат, а не дубль: у неё своя
+ * задача, своё письмо об освещении и свой ящик редакции. Её мы не схлопываем,
+ * но и в счёт «одно письмо ведомству» не берём.
+ */
+function min_dedupe_by_org(array $rows): array {
+    // Регион пишут по-разному: «Брянская область» и «Брянская обл.» — один и тот
+    // же субъект, но как ключ это две разные строки, и департамент культуры
+    // Брянской области оставался в списке дважды. Сокращения разворачиваем.
+    $norm = static function (string $s): string {
+        $s = mb_strtolower(trim($s));
+        $s = strtr($s, [
+            'обл.' => 'область', ' обл ' => ' область ',
+            'респ.' => 'республика', 'кр.' => 'край',
+            'а.о.' => 'автономный округ', 'ао' => 'автономный округ',
+            'г.' => '', 'ё' => 'е',
+        ]);
+        $s = preg_replace('~[^\p{L}\p{N} ]+~u', ' ', $s) ?? $s;
+        return trim(preg_replace('~\s+~u', ' ', $s) ?? $s);
+    };
+    $key = static function (array $m) use ($norm): string {
+        // Отрезаем приписки вида «, пресс-служба» и «— для СМИ»: это одно ведомство.
+        $o = (string) ($m['org'] ?? '');
+        $o = preg_replace('~\s*[,—–].*$~u', '', $o) ?? $o;
+        return $norm($o) . '|' . $norm((string) ($m['region'] ?? ''));
+    };
+    $rank = static function (array $m): int {
+        $e = mb_strtolower((string) ($m['email'] ?? ''));
+        $dom = (string) (explode('@', $e)[1] ?? '');
+        if ($dom === '') return 9;
+        if (preg_match('~\.(gov\.ru|gov\.spb\.ru)$~', $dom)) return 0;
+        if (preg_match('~(^|\.)(mos\.ru|nso\.ru|donland\.ru|tatar\.ru|belgov\.ru|kbr\.ru)$~', $dom)) return 0;
+        if (preg_match('~\.ru$~', $dom) && !preg_match('~(mail|yandex|list|bk|inbox|rambler|gmail|yahoo)\.~', $dom)) return 1;
+        return 2;
+    };
+
+    $best = [];
+    foreach ($rows as $m) {
+        // Пресс-служба идёт своей строкой и в схлопывание не попадает.
+        if ((string) ($m['branch'] ?? 'main') === 'press') { $best['press:' . (int) $m['id']] = $m; continue; }
+        $k = $key($m);
+        if (!isset($best[$k]) || $rank($m) < $rank($best[$k])) $best[$k] = $m;
+    }
+    return array_values($best);
 }
 
 function min_mark_sent(int $id, string $number): void {
