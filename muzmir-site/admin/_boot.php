@@ -232,3 +232,49 @@ function diploma_preview_generate(array $comp): array {
 function diploma_is_approved(int $cid): bool {
     return (int) scalar("SELECT diploma_approved FROM competitions WHERE id=?", [$cid]) === 1;
 }
+
+/**
+ * БЛОК «ЭТОТ ЖЕ НОМЕР УЖЕ ОЦЕНИВАЛИ НА ДРУГОМ КОНКУРСЕ».
+ *
+ * Показывается только когда совпадение реально есть, и только по оценённым
+ * заявкам. Смысл блока — не статистика, а предупреждение жюри: если тому же
+ * коллективу за этот же номер месяц назад присудили «Лауреат II степени», а
+ * сегодня поставить «Гран-при», участник сравнит два диплома и придёт с
+ * вопросом, на который отвечать будет нечего.
+ *
+ * @param array<int, array{id:int,number:string,who:string,work:string,comp:string,result:string,extra:string,graded_at:string}> $rows
+ */
+function admin_same_work_box(array $rows): string {
+    if (!$rows) return '';
+
+    $items = '';
+    foreach ($rows as $r) {
+        $when = trim((string) $r['graded_at']) !== ''
+            ? ' <span class="muted">· ' . h(date('d.m.Y', strtotime((string) $r['graded_at']))) . '</span>'
+            : '';
+        $extra = trim((string) $r['extra']) !== ''
+            ? ' <span class="badge badge--extra">' . h($r['extra']) . '</span>'
+            : '';
+        // Название номера участники часто вписывают уже в кавычках. Оборачивать
+        // его ещё раз нельзя — получается «„Румяная история“».
+        $work = trim((string) $r['work']);
+        $quoted = preg_match('~^[«"„\'].*[»"“\']$~u', $work) ? $work : '«' . $work . '»';
+        $items .= '<div style="padding:8px 0;border-top:1px solid var(--a-line)">'
+                . '<b>' . h($r['who']) . '</b> — ' . h($quoted) . '<br>'
+                . '<span class="small muted">' . h($r['comp']) . '</span>'
+                . ' <a class="small" href="' . a_link('applications', ['id' => (int) $r['id']]) . '">'
+                . h($r['number'] ?: ('#' . (int) $r['id'])) . '</a>' . $when
+                . '<div style="margin-top:4px"><span class="badge badge--gold">' . h($r['result']) . '</span>' . $extra . '</div>'
+                . '</div>';
+    }
+
+    $title = count($rows) === 1
+        ? 'Этот же номер уже оценивали на другом конкурсе'
+        : 'Этот же номер уже оценивали на других конкурсах (' . count($rows) . ')';
+
+    return '<div style="border:1px solid #E2B93B;background:#FFFBEF;border-radius:12px;padding:12px 16px;margin-bottom:14px">'
+         . '<b>' . $title . '</b>'
+         . '<div class="small muted" style="margin:4px 0 2px">Тот же исполнитель и то же название номера. '
+         . 'Учтите при выставлении оценки.</div>'
+         . $items . '</div>';
+}

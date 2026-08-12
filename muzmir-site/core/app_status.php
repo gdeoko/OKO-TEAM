@@ -301,3 +301,78 @@ function app_status_sync(int $appId): string {
     }
     return $code;
 }
+
+/**
+ * ТОТ ЖЕ НОМЕР НА ДРУГОМ КОНКУРСЕ — УЖЕ ОЦЕНЁННЫЙ.
+ *
+ * Один и тот же номер участник нередко подаёт сразу в несколько конкурсов
+ * сезона. Жюри об этом не знает и может поставить «Гран-при» там, где месяц
+ * назад тот же номер получил «Лауреат II степени» — участник сравнит два
+ * диплома и придёт с вопросом. Поэтому при оценке показываем, что этому же
+ * исполнителю за этот же номер уже присуждали.
+ *
+ * Совпадением считаем пару «исполнитель + название номера»: у коллектива —
+ * название коллектива, у солиста — ФИО. Сравниваем по нормали, без регистра,
+ * кавычек и лишних пробелов: участники пишут «Journey» и «„Journey“» вперемешку.
+ *
+ * @return array<int, array{id:int, number:string, who:string, work:string, comp:string, result:string, extra:string, graded_at:string}>
+ */
+function app_same_work_graded(array $app): array {
+    $work = app_norm_key((string) ($app['work_title'] ?? ''));
+    if ($work === '') return [];
+
+    $who = app_norm_key((int) ($app['is_group'] ?? 0) === 1
+        ? (string) ($app['group_name'] ?? '')
+        : (string) ($app['full_name'] ?? ''));
+    if ($who === '') return [];
+
+    $id   = (int) ($app['id'] ?? 0);
+    $comp = (int) ($app['competition_id'] ?? 0);
+
+    try {
+        $rows = all(
+            "SELECT a.id, a.number, a.is_group, a.group_name, a.full_name, a.work_title,
+                    a.result, a.extra_diploma, a.graded_at, c.name AS comp
+               FROM applications a
+               LEFT JOIN competitions c ON c.id = a.competition_id
+              WHERE a.id <> ?
+                AND a.competition_id <> ?
+                AND TRIM(COALESCE(a.result,'')) <> ''
+                AND COALESCE(a.status,'') <> 'rejected'
+              ORDER BY a.graded_at DESC, a.id DESC",
+            [$id, $comp]
+        );
+    } catch (\Throwable $e) { return []; }
+
+    $out = [];
+    foreach ($rows as $r) {
+        if (app_norm_key((string) $r['work_title']) !== $work) continue;
+        $rWho = app_norm_key((int) $r['is_group'] === 1 ? (string) $r['group_name'] : (string) $r['full_name']);
+        if ($rWho !== $who) continue;
+        $out[] = [
+            'id'        => (int) $r['id'],
+            'number'    => (string) $r['number'],
+            'who'       => (int) $r['is_group'] === 1 ? (string) $r['group_name'] : (string) $r['full_name'],
+            'work'      => (string) $r['work_title'],
+            'comp'      => (string) ($r['comp'] ?? ''),
+            'result'    => (string) $r['result'],
+            'extra'     => (string) ($r['extra_diploma'] ?? ''),
+            'graded_at' => (string) ($r['graded_at'] ?? ''),
+        ];
+    }
+    return $out;
+}
+
+/**
+ * Ключ для сравнения имён и названий.
+ *
+ * Убирает регистр, кавычки всех видов, дефисы-разделители и повторные пробелы.
+ * Букву «ё» приводим к «е»: в заявках она встречается в обоих написаниях, и без
+ * этого «Метелица» и «Метёлица» считались бы разными номерами.
+ */
+function app_norm_key(string $s): string {
+    $s = mb_strtolower(trim($s));
+    $s = str_replace(['ё', '«', '»', '"', "'", '“', '”', '„', '`'], ['е', '', '', '', '', '', '', '', ''], $s);
+    $s = preg_replace('~[\s\-–—_.,;:!?]+~u', ' ', $s) ?? $s;
+    return trim($s);
+}

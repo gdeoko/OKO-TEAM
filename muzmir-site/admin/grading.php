@@ -8,6 +8,7 @@
  */
 declare(strict_types=1);
 require_once BASE_PATH . '/core/jury.php';
+require_once BASE_PATH . '/core/app_status.php';
 require_once BASE_PATH . '/core/link_check.php';
 jury_ensure_schema();
 
@@ -742,6 +743,7 @@ if ($id = (int) input('id')) {
 
       <div class="card" id="resultCard">
         <h3>Итоговый результат</h3>
+        <?= admin_same_work_box(app_same_work_graded($a)) ?>
         <p class="small muted">Выберите звание. Доп. диплом и комментарий — по желанию. До момента отправки результат можно менять — повторное сохранение перезапишет итог.</p>
         <form method="post" action="<?= url('/admin/?p=grading') ?>">
           <?= csrf_field() ?><input type="hidden" name="p" value="grading"><input type="hidden" name="do" value="grade_result">

@@ -312,6 +312,8 @@ if ($id = (int) input('id')) {
         <?php endif; ?>
       </dl>
 
+      <?= admin_same_work_box(app_same_work_graded($a)) ?>
+
       <!-- ---- РЕЗУЛЬТАТ ---- -->
       <div style="border:1px solid var(--a-line);border-radius:12px;padding:14px 16px;margin-bottom:14px">
         <div style="display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap;align-items:center">
@@ -624,10 +626,10 @@ ob_start(); ?>
     <table class="tbl">
       <thead><tr>
         <th class="checkbox-cell"><input type="checkbox" onclick="document.querySelectorAll('.rowchk').forEach(c=>c.checked=this.checked)"></th>
-        <th>От кого</th><th>Конкурсный номер</th><th>Конкурс</th><th>Статус</th><th>Сумма</th><th>Подана</th>
+        <th>От кого</th><th>Конкурсный номер</th><th>Конкурс</th><th>Оценка</th><th>Статус</th><th>Сумма</th><th>Подана</th>
       </tr></thead>
       <tbody>
-        <?php if (!$rows): ?><tr><td colspan="7" class="muted" style="text-align:center;padding:28px">Заявок по фильтру нет</td></tr><?php endif; ?>
+        <?php if (!$rows): ?><tr><td colspan="8" class="muted" style="text-align:center;padding:28px">Заявок по фильтру нет</td></tr><?php endif; ?>
         <?php foreach ($rows as $a):
           $st = app_state($a, true);
           // Сумма: бесплатный конкурс — «Бесплатно»; платный — фактически оплаченная
@@ -663,6 +665,14 @@ ob_start(); ?>
             <td class="small"><?= h($a['work_title'] ?: '—') ?>
               <?php if (!empty($a['nomination'])): ?><br><span class="muted"><?= h($a['nomination']) ?></span><?php endif; ?></td>
             <td class="small"><?= h($a['comp']) ?></td>
+            <td class="small">
+              <?php if (trim((string) $a['result']) !== ''): ?>
+                <span class="badge badge--gold"><?= h($a['result']) ?></span>
+                <?php if (trim((string) ($a['extra_diploma'] ?? '')) !== ''): ?>
+                  <br><span class="badge badge--extra" style="margin-top:4px"><?= h($a['extra_diploma']) ?></span>
+                <?php endif; ?>
+              <?php else: ?><span class="muted">—</span><?php endif; ?>
+            </td>
             <td><span class="badge badge--<?= h($st['code']) ?>"><?= h($st['label']) ?></span></td>
             <td class="small"><?= $sumHtml ?></td>
             <td class="small"><?= h(date('d.m.Y', strtotime($a['created_at']))) ?><br><span class="muted"><?= h(date('H:i', strtotime($a['created_at']))) ?></span></td>
