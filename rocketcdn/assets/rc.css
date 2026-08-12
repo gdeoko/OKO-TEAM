@@ -52,6 +52,8 @@
   --pill-line: rgba(226,232,240,.16);
   --pill-off:  rgba(226,232,240,.62);
   --pill-hover:#E2E8F0;
+  --tab-on:    #E2E8F0;
+  --tab-on-tx: #091320;
 }
 
 /* ── Светлая тема ─────────────────────────────────────────── */
@@ -77,6 +79,8 @@
   --pill-line: #091320;
   --pill-off:  rgba(255,255,255,.55);
   --pill-hover:#fff;
+  --tab-on:    #091320;
+  --tab-on-tx: #fff;
 }
 
 html {
@@ -383,7 +387,12 @@ section { position: relative; padding: var(--sec) 0; }
   transition: all var(--fast);
 }
 .reg-tabs button:hover { border-color: var(--cyan); color: var(--tx); }
-.reg-tabs button.on { background: var(--grad); border-color: transparent; color: #fff; }
+/* Активная вкладка - тёмная таблетка, как в их дизайн-системе */
+.reg-tabs button.on {
+  background: var(--tab-on); border-color: var(--tab-on); color: var(--tab-on-tx);
+  box-shadow: 0 4px 14px -6px rgba(9,19,32,.55);
+}
+.reg-tabs button.on:hover { border-color: var(--tab-on); }
 .search { position: relative; margin-bottom: 14px; }
 .search input {
   width: 100%; padding: 13px 15px 13px 42px; border-radius: var(--r-sm);
@@ -486,9 +495,11 @@ section { position: relative; padding: var(--sec) 0; }
 [data-theme="light"] .field input,
 [data-theme="light"] .field textarea,
 [data-theme="light"] .field select { background: #fff; }
+.field input:hover, .field textarea:hover, .field select:hover { border-color: var(--cyan); }
 .field input:focus, .field textarea:focus, .field select:focus {
-  outline: none; border-color: var(--cyan); box-shadow: 0 0 0 3px rgba(66,178,220,.14);
+  outline: none; border-color: var(--tx); box-shadow: 0 0 0 3px rgba(66,178,220,.18);
 }
+.search input:hover { border-color: var(--cyan); }
 .field input::placeholder, .field textarea::placeholder { color: var(--tx-3); }
 .field textarea { resize: vertical; min-height: 96px; }
 .field.bad input, .field.bad textarea { border-color: #F87171; }
