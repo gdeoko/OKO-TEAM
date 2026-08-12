@@ -1014,7 +1014,8 @@ case 'wd_reject': {
 // ═════════════════════════════════════════════════════════════════
 case 'oko_task': {
     rate_limit('oko_task',20,60);
-    $KINDS=['image','video','clip','cover','site','post','email','content','other'];
+    $KINDS=['image','video','clip','cover','site','post','email','content','other',
+            'system','video_check','content_plan','brandbook'];
     $kind=preg_replace('/[^a-z_]/','',strtolower((string)($body['kind']??'')));
     if(!in_array($kind,$KINDS,true)) $kind='other';
     $title=mb_substr(trim((string)($body['title']??'')),0,160);
@@ -1084,6 +1085,72 @@ case 'oko_task_result': {
     $n=db_exec("UPDATE app_tasks SET status=?, result=?, error=?, updated_at=? WHERE uid=?",[$status,$result,$error,now(),$uid]);
     if($n===0) fail('not found',404);
     out(['ok'=>true,'uid'=>$uid,'status'=>$status]);
+}
+
+// ═════════════════════════════════════════════════════════════════
+// СИСТЕМЫ РОСТА — хранилище готовых систем.
+//
+// Собранная система это ОДИН самодостаточный HTML (принцип «один файл» из
+// ТЗ v3.0): главная, контент-план-календарь, бизнес-план, чек-лист,
+// материалы, визуал, перспективы, трекеры - всё внутри. Весит сотни
+// килобайт, поэтому лежит отдельной таблицей, а не в результате задачи.
+//
+// Кладёт сессия-сливщик (нужен токен), забирает приложение по uid.
+// ═════════════════════════════════════════════════════════════════
+case 'oko_system_put': {
+    if(!drainer_ok()) fail('Unauthorized',403);
+    $html=(string)($body['html']??'');
+    if(strlen($html) < 500) fail('пустая система');
+    if(strlen($html) > 8*1024*1024) fail('система больше 8 МБ');
+    $uid=preg_replace('/[^a-f0-9]/','',(string)($body['uid']??''));
+    if($uid==='') $uid=bin2hex(random_bytes(9));
+    $task=preg_replace('/[^a-f0-9]/','',(string)($body['task_uid']??''));
+    $user=mb_substr(trim((string)($body['user']??'')),0,80);
+    $title=mb_substr(trim((string)($body['title']??'Система Роста')),0,160);
+    $niche=mb_substr(trim((string)($body['niche']??'')),0,120);
+    $period=mb_substr(trim((string)($body['period']??'')),0,60);
+    $meta=is_string($body['meta']??null)?$body['meta']:json_encode($body['meta']??null,JSON_UNESCAPED_UNICODE);
+    $ex=db_one("SELECT id,version FROM app_systems WHERE uid=?",[$uid]);
+    if($ex){
+        db_exec("UPDATE app_systems SET html=?, title=?, niche=?, period=?, meta=?, version=version+1, updated_at=? WHERE uid=?",
+            [$html,$title,$niche,$period,$meta,now(),$uid]);
+        $ver=(int)$ex['version']+1;
+    } else {
+        db_insert("INSERT INTO app_systems (uid,task_uid,user_ref,title,niche,period,html,meta,created_at,updated_at) VALUES (?,?,?,?,?,?,?,?,?,?)",
+            [$uid,$task,$user,$title,$niche,$period,$html,$meta,now(),now()]);
+        $ver=1;
+    }
+    /* Человеку - уведомление в Telegram владельцу; сам он увидит систему в
+       приложении. Никаких обещаний «готово» раньше времени: пишем только по
+       факту сохранения. */
+    tg_send($C['daniel_tg']??'',"<b>Система собрана</b>\n".htmlspecialchars($title)
+        .($niche?"\nНиша: ".htmlspecialchars($niche):'').($user?"\nДля: ".htmlspecialchars($user):'')
+        ."\nРазмер: ".round(strlen($html)/1024)." КБ · версия {$ver}");
+    out(['ok'=>true,'uid'=>$uid,'version'=>$ver,'bytes'=>strlen($html)]);
+}
+
+// Отдать готовую систему. Публично по uid: ссылка неугадываемая (18 hex),
+// а человеку система нужна и из приложения, и по прямой ссылке.
+case 'oko_system_get': {
+    $uid=preg_replace('/[^a-f0-9]/','',(string)($_GET['uid']??$body['uid']??''));
+    if($uid==='') fail('no uid');
+    $r=db_one("SELECT uid,title,niche,period,html,meta,version,created_at,updated_at FROM app_systems WHERE uid=?",[$uid]);
+    if(!$r) fail('not found',404);
+    if(isset($_GET['raw'])){                      // отдать как страницу
+        header_remove('Content-Type');
+        header('Content-Type: text/html; charset=UTF-8');
+        echo $r['html']; exit;
+    }
+    out(['ok'=>true]+$r);
+}
+
+// Список систем пользователя (без тела html - только карточки).
+case 'oko_system_mine': {
+    $user=mb_substr(trim((string)($_GET['user']??$body['user']??'')),0,80);
+    if($user==='') fail('no user');
+    out(['ok'=>true,'items'=>db_all(
+        "SELECT uid,title,niche,period,version,created_at,updated_at, length(html) AS bytes
+         FROM app_systems WHERE user_ref=? ORDER BY id DESC LIMIT 30",[$user])]);
 }
 
 // ── Состояние интеграций для Штаба OKO ──────────────────────────

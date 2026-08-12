@@ -111,6 +111,16 @@ function db_schema(PDO $pdo): void {
       created_at TEXT DEFAULT (datetime('now','localtime')), updated_at TEXT);
     CREATE INDEX IF NOT EXISTS idx_app_tasks_status ON app_tasks(status);
     CREATE INDEX IF NOT EXISTS idx_app_tasks_uid ON app_tasks(uid);
+    /* Готовые Системы Роста. Собранная система - это ОДИН самодостаточный HTML
+       (принцип «один файл» из ТЗ v3.0), 200-800 КБ. В app_tasks.result такое не
+       положишь (там потолок), поэтому храним отдельно и отдаём по uid. */
+    CREATE TABLE IF NOT EXISTS app_systems (
+      id INTEGER PRIMARY KEY AUTOINCREMENT, uid TEXT UNIQUE, task_uid TEXT,
+      user_ref TEXT, title TEXT, niche TEXT, period TEXT,
+      html TEXT, meta TEXT, version INTEGER DEFAULT 1,
+      created_at TEXT DEFAULT (datetime('now','localtime')), updated_at TEXT);
+    CREATE INDEX IF NOT EXISTS idx_app_systems_user ON app_systems(user_ref);
+    CREATE INDEX IF NOT EXISTS idx_app_systems_uid ON app_systems(uid);
     CREATE TABLE IF NOT EXISTS visits (
       id INTEGER PRIMARY KEY AUTOINCREMENT, page TEXT, ref TEXT, ua TEXT, ip TEXT,
       created_at TEXT DEFAULT (datetime('now','localtime')));
