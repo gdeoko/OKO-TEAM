@@ -352,6 +352,22 @@ Object.defineProperty(Globe3D.prototype, "filter", {
   }
 });
 
+/* Экранный круг планеты в координатах окна.
+   Камера стоит неподвижно (fov 34, z 4.4), поэтому шар радиуса 1
+   занимает постоянную долю высоты холста. По этому кругу ракета
+   строит орбиту, не заглядывая внутрь чужой сцены. */
+Globe3D.prototype.screenCircle = function () {
+  var b = this.cv.getBoundingClientRect();
+  if (!b.width || !b.height) return null;
+  var half = Math.tan((34 * Math.PI / 180) / 2) * 4.4;   /* половина кадра в мире */
+  return {
+    cx: b.left + b.width / 2,
+    cy: b.top + b.height / 2,
+    r:  (1 / half) * (b.height / 2),
+    rect: b
+  };
+};
+
 Globe3D.prototype.resize = function () {
   var r = this.cv.getBoundingClientRect();
   var w = Math.max(1, r.width), h = Math.max(1, r.height);

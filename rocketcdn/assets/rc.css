@@ -48,6 +48,10 @@
   --head-bg:   rgba(5,12,21,.72);
   --hero-veil: radial-gradient(ellipse 90% 60% at 50% -10%, rgba(66,178,220,.18), transparent 62%),
                radial-gradient(ellipse 60% 50% at 88% 12%, rgba(138,89,246,.13), transparent 60%);
+  --pill-bg:   rgba(255,255,255,.06);
+  --pill-line: rgba(226,232,240,.16);
+  --pill-off:  rgba(226,232,240,.62);
+  --pill-hover:#E2E8F0;
 }
 
 /* ── Светлая тема ─────────────────────────────────────────── */
@@ -68,6 +72,11 @@
   --grad-txt:  linear-gradient(120deg, #0A5897 0%, #42B2DC 50%, #8A59F6 100%);
   --hero-veil: radial-gradient(ellipse 90% 60% at 50% -10%, rgba(66,178,220,.20), transparent 62%),
                radial-gradient(ellipse 60% 50% at 88% 12%, rgba(138,89,246,.10), transparent 60%);
+  /* В светлой теме пилюля тёмная: ровно так она нарисована в их макете */
+  --pill-bg:   #091320;
+  --pill-line: #091320;
+  --pill-off:  rgba(255,255,255,.55);
+  --pill-hover:#fff;
 }
 
 html {
@@ -220,15 +229,42 @@ section { position: relative; padding: var(--sec) 0; }
 }
 .icon-btn:hover { color: var(--cyan); border-color: var(--cyan); }
 .icon-btn svg { width: 18px; height: 18px; }
-.lang {
-  display: flex; background: var(--surface); border: 1px solid var(--line);
-  border-radius: var(--r-sm); overflow: hidden; flex: none;
+/* ── Фирменная пилюля из дизайн-системы клиента ───────────── */
+/* Тёмная капсула, внутри ездит фиолетовый кругляш, подписи по краям. */
+.pill {
+  position: relative; display: flex; align-items: center; flex: none;
+  background: var(--pill-bg); border: 1px solid var(--pill-line);
+  border-radius: var(--r-full); padding: 3px;
+  transition: background var(--fast), border-color var(--fast);
 }
-.lang button {
-  padding: 8px 11px; font-size: 12.5px; font-weight: 600; background: none; border: 0;
-  color: var(--tx-3); cursor: pointer; transition: all var(--fast);
+.pill-knob {
+  position: absolute; top: 3px; left: 3px; width: calc(50% - 3px); height: calc(100% - 6px);
+  border-radius: var(--r-full); background: var(--violet);
+  box-shadow: 0 2px 10px -2px rgba(138,89,246,.7);
+  transition: transform .34s var(--ease), background var(--fast);
+  pointer-events: none;
 }
-.lang button.on { background: var(--grad); color: #fff; }
+.pill.at-2 .pill-knob { transform: translateX(100%); }
+.pill button {
+  position: relative; z-index: 1; display: grid; place-items: center;
+  min-width: 42px; height: 30px; padding: 0 12px;
+  background: none; border: 0; border-radius: var(--r-full);
+  font-size: 12.5px; font-weight: 700; letter-spacing: .02em;
+  color: var(--pill-off); cursor: pointer;
+  transition: color var(--fast);
+}
+.pill button:hover { color: var(--pill-hover); }
+.pill button.on { color: #fff; }
+.pill button svg { width: 16px; height: 16px; }
+.pill.theme button { min-width: 38px; padding: 0 10px; }
+.vh {
+  position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px;
+  overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; border: 0;
+}
+/* Широкий вариант для меню на телефоне: подписи словами */
+.pill.wide { width: 100%; }
+.pill.wide button { flex: 1 1 0; min-width: 0; height: 40px; gap: 8px; font-size: 14px; }
+.pill.theme.wide button { display: flex; align-items: center; justify-content: center; }
 .burger { display: none; }
 
 /* Мобильное меню */
@@ -536,7 +572,8 @@ section { position: relative; padding: var(--sec) 0; }
 @media (max-width: 900px) {
   .nav { display: none }
   .burger { display: grid }
-  .hdr-act .lang { display: none }
+  /* Пилюли уезжают в меню, в шапке им тесно */
+  .hdr-act .pill { display: none }
   .g-3 { grid-template-columns: repeat(2, 1fr) }
   .contact { grid-template-columns: 1fr }
   .dc-grid { grid-template-columns: 1fr }
@@ -725,8 +762,7 @@ section { position: relative; padding: var(--sec) 0; }
   /* Переключатель темы переезжает в меню, иначе шапка не влезает */
   .hdr-act .js-theme { display: none; }
 }
-.drawer-tools { display: flex; gap: 10px; align-items: center; margin-top: 18px; }
-.drawer-tools .icon-btn { width: 44px; height: 44px; }
+.drawer-tools { display: flex; flex-direction: column; gap: 10px; margin-top: 18px; }
 
 /* ═══════════════════════════════════════════════════════════
    Премиальные мелочи: зерно, разделители, вскрытие заголовков,

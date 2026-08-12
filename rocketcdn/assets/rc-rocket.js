@@ -137,30 +137,30 @@ function hullTexture() {
   x.fillStyle = "rgba(96,118,146,.34)";
   [0.30, 0.34, 0.62, 0.66].forEach(function (v) { x.fillRect(0, (1 - v) * H, W, 3); });
 
-  /* Надпись вдоль корпуса, четыре раза по окружности */
-  var fam = '"Golos Text", "Arial Black", Arial, sans-serif';
+  /* Названия на корпусе нет: ракета всё время крутится, и на вращении
+     любая надпись смазывается в кашу. Вместо букв - опознавательный знак:
+     четыре фирменных шеврона по окружности. */
   for (i = 0; i < 4; i++) {
     var cx = (i + 0.5) * (W / 4);
     x.save();
     x.translate(cx, (1 - 0.50) * H);
-    x.rotate(Math.PI / 2);
-    x.textAlign = "center";
-    x.textBaseline = "middle";
 
-    x.font = "800 96px " + fam;
-    var wRocket = x.measureText("Rocket").width;
-    var wCDN = x.measureText("CDN").width;
-    var total = wRocket + wCDN;
-    x.fillStyle = "#0B1726";
-    x.fillText("Rocket", -total / 2 + wRocket / 2, -26);
-    x.fillStyle = "#1B84BE";
-    x.fillText("CDN", total / 2 - wCDN / 2, -26);
-
-    x.font = "700 22px " + fam;
-    try { x.letterSpacing = "9px"; } catch (e) {}
-    x.fillStyle = "rgba(11,23,38,.45)";
-    x.fillText("FAST. RELIABLE. GLOBAL.", 0, 42);
-    try { x.letterSpacing = "0px"; } catch (e) {}
+    var sh = x.createLinearGradient(0, -80, 0, 80);
+    sh.addColorStop(0, "#5BC4EA");
+    sh.addColorStop(1, "#0A5897");
+    x.fillStyle = sh;
+    /* Шеврон остриём к носу, то есть вверх по холсту */
+    [0, 74].forEach(function (off) {
+      x.beginPath();
+      x.moveTo(0, -62 + off);
+      x.lineTo(56, 6 + off);
+      x.lineTo(36, 6 + off);
+      x.lineTo(0, -30 + off);
+      x.lineTo(-36, 6 + off);
+      x.lineTo(-56, 6 + off);
+      x.closePath();
+      x.fill();
+    });
     x.restore();
   }
 
@@ -553,6 +553,15 @@ function Rocket(canvas) {
   this._veil = 1;
   this._veilGoal = 1;
   this._veilT = 0;
+
+  /* Орбита вокруг планеты */
+  this.orbK = 0;      /* 0 - летим по маршруту, 1 - полностью на витке */
+  this.orbA = 0;      /* угол на витке */
+  this._spin = 0;     /* подкрутка от прокрутки */
+  this.occl = 1;      /* 1 - видна, ниже - уходит за шар */
+  this._orbP = new T.Vector3();
+  this._orbT = new T.Vector3();
+  this._tmpD = new T.Vector3();
   canvas.classList.add("rk-soft");
 
   this.bind();
@@ -582,24 +591,118 @@ Rocket.prototype.resize = function () {
 };
 
 /* Раскладка по прогрессу прокрутки: положение, поворот, масштаб */
-Rocket.prototype.layout = function (p) {
+/* ── Орбита вокруг планеты ────────────────────────────────
+   Долистали до раздела с глобусом - ракета сходит с общей траектории
+   и наматывает витки вокруг шара, сама по себе, пока человек читает.
+   Тронулись дальше - плавно возвращается на траекторию из той точки,
+   где была, без телепортов.
+
+   Планета живёт в чужом холсте, поэтому орбита строится не по её сцене,
+   а по экранному кругу: у обоих глобусов есть метод screenCircle. Круг
+   переводится в мир камеры ракеты через размер кадра на нужной глубине. */
+
+/* Плоскость орбиты почти ребром к зрителю: так ракета честно уходит
+   за планету и выныривает с другой стороны. */
+var ORB_U = { x: 1, y: 0.06, z: 0 };
+var ORB_V = { x: 0, y: 0.30, z: 0.95 };
+
+Rocket.prototype.globeCircle = function () {
+  var list = g.__globes || [];
+  for (var i = 0; i < list.length; i++) {
+    var gl = list[i];
+    if (!gl || typeof gl.screenCircle !== "function") continue;
+    if (gl.cv && gl.cv.id !== "globeMap") continue;
+    var c = gl.screenCircle();
+    if (c && c.r > 24) return c;
+  }
+  return null;
+};
+
+/* Экранная точка в мир камеры ракеты на заданной глубине */
+Rocket.prototype.toWorld = function (sx, sy, z, out) {
+  var w = this.canvas.clientWidth || innerWidth;
+  var h = this.canvas.clientHeight || innerHeight;
+  var dist = this.cam.position.z - z;
+  var halfH = Math.tan((this.cam.fov * Math.PI / 180) / 2) * dist;
+  var halfW = halfH * (w / h);
+  out.set(((sx / w) * 2 - 1) * halfW, (-(sy / h) * 2 + 1) * halfH, z);
+  return { halfH: halfH, h: h };
+};
+
+/* Насколько мы «в разделе планеты»: 0 - мимо, 1 - глобус по центру экрана */
+function capture(c) {
+  if (!c) return 0;
+  var mid = c.cy;
+  var d = Math.abs(mid - innerHeight / 2) / (innerHeight * 0.62);
+  var v = 1 - d;
+  return v < 0 ? 0 : v > 1 ? 1 : v * v * (3 - 2 * v);
+}
+
+Rocket.prototype.orbit = function (dt) {
+  var c = this.globeCircle();
+  var want = capture(c);
+  /* Захват мягкий: рывков на границе быть не должно */
+  this.orbK += (want - this.orbK) * Math.min(1, dt * 2.6);
+  if (this.orbK < 0.002 && want < 0.002) { this.orbK = 0; this.occl = 1; return null; }
+
+  /* Виток идёт своим ходом, прокрутка его немного подкручивает */
+  this.orbA += dt * 0.78 + (this._spin || 0);
+  this._spin *= 0.9;
+
+  var depth = -1.6;                       /* планета «стоит» чуть в глубине */
+  var m = this.toWorld(c.cx, c.cy, depth, this._tmpD);
+  var Rw = (c.r / (m.h / 2)) * m.halfH;   /* радиус планеты в мире ракеты */
+  var R = Rw * 1.28;
+
+  var ca = Math.cos(this.orbA), sa = Math.sin(this.orbA);
+  this._orbP.set(
+    this._tmpD.x + R * (ca * ORB_U.x + sa * ORB_V.x),
+    this._tmpD.y + R * (ca * ORB_U.y + sa * ORB_V.y),
+    this._tmpD.z + R * (ca * ORB_U.z + sa * ORB_V.z)
+  );
+  this._orbT.set(
+    -sa * ORB_U.x + ca * ORB_V.x,
+    -sa * ORB_U.y + ca * ORB_V.y,
+    -sa * ORB_U.z + ca * ORB_V.z
+  ).normalize();
+
+  /* Ушла за шар - гаснет, как и положено: планета непрозрачная */
+  var behind = this._orbP.z < this._tmpD.z;
+  var dx = this._orbP.x - this._tmpD.x, dy = this._orbP.y - this._tmpD.y;
+  var flat = Math.sqrt(dx * dx + dy * dy) / Rw;
+  var hid = behind ? 1 - Math.min(1, Math.max(0, (flat - 0.82) / 0.3)) : 0;
+  this.occl = 1 - hid * 0.94 * this.orbK;
+
+  return { R: R, Rw: Rw };
+};
+
+Rocket.prototype.layout = function (p, dt) {
   p = ((p % 1) + 1) % 1;
   var pos = this.path.getPointAt(p, this._tmpA);
   var tan = this.path.getTangentAt(p, this._tmpB).normalize();
 
+  var orb = this.orbit(dt || 0.016);
+  var k = this.orbK;
+  if (orb && k > 0.001) {
+    pos.lerp(this._orbP, k);
+    tan.lerp(this._orbT, k).normalize();
+  }
+
   this.pivot.position.copy(pos);
 
-  /* Нос смотрит вдоль движения */
+  /* Нос смотрит вдоль движения. На орбите доворачиваем резче,
+     иначе на быстром витке ракета летит боком. */
   this._q.setFromUnitVectors(this._up, tan);
-  this.pivot.quaternion.slerp(this._q, 0.22);
+  this.pivot.quaternion.slerp(this._q, 0.22 + k * 0.4);
 
   /* Крен по горизонтальной составляющей */
   this.craft.rotation.z = -tan.x * 0.55;
   this.craft.rotation.y += 0.004;
 
-  /* Дальние участки пути делаем мельче, ближние крупнее */
+  /* Дальние участки пути делаем мельче, ближние крупнее.
+     Вокруг планеты ракета идёт мельче: она «далеко». */
   var s = this.C.mobile ? 0.62 : 0.86;
-  this.pivot.scale.setScalar(s);
+  this.pivot.scale.setScalar(s * (1 - k * 0.62));
 };
 
 /* Крупный читаемый текст: только он лежит на прозрачном фоне,
@@ -639,22 +742,27 @@ Rocket.prototype.veil = function (dt) {
   }
   var light = document.documentElement.getAttribute("data-theme") === "light";
   var d = this._veilGoal - this._veil;
-  if (Math.abs(d) > 0.004) this._veil += d * Math.min(1, dt * 4.5);
-  else if (light === this._wasLight) return;
+  var moved = Math.abs(d) > 0.004;
+  if (moved) this._veil += d * Math.min(1, dt * 4.5);
+  var occMoved = Math.abs(this.occl - (this._wasOcc == null ? 1 : this._wasOcc)) > 0.004;
+  this._wasOcc = this.occl;
+  if (!moved && !occMoved && light === this._wasLight) return;
   this._wasLight = light;
-  this.canvas.style.opacity = (this._veil * (light ? 0.92 : 1)).toFixed(3);
+  this.canvas.style.opacity = (this._veil * this.occl * (light ? 0.92 : 1)).toFixed(3);
 };
 
 Rocket.prototype.setProgress = function (p, velocity) {
   this.progress = p;
   this.power = Math.max(0.32, Math.min(1, 0.36 + Math.abs(velocity || 0) * 0.05));
+  /* Листаешь - виток вокруг планеты ускоряется в ту же сторону */
+  if (this.orbK > 0.01) this._spin += (velocity || 0) * 0.0012;
 };
 
 Rocket.prototype.frame = function (dt) {
   this.time += dt;
   var t = this.time;
 
-  this.layout(this.progress);
+  this.layout(this.progress, dt);
 
   /* Покачивание в состоянии покоя */
   this.craft.position.y = Math.sin(t * 1.35) * 0.16;

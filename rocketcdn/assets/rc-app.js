@@ -105,9 +105,14 @@ function applyTheme(v, silent) {
   localStorage.setItem("rc_theme", v);
   var m = $('meta[name="theme-color"]');
   if (m) m.setAttribute("content", v === "light" ? "#F3F7FB" : "#050C15");
+  /* Фирменная пилюля: кругляш едет к выбранной половине */
+  $$(".pill.theme").forEach(function (p) {
+    p.classList.toggle("at-2", v === "dark");
+  });
   $$(".js-theme").forEach(function (b) {
-    b.innerHTML = svg(v === "light" ? "moon" : "sun");
-    b.setAttribute("aria-label", t("theme.toggle"));
+    var on = b.dataset.theme === v;
+    b.classList.toggle("on", on);
+    b.setAttribute("aria-pressed", on ? "true" : "false");
   });
   if (window.__globes) window.__globes.forEach(function (g) { g.setTheme(v); });
   if (!silent) track("theme", v);
@@ -122,7 +127,12 @@ function applyLang(v, silent) {
     if (el.hasAttribute("data-i18n-attr")) el.setAttribute(el.getAttribute("data-i18n-attr"), val);
     else el.textContent = val;
   });
-  $$(".lang button").forEach(function (b) { b.classList.toggle("on", b.dataset.lang === v); });
+  $$(".lang button").forEach(function (b) {
+    var on = b.dataset.lang === v;
+    b.classList.toggle("on", on);
+    b.setAttribute("aria-pressed", on ? "true" : "false");
+  });
+  $$(".pill.lang").forEach(function (p) { p.classList.toggle("at-2", v === "en"); });
   renderBlocks();
   renderNodes();
   document.dispatchEvent(new CustomEvent("rc:lang", { detail: { lang: v, t: t, blocks: blocks } }));
@@ -419,10 +429,22 @@ function boot() {
 
   /* Переключатели */
   $$(".js-theme").forEach(function (b) {
-    b.addEventListener("click", function () { applyTheme(state.theme === "light" ? "dark" : "light"); });
+    b.addEventListener("click", function () { applyTheme(b.dataset.theme || (state.theme === "light" ? "dark" : "light")); });
   });
   $$(".lang button").forEach(function (b) {
     b.addEventListener("click", function () { applyLang(b.dataset.lang); });
+  });
+  /* Клавиатура: стрелками ходим по половинам пилюли */
+  $$(".pill").forEach(function (p) {
+    p.addEventListener("keydown", function (e) {
+      if (e.key !== "ArrowLeft" && e.key !== "ArrowRight") return;
+      var bs = [].slice.call(p.querySelectorAll("button"));
+      var i = bs.indexOf(document.activeElement);
+      if (i < 0) return;
+      e.preventDefault();
+      var n = bs[e.key === "ArrowLeft" ? Math.max(0, i - 1) : Math.min(bs.length - 1, i + 1)];
+      n.focus(); n.click();
+    });
   });
 
   /* Мобильное меню */

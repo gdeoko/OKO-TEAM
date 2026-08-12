@@ -95,6 +95,14 @@ Globe.prototype.resize = function () {
 };
 
 /* Дуги между узлами - «мосты» соединения. Строим по живым узлам, без «Скоро». */
+/* Экранный круг глобуса в координатах окна: по нему ракета
+   строит орбиту вокруг планеты. cx, cy и R уже в CSS-пикселях. */
+Globe.prototype.screenCircle = function () {
+  var b = this.cv.getBoundingClientRect();
+  if (!b.width || !b.height) return null;
+  return { cx: b.left + this.cx, cy: b.top + this.cy, r: this.R, rect: b };
+};
+
 Globe.prototype.seedArcs = function () {
   var live = [], i;
   for (i = 0; i < this.nodes.length; i++) if (!(this.nodes[i][4] & 4)) live.push(i);

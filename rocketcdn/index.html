@@ -86,11 +86,22 @@ try{var _t=localStorage.getItem("rc_theme");if(_t==="light"||_t==="dark")documen
     </nav>
 
     <div class="hdr-act">
-      <div class="lang" role="group" aria-label="Язык">
-        <button type="button" data-lang="ru" class="on">RU</button>
-        <button type="button" data-lang="en">EN</button>
+      <div class="pill lang" role="group" aria-label="Язык интерфейса">
+        <i class="pill-knob" aria-hidden="true"></i>
+        <button type="button" data-lang="ru" class="on" aria-pressed="true">RU</button>
+        <button type="button" data-lang="en" aria-pressed="false">EN</button>
       </div>
-      <button type="button" class="icon-btn js-theme" aria-label="Сменить тему"></button>
+      <div class="pill theme" role="group" aria-label="Оформление">
+        <i class="pill-knob" aria-hidden="true"></i>
+        <button type="button" class="js-theme" data-theme="light" aria-pressed="false" title="Светлое оформление">
+          <svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><circle cx="12" cy="12" r="4.2" stroke="currentColor" stroke-width="1.8"/><path d="M12 2.6v2.2M12 19.2v2.2M2.6 12h2.2M19.2 12h2.2M5.4 5.4l1.6 1.6M17 17l1.6 1.6M18.6 5.4L17 7M7 17l-1.6 1.6" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
+          <span class="vh" data-i18n="ui.light">Светлая тема</span>
+        </button>
+        <button type="button" class="js-theme" data-theme="dark" aria-pressed="true" title="Тёмное оформление">
+          <svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M20 14.2A8.2 8.2 0 0 1 9.8 4a8.4 8.4 0 1 0 10.2 10.2z" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/></svg>
+          <span class="vh" data-i18n="ui.dark">Тёмная тема</span>
+        </button>
+      </div>
       <a class="btn btn-p btn-sm js-reg" data-place="header" href="https://lk.rocketcdn.ru" target="_blank" rel="noopener">
         <span data-i18n="cta.register">Регистрация</span>
       </a>
@@ -112,10 +123,21 @@ try{var _t=localStorage.getItem("rc_theme");if(_t==="light"||_t==="dark")documen
     <span data-i18n="cta.register2">Зарегистрироваться</span>
   </a>
   <div class="drawer-tools">
-    <button type="button" class="icon-btn js-theme" aria-label="Сменить тему"></button>
-    <div class="lang" role="group" aria-label="Язык">
-      <button type="button" data-lang="ru" class="on">Русский</button>
-      <button type="button" data-lang="en">English</button>
+    <div class="pill lang wide" role="group" aria-label="Язык интерфейса">
+      <i class="pill-knob" aria-hidden="true"></i>
+      <button type="button" data-lang="ru" class="on" aria-pressed="true">Русский</button>
+      <button type="button" data-lang="en" aria-pressed="false">English</button>
+    </div>
+    <div class="pill theme wide" role="group" aria-label="Оформление">
+      <i class="pill-knob" aria-hidden="true"></i>
+      <button type="button" class="js-theme" data-theme="light" aria-pressed="false">
+        <svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><circle cx="12" cy="12" r="4.2" stroke="currentColor" stroke-width="1.8"/><path d="M12 2.6v2.2M12 19.2v2.2M2.6 12h2.2M19.2 12h2.2M5.4 5.4l1.6 1.6M17 17l1.6 1.6M18.6 5.4L17 7M7 17l-1.6 1.6" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
+        <span data-i18n="ui.light">Светлая</span>
+      </button>
+      <button type="button" class="js-theme" data-theme="dark" aria-pressed="true">
+        <svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M20 14.2A8.2 8.2 0 0 1 9.8 4a8.4 8.4 0 1 0 10.2 10.2z" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/></svg>
+        <span data-i18n="ui.dark">Тёмная</span>
+      </button>
     </div>
   </div>
 </nav>
