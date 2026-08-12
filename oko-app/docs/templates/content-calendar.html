@@ -1,0 +1,346 @@
+<!-- ═══════════════════════════════════════════════════════════════
+     OKO · КАЛЕНДАРЬ КОНТЕНТ-ПЛАНА — готовый компонент для Системы Роста
+
+     Вставляется в собираемую систему целиком: разметка, стили и логика
+     самодостаточны, зависимостей нет. Сборщику остаётся подставить данные
+     в CP_DATA и цвет бренда в --cp-accent.
+
+     ВАЖНО: это ФРАГМЕНТ, а не отдельная страница. В документе-хозяине
+     обязателен <meta charset="utf-8"> - иначе русский текст превратится в
+     кракозябры (проверено: без него «Сентябрь» читается как «Ð¡ÐµÐ½Ñ‚ÑÐ±Ñ€ÑŒ»).
+
+     ТРИ УРОВНЯ РАСКРЫТИЯ (как в ТЗ v3.0, часть 05):
+       1. Календарная сетка: 7 колонок по дням недели, в ячейке номер дня,
+          число единиц контента и точки по типам.
+       2. Клик по дню - панель дня со списком единиц: формат, тема,
+          бейдж типа (виральный / кодовое слово / лид-магнит).
+       3. Клик по теме - полный текст целиком плюс кнопка «Копировать»
+          и промпт визуала, если он есть.
+
+     ПРАВИЛА, КОТОРЫЕ ЗДЕСЬ СОБЛЮДЕНЫ:
+       · клетка календаря не растягивается до 44px - иначе неделя из семи
+         колонок ломается; поэтому клеткам проставлен data-oko-hit="1";
+       · движение только на transform/opacity, гаснет при reduced-motion;
+       · обе темы работают, цвета только через переменные;
+       · эмодзи нет, значки форматов - буквенные метки Ф1-Ф8;
+       · пусто - честный empty-state, а не выдуманные темы.
+     ═══════════════════════════════════════════════════════════════ -->
+
+<style>
+.cp{
+  --cp-accent:#9AFF00;                 /* ← подставить цвет бренда клиента */
+  --cp-bg:#0b0d09; --cp-surface:#12150f; --cp-line:rgba(255,255,255,.09);
+  --cp-text:#f2f5ee; --cp-dim:rgba(242,245,238,.55);
+  font-family:'Onest',Montserrat,system-ui,sans-serif;
+  color:var(--cp-text);
+}
+@media (prefers-color-scheme:light){
+  .cp:not([data-theme="dark"]){
+    --cp-bg:#fbfcf9; --cp-surface:#fff; --cp-line:rgba(0,0,0,.1);
+    --cp-text:#161a12; --cp-dim:rgba(22,26,18,.6);
+  }
+}
+
+/* ── шапка месяца ── */
+.cp-head{display:flex;align-items:center;gap:12px;margin-bottom:14px}
+.cp-title{font-size:20px;font-weight:800;letter-spacing:.01em;flex:1}
+.cp-nav{display:flex;gap:6px}
+.cp-nav button{
+  width:44px;height:44px;border-radius:12px;border:1px solid var(--cp-line);
+  background:var(--cp-surface);color:var(--cp-text);cursor:pointer;
+  display:flex;align-items:center;justify-content:center;
+  transition:border-color .18s,transform .12s;
+}
+.cp-nav button:hover{border-color:var(--cp-accent)}
+.cp-nav button:active{transform:scale(.94)}
+
+/* ── сетка ── */
+.cp-week{
+  display:grid;grid-template-columns:repeat(7,1fr);gap:4px;
+  margin-bottom:6px;
+}
+.cp-wd{
+  text-align:center;font-size:11px;font-weight:700;letter-spacing:.05em;
+  text-transform:uppercase;color:var(--cp-dim);padding:4px 0;
+}
+.cp-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:4px}
+
+.cp-day{
+  position:relative;aspect-ratio:1/1;min-width:0;
+  border-radius:10px;border:1px solid var(--cp-line);
+  background:var(--cp-surface);color:var(--cp-text);
+  display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;
+  cursor:pointer;font:inherit;padding:2px;
+  transition:border-color .18s,background .18s,transform .12s;
+}
+.cp-day:hover{border-color:color-mix(in srgb,var(--cp-accent) 55%,transparent)}
+.cp-day:active{transform:scale(.95)}
+.cp-day.empty{opacity:.32;cursor:default}
+.cp-day.today{border-color:var(--cp-accent);box-shadow:0 0 0 1px var(--cp-accent) inset}
+.cp-day.on{background:color-mix(in srgb,var(--cp-accent) 16%,var(--cp-surface));border-color:var(--cp-accent)}
+.cp-num{font-size:14px;font-weight:700;line-height:1}
+.cp-dots{display:flex;gap:2px;height:5px;align-items:center}
+.cp-dot{width:4px;height:4px;border-radius:50%;background:var(--cp-accent);opacity:.85}
+.cp-dot.sale{background:#ffd23f}
+.cp-dot.lead{background:#4fc3f7}
+.cp-cnt{font-size:9px;color:var(--cp-dim);line-height:1}
+
+/* ── панель дня ── */
+.cp-panel{
+  margin-top:12px;border-radius:14px;border:1px solid var(--cp-line);
+  background:var(--cp-surface);overflow:hidden;
+}
+.cp-panel[hidden]{display:none}
+.cp-panel-h{
+  display:flex;align-items:center;gap:10px;padding:14px 15px;
+  border-bottom:1px solid var(--cp-line);
+}
+.cp-panel-h b{font-size:15px;flex:1}
+.cp-panel-h span{font-size:12px;color:var(--cp-dim)}
+
+.cp-unit{
+  width:100%;display:flex;align-items:center;gap:11px;text-align:left;
+  padding:13px 15px;background:none;border:0;border-bottom:1px solid var(--cp-line);
+  color:var(--cp-text);cursor:pointer;font:inherit;min-height:44px;
+  transition:background .16s;
+}
+.cp-unit:last-of-type{border-bottom:0}
+.cp-unit:hover{background:color-mix(in srgb,var(--cp-accent) 7%,transparent)}
+.cp-fmt{
+  flex:0 0 auto;width:38px;height:38px;border-radius:11px;
+  display:flex;align-items:center;justify-content:center;
+  background:color-mix(in srgb,var(--cp-accent) 14%,transparent);
+  color:var(--cp-accent);font-weight:800;font-size:12px;letter-spacing:.02em;
+}
+.cp-unit-b{flex:1;min-width:0}
+.cp-unit-b b{display:block;font-size:14px;font-weight:600;line-height:1.35;margin-bottom:3px}
+.cp-tag{
+  display:inline-block;font-size:10px;font-weight:700;letter-spacing:.04em;
+  text-transform:uppercase;padding:2px 7px;border-radius:99px;
+  background:color-mix(in srgb,var(--cp-accent) 16%,transparent);color:var(--cp-accent);
+}
+.cp-tag.sale{background:rgba(255,210,63,.16);color:#ffd23f}
+.cp-tag.lead{background:rgba(79,195,247,.16);color:#4fc3f7}
+
+/* ── полный текст ── */
+.cp-full{padding:0 15px 15px;border-bottom:1px solid var(--cp-line)}
+.cp-full[hidden]{display:none}
+.cp-sec{margin-top:13px}
+.cp-sec-h{
+  font-size:11px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;
+  color:var(--cp-dim);margin-bottom:6px;
+}
+.cp-text{
+  background:var(--cp-bg);border:1px solid var(--cp-line);border-radius:10px;
+  padding:13px;font-size:13.5px;line-height:1.65;white-space:pre-wrap;
+  word-break:break-word;
+}
+.cp-acts{display:flex;flex-wrap:wrap;gap:8px;margin-top:11px}
+.cp-btn{
+  flex:1 1 auto;min-width:140px;min-height:44px;
+  border-radius:11px;border:1px solid var(--cp-line);
+  background:var(--cp-surface);color:var(--cp-text);
+  font:inherit;font-size:13.5px;font-weight:600;cursor:pointer;
+  display:flex;align-items:center;justify-content:center;gap:7px;
+  transition:border-color .18s,background .18s,transform .12s;
+}
+.cp-btn:hover{border-color:var(--cp-accent)}
+.cp-btn:active{transform:scale(.97)}
+.cp-btn.main{background:var(--cp-accent);color:#0a0d06;border-color:var(--cp-accent);font-weight:700}
+.cp-btn.ok{background:color-mix(in srgb,var(--cp-accent) 22%,transparent);border-color:var(--cp-accent)}
+
+.cp-empty{padding:26px 18px;text-align:center;color:var(--cp-dim);font-size:13px;line-height:1.6}
+
+/* появление панели */
+.cp-panel:not([hidden]){animation:cpIn .26s cubic-bezier(.22,1,.32,1)}
+@keyframes cpIn{from{opacity:0;transform:translateY(-6px)}to{opacity:1;transform:none}}
+@media (prefers-reduced-motion:reduce){
+  .cp-panel:not([hidden]){animation:none}
+  .cp-day,.cp-btn,.cp-nav button{transition:none}
+  .cp-day:active,.cp-btn:active,.cp-nav button:active{transform:none}
+}
+</style>
+
+<div class="cp" id="cp">
+  <div class="cp-head">
+    <div class="cp-title" id="cpTitle"></div>
+    <div class="cp-nav">
+      <button type="button" onclick="cpMove(-1)" aria-label="Предыдущий месяц">‹</button>
+      <button type="button" onclick="cpMove(1)" aria-label="Следующий месяц">›</button>
+    </div>
+  </div>
+  <div class="cp-week" id="cpWeek"></div>
+  <div class="cp-grid" id="cpGrid"></div>
+  <div class="cp-panel" id="cpPanel" hidden></div>
+</div>
+
+<script>
+/* ДАННЫЕ. Сборщик подставляет сюда реальный контент-план.
+   Ключ - дата ISO. Значение - список единиц контента дня.
+   Поля единицы: fmt (Ф1..Ф8 / КАР / TG / С1..С5), type (viral|sale|lead),
+   topic (тема одной строкой), hook, text (ПОЛНЫЙ текст), hashtags,
+   cta, prompt (промпт визуала), code (кодовое слово). */
+const CP_DATA = {
+  /* "2026-09-01": [
+       { fmt:"Ф1", type:"viral", topic:"Три ошибки на старте",
+         hook:"Первые 3 секунды...", text:"Полный текст ролика целиком...",
+         cta:"Подпишись", prompt:"English prompt for visual...", code:"" }
+     ] */
+};
+
+const CP_MONTHS = ['Январь','Февраль','Март','Апрель','Май','Июнь',
+                   'Июль','Август','Сентябрь','Октябрь','Ноябрь','Декабрь'];
+const CP_WD = ['Пн','Вт','Ср','Чт','Пт','Сб','Вс'];
+
+let cpCur = (function(){
+  const keys = Object.keys(CP_DATA).sort();
+  const d = keys.length ? new Date(keys[0]) : new Date();
+  return new Date(d.getFullYear(), d.getMonth(), 1);
+})();
+let cpOpenDay = null;
+
+function cpKey(y,m,d){
+  return y + '-' + String(m+1).padStart(2,'0') + '-' + String(d).padStart(2,'0');
+}
+function cpEsc(s){
+  return String(s==null?'':s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+}
+
+function cpRender(){
+  document.getElementById('cpTitle').textContent =
+    CP_MONTHS[cpCur.getMonth()] + ' ' + cpCur.getFullYear();
+  document.getElementById('cpWeek').innerHTML =
+    CP_WD.map(w => '<div class="cp-wd">' + w + '</div>').join('');
+
+  const y = cpCur.getFullYear(), m = cpCur.getMonth();
+  const first = new Date(y, m, 1);
+  /* неделя начинается с понедельника: воскресенье (0) уводим в конец */
+  const shift = (first.getDay() + 6) % 7;
+  const days = new Date(y, m + 1, 0).getDate();
+  const today = new Date(); const todayKey = cpKey(today.getFullYear(), today.getMonth(), today.getDate());
+
+  let h = '';
+  for (let i = 0; i < shift; i++) h += '<div class="cp-day empty" aria-hidden="true"></div>';
+  for (let d = 1; d <= days; d++){
+    const k = cpKey(y, m, d);
+    const list = CP_DATA[k] || [];
+    const dots = list.slice(0,4).map(u =>
+      '<i class="cp-dot ' + (u.type === 'sale' ? 'sale' : u.type === 'lead' ? 'lead' : '') + '"></i>').join('');
+    h += '<button type="button" class="cp-day'
+      + (k === todayKey ? ' today' : '') + (k === cpOpenDay ? ' on' : '')
+      + '" data-oko-hit="1" data-k="' + k + '" onclick="cpOpen(\'' + k + '\')"'
+      + ' aria-label="' + d + ' ' + CP_MONTHS[m] + ', единиц контента: ' + list.length + '">'
+      + '<span class="cp-num">' + d + '</span>'
+      + '<span class="cp-dots">' + dots + '</span>'
+      + (list.length ? '<span class="cp-cnt">' + list.length + '</span>' : '')
+      + '</button>';
+  }
+  document.getElementById('cpGrid').innerHTML = h;
+  cpPaintPanel();
+}
+
+function cpMove(step){
+  cpCur = new Date(cpCur.getFullYear(), cpCur.getMonth() + step, 1);
+  cpOpenDay = null;
+  cpRender();
+}
+
+function cpOpen(k){
+  cpOpenDay = (cpOpenDay === k) ? null : k;
+  cpRender();
+  if (cpOpenDay){
+    const p = document.getElementById('cpPanel');
+    if (p) p.scrollIntoView({ block:'nearest', behavior:'smooth' });
+  }
+}
+
+function cpPaintPanel(){
+  const p = document.getElementById('cpPanel');
+  if (!p) return;
+  if (!cpOpenDay){ p.hidden = true; p.innerHTML = ''; return; }
+  const list = CP_DATA[cpOpenDay] || [];
+  const d = new Date(cpOpenDay);
+  let h = '<div class="cp-panel-h"><b>' + d.getDate() + ' ' + CP_MONTHS[d.getMonth()] + '</b>'
+        + '<span>' + (list.length ? list.length + ' ед. контента' : 'пусто') + '</span></div>';
+
+  if (!list.length){
+    h += '<div class="cp-empty">На этот день контента пока нет.<br>'
+       + 'План заполняется по мере сборки - выдуманные темы сюда не ставятся.</div>';
+  } else {
+    list.forEach((u, i) => {
+      const tag = u.type === 'sale' ? 'кодовое слово' : u.type === 'lead' ? 'лид-магнит' : 'виральный';
+      h += '<button type="button" class="cp-unit" onclick="cpToggle(' + i + ')" aria-expanded="false">'
+        + '<span class="cp-fmt">' + cpEsc(u.fmt || 'Ф1') + '</span>'
+        + '<span class="cp-unit-b"><b>' + cpEsc(u.topic || 'Без темы') + '</b>'
+        + '<span class="cp-tag ' + (u.type === 'sale' ? 'sale' : u.type === 'lead' ? 'lead' : '') + '">' + tag + '</span></span>'
+        + '</button>'
+        + '<div class="cp-full" id="cpFull' + i + '" hidden>' + cpFullHtml(u, i) + '</div>';
+    });
+  }
+  p.innerHTML = h;
+  p.hidden = false;
+}
+
+function cpFullHtml(u, i){
+  let h = '';
+  if (u.hook){
+    h += '<div class="cp-sec"><div class="cp-sec-h">Хук</div>'
+       + '<div class="cp-text">' + cpEsc(u.hook) + '</div></div>';
+  }
+  h += '<div class="cp-sec"><div class="cp-sec-h">Полный текст</div>'
+     + '<div class="cp-text" id="cpText' + i + '">' + cpEsc(u.text || 'Текст этой единицы ещё не написан.') + '</div></div>';
+  if (u.cta) h += '<div class="cp-sec"><div class="cp-sec-h">Призыв</div><div class="cp-text">' + cpEsc(u.cta) + '</div></div>';
+  if (u.code) h += '<div class="cp-sec"><div class="cp-sec-h">Кодовое слово</div><div class="cp-text">' + cpEsc(u.code) + '</div></div>';
+  if (u.hashtags) h += '<div class="cp-sec"><div class="cp-sec-h">Хештеги</div><div class="cp-text">' + cpEsc(u.hashtags) + '</div></div>';
+  if (u.prompt){
+    h += '<div class="cp-sec"><div class="cp-sec-h">Промпт визуала</div>'
+       + '<div class="cp-text" id="cpPrompt' + i + '">' + cpEsc(u.prompt) + '</div></div>';
+  }
+  h += '<div class="cp-acts">'
+     + '<button type="button" class="cp-btn main" onclick="cpCopy(\'cpText' + i + '\',this)">Копировать текст</button>'
+     + (u.prompt ? '<button type="button" class="cp-btn" onclick="cpCopy(\'cpPrompt' + i + '\',this)">Копировать промпт</button>' : '')
+     + '</div>';
+  return h;
+}
+
+function cpToggle(i){
+  const el = document.getElementById('cpFull' + i);
+  if (!el) return;
+  const open = !el.hidden;
+  el.hidden = open;
+  const btn = el.previousElementSibling;
+  if (btn && btn.classList.contains('cp-unit')) btn.setAttribute('aria-expanded', String(!open));
+}
+
+/* Копирование с честной обратной связью: получилось - говорим, не получилось -
+   тоже говорим, а не притворяемся. */
+function cpCopy(id, btn){
+  const el = document.getElementById(id);
+  if (!el) return;
+  const text = el.textContent;
+  const done = () => {
+    const was = btn.textContent;
+    btn.textContent = 'Скопировано';
+    btn.classList.add('ok');
+    setTimeout(() => { btn.textContent = was; btn.classList.remove('ok'); }, 1600);
+  };
+  const fail = () => {
+    const was = btn.textContent;
+    btn.textContent = 'Не вышло - выдели вручную';
+    setTimeout(() => { btn.textContent = was; }, 2200);
+  };
+  if (navigator.clipboard && navigator.clipboard.writeText){
+    navigator.clipboard.writeText(text).then(done).catch(fail);
+  } else {
+    try {
+      const ta = document.createElement('textarea');
+      ta.value = text; ta.style.position = 'fixed'; ta.style.opacity = '0';
+      document.body.appendChild(ta); ta.select();
+      document.execCommand('copy') ? done() : fail();
+      document.body.removeChild(ta);
+    } catch (e) { fail(); }
+  }
+}
+
+cpRender();
+</script>

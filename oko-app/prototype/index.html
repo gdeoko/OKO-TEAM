@@ -1554,6 +1554,9 @@ button:focus-visible,a:focus-visible,input:focus-visible,textarea:focus-visible,
      полноэкранный просмотр собранной системы внутри приложения -->
 <link rel="stylesheet" href="media/app/oko-sysbuild.css" media="print" onload="this.media='all'">
 <noscript><link rel="stylesheet" href="media/app/oko-sysbuild.css"></noscript>
+<!-- oko-bridge-apps.css - статусы и результаты для Контент-завода и Проверки видео -->
+<link rel="stylesheet" href="media/app/oko-bridge-apps.css" media="print" onload="this.media='all'">
+<noscript><link rel="stylesheet" href="media/app/oko-bridge-apps.css"></noscript>
 <script defer src="media/app/app.min.js"></script>
 <script defer src="media/app/oko-v2.js"></script>
 <!-- Клипы: настоящий вертикальный видео-плеер вместо сторис-обёртки -->
@@ -1659,6 +1662,9 @@ button:focus-visible,a:focus-visible,input:focus-visible,textarea:focus-visible,
      звук, яркость по снятым кадрам — и сверяет с требованиями площадки.
      Никаких баллов виральности. Слой поверх ядра, ядро не переписывает. -->
 <script defer src="media/app/oko-factory2.js"></script>
+<!-- МОСТ ДЛЯ ЗАВОДА И ПРОВЕРКИ ВИДЕО: бриф уходит в производство, замеры
+     ролика - на смысловой разбор. Грузится ПОСЛЕ oko-factory2.js. -->
+<script defer src="media/app/oko-bridge-apps.js"></script>
 
 <!-- oko-system2.js — СИСТЕМА РОСТА и МОИ СОЦСЕТИ под запуск. Убирает из ядра
      экран «Анкета принята, команда OKO приступила · готовность 4–6 часов»
@@ -2964,7 +2970,7 @@ button:focus-visible,a:focus-visible,input:focus-visible,textarea:focus-visible,
   </div>
 </div>
 <div class="sheet" id="sheet-progress" style="max-height:78vh;overflow-y:auto">
-  <h3>Прогресс сборки OKO <span class="chip" data-build style="font-size:10px;vertical-align:3px">сборка v2.26</span></h3>
+  <h3>Прогресс сборки OKO <span class="chip" data-build style="font-size:10px;vertical-align:3px">сборка v2.27</span></h3>
   <p class="dim" style="font-size:12px;margin:-6px 0 10px">Запуск: 15 июля 2026. Обновляется с каждым этапом.</p>
   <div id="progressList"></div>
 </div>
