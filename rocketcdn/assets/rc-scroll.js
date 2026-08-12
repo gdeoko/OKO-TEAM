@@ -197,8 +197,10 @@ function sizeHS() {
   hsList.forEach(function (h) {
     var over = Math.max(0, h.track.scrollWidth - innerWidth);
     h.span = over;
-    /* Высота секции задаёт, сколько прокрутки уходит на проезд ленты */
-    h.sec.style.height = (innerHeight + over * 0.9) + "px";
+    /* Высота секции задаёт, сколько прокрутки уходит на проезд ленты.
+       Коэффициент меньше единицы: лента едет вбок быстрее, чем палец
+       вниз, и раздел не растягивает страницу. */
+    h.sec.style.height = Math.round(innerHeight * 0.86 + over * 0.62) + "px";
   });
 }
 function applyHS() {
@@ -242,22 +244,66 @@ function splitWords() {
   });
 }
 
-/* ── Наклон карточек под курсором ────────────────────────── */
+/* ── Объём карточек ──────────────────────────────────────────
+   Под курсором карточка поворачивается, а её внутренние слои
+   расходятся по глубине. Без мыши, на телефоне, тот же объём
+   даёт прокрутка: карточка доворачивается по своему положению
+   на экране, поэтому лента живёт и под пальцем. */
+var SEL3D = ".card, .dc";
+var d3list = [], d3io = null;
+
+function collect3D() {
+  if (REDUCE) return;
+  if (!d3io && g.IntersectionObserver) {
+    d3io = new IntersectionObserver(function (ents) {
+      ents.forEach(function (e) {
+        var i = d3list.indexOf(e.target);
+        if (e.isIntersecting) { if (i < 0) d3list.push(e.target); }
+        else if (i >= 0) { d3list.splice(i, 1); e.target.style.transform = ""; }
+      });
+    }, { rootMargin: "12% 0px" });
+  }
+  $$(SEL3D).forEach(function (el) {
+    if (el._d3) return;
+    el._d3 = 1;
+    el.classList.add("d3");
+    if (d3io) d3io.observe(el); else d3list.push(el);
+  });
+}
+
+function apply3D() {
+  if (REDUCE) return;
+  var vh = innerHeight, half = vh / 2;
+  for (var i = 0; i < d3list.length; i++) {
+    var el = d3list[i];
+    if (el._hov) continue;
+    var r = el.getBoundingClientRect();
+    var p = ((r.top + r.height / 2) - half) / vh;
+    if (p < -0.9) p = -0.9; else if (p > 0.9) p = 0.9;
+    el.style.transform = "perspective(1100px) rotateX(" + (-p * 4.6).toFixed(2) + "deg)";
+  }
+}
+
 function tilt() {
-  if (!FINE || REDUCE) return;
+  if (REDUCE) return;
+  collect3D();
+  if (!FINE) return;
   document.addEventListener("mousemove", function (e) {
-    var c = e.target.closest && e.target.closest(".card, .viz-card, .dc");
+    var c = e.target.closest && e.target.closest(SEL3D + ", .viz-card");
     if (!c) return;
     var r = c.getBoundingClientRect();
     var dx = (e.clientX - (r.left + r.width / 2)) / (r.width / 2);
     var dy = (e.clientY - (r.top + r.height / 2)) / (r.height / 2);
+    c._hov = 1;
     c.classList.add("tilt");
-    c.style.transform = "perspective(900px) rotateX(" + (-dy * 3).toFixed(2) + "deg) rotateY(" +
-      (dx * 3.4).toFixed(2) + "deg) translateY(-4px)";
+    c.style.setProperty("--gl", (120 + dx * 60).toFixed(0) + "deg");
+    c.style.transform = "perspective(1100px) rotateX(" + (-dy * 7).toFixed(2) + "deg) rotateY(" +
+      (dx * 8).toFixed(2) + "deg) translateY(-5px) scale(1.012)";
   }, { passive: true });
   document.addEventListener("mouseout", function (e) {
-    var c = e.target.closest && e.target.closest(".card, .viz-card, .dc");
+    var c = e.target.closest && e.target.closest(SEL3D + ", .viz-card");
     if (!c || (e.relatedTarget && c.contains(e.relatedTarget))) return;
+    c._hov = 0;
     c.classList.remove("tilt");
     c.style.transform = "";
   }, { passive: true });
@@ -293,6 +339,7 @@ function onScroll() {
     pushProgress();
     applyParallax();
     applyHS();
+    apply3D();
     updateRing(progress());
   });
 }
@@ -363,6 +410,12 @@ function boot() {
   magnetics();
   cursor();
   tilt();
+  /* Блоки перерисовываются при смене языка, новые карточки тоже
+     должны получить объём */
+  addEventListener("rc:lang", function () { setTimeout(collect3D, 60); });
+  document.addEventListener("rc:lang", function () { setTimeout(collect3D, 60); });
+  setTimeout(collect3D, 1200);
+  setTimeout(collect3D, 3000);
   buildRing();
   splitWords();
 

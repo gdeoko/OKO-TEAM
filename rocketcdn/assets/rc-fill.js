@@ -44,13 +44,16 @@ function fill(t, blocks) {
       "<p>" + esc(t("dc" + (i + 1) + "p")) + "</p></article>";
   }).join("");
 
-  /* Путь запроса */
+  /* Путь запроса: горизонтальный маршрут с отсечками времени */
   var how = $("#howGrid");
-  if (how) how.innerHTML = [1, 2, 3, 4].map(function (n) {
-    return '<article class="card case rv rv-d' + n + '">' +
+  var howMs = ["0", "3", "9", "18", "31", "40"];
+  if (how) how.innerHTML = [1, 2, 3, 4, 5, 6].map(function (n) {
+    return '<article class="card case step rv rv-d' + n + '">' +
       '<span class="num">' + n + "</span>" +
+      '<span class="step-ms"><b>' + howMs[n - 1] + "</b> " + esc(t("how.ms")) + "</span>" +
       "<h3>" + esc(t("how.s" + n + "h")) + "</h3>" +
-      "<p>" + esc(t("how.s" + n + "p")) + "</p></article>";
+      "<p>" + esc(t("how.s" + n + "p")) + "</p>" +
+      '<i class="step-line" aria-hidden="true"></i></article>';
   }).join("");
 
   /* Надёжность */

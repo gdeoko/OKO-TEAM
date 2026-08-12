@@ -111,6 +111,11 @@ var RU = {
   "how.s3p":       "Файл уже лежит на узле и уходит пользователю без обращения к origin.",
   "how.s4h":       "Промах кэша",
   "how.s4p":       "Если файла нет, узел забирает его с origin по оптимизированному каналу и кладёт в кэш.",
+  "how.ms":        "мс",
+  "how.s5h":       "Сжатие на лету",
+  "how.s5p":       "Текст ужимается gzip и brotli, картинки отдаются в лёгком формате. Трафик меньше, страница быстрее.",
+  "how.s6h":       "Запрос в статистике",
+  "how.s6p":       "Каждое обращение попадает в личный кабинет: трафик, коды ответов, география и попадания в кэш.",
 
   /* Сценарии */
   "case.tag":      "Сценарии",
@@ -338,6 +343,7 @@ var EN = {
   "how.s2h": "Anycast routing", "how.s2p": "The network picks the nearest healthy node by latency and load.",
   "how.s3h": "Served from cache", "how.s3p": "The file is already on the node and goes straight to the user.",
   "how.s4h": "Cache miss", "how.s4p": "If the file is missing, the node pulls it from origin over an optimized channel and caches it.",
+  "how.ms": "ms", "how.s5h": "Compression on the fly", "how.s5p": "Text is squeezed with gzip and brotli, images go out in a light format. Less traffic, faster page.", "how.s6h": "Request in the stats", "how.s6p": "Every hit lands in your dashboard: traffic, response codes, geography and cache hits.",
 
   "case.tag": "Use cases", "case.h": "What people run on Rocket CDN",
   "case.p": "From a one-off broadcast to constant delivery of terabytes.",

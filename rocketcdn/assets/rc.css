@@ -171,11 +171,12 @@ section { position: relative; padding: var(--sec) 0; }
   position: relative; background: var(--surface); border: 1px solid var(--line);
   border-radius: var(--r-lg); padding: clamp(20px, 2.6vw, 30px);
   transition: transform var(--fast), border-color var(--fast), background var(--fast), box-shadow var(--fast);
-  overflow: hidden; height: 100%;
+  height: 100%;
 }
 .card::before {
   content: ''; position: absolute; inset: 0; opacity: 0; pointer-events: none;
   background: radial-gradient(420px circle at var(--mx, 50%) var(--my, 0%), rgba(66,178,220,.12), transparent 62%);
+  border-radius: inherit;
   transition: opacity .3s var(--ease);
 }
 .card:hover { transform: translateY(-4px); border-color: var(--line-2); box-shadow: var(--shadow); }
@@ -439,7 +440,7 @@ section { position: relative; padding: var(--sec) 0; }
 }
 
 /* ── Сценарии ─────────────────────────────────────────────── */
-.case { position: relative; overflow: hidden; }
+.case { position: relative; }
 .case .num {
   position: absolute; right: 16px; top: 6px; font-size: 74px; font-weight: 800;
   letter-spacing: -.06em; color: var(--tx); opacity: .05; line-height: 1;
@@ -894,9 +895,11 @@ body::after {
 
 /* Горизонтальная лента, которую двигает вертикальный скролл */
 .hs { padding: 0; }
-.hs-stage { position: sticky; top: 0; height: 100svh; display: flex; flex-direction: column; justify-content: center; gap: clamp(18px, 3vw, 34px); overflow: hidden; }
+/* z-index на липкой сцене: без него вся лента лежит под ракетой */
+.hs-stage { z-index: 2; position: sticky; top: 0; height: 100svh; display: flex; flex-direction: column; justify-content: center; gap: clamp(18px, 3vw, 34px); overflow: hidden; }
 .hs-head { flex: none; margin-bottom: 0; }
-.hs-view { width: 100%; overflow: hidden; }
+/* Свой слой: иначе ракета проходит поверх карточек, а не за ними */
+.hs-view { position: relative; z-index: 2; width: 100%; overflow: hidden; }
 .hs-track {
   display: flex; gap: var(--gap); padding: 4px var(--pad);
   width: max-content; will-change: transform;
@@ -984,4 +987,69 @@ body::after {
 @media (max-width: 900px) {
   .what-top { grid-template-columns: 1fr; }
   .rack { height: clamp(300px, 74vw, 380px); min-height: 0; order: -1; }
+}
+
+/* ── Шаг маршрута в горизонтальной ленте ──────────────────── */
+.card.step { display: flex; flex-direction: column; }
+.step-ms {
+  display: inline-flex; align-items: baseline; gap: 5px; align-self: flex-start;
+  margin-bottom: 12px; padding: 4px 11px; border-radius: var(--r-full);
+  background: var(--grad-soft); border: 1px solid var(--line);
+  font-size: 11px; letter-spacing: .08em; text-transform: uppercase; color: var(--cyan);
+}
+.step-ms b { font-size: 15px; font-weight: 700; letter-spacing: -.01em; }
+/* Нить, связывающая шаги в один маршрут */
+.step-line {
+  position: absolute; left: 100%; top: 50%; width: var(--gap); height: 1px;
+  background: linear-gradient(90deg, var(--cyan), transparent);
+  opacity: .55;
+}
+.hs-track > *:last-child .step-line { display: none; }
+
+/* ── Плотная сетка: тот же контент, меньше воздуха ────────── */
+.grid.tight { gap: 14px; }
+.grid.tight .card { padding: clamp(16px, 1.9vw, 22px); border-radius: var(--r-md); }
+.grid.tight .card-ico { width: 38px; height: 38px; border-radius: 11px; margin-bottom: 12px; }
+.grid.tight .card-ico svg { width: 19px; height: 19px; }
+.grid.tight .card h3 { font-size: 16px; margin-bottom: 6px; }
+.grid.tight .card p { font-size: 13.5px; }
+.grid.tight .prod-card ul { margin-top: 10px; gap: 5px; }
+.grid.tight .prod-card li { font-size: 12.5px; padding-left: 17px; }
+@media (max-width: 1080px) { .grid.tight { grid-template-columns: repeat(2, 1fr) } }
+@media (max-width: 560px)  { .grid.tight { grid-template-columns: 1fr } }
+
+/* Заголовок про ЦОД встаёт рядом с карточками, а не над ними */
+@media (min-width: 1024px) {
+  .dc-head { display: grid; grid-template-columns: minmax(0,.44fr) minmax(0,.56fr); gap: var(--gap); align-items: end; margin-bottom: clamp(16px,2vw,24px) !important; }
+  .dc-head .sec-h { margin-bottom: 0; max-width: none; }
+  .dc-head .sec-p { max-width: none; }
+}
+
+/* ═══════════════════════════════════════════════════════════
+   Настоящий объём карточек
+
+   Карточка это не картинка с тенью: у неё есть толщина.
+   Внутренние слои вынесены вперёд по оси Z, поэтому при
+   наклоне они расходятся с фоном по-настоящему, а не
+   имитируют глубину градиентом.
+   ═══════════════════════════════════════════════════════════ */
+.d3 { transform-style: preserve-3d; will-change: transform; }
+.d3 > * { transform: translateZ(12px); }
+.d3 .card-ico { transform: translateZ(42px); }
+.d3 h3, .d3 h4 { transform: translateZ(26px); }
+.d3 p, .d3 ul { transform: translateZ(16px); }
+.d3 .num { transform: translateZ(2px); }
+.d3 .step-ms { transform: translateZ(34px); }
+/* Блик едет против наклона: так читается стеклянная поверхность */
+.d3::after {
+  content: ''; position: absolute; inset: 0; border-radius: inherit;
+  background: linear-gradient(var(--gl, 120deg), rgba(255,255,255,.10), transparent 46%);
+  opacity: 0; transition: opacity .3s var(--ease);
+  pointer-events: none; transform: translateZ(1px);
+}
+.d3.tilt::after { opacity: 1; }
+[data-theme="light"] .d3::after { background: linear-gradient(var(--gl, 120deg), rgba(255,255,255,.75), transparent 46%); }
+
+@media (prefers-reduced-motion: reduce) {
+  .d3, .d3 > * { transform: none !important; }
 }

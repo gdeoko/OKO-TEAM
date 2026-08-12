@@ -307,7 +307,7 @@ try{var _t=localStorage.getItem("rc_theme");if(_t==="light"||_t==="dark")documen
       <h2 class="sec-h" data-i18n="prod.h">Инфраструктура под любую задачу</h2>
       <p class="sec-p" data-i18n="prod.p">Всё, что нужно для доставки контента и работы медиа-сервисов, в одном личном кабинете.</p>
     </div>
-    <div class="grid g-3" id="gridProducts"></div>
+    <div class="grid g-4 tight" id="gridProducts"></div>
   </div>
 </section>
 
@@ -358,13 +358,13 @@ try{var _t=localStorage.getItem("rc_theme");if(_t==="light"||_t==="dark")documen
       </div>
     </div>
 
-    <div class="sec-head rv" style="margin:clamp(44px,6vw,74px) 0 0">
-      <h3 class="sec-h" style="font-size:clamp(22px,3vw,34px)" data-i18n="infra.dch">Три собственных дата-центра</h3>
+    <div class="sec-head rv dc-head" style="margin:clamp(30px,4vw,52px) 0 0">
+      <h3 class="sec-h" style="font-size:clamp(21px,2.6vw,30px)" data-i18n="infra.dch">Три собственных дата-центра</h3>
       <p class="sec-p" data-i18n="infra.dcp">Своё оборудование, свои каналы и полный контроль над маршрутами.</p>
     </div>
     <div class="dc-grid" id="dcGrid"></div>
 
-    <div class="mq rv" data-viz="marquee" style="margin-top:clamp(30px,4vw,48px)"></div>
+    <div class="mq rv" data-viz="marquee" style="margin-top:clamp(22px,3vw,34px)"></div>
 
     <div class="viz-grid rv rv-d1" style="margin-top:var(--gap)">
       <article class="viz-card viz-wide">
@@ -388,16 +388,25 @@ try{var _t=localStorage.getItem("rc_theme");if(_t==="light"||_t==="dark")documen
 </section>
 
 <!-- ═══ Как работает ═══ -->
-<section id="how">
-  <div class="wrap">
-    <div class="sec-head rv" data-par="0.03">
+<section id="how" class="hs">
+  <div class="hs-stage">
+    <div class="wrap hs-head sec-head rv" data-par="0.02">
       <div class="sec-tag" data-i18n="how.tag">Как это работает</div>
       <h2 class="sec-h" data-i18n="how.h">Путь запроса за 40 миллисекунд</h2>
       <p class="sec-p" data-i18n="how.p">Маршрут строится автоматически.</p>
     </div>
-    <div class="grid g-4" id="howGrid"></div>
+    <div class="hs-view">
+      <div class="hs-track" id="howGrid"></div>
+    </div>
+    <div class="wrap hs-bar"><i></i></div>
+  </div>
+</section>
 
-    <div class="viz-card rv rv-d1" style="margin-top:var(--gap)">
+<div class="sep-line"><i></i></div>
+
+<section id="route">
+  <div class="wrap">
+    <div class="viz-card rv">
       <h3 data-i18n="topo.h">Маршрут от origin до пользователя</h3>
       <div data-viz="topology" data-origin="Ваш origin" data-dc1="Москва" data-dc2="Алматы" data-dc3="Прага"></div>
       <p data-i18n="topo.p">Слева ваш сервер, в центре собственные дата-центры, справа edge-узлы рядом с аудиторией.</p>
