@@ -45,6 +45,69 @@
 
   /* ------------------------------------------------------------ разметка */
 
+  /* Живая графика в шапке карточки. У каждого тарифа своя: шестерни,
+     столбики, сеть, орбита. Всё - лёгкий SVG с CSS-анимацией, никаких
+     картинок и библиотек. Движение гаснет при prefers-reduced-motion. */
+  function art(id) {
+    var A = {
+      FREE:
+        '<svg class="tp-art" viewBox="0 0 240 90" aria-hidden="true">'
+        + '<circle class="a-pulse" cx="52" cy="45" r="16"/>'
+        + '<circle class="a-pulse d1" cx="52" cy="45" r="26"/>'
+        + '<circle class="a-pulse d2" cx="52" cy="45" r="36"/>'
+        + '<circle class="a-dot f1" cx="140" cy="30" r="3"/>'
+        + '<circle class="a-dot f2" cx="180" cy="58" r="3"/>'
+        + '<circle class="a-dot f3" cx="210" cy="26" r="3"/></svg>',
+      START:
+        '<svg class="tp-art" viewBox="0 0 240 90" aria-hidden="true">'
+        + '<rect class="a-bar b1" x="30"  y="30" width="18" height="46" rx="4"/>'
+        + '<rect class="a-bar b2" x="58"  y="30" width="18" height="46" rx="4"/>'
+        + '<rect class="a-bar b3" x="86"  y="30" width="18" height="46" rx="4"/>'
+        + '<rect class="a-bar b4" x="114" y="30" width="18" height="46" rx="4"/>'
+        + '<path class="a-line" d="M30 58 L67 44 L95 50 L123 28 L160 34"/>'
+        + '<circle class="a-run" r="3.5"><animateMotion dur="4s" repeatCount="indefinite"'
+        + ' path="M30 58 L67 44 L95 50 L123 28 L160 34"/></circle></svg>',
+      PRO:
+        '<svg class="tp-art" viewBox="0 0 240 90" aria-hidden="true">'
+        + '<g class="a-gear g1" style="transform-origin:70px 42px">' + gear(70, 42, 26) + '</g>'
+        + '<g class="a-gear g2" style="transform-origin:126px 62px">' + gear(126, 62, 17) + '</g>'
+        + '<g class="a-gear g3" style="transform-origin:170px 30px">' + gear(170, 30, 13) + '</g></svg>',
+      BUSINESS:
+        '<svg class="tp-art" viewBox="0 0 240 90" aria-hidden="true">'
+        + '<path class="a-net" d="M60 46 L108 24 M60 46 L104 68 M108 24 L156 40 M104 68 L156 40 M156 40 L200 26 M156 40 L198 62"/>'
+        + '<circle class="a-node n1" cx="60"  cy="46" r="7"/>'
+        + '<circle class="a-node n2" cx="108" cy="24" r="5"/>'
+        + '<circle class="a-node n3" cx="104" cy="68" r="5"/>'
+        + '<circle class="a-node n4" cx="156" cy="40" r="6"/>'
+        + '<circle class="a-node n5" cx="200" cy="26" r="4"/>'
+        + '<circle class="a-node n6" cx="198" cy="62" r="4"/></svg>',
+      MAX:
+        '<svg class="tp-art" viewBox="0 0 240 90" aria-hidden="true">'
+        + '<ellipse class="a-orb o1" cx="120" cy="45" rx="74" ry="26"/>'
+        + '<ellipse class="a-orb o2" cx="120" cy="45" rx="52" ry="40"/>'
+        + '<circle class="a-core" cx="120" cy="45" r="13"/>'
+        + '<circle class="a-sat s1" r="4"><animateMotion dur="7s" repeatCount="indefinite"'
+        + ' path="M46 45 a74 26 0 1 0 148 0 a74 26 0 1 0 -148 0"/></circle>'
+        + '<circle class="a-sat s2" r="3"><animateMotion dur="5s" repeatCount="indefinite"'
+        + ' path="M68 45 a52 40 0 1 1 104 0 a52 40 0 1 1 -104 0"/></circle></svg>'
+    };
+    return A[id] || A.FREE;
+  }
+
+  /* Шестерня: зубцы считаем, а не рисуем руками - так они ровные. */
+  function gear(cx, cy, r) {
+    var teeth = 9, out = '', i, a, x1, y1;
+    for (i = 0; i < teeth; i++) {
+      a = (Math.PI * 2 / teeth) * i;
+      x1 = cx + Math.cos(a) * (r + 5);
+      y1 = cy + Math.sin(a) * (r + 5);
+      out += '<rect x="' + (x1 - 3.5).toFixed(1) + '" y="' + (y1 - 3.5).toFixed(1) + '" width="7" height="7" rx="1.6"'
+        + ' transform="rotate(' + (a * 180 / Math.PI).toFixed(1) + ' ' + x1.toFixed(1) + ' ' + y1.toFixed(1) + ')"/>';
+    }
+    return out + '<circle cx="' + cx + '" cy="' + cy + '" r="' + r + '"/>'
+      + '<circle class="a-hole" cx="' + cx + '" cy="' + cy + '" r="' + (r * 0.4).toFixed(1) + '"/>';
+  }
+
   function html() {
     var T = tiers(), P = periods(), cur = curTier();
     if (!T.length) {
@@ -56,67 +119,92 @@
     st.per = per.m;
 
     var h = '';
+    h += '<p class="tp-hint">Свайпни, чтобы выбрать</p>';
 
-    /* переключатель срока: скидка видна сразу, без мелкого шрифта */
+    /* срок оплаты */
     h += '<div class="tp-per" role="tablist" aria-label="Срок оплаты">';
     P.forEach(function (p) {
       h += '<button class="tp-per-b' + (p.m === st.per ? ' on' : '') + '" type="button" role="tab"'
         + ' aria-selected="' + (p.m === st.per ? 'true' : 'false') + '"'
         + ' onclick="okoTarPop.срок(' + p.m + ')">'
-        + '<b>' + E(p.lab) + '</b>'
-        + (p.disc ? '<i>−' + p.disc + '%</i>' : '<i>—</i>')
-        + '</button>';
+        + '<b>' + E(p.lab) + '</b>' + (p.disc ? '<i>−' + p.disc + '%</i>' : '') + '</button>';
     });
     h += '</div>';
 
-    /* карточки тарифов */
-    h += '<div class="tp-list">';
+    /* карусель карточек */
+    h += '<div class="tp-rail" id="tpRail">';
     T.forEach(function (t, i) {
       var active = t.id === st.plan;
       var mine = t.id === cur;
       var full = t.price * per.m;
       var total = Math.round(full * (1 - (per.disc || 0) / 100));
-      h += '<article class="tp-card' + (active ? ' on' : '') + (mine ? ' mine' : '') + '"'
-        + ' style="--i:' + i + '" tabindex="0" role="button" aria-pressed="' + active + '"'
+      var perDay = t.price ? Math.round(total / (per.m * 30)) : 0;
+
+      h += '<article class="tp-card' + (active ? ' on' : '') + '" data-plan="' + t.id + '" style="--i:' + i + '"'
+        + ' tabindex="0" role="button" aria-pressed="' + active + '"'
         + ' onclick="okoTarPop.выбрать(\'' + t.id + '\')"'
         + ' onkeydown="if(event.key===\'Enter\'||event.key===\' \'){event.preventDefault();okoTarPop.выбрать(\'' + t.id + '\')}">';
-      h += '<div class="tp-card-h">'
-        + '<div class="tp-name">' + E(t.name || t.id) + (mine ? '<span class="tp-mine">' + ico('check') + ' твой</span>' : '') + '</div>'
+
+      /* шапка с живой графикой */
+      h += '<div class="tp-head">' + art(t.id)
+        + '<div class="tp-flags">'
+        + (mine ? '<span class="tp-flag now">сейчас</span>' : '')
+        + (t.id === 'PRO' ? '<span class="tp-flag hit">хит</span>' : '')
+        + (t.id === 'MAX' ? '<span class="tp-flag hit">максимум</span>' : '')
+        + '</div>'
+        + '<div class="tp-head-b"><b>' + E(t.name || t.id) + '</b>'
+        + '<span>' + E(t.line || '') + '</span></div></div>';
+
+      /* тело */
+      h += '<div class="tp-body-c">';
+      h += '<div class="tp-price-row">'
         + '<div class="tp-price">' + (t.price ? money(t.price) + '<small>/мес</small>' : 'Бесплатно') + '</div>'
+        + (perDay ? '<div class="tp-day">' + perDay + ' ₽/день</div>' : '')
         + '</div>';
-      if (t.line) h += '<div class="tp-line">' + E(t.line) + '</div>';
-      if (Array.isArray(t.feats) && t.feats.length) {
-        h += '<ul class="tp-feats">' + t.feats.map(function (f) {
-          return '<li>' + ico('check') + '<span>' + E(f) + '</span></li>';
+      if (Array.isArray(t.feats)) {
+        h += '<ul class="tp-feats">' + t.feats.map(function (f, k) {
+          return '<li style="--k:' + k + '">' + ico('check2') + '<span>' + E(f) + '</span></li>';
         }).join('') + '</ul>';
       }
       if (t.price && per.m > 1) {
-        h += '<div class="tp-total">За ' + per.m + ' мес: <b>' + money(total) + '</b>'
-          + (per.disc ? ' <s>' + money(full) + '</s>' : '') + '</div>';
+        h += '<div class="tp-total">За ' + per.m + ' мес <b>' + money(total) + '</b>'
+          + (per.disc ? '<s>' + money(full) + '</s>' : '') + '</div>';
       }
-      h += '</article>';
+      h += mine
+        ? '<div class="tp-cta mine">' + ico('check2') + ' Твой тариф</div>'
+        : '<button class="tp-cta go" type="button" onclick="event.stopPropagation();okoTarPop.оплатить(\'' + t.id + '\')">'
+          + (t.price ? ico('bolt') + ' Подключить' : 'Уже доступен') + '</button>';
+      h += '</div></article>';
     });
     h += '</div>';
 
-    /* действие */
-    var sel = T.filter(function (t) { return t.id === st.plan; })[0];
-    if (sel) {
-      var full2 = sel.price * per.m;
-      var total2 = Math.round(full2 * (1 - (per.disc || 0) / 100));
-      h += '<div class="tp-foot">';
-      if (!sel.price) {
-        h += '<p class="tp-note">FREE уже доступен - платить не нужно.</p>';
-      } else if (sel.id === cur) {
-        h += '<p class="tp-note">' + E(sel.name) + ' у тебя активен. Управлять подпиской - в Кошельке.</p>'
-          + '<button class="btn ghost okv-press" type="button" onclick="okoTarPop.вКошелёк()">' + ico('card') + ' Управлять подпиской</button>';
-      } else {
-        h += '<button class="btn okv-press okv-shine" type="button" onclick="okoTarPop.оплатить()">'
-          + ico('bolt') + ' Оплатить ' + money(total2) + ' за ' + per.m + ' мес</button>'
-          + '<p class="tp-note">Оплата проходит на защищённой странице шлюза. Тариф включится, '
-          + 'когда шлюз подтвердит платёж - приложение само себе тариф не выдаёт.</p>';
-      }
-      h += '</div>';
-    }
+    /* точки-пагинация */
+    h += '<div class="tp-dots" id="tpDots">' + T.map(function (t) {
+      return '<i class="tp-dot' + (t.id === st.plan ? ' on' : '') + '" data-plan="' + t.id + '"></i>';
+    }).join('') + '</div>';
+
+    /* сравнение */
+    h += '<button class="tp-cmp okv-press" type="button" onclick="okoTarPop.сравнить()">'
+      + ico('target') + ' Сравнить все тарифы' + ico('chev') + '</button>';
+
+    return h;
+  }
+
+  /* Таблица сравнения: все возможности всех тарифов рядом. */
+  function cmpHtml() {
+    var T = tiers();
+    var all = [];
+    T.forEach(function (t) { (t.feats || []).forEach(function (f) { if (all.indexOf(f) < 0) all.push(f); }); });
+    var h = '<div class="tp-cmp-wrap"><table class="tp-tab"><thead><tr><th></th>'
+      + T.map(function (t) { return '<th>' + E(t.name || t.id) + '</th>'; }).join('') + '</tr></thead><tbody>';
+    all.forEach(function (f) {
+      h += '<tr><td>' + E(f) + '</td>' + T.map(function (t) {
+        var yes = (t.feats || []).indexOf(f) >= 0;
+        return '<td>' + (yes ? '<i class="tp-yes">' + ico('check2') + '</i>' : '<i class="tp-no">—</i>') + '</td>';
+      }).join('') + '</tr>';
+    });
+    h += '</tbody></table></div>'
+      + '<button class="btn ghost okv-press" type="button" onclick="okoTarPop.назад()">Назад к тарифам</button>';
     return h;
   }
 
@@ -145,15 +233,61 @@
 
   function paint() {
     var b = document.getElementById('tpBody');
-    if (b) b.innerHTML = html();
+    if (!b) return;
+    b.innerHTML = вид === 'cmp' ? cmpHtml() : html();
     var s = document.getElementById('tpSub');
     if (s) s.textContent = 'Активен ' + curTier();
+    if (вид === 'cmp') return;
+    подвестиКарусель();
+    /* активный срок подъезжает в кадр: «Год −20%» стоит последним и на
+       узком экране уезжал за правый край - человек не видел лучшую цену */
+    var pb = b.querySelector('.tp-per-b.on');
+    if (pb && pb.parentNode && pb.parentNode.scrollWidth > pb.parentNode.clientWidth) {
+      pb.parentNode.scrollTo({ left: Math.max(0, pb.offsetLeft - 16), behavior: 'auto' });
+    }
   }
+
+  /* Карусель: активная карточка приезжает в центр, точки следят за пальцем.
+     Слушатель прокрутки дебаунсится через rAF - на слабом телефоне иначе
+     дёргается (тот же урок, что и с наблюдателями). */
+  var вид = 'list';
+  function подвестиКарусель() {
+    var rail = document.getElementById('tpRail');
+    if (!rail) return;
+    var act = rail.querySelector('.tp-card.on');
+    if (act) {
+      var к = act.offsetLeft - (rail.clientWidth - act.offsetWidth) / 2;
+      rail.scrollTo({ left: к, behavior: перваяОтрисовка ? 'auto' : 'smooth' });
+    }
+    перваяОтрисовка = false;
+    if (rail.dataset.wired) return;
+    rail.dataset.wired = '1';
+    var кадр = null;
+    rail.addEventListener('scroll', function () {
+      if (кадр) return;
+      кадр = requestAnimationFrame(function () {
+        кадр = null;
+        var c = rail.clientWidth / 2 + rail.scrollLeft, лучший = null, дист = 1e9;
+        Array.prototype.forEach.call(rail.children, function (el) {
+          var d = Math.abs(el.offsetLeft + el.offsetWidth / 2 - c);
+          if (d < дист) { дист = d; лучший = el; }
+        });
+        if (!лучший) return;
+        var id = лучший.getAttribute('data-plan');
+        var dots = document.getElementById('tpDots');
+        if (dots) Array.prototype.forEach.call(dots.children, function (d) {
+          d.classList.toggle('on', d.getAttribute('data-plan') === id);
+        });
+      });
+    }, { passive: true });
+  }
+  var перваяОтрисовка = true;
 
   var прошлыйФокус = null;
 
   function open() {
     var el = build();
+    вид = 'list'; перваяОтрисовка = true;
     прошлыйФокус = document.activeElement;
     paint();
     el.classList.add('on');
@@ -181,7 +315,25 @@
 
   /* --------------------------------------------------------- действия */
 
-  function выбрать(id) { st.plan = id; paint(); }
+  function выбрать(id) {
+    st.plan = id;
+    var rail = document.getElementById('tpRail');
+    if (!rail) { paint(); return; }
+    /* перерисовка целиком сбрасывала бы прокрутку под пальцем - меняем
+       только состояние и подводим карточку к центру */
+    Array.prototype.forEach.call(rail.children, function (el) {
+      var on = el.getAttribute('data-plan') === id;
+      el.classList.toggle('on', on);
+      el.setAttribute('aria-pressed', String(on));
+    });
+    var dots = document.getElementById('tpDots');
+    if (dots) Array.prototype.forEach.call(dots.children, function (d) {
+      d.classList.toggle('on', d.getAttribute('data-plan') === id);
+    });
+    подвестиКарусель();
+  }
+  function сравнить() { вид = 'cmp'; paint(); }
+  function назад() { вид = 'list'; перваяОтрисовка = true; paint(); }
   function срок(m) { st.per = m; paint(); }
 
   function вКошелёк() {
@@ -194,8 +346,8 @@
 
   /* Оплата идёт по УЖЕ существующему пути приложения: своего платёжного
      контура здесь не появляется. Нет пути - честно говорим, а не молчим. */
-  function оплатить() {
-    var id = st.plan;
+  function оплатить(id) {
+    id = id || st.plan;
     close();
     setTimeout(function () {
       try {
@@ -241,6 +393,6 @@
 
   window.okoTarPop = {
     открыть: open, закрыть: close, выбрать: выбрать, срок: срок,
-    оплатить: оплатить, вКошелёк: вКошелёк
+    оплатить: оплатить, вКошелёк: вКошелёк, сравнить: сравнить, назад: назад
   };
 })();
