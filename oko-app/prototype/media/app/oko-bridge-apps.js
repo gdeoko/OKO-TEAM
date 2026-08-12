@@ -57,7 +57,7 @@
       return h;
     }
     if (rec.status === 'failed') {
-      return '<div class="ba-st bad"><span class="ba-st-ic">' + ico('alert') + '</span>'
+      return '<div class="ba-st bad"><span class="ba-st-ic">' + ico('warning') + '</span>'
         + '<div><b>Не получилось</b><small>' + E(rec.error || 'Причина не указана. Попробуй ещё раз или напиши в поддержку.') + '</small></div></div>';
     }
     return '<div class="ba-st"><span class="ba-st-ic okv-halo">' + ico('clock') + '</span>'
@@ -237,7 +237,7 @@
     var h = '';
     if (!rec) {
       h += '<div class="ba-offer">'
-        + '<div class="ba-offer-h">' + ico('spark') + '<b>Глубокий разбор</b></div>'
+        + '<div class="ba-offer-h">' + ico('bolt') + '<b>Глубокий разбор</b></div>'
         + '<p>Замеры выше сняты прямо в браузере. Смысловой разбор - хук первых секунд, темп, '
         + 'где зритель уходит, что переснять - делает специалист OKO по этим замерам. '
         + 'Сам файл никуда не уходит.</p>'
