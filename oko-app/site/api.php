@@ -1038,11 +1038,15 @@ case 'oko_task': {
 case 'oko_task_status': {
     $uid=preg_replace('/[^a-f0-9]/','',(string)($_GET['uid']??$body['uid']??''));
     if($uid==='') fail('no uid');
-    $t=db_one("SELECT uid,kind,title,status,result,error,created_at,updated_at FROM app_tasks WHERE uid=?",[$uid]);
+    $t=db_one("SELECT uid,kind,title,status,result,error,user_ref,created_at,updated_at FROM app_tasks WHERE uid=?",[$uid]);
     if(!$t) fail('not found',404);
     $res=$t['result']; $dec=json_decode((string)$res,true); if(json_last_error()===JSON_ERROR_NONE) $res=$dec;
+    /* user_ref нужен сборщику: по нему собранная система привязывается к
+       человеку и попадает в его список. Без этого система сохранялась
+       «ничьей» и в приложении не показывалась. */
     out(['ok'=>true,'uid'=>$t['uid'],'kind'=>$t['kind'],'title'=>$t['title'],'status'=>$t['status'],
-        'result'=>$res,'error'=>$t['error'],'created_at'=>$t['created_at'],'updated_at'=>$t['updated_at']]);
+        'result'=>$res,'error'=>$t['error'],'user_ref'=>$t['user_ref'],
+        'created_at'=>$t['created_at'],'updated_at'=>$t['updated_at']]);
 }
 
 // Список задач пользователя (для экрана «Очередь» в приложении).
