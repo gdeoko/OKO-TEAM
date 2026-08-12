@@ -544,6 +544,7 @@ function mail_pool_names(string $pool): array {
         'cold'     => ['unisender-cold'],                  // первое письмо в школу/сад/ДК
         'awards'   => ['nagradi', 'main'],                 // наградной, резерв — официальная почта
         'official' => ['kc'],                              // обращения в ведомства: только российский домен
+        'news'     => ['unisender-kc'],                    // разовые новости и уведомления сайта
         default    => ['kc', 'main', 'nagradi'],           // личные письма: сперва свой домен, Gmail — резерв
     };
 }
@@ -567,10 +568,26 @@ function mail_account_by_name(string $name): array {
     // Канал у них общий — другого для массовых нет: Яндекс забанил наши ящики
     // после первой же большой рассылки. Разделён именно ОБРАТНЫЙ АДРЕС, и
     // разделены суточные нормы: поле user у них разное, а по нему считается темп.
-    if ($name === 'unisender' || $name === 'unisender-cold') {
+    //   unisender-kc   — разовые новости и уведомления сайта от официального ящика.
+    //                    Когда адресатов больше двух сотен, рассылать с личного SMTP
+    //                    нельзя: это уже рассылка, ей положены сервис, отписка и
+    //                    учёт жалоб. Домен музыкальный-мир.рф в сервисе подтверждён,
+    //                    DKIM активен, поэтому письмо идёт от нашего адреса.
+    if ($name === 'unisender' || $name === 'unisender-cold' || $name === 'unisender-kc') {
         $cold = $name === 'unisender-cold';
         $key = trim((string) cfgv('unisender_api_key', ''));
         if ($key === '') return [];
+        if ($name === 'unisender-kc') {
+            return [
+                'transport' => 'unisender',
+                'host'      => 'go2.unisender.ru',
+                'port'      => 443,
+                'user'      => $name,
+                'pass'      => $key,
+                'from_addr' => 'kc@музыкальный-мир.рф',
+                'from_name' => (string) cfgv('mail_from_name', 'Культурный центр «Музыкальный Мир»'),
+            ];
+        }
         $from = trim((string) cfgv($cold ? 'unisender_from_cold' : 'unisender_from', ''));
         // Отдельного адреса для холодной базы может ещё не быть — тогда честнее
         // не слать вовсе, чем подставить рассылочный адрес своей базы.
@@ -619,6 +636,9 @@ function mail_pool_for(array $row): string {
     // Официальные обращения в ведомства идут ТОЛЬКО с официальной почты центра на
     // российском домене — у них свой пул без запасного Gmail, см. mail_pool_names().
     if ($ct === 'official') return 'official';
+    // Разовая новость или уведомление сайта на широкий круг: от официального ящика,
+    // но через сервис рассылок — с отпиской и учётом жалоб, как положено рассылке.
+    if ($ct === 'news') return 'news';
     if ((int) ($row['priority'] ?? 0) > 0) return 'bulk';
     $subj = mb_strtolower((string) ($row['subject'] ?? ''));
     foreach (['диплом', 'наград', 'кубок', 'статуэт', 'медал', 'благодарн'] as $w) {
