@@ -1,0 +1,337 @@
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+@page { size: A4 portrait; margin: 0; }
+
+body {
+  background: #444;
+  font-family: 'Manrope', sans-serif;
+  padding: 20px;
+  min-height: 100vh;
+}
+
+.diploma {
+  width: 210mm;
+  height: 297mm;
+  margin: 0 auto;
+  position: relative;
+  overflow: hidden;
+  color: white;
+  box-shadow: 0 20px 60px rgba(0,0,0,0.5);
+}
+
+.bg-layer { position: absolute; inset: 0; z-index: 1; }
+
+.bg-classic {
+  background:
+    radial-gradient(ellipse at 50% 15%, rgba(40,70,130,0.5) 0%, transparent 55%),
+    linear-gradient(180deg, #0d1428 0%, #0a0f1f 40%, #0d1428 100%);
+}
+.bg-royal {
+  background:
+    radial-gradient(ellipse at 50% 15%, rgba(150,30,60,0.4) 0%, transparent 55%),
+    linear-gradient(180deg, #1a0512 0%, #12030c 40%, #1a0512 100%);
+}
+.bg-forest {
+  background:
+    radial-gradient(ellipse at 50% 15%, rgba(30,100,60,0.4) 0%, transparent 55%),
+    linear-gradient(180deg, #0a1a12 0%, #05120a 40%, #0a1a12 100%);
+}
+.bg-gold {
+  background:
+    radial-gradient(ellipse at 50% 15%, rgba(180,140,60,0.35) 0%, transparent 55%),
+    linear-gradient(180deg, #201408 0%, #180c05 40%, #201408 100%);
+}
+
+/* Белое растворение снизу — часть фона */
+.bg-white-gradient {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 95mm;
+  background: linear-gradient(
+    180deg,
+    transparent 0%,
+    rgba(240,240,245,0.1) 12%,
+    rgba(245,245,250,0.45) 35%,
+    rgba(250,250,252,0.82) 60%,
+    rgba(255,255,255,0.96) 100%
+  );
+  z-index: 2;
+  pointer-events: none;
+}
+
+.content {
+  position: relative;
+  z-index: 3;
+  padding: 10mm 14mm 0;
+  height: 100%;
+}
+
+/* --- ШАПКА --- */
+.header-legal {
+  text-align: center;
+  font-size: 7.5pt;
+  line-height: 1.35;
+  color: white;
+  margin-bottom: 5mm;
+}
+.header-legal .org-name {
+  font-family: 'Playfair Display', serif;
+  font-size: 17pt;
+  font-weight: 800;
+  margin-bottom: 3mm;
+  color: white;
+  
+}
+.header-legal .legal-text {
+  font-weight: 500;
+  color: white;
+}
+
+/* --- ЛОГОТИПЫ --- */
+.logos-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 3mm;
+  padding: 0 3mm;
+}
+.logos-row .logo {
+  width: auto;
+  filter: drop-shadow(0 2px 6px rgba(0,0,0,0.3));
+}
+.logos-row .logo-prok { height: 18mm; }
+.logos-row .logo-emblem { height: 22mm; }
+.logos-row .logo-rossia { height: 22mm; }
+.logos-row .logo-natsproekty { height: 20mm; }
+.logos-row .logo-center {
+  height: 34mm;
+  flex-shrink: 0;
+  margin: 0 2mm;
+}
+
+/* --- ЗАГОЛОВОК КОНКУРСА --- */
+.competition-type {
+  text-align: center;
+  font-family: 'Playfair Display', serif;
+  font-size: 15pt;
+  font-weight: 700;
+  color: white;
+  margin-bottom: 2mm;
+}
+.competition-name {
+  text-align: center;
+  font-family: 'Playfair Display', serif;
+  font-size: 30pt;
+  font-weight: 900;
+  background: linear-gradient(180deg,
+    #FFF3B0 0%, #FFD54F 20%, #C9A84C 45%, #8B6F1F 55%, #C9A84C 75%, #FFE082 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  letter-spacing: 3px;
+  margin-bottom: 3mm;
+  text-shadow: 0 2px 8px rgba(201,168,76,0.5), 0 0 20px rgba(255,215,0,0.15);
+  filter: drop-shadow(0 2px 4px rgba(0,0,0,0.6));
+}
+.support-line {
+  text-align: center;
+  font-family: 'Playfair Display', serif;
+  font-size: 12pt;
+  font-weight: 600;
+  line-height: 1.4;
+  margin-bottom: 4mm;
+  padding: 0 5mm;
+  color: white;
+}
+
+/* --- ТИП ДИПЛОМА --- */
+.diploma-type {
+  text-align: center;
+  font-family: 'Playfair Display', serif;
+  font-size: 48pt;
+  font-weight: 900;
+  background: linear-gradient(180deg,
+    #FFF3B0 0%, #FFD54F 15%, #FFC107 30%, #D4A017 45%,
+    #A67C10 55%, #D4A017 70%, #FFC107 85%, #FFF3B0 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  letter-spacing: 6px;
+  margin-bottom: 1mm;
+  text-shadow: 0 3px 12px rgba(255,193,7,0.4), 0 0 25px rgba(255,215,0,0.2);
+  filter: drop-shadow(0 3px 6px rgba(0,0,0,0.7));
+  line-height: 1;
+}
+.diploma-degree {
+  text-align: center;
+  font-family: 'Playfair Display', serif;
+  font-size: 28pt;
+  font-weight: 900;
+  background: linear-gradient(180deg,
+    #FFF3B0 0%, #FFD54F 25%, #D4A017 55%, #A67C10 75%, #FFC107 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  letter-spacing: 4px;
+  margin-bottom: 4mm;
+  filter: drop-shadow(0 2px 5px rgba(0,0,0,0.7));
+  line-height: 1;
+}
+
+/* --- ФИО и данные --- */
+.awarded-label {
+  text-align: center;
+  font-family: 'Playfair Display', serif;
+  font-size: 15pt;
+  font-weight: 600;
+  color: white;
+  margin-bottom: 2mm;
+}
+.awarded-name {
+  text-align: center;
+  font-family: 'Playfair Display', serif;
+  font-size: 24pt;
+  font-weight: 700;
+  color: #FFE082;
+  margin-bottom: 4mm;
+  filter: drop-shadow(0 2px 4px rgba(0,0,0,0.6));
+}
+.awarded-name-script {
+  text-align: center;
+  font-family: 'Marck Script', cursive;
+  font-size: 36pt;
+  color: #FFE082;
+  margin-bottom: 5mm;
+  filter: drop-shadow(0 2px 6px rgba(0,0,0,0.7));
+  line-height: 1;
+}
+
+.field-list {
+  padding: 0 8mm;
+  font-family: 'Playfair Display', serif;
+  font-size: 12.5pt;
+  font-weight: 600;
+  line-height: 1.75;
+  text-align: center;
+}
+.field-list .field {
+  color: white;
+  filter: drop-shadow(0 1px 3px rgba(0,0,0,0.5));
+}
+
+.gratitude-text {
+  padding: 0 8mm;
+  font-family: 'Playfair Display', serif;
+  font-size: 11.5pt;
+  font-weight: 600;
+  line-height: 1.55;
+  text-align: center;
+  color: white;
+  filter: drop-shadow(0 1px 3px rgba(0,0,0,0.5));
+}
+
+/* === ПОДПИСИ (сетка 2 столбца × 2 строки) === */
+.bottom-block {
+  position: absolute;
+  bottom: 10mm;
+  left: 14mm;
+  right: 14mm;
+  z-index: 4;
+  color: #1a1a2a;
+}
+
+.signatures-grid {
+  display: grid;
+  grid-template-columns: 1fr 82mm;
+  grid-template-rows: auto auto;
+  gap: 4mm 4mm;
+  align-items: center;
+}
+
+.sig-text-block {
+  font-family: 'Manrope', sans-serif;
+  font-size: 9.5pt;
+  line-height: 1.4;
+  padding-right: 3mm;
+}
+.sig-text-block .sig-name {
+  font-weight: 700;
+  text-decoration: underline;
+  margin-bottom: 1mm;
+  color: #1a1a2a;
+  font-size: 10.5pt;
+}
+.sig-text-block .sig-role {
+  font-weight: 500;
+  color: #1a1a2a;
+}
+
+/* Правая колонка — штамп/печать + подпись рядом */
+.sig-visual-block {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 2mm;
+  align-items: center;
+  position: relative;
+}
+
+.chairman-stamp {
+  width: 100%;
+  max-width: 55mm;
+  height: auto;
+  display: block;
+  justify-self: end;
+}
+.big-seal {
+  width: 42mm;
+  height: auto;
+  display: block;
+  justify-self: end;
+  opacity: 0.92;
+}
+.sig-signature-1 {
+  width: 26mm;
+  height: auto;
+  display: block;
+}
+.sig-signature-2 {
+  width: 28mm;
+  height: auto;
+  display: block;
+}
+
+.sig-underline {
+  border-bottom: 1px solid #1a1a2a;
+  width: 30mm;
+  align-self: end;
+  padding-top: 8mm;
+}
+
+.footer-city {
+  text-align: center;
+  margin-top: 6mm;
+  font-family: 'Playfair Display', serif;
+  font-size: 12pt;
+  font-weight: 600;
+  color: #1a1a2a;
+}
+
+.controls {
+  position: fixed; top: 20px; right: 20px;
+  background: white; padding: 15px; border-radius: 8px;
+  box-shadow: 0 4px 20px rgba(0,0,0,0.2); z-index: 1000;
+  font-family: 'Manrope', sans-serif; max-width: 260px;
+}
+.controls h3 { font-size: 14px; margin-bottom: 10px; color: #1a1a2a; }
+.controls label { display: block; font-size: 12px; margin-bottom: 4px; color: #666; }
+.controls select { width: 100%; padding: 6px 8px; margin-bottom: 10px; border: 1px solid #ddd; border-radius: 4px; font-size: 12px; }
+.controls button { width: 100%; padding: 10px; background: #C9A84C; color: white; border: none; border-radius: 4px; font-weight: 600; cursor: pointer; font-size: 13px; }
+.controls button:hover { background: #8B6F1F; }
+
+@media print {
+  body { background: white; padding: 0; }
+  .diploma { box-shadow: none; margin: 0; }
+  .controls { display: none; }
+}

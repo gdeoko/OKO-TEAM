@@ -1,0 +1,166 @@
+[
+  {
+    "idx": 56,
+    "org": "Министерство культуры и туризма Магаданской области",
+    "official_site": "https://minkult.49gov.ru",
+    "person": "Горлачева Людмила Александровна",
+    "person_role_nominative": "Министр культуры и туризма Магаданской области",
+    "email": "mkst@49gov.ru",
+    "email_alt": "",
+    "e_reception_url": "https://minkult.49gov.ru/feedback/desk/",
+    "phone": "8 (4132) 62-10-98",
+    "address": "685000, г. Магадан, пр. Карла Маркса, д. 63А",
+    "appointed": "министр культуры, спорта и туризма — с февраля 2014 г.; министр культуры и туризма Магаданской области — с января 2015 г.",
+    "changed": false,
+    "confidence": "high",
+    "source_urls": [
+      "https://minkult.49gov.ru/depart/lead/",
+      "https://minkult.49gov.ru/feedback/contacts/"
+    ],
+    "note": "Данные сняты со страницы «Руководитель» и «Контакты» официального сайта министерства 12.08.2026. Сайт домена 49gov.ru отдаёт 403 на зарубежные IP — страницы получены через российский сервер проекта. ФИО и e-mail совпадают с реестром."
+  },
+  {
+    "idx": 57,
+    "org": "Министерство культуры и туризма Московской области",
+    "official_site": "https://mk.mosreg.ru",
+    "person": "Кузнецов Василий Сергеевич",
+    "person_role_nominative": "Министр культуры и туризма Московской области",
+    "email": "mincult@mosreg.ru",
+    "email_alt": "",
+    "e_reception_url": "https://mk.mosreg.ru/dokumenty/obrascheniya-grazhdan",
+    "phone": "+7 (498) 602-84-88; приёмная +7 (498) 602-84-84 доб. 46016",
+    "address": "143407, Московская область, г. Красногорск, бульвар Строителей, д. 1 (фактическое размещение — бульвар Строителей, д. 7)",
+    "appointed": "с 08.06.2022",
+    "changed": false,
+    "confidence": "high",
+    "source_urls": [
+      "https://mk.mosreg.ru/ov/struktura-organa-vlasti/ministr-kultury-i-turizma-moskovskoi-oblasti",
+      "https://mk.mosreg.ru/ov",
+      "https://mk.mosreg.ru/kontakty"
+    ],
+    "note": "Страница «Министр культуры и туризма Московской области» на официальном сайте (обновлена 12.12.2025) подтверждает действующего министра и контакты. Сайт закрыт JS-защитой ServicePipe — открыт через реальный браузер. Отдельной формы электронной приёмной у министерства нет: раздел «Обращения граждан» + региональный портал «Добродел». Почтовый индекс/дом для писем — б-р Строителей, д. 1."
+  },
+  {
+    "idx": 58,
+    "org": "Министерство культуры Мурманской области",
+    "official_site": "https://culture.gov-murman.ru",
+    "person": "Обухова Ольга Геннадиевна",
+    "person_role_nominative": "Министр культуры Мурманской области",
+    "email": "culture@gov-murman.ru",
+    "email_alt": "",
+    "e_reception_url": "http://reception.gov-murman.ru",
+    "phone": "8 (8152) 486-319; факс 8 (8152) 770-333",
+    "address": "183038, г. Мурманск, ул. Софьи Перовской, д. 3",
+    "appointed": "",
+    "changed": true,
+    "confidence": "high",
+    "source_urls": [
+      "https://culture.gov-murman.ru/contacts/index.php",
+      "https://odkkirova.ru/o-nas/kontakty"
+    ],
+    "note": "ФИО министра совпадает с реестром, но e-mail в базе (kultura@gov-murman.ru) неверный — на официальной странице «Состав» указан culture@gov-murman.ru. Продублировано на сайте подведомственного учреждения в разделе «Учредитель». Виртуальная приёмная региона — reception.gov-murman.ru."
+  },
+  {
+    "idx": 59,
+    "org": "ГОАУК «Мурманский областной Дворец культуры и народного творчества им. С.М. Кирова»",
+    "official_site": "https://odkkirova.ru",
+    "person": "Викторова Маргарита Сергеевна",
+    "person_role_nominative": "Директор ГОАУК «Мурманский областной Дворец культуры и народного творчества им. С.М. Кирова»",
+    "email": "odk_kirova@mail.ru",
+    "email_alt": "",
+    "e_reception_url": "https://odkkirova.ru/o-nas/kontakty",
+    "phone": "8 (8152) 47-66-04",
+    "address": "183038, Мурманская обл., г. Мурманск, ул. Пушкинская, д. 3",
+    "appointed": "",
+    "changed": true,
+    "confidence": "high",
+    "source_urls": [
+      "https://odkkirova.ru/o-nas/sotrudniki",
+      "https://odkkirova.ru/o-nas/kontakty",
+      "https://culture.gov-murman.ru/culture/oblastnye_uchrez/dvorec_kultury_a/"
+    ],
+    "note": "Руководитель подтверждён дважды: страница «Сотрудники дворца» на сайте учреждения и карточка учреждения на сайте учредителя (Минкультуры Мурманской области) — обе называют Викторову М.С. В базе ФИО не было. E-mail odk_kirova@mail.ru подтверждён на странице «Контакты» официального сайта. Отдельной электронной приёмной нет — форма обратной связи на странице контактов."
+  },
+  {
+    "idx": 60,
+    "org": "Министерство культуры Мурманской области",
+    "official_site": "https://culture.gov-murman.ru",
+    "person": "Обухова Ольга Геннадиевна",
+    "person_role_nominative": "Министр культуры Мурманской области",
+    "email": "culture@gov-murman.ru",
+    "email_alt": "",
+    "e_reception_url": "http://reception.gov-murman.ru",
+    "phone": "8 (8152) 486-319; факс 8 (8152) 770-333",
+    "address": "183038, г. Мурманск, ул. Софьи Перовской, д. 3",
+    "appointed": "",
+    "changed": true,
+    "confidence": "high",
+    "source_urls": [
+      "https://culture.gov-murman.ru/contacts/index.php"
+    ],
+    "note": "Дубликат записи idx 58 в реестре. E-mail в базе верный, ФИО руководителя отсутствовало — добавлено по официальной странице «Состав». Перед рассылкой запись стоит объединить с idx 58, чтобы в ведомство не ушло два письма."
+  },
+  {
+    "idx": 61,
+    "org": "Департамент образования, культуры и спорта Ненецкого а.о.",
+    "official_site": "https://kultura.adm-nao.ru",
+    "person": "Коротаева Марина Александровна",
+    "person_role_nominative": "Начальник Управления культуры Ненецкого автономного округа",
+    "email": "kultura@adm-nao.ru",
+    "email_alt": "",
+    "e_reception_url": "http://kultura.adm-nao.ru/obrasheniya-i-priemy-grazhdan/",
+    "phone": "8 (81853) 2-12-30 (приёмная); 8 (81853) 2-11-68",
+    "address": "166000, Ненецкий автономный округ, г. Нарьян-Мар, ул. Ленина, д. 23А",
+    "appointed": "Управление культуры НАО образовано в конце 2025 г. (структура — распоряжение губернатора НАО от 25.11.2025 № 365-рг, Положение — постановление Администрации НАО от 17.12.2025 № 323-п)",
+    "changed": true,
+    "confidence": "high",
+    "source_urls": [
+      "https://kultura.adm-nao.ru/",
+      "http://kultura.adm-nao.ru/kontakty/",
+      "http://kultura.adm-nao.ru/struktura-i-polnomochiya/",
+      "https://adm-nao.ru/gov/ogiv/",
+      "http://dos.adm-nao.ru/struktura/staff/"
+    ],
+    "note": "ВЕДОМСТВО РЕОРГАНИЗОВАНО. Департамента образования, культуры и спорта НАО больше нет: он переименован в Департамент образования и спорта НАО (руководитель — Барабас Андрей Александрович, заместитель губернатора НАО), а полномочия в сфере культуры переданы вновь созданному Управлению культуры Ненецкого автономного округа — прямо указано на странице «Структура и полномочия» как правопреемство. Данные в базе (Гущина Лина Викторовна, doks@ogvnao.ru) устарели; письмо по культуре надо адресовать начальнику Управления культуры НАО Коротаевой М.А. на kultura@adm-nao.ru."
+  },
+  {
+    "idx": 62,
+    "org": "ГБУК «Этно-культурный центр Ненецкого автономного округа»",
+    "official_site": "https://www.etnonao.ru",
+    "person": "Вергунова Елена Ивановна",
+    "person_role_nominative": "Директор ГБУК «Этнокультурный центр Ненецкого автономного округа»",
+    "email": "etnonao@mail.ru",
+    "email_alt": "",
+    "e_reception_url": "https://www.etnonao.ru/index.php/obratnaya-svyaz",
+    "phone": "8 (81853) 2-16-92, 2-16-93",
+    "address": "166000, Ненецкий автономный округ, г. Нарьян-Мар, ул. Смидовича, д. 20а",
+    "appointed": "",
+    "changed": true,
+    "confidence": "high",
+    "source_urls": [
+      "https://www.etnonao.ru/index.php/about/o-nas",
+      "https://www.etnonao.ru/"
+    ],
+    "note": "Директор и контакты взяты со страницы «О нас» официального сайта (список сотрудников, раздел «Дирекция»); адрес и e-mail продублированы в подвале главной страницы. В базе ФИО не было. Точное наименование учреждения на сайте — «Этнокультурный центр Ненецкого автономного округа» (ГБУК «ЭКЦ НАО»), без дефиса в слове «Этнокультурный». Учредитель с конца 2025 г. — Управление культуры НАО."
+  },
+  {
+    "idx": 63,
+    "org": "Министерство культуры Нижегородской области",
+    "official_site": "https://minkult.nobl.ru",
+    "person": "Суханова Наталья Евгеньевна",
+    "person_role_nominative": "Министр культуры Нижегородской области",
+    "email": "minkult@nobl.ru",
+    "email_alt": "",
+    "e_reception_url": "https://nobl.ru/priem-obrashchenij/",
+    "phone": "+7 (831) 416-23-24, +7 (831) 416-23-25",
+    "address": "603082, Нижегородская область, г. Нижний Новгород, Кремль, корпус 14",
+    "appointed": "",
+    "changed": true,
+    "confidence": "high",
+    "source_urls": [
+      "https://minkult.nobl.ru/about/structure/",
+      "https://minkult.nobl.ru/about/contacts/"
+    ],
+    "note": "В базе устаревшие данные: Преподобная Н.А. (и.о. министра в 2018 г.) и ящик official@kult.kreml.nnov.ru. По разделу «Структура» официального сайта действующий министр — Суханова Наталья Евгеньевна, рабочий адрес для обращений minkult@nobl.ru. Старый домен minkultnn.ru утрачен ведомством и занят посторонним коммерческим сайтом — использовать нельзя. Приём обращений — через портал правительства области nobl.ru/priem-obrashchenij/."
+  }
+]

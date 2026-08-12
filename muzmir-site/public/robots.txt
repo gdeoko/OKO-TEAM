@@ -1,0 +1,12 @@
+User-agent: *
+Allow: /
+Allow: /assets/
+Disallow: /admin
+Disallow: /api
+Disallow: /cabinet
+Disallow: /login
+Disallow: /reset-password
+Disallow: /verify-email
+Disallow: /logout
+Disallow: /forgot
+Sitemap: https://xn----7sbugdeiegh1b0a9hen.xn--p1ai/sitemap.xml

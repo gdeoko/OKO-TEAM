@@ -1,0 +1,168 @@
+[
+  {
+    "idx": 128,
+    "org": "Министерство культуры и туризма Смоленской области",
+    "official_site": "https://kultura.admin-smolensk.ru",
+    "person": "Ивушин Михаил Юрьевич",
+    "person_role_nominative": "Министр культуры и туризма Смоленской области",
+    "email": "kult@admin-smolensk.ru",
+    "email_alt": "",
+    "e_reception_url": "https://kultura.admin-smolensk.ru/obraschenia-graj/",
+    "phone": "+7 (4812) 29-23-86, приёмная министра +7 (4812) 29-23-60, факс +7 (4812) 38-76-72",
+    "address": "214008, г. Смоленск, пл. Ленина, д. 1",
+    "appointed": "",
+    "changed": true,
+    "confidence": "high",
+    "source_urls": [
+      "https://kultura.admin-smolensk.ru/obshaia-informac/leadership/",
+      "https://kultura.admin-smolensk.ru/kontakty/",
+      "https://kultura.admin-smolensk.ru/obraschenia-graj/",
+      "https://kultura.admin-smolensk.ru/"
+    ],
+    "note": "ФИО министра подтверждено на официальном сайте на двух страницах (главная + раздел «Руководство»). В базе был e-mail kult@admin.smolensk.ru (через точку) — на сайте везде указан kult@admin-smolensk.ru (через дефис), исправлено. Электронные обращения министерство принимает через форму ПОС Госуслуг: https://pos.gosuslugi.ru/form/?opaId=222047 (ссылка со страницы «Обращения граждан»). Заместители: Романенкова О.П. (первый зам.), Василенко Д.В., Белова А.К."
+  },
+  {
+    "idx": 129,
+    "org": "Министерство культуры и туризма Смоленской области",
+    "official_site": "https://kultura.admin-smolensk.ru",
+    "person": "Ивушин Михаил Юрьевич",
+    "person_role_nominative": "Министр культуры и туризма Смоленской области",
+    "email": "kult@admin-smolensk.ru",
+    "email_alt": "",
+    "e_reception_url": "https://kultura.admin-smolensk.ru/obraschenia-graj/",
+    "phone": "+7 (4812) 29-23-86, приёмная министра +7 (4812) 29-23-60",
+    "address": "214008, г. Смоленск, пл. Ленина, д. 1",
+    "appointed": "",
+    "changed": true,
+    "confidence": "high",
+    "source_urls": [
+      "https://kultura.admin-smolensk.ru/obshaia-informac/leadership/",
+      "https://kultura.admin-smolensk.ru/kontakty/"
+    ],
+    "note": "Дубль записи idx 128 (та же организация). E-mail в базе был указан верно; добавлены ФИО и должность действующего министра — подтверждены на официальном сайте (раздел «Руководство»). Форма обращений: https://pos.gosuslugi.ru/form/?opaId=222047"
+  },
+  {
+    "idx": 130,
+    "org": "Министерство культуры и туризма Смоленской области (второй ящик)",
+    "official_site": "https://kultura.admin-smolensk.ru",
+    "person": "Ивушин Михаил Юрьевич",
+    "person_role_nominative": "Министр культуры и туризма Смоленской области",
+    "email": "kult@admin-smolensk.ru",
+    "email_alt": "1.kult@admin-smolensk.ru",
+    "e_reception_url": "https://kultura.admin-smolensk.ru/obraschenia-graj/",
+    "phone": "+7 (4812) 29-23-86",
+    "address": "214008, г. Смоленск, пл. Ленина, д. 1",
+    "appointed": "",
+    "changed": true,
+    "confidence": "high",
+    "source_urls": [
+      "https://kultura.admin-smolensk.ru/obshaia-informac/leadership/",
+      "https://kultura.admin-smolensk.ru/kontakty/",
+      "https://kultura.admin-smolensk.ru/obraschenia-graj/"
+    ],
+    "note": "ВАЖНО: ящик 1.kult@admin-smolensk.ru из базы НЕ подтверждён — на официальном сайте (разделы «Контакты» и «Обращения граждан») указан только kult@admin-smolensk.ru. Основным адресом для письма поставлен подтверждённый ящик, старый оставлен в email_alt как непроверенный. ФИО и должность министра подтверждены официальным сайтом."
+  },
+  {
+    "idx": 131,
+    "org": "Министерство культуры Ставропольского края",
+    "official_site": "https://www.mincultsk.ru",
+    "person": "Лихачёва Татьяна Ивановна",
+    "person_role_nominative": "Министр культуры Ставропольского края",
+    "email": "mksk@stavregion.ru",
+    "email_alt": "",
+    "e_reception_url": "https://stavregion.ru/feedback/",
+    "phone": "+7 (8652) 747-212, факс +7 (8652) 26-16-60",
+    "address": "355000, г. Ставрополь, ул. Булкина, д. 17",
+    "appointed": "",
+    "changed": false,
+    "confidence": "high",
+    "source_urls": [
+      "https://stavregion.ru/govdep/ministries/mincult/",
+      "https://stavregion.ru/govdep/ministries/"
+    ],
+    "note": "Собственный сайт министерства www.mincultsk.ru на 12.08.2026 отдаёт HTTP 502 (недоступен), поэтому данные взяты с официального портала органов государственной власти Ставропольского края stavregion.ru — карточка министерства в разделе «Органы власти / Министерства». Там же график приёма граждан: министр Лихачёва Т.И. — второй четверг месяца 14:00–18:00; заместители Лезговко М.Б., Калюка Е.В. Данные базы (ФИО и e-mail) совпали. На сайте встречается написание и «Лихачева», и «Лихачёва»."
+  },
+  {
+    "idx": 132,
+    "org": "Министерство физической культуры и спорта Ставропольского края",
+    "official_site": "https://stavregion.ru/govdep/ministries/minisport/",
+    "person": "Тайдакова Вероника Сергеевна",
+    "person_role_nominative": "Министр физической культуры и спорта Ставропольского края",
+    "email": "minsport@stavregion.ru",
+    "email_alt": "",
+    "e_reception_url": "https://stavregion.ru/feedback/",
+    "phone": "+7 (8652) 26-15-97, факс +7 (8652) 26-22-45, запись на приём +7 (8652) 26-15-92",
+    "address": "355002, г. Ставрополь, ул. Пушкина, 25а",
+    "appointed": "",
+    "changed": true,
+    "confidence": "high",
+    "source_urls": [
+      "https://stavregion.ru/govdep/ministries/minisport/",
+      "https://stavregion.ru/govdep/ministries/"
+    ],
+    "note": "Данные с официального портала органов государственной власти Ставропольского края (карточка министерства + график приёма граждан: Тайдакова В.С. — министр, второй четверг месяца 14:00–18:00; заместители Абдуллаев И.М., Савельева Т.В.). Отдельный рабочий сайт министерства не найден: на портале в поле «Официальный сайт» указано «minsport.ru» — это сайт федерального Минспорта, ошибка портала; домены minsport26.ru, mfks26.ru, stavsport.ru не отвечают. Подтверждение по единственному (официальному краевому) источнику — второй независимый официальный источник найти не удалось."
+  },
+  {
+    "idx": 133,
+    "org": "Министерство культуры Тамбовской области",
+    "official_site": "https://cult.tmbreg.ru",
+    "person": "Голубев Юрий Николаевич",
+    "person_role_nominative": "Министр культуры Тамбовской области",
+    "email": "post@cult.tambov.gov.ru",
+    "email_alt": "info@cult.tambov.gov.ru",
+    "e_reception_url": "https://cult.tmbreg.ru/o-ministerstve/rabota-s-obrashheniyami-grazhdan.html",
+    "phone": "+7 (4752) 79-02-62 (приёмная министра), +7 (4752) 79-02-85 (приём электронной корреспонденции)",
+    "address": "г. Тамбов, ул. Советская, д. 76",
+    "appointed": "",
+    "changed": false,
+    "confidence": "high",
+    "source_urls": [
+      "https://cult.tmbreg.ru/o-ministerstve/kontakty.html",
+      "https://cult.tmbreg.ru/o-ministerstve/rabota-s-obrashheniyami-grazhdan.html",
+      "https://cult.tmbreg.ru/o-ministerstve/"
+    ],
+    "note": "ФИО подтверждено дважды: таблица контактов («ГОЛУБЕВ Юрий Николаевич — Министр культуры Тамбовской области») и страница обращений («личный приём осуществляет министр культуры Тамбовской области Ю.Н. Голубев каждую последнюю среду месяца»). Данные базы совпали. ВНИМАНИЕ: с 30.03.2025 (ФЗ № 547-ФЗ) министерство НЕ рассматривает обращения граждан, присланные по обычной электронной почте — только через Платформу обратной связи (ПОС) на Госуслугах, официальный сайт или лично/письмом. Для официального письма от организации на бланке предпочтителен бумажный/ПОС-канал; post@cult.tambov.gov.ru остаётся официальным ящиком министерства. Заместители: Волкова С.А., Дубок В.Ю., Жмаева Е.В."
+  },
+  {
+    "idx": 134,
+    "org": "ТОГБУК «Научно-методический центр народного творчества и досуга»",
+    "official_site": "http://www.tambovcentr.ru",
+    "person": "Павлов Юрий Дмитриевич",
+    "person_role_nominative": "Директор ТОГБУК «Научно-методический центр народного творчества и досуга»",
+    "email": "cnt@cult.tambov.gov.ru",
+    "email_alt": "",
+    "e_reception_url": "",
+    "phone": "+7 (4752) 72-57-28 (директор)",
+    "address": "392000, г. Тамбов, ул. Советская, д. 59",
+    "appointed": "",
+    "changed": true,
+    "confidence": "high",
+    "source_urls": [
+      "http://www.tambovcentr.ru/joomla/index.php/about/struktura",
+      "http://www.tambovcentr.ru/joomla/index.php/about/kontakty",
+      "https://cult.tmbreg.ru/o-ministerstve/sajty-podvedomstvennyh-uchrezhdenij.html"
+    ],
+    "note": "Сайт учреждения и e-mail cnt@cult.tambov.gov.ru подтверждены на официальном сайте министерства культуры Тамбовской области (реестр подведомственных учреждений) и на самом сайте центра. ФИО директора подтверждено дважды на сайте центра: раздел «Структура» («Директор Центра, заслуженный работник культуры РФ Павлов Юрий Дмитриевич») и «Контакты» («личный приём граждан осуществляет директор Центра Павлов Юрий Дмитриевич»; «Директор Павлов Юрий Дмитриевич действует на основании Устава»). Второй фактический адрес: г. Тамбов, ул. Степана Разина, д. 5. Заместители: Козлова К.Ю., Бурцева О.А., Малахов М.А. Электронная приёмная у учреждения отсутствует."
+  },
+  {
+    "idx": 135,
+    "org": "Министерство культуры Тверской области",
+    "official_site": "https://культура.тверскаяобласть.рф",
+    "person": "Постнова Елена Владимировна",
+    "person_role_nominative": "Министр культуры Тверской области",
+    "email": "dep_kultury@tverreg.ru",
+    "email_alt": "",
+    "e_reception_url": "https://культура.тверскаяобласть.рф/obrashcheniya/elek-obrashchenie/",
+    "phone": "+7 (4822) 33-34-95 (доб. 201)",
+    "address": "г. Тверь, ул. Андрея Дементьева, д. 34",
+    "appointed": "",
+    "changed": true,
+    "confidence": "high",
+    "source_urls": [
+      "https://культура.тверскаяобласть.рф/komitet/rukovodstvo/",
+      "https://культура.тверскаяобласть.рф/komitet/struktura/",
+      "https://культура.тверскаяобласть.рф/kontakty/"
+    ],
+    "note": "РУКОВОДИТЕЛЬ СМЕНИЛСЯ: в базе была Глинка Ксения Олеговна, действующий министр — Постнова Елена Владимировна (подтверждено на двух страницах официального сайта: «Руководство» и «Структура», сайт актуален, копирайт © 2026). E-MAIL ТОЖЕ ДРУГОЙ: в базе info@tvercult69.ru, домен tvercult69.ru не отвечает; действующий официальный сайт — культура.тверскаяобласть.рф (punycode https://xn--80atdujec4e.xn--80aaccp4ajwpkgbl4lpb.xn--p1ai), почта dep_kultury@tverreg.ru (указана в контактах и в подвале всех страниц). Заместители министра: Мельников Антон Михайлович, Антипчук Елена Николаевна. Почтовый индекс на сайте не указан — не проставлен, чтобы не выдумывать."
+  }
+]

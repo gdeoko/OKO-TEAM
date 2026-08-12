@@ -1,0 +1,169 @@
+[
+  {
+    "idx": 88,
+    "org": "Министерство культуры Республики Алтай",
+    "official_site": "https://culture-altai.ru",
+    "person": "Антарадонова Ольга Юрьевна",
+    "person_role_nominative": "Министр культуры Республики Алтай",
+    "email": "info@mk.altaigov.ru",
+    "email_alt": "",
+    "e_reception_url": "https://culture-altai.ru/obrsh-graz/elektronnaya-priemnaya",
+    "phone": "+7 (38822) 2-64-88",
+    "address": "649000, Республика Алтай, г. Горно-Алтайск, ул. Эркемена Палкина, д. 9",
+    "appointed": "Указ Главы Республики Алтай от 29.11.2019 № 276-у; на 2026 год — действующий министр",
+    "changed": true,
+    "confidence": "high",
+    "source_urls": [
+      "https://culture-altai.ru/kontakty/ministerstvo-kultury-respubliki-alta/obshchaya/kontakty",
+      "https://culture-altai.ru/glavnaya/ministerstvo-kultury-respubliki-alta",
+      "https://culture-altai.ru/obrsh-graz/elektronnaya-priemnaya"
+    ],
+    "note": "ФИО подтверждено на официальном сайте (раздел Контакты: «Министр — Антарадонова Ольга Юрьевна», секретарь Тохон Е.А.). E-mail в базе (mk@minkulturi.gorny.ru) устарел — на сайте указан info@mk.altaigov.ru. Первый заместитель — Стрельникова Лариса Вячеславовна."
+  },
+  {
+    "idx": 89,
+    "org": "Министерство культуры Республики Башкортостан",
+    "official_site": "https://culture.bashkortostan.ru",
+    "person": "Шайхисламов Фанур Рафисович",
+    "person_role_nominative": "Исполняющий обязанности министра культуры Республики Башкортостан",
+    "email": "mkrb@bashkortostan.ru",
+    "email_alt": "",
+    "e_reception_url": "",
+    "phone": "",
+    "address": "",
+    "appointed": "и.о. министра с 16.03.2026 (назначен Главой РБ Р. Хабировым)",
+    "changed": true,
+    "confidence": "medium",
+    "source_urls": [
+      "https://www.bashinform.ru/news/culture/2026-06-08/v-bashkirii-v-ramkah-natsproekta-semya-otkroetsya-shest-ob-ektov-kultury-4656453",
+      "https://ufa1.ru/text/gorod/2026/03/16/76313716/",
+      "https://ufa.aif.ru/politic/gover/habirov-poyasnil-naznachenie-fanura-shayhislamova-i-o-ministra-kultury",
+      "https://ufa.rbc.ru/ufa/08/04/2026/69d61b399a7947a628ca7b20"
+    ],
+    "note": "ВНИМАНИЕ: руководитель в базе (Шафикова Амина Ивниевна) более не в должности — задержана в марте 2026, в апреле 2026 оставлена в СИЗО. С 16.03.2026 ведомство возглавляет и.о. министра Шайхисламов Фанур Рафисович (подтверждено ИА «Башинформ», гос. агентство РБ, 08.06.2026 — «и. о. министра культуры РБ Фанур Шайхисламов»). Официальный сайт culture.bashkortostan.ru из этой сети недоступен (503/WAF), поэтому e-mail взят из базы и НЕ переподтверждён, телефон и почтовый адрес не подтверждены — оставлены пустыми. Перед отправкой письма проверить адресат вручную; обращение лучше адресовать «Исполняющему обязанности министра культуры Республики Башкортостан Шайхисламову Ф.Р.»"
+  },
+  {
+    "idx": 90,
+    "org": "Министерство культуры Республики Бурятия",
+    "official_site": "https://minkultrb.ru",
+    "person": "Дагаева Соелма Баяртуевна",
+    "person_role_nominative": "Министр культуры Республики Бурятия",
+    "email": "mkrb@minkultrb.ru",
+    "email_alt": "",
+    "e_reception_url": "https://minkultrb.ru/contacts/",
+    "phone": "+7 (3012) 21-37-87 (приёмная), факс +7 (3012) 21-35-86",
+    "address": "670000, Республика Бурятия, г. Улан-Удэ, ул. Ленина, д. 30",
+    "appointed": "действующий министр на 2026 год",
+    "changed": false,
+    "confidence": "high",
+    "source_urls": [
+      "https://egov-buryatia.ru/minkult/about_authority/guide/",
+      "https://minkultrb.ru/contacts/"
+    ],
+    "note": "Подтверждено на официальном портале органов власти Бурятии egov-buryatia.ru (раздел «Руководство») и на сайте министерства minkultrb.ru (раздел «Контакты»). Первый заместитель министра — Кожевников Владимир Вениаминович. Форма обращения — на странице контактов (модальная форма обратной связи)."
+  },
+  {
+    "idx": 91,
+    "org": "Министерство культуры Республики Дагестан",
+    "official_site": "https://minkultrd.ru",
+    "person": "Бутаева Зарема Ажуевна",
+    "person_role_nominative": "Министр культуры Республики Дагестан",
+    "email": "minkult@e-dag.ru",
+    "email_alt": "",
+    "e_reception_url": "https://minkultrd.ru/appeals/otpravite-obrasenie",
+    "phone": "+7 (8722) 67-49-09",
+    "address": "367031, Республика Дагестан, г. Махачкала, пр. Гамзатова, д. 93А",
+    "appointed": "действующий министр на 2026 год",
+    "changed": false,
+    "confidence": "high",
+    "source_urls": [
+      "https://minkultrd.ru/ministry/struktura",
+      "https://minkultrd.ru/ministry/kontakty",
+      "https://minkultrd.ru/appeals/otpravite-obrasenie"
+    ],
+    "note": "Раздел «Структура» официального сайта: «Руководитель — Бутаева Зарема Ажуевна, Министр культуры Республики Дагестан, 8(8722)67-49-09, minkult@e-dag.ru». Актуальность сайта подтверждается новостями от 11.08.2026. Первый заместитель — Курбанов Мухтар Аммаевич."
+  },
+  {
+    "idx": 92,
+    "org": "Министерство культуры Республики Ингушетия",
+    "official_site": "https://mincultri.ru",
+    "person": "Льянова Залина Исраиловна",
+    "person_role_nominative": "Министр культуры и туризма Республики Ингушетия",
+    "email": "mkri06@mail.ru",
+    "email_alt": "infomkri@mail.ru",
+    "e_reception_url": "",
+    "phone": "+7 (8734) 55-42-00 (приёмная), горячая линия +7 (8734) 55-42-35",
+    "address": "386001, Республика Ингушетия, г. Магас, проспект Идриса Зязикова, д. 16А",
+    "appointed": "в должности с февраля 2022 года; действующий министр на 2026 год",
+    "changed": false,
+    "confidence": "high",
+    "source_urls": [
+      "https://mincultri.ru/contacts/",
+      "https://mincultri.ru/%D1%80%D1%83%D0%BA%D0%BE%D0%B2%D0%BE%D0%B4%D1%81%D1%82%D0%B2%D0%BE/",
+      "https://mincultri.ru/28-30-%D0%B0%D0%BF%D1%80%D0%B5%D0%BB%D1%8F-2026-%D0%B3%D0%BE%D0%B4%D0%B0-%D0%B2%D0%BE-%D0%B2%D0%BB%D0%B0%D0%B4%D0%B8%D0%BA%D0%B0%D0%B2%D0%BA%D0%B0%D0%B7%D0%B5-%D0%BF%D1%80%D0%BE%D1%88%D0%BB/"
+    ],
+    "note": "Официальный сайт, раздел «Контакты»: «Руководство — Министр Льянова Залина Исраиловна, +7 (8734) 55-42-00», основная эл. почта mkri06@mail.ru. Ведомство переименовано: корректное название — «Министерство культуры и туризма Республики Ингушетия» (в базе указано «Министерство культуры Республики Ингушетия»). Упоминание Дзейтова Т.М.-Г. в архиве новостей сайта относится к 2019 году, он давно не министр (советник Главы РИ по вопросам культуры). Отдельной электронной приёмной на сайте не найдено."
+  },
+  {
+    "idx": 93,
+    "org": "Министерство культуры и туризма  Республики Калмыкия",
+    "official_site": "https://minkult08.ru",
+    "person": "Бембеев Евгений Владимирович",
+    "person_role_nominative": "Министр культуры и туризма Республики Калмыкия",
+    "email": "",
+    "email_alt": "",
+    "e_reception_url": "",
+    "phone": "+7 (84722) 5-00-09",
+    "address": "358000, Республика Калмыкия, г. Элиста, ул. Джангара, д. 9",
+    "appointed": "назначен 16–17 марта 2026 года",
+    "changed": true,
+    "confidence": "medium",
+    "source_urls": [
+      "https://www.visitkalmykia.ru/2026/vice-premer-respubliki-kalmykiya-predstavil-novogo-ministra-kultury-i-turizma/",
+      "https://gogov.ru/executive/klm/e683143"
+    ],
+    "note": "ВНИМАНИЕ: руководитель в базе (Тюрбеева Саглара Денаевна, назначена в 2020) сменился. В марте 2026 первый заместитель Председателя Правительства РК Эрдни Церенов представил коллективу министерства нового руководителя — Бембеева Евгения Владимировича (лингвист, к.ф.н., ранее главный редактор республиканской газеты). Подтверждение — Туристский портал Калмыкии visitkalmykia.ru (ведомственный портал) и vesti-kalmykia.ru; сам сайт minkult08.ru из этой сети недоступен (503), поэтому confidence=medium. E-mail НЕ подтверждён и оставлен пустым: старый ящик minkult08@mail.ru из базы проверить не удалось. Телефон и адрес — из вторичных справочников, требуют проверки."
+  },
+  {
+    "idx": 94,
+    "org": "Министерство культуры Республики Карелия",
+    "official_site": "https://culture.gov10.ru",
+    "person": "Лесонен Алексей Николаевич",
+    "person_role_nominative": "Министр культуры Республики Карелия",
+    "email": "mincult@culture.gov10.ru",
+    "email_alt": "",
+    "e_reception_url": "https://gov10.ru/appeal/",
+    "phone": "+7 (8142) 33-19-81 (доб. 101)",
+    "address": "185035, Республика Карелия, г. Петрозаводск, пл. Ленина, д. 2",
+    "appointed": "в должности с декабря 2015 года; действующий министр на 2026 год",
+    "changed": true,
+    "confidence": "high",
+    "source_urls": [
+      "https://culture.gov10.ru/head_of/",
+      "https://culture.gov10.ru/contacts/",
+      "https://gov10.ru/power/executive/mincult/"
+    ],
+    "note": "Официальная должность на сайте: «член Правительства Республики Карелия – Министр культуры Республики Карелия». ВАЖНО: сменились домены — портал Правительства РК gov.karelia.ru переехал на gov10.ru, сайт министерства — culture.gov10.ru (в базе был mincultrk.ru). E-mail в базе (mincult@karelia.ru) устарел, действующий — mincult@culture.gov10.ru (приёмная, Назарова Ольга Сергеевна). Первый заместитель — Виноградова Екатерина Владимировна."
+  },
+  {
+    "idx": 95,
+    "org": "Министерство культуры Республики Крым",
+    "official_site": "https://mkult.rk.gov.ru",
+    "person": "Манежина Татьяна Анатольевна",
+    "person_role_nominative": "Министр культуры Республики Крым",
+    "email": "",
+    "email_alt": "",
+    "e_reception_url": "",
+    "phone": "",
+    "address": "295005, Республика Крым, г. Симферополь, пр-т Кирова, д. 13",
+    "appointed": "назначена 16.12.2021; действующий министр в 2026 году",
+    "changed": false,
+    "confidence": "medium",
+    "source_urls": [
+      "https://gazetacrimea.ru/news/ministr-kultury-kryma-tatyana-manezhina-o-tom-kak-menyaetsya-kulturnaya-zhizn-poluostrova/",
+      "https://kianews24.ru/news/ministrom-kulturi-krima-naznachena-t/",
+      "https://crimea-news.com/culture/2026/03/25/1917856.html"
+    ],
+    "note": "ФИО и должность подтверждены вторичными официальными источниками: распоряжение о назначении — «Назначить Манежину Татьяну Анатольевну на государственную должность Республики Крым – министра культуры Республики Крым» (16.12.2021); интервью в республиканской газете «Крымская газета» (19.12.2025) — «Министр культуры Крыма Татьяна Манежина»; новости о её рабочих поездках и личном приёме граждан за январь–март 2026. Официальный сайт mkult.rk.gov.ru закрыт системой защиты веб-приложений (АО «Крымтехнологии») и из этой сети не открывается, поэтому confidence=medium. E-mail и телефон подтвердить не удалось и оставлены пустыми: адрес mincult@rk.gov.ru из базы не проверен. Почтовый адрес — по данным ЕГРЮЛ."
+  }
+]

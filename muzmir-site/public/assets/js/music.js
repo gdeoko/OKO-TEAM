@@ -1,0 +1,217 @@
+/**
+ * Фоновая классическая музыка Культурного центра «Музыкальный Мир» — БЕЗ видимого плеера.
+ * Играет всегда при входе. Браузеры блокируют автозапуск звука до первого касания —
+ * поэтому гарантированно стартуем на ПЕРВОМ же взаимодействии (тап/скролл/клик),
+ * вызывая play() СИНХРОННО (источник задан заранее). Выключить можно только в настройках профиля.
+ *
+ * Важно: НЕ ставим audio.crossOrigin — многие радио-стримы не отдают CORS-заголовки,
+ * и с crossOrigin='anonymous' воспроизведение молча блокируется.
+ */
+(function () {
+  if (window.MzMusic) return;
+  const SS_STREAM = 'mz-music-stream-idx';
+  const SS_TRACK  = 'mz-music-track-idx';
+  let audio, playlist = null, mode = 'stream', tries = 0, started = false;
+
+  // ВЫБОР ЧЕЛОВЕКА ЖИВЁТ МЕЖДУ СТРАНИЦАМИ.
+  // Раньше выключить фоновую музыку можно было только в настройках профиля — то есть
+  // гостю сайта вообще нечем: звук играл на каждой странице и остановить его было
+  // нельзя. Теперь есть видимая кнопка (см. .mz-radio в layout.php), а её состояние
+  // запоминается: нажал «выключить» — тишина и на всех следующих страницах.
+  const LS_OFF = 'mz-music-off';
+  let offByUser = false;
+  try { offByUser = localStorage.getItem(LS_OFF) === '1'; } catch (e) {}
+  let userWantsOn = window.MZ_MUSIC_OFF !== true && !offByUser;
+
+  function ensureAudio() {
+    if (audio) return;
+    audio = new Audio();
+    audio.preload = 'auto';
+    audio.volume = 0;
+    audio.setAttribute('playsinline', '');
+    audio.addEventListener('canplay', () => fade(0.32, 1600));
+    audio.addEventListener('playing', () => { started = true; });
+    audio.addEventListener('ended', next);
+    audio.addEventListener('error', onError);
+    audio.addEventListener('stalled', onError);
+  }
+
+  function fade(target, ms) {
+    if (!audio) return;
+    const from = audio.volume, delta = target - from, start = performance.now();
+    (function step(t) {
+      const p = Math.min(1, (t - start) / ms);
+      audio.volume = Math.max(0, Math.min(1, from + delta * p));
+      if (p < 1) requestAnimationFrame(step);
+    })(performance.now());
+  }
+
+  function pickSrc() {
+    const p = playlist; if (!p) return '';
+    if (mode === 'stream' && p.streams && p.streams.length) {
+      const si = Number(sessionStorage.getItem(SS_STREAM) || 0) % p.streams.length;
+      return p.streams[si].url;
+    }
+    if (p.tracks && p.tracks.length) {
+      const ti = Number(sessionStorage.getItem(SS_TRACK) || 0) % p.tracks.length;
+      return p.tracks[ti].url;
+    }
+    return '';
+  }
+
+  function setSrc() {
+    ensureAudio();
+    const s = pickSrc();
+    if (s && audio.src !== s) audio.src = s;
+    return s;
+  }
+
+  // Синхронный запуск (без await перед play() — иначе теряется «разрешение от касания»).
+  function play() {
+    if (!userWantsOn) return;
+    if (!setSrc()) return;
+    const pr = audio.play();
+    if (pr && pr.catch) pr.catch(function () {});
+  }
+
+  // Muted-предзапуск: беззвучный autoplay разрешён почти везде — поток уже буферизуется,
+  // и на первом касании достаточно просто снять mute → звук мгновенно.
+  function mutedPrestart() {
+    if (!userWantsOn || !setSrc()) return;
+    audio.muted = true;
+    const pr = audio.play();
+    if (pr && pr.catch) pr.catch(function () {});
+  }
+  function unmuteNow() {
+    if (!audio) return;
+    audio.muted = false;
+    if (audio.paused) play();
+    fade(0.32, 1200);
+  }
+
+  function onError() {
+    tries++; if (tries > 10) return;
+    if (mode === 'stream') {
+      const p = playlist || {};
+      const si = Number(sessionStorage.getItem(SS_STREAM) || 0) + 1;
+      if (si < ((p.streams && p.streams.length) || 0)) sessionStorage.setItem(SS_STREAM, String(si));
+      else mode = 'tracks';
+    } else {
+      const p = playlist || { tracks: [] };
+      if (p.tracks && p.tracks.length) {
+        sessionStorage.setItem(SS_TRACK, String((Number(sessionStorage.getItem(SS_TRACK) || 0) + 1) % p.tracks.length));
+      }
+    }
+    play();
+  }
+
+  function next() {
+    if (!(playlist && playlist.tracks && playlist.tracks.length)) return;
+    mode = 'tracks';
+    sessionStorage.setItem(SS_TRACK, String((Number(sessionStorage.getItem(SS_TRACK) || 0) + 1) % playlist.tracks.length));
+    fade(0, 500);
+    setTimeout(play, 520);
+  }
+
+  // Гарантированный старт с первого взаимодействия — синхронно в обработчике жеста.
+  function armGesture() {
+    // ТОЛЬКО ЯВНОЕ ДЕЙСТВИЕ. 'scroll', 'wheel' и особенно 'mousemove' — это не
+    // намерение включить звук: музыка начинала играть от одного движения мышью,
+    // когда человек просто читал страницу.
+    const evs = ['pointerdown', 'touchstart', 'touchend', 'click', 'keydown'];
+    function go() {
+      if (!userWantsOn) { cleanup(); return; }
+      unmuteNow();                       // снимаем mute с уже играющего потока (мгновенный звук)
+      if (started && !audio.muted) cleanup();
+    }
+    function cleanup() { evs.forEach(function (e) { document.removeEventListener(e, go, true); }); }
+    evs.forEach(function (e) { document.addEventListener(e, go, true); });
+  }
+
+  async function init() {
+    try {
+      const r = await fetch('/assets/music/playlist.json', { cache: 'force-cache' });
+      playlist = await r.json();
+    } catch (_) { playlist = { streams: [], tracks: [] }; }
+    if (!sessionStorage.getItem(SS_TRACK) && playlist.tracks && playlist.tracks.length) {
+      sessionStorage.setItem(SS_TRACK, String(Math.floor(Math.random() * playlist.tracks.length)));
+    }
+    ensureAudio();
+    setSrc();            // источник готов заранее — жест снимает mute синхронно
+    audio.muted = false;
+    play();              // 1) пробуем честный автозапуск со звуком
+    setTimeout(function () {
+      if (userWantsOn && (!audio || audio.paused)) mutedPrestart(); // 2) беззвучный предзапуск
+    }, 350);
+    armGesture();        // 3) первое касание где угодно → звук
+
+    // Уход со страницы (сворачивание/переключение вкладки): ПЛАВНО затухаем в ноль
+    // и СТАВИМ НА ПАУЗУ (не просто mute — иначе поток продолжает играть в фоне).
+    // Возврат на страницу: возобновляем и ПЛАВНО поднимаем громкость.
+    var hideTimer = null;
+    function fadeOutPause() {
+      if (!audio || audio.paused) return;
+      fade(0, 600);
+      clearTimeout(hideTimer);
+      hideTimer = setTimeout(function () { try { if (audio && !audio.paused) audio.pause(); } catch (e) {} }, 650);
+    }
+    function fadeInResume() {
+      clearTimeout(hideTimer);
+      if (!userWantsOn || !audio) return;
+      if (audio.paused) { audio.muted = false; var pr = audio.play(); if (pr && pr.catch) pr.catch(function () {}); }
+      fade(0.32, 1000);
+    }
+    document.addEventListener('visibilitychange', function () {
+      if (document.hidden) fadeOutPause(); else fadeInResume();
+    });
+    // Потеря фокуса окна (alt-tab на десктопе) — тоже мягко приглушаем и ставим паузу.
+    window.addEventListener('blur',  fadeOutPause);
+    window.addEventListener('focus', fadeInResume);
+    // Полный уход (закрытие/переход) — жёстко останавливаем, чтобы звук не «догонял».
+    window.addEventListener('pagehide', function () { try { if (audio) audio.pause(); } catch (e) {} });
+  }
+
+  // Включить/выключить фоновую музыку на лету (кнопка на странице и настройки профиля).
+  function setEnabled(on) {
+    userWantsOn = !!on;
+    try { localStorage.setItem(LS_OFF, on ? '0' : '1'); } catch (e) {}
+    if (on) { tries = 0; ensureAudio(); if (!playlist) { init(); } else { setSrc(); audio.muted = false; play(); } }
+    else if (audio) { fade(0, 300); setTimeout(function () { try { audio.pause(); } catch (e) {} }, 320); }
+    syncWidget();
+  }
+
+  /* ── Видимый переключатель на странице ────────────────────────────────────
+     Звук, который нельзя остановить, — это не только раздражение, но и прямое
+     нарушение доступности: человеку со скринридером фоновая музыка перекрывает
+     речь синтезатора, и уйти со страницы он может только закрыв вкладку. */
+  function syncWidget() {
+    var w = document.getElementById('mzRadio');
+    if (!w) return;
+    var on = userWantsOn && !!(audio && !audio.paused);
+    w.setAttribute('data-on', on ? '1' : '0');
+    var b = w.querySelector('.mz-radio-btn');
+    if (b) b.setAttribute('aria-label', on ? 'Выключить фоновую музыку' : 'Включить фоновую музыку');
+  }
+
+  function mountWidget() {
+    var w = document.getElementById('mzRadio');
+    if (!w) return;
+    var b = w.querySelector('.mz-radio-btn');
+    if (b && !b.dataset.bound) {
+      b.dataset.bound = '1';
+      b.addEventListener('click', function () { setEnabled(!userWantsOn || !(audio && !audio.paused)); });
+    }
+    if (audio) {
+      audio.addEventListener('playing', syncWidget);
+      audio.addEventListener('pause', syncWidget);
+    }
+    syncWidget();
+  }
+
+  function boot() { init(); setTimeout(mountWidget, 60); }
+  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', boot);
+  else boot();
+
+  window.MzMusic = { play: play, next: next, setEnabled: setEnabled, sync: syncWidget,
+    isPlaying: function () { return !!(audio && !audio.paused && audio.currentTime > 0); } };
+})();

@@ -1,0 +1,39 @@
+{
+ "streams": [
+  {
+   "url": "https://uk2.streamingpulse.com/ssl/vcr1",
+   "title": "Venice Classic Radio · без ведущих",
+   "live": true
+  },
+  {
+   "url": "https://live.musopen.org:8085/streamvbr0",
+   "title": "Musopen Classical · 24/7 без ведущих",
+   "live": true
+  },
+  {
+   "url": "https://stream.srg-ssr.ch/m/rsc_de/mp3_128",
+   "title": "Radio Swiss Classic",
+   "live": true
+  }
+ ],
+ "tracks": [
+  {"url": "https://archive.org/download/ClairDeLune_182/Debussy_Clair_de_Lune.mp3", "title": "Clair de Lune", "composer": "Debussy"},
+  {"url": "https://archive.org/download/lp_the-four-seasons_antonio-vivaldi_0/disc1/01.01.%20No.%201%20Spring%20-%201st%20Movt.%20Allegro%3B%202nd%20Movt.%20Largo%3B%203rd%20Movt.%20Allegro.mp3", "title": "Времена года — Весна", "composer": "Vivaldi"},
+  {"url": "https://archive.org/download/ChopinFourteenWaltzes/01%20No.%201%20in%20E%20flat%2C%20Op.%2018%20Grande%20valse%20brilliante.mp3", "title": "Большой блестящий вальс", "composer": "Chopin"},
+  {"url": "https://archive.org/download/TheBlueDanube/The%20Blue%20Danube.mp3", "title": "На прекрасном голубом Дунае", "composer": "Strauss"},
+  {"url": "https://archive.org/download/DvorakSymphonyNo.9fromTheNewWorld/01_Adagio-AlegroMolto.mp3", "title": "Симфония №9 «Из Нового Света»", "composer": "Dvorak"},
+  {"url": "https://archive.org/download/lp_peer-gynt_edvard-grieg-sir-john-barbirolli-halle/disc1/01.01.%20Overture.mp3", "title": "Пер Гюнт — Увертюра", "composer": "Grieg"},
+  {"url": "https://archive.org/download/SibeliusSocietyAlbumNo.1/01_tempoMoltoModerato.mp3", "title": "Album No. 1", "composer": "Sibelius"},
+  {"url": "https://archive.org/download/SchubertMomentsMusicaux1-6/01_no.1InCMajor.mp3", "title": "Музыкальные моменты", "composer": "Schubert"},
+  {"url": "https://archive.org/download/lp_bolero_maurice-ravel-eugene-ormandy-the-philad/disc1/01.01.%20Bolero.mp3", "title": "Болеро", "composer": "Ravel"},
+  {"url": "https://archive.org/download/EmperorWaltz_201309/Emperor%20Waltz.mp3", "title": "Императорский вальс", "composer": "Strauss"},
+  {"url": "https://archive.org/download/lp_grieg-piano-concerto-and-favorite-encores_arthur-rubinstein-alfred-wallenstein-edvar/disc1/01.01.%20Concerto%20In%20A%20Minor%2C%20Op.%2016%3A%20I.%20Allegro%20Molto%20Moderato.mp3", "title": "Концерт для фортепиано ля минор", "composer": "Grieg"},
+  {"url": "https://archive.org/download/lp_basic-library-of-the-worlds-greatest-music_nikolai-rimsky-korsakov-antonn-dvok-dvorak/disc1/01.01.%20Scherezade%2C%20Op.%2035%3A%203rd%20Movement%3A%20Andantino%2C%20Quasi%20Allegretto%3B%204th%20Movement%3A%20Allegro%20Molto.mp3", "title": "Шехеразада", "composer": "Rimsky-Korsakov"},
+  {"url": "https://archive.org/download/HaydnSymphonyNo.100military/01-JosephHaydnSymphonyNr100InGMajorMilitary-AdagioAllegro.mp3", "title": "Симфония №100 «Военная»", "composer": "Haydn"},
+  {"url": "https://archive.org/download/lp_paganini-saint-sans_zino-francescatti-niccol-paganini-camille/disc1/01.02.%20Concerto%20No.1%20In%20D%20Major%2C%20Op.%206%3A%20Second%20Movement%3A%20Adagio%20Expressivo.mp3", "title": "Концерт для скрипки №1", "composer": "Paganini"},
+  {"url": "https://archive.org/download/SuiteBergamasque-ClairDeLunedebussy/ClairdeluneDebussy.mp3", "title": "Бергамасская сюита", "composer": "Debussy"},
+  {"url": "https://archive.org/download/BeaucoupsDeDansesMacabres/01DanseMacabreOp.40-Orchestra.mp3", "title": "Пляска смерти", "composer": "Saint-Saens"},
+  {"url": "https://archive.org/download/78_wedding-march_symphony-orchestra-mendelssohn_gbia0012855a/Wedding%20March%20-%20Symphony%20Orchestra%20-%20Mendelssohn-restored.mp3", "title": "Свадебный марш", "composer": "Mendelssohn"},
+  {"url": "https://archive.org/download/sibelius-symphonies-1-7/01%20Symphony%20No.%201%20-%20I%20Andante%20ma%20non%20troppo%20-%20Allegro%20energico.mp3", "title": "Симфония №1", "composer": "Sibelius"}
+ ]
+}

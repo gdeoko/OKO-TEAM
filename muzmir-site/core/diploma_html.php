@@ -1,0 +1,663 @@
+<?php
+/**
+ * core/diploma_html.php — HTML-сборщик дипломов и благодарностей.
+ * Вёрстка и стили — 1:1 из эталонов Даниэля (docs/assets_daniel/diplom_laureat2.html
+ * и blagodarnost1.html): A4 портрет, Playfair Display, золотые градиенты, ряд
+ * гербов с большим центральным логотипом, белое растворение снизу, подписи
+ * Галиулина и Ильясова с полными регалиями, печати.
+ *
+ * diploma_html(array $c, array $a, array $opt=[]): string
+ *   $c — конкурс (name, type, diploma_bg, diploma_template);
+ *   $a — заявка (full_name, group_name, age_category, nomination, teacher,
+ *        institution, city, work_title, result, extra_diploma);
+ *   $opt: sample — шаблон-эталон с плейсхолдерами и знаком ОБРАЗЕЦ,
+ *         thanks — благодарность (текст признательности + рукописное ФИО),
+ *         edit   — data-el атрибуты для визуального редактора админки.
+ *
+ * Конфиг редактора (competitions.diploma_template, JSON):
+ *   {"els":{"<ключ>":{"dy":мм,"fs":pt,"hide":0|1}}, "overlay":0..100, "fade":мм}
+ *   overlay — затемнение фоновой картинки сверху (для читаемости золота/белого),
+ *   fade    — высота белого растворения снизу (зона подписей), по эталону 95 мм.
+ *   Ключи элементов: org, legal, logos, comptype, compname, support, dtype,
+ *                    degree, label, name, fields, bottom.
+ */
+declare(strict_types=1);
+
+/** Конфиг элемента из шаблона. */
+function _dh_cfg(array $tpl, string $key): array {
+    $e = $tpl['els'][$key] ?? [];
+    return ['dy' => (float)($e['dy'] ?? 0), 'fs' => isset($e['fs']) ? (float)$e['fs'] : null,
+            'hide' => !empty($e['hide'])];
+}
+
+/**
+ * Разбор поля «педагог» из заявки: если там несколько ФИО (через запятую/точку с запятой/
+ * «и»/с новой строки, либо просто несколько подряд идущих троек Фамилия-Имя-Отчество) —
+ * возвращает подпись «Педагоги» и список через запятую; для одного — «Педагог».
+ * @return array{0:string,1:string}  [подпись, значение]
+ */
+function _dh_teachers(string $raw): array {
+    $raw = trim(preg_replace('~\s+~u', ' ', $raw));
+    if ($raw === '') return ['Педагог', ''];
+    // 1) Явные разделители.
+    $parts = preg_split('~\s*(?:,|;|/|\bи\b|\n)\s*~u', $raw, -1, PREG_SPLIT_NO_EMPTY) ?: [];
+    $parts = array_values(array_filter(array_map('trim', $parts), static fn($p) => $p !== ''));
+    // 2) Разделителей нет, но несколько ФИО подряд (кратно 3 словам) — режем по тройкам.
+    if (count($parts) <= 1) {
+        $words = preg_split('~\s+~u', $raw, -1, PREG_SPLIT_NO_EMPTY) ?: [];
+        if (count($words) >= 6 && count($words) % 3 === 0) {
+            $parts = [];
+            for ($i = 0, $n = count($words); $i < $n; $i += 3) $parts[] = implode(' ', array_slice($words, $i, 3));
+        } else {
+            $parts = [$raw];
+        }
+    }
+    $label = count($parts) > 1 ? 'Педагоги' : 'Педагог';
+    return [$label, implode(', ', $parts)];
+}
+/** style="" для элемента: вертикальный сдвиг + кегль + скрытие. */
+/** Подобрать кегль (pt), чтобы текст влез в $availMm в ОДНУ строку (эмпирика по ширине em). */
+function _dh_fit_pt(string $s, float $maxPt, float $emW, float $availMm, float $minPt = 12.0): float {
+    $len = max(1, mb_strlen(trim($s)));
+    $fit = $availMm / ($len * $emW * 0.3528);   // 0.3528 мм/pt
+    return round(max($minPt, min($maxPt, $fit)), 1);
+}
+
+/**
+ * Ширина строки в мм при заданном кегле С УЧЁТОМ разрядки (letter-spacing).
+ * Разрядку раньше не считали — и «ЗА ВИРТУОЗНОЕ ИСПОЛНЕНИЕ» с letter-spacing 4px
+ * вылезало за лист и обрезалось на «…ИСПОЛНЕН».
+ */
+function _dh_text_mm(string $s, float $pt, float $emW, float $lsPx = 0.0): float {
+    $len = max(1, mb_strlen(trim($s)));
+    return $len * $emW * $pt * 0.3528 + max(0, $len - 1) * $lsPx * 0.264583;
+}
+
+/**
+ * Разбить строку на $lines сбалансированных строк ПО СЛОВАМ (слова не режутся).
+ * @return string[] ровно столько строк, сколько получилось (может быть меньше $lines)
+ */
+function _dh_split_lines(string $s, int $lines): array {
+    $words = preg_split('~\s+~u', trim($s), -1, PREG_SPLIT_NO_EMPTY) ?: [];
+    if ($lines <= 1 || count($words) <= 1) return [trim($s)];
+    if ($lines === 2) { $p = _dh_split_two($s); return $p[1] === '' ? [$p[0]] : $p; }
+
+    // Три и более: жадно набираем примерно равные по длине куски.
+    $total = mb_strlen(implode(' ', $words));
+    $target = $total / $lines;
+    $out = []; $cur = '';
+    foreach ($words as $w) {
+        $try = $cur === '' ? $w : $cur . ' ' . $w;
+        if ($cur !== '' && mb_strlen($try) > $target && count($out) < $lines - 1) { $out[] = $cur; $cur = $w; }
+        else $cur = $try;
+    }
+    if ($cur !== '') $out[] = $cur;
+    return $out;
+}
+
+/**
+ * ОДНО ФИО из поля «педагог».
+ *
+ * Правило владельца: одна благодарность = один педагог = одно ФИО. Двух имён на
+ * одном бланке быть не может. В заявке педагоги нередко перечислены через запятую
+ * или просто подряд — берём одного (по умолчанию первого), а при заказе используем
+ * ровно то ФИО, которое указал заказчик.
+ *
+ * @param int $idx какой по счёту педагог нужен (0 — первый)
+ */
+function _dh_one_person(string $raw, int $idx = 0): string {
+    [, $joined] = _dh_teachers($raw);
+    $list = array_values(array_filter(array_map('trim', explode(',', $joined)), static fn($x) => $x !== ''));
+    if (!$list) return trim($raw);
+    return $list[$idx] ?? $list[0];
+}
+
+/**
+ * АВТО-ВЁРСТКА строки диплома: слова НИКОГДА не режутся и текст НИКОГДА не вылезает.
+ *
+ * Порядок ровно такой, как просил владелец:
+ *   1) пробуем уместить в одну строку максимальным кеглем;
+ *   2) не влезло — переносим ПО СЛОВАМ на вторую строку;
+ *   3) не влезло и в две — уменьшаем кегль, пока не влезет.
+ *
+ * @param float $lsPx разрядка элемента в px (letter-spacing из CSS)
+ * @return array{html:string, css:string}
+ */
+function _dh_fit_block(string $text, float $maxPt, float $minPt, float $emW,
+                       float $availMm, float $lsPx = 0.0, int $maxLines = 2,
+                       int $wrapMinWords = 2): array {
+    $text = trim($text);
+    if ($text === '') return ['html' => '', 'css' => 'font-size:' . $maxPt . 'pt;'];
+
+    // Короткие строки (ФИО человека — обычно три слова) НЕ переносим: «Мельникова /
+    // Анастасия Вадимовна» читается как две разные строки. Такие ужимаем кеглем и
+    // держим в одну строку. Перенос включается от $wrapMinWords слов — это названия
+    // коллективов и спецноминации, где он как раз и нужен.
+    $words = count(preg_split('~\s+~u', $text, -1, PREG_SPLIT_NO_EMPTY) ?: []);
+    if ($words < $wrapMinWords) $maxLines = 1;
+
+    for ($pt = $maxPt; $pt >= $minPt - 0.01; $pt -= 0.5) {
+        for ($n = 1; $n <= $maxLines; $n++) {
+            $parts = _dh_split_lines($text, $n);
+            if (count($parts) < $n) continue;              // на меньшее число строк уже проверили
+            $fits = true;
+            foreach ($parts as $p) { if (_dh_text_mm($p, $pt, $emW, $lsPx) > $availMm) { $fits = false; break; } }
+            if (!$fits) continue;
+            $lh = $n > 1 ? 1.06 : 1.05;
+            return [
+                'html' => implode('<br>', array_map('h', $parts)),
+                'css'  => 'font-size:' . round($pt, 1) . 'pt;line-height:' . $lh . ';'
+                        . ($n > 1 ? 'white-space:normal;' : 'white-space:nowrap;'),
+            ];
+        }
+    }
+    // Даже минимальным кеглем не влезло — отдаём минимальный кегль с обычным переносом
+    // по словам: лучше три строки мелко, чем обрезанное слово.
+    $parts = _dh_split_lines($text, $maxLines);
+    return [
+        'html' => implode('<br>', array_map('h', $parts)),
+        'css'  => 'font-size:' . round($minPt, 1) . 'pt;line-height:1.06;white-space:normal;word-break:normal;',
+    ];
+}
+
+/**
+ * Степень в человеческом виде: арабская цифра → римская заглавная.
+ * В шрифтах тем (Cormorant Garamond, Forum и др.) цифры по умолчанию старостильные —
+ * «ЛАУРЕАТ 1 СТЕПЕНИ» печаталось с крошечной единицей вровень со строчными буквами.
+ * Римские I/II/III — обычные заглавные, поэтому смотрятся ровно с остальным текстом.
+ */
+function _dh_degree_roman(string $s): string {
+    $map = ['1' => 'I', '2' => 'II', '3' => 'III', '4' => 'IV', '5' => 'V'];
+    return preg_replace_callback('~(?<![0-9])([1-5])(?=\s*(СТЕПЕН|степен|МЕСТ|мест))~u',
+        static fn($m) => $map[$m[1]] ?? $m[1], $s) ?? $s;
+}
+/**
+ * Разбить длинное название на 2 сбалансированные строки: минимизируем длиннейшую строку,
+ * при равенстве — больше слов в первой строке (логичный перенос по смыслу).
+ * @return array{0:string,1:string}
+ */
+function _dh_split_two(string $s): array {
+    $words = preg_split('~\s+~u', trim($s), -1, PREG_SPLIT_NO_EMPTY) ?: [];
+    if (count($words) < 2) return [$s, ''];
+    $best = [$s, '']; $bestMax = PHP_INT_MAX; $bestW1 = 0;
+    for ($i = 1, $n = count($words); $i < $n; $i++) {
+        $l1 = implode(' ', array_slice($words, 0, $i));
+        $l2 = implode(' ', array_slice($words, $i));
+        $mx = max(mb_strlen($l1), mb_strlen($l2));
+        if ($mx < $bestMax || ($mx === $bestMax && $i > $bestW1)) { $bestMax = $mx; $best = [$l1, $l2]; $bestW1 = $i; }
+    }
+    return $best;
+}
+
+function _dh_style(array $cfg, ?float $baseFs = null): string {
+    $s = '';
+    if ($cfg['dy'] !== 0.0) $s .= 'transform:translateY(' . $cfg['dy'] . 'mm);';
+    if ($cfg['fs'] !== null && $baseFs !== null) $s .= 'font-size:' . $cfg['fs'] . 'pt;';
+    if ($cfg['hide']) $s .= 'display:none;';
+    return $s !== '' ? ' style="' . $s . '"' : '';
+}
+/** Как _dh_style, но добавляет авто-CSS ($autoCss) когда в шаблоне НЕТ ручного кегля. */
+function _dh_style2(array $cfg, string $autoCss = ''): string {
+    $s = '';
+    if (($cfg['dy'] ?? 0.0) !== 0.0) $s .= 'transform:translateY(' . $cfg['dy'] . 'mm);';
+    if (($cfg['fs'] ?? null) !== null) $s .= 'font-size:' . $cfg['fs'] . 'pt;'; else $s .= $autoCss;
+    if (!empty($cfg['hide'])) $s .= 'display:none;';
+    return $s !== '' ? ' style="' . $s . '"' : '';
+}
+
+/**
+ * Дизайн-тема диплома по названию конкурса: свои шрифты и цвета для названия,
+ * слова ДИПЛОМ/БЛАГОДАРНОСТЬ, степени и ФИО. Все шрифты — с кириллицей.
+ * Переопределяется ключом diploma_template.theme (cosmos|zenith|theatre|derzhava|classic).
+ */
+function diploma_theme_pick(array $c, array $tpl): array {
+    $themes = [
+        // Космос, звёзды: холодное сияние, серебристо-ледяные акценты к золоту.
+        'cosmos' => [
+            'fonts'   => 'Prata',
+            'ff_comp' => "'Prata',serif", 'ls_comp' => '4px',
+            'grad_comp'   => 'linear-gradient(180deg,#EAF7FF 0%,#BFE9FF 30%,#7FC9F0 55%,#CDEFFF 80%,#FFFFFF 100%)',
+            'grad_dtype'  => 'linear-gradient(180deg,#FFF6C4 0%,#FFD54F 18%,#FFC107 38%,#D4A017 52%,#B8860B 62%,#FFC107 80%,#FFF3B0 100%)',
+            'grad_degree' => 'linear-gradient(180deg,#FFFFFF 0%,#CFEFFF 35%,#8FD4F5 65%,#E8F9FF 100%)',
+            'name_color' => '#BFE9FF', 'ff_name' => "'Prata',serif",
+            'script_font' => 'Pacifico', 'ff_script' => "'Pacifico',cursive", 'script_fs' => 36, 'script_color' => '#D6F1FF',
+        ],
+        // Зенит, триумф: античная классика, тёплое торжественное золото.
+        'zenith' => [
+            'fonts'   => 'Forum',
+            'ff_comp' => "'Forum',serif", 'ls_comp' => '5px',
+            'grad_comp'   => 'linear-gradient(180deg,#FFF7D6 0%,#FFE082 25%,#E9C567 45%,#B8860B 58%,#E9C567 75%,#FFF3B0 100%)',
+            'grad_dtype'  => 'linear-gradient(180deg,#FFFBE8 0%,#FFE082 20%,#F5C542 40%,#C9971C 55%,#A67C10 65%,#E9C567 82%,#FFF7D6 100%)',
+            'grad_degree' => 'linear-gradient(180deg,#FFFFFF 0%,#FFF3C4 30%,#F0CE72 60%,#D4A017 85%,#FFE082 100%)',
+            'name_color' => '#FFE99C', 'ff_name' => "'Forum',serif",
+            'script_font' => 'Marck+Script', 'ff_script' => "'Marck Script',cursive", 'script_fs' => 40, 'script_color' => '#FFE99C',
+        ],
+        // Театр, сцена: бархат и шампань, тёплый кремовый свет рампы.
+        'theatre' => [
+            'fonts'   => 'Cormorant+Garamond:wght@600;700',
+            'ff_comp' => "'Cormorant Garamond',serif", 'ls_comp' => '3px',
+            'grad_comp'   => 'linear-gradient(180deg,#FFF6E8 0%,#FFE3B0 30%,#F2BE6A 55%,#D89A3D 70%,#FFDFA6 100%)',
+            'grad_dtype'  => 'linear-gradient(180deg,#FFF9EC 0%,#FFE7B8 22%,#F4C878 42%,#D89A3D 56%,#B87526 66%,#F2BE6A 82%,#FFF2D8 100%)',
+            'grad_degree' => 'linear-gradient(180deg,#FFFFFF 0%,#FFF0D6 32%,#F2CE8E 62%,#D89A3D 88%,#FFE3B0 100%)',
+            'name_color' => '#FFE9C4', 'ff_name' => "'Cormorant Garamond',serif",
+            'script_font' => 'Poiret+One', 'ff_script' => "'Poiret One',cursive", 'script_fs' => 42, 'script_color' => '#FFE3B0',
+        ],
+        // Держава: имперское золото с рубиновым отблеском, строгая антиква.
+        'derzhava' => [
+            'fonts'   => 'Old+Standard+TT:wght@700',
+            'ff_comp' => "'Old Standard TT',serif", 'ls_comp' => '4px',
+            'grad_comp'   => 'linear-gradient(180deg,#FFF3C4 0%,#FFD766 22%,#E8A93C 45%,#B8641B 60%,#E8A93C 78%,#FFE9A6 100%)',
+            'grad_dtype'  => 'linear-gradient(180deg,#FFF6D0 0%,#FFD766 20%,#F0AE3C 40%,#C4571E 55%,#A63E14 63%,#E8A93C 80%,#FFE9A6 100%)',
+            'grad_degree' => 'linear-gradient(180deg,#FFFFFF 0%,#FFEFC0 30%,#F0C868 60%,#D08A20 85%,#FFD766 100%)',
+            'name_color' => '#FFE9A6', 'ff_name' => "'Old Standard TT',serif",
+            'script_font' => 'Lobster', 'ff_script' => "'Lobster',cursive", 'script_fs' => 37, 'script_color' => '#FFD98F',
+        ],
+        // Классика эталона (фолбэк).
+        'classic' => [
+            'fonts'   => '',
+            'ff_comp' => "'Playfair Display',serif", 'ls_comp' => '3px',
+            'grad_comp'   => 'linear-gradient(180deg,#FFF3B0 0%,#FFD54F 20%,#C9A84C 45%,#8B6F1F 55%,#C9A84C 75%,#FFE082 100%)',
+            'grad_dtype'  => 'linear-gradient(180deg,#FFF3B0 0%,#FFD54F 15%,#FFC107 30%,#D4A017 45%,#A67C10 55%,#D4A017 70%,#FFC107 85%,#FFF3B0 100%)',
+            'grad_degree' => 'linear-gradient(180deg,#FFF3B0 0%,#FFD54F 25%,#D4A017 55%,#A67C10 75%,#FFC107 100%)',
+            'name_color' => '#FFE082', 'ff_name' => "'Playfair Display',serif",
+            'script_font' => 'Marck+Script', 'ff_script' => "'Marck Script',cursive", 'script_fs' => 40, 'script_color' => '#FFE082',
+        ],
+    ];
+    $key = (string)($tpl['theme'] ?? '');
+    if (!isset($themes[$key])) {
+        $n = mb_strtolower((string)($c['name'] ?? ''));
+        $key = 'classic';
+        if (preg_match('/росси|велич|держав|патриот|родин|отчизн|отечеств/u', $n)) $key = 'derzhava';
+        elseif (preg_match('/зенит|слав|вершин|олимп|триумф|пик /u', $n))          $key = 'zenith';
+        elseif (preg_match('/искусств|благо|сцен|театр|творч|арт/u', $n))          $key = 'theatre';
+        elseif (preg_match('/талант|звёзд|звезд|мир|космос|галакт|вселенн/u', $n)) $key = 'cosmos';
+    }
+    return $themes[$key] + ['key' => $key];
+}
+
+function diploma_html(array $c, array $a, array $opt = []): string {
+    $tpl = [];
+    if (!empty($c['diploma_template'])) {
+        $j = json_decode((string)$c['diploma_template'], true);
+        if (is_array($j)) $tpl = $j;
+    }
+    $sample = !empty($opt['sample']);
+    $thanks = !empty($opt['thanks']);
+    $isExtra = !empty($opt['extra']);   // ОТДЕЛЬНЫЙ дополнительный диплом (спецноминация)
+    $named  = !empty($opt['named']);    // именной диплом (в составе коллектива)
+    $edit   = !empty($opt['edit']);
+    // ЧИСТЫЙ оригинал: без подписей и печатей (их ставят живьём), НО с номером+QR.
+    $clean  = !empty($opt['clean']);
+
+    $base   = rtrim(cfgv('base_url'), '/');
+    $imgDip = $base . '/assets/img/diploma';
+    $bgUrl  = '';
+    if (!empty($c['diploma_bg'])) {
+        $p = (string)$c['diploma_bg'];
+        $bgUrl = preg_match('~^https?://~', $p) ? $p : $base . '/' . ltrim($p, '/');
+    }
+    // Затемнение нужно только поверх фотографии; на градиенте эталона — ноль.
+    $overlay = isset($tpl['overlay']) ? max(0, min(100, (int)$tpl['overlay'])) : ($bgUrl ? 55 : 0);
+    $fade    = isset($tpl['fade']) ? max(30, min(160, (int)$tpl['fade'])) : 105;
+    $T       = diploma_theme_pick($c, $tpl);
+
+    $isIntl   = ($c['type'] ?? '') === 'international';
+    $typeGenM = $isIntl ? 'международного' : 'всероссийского';   // род. падеж
+    $compType = ($isIntl ? 'Международный' : 'Всероссийский') . ' многожанровый конкурс';
+    $compName = mb_strtoupper(trim((string)($c['name'] ?? '')) ?: 'НАЗВАНИЕ КОНКУРСА');
+    $extra    = trim((string)($a['extra_diploma'] ?? ''));
+    // Основной диплом: степень = аттестационный результат (ГРАН-ПРИ/ЛАУРЕАТ/…).
+    // Дополнительный диплом ($isExtra): степень = спецноминация (ЗА АРТИСТИЗМ и т.п.).
+    $degree   = $isExtra
+        ? (mb_strtoupper($extra) ?: 'ЗА ТВОРЧЕСКИЕ ДОСТИЖЕНИЯ')
+        : _dh_degree_roman(mb_strtoupper(trim((string)($a['result'] ?? ''))) ?: 'ЛАУРЕАТ I СТЕПЕНИ');
+    $dtype    = $thanks ? 'БЛАГОДАРНОСТЬ' : 'ДИПЛОМ';
+    // НАГРАЖДАЕМЫЙ на дипломе:
+    //  • коллектив/ансамбль (is_group=1 или формация ансамбль/хор) → НАЗВАНИЕ КОЛЛЕКТИВА
+    //    (не ФИО того, кто подал заявку от коллектива!);
+    //  • благодарность педагогу ($thanks) → ФИО преподавателя;
+    //  • соло → ФИО участника (full_name).
+    $fullName  = trim((string)($a['full_name'] ?? ''));
+    $groupName = trim((string)($a['group_name'] ?? ''));
+    $isGroup   = ((int)($a['is_group'] ?? 0) === 1)
+        || in_array(mb_strtolower(trim((string)($a['formation'] ?? ''))), ['ансамбль','хор','коллектив','ensemble','choir'], true);
+    if ($thanks) {
+        // Благодарность — строго ОДНОМУ педагогу. Явно переданное ФИО (из заказа)
+        // имеет приоритет; иначе берём одного педагога из заявки, а не весь список.
+        $person = trim((string) ($opt['person'] ?? ''));
+        if ($person === '') {
+            $raw = trim((string) ($a['teacher'] ?? ''));
+            $person = $raw !== '' ? _dh_one_person($raw, (int) ($opt['person_idx'] ?? 0)) : '';
+        }
+        $name = ($person ?: $fullName) ?: 'Иванов Иван Иванович';
+    } elseif ($named) {
+        // Именной диплом участника в составе коллектива — ФИО участника (если задано), иначе коллектив.
+        $name = ($fullName !== '' ? $fullName : $groupName) ?: 'Иванов Иван Иванович';
+    } elseif ($isGroup && $groupName !== '') {
+        $name = $groupName;
+    } else {
+        $name = $fullName ?: 'Иванов Иван Иванович';
+    }
+    $year     = date('Y');
+
+    // --- СТРОГАЯ авто-подгонка вёрстки диплома ---
+    // Правило владельца: слова НИКОГДА не режутся и текст НИКОГДА не вылезает за лист.
+    // Сначала пробуем одну строку максимальным кеглем, не влезло — переносим ПО СЛОВАМ
+    // на вторую, не влезло и в две — уменьшаем кегль. Разрядка (letter-spacing) учтена:
+    // без неё «ЗА ВИРТУОЗНОЕ ИСПОЛНЕНИЕ» обрезалось на «…ИСПОЛНЕН».
+    $AVAIL     = 180.0;   // мм полезной ширины (лист 210 мм минус поля/рамки)
+    $degreeBlk = _dh_fit_block($degree, 33.0, 15.0, 0.56, $AVAIL, 4.0, 2);   // ls: .diploma-degree = 4px
+    $degreeHtml = $degreeBlk['html'];
+    $degreeCss  = $degreeBlk['css'];
+
+    // Награждаемый: коллектив — максимум 2 строки, соло/благодарность — тоже
+    // (длинное ФИО лучше перенести, чем ужать до нечитаемого).
+    // 4 слова — порог переноса: ФИО (Фамилия Имя Отчество) остаётся в одну строку,
+    // длинное название коллектива переносится на вторую.
+    $nameBlk  = _dh_fit_block($name, 29.0, 14.0, 0.56, $AVAIL, 0.0, 2, 4);
+    $nameHtml = $nameBlk['html'];
+    $nameCss  = $nameBlk['css'];
+
+    // Номер диплома + QR-код проверки подлинности (правый нижний угол).
+    // ЖЁСТКОЕ ПРАВИЛО: номер есть ВСЕГДА на всех типах (осн/доп/именной/благодарность),
+    // и на электронном, и на оригинале. Номер печатается независимо от QR.
+    $dipNumber = trim((string)($opt['number'] ?? ($a['number'] ?? '')));
+    if ($dipNumber === '') {
+        // страховка: номер не должен быть пустым НИКОГДА
+        $seed = (string)($a['id'] ?? '') . '|' . $name . '|' . $dtype . '|' . ($isExtra ? 'E' : ($thanks ? 'T' : ($named ? 'N' : 'M')));
+        $dipNumber = 'MM-' . date('Y') . '-' . strtoupper(substr(md5($seed), 0, 6));
+    }
+    $qrSvg = '';
+    if (!function_exists('qr_svg') && is_file(BASE_PATH . '/core/qr.php')) require_once BASE_PATH . '/core/qr.php';
+    if (function_exists('qr_svg')) {
+        $verifyUrl = $base . '/verify/' . rawurlencode($dipNumber);
+        try { $qrSvg = qr_svg($verifyUrl); } catch (\Throwable $e) { $qrSvg = ''; }
+    }
+
+    /* Поля: в образце — все строки эталона с плейсхолдерами (шаблон 1:1),
+     * в боевом дипломе — только заполненные из заявки. */
+    if ($sample && !$thanks) {
+        $fields = [
+            'Название коллектива'   => 'указать название коллектива (если есть)',
+            'Возрастная категория'  => '00-00 лет',
+            'Номинация'             => 'указать вашу номинацию',
+            'Педагог'               => 'Иванов Иван Иванович',
+            'Название учреждения'   => 'указать ваше учреждение и город',
+            'Конкурсный номер'      => 'Указать название вашего конкурсного номера',
+        ];
+    } else {
+        $fields = [];
+        // Всё строго по заявке. Контактное лицо (full_name) на диплом НЕ выносится —
+        // это тот, кто заполнял заявку, а не участник/руководитель/педагог.
+        // «Название коллектива» показываем отдельной строкой только если оно НЕ вынесено
+        // в главную строку награждаемого (для соло/благодарности/именного).
+        if (!empty($a['group_name']) && $name !== $a['group_name']) $fields['Название коллектива'] = $a['group_name'];
+        if (!empty($a['age_category'])) $fields['Возрастная категория'] = $a['age_category'];
+        if (!empty($a['nomination']))   $fields['Номинация'] = $a['nomination'];
+        // Педагог(и): если в поле несколько ФИО — «Педагоги: ФИО, ФИО» (множественное + запятые).
+        if (!empty($a['teacher'])) { [$tLabel, $tVal] = _dh_teachers((string) $a['teacher']); if ($tVal !== '') $fields[$tLabel] = $tVal; }
+        if (!empty($a['institution'])) {
+            // Учреждение + город БЕЗ дублирования: «Московский …» уже содержит город.
+            if (!function_exists('institution_with_city') && is_file(BASE_PATH . '/core/text_format.php'))
+                require_once BASE_PATH . '/core/text_format.php';
+            $fields['Название учреждения'] = function_exists('institution_with_city')
+                ? institution_with_city((string) $a['institution'], (string) ($a['city'] ?? ''))
+                : $a['institution'] . (!empty($a['city']) ? ', ' . $a['city'] : '');
+        }
+        if (!empty($a['work_title']))   $fields['Конкурсный номер'] = $a['work_title'];
+    }
+
+    /* Авто-сжатие блока полей: реальные данные бывают длиннее плейсхолдеров
+     * (двойные преподаватели, длинные коллективы). Оцениваем число строк при
+     * 12.5pt (~58 символов в строке) и пропорционально уменьшаем кегль,
+     * чтобы поля гарантированно не доставали до блока подписей. */
+    $fldLines = 0;
+    foreach ($fields as $fk => $fv) {
+        $fldLines += max(1, (int)ceil(mb_strlen($fk . ': ' . $fv) / 58));
+    }
+    $fldFs = 13.5; $fldLh = 1.62;
+    if ($fldLines > 6) {
+        $fldFs = max(10.0, round(13.5 * 6 / $fldLines, 1));
+        $fldLh = 1.45;
+    }
+
+    // Текст благодарности — эталон, с подстановкой конкурса.
+    $gratitude = 'Культурный центр «Музыкальный Мир» и оргкомитет ' . $typeGenM
+        . ' многожанрового конкурса культуры и искусства «' . trim((string)($c['name'] ?? 'Название конкурса'))
+        . '» при информационной поддержке Министерства культуры и образования субъектов Российской'
+        . ' Федерации и государственного портала «Pro Культура» выражает Вам благодарность за высокий'
+        . ' профессионализм и индивидуальный подход к раскрытию творческого потенциала Ваших учеников,'
+        . ' а так же за целеустремлённость и деятельность по приобщению творческих поколений к культуре'
+        . ' и искусству, посредством участия в международных культурных мероприятиях.';
+
+    $roleChairman = 'Лауреат международных и всероссийских конкурсов и фестивалей, председатель'
+        . ' оргкомитета ' . $typeGenM . ' конкурса культуры и искусства «'
+        . trim((string)($c['name'] ?? 'Название конкурса')) . '»';
+    $roleDirector = 'Лауреат международных и всероссийских конкурсов и фестивалей, заслуженный'
+        . ' деятель культуры, генеральный директор Культурного центра «Музыкальный Мир»';
+
+    $E = static fn(string $k) => _dh_cfg($tpl, $k);
+    $D = static fn(string $k) => $edit ? ' data-el="' . $k . '"' : '';
+
+    ob_start(); ?>
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<!-- Фиксированный «печатный» вьюпорт: телефон сам масштабирует лист A4 целиком -->
+<meta name="viewport" content="width=834">
+<title><?= h($dtype) ?> — <?= h($compName) ?></title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600;700;800;900&family=Manrope:wght@400;500;600;700;800&family=Marck+Script<?= $T['fonts'] !== '' ? '&family=' . $T['fonts'] : '' ?><?= ($T['script_font'] ?? '') !== '' && $T['script_font'] !== 'Marck+Script' ? '&family=' . $T['script_font'] : '' ?>&display=swap" rel="stylesheet">
+<style>
+/* ===== 1:1 из эталона diplom_laureat2.html / blagodarnost1.html ===== */
+*{box-sizing:border-box;margin:0;padding:0}
+@page{size:A4 portrait;margin:0}
+body{background:#444;font-family:'Manrope',sans-serif;padding:20px;min-height:100vh}
+.diploma{width:210mm;height:297mm;margin:0 auto;position:relative;overflow:hidden;color:#fff;box-shadow:0 20px 60px rgba(0,0,0,.5)}
+.bg-layer{position:absolute;inset:0;z-index:1;
+  <?php if ($bgUrl): ?>background:url('<?= h($bgUrl) ?>') center/cover no-repeat;
+  <?php else: ?>background:radial-gradient(ellipse at 50% 15%, rgba(40,70,130,.5) 0%, transparent 55%),linear-gradient(180deg,#0d1428 0%,#0a0f1f 40%,#0d1428 100%);<?php endif; ?>}
+/* Тонирование фото-фона (в эталоне на градиенте его нет; регулируется в редакторе) */
+<?php if ($overlay > 0 || $edit): ?>
+.bg-tone{position:absolute;inset:0;z-index:1;pointer-events:none;
+  background:linear-gradient(180deg, rgba(8,12,28,<?= number_format($overlay/100*.68,2,'.','') ?>) 0%, rgba(8,12,28,<?= number_format($overlay/100*.52,2,'.','') ?>) 45%, rgba(8,12,28,<?= number_format($overlay/100*.34,2,'.','') ?>) 65%, rgba(8,12,28,<?= number_format($overlay/100*.14,2,'.','') ?>) 78%, rgba(8,12,28,0) 88%)}
+<?php endif; ?>
+/* Засвет снизу: длинное мягкое растворение кверху, без белого «блока» */
+.bg-white-gradient{position:absolute;bottom:0;left:0;right:0;height:<?= $fade ?>mm;z-index:2;pointer-events:none;
+  background:linear-gradient(180deg, transparent 0%, rgba(248,248,252,.05) 16%, rgba(250,250,253,.16) 34%, rgba(252,252,254,.36) 52%, rgba(253,253,255,.62) 70%, rgba(255,255,255,.85) 86%, rgba(255,255,255,.95) 100%)}
+.content{position:relative;z-index:3;padding:8mm 12mm 0;height:100%}
+.header-legal{text-align:center;font-size:7.5pt;line-height:1.3;color:#fff;margin-bottom:3mm}
+.header-legal .org-name{font-family:'Playfair Display',serif;font-size:19pt;font-weight:900;margin-bottom:2mm;color:#fff}
+.header-legal .legal-text{font-weight:600;color:#fff}
+/* Ряд логотипов: светлые версии для тёмных фонов, выровнены по центру */
+.logos-row{display:flex;justify-content:space-between;align-items:center;margin-bottom:2mm;padding:0 2mm}
+.logos-row .logo{width:auto;filter:drop-shadow(0 2px 6px rgba(0,0,0,.45))}
+.logos-row .logo-prok{height:16mm}
+.logos-row .logo-medal{height:21mm}
+.logos-row .logo-natsproekty{height:19mm}
+.logos-row .logo-center{height:36mm;flex-shrink:0;margin:0 2mm}
+.competition-type{text-align:center;font-family:'Playfair Display',serif;font-size:15.5pt;font-weight:800;color:#fff;margin-bottom:1.5mm}
+.competition-name{text-align:center;font-family:<?= $T['ff_comp'] ?>;font-size:37pt;font-weight:900;
+  background:<?= $T['grad_comp'] ?>;
+  -webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;
+  letter-spacing:<?= $T['ls_comp'] ?>;margin-bottom:2mm;line-height:1.05;filter:drop-shadow(0 2px 4px rgba(0,0,0,.65))}
+.support-line{text-align:center;font-family:'Playfair Display',serif;font-size:11.5pt;font-weight:700;line-height:1.3;margin-bottom:3mm;padding:0 5mm;color:#fff}
+.diploma-type{text-align:center;font-family:<?= $T['ff_comp'] ?>;font-size:<?= $thanks ? 48 : 58 ?>pt;font-weight:900;
+  background:<?= $T['grad_dtype'] ?>;
+  -webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;
+  letter-spacing:5px;margin-bottom:1mm;filter:drop-shadow(0 3px 6px rgba(0,0,0,.7));line-height:1}
+/* Цифры — только «прописные» (lining): в антиквах тем цифры по умолчанию
+   старостильные, и «1 СТЕПЕНИ» печаталось крошечной единицей. */
+.diploma-degree,.awarded-name,.awarded-name-script,.field-list,.diploma-type{
+  font-variant-numeric:lining-nums;font-feature-settings:"lnum" 1,"onum" 0}
+.diploma-degree{text-align:center;font-family:<?= $T['ff_comp'] ?>;font-size:33pt;font-weight:900;
+  background:<?= $T['grad_degree'] ?>;
+  -webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;
+  letter-spacing:4px;margin-bottom:2.5mm;filter:drop-shadow(0 2px 5px rgba(0,0,0,.7));line-height:1}
+.extra-award{text-align:center;font-family:'Playfair Display',serif;font-size:14.5pt;font-weight:800;color:<?= $T['name_color'] ?>;margin:-1.5mm 0 2.5mm;filter:drop-shadow(0 1px 3px rgba(0,0,0,.6))}
+.awarded-label{text-align:center;font-family:'Playfair Display',serif;font-size:15pt;font-weight:700;color:#fff;margin-bottom:1mm}
+.awarded-name{text-align:center;font-family:<?= $T['ff_name'] ?>;font-size:29pt;font-weight:900;color:<?= $T['name_color'] ?>;margin-bottom:3mm;filter:drop-shadow(0 2px 4px rgba(0,0,0,.6))}
+.awarded-name-script{text-align:center;font-family:<?= $T['ff_script'] ?>;font-size:<?= $T['script_fs'] ?>pt;color:<?= $T['script_color'] ?>;margin-bottom:3mm;filter:drop-shadow(0 2px 6px rgba(0,0,0,.7));line-height:1}
+.field-list{padding:0 6mm;font-family:'Playfair Display',serif;font-size:<?= $fldFs ?>pt;font-weight:700;line-height:<?= $fldLh ?>;text-align:center}
+.field-list .field{color:#fff;filter:drop-shadow(0 1px 3px rgba(0,0,0,.5))}
+/* Текст благодарности сжат так, чтобы гарантированно не доставать до подписей */
+.gratitude-text{padding:0 7mm;font-family:'Playfair Display',serif;font-size:11.5pt;font-weight:700;line-height:1.42;text-align:center;color:#fff;filter:drop-shadow(0 1px 3px rgba(0,0,0,.5))}
+/* Подписи прижаты ниже и собраны компактнее: регалии набираются в ТРИ строки
+ * вместо четырёх, межстрочный интервал и промежуток между двумя подписями меньше.
+ * Это освобождает ~14 мм по вертикали — длинная заявка (много полей, длинные
+ * названия) больше не упирается в подписи и печати. */
+.bottom-block{position:absolute;bottom:7mm;left:14mm;right:14mm;z-index:4;color:#1a1a2a}
+.signatures-grid{display:grid;grid-template-columns:1fr 82mm;grid-template-rows:16mm 19mm;gap:2mm 4mm;align-items:center}
+.sig-text-block{font-family:'Manrope',sans-serif;font-size:8.4pt;line-height:1.2;padding-right:2mm}
+.sig-text-block .sig-name{font-weight:800;text-decoration:underline;margin-bottom:.6mm;color:#1a1a2a;font-size:10pt}
+.sig-text-block .sig-role{font-weight:600;color:#1a1a2a}
+.sig-visual-block{display:grid;grid-template-columns:1fr auto;gap:2mm;align-items:center;position:relative;height:100%}
+/* Штамп председателя поднят: круглая печать касается его лишь слегка снизу */
+.chairman-stamp{width:auto;max-width:55mm;max-height:20mm;display:block;justify-self:end;transform:translateY(-8mm)}
+.big-seal{width:40mm;height:auto;display:block;justify-self:end;opacity:.92;margin-top:-14mm}
+/* Росписи увеличены в 1.8 раза через scale — позиция не сдвигается */
+.sig-signature-1{width:26mm;height:auto;display:block;transform:scale(1.8);transform-origin:center right}
+.sig-signature-2{width:28mm;height:auto;display:block;transform:scale(1.8);transform-origin:center right}
+.footer-city{text-align:center;margin-top:2.5mm;font-family:'Playfair Display',serif;font-size:12pt;font-weight:700;color:#1a1a2a}
+/* Номер диплома + QR проверки подлинности — правый нижний угол. */
+.dip-verify{position:absolute;right:7mm;bottom:6mm;z-index:6;display:flex;flex-direction:column;align-items:center;gap:.7mm}
+.dip-verify .qr{width:15mm;height:15mm;background:#fff;padding:1mm;border-radius:1.5mm;box-shadow:0 1px 4px rgba(0,0,0,.25)}
+.dip-verify .qr svg{width:100%;height:100%;display:block}
+.dip-verify .num{font-family:'Manrope',sans-serif;font-size:7pt;font-weight:800;color:#1a1a2a;letter-spacing:.3px}
+.dip-verify .lbl{font-family:'Manrope',sans-serif;font-size:5.6pt;font-weight:600;color:#3a3a4a;text-transform:uppercase;letter-spacing:.4px}
+/* Водяной знак «ОБРАЗЕЦ» повторяется ПО ВСЕМУ ПОЛЮ диплома (перекрёстно, по диагонали). */
+.sample-mark{position:absolute;inset:-20%;z-index:9;pointer-events:none;overflow:hidden;
+  display:flex;flex-wrap:wrap;align-content:center;justify-content:center;gap:9mm 18mm;
+  transform:rotate(-30deg)}
+.sample-mark span{font-family:'Playfair Display',serif;font-weight:900;font-size:26pt;letter-spacing:8px;
+  color:rgba(200,40,60,.13);white-space:nowrap;text-transform:uppercase}
+/* Рамка «ОБРАЗЕЦ» по всему периметру диплома. */
+.sample-frame{position:absolute;inset:5mm;z-index:9;pointer-events:none;border:3px dashed rgba(200,40,60,.28);border-radius:4mm}
+<?php if ($edit): ?>[data-el]{cursor:grab}[data-el]:hover{outline:1px dashed rgba(255,215,80,.85)}<?php endif; ?>
+@media print{body{background:#fff;padding:0}.diploma{box-shadow:none;margin:0}}
+</style>
+</head>
+<body>
+<div class="diploma">
+  <div class="bg-layer"></div>
+  <?php if ($overlay > 0 || $edit): ?><div class="bg-tone"></div><?php endif; ?>
+  <div class="bg-white-gradient"></div>
+  <?php if ($sample): ?><div class="sample-frame"></div><div class="sample-mark"><?php for ($si = 0; $si < 60; $si++) echo '<span>ОБРАЗЕЦ</span>'; ?></div><?php endif; ?>
+
+  <div class="content">
+    <?php $e = $E('org'); $e2 = $E('legal'); ?>
+    <div class="header-legal">
+      <div class="org-name"<?= $D('org') . _dh_style($e, 17.0) ?>>Культурный центр «Музыкальный Мир»</div>
+      <div class="legal-text"<?= $D('legal') . _dh_style($e2, 7.5) ?>>
+        Зарегистрирован в официальном российском федеральном органе исполнительной власти Роскомнадзор от 24.06.2025 №094084<br>
+        Конкурс проводится на основании закона "Гражданский кодекс Российской Федерации (часть вторая)" от 26.01.1996<br>
+        N 14-ФЗ (ред. от 01.07.2021, с изм. от 08.07.2021) (с изм. и доп., вступ. в силу с 01.01.2022) ГК РФ Глава 57 - публичный конкурс.<br>
+        Выполнение указа Президента РФ «Об утверждении Основ государственной культурной политики» № 808 от 24 декабря 2014 года.
+      </div>
+    </div>
+
+    <?php $e = $E('logos'); ?>
+    <?php /* Порядок Даниэля: Про Культура — Минпросвещения — Минкультуры —
+             Культурного центра «Музыкальный Мир» (центр) — Союз композиторов — Минобразования —
+             Нацпроекты «Культура». Всего 7. */ ?>
+    <div class="logos-row"<?= $D('logos') . _dh_style($e) ?>>
+      <img class="logo logo-prok" src="<?= $imgDip ?>/logo_prokultura.png" alt="">
+      <img class="logo logo-medal" src="<?= $imgDip ?>/logo_minprosvet.png" alt="">
+      <img class="logo logo-medal" src="<?= $imgDip ?>/logo_minkult.png" alt="">
+      <img class="logo logo-center" src="<?= $imgDip ?>/logo_mm_badge.png" alt="">
+      <img class="logo logo-medal" src="<?= $imgDip ?>/logo_soyuzkomp.png" alt="">
+      <img class="logo logo-medal" src="<?= $imgDip ?>/logo_minobr.png" alt="">
+      <img class="logo logo-natsproekty" src="<?= $imgDip ?>/logo_natsproekty2.png" alt="">
+    </div>
+
+    <?php $e = $E('comptype'); ?>
+    <div class="competition-type"<?= $D('comptype') . _dh_style($e, 15.0) ?>><?= h($compType) ?></div>
+    <?php $e = $E('compname'); ?>
+    <div class="competition-name"<?= $D('compname') . _dh_style($e, 30.0) ?>><?= h($compName) ?></div>
+    <?php $e = $E('support'); ?>
+    <div class="support-line"<?= $D('support') . _dh_style($e, 12.0) ?>>
+      При информационной поддержке Министерства культуры и образования<br>
+      субъектов Российской Федерации и государственного портала «Pro Культура»
+    </div>
+
+    <?php $e = $E('dtype'); ?>
+    <div class="diploma-type"<?= $D('dtype') . _dh_style($e, 48.0) ?>><?= h($dtype) ?></div>
+
+    <?php if (!$thanks): ?>
+      <?php $e = $E('degree'); ?>
+      <div class="diploma-degree"<?= $D('degree') . _dh_style2($e, $degreeCss) ?>><?= $degreeHtml ?></div>
+      <?php /* Доп. награда печатается ОТДЕЛЬНЫМ дипломом (diploma_html(...,['extra'=>true])), не строкой здесь. */ ?>
+
+      <?php $e = $E('label'); ?>
+      <div class="awarded-label"<?= $D('label') . _dh_style($e, 15.0) ?>>награждается:</div>
+      <?php $e = $E('name'); ?>
+      <div class="awarded-name"<?= $D('name') . _dh_style2($e, $nameCss) ?>><?= $nameHtml ?></div>
+
+      <?php $e = $E('fields'); ?>
+      <div class="field-list"<?= $D('fields') . _dh_style($e, 12.5) ?>>
+        <?php foreach ($fields as $k => $v): ?>
+          <div class="field"><strong><?= h($k) ?>:</strong> <?= h((string)$v) ?></div>
+        <?php endforeach; ?>
+      </div>
+    <?php else: ?>
+      <?php $e = $E('label'); ?>
+      <div class="awarded-label"<?= $D('label') . _dh_style($e, 15.0) ?>>награждается:</div>
+      <?php $e = $E('name'); ?>
+      <?php /* Благодарность — всегда ОДНО ФИО, поэтому и здесь порог переноса 4 слова. */
+            $scriptBlk = _dh_fit_block($name, (float) $T['script_fs'], 16.0, 0.5, $AVAIL, 0.0, 2, 4); ?>
+      <div class="awarded-name-script"<?= $D('name') . _dh_style2($e, $scriptBlk['css']) ?>><?= $scriptBlk['html'] ?></div>
+
+      <?php $e = $E('fields'); ?>
+      <div class="gratitude-text"<?= $D('fields') . _dh_style($e, 11.5) ?>>
+        <?= h($gratitude) ?><br><br>
+        Желаем Вам творческих успехов, процветания и новых побед!
+      </div>
+    <?php endif; ?>
+  </div>
+
+  <?php $e = $E('bottom'); ?>
+  <div class="bottom-block"<?= $D('bottom') . _dh_style($e) ?>>
+    <div class="signatures-grid">
+      <div class="sig-text-block">
+        <div class="sig-name">Галиулин Данил Дамирович</div>
+        <div class="sig-role"><?= h($roleChairman) ?></div>
+      </div>
+      <div class="sig-visual-block">
+        <?php if (!$clean): ?>
+          <img class="chairman-stamp" src="<?= $imgDip ?>/stamp.png" alt="">
+          <img class="sig-signature-1" src="<?= $imgDip ?>/sig1.png" alt="">
+        <?php endif; ?>
+      </div>
+      <div class="sig-text-block">
+        <div class="sig-name">Ильясов Альберт Ильясович</div>
+        <div class="sig-role"><?= h($roleDirector) ?></div>
+      </div>
+      <div class="sig-visual-block">
+        <?php if (!$clean): ?>
+          <img class="big-seal" src="<?= $imgDip ?>/seal.png" alt="">
+          <img class="sig-signature-2" src="<?= $imgDip ?>/sig2.png" alt="">
+        <?php endif; ?>
+      </div>
+    </div>
+    <div class="footer-city">Российская Федерация, город Москва - <?= $year ?></div>
+  </div>
+  <?php /* Номер + QR + «проверка подлинности» — ВСЕГДА (номер даже без QR). */ ?>
+  <div class="dip-verify">
+    <?php if ($qrSvg !== ''): ?><div class="qr"><?= $qrSvg ?></div><?php endif; ?>
+    <div class="num">№ <?= h($dipNumber) ?></div>
+    <div class="lbl">проверка подлинности</div>
+  </div>
+</div>
+</body>
+</html>
+<?php
+    return (string)ob_get_clean();
+}
+
+/** Данные для шаблона-образца (плейсхолдеры эталона). */
+function diploma_sample_app(): array {
+    return ['full_name' => 'Иванов Иван Иванович', 'result' => 'ЛАУРЕАТ 1 СТЕПЕНИ',
+            'extra_diploma' => 'ЗА АРТИСТИЗМ'];
+}
