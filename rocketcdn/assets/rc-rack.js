@@ -423,9 +423,21 @@ g.RCRack = {
     } catch (e) { return null; }
     if (matchMedia("(prefers-reduced-motion: reduce)").matches) return null;
     if ((navigator.deviceMemory || 4) <= 2) return null;
+    if (g.RC_GL && !g.RC_GL.take()) return null;
     try {
-      return new Rack(canvas, opts);
+      var made = new Rack(canvas, opts);
+      if (g.RC_GL) g.RC_GL.guard(canvas, function () {
+        made.stop();
+        var box = canvas.parentElement;
+        if (box) box.style.display = "none";
+      }, function () {
+        var box = canvas.parentElement;
+        if (box) box.style.display = "";
+        made.start();
+      });
+      return made;
     } catch (e) {
+      if (g.RC_GL) g.RC_GL.give();
       if (g.RC_track) g.RC_track("jserr", "rack: " + (e.message || e), true);
       return null;
     }

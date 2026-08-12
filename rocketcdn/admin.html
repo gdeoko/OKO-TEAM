@@ -259,6 +259,10 @@
         <div class="form-msg" id="sysMsg"></div>
       </div>
       <div class="panel">
+        <h3>Что происходит сейчас</h3>
+        <div class="kv" id="sysLive"></div>
+      </div>
+      <div class="panel">
         <h3>Журнал ошибок сервера</h3>
         <div class="field"><textarea class="code" id="sysLog" readonly style="min-height:260px"></textarea></div>
       </div>
@@ -723,6 +727,21 @@ function loadSys() {
     $("#sysKv").innerHTML = items.map(function (i) {
       return "<b>" + esc(i[0]) + '</b><span><i class="' + (i[1] ? "ok-dot" : "bad-dot") + '"></i>' + (i[1] ? "да" : "нет") + "</span>";
     }).join("");
+
+    /* Что происходит на площадке: видно, не заходя на сервер */
+    function row(k, v, bad) {
+      return "<b>" + esc(k) + '</b><span>' + (bad ? '<i class="bad-dot"></i>' : "") + esc(String(v)) + "</span>";
+    }
+    var live = [];
+    live.push(row("Заявок без ответа", r.leads_new || 0, (r.leads_new || 0) > 0));
+    if (r.leads_wait_hours) live.push(row("Самая старая ждёт", r.leads_wait_hours + " ч", r.leads_wait_hours >= 4));
+    live.push(row("Последний отчёт", r.cron_last || "ещё не было", !r.cron_last));
+    live.push(row("Резервных копий", (r.backup_count || 0) + " шт, последняя " + (r.backup_last || "-"), !r.backup_count));
+    if (r.cert_days != null) live.push(row("Сертификат", r.cert_days + " дн. до конца", r.cert_days <= 14));
+    if (r.disk_free_gb != null) live.push(row("Свободно на диске", r.disk_free_gb + " ГБ", r.disk_free_gb < 3));
+    if (r.tg_ip) live.push(row("Адрес Телеграма", r.tg_ip, false));
+    var box = $("#sysLive");
+    if (box) box.innerHTML = live.join("");
   });
   api("errors").then(function (r) {
     if (r.ok) $("#sysLog").value = (r.log || []).join("") || "Пусто, ошибок не было.";

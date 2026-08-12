@@ -52,6 +52,93 @@ if ($force || ($hour >= (int)rc_cfg('report_hour', 9) && ($state['daily'] ?? '')
     rc_json_write($flagFile, $state);
 }
 
+/* ── Заявка ждёт ответа ─────────────────────────────────────
+   Заявка приходит и лежит. Владелец может её проглядеть в потоке
+   сообщений, поэтому раз в час смотрим, не забыли ли кого. */
+$remindAfter = (int)rc_cfg('lead_remind_hours', 3) * 3600;
+if ($remindAfter > 0 && $hour >= 9 && $hour <= 21) {
+    $store = rc_json_read(RC_LEADS, []);
+    $stale = [];
+    foreach ((array)($store['items'] ?? []) as $l) {
+        if (($l['status'] ?? 'new') !== 'new') continue;
+        /* ts лежит строкой вида 2026-08-12 11:30:00 */
+        $ts = strtotime((string)($l['ts'] ?? ''));
+        if (!$ts || time() - $ts < $remindAfter) continue;
+        if (in_array($l['id'] ?? '', (array)($state['reminded'] ?? []), true)) continue;
+        $stale[] = $l;
+    }
+    if ($stale) {
+        $txt = "<b>Заявки без ответа</b>\n\n";
+        foreach (array_slice($stale, 0, 8) as $l) {
+            $h = max(1, (int)round((time() - strtotime((string)$l['ts'])) / 3600));
+            $txt .= '· ' . htmlspecialchars((string)($l['name'] ?? '-')) . ' · ' .
+                    htmlspecialchars((string)($l['contact'] ?? '-')) . ' · ждёт ' . $h . " ч\n";
+        }
+        if (count($stale) > 8) $txt .= 'и ещё ' . (count($stale) - 8) . "\n";
+        $txt .= "\nОткрыть: " . rc_cfg('site_url') . '/admin.html';
+        rc_notify($txt, null, 'tg_topic_form');
+
+        $done = (array)($state['reminded'] ?? []);
+        foreach ($stale as $l) $done[] = $l['id'] ?? '';
+        $state['reminded'] = array_slice(array_values(array_unique($done)), -200);
+        rc_json_write($flagFile, $state);
+    }
+}
+
+/* ── Здоровье площадки ──────────────────────────────────────
+   Раз в сутки смотрим на то, что тихо ломается и о чём узнают
+   последними: место на диске, срок сертификата, право на запись. */
+if (($state['health'] ?? '') !== $today && ($force || $hour === 10)) {
+    $bad = [];
+
+    $free = @disk_free_space(RC_DATA);
+    $all  = @disk_total_space(RC_DATA);
+    if ($free && $all && $free / $all < 0.12) {
+        $bad[] = 'на диске осталось ' . round($free / 1073741824, 1) . ' ГБ из ' . round($all / 1073741824) . ' ГБ';
+    }
+
+    if (!is_writable(RC_DATA)) $bad[] = 'папка с заявками закрыта на запись, форма не сохранит ничего';
+
+    /* Срок сертификата пишет корневой скрипт в cert.json */
+    $cert = rc_json_read(RC_DATA . '/cert.json', []);
+    if (!empty($cert['until'])) {
+        $days = (int)floor(((int)$cert['until'] - time()) / 86400);
+        if ($days <= 14) $bad[] = 'сертификат кончается через ' . $days . ' дн.';
+    }
+
+    $log = is_file(RC_LOG) ? (string)@file_get_contents(RC_LOG) : '';
+    $tgErr = substr_count($log, 'TG ');
+    if ($tgErr > 20) $bad[] = 'в журнале ' . $tgErr . ' сбоев связи с Телеграмом';
+
+    if ($bad) {
+        rc_notify("<b>Площадка просит внимания</b>\n\n· " . implode("\n· ", $bad), null, 'tg_topic_error');
+    }
+    $state['health'] = $today;
+    rc_json_write($flagFile, $state);
+}
+
+/* ── Резервная копия заявок ─────────────────────────────────
+   Заявки живут в файлах, и это единственная незаменимая вещь на
+   площадке. Держим четырнадцать суточных копий рядом, но вне
+   корня сайта. */
+if (($state['backup'] ?? '') !== $today) {
+    $dir = RC_DATA . '/backup';
+    if (!is_dir($dir)) @mkdir($dir, 0775, true);
+    $snap = [
+        'date'   => $today,
+        'leads'  => rc_json_read(RC_LEADS, []),
+        'binds'  => rc_json_read(RC_DATA . '/bindings.json', []),
+        'content'=> rc_json_read(RC_CONTENT, []),
+    ];
+    @file_put_contents($dir . '/' . $today . '.json',
+        json_encode($snap, JSON_UNESCAPED_UNICODE | JSON_PRETTY_PRINT), LOCK_EX);
+    foreach (glob($dir . '/*.json') as $f) {
+        if (strtotime(basename($f, '.json')) < strtotime('-14 day')) @unlink($f);
+    }
+    $state['backup'] = $today;
+    rc_json_write($flagFile, $state);
+}
+
 /* ── Уборка раз в сутки ─────────────────────────────────── */
 if (($state['clean'] ?? '') !== $today) {
     /* Статистика старше 180 дней не нужна */

@@ -275,9 +275,23 @@ function initGlobes() {
     /* На совсем слабых устройствах два контекста WebGL сразу (ракета и
        глобус) не тянутся, поэтому там остаётся плоская версия. */
     var weak = (navigator.deviceMemory || 4) <= 2 || (navigator.hardwareConcurrency || 4) <= 2;
-    if (window.RCGlobe3D && window.THREE && !weak) {
+    var room = !window.RC_GL || window.RC_GL.take();
+    if (window.RCGlobe3D && window.THREE && !weak && room) {
       try { made = new window.RCGlobe3D(mapCv, opts); } catch (e) { made = null; }
-    }
+      if (!made && window.RC_GL) window.RC_GL.give();
+      else if (made && window.RC_GL) {
+        /* Отобрали контекст - молча возвращаемся на плоский глобус */
+        window.RC_GL.guard(mapCv, function () {
+          try { made.stop(); } catch (e) {}
+          var back = new RCGlobe(mapCv, opts);
+          var i = window.__globes.indexOf(made);
+          if (i >= 0) window.__globes[i] = back;
+          globe = back;
+          back.start();
+          mapCv.style.opacity = "";
+        });
+      }
+    } else if (room && window.RC_GL) { window.RC_GL.give(); }
     globe = made || new RCGlobe(mapCv, opts);
     window.__globes.push(globe);
   }

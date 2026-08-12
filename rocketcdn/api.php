@@ -408,6 +408,38 @@ if ($action === 'selftest') {
     $res['tg_configured']   = (bool)rc_cfg('tg_token');
     $res['chat_bound']      = (bool)rc_cfg('tg_chat');
     $res['data_writable']   = is_writable(RC_DATA);
+
+    /* Что важно видеть владельцу, не заходя на сервер */
+    $st = rc_json_read(RC_DATA . '/cron_state.json', []);
+    $res['cron_last']  = (string)($st['daily'] ?? '');
+    $res['backup_last']= (string)($st['backup'] ?? '');
+    $bk = glob(RC_DATA . '/backup/*.json');
+    $res['backup_count'] = $bk ? count($bk) : 0;
+
+    $store = rc_json_read(RC_LEADS, []);
+    $new = 0; $oldest = 0;
+    foreach ((array)($store['items'] ?? []) as $l) {
+        if (($l['status'] ?? 'new') !== 'new') continue;
+        $new++;
+        $ts = strtotime((string)($l['ts'] ?? ''));
+        if ($ts && (!$oldest || $ts < $oldest)) $oldest = $ts;
+    }
+    $res['leads_new'] = $new;
+    $res['leads_wait_hours'] = $oldest ? (int)round((time() - $oldest) / 3600) : 0;
+
+    /* Дату кладёт корневой скрипт: папку letsencrypt сайту не открываем,
+       рядом с сертификатом лежит закрытый ключ */
+    $res['cert_days'] = null;
+    $cert = rc_json_read(RC_DATA . '/cert.json', []);
+    if (!empty($cert['until'])) {
+        $res['cert_days'] = (int)floor(((int)$cert['until'] - time()) / 86400);
+        $res['cert_names'] = (string)($cert['names'] ?? '');
+    }
+
+    $free = @disk_free_space(RC_DATA);
+    $res['disk_free_gb'] = $free ? round($free / 1073741824, 1) : null;
+
+    $res['tg_ip'] = function_exists('rc_tg_pin_get') ? rc_tg_pin_get() : '';
     if (inp('send')) {
         $res['mail_sent'] = rc_mail(rc_cfg('mail_to'), 'Проверка связи · Rocket CDN',
             rc_mail_tpl('Проверка связи', ['Статус' => 'Почта настроена и работает'], 'Письмо отправлено из админки сайта.'));

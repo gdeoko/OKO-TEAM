@@ -842,11 +842,20 @@ g.RCRocket = {
       if (!ctx) return null;
     } catch (e) { return null; }
     if (matchMedia("(prefers-reduced-motion: reduce)").matches) return null;
+    if (g.RC_GL && !g.RC_GL.take()) return null;
     try {
       var made = new Rocket(canvas);
       g.RC_ROCKET = made;
+      if (g.RC_GL) g.RC_GL.guard(canvas, function () {
+        made.stop();
+        document.documentElement.classList.remove("has-rocket");
+      }, function () {
+        document.documentElement.classList.add("has-rocket");
+        made.start();
+      });
       return made;
     } catch (e) {
+      if (g.RC_GL) g.RC_GL.give();
       if (g.RC_track) g.RC_track("jserr", "rocket: " + (e.message || e), true);
       return null;
     }
