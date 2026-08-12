@@ -231,9 +231,13 @@ function lm_mail_support(array $r, string $number, array $free): array {
             'Логотип Культурного центра «Музыкальный Мир».'];
 
     // Документ собираем файлом: он уходит вложением и его же скачивают по кнопке.
+    // Бланк строгий: белая бумага, без рамки и выделенных плашек — в ведомстве
+    // документ читают как документ.
     $doc = lm_render($number, [
-        'title'       => 'Обращение',
-        'addressee'   => array_values(array_filter([$role !== '' ? $role : $org, $fio])),
+        'kind'        => 'support',
+        'plain'       => true,
+        'title'       => 'Об информационной поддержке всероссийского творческого конкурса',
+        'addressee'   => lm_addressee($role, $org, $fio),
         'salutation'  => lm_salut($fio),
         'body'        => ol_body_support($free, $o),
         'attachments' => $att,
@@ -451,6 +455,60 @@ function lm_mail_thanks(array $inst, string $number, int $works = 0, array $teac
 }
 
 /* ── Мелочи обращения по имени ─────────────────────────────────────────── */
+
+/**
+ * РЕКВИЗИТ «АДРЕСАТ» ПО ПРАВИЛАМ ДЕЛОПРОИЗВОДСТВА (ГОСТ Р 7.0.97-2016).
+ *
+ * Должность с наименованием организации — в дательном падеже, ниже отдельной
+ * строкой фамилия с инициалами, инициалы ПЕРЕД фамилией. «Иванова Мария
+ * Петровна» в реквизите адресата не пишут: там «Ивановой М. П.».
+ *
+ * Когда должность неизвестна, остаётся одна организация — это допустимо, а вот
+ * выдумывать должность нельзя: письмо уйдёт не тому и вернётся с отказом.
+ *
+ * @return array<int,string> строки реквизита сверху вниз
+ */
+function lm_addressee(string $role, string $org, string $fio): array {
+    $out = [];
+    $head = trim($role) !== '' ? trim($role) : trim($org);
+    if ($head !== '') $out[] = $head;
+
+    $parts = array_values(array_filter(preg_split('~\s+~u', trim($fio)) ?: []));
+    if (count($parts) >= 2) {
+        // Фамилия в дательном падеже уже приходит из реестра в именительном,
+        // поэтому склоняем только окончание — этого достаточно для «Ивановой».
+        $ini = mb_substr($parts[1], 0, 1) . '.';
+        if (isset($parts[2])) $ini .= ' ' . mb_substr($parts[2], 0, 1) . '.';
+        $out[] = ol_surname_dative($parts[0], $fio) . ' ' . $ini;
+    } elseif (count($parts) === 1) {
+        $out[] = $parts[0];
+    }
+    return $out;
+}
+
+/**
+ * Фамилия в дательном падеже: «Иванов» → «Иванову», «Иванова» → «Ивановой».
+ *
+ * Полного склонения тут не нужно и опасно: несклоняемые фамилии («Шевченко»,
+ * «Дюма») портятся любой попыткой их согнуть. Меняем окончание только у явных
+ * русских форм, остальное оставляем как есть — это всегда безопасно.
+ */
+function ol_surname_dative(string $surname, string $fio = ''): string {
+    $s = trim($surname);
+    if ($s === '') return $s;
+    $female = ol_gender($fio !== '' ? $fio : $s) === 'f';
+
+    if ($female) {
+        if (preg_match('~(ова|ева|ёва|ина|ына|ская|цкая|ая|яя)$~u', $s)) {
+            return preg_replace('~ая$~u', 'ой', preg_replace('~а$~u', 'ой', $s));
+        }
+        return $s;                                   // «Ким», «Гурулёв оглы» — не склоняем
+    }
+    if (preg_match('~(ий|ый|ой)$~u', $s)) return preg_replace('~(ий|ый|ой)$~u', 'ому', $s);
+    if (preg_match('~(ов|ев|ёв|ин|ын)$~u', $s))  return $s . 'у';
+    if (preg_match('~[бвгдджзклмнпрстфхцчшщ]$~u', $s)) return $s . 'у';
+    return $s;
+}
 
 /** «Уважаемая Мария Петровна!» по полному ФИО; без ФИО — нейтрально. */
 function lm_salut(string $fio): string {

@@ -117,9 +117,21 @@ function pdf_official_letter(array $o): string {
     $W = 1240; $H = 1754;                                 // A4 @150dpi
     $mL = 104; $mR = 104;
 
+    // СТРОГИЙ БЛАНК ДЛЯ ВЕДОМСТВ.
+    // Обращение в министерство читает делопроизводитель, и читает он его как
+    // документ, а не как рекламный лист. Тонированная бумага с золотой рамкой
+    // хороша для благодарности учреждению, но в ведомстве такой лист выглядит
+    // приглашением на праздник и снижает доверие к содержанию. Поэтому у
+    // официальных обращений бумага белая, рамки нет, выделенных плашек нет.
+    $plain = !empty($o['plain']);
+
     $img = imagecreatetruecolor($W, $H);
-    pl_gradient($img, [253, 249, 238], [247, 240, 222]);  // бежевая бумага, как в HTML
-    pl_frame($img, 44, [184, 134, 11], 2);
+    if ($plain) {
+        imagefilledrectangle($img, 0, 0, $W, $H, imagecolorallocate($img, 255, 255, 255));
+    } else {
+        pl_gradient($img, [253, 249, 238], [247, 240, 222]);  // бежевая бумага, как в HTML
+        pl_frame($img, 44, [184, 134, 11], 2);
+    }
 
     $navy  = [21, 34, 76];
     $ink   = [38, 38, 44];
@@ -170,36 +182,47 @@ function pdf_official_letter(array $o): string {
     pl_text($img, 0, $top + 146, 17, $navy, $fSerB, 'Культурный центр', 'center', $W);
     pl_text($img, 0, $top + 170, 17, $navy, $fSerB, '«Музыкальный Мир»', 'center', $W);
 
-    // Правая колонка — УТВЕРЖДАЮ, подпись, исходящий номер.
+    // Правая колонка.
     $ax = $W - $mR - 300;
     $ay = $top;
-    // Гриф ставится на документе, который что-то утверждает. У благодарственного
-    // письма его быть не должно — оно ничего не утверждает, и «УТВЕРЖДАЮ» над
-    // словами благодарности читается как канцелярская нелепость.
-    if (empty($o['no_approve'])) {
+    $dateHuman = function_exists('ru_date') ? ru_date($date) : date('d.m.Y', strtotime($date));
+    // Файл подписи нужен и внизу листа, под текстом, поэтому путь берём здесь —
+    // в строгом бланке верхнего блока с подписью нет, а нижний есть всегда.
+    $sig = $imgDir . (is_file($imgDir . 'letter/sig.png') ? 'letter/sig.png' : 'diploma/sig2.png');
+
+    if ($plain) {
+        // В ДЕЛОВОМ ПИСЬМЕ ГРИФА «УТВЕРЖДАЮ» НЕТ.
+        // Гриф утверждения ставится на документе, который вводят в действие:
+        // положение, акт, инструкция. Письмо ничего не утверждает, оно просит,
+        // и гриф над просьбой в ведомстве читается как ошибка составителя.
+        // Подпись здесь тоже лишняя — она стоит под текстом, где ей и место.
+        // Наверху остаются только дата и исходящий номер.
+        pl_text($img, $ax, $ay + 16, 16, $ink, $fReg, 'от ' . $dateHuman);
+        $ay += 26;
+        pl_text($img, $ax, $ay + 16, 16, $ink, $fBold, 'Исх. №' . $number);
+        $ay += 26;
+    } else {
         pl_text($img, $ax, $ay + 22, 22, $navy, $fBold, 'УТВЕРЖДАЮ');
         $ay += 40;
-    } else {
+        foreach (['Генеральный директор', 'Культурного центра', '«Музыкальный Мир»'] as $ln) {
+            pl_text($img, $ax, $ay + 14, 14, $muted, $fReg, $ln);
+            $ay += 21;
+        }
         $ay += 6;
+        // Высоту НЕ задаём: подпись и печать квадратные, а жёсткая пара «ширина ×
+        // высота» их плющит — именно от этого подпись выглядела кривой.
+        $sigH = 0;
+        if (is_file($sig)) { [, $sigH] = pl_image($img, $sig, $ax, $ay, 126, null); }
+        pl_text($img, $ax + 140, $ay + max(30, (int) ($sigH * 0.7)), 16, $navy, $fBold, 'Ильясов А. И.');
+        $ay += max(56, $sigH + 10);
+        pl_text($img, $ax, $ay + 14, 14, $muted, $fReg, $dateHuman);
+        pl_text($img, $ax, $ay + 36, 15, $navy, $fBold, 'Исх. №' . $number);
     }
-    foreach (['Генеральный директор', 'Культурного центра', '«Музыкальный Мир»'] as $ln) {
-        pl_text($img, $ax, $ay + 14, 14, $muted, $fReg, $ln);
-        $ay += 21;
-    }
-    $ay += 6;
-    // Высоту НЕ задаём: подпись и печать квадратные, а жёсткая пара «ширина ×
-    // высота» их плющит — именно от этого подпись выглядела кривой.
-    $sig = $imgDir . (is_file($imgDir . 'letter/sig.png') ? 'letter/sig.png' : 'diploma/sig2.png');
-    $sigH = 0;
-    if (is_file($sig)) { [, $sigH] = pl_image($img, $sig, $ax, $ay, 126, null); }
-    pl_text($img, $ax + 140, $ay + max(30, (int) ($sigH * 0.7)), 16, $navy, $fBold, 'Ильясов А. И.');
-    $ay += max(56, $sigH + 10);
-    $dateHuman = function_exists('ru_date') ? ru_date($date) : date('d.m.Y', strtotime($date));
-    pl_text($img, $ax, $ay + 14, 14, $muted, $fReg, $dateHuman);
-    pl_text($img, $ax, $ay + 36, 15, $navy, $fBold, 'Исх. №' . $number);
 
     $y = max($ry, $top + 190, $ay + 52) + 16;
-    pl_rule($img, $mL, $y, $W - $mR, $gold, 3);
+    // Линия под шапкой: в строгом бланке тонкая и серая, без золота.
+    $plain ? pl_rule($img, $mL, $y, $W - $mR, [140, 140, 150], 1)
+           : pl_rule($img, $mL, $y, $W - $mR, $gold, 3);
     $y += 22;
 
     /* ── Правовое основание ────────────────────────────────────────────── */
@@ -239,23 +262,51 @@ function pdf_official_letter(array $o): string {
         }
         $y += $eh + 16;
     }
-    pl_rule($img, $mL, $y, $W - $mR, [216, 199, 155], 1);
+    pl_rule($img, $mL, $y, $W - $mR, $plain ? [200, 200, 208] : [216, 199, 155], 1);
     $y += 30;
 
     /* ── Заголовок и адресат ───────────────────────────────────────────── */
-    $title = mb_strtoupper((string) ($o['title'] ?? 'Обращение'), 'UTF-8');
-    pl_text_spaced($img, (int) ($W / 2), $y + 36, 36, $navy, $fSerB, $title, 3.0, 'center');
-    $y += 62;
+    $addressee = array_values(array_filter(array_map('trim', (array) ($o['addressee'] ?? []))));
 
-    foreach ((array) ($o['addressee'] ?? []) as $ln) {
-        $ln = trim((string) $ln);
-        if ($ln === '') continue;
-        foreach (pl_wrap($ln, 19, $fSerB, $W - $mL - $mR - 120) as $w) {
-            pl_text($img, 0, $y + 19, 19, $navy, $fSerB, $w, 'center', $W);
-            $y += 27;
+    if ($plain) {
+        // РЕКВИЗИТ «АДРЕСАТ» — В ПРАВОЙ ВЕРХНЕЙ ЧАСТИ ЛИСТА (ГОСТ Р 7.0.97-2016).
+        // Должность и организация в дательном падеже, ниже фамилия с инициалами.
+        // По центру, как на приглашении, адресата в деловом письме не ставят —
+        // именно по этому месту документ и опознают как официальный.
+        $ax2 = (int) ($W * 0.52);
+        $aw  = $W - $mR - $ax2;
+        $ay2 = $y;
+        foreach ($addressee as $i => $ln) {
+            $f = $i === count($addressee) - 1 ? $fBold : $fReg;   // фамилия — полужирным
+            foreach (pl_wrap($ln, 17, $f, $aw) as $w) {
+                pl_text($img, $ax2, $ay2 + 17, 17, $ink, $f, $w);
+                $ay2 += 25;
+            }
         }
+        $y = $ay2 + 34;
+
+        // Заголовок к тексту — от левого поля, без разрядки и без центрирования.
+        // Обязательно с переносом: заголовок делового письма отвечает на вопрос
+        // «о чём», он длинный и в одну строку не помещается.
+        $title = (string) ($o['title'] ?? 'Обращение');
+        foreach (pl_wrap($title, 23, $fSerB, $W - $mL - $mR) as $ln) {
+            pl_text($img, $mL, $y + 23, 23, $navy, $fSerB, $ln);
+            $y += 32;
+        }
+        $y += 14;
+    } else {
+        $title = mb_strtoupper((string) ($o['title'] ?? 'Обращение'), 'UTF-8');
+        pl_text_spaced($img, (int) ($W / 2), $y + 36, 36, $navy, $fSerB, $title, 3.0, 'center');
+        $y += 62;
+
+        foreach ($addressee as $ln) {
+            foreach (pl_wrap($ln, 19, $fSerB, $W - $mL - $mR - 120) as $w) {
+                pl_text($img, 0, $y + 19, 19, $navy, $fSerB, $w, 'center', $W);
+                $y += 27;
+            }
+        }
+        $y += 16;
     }
-    $y += 16;
 
     $salut = trim((string) ($o['salutation'] ?? ''));
     if ($salut !== '') {
@@ -268,6 +319,11 @@ function pdf_official_letter(array $o): string {
     // Двухстраничное письмо в ведомстве читают хуже, а третьей страницы у нас
     // и нет — подпись с печатью должны стоять под текстом, а не отдельно.
     $blocks = pl_letter_blocks((string) ($o['body'] ?? ''));
+    // Плашки убираем ДО подбора кегля, иначе высота считалась бы по одной
+    // разметке, а печаталась бы другая — и текст не влез бы на лист.
+    if ($plain) {
+        foreach ($blocks as $i => $b) if ($b['type'] === 'box') $blocks[$i]['type'] = 'p';
+    }
     $att    = array_values(array_filter((array) ($o['attachments'] ?? [])));
 
     $footNeed = 306;                                   // подпись, печать, QR, контакты
@@ -379,7 +435,7 @@ function pdf_official_letter(array $o): string {
     $s3 = 12; while ($s3 > 9 && pl_text_w($s3, $fReg, $c3) > $cw) $s3--;
 
     $cy = $frameB - 76;                                // линия-разделитель
-    pl_rule($img, $mL, $cy, $W - $mR, [216, 199, 155], 1);
+    pl_rule($img, $mL, $cy, $W - $mR, $plain ? [200, 200, 208] : [216, 199, 155], 1);
     pl_text($img, 0, $cy + 26, 13, $navy, $fBold, $reg, 'center', $W);
     if ($c2 !== '') pl_text($img, 0, $cy + 46, $s2, $muted, $fReg, $c2, 'center', $W);
     pl_text($img, 0, $cy + 64, $s3, $muted, $fReg, $c3, 'center', $W);
