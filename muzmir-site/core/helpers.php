@@ -115,8 +115,19 @@ function json_out($data, int $code = 200): void {
     echo json_encode($data, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
     exit;
 }
+/**
+ * Значение из запроса, всегда строкой.
+ *
+ * $default ПРИВОДИТСЯ К СТРОКЕ. Функция объявлена возвращать string, а вызывают её
+ * и с числовым запасным значением — input('comp', 0). Пока параметр в запросе есть,
+ * всё работает; как только его нет, возвращался int, и PHP валил страницу целиком:
+ * «input(): Return value must be of type string, int returned». Именно так 12.08.2026
+ * слегла страница подачи заявки — открытая без ?competition= в адресе.
+ */
 function input(string $key, $default = ''): string {
-    return isset($_POST[$key]) ? trim((string)$_POST[$key]) : (isset($_GET[$key]) ? trim((string)$_GET[$key]) : $default);
+    if (isset($_POST[$key])) return trim((string) $_POST[$key]);
+    if (isset($_GET[$key]))  return trim((string) $_GET[$key]);
+    return is_scalar($default) ? (string) $default : '';
 }
 
 /**
