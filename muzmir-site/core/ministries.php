@@ -195,7 +195,20 @@ function min_recipients(string $branch = ''): array {
     // Президенте и Общественная палата: это приёмные обращений граждан, а не
     // адресаты информационной поддержки конкурса. Ответа по существу оттуда не
     // будет, а обращение уйдёт в реестр со сроками и последствиями.
-    $sql = "SELECT * FROM ministries WHERE email<>'' AND status NOT IN ('unsub','bounced','declined','excluded')";
+    // БЕЗ ФИО И ДОЛЖНОСТИ АДРЕСАТА ОБРАЩЕНИЕ НЕ УХОДИТ.
+    //
+    // Обращение в ведомство именное: реквизит «адресат» по ГОСТ Р 7.0.97-2016 и
+    // «Уважаемый Иван Иванович!» в тексте. Без имени остаётся безличное письмо,
+    // которое в ведомстве кладут в общую папку. Первое обращение отправляется один
+    // раз и переделать его нельзя, поэтому адресат без ФИО ждёт, пока имя найдут,
+    // — это не потеря, а отложенная отправка.
+    //
+    // Исключение — пресс-службы и редакции (branch='press'): там адресат по
+    // должности не подразумевается, письмо идёт на редакционный ящик.
+    $sql = "SELECT * FROM ministries
+             WHERE email<>'' AND status NOT IN ('unsub','bounced','declined','excluded')
+               AND (branch = 'press'
+                    OR (TRIM(COALESCE(person,'')) <> '' AND TRIM(COALESCE(person_role,'')) <> ''))";
     $a = [];
     if ($branch !== '') { $sql .= " AND branch=?"; $a[] = $branch; }
     $sql .= " ORDER BY CASE kind WHEN 'federal' THEN 0 WHEN 'union' THEN 1 WHEN 'media' THEN 2 ELSE 3 END, org";
