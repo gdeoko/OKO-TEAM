@@ -1,0 +1,167 @@
+[
+  {
+    "idx": 48,
+    "org": "ГАУ «Курганский областной Дом народного творчества»",
+    "official_site": "http://kodnt.kurganobl.ru",
+    "person": "Потапова Ирина Ивановна",
+    "person_role_nominative": "Директор государственного автономного учреждения «Курганский областной Дом народного творчества»",
+    "email": "kodnt1@yandex.ru",
+    "email_alt": "",
+    "e_reception_url": "http://kodnt.kurganobl.ru/index.php?option=com_aicontactsafe&view=message&layout=message&pf=1&Itemid=35",
+    "phone": "+7 (3522) 46-50-18 (доб. 206 — директор), касса +7 (3522) 41-38-42",
+    "address": "640020, Курганская область, г. Курган, ул. Гоголя, д. 30",
+    "appointed": "",
+    "changed": false,
+    "confidence": "high",
+    "source_urls": [
+      "http://kodnt.kurganobl.ru/index.php?Itemid=17&id=75&option=com_content&view=article",
+      "https://kultura.kurganobl.ru/info/news/10431/"
+    ],
+    "note": "Страница «Контактные данные» официального сайта учреждения прямо указывает: «Директор: Потапова Ирина Ивановна», телефон и ящик kodnt1@yandex.ru — совпадает с базой. Подтверждение действующего статуса — новость на сайте управления культуры Курганской области (kultura.kurganobl.ru), где Потапова выступает как директор КОДНТ. ФИО в базе отсутствовало — теперь заполнено. Учредитель — Управление культуры Курганской области."
+  },
+  {
+    "idx": 49,
+    "org": "Министерство культуры Курской области",
+    "official_site": "https://культура46.рф (https://xn--46-6kc3bf4angc2g.xn--p1ai)",
+    "person": "Конорев Алексей Иванович",
+    "person_role_nominative": "Министр культуры Курской области",
+    "email": "komkul@rkursk.ru",
+    "email_alt": "",
+    "e_reception_url": "https://xn--46-6kc3bf4angc2g.xn--p1ai/contacts",
+    "phone": "+7 (4712) 70-18-53",
+    "address": "305000, г. Курск, ул. Ленина, д. 11 (каб. 301)",
+    "appointed": "30.10.2025",
+    "changed": true,
+    "confidence": "high",
+    "source_urls": [
+      "https://xn--46-6kc3bf4angc2g.xn--p1ai/ministerstvo/struktura",
+      "https://xn--46-6kc3bf4angc2g.xn--p1ai/contacts",
+      "https://kursk-izvestia.ru/news/231021",
+      "https://www.interfax-russia.ru/center/news/ministr-kultury-i-pyat-sovetnikov-gubernatora-naznacheny-v-kurskoy-oblasti"
+    ],
+    "note": "ВАЖНО: в базе стояла Полетыкина Юлия Николаевна — данные устарели. На странице «Структура» официального сайта министерства первым в блоке «Руководство» указан Конорев Алексей Иванович, министр культуры Курской области, каб. 301, тел. +7 (4712) 70-18-53, komkul@rkursk.ru. Назначен губернатором 30.10.2025 (подтверждено Интерфакс и «Курские известия»). Долженкова Е.С., которую выдаёт часть поисковых агрегаторов как врио министра, на самом деле заместитель министра — использовать её нельзя. Электронная приёмная — форма «Обратиться в ведомство» на странице контактов."
+  },
+  {
+    "idx": 50,
+    "org": "ОБУК «Курский областной Дом народного творчества»",
+    "official_site": "https://odnt46.ru",
+    "person": "Русанов Владимир Викторович",
+    "person_role_nominative": "Директор областного бюджетного учреждения культуры «Курский областной Дом народного творчества»",
+    "email": "pr.odnt@mail.ru",
+    "email_alt": "info.odnt@yandex.ru",
+    "e_reception_url": "https://odnt46.ru/about/contacts/",
+    "phone": "+7 (4712) 44-64-20 (директор), приёмная/факс +7 (4712) 44-64-21, +7 (4712) 54-96-13",
+    "address": "305016, Курская область, г. Курск, ул. Советская, д. 93",
+    "appointed": "",
+    "changed": false,
+    "confidence": "high",
+    "source_urls": [
+      "https://odnt46.ru/about/structure/",
+      "https://odnt46.ru/about/contacts/",
+      "https://morsmagazine.ru/lyudi/rusanov-vladimir/"
+    ],
+    "note": "Раздел «Структура» официального сайта: «РУСАНОВ ВЛАДИМИР ВИКТОРОВИЧ — ДИРЕКТОР, Заслуженный работник культуры РФ», тел. 8 (4712) 44-64-20, pr.odnt@mail.ru. E-mail совпадает с базой. Учредитель — Министерство культуры Курской области (305000, г. Курск, ул. Ленина, 11). Электронная приёмная как таковая отсутствует — на странице контактов есть форма обратной связи «Возникли вопросы? Напишите нам»."
+  },
+  {
+    "idx": 51,
+    "org": "Комитет по культуре и туризму Ленинградской области",
+    "official_site": "https://kit.lenobl.ru",
+    "person": "Мельникова Ольга Львовна",
+    "person_role_nominative": "Председатель комитета по культуре и туризму Ленинградской области",
+    "email": "tourism@lenreg.ru",
+    "email_alt": "kult_lo@lenreg.ru",
+    "e_reception_url": "https://kit.lenobl.ru/ru/kadry/reception/",
+    "phone": "+7 (812) 539-42-57 (приёмная), факс +7 (812) 539-51-46",
+    "address": "191124, г. Санкт-Петербург, ул. Смольного, д. 3 (каб. 2-172)",
+    "appointed": "",
+    "changed": true,
+    "confidence": "high",
+    "source_urls": [
+      "https://kit.lenobl.ru/ru/o-komitete/rukovodstvo/",
+      "https://kit.lenobl.ru/ru/kadry/adres/",
+      "https://kit.lenobl.ru/ru/kadry/reception/"
+    ],
+    "note": "ВАЖНО, два изменения. (1) В базе стоял Чайковский Евгений Валерьевич — устарело. На странице «Руководство комитета» (обновлено 24.06.2026) первым идёт: «Председатель комитета по культуре и туризму Ленинградской области — Мельникова Ольга Львовна». (2) Сменился и сайт: старый адрес culture.lenobl.ru из базы теперь 302-редиректом уходит на комитет по охране наследия (okn.lenobl.ru → kskn.lenobl.ru); действующий сайт комитета — kit.lenobl.ru. (3) По e-mail: на действующем сайте (страницы «Адрес» и подвал) указан ТОЛЬКО tourism@lenreg.ru — его и ставлю основным. Ящик kult_lo@lenreg.ru из базы на текущем сайте нигде не подтверждается, оставил в email_alt как запасной. Электронная приёмная — форма «Отправить обращение» /ru/kadry/reception/."
+  },
+  {
+    "idx": 52,
+    "org": "ГБУК ЛО «Дом народного творчества»",
+    "official_site": "https://dnt47.ru",
+    "person": "Овсяник Ангелина Борисовна",
+    "person_role_nominative": "Директор Государственного бюджетного учреждения культуры Ленинградской области «Дом народного творчества»",
+    "email": "dnt@dnt47.ru",
+    "email_alt": "",
+    "e_reception_url": "",
+    "phone": "+7 (812) 540-20-06",
+    "address": "195197, г. Санкт-Петербург, ул. Замшина, д. 6",
+    "appointed": "",
+    "changed": false,
+    "confidence": "high",
+    "source_urls": [
+      "https://dnt47.ru/about/structure/rukovodstvo-dnt/"
+    ],
+    "note": "Страница «Руководство ДНТ» официального сайта: «Овсяник Ангелина Борисовна — Директор Государственного бюджетного учреждения культуры Ленинградской области «Дом народного творчества», телефон 540-20-06, e-mail dnt@dnt47.ru». E-mail совпадает с базой. Учредитель — комитет по культуре и туризму Ленинградской области. Отдельной электронной приёмной на сайте нет, поэтому поле пустое."
+  },
+  {
+    "idx": 53,
+    "org": "Комитет по сохранению культурного наследия Ленинградской области",
+    "official_site": "https://kskn.lenobl.ru",
+    "person": "Цой Владимир Олегович",
+    "person_role_nominative": "Вице-губернатор Ленинградской области по вопросам развития и сохранения культурного наследия – председатель комитета по сохранению культурного наследия Ленинградской области",
+    "email": "okn@lenreg.ru",
+    "email_alt": "",
+    "e_reception_url": "https://kskn.lenobl.ru/ru/obrashcheniia/reception/",
+    "phone": "+7 (812) 539-45-00, +7 (812) 539-44-98 (приёмная председателя), факс +7 (812) 539-45-05",
+    "address": "191311, г. Санкт-Петербург, ул. Смольного, д. 3",
+    "appointed": "",
+    "changed": false,
+    "confidence": "high",
+    "source_urls": [
+      "https://kskn.lenobl.ru/ru/about/rukovodstvo1/",
+      "https://kskn.lenobl.ru/ru/",
+      "https://kskn.lenobl.ru/ru/about/"
+    ],
+    "note": "Страница «Руководство» (обновлено 24.04.2026): «Вице-губернатор Ленинградской области по вопросам развития и сохранения культурного наследия – председатель комитета по сохранению культурного наследия Ленинградской области — Цой Владимир Олегович, тел. +7 (812) 539-45-00, e-mail okn@lenreg.ru». E-mail совпадает с базой. Домен okn.lenobl.ru редиректит на kskn.lenobl.ru — оба рабочие, канонический kskn.lenobl.ru. Должность писать целиком: он одновременно вице-губернатор и председатель комитета."
+  },
+  {
+    "idx": 54,
+    "org": "Министерство культуры Липецкой области",
+    "official_site": "https://kultura48.ru",
+    "person": "Кремнёва Ирина Александровна",
+    "person_role_nominative": "Министр культуры Липецкой области",
+    "email": "culture@admlr.lipetsk.ru",
+    "email_alt": "KremnevaIA@admlr.lipetsk.ru",
+    "e_reception_url": "https://kultura48.ru/contact/appeal/reception/",
+    "phone": "+7 (4742) 72-46-18",
+    "address": "398050, г. Липецк, пл. Плеханова, д. 1 (каб. 533)",
+    "appointed": "январь 2025",
+    "changed": false,
+    "confidence": "high",
+    "source_urls": [
+      "https://kultura48.ru/org/chief/",
+      "https://kultura48.ru/org/directory/",
+      "https://kultura48.ru/contact/",
+      "https://kultura48.ru/media/news/novosti-regiona/vstrecha-ministra-kultury-lipetskoy-oblasti-iriny-kremnevoy-i-vitse-prezidenta-blagotvoritelnogo-fon/"
+    ],
+    "note": "Страница «Министр культуры» официального сайта: «Министр культуры Липецкой области — Кремнёва Ирина Александровна». Подтверждено вторично «Справочником Министерства» на том же сайте (каб. 533, тел. 8 (4742) 72-46-18, KremnevaIA@admlr.lipetsk.ru) и свежими новостями министерства. В базе ФИО отсутствовало — теперь заполнено. Общий ящик для обращений culture@admlr.lipetsk.ru совпадает с базой; интернет-приёмная — /contact/appeal/reception/."
+  },
+  {
+    "idx": 55,
+    "org": "ОБУК «Областной центр культуры, народного творчества и кино»",
+    "official_site": "https://ocknt.ru",
+    "person": "Колыбельская Ольга Владимировна",
+    "person_role_nominative": "Директор областного бюджетного учреждения культуры «Областной центр культуры, народного творчества и кино»",
+    "email": "ockntlip@admlr.lipetsk.ru",
+    "email_alt": "",
+    "e_reception_url": "",
+    "phone": "",
+    "address": "398032, г. Липецк, ул. Космонавтов, д. 54а",
+    "appointed": "",
+    "changed": false,
+    "confidence": "high",
+    "source_urls": [
+      "https://kultura48.ru/org/subdivision/prochee/oblastnoy-tsentr-kultury-narodnogo-tvorchestva-i-kino/"
+    ],
+    "note": "Карточка подведомственного учреждения на официальном сайте Министерства культуры Липецкой области: «Руководитель: Колыбельская Ольга Владимировна», почтовый адрес 398032, г. Липецк, ул. Космонавтов, 54а, электронный адрес ockntlip@admlr.lipetsk.ru (совпадает с базой), сайт https://ocknt.ru. Собственный сайт учреждения ocknt.ru из этой среды не открывается (503/сброс соединения), поэтому телефон и электронная приёмная не подтверждены и оставлены пустыми — писать следует на ockntlip@admlr.lipetsk.ru."
+  }
+]
