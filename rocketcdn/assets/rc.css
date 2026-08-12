@@ -112,6 +112,9 @@
 }
 
 html {
+  /* Выдвижное меню стоит за правым краем и раздувает ширину документа.
+     clip обрезает, не создавая своего контейнера прокрутки. */
+  overflow-x: clip;
   scroll-behavior: smooth;
   scroll-padding-top: 88px;
   -webkit-text-size-adjust: 100%;
@@ -1239,3 +1242,14 @@ body { background: var(--bg); }
     background: var(--read-veil-2);
   }
 }
+
+/* На телефоне в шапке остаётся только кнопка регистрации и меню:
+   капсулы живут в выдвижном меню, там им просторно */
+@media (max-width: 900px) {
+  .hdr-act .pill { display: none; }
+}
+/* Широкая капсула звука в меню: кругляш занимает половину,
+   рядом подпись, как у остальных */
+.pill.snd.wide { width: 100%; }
+.pill.snd.wide button { width: 100%; gap: 9px; display: flex; align-items: center; justify-content: center; }
+.pill.snd.wide .pill-knob { width: calc(50% - 3px); }
