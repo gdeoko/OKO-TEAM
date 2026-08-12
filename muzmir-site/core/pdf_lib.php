@@ -479,8 +479,13 @@ function pl_pdf_from_images(array $images, string $path, int $dpi = 150, int $qu
         );
         $content = "q\n$pw 0 0 $ph 0 0 cm\n/Im0 Do\nQ\n";
         $contId = $addObj("<< /Length " . strlen($content) . " >>\nstream\n$content\nendstream");
+        // /Parent — ССЫЛКА НА ОБЪЕКТ, а не число: «$pagesId 0 R», не «$pagesId».
+        // Без «0 R» страница ссылается на целое число вместо словаря Pages. Adobe
+        // Acrobat и делопроизводственные системы ведомств считают такой файл
+        // повреждённым и предлагают восстановить его; poppler и ghostscript ошибку
+        // прощают молча — поэтому дефект и дожил до отправки обращений.
         $pageId = $addObj(
-            "<< /Type /Page /Parent $pagesId /MediaBox [0 0 $pw $ph] "
+            "<< /Type /Page /Parent $pagesId 0 R /MediaBox [0 0 $pw $ph] "
             . "/Resources << /XObject << /Im0 $imgId 0 R >> >> /Contents $contId 0 R >>"
         );
         $kids[] = "$pageId 0 R";
@@ -502,7 +507,9 @@ function pl_pdf_from_images(array $images, string $path, int $dpi = 150, int $qu
     foreach ($offsets as $off) {
         $pdf .= sprintf("%010d 00000 n \n", $off);
     }
-    $pdf .= "trailer\n<< /Size $count /Root $catalogId 0 R >>\nstartxref\n$xrefPos\n%%EOF";
+    // Завершающий перевод строки после %%EOF: по стандарту это последняя строка
+    // файла, и часть просмотрщиков ищет именно строку, а не хвост без разделителя.
+    $pdf .= "trailer\n<< /Size $count /Root $catalogId 0 R >>\nstartxref\n$xrefPos\n%%EOF\n";
 
     file_put_contents($path, $pdf);
 }
