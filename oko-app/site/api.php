@@ -1148,6 +1148,17 @@ case 'oko_system_get': {
     out(['ok'=>true]+$r);
 }
 
+// Удалить систему. Под токеном: удаление чужой работы по угаданному uid
+// быть не должно, а владельцу и сборщику это нужно (снять брак, убрать тест).
+case 'oko_system_del': {
+    if(!drainer_ok()) fail('Unauthorized',403);
+    $uid=preg_replace('/[^a-f0-9]/','',(string)($_GET['uid']??$body['uid']??''));
+    if($uid==='') fail('no uid');
+    $n=db_exec("DELETE FROM app_systems WHERE uid=?",[$uid]);
+    if($n===0) fail('not found',404);
+    out(['ok'=>true,'uid'=>$uid,'deleted'=>$n]);
+}
+
 // Список систем пользователя (без тела html - только карточки).
 case 'oko_system_mine': {
     $user=mb_substr(trim((string)($_GET['user']??$body['user']??'')),0,80);
