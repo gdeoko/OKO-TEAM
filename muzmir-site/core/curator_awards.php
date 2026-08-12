@@ -2,22 +2,27 @@
 /**
  * БЛАГОДАРНОСТЬ ПЕДАГОГУ, КОТОРЫЙ ПРИВЁЛ УЧЕНИКОВ.
  *
- * Заявку в конкурс приносит не ребёнок и не родитель, а преподаватель: одна
- * учительница ДШИ подаёт десять-пятнадцать работ своего класса. Она и есть
- * канал — но до сих пор не получала за это ничего. Благодарственное письмо
- * лежало в прайсе наградных за 300 рублей и не было выдано ни разу.
+ * ПО УМОЛЧАНИЮ ВЫКЛЮЧЕНО. Благодарственное письмо — позиция прайса наградных
+ * (300 ₽ электронное, 400 ₽ оригинал), и раздавать её даром — решение владельца,
+ * а не автоматики. Механизм остаётся в коде, но включается только вручную:
+ * setting('curator_free_enabled') = '1'.
  *
- * Между тем именно этот документ педагогу и нужен: он идёт в аттестационное
- * портфолио и влияет на категорию. Стоит он нам ноль — это PDF. Поэтому
- * педагогу, чьи ученики прошли аттестацию, благодарность выдаётся сама, без
- * заказа и без оплаты, как только готовы дипломы его учеников.
+ * Замысел механизма: заявку в конкурс приносит не ребёнок и не родитель, а
+ * преподаватель — одна учительница ДШИ подаёт десять-пятнадцать работ своего
+ * класса. Документ ей нужен в аттестационное портфолио, стоит он центру ноль,
+ * это PDF. Порог в несколько работ отделяет преподавателя, работающего с
+ * классом, от родителя, вписавшего имя учителя в одну заявку.
  *
- * Порог в несколько работ оставлен намеренно. Он отделяет преподавателя,
- * работающего с классом, от родителя, который вписал имя учителя в одну
- * заявку, — и заодно не обесценивает платную благодарность для тех, кто
- * заказывает её отдельно и в оригинале.
+ * Отдельная нерешённая проблема, из-за которой включать нельзя как есть:
+ * СВОЕГО АДРЕСА У ПЕДАГОГА В БАЗЕ НЕТ. Письмо уходит на почту из заявок, а её
+ * указывает подающий — то есть благодарность педагогу приходит участнику.
  */
 declare(strict_types=1);
+
+/** Включена ли бесплатная автовыдача благодарностей педагогам. */
+function curator_free_enabled(): bool {
+    return (string) setting('curator_free_enabled', '0') === '1';
+}
 
 /** Со скольких аттестованных работ педагог получает благодарность даром. */
 function curator_free_threshold(): int {
@@ -25,6 +30,50 @@ function curator_free_threshold(): int {
 }
 
 /** Нормализованное имя педагога — ключ, по которому его узнаём среди заявок. */
+/**
+ * РАЗБОР ПОЛЯ «ПЕДАГОГ» НА ОТДЕЛЬНЫХ ЛЮДЕЙ.
+ *
+ * Участник вписывает педагогов как придётся: через запятую, через «и», через
+ * слэш, а чаще всего просто подряд — «Мельникова Анастасия Вадимовна Волкова
+ * Ирина Вячеславовна». Явные разделители разбираем сразу; сплошную строку режем
+ * по тройкам «Фамилия Имя Отчество», опираясь на отчество — оно в русском ФИО
+ * стоит последним и хорошо опознаётся по окончанию.
+ *
+ * Если разобрать не вышло, возвращаем строку целиком: лучше одна благодарность
+ * со странным именем, чем ни одной.
+ *
+ * @return array<int,string>
+ */
+function curator_split_teachers(string $raw): array {
+    $s = preg_replace('~\s+~u', ' ', trim($raw)) ?? '';
+    if ($s === '') return [];
+
+    // Явные разделители — самый частый и самый надёжный случай.
+    if (preg_match('~[,;/]|\sи\s~u', $s)) {
+        $parts = preg_split('~\s*[,;/]\s*|\s+и\s+~u', $s) ?: [];
+        $out = [];
+        foreach ($parts as $p) { $p = trim($p); if (mb_strlen($p) >= 5) $out[] = $p; }
+        if ($out) return $out;
+    }
+
+    // Сплошная строка: собираем слова, закрывая человека на отчестве.
+    $words = preg_split('~ ~u', $s) ?: [];
+    if (count($words) < 6) return [$s];              // один человек — делить нечего
+
+    $out = []; $buf = [];
+    foreach ($words as $w) {
+        $buf[] = $w;
+        $isPatronymic = (bool) preg_match('~(вич|вна|чна|шна|ич|ична)$~ui', $w);
+        if ($isPatronymic && count($buf) >= 3) { $out[] = implode(' ', $buf); $buf = []; }
+    }
+    if ($buf) {
+        // Хвост без отчества — приклеиваем к последнему, чтобы не потерять слова.
+        if ($out) $out[count($out) - 1] .= ' ' . implode(' ', $buf);
+        else      $out[] = implode(' ', $buf);
+    }
+    return $out ?: [$s];
+}
+
 function curator_key(string $teacher): string {
     $t = preg_replace('~\s+~u', ' ', trim($teacher));
     return mb_strtolower((string) $t);
@@ -39,6 +88,7 @@ function curator_key(string $teacher): string {
  * @return array [['teacher'=>..,'email'=>..,'works'=>int,'app_id'=>int], ...]
  */
 function curator_pending(int $competitionId): array {
+    if (!curator_free_enabled()) return [];
     $rows = all(
         "SELECT a.id, a.teacher, a.email, a.full_name
            FROM applications a
@@ -52,14 +102,20 @@ function curator_pending(int $competitionId): array {
 
     $byTeacher = [];
     foreach ($rows as $r) {
-        $k = curator_key((string) $r['teacher']);
-        if ($k === '') continue;
-        if (!isset($byTeacher[$k])) {
-            $byTeacher[$k] = ['teacher' => trim((string) $r['teacher']), 'email' => '', 'works' => 0, 'app_id' => (int) $r['id'], 'emails' => []];
+        // В одной заявке нередко записаны ДВА педагога: «Мельникова Анастасия
+        // Вадимовна Волкова Ирина Вячеславовна». Без разбора они склеивались в
+        // одну «фамилию» и печатались на бланке одной строкой — благодарность
+        // получалась ни на кого. Благодарность именная: одна на человека.
+        foreach (curator_split_teachers((string) $r['teacher']) as $one) {
+            $k = curator_key($one);
+            if ($k === '') continue;
+            if (!isset($byTeacher[$k])) {
+                $byTeacher[$k] = ['teacher' => $one, 'email' => '', 'works' => 0, 'app_id' => (int) $r['id'], 'emails' => []];
+            }
+            $byTeacher[$k]['works']++;
+            $e = mb_strtolower(trim((string) $r['email']));
+            if ($e !== '') $byTeacher[$k]['emails'][$e] = ($byTeacher[$k]['emails'][$e] ?? 0) + 1;
         }
-        $byTeacher[$k]['works']++;
-        $e = mb_strtolower(trim((string) $r['email']));
-        if ($e !== '') $byTeacher[$k]['emails'][$e] = ($byTeacher[$k]['emails'][$e] ?? 0) + 1;
     }
 
     $out = [];
@@ -124,9 +180,17 @@ function curator_grant(int $competitionId, array $t): int {
         'subgroup'       => '',
     ]);
 
+    // ОПЦИЯ НАЗЫВАЕТСЯ 'thanks', А НЕ 'type'.
+    // Генератор читает ['thanks'=>true|'extra'=>true|'named'=>true]; ключ 'type'
+    // он не знает и молча печатал ОСНОВНОЙ ДИПЛОМ. Хуже того, имя файла строится
+    // от номера заявки — и путь совпадал с дипломом ученика: педагогу уходила
+    // копия детского диплома вместо благодарности на своё имя.
+    // 'person' обязателен: без него на бланке печатается участник, а не педагог.
     $pdf = '';
     try {
-        if (function_exists('diploma_pdf_html')) $pdf = (string) diploma_pdf_html($doc, ['type' => 'thanks']);
+        if (function_exists('diploma_pdf_html')) {
+            $pdf = (string) diploma_pdf_html($doc, ['thanks' => true, 'person' => (string) $t['teacher']]);
+        }
     } catch (\Throwable $e) { $pdf = ''; }
     if ($pdf === '' && function_exists('pdf_diploma')) {
         try { $pdf = (string) pdf_diploma($doc, 'thanks'); } catch (\Throwable $e) { $pdf = ''; }
@@ -179,6 +243,7 @@ function curator_email_html(array $row, string $compName): string {
  * отправить письма. Возвращает [выдано, отправлено].
  */
 function curator_process_competition(int $competitionId): array {
+    if (!curator_free_enabled()) return [0, 0];
     $comp = one("SELECT name FROM competitions WHERE id=?", [$competitionId]);
     $name = (string) ($comp['name'] ?? '');
     $granted = 0; $sent = 0;
