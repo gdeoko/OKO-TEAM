@@ -54,6 +54,15 @@
   --pill-hover:#E2E8F0;
   --tab-on:    #E2E8F0;
   --tab-on-tx: #091320;
+  --gl-1:      rgba(255,255,255,.075);
+  --gl-2:      rgba(255,255,255,.035);
+  --gl-3:      rgba(255,255,255,.015);
+  --gl-line:   rgba(226,232,240,.13);
+  --gl-line-2: rgba(226,232,240,.24);
+  --gl-top:    rgba(255,255,255,.14);
+  --gl-top-2:  rgba(255,255,255,.22);
+  --gl-bot:    rgba(4,12,22,.35);
+  --gl-ring:   rgba(66,178,220,.18);
   --ico-bg:    rgba(138,89,246,.14);
   --ico-bg-2:  rgba(138,89,246,.22);
   --ico-line:  rgba(138,89,246,.26);
@@ -84,6 +93,15 @@
   --pill-hover:#fff;
   --tab-on:    #091320;
   --tab-on-tx: #fff;
+  --gl-1:      rgba(255,255,255,.96);
+  --gl-2:      rgba(255,255,255,.82);
+  --gl-3:      rgba(238,245,252,.72);
+  --gl-line:   rgba(9,19,32,.09);
+  --gl-line-2: rgba(9,19,32,.16);
+  --gl-top:    rgba(255,255,255,1);
+  --gl-top-2:  rgba(255,255,255,1);
+  --gl-bot:    rgba(9,19,32,.05);
+  --gl-ring:   rgba(66,178,220,.22);
   --ico-bg:    rgba(138,89,246,.10);
   --ico-bg-2:  rgba(138,89,246,.16);
   --ico-line:  rgba(138,89,246,.22);
@@ -1093,3 +1111,56 @@ body::after {
 #spaceBg.on { opacity: 1; }
 /* Тело больше не глухая заливка: сквозь секции виден космос */
 body { background: var(--bg); }
+
+/* ═══════════════════════════════════════════════════════════
+   Стекло
+
+   Карточка это не прямоугольник с прозрачностью. У стекла есть
+   толщина, светящаяся кромка сверху, где свет входит, и тень
+   снизу, где он выходит. Размытие фона включаем только там, где
+   оно по карману: на телефоне это самая дорогая операция в списке.
+   ═══════════════════════════════════════════════════════════ */
+.card, .viz-card, .dc {
+  background:
+    linear-gradient(160deg, var(--gl-1) 0%, var(--gl-2) 46%, var(--gl-3) 100%);
+  border: 1px solid var(--gl-line);
+  box-shadow:
+    inset 0 1px 0 var(--gl-top),
+    inset 0 -1px 0 var(--gl-bot),
+    0 18px 40px -28px rgba(4, 12, 22, .9);
+}
+/* Кромка: тонкая светлая линия по верхнему краю, как на настоящем стекле */
+.card::after, .viz-card::after {
+  border-radius: inherit;
+}
+.card:hover, .viz-card:hover, .dc:hover {
+  border-color: var(--gl-line-2);
+  box-shadow:
+    inset 0 1px 0 var(--gl-top-2),
+    inset 0 -1px 0 var(--gl-bot),
+    0 30px 60px -30px rgba(4, 12, 22, .95),
+    0 0 0 1px var(--gl-ring);
+}
+
+/* Размытие фона: только настольные и только там, где под карточкой
+   действительно есть что размывать */
+@media (min-width: 1024px) and (hover: hover) {
+  .card, .viz-card, .dc { backdrop-filter: blur(9px) saturate(1.25); }
+}
+
+/* Парящая карточка: отрывается от плоскости и получает свою тень.
+   Ставим точечно, где это уместно, а не на всё подряд. */
+.float-3d {
+  animation: floatY 7s var(--ease) infinite;
+  box-shadow:
+    inset 0 1px 0 var(--gl-top),
+    0 42px 70px -38px rgba(4, 12, 22, .95),
+    0 0 60px -30px rgba(66, 178, 220, .5);
+}
+.float-3d:nth-child(2n) { animation-delay: -2.3s; animation-duration: 8.4s; }
+.float-3d:nth-child(3n) { animation-delay: -4.1s; animation-duration: 9.1s; }
+@keyframes floatY {
+  0%, 100% { transform: translateY(0) }
+  50%      { transform: translateY(-11px) }
+}
+@media (prefers-reduced-motion: reduce) { .float-3d { animation: none } }

@@ -37,7 +37,7 @@ function fill(t, blocks) {
   /* Собственные дата-центры */
   var dc = $("#dcGrid");
   if (dc && GEO) dc.innerHTML = GEO.DC.map(function (d, i) {
-    return '<article class="dc rv rv-d' + (i + 1) + '">' +
+    return '<article class="dc float-3d rv rv-d' + (i + 1) + '">' +
       '<div class="lbl">' + esc(t("infra.dc")) + "</div>" +
       "<h4>" + esc(d.name[lang] || d.name.ru) + "</h4>" +
       '<p style="color:var(--tx-3);font-size:12.5px;margin-bottom:10px">' + esc(d.cc[lang] || d.cc.ru) + "</p>" +
