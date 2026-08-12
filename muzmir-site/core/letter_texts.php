@@ -32,6 +32,22 @@ function ol_comps(bool $onlyFree = false): array {
     return array_values(array_filter($rows, fn($c) => (int) ($c['is_paid'] ?? 0) !== 1));
 }
 
+/**
+ * АДРЕС ДЛЯ ОТВЕТА НА ОФИЦИАЛЬНОЕ ОБРАЩЕНИЕ.
+ *
+ * Только российский домен. Ведомства режут почту с зарубежных сервисов: 12.08.2026
+ * обращения с Gmail отбили Якутия («ограничение сообщений, отправляемых через
+ * почтовую службу Gmail… в соответствии с Представлением СУ МВД России»), Курск
+ * («принимаем письма только с доменов .RU и .SU») и Томск. Тот же запрет способен
+ * помешать и ИХ ответу уйти на gmail-адрес, названный в тексте письма.
+ *
+ * По умолчанию — kc@музыкальный-мир.рф, официальный ящик центра.
+ */
+function ol_reply_email(): string {
+    $v = trim((string) cfgv('official_reply_email', ''));
+    return $v !== '' ? $v : 'kc@музыкальный-мир.рф';
+}
+
 /** Срок приёма по самому раннему закрытию: обещать больше, чем есть, нельзя. */
 function ol_deadline(array $comps): string {
     $d = '';
@@ -56,7 +72,9 @@ function ol_body_support(array $free, array $o = []): string {
     $dl = $deadline !== '' ? (function_exists('ru_date') ? ru_date($deadline) : date('d.m.Y', strtotime($deadline))) : '';
     // Адрес для ответа называем прямо в тексте: делопроизводитель отвечает по
     // реквизиту в письме, а не по полю «отправитель» в почтовом клиенте.
-    $email = (string) cfgv('org_email', 'kulturniy.centr.mir@gmail.com');
+    // Это ОТДЕЛЬНЫЙ адрес на российском домене, не общий org_email: ведомства
+    // блокируют Gmail, и ответ на gmail-адрес их система может не выпустить.
+    $email = ol_reply_email();
     $year = date('Y');
 
     $names = [];

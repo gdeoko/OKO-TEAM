@@ -99,7 +99,8 @@ function mm_subject(string $number): string {
 function mm_cover_html(array $r, string $number, array $free, bool $press): string {
     $site  = (string) cfgv('domain', 'музыкальный-мир.рф');
     $base  = rtrim((string) cfgv('base_url', ''), '/');
-    $email = (string) cfgv('org_email', 'kulturniy.centr.mir@gmail.com');
+    // Адрес для ответа — российский домен, не общий org_email: см. ol_reply_email().
+    $email = function_exists('ol_reply_email') ? ol_reply_email() : (string) cfgv('official_reply_email', 'kc@музыкальный-мир.рф');
     $phone = (string) cfgv('org_phone', '');
     $vk    = (string) cfgv('org_vk', '');
 
