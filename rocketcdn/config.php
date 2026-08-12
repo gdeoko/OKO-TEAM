@@ -119,25 +119,69 @@ function rc_log($msg) {
 }
 
 /* ── Телеграм ────────────────────────────────────────────── */
+/* Запасные адреса api.telegram.org.
+   На российских площадках имя нередко резолвится в адрес, до которого
+   сети нет. Тогда мы перебираем известные адреса, а найденный рабочий
+   запоминаем в data/tg_ip.txt, чтобы следующий вызов шёл сразу по нему. */
+function rc_tg_ips() {
+    $own = (array)rc_cfg('tg_ips', []);
+    $def = ['149.154.167.220', '149.154.167.197', '149.154.175.50',
+            '149.154.166.110', '91.108.56.130'];
+    return array_values(array_unique(array_merge($own, $def)));
+}
+
+function rc_tg_pin_file() { return RC_DATA . '/tg_ip.txt'; }
+
+function rc_tg_pin_get() {
+    $f = rc_tg_pin_file();
+    if (!is_file($f)) return '';
+    $ip = trim((string)@file_get_contents($f));
+    return filter_var($ip, FILTER_VALIDATE_IP) ? $ip : '';
+}
+
+function rc_tg_pin_set($ip) {
+    @file_put_contents(rc_tg_pin_file(), $ip, LOCK_EX);
+}
+
+function rc_tg_call($token, $method, $params, $ip) {
+    $ch = curl_init('https://api.telegram.org/bot' . $token . '/' . $method);
+    $opt = [
+        CURLOPT_POST           => true,
+        CURLOPT_POSTFIELDS     => json_encode($params, JSON_UNESCAPED_UNICODE),
+        CURLOPT_HTTPHEADER     => ['Content-Type: application/json'],
+        CURLOPT_RETURNTRANSFER => true,
+        CURLOPT_TIMEOUT        => 25,
+        CURLOPT_CONNECTTIMEOUT => 8,
+    ];
+    if ($ip) $opt[CURLOPT_RESOLVE] = ['api.telegram.org:443:' . $ip];
+    if ($px = rc_cfg('tg_proxy')) $opt[CURLOPT_PROXY] = $px;
+    curl_setopt_array($ch, $opt);
+    $r = curl_exec($ch);
+    $err = curl_error($ch);
+    curl_close($ch);
+    return [$r, $err];
+}
+
 function rc_tg($method, $params = [], $tries = 2) {
     $token = rc_cfg('tg_token');
     if (!$token) return null;
     $err = '';
+    $pin = rc_tg_pin_get();
     for ($i = 0; $i < max(1, $tries); $i++) {
-        $ch = curl_init('https://api.telegram.org/bot' . $token . '/' . $method);
-        curl_setopt_array($ch, [
-            CURLOPT_POST           => true,
-            CURLOPT_POSTFIELDS     => json_encode($params, JSON_UNESCAPED_UNICODE),
-            CURLOPT_HTTPHEADER     => ['Content-Type: application/json'],
-            CURLOPT_RETURNTRANSFER => true,
-            CURLOPT_TIMEOUT        => 25,
-            CURLOPT_CONNECTTIMEOUT => 10,
-        ]);
-        $r = curl_exec($ch);
-        $err = curl_error($ch);
-        curl_close($ch);
+        list($r, $err) = rc_tg_call($token, $method, $params, $pin);
         if (!$err) return json_decode($r, true);
         if ($i === 0) usleep(400000);
+    }
+
+    /* Обычный путь не сработал: ищем адрес, до которого сеть есть */
+    foreach (rc_tg_ips() as $ip) {
+        if ($ip === $pin) continue;
+        list($r, $e2) = rc_tg_call($token, $method, $params, $ip);
+        if (!$e2) {
+            rc_tg_pin_set($ip);
+            rc_log('TG: перешли на адрес ' . $ip);
+            return json_decode($r, true);
+        }
     }
     /* Связь с Телеграмом иногда моргает. В журнал пишем только то,
        что не прошло и со второй попытки. */
