@@ -738,7 +738,10 @@ Rocket.prototype.veil = function (dt) {
       var dy = Math.max(b.top - cy, 0, cy - b.bottom);
       if (dx * dx + dy * dy < rr) { hit = true; break; }
     }
-    this._veilGoal = hit ? 0.17 : 1;
+    /* Раньше ракета пряталась от текста до 0,17 и её было не видно.
+       Теперь она остаётся на виду: над словами лишь слегка притухает,
+       а читаемость держит стеклянная подложка под текстовым блоком. */
+    this._veilGoal = hit ? 0.62 : 1;
   }
   var light = document.documentElement.getAttribute("data-theme") === "light";
   var d = this._veilGoal - this._veil;
@@ -791,7 +794,28 @@ Rocket.prototype.frame = function (dt) {
   }
   this.veil(dt);
 
+  this.publish();
   this.r.render(this.scene, this.cam);
+};
+
+/* Экранное положение ракеты уходит в CSS-переменные. По ним чипы
+   разлетаются от пролёта, счётчики стартуют, карточки подсвечиваются:
+   трёхмерная сцена и плоский интерфейс живут в одном пространстве. */
+Rocket.prototype.publish = function () {
+  this._pubT = (this._pubT || 0) + 1;
+  if (this._pubT % 2) return;
+  var v = this._tmpC.copy(this.pivot.position).project(this.cam);
+  var w = this.canvas.clientWidth || innerWidth;
+  var h = this.canvas.clientHeight || innerHeight;
+  var x = (v.x * 0.5 + 0.5) * w;
+  var y = (-v.y * 0.5 + 0.5) * h;
+  /* near: 1 когда ракета близко к камере, 0 когда далеко */
+  var near = Math.max(0, Math.min(1, (v.z + 1) * 0.5));
+  var st = document.documentElement.style;
+  st.setProperty("--rocket-x", Math.round(x) + "px");
+  st.setProperty("--rocket-y", Math.round(y) + "px");
+  st.setProperty("--rocket-near", (1 - near).toFixed(3));
+  g.RC_ROCKET_POS = { x: x, y: y, near: 1 - near, orb: this.orbK };
 };
 
 Rocket.prototype.tick = function (ts) {

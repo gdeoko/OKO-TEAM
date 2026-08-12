@@ -233,6 +233,7 @@ try{var _t=localStorage.getItem("rc_theme");if(_t==="light"||_t==="dark")documen
 <canvas id="spaceBg" aria-hidden="true"></canvas>
 
 <div class="prog" id="prog"></div>
+<div class="snd-hint" role="status" data-i18n="ui.soundHint">У этого сайта есть звук</div>
 
 <!-- 3D-ракета, летит по скроллу через весь сайт -->
 <canvas id="rocketCanvas" aria-hidden="true"></canvas>
@@ -269,6 +270,13 @@ try{var _t=localStorage.getItem("rc_theme");if(_t==="light"||_t==="dark")documen
         <button type="button" class="js-theme" data-theme="dark" aria-pressed="true" title="Тёмное оформление">
           <svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M20 14.2A8.2 8.2 0 0 1 9.8 4a8.4 8.4 0 1 0 10.2 10.2z" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/></svg>
           <span class="vh" data-i18n="ui.dark">Тёмная тема</span>
+        </button>
+      </div>
+      <div class="pill snd" role="group" aria-label="Звук">
+        <i class="pill-knob" aria-hidden="true"></i>
+        <button type="button" class="js-sound" aria-pressed="false">
+          <span class="eq" aria-hidden="true"><i></i><i></i><i></i></span>
+          <span class="vh" data-i18n="ui.sound">Звук</span>
         </button>
       </div>
       <a class="btn btn-p btn-sm js-reg" data-place="header" href="https://lk.rocketcdn.ru" target="_blank" rel="noopener">
@@ -755,6 +763,7 @@ try{var _t=localStorage.getItem("rc_theme");if(_t==="light"||_t==="dark")documen
 </button>
 
 <script src="assets/rc-space.js"></script>
+<script src="assets/rc-sound.js"></script>
 <script src="assets/rc-geo.js"></script>
 <script src="assets/rc-i18n.js"></script>
 <script src="assets/rc-globe.js"></script>

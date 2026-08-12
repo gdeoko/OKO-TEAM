@@ -54,6 +54,8 @@
   --pill-hover:#E2E8F0;
   --tab-on:    #E2E8F0;
   --tab-on-tx: #091320;
+  --read-veil:  rgba(5,12,21,.42);
+  --read-veil-2:rgba(5,12,21,.62);
   --gl-1:      rgba(255,255,255,.075);
   --gl-2:      rgba(255,255,255,.035);
   --gl-3:      rgba(255,255,255,.015);
@@ -93,6 +95,8 @@
   --pill-hover:#fff;
   --tab-on:    #091320;
   --tab-on-tx: #fff;
+  --read-veil:  rgba(243,247,251,.52);
+  --read-veil-2:rgba(243,247,251,.74);
   --gl-1:      rgba(255,255,255,.96);
   --gl-2:      rgba(255,255,255,.82);
   --gl-3:      rgba(238,245,252,.72);
@@ -192,7 +196,7 @@ section { position: relative; padding: var(--sec) 0; }
   border: 1px solid var(--line-2); backdrop-filter: blur(10px);
 }
 .btn-g:hover { border-color: var(--cyan); background: var(--surface-2); transform: translateY(-2px); }
-.btn-sm { padding: 10px 18px; font-size: 14px; border-radius: var(--r-sm); }
+.btn-sm { padding: 10px 15px; font-size: 13.8px; border-radius: var(--r-sm); }
 .btn-lg { padding: 17px 34px; font-size: 16px; }
 .btn[disabled] { opacity: .5; cursor: not-allowed; transform: none !important; }
 .btn-row { display: flex; flex-wrap: wrap; gap: 12px; }
@@ -240,7 +244,7 @@ section { position: relative; padding: var(--sec) 0; }
 }
 .hdr.stuck { border-bottom-color: var(--line); }
 .hdr.hide { transform: translateY(-100%); }
-.hdr-in { display: flex; align-items: center; gap: 16px; height: 70px; }
+.hdr-in { display: flex; align-items: center; gap: 12px; height: 70px; }
 .logo { display: flex; align-items: center; gap: 10px; flex: none; }
 .logo img { height: 32px; width: auto; }
 /* Переключение вариантов логотипа работает и в шапке, и в подвале */
@@ -249,8 +253,8 @@ section { position: relative; padding: var(--sec) 0; }
 [data-theme="light"] .lg-light { display: block; }
 .nav { display: flex; gap: 4px; margin-left: auto; }
 .nav a {
-  position: relative; padding: 9px 13px; border-radius: var(--r-sm);
-  font-size: 14.5px; color: var(--tx-2); white-space: nowrap;
+  position: relative; padding: 9px 8px; border-radius: var(--r-sm);
+  font-size: 13.8px; color: var(--tx-2); white-space: nowrap;
   transition: color var(--fast), background var(--fast);
 }
 .nav a:hover, .nav a.act { color: var(--tx); background: var(--surface); }
@@ -285,7 +289,7 @@ section { position: relative; padding: var(--sec) 0; }
 .pill.at-2 .pill-knob { transform: translateX(100%); }
 .pill button {
   position: relative; z-index: 1; display: grid; place-items: center;
-  min-width: 42px; height: 30px; padding: 0 12px;
+  min-width: 38px; height: 30px; padding: 0 10px;
   background: none; border: 0; border-radius: var(--r-full);
   font-size: 12.5px; font-weight: 700; letter-spacing: .02em;
   color: var(--pill-off); cursor: pointer;
@@ -294,7 +298,7 @@ section { position: relative; padding: var(--sec) 0; }
 .pill button:hover { color: var(--pill-hover); }
 .pill button.on { color: #fff; }
 .pill button svg { width: 16px; height: 16px; }
-.pill.theme button { min-width: 38px; padding: 0 10px; }
+.pill.theme button { min-width: 33px; padding: 0 7px; }
 .vh {
   position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px;
   overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; border: 0;
@@ -1164,3 +1168,74 @@ body { background: var(--bg); }
   50%      { transform: translateY(-11px) }
 }
 @media (prefers-reduced-motion: reduce) { .float-3d { animation: none } }
+
+/* ── Звук: фирменная капсула с эквалайзером ───────────────── */
+.pill.snd button { min-width: 44px; padding: 0 12px; }
+.eq { display: flex; align-items: center; gap: 3px; height: 14px; }
+.eq i {
+  width: 2.5px; border-radius: 2px; background: currentColor;
+  height: 3px; transition: height .12s linear;
+}
+/* Звук выключен: полоски приплюснуты в одну черту */
+.snd-on .pill.snd .eq i:nth-child(1) { height: calc(4px + var(--snd-e, 0) * 9px); }
+.snd-on .pill.snd .eq i:nth-child(2) { height: calc(6px + var(--snd-e, 0) * 14px); }
+.snd-on .pill.snd .eq i:nth-child(3) { height: calc(3px + var(--snd-e, 0) * 7px); }
+
+.snd-hint {
+  position: fixed; z-index: 210; top: calc(76px + env(safe-area-inset-top, 0px));
+  right: var(--pad); max-width: 260px;
+  padding: 10px 15px; border-radius: var(--r-md);
+  background: var(--bg-3); border: 1px solid var(--line-2); color: var(--tx);
+  font-size: 13px; box-shadow: var(--shadow);
+  opacity: 0; transform: translateY(-8px); pointer-events: none;
+  transition: opacity .4s var(--ease), transform .4s var(--ease);
+}
+.snd-hint.on { opacity: 1; transform: none; }
+@media (max-width: 900px) { .snd-hint { display: none } }
+
+/* Звук это одно состояние, а не выбор из двух: капсула узкая,
+   кругляш ездит внутри неё */
+.pill.snd { width: 54px; }
+.pill.snd button { width: 100%; min-width: 0; padding: 0; }
+.pill.snd .pill-knob { width: calc(50% - 3px); }
+.pill.snd.at-2 .pill-knob { transform: translateX(100%); }
+
+/* Ширина шапки не резиновая. Сначала ужимаем навигацию, потом
+   уводим язык в меню: тема и звук нужнее под рукой. */
+@media (max-width: 1340px) {
+  .nav a { padding: 9px 8px; font-size: 13.5px; }
+}
+@media (max-width: 1240px) {
+  .hdr-act .pill.lang { display: none; }
+}
+
+/* ═══════════════════════════════════════════════════════════
+   Читаемость без затемнения
+
+   Гасить всю картинку ради текста неправильно: пропадает и фон, и
+   ракета. Подложку ставим локально, ровно под текстовым блоком, и
+   она стеклянная: сквозь неё виден и космос, и ракета.
+   ═══════════════════════════════════════════════════════════ */
+.sec-head, .hero-in, .hs-head {
+  position: relative;
+  isolation: isolate;
+}
+.sec-head::before, .hero-in::before, .hs-head::before {
+  content: '';
+  position: absolute; z-index: -1;
+  inset: -18px -26px -14px -26px;
+  border-radius: var(--r-xl);
+  background: var(--read-veil);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+  mask-image: radial-gradient(120% 100% at 30% 50%, #000 55%, transparent 100%);
+  -webkit-mask-image: radial-gradient(120% 100% at 30% 50%, #000 55%, transparent 100%);
+  pointer-events: none;
+}
+/* На телефоне размытие дорого: обходимся мягкой заливкой */
+@media (max-width: 900px) {
+  .sec-head::before, .hero-in::before, .hs-head::before {
+    backdrop-filter: none; -webkit-backdrop-filter: none;
+    background: var(--read-veil-2);
+  }
+}

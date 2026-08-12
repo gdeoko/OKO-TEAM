@@ -20,6 +20,8 @@ var RU = {
   "cta.consult":   "Получить консультацию",
   "cta.all":       "Все точки присутствия",
   "theme.toggle":  "Сменить тему",
+  "ui.sound":      "Звук",
+  "ui.soundHint":  "У этого сайта есть звук",
   "ui.light":      "Светлая тема",
   "ui.dark":       "Тёмная тема",
   "menu.open":     "Открыть меню",
@@ -298,7 +300,7 @@ var EN = {
   "nav.how": "How it works", "nav.cases": "Use cases", "nav.faq": "FAQ", "nav.contact": "Contacts",
   "cta.register": "Sign up", "cta.register2": "Create an account", "cta.connect": "Request access",
   "cta.callback": "Request a call", "cta.consult": "Get a consultation", "cta.all": "All locations",
-  "theme.toggle": "Switch theme", "ui.light": "Light theme", "ui.dark": "Dark theme", "menu.open": "Open menu", "menu.close": "Close menu",
+  "theme.toggle": "Switch theme", "ui.sound": "Sound", "ui.soundHint": "This site has sound", "ui.light": "Light theme", "ui.dark": "Dark theme", "menu.open": "Open menu", "menu.close": "Close menu",
 
   "hero.h1a": "Content delivery", "hero.h1b": "at maximum speed",
   "hero.sub": "Rocket CDN combines its own infrastructure with global edge coverage, so content sits closer to the user. Fast, stable and predictable.",
