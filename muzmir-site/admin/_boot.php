@@ -289,3 +289,154 @@ function admin_same_work_box(array $rows): string {
          . 'Учтите при выставлении оценки.</div>'
          . $items . '</div>';
 }
+
+/**
+ * ТАБЛИЦА «ОЦЕНЁННЫЕ» — ОДНА И ТА ЖЕ В ОБОИХ РАЗДЕЛАХ ОЦЕНКИ.
+ *
+ * Показывает всё, что администратор уже разобрал: и звания, и отклонения. По
+ * каждой строке видно, когда участник узнает результат и когда получит наградные
+ * документы, и отсюда же можно поправить решение, перенести отправку, снять
+ * отклонение или сделать копию заявки.
+ *
+ * @param array  $rows строки graded_rows()
+ * @param string $back раздел, куда возвращаться после действия ('grading' | 'longcomp')
+ * @param array  $keep параметры адреса, которые надо сохранить при возврате
+ */
+function admin_graded_table(array $rows, string $back = 'grading', array $keep = []): string {
+    if (!$rows) {
+        return '<p class="muted small">Пока ничего не оценено и не отклонено.</p>';
+    }
+    if (!function_exists('graded_send_info')) require_once BASE_PATH . '/core/graded_list.php';
+
+    ob_start(); ?>
+<div class="table-wrap"><table class="tbl gl-tbl">
+  <thead><tr>
+    <th>Участник</th><th>Конкурсный номер</th><th>Разобрана</th>
+    <th>Решение</th><th>Отправка</th><th style="width:230px"></th>
+  </tr></thead>
+  <tbody>
+  <?php foreach ($rows as $a):
+      $aid  = (int) $a['id'];
+      $rej  = (string) $a['status'] === 'rejected';
+      $who  = trim((string) ($a['group_name'] ?? '')) !== '' && (int) ($a['is_group'] ?? 0)
+                ? (string) $a['group_name'] : (string) $a['full_name'];
+      $when = trim((string) ($a['graded_at'] ?? '')) !== '' ? (string) $a['graded_at'] : (string) $a['created_at'];
+      $info = graded_send_info($a);
+      $link = a_link('grading', ['id' => $aid] + $keep);
+  ?>
+    <tr<?= $rej ? ' class="gl-rej"' : '' ?>>
+      <td>
+        <b><?= h($who) ?></b><?= vip_mark((int) ($a['user_id'] ?? 0), '', (string) ($a['email'] ?? '')) ?>
+        <div class="small muted"><?= h((string) ($a['number'] ?: '#' . $aid)) ?> · <?= h((string) $a['comp']) ?></div>
+      </td>
+      <td class="small"><?= h((string) $a['work_title']) ?></td>
+      <td class="small"><?= h(date('d.m.y H:i', strtotime($when))) ?></td>
+      <td>
+        <?php if ($rej): ?>
+          <span class="badge badge--rejected">Отклонена</span>
+          <?php if (trim((string) ($a['reject_reason'] ?? '')) !== ''): ?>
+            <div class="small muted" style="max-width:280px"><?= h(mb_substr((string) $a['reject_reason'], 0, 120)) ?></div>
+          <?php endif; ?>
+        <?php else: ?>
+          <span class="badge badge--gold"><?= h((string) $a['result']) ?></span>
+          <?php if (trim((string) ($a['extra_diploma'] ?? '')) !== ''): ?>
+            <div class="small muted">доп: <?= h((string) $a['extra_diploma']) ?></div>
+          <?php endif; ?>
+        <?php endif; ?>
+      </td>
+      <td class="small">
+        <div<?= $info['result_done'] ? ' style="color:var(--a-navy)"' : ' class="muted"' ?>>
+          Результат: <?= h($info['result']) ?>
+        </div>
+        <?php if (!$rej): ?>
+          <div<?= $info['docs_done'] ? ' style="color:var(--a-navy)"' : ' class="muted"' ?>>
+            Дипломы: <?= h($info['docs']) ?>
+          </div>
+        <?php endif; ?>
+      </td>
+      <td style="white-space:nowrap">
+        <a class="btn btn--primary btn--sm" href="<?= $link ?>"><?= admin_icon('grading') ?><?= $rej ? 'Открыть' : 'Изменить' ?></a>
+        <a class="btn btn--ghost btn--sm" href="<?= a_link('applications', ['id' => $aid]) ?>">Заявка</a>
+        <details class="gl-more"><summary class="btn btn--ghost btn--sm">Ещё</summary>
+          <div class="gl-menu">
+            <?php if (!$rej): ?>
+              <form method="post" action="<?= url('/admin/') ?>" class="gl-f"><?= csrf_field() ?>
+                <input type="hidden" name="do" value="gl_resched"><input type="hidden" name="id" value="<?= $aid ?>">
+                <?php foreach ($keep as $k => $v): ?><input type="hidden" name="<?= h((string) $k) ?>" value="<?= h((string) $v) ?>"><?php endforeach; ?>
+                <label class="small muted">Перенести отправку наград</label>
+                <input type="datetime-local" name="at" required>
+                <button class="btn btn--navy btn--sm">Перенести</button>
+              </form>
+            <?php else: ?>
+              <form method="post" action="<?= url('/admin/') ?>" class="gl-f"
+                    onsubmit="return confirm('Снять отклонение? Заявка вернётся в очередь на оценку.')"><?= csrf_field() ?>
+                <input type="hidden" name="do" value="gl_unreject"><input type="hidden" name="id" value="<?= $aid ?>">
+                <?php foreach ($keep as $k => $v): ?><input type="hidden" name="<?= h((string) $k) ?>" value="<?= h((string) $v) ?>"><?php endforeach; ?>
+                <button class="btn btn--ghost btn--sm">Снять отклонение</button>
+              </form>
+            <?php endif; ?>
+            <form method="post" action="<?= url('/admin/') ?>" class="gl-f"
+                  onsubmit="return confirm('Создать копию заявки? Копия будет без результата и без оплаты.')"><?= csrf_field() ?>
+              <input type="hidden" name="do" value="gl_duplicate"><input type="hidden" name="id" value="<?= $aid ?>">
+              <?php foreach ($keep as $k => $v): ?><input type="hidden" name="<?= h((string) $k) ?>" value="<?= h((string) $v) ?>"><?php endforeach; ?>
+              <button class="btn btn--ghost btn--sm">Дублировать заявку</button>
+            </form>
+          </div>
+        </details>
+      </td>
+    </tr>
+  <?php endforeach; ?>
+  </tbody>
+</table></div>
+<style>
+.gl-tbl td{vertical-align:top}
+.gl-tbl .gl-rej{background:rgba(190,60,60,.05)}
+.gl-more{position:relative;display:inline-block}
+.gl-more summary{list-style:none;cursor:pointer}
+.gl-more summary::-webkit-details-marker{display:none}
+.gl-menu{position:absolute;right:0;top:calc(100% + 4px);z-index:30;min-width:250px;padding:12px;
+         background:var(--a-card,#fff);border:1px solid var(--a-line);border-radius:12px;
+         box-shadow:0 12px 32px rgba(0,0,0,.16)}
+.gl-menu .gl-f{display:flex;flex-direction:column;gap:6px;padding:8px 0}
+.gl-menu .gl-f + .gl-f{border-top:1px solid var(--a-line)}
+.gl-menu input[type=datetime-local]{padding:7px 9px;border:1px solid var(--a-line);border-radius:8px;font-size:.86rem}
+@media (max-width:820px){.gl-menu{position:static;box-shadow:none;min-width:0}}
+</style>
+<?php
+    return (string) ob_get_clean();
+}
+
+/**
+ * Обработчик действий таблицы «Оценённые». Общий для обоих разделов оценки,
+ * поэтому и живёт здесь, а не в каждом из них по копии.
+ *
+ * @return bool обработал ли действие (тогда вызывающий уже сделал редирект)
+ */
+function admin_graded_actions(string $back, array $keep = []): bool {
+    $do = (string) input('do');
+    if (!in_array($do, ['gl_resched', 'gl_unreject', 'gl_duplicate'], true)) return false;
+    if (!csrf_check()) { flash('Сессия устарела.', 'error'); admin_redirect($back, $keep); }
+
+    $aid = (int) input('id');
+    $a   = $aid ? one("SELECT * FROM applications WHERE id=?", [$aid]) : null;
+    if (!$a) { flash('Заявка не найдена.', 'error'); admin_redirect($back, $keep); }
+
+    if ($do === 'gl_resched') {
+        require_once BASE_PATH . '/core/dispatch_ops.php';
+        $r = dops_diplomas_resched($aid, (string) input('at'));
+        flash($r['msg'], $r['ok'] ? 'success' : 'error');
+    } elseif ($do === 'gl_unreject') {
+        // Возвращаем в очередь: результат не трогаем — если он был, заявка снова
+        // окажется в «оценённых», а если нет, вернётся на аттестацию.
+        update('applications', ['status' => 'new', 'reject_reason' => ''], 'id=:id', ['id' => $aid]);
+        if (function_exists('app_status_sync')) app_status_sync($aid);
+        audit('application_unreject', 'application', $aid, ['from' => $back]);
+        flash('Отклонение снято — заявка вернулась в работу.', 'success');
+    } else {
+        require_once BASE_PATH . '/core/graded_list.php';
+        $r = app_duplicate($aid, (int) input('to_competition'));
+        flash($r['msg'], $r['ok'] ? 'success' : 'error');
+    }
+    admin_redirect($back, $keep);
+    return true;
+}

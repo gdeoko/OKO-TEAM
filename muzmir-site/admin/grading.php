@@ -503,6 +503,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && input('do') === 'reject') {
     admin_redirect('grading', array_filter(['competition'=>$comp,'order'=>$order]));
 }
 
+/* ---------- Действия нижнего списка «Оценённые» (перенос, снятие отклонения, копия) ---------- */
+require_once BASE_PATH . '/core/graded_list.php';
+if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    admin_graded_actions('grading', array_filter(['competition' => $comp, 'order' => $order, 'q' => trim(input('q'))]));
+}
+
 /* ---------- Редактирование полей заявки ПРЯМО В ОЦЕНКЕ (короткие/длинные) ---------- */
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && input('do') === 'edit_app') {
     if (!csrf_check()) { flash('Сессия устарела.', 'error'); admin_redirect('grading'); }
@@ -917,22 +923,14 @@ $compRow = null;
 foreach ($comps as $c) if ((int)$c['id'] === $comp) { $compRow = $c; break; }
 
 $qSearch = trim(input('q'));
-$show = ($comp && input('show') === 'graded') ? 'graded' : '';
-if ($show === 'graded') {
-    $gw = "a.competition_id=? AND a.result<>'' AND a.status<>'rejected'"; $gargs = [$comp];
-    if ($qSearch !== '') {
-        [$sq, $sa] = search_like(['a.full_name','a.group_name','a.number','a.email','a.phone',
-                                  'a.work_title','a.teacher','a.result'], $qSearch);
-        if ($sq !== '') { $gw .= " AND ($sq)"; $gargs = array_merge($gargs, $sa); }
-    }
-    $rows = all("SELECT a.*, c.name comp, 1 grp_count, 0 grp_pos FROM applications a
-                 LEFT JOIN competitions c ON c.id=a.competition_id
-                 WHERE $gw
-                 ORDER BY a.created_at " . ($order === 'new' ? 'DESC' : 'ASC') . ", a.id LIMIT 500", $gargs);
-} else {
-    $rows = grading_queue_rows($comp, $order, $qSearch);
-}
-$qTotal = count($rows);
+
+// ДВА СПИСКА НА ОДНОЙ СТРАНИЦЕ. Сверху очередь на аттестацию, снизу — всё, что
+// уже разобрано, включая отклонённые. Раньше это был переключатель: оценённые
+// ПОДМЕНЯЛИ очередь, поэтому увидеть своё вчерашнее решение, не потеряв из виду
+// сегодняшнюю очередь, было нельзя. Поиск общий — ищем по обоим спискам сразу.
+$rows       = grading_queue_rows($comp, $order, $qSearch);
+$qTotal     = count($rows);
+$gradedRows = graded_rows($comp, $qSearch, input('gorder') === 'old' ? 'old' : 'new', 'short');
 
 /* Панель «Итоги конкурса» для длинных бесплатных (results_mode='list' или is_paid=0). */
 $isLong = $compRow && (($compRow['results_mode'] ?? '') === 'list' || (int)$compRow['is_paid'] === 0);
@@ -948,25 +946,29 @@ foreach ($rows as $r) { $firstId = (int)$r['id']; break; }
 
 ob_start(); ?>
 <div class="section-title">
-  <h2>Оценивание <span class="small muted">(<?= $show === 'graded' ? 'оценено: ' : 'в очереди: ' ?><?= $qTotal ?>)</span></h2>
-  <?php if ($firstId && $show === ''): ?>
+  <h2>Оценка коротких <span class="small muted">(в очереди: <?= $qTotal ?> · разобрано: <?= count($gradedRows) ?>)</span></h2>
+  <?php if ($firstId): ?>
     <a class="btn btn--primary" href="<?= a_link('grading', array_filter(['id'=>$firstId,'competition'=>$comp,'order'=>$order])) ?>"><?= admin_icon('grading') ?>Начать оценку</a>
   <?php endif; ?>
 </div>
-<p class="small muted" style="margin:-6px 0 14px">Новые заявки попадают в очередь автоматически. После сохранения итога заявка получает статус «Оценена», после отправки диплома — «Исполнена». Ручные переносы статусов не нужны.</p>
+<p class="small muted" style="margin:-6px 0 14px">Сверху — очередь на аттестацию, снизу — всё, что уже разобрано, вместе с отклонёнными. Новые заявки попадают в очередь автоматически, ручные переносы статусов не нужны.</p>
 
 <form method="get" class="filters">
-  <input type="hidden" name="p" value="grading"><?php if ($show): ?><input type="hidden" name="show" value="graded"><?php endif; ?>
-  <div class="field"><label>Поиск</label><input name="q" value="<?= h($qSearch) ?>" placeholder="ФИО, коллектив, №, email, телефон, номер"></div>
+  <input type="hidden" name="p" value="grading">
+  <div class="field"><label>Поиск по обоим спискам</label><input name="q" value="<?= h($qSearch) ?>" placeholder="ФИО, коллектив, №, email, телефон, номер, звание"></div>
   <div class="field"><label>Конкурс</label><select name="competition" onchange="this.form.submit()"><option value="">Все конкурсы</option>
     <?php foreach ($comps as $c): ?><option value="<?= $c['id'] ?>" <?= $comp===(int)$c['id']?'selected':'' ?>><?= h($c['name']) ?></option><?php endforeach; ?>
   </select></div>
-  <div class="field"><label>Порядок</label><select name="order" onchange="this.form.submit()">
+  <div class="field"><label>Очередь</label><select name="order" onchange="this.form.submit()">
     <option value="old" <?= $order==='old'?'selected':'' ?>>Старые → новые</option>
     <option value="new" <?= $order==='new'?'selected':'' ?>>Новые → старые</option>
   </select></div>
+  <div class="field"><label>Разобранные</label><select name="gorder" onchange="this.form.submit()">
+    <option value="new" <?= input('gorder')!=='old'?'selected':'' ?>>Новые оценённые сверху</option>
+    <option value="old" <?= input('gorder')==='old'?'selected':'' ?>>Старые оценённые сверху</option>
+  </select></div>
   <button class="btn btn--primary btn--sm"><?= admin_icon('search') ?? '' ?>Поиск</button>
-  <?php if ($qSearch !== ''): ?><a class="btn btn--ghost btn--sm" href="<?= a_link('grading', array_filter(['competition'=>$comp,'order'=>$order,'show'=>$show?:null])) ?>">Сброс</a><?php endif; ?>
+  <?php if ($qSearch !== ''): ?><a class="btn btn--ghost btn--sm" href="<?= a_link('grading', array_filter(['competition'=>$comp,'order'=>$order])) ?>">Сброс</a><?php endif; ?>
 </form>
 
 <?php if ($longStats): ?>
@@ -980,11 +982,7 @@ ob_start(); ?>
       <div style="display:flex;gap:8px;flex-wrap:wrap">
         <a class="btn btn--navy btn--sm" href="<?= a_link('grading', ['action'=>'results_csv','competition'=>$comp]) ?>"><?= admin_icon('download') ?>Скачать CSV</a>
         <a class="btn btn--navy btn--sm" target="_blank" href="<?= a_link('grading', ['action'=>'results_html','competition'=>$comp]) ?>"><?= admin_icon('eye') ?>HTML для печати</a>
-        <?php if ($show === 'graded'): ?>
-          <a class="btn btn--ghost btn--sm" href="<?= a_link('grading', array_filter(['competition'=>$comp,'order'=>$order])) ?>">К очереди неоценённых</a>
-        <?php else: ?>
-          <a class="btn btn--ghost btn--sm" href="<?= a_link('grading', array_filter(['competition'=>$comp,'order'=>$order,'show'=>'graded'])) ?>"><?= admin_icon('edit') ?>Редактировать результаты</a>
-        <?php endif; ?>
+        <a class="btn btn--ghost btn--sm" href="#graded"><?= admin_icon('edit') ?>К разобранным заявкам</a>
       </div>
     </div>
     <div style="height:9px;border-radius:6px;background:var(--a-line);overflow:hidden;margin-top:10px">
@@ -998,13 +996,18 @@ ob_start(); ?>
 .gq-tbl .gq-grp{border-left:3px solid var(--a-gold,#8B6F1F)}
 .gq-tbl .gq-badge{font-size:.7rem}
 </style>
+
+<!-- СПИСОК 1: ОЧЕРЕДЬ НА АТТЕСТАЦИЮ -->
+<div class="section-title" style="margin:18px 0 8px">
+  <h3>На аттестации <span class="badge badge--muted"><?= $qTotal ?></span></h3>
+</div>
 <div class="table-wrap">
   <table class="tbl gq-tbl">
     <thead><tr>
-      <th>Участник</th><th>Конкурс</th><th>Конкурсный номер</th><th>Подана</th><th>Статус</th><?php if ($show): ?><th>Результат</th><?php endif; ?><th></th>
+      <th>Участник</th><th>Конкурс</th><th>Конкурсный номер</th><th>Подана</th><th>Статус</th><th></th>
     </tr></thead>
     <tbody>
-      <?php if (!$rows): ?><tr><td colspan="7" class="muted" style="text-align:center;padding:28px"><?= $show ? 'Оценённых заявок пока нет' : 'Очередь пуста — все заявки оценены' ?></td></tr><?php endif; ?>
+      <?php if (!$rows): ?><tr><td colspan="6" class="muted" style="text-align:center;padding:28px">Очередь пуста — все заявки разобраны</td></tr><?php endif; ?>
       <?php foreach ($rows as $a): ?>
         <tr class="<?= (int)$a['grp_count'] > 1 ? 'gq-grp' : '' ?>">
           <td><b><?= h($a['is_group'] ? $a['group_name'] : $a['full_name']) ?></b><?= vip_mark((int)($a['user_id'] ?? 0), '', (string)($a['email'] ?? '')) ?>
@@ -1019,13 +1022,23 @@ ob_start(); ?>
           <td class="small"><?= h($a['work_title']) ?></td>
           <td class="small"><?= h(date('d.m.y H:i', strtotime((string)$a['created_at']))) ?></td>
           <td><span class="badge badge--<?= h($a['status']) ?>"><?= h(app_status_ru($a['status'])) ?></span></td>
-          <?php if ($show): ?><td class="small"><span class="badge badge--gold"><?= h($a['result']) ?></span><?= !empty($a['extra_diploma']) ? '<div class="small muted">'.h($a['extra_diploma']).'</div>' : '' ?></td><?php endif; ?>
-          <td><a class="btn btn--primary" href="<?= a_link('grading', array_filter(['id'=>$a['id'],'competition'=>$comp,'order'=>$order])) ?>"><?= admin_icon('grading') ?><?= $show ? 'Изменить' : 'ОЦЕНИТЬ' ?></a></td>
+          <td><a class="btn btn--primary" href="<?= a_link('grading', array_filter(['id'=>$a['id'],'competition'=>$comp,'order'=>$order])) ?>"><?= admin_icon('grading') ?>ОЦЕНИТЬ</a></td>
         </tr>
       <?php endforeach; ?>
     </tbody>
   </table>
 </div>
+
+<!-- СПИСОК 2: РАЗОБРАННЫЕ (оценённые + отклонённые) -->
+<div class="section-title" id="graded" style="margin:26px 0 8px">
+  <h3>Оценённые и отклонённые <span class="badge badge--gold"><?= count($gradedRows) ?></span></h3>
+</div>
+<p class="small muted" style="margin:-4px 0 12px">
+  Всё, что уже разобрано. Видно, когда участник узнает результат и когда получит наградные документы.
+  «Изменить» открывает ту же карточку оценки — там правится и результат, и сама заявка.
+</p>
+<?= admin_graded_table($gradedRows, 'grading',
+      array_filter(['competition' => $comp, 'order' => $order, 'q' => $qSearch])) ?>
 <?php
 $content = ob_get_clean();
-admin_layout('Оценивание', $content, 'grading');
+admin_layout('Оценка коротких', $content, 'grading');

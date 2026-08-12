@@ -12,6 +12,7 @@
 declare(strict_types=1);
 
 require_once BASE_PATH . '/core/presets.php';
+require_once BASE_PATH . '/core/graded_list.php';
 if (is_file(BASE_PATH . '/core/text_format.php')) require_once BASE_PATH . '/core/text_format.php';
 
 try { db()->exec("ALTER TABLE competitions ADD COLUMN results_published_at TEXT"); } catch (\Throwable $e) {}
@@ -19,6 +20,8 @@ try { db()->exec("ALTER TABLE competitions ADD COLUMN results_published_at TEXT"
 /* ------------------------------- POST -------------------------------- */
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     if (!csrf_check()) { flash('Сессия устарела.', 'error'); admin_redirect('longcomp'); }
+    // Перенос отправки, снятие отклонения и дублирование — общие для обоих разделов оценки.
+    admin_graded_actions('longcomp', array_filter(['competition' => (int) input('competition'), 'q' => trim(input('q'))]));
     $do  = input('do');
     $cid = (int) input('competition');
     $aid = (int) input('id');
@@ -102,7 +105,11 @@ ob_start(); ?>
       <?php endforeach; ?>
     </select>
   </div>
-  <div class="field"><label>Поиск</label><input name="q" value="<?= h(input('q')) ?>" placeholder="ФИО, коллектив, №, email, телефон, номер"></div>
+  <div class="field"><label>Поиск по обоим спискам</label><input name="q" value="<?= h(input('q')) ?>" placeholder="ФИО, коллектив, №, email, телефон, номер, звание"></div>
+  <div class="field"><label>Разобранные</label><select name="gorder" onchange="this.form.submit()">
+    <option value="new" <?= input('gorder')!=='old'?'selected':'' ?>>Новые оценённые сверху</option>
+    <option value="old" <?= input('gorder')==='old'?'selected':'' ?>>Старые оценённые сверху</option>
+  </select></div>
   <button class="btn btn--primary btn--sm"><?= admin_icon('search') ?>Поиск</button>
   <?php if (trim(input('q')) !== ''): ?><a class="btn btn--ghost btn--sm" href="<?= a_link('longcomp', ['competition'=>$comp]) ?>">Сброс</a><?php endif; ?>
 </form>
@@ -112,6 +119,8 @@ ob_start(); ?>
 <?php elseif (!$current): ?>
   <div class="card"><p class="muted">Конкурс не найден.</p></div>
 <?php else:
+  // Верхний список — только то, что ждёт аттестации. Отклонённые сюда не входят:
+  // они уже разобраны и живут в нижнем списке вместе с оценёнными.
   $all = all("SELECT * FROM applications WHERE competition_id=? AND is_paid=1 AND status<>'rejected'
               ORDER BY full_name COLLATE NOCASE", [$comp]);
   $qLong = trim(input('q'));
@@ -131,6 +140,10 @@ ob_start(); ?>
   }
   $toGrade = array_values(array_filter($all, fn($a) => trim((string)$a['result']) === ''));
   $graded  = array_values(array_filter($all, fn($a) => trim((string)$a['result']) !== ''));
+  // Нижний список — общий с короткими: оценённые И отклонённые, с полным набором
+  // действий. Эталон-таблица результатов ниже строится отдельно и только из
+  // оценённых: отклонённой заявке в списке итогов конкурса делать нечего.
+  $gradedRows = graded_rows($comp, $qLong, input('gorder') === 'old' ? 'old' : 'new', 'long');
   $tot = count($all); $done = count($graded);
   $pct = $tot ? (int) round($done / $tot * 100) : 0;
   $published = trim((string)($current['results_published_at'] ?? '')) !== '';
@@ -215,13 +228,25 @@ ob_start(); ?>
     <?php endif; ?>
   </div>
 
-  <!-- СПИСОК 2: ОЦЕНЁННЫЕ (эталон-таблица результатов) -->
+  <!-- СПИСОК 2: РАЗОБРАННЫЕ (оценённые + отклонённые), полный набор действий -->
+  <div class="card" id="graded" style="margin-bottom:16px">
+    <div class="section-title" style="margin-bottom:8px">
+      <h3>Оценённые и отклонённые <span class="badge badge--gold"><?= count($gradedRows) ?></span></h3>
+    </div>
+    <p class="small muted" style="margin:-4px 0 12px">
+      Всё, что уже разобрано. Отклонённые остаются здесь — решение по заявке принято, и проверить его
+      должно быть где. «Изменить» открывает карточку оценки: там правится и результат, и сама заявка.
+    </p>
+    <?= admin_graded_table($gradedRows, 'longcomp', array_filter(['competition' => $comp, 'q' => $qLong])) ?>
+  </div>
+
+  <!-- СПИСОК 3: ЭТАЛОН-ТАБЛИЦА ИТОГОВ (то, что уйдёт в DOCX и в пост) -->
   <div class="card" id="results-preview">
-    <div class="section-title" style="margin-bottom:8px"><h3>Оценённые · Результаты <span class="badge badge--gold"><?= count($graded) ?></span></h3></div>
+    <div class="section-title" style="margin-bottom:8px"><h3>Список итогов по эталону <span class="badge badge--gold"><?= count($graded) ?></span></h3></div>
     <?php if (!$graded): ?>
       <p class="muted small">Оценённых заявок пока нет.</p>
     <?php else: ?>
-    <p class="small muted" style="margin:0 0 10px">Формат по эталону. Нажмите «Оценить», чтобы открыть и отредактировать результат.</p>
+    <p class="small muted" style="margin:0 0 10px">Ровно то, что попадёт в DOCX и в пост с итогами. Отклонённых здесь нет.</p>
     <div class="table-wrap"><table class="tbl">
       <thead><tr><th>Ф.И.О. участника / коллектив</th><th>Название конкурсного номера</th><th>Страна / город</th><th>Аттестационный результат</th><th style="width:280px">Действия</th></tr></thead>
       <tbody>
