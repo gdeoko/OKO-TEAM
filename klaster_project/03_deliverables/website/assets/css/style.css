@@ -34,7 +34,7 @@ h2{font-size:clamp(28px,4vw,44px);color:var(--ink)}
 /* header */
 .hd{position:sticky;top:0;z-index:60;background:rgba(255,255,255,.86);backdrop-filter:blur(14px);border-bottom:1px solid var(--line)}
 .hd-in{display:flex;align-items:center;gap:28px;height:72px}
-.hd-logo{height:38px}.hd-logo img{height:100%}
+.hd-logo{height:38px;flex:0 0 auto}.hd-logo img{height:100%;width:auto;max-width:none}
 .nav{display:flex;gap:24px;margin-left:auto}
 .nav a{font-size:15px;font-weight:600;color:var(--ink);opacity:.82;transition:.15s;white-space:nowrap}
 .nav a:hover{opacity:1;color:var(--amber-d)}
@@ -57,7 +57,7 @@ h2{font-size:clamp(28px,4vw,44px);color:var(--ink)}
 .hero-soc a:hover{background:var(--ink);color:#fff;border-color:var(--ink)}
 .hero-soc svg{width:20px;height:20px}
 .hero-media{position:relative}
-.hero-media img{width:100%;border-radius:var(--r-lg);box-shadow:var(--sh-lg);aspect-ratio:4/3;object-fit:cover}
+.hero-media img{width:100%;height:auto;border-radius:var(--r-lg);box-shadow:var(--sh-lg);aspect-ratio:4/3;object-fit:cover}
 .hero-badge{position:absolute;left:-14px;bottom:22px;background:#fff;border:1px solid var(--line);border-radius:16px;padding:14px 20px;box-shadow:var(--sh);display:flex;gap:16px;align-items:center}
 .hero-badge b{font-family:var(--ff-d);font-size:26px;display:block;line-height:1}
 .hero-badge span{font-size:12px;color:var(--muted)}
@@ -209,6 +209,12 @@ html.js .rv.in{opacity:1;transform:none}
 }
 @media(max-width:620px){
   .wrap{padding:0 18px}
+  /* шапка на телефоне: логотип держит пропорции, кнопка ужимается, строка не уезжает вбок */
+  .hd-in{gap:14px}
+  .hd-logo{height:28px}
+  .hd-cta{gap:8px}
+  .hd-cta .btn{font-size:13px;padding:11px 14px;letter-spacing:.02em}
+  .burger{padding:6px}
   .stats-grid,.g2,.g3,.g4,.specs-grid,.res-grid,.cat-grid,.why-grid,.row2{grid-template-columns:1fr}
   .hero-badge{left:12px}
   .hero-cta .btn{flex:1;justify-content:center}
