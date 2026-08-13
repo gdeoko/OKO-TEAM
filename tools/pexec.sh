@@ -4,7 +4,7 @@
 # хост моста — там стоит Chrome, а сайты РФ из облака недоступны.
 set -u
 cd /home/user/OKO-TEAM || exit 1
-source <(base64 -d secrets.env.b64) 2>/dev/null
+. ~/.oko/secrets.env 2>/dev/null
 B=$(base64 -w0 "$1")
 T="/tmp/px_$$_$RANDOM.sh"
 CMD="echo '$B' | base64 -d > $T; bash $T; rm -f $T"

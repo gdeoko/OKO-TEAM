@@ -4,7 +4,7 @@
 # вызовы не перетирают друг друга (из-за этого раньше приходил чужой вывод).
 set -u
 cd /home/user/OKO-TEAM || exit 1
-source <(base64 -d secrets.env.b64) 2>/dev/null
+. ~/.oko/secrets.env 2>/dev/null
 B=$(base64 -w0 "$1")
 T="/tmp/rx_$$_$RANDOM.sh"
 CMD="source /opt/oko-poster/cfg/secrets.env; echo '$B' | base64 -d > $T; sshpass -p \"\$MUZMIR_ROOT_PW\" ssh -o StrictHostKeyChecking=no root@\$MUZMIR_SERVER_IP 'cat > $T && bash $T; rm -f $T' < $T; rm -f $T"

@@ -3,7 +3,7 @@
 Правило: перед каждым роликом — заново. Всё разнообразное, ничего не повторяется ни внутри
 ролика, ни между роликами (реестры USED_*). Цель — миллион просмотров.
 
-Ключи: `set -a && source <(base64 -d secrets.env.b64) && set +a`
+Ключи: `set -a && . ~/.oko/secrets.env && set +a`
 (TELEGRAM_BOT_TOKEN, TELEGRAM_CHAT_ID, HF_TOKEN, PEXELS_API_KEY, KAGGLE_API_TOKEN…).
 
 ## СТАДИЯ 1 — АНАЛИЗ КОНКУРЕНТОВ  (`pipeline/research/`)

@@ -20,7 +20,7 @@ description: OKO magic skill — главный производственный
 ## ПАМЯТЬ (первое действие каждой сессии)
 - Прочитай `brain/Claude/Projects/<проект>.md`, `brain/Claude/Инфраструктура.md`, 2 последние `brain/Claude/Sessions/`.
 - В конце сессии допиши `brain/Claude/Sessions/YYYY-MM-DD-<проект>.md`: факты, пути, решения, незакрытое. Закоммить.
-- Секреты: ПЕРВЫМ ДЕЛОМ `source <(base64 -d secrets.env.b64)` из корня репо (base64 из-за push-protection GitHub, решение Даниэля). Новые ключи: дописать в расшифровку, перекодировать `base64 -w0 > secrets.env.b64`, закоммитить. Плюс проверить env-переменные окружения.
+- Секреты: ПЕРВЫМ ДЕЛОМ `. ~/.oko/secrets.env` из корня репо (base64 из-за push-protection GitHub, решение Даниэля). Новые ключи: дописать в расшифровку, перекодировать `base64 -w0 > secrets.env.b64`, закоммитить. Плюс проверить env-переменные окружения.
 
 ## СРЕДА (специфика этого облака — не как в Termux)
 - HTTPS через прокси `$HTTPS_PROXY`; CA-бандл `/root/.ccr/ca-bundle.crt` (boto3/python: verify=CA). node fetch мимо прокси не ходит — curl.
