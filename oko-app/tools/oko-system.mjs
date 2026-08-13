@@ -81,6 +81,15 @@ const [, , cmd, a1, a2] = process.argv;
 
     const url = `${SITE}/api.php?action=oko_system_get&uid=${put.uid}&raw=1`;
 
+    /* Ссылку проверяем содержимым, а не кодом ответа: сервер отдаёт приложение
+       на любой несуществующий путь со статусом 200, а сама ручка на пропавшую
+       систему отвечает JSON-ошибкой. Задачу нельзя закрывать по битой ссылке -
+       человек увидит «готово» и пустой экран. */
+    const probe = await fetch(url).then(r => r.text()).catch(() => '');
+    if (probe.length < 500 || /"ok"\s*:\s*false/.test(probe.slice(0, 200))) {
+      throw new Error('система не отдаётся по ссылке (' + probe.length + ' симв) - задача НЕ закрыта: ' + url);
+    }
+
     /* Задача закрывается ТОЛЬКО после того, как система реально сохранена. */
     await call('oko_task_result', {
       uid: taskUid, status: 'done',
