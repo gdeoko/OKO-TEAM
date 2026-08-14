@@ -53,7 +53,7 @@
     var groups = [
       ['.hero-grid > div > *', ''],
       ['section .eyebrow, section > .wrap > h2, section > .wrap > .lead', ''],
-      ['.why-card, .spec, .infra-card, .ind-card, .res-card, .faq-item, .lot, .tr-card, .card', ''],
+      ['.why-card, .spec, .infra-card, .ind-card, .res-card, .faq-item, .lot, .tr-card, .card, .gal-i, .res, .route', ''],
       ['.hero-soc', '']
     ];
     groups.forEach(function(g){
@@ -92,7 +92,7 @@
     });
 
     // картинки: шторка и блик
-    $$('.lot-img, .infra-card figure, .res-card figure, .ind-card figure, .why-card figure, .media, .pic').forEach(function(f){
+    $$('.lot-img, .why-shot, .tr-shot, .infra-shots figure, .infra-card figure, .res-card figure, .ind-card figure, .why-card figure, .media, .pic').forEach(function(f){
       if(!f.querySelector('img')) return;
       f.classList.add('mo-img');
       watch(f);
@@ -234,7 +234,7 @@
 
   /* ================= 9. номера разделов ================= */
   function stamps(){
-    var order = ['about','transport','specs','infra','industries','residents','catalog','faq'];
+    var order = ['about','gallery','transport','specs','infra','industries','residents','catalog','faq'];
     order.forEach(function(id,i){
       var s = document.getElementById(id);
       if(!s || $('.mo-stamp', s)) return;

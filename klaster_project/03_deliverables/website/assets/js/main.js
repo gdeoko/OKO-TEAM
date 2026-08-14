@@ -43,7 +43,7 @@
 
   // ---- catalog ----
   var grid=document.getElementById('catGrid');
-  var imgs=['/assets/img/photos/hall_empty.jpg','/assets/img/photos/interior_corridor.jpg','/assets/img/renders/facade_loading.jpg','/assets/img/photos/production_workers.jpg','/assets/img/renders/facade_entrance.jpg','/assets/img/photos/coworking.jpg'];
+  var imgs=['/assets/img/real/gates-900.jpg','/assets/img/real/facade_persp-900.jpg','/assets/img/real/street_inner-900.jpg','/assets/img/real/complex_front-900.jpg','/assets/img/real/gates_side-900.jpg','/assets/img/real/yard_wide-900.jpg'];
   fetch('/assets/js/catalog.json').then(function(r){return r.json()}).then(function(lots){
     render(lots);
   }).catch(function(){ render(fallbackLots()); });
@@ -92,6 +92,59 @@
       n.innerHTML='Не удалось отправить заявку. Позвоните в отдел аренды: <a href="tel:+79853310271" style="color:#c0392b;font-weight:700">8 985 331-02-71</a>';
     }
   });
+
+
+  // ---- просмотр кадра крупно ----
+  (function(){
+    var tiles = Array.prototype.slice.call(document.querySelectorAll('.gal-i'));
+    if(!tiles.length) return;
+    var box = document.createElement('div');
+    box.className = 'lb'; box.setAttribute('role','dialog'); box.setAttribute('aria-modal','true');
+    box.innerHTML =
+      '<span class="lb-count"></span>' +
+      '<button class="lb-x" aria-label="Закрыть">&#10005;</button>' +
+      '<button class="lb-p" aria-label="Предыдущий кадр"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M15 5l-7 7 7 7"/></svg></button>' +
+      '<button class="lb-n" aria-label="Следующий кадр"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M9 5l7 7-7 7"/></svg></button>' +
+      '<img alt=""><div class="lb-cap"></div>';
+    document.body.appendChild(box);
+    var im = box.querySelector('img'), cap = box.querySelector('.lb-cap'),
+        cnt = box.querySelector('.lb-count'), cur = 0, last = null;
+
+    function show(i){
+      cur = (i + tiles.length) % tiles.length;
+      var t = tiles[cur];
+      im.src = t.getAttribute('data-full');
+      im.alt = t.getAttribute('data-cap') || '';
+      cap.textContent = t.getAttribute('data-cap') || '';
+      cnt.textContent = (cur+1) + ' / ' + tiles.length;
+    }
+    function open(i){ last = document.activeElement; show(i); box.classList.add('open');
+      document.body.classList.add('lb-on');
+      document.body.style.overflow='hidden'; box.querySelector('.lb-x').focus(); }
+    function close(){ box.classList.remove('open'); document.body.classList.remove('lb-on'); document.body.style.overflow='';
+      if(last && last.focus) last.focus(); }
+
+    tiles.forEach(function(t,i){ t.addEventListener('click', function(){ open(i); }); });
+    box.querySelector('.lb-x').addEventListener('click', close);
+    box.querySelector('.lb-p').addEventListener('click', function(e){ e.stopPropagation(); show(cur-1); });
+    box.querySelector('.lb-n').addEventListener('click', function(e){ e.stopPropagation(); show(cur+1); });
+    box.addEventListener('click', function(e){ if(e.target === box || e.target === im) close(); });
+    document.addEventListener('keydown', function(e){
+      if(!box.classList.contains('open')) return;
+      if(e.key === 'Escape') close();
+      if(e.key === 'ArrowLeft') show(cur-1);
+      if(e.key === 'ArrowRight') show(cur+1);
+    });
+    // свайп на телефоне
+    var x0 = null;
+    box.addEventListener('touchstart', function(e){ x0 = e.touches[0].clientX; }, {passive:true});
+    box.addEventListener('touchend', function(e){
+      if(x0 === null) return;
+      var dx = e.changedTouches[0].clientX - x0;
+      if(Math.abs(dx) > 45) show(cur + (dx < 0 ? 1 : -1));
+      x0 = null;
+    }, {passive:true});
+  })();
 
   // ---- chatbot ----
   var cbBtn=document.getElementById('cbBtn'), cbPanel=document.getElementById('cbPanel'),
