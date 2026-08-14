@@ -17,7 +17,10 @@ declare(strict_types=1);
 function im_cmd(array $acc, string $mailbox, string $req = '', int $timeout = 60): array {
     $ch = curl_init();
     curl_setopt_array($ch, [
-        CURLOPT_URL            => 'imaps://' . $acc['host'] . ':' . $acc['port'] . '/' . rawurlencode($mailbox),
+        // Имя ящика кодируем, а точку с запятой в «INBOX;MAILINDEX=23» — нет:
+        // это часть адреса, а не имя папки.
+        CURLOPT_URL            => 'imaps://' . $acc['host'] . ':' . $acc['port'] . '/'
+                                  . implode(';', array_map('rawurlencode', explode(';', $mailbox))),
         CURLOPT_USERNAME       => $acc['user'],
         CURLOPT_PASSWORD       => $acc['pass'],
         CURLOPT_USE_SSL        => CURLUSESSL_ALL,
@@ -48,8 +51,26 @@ function im_search(array $acc, string $criteria, string $mailbox = 'INBOX'): arr
 
 /** Полный исходник письма по его номеру. */
 function im_fetch(array $acc, int $id, string $mailbox = 'INBOX'): string {
-    [$ok, $body] = im_cmd($acc, $mailbox, 'FETCH ' . $id . ' BODY.PEEK[]', 120);
-    return $ok ? $body : '';
+    /* ПИСЬМО БЕРЁМ АДРЕСОМ, А НЕ СЫРОЙ КОМАНДОЙ.
+     *
+     * Здесь стояло CUSTOMREQUEST «FETCH <n> BODY.PEEK[]». Сервер на такую
+     * команду отвечает строкой вида «* 23 FETCH (BODY[] {13508}» и следом самим
+     * письмом, но curl отдаёт только первую строку: письма не было вовсе,
+     * возвращалось 28 байт служебного заголовка. Разбор при этом не падал — он
+     * честно доставал из пустоты пустые «от кого» и «тема», и каждое письмо
+     * выглядело чужим. То есть ответы ведомств не были бы прочитаны никогда, а
+     * в логах стояло бы бодрое «просмотрено писем 23, от ведомств 0».
+     *
+     * Правильный для curl способ — попросить письмо по номеру прямо в адресе:
+     * imaps://host/INBOX;MAILINDEX=23. Тогда возвращается исходник целиком.
+     * Флаг «прочитано» при этом не ставится: curl запрашивает BODY.PEEK.
+     */
+    [$ok, $body] = im_cmd($acc, $mailbox . ';MAILINDEX=' . $id, '', 120);
+    if ($ok && trim($body) !== '') return $body;
+
+    // Запасной путь на случай почтовой службы, которая не понимает MAILINDEX.
+    [$ok2, $body2] = im_cmd($acc, $mailbox, 'FETCH ' . $id . ' BODY.PEEK[]', 120);
+    return $ok2 ? $body2 : '';
 }
 
 /** Декодирует заголовок вида =?UTF-8?B?...?= в обычную строку. */
