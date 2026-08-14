@@ -17,10 +17,14 @@ declare(strict_types=1);
 function im_cmd(array $acc, string $mailbox, string $req = '', int $timeout = 60): array {
     $ch = curl_init();
     curl_setopt_array($ch, [
-        // Имя ящика кодируем, а точку с запятой в «INBOX;MAILINDEX=23» — нет:
-        // это часть адреса, а не имя папки.
+        // Кодируем ТОЛЬКО имя папки. Хвост «;MAILINDEX=23» — служебная часть
+        // адреса, и трогать её нельзя: закодированный знак равенства
+        // («MAILINDEX%3D23») сервер не понимает и молча отдаёт пустоту.
         CURLOPT_URL            => 'imaps://' . $acc['host'] . ':' . $acc['port'] . '/'
-                                  . implode(';', array_map('rawurlencode', explode(';', $mailbox))),
+                                  . (static function (string $mb): string {
+                                        $p = explode(';', $mb, 2);
+                                        return rawurlencode($p[0]) . (isset($p[1]) ? ';' . $p[1] : '');
+                                    })($mailbox),
         CURLOPT_USERNAME       => $acc['user'],
         CURLOPT_PASSWORD       => $acc['pass'],
         CURLOPT_USE_SSL        => CURLUSESSL_ALL,
