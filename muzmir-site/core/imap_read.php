@@ -160,9 +160,9 @@ function im_walk_parts(string $body, string $boundary, array &$out, int $depth =
         $ph = preg_replace('~\R[ \t]+~', ' ', $sp[0] ?? '') ?? '';
         $pb = $sp[1] ?? '';
 
-        $ct   = preg_match('~content-type:\s*([^;\R]+)~i', $ph, $m) ? mb_strtolower(trim($m[1])) : 'text/plain';
-        $enc  = preg_match('~content-transfer-encoding:\s*([^\s;\R]+)~i', $ph, $m) ? $m[1] : '';
-        $disp = preg_match('~content-disposition:\s*([^;\R]+)~i', $ph, $m) ? mb_strtolower(trim($m[1])) : '';
+        $ct   = preg_match('~content-type:\s*([^;\r\n]+)~i', $ph, $m) ? mb_strtolower(trim($m[1])) : 'text/plain';
+        $enc  = preg_match('~content-transfer-encoding:\s*([^\s;\r\n]+)~i', $ph, $m) ? $m[1] : '';
+        $disp = preg_match('~content-disposition:\s*([^;\r\n]+)~i', $ph, $m) ? mb_strtolower(trim($m[1])) : '';
         $cs   = preg_match('~charset="?([^";\s]+)"?~i', $ph, $m) ? $m[1] : '';
 
         if (preg_match('~boundary="?([^";\s]+)"?~i', $ph, $bm)) {
@@ -171,8 +171,8 @@ function im_walk_parts(string $body, string $boundary, array &$out, int $depth =
         }
 
         $name = '';
-        if (preg_match('~filename\*?="?([^";\R]+)"?~i', $ph, $m)) $name = im_decode_header($m[1]);
-        elseif (preg_match('~name\*?="?([^";\R]+)"?~i', $ph, $m)) $name = im_decode_header($m[1]);
+        if (preg_match('~filename\*?="?([^";\r\n]+)"?~i', $ph, $m)) $name = im_decode_header($m[1]);
+        elseif (preg_match('~name\*?="?([^";\r\n]+)"?~i', $ph, $m)) $name = im_decode_header($m[1]);
 
         $isAtt = $disp === 'attachment' || ($name !== '' && $ct !== 'text/plain' && $ct !== 'text/html');
 
