@@ -10,7 +10,16 @@
    "отдельный вход + ворота"
   ],
   "price": "по запросу",
-  "priceNote": "аренда, м²/год"
+  "priceNote": "аренда, м²/год",
+  "purpose": [
+   "prod"
+  ],
+  "area": 420,
+  "height": 9,
+  "power": 100,
+  "gate": true,
+  "crane": false,
+  "ramp": false
  },
  {
   "title": "Склад с зоной погрузки",
@@ -23,7 +32,16 @@
    "рампа"
   ],
   "price": "по запросу",
-  "priceNote": "аренда, м²/год"
+  "priceNote": "аренда, м²/год",
+  "purpose": [
+   "ware"
+  ],
+  "area": 800,
+  "height": 8,
+  "power": 100,
+  "gate": true,
+  "crane": true,
+  "ramp": true
  },
  {
   "title": "Производство + офис",
@@ -36,7 +54,17 @@
    "с/у и офис"
   ],
   "price": "по запросу",
-  "priceNote": "аренда, м²/год"
+  "priceNote": "аренда, м²/год",
+  "purpose": [
+   "prod",
+   "office"
+  ],
+  "area": 650,
+  "height": 8,
+  "power": 150,
+  "gate": true,
+  "crane": false,
+  "ramp": false
  },
  {
   "title": "Лёгкое производство",
@@ -49,7 +77,16 @@
    "отдельный вход"
   ],
   "price": "по запросу",
-  "priceNote": "аренда, м²/год"
+  "priceNote": "аренда, м²/год",
+  "purpose": [
+   "prod"
+  ],
+  "area": 260,
+  "height": 6,
+  "power": 60,
+  "gate": true,
+  "crane": false,
+  "ramp": false
  },
  {
   "title": "Офисное помещение",
@@ -62,7 +99,16 @@
    "паркинг"
   ],
   "price": "по запросу",
-  "priceNote": "аренда, м²/год"
+  "priceNote": "аренда, м²/год",
+  "purpose": [
+   "office"
+  ],
+  "area": 120,
+  "height": 3,
+  "power": 20,
+  "gate": false,
+  "crane": false,
+  "ramp": false
  },
  {
   "title": "Большой производственный цех",
@@ -75,6 +121,16 @@
    "2 лифта 5 т"
   ],
   "price": "по запросу",
-  "priceNote": "аренда, м²/год"
+  "priceNote": "аренда, м²/год",
+  "purpose": [
+   "prod",
+   "ware"
+  ],
+  "area": 3000,
+  "height": 12,
+  "power": 500,
+  "gate": true,
+  "crane": true,
+  "ramp": true
  }
 ]

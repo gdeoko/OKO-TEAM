@@ -510,6 +510,59 @@
     watch(box);
   }
 
+
+  /* ================= 12. расписание шаттла ================= */
+  function shuttle(){
+    var sec = document.getElementById('transport'); if (!sec) return;
+    var wrap = $('.wrap', sec); if (!wrap || $('.bus', sec)) return;
+
+    var TO   = ['06:30','07:00','07:30','08:00','08:30','09:00','09:30'];
+    var BACK = ['16:00','16:45','17:15','17:45','18:15','18:45','19:15','20:00'];
+
+    function col(title, from, to, times, note){
+      return '<div class="bus-col">' +
+        '<div class="bus-dir"><b>' + from + '</b>' +
+          '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" aria-hidden="true"><path d="M4 12h15M14 7l5 5-5 5"/></svg>' +
+          '<b>' + to + '</b></div>' +
+        '<div class="bus-times">' + times.map(function(x){ return '<span>' + x + '</span>'; }).join('') + '</div>' +
+        '<div class="bus-note">' + note + '</div>' +
+      '</div>';
+    }
+
+    var box = document.createElement('div');
+    box.className = 'bus rv';
+    box.innerHTML =
+      '<button class="bus-head" type="button" aria-expanded="false">' +
+        '<span class="bus-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">' +
+          '<rect x="3" y="4" width="18" height="12" rx="2"/><path d="M3 10h18M7 20v-2M17 20v-2"/>' +
+          '<circle cx="7.5" cy="16.5" r="1.4" fill="currentColor" stroke="none"/><circle cx="16.5" cy="16.5" r="1.4" fill="currentColor" stroke="none"/></svg></span>' +
+        '<span class="bus-t"><b>Бесплатный шаттл от метро «Царицыно»</b>' +
+          '<i>15 рейсов в будний день, дорога 15 минут</i></span>' +
+        '<span class="bus-x" aria-hidden="true"></span>' +
+      '</button>' +
+      '<div class="bus-body">' +
+        '<div class="bus-grid">' +
+          col('к объекту', 'метро «Царицыно»', 'бизнес-парк', TO, 'В пути 15 минут, прибытие к началу смены') +
+          col('от объекта', 'бизнес-парк', 'метро «Царицыно»', BACK, 'Обратные рейсы отправляются от проходной') +
+        '</div>' +
+        '<p class="bus-foot">Расписание будних дней. Проезд для сотрудников резидентов бесплатный.</p>' +
+      '</div>';
+
+    var routes = $('.route');
+    if (routes && routes.parentElement){
+      routes.parentElement.appendChild(box);
+    } else {
+      wrap.appendChild(box);
+    }
+
+    var head = $('.bus-head', box), body = $('.bus-body', box);
+    head.addEventListener('click', function(){
+      var open = box.classList.toggle('open');
+      head.setAttribute('aria-expanded', open ? 'true' : 'false');
+    });
+    watch(box);
+  }
+
   function boot(){
     try{ light();      }catch(e){}
     try{ sheet();      }catch(e){}
@@ -520,13 +573,14 @@
     try{ power();      }catch(e){}
     try{ transport();  }catch(e){}
     try{ gates();      }catch(e){}
+    try{ shuttle();    }catch(e){}
     try{ exposure();   }catch(e){}
     // одометр последним: он забирает числа, которые пометил моушен-слой
     setTimeout(function(){ try{ odometers(); }catch(e){} }, 60);
     // страховка: ничего не остаётся спрятанным
     setTimeout(function(){
       $$('.expo:not(.expo-on)').forEach(function(n){ n.classList.add('expo-on'); });
-      $$('.dim,.rail,.floor,.pwr,.geo,.gate').forEach(function(n){ n.classList.add('on'); });
+      $$('.dim,.rail,.floor,.pwr,.geo,.gate,.bus').forEach(function(n){ n.classList.add('on'); });
     }, 5000);
   }
 

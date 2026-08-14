@@ -288,3 +288,116 @@ section#specs, section#infra, section#industries, section#residents, section#cat
 /* подпись маршрута идёт со своей строки, иначе слипается с названием */
 .route > div{display:flex;flex-direction:column;gap:2px;min-width:0}
 .route span{display:block}
+
+/* ---------- 14. подбор помещения ---------- */
+.pick{
+  background:#fff; border:1px solid var(--line); border-radius:var(--r-lg);
+  padding:clamp(18px,2.4vw,26px); margin:26px 0 30px; box-shadow:var(--sh);
+}
+.pick-head{display:flex; justify-content:space-between; align-items:baseline; gap:16px; flex-wrap:wrap; margin-bottom:16px}
+.pick-t{font-family:var(--ff-d); text-transform:uppercase; letter-spacing:.14em; font-size:13px; color:var(--amber-ink)}
+.pick-n{font-size:13px; color:var(--muted)}
+.pick-n b{font-family:var(--ff-d); font-size:26px; color:var(--ink); line-height:1; margin-right:6px}
+.pick-n i{font-style:normal; font-weight:600; color:var(--ink)}
+.pick.pick-zero .pick-n b{color:#c0392b}
+
+.pick-row{display:flex; align-items:center; gap:14px; padding:9px 0; flex-wrap:wrap}
+.pick-row + .pick-row{border-top:1px solid var(--line)}
+.pick-l{font-size:14px; color:var(--muted); min-width:150px}
+.pick-l label{cursor:pointer}
+.pick-v{font-family:var(--ff-d); font-size:16px; color:var(--ink); min-width:84px; text-align:right}
+
+.pick-chips{display:flex; gap:8px; flex-wrap:wrap}
+.pick-c{
+  font-family:var(--ff-d); font-size:13px; letter-spacing:.06em; text-transform:uppercase;
+  padding:9px 14px; min-height:38px; border-radius:9px; cursor:pointer;
+  border:1px solid var(--line); background:#fff; color:var(--muted);
+  transition:.18s var(--e-tap);
+}
+.pick-c:hover{border-color:var(--ink); color:var(--ink)}
+.pick-c.on{background:var(--ink); border-color:var(--ink); color:#fff}
+.pick-c:focus-visible{outline:3px solid var(--amber); outline-offset:2px}
+
+.pick-range{
+  flex:1; min-width:170px; appearance:none; height:44px; padding:20px 0; background-clip:content-box;
+  background:linear-gradient(90deg,var(--amber) var(--p,20%),var(--line) var(--p,20%));
+  border-radius:3px; outline:none; cursor:pointer;
+}
+.pick-range::-webkit-slider-thumb{appearance:none;width:20px;height:20px;border-radius:50%;background:var(--amber);border:3px solid #fff;box-shadow:0 2px 8px rgba(20,23,28,.3)}
+.pick-range::-moz-range-thumb{width:20px;height:20px;border-radius:50%;background:var(--amber);border:3px solid #fff}
+.pick-range:focus-visible{box-shadow:0 0 0 3px rgba(232,164,0,.35)}
+
+.pick-row-end{justify-content:space-between; padding-top:16px}
+.pick-check{display:inline-flex; align-items:center; gap:9px; cursor:pointer; font-size:14px; color:var(--ink); min-height:44px}
+.pick-check input{width:19px; height:19px; accent-color:var(--amber); cursor:pointer}
+.pick-go{white-space:normal; text-align:center}
+.pick-go.pick-sent{transform:translateY(2px); box-shadow:0 2px 0 var(--deep)}
+.pick-note{margin-top:12px; font-size:14px; color:#8a6200; background:var(--amber-soft); border-radius:10px; padding:12px 14px}
+
+/* карточка не подошла под фильтр: остаётся видимой, но приглушена и объясняет чем */
+.lot{transition:opacity .35s var(--e-tap), filter .35s var(--e-tap)}
+.lot-near{opacity:.62; filter:saturate(.7)}
+.lot-near:hover{opacity:1; filter:none}
+.lot-miss{
+  display:block; font-size:11px; letter-spacing:.04em; color:#8a6200;
+  background:var(--amber-soft); border-radius:6px; padding:4px 8px; margin-bottom:8px;
+}
+@media(max-width:700px){
+  .pick-l{min-width:100%}
+  .pick-v{min-width:0}
+  .pick-row-end{flex-direction:column; align-items:stretch; gap:10px}
+  .pick-go{width:100%}
+}
+@media (prefers-reduced-motion:reduce){
+  .lot{transition:none}
+  .pick-go.pick-sent{transform:none}
+}
+
+/* ---------- 15. расписание шаттла ---------- */
+.bus{margin-top:18px;border:1px solid var(--line);border-radius:var(--r);background:#fff;overflow:hidden}
+.bus-head{
+  display:flex;align-items:center;gap:14px;width:100%;padding:16px 18px;
+  background:none;border:0;cursor:pointer;text-align:left;min-height:64px;
+  transition:background .2s var(--e-tap);
+}
+.bus-head:hover{background:var(--bg)}
+.bus-head:focus-visible{outline:3px solid var(--amber);outline-offset:-3px}
+.bus-ic{width:42px;height:42px;flex:none;border-radius:11px;background:var(--amber-soft);display:grid;place-items:center;color:var(--amber-ink)}
+.bus-ic svg{width:22px;height:22px}
+.bus-t{display:flex;flex-direction:column;gap:3px;min-width:0}
+.bus-t b{font-family:var(--ff-d);font-weight:600;font-size:17px;color:var(--ink)}
+.bus-t i{font-style:normal;font-size:13px;color:var(--muted)}
+.bus-x{margin-left:auto;width:22px;height:22px;flex:none;position:relative}
+.bus-x::before,.bus-x::after{
+  content:'';position:absolute;left:50%;top:50%;background:var(--amber-ink);border-radius:2px;
+  transform:translate(-50%,-50%);transition:transform .28s var(--e-tap);
+}
+.bus-x::before{width:14px;height:2px}
+.bus-x::after{width:2px;height:14px}
+.bus.open .bus-x::after{transform:translate(-50%,-50%) scaleY(0)}
+.bus-body{display:grid;grid-template-rows:0fr;transition:grid-template-rows .34s var(--e-in)}
+.bus.open .bus-body{grid-template-rows:1fr}
+.bus-body > *{overflow:hidden}
+.bus-grid{display:grid;grid-template-columns:1fr 1fr;gap:0;border-top:1px solid var(--line)}
+.bus-col{padding:16px 18px}
+.bus-col + .bus-col{border-left:1px solid var(--line)}
+.bus-dir{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:12px}
+.bus-dir b{font-family:var(--ff-d);font-weight:600;font-size:13px;text-transform:uppercase;letter-spacing:.06em;color:var(--ink)}
+.bus-dir svg{width:17px;height:17px;color:var(--amber);flex:none}
+.bus-times{display:flex;flex-wrap:wrap;gap:7px}
+.bus-times span{
+  font-family:var(--ff-d);font-size:15px;font-weight:600;color:var(--ink);
+  background:var(--bg);border:1px solid var(--line);border-radius:8px;padding:7px 11px;
+  font-variant-numeric:tabular-nums;
+}
+.bus-note{margin-top:11px;font-size:12.5px;color:var(--muted)}
+.bus-foot{padding:0 18px 16px;font-size:13px;color:var(--muted)}
+@media(max-width:760px){
+  .bus-grid{grid-template-columns:1fr}
+  .bus-col + .bus-col{border-left:0;border-top:1px solid var(--line)}
+  .bus-t b{font-size:15px}
+}
+@media (prefers-reduced-motion:reduce){
+  .bus-body{transition:none}
+  .bus-x::before,.bus-x::after{transition:none}
+}
