@@ -529,11 +529,23 @@ function lm_name_only(string $fio): string {
  *
  * @return array{files:int, bytes:int}
  */
-function lm_cleanup(int $days = 30): array {
+function lm_cleanup(int $days = 30, int $pdfDays = 7): array {
     $n = 0; $b = 0;
-    $edge = time() - max(1, $days) * 86400;
-    foreach ([BASE_PATH . '/public/uploads/letters', BASE_PATH . '/data/letters'] as $dir) {
+    // РАЗНЫЕ СРОКИ ДЛЯ РАЗНОГО.
+    //
+    // PDF — самое тяжёлое: 700 КБ на письмо. Он нужен ровно один раз, в момент
+    // отправки, вложением; дальше документ лежит у адресата. Картинка легче и
+    // живёт дольше: её показывает страница проверки подлинности, куда ведёт QR
+    // с бланка, и делопроизводитель может прийти туда через месяц.
+    //
+    // Сроки пришлось развести после того, как диск сервера кончился: рассылка по
+    // учреждениям делает тысячи писем в день, за трое суток набежало семь
+    // гигабайт, а впереди тридцать семь тысяч адресов. При хранении в тридцать
+    // дней это двадцать пять гигабайт на диске в тридцать восемь.
+    foreach ([[BASE_PATH . '/data/letters', $pdfDays],
+              [BASE_PATH . '/public/uploads/letters', $days]] as [$dir, $keep]) {
         if (!is_dir($dir)) continue;
+        $edge = time() - max(1, $keep) * 86400;
         foreach (glob($dir . '/*') ?: [] as $f) {
             if (!is_file($f) || filemtime($f) > $edge) continue;
             $b += (int) filesize($f);
