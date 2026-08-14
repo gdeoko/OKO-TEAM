@@ -39,4 +39,5 @@ B64=$(base64 -w0 "$REPO/$REL")
 vexec "printf %s '$B64' | base64 -d > /tmp/push_one.tmp && md5sum /tmp/push_one.tmp | cut -d' ' -f1"
 echo "  ожидали md5: $(md5sum "$REPO/$REL" | cut -d' ' -f1)"
 vexec "sshpass -p '$MUZMIR_ROOT_PW' scp -o StrictHostKeyChecking=no -o LogLevel=ERROR /tmp/push_one.tmp root@$MUZMIR_SERVER_IP:/tmp/push_one.tmp >/dev/null && echo доставлен"
-mm "cp -p $REL $REL.bak-\$(date +%Y%m%d-%H%M%S) && cp /tmp/push_one.tmp $REL && chown www-data:www-data $REL && php -l $REL"
+# Копию делаем только если там уже что-то лежит: новый файл копировать не с чего.
+mm "mkdir -p \$(dirname $REL); [ -f $REL ] && cp -p $REL $REL.bak-\$(date +%Y%m%d-%H%M%S); cp /tmp/push_one.tmp $REL && chown www-data:www-data $REL && php -l $REL"
