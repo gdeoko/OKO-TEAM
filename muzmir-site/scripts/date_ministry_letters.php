@@ -20,6 +20,7 @@
  *   php scripts/date_ministry_letters.php            — проставить недостающие
  *   php scripts/date_ministry_letters.php dry        — только показать, что прочитается
  *   php scripts/date_ministry_letters.php limit 20   — обработать не больше 20 писем
+ *   php scripts/date_ministry_letters.php nogem      — только свой OCR, без обращений к Gemini
  */
 declare(strict_types=1);
 if (PHP_SAPI !== 'cli') { fwrite(STDERR, "CLI only\n"); exit(1); }
@@ -113,17 +114,41 @@ function ml_date_from_scan(string $bytes, string $mime): string {
  * вариантом для тех сканов, где дату не нашли.
  */
 function ml_ocr_text(string $abs): string {
-    $out = [];
-    // psm 6 («один блок текста») даёт лучший результат на шапке бланка, чем
-    // авто-режим: шапка стоит колонкой слева и авто-разбор её дробит.
-    @exec('tesseract ' . escapeshellarg($abs) . ' stdout -l rus --psm 6 2>/dev/null', $out);
-    $t = implode("\n", $out);
-    if (trim($t) === '') {
+    $texts = [];
+    // РЕЖИМЫ РАЗБОРА СТРАНИЦЫ. Шапка бланка стоит колонкой слева, рядом с гербом
+    // и адресатом справа — один режим её нередко склеивает или роняет. Пробуем
+    // несколько: «один блок», «одна колонка», «разреженный текст», авто.
+    foreach ([6, 4, 11, 3] as $psm) {
         $out = [];
-        @exec('tesseract ' . escapeshellarg($abs) . ' stdout -l rus 2>/dev/null', $out);
+        @exec('tesseract ' . escapeshellarg($abs) . ' stdout -l rus --psm ' . $psm . ' 2>/dev/null', $out);
         $t = implode("\n", $out);
+        if (trim($t) !== '') $texts[] = $t;
     }
-    return $t;
+    return implode("\n", $texts);
+}
+
+/**
+ * ВЕРХНЯЯ ТРЕТЬ СКАНА, УВЕЛИЧЕННАЯ ВДВОЕ.
+ *
+ * Исходящий штамп набран мелким шрифтом, и на скане 150 dpi распознаётся плохо:
+ * из ста двадцати писем свой OCR брал меньше половины. Если вырезать шапку и
+ * увеличить её, тот же tesseract читает её уверенно. Возвращает путь к
+ * временному файлу ('' — если GD не смог).
+ */
+function ml_crop_header(string $abs): string {
+    if (!function_exists('imagecreatefromjpeg')) return '';
+    $ext = strtolower(pathinfo($abs, PATHINFO_EXTENSION));
+    $img = $ext === 'png' ? @imagecreatefrompng($abs) : @imagecreatefromjpeg($abs);
+    if (!$img) return '';
+    $w = imagesx($img); $h = imagesy($img);
+    $ch = (int) round($h * 0.42);
+    $dst = @imagecreatetruecolor($w * 2, $ch * 2);
+    if (!$dst) { imagedestroy($img); return ''; }
+    imagecopyresampled($dst, $img, 0, 0, 0, 0, $w * 2, $ch * 2, $w, $ch);
+    $tmp = tempnam(sys_get_temp_dir(), 'mlhead') . '.png';
+    $ok = @imagepng($dst, $tmp);
+    imagedestroy($img); imagedestroy($dst);
+    return $ok ? $tmp : '';
 }
 
 /**
@@ -186,6 +211,20 @@ function ml_date_from_text(string $text): string {
         if ($iso !== '') return $iso;
     }
 
+    // КЛАССИЧЕСКАЯ ШАПКА: «18.01.2024 № МК-0130-06-12» — дата слева, номер справа,
+    // слова «от» между ними нет вовсе. Так свёрстано большинство бланков, и
+    // правило «только после от» их все пропускало: сорок писем из семидесяти
+    // пяти ушли бы в Gemini впустую.
+    foreach (array_slice($lines, 0, 20) as $ln) {
+        if (preg_match('~^\s*на\s*№~ui', $ln)) continue;
+        if (preg_match('~постановлен|приказ|распоряжен|закон|указ~ui', $ln)) continue;
+        // Номер акта («№ 5-пп») — не наш исходящий, такую строку пропускаем.
+        if (preg_match('~№\s*\d+[\-/]?[А-Яа-яA-Za-z]~u', $ln)) continue;
+        if (!preg_match('~(\d{1,2}[.\-]\d{1,2}[.\-]\d{2,4}|\d{1,2}\s+[А-Яа-яё]{3,10}\s+\d{4})\s*(г\.?)?\s*№~u', $ln, $m)) continue;
+        $iso = $pick($m[1]);
+        if ($iso !== '') return $iso;
+    }
+
     // Дата может стоять отдельной короткой строкой под номером — без слова «от».
     foreach (array_slice($lines, 0, 12) as $ln) {
         $t = trim($ln);
@@ -215,6 +254,10 @@ echo 'ПИСЬМА БЕЗ ДАТЫ: ' . count($rows) . ($dry ? '  (пробны�
    . str_repeat('=', 78) . "\n";
 
 $ok = $fail = 0;
+// Запасной путь (Gemini) можно выключить руками: «nogem». Полезно, когда важно
+// быстро разобрать всё, что берёт свой OCR, и не ждать по две минуты на скан.
+$noGemini = in_array('nogem', $argv, true);
+$needGemini = 0;     // сколько писем ждут его на следующий день
 foreach ($rows as $i => $r) {
     $rel = trim((string) ($r['image_path'] ?: $r['file_path']));
     $abs = BASE_PATH . '/public' . $rel;
@@ -234,18 +277,39 @@ foreach ($rows as $i => $r) {
         ? mrep_pdf_text((string) file_get_contents($abs))
         : ml_ocr_text($abs));
 
+    // 1б) Не вышло — читаем увеличенную шапку: мелкий штамп на скане 150 dpi
+    //     распознаётся вдвое хуже, чем он же, вырезанный и увеличенный.
+    if ($raw === '' && $ext !== 'pdf') {
+        $crop = ml_crop_header($abs);
+        if ($crop !== '') {
+            $raw = ml_date_from_text(ml_ocr_text($crop));
+            if ($raw !== '') $how = 'OCR шапки';
+            @unlink($crop);
+        }
+    }
+
     // 2) Не нашли — спрашиваем Gemini Vision (рукописные шапки, кривые сканы).
-    if ($raw === '') {
+    if ($raw === '' && !$noGemini) {
         $how  = 'Gemini';
         $mime = $ext === 'png' ? 'image/png' : ($ext === 'pdf' ? 'application/pdf' : 'image/jpeg');
         $raw  = ml_date_from_scan((string) file_get_contents($abs), $mime);
     }
 
+    // КВОТА КОНЧИЛАСЬ — РАБОТУ НЕ БРОСАЕМ.
+    // Раньше здесь стоял break, и первое же письмо, ушедшее в Gemini, обрывало
+    // весь прогон: сто девятнадцать сканов, которые прекрасно читает свой OCR,
+    // так и оставались без дат из-за чужой квоты. Теперь запасной путь просто
+    // выключается, а остальные письма разбираются как обычно.
     if ($raw === '__NOKEY__') {
-        echo "\nОСТАНОВЛЕНО: бесплатная квота Gemini на сегодня исчерпана.\n"
-           . "Платные ключи без разрешения владельца не трогаем. Запустите скрипт завтра —\n"
-           . "он продолжит с этого же места (обрабатываются только письма без даты).\n";
-        break;
+        $noGemini = true;
+        $needGemini++;
+        printf("  %3d/%d  %-34s отложено: Gemini недоступен\n", $i + 1, count($rows), $name);
+        continue;
+    }
+    if ($raw === '' && $noGemini) {
+        $needGemini++;
+        printf("  %3d/%d  %-34s отложено: нужен Gemini\n", $i + 1, count($rows), $name);
+        continue;
     }
 
     $iso = ml_date_sane($raw);
@@ -267,5 +331,9 @@ foreach ($rows as $i => $r) {
 
 echo str_repeat('=', 78) . "\n";
 echo "дат проставлено: $ok, не разобрано: $fail\n";
+if ($needGemini > 0) {
+    echo "ждут Gemini (свой OCR даты не нашёл, квота исчерпана): $needGemini — "
+       . "запустите скрипт позже, он продолжит с этого места\n";
+}
 $left = (int) (scalar("SELECT COUNT(*) FROM ministry_letters WHERE COALESCE(letter_date,'')=''") ?? 0);
 echo "осталось без даты в базе: $left\n";
