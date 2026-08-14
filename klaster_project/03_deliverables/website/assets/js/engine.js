@@ -423,11 +423,11 @@
           '<text class="geo-t3" y="68" text-anchor="middle">6-я Радиальная, 17с1</text>' +
         '</g>' +
         // станции
-        '<g class="geo-st" data-year="2027" transform="translate(300,112)"><g class="geo-in">' +
+        '<g class="geo-st" data-year="2028" transform="translate(300,112)"><g class="geo-in">' +
           '<circle class="geo-ring" r="16"/><circle class="geo-dot" r="9"/>' +
           '<text class="geo-t2" y="-24" text-anchor="middle">Каспийская</text>' +
           '<text class="geo-t3" y="32" text-anchor="middle">7 минут пешком</text></g></g>' +
-        '<g class="geo-st" data-year="2028" transform="translate(330,342)"><g class="geo-in">' +
+        '<g class="geo-st" data-year="2029" transform="translate(330,342)"><g class="geo-in">' +
           '<circle class="geo-ring" r="16"/><rect class="geo-dot sq" x="-8" y="-8" width="16" height="16" rx="4"/>' +
           '<text class="geo-t2" y="42" text-anchor="middle">МЦД Котляково</text>' +
           '<text class="geo-t3" y="58" text-anchor="middle">2 минуты пешком</text></g></g>' +
@@ -438,9 +438,9 @@
       '</svg>' +
       '<div class="geo-ctl">' +
         '<span class="geo-y" data-y="2026">2026</span>' +
-        '<span class="geo-y" data-y="2027">2027</span>' +
         '<span class="geo-y" data-y="2028">2028</span>' +
-        '<input class="geo-range" type="range" min="2026" max="2028" step="1" value="2026" aria-label="Год транспортной доступности">' +
+        '<span class="geo-y" data-y="2029">2029</span>' +
+        '<input class="geo-range" type="range" min="2026" max="2029" step="1" value="2026" aria-label="Год транспортной доступности">' +
         '<span class="geo-note">до метро пешком: <b>15</b> мин</span>' +
       '</div>';
 
@@ -461,11 +461,11 @@
       $$('.geo-st', box).forEach(function(st){
         st.classList.toggle('on', +st.getAttribute('data-year') <= y);
       });
-      $('[data-id=metro]', svg).classList.toggle('live', y >= 2027);
-      $('[data-id=mcd]',   svg).classList.toggle('live', y >= 2028);
+      $('[data-id=metro]', svg).classList.toggle('live', y >= 2028);
+      $('[data-id=mcd]',   svg).classList.toggle('live', y >= 2029);
       years.forEach(function(s){ s.classList.toggle('cur', +s.getAttribute('data-y') === y); });
-      note.textContent = y >= 2028 ? '2' : (y >= 2027 ? '7' : '15');
-      range.style.setProperty('--p', ((y - 2026) / 2 * 100) + '%');
+      note.textContent = y >= 2029 ? '2' : (y >= 2028 ? '7' : '15');
+      range.style.setProperty('--p', ((y - 2026) / 3 * 100) + '%');
     }
     range.addEventListener('input', function(){ apply(range.value); });
     years.forEach(function(s){
