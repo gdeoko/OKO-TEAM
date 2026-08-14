@@ -387,6 +387,129 @@
     });
   }
 
+
+  /* ================= 10. транспорт: схема с ползунком по годам ================= */
+  function transport(){
+    var box = $('.mapbox'); if (!box || box.dataset.built) return;
+    box.dataset.built = '1';
+    box.classList.add('geo');
+    box.innerHTML =
+      '<svg viewBox="0 0 640 470" role="img" aria-label="Схема транспортной доступности бизнес-парка Кластер">' +
+        '<defs><filter id="gsh" x="-30%" y="-30%" width="160%" height="160%">' +
+          '<feDropShadow dx="0" dy="3" stdDeviation="3" flood-color="#0A0B0D" flood-opacity=".35"/></filter></defs>' +
+        // подложка кварталов
+        '<g class="geo-blocks">' +
+          '<rect x="34"  y="40"  width="120" height="86"  rx="6"/><rect x="176" y="30"  width="150" height="70" rx="6"/>' +
+          '<rect x="352" y="46"  width="106" height="96"  rx="6"/><rect x="480" y="34"  width="126" height="80" rx="6"/>' +
+          '<rect x="40"  y="300" width="140" height="104" rx="6"/><rect x="206" y="322" width="118" height="92" rx="6"/>' +
+          '<rect x="350" y="298" width="132" height="110" rx="6"/><rect x="506" y="316" width="100" height="86" rx="6"/>' +
+        '</g>' +
+        // дороги
+        '<g class="geo-roads">' +
+          '<path d="M0 158 H640"/><path d="M0 268 H640"/><path d="M164 0 V470"/><path d="M470 0 V470"/>' +
+        '</g>' +
+        '<text class="geo-rd" x="16" y="150">Липецкая улица</text>' +
+        '<text class="geo-rd" x="470" y="286">Каширское шоссе</text>' +
+        // маршруты
+        '<path class="geo-route" data-id="shuttle" d="M118 372 C 200 340, 250 260, 306 218"/>' +
+        '<path class="geo-route pend" data-id="metro"  d="M306 214 C 300 180, 300 150, 300 118"/>' +
+        '<path class="geo-route pend" data-id="mcd"    d="M312 226 C 330 268, 330 300, 330 336"/>' +
+        // объект
+        '<g class="geo-obj" filter="url(#gsh)" transform="translate(306,216)">' +
+          '<circle class="geo-halo" r="54"/>' +
+          '<rect x="-32" y="-32" width="64" height="64" rx="15"/>' +
+          '<text class="geo-t1" y="6" text-anchor="middle">А</text>' +
+          '<text class="geo-t2" y="52" text-anchor="middle">КЛАСТЕР</text>' +
+          '<text class="geo-t3" y="68" text-anchor="middle">6-я Радиальная, 17с1</text>' +
+        '</g>' +
+        // станции
+        '<g class="geo-st" data-year="2027" transform="translate(300,112)"><g class="geo-in">' +
+          '<circle class="geo-ring" r="16"/><circle class="geo-dot" r="9"/>' +
+          '<text class="geo-t2" y="-24" text-anchor="middle">Каспийская</text>' +
+          '<text class="geo-t3" y="32" text-anchor="middle">7 минут пешком</text></g></g>' +
+        '<g class="geo-st" data-year="2028" transform="translate(330,342)"><g class="geo-in">' +
+          '<circle class="geo-ring" r="16"/><rect class="geo-dot sq" x="-8" y="-8" width="16" height="16" rx="4"/>' +
+          '<text class="geo-t2" y="42" text-anchor="middle">МЦД Котляково</text>' +
+          '<text class="geo-t3" y="58" text-anchor="middle">2 минуты пешком</text></g></g>' +
+        '<g class="geo-st on" data-year="2026" transform="translate(112,378)"><g class="geo-in">' +
+          '<circle class="geo-dot grey" r="9"/>' +
+          '<text class="geo-t2" y="-20" text-anchor="middle">Царицыно</text>' +
+          '<text class="geo-t3" y="30" text-anchor="middle">шаттл 15 минут</text></g></g>' +
+      '</svg>' +
+      '<div class="geo-ctl">' +
+        '<span class="geo-y" data-y="2026">2026</span>' +
+        '<span class="geo-y" data-y="2027">2027</span>' +
+        '<span class="geo-y" data-y="2028">2028</span>' +
+        '<input class="geo-range" type="range" min="2026" max="2028" step="1" value="2026" aria-label="Год транспортной доступности">' +
+        '<span class="geo-note">до метро пешком: <b>15</b> мин</span>' +
+      '</div>';
+
+    var svg   = $('svg', box);
+    var range = $('.geo-range', box);
+    var note  = $('.geo-note b', box);
+    var years = $$('.geo-y', box);
+
+    // длины путей считаем один раз
+    $$('.geo-route', svg).forEach(function(pth){
+      var L = 0;
+      try { L = pth.getTotalLength(); } catch(e){ L = 400; }
+      pth.style.setProperty('--len', L.toFixed(0));
+    });
+
+    function apply(y){
+      y = +y;
+      $$('.geo-st', box).forEach(function(st){
+        st.classList.toggle('on', +st.getAttribute('data-year') <= y);
+      });
+      $('[data-id=metro]', svg).classList.toggle('live', y >= 2027);
+      $('[data-id=mcd]',   svg).classList.toggle('live', y >= 2028);
+      years.forEach(function(s){ s.classList.toggle('cur', +s.getAttribute('data-y') === y); });
+      note.textContent = y >= 2028 ? '2' : (y >= 2027 ? '7' : '15');
+      range.style.setProperty('--p', ((y - 2026) / 2 * 100) + '%');
+    }
+    range.addEventListener('input', function(){ apply(range.value); });
+    years.forEach(function(s){
+      s.addEventListener('click', function(){ range.value = s.getAttribute('data-y'); apply(range.value); });
+    });
+    apply(2026);
+
+    // список маршрутов слева подсвечивает свой путь
+    var map = {0:'metro',1:'mcd',2:'shuttle'};
+    $$('.route', box.parentElement.parentElement).forEach(function(r, i){
+      var id = map[i]; if (!id) return;
+      var pth = $('[data-id='+id+']', svg); if (!pth) return;
+      r.addEventListener('pointerenter', function(){ pth.classList.add('hi'); });
+      r.addEventListener('pointerleave', function(){ pth.classList.remove('hi'); });
+    });
+
+    watch(box);
+  }
+
+  /* ================= 11. ворота: габарит и фура ================= */
+  function gates(){
+    var sec = document.getElementById('specs'); if (!sec) return;
+    var wrap = $('.wrap', sec); if (!wrap || $('.gate', sec)) return;
+
+    var box = document.createElement('figure');
+    box.className = 'gate rv';
+    box.innerHTML =
+      '<picture><source type="image/webp" srcset="/assets/img/real/gates-900.webp 900w, /assets/img/real/gates.webp 1600w" sizes="(max-width:1100px) 100vw, 1100px">' +
+      '<img src="/assets/img/real/gates-900.jpg" width="1600" height="900" alt="Ворота производственных блоков бизнес-парка Кластер" loading="lazy" decoding="async"></picture>' +
+      '<svg class="gate-svg" viewBox="0 0 160 90" preserveAspectRatio="none" aria-hidden="true">' +
+        '<rect class="gate-frame" x="52" y="26" width="56" height="58"/>' +
+        '<line class="gate-w" x1="52" y1="20" x2="108" y2="20"/>' +
+        '<line class="gate-h" x1="46" y1="26" x2="46" y2="84"/>' +
+      '</svg>' +
+      '<span class="gate-cap gate-cw">ширина проёма 4 200 мм</span>' +
+      '<span class="gate-cap gate-ch">высота 4 500 мм</span>' +
+      '<span class="gate-truck"><svg viewBox="0 0 210 78" fill="none" stroke="#E8A400" stroke-width="2">' +
+        '<rect x="4" y="12" width="122" height="46" rx="3"/><path d="M126 26h30l20 20v12h-50z"/>' +
+        '<circle cx="42" cy="64" r="9"/><circle cx="104" cy="64" r="9"/><circle cx="164" cy="64" r="9"/></svg></span>' +
+      '<figcaption>Фура заходит под погрузку прямо к воротам блока, зазор по высоте остаётся</figcaption>';
+    wrap.appendChild(box);
+    watch(box);
+  }
+
   function boot(){
     try{ light();      }catch(e){}
     try{ sheet();      }catch(e){}
@@ -395,13 +518,15 @@
     try{ heightRail(); }catch(e){}
     try{ floorCut();   }catch(e){}
     try{ power();      }catch(e){}
+    try{ transport();  }catch(e){}
+    try{ gates();      }catch(e){}
     try{ exposure();   }catch(e){}
     // одометр последним: он забирает числа, которые пометил моушен-слой
     setTimeout(function(){ try{ odometers(); }catch(e){} }, 60);
     // страховка: ничего не остаётся спрятанным
     setTimeout(function(){
       $$('.expo:not(.expo-on)').forEach(function(n){ n.classList.add('expo-on'); });
-      $$('.dim,.rail,.floor,.pwr').forEach(function(n){ n.classList.add('on'); });
+      $$('.dim,.rail,.floor,.pwr,.geo,.gate').forEach(function(n){ n.classList.add('on'); });
     }, 5000);
   }
 

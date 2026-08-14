@@ -206,3 +206,85 @@ section#specs, section#infra, section#industries, section#residents, section#cat
   .odo-d i{transition:none}
   .sheet-win b{transition:none}
 }
+
+/* ---------- 12. схема транспорта ---------- */
+.geo{position:relative;background:var(--ink);border-radius:var(--r-lg);padding:14px 14px 8px;overflow:hidden}
+.geo svg{width:100%;height:auto;display:block}
+.geo-blocks rect{fill:#20252d;opacity:0;transition:opacity .6s var(--e-in)}
+.geo.on .geo-blocks rect{opacity:.55}
+.geo-roads path{stroke:#333a45;stroke-width:7;fill:none;stroke-linecap:round}
+.geo-rd{fill:rgba(255,255,255,.32);font-family:var(--ff);font-size:11px}
+.geo-t1{fill:var(--amber);font-family:var(--ff-d);font-size:26px;font-weight:700}
+.geo-t2{fill:#fff;font-family:var(--ff-d);font-size:12px;letter-spacing:.1em;text-transform:uppercase}
+.geo-t3{fill:rgba(255,255,255,.5);font-family:var(--ff);font-size:10.5px}
+.geo-obj rect{fill:#0E1116;stroke:rgba(201,162,51,.6);stroke-width:1.5}
+.geo-halo{fill:rgba(232,164,0,.14)}
+.geo.on .geo-halo{animation:geo-breathe 4.6s ease-in-out infinite}
+@keyframes geo-breathe{0%,100%{opacity:.5;r:50}50%{opacity:1;r:58}}
+.geo-route{
+  stroke:rgba(232,164,0,.9);stroke-width:2.4;fill:none;stroke-linecap:round;
+  stroke-dasharray:var(--len,400);stroke-dashoffset:var(--len,400);
+  transition:stroke-dashoffset .9s var(--e-draw),stroke .2s;
+}
+.geo.on .geo-route{stroke-dashoffset:0}
+.geo-route.pend{stroke:rgba(255,255,255,.28);stroke-dasharray:6 4 !important;stroke-dashoffset:0;opacity:.55}
+.geo.on .geo-route.pend{animation:geo-pend 3.2s ease-in-out infinite}
+@keyframes geo-pend{0%,100%{opacity:.4}50%{opacity:.9}}
+.geo-route.live{stroke:rgba(232,164,0,.95);stroke-dasharray:none !important;opacity:1;animation:none}
+.geo-route.hi{stroke:#FFD778;stroke-width:3.4}
+.geo-st{opacity:0;transition:opacity .5s var(--e-in)}
+.geo-st.on{opacity:1}
+.geo-st .geo-in{transform:scale(.62);transform-box:fill-box;transform-origin:center;transition:transform .5s var(--e-in)}
+.geo-st.on .geo-in{transform:scale(1)}
+.geo-dot{fill:#fff;stroke:var(--amber);stroke-width:3}
+.geo-dot.sq{fill:#fff;stroke:#1F9D6B;stroke-width:3}
+.geo-dot.grey{fill:#fff;stroke:#6B7280;stroke-width:3}
+.geo-ring{fill:none;stroke:rgba(232,164,0,.45);stroke-width:1.2;stroke-dasharray:3 4}
+.geo-ctl{display:flex;align-items:center;gap:12px;flex-wrap:wrap;padding:12px 6px 8px;color:rgba(255,255,255,.75);font-size:13px}
+.geo-y{font-family:var(--ff-d);font-size:12px;letter-spacing:.1em;color:rgba(255,255,255,.42);cursor:pointer;padding:6px 8px;border-radius:7px;transition:.2s;min-height:32px;display:inline-flex;align-items:center}
+.geo-y:hover{color:#fff}
+.geo-y.cur{color:var(--ink);background:var(--amber);font-weight:700}
+.geo-range{
+  flex:1;min-width:150px;appearance:none;height:44px;padding:20px 0;background-clip:content-box;
+  background:linear-gradient(90deg,var(--amber) var(--p,0%),rgba(255,255,255,.18) var(--p,0%));
+  border-radius:3px;outline:none;cursor:pointer;
+}
+.geo-range::-webkit-slider-thumb{appearance:none;width:20px;height:20px;border-radius:50%;background:var(--amber);border:3px solid var(--ink);box-shadow:0 2px 10px rgba(0,0,0,.5)}
+.geo-range::-moz-range-thumb{width:20px;height:20px;border-radius:50%;background:var(--amber);border:3px solid var(--ink)}
+.geo-range:focus-visible{box-shadow:0 0 0 3px rgba(232,164,0,.4)}
+.geo-note{font-size:13px;white-space:nowrap}
+.geo-note b{color:var(--amber);font-family:var(--ff-d);font-size:17px}
+
+/* ---------- 13. ворота и фура ---------- */
+.gate{position:relative;margin-top:26px;border-radius:var(--r-lg);overflow:hidden;background:var(--ink)}
+.gate img{width:100%;height:auto;display:block;aspect-ratio:16/9;object-fit:cover;opacity:.92}
+.gate-svg{position:absolute;inset:0;width:100%;height:100%}
+.gate-frame{fill:none;stroke:var(--amber);stroke-width:.9;stroke-dasharray:230;stroke-dashoffset:230;transition:stroke-dashoffset .9s var(--e-draw) .2s}
+.gate-w,.gate-h{stroke:var(--amber);stroke-width:.7;stroke-dasharray:60;stroke-dashoffset:60;transition:stroke-dashoffset .5s var(--e-draw) .8s}
+.gate.on .gate-frame,.gate.on .gate-w,.gate.on .gate-h{stroke-dashoffset:0}
+.gate-cap{position:absolute;font-family:var(--ff-d);font-size:11px;letter-spacing:.12em;color:#fff;text-shadow:0 1px 8px rgba(0,0,0,.85);opacity:0;transition:opacity .3s 1.1s}
+.gate.on .gate-cap{opacity:1}
+.gate-cw{left:50%;top:16%;transform:translateX(-50%)}
+.gate-ch{left:6%;top:52%;transform:rotate(-90deg);transform-origin:left center}
+.gate-truck{position:absolute;left:0;bottom:12%;width:22%;transform:translateX(150%);opacity:0}
+.gate.on .gate-truck{opacity:1;transform:translateX(24%);transition:transform 1.5s var(--e-draw) 1.2s,opacity .3s 1.2s}
+.gate-truck svg{width:100%;height:auto;filter:drop-shadow(0 6px 10px rgba(0,0,0,.55))}
+.gate figcaption{padding:12px 18px;font-size:13px;color:rgba(255,255,255,.72);background:var(--ink)}
+@media(max-width:700px){
+  .gate-cap{font-size:10px}
+  .gate-truck{width:32%}
+}
+@media (prefers-reduced-motion:reduce){
+  .geo-blocks rect{opacity:.55 !important}
+  .geo-route{stroke-dashoffset:0 !important;transition:none}
+  .geo-st.on{opacity:1;transition:none}
+  .geo-st .geo-in{transform:scale(1) !important;transition:none}
+  .geo.on .geo-halo,.geo.on .geo-route.pend{animation:none}
+  .gate-frame,.gate-w,.gate-h{stroke-dashoffset:0 !important;transition:none}
+  .gate-cap{opacity:1 !important;transition:none}
+  .gate-truck{opacity:1 !important;transform:translateX(24%) !important;transition:none}
+}
+
+/* подпись маршрута идёт со своей строки, иначе слипается с названием */
+.route > div{display:flex;flex-direction:column;gap:2px;min-width:0}
+.route span{display:block}
