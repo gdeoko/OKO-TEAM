@@ -598,10 +598,14 @@ if ($action === 'edit' || $action === 'new') {
                 <input type="checkbox" name="ch_vk" value="1" style="width:18px;height:18px;margin:0">
                 <span><b>ВКонтакте</b> — пост в сообществе <span class="muted small">(1 публикация на всех подписчиков VK)</span></span>
               </label>
+              <?php /* Публичного канала у центра нет: пока org_tg_channel пуст,
+                       галку не показываем — постить всё равно некуда. */
+              if (trim((string) cfgv('org_tg_channel', '')) !== ''): ?>
               <label style="display:flex;align-items:center;gap:10px;cursor:pointer">
                 <input type="checkbox" name="ch_tg_channel" value="1" style="width:18px;height:18px;margin:0">
-                <span><b>Telegram-канал</b> — пост в <?= h(cfgv('org_tg_channel') ?: '(не указан)') ?></span>
+                <span><b>Telegram-канал</b> — пост в <?= h(cfgv('org_tg_channel')) ?></span>
               </label>
+              <?php endif; ?>
               <label style="display:flex;align-items:center;gap:10px;cursor:pointer">
                 <input type="checkbox" name="ch_tg_users" value="1" style="width:18px;height:18px;margin:0">
                 <span><b>Telegram — каждому пользователю бота</b> <span class="muted small">(кто привязал @okoappbot и включил notify_tg)</span></span>
