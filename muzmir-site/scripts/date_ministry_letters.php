@@ -46,10 +46,16 @@ foreach ($argv as $i => $a) if ($a === 'limit') $limit = (int) ($argv[$i + 1] ??
  */
 function ml_date_from_scan(string $bytes, string $mime): string {
     if (!function_exists('chat_gemini_keys')) return '';
-    $model = (string) (cfgv('gemini_model') ?: 'gemini-flash-latest');
+    // ДВЕ МОДЕЛИ ПО ОЧЕРЕДИ. Штатная gemini-flash-latest на этой неделе отвечает
+    // «высокий спрос» (503) чаще, чем работает, и каждый скан упирался в таймаут.
+    // Задача здесь простая — прочитать одну строку из шапки, — и её прекрасно
+    // делает облегчённая модель, которая отвечает за секунду.
+    $models = array_values(array_unique(array_filter([
+        'gemini-flash-lite-latest',
+        (string) (cfgv('gemini_model') ?: 'gemini-flash-latest'),
+    ])));
     $base  = rtrim((string) (cfgv('gemini_base_url') ?: 'https://generativelanguage.googleapis.com'), '/');
-    $payload = json_encode([
-        'contents' => [['role' => 'user', 'parts' => [
+    $ask = ['contents' => [['role' => 'user', 'parts' => [
             ['text' => 'Это скан официального письма российского органа власти на фирменном бланке. '
                      . 'Найди ДАТУ ИСХОДЯЩЕГО письма — она стоит в шапке рядом с исходящим номером '
                      . '(«от 12.03.2026 № 01-05/123», «12 марта 2026 г.», «12.03.2026»). '
@@ -58,47 +64,52 @@ function ml_date_from_scan(string $bytes, string $mime): string {
                      . 'Ответь РОВНО одной строкой в формате ГГГГ-ММ-ДД и ничем больше. '
                      . 'Если года на письме нет или дату разобрать нельзя — ответь одним словом: нет.'],
             ['inline_data' => ['mime_type' => $mime, 'data' => base64_encode($bytes)]],
-        ]]],
-        // ЗАПАС ПО ТОКЕНАМ И ВЫКЛЮЧЕННОЕ «РАЗМЫШЛЕНИЕ».
-        // Сначала здесь стояло 40 токенов: ответ-то в десять символов. Но модели
-        // 2.5 тратят бюджет ещё и на внутренние рассуждения, и он кончался ДО
-        // первой буквы ответа — на все письма возвращалась пустота, будто даты
-        // на бланках нет вовсе. Рассуждение выключаем, запас оставляем.
-        'generationConfig' => ['maxOutputTokens' => 300, 'temperature' => 0,
-                               'thinkingConfig' => ['thinkingBudget' => 0]],
-    ], JSON_UNESCAPED_UNICODE);
+        ]]]];
 
     foreach (chat_gemini_keys() as $key) {
         if (chat_gemini_is_exhausted($key)) continue;
-        // 503 «высокий спрос» прилетает у Gemini пачками и проходит за секунды.
-        // Без повтора такое письмо навсегда осталось бы без даты по причине,
-        // которая нас вообще не касается.
-        $resp = false; $code = 0;
-        for ($try = 1; $try <= 3; $try++) {
-            $ch = curl_init($base . '/v1beta/models/' . rawurlencode($model) . ':generateContent?key=' . rawurlencode($key));
-            curl_setopt_array($ch, [
-                CURLOPT_RETURNTRANSFER => true, CURLOPT_POST => true, CURLOPT_POSTFIELDS => $payload,
-                CURLOPT_HTTPHEADER => ['Content-Type: application/json'],
-                CURLOPT_TIMEOUT => 90, CURLOPT_CONNECTTIMEOUT => 8,
-            ]);
-            $resp = curl_exec($ch);
-            $code = (int) curl_getinfo($ch, CURLINFO_RESPONSE_CODE);
-            curl_close($ch);
-            if ($code !== 503 && $code !== 500) break;
-            sleep(3 * $try);
+        foreach ($models as $model) {
+            // ЗАПАС ПО ТОКЕНАМ И «РАЗМЫШЛЕНИЕ» — ПО МОДЕЛЯМ РАЗНЫЕ.
+            // Сначала стояло 40 токенов: ответ-то в десять символов. Но модели 2.5
+            // тратят бюджет ещё и на внутренние рассуждения, и он кончался ДО первой
+            // буквы ответа — возвращалась пустота, будто даты на бланке нет вовсе.
+            // У облегчённой модели рассуждения нет вовсе, и параметр thinkingConfig
+            // она отвергает целиком: «invalid argument» на каждом письме.
+            $gen = ['maxOutputTokens' => 300, 'temperature' => 0];
+            if (mb_strpos($model, 'lite') === false) $gen['thinkingConfig'] = ['thinkingBudget' => 0];
+            $payload = json_encode($ask + ['generationConfig' => $gen], JSON_UNESCAPED_UNICODE);
+
+            // 503 «высокий спрос» проходит за секунды, но ждать долго незачем:
+            // если модель занята, следующая в списке ответит сразу.
+            $resp = false; $code = 0;
+            for ($try = 1; $try <= 2; $try++) {
+                $ch = curl_init($base . '/v1beta/models/' . rawurlencode($model) . ':generateContent?key=' . rawurlencode($key));
+                curl_setopt_array($ch, [
+                    CURLOPT_RETURNTRANSFER => true, CURLOPT_POST => true, CURLOPT_POSTFIELDS => $payload,
+                    CURLOPT_HTTPHEADER => ['Content-Type: application/json'],
+                    CURLOPT_TIMEOUT => 45, CURLOPT_CONNECTTIMEOUT => 8,
+                ]);
+                $resp = curl_exec($ch);
+                $code = (int) curl_getinfo($ch, CURLINFO_RESPONSE_CODE);
+                curl_close($ch);
+                if ($code !== 503 && $code !== 500) break;
+                sleep(2);
+            }
+            // Квота кончилась у КЛЮЧА, а не у модели: другую модель тем же ключом
+            // пробовать бессмысленно, переходим сразу к следующему ключу.
+            if ($code === 429) { chat_gemini_mark_exhausted($key); continue 2; }
+            // Молчаливый пропуск ошибки прячет причину: скан 4 МБ, занятая модель
+            // и выключенный ключ выглядят одинаково — «дату не разобрал».
+            if (!is_string($resp) || $code >= 400) {
+                fwrite(STDERR, '        ' . $model . ' ответил ' . $code . ': '
+                    . mb_substr(preg_replace('~\s+~', ' ', (string) $resp) ?? '', 0, 120) . "\n");
+                continue;
+            }
+            $d = json_decode($resp, true);
+            $t = '';
+            foreach ($d['candidates'][0]['content']['parts'] ?? [] as $p) $t .= (string) ($p['text'] ?? '');
+            if (trim($t) !== '') return trim($t);
         }
-        if ($code === 429) { chat_gemini_mark_exhausted($key); continue; }
-        // Молчаливый пропуск ошибки прячет причину: скан 4 МБ, неверная модель и
-        // выключенный ключ выглядят одинаково — «дату не разобрал». Показываем код.
-        if (!is_string($resp) || $code >= 400) {
-            fwrite(STDERR, '        Gemini ответил ' . $code . ': '
-                . mb_substr(preg_replace('~\s+~', ' ', (string) $resp) ?? '', 0, 160) . "\n");
-            continue;
-        }
-        $d = json_decode($resp, true);
-        $t = '';
-        foreach ($d['candidates'][0]['content']['parts'] ?? [] as $p) $t .= (string) ($p['text'] ?? '');
-        return trim($t);
     }
     return '__NOKEY__';   // все ключи выбраны — это не «нет даты», а «спросить не у кого»
 }
@@ -125,6 +136,33 @@ function ml_ocr_text(string $abs): string {
         if (trim($t) !== '') $texts[] = $t;
     }
     return implode("\n", $texts);
+}
+
+/**
+ * КОМПАКТНАЯ ШАПКА ДЛЯ ОТПРАВКИ В GEMINI.
+ *
+ * Скан целиком уходил через прокси по полторы минуты и часто обрывался по
+ * таймауту — при том, что модели нужна одна строка из шапки. Отправляем верхние
+ * 45% страницы шириной до 1200 точек: файл вчетверо меньше, ответ приходит за
+ * секунды, а всё нужное на картинке осталось.
+ *
+ * @return array{0:string,1:string} [двоичные данные JPEG, mime] — пусто, если GD не смог
+ */
+function ml_header_jpeg(string $abs): array {
+    if (!function_exists('imagecreatefromjpeg')) return ['', ''];
+    $ext = strtolower(pathinfo($abs, PATHINFO_EXTENSION));
+    $img = $ext === 'png' ? @imagecreatefrompng($abs) : @imagecreatefromjpeg($abs);
+    if (!$img) return ['', ''];
+    $w = imagesx($img); $h = imagesy($img);
+    $ch = (int) round($h * 0.45);
+    $nw = min(1200, $w);
+    $nh = (int) round($ch * $nw / max(1, $w));
+    $dst = @imagecreatetruecolor($nw, $nh);
+    if (!$dst) { imagedestroy($img); return ['', '']; }
+    imagecopyresampled($dst, $img, 0, 0, 0, 0, $nw, $nh, $w, $ch);
+    ob_start(); @imagejpeg($dst, null, 72); $bytes = (string) ob_get_clean();
+    imagedestroy($img); imagedestroy($dst);
+    return $bytes !== '' ? [$bytes, 'image/jpeg'] : ['', ''];
 }
 
 /**
@@ -290,9 +328,13 @@ foreach ($rows as $i => $r) {
 
     // 2) Не нашли — спрашиваем Gemini Vision (рукописные шапки, кривые сканы).
     if ($raw === '' && !$noGemini) {
-        $how  = 'Gemini';
-        $mime = $ext === 'png' ? 'image/png' : ($ext === 'pdf' ? 'application/pdf' : 'image/jpeg');
-        $raw  = ml_date_from_scan((string) file_get_contents($abs), $mime);
+        $how = 'Gemini';
+        [$hb, $hm] = $ext === 'pdf' ? ['', ''] : ml_header_jpeg($abs);
+        if ($hb === '') {
+            $hb = (string) file_get_contents($abs);
+            $hm = $ext === 'png' ? 'image/png' : ($ext === 'pdf' ? 'application/pdf' : 'image/jpeg');
+        }
+        $raw = ml_date_from_scan($hb, $hm);
     }
 
     // КВОТА КОНЧИЛАСЬ — РАБОТУ НЕ БРОСАЕМ.
