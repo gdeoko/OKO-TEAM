@@ -184,3 +184,56 @@ html.js .mo-img.mo-on::after{transform:translate3d(120%,0,0)}
   .mo-progress{display:none}
   .mo-card{transition:none}
 }
+
+/* ---------- 16. кинослой: фотография оживает видео ---------- */
+.cine{position:relative;overflow:hidden}
+.cine > .cine-v{
+  position:absolute; inset:0; width:100%; height:100%;
+  object-fit:cover; z-index:1;
+  opacity:0; transition:opacity .9s var(--mo-ease-out);
+  pointer-events:none;
+}
+.cine.cine-on > .cine-v{opacity:1}
+/* постер остаётся под видео и держит размер блока */
+.cine > picture,.cine > img{position:relative;z-index:0}
+.cine > figcaption{position:relative;z-index:3}
+/* метка «живой кадр» */
+.cine::before{
+  content:''; position:absolute; z-index:4; left:14px; top:14px;
+  width:9px; height:9px; border-radius:50%; background:var(--amber);
+  box-shadow:0 0 0 0 rgba(232,164,0,.55);
+  opacity:0; transition:opacity .4s;
+}
+.cine.cine-on::before{opacity:1; animation:cine-pulse 2.4s ease-out infinite}
+@keyframes cine-pulse{
+  0%{box-shadow:0 0 0 0 rgba(232,164,0,.55)}
+  70%{box-shadow:0 0 0 12px rgba(232,164,0,0)}
+  100%{box-shadow:0 0 0 0 rgba(232,164,0,0)}
+}
+@media (prefers-reduced-motion:reduce){
+  .cine > .cine-v{display:none}
+  .cine::before{display:none}
+}
+
+/* ---------- 17. слой объёма ---------- */
+/* специфичность поднята намеренно: правило появления mo-on ставит transform:none
+   и без этого перебивает наклон карточки */
+.d-tilt,
+html.js .d-tilt.mo-r.mo-on{
+  transform:perspective(900px) rotateX(var(--rx,0deg)) rotateY(var(--ry,0deg)) translateY(var(--ty,0px));
+  transform-style:preserve-3d;
+  transition:transform .35s var(--mo-ease), box-shadow .42s var(--mo-ease), border-color .42s var(--mo-ease);
+}
+@media (hover:hover){
+  .mo-card.d-tilt:hover,
+  html.js .mo-card.d-tilt.mo-r.mo-on:hover{--ty:-6px}
+}
+.d-hero .hero-media{transform-style:preserve-3d;will-change:transform}
+.d-hero .hero-badge{will-change:transform}
+.d-w{display:inline-block;overflow:hidden;vertical-align:top}
+.d-wi{display:inline-block;will-change:transform}
+html.has-lenis{scroll-behavior:auto}
+@media (prefers-reduced-motion:reduce){
+  .d-tilt,html.js .d-tilt.mo-r.mo-on{transform:none !important;transition:none}
+  .d-wi{transform:none !important}
+}
