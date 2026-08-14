@@ -101,7 +101,14 @@ try {
     )");
 
     // Бесплатные конкурсы без опубликованных итогов, у которых есть заявки
-    // и все заявки уже оценены жюри (status='graded').
+    // и жюри разобрало КАЖДУЮ из них.
+    //
+    // Условие «все заявки в статусе graded» не работало вовсе: отклонённая заявка
+    // имеет статус 'rejected', оценённая по платному пути уходит в 'making'/'made',
+    // и любой такой заявки хватало, чтобы конкурс никогда не попал в выборку. У
+    // «Величия России» из 88 заявок 5 отклонённых — итоги не опубликовались бы
+    // молча, и виновного было бы не найти. Считаем по фактам: у каждой не
+    // отклонённой заявки должен стоять результат.
     $comps = all(
         "SELECT c.*
            FROM competitions c
@@ -110,7 +117,9 @@ try {
             AND NOT EXISTS (SELECT 1 FROM vk_results_log l WHERE l.competition_id = c.id)
             AND EXISTS (SELECT 1 FROM applications a WHERE a.competition_id = c.id)
             AND NOT EXISTS (SELECT 1 FROM applications a
-                             WHERE a.competition_id = c.id AND a.status != 'graded')
+                             WHERE a.competition_id = c.id
+                               AND COALESCE(a.status,'') <> 'rejected'
+                               AND COALESCE(a.result,'') = '')
        ORDER BY c.id ASC"
     );
 
@@ -169,6 +178,14 @@ try {
             'competition_id' => $cid,
             'posted_at'      => date('Y-m-d H:i:s'),
         ]);
+
+        // И тот же рубильник, что у волны пульта: дата публикации открывает раздел
+        // «Результаты» на сайте, личный кабинет и чат-бота. Без неё участник получал
+        // письмо со званием, а сайт продолжал отвечать «итоги ещё не опубликованы».
+        if (trim((string) ($c['results_published_at'] ?? '')) === '') {
+            update('competitions', ['results_published_at' => date('Y-m-d H:i:s')], 'id=:id', ['id' => $cid]);
+            cron_log(JOB, "конкурс #$cid: раздел «Результаты» на сайте открыт");
+        }
         $posted++;
     }
 

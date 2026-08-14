@@ -464,6 +464,27 @@ function launch_fire(int $compId, string $wave, array $channels, string $when = 
         else { $n = launch_notify_all($t, $b, $u, 'trophy'); $report['inapp'] = 'уведомлено пользователей: ' . $n; }
     }
 
+    // ВОЛНА «РЕЗУЛЬТАТЫ» — ОДИН РУБИЛЬНИК НА ВСЁ ОГЛАШЕНИЕ.
+    //
+    // Пост в сообществе вышел, персональные письма ушли — значит итоги оглашены, и
+    // с этой секунды их можно показывать. Дата публикации хранится в
+    // competitions.results_published_at, и по ней открываются сразу три места:
+    // раздел «Результаты» на сайте, личный кабинет участника и чат-бот
+    // (см. app_result_public_sql и core/chat_gate.php).
+    //
+    // Раньше эту дату не ставил никто, кроме кнопки «Опубликовать» в админке. То
+    // есть 28-го числа участник получал письмо со своим званием, шёл на сайт — и
+    // видел «результаты будут опубликованы», а бот отказывался их называть, пока
+    // оргкомитет не вспомнит про кнопку. Теперь оглашение включает всё разом.
+    if (!$dry && $wave === 'results') {
+        foreach ($siblings as $sc) {
+            if (!vkt_is_long($sc)) continue;
+            if (trim((string) ($sc['results_published_at'] ?? '')) !== '') continue;
+            update('competitions', ['results_published_at' => date('Y-m-d H:i:s')], 'id=:id', ['id' => (int) $sc['id']]);
+            $report['site'] = 'раздел «Результаты» на сайте открыт, кабинет и чат-бот показывают итоги';
+        }
+    }
+
     // Волна «Открытие» — конкурс(ы) становятся видимыми на сайте (гейт запуска).
     if (!$dry && in_array($wave, ['launch', 'launch_mail', 'launch_vk'], true)) {
         $toShow = in_array($wave, ['launch_mail'], true) ? $siblings : [$c];
@@ -533,7 +554,8 @@ function launch_send_slot(\DateTime $from): \DateTime {
  *       — campaign_kabinet — письмо о возможностях личного кабинета (+30 мин, квота 75/день);
  *   • общие посты месяца (ВК+in-app, БЕЗ e-mail): 22 09:00 «3 дня», 25 09:00 «последний день»,
  *     25 18:00 «приём закрыт» (закрытие приёма);
- *   • результаты 28 09:00 — по КАЖДОМУ длинному конкурсу (ВК-пост общий + персональные письма участникам).
+ *   • результаты 28 10:00 — по КАЖДОМУ длинному конкурсу (ВК-пост общий + персональные письма участникам).
+ *     Час выбран владельцем: в 10:00 сообщество уже читает ленту, в 09:00 пост уходил в пустоту.
  * Предыдущий незавершённый план отменяется.
  */
 function launch_schedule_all(string $launchDate, string $launchTime, array $channels): array {
@@ -619,8 +641,11 @@ function launch_schedule_all(string $launchDate, string $launchTime, array $chan
     insert('launch_jobs', ['competition_id' => $rep, 'wave' => 'closed', 'channels' => implode(',', $commonCh), 'run_at' => $closed, 'status' => 'scheduled']);
     $planned['d3'] = $d3; $planned['last'] = $last; $planned['closed'] = $closed;
 
-    // 5) Результаты 28 09:00 — по каждому ДЛИННОМУ конкурсу (ВК общий пост + персональные письма участникам).
-    $results = launch_workday_at($ly, $lm, 28, 9, 0);
+    // 5) Результаты 28 10:00 — по каждому ДЛИННОМУ конкурсу (ВК общий пост + персональные письма участникам).
+    // Время оглашения назначено владельцем на 10:00 МСК и совпадает со страховочным
+    // кроном publish_results_vk (он же 28-го в 10:00): если пульт по какой-то причине
+    // не сработает, оглашение всё равно состоится в обещанный час, а не на час раньше.
+    $results = launch_workday_at($ly, $lm, 28, 10, 0);
     // Результаты: стена+сторис + рассылка ВК + персональные письма участникам + in-app/колокольчик.
     $resCh = $enabled(['vk_wall', 'vk_dm', 'email', 'inapp']) ?: ['email'];
     $longIds = [];
@@ -752,7 +777,7 @@ function launch_panel_html(): string {
     ob_start(); ?>
     <div class="lp2" data-post="<?= h($post) ?>" data-csrf="<?= h(csrf_token()) ?>">
       <div class="page-head" style="margin-bottom:8px"><h2 style="margin:0"><?= admin_icon('rocket') ?> Пульт запуска</h2>
-        <p class="muted small" style="margin:4px 0 0">Всё видно сразу, редактируется на месте. Ничего не уходит раньше расписания и только в рабочее время (09:00–18:00, кроме вс). По умолчанию запуск — 1-е число (если вс → 2-е), общие посты 22 (09:00), 25 (09:00), 25 (18:00), результаты длинного — 28 (09:00). Если дата попадает на вс — сдвиг на день.</p>
+        <p class="muted small" style="margin:4px 0 0">Всё видно сразу, редактируется на месте. Ничего не уходит раньше расписания и только в рабочее время (09:00–18:00, кроме вс). По умолчанию запуск — 1-е число (если вс → 2-е), общие посты 22 (09:00), 25 (09:00), 25 (18:00), результаты длинного — 28 (10:00). Если дата попадает на вс — сдвиг на день.</p>
       </div>
 
       <?php if (!$openComps): ?>
@@ -909,7 +934,7 @@ function launch_panel_html(): string {
 
         <?php $longComps = array_values(array_filter($openComps, fn($c) => function_exists('vkt_is_long') && vkt_is_long($c))); ?>
         <?php if ($longComps): ?>
-          <div class="lp2-group-t" style="margin-top:18px">Результаты длинного конкурса (28-е, 09:00) — ВК-пост общий; на почту — персональное письмо каждому участнику с результатом, кнопками и файлом списка</div>
+          <div class="lp2-group-t" style="margin-top:18px">Результаты длинного конкурса (28-е, 10:00) — ВК-пост общий; на почту — персональное письмо каждому участнику с результатом, кнопками и файлом списка</div>
           <?php foreach ($longComps as $c) {
               echo $editor((int) $c['id'], 'results', 'Результаты «' . $c['name'] . '»',
                   launch_wave_text($c, 'results', [$c]), $coverDisp($c, 'results', [$c]), true);
