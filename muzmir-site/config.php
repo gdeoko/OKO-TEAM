@@ -54,6 +54,10 @@ return [
     'owner_email'    => cfg('MUZMIR_OWNER_EMAIL', 'kulturniy.centr.mir@gmail.com'),
     'org_hours'      => 'Пн–Пт 09:00–18:00, Сб 10:00–16:00, Вс/праздники - выходной (МСК)',
     'org_vk'         => 'https://vk.com/music_world.online',
+    // Сообщество в МАКС — ссылка-приглашение целиком, вместе с кодом. Без кода
+    // адрес max.ru/join открывает общую страницу мессенджера, а не сообщество
+    // центра: человек жмёт «подписаться» и попадает в никуда.
+    'org_max'        => cfg('MUZMIR_ORG_MAX', 'https://max.ru/join/v4SJluLzTAMWm4r5ldJ-JyA2rS5InmPYjaP6drn3F8I'),
     'org_tg_channel' => 'https://t.me/kc_mus_mir',
 
     // Домен

@@ -37,6 +37,8 @@ require_once BASE_PATH . '/core/helpers.php';
 require_once BASE_PATH . '/core/mailer.php';
 require_once BASE_PATH . '/core/imap_read.php';
 require_once BASE_PATH . '/core/ministries.php';
+require_once BASE_PATH . '/core/letter_texts.php';
+require_once BASE_PATH . '/core/ministry_reply.php';
 require_once __DIR__ . '/_lib.php';
 
 const JOB = 'ministry_replies';
@@ -119,6 +121,25 @@ foreach ($ids as $id) {
 
     $m = im_parse($raw);
     $from = (string) $m['from'];
+
+    /* УВЕДОМЛЕНИЕ О НЕДОСТАВКЕ.
+     *
+     * Его пишет почтовый сервер, а не ведомство: адрес отправителя —
+     * MAILER-DAEMON или postmaster, и по фильтру «письмо от известного
+     * ведомства» такое уведомление не проходило вовсе. Адрес, который не принял
+     * письмо, спрятан внутри текста — достаём его оттуда и вычёркиваем.
+     */
+    if (mrep_is_daemon($from, (string) $m['subject'])) {
+        foreach (mrep_bounced_addresses($raw, $known) as $deadMail) {
+            if (mrep_mark_bounced($deadMail, 'письмо вернулось ' . date('d.m.Y'))) {
+                mr_log('адрес не принимает почту, вычеркнут: ' . $deadMail
+                     . ' (' . (string) ($known[$deadMail]['org'] ?? '') . ')');
+                $replies++;
+            }
+        }
+        continue;
+    }
+
     if ($from === '' || !isset($known[$from])) continue;      // не ведомство — не наше дело
 
     $seen++;
@@ -130,19 +151,78 @@ foreach ($ids as $id) {
     $key = substr(sha1($from . '|' . $m['subject'] . '|' . $m['date']), 0, 24);
     if ((int) scalar("SELECT COUNT(*) FROM ministry_letters WHERE msg_key=?", [$key]) > 0) continue;
 
-    // Отказ отличаем от поддержки по тексту: «не имеем возможности», «отказ».
-    $txt = mb_strtolower((string) $m['text']);
-    $isRefusal = (bool) preg_match('~не\s+(?:имеем|представляется|можем)|отказ|отклонен~u', $txt);
-    $isUnsub   = (bool) preg_match('~^\s*отписать~u', $txt);
+    $isUnsub = (bool) preg_match('~^\s*отписать~u', mb_strtolower((string) $m['text']));
+
+    /* ЧТО НАМ ОТВЕТИЛИ.
+     *
+     * Решение органа власти живёт в приложенном документе на бланке, а не в теле
+     * письма: в теле бывает «направляем ответ» или автоответчик об отпуске.
+     * Поэтому разбирается всё письмо целиком — тело плюс вложения, включая
+     * сканы без текстового слоя. Прежняя проверка искала «не имеем возможности»
+     * в теле и одинаково срабатывала на отказе, на квитанции о регистрации и на
+     * автоответе.
+     */
+    $verdict = mrep_classify((string) $m['subject'], (string) $m['text'], (array) $m['attachments']);
+    $isRefusal = $verdict['verdict'] === 'refusal';
+    $isSupport = $verdict['verdict'] === 'support';
 
     if ($dry) {
-        mr_log(sprintf('  [%s] %s — «%s», вложений %d%s', $m['date'], $org,
-            mb_substr((string) $m['subject'], 0, 60), count($m['attachments']),
-            $isRefusal ? ' (похоже на отказ)' : ''));
+        mr_log(sprintf('  [%s] %s — «%s», вложений %d → %s (%s): %s', $m['date'], $org,
+            mb_substr((string) $m['subject'], 0, 50), count($m['attachments']),
+            $verdict['verdict'], $verdict['by'], mb_substr((string) $verdict['reason'], 0, 70)));
         continue;
     }
 
     if ($isUnsub) { min_unsubscribe($from); $replies++; continue; }
+
+    // След разбора: по нему потом видно, почему центр ответил именно так.
+    mrep_migrate();
+    try {
+        insert('ministry_replies', [
+            'ministry_id' => (int) ($known[$from]['id'] ?? 0),
+            'email' => $from, 'org' => $org,
+            'subject' => (string) $m['subject'],
+            'excerpt' => mb_substr(trim((string) $m['text']), 0, 500),
+            'verdict' => (string) $verdict['verdict'],
+            'reason'  => (string) $verdict['reason'],
+            'fixed_fio' => (string) ($verdict['fio'] ?? ''),
+            'msg_key' => $key,
+        ]);
+    } catch (\Throwable $e) {}
+
+    // Квитанция о регистрации и автоответчик — ещё не ответ. Ведомство остаётся
+    // в работе и ждёт настоящего решения, отвечать тут нечего.
+    if (in_array($verdict['verdict'], ['receipt', 'bounce'], true)) { $replies++; continue; }
+
+    // Не разобрали — зовём человека и ничего не решаем сами.
+    if ($verdict['verdict'] === 'other') {
+        $replies++;
+        if (is_file(BASE_PATH . '/core/notify_owner.php')) {
+            require_once BASE_PATH . '/core/notify_owner.php';
+            if (function_exists('owner_tg_send')) {
+                try {
+                    owner_tg_send('analytics', '<b>Ответ ведомства не разобран</b>' . "\n" . h($org)
+                        . "\n«" . h(mb_substr((string) $m['subject'], 0, 80)) . '»'
+                        . "\n" . h(mb_substr(trim((string) $m['text']), 0, 300))
+                        . "\n\nРешение примите сами: автоматика по нему ничего не делает.");
+                } catch (\Throwable $e) {}
+            }
+        }
+        continue;
+    }
+
+    // Просят переоформить: правим адресата и шлём обращение заново.
+    if ($verdict['verdict'] === 'fix') {
+        $replies++;
+        $newFio = trim((string) ($verdict['fio'] ?? ''));
+        if ($newFio !== '') mrep_fix_person($from, $newFio);
+        if (mrep_enabled()) {
+            $ans = mrep_reply_fix($known[$from], $newFio, (string) ($known[$from]['last_number'] ?? ''));
+            mrep_queue_official($from, $org, $ans['subject'], $ans['html']);
+        }
+        mr_log('просят переоформить: ' . $org . ($newFio !== '' ? ' → ' . $newFio : ' (ФИО не назвали)'));
+        continue;
+    }
 
     min_mark_replied($from, $isRefusal ? 'declined' : 'supported');
     try {
@@ -150,7 +230,17 @@ foreach ($ids as $id) {
           [$isRefusal ? 'declined' : 'replied', $from]);
     } catch (\Throwable $e) {}
     $replies++;
-    if ($isRefusal) continue;                                  // отказ в галерею не идёт
+
+    if ($isRefusal) {
+        // Отказ: вычёркиваем навсегда и отвечаем коротко. В галерею не идёт.
+        mrep_mark_declined($from, (string) $verdict['reason']);
+        if (mrep_enabled()) {
+            $ans = mrep_reply_refusal($known[$from], (string) ($known[$from]['last_number'] ?? ''));
+            mrep_queue_official($from, $org, $ans['subject'], $ans['html']);
+        }
+        mr_log('отказ, ведомство больше не пишем: ' . $org);
+        continue;
+    }
 
     /* ── Скан письма ────────────────────────────────────────────────────── */
     $imgRel = ''; $fileRel = '';
@@ -194,6 +284,28 @@ foreach ($ids as $id) {
     } catch (\Throwable $e) {
         mr_log('не удалось записать письмо: ' . $e->getMessage());
         continue;
+    }
+
+    /* ── БЛАГОДАРНОСТЬ ЗА ПОДДЕРЖКУ ──────────────────────────────────────
+     *
+     * Ведомство поддержало — центр отвечает письмом и прикладывает именную
+     * благодарность на бланке. Имя берётся из той же строки базы, что стояла в
+     * адресате обращения: человек, которому писали, и человек, которого
+     * благодарим, — один и тот же.
+     *
+     * Документ печатает браузер на бастионе, это не мгновенно; если печать не
+     * удалась, письмо всё равно уходит — благодарность без вложения лучше, чем
+     * молчание в ответ на поддержку.
+     */
+    if (mrep_enabled()) {
+        $files = [];
+        try {
+            $thanks = mrep_thanks_pdf($known[$from]);
+            if ($thanks) $files[] = $thanks;
+        } catch (\Throwable $e) {}
+        $ans = mrep_reply_support($known[$from], (string) ($known[$from]['last_number'] ?? ''));
+        mrep_queue_official($from, $org, $ans['subject'], $ans['html'], $files);
+        mr_log('поддержка: ' . $org . ($files ? ' — благодарность приложена' : ' — БЕЗ документа, печать не удалась'));
     }
 
     /* ── Владельцу и во ВКонтакте ───────────────────────────────────────── */

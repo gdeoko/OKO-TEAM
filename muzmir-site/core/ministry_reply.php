@@ -660,3 +660,30 @@ function mrep_fix_person(string $email, string $fio, string $role = ''): bool {
         return true;
     } catch (\Throwable $e2) { return false; }
 }
+
+/**
+ * ПОСТАВИТЬ ОТВЕТ ЦЕНТРА В ОЧЕРЕДЬ.
+ *
+ * Ответ ведомству — такое же официальное письмо, как и само обращение: уходит с
+ * kc@ и тем же неспешным темпом, пять писем в минуту. Поэтому помечаем его
+ * campaign_type='official', иначе очередь отправит его в общем потоке личных
+ * писем — тридцать штук в минуту с ящика, у которого нет резерва.
+ *
+ * @param string $files вложения списком абсолютных путей (JSON), если они есть
+ */
+function mrep_queue_official(string $to, string $name, string $subject, string $html, array $files = []): int {
+    $id = 0;
+    try {
+        $id = (int) insert('mail_queue', [
+            'to_email'      => mb_strtolower(trim($to)),
+            'to_name'       => $name,
+            'subject'       => $subject,
+            'body'          => $html,
+            'status'        => 'queued',
+            'priority'      => 0,
+            'campaign_type' => 'official',
+            'attach'        => $files ? json_encode(array_values($files), JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES) : null,
+        ]);
+    } catch (\Throwable $e) { $id = 0; }
+    return $id;
+}

@@ -85,7 +85,7 @@ function mm_email_layout(string $inner, array $opt = []): string {
         : $note;
 
     // Подписка на наши каналы — ВКонтакте и MAX (в каждом письме).
-    $vkUrl  = h((string) cfgv('org_vk', 'https://vk.com/muzmir_kc'));
+    $vkUrl  = h((string) cfgv('org_vk', 'https://vk.com/music_world.online'));
     $maxUrl = h((string) cfgv('org_max', 'https://max.ru/join/v4SJluLzTAMWm4r5ldJ-JyA2rS5InmPYjaP6drn3F8I'));
     $social = '<div style="margin-top:18px;">'
         . '<div style="font-size:12px;color:' . $muted . ';margin-bottom:8px;">Подпишитесь на наши каналы - анонсы конкурсов, результаты и полезное:</div>'
