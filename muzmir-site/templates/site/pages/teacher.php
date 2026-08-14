@@ -5,6 +5,7 @@
  * Личный кабинет участника (templates/site/pages/cabinet.php) не затрагивается.
  */
 require_login();
+require_once BASE_PATH . '/core/app_status.php';   // app_result_public_sql — что уже можно показывать
 $user = current_user();
 $uid = (int) $user['id'];
 
@@ -54,10 +55,12 @@ if (!$isTeacher) {
 // --- Единый отчёт для директора: выгрузка CSV ---
 if (($_GET['report'] ?? '') === 'csv') {
     $rows = all(
-        "SELECT a.full_name, a.number, c.name AS comp_name, a.nomination, a.status, a.result, d.number AS diploma_number
+        "SELECT a.full_name, a.number, c.name AS comp_name, a.nomination, a.status,
+                CASE WHEN " . app_result_public_sql('a', 'c') . " THEN a.result ELSE '' END AS result,
+                d.number AS diploma_number
          FROM applications a
          LEFT JOIN competitions c ON c.id = a.competition_id
-         LEFT JOIN diplomas d ON d.application_id = a.id
+         LEFT JOIN diplomas d ON d.application_id = a.id AND COALESCE(d.sent_at,'') <> ''
          WHERE a.user_id = ? OR (a.teacher <> '' AND a.teacher = ?)
          ORDER BY c.name, a.full_name",
         [$uid, $user['full_name']]
@@ -102,10 +105,12 @@ $allMyComps = all(
 );
 
 $report = all(
-    "SELECT a.full_name, a.number, c.name AS comp_name, a.nomination, a.status, a.result, d.number AS diploma_number, d.pdf_path
+    "SELECT a.full_name, a.number, c.name AS comp_name, a.nomination, a.status,
+            CASE WHEN " . app_result_public_sql('a', 'c') . " THEN a.result ELSE '' END AS result,
+            d.number AS diploma_number, d.pdf_path
      FROM applications a
      LEFT JOIN competitions c ON c.id = a.competition_id
-     LEFT JOIN diplomas d ON d.application_id = a.id
+     LEFT JOIN diplomas d ON d.application_id = a.id AND COALESCE(d.sent_at,'') <> ''
      WHERE a.user_id = ? OR (a.teacher <> '' AND a.teacher = ?)
      ORDER BY c.name, a.full_name",
     [$uid, $user['full_name']]

@@ -6,13 +6,19 @@ $comps = all("SELECT slug, name, type, status FROM competitions WHERE status IN(
 $apps = $diplomas = $orders = [];
 if ($u) {
     $uid = (int)$u['id'];
-    $apps = all("SELECT a.status, a.result, a.number, c.name AS comp_name
+    // Мини-приложение показывает то же, что и личный кабинет: только дошедшее до
+    // участника. Иначе оно становится обходным путём — в кабинете звание скрыто,
+    // а в Телеграме то же самое видно (разбор — app_result_public_sql).
+    require_once BASE_PATH . '/core/app_status.php';
+    $apps = all("SELECT a.status, a.number, c.name AS comp_name,
+                        CASE WHEN " . app_result_public_sql('a', 'c') . " THEN a.result ELSE '' END AS result
                  FROM applications a LEFT JOIN competitions c ON c.id=a.competition_id
                  WHERE a.user_id=? ORDER BY a.created_at DESC LIMIT 12", [$uid]);
     $diplomas = all("SELECT d.number, d.result AS d_result, a.result AS a_result, c.name AS comp_name
                      FROM diplomas d JOIN applications a ON a.id=d.application_id
                      LEFT JOIN competitions c ON c.id=a.competition_id
-                     WHERE a.user_id=? ORDER BY d.created_at DESC LIMIT 12", [$uid]);
+                     WHERE a.user_id=? AND COALESCE(d.sent_at,'')<>''
+                     ORDER BY d.sent_at DESC, d.created_at DESC LIMIT 12", [$uid]);
     $orders = all("SELECT items, status, tracking FROM awards_orders WHERE user_id=? ORDER BY created_at DESC LIMIT 12", [$uid]);
 }
 $appStatus = ['new'=>'Новая','paid'=>'Оплачена','judging'=>'На оценке','graded'=>'Оценена','sent'=>'Диплом отправлен','rejected'=>'Отклонена'];

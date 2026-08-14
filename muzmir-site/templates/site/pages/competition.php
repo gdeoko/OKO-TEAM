@@ -76,12 +76,16 @@ $priceHtml = static function (int $p) use ($clubPrice): string {
         : h(money($p));
 };
 
-/* Результаты: заявки с выставленной оценкой. */
+/* Результаты: только раскрытые участникам (письмо ушло / список опубликован).
+   См. разбор в app_result_public_sql(): статус 'graded' появляется сразу после
+   работы жюри, и по нему страница выдавала звания раньше срока. */
+require_once BASE_PATH . '/core/app_status.php';
 $results = all(
-    "SELECT full_name, group_name, is_group, nomination, work_title, result, score
-     FROM applications
-     WHERE competition_id = ? AND status IN ('graded','sent') AND result <> ''
-     ORDER BY score DESC, full_name ASC",
+    "SELECT a.full_name, a.group_name, a.is_group, a.nomination, a.work_title, a.result, a.score
+     FROM applications a
+     LEFT JOIN competitions c ON c.id = a.competition_id
+     WHERE a.competition_id = ? AND " . app_result_public_sql('a', 'c') . "
+     ORDER BY a.score DESC, a.full_name ASC",
     [$c['id']]
 );
 

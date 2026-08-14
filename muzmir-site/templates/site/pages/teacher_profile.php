@@ -29,6 +29,7 @@ $rows = all(
      JOIN applications a ON a.id = d.application_id
      LEFT JOIN competitions c ON c.id = a.competition_id
      WHERE a.teacher <> ''
+       AND COALESCE(d.sent_at,'') <> ''   -- в публичный реестр попадают только отправленные дипломы
      ORDER BY d.created_at DESC, d.id DESC"
 );
 

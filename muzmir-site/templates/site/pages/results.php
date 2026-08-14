@@ -70,14 +70,20 @@ if (!$isFinished) {
     return;
 }
 
-/* --- Победители: заявки с выставленным результатом. --- */
+/* --- Аттестационные результаты: только те, что уже раскрыты участникам. ---
+   Отбор шёл по status IN ('graded','sent'), то есть по факту работы жюри. Из-за
+   этого страница могла показать звание раньше, чем участник получил письмо, а по
+   длинному конкурсу — раньше общего оглашения. Условие app_result_public_sql()
+   одинаково для сайта, кабинета и чат-бота. */
+require_once BASE_PATH . '/core/app_status.php';
 $results = all(
     "SELECT a.id AS app_id, a.user_id, a.full_name, a.group_name, a.is_group, a.city, a.institution, a.teacher,
             a.nomination, a.age_category, a.work_title, a.result, a.score, a.video_url, a.video_platform,
             d.number AS diploma_number
      FROM applications a
      LEFT JOIN diplomas d ON d.application_id = a.id
-     WHERE a.competition_id = ? AND a.status IN ('graded','sent') AND a.result <> ''
+     LEFT JOIN competitions c ON c.id = a.competition_id
+     WHERE a.competition_id = ? AND " . app_result_public_sql('a', 'c') . "
      ORDER BY a.nomination ASC, a.score DESC, a.full_name ASC",
     [(int) $c['id']]
 );

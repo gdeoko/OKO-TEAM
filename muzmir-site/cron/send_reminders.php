@@ -27,6 +27,7 @@ require_once BASE_PATH . '/core/mailer.php';
 if (is_file(BASE_PATH . '/core/notifications.php')) require_once BASE_PATH . '/core/notifications.php';
 require_once __DIR__ . '/_lib.php';
 require_once BASE_PATH . '/core/paylink.php';   // прямые ссылки на оплату счёта
+require_once BASE_PATH . '/core/app_status.php'; // app_result_public_sql — что уже можно называть
 // Опционально: движок рассылок даёт настоящий unsub_token через nl_ensure_subscriber().
 if (is_file(BASE_PATH . '/core/newsletter.php')) require_once BASE_PATH . '/core/newsletter.php';
 
@@ -109,11 +110,14 @@ try {
         "SELECT a.id, a.full_name, a.email, a.result, c.name AS comp_name
            FROM applications a
            JOIN competitions c ON c.id = a.competition_id
-          WHERE a.result <> ''
-            AND a.status IN ('graded', 'sent')
-            AND a.email <> ''
+          WHERE a.email <> ''
             AND c.results_date IS NOT NULL
-            AND date(c.results_date) <= date('now', '-3 days')"
+            AND date(c.results_date) <= date('now', '-3 days')
+            -- Письмо называет звание участника, поэтому уходит только по уже
+            -- раскрытому результату: по длинному конкурсу — после публикации
+            -- списка, по короткому — после письма с результатом. Прежнее условие
+            -- (status IN 'graded','sent') срабатывало сразу после работы жюри.
+            AND " . app_result_public_sql('a', 'c') . ""
     );
     foreach ($rows as $a) {
         $id = (int) $a['id'];
