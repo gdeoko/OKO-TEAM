@@ -55,6 +55,12 @@ ob_start(); ?>
   .lv-kv span{color:var(--muted);flex:none}
   .lv-kv b{text-align:right}
   .lv-no-mono{font-family:'Courier New',monospace;letter-spacing:.03em}
+  /* Сам лист обращения. По клику открывается в полный размер — печать и подпись
+     на бланке должны читаться, иначе сверять нечего. */
+  .lv-doc{margin:22px 0 0;border-top:1px solid var(--line);padding-top:18px}
+  .lv-doc-cap{color:var(--muted);font-size:.9rem;margin:0 0 10px}
+  .lv-doc img{display:block;width:100%;height:auto;border:1px solid var(--line);
+    border-radius:8px;box-shadow:0 6px 22px rgba(21,34,76,.10)}
 </style>
 
 <section class="section">
@@ -78,6 +84,25 @@ ob_start(); ?>
               : 'Запрос информационной поддержки' ?></b></div>
           <div><span>Кем выдан</span><b><?= h($org) ?></b></div>
         </div>
+
+        <?php
+        /* САМ ДОКУМЕНТ. Карточка отвечает на вопрос «выдавали ли», но
+           делопроизводителю обычно нужно другое: сверить лист, который лежит
+           перед ним, с тем, что у центра в реестре. Поэтому показываем ровно то
+           изображение обращения, которое ушло адресату. Файл лежит рядом с
+           письмом: lm_render() кладёт его в uploads/letters под номером, где
+           косая черта заменена дефисом. */
+        $lvStem = 'ol-' . preg_replace('~[^0-9a-zA-Z]~', '-', (string) $row['number']);
+        $lvJpg  = BASE_PATH . '/public/uploads/letters/' . $lvStem . '.jpg';
+        if (is_file($lvJpg)): ?>
+          <div class="lv-doc">
+            <div class="lv-doc-cap">Документ, направленный адресату</div>
+            <a href="<?= h(url('/uploads/letters/' . $lvStem . '.jpg')) ?>" target="_blank" rel="noopener">
+              <img src="<?= h(url('/uploads/letters/' . $lvStem . '.jpg')) ?>"
+                   alt="Обращение №<?= h((string) $row['number']) ?>" loading="lazy">
+            </a>
+          </div>
+        <?php endif; ?>
       <?php else: ?>
         <div class="lv-badge lv-no">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"

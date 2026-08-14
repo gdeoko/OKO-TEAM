@@ -415,9 +415,14 @@ function pdf_official_letter(array $o): string {
     $qr = $W - $mR;                                     // правая граница блока
     $qx = $qr - $qs;
     if (pl_letter_qr($img, ol_verify_url($number), $qx, $fy - 6, $qs)) {
+        // Под кодом печатаем ПОЛНЫЙ адрес страницы вместе с номером, а не корень
+        // раздела: тот, у кого нет под рукой камеры, должен набрать его руками и
+        // попасть на тот же документ, что открывает QR. В самом коде зашит
+        // punycode-вид домена — кириллические адреса открывают не все сканеры,
+        // а ведут обе записи в одно и то же место.
         pl_text($img, 0, $fy + $qs + 16, 14, $navy, $fBold, '№' . $number, 'right', $qr);
-        pl_text($img, 0, $fy + $qs + 34, 11, $muted, $fReg, 'проверка подлинности', 'right', $qr);
-        pl_text($img, 0, $fy + $qs + 50, 11, $muted, $fReg, $site . '/letter', 'right', $qr);
+        pl_text($img, 0, $fy + $qs + 34, 11, $muted, $fReg, 'проверка подлинности документа', 'right', $qr);
+        pl_text($img, 0, $fy + $qs + 50, 11, $muted, $fReg, $site . '/letter/' . $number, 'right', $qr);
     }
 
     /* ── Контактная полоса ─────────────────────────────────────────────── */
