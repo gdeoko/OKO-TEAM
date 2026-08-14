@@ -113,7 +113,10 @@ try {
         "SELECT c.*
            FROM competitions c
           WHERE c.is_paid = 0
-            AND c.status IN ('open','finished')
+            -- 'closed' обязателен: приём закрывается 25-го в 18:00, и к 28-му
+            -- числу конкурс уже не 'open'. Без этого статуса страховочный крон
+            -- не нашёл бы ни одного конкурса именно в день оглашения.
+            AND c.status IN ('open','closed','finished')
             AND NOT EXISTS (SELECT 1 FROM vk_results_log l WHERE l.competition_id = c.id)
             AND EXISTS (SELECT 1 FROM applications a WHERE a.competition_id = c.id)
             AND NOT EXISTS (SELECT 1 FROM applications a
