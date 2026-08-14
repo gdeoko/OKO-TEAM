@@ -1,0 +1,11 @@
+[Unit]
+Description=Ежечасный сбор метрик площадок Кластера
+
+[Timer]
+OnCalendar=hourly
+RandomizedDelaySec=600
+Persistent=true
+Unit=klaster-collect.service
+
+[Install]
+WantedBy=timers.target

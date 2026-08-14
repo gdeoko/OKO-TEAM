@@ -1,0 +1,13 @@
+[Unit]
+Description=Сбор метрик площадок Кластера
+After=network-online.target
+
+[Service]
+Type=oneshot
+User=www-data
+Group=www-data
+ExecStart=/usr/bin/python3 /var/www/klaster-data/bin/klaster_collect.py
+TimeoutStartSec=600
+Nice=10
+# ключ Data API, если он есть - класть сюда, а не в код
+EnvironmentFile=-/etc/klaster/collect.env
