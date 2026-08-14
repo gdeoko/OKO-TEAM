@@ -106,10 +106,12 @@ ob_start(); ?>
     </select>
   </div>
   <div class="field"><label>Поиск по обоим спискам</label><input name="q" value="<?= h(input('q')) ?>" placeholder="ФИО, коллектив, №, email, телефон, номер, звание"></div>
-  <div class="field"><label>Разобранные</label><select name="gorder" onchange="this.form.submit()">
-    <option value="new" <?= input('gorder')!=='old'?'selected':'' ?>>Новые оценённые сверху</option>
-    <option value="old" <?= input('gorder')==='old'?'selected':'' ?>>Старые оценённые сверху</option>
+  <div class="field"><label>Сортировка очереди на аттестацию</label><select name="order" onchange="this.form.submit()">
+    <option value="old" <?= input('order')!=='new'?'selected':'' ?>>Сначала старые заявки (по дате подачи)</option>
+    <option value="new" <?= input('order')==='new'?'selected':'' ?>>Сначала новые заявки (по дате подачи)</option>
   </select></div>
+  <?php // Архив «разобранных» всегда идёт снизу в порядке «последние оценённые сверху» —
+        // единственный удобный порядок при проверке своих же недавних решений. Переключатель убран. ?>
   <button class="btn btn--primary btn--sm"><?= admin_icon('search') ?>Поиск</button>
   <?php if (trim(input('q')) !== ''): ?><a class="btn btn--ghost btn--sm" href="<?= a_link('longcomp', ['competition'=>$comp]) ?>">Сброс</a><?php endif; ?>
 </form>
@@ -121,8 +123,12 @@ ob_start(); ?>
 <?php else:
   // Верхний список — только то, что ждёт аттестации. Отклонённые сюда не входят:
   // они уже разобраны и живут в нижнем списке вместе с оценёнными.
+  // Сортировка — по ДАТЕ ПОДАЧИ (created_at), не по алфавиту: администратору важен
+  // порядок поступления, а не имя. Переключатель «старые ↔ новые» — в фильтрах выше.
+  $qOrder = input('order') === 'new' ? 'new' : 'old';
+  $dir = $qOrder === 'new' ? 'DESC' : 'ASC';
   $all = all("SELECT * FROM applications WHERE competition_id=? AND is_paid=1 AND status<>'rejected'
-              ORDER BY full_name COLLATE NOCASE", [$comp]);
+              ORDER BY created_at $dir, id $dir", [$comp]);
   $qLong = trim(input('q'));
   if ($qLong !== '') {
       // Многословный поиск: «иванова вальс» найдёт строку, где есть оба фрагмента.
@@ -143,7 +149,8 @@ ob_start(); ?>
   // Нижний список — общий с короткими: оценённые И отклонённые, с полным набором
   // действий. Эталон-таблица результатов ниже строится отдельно и только из
   // оценённых: отклонённой заявке в списке итогов конкурса делать нечего.
-  $gradedRows = graded_rows($comp, $qLong, input('gorder') === 'old' ? 'old' : 'new', 'long');
+  // Архив всегда «последние оценённые сверху» — переключатель убран, см. фильтры выше.
+  $gradedRows = graded_rows($comp, $qLong, 'new', 'long');
   $tot = count($all); $done = count($graded);
   $pct = $tot ? (int) round($done / $tot * 100) : 0;
   $published = trim((string)($current['results_published_at'] ?? '')) !== '';
@@ -162,6 +169,11 @@ ob_start(); ?>
     </div>
     <div class="toolbar" style="gap:8px;flex-wrap:wrap">
       <a class="btn btn--navy btn--sm" href="<?= a_link('longcomp', ['competition'=>$comp,'do'=>'results_doc']) ?>"><?= admin_icon('diplomas') ?>Скачать результаты (DOCX)</a>
+      <?php // Выгрузки переехали сюда из «Оценки коротких»: там они стояли в панели
+            // длинного конкурса и были единственной причиной, по которой длинный
+            // конкурс вообще показывался в чужом разделе. ?>
+      <a class="btn btn--navy btn--sm" href="<?= a_link('grading', ['action'=>'results_csv','competition'=>$comp]) ?>"><?= admin_icon('download') ?>CSV</a>
+      <a class="btn btn--navy btn--sm" target="_blank" href="<?= a_link('grading', ['action'=>'results_html','competition'=>$comp]) ?>"><?= admin_icon('eye') ?>HTML для печати</a>
       <a class="btn btn--ghost btn--sm" href="<?= a_link('longcomp', ['competition'=>$comp]) ?>#results-preview">Открыть список</a>
       <?php if (!$published): ?>
         <form method="post" action="<?= url('/admin/') ?>" onsubmit="return confirm('Опубликовать результаты? Участники увидят звания и смогут заказать награды.')"><?= csrf_field() ?>
@@ -268,3 +280,4 @@ ob_start(); ?>
 <?php
 $content = ob_get_clean();
 admin_layout('Оценка длинных', $content, 'longcomp');
+

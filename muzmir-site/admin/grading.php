@@ -966,9 +966,25 @@ if ($id = (int) input('id')) {
 }
 
 /* ================= ОЧЕРЕДЬ ОЦЕНИВАНИЯ (СПИСОК) ================= */
-$comps = all("SELECT id,name,is_paid,results_mode,results_date FROM competitions ORDER BY sort,name");
+
+/* ДВА РАЗДЕЛА — ДВА РАЗНЫХ НАБОРА КОНКУРСОВ.
+ *
+ * Очередь и архив здесь всегда были только по коротким конкурсам, а вот
+ * выпадающий список предлагал ВСЕ, включая длинные. Выбрав в «Оценке коротких»
+ * длинный конкурс, администратор получал пустую очередь, пустой архив и при этом
+ * панель «Итоги конкурса» с кнопками длинного — то есть длинный конкурс жил
+ * сразу в двух разделах, и понять, где его на самом деле оценивают, было нельзя.
+ * Теперь в списке только короткие, а ссылка на длинный уводит в свой раздел. */
+$comps = all("SELECT id,name,is_paid,results_mode,results_date FROM competitions
+               WHERE COALESCE(results_mode,'email') <> 'list' ORDER BY sort,name");
 $compRow = null;
 foreach ($comps as $c) if ((int)$c['id'] === $comp) { $compRow = $c; break; }
+
+// Пришли по старой ссылке с длинным конкурсом — отправляем в «Оценку длинных».
+if ($comp && !$compRow) {
+    $isLongComp = (string) (scalar("SELECT results_mode FROM competitions WHERE id=?", [$comp]) ?? '') === 'list';
+    if ($isLongComp) admin_redirect('longcomp', ['competition' => $comp]);
+}
 
 $qSearch = trim(input('q'));
 
@@ -980,14 +996,9 @@ $rows       = grading_queue_rows($comp, $order, $qSearch);
 $qTotal     = count($rows);
 $gradedRows = graded_rows($comp, $qSearch, input('gorder') === 'old' ? 'old' : 'new', 'short');
 
-/* Панель «Итоги конкурса» для длинных бесплатных (results_mode='list' или is_paid=0). */
-$isLong = $compRow && (($compRow['results_mode'] ?? '') === 'list' || (int)$compRow['is_paid'] === 0);
-$longStats = null;
-if ($isLong) {
-    $tot = (int) scalar("SELECT COUNT(*) FROM applications WHERE competition_id=? AND status<>'rejected'", [$comp]);
-    $done = (int) scalar("SELECT COUNT(*) FROM applications WHERE competition_id=? AND status<>'rejected' AND result<>''", [$comp]);
-    $longStats = ['total' => $tot, 'done' => $done, 'pct' => $tot ? (int)round($done / $tot * 100) : 0];
-}
+/* Панель «Итоги конкурса» отсюда убрана: она про длинный конкурс и живёт в
+   разделе «Оценка длинных» (admin/longcomp.php), где есть и прогресс оценки, и
+   выгрузка списка, и кнопка публикации итогов. Здесь она только путала. */
 
 $firstId = null;
 foreach ($rows as $r) { $firstId = (int)$r['id']; break; }
@@ -1019,25 +1030,7 @@ ob_start(); ?>
   <?php if ($qSearch !== ''): ?><a class="btn btn--ghost btn--sm" href="<?= a_link('grading', array_filter(['competition'=>$comp,'order'=>$order])) ?>">Сброс</a><?php endif; ?>
 </form>
 
-<?php if ($longStats): ?>
-  <div class="card" style="margin-bottom:16px">
-    <div style="display:flex;flex-wrap:wrap;gap:12px;align-items:center;justify-content:space-between">
-      <div>
-        <h4 style="margin:0 0 4px">Итоги конкурса (бесплатный / длинный)</h4>
-        <div class="small">Оценено <b><?= $longStats['done'] ?></b> из <b><?= $longStats['total'] ?></b> <span class="muted">(<?= $longStats['pct'] ?>%)</span>.
-          Результаты не рассылаются по одному — копятся до даты публикации<?= !empty($compRow['results_date']) ? ' (' . h(date('d.m.Y', strtotime((string)$compRow['results_date']))) . ')' : ' (28-е число)' ?>. До публикации любой результат можно править.</div>
-      </div>
-      <div style="display:flex;gap:8px;flex-wrap:wrap">
-        <a class="btn btn--navy btn--sm" href="<?= a_link('grading', ['action'=>'results_csv','competition'=>$comp]) ?>"><?= admin_icon('download') ?>Скачать CSV</a>
-        <a class="btn btn--navy btn--sm" target="_blank" href="<?= a_link('grading', ['action'=>'results_html','competition'=>$comp]) ?>"><?= admin_icon('eye') ?>HTML для печати</a>
-        <a class="btn btn--ghost btn--sm" href="#graded"><?= admin_icon('edit') ?>К разобранным заявкам</a>
-      </div>
-    </div>
-    <div style="height:9px;border-radius:6px;background:var(--a-line);overflow:hidden;margin-top:10px">
-      <div style="height:100%;width:<?= $longStats['pct'] ?>%;background:var(--grad-gold);border-radius:6px"></div>
-    </div>
-  </div>
-<?php endif; ?>
+
 
 <style>
 .gq-tbl td{vertical-align:middle}
