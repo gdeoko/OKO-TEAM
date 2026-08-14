@@ -14,7 +14,7 @@ if (PHP_SAPI !== 'cli') { fwrite(STDERR, "CLI only\n"); exit(1); }
 define('BASE_PATH', dirname(__DIR__));
 $GLOBALS['CFG'] = require BASE_PATH . '/config.php';
 foreach (['db', 'data', 'helpers', 'mailer', 'ministries', 'letter_texts', 'letter_mail',
-          'ministry_mailing', 'ministry_reply', 'official_letter'] as $m) {
+          'ministry_mailing', 'ministry_reply', 'official_letter', 'chat_brain'] as $m) {
     require_once BASE_PATH . '/core/' . $m . '.php';
 }
 
@@ -109,8 +109,8 @@ $say(in_array($auto['verdict'], ['receipt', 'other'], true) ? 'ok' : 'bad',
      'автоответчик не считается решением', $auto['verdict']);
 $dsn = mrep_classify('Undelivered Mail Returned to Sender', '550 5.1.1 User unknown', []);
 $say($dsn['verdict'] === 'bounce' ? 'ok' : 'bad', 'недоставка распознаётся', $dsn['verdict']);
-$say(count(chat_gemini_keys()) > 0 ? 'ok' : 'bad', 'ключи модели для разбора',
-     count(chat_gemini_keys()) . ' шт.');
+$keys = function_exists('chat_gemini_keys') ? chat_gemini_keys() : [];
+$say($keys ? 'ok' : 'bad', 'ключи модели для разбора', count($keys) . ' шт.');
 $say(trim((string) shell_exec('command -v pdftotext')) !== '' ? 'ok' : 'bad', 'чтение PDF');
 $say(class_exists('ZipArchive') ? 'ok' : 'bad', 'чтение DOCX');
 
