@@ -99,6 +99,14 @@ h1,h2{font-family:var(--ff-display);font-weight:800;letter-spacing:.005em}
 a:focus-visible,button:focus-visible,.btn:focus-visible,[role=tab]:focus-visible,summary:focus-visible,
 input:focus-visible,select:focus-visible,textarea:focus-visible{outline:2px solid var(--gold);outline-offset:2px;border-radius:6px}
 [id]{scroll-margin-top:88px}
+/* СПРЯТАНО — ЗНАЧИТ СПРЯТАНО.
+   Браузер прячет [hidden] правилом из своей встроенной таблицы, а любое наше
+   правило с display сильнее её. Из-за этого кнопка «Оплатить оргвзнос» на экране
+   «Заявка принята» (.btn{display:inline-flex}) висела ВСЕГДА — в том числе после
+   заявки на бесплатный конкурс, где платить нечего. Тем же болели модалка входа,
+   корзина и подсказки адреса — на каждую заводили отдельную заплатку. Одно общее
+   правило закрывает и их, и все будущие случаи. */
+[hidden]{display:none !important}
 h1{font-size:clamp(2.4rem,7.4vw,4.6rem)}
 h2{font-size:clamp(1.9rem,5vw,3.2rem)}
 h3{font-family:var(--ff-serif);font-weight:700;font-size:clamp(1.25rem,2.6vw,1.65rem)}

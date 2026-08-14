@@ -71,6 +71,11 @@ hr{border:none;border-top:1px solid var(--a-line);margin:22px 0}
 .content{padding:26px;max-width:1240px;width:100%}
 .page-actions{display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin-left:auto}
 
+/* Спрятано — значит спрятано: наше .btn{display:inline-flex} сильнее встроенного
+   правила браузера для [hidden], и скрытые кнопки оставались на виду (см. тот же
+   разбор в public/assets/css/style.css). */
+[hidden]{display:none !important}
+
 /* ===== Кнопки ===== */
 .btn{display:inline-flex;align-items:center;gap:8px;font-family:var(--ff-body);font-weight:700;font-size:.92rem;
   padding:10px 20px;border-radius:999px;border:1.5px solid transparent;cursor:pointer;transition:.16s;line-height:1;white-space:nowrap}

@@ -50,7 +50,7 @@ if (!$isFinished) {
         <?php $rd = trim((string)($c['results_date'] ?? '')); ?>
         <?php if ($rd !== ''): ?>
           <p style="color:var(--muted);margin-top:14px">Результаты конкурса будут опубликованы <b><?= h(ru_date($rd)) ?></b>.
-             Список победителей появится на этой странице в день публикации.</p>
+             Список аттестационных результатов появится на этой странице в день публикации.</p>
         <?php else: ?>
           <p style="color:var(--muted);margin-top:14px">Результаты этого конкурса ещё не опубликованы: приём заявок или оценка жюри продолжается.
              Итоги появятся на этой странице сразу после завершения конкурса.</p>
@@ -279,7 +279,7 @@ ob_start(); ?>
     <?php else: ?>
 
       <div class="res-stats reveal">
-        <div class="stat"><b data-count="<?= count($results) ?>">0</b><span>Победителей и лауреатов</span></div>
+        <div class="stat"><b data-count="<?= count($results) ?>">0</b><span>Аттестационных результатов</span></div>
         <div class="stat"><b data-count="<?= $grandPrix ?>">0</b><span>Гран-при</span></div>
         <div class="stat"><b data-count="<?= $laureates ?>">0</b><span>Лауреатов</span></div>
         <div class="stat"><b data-count="<?= count($cities) ?>">0</b><span>Городов и регионов</span></div>
@@ -378,7 +378,7 @@ ob_start(); ?>
       <?php endif; ?>
 
       <?php if ($videos): ?>
-        <div class="section-head reveal" style="margin:8px 0 16px"><p class="eyebrow">Смотрите</p><h2>Видео-номера победителей</h2></div>
+        <div class="section-head reveal" style="margin:8px 0 16px"><p class="eyebrow">Смотрите</p><h2>Видео-номера участников</h2></div>
         <div class="res-media reveal">
           <?php foreach ($videos as $vurl => $v): ?>
             <a class="res-video-chip" href="<?= h($vurl) ?>" target="_blank" rel="noopener">
@@ -423,7 +423,7 @@ ob_start(); ?>
 <?php
 $content = ob_get_clean();
 $metaDesc = $results
-    ? 'Результаты конкурса «' . $c['name'] . '»: ' . count($results) . ' победителей и лауреатов, ' . count($byNomination) . ' номинаций. Культурного центра «Музыкальный Мир».'
+    ? 'Результаты конкурса «' . $c['name'] . '»: ' . count($results) . ' аттестационных результатов, ' . count($byNomination) . ' номинаций. Культурного центра «Музыкальный Мир».'
     : 'Результаты конкурса «' . $c['name'] . '» - Культурного центра «Музыкальный Мир».';
 render_page('Результаты - ' . $c['name'], $content, [
     'active'   => '/competitions',

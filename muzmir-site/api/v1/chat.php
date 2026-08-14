@@ -388,14 +388,16 @@ function chat_actions(string $text, ?int $uid, string $sessionKey): array {
     // определена и аттестована, а диплом готов — добавляем кнопку скачивания (задача 2).
     $askResultDiploma = $has(['результат', 'итог', 'балл', 'оцен', 'диплом', 'сертификат', 'аттест', 'провер', 'готов ли', 'где мой', 'когда']);
     if ($uid && $askResultDiploma) {
-        $stMap = ['new' => 'на рассмотрении', 'pending' => 'на рассмотрении', 'submitted' => 'принята, ожидает аттестации',
-            'paid' => 'оплачена, ожидает аттестации', 'review' => 'на аттестации жюри', 'judging' => 'на аттестации жюри',
-            'scored' => 'аттестована, результат готов', 'done' => 'аттестована, результат готов',
-            'unpaid' => 'ожидает оплаты'];
+        if (!function_exists('chat_gate_app')) require_once BASE_PATH . '/core/chat_gate.php';
 
         $acted = [];
         try {
-            $acted = all("SELECT a.id, a.number, a.status, a.result, c.name AS comp_name
+            // Поля конкурса обязательны: без них не отличить длинный конкурс от
+            // короткого, а подпись к заявке в выпадающем списке («аттестована,
+            // результат готов») сама по себе выдавала итог до срока.
+            $acted = all("SELECT a.*, c.name AS comp_name,
+                                 c.results_mode AS comp_results_mode, c.results_date AS comp_results_date,
+                                 c.results_published_at AS comp_results_pub
                             FROM applications a JOIN competitions c ON c.id = a.competition_id
                            WHERE a.user_id = ? AND a.status NOT IN ('rejected')
                         ORDER BY a.id DESC LIMIT 15", [$uid]);
@@ -414,21 +416,28 @@ function chat_actions(string $text, ?int $uid, string $sessionKey): array {
             $options = [];
             foreach ($acted as $a) {
                 $num = (string) ($a['number'] ?? $a['id'] ?? '');
-                $st  = $stMap[(string) ($a['status'] ?? '')] ?? (string) ($a['status'] ?? '—');
-                $options[] = ['label' => '№' . $num . ' «' . (string) ($a['comp_name'] ?? '') . '» — ' . $st,
+                $g   = chat_gate_app((array) $a);
+                $options[] = ['label' => '№' . $num . ' «' . (string) ($a['comp_name'] ?? '') . '» — ' . $g['status'],
                               'value' => (int) $a['id'], 'number' => $num];
             }
             $acts[] = ['type' => 'select', 'label' => 'Выберите заявку', 'options' => $options];
         } else {
-            // Одна заявка ИЛИ участник назвал конкретную — если она аттестована и есть
-            // готовый диплом, сразу отдаём кнопку скачивания (не полагаясь на keyword-логику).
+            // Одна заявка ИЛИ участник назвал конкретную.
+            //
+            // КНОПКА СКАЧИВАНИЯ ДИПЛОМА — ТОЛЬКО ПО ОТПРАВЛЕННОМУ ДИПЛОМУ.
+            // Здесь стояло условие «есть оценка → отдаём файл»: диплом уходил в чат
+            // прямо из очереди на отправку, до письма участнику, а по длинному
+            // конкурсу — до публикации итогов. Кнопка с дипломом сообщает звание
+            // вернее любой фразы, поэтому решает не факт оценки, а факт отправки
+            // (diplomas.sent_at) — ровно как в личном кабинете.
             if ($target === null && count($acted) === 1) $target = $acted[0];
             if ($target) {
-                $attested = in_array((string) ($target['status'] ?? ''), ['scored', 'done'], true)
-                    || trim((string) ($target['result'] ?? '')) !== '';
-                if ($attested) {
+                $g = chat_gate_app((array) $target);
+                if ($g['may_result'] && $g['may_diploma']) {
                     try {
-                        $dip = one("SELECT number FROM diplomas WHERE application_id=? ORDER BY id DESC LIMIT 1", [(int) $target['id']]);
+                        $dip = one("SELECT number FROM diplomas
+                                     WHERE application_id=? AND COALESCE(sent_at,'')<>''
+                                  ORDER BY id DESC LIMIT 1", [(int) $target['id']]);
                     } catch (\Throwable $e) { $dip = null; }
                     if ($dip && !empty($dip['number'])) {
                         $add('Скачать диплом (PDF)', url('/diploma/' . $dip['number'] . '.pdf'));

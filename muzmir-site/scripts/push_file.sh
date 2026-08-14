@@ -35,9 +35,39 @@ if [ "$NOW" != "$BASE" ] && [ "$FORCE" != "force" ]; then
   exit 1
 fi
 
-B64=$(base64 -w0 "$REPO/$REL")
-vexec "printf %s '$B64' | base64 -d > /tmp/push_one.tmp && md5sum /tmp/push_one.tmp | cut -d' ' -f1"
-echo "  ожидали md5: $(md5sum "$REPO/$REL" | cut -d' ' -f1)"
-vexec "sshpass -p '$MUZMIR_ROOT_PW' scp -o StrictHostKeyChecking=no -o LogLevel=ERROR /tmp/push_one.tmp root@$MUZMIR_SERVER_IP:/tmp/push_one.tmp >/dev/null && echo доставлен"
+# ИМЯ ВРЕМЕННОГО ФАЙЛА — РАЗНОЕ ДЛЯ КАЖДОЙ ВЫКЛАДКИ.
+#
+# Здесь стояло общее /tmp/push_one.tmp — и на мосту, и на боевом сервере. Пока
+# выкладка одна, это работает; стоит двум пойти внахлёст (или одной подвиснуть на
+# минуту), и второй файл затирает первый ровно между «положили» и «скопировали».
+# Так личный кабинет получил содержимое консольного скрипта проверки рассылки:
+# страница /cabinet падала с «Undefined constant STDERR», а участник видел
+# «страница недоступна». Уникальное имя убирает саму возможность такой подмены,
+# а проверка md5 после доставки ловит порчу файла в пути.
+TMP="/tmp/push_$$_$(date +%s%N | tail -c 7).tmp"
+WANT=$(md5sum "$REPO/$REL" | cut -d' ' -f1)
+
+# ПЕРЕДАЁМ ЧАСТЯМИ. Файл едет на мост аргументом команды, а длина аргументов
+# ограничена: на файле в 60 КБ python на той стороне падает с «Argument list too
+# long», и раньше это выглядело как молчаливо неудавшаяся выкладка. Режем base64
+# на куски по 24 000 символов и дописываем — размер файла перестаёт быть преградой.
+B64FILE="$TMP.b64"
+base64 -w0 "$REPO/$REL" > "$B64FILE"
+vexec "rm -f $TMP.part" >/dev/null
+split -b 24000 "$B64FILE" "$B64FILE.chunk."
+for CH in "$B64FILE".chunk.*; do
+  vexec "printf %s '$(cat "$CH")' >> $TMP.part" >/dev/null
+done
+rm -f "$B64FILE" "$B64FILE".chunk.*
+vexec "base64 -d $TMP.part > $TMP && rm -f $TMP.part && md5sum $TMP | cut -d' ' -f1"
+echo "  ожидали md5: $WANT"
+vexec "sshpass -p '$MUZMIR_ROOT_PW' scp -o StrictHostKeyChecking=no -o LogLevel=ERROR $TMP root@$MUZMIR_SERVER_IP:$TMP >/dev/null && echo доставлен"
+GOT=$(mm "md5sum $TMP | cut -d' ' -f1" | tr -d '\r\n ')
+if [ "$GOT" != "$WANT" ]; then
+  echo "СТОП: на сервер доехал не тот файл (md5 $GOT вместо $WANT). Ничего не заменяем."
+  vexec "rm -f $TMP" >/dev/null 2>&1 || true
+  exit 1
+fi
 # Копию делаем только если там уже что-то лежит: новый файл копировать не с чего.
-mm "mkdir -p \$(dirname $REL); [ -f $REL ] && cp -p $REL $REL.bak-\$(date +%Y%m%d-%H%M%S); cp /tmp/push_one.tmp $REL && chown www-data:www-data $REL && php -l $REL"
+mm "mkdir -p \$(dirname $REL); [ -f $REL ] && cp -p $REL $REL.bak-\$(date +%Y%m%d-%H%M%S); cp $TMP $REL && chown www-data:www-data $REL && rm -f $TMP && php -l $REL"
+vexec "rm -f $TMP" >/dev/null 2>&1 || true
