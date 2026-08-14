@@ -614,6 +614,33 @@ function mrep_bounced_addresses(string $raw, array $known): array {
     return array_keys($out);
 }
 
+/**
+ * НАВСЕГДА ЛИ НЕ ДОШЛО.
+ *
+ * Вычёркивать ведомство можно только тогда, когда адресата действительно нет.
+ * 14.08.2026 отбой от министерства культуры Челябинской области гласил
+ * «554 5.4.0 Error: too many hops» — это петля пересылки внутри их собственной
+ * почты, ящик при этом живой. Автоматика вычеркнула министерство навсегда, и
+ * письма туда больше не пошли бы никогда: чужая временная поломка стоила бы
+ * центру целого региона.
+ *
+ * Постоянный отказ — это «нет такого пользователя» и коды 5.1.1/5.1.10. Всё
+ * прочее (переполнен ящик, петля, отказ по политике, любые 4.x.x) значит
+ * «сейчас не доставили» — ведомство остаётся в работе, а письмо уйдёт в
+ * следующий раз.
+ */
+function mrep_bounce_is_permanent(string $raw): bool {
+    $t = mb_strtolower($raw);
+
+    // Сначала то, что временно, — иначе «5.4.0» ниже спутается с «5.1.1».
+    if (preg_match('~too many hops|loops back|mailbox (is )?full|quota exceeded|over quota'
+                 . '|try again later|temporar|greylist|4\.\d\.\d|451|452|421~u', $t)) return false;
+
+    return (bool) preg_match('~user unknown|no such user|unknown user|recipient (address )?rejected'
+                           . '|does not exist|нет такого (пользователя|адресата)|адресат не (существует|найден)'
+                           . '|5\.1\.[01]|550 5\.1|user not found~u', $t);
+}
+
 /** Письмо написал почтовый сервер, а не человек? */
 function mrep_is_daemon(string $from, string $subject): bool {
     $f = mb_strtolower($from) . ' ' . mb_strtolower($subject);

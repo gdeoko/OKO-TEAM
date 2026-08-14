@@ -130,11 +130,19 @@ foreach ($ids as $id) {
      * письмо, спрятан внутри текста — достаём его оттуда и вычёркиваем.
      */
     if (mrep_is_daemon($from, (string) $m['subject'])) {
+        // Вычёркиваем только при постоянном отказе: «нет такого адресата».
+        // Переполненный ящик, петля пересылки и прочие временные беды — не повод
+        // терять ведомство навсегда, письмо просто уйдёт в следующий раз.
+        $perm = mrep_bounce_is_permanent($raw);
         foreach (mrep_bounced_addresses($raw, $known) as $deadMail) {
-            if (mrep_mark_bounced($deadMail, 'письмо вернулось ' . date('d.m.Y'))) {
-                mr_log('адрес не принимает почту, вычеркнут: ' . $deadMail
-                     . ' (' . (string) ($known[$deadMail]['org'] ?? '') . ')');
-                $replies++;
+            $org = (string) ($known[$deadMail]['org'] ?? '');
+            if ($perm) {
+                if (mrep_mark_bounced($deadMail, 'адресата не существует, ' . date('d.m.Y'))) {
+                    mr_log('адресата не существует, вычеркнут: ' . $deadMail . ' (' . $org . ')');
+                    $replies++;
+                }
+            } else {
+                mr_log('письмо не доставлено, но адрес живой — оставляем в работе: ' . $deadMail . ' (' . $org . ')');
             }
         }
         continue;
