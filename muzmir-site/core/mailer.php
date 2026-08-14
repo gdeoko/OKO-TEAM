@@ -542,10 +542,10 @@ function mail_pool_names(string $pool): array {
     return match ($pool) {
         'bulk'     => ['unisender'],                       // рассылки своей базе
         'cold'     => ['unisender-cold'],                  // первое письмо в школу/сад/ДК
-        'awards'   => ['nagradi', 'main'],                 // наградной, резерв — официальная почта
+        'awards'   => ['nagradi', 'kc'],                   // наградной, резерв — официальная почта центра
         'official' => ['kc'],                              // обращения в ведомства: только российский домен
         'news'     => ['unisender-kc'],                    // разовые новости и уведомления сайта
-        default    => ['kc', 'main', 'nagradi'],           // личные письма: сперва свой домен, Gmail — резерв
+        default    => ['kc', 'nagradi'],                   // личные письма: только свой домен
     };
 }
 

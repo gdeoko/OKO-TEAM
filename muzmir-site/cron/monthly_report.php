@@ -80,7 +80,8 @@ try {
         tg_notify_admin($summary);
     }
 
-    $orgEmail = (string) cfgv('org_email', '');
+    // Отчёт — админам, во входящий ящик, а не на публичный адрес центра.
+    $orgEmail = (string) cfgv('owner_email', (string) cfgv('org_email', ''));
     if ($orgEmail !== '' && function_exists('mail_queue')) {
         $message = nl2br(h($summary));
         $html = function_exists('mail_template') ? mail_template('monthly_report', [

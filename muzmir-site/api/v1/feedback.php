@@ -56,8 +56,11 @@ $body = function_exists('mail_template')
       . '<p><b>Телефон:</b> ' . h($phone) . '</p>'
       . '<p><b>Сообщение:</b><br>' . nl2br(h($msg)) . '</p>';
 
-// Обращения с сайта — на основную почту центра (Даниэль: kulturniy.centr.mir@gmail.com).
-$admin = trim((string) cfgv('org_email'));
+// Обращения с сайта — в ящик администраторов. Это ВХОДЯЩАЯ почта: сюда падают
+// уведомления сайта, а наружу с неё не уходит ничего. Публичный адрес центра
+// (org_email) теперь российский и стоит в контактах, но уведомления админам
+// по-прежнему собираются отдельно, чтобы не смешиваться с перепиской.
+$admin = trim((string) cfgv('owner_email', (string) cfgv('org_email', '')));
 if ($admin === '' || !filter_var($admin, FILTER_VALIDATE_EMAIL)) $admin = 'kulturniy.centr.mir@gmail.com';
 if (function_exists('mail_queue')) {
     mail_queue($admin, 'Оргкомитет', $subject, $body);
