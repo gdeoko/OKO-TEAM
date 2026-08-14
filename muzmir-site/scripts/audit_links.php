@@ -59,12 +59,27 @@ if (!$links) { echo "ссылок не найдено\n"; exit(0); }
 echo "ПРОВЕРКА ССЫЛОК · " . count($links) . " шт.\n" . str_repeat('=', 78) . "\n\n";
 
 $bad = 0;
+$lastHost = '';
 foreach ($links as $url => $where) {
+    // ПАУЗА МЕЖДУ ЗАПРОСАМИ К ОДНОМУ САЙТУ. ВКонтакте рубит соединение, если
+    // постучаться к нему десять раз подряд, и проверка сама себе устраивала
+    // «ошибку связи»: девять живых ссылок на видео были объявлены битыми.
+    // Тревога, поднятая собственной торопливостью, хуже отсутствия проверки.
+    $host = (string) parse_url($url, PHP_URL_HOST);
+    if ($host !== '' && $host === $lastHost) sleep(3);
+    $lastHost = $host;
+
     $ch = curl_init($url);
     curl_setopt_array($ch, [
-        CURLOPT_RETURNTRANSFER => true, CURLOPT_NOBODY => false, CURLOPT_FOLLOWLOCATION => true,
+        CURLOPT_RETURNTRANSFER => true, CURLOPT_NOBODY => false,
+        // ПО РЕДИРЕКТАМ НЕ ХОДИМ. ВКонтакте отвечает на ссылку видео кодом 302 и
+        // уводит на страницу входа; если пойти следом, он рвёт соединение на
+        // втором-третьем запросе подряд, и живые ссылки объявляются битыми.
+        // Нам довольно ответа самого сервера: 302 значит, что адрес существует.
+        CURLOPT_FOLLOWLOCATION => false,
         CURLOPT_TIMEOUT => 20, CURLOPT_CONNECTTIMEOUT => 8, CURLOPT_SSL_VERIFYPEER => false,
         CURLOPT_USERAGENT => 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 Chrome/120.0.0.0 Safari/537.36',
+        CURLOPT_HTTPHEADER => ['Accept-Language: ru-RU,ru;q=0.9', 'Accept: text/html,*/*;q=0.8'],
     ]);
     $body = (string) curl_exec($ch);
     $code = (int) curl_getinfo($ch, CURLINFO_RESPONSE_CODE);
