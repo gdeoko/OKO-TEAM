@@ -371,11 +371,15 @@ function mrep_thanks_pdf(array $m, bool $regen = false): ?string {
     if ($poster === '' || $token === '' || $sshPas === '') return null;
 
     if (!function_exists('diploma_render_key')) require_once BASE_PATH . '/core/diploma_render.php';
+    // Должность берём в именительном падеже: в базе рядом с дательным, который
+    // нужен обращению, лежит исходная форма из сверки. Если её почему-то нет,
+    // печатаем без должности — лучше короче, чем с падежом от другого документа.
     $url = rtrim((string) cfgv('base_url', ''), '/') . '/tests/ministry-thanks.php'
          . '?key='   . rawurlencode(diploma_render_key())
          . '&org='   . rawurlencode((string) ($m['org'] ?? ''))
          . '&reg='   . rawurlencode((string) ($m['region'] ?? ''))
          . '&fio='   . rawurlencode((string) ($m['person'] ?? ''))
+         . '&role='  . rawurlencode((string) ($m['person_role_nom'] ?? ''))
          . '&docno=' . rawurlencode($number);
 
     @mkdir(dirname($out), 0775, true);

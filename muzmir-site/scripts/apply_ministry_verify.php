@@ -94,8 +94,12 @@ foreach ($recs as $idx => $r) {
             if (mb_strtolower(trim((string) $cur['person'])) !== mb_strtolower($fio)) $stat['сменился руководитель']++;
             $data['person'] = $fio;
             // В базе должность хранится в дательном падеже — так она печатается в
-            // реквизите «адресат» по ГОСТ. Агент возвращает именительный.
-            if ($role !== '') $data['person_role'] = min_role_dative($role);
+            // реквизите «адресат» по ГОСТ. Агент возвращает именительный, и его
+            // тоже сохраняем: благодарственному письму нужна исходная форма.
+            if ($role !== '') {
+                $data['person_role']     = min_role_dative($role);
+                $data['person_role_nom'] = $role;
+            }
         }
         // Адрес меняем только у главной строки: у пресс-службы он свой и правильный.
         if ($okEmail($mail) && (string) ($cur['branch'] ?? 'main') !== 'press'
