@@ -7,9 +7,21 @@
  */
 $u = current_user();
 
-// Список для ВЫБОРА (уровень 1) — только запущенные открытые конкурсы (гейт витрины).
-$comps = all("SELECT id, slug, name, type, direction, cover, diploma_bg, end_date, nominations, is_paid
-              FROM competitions WHERE status='open' AND COALESCE(launched,0) = 1 ORDER BY sort, id");
+// Список для ВЫБОРА (уровень 1) — конкурсы, по которым заказ наград ещё открыт:
+// идёт приём ИЛИ не прошло два месяца со дня закрытия приёма (awards_window_open).
+// Раньше здесь стояло status='open', и 25-го числа в 18:00 вместе с приёмом
+// закрывалась вся витрина образцов — как раз когда участники идут заказывать
+// кубки по своим результатам. Порядок: сначала те, где приём идёт, дальше по
+// дате закрытия приёма — свежие сверху, прошлые уходят вниз и исчезают сами,
+// когда окно заказа истекает.
+require_once BASE_PATH . '/core/orders.php';
+$comps = array_values(array_filter(
+    all("SELECT id, slug, name, type, direction, cover, diploma_bg, end_date, nominations, is_paid, status
+           FROM competitions
+          WHERE COALESCE(launched,0) = 1 AND status <> 'draft'
+       ORDER BY CASE WHEN status='open' THEN 0 ELSE 1 END, end_date DESC, sort, id"),
+    'awards_window_open'
+));
 
 // Выбранный конкурс (уровень 2 — образцы наград и заказ). Загружаем НЕЗАВИСИМО от гейта витрины:
 // заказать награды можно по ЛЮБОМУ реальному конкурсу (в т.ч. с уже опубликованными результатами,
@@ -18,8 +30,12 @@ $compId = isset($_GET['comp']) ? (int) $_GET['comp'] : 0;
 $selComp = null;
 foreach ($comps as $c) { if ((int)$c['id'] === $compId) { $selComp = $c; break; } }
 if (!$selComp && $compId > 0) {
-    $selComp = one("SELECT id, slug, name, type, direction, cover, diploma_bg, end_date, nominations, is_paid
+    $selComp = one("SELECT id, slug, name, type, direction, cover, diploma_bg, end_date, nominations, is_paid, status
                       FROM competitions WHERE id=? AND status <> 'draft'", [$compId]);
+    // Окно заказа по этому конкурсу могло истечь: два месяца прошли, награды
+    // больше не изготавливаются. Показывать каталог с корзиной в этом случае
+    // нечестно — человек соберёт заказ и упрётся в отказ на оплате.
+    if ($selComp && !awards_window_open((array) $selComp)) $selComp = null;
 }
 
 /* Канонизация названий переехала в core/orders.php (award_canon_item): один и тот же

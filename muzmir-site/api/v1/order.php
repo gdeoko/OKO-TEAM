@@ -171,7 +171,7 @@ if (!$isClubOrder) {
     try { db()->exec("ALTER TABLE competitions ADD COLUMN results_published_at TEXT"); } catch (\Throwable $e) {}
     $appRow = one("SELECT a.id, a.result, a.status, a.user_id, a.result_sent_at,
                           c.id AS comp_id, c.name AS comp_name, c.is_paid AS comp_is_paid,
-                          c.results_mode, c.results_published_at
+                          c.results_mode, c.results_published_at, c.status AS comp_status, c.end_date
                    FROM applications a LEFT JOIN competitions c ON c.id=a.competition_id
                    WHERE a.id=?", [$applicationId]);
     // Привязка к покупателю: авторизованный пользователь может заказывать награды только
@@ -192,6 +192,16 @@ if (!$isClubOrder) {
     if ((string) ($appRow['results_mode'] ?? '') === 'list'
         && trim((string) ($appRow['results_published_at'] ?? '')) === '') {
         json_out(['ok' => false, 'error' => 'Результаты этого конкурса ещё не опубликованы. Заказ наград откроется после публикации итогов.'], 422);
+    }
+    // Окно заказа: два месяца со дня закрытия приёма. Дальше награды по конкурсу
+    // не изготавливаются, и принимать деньги за них нельзя (core/orders.php).
+    if (!function_exists('awards_window_open')) require_once BASE_PATH . '/core/orders.php';
+    $__win = ['status' => (string) ($appRow['comp_status'] ?? ''), 'end_date' => (string) ($appRow['end_date'] ?? '')];
+    if (!awards_window_open($__win)) {
+        $__end = awards_window_end($__win);
+        json_out(['ok' => false, 'error' => 'Срок заказа наградного материала по этому конкурсу истёк'
+            . ($__end !== '' ? ' ' . date('d.m.Y', strtotime($__end)) : '')
+            . '. Награды изготавливаются в течение двух месяцев после закрытия приёма заявок.'], 422);
     }
 }
 

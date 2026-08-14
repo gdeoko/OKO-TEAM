@@ -301,10 +301,22 @@ ob_start(); ?>
 
     <div class="apply-wrap reveal">
     <?php if (!$comps): ?>
+      <?php
+      // Дату открытия следующего месяца ставит закрытие приёма (launch_close_intake).
+      // Без неё человек читал «приём закрыт» и уходил, не зная, когда возвращаться.
+      $__reopen = (string) setting('intake_reopen_date', '');
+      $__reopenTxt = $__reopen !== '' ? ru_date($__reopen) : '1-го числа следующего месяца';
+      ?>
       <div class="card" style="text-align:center">
-        <h3>Приём заявок сейчас закрыт</h3>
-        <p style="color:var(--muted)">Следите за новыми конкурсами в разделе
-          <a href="<?= url('/competitions') ?>">«Конкурсы»</a> или подпишитесь на уведомления.</p>
+        <h3>Приём заявок этого месяца завершён</h3>
+        <p style="color:var(--muted)">Новые конкурсы откроются <b><?= h($__reopenTxt) ?></b>, тогда же снова заработает эта форма.
+          Афиша и календарь конкурсов — в разделе <a href="<?= url('/competitions') ?>">«Конкурсы»</a>.
+          Заказать наградной материал по уже прошедшим конкурсам можно в разделе
+          <a href="<?= url('/awards') ?>">«Награды»</a> в течение двух месяцев после закрытия приёма.</p>
+        <div style="margin-top:18px;display:flex;gap:10px;justify-content:center;flex-wrap:wrap">
+          <a class="btn btn--primary" href="<?= url('/awards') ?>">Заказать награды</a>
+          <a class="btn btn--ghost" href="<?= url('/competitions') ?>">Афиша конкурсов</a>
+        </div>
       </div>
     <?php else: ?>
 
