@@ -43,6 +43,10 @@ foreach ($dirs as $d) {
             $u = rtrim($u, '.,)"\'');
             // Примеры из комментариев и заглушки проверять незачем.
             if (preg_match('~/(xxx|example|wall-12345_678)~', $u)) continue;
+            // Заготовка, а не ссылка: код приклеивает к ней номер видео
+            // («https://rutube.ru/video/» . $id). Сама по себе она и должна
+            // отдавать 404 — тревожиться тут не о чем.
+            if (str_ends_with($u, '/') || preg_match('~/(embed|videoembed|video_ext\.php|share\.php|share/url|api/video)/?$~', $u)) continue;
             $links[$u][] = str_replace(BASE_PATH . '/', '', $f->getPathname());
         }
     }
@@ -70,7 +74,9 @@ foreach ($links as $url => $where) {
     // ВКонтакте на несуществующее сообщество отвечает 200 и страницей с текстом
     // об ошибке — по коду ответа такую ссылку не поймать.
     $soft = $code === 200 && preg_match('~страница не найдена|страница удалена|page not found|такой страницы не~ui', $body);
-    $ok = $code >= 200 && $code < 400 && !$soft;
+    // Обрыв связи — тоже беда: значит по ссылке не пройти. Молча считать её
+    // рабочей нельзя.
+    $ok = $err === '' && $code >= 200 && $code < 400 && !$soft;
     if (!$ok) $bad++;
 
     printf("%s %-64s %s\n", $ok ? '[ok]' : '[!!]', mb_substr($url, 0, 62),
