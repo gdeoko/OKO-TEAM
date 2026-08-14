@@ -77,7 +77,14 @@ function mrep_migrate(): void {
  *            receipt  — квитанция о регистрации, ответа по существу ещё нет;
  *            other    — не разобрали, нужен человек.
  */
-function mrep_classify(string $subject, string $text): array {
+function mrep_classify(string $subject, string $text, array $attachments = []): array {
+    // Ответ ведомства часто лежит не в письме, а в приложенном документе. Текст
+    // вложений приклеиваем к телу: разбирать надо всё письмо целиком, иначе
+    // «см. приложение» останется загадкой.
+    if ($attachments) {
+        $fromFiles = mrep_attachments_text($attachments);
+        if ($fromFiles !== '') $text = trim($text . "\n\n" . $fromFiles);
+    }
     $clean = trim(preg_replace('~\s+~u', ' ', $subject . "\n" . $text) ?? '');
     if ($clean === '') return ['verdict' => 'other', 'reason' => 'пустое письмо', 'fio' => '', 'by' => 'нет текста'];
 
@@ -175,6 +182,132 @@ PROMPT;
         ];
     }
     return null;
+}
+
+/* =====================================================================
+ *  1б. Ответ во вложении
+ * ===================================================================== */
+
+/**
+ * ПРОЧИТАТЬ ВЛОЖЕНИЯ ОТВЕТА.
+ *
+ * Канцелярия отвечает не текстом в письме, а документом: в теле стоит «во
+ * вложении» или вовсе пусто, а решение — на бланке в PDF. Разбор одного лишь
+ * тела письма в таком случае честно скажет «не понял» и позовёт человека, хотя
+ * в приложенном документе прямым текстом написано «поддерживаем».
+ *
+ * Порядок такой:
+ *   PDF с текстовым слоем  → pdftotext, это точно и бесплатно;
+ *   PDF-скан без слоя      → первая страница в картинку и в модель со зрением;
+ *   фотография или скан    → сразу в модель;
+ *   DOCX                   → распаковываем document.xml.
+ *
+ * Читаем не больше трёх вложений и первые две страницы: решение ведомства
+ * всегда в начале, а остальное — приложения к их же письму.
+ *
+ * @param array<int,array{name:string,data:string}> $attachments
+ */
+function mrep_attachments_text(array $attachments): string {
+    $out = [];
+    $done = 0;
+    foreach ($attachments as $a) {
+        if ($done >= 3) break;
+        $name = (string) ($a['name'] ?? '');
+        $data = (string) ($a['data'] ?? '');
+        $ext  = strtolower((string) pathinfo($name, PATHINFO_EXTENSION));
+        if ($data === '' || strlen($data) > 25 * 1024 * 1024) continue;
+
+        $txt = '';
+        if ($ext === 'pdf')                                  $txt = mrep_pdf_text($data);
+        elseif (in_array($ext, ['jpg','jpeg','png'], true))  $txt = mrep_image_text($data, $ext === 'png' ? 'image/png' : 'image/jpeg');
+        elseif ($ext === 'docx')                             $txt = mrep_docx_text($data);
+        elseif (in_array($ext, ['txt','rtf'], true))         $txt = mb_substr(strip_tags($data), 0, 4000);
+
+        $txt = trim(preg_replace('~\s+~u', ' ', $txt) ?? '');
+        if ($txt !== '') { $out[] = "[вложение: $name]\n" . mb_substr($txt, 0, 4000); $done++; }
+    }
+    return implode("\n\n", $out);
+}
+
+/** Текст из PDF: сперва текстовый слой, если его нет — страница как картинка. */
+function mrep_pdf_text(string $data): string {
+    $tmp = tempnam(sys_get_temp_dir(), 'mrep') . '.pdf';
+    if (@file_put_contents($tmp, $data) === false) return '';
+    $txt = '';
+    $out = $tmp . '.txt';
+    @exec('pdftotext -f 1 -l 2 -enc UTF-8 ' . escapeshellarg($tmp) . ' ' . escapeshellarg($out) . ' 2>/dev/null');
+    if (is_file($out)) { $txt = (string) file_get_contents($out); @unlink($out); }
+
+    // Меньше двухсот знаков на двух страницах — это скан, а не документ.
+    if (mb_strlen(trim($txt)) < 200) {
+        $stem = $tmp . '-page';
+        @exec('pdftoppm -jpeg -r 150 -f 1 -l 1 -singlefile ' . escapeshellarg($tmp) . ' ' . escapeshellarg($stem) . ' 2>/dev/null');
+        if (is_file($stem . '.jpg')) {
+            $img = (string) file_get_contents($stem . '.jpg');
+            @unlink($stem . '.jpg');
+            $seen = mrep_image_text($img, 'image/jpeg');
+            if (mb_strlen($seen) > mb_strlen(trim($txt))) $txt = $seen;
+        }
+    }
+    @unlink($tmp);
+    return $txt;
+}
+
+/** Текст с картинки — читает модель со зрением. */
+function mrep_image_text(string $bytes, string $mime): string {
+    if (!function_exists('chat_gemini_keys')) {
+        if (!is_file(BASE_PATH . '/core/chat_brain.php')) return '';
+        require_once BASE_PATH . '/core/chat_brain.php';
+    }
+    if (!function_exists('chat_gemini_keys')) return '';
+
+    $model = (string) (cfgv('gemini_model') ?: 'gemini-flash-latest');
+    $base  = rtrim((string) (cfgv('gemini_base_url') ?: 'https://generativelanguage.googleapis.com'), '/');
+    $payload = json_encode([
+        'contents' => [['role' => 'user', 'parts' => [
+            ['text' => 'Это скан официального письма российского органа власти. Перепиши его текст '
+                     . 'дословно, сохраняя формулировки решения. Без пояснений и без пересказа.'],
+            ['inline_data' => ['mime_type' => $mime, 'data' => base64_encode($bytes)]],
+        ]]],
+        'generationConfig' => ['maxOutputTokens' => 1200, 'temperature' => 0],
+    ], JSON_UNESCAPED_UNICODE);
+
+    foreach (chat_gemini_keys() as $key) {
+        if (function_exists('chat_gemini_is_exhausted') && chat_gemini_is_exhausted($key)) continue;
+        $ch = curl_init($base . '/v1beta/models/' . rawurlencode($model) . ':generateContent?key=' . rawurlencode($key));
+        curl_setopt_array($ch, [
+            CURLOPT_RETURNTRANSFER => true, CURLOPT_POST => true, CURLOPT_POSTFIELDS => $payload,
+            CURLOPT_HTTPHEADER => ['Content-Type: application/json'],
+            CURLOPT_TIMEOUT => 60, CURLOPT_CONNECTTIMEOUT => 8,
+        ]);
+        $resp = curl_exec($ch);
+        $code = (int) curl_getinfo($ch, CURLINFO_RESPONSE_CODE);
+        curl_close($ch);
+        if ($code === 429 && function_exists('chat_gemini_mark_exhausted')) { chat_gemini_mark_exhausted($key); continue; }
+        if (!is_string($resp) || $code >= 400) continue;
+        $d = json_decode($resp, true);
+        $t = '';
+        foreach ($d['candidates'][0]['content']['parts'] ?? [] as $p) $t .= (string) ($p['text'] ?? '');
+        if (trim($t) !== '') return trim($t);
+    }
+    return '';
+}
+
+/** Текст из DOCX: это zip, внутри которого document.xml. */
+function mrep_docx_text(string $data): string {
+    $tmp = tempnam(sys_get_temp_dir(), 'mrepd') . '.docx';
+    if (@file_put_contents($tmp, $data) === false) return '';
+    $txt = '';
+    $zip = new ZipArchive();
+    if ($zip->open($tmp) === true) {
+        $xml = (string) $zip->getFromName('word/document.xml');
+        $zip->close();
+        // Абзацы и переводы строк — в пробелы, иначе слова слипаются.
+        $xml = preg_replace('~</w:p>|<w:br/>~', ' ', $xml) ?? $xml;
+        $txt = trim(html_entity_decode(strip_tags($xml), ENT_QUOTES | ENT_XML1, 'UTF-8'));
+    }
+    @unlink($tmp);
+    return $txt;
 }
 
 /** Один вызов модели без истории разговора: здесь нужен разбор, а не беседа. */
