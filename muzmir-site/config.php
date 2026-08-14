@@ -92,6 +92,11 @@ return [
     'mail_daily_limit' => (int) cfg('MUZMIR_MAIL_DAILY_LIMIT', 400),
     'mail_daily_max'   => (int) cfg('MUZMIR_MAIL_DAILY_MAX', 400),   // потолок массовых/день = 400 успешных (база 200 + ВИП 100 + кабинет 100)
     'mail_batch_size'  => (int) cfg('MUZMIR_MAIL_BATCH', 40),
+    // Обращений в ведомства за один прогон очереди. Все они уходят с единственного
+    // ящика kc@, у которого нет резерва, поэтому темп сознательно низкий: две с
+    // лишним сотни писем расходятся примерно за час и выглядят как работа
+    // канцелярии, а не как всплеск рассылки.
+    'official_per_minute' => (int) cfg('MUZMIR_OFFICIAL_PER_MIN', 5),
     // IMAP ящика news@ — для авто-очистки базы от отказов (cron/process_bounces.php).
     'imap_host'        => cfg('MUZMIR_IMAP_HOST', 'imap.yandex.ru'),
     'imap_port'        => (int) cfg('MUZMIR_IMAP_PORT', 993),

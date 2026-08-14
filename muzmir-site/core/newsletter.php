@@ -1293,8 +1293,27 @@ function newsletter_process_queue(int $limit): int {
     //    восстановление пароля, уведомления, дипломы) — сразу, БЕЗ дневного лимита, до 30 за запуск.
     //    Каждое уходит со своего отправителя (Gmail для конкурсов, nagradi для наград).
     $tx = all("SELECT * FROM mail_queue WHERE status='queued' AND COALESCE(priority,0)=0
+               AND COALESCE(campaign_type,'') <> 'official'
                AND (scheduled_at IS NULL OR scheduled_at='' OR scheduled_at<=?) ORDER BY id ASC LIMIT 30", [$nowTs]);
     foreach ($tx as $row) { if ($sendRow($row, $route($row))) $sent++; }
+
+    // 1б) ОБРАЩЕНИЯ В ВЕДОМСТВА — тоже личные письма, но идут медленнее.
+    //
+    // Их две с лишним сотни, и уходят они все с одного ящика kc@, у которого нет
+    // и не будет запасного: письмо с зарубежного адреса ведомства отбивают, а
+    // Gmail в этот пул закрыт намеренно. Тридцать писем в минуту — это всплеск,
+    // за который почтовая служба ограничивает ящик, и центр останется вообще без
+    // канала для официальной переписки.
+    //
+    // Пять в минуту — это около часа на всю рассылку и обычный темп работающей
+    // канцелярии со стороны почтовой службы. Спешить тут некуда: обращения не
+    // портятся.
+    $ofLimit = max(1, (int) cfgv('official_per_minute', 5));
+    $of = all("SELECT * FROM mail_queue WHERE status='queued' AND COALESCE(priority,0)=0
+               AND COALESCE(campaign_type,'') = 'official'
+               AND (scheduled_at IS NULL OR scheduled_at='' OR scheduled_at<=?) ORDER BY id ASC LIMIT ?",
+              [$nowTs, $ofLimit]);
+    foreach ($of as $row) { if ($sendRow($row, $route($row))) $sent++; }
 
     // 2) МАССОВЫЕ (priority>0) — только когда массовые коммуникации включены в пульте.
     //    До старта они просто ждут в очереди: ничего не теряется и никуда не уходит.
