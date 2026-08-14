@@ -62,16 +62,35 @@ foreach (["ALTER TABLE ministry_letters ADD COLUMN source_email TEXT DEFAULT ''"
     try { db()->exec($sql); } catch (\Throwable $e) {}
 }
 
-/* ── Учётные данные официальной почты ───────────────────────────────────── */
-$user = trim((string) cfgv('smtp_user', ''));
-$pass = trim((string) cfgv('smtp_pass', ''));
+/* ── Учётные данные официальной почты ─────────────────────────────────────
+ *
+ * ЧИТАЕМ ТОТ ЯЩИК, С КОТОРОГО ПИСАЛИ. Обращения уходят с kc@музыкальный-мир.рф
+ * (пул official), туда же ведомства и отвечают — адрес для ответа назван в самом
+ * документе. Здесь же стояло cfgv('smtp_user'), то есть Gmail администраторов, и
+ * IMAP-хост выводился из smtp_host как imap.gmail.com. Разбор ходил в чужой
+ * ящик: ответы ведомств лежали бы в kc@ непрочитанными, поддержка не попадала бы
+ * на сайт, отказы не вычёркивались, а мёртвые адреса оставались в базе.
+ * Обнаружено сразу после первой рассылки 220 обращений, 14.08.2026.
+ */
+$acc = function_exists('mail_account_by_name') ? mail_account_by_name('kc') : [];
+$user = trim((string) ($acc['user'] ?? ''));
+$pass = trim((string) ($acc['pass'] ?? ''));
+$smtpHost = (string) ($acc['host'] ?? '');
+
+// Запасной путь — общие настройки, если ящик official почему-то не заведён.
+if ($user === '' || $pass === '') {
+    $user = trim((string) cfgv('smtp_user', ''));
+    $pass = trim((string) cfgv('smtp_pass', ''));
+    $smtpHost = (string) cfgv('smtp_host', 'smtp.gmail.com');
+    if ($user !== '') mr_log('ВНИМАНИЕ: ящик official не настроен, читаем общий — ответы ведомств могут быть не здесь');
+}
 if ($user === '' || $pass === '') { mr_log('нет учётных данных официальной почты — пропуск'); exit(0); }
 
-// Хост IMAP выводим из SMTP: у Gmail это imap.gmail.com, у Яндекса imap.yandex.ru.
-$smtpHost = (string) cfgv('smtp_host', 'smtp.gmail.com');
+// Хост IMAP выводим из SMTP: у Яндекса это imap.yandex.ru, у Gmail imap.gmail.com.
 $imapHost = trim((string) cfgv('imap_official_host', ''));
 if ($imapHost === '') $imapHost = str_ireplace('smtp.', 'imap.', $smtpHost);
 
+mr_log('читаем ящик ' . $user . ' на ' . $imapHost);
 $acc = ['host' => $imapHost, 'port' => (int) (cfgv('imap_port', 0) ?: 993), 'user' => $user, 'pass' => $pass];
 
 /* ── Кого слушаем ───────────────────────────────────────────────────────── */
