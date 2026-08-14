@@ -157,7 +157,17 @@ foreach ($ids as $id) {
     // Ключ письма: адрес + тема + дата. По нему письмо не попадёт в галерею
     // дважды, даже если крон прочитает ящик десять раз.
     $key = substr(sha1($from . '|' . $m['subject'] . '|' . $m['date']), 0, 24);
-    if ((int) scalar("SELECT COUNT(*) FROM ministry_letters WHERE msg_key=?", [$key]) > 0) continue;
+    // ПРОВЕРЯЕМ ОБА ЖУРНАЛА.
+    //
+    // Здесь смотрели только в галерею писем поддержки (ministry_letters), а туда
+    // попадает лишь одобрение. Квитанция «обращение зарегистрировано» в галерею
+    // не идёт — и каждый прогон крона (а он раз в пять минут) заводил по ней новую
+    // строку разбора. Три ведомства превратились в четырнадцать «ответов», и
+    // сводка по статусам врала бы ровно во столько же раз.
+    mrep_migrate();
+    $dup = (int) scalar("SELECT COUNT(*) FROM ministry_letters WHERE msg_key=?", [$key])
+         + (int) scalar("SELECT COUNT(*) FROM ministry_replies WHERE msg_key=?", [$key]);
+    if ($dup > 0) continue;
 
     $isUnsub = (bool) preg_match('~^\s*отписать~u', mb_strtolower((string) $m['text']));
 
@@ -216,6 +226,10 @@ foreach ($ids as $id) {
             'reason'  => (string) $verdict['reason'],
             'fixed_fio' => (string) ($verdict['fio'] ?? ''),
             'msg_key' => $key,
+            // Дата письма ведомства, а не момент разбора: в сводке важно, когда
+            // ответили они. Пустая колонка делала сводку по датам бесполезной.
+            'answered_at' => (string) ($m['date'] ?? date('Y-m-d H:i:s')),
+            'answer_kind' => (string) ($m['attachments'] ? 'с вложением' : 'только текст'),
         ]);
     } catch (\Throwable $e) {}
 
