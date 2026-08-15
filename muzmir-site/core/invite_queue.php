@@ -27,7 +27,7 @@ if (!function_exists('inst_pick_for_invite')) require_once __DIR__ . '/instituti
  */
 function invite_open_comps(): array {
     try {
-        return all("SELECT name, is_paid, price, slug, end_date
+        return all("SELECT id, name, is_paid, price, slug, end_date
                       FROM competitions
                      WHERE status='open'
                      ORDER BY sort ASC, id ASC");
@@ -84,11 +84,8 @@ function invite_queue_institutions(int $limit = 500): array {
         // «Уважаемая Мария Петровна» и «Уважаемые коллеги» — письма разной судьбы:
         // первое читают, второе удаляют не открыв. ФИО руководителей пришли из
         // официального реестра Минкультуры, так что имя в письме — не выдумка.
-        $letter = null;
-        $fio = trim((string) ($r['director'] ?? ''));
-        if ($fio !== '') {
-            $letter = invite_official_letter($r, $fio, $comps, $unsub);
-        }
+        // ФИО директора НЕ используем: реестр меняется каждый месяц, обращение всегда безличное.
+        $letter = invite_official_letter($r, '', $comps, $unsub);
 
         $mail = $letter
             ? ['subject' => $letter['subject'], 'html' => $letter['html']]
@@ -96,14 +93,25 @@ function invite_queue_institutions(int $limit = 500): array {
 
         try {
             $pdf = $letter ? (string) ($letter['pdf'] ?? '') : '';
+            // Вложения: обращение PDF + афиши + положения (собраны в invite_official_letter).
+            // Массив упаковываем в JSON, чтобы process_newsletter_queue разложил через json_decode.
+            $attaches = (is_array($letter['attach'] ?? null) && !empty($letter['attach']))
+                ? $letter['attach']
+                : ($pdf !== '' && is_file($pdf) ? [$pdf] : []);
+            $attachField = '';
+            if (count($attaches) === 1) {
+                $attachField = $attaches[0];
+            } elseif (count($attaches) > 1) {
+                $attachField = json_encode(array_values($attaches), JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
+            }
             $qid = (int) insert('mail_queue', [
                 'to_email'      => mb_strtolower($email),
                 'to_name'       => (string) $r['name'],
                 'subject'       => (string) $mail['subject'],
                 'body'          => (string) $mail['html'],
                 // Документ уходит файлом: его распечатывают и подшивают, а из тела
-                // письма подшить нечего.
-                'attach'        => $pdf !== '' && is_file($pdf) ? $pdf : '',
+                // письма подшить нечего. Плюс афиши и положения — тем же вложением.
+                'attach'        => $attachField,
                 'status'        => 'queued',
                 'priority'      => 5,          // МАССОВОЕ: пойдёт через bulk-пул по норме
                 // Свой тип кампании: у писем учреждениям отдельная суточная доля,
@@ -157,6 +165,55 @@ function invite_official_letter(array $inst, string $fio, array $comps, string $
     $inst['director'] = $fio;
     try {
         $mail = lm_mail_institution($inst, (string) $L['number'], $comps, $unsub);
+        // Афиши и положения — ОДИН общий набор на месяц кампании (сезон), а не копия
+        // 9 файлов под каждое из 40к писем. Иначе диск съедается за сутки: 40к × 5МБ = 200ГБ.
+        // Уникальный только PDF-обращения (~700КБ), он и так лежит отдельно в data/letters/.
+        $atts = [];
+        $ruCompNames = ['velichie-rossii'=>'Величие_России','mirovye-talanty'=>'Мировые_Таланты',
+                        'v-zenite-slavy'=>'В_зените_славы','iskusstvo-vo-blago'=>'Искусство_во_благо'];
+        $seasonDir = BASE_PATH . '/data/attach_cache/season-' . date('Y-m');
+        @mkdir($seasonDir, 0775, true);
+
+        // Обращение — уникальный PDF, лежит по своему пути, копию НЕ делаем.
+        if (!empty($mail['pdf']) && is_file($mail['pdf'])) {
+            // Даём Unisender понятное имя через параметр name у аттача,
+            // если поддерживается; иначе оставляем оригинальный путь.
+            $atts[] = $mail['pdf'];
+        }
+
+        // АФИШИ И ПОЛОЖЕНИЯ — ССЫЛКАМИ, А НЕ ФАЙЛАМИ (решение владельца, 15.08.2026).
+        //
+        // Их клали вложениями: девять файлов на 3,5 МБ в каждом холодном письме.
+        // Это классический спам-профиль, и почтовые службы так и решили — проба от
+        // нашего же домена легла в папку «Спам» с оценкой 4 из 5. Шесть тысяч писем
+        // не принесли ни одного ответа именно поэтому: до входящих дошли не все.
+        // Официальный документ остаётся вложением, ему там и место; афиши и
+        // положения даёт письмо ссылками — они и так лежат на сайте.
+        //
+        // Переключатель inst_attach_full=1 в настройках возвращает старое поведение,
+        // если понадобится сравнить.
+        $full = function_exists('setting') && (string) setting('inst_attach_full', '0') === '1';
+        if ($full) {
+            foreach ((array)$comps as $c) {
+                $slug = (string)($c['slug'] ?? ''); $cid = (int)($c['id'] ?? 0);
+                $ru   = $ruCompNames[$slug] ?? $slug;
+
+                $af = BASE_PATH . '/public/uploads/comp/' . $cid . '/afisha.jpg';
+                if (is_file($af)) {
+                    $dst = $seasonDir . '/Афиша_' . $ru . '.jpg';
+                    if (!is_file($dst)) copy($af, $dst);
+                    if (is_file($dst)) $atts[] = $dst;
+                }
+                $rg = BASE_PATH . '/public/uploads/regulations/' . $slug . '.pdf';
+                if (is_file($rg)) {
+                    $dst = $seasonDir . '/Положение_' . $ru . '.pdf';
+                    if (!is_file($dst)) copy($rg, $dst);
+                    if (is_file($dst)) $atts[] = $dst;
+                }
+            }
+        }
+        $mail['attach'] = $atts;
+
     } catch (\Throwable $e) { return null; }
 
     return [
@@ -165,6 +222,7 @@ function invite_official_letter(array $inst, string $fio, array $comps, string $
         'subject' => (string) $mail['subject'],
         'html'    => (string) $mail['html'],
         'pdf'     => (string) ($mail['pdf'] ?? ''),
+        'attach'  => is_array($mail['attach'] ?? null) ? $mail['attach'] : [],
     ];
 }
 
@@ -201,8 +259,7 @@ function invite_requeue_institutions(int $limit = 500, int $months = 3): array {
         }
         $unsub = $base . '/api/v1/unsubscribe.php?token=' . urlencode($token);
 
-        $fio    = trim((string) ($r['director'] ?? ''));
-        $letter = $fio !== '' ? invite_official_letter($r, $fio, $comps, $unsub) : null;
+        $letter = invite_official_letter($r, '', $comps, $unsub);
         $mail   = $letter
             ? ['subject' => $letter['subject'], 'html' => $letter['html']]
             : invite_institution_email($comps, $unsub, []);
@@ -405,3 +462,4 @@ function invite_unsub_line(string $unsub): string {
          . 'и мы больше не напишем.'
          . '</div>';
 }
+

@@ -441,17 +441,18 @@ ob_start(); ?>
             <label for="institution">Учреждение</label>
             <div class="hint">Например, детская школа искусств №1.</div>
           </div>
+          <?php /* СТРАНА И ГОРОД — ОДНО ПОЛЕ.
+                   Их было два, причём «Страна» только для чтения и всегда «Россия»:
+                   участник из Минска физически не мог указать свою страну, а
+                   незнакомый справочнику городок молча получал российское
+                   гражданство. Теперь поле одно, страна подставляется по городу,
+                   а если город редкий — её можно написать самому через запятую. */ ?>
           <div class="field ff">
             <input type="text" id="city" name="city" placeholder=" " required value="<?= h($prefill['city']) ?>"
-                   data-address-suggest data-suggest-mode="city" data-country="#country_display">
-            <label for="city">Город / населённый пункт *</label>
-            <div class="hint">Обязательно. Начните вводить — подскажем город и подставим страну: «Каз» → «г. Казань» (Россия).</div>
-            <div class="err-msg">Укажите город или населённый пункт.</div>
-          </div>
-          <div class="field ff">
-            <input type="text" id="country_display" name="country" placeholder=" " value="<?= h($prefill['country'] ?? 'Россия') ?>" readonly>
-            <label for="country_display">Страна</label>
-            <div class="hint">Заполняется автоматически по выбранному городу.</div>
+                   data-address-suggest data-suggest-mode="city">
+            <label for="city">Страна и город *</label>
+            <div class="hint">Обязательно. Достаточно города — страну подставим сами: «Каз» → «Россия, г. Казань», «Минск» → «Республика Беларусь, г. Минск». Редкий населённый пункт пишите со страной: «Республика Беларусь, г. Столбцы».</div>
+            <div class="err-msg">Укажите страну и город.</div>
           </div>
           <div class="astep-nav">
             <button type="button" class="btn btn--ghost back" data-back>Назад</button>

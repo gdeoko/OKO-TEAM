@@ -355,6 +355,36 @@ function lm_mail_institution(array $inst, string $number, array $comps, string $
         . '<b>' . h($site) . '</b>. Будем признательны, если Вы доведёте настоящее обращение до сведения '
         . 'преподавателей Вашего учреждения и разместите его на информационном стенде.');
 
+    // АФИШИ И ПОЛОЖЕНИЯ — ССЫЛКАМИ.
+    // Раньше они ехали вложениями: девять файлов на 3,5 МБ в каждом холодном
+    // письме. Почтовые службы читают такое как спам — проба от нашего же домена
+    // легла в папку «Спам». Ссылки на сайт дают ровно то же самое и ничего не весят.
+    $links = '';
+    foreach ((array) $comps as $c) {
+        $slug = trim((string) ($c['slug'] ?? ''));
+        $nm   = trim((string) ($c['name'] ?? ''));
+        if ($slug === '' || $nm === '') continue;
+        $links .= '<tr><td style="padding:4px 0;font-size:14px;line-height:1.5">'
+                . '<b>' . h($nm) . '</b> — '
+                . '<a href="' . h($base . '/competition/' . $slug) . '" style="color:#8B6F1F">афиша и условия</a>'
+                . ' · <a href="' . h($base . '/competition/' . $slug . '/regulation.pdf') . '" style="color:#8B6F1F">положение (PDF)</a>'
+                . '</td></tr>';
+    }
+    if ($links !== '') {
+        $inner .= lm_p('<b>Афиши и положения конкурсов:</b>', 'margin-bottom:6px');
+        $inner .= '<table style="width:100%;border-collapse:collapse;margin:0 0 14px">' . $links . '</table>';
+    }
+
+    // КОНТАКТЫ В САМОМ ПИСЬМЕ.
+    // Их тут не было вовсе: адрес для ответа стоял только внутри приложенного PDF.
+    // Человек, решивший написать, не видел куда, и письмо уходило в никуда либо
+    // не уходило вовсе.
+    $inner .= lm_p('По вопросам участия и партнёрства: <b>' . h((string) cfgv('org_phone', '')) . '</b>, '
+        . '<a href="mailto:' . h((string) cfgv('org_email', '')) . '" style="color:#8B6F1F">'
+        . h((string) cfgv('org_email', '')) . '</a>. '
+        . 'Согласие на информационное партнёрство достаточно направить ответным письмом.',
+        'font-size:14px;color:#4a4a55');
+
     $inner .= lm_attachments_list(['Обращение на бланке центра (PDF).']);
     $inner .= lm_sign($number);
 
@@ -554,3 +584,4 @@ function lm_cleanup(int $days = 30, int $pdfDays = 7): array {
     }
     return ['files' => $n, 'bytes' => $b];
 }
+
