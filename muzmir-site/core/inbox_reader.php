@@ -230,6 +230,20 @@ function inbox_scan(string $alias, int $days = 14): array {
                     : inbox_classify($alias, (string) $m['subject'], (string) $m['text'], $isAuto);
             $who    = inbox_identify($from);
 
+            // РЕШАЕТ ОТПРАВИТЕЛЬ, А НЕ ЯЩИК.
+            // В приложенном к обращению PDF учреждениям написано «согласие
+            // направляйте на kc@». То есть согласие на партнёрство приходит в
+            // ящик ведомств — и по одному лишь ящику было бы разобрано как ответ
+            // ведомства, а разбор ответов ведомств чужие письма не берёт.
+            // Согласие снова потерялось бы, теперь уже внутри нашей же системы.
+            if ($who['ministry_id'] === 0 && $who['inst_id'] > 0) {
+                $kind = ['ministry_approve' => 'partner_accept', 'ministry_decline' => 'partner_decline',
+                         'ministry_question' => 'question'][$kind] ?? $kind;
+            } elseif ($who['ministry_id'] > 0) {
+                $kind = ['partner_accept' => 'ministry_approve', 'partner_decline' => 'ministry_decline',
+                         'question' => 'ministry_question'][$kind] ?? $kind;
+            }
+
             $att = [];
             foreach ((array) $m['attachments'] as $a) {
                 $att[] = ['name' => (string) ($a['name'] ?? ''), 'mime' => (string) ($a['mime'] ?? ''),
