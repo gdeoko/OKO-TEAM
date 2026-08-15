@@ -77,20 +77,25 @@ if (!$send) {
     }
 
     echo "  ждём доставку";
-    // Смотрим и «Спам»: свои же массовые письма Яндекс кладёт туда регулярно.
+    // Ищем перебором писем за сутки, а НЕ поиском IMAP по теме: тема закодирована
+    // (MIME), и поиск по ней через curl не находит ничего. Смотрим и «Спам» —
+    // свои же массовые письма Яндекс кладёт туда регулярно.
     $acc = mail_account_by_name('kc');
     $acc['host'] = 'imap.yandex.ru'; $acc['port'] = 993;
+    $since = date('d-M-Y', time() - 86400);
     $found = [];
     for ($i = 0; $i < 18 && count($found) < 2; $i++) {
         sleep(10); echo '.';
         foreach (['INBOX', 'Spam'] as $folder) {
-            foreach (im_search($acc, 'SUBJECT "' . $tag . '"', $folder) as $id) {
+            foreach (im_search($acc, 'SINCE ' . $since, $folder) as $id) {
                 $raw = im_fetch($acc, (int) $id, $folder);
                 if (trim($raw) === '') continue;
                 $head = explode("\r\n\r\n", $raw, 2)[0];
-                $subj = preg_match('~^Subject:\s*(.+)$~mi', $head, $m) ? im_decode_header(trim($m[1])) : '';
+                $subj = preg_match('~^Subject:\s*(.+(?:\r?\n[ \t].+)*)$~mi', $head, $m)
+                        ? im_decode_header(preg_replace('~\r?\n[ \t]+~', '', trim($m[1]))) : '';
+                if (mb_strpos($subj, $tag) === false) continue;
                 $pool = preg_match('~\[(cold|bulk)\]~u', $subj, $m2) ? $m2[1] : '?';
-                $rt   = preg_match('~^Reply-To:\s*(.+)$~mi', $head, $m3) ? trim($m3[1]) : '';
+                $rt   = preg_match('~^Reply-To:\s*(.+)$~mi', $head, $m3) ? im_decode_header(trim($m3[1])) : '';
                 if ($pool !== '?') $found[$pool] = ['reply' => $rt, 'where' => $folder];
             }
         }
@@ -103,7 +108,7 @@ if (!$send) {
         if (!$good) $fail++;
         printf("  %s письмо пула «%s»: обратный адрес %s%s\n", $good ? '✓' : '✗', $pool,
             $rt !== '' ? $rt : 'письмо не найдено в ящике',
-            isset($found[$pool]) && $found[$pool]['where'] === 'Spam' ? '  [письмо попало в спам]' : '');
+            (($found[$pool]['where'] ?? '') === 'Spam') ? '  [письмо попало в спам]' : '');
     }
 }
 
