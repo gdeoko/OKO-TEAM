@@ -102,15 +102,69 @@ if ($apply) {
     $did[] = 'удалено учётных записей: ' . count($users);
 }
 
+/* ── 4б. Платежи, оставленные проверками ──────────────────────────────────── */
+//
+// Проверка оплаты «проводила» деньги способом 'test' и открывала платёжные
+// страницы, а каждое открытие создаёт счёт в кассе. На отладочной базе это следы
+// в песочнице, на боевой — заявка живого участника, помеченная оплаченной на
+// 500 ₽, которых он не платил, и висящие счета к удалённым заказам.
+// Что считаем следом проверки:
+//   • способ 'test' — так «оплачивает» только проверка;
+//   • счёт к заказу, которого больше нет (заказ создан и удалён проверкой);
+//   • отменённый счёт к заявке, у которой ЕСТЬ более ранний счёт: каждое открытие
+//     платёжной страницы гасит предыдущий счёт и заводит новый, и проверка,
+//     открывавшая страницу подряд, наплодила их поверх настоящего.
+$fakePays = all("SELECT id, application_id, order_id, amount, status, method, created_at
+                   FROM payments p
+                  WHERE method='test'
+                     OR (order_id IS NOT NULL AND order_id NOT IN (SELECT id FROM awards_orders))
+                     OR (application_id IS NOT NULL AND status='canceled'
+                         AND EXISTS (SELECT 1 FROM payments p2
+                                      WHERE p2.application_id = p.application_id
+                                        AND p2.id < p.id AND p2.status='canceled'))
+                  ORDER BY id");
+echo "\nПЛАТЕЖИ ОТ ПРОВЕРОК\n$line\n";
+foreach ($fakePays as $p) printf("  #%-4s заявка=%-5s заказ=%-5s %s ₽ %-10s %s %s\n",
+    $p['id'], (string) ($p['application_id'] ?? '-'), (string) ($p['order_id'] ?? '-'),
+    (string) $p['amount'], (string) $p['status'], (string) $p['method'], (string) $p['created_at']);
+echo '  всего: ' . count($fakePays) . "\n";
+
+// Заявки, которые такой платёж пометил оплаченными, возвращаем в неоплаченные:
+// человек денег не вносил, ему по-прежнему положено напоминание об оплате.
+$paidByFake = all("SELECT DISTINCT a.id, a.number, a.email FROM applications a
+                     JOIN payments p ON p.application_id = a.id
+                    WHERE p.method='test' AND COALESCE(a.is_paid,0)=1");
+echo "\nЗАЯВКИ, ПОМЕЧЕННЫЕ ОПЛАЧЕННЫМИ БЕЗ ОПЛАТЫ\n$line\n";
+foreach ($paidByFake as $a) printf("  #%-5s %-16s %s\n", $a['id'], (string) $a['number'], (string) $a['email']);
+echo '  всего: ' . count($paidByFake) . "\n";
+
+if ($apply) {
+    foreach ($paidByFake as $a) {
+        q("UPDATE applications SET is_paid=0, payment_id=0, amount_paid=0, price_base=0,
+                  discount_pct=0, discount_info='' WHERE id=?", [(int) $a['id']]);
+        if (function_exists('app_status_sync')) app_status_sync((int) $a['id']);
+    }
+    if ($paidByFake) $did[] = 'возвращено в неоплаченные заявок: ' . count($paidByFake);
+    foreach ($fakePays as $p) q("DELETE FROM payments WHERE id=?", [(int) $p['id']]);
+    if ($fakePays) $did[] = 'удалено платежей проверок: ' . count($fakePays);
+}
+
 /* ── 5. Письма проверок ───────────────────────────────────────────────────── */
 // Наружу они не уходили (адреса зоны .test не маршрутизируются), но в отчётах по
 // рассылке мешают: их видно в «отправлено» и они сбивают счёт.
-$letters = (int) (scalar("SELECT COUNT(*) FROM mail_queue
-                           WHERE LOWER(to_email) LIKE '%@example.test'
-                              OR subject LIKE '%VR-2026-00107%'") ?? 0);
+// Ищем и по имени получателя, и по телу: письма выдуманным участникам остаются
+// в списке отправок и в рассылках даже после удаления самих заявок.
+$letterWhere = "LOWER(to_email) LIKE '%@example.test'
+                 OR subject LIKE '%VR-2026-00107%'
+                 OR to_name IN ('Смирнова Ольга Ивановна','Кузнецов Пётр Алексеевич','Волков Илья Романович','Проверка Участник')
+                 OR body LIKE '%Смирнова Ольга Ивановна%'
+                 OR body LIKE '%Кузнецов Пётр Алексеевич%'
+                 OR body LIKE '%Волков Илья Романович%'
+                 OR body LIKE '%Петрова Анна Сергеевна%'";
+$letters = (int) (scalar("SELECT COUNT(*) FROM mail_queue WHERE $letterWhere") ?? 0);
 echo "\nПИСЬМА ПРОВЕРОК\n$line\n  всего: $letters\n";
 if ($apply && $letters) {
-    q("DELETE FROM mail_queue WHERE LOWER(to_email) LIKE '%@example.test' OR subject LIKE '%VR-2026-00107%'");
+    q("DELETE FROM mail_queue WHERE $letterWhere");
     $did[] = 'удалено писем проверок: ' . $letters;
 }
 
