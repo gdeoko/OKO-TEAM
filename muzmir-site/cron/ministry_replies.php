@@ -148,6 +148,24 @@ foreach ($ids as $id) {
         continue;
     }
 
+    // ОТВЕТ С СОСЕДНЕГО АДРЕСА ТОГО ЖЕ ВЕДОМСТВА.
+    // Департамент культуры ЯНАО ответил с codify@yanao.ru на письмо, ушедшее на
+    // depcul@yanao.ru: у крупных органов входящие регистрирует отдельная система
+    // со своим адресом. Строгое сравнение такой ответ теряло — он не попадал ни в
+    // разбор, ни в счётчик ответивших. Домены общих почтовых служб (mail.ru и
+    // прочие) сюда не годятся: там за одним доменом тысячи чужих людей.
+    if ($from !== '' && !isset($known[$from]) && str_contains($from, '@')) {
+        $dom = substr($from, strpos($from, '@') + 1);
+        if ($dom !== '' && !preg_match('~^(mail|gmail|yandex|bk|list|inbox|rambler|ya|mail\.ru)\.~i', $dom)) {
+            foreach ($known as $km => $kr) {
+                if (str_ends_with($km, '@' . $dom)) {
+                    $known[$from] = $kr;
+                    mr_log('ответ с соседнего адреса ведомства: ' . $from . ' → ' . (string) $kr['org']);
+                    break;
+                }
+            }
+        }
+    }
     if ($from === '' || !isset($known[$from])) continue;      // не ведомство — не наше дело
 
     $seen++;

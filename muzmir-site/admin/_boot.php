@@ -81,9 +81,11 @@ function admin_modules(): array {
         // База учреждений — школы искусств, дома культуры, центры творчества.
         // Отсюда идут приглашения педагогам: именно они приводят детей на конкурсы.
         'institutions' => ['База учреждений', 'admin',  'users'],
+        'partners'     => ['Партнёры',        'admin',  'trophy'],
         // Ведомства — министерства, союзы, порталы. Отсюда уходят официальные
         // обращения об информационной поддержке и сюда же приходят ответы.
         'ministries'   => ['Ведомства и обращения', 'admin', 'newsletter'],
+        'inbox'        => ['Входящие письма', 'admin', 'newsletter'],
         'analytics'    => ['Аналитика',    'moderator', 'chart'],
         'cms'          => ['Контент',      'moderator', 'cms'],
         'users'        => ['Пользователи', 'admin',     'users'],
@@ -440,3 +442,4 @@ function admin_graded_actions(string $back, array $keep = []): bool {
     admin_redirect($back, $keep);
     return true;
 }
+

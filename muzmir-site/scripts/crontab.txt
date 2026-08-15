@@ -106,3 +106,7 @@ MAILTO=""
 # ── Запускаются вручную, в crontab не нужны ─────────────────────────────────
 #   cron/regen_regulations.php  — перегенерация положений-DOCX (all | <id>)
 #   cron/vk_send_delayed.php    — отложенный ответ бота, запускается из вебхука ВК
+
+# Входящая почта: читалка четырёх ящиков и разбор с автодействиями.
+*/5 * * * * php /var/www/muzmir/cron/inbox_read.php >> /var/www/muzmir/data/logs/cron.log 2>&1
+*/2 * * * * php /var/www/muzmir/cron/inbox_actions.php >> /var/www/muzmir/data/logs/cron.log 2>&1
