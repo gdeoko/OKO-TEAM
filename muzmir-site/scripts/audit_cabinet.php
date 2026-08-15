@@ -17,7 +17,21 @@ foreach (['db','helpers','data','app_status','send_timing','loyalty','club','mai
 }
 db();
 
-$BASE = rtrim((string) (getenv('BASE') ?: 'http://127.0.0.1:8099'), '/');
+const AUDIT_HOST = 'xn----7sbugdeiegh1b0a9hen.xn--p1ai';
+
+/* КУДА СТУЧАТЬСЯ.
+ *
+ * Здесь стоял только адрес местного отладочного сервера, и на боевом сервере,
+ * где его нет, ВСЕ проверки возвращали код 0 и отчёт был сплошным «FAIL» — то
+ * есть аудит молчаливо ничего не проверял. Теперь по умолчанию берём сам сайт:
+ * если рядом поднят отладочный сервер, он и будет использован, иначе боевой
+ * (запрос идёт на 127.0.0.1 с нужным заголовком Host, наружу не выходит). */
+$BASE = rtrim((string) getenv('BASE'), '/');
+if ($BASE === '') {
+    $probe = @fsockopen('127.0.0.1', 8099, $eno, $estr, 1);
+    if ($probe) { fclose($probe); $BASE = 'http://127.0.0.1:8099'; }
+    else        { $BASE = 'https://' . AUDIT_HOST; }
+}
 $FAIL = 0; $OK = 0;
 function sec(string $s): void { echo "\n=== $s ===\n"; }
 function ok(string $w, $i = ''): void { global $OK; $OK++; echo "  ok   $w" . ($i !== '' ? "  [$i]" : '') . "\n"; }
@@ -28,7 +42,9 @@ function http(string $jar, string $url, array $post = null, bool $follow = true)
     global $BASE;
     $ch = curl_init($url);
     curl_setopt_array($ch, [
-        CURLOPT_RETURNTRANSFER => true, CURLOPT_FOLLOWLOCATION => $follow, CURLOPT_MAXREDIRS => 5,
+        CURLOPT_RETURNTRANSFER => true,
+        CURLOPT_SSL_VERIFYPEER => false, CURLOPT_SSL_VERIFYHOST => 0,
+        CURLOPT_RESOLVE => [AUDIT_HOST . ':443:127.0.0.1', AUDIT_HOST . ':80:127.0.0.1'], CURLOPT_FOLLOWLOCATION => $follow, CURLOPT_MAXREDIRS => 5,
         CURLOPT_COOKIEJAR => $jar, CURLOPT_COOKIEFILE => $jar, CURLOPT_TIMEOUT => 60,
         CURLOPT_HEADER => true, CURLOPT_PROXY => '',
         CURLOPT_HTTPHEADER => ['Origin: ' . $BASE, 'Referer: ' . $BASE . '/', 'X-Requested-With: fetch'],
@@ -52,15 +68,21 @@ $UJAR = sys_get_temp_dir() . '/muzmir_cab_user.txt';
 
 /* ───────── вход участником ───────── */
 sec('Вход участника');
+// Учётную запись под проверку заводим сами: на боевом сервере отладочной нет,
+// и раньше все проверки кабинета молча возвращали код 0.
+require_once BASE_PATH . '/scripts/_audit_actors.php';
+$USR = audit_actor('user');
+$USER_MAIL = $USR['email'];
+audit_actor_app((int) $USR['id']);
 $t = tok($UJAR, '/login');
 http($UJAR, $BASE . '/login', ['_csrf' => $t, 'csrf' => $t, 'do' => 'login',
-      'email' => 'user@test.local', 'password' => 'Test_12345']);
+      'email' => $USR['email'], 'password' => $USR['password']]);
 $cab = http($UJAR, $BASE . '/cabinet');
 chk('кабинет открывается', $cab['code'] === 200, (string) $cab['code']);
 chk('в кабинете нет PHP-шума',
     stripos($cab['body'], 'Warning:') === false && stripos($cab['body'], 'Undefined ') === false
     && stripos($cab['body'], 'Fatal error') === false);
-$uid = (int) scalar("SELECT id FROM users WHERE email='user@test.local'");
+$uid = (int) $USR['id'];
 chk('участник найден в базе', $uid > 0, "id=$uid");
 
 /* ───────── разделы кабинета ───────── */
@@ -205,11 +227,16 @@ $apps = all("SELECT a.*, c.results_mode AS comp_results_mode, c.results_publishe
                FROM applications a LEFT JOIN competitions c ON c.id=a.competition_id
               WHERE a.user_id=?", [$uid]);
 $expNew = $expJudging = $expGraded = 0;
+// Плитки кабинета делят заявки надвое, как и написано в шаблоне:
+//   «Оценено»  — жюри уже подвело итог (включая judging, когда письмо ещё в пути);
+//   «На оценке» — итога ещё нет (new, paid, submitted, pending).
+// Раньше проверка считала «На оценке» только judging и потому расходилась с
+// кабинетом на каждой свежей заявке.
 foreach ($apps as $a) {
     $st = app_state((array) $a, false)['code'];
-    if (in_array($st, ['graded','making','made','extra','done'], true)) $expGraded++;
-    elseif ($st === 'judging') $expJudging++;
-    elseif ($st !== 'rejected') $expNew++;
+    if (in_array($st, ['graded','judging','making','made','extra','done'], true)) $expGraded++;
+    elseif ($st === 'rejected') { /* отклонённые считаются отдельно */ }
+    else { $expJudging++; $expNew++; }
 }
 $cab = http($UJAR, $BASE . '/cabinet');
 preg_match('~<b>(\d+)</b><span>Всего заявок</span>~u', $cab['body'], $m1);
@@ -232,7 +259,7 @@ $season = loyalty_season();
 chk('сезон = текущий год', $season === date('Y'), $season);
 $seasonApps = (int) scalar("SELECT COUNT(*) FROM applications WHERE user_id=? AND created_at >= ?",
                            [$uid, loyalty_season_start()]);
-$pct = loyalty_discount($uid, 'user@test.local');
+$pct = loyalty_discount($uid, $USER_MAIL);
 chk('скидка за достижения не больше 5%', $pct <= LOYALTY_MAX_PCT, "$pct% при $seasonApps заявках");
 chk('в кабинете есть блок достижений', stripos($cab['body'], 'Достижения') !== false);
 
@@ -302,7 +329,7 @@ chk('ВИП получает награды раньше обычного уча
 sec('Массовое приглашение в клуб не идёт действующим членам');
 $vipList = array_map(fn($r) => mb_strtolower((string) $r['email']), nl_resolve_recipients('vip'));
 chk('действующий член клуба исключён из рассылки',
-    !in_array('user@test.local', $vipList, true), count($vipList) . ' адресов');
+    !in_array($USER_MAIL, $vipList, true), count($vipList) . ' адресов');
 foreach (club_staff_emails() as $se) {
     chk('команда центра исключена: ' . $se, !in_array(mb_strtolower($se), $vipList, true));
 }
@@ -329,6 +356,8 @@ if (is_file($png)) {
     $ch = curl_init($BASE . '/api/v1/avatar');
     curl_setopt_array($ch, [
         CURLOPT_RETURNTRANSFER => true, CURLOPT_POST => true, CURLOPT_TIMEOUT => 40,
+        CURLOPT_SSL_VERIFYPEER => false, CURLOPT_SSL_VERIFYHOST => 0,
+        CURLOPT_RESOLVE => [AUDIT_HOST . ':443:127.0.0.1', AUDIT_HOST . ':80:127.0.0.1'],
         CURLOPT_COOKIEJAR => $UJAR, CURLOPT_COOKIEFILE => $UJAR, CURLOPT_PROXY => '',
         CURLOPT_HTTPHEADER => ['Origin: ' . $BASE, 'Referer: ' . $BASE . '/cabinet'],
         CURLOPT_POSTFIELDS => ['_csrf' => $tok, 'photo' => new CURLFile($png, 'image/png', 'ava.png')],
@@ -381,7 +410,7 @@ if ($cid > 0) {
     // Свежая тестовая неоплаченная заявка
     q("INSERT INTO applications(user_id,competition_id,number,full_name,email,status,is_paid,created_at)
        VALUES(?,?,?,?,?,'new',0,datetime('now'))",
-      [$uid, $cid, 'AUDIT-PAY-' . substr(bin2hex(random_bytes(3)), 0, 6), 'Тест Правка', 'user@test.local']);
+      [$uid, $cid, 'AUDIT-PAY-' . substr(bin2hex(random_bytes(3)), 0, 6), 'Тест Правка', $USER_MAIL]);
     $aid = (int) db()->lastInsertId();
 
     // Скидка за достижения профиля у этого пользователя должна попасть в APPLY_CONFIG.
@@ -458,7 +487,7 @@ chk('после истечения клуб неактивен', !club_is_active
 chk('после истечения скидка обнулилась', club_discount_percent($uid) === 0, club_discount_percent($uid) . '%');
 $vipList2 = array_map(fn($r) => mb_strtolower((string) $r['email']), nl_resolve_recipients('vip'));
 chk('после истечения адрес снова попадает в приглашение',
-    in_array('user@test.local', $vipList2, true), count($vipList2) . ' адресов');
+    in_array($USER_MAIL, $vipList2, true), count($vipList2) . ' адресов');
 
 sec('Команда центра: безлимитный клуб без подписки');
 foreach (club_staff_emails() as $se) {

@@ -160,11 +160,21 @@ sec('Почта: разделение пулов (массовые ≠ личн�
 $bulk = mail_pool_names('bulk');
 $awd  = mail_pool_names('awards');
 $tx   = mail_pool_names('tx');
-is_true('массовые: только news/news2', $bulk === ['news', 'news2'], implode(',', $bulk));
+// Массовые уходят ТОЛЬКО через сервис рассылок: свои ящики Яндекс забанил за
+// спам после первой же большой рассылки, держать их в резерве бессмысленно.
+is_true('массовые: только сервис рассылок', $bulk === ['unisender'], implode(',', $bulk));
 is_true('массовые: НЕТ основного ящика (kulturniy.centr)', !in_array('main', $bulk, true), implode(',', $bulk));
 is_true('массовые: НЕТ ящика наград (nagradi@домен)', !in_array('nagradi', $bulk, true), implode(',', $bulk));
-is_true('награды: цепочка из 3 ящиков', count($awd) >= 3, implode(',', $awd));
-is_true('транзакционные: основной первым', ($tx[0] ?? '') === 'main', implode(',', $tx));
+is_true('награды: наградный ящик первым, дальше резерв', ($awd[0] ?? '') === 'nagradi' && count($awd) >= 2, implode(',', $awd));
+is_true('личные письма: только свой домен', $tx === ['kc', 'nagradi'], implode(',', $tx));
+
+/* Куда придёт ответ — правило владельца: партнёрка на novosti, своя база на news,
+   ведомства на kc, награды на nagradi. В заголовке домен обязан быть латиницей. */
+foreach (['cold' => 'novosti@', 'bulk' => 'news@', 'official' => 'kc@', 'awards' => 'nagradi.on@'] as $__p => $__box) {
+    $__rt = mail_reply_box($__p);
+    is_true('обратный адрес пула «' . $__p . '» — ' . $__box,
+        str_starts_with($__rt, $__box) && str_contains($__rt, 'xn--'), $__rt);
+}
 
 is_eq('массовая рассылка → пул bulk',  mail_pool_for(['priority' => 5, 'subject' => 'Стартовал конкурс']), 'bulk');
 is_eq('диплом → пул awards',           mail_pool_for(['priority' => 0, 'subject' => 'Ваш диплом победителя']), 'awards');

@@ -19,7 +19,21 @@ foreach (['db', 'helpers', 'data', 'app_status', 'loyalty', 'club'] as $m) {
 }
 db();
 
-$BASE = rtrim((string) (getenv('BASE') ?: 'http://127.0.0.1:8099'), '/');
+const AUDIT_HOST = 'xn----7sbugdeiegh1b0a9hen.xn--p1ai';
+
+/* КУДА СТУЧАТЬСЯ.
+ *
+ * Здесь стоял только адрес местного отладочного сервера, и на боевом сервере,
+ * где его нет, ВСЕ проверки возвращали код 0 и отчёт был сплошным «FAIL» — то
+ * есть аудит молчаливо ничего не проверял. Теперь по умолчанию берём сам сайт:
+ * если рядом поднят отладочный сервер, он и будет использован, иначе боевой
+ * (запрос идёт на 127.0.0.1 с нужным заголовком Host, наружу не выходит). */
+$BASE = rtrim((string) getenv('BASE'), '/');
+if ($BASE === '') {
+    $probe = @fsockopen('127.0.0.1', 8099, $eno, $estr, 1);
+    if ($probe) { fclose($probe); $BASE = 'http://127.0.0.1:8099'; }
+    else        { $BASE = 'https://' . AUDIT_HOST; }
+}
 $FAIL = 0; $OK = 0;
 function sec(string $s): void { echo "\n=== $s ===\n"; }
 function ok(string $w, $i = ''): void { global $OK; $OK++; echo "  ok   $w" . ($i !== '' ? "  [$i]" : '') . "\n"; }
@@ -30,7 +44,9 @@ function http(string $jar, string $url, array $post = null): array {
     global $BASE;
     $ch = curl_init($url);
     curl_setopt_array($ch, [
-        CURLOPT_RETURNTRANSFER => true, CURLOPT_FOLLOWLOCATION => true, CURLOPT_MAXREDIRS => 5,
+        CURLOPT_RETURNTRANSFER => true,
+        CURLOPT_SSL_VERIFYPEER => false, CURLOPT_SSL_VERIFYHOST => 0,
+        CURLOPT_RESOLVE => [AUDIT_HOST . ':443:127.0.0.1', AUDIT_HOST . ':80:127.0.0.1'], CURLOPT_FOLLOWLOCATION => true, CURLOPT_MAXREDIRS => 5,
         CURLOPT_COOKIEJAR => $jar, CURLOPT_COOKIEFILE => $jar, CURLOPT_TIMEOUT => 60,
         CURLOPT_HEADER => true, CURLOPT_PROXY => '',
         CURLOPT_HTTPHEADER => ['Origin: ' . $BASE, 'Referer: ' . $BASE . '/'],
@@ -71,16 +87,24 @@ $UJAR = sys_get_temp_dir() . '/muzmir_real_usr.txt'; @unlink($UJAR);
 
 /* ───────── вход ───────── */
 sec('Вход');
+// Учётные записи под проверку заводим сами: на боевом сервере отладочных нет,
+// и раньше весь блок молча превращался в «пропуск».
+require_once BASE_PATH . '/scripts/_audit_actors.php';
+$ADM = audit_actor('admin');
+$USR = audit_actor('user');
+if (!scalar("SELECT COUNT(*) FROM applications WHERE user_id=?", [(int) $USR['id']])) {
+    audit_actor_app((int) $USR['id']);
+}
 $t = tok($AJAR, '/login');
 http($AJAR, $BASE . '/login', ['_csrf' => $t, 'csrf' => $t, 'do' => 'login',
-      'email' => 'admin@test.local', 'password' => 'Test_12345']);
+      'email' => $ADM['email'], 'password' => $ADM['password']]);
 $dash = http($AJAR, $BASE . '/admin/?p=dashboard');
 chk('дашборд открывается админом', $dash['code'] === 200, (string) $dash['code']);
 
 $t = tok($UJAR, '/login');
 http($UJAR, $BASE . '/login', ['_csrf' => $t, 'csrf' => $t, 'do' => 'login',
-      'email' => 'user@test.local', 'password' => 'Test_12345']);
-$uid = (int) scalar("SELECT id FROM users WHERE email='user@test.local'");
+      'email' => $USR['email'], 'password' => $USR['password']]);
+$uid = (int) $USR['id'];
 
 /* ───────── дашборд: счётчики против базы ───────── */
 sec('Дашборд: цифры совпадают с базой');

@@ -16,7 +16,21 @@ foreach (['db','helpers','data','app_status','send_timing','loyalty','club','mai
 }
 db();
 
-$BASE = rtrim((string) (getenv('BASE') ?: 'http://127.0.0.1:8099'), '/');
+const AUDIT_HOST = 'xn----7sbugdeiegh1b0a9hen.xn--p1ai';
+
+/* КУДА СТУЧАТЬСЯ.
+ *
+ * Здесь стоял только адрес местного отладочного сервера, и на боевом сервере,
+ * где его нет, ВСЕ проверки возвращали код 0 и отчёт был сплошным «FAIL» — то
+ * есть аудит молчаливо ничего не проверял. Теперь по умолчанию берём сам сайт:
+ * если рядом поднят отладочный сервер, он и будет использован, иначе боевой
+ * (запрос идёт на 127.0.0.1 с нужным заголовком Host, наружу не выходит). */
+$BASE = rtrim((string) getenv('BASE'), '/');
+if ($BASE === '') {
+    $probe = @fsockopen('127.0.0.1', 8099, $eno, $estr, 1);
+    if ($probe) { fclose($probe); $BASE = 'http://127.0.0.1:8099'; }
+    else        { $BASE = 'https://' . AUDIT_HOST; }
+}
 $FAIL = 0; $OK = 0;
 function sec(string $s): void { echo "\n=== $s ===\n"; }
 function ok(string $w, $i = ''): void { global $OK; $OK++; echo "  ok   $w" . ($i !== '' ? "  [$i]" : '') . "\n"; }
@@ -27,7 +41,9 @@ function http(string $jar, string $url, array $post = null, bool $follow = true)
     global $BASE;
     $ch = curl_init($url);
     curl_setopt_array($ch, [
-        CURLOPT_RETURNTRANSFER => true, CURLOPT_FOLLOWLOCATION => $follow, CURLOPT_MAXREDIRS => 5,
+        CURLOPT_RETURNTRANSFER => true,
+        CURLOPT_SSL_VERIFYPEER => false, CURLOPT_SSL_VERIFYHOST => 0,
+        CURLOPT_RESOLVE => [AUDIT_HOST . ':443:127.0.0.1', AUDIT_HOST . ':80:127.0.0.1'], CURLOPT_FOLLOWLOCATION => $follow, CURLOPT_MAXREDIRS => 5,
         CURLOPT_COOKIEJAR => $jar, CURLOPT_COOKIEFILE => $jar, CURLOPT_TIMEOUT => 60,
         CURLOPT_HEADER => true, CURLOPT_PROXY => '',
         CURLOPT_HTTPHEADER => ['Origin: ' . $BASE, 'Referer: ' . $BASE . '/', 'X-Requested-With: fetch'],
@@ -52,8 +68,12 @@ $AJAR = sys_get_temp_dir() . '/muzmir_adm.txt';
 
 sec('Вход администратором');
 $t = tok($AJAR, '/admin/');
+// Учётную запись заводим сами: на боевом сервере отладочной нет, и без неё вся
+// проверка админки молча превращалась в «FAIL» по каждому пункту.
+require_once BASE_PATH . '/scripts/_audit_actors.php';
+$ADM = audit_actor('admin');
 $r = http($AJAR, $BASE . '/admin/', ['_csrf' => $t, 'do' => 'login',
-      'email' => 'admin@test.local', 'password' => 'Test_12345']);
+      'email' => $ADM['email'], 'password' => $ADM['password']]);
 chk('вход выполнен', stripos($r['body'], 'p=logout') !== false);
 
 /* ───────── карточка заявки ───────── */

@@ -17,7 +17,21 @@ $GLOBALS['CFG'] = require BASE_PATH . '/config.php';
 foreach (['db','helpers','app_status','send_timing','club','orders'] as $m) require_once BASE_PATH . '/core/' . $m . '.php';
 db();
 
-$BASE = rtrim((string) (getenv('BASE') ?: 'http://127.0.0.1:8099'), '/');
+const AUDIT_HOST = 'xn----7sbugdeiegh1b0a9hen.xn--p1ai';
+
+/* КУДА СТУЧАТЬСЯ.
+ *
+ * Здесь стоял только адрес местного отладочного сервера, и на боевом сервере,
+ * где его нет, ВСЕ проверки возвращали код 0 и отчёт был сплошным «FAIL» — то
+ * есть аудит молчаливо ничего не проверял. Теперь по умолчанию берём сам сайт:
+ * если рядом поднят отладочный сервер, он и будет использован, иначе боевой
+ * (запрос идёт на 127.0.0.1 с нужным заголовком Host, наружу не выходит). */
+$BASE = rtrim((string) getenv('BASE'), '/');
+if ($BASE === '') {
+    $probe = @fsockopen('127.0.0.1', 8099, $eno, $estr, 1);
+    if ($probe) { fclose($probe); $BASE = 'http://127.0.0.1:8099'; }
+    else        { $BASE = 'https://' . AUDIT_HOST; }
+}
 $FAIL = 0; $OK = 0;
 function sec(string $s): void { echo "\n=== $s ===\n"; }
 function ok(string $w, $i = ''): void { global $OK; $OK++; echo "  ok   $w" . ($i !== '' ? "  [$i]" : '') . "\n"; }
@@ -29,7 +43,9 @@ function http(string $jar, string $url, array $post = null, bool $follow = true)
     global $BASE;
     $ch = curl_init($url);
     curl_setopt_array($ch, [
-        CURLOPT_RETURNTRANSFER => true, CURLOPT_FOLLOWLOCATION => $follow, CURLOPT_MAXREDIRS => 5,
+        CURLOPT_RETURNTRANSFER => true,
+        CURLOPT_SSL_VERIFYPEER => false, CURLOPT_SSL_VERIFYHOST => 0,
+        CURLOPT_RESOLVE => [AUDIT_HOST . ':443:127.0.0.1', AUDIT_HOST . ':80:127.0.0.1'], CURLOPT_FOLLOWLOCATION => $follow, CURLOPT_MAXREDIRS => 5,
         CURLOPT_COOKIEJAR => $jar, CURLOPT_COOKIEFILE => $jar, CURLOPT_TIMEOUT => 60,
         CURLOPT_HEADER => true, CURLOPT_PROXY => '',
         // API требует свой Origin/Referer (защита от межсайтовых запросов) — эмулируем браузер.
@@ -59,13 +75,17 @@ $UJAR = sys_get_temp_dir() . '/muzmir_flow_user.txt';
 /* ───────────── 0. Вход админом и участником ───────────── */
 sec('Вход');
 $tok = csrf($AJAR, '/admin/');
+// Учётные записи под проверку заводим сами: отладочных на боевом сервере нет.
+require_once BASE_PATH . '/scripts/_audit_actors.php';
+$ADM = audit_actor('admin');
+$USR = audit_actor('user');
 $r = http($AJAR, $BASE . '/admin/', ['_csrf' => $tok, 'do' => 'login',
-        'email' => getenv('ADMIN_LOGIN') ?: 'admin@test.local', 'password' => getenv('ADMIN_PASS') ?: 'Test_12345']);
+        'email' => getenv('ADMIN_LOGIN') ?: $ADM['email'], 'password' => getenv('ADMIN_PASS') ?: $ADM['password']]);
 chk('админ вошёл', stripos($r['body'], 'p=logout') !== false);
 
 $tok = csrf($UJAR, '/login');
 $r = http($UJAR, $BASE . '/login', ['_csrf' => $tok, 'csrf' => $tok, 'do' => 'login',
-        'email' => 'user@test.local', 'password' => 'Test_12345']);
+        'email' => $USR['email'], 'password' => $USR['password']]);
 $cab = http($UJAR, $BASE . '/cabinet');
 $userIn = stripos($cab['body'], 'Личный кабинет') !== false || stripos($cab['body'], 'Мои заявки') !== false;
 chk('участник вошёл в кабинет', $userIn);
@@ -188,7 +208,11 @@ chk('план попадает в рабочее окно 09:00–18:00',
     $planAt !== '' ? date('H:i', strtotime($planAt)) : '');
 chk('план не в воскресенье', $planAt === '' || (int) date('w', strtotime($planAt)) !== 0,
     $planAt !== '' ? date('D d.m', strtotime($planAt)) : '');
-chk('до отправки статус «На оценке»', app_state($appAuto, true)['code'] === 'judging',
+// Смотрим ГЛАЗАМИ УЧАСТНИКА (второй аргумент — «для админки»): в админке заявка
+// становится «Оценена» сразу после оценки, а участник до ухода письма обязан
+// видеть «На оценке». Проверка передавала сюда админский взгляд и потому
+// требовала от него невозможного.
+chk('до отправки участник видит «На оценке»', app_state($appAuto, false)['code'] === 'judging',
     app_state($appAuto, true)['label']);
 chk('участник НЕ видит результат до отправки', app_state($appAuto, false)['result_sent_at'] === '');
 
