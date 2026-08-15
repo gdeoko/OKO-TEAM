@@ -14,6 +14,32 @@ declare(strict_types=1);
 
 if (!function_exists('audit_actor')) {
 
+/**
+ * Подбираем хвосты прошлых прогонов.
+ *
+ * Уборка в конце работы срабатывает не всегда: если вывод проверки прогнали
+ * через `head`, процесс умирает по SIGPIPE, и до неё дело не доходит. Поэтому
+ * при старте сносим временные записи старше часа — свежие трогать нельзя, рядом
+ * может идти другой прогон.
+ */
+function audit_actor_sweep(): void {
+    static $done = false;
+    if ($done) return;
+    $done = true;
+    try {
+        $old = all("SELECT id FROM users
+                     WHERE email LIKE 'audit-%@example.test'
+                       AND created_at < datetime('now','-1 hour')");
+        foreach ($old as $u) {
+            $id = (int) $u['id'];
+            q("DELETE FROM diplomas WHERE application_id IN (SELECT id FROM applications WHERE user_id=?)", [$id]);
+            q("DELETE FROM applications WHERE user_id=?", [$id]);
+            q("DELETE FROM sessions WHERE user_id=?", [$id]);
+            q("DELETE FROM users WHERE id=?", [$id]);
+        }
+    } catch (\Throwable $e) { /* уборка не должна ронять проверку */ }
+}
+
 /** Список того, что нужно убрать за собой. */
 function audit_actor_registry(): array {
     static $reg = ['users' => [], 'apps' => []];
@@ -27,6 +53,7 @@ function audit_actor_registry(): array {
 function audit_actor(string $role = 'user'): array {
     static $made = [];
     if (isset($made[$role])) return $made[$role];
+    audit_actor_sweep();
 
     $mail = 'audit-' . $role . '-' . bin2hex(random_bytes(4)) . '@example.test';
     $pass = 'Aud-' . bin2hex(random_bytes(5));

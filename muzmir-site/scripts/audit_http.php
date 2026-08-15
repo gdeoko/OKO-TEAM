@@ -155,18 +155,13 @@ if (!preg_match('~name="_csrf"\s+value="([^"]+)"~', $r['body'], $m)) {
      * проходим проверки его глазами и удаляем его в конце — настоящие учётные
      * записи при этом не трогаются, и пароли нигде не всплывают. */
     if (!$adminIn) {
-        $GLOBALS['__tmpAdmin'] = 0;
         try {
-            $tmpMail = 'audit-adm-' . bin2hex(random_bytes(4)) . '@example.test';
-            $tmpPass = 'Aud-' . bin2hex(random_bytes(5));
-            $GLOBALS['__tmpAdmin'] = (int) insert('users', [
-                'email' => $tmpMail, 'password_hash' => password_hash($tmpPass, PASSWORD_DEFAULT),
-                'full_name' => 'Проверка Админ', 'role' => 'admin', 'email_verified' => 1,
-            ]);
+            require_once BASE_PATH . '/scripts/_audit_actors.php';
+            $tmp = audit_actor('admin');
             $r = req($BASE . '/admin/');
             if (preg_match('~name="_csrf"\s+value="([^"]+)"~', $r['body'], $m2)) {
                 $r = req($BASE . '/admin/', ['_csrf' => $m2[1], 'do' => 'login',
-                                             'email' => $tmpMail, 'password' => $tmpPass]);
+                                             'email' => $tmp['email'], 'password' => $tmp['password']]);
                 $adminIn = stripos($r['body'], 'p=logout') !== false;
             }
         } catch (\Throwable $e) { /* не вышло — ниже честно скажем */ }
@@ -223,10 +218,3 @@ echo "\n" . str_repeat('─', 60) . "\n";
 echo ($FAIL === 0 ? "HTTP ЧИСТО" : "ПРОВАЛОВ: $FAIL") . ", пройдено: $OK, предупреждений: $WARN\n";
 exit($FAIL === 0 ? 0 : 1);
 
-/* Временный админ живёт ровно столько, сколько идёт проверка. */
-if (!empty($GLOBALS['__tmpAdmin'])) {
-    try {
-        q("DELETE FROM sessions WHERE user_id=?", [(int) $GLOBALS['__tmpAdmin']]);
-        q("DELETE FROM users WHERE id=?", [(int) $GLOBALS['__tmpAdmin']]);
-    } catch (\Throwable $e) {}
-}
