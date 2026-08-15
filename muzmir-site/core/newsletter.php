@@ -1158,6 +1158,23 @@ function nl_build_body(array $row): ?array {
     return ['subject' => $subject, 'body' => $body, 'after' => $after];
 }
 
+/**
+ * ПОТЕРЯЛО ЛИ ПИСЬМО СМЫСЛ К МОМЕНТУ ОТПРАВКИ.
+ *
+ * Пока речь только о приглашениях подать заявку: после закрытия приёма они
+ * зовут человека на страницу, где подать уже нельзя. Остальные письма
+ * (наградные, личные, официальные) не устаревают и проверку проходят всегда.
+ */
+function nl_letter_expired(array $row): bool {
+    $type = mb_strtolower(trim((string) ($row['campaign_type'] ?? '')));
+    $subj = mb_strtolower((string) ($row['subject'] ?? ''));
+    $isInvite = $type === 'konkurs'
+                || mb_strpos($subj, 'открыт приём заявок') !== false
+                || mb_strpos($subj, 'открыт прием заявок') !== false;
+    if (!$isInvite) return false;
+    return (string) (function_exists('setting') ? setting('intake_closed', '') : '') === '1';
+}
+
 function newsletter_process_queue(int $limit): int {
     $dailyLimit = nl_daily_cap();
     $gap        = max(0, (int) cfgv('mail_send_gap', 30));   // антибан-пауза для МАССОВЫХ
@@ -1178,6 +1195,22 @@ function newsletter_process_queue(int $limit): int {
     // $account — необязательный аккаунт-отправитель (для массовых рассылок из пула).
     $sendRow = function (array $row, array $account = []): bool {
         $id = (int) $row['id'];
+
+        // ПИСЬМО, ПОТЕРЯВШЕЕ СМЫСЛ, НЕ ОТПРАВЛЯЕМ.
+        //
+        // В очереди стоят тысячи писем «Открыт приём заявок», и уходят они не
+        // мгновенно, а несколько дней. Приём закрывается 25 августа в 18:00; если
+        // очередь притормозит (лимит ящика, сбой сервиса), остаток ушёл бы уже
+        // после закрытия — человек получил бы приглашение подать заявку туда, где
+        // приём закончен, и пришёл бы на закрытую страницу. Такие письма гасим.
+        if (nl_letter_expired($row)) {
+            update('mail_queue', [
+                'status' => 'failed',
+                'error'  => 'приём заявок закрыт — письмо потеряло смысл и не отправлено',
+            ], 'id=:id', ['id' => $id]);
+            nl_log('process: #' . $id . ' погашено, приём заявок закрыт');
+            return false;
+        }
 
         // ЧУЖУЮ ПРИЧИНУ ОТКАЗА СЮДА НЕ ПУСКАЕМ.
         // mail_last_error() — статик на весь процесс, и сбрасывается он только внутри

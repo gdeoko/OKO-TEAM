@@ -336,10 +336,21 @@ $compForPrice = one("SELECT id, name, slug, code, price, is_paid FROM competitio
 if (!$compForPrice) { ok('в базе нет платных конкурсов — пропуск'); }
 else {
     $cid = (int) $compForPrice['id']; $oldPrice = (int) $compForPrice['price'];
-    // Цену настоящего конкурса возвращаем как было, чем бы проверка ни кончилась:
-    // раньше она оставляла последнее проверочное значение.
-    register_shutdown_function(static function () use ($cid, $oldPrice): void {
-        try { q("UPDATE competitions SET price=? WHERE id=?", [$oldPrice, $cid]); } catch (\Throwable $e) {}
+    // ВОЗВРАЩАЕМ ВЕСЬ КОНКУРС ЦЕЛИКОМ, А НЕ ОДНУ ЦЕНУ.
+    //
+    // Форма сохранения в админке перезаписывает ВСЕ поля тем, что пришло в запросе,
+    // а проверка отправляет только десяток. Из-за этого у «Мировых Талантов»
+    // обнулились афиша, даты приёма, дата итогов, фон диплома и порядок вывода:
+    // конкурс пропал с главной, из календаря и из раздела конкурсов. Поэтому
+    // снимаем полный слепок строки и возвращаем его при любом исходе.
+    $__compSnap = one("SELECT * FROM competitions WHERE id=?", [$cid]);
+    register_shutdown_function(static function () use ($cid, $__compSnap): void {
+        if (!$__compSnap) return;
+        try {
+            $data = $__compSnap;
+            unset($data['id']);
+            update('competitions', $data, 'id=:id', ['id' => $cid]);
+        } catch (\Throwable $e) {}
     });
     // Логинимся админом (уже есть $AJAR), берём CSRF со страницы edit
     $rEdit = http($AJAR, $BASE . '/admin/?p=competitions&id=' . $cid . '&action=edit');

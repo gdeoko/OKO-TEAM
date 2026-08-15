@@ -183,10 +183,41 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $oldRow = $id ? (one("SELECT status, price, is_paid FROM competitions WHERE id=?", [$id]) ?: []) : [];
         $oldStatus = (string) ($oldRow['status'] ?? '');
 
+        /* НЕПОЛНАЯ ФОРМА НЕ ИМЕЕТ ПРАВА СТИРАТЬ ПОЛЯ.
+         *
+         * Здесь всегда записывался ПОЛНЫЙ набор колонок, собранный из запроса.
+         * Значит любой запрос, где часть полей отсутствует, обнулял их молча: у
+         * «Мировых Талантов» так пропали афиша, даты приёма, дата итогов, фон
+         * диплома и порядок вывода — конкурс исчез с главной, из календаря и из
+         * раздела конкурсов, хотя «сохранение» отработало без ошибок.
+         *
+         * Настоящая форма редактирования помечает себя полем full_form и по-прежнему
+         * перезаписывает всё (иначе снятую галочку «платный» было бы не сохранить).
+         * Любой другой запрос меняет только те поля, которые прислал; остальные
+         * берутся из текущей строки, чтобы дальнейшие уведомления говорили правду. */
+        $dbData = $data;
+        if ($id && !isset($_POST['full_form'])) {
+            $partial = [];
+            foreach ($data as $k => $v) {
+                // 'nominations' приходит из массива noms, 'is_paid' — галочкой.
+                if (array_key_exists($k, $_POST)
+                    || ($k === 'nominations' && array_key_exists('noms', $_POST))) {
+                    $partial[$k] = $v;
+                }
+            }
+            $dbData = $partial;
+            $cur = one("SELECT * FROM competitions WHERE id=?", [$id]) ?: [];
+            $data = array_merge($cur, $partial);
+        }
+        if ($id && !$dbData) {
+            flash('В запросе нет ни одного поля для сохранения — конкурс не изменён.', 'warning');
+            admin_redirect('competitions', ['id' => $id]);
+        }
+
         if ($id) {
-            update('competitions', $data, 'id=:wid', ['wid' => $id]);
+            update('competitions', $dbData, 'id=:wid', ['wid' => $id]);
             audit('competition_update', 'competition', $id, [
-                'name'        => $data['name'],
+                'name'        => (string) $data['name'],
                 'price_from'  => (int) ($oldRow['price'] ?? 0),
                 'price_to'    => (int) $data['price'],
                 'is_paid_from' => (int) ($oldRow['is_paid'] ?? 0),
@@ -197,11 +228,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             audit('competition_create', 'competition', $id, ['name' => $data['name']]);
         }
         // Явное подтверждение того, что цена действительно сохранена именно такая.
-        $__pInfo = $data['is_paid']
-            ? number_format((int) $data['price'], 0, '.', ' ') . ' ₽ за заявку'
+        $__price  = (int) $data['price'];
+        $__isPaid = (int) $data['is_paid'];
+        $__pInfo = $__isPaid
+            ? number_format($__price, 0, '.', ' ') . ' ₽ за заявку'
             : 'бесплатное участие';
-        $__changed = ($oldRow && ((int) ($oldRow['price'] ?? 0) !== (int) $data['price']
-                                 || (int) ($oldRow['is_paid'] ?? 0) !== (int) $data['is_paid']));
+        $__changed = ($oldRow && ((int) ($oldRow['price'] ?? 0) !== $__price
+                                 || (int) ($oldRow['is_paid'] ?? 0) !== $__isPaid));
         if ($__changed) {
             flash('Конкурс «' . $data['name'] . '» сохранён. Стоимость участия теперь — '
                 . $__pInfo . '. Скидка Клуба и все места, где показывается цена, обновятся сразу.', 'success');
@@ -563,6 +596,8 @@ if ($action === 'edit') {
     <form method="post" action="<?= url('/admin/') ?>" enctype="multipart/form-data">
       <?= csrf_field() ?>
       <input type="hidden" name="do" value="save">
+      <!-- Форма полная: сохраняем все поля, снятые галочки тоже значимы. -->
+      <input type="hidden" name="full_form" value="1">
       <input type="hidden" name="id" value="<?= (int)$c['id'] ?>">
       <div class="grid grid-2">
         <div class="card">
