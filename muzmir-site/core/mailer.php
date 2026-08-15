@@ -773,6 +773,38 @@ function mail_send_failover(string $to, string $subject, string $html, array $op
     // Обратный адрес — по типу письма, а не один на всё. Если вызывающий код
     // задал его явно (например, персональный ответ), не перебиваем.
     if (trim((string) ($opt['reply_to'] ?? '')) === '') $opt['reply_to'] = mail_reply_box($pool);
+
+    // КНОПКА «ОТПИСАТЬСЯ» ОБЯЗАНА БЫТЬ В КАЖДОМ МАССОВОМ ПИСЬМЕ.
+    //
+    // Заголовок отписки ставился только там, где вызывающий код не забыл передать
+    // ссылку. А почта показывает штатную кнопку рядом с адресом отправителя лишь
+    // при наличии заголовка; без неё человек, которому надоела рассылка, жмёт
+    // «Спам» — и это бьёт по репутации домена сильнее, чем сама отписка, портя
+    // доставку уже и дипломам. Поэтому для массовых пулов ссылку добираем сами.
+    //
+    // Холодные письма учреждениям сюда НЕ входят намеренно: им ссылку собирает
+    // свой код (core/invite_institution.php), и заводить каждое учреждение в
+    // таблицу подписчиков нельзя — это разные списки и разный учёт.
+    if (in_array($pool, ['bulk', 'news'], true) && trim((string) ($opt['unsubscribe_url'] ?? '')) === '') {
+        try {
+            if (!function_exists('nl_ensure_subscriber') && is_file(BASE_PATH . '/core/newsletter.php')) {
+                require_once BASE_PATH . '/core/newsletter.php';
+            }
+            // Свои же служебные ящики в список подписчиков не заводим.
+            $__own = ['kc', 'news', 'novosti', 'nagradi.on'];
+            $__isOwn = false;
+            foreach ($__own as $__b) {
+                if (stripos($to, $__b . '@') === 0) { $__isOwn = true; break; }
+            }
+            if (!$__isOwn && function_exists('nl_ensure_subscriber')) {
+                [$__tok] = nl_ensure_subscriber($to, (string) ($opt['to_name'] ?? ''), 'mail');
+                if ($__tok !== '') {
+                    $opt['unsubscribe_url'] = rtrim((string) cfgv('base_url'), '/')
+                                            . '/api/v1/unsubscribe?token=' . rawurlencode($__tok);
+                }
+            }
+        } catch (\Throwable $e) { /* без ссылки письмо всё равно уйдёт */ }
+    }
     $errors = [];
     foreach ($accounts as $i => $acc) {
         $try = $opt;

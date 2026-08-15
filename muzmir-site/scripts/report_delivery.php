@@ -52,6 +52,30 @@ try {
     }
 } catch (\Throwable $e) {}
 
+/* ── 1б. Судьба писем по событиям доставки ────────────────────────────────── */
+echo "\nЧТО СТАЛО С ПИСЬМАМИ (события от сервиса рассылок)\n$line\n";
+$statusRu = [
+    'sent' => 'принято к отправке', 'delivered' => 'доставлено в ящик',
+    'opened' => 'открыто', 'clicked' => 'перешли по ссылке',
+    'soft_bounced' => 'временный отказ', 'hard_bounced' => 'ящика не существует',
+    'spam' => 'пожаловались на спам', 'unsubscribed' => 'отписались',
+];
+try {
+    $rows = all("SELECT status, COUNT(DISTINCT email) n FROM mail_events GROUP BY 1 ORDER BY 2 DESC");
+    if (!$rows) {
+        echo "  событий ещё нет. Подписка настроена, но события приходят только по письмам,\n"
+           . "  отправленным после её включения — по прежним рассылкам данных не будет.\n";
+    } else {
+        foreach ($rows as $r) printf("  %-16s %6d  %s\n", (string) $r['status'], (int) $r['n'],
+            $statusRu[(string) $r['status']] ?? '');
+        $sentN = (int) (scalar("SELECT COUNT(DISTINCT email) FROM mail_events WHERE status='sent'") ?? 0);
+        $delN  = (int) (scalar("SELECT COUNT(DISTINCT email) FROM mail_events WHERE status='delivered'") ?? 0);
+        $openN = (int) (scalar("SELECT COUNT(DISTINCT email) FROM mail_events WHERE status='opened'") ?? 0);
+        if ($sentN > 0) printf("  доходит до ящика: %d%%, открывают: %d%% от доставленных\n",
+            (int) round($delN * 100 / $sentN), $delN > 0 ? (int) round($openN * 100 / $delN) : 0);
+    }
+} catch (\Throwable $e) { echo "  таблицы событий ещё нет\n"; }
+
 if ($key === '') { echo "\nключ сервиса рассылок не задан — дальше проверять нечем\n"; exit(1); }
 
 /* ── 2. Подавленные адреса ────────────────────────────────────────────────── */
