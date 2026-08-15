@@ -452,6 +452,39 @@ function inst_mark_invited(int $id): void {
 }
 
 /**
+ * ВОЗВРАЩАЕТ В ОЧЕРЕДЬ ТЕХ, КОГО ПОМЕТИЛИ ПРИГЛАШЁННЫМИ, А ПИСЬМА НЕТ.
+ *
+ * Отметка «приглашено» ставится сразу после постановки письма в очередь. Если
+ * письмо из очереди потом исчезает (перезалив базы, ручная чистка, сбой), метка
+ * остаётся — и учреждение навсегда выпадает из выборки: она берёт только тех, у
+ * кого статус «новый». Так десять с половиной тысяч адресов оказались отмечены
+ * как обработанные, не получив ни одного письма.
+ *
+ * Здесь мы возвращаем таким учреждениям статус «новый». История не теряется:
+ * invited_at и invited_count остаются как были, и повторную волну по ним видно.
+ *
+ * @return int сколько записей вернули в работу
+ */
+function inst_reset_ghost_invites(bool $apply = true): int {
+    inst_migrate();
+    try {
+        $n = (int) (scalar("SELECT COUNT(*) FROM institutions i
+                             WHERE i.status='invited'
+                               AND TRIM(COALESCE(i.email,''))<>''
+                               AND NOT EXISTS (SELECT 1 FROM mail_queue q
+                                                WHERE LOWER(q.to_email)=LOWER(i.email))") ?? 0);
+        if ($apply && $n > 0) {
+            q("UPDATE institutions SET status='new', updated_at=datetime('now')
+                WHERE status='invited'
+                  AND TRIM(COALESCE(email,''))<>''
+                  AND NOT EXISTS (SELECT 1 FROM mail_queue q
+                                   WHERE LOWER(q.to_email)=LOWER(institutions.email))");
+        }
+        return $n;
+    } catch (\Throwable $e) { return 0; }
+}
+
+/**
  * Учреждение отказалось от рассылки — больше не пишем НИКОГДА.
  * Зовётся из api/v1/unsubscribe.php по адресу.
  */

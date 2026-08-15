@@ -82,6 +82,18 @@ if ($mode === 'status') {
 if (!cron_lock(JOB, 900)) { echo "предыдущий прогон ещё идёт\n"; exit(0); }
 register_shutdown_function(static function () { cron_unlock(JOB); });
 
+/* САМОЛЕЧЕНИЕ ПЕРЕД ДОБОРОМ.
+ *
+ * Учреждение помечается приглашённым сразу после постановки письма в очередь.
+ * Если письмо из очереди потом исчезло (перезалив базы, ручная чистка, сбой),
+ * метка осталась, и адрес выпал из выборки навсегда: она берёт только «новых».
+ * Так десять с половиной тысяч учреждений числились обработанными, не получив
+ * ни строчки. Перед каждым добором возвращаем таких в работу. */
+if (function_exists('inst_reset_ghost_invites')) {
+    $ghost = inst_reset_ghost_invites(true);
+    if ($ghost > 0) cron_log(JOB, "возвращено в работу без письма: $ghost");
+}
+
 $have = qi_in_queue();
 $need = qi_target_depth() - $have;
 if ($mode !== '' && ctype_digit($mode)) $need = min($need, (int) $mode);
