@@ -106,6 +106,9 @@ register_shutdown_function(static function (): void {
         try { q("DELETE FROM applications WHERE user_id=?", [(int) $u]); } catch (\Throwable $e) {}
         try { q("DELETE FROM users WHERE id=?", [(int) $u]); } catch (\Throwable $e) {}
     }
+    // Письма проверочным адресам наружу всё равно не уходят, но и висеть в очереди
+    // им незачем: в отчётах по рассылке они только сбивают счёт.
+    try { q("DELETE FROM mail_queue WHERE LOWER(to_email) LIKE '%@example.test'"); } catch (\Throwable $e) {}
 });
 
 }

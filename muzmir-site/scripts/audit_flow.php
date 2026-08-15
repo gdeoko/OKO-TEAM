@@ -94,6 +94,20 @@ chk('участник вошёл в кабинет', $userIn);
 sec('Пульт запуска: гейт публикации');
 // Прогон должен быть повторяемым: возвращаем стенд в «до запуска» и снимаем
 // счётчики частоты (иначе повторный прогон упирается в защиту от флуда заявками).
+/* КОНКУРСЫ ВОЗВРАЩАЕМ В ИСХОДНЫЙ ВИД ПРИ ЛЮБОМ ИСХОДЕ.
+ *
+ * Проверка сбрасывает признак «запущен» и открывает раздел итогов, чтобы увидеть
+ * поведение сайта до и после публикации. Раньше она этого не возвращала: раздел
+ * аттестационных результатов «Величия России» остался открытым за тринадцать дней
+ * до срока, а признак запуска был сбит у всех открытых конкурсов. */
+$GLOBALS['__compSnapshot'] = all("SELECT * FROM competitions");
+register_shutdown_function(static function (): void {
+    foreach ($GLOBALS['__compSnapshot'] ?? [] as $row) {
+        $id = (int) $row['id'];
+        unset($row['id']);
+        try { update('competitions', $row, 'id=:id', ['id' => $id]); } catch (\Throwable $e) {}
+    }
+});
 q("UPDATE competitions SET launched=0, results_published_at=NULL WHERE status='open'");
 try { q("DELETE FROM rate_limit"); } catch (\Throwable $e) {}
 $hidden = (int) scalar("SELECT COUNT(*) FROM competitions WHERE status='open' AND COALESCE(launched,0)=0");
@@ -136,12 +150,20 @@ function submit_app(string $jar, array $comp, string $fio, string $title): array
         'agree_rules' => '1', 'agree_reg' => '1', 'agree_pd' => '1',
     ]);
     $j = json_decode($r['body'], true);
-    // Запоминаем всё, что создали: удалим в конце, чем бы проверка ни кончилась.
-    foreach (all("SELECT id FROM applications WHERE competition_id=? AND full_name=? ORDER BY id DESC LIMIT 1",
-                 [(int) $comp['id'], $fio]) as $__a) {
-        $GLOBALS['__audit_apps'][] = (int) $__a['id'];
+    // Запоминаем, что создали: удалим в конце, чем бы проверка ни кончилась. И
+    // возвращаем НОМЕР СОЗДАННОЙ ЗАЯВКИ. Без него дальше бралась «последняя заявка
+    // конкурса», и если подача не прошла, проверка оценивала и рассылала результат
+    // по заявке ЖИВОГО участника: человек получал письмо с оценкой, которой жюри
+    // ему не ставило.
+    $made = one("SELECT id FROM applications WHERE competition_id=? AND full_name=? ORDER BY id DESC LIMIT 1",
+                [(int) $comp['id'], $fio]);
+    $newId = 0;
+    if ($made && ($j['ok'] ?? false) === true) {
+        $newId = (int) $made['id'];
+        $GLOBALS['__audit_apps'][] = $newId;
     }
-    return ['code' => $r['code'], 'json' => is_array($j) ? $j : [], 'raw' => substr($r['body'], 0, 300)];
+    return ['code' => $r['code'], 'json' => is_array($j) ? $j : [],
+            'raw' => substr($r['body'], 0, 300), 'id' => $newId];
 }
 
 $a1 = submit_app($UJAR, $paid, 'Смирнова Ольга Ивановна', 'Аве Мария');
@@ -151,12 +173,16 @@ $a2 = submit_app($UJAR, $free, 'Кузнецов Пётр Алексеевич',
 chk('заявка в бесплатный конкурс принята', ($a2['json']['ok'] ?? false) === true,
     ($a2['json']['error'] ?? $a2['json']['message'] ?? $a2['raw']));
 
-$appPaid = one("SELECT * FROM applications WHERE competition_id=? ORDER BY id DESC LIMIT 1", [(int) $paid['id']]);
-$appFree = one("SELECT * FROM applications WHERE competition_id=? ORDER BY id DESC LIMIT 1", [(int) $free['id']]);
+// Берём ИМЕННО СВОИ заявки по возвращённому номеру. Здесь стояла «последняя
+// заявка конкурса»: если подача не проходила, дальше оценивалась и рассылалась
+// заявка живого участника.
+$idPaid = (int) ($a1['id'] ?? 0);
+$idFree = (int) ($a2['id'] ?? 0);
+$appPaid = $idPaid ? one("SELECT * FROM applications WHERE id=?", [$idPaid]) : null;
+$appFree = $idFree ? one("SELECT * FROM applications WHERE id=?", [$idFree]) : null;
 chk('заявка платного сохранена в базе', (bool) $appPaid, 'id=' . ($appPaid['id'] ?? '-'));
 chk('заявка бесплатного сохранена в базе', (bool) $appFree, 'id=' . ($appFree['id'] ?? '-'));
-if (!$appPaid || !$appFree) { echo "\nдальше без заявок нельзя\n"; exit(1); }
-$idPaid = (int) $appPaid['id']; $idFree = (int) $appFree['id'];
+if (!$appPaid || !$appFree) { echo "\nсвои заявки не создались — дальше не идём, чужие не трогаем\n"; exit(1); }
 
 sec('Статусы сразу после подачи');
 chk('платная заявка — Новая', app_state($appPaid)['code'] === 'new', app_state($appPaid)['label']);
@@ -207,8 +233,10 @@ chk('статус стал «Оценена»', app_state($appPaid, true)['code'
 
 sec('Оценка с автосроком (5 рабочих дней от подачи)');
 $a3 = submit_app($UJAR, $paid, 'Волков Илья Романович', 'Полонез');
-$appAuto = one("SELECT * FROM applications WHERE competition_id=? ORDER BY id DESC LIMIT 1", [(int) $paid['id']]);
-$idAuto = (int) $appAuto['id'];
+$idAuto = (int) ($a3['id'] ?? 0);
+if (!$idAuto) { echo "\nсвоя заявка не создалась — оценку пропускаем, чужие не трогаем\n"; }
+$appAuto = $idAuto ? one("SELECT * FROM applications WHERE id=?", [$idAuto]) : null;
+if (!$appAuto) { $appAuto = ['id' => 0, 'result_send_at' => '', 'result' => '']; }
 q("UPDATE applications SET is_paid=1 WHERE id=?", [$idAuto]);
 $tok = csrf($AJAR, '/admin/?p=grading&id=' . $idAuto);
 http($AJAR, $BASE . '/admin/?p=grading', ['_csrf' => $tok, 'do' => 'grade_result', 'id' => (string) $idAuto,

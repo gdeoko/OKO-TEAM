@@ -102,6 +102,54 @@ if ($apply) {
     $did[] = 'удалено учётных записей: ' . count($users);
 }
 
+/* ── 5. Письма проверок ───────────────────────────────────────────────────── */
+// Наружу они не уходили (адреса зоны .test не маршрутизируются), но в отчётах по
+// рассылке мешают: их видно в «отправлено» и они сбивают счёт.
+$letters = (int) (scalar("SELECT COUNT(*) FROM mail_queue
+                           WHERE LOWER(to_email) LIKE '%@example.test'
+                              OR subject LIKE '%VR-2026-00107%'") ?? 0);
+echo "\nПИСЬМА ПРОВЕРОК\n$line\n  всего: $letters\n";
+if ($apply && $letters) {
+    q("DELETE FROM mail_queue WHERE LOWER(to_email) LIKE '%@example.test' OR subject LIKE '%VR-2026-00107%'");
+    $did[] = 'удалено писем проверок: ' . $letters;
+}
+
+/* ── 6. Осиротевшие наградные документы ───────────────────────────────────── */
+// Диплом, чья заявка удалена, не нужен никому и портит счётчики в админке.
+$orphans = (int) (scalar("SELECT COUNT(*) FROM diplomas d
+                           LEFT JOIN applications a ON a.id=d.application_id
+                          WHERE a.id IS NULL") ?? 0);
+echo "\nДИПЛОМЫ БЕЗ ЗАЯВКИ\n$line\n  всего: $orphans\n";
+if ($apply && $orphans) {
+    q("DELETE FROM diplomas WHERE application_id NOT IN (SELECT id FROM applications)");
+    $did[] = 'удалено дипломов без заявки: ' . $orphans;
+}
+
+/* ── 7. Учётные записи для проб ───────────────────────────────────────────── */
+// Только поимённо. Никаких «удалить всех, у кого нет заявок»: так под нож попал бы
+// человек, который зарегистрировался и ещё не успел подать работу.
+$testMails = ['albertilasov1676@gmail.com'];   // рабочий адрес владельца для проб
+$probes = [];
+foreach ($testMails as $m) {
+    $u = one("SELECT id, email, (SELECT COUNT(*) FROM applications a WHERE a.user_id=users.id) n
+                FROM users WHERE LOWER(email)=?", [mb_strtolower($m)]);
+    if ($u) $probes[] = $u;
+}
+echo "\nУЧЁТНЫЕ ЗАПИСИ ДЛЯ ПРОБ\n$line\n";
+foreach ($probes as $u) printf("  #%-6s %-34s заявок: %s\n", $u['id'], (string) $u['email'], $u['n']);
+echo '  всего: ' . count($probes) . "\n";
+if ($apply) {
+    foreach ($probes as $u) {
+        // Если на записи ещё висят заявки — не трогаем: значит это уже не проба.
+        if ((int) $u['n'] > 0) { echo '  пропуск #' . $u['id'] . ": на записи есть заявки\n"; continue; }
+        q("DELETE FROM mail_queue WHERE LOWER(to_email)=?", [mb_strtolower((string) $u['email'])]);
+        q("DELETE FROM sessions WHERE user_id=?", [(int) $u['id']]);
+        q("DELETE FROM club_members WHERE user_id=?", [(int) $u['id']]);
+        q("DELETE FROM users WHERE id=?", [(int) $u['id']]);
+        $did[] = 'удалена проба ' . (string) $u['email'];
+    }
+}
+
 echo "\n$line\n";
 if (!$apply) { echo "ничего не меняли — запустите с --apply\n"; exit(0); }
 foreach ($did as $d) echo "  $d\n";
