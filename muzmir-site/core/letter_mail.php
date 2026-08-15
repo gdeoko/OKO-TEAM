@@ -379,9 +379,12 @@ function lm_mail_institution(array $inst, string $number, array $comps, string $
     // Их тут не было вовсе: адрес для ответа стоял только внутри приложенного PDF.
     // Человек, решивший написать, не видел куда, и письмо уходило в никуда либо
     // не уходило вовсе.
+    // Адрес партнёрского отдела, а не общий официальный: ответ должен прийти туда,
+    // где его читают. Стоял kc@ — ящик ведомств, и согласие учреждения попадало в
+    // разбор обращений к министерствам, который чужие письма не берёт.
+    $boxPartner = function_exists('ol_box_email') ? ol_box_email('partner') : 'novosti@музыкальный-мир.рф';
     $inner .= lm_p('По вопросам участия и партнёрства: <b>' . h((string) cfgv('org_phone', '')) . '</b>, '
-        . '<a href="mailto:' . h((string) cfgv('org_email', '')) . '" style="color:#8B6F1F">'
-        . h((string) cfgv('org_email', '')) . '</a>. '
+        . '<a href="mailto:' . h($boxPartner) . '" style="color:#8B6F1F">' . h($boxPartner) . '</a>. '
         . 'Согласие на информационное партнёрство достаточно направить ответным письмом.',
         'font-size:14px;color:#4a4a55');
 
