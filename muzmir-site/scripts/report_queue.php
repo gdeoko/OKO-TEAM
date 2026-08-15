@@ -56,6 +56,32 @@ if ($sent24 > 0) {
 $next = (string) (scalar("SELECT MIN(COALESCE(NULLIF(scheduled_at,''),created_at)) FROM mail_queue WHERE status='queued'") ?? '');
 if ($next !== '') printf("  самое раннее письмо в очереди: %s\n", substr($next, 0, 16));
 
+/* ── 2б. Сколько писем вообще осталось по тарифу ──────────────────────────── */
+echo "\nПАКЕТ СЕРВИСА РАССЫЛОК\n$line\n";
+require_once BASE_PATH . '/core/mailer.php';
+require_once BASE_PATH . '/core/newsletter.php';
+if (function_exists('nl_service_month_usage')) {
+    $u = nl_service_month_usage();
+    if ((int) $u['cap'] <= 0) {
+        echo "  месячный пакет не задан — ограничения по тарифу не считаются\n";
+    } else {
+        printf("  оплачено на месяц: %d\n  израсходовано:     %d (%d%%)\n  остаток:           %d\n",
+            (int) $u['cap'], (int) $u['sent'], (int) $u['pct'], (int) $u['left']);
+        $left = (int) $u['left'];
+        if ($left < $queued) {
+            printf("  ВНИМАНИЕ: в очереди %d писем, а по тарифу можно отправить ещё %d.\n", $queued, $left);
+            printf("  Без продления пакета %d писем в этом месяце не уйдут.\n", $queued - $left);
+        }
+        if ($left <= 0) echo "  ПАКЕТ ИСЧЕРПАН: массовые рассылки остановлены до продления или до 1 числа.\n";
+    }
+}
+if (function_exists('nl_service_cap_today')) {
+    printf("  норма на сегодня: %d, из них уже ушло %d\n",
+        nl_service_cap_today(),
+        (int) (scalar("SELECT COUNT(*) FROM mail_queue WHERE status='sent'
+                        AND COALESCE(priority,0)>0 AND date(sent_at)=date('now')") ?? 0));
+}
+
 /* ── 3. Что уходить не должно ─────────────────────────────────────────────── */
 echo "\nЧЕГО В ОЧЕРЕДИ БЫТЬ НЕ ДОЛЖНО\n$line\n";
 $checks = [
