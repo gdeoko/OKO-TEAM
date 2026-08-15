@@ -34,6 +34,7 @@ function audit_actor_sweep(): void {
             $id = (int) $u['id'];
             q("DELETE FROM diplomas WHERE application_id IN (SELECT id FROM applications WHERE user_id=?)", [$id]);
             q("DELETE FROM applications WHERE user_id=?", [$id]);
+            q("DELETE FROM club_members WHERE user_id=?", [$id]);
             q("DELETE FROM sessions WHERE user_id=?", [$id]);
             q("DELETE FROM users WHERE id=?", [$id]);
         }
@@ -75,8 +76,12 @@ function audit_actor_app(int $uid, array $over = []): int {
         'number' => 'AUDIT-' . date('Y') . '-' . random_int(10000, 99999),
         'competition_id' => (int) $comp['id'], 'user_id' => $uid,
         'full_name' => 'Проверка Участник', 'is_group' => 0,
-        'nomination' => '', 'work_title' => '«Проба пера»', 'teacher' => '',
-        'institution' => '', 'city' => 'Россия, г. Москва',
+        // Поля заполнены как у настоящей заявки: письма и карточки проверяются на
+        // наличие «Учреждения» и «Формы исполнения», а пустое поле шаблон опускает.
+        'nomination' => 'Хореография', 'subgroup' => 'Народный танец', 'formation' => 'Соло',
+        'age_category' => '13-15 лет',
+        'work_title' => '«Проба пера»', 'teacher' => 'Проверкин Проверка Проверкович',
+        'institution' => 'ДШИ №1', 'city' => 'Россия, г. Москва',
         'email' => (string) (scalar("SELECT email FROM users WHERE id=?", [$uid]) ?? ''),
         'phone' => '+79000000000', 'video_url' => 'https://rutube.ru/video/audit/',
         'status' => 'new', 'is_paid' => 1, 'created_at' => date('Y-m-d H:i:s'),
@@ -87,12 +92,18 @@ function audit_actor_app(int $uid, array $over = []): int {
 
 // Уборка при любом исходе: и при успехе, и при падении с ошибкой.
 register_shutdown_function(static function (): void {
-    foreach ($GLOBALS['__audit_apps'] ?? [] as $a) {
-        try { q("DELETE FROM diplomas WHERE application_id=?", [(int) $a]); } catch (\Throwable $e) {}
+    foreach (array_unique($GLOBALS['__audit_apps'] ?? []) as $a) {
+        foreach (['diplomas', 'awards_orders', 'payments'] as $t) {
+            try { q("DELETE FROM $t WHERE application_id=?", [(int) $a]); } catch (\Throwable $e) {}
+        }
         try { q("DELETE FROM applications WHERE id=?", [(int) $a]); } catch (\Throwable $e) {}
     }
-    foreach ($GLOBALS['__audit_users'] ?? [] as $u) {
-        try { q("DELETE FROM sessions WHERE user_id=?", [(int) $u]); } catch (\Throwable $e) {}
+    foreach (array_unique($GLOBALS['__audit_users'] ?? []) as $u) {
+        // Членство в клубе выдаёт проверка привилегий — снимаем вместе с записью.
+        foreach (['club_members', 'sessions'] as $t) {
+            try { q("DELETE FROM $t WHERE user_id=?", [(int) $u]); } catch (\Throwable $e) {}
+        }
+        try { q("DELETE FROM applications WHERE user_id=?", [(int) $u]); } catch (\Throwable $e) {}
         try { q("DELETE FROM users WHERE id=?", [(int) $u]); } catch (\Throwable $e) {}
     }
 });

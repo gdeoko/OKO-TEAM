@@ -112,13 +112,22 @@ $free = one("SELECT * FROM competitions WHERE is_paid=0 AND status='open' ORDER 
 chk('в базе есть платный конкурс', (bool) $paid, (string) ($paid['name'] ?? ''));
 chk('в базе есть бесплатный конкурс', (bool) $free, (string) ($free['name'] ?? ''));
 
+/**
+ * ЗАЯВКА ПРОВЕРКИ ПОДАЁТСЯ ОТ ВРЕМЕННОГО УЧАСТНИКА, А НЕ ОТ ПОЧТЫ ЦЕНТРА.
+ *
+ * Здесь стояла okoteam.top@gmail.com — рабочая почта оргкомитета. Заявка
+ * привязывалась к настоящей учётной записи центра, оставалась в базе навсегда
+ * (проверка её не удаляла) и светилась в списках админки золотой галочкой
+ * оргкомитета: владелец увидел «участницу», которая никакого ВИП не покупала.
+ * Теперь заявки подаются от временного участника и удаляются после проверки.
+ */
 function submit_app(string $jar, array $comp, string $fio, string $title): array {
-    global $BASE;
+    global $BASE, $USR;
     $tok = csrf($jar, '/apply?competition=' . $comp['slug']);
     $r = http($jar, $BASE . '/api/v1/apply.php', [
         '_csrf' => $tok, 'csrf' => $tok,
         'competition_id' => (string) $comp['id'], 'competition' => (string) $comp['slug'],
-        'full_name' => $fio, 'email' => 'okoteam.top@gmail.com', 'phone' => '+79995048899',
+        'full_name' => $fio, 'email' => (string) $USR['email'], 'phone' => '+79995048899',
         'age_category' => '13-15 лет',
         'nomination' => 'Хореография', 'subgroup' => 'Народный танец', 'formation' => 'Соло',
         'work_title' => $title, 'teacher' => 'Петрова Анна Сергеевна',
@@ -127,6 +136,11 @@ function submit_app(string $jar, array $comp, string $fio, string $title): array
         'agree_rules' => '1', 'agree_reg' => '1', 'agree_pd' => '1',
     ]);
     $j = json_decode($r['body'], true);
+    // Запоминаем всё, что создали: удалим в конце, чем бы проверка ни кончилась.
+    foreach (all("SELECT id FROM applications WHERE competition_id=? AND full_name=? ORDER BY id DESC LIMIT 1",
+                 [(int) $comp['id'], $fio]) as $__a) {
+        $GLOBALS['__audit_apps'][] = (int) $__a['id'];
+    }
     return ['code' => $r['code'], 'json' => is_array($j) ? $j : [], 'raw' => substr($r['body'], 0, 300)];
 }
 

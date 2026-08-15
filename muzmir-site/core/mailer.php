@@ -761,6 +761,14 @@ function mail_account_penalty(array $acc): int {
  * Возвращает true, если письмо ушло хоть с какого-то ящика.
  */
 function mail_send_failover(string $to, string $subject, string $html, array $opt = []): bool {
+    // На адреса зоны .test письма не отправляем НИКОГДА: она не маршрутизируется,
+    // и каждая попытка вернулась бы отказом, а отказы бьют по репутации домена и
+    // по доставке дипломов. Такие адреса бывают только у сквозных проверок.
+    if (preg_match('~\.test$~i', trim($to))) {
+        mail_log('SKIP .test ' . $to . ' | ' . mb_substr($subject, 0, 60));
+        return true;
+    }
+
     // Пул определяется типом письма: массовые — только рассылочные ящики,
     // награды и личные письма — рабочие почты центра.
     $pool = (string) ($opt['pool'] ?? mail_pool_for(['priority' => $opt['priority'] ?? 0, 'subject' => $subject]));

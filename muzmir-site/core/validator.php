@@ -29,6 +29,17 @@ function v_email(string $e): array {
     if (in_array($domain, DISPOSABLE_MAIL_DOMAINS(), true)) {
         return ['ok' => false, 'reason' => 'Одноразовые почтовые ящики не принимаются'];
     }
+    // ЗОНА .test СУЩЕСТВУЕТ РОВНО ДЛЯ ПРОВЕРОК (RFC 6761): она не маршрутизируется
+    // и никому не принадлежит. Пропускаем такой адрес ТОЛЬКО когда запрос пришёл с
+    // самого сервера — то есть от нашей же сквозной проверки. Снаружи он
+    // по-прежнему не принимается, а письма на .test не отправляются вовсе
+    // (core/mailer.php), чтобы не плодить отказы и не портить репутацию домена.
+    if (str_ends_with($domain, '.test')) {
+        $ip = $_SERVER['REMOTE_ADDR'] ?? '';
+        return in_array($ip, ['127.0.0.1', '::1'], true) || PHP_SAPI === 'cli'
+            ? ['ok' => true, 'reason' => '']
+            : ['ok' => false, 'reason' => 'Проверьте написание адреса электронной почты'];
+    }
     // MX (с фолбэком на A) — если DNS недоступен, не блокируем строго.
     if (function_exists('checkdnsrr')) {
         $hasMx = @checkdnsrr($domain, 'MX') || @checkdnsrr($domain, 'A');
