@@ -297,7 +297,7 @@ function vk_dm_ensure_table(): void {
         ref TEXT NOT NULL,
         status TEXT NOT NULL DEFAULT 'queued',
         error TEXT,
-        created_at TEXT NOT NULL DEFAULT (datetime('now')),
+        created_at TEXT NOT NULL DEFAULT (datetime('now','localtime')),
         sent_at TEXT,
         UNIQUE(peer_id, kind, ref)
     )");

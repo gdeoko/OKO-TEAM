@@ -284,7 +284,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && input('do') === 'send') {
             continue;
         }
         insert('mail_queue', ['to_email'=>$d['email'],'to_name'=>$name,'subject'=>$subject,'body'=>$body,'attach'=>$pdfAbs]);
-        q("UPDATE diplomas SET sent_at=datetime('now') WHERE id=?", [$did]);
+        q("UPDATE diplomas SET sent_at=datetime('now','localtime') WHERE id=?", [$did]);
         q("UPDATE applications SET status='sent' WHERE id=?", [$d['application_id']]);
         $queued++;
     }
@@ -324,7 +324,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && input('do') === 'resend') {
             admin_redirect('diplomas', array_filter(['competition'=>$comp,'tab'=>'sent']));
         }
         insert('mail_queue', ['to_email'=>$d['email'],'to_name'=>$name,'subject'=>'Ваш диплом (повторно) · '.$d['comp'],'body'=>$body,'attach'=>$pdfAbs]);
-        q("UPDATE diplomas SET sent_at=datetime('now') WHERE id=?", [$did]);
+        q("UPDATE diplomas SET sent_at=datetime('now','localtime') WHERE id=?", [$did]);
         audit('diploma_resend', 'diploma', $did);
         flash('Диплом повторно поставлен в очередь.', 'success');
     }

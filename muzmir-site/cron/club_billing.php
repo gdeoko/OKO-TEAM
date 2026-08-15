@@ -72,7 +72,7 @@ try {
             $renewed++;
         } else {
             $fails = (int) ($m['charge_fails'] ?? 0) + 1;
-            q("UPDATE club_members SET charge_fails=?, next_charge_at=datetime('now','+1 day') WHERE user_id=?", [$fails, $uid]);
+            q("UPDATE club_members SET charge_fails=?, next_charge_at=datetime('now','localtime','+1 day') WHERE user_id=?", [$fails, $uid]);
             club_billing_notify($email, (string) $m['full_name'], $fails >= 3 ? 'stopped' : 'retry', $period, $price);
             cron_log(JOB, "не удалось списать: user #$uid, попытка $fails");
             $failed++;
@@ -99,7 +99,7 @@ try {
             "SELECT m.*, u.email, u.full_name
                FROM club_members m JOIN users u ON u.id = m.user_id
               WHERE m.active = 0 AND COALESCE(m.expires_at,'') <> ''
-                AND date(m.expires_at) = date('now', '-' || ? || ' days')
+                AND date(m.expires_at) = date('now','localtime', '-' || ? || ' days')
                 AND COALESCE(u.email,'') <> '' AND COALESCE(u.blocked,0) = 0
               LIMIT 100", [$day]
         );

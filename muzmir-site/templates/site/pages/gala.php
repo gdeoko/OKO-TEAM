@@ -64,7 +64,7 @@ if ($nominees) {
         nominee_key TEXT NOT NULL,
         session_key TEXT NOT NULL DEFAULT '',
         ip TEXT DEFAULT '',
-        created_at TEXT DEFAULT (datetime('now'))
+        created_at TEXT DEFAULT (datetime('now','localtime'))
     )");
     db()->exec("CREATE UNIQUE INDEX IF NOT EXISTS idx_gala_votes_session ON gala_votes(gala_id, session_key)");
     db()->exec("CREATE INDEX IF NOT EXISTS idx_gala_votes_nominee ON gala_votes(gala_id, nominee_key)");

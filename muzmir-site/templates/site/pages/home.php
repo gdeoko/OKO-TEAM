@@ -63,7 +63,7 @@ if ($currentUser) {
 }
 // Ближайший дедлайн среди открытых конкурсов (для всех — как «горит»)
 $quickDeadline = one("SELECT name, slug, end_date FROM competitions
-                      WHERE status='open' AND end_date IS NOT NULL AND end_date >= date('now')
+                      WHERE status='open' AND end_date IS NOT NULL AND end_date >= date('now','localtime')
                       ORDER BY end_date ASC LIMIT 1");
 $quickAppStatusLbl = ['new'=>['Не оплачена','pay'],'paid'=>['Оплачена — ждёт оценки','ok'],
                       'judging'=>['На оценке жюри','warn'],'graded'=>['Оценена','ok'],

@@ -77,7 +77,7 @@ function nl_resolve_recipients(string $audience): array {
               WHERE LOWER(email) NOT IN (
                     SELECT LOWER(u2.email) FROM club_members m JOIN users u2 ON u2.id = m.user_id
                      WHERE COALESCE(m.active,1) = 1
-                       AND (m.expires_at IS NULL OR m.expires_at = '' OR m.expires_at > datetime('now'))
+                       AND (m.expires_at IS NULL OR m.expires_at = '' OR m.expires_at > datetime('now','localtime'))
                        AND COALESCE(u2.email,'') <> ''
                 )
                 AND LOWER(email) NOT IN ($staffIn)",
@@ -603,7 +603,7 @@ function nl_failure_kind(string $err): string {
 function nl_purge_guard_tripped(int $hardNow = 0): bool {
     $sentToday = (int) (scalar("SELECT COUNT(*) FROM mail_queue
                                  WHERE status='sent' AND COALESCE(priority,0)>0
-                                   AND date(sent_at)=date('now')") ?? 0);
+                                   AND date(sent_at)=date('now','localtime')") ?? 0);
     // ЗА СУТКИ — значит за сутки. Раньше в этом запросе не было фильтра по дате, и в
     // знаменатель шла ВСЯ история отказов: строки status='failed' не удаляются никогда,
     // так что через месяц работы там копятся тысячи записей. На их фоне доля сегодняшних
@@ -611,7 +611,7 @@ function nl_purge_guard_tripped(int $hardNow = 0): bool {
     // потери 2695 живых адресов, не сработал бы ни разу.
     $failToday = (int) (scalar("SELECT COUNT(*) FROM mail_queue
                                  WHERE status='failed' AND COALESCE(priority,0)>0
-                                   AND date(COALESCE(NULLIF(sent_at,''), created_at))=date('now')") ?? 0);
+                                   AND date(COALESCE(NULLIF(sent_at,''), created_at))=date('now','localtime')") ?? 0);
     $total = $sentToday + $failToday;
     if ($hardNow < 50 || $total < 100) return false;      // мало данных — не судим
     return ($hardNow / max(1, $total)) > 0.20;            // каждый пятый — это канал, не адреса
@@ -625,7 +625,7 @@ function nl_prune_failed(): int {
     $rows = all("SELECT id, to_email, COALESCE(error,'') AS error, COALESCE(soft_tries,0) AS soft_tries
                    FROM mail_queue
                   WHERE status='failed' AND COALESCE(priority,0)>0
-                    AND date(COALESCE(NULLIF(sent_at,''), created_at)) >= date('now','-2 day')
+                    AND date(COALESCE(NULLIF(sent_at,''), created_at)) >= date('now','localtime','-2 day')
                   ORDER BY id DESC LIMIT 2000");
 
     // Сначала считаем, сколько отказов набралось, и только потом решаем, трогать ли базу.
@@ -799,7 +799,7 @@ function nl_service_month_left(): int {
 
     $sent = (int) (scalar("SELECT COUNT(*) FROM mail_queue
                             WHERE status='sent' AND COALESCE(priority,0) > 0
-                              AND sent_at >= date('now','start of month')") ?? 0);
+                              AND sent_at >= date('now','localtime','start of month')") ?? 0);
     return max(0, $cap - $sent);
 }
 
@@ -808,7 +808,7 @@ function nl_service_month_usage(): array {
     $cap  = (int) setting('nl_service_month_cap', '0');
     $sent = (int) (scalar("SELECT COUNT(*) FROM mail_queue
                             WHERE status='sent' AND COALESCE(priority,0) > 0
-                              AND sent_at >= date('now','start of month')") ?? 0);
+                              AND sent_at >= date('now','localtime','start of month')") ?? 0);
     return [
         'cap'  => $cap,
         'sent' => $sent,
@@ -852,10 +852,10 @@ function nl_service_cap_today(): int {
     // Доставляемость плохая — не растём. Считаем только сегодняшние массовые.
     $sentToday = (int) (scalar("SELECT COUNT(*) FROM mail_queue
                                  WHERE status='sent' AND COALESCE(priority,0)>0
-                                   AND date(sent_at)=date('now')") ?? 0);
+                                   AND date(sent_at)=date('now','localtime')") ?? 0);
     $failToday = (int) (scalar("SELECT COUNT(*) FROM mail_queue
                                  WHERE status='failed' AND COALESCE(priority,0)>0
-                                   AND date(COALESCE(NULLIF(sent_at,''), created_at))=date('now')") ?? 0);
+                                   AND date(COALESCE(NULLIF(sent_at,''), created_at))=date('now','localtime')") ?? 0);
     if ($sentToday + $failToday >= 200 && $failToday > ($sentToday + $failToday) * 0.05) {
         $prev = $ladder[max(0, min($days - 1, count($ladder) - 1))];
         return min($cap, $prev, $left);
@@ -1120,7 +1120,7 @@ function nl_build_body(array $row): ?array {
         $inClub = (bool) one(
             "SELECT 1 FROM club_members m JOIN users u2 ON u2.id = m.user_id
               WHERE LOWER(u2.email) = ? AND COALESCE(m.active,1) = 1
-                AND (m.expires_at IS NULL OR m.expires_at = '' OR m.expires_at > datetime('now'))",
+                AND (m.expires_at IS NULL OR m.expires_at = '' OR m.expires_at > datetime('now','localtime'))",
             [$email]);
     } catch (\Throwable $e) {}
     $needVip = !$inClub;
@@ -1517,7 +1517,7 @@ function newsletter_process_queue(int $limit): int {
     if ($pruned > 0) nl_log("process: выведено из базы (SMTP-отказ) - $pruned");
 
     // Рассылки без остатка в очереди помечаем как отправленные.
-    q("UPDATE newsletters SET status = 'sent', sent_at = COALESCE(sent_at, datetime('now'))
+    q("UPDATE newsletters SET status = 'sent', sent_at = COALESCE(sent_at, datetime('now','localtime'))
         WHERE status = 'sending'
           AND id NOT IN (SELECT DISTINCT newsletter_id FROM mail_queue
                           WHERE newsletter_id IS NOT NULL AND status = 'queued')");

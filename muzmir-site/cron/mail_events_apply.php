@@ -46,9 +46,9 @@ $chg = static fn(): int => (int) db()->query("SELECT changes()")->fetchColumn();
 
 foreach ($rows as $r) {
     $e = mb_strtolower(trim((string) $r['email']));
-    if ($e === '') { q("UPDATE mail_events SET handled_at=datetime('now') WHERE id=?", [(int) $r['id']]); continue; }
+    if ($e === '') { q("UPDATE mail_events SET handled_at=datetime('now','localtime') WHERE id=?", [(int) $r['id']]); continue; }
     foreach ([
-        'учреждения' => ["UPDATE institutions SET status=?, updated_at=datetime('now')
+        'учреждения' => ["UPDATE institutions SET status=?, updated_at=datetime('now','localtime')
                            WHERE status NOT IN ('bounced','unsubscribed','banned') AND LOWER(email)=?",
                          [(string) $r['status'] === 'unsubscribed' ? 'unsubscribed' : 'bounced', $e]],
         'подписчики' => ["UPDATE subscribers SET active=0 WHERE active=1 AND LOWER(email)=?", [$e]],
@@ -57,7 +57,7 @@ foreach ($rows as $r) {
     ] as $what => [$sql, $args]) {
         try { q($sql, $args); $n[$what] += $chg(); } catch (\Throwable $ex) {}
     }
-    q("UPDATE mail_events SET handled_at=datetime('now') WHERE id=?", [(int) $r['id']]);
+    q("UPDATE mail_events SET handled_at=datetime('now','localtime') WHERE id=?", [(int) $r['id']]);
 }
 
 mea_log('разобрано событий ' . count($rows) . ': снято учреждений ' . $n['учреждения']

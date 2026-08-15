@@ -486,7 +486,7 @@ if ($id = (int) input('id')) {
                 <td class="small"><?= h($itsTxt ?: '—') ?><?= !empty($o['tracking']) ? '<br><span class="muted">трек: '.h((string)$o['tracking']).'</span>' : '' ?></td>
                 <td class="small"><b><?= number_format((int)$o['amount'], 0, '.', ' ') ?> ₽</b></td>
                 <td class="small"><span class="badge badge--<?= h((string)$o['status']) ?>"><?= h($ordLbl[(string)$o['status']] ?? (string)$o['status']) ?></span></td>
-                <td class="small"><?= h(date('d.m.Y', strtotime((string)$o['created_at']))) ?></td>
+                <td class="small" style="white-space:nowrap"><?= h(date('d.m.Y', strtotime((string)$o['created_at']))) ?><br><span class="muted"><?= h(date('H:i', strtotime((string)$o['created_at']))) ?></span></td>
                 <td class="small"><a class="btn btn--ghost btn--sm" href="<?= a_link('orders', ['id'=>(int)$o['id']]) ?>">Открыть</a></td>
               </tr>
             <?php endforeach; ?>

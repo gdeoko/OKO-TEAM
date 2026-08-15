@@ -32,7 +32,7 @@ function chat_learn_migrate(): void {
             bad TEXT DEFAULT '',
             good TEXT DEFAULT '',
             session_key TEXT DEFAULT '',
-            created_at TEXT DEFAULT (datetime('now'))
+            created_at TEXT DEFAULT (datetime('now','localtime'))
         )");
         db()->exec("CREATE INDEX IF NOT EXISTS idx_lessons_created ON chat_lessons(created_at DESC)");
     } catch (\Throwable $e) {}

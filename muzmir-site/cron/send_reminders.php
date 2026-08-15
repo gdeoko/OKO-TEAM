@@ -112,7 +112,7 @@ try {
            JOIN competitions c ON c.id = a.competition_id
           WHERE a.email <> ''
             AND c.results_date IS NOT NULL
-            AND date(c.results_date) <= date('now', '-3 days')
+            AND date(c.results_date) <= date('now','localtime', '-3 days')
             -- Письмо называет звание участника, поэтому уходит только по уже
             -- раскрытому результату: по длинному конкурсу — после публикации
             -- списка, по короткому — после письма с результатом. Прежнее условие
@@ -159,7 +159,7 @@ try {
     $subs = all("SELECT email, name, unsub_token FROM subscribers WHERE active=1 AND email <> ''");
     foreach ([5, 3, 1] as $days) {
         $comps = all(
-            "SELECT * FROM competitions WHERE status='open' AND end_date IS NOT NULL AND date(end_date)=date('now', ?)",
+            "SELECT * FROM competitions WHERE status='open' AND end_date IS NOT NULL AND date(end_date)=date('now','localtime', ?)",
             ["+$days days"]
         );
         foreach ($comps as $c) {
@@ -198,7 +198,7 @@ try {
            JOIN applications a ON a.id = d.application_id
            JOIN competitions c ON c.id = a.competition_id
           WHERE d.sent_at IS NOT NULL
-            AND date(d.sent_at) <= date('now', '-3 days')
+            AND date(d.sent_at) <= date('now','localtime', '-3 days')
             AND a.email <> ''
           GROUP BY a.id"
     );

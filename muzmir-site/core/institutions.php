@@ -52,8 +52,8 @@ function inst_migrate(): void {
             replied_at TEXT DEFAULT '',
             bounce_count INTEGER DEFAULT 0,
             note TEXT DEFAULT '',
-            created_at TEXT DEFAULT (datetime('now')),
-            updated_at TEXT DEFAULT (datetime('now'))
+            created_at TEXT DEFAULT (datetime('now','localtime')),
+            updated_at TEXT DEFAULT (datetime('now','localtime'))
         )");
         // Один адрес — одна запись. Пустой email не мешает: в SQLite NULL/'' в
         // уникальном индексе повторяться нельзя, поэтому индекс частичный.
@@ -432,7 +432,7 @@ function inst_pick_for_reinvite(int $limit = 500, int $months = 3, int $maxLette
                 AND COALESCE(bounce_count,0) < 2
                 AND COALESCE(invited_count,1) < ?
                 AND invited_at <> ''
-                AND invited_at < datetime('now', ?)
+                AND invited_at < datetime('now', 'localtime', ?)
               ORDER BY CASE WHEN COALESCE(director,'') <> '' THEN 0 ELSE 1 END,
                        invited_at ASC
               LIMIT ?",
@@ -474,7 +474,7 @@ function inst_reset_ghost_invites(bool $apply = true): int {
                                AND NOT EXISTS (SELECT 1 FROM mail_queue q
                                                 WHERE LOWER(q.to_email)=LOWER(i.email))") ?? 0);
         if ($apply && $n > 0) {
-            q("UPDATE institutions SET status='new', updated_at=datetime('now')
+            q("UPDATE institutions SET status='new', updated_at=datetime('now','localtime')
                 WHERE status='invited'
                   AND TRIM(COALESCE(email,''))<>''
                   AND NOT EXISTS (SELECT 1 FROM mail_queue q

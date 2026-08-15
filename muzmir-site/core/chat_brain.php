@@ -766,7 +766,7 @@ function chat_should_greet(string $sessionKey): bool {
     try {
         $lastEndId = (int) (scalar("SELECT MAX(id) FROM chat_messages WHERE session_key=? AND role='dialog_end'", [$sessionKey]) ?: 0);
         $recent = (int) scalar(
-            "SELECT COUNT(*) FROM chat_messages WHERE session_key=? AND role IN ('assistant','assistant_followup') AND id>? AND created_at > datetime('now','-1 day')",
+            "SELECT COUNT(*) FROM chat_messages WHERE session_key=? AND role IN ('assistant','assistant_followup') AND id>? AND created_at > datetime('now','localtime','-1 day')",
             [$sessionKey, $lastEndId]
         );
         return $recent === 0;

@@ -41,7 +41,7 @@ function qw_report(array $u): string {
     // трёх суток, а не по плану: план растёт, а квота одна.
     $recent = (int) (scalar("SELECT COUNT(*) FROM mail_queue
                               WHERE status='sent' AND COALESCE(priority,0) > 0
-                                AND sent_at >= datetime('now','-3 day')") ?? 0);
+                                AND sent_at >= datetime('now','localtime','-3 day')") ?? 0);
     $perDay = max(1, (int) round($recent / 3));
     $days   = $u['left'] < 0 ? 0 : (int) floor($u['left'] / $perDay);
 

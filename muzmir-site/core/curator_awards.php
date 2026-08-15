@@ -144,7 +144,7 @@ function curator_already_thanked(int $competitionId, string $teacherKey): bool {
             email TEXT,
             works INTEGER DEFAULT 0,
             pdf_path TEXT DEFAULT '',
-            created_at TEXT DEFAULT (datetime('now')),
+            created_at TEXT DEFAULT (datetime('now','localtime')),
             sent_at TEXT
         )");
         db()->exec("CREATE UNIQUE INDEX IF NOT EXISTS idx_curator_thanks_uni

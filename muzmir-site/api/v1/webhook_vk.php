@@ -61,7 +61,7 @@ try {
     q("CREATE TABLE IF NOT EXISTS vk_cb_events (
         event_id TEXT PRIMARY KEY,
         type TEXT,
-        created_at TEXT DEFAULT (datetime('now'))
+        created_at TEXT DEFAULT (datetime('now','localtime'))
     )");
     if ($eventId !== '') {
         $dup = (int) scalar("SELECT COUNT(*) FROM vk_cb_events WHERE event_id=?", [$eventId]);
@@ -345,7 +345,7 @@ function _vk_bot_ensure_chatlog(): void {
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             user_id INTEGER, session_key TEXT, role TEXT, text TEXT,
             file TEXT DEFAULT '',
-            created_at TEXT DEFAULT (datetime('now'))
+            created_at TEXT DEFAULT (datetime('now','localtime'))
         )");
     } catch (\Throwable $e) {}
 }

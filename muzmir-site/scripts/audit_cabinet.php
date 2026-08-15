@@ -265,7 +265,7 @@ chk('в кабинете есть блок достижений', stripos($cab['
 
 /* ───────── ВИП-клуб: до и после подписки ───────── */
 sec('ВИП-клуб: состояние ДО подписки');
-q("UPDATE club_members SET active=0, expires_at=datetime('now','-1 day') WHERE user_id=?", [$uid]);
+q("UPDATE club_members SET active=0, expires_at=datetime('now','localtime','-1 day') WHERE user_id=?", [$uid]);
 chk('клуб неактивен', !club_is_active($uid));
 chk('скидка клуба = 0%', club_discount_percent($uid) === 0, club_discount_percent($uid) . '%');
 $cab = http($UJAR, $BASE . '/cabinet');
@@ -409,7 +409,7 @@ if ($cid > 0) {
     q("UPDATE competitions SET price=500 WHERE id=?", [$cid]);
     // Свежая тестовая неоплаченная заявка
     q("INSERT INTO applications(user_id,competition_id,number,full_name,email,status,is_paid,created_at)
-       VALUES(?,?,?,?,?,'new',0,datetime('now'))",
+       VALUES(?,?,?,?,?,'new',0,datetime('now','localtime'))",
       [$uid, $cid, 'AUDIT-PAY-' . substr(bin2hex(random_bytes(3)), 0, 6), 'Тест Правка', $USER_MAIL]);
     $aid = (int) db()->lastInsertId();
 
@@ -482,7 +482,7 @@ chk('в афише конкурсов видна клубная цена',
 chk('в афише полная цена зачёркнута', preg_match('~cc-fee--club.*?<s>\d+~s', $compPage['body']) === 1);
 
 sec('ВИП-клуб: снятие привилегий по истечении');
-q("UPDATE club_members SET expires_at=datetime('now','-1 hour') WHERE user_id=?", [$uid]);
+q("UPDATE club_members SET expires_at=datetime('now','localtime','-1 hour') WHERE user_id=?", [$uid]);
 chk('после истечения клуб неактивен', !club_is_active($uid));
 chk('после истечения скидка обнулилась', club_discount_percent($uid) === 0, club_discount_percent($uid) . '%');
 $vipList2 = array_map(fn($r) => mb_strtolower((string) $r['email']), nl_resolve_recipients('vip'));

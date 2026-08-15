@@ -271,6 +271,22 @@ function ru_date(?string $d): string {
     return (int)date('j', $ts) . ' ' . $months[(int)date('n', $ts)] . ' ' . date('Y', $ts);
 }
 
+/**
+ * Дата со временем по-русски: «15 августа 2026, 20:40».
+ *
+ * Всё время в базе московское, поэтому здесь ничего не пересчитывается — только
+ * оформляется. Если во входной строке одна дата без часов, время не дописываем:
+ * выдумывать полночь там, где её не было, хуже, чем показать одну дату.
+ */
+function ru_datetime(?string $d): string {
+    $s = trim((string) $d);
+    if ($s === '') return '';
+    $ts = strtotime($s);
+    if (!$ts) return '';
+    $date = ru_date(substr($s, 0, 10));
+    return preg_match('~\d{2}:\d{2}~', $s) ? $date . ', ' . date('H:i', $ts) : $date;
+}
+
 /** Относительное время: «5 минут назад», «вчера», «3 дня назад», иначе дата. */
 function ru_relative_time(?string $d): string {
     if (!$d) return '';

@@ -17,7 +17,7 @@ function jury_ensure_schema(): void {
         application_id INTEGER NOT NULL,
         jury_id INTEGER NOT NULL,
         done INTEGER DEFAULT 0,
-        created_at TEXT DEFAULT (datetime('now')),
+        created_at TEXT DEFAULT (datetime('now','localtime')),
         UNIQUE(application_id, jury_id)
     );
     CREATE INDEX IF NOT EXISTS idx_jury_assign_app ON jury_assignments(application_id);
@@ -28,7 +28,7 @@ function jury_ensure_schema(): void {
         application_id INTEGER NOT NULL,
         jury_id INTEGER NOT NULL,
         path TEXT NOT NULL,
-        created_at TEXT DEFAULT (datetime('now')),
+        created_at TEXT DEFAULT (datetime('now','localtime')),
         UNIQUE(application_id, jury_id)
     );
     CREATE INDEX IF NOT EXISTS idx_jury_video_app ON jury_video(application_id);

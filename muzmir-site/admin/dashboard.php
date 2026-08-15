@@ -22,25 +22,25 @@ $paidStatuses = "('paid','succeeded')";
 /* ── Счётчики верхнего уровня ─────────────────────────────────── */
 $new_apps    = (int) scalar("SELECT COUNT(*) FROM applications WHERE status='new'");
 $apps_total  = (int) scalar("SELECT COUNT(*) FROM applications");
-$apps_month  = (int) scalar("SELECT COUNT(*) FROM applications WHERE created_at >= date('now','start of month')");
-$apps_prev   = (int) scalar("SELECT COUNT(*) FROM applications WHERE created_at >= date('now','start of month','-1 month') AND created_at < date('now','start of month')");
+$apps_month  = (int) scalar("SELECT COUNT(*) FROM applications WHERE created_at >= date('now','localtime','start of month')");
+$apps_prev   = (int) scalar("SELECT COUNT(*) FROM applications WHERE created_at >= date('now','localtime','start of month','-1 month') AND created_at < date('now','localtime','start of month')");
 
-$pay_day     = (int) scalar("SELECT COALESCE(SUM(amount),0) FROM payments WHERE status IN $paidStatuses AND date(created_at)=date('now')");
-$pay_month   = (int) scalar("SELECT COALESCE(SUM(amount),0) FROM payments WHERE status IN $paidStatuses AND created_at >= date('now','start of month')");
-$pay_prev    = (int) scalar("SELECT COALESCE(SUM(amount),0) FROM payments WHERE status IN $paidStatuses AND created_at >= date('now','start of month','-1 month') AND created_at < date('now','start of month')");
+$pay_day     = (int) scalar("SELECT COALESCE(SUM(amount),0) FROM payments WHERE status IN $paidStatuses AND date(created_at)=date('now','localtime')");
+$pay_month   = (int) scalar("SELECT COALESCE(SUM(amount),0) FROM payments WHERE status IN $paidStatuses AND created_at >= date('now','localtime','start of month')");
+$pay_prev    = (int) scalar("SELECT COALESCE(SUM(amount),0) FROM payments WHERE status IN $paidStatuses AND created_at >= date('now','localtime','start of month','-1 month') AND created_at < date('now','localtime','start of month')");
 
 $subs        = (int) scalar("SELECT COUNT(*) FROM subscribers WHERE active=1");
-$subs_month  = (int) scalar("SELECT COUNT(*) FROM subscribers WHERE created_at >= date('now','start of month')");
-$subs_prev   = (int) scalar("SELECT COUNT(*) FROM subscribers WHERE created_at >= date('now','start of month','-1 month') AND created_at < date('now','start of month')");
+$subs_month  = (int) scalar("SELECT COUNT(*) FROM subscribers WHERE created_at >= date('now','localtime','start of month')");
+$subs_prev   = (int) scalar("SELECT COUNT(*) FROM subscribers WHERE created_at >= date('now','localtime','start of month','-1 month') AND created_at < date('now','localtime','start of month')");
 
 $comps_total = (int) scalar("SELECT COUNT(*) FROM competitions");
 $comps_open  = (int) scalar("SELECT COUNT(*) FROM competitions WHERE status='open'");
 
 $dip_total   = (int) scalar("SELECT COUNT(*) FROM diplomas");
-$dip_month   = (int) scalar("SELECT COUNT(*) FROM diplomas WHERE created_at >= date('now','start of month')");
+$dip_month   = (int) scalar("SELECT COUNT(*) FROM diplomas WHERE created_at >= date('now','localtime','start of month')");
 $dip_sent    = (int) scalar("SELECT COUNT(*) FROM diplomas WHERE sent_at IS NOT NULL AND sent_at<>''");
 
-$visits_day  = (int) scalar("SELECT COUNT(DISTINCT ip) FROM audit_log WHERE date(created_at)=date('now')");
+$visits_day  = (int) scalar("SELECT COUNT(DISTINCT ip) FROM audit_log WHERE date(created_at)=date('now','localtime')");
 $pending_rev = (int) scalar("SELECT COUNT(*) FROM reviews WHERE status='pending'");
 $queue_wait  = (int) scalar("SELECT COUNT(*) FROM mail_queue WHERE status='queued'");
 // «На оценку» — принятые заявки БЕЗ проставленного результата. По колонке status
@@ -64,12 +64,12 @@ $to_grade_long = (int) scalar("SELECT COUNT(*) FROM applications a
 $days = [];
 for ($i = 13; $i >= 0; $i--) $days[date('Y-m-d', strtotime("-$i day"))] = 0;
 foreach (all("SELECT date(created_at) d, COUNT(*) c FROM applications
-              WHERE created_at >= date('now','-13 day') GROUP BY d") as $r) {
+              WHERE created_at >= date('now','localtime','-13 day') GROUP BY d") as $r) {
     if (isset($days[$r['d']])) $days[$r['d']] = (int)$r['c'];
 }
 $pdays = array_fill_keys(array_keys($days), 0);
 foreach (all("SELECT date(created_at) d, COALESCE(SUM(amount),0) s FROM payments
-              WHERE status IN $paidStatuses AND created_at >= date('now','-13 day') GROUP BY d") as $r) {
+              WHERE status IN $paidStatuses AND created_at >= date('now','localtime','-13 day') GROUP BY d") as $r) {
     if (isset($pdays[$r['d']])) $pdays[$r['d']] = (int)$r['s'];
 }
 

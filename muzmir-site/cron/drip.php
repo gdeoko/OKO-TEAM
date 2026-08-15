@@ -207,8 +207,8 @@ try {
         "SELECT id, email, name, unsub_token, tags
            FROM subscribers
           WHERE active = 1 AND email <> ''
-            AND created_at <= datetime('now', '-3 days')
-            AND created_at >  datetime('now', '-7 days')
+            AND created_at <= datetime('now','localtime','-3 days')
+            AND created_at >  datetime('now','localtime','-7 days')
             AND (tags IS NULL OR tags NOT LIKE '%drip_d3%')
           ORDER BY id
           LIMIT ?",
@@ -242,8 +242,8 @@ try {
             "SELECT id, email, name, unsub_token, tags
                FROM subscribers
               WHERE active = 1 AND email <> ''
-                AND created_at <= datetime('now', '-7 days')
-                AND created_at >  datetime('now', '-14 days')
+                AND created_at <= datetime('now','localtime','-7 days')
+                AND created_at >  datetime('now','localtime','-14 days')
                 AND (tags IS NULL OR tags NOT LIKE '%drip_d7%')
               ORDER BY id
               LIMIT ?",

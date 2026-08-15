@@ -104,7 +104,7 @@ function site_events_ensure(): void {
     try {
         q("CREATE TABLE IF NOT EXISTS site_events (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
-            ts TEXT DEFAULT (datetime('now')),
+            ts TEXT DEFAULT (datetime('now','localtime')),
             type TEXT NOT NULL,
             path TEXT DEFAULT '',
             user_id INTEGER,
@@ -163,7 +163,7 @@ function owner_tg_topics_ensure(): void {
             chat_id TEXT NOT NULL,
             topic TEXT NOT NULL,
             thread_id INTEGER,
-            created_at TEXT DEFAULT (datetime('now')),
+            created_at TEXT DEFAULT (datetime('now','localtime')),
             UNIQUE(chat_id, topic)
         )");
     } catch (\Throwable $e) { /* тихо */ }

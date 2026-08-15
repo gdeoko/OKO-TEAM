@@ -43,7 +43,7 @@ function events_log_ensure(): void {
         status TEXT DEFAULT 'pending',     -- pending|sent|skipped|error
         http_code INTEGER DEFAULT 0,
         response TEXT DEFAULT '',
-        created_at TEXT DEFAULT (datetime('now'))
+        created_at TEXT DEFAULT (datetime('now','localtime'))
     )");
     q("CREATE INDEX IF NOT EXISTS idx_events_type ON events_log(type)");
     $done = true;

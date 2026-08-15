@@ -81,7 +81,7 @@ function inbox_migrate(): void {
             ministry_id  INTEGER DEFAULT 0,      -- ведомство, если узнали
             user_id      INTEGER DEFAULT 0,      -- участник, если узнали
             received_at  TEXT NOT NULL,
-            created_at   TEXT DEFAULT (datetime('now'))
+            created_at   TEXT DEFAULT (datetime('now','localtime'))
         )");
         db()->exec("CREATE UNIQUE INDEX IF NOT EXISTS idx_inbox_key ON inbox_messages(msg_key)");
         db()->exec("CREATE INDEX IF NOT EXISTS idx_inbox_box  ON inbox_messages(mailbox, received_at DESC)");

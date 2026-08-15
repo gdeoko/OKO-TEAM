@@ -78,7 +78,7 @@ function award_reminder_mark(int $appId, string $kind): void {
 /**
  * Момент проставления результата (unix ts): graded_at (пишет PHP по зоне сайта,
  * Europe/Moscow) или, для старых заявок без метки, created_at (SQL-дефолт
- * datetime('now') — UTC, см. соглашение в cron/_lib.php).
+ * datetime('now','localtime') — UTC, см. соглашение в cron/_lib.php).
  */
 function award_graded_ts(array $a): int {
     $g = trim((string) ($a['graded_at'] ?? ''));
@@ -154,7 +154,7 @@ try {
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         app_id INTEGER NOT NULL,
         kind TEXT NOT NULL,
-        sent_at TEXT DEFAULT (datetime('now'))
+        sent_at TEXT DEFAULT (datetime('now','localtime'))
     )");
     q("CREATE UNIQUE INDEX IF NOT EXISTS idx_reminder_log_app_kind ON reminder_log(app_id, kind)");
     // Таблица in-app уведомлений (контракт core/notifications.php) — если её ещё нет.
@@ -166,7 +166,7 @@ try {
         url TEXT DEFAULT '',
         icon TEXT DEFAULT 'bell',
         is_read INTEGER DEFAULT 0,
-        created_at TEXT DEFAULT (datetime('now'))
+        created_at TEXT DEFAULT (datetime('now','localtime'))
     )");
 
     /* ---------- Кандидаты: результат есть, оплаченного заказа наград нет ---------- */

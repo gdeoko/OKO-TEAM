@@ -937,7 +937,7 @@ ob_start(); ?>
                 <div style="min-width:0">
                   <span class="cab-ttl"><?= h($a['comp_name'] ?: 'Конкурс') ?></span>
                   <?php if (!empty($a['work_title'])): ?><p class="cab-meta"><?= h(wt_show((string) $a['work_title'])) ?></p><?php endif; ?>
-                  <p class="cab-meta">Подана <?= h(ru_date(substr((string)$a['created_at'],0,10))) ?></p>
+                  <p class="cab-meta">Подана <?= h(ru_datetime((string)$a['created_at'])) ?></p>
                 </div>
                 <div style="text-align:right"><span class="cab-status cab-status--<?= h($bc) ?>"><?= h($bl) ?></span></div>
               </div>
@@ -1199,7 +1199,7 @@ ob_start(); ?>
                 <div style="min-width:0">
                   <span class="cab-ttl"><?= h(order_items_label($o['items'] ?? '')) ?></span>
                   <p class="cab-meta"><?= h($o['competition'] ?: '') ?><?php if ($o['result']): ?> - <?= h($o['result']) ?><?php endif; ?></p>
-                  <p class="cab-meta">Заказ от <?= h(ru_date(substr((string)$o['created_at'],0,10))) ?><?php if ($o['amount']): ?> - <?= h(money((int)$o['amount'])) ?><?php endif; ?></p>
+                  <p class="cab-meta">Заказ от <?= h(ru_datetime((string)$o['created_at'])) ?><?php if ($o['amount']): ?> - <?= h(money((int)$o['amount'])) ?><?php endif; ?></p>
                   <?php if ($track !== ''): ?><p class="cab-meta">Трек-номер: <strong><?= h($track) ?></strong></p><?php endif; ?>
                 </div>
                 <div style="text-align:right"><?= $badge($sl,$st) ?></div>

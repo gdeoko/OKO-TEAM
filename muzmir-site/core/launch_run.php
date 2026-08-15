@@ -271,7 +271,7 @@ function launch_migrate(): void {
             run_at TEXT NOT NULL,
             status TEXT DEFAULT 'scheduled',   -- scheduled|done|cancelled
             report TEXT DEFAULT '',
-            created_at TEXT DEFAULT (datetime('now')),
+            created_at TEXT DEFAULT (datetime('now','localtime')),
             done_at TEXT
         )");
     } catch (\Throwable $e) {}

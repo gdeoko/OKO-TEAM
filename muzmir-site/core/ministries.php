@@ -51,7 +51,7 @@ function min_migrate(): void {
         last_number TEXT DEFAULT '',
         sent_count  INTEGER DEFAULT 0,
         replied_at  TEXT DEFAULT '',
-        created_at  TEXT DEFAULT (datetime('now'))
+        created_at  TEXT DEFAULT (datetime('now','localtime'))
     );
     CREATE UNIQUE INDEX IF NOT EXISTS idx_min_email ON ministries(email);
     CREATE INDEX IF NOT EXISTS idx_min_kind   ON ministries(kind);
@@ -228,7 +228,7 @@ function min_posts_migrate(): void {
             image_path TEXT DEFAULT '',
             status TEXT DEFAULT 'draft',      -- draft|published|skipped
             vk_post_id TEXT DEFAULT '',
-            created_at TEXT DEFAULT (datetime('now')),
+            created_at TEXT DEFAULT (datetime('now','localtime')),
             published_at TEXT DEFAULT ''
         )");
     } catch (\Throwable $e) {}
@@ -460,7 +460,7 @@ function min_mark_sent(int $id, string $number): void {
     min_migrate();
     try {
         q("UPDATE ministries SET status=CASE WHEN status='new' THEN 'sent' ELSE status END,
-             last_sent_at=datetime('now'), last_number=?, sent_count=sent_count+1 WHERE id=?",
+             last_sent_at=datetime('now','localtime'), last_number=?, sent_count=sent_count+1 WHERE id=?",
           [$number, $id]);
     } catch (\Throwable $e) {}
 }
@@ -470,7 +470,7 @@ function min_mark_replied(string $email, string $status = 'replied'): void {
     $ok = ['replied', 'supported', 'declined'];
     if (!in_array($status, $ok, true)) $status = 'replied';
     try {
-        q("UPDATE ministries SET status=?, replied_at=datetime('now') WHERE email=?",
+        q("UPDATE ministries SET status=?, replied_at=datetime('now','localtime') WHERE email=?",
           [$status, mb_strtolower(trim($email))]);
     } catch (\Throwable $e) {}
 }

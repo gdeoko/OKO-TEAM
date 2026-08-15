@@ -144,7 +144,7 @@ chk('оргкомитет → галочка команды', vip_kind(null, '',
 // золотая, и требовать от него синей бессмысленно.
 $clubUid = (int) (scalar("SELECT cm.user_id FROM club_members cm
                             JOIN users u ON u.id=cm.user_id
-                           WHERE cm.active=1 AND cm.expires_at > datetime('now')
+                           WHERE cm.active=1 AND cm.expires_at > datetime('now','localtime')
                              AND COALESCE(cm.source,'') <> 'staff'
                              AND u.role NOT IN ('owner','admin','orgcom')
                            LIMIT 1") ?? 0);
@@ -161,7 +161,7 @@ chk('в подписи синей галочки написано про ВИП-
 // заявке почту центра, раньше получал золотую галочку оргкомитета вместо синей ВИП.
 $clubUid2 = (int) (scalar("SELECT cm.user_id FROM club_members cm
                             JOIN users u ON u.id=cm.user_id
-                           WHERE cm.active=1 AND cm.expires_at > datetime('now')
+                           WHERE cm.active=1 AND cm.expires_at > datetime('now','localtime')
                              AND COALESCE(cm.source,'') <> 'staff'
                              AND u.role NOT IN ('owner','admin','orgcom')
                            LIMIT 1") ?? 0);
@@ -189,7 +189,7 @@ $vipTempUid = (int) $__vipUser['id'];
 if ($vipTempUid > 0) {
     q("DELETE FROM club_members WHERE user_id=?", [$vipTempUid]);
     q("INSERT INTO club_members(user_id,started_at,expires_at,source,active,created,period,auto_renew)
-       VALUES(?,datetime('now'),datetime('now','+1 day'),'audit',1,datetime('now'),'month',0)", [$vipTempUid]);
+       VALUES(?,datetime('now','localtime'),datetime('now','localtime','+1 day'),'audit',1,datetime('now','localtime'),'month',0)", [$vipTempUid]);
     ok('на время проверки выдано членство клуба временному участнику', 'id=' . $vipTempUid);
 }
 $dipComp = (int) (scalar("SELECT a.competition_id FROM diplomas d

@@ -43,8 +43,8 @@ foreach (all("SELECT subject, COUNT(*) n FROM mail_queue WHERE status='queued'
 
 /* ── 2. Темп и срок ───────────────────────────────────────────────────────── */
 echo "\nТЕМП ОТПРАВКИ\n$line\n";
-$sent24 = (int) (scalar("SELECT COUNT(*) FROM mail_queue WHERE status='sent' AND sent_at > datetime('now','-1 day')") ?? 0);
-$sent1h = (int) (scalar("SELECT COUNT(*) FROM mail_queue WHERE status='sent' AND sent_at > datetime('now','-1 hour')") ?? 0);
+$sent24 = (int) (scalar("SELECT COUNT(*) FROM mail_queue WHERE status='sent' AND sent_at > datetime('now','localtime','-1 day')") ?? 0);
+$sent1h = (int) (scalar("SELECT COUNT(*) FROM mail_queue WHERE status='sent' AND sent_at > datetime('now','localtime','-1 hour')") ?? 0);
 $queued = (int) (scalar("SELECT COUNT(*) FROM mail_queue WHERE status='queued'") ?? 0);
 printf("  за последний час:   %d\n  за последние сутки: %d\n", $sent1h, $sent24);
 if ($sent24 > 0) {
@@ -79,7 +79,7 @@ if (function_exists('nl_service_cap_today')) {
     printf("  норма на сегодня: %d, из них уже ушло %d\n",
         nl_service_cap_today(),
         (int) (scalar("SELECT COUNT(*) FROM mail_queue WHERE status='sent'
-                        AND COALESCE(priority,0)>0 AND date(sent_at)=date('now')") ?? 0));
+                        AND COALESCE(priority,0)>0 AND date(sent_at)=date('now','localtime')") ?? 0));
 }
 
 /* ── 3. Что уходить не должно ─────────────────────────────────────────────── */

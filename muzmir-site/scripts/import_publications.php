@@ -10,7 +10,7 @@ $items = json_decode(file_get_contents($json), true);
 if (!is_array($items)) { fwrite(STDERR, "bad manifest\n"); exit(1); }
 $d = new PDO('sqlite:' . $db);
 $d->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
-$d->exec('CREATE TABLE IF NOT EXISTS publications (id INTEGER PRIMARY KEY AUTOINCREMENT, url TEXT NOT NULL UNIQUE, title TEXT NOT NULL, source TEXT, host TEXT, sort INTEGER DEFAULT 0, created_at TEXT DEFAULT CURRENT_TIMESTAMP)');
+$d->exec('CREATE TABLE IF NOT EXISTS publications (id INTEGER PRIMARY KEY AUTOINCREMENT, url TEXT NOT NULL UNIQUE, title TEXT NOT NULL, source TEXT, host TEXT, sort INTEGER DEFAULT 0, created_at TEXT DEFAULT (datetime(\'now\',\'localtime\')))');
 $d->exec('BEGIN');
 $d->exec('DELETE FROM publications');
 $ins = $d->prepare('INSERT OR IGNORE INTO publications (url,title,source,host,sort) VALUES (?,?,?,?,?)');

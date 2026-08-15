@@ -23,11 +23,11 @@ function club_boot(): void {
     CREATE TABLE IF NOT EXISTS club_members (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         user_id INTEGER NOT NULL UNIQUE,        -- одно членство на пользователя
-        started_at TEXT DEFAULT (datetime('now')), -- дата первого вступления
+        started_at TEXT DEFAULT (datetime('now','localtime')), -- дата первого вступления
         expires_at TEXT,                        -- срок действия членства (UTC datetime)
         source TEXT DEFAULT 'payment',          -- payment|manual|import и т.п.
         active INTEGER DEFAULT 1,               -- админ-выключатель; срок проверяется отдельно
-        created TEXT DEFAULT (datetime('now'))
+        created TEXT DEFAULT (datetime('now','localtime'))
     );
     CREATE INDEX IF NOT EXISTS idx_club_user ON club_members(user_id);
     CREATE INDEX IF NOT EXISTS idx_club_exp  ON club_members(expires_at);
@@ -70,8 +70,8 @@ function club_grant(int $userId, int $months = 1, string $source = 'payment', ar
         q(
             "UPDATE club_members
                 SET expires_at = datetime(
-                        CASE WHEN expires_at IS NOT NULL AND expires_at > datetime('now')
-                             THEN expires_at ELSE datetime('now') END,
+                        CASE WHEN expires_at IS NOT NULL AND expires_at > datetime('now','localtime')
+                             THEN expires_at ELSE datetime('now','localtime') END,
                         '+' || ? || ' months'),
                     active = 1,
                     source = ?
@@ -81,7 +81,7 @@ function club_grant(int $userId, int $months = 1, string $source = 'payment', ar
     } else {
         q(
             "INSERT INTO club_members (user_id, started_at, expires_at, source, active)
-             VALUES (?, datetime('now'), datetime('now', '+' || ? || ' months'), ?, 1)",
+             VALUES (?, datetime('now','localtime'), datetime('now','localtime','+' || ? || ' months'), ?, 1)",
             [$userId, $months, $source]
         );
     }
@@ -115,7 +115,7 @@ function club_due_for_charge(int $limit = 50): array {
            FROM club_members m JOIN users u ON u.id = m.user_id
           WHERE m.active = 1 AND COALESCE(m.auto_renew,0) = 1
             AND COALESCE(m.charge_fails,0) < 3
-            AND m.expires_at IS NOT NULL AND m.expires_at <= datetime('now')
+            AND m.expires_at IS NOT NULL AND m.expires_at <= datetime('now','localtime')
           ORDER BY m.expires_at ASC LIMIT ?", [$limit]
     );
 }
@@ -127,7 +127,7 @@ function club_expired(int $limit = 100): array {
         "SELECT m.*, u.email, u.full_name
            FROM club_members m JOIN users u ON u.id = m.user_id
           WHERE m.active = 1
-            AND m.expires_at IS NOT NULL AND m.expires_at <= datetime('now')
+            AND m.expires_at IS NOT NULL AND m.expires_at <= datetime('now','localtime')
             AND (COALESCE(m.auto_renew,0) = 0 OR COALESCE(m.charge_fails,0) >= 3)
           ORDER BY m.expires_at ASC LIMIT ?", [$limit]
     );
@@ -173,7 +173,7 @@ function club_is_active(int $userId): bool {
     if (club_is_staff($userId)) return true;          // безлимитная подписка команды
     $n = (int) scalar(
         "SELECT COUNT(*) FROM club_members
-          WHERE user_id=? AND active=1 AND expires_at IS NOT NULL AND expires_at > datetime('now')",
+          WHERE user_id=? AND active=1 AND expires_at IS NOT NULL AND expires_at > datetime('now','localtime')",
         [$userId]
     );
     return $n > 0;
@@ -210,7 +210,7 @@ function club_status(int $userId): array {
     $out['auto_renew'] = (int) ($row['auto_renew'] ?? 0) === 1;
     $out['period']     = (string) ($row['period'] ?? 'month');
     $exp = $row['expires_at'] ?? null;
-    // ВАЖНО про время: expires_at пишется SQL-функцией datetime('now') — это UTC
+    // ВАЖНО про время: expires_at пишется SQL-функцией datetime('now','localtime') — это UTC
     // (см. соглашение в cron/_lib.php), а сайт живёт в Europe/Moscow. Раньше здесь
     // стоял strtotime($exp) без указания зоны: PHP читал UTC-строку как московскую,
     // и кабинет ещё три часа показывал «членство активно», когда скидки уже не

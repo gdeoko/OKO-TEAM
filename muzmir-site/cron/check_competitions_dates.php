@@ -69,7 +69,7 @@ try {
 
     /* ---------- 1) Автозакрытие приёма заявок ---------- */
     $closed = 0;
-    $toClose = all("SELECT * FROM competitions WHERE status='open' AND end_date IS NOT NULL AND date(end_date) < date('now')");
+    $toClose = all("SELECT * FROM competitions WHERE status='open' AND end_date IS NOT NULL AND date(end_date) < date('now','localtime')");
     foreach ($toClose as $c) {
         $cid = (int) $c['id'];
         update('competitions', ['status' => 'closed'], 'id=:wid', ['wid' => $cid]);
@@ -99,7 +99,7 @@ try {
     }
 
     /* ---------- 3) Афиши «Результаты» ---------- */
-    $withResults = all("SELECT * FROM competitions WHERE results_date IS NOT NULL AND date(results_date) <= date('now')");
+    $withResults = all("SELECT * FROM competitions WHERE results_date IS NOT NULL AND date(results_date) <= date('now','localtime')");
     foreach ($withResults as $c) {
         ensure_poster($c, 'results');
     }

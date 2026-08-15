@@ -45,7 +45,7 @@ function ol_migrate(): void {
             status TEXT DEFAULT 'new',         -- new|queued|sent|replied|declined
             replied_at TEXT DEFAULT '',
             reply_file TEXT DEFAULT '',        -- скан ответа, если пришёл
-            created_at TEXT DEFAULT (datetime('now')),
+            created_at TEXT DEFAULT (datetime('now','localtime')),
             sent_at TEXT DEFAULT ''
         )");
         // Файл документа и строка очереди — добавлены позже, поэтому мягко.

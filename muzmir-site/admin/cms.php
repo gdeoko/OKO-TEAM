@@ -236,7 +236,7 @@ if ($tab === 'pages'):
       <?php foreach ($pages as $p): $ml=mb_strlen((string)$p['meta_description']); ?>
         <tr><td><b><?= h($p['title']) ?></b></td><td class="small"><span class="tag"><?= h($p['slug']) ?></span></td>
           <td class="small"><?php if(!$ml): ?><span class="badge badge--rejected">нет</span><?php elseif($ml<70||$ml>170): ?><span class="badge badge--judging"><?= $ml ?></span><?php else: ?><span class="badge badge--paid"><?= $ml ?></span><?php endif; ?></td>
-          <td class="small"><?= h(date('d.m.y', strtotime($p['updated_at']))) ?></td>
+          <td class="small" style="white-space:nowrap"><?= h(date('d.m.y', strtotime($p['updated_at']))) ?> <span class="muted"><?= h(date('H:i', strtotime($p['updated_at']))) ?></span></td>
           <td style="white-space:nowrap"><a class="btn btn--navy btn--sm" href="<?= a_link('cms',['tab'=>'pages','edit'=>$p['id']]) ?>"><?= admin_icon('edit') ?>Править</a>
             <a class="btn btn--ghost btn--sm" href="<?= h(cms_page_url((string)$p['slug'])) ?>" target="_blank" rel="noopener"><?= admin_icon('eye') ?></a></td></tr>
       <?php endforeach; ?>

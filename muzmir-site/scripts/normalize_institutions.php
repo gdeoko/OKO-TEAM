@@ -186,11 +186,11 @@ if (!$apply) {
 $db = db();
 $db->beginTransaction();
 foreach ($rename as $id => $now) {
-    q("UPDATE institutions SET name = ?, updated_at = datetime('now') WHERE id = ?", [$now, $id]);
+    q("UPDATE institutions SET name = ?, updated_at = datetime('now','localtime') WHERE id = ?", [$now, $id]);
 }
 foreach ($junk as $id => $why) {
     q("UPDATE institutions SET status = 'invalid', note = TRIM(COALESCE(note,'') || ' [' || ? || ']'),
-              updated_at = datetime('now') WHERE id = ?", [$why, $id]);
+              updated_at = datetime('now','localtime') WHERE id = ?", [$why, $id]);
 }
 $db->commit();
 

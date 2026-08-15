@@ -55,11 +55,67 @@ if (!function_exists('tbl_exists')) {
         return (bool) one("SELECT name FROM sqlite_master WHERE type='table' AND name=?", [$t]);
     }
 }
+/**
+ * ВРЕМЯ СОЗДАНИЯ ЗАПИСИ СТАВИМ САМИ, ПО МОСКВЕ.
+ *
+ * У почти всех таблиц created_at заполнялся умолчанием SQLite — datetime('now'),
+ * а это ВСЕМИРНОЕ время, без часового пояса. Заявка, поданная в 11:04 по Москве,
+ * ложилась в базу как 08:04, и в админке рядом стояли два времени одного события
+ * с разницей в три часа: время подачи от SQLite и время письма от PHP.
+ *
+ * Умолчания в схеме починены отдельно (scripts/fix_tz_defaults.php), но эта
+ * подстраховка остаётся: время проставляется здесь, в единственной точке вставки,
+ * и уже не зависит от того, что записано в схеме. Если вызывающий код задал
+ * значение сам, не трогаем.
+ */
 function insert(string $table, array $data): int {
+    foreach (db_tz_columns($table) as $col) {
+        if (!array_key_exists($col, $data)) $data[$col] = date('Y-m-d H:i:s');
+    }
     $cols = array_keys($data);
     $ph = array_map(fn($c) => ':' . $c, $cols);
     q("INSERT INTO $table (" . implode(',', $cols) . ") VALUES (" . implode(',', $ph) . ")", $data);
     return (int) db()->lastInsertId();
+}
+
+/**
+ * КОЛОНКИ СО ВРЕМЕНЕМ, КОТОРОЕ ИНАЧЕ ПОСТАВИТ SQLITE.
+ *
+ * Это все колонки таблицы, у которых в умолчании стоит datetime('now') — неважно,
+ * как они называются: created_at, created, ts, started_at. Именно им нужно
+ * подставить московское время при вставке. Если умолчание уже с 'localtime',
+ * колонка сюда не попадает — подставлять нечего.
+ */
+function db_tz_columns(string $table): array {
+    static $cache = [];
+    if (!preg_match('/^[A-Za-z_][A-Za-z0-9_]*$/', $table)) return [];
+    if (!isset($cache[$table])) {
+        $out = [];
+        try {
+            foreach (db()->query("PRAGMA table_info(\"$table\")")->fetchAll(PDO::FETCH_ASSOC) as $c) {
+                $def = (string) ($c['dflt_value'] ?? '');
+                if (strpos($def, "datetime('now')") !== false) $out[] = (string) $c['name'];
+            }
+        } catch (\Throwable $e) { $out = []; }
+        $cache[$table] = $out;
+    }
+    return $cache[$table];
+}
+
+/** Есть ли у таблицы такая колонка. Ответ кэшируется: спрашивают на каждой вставке. */
+function db_has_column(string $table, string $column): bool {
+    static $cache = [];
+    if (!preg_match('/^[A-Za-z_][A-Za-z0-9_]*$/', $table)) return false;
+    if (!isset($cache[$table])) {
+        $cols = [];
+        try {
+            foreach (db()->query("PRAGMA table_info(\"$table\")")->fetchAll(PDO::FETCH_ASSOC) as $c) {
+                $cols[(string) $c['name']] = true;
+            }
+        } catch (\Throwable $e) { $cols = []; }
+        $cache[$table] = $cols;
+    }
+    return isset($cache[$table][$column]);
 }
 function update(string $table, array $data, string $where, array $wargs = []): int {
     $set = implode(',', array_map(fn($c) => "$c=:$c", array_keys($data)));
@@ -87,14 +143,14 @@ function db_migrate(PDO $pdo): void {
         reset_expires TEXT DEFAULT '',
         notify_email INTEGER DEFAULT 1,
         notify_tg INTEGER DEFAULT 1,
-        created_at TEXT DEFAULT (datetime('now')),
+        created_at TEXT DEFAULT (datetime('now','localtime')),
         last_login TEXT
     );
     CREATE TABLE IF NOT EXISTS sessions (
         token TEXT PRIMARY KEY,
         user_id INTEGER NOT NULL,
         ip TEXT, ua TEXT,
-        created_at TEXT DEFAULT (datetime('now')),
+        created_at TEXT DEFAULT (datetime('now','localtime')),
         expires_at TEXT
     );
     CREATE TABLE IF NOT EXISTS competitions (
@@ -122,7 +178,7 @@ function db_migrate(PDO $pdo): void {
         region_logos TEXT DEFAULT '',       -- json список лого субъектов
         nominations TEXT DEFAULT '',        -- json активных номинаций
         sort INTEGER DEFAULT 0,
-        created_at TEXT DEFAULT (datetime('now'))
+        created_at TEXT DEFAULT (datetime('now','localtime'))
     );
     CREATE TABLE IF NOT EXISTS awards_prices (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -159,7 +215,7 @@ function db_migrate(PDO $pdo): void {
         score REAL,
         result TEXT DEFAULT '',
         flag TEXT DEFAULT '',                -- suspicious|duplicate
-        created_at TEXT DEFAULT (datetime('now'))
+        created_at TEXT DEFAULT (datetime('now','localtime'))
     );
     CREATE TABLE IF NOT EXISTS jury_grades (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -167,7 +223,7 @@ function db_migrate(PDO $pdo): void {
         jury_id INTEGER NOT NULL,
         score REAL,
         note TEXT DEFAULT '',
-        created_at TEXT DEFAULT (datetime('now'))
+        created_at TEXT DEFAULT (datetime('now','localtime'))
     );
     CREATE TABLE IF NOT EXISTS diplomas (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -179,7 +235,7 @@ function db_migrate(PDO $pdo): void {
         lang TEXT DEFAULT 'ru',
         sent_at TEXT,
         verified_count INTEGER DEFAULT 0,
-        created_at TEXT DEFAULT (datetime('now'))
+        created_at TEXT DEFAULT (datetime('now','localtime'))
     );
     CREATE TABLE IF NOT EXISTS awards_orders (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -192,7 +248,7 @@ function db_migrate(PDO $pdo): void {
         status TEXT DEFAULT 'new',           -- new|paid|shipped|delivered
         tracking TEXT DEFAULT '',
         payment_id TEXT DEFAULT '',
-        created_at TEXT DEFAULT (datetime('now'))
+        created_at TEXT DEFAULT (datetime('now','localtime'))
     );
     CREATE TABLE IF NOT EXISTS payments (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -203,7 +259,7 @@ function db_migrate(PDO $pdo): void {
         status TEXT DEFAULT 'pending',
         yukassa_id TEXT DEFAULT '',
         purpose TEXT DEFAULT '',
-        created_at TEXT DEFAULT (datetime('now'))
+        created_at TEXT DEFAULT (datetime('now','localtime'))
     );
     CREATE TABLE IF NOT EXISTS subscribers (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -213,7 +269,7 @@ function db_migrate(PDO $pdo): void {
         tags TEXT DEFAULT '',
         unsub_token TEXT DEFAULT '',
         active INTEGER DEFAULT 1,
-        created_at TEXT DEFAULT (datetime('now'))
+        created_at TEXT DEFAULT (datetime('now','localtime'))
     );
     CREATE TABLE IF NOT EXISTS newsletters (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -224,7 +280,7 @@ function db_migrate(PDO $pdo): void {
         stats_open INTEGER DEFAULT 0,
         stats_click INTEGER DEFAULT 0,
         status TEXT DEFAULT 'draft',
-        created_at TEXT DEFAULT (datetime('now'))
+        created_at TEXT DEFAULT (datetime('now','localtime'))
     );
     CREATE TABLE IF NOT EXISTS mail_queue (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -236,7 +292,7 @@ function db_migrate(PDO $pdo): void {
         priority INTEGER DEFAULT 0,          -- 0=транзакционное (сразу), >0=массовое (лимит+паузы)
         tries INTEGER DEFAULT 0,
         error TEXT DEFAULT '',
-        created_at TEXT DEFAULT (datetime('now')),
+        created_at TEXT DEFAULT (datetime('now','localtime')),
         sent_at TEXT
     );
     CREATE TABLE IF NOT EXISTS reviews (
@@ -246,7 +302,7 @@ function db_migrate(PDO $pdo): void {
         rating INTEGER DEFAULT 5,
         status TEXT DEFAULT 'pending',       -- pending|published|rejected
         admin_reply TEXT DEFAULT '',
-        created_at TEXT DEFAULT (datetime('now'))
+        created_at TEXT DEFAULT (datetime('now','localtime'))
     );
     CREATE TABLE IF NOT EXISTS faq (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -256,7 +312,7 @@ function db_migrate(PDO $pdo): void {
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         slug TEXT UNIQUE, title TEXT, body TEXT,
         meta_description TEXT DEFAULT '',
-        updated_at TEXT DEFAULT (datetime('now'))
+        updated_at TEXT DEFAULT (datetime('now','localtime'))
     );
     CREATE TABLE IF NOT EXISTS concerts (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -266,7 +322,7 @@ function db_migrate(PDO $pdo): void {
     CREATE TABLE IF NOT EXISTS posters (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         competition_id INTEGER, type TEXT, format TEXT DEFAULT '1x1',
-        image_path TEXT, published_at TEXT, created_at TEXT DEFAULT (datetime('now'))
+        image_path TEXT, published_at TEXT, created_at TEXT DEFAULT (datetime('now','localtime'))
     );
     CREATE TABLE IF NOT EXISTS ministry_letters (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -275,12 +331,12 @@ function db_migrate(PDO $pdo): void {
     CREATE TABLE IF NOT EXISTS chat_messages (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         user_id INTEGER, session_key TEXT, role TEXT, text TEXT,
-        created_at TEXT DEFAULT (datetime('now'))
+        created_at TEXT DEFAULT (datetime('now','localtime'))
     );
     CREATE TABLE IF NOT EXISTS audit_log (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         user_id INTEGER, action TEXT, entity TEXT, entity_id INTEGER,
-        meta TEXT DEFAULT '', ip TEXT DEFAULT '', created_at TEXT DEFAULT (datetime('now'))
+        meta TEXT DEFAULT '', ip TEXT DEFAULT '', created_at TEXT DEFAULT (datetime('now','localtime'))
     );
     CREATE TABLE IF NOT EXISTS settings (key TEXT PRIMARY KEY, value TEXT, updated_at TEXT);
     CREATE TABLE IF NOT EXISTS rate_limit (
@@ -288,7 +344,7 @@ function db_migrate(PDO $pdo): void {
     );
     CREATE TABLE IF NOT EXISTS verify_log (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
-        diploma_number TEXT, ip TEXT, created_at TEXT DEFAULT (datetime('now'))
+        diploma_number TEXT, ip TEXT, created_at TEXT DEFAULT (datetime('now','localtime'))
     );
 
     CREATE INDEX IF NOT EXISTS idx_app_comp ON applications(competition_id);
@@ -423,8 +479,8 @@ function setting(string $key, $default = null) {
     return $r ? $r['value'] : $default;
 }
 function set_setting(string $key, string $value): void {
-    q("INSERT INTO settings(key,value,updated_at) VALUES(?,?,datetime('now'))
-       ON CONFLICT(key) DO UPDATE SET value=excluded.value, updated_at=datetime('now')", [$key, $value]);
+    q("INSERT INTO settings(key,value,updated_at) VALUES(?,?,datetime('now','localtime'))
+       ON CONFLICT(key) DO UPDATE SET value=excluded.value, updated_at=datetime('now','localtime')", [$key, $value]);
 }
 
 require_once __DIR__ . '/seed.php';

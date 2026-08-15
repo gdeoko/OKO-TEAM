@@ -166,7 +166,7 @@ foreach ($chunks as $ch) {
     foreach ([
         'очередь'    => "UPDATE mail_queue SET status='failed', error='адрес подавлен сервисом рассылок'
                           WHERE status='queued' AND LOWER(to_email) IN ($in)",
-        'учреждения' => "UPDATE institutions SET status='bounced', updated_at=datetime('now')
+        'учреждения' => "UPDATE institutions SET status='bounced', updated_at=datetime('now','localtime')
                           WHERE status NOT IN ('bounced','unsubscribed','banned') AND LOWER(email) IN ($in)",
         'подписчики' => "UPDATE subscribers SET active=0 WHERE active=1 AND LOWER(email) IN ($in)",
     ] as $what => $sql) {

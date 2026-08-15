@@ -186,11 +186,11 @@ $db = db();
 $db->beginTransaction();
 foreach ($plan['fix'] as $id => $to) {
     q("UPDATE institutions SET email = ?, note = TRIM(COALESCE(note,'') || ' [домен исправлен]'),
-              updated_at = datetime('now') WHERE id = ?", [$to, $id]);
+              updated_at = datetime('now','localtime') WHERE id = ?", [$to, $id]);
 }
 foreach ($plan['invalid'] as $id => $why) {
     q("UPDATE institutions SET status = 'invalid', note = TRIM(COALESCE(note,'') || ' [' || ? || ']'),
-              updated_at = datetime('now') WHERE id = ?", [$why, $id]);
+              updated_at = datetime('now','localtime') WHERE id = ?", [$why, $id]);
 }
 $db->commit();
 

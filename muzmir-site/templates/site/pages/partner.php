@@ -16,7 +16,7 @@ db()->exec("CREATE TABLE IF NOT EXISTS partner_requests (
     contact TEXT DEFAULT '',
     comment TEXT DEFAULT '',
     status TEXT DEFAULT 'new',
-    created_at TEXT DEFAULT (datetime('now'))
+    created_at TEXT DEFAULT (datetime('now','localtime'))
 )");
 
 $percent = (int) setting('partner_percent', '15');

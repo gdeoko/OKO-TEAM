@@ -37,7 +37,7 @@ function dun_log_ensure(): void {
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             app_id INTEGER NOT NULL,
             kind TEXT NOT NULL,
-            sent_at TEXT DEFAULT (datetime('now')),
+            sent_at TEXT DEFAULT (datetime('now','localtime')),
             UNIQUE(app_id, kind)
         )");
     } catch (\Throwable $e) { /* тихо */ }
@@ -77,7 +77,7 @@ try {
           WHERE c.is_paid=1 AND a.is_paid=0
             AND a.status NOT IN ('rejected','paid','judging','graded','sent','done')
             AND a.email <> ''
-            AND a.created_at >= datetime('now','-4 days')"
+            AND a.created_at >= datetime('now','localtime','-4 days')"
     );
     foreach ($apps as $a) {
         $id = (int) $a['id'];
@@ -120,7 +120,7 @@ try {
     /* ─────────── ЗАКАЗЫ НАГРАД (не оплачены, status='new') ─────────── */
     $ords = all(
         "SELECT * FROM awards_orders
-          WHERE status='new' AND email <> '' AND created_at >= datetime('now','-4 days')"
+          WHERE status='new' AND email <> '' AND created_at >= datetime('now','localtime','-4 days')"
     );
     foreach ($ords as $o) {
         $id = (int) $o['id'];

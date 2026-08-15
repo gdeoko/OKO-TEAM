@@ -441,7 +441,7 @@ if (input('action') === 'profile') {
             <td class="small"><?= h((string)$d['number']) ?></td>
             <td class="small"><?= h($dtMap[$d['type']] ?? $d['type']) ?></td>
             <td class="small"><?= h((string)$d['result']) ?: '—' ?></td>
-            <td class="small"><?= $d['sent_at'] ? h(date('d.m.Y', strtotime((string)$d['sent_at']))) : '<span class="muted">в очереди</span>' ?></td>
+            <td class="small"><?= $d['sent_at'] ? h(date('d.m.Y H:i', strtotime((string)$d['sent_at']))) : '<span class="muted">в очереди</span>' ?></td>
             <td style="white-space:nowrap;text-align:right">
               <a class="btn btn--ghost btn--sm" href="<?= h(url('/verify/'.rawurlencode((string)$d['number']))) ?>" target="_blank" rel="noopener" title="Проверить/посмотреть"><?= admin_icon('eye') ?></a>
               <form method="post" action="<?= url('/admin/') ?>" style="display:inline">
@@ -610,7 +610,7 @@ details.u-d>summary svg{width:15px;height:15px;vertical-align:-2px;margin-right:
           </td>
           <td class="small"><?= h($u['phone'] ?: '—') ?></td>
           <td><span class="badge badge--<?= role_badge_class($u['role']) ?>"><?= h(role_ru($u['role'])) ?></span></td>
-          <td class="small"><?= h(date('d.m.y', strtotime($u['created_at']))) ?></td>
+          <td class="small" style="white-space:nowrap"><?= h(date('d.m.y', strtotime($u['created_at']))) ?><br><span class="muted"><?= h(date('H:i', strtotime($u['created_at']))) ?></span></td>
           <td>
             <?php if ($u['role'] !== 'owner'): ?>
             <form method="post" action="<?= url('/admin/') ?>" class="field--inline">
@@ -683,7 +683,7 @@ details.u-d>summary svg{width:15px;height:15px;vertical-align:-2px;margin-right:
               <div class="u-panel">
                 <div class="u-profile-grid">
                   <div class="u-pm"><div class="k">ID</div><div class="v">#<?= $u['id'] ?></div></div>
-                  <div class="u-pm"><div class="k">Регистрация</div><div class="v"><?= h(date('d.m.Y', strtotime($u['created_at']))) ?></div></div>
+                  <div class="u-pm"><div class="k">Регистрация</div><div class="v"><?= h(date('d.m.Y H:i', strtotime($u['created_at']))) ?></div></div>
                   <div class="u-pm"><div class="k">Последний вход</div><div class="v"><?= !empty($u['last_login']) ? h(date('d.m.Y H:i', strtotime($u['last_login']))) : '—' ?></div></div>
                   <div class="u-pm"><div class="k">Заявок</div><div class="v"><?= $uApps ?></div></div>
                   <div class="u-pm"><div class="k">Email подтверждён</div><div class="v"><?= (int)($u['email_verified'] ?? 0) ? 'да' : 'нет' ?></div></div>
@@ -702,7 +702,7 @@ details.u-d>summary svg{width:15px;height:15px;vertical-align:-2px;margin-right:
                       <?php foreach ($uAppRows as $ap): ?>
                         <li><span class="num"><?= h((string)($ap['number'] ?: ('#'.$ap['id']))) ?></span>
                           <span class="badge badge--<?= role_badge_class('user') ?>" style="background:var(--a-parchment);border:1px solid var(--a-line);color:var(--a-ink)"><?= h(app_status_ru((string)$ap['status'])) ?></span>
-                          <span class="small muted"><?= h(date('d.m.y', strtotime($ap['created_at']))) ?></span>
+                          <span class="small muted"><?= h(date('d.m.y H:i', strtotime($ap['created_at']))) ?></span>
                         </li>
                       <?php endforeach; ?>
                     </ul>

@@ -13,7 +13,7 @@ function current_user(): ?array {
         // сессия на 30 дней, и он спокойно продолжал работать — включая админку,
         // если у него была роль. Блокировка «срабатывала» только при новом входе.
         $row = one("SELECT u.* FROM sessions s JOIN users u ON u.id=s.user_id
-                    WHERE s.token=? AND (s.expires_at IS NULL OR s.expires_at > datetime('now'))
+                    WHERE s.token=? AND (s.expires_at IS NULL OR s.expires_at > datetime('now','localtime'))
                       AND COALESCE(u.blocked,0)=0", [$token]);
         if ($row) $u = $row;
     }

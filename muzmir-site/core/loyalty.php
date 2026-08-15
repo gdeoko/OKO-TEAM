@@ -41,7 +41,7 @@ function loyalty_boot(): void {
         uses INTEGER DEFAULT 0,             -- число оплаченных применений
         active INTEGER DEFAULT 1,
         note TEXT DEFAULT '',
-        created TEXT DEFAULT (datetime('now'))
+        created TEXT DEFAULT (datetime('now','localtime'))
     );
     CREATE TABLE IF NOT EXISTS promo_uses (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -53,7 +53,7 @@ function loyalty_boot(): void {
         amount INTEGER DEFAULT 0,           -- сумма к оплате со скидкой, руб.
         reward INTEGER DEFAULT 0,           -- начислено педагогу, руб.
         status TEXT DEFAULT 'pending',      -- pending|paid
-        created TEXT DEFAULT (datetime('now'))
+        created TEXT DEFAULT (datetime('now','localtime'))
     );
     CREATE INDEX IF NOT EXISTS idx_ref_teacher ON referrals(teacher_user_id);
     CREATE INDEX IF NOT EXISTS idx_promo_ref ON promo_uses(referral_id);
@@ -70,7 +70,7 @@ function loyalty_boot(): void {
         status TEXT DEFAULT 'available',    -- available|used
         used_at TEXT DEFAULT '',
         used_ref TEXT DEFAULT '',           -- где потрачено: application:12 / order:34
-        created TEXT DEFAULT (datetime('now'))
+        created TEXT DEFAULT (datetime('now','localtime'))
     );
     CREATE INDEX IF NOT EXISTS idx_credit_user ON referral_credits(user_id, status);
     ");
@@ -184,7 +184,7 @@ function referral_already_used(?int $userId, string $email): bool {
     $row = one(
         "SELECT id FROM promo_uses
           WHERE ( (user_id IS NOT NULL AND user_id=?) OR (email<>'' AND email=?) )
-            AND ( status='paid' OR (status='pending' AND created >= datetime('now','-1 day')) )
+            AND ( status='paid' OR (status='pending' AND created >= datetime('now','localtime','-1 day')) )
           LIMIT 1",
         [$userId ?? 0, $email]
     );

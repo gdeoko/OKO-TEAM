@@ -263,7 +263,7 @@ function admin_same_work_box(array $rows): string {
     $items = '';
     foreach ($rows as $r) {
         $when = trim((string) $r['graded_at']) !== ''
-            ? ' <span class="muted">· ' . h(date('d.m.Y', strtotime((string) $r['graded_at']))) . '</span>'
+            ? ' <span class="muted">· ' . h(date('d.m.Y H:i', strtotime((string) $r['graded_at']))) . '</span>'
             : '';
         $extra = trim((string) $r['extra']) !== ''
             ? ' <span class="badge badge--extra">' . h($r['extra']) . '</span>'

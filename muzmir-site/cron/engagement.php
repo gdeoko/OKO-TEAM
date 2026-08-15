@@ -45,8 +45,8 @@ try {
         "SELECT DISTINCT u.id, u.full_name
            FROM users u
            JOIN sessions s ON s.user_id = u.id
-          WHERE u.created_at <= datetime('now','-2 days')
-            AND s.created_at >= datetime('now','-30 days')
+          WHERE u.created_at <= datetime('now','localtime','-2 days')
+            AND s.created_at >= datetime('now','localtime','-30 days')
             AND NOT EXISTS (SELECT 1 FROM applications a WHERE a.user_id = u.id)
             AND NOT EXISTS (SELECT 1 FROM notifications n WHERE n.user_id = u.id AND n.icon='nudge')
           LIMIT 300"
@@ -66,9 +66,9 @@ try {
             "SELECT DISTINCT u.id
                FROM users u
                JOIN sessions s ON s.user_id = u.id
-              WHERE s.created_at >= datetime('now','-14 days')
+              WHERE s.created_at >= datetime('now','localtime','-14 days')
                 AND NOT EXISTS (SELECT 1 FROM notifications n WHERE n.user_id = u.id AND n.icon='promo'
-                                AND n.created_at >= datetime('now','-7 days'))
+                                AND n.created_at >= datetime('now','localtime','-7 days'))
               LIMIT " . (int) $PROMO_CAP
         );
         foreach ($rows as $u) {
@@ -100,13 +100,13 @@ try {
     // Активные пользователи (была сессия за 21 день), которым сегодня не слали нудж/промо выше.
     $activeUsers = all(
         "SELECT DISTINCT u.id FROM users u JOIN sessions s ON s.user_id=u.id
-          WHERE s.created_at >= datetime('now','-21 days') LIMIT " . (int)$TIP_CAP);
+          WHERE s.created_at >= datetime('now','localtime','-21 days') LIMIT " . (int)$TIP_CAP);
     foreach ($activeUsers as $u) {
         $uid = (int) $u['id'];
         foreach ($TIPS as [$title, $body, $url, $ic]) {
             // Уже получал этот тип за последние 30 дней? — пропускаем.
             $has = (int) scalar(
-                "SELECT COUNT(*) FROM notifications WHERE user_id=? AND icon=? AND created_at >= datetime('now','-30 days')",
+                "SELECT COUNT(*) FROM notifications WHERE user_id=? AND icon=? AND created_at >= datetime('now','localtime','-30 days')",
                 [$uid, $ic]);
             if ($has) continue;
             notify_user($uid, $title, $body, $url, $ic);

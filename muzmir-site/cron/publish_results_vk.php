@@ -97,7 +97,7 @@ try {
     q("CREATE TABLE IF NOT EXISTS vk_results_log (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         competition_id INTEGER NOT NULL UNIQUE,
-        posted_at TEXT DEFAULT (datetime('now'))
+        posted_at TEXT DEFAULT (datetime('now','localtime'))
     )");
 
     // Бесплатные конкурсы без опубликованных итогов, у которых есть заявки

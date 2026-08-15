@@ -29,7 +29,7 @@ function audit_actor_sweep(): void {
     try {
         $old = all("SELECT id FROM users
                      WHERE email LIKE 'audit-%@example.test'
-                       AND created_at < datetime('now','-1 hour')");
+                       AND created_at < datetime('now','localtime','-1 hour')");
         foreach ($old as $u) {
             $id = (int) $u['id'];
             q("DELETE FROM diplomas WHERE application_id IN (SELECT id FROM applications WHERE user_id=?)", [$id]);

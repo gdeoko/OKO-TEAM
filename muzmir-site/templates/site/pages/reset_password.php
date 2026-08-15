@@ -9,7 +9,7 @@ function reset_lookup(string $token): ?array {
     return one("SELECT * FROM users
                 WHERE reset_token=? AND reset_token<>''
                   AND reset_expires IS NOT NULL AND reset_expires<>''
-                  AND reset_expires > datetime('now')", [$token]);
+                  AND reset_expires > datetime('now','localtime')", [$token]);
 }
 
 $token = input('token');

@@ -43,7 +43,7 @@ try {
         "SELECT * FROM payments
          WHERE status IN ('pending','waiting_for_capture')
            AND yukassa_id != '' AND yukassa_id NOT LIKE 'stub-%'
-           AND created_at >= datetime('now','-3 days')
+           AND created_at >= datetime('now','localtime','-3 days')
          ORDER BY created_at DESC LIMIT 100"
     );
     $checked = 0; $succeeded = 0; $changed = 0;

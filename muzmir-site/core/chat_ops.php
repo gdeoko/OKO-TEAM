@@ -30,8 +30,8 @@ function chat_ops_boot(): void {
             last_admin_at TEXT DEFAULT '',      -- когда оператор в последний раз писал
             pending_offhours INTEGER DEFAULT 0, -- есть вопрос, заданный вне графика (ответить в 9:00)
             offhours_at   TEXT DEFAULT '',      -- когда отправили шаблон «нерабочее время»
-            created_at    TEXT DEFAULT (datetime('now')),
-            updated_at    TEXT DEFAULT (datetime('now'))
+            created_at    TEXT DEFAULT (datetime('now','localtime')),
+            updated_at    TEXT DEFAULT (datetime('now','localtime'))
         )");
     } catch (\Throwable $e) { /* best-effort */ }
 }
@@ -70,7 +70,7 @@ function chat_dialog_set(string $sessionKey, array $fields): void {
         if ($fields) {
             $set = []; $vals = [];
             foreach ($fields as $k => $v) { $set[] = "$k=?"; $vals[] = $v; }
-            $set[] = "updated_at=datetime('now')";
+            $set[] = "updated_at=datetime('now','localtime')";
             $vals[] = $sessionKey;
             q("UPDATE chat_dialogs SET " . implode(',', $set) . " WHERE session_key=?", $vals);
         }

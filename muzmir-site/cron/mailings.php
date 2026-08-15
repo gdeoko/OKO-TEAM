@@ -334,7 +334,7 @@ try {
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         kind TEXT NOT NULL,
         ref TEXT NOT NULL,
-        sent_at TEXT DEFAULT (datetime('now')),
+        sent_at TEXT DEFAULT (datetime('now','localtime')),
         UNIQUE(kind, ref)
     )");
     // Таблица in-app уведомлений (контракт core/notifications.php) — если её ещё нет.
@@ -346,7 +346,7 @@ try {
         url TEXT DEFAULT '',
         icon TEXT DEFAULT 'bell',
         is_read INTEGER DEFAULT 0,
-        created_at TEXT DEFAULT (datetime('now'))
+        created_at TEXT DEFAULT (datetime('now','localtime'))
     )");
 
     $today = date('Y-m-d');            // Europe/Moscow (config.php)
@@ -383,12 +383,12 @@ try {
 
     /* ============ 1. ЗАПУСК КОНКУРСОВ (любой час) ============ */
     // status='open' и (start_date = сегодня ИЛИ конкурс создан < 24 часов назад);
-    // created_at — SQL-дефолт datetime('now'), UTC (см. соглашение в cron/_lib.php).
+    // created_at — SQL-дефолт datetime('now','localtime'), UTC (см. соглашение в cron/_lib.php).
     $launch = array_values(array_filter(
         all(
             "SELECT * FROM competitions
               WHERE status = 'open'
-                AND (date(start_date) = ? OR created_at >= datetime('now', '-1 day'))
+                AND (date(start_date) = ? OR created_at >= datetime('now','localtime','-1 day'))
            ORDER BY id ASC",
             [$today]
         ),

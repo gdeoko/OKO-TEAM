@@ -336,7 +336,7 @@ function chat_ensure_schema(): void {
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             user_id INTEGER, session_key TEXT, role TEXT, text TEXT,
             file TEXT DEFAULT '',
-            created_at TEXT DEFAULT (datetime('now'))
+            created_at TEXT DEFAULT (datetime('now','localtime'))
         )");
         $cols = array_map(static fn($c) => $c['name'] ?? '', all("PRAGMA table_info(chat_messages)"));
         if (!in_array('file', $cols, true)) {

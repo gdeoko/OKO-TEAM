@@ -287,7 +287,7 @@ foreach ($ids as $id) {
 
     min_mark_replied($from, $isRefusal ? 'declined' : 'supported');
     try {
-        q("UPDATE official_letters SET status=?, replied_at=datetime('now') WHERE email=? AND kind='support'",
+        q("UPDATE official_letters SET status=?, replied_at=datetime('now','localtime') WHERE email=? AND kind='support'",
           [$isRefusal ? 'declined' : 'replied', $from]);
     } catch (\Throwable $e) {}
     $replies++;

@@ -108,7 +108,7 @@ function launch_combo_club_emails(): array {
     try {
         $rows = all("SELECT LOWER(u.email) e FROM club_members m JOIN users u ON u.id = m.user_id
                       WHERE COALESCE(m.active,1) = 1
-                        AND (m.expires_at IS NULL OR m.expires_at = '' OR m.expires_at > datetime('now'))
+                        AND (m.expires_at IS NULL OR m.expires_at = '' OR m.expires_at > datetime('now','localtime'))
                         AND COALESCE(u.email,'') <> ''");
         foreach ($rows as $r) $out[(string) $r['e']] = true;
     } catch (\Throwable $e) {}

@@ -57,7 +57,7 @@ function mrep_migrate(): void {
         answered_at TEXT DEFAULT '',
         answer_kind TEXT DEFAULT '',
         msg_key     TEXT DEFAULT '',
-        created_at  TEXT DEFAULT (datetime('now'))
+        created_at  TEXT DEFAULT (datetime('now','localtime'))
     );
     CREATE INDEX IF NOT EXISTS idx_mrep_key ON ministry_replies(msg_key);
     ");
@@ -707,7 +707,7 @@ function mrep_mark_declined(string $email, string $why = ''): bool {
     $e = mb_strtolower(trim($email));
     if ($e === '') return false;
     try {
-        q("UPDATE ministries SET status='declined', replied_at=datetime('now'),
+        q("UPDATE ministries SET status='declined', replied_at=datetime('now','localtime'),
                   note=TRIM(COALESCE(note,'')||' | отказ от "
             . "поддержки: '||?) WHERE lower(email)=?", [$why !== '' ? $why : date('d.m.Y'), $e]);
         return true;

@@ -51,7 +51,7 @@ function mev_migrate(): void {
         event_time TEXT DEFAULT '',
         job_id TEXT DEFAULT '',
         comment TEXT DEFAULT '',
-        created_at TEXT DEFAULT (datetime('now'))
+        created_at TEXT DEFAULT (datetime('now','localtime'))
     )");
     db()->exec("CREATE INDEX IF NOT EXISTS idx_mev_email ON mail_events(email)");
     db()->exec("CREATE INDEX IF NOT EXISTS idx_mev_status ON mail_events(status)");

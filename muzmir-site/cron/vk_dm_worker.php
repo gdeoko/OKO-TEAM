@@ -43,7 +43,7 @@ try {
     foreach ($batch as $m) {
         $r = vk_dm_send((int) $m['peer_id'], (string) $m['message'], (string) $m['attachment'], (int) $m['id']);
         if (isset($r['response'])) {
-            db()->prepare("UPDATE vk_dm_queue SET status='sent', sent_at=datetime('now') WHERE id=?")
+            db()->prepare("UPDATE vk_dm_queue SET status='sent', sent_at=datetime('now','localtime') WHERE id=?")
                 ->execute([(int) $m['id']]);
             $sent++;
         } else {

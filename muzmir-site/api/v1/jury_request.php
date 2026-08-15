@@ -36,7 +36,7 @@ try {
         application_id INTEGER NOT NULL,
         user_id INTEGER NOT NULL,
         status TEXT DEFAULT 'new',
-        created_at TEXT DEFAULT (datetime('now')),
+        created_at TEXT DEFAULT (datetime('now','localtime')),
         UNIQUE(application_id)
     )");
 } catch (\Throwable $e) {}

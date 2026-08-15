@@ -51,7 +51,7 @@ $stats = all("SELECT
                 status,
                 COUNT(*) AS n
               FROM mail_queue
-              WHERE created_at >= datetime('now', '-1 day')
+              WHERE created_at >= datetime('now','localtime','-1 day')
               GROUP BY domain, status
               ORDER BY domain, status");
 foreach ($stats as $r) printf("  %-8s %-8s %d\n", $r['domain'], $r['status'], $r['n']);

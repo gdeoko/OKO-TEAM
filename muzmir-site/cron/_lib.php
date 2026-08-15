@@ -8,7 +8,7 @@
  * Подключать ПОСЛЕ core/db.php + core/helpers.php (использует cfgv/db/one/scalar).
  *
  * Соглашение по времени: created_at и другие *_at-колонки со значением по умолчанию
- * в схеме (core/db.php) пишутся SQL-дефолтом datetime('now') - это UTC, т.к. SQLite
+ * в схеме (core/db.php) пишутся SQL-дефолтом datetime('now','localtime') - это UTC, т.к. SQLite
  * сам по себе не переводит время в локальную зону. А вот значения, которые пишет
  * руками сам код проекта (sent_at, last_login, expires_at и т.п. - см. core/auth.php,
  * core/newsletter.php), готовятся через PHP date() по локальной зоне сайта

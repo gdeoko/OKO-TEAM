@@ -22,7 +22,7 @@ $pay = one(
        LEFT JOIN applications a ON a.id = p.application_id
        LEFT JOIN awards_orders o ON o.id = p.order_id
       WHERE (a.user_id = ? OR o.user_id = ?)
-        AND p.created_at >= datetime('now','-2 hours')
+        AND p.created_at >= datetime('now','localtime','-2 hours')
         AND p.yukassa_id <> '' AND p.yukassa_id NOT LIKE 'stub-%'
       ORDER BY p.id DESC LIMIT 1",
     [$uid, $uid]
