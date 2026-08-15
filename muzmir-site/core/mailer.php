@@ -549,6 +549,57 @@ function mail_pool_names(string $pool): array {
     };
 }
 
+/**
+ * КУДА ДОЛЖЕН ПРИЙТИ ОТВЕТ НА ПИСЬМО (правило владельца, август 2026).
+ *
+ *   партнёрка и учреждения — novosti@
+ *   своя база участников   — news@
+ *   ведомства и министерства — kc@
+ *   награды и заказы       — nagradi.on@
+ *
+ * Раньше обратный адрес был один на всё (mail_reply_to = kc@), а массовые письма
+ * через Unisender не имели его вовсе: ответ уходил на адрес отправителя, и никто
+ * не знал, в каком ящике его искать. Отсюда и ощущение, что на шесть тысяч писем
+ * нет ни одного ответа. Теперь ящик ответа задаётся типом письма и совпадает с
+ * тем, что мы пишем в самом тексте письма (letter_texts: ol_box_email).
+ */
+/**
+ * АДРЕС ДЛЯ ЗАГОЛОВКА ПИСЬМА — ДОМЕН ТОЛЬКО ЛАТИНИЦЕЙ.
+ *
+ * Наш домен кириллический, и в тексте письма он так и должен выглядеть. Но в
+ * заголовках (From, Reply-To) кириллица недопустима: почтовые программы кладут
+ * туда сырые байты, и адрес превращается в мусор — в проверочном письме вместо
+ * kc@музыкальный-мир.рф стояло <"8@."@D>. Ответить на такое письмо нельзя, а
+ * спам-фильтр видит битый заголовок. Поэтому в заголовки домен идёт в punycode.
+ */
+function mail_addr_ascii(string $email): string {
+    $email = trim($email);
+    $at = mb_strrpos($email, '@');
+    if ($at === false) return $email;
+    $box = mb_substr($email, 0, $at);
+    $dom = mb_substr($email, $at + 1);
+    if (preg_match('~^[\x20-\x7E]+$~', $dom)) return $email;   // уже латиница
+    if (function_exists('idn_to_ascii')) {
+        $a = idn_to_ascii($dom, IDNA_DEFAULT, INTL_IDNA_VARIANT_UTS46);
+        if (is_string($a) && $a !== '') return $box . '@' . $a;
+    }
+    // Запасной вариант для сервера без расширения intl: наш единственный домен.
+    if ($dom === 'музыкальный-мир.рф') return $box . '@xn----7sbugdeiegh1b0a9hen.xn--p1ai';
+    return $email;
+}
+
+function mail_reply_box(string $pool): string {
+    $dom = 'музыкальный-мир.рф';
+    $box = match ($pool) {
+        'cold'     => 'novosti',     // первое письмо в школу, сад, ДК — партнёрка
+        'bulk'     => 'news',        // рассылка своей базе
+        'official' => 'kc',          // обращения в ведомства
+        'awards'   => 'nagradi.on',  // наградные документы и заказы
+        default    => 'kc',          // личные письма центра
+    };
+    return mail_addr_ascii($box . '@' . $dom);
+}
+
 /** Ящик по имени из smtp_senders ('main' — основной из config). */
 function mail_account_by_name(string $name): array {
     // Unisender — не почтовый ящик, а сервис рассылок: письма уходят по HTTP API
@@ -719,6 +770,9 @@ function mail_send_failover(string $to, string $subject, string $html, array $op
         mail_log('POOL EMPTY (' . $pool . ') для ' . $to);
         return false;
     }
+    // Обратный адрес — по типу письма, а не один на всё. Если вызывающий код
+    // задал его явно (например, персональный ответ), не перебиваем.
+    if (trim((string) ($opt['reply_to'] ?? '')) === '') $opt['reply_to'] = mail_reply_box($pool);
     $errors = [];
     foreach ($accounts as $i => $acc) {
         $try = $opt;
@@ -793,6 +847,16 @@ function mail_send_unisender(string $to, string $subject, string $html, array $o
         'from_email' => $fromAddr,
         'from_name'  => $fromName,
     ];
+
+    // ОБРАТНЫЙ АДРЕС В МАССОВЫХ ПИСЬМАХ. Его здесь не было вовсе: человек жал
+    // «Ответить», письмо уходило на адрес отправителя, и ответы расползались по
+    // ящикам, в которые никто не смотрел. Теперь адрес ответа проставляется явно
+    // и совпадает с тем, что назван в тексте письма.
+    $replyTo = mail_addr_ascii((string) ($opt['reply_to'] ?? ''));
+    if ($replyTo !== '') {
+        $msg['reply_to'] = $replyTo;
+        $msg['reply_to_name'] = $fromName;
+    }
 
     // ОДНОКЛИКОВАЯ ОТПИСКА В ИНТЕРФЕЙСЕ ПОЧТЫ.
     // Ссылка отписки была только в подвале письма. Gmail и Mail.ru показывают
@@ -898,6 +962,7 @@ function mail_send(string $to, string $subject, string $html, array $opt = []): 
             'from_addr'       => $accT['from_addr'] ?? null,
             'from_name'       => $opt['from_name'] ?? ($accT['from_name'] ?? null),
             'unsubscribe_url' => $opt['unsubscribe_url'] ?? '',
+            'reply_to'        => $opt['reply_to'] ?? '',
         ]);
     }
     $to = trim($to);
@@ -921,7 +986,7 @@ function mail_send(string $to, string $subject, string $html, array $opt = []): 
     }
 
     $fromName = (string) ($opt['from_name'] ?? $acc['from_name'] ?? cfgv('mail_from_name', 'Культурного центра «Музыкальный Мир»'));
-    $replyTo  = (string) ($opt['reply_to'] ?? cfgv('mail_reply_to', ''));
+    $replyTo  = mail_addr_ascii((string) ($opt['reply_to'] ?? cfgv('mail_reply_to', '')));
     // Вложения: 'attachments' (массив путей) имеет приоритет, иначе 'attach'.
     // В 'attach' может прийти И строка (одно вложение), И массив: очередь хранит
     // несколько путей строкой JSON и разворачивает её перед отправкой. Раньше

@@ -562,25 +562,24 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && input('do') === 'edit_app') {
     if (!$cur) { flash('Заявка не найдена.', 'error'); admin_redirect('grading'); }
     $back = array_filter(['id'=>$appId, 'competition'=>$comp, 'order'=>$order]);
 
-    // Обновляем ТОЛЬКО реально присланные поля (защита от затирания при частичной отправке).
-    $fields = ['full_name','group_name','teacher','nomination','work_title','institution','city','age_category','email','phone','video_url'];
-    $data = [];
-    foreach ($fields as $fld) {
-        if (!array_key_exists($fld, $_POST)) continue;
-        $val = trim((string) $_POST[$fld]);
-        if ($fld === 'email') $val = mb_strtolower($val);
-        $data[$fld] = $val;
+    // Обновляем ТОЛЬКО реально присланные поля (защита от затирания при частичной
+    // отправке), а приводим их к единому виду там же, где кабинет и админка —
+    // core/app_fields.php. Иначе поправленное жюри название номера отличалось бы
+    // от того же названия, поправленного участником.
+    require_once BASE_PATH . '/core/app_fields.php';
+    $fields = ['full_name','group_name','teacher','nomination','subgroup','work_title',
+               'institution','city','age_category','formation','email','phone','video_url'];
+    $in = [];
+    foreach ($fields as $fld) if (array_key_exists($fld, $_POST)) $in[$fld] = (string) $_POST[$fld];
+    if (!$in) { flash('Изменений нет.', 'info'); admin_redirect('grading', $back); }
+    $res = app_fields_normalize($in, (array) $cur);
+    if ($res['errors']) {
+        flash(implode(' ', $res['errors']) . ' Заявка не сохранена.', 'error');
+        admin_redirect('grading', $back);
     }
+    $data = $res['data'];
     if (!$data) { flash('Изменений нет.', 'info'); admin_redirect('grading', $back); }
-    if (isset($data['nomination']) && $data['nomination'] !== '' && function_exists('NOMINATIONS') && !array_key_exists($data['nomination'], NOMINATIONS())) {
-        flash('Недопустимая номинация — выберите из списка.', 'error'); admin_redirect('grading', $back);
-    }
-    if (isset($data['age_category']) && $data['age_category'] !== '' && function_exists('AGE_CATEGORIES') && !in_array($data['age_category'], AGE_CATEGORIES(), true)) {
-        flash('Недопустимая возрастная категория — выберите из списка.', 'error'); admin_redirect('grading', $back);
-    }
-    if (isset($data['email']) && $data['email'] !== '' && !filter_var($data['email'], FILTER_VALIDATE_EMAIL)) {
-        flash('Некорректный email.', 'error'); admin_redirect('grading', $back);
-    }
+
     // Смена видео-ссылки — сбрасываем кэш проверки, чтобы перепроверилась.
     if (isset($data['video_url']) && (string)($cur['video_url'] ?? '') !== $data['video_url']) $data['link_check'] = '';
     update('applications', $data, 'id=:wid', ['wid' => $appId]);

@@ -183,44 +183,25 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && input('do') === 'edit_app') {
     $cur = one("SELECT * FROM applications WHERE id=?", [$id]);
     if (!$cur) { flash('Заявка не найдена.', 'error'); admin_redirect('applications'); }
 
-    $data = [
-        'full_name'    => trim((string) input('full_name')),
-        'group_name'   => trim((string) input('group_name')),
-        'teacher'      => trim((string) input('teacher')),
-        'nomination'   => trim((string) input('nomination')),
-        'work_title'   => trim((string) input('work_title')),
-        'institution'  => trim((string) input('institution')),
-        'city'         => trim((string) input('city')),
-        'age_category' => trim((string) input('age_category')),
-        // Контакты и ссылка на выступление правятся здесь же: ошибка в почте
-        // означает, что диплом уйдёт в никуда, а неверная ссылка — что жюри
-        // нечего смотреть. Раньше эти поля можно было поправить только в базе.
-        'formation'    => trim((string) input('formation')),
-        'video_url'    => trim((string) input('video_url')),
-        'email'        => mb_strtolower(trim((string) input('email'))),
-        'phone'        => trim((string) input('phone')),
-        'address'      => trim((string) input('address')),
-        'postal_index' => trim((string) input('postal_index')),
-    ];
-    if ($data['email'] !== '' && !filter_var($data['email'], FILTER_VALIDATE_EMAIL)) {
-        flash('Почта указана с ошибкой — заявка не сохранена.', 'error');
+    // Правила приведения полей — общие с кабинетом участника и с оценкой жюри
+    // (core/app_fields.php). Здесь были свои: название номера сохранялось без
+    // «ёлочек», ФИО оставалось капсом, город не разворачивался в «Страна, город»,
+    // а форма исполнения проверялась по списку solo|duet|ensemble|choir, которого
+    // в справочнике нет, — и любое значение молча откатывалось к прежнему.
+    // Из-за этого одна и та же заявка выглядела в админке иначе, чем в кабинете.
+    require_once BASE_PATH . '/core/app_fields.php';
+    $fields = ['full_name','group_name','teacher','nomination','subgroup','work_title',
+               'institution','city','age_category','formation','video_url','email',
+               'phone','address','postal_index'];
+    $in = [];
+    foreach ($fields as $f) if (array_key_exists($f, $_POST)) $in[$f] = (string) $_POST[$f];
+    $res = app_fields_normalize($in, (array) $cur);
+    if ($res['errors']) {
+        flash(implode(' ', $res['errors']) . ' Заявка не сохранена.', 'error');
         admin_redirect('applications', ['id' => $id]);
     }
-    if ($data['formation'] !== '' && !in_array($data['formation'], ['solo','duet','ensemble','choir'], true)) {
-        $data['formation'] = (string) ($cur['formation'] ?? '');
-    }
-
-    // Валидация по справочникам (если доступны). Пустое значение допустимо.
-    if ($data['nomination'] !== '' && function_exists('NOMINATIONS')
-        && !array_key_exists($data['nomination'], NOMINATIONS())) {
-        flash('Недопустимая номинация — выберите из списка.', 'error');
-        admin_redirect('applications', ['id' => $id]);
-    }
-    if ($data['age_category'] !== '' && function_exists('AGE_CATEGORIES')
-        && !in_array($data['age_category'], AGE_CATEGORIES(), true)) {
-        flash('Недопустимая возрастная категория — выберите из списка.', 'error');
-        admin_redirect('applications', ['id' => $id]);
-    }
+    $data = $res['data'];
+    if (!$data) { flash('Изменений нет.', 'info'); admin_redirect('applications', ['id' => $id]); }
 
     update('applications', $data, 'id=:id', ['id' => $id]);
     // Аудит только реально изменившихся полей.

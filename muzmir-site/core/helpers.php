@@ -80,25 +80,93 @@ function render_page(string $title, string $content, array $opts = []): void {
     require BASE_PATH . '/templates/site/layout.php';
 }
 
-/** CSRF. */
+/**
+ * Секрет приложения для подписи токенов. Лежит рядом с базой (каталог /data вне
+ * web-root), в git не попадает, создаётся сам при первом обращении.
+ */
+function app_secret(): string {
+    static $s = null;
+    if ($s !== null) return $s;
+    $f = BASE_PATH . '/data/app_secret.key';
+    $s = is_file($f) ? trim((string) @file_get_contents($f)) : '';
+    if ($s === '') {
+        $s = bin2hex(random_bytes(32));
+        @mkdir(dirname($f), 0775, true);
+        @file_put_contents($f, $s);
+        @chmod($f, 0600);
+    }
+    return $s;
+}
+
+const CSRF_COOKIE = 'muzmir_csrf';
+
+/**
+ * ТОКЕН ФОРМЫ НЕ ДОЛЖЕН ПРОТУХАТЬ РАНЬШЕ ВХОДА.
+ *
+ * Раньше токен жил в PHP-сессии: cookie входа — 30 дней, а сессия на сервере
+ * умирает через 24 минуты (session.gc_maxlifetime=1440). Человек открывал
+ * кабинет, заполнял «Изменить заявку», отвлекался (или телефон усыплял вкладку),
+ * жал «Сохранить» — сессия уже другая, токен не сходился, и правка молча не
+ * сохранялась. Ровно тот баг, о котором сообщил владелец.
+ *
+ * Теперь токен считается от долгоживущих cookie: у вошедшего — от его 30-дневной
+ * cookie входа, у гостя — от собственной 30-дневной cookie. Угадать его чужой
+ * сайт не может (значений cookie он не видит), а протухнуть раньше самого входа
+ * токен больше не способен.
+ */
+function csrf_boot(): void {
+    if (!empty($_COOKIE[CSRF_COOKIE]) || headers_sent()) return;
+    $t = bin2hex(random_bytes(16));
+    $_COOKIE[CSRF_COOKIE] = $t;
+    setcookie(CSRF_COOKIE, $t, [
+        'expires' => time() + 60 * 60 * 24 * 30, 'path' => '/',
+        'httponly' => true, 'samesite' => 'Lax',
+        'secure' => (($_SERVER['HTTPS'] ?? '') === 'on'),
+    ]);
+}
+
 function csrf_token(): string {
+    $auth = (string) ($_COOKIE['muzmir_sess'] ?? '');
+    if ($auth !== '') return hash_hmac('sha256', 'csrf|user|' . $auth, app_secret());
+    $c = (string) ($_COOKIE[CSRF_COOKIE] ?? '');
+    if ($c !== '') return hash_hmac('sha256', 'csrf|guest|' . $c, app_secret());
     if (empty($_SESSION['csrf'])) $_SESSION['csrf'] = bin2hex(random_bytes(16));
-    return $_SESSION['csrf'];
+    return (string) $_SESSION['csrf'];
 }
 function csrf_field(): string { return '<input type="hidden" name="_csrf" value="' . h(csrf_token()) . '">'; }
+
 /**
- * Проверка CSRF-токена.
- *
- * Было fail-open: если в сессии токена ещё нет (а это обычное состояние — cookie
- * авторизации живёт 30 дней, а PHP-сессия истекает через 24 минуты), сравнение
- * пустого с пустым давало true. То есть достаточно было прислать `_csrf=` пустым —
- * и защита пропускала запрос. Теперь пустой или несовпадающий токен отклоняется
- * всегда: нет токена в сессии — нет и разрешения.
+ * Проверка CSRF-токена. Принимаем любой из действующих токенов этого браузера:
+ * от cookie входа, от гостевой cookie и (для страниц, открытых до обновления)
+ * старый сессионный. Пустой токен не принимается никогда — fail-open здесь был
+ * дырой: достаточно было прислать `_csrf=` пустым.
  */
 function csrf_check(): bool {
+    $got = $_POST['_csrf'] ?? ($_POST['csrf'] ?? '');
+    if (!is_string($got) || $got === '') return false;
+    $ok = [];
+    $auth = (string) ($_COOKIE['muzmir_sess'] ?? '');
+    if ($auth !== '') $ok[] = hash_hmac('sha256', 'csrf|user|' . $auth, app_secret());
+    $c = (string) ($_COOKIE[CSRF_COOKIE] ?? '');
+    if ($c !== '') $ok[] = hash_hmac('sha256', 'csrf|guest|' . $c, app_secret());
     $sess = (string) ($_SESSION['csrf'] ?? '');
-    $got  = $_POST['_csrf'] ?? '';
-    return $sess !== '' && is_string($got) && $got !== '' && hash_equals($sess, $got);
+    if ($sess !== '') $ok[] = $sess;
+    foreach ($ok as $t) if (hash_equals($t, $got)) return true;
+    return false;
+}
+
+/**
+ * Название конкурсного номера для показа — ровно в ОДНОЙ паре «ёлочек».
+ *
+ * В базе название уже хранится в кавычках (quote_title при подаче и при правке),
+ * а шаблоны добавляли свои — участник видел ««Жаворонок»» и в кабинете, и в
+ * списках, и на сертификате, и решал, что правка «не сохранилась».
+ */
+function wt_show(string $s): string {
+    $s = trim($s);
+    if ($s === '') return '';
+    if (preg_match('~^[«"“](.*)[»"”]$~us', $s, $m)) return '«' . trim($m[1]) . '»';
+    return '«' . $s . '»';
 }
 
 /** Flash-сообщения. */

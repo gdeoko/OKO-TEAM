@@ -85,7 +85,7 @@ if (!$fromApp) {
           <a class="order-pick" href="<?= url('/order-awards') ?>?app=<?= (int) $a['id'] ?>">
             <span class="order-pick-main">
               <b><?= h($who) ?></b>
-              <span class="order-pick-sub"><?= h((string) $a['comp_name']) ?><?= trim((string) $a['work_title']) !== '' ? ' — «' . h((string) $a['work_title']) . '»' : '' ?></span>
+              <span class="order-pick-sub"><?= h((string) $a['comp_name']) ?><?= trim((string) $a['work_title']) !== '' ? ' — ' . h(wt_show((string) $a['work_title'])) : '' ?></span>
             </span>
             <span class="order-pick-res"><?= h((string) $a['result']) ?></span>
           </a>

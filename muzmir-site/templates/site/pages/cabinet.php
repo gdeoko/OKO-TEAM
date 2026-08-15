@@ -9,7 +9,16 @@ $isTeacher = in_array($user['role'], ['teacher','jury','moderator','admin','owne
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $action = input('action');
     if (!csrf_check()) {
-        flash('Сессия устарела. Обновите страницу и попробуйте снова.', 'error');
+        // Не оставляем человека на месте с ощущением «кнопка не работает»: говорим
+        // прямо, что сохранить не удалось, и возвращаем к его заявкам.
+        if ($action === 'edit_app') {
+            $dir = BASE_PATH . '/data/logs';
+            if (!is_dir($dir)) @mkdir($dir, 0775, true);
+            @file_put_contents($dir . '/app_edit.log', date('Y-m-d H:i:s') . ' участник=' . $uid
+                . ' заявка=' . (int) input('app_id') . " — не сошёлся токен формы\n", FILE_APPEND);
+        }
+        flash('Не удалось сохранить: страница была открыта слишком долго. Обновите страницу и повторите — данные не изменились.', 'error');
+        redirect($action === 'edit_app' ? '/cabinet#apps' : '/cabinet');
     } elseif ($action === 'notify') {
         update('users', [
             'notify_email' => isset($_POST['notify_email']) ? 1 : 0,
@@ -212,6 +221,22 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         }
         redirect('/cabinet');
     } elseif ($action === 'edit_app') {
+        /* ЖУРНАЛ ПОПЫТОК ПРАВКИ.
+         *
+         * Владелец сообщает «не сохраняет», а в базе при этом нет ни одной
+         * записи о правке: значит, обработчик разворачивает запрос раньше — по
+         * сроку, по правам, по справочнику. Догадываться, по какой именно
+         * причине, дорого; поэтому каждая попытка пишется в data/logs/app_edit.log
+         * вместе с исходом. Персональных данных не пишем — только идентификаторы
+         * и причина отказа. */
+        $__editLog = static function (string $why) use ($uid): void {
+            $dir = BASE_PATH . '/data/logs';
+            if (!is_dir($dir)) @mkdir($dir, 0775, true);
+            @file_put_contents($dir . '/app_edit.log',
+                date('Y-m-d H:i:s') . " участник=$uid заявка=" . (int) input('app_id')
+                . ' ip=' . (function_exists('client_ip') ? client_ip() : '-') . ' — ' . $why . "\n",
+                FILE_APPEND);
+        };
         // Редактирование своей заявки — ТОЛЬКО два рабочих дня со дня подачи
         // (core/app_status.php: app_edit_window). Дальше материал у жюри, и данные
         // обязаны совпадать с тем, что оценивалось и будет напечатано в дипломе.
@@ -227,83 +252,41 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $appId = (int) input('app_id');
         $app = one("SELECT * FROM applications WHERE id=? AND user_id=?", [$appId, $uid]);
         if (!$app) {
+            $__editLog('заявка не найдена или принадлежит другому участнику');
             flash('Заявка не найдена.', 'error');
             redirect('/cabinet#apps');
         }
         $win = app_edit_window((array) $app);
         if (!$win['can']) {
+            $__editLog('окно правки закрыто: ' . $win['reason']);
             flash($win['reason'] !== '' ? $win['reason'] : 'Эту заявку уже нельзя изменить.', 'warning');
             redirect('/cabinet#apps');
         }
 
-        // Собираем ВСЕ поля, которые участник заполняет при подаче (кроме галочек согласия).
-        $isGroup = input('is_group') === '1' ? 1 : 0;
-        $nomination = mb_substr(trim((string) input('nomination')), 0, 120);
-        $subgroup   = mb_substr(trim((string) input('subgroup')), 0, 120);
-        $formation  = mb_substr(trim((string) input('formation')), 0, 120);
-
-        // Справочники — источник истины тот же, что и на подаче: чужие значения не принимаем.
-        $noms = NOMINATIONS();
-        if ($nomination !== '' && !isset($noms[$nomination])) $nomination = (string) $app['nomination'];
-        $subOk = $nomination !== '' ? ($noms[$nomination] ?? []) : [];
-        if ($subgroup !== '' && $subOk && !in_array($subgroup, $subOk, true)) $subgroup = '';
-        $formOk = FORMATIONS_FOR($nomination);
-        if ($formation !== '' && !in_array($formation, $formOk, true)) $formation = (string) $app['formation'];
-        $age = mb_substr(trim((string) input('age_category')), 0, 60);
-        if ($age !== '' && !in_array($age, AGE_CATEGORIES(), true)) $age = (string) $app['age_category'];
-
-        $email = mb_strtolower(trim((string) input('email')));
-        if ($email === '' || !filter_var($email, FILTER_VALIDATE_EMAIL)) $email = (string) $app['email'];
-        $city = trim((string) input('city'));
-        if (function_exists('city_normalize') && ($cn = city_normalize($city)) !== '') $city = $cn;
-
-        // Нормализация регистра — та же, что при первичной подаче:
-        //   ФИО участника/педагога — Каждое Слово С Заглавной;
-        //   название коллектива     — «ЁЛОЧКИ» с типом-приставкой ('вокальный ансамбль «Ремарка»');
-        //   название номера         — «Ёлочки»; ВСЁ КАПСОМ приводится к нормальному;
-        //   город                   — 'Россия, г. Москва' (city_normalize);
-        //   учреждение              — НЕ трогаем: там аббревиатуры (МБОУ ДО «ДШИ №1»).
-        $__inFio = static function (string $key): string {
-            return function_exists('v_fio') ? v_fio(input($key)) : trim((string) input($key));
-        };
-        $__inTitle = static function (string $key): string {
-            return function_exists('quote_title') ? quote_title((string) input($key)) : trim((string) input($key));
-        };
-        $__inGroup = static function (string $key): string {
-            $s = trim((string) input($key));
-            return function_exists('collective_normalize') ? collective_normalize($s) : $s;
-        };
-
-        $data = [
-            'is_group'     => $isGroup,
-            'full_name'    => mb_substr($__inFio('full_name'), 0, 200),
-            'group_name'   => mb_substr($__inGroup('group_name'), 0, 200),
-            // Дату рождения (birth_date) больше не запрашиваем: работаем только с
-            // возрастной категорией, которая и попадает в диплом и в номинации.
-            'age_category' => $age,
-            'nomination'   => $nomination,
-            'subgroup'     => $subgroup,
-            'formation'    => $formation,
-            'work_title'   => mb_substr($__inTitle('work_title'), 0, 200),
-            'teacher'      => mb_substr($__inFio('teacher'), 0, 200),
-            // Учреждение НЕ капитализируем автоматически: там 'МБОУ ДО', 'ГБУ', 'ФГБОУ ВО'
-            // и другие аббревиатуры, которые нельзя портить smart_title'ом.
-            'institution'  => mb_substr(trim((string) input('institution')), 0, 200),
-            'city'         => mb_substr($city, 0, 120),
-            'email'        => mb_substr($email, 0, 190),
-            'phone'        => mb_substr(trim((string) input('phone')), 0, 40),
-            'address'      => mb_substr(trim((string) input('address')), 0, 300),
-            'postal_index' => mb_substr(trim((string) input('postal_index')), 0, 20),
-            'video_url'    => mb_substr(trim((string) input('video_url')), 0, 500),
-        ];
-        // Солист или коллектив: пустое имя не затираем — оставляем прежнее.
-        if ($isGroup === 1 && $data['group_name'] === '') $data['group_name'] = (string) $app['group_name'];
-        if ($isGroup === 0 && $data['full_name'] === '')  $data['full_name']  = (string) $app['full_name'];
+        // Правила приведения полей — общие для кабинета, админки и оценки
+        // (core/app_fields.php). Раньше они были свои в каждом месте, и одно и
+        // то же поле после правки выглядело по-разному в кабинете и в админке.
+        require_once BASE_PATH . '/core/app_fields.php';
+        $fields = ['is_group','full_name','group_name','age_category','nomination','subgroup',
+                   'formation','work_title','teacher','institution','city','email','phone',
+                   'address','postal_index','video_url'];
+        $in = [];
+        foreach ($fields as $f) if (array_key_exists($f, $_POST)) $in[$f] = (string) $_POST[$f];
+        $res  = app_fields_normalize($in, (array) $app);
+        $data = $res['data'];
+        if ($res['errors']) {
+            // Говорим прямо, что именно не так: молчаливый откат к прежнему
+            // значению человек читает как «форма не работает».
+            $__editLog('отклонено проверкой: ' . implode(' ', array_keys($res['errors'])));
+            flash(implode(' ', $res['errors']) . ' Заявка не изменена.', 'error');
+            redirect('/cabinet#apps');
+        }
 
         update('applications', $data, 'id=:wid', ['wid' => $appId]);
         // Правки участника обязаны попасть в диплом: сносим ещё не отправленные
         // наградные документы — крон соберёт их заново из обновлённой заявки.
         q("DELETE FROM diplomas WHERE application_id=? AND (sent_at IS NULL OR sent_at='')", [$appId]);
+        $__editLog('сохранено, полей: ' . count($data));
         audit('application_edit', 'application', $appId, ['fields' => array_keys($data)]);
         flash('Заявка обновлена. Изменения учтены во всех наградных документах.', 'success');
         redirect('/cabinet#apps');
@@ -934,7 +917,7 @@ ob_start(); ?>
             if (trim((string)($a['nomination'] ?? '')) !== '')   $info[] = ['Номинация', $a['nomination']];
             if (trim((string)($a['subgroup'] ?? '')) !== '')     $info[] = ['Подраздел', $a['subgroup']];
             if (trim((string)($a['formation'] ?? '')) !== '')    $info[] = ['Форма исполнения', $a['formation']];
-            if (trim((string)($a['work_title'] ?? '')) !== '')   $info[] = ['Название номера', '«' . $a['work_title'] . '»'];
+            if (trim((string)($a['work_title'] ?? '')) !== '')   $info[] = ['Название номера', wt_show((string) $a['work_title'])];
             if (trim((string)($a['video_url'] ?? '')) !== '')    $info[] = ['Ссылка на выступление', $a['video_url']];
             if (trim((string)($a['teacher'] ?? '')) !== '')      $info[] = ['Педагог / руководитель', $a['teacher']];
             if (trim((string)($a['institution'] ?? '')) !== '')  $info[] = ['Учреждение', $a['institution']];
@@ -953,7 +936,7 @@ ob_start(); ?>
               <div class="cab-row">
                 <div style="min-width:0">
                   <span class="cab-ttl"><?= h($a['comp_name'] ?: 'Конкурс') ?></span>
-                  <?php if (!empty($a['work_title'])): ?><p class="cab-meta">«<?= h($a['work_title']) ?>»</p><?php endif; ?>
+                  <?php if (!empty($a['work_title'])): ?><p class="cab-meta"><?= h(wt_show((string) $a['work_title'])) ?></p><?php endif; ?>
                   <p class="cab-meta">Подана <?= h(ru_date(substr((string)$a['created_at'],0,10))) ?></p>
                 </div>
                 <div style="text-align:right"><span class="cab-status cab-status--<?= h($bc) ?>"><?= h($bl) ?></span></div>

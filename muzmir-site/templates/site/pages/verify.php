@@ -323,7 +323,7 @@ ob_start(); ?>
 
           <?php if ($result): ?><div class="cert-result"><?= h($result) ?></div><?php endif; ?>
           <div class="cert-name"><?= h(verify_short_name((string) $d['full_name'])) ?></div>
-          <?php if ($d['work_title']): ?><p class="cert-work">«<?= h($d['work_title']) ?>»</p><?php endif; ?>
+          <?php if ($d['work_title']): ?><p class="cert-work"><?= h(wt_show((string) $d['work_title'])) ?></p><?php endif; ?>
 
           <div class="cert-grid">
             <div class="fld"><span>Конкурс</span><strong><?= h($d['comp_name'] ?: 'Конкурс Культурного центра «Музыкальный Мир»') ?></strong></div>

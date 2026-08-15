@@ -14,6 +14,7 @@ require_once BASE_PATH . '/core/auth.php';
 require_once BASE_PATH . '/core/security.php';
 
 session_start();
+csrf_boot();  // токен формы живёт столько же, сколько вход, а не 24 минуты
 db(); // инициализация/миграции
 
 // Маршрут

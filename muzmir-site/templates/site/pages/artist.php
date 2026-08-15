@@ -254,7 +254,7 @@ ob_start(); ?>
                   <?= h($it['comp_name'] ?: 'Конкурс') ?>
                   <?php if ($it['nomination']): ?> - <?= h($it['nomination']) ?><?php endif; ?>
                   <?php if ($it['formation']): ?> - <?= h($it['formation']) ?><?php endif; ?>
-                  <?php if ($it['work_title']): ?> - «<?= h($it['work_title']) ?>»<?php endif; ?>
+                  <?php if ($it['work_title']): ?> - <?= h(wt_show((string) $it['work_title'])) ?><?php endif; ?>
                 </p>
                 <?php if ($it['teacher']): ?>
                   <p style="color:var(--muted);margin:3px 0 0;font-size:.86rem">Педагог - <?= h($it['teacher']) ?></p>

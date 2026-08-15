@@ -331,7 +331,7 @@ ob_start(); ?>
                 <?php endif; ?>
                 <div class="pcard-name">
                   <b><?php if ($aslug): ?><a href="<?= url('/artist/' . $aslug) ?>"><?= h($displayName) ?></a><?php else: ?><?= h($displayName) ?><?php endif; ?></b>
-                  <?php if ($r['work_title']): ?><p class="pcard-work">«<?= h($r['work_title']) ?>»</p><?php endif; ?>
+                  <?php if ($r['work_title']): ?><p class="pcard-work"><?= h(wt_show((string) $r['work_title'])) ?></p><?php endif; ?>
                 </div>
               </div>
 
