@@ -518,9 +518,27 @@ chk('достижения + промокод без клуба = ровно 10%'
 
 /* ───────── прямые ссылки на оплату ───────── */
 sec('Кнопка «Оплатить» ведёт на оплату КОНКРЕТНОГО счёта');
-$unpaidApp = one("SELECT a.id, a.number FROM applications a JOIN competitions c ON c.id=a.competition_id
-                   WHERE c.is_paid=1 AND COALESCE(a.is_paid,0)=0 ORDER BY a.id DESC LIMIT 1");
-if (!$unpaidApp) { ok('неоплаченных платных заявок нет — пропуск'); }
+// ССЫЛКУ ОПЛАТЫ ПРОВЕРЯЕМ НА СВОЕЙ ЗАЯВКЕ.
+//
+// Раньше бралась ПЕРВАЯ настоящая неоплаченная заявка живого участника. Открытие
+// ссылки заводит счёт в кассе, а каждый следующий прогон гасит прежний и заводит
+// новый: у человека в кассе копились счета, которых он не создавал, а в нашей
+// базе — отменённые платежи к его заявке. Заводим свою заявку на том же платном
+// конкурсе, проверяем на ней и убираем вместе со счетами.
+$__payComp = one("SELECT id FROM competitions WHERE is_paid=1 ORDER BY id DESC LIMIT 1");
+$unpaidApp = null; $__tmpAppId = 0;
+if ($__payComp) {
+    try {
+        $__tmpAppId = (int) insert('applications', [
+            'number' => 'CHK-PAY-' . substr(bin2hex(random_bytes(3)), 0, 6),
+            'competition_id' => (int) $__payComp['id'],
+            'full_name' => 'ПРОВЕРКА ссылки оплаты', 'email' => 'audit-pay@example.test',
+            'work_title' => '«Проверка»', 'status' => 'new', 'is_paid' => 0,
+        ]);
+        if ($__tmpAppId > 0) $unpaidApp = one("SELECT id, number FROM applications WHERE id=?", [$__tmpAppId]);
+    } catch (\Throwable $e) { $unpaidApp = null; }
+}
+if (!$unpaidApp) { ok('платных конкурсов нет — пропуск'); }
 else {
     $aid = (int) $unpaidApp['id'];
     chk('ссылка содержит номер счёта и подпись',
@@ -547,6 +565,12 @@ else {
     chk('чужой номер с чужой подписью отклоняется', str_contains($r['body'], 'Ссылка недействительна'));
 
     chk('подпись заявки и заказа не совпадают', pay_sign('app', $aid) !== pay_sign('order', $aid));
+
+    // Убираем за собой: и счета, заведённые открытием ссылки, и саму заявку.
+    if ($__tmpAppId > 0) {
+        try { q("DELETE FROM payments WHERE application_id=?", [$__tmpAppId]); } catch (\Throwable $e) {}
+        try { q("DELETE FROM applications WHERE id=?", [$__tmpAppId]); } catch (\Throwable $e) {}
+    }
 }
 // ССЫЛКУ ОПЛАТЫ ПРОВЕРЯЕМ НА СВОЁМ ЗАКАЗЕ, А НЕ НА ЧУЖОМ.
 //
