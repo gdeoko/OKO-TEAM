@@ -114,16 +114,25 @@ try {
                 continue;
             }
             if (!$autoPartner) { ia_log('автоприём выключен, оставляю оператору: ' . $from); $mark('human'); continue; }
-            $inst = one("SELECT id, org, partner_status FROM institutions WHERE id=?", [$instId]);
-            if ($inst && (string) ($inst['partner_status'] ?? '') === 'active') {
+            // Название учреждения лежит в колонке name (в таблице ведомств — в org,
+            // и на этом различии здесь однажды всё падало: запрос к несуществующей
+            // колонке обрывал разбор всей пачки писем, и почта переставала разбираться).
+            $inst = one("SELECT id, name, partner_status FROM institutions WHERE id=?", [$instId]);
+            // Принятый партнёр помечается статусом accepted (так его ставит
+            // partner_accept). Сверять надо именно с ним.
+            if ($inst && (string) ($inst['partner_status'] ?? '') === 'accepted') {
                 ia_log('уже партнёр, повторное согласие: ' . $from);
                 $mark('auto_accept');
                 continue;
             }
-            if ($dry) { ia_log('ПРИНЯЛ БЫ партнёром: ' . $from . ' (' . (string) ($inst['org'] ?? '') . ')'); $did['accept']++; continue; }
+            if ($dry) { ia_log('ПРИНЯЛ БЫ партнёром: ' . $from . ' (' . (string) ($inst['name'] ?? '') . ')'); $did['accept']++; continue; }
             try {
-                partner_accept($instId);
-                ia_log('принят партнёром: ' . $from . ' (' . (string) ($inst['org'] ?? '') . ')');
+                $res = partner_accept($instId);
+                // Сертификат и доступ в кабинет уходят сразу: пароль существует
+                // в открытом виде только здесь, в ответе partner_accept. Не отправить
+                // его сейчас — значит не отправить никогда.
+                partner_send_welcome($instId, (string) ($res['password_plain'] ?? ''));
+                ia_log('принят партнёром: ' . $from . ' (' . (string) ($inst['name'] ?? '') . ')');
                 $mark('auto_accept');
                 $did['accept']++;
             } catch (\Throwable $e) {
@@ -142,7 +151,7 @@ try {
                 // Партнёра, который уже принят, не выбрасываем по одному письму:
                 // у него на руках сертификат и доступ в кабинет, тут нужен человек.
                 $st = $instId > 0 ? (string) (scalar("SELECT partner_status FROM institutions WHERE id=?", [$instId]) ?? '') : '';
-                if ($st === 'active') { ia_log('отказ от действующего партнёра, нужен оператор: ' . $from); $mark('human'); continue; }
+                if ($st === 'accepted') { ia_log('отказ от действующего партнёра, нужен оператор: ' . $from); $mark('human'); continue; }
                 if ($instId > 0) {
                     partner_decline($instId, 'отказ письмом ' . date('d.m.Y'));
                     q("UPDATE institutions SET email='' WHERE id=?", [$instId]);

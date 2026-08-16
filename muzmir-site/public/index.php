@@ -138,6 +138,41 @@ if (preg_match('#^/letter/([0-9]{6,8})/([0-9]{1,6})$#', $route, $m)) {
     serve('letter', ['number' => $m[1] . '/' . $m[2]]);
 }
 
+// КАБИНЕТ ПАРТНЁРА НА ТОМ ЖЕ АДРЕСЕ, ЧТО И СТРАНИЦА ПРОГРАММЫ.
+//
+// По /partner живёт публичная страница партнёрской программы, а кабинет —
+// отдельный контроллер public/partner.php, и до него не вело ничего: письма
+// звали на /partner?a=thanks, а человек попадал на рекламную страницу. Развилка
+// простая: если это запрос кабинета (раздел в ?a=, отправка формы или уже
+// выполненный вход) — показываем кабинет, иначе страницу программы.
+if ($route === '/partner' || $route === '/partner/') {
+    require_once BASE_PATH . '/core/partner.php';
+    $wantsCabinet = trim((string) ($_GET['a'] ?? '')) !== ''
+        || ($_SERVER['REQUEST_METHOD'] ?? 'GET') === 'POST'
+        || partner_current() !== null;
+    if ($wantsCabinet) { require BASE_PATH . '/public/partner.php'; exit; }
+}
+
+// ПЕРСОНАЛЬНАЯ ССЫЛКА ПАРТНЁРА /p/<slug>.
+//
+// По ней учреждение зовёт своих участников, и по ней же их заявки засчитываются
+// учреждению — без этого партнёрская программа не считает ничего: ни порога в
+// пять заявок для благодарностей, ни десяти для промокода. Метку кладём в cookie
+// на 90 дней и уводим человека сразу на подачу заявки.
+if (preg_match('#^/p/([A-Za-z0-9\-]{2,120})$#', $route, $m)) {
+    require_once BASE_PATH . '/core/partner.php';
+    $p = partner_by_slug(strtolower($m[1]));
+    if ($p) {
+        partner_set_cookie((int) $p['id']);
+        header('Location: ' . url('/apply?src=partner'), true, 302);
+    } else {
+        // Ссылка устарела или партнёрство закрыто — не показываем ошибку,
+        // просто отправляем человека на главную.
+        header('Location: ' . url('/'), true, 302);
+    }
+    exit;
+}
+
 if ($route === '/verify') serve('verify', ['number' => '']);
 if (preg_match('#^/verify/([A-Za-zА-Яа-я0-9\-]+)$#u', $route, $m)) serve('verify', ['number' => $m[1]]);
 // Внутренняя страница конкурса упразднена: вся информация — на афише в календаре,

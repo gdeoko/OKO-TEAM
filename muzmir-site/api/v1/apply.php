@@ -264,6 +264,13 @@ if (!$uid && $email !== '') {
     }
 }
 
+// Учреждение-партнёр, по чьей персональной ссылке пришёл человек (0 — сам по себе).
+$partnerInstId = 0;
+if (is_file(BASE_PATH . '/core/partner.php')) {
+    require_once BASE_PATH . '/core/partner.php';
+    if (function_exists('partner_cookie_id')) $partnerInstId = partner_cookie_id();
+}
+
 $numbers = [];
 $appIds  = [];
 $appMap  = []; // number -> comp_name
@@ -296,6 +303,13 @@ foreach ($comps as $ci) {
         'is_paid'        => (int) $ci['is_paid'] ? 0 : 1,
         'status'         => 'new',
     ]);
+    // ЗАЯВКА, ПРИШЕДШАЯ ПО ПЕРСОНАЛЬНОЙ ССЫЛКЕ ПАРТНЁРА, ЗАСЧИТЫВАЕТСЯ ЕМУ.
+    //
+    // Метку оставляет переход по /p/<slug> (cookie на 90 дней). Без этой привязки
+    // счётчик заявок учреждения стоит на нуле, и пороги партнёрской программы —
+    // пять заявок на благодарности, десять на промокод — не наступают никогда.
+    if ($partnerInstId > 0) partner_attach_application((int) $aid, $partnerInstId);
+
     $numbers[] = $num;
     $appIds[]  = $aid;
     $appMap[$num] = $ci['name'];
