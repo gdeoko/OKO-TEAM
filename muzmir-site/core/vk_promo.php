@@ -64,6 +64,7 @@ function vkp_ensure(): void {
         id         INTEGER PRIMARY KEY AUTOINCREMENT,
         group_id   INTEGER NOT NULL,
         mode       TEXT    DEFAULT '',
+        slot       INTEGER DEFAULT 0,
         post_id    INTEGER DEFAULT 0,
         campaign   TEXT    DEFAULT '',
         outcome    TEXT    DEFAULT 'sent',
@@ -72,6 +73,74 @@ function vkp_ensure(): void {
         created_at TEXT    DEFAULT (datetime('now','localtime')))");
     db()->exec("CREATE INDEX IF NOT EXISTS idx_vkpl_group ON vk_promo_log(group_id)");
     db()->exec("CREATE INDEX IF NOT EXISTS idx_vkpl_created ON vk_promo_log(created_at)");
+
+    // Место в ротации и ожидание вердикта по предложке: без них площадка либо
+    // получает одну и ту же запись, либо получает вторую, не дождавшись ответа
+    // на первую.
+    foreach ([
+        "ALTER TABLE vk_targets ADD COLUMN next_slot INTEGER DEFAULT 1",
+        "ALTER TABLE vk_targets ADD COLUMN pending_log_id INTEGER DEFAULT 0",
+        "ALTER TABLE vk_targets ADD COLUMN score INTEGER DEFAULT 0",
+        "ALTER TABLE vk_promo_log ADD COLUMN slot INTEGER DEFAULT 0",
+    ] as $sql) {
+        try { db()->exec($sql); } catch (\Throwable $e) { /* уже есть */ }
+    }
+    vkp_posts_ensure();
+}
+
+/**
+ * НАБОР ЗАПИСЕЙ, КОТОРЫЙ РАЗНОСИТСЯ ПО ПЛОЩАДКАМ.
+ *
+ * Записи не сочиняются заново: это наши собственные посты со стены сообщества,
+ * перенесённые сюда один в один вместе с афишами. Слот — место в очереди;
+ * площадка получает по одной записи в день и за шесть дней видит весь набор.
+ */
+function vkp_posts_ensure(): void {
+    static $done = false;
+    if ($done) return;
+    $done = true;
+    db()->exec("CREATE TABLE IF NOT EXISTS vk_posts (
+        slot           INTEGER PRIMARY KEY,
+        kind           TEXT    DEFAULT '',
+        title          TEXT    DEFAULT '',
+        text           TEXT    NOT NULL,
+        attachment     TEXT    DEFAULT '',
+        source_post_id INTEGER DEFAULT 0,
+        active         INTEGER DEFAULT 1,
+        created_at     TEXT    DEFAULT (datetime('now','localtime')))");
+}
+
+/** Записи в ротации по порядку слотов. */
+function vkp_posts(): array {
+    vkp_posts_ensure();
+    return all("SELECT * FROM vk_posts WHERE active=1 ORDER BY slot");
+}
+
+/**
+ * Какая запись пойдёт этой площадке сейчас.
+ *
+ * Слот хранится у площадки, а не считается глобально: сообщества добавляются и
+ * выпадают из очереди в разное время, и общий счётчик давал бы одним площадкам
+ * четвёртую запись, а другим первую по кругу без всякой связи с тем, что они
+ * уже видели.
+ */
+function vkp_next_post(array $target): ?array {
+    $posts = vkp_posts();
+    if (!$posts) return null;
+    $want = max(1, (int) ($target['next_slot'] ?? 1));
+    foreach ($posts as $p) if ((int) $p['slot'] === $want) return $p;
+    return $posts[0];   // слот выключили — начинаем набор заново
+}
+
+/** Передвинуть площадку на следующую запись набора. */
+function vkp_advance_slot(int $groupId, int $currentSlot): void {
+    $posts = vkp_posts();
+    if (!$posts) return;
+    $slots = array_map(static fn(array $p): int => (int) $p['slot'], $posts);
+    sort($slots);
+    $next = $slots[0];
+    foreach ($slots as $sN) { if ($sN > $currentSlot) { $next = $sN; break; } }
+    q("UPDATE vk_targets SET next_slot=:n WHERE group_id=:g", ['n' => $next, 'g' => $groupId]);
 }
 
 /* ═════════════════════════ Разведка площадок ═════════════════════════ */
@@ -205,81 +274,6 @@ function vkp_rank(): array {
     return [$fit, $out];
 }
 
-/* ═════════════════════════ Текст анонса ═════════════════════════ */
-
-/**
- * Как назвать учреждение в двух падежах: «вашей школы искусств» и «в школе искусств».
- *
- * Падежи здесь не украшение. Фраза «для воспитанников вашего художественной школы»
- * читается как машинная рассылка, и администратор отклоняет запись, даже не дочитав.
- * Поэтому для каждого типа заранее заданы обе формы, а не склеены на ходу.
- *
- * @return array{gen:string, prep:string}
- */
-function vkp_kind_forms(string $kind, string $name): array {
-    $h = mb_strtolower($kind . ' ' . $name);
-    $map = [
-        'школ.{0,4}искусств|дши'      => ['вашей школы искусств',      'в школе искусств'],
-        'музыкальн.{0,4}школ|дмш'     => ['вашей музыкальной школы',   'в музыкальной школе'],
-        'художествен.{0,4}школ|дхш'   => ['вашей художественной школы','в художественной школе'],
-        'дом.{0,4}культур|дк|скц|кдц' => ['вашего дома культуры',      'в доме культуры'],
-        'детск.{0,4}сад|доу'          => ['вашего детского сада',      'в детском саду'],
-        'дополнительн|цдт|ддт|двор'   => ['вашего центра творчества',  'в центре творчества'],
-        'библиотек'                   => ['вашей библиотеки',          'в библиотеке'],
-        'колледж|училищ|техникум'     => ['вашего колледжа',           'в колледже'],
-        'школ|мбоу|моу|гбоу|гимназ|лице' => ['вашей школы',            'в школе'],
-    ];
-    foreach ($map as $re => [$gen, $prep]) {
-        if (preg_match('~' . $re . '~u', $h)) return ['gen' => $gen, 'prep' => $prep];
-    }
-    return ['gen' => 'вашего учреждения', 'prep' => 'в учреждении'];
-}
-
-/**
- * Собрать запись для конкретного сообщества.
- *
- * Смысл текста один и тот же, форма — разная: выбор варианта определяется
- * остатком от деления id сообщества, поэтому один и тот же адресат никогда не
- * получит два разных анонса, а соседние сообщества получат непохожие.
- */
-function vkp_message(array $t, string $link, string $deadline = ''): string {
-    $link = link_human($link);
-    $forms    = vkp_kind_forms((string) ($t['kind'] ?? ''), (string) ($t['name'] ?? ''));
-    $kindWord = $forms['prep'];
-    $gid      = (int) ($t['group_id'] ?? 0);
-    $dl       = $deadline !== '' ? $deadline : '25 августа';
-
-    $open = [
-        "Педагогам и родителям: до {$dl} открыт приём работ на бесплатный всероссийский конкурс.",
-        "Коллеги, для воспитанников {$forms['gen']} — бесплатное участие во всероссийском конкурсе, приём работ до {$dl}.",
-        "Хорошая новость для юных талантов: стартовал приём заявок на бесплатный всероссийский конкурс.",
-        "Открыт приём работ на всероссийский конкурс детского творчества. Участие бесплатное, дистанционно, до {$dl}.",
-        "Дистанционный конкурс для учеников и педагогов: заявку можно подать до {$dl}, участие в номинации «Величие России» бесплатное.",
-    ];
-    $body = [
-        "Культурный центр «Музыкальный Мир» проводит конкурсы для детей и взрослых: вокал, хореография, инструментальное исполнительство, изобразительное и декоративно-прикладное творчество, театр, художественное слово.\n\nВсё дистанционно: работа отправляется ссылкой на видео или файлом, приезжать никуда не нужно.",
-        "Принимаются работы по вокалу, хореографии, инструментальному исполнительству, рисунку, декоративно-прикладному творчеству, театру и художественному слову. Возраст — от дошкольников до взрослых, есть и педагогические номинации.\n\nФормат дистанционный: достаточно ссылки на видео или фотографии работы.",
-        "Номинации охватывают почти всё, чем занимаются " . $kindWord . ": вокал и хор, хореография, инструменты, живопись и рисунок, декоративно-прикладное творчество, театр, чтецы. Возрастных ограничений нет, коллективы участвуют наравне с солистами.\n\nУчастие дистанционное, работа принимается ссылкой на видео или файлом.",
-    ];
-    $why = [
-        "Дипломы именные, с указанием педагога — их принимают в портфолио ученика и в документы к аттестации преподавателя.",
-        "Каждый участник получает именной диплом, преподаватель — благодарность. Документы подходят для портфолио и аттестации.",
-        "По итогам — именной диплом участнику и благодарственное письмо педагогу; электронный документ приходит на почту.",
-    ];
-    $cta = [
-        "Положение и форма заявки: {$link}",
-        "Подробности и подача работы: {$link}",
-        "Условия, номинации и заявка: {$link}",
-    ];
-
-    $pick = static fn(array $a, int $salt): string => $a[($salt) % count($a)];
-
-    return $pick($open, $gid)
-        . "\n\n" . $pick($body, intdiv($gid, 7))
-        . "\n\n" . $pick($why, intdiv($gid, 13))
-        . "\n\n" . $pick($cta, intdiv($gid, 3));
-}
-
 /* ═════════════════════════ Афиша ═════════════════════════ */
 
 /**
@@ -350,13 +344,14 @@ function vkp_daily_cap(): int {
  *
  * @return array ['ok'=>bool,'post_id'=>int,'mode'=>string,'error'=>string,'fatal'=>bool]
  */
-function vkp_publish(array $t, string $message, string $attachment = '', string $campaign = ''): array {
+function vkp_publish(array $t, array $post, string $campaign = ''): array {
     vkp_ensure();
     $gid  = (int) $t['group_id'];
     $mode = (int) ($t['can_post'] ?? 0) === 1 ? 'post' : 'suggest';
+    $slot = (int) ($post['slot'] ?? 0);
 
-    $params = ['owner_id' => -$gid, 'from_group' => 0, 'message' => $message];
-    if ($attachment !== '') $params['attachments'] = $attachment;
+    $params = ['owner_id' => -$gid, 'from_group' => 0, 'message' => (string) $post['text']];
+    if (trim((string) ($post['attachment'] ?? '')) !== '') $params['attachments'] = (string) $post['attachment'];
     $r = vk_api('wall.post', $params);
 
     if (isset($r['error'])) {
@@ -369,18 +364,35 @@ function vkp_publish(array $t, string $message, string $attachment = '', string 
             q("UPDATE vk_targets SET status='closed', note=:n WHERE group_id=:g",
               ['n' => mb_substr($msg, 0, 160), 'g' => $gid]);
         }
-        q("INSERT INTO vk_promo_log (group_id,mode,campaign,outcome,error) VALUES (:g,:m,:c,'error',:e)",
-          ['g' => $gid, 'm' => $mode, 'c' => $campaign, 'e' => mb_substr($msg, 0, 200)]);
+        q("INSERT INTO vk_promo_log (group_id,mode,slot,campaign,outcome,error)
+           VALUES (:g,:m,:s,:c,'error',:e)",
+          ['g' => $gid, 'm' => $mode, 's' => $slot, 'c' => $campaign, 'e' => mb_substr($msg, 0, 200)]);
         return ['ok' => false, 'post_id' => 0, 'mode' => $mode, 'error' => $msg, 'fatal' => $fatal];
     }
 
     $pid = (int) ($r['response']['post_id'] ?? 0);
-    q("INSERT INTO vk_promo_log (group_id,mode,post_id,campaign,outcome) VALUES (:g,:m,:p,:c,'sent')",
-      ['g' => $gid, 'm' => $mode, 'p' => $pid, 'c' => $campaign]);
-    q("UPDATE vk_targets SET status='done', posts_count=posts_count+1,
-              last_post_at=datetime('now','localtime') WHERE group_id=:g", ['g' => $gid]);
+    $logId = (int) insert('vk_promo_log', [
+        'group_id' => $gid, 'mode' => $mode, 'post_id' => $pid,
+        'slot' => $slot, 'campaign' => $campaign, 'outcome' => 'sent',
+    ]);
+
+    if ($mode === 'post') {
+        // Открытая стена: запись уже висит, ждать нечего — сразу переходим к
+        // следующей записи набора, она уйдёт завтра.
+        q("UPDATE vk_targets SET posts_count=posts_count+1,
+                  last_post_at=datetime('now','localtime') WHERE group_id=:g", ['g' => $gid]);
+        vkp_advance_slot($gid, $slot);
+    } else {
+        // Предложка: решает администратор. До вердикта второй записи не шлём —
+        // две висящие подряд читаются как навязчивость и получают отказ обе.
+        q("UPDATE vk_targets SET posts_count=posts_count+1, pending_log_id=:l,
+                  last_post_at=datetime('now','localtime') WHERE group_id=:g",
+          ['l' => $logId, 'g' => $gid]);
+    }
+
     return ['ok' => true, 'post_id' => $pid, 'mode' => $mode, 'error' => '', 'fatal' => false];
 }
+
 
 /**
  * Проверить судьбу предложенных записей: опубликовали, отклонили или ещё висит.
@@ -388,25 +400,56 @@ function vkp_publish(array $t, string $message, string $attachment = '', string 
  */
 function vkp_check_outcomes(int $limit = 100): array {
     vkp_ensure();
-    $rows = all("SELECT id, group_id, post_id FROM vk_promo_log
+    // Ждём вердикта столько дней, сколько разумно ждёт живой человек. Не ответили
+    // за это время — значит предложку не смотрят, и слать туда дальше бессмысленно.
+    $waitDays = max(1, (int) (scalar("SELECT value FROM settings WHERE key='vk_promo_wait_days'") ?: 5));
+
+    $rows = all("SELECT id, group_id, post_id, mode, slot, created_at FROM vk_promo_log
                   WHERE outcome='sent' AND post_id<>0
-                    AND created_at < datetime('now','localtime','-1 day')
+                    AND created_at < datetime('now','localtime','-4 hours')
                   ORDER BY id LIMIT :l", ['l' => $limit]);
-    $stat = ['опубликовано' => 0, 'висит' => 0, 'снято' => 0];
+
+    $stat = ['опубликовано' => 0, 'висит' => 0, 'снято' => 0, 'молчат' => 0];
     foreach ($rows as $r) {
-        $r2 = vk_api('wall.getById', ['posts' => (-(int) $r['group_id']) . '_' . (int) $r['post_id']]);
+        $gid  = (int) $r['group_id'];
+        $mode = (string) $r['mode'];
+        $r2 = vk_api('wall.getById', ['posts' => (-$gid) . '_' . (int) $r['post_id']]);
         $items = $r2['response']['items'] ?? $r2['response'] ?? [];
         $item  = $items[0] ?? null;
+        $old   = (strtotime((string) $r['created_at']) ?: time()) < strtotime('-' . $waitDays . ' days');
+
         if (!$item) {
-            $out = 'rejected'; $stat['снято']++;
+            /* Записи нет: администратор её отклонил. Больше туда не пишем —
+             * настойчивость после отказа это ровно то, за что жалуются. */
+            $out = 'rejected';
+            $stat['снято']++;
+            q("UPDATE vk_targets SET status='rejected', pending_log_id=0,
+                      note='отклонили предложенную запись' WHERE group_id=:g", ['g' => $gid]);
         } elseif ((string) ($item['post_type'] ?? '') === 'suggest') {
-            $out = 'pending';  $stat['висит']++;
+            /* Ещё висит. Пока ждём; когда ожидание вышло за срок — считаем, что
+             * предложку не читают, и площадку откладываем. */
+            if ($old) {
+                $out = 'ignored';
+                $stat['молчат']++;
+                q("UPDATE vk_targets SET status='silent', pending_log_id=0,
+                          note='предложку не смотрят' WHERE group_id=:g", ['g' => $gid]);
+            } else {
+                $stat['висит']++;
+                continue;   // вердикта нет, строку журнала не трогаем
+            }
         } else {
-            $out = 'published'; $stat['опубликовано']++;
+            /* Опубликовали. Площадка живая: снимаем ожидание и передвигаем на
+             * следующую запись набора — она уйдёт в свой день. */
+            $out = 'published';
+            $stat['опубликовано']++;
+            q("UPDATE vk_targets SET status='ready', pending_log_id=0 WHERE group_id=:g", ['g' => $gid]);
+            vkp_advance_slot($gid, (int) $r['slot']);
         }
+
         q("UPDATE vk_promo_log SET outcome=:o, checked_at=datetime('now','localtime') WHERE id=:i",
           ['o' => $out, 'i' => (int) $r['id']]);
         usleep(350000);
     }
     return $stat;
 }
+
