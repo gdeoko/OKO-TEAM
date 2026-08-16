@@ -32,17 +32,44 @@ foreach (glob(BASE_PATH.'/data/attach_cache/inv_*', GLOB_ONLYDIR) as $dir) {
 }
 $logit("attach_cache: freed=".round($freed/1024/1024,1)."MB kept_dirs=$kept");
 
-// 2) letters/obrashchenie-*.pdf: снести PDF, где письмо давно ушло
+// 2) letters/obrashchenie-*.pdf: снести PDF, где письмо уже ушло.
+// Сутки, а не трое: один бланк весит больше полумегабайта, а в день их теперь
+// уходит несколько тысяч. Проверке подлинности PDF не нужен — страница письма
+// собирается из базы, и QR ведёт именно на неё.
 $cnt = 0; $bytes = 0;
 $rows = db()->query("SELECT DISTINCT o.file FROM official_letters o
     JOIN mail_queue m ON m.id=o.queue_id
-    WHERE m.status='sent' AND m.sent_at < datetime('now','-3 days')
+    WHERE m.status='sent' AND m.sent_at < datetime('now','localtime','-1 day')
       AND o.file LIKE '%obrashchenie-%.pdf'")->fetchAll(PDO::FETCH_COLUMN);
 foreach ($rows as $f) {
     if (!$f || !is_file($f)) continue;
     $bytes += @filesize($f); @unlink($f); $cnt++;
 }
 $logit("letters: pruned=$cnt files, freed=".round($bytes/1024/1024,1)."MB");
+
+// 2б) БЕСХОЗНЫЕ БЛАНКИ. Письмо могли снять с очереди (адрес попал в стоп-лист,
+// учреждение удалили, волна отменилась), а полумегабайтный PDF остался лежать
+// навсегда. Такие файлы никому не принадлежат и место занимают зря.
+// «Занят» определяем ТОЛЬКО по вложениям писем, которые ещё ждут отправки.
+// Реестр обращений для этого не годится: у неотправленного письма поле file
+// пустое, и по нему все живые бланки выглядели бы бесхозными.
+$busy = [];
+foreach (db()->query("SELECT attach FROM mail_queue
+                       WHERE status IN ('queued','paused') AND COALESCE(attach,'')<>''")
+             ->fetchAll(PDO::FETCH_COLUMN) as $a) {
+    $list = json_decode((string) $a, true);
+    if (!is_array($list)) $list = [(string) $a];
+    foreach ($list as $f) $busy[basename((string) $f)] = true;
+}
+$cnt = 0; $bytes = 0;
+foreach (glob(BASE_PATH.'/data/letters/obrashchenie-*.pdf') as $f) {
+    $b = basename($f);
+    if (isset($busy[$b])) continue;
+    // Совсем свежие не трогаем: письмо могли поставить в очередь секунду назад.
+    if (time() - (int) @filemtime($f) < 3600) continue;
+    $bytes += (int) @filesize($f); @unlink($f); $cnt++;
+}
+$logit("letters orphan: pruned=$cnt files, freed=".round($bytes/1024/1024,1)."MB");
 
 // 3) daily backups старше 10 дней (кроме weekly и before_cleanup)
 $cnt = 0; $bytes = 0;

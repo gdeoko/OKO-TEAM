@@ -149,6 +149,25 @@ if ($apply) {
     if ($fakePays) $did[] = 'удалено платежей проверок: ' . count($fakePays);
 }
 
+/* ── 4б. Счета к заказам, которых больше нет ──────────────────────────────── */
+// Проверка заказа наград заводит и заказ, и счёт к нему. Заказ потом удаляется по
+// номеру заявки, а счёт привязан к заказу, а не к заявке, и оставался висеть.
+// В отчётах он выглядит как деньги, за которыми ничего не стоит.
+$orphanPays = all("SELECT id, order_id, amount, status FROM payments
+                    WHERE COALESCE(order_id,0) > 0
+                      AND order_id NOT IN (SELECT id FROM awards_orders)");
+if ($orphanPays) {
+    echo "\nСЧЕТА К НЕСУЩЕСТВУЮЩИМ ЗАКАЗАМ: " . count($orphanPays) . "\n";
+    foreach ($orphanPays as $p) {
+        printf("  счёт #%d к заказу #%d, %d ₽, %s\n",
+            (int) $p['id'], (int) $p['order_id'], (int) $p['amount'], (string) $p['status']);
+    }
+    if ($apply) {
+        foreach ($orphanPays as $p) q("DELETE FROM payments WHERE id=?", [(int) $p['id']]);
+        $did[] = 'удалено счетов к несуществующим заказам: ' . count($orphanPays);
+    }
+}
+
 /* ── 5. Письма проверок ───────────────────────────────────────────────────── */
 // Наружу они не уходили (адреса зоны .test не маршрутизируются), но в отчётах по
 // рассылке мешают: их видно в «отправлено» и они сбивают счёт.

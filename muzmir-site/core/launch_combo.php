@@ -29,6 +29,8 @@ declare(strict_types=1);
 require_once __DIR__ . '/newsletter.php';
 require_once __DIR__ . '/mail_campaigns.php';
 require_once __DIR__ . '/kabinet_onboarding.php';
+// Список собственных ящиков центра — чтобы не слать массовое самим себе.
+if (is_file(__DIR__ . '/inbox_reader.php')) require_once __DIR__ . '/inbox_reader.php';
 
 // Метки условных блоков письма. Нужны, чтобы «кому что показывать» решалось
 // при отправке КАЖДОМУ человеку, а не при сборке эталона: тогда логика переживает
@@ -196,6 +198,25 @@ function launch_combo_enqueue(bool $dry = false, int $limit = 20000): array {
         if ($name !== '' && trim((string) ($r['name'] ?? '')) === '') {
             try { q("UPDATE subscribers SET name=? WHERE LOWER(email)=? AND COALESCE(name,'')=''", [$name, $email]); } catch (\Throwable $e) {}
             try { q("UPDATE users SET full_name=? WHERE LOWER(email)=? AND COALESCE(full_name,'')=''", [$name, $email]); } catch (\Throwable $e) {}
+        }
+
+        // Свои же ящики в массовую волну не берём. Они есть и в подписчиках, и в
+        // учётных записях, и письмо «Открыт приём заявок» с чужим логином и паролем
+        // приходило бы самому центру, засоряя рабочую почту и портя статистику.
+        if (function_exists('inbox_own_emails')) {
+            static $own = null;
+            if ($own === null) {
+                $own = [];
+                foreach (inbox_own_emails() as $o) {
+                    $o = mb_strtolower(trim((string) $o));
+                    if ($o === '') continue;
+                    $own[$o] = true;
+                    // Адрес на кириллическом домене хранится в очереди в punycode,
+                    // поэтому держим обе записи.
+                    if (function_exists('mail_addr_ascii')) $own[mb_strtolower(mail_addr_ascii($o))] = true;
+                }
+            }
+            if (isset($own[$email])) { $skipped++; continue; }
         }
 
         // Идемпотентность: одному адресу — одно письмо кампании месяца.

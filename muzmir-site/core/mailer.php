@@ -760,6 +760,33 @@ function mail_account_penalty(array $acc): int {
  * админка показала «отправлено с резервной почты», а не молчала.
  * Возвращает true, если письмо ушло хоть с какого-то ящика.
  */
+/**
+ * АДРЕС В СТОП-ЛИСТЕ?
+ *
+ * Стоп-лист (таблица mail_stop) собирается чисткой базы: несуществующие ящики,
+ * отказы, жалобы на спам. Одной чистки мало — сбор учреждений идёт постоянно и
+ * вернул бы те же адреса обратно через неделю. Поэтому проверка стоит здесь, в
+ * точке отправки: что бы ни попало в очередь, письмо в мёртвый ящик не уйдёт.
+ *
+ * Ответ кэшируется на прогон: очередь идёт пачками, и спрашивать базу на каждое
+ * письмо ни к чему.
+ */
+function mail_is_stopped(string $email): bool {
+    static $cache = [];
+    static $has = null;
+    $e = mb_strtolower(trim($email));
+    if ($e === '') return false;
+    if ($has === null) {
+        try { $has = (bool) one("SELECT name FROM sqlite_master WHERE type='table' AND name='mail_stop'"); }
+        catch (\Throwable $ex) { $has = false; }
+    }
+    if (!$has) return false;
+    if (isset($cache[$e])) return $cache[$e];
+    try { $cache[$e] = (bool) one("SELECT email FROM mail_stop WHERE email=?", [$e]); }
+    catch (\Throwable $ex) { $cache[$e] = false; }
+    return $cache[$e];
+}
+
 function mail_send_failover(string $to, string $subject, string $html, array $opt = []): bool {
     // На адреса зоны .test письма не отправляем НИКОГДА: она не маршрутизируется,
     // и каждая попытка вернулась бы отказом, а отказы бьют по репутации домена и
@@ -767,6 +794,11 @@ function mail_send_failover(string $to, string $subject, string $html, array $op
     if (preg_match('~\.test$~i', trim($to))) {
         mail_log('SKIP .test ' . $to . ' | ' . mb_substr($subject, 0, 60));
         return true;
+    }
+    if (mail_is_stopped($to)) {
+        mail_log('SKIP стоп-лист ' . $to . ' | ' . mb_substr($subject, 0, 60));
+        mail_last_error('адрес в стоп-листе: ящика не существует, отказ или жалоба');
+        return false;
     }
 
     // Пул определяется типом письма: массовые — только рассылочные ящики,
@@ -1122,6 +1154,9 @@ function mail_send(string $to, string $subject, string $html, array $opt = []): 
 
 /** Кладёт письмо в очередь mail_queue (реальная отправка — воркером). */
 function mail_queue(string $to, string $name, string $subject, string $html, string $attach = ''): int {
+    // В очередь мёртвый адрес не кладём вовсе: иначе он копится там неделями и
+    // портит и отчёты, и суточную квоту.
+    if (mail_is_stopped($to)) { mail_log('QUEUE SKIP стоп-лист ' . $to); return 0; }
     try {
         $id = insert('mail_queue', [
             'to_email' => trim($to),
