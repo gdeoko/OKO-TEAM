@@ -21,8 +21,10 @@ require_once BASE_PATH . '/core/auth.php';
 // за него можно везде.
 require_once BASE_PATH . '/core/mailer.php';
 require_once BASE_PATH . '/core/security.php';
+require_once BASE_PATH . '/core/traffic.php';
 
 session_start();
+traffic_capture();   // метка канала из ссылки — до любой выдачи страницы
 csrf_boot();  // токен формы живёт столько же, сколько вход, а не 24 минуты
 db(); // инициализация/миграции
 

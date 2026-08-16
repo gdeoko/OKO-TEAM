@@ -75,6 +75,19 @@ $topPages = all("SELECT path, COUNT(*) c FROM site_events
                  GROUP BY path ORDER BY c DESC LIMIT 10", [$since]);
 $maxPage = max(1, (int) ($topPages[0]['c'] ?? 1));
 
+/* ---------- Откуда пришли заявки ----------
+ * Метку канала ставит core/traffic.php при первом заходе по ссылке с utm_source
+ * и хранит 90 дней, поэтому заслуга остаётся за первым касанием. Заявки без
+ * метки — это прямые заходы, поиск и старые письма без разметки.
+ */
+$srcRows = all("SELECT CASE WHEN COALESCE(src,'')='' THEN 'без метки' ELSE src END AS s,
+                       COUNT(*) c, SUM(is_paid) p
+                  FROM applications WHERE created_at >= ?
+                 GROUP BY s ORDER BY c DESC LIMIT 12", [$since]);
+$maxSrc = max(1, (int) ($srcRows[0]['c'] ?? 1));
+$srcNames = ['vk' => 'ВКонтакте, анонсы в сообществах', 'email' => 'письма',
+             'partner' => 'партнёры (персональные ссылки)', 'без метки' => 'прямые заходы и поиск'];
+
 /* ---------- Последние события ---------- */
 $lastEvents = all("SELECT ts, type, path, user_id, session, meta FROM site_events
                    ORDER BY id DESC LIMIT 30");
@@ -201,6 +214,26 @@ ob_start();
       <?php endforeach; ?>
     <?php endif; ?>
   </div>
+</div>
+
+<div class="card" style="padding:16px">
+  <h3 style="margin:0 0 8px">Откуда пришли заявки</h3>
+  <?php if (!$srcRows): ?>
+    <p class="muted small" style="margin:6px 0 0">За период заявок нет.</p>
+  <?php else: ?>
+    <?php foreach ($srcRows as $sr):
+        $key   = (string) $sr['s'];
+        $short = explode('/', $key)[0];
+        $title = $srcNames[$short] ?? $key; ?>
+      <div style="display:flex;align-items:center;gap:10px;margin:7px 0">
+        <div style="flex:0 0 44%;font-size:.83rem;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="<?= h($key) ?>"><?= h($title) ?></div>
+        <div style="flex:1;height:9px;border-radius:5px;background:rgba(128,128,128,.14);overflow:hidden">
+          <div style="height:100%;width:<?= round((int) $sr['c'] / $maxSrc * 100) ?>%;background:#3a6ea5;border-radius:5px"></div>
+        </div>
+        <div style="flex:0 0 auto;font-size:.8rem;font-weight:700"><?= (int) $sr['c'] ?><span class="muted" style="font-weight:400">, оплачено <?= (int) $sr['p'] ?></span></div>
+      </div>
+    <?php endforeach; ?>
+  <?php endif; ?>
 </div>
 
 <div class="card table-wrap" style="padding:16px;overflow-x:auto">

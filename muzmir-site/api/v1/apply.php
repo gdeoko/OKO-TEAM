@@ -271,6 +271,13 @@ if (is_file(BASE_PATH . '/core/partner.php')) {
     if (function_exists('partner_cookie_id')) $partnerInstId = partner_cookie_id();
 }
 
+// Канал, который привёл человека (utm_source в ссылке анонса или письма).
+$srcTag = '';
+if (is_file(BASE_PATH . '/core/traffic.php')) {
+    require_once BASE_PATH . '/core/traffic.php';
+    $srcTag = traffic_src();
+}
+
 $numbers = [];
 $appIds  = [];
 $appMap  = []; // number -> comp_name
@@ -279,6 +286,7 @@ foreach ($comps as $ci) {
     $num = gen_application_number($ci);
     $aid = insert('applications', [
         'number'         => $num,
+        'src'            => $srcTag,
         'competition_id' => (int) $ci['id'],
         'user_id'        => $uid,
         'full_name'      => $full_name,

@@ -99,7 +99,7 @@ function invite_institution_body(array $comps, array $opt = []): string {
 </p>
 
 <div style="margin:22px 0 8px;text-align:center">
-  <a href="' . h($site) . '/competitions"
+  <a href="' . h($site) . '/competitions?utm_source=email&utm_campaign=invite-inst"
      style="display:inline-block;padding:14px 34px;background:' . $gold . ';color:#1B1533;
             text-decoration:none;border-radius:999px;font-weight:700;font-size:15px">
     Посмотреть положения конкурсов

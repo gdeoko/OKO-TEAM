@@ -428,6 +428,10 @@ function db_migrate(PDO $pdo): void {
         ['awards_orders', 'refund_amount', 'INTEGER DEFAULT 0'],       // возвращённая сумма, ₽
         ['awards_orders', 'refund_id',     "TEXT DEFAULT ''"],         // id refund в ЮKassa
 
+        // Канал, приведший заявку: 'vk/vk-promo-2026-08', 'email', 'partner'.
+        // Без него все каналы сливаются в одну кучу и усиливать нечего.
+        ['applications', 'src', "TEXT DEFAULT ''"],
+
         ['users',   'blocked',     'INTEGER DEFAULT 0'],
         ['reviews', 'attachments', "TEXT DEFAULT ''"],
         ['newsletters', 'campaign_type', "TEXT DEFAULT 'konkurs'"],
