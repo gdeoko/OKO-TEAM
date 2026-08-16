@@ -155,6 +155,36 @@ function partner_verify_url(string $number): string {
         . '&s=' . partner_sign($number);
 }
 
+/**
+ * Подпись ссылки «стать партнёром» для конкретного учреждения.
+ *
+ * Согласие партнёра до сих пор принималось только ответным письмом: учреждение
+ * должно было написать «согласны», письмо попадало в разбор входящих, и лишь
+ * потом включалась вся цепочка. На 7 849 отправленных приглашений это дало ноль
+ * партнёрств — не потому, что учреждения против, а потому что отвечать на письмо
+ * долго и некому. Ссылка с подписью убирает этот шаг: одно нажатие в письме, и
+ * учреждение уже в программе.
+ *
+ * Подпись привязана к id учреждения и к секрету сайта, поэтому подобрать чужую
+ * ссылку нельзя, а старое письмо продолжает работать.
+ */
+function partner_join_sign(int $instId): string {
+    return substr(hash_hmac('sha256', 'partner-join:' . $instId, pay_secret()), 0, 20);
+}
+
+/** Ссылка «стать партнёром» для письма-приглашения. */
+function partner_join_url(int $instId): string {
+    return rtrim((string) cfgv('base_url', ''), '/')
+        . '/partner-join?i=' . $instId . '&s=' . partner_join_sign($instId);
+}
+
+/** Проверить ссылку и вернуть учреждение (или null, если подпись чужая). */
+function partner_join_check(int $instId, string $sig): ?array {
+    if ($instId <= 0 || $sig === '') return null;
+    if (!hash_equals(partner_join_sign($instId), $sig)) return null;
+    return one("SELECT * FROM institutions WHERE id=?", [$instId]) ?: null;
+}
+
 /* ─────────────────────── ЖИЗНЕННЫЙ ЦИКЛ ─────────────────────── */
 
 /**

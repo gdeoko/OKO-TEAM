@@ -307,6 +307,9 @@ function lm_mail_support(array $r, string $number, array $free): array {
  * @return array{subject:string, html:string, pdf:string}
  */
 function lm_mail_institution(array $inst, string $number, array $comps, string $unsubUrl = ''): array {
+    if (!function_exists('partner_join_url') && is_file(BASE_PATH . '/core/partner.php')) {
+        require_once BASE_PATH . '/core/partner.php';
+    }
     $fio  = trim((string) ($inst['director'] ?? ''));
     $org  = (string) ($inst['name'] ?? '');
     $base = rtrim((string) cfgv('base_url', ''), '/');
@@ -383,9 +386,24 @@ function lm_mail_institution(array $inst, string $number, array $comps, string $
     // где его читают. Стоял kc@ — ящик ведомств, и согласие учреждения попадало в
     // разбор обращений к министерствам, который чужие письма не берёт.
     $boxPartner = function_exists('ol_box_email') ? ol_box_email('partner') : 'novosti@музыкальный-мир.рф';
+    // СОГЛАСИЕ НА ПАРТНЁРСТВО — КНОПКОЙ, А НЕ ОТВЕТНЫМ ПИСЬМОМ.
+    //
+    // Раньше единственным способом было ответить на письмо словом «согласны»:
+    // ответ разбирал почтовый робот и только тогда включал всю цепочку. На
+    // тысячах отправленных приглашений это не сработало ни разу — писать ответ
+    // долго, и в школе этим обычно некому заняться. Именная подписанная ссылка
+    // делает то же самое одним нажатием, а ответ письмом остаётся как запасной путь.
+    $instId = (int) ($inst['id'] ?? 0);
+    if ($instId > 0 && function_exists('partner_join_url')) {
+        $inner .= lm_callout('<b>Информационное партнёрство.</b> Учреждение-партнёр получает именной '
+            . 'сертификат, персональную ссылку для своих участников, кабинет на сайте, а после пяти '
+            . 'заявок — благодарственные письма педагогам. Участие бесплатное и ни к чему не обязывает.');
+        $inner .= mm_email_btn(partner_join_url($instId), 'Стать партнёром', 'navy');
+    }
+
     $inner .= lm_p('По вопросам участия и партнёрства: <b>' . h((string) cfgv('org_phone', '')) . '</b>, '
         . '<a href="mailto:' . h($boxPartner) . '" style="color:#8B6F1F">' . h($boxPartner) . '</a>. '
-        . 'Согласие на информационное партнёрство достаточно направить ответным письмом.',
+        . 'Согласие на информационное партнёрство можно также направить ответным письмом.',
         'font-size:14px;color:#4a4a55');
 
     $inner .= lm_attachments_list(['Обращение на бланке центра (PDF).']);

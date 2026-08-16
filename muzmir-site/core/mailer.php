@@ -1057,7 +1057,7 @@ function mail_send(string $to, string $subject, string $html, array $opt = []): 
             'reply_to'        => $opt['reply_to'] ?? '',
         ]);
     }
-    $to = trim($to);
+    $to = mail_addr_ascii(trim($to));
     if ($to === '' || !filter_var($to, FILTER_VALIDATE_EMAIL)) {
         mail_log('SKIP bad recipient: ' . $to);
         mail_last_error('Некорректный адрес получателя: ' . $to);
