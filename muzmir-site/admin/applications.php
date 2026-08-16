@@ -409,6 +409,66 @@ if ($id = (int) input('id')) {
         </details>
       </div>
 
+      <!-- ---- ОТКЛОНЕНИЕ ----
+           Отклонение — такое же решение по заявке, как звание, и ошибиться в нём
+           так же легко: не тот пункт положения, неточная формулировка. Раньше в
+           карточке заявки его вообще не было видно, а поправить можно было только
+           повторным отклонением — со вторым письмом участнику и второй попыткой
+           возврата денег. -->
+      <?php if ((string) $a['status'] === 'rejected'): ?>
+        <?php if (!function_exists('REJECT_REASONS')) require_once BASE_PATH . '/core/presets.php'; ?>
+        <div style="border:1px solid #EBC7C7;background:#FDF7F7;border-radius:12px;padding:14px 16px;margin-bottom:14px">
+          <div style="display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap;align-items:center">
+            <b>Отклонение заявки</b>
+            <span class="badge badge--rejected">Отклонена</span>
+          </div>
+          <div class="small" style="margin-top:8px">
+            <span class="muted">Текущее основание:</span><br>
+            <?= trim((string) ($a['reject_reason'] ?? '')) !== ''
+                  ? nl2br(h((string) $a['reject_reason']))
+                  : '<span class="muted">не указано</span>' ?>
+          </div>
+          <details style="margin-top:12px">
+            <summary class="small" style="cursor:pointer;color:var(--a-navy)">Изменить причину отклонения</summary>
+            <form method="post" action="<?= url('/admin/?p=grading') ?>" style="margin-top:10px">
+              <?= csrf_field() ?>
+              <input type="hidden" name="p" value="grading">
+              <input type="hidden" name="do" value="reject_edit">
+              <input type="hidden" name="id" value="<?= $id ?>">
+              <input type="hidden" name="back" value="applications">
+              <label class="small muted">Готовые основания по положению этого конкурса</label>
+              <select id="rrPick" style="width:100%;margin:4px 0 10px">
+                <option value="">— выбрать пункт положения —</option>
+                <?php foreach (REJECT_REASONS(['is_paid' => (int) ($a['comp_paid'] ?? 1)]) as $k => $v): ?>
+                  <option value="<?= h($v) ?>"><?= h($k . ' — ' . mb_substr($v, 0, 70)) ?></option>
+                <?php endforeach; ?>
+              </select>
+              <textarea name="reject_reason" id="rrText" rows="3" style="width:100%;margin:0 0 10px"><?= h((string) ($a['reject_reason'] ?? '')) ?></textarea>
+              <label class="small" style="display:block;margin:0 0 10px">
+                <input type="checkbox" name="notify" value="1"> сообщить участнику об уточнении причины
+              </label>
+              <button class="btn btn--primary btn--sm">Сохранить причину</button>
+              <div class="small muted" style="margin-top:8px">
+                Без галочки участнику ничего не уходит: он уже получил отказ, и второе
+                такое же письмо выглядит как новый отказ по той же заявке. Возврат оргвзноса
+                тут не повторяется — он выполнен при самом отклонении.
+              </div>
+            </form>
+            <script>(function(){
+              var pick=document.getElementById('rrPick'), ta=document.getElementById('rrText');
+              if(pick&&ta) pick.addEventListener('change',function(){ if(pick.value){ ta.value=pick.value; ta.focus(); } });
+            })();</script>
+          </details>
+          <form method="post" action="<?= url('/admin/?p=grading') ?>" style="margin-top:10px"
+                onsubmit="return confirm('Снять отклонение? Заявка вернётся в работу, и её можно будет оценить.')">
+            <?= csrf_field() ?><input type="hidden" name="p" value="grading">
+            <input type="hidden" name="do" value="gl_unreject"><input type="hidden" name="id" value="<?= $id ?>">
+            <input type="hidden" name="back" value="applications">
+            <button class="btn btn--ghost btn--sm">Снять отклонение и вернуть в работу</button>
+          </form>
+        </div>
+      <?php endif; ?>
+
       <!-- ---- НАГРАДНЫЕ ДОКУМЕНТЫ ---- -->
       <div style="border:1px solid var(--a-line);border-radius:12px;padding:14px 16px;margin-bottom:14px">
         <div style="display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap;align-items:center">

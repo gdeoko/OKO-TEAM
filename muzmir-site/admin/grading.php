@@ -10,6 +10,9 @@ declare(strict_types=1);
 require_once BASE_PATH . '/core/jury.php';
 require_once BASE_PATH . '/core/app_status.php';
 require_once BASE_PATH . '/core/link_check.php';
+// Звания, спец-номинации и основания для отклонения — один общий список на всю
+// админку: тот же набор нужен карточке заявки, где правится вынесенное решение.
+require_once BASE_PATH . '/core/presets.php';
 jury_ensure_schema();
 
 /** Прямая ссылка на файл Яндекс.Диска (для HTML5-плеера). null при ошибке. */
@@ -71,73 +74,8 @@ function EXTRA_PRESETS(): array {
     return ['ЗА АРТИСТИЗМ','ЗА ПАТРИОТИЗМ','ЗА ОРИГИНАЛЬНОЕ ИСПОЛНЕНИЕ','ЗА ВЫРАЗИТЕЛЬНОСТЬ','ЗА ВИРТУОЗНОЕ ИСПОЛНЕНИЕ'];
 }
 
-/**
- * ОСНОВАНИЯ ДЛЯ ОТКЛОНЕНИЯ ЗАЯВКИ — ИЗ ПОЛОЖЕНИЯ ИМЕННО ЭТОГО КОНКУРСА.
- *
- * У платного и бесплатного конкурсов РАЗНЫЕ эталоны положения, и нумерация в
- * них не совпадает. Разрешённые интернет-ресурсы — это п. 8.8 у платного
- * («Эврика») и п. 8.7 у бесплатного («Слава России»); срок в один год — 8.11 и
- * 8.10 соответственно. Причина проста: в патриотическом положении нет
- * отдельного пункта про руки, ноги и лицо исполнителя, и вся нумерация ниже
- * сдвинута на единицу.
- *
- * Раньше список был один на все конкурсы и жёстко привязан к платной
- * нумерации. Участник бесплатного конкурса получал отказ со ссылкой на пункт,
- * которого в его положении нет или который говорит совсем о другом, — и был бы
- * совершенно прав, оспорив такой отказ.
- *
- * Ещё две формулировки пришлось выправить по тексту эталонов:
- *   - качество видео: в положении сказано «должно быть хорошего качества», и
- *     никакого порога в 480 пикселей там нет — цифра была выдумана;
- *   - фонограмма: по положению за неё оценка СНИЖАЕТСЯ до дипломанта, а не
- *     отклоняется заявка, поэтому основанием для отказа она быть не может и из
- *     списка убрана.
- *
- * @param array $comp строка конкурса; смотрим is_paid — по нему выбирается эталон
- */
-function REJECT_REASONS(array $comp = []): array {
-    $paid = (int) ($comp['is_paid'] ?? 1) === 1;
-
-    // Номера пунктов по эталону: слева платный («Эврика»), справа бесплатный
-    // («Слава России»).
-    $p = $paid
-        ? ['montazh' => '8.5', 'video' => '8.6', 'audio' => '8.7.1', 'resurs' => '8.8',
-           'zapret' => '8.9', 'ssylka' => '8.10', 'god' => '8.11', 'odna' => '8.1',
-           'semka' => '8.2', 'vidno' => '8.3']
-        : ['montazh' => '8.3', 'video' => '8.5', 'audio' => '8.6', 'resurs' => '8.7',
-           'zapret' => '8.8', 'ssylka' => '8.9', 'god' => '8.10', 'odna' => '8.1',
-           'semka' => null,  'vidno' => null];
-
-    $t = static fn(string $num, string $text): array => ['п. ' . $num, $text . ' (п. ' . $num . ' положения).'];
-
-    $list = [];
-    foreach ([
-        [$p['god'],     'Конкурсный материал старше 1 года с момента исполнения'],
-        [$p['ssylka'],  'Ссылка на конкурсный материал недействительна: она должна быть актуальна вплоть до оглашения результатов'],
-        [$p['resurs'],  'Ссылка не на разрешённый интернет-ресурс. Принимаются только: RuTube, Google Диск, Яндекс Диск, ОК видео, ВК видео, Дзен видео'],
-        [$p['zapret'],  'Материал размещён на запрещённом интернет-ресурсе (Instagram, Facebook — принадлежат Meta, признанной в России экстремистской, TikTok, YouTube)'],
-        [$p['montazh'], 'Видеоматериал содержит элементы монтажа, склейки, стоп-кадры или наложение видеоэффектов и аудиодорожек'],
-        [$p['video'],   'Видео- или фотоматериал конкурсного номера ненадлежащего качества'],
-        [$p['audio'],   'Ненадлежащее качество звука: аудиотрек, музыкальное сопровождение, аккомпанемент или вокал плохо прослушиваются'],
-        [$p['vidno'],   'В конкурсном номере чётко не видны руки, ноги и лицо исполнителя (в соответствии с номинацией)'],
-        [$p['semka'],   'Видеозапись не соответствует требованиям к съёмке: сцена, импровизированная сцена или домашние условия, статичная камера'],
-        [$p['odna'],    'Несколько конкурсных материалов поданы одной заявкой: одна заявка — один конкурсный материал'],
-    ] as [$num, $text]) {
-        if ($num === null) continue;                 // пункта нет в этом положении
-        [$k, $v] = $t($num, $text);
-        $list[$k] = $v;
-    }
-
-    // Общие основания — нумерация у обоих эталонов одинаковая.
-    $list['п. 4.2'] = 'Заявка на участие заполнена неверно (п. 4.2 положения).';
-    $list['п. 4.1'] = 'Невыполнение требований, условий или правил, прописанных в положении конкурса (п. 4.1 положения).';
-    $list['Пункт №1'] = 'Материал не допускается к конкурсу: нецензурная брань, сцены насилия или призыва к насилию, '
-                      . 'материалы экстремистского толка, порнография, реклама табака, алкоголя и наркотиков, а также '
-                      . 'иные материалы, нарушающие законодательство Российской Федерации (Пункт №1 положения).';
-    $list['критерии'] = 'Отсутствие самостоятельности исполнения: срисовывание или плагиат (критерий «оригинальность замысла»).';
-
-    return $list;
-}
+// Основания для отклонения (REJECT_REASONS) переехали в core/presets.php:
+// тем же списком пользуется карточка заявки, где правится уже вынесенное отклонение.
 
 /** Нормализация телефона для сравнения (8XXX... == +7XXX...). */
 function grading_norm_phone(?string $p): string {
@@ -450,6 +388,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && input('do') === 'grade_result') {
         if ((string) input('back') === 'applications') {
             admin_redirect('applications', ['id' => $appId]);
         }
+        // Правку могли начать из архива оценённых — короткого или длинного.
+        // Возвращаемся туда же: администратор пришёл поправить одно решение,
+        // а не судить следующую заявку.
+        if ((string) input('back') === 'archive') {
+            admin_redirect($isLongComp ? 'longcomp' : 'grading',
+                array_filter(['competition' => (int) $cur['competition_id']]));
+        }
         // Длинный конкурс — возвращаемся в его раздел (список аттестации/оценённых).
         if (!empty($isLongComp)) {
             admin_redirect('longcomp', ['competition' => (int) $cur['competition_id']]);
@@ -461,6 +406,77 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && input('do') === 'grade_result') {
     flash('Выберите итоговый результат из списка.', 'error');
     if ((string) input('back') === 'applications') admin_redirect('applications', ['id' => $appId]);
     admin_redirect('grading', array_filter(['id'=>$appId,'competition'=>$comp,'order'=>$order]));
+}
+
+/* ---------- ПРАВКА УЖЕ ВЫНЕСЕННОГО ОТКЛОНЕНИЯ ---------------------------------
+ * Отклонение — такое же решение, как звание, и ошибиться в нём так же легко:
+ * не тот пункт положения, опечатка, слишком резкая формулировка. Раньше
+ * поправить его было нечем: единственная кнопка запускала отклонение заново, а
+ * значит второе письмо участнику и вторую попытку возврата денег. Люди получали
+ * два отказа подряд по одной заявке.
+ *
+ * Здесь причина правится отдельно от самого отклонения. Письмо уходит, только
+ * если администратор попросил: участнику, который уже получил отказ, полезно
+ * узнать про уточнённую формулировку, но навязывать это письмо нельзя.
+ */
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && input('do') === 'reject_edit') {
+    if (!csrf_check()) { flash('Сессия устарела.', 'error'); admin_redirect('grading'); }
+    $appId  = (int) input('id');
+    $reason = trim(input('reject_reason'));
+    $notify = input('notify') === '1';
+    $backTo = (string) input('back');
+
+    $a = $appId ? one("SELECT a.*, c.name comp, c.slug comp_slug FROM applications a
+                        LEFT JOIN competitions c ON c.id=a.competition_id WHERE a.id=?", [$appId]) : null;
+    $goBack = static function () use ($backTo, $appId, $a, $comp, $order): void {
+        if ($backTo === 'applications') admin_redirect('applications', ['id' => $appId]);
+        if ($backTo === 'archive') {
+            $long = $a && (string) (scalar("SELECT results_mode FROM competitions WHERE id=?",
+                                           [(int) $a['competition_id']]) ?? '') === 'list';
+            admin_redirect($long ? 'longcomp' : 'grading',
+                array_filter(['competition' => (int) ($a['competition_id'] ?? 0)]));
+        }
+        admin_redirect('grading', array_filter(['id' => $appId, 'competition' => $comp, 'order' => $order]));
+    };
+
+    if (!$a) { flash('Заявка не найдена.', 'error'); admin_redirect('grading'); }
+    if ((string) $a['status'] !== 'rejected') {
+        flash('Эта заявка не отклонена — правьте её решение в разделе итога.', 'error');
+        $goBack();
+    }
+    if ($reason === '') { flash('Причина отклонения не может быть пустой.', 'error'); $goBack(); }
+
+    $was = trim((string) ($a['reject_reason'] ?? ''));
+    if ($was === $reason && !$notify) { flash('Причина не изменилась.', 'info'); $goBack(); }
+
+    update('applications', ['reject_reason' => $reason], 'id=:wid', ['wid' => $appId]);
+    audit('application_reject_edit', 'application', $appId, ['было' => $was, 'стало' => $reason]);
+
+    // Возврат оргвзноса здесь не трогаем: он уже выполнен при самом отклонении,
+    // а повторный вызов — это вторая попытка вернуть одни и те же деньги.
+    $mailed = false;
+    if ($notify && trim((string) $a['email']) !== '' && is_file(BASE_PATH . '/core/result_mail.php')) {
+        require_once BASE_PATH . '/core/result_mail.php';
+        try {
+            $name  = trim((string) $a['full_name']);
+            $hello = $name !== '' ? 'Здравствуйте, ' . h($name) . '!' : 'Здравствуйте!';
+            $inner = '<h1 style="margin:0 0 16px;font-family:Georgia,\'Times New Roman\',serif;font-size:24px;line-height:1.3;font-weight:700;color:' . RM_NAVY . ';">Заявка №' . h((string) $a['number']) . ': уточнение причины</h1>'
+                . '<p style="margin:0 0 14px;">' . $hello . '</p>'
+                . '<p style="margin:0 0 18px;">Оргкомитет уточнил основание, по которому Ваша заявка на конкурс «' . h((string) $a['comp']) . '» не была принята к участию. Верной считается формулировка ниже.</p>'
+                . '<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin:0 0 20px;background:#FDF1F1;border:1px solid #EBC7C7;border-radius:14px;">'
+                . '<tr><td style="padding:16px 22px;"><div style="font-size:12px;letter-spacing:.1em;text-transform:uppercase;color:#A0403E;margin-bottom:6px;">Причина отклонения (пункт положения 1:1)</div>'
+                . '<div style="font-size:14px;line-height:1.7;color:' . RM_INK . ';">' . nl2br(h($reason)) . '</div></td></tr></table>'
+                . '<p style="margin:0 0 14px;">Это не отказ навсегда: устраните причину и <b style="color:' . RM_NAVY . ';">подайте заявку заново</b> — мы с радостью примем её к аттестации.</p>'
+                . rm_mail_btn(url('/apply?competition=' . rawurlencode((string) ($a['comp_slug'] ?? ''))), 'Подать заявку заново');
+            $html = rm_mail_layout($inner, 'Заявка №' . (string) $a['number'] . ': уточнили причину отклонения.');
+            $mailed = mail_queue((string) $a['email'], $name,
+                'Заявка №' . (string) $a['number'] . ' — уточнение причины отклонения', $html) > 0;
+        } catch (\Throwable $e) { /* письмо не должно ломать правку */ }
+    }
+
+    flash('Причина отклонения обновлена.' . ($notify ? ($mailed ? ' Участнику отправлено уточнение.' : ' Уведомление отправить не удалось.') : ' Участнику ничего не отправляли.'),
+        $notify && !$mailed ? 'error' : 'success');
+    $goBack();
 }
 
 /* ---------- Отклонение заявки по пункту положения + письмо участнику ---------- */
@@ -867,20 +883,45 @@ if ($id = (int) input('id')) {
           <?php endif; ?>
         </form>
 
-        <button type="button" class="btn btn--ghost btn--sm" id="rejectToggle" style="margin-top:14px;color:#8b2f2f;border-color:#d99"><?= admin_icon('x') ?>Отклонить заявку…</button>
-        <div class="reject-panel" id="rejectPanel">
-          <b>Отклонение заявки по пункту положения</b>
-          <p class="small muted" style="margin:4px 0 0">Выберите готовое основание или впишите своё. Участник получит письмо с причиной и предложением исправить и подать заявку заново.<br>
+        <?php $isRejected = (string) $a['status'] === 'rejected'; ?>
+        <button type="button" class="btn btn--ghost btn--sm" id="rejectToggle" style="margin-top:14px;color:#8b2f2f;border-color:#d99"><?= admin_icon('x') ?><?= $isRejected ? 'Изменить отклонение…' : 'Отклонить заявку…' ?></button>
+        <div class="reject-panel<?= $isRejected ? ' show' : '' ?>" id="rejectPanel">
+          <b><?= $isRejected ? 'Заявка отклонена — можно поправить основание' : 'Отклонение заявки по пункту положения' ?></b>
+          <p class="small muted" style="margin:4px 0 0">
+            <?php if ($isRejected): ?>
+              Не тот пункт или неточная формулировка — поправьте текст и сохраните. Повторное письмо
+              участнику НЕ уходит, пока Вы сами не поставите галочку: он уже получил отказ, и второе
+              такое же письмо выглядит как новый отказ по той же заявке.
+            <?php else: ?>
+              Выберите готовое основание или впишите своё. Участник получит письмо с причиной и предложением исправить и подать заявку заново.
+            <?php endif; ?><br>
             Пункты приведены по положению этого конкурса — <b><?= (int) ($a['comp_paid'] ?? 1) === 1 ? 'платного, эталон «Эврика»' : 'бесплатного, эталон «Слава России»' ?></b>.</p>
           <div class="rr-chips" id="rrChips"></div>
           <form method="post" action="<?= url('/admin/?p=grading') ?>">
-            <?= csrf_field() ?><input type="hidden" name="p" value="grading"><input type="hidden" name="do" value="reject">
+            <?= csrf_field() ?><input type="hidden" name="p" value="grading">
+            <input type="hidden" name="do" value="<?= $isRejected ? 'reject_edit' : 'reject' ?>">
             <input type="hidden" name="id" value="<?= $id ?>"><input type="hidden" name="competition" value="<?= $comp ?>"><input type="hidden" name="order" value="<?= h($order) ?>">
             <div class="field">
               <textarea name="reject_reason" id="rejectReason" rows="3" placeholder="Причина отклонения (пункт положения)"><?= h((string)($a['reject_reason'] ?? '')) ?></textarea>
             </div>
-            <button class="btn btn--sm" style="background:#8b2f2f;color:#fff" onclick="return confirm('Отклонить заявку и отправить участнику письмо с причиной?')"><?= admin_icon('x') ?>Отклонить и отправить письмо</button>
+            <?php if ($isRejected): ?>
+              <label class="small" style="display:block;margin:0 0 8px">
+                <input type="checkbox" name="notify" value="1"> сообщить участнику об уточнении причины
+              </label>
+              <button class="btn btn--sm" style="background:#8b2f2f;color:#fff"><?= admin_icon('edit') ?>Сохранить причину</button>
+            <?php else: ?>
+              <button class="btn btn--sm" style="background:#8b2f2f;color:#fff" onclick="return confirm('Отклонить заявку и отправить участнику письмо с причиной?')"><?= admin_icon('x') ?>Отклонить и отправить письмо</button>
+            <?php endif; ?>
           </form>
+          <?php if ($isRejected): ?>
+            <form method="post" action="<?= url('/admin/?p=grading') ?>" style="margin-top:10px"
+                  onsubmit="return confirm('Снять отклонение? Заявка вернётся в работу, и её можно будет оценить.')">
+              <?= csrf_field() ?><input type="hidden" name="p" value="grading">
+              <input type="hidden" name="do" value="gl_unreject"><input type="hidden" name="id" value="<?= $id ?>">
+              <input type="hidden" name="competition" value="<?= $comp ?>"><input type="hidden" name="order" value="<?= h($order) ?>">
+              <button class="btn btn--ghost btn--sm">Снять отклонение и вернуть в работу</button>
+            </form>
+          <?php endif; ?>
         </div>
         <script>
           (function(){

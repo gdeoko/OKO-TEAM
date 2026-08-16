@@ -309,6 +309,10 @@ function admin_graded_table(array $rows, string $back = 'grading', array $keep =
         return '<p class="muted small">Пока ничего не оценено и не отклонено.</p>';
     }
     if (!function_exists('graded_send_info')) require_once BASE_PATH . '/core/graded_list.php';
+    // Списки званий и спец-номинаций нужны прямо в таблице: решение меняется здесь же,
+    // без захода в карточку оценки.
+    if (!function_exists('RESULT_PRESETS')) require_once BASE_PATH . '/core/presets.php';
+    $glExtra = function_exists('EXTRA_PRESETS') ? EXTRA_PRESETS() : [];
 
     ob_start(); ?>
 <div class="table-wrap"><table class="tbl gl-tbl">
@@ -362,6 +366,33 @@ function admin_graded_table(array $rows, string $back = 'grading', array $keep =
         <details class="gl-more"><summary class="btn btn--ghost btn--sm">Ещё</summary>
           <div class="gl-menu">
             <?php if (!$rej): ?>
+              <?php /* СМЕНА ЗВАНИЯ ПРЯМО В АРХИВЕ. Форма уходит в раздел оценки тем же
+                        действием grade_result: там вся логика переоценки — пересоздание
+                        неотправленного диплома, пересчёт срока, повторная отправка
+                        результата. Вторую такую же логику здесь заводить нельзя. */ ?>
+              <form method="post" action="<?= url('/admin/?p=grading') ?>" class="gl-f"><?= csrf_field() ?>
+                <input type="hidden" name="p" value="grading">
+                <input type="hidden" name="do" value="grade_result"><input type="hidden" name="id" value="<?= $aid ?>">
+                <input type="hidden" name="back" value="archive">
+                <input type="hidden" name="jury_comment" value="<?= h((string) ($a['jury_comment'] ?? '')) ?>">
+                <label class="small muted">Изменить решение</label>
+                <select name="result">
+                  <?php foreach (RESULT_PRESETS() as $rp): ?>
+                    <option value="<?= h($rp) ?>" <?= (string) $a['result'] === $rp ? 'selected' : '' ?>><?= h($rp) ?></option>
+                  <?php endforeach; ?>
+                </select>
+                <select name="extra_diploma">
+                  <option value="">— без доп. диплома —</option>
+                  <?php foreach ($glExtra as $ep): ?>
+                    <option value="<?= h($ep) ?>" <?= (string) ($a['extra_diploma'] ?? '') === $ep ? 'selected' : '' ?>><?= h($ep) ?></option>
+                  <?php endforeach; ?>
+                  <?php $ce = trim((string) ($a['extra_diploma'] ?? '')); if ($ce !== '' && !in_array($ce, $glExtra, true)): ?>
+                    <option value="<?= h($ce) ?>" selected><?= h($ce) ?></option>
+                  <?php endif; ?>
+                </select>
+                <label class="small"><input type="checkbox" name="auto_send" value="1" checked> отправить по сроку</label>
+                <button class="btn btn--navy btn--sm" name="save" value="1">Сохранить решение</button>
+              </form>
               <form method="post" action="<?= url('/admin/') ?>" class="gl-f"><?= csrf_field() ?>
                 <input type="hidden" name="do" value="gl_resched"><input type="hidden" name="id" value="<?= $aid ?>">
                 <?php foreach ($keep as $k => $v): ?><input type="hidden" name="<?= h((string) $k) ?>" value="<?= h((string) $v) ?>"><?php endforeach; ?>
@@ -370,6 +401,18 @@ function admin_graded_table(array $rows, string $back = 'grading', array $keep =
                 <button class="btn btn--navy btn--sm">Перенести</button>
               </form>
             <?php else: ?>
+              <?php /* ПРАВКА ОСНОВАНИЯ ОТКЛОНЕНИЯ. Ошибиться пунктом положения так же
+                        легко, как званием, а поправить это было нечем: единственная
+                        кнопка отклоняла заново и слала участнику второй отказ. */ ?>
+              <form method="post" action="<?= url('/admin/?p=grading') ?>" class="gl-f"><?= csrf_field() ?>
+                <input type="hidden" name="p" value="grading">
+                <input type="hidden" name="do" value="reject_edit"><input type="hidden" name="id" value="<?= $aid ?>">
+                <input type="hidden" name="back" value="archive">
+                <label class="small muted">Изменить причину отклонения</label>
+                <textarea name="reject_reason" rows="3"><?= h((string) ($a['reject_reason'] ?? '')) ?></textarea>
+                <label class="small"><input type="checkbox" name="notify" value="1"> сообщить участнику</label>
+                <button class="btn btn--navy btn--sm">Сохранить причину</button>
+              </form>
               <form method="post" action="<?= url('/admin/') ?>" class="gl-f"
                     onsubmit="return confirm('Снять отклонение? Заявка вернётся в очередь на оценку.')"><?= csrf_field() ?>
                 <input type="hidden" name="do" value="gl_unreject"><input type="hidden" name="id" value="<?= $aid ?>">
@@ -401,7 +444,11 @@ function admin_graded_table(array $rows, string $back = 'grading', array $keep =
          box-shadow:0 12px 32px rgba(0,0,0,.16)}
 .gl-menu .gl-f{display:flex;flex-direction:column;gap:6px;padding:8px 0}
 .gl-menu .gl-f + .gl-f{border-top:1px solid var(--a-line)}
-.gl-menu input[type=datetime-local]{padding:7px 9px;border:1px solid var(--a-line);border-radius:8px;font-size:.86rem}
+.gl-menu input[type=datetime-local],.gl-menu select,.gl-menu textarea{
+         padding:7px 9px;border:1px solid var(--a-line);border-radius:8px;font-size:.86rem;
+         width:100%;box-sizing:border-box;font-family:inherit}
+.gl-menu textarea{resize:vertical;min-height:64px}
+.gl-menu{min-width:290px}
 @media (max-width:820px){.gl-menu{position:static;box-shadow:none;min-width:0}}
 </style>
 <?php
@@ -422,6 +469,10 @@ function admin_graded_actions(string $back, array $keep = []): bool {
     $aid = (int) input('id');
     $a   = $aid ? one("SELECT * FROM applications WHERE id=?", [$aid]) : null;
     if (!$a) { flash('Заявка не найдена.', 'error'); admin_redirect($back, $keep); }
+
+    // Снять отклонение можно и из карточки заявки — тогда и возвращаемся туда,
+    // а не в раздел оценки: администратор разбирался с этой заявкой, а не судил.
+    if ((string) input('back') === 'applications') { $back = 'applications'; $keep = ['id' => $aid]; }
 
     if ($do === 'gl_resched') {
         require_once BASE_PATH . '/core/dispatch_ops.php';
