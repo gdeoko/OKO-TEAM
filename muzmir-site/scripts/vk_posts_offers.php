@@ -21,6 +21,7 @@ define('BASE_PATH', dirname(__DIR__));
 $GLOBALS['CFG'] = require BASE_PATH . '/config.php';
 require_once BASE_PATH . '/core/db.php';
 require_once BASE_PATH . '/core/helpers.php';
+require_once BASE_PATH . '/core/outreach_window.php';
 require_once BASE_PATH . '/core/vk_promo.php';
 
 
@@ -28,6 +29,8 @@ $dry  = in_array('--dry', $argv, true);
 $line = str_repeat('=', 78);
 $site = (string) cfgv('domain', 'музыкальный-мир.рф');
 $tel  = (string) cfgv('org_phone', '');
+
+if (!$dry && !outreach_window_guard(in_array('--force', $argv, true))) exit(0);
 
 vkp_ensure();
 

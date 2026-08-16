@@ -82,6 +82,11 @@ function vkp_ensure(): void {
         "ALTER TABLE vk_targets ADD COLUMN pending_log_id INTEGER DEFAULT 0",
         "ALTER TABLE vk_targets ADD COLUMN score INTEGER DEFAULT 0",
         "ALTER TABLE vk_promo_log ADD COLUMN slot INTEGER DEFAULT 0",
+        // День, в который площадка с открытой стеной получает весь набор волнами,
+        // и отметка о пройденном круге: без них она либо получит одну запись, либо
+        // будет получать набор бесконечно.
+        "ALTER TABLE vk_targets ADD COLUMN cycle_date TEXT DEFAULT ''",
+        "ALTER TABLE vk_targets ADD COLUMN last_cycle_at TEXT DEFAULT ''",
     ] as $sql) {
         try { db()->exec($sql); } catch (\Throwable $e) { /* уже есть */ }
     }

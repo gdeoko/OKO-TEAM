@@ -16,12 +16,15 @@ define('BASE_PATH', dirname(__DIR__));
 $GLOBALS['CFG'] = require BASE_PATH . '/config.php';
 require_once BASE_PATH . '/core/db.php';
 require_once BASE_PATH . '/core/helpers.php';
+require_once BASE_PATH . '/core/outreach_window.php';
 require_once BASE_PATH . '/core/mailer.php';
 require_once BASE_PATH . '/core/vk_outreach.php';
 
 $line  = str_repeat('=', 78);
 $gid   = (int) cfgv('vk_group_id', 211325055);
 $peer  = -$gid;
+if (!outreach_window_guard(in_array('--force', $argv, true))) exit(0);
+
 $comps = vko_comps();
 
 echo "ЖИВАЯ ПРОБА ОБРАЩЕНИЯ\n$line\n";
