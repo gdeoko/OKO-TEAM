@@ -242,17 +242,8 @@ function vkp_kind_forms(string $kind, string $name): array {
  * остатком от деления id сообщества, поэтому один и тот же адресат никогда не
  * получит два разных анонса, а соседние сообщества получат непохожие.
  */
-function vkp_link_human(string $url): string {
-    // Ссылка вида https://xn----7sbugdeiegh1b0a9hen.xn--p1ai читается как
-    // машинный мусор и снижает доверие. Показываем домен по-русски.
-    return preg_replace_callback('~//(xn--[^/]+)~', static function (array $m): string {
-        $h = function_exists('idn_to_utf8') ? idn_to_utf8($m[1], 0, INTL_IDNA_VARIANT_UTS46) : false;
-        return '//' . ($h !== false && $h !== '' ? $h : $m[1]);
-    }, $url) ?? $url;
-}
-
 function vkp_message(array $t, string $link, string $deadline = ''): string {
-    $link = vkp_link_human($link);
+    $link = link_human($link);
     $forms    = vkp_kind_forms((string) ($t['kind'] ?? ''), (string) ($t['name'] ?? ''));
     $kindWord = $forms['prep'];
     $gid      = (int) ($t['group_id'] ?? 0);

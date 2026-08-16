@@ -41,6 +41,20 @@ function cfgv(string $key, $default = null) {
     return $v ?? $default;
 }
 
+/**
+ * Ссылка, годная для человеческих глаз: домен из punycode обратно в кириллицу.
+ *
+ * Наш адрес технически записан как xn----7sbugdeiegh1b0a9hen.xn--p1ai. В коде это
+ * правильно, а в письме, бланке или записи ВКонтакте такая ссылка выглядит как
+ * подделка, и до сути читатель уже не доходит.
+ */
+function link_human(string $url): string {
+    return preg_replace_callback('~//(xn--[^/]+)~', static function (array $m): string {
+        $h = function_exists('idn_to_utf8') ? idn_to_utf8($m[1], 0, INTL_IDNA_VARIANT_UTS46) : false;
+        return '//' . ($h !== false && $h !== '' ? $h : $m[1]);
+    }, $url) ?? $url;
+}
+
 function url(string $path = ''): string {
     return rtrim(cfgv('base_url'), '/') . '/' . ltrim($path, '/');
 }

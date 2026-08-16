@@ -106,6 +106,29 @@ $counts = [
     'blocked'  => (int) (scalar("SELECT COUNT(*) FROM institutions WHERE partner_status='blocked'") ?? 0),
 ];
 
+/* ── Как идёт вербовка по каналам ──
+ * Приглашение уходит двумя дорогами: письмом на официальный ящик и обращением
+ * в сообщения сообщества ВКонтакте. Ссылка согласия в обоих случаях одна и та
+ * же, поэтому здесь видно не «сколько писем ушло», а сколько учреждений
+ * реально дошли до кнопки.
+ */
+$chan = ['письма' => 0, 'вк' => 0, 'вк_осталось' => 0, 'согласий' => 0, 'согласий_сегодня' => 0];
+try {
+    $chan['письма'] = (int) (scalar("SELECT COUNT(*) FROM institutions WHERE invited_count > 0") ?? 0);
+    if (tbl_exists('vk_outreach_log')) {
+        $chan['вк'] = (int) (scalar("SELECT COUNT(*) FROM vk_outreach_log WHERE outcome='sent'") ?? 0);
+        $chan['вк_осталось'] = (int) (scalar(
+            "SELECT COUNT(*) FROM vk_targets t
+               JOIN institutions i ON i.id = t.institution_id
+               LEFT JOIN vk_outreach_log l ON l.institution_id = i.id
+              WHERE t.score >= 12 AND l.id IS NULL
+                AND COALESCE(i.partner_status,'') NOT IN ('accepted','declined','blocked')") ?? 0);
+    }
+    $chan['согласий'] = (int) (scalar("SELECT COUNT(*) FROM partner_events WHERE kind='accepted'") ?? 0);
+    $chan['согласий_сегодня'] = (int) (scalar("SELECT COUNT(*) FROM partner_events
+        WHERE kind='accepted' AND date(created_at)=date('now','localtime')") ?? 0);
+} catch (\Throwable $e) { /* сводка не критична */ }
+
 $current = null;
 if ($id > 0) {
     $current = one("SELECT * FROM institutions WHERE id=?", [$id]);
@@ -120,8 +143,18 @@ if ($id > 0) {
 ob_start(); ?>
 <div class="section-title"><h2>Партнёры <span class="small muted">(принято: <?= $counts['accepted'] ?>, приглашено: <?= $counts['invited'] ?>, отказ: <?= $counts['declined'] ?>, блок: <?= $counts['blocked'] ?>)</span></h2></div>
 <p class="small muted" style="margin:-6px 0 14px">
-  Учреждения-Информационные партнёры. Приглашение отправляется массовой рассылкой по учреждениям (novosti@), партнёр принимает — админ жмёт «Принять» и ЛК активируется. Список сортируется от новых к старым.
+  Учреждения-Информационные партнёры. Приглашение идёт двумя каналами: письмом на официальный ящик и обращением в сообщения сообщества ВКонтакте. В обоих стоит одна и та же именная ссылка согласия, поэтому учреждение принимает партнёрство само, одним нажатием, без ответного письма и без действий оператора. Кнопка «Принять» в карточке нужна для ручных случаев (согласие пришло по телефону или письмом).
 </p>
+
+<div class="card" style="margin:0 0 16px;padding:14px 16px">
+  <div style="display:flex;flex-wrap:wrap;gap:18px;align-items:baseline">
+    <div><span class="small muted">приглашено письмами</span><br><b style="font-size:1.15rem"><?= number_format($chan['письма'], 0, '.', ' ') ?></b></div>
+    <div><span class="small muted">обращений ВКонтакте</span><br><b style="font-size:1.15rem"><?= number_format($chan['вк'], 0, '.', ' ') ?></b></div>
+    <div><span class="small muted">в очереди ВКонтакте</span><br><b style="font-size:1.15rem"><?= number_format($chan['вк_осталось'], 0, '.', ' ') ?></b></div>
+    <div><span class="small muted">согласий всего</span><br><b style="font-size:1.15rem"><?= number_format($chan['согласий'], 0, '.', ' ') ?></b></div>
+    <div><span class="small muted">согласий сегодня</span><br><b style="font-size:1.15rem"><?= number_format($chan['согласий_сегодня'], 0, '.', ' ') ?></b></div>
+  </div>
+</div>
 
 <form method="get" class="filters">
   <input type="hidden" name="p" value="partners">
