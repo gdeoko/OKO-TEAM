@@ -244,12 +244,16 @@ case 'uploadAnketaFile':
              'limit'=>ini_get('upload_max_filesize')],400);
     $orig=(string)($_FILES['file']['name']??'file');
     if(((int)($_FILES['file']['size']??0))> 400*1024*1024) out(['ok'=>false,'error'=>'файл больше 400 МБ'],413);
-    $dir=__DIR__."/uploads/$sid"; if(!is_dir($dir)) @mkdir($dir,0755,true);
+    // Папку заводим ПОСЛЕ проверки типа (ниже): иначе каждая отбитая попытка
+    // залить исполняемое оставляла пустой каталог, и их можно было наплодить
+    // сколько угодно одним скриптом.
+    $dir=__DIR__."/uploads/$sid";
     $fn=preg_replace('/[^\w.\-]+/u','_',$orig);
     $ext=strtolower(pathinfo($fn,PATHINFO_EXTENSION));
     // Исполняемое на сервере не принимаем ни под каким видом.
     if(in_array($ext,['php','phtml','php3','php4','php5','phar','cgi','pl','py','sh','htaccess']))
         out(['ok'=>false,'error'=>'такой тип файла не принимаем'],415);
+    if(!is_dir($dir)) @mkdir($dir,0755,true);
     if(file_exists("$dir/$fn")) $fn=pathinfo($fn,PATHINFO_FILENAME).'_'.substr(md5(mt_rand()),0,5).($ext?".$ext":'');
     if(!move_uploaded_file($_FILES['file']['tmp_name'],"$dir/$fn"))
         out(['ok'=>false,'error'=>'не удалось сохранить'],500);
@@ -442,6 +446,74 @@ case 'getDialogs':
 
 case 'getVacancies': require_admin(); out(['ok'=>true,'vacancies'=>db_all("SELECT * FROM vacancies ORDER BY id DESC LIMIT 200")]);
 case 'getResponses': require_admin(); out(['ok'=>true,'responses'=>db_all("SELECT * FROM responses ORDER BY id DESC LIMIT 200")]);
+case 'admin_calls':
+    // Созвоны. Пишет их агент в data_runtime/calls.json на стороне бота,
+    // админка только показывает: одна правда, две витрины.
+    require_admin();
+    $путь = '/opt/oko-agents/data_runtime/calls.json';
+    $записи = [];
+    if (is_readable($путь)) {
+        $d = json_decode((string)file_get_contents($путь), true);
+        if (is_array($d) && isset($d['записи']) && is_array($d['записи'])) {
+            foreach ($d['записи'] as $з) {
+                if (($з['статус'] ?? '') === 'отменён') continue;
+                $записи[] = $з;
+            }
+            usort($записи, function($a, $b){
+                return strcmp((string)($a['когда'] ?? ''), (string)($b['когда'] ?? ''));
+            });
+        }
+    }
+    out(['ok'=>true,'calls'=>$записи]);
+
+case 'admin_progress':
+    // Путь клиента: шесть отметок, статус, соглашения. Считает Python
+    // (core/progress.py) и кладёт снимок в data_runtime/admin_clients.json.
+    // Здесь только отдаём: логика прогресса живёт в одном месте и покрыта
+    // тестами, а не переписана вторым разом на PHP, где через месяц разъедется.
+    require_admin();
+    $путь = '/opt/oko-agents/data_runtime/admin_clients.json';
+    $снимок = ['клиенты'=>[], 'сводка'=>[], 'собран'=>0];
+    if (is_readable($путь)) {
+        $d = json_decode((string)file_get_contents($путь), true);
+        if (is_array($d) && isset($d['клиенты'])) $снимок = $d;
+    }
+    $статус = trim((string)($_GET['статус'] ?? ''));
+    $поиск  = mb_strtolower(trim((string)($_GET['q'] ?? '')));
+    $клиенты = [];
+    foreach (($снимок['клиенты'] ?? []) as $к) {
+        if ($статус !== '' && ($к['статус'] ?? '') !== $статус) continue;
+        if ($поиск !== '') {
+            $стог = mb_strtolower(($к['имя'] ?? '').' '.($к['ник'] ?? '').' '
+                                  .($к['ниша'] ?? '').' '.($к['uid'] ?? ''));
+            if (mb_strpos($стог, $поиск) === false) continue;
+        }
+        $клиенты[] = $к;
+    }
+    // Возраст снимка отдаём наружу: пустой список из-за упавшего сборщика и
+    // пустой список из-за пустой базы выглядят одинаково, и молчать об этом
+    // нельзя. Витрина обязана показывать, насколько она свежая.
+    out(['ok'=>true, 'clients'=>array_slice($клиенты, 0, 500),
+         'summary'=>($снимок['сводка'] ?? []), 'built'=>(int)($снимок['собран'] ?? 0),
+         'total'=>count($снимок['клиенты'] ?? []), 'shown'=>count($клиенты),
+         'age_sec'=>($снимок['собран'] ?? 0) ? (time() - (int)$снимок['собран']) : -1]);
+
+case 'admin_note':
+    // Заметка по клиенту. Дописываем в тот же файл, что читает бот: одна
+    // история на двоих, без затирания предыдущей записи.
+    require_admin();
+    $uid = trim((string)($body['uid'] ?? ''));
+    $текст = trim((string)($body['text'] ?? ''));
+    if ($uid === '' || $текст === '') fail('uid and text required');
+    $строка = json_encode([
+        'uid'=>$uid, 'кто'=>(string)($body['who'] ?? 'Даниэль'),
+        'когда'=>time(), 'текст'=>mb_substr($текст, 0, 4000),
+    ], JSON_UNESCAPED_UNICODE);
+    $файл = '/opt/oko-agents/data_runtime/client_notes.jsonl';
+    $ок = @file_put_contents($файл, $строка."\n", FILE_APPEND | LOCK_EX);
+    if ($ок === false) fail('не записалось: нет доступа к '.$файл);
+    out(['ok'=>true, 'uid'=>$uid]);
+
 case 'getPayments': require_admin(); out(['ok'=>true,'payments'=>db_all("SELECT * FROM payments ORDER BY id DESC LIMIT 200")]);
 case 'getSubscribers': require_admin(); out(['ok'=>true,'subscribers'=>contacts_all('all'),'log'=>db_all("SELECT * FROM newsletter_log ORDER BY id DESC LIMIT 20")]);
 case 'getProducts':

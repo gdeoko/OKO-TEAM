@@ -109,6 +109,20 @@ a{color:inherit;text-decoration:none}
 .b-response{background:rgba(168,85,247,0.14);color:#a855f7}
 .b-anketa{background:rgba(52,211,153,0.14);color:#34d399}
 .b-refund,.b-banned{background:rgba(255,107,107,0.14);color:var(--red)}
+.b-vnim{background:rgba(255,180,0,0.18);color:var(--amber)}
+.b-spyash{background:rgba(255,255,255,0.06);color:var(--w3)}
+.b-otkaz{background:rgba(255,107,107,0.12);color:var(--red)}
+.steps{display:flex;gap:4px;align-items:center;margin:9px 0 3px;flex-wrap:wrap}
+.step{flex:1 1 34px;min-width:26px;height:5px;border-radius:3px;background:rgba(255,255,255,0.09)}
+.step.on{background:var(--lime)}
+.step-lbl{display:flex;gap:4px;flex-wrap:wrap;font-size:10px;color:var(--w3);letter-spacing:.2px}
+.step-lbl span{flex:1 1 34px;min-width:26px;text-align:center}
+.step-lbl span.on{color:var(--lime);font-weight:700}
+.note{background:rgba(255,255,255,0.04);border-left:2px solid var(--lime);padding:7px 10px;border-radius:0 6px 6px 0;margin:6px 0;font-size:12.5px;line-height:1.5}
+.note .who{font-size:10.5px;color:var(--w3);text-transform:uppercase;letter-spacing:.4px;margin-bottom:2px}
+.agr{display:flex;justify-content:space-between;gap:10px;padding:7px 0;border-bottom:1px solid rgba(255,255,255,0.06);font-size:12.5px;flex-wrap:wrap}
+.agr:last-child{border-bottom:none}
+.stale{background:rgba(255,180,0,0.12);color:var(--amber);padding:8px 12px;border-radius:8px;font-size:12.5px;margin-bottom:12px}
 .row-tools{display:flex;gap:10px;margin-bottom:14px;flex-wrap:wrap;min-width:0}
 .row-tools .inp{flex:1;min-width:180px}
 .sel{background:rgba(255,255,255,0.05);border:1px solid var(--bd);border-radius:var(--r);padding:12px 14px;color:var(--w1);font-family:'Onest';font-size:14px;outline:none;min-width:0}
@@ -240,6 +254,7 @@ a{color:inherit;text-decoration:none}
     </div>
     <div class="nav-i on" data-p="dashboard" onclick="go('dashboard')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="9" rx="1.5"/><rect x="14" y="3" width="7" height="5" rx="1.5"/><rect x="14" y="12" width="7" height="9" rx="1.5"/><rect x="3" y="16" width="7" height="5" rx="1.5"/></svg><span class="lbl">Дашборд</span><span class="nav-live-dot"></span></div>
     <div class="nav-i" data-p="clients" onclick="go('clients')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="9" cy="7" r="3.5"/><path d="M2 21c0-3.5 3-6 7-6s7 2.5 7 6"/><path d="M17 4.5a3.5 3.5 0 0 1 0 6.5M22 21c0-2.8-1.6-5-4-5.7"/></svg><span class="lbl">Клиенты</span></div>
+    <div class="nav-i" data-p="progress" onclick="go('progress')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 18h4V9H4zM10 18h4V4h-4zM16 18h4v-6h-4z"/></svg><span class="lbl">Путь клиента</span><span class="nav-live-dot"></span></div>
     <div class="nav-i" data-p="feed" onclick="go('feed')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 6h16M4 12h16M4 18h16"/></svg><span class="lbl">Live-лента</span></div>
     <div class="nav-i" data-p="manualpay" onclick="go('manualpay')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 5v14M5 12h14"/><rect x="2" y="4" width="20" height="16" rx="2"/></svg><span class="lbl">Ручная оплата</span></div>
     <div class="nav-i" data-p="agents" onclick="go('agents')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="12" rx="2"/><path d="M8 20h8M12 16v4"/><circle cx="9" cy="10" r="1"/><circle cx="15" cy="10" r="1"/></svg><span class="lbl">Агенты</span><span class="nav-live-dot"></span></div>
@@ -249,7 +264,7 @@ a{color:inherit;text-decoration:none}
     <div class="nav-i" data-p="anketas" onclick="go('anketas')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="4" y="3" width="16" height="18" rx="2"/><path d="M8 8h8M8 12h8M8 16h5"/></svg><span class="lbl">Анкеты</span></div>
     <div class="nav-i" data-p="dossier" onclick="go('dossier')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 4h6l2 2h8v12a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2z"/><path d="M8 13h8M8 17h5"/></svg><span class="lbl">Материалы</span></div>
     <div class="nav-i" data-p="dialogs" onclick="go('dialogs')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H8l-4 4V5a2 2 0 0 1 2-2h13a2 2 0 0 1 2 2z"/></svg><span class="lbl">Диалоги</span></div>
-    <div class="nav-i" data-p="deals" onclick="go('deals')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 7 12 3 4 7v10l8 4 8-4z"/></svg><span class="lbl">Сделки</span></div>
+    <div class="nav-i" data-p="calls" onclick="go('calls')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M15 10l5-3v10l-5-3v-4z"/><rect x="3" y="6" width="12" height="12" rx="2"/></svg><span>Созвоны</span></div><div class="nav-i" data-p="deals" onclick="go('deals')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 7 12 3 4 7v10l8 4 8-4z"/></svg><span class="lbl">Сделки</span></div>
     <div class="nav-i" data-p="vacancies" onclick="go('vacancies')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="7" width="18" height="13" rx="2"/><path d="M8 7V5a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg><span class="lbl">Вакансии</span></div>
     <div class="nav-i" data-p="responses" onclick="go('responses')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 2 11 13M22 2l-7 20-4-9-9-4z"/></svg><span class="lbl">Отклики</span></div>
     <div class="nav-i" data-p="payments" onclick="go('payments')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="5" width="20" height="14" rx="2"/><path d="M2 10h20"/></svg><span class="lbl">Оплаты</span></div>
@@ -348,6 +363,7 @@ function logout(){localStorage.removeItem('okoKey');location.reload()}
 const TITLES={
   dashboard:['Дашборд','Обзор в реальном времени'],
   clients:['Клиенты','CRM · база клиентов и лидов'],
+  progress:['Путь клиента','Шесть отметок, статусы, соглашения и заметки'],
   dossier:['Материалы','КП, Системы, договоры и оплата по каждому клиенту'],
   feed:['Live-лента','События по мере поступления'],
   manualpay:['Ручная оплата','Провести платёж в обход webhook'],
@@ -357,6 +373,7 @@ const TITLES={
   finance:['Финансы','Выручка, расходы, прогноз'],
   anketas:['Анкеты','Заполненные анкеты'],
   dialogs:['Диалоги','Переписка агентов'],
+  calls:['Созвоны','Записи, слоты и ссылки на Zoom'],
   deals:['Сделки','Закрытые и активные'],
   vacancies:['Вакансии','Найденные вакансии'],
   responses:['Отклики','Отправленные отклики'],
@@ -400,9 +417,11 @@ async function loadPage(p,silent){
   if(p==='moderation')return renderModeration(box);
   if(p==='finance')return renderFinance(box);
   if(p==='clients')return renderClients(box);
+  if(p==='progress')return renderProgress(box);
   if(p==='dossier')return renderDossier(box);
   if(p==='anketas')return renderAnketasList(box);
   if(p==='dialogs')return renderList(box,'getDialogs','dialogs',renderDialog,'Диалогов пока нет');
+  if(p==='calls')return renderList(box,'admin_calls','calls',renderCall,'Созвонов пока нет');
   if(p==='deals')return renderList(box,'getStats','deals',renderDeal,'Сделок пока нет');
   if(p==='vacancies')return renderList(box,'getVacancies','vacancies',renderVac,'Вакансий пока нет');
   if(p==='responses')return renderList(box,'getResponses','responses',renderResp,'Откликов пока нет');
@@ -1034,6 +1053,119 @@ function showModal(html){
 function closeModal(){document.getElementById('modalWrap').innerHTML=''}
 addEventListener('keydown',e=>{if(e.key==='Escape')closeModal()});
 
+/* ========== ПУТЬ КЛИЕНТА ==========
+   Шесть отметок, статус, соглашения и заметки. Всё считает Python и кладёт
+   снимок в data_runtime/admin_clients.json, тут только показ: одна правда,
+   две витрины. Отметка «оплата» стоит только когда деньги есть в журнале
+   выручки, поэтому «стадия оплаты, а платежа нет» видно как тревогу, а не как
+   зелёную галочку. */
+let progressData=[],progressSummary={};
+// Заметки и снимок хранят время в unix-секундах, а общий ago() ждёт строку с
+// датой: на числе он давал Invalid Date и показывал сырые «1755380000».
+function agoU(сек){return сек?ago(new Date(Number(сек)*1000).toISOString()):''}
+const СТАТУС_КЛАСС={'требует внимания':'b-vnim','активный':'b-paid','спящий':'b-spyash','завершён':'b-deal','отказ':'b-otkaz'};
+async function renderProgress(box){
+  box.innerHTML='<div class="spin" style="margin:40px auto"></div>';
+  const d=await api('admin_progress');
+  if(!d.ok){box.innerHTML='<div class="empty">Не загрузилось: '+esc(d.error||'')+'</div>';return}
+  progressData=d.clients||[];progressSummary=d.summary||{};
+  const с=progressSummary.по_статусам||{};
+  // Возраст снимка на виду. Пустой список из-за упавшего сборщика и пустой
+  // список из-за пустой базы выглядят одинаково, и молчать об этом нельзя.
+  const возраст=d.age_sec;
+  let шапка='';
+  if(возраст<0)шапка='<div class="stale">Снимок ещё ни разу не собирался. Запусти: python3 -m tools.admin_snapshot</div>';
+  else if(возраст>1800)шапка='<div class="stale">Снимок собран '+Math.round(возраст/60)+' мин назад, данные могли устареть</div>';
+  const плитки=[['требует внимания','b-vnim'],['активный','b-paid'],['спящий','b-spyash'],['завершён','b-deal'],['отказ','b-otkaz']]
+    .map(([имя,кл])=>'<button class="mini-btn '+(кл==='b-vnim'?'':'ghost')+'" onclick="filterProgress(\''+имя+'\')">'+имя+': <b>'+(с[имя]||0)+'</b></button>').join('');
+  const в=progressSummary.воронка||{};
+  const воронка=['контакт','ответ','кп','договор','оплата','работа']
+    .map(э=>'<span>'+э+': <b class="lime">'+(в[э]||0)+'</b></span>').join('');
+  box.innerHTML=шапка+`<div class="section">
+    <div class="lc-meta" style="margin-bottom:12px">${воронка}</div>
+    <div class="row-tools">
+      <input class="inp" id="pSearch" placeholder="Поиск: имя, ник, ниша, uid" oninput="filterProgress()">
+      <select class="sel" id="pStatus" onchange="filterProgress()">
+        <option value="">Все статусы</option>
+        <option value="требует внимания">Требуют внимания</option>
+        <option value="активный">Активные</option>
+        <option value="спящий">Спящие</option>
+        <option value="завершён">Завершённые</option>
+        <option value="отказ">Отказы</option>
+      </select>
+    </div>
+    <div class="btnrow" style="margin-bottom:12px">${плитки}</div>
+    <div id="progressList"></div>
+  </div>`;
+  filterProgress();
+}
+function filterProgress(статус){
+  if(статус!==undefined){const s=document.getElementById('pStatus');if(s)s.value=статус}
+  const q=(document.getElementById('pSearch')?.value||'').toLowerCase();
+  const st=document.getElementById('pStatus')?.value||'';
+  const list=progressData.filter(k=>{
+    if(st&&k.статус!==st)return false;
+    if(!q)return true;
+    return ((k.имя||'')+' '+(k.ник||'')+' '+(k.ниша||'')+' '+(k.uid||'')).toLowerCase().includes(q);
+  });
+  const el=document.getElementById('progressList');
+  if(!el)return;
+  el.innerHTML='<div style="font-size:12px;color:var(--w3);margin-bottom:8px">Показано: '+list.length+' из '+progressData.length+'</div>'
+    +(list.length?list.slice(0,300).map(progressCard).join(''):'<div class="empty">Ничего не найдено</div>');
+}
+function progressCard(k){
+  const кл=СТАТУС_КЛАСС[k.статус]||'b-new';
+  const шкала=(k.этапы||[]).map(э=>'<div class="step'+(э.есть?' on':'')+'" title="'+esc(э.этап+(э.чем?': '+э.чем:''))+'"></div>').join('');
+  const подписи=(k.этапы||[]).map(э=>'<span class="'+(э.есть?'on':'')+'">'+esc(э.этап)+'</span>').join('');
+  const ник=k.ник?'<a href="https://t.me/'+esc(k.ник)+'" target="_blank" onclick="event.stopPropagation()">@'+esc(k.ник)+'</a>':'';
+  return`<div class="lc" onclick="openProgress('${esc(k.uid)}',this,event)">
+    <div class="lc-top"><div class="lc-name">${esc(k.имя||'без имени')} <span style="color:var(--w4);font-size:11px">${esc(k.uid)}</span></div>
+      <span class="badge ${кл}">${esc(k.статус)} ${k.прогресс}/${k.всего}</span></div>
+    <div class="steps">${шкала}</div><div class="step-lbl">${подписи}</div>
+    <div class="lc-meta" style="margin-top:7px">${ник}${k.ниша?'<span>'+esc(k.ниша)+'</span>':''}${k.стадия?'<span>'+esc(k.стадия)+'</span>':''}${k.оплачено?'<span class="lime">'+rub(k.оплачено)+'</span>':''}${k.аккаунт?'<span>'+esc(k.аккаунт)+'</span>':''}<span style="color:var(--amber)">${esc(k.почему||'')}</span></div>
+    <div class="pdetail"></div></div>`;
+}
+function openProgress(uid,el,ev){
+  if(ev&&ev.target.closest('a,button'))return;
+  const box=el.querySelector('.pdetail');
+  if(box.dataset.open){box.innerHTML='';box.dataset.open='';return}
+  box.dataset.open='1';
+  const k=progressData.find(x=>String(x.uid)===String(uid));
+  if(!k){box.innerHTML='<div class="detail">Карточка не найдена</div>';return}
+  let h='<div class="detail">';
+  h+='<div style="font-size:11px;color:var(--w3);text-transform:uppercase;margin-bottom:6px">Отметки</div>';
+  (k.этапы||[]).forEach(э=>{h+='<div class="agr"><span>'+(э.есть?'<span class="lime">✓</span> ':'<span style="color:var(--w4)">·</span> ')+esc(э.этап)+'</span><span style="color:var(--w3)">'+esc(э.чем||'нет')+'</span></div>'});
+  const сог=k.соглашения||[];
+  h+='<div style="font-size:11px;color:var(--w3);text-transform:uppercase;margin:14px 0 6px">Соглашения'+(сог.length?' ('+сог.length+')':'')+'</div>';
+  if(!сог.length)h+='<div style="color:var(--w3);font-size:12.5px">Договоров пока нет</div>';
+  сог.forEach(s=>{
+    const ссылки=[s.договор?'<a class="lime" href="'+esc(s.договор)+'" target="_blank">договор</a>':'',
+                  s.оплата?'<a class="lime" href="'+esc(s.оплата)+'" target="_blank">оплата</a>':''].filter(Boolean).join(' · ');
+    h+='<div class="agr"><span><b>'+esc(s.тариф||'тариф')+'</b> '+(s.дней?'· '+s.дней+' дн':'')+'</span>'
+      +'<span>'+(s.сумма?rub(s.сумма)+' ':'')+(s.оплачен?'<span class="lime">оплачен'+(s.доля?', '+esc(s.доля):'')+'</span>':'<span style="color:var(--amber)">не оплачен</span>')+' '+ссылки+'</span></div>';
+  });
+  const зам=k.заметки||[];
+  h+='<div style="font-size:11px;color:var(--w3);text-transform:uppercase;margin:14px 0 6px">Заметки'+(зам.length?' ('+зам.length+')':'')+'</div>';
+  if(!зам.length)h+='<div style="color:var(--w3);font-size:12.5px">Заметок пока нет</div>';
+  зам.forEach(z=>{h+='<div class="note"><div class="who">'+esc(z.кто||'')+' · '+agoU(z.когда)+'</div>'+esc(z.текст||'')+'</div>'});
+  h+='<div class="btnrow"><button class="mini-btn" onclick="event.stopPropagation();addNote(\''+esc(k.uid)+'\')">Добавить заметку</button>';
+  if(k.ник)h+='<a class="mini-btn ghost" href="https://t.me/'+esc(k.ник)+'" target="_blank" onclick="event.stopPropagation()">Написать в TG</a>';
+  if((k.ссылки||{}).кп)h+='<a class="mini-btn ghost" href="'+esc(k.ссылки.кп)+'" target="_blank" onclick="event.stopPropagation()">КП</a>';
+  h+='</div></div>';
+  box.innerHTML=h;
+}
+async function addNote(uid){
+  const t=prompt('Заметка по клиенту (дописывается, старое не затирается):','');
+  if(!t)return;
+  const r=await apiPost('admin_note',{uid,text:t,who:'Даниэль'});
+  if(!r.ok){alert('Не записалось: '+(r.error||''));return}
+  // Снимок пересобирается сборщиком, поэтому дописываем локально сразу:
+  // иначе заметка «пропадёт» до следующей сборки и её напишут второй раз.
+  const k=progressData.find(x=>String(x.uid)===String(uid));
+  if(k){(k.заметки=k.заметки||[]).unshift({кто:'Даниэль',когда:Math.floor(Date.now()/1000),текст:t})}
+  filterProgress();
+}
+
 /* ========== ПРОСТЫЕ ЛИСТИНГИ ========== */
 async function renderList(box,action,key,render,emptyMsg){
   const d=await api(action);
@@ -1047,6 +1179,21 @@ async function renderAnketasList(box){
 }
 function renderAnketa(a){return`<div class="lc"><div class="lc-top"><div class="lc-name">${esc(a.client_name||'Клиент')}</div><span class="badge ${a.complete?'b-paid':'b-wait'}">${a.complete?'готова':'частично'}</span></div><div class="lc-meta">${a.service_type?'<span>'+esc(productName(a.service_type))+'</span>':''}${a.email?'<span>'+esc(a.email)+'</span>':''}${a.tg?'<a href="https://t.me/'+esc(a.tg)+'">@'+esc(a.tg)+'</a>':''}<span>${num(a.progress)}/${a.total||'?'}</span>${a.created_at?'<span>'+when(a.created_at)+'</span>':''}</div><div style="margin-top:10px;display:flex;gap:6px;flex-wrap:wrap"><a class="mini-btn ghost" href="${API}?action=downloadAnketaPdf&id=${encodeURIComponent(a.submission_id||a.id)}&key=${encodeURIComponent(adminKey)}" target="_blank">PDF</a><a class="mini-btn ghost" href="${API}?action=downloadAnketa&id=${encodeURIComponent(a.submission_id||a.id)}&key=${encodeURIComponent(adminKey)}" target="_blank">ZIP</a></div></div>`}
 function renderDialog(m){return`<div class="lc"><div class="lc-top"><div class="lc-name">${esc(m.client_name||m.name||m.username||'—')}</div><span class="badge b-new">${esc(m.account||m.role||'')}</span></div><div class="lc-meta">${when(m.created_at||m.ts)}</div><div class="detail" style="border:none;padding:6px 0 0">${esc((m.message||m.text||m.snippet||'').slice(0,240))}</div></div>`}
+function renderCall(c){
+  const l=c.ссылки||c.links||{};
+  const когда=esc(c.когда||c.when||'');
+  const ссылки=[
+    l.kp?'<a href="'+esc(l.kp)+'" target="_blank">КП</a>':'',
+    l.contract?'<a href="'+esc(l.contract)+'" target="_blank">Договор</a>':'',
+    l.sistema?'<a href="'+esc(l.sistema)+'" target="_blank">Система</a>':'',
+    l.dialog?'<a href="'+esc(l.dialog)+'" target="_blank">Диалог</a>':''
+  ].filter(Boolean).join(' · ');
+  const zoom=c.zoom?'<a class="lime" href="'+esc(c.zoom)+'" target="_blank">Войти в Zoom</a>'
+                   :'<span class="b-wait">Zoom не создан</span>';
+  return`<div class="lc"><div class="lc-top"><div class="lc-name">${esc(c.фио||c.name||'Клиент')}${c.ник?' · @'+esc(c.ник):''}</div><span class="badge b-deal">${когда} МСК</span></div>
+  <div class="lc-meta">${c.ниша?'<span>'+esc(c.ниша)+'</span>':''}${c.бюджет?'<span class="lime">'+rub(c.бюджет)+'</span>':''}<span>${zoom}</span></div>
+  ${ссылки?'<div class="lc-meta">'+ссылки+'</div>':''}
+  ${c.сводка?'<div class="detail" style="border:none;padding:6px 0 0">'+esc(String(c.сводка).slice(0,300))+'</div>':''}</div>`}
 function renderDeal(d){return`<div class="lc"><div class="lc-top"><div class="lc-name">${esc(d.name||d.client_name||'Сделка')}</div><span class="badge b-deal">${esc(productName(d.product)||d.status||'deal')}</span></div><div class="lc-meta">${d.amount?'<span class="lime">'+rub(d.amount)+'</span>':''}${when(d.created_at||d.ts)}</div></div>`}
 function renderVac(v){return`<div class="lc"><div class="lc-top"><div class="lc-name">${esc(v.source||v.niche||'Вакансия')}</div>${v.score?'<span class="badge b-deal">'+esc(v.score)+'</span>':''}</div><div class="lc-meta">${v.niche?'<span>'+esc(v.niche)+'</span>':''}${when(v.created_at||v.ts)}</div><div class="detail" style="border:none;padding:6px 0 0">${esc((v.text||'').slice(0,200))}</div></div>`}
 function renderResp(r){return`<div class="lc"><div class="lc-top"><div class="lc-name">${esc(r.account||r.username||'Отклик')}</div><span class="badge b-new">${esc(r.niche||'')}</span></div><div class="lc-meta">${when(r.created_at||r.ts)}</div><div class="detail" style="border:none;padding:6px 0 0">${esc((r.message||r.text||'').slice(0,200))}</div></div>`}
