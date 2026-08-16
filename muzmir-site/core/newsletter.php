@@ -14,6 +14,12 @@
  */
 declare(strict_types=1);
 
+// Распознавание имени по адресу: нужно там, где человек имени не оставлял, а
+// писать ему безлично не хочется.
+if (!function_exists('person_greeting_name') && is_file(BASE_PATH . '/core/person_name.php')) {
+    require_once BASE_PATH . '/core/person_name.php';
+}
+
 /** Тихий лог рассылок в общий mail.log (функция из mailer.php). */
 function nl_log(string $msg): void {
     if (function_exists('mail_log')) mail_log('[nl] ' . $msg);
@@ -328,7 +334,15 @@ function newsletter_enqueue(int $newsletterId): int {
             // Подстановка имени. Эталоны кампаний (campaign_inner) начинаются со строки
             // «Здравствуйте, {{name}}!», а здесь тело раньше уходило как есть — вся база
             // получала бы письмо с буквальным «{{name}}» в первой строке.
-            $nm   = trim((string) ($r['name'] ?? ''));
+            // Имя берём своё, а если человек его не оставлял — распознаём по адресу
+            // (nelaeva.svetlana@ → «Светлана»), тем же разборщиком, что и в волне
+            // запуска. Обращение «уважаемый участник» стояло здесь заглушкой и
+            // читалось как обращение к никому: у половины базы имя есть прямо в
+            // адресе, и не воспользоваться им — значит писать безлично без нужды.
+            $nm = trim((string) ($r['name'] ?? ''));
+            if ($nm === '' && function_exists('person_greeting_name')) {
+                $nm = trim(person_greeting_name($email, ''));
+            }
             $nm   = $nm !== '' ? $nm : 'уважаемый участник';
             $tok2 = ['{{name}}', '{{имя}}'];
             $subject = str_replace($tok2, $nm, $subject);

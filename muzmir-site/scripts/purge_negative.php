@@ -46,11 +46,25 @@ db()->exec("CREATE TABLE IF NOT EXISTS mail_stop (
     source TEXT NOT NULL DEFAULT '',
     added_at TEXT DEFAULT (datetime('now','localtime')))");
 
+// Свои ящики в стоп-лист не попадают ни при каких метках: старая пометка «отказ»,
+// оставшаяся от давней проверки, однажды уже отрезала центр от его же почты.
+$ownBox = [];
+if (is_file(BASE_PATH . '/core/inbox_reader.php')) require_once BASE_PATH . '/core/inbox_reader.php';
+if (is_file(BASE_PATH . '/core/mailer.php'))       require_once BASE_PATH . '/core/mailer.php';
+foreach (array_merge(function_exists('inbox_own_emails') ? inbox_own_emails() : [],
+                     [(string) cfgv('org_email', '')]) as $o) {
+    $o = mb_strtolower(trim((string) $o));
+    if ($o === '') continue;
+    $ownBox[$o] = true;
+    if (function_exists('mail_addr_ascii')) $ownBox[mb_strtolower(mail_addr_ascii($o))] = true;
+}
+
 /** Адрес → причина. Первая причина побеждает: источники идут от самого надёжного. */
 $stop = [];
-$add = static function (string $email, string $reason, string $src) use (&$stop): void {
+$add = static function (string $email, string $reason, string $src) use (&$stop, $ownBox): void {
     $e = mb_strtolower(trim($email));
     if ($e === '' || !filter_var($e, FILTER_VALIDATE_EMAIL)) return;
+    if (isset($ownBox[$e])) return;
     if (!isset($stop[$e])) $stop[$e] = ['reason' => $reason, 'source' => $src];
 };
 

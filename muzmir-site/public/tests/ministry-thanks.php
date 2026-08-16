@@ -45,7 +45,7 @@ $logo   = $base . '/assets/img/logo_muzmir_512.png';
 $year   = date('Y');
 
 $sig = substr(hash_hmac('sha256', 'ministry-doc:' . $docNumber, pay_secret()), 0, 16);
-$verifyUrl = $base . '/tests/verify.php?n=' . rawurlencode($docNumber) . '&s=' . $sig;
+$verifyUrl = $base . '/verify-doc.php?n=' . rawurlencode($docNumber) . '&s=' . $sig;
 $qrSvg = qr_svg($verifyUrl);
 
 $subtitle = 'за информационную поддержку';

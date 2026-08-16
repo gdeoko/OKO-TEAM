@@ -88,12 +88,12 @@ step('верификация: подпись от чужого номера НЕ
     $wrongNo = 'ИП-2026-00001';
     $realSig = substr(hash_hmac('sha256', 'partner-doc:' . $realNo, pay_secret()), 0, 16);
     // Пытаемся использовать real-подпись с wrong-номером
-    $url = rtrim((string)cfgv('base_url'),'/') . '/tests/verify.php?n=' . rawurlencode($wrongNo) . '&s=' . $realSig;
+    $url = rtrim((string)cfgv('base_url'),'/') . '/verify-doc.php?n=' . rawurlencode($wrongNo) . '&s=' . $realSig;
     $body = @file_get_contents($url);
     return $body && str_contains($body, 'не подтверждён');
 });
 step('верификация: пустая подпись → «не подтверждён»', function() {
-    $url = rtrim((string)cfgv('base_url'),'/') . '/tests/verify.php?n=ANY&s=';
+    $url = rtrim((string)cfgv('base_url'),'/') . '/verify-doc.php?n=ANY&s=';
     $body = @file_get_contents($url);
     return $body && str_contains($body, 'не подтверждён');
 });

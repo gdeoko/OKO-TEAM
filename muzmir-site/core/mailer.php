@@ -774,8 +774,28 @@ function mail_account_penalty(array $acc): int {
 function mail_is_stopped(string $email): bool {
     static $cache = [];
     static $has = null;
+    static $own = null;
     $e = mb_strtolower(trim($email));
     if ($e === '') return false;
+
+    // СВОИ ЯЩИКИ НЕ БЛОКИРУЕМ НИКОГДА. Один такой адрес уже попал в стоп-лист по
+    // старой метке «отказ», оставшейся от давней проверки, и центр перестал
+    // получать собственные письма: и проверочные, и копии наградных. Ошибка в
+    // метке не должна отрезать центр от его же почты.
+    if ($own === null) {
+        $own = [];
+        if (!function_exists('inbox_own_emails') && is_file(BASE_PATH . '/core/inbox_reader.php')) {
+            require_once BASE_PATH . '/core/inbox_reader.php';
+        }
+        $list = function_exists('inbox_own_emails') ? inbox_own_emails() : [];
+        foreach (array_merge($list, [(string) cfgv('org_email', '')]) as $o) {
+            $o = mb_strtolower(trim((string) $o));
+            if ($o === '') continue;
+            $own[$o] = true;
+            $own[mb_strtolower(mail_addr_ascii($o))] = true;
+        }
+    }
+    if (isset($own[$e])) return false;
     if ($has === null) {
         try { $has = (bool) one("SELECT name FROM sqlite_master WHERE type='table' AND name='mail_stop'"); }
         catch (\Throwable $ex) { $has = false; }

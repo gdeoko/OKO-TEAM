@@ -143,7 +143,7 @@ function partner_gen_password(): string {
     return $out;
 }
 
-/** HMAC-подпись документа (тот же алгоритм, что и в /tests/verify.php). */
+/** HMAC-подпись документа (тот же алгоритм, что и на странице проверки подлинности). */
 function partner_sign(string $number): string {
     return substr(hash_hmac('sha256', 'partner-doc:' . $number, pay_secret()), 0, 16);
 }
@@ -151,7 +151,7 @@ function partner_sign(string $number): string {
 /** URL проверки подлинности для QR. */
 function partner_verify_url(string $number): string {
     return rtrim((string) cfgv('base_url', ''), '/')
-        . '/tests/verify.php?n=' . rawurlencode($number)
+        . '/verify-doc.php?n=' . rawurlencode($number)
         . '&s=' . partner_sign($number);
 }
 
@@ -291,6 +291,12 @@ function partner_send_welcome(int $instId, string $passPlain = ''): bool {
     $base = rtrim((string) cfgv('base_url', ''), '/');
     $link = $base . '/p/' . rawurlencode((string) $inst['partner_slug']);
     $no   = (string) $inst['partner_no'];
+    // Проверка подлинности, контакты и регистрационные данные: партнёр показывает
+    // сертификат в аттестационном портфолио, и там спрашивают, чем он подтверждён.
+    $verify  = partner_verify_url($no);
+    $phone   = (string) cfgv('org_phone', '');
+    $orgMail = (string) cfgv('org_email', '');
+    $reg     = (string) cfgv('org_reg', '');
 
     $access = $passPlain === '' ? '' :
         '<div style="background:#FDF6E2;border:1px solid #E9CE84;border-radius:8px;padding:16px 20px;margin:16px 0">
@@ -298,6 +304,7 @@ function partner_send_welcome(int $instId, string $passPlain = ''): bool {
          <div>Адрес: <a href="' . $base . '/partner?a=login">' . h($base) . '/partner</a></div>
          <div>Логин: <b>' . h($email) . '</b></div>
          <div>Пароль: <b style="font-family:monospace;font-size:17px">' . h($passPlain) . '</b></div>
+         <div style="font-size:12px;color:#7A5A12;margin-top:8px">Пароль высылается один раз, сменить его можно в кабинете.</div>
          </div>';
 
     $body = '<div style="font:15px Arial,sans-serif;line-height:1.65;max-width:640px;padding:24px;color:#2A1E06">
@@ -306,7 +313,9 @@ function partner_send_welcome(int $instId, string $passPlain = ''): bool {
 <p style="text-align:center;color:#666;margin:0 0 22px">Партнёрство № ' . h($no) . '</p>
 <p>Уважаемые коллеги!</p>
 <p>Благодарим за согласие на сотрудничество. Культурный центр «Музыкальный Мир» подтверждает статус информационного партнёра для <b>' . h((string) $inst['name']) . '</b>.'
-. ($cert ? ' Сертификат партнёра — в приложении к письму.' : '') . '</p>'
+. ($cert ? ' Сертификат партнёра — в приложении к письму.' : '') . '</p>
+<p style="font-size:14px;color:#555">Подлинность сертификата можно проверить в любой момент по QR-коду на бланке или по ссылке:<br>
+<a href="' . h($verify) . '">' . h($verify) . '</a></p>'
 . $access .
 '<p><b>Персональная ссылка учреждения:</b><br><a href="' . $link . '">' . h($link) . '</a></p>
 <p style="font-size:14px;color:#555">Заявки, поданные по этой ссылке, засчитываются учреждению автоматически — отдельно ничего указывать не нужно.</p>
@@ -318,7 +327,10 @@ function partner_send_welcome(int $instId, string $passPlain = ''): bool {
 <li>ускоренная выдача дипломов участникам учреждения;</li>
 <li>кабинет партнёра: заявки, статистика, заказ благодарностей.</li>
 </ul></div>
-<p style="margin-top:22px">С уважением, Оргкомитет Культурного центра «Музыкальный Мир»</p>
+<p style="margin-top:22px">С уважением,<br>Оргкомитет Культурного центра «Музыкальный Мир»<br>
+' . h($phone) . ' · ' . h($orgMail) . '</p>
+<hr style="border:none;border-top:1px solid #E9CE84;margin:24px 0 12px">
+<p style="font-size:11px;color:#999;text-align:center">' . h($reg) . '</p>
 </div>';
 
     $opts = ['pool' => 'awards'];

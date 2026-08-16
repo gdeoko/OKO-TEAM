@@ -39,7 +39,7 @@ $logo   = $base . '/assets/img/logo_muzmir_512.png';
 $year   = date('Y');
 
 $sig = substr(hash_hmac('sha256', 'partner-doc:' . $partnerNo, pay_secret()), 0, 16);
-$verifyUrl = $base . '/tests/verify.php?n=' . rawurlencode($partnerNo) . '&s=' . $sig;
+$verifyUrl = $base . '/verify-doc.php?n=' . rawurlencode($partnerNo) . '&s=' . $sig;
 $qrSvg = qr_svg($verifyUrl);
 
 $len = mb_strlen($org);

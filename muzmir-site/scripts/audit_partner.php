@@ -341,13 +341,13 @@ step('корректная подпись → страница «подлинн�
     $p = one("SELECT partner_no FROM institutions WHERE id=?", [$TEST_INST_ID]);
     $n = (string) $p['partner_no'];
     $s = substr(hash_hmac('sha256', 'partner-doc:' . $n, pay_secret()), 0, 16);
-    $url = rtrim((string) cfgv('base_url'), '/') . '/tests/verify.php?n=' . rawurlencode($n) . '&s=' . $s;
+    $url = rtrim((string) cfgv('base_url'), '/') . '/verify-doc.php?n=' . rawurlencode($n) . '&s=' . $s;
     $out = @file_get_contents($url);
     return $out && str_contains($out, 'Документ подлинный');
 });
 step('неверная подпись → «не подтверждён»', function() use ($TEST_INST_ID) {
     $p = one("SELECT partner_no FROM institutions WHERE id=?", [$TEST_INST_ID]);
-    $url = rtrim((string) cfgv('base_url'), '/') . '/tests/verify.php?n=' . rawurlencode((string) $p['partner_no']) . '&s=WRONGSIG12345678';
+    $url = rtrim((string) cfgv('base_url'), '/') . '/verify-doc.php?n=' . rawurlencode((string) $p['partner_no']) . '&s=WRONGSIG12345678';
     $out = @file_get_contents($url);
     return $out && str_contains($out, 'не подтверждён');
 });
