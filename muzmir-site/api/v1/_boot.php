@@ -16,6 +16,15 @@ require_once BASE_PATH . '/core/db.php';
 require_once BASE_PATH . '/core/data.php';
 require_once BASE_PATH . '/core/helpers.php';
 require_once BASE_PATH . '/core/auth.php';
+// ПОЧТОВЫЙ СЛОЙ ПОДКЛЮЧАЕМ ВСЕГДА.
+//
+// Половина кода спрашивает function_exists('mail_queue') и молча пропускает
+// отправку, если ответ «нет». Ни один из трёх входов в приложение почту не
+// подключал, и каждая такая ветка была миной: кнопка «Подтвердить почту» в
+// кабинете именно так и не работала — редирект без письма и без ошибки.
+// Файл только объявляет функции и цвета, ничего не выполняет, поэтому платить
+// за него можно везде.
+require_once BASE_PATH . '/core/mailer.php';
 
 // Опциональные сервисы фундамента — подключаем, если файлы уже собраны.
 foreach (['mailer', 'validator', 'telegram', 'payments'] as $svc) {

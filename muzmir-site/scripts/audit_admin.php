@@ -548,14 +548,32 @@ else {
 
     chk('подпись заявки и заказа не совпадают', pay_sign('app', $aid) !== pay_sign('order', $aid));
 }
-$unpaidOrd = one("SELECT id FROM awards_orders WHERE status='new' ORDER BY id DESC LIMIT 1");
-if (!$unpaidOrd) { ok('неоплаченных заказов нет — пропуск'); }
+// ССЫЛКУ ОПЛАТЫ ПРОВЕРЯЕМ НА СВОЁМ ЗАКАЗЕ, А НЕ НА ЧУЖОМ.
+//
+// Раньше здесь брался ПЕРВЫЙ настоящий неоплаченный заказ живого человека, и
+// проверка открывала для него ссылку оплаты. А открытие ссылки заводит платёж
+// в платёжной системе: в базе оставались счета к чужим заказам, а у человека
+// в платёжной системе появлялся счёт, которого он не создавал. Заводим свой
+// заказ, проверяем на нём и убираем за собой вместе с его счётом.
+$tmpOrderId = 0;
+try {
+    $tmpOrderId = (int) insert('awards_orders', [
+        'application_id' => 0, 'user_id' => 0,
+        'full_name' => 'ПРОВЕРКА ссылки оплаты', 'competition' => 'проверка',
+        'result' => '', 'items' => json_encode([['item' => 'проверка', 'kind' => 'digital', 'price' => 1]], JSON_UNESCAPED_UNICODE),
+        'amount' => 1, 'email' => 'audit-order@example.test', 'phone' => '',
+        'address' => '', 'status' => 'new',
+    ]);
+} catch (\Throwable $e) { $tmpOrderId = 0; }
+
+if ($tmpOrderId <= 0) { ok('временный заказ для проверки ссылки не создался — пропуск'); }
 else {
-    $oid = (int) $unpaidOrd['id'];
-    $r = http($AJAR, $BASE . pay_path_order($oid), null, false);
+    $r = http($AJAR, $BASE . pay_path_order($tmpOrderId), null, false);
     chk('по ссылке открывается оплата этого заказа',
         ($r['code'] === 302 && preg_match('~^Location:\s*https?://~mi', $r['head'] ?? ''))
-        || ($r['code'] === 200 && str_contains($r['body'], 'заказа №' . $oid)), (string) $r['code']);
+        || ($r['code'] === 200 && str_contains($r['body'], 'заказа №' . $tmpOrderId)), (string) $r['code']);
+    try { q("DELETE FROM payments WHERE order_id=?", [$tmpOrderId]); } catch (\Throwable $e) {}
+    try { q("DELETE FROM awards_orders WHERE id=?", [$tmpOrderId]); } catch (\Throwable $e) {}
 }
 $paidApp = one("SELECT id, number FROM applications WHERE COALESCE(is_paid,0)=1 ORDER BY id DESC LIMIT 1");
 if ($paidApp) {

@@ -1460,7 +1460,13 @@ function newsletter_process_queue(int $limit): int {
                     AND (q.scheduled_at IS NULL OR q.scheduled_at='' OR q.scheduled_at<=?)
                     AND COALESCE(q.campaign_type, n.campaign_type, 'konkurs') IN ($ph)
                   ORDER BY q.id ASC LIMIT ?",
-                array_merge([$nowTs], $allowed, [max(20, count($ready) * 20)])
+                // Берём с запасом ОТ РАЗМЕРА ПАЧКИ, а не круглым числом. Раньше тут
+                // стояло жёсткое «двадцать на ящик», и это был потолок сильнее всех
+                // остальных: сколько бы ни разрешала лесенка прогрева, за прогон
+                // уходило не больше двадцати писем, то есть 12 000 за десятичасовое
+                // окно. Норма в 14 000 и выше не выбралась бы никогда, а понять это
+                // можно было бы только вечером по недосланному хвосту.
+                array_merge([$nowTs], $allowed, [max(20, count($ready) * max(20, nl_box_burst_cap() * 2))])
             );
 
             $bulkSent = 0;
