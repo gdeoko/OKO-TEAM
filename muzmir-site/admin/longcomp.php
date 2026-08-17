@@ -64,12 +64,12 @@ $current = $comp ? one("SELECT * FROM competitions WHERE id=? AND results_mode='
 /* ------- Помощник: строка «страна/город» и «участник/коллектив» ------- */
 $whoName = static fn(array $a): string => trim((string) $a['group_name']) !== ''
     ? trim((string) $a['group_name']) : trim((string) $a['full_name']);
-$whoPlace = static function (array $a): string {
-    $city = trim((string) ($a['city'] ?? ''));
-    if ($city === '') return 'Россия';
-    if (function_exists('city_normalize')) { $n = city_normalize($city); if ($n !== '') return $n; }
-    return mb_strpos($city, ',') !== false ? $city : ('Россия, ' . $city);
-};
+// Страна и город — общим правилом (core/text_format.php::city_display): пустой
+// город больше не превращается в «Россия», а нераспознанный не получает её
+// приписку. Участник из Дубая в протоколе должен быть из Дубая.
+$whoPlace = static fn(array $a): string => function_exists('city_display')
+    ? city_display((string) ($a['city'] ?? ''), '—')
+    : trim((string) ($a['city'] ?? ''));
 
 /* --------------- Экспорт результатов в DOCX (эталон-шапка + таблица) -------------- */
 if ($current && input('do') === 'results_doc') {

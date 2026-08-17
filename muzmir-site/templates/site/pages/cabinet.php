@@ -1049,7 +1049,7 @@ ob_start(); ?>
                     <div class="field" style="margin:0"><label>Название конкурсного номера</label><input type="text" name="work_title" value="<?= h($a['work_title'] ?? '') ?>"></div>
                     <div class="field" style="margin:0"><label>ФИО руководителя или педагога</label><input type="text" name="teacher" value="<?= h($a['teacher'] ?? '') ?>"></div>
                     <div class="field" style="margin:0"><label>Учреждение</label><input type="text" name="institution" value="<?= h($a['institution'] ?? '') ?>"></div>
-                    <div class="field" style="margin:0"><label>Страна и город</label><input type="text" name="city" data-address-suggest data-suggest-mode="city" placeholder="Россия, г. Москва" value="<?= h($a['city'] ?? '') ?>"></div>
+                    <div class="field" style="margin:0"><label>Страна и город</label><input type="text" name="city" data-address-suggest data-suggest-mode="city" placeholder="Страна и город, например: Россия, г. Москва" value="<?= h($a['city'] ?? '') ?>"></div>
 
                     <div class="field" style="margin:0"><label>E-mail для результатов</label><input type="email" name="email" value="<?= h($a['email'] ?? '') ?>"></div>
                     <div class="field" style="margin:0"><label>Телефон</label><input type="tel" name="phone" value="<?= h($a['phone'] ?? '') ?>"></div>
