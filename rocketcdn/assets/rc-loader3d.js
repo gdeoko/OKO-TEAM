@@ -124,8 +124,12 @@ function shade(n, kind) {
 /* ── Рисование кадра ─────────────────────────────────────── */
 function drawRocket(x, W, H, S, spin, tilt, cxp, cyp, scale, glow) {
   var i, j;
+  if (!(W > 8) || !(H > 8)) return;          /* холст ещё без размера */
   var cx = W * cxp, cy = H * cyp;
-  var fov = S * scale;
+  /* Масштаб считаем от меньшей стороны, но с потолком по высоте:
+     на узком и высоком экране телефона ракета иначе распухала и
+     превращалась в вертикальную полосу во весь кадр. */
+  var fov = Math.min(S * scale, H * scale * 0.62);
   var dist = 7.4;
 
   var rot = [], vs = MODEL.verts;

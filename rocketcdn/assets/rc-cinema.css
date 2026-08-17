@@ -1,0 +1,88 @@
+/* ═══════════════════════════════════════════════════════════
+   Rocket CDN · кинематограф, оформление
+
+   Здесь только то, что можно выразить стилями: сцена с точкой
+   схода, положение карточки в пространстве по переменным из
+   rc-cinema.js и поведение при касании. Никаких значений в
+   пикселях, посчитанных наугад: всё приходит из кадра.
+
+   Железное правило: карточка, оказавшаяся в центре, стоит к
+   зрителю лицом и не размыта. Текст важнее любого эффекта.
+   ═══════════════════════════════════════════════════════════ */
+
+/* ── Общая сцена ─────────────────────────────────────────── */
+.cin-stage {
+  perspective: 1400px;
+  perspective-origin: 50% 45%;
+}
+.cin-item {
+  transform:
+    translate3d(0, var(--cin-y, 0px), var(--cin-z, 0px))
+    rotateY(var(--cin-rot, 0deg));
+  opacity: var(--cin-vis, 1);
+  filter: blur(var(--cin-blur, 0px));
+  transform-style: preserve-3d;
+  will-change: transform, opacity;
+  transition: filter .35s var(--ease), opacity .35s var(--ease);
+  backface-visibility: hidden;
+}
+
+/* ── Барабан рубки ────────────────────────────────────────────
+   Карточки стоят по кругу салона. Центральная выпрямляется и
+   получает подсветку кромки: именно её сейчас читают. */
+.cin-drum {
+  perspective: 1100px;
+  perspective-origin: 50% 50%;
+}
+.cin-drum .cin-item {
+  transform-origin: 50% 50%;
+  transition: filter .35s var(--ease), opacity .35s var(--ease), box-shadow .4s var(--ease);
+}
+.cin-drum .cin-item.cin-front {
+  --cin-blur: 0px;
+  box-shadow:
+    inset 0 1px 0 var(--gl-top),
+    0 30px 60px -34px rgba(0,0,0,.9),
+    0 0 46px -18px rgba(66,178,220,.7);
+  border-color: rgba(66,178,220,.4);
+}
+
+/* ── Проезд вглубь ───────────────────────────────────────────
+   Коридор продуктов: дальние мельче и мягче, ближние резкие. */
+.cin-tunnel { perspective: 1600px; perspective-origin: 50% 42%; }
+
+/* ── Полка с разворотом ─────────────────────────────────────
+   Лента едет вбок, карточки по краям отвёрнуты от зрителя. */
+.cin-shelf { perspective: 1800px; }
+.cin-shelf .cin-item { transition: opacity .3s linear; }
+
+/* ── Ответ на касание ────────────────────────────────────────
+   На телефоне вместо наведения работает нажатие: карточка
+   проваливается на пару миллиметров и возвращается. */
+.cin-press {
+  transform:
+    translate3d(0, var(--cin-y, 0px), calc(var(--cin-z, 0px) - 26px))
+    rotateY(var(--cin-rot, 0deg)) scale(.985);
+  transition: transform .18s var(--ease);
+}
+
+/* ── Когда всё это выключено ─────────────────────────────────
+   Быстрая прокрутка, слабое устройство и просьба меньше
+   движения возвращают обычную страницу без единого поворота. */
+html.rc-fast .cin-item,
+html.rc-reduced .cin-item,
+html[data-degrade="3"] .cin-item {
+  transform: none !important;
+  filter: none !important;
+  opacity: 1 !important;
+}
+@media (prefers-reduced-motion: reduce) {
+  .cin-item { transform: none !important; filter: none !important; opacity: 1 !important; }
+}
+
+/* На узком экране глубина мягче: там карточка занимает почти всю
+   ширину, и сильный разворот съедает читаемость. */
+@media (max-width: 760px) {
+  .cin-stage { perspective: 900px; }
+  .cin-item { filter: none; }
+}

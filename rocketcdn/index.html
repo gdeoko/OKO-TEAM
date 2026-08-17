@@ -86,7 +86,7 @@ img,svg,canvas{max-width:100%}
 
 <link rel="preload" href="assets/fonts/golos-cyr.woff2" as="font" type="font/woff2" crossorigin>
 <link rel="stylesheet" href="assets/rc-fonts.css?v=1786650096">
-<link rel="stylesheet" href="assets/rc.css?v=1786964970">
+<link rel="stylesheet" href="assets/rc.css?v=1786966160">
 <link rel="stylesheet" href="assets/rc-compact.css?v=1786961511">
 <link rel="stylesheet" href="assets/rc-interior.css?v=1786953860">
 <link rel="stylesheet" href="assets/rc-reduced.css?v=1786953497">
@@ -94,6 +94,7 @@ img,svg,canvas{max-width:100%}
      значения предыдущих, а своих цветов и шрифтов не вводит -->
 <link rel="stylesheet" href="assets/rc-adapt.css?v=1786961400">
 <link rel="stylesheet" href="assets/rc-depth.css?v=1786962839">
+<link rel="stylesheet" href="assets/rc-cinema.css?v=1786966027">
 <!-- Режим страницы решается до того, как поднимутся сцены: иначе они
      успеют занять контексты, которых на слабом устройстве и так мало -->
 <script src="assets/rc-fallback.js?v=1786953470"></script>
@@ -236,8 +237,12 @@ html[data-theme="light"] .rc-load{background:#070F1A}
   /* ── Рисование кадра ─────────────────────────────────────── */
   function drawRocket(x, W, H, S, spin, tilt, cxp, cyp, scale, glow) {
     var i, j;
+    if (!(W > 8) || !(H > 8)) return;          /* холст ещё без размера */
     var cx = W * cxp, cy = H * cyp;
-    var fov = S * scale;
+    /* Масштаб считаем от меньшей стороны, но с потолком по высоте:
+       на узком и высоком экране телефона ракета иначе распухала и
+       превращалась в вертикальную полосу во весь кадр. */
+    var fov = Math.min(S * scale, H * scale * 0.62);
     var dist = 7.4;
 
     var rot = [], vs = MODEL.verts;
@@ -357,11 +362,19 @@ html[data-theme="light"] .rc-load{background:#070F1A}
     stars.push({ x:(Math.random()-.5)*2, y:(Math.random()-.5)*2, z:Math.random(), c:Math.random() });
   }
 
+  /* Размер берём у самого холста, а не у окна: в мобильных браузерах
+     окно и видимая область расходятся, когда прячется адресная
+     строка, и холст оставался со старым размером - картинку тянуло
+     по вертикали в полосу. Заодно страхуемся от нулевого размера. */
   function size() {
     if (!cv) return;
     var r = Math.min(2, g.devicePixelRatio || 1);
-    cv.width = Math.round(innerWidth * r);
-    cv.height = Math.round(innerHeight * r);
+    var box = cv.getBoundingClientRect();
+    var w = Math.round((box.width || innerWidth) * r);
+    var h = Math.round((box.height || innerHeight) * r);
+    if (w < 8 || h < 8) return;
+    if (cv.width !== w) cv.width = w;
+    if (cv.height !== h) cv.height = h;
   }
 
   function build() {
@@ -388,6 +401,8 @@ html[data-theme="light"] .rc-load{background:#070F1A}
 
   function frame(dt) {
     if (!x || !cv) return;
+    size();                                   /* окно на телефоне ползёт постоянно */
+    if (cv.width < 8 || cv.height < 8) return;
     pShow += (p - pShow) * 0.1;
     t += dt;
     if (launch) launch = Math.min(1, launch + dt * 1.5);
@@ -1261,6 +1276,7 @@ html[data-theme="light"] .rc-load{background:#070F1A}
 <script src="assets/rc-motion.js?v=1786953586"></script>
 <script src="assets/rc-hooks.js?v=1786953764"></script>
 <script src="assets/rc-depth.js?v=1786959953"></script>
+<script src="assets/rc-cinema.js?v=1786966327"></script>
 <!-- Объёмный слой (three.js и три сцены) подтягивает rc-gl.js
      после загрузки и только там, где он вообще будет показан -->
 <script src="assets/rc-gl.js?v=1786964844"></script>
