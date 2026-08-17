@@ -627,15 +627,32 @@ case 'sendNewsletter':
     out(['ok'=>true,'sent'=>$sent,'failed'=>$failed]);
 
 case 'downloadAnketa':
+    // Ссылка, которая уходит в топик и клиенту. Открывает тот же визуальный
+    // отчёт, что видит администратор: заполненная анкета целиком и файлы
+    // внутри страницы, которые можно посмотреть и скачать.
+    //
+    // Раньше этот случай проваливался в ветку ниже, а та требует пароль
+    // администратора: по подписанной ссылке приходило 403. Кнопка была, вид
+    // рабочий, результат отказ.
     $__id=(string)($_GET['id']??'');
     if(!admin_ok() && !anketa_sig_ok($__id,(string)($_GET['sig']??''))) fail('Unauthorized',403);
-    // require __DIR__.'/anketa_download.php'; download_anketa_zip($_GET['id']??''); exit;
+    require __DIR__.'/anketa_report.php'; render_anketa_report($__id); exit;
 
 case 'downloadAnketaPdf':
     require_admin(); require __DIR__.'/anketa_report.php'; render_anketa_report($_GET['id']??''); exit;
 
 case 'anketaFile':
-    require_admin(); require __DIR__.'/anketa_report.php'; serve_anketa_file((int)($_GET['id']??0)); exit;
+    // Вложение внутри отчёта. Пускаем администратора по ключу и владельца
+    // подписанной ссылки по подписи ЕГО анкеты: иначе отчёт открывается, а
+    // все файлы в нём отдают 403, и толку от такого отчёта нет.
+    $__fid=(int)($_GET['id']??0);
+    if(!admin_ok()){
+        require_once __DIR__.'/db.php';
+        $__row=db_one("SELECT submission_id FROM anketa_files WHERE id=?",[$__fid]);
+        $__sid=(string)($__row['submission_id']??'');
+        if($__sid===''||!anketa_sig_ok($__sid,(string)($_GET['sig']??''))) fail('Unauthorized',403);
+    }
+    require __DIR__.'/anketa_report.php'; serve_anketa_file($__fid); exit;
 
 case 'agentDialog':
     require_agent(); $cid=agent_resolve_client($body);

@@ -213,7 +213,14 @@ function ar_file_src(array $file, string $key): string {
         if ($b !== false) return 'data:' . $mime . ';base64,' . base64_encode($b);
     }
     // Остальное отдаём через защищённый endpoint (виден в браузере при просмотре отчёта).
-    return './api.php?action=anketaFile&id=' . (int)$file['id'] . '&key=' . rawurlencode($key);
+    // Пропуск бывает двух видов: у администратора пароль админки, у владельца
+    // подписанной ссылки - подпись его анкеты. Второй случай важен не меньше
+    // первого: без него отчёт по ссылке открывается, а каждый файл в нём
+    // отдаёт 403, и смысл отчёта пропадает.
+    $пропуск = $key !== ''
+        ? 'key=' . rawurlencode($key)
+        : 'sig=' . rawurlencode((string)($GLOBALS['ar_sig'] ?? ''));
+    return './api.php?action=anketaFile&id=' . (int)$file['id'] . '&' . $пропуск;
 }
 
 function ar_render_media(array $files, string $key): string {
@@ -277,6 +284,9 @@ function render_anketa_report(string $sid): void {
     $files = db_all("SELECT id, filename, path, mime, size_bytes FROM anketa_files WHERE submission_id=? ORDER BY id", [$sid]);
     $C = cfg();
     $key = $_GET['key'] ?? ($_SERVER['HTTP_X_ADMIN_KEY'] ?? '');
+    // Подпись этой анкеты, чтобы ссылки на вложения работали и у того, кто
+    // пришёл по подписанной ссылке, а не только у администратора.
+    $GLOBALS['ar_sig'] = $key !== '' ? '' : (string)($_GET['sig'] ?? '');
 
     $client = $a['client_name'] ?: '—';
     $service = ar_service_label($a['service_type'] ?? '');
