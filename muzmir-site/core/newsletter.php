@@ -516,6 +516,51 @@ function nl_campaign_day(): int {
 }
 
 /** Дневной потолок массовых с учётом прогрева. */
+/**
+ * ДОЛЯ ЖЁСТКИХ ОТКАЗОВ ЗА СЕГОДНЯ И ПРЕДОХРАНИТЕЛЬ ПО НЕЙ.
+ *
+ * Семнадцатого августа, в первый день, когда события доставки пошли
+ * по-настоящему, из 3 932 адресов отбились намертво 1 472 — тридцать семь
+ * процентов. База старая и ни разу не чищенная, так что цифра честная, а не
+ * случайная. Механизм чистки сработал, все отказавшие ушли в стоп-лист, но
+ * заплатили мы за это репутацией домена: каждый отказ почтовые службы
+ * записывают на отправителя, и после определённой доли начинают складывать
+ * письма в спам всем подряд.
+ *
+ * Отдельные предохранители уже были: подряд идущие отказы в одном прогоне и
+ * остановка роста лестницы. Не было главного — взгляда на день целиком. Здесь
+ * он и появляется: если доля отказов за сутки перевалила порог, массовая
+ * отправка останавливается, и разбираться приходится человеку.
+ *
+ * Порог в настройке nl_bounce_stop_pct (по умолчанию 15%); считается только
+ * когда событий набралось достаточно, чтобы доля что-то значила.
+ */
+function nl_bounce_rate_today(): array {
+    try {
+        $b = (int) (scalar("SELECT COUNT(DISTINCT email) FROM mail_events
+                             WHERE status='hard_bounced' AND date(created_at)=date('now','localtime')") ?? 0);
+        $d = (int) (scalar("SELECT COUNT(DISTINCT email) FROM mail_events
+                             WHERE status='delivered' AND date(created_at)=date('now','localtime')") ?? 0);
+    } catch (\Throwable $e) { return ['bounced' => 0, 'delivered' => 0, 'total' => 0, 'pct' => 0.0]; }
+    $t = $b + $d;
+    return ['bounced' => $b, 'delivered' => $d, 'total' => $t,
+            'pct' => $t > 0 ? round($b * 100 / $t, 1) : 0.0];
+}
+
+/** Не пора ли остановиться. Возвращает true, если отправку пришлось выключить. */
+function nl_bounce_guard(): bool {
+    $minEvents = 300;                       // на маленьких числах доля ничего не значит
+    $limit = (float) (function_exists('setting') ? setting('nl_bounce_stop_pct', '15') : 15);
+    $r = nl_bounce_rate_today();
+    if ($r['total'] < $minEvents || $r['pct'] < $limit) return false;
+    if (function_exists('mass_sending_enabled') && !mass_sending_enabled()) return true;
+    mass_sending_set(false, sprintf('жёсткие отказы %.1f%% за сутки (%d из %d) — выше порога %.0f%%',
+        $r['pct'], $r['bounced'], $r['total'], $limit));
+    nl_log(sprintf('СТОП: доля жёстких отказов за сутки %.1f%% (%d из %d), порог %.0f%%',
+        $r['pct'], $r['bounced'], $r['total'], $limit));
+    return true;
+}
+
 function nl_daily_cap(): int {
     // Дневной потолок = сумма норм ящиков пула. У сервиса рассылок норма своя и
     // растущая (nl_service_cap_today): полный темп с первого дня годится для наших
