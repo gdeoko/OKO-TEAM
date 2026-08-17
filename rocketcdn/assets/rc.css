@@ -205,29 +205,27 @@ section { position: relative; padding: var(--sec) 0; }
 .btn-row { display: flex; flex-wrap: wrap; gap: 12px; }
 
 /* ── Рифма с личным кабинетом ──────────────────────────────────
-   Кабинет клиента живёт на другом домене и сделан не нами: там
-   свой шрифт Geologica, свои радиусы 8 и 12, свой градиент от
-   фиолетового к жёлтому и свои цвета статусов. Чтобы переход с
-   сайта в кабинет не выглядел переездом в другую компанию, мы
-   берём оттуда палитру и ставим её ровно в двух местах: на всё,
-   что ведёт в кабинет, и на состояния (успех, ожидание, отказ).
-   Остальной сайт остаётся в бренде Rocket CDN. */
+   Клиент прислал дизайн-систему кабинета, и она оказалась той же
+   самой: чернила #091320, акцент #42B2DC, светлый #E2E8F0, градиент
+   от циана через фиолет к глубокому синему. Значит выдумывать мост
+   не нужно - сайт и кабинет уже говорят на одном языке. Здесь мы
+   только помечаем всё, что уводит в кабинет, его фирменной чертой,
+   и держим общие радиусы и тени. */
 :root {
-  --lk-ink:    #051114;
-  --lk-blue:   #1770C1;
-  --lk-grad:   linear-gradient(190deg, #9F40CC 5.37%, #F6C444 97.53%);
-  --lk-lime:   linear-gradient(45deg, #D3FF22 0%, #CEDF8A 100%);
-  --lk-ok:     #67C23A;
-  --lk-warn:   #E6A23C;
-  --lk-err:    #F56C6C;
-  --lk-mut:    #606266;
-  --lk-line:   #E4E7ED;
-  --lk-r:      12px;
-  --lk-r-sm:   8px;
-  --lk-shadow: 0 8px 24px -12px rgba(16,46,56,.32);
+  --lk-ink:    #091320;
+  --lk-accent: #42B2DC;
+  --lk-mist:   #E2E8F0;
+  --lk-deep:   #0A5897;
+  --lk-violet: #8A59F6;
+  --lk-grad:   linear-gradient(120deg, #42B2DC 0%, #8A59F6 55%, #0A5897 100%);
+  --lk-ok:     #34D399;
+  --lk-err:    #F87171;
+  --lk-r:      14px;
+  --lk-r-sm:   10px;
+  --lk-shadow: 0 10px 30px -14px rgba(9,19,32,.55);
 }
-/* Всё, что уводит в кабинет, помечено фирменной чертой кабинета:
-   тонкая полоса его градиента появляется на наведении снизу. */
+/* Всё, что уводит в кабинет, помечено его чертой: тонкая полоса
+   фирменного градиента появляется на наведении снизу. */
 .js-reg { position: relative; }
 .btn.js-reg::before {
   content: ''; position: absolute; left: 14px; right: 14px; bottom: 6px; height: 2px;
@@ -239,6 +237,7 @@ section { position: relative; padding: var(--sec) 0; }
 a.js-reg:not(.btn) { background-image: var(--lk-grad); background-repeat: no-repeat;
   background-size: 0 2px; background-position: 0 100%; transition: background-size var(--fast); }
 a.js-reg:not(.btn):hover { background-size: 100% 2px; }
+
 /* Состояния берём из кабинета: одинаковый зелёный, одинаковый
    янтарный, одинаковый красный по обе стороны перехода. */
 
@@ -410,8 +409,8 @@ a.js-reg:not(.btn):hover { background-size: 100% 2px; }
   font-size: 12.5px; font-weight: 600; color: var(--tx-2); backdrop-filter: blur(8px);
 }
 .chip b { color: var(--tx); font-weight: 700; }
-.dot-live { width: 7px; height: 7px; border-radius: 50%; background: var(--lk-ok); box-shadow: 0 0 0 0 rgba(103,194,58,.6); animation: pulse 2.2s infinite; flex: none; }
-@keyframes pulse { 70% { box-shadow: 0 0 0 9px rgba(103,194,58,0) } 100% { box-shadow: 0 0 0 0 rgba(103,194,58,0) } }
+.dot-live { width: 7px; height: 7px; border-radius: 50%; background: var(--lk-ok); box-shadow: 0 0 0 0 rgba(52,211,153,.6); animation: pulse 2.2s infinite; flex: none; }
+@keyframes pulse { 70% { box-shadow: 0 0 0 9px rgba(52,211,153,0) } 100% { box-shadow: 0 0 0 0 rgba(52,211,153,0) } }
 .hero-chips { display: flex; flex-wrap: wrap; gap: 9px; margin-bottom: 26px; }
 .hero-marks { display: flex; flex-wrap: wrap; gap: 10px 26px; margin-top: 38px; }
 .hero-mark { display: flex; align-items: center; gap: 9px; font-size: 13px; color: var(--tx-3); }
@@ -590,8 +589,8 @@ a.js-reg:not(.btn):hover { background-size: 100% 2px; }
 .consent input { width: 17px; height: 17px; margin-top: 2px; flex: none; accent-color: var(--cyan); }
 .consent a { color: var(--cyan); text-decoration: underline; text-underline-offset: 2px; }
 .form-msg { display: none; padding: 13px 16px; border-radius: var(--r-sm); font-size: 14px; margin-bottom: 14px; }
-.form-msg.ok  { display: block; background: rgba(103,194,58,.12); border: 1px solid rgba(103,194,58,.34); color: var(--lk-ok); }
-.form-msg.bad { display: block; background: rgba(245,108,108,.12); border: 1px solid rgba(245,108,108,.34); color: var(--lk-err); }
+.form-msg.ok  { display: block; background: rgba(52,211,153,.12); border: 1px solid rgba(52,211,153,.34); color: var(--lk-ok); }
+.form-msg.bad { display: block; background: rgba(248,113,113,.12); border: 1px solid rgba(248,113,113,.34); color: var(--lk-err); }
 
 .contact { display: grid; grid-template-columns: minmax(0, .9fr) minmax(0, 1.1fr); gap: clamp(26px, 4vw, 60px); align-items: start; }
 .contact-list { display: grid; gap: 14px; margin-top: 28px; }
@@ -1372,3 +1371,24 @@ body { background: var(--bg); }
   .inc-item svg { opacity: 1; }
   .inc-item::before { display: none; }
 }
+
+/* ── Пыль из-под опор при посадке ─────────────────────────────
+   Слой живёт полторы секунды и сам себя убирает. Держим его в
+   вёрстке, а не в сцене: частицы в WebGL стоят дорого, а тут
+   тридцать кружков, которые браузер рисует композитором. */
+.rc-dust {
+  position: fixed; z-index: 3; pointer-events: none;
+  width: 0; height: 0;
+}
+.rc-dust i {
+  position: absolute; left: 0; top: 0;
+  width: 10px; height: 10px; border-radius: 50%;
+  background: radial-gradient(circle, rgba(207,233,245,.5), rgba(66,178,220,.16) 55%, transparent 72%);
+  opacity: 0; transform: translate3d(0,0,0) scale(.3);
+  animation: rcDust 1.5s cubic-bezier(.15,.75,.3,1) forwards;
+}
+@keyframes rcDust {
+  10%  { opacity: .85 }
+  100% { opacity: 0; transform: translate3d(var(--dx,60px), var(--dy,20px), 0) scale(var(--ds,1.2)) }
+}
+@media (prefers-reduced-motion: reduce) { .rc-dust { display: none } }

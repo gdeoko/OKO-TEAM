@@ -7,13 +7,13 @@
 <meta name="robots" content="noindex, nofollow">
 <style>
 /* Витрина в палитре кабинета: Geologica, радиусы 8 и 12,
-   градиент от фиолетового к жёлтому, синий #1770C1. */
+   градиент от фиолетового к жёлтому, синий #0A5897. */
 :root{
-  --ink:#051114; --mut:#606266; --line:#E4E7ED; --bg:#F5F7FA; --card:#FFFFFF;
-  --blue:#1770C1; --ok:#67C23A;
-  --grad:linear-gradient(190deg,#9F40CC 5.37%,#F6C444 97.53%);
+  --ink:#091320; --mut:#5A6B7D; --line:#E2E8F0; --bg:#F3F7FB; --card:#FFFFFF;
+  --blue:#0A5897; --ok:#34D399;
+  --grad:linear-gradient(120deg,#42B2DC 0%,#8A59F6 55%,#0A5897 100%);
   --r:12px; --r-sm:8px; --sh:0 8px 24px -12px rgba(16,46,56,.32);
-  --font:Geologica,'Golos Text',-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;
+  --font:"Golos Text",Geologica,'Golos Text',-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;
 }
 *{box-sizing:border-box}
 body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--font);
@@ -41,11 +41,11 @@ button{font:inherit;font-size:13px;font-weight:600;cursor:pointer;border-radius:
        transition:background .18s,border-color .18s,color .18s}
 button:hover{border-color:var(--blue);color:var(--blue)}
 button.go{background:var(--blue);border-color:var(--blue);color:#fff}
-button.go:hover{background:#125a9c;color:#fff}
+button.go:hover{background:#084577;color:#fff}
 button.ok{border-color:var(--ok);color:var(--ok)}
 button[aria-pressed="true"]{background:var(--grad);border-color:transparent;color:#fff}
 code{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:12.5px;
-     background:#F0F3F7;border-radius:4px;padding:1px 5px}
+     background:#EDF3F9;border-radius:4px;padding:1px 5px}
 .foot{max-width:1220px;margin:34px auto 0;padding:20px;background:#fff;border:1px solid var(--line);
       border-radius:var(--r);box-shadow:var(--sh);font-size:13.5px;color:var(--mut)}
 .foot b{color:var(--ink)}
@@ -114,6 +114,174 @@ return '<!-- Экран загрузки Rocket CDN. Вставить в <head>.
 + '<script>\n'
 + '(function(w,d){\n'
 + '  "use strict";\n'
++ '\n'
++ '/* ── Модель ракеты ───────────────────────────────────────────\n'
++ '   Строим один раз при запуске: тело вращения из колец плюс\n'
++ '   стабилизаторы. Координаты в условных единицах, ось Y - вдоль\n'
++ '   корпуса. Профиль задаёт форму: пары «высота, радиус». */\n'
++ 'var PROFILE = [\n'
++ '  [ 2.30, 0.00],   /* острие */\n'
++ '  [ 2.05, 0.14],\n'
++ '  [ 1.75, 0.26],\n'
++ '  [ 1.35, 0.36],\n'
++ '  [ 0.60, 0.40],   /* цилиндр корпуса */\n'
++ '  [-0.30, 0.40],\n'
++ '  [-0.95, 0.38],\n'
++ '  [-1.25, 0.30],   /* сужение к соплу */\n'
++ '  [-1.45, 0.26],\n'
++ '  [-1.62, 0.34],   /* раструб */\n'
++ '  [-1.72, 0.30]\n'
++ '];\n'
++ 'var SEG = 18;      /* граней по окружности */\n'
++ '\n'
++ 'function buildRocket() {\n'
++ '  var verts = [], faces = [], i, j;\n'
++ '\n'
++ '  /* Кольца профиля */\n'
++ '  for (i = 0; i < PROFILE.length; i++) {\n'
++ '    for (j = 0; j < SEG; j++) {\n'
++ '      var a = (j / SEG) * Math.PI * 2;\n'
++ '      verts.push([Math.cos(a) * PROFILE[i][1], PROFILE[i][0], Math.sin(a) * PROFILE[i][1]]);\n'
++ '    }\n'
++ '  }\n'
++ '  /* Боковые грани между соседними кольцами */\n'
++ '  for (i = 0; i < PROFILE.length - 1; i++) {\n'
++ '    for (j = 0; j < SEG; j++) {\n'
++ '      var j2 = (j + 1) % SEG;\n'
++ '      var a0 = i * SEG + j, b0 = i * SEG + j2;\n'
++ '      var a1 = (i + 1) * SEG + j, b1 = (i + 1) * SEG + j2;\n'
++ '      /* Тёмная обшивка, у сопла металл темнее и холоднее */\n'
++ '      var kind = i >= PROFILE.length - 3 ? "nozzle" : (i <= 2 ? "nose" : "hull");\n'
++ '      faces.push({ v: [a0, b0, b1, a1], kind: kind, ring: i });\n'
++ '    }\n'
++ '  }\n'
++ '\n'
++ '  /* Три стабилизатора: плоские клинья у основания */\n'
++ '  for (i = 0; i < 3; i++) {\n'
++ '    var ang = (i / 3) * Math.PI * 2 + 0.4;\n'
++ '    var ca = Math.cos(ang), sa = Math.sin(ang);\n'
++ '    var base = verts.length;\n'
++ '    /* Внутренняя кромка у корпуса, внешняя отведена наружу и вниз */\n'
++ '    verts.push([ca * 0.36, -0.35, sa * 0.36]);\n'
++ '    verts.push([ca * 0.36, -1.15, sa * 0.36]);\n'
++ '    verts.push([ca * 0.95, -1.42, sa * 0.95]);\n'
++ '    verts.push([ca * 0.60, -0.62, sa * 0.60]);\n'
++ '    faces.push({ v: [base, base + 1, base + 2, base + 3], kind: "fin", ring: 99 });\n'
++ '  }\n'
++ '\n'
++ '  return { verts: verts, faces: faces };\n'
++ '}\n'
++ '\n'
++ 'var MODEL = buildRocket();\n'
++ '\n'
++ '/* ── Математика ──────────────────────────────────────────── */\n'
++ 'function rotate(p, ry, rx) {\n'
++ '  var cy = Math.cos(ry), sy = Math.sin(ry);\n'
++ '  var cx = Math.cos(rx), sx = Math.sin(rx);\n'
++ '  var x = p[0] * cy - p[2] * sy;\n'
++ '  var z = p[0] * sy + p[2] * cy;\n'
++ '  var y = p[1] * cx - z * sx;\n'
++ '  z = p[1] * sx + z * cx;\n'
++ '  return [x, y, z];\n'
++ '}\n'
++ '\n'
++ 'function normal(a, b, c) {\n'
++ '  var ux = b[0] - a[0], uy = b[1] - a[1], uz = b[2] - a[2];\n'
++ '  var vx = c[0] - a[0], vy = c[1] - a[1], vz = c[2] - a[2];\n'
++ '  var nx = uy * vz - uz * vy, ny = uz * vx - ux * vz, nz = ux * vy - uy * vx;\n'
++ '  var l = Math.sqrt(nx * nx + ny * ny + nz * nz) || 1;\n'
++ '  return [nx / l, ny / l, nz / l];\n'
++ '}\n'
++ '\n'
++ '/* Свет по договору всего сайта: ключевой сверху-слева цианoвый,\n'
++ '   заполняющий снизу-справа фиолетовый, контровой холодный белый. */\n'
++ 'var KEY = [-0.55, 0.72, 0.42];\n'
++ 'var FILL = [0.6, -0.4, 0.35];\n'
++ '\n'
++ 'function shade(n, kind) {\n'
++ '  var kd = Math.max(0, n[0] * KEY[0] + n[1] * KEY[1] + n[2] * KEY[2]);\n'
++ '  var fd = Math.max(0, n[0] * FILL[0] + n[1] * FILL[1] + n[2] * FILL[2]);\n'
++ '  var rim = Math.pow(1 - Math.abs(n[2]), 3);\n'
++ '\n'
++ '  var base = kind === "nozzle" ? [34, 44, 58]\n'
++ '           : kind === "fin" ? [22, 42, 64]\n'
++ '           : kind === "nose" ? [40, 74, 104]\n'
++ '           : [30, 56, 82];\n'
++ '\n'
++ '  var r = base[0] + kd * 128 + fd * 62 + rim * 78;\n'
++ '  var gg = base[1] + kd * 186 + fd * 54 + rim * 132;\n'
++ '  var b = base[2] + kd * 210 + fd * 150 + rim * 168;\n'
++ '  return "rgb(" + Math.min(255, r | 0) + "," + Math.min(255, gg | 0) + "," + Math.min(255, b | 0) + ")";\n'
++ '}\n'
++ '\n'
++ '/* ── Рисование кадра ─────────────────────────────────────── */\n'
++ 'function drawRocket(x, W, H, S, spin, tilt, cxp, cyp, scale, glow) {\n'
++ '  var i, j;\n'
++ '  var cx = W * cxp, cy = H * cyp;\n'
++ '  var fov = S * scale;\n'
++ '  var dist = 7.4;\n'
++ '\n'
++ '  var rot = [], vs = MODEL.verts;\n'
++ '  for (i = 0; i < vs.length; i++) rot.push(rotate(vs[i], spin, tilt));\n'
++ '\n'
++ '  var list = [];\n'
++ '  for (i = 0; i < MODEL.faces.length; i++) {\n'
++ '    var f = MODEL.faces[i];\n'
++ '    var pts = [], zsum = 0;\n'
++ '    for (j = 0; j < f.v.length; j++) {\n'
++ '      var p = rot[f.v[j]];\n'
++ '      zsum += p[2];\n'
++ '      var k = fov / (dist + p[2]);\n'
++ '      pts.push([cx + p[0] * k, cy - p[1] * k]);\n'
++ '    }\n'
++ '    var n = normal(rot[f.v[0]], rot[f.v[1]], rot[f.v[2]]);\n'
++ '    /* Задние грани не рисуем: экономия и правильный силуэт */\n'
++ '    if (n[2] > 0.06 && f.kind !== "fin") continue;\n'
++ '    list.push({ pts: pts, z: zsum / f.v.length, col: shade(n, f.kind), kind: f.kind, ring: f.ring });\n'
++ '  }\n'
++ '  list.sort(function (a, b) { return b.z - a.z; });\n'
++ '\n'
++ '  for (i = 0; i < list.length; i++) {\n'
++ '    var it = list[i];\n'
++ '    x.beginPath();\n'
++ '    x.moveTo(it.pts[0][0], it.pts[0][1]);\n'
++ '    for (j = 1; j < it.pts.length; j++) x.lineTo(it.pts[j][0], it.pts[j][1]);\n'
++ '    x.closePath();\n'
++ '    x.fillStyle = it.col;\n'
++ '    x.fill();\n'
++ '    /* Швы обшивки: тонкая цианoвая линия по кольцам */\n'
++ '    if (it.kind === "hull" && it.ring % 2 === 0) {\n'
++ '      x.strokeStyle = "rgba(66,178,220,.22)";\n'
++ '      x.lineWidth = Math.max(0.6, S * 0.0012);\n'
++ '      x.stroke();\n'
++ '    }\n'
++ '  }\n'
++ '\n'
++ '  /* Факел: живёт под соплом, длина и яркость идут за прогрессом */\n'
++ '  if (glow > 0.01) {\n'
++ '    var nozzle = rotate([0, -1.78, 0], spin, tilt);\n'
++ '    var k2 = fov / (dist + nozzle[2]);\n'
++ '    var fx = cx + nozzle[0] * k2, fy = cy - nozzle[1] * k2;\n'
++ '    var len = S * (0.05 + glow * 0.14);\n'
++ '    var gr = x.createLinearGradient(fx, fy, fx, fy + len);\n'
++ '    gr.addColorStop(0, "rgba(226,240,255," + (0.85 * glow).toFixed(3) + ")");\n'
++ '    gr.addColorStop(0.22, "rgba(66,178,220," + (0.8 * glow).toFixed(3) + ")");\n'
++ '    gr.addColorStop(0.6, "rgba(138,89,246," + (0.42 * glow).toFixed(3) + ")");\n'
++ '    gr.addColorStop(1, "rgba(138,89,246,0)");\n'
++ '    x.beginPath();\n'
++ '    x.moveTo(fx - S * 0.016 * (0.6 + glow), fy);\n'
++ '    x.quadraticCurveTo(fx, fy + len * 1.15, fx + S * 0.016 * (0.6 + glow), fy);\n'
++ '    x.closePath();\n'
++ '    x.fillStyle = gr;\n'
++ '    x.fill();\n'
++ '    /* Ореол у среза сопла */\n'
++ '    var hg = x.createRadialGradient(fx, fy, 0, fx, fy, S * 0.05 * (0.5 + glow));\n'
++ '    hg.addColorStop(0, "rgba(207,233,245," + (0.5 * glow).toFixed(3) + ")");\n'
++ '    hg.addColorStop(1, "rgba(66,178,220,0)");\n'
++ '    x.fillStyle = hg;\n'
++ '    x.beginPath(); x.arc(fx, fy, S * 0.05 * (0.5 + glow), 0, 6.283); x.fill();\n'
++ '  }\n'
++ '}\n'
 + '  var el=null,cv=null,x=null,raf=null,shown=0,hid=false,p=0,pShow=0,t=0,last=0,dead=false;\n'
 + '  var calm=false;try{calm=matchMedia("(prefers-reduced-motion: reduce)").matches}catch(e){}\n'
 + '  var wantSound=true,ac=null,bus=null,started=false;\n'
@@ -238,7 +406,7 @@ var V1_CSS =
 '.rcl-1 .rcl-cap{position:absolute;left:0;right:0;bottom:15%;text-align:center;\n' +
 '  font-size:11px;letter-spacing:.42em;font-weight:600;color:rgba(226,232,240,.5)}\n' +
 '.rcl-1 .rcl-pc{position:absolute;left:0;right:0;bottom:8%;text-align:center;\n' +
-'  font-size:13px;font-weight:700;color:#F6C444;font-variant-numeric:tabular-nums}\n';
+'  font-size:13px;font-weight:700;color:#42B2DC;font-variant-numeric:tabular-nums}\n';
 
 var V1_HTML = '<div class="rcl-1"><canvas></canvas>' +
   '<div class="rcl-cap">ROCKET CDN</div><div class="rcl-pc">0%</div></div>';
@@ -269,53 +437,42 @@ var V1_DRAW = function (W, H, S, p, t, dt) {
   var stars = draw1.stars;
   if (!stars) {
     stars = draw1.stars = [];
-    for (var i = 0; i < 320; i++) {
+    for (var i = 0; i < 260; i++) {
       stars.push({ x: (Math.random() - 0.5) * 2, y: (Math.random() - 0.5) * 2, z: Math.random(), c: Math.random() });
     }
+    draw1.launch = 0;
   }
   var cx = W / 2, cy = H / 2;
-  /* Шлейф вместо очистки: следы остаются и читаются как скорость */
-  x.fillStyle = "rgba(5,11,18," + (0.34 - p * 0.16).toFixed(3) + ")";
+  if (p > 0.985) draw1.launch = Math.min(1, (draw1.launch || 0) + dt * 1.6);
+  var lift = draw1.launch || 0;
+
+  /* Шлейф вместо очистки: следы читаются как скорость */
+  x.fillStyle = "rgba(5,12,21," + (0.36 - p * 0.14).toFixed(3) + ")";
   x.fillRect(0, 0, W, H);
 
-  var speed = (0.12 + p * p * 1.35) * dt * 60;
-  var fov = S * 0.75;
+  var speed = (0.1 + p * p * 1.1 + lift * 2.4) * dt * 60;
+  var fov = S * 0.72;
   for (var i = 0; i < stars.length; i++) {
-    var s = stars[i];
-    var pz = s.z;
+    var s = stars[i], pz = s.z;
     s.z -= speed * 0.012;
-    if (s.z <= 0.02) {
-      s.z = 1; s.x = (Math.random() - 0.5) * 2; s.y = (Math.random() - 0.5) * 2; s.c = Math.random();
-      pz = s.z;
-    }
+    if (s.z <= 0.02) { s.z = 1; s.x = (Math.random()-.5)*2; s.y = (Math.random()-.5)*2; s.c = Math.random(); pz = s.z; }
     var k = fov / s.z, kp = fov / pz;
-    var px = cx + s.x * k, py = cy + s.y * k;
-    var qx = cx + s.x * kp, qy = cy + s.y * kp;
     var a = Math.min(1, (1 - s.z) * 1.5);
-    var wgt = Math.max(0.6, (1 - s.z) * 4.5);
-    /* Фирменные цвета кабинета: фиолетовый в жёлтый */
-    x.strokeStyle = s.c > 0.72
-      ? "rgba(246,196,68," + (a * 0.95).toFixed(3) + ")"
-      : (s.c > 0.4 ? "rgba(159,64,204," + (a * 0.9).toFixed(3) + ")"
-                   : "rgba(66,178,220," + (a * 0.8).toFixed(3) + ")");
-    x.lineWidth = wgt;
-    x.beginPath(); x.moveTo(qx, qy); x.lineTo(px, py); x.stroke();
+    x.strokeStyle = s.c > 0.78 ? "rgba(138,89,246," + (a*.85).toFixed(3) + ")"
+                  : "rgba(66,178,220," + (a*.8).toFixed(3) + ")";
+    x.lineWidth = Math.max(0.7, (1 - s.z) * 4);
+    x.beginPath();
+    x.moveTo(cx + s.x * kp, cy + s.y * kp);
+    x.lineTo(cx + s.x * k, cy + s.y * k);
+    x.stroke();
   }
 
-  /* Кольцо горизонта: тонкий обод, который сжимается к финалу */
-  var R = S * (0.42 - p * 0.12);
-  x.strokeStyle = "rgba(226,232,240," + (0.1 + p * 0.16).toFixed(3) + ")";
-  x.lineWidth = Math.max(1, S * 0.0022);
-  x.beginPath(); x.arc(cx, cy, R, 0, 6.283); x.stroke();
-
-  /* Ядро в центре разгорается по прогрессу */
-  var core = S * (0.045 + p * 0.11);
-  var gr = x.createRadialGradient(cx, cy, 0, cx, cy, core * 2.6);
-  gr.addColorStop(0, "rgba(246,196,68," + (0.3 + p * 0.5).toFixed(3) + ")");
-  gr.addColorStop(0.35, "rgba(159,64,204," + (0.12 + p * 0.22).toFixed(3) + ")");
-  gr.addColorStop(1, "rgba(5,11,18,0)");
-  x.fillStyle = gr;
-  x.beginPath(); x.arc(cx, cy, core * 2.6, 0, 6.283); x.fill();
+  /* Сама ракета: объёмная модель, поворачивается, показывая форму,
+     и на финале уходит вверх из кадра */
+  var spin = t * 0.6;
+  var tilt = 0.32 - lift * 0.28 + Math.sin(t * 0.8) * 0.05;
+  drawRocket(x, W, H, S, spin, tilt, 0.5, 0.46 - lift * lift * 0.9,
+             0.4 + p * 0.05 + lift * 0.14, 0.3 + p * 0.5 + lift * 1.2);
 
   var pc = el.querySelector(".rcl-pc");
   if (pc) pc.textContent = Math.round(p * 100) + "%";
@@ -333,7 +490,7 @@ var V2_CSS =
 '  font-size:11px;letter-spacing:.42em;font-weight:600;color:rgba(226,232,240,.5)}\n' +
 '.rcl-2 .rcl-pc{position:absolute;left:0;right:0;top:50%;transform:translateY(-50%);\n' +
 '  text-align:center;font-size:34px;font-weight:800;color:#fff;\n' +
-'  font-variant-numeric:tabular-nums;text-shadow:0 0 30px rgba(159,64,204,.8)}\n';
+'  font-variant-numeric:tabular-nums;text-shadow:0 0 30px rgba(138,89,246,.8)}\n';
 
 var V2_HTML = '<div class="rcl-2"><canvas></canvas>' +
   '<div class="rcl-pc">0%</div><div class="rcl-cap">218 ТОЧЕК ПРИСУТСТВИЯ</div></div>';
@@ -420,8 +577,8 @@ var V2_DRAW = function (W, H, S, p, t, dt) {
     if (q.on) {
       var pulse = 0.6 + 0.4 * Math.sin(t * 3 + q.d * 9);
       x.fillStyle = q.d > 0.66
-        ? "rgba(246,196,68," + (pulse * depth).toFixed(3) + ")"
-        : "rgba(159,64,204," + (pulse * depth).toFixed(3) + ")";
+        ? "rgba(66,178,220," + (pulse * depth).toFixed(3) + ")"
+        : "rgba(138,89,246," + (pulse * depth).toFixed(3) + ")";
     } else {
       x.fillStyle = "rgba(96,98,102," + (0.18 * depth).toFixed(3) + ")";
     }
@@ -452,7 +609,7 @@ var V3_CSS =
 '.rcl-3 .rcl-cap{position:absolute;left:0;right:0;bottom:15%;text-align:center;\n' +
 '  font-size:11px;letter-spacing:.42em;font-weight:600;color:rgba(226,232,240,.45)}\n' +
 '.rcl-3 .rcl-pc{position:absolute;left:0;right:0;bottom:8%;text-align:center;\n' +
-'  font-size:13px;font-weight:700;color:#9F40CC;font-variant-numeric:tabular-nums}\n';
+'  font-size:13px;font-weight:700;color:#8A59F6;font-variant-numeric:tabular-nums}\n';
 
 var V3_HTML = '<div class="rcl-3"><canvas></canvas>' +
   '<div class="rcl-cap">FAST. RELIABLE. GLOBAL.</div><div class="rcl-pc">0%</div></div>';
@@ -484,112 +641,70 @@ var V3_AUDIO =
 
 var V3_DRAW = function (W, H, S, p, t, dt) {
   var cx = W / 2, cy = H / 2;
-  x.fillStyle = "rgba(5,11,18,.5)";
+  x.fillStyle = "rgba(5,12,21,.5)";
   x.fillRect(0, 0, W, H);
 
-  /* Звёздная пыль на фоне, чтобы объём было от чего отсчитывать */
+  /* Звёздная пыль: от неё отсчитывается глубина кадра */
   var dust = draw3.dust;
   if (!dust) {
     dust = draw3.dust = [];
-    for (var i = 0; i < 90; i++) dust.push({ x: Math.random(), y: Math.random(), s: Math.random() });
+    for (var i = 0; i < 110; i++) dust.push({ x: Math.random(), y: Math.random(), s: Math.random() });
   }
   for (i = 0; i < dust.length; i++) {
     var dd = dust[i];
-    x.fillStyle = "rgba(226,232,240," + (0.05 + dd.s * 0.1).toFixed(3) + ")";
-    x.fillRect(dd.x * W, ((dd.y + t * 0.01 * (0.3 + dd.s)) % 1) * H, 1.6, 1.6);
+    x.fillStyle = "rgba(226,232,240," + (0.05 + dd.s * 0.12).toFixed(3) + ")";
+    x.fillRect(dd.x * W, ((dd.y + t * 0.008 * (0.3 + dd.s)) % 1) * H, 1.6, 1.6);
   }
 
-  var snap = Math.max(0, Math.min(1, (p - 0.92) / 0.08));   /* схлопывание в куб */
-  var capW = S * 0.36, capH = S * 0.165;
-  var rot = t * 0.75;
-
-  /* Капсула: рисуем как объёмный корпус с фаской и внутренней тенью */
-  x.save();
-  x.translate(cx, cy);
-  x.scale(1, 1 - snap * 0.12);
-  var r = capH / 2;
-  function capsule(w2, h2, rr) {
-    x.beginPath();
-    x.moveTo(-w2 / 2 + rr, -h2 / 2);
-    x.lineTo(w2 / 2 - rr, -h2 / 2);
-    x.quadraticCurveTo(w2 / 2, -h2 / 2, w2 / 2, -h2 / 2 + rr);
-    x.lineTo(w2 / 2, h2 / 2 - rr);
-    x.quadraticCurveTo(w2 / 2, h2 / 2, w2 / 2 - rr, h2 / 2);
-    x.lineTo(-w2 / 2 + rr, h2 / 2);
-    x.quadraticCurveTo(-w2 / 2, h2 / 2, -w2 / 2, h2 / 2 - rr);
-    x.lineTo(-w2 / 2, -h2 / 2 + rr);
-    x.quadraticCurveTo(-w2 / 2, -h2 / 2, -w2 / 2 + rr, -h2 / 2);
-    x.closePath();
+  /* Планета внизу кадра: точки материков и атмосферный ободок */
+  var R = S * 0.5, py = cy + S * 0.52;
+  var pts = draw3.globe;
+  if (!pts) {
+    pts = draw3.globe = [];
+    var n = 260, off = 2 / n, inc = Math.PI * (3 - Math.sqrt(5));
+    for (i = 0; i < n; i++) {
+      var yy = i * off - 1 + off / 2, rr = Math.sqrt(1 - yy * yy), phi = i * inc;
+      pts.push([Math.cos(phi) * rr, yy, Math.sin(phi) * rr]);
+    }
   }
-  var body = x.createLinearGradient(0, -capH / 2, 0, capH / 2);
-  body.addColorStop(0, "rgba(28,44,62,.95)");
-  body.addColorStop(1, "rgba(9,18,30,.95)");
-  capsule(capW, capH, r);
-  x.fillStyle = body; x.fill();
-  x.strokeStyle = "rgba(226,232,240,.14)";
-  x.lineWidth = Math.max(1, S * 0.002);
+  var ang = t * 0.16, ca = Math.cos(ang), sa = Math.sin(ang);
+  for (i = 0; i < pts.length; i++) {
+    var v = pts[i];
+    var rx = v[0] * ca - v[2] * sa, rz = v[0] * sa + v[2] * ca;
+    if (rz < -0.1) continue;
+    var sx = cx + rx * R, sy = py + v[1] * R;
+    var dep = (rz + 1) / 2;
+    x.fillStyle = "rgba(66,178,220," + (0.12 + dep * 0.45).toFixed(3) + ")";
+    x.beginPath(); x.arc(sx, sy, 1.2 + dep * 2, 0, 6.283); x.fill();
+  }
+  var hg = x.createRadialGradient(cx, py, R * 0.9, cx, py, R * 1.16);
+  hg.addColorStop(0, "rgba(66,178,220,0)");
+  hg.addColorStop(0.6, "rgba(66,178,220," + (0.1 + p * 0.16).toFixed(3) + ")");
+  hg.addColorStop(1, "rgba(66,178,220,0)");
+  x.fillStyle = hg;
+  x.beginPath(); x.arc(cx, py, R * 1.16, 0, 6.283); x.fill();
+
+  /* Ракета идёт по орбите: угол растёт вместе с процентом загрузки */
+  var orb = -2.5 + p * 2.6;
+  var ox = cx + Math.cos(orb) * R * 1.3;
+  var oy = py + Math.sin(orb) * R * 1.3 * 0.42;
+  drawRocket(x, W, H, S, t * 0.5, 1.15 + Math.sin(orb) * 0.4,
+             ox / W, oy / H, 0.3 + p * 0.05, 0.45 + p * 0.5);
+
+  /* След орбиты */
+  x.strokeStyle = "rgba(138,89,246,.28)";
+  x.lineWidth = Math.max(1, S * 0.0016);
+  x.beginPath();
+  for (i = 0; i <= 40; i++) {
+    var aa = -2.5 + (p * 2.6) * (i / 40);
+    var lx = cx + Math.cos(aa) * R * 1.3, ly = py + Math.sin(aa) * R * 1.3 * 0.42;
+    if (i === 0) x.moveTo(lx, ly); else x.lineTo(lx, ly);
+  }
   x.stroke();
-  x.restore();
 
-  /* Кругляш едет по проценту и на финале становится ядром */
-  var travel = (capW - capH) * (p - 0.5);
-  var kx = cx + travel, ky = cy;
-  var kr = (capH / 2 - S * 0.008) * (1 + snap * 0.5);
-
-  if (snap < 1) {
-    var kg = x.createRadialGradient(kx - kr * 0.3, ky - kr * 0.4, kr * 0.1, kx, ky, kr);
-    kg.addColorStop(0, "#C86BE8");
-    kg.addColorStop(0.55, "#9F40CC");
-    kg.addColorStop(1, "#F6C444");
-    x.fillStyle = kg;
-    x.beginPath(); x.arc(kx, ky, kr * (1 - snap), 0, 6.283); x.fill();
-    x.fillStyle = "rgba(246,196,68,.25)";
-    x.beginPath(); x.arc(kx, ky, kr * (1 - snap) * 1.9, 0, 6.283); x.fill();
-  }
-
-  /* Куб: восемь вершин, честная перспективная проекция и заливка
-     видимых граней. Никакого спрайта, всё считается на месте. */
-  if (snap > 0) {
-    var a = kr * 1.15 * snap;
-    var V = [[-1,-1,-1],[1,-1,-1],[1,1,-1],[-1,1,-1],[-1,-1,1],[1,-1,1],[1,1,1],[-1,1,1]];
-    var F = [[0,1,2,3],[5,4,7,6],[4,0,3,7],[1,5,6,2],[4,5,1,0],[3,2,6,7]];
-    var cy2 = Math.cos(rot), sy2 = Math.sin(rot);
-    var cx2 = Math.cos(rot * 0.6), sx2 = Math.sin(rot * 0.6);
-    var proj = [];
-    for (i = 0; i < 8; i++) {
-      var vx = V[i][0] * a, vy = V[i][1] * a, vz = V[i][2] * a;
-      var X1 = vx * cy2 - vz * sy2, Z1 = vx * sy2 + vz * cy2;
-      var Y1 = vy * cx2 - Z1 * sx2, Z2 = vy * sx2 + Z1 * cx2;
-      var k2 = (S * 1.6) / (S * 1.6 + Z2);
-      proj.push({ x: cx + X1 * k2, y: cy + Y1 * k2, z: Z2 });
-    }
-    var faces = F.map(function (f) {
-      return { f: f, z: (proj[f[0]].z + proj[f[1]].z + proj[f[2]].z + proj[f[3]].z) / 4 };
-    }).sort(function (u, v) { return v.z - u.z; });
-
-    for (i = 0; i < faces.length; i++) {
-      var f2 = faces[i].f, dep = 1 - (faces[i].z / (a * 2) + 0.5) * 0.55;
-      x.beginPath();
-      x.moveTo(proj[f2[0]].x, proj[f2[0]].y);
-      for (var j = 1; j < 4; j++) x.lineTo(proj[f2[j]].x, proj[f2[j]].y);
-      x.closePath();
-      var fg = x.createLinearGradient(proj[f2[0]].x, proj[f2[0]].y, proj[f2[2]].x, proj[f2[2]].y);
-      fg.addColorStop(0, "rgba(159,64,204," + (0.85 * dep).toFixed(3) + ")");
-      fg.addColorStop(1, "rgba(246,196,68," + (0.75 * dep).toFixed(3) + ")");
-      x.fillStyle = fg; x.fill();
-      x.strokeStyle = "rgba(255,255,255,.32)";
-      x.lineWidth = Math.max(1, S * 0.0018);
-      x.stroke();
-    }
-    /* Свечение вокруг ядра */
-    var hg = x.createRadialGradient(cx, cy, a * 0.5, cx, cy, a * 3.2);
-    hg.addColorStop(0, "rgba(246,196,68,.28)");
-    hg.addColorStop(1, "rgba(246,196,68,0)");
-    x.fillStyle = hg;
-    x.beginPath(); x.arc(cx, cy, a * 3.2, 0, 6.283); x.fill();
-  } else if (typeof tick === "function" && p > 0.02) {
-    /* Щелчок на каждом делении шкалы: слышно, как идёт загрузка */
-    if (Math.floor(p * 20) !== draw3.step) { draw3.step = Math.floor(p * 20); tick(); }
+  if (typeof tick === "function" && Math.floor(p * 20) !== draw3.step) {
+    draw3.step = Math.floor(p * 20);
+    tick();
   }
 
   var pc = el.querySelector(".rcl-pc");
@@ -599,9 +714,9 @@ var V3_DRAW = function (W, H, S, p, t, dt) {
 /* ── Сборка вариантов ───────────────────────────────────────── */
 var VARIANTS = [
   {
-    id: "1", name: "Гиперпрыжок",
-    desc: "Пакеты данных летят на зрителя, скорость растёт по проценту, на финале прыжок и вспышка",
-    note: "Самый сильный по движению. Гул разгона синтезируется двумя осцилляторами, фильтр открывается вместе с прогрессом.",
+    id: "1", name: "Старт",
+    desc: "Объёмная ракета в потоке данных: вращается, показывая форму, на финале уходит вверх",
+    note: "Модель ракеты считается прямо в браузере: грани сортируются по глубине, свет ложится по форме. Гул разгона идёт за процентом, на старте бьёт отрыв.",
     css: V1_CSS, html: V1_HTML, audio: V1_AUDIO, draw: V1_DRAW, fn: "draw1"
   },
   {
@@ -611,9 +726,9 @@ var VARIANTS = [
     css: V2_CSS, html: V2_HTML, audio: V2_AUDIO, draw: V2_DRAW, fn: "draw2"
   },
   {
-    id: "3", name: "Ядро",
-    desc: "Капсула кабинета в объёме: кругляш едет и схлопывается во вращающийся куб",
-    note: "Куб считается перспективной проекцией восьми вершин с сортировкой граней. Щелчки идут по делениям шкалы.",
+    id: "3", name: "Орбита",
+    desc: "Ракета идёт по орбите вокруг планеты, дуга следа растёт вместе с процентом",
+    note: "Планета собрана из точек по спирали Фибоначчи и медленно вращается. Щелчки навигации идут по делениям шкалы.",
     css: V3_CSS, html: V3_HTML, audio: V3_AUDIO, draw: V3_DRAW, fn: "draw3"
   }
 ];

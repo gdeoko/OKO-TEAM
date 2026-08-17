@@ -1,0 +1,296 @@
+/* ═══════════════════════════════════════════════════════════
+   RocketCDN · вертикальный ритм
+
+   Претензия заказчика: сайт длинный. Он длинный не потому, что
+   на нём много сказано, а потому, что между сказанным слишком
+   много пустоты. На телефоне страница занимала шестнадцать с
+   половиной экранов, при том что содержания в ней на десять.
+
+   Поэтому здесь мы не убираем ни одного слова, ни одного города,
+   ни одной карточки. Мы только сокращаем воздух и разворачиваем
+   в две колонки то, что на телефоне без нужды стояло в одну.
+
+   Правило, по которому всё написано: чем уже экран, тем плотнее
+   вёрстка. На телефоне человек листает большим пальцем и платит
+   за каждый пустой пиксель лишним движением. На большом мониторе
+   воздух работает на ощущение дорогого продукта, поэтому от 1280
+   и выше ритм остаётся прежним - там резать нечего.
+
+   Файл подключается ПОСЛЕ rc.css и работает через её же
+   переменные: --sec (отступ секции) и --gap (зазор в сетках).
+   Своих цветов, шрифтов и теней здесь нет - только ритм.
+   ═══════════════════════════════════════════════════════════ */
+
+
+/* ── 1. Ритм секций ────────────────────────────────────────────
+   Было clamp(52px, 6.4vw, 96px): на телефоне 52 сверху и 52 снизу,
+   то есть между двумя блоками зияло 104 пикселя, треть экрана.
+   Стало 34 - блоки дышат, но не расползаются. Наклон кривой
+   пологий, поэтому к ноутбуку значение подтягивается само.
+
+   Зазор в сетках на телефоне ужимаем до 10: при двух колонках
+   каждый лишний пиксель зазора съедает ширину карточки. */
+:root {
+  --sec: clamp(30px, 5.2vw, 90px);
+  --gap: clamp(10px, 2.2vw, 24px);
+}
+
+/* От широкого монитора и выше ничего не трогаем: там простор -
+   часть впечатления, а не потеря. Значения совпадают с прежними
+   с точностью до пары пикселей. */
+@media (min-width: 1280px) {
+  :root { --sec: clamp(78px, 6.2vw, 96px); }
+}
+
+
+/* ── 2. Шапка блока ────────────────────────────────────────────
+   Заголовок с подзаголовком отделялся от содержимого сорока
+   пикселями. Между заголовком и тем, что он называет, пауза
+   нужна короткая: это одна мысль, а не две. */
+.sec-head { margin-bottom: clamp(14px, 2.4vw, 34px); }
+
+@media (max-width: 900px) {
+  .sec-tag { margin-bottom: 8px; }
+  .sec-h   { margin-bottom: 8px; }
+  /* Надпись-код над заголовком на телефоне была почти в рост
+     самого заголовка - возвращаем ей роль подписи */
+  .sec-tag::before { width: 16px; }
+  /* Подзаголовок остаётся целиком, но перестаёт занимать
+     столько же места, сколько сам заголовок */
+  .sec-p { font-size: 13px; line-height: 1.5; }
+  /* Строки с галочками под заголовком */
+  .hero-mark { font-size: 12.5px; gap: 7px; }
+  .hero-mark svg { width: 14px; height: 14px; }
+}
+
+
+/* ── 3. Первый экран ───────────────────────────────────────────
+   Лого, чипы, заголовок, абзац, две кнопки и три отметки стояли
+   через большие интервалы и не влезали в экран целиком. Сжимаем
+   интервалы и сам знак: он и в меньшем размере читается как
+   фирменный, а экран наконец собирается в один кадр. */
+@media (max-width: 640px) {
+  .hero { padding: 82px 0 26px; }
+  .hero-logo { margin-bottom: 10px; }
+  .hero-logo img { width: clamp(118px, 33vw, 158px); }
+  .hero-chips { margin-bottom: 13px; gap: 6px; }
+  .hero h1 { margin-bottom: 12px; }
+  .hero-sub { margin-bottom: 16px; }
+  .hero-marks { margin-top: 13px; gap: 6px 16px; }
+  /* Кнопки во всю ширину остаются, но перестают быть подушками */
+  .btn-lg { padding: 12px 24px; font-size: 15.5px; }
+  .btn-row { gap: 8px; }
+}
+
+
+/* ── 4. Показатели ─────────────────────────────────────────────
+   Четыре числа плюс подзаголовок следующего блока обязаны
+   помещаться в один экран телефона. Число само по себе крупное,
+   а вот подложка вокруг него была размером с само число. */
+@media (max-width: 640px) {
+  .kpi > div { padding: 13px 12px; }
+  .kpi-n { font-size: 24px; }
+  .kpi-l { font-size: 11.5px; margin-top: 3px; line-height: 1.35; }
+}
+
+
+/* ── 5. Карточки в две колонки на телефоне ─────────────────────
+   Главный источник длины. Семь продуктов, шесть преимуществ и
+   четыре пункта надёжности стояли в одну колонку - это двадцать
+   с лишним карточек друг под другом.
+
+   В две колонки на 412 пикселях карточка получает 185 пикселей
+   ширины. Этого хватает на значок, заголовок в строку-две и
+   описание, если ужать внутренние отступы и кегль на пару
+   пунктов. Ни одна карточка при этом не исчезает. */
+@media (max-width: 640px) {
+  .g-3, .g-4, .grid.tight { grid-template-columns: repeat(2, 1fr); }
+
+  .card { padding: 13px 12px; }
+  .card-ico { width: 32px; height: 32px; border-radius: 10px; margin-bottom: 8px; }
+  .card-ico svg { width: 17px; height: 17px; }
+  .card h3 { font-size: 14px; line-height: 1.25; margin-bottom: 4px; }
+  .card p  { font-size: 12px; line-height: 1.45; }
+
+  /* Список внутри продукта: точки ближе к тексту, строки плотнее */
+  .grid.tight .card p { font-size: 11.5px; }
+  .grid.tight .prod-card ul { margin-top: 7px; gap: 3px; }
+  .grid.tight .prod-card li { font-size: 11px; line-height: 1.38; padding-left: 12px; }
+  .grid.tight .prod-card li::before { left: 2px; top: .5em; width: 5px; height: 5px; }
+
+  /* Порядковый номер сценария занимал четверть карточки */
+  .case .num { font-size: 52px; right: 12px; }
+}
+
+/* Совсем узкие аппараты: две колонки станут нечитаемыми,
+   возвращаем одну, но уже с плотной типографикой выше */
+@media (max-width: 359px) {
+  .g-3, .g-4, .grid.tight { grid-template-columns: 1fr; }
+}
+
+/* Ноутбук и планшет: на 820-1080 сетка зря падала в две колонки.
+   Семь продуктов в три колонки - это три ряда вместо четырёх, а
+   шесть преимуществ - два ряда вместо трёх. */
+@media (min-width: 820px) and (max-width: 1080px) {
+  .grid.tight { grid-template-columns: repeat(3, 1fr); }
+  .g-3 { grid-template-columns: repeat(3, 1fr); }
+  .g-4 { grid-template-columns: repeat(4, 1fr); }
+}
+
+
+/* ── 6. Что это: схема из трёх узлов ───────────────────────────
+   На телефоне узлы вставали столбиком, каждый со значком по
+   центру и текстом под ним. Разворачиваем узел в строку: значок
+   слева, подпись справа - высота падает вдвое, смысл тот же.
+   Соединительная нить при этом остаётся, маршрут читается. */
+@media (max-width: 900px) {
+  .what-top { margin-bottom: clamp(18px, 3vw, 34px); }
+  .rack { height: clamp(230px, 56vw, 300px); }
+
+  .flow-node {
+    display: grid; grid-template-columns: auto 1fr;
+    column-gap: 12px; align-items: center;
+    text-align: left; padding: 12px 14px;
+  }
+  .flow-node .card-ico { margin: 0; grid-row: span 2; align-self: center; }
+  .flow-node h4 { font-size: 14.5px; margin-bottom: 2px; align-self: end; }
+  .flow-node p  { font-size: 12.5px; line-height: 1.45; align-self: start; }
+  .flow-link { height: 20px; margin: 5px auto; }
+}
+
+
+/* ── 7. Инфографика ────────────────────────────────────────────
+   Кольцо и шкала - две картинки одного размера и одного смысла,
+   на телефоне они честно встают рядом. Полоса задержки шире их
+   обеих, поэтому занимает весь ряд.
+
+   Ищем блоки по содержимому, а не по порядку в разметке: так
+   правка не развалится, если координатор переставит карточки. */
+@media (max-width: 700px) {
+  .viz-card { padding: 14px 13px; gap: 10px; }
+  .viz-card > h3 { font-size: 14.5px; }
+  .viz-card > p  { font-size: 12.5px; line-height: 1.5; }
+
+  .viz-grid:has(.dn-wrap):has(.ga-wrap) { grid-template-columns: 1fr 1fr; }
+  .viz-grid:has(.dn-wrap):has(.ga-wrap) > .viz-card:has([data-viz="latency"]) { grid-column: 1 / -1; }
+
+  .donut, .gauge { max-width: 140px; }
+  .dn-mid b, .ga-mid b { font-size: 22px; }
+  .dn-mid span, .ga-mid span { font-size: 10.5px; }
+  .lat-row { margin-bottom: 10px; }
+  .lat-top { margin-bottom: 6px; font-size: 12.5px; }
+  .wave-cv { height: 92px; }
+  .rb-row { margin-bottom: 8px; gap: 10px; }
+
+  /* Счётчики: четыре штуки столбиком - это полтора экрана ни о чём.
+     Ставим их сеткой два на два, заголовок карточки на всю ширину. */
+  .viz-card:has(> .tick) { display: grid; grid-template-columns: 1fr 1fr; gap: 12px 14px; align-content: start; }
+  .viz-card:has(> .tick) > h3,
+  .viz-card:has(> .tick) > p { grid-column: 1 / -1; }
+  .tick b { font-size: 21px; }
+  .tick span { font-size: 11.5px; line-height: 1.35; }
+}
+
+
+/* ── 8. Инфраструктура ─────────────────────────────────────────
+   Самый высокий блок сайта: карта, вкладки регионов, поиск,
+   список из 218 городов, три дата-центра, бегущая строка и ещё
+   два виджета. Все 218 городов остаются на месте - просто окно
+   списка становится ниже, а карточки ЦОД перестают быть с
+   ладонь величиной. */
+@media (max-width: 900px) {
+  .map-wrap { max-width: 268px; }
+  .map-legend { margin-top: 9px; gap: 5px 13px; }
+  .leg { font-size: 11.5px; }
+
+  .reg-tabs { gap: 6px; margin-bottom: 10px; }
+  .reg-tabs button { padding: 6px 11px; font-size: 12.5px; }
+  .search { margin-bottom: 9px; }
+  .search input { padding: 10px 14px 10px 38px; }
+  /* Окно списка: 210 пикселей - это пять строк. Все 218 городов
+     на месте, просто окно перестало быть в полэкрана */
+  .node-list { max-height: 210px; }
+  .node-row { padding: 8px 13px; font-size: 13.5px; }
+
+  /* Три дата-центра встают в две колонки: третий занимает нижний
+     ряд целиком, чтобы ряд не выглядел оборванным */
+  .dc-grid { grid-template-columns: repeat(2, 1fr); margin-top: clamp(14px, 2.6vw, 28px); }
+  .dc-grid > .dc:last-child:nth-child(3) { grid-column: 1 / -1; }
+  .dc { padding: 13px 15px; }
+  .dc h4 { font-size: 16.5px; margin: 4px 0 2px; }
+  .dc p { font-size: 12px; line-height: 1.45; }
+
+  .mq { padding: 8px 0; }
+  .mq-set span { font-size: 12.5px; }
+}
+
+
+/* ── 9. Состав подключения ─────────────────────────────────────
+   Девять пунктов - это не список, а сетка. На телефоне две
+   колонки, на планшете три: строка «HTTP/2 и HTTP/3» не
+   становится понятнее от того, что вокруг неё полэкрана. */
+@media (max-width: 560px) {
+  .inc-grid { grid-template-columns: repeat(2, 1fr); gap: 8px; }
+  .inc-item { padding: 10px 11px; font-size: 12.5px; gap: 9px; line-height: 1.35; }
+  .inc-item svg { width: 15px; height: 15px; }
+}
+@media (min-width: 561px) and (max-width: 900px) {
+  .inc-grid { grid-template-columns: repeat(3, 1fr); }
+}
+@media (max-width: 359px) {
+  .inc-grid { grid-template-columns: 1fr; }
+}
+
+
+/* ── 10. Горизонтальные ленты ──────────────────────────────────
+   Маршрут запроса и двенадцать сценариев на телефоне листаются
+   пальцем вбок - по вертикали они и так стоят дёшево. Немного
+   сужаем карточку, чтобы за правым краем виднелась следующая:
+   так видно, что лента продолжается. */
+@media (max-width: 900px) {
+  .hs-stage { gap: 12px; }
+  .hs-track { padding: 3px var(--pad); }
+  .hs-track > * { width: 68vw; }
+  .step-ms { margin-bottom: 8px; padding: 3px 9px; }
+}
+
+
+/* ── 11. Вопросы ───────────────────────────────────────────────
+   Восемь вопросов остаются все. Строка вопроса занимала высоту
+   в две с лишним строки текста из-за отступов. */
+@media (max-width: 640px) {
+  .faq-q { padding: 11px 14px; font-size: 14.2px; line-height: 1.35; gap: 12px; }
+  .faq-q i { width: 16px; height: 16px; }
+  .faq-q i::before { top: 7px; width: 16px; }
+  .faq-q i::after  { left: 7px; height: 16px; }
+  .faq-a p { padding: 0 14px 13px; font-size: 13.5px; line-height: 1.55; }
+}
+
+
+/* ── 12. Контакты и заявка ─────────────────────────────────────
+   Форма остаётся полностью: все поля, согласие и кнопка. Ужимаем
+   только поля между собой - в анкете важна не воздушность, а то,
+   чтобы кнопка отправки была видна без долгой прокрутки. */
+@media (max-width: 900px) {
+  .contact { gap: 20px; }
+  .contact-list { gap: 10px; margin-top: 16px; }
+  .contact-list a, .contact-list div { font-size: 14px; gap: 11px; }
+  .contact-list svg { width: 17px; height: 17px; }
+
+  .form-card { padding: 15px 14px; }
+  .field { margin-bottom: 9px; }
+  .field label { margin-bottom: 4px; font-size: 12px; }
+  /* 16px у поля ввода трогать нельзя: на айфоне всё, что мельче,
+     заставляет браузер приближать страницу при фокусе */
+  .field input, .field textarea, .field select { padding: 10px 13px; font-size: 16px; }
+  .field textarea { min-height: 62px; }
+  .consent { margin: 2px 0 10px; line-height: 1.45; }
+
+  .legal { margin-top: 14px; padding-top: 12px; gap: 5px 16px; font-size: 12px; }
+}
+
+
+/* ── 13. Уменьшенная анимация ──────────────────────────────────
+   Плотность к анимации отношения не имеет: человек, который
+   выключил движение, получает ту же компактную страницу. Ничего
+   отдельного здесь не нужно - правила выше не анимируются. */

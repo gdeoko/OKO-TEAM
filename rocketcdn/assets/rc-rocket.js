@@ -709,9 +709,10 @@ Rocket.prototype.landing = function (p, dt, pos, tan) {
   /* Тяга гаснет, но факел не исчезает совсем: сопло остывает */
   this.power = Math.max(0.14, this.power * (1 - this.landK * 0.82));
 
-  /* Касание: один удар и тишина после него */
+  /* Касание: один удар, пыль из-под опор и тишина после него */
   if (this.landK > 0.86 && !this._touched) {
     this._touched = 1;
+    this.dust();
     document.documentElement.classList.add("rc-landed-craft");
     if (g.RC_SOUND && g.RC_SOUND.boom) { try { g.RC_SOUND.boom(); } catch (e) {} }
     try { dispatchEvent(new CustomEvent("rc:touchdown")); } catch (e) {}
@@ -721,6 +722,33 @@ Rocket.prototype.landing = function (p, dt, pos, tan) {
     document.documentElement.classList.remove("rc-landed-craft");
   }
   return this.landK;
+};
+
+/* Пыль из-под опор. Живёт в обычной вёрстке, а не в сцене: тридцать
+   лёгких кружков поверх холста дешевле любой системы частиц и на
+   телефоне не стоит ничего. */
+Rocket.prototype.dust = function () {
+  if (document.documentElement.classList.contains("rc-reduced")) return;
+  var pos = g.RC_ROCKET_POS;
+  if (!pos || !isFinite(pos.x)) return;
+  var layer = document.createElement("div");
+  layer.className = "rc-dust";
+  layer.setAttribute("aria-hidden", "true");
+  layer.style.left = pos.x + "px";
+  layer.style.top = pos.y + "px";
+  var n = this.C.mobile ? 14 : 28;
+  for (var i = 0; i < n; i++) {
+    var d = document.createElement("i");
+    var a = (Math.random() - 0.5) * Math.PI;      /* в стороны, а не вверх */
+    var dist = 60 + Math.random() * 190;
+    d.style.setProperty("--dx", (Math.cos(a) * dist).toFixed(0) + "px");
+    d.style.setProperty("--dy", (Math.abs(Math.sin(a)) * dist * 0.32).toFixed(0) + "px");
+    d.style.setProperty("--ds", (0.5 + Math.random() * 1.5).toFixed(2));
+    d.style.animationDelay = (Math.random() * 0.18).toFixed(2) + "s";
+    layer.appendChild(d);
+  }
+  document.body.appendChild(layer);
+  setTimeout(function () { if (layer.parentNode) layer.parentNode.removeChild(layer); }, 2200);
 };
 
 Rocket.prototype.layout = function (p, dt) {
@@ -752,7 +780,7 @@ Rocket.prototype.layout = function (p, dt) {
 
   /* Дальние участки пути делаем мельче, ближние крупнее.
      Вокруг планеты ракета идёт мельче: она «далеко». */
-  var s = this.C.mobile ? 0.62 : 0.86;
+  var s = this.C.mobile ? 0.82 : 1.12;
   this.pivot.scale.setScalar(s * (1 - k * 0.62) * (1 + (this.landK || 0) * 0.12));
 };
 
