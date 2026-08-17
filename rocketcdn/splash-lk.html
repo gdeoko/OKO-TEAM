@@ -411,9 +411,12 @@ var V4_CSS =
 '@media (prefers-color-scheme:dark){.rcl{background:#050B12!important}}\n' +
 '.rcl-4 .rcl-pc{position:absolute;left:0;right:0;bottom:9%;text-align:center;\n' +
 '  font-size:13px;font-weight:700;color:#0A5897;font-variant-numeric:tabular-nums}\n' +
-'@media (prefers-color-scheme:dark){.rcl-4 .rcl-pc{color:#42B2DC}}\n';
+'.rcl-4 .rcl-br{position:absolute;left:0;right:0;bottom:14.5%;text-align:center;\n' +
+'  font-size:10px;font-weight:600;letter-spacing:.44em;color:rgba(10,88,151,.5)}\n' +
+'@media (prefers-color-scheme:dark){.rcl-4 .rcl-pc{color:#42B2DC}\n' +
+'  .rcl-4 .rcl-br{color:rgba(207,233,245,.4)}}\n';
 
-var V4_HTML = '<div class="rcl-4"><canvas></canvas><div class="rcl-pc">0%</div></div>';
+var V4_HTML = '<div class="rcl-4"><canvas></canvas><div class="rcl-br">ROCKET CDN</div><div class="rcl-pc">0%</div></div>';
 
 var V4_AUDIO =
 '  var pad=null,padG=null;\n' +
@@ -441,7 +444,7 @@ var V4_DRAW = function (W, H, S, p, t, dt) {
 
   /* Пыль на заднем плане: едва заметная, чтобы кадр не был голым */
   var dustCol = dark ? "226,232,240" : "10,88,151";
-  for (var d = 0; d < 26; d++) {
+  for (var d = 0; d < 44; d++) {
     var dx = (Math.sin(d * 12.9898) * 43758.5453) % 1; if (dx < 0) dx += 1;
     var dy = (Math.sin(d * 78.233) * 12578.1459) % 1; if (dy < 0) dy += 1;
     var tw = 0.5 + 0.5 * Math.sin(t * 0.8 + d * 1.7);
@@ -484,6 +487,13 @@ var V4_DRAW = function (W, H, S, p, t, dt) {
 
   function planet(it) {
     var o = it.o, r = o[1] * S * it.k;
+    /* Нимб: тонкое свечение атмосферы в цвет планеты */
+    var ng = x.createRadialGradient(it.x, it.y, r * 0.6, it.x, it.y, r * 1.9);
+    ng.addColorStop(0, "rgba(0,0,0,0)");
+    ng.addColorStop(0.55, o[3] + (dark ? "2E" : "22"));
+    ng.addColorStop(1, o[3] + "00");
+    x.fillStyle = ng;
+    x.beginPath(); x.arc(it.x, it.y, r * 1.9, 0, 6.283); x.fill();
     /* Свет со стороны солнца */
     var la = Math.atan2(cy - it.y, cx - it.x);
     var lx = it.x + Math.cos(la) * r * 0.45, ly = it.y + Math.sin(la) * r * 0.45;

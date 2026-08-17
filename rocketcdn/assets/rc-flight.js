@@ -59,6 +59,22 @@ var F = {
 var ui = {};      /* DOM оверлея */
 var W3 = null;    /* всё трёхмерное */
 
+/* Три вселенные: своя окраска неба, туманностей, звёзд и солнца.
+   Мир один, но за гипер-вспышкой он оживает в другом свете - и его
+   хочется исследовать заново. */
+var UNIVERSES = [
+  { name: RU ? "СОЛНЕЧНАЯ СИСТЕМА" : "SOLAR SYSTEM",
+    sky: 0x9db4cc, amb: 0x3a4a68, neb: [0x42b2dc, 0x8a59f6], sun: 0xfff2dc,
+    stars: [0xcfe9f5, 0x8fb7ff, 0xffe9c9] },
+  { name: RU ? "ВСЕЛЕННАЯ RV-2" : "UNIVERSE RV-2",
+    sky: 0xa08cd8, amb: 0x4a3468, neb: [0x8a59f6, 0xd06bff], sun: 0xe8d4ff,
+    stars: [0xe2d4ff, 0xb08cff, 0xffc9ec] },
+  { name: RU ? "ВСЕЛЕННАЯ RC-3" : "UNIVERSE RC-3",
+    sky: 0xd8b48c, amb: 0x684a34, neb: [0xffb066, 0xff7a4d], sun: 0xffe0b0,
+    stars: [0xffe9cf, 0xffc98f, 0xc9e2ff] }
+];
+var uniIdx = 0;
+
 /* ── Оверлей ─────────────────────────────────────────────────
    DOM собирается один раз при первом открытии: кнопка полёта не
    должна ничего стоить тем, кто её не нажал. */
@@ -125,10 +141,15 @@ function buildUI() {
 
   w.querySelector(".rcf-close").addEventListener("click", close);
   ui.ret.addEventListener("click", close);
-  ui.auto.addEventListener("click", function () { setAuto(!F.auto); });
+  ui.auto.addEventListener("click", function () {
+    setAuto(!F.auto);
+    if (g.RC_SOUND && g.RC_SOUND.blip) { try { g.RC_SOUND.blip(F.auto ? 760 : 420, 0.09, "sine", 0.045); } catch (e) {} }
+  });
   ui.nav.addEventListener("click", function (e) {
     var b = e.target.closest("button[data-goal]");
-    if (b) goTo(b.getAttribute("data-goal"));
+    if (!b) return;
+    goTo(b.getAttribute("data-goal"));
+    if (g.RC_SOUND && g.RC_SOUND.blip) { try { g.RC_SOUND.blip(640, 0.08, "square", 0.028); } catch (e) {} }
   });
   bindControls();
 }
@@ -157,8 +178,50 @@ function manual() {
   hideHint();
 }
 
+function applyUniverse(i) {
+  if (!W3) return;
+  var T = g.THREE, u = UNIVERSES[i % UNIVERSES.length];
+  W3.sky.material.color.set(u.sky);
+  W3.amb.color.set(u.amb);
+  W3.sunGlow.material.color = new T.Color(u.sun);
+  for (var k = 0; k < W3.nebSprites.length; k++) {
+    W3.nebSprites[k].material.color = new T.Color(u.neb[k % 2]);
+  }
+  for (k = 0; k < W3.starMats.length; k++) {
+    W3.starMats[k].color.set(u.stars[k]);
+  }
+}
+
+/* Прыжок между вселенными: белая вспышка, за ней мир уже другой */
+var uniBusy = false;
+function jumpUniverse() {
+  if (uniBusy || !W3) return;
+  uniBusy = true;
+  uniIdx = (uniIdx + 1) % UNIVERSES.length;
+  if (ui.fade) { ui.fade.style.transition = "opacity .45s"; ui.fade.style.opacity = "1"; }
+  if (g.RC_SOUND && g.RC_SOUND.chime) { try { g.RC_SOUND.chime(); } catch (e) {} }
+  F.shake = 1;
+  setTimeout(function () {
+    applyUniverse(uniIdx);
+    if (ui.cap) {
+      ui.cap._t = UNIVERSES[uniIdx].name;
+      ui.cap._hold = performance.now() + 3200;
+      ui.cap.classList.remove("in"); void ui.cap.offsetWidth;
+      ui.cap.textContent = UNIVERSES[uniIdx].name;
+      ui.cap.classList.add("in");
+    }
+    if (ui.fade) ui.fade.style.opacity = "0";
+    setTimeout(function () { uniBusy = false; }, 700);
+  }, 480);
+}
+
 function goTo(id) {
   if (!W3 || !W3.at) return;
+  if (id === "galaxy" && F.p > W3.at.jump0 && F.p < W3.at.jump1) {
+    /* Уже в межгалактическом коридоре: прыгаем в другую вселенную */
+    jumpUniverse();
+    return;
+  }
   var p = id === "earth" ? 0.02
         : id === "home" ? 0.985
         : id === "galaxy" ? (W3.at.jump0 + W3.at.jump1) / 2
@@ -239,7 +302,8 @@ function buildWorld() {
   var FOV0 = portrait ? 84 : 72;
   var cam = new T.PerspectiveCamera(FOV0, 1, 0.1, 9000);
 
-  scene.add(new T.AmbientLight(0x3a4a68, 0.85));
+  var amb = new T.AmbientLight(0x3a4a68, 0.85);
+  scene.add(amb);
   var sun = new T.DirectionalLight(0xfff2dc, 1.6);
   sun.position.set(2600, 1000, 1750);
   scene.add(sun);
@@ -274,9 +338,11 @@ function buildWorld() {
     scene.add(pts);
     return pts;
   }
-  stars(mob ? 2400 : 5200, 2.4, 3000, 0xcfe9f5);
-  stars(mob ? 900 : 2200, 3.6, 2200, 0x8fb7ff);
-  stars(mob ? 400 : 900, 4.8, 1500, 0xffe9c9);
+  var starMats = [
+    stars(mob ? 2400 : 5200, 2.4, 3000, 0xcfe9f5).material,
+    stars(mob ? 900 : 2200, 3.6, 2200, 0x8fb7ff).material,
+    stars(mob ? 400 : 900, 4.8, 1500, 0xffe9c9).material
+  ];
 
   /* Солнце: далёкий слепящий блик, как на съёмке с орбиты */
   var sunGlow = new T.Sprite(new T.SpriteMaterial({
@@ -291,11 +357,13 @@ function buildWorld() {
   var nebT = glowSprite(256, "rgba(66,178,220,.32)", "rgba(66,178,220,0)");
   var nebV = glowSprite(256, "rgba(138,89,246,.28)", "rgba(138,89,246,0)");
   var nebs = [[-1400, 500, -2400, 2600, nebT], [1900, -300, -1500, 2100, nebV], [600, 800, 2200, 2400, nebT], [-2100, -600, 1400, 1900, nebV]];
+  var nebSprites = [];
   for (var i = 0; i < nebs.length; i++) {
     var sp = new T.Sprite(new T.SpriteMaterial({ map: nebs[i][4], transparent: true, opacity: 0.5, depthWrite: false }));
     sp.position.set(nebs[i][0], nebs[i][1], nebs[i][2]);
     sp.scale.setScalar(nebs[i][3]);
     scene.add(sp);
+    nebSprites.push(sp);
   }
 
   /* ── Земля ── */
@@ -478,6 +546,46 @@ function buildWorld() {
   var pickables = [eBody, moon, mars, saturn.children[0], hole.children[0]];
   saturn.children[0].userData.info = RU ? "САТУРН · кольца открыл Гюйгенс, 1655" : "SATURN · rings discovered by Huygens, 1655";
 
+  /* Комета: ядро со свечением и хвост из частиц. Ходит по вытянутому
+     эллипсу между Марсом и Сатурном, хвост всегда от солнца. */
+  var comet = new T.Group();
+  var cometCore = new T.Sprite(new T.SpriteMaterial({
+    map: glowSprite(64, "rgba(220,244,255,1)", "rgba(160,220,255,0)"),
+    transparent: true, depthWrite: false, blending: T.AdditiveBlending
+  }));
+  cometCore.scale.setScalar(26);
+  cometCore.userData.info = RU ? "КОМЕТА RC/2026 · хвост всегда смотрит от солнца" : "COMET RC/2026 · the tail always points away from the sun";
+  comet.add(cometCore);
+  var cometTail = (function () {
+    var n = 90, geo = new T.BufferGeometry(), posA = new Float32Array(n * 3);
+    for (var k = 0; k < n; k++) {
+      var d = k / n;
+      posA[k * 3] = -d * 150 + (Math.random() - 0.5) * d * 26;
+      posA[k * 3 + 1] = (Math.random() - 0.5) * d * 26;
+      posA[k * 3 + 2] = (Math.random() - 0.5) * d * 26;
+    }
+    geo.setAttribute("position", new T.BufferAttribute(posA, 3));
+    return new T.Points(geo, new T.PointsMaterial({
+      color: 0xbfe4ff, size: 7, sizeAttenuation: true, map: starDot,
+      transparent: true, opacity: 0.55, depthWrite: false, blending: T.AdditiveBlending
+    }));
+  })();
+  comet.add(cometTail);
+  scene.add(comet);
+  pickables.push(cometCore);
+
+  /* Спутник на орбите Земли: корпус и две солнечные панели */
+  var sat = new T.Group();
+  var satBody = new T.Mesh(new T.BoxGeometry(4, 4, 8),
+    new T.MeshPhongMaterial({ color: 0xd8e2ec, shininess: 60 }));
+  satBody.userData.info = RU ? "СПУТНИК RC-SAT · ретранслятор Rocket CDN на низкой орбите" : "RC-SAT · Rocket CDN relay in low orbit";
+  sat.add(satBody);
+  var panelMat = new T.MeshPhongMaterial({ color: 0x1d4d8f, shininess: 90, side: T.DoubleSide });
+  var p1 = new T.Mesh(new T.PlaneGeometry(16, 5), panelMat); p1.position.x = 11; sat.add(p1);
+  var p2 = new T.Mesh(new T.PlaneGeometry(16, 5), panelMat); p2.position.x = -11; sat.add(p2);
+  scene.add(sat);
+  pickables.push(satBody);
+
   var milky = spiralGalaxy(900, 420, -3300, 950, 0x9fd8ef, 0x8fb7ff, 0.9, 0.3);
   var gal2 = spiralGalaxy(-2800, -500, -1600, 680, 0xb08cff, 0x8a59f6, 1.15, -0.4);
   var gal3 = spiralGalaxy(3400, 700, -400, 620, 0xffd9a6, 0xff9d6b, 0.75, 0.55);
@@ -576,6 +684,7 @@ function buildWorld() {
   return {
     r: r, scene: scene, cam: cam, path: path, looks: LOOKS, at: AT, fov0: FOV0,
     milky: milky, gal2: gal2, gal3: gal3,
+    comet: comet, sat: sat, nebSprites: nebSprites, starMats: starMats, sunGlow: sunGlow, amb: amb,
     earth: earth, moon: moon, mars: mars, saturn: saturn, hole: hole,
     diskMat: diskMat, jump: jump, sky: sky, pickables: pickables,
     tmpA: new T.Vector3(), tmpB: new T.Vector3(), tmpQ: new T.Quaternion(), tmpM: new T.Matrix4()
@@ -751,6 +860,21 @@ function frame(ts) {
   w3.sky.rotation.y += dt * 0.0025;
   if (w3.milky) { w3.milky.rotation.y += dt * 0.01; w3.gal2.rotation.y -= dt * 0.008; w3.gal3.rotation.y += dt * 0.012; }
 
+  /* Комета: эллипс между Марсом и Сатурном, хвост от солнца */
+  if (w3.comet) {
+    var ca = ts * 0.000021;
+    w3.comet.position.set(950 + Math.cos(ca) * 520, -40 + Math.sin(ca * 1.7) * 90, -860 + Math.sin(ca) * 300);
+    w3.tmpB.copy(w3.comet.position).sub(w3.sunGlow.position).normalize();
+    w3.comet.lookAt(w3.tmpA.copy(w3.comet.position).add(w3.tmpB));
+    w3.comet.rotateY(Math.PI / 2);
+  }
+  /* Спутник: низкая орбита Земли с наклоном */
+  if (w3.sat) {
+    var sa = ts * 0.00011;
+    w3.sat.position.set(Math.cos(sa) * 86, Math.sin(sa * 2) * 20, Math.sin(sa) * 86);
+    w3.sat.rotation.y = sa + 1.2;
+  }
+
   /* Бортовой справочник: навёл на планету или галактику - корабль
      говорит, что это и когда открыто. Дорогую проверку пересечений
      гоняем восемь раз в секунду, не каждый кадр. */
@@ -765,7 +889,11 @@ function frame(ts) {
     }
     if (info !== frame._info) {
       frame._info = info;
-      if (info) { ui.info.textContent = info; ui.info.classList.add("on"); }
+      if (info) {
+        ui.info.textContent = info;
+        ui.info.classList.add("on");
+        if (g.RC_SOUND && g.RC_SOUND.blip) { try { g.RC_SOUND.blip(920, 0.06, "sine", 0.018); } catch (e) {} }
+      }
       else ui.info.classList.remove("on");
     }
     F.pick = false;
@@ -785,7 +913,7 @@ function frame(ts) {
   /* HUD */
   var cap = CAPTIONS[0];
   for (i = CAPTIONS.length - 1; i >= 0; i--) { if (F.p >= CAPTIONS[i].p) { cap = CAPTIONS[i]; break; } }
-  if (ui.cap._t !== cap.t) {
+  if (ui.cap._t !== cap.t && !(ui.cap._hold && ts < ui.cap._hold)) {
     ui.cap._t = cap.t;
     ui.cap.classList.remove("in");
     void ui.cap.offsetWidth;

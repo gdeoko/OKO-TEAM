@@ -85,9 +85,9 @@ html.rc-flying body { overflow: hidden; }
 }
 
 .rcf-track {
-  position: absolute; left: 50%; bottom: clamp(12px, 3.2vh, 30px);
+  position: absolute; left: 50%; bottom: 1.6%;
   transform: translateX(-50%);
-  width: min(420px, 56vw); height: 2px;
+  width: min(380px, 48vw); height: 2px;
   background: rgba(207,233,245,.16);
   border-radius: 2px;
 }
@@ -99,7 +99,7 @@ html.rc-flying body { overflow: hidden; }
 }
 
 .rcf-hint {
-  position: absolute; left: 50%; bottom: clamp(28px, 6.5vh, 60px);
+  position: absolute; left: 50%; bottom: 16%;
   transform: translateX(-50%);
   color: rgba(207,233,245,.75);
   font-size: clamp(11px, 1.3vw, 13px);
@@ -112,7 +112,7 @@ html.rc-flying body { overflow: hidden; }
 @keyframes rcfPulse { 0%,100% { opacity: .55 } 50% { opacity: 1 } }
 
 .rcf-speed {
-  position: absolute; right: clamp(14px, 3vw, 40px); bottom: clamp(12px, 3.2vh, 30px);
+  position: absolute; right: clamp(14px, 4vw, 60px); bottom: 3.4%;
   color: #CFE9F5; text-align: right;
   font-variant-numeric: tabular-nums;
 }
@@ -275,34 +275,53 @@ html[data-theme="light"] .rc-vidbg.on { opacity: .16; }
 }
 .rc-flight.has-cab .rcf-cab { opacity: 1; }
 
-/* ── Навигация по целям ──────────────────────────────────────ы */
+/* ── Навигация: клавиши прямо на консоли корабля ─────────────
+   Кнопки стоят в зоне нарисованной панели и сделаны её клавишами:
+   тёмный металл, утопленная посадка, светящаяся кромка снизу.
+   Никаких «стеклянных таблеток поверх кадра». */
 .rcf-nav {
-  position: absolute; left: 50%; bottom: clamp(46px, 10vh, 92px);
+  position: absolute; left: 50%; bottom: 3.6%;
   transform: translateX(-50%);
-  display: flex; gap: 6px; flex-wrap: wrap; justify-content: center;
-  max-width: 94vw;
+  display: flex; gap: 7px; flex-wrap: wrap; justify-content: center;
+  max-width: min(760px, 86vw);
   pointer-events: auto;
 }
 .rcf-nav button {
   font-family: var(--f-body, "Golos Text", sans-serif);
-  font-size: 11px; font-weight: 600; letter-spacing: .12em;
+  font-size: 10.5px; font-weight: 700; letter-spacing: .14em;
   text-transform: uppercase;
-  color: rgba(207,233,245,.8);
-  background: rgba(4,10,18,.6);
-  border: 1px solid rgba(66,178,220,.3);
-  border-radius: 999px;
-  padding: 7px 13px;
+  color: rgba(180,226,244,.92);
+  background: linear-gradient(180deg, #2a3542 0%, #131c26 42%, #0b121b 100%);
+  border: 1px solid rgba(10,16,24,.9);
+  border-radius: 7px;
+  padding: 8px 13px 9px;
   cursor: pointer;
-  backdrop-filter: blur(5px);
-  -webkit-backdrop-filter: blur(5px);
-  transition: color .2s, border-color .2s, box-shadow .2s;
+  box-shadow:
+    inset 0 1px 0 rgba(207,233,245,.16),
+    inset 0 -3px 6px rgba(0,0,0,.55),
+    0 1px 0 rgba(0,0,0,.8),
+    0 3px 6px -2px rgba(0,0,0,.9);
+  text-shadow: 0 0 8px rgba(66,178,220,.6);
+  transition: color .18s, box-shadow .18s, transform .12s;
 }
-.rcf-nav button:hover { color: #fff; border-color: rgba(66,178,220,.8); }
+.rcf-nav button:hover {
+  color: #EAF7FF;
+  box-shadow:
+    inset 0 1px 0 rgba(207,233,245,.2),
+    inset 0 -3px 6px rgba(0,0,0,.5),
+    0 0 14px -2px rgba(66,178,220,.7),
+    0 3px 6px -2px rgba(0,0,0,.9);
+}
+.rcf-nav button:active { transform: translateY(1px); }
 .rcf-nav button.cur {
-  color: #061019;
-  background: linear-gradient(135deg, var(--cyan, #42B2DC), #7BD1EC);
-  border-color: transparent;
-  box-shadow: 0 0 18px -4px rgba(66,178,220,.9);
+  color: #06131d;
+  background: linear-gradient(180deg, #9FE0F6 0%, #42B2DC 60%, #2C8FB8 100%);
+  text-shadow: none;
+  box-shadow:
+    inset 0 1px 0 rgba(255,255,255,.55),
+    inset 0 -3px 6px rgba(6,24,36,.35),
+    0 0 20px -3px rgba(66,178,220,.95),
+    0 3px 6px -2px rgba(0,0,0,.9);
 }
 
 /* ── Автопилот ───────────────────────────────────────────────ы */
@@ -392,9 +411,26 @@ html[data-theme="light"] .rc-vidbg.on { opacity: .16; }
 }
 
 @media (max-width: 760px) {
-  .rcf-nav { bottom: clamp(56px, 11vh, 100px); gap: 5px; }
-  .rcf-nav button { font-size: 10px; padding: 6px 10px; }
+  /* На телефоне консоль ниже и уже: клавиши идут одной лентой с
+     прокруткой пальцем, как строка приборов, а не в три этажа
+     поверх окна */
+  .rcf-nav {
+    bottom: 4.6%; gap: 5px;
+    max-width: 94vw; width: 94vw;
+    flex-wrap: nowrap; justify-content: flex-start;
+    overflow-x: auto; overscroll-behavior-x: contain;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+    padding: 4px 6px;
+    -webkit-mask-image: linear-gradient(90deg, transparent 0, #000 14px, #000 calc(100% - 14px), transparent 100%);
+    mask-image: linear-gradient(90deg, transparent 0, #000 14px, #000 calc(100% - 14px), transparent 100%);
+  }
+  .rcf-nav::-webkit-scrollbar { display: none; }
+  .rcf-nav button { font-size: 9.5px; padding: 7px 10px 8px; flex: 0 0 auto; }
   .rcf-auto { padding: 8px 12px; font-size: 11px; }
-  .rcf-holo { right: 10px; bottom: 15vh; width: 46px; }
+  .rcf-holo { right: 8px; bottom: 12.5%; width: 44px; }
   .rcf-info { top: clamp(64px, 12vh, 110px); }
+  .rcf-hint { bottom: 17%; font-size: 10.5px; max-width: 90vw; white-space: normal; text-align: center; }
+  .rcf-speed { display: none; }
+  .rcf-track { bottom: 1.2%; }
 }
