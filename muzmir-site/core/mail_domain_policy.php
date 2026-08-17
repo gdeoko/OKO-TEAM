@@ -38,6 +38,12 @@ function mdp_ensure(): void {
         bounced    INTEGER DEFAULT 0,
         reason     TEXT DEFAULT '',
         updated_at TEXT DEFAULT (datetime('now','localtime')))");
+    // Ручная запись: её ставит человек и снимает тоже человек. Автоматический
+    // пересчёт такие строки не трогает — иначе yandex.ru вылетал бы из особого
+    // канала на первом же прогоне: он письма ПРИНИМАЕТ (доставка есть), просто
+    // кладёт их в «Спам», а по доставке пересчёт считает домен здоровым.
+    try { db()->exec("ALTER TABLE mail_domain_policy ADD COLUMN manual INTEGER DEFAULT 0"); }
+    catch (\Throwable $e) { /* колонка уже есть */ }
 }
 
 /** Отказ выглядит как блокировка канала, а не как отсутствие ящика? */
@@ -85,6 +91,9 @@ function mdp_learn(int $days = 14): array {
         // временные и лечатся паузой (mrep_paused_domains), а поток с kc@ они
         // не выдержат по объёму.
         if (in_array($d, mdp_public_mailers(), true)) continue;
+
+        // Ручную запись пересчёт не трогает ни в какую сторону.
+        if ((int) (scalar("SELECT COALESCE(manual,0) FROM mail_domain_policy WHERE domain=?", [$d]) ?? 0) === 1) continue;
 
         $isOfficial = $s['delivered'] === 0 && $s['bounced'] >= 3 && $s['blocked'] >= 1;
         $was = (string) (scalar("SELECT policy FROM mail_domain_policy WHERE domain=?", [$d]) ?? '');

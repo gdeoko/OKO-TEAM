@@ -998,6 +998,38 @@ function nl_warmup_touch(): void {
     }
 }
 
+/**
+ * СОБЫТИЕ ДОСТАВКИ, ЗАПИСАННОЕ НАМИ САМИМИ.
+ *
+ * Письма, ушедшие напрямую с почты центра, сервис рассылок не видит и событий по
+ * ним не присылает. Пишем их в ту же таблицу с пометкой job_id='own', чтобы
+ * отчёты, суточные нормы и предохранители работали одинаково для обоих каналов.
+ */
+function nl_own_event(string $email, string $status): void {
+    $email = mb_strtolower(trim($email));
+    if ($email === '' || $status === '') return;
+    try {
+        q("INSERT OR IGNORE INTO mail_events (email, status, event_time, job_id, comment)
+           VALUES (?,?,?,'own','письмо напрямую с почты центра')",
+          [$email, $status, date('Y-m-d H:i:s')]);
+    } catch (\Throwable $e) { /* учёт не должен ломать отправку */ }
+}
+
+/** Подпись пикселя открытия для писем своего канала. */
+function nl_own_pixel_sig(int $queueId): string {
+    $secret = function_exists('pay_secret') ? pay_secret() : (string) cfgv('app_key', 'muzmir');
+    return substr(hash_hmac('sha256', 'own-open:' . $queueId, $secret), 0, 16);
+}
+
+/** HTML пикселя открытия для письма своего канала ('' если нечего вставлять). */
+function nl_own_pixel(int $queueId): string {
+    if ($queueId <= 0) return '';
+    $url = rtrim((string) cfgv('base_url'), '/') . '/api/v1/track.php?e=o2&q=' . $queueId
+         . '&s=' . nl_own_pixel_sig($queueId);
+    return '<img src="' . htmlspecialchars($url, ENT_QUOTES) . '" width="1" height="1" alt="" '
+         . 'style="display:block;width:1px;height:1px;border:0;opacity:0">';
+}
+
 /** Отправитель — сервис рассылок, а не наш почтовый ящик? */
 function nl_box_is_service(string $box): bool {
     // Сервис рассылок заведён дважды — под свою базу и под холодную. Прогрев и
@@ -1377,6 +1409,13 @@ function newsletter_process_queue(int $limit): int {
                 'priority'      => (int) ($row['priority'] ?? 0),
                 'subject'       => (string) ($row['subject'] ?? ''),
             ]);
+            // Массовое письмо своего канала несёт наш пиксель открытия: событий от
+            // сервиса рассылок по нему не будет, а знать, дошло ли оно во «Входящие»,
+            // нужно — ради этого канал и заводился.
+            //
+            // Сам пиксель вставляется ниже, ПОСЛЕ сборки тела: у персональных волн
+            // тело собирается в секунду отправки и переписывает всё, что мы успели
+            // добавить раньше.
         }
 
         // ТЕЛО ПЕРСОНАЛЬНОГО ПИСЬМА СОБИРАЕТСЯ ЗДЕСЬ, В СЕКУНДУ ОТПРАВКИ.
@@ -1395,6 +1434,17 @@ function newsletter_process_queue(int $limit): int {
             $row['subject'] = $built['subject'];
             $row['body']    = $built['body'];
             $afterSend      = $built['after'] ?? null;
+        }
+
+        // ПИКСЕЛЬ ОТКРЫТИЯ ДЛЯ ПИСЕМ СВОЕГО КАНАЛА — в готовое тело, перед отправкой.
+        if (($opt['pool'] ?? '') === 'official' && (int) ($row['priority'] ?? 0) > 0) {
+            $px = nl_own_pixel($id);
+            if ($px !== '' && mb_strpos((string) $row['body'], 'e=o2') === false) {
+                $body = (string) $row['body'];
+                $row['body'] = mb_stripos($body, '</body>') !== false
+                    ? preg_replace('~</body>~i', $px . '</body>', $body, 1)
+                    : $body . $px;
+            }
         }
         // ПРИОРИТЕТ ОБЯЗАН ДОЙТИ ДО mail_send_failover.
         // Внутри него пул письма считается заново: mail_pool_for(['priority'=>…,'subject'=>…]).
@@ -1513,7 +1563,7 @@ function newsletter_process_queue(int $limit): int {
     //    пула и упирался в суточный лимит провайдера.
     nl_ensure_campaign_type_col();
 
-    // ── ВЕДОМСТВЕННЫЕ ШЛЮЗЫ: ПИШЕМ НАПРЯМУЮ С ПОЧТЫ ЦЕНТРА ───────────────────
+    // ── КОМУ ПИШЕМ НАПРЯМУЮ С ПОЧТЫ ЦЕНТРА, А НЕ ЧЕРЕЗ СЕРВИС ────────────────
     //
     // Часть школ искусств сидит на почте региона (mosreg.ru, nso.ru, govvrn.ru).
     // Их шлюзы режут всё, что пришло через сервис рассылок: по mosreg.ru 35
@@ -1522,6 +1572,13 @@ function newsletter_process_queue(int $limit): int {
     //
     // Зато письмо с собственного российского домена напрямую они принимают: так
     // же было с ведомствами, которые отбивали Gmail и принимали kc@.
+    //
+    // Сюда же вручную заведён yandex.ru. Он ведёт себя хитрее шлюза: письма через
+    // сервис рассылок ПРИНИМАЕТ (отказов всего 5%), но кладёт в «Спам» — 1 181
+    // доставленное письмо и семь открытий за всё время, притом что gmail.com в тот
+    // же день открывал каждый четвёртый. Формально доставлено, фактически нет.
+    // Наш домен живёт на Яндексе, и своему же клиенту он доверяет больше, чем
+    // рассылочному сервису: четыреста писем во «Входящие» полезнее тысячи в спаме.
     //
     // Поток здесь маленький и намеренно: kc@ это живой ящик, которым уходят
     // дипломы и обращения в министерства, и спалить его объёмом нельзя. Норма
@@ -1557,9 +1614,21 @@ function newsletter_process_queue(int $limit): int {
                     // то есть ровно тем каналом, который шлюз и блокирует.
                     $row['campaign_type'] = 'official';
                     $row['ctype']         = 'official';
-                    if ($sendRow($row, $govAcc)) { $sent++; $govDone++; }
+                    if ($sendRow($row, $govAcc)) {
+                        $sent++; $govDone++;
+                        // СВОЙ КАНАЛ НАДО МЕРИТЬ САМИМ.
+                        //
+                        // События доставки присылает сервис рассылок, а эти письма
+                        // уходят мимо него, напрямую с почты центра. Без собственной
+                        // отметки канал был бы слепой зоной: в отчёте по службам
+                        // yandex.ru показывал бы ноль доставленных и ноль открытий,
+                        // и отличить «письма дошли во Входящие» от «мы туда вообще
+                        // не пишем» стало бы нечем. Отметку кладём в ту же таблицу
+                        // событий, чтобы весь учёт остался единым.
+                        nl_own_event((string) $row['to_email'], 'delivered');
+                    }
                 }
-                if ($govDone > 0) nl_log("process: ведомственные шлюзы — отправлено $govDone (за сутки "
+                if ($govDone > 0) nl_log("process: напрямую с почты центра — отправлено $govDone (за сутки "
                                        . ($govSent + $govDone) . " из $govCap)");
             }
         }
