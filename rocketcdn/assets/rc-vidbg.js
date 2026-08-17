@@ -59,20 +59,78 @@ function build(sec, name) {
   sec.classList.add("has-vidbg");
   sec.insertBefore(v, sec.firstChild);
 
+  /* Появление - только когда видео реально готово играть.
+     Раньше класс вешался по пересечению, и на медленной сети
+     фон «мигал» чёрным кадром. Теперь ждём canplay; если данные
+     уже на месте (кэш) - включаем сразу. */
+  function reveal() { v.classList.add("on"); }
+  if (v.readyState >= 3) reveal();
+  else v.addEventListener("canplay", reveal, { once: true });
+
+  /* Маскировка стыка лупа: за четверть секунды до конца плавно
+     пригашаем видео до ~60% его рабочей непрозрачности, а после
+     перемотки к началу так же плавно возвращаем. Только события,
+     без таймеров. Базовую opacity держит класс .on, поэтому
+     инлайн после отката снимаем начисто (style.opacity = ''),
+     чтобы кен-бёрнс и темы дальше жили по CSS. */
+  var dimmed = false;
+  function dimOff() {
+    if (!dimmed) return;
+    dimmed = false;
+    v.style.opacity = "";
+  }
+  v.addEventListener("timeupdate", function () {
+    var d = v.duration;
+    if (!d || !isFinite(d)) return;
+    if (!dimmed && v.currentTime > d - 0.25) {
+      dimmed = true;
+      var cur = parseFloat(getComputedStyle(v).opacity);
+      if (!isFinite(cur)) cur = 1;
+      v.style.transition = "opacity .22s linear";
+      v.style.opacity = String(cur * 0.6);
+    } else if (dimmed && v.currentTime < d - 0.5) {
+      /* Луп перескочил к началу (в части браузеров seeked при
+         loop не приходит) - возвращаем яркость. */
+      dimOff();
+    }
+  });
+  v.addEventListener("seeked", function () {
+    if (v.currentTime < 1) dimOff();
+  });
+  /* Когда откат непрозрачности доигрался - убираем инлайновый
+     transition, чтобы 2-секундная плавность класса .on вернулась. */
+  v.addEventListener("transitionend", function (e) {
+    if (e.propertyName === "opacity" && !dimmed) v.style.transition = "";
+  });
+
+  function inView() {
+    var r = sec.getBoundingClientRect();
+    return r.bottom > 0 && r.top < (innerHeight || root.clientHeight);
+  }
+  function tryPlay() {
+    var p = v.play();
+    if (p && p.catch) p.catch(function () {});
+  }
+
   /* Заводим только в кадре. Порог маленький: видео фоновое,
      пусть уже идёт, когда человек доехал до содержимого. */
   var io = new IntersectionObserver(function (es) {
     for (var i = 0; i < es.length; i++) {
       if (es[i].isIntersecting && !root.classList.contains("rc-flying")) {
-        var r = v.play();
-        if (r && r.catch) r.catch(function () {});
-        v.classList.add("on");
+        tryPlay();
       } else {
         try { v.pause(); } catch (e) {}
       }
     }
   }, { rootMargin: "160px 0px" });
   io.observe(sec);
+
+  /* Вкладка ушла в фон - видео молчит; вернулась - продолжаем,
+     но только если секция действительно на экране. */
+  doc.addEventListener("visibilitychange", function () {
+    if (doc.hidden) { try { v.pause(); } catch (e) {} }
+    else if (inView() && !root.classList.contains("rc-flying")) tryPlay();
+  });
 
   /* В полёте фоны страницы молчат */
   addEventListener("rc:flight", function (e) {

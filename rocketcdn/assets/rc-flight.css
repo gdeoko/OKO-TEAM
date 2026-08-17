@@ -248,7 +248,7 @@ section.has-vidbg > .wrap { position: relative; z-index: 1; }
   width: 100%; height: 100%;
   object-fit: cover;
   z-index: 0; pointer-events: none;
-  opacity: 0; transition: opacity 1.2s var(--ease);
+  opacity: 0; transition: opacity 2s var(--ease);
   mask-image: linear-gradient(180deg, transparent 0%, #000 16%, #000 84%, transparent 100%);
   -webkit-mask-image: linear-gradient(180deg, transparent 0%, #000 16%, #000 84%, transparent 100%);
 }
@@ -256,6 +256,16 @@ section.has-vidbg > .wrap { position: relative; z-index: 1; }
 html[data-theme="light"] .rc-vidbg.on { opacity: .16; }
 @media (max-width: 760px) {
   .rc-vidbg.on { opacity: .3; }
+}
+/* Лёгкий кен-бёрнс: луп медленно дышит масштабом, чтобы фон не
+   казался статичной телекартинкой. Только когда видео включено. */
+.rc-vidbg.on { animation: rcVbKen 40s ease-in-out infinite; }
+@keyframes rcVbKen {
+  0%, 100% { transform: scale(1); }
+  50%      { transform: scale(1.06); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .rc-vidbg.on { animation: none; }
 }
 
 /* ── Рамка кабины ────────────────────────────────────────────

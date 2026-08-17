@@ -515,6 +515,14 @@ function buildWorld() {
   var disk = new T.Mesh(diskGeo, diskMat);
   disk.rotation.x = Math.PI / 2.5;
   hole.add(disk);
+  /* Фотонная сфера: свет, обёрнутый вокруг горизонта. Тонкий
+     ярко-белый обруч у самого ядра - как на снимке M87*. */
+  var photon = new T.Mesh(
+    new T.TorusGeometry(28.5, 0.7, 10, 90),
+    new T.MeshBasicMaterial({ color: 0xffe8c9, transparent: true, opacity: 0.9, blending: T.AdditiveBlending, depthWrite: false })
+  );
+  photon.rotation.x = Math.PI / 2.5;
+  hole.add(photon);
   var halo = new T.Sprite(new T.SpriteMaterial({ map: glowSprite(256, "rgba(255,140,50,.4)", "rgba(255,80,20,0)"), transparent: true, opacity: 0.55, depthWrite: false }));
   halo.scale.setScalar(240);
   hole.add(halo);
@@ -630,13 +638,42 @@ function buildWorld() {
   scene.add(sat);
   pickables.push(satBody);
 
-  var milky = spiralGalaxy(900, 420, -3300, 950, 0x9fd8ef, 0x8fb7ff, 0.9, 0.3);
+  var milky = spiralGalaxy(1150, 80, -2080, 950, 0x9fd8ef, 0x8fb7ff, 0.9, 0.3);
   var gal2 = spiralGalaxy(-2800, -500, -1600, 680, 0xb08cff, 0x8a59f6, 1.15, -0.4);
   var gal3 = spiralGalaxy(3400, 700, -400, 620, 0xffd9a6, 0xff9d6b, 0.75, 0.55);
   milky.children[1].userData.info = RU ? "МЛЕЧНЫЙ ПУТЬ · 200 млрд звёзд · виден с Земли 10 000 лет" : "MILKY WAY · 200B stars";
   gal2.children[1].userData.info = RU ? "ГАЛАКТИКА RV-2 · неизведанная вселенная" : "GALAXY RV-2 · uncharted universe";
   gal3.children[1].userData.info = RU ? "ГАЛАКТИКА RC-3 · открыта Rocket CDN" : "GALAXY RC-3 · discovered by Rocket CDN";
   pickables.push(milky.children[1], gal2.children[1], gal3.children[1]);
+
+  /* ── Астероидный пояс ──
+     Камни рассыпаны трубой вокруг отрезка будущего маршрута между
+     Марсом и Сатурном: корабль проходит сквозь пояс, камни висят
+     вокруг и медленно дрейфуют. Два слоя точек - крупные ближе,
+     мелкая пыль дальше. */
+  function beltLayer(nPts, size, spread, color) {
+    var geo = new T.BufferGeometry();
+    var pos = new Float32Array(nPts * 3);
+    /* Отрезок пути: прямая от окрестности Марса к Сатурну */
+    var A = new T.Vector3(760, -120, -900), B = new T.Vector3(1350, 210, -1000);
+    for (var k = 0; k < nPts; k++) {
+      var tt = Math.random();
+      var cx = A.x + (B.x - A.x) * tt, cy = A.y + (B.y - A.y) * tt, cz = A.z + (B.z - A.z) * tt;
+      var a = Math.random() * 6.283, rr = 40 + Math.pow(Math.random(), 0.5) * spread;
+      pos[k * 3] = cx + Math.cos(a) * rr;
+      pos[k * 3 + 1] = cy + (Math.random() - 0.5) * spread * 0.7;
+      pos[k * 3 + 2] = cz + Math.sin(a) * rr;
+    }
+    geo.setAttribute("position", new T.BufferAttribute(pos, 3));
+    var pts = new T.Points(geo, new T.PointsMaterial({
+      color: color, size: size, sizeAttenuation: true, map: starDot,
+      transparent: true, opacity: 0.8, depthWrite: false
+    }));
+    scene.add(pts);
+    return pts;
+  }
+  var belt1 = beltLayer(mob ? 500 : 1100, 3.4, 230, 0x9a8f80);
+  var belt2 = beltLayer(mob ? 260 : 600, 6.5, 160, 0xb8a890);
 
   /* ── Маршрут ──
      Кривая проходит через все сцены и заворачивает домой. Взгляд
@@ -699,7 +736,7 @@ function buildWorld() {
     { p: AT.saturn + 0.03, at: saturn.position },
     { p: AT.hole - 0.04, at: hole.position },
     { p: AT.hole + 0.03, at: hole.position },
-    { p: AT.jump0 + 0.04, at: new T.Vector3(900, 420, -3300) }, /* Млечный Путь */
+    { p: AT.jump0 + 0.04, at: milky.position }, /* Млечный Путь - прыжок идёт сквозь его рукав */
     { p: AT.jump1, at: new T.Vector3(300, 90, -800) },  /* по ходу прыжка */
     { p: 0.94, at: new T.Vector3(0, 0, 0) }             /* снова Земля */
   ];
@@ -735,6 +772,7 @@ function buildWorld() {
     { o: hole, name: RU ? "ЧЁРНАЯ ДЫРА" : "BLACK HOLE", key: "hole" },
     { o: comet, name: RU ? "КОМЕТА RC/2026" : "COMET RC/2026", key: "comet" },
     { o: sat, name: "RC-SAT", key: "sat" },
+    { o: belt1, name: RU ? "АСТЕРОИДНЫЙ ПОЯС" : "ASTEROID BELT", key: "belt" },
     { o: milky, name: RU ? "МЛЕЧНЫЙ ПУТЬ" : "MILKY WAY", key: "milky" },
     { o: gal2, name: "RV-2", key: "gal2" },
     { o: gal3, name: "RC-3", key: "gal3" }
@@ -743,7 +781,7 @@ function buildWorld() {
   return {
     r: r, scene: scene, cam: cam, path: path, looks: LOOKS, at: AT, fov0: FOV0, scanTargets: scanTargets,
     milky: milky, gal2: gal2, gal3: gal3,
-    comet: comet, sat: sat, nebSprites: nebSprites, starMats: starMats, sunGlow: sunGlow, amb: amb,
+    comet: comet, sat: sat, belt1: belt1, belt2: belt2, nebSprites: nebSprites, starMats: starMats, sunGlow: sunGlow, amb: amb,
     earth: earth, clouds: clouds, moon: moon, mars: mars, saturn: saturn, hole: hole,
     diskMat: diskMat, jump: jump, sky: sky, pickables: pickables,
     tmpA: new T.Vector3(), tmpB: new T.Vector3(), tmpQ: new T.Quaternion(), tmpM: new T.Matrix4()
@@ -919,6 +957,19 @@ function frame(ts) {
   w3.diskMat.uniforms.uT.value = ts * 0.001;
   w3.sky.rotation.y += dt * 0.0025;
   if (w3.milky) { w3.milky.rotation.y += dt * 0.01; w3.gal2.rotation.y -= dt * 0.008; w3.gal3.rotation.y += dt * 0.012; }
+  if (w3.belt1) { w3.belt1.rotation.y += dt * 0.0012; w3.belt2.rotation.y -= dt * 0.0009; }
+
+  /* Страж плавности: если кадры стабильно тяжёлые, снижаем
+     разрешение рендера ступенями и в крайнем случае снимаем
+     облака. Вверх не откатываемся - мигание качеством хуже. */
+  frame._ema = (frame._ema || 0.016) * 0.95 + dt * 0.05;
+  if (frame._ema > 0.055 && ts - (frame._degT || 0) > 4000) {
+    frame._degT = ts;
+    frame._deg = (frame._deg || 0) + 1;
+    if (frame._deg === 1) w3.r.setPixelRatio(Math.max(1, (g.devicePixelRatio || 1) * 0.75));
+    else if (frame._deg === 2) w3.r.setPixelRatio(1);
+    else if (frame._deg === 3 && w3.clouds) w3.clouds.visible = false;
+  }
 
   /* Комета: эллипс между Марсом и Сатурном, хвост от солнца */
   if (w3.comet) {

@@ -25,16 +25,24 @@ try { reduced = matchMedia("(prefers-reduced-motion: reduce)").matches; } catch 
 
 var el = null, sec = null, raf = null;
 var k = 0, kGoal = 0, live = false, hissed = false;
+var kPrev = 0, unlockT = 0;
 
 function build() {
   if (el) return;
   el = doc.createElement("div");
   el.className = "rc-airlock";
   el.setAttribute("aria-hidden", "true");
+  /* Каждая створка несёт свою «жизнь»: слева иллюминатор и трафарет
+     ROCKET, справа трафарет CDN-01. Над стыком - сегментное табло,
+     два слоя которого (янтарный и циановый) перетекают по --al-k. */
   el.innerHTML =
     '<div class="al-glow"></div>' +
-    '<div class="al-door al-l"><i></i></div>' +
-    '<div class="al-door al-r"><i></i></div>';
+    '<div class="al-door al-l"><i></i>' +
+      '<span class="al-port"></span>' +
+      '<span class="al-stencil">ROCKET</span></div>' +
+    '<div class="al-door al-r"><i></i>' +
+      '<span class="al-stencil">CDN-01</span></div>' +
+    '<div class="al-board"><span class="al-amber"></span><span class="al-cyan"></span></div>';
   doc.body.appendChild(el);
 }
 
@@ -61,11 +69,21 @@ function frame() {
   measure();
 
   if (live !== el.classList.contains("on")) el.classList.toggle("on", live);
-  if (!live) { k = kGoal; hissed = kGoal >= 1; return; }
+  if (!live) { k = kGoal; kPrev = k; hissed = kGoal >= 1; return; }
 
   k += (kGoal - k) * 0.16;
   if (Math.abs(k - kGoal) < 0.001) k = kGoal;
   el.style.setProperty("--al-k", k.toFixed(4));
+
+  /* «Отдача» замков: в момент, когда дверь только тронулась (доля
+     прошла порог вверх), створки коротко дёргаются внутрь и назад -
+     как будто расцепились фиксаторы. Класс живёт 300 мс. */
+  if (kPrev <= 0.04 && k > 0.04) {
+    el.classList.add("al-unlock");
+    clearTimeout(unlockT);
+    unlockT = setTimeout(function () { if (el) el.classList.remove("al-unlock"); }, 300);
+  }
+  kPrev = k;
 
   /* Шипение пневматики один раз на открытие */
   if (k > 0.06 && !hissed) {

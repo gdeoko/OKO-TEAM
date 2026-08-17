@@ -63,13 +63,92 @@
   background: rgba(207,233,245,.10);
   box-shadow: 0 1px 0 rgba(0,0,0,.7), 0 34vh 0 rgba(207,233,245,.10), 0 calc(34vh + 1px) 0 rgba(0,0,0,.7);
 }
-/* Табло над стыком: полоса состояния шлюза */
-.rc-airlock .al-l::after {
-  content: ''; position: absolute; right: 8px; top: 12%;
-  width: clamp(40px, 6vw, 90px); height: 8px; border-radius: 2px;
-  background: repeating-linear-gradient(90deg, rgba(66,178,220,.8) 0 6px, transparent 6px 10px);
-  opacity: calc(.9 - var(--al-k, 0) * .6);
-  box-shadow: 0 0 10px rgba(66,178,220,.5);
+/* Предупредительная разметка вдоль стыка: короткие диагональные
+   жёлто-чёрные полосы по краю каждой створки, приглушённые - краска
+   на технике, а не дорожный знак */
+.rc-airlock .al-door::after {
+  content: ''; position: absolute; top: 5%; bottom: 5%; width: 13px;
+  background: repeating-linear-gradient(45deg,
+    rgba(240,180,60,.18) 0 9px, rgba(8,12,18,.55) 9px 18px);
+  box-shadow: inset 0 0 6px rgba(0,0,0,.5);
+}
+/* Отступ больше нахлёста створок (2%), чтобы при закрытой двери
+   были видны обе ленты, а не одна поверх другой */
+.rc-airlock .al-l::after { right: calc(2% + 10px); }
+.rc-airlock .al-r::after { left: calc(2% + 10px); }
+
+/* Иллюминатор на левой створке: тёмное стекло с бликом в
+   металлическом ободе. Только градиенты и тени, без картинок */
+.rc-airlock .al-port {
+  position: absolute; right: 15%; top: 33%;
+  width: clamp(58px, 7vw, 104px); height: clamp(58px, 7vw, 104px);
+  border-radius: 50%;
+  background:
+    radial-gradient(circle at 32% 26%, rgba(215,240,252,.42) 0 4%, rgba(160,205,232,.12) 11%, transparent 26%),
+    radial-gradient(circle at 68% 80%, rgba(66,178,220,.12), transparent 45%),
+    radial-gradient(circle at 50% 115%, rgba(255,214,160,.08), transparent 55%),
+    radial-gradient(circle, #0e2033 0%, #0a1727 46%, #030810 78%, #02060c 100%);
+  border: 3px solid #334456;
+  box-shadow:
+    inset 0 4px 10px rgba(0,0,0,.9),
+    inset 0 -2px 8px rgba(66,178,220,.08),
+    inset 0 0 0 2px rgba(4,8,14,.9),
+    0 0 0 2px #0f1927,
+    0 0 0 6px #202e3e,
+    0 0 0 7px rgba(207,233,245,.08),
+    0 1px 0 8px rgba(0,0,0,.35),
+    0 4px 14px rgba(0,0,0,.65);
+}
+
+/* Трафаретная маркировка: как краска через трафарет на корпусе */
+.rc-airlock .al-stencil {
+  position: absolute; top: 62%;
+  font: 700 clamp(15px, 2vw, 26px)/1 'Golos Text', system-ui, sans-serif;
+  letter-spacing: .58em; text-indent: .58em;
+  color: rgba(207,233,245,.14);
+  text-shadow: 0 1px 0 rgba(0,0,0,.4);
+  white-space: nowrap;
+}
+.rc-airlock .al-l .al-stencil { right: 12%; }
+.rc-airlock .al-r .al-stencil { left: 12%; }
+
+/* Табло над стыком: сегментный индикатор состояния шлюза. Два слоя -
+   янтарный «заперто» и циановый «открыто» - перетекают по --al-k;
+   на полном раскрытии табло уходит вместе с дверью в затемнение */
+.rc-airlock .al-board {
+  position: absolute; left: 50%; top: 10%;
+  transform: translateX(-50%);
+  width: clamp(66px, 8vw, 112px); height: 12px;
+  border-radius: 3px;
+  background: #070d15;
+  border: 1px solid #223040;
+  box-shadow: 0 2px 8px rgba(0,0,0,.6), inset 0 1px 3px rgba(0,0,0,.8);
+  opacity: calc(2.4 - var(--al-k, 0) * 2.6); /* clamp сам прижмёт к 0..1 */
+}
+.rc-airlock .al-board span {
+  position: absolute; inset: 2px; border-radius: 2px;
+}
+.rc-airlock .al-amber {
+  background: repeating-linear-gradient(90deg, rgba(240,180,60,.85) 0 6px, transparent 6px 10px);
+  box-shadow: 0 0 10px rgba(240,180,60,.45);
+  opacity: calc(1 - var(--al-k, 0) * 1.5);
+}
+.rc-airlock .al-cyan {
+  background: repeating-linear-gradient(90deg, rgba(66,178,220,.9) 0 6px, transparent 6px 10px);
+  box-shadow: 0 0 10px rgba(66,178,220,.55);
+  opacity: calc(var(--al-k, 0) * 1.5 - .12);
+}
+
+/* «Отдача» замков: короткий микросдвиг створок внутрь и обратно в
+   самом начале открытия. Анимируем свойство translate - оно живёт
+   отдельно от transform с --al-k и не спорит с ним */
+.rc-airlock.al-unlock .al-l { animation: al-jolt-l .3s ease-out; }
+.rc-airlock.al-unlock .al-r { animation: al-jolt-r .3s ease-out; }
+@keyframes al-jolt-l {
+  0% { translate: 0 0; } 35% { translate: 3px 0; } 100% { translate: 0 0; }
+}
+@keyframes al-jolt-r {
+  0% { translate: 0 0; } 35% { translate: -3px 0; } 100% { translate: 0 0; }
 }
 
 @media (prefers-reduced-motion: reduce) {
