@@ -83,5 +83,26 @@ $paused = mrep_paused_domains();
 printf("  на паузе сейчас: %s\n", $paused ? mrep_paused_note() : 'никого');
 $say(is_array($paused), 'список паузы получен');
 
+echo "\nСВОЯ НОРМА НА КАЖДУЮ ПОЧТОВУЮ СЛУЖБУ\n$line\n";
+$capMail = mrep_domain_day_cap('mail.ru');
+$say($capMail > 0 && $capMail < 100000, 'у mail.ru своя суточная норма', (string) $capMail);
+$say(mrep_domain_day_cap('dshi-example.gov74.ru') === PHP_INT_MAX, 'школьная почта нормой не ограничена');
+foreach (['mail.ru', 'yandex.ru', 'gmail.com'] as $d) {
+    printf("  %-12s норма %5d, ушло сегодня %5d, осталось %5d\n", $d,
+        mrep_domain_day_cap($d), mrep_sent_today_by_domain()[$d] ?? 0, mrep_domain_quota_left($d));
+}
+
+echo "\nВЕДОМСТВЕННЫЕ ШЛЮЗЫ ИДУТ ЧЕРЕЗ ПОЧТУ ЦЕНТРА\n$line\n";
+if (is_file(BASE_PATH . '/core/mail_domain_policy.php')) {
+    require_once BASE_PATH . '/core/mail_domain_policy.php';
+    $off = mdp_official_domains();
+    $say(is_array($off), 'список особого канала читается', count($off) . ' доменов: ' . implode(', ', array_slice(array_keys($off), 0, 5)));
+    $say(!mdp_needs_official('kto@mail.ru'), 'публичная почта в особый канал не уходит');
+    if ($off) {
+        $one = array_key_first($off);
+        $say(mdp_needs_official('x@' . $one), 'адрес шлюза распознан', $one);
+    }
+} else { $say(false, 'файл политики доменов не найден'); }
+
 echo "\n$line\nПРОЙДЕНО: $ok · СБОЕВ: $bad\n";
 exit($bad > 0 ? 1 : 0);

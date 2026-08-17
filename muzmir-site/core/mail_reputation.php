@@ -130,6 +130,117 @@ function mrep_domain_paused(string $email): bool {
     return $d !== '' && isset(mrep_paused_domains()[$d]);
 }
 
+/**
+ * СВОЯ СУТОЧНАЯ НОРМА НА КАЖДУЮ ПОЧТОВУЮ СЛУЖБУ.
+ *
+ * Общий потолок в 4 000 писем ничего не говорит о том, сколько из них уйдёт в
+ * mail.ru. А уходит туда больше половины: в очереди своей базы 14 911 адресов
+ * mail.ru из 23 252. Для почтовой службы это выглядит так: незнакомый домен,
+ * который вчера не слал ничего, сегодня вываливает две с половиной тысячи писем.
+ * Ответ предсказуемый — «550 spam message rejected», и именно его мы и получили.
+ *
+ * Прогрев считается ПО КАЖДОЙ СЛУЖБЕ ОТДЕЛЬНО и растёт от факта: доставили вчера
+ * чисто — норма выросла в полтора раза, посыпались отказы — норма ополовинена.
+ * Домен, которого в списке нет (школьная почта, ведомственный шлюз), нормой не
+ * ограничивается: там счёт идёт на единицы писем.
+ *
+ * Настройки: nl_domain_start_cap (первая норма), nl_domain_cap_max (потолок),
+ * nl_domain_grow (во сколько раз растём за сутки).
+ */
+function mrep_managed_domains(): array {
+    return ['mail.ru', 'bk.ru', 'list.ru', 'inbox.ru', 'internet.ru',
+            'yandex.ru', 'ya.ru', 'gmail.com', 'rambler.ru'];
+}
+
+/** Норма домена на сегодня. Пересчитывается раз в сутки по вчерашнему результату. */
+function mrep_domain_day_cap(string $domain): int {
+    static $cache = [];
+    $d = mb_strtolower(trim($domain));
+    if ($d === '') return PHP_INT_MAX;
+    if (!in_array($d, mrep_managed_domains(), true)) return PHP_INT_MAX;
+    if (isset($cache[$d])) return $cache[$d];
+
+    mrep_ensure_caps();
+    $start = max(100, (int) setting('nl_domain_start_cap', '1200'));
+    $max   = max($start, (int) setting('nl_domain_cap_max', '6000'));
+    $grow  = max(1.1, (float) setting('nl_domain_grow', '1.5'));
+    $today = date('Y-m-d');
+
+    $row = one("SELECT day_cap, cap_date FROM mail_domain_caps WHERE domain=?", [$d]);
+    if (!$row) {
+        q("INSERT OR REPLACE INTO mail_domain_caps (domain, day_cap, cap_date) VALUES (?,?,?)",
+          [$d, $start, $today]);
+        return $cache[$d] = $start;
+    }
+
+    $cap  = max(100, (int) $row['day_cap']);
+    $when = (string) $row['cap_date'];
+    if ($when === $today) return $cache[$d] = $cap;
+
+    // Новый день: смотрим, чем кончился прошлый заход в эту службу.
+    $st = one("SELECT SUM(status='delivered') dl, SUM(status='hard_bounced') hb
+                 FROM mail_events
+                WHERE LOWER(SUBSTR(email, INSTR(email,'@') + 1)) = ?
+                  AND date(created_at) = date(?)", [$d, $when]);
+    $dl = (int) ($st['dl'] ?? 0);
+    $hb = (int) ($st['hb'] ?? 0);
+    $tot = $dl + $hb;
+    $pct = $tot > 0 ? $hb * 100 / $tot : 0;
+
+    if ($tot < 50)      $new = $cap;                       // мало данных — стоим на месте
+    elseif ($pct >= 25) $new = (int) max(200, $cap / 2);   // отбивают — вдвое назад
+    elseif ($pct >= 10) $new = $cap;                       // ни туда ни сюда — держим
+    else                $new = (int) min($max, ceil($cap * $grow));
+
+    q("UPDATE mail_domain_caps SET day_cap=?, cap_date=?, note=? WHERE domain=?",
+      [$new, $today, sprintf('вчера %d доставлено, %d отказов (%.0f%%)', $dl, $hb, $pct), $d]);
+    return $cache[$d] = $new;
+}
+
+function mrep_ensure_caps(): void {
+    static $done = false;
+    if ($done) return;
+    $done = true;
+    db()->exec("CREATE TABLE IF NOT EXISTS mail_domain_caps (
+        domain   TEXT PRIMARY KEY,
+        day_cap  INTEGER DEFAULT 0,
+        cap_date TEXT DEFAULT '',
+        note     TEXT DEFAULT '')");
+}
+
+/** Сколько писем уже ушло сегодня в каждый домен. Один запрос на прогон. */
+function mrep_sent_today_by_domain(): array {
+    static $map = null;
+    if ($map !== null) return $map;
+    $map = [];
+    try {
+        foreach (all("SELECT LOWER(SUBSTR(to_email, INSTR(to_email,'@') + 1)) d, COUNT(*) c
+                        FROM mail_queue
+                       WHERE status='sent' AND date(sent_at)=date('now','localtime')
+                         AND INSTR(to_email,'@') > 0
+                       GROUP BY 1") as $r) {
+            $map[(string) $r['d']] = (int) $r['c'];
+        }
+    } catch (\Throwable $e) {}
+    return $map;
+}
+
+/** Суточная норма этой службы уже выбрана? */
+function mrep_domain_quota_done(string $email): bool {
+    $d = mrep_domain($email);
+    if ($d === '') return false;
+    $cap = mrep_domain_day_cap($d);
+    if ($cap === PHP_INT_MAX) return false;
+    return (mrep_sent_today_by_domain()[$d] ?? 0) >= $cap;
+}
+
+/** Сколько ещё можно сегодня в эту службу (для отчёта). */
+function mrep_domain_quota_left(string $domain): int {
+    $cap = mrep_domain_day_cap($domain);
+    if ($cap === PHP_INT_MAX) return PHP_INT_MAX;
+    return max(0, $cap - (mrep_sent_today_by_domain()[mb_strtolower($domain)] ?? 0));
+}
+
 /** Короткая строка для журнала и отчёта: кто на паузе и почему. */
 function mrep_paused_note(): string {
     $p = mrep_paused_domains();

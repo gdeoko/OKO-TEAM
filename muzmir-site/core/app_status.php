@@ -273,16 +273,16 @@ function app_state(array $app, bool $forAdmin = false): array {
         $out['detail'] = 'Дополнительный заказ наградного материала в работе.';
     } elseif ($dipAllSent) {
         $out['code'] = 'made';
-        $out['detail'] = 'Наградные документы отправлены ' . app_state_dt($out['diploma_sent_at']) . '.';
+        $out['detail'] = 'Наградной материал отправлен ' . app_state_dt($out['diploma_sent_at']) . '.';
     } elseif ($dipPlanned) {
         $out['code'] = 'making';
         $out['detail'] = $out['diploma_plan_at'] !== ''
-            ? 'Наградные документы придут ' . app_state_dt($out['diploma_plan_at'])
-            : 'Наградные документы готовятся к отправке.';
+            ? 'Наградной материал придёт ' . app_state_dt($out['diploma_plan_at'])
+            : 'Наградной материал готовится к отправке.';
     } else {
         $out['code'] = 'graded';
         $out['detail'] = $out['result_sent_at'] !== ''
-            ? 'Результат отправлен ' . app_state_dt($out['result_sent_at']) . '. Наградные документы готовятся.'
+            ? 'Результат отправлен ' . app_state_dt($out['result_sent_at']) . '. Наградной материал готовится.'
             : ($out['result_plan_at'] !== ''
                 ? 'Оценка проставлена. Результат уйдёт участнику ' . app_state_dt($out['result_plan_at']) . '.'
                 : 'Оценка проставлена, отправка результата готовится.');

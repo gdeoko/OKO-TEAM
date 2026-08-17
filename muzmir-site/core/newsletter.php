@@ -27,6 +27,17 @@ if (!function_exists('mrep_domain_paused') && is_file(BASE_PATH . '/core/mail_re
     require_once BASE_PATH . '/core/mail_reputation.php';
 }
 
+// Домены, которым рассылочный канал закрыт наглухо (ведомственные шлюзы):
+// им письмо уходит напрямую с почты центра, маленьким потоком.
+if (!function_exists('mdp_needs_official') && is_file(BASE_PATH . '/core/mail_domain_policy.php')) {
+    require_once BASE_PATH . '/core/mail_domain_policy.php';
+}
+
+// Окно внешних действий: наружу ничего не уходит ночью и в воскресенье.
+if (!function_exists('outreach_window_ok') && is_file(BASE_PATH . '/core/outreach_window.php')) {
+    require_once BASE_PATH . '/core/outreach_window.php';
+}
+
 /** Тихий лог рассылок в общий mail.log (функция из mailer.php). */
 function nl_log(string $msg): void {
     if (function_exists('mail_log')) mail_log('[nl] ' . $msg);
@@ -486,11 +497,20 @@ function nl_daily_split(): array {
     $sum = array_sum($out);
     if ($sum < $cap) $out['konkurs'] += $cap - $sum;
 
+    // ПРИГЛАШЕНИЯ ПЕДАГОГАМ — СВОЯ КВОТА ЧИСЛОМ, А НЕ ДОЛЕЙ.
+    //
+    // Их немного (десятки в день), и доля в процентах для них бессмысленна: один
+    // процент от восьми тысяч это восемьдесят писем, а бывает их пять. Куда важнее
+    // другое: без собственной квоты тип вообще не попадал в разбор, и 59 писем,
+    // поставленных в очередь 17 августа в 11:00, простояли там весь день молча —
+    // выборка идёт ТОЛЬКО по типам из nl_campaign_types().
+    $out['teacher'] = max(0, (int) setting('nl_split_teacher', '300'));
+
     return $out;
 }
 
 /** Типы кампаний, у которых есть своя суточная квота. */
-function nl_campaign_types(): array { return ['konkurs', 'inst', 'vip', 'kabinet']; }
+function nl_campaign_types(): array { return ['konkurs', 'inst', 'teacher', 'vip', 'kabinet']; }
 
 /**
  * Сколько писем конкретной кампании (newsletter_id) уже успешно ушло сегодня —
@@ -1493,6 +1513,58 @@ function newsletter_process_queue(int $limit): int {
     //    пула и упирался в суточный лимит провайдера.
     nl_ensure_campaign_type_col();
 
+    // ── ВЕДОМСТВЕННЫЕ ШЛЮЗЫ: ПИШЕМ НАПРЯМУЮ С ПОЧТЫ ЦЕНТРА ───────────────────
+    //
+    // Часть школ искусств сидит на почте региона (mosreg.ru, nso.ru, govvrn.ru).
+    // Их шлюзы режут всё, что пришло через сервис рассылок: по mosreg.ru 35
+    // отказов и ноль доставленных, ответ всегда один — «blocked due to security
+    // reason». Через сервис им не написать никогда, сколько ни повторяй.
+    //
+    // Зато письмо с собственного российского домена напрямую они принимают: так
+    // же было с ведомствами, которые отбивали Gmail и принимали kc@.
+    //
+    // Поток здесь маленький и намеренно: kc@ это живой ящик, которым уходят
+    // дипломы и обращения в министерства, и спалить его объёмом нельзя. Норма
+    // в сутки — nl_gov_daily (150), за прогон — пара писем.
+    if (function_exists('mdp_needs_official') && function_exists('mail_fallback_accounts')) {
+        $govAcc = mail_fallback_accounts([], 'official')[0] ?? [];
+        $govCap = max(0, (int) setting('nl_gov_daily', '150'));
+        $kcBox  = mb_strtolower((string) ($govAcc['user'] ?? ''));
+        $govOk  = !function_exists('outreach_window_ok') || outreach_window_ok();
+        if ($govCap > 0 && $kcBox !== '' && $govOk) {
+            $govSent = (int) (scalar("SELECT COUNT(*) FROM mail_queue
+                                       WHERE status='sent' AND COALESCE(priority,0)>0
+                                         AND sent_via=? AND date(sent_at)=date('now','localtime')",
+                                     [$kcBox]) ?? 0);
+            if ($govSent < $govCap) {
+                $perRunGov = max(1, (int) setting('nl_gov_per_run', '2'));
+                $govRows = all("SELECT q.*, COALESCE(q.campaign_type, n.campaign_type, 'konkurs') AS ctype
+                                  FROM mail_queue q LEFT JOIN newsletters n ON n.id = q.newsletter_id
+                                 WHERE q.status='queued' AND COALESCE(q.priority,0)>0
+                                   AND (q.scheduled_at IS NULL OR q.scheduled_at='' OR q.scheduled_at<=?)
+                                   AND LOWER(SUBSTR(q.to_email, INSTR(q.to_email,'@') + 1))
+                                       IN (SELECT domain FROM mail_domain_policy WHERE policy='official')
+                                 ORDER BY q.priority DESC, q.id ASC LIMIT ?",
+                               [$nowTs, $perRunGov * 4]);
+                $govDone = 0;
+                foreach ($govRows as $row) {
+                    if ($govDone >= $perRunGov || $govSent + $govDone >= $govCap) break;
+                    // Пул задаётся явно: письмо массовое по типу, но канал у него
+                    // официальный, и подменять его выбором по приоритету нельзя.
+                    // Тип переписываем в ОБОИХ полях. Пул письма считается по
+                    // ctype (он приходит из COALESCE в выборке), и одного
+                    // campaign_type мало: письмо уходило через сервис рассылок,
+                    // то есть ровно тем каналом, который шлюз и блокирует.
+                    $row['campaign_type'] = 'official';
+                    $row['ctype']         = 'official';
+                    if ($sendRow($row, $govAcc)) { $sent++; $govDone++; }
+                }
+                if ($govDone > 0) nl_log("process: ведомственные шлюзы — отправлено $govDone (за сутки "
+                                       . ($govSent + $govDone) . " из $govCap)");
+            }
+        }
+    }
+
     // ПРОСРОЧЕННАЯ ВОЛНА ЗАПУСКА НЕ УХОДИТ В СЛЕДУЮЩИЙ МЕСЯЦ.
     // Письмо запуска зовёт подать заявку на конкурсы ЭТОГО месяца — приём закрывается
     // 25-го. Что не успело уйти до конца месяца, в следующем стало бы приглашением на
@@ -1575,6 +1647,33 @@ function newsletter_process_queue(int $limit): int {
             // ней полдня каждый день нельзя. Поэтому выборка идёт по каждому типу
             // отдельно, а доля пачки пропорциональна тому, сколько типу осталось
             // до его дневной квоты.
+            // ДОМЕНЫ, КОТОРЫМ СЕЙЧАС НЕ ПИШЕМ, ОТСЕИВАЕМ В ЗАПРОСЕ, А НЕ ПОСЛЕ.
+            //
+            // Сначала они отбрасывались уже в разобранной пачке. Пачка небольшая
+            // и отсортирована по номеру, а больше половины базы сидит на mail.ru
+            // — стоило поставить mail.ru на паузу, как вся пачка оказывалась из
+            // одних пропусков, и ящик за прогон не отправлял НИЧЕГО, хотя дальше
+            // в очереди стояли тысячи писем на другие домены.
+            $skipDomains = [];
+            if (function_exists('mrep_paused_domains')) {
+                foreach (array_keys(mrep_paused_domains()) as $d) $skipDomains[$d] = true;
+            }
+            if (function_exists('mrep_managed_domains')) {
+                foreach (mrep_managed_domains() as $d) {
+                    if (mrep_domain_quota_left($d) <= 0) $skipDomains[$d] = true;
+                }
+            }
+            if (function_exists('mdp_official_domains')) {
+                foreach (array_keys(mdp_official_domains()) as $d) $skipDomains[$d] = true;
+            }
+            $skipSql = '';
+            if ($skipDomains) {
+                $quoted = array_map(static fn($d) => "'" . str_replace("'", "''", $d) . "'", array_keys($skipDomains));
+                $skipSql = " AND LOWER(SUBSTR(q.to_email, INSTR(q.to_email,'@') + 1)) NOT IN ("
+                         . implode(',', $quoted) . ')';
+                nl_log('process: сейчас не пишем на ' . implode(', ', array_keys($skipDomains)));
+            }
+
             $take = max(20, count($ready) * max(20, nl_box_burst_cap() * 2));
             $leftSum = array_sum(array_map(static fn($t) => max(0, (int) ($typeLeft[$t] ?? 0)), $allowed)) ?: 1;
             $bulk = [];
@@ -1586,8 +1685,12 @@ function newsletter_process_queue(int $limit): int {
                        FROM mail_queue q LEFT JOIN newsletters n ON n.id = q.newsletter_id
                       WHERE q.status='queued' AND COALESCE(q.priority,0)>0
                         AND (q.scheduled_at IS NULL OR q.scheduled_at='' OR q.scheduled_at<=?)
-                        AND COALESCE(q.campaign_type, n.campaign_type, 'konkurs') = ?
-                      ORDER BY q.id ASC LIMIT ?",
+                        AND COALESCE(q.campaign_type, n.campaign_type, 'konkurs') = ?" . $skipSql . "
+                      -- Внутри типа вперёд идут письма с бо́льшим приоритетом.
+                      -- Так повторное обращение к учреждению, которое уже получало
+                      -- письмо (приоритет 7), уходит раньше первого касания
+                      -- (приоритет 5): оно теплее, и ответ с него вероятнее.
+                      ORDER BY q.priority DESC, q.id ASC LIMIT ?",
                     [$nowTs, $t, $share]
                 ) as $row) $bulk[] = $row;
             }
@@ -1620,6 +1723,15 @@ function newsletter_process_queue(int $limit): int {
                     // отказ пишется на нашу репутацию, и стучаться в закрытую
                     // дверь дороже, чем подождать час.
                     if (function_exists('mrep_domain_paused') && mrep_domain_paused((string) $row['to_email'])) continue;
+                    // Ведомственный шлюз через сервис рассылок недостижим в
+                    // принципе: у него свой медленный канал с почты центра, см.
+                    // выше. Здесь такие письма только пропускаем.
+                    if (function_exists('mdp_needs_official') && mdp_needs_official((string) $row['to_email'])) continue;
+                    // Суточная норма конкретной почтовой службы. Общий потолок
+                    // в 4 000 не спасает: больше половины базы сидит на mail.ru,
+                    // и без отдельной нормы туда каждый день валилось бы две с
+                    // половиной тысячи писем от вчера ещё молчавшего домена.
+                    if (function_exists('mrep_domain_quota_done') && mrep_domain_quota_done((string) $row['to_email'])) continue;
                     unset($bulk[$k]);                       // письмо занято этим прогоном
                     if ($sendRow($row, $acc)) {
                         $sent++; $bulkSent++; $typeLeft[$ct]--;
@@ -1652,6 +1764,22 @@ function newsletter_process_queue(int $limit): int {
                             // Отказ на нашей стороне. Считаем подряд идущие: несколько
                             // таких — значит ящик упёрся в суточный предел, и на сегодня
                             // он замолкает. Письмо вернётся в очередь само.
+                            //
+                            // НО отказ ПО КОНКРЕТНОМУ ПОЛУЧАТЕЛЮ ящик не наказывает.
+                            // «Спам-фильтр адресата», «сервис уже считает адрес
+                            // недоступным» — это про адрес и его почтовую службу, а
+                            // не про наш канал. 17 августа пять таких подряд с
+                            // mail.ru заткнули рассылочный ящик до конца суток, и
+                            // волна учреждений встала на ровном месте: у неё был свой
+                            // ящик, свои 4 000 писем нормы и полная очередь адресов на
+                            // других доменах. На такие случаи есть пауза домену
+                            // (mrep_paused_domains), а ящик тут ни при чём.
+                            $perRecipient = false;
+                            foreach (['spam', 'skip_dup', 'security reason', 'blacklist',
+                                      'reputation', 'greylist', 'too many', 'policy'] as $w) {
+                                if (mb_stripos($why, $w) !== false) { $perRecipient = true; break; }
+                            }
+                            if ($perRecipient) { nl_box_fail_reset($boxUser); continue; }
                             if (nl_box_fail_add($boxUser)) {
                                 nl_log("process: ящик $boxUser отвечает отказом подряд - до завтра его не трогаем ($why)");
                                 break 2;
