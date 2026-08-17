@@ -1063,7 +1063,7 @@ let progressData=[],progressSummary={};
 // Заметки и снимок хранят время в unix-секундах, а общий ago() ждёт строку с
 // датой: на числе он давал Invalid Date и показывал сырые «1755380000».
 function agoU(сек){return сек?ago(new Date(Number(сек)*1000).toISOString()):''}
-const СТАТУС_КЛАСС={'требует внимания':'b-vnim','активный':'b-paid','спящий':'b-spyash','завершён':'b-deal','отказ':'b-otkaz'};
+const СТАТУС_КЛАСС={'требует внимания':'b-vnim','активный':'b-paid','новый лид':'b-lead','спящий':'b-spyash','завершён':'b-deal','не клиент':'b-spyash','отказ':'b-otkaz'};
 async function renderProgress(box){
   box.innerHTML='<div class="spin" style="margin:40px auto"></div>';
   const d=await api('admin_progress');
@@ -1076,7 +1076,7 @@ async function renderProgress(box){
   let шапка='';
   if(возраст<0)шапка='<div class="stale">Снимок ещё ни разу не собирался. Запусти: python3 -m tools.admin_snapshot</div>';
   else if(возраст>1800)шапка='<div class="stale">Снимок собран '+Math.round(возраст/60)+' мин назад, данные могли устареть</div>';
-  const плитки=[['требует внимания','b-vnim'],['активный','b-paid'],['спящий','b-spyash'],['завершён','b-deal'],['отказ','b-otkaz']]
+  const плитки=[['требует внимания','b-vnim'],['активный','b-paid'],['новый лид','b-lead'],['завершён','b-deal'],['спящий','b-spyash'],['не клиент','b-spyash'],['отказ','b-otkaz']]
     .map(([имя,кл])=>'<button class="mini-btn '+(кл==='b-vnim'?'':'ghost')+'" onclick="filterProgress(\''+имя+'\')">'+имя+': <b>'+(с[имя]||0)+'</b></button>').join('');
   const в=progressSummary.воронка||{};
   const воронка=['контакт','ответ','кп','договор','оплата','работа']
@@ -1089,8 +1089,10 @@ async function renderProgress(box){
         <option value="">Все статусы</option>
         <option value="требует внимания">Требуют внимания</option>
         <option value="активный">Активные</option>
-        <option value="спящий">Спящие</option>
+        <option value="новый лид">Новые лиды</option>
         <option value="завершён">Завершённые</option>
+        <option value="спящий">Спящие</option>
+        <option value="не клиент">Не клиенты</option>
         <option value="отказ">Отказы</option>
       </select>
     </div>
@@ -1122,7 +1124,7 @@ function progressCard(k){
     <div class="lc-top"><div class="lc-name">${esc(k.имя||'без имени')} <span style="color:var(--w4);font-size:11px">${esc(k.uid)}</span></div>
       <span class="badge ${кл}">${esc(k.статус)} ${k.прогресс}/${k.всего}</span></div>
     <div class="steps">${шкала}</div><div class="step-lbl">${подписи}</div>
-    <div class="lc-meta" style="margin-top:7px">${ник}${k.ниша?'<span>'+esc(k.ниша)+'</span>':''}${k.стадия?'<span>'+esc(k.стадия)+'</span>':''}${k.оплачено?'<span class="lime">'+rub(k.оплачено)+'</span>':''}${k.аккаунт?'<span>'+esc(k.аккаунт)+'</span>':''}<span style="color:var(--amber)">${esc(k.почему||'')}</span></div>
+    <div class="lc-meta" style="margin-top:7px">${ник}${k.ниша?'<span>'+esc(k.ниша)+'</span>':''}${k.стадия?'<span>'+esc(k.стадия)+'</span>':''}${k.оплачено?'<span class="lime">'+rub(k.оплачено)+'</span>':''}${k.аккаунт?'<span>'+esc(k.аккаунт)+'</span>':''}${k.заглушён?'<span class="badge b-spyash">агент молчит</span>':''}<span style="color:var(--amber)">${esc(k.почему||'')}</span></div>
     <div class="pdetail"></div></div>`;
 }
 function openProgress(uid,el,ev){
