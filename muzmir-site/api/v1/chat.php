@@ -9,6 +9,7 @@
 declare(strict_types=1);
 require __DIR__ . '/_boot.php';
 require_once BASE_PATH . '/core/chat_brain.php';   // общий «мозг» (общий с ботом ВК)
+require_once BASE_PATH . '/core/chat_priority.php'; // очередь: Клубу моментально, остальным в срок
 require_once BASE_PATH . '/core/chat_ops.php';     // состояние диалога: бот/оператор/график
 require_post();
 
@@ -29,9 +30,13 @@ if ($action === 'history') {
     try {
         $rows = $since > 0
             ? all("SELECT id, role, text, file, created_at FROM chat_messages
-                    WHERE session_key=? AND id>? ORDER BY id ASC LIMIT 100", [$sessionKey, $since])
+                    WHERE session_key=? AND id>?
+                      AND (COALESCE(visible_at,'') = '' OR visible_at <= datetime('now','localtime'))
+                    ORDER BY id ASC LIMIT 100", [$sessionKey, $since])
             : all("SELECT id, role, text, file, created_at FROM chat_messages
-                    WHERE session_key=? ORDER BY id DESC LIMIT 100", [$sessionKey]);
+                    WHERE session_key=?
+                      AND (COALESCE(visible_at,'') = '' OR visible_at <= datetime('now','localtime'))
+                    ORDER BY id DESC LIMIT 100", [$sessionKey]);
         if ($since <= 0) $rows = array_reverse($rows);   // последние 100, в прямом порядке
     } catch (\Throwable $e) { $rows = []; }
     json_out(['ok' => true, 'session' => $sessionKey, 'messages' => $rows]);
@@ -231,8 +236,18 @@ if (chat_is_closing($text)) {
     $reply = chat_wrap_reply($sessionKey, $core, $greetName, $greet, false);
 }
 
+/* ОЧЕРЕДЬ: КЛУБУ МОМЕНТАЛЬНО, ОСТАЛЬНЫМ В ОБЕЩАННЫЙ СРОК.
+ *
+ * Ответ уже готов, задерживается только его показ: участник Клуба видит его
+ * сразу, обычный — через chat_delay_regular_sec. Пока ответ ждёт своего часа,
+ * человеку сразу приходит подтверждение, что вопрос принят и когда будет ответ:
+ * молчание в чате читается как поломка, а не как очередь. */
+$delay = chat_reply_delay_sec($uid);
+$visibleAt = $delay > 0 ? date('Y-m-d H:i:s', time() + $delay) : '';
+
 try {
-    insert('chat_messages', ['user_id' => $uid, 'session_key' => $sessionKey, 'role' => 'assistant', 'text' => $reply, 'file' => '']);
+    insert('chat_messages', ['user_id' => $uid, 'session_key' => $sessionKey, 'role' => 'assistant',
+                             'text' => $reply, 'file' => '', 'visible_at' => $visibleAt]);
 } catch (\Throwable $e) {}
 if ($closing) chat_mark_dialog_end($sessionKey); // маркер — ПОСЛЕ ответа
 
@@ -249,6 +264,24 @@ $actions = chat_actions($text, $uid, $sessionKey);
 $fmt     = chat_web_format($reply, $actions);
 $actions = $fmt['actions'];
 $image   = chat_sample_image($text);   // картинка-образец «по необходимости»
+
+if ($delay > 0) {
+    // Ответ придёт следующим опросом истории, когда настанет его время.
+    $notice = chat_wait_notice($delay, $greetName);
+    try {
+        insert('chat_messages', ['user_id' => $uid, 'session_key' => $sessionKey, 'role' => 'assistant',
+                                 'text' => $notice, 'file' => '']);
+    } catch (\Throwable $e) {}
+    json_out([
+        'ok'      => true,
+        'reply'   => $notice,
+        'actions' => [],
+        'image'   => null,
+        'session' => $sessionKey,
+        'queued'  => true,
+        'eta_sec' => $delay,
+    ]);
+}
 
 json_out([
     'ok'      => true,

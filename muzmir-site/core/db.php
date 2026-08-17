@@ -432,6 +432,11 @@ function db_migrate(PDO $pdo): void {
         // Без него все каналы сливаются в одну кучу и усиливать нечего.
         ['applications', 'src', "TEXT DEFAULT ''"],
 
+        // Время, начиная с которого сообщение показывается участнику. Пусто —
+        // сразу. Так работает очередь чата: Клуб получает ответ моментально,
+        // обычный участник в обещанный срок (core/chat_priority.php).
+        ['chat_messages', 'visible_at', "TEXT DEFAULT ''"],
+
         ['users',   'blocked',     'INTEGER DEFAULT 0'],
         ['reviews', 'attachments', "TEXT DEFAULT ''"],
         ['newsletters', 'campaign_type', "TEXT DEFAULT 'konkurs'"],
