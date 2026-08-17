@@ -1450,24 +1450,35 @@ function newsletter_process_queue(int $limit): int {
         } elseif (!$ready) {
             // Это нормальное состояние между слотами — в лог не шумим каждую минуту.
         } else {
-            $ph   = implode(',', array_fill(0, count($allowed), '?'));
-            // Берём с запасом: часть писем может не уйти (мёртвые адреса), и тогда
-            // мы сразу пробуем следующее тем же ящиком, не теряя слот.
-            $bulk = all(
-                "SELECT q.*, COALESCE(q.campaign_type, n.campaign_type, 'konkurs') AS ctype
-                   FROM mail_queue q LEFT JOIN newsletters n ON n.id = q.newsletter_id
-                  WHERE q.status='queued' AND COALESCE(q.priority,0)>0
-                    AND (q.scheduled_at IS NULL OR q.scheduled_at='' OR q.scheduled_at<=?)
-                    AND COALESCE(q.campaign_type, n.campaign_type, 'konkurs') IN ($ph)
-                  ORDER BY q.id ASC LIMIT ?",
-                // Берём с запасом ОТ РАЗМЕРА ПАЧКИ, а не круглым числом. Раньше тут
-                // стояло жёсткое «двадцать на ящик», и это был потолок сильнее всех
-                // остальных: сколько бы ни разрешала лесенка прогрева, за прогон
-                // уходило не больше двадцати писем, то есть 12 000 за десятичасовое
-                // окно. Норма в 14 000 и выше не выбралась бы никогда, а понять это
-                // можно было бы только вечером по недосланному хвосту.
-                array_merge([$nowTs], $allowed, [max(20, count($ready) * max(20, nl_box_burst_cap() * 2))])
-            );
+            // ВОЛНЫ ИДУТ ОДНОВРЕМЕННО, А НЕ ПО ОЧЕРЕДИ.
+            //
+            // Раньше пачка бралась одним запросом с сортировкой по id, и это
+            // означало последовательность: своя база встала в очередь раньше, у
+            // неё меньше номера, и до писем учреждениям дело доходило только
+            // после того, как своя база выберет дневную квоту — то есть к обеду.
+            // Волна учреждений несёт кнопку согласия на партнёрство, и терять на
+            // ней полдня каждый день нельзя. Поэтому выборка идёт по каждому типу
+            // отдельно, а доля пачки пропорциональна тому, сколько типу осталось
+            // до его дневной квоты.
+            $take = max(20, count($ready) * max(20, nl_box_burst_cap() * 2));
+            $leftSum = array_sum(array_map(static fn($t) => max(0, (int) ($typeLeft[$t] ?? 0)), $allowed)) ?: 1;
+            $bulk = [];
+            foreach ($allowed as $t) {
+                $share = (int) ceil($take * max(0, (int) ($typeLeft[$t] ?? 0)) / $leftSum);
+                if ($share < 1) continue;
+                foreach (all(
+                    "SELECT q.*, COALESCE(q.campaign_type, n.campaign_type, 'konkurs') AS ctype
+                       FROM mail_queue q LEFT JOIN newsletters n ON n.id = q.newsletter_id
+                      WHERE q.status='queued' AND COALESCE(q.priority,0)>0
+                        AND (q.scheduled_at IS NULL OR q.scheduled_at='' OR q.scheduled_at<=?)
+                        AND COALESCE(q.campaign_type, n.campaign_type, 'konkurs') = ?
+                      ORDER BY q.id ASC LIMIT ?",
+                    [$nowTs, $t, $share]
+                ) as $row) $bulk[] = $row;
+            }
+            // Перемешиваем, чтобы ящики не отправляли одному типу подряд: почтовики
+            // одинаковые письма подряд читают хуже, чем чередование.
+            shuffle($bulk);
 
             $bulkSent = 0;
             foreach ($ready as $bi => $boxUser) {
