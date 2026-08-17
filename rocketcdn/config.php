@@ -143,15 +143,19 @@ function rc_tg_pin_set($ip) {
     @file_put_contents(rc_tg_pin_file(), $ip, LOCK_EX);
 }
 
-function rc_tg_call($token, $method, $params, $ip) {
+/* $fast - режим перебора: адреса, до которых сети нет, отваливаются
+   за три секунды, а не за восемь. На этой площадке из пяти известных
+   адресов телеграма отвечает ровно один, и перебор остальных по
+   восемь секунд съедал минуту на каждый сбой. */
+function rc_tg_call($token, $method, $params, $ip, $fast = false) {
     $ch = curl_init('https://api.telegram.org/bot' . $token . '/' . $method);
     $opt = [
         CURLOPT_POST           => true,
         CURLOPT_POSTFIELDS     => json_encode($params, JSON_UNESCAPED_UNICODE),
         CURLOPT_HTTPHEADER     => ['Content-Type: application/json'],
         CURLOPT_RETURNTRANSFER => true,
-        CURLOPT_TIMEOUT        => 25,
-        CURLOPT_CONNECTTIMEOUT => 8,
+        CURLOPT_TIMEOUT        => $fast ? 10 : 25,
+        CURLOPT_CONNECTTIMEOUT => $fast ? 3 : 8,
         /* Только IPv4. Резолвер площадки отдаёт для api.telegram.org
            адрес шестой версии, до которого отсюда сети нет, и каждый
            вызов молча висел восемь секунд, пока не упрётся в таймаут. */
@@ -238,7 +242,7 @@ function rc_tg($method, $params = [], $tries = 2) {
     foreach (array_merge(rc_tg_ips(), rc_tg_resolve()) as $ip) {
         if (in_array($ip, $tried, true)) continue;
         $tried[] = $ip;
-        list($r, $e2) = rc_tg_call($token, $method, $params, $ip);
+        list($r, $e2) = rc_tg_call($token, $method, $params, $ip, true);
         if (!$e2) {
             rc_tg_pin_set($ip);
             rc_log('TG: перешли на адрес ' . $ip);
