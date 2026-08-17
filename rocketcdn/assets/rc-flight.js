@@ -52,7 +52,8 @@ var CAPTIONS = [
 var F = {
   open: false, built: false,
   p: 0, v: 0, look: { x: 0, y: 0, tx: 0, ty: 0 },
-  last: 0, raf: null, shake: 0
+  last: 0, raf: null, shake: 0,
+  auto: true, goal: null
 };
 
 var ui = {};      /* DOM оверлея */
@@ -65,17 +66,39 @@ function buildUI() {
   if (ui.wrap) return;
   var w = doc.createElement("div");
   w.className = "rc-flight";
+  /* Цели навигации: по ним корабль умеет долетать сам. Отметки p
+     подставляются после сборки мира из честных позиций на дуге. */
+  var NAV = [
+    { id: "earth", t: RU ? "Земля" : "Earth" },
+    { id: "moon", t: RU ? "Луна" : "Moon" },
+    { id: "mars", t: RU ? "Марс" : "Mars" },
+    { id: "saturn", t: RU ? "Сатурн" : "Saturn" },
+    { id: "hole", t: RU ? "Дыра" : "Hole" },
+    { id: "galaxy", t: RU ? "Галактика" : "Galaxy" },
+    { id: "home", t: RU ? "Домой" : "Home" }
+  ];
+  var navHtml = "";
+  for (var ni = 0; ni < NAV.length; ni++) {
+    navHtml += '<button type="button" data-goal="' + NAV[ni].id + '">' + NAV[ni].t + "</button>";
+  }
+
   w.innerHTML =
     '<canvas class="rcf-cv"></canvas>' +
-    '<div class="rcf-cockpit" aria-hidden="true"></div>' +
+    '<img class="rcf-cab" alt="" aria-hidden="true" decoding="async">' +
     '<div class="rcf-hud">' +
       '<div class="rcf-cap" aria-live="polite"></div>' +
+      '<div class="rcf-nav" role="group" aria-label="' + (RU ? "Навигация" : "Navigation") + '">' + navHtml + '</div>' +
       '<div class="rcf-track"><i></i></div>' +
       '<div class="rcf-hint">' + (matchMedia("(pointer: coarse)").matches
         ? (RU ? "Ведите пальцем вверх - тяга, в сторону - взгляд" : "Swipe up to thrust, sideways to look")
         : (RU ? "Колесо или свайп - тяга. Мышь - взгляд." : "Scroll or swipe to thrust. Mouse to look.")) + '</div>' +
       '<div class="rcf-speed"><b>0</b><span>' + (RU ? "км/с" : "km/s") + '</span></div>' +
+      '<div class="rcf-info" role="status"></div>' +
     '</div>' +
+    '<div class="rcf-holo" aria-hidden="true"><img src="assets/mark.webp" alt=""><i></i></div>' +
+    '<button type="button" class="rcf-auto" aria-pressed="true">' +
+      '<i></i><span>' + (RU ? "Автопилот" : "Autopilot") + '</span>' +
+    '</button>' +
     '<button type="button" class="rcf-close" aria-label="' + (RU ? "Выйти из полёта" : "Exit flight") + '">' +
       '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg>' +
     '</button>' +
@@ -84,16 +107,67 @@ function buildUI() {
   doc.body.appendChild(w);
   ui.wrap = w;
   ui.cv = w.querySelector(".rcf-cv");
+  ui.cab = w.querySelector(".rcf-cab");
   ui.cap = w.querySelector(".rcf-cap");
+  ui.nav = w.querySelector(".rcf-nav");
   ui.bar = w.querySelector(".rcf-track i");
   ui.hint = w.querySelector(".rcf-hint");
   ui.speed = w.querySelector(".rcf-speed b");
+  ui.auto = w.querySelector(".rcf-auto");
   ui.ret = w.querySelector(".rcf-return");
+  ui.info = w.querySelector(".rcf-info");
   ui.fade = w.querySelector(".rcf-fade");
+
+  /* Рамка кабины: своя для альбома и своя для портрета */
+  cabSrc();
+  ui.cab.addEventListener("load", function () { w.classList.add("has-cab"); });
+  ui.cab.addEventListener("error", function () { w.classList.remove("has-cab"); });
 
   w.querySelector(".rcf-close").addEventListener("click", close);
   ui.ret.addEventListener("click", close);
+  ui.auto.addEventListener("click", function () { setAuto(!F.auto); });
+  ui.nav.addEventListener("click", function (e) {
+    var b = e.target.closest("button[data-goal]");
+    if (b) goTo(b.getAttribute("data-goal"));
+  });
   bindControls();
+}
+
+function cabSrc() {
+  if (!ui.cab) return;
+  var want = innerHeight > innerWidth ? "assets/gen/cockpit-tall.webp" : "assets/gen/cockpit-wide.webp";
+  if (ui.cab.getAttribute("src") !== want) ui.cab.setAttribute("src", want);
+}
+
+/* ── Автопилот и навигация ───────────────────────────────────
+   Автопилот держит крейсерскую тягу: корабль сам плывёт по всему
+   маршруту, человек только смотрит по сторонам. Любое своё усилие
+   на тяге отключает автопилот - управление отдано человеку.
+   Кнопки навигации ведут к цели в обе стороны и сами тормозят
+   у места назначения. */
+function setAuto(on) {
+  F.auto = !!on;
+  if (on) F.goal = null;
+  if (ui.auto) ui.auto.setAttribute("aria-pressed", F.auto ? "true" : "false");
+}
+
+function manual() {
+  if (F.auto) setAuto(false);
+  F.goal = null;
+  hideHint();
+}
+
+function goTo(id) {
+  if (!W3 || !W3.at) return;
+  var p = id === "earth" ? 0.02
+        : id === "home" ? 0.985
+        : id === "galaxy" ? (W3.at.jump0 + W3.at.jump1) / 2
+        : W3.at[id];
+  if (p === undefined) return;
+  F.auto = false;
+  if (ui.auto) ui.auto.setAttribute("aria-pressed", "false");
+  F.goal = p;
+  hideHint();
 }
 
 /* ── Процедурные текстуры ────────────────────────────────────
@@ -353,6 +427,65 @@ function buildWorld() {
   })();
   scene.add(jump);
 
+  /* ── Галактики ──────────────────────────────────────────────
+     Три спирали из частиц: Млечный Путь по курсу прыжка и две
+     дальние вселенные по сторонам. Каждая - несколько тысяч точек
+     по логарифмической спирали с гауссовым разбросом; ядро теплее,
+     рукава в цвет вселенной. */
+  function spiralGalaxy(px, py, pz, scale, colA, colB, tiltX, tiltZ) {
+    var n = mob ? 1600 : 3200;
+    var geo = new T.BufferGeometry();
+    var pos = new Float32Array(n * 3);
+    var col = new Float32Array(n * 3);
+    var cA = new T.Color(colA), cB = new T.Color(colB), cC = new T.Color(0xfff3dd);
+    for (var k = 0; k < n; k++) {
+      var tt = Math.pow(Math.random(), 0.65);            /* плотнее к ядру */
+      var arm = (k % 3) * (6.28318 / 3);
+      var ang = arm + tt * 4.6 + (Math.random() - 0.5) * 0.5;
+      var rad = tt * scale;
+      var spread = scale * 0.05 * (1 - tt * 0.6);
+      pos[k * 3] = Math.cos(ang) * rad + (Math.random() - 0.5) * spread * 2;
+      pos[k * 3 + 1] = (Math.random() - 0.5) * spread;
+      pos[k * 3 + 2] = Math.sin(ang) * rad + (Math.random() - 0.5) * spread * 2;
+      var c = tt < 0.18 ? cC : (Math.random() > 0.5 ? cA : cB);
+      col[k * 3] = c.r; col[k * 3 + 1] = c.g; col[k * 3 + 2] = c.b;
+    }
+    geo.setAttribute("position", new T.BufferAttribute(pos, 3));
+    geo.setAttribute("color", new T.BufferAttribute(col, 3));
+    var pts = new T.Points(geo, new T.PointsMaterial({
+      size: scale * 0.012, sizeAttenuation: true, map: starDot, vertexColors: true,
+      transparent: true, opacity: 0.85, depthWrite: false, blending: T.AdditiveBlending
+    }));
+    /* Ядро: тёплое свечение */
+    var core = new T.Sprite(new T.SpriteMaterial({
+      map: glowSprite(128, "rgba(255,240,214,.9)", "rgba(255,214,150,0)"),
+      transparent: true, opacity: 0.85, depthWrite: false, blending: T.AdditiveBlending
+    }));
+    core.scale.setScalar(scale * 0.5);
+    var gr = new T.Group();
+    gr.add(pts); gr.add(core);
+    gr.position.set(px, py, pz);
+    gr.rotation.x = tiltX; gr.rotation.z = tiltZ;
+    scene.add(gr);
+    return gr;
+  }
+  /* Что расскажет бортовой справочник при наведении на объект */
+  eBody.userData.info = RU ? "ЗЕМЛЯ · диаметр 12 742 км · единственная планета с CDN" : "EARTH · 12,742 km wide · the only planet with a CDN";
+  moon.userData.info = RU ? "ЛУНА · 384 400 км · первая цель космических миссий, 1959" : "MOON · 384,400 km · first space target, 1959";
+  mars.userData.info = RU ? "МАРС · в телескоп впервые разглядел Галилей, 1610" : "MARS · first seen through a telescope by Galileo, 1610";
+  saturn.userData.info = RU ? "САТУРН · кольца открыл Гюйгенс, 1655" : "SATURN · rings discovered by Huygens, 1655";
+  hole.children[0].userData.info = RU ? "ЧЁРНАЯ ДЫРА · первый снимок - M87*, 2019" : "BLACK HOLE · first image - M87*, 2019";
+  var pickables = [eBody, moon, mars, saturn.children[0], hole.children[0]];
+  saturn.children[0].userData.info = RU ? "САТУРН · кольца открыл Гюйгенс, 1655" : "SATURN · rings discovered by Huygens, 1655";
+
+  var milky = spiralGalaxy(900, 420, -3300, 950, 0x9fd8ef, 0x8fb7ff, 0.9, 0.3);
+  var gal2 = spiralGalaxy(-2800, -500, -1600, 680, 0xb08cff, 0x8a59f6, 1.15, -0.4);
+  var gal3 = spiralGalaxy(3400, 700, -400, 620, 0xffd9a6, 0xff9d6b, 0.75, 0.55);
+  milky.children[1].userData.info = RU ? "МЛЕЧНЫЙ ПУТЬ · 200 млрд звёзд · виден с Земли 10 000 лет" : "MILKY WAY · 200B stars";
+  gal2.children[1].userData.info = RU ? "ГАЛАКТИКА RV-2 · неизведанная вселенная" : "GALAXY RV-2 · uncharted universe";
+  gal3.children[1].userData.info = RU ? "ГАЛАКТИКА RC-3 · открыта Rocket CDN" : "GALAXY RC-3 · discovered by Rocket CDN";
+  pickables.push(milky.children[1], gal2.children[1], gal3.children[1]);
+
   /* ── Маршрут ──
      Кривая проходит через все сцены и заворачивает домой. Взгляд
      ведут точки интереса: у каждого отрезка своя цель, между ними
@@ -414,6 +547,7 @@ function buildWorld() {
     { p: AT.saturn + 0.03, at: saturn.position },
     { p: AT.hole - 0.04, at: hole.position },
     { p: AT.hole + 0.03, at: hole.position },
+    { p: AT.jump0 + 0.04, at: new T.Vector3(900, 420, -3300) }, /* Млечный Путь */
     { p: AT.jump1, at: new T.Vector3(300, 90, -800) },  /* по ходу прыжка */
     { p: 0.94, at: new T.Vector3(0, 0, 0) }             /* снова Земля */
   ];
@@ -427,7 +561,9 @@ function buildWorld() {
   CAPTIONS[4].p = AT.saturn - 0.05;
   CAPTIONS[5].p = AT.hole - 0.05;
   CAPTIONS[6].p = AT.jump0;
-  CAPTIONS[7].p = AT.jump1 + 0.02;
+  CAPTIONS.splice(7, 0, { p: AT.jump0 + 0.09,
+    t: RU ? "МЛЕЧНЫЙ ПУТЬ · 200 млрд звёзд, ваши пользователи ближе" : "MILKY WAY · 200B stars, your users are closer" });
+  CAPTIONS[8].p = AT.jump1 + 0.02;
   for (var ci = 1; ci < CAPTIONS.length; ci++) {
     if (CAPTIONS[ci].p < CAPTIONS[ci - 1].p + 0.03) CAPTIONS[ci].p = CAPTIONS[ci - 1].p + 0.03;
   }
@@ -439,8 +575,9 @@ function buildWorld() {
 
   return {
     r: r, scene: scene, cam: cam, path: path, looks: LOOKS, at: AT, fov0: FOV0,
+    milky: milky, gal2: gal2, gal3: gal3,
     earth: earth, moon: moon, mars: mars, saturn: saturn, hole: hole,
-    diskMat: diskMat, jump: jump, sky: sky,
+    diskMat: diskMat, jump: jump, sky: sky, pickables: pickables,
     tmpA: new T.Vector3(), tmpB: new T.Vector3(), tmpQ: new T.Quaternion(), tmpM: new T.Matrix4()
   };
 }
@@ -452,7 +589,7 @@ function bindControls() {
   w.addEventListener("wheel", function (e) {
     e.preventDefault();
     F.v += e.deltaY * 0.0001;
-    hideHint();
+    manual();
   }, { passive: false });
 
   var tY = null, tX = null;
@@ -465,6 +602,7 @@ function bindControls() {
     var y = e.touches[0].clientY, x = e.touches[0].clientX;
     if (tY !== null) {
       F.v += (tY - y) * 0.00016;
+      manual();
       F.look.tx += (x - tX) * 0.004;
       F.look.tx = Math.max(-0.5, Math.min(0.5, F.look.tx));
     }
@@ -477,16 +615,24 @@ function bindControls() {
     if (e.pointerType === "touch") return;
     F.look.tx = (e.clientX / innerWidth - 0.5) * 0.66;
     F.look.ty = (e.clientY / innerHeight - 0.5) * 0.4;
+    F.mx = (e.clientX / innerWidth) * 2 - 1;
+    F.my = -(e.clientY / innerHeight) * 2 + 1;
+  }, { passive: true });
+  /* На тачскрине справочник вызывает касание */
+  w.addEventListener("pointerdown", function (e) {
+    F.mx = (e.clientX / innerWidth) * 2 - 1;
+    F.my = -(e.clientY / innerHeight) * 2 + 1;
+    F.pick = true;
   }, { passive: true });
 
   addEventListener("keydown", function (e) {
     if (!F.open) return;
     if (e.key === "Escape") { close(); return; }
-    if (e.key === "ArrowDown" || e.key === "PageDown" || e.key === " ") { F.v += 0.14; e.preventDefault(); hideHint(); }
-    if (e.key === "ArrowUp" || e.key === "PageUp") { F.v -= 0.14; e.preventDefault(); hideHint(); }
+    if (e.key === "ArrowDown" || e.key === "PageDown" || e.key === " ") { F.v += 0.14; e.preventDefault(); manual(); }
+    if (e.key === "ArrowUp" || e.key === "PageUp") { F.v -= 0.14; e.preventDefault(); manual(); }
   });
 
-  addEventListener("resize", size, { passive: true });
+  addEventListener("resize", function () { size(); cabSrc(); }, { passive: true });
 }
 
 var hintHidden = false;
@@ -516,11 +662,47 @@ function frame(ts) {
      не должен обрываться на полпути из-за уставшего пальца. */
   var jumpZone = W3.at ? (F.p > W3.at.jump0 && F.p < W3.at.jump1) : (F.p > 0.74 && F.p < 0.86);
   if (jumpZone && F.v < 0.11) F.v += (0.11 - F.v) * Math.min(1, dt * 2);
-  F.v *= Math.pow(0.14, dt);
+
+  if (F.goal !== null && F.goal !== undefined) {
+    /* Навигация к цели: тяга по расстоянию, у места сама тормозит.
+       Работает в обе стороны - к Марсу можно и вернуться. */
+    var dp = F.goal - F.p;
+    if (Math.abs(dp) < 0.006) { F.goal = null; F.v *= 0.3; }
+    else {
+      var wantV = Math.max(-0.14, Math.min(0.14, dp * 1.1 + (dp > 0 ? 0.02 : -0.02)));
+      F.v += (wantV - F.v) * Math.min(1, dt * 3);
+    }
+  } else if (F.auto && F.p < 0.999) {
+    /* Автопилот: спокойная крейсерская, чтобы просто смотреть кино */
+    var cruise = jumpZone ? 0.11 : 0.03;
+    F.v += (cruise - F.v) * Math.min(1, dt * 2.5);
+  } else {
+    /* Ручной режим: тяга набирается щелчками и сама затухает */
+    F.v *= Math.pow(0.14, dt);
+  }
   F.v = Math.max(-0.2, Math.min(0.3, F.v));
   F.p += F.v * dt;
   if (F.p < 0) { F.p = 0; F.v = 0; }
   if (F.p > 1) { F.p = 1; F.v = 0; }
+
+  /* Подсветка текущей цели в навигации */
+  if (ui.nav && w3.at && (frame._navT || 0) < ts - 300) {
+    frame._navT = ts;
+    var seg = "earth";
+    if (F.p > 0.06 && F.p <= (w3.at.mars + w3.at.moon) / 2) seg = "moon";
+    else if (F.p > (w3.at.mars + w3.at.moon) / 2 && F.p <= (w3.at.saturn + w3.at.mars) / 2) seg = "mars";
+    else if (F.p > (w3.at.saturn + w3.at.mars) / 2 && F.p <= (w3.at.hole + w3.at.saturn) / 2) seg = "saturn";
+    else if (F.p > (w3.at.hole + w3.at.saturn) / 2 && F.p <= w3.at.jump0) seg = "hole";
+    else if (F.p > w3.at.jump0 && F.p <= w3.at.jump1) seg = "galaxy";
+    else if (F.p > w3.at.jump1) seg = "home";
+    if (frame._seg !== seg) {
+      frame._seg = seg;
+      var bs = ui.nav.querySelectorAll("button");
+      for (var bi = 0; bi < bs.length; bi++) {
+        bs[bi].classList.toggle("cur", bs[bi].getAttribute("data-goal") === seg);
+      }
+    }
+  }
 
   /* Камера по кривой */
   var pos = w3.path.getPointAt(F.p);
@@ -567,6 +749,27 @@ function frame(ts) {
   w3.hole.rotation.y += dt * 0.14;
   w3.diskMat.uniforms.uT.value = ts * 0.001;
   w3.sky.rotation.y += dt * 0.0025;
+  if (w3.milky) { w3.milky.rotation.y += dt * 0.01; w3.gal2.rotation.y -= dt * 0.008; w3.gal3.rotation.y += dt * 0.012; }
+
+  /* Бортовой справочник: навёл на планету или галактику - корабль
+     говорит, что это и когда открыто. Дорогую проверку пересечений
+     гоняем восемь раз в секунду, не каждый кадр. */
+  if (ui.info && (F.mx !== undefined) && ts - (frame._pickT || 0) > 120) {
+    frame._pickT = ts;
+    if (!frame._ray) frame._ray = new T.Raycaster();
+    frame._ray.setFromCamera({ x: F.mx, y: F.my }, w3.cam);
+    var hits = frame._ray.intersectObjects(w3.pickables || [], false);
+    var info = null;
+    for (var hi = 0; hi < hits.length; hi++) {
+      if (hits[hi].object.userData && hits[hi].object.userData.info) { info = hits[hi].object.userData.info; break; }
+    }
+    if (info !== frame._info) {
+      frame._info = info;
+      if (info) { ui.info.textContent = info; ui.info.classList.add("on"); }
+      else ui.info.classList.remove("on");
+    }
+    F.pick = false;
+  }
 
   /* Стримы прыжка едут за камерой и светятся только в прыжке */
   var jm = w3.jump.material;
@@ -622,6 +825,7 @@ function open() {
 
   F.open = true;
   F.p = 0; F.v = 0; F.last = 0;
+  setAuto(true);
   F.look.x = F.look.y = F.look.tx = F.look.ty = 0;
   hintHidden = false;
   if (ui.hint) ui.hint.classList.remove("off");
