@@ -41,15 +41,35 @@ function fill(t, blocks) {
   var DC_SHOT = ["dc-moscow", "dc-almaty", "dc-prague"];
   var dc = $("#dcGrid");
   if (dc && GEO) dc.innerHTML = GEO.DC.map(function (d, i) {
-    /* Путь от корня сайта: переменную читает правило из rc.css, а
-       относительный адрес там считался бы от папки со стилями */
-    var shot = DC_SHOT[i] ? ' style="--shot:url(/assets/gen/' + DC_SHOT[i] + '.webp)"' : "";
+    /* Снимок зала записываем в data-атрибут: подставим его в
+       переменную, только когда секция подойдёт к экрану - двести
+       килобайт фотографий не должны ехать раньше первого экрана */
+    var shot = DC_SHOT[i] ? ' data-shot="/assets/gen/' + DC_SHOT[i] + '.webp"' : "";
     return '<article class="dc float-3d rv rv-d' + (i + 1) + '"' + shot + '>' +
       '<div class="lbl">' + esc(t("infra.dc")) + "</div>" +
       "<h4>" + esc(d.name[lang] || d.name.ru) + "</h4>" +
       '<p style="color:var(--tx-3);font-size:12.5px;margin-bottom:10px">' + esc(d.cc[lang] || d.cc.ru) + "</p>" +
       "<p>" + esc(t("dc" + (i + 1) + "p")) + "</p></article>";
   }).join("");
+
+  /* Ленивая подстановка снимков ЦОД: за полтора экрана до секции */
+  if (dc && "IntersectionObserver" in window) {
+    var dcIo = new IntersectionObserver(function (es) {
+      es.forEach(function (e) {
+        if (!e.isIntersecting) return;
+        [].forEach.call(dc.querySelectorAll("[data-shot]"), function (el) {
+          el.style.setProperty("--shot", "url(" + el.getAttribute("data-shot") + ")");
+          el.removeAttribute("data-shot");
+        });
+        dcIo.disconnect();
+      });
+    }, { rootMargin: "1400px 0px" });
+    dcIo.observe(dc);
+  } else if (dc) {
+    [].forEach.call(dc.querySelectorAll("[data-shot]"), function (el) {
+      el.style.setProperty("--shot", "url(" + el.getAttribute("data-shot") + ")");
+    });
+  }
 
   /* Путь запроса: горизонтальный маршрут с отсечками времени */
   var how = $("#howGrid");

@@ -417,7 +417,7 @@ function buildWorld() {
     new T.MeshPhongMaterial({
       map: tex("assets/space/earth-day.jpg"),
       emissiveMap: tex("assets/space/earth-night.jpg"),
-      emissive: new T.Color(0xffd9a0), emissiveIntensity: 0.75,
+      emissive: new T.Color(0xffd9a0), emissiveIntensity: 1.05,
       specular: new T.Color(0x223344), shininess: 14
     })
   );
@@ -450,6 +450,32 @@ function buildWorld() {
   );
   moon.position.set(300, 40, -190);
   scene.add(moon);
+  /* Маршрут проходит с теневой стороны Луны - без своего света она
+     встречала корабль чёрным диском */
+  var moonLamp = new T.PointLight(0xcfd8e2, 1.1, 420);
+  moonLamp.position.set(330, 60, -120);
+  scene.add(moonLamp);
+
+  /* Узлы-реле CDN: цепочка светящихся маяков вдоль перегона
+     Луна-Марс. Пустой кусок пути превращается в кадр про продукт:
+     «контент идёт с ближайшего узла» - вот эти узлы. */
+  var relayTex = glowSprite(64, "rgba(159,224,246,1)", "rgba(66,178,220,0)");
+  var relayPts = [], relaySprites = [];
+  for (var ri = 0; ri < 6; ri++) {
+    var rt = ri / 5;
+    var rp = new T.Vector3(350 + rt * 210, 20 - rt * 145, -250 - rt * 420);
+    rp.x += (ri % 2 ? 34 : -30); rp.y += (ri % 3 - 1) * 26;
+    var rs = new T.Sprite(new T.SpriteMaterial({ map: relayTex, transparent: true, opacity: 0.9, depthWrite: false, blending: T.AdditiveBlending }));
+    rs.position.copy(rp);
+    rs.scale.setScalar(9);
+    rs.userData.info = RU ? "УЗЕЛ RC-" + (ri + 1) + "0 · ближайший к вам сервер сети" : "NODE RC-" + (ri + 1) + "0";
+    scene.add(rs);
+    relayPts.push(rp);
+    relaySprites.push(rs);
+  }
+  /* Линия связи между узлами: тонкая, едва заметная */
+  var relayGeo = new T.BufferGeometry().setFromPoints(relayPts);
+  scene.add(new T.Line(relayGeo, new T.LineBasicMaterial({ color: 0x42b2dc, transparent: true, opacity: 0.28, blending: T.AdditiveBlending, depthWrite: false })));
 
   /* ── Марс ── */
   var mars = new T.Mesh(
@@ -531,8 +557,8 @@ function buildWorld() {
   );
   photon.rotation.x = Math.PI / 2.5;
   hole.add(photon);
-  var halo = new T.Sprite(new T.SpriteMaterial({ map: glowSprite(256, "rgba(255,140,50,.4)", "rgba(255,80,20,0)"), transparent: true, opacity: 0.55, depthWrite: false }));
-  halo.scale.setScalar(240);
+  var halo = new T.Sprite(new T.SpriteMaterial({ map: glowSprite(256, "rgba(255,140,50,.32)", "rgba(255,80,20,0)"), transparent: true, opacity: 0.5, depthWrite: false }));
+  halo.scale.setScalar(380);
   hole.add(halo);
   hole.position.set(2140, -160, -2380);
   scene.add(hole);
@@ -604,6 +630,7 @@ function buildWorld() {
   saturn.userData.info = RU ? "САТУРН · кольца открыл Гюйгенс, 1655" : "SATURN · rings discovered by Huygens, 1655";
   hole.children[0].userData.info = RU ? "ЧЁРНАЯ ДЫРА · первый снимок - M87*, 2019" : "BLACK HOLE · first image - M87*, 2019";
   var pickables = [eBody, moon, mars, saturn.children[0], hole.children[0]];
+  for (var rj = 0; rj < relaySprites.length; rj++) pickables.push(relaySprites[rj]);
   saturn.children[0].userData.info = RU ? "САТУРН · кольца открыл Гюйгенс, 1655" : "SATURN · rings discovered by Huygens, 1655";
 
   /* Комета: ядро со свечением и хвост из частиц. Ходит по вытянутому
@@ -653,6 +680,27 @@ function buildWorld() {
   gal2.children[1].userData.info = RU ? "ГАЛАКТИКА RV-2 · неизведанная вселенная" : "GALAXY RV-2 · uncharted universe";
   gal3.children[1].userData.info = RU ? "ГАЛАКТИКА RC-3 · открыта Rocket CDN" : "GALAXY RC-3 · discovered by Rocket CDN";
   pickables.push(milky.children[1], gal2.children[1], gal3.children[1]);
+
+  /* ── Пыль у стекла ──
+     Куб мелких частиц, вечно висящий вокруг камеры: кадр никогда
+     не бывает мёртвым, а скорость читается кожей. Частицы
+     заворачиваются по модулю куба относительно камеры - облако
+     бесконечно, а точек всего три сотни. */
+  var dust = (function () {
+    var nD = mob ? 160 : 320, SIDE = 140;
+    var geo = new T.BufferGeometry();
+    var pos = new Float32Array(nD * 3);
+    for (var k = 0; k < nD * 3; k++) pos[k] = (Math.random() - 0.5) * SIDE;
+    geo.setAttribute("position", new T.BufferAttribute(pos, 3));
+    var pts = new T.Points(geo, new T.PointsMaterial({
+      color: 0xaac6d8, size: 1.1, sizeAttenuation: true, map: starDot,
+      transparent: true, opacity: 0.5, depthWrite: false
+    }));
+    pts.frustumCulled = false;
+    pts.userData.side = SIDE;
+    scene.add(pts);
+    return pts;
+  })();
 
   /* ── Астероидный пояс ──
      Камни рассыпаны трубой вокруг отрезка будущего маршрута между
@@ -708,8 +756,9 @@ function buildWorld() {
     new T.Vector3(1860, -120, -2720),
     new T.Vector3(1000, 60, -1900),      /* гиперпрыжок домой */
     new T.Vector3(300, 90, -800),
-    new T.Vector3(0, 40, -260),
-    new T.Vector3(-40, 14, 190)          /* торможение у Земли */
+    new T.Vector3(-60, 50, -290),
+    new T.Vector3(-230, 30, -60),
+    new T.Vector3(-170, 10, 170)         /* торможение: Земля по борту */
   ], false, "catmullrom", 0.12);
 
   /* Подписи и цели взгляда стояли на глазок и разъехались с фактом:
@@ -742,7 +791,7 @@ function buildWorld() {
     { p: AT.mars + 0.03, at: mars.position },
     { p: AT.saturn - 0.05, at: saturn.position },
     { p: AT.saturn + 0.03, at: saturn.position },
-    { p: AT.hole - 0.04, at: hole.position },
+    { p: AT.hole - 0.085, at: hole.position },
     { p: AT.hole + 0.03, at: hole.position },
     { p: AT.jump0 + 0.04, at: milky.position }, /* Млечный Путь - прыжок идёт сквозь его рукав */
     { p: AT.jump1, at: new T.Vector3(300, 90, -800) },  /* по ходу прыжка */
@@ -760,7 +809,9 @@ function buildWorld() {
   CAPTIONS[6].p = AT.jump0;
   CAPTIONS.splice(7, 0, { p: AT.jump0 + 0.09,
     t: RU ? "МЛЕЧНЫЙ ПУТЬ · 200 млрд звёзд, ваши пользователи ближе" : "MILKY WAY · 200B stars, your users are closer" });
-  CAPTIONS[8].p = AT.jump1 + 0.02;
+  CAPTIONS.splice(8, 0, { p: AT.jump0 + 0.19,
+    t: RU ? "ДРУГОЙ РУКАВ ГАЛАКТИКИ · дом уже виден" : "ANOTHER GALACTIC ARM · home is in sight" });
+  CAPTIONS[9].p = AT.jump1 + 0.02;
   for (var ci = 1; ci < CAPTIONS.length; ci++) {
     if (CAPTIONS[ci].p < CAPTIONS[ci - 1].p + 0.03) CAPTIONS[ci].p = CAPTIONS[ci - 1].p + 0.03;
   }
@@ -789,7 +840,7 @@ function buildWorld() {
   return {
     r: r, scene: scene, cam: cam, path: path, looks: LOOKS, at: AT, fov0: FOV0, scanTargets: scanTargets,
     milky: milky, gal2: gal2, gal3: gal3,
-    comet: comet, sat: sat, belt1: belt1, belt2: belt2, nebSprites: nebSprites, starMats: starMats, sunGlow: sunGlow, amb: amb,
+    comet: comet, sat: sat, belt1: belt1, belt2: belt2, dust: dust, nebSprites: nebSprites, starMats: starMats, sunGlow: sunGlow, amb: amb,
     earth: earth, clouds: clouds, moon: moon, mars: mars, saturn: saturn, hole: hole,
     diskMat: diskMat, jump: jump, sky: sky, pickables: pickables,
     tmpA: new T.Vector3(), tmpB: new T.Vector3(), tmpQ: new T.Quaternion(), tmpM: new T.Matrix4()
@@ -932,7 +983,15 @@ function frame(ts) {
   w3.tmpA.copy(a.at).lerp(b.at, k);
   w3.tmpM.lookAt(w3.cam.position, w3.tmpA, w3.cam.up);
   w3.tmpQ.setFromRotationMatrix(w3.tmpM);
-  w3.cam.quaternion.slerp(w3.tmpQ, Math.min(1, dt * 3.2));
+  /* Ориентация автопилота живёт отдельно от взгляда человека.
+     Раньше повороты мыши применялись к тому же кватерниону, что и
+     сглаживание курса: на тяжёлых кадрах ручной наклон накапливался
+     быстрее, чем курс успевал его возвращать, и камера утыкалась в
+     пол. Теперь курс сходится сам по себе, а взгляд - только
+     насадка на кадр. */
+  if (!w3.baseQ) w3.baseQ = w3.cam.quaternion.clone();
+  w3.baseQ.slerp(w3.tmpQ, Math.min(1, dt * 3.2));
+  w3.cam.quaternion.copy(w3.baseQ);
 
   /* Взгляд человека поверх автопилота */
   F.look.x += (F.look.tx - F.look.x) * Math.min(1, dt * 5);
@@ -970,6 +1029,23 @@ function frame(ts) {
   w3.sky.rotation.y += dt * 0.0025;
   if (w3.milky) { w3.milky.rotation.y += dt * 0.01; w3.gal2.rotation.y -= dt * 0.008; w3.gal3.rotation.y += dt * 0.012; }
   if (w3.belt1) { w3.belt1.rotation.y += dt * 0.0012; w3.belt2.rotation.y -= dt * 0.0009; }
+
+  /* Пыль заворачивается вокруг камеры: частица, отставшая больше
+     чем на полкуба, перекладывается на другую сторону */
+  if (w3.dust && ts - (frame._dustT || 0) > 120) {
+    frame._dustT = ts;
+    var dp = w3.dust.geometry.attributes.position, half = w3.dust.userData.side / 2;
+    var cxp = w3.cam.position.x, cyp = w3.cam.position.y, czp = w3.cam.position.z;
+    for (var di = 0; di < dp.count; di++) {
+      var vx = dp.getX(di), vy = dp.getY(di), vz = dp.getZ(di);
+      var moved = false;
+      if (vx - cxp > half) { vx -= half * 2; moved = true; } else if (cxp - vx > half) { vx += half * 2; moved = true; }
+      if (vy - cyp > half) { vy -= half * 2; moved = true; } else if (cyp - vy > half) { vy += half * 2; moved = true; }
+      if (vz - czp > half) { vz -= half * 2; moved = true; } else if (czp - vz > half) { vz += half * 2; moved = true; }
+      if (moved) dp.setXYZ(di, vx, vy, vz);
+    }
+    dp.needsUpdate = true;
+  }
 
   /* Страж плавности: если кадры стабильно тяжёлые, снижаем
      разрешение рендера ступенями и в крайнем случае снимаем
@@ -1066,6 +1142,13 @@ function frame(ts) {
   if (jm.opacity > 0.01) {
     w3.jump.position.copy(w3.cam.position);
     w3.jump.quaternion.copy(w3.cam.quaternion);
+    /* Фаза туннеля: к концу прыжка полосы уходят из циана в
+       фиолет - слышно, что летим уже по другому рукаву */
+    if (w3.at) {
+      var jk = (F.p - w3.at.jump0) / Math.max(0.001, w3.at.jump1 - w3.at.jump0);
+      jk = jk < 0 ? 0 : jk > 1 ? 1 : jk;
+      jm.color.setRGB(0.62 - jk * 0.2, 0.85 - jk * 0.35, 0.94);
+    }
   }
 
   /* Панель кабины чуть оседает на разгоне: перегрузка */
@@ -1195,6 +1278,15 @@ function launchers() {
 
 g.RC_FLIGHT = {
   open: open, close: close,
+  _dbg: function () {
+    if (!W3) return null;
+    var d = new g.THREE.Vector3(); W3.cam.getWorldDirection(d);
+    var e = new g.THREE.Vector3(0, 0, 0).sub(W3.cam.position).normalize();
+    return { pos: W3.cam.position.toArray().map(Math.round),
+             dir: d.toArray().map(function(v){return +v.toFixed(2)}),
+             toEarth: e.toArray().map(function(v){return +v.toFixed(2)}),
+             угол: +(Math.acos(Math.max(-1,Math.min(1,d.dot(e)))) * 57.3).toFixed(1) };
+  },
   state: function () {
     return { открыт: F.open, собран: F.built, p: +F.p.toFixed(3), v: +F.v.toFixed(5),
              отметки: W3 && W3.at ? W3.at : null };

@@ -64,7 +64,19 @@ function build() {
   layer.appendChild(img);
   layer.appendChild(cv);
   sec.insertBefore(layer, sec.firstChild);
-  vidBuild();
+  /* Ролик подхода тянем не сразу: полмегабайта видео не должны
+     ехать раньше первого экрана. Наблюдатель заводит его за
+     полтора-два экрана до пульта - к подходу кадры уже готовы. */
+  if ("IntersectionObserver" in g) {
+    var vio = new IntersectionObserver(function (es) {
+      for (var i = 0; i < es.length; i++) {
+        if (es[i].isIntersecting) { vidBuild(); vio.disconnect(); break; }
+      }
+    }, { rootMargin: "1800px 0px" });
+    vio.observe(sec);
+  } else {
+    vidBuild();
+  }
 
   img.onload = function () {
     ready = true;
