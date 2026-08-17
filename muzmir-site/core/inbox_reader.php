@@ -172,10 +172,60 @@ function inbox_classify(string $mailbox, string $subject, string $body, bool $is
                  . '|это не (моя|наша) почта|(эта|это) (эл\.? )?(почта|адрес) не '
                  . '|чужой адрес|адрес указан ошибочно|ошиблись адресом~ui', $t)) return 'optout';
 
+    // ВЕДОМСТВО ГОВОРИТ «ДА» СВОИМИ СЛОВАМИ.
+    //
+    // Министерство не пишет «согласны стать партнёром» — оно пишет, что сделало:
+    // «информация доведена до сведения учреждений культуры региона», «направлена
+    // в адрес муниципальных учреждений», «размещена на культурном портале».
+    // Именно это нам и нужно: región разослал наш конкурс по своим школам.
+    // Департамент культуры Брянской области распознался по обороту «доведена до
+    // сведения», а Минкультнац Мордовии тем же ответом — нет, потому что написал
+    // «направлена в адрес» и «размещена на портале».
+    if (preg_match('~(информаци\w+|сведени\w+|письмо|материал\w*)[^.!?]{0,80}'
+                 . '(доведен\w+|направлен\w+|разослан\w+|размещен\w+|опубликован\w+)'
+                 . '|(доведен\w+|направлен\w+|разослан\w+|размещен\w+|опубликован\w+)[^.!?]{0,80}'
+                 . '(учреждени|подведомствен|муниципальн|образовательн|портал|сайт|социальн)'
+                 . '|проинформирован\w+|информирован\w+ (учреждени|организаци)~ui', $t)) {
+        return $mailbox === 'kc' ? 'ministry_approve' : 'partner_accept';
+    }
+
     if (preg_match($no, $t))  return $mailbox === 'kc' ? 'ministry_decline' : 'partner_decline';
     if (preg_match($yes, $t)) return $mailbox === 'kc' ? 'ministry_approve' : 'partner_accept';
     if ($mailbox === 'kc') return 'ministry_question';
     return 'question';
+}
+
+/**
+ * СОХРАНИТЬ ВЛОЖЕНИЕ ПИСЬМА. Возвращает путь относительно корня сайта или ''.
+ *
+ * Имя файла берём не из письма: там бывает что угодно, вплоть до путей с точками.
+ * Оставляем только буквы, цифры и расширение, остальное режем.
+ */
+function inbox_save_attachment(string $mailbox, string $key, string $name, string $data): string {
+    if ($data === '' || strlen($data) > 25 * 1024 * 1024) return '';
+    $ext  = strtolower(pathinfo($name, PATHINFO_EXTENSION));
+    $ext  = preg_match('~^[a-z0-9]{1,5}$~', $ext) ? $ext : 'bin';
+    $base = preg_replace('~[^a-zA-Zа-яА-Я0-9._-]+~u', '_', pathinfo($name, PATHINFO_FILENAME)) ?: 'file';
+    $dir  = 'data/inbox/' . preg_replace('~[^a-z0-9]~', '', $mailbox) . '/' . $key;
+    $abs  = BASE_PATH . '/' . $dir;
+    if (!is_dir($abs) && !@mkdir($abs, 0775, true) && !is_dir($abs)) return '';
+    $rel  = $dir . '/' . mb_substr($base, 0, 60) . '.' . $ext;
+    return @file_put_contents(BASE_PATH . '/' . $rel, $data) !== false ? $rel : '';
+}
+
+/**
+ * ТЕКСТ ИЗ PDF. Пусто, если распознать нечем или файл оказался картинкой.
+ *
+ * Сканы без текстового слоя здесь не разбираются намеренно: распознавание
+ * картинок это отдельная история, а половина ответов ведомств приходит обычным
+ * электронным документом, где текст есть.
+ */
+function inbox_pdf_text(string $file): string {
+    if (!is_file($file)) return '';
+    $bin = trim((string) @shell_exec('command -v pdftotext 2>/dev/null'));
+    if ($bin === '') return '';
+    $out = (string) @shell_exec($bin . ' -q -enc UTF-8 -nopgbrk ' . escapeshellarg($file) . ' - 2>/dev/null');
+    return mb_substr(trim(preg_replace('~\s+~u', ' ', $out) ?? ''), 0, 3000);
 }
 
 /** Кого мы знаем по адресу: учреждение, ведомство, участника. */
@@ -269,10 +319,41 @@ function inbox_scan(string $alias, int $days = 14): array {
                          'question' => 'ministry_question'][$kind] ?? $kind;
             }
 
+            // ВЛОЖЕНИЕ — ЭТО И ЕСТЬ ОТВЕТ. ЕГО НАДО СОХРАНИТЬ И ПРОЧИТАТЬ.
+            //
+            // Ведомства отвечают официальным письмом на бланке, то есть PDF, а тело
+            // письма у них пустое или из одной подписи. Раньше от вложения мы
+            // оставляли только имя и размер, и первые же содержательные ответы —
+            // Минкультнац Мордовии и Департамент культуры Брянской области —
+            // оказались нечитаемыми: разобрать, согласие это или отказ, было нечем.
+            //
+            // Теперь файл ложится на диск, а из PDF вынимается текст (pdftotext) и
+            // приклеивается к телу письма. Дальше он работает как обычный текст:
+            // по нему считается тип ответа и его видит человек в админке.
             $att = [];
+            $attText = '';
             foreach ((array) $m['attachments'] as $a) {
-                $att[] = ['name' => (string) ($a['name'] ?? ''), 'mime' => (string) ($a['mime'] ?? ''),
-                          'size' => strlen((string) ($a['data'] ?? ''))];
+                $data = (string) ($a['data'] ?? '');
+                $name = (string) ($a['name'] ?? '');
+                $rel  = inbox_save_attachment($alias, $key, $name, $data);
+                if ($rel !== '' && preg_match('~\.pdf$~i', $name)) {
+                    $attText .= "\n" . inbox_pdf_text(BASE_PATH . '/' . $rel);
+                }
+                $att[] = ['name' => $name, 'mime' => (string) ($a['mime'] ?? ''),
+                          'size' => strlen($data), 'file' => $rel];
+            }
+            // Текст из вложения участвует в разборе наравне с телом письма.
+            if (trim($attText) !== '') {
+                $m['text'] = trim((string) $m['text'] . "\n" . $attText);
+                $kind = inbox_is_service($from) ? 'service'
+                      : inbox_classify($alias, (string) $m['subject'], (string) $m['text'], $isAuto);
+                if ($who['ministry_id'] === 0 && $who['inst_id'] > 0) {
+                    $kind = ['ministry_approve' => 'partner_accept', 'ministry_decline' => 'partner_decline',
+                             'ministry_question' => 'question'][$kind] ?? $kind;
+                } elseif ($who['ministry_id'] > 0) {
+                    $kind = ['partner_accept' => 'ministry_approve', 'partner_decline' => 'ministry_decline',
+                             'question' => 'ministry_question'][$kind] ?? $kind;
+                }
             }
 
             try {
