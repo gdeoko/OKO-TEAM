@@ -1404,7 +1404,11 @@ function newsletter_process_queue(int $limit): int {
         // Тип берём из строки очереди: у выборки массовых он приезжает как ctype
         // (COALESCE по письму и по рассылке), у остальных лежит в самой колонке.
         if (function_exists('mail_pool_for')) {
-            $opt['pool'] = mail_pool_for([
+            // Строка может назвать пул сама: так делает прямой канал, где ящик
+            // тот же, а транспорт другой (news@/novosti@ напрямую, без сервиса).
+            $opt['pool'] = trim((string) ($row['force_pool'] ?? '')) !== ''
+                ? (string) $row['force_pool']
+                : mail_pool_for([
                 'campaign_type' => (string) ($row['ctype'] ?? $row['campaign_type'] ?? ''),
                 'priority'      => (int) ($row['priority'] ?? 0),
                 'subject'       => (string) ($row['subject'] ?? ''),
@@ -1437,7 +1441,8 @@ function newsletter_process_queue(int $limit): int {
         }
 
         // ПИКСЕЛЬ ОТКРЫТИЯ ДЛЯ ПИСЕМ СВОЕГО КАНАЛА — в готовое тело, перед отправкой.
-        if (($opt['pool'] ?? '') === 'official' && (int) ($row['priority'] ?? 0) > 0) {
+        if (in_array($opt['pool'] ?? '', ['bulk_smtp', 'cold_smtp'], true)
+            && (int) ($row['priority'] ?? 0) > 0) {
             $px = nl_own_pixel($id);
             if ($px !== '' && mb_strpos((string) $row['body'], 'e=o2') === false) {
                 $body = (string) $row['body'];
@@ -1563,73 +1568,70 @@ function newsletter_process_queue(int $limit): int {
     //    пула и упирался в суточный лимит провайдера.
     nl_ensure_campaign_type_col();
 
-    // ── КОМУ ПИШЕМ НАПРЯМУЮ С ПОЧТЫ ЦЕНТРА, А НЕ ЧЕРЕЗ СЕРВИС ────────────────
+    // ── ПРЯМОЙ КАНАЛ: ТЕ ЖЕ ЯЩИКИ, НО МИМО СЕРВИСА РАССЫЛОК ──────────────────
     //
-    // Часть школ искусств сидит на почте региона (mosreg.ru, nso.ru, govvrn.ru).
-    // Их шлюзы режут всё, что пришло через сервис рассылок: по mosreg.ru 35
-    // отказов и ноль доставленных, ответ всегда один — «blocked due to security
-    // reason». Через сервис им не написать никогда, сколько ни повторяй.
+    // Часть школ искусств сидит на почте региона (mosreg.ru, nso.ru,
+    // kult.permkrai.ru). Их шлюзы режут всё, что пришло через сервис рассылок:
+    // по mosreg.ru 38 отказов и ноль доставленных, ответ всегда один — «blocked
+    // due to security reason». Через сервис им не написать никогда, сколько ни
+    // повторяй. Письмо с нашего собственного домена напрямую они принимают и
+    // отвечают по существу, вплоть до «такого адреса нет» по конкретному ящику.
     //
-    // Зато письмо с собственного российского домена напрямую они принимают: так
-    // же было с ведомствами, которые отбивали Gmail и принимали kc@.
+    // Сюда же заведён yandex.ru. Он ведёт себя хитрее шлюза: письма через сервис
+    // ПРИНИМАЕТ (отказов 5%), но кладёт в «Спам» — 1 181 доставленное письмо и
+    // семь открытий за всё время, притом что gmail.com в тот же день открывал
+    // каждый четвёртый. Формально доставлено, фактически нет.
     //
-    // Сюда же вручную заведён yandex.ru. Он ведёт себя хитрее шлюза: письма через
-    // сервис рассылок ПРИНИМАЕТ (отказов всего 5%), но кладёт в «Спам» — 1 181
-    // доставленное письмо и семь открытий за всё время, притом что gmail.com в тот
-    // же день открывал каждый четвёртый. Формально доставлено, фактически нет.
-    // Наш домен живёт на Яндексе, и своему же клиенту он доверяет больше, чем
-    // рассылочному сервису: четыреста писем во «Входящие» полезнее тысячи в спаме.
+    // ЯЩИК ЗДЕСЬ ТОТ ЖЕ, ЧТО И В ОБЫЧНОМ КАНАЛЕ (правило владельца): своей базе —
+    // news@, учреждениям — novosti@. Меняется только транспорт. Официальная почта
+    // центра kc@ в массовых рассылках не участвует никогда: на ней заявки,
+    // результаты, письма сайта и переписка с ведомствами, и терять её нельзя.
     //
-    // Поток здесь маленький и намеренно: kc@ это живой ящик, которым уходят
-    // дипломы и обращения в министерства, и спалить его объёмом нельзя. Норма
-    // в сутки — nl_gov_daily (150), за прогон — пара писем.
+    // Поток намеренно маленький: это живые почтовые ящики, а не сервис с
+    // прогретыми серверами. Норма на каждый — nl_smtp_daily.
     if (function_exists('mdp_needs_official') && function_exists('mail_fallback_accounts')) {
-        $govAcc = mail_fallback_accounts([], 'official')[0] ?? [];
-        $govCap = max(0, (int) setting('nl_gov_daily', '150'));
-        $kcBox  = mb_strtolower((string) ($govAcc['user'] ?? ''));
-        $govOk  = !function_exists('outreach_window_ok') || outreach_window_ok();
-        if ($govCap > 0 && $kcBox !== '' && $govOk) {
-            $govSent = (int) (scalar("SELECT COUNT(*) FROM mail_queue
-                                       WHERE status='sent' AND COALESCE(priority,0)>0
-                                         AND sent_via=? AND date(sent_at)=date('now','localtime')",
-                                     [$kcBox]) ?? 0);
-            if ($govSent < $govCap) {
-                $perRunGov = max(1, (int) setting('nl_gov_per_run', '2'));
-                $govRows = all("SELECT q.*, COALESCE(q.campaign_type, n.campaign_type, 'konkurs') AS ctype
-                                  FROM mail_queue q LEFT JOIN newsletters n ON n.id = q.newsletter_id
-                                 WHERE q.status='queued' AND COALESCE(q.priority,0)>0
-                                   AND (q.scheduled_at IS NULL OR q.scheduled_at='' OR q.scheduled_at<=?)
-                                   AND LOWER(SUBSTR(q.to_email, INSTR(q.to_email,'@') + 1))
-                                       IN (SELECT domain FROM mail_domain_policy WHERE policy='official')
-                                 ORDER BY q.priority DESC, q.id ASC LIMIT ?",
-                               [$nowTs, $perRunGov * 4]);
-                $govDone = 0;
-                foreach ($govRows as $row) {
-                    if ($govDone >= $perRunGov || $govSent + $govDone >= $govCap) break;
-                    // Пул задаётся явно: письмо массовое по типу, но канал у него
-                    // официальный, и подменять его выбором по приоритету нельзя.
-                    // Тип переписываем в ОБОИХ полях. Пул письма считается по
-                    // ctype (он приходит из COALESCE в выборке), и одного
-                    // campaign_type мало: письмо уходило через сервис рассылок,
-                    // то есть ровно тем каналом, который шлюз и блокирует.
-                    $row['campaign_type'] = 'official';
-                    $row['ctype']         = 'official';
-                    if ($sendRow($row, $govAcc)) {
-                        $sent++; $govDone++;
-                        // СВОЙ КАНАЛ НАДО МЕРИТЬ САМИМ.
-                        //
-                        // События доставки присылает сервис рассылок, а эти письма
-                        // уходят мимо него, напрямую с почты центра. Без собственной
-                        // отметки канал был бы слепой зоной: в отчёте по службам
-                        // yandex.ru показывал бы ноль доставленных и ноль открытий,
-                        // и отличить «письма дошли во Входящие» от «мы туда вообще
-                        // не пишем» стало бы нечем. Отметку кладём в ту же таблицу
-                        // событий, чтобы весь учёт остался единым.
+        $smtpCap = max(0, (int) setting('nl_smtp_daily', '300'));
+        $smtpOk  = !function_exists('outreach_window_ok') || outreach_window_ok();
+        if ($smtpCap > 0 && $smtpOk) {
+            $perRunSmtp = max(1, (int) setting('nl_smtp_per_run', '2'));
+            // Тип кампании решает и ящик, и пул: 'inst' — novosti@, остальное — news@.
+            foreach (['inst' => 'cold_smtp', 'konkurs' => 'bulk_smtp'] as $type => $pool) {
+                $acc = mail_fallback_accounts([], $pool)[0] ?? [];
+                $box = mb_strtolower((string) ($acc['user'] ?? ''));
+                if ($box === '') continue;
+                $done0 = (int) (scalar("SELECT COUNT(*) FROM mail_queue
+                                         WHERE status='sent' AND COALESCE(priority,0)>0
+                                           AND sent_via=? AND date(sent_at)=date('now','localtime')",
+                                       [$box]) ?? 0);
+                if ($done0 >= $smtpCap) continue;
+
+                $rows = all("SELECT q.*, COALESCE(q.campaign_type, n.campaign_type, 'konkurs') AS ctype
+                               FROM mail_queue q LEFT JOIN newsletters n ON n.id = q.newsletter_id
+                              WHERE q.status='queued' AND COALESCE(q.priority,0)>0
+                                AND (q.scheduled_at IS NULL OR q.scheduled_at='' OR q.scheduled_at<=?)
+                                AND COALESCE(q.campaign_type, n.campaign_type, 'konkurs') = ?
+                                AND LOWER(SUBSTR(q.to_email, INSTR(q.to_email,'@') + 1))
+                                    IN (SELECT domain FROM mail_domain_policy WHERE policy='official')
+                              ORDER BY q.priority DESC, q.id ASC LIMIT ?",
+                            [$nowTs, $type, $perRunSmtp * 4]);
+                $done = 0;
+                foreach ($rows as $row) {
+                    if ($done >= $perRunSmtp || $done0 + $done >= $smtpCap) break;
+                    // Пул называем явно: тип кампании оставляем как есть, чтобы
+                    // суточные доли и отчёты считали письмо своей волной, а не
+                    // «официальным обращением».
+                    $row['force_pool'] = $pool;
+                    if ($sendRow($row, $acc)) {
+                        $sent++; $done++;
+                        // СВОЙ КАНАЛ НАДО МЕРИТЬ САМИМ: событий от сервиса рассылок
+                        // по этим письмам не будет, и в отчёте домен показывал бы
+                        // нули, по которым не отличить «дошло во Входящие» от «мы
+                        // туда вообще не пишем».
                         nl_own_event((string) $row['to_email'], 'delivered');
                     }
                 }
-                if ($govDone > 0) nl_log("process: напрямую с почты центра — отправлено $govDone (за сутки "
-                                       . ($govSent + $govDone) . " из $govCap)");
+                if ($done > 0) nl_log("process: напрямую с $box — отправлено $done (за сутки "
+                                    . ($done0 + $done) . " из $smtpCap)");
             }
         }
     }

@@ -92,7 +92,26 @@ foreach (['mail.ru', 'yandex.ru', 'gmail.com'] as $d) {
         mrep_domain_day_cap($d), mrep_sent_today_by_domain()[$d] ?? 0, mrep_domain_quota_left($d));
 }
 
-echo "\nВЕДОМСТВЕННЫЕ ШЛЮЗЫ ИДУТ ЧЕРЕЗ ПОЧТУ ЦЕНТРА\n$line\n";
+echo "\nРАБОЧИЕ ЯЩИКИ ЦЕНТРА В РАССЫЛКАХ НЕ УЧАСТВУЮТ\n$line\n";
+// Правило владельца: kc@ — заявки, результаты, сайт, ведомства; nagradi.on@ —
+// награды; массовые — только news@ и novosti@, в обоих каналах.
+$boxesOf = static function (string $pool): array {
+    return array_map(static fn(array $a) => mb_strtolower((string) ($a['user'] ?? '')),
+                     mail_fallback_accounts([], $pool));
+};
+foreach (['bulk', 'cold', 'bulk_smtp', 'cold_smtp'] as $pool) {
+    $list = $boxesOf($pool);
+    // Имя переменной намеренно длинное: короткое $bad — это счётчик сбоев всего
+    // аудита, и его подмена обнуляла итоговую строку.
+    $officialBoxes = array_filter($list, static fn($u) => str_starts_with($u, 'kc@') || str_starts_with($u, 'nagradi'));
+    $say(!$officialBoxes, "пул $pool не содержит рабочих ящиков центра", implode(', ', $list));
+}
+$say($boxesOf('bulk_smtp') === $boxesOf('bulk') || str_starts_with($boxesOf('bulk_smtp')[0] ?? '', 'news@'),
+     'прямой канал своей базы идёт с news@', $boxesOf('bulk_smtp')[0] ?? '(нет)');
+$say(str_starts_with($boxesOf('cold_smtp')[0] ?? '', 'novosti@'),
+     'прямой канал учреждений идёт с novosti@', $boxesOf('cold_smtp')[0] ?? '(нет)');
+
+echo "\nШЛЮЗЫ И ЯНДЕКС ИДУТ ПРЯМЫМ КАНАЛОМ\n$line\n";
 if (is_file(BASE_PATH . '/core/mail_domain_policy.php')) {
     require_once BASE_PATH . '/core/mail_domain_policy.php';
     $off = mdp_official_domains();
