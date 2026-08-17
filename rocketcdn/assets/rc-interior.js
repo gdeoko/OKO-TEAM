@@ -57,6 +57,9 @@ function measure() {
   P_TURN = Math.max(P_IN + 0.02, Math.min(0.985, (conTop - innerHeight * 0.4) / maxS));
   P_OUT  = Math.max(P_TURN + 0.01, Math.min(0.999, (conBot - innerHeight * 0.2) / maxS));
   P_PREP = Math.max(0.2, P_LOCK - 0.12);
+  /* Ракета обязана приземлиться до того, как мы войдём в люк:
+     заходить внутрь корабля, который ещё летит, странно. */
+  g.RC_LAND_AT = P_LOCK;
 }
 
 var st = {

@@ -676,6 +676,53 @@ Rocket.prototype.orbit = function (dt) {
   return { R: R, Rw: Rw };
 };
 
+/* ── Посадка ─────────────────────────────────────────────────
+   Перед тем как мы войдём внутрь корабля, он должен приземлиться:
+   иначе человек заходит в люк ракеты, которая по-прежнему летит.
+   Порог посадки сообщает сцена интерьера (она знает, где начинается
+   тамбур). Если её нет, посадки просто не происходит и ракета летит
+   до конца страницы, как летела раньше. */
+Rocket.prototype.landing = function (p, dt, pos, tan) {
+  var at = g.RC_LAND_AT || 0;
+  if (!at) { this.landK = 0; return 0; }
+
+  var from = Math.max(0, at - 0.07);
+  var k = (p - from) / Math.max(0.001, at - from);
+  k = k < 0 ? 0 : k > 1 ? 1 : k;
+  k = k * k * (3 - 2 * k);
+  /* Демпфер: рывок скроллом не должен ронять ракету камнем */
+  /* Первый кадр: поля ещё нет, и без явного нуля сложение даёт NaN,
+     который дальше расходится по всей сцене */
+  var prev = this.landK || 0;
+  this.landK = prev + (k - prev) * Math.min(1, (dt || 0.016) * 3.2);
+  if (this.landK < 0.002) return 0;
+
+  /* Площадка: нижняя треть кадра, чуть правее центра, ближе к камере */
+  var w = this.canvas.clientWidth || innerWidth;
+  var h = this.canvas.clientHeight || innerHeight;
+  this.toWorld(w * 0.78, h * 0.86, -0.2, this._padP || (this._padP = new T.Vector3()));
+  pos.lerp(this._padP, this.landK);
+
+  /* Нос разворачивается вверх: ракета встаёт на опоры */
+  tan.lerp(this._upVec || (this._upVec = new T.Vector3(0, 1, 0)), this.landK).normalize();
+
+  /* Тяга гаснет, но факел не исчезает совсем: сопло остывает */
+  this.power = Math.max(0.14, this.power * (1 - this.landK * 0.82));
+
+  /* Касание: один удар и тишина после него */
+  if (this.landK > 0.86 && !this._touched) {
+    this._touched = 1;
+    document.documentElement.classList.add("rc-landed-craft");
+    if (g.RC_SOUND && g.RC_SOUND.boom) { try { g.RC_SOUND.boom(); } catch (e) {} }
+    try { dispatchEvent(new CustomEvent("rc:touchdown")); } catch (e) {}
+  }
+  if (this.landK < 0.4 && this._touched) {
+    this._touched = 0;
+    document.documentElement.classList.remove("rc-landed-craft");
+  }
+  return this.landK;
+};
+
 Rocket.prototype.layout = function (p, dt) {
   p = ((p % 1) + 1) % 1;
   var pos = this.path.getPointAt(p, this._tmpA);
@@ -687,6 +734,10 @@ Rocket.prototype.layout = function (p, dt) {
     pos.lerp(this._orbP, k);
     tan.lerp(this._orbT, k).normalize();
   }
+
+  /* Посадка перекрывает и полёт, и орбиту: это финал наружного акта */
+  var land = this.landing(p, dt, pos, tan);
+  if (land > 0.01) k = k * (1 - land);
 
   this.pivot.position.copy(pos);
 
@@ -702,7 +753,7 @@ Rocket.prototype.layout = function (p, dt) {
   /* Дальние участки пути делаем мельче, ближние крупнее.
      Вокруг планеты ракета идёт мельче: она «далеко». */
   var s = this.C.mobile ? 0.62 : 0.86;
-  this.pivot.scale.setScalar(s * (1 - k * 0.62));
+  this.pivot.scale.setScalar(s * (1 - k * 0.62) * (1 + (this.landK || 0) * 0.12));
 };
 
 /* Крупный читаемый текст: только он лежит на прозрачном фоне,
@@ -768,8 +819,9 @@ Rocket.prototype.frame = function (dt) {
   this.layout(this.progress, dt);
 
   /* Покачивание в состоянии покоя */
-  this.craft.position.y = Math.sin(t * 1.35) * 0.16;
-  this.craft.position.x = Math.cos(t * 0.9) * 0.09;
+  var calmK = 1 - (this.landK || 0) * 0.92;      /* на опорах ракета стоит */
+  this.craft.position.y = Math.sin(t * 1.35) * 0.16 * calmK;
+  this.craft.position.x = Math.cos(t * 0.9) * 0.09 * calmK;
 
   /* Факел дышит и реагирует на скорость прокрутки */
   var flick = 0.86 + Math.sin(t * 27) * 0.07 + Math.sin(t * 41) * 0.05;

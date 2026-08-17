@@ -212,6 +212,50 @@ Sound.prototype.energy = function () {
 
 /* ── Подключение ─────────────────────────────────────────── */
 var snd = new Sound();
+
+/* ── Короткие события: отсечки маршрута и посадка ─────────────
+   Звучат только если человек включил звук. Не чаще шести раз в
+   секунду: иначе на быстрой прокрутке получается треск, а не кино. */
+Sound.prototype.blip = function (freq) {
+  if (!this.on || !this.ctx) return;
+  var now = this.ctx.currentTime;
+  if (this._blipAt && now - this._blipAt < 0.16) return;
+  this._blipAt = now;
+  try {
+    var o = this.ctx.createOscillator(), g2 = this.ctx.createGain();
+    o.type = "triangle";
+    o.frequency.value = freq || 660;
+    g2.gain.setValueAtTime(0, now);
+    g2.gain.linearRampToValueAtTime(0.07, now + 0.01);
+    g2.gain.exponentialRampToValueAtTime(0.0001, now + 0.26);
+    o.connect(g2); g2.connect(this.master);
+    o.start(); o.stop(now + 0.3);
+  } catch (e) {}
+};
+
+/* Касание опор: глухой удар и шипение, после которого по сценарию
+   идут шестьсот миллисекунд полной тишины. */
+Sound.prototype.boom = function () {
+  if (!this.on || !this.ctx) return;
+  var now = this.ctx.currentTime;
+  if (this._boomAt && now - this._boomAt < 2) return;
+  this._boomAt = now;
+  try {
+    var n = Math.floor(this.ctx.sampleRate * 0.6);
+    var b = this.ctx.createBuffer(1, n, this.ctx.sampleRate), c = b.getChannelData(0);
+    for (var i = 0; i < n; i++) c[i] = (Math.random() * 2 - 1) * Math.pow(1 - i / n, 2);
+    var src = this.ctx.createBufferSource(); src.buffer = b;
+    var f = this.ctx.createBiquadFilter(); f.type = "lowpass"; f.frequency.value = 900;
+    var g2 = this.ctx.createGain();
+    g2.gain.setValueAtTime(0.32, now);
+    g2.gain.exponentialRampToValueAtTime(0.0001, now + 0.6);
+    src.connect(f); f.connect(g2); g2.connect(this.master);
+    src.start();
+    /* Гул двигателя уходит в ноль: ракета села */
+    if (this.eg) this.eg.gain.setTargetAtTime(0.0001, now, 0.2);
+  } catch (e) {}
+};
+
 g.RC_SOUND = snd;
 
 function bind() {
