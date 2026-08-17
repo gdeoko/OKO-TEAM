@@ -110,7 +110,7 @@ g.RC_GL = {
     return;
   }
 
-  var FILES = ["vendor/three.min.js", "rc-globe3d.js", "rc-rack.js", "rc-rocket.js"];
+  var FILES = ["vendor/three.min.js", "rc-globe3d.js", "rc-rack.js", "rc-rocket.js", "rc-interior.js"];
   var started = false;
 
   function load(i) {

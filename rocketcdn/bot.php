@@ -12,6 +12,9 @@
    ══════════════════════════════════════════════════════════ */
 
 require __DIR__ . '/config.php';
+/* Дневной отчёт собирается тем же кодом, что и в cron.php:
+   команда /report обязана давать ровно то же, что приходит в 9:00 */
+require __DIR__ . '/lib_report.php';
 
 if (php_sapi_name() !== 'cli' && ($_GET['key'] ?? '') !== rc_cfg('admin_key')) {
     http_response_code(403); exit('forbidden');
@@ -33,6 +36,7 @@ function is_admin($uid) { return in_array((int)$uid, array_map('intval', (array)
 function menu_admin() {
     return ['keyboard' => [
         [['text' => 'Аналитика'], ['text' => 'Заявки']],
+        [['text' => 'Состояние'], ['text' => 'Тексты сайта']],
         [['text' => 'Сеть'], ['text' => 'Мини-приложение', 'web_app' => ['url' => $GLOBALS['APP_URL']]]],
         [['text' => 'Настройки'], ['text' => 'Помощь']],
     ], 'resize_keyboard' => true, 'is_persistent' => true];
@@ -114,7 +118,11 @@ function txt_help($uid) {
             . "/bindchat - привязать текущий чат и тему для уведомлений\n"
             . "/unbind - отвязать чат\n"
             . "/id - показать id чата и темы\n"
-            . "/site - ссылки на сайт и админку\n\n"
+            . "/site - ссылки на сайт и админку\n"
+            . "/health - состояние площадки\n"
+            . "/texts - правка текстов сайта прямо здесь\n"
+            . "/report - собрать дневной отчёт сейчас\n"
+            . "/undo - отменить последнюю правку текста\n\n"
             . "Нижнее меню открывает те же разделы кнопками.";
     }
     return "Напишите вопрос сообщением, мы ответим. Нижнее меню открывает разделы о сервисе.";
@@ -219,6 +227,101 @@ function leads_text($limit = 8) {
 }
 
 /* ── Снимаем вебхук один раз, иначе getUpdates не работает ── */
+/* ── Состояние площадки одним сообщением ─────────────────────
+   Те же цифры, что во вкладке «Состояние» админки: считает общая
+   функция rc_selftest() из config.php. */
+function health_text() {
+    $r = rc_selftest();
+    $yn = function ($v) { return $v ? 'да' : 'НЕТ'; };
+    $t = "<b>Состояние площадки</b>\n\n"
+       . "Почта настроена: " . $yn($r['mail_configured']) . "\n"
+       . "Бот настроен: " . $yn($r['tg_configured']) . "\n"
+       . "Чат уведомлений привязан: " . $yn($r['chat_bound']) . "\n"
+       . "Папка данных пишется: " . $yn($r['data_writable']) . "\n\n"
+       . "Заявок без ответа: <b>" . (int)$r['leads_new'] . "</b>";
+    if (!empty($r['leads_wait_hours'])) $t .= " (самая старая ждёт " . (int)$r['leads_wait_hours'] . " ч)";
+    $t .= "\nПоследний отчёт: " . ($r['cron_last'] ?: 'ещё не было')
+       . "\nКопий заявок: " . (int)$r['backup_count'] . ", последняя " . ($r['backup_last'] ?: '-');
+    if ($r['cert_days'] !== null) $t .= "\nСертификат: " . (int)$r['cert_days'] . " дн. до конца";
+    if ($r['disk_free_gb'] !== null) $t .= "\nСвободно на диске: " . $r['disk_free_gb'] . " ГБ";
+    if (!empty($r['tg_ip'])) $t .= "\nАдрес телеграма: <code>" . $r['tg_ip'] . "</code>";
+
+    /* То, что тревожит, повторяем отдельной строкой: в длинном
+       сообщении важное иначе теряется */
+    $warn = [];
+    if ($r['cert_days'] !== null && $r['cert_days'] <= 14) $warn[] = 'сертификат кончается';
+    if ($r['disk_free_gb'] !== null && $r['disk_free_gb'] < 3) $warn[] = 'мало места на диске';
+    if (!empty($r['leads_wait_hours']) && $r['leads_wait_hours'] >= 4) $warn[] = 'заявка ждёт ответа';
+    if (!$r['data_writable']) $warn[] = 'папка данных не пишется';
+    if ($warn) $t .= "\n\n<b>Требует внимания:</b> " . implode(', ', $warn) . '.';
+    return $t;
+}
+
+/* ── Правка текстов сайта из переписки ───────────────────────
+   Ключи словаря сгруппированы по первому слову: hero, cta, kpi и
+   так далее. Сначала выбираем группу, потом ключ, потом присылаем
+   новое значение сообщением. Перед заменой всегда показываем
+   старое: правка вслепую на боевом сайте недопустима. */
+function texts_state_file() { return RC_DATA . '/bot_state.json'; }
+
+function texts_state_set($uid, $val) {
+    rc_json_update(texts_state_file(), function ($d) use ($uid, $val) {
+        if (!is_array($d)) $d = [];
+        if ($val === null) unset($d[(string)$uid]); else $d[(string)$uid] = $val;
+        return $d;
+    });
+}
+function texts_state_get($uid) {
+    $d = rc_json_read(texts_state_file(), []);
+    return $d[(string)$uid] ?? null;
+}
+
+function texts_groups() {
+    $all = rc_i18n_ru();
+    $g = [];
+    foreach ($all as $k => $v) {
+        $part = explode('.', $k);
+        $grp = count($part) > 1 ? $part[0] : 'прочее';
+        $g[$grp] = ($g[$grp] ?? 0) + 1;
+    }
+    ksort($g);
+    return $g;
+}
+
+function texts_groups_kb() {
+    $rows = []; $line = [];
+    foreach (texts_groups() as $grp => $n) {
+        $line[] = ['text' => $grp . ' (' . $n . ')', 'callback_data' => 'tg_' . $grp];
+        if (count($line) === 3) { $rows[] = $line; $line = []; }
+    }
+    if ($line) $rows[] = $line;
+    return $rows;
+}
+
+function texts_keys_kb($grp, $page = 0) {
+    $all = rc_i18n_ru();
+    $keys = [];
+    foreach ($all as $k => $v) {
+        $part = explode('.', $k);
+        $g = count($part) > 1 ? $part[0] : 'прочее';
+        if ($g === $grp) $keys[] = $k;
+    }
+    sort($keys);
+    $per = 12;
+    $slice = array_slice($keys, $page * $per, $per);
+    $rows = [];
+    foreach ($slice as $k) {
+        $val = mb_substr((string)($all[$k] ?? ''), 0, 34);
+        $rows[] = [['text' => $k . ' · ' . $val, 'callback_data' => 'tk_' . $k]];
+    }
+    $nav = [];
+    if ($page > 0) $nav[] = ['text' => 'назад', 'callback_data' => 'tp_' . $grp . '_' . ($page - 1)];
+    if (count($keys) > ($page + 1) * $per) $nav[] = ['text' => 'дальше', 'callback_data' => 'tp_' . $grp . '_' . ($page + 1)];
+    $nav[] = ['text' => 'к разделам', 'callback_data' => 'tg_root'];
+    $rows[] = $nav;
+    return $rows;
+}
+
 $flag = RC_DATA . '/.webhook_off';
 if (rc_cfg('tg_token') && !is_file($flag)) {
     rc_tg('deleteWebhook', ['drop_pending_updates' => false]);
@@ -262,6 +365,34 @@ for ($loop = 0; $loop < 6; $loop++) {
             }
             if (preg_match('~^stats_(\d+)$~', $data, $m)) {
                 say($chat, stats_text((int)$m[1]), $uid);
+            }
+
+            /* ── Тексты сайта ── */
+            if ($data === 'tg_root') {
+                say($chat, "<b>Тексты сайта</b>\n\nВыберите раздел.", null, texts_groups_kb());
+            } elseif (preg_match('~^tg_(.+)$~', $data, $m)) {
+                say($chat, "Раздел <b>" . htmlspecialchars($m[1]) . "</b>. Выберите строку.", null, texts_keys_kb($m[1], 0));
+            } elseif (preg_match('~^tp_(.+)_(\d+)$~', $data, $m)) {
+                say($chat, "Раздел <b>" . htmlspecialchars($m[1]) . "</b>.", null, texts_keys_kb($m[1], (int)$m[2]));
+            } elseif (preg_match('~^tk_(.+)$~', $data, $m)) {
+                $all = rc_i18n_ru();
+                $key = $m[1];
+                if (!isset($all[$key])) { say($chat, 'Такой строки больше нет.', $uid); continue; }
+                texts_state_set($uid, ['key' => $key, 'old' => $all[$key]]);
+                say($chat, "<b>" . htmlspecialchars($key) . "</b>\n\nСейчас на сайте:\n<code>"
+                    . htmlspecialchars($all[$key]) . "</code>\n\nПришлите новый текст одним сообщением."
+                    . "\nЧтобы передумать - /cancel.", $uid);
+            } elseif ($data === 'txt_save') {
+                $stt = texts_state_get($uid);
+                if (!empty($stt['key']) && isset($stt['new'])) {
+                    rc_i18n_set($stt['key'], $stt['new']);
+                    rc_admin_log($uid, 'правка текста ' . $stt['key'], $stt['old'] . ' -> ' . $stt['new']);
+                    texts_state_set($uid, ['undo' => ['key' => $stt['key'], 'old' => $stt['old']]]);
+                    say($chat, "Сохранено. Сайт уже отдаёт новый текст.\nОтменить - /undo", $uid);
+                } else say($chat, 'Нечего сохранять.', $uid);
+            } elseif ($data === 'txt_cancel') {
+                texts_state_set($uid, null);
+                say($chat, 'Правка отменена, на сайте всё по-старому.', $uid);
             }
             continue;
         }
@@ -361,6 +492,49 @@ for ($loop = 0; $loop < 6; $loop++) {
             continue;
         }
         if ($cmd === '/leads' || $text === 'Заявки') { say($chat, leads_text(8), $uid); continue; }
+
+        if ($cmd === '/health' || $text === 'Состояние') { say($chat, health_text(), $uid); continue; }
+
+        if ($cmd === '/report') {
+            /* Принудительный отчёт: расписание в 9:00 это не сдвигает,
+               cron.php сам держит отметку дня в cron_state.json */
+            say($chat, rc_report_daily(), $uid);
+            rc_admin_log($uid, 'отчёт по требованию');
+            continue;
+        }
+
+        if ($cmd === '/texts' || $text === 'Тексты сайта') {
+            say($chat, "<b>Тексты сайта</b>\n\nПравим прямо здесь: раздел, строка, новый текст."
+                . "\nСтарое значение показывается перед заменой, последнюю правку можно отменить командой /undo.",
+                null, texts_groups_kb());
+            continue;
+        }
+
+        if ($cmd === '/cancel') { texts_state_set($uid, null); say($chat, 'Отменено.', $uid); continue; }
+
+        if ($cmd === '/undo') {
+            $stt = texts_state_get($uid);
+            if (!empty($stt['undo']['key'])) {
+                rc_i18n_set($stt['undo']['key'], $stt['undo']['old']);
+                rc_admin_log($uid, 'откат текста ' . $stt['undo']['key'], $stt['undo']['old']);
+                texts_state_set($uid, null);
+                say($chat, 'Вернул прежний текст.', $uid);
+            } else say($chat, 'Отменять нечего: последней правки нет.', $uid);
+            continue;
+        }
+
+        /* Ждём новый текст для выбранной строки */
+        $stt = texts_state_get($uid);
+        if (!empty($stt['key']) && $cmd !== '' && $cmd[0] !== '/' && !$isGroup) {
+            $stt['new'] = $text;
+            texts_state_set($uid, $stt);
+            say($chat, "<b>" . htmlspecialchars($stt['key']) . "</b>\n\nБыло:\n<code>"
+                . htmlspecialchars($stt['old']) . "</code>\n\nСтанет:\n<code>"
+                . htmlspecialchars($text) . "</code>", null,
+                [[['text' => 'Сохранить', 'callback_data' => 'txt_save'],
+                  ['text' => 'Отмена', 'callback_data' => 'txt_cancel']]]);
+            continue;
+        }
         if ($text === 'Настройки' || $cmd === '/site') {
             $bound = rc_cfg('tg_chat') ? 'да' : 'нет';
             $mail  = rc_cfg('mail_user') ? 'настроена' : 'не настроена';

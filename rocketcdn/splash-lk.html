@@ -1,0 +1,756 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Экраны загрузки для личного кабинета Rocket CDN</title>
+<meta name="robots" content="noindex, nofollow">
+<style>
+/* Витрина в палитре кабинета: Geologica, радиусы 8 и 12,
+   градиент от фиолетового к жёлтому, синий #1770C1. */
+:root{
+  --ink:#051114; --mut:#606266; --line:#E4E7ED; --bg:#F5F7FA; --card:#FFFFFF;
+  --blue:#1770C1; --ok:#67C23A;
+  --grad:linear-gradient(190deg,#9F40CC 5.37%,#F6C444 97.53%);
+  --r:12px; --r-sm:8px; --sh:0 8px 24px -12px rgba(16,46,56,.32);
+  --font:Geologica,'Golos Text',-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--font);
+     font-size:15px;line-height:1.55;padding:40px 20px 90px}
+h1{font-size:31px;font-weight:800;margin:0 0 10px}
+.top{max-width:1220px;margin:0 auto 30px;text-align:center}
+.lead{max-width:74ch;color:var(--mut);margin:0 auto}
+.badge{display:inline-block;padding:5px 12px;border-radius:999px;font-size:12px;font-weight:700;
+       color:#fff;background:var(--grad);margin-bottom:12px}
+.grid{display:grid;gap:22px;max-width:1220px;margin:0 auto;
+      grid-template-columns:repeat(auto-fit,minmax(340px,1fr))}
+.item{background:var(--card);border:1px solid var(--line);border-radius:var(--r);
+      box-shadow:var(--sh);overflow:hidden;display:flex;flex-direction:column}
+.head{padding:18px 18px 12px}
+.head h2{font-size:17px;margin:0 0 4px;font-weight:700}
+.head p{margin:0;font-size:13px;color:var(--mut)}
+.stage{position:relative;height:280px;background:#050B12;border-top:1px solid var(--line);
+       border-bottom:1px solid var(--line);overflow:hidden}
+.stage .hold{position:absolute;inset:0;display:grid;place-items:center;color:#6a7b88;
+       font-size:13px;letter-spacing:.04em}
+.note{padding:12px 18px;font-size:12.5px;color:var(--mut);flex:1}
+.row{display:flex;gap:8px;padding:0 18px 16px;flex-wrap:wrap}
+button{font:inherit;font-size:13px;font-weight:600;cursor:pointer;border-radius:var(--r-sm);
+       padding:8px 14px;border:1px solid var(--line);background:#fff;color:var(--ink);
+       transition:background .18s,border-color .18s,color .18s}
+button:hover{border-color:var(--blue);color:var(--blue)}
+button.go{background:var(--blue);border-color:var(--blue);color:#fff}
+button.go:hover{background:#125a9c;color:#fff}
+button.ok{border-color:var(--ok);color:var(--ok)}
+button[aria-pressed="true"]{background:var(--grad);border-color:transparent;color:#fff}
+code{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:12.5px;
+     background:#F0F3F7;border-radius:4px;padding:1px 5px}
+.foot{max-width:1220px;margin:34px auto 0;padding:20px;background:#fff;border:1px solid var(--line);
+      border-radius:var(--r);box-shadow:var(--sh);font-size:13.5px;color:var(--mut)}
+.foot b{color:var(--ink)}
+.foot ul{margin:8px 0 0;padding-left:20px}
+</style>
+</head>
+<body>
+
+<div class="top">
+  <span class="badge">Для личного кабинета</span>
+  <h1>Три экрана загрузки Rocket CDN</h1>
+  <p class="lead">
+    Объёмные, с настоящим движением и звуком. Ни одной внешней зависимости, ни одного
+    запроса, ни одной картинки и ни одного звукового файла: вся графика считается в
+    браузере, весь звук синтезируется на месте. Разработчику кабинета отдаётся одним
+    куском кода с единым интерфейсом
+    <code>RocketLoader.show / setProgress / hide</code>.
+  </p>
+</div>
+
+<div class="grid" id="grid"></div>
+
+<div class="foot">
+  <b>Как встроить.</b> Кусок кода вставляется в <code>&lt;head&gt;</code> страницы кабинета
+  и дальше работает сам: не показывается первые 150 мс, если показался - живёт минимум
+  700 мс, потолок 4 секунды, финальные 600 мс ухода не обрываются никогда.
+  Прогресс отдаётся вызовом <code>RocketLoader.setProgress(0.42)</code>, завершение -
+  <code>RocketLoader.hide()</code>. Если приложение молчит, заставка уходит сама по
+  событию <code>load</code>.
+  <br><br>
+  <b>Про звук.</b> Браузер не даст звучать, пока человек не коснулся страницы, и это
+  правильно. Поэтому звук включается только там, где жест уже был: при переходе внутри
+  кабинета. На первой загрузке заставка молча показывает картинку, ничего не ломая.
+  Выключить совсем: <code>RocketLoader.sound(false)</code>.
+  <ul>
+    <li>Светлая и тёмная схема оформления.</li>
+    <li>Режим уменьшенного движения: остаётся статичный кадр, звук молчит.</li>
+    <li>Доступность: <code>role="status"</code>, <code>aria-busy</code> и скрытая подпись для читалок.</li>
+    <li>Рендер останавливается, если вкладку увели в фон.</li>
+  </ul>
+</div>
+
+<script>
+/* ═══════════════════════════════════════════════════════════
+   Витрина показывает ровно тот код, который отдаётся: страница
+   собирает кусок для разработчика и его же исполняет. Разъехаться
+   показанному и выданному физически негде.
+   ═══════════════════════════════════════════════════════════ */
+(function () {
+"use strict";
+
+/* ── Общая обвязка заставки ────────────────────────────────────
+   Одинаковая для всех трёх: тайминги, честный прогресс, звуковая
+   шина на Web Audio, остановка в фоне, режим уменьшенного движения. */
+function wrap(css, html, draw, audio) {
+return '<!-- Экран загрузки Rocket CDN. Вставить в <head>. Зависимостей нет. -->\n'
++ '<style>\n'
++ '.rcl{position:fixed;inset:0;z-index:9999;background:#050B12;opacity:0;\n'
++ '     transition:opacity .35s ease;font-family:Geologica,system-ui,sans-serif;overflow:hidden}\n'
++ '.rcl.on{opacity:1}.rcl.out{opacity:0}\n'
++ '.rcl canvas{position:absolute;inset:0;width:100%;height:100%;display:block}\n'
++ '.rcl-sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)}\n'
++ '@media (prefers-color-scheme:light){.rcl{background:#050B12}}\n'
++ css
++ '</style>\n'
++ '<script>\n'
++ '(function(w,d){\n'
++ '  "use strict";\n'
++ '  var el=null,cv=null,x=null,raf=null,shown=0,hid=false,p=0,pShow=0,t=0,last=0,dead=false;\n'
++ '  var calm=false;try{calm=matchMedia("(prefers-reduced-motion: reduce)").matches}catch(e){}\n'
++ '  var wantSound=true,ac=null,bus=null,started=false;\n'
++ '\n'
++ '  /* ── Звук: синтез на месте, ни одного файла ── */\n'
++ '  function audioUp(){\n'
++ '    if(ac||!wantSound||calm)return;\n'
++ '    try{\n'
++ '      var C=w.AudioContext||w.webkitAudioContext;if(!C)return;\n'
++ '      ac=new C();\n'
++ '      bus=ac.createGain();bus.gain.value=0;\n'
++ '      var lim=ac.createDynamicsCompressor();\n'
++ '      lim.threshold.value=-12;lim.ratio.value=20;lim.attack.value=.003;lim.release.value=.25;\n'
++ '      bus.connect(lim);lim.connect(ac.destination);\n'
++ '      if(ac.state==="suspended")ac.resume();\n'
++ '      bus.gain.setTargetAtTime(.5,ac.currentTime,.4);\n'
++ '    }catch(e){ac=null}\n'
++ '  }\n'
++ '  function noise(dur){\n'
++ '    var n=Math.floor(ac.sampleRate*dur),b=ac.createBuffer(1,n,ac.sampleRate),c=b.getChannelData(0);\n'
++ '    for(var i=0;i<n;i++)c[i]=(Math.random()*2-1)*(1-i/n);\n'
++ '    var s=ac.createBufferSource();s.buffer=b;return s;\n'
++ '  }\n'
++ '  function ping(freq,dur,vol,type){\n'
++ '    if(!ac)return;\n'
++ '    var o=ac.createOscillator(),g=ac.createGain();\n'
++ '    o.type=type||"sine";o.frequency.value=freq;\n'
++ '    g.gain.setValueAtTime(0,ac.currentTime);\n'
++ '    g.gain.linearRampToValueAtTime(vol||.12,ac.currentTime+.012);\n'
++ '    g.gain.exponentialRampToValueAtTime(.0001,ac.currentTime+(dur||.3));\n'
++ '    o.connect(g);g.connect(bus);o.start();o.stop(ac.currentTime+(dur||.3)+.05);\n'
++ '  }\n'
++ '  function hit(){\n'
++ '    if(!ac)return;\n'
++ '    var s=noise(.5),f=ac.createBiquadFilter(),g=ac.createGain();\n'
++ '    f.type="lowpass";f.frequency.value=1800;\n'
++ '    g.gain.setValueAtTime(.5,ac.currentTime);\n'
++ '    g.gain.exponentialRampToValueAtTime(.0001,ac.currentTime+.5);\n'
++ '    s.connect(f);f.connect(g);g.connect(bus);s.start();\n'
++ '  }\n'
++ audio
++ '\n'
++ '  /* ── Разметка ── */\n'
++ '  function build(){\n'
++ '    if(el||hid||dead)return;\n'
++ '    el=d.createElement("div");el.className="rcl";\n'
++ '    el.setAttribute("role","status");el.setAttribute("aria-busy","true");\n'
++ '    el.innerHTML=' + JSON.stringify(html) + '+\'<span class="rcl-sr">Загрузка личного кабинета Rocket CDN</span>\';\n'
++ '    (d.body||d.documentElement).appendChild(el);\n'
++ '    cv=el.querySelector("canvas");\n'
++ '    if(cv){x=cv.getContext("2d");size()}\n'
++ '    requestAnimationFrame(function(){if(el)el.classList.add("on")});\n'
++ '    shown=Date.now();\n'
++ '    audioUp();\n'
++ '    if(typeof setup==="function")try{setup()}catch(e){}\n'
++ '    if(!calm)raf=requestAnimationFrame(loop);else frame(0);\n'
++ '  }\n'
++ '  function size(){\n'
++ '    if(!cv)return;\n'
++ '    var r=Math.min(2,w.devicePixelRatio||1);\n'
++ '    cv.width=Math.round(innerWidth*r);cv.height=Math.round(innerHeight*r);\n'
++ '  }\n'
++ '  w.addEventListener("resize",size,{passive:true});\n'
++ '\n'
++ '  /* ── Кадр ── */\n'
++ '  function frame(dt){\n'
++ '    if(!x)return;\n'
++ '    pShow+=(p-pShow)*.12;\n'
++ '    t+=dt;\n'
++ '    var W=cv.width,H=cv.height,S=Math.min(W,H);\n'
++ '    draw(W,H,S,pShow,t,dt);\n'
++ '  }\n'
++ '  function loop(ts){\n'
++ '    raf=requestAnimationFrame(loop);\n'
++ '    if(d.hidden){last=0;return}\n'
++ '    var dt=last?Math.min(.05,(ts-last)/1000):.016;last=ts;\n'
++ '    frame(dt);\n'
++ '  }\n'
++ '\n'
++ '  var api={\n'
++ '    show:function(){build()},\n'
++ '    setProgress:function(v){p=v>1?v/100:v;if(p>1)p=1;if(p<0)p=0},\n'
++ '    sound:function(on){wantSound=!!on;if(!on&&ac){try{ac.close()}catch(e){}ac=null}},\n'
++ '    hide:function(){\n'
++ '      if(hid)return;hid=true;if(!el){dead=true;return}\n'
++ '      var wait=Math.max(0,700-(Date.now()-shown));\n'
++ '      setTimeout(function(){\n'
++ '        p=1;\n'
++ '        if(typeof finale==="function")try{finale()}catch(e){}\n'
++ '        setTimeout(function(){\n'
++ '          if(!el)return;\n'
++ '          el.classList.add("out");\n'
++ '          if(ac&&bus)try{bus.gain.setTargetAtTime(0,ac.currentTime,.18)}catch(e){}\n'
++ '          setTimeout(api.destroy,600);\n'
++ '        },520);\n'
++ '      },wait);\n'
++ '    },\n'
++ '    destroy:function(){\n'
++ '      dead=true;\n'
++ '      if(raf)cancelAnimationFrame(raf);raf=null;\n'
++ '      if(ac){try{ac.close()}catch(e){}ac=null}\n'
++ '      if(el&&el.parentNode)el.parentNode.removeChild(el);el=null;x=null;cv=null;\n'
++ '    }\n'
++ '  };\n'
++ '  w.RocketLoader=api;\n'
++ '  setTimeout(function(){if(!hid)api.show()},150);\n'
++ '  if(d.readyState==="complete")api.hide();\n'
++ '  else w.addEventListener("load",function(){api.hide()},{once:true});\n'
++ '  setTimeout(function(){api.hide()},4000);\n'
++ '})(window,document);\n'
++ '<\/script>';
+}
+
+/* ══════════════════════════════════════════════════════════════
+   Вариант 1. Гиперпрыжок
+
+   Настоящий трёхмерный туннель: пакеты данных летят на зрителя с
+   перспективной проекцией, скорость и длина следа растут по
+   проценту загрузки, на финале прыжок и вспышка.
+   ══════════════════════════════════════════════════════════════ */
+var V1_CSS =
+'.rcl-1 .rcl-cap{position:absolute;left:0;right:0;bottom:15%;text-align:center;\n' +
+'  font-size:11px;letter-spacing:.42em;font-weight:600;color:rgba(226,232,240,.5)}\n' +
+'.rcl-1 .rcl-pc{position:absolute;left:0;right:0;bottom:8%;text-align:center;\n' +
+'  font-size:13px;font-weight:700;color:#F6C444;font-variant-numeric:tabular-nums}\n';
+
+var V1_HTML = '<div class="rcl-1"><canvas></canvas>' +
+  '<div class="rcl-cap">ROCKET CDN</div><div class="rcl-pc">0%</div></div>';
+
+var V1_AUDIO =
+'  var eng=null,engF=null,engG=null;\n' +
+'  function setup(){\n' +
+'    if(!ac)return;\n' +
+'    /* Гул разгона: две расстроенные пилы через фильтр, который\n' +
+'       открывается по мере роста прогресса */\n' +
+'    engG=ac.createGain();engG.gain.value=.0001;\n' +
+'    engF=ac.createBiquadFilter();engF.type="lowpass";engF.frequency.value=180;engF.Q.value=6;\n' +
+'    eng=[ac.createOscillator(),ac.createOscillator()];\n' +
+'    eng[0].type=eng[1].type="sawtooth";\n' +
+'    eng[0].frequency.value=55;eng[1].frequency.value=55*1.5;\n' +
+'    eng[1].detune.value=7;\n' +
+'    eng[0].connect(engF);eng[1].connect(engF);engF.connect(engG);engG.connect(bus);\n' +
+'    eng[0].start();eng[1].start();\n' +
+'    engG.gain.setTargetAtTime(.16,ac.currentTime,.6);\n' +
+'  }\n' +
+'  function finale(){\n' +
+'    if(!ac)return;\n' +
+'    hit();ping(880,.5,.1,"triangle");ping(1320,.6,.07,"sine");\n' +
+'    if(engG)engG.gain.setTargetAtTime(.0001,ac.currentTime,.25);\n' +
+'  }\n';
+
+var V1_DRAW = function (W, H, S, p, t, dt) {
+  var stars = draw1.stars;
+  if (!stars) {
+    stars = draw1.stars = [];
+    for (var i = 0; i < 320; i++) {
+      stars.push({ x: (Math.random() - 0.5) * 2, y: (Math.random() - 0.5) * 2, z: Math.random(), c: Math.random() });
+    }
+  }
+  var cx = W / 2, cy = H / 2;
+  /* Шлейф вместо очистки: следы остаются и читаются как скорость */
+  x.fillStyle = "rgba(5,11,18," + (0.34 - p * 0.16).toFixed(3) + ")";
+  x.fillRect(0, 0, W, H);
+
+  var speed = (0.12 + p * p * 1.35) * dt * 60;
+  var fov = S * 0.75;
+  for (var i = 0; i < stars.length; i++) {
+    var s = stars[i];
+    var pz = s.z;
+    s.z -= speed * 0.012;
+    if (s.z <= 0.02) {
+      s.z = 1; s.x = (Math.random() - 0.5) * 2; s.y = (Math.random() - 0.5) * 2; s.c = Math.random();
+      pz = s.z;
+    }
+    var k = fov / s.z, kp = fov / pz;
+    var px = cx + s.x * k, py = cy + s.y * k;
+    var qx = cx + s.x * kp, qy = cy + s.y * kp;
+    var a = Math.min(1, (1 - s.z) * 1.5);
+    var wgt = Math.max(0.6, (1 - s.z) * 4.5);
+    /* Фирменные цвета кабинета: фиолетовый в жёлтый */
+    x.strokeStyle = s.c > 0.72
+      ? "rgba(246,196,68," + (a * 0.95).toFixed(3) + ")"
+      : (s.c > 0.4 ? "rgba(159,64,204," + (a * 0.9).toFixed(3) + ")"
+                   : "rgba(66,178,220," + (a * 0.8).toFixed(3) + ")");
+    x.lineWidth = wgt;
+    x.beginPath(); x.moveTo(qx, qy); x.lineTo(px, py); x.stroke();
+  }
+
+  /* Кольцо горизонта: тонкий обод, который сжимается к финалу */
+  var R = S * (0.42 - p * 0.12);
+  x.strokeStyle = "rgba(226,232,240," + (0.1 + p * 0.16).toFixed(3) + ")";
+  x.lineWidth = Math.max(1, S * 0.0022);
+  x.beginPath(); x.arc(cx, cy, R, 0, 6.283); x.stroke();
+
+  /* Ядро в центре разгорается по прогрессу */
+  var core = S * (0.045 + p * 0.11);
+  var gr = x.createRadialGradient(cx, cy, 0, cx, cy, core * 2.6);
+  gr.addColorStop(0, "rgba(246,196,68," + (0.3 + p * 0.5).toFixed(3) + ")");
+  gr.addColorStop(0.35, "rgba(159,64,204," + (0.12 + p * 0.22).toFixed(3) + ")");
+  gr.addColorStop(1, "rgba(5,11,18,0)");
+  x.fillStyle = gr;
+  x.beginPath(); x.arc(cx, cy, core * 2.6, 0, 6.283); x.fill();
+
+  var pc = el.querySelector(".rcl-pc");
+  if (pc) pc.textContent = Math.round(p * 100) + "%";
+};
+
+/* ══════════════════════════════════════════════════════════════
+   Вариант 2. Сфера сети
+
+   Двести восемнадцать узлов на настоящей сфере: точки разложены
+   по спирали Фибоначчи, сфера вращается, волна зажигания идёт от
+   Москвы по широте, между вспыхнувшими узлами протягиваются дуги.
+   ══════════════════════════════════════════════════════════════ */
+var V2_CSS =
+'.rcl-2 .rcl-cap{position:absolute;left:0;right:0;bottom:15%;text-align:center;\n' +
+'  font-size:11px;letter-spacing:.42em;font-weight:600;color:rgba(226,232,240,.5)}\n' +
+'.rcl-2 .rcl-pc{position:absolute;left:0;right:0;top:50%;transform:translateY(-50%);\n' +
+'  text-align:center;font-size:34px;font-weight:800;color:#fff;\n' +
+'  font-variant-numeric:tabular-nums;text-shadow:0 0 30px rgba(159,64,204,.8)}\n';
+
+var V2_HTML = '<div class="rcl-2"><canvas></canvas>' +
+  '<div class="rcl-pc">0%</div><div class="rcl-cap">218 ТОЧЕК ПРИСУТСТВИЯ</div></div>';
+
+var V2_AUDIO =
+'  var lit=0,pad=null,padG=null;\n' +
+'  function setup(){\n' +
+'    if(!ac)return;\n' +
+'    /* Подложка: тихий аккорд, на который ложатся щелчки узлов */\n' +
+'    padG=ac.createGain();padG.gain.value=.0001;padG.connect(bus);\n' +
+'    pad=[ac.createOscillator(),ac.createOscillator(),ac.createOscillator()];\n' +
+'    var f=[110,164.81,220];\n' +
+'    for(var i=0;i<3;i++){pad[i].type="sine";pad[i].frequency.value=f[i];pad[i].connect(padG);pad[i].start()}\n' +
+'    padG.gain.setTargetAtTime(.05,ac.currentTime,.8);\n' +
+'  }\n' +
+'  function node(k){\n' +
+'    /* Не чаще шести звуков в секунду: иначе получается треск */\n' +
+'    if(!ac)return;\n' +
+'    var now=ac.currentTime;\n' +
+'    if(now-lit<.16)return;lit=now;\n' +
+'    ping(520+k*680,.28,.08,"triangle");\n' +
+'  }\n' +
+'  function finale(){\n' +
+'    if(!ac)return;\n' +
+'    ping(659.25,.7,.1,"sine");ping(987.77,.9,.07,"sine");hit();\n' +
+'    if(padG)padG.gain.setTargetAtTime(.0001,ac.currentTime,.3);\n' +
+'  }\n';
+
+var V2_DRAW = function (W, H, S, p, t, dt) {
+  var N = draw2.N;
+  if (!N) {
+    N = draw2.N = [];
+    /* Спираль Фибоначчи: точки ложатся по сфере равномерно, без
+       сгущения у полюсов */
+    var n = 218, off = 2 / n, inc = Math.PI * (3 - Math.sqrt(5));
+    for (var i = 0; i < n; i++) {
+      var yy = i * off - 1 + off / 2;
+      var r = Math.sqrt(1 - yy * yy);
+      var phi = i * inc;
+      N.push({ x: Math.cos(phi) * r, y: yy, z: Math.sin(phi) * r, on: 0, d: (yy + 1) / 2 });
+    }
+    draw2.done = 0;
+  }
+  var cx = W / 2, cy = H / 2, R = S * 0.3;
+  x.fillStyle = "rgba(5,11,18,.42)";
+  x.fillRect(0, 0, W, H);
+
+  var ang = t * 0.42;
+  var ca = Math.cos(ang), sa = Math.sin(ang);
+  var pts = [];
+  for (var i = 0; i < N.length; i++) {
+    var n2 = N[i];
+    var rx = n2.x * ca - n2.z * sa;
+    var rz = n2.x * sa + n2.z * ca;
+    /* Наклон оси: сфера смотрится живее, чем строго вертикальная */
+    var ry = n2.y * 0.94 - rz * 0.34;
+    var rz2 = n2.y * 0.34 + rz * 0.94;
+    var k = 1 / (2.4 - rz2);
+    pts.push({ sx: cx + rx * R * k * 2.2, sy: cy + ry * R * k * 2.2, z: rz2, on: n2.on, d: n2.d });
+
+    /* Волна зажигания идёт снизу вверх ровно по проценту */
+    if (!n2.on && n2.d <= p) {
+      n2.on = 1;
+      if (typeof node === "function") node(n2.d);
+    }
+  }
+  pts.sort(function (a, b) { return a.z - b.z; });
+
+  /* Дуги между соседними зажжёнными узлами */
+  x.lineWidth = Math.max(1, S * 0.0016);
+  for (i = 0; i < pts.length - 1; i += 3) {
+    var a1 = pts[i], b1 = pts[i + 1];
+    if (!a1.on || !b1.on || a1.z < -0.2) continue;
+    x.strokeStyle = "rgba(66,178,220," + (0.1 + a1.z * 0.16).toFixed(3) + ")";
+    x.beginPath(); x.moveTo(a1.sx, a1.sy);
+    x.quadraticCurveTo((a1.sx + b1.sx) / 2, (a1.sy + b1.sy) / 2 - S * 0.06, b1.sx, b1.sy);
+    x.stroke();
+  }
+
+  for (i = 0; i < pts.length; i++) {
+    var q = pts[i];
+    var depth = (q.z + 1) / 2;
+    var rad = S * (0.004 + depth * 0.006) * (q.on ? 1.5 : 0.8);
+    if (q.on) {
+      var pulse = 0.6 + 0.4 * Math.sin(t * 3 + q.d * 9);
+      x.fillStyle = q.d > 0.66
+        ? "rgba(246,196,68," + (pulse * depth).toFixed(3) + ")"
+        : "rgba(159,64,204," + (pulse * depth).toFixed(3) + ")";
+    } else {
+      x.fillStyle = "rgba(96,98,102," + (0.18 * depth).toFixed(3) + ")";
+    }
+    x.beginPath(); x.arc(q.sx, q.sy, rad, 0, 6.283); x.fill();
+  }
+
+  /* Ободок атмосферы */
+  var gr = x.createRadialGradient(cx, cy, R * 0.62, cx, cy, R * 1.16);
+  gr.addColorStop(0, "rgba(66,178,220,0)");
+  gr.addColorStop(0.75, "rgba(66,178,220," + (0.06 + p * 0.14).toFixed(3) + ")");
+  gr.addColorStop(1, "rgba(66,178,220,0)");
+  x.fillStyle = gr;
+  x.beginPath(); x.arc(cx, cy, R * 1.16, 0, 6.283); x.fill();
+
+  var pc = el.querySelector(".rcl-pc");
+  if (pc) pc.textContent = Math.round(p * 100) + "%";
+};
+
+/* ══════════════════════════════════════════════════════════════
+   Вариант 3. Ядро
+
+   Капсула-переключатель из интерфейса кабинета, но объёмная:
+   кругляш едет по проценту, на финале схлопывается в куб, куб
+   разворачивается в пространстве и раскрывается вспышкой.
+   Считается той же перспективной проекцией, что и остальные.
+   ══════════════════════════════════════════════════════════════ */
+var V3_CSS =
+'.rcl-3 .rcl-cap{position:absolute;left:0;right:0;bottom:15%;text-align:center;\n' +
+'  font-size:11px;letter-spacing:.42em;font-weight:600;color:rgba(226,232,240,.45)}\n' +
+'.rcl-3 .rcl-pc{position:absolute;left:0;right:0;bottom:8%;text-align:center;\n' +
+'  font-size:13px;font-weight:700;color:#9F40CC;font-variant-numeric:tabular-nums}\n';
+
+var V3_HTML = '<div class="rcl-3"><canvas></canvas>' +
+  '<div class="rcl-cap">FAST. RELIABLE. GLOBAL.</div><div class="rcl-pc">0%</div></div>';
+
+var V3_AUDIO =
+'  var hum=null,humG=null,ticked=0;\n' +
+'  function setup(){\n' +
+'    if(!ac)return;\n' +
+'    humG=ac.createGain();humG.gain.value=.0001;humG.connect(bus);\n' +
+'    hum=ac.createOscillator();hum.type="sine";hum.frequency.value=72;\n' +
+'    var f=ac.createBiquadFilter();f.type="lowpass";f.frequency.value=400;\n' +
+'    hum.connect(f);f.connect(humG);hum.start();\n' +
+'    humG.gain.setTargetAtTime(.12,ac.currentTime,.7);\n' +
+'  }\n' +
+'  function tick(){\n' +
+'    /* Механический щелчок: короткий шум через полосовой фильтр */\n' +
+'    if(!ac)return;\n' +
+'    var now=ac.currentTime;if(now-ticked<.09)return;ticked=now;\n' +
+'    var s=noise(.05),f=ac.createBiquadFilter(),g=ac.createGain();\n' +
+'    f.type="bandpass";f.frequency.value=2800;f.Q.value=8;\n' +
+'    g.gain.setValueAtTime(.16,now);g.gain.exponentialRampToValueAtTime(.0001,now+.05);\n' +
+'    s.connect(f);f.connect(g);g.connect(bus);s.start();\n' +
+'  }\n' +
+'  function finale(){\n' +
+'    if(!ac)return;\n' +
+'    hit();ping(392,.5,.09,"triangle");ping(587.33,.75,.08,"sine");\n' +
+'    if(humG)humG.gain.setTargetAtTime(.0001,ac.currentTime,.3);\n' +
+'  }\n';
+
+var V3_DRAW = function (W, H, S, p, t, dt) {
+  var cx = W / 2, cy = H / 2;
+  x.fillStyle = "rgba(5,11,18,.5)";
+  x.fillRect(0, 0, W, H);
+
+  /* Звёздная пыль на фоне, чтобы объём было от чего отсчитывать */
+  var dust = draw3.dust;
+  if (!dust) {
+    dust = draw3.dust = [];
+    for (var i = 0; i < 90; i++) dust.push({ x: Math.random(), y: Math.random(), s: Math.random() });
+  }
+  for (i = 0; i < dust.length; i++) {
+    var dd = dust[i];
+    x.fillStyle = "rgba(226,232,240," + (0.05 + dd.s * 0.1).toFixed(3) + ")";
+    x.fillRect(dd.x * W, ((dd.y + t * 0.01 * (0.3 + dd.s)) % 1) * H, 1.6, 1.6);
+  }
+
+  var snap = Math.max(0, Math.min(1, (p - 0.92) / 0.08));   /* схлопывание в куб */
+  var capW = S * 0.36, capH = S * 0.165;
+  var rot = t * 0.75;
+
+  /* Капсула: рисуем как объёмный корпус с фаской и внутренней тенью */
+  x.save();
+  x.translate(cx, cy);
+  x.scale(1, 1 - snap * 0.12);
+  var r = capH / 2;
+  function capsule(w2, h2, rr) {
+    x.beginPath();
+    x.moveTo(-w2 / 2 + rr, -h2 / 2);
+    x.lineTo(w2 / 2 - rr, -h2 / 2);
+    x.quadraticCurveTo(w2 / 2, -h2 / 2, w2 / 2, -h2 / 2 + rr);
+    x.lineTo(w2 / 2, h2 / 2 - rr);
+    x.quadraticCurveTo(w2 / 2, h2 / 2, w2 / 2 - rr, h2 / 2);
+    x.lineTo(-w2 / 2 + rr, h2 / 2);
+    x.quadraticCurveTo(-w2 / 2, h2 / 2, -w2 / 2, h2 / 2 - rr);
+    x.lineTo(-w2 / 2, -h2 / 2 + rr);
+    x.quadraticCurveTo(-w2 / 2, -h2 / 2, -w2 / 2 + rr, -h2 / 2);
+    x.closePath();
+  }
+  var body = x.createLinearGradient(0, -capH / 2, 0, capH / 2);
+  body.addColorStop(0, "rgba(28,44,62,.95)");
+  body.addColorStop(1, "rgba(9,18,30,.95)");
+  capsule(capW, capH, r);
+  x.fillStyle = body; x.fill();
+  x.strokeStyle = "rgba(226,232,240,.14)";
+  x.lineWidth = Math.max(1, S * 0.002);
+  x.stroke();
+  x.restore();
+
+  /* Кругляш едет по проценту и на финале становится ядром */
+  var travel = (capW - capH) * (p - 0.5);
+  var kx = cx + travel, ky = cy;
+  var kr = (capH / 2 - S * 0.008) * (1 + snap * 0.5);
+
+  if (snap < 1) {
+    var kg = x.createRadialGradient(kx - kr * 0.3, ky - kr * 0.4, kr * 0.1, kx, ky, kr);
+    kg.addColorStop(0, "#C86BE8");
+    kg.addColorStop(0.55, "#9F40CC");
+    kg.addColorStop(1, "#F6C444");
+    x.fillStyle = kg;
+    x.beginPath(); x.arc(kx, ky, kr * (1 - snap), 0, 6.283); x.fill();
+    x.fillStyle = "rgba(246,196,68,.25)";
+    x.beginPath(); x.arc(kx, ky, kr * (1 - snap) * 1.9, 0, 6.283); x.fill();
+  }
+
+  /* Куб: восемь вершин, честная перспективная проекция и заливка
+     видимых граней. Никакого спрайта, всё считается на месте. */
+  if (snap > 0) {
+    var a = kr * 1.15 * snap;
+    var V = [[-1,-1,-1],[1,-1,-1],[1,1,-1],[-1,1,-1],[-1,-1,1],[1,-1,1],[1,1,1],[-1,1,1]];
+    var F = [[0,1,2,3],[5,4,7,6],[4,0,3,7],[1,5,6,2],[4,5,1,0],[3,2,6,7]];
+    var cy2 = Math.cos(rot), sy2 = Math.sin(rot);
+    var cx2 = Math.cos(rot * 0.6), sx2 = Math.sin(rot * 0.6);
+    var proj = [];
+    for (i = 0; i < 8; i++) {
+      var vx = V[i][0] * a, vy = V[i][1] * a, vz = V[i][2] * a;
+      var X1 = vx * cy2 - vz * sy2, Z1 = vx * sy2 + vz * cy2;
+      var Y1 = vy * cx2 - Z1 * sx2, Z2 = vy * sx2 + Z1 * cx2;
+      var k2 = (S * 1.6) / (S * 1.6 + Z2);
+      proj.push({ x: cx + X1 * k2, y: cy + Y1 * k2, z: Z2 });
+    }
+    var faces = F.map(function (f) {
+      return { f: f, z: (proj[f[0]].z + proj[f[1]].z + proj[f[2]].z + proj[f[3]].z) / 4 };
+    }).sort(function (u, v) { return v.z - u.z; });
+
+    for (i = 0; i < faces.length; i++) {
+      var f2 = faces[i].f, dep = 1 - (faces[i].z / (a * 2) + 0.5) * 0.55;
+      x.beginPath();
+      x.moveTo(proj[f2[0]].x, proj[f2[0]].y);
+      for (var j = 1; j < 4; j++) x.lineTo(proj[f2[j]].x, proj[f2[j]].y);
+      x.closePath();
+      var fg = x.createLinearGradient(proj[f2[0]].x, proj[f2[0]].y, proj[f2[2]].x, proj[f2[2]].y);
+      fg.addColorStop(0, "rgba(159,64,204," + (0.85 * dep).toFixed(3) + ")");
+      fg.addColorStop(1, "rgba(246,196,68," + (0.75 * dep).toFixed(3) + ")");
+      x.fillStyle = fg; x.fill();
+      x.strokeStyle = "rgba(255,255,255,.32)";
+      x.lineWidth = Math.max(1, S * 0.0018);
+      x.stroke();
+    }
+    /* Свечение вокруг ядра */
+    var hg = x.createRadialGradient(cx, cy, a * 0.5, cx, cy, a * 3.2);
+    hg.addColorStop(0, "rgba(246,196,68,.28)");
+    hg.addColorStop(1, "rgba(246,196,68,0)");
+    x.fillStyle = hg;
+    x.beginPath(); x.arc(cx, cy, a * 3.2, 0, 6.283); x.fill();
+  } else if (typeof tick === "function" && p > 0.02) {
+    /* Щелчок на каждом делении шкалы: слышно, как идёт загрузка */
+    if (Math.floor(p * 20) !== draw3.step) { draw3.step = Math.floor(p * 20); tick(); }
+  }
+
+  var pc = el.querySelector(".rcl-pc");
+  if (pc) pc.textContent = Math.round(p * 100) + "%";
+};
+
+/* ── Сборка вариантов ───────────────────────────────────────── */
+var VARIANTS = [
+  {
+    id: "1", name: "Гиперпрыжок",
+    desc: "Пакеты данных летят на зрителя, скорость растёт по проценту, на финале прыжок и вспышка",
+    note: "Самый сильный по движению. Гул разгона синтезируется двумя осцилляторами, фильтр открывается вместе с прогрессом.",
+    css: V1_CSS, html: V1_HTML, audio: V1_AUDIO, draw: V1_DRAW, fn: "draw1"
+  },
+  {
+    id: "2", name: "Сфера сети",
+    desc: "218 узлов на вращающейся сфере зажигаются волной, между ними протягиваются дуги",
+    note: "Точки разложены по спирали Фибоначчи, поэтому распределены равномерно. Каждый узел при зажигании даёт свой тон.",
+    css: V2_CSS, html: V2_HTML, audio: V2_AUDIO, draw: V2_DRAW, fn: "draw2"
+  },
+  {
+    id: "3", name: "Ядро",
+    desc: "Капсула кабинета в объёме: кругляш едет и схлопывается во вращающийся куб",
+    note: "Куб считается перспективной проекцией восьми вершин с сортировкой граней. Щелчки идут по делениям шкалы.",
+    css: V3_CSS, html: V3_HTML, audio: V3_AUDIO, draw: V3_DRAW, fn: "draw3"
+  }
+];
+
+/* Полный код варианта: ровно то, что исполняет витрина */
+function fullCode(v) {
+  var drawSrc = "  var " + v.fn + " = " + v.draw.toString() + ";\n" +
+                "  var draw = function(W,H,S,p,t,dt){ " + v.fn + "(W,H,S,p,t,dt) };\n";
+  return wrap(v.css, v.html, drawSrc, v.audio).replace("  /* ── Разметка ── */", drawSrc + "  /* ── Разметка ── */");
+}
+
+/* ── Витрина ────────────────────────────────────────────────── */
+var grid = document.getElementById("grid");
+var soundOn = true;
+
+VARIANTS.forEach(function (v) {
+  var item = document.createElement("div");
+  item.className = "item";
+  item.innerHTML =
+    '<div class="head"><h2>' + v.id + ". " + v.name + "</h2><p>" + v.desc + "</p></div>" +
+    '<div class="stage"><div class="hold">нажмите «показать»</div></div>' +
+    '<div class="note">' + v.note + "</div>" +
+    '<div class="row">' +
+      '<button class="go">показать</button>' +
+      '<button class="full">во весь экран</button>' +
+      '<button class="copy">скопировать код</button>' +
+    "</div>";
+  grid.appendChild(item);
+
+  var stage = item.querySelector(".stage");
+
+  /* Показ внутри карточки: исполняем ровно тот код, что отдаём,
+     только заставку прижимаем к габаритам сцены. */
+  function play(fullscreen) {
+    if (stage._loop) { clearTimeout(stage._loop); stage._loop = null; }
+    var code = fullCode(v);
+    var js = code.slice(code.indexOf("<script>") + 8, code.lastIndexOf("<\/script>"));
+    var css = code.slice(code.indexOf("<style>") + 7, code.indexOf("</style>"));
+
+    var host = fullscreen ? document.body : stage;
+    var old = host.querySelector(".rcl-host");
+    if (old) old.remove();
+
+    var holder = document.createElement("div");
+    holder.className = "rcl-host";
+    holder.style.cssText = fullscreen
+      ? "position:fixed;inset:0;z-index:9998"
+      : "position:absolute;inset:0";
+    host.appendChild(holder);
+
+    var st = document.createElement("style");
+    st.textContent = css + (fullscreen ? "" :
+      ".rcl-host .rcl{position:absolute;inset:0}");
+    holder.appendChild(st);
+
+    /* Своя песочница: заставка думает, что живёт на целой странице */
+    var sandbox = {
+      RocketLoader: null,
+      AudioContext: window.AudioContext, webkitAudioContext: window.webkitAudioContext,
+      devicePixelRatio: window.devicePixelRatio,
+      innerWidth: fullscreen ? innerWidth : stage.clientWidth,
+      innerHeight: fullscreen ? innerHeight : stage.clientHeight,
+      addEventListener: function () {}, requestAnimationFrame: window.requestAnimationFrame.bind(window),
+      cancelAnimationFrame: window.cancelAnimationFrame.bind(window),
+      setTimeout: window.setTimeout.bind(window), matchMedia: window.matchMedia.bind(window)
+    };
+    var fakeDoc = {
+      hidden: false, readyState: "loading",
+      createElement: document.createElement.bind(document),
+      body: holder, documentElement: holder
+    };
+    try {
+      new Function("w", "d", js.replace("})(window,document);", "})(w,d);"))(sandbox, fakeDoc);
+    } catch (e) { console.error(e); return; }
+
+    var L = sandbox.RocketLoader;
+    if (!L) return;
+    L.sound(soundOn);
+    L.show();
+    var pr = 0;
+    var iv = setInterval(function () {
+      pr += 2 + Math.random() * 6;
+      if (pr >= 100) { pr = 100; clearInterval(iv); L.setProgress(1); setTimeout(function () { L.hide(); }, 260); }
+      L.setProgress(pr / 100);
+    }, 95);
+    if (fullscreen) {
+      holder.addEventListener("click", function () { clearInterval(iv); L.destroy(); holder.remove(); });
+      setTimeout(function () { if (holder.parentNode) holder.remove(); }, 9000);
+    } else {
+      /* Витрина крутит заставки по кругу: клиенту не надо нажимать,
+         чтобы понять, как это выглядит вживую. */
+      stage._loop = setTimeout(function () { play(false); }, 5200);
+    }
+  }
+
+  item.querySelector(".go").addEventListener("click", function () { play(false); });
+  /* Первый показ сам, как только карточка попала на экран */
+  if ("IntersectionObserver" in window) {
+    var io = new IntersectionObserver(function (e) {
+      if (e[0].isIntersecting) { io.disconnect(); play(false); }
+    }, { threshold: .35 });
+    io.observe(item);
+  } else play(false);
+  item.querySelector(".full").addEventListener("click", function () { play(true); });
+  item.querySelector(".copy").addEventListener("click", function () {
+    var b = this, txt = fullCode(v);
+    function done() {
+      b.textContent = "код скопирован"; b.classList.add("ok");
+      setTimeout(function () { b.textContent = "скопировать код"; b.classList.remove("ok"); }, 2200);
+    }
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(txt).then(done, function () { fb(txt, done); });
+    } else fb(txt, done);
+  });
+});
+
+function fb(txt, done) {
+  var ta = document.createElement("textarea");
+  ta.value = txt; ta.style.cssText = "position:fixed;left:-9999px";
+  document.body.appendChild(ta); ta.select();
+  try { document.execCommand("copy"); done(); } catch (e) {}
+  document.body.removeChild(ta);
+}
+
+/* Общий выключатель звука для витрины */
+var sb = document.createElement("button");
+sb.textContent = "звук включён";
+sb.setAttribute("aria-pressed", "true");
+sb.style.cssText = "position:fixed;right:20px;bottom:20px;z-index:9999;box-shadow:var(--sh)";
+sb.addEventListener("click", function () {
+  soundOn = !soundOn;
+  sb.textContent = soundOn ? "звук включён" : "звук выключен";
+  sb.setAttribute("aria-pressed", String(soundOn));
+});
+document.body.appendChild(sb);
+
+})();
+</script>
+</body>
+</html>

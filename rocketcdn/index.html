@@ -33,6 +33,320 @@ try{var _t=localStorage.getItem("rc_theme");if(_t==="light"||_t==="dark")documen
 <link rel="preload" href="assets/fonts/golos-cyr.woff2" as="font" type="font/woff2" crossorigin>
 <link rel="stylesheet" href="assets/rc-fonts.css">
 <link rel="stylesheet" href="assets/rc.css">
+<link rel="stylesheet" href="assets/rc-interior.css">
+<link rel="stylesheet" href="assets/rc-reduced.css">
+<!-- Режим страницы решается до того, как поднимутся сцены: иначе они
+     успеют занять контексты, которых на слабом устройстве и так мало -->
+<script src="assets/rc-fallback.js"></script>
+
+<!-- ══ Заставка «Разгон» ════════════════════════════════════════════
+     Живёт прямо здесь, без единого запроса и зависимости: пока
+     подтянется таблица стилей, шрифт и объёмный слой, человек уже
+     смотрит на фирменный разгон. Всё считается в браузере: поток
+     пакетов данных летит на зрителя с настоящей перспективой,
+     скорость растёт по честному проценту загрузки, на финале поток
+     схлопывается в капсулу с фирменным знаком и уходит в шапку.
+
+     Звук включается только если человек уже разрешал звук на сайте:
+     без разрешения браузер всё равно не даст, а лезть с гулом к
+     тому, кто его не просил, мы не собираемся.
+
+     Разметку строит сам скрипт: при выключенном JavaScript заставки
+     нет вовсе и страница читается сразу, как требует приёмка. ══ -->
+<style>
+.rc-load{position:fixed;inset:0;z-index:1200;background:#050C15;opacity:0;overflow:hidden;
+  transition:opacity .3s ease}
+html[data-theme="light"] .rc-load{background:#F3F7FB}
+.rc-load.on{opacity:1}
+.rc-load canvas{position:absolute;inset:0;width:100%;height:100%;display:block}
+.rc-load-sl{position:absolute;left:0;right:0;bottom:13%;text-align:center;
+  font:600 10px/1 'Golos Text',system-ui,sans-serif;letter-spacing:.42em;
+  color:rgba(226,232,240,.42);opacity:0;transition:opacity .5s ease}
+html[data-theme="light"] .rc-load-sl{color:rgba(9,19,32,.45)}
+.rc-load.lit .rc-load-sl{opacity:1}
+.rc-load-pc{position:absolute;left:0;right:0;bottom:8%;text-align:center;
+  font:700 13px/1 'Golos Text',system-ui,sans-serif;color:#42B2DC;
+  font-variant-numeric:tabular-nums;opacity:0;transition:opacity .5s ease}
+.rc-load.lit .rc-load-pc{opacity:1}
+/* Уход: заставка расходится, капсула улетает вверх в шапку */
+.rc-load.out{opacity:0;transition:opacity .5s ease}
+.rc-load.out canvas{transform:translateY(-14vh) scale(1.12);opacity:0;
+  transition:transform .58s cubic-bezier(.6,0,.2,1),opacity .5s ease}
+@media (prefers-reduced-motion: reduce){
+  .rc-load canvas,.rc-load-sl,.rc-load-pc{transition:none!important}
+  .rc-load.out canvas{transform:none}
+}
+</style>
+<script>
+/* ── RocketLoader ─────────────────────────────────────────────────
+   Единственный публичный объект заставки, тот же интерфейс, что мы
+   отдаём разработчику личного кабинета: show, hide, setProgress,
+   sound, destroy. Правила времени из сценария нарушать нельзя:
+   первые 150 мс молчим (на быстром кеше моргать нечем), если уже
+   показались - держим минимум 700 мс, потолок 4 секунды, финальные
+   600 мс ухода не обрываем никогда, иначе капсула не долетит. */
+(function (g, d) {
+  "use strict";
+  var el = null, cv = null, x = null, raf = null, last = 0, t = 0;
+  var shown = 0, killed = false, hid = false, p = 0, pShow = 0;
+  var T_HOLD = 700, T_CAP = 4000, T_OUT = 600;
+  var calm = false;
+  try { calm = matchMedia("(prefers-reduced-motion: reduce)").matches; } catch (e) {}
+
+  /* Звук берём только с разрешения, выданного раньше на этом сайте */
+  var wantSound = false;
+  try { wantSound = localStorage.getItem("rcdn.sound") === "1"; } catch (e) {}
+  var ac = null, bus = null, eng = null, engG = null, engF = null;
+
+  function audioUp() {
+    if (ac || !wantSound || calm) return;
+    try {
+      var C = g.AudioContext || g.webkitAudioContext;
+      if (!C) return;
+      ac = new C();
+      bus = ac.createGain(); bus.gain.value = 0;
+      var lim = ac.createDynamicsCompressor();
+      lim.threshold.value = -12; lim.ratio.value = 20; lim.attack.value = .003; lim.release.value = .25;
+      bus.connect(lim); lim.connect(ac.destination);
+      if (ac.state === "suspended") ac.resume();
+      bus.gain.setTargetAtTime(.42, ac.currentTime, .5);
+      /* Гул разгона: две расстроенные пилы через фильтр, который
+         открывается по мере роста прогресса */
+      engG = ac.createGain(); engG.gain.value = .0001;
+      engF = ac.createBiquadFilter(); engF.type = "lowpass"; engF.frequency.value = 170; engF.Q.value = 5;
+      eng = [ac.createOscillator(), ac.createOscillator()];
+      eng[0].type = eng[1].type = "sawtooth";
+      eng[0].frequency.value = 55; eng[1].frequency.value = 82.5; eng[1].detune.value = 7;
+      eng[0].connect(engF); eng[1].connect(engF); engF.connect(engG); engG.connect(bus);
+      eng[0].start(); eng[1].start();
+      engG.gain.setTargetAtTime(.14, ac.currentTime, .7);
+    } catch (e) { ac = null; }
+  }
+  function boom() {
+    if (!ac) return;
+    try {
+      var n = Math.floor(ac.sampleRate * .5), b = ac.createBuffer(1, n, ac.sampleRate), c = b.getChannelData(0);
+      for (var i = 0; i < n; i++) c[i] = (Math.random() * 2 - 1) * (1 - i / n);
+      var s = ac.createBufferSource(); s.buffer = b;
+      var f = ac.createBiquadFilter(); f.type = "lowpass"; f.frequency.value = 1600;
+      var gg = ac.createGain();
+      gg.gain.setValueAtTime(.42, ac.currentTime);
+      gg.gain.exponentialRampToValueAtTime(.0001, ac.currentTime + .5);
+      s.connect(f); f.connect(gg); gg.connect(bus); s.start();
+      var o = ac.createOscillator(), og = ac.createGain();
+      o.type = "triangle"; o.frequency.value = 880;
+      og.gain.setValueAtTime(.0001, ac.currentTime);
+      og.gain.linearRampToValueAtTime(.09, ac.currentTime + .015);
+      og.gain.exponentialRampToValueAtTime(.0001, ac.currentTime + .5);
+      o.connect(og); og.connect(bus); o.start(); o.stop(ac.currentTime + .6);
+      if (engG) engG.gain.setTargetAtTime(.0001, ac.currentTime, .22);
+    } catch (e) {}
+  }
+
+  var stars = [];
+  function seed() {
+    stars.length = 0;
+    for (var i = 0; i < 300; i++) {
+      stars.push({ x: (Math.random() - 0.5) * 2, y: (Math.random() - 0.5) * 2, z: Math.random(), c: Math.random() });
+    }
+  }
+
+  function size() {
+    if (!cv) return;
+    var r = Math.min(2, g.devicePixelRatio || 1);
+    cv.width = Math.round(innerWidth * r);
+    cv.height = Math.round(innerHeight * r);
+  }
+
+  function build() {
+    if (el || killed) return;
+    el = d.createElement("div");
+    el.className = "rc-load";
+    el.setAttribute("role", "status");
+    el.setAttribute("aria-busy", "true");
+    el.innerHTML =
+      '<canvas aria-hidden="true"></canvas>' +
+      '<div class="rc-load-sl">FAST. RELIABLE. GLOBAL.</div>' +
+      '<div class="rc-load-pc">0%</div>' +
+      '<span style="position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)">Загрузка Rocket CDN</span>';
+    (d.body || d.documentElement).appendChild(el);
+    cv = el.querySelector("canvas");
+    x = cv.getContext("2d");
+    seed(); size();
+    addEventListener("resize", size, { passive: true });
+    requestAnimationFrame(function () { if (el) { el.classList.add("on"); el.classList.add("lit"); } });
+    shown = Date.now();
+    audioUp();
+    if (calm) frame(0);
+    else raf = requestAnimationFrame(loop);
+  }
+
+  /* Тёмная и светлая тема рисуются одной функцией: меняются только
+     цвет фона следа и прозрачность линий. */
+  function light() {
+    return d.documentElement.getAttribute("data-theme") === "light";
+  }
+
+  function frame(dt) {
+    if (!x || !cv) return;
+    pShow += (p - pShow) * 0.11;
+    t += dt;
+    var W = cv.width, H = cv.height, S = Math.min(W, H);
+    var cx = W / 2, cy = H / 2;
+    var lite = light();
+
+    /* Шлейф вместо очистки: следы читаются как скорость */
+    x.fillStyle = lite
+      ? "rgba(243,247,251," + (0.4 - pShow * 0.18).toFixed(3) + ")"
+      : "rgba(5,12,21," + (0.36 - pShow * 0.17).toFixed(3) + ")";
+    x.fillRect(0, 0, W, H);
+
+    var speed = (0.1 + pShow * pShow * 1.25) * dt * 60;
+    var fov = S * 0.72;
+    for (var i = 0; i < stars.length; i++) {
+      var s = stars[i], pz = s.z;
+      s.z -= speed * 0.012;
+      if (s.z <= 0.02) {
+        s.z = 1; s.x = (Math.random() - 0.5) * 2; s.y = (Math.random() - 0.5) * 2; s.c = Math.random();
+        pz = s.z;
+      }
+      var k = fov / s.z, kp = fov / pz;
+      var a = Math.min(1, (1 - s.z) * 1.5) * (lite ? 0.7 : 1);
+      x.strokeStyle = s.c > 0.78
+        ? "rgba(138,89,246," + (a * 0.9).toFixed(3) + ")"
+        : (s.c > 0.42 ? "rgba(66,178,220," + (a * 0.92).toFixed(3) + ")"
+                      : "rgba(207,233,245," + (a * 0.55).toFixed(3) + ")");
+      x.lineWidth = Math.max(0.7, (1 - s.z) * 4.2);
+      x.beginPath();
+      x.moveTo(cx + s.x * kp, cy + s.y * kp);
+      x.lineTo(cx + s.x * k, cy + s.y * k);
+      x.stroke();
+    }
+
+    /* Обод горизонта сжимается к финалу */
+    x.strokeStyle = lite ? "rgba(9,19,32,.12)" : "rgba(226,232,240," + (0.1 + pShow * 0.14).toFixed(3) + ")";
+    x.lineWidth = Math.max(1, S * 0.002);
+    x.beginPath(); x.arc(cx, cy, S * (0.4 - pShow * 0.1), 0, 6.283); x.stroke();
+
+    /* Ядро разгорается по прогрессу */
+    var core = S * (0.04 + pShow * 0.1);
+    var gr = x.createRadialGradient(cx, cy, 0, cx, cy, core * 2.8);
+    gr.addColorStop(0, "rgba(207,233,245," + (0.3 + pShow * 0.5).toFixed(3) + ")");
+    gr.addColorStop(0.32, "rgba(66,178,220," + (0.16 + pShow * 0.3).toFixed(3) + ")");
+    gr.addColorStop(0.7, "rgba(138,89,246," + (0.08 + pShow * 0.16).toFixed(3) + ")");
+    gr.addColorStop(1, "rgba(5,12,21,0)");
+    x.fillStyle = gr;
+    x.beginPath(); x.arc(cx, cy, core * 2.8, 0, 6.283); x.fill();
+
+    /* Финал: поток схлопывается в капсулу со знаком */
+    var snap = Math.max(0, Math.min(1, (pShow - 0.9) / 0.1));
+    /* Пока капсула меньше пары десятков пикселей, рисовать её нечем:
+       радиусы уходят в минус и градиент отказывается строиться */
+    if (snap > 0.06) {
+      var capW = S * 0.3 * snap, capH = S * 0.135 * snap, r = capH / 2;
+      x.save(); x.translate(cx, cy);
+      x.beginPath();
+      x.moveTo(-capW / 2 + r, -capH / 2);
+      x.lineTo(capW / 2 - r, -capH / 2);
+      x.quadraticCurveTo(capW / 2, -capH / 2, capW / 2, 0);
+      x.quadraticCurveTo(capW / 2, capH / 2, capW / 2 - r, capH / 2);
+      x.lineTo(-capW / 2 + r, capH / 2);
+      x.quadraticCurveTo(-capW / 2, capH / 2, -capW / 2, 0);
+      x.quadraticCurveTo(-capW / 2, -capH / 2, -capW / 2 + r, -capH / 2);
+      x.closePath();
+      var bg = x.createLinearGradient(0, -capH / 2, 0, capH / 2);
+      bg.addColorStop(0, "rgba(20,40,61,.96)");
+      bg.addColorStop(1, "rgba(9,19,32,.96)");
+      x.fillStyle = bg; x.fill();
+      x.strokeStyle = "rgba(66,178,220," + (0.5 * snap).toFixed(3) + ")";
+      x.lineWidth = Math.max(1, S * 0.0022); x.stroke();
+      /* Ядро внутри капсулы: доехало вправо и стало знаком */
+      var kx = capW / 2 - r, kr = Math.max(1, r - S * 0.008);
+      var kg = x.createRadialGradient(kx - kr * .3, -kr * .3, kr * .1, kx, 0, kr);
+      kg.addColorStop(0, "#7FD8FA"); kg.addColorStop(.6, "#42B2DC"); kg.addColorStop(1, "#0A5897");
+      x.fillStyle = kg;
+      x.beginPath(); x.arc(kx, 0, kr, 0, 6.283); x.fill();
+      x.restore();
+    }
+
+    var pc = el && el.querySelector(".rc-load-pc");
+    if (pc) pc.textContent = Math.round(pShow * 100) + "%";
+  }
+
+  function loop(ts) {
+    raf = requestAnimationFrame(loop);
+    if (d.hidden) { last = 0; return; }
+    var dt = last ? Math.min(0.05, (ts - last) / 1000) : 0.016;
+    last = ts;
+    frame(dt);
+    /* Фильтр гула открывается вместе с разгоном */
+    if (ac && engF) {
+      try { engF.frequency.setTargetAtTime(170 + pShow * 900, ac.currentTime, .25); } catch (e) {}
+    }
+  }
+
+  var api = {
+    show: function () { if (!hid) build(); },
+    setProgress: function (v) {
+      p = v > 1 ? v / 100 : v;
+      if (p > 1) p = 1; if (p < 0) p = 0;
+    },
+    sound: function (on) {
+      wantSound = !!on;
+      if (!on && ac) { try { ac.close(); } catch (e) {} ac = null; }
+      else if (on && el) audioUp();
+    },
+    hide: function () {
+      if (hid) return;
+      hid = true;
+      if (!el) { killed = true; return; }
+      var wait = Math.max(0, T_HOLD - (Date.now() - shown));
+      setTimeout(function () {
+        if (!el) return;
+        p = 1;
+        boom();
+        /* Полсекунды на схлопывание, потом капсула улетает в шапку */
+        setTimeout(function () {
+          if (!el) return;
+          el.classList.add("out");
+          d.documentElement.classList.add("rc-loaded");
+          setTimeout(api.destroy, T_OUT + 60);
+        }, 520);
+      }, wait);
+    },
+    destroy: function () {
+      killed = true;
+      if (raf) cancelAnimationFrame(raf);
+      raf = null;
+      if (ac) { try { ac.close(); } catch (e) {} ac = null; }
+      if (el && el.parentNode) el.parentNode.removeChild(el);
+      el = null; cv = null; x = null;
+    }
+  };
+  g.RocketLoader = api;
+
+  /* Показываемся не раньше 150 мс: если страница из кеша, никто ничего не увидит */
+  setTimeout(function () { if (!hid) api.show(); }, 150);
+
+  /* Честный прогресс: три вехи, каждая своя доля */
+  var got = 0, need = 3;
+  function step() { got++; api.setProgress(got / need); if (got >= need) api.hide(); }
+  try {
+    if (d.fonts && d.fonts.ready) d.fonts.ready.then(step); else step();
+  } catch (e) { step(); }
+  if (d.readyState === "complete") step();
+  else g.addEventListener("load", step, { once: true });
+  /* Третья веха - объёмная сцена: она сама скажет, что готова или что её не будет */
+  var told = false;
+  function once() { if (told) return; told = true; step(); }
+  g.addEventListener("rc:3d", once);
+  g.addEventListener("rc:no3d", once);
+  setTimeout(once, 2600);
+
+  /* Потолок: что бы ни случилось, дальше четырёх секунд никого не держим */
+  setTimeout(function () { api.hide(); }, T_CAP);
+})(window, document);
+</script>
 
 <script type="application/ld+json">
 {
@@ -221,13 +535,8 @@ try{var _t=localStorage.getItem("rc_theme");if(_t==="light"||_t==="dark")documen
 </head>
 <body>
 
-<!-- Прелоадер -->
-<div class="preload" id="preload">
-  <div class="preload-in">
-    <img src="assets/mark.png" alt="Rocket CDN" width="108" height="101">
-    <div class="preload-bar"><i id="preloadBar"></i></div>
-  </div>
-</div>
+<!-- Заставку строит RocketLoader из шапки документа: без JavaScript её нет
+     вовсе и страница читается сразу -->
 
 <!-- Живой космос на фоне всей страницы -->
 <canvas id="spaceBg" aria-hidden="true"></canvas>
@@ -777,6 +1086,8 @@ try{var _t=localStorage.getItem("rc_theme");if(_t==="light"||_t==="dark")documen
 <script src="assets/rc-app.js"></script>
 <script src="assets/rc-fill.js"></script>
 <script src="assets/rc-viz.js"></script>
+<script src="assets/rc-motion.js"></script>
+<script src="assets/rc-hooks.js"></script>
 <!-- Объёмный слой (three.js и три сцены) подтягивает rc-gl.js
      после загрузки и только там, где он вообще будет показан -->
 <script src="assets/rc-gl.js"></script>

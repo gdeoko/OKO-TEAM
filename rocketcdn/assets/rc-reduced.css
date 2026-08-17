@@ -1,0 +1,124 @@
+/* ═══════════════════════════════════════════════════════════
+   Rocket CDN · запасной сценарий, оформление
+
+   Всё под селектором html.rc-reduced. Правило простое: движение
+   выключено, содержимое остаётся целиком, стекло остаётся, но
+   запечённое - без размытия фона, потому что именно оно стоит
+   дороже всего на слабых устройствах.
+   ═══════════════════════════════════════════════════════════ */
+
+/* ── Кадр раскадровки вместо живой сцены ─────────────────── */
+.rc-frame {
+  position: relative; margin: 0 auto clamp(26px, 4vw, 48px);
+  max-width: var(--maxw); width: min(100% - 2 * var(--pad), var(--maxw));
+  border-radius: var(--r-lg); overflow: hidden;
+  border: 1px solid var(--line);
+  box-shadow: 0 30px 60px -34px rgba(4, 12, 22, .9);
+  background: var(--bg-2);
+}
+.rc-frame img { display: block; width: 100%; height: auto; }
+/* Низ кадра уводим в фон страницы, чтобы картинка не выглядела наклейкой */
+.rc-frame::after {
+  content: ''; position: absolute; inset: auto 0 0 0; height: 34%;
+  background: linear-gradient(to bottom, transparent, var(--bg) 96%);
+  pointer-events: none;
+}
+html:not(.rc-reduced) .rc-frame { display: none; }
+
+/* ── Что выключено ───────────────────────────────────────── */
+html.rc-reduced #rocketCanvas,
+html.rc-reduced #spaceBg,
+html.rc-reduced .hero-globe,
+html.rc-reduced .rc-pkt-layer,
+html.rc-reduced .rc-int-layer { display: none !important; }
+
+html.rc-reduced *,
+html.rc-reduced *::before,
+html.rc-reduced *::after {
+  animation-duration: .001ms !important;
+  animation-iteration-count: 1 !important;
+  transition-duration: .25s !important;
+  scroll-behavior: auto !important;
+}
+
+/* Появления только по прозрачности, без сдвигов */
+html.rc-reduced .rv { opacity: 0; transform: none !important; transition: opacity .25s linear; }
+html.rc-reduced .rv.on { opacity: 1; }
+html.rc-reduced .sec-h .w > i,
+html.rc-reduced .hero h1 .w > i { transform: none !important; opacity: 1 !important; }
+
+/* Наклонов и парения нет */
+html.rc-reduced .card,
+html.rc-reduced .viz-card,
+html.rc-reduced .dc,
+html.rc-reduced .prod-card,
+html.rc-reduced .case {
+  transform: none !important; rotate: 0deg !important; translate: 0 !important;
+  animation: none !important;
+}
+
+/* ── Стекло остаётся, но запечённое ──────────────────────── */
+html.rc-reduced .card,
+html.rc-reduced .viz-card,
+html.rc-reduced .dc,
+html.rc-reduced .glass,
+html.rc-reduced .hdr,
+html.rc-reduced .btn-g {
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+}
+html.rc-reduced .hdr { background: var(--bg-2); }
+html.rc-reduced .card,
+html.rc-reduced .viz-card,
+html.rc-reduced .dc { background: var(--bg-3); }
+html[data-theme="light"].rc-reduced .card,
+html[data-theme="light"].rc-reduced .viz-card,
+html[data-theme="light"].rc-reduced .dc { background: var(--bg-2); }
+
+/* ── Доступность ─────────────────────────────────────────── */
+:focus-visible {
+  outline: 2px solid var(--cyan);
+  outline-offset: 3px;
+  border-radius: 4px;
+}
+.rc-sr {
+  position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px;
+  overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; border: 0;
+}
+
+/* ── Подсказка «листайте дальше» из rc-motion.js ──────────── */
+.rc-hint {
+  position: fixed; left: 50%; bottom: 26px; transform: translateX(-50%) translateY(10px);
+  z-index: 40; padding: 9px 16px; border-radius: var(--r-full);
+  background: var(--surface-2); border: 1px solid var(--line-2);
+  color: var(--tx-2); font-size: 13px; font-weight: 600;
+  opacity: 0; pointer-events: none;
+  transition: opacity .4s var(--ease), transform .4s var(--ease);
+}
+.rc-hint.on { opacity: 1; transform: translateX(-50%); }
+html.rc-reduced .rc-hint { display: none; }
+
+/* ── Ступени деградации из rc-motion.js ──────────────────────
+   Снимаем украшения по одному, а не всё сразу: так падение
+   качества почти незаметно, а кадры возвращаются. */
+html[data-degrade="1"] .rc-pkt-layer,
+html[data-degrade="1"] .sep-line i { display: none; }
+html[data-degrade="2"] .card,
+html[data-degrade="2"] .viz-card,
+html[data-degrade="2"] .dc,
+html[data-degrade="2"] .hdr {
+  backdrop-filter: none !important; -webkit-backdrop-filter: none !important;
+}
+html[data-degrade="2"] .float-3d { animation: none; box-shadow: var(--shadow); }
+html[data-degrade="3"] #spaceBg { opacity: .35; }
+html[data-degrade="3"] .card,
+html[data-degrade="3"] .viz-card,
+html[data-degrade="3"] .dc { rotate: 0deg !important; translate: 0 !important; }
+
+/* ── Быстрая прокрутка: мелочь не рисуем ─────────────────── */
+html.rc-fast .rc-pkt-layer { display: none; }
+html.rc-fast .card,
+html.rc-fast .viz-card,
+html.rc-fast .dc,
+html.rc-fast .prod-card { transition: none !important; rotate: 0deg !important; }
+html.rc-hyper #rocketCanvas { filter: blur(1.5px); }

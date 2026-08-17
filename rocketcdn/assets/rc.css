@@ -204,6 +204,44 @@ section { position: relative; padding: var(--sec) 0; }
 .btn[disabled] { opacity: .5; cursor: not-allowed; transform: none !important; }
 .btn-row { display: flex; flex-wrap: wrap; gap: 12px; }
 
+/* ── Рифма с личным кабинетом ──────────────────────────────────
+   Кабинет клиента живёт на другом домене и сделан не нами: там
+   свой шрифт Geologica, свои радиусы 8 и 12, свой градиент от
+   фиолетового к жёлтому и свои цвета статусов. Чтобы переход с
+   сайта в кабинет не выглядел переездом в другую компанию, мы
+   берём оттуда палитру и ставим её ровно в двух местах: на всё,
+   что ведёт в кабинет, и на состояния (успех, ожидание, отказ).
+   Остальной сайт остаётся в бренде Rocket CDN. */
+:root {
+  --lk-ink:    #051114;
+  --lk-blue:   #1770C1;
+  --lk-grad:   linear-gradient(190deg, #9F40CC 5.37%, #F6C444 97.53%);
+  --lk-lime:   linear-gradient(45deg, #D3FF22 0%, #CEDF8A 100%);
+  --lk-ok:     #67C23A;
+  --lk-warn:   #E6A23C;
+  --lk-err:    #F56C6C;
+  --lk-mut:    #606266;
+  --lk-line:   #E4E7ED;
+  --lk-r:      12px;
+  --lk-r-sm:   8px;
+  --lk-shadow: 0 8px 24px -12px rgba(16,46,56,.32);
+}
+/* Всё, что уводит в кабинет, помечено фирменной чертой кабинета:
+   тонкая полоса его градиента появляется на наведении снизу. */
+.js-reg { position: relative; }
+.btn.js-reg::before {
+  content: ''; position: absolute; left: 14px; right: 14px; bottom: 6px; height: 2px;
+  border-radius: 2px; background: var(--lk-grad);
+  opacity: 0; transform: scaleX(.4); transform-origin: 50% 50%;
+  transition: opacity var(--fast), transform var(--fast); z-index: 2;
+}
+.btn.js-reg:hover::before, .btn.js-reg:focus-visible::before { opacity: .95; transform: none; }
+a.js-reg:not(.btn) { background-image: var(--lk-grad); background-repeat: no-repeat;
+  background-size: 0 2px; background-position: 0 100%; transition: background-size var(--fast); }
+a.js-reg:not(.btn):hover { background-size: 100% 2px; }
+/* Состояния берём из кабинета: одинаковый зелёный, одинаковый
+   янтарный, одинаковый красный по обе стороны перехода. */
+
 /* ── Карточки ─────────────────────────────────────────────── */
 .card {
   position: relative; background: var(--surface); border: 1px solid var(--line);
@@ -372,8 +410,8 @@ section { position: relative; padding: var(--sec) 0; }
   font-size: 12.5px; font-weight: 600; color: var(--tx-2); backdrop-filter: blur(8px);
 }
 .chip b { color: var(--tx); font-weight: 700; }
-.dot-live { width: 7px; height: 7px; border-radius: 50%; background: #34D399; box-shadow: 0 0 0 0 rgba(52,211,153,.6); animation: pulse 2.2s infinite; flex: none; }
-@keyframes pulse { 70% { box-shadow: 0 0 0 9px rgba(52,211,153,0) } 100% { box-shadow: 0 0 0 0 rgba(52,211,153,0) } }
+.dot-live { width: 7px; height: 7px; border-radius: 50%; background: var(--lk-ok); box-shadow: 0 0 0 0 rgba(103,194,58,.6); animation: pulse 2.2s infinite; flex: none; }
+@keyframes pulse { 70% { box-shadow: 0 0 0 9px rgba(103,194,58,0) } 100% { box-shadow: 0 0 0 0 rgba(103,194,58,0) } }
 .hero-chips { display: flex; flex-wrap: wrap; gap: 9px; margin-bottom: 26px; }
 .hero-marks { display: flex; flex-wrap: wrap; gap: 10px 26px; margin-top: 38px; }
 .hero-mark { display: flex; align-items: center; gap: 9px; font-size: 13px; color: var(--tx-3); }
@@ -552,8 +590,8 @@ section { position: relative; padding: var(--sec) 0; }
 .consent input { width: 17px; height: 17px; margin-top: 2px; flex: none; accent-color: var(--cyan); }
 .consent a { color: var(--cyan); text-decoration: underline; text-underline-offset: 2px; }
 .form-msg { display: none; padding: 13px 16px; border-radius: var(--r-sm); font-size: 14px; margin-bottom: 14px; }
-.form-msg.ok  { display: block; background: rgba(52,211,153,.12); border: 1px solid rgba(52,211,153,.34); color: #34D399; }
-.form-msg.bad { display: block; background: rgba(248,113,113,.12); border: 1px solid rgba(248,113,113,.34); color: #F87171; }
+.form-msg.ok  { display: block; background: rgba(103,194,58,.12); border: 1px solid rgba(103,194,58,.34); color: var(--lk-ok); }
+.form-msg.bad { display: block; background: rgba(245,108,108,.12); border: 1px solid rgba(245,108,108,.34); color: var(--lk-err); }
 
 .contact { display: grid; grid-template-columns: minmax(0, .9fr) minmax(0, 1.1fr); gap: clamp(26px, 4vw, 60px); align-items: start; }
 .contact-list { display: grid; gap: 14px; margin-top: 28px; }
@@ -1253,3 +1291,84 @@ body { background: var(--bg); }
 .pill.snd.wide { width: 100%; }
 .pill.snd.wide button { width: 100%; gap: 9px; display: flex; align-items: center; justify-content: center; }
 .pill.snd.wide .pill-knob { width: calc(50% - 3px); }
+
+/* ══ Точки касания ракеты ═════════════════════════════════════
+   Стили для rc-hooks.js. Здесь важно одно: ракета трогает
+   элементы через отдельные свойства rotate и translate, а не
+   через transform. Transform у карточек уже занят парением и
+   наклоном под курсором, и если бы мы писали в него, эффекты
+   затирали бы друг друга. ══════════════════════════════════ */
+
+/* Пакеты данных, которые ракета бросает в виджеты */
+.rc-pkt-layer { position: fixed; inset: 0; z-index: 6; pointer-events: none; }
+.rc-pkt {
+  position: absolute; left: -5px; top: -5px; width: 10px; height: 10px; border-radius: 50%;
+  background: radial-gradient(circle, #CFE9F5 0%, var(--cyan) 45%, rgba(66,178,220,0) 72%);
+  opacity: .95; will-change: transform, opacity;
+  transition: transform .62s cubic-bezier(.3,.8,.35,1), opacity .62s ease;
+}
+
+/* Показатель, разбуженный пролётом */
+.kpi-n { transition: text-shadow .5s var(--ease), filter .5s var(--ease); }
+.kpi-n.rc-lit { filter: brightness(1.14); text-shadow: 0 0 26px rgba(66,178,220,.5); }
+
+/* Виджет, поймавший пакет */
+.viz-card.rc-pulse {
+  border-color: rgba(66,178,220,.5);
+  box-shadow: inset 0 1px 0 var(--gl-top), 0 0 44px -16px rgba(66,178,220,.75);
+}
+
+/* Карточки дата-центров под струёй */
+.dc {
+  rotate: var(--jet-rot, 0deg);
+  translate: 0 calc(var(--jet, 0) * -7px);
+  transition: rotate .5s var(--ease), translate .5s var(--ease), box-shadow .5s var(--ease);
+}
+.dc::before {
+  content: ''; position: absolute; inset: 0; border-radius: inherit; pointer-events: none;
+  background: linear-gradient(100deg, rgba(66,178,220,.16), transparent 55%);
+  opacity: var(--jet, 0); transition: opacity .4s var(--ease);
+}
+
+/* Продукты-спутники кренятся от прохода */
+.prod-card {
+  rotate: var(--tilt, 0deg);
+  translate: 0 calc(var(--lift, 0px) * -1);
+  transition: rotate .55s var(--ease), translate .55s var(--ease);
+}
+
+/* Заголовок, подсвеченный снизу факелом */
+.sec-h { position: relative; }
+.sec-h::after {
+  content: ''; position: absolute; left: 0; right: 12%; bottom: -8px; height: 2px; border-radius: 2px;
+  background: linear-gradient(90deg, var(--cyan), rgba(138,89,246,.65) 70%, transparent);
+  opacity: calc(var(--under, 0) * .9);
+  transform: scaleX(calc(.3 + var(--under, 0) * .7)); transform-origin: 0 50%;
+  transition: opacity .35s var(--ease), transform .35s var(--ease);
+}
+
+/* Отсечка маршрута, которую щёлкнула ракета */
+.step .step-ms { transition: color .4s var(--ease), text-shadow .4s var(--ease); }
+.step.rc-tick .step-ms { color: var(--cyan); text-shadow: 0 0 18px rgba(66,178,220,.55); }
+.step.rc-tick .step-line { opacity: 1; }
+
+/* Лента сценариев, которую ракета тянет за собой */
+.case:not(.step) { translate: var(--drag, 0px) 0; transition: translate .5s var(--ease); }
+
+/* Девять пунктов: галочка приезжает по световой дорожке */
+.inc-item svg { opacity: .25; transition: opacity .4s var(--ease), filter .4s var(--ease); }
+.inc-item::before {
+  content: ''; position: absolute; left: 0; top: 50%; width: 0; height: 1px;
+  background: linear-gradient(90deg, var(--cyan), transparent);
+  opacity: 0; transition: width .45s var(--ease), opacity .45s var(--ease);
+}
+.inc-item { position: relative; }
+.inc-item.rc-landed svg { opacity: 1; filter: drop-shadow(0 0 8px rgba(66,178,220,.6)); }
+.inc-item.rc-landed::before { width: 100%; opacity: .5; }
+
+@media (prefers-reduced-motion: reduce) {
+  .rc-pkt { display: none; }
+  .dc, .prod-card, .case:not(.step) { rotate: 0deg; translate: 0; transition: none; }
+  .inc-item svg { opacity: 1; }
+  .inc-item::before { display: none; }
+}

@@ -282,3 +282,93 @@ function rc_mail_tpl($title, $rows, $note = '', $btn = null) {
         . ' &middot; ' . date('d.m.Y H:i')
         . '</div></td></tr></table></td></tr></table></body></html>';
 }
+
+/* ── Состояние площадки в одном месте ─────────────────────────
+   Одни и те же цифры нужны трём местам: вкладке «Состояние» в
+   админке, ежедневной проверке в cron.php и команде /health в
+   боте. Считаем их здесь, чтобы три копии логики не разъехались
+   при первой же правке. */
+function rc_selftest() {
+    $res = [];
+    $res['mail_configured'] = (bool)rc_cfg('mail_user') && (bool)rc_cfg('mail_pass');
+    $res['tg_configured']   = (bool)rc_cfg('tg_token');
+    $res['chat_bound']      = (bool)rc_cfg('tg_chat');
+    $res['data_writable']   = is_writable(RC_DATA);
+
+    $st = rc_json_read(RC_DATA . '/cron_state.json', []);
+    $res['cron_last']   = (string)($st['daily'] ?? '');
+    $res['backup_last'] = (string)($st['backup'] ?? '');
+    $bk = glob(RC_DATA . '/backup/*.json');
+    $res['backup_count'] = $bk ? count($bk) : 0;
+
+    $store = rc_json_read(RC_LEADS, []);
+    $new = 0; $oldest = 0;
+    foreach ((array)($store['items'] ?? []) as $l) {
+        if (($l['status'] ?? 'new') !== 'new') continue;
+        $new++;
+        $ts = strtotime((string)($l['ts'] ?? ''));
+        if ($ts && (!$oldest || $ts < $oldest)) $oldest = $ts;
+    }
+    $res['leads_new'] = $new;
+    $res['leads_wait_hours'] = $oldest ? (int)round((time() - $oldest) / 3600) : 0;
+
+    /* Дату кладёт корневой скрипт: папку letsencrypt сайту не открываем,
+       рядом с сертификатом лежит закрытый ключ */
+    $res['cert_days'] = null;
+    $cert = rc_json_read(RC_DATA . '/cert.json', []);
+    if (!empty($cert['until'])) {
+        $res['cert_days'] = (int)floor(((int)$cert['until'] - time()) / 86400);
+        $res['cert_names'] = (string)($cert['names'] ?? '');
+    }
+
+    $free = @disk_free_space(RC_DATA);
+    $res['disk_free_gb'] = $free ? round($free / 1073741824, 1) : null;
+    $res['tg_ip'] = function_exists('rc_tg_pin_get') ? rc_tg_pin_get() : '';
+    return $res;
+}
+
+/* Кто и что менял через бота: правки текстов идут в обход админки,
+   и без журнала потом не разобраться, откуда взялась формулировка. */
+function rc_admin_log($who, $what, $detail = '') {
+    $f = RC_DATA . '/admin_log.json';
+    $d = rc_json_read($f, []);
+    if (!is_array($d)) $d = [];
+    array_unshift($d, [
+        'ts' => date('Y-m-d H:i:s'),
+        'who' => (string)$who,
+        'what' => (string)$what,
+        'detail' => mb_substr((string)$detail, 0, 400),
+    ]);
+    rc_json_write($f, array_slice($d, 0, 300));
+}
+
+/* Словарь сайта: сначала правки из админки, потом исходные строки
+   из rc-i18n.js. Разбор регулярным выражением намеренно простой -
+   файл наш, формат мы держим сами. */
+function rc_i18n_ru() {
+    $out = [];
+    $file = RC_ROOT . '/assets/rc-i18n.js';
+    $src = is_file($file) ? (string)@file_get_contents($file) : '';
+    $cut = strpos($src, 'var EN');
+    if ($cut !== false) $src = substr($src, 0, $cut);
+    if (preg_match_all('~"([a-z0-9_.]+)"\s*:\s*"((?:[^"\\\\]|\\\\.)*)"~i', $src, $m, PREG_SET_ORDER)) {
+        foreach ($m as $one) {
+            $out[$one[1]] = str_replace(['\\"', '\\n'], ['"', "\n"], $one[2]);
+        }
+    }
+    $c = rc_json_read(RC_CONTENT, []);
+    foreach ((array)($c['i18n']['ru'] ?? []) as $k => $v) {
+        if (is_string($v)) $out[$k] = $v;
+    }
+    return $out;
+}
+
+/* Сохранить одну строку словаря, не трогая остальные */
+function rc_i18n_set($key, $value) {
+    $c = rc_json_read(RC_CONTENT, []);
+    if (!is_array($c)) $c = [];
+    if (!isset($c['i18n']) || !is_array($c['i18n'])) $c['i18n'] = [];
+    if (!isset($c['i18n']['ru']) || !is_array($c['i18n']['ru'])) $c['i18n']['ru'] = [];
+    $c['i18n']['ru'][$key] = $value;
+    rc_json_write(RC_CONTENT, $c);
+}

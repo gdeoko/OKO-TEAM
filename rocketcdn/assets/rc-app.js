@@ -457,20 +457,10 @@ function boot() {
   initGlobes();
   observeReveal();
 
-  /* Прелоадер */
-  var pre = $("#preload"), bar = $("#preloadBar");
-  var pct = 0, iv = setInterval(function () {
-    pct = Math.min(96, pct + 7 + Math.random() * 12);
-    if (bar) bar.style.width = pct + "%";
-  }, 110);
-  function done() {
-    clearInterval(iv);
-    if (bar) bar.style.width = "100%";
-    setTimeout(function () { if (pre) pre.classList.add("off"); }, 260);
-  }
-  if (document.readyState === "complete") done();
-  else window.addEventListener("load", done);
-  setTimeout(done, 3200);
+  /* Заставкой заведует RocketLoader из шапки документа: он считает
+     честный прогресс и сам уходит. Отсюда только страхуем случай,
+     когда приложение поднялось, а какая-то веха не пришла. */
+  if (window.RocketLoader) setTimeout(function () { window.RocketLoader.hide(); }, 1200);
 
   /* Переключатели */
   $$(".js-theme").forEach(function (b) {
