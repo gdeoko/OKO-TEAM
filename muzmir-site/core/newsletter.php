@@ -998,38 +998,6 @@ function nl_warmup_touch(): void {
     }
 }
 
-/**
- * СОБЫТИЕ ДОСТАВКИ, ЗАПИСАННОЕ НАМИ САМИМИ.
- *
- * Письма, ушедшие напрямую с почты центра, сервис рассылок не видит и событий по
- * ним не присылает. Пишем их в ту же таблицу с пометкой job_id='own', чтобы
- * отчёты, суточные нормы и предохранители работали одинаково для обоих каналов.
- */
-function nl_own_event(string $email, string $status): void {
-    $email = mb_strtolower(trim($email));
-    if ($email === '' || $status === '') return;
-    try {
-        q("INSERT OR IGNORE INTO mail_events (email, status, event_time, job_id, comment)
-           VALUES (?,?,?,'own','письмо напрямую с почты центра')",
-          [$email, $status, date('Y-m-d H:i:s')]);
-    } catch (\Throwable $e) { /* учёт не должен ломать отправку */ }
-}
-
-/** Подпись пикселя открытия для писем своего канала. */
-function nl_own_pixel_sig(int $queueId): string {
-    $secret = function_exists('pay_secret') ? pay_secret() : (string) cfgv('app_key', 'muzmir');
-    return substr(hash_hmac('sha256', 'own-open:' . $queueId, $secret), 0, 16);
-}
-
-/** HTML пикселя открытия для письма своего канала ('' если нечего вставлять). */
-function nl_own_pixel(int $queueId): string {
-    if ($queueId <= 0) return '';
-    $url = rtrim((string) cfgv('base_url'), '/') . '/api/v1/track.php?e=o2&q=' . $queueId
-         . '&s=' . nl_own_pixel_sig($queueId);
-    return '<img src="' . htmlspecialchars($url, ENT_QUOTES) . '" width="1" height="1" alt="" '
-         . 'style="display:block;width:1px;height:1px;border:0;opacity:0">';
-}
-
 /** Отправитель — сервис рассылок, а не наш почтовый ящик? */
 function nl_box_is_service(string $box): bool {
     // Сервис рассылок заведён дважды — под свою базу и под холодную. Прогрев и
@@ -1404,22 +1372,11 @@ function newsletter_process_queue(int $limit): int {
         // Тип берём из строки очереди: у выборки массовых он приезжает как ctype
         // (COALESCE по письму и по рассылке), у остальных лежит в самой колонке.
         if (function_exists('mail_pool_for')) {
-            // Строка может назвать пул сама: так делает прямой канал, где ящик
-            // тот же, а транспорт другой (news@/novosti@ напрямую, без сервиса).
-            $opt['pool'] = trim((string) ($row['force_pool'] ?? '')) !== ''
-                ? (string) $row['force_pool']
-                : mail_pool_for([
+            $opt['pool'] = mail_pool_for([
                 'campaign_type' => (string) ($row['ctype'] ?? $row['campaign_type'] ?? ''),
                 'priority'      => (int) ($row['priority'] ?? 0),
                 'subject'       => (string) ($row['subject'] ?? ''),
             ]);
-            // Массовое письмо своего канала несёт наш пиксель открытия: событий от
-            // сервиса рассылок по нему не будет, а знать, дошло ли оно во «Входящие»,
-            // нужно — ради этого канал и заводился.
-            //
-            // Сам пиксель вставляется ниже, ПОСЛЕ сборки тела: у персональных волн
-            // тело собирается в секунду отправки и переписывает всё, что мы успели
-            // добавить раньше.
         }
 
         // ТЕЛО ПЕРСОНАЛЬНОГО ПИСЬМА СОБИРАЕТСЯ ЗДЕСЬ, В СЕКУНДУ ОТПРАВКИ.
@@ -1440,17 +1397,6 @@ function newsletter_process_queue(int $limit): int {
             $afterSend      = $built['after'] ?? null;
         }
 
-        // ПИКСЕЛЬ ОТКРЫТИЯ ДЛЯ ПИСЕМ СВОЕГО КАНАЛА — в готовое тело, перед отправкой.
-        if (in_array($opt['pool'] ?? '', ['bulk_smtp', 'cold_smtp'], true)
-            && (int) ($row['priority'] ?? 0) > 0) {
-            $px = nl_own_pixel($id);
-            if ($px !== '' && mb_strpos((string) $row['body'], 'e=o2') === false) {
-                $body = (string) $row['body'];
-                $row['body'] = mb_stripos($body, '</body>') !== false
-                    ? preg_replace('~</body>~i', $px . '</body>', $body, 1)
-                    : $body . $px;
-            }
-        }
         // ПРИОРИТЕТ ОБЯЗАН ДОЙТИ ДО mail_send_failover.
         // Внутри него пул письма считается заново: mail_pool_for(['priority'=>…,'subject'=>…]).
         // Без priority он всегда видел 0 и определял пул ПО ТЕМЕ. Тема волны запуска —
@@ -1568,74 +1514,6 @@ function newsletter_process_queue(int $limit): int {
     //    пула и упирался в суточный лимит провайдера.
     nl_ensure_campaign_type_col();
 
-    // ── ПРЯМОЙ КАНАЛ: ТЕ ЖЕ ЯЩИКИ, НО МИМО СЕРВИСА РАССЫЛОК ──────────────────
-    //
-    // Часть школ искусств сидит на почте региона (mosreg.ru, nso.ru,
-    // kult.permkrai.ru). Их шлюзы режут всё, что пришло через сервис рассылок:
-    // по mosreg.ru 38 отказов и ноль доставленных, ответ всегда один — «blocked
-    // due to security reason». Через сервис им не написать никогда, сколько ни
-    // повторяй. Письмо с нашего собственного домена напрямую они принимают и
-    // отвечают по существу, вплоть до «такого адреса нет» по конкретному ящику.
-    //
-    // Сюда же заведён yandex.ru. Он ведёт себя хитрее шлюза: письма через сервис
-    // ПРИНИМАЕТ (отказов 5%), но кладёт в «Спам» — 1 181 доставленное письмо и
-    // семь открытий за всё время, притом что gmail.com в тот же день открывал
-    // каждый четвёртый. Формально доставлено, фактически нет.
-    //
-    // ЯЩИК ЗДЕСЬ ТОТ ЖЕ, ЧТО И В ОБЫЧНОМ КАНАЛЕ (правило владельца): своей базе —
-    // news@, учреждениям — novosti@. Меняется только транспорт. Официальная почта
-    // центра kc@ в массовых рассылках не участвует никогда: на ней заявки,
-    // результаты, письма сайта и переписка с ведомствами, и терять её нельзя.
-    //
-    // Поток намеренно маленький: это живые почтовые ящики, а не сервис с
-    // прогретыми серверами. Норма на каждый — nl_smtp_daily.
-    if (function_exists('mdp_needs_official') && function_exists('mail_fallback_accounts')) {
-        $smtpCap = max(0, (int) setting('nl_smtp_daily', '300'));
-        $smtpOk  = !function_exists('outreach_window_ok') || outreach_window_ok();
-        if ($smtpCap > 0 && $smtpOk) {
-            $perRunSmtp = max(1, (int) setting('nl_smtp_per_run', '2'));
-            // Тип кампании решает и ящик, и пул: 'inst' — novosti@, остальное — news@.
-            foreach (['inst' => 'cold_smtp', 'konkurs' => 'bulk_smtp'] as $type => $pool) {
-                $acc = mail_fallback_accounts([], $pool)[0] ?? [];
-                $box = mb_strtolower((string) ($acc['user'] ?? ''));
-                if ($box === '') continue;
-                $done0 = (int) (scalar("SELECT COUNT(*) FROM mail_queue
-                                         WHERE status='sent' AND COALESCE(priority,0)>0
-                                           AND sent_via=? AND date(sent_at)=date('now','localtime')",
-                                       [$box]) ?? 0);
-                if ($done0 >= $smtpCap) continue;
-
-                $rows = all("SELECT q.*, COALESCE(q.campaign_type, n.campaign_type, 'konkurs') AS ctype
-                               FROM mail_queue q LEFT JOIN newsletters n ON n.id = q.newsletter_id
-                              WHERE q.status='queued' AND COALESCE(q.priority,0)>0
-                                AND (q.scheduled_at IS NULL OR q.scheduled_at='' OR q.scheduled_at<=?)
-                                AND COALESCE(q.campaign_type, n.campaign_type, 'konkurs') = ?
-                                AND LOWER(SUBSTR(q.to_email, INSTR(q.to_email,'@') + 1))
-                                    IN (SELECT domain FROM mail_domain_policy WHERE policy='official')
-                              ORDER BY q.priority DESC, q.id ASC LIMIT ?",
-                            [$nowTs, $type, $perRunSmtp * 4]);
-                $done = 0;
-                foreach ($rows as $row) {
-                    if ($done >= $perRunSmtp || $done0 + $done >= $smtpCap) break;
-                    // Пул называем явно: тип кампании оставляем как есть, чтобы
-                    // суточные доли и отчёты считали письмо своей волной, а не
-                    // «официальным обращением».
-                    $row['force_pool'] = $pool;
-                    if ($sendRow($row, $acc)) {
-                        $sent++; $done++;
-                        // СВОЙ КАНАЛ НАДО МЕРИТЬ САМИМ: событий от сервиса рассылок
-                        // по этим письмам не будет, и в отчёте домен показывал бы
-                        // нули, по которым не отличить «дошло во Входящие» от «мы
-                        // туда вообще не пишем».
-                        nl_own_event((string) $row['to_email'], 'delivered');
-                    }
-                }
-                if ($done > 0) nl_log("process: напрямую с $box — отправлено $done (за сутки "
-                                    . ($done0 + $done) . " из $smtpCap)");
-            }
-        }
-    }
-
     // ПРОСРОЧЕННАЯ ВОЛНА ЗАПУСКА НЕ УХОДИТ В СЛЕДУЮЩИЙ МЕСЯЦ.
     // Письмо запуска зовёт подать заявку на конкурсы ЭТОГО месяца — приём закрывается
     // 25-го. Что не успело уйти до конца месяца, в следующем стало бы приглашением на
@@ -1734,9 +1612,6 @@ function newsletter_process_queue(int $limit): int {
                     if (mrep_domain_quota_left($d) <= 0) $skipDomains[$d] = true;
                 }
             }
-            if (function_exists('mdp_official_domains')) {
-                foreach (array_keys(mdp_official_domains()) as $d) $skipDomains[$d] = true;
-            }
             $skipSql = '';
             if ($skipDomains) {
                 $quoted = array_map(static fn($d) => "'" . str_replace("'", "''", $d) . "'", array_keys($skipDomains));
@@ -1794,10 +1669,6 @@ function newsletter_process_queue(int $limit): int {
                     // отказ пишется на нашу репутацию, и стучаться в закрытую
                     // дверь дороже, чем подождать час.
                     if (function_exists('mrep_domain_paused') && mrep_domain_paused((string) $row['to_email'])) continue;
-                    // Ведомственный шлюз через сервис рассылок недостижим в
-                    // принципе: у него свой медленный канал с почты центра, см.
-                    // выше. Здесь такие письма только пропускаем.
-                    if (function_exists('mdp_needs_official') && mdp_needs_official((string) $row['to_email'])) continue;
                     // Суточная норма конкретной почтовой службы. Общий потолок
                     // в 4 000 не спасает: больше половины базы сидит на mail.ru,
                     // и без отдельной нормы туда каждый день валилось бы две с
@@ -1845,9 +1716,18 @@ function newsletter_process_queue(int $limit): int {
                             // ящик, свои 4 000 писем нормы и полная очередь адресов на
                             // других доменах. На такие случаи есть пауза домену
                             // (mrep_paused_domains), а ящик тут ни при чём.
+                            //
+                            // Главный признак: сервис назвал КОНКРЕТНЫЕ адреса
+                            // (failed_emails) или прямым текстом сказал «нет
+                            // подходящих получателей». Это разговор про адрес, а
+                            // не про канал: 17 августа один-единственный адрес со
+                            // статусом temporary_unavailable трижды затыкал ящик
+                            // учреждений до конца суток, и волна стояла часами.
                             $perRecipient = false;
-                            foreach (['spam', 'skip_dup', 'security reason', 'blacklist',
-                                      'reputation', 'greylist', 'too many', 'policy'] as $w) {
+                            foreach (['failed_emails', 'no valid recipients', 'temporary_unavailable',
+                                      'permanent_unavailable', 'unreachable', 'spam', 'skip_dup',
+                                      'security reason', 'blacklist', 'reputation', 'greylist',
+                                      'too many', 'policy'] as $w) {
                                 if (mb_stripos($why, $w) !== false) { $perRecipient = true; break; }
                             }
                             if ($perRecipient) { nl_box_fail_reset($boxUser); continue; }

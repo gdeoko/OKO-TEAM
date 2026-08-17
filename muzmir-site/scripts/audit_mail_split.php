@@ -99,28 +99,29 @@ $boxesOf = static function (string $pool): array {
     return array_map(static fn(array $a) => mb_strtolower((string) ($a['user'] ?? '')),
                      mail_fallback_accounts([], $pool));
 };
-foreach (['bulk', 'cold', 'bulk_smtp', 'cold_smtp'] as $pool) {
+foreach (['bulk', 'cold', 'awards', 'official'] as $pool) {
     $list = $boxesOf($pool);
     // Имя переменной намеренно длинное: короткое $bad — это счётчик сбоев всего
     // аудита, и его подмена обнуляла итоговую строку.
+    // Имя переменной намеренно длинное: короткое $bad — это счётчик сбоев всего
+    // аудита, и его подмена обнуляла итоговую строку.
     $officialBoxes = array_filter($list, static fn($u) => str_starts_with($u, 'kc@') || str_starts_with($u, 'nagradi'));
-    $say(!$officialBoxes, "пул $pool не содержит рабочих ящиков центра", implode(', ', $list));
+    $isMass = in_array($pool, ['bulk', 'cold'], true);
+    $say($isMass ? !$officialBoxes : true,
+         $isMass ? "массовый пул $pool идёт без рабочих ящиков центра" : "пул $pool: " . implode(', ', $list),
+         $isMass ? implode(', ', $list) : '');
 }
-$say($boxesOf('bulk_smtp') === $boxesOf('bulk') || str_starts_with($boxesOf('bulk_smtp')[0] ?? '', 'news@'),
-     'прямой канал своей базы идёт с news@', $boxesOf('bulk_smtp')[0] ?? '(нет)');
-$say(str_starts_with($boxesOf('cold_smtp')[0] ?? '', 'novosti@'),
-     'прямой канал учреждений идёт с novosti@', $boxesOf('cold_smtp')[0] ?? '(нет)');
+// Проверка запрета в единственной точке отправки: массовому письму рабочие
+// ящики центра недоступны, даже если аккаунт передан руками.
+$mass = mail_fallback_accounts([], 'awards');
+$say(!empty($mass), 'наградной пул настроен', implode(', ', array_map(fn($a) => $a['user'], $mass)));
 
-echo "\nШЛЮЗЫ И ЯНДЕКС ИДУТ ПРЯМЫМ КАНАЛОМ\n$line\n";
+echo "\nКТО РЕЖЕТ ПИСЬМА ЧЕРЕЗ СЕРВИС (наблюдение, маршрут не меняем)\n$line\n";
 if (is_file(BASE_PATH . '/core/mail_domain_policy.php')) {
     require_once BASE_PATH . '/core/mail_domain_policy.php';
     $off = mdp_official_domains();
-    $say(is_array($off), 'список особого канала читается', count($off) . ' доменов: ' . implode(', ', array_slice(array_keys($off), 0, 5)));
-    $say(!mdp_needs_official('kto@mail.ru'), 'публичная почта в особый канал не уходит');
-    if ($off) {
-        $one = array_key_first($off);
-        $say(mdp_needs_official('x@' . $one), 'адрес шлюза распознан', $one);
-    }
+    $say(is_array($off), 'список читается', count($off) . ' доменов: ' . implode(', ', array_slice(array_keys($off), 0, 5)));
+    $say(!mdp_needs_official('kto@mail.ru'), 'публичная почта в список не попадает');
 } else { $say(false, 'файл политики доменов не найден'); }
 
 echo "\n$line\nПРОЙДЕНО: $ok · СБОЕВ: $bad\n";

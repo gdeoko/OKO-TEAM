@@ -42,34 +42,6 @@ if (($_SERVER['REQUEST_METHOD'] ?? 'GET') === 'POST') {
 $token = trim(input('t'));
 $event = trim(input('e'));
 
-/* ---------- Открытие письма, отправленного НАПРЯМУЮ с почты центра ----------
- *
- * У писем, ушедших через сервис рассылок, события открытий присылает сам сервис.
- * Письма ведомственным шлюзам и на Яндекс уходят мимо него, прямой отправкой, и
- * по ним не было бы вообще ничего: ни доставки, ни открытий. А знать надо именно
- * это — ради того канал и заводился (Яндекс письма через сервис принимает, но
- * кладёт в «Спам»: 1 181 доставлено, 7 открытий).
- *
- * Ссылка именная и подписана: по номеру письма в очереди находится адрес, и
- * открытие ложится в общую таблицу событий с пометкой job_id='own'. Дальше его
- * одинаково видят и отчёт по службам, и суточные нормы.
- */
-if ($event === 'o2') {
-    $qid = (int) input('q');
-    $sig = trim((string) input('s'));
-    if (!function_exists('nl_own_pixel_sig')) require_once BASE_PATH . '/core/newsletter.php';
-    if ($qid > 0 && $sig !== '' && hash_equals(nl_own_pixel_sig($qid), $sig)) {
-        try {
-            $to = (string) (scalar("SELECT to_email FROM mail_queue WHERE id=?", [$qid]) ?? '');
-            if ($to !== '') nl_own_event($to, 'opened');
-        } catch (\Throwable $e) { /* картинку отдаём в любом случае */ }
-    }
-    header('Content-Type: image/gif');
-    header('Cache-Control: no-store, no-cache, must-revalidate, max-age=0');
-    echo base64_decode('R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7');
-    exit;
-}
-
 if ($event === 'c') {
     $enc = (string) input('u');
     $url = '';
