@@ -202,7 +202,7 @@ function sizeHS() {
     /* Высота секции задаёт, сколько прокрутки уходит на проезд ленты.
        Коэффициент меньше единицы: лента едет вбок быстрее, чем палец
        вниз, и раздел не растягивает страницу. */
-    h.sec.style.height = Math.round(innerHeight * 0.86 + over * 0.62) + "px";
+    h.sec.style.height = Math.round(innerHeight * 0.72 + over * 0.42) + "px";
   });
 }
 function applyHS() {

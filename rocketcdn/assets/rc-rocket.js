@@ -780,7 +780,7 @@ Rocket.prototype.layout = function (p, dt) {
 
   /* Дальние участки пути делаем мельче, ближние крупнее.
      Вокруг планеты ракета идёт мельче: она «далеко». */
-  var s = this.C.mobile ? 0.82 : 1.12;
+  var s = this.C.mobile ? 0.66 : 1.12;
   this.pivot.scale.setScalar(s * (1 - k * 0.62) * (1 + (this.landK || 0) * 0.12));
 };
 
@@ -820,7 +820,9 @@ Rocket.prototype.veil = function (dt) {
     /* Раньше ракета пряталась от текста до 0,17 и её было не видно.
        Теперь она остаётся на виду: над словами лишь слегка притухает,
        а читаемость держит стеклянная подложка под текстовым блоком. */
-    this._veilGoal = hit ? 0.62 : 1;
+    /* На телефоне колонка одна и текста в кадре втрое больше, поэтому
+       над словами ракета уступает заметно сильнее, чем на мониторе. */
+    this._veilGoal = hit ? (this.C.mobile ? 0.34 : 0.62) : 1;
   }
   var light = document.documentElement.getAttribute("data-theme") === "light";
   var d = this._veilGoal - this._veil;

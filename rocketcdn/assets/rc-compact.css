@@ -25,13 +25,14 @@
 /* ── 1. Ритм секций ────────────────────────────────────────────
    Было clamp(52px, 6.4vw, 96px): на телефоне 52 сверху и 52 снизу,
    то есть между двумя блоками зияло 104 пикселя, треть экрана.
-   Стало 34 - блоки дышат, но не расползаются. Наклон кривой
-   пологий, поэтому к ноутбуку значение подтягивается само.
+   Стало 27, то есть 54 на стыке - это всё ещё впятеро больше
+   зазора внутри сетки, граница блоков читается сразу. Наклон
+   кривой пологий, поэтому к ноутбуку значение подтягивается само.
 
    Зазор в сетках на телефоне ужимаем до 10: при двух колонках
    каждый лишний пиксель зазора съедает ширину карточки. */
 :root {
-  --sec: clamp(30px, 5.2vw, 90px);
+  --sec: clamp(27px, 5.2vw, 90px);
   --gap: clamp(10px, 2.2vw, 24px);
 }
 
@@ -88,9 +89,9 @@
    помещаться в один экран телефона. Число само по себе крупное,
    а вот подложка вокруг него была размером с само число. */
 @media (max-width: 640px) {
-  .kpi > div { padding: 13px 12px; }
-  .kpi-n { font-size: 24px; }
-  .kpi-l { font-size: 11.5px; margin-top: 3px; line-height: 1.35; }
+  .kpi > div { padding: 11px 11px; }
+  .kpi-n { font-size: 23px; }
+  .kpi-l { font-size: 11.5px; margin-top: 2px; line-height: 1.32; }
 }
 
 
@@ -113,7 +114,7 @@
   .card p  { font-size: 12px; line-height: 1.45; }
 
   /* Список внутри продукта: точки ближе к тексту, строки плотнее */
-  .grid.tight .card p { font-size: 11.5px; }
+  .grid.tight .card p { font-size: 11.5px; line-height: 1.4; }
   .grid.tight .prod-card ul { margin-top: 7px; gap: 3px; }
   .grid.tight .prod-card li { font-size: 11px; line-height: 1.38; padding-left: 12px; }
   .grid.tight .prod-card li::before { left: 2px; top: .5em; width: 5px; height: 5px; }
@@ -154,8 +155,8 @@
   }
   .flow-node .card-ico { margin: 0; grid-row: span 2; align-self: center; }
   .flow-node h4 { font-size: 14.5px; margin-bottom: 2px; align-self: end; }
-  .flow-node p  { font-size: 12.5px; line-height: 1.45; align-self: start; }
-  .flow-link { height: 20px; margin: 5px auto; }
+  .flow-node p  { font-size: 12px; line-height: 1.4; align-self: start; }
+  .flow-link { height: 16px; margin: 4px auto; }
 }
 
 
@@ -167,9 +168,9 @@
    Ищем блоки по содержимому, а не по порядку в разметке: так
    правка не развалится, если координатор переставит карточки. */
 @media (max-width: 700px) {
-  .viz-card { padding: 14px 13px; gap: 10px; }
+  .viz-card { padding: 14px 13px; gap: 9px; }
   .viz-card > h3 { font-size: 14.5px; }
-  .viz-card > p  { font-size: 12.5px; line-height: 1.5; }
+  .viz-card > p  { font-size: 12px; line-height: 1.45; }
 
   .viz-grid:has(.dn-wrap):has(.ga-wrap) { grid-template-columns: 1fr 1fr; }
   .viz-grid:has(.dn-wrap):has(.ga-wrap) > .viz-card:has([data-viz="latency"]) { grid-column: 1 / -1; }
@@ -199,7 +200,7 @@
    списка становится ниже, а карточки ЦОД перестают быть с
    ладонь величиной. */
 @media (max-width: 900px) {
-  .map-wrap { max-width: 268px; }
+  .map-wrap { max-width: 232px; }
   .map-legend { margin-top: 9px; gap: 5px 13px; }
   .leg { font-size: 11.5px; }
 
@@ -207,9 +208,9 @@
   .reg-tabs button { padding: 6px 11px; font-size: 12.5px; }
   .search { margin-bottom: 9px; }
   .search input { padding: 10px 14px 10px 38px; }
-  /* Окно списка: 210 пикселей - это пять строк. Все 218 городов
+  /* Окно списка: 190 пикселей - это пять строк. Все 218 городов
      на месте, просто окно перестало быть в полэкрана */
-  .node-list { max-height: 210px; }
+  .node-list { max-height: 190px; }
   .node-row { padding: 8px 13px; font-size: 13.5px; }
 
   /* Три дата-центра встают в две колонки: третий занимает нижний
@@ -218,7 +219,7 @@
   .dc-grid > .dc:last-child:nth-child(3) { grid-column: 1 / -1; }
   .dc { padding: 13px 15px; }
   .dc h4 { font-size: 16.5px; margin: 4px 0 2px; }
-  .dc p { font-size: 12px; line-height: 1.45; }
+  .dc p { font-size: 11.5px; line-height: 1.4; }
 
   .mq { padding: 8px 0; }
   .mq-set span { font-size: 12.5px; }
@@ -273,9 +274,14 @@
    чтобы кнопка отправки была видна без долгой прокрутки. */
 @media (max-width: 900px) {
   .contact { gap: 20px; }
-  .contact-list { gap: 10px; margin-top: 16px; }
-  .contact-list a, .contact-list div { font-size: 14px; gap: 11px; }
+  .contact-list { gap: 8px; margin-top: 14px; }
+  .contact-list a, .contact-list div { font-size: 13.5px; gap: 10px; }
   .contact-list svg { width: 17px; height: 17px; }
+
+  /* Имя и контакт - две короткие строки, на телефоне они спокойно
+     встают рядом и экономят целое поле по высоте. Остальные поля
+     (компания, тема, задача) остаются во всю ширину */
+  .form-2 { grid-template-columns: 1fr 1fr; gap: 0 10px; }
 
   .form-card { padding: 15px 14px; }
   .field { margin-bottom: 9px; }
@@ -294,3 +300,20 @@
    Плотность к анимации отношения не имеет: человек, который
    выключил движение, получает ту же компактную страницу. Ничего
    отдельного здесь не нужно - правила выше не анимируются. */
+
+/* ── Плотность на большом экране ──────────────────────────────
+   Дополнение к работе выше. На ноутбуке и мониторе воздух нужен,
+   но между секциями его было столько же, сколько на телефоне до
+   уплотнения, и страница выходила на пятнадцать экранов. Режем
+   умеренно: сам блок остаётся просторным, сокращается только
+   расстояние между блоками и высота шапок разделов. */
+@media (min-width: 1024px) {
+  :root { --sec: clamp(46px, 4.2vw, 76px); }
+  .sec-head { margin-bottom: clamp(22px, 2.4vw, 34px); }
+  .hero { min-height: 92svh; padding: 104px 0 48px; }
+  section > .wrap > .sec-head + * { margin-top: 0; }
+  .viz-grid, .grid { row-gap: clamp(14px, 1.6vw, 22px); }
+}
+@media (min-width: 1600px) {
+  :root { --sec: clamp(54px, 3.6vw, 88px); }
+}
