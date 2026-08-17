@@ -152,6 +152,10 @@ function rc_tg_call($token, $method, $params, $ip) {
         CURLOPT_RETURNTRANSFER => true,
         CURLOPT_TIMEOUT        => 25,
         CURLOPT_CONNECTTIMEOUT => 8,
+        /* Только IPv4. Резолвер площадки отдаёт для api.telegram.org
+           адрес шестой версии, до которого отсюда сети нет, и каждый
+           вызов молча висел восемь секунд, пока не упрётся в таймаут. */
+        CURLOPT_IPRESOLVE      => CURL_IPRESOLVE_V4,
     ];
     if ($ip) $opt[CURLOPT_RESOLVE] = ['api.telegram.org:443:' . $ip];
     if ($px = rc_cfg('tg_proxy')) $opt[CURLOPT_PROXY] = $px;
@@ -160,6 +164,60 @@ function rc_tg_call($token, $method, $params, $ip) {
     $err = curl_error($ch);
     curl_close($ch);
     return [$r, $err];
+}
+
+/* Резервный резолвинг через DNS поверх HTTPS.
+   Статический список адресов рано или поздно устаревает: телеграм
+   меняет узлы. Спрашиваем адрес у публичных резолверов и запоминаем
+   ответ на четверть часа, чтобы не дёргать их на каждый вызов. */
+function rc_tg_resolve() {
+    $cache = RC_DATA . '/tg_dns.json';
+    $d = rc_json_read($cache, []);
+    if (!empty($d['ips']) && !empty($d['ts']) && (time() - (int)$d['ts']) < 900) {
+        return (array)$d['ips'];
+    }
+    $ips = [];
+    $sources = [
+        ['https://1.1.1.1/dns-query?name=api.telegram.org&type=A', ['accept: application/dns-json']],
+        ['https://dns.google/resolve?name=api.telegram.org&type=A', []],
+    ];
+    foreach ($sources as $src) {
+        $ch = curl_init($src[0]);
+        curl_setopt_array($ch, [
+            CURLOPT_RETURNTRANSFER => true,
+            CURLOPT_TIMEOUT        => 6,
+            CURLOPT_CONNECTTIMEOUT => 4,
+            CURLOPT_IPRESOLVE      => CURL_IPRESOLVE_V4,
+            CURLOPT_HTTPHEADER     => $src[1],
+        ]);
+        $r = curl_exec($ch);
+        curl_close($ch);
+        $j = json_decode((string)$r, true);
+        foreach ((array)($j['Answer'] ?? []) as $a) {
+            $ip = (string)($a['data'] ?? '');
+            if (filter_var($ip, FILTER_VALIDATE_IP, FILTER_FLAG_IPV4)) $ips[] = $ip;
+        }
+        if ($ips) break;
+    }
+    $ips = array_values(array_unique($ips));
+    if ($ips) rc_json_write($cache, ['ts' => time(), 'ips' => $ips]);
+    return $ips;
+}
+
+/* Одна и та же жалоба не должна забивать журнал: повторы копим и
+   пишем не чаще раза в четверть часа, с числом попыток. */
+function rc_log_rare($key, $msg) {
+    $f = RC_DATA . '/log_rare.json';
+    $d = rc_json_read($f, []);
+    $now = time();
+    $rec = $d[$key] ?? ['ts' => 0, 'n' => 0];
+    $rec['n']++;
+    if ($now - (int)$rec['ts'] >= 900) {
+        rc_log($msg . ($rec['n'] > 1 ? ' (повторов с прошлой записи: ' . $rec['n'] . ')' : ''));
+        $rec = ['ts' => $now, 'n' => 0];
+    }
+    $d[$key] = $rec;
+    rc_json_write($f, $d);
 }
 
 function rc_tg($method, $params = [], $tries = 2) {
@@ -173,9 +231,13 @@ function rc_tg($method, $params = [], $tries = 2) {
         if ($i === 0) usleep(400000);
     }
 
-    /* Обычный путь не сработал: ищем адрес, до которого сеть есть */
-    foreach (rc_tg_ips() as $ip) {
-        if ($ip === $pin) continue;
+    /* Обычный путь не сработал: ищем адрес, до которого сеть есть.
+       Сначала известные адреса, потом свежие от публичных резолверов -
+       список в коде когда-нибудь устареет, а резолвер нет. */
+    $tried = [$pin];
+    foreach (array_merge(rc_tg_ips(), rc_tg_resolve()) as $ip) {
+        if (in_array($ip, $tried, true)) continue;
+        $tried[] = $ip;
         list($r, $e2) = rc_tg_call($token, $method, $params, $ip);
         if (!$e2) {
             rc_tg_pin_set($ip);
@@ -184,8 +246,8 @@ function rc_tg($method, $params = [], $tries = 2) {
         }
     }
     /* Связь с Телеграмом иногда моргает. В журнал пишем только то,
-       что не прошло и со второй попытки. */
-    rc_log('TG ' . $method . ': ' . $err);
+       что не прошло ни с одного адреса, и не чаще раза в четверть часа. */
+    rc_log_rare('tg_' . $method, 'TG ' . $method . ': ' . $err);
     return null;
 }
 
