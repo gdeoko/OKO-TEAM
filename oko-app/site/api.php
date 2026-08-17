@@ -673,7 +673,18 @@ case 'agentDeal':
         [$cid,$body['product']??'',$body['tariff']??'',(int)($body['amount']??0),$body['status']??'open',$body['kp_url']??'',$body['contract_path']??'',now()])]);
 case 'getAnketaForAgent':
     require_agent();
-    $a=db_one("SELECT * FROM anketa_submissions WHERE submission_id=? OR email=? ORDER BY id DESC LIMIT 1",[$body['submission_id']??'',$body['email']??'']);
+    // Ищем ТОЛЬКО по тем ключам, которые реально передали. Раньше в запрос
+    // шло «submission_id=? OR email=?», а недостающий ключ подставлялся пустой
+    // строкой - и условие «email=''» совпадало с любой записью без почты.
+    // Спросив анкету по её номеру, агент мог получить чужую: самую свежую из
+    // тех, где почта не заполнена. Пустой ключ теперь не ищет ничего.
+    $sid=trim($body['submission_id']??'');
+    $mail=trim($body['email']??'');
+    $усл=[]; $знач=[];
+    if($sid!==''){ $усл[]='submission_id=?'; $знач[]=$sid; }
+    if($mail!==''){ $усл[]='email=?'; $знач[]=$mail; }
+    if(!$усл) fail('Нужен submission_id или email',400);
+    $a=db_one("SELECT * FROM anketa_submissions WHERE ".implode(' OR ',$усл)." ORDER BY id DESC LIMIT 1",$знач);
     if(!$a) fail('Анкета не найдена',404);
     $a['files']=db_all("SELECT filename,path,mime FROM anketa_files WHERE submission_id=?",[$a['submission_id']]);
     out(['ok'=>true,'anketa'=>$a]);
