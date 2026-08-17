@@ -389,6 +389,42 @@ if (!function_exists('city_geo')) {
     }
 }
 
+if (!function_exists('tf_extract_country')) {
+    /**
+     * Вырезать название страны ИЗ ЛЮБОГО МЕСТА строки.
+     *
+     * Страну ищут по краям, а пишут где придётся: в базе лежит
+     * «Россия, г. Россия Г. Мосальск» — форма подставила страну, человек
+     * дописал свою, и вышло «город Россия». Проверка краёв такое не ловит,
+     * потому что посередине стоит приставка. Здесь строка разбирается по
+     * словам, и каждое сочетание из одного-трёх слов сверяется со справочником
+     * стран: что совпало — вырезается, что осталось — и есть населённый пункт.
+     *
+     * @param string $found сюда попадёт каноническое имя найденной страны
+     */
+    function tf_extract_country(string $s, string &$found): string {
+        $words = preg_split('~\s+~u', trim($s)) ?: [];
+        $n = count($words);
+        $keep = [];
+        for ($i = 0; $i < $n; ) {
+            $matched = 0;
+            for ($len = min(3, $n - $i); $len >= 1; $len--) {
+                $chunk = implode(' ', array_slice($words, $i, $len));
+                $c = tf_country_canon($chunk);
+                if ($c !== '') {
+                    if ($found === '') $found = $c;
+                    $matched = $len;
+                    break;
+                }
+            }
+            if ($matched > 0) { $i += $matched; continue; }
+            $keep[] = $words[$i];
+            $i++;
+        }
+        return trim(implode(' ', $keep));
+    }
+}
+
 if (!function_exists('city_resolve')) {
     /**
      * Разбирает произвольный ввод города («Москва», «г. минск», «Россия, г. Москва»,
@@ -470,6 +506,34 @@ if (!function_exists('city_resolve')) {
         }
         $s = tf_strip_quotes($s);
         if ($s === '') return $out;
+
+        /* Страна могла остаться внутри строки: «Россия Г. Мосальск». Вырезаем её
+         * отовсюду, где бы она ни стояла, и при необходимости снимаем приставку
+         * ещё раз — она могла прятаться за вырезанным словом. */
+        $inner = '';
+        $cut = tf_extract_country($s, $inner);
+        if ($cut !== '' && $cut !== $s) {
+            $s = $cut;
+            if ($saidCountry === '' && $inner !== '') $saidCountry = $inner;
+            if (preg_match('~^(город|гор\.?|г\.?|пгт\.?|посёлок|поселок|п\.?|село|с\.?|деревня|дер\.?|д\.?|станица|ст\.?|хутор|х\.?|аул|рп\.?)\s+~ui', $s, $m3)) {
+                $raw = mb_strtolower($m3[1], 'UTF-8');
+                $s = trim(mb_substr($s, mb_strlen($m3[0])));
+                if (preg_match('~^(село|с)~u',$raw)) $prefix='с.';
+                elseif (preg_match('~^(деревня|дер|д)~u',$raw)) $prefix='д.';
+                elseif (preg_match('~^(посёлок|поселок|пгт|рп|п)~u',$raw)) $prefix='пгт';
+                elseif (preg_match('~^(станица|ст)~u',$raw)) $prefix='ст.';
+                elseif (preg_match('~^(хутор|х)~u',$raw)) $prefix='х.';
+                elseif (preg_match('~^аул~u',$raw)) $prefix='аул';
+                else $prefix='г.';
+            }
+        }
+        // Ввели только страну, города нет: города не выдумываем.
+        if ($s === '') { $out['country'] = $saidCountry !== '' ? $saidCountry : 'Россия'; return $out; }
+        // Строка целиком оказалась страной («Россия») — тот же случай.
+        if ($saidCountry === '' && tf_country_canon($s) !== '') {
+            $out['country'] = tf_country_canon($s);
+            return $out;
+        }
 
         /* Страна могла прятаться ЗА приставкой: «Россия, г. Беларусь Гомель» —
          * так пишут, когда страну подставила форма, а человек дописал свою.

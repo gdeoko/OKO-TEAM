@@ -15,6 +15,8 @@
  */
 declare(strict_types=1);
 require __DIR__ . '/_boot.php';
+// Свой справочник городов: без него подсказки знают только Россию.
+if (!function_exists('city_geo')) require_once BASE_PATH . '/core/text_format.php';
 
 $q = trim((string) input('q'));
 // Режим city: пользователь ищет только город/населённый пункт (шаг «Город» в заявке).
@@ -28,10 +30,38 @@ if (function_exists('rate_ok') && !rate_ok('addr:' . client_ip(), 60, 60)) {
     json_out(['ok' => true, 'suggestions' => []]);
 }
 
+/* СВОИ ПОДСКАЗКИ ИДУТ ПЕРВЫМИ.
+ *
+ * DaData ищет по России, и на «Минск» она честно предлагает село Минское в
+ * Костромской области и деревню Минск в Красноярском крае. Участник из Минска
+ * выбирает первое попавшееся и оказывается россиянином. Поэтому сначала
+ * отвечает наш собственный справочник городов (core/text_format.php): он знает
+ * и ближнее зарубежье, и Дубай, и отдаёт сразу канонический вид
+ * «Страна, г. Город» — ровно то, что должно лежать в заявке.
+ */
+$localOut = [];
+if ($mode === 'city' && function_exists('city_geo')) {
+    $needle = str_replace('ё', 'е', mb_strtolower($q, 'UTF-8'));
+    foreach (city_geo() as $key => [$country, $stem, $display]) {
+        if (mb_strpos($key, $needle) !== 0) continue;
+        $value = $country . ', г. ' . $display;
+        $localOut[$value] = [
+            'value'       => $value,
+            'short'       => $display . ' (' . $country . ')',
+            'postal_code' => '',
+            'region'      => '',
+            'city'        => $display,
+            'street'      => '',
+            'house'       => '',
+        ];
+        if (count($localOut) >= 7) break;
+    }
+}
+
 $token = (string) cfgv('dadata_token', '');
 if ($token === '') {
-    // Ключ не настроен — подсказок нет, но поле продолжает работать как обычное.
-    json_out(['ok' => true, 'suggestions' => [], 'reason' => 'no_token']);
+    // Ключ не настроен — остаются наши подсказки, поле продолжает работать.
+    json_out(['ok' => true, 'suggestions' => array_values($localOut), 'reason' => 'no_token']);
 }
 
 $payload = ['query' => $q, 'count' => 7];
@@ -40,6 +70,10 @@ $payload = ['query' => $q, 'count' => 7];
 if ($mode === 'city') {
     $payload['from_bound'] = ['value' => 'city'];
     $payload['to_bound']   = ['value' => 'settlement'];
+    // Ищем не только по России: конкурсы международные, участники пишут из
+    // Минска, Алматы и Дубая. Если тариф зарубежные страны не отдаёт, ответ
+    // просто не изменится — свои подсказки уже собраны выше.
+    $payload['locations'] = [['country_iso_code' => '*']];
 }
 
 $ch = curl_init('https://suggestions.dadata.ru/suggestions/api/4_1/rs/suggest/address');
@@ -61,12 +95,13 @@ $code = (int) curl_getinfo($ch, CURLINFO_HTTP_CODE);
 curl_close($ch);
 
 if ($raw === false || $code !== 200) {
-    // Молча отдаём пустой список: поле остаётся рабочим, ввод руками не блокируется.
-    json_out(['ok' => true, 'suggestions' => [], 'reason' => $err !== '' ? 'net' : ('http_' . $code)]);
+    // Молча отдаём то, что знаем сами: поле остаётся рабочим, ввод не блокируется.
+    json_out(['ok' => true, 'suggestions' => array_values($localOut),
+              'reason' => $err !== '' ? 'net' : ('http_' . $code)]);
 }
 
 $data = json_decode((string) $raw, true);
-$out  = [];
+$out  = $localOut;   // свои подсказки первыми, дальше DaData
 foreach ((array) ($data['suggestions'] ?? []) as $s) {
     $d = (array) ($s['data'] ?? []);
 
@@ -94,10 +129,31 @@ foreach ((array) ($data['suggestions'] ?? []) as $s) {
     if ($house !== '')  $parts[] = ($houseT !== '' ? $houseT . ' ' : '') . $house;
     $full = implode(', ', $parts);
 
-    $out[] = [
-        // value — что подставится в поле (полный адрес), а короткий вариант DaData
-        // остаётся в `short` для компактного показа в списке.
-        'value'       => $full !== '' ? $full : (string) ($s['value'] ?? ''),
+    /* В режиме города в поле должно попасть «Страна, г. Город», а не почтовый
+     * адрес с областью и районом: человек указывает город участника, а не куда
+     * везти посылку. Разбор всё равно приведёт строку к этому виду, но человек
+     * должен видеть в поле то же самое, что увидит потом в дипломе. */
+    $valueFull = $full !== '' ? $full : (string) ($s['value'] ?? '');
+    if ($mode === 'city') {
+        $short = $city !== '' ? $city : $settl;
+        /* Подсказка должна отвечать на введённое слово. На «моск» DaData находит
+         * и «Московское шоссе» в Рязани — в списке городов это выглядит как
+         * предложение поехать в Рязань. Оставляем только те, где название
+         * населённого пункта действительно начинается с введённого. */
+        $needleLow = str_replace('ё', 'е', mb_strtolower($q, 'UTF-8'));
+        $shortLow  = str_replace('ё', 'е', mb_strtolower($short, 'UTF-8'));
+        if ($short === '' || mb_strpos($shortLow, $needleLow) !== 0) continue;
+        if ($short !== '' && function_exists('city_normalize')) {
+            $canon = city_normalize(($country !== '' ? $country . ', ' : '') . $short);
+            if ($canon !== '') $valueFull = $canon;
+        }
+    }
+    if (isset($out[$valueFull])) continue;      // уже пришло из своего справочника
+
+    $out[$valueFull] = [
+        // value — что подставится в поле, а короткий вариант DaData остаётся
+        // в `short` для компактного показа в списке.
+        'value'       => $valueFull,
         'short'       => (string) ($s['value'] ?? ''),
         'postal_code' => (string) ($d['postal_code'] ?? ''),
         'region'      => $region,
@@ -106,4 +162,4 @@ foreach ((array) ($data['suggestions'] ?? []) as $s) {
         'house'       => $house,
     ];
 }
-json_out(['ok' => true, 'suggestions' => $out]);
+json_out(['ok' => true, 'suggestions' => array_values($out)]);
