@@ -275,44 +275,77 @@ html[data-theme="light"] .rc-vidbg.on { opacity: .16; }
 }
 .rc-flight.has-cab .rcf-cab { opacity: 1; }
 
-/* ── Навигация: клавиши прямо на консоли корабля ─────────────
-   Кнопки стоят в зоне нарисованной панели и сделаны её клавишами:
-   тёмный металл, утопленная посадка, светящаяся кромка снизу.
-   Никаких «стеклянных таблеток поверх кадра». */
-.rcf-nav {
-  position: absolute; left: 50%; bottom: 3.6%;
-  transform: translateX(-50%);
-  display: flex; gap: 7px; flex-wrap: wrap; justify-content: center;
-  max-width: min(760px, 86vw);
+/* ── Пульт навигации: блок клавиш ВНУТРИ консоли ─────────────
+   Не кнопки поверх кадра, а физический блок панели: металлическая
+   ниша с фаской и винтами по углам, лежащая в перспективе консоли
+   (наклонена от зрителя, как и нарисованная), внутри - клавиши с
+   LED-полосой. Нажатие вдавливает клавишу в панель. */
+.rcf-deck {
+  position: absolute; left: 50%; bottom: 2.6%;
+  transform: translateX(-50%) perspective(760px) rotateX(33deg);
+  transform-origin: 50% 100%;
   pointer-events: auto;
+  padding: 10px 14px 12px;
+  border-radius: 12px;
+  background:
+    radial-gradient(circle at 8px 8px, rgba(207,233,245,.35) 1.6px, transparent 2.4px),
+    radial-gradient(circle at calc(100% - 8px) 8px, rgba(207,233,245,.35) 1.6px, transparent 2.4px),
+    radial-gradient(circle at 8px calc(100% - 8px), rgba(207,233,245,.35) 1.6px, transparent 2.4px),
+    radial-gradient(circle at calc(100% - 8px) calc(100% - 8px), rgba(207,233,245,.35) 1.6px, transparent 2.4px),
+    linear-gradient(180deg, #1c2632 0%, #10171f 40%, #0a0f16 100%);
+  border: 1px solid rgba(4,8,14,.95);
+  box-shadow:
+    inset 0 1px 0 rgba(207,233,245,.1),
+    inset 0 0 26px rgba(0,0,0,.6),
+    0 -1px 0 rgba(207,233,245,.06),
+    0 10px 26px -8px rgba(0,0,0,.95);
+}
+/* Светящаяся щель по верхней кромке ниши: пульт встроен, не приклеен */
+.rcf-deck::before {
+  content: ''; position: absolute; left: 6%; right: 6%; top: -2px; height: 1px;
+  background: linear-gradient(90deg, transparent, rgba(66,178,220,.55), transparent);
+}
+.rcf-nav {
+  display: flex; gap: 7px; flex-wrap: wrap; justify-content: center;
+  max-width: min(720px, 84vw);
 }
 .rcf-nav button {
   font-family: var(--f-body, "Golos Text", sans-serif);
   font-size: 10.5px; font-weight: 700; letter-spacing: .14em;
   text-transform: uppercase;
   color: rgba(180,226,244,.92);
-  background: linear-gradient(180deg, #2a3542 0%, #131c26 42%, #0b121b 100%);
-  border: 1px solid rgba(10,16,24,.9);
-  border-radius: 7px;
-  padding: 8px 13px 9px;
+  background: linear-gradient(180deg, #303c4b 0%, #17212c 45%, #0d141d 100%);
+  border: 1px solid rgba(6,10,16,.95);
+  border-radius: 6px;
+  padding: 9px 13px 10px;
   cursor: pointer;
+  position: relative;
   box-shadow:
-    inset 0 1px 0 rgba(207,233,245,.16),
-    inset 0 -3px 6px rgba(0,0,0,.55),
-    0 1px 0 rgba(0,0,0,.8),
-    0 3px 6px -2px rgba(0,0,0,.9);
+    inset 0 1px 0 rgba(207,233,245,.18),
+    inset 0 -4px 7px rgba(0,0,0,.6),
+    0 2px 0 #05090f,
+    0 4px 7px -2px rgba(0,0,0,.9);
   text-shadow: 0 0 8px rgba(66,178,220,.6);
-  transition: color .18s, box-shadow .18s, transform .12s;
+  transition: color .16s, box-shadow .16s, transform .1s, background .16s;
 }
-.rcf-nav button:hover {
-  color: #EAF7FF;
+/* LED-полоска клавиши */
+.rcf-nav button::after {
+  content: ''; position: absolute; left: 22%; right: 22%; top: 3px; height: 2px;
+  border-radius: 1px;
+  background: rgba(66,178,220,.35);
+  box-shadow: 0 0 6px rgba(66,178,220,.3);
+  transition: background .2s, box-shadow .2s;
+}
+.rcf-nav button:hover { color: #EAF7FF; }
+.rcf-nav button:hover::after { background: rgba(159,224,246,.85); box-shadow: 0 0 10px rgba(66,178,220,.8); }
+.rcf-nav button:active {
+  transform: translateY(2px);
   box-shadow:
-    inset 0 1px 0 rgba(207,233,245,.2),
-    inset 0 -3px 6px rgba(0,0,0,.5),
-    0 0 14px -2px rgba(66,178,220,.7),
-    0 3px 6px -2px rgba(0,0,0,.9);
+    inset 0 1px 0 rgba(207,233,245,.1),
+    inset 0 3px 8px rgba(0,0,0,.7),
+    0 0 0 #05090f,
+    0 1px 3px -1px rgba(0,0,0,.9);
 }
-.rcf-nav button:active { transform: translateY(1px); }
 .rcf-nav button.cur {
   color: #06131d;
   background: linear-gradient(180deg, #9FE0F6 0%, #42B2DC 60%, #2C8FB8 100%);
@@ -320,9 +353,11 @@ html[data-theme="light"] .rc-vidbg.on { opacity: .16; }
   box-shadow:
     inset 0 1px 0 rgba(255,255,255,.55),
     inset 0 -3px 6px rgba(6,24,36,.35),
-    0 0 20px -3px rgba(66,178,220,.95),
-    0 3px 6px -2px rgba(0,0,0,.9);
+    0 0 22px -3px rgba(66,178,220,.95),
+    0 2px 0 #0a3346,
+    0 4px 7px -2px rgba(0,0,0,.9);
 }
+.rcf-nav button.cur::after { background: #063040; box-shadow: none; }
 
 /* ── Автопилот ───────────────────────────────────────────────ы */
 .rcf-auto {
@@ -411,26 +446,92 @@ html[data-theme="light"] .rc-vidbg.on { opacity: .16; }
 }
 
 @media (max-width: 760px) {
-  /* На телефоне консоль ниже и уже: клавиши идут одной лентой с
-     прокруткой пальцем, как строка приборов, а не в три этажа
-     поверх окна */
+  /* На телефоне пульт компактнее и почти анфас: сильная перспектива
+     на узком экране ломает читаемость клавиш. Лента с прокруткой
+     пальцем, как строка приборов. */
+  .rcf-deck {
+    bottom: 3%;
+    max-width: 94vw;
+    padding: 7px 9px 8px;
+    transform: translateX(-50%) perspective(620px) rotateX(18deg);
+  }
   .rcf-nav {
-    bottom: 4.6%; gap: 5px;
-    max-width: 94vw; width: 94vw;
+    gap: 5px;
+    max-width: 88vw;
     flex-wrap: nowrap; justify-content: flex-start;
     overflow-x: auto; overscroll-behavior-x: contain;
     -webkit-overflow-scrolling: touch;
     scrollbar-width: none;
-    padding: 4px 6px;
-    -webkit-mask-image: linear-gradient(90deg, transparent 0, #000 14px, #000 calc(100% - 14px), transparent 100%);
-    mask-image: linear-gradient(90deg, transparent 0, #000 14px, #000 calc(100% - 14px), transparent 100%);
+    -webkit-mask-image: linear-gradient(90deg, transparent 0, #000 12px, #000 calc(100% - 12px), transparent 100%);
+    mask-image: linear-gradient(90deg, transparent 0, #000 12px, #000 calc(100% - 12px), transparent 100%);
   }
   .rcf-nav::-webkit-scrollbar { display: none; }
-  .rcf-nav button { font-size: 9.5px; padding: 7px 10px 8px; flex: 0 0 auto; }
+  .rcf-nav button { font-size: 9.5px; padding: 8px 10px 9px; flex: 0 0 auto; }
   .rcf-auto { padding: 8px 12px; font-size: 11px; }
   .rcf-holo { right: 8px; bottom: 12.5%; width: 44px; }
   .rcf-info { top: clamp(64px, 12vh, 110px); }
   .rcf-hint { bottom: 17%; font-size: 10.5px; max-width: 90vw; white-space: normal; text-align: center; }
   .rcf-speed { display: none; }
   .rcf-track { bottom: 1.2%; }
+}
+
+/* ── Сканер: рамка захвата цели ──────────────────────────────
+   Четыре уголка и строка данных под ними. Стоит на экранной
+   проекции объекта и дышит, как настоящий прибор наведения. */
+.rcf-lock {
+  position: absolute; width: 84px; height: 84px;
+  transform: translate(-50%, -50%);
+  pointer-events: none;
+  opacity: 0; transition: opacity .25s linear;
+}
+.rcf-lock.on { opacity: 1; animation: rcfLock 2.2s ease-in-out infinite; }
+@keyframes rcfLock {
+  0%, 100% { transform: translate(-50%, -50%) scale(1); }
+  50%      { transform: translate(-50%, -50%) scale(1.07); }
+}
+.rcf-lock b {
+  position: absolute; width: 16px; height: 16px;
+  border: 2px solid #9FE0F6;
+  filter: drop-shadow(0 0 6px rgba(66,178,220,.9));
+}
+.rcf-lock b:nth-child(1) { left: 0; top: 0; border-right: 0; border-bottom: 0; }
+.rcf-lock b:nth-child(2) { right: 0; top: 0; border-left: 0; border-bottom: 0; }
+.rcf-lock b:nth-child(3) { left: 0; bottom: 0; border-right: 0; border-top: 0; }
+.rcf-lock b:nth-child(4) { right: 0; bottom: 0; border-left: 0; border-top: 0; }
+.rcf-lock span {
+  position: absolute; left: 50%; top: calc(100% + 8px);
+  transform: translateX(-50%);
+  white-space: nowrap;
+  font-family: var(--f-body, "Golos Text", sans-serif);
+  font-size: 10.5px; font-weight: 600; letter-spacing: .16em;
+  color: #9FE3FF;
+  text-shadow: 0 0 8px rgba(66,178,220,.8);
+}
+
+/* Клавиша сканера в активном положении - янтарная: приборы
+   наведения на пультах всегда выделены другим цветом */
+.rcf-nav button.rcf-scan-key.cur {
+  background: linear-gradient(180deg, #FFD9A0 0%, #F0A85A 60%, #C9853E 100%);
+  color: #241303;
+  box-shadow:
+    inset 0 1px 0 rgba(255,255,255,.55),
+    inset 0 -3px 6px rgba(60,30,6,.35),
+    0 0 22px -3px rgba(240,168,90,.95),
+    0 2px 0 #4a3010,
+    0 4px 7px -2px rgba(0,0,0,.9);
+}
+.rcf-nav button.rcf-scan-key.cur::after { background: #4a3010; box-shadow: none; }
+
+/* ── Журнал исследователя ────────────────────────────────────ы */
+.rcf-prog {
+  position: absolute; left: clamp(14px, 3vw, 40px); bottom: 3.4%;
+  font-family: var(--f-body, "Golos Text", sans-serif);
+  font-size: 10.5px; font-weight: 600; letter-spacing: .18em;
+  text-transform: uppercase;
+  color: rgba(159,227,255,.65);
+}
+.rcf-prog.full { color: #35E08F; text-shadow: 0 0 10px rgba(53,224,143,.6); }
+@media (max-width: 760px) {
+  .rcf-prog { left: 10px; bottom: auto; top: clamp(58px, 10vh, 92px); }
+  .rcf-lock { width: 64px; height: 64px; }
 }

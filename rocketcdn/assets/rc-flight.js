@@ -59,6 +59,27 @@ var F = {
 var ui = {};      /* DOM оверлея */
 var W3 = null;    /* всё трёхмерное */
 
+/* Журнал исследователя: что уже открыто наведением. Живёт в
+   localStorage - вернувшись на сайт, человек продолжает свой
+   список, а не начинает заново. */
+var LOG_KEY = "rcdn.explored";
+var explored = {};
+try { explored = JSON.parse(localStorage.getItem(LOG_KEY) || "{}") || {}; } catch (e) { explored = {}; }
+function noteExplored(name) {
+  if (explored[name]) return;
+  explored[name] = 1;
+  try { localStorage.setItem(LOG_KEY, JSON.stringify(explored)); } catch (e) {}
+  paintProgress();
+  var total = 10, got = Object.keys(explored).length;
+  if (got >= total && g.RC_SOUND && g.RC_SOUND.uiConfirm) { try { g.RC_SOUND.uiConfirm(); } catch (e) {} }
+}
+function paintProgress() {
+  if (!ui.prog) return;
+  var got = Object.keys(explored).length, total = 10;
+  ui.prog.textContent = (RU ? "Исследовано " : "Explored ") + Math.min(got, total) + "/" + total;
+  ui.prog.classList.toggle("full", got >= total);
+}
+
 /* Три вселенные: своя окраска неба, туманностей, звёзд и солнца.
    Мир один, но за гипер-вспышкой он оживает в другом свете - и его
    хочется исследовать заново. */
@@ -97,19 +118,22 @@ function buildUI() {
   for (var ni = 0; ni < NAV.length; ni++) {
     navHtml += '<button type="button" data-goal="' + NAV[ni].id + '">' + NAV[ni].t + "</button>";
   }
+  navHtml += '<button type="button" class="rcf-scan-key" data-scan aria-pressed="false">' + (RU ? "Сканер" : "Scanner") + "</button>";
 
   w.innerHTML =
     '<canvas class="rcf-cv"></canvas>' +
     '<img class="rcf-cab" alt="" aria-hidden="true" decoding="async">' +
     '<div class="rcf-hud">' +
       '<div class="rcf-cap" aria-live="polite"></div>' +
-      '<div class="rcf-nav" role="group" aria-label="' + (RU ? "Навигация" : "Navigation") + '">' + navHtml + '</div>' +
+      '<div class="rcf-deck"><div class="rcf-nav" role="group" aria-label="' + (RU ? "Навигация" : "Navigation") + '">' + navHtml + '</div></div>' +
       '<div class="rcf-track"><i></i></div>' +
       '<div class="rcf-hint">' + (matchMedia("(pointer: coarse)").matches
         ? (RU ? "Ведите пальцем вверх - тяга, в сторону - взгляд" : "Swipe up to thrust, sideways to look")
         : (RU ? "Колесо или свайп - тяга. Мышь - взгляд." : "Scroll or swipe to thrust. Mouse to look.")) + '</div>' +
       '<div class="rcf-speed"><b>0</b><span>' + (RU ? "км/с" : "km/s") + '</span></div>' +
       '<div class="rcf-info" role="status"></div>' +
+      '<div class="rcf-prog"></div>' +
+      '<div class="rcf-lock" aria-hidden="true"><b></b><b></b><b></b><b></b><span></span></div>' +
     '</div>' +
     '<div class="rcf-holo" aria-hidden="true"><img src="assets/mark.webp" alt=""><i></i></div>' +
     '<button type="button" class="rcf-auto" aria-pressed="true">' +
@@ -132,6 +156,10 @@ function buildUI() {
   ui.auto = w.querySelector(".rcf-auto");
   ui.ret = w.querySelector(".rcf-return");
   ui.info = w.querySelector(".rcf-info");
+  ui.prog = w.querySelector(".rcf-prog");
+  ui.lock = w.querySelector(".rcf-lock");
+  ui.lockCap = ui.lock.querySelector("span");
+  ui.scanKey = w.querySelector(".rcf-scan-key");
   ui.fade = w.querySelector(".rcf-fade");
 
   /* Рамка кабины: своя для альбома и своя для портрета */
@@ -143,13 +171,21 @@ function buildUI() {
   ui.ret.addEventListener("click", close);
   ui.auto.addEventListener("click", function () {
     setAuto(!F.auto);
-    if (g.RC_SOUND && g.RC_SOUND.blip) { try { g.RC_SOUND.blip(F.auto ? 760 : 420, 0.09, "sine", 0.045); } catch (e) {} }
+    if (g.RC_SOUND) { try { (g.RC_SOUND.uiConfirm || g.RC_SOUND.blip).call(g.RC_SOUND); } catch (e) {} }
   });
   ui.nav.addEventListener("click", function (e) {
+    if (g.RC_SOUND) { try { (g.RC_SOUND.uiClick || g.RC_SOUND.blip).call(g.RC_SOUND); } catch (err) {} }
+    var sc = e.target.closest("button[data-scan]");
+    if (sc) {
+      F.scan = !F.scan;
+      sc.setAttribute("aria-pressed", F.scan ? "true" : "false");
+      sc.classList.toggle("cur", F.scan);
+      if (!F.scan && ui.lock) ui.lock.classList.remove("on");
+      return;
+    }
     var b = e.target.closest("button[data-goal]");
     if (!b) return;
     goTo(b.getAttribute("data-goal"));
-    if (g.RC_SOUND && g.RC_SOUND.blip) { try { g.RC_SOUND.blip(640, 0.08, "square", 0.028); } catch (e) {} }
   });
   bindControls();
 }
@@ -199,7 +235,7 @@ function jumpUniverse() {
   uniBusy = true;
   uniIdx = (uniIdx + 1) % UNIVERSES.length;
   if (ui.fade) { ui.fade.style.transition = "opacity .45s"; ui.fade.style.opacity = "1"; }
-  if (g.RC_SOUND && g.RC_SOUND.chime) { try { g.RC_SOUND.chime(); } catch (e) {} }
+  if (g.RC_SOUND) { try { (g.RC_SOUND.hyper || g.RC_SOUND.chime).call(g.RC_SOUND); } catch (e) {} }
   F.shake = 1;
   setTimeout(function () {
     applyUniverse(uniIdx);
@@ -689,8 +725,23 @@ function buildWorld() {
     if (LOOKS[li].p < LOOKS[li - 1].p + 0.015) LOOKS[li].p = LOOKS[li - 1].p + 0.015;
   }
 
+  /* Цели сканера: что прибор умеет вести. Имя короткое - оно
+     горит над рамкой захвата. */
+  var scanTargets = [
+    { o: earth, name: RU ? "ЗЕМЛЯ" : "EARTH", key: "earth" },
+    { o: moon, name: RU ? "ЛУНА" : "MOON", key: "moon" },
+    { o: mars, name: RU ? "МАРС" : "MARS", key: "mars" },
+    { o: saturn, name: RU ? "САТУРН" : "SATURN", key: "saturn" },
+    { o: hole, name: RU ? "ЧЁРНАЯ ДЫРА" : "BLACK HOLE", key: "hole" },
+    { o: comet, name: RU ? "КОМЕТА RC/2026" : "COMET RC/2026", key: "comet" },
+    { o: sat, name: "RC-SAT", key: "sat" },
+    { o: milky, name: RU ? "МЛЕЧНЫЙ ПУТЬ" : "MILKY WAY", key: "milky" },
+    { o: gal2, name: "RV-2", key: "gal2" },
+    { o: gal3, name: "RC-3", key: "gal3" }
+  ];
+
   return {
-    r: r, scene: scene, cam: cam, path: path, looks: LOOKS, at: AT, fov0: FOV0,
+    r: r, scene: scene, cam: cam, path: path, looks: LOOKS, at: AT, fov0: FOV0, scanTargets: scanTargets,
     milky: milky, gal2: gal2, gal3: gal3,
     comet: comet, sat: sat, nebSprites: nebSprites, starMats: starMats, sunGlow: sunGlow, amb: amb,
     earth: earth, clouds: clouds, moon: moon, mars: mars, saturn: saturn, hole: hole,
@@ -884,6 +935,43 @@ function frame(ts) {
     w3.sat.rotation.y = sa + 1.2;
   }
 
+  /* Сканер: находит цель ближе всех к центру кадра, ведёт её
+     рамкой захвата и пишет дистанцию. Заодно пополняет журнал
+     исследователя. Работает в своём темпе - двенадцать раз в
+     секунду, дешевле рейкаста. */
+  if (F.scan && ui.lock && ts - (frame._scanT || 0) > 84) {
+    frame._scanT = ts;
+    var bestT = null, bestD = 0.55, sx = 0, sy = 0, bd = 0;
+    for (var si = 0; si < (w3.scanTargets || []).length; si++) {
+      var tg = w3.scanTargets[si];
+      w3.tmpA.setFromMatrixPosition(tg.o.matrixWorld).project(w3.cam);
+      if (w3.tmpA.z > 1) continue;                  /* за спиной */
+      var dxn = w3.tmpA.x, dyn = w3.tmpA.y;
+      var dc = Math.sqrt(dxn * dxn + dyn * dyn);
+      if (dc < bestD) {
+        bestD = dc; bestT = tg;
+        sx = (dxn * 0.5 + 0.5) * innerWidth;
+        sy = (-dyn * 0.5 + 0.5) * innerHeight;
+        bd = w3.cam.position.distanceTo(w3.tmpB.setFromMatrixPosition(tg.o.matrixWorld));
+      }
+    }
+    if (bestT) {
+      ui.lock.classList.add("on");
+      ui.lock.style.left = sx + "px";
+      ui.lock.style.top = sy + "px";
+      /* Масштаб мира: радиус Земли 60 единиц = 6371 км, то есть
+         единица - около ста километров. Дистанции получаются
+         орбитальные, как и вся сцена. */
+      var tkm = bd * 106 / 1000;
+      ui.lockCap.textContent = bestT.name + " · " + (tkm >= 1000
+        ? ((tkm / 1000).toFixed(1) + (RU ? " млн км" : "M km"))
+        : (Math.round(tkm) + (RU ? " тыс. км" : "K km")));
+      noteExplored(bestT.key);
+    } else {
+      ui.lock.classList.remove("on");
+    }
+  }
+
   /* Бортовой справочник: навёл на планету или галактику - корабль
      говорит, что это и когда открыто. Дорогую проверку пересечений
      гоняем восемь раз в секунду, не каждый кадр. */
@@ -901,7 +989,8 @@ function frame(ts) {
       if (info) {
         ui.info.textContent = info;
         ui.info.classList.add("on");
-        if (g.RC_SOUND && g.RC_SOUND.blip) { try { g.RC_SOUND.blip(920, 0.06, "sine", 0.018); } catch (e) {} }
+        noteExplored(info.split(" ")[0]);
+        if (g.RC_SOUND) { try { (g.RC_SOUND.uiHover || g.RC_SOUND.blip).call(g.RC_SOUND); } catch (e) {} }
       }
       else ui.info.classList.remove("on");
     }
@@ -962,6 +1051,10 @@ function open() {
 
   F.open = true;
   F.p = 0; F.v = 0; F.last = 0;
+  F.scan = false;
+  if (ui.scanKey) { ui.scanKey.classList.remove("cur"); ui.scanKey.setAttribute("aria-pressed", "false"); }
+  if (ui.lock) ui.lock.classList.remove("on");
+  paintProgress();
   setAuto(true);
   F.look.x = F.look.y = F.look.tx = F.look.ty = 0;
   hintHidden = false;

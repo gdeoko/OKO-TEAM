@@ -416,6 +416,71 @@ Sound.prototype.flightLevel = function (k) {
   if (this.eg) this.eg.gain.setTargetAtTime((this.music() ? 0.3 : 0.5) * (0.5 + k * 0.8), t, 0.35);
 };
 
+/* ── Звуки интерфейса игры ───────────────────────────────────
+   Клавиша панели - это не «бип», а механика: короткий высокий тик
+   контакта и глухой удар клавишного хода под ним. Наведение -
+   мягкий проход сканера. Подтверждение - двойной тон. Гипер -
+   шумовой разгон с подъёмом высоты. Всё синтез, всё очень тихо:
+   эффекты обязаны читаться, а не пугать. */
+Sound.prototype.uiClick = function () {
+  if (!this.ready && !this.build()) return;
+  var ctx = this.ctx, t = ctx.currentTime;
+  try {
+    var o1 = ctx.createOscillator(), g1 = ctx.createGain();
+    o1.type = "square"; o1.frequency.value = 2300;
+    g1.gain.setValueAtTime(0.028, t);
+    g1.gain.exponentialRampToValueAtTime(0.0001, t + 0.014);
+    o1.connect(g1); g1.connect(this.master); o1.start(t); o1.stop(t + 0.02);
+    var o2 = ctx.createOscillator(), g2 = ctx.createGain();
+    o2.type = "sine"; o2.frequency.setValueAtTime(190, t);
+    o2.frequency.exponentialRampToValueAtTime(95, t + 0.045);
+    g2.gain.setValueAtTime(0.05, t);
+    g2.gain.exponentialRampToValueAtTime(0.0001, t + 0.05);
+    o2.connect(g2); g2.connect(this.master); o2.start(t); o2.stop(t + 0.06);
+  } catch (e) {}
+};
+
+Sound.prototype.uiHover = function () {
+  if (!this.ready) return;
+  var ctx = this.ctx, t = ctx.currentTime;
+  try {
+    var o = ctx.createOscillator(), gn = ctx.createGain();
+    o.type = "sine";
+    o.frequency.setValueAtTime(620, t);
+    o.frequency.linearRampToValueAtTime(940, t + 0.09);
+    gn.gain.setValueAtTime(0, t);
+    gn.gain.linearRampToValueAtTime(0.016, t + 0.02);
+    gn.gain.exponentialRampToValueAtTime(0.0001, t + 0.11);
+    o.connect(gn); gn.connect(this.master); o.start(t); o.stop(t + 0.12);
+  } catch (e) {}
+};
+
+Sound.prototype.uiConfirm = function () {
+  this.blip(660, 0.1, "sine", 0.035);
+  var self = this;
+  setTimeout(function () { self.blip(990, 0.16, "sine", 0.03); }, 90);
+};
+
+Sound.prototype.hyper = function () {
+  if (!this.ready && !this.build()) return;
+  var ctx = this.ctx, t = ctx.currentTime;
+  try {
+    var n = Math.floor(ctx.sampleRate * 1.4);
+    var b = ctx.createBuffer(1, n, ctx.sampleRate), c = b.getChannelData(0);
+    for (var i = 0; i < n; i++) c[i] = (Math.random() * 2 - 1) * Math.pow(i / n, 1.6);
+    var src = ctx.createBufferSource(); src.buffer = b;
+    var f = ctx.createBiquadFilter(); f.type = "bandpass"; f.Q.value = 1.4;
+    f.frequency.setValueAtTime(240, t);
+    f.frequency.exponentialRampToValueAtTime(3600, t + 1.15);
+    var gn = ctx.createGain();
+    gn.gain.setValueAtTime(0.0001, t);
+    gn.gain.exponentialRampToValueAtTime(0.16, t + 0.9);
+    gn.gain.exponentialRampToValueAtTime(0.0001, t + 1.4);
+    src.connect(f); f.connect(gn); gn.connect(this.master);
+    src.start(t);
+  } catch (e) {}
+};
+
 g.RC_SOUND = snd;
 
 function bind() {
