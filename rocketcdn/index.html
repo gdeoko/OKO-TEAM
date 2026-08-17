@@ -31,72 +31,228 @@
 <script>/* Тема до первой отрисовки: без этого страница моргает и клон первого экрана строится не в той теме */
 try{var _t=localStorage.getItem("rc_theme");if(_t==="light"||_t==="dark")document.documentElement.setAttribute("data-theme",_t);}catch(e){}</script>
 <link rel="preload" href="assets/fonts/golos-cyr.woff2" as="font" type="font/woff2" crossorigin>
-<link rel="stylesheet" href="assets/rc-fonts.css">
-<link rel="stylesheet" href="assets/rc.css">
-<link rel="stylesheet" href="assets/rc-interior.css">
-<link rel="stylesheet" href="assets/rc-reduced.css">
+<link rel="stylesheet" href="assets/rc-fonts.css?v=1786650096">
+<link rel="stylesheet" href="assets/rc.css?v=1786953380">
+<link rel="stylesheet" href="assets/rc-interior.css?v=1786953860">
+<link rel="stylesheet" href="assets/rc-reduced.css?v=1786953497">
 <!-- Режим страницы решается до того, как поднимутся сцены: иначе они
      успеют занять контексты, которых на слабом устройстве и так мало -->
-<script src="assets/rc-fallback.js"></script>
+<script src="assets/rc-fallback.js?v=1786953470"></script>
 
-<!-- ══ Заставка «Разгон» ════════════════════════════════════════════
-     Живёт прямо здесь, без единого запроса и зависимости: пока
-     подтянется таблица стилей, шрифт и объёмный слой, человек уже
-     смотрит на фирменный разгон. Всё считается в браузере: поток
-     пакетов данных летит на зрителя с настоящей перспективой,
-     скорость растёт по честному проценту загрузки, на финале поток
-     схлопывается в капсулу с фирменным знаком и уходит в шапку.
-
-     Звук включается только если человек уже разрешал звук на сайте:
-     без разрешения браузер всё равно не даст, а лезть с гулом к
-     тому, кто его не просил, мы не собираемся.
+<!-- ══ Заставка «Старт» ═════════════════════════════════════════════
+     Объёмная ракета, посчитанная прямо здесь: настоящая трёхмерная
+     модель, перспективная проекция, свет по форме. Ни одного запроса
+     и ни одного килобайта библиотек - заставка обязана быть на экране
+     раньше, чем приедет что-либо ещё.
 
      Разметку строит сам скрипт: при выключенном JavaScript заставки
      нет вовсе и страница читается сразу, как требует приёмка. ══ -->
 <style>
 .rc-load{position:fixed;inset:0;z-index:1200;background:#050C15;opacity:0;overflow:hidden;
   transition:opacity .3s ease}
-html[data-theme="light"] .rc-load{background:#F3F7FB}
+html[data-theme="light"] .rc-load{background:#070F1A}
 .rc-load.on{opacity:1}
 .rc-load canvas{position:absolute;inset:0;width:100%;height:100%;display:block}
-.rc-load-sl{position:absolute;left:0;right:0;bottom:13%;text-align:center;
+.rc-load-sl{position:absolute;left:0;right:0;bottom:12%;text-align:center;
   font:600 10px/1 'Golos Text',system-ui,sans-serif;letter-spacing:.42em;
-  color:rgba(226,232,240,.42);opacity:0;transition:opacity .5s ease}
-html[data-theme="light"] .rc-load-sl{color:rgba(9,19,32,.45)}
-.rc-load.lit .rc-load-sl{opacity:1}
-.rc-load-pc{position:absolute;left:0;right:0;bottom:8%;text-align:center;
+  color:rgba(226,232,240,.44);opacity:0;transition:opacity .5s ease}
+.rc-load-pc{position:absolute;left:0;right:0;bottom:7.2%;text-align:center;
   font:700 13px/1 'Golos Text',system-ui,sans-serif;color:#42B2DC;
   font-variant-numeric:tabular-nums;opacity:0;transition:opacity .5s ease}
-.rc-load.lit .rc-load-pc{opacity:1}
-/* Уход: заставка расходится, капсула улетает вверх в шапку */
-.rc-load.out{opacity:0;transition:opacity .5s ease}
-.rc-load.out canvas{transform:translateY(-14vh) scale(1.12);opacity:0;
-  transition:transform .58s cubic-bezier(.6,0,.2,1),opacity .5s ease}
+.rc-load.lit .rc-load-sl,.rc-load.lit .rc-load-pc{opacity:1}
+.rc-load.out{opacity:0;transition:opacity .55s ease}
 @media (prefers-reduced-motion: reduce){
-  .rc-load canvas,.rc-load-sl,.rc-load-pc{transition:none!important}
-  .rc-load.out canvas{transform:none}
+  .rc-load,.rc-load-sl,.rc-load-pc{transition:none!important}
 }
 </style>
 <script>
 /* ── RocketLoader ─────────────────────────────────────────────────
-   Единственный публичный объект заставки, тот же интерфейс, что мы
-   отдаём разработчику личного кабинета: show, hide, setProgress,
-   sound, destroy. Правила времени из сценария нарушать нельзя:
-   первые 150 мс молчим (на быстром кеше моргать нечем), если уже
-   показались - держим минимум 700 мс, потолок 4 секунды, финальные
-   600 мс ухода не обрываем никогда, иначе капсула не долетит. */
+   Показ подчинён сценарию: молчим первые 150 мс, показались - живём
+   минимум 700 мс, потолок 4 секунды, финальные 600 мс старта не
+   обрываем никогда. Прогресс честный: шрифт, событие load и сигнал
+   объёмного слоя. */
 (function (g, d) {
   "use strict";
-  var el = null, cv = null, x = null, raf = null, last = 0, t = 0;
-  var shown = 0, killed = false, hid = false, p = 0, pShow = 0;
-  var T_HOLD = 700, T_CAP = 4000, T_OUT = 600;
-  var calm = false;
+
+
+  /* ── Модель ракеты ───────────────────────────────────────────
+     Строим один раз при запуске: тело вращения из колец плюс
+     стабилизаторы. Координаты в условных единицах, ось Y - вдоль
+     корпуса. Профиль задаёт форму: пары «высота, радиус». */
+  var PROFILE = [
+    [ 2.30, 0.00],   /* острие */
+    [ 2.05, 0.14],
+    [ 1.75, 0.26],
+    [ 1.35, 0.36],
+    [ 0.60, 0.40],   /* цилиндр корпуса */
+    [-0.30, 0.40],
+    [-0.95, 0.38],
+    [-1.25, 0.30],   /* сужение к соплу */
+    [-1.45, 0.26],
+    [-1.62, 0.34],   /* раструб */
+    [-1.72, 0.30]
+  ];
+  var SEG = 18;      /* граней по окружности */
+
+  function buildRocket() {
+    var verts = [], faces = [], i, j;
+
+    /* Кольца профиля */
+    for (i = 0; i < PROFILE.length; i++) {
+      for (j = 0; j < SEG; j++) {
+        var a = (j / SEG) * Math.PI * 2;
+        verts.push([Math.cos(a) * PROFILE[i][1], PROFILE[i][0], Math.sin(a) * PROFILE[i][1]]);
+      }
+    }
+    /* Боковые грани между соседними кольцами */
+    for (i = 0; i < PROFILE.length - 1; i++) {
+      for (j = 0; j < SEG; j++) {
+        var j2 = (j + 1) % SEG;
+        var a0 = i * SEG + j, b0 = i * SEG + j2;
+        var a1 = (i + 1) * SEG + j, b1 = (i + 1) * SEG + j2;
+        /* Тёмная обшивка, у сопла металл темнее и холоднее */
+        var kind = i >= PROFILE.length - 3 ? "nozzle" : (i <= 2 ? "nose" : "hull");
+        faces.push({ v: [a0, b0, b1, a1], kind: kind, ring: i });
+      }
+    }
+
+    /* Три стабилизатора: плоские клинья у основания */
+    for (i = 0; i < 3; i++) {
+      var ang = (i / 3) * Math.PI * 2 + 0.4;
+      var ca = Math.cos(ang), sa = Math.sin(ang);
+      var base = verts.length;
+      /* Внутренняя кромка у корпуса, внешняя отведена наружу и вниз */
+      verts.push([ca * 0.36, -0.35, sa * 0.36]);
+      verts.push([ca * 0.36, -1.15, sa * 0.36]);
+      verts.push([ca * 0.95, -1.42, sa * 0.95]);
+      verts.push([ca * 0.60, -0.62, sa * 0.60]);
+      faces.push({ v: [base, base + 1, base + 2, base + 3], kind: "fin", ring: 99 });
+    }
+
+    return { verts: verts, faces: faces };
+  }
+
+  var MODEL = buildRocket();
+
+  /* ── Математика ──────────────────────────────────────────── */
+  function rotate(p, ry, rx) {
+    var cy = Math.cos(ry), sy = Math.sin(ry);
+    var cx = Math.cos(rx), sx = Math.sin(rx);
+    var x = p[0] * cy - p[2] * sy;
+    var z = p[0] * sy + p[2] * cy;
+    var y = p[1] * cx - z * sx;
+    z = p[1] * sx + z * cx;
+    return [x, y, z];
+  }
+
+  function normal(a, b, c) {
+    var ux = b[0] - a[0], uy = b[1] - a[1], uz = b[2] - a[2];
+    var vx = c[0] - a[0], vy = c[1] - a[1], vz = c[2] - a[2];
+    var nx = uy * vz - uz * vy, ny = uz * vx - ux * vz, nz = ux * vy - uy * vx;
+    var l = Math.sqrt(nx * nx + ny * ny + nz * nz) || 1;
+    return [nx / l, ny / l, nz / l];
+  }
+
+  /* Свет по договору всего сайта: ключевой сверху-слева цианoвый,
+     заполняющий снизу-справа фиолетовый, контровой холодный белый. */
+  var KEY = [-0.55, 0.72, 0.42];
+  var FILL = [0.6, -0.4, 0.35];
+
+  function shade(n, kind) {
+    var kd = Math.max(0, n[0] * KEY[0] + n[1] * KEY[1] + n[2] * KEY[2]);
+    var fd = Math.max(0, n[0] * FILL[0] + n[1] * FILL[1] + n[2] * FILL[2]);
+    var rim = Math.pow(1 - Math.abs(n[2]), 3);
+
+    var base = kind === "nozzle" ? [34, 44, 58]
+             : kind === "fin" ? [22, 42, 64]
+             : kind === "nose" ? [40, 74, 104]
+             : [30, 56, 82];
+
+    var r = base[0] + kd * 128 + fd * 62 + rim * 78;
+    var gg = base[1] + kd * 186 + fd * 54 + rim * 132;
+    var b = base[2] + kd * 210 + fd * 150 + rim * 168;
+    return "rgb(" + Math.min(255, r | 0) + "," + Math.min(255, gg | 0) + "," + Math.min(255, b | 0) + ")";
+  }
+
+  /* ── Рисование кадра ─────────────────────────────────────── */
+  function drawRocket(x, W, H, S, spin, tilt, cxp, cyp, scale, glow) {
+    var i, j;
+    var cx = W * cxp, cy = H * cyp;
+    var fov = S * scale;
+    var dist = 7.4;
+
+    var rot = [], vs = MODEL.verts;
+    for (i = 0; i < vs.length; i++) rot.push(rotate(vs[i], spin, tilt));
+
+    var list = [];
+    for (i = 0; i < MODEL.faces.length; i++) {
+      var f = MODEL.faces[i];
+      var pts = [], zsum = 0;
+      for (j = 0; j < f.v.length; j++) {
+        var p = rot[f.v[j]];
+        zsum += p[2];
+        var k = fov / (dist + p[2]);
+        pts.push([cx + p[0] * k, cy - p[1] * k]);
+      }
+      var n = normal(rot[f.v[0]], rot[f.v[1]], rot[f.v[2]]);
+      /* Задние грани не рисуем: экономия и правильный силуэт */
+      if (n[2] > 0.06 && f.kind !== "fin") continue;
+      list.push({ pts: pts, z: zsum / f.v.length, col: shade(n, f.kind), kind: f.kind, ring: f.ring });
+    }
+    list.sort(function (a, b) { return b.z - a.z; });
+
+    for (i = 0; i < list.length; i++) {
+      var it = list[i];
+      x.beginPath();
+      x.moveTo(it.pts[0][0], it.pts[0][1]);
+      for (j = 1; j < it.pts.length; j++) x.lineTo(it.pts[j][0], it.pts[j][1]);
+      x.closePath();
+      x.fillStyle = it.col;
+      x.fill();
+      /* Швы обшивки: тонкая цианoвая линия по кольцам */
+      if (it.kind === "hull" && it.ring % 2 === 0) {
+        x.strokeStyle = "rgba(66,178,220,.22)";
+        x.lineWidth = Math.max(0.6, S * 0.0012);
+        x.stroke();
+      }
+    }
+
+    /* Факел: живёт под соплом, длина и яркость идут за прогрессом */
+    if (glow > 0.01) {
+      var nozzle = rotate([0, -1.78, 0], spin, tilt);
+      var k2 = fov / (dist + nozzle[2]);
+      var fx = cx + nozzle[0] * k2, fy = cy - nozzle[1] * k2;
+      var len = S * (0.05 + glow * 0.14);
+      var gr = x.createLinearGradient(fx, fy, fx, fy + len);
+      gr.addColorStop(0, "rgba(226,240,255," + (0.85 * glow).toFixed(3) + ")");
+      gr.addColorStop(0.22, "rgba(66,178,220," + (0.8 * glow).toFixed(3) + ")");
+      gr.addColorStop(0.6, "rgba(138,89,246," + (0.42 * glow).toFixed(3) + ")");
+      gr.addColorStop(1, "rgba(138,89,246,0)");
+      x.beginPath();
+      x.moveTo(fx - S * 0.016 * (0.6 + glow), fy);
+      x.quadraticCurveTo(fx, fy + len * 1.15, fx + S * 0.016 * (0.6 + glow), fy);
+      x.closePath();
+      x.fillStyle = gr;
+      x.fill();
+      /* Ореол у среза сопла */
+      var hg = x.createRadialGradient(fx, fy, 0, fx, fy, S * 0.05 * (0.5 + glow));
+      hg.addColorStop(0, "rgba(207,233,245," + (0.5 * glow).toFixed(3) + ")");
+      hg.addColorStop(1, "rgba(66,178,220,0)");
+      x.fillStyle = hg;
+      x.beginPath(); x.arc(fx, fy, S * 0.05 * (0.5 + glow), 0, 6.283); x.fill();
+    }
+  }
+
+  var el=null, cv=null, x=null, raf=null, last=0, t=0;
+  var shown=0, killed=false, hid=false, p=0, pShow=0, launch=0;
+  var T_HOLD=700, T_CAP=4000, T_OUT=600;
+  var calm=false;
   try { calm = matchMedia("(prefers-reduced-motion: reduce)").matches; } catch (e) {}
 
   /* Звук берём только с разрешения, выданного раньше на этом сайте */
   var wantSound = false;
-  try { wantSound = localStorage.getItem("rcdn.sound") === "1"; } catch (e) {}
-  var ac = null, bus = null, eng = null, engG = null, engF = null;
+  try { wantSound = localStorage.getItem("rcdn.sound") !== "off"; } catch (e) {}
+  var ac=null, bus=null, engG=null, engF=null;
 
   function audioUp() {
     if (ac || !wantSound || calm) return;
@@ -104,51 +260,42 @@ html[data-theme="light"] .rc-load-sl{color:rgba(9,19,32,.45)}
       var C = g.AudioContext || g.webkitAudioContext;
       if (!C) return;
       ac = new C();
+      if (ac.state !== "running") { try { ac.close(); } catch (e2) {} ac = null; return; }
       bus = ac.createGain(); bus.gain.value = 0;
       var lim = ac.createDynamicsCompressor();
-      lim.threshold.value = -12; lim.ratio.value = 20; lim.attack.value = .003; lim.release.value = .25;
+      lim.threshold.value=-12; lim.ratio.value=20; lim.attack.value=.003; lim.release.value=.25;
       bus.connect(lim); lim.connect(ac.destination);
-      if (ac.state === "suspended") ac.resume();
-      bus.gain.setTargetAtTime(.42, ac.currentTime, .5);
-      /* Гул разгона: две расстроенные пилы через фильтр, который
-         открывается по мере роста прогресса */
+      bus.gain.setTargetAtTime(.4, ac.currentTime, .5);
       engG = ac.createGain(); engG.gain.value = .0001;
-      engF = ac.createBiquadFilter(); engF.type = "lowpass"; engF.frequency.value = 170; engF.Q.value = 5;
-      eng = [ac.createOscillator(), ac.createOscillator()];
-      eng[0].type = eng[1].type = "sawtooth";
-      eng[0].frequency.value = 55; eng[1].frequency.value = 82.5; eng[1].detune.value = 7;
-      eng[0].connect(engF); eng[1].connect(engF); engF.connect(engG); engG.connect(bus);
-      eng[0].start(); eng[1].start();
-      engG.gain.setTargetAtTime(.14, ac.currentTime, .7);
+      engF = ac.createBiquadFilter(); engF.type="lowpass"; engF.frequency.value=140; engF.Q.value=6;
+      var o1 = ac.createOscillator(), o2 = ac.createOscillator();
+      o1.type = o2.type = "sawtooth";
+      o1.frequency.value = 52; o2.frequency.value = 78; o2.detune.value = 8;
+      o1.connect(engF); o2.connect(engF); engF.connect(engG); engG.connect(bus);
+      o1.start(); o2.start();
+      engG.gain.setTargetAtTime(.15, ac.currentTime, .8);
     } catch (e) { ac = null; }
   }
-  function boom() {
+  function liftoff() {
     if (!ac) return;
     try {
-      var n = Math.floor(ac.sampleRate * .5), b = ac.createBuffer(1, n, ac.sampleRate), c = b.getChannelData(0);
-      for (var i = 0; i < n; i++) c[i] = (Math.random() * 2 - 1) * (1 - i / n);
+      var n = Math.floor(ac.sampleRate * .9), b = ac.createBuffer(1, n, ac.sampleRate), c = b.getChannelData(0);
+      for (var i = 0; i < n; i++) c[i] = (Math.random() * 2 - 1) * Math.pow(1 - i / n, 1.4);
       var s = ac.createBufferSource(); s.buffer = b;
-      var f = ac.createBiquadFilter(); f.type = "lowpass"; f.frequency.value = 1600;
+      var f = ac.createBiquadFilter(); f.type="lowpass"; f.frequency.value=2400;
       var gg = ac.createGain();
-      gg.gain.setValueAtTime(.42, ac.currentTime);
-      gg.gain.exponentialRampToValueAtTime(.0001, ac.currentTime + .5);
+      gg.gain.setValueAtTime(.5, ac.currentTime);
+      gg.gain.exponentialRampToValueAtTime(.0001, ac.currentTime + .9);
       s.connect(f); f.connect(gg); gg.connect(bus); s.start();
-      var o = ac.createOscillator(), og = ac.createGain();
-      o.type = "triangle"; o.frequency.value = 880;
-      og.gain.setValueAtTime(.0001, ac.currentTime);
-      og.gain.linearRampToValueAtTime(.09, ac.currentTime + .015);
-      og.gain.exponentialRampToValueAtTime(.0001, ac.currentTime + .5);
-      o.connect(og); og.connect(bus); o.start(); o.stop(ac.currentTime + .6);
-      if (engG) engG.gain.setTargetAtTime(.0001, ac.currentTime, .22);
+      if (engG) engG.gain.setTargetAtTime(.32, ac.currentTime, .12);
+      if (engF) engF.frequency.setTargetAtTime(1400, ac.currentTime, .2);
     } catch (e) {}
   }
 
+  /* Звёздный поток за ракетой: даёт скорость и глубину кадра */
   var stars = [];
-  function seed() {
-    stars.length = 0;
-    for (var i = 0; i < 300; i++) {
-      stars.push({ x: (Math.random() - 0.5) * 2, y: (Math.random() - 0.5) * 2, z: Math.random(), c: Math.random() });
-    }
+  for (var si = 0; si < 190; si++) {
+    stars.push({ x:(Math.random()-.5)*2, y:(Math.random()-.5)*2, z:Math.random(), c:Math.random() });
   }
 
   function size() {
@@ -172,101 +319,59 @@ html[data-theme="light"] .rc-load-sl{color:rgba(9,19,32,.45)}
     (d.body || d.documentElement).appendChild(el);
     cv = el.querySelector("canvas");
     x = cv.getContext("2d");
-    seed(); size();
+    size();
     addEventListener("resize", size, { passive: true });
     requestAnimationFrame(function () { if (el) { el.classList.add("on"); el.classList.add("lit"); } });
     shown = Date.now();
     audioUp();
-    if (calm) frame(0);
-    else raf = requestAnimationFrame(loop);
-  }
-
-  /* Тёмная и светлая тема рисуются одной функцией: меняются только
-     цвет фона следа и прозрачность линий. */
-  function light() {
-    return d.documentElement.getAttribute("data-theme") === "light";
+    if (calm) frame(0); else raf = requestAnimationFrame(loop);
   }
 
   function frame(dt) {
     if (!x || !cv) return;
-    pShow += (p - pShow) * 0.11;
+    pShow += (p - pShow) * 0.1;
     t += dt;
+    if (launch) launch = Math.min(1, launch + dt * 1.5);
     var W = cv.width, H = cv.height, S = Math.min(W, H);
-    var cx = W / 2, cy = H / 2;
-    var lite = light();
 
     /* Шлейф вместо очистки: следы читаются как скорость */
-    x.fillStyle = lite
-      ? "rgba(243,247,251," + (0.4 - pShow * 0.18).toFixed(3) + ")"
-      : "rgba(5,12,21," + (0.36 - pShow * 0.17).toFixed(3) + ")";
+    x.fillStyle = "rgba(5,12,21," + (0.4 - pShow * 0.16).toFixed(3) + ")";
     x.fillRect(0, 0, W, H);
 
-    var speed = (0.1 + pShow * pShow * 1.25) * dt * 60;
-    var fov = S * 0.72;
+    /* Поток данных мимо камеры */
+    var speed = (0.1 + pShow * pShow * 0.9 + launch * 2.2) * dt * 60;
+    var fov = S * 0.7, cx = W / 2, cy = H / 2;
     for (var i = 0; i < stars.length; i++) {
-      var s = stars[i], pz = s.z;
-      s.z -= speed * 0.012;
-      if (s.z <= 0.02) {
-        s.z = 1; s.x = (Math.random() - 0.5) * 2; s.y = (Math.random() - 0.5) * 2; s.c = Math.random();
-        pz = s.z;
-      }
-      var k = fov / s.z, kp = fov / pz;
-      var a = Math.min(1, (1 - s.z) * 1.5) * (lite ? 0.7 : 1);
-      x.strokeStyle = s.c > 0.78
-        ? "rgba(138,89,246," + (a * 0.9).toFixed(3) + ")"
-        : (s.c > 0.42 ? "rgba(66,178,220," + (a * 0.92).toFixed(3) + ")"
-                      : "rgba(207,233,245," + (a * 0.55).toFixed(3) + ")");
-      x.lineWidth = Math.max(0.7, (1 - s.z) * 4.2);
+      var st = stars[i], pz = st.z;
+      st.z -= speed * 0.012;
+      if (st.z <= 0.02) { st.z = 1; st.x = (Math.random()-.5)*2; st.y = (Math.random()-.5)*2; st.c = Math.random(); pz = st.z; }
+      var k = fov / st.z, kp = fov / pz;
+      var a = Math.min(1, (1 - st.z) * 1.4);
+      x.strokeStyle = st.c > .8 ? "rgba(138,89,246," + (a*.75).toFixed(3) + ")"
+                    : "rgba(66,178,220," + (a*.7).toFixed(3) + ")";
+      x.lineWidth = Math.max(0.6, (1 - st.z) * 3.4);
       x.beginPath();
-      x.moveTo(cx + s.x * kp, cy + s.y * kp);
-      x.lineTo(cx + s.x * k, cy + s.y * k);
+      x.moveTo(cx + st.x * kp, cy + st.y * kp);
+      x.lineTo(cx + st.x * k, cy + st.y * k);
       x.stroke();
     }
 
-    /* Обод горизонта сжимается к финалу */
-    x.strokeStyle = lite ? "rgba(9,19,32,.12)" : "rgba(226,232,240," + (0.1 + pShow * 0.14).toFixed(3) + ")";
-    x.lineWidth = Math.max(1, S * 0.002);
-    x.beginPath(); x.arc(cx, cy, S * (0.4 - pShow * 0.1), 0, 6.283); x.stroke();
+    /* Ракета: на загрузке медленно поворачивается, показывая объём,
+       на старте выпрямляется и уходит вверх из кадра */
+    var spin = t * 0.55;
+    var tilt = 0.34 - launch * 0.3 + Math.sin(t * 0.7) * 0.05;
+    var upY = 0.44 - launch * launch * 0.9;
+    var scale = 0.42 + pShow * 0.05 + launch * 0.14;
+    var glow = 0.3 + pShow * 0.5 + launch * 1.1;
+    drawRocket(x, W, H, S, spin, tilt, 0.5, upY, scale, glow);
 
-    /* Ядро разгорается по прогрессу */
-    var core = S * (0.04 + pShow * 0.1);
-    var gr = x.createRadialGradient(cx, cy, 0, cx, cy, core * 2.8);
-    gr.addColorStop(0, "rgba(207,233,245," + (0.3 + pShow * 0.5).toFixed(3) + ")");
-    gr.addColorStop(0.32, "rgba(66,178,220," + (0.16 + pShow * 0.3).toFixed(3) + ")");
-    gr.addColorStop(0.7, "rgba(138,89,246," + (0.08 + pShow * 0.16).toFixed(3) + ")");
-    gr.addColorStop(1, "rgba(5,12,21,0)");
-    x.fillStyle = gr;
-    x.beginPath(); x.arc(cx, cy, core * 2.8, 0, 6.283); x.fill();
-
-    /* Финал: поток схлопывается в капсулу со знаком */
-    var snap = Math.max(0, Math.min(1, (pShow - 0.9) / 0.1));
-    /* Пока капсула меньше пары десятков пикселей, рисовать её нечем:
-       радиусы уходят в минус и градиент отказывается строиться */
-    if (snap > 0.06) {
-      var capW = S * 0.3 * snap, capH = S * 0.135 * snap, r = capH / 2;
-      x.save(); x.translate(cx, cy);
-      x.beginPath();
-      x.moveTo(-capW / 2 + r, -capH / 2);
-      x.lineTo(capW / 2 - r, -capH / 2);
-      x.quadraticCurveTo(capW / 2, -capH / 2, capW / 2, 0);
-      x.quadraticCurveTo(capW / 2, capH / 2, capW / 2 - r, capH / 2);
-      x.lineTo(-capW / 2 + r, capH / 2);
-      x.quadraticCurveTo(-capW / 2, capH / 2, -capW / 2, 0);
-      x.quadraticCurveTo(-capW / 2, -capH / 2, -capW / 2 + r, -capH / 2);
-      x.closePath();
-      var bg = x.createLinearGradient(0, -capH / 2, 0, capH / 2);
-      bg.addColorStop(0, "rgba(20,40,61,.96)");
-      bg.addColorStop(1, "rgba(9,19,32,.96)");
-      x.fillStyle = bg; x.fill();
-      x.strokeStyle = "rgba(66,178,220," + (0.5 * snap).toFixed(3) + ")";
-      x.lineWidth = Math.max(1, S * 0.0022); x.stroke();
-      /* Ядро внутри капсулы: доехало вправо и стало знаком */
-      var kx = capW / 2 - r, kr = Math.max(1, r - S * 0.008);
-      var kg = x.createRadialGradient(kx - kr * .3, -kr * .3, kr * .1, kx, 0, kr);
-      kg.addColorStop(0, "#7FD8FA"); kg.addColorStop(.6, "#42B2DC"); kg.addColorStop(1, "#0A5897");
-      x.fillStyle = kg;
-      x.beginPath(); x.arc(kx, 0, kr, 0, 6.283); x.fill();
-      x.restore();
+    /* Дымный столб под ракетой в момент старта */
+    if (launch > 0.02) {
+      var sg = x.createRadialGradient(cx, cy + S * 0.3, 0, cx, cy + S * 0.3, S * (0.2 + launch * 0.5));
+      sg.addColorStop(0, "rgba(207,233,245," + (0.22 * (1 - launch)).toFixed(3) + ")");
+      sg.addColorStop(1, "rgba(66,178,220,0)");
+      x.fillStyle = sg;
+      x.beginPath(); x.arc(cx, cy + S * 0.3, S * (0.2 + launch * 0.5), 0, 6.283); x.fill();
     }
 
     var pc = el && el.querySelector(".rc-load-pc");
@@ -276,21 +381,17 @@ html[data-theme="light"] .rc-load-sl{color:rgba(9,19,32,.45)}
   function loop(ts) {
     raf = requestAnimationFrame(loop);
     if (d.hidden) { last = 0; return; }
-    var dt = last ? Math.min(0.05, (ts - last) / 1000) : 0.016;
+    var dt = last ? Math.min(.05, (ts - last) / 1000) : .016;
     last = ts;
     frame(dt);
-    /* Фильтр гула открывается вместе с разгоном */
-    if (ac && engF) {
-      try { engF.frequency.setTargetAtTime(170 + pShow * 900, ac.currentTime, .25); } catch (e) {}
+    if (ac && engF && !launch) {
+      try { engF.frequency.setTargetAtTime(140 + pShow * 700, ac.currentTime, .3); } catch (e) {}
     }
   }
 
   var api = {
     show: function () { if (!hid) build(); },
-    setProgress: function (v) {
-      p = v > 1 ? v / 100 : v;
-      if (p > 1) p = 1; if (p < 0) p = 0;
-    },
+    setProgress: function (v) { p = v > 1 ? v / 100 : v; if (p > 1) p = 1; if (p < 0) p = 0; },
     sound: function (on) {
       wantSound = !!on;
       if (!on && ac) { try { ac.close(); } catch (e) {} ac = null; }
@@ -304,14 +405,15 @@ html[data-theme="light"] .rc-load-sl{color:rgba(9,19,32,.45)}
       setTimeout(function () {
         if (!el) return;
         p = 1;
-        boom();
-        /* Полсекунды на схлопывание, потом капсула улетает в шапку */
+        launch = 0.001;          /* старт: ракета уходит вверх */
+        liftoff();
         setTimeout(function () {
           if (!el) return;
           el.classList.add("out");
           d.documentElement.classList.add("rc-loaded");
-          setTimeout(api.destroy, T_OUT + 60);
-        }, 520);
+          if (ac && bus) { try { bus.gain.setTargetAtTime(0, ac.currentTime, .2); } catch (e) {} }
+          setTimeout(api.destroy, T_OUT + 80);
+        }, 620);
       }, wait);
     },
     destroy: function () {
@@ -325,25 +427,18 @@ html[data-theme="light"] .rc-load-sl{color:rgba(9,19,32,.45)}
   };
   g.RocketLoader = api;
 
-  /* Показываемся не раньше 150 мс: если страница из кеша, никто ничего не увидит */
   setTimeout(function () { if (!hid) api.show(); }, 150);
 
-  /* Честный прогресс: три вехи, каждая своя доля */
   var got = 0, need = 3;
   function step() { got++; api.setProgress(got / need); if (got >= need) api.hide(); }
-  try {
-    if (d.fonts && d.fonts.ready) d.fonts.ready.then(step); else step();
-  } catch (e) { step(); }
+  try { if (d.fonts && d.fonts.ready) d.fonts.ready.then(step); else step(); } catch (e) { step(); }
   if (d.readyState === "complete") step();
   else g.addEventListener("load", step, { once: true });
-  /* Третья веха - объёмная сцена: она сама скажет, что готова или что её не будет */
   var told = false;
   function once() { if (told) return; told = true; step(); }
   g.addEventListener("rc:3d", once);
   g.addEventListener("rc:no3d", once);
   setTimeout(once, 2600);
-
-  /* Потолок: что бы ни случилось, дальше четырёх секунд никого не держим */
   setTimeout(function () { api.hide(); }, T_CAP);
 })(window, document);
 </script>
@@ -1078,19 +1173,19 @@ html[data-theme="light"] .rc-load-sl{color:rgba(9,19,32,.45)}
   <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M12 19V5M6 11l6-6 6 6"/></svg>
 </button>
 
-<script src="assets/rc-space.js"></script>
-<script src="assets/rc-sound.js"></script>
-<script src="assets/rc-geo.js"></script>
-<script src="assets/rc-i18n.js"></script>
-<script src="assets/rc-globe.js"></script>
-<script src="assets/rc-app.js"></script>
-<script src="assets/rc-fill.js"></script>
-<script src="assets/rc-viz.js"></script>
-<script src="assets/rc-motion.js"></script>
-<script src="assets/rc-hooks.js"></script>
+<script src="assets/rc-space.js?v=1786650096"></script>
+<script src="assets/rc-sound.js?v=1786957029"></script>
+<script src="assets/rc-geo.js?v=1786650096"></script>
+<script src="assets/rc-i18n.js?v=1786650096"></script>
+<script src="assets/rc-globe.js?v=1786650096"></script>
+<script src="assets/rc-app.js?v=1786956726"></script>
+<script src="assets/rc-fill.js?v=1786650096"></script>
+<script src="assets/rc-viz.js?v=1786650096"></script>
+<script src="assets/rc-motion.js?v=1786953586"></script>
+<script src="assets/rc-hooks.js?v=1786953764"></script>
 <!-- Объёмный слой (three.js и три сцены) подтягивает rc-gl.js
      после загрузки и только там, где он вообще будет показан -->
-<script src="assets/rc-gl.js"></script>
-<script defer src="assets/rc-scroll.js"></script>
+<script src="assets/rc-gl.js?v=1786957102"></script>
+<script defer src="assets/rc-scroll.js?v=1786650096"></script>
 </body>
 </html>

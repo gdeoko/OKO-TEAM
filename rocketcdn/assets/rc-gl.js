@@ -80,9 +80,18 @@ g.RC_GL = {
    вообще будут показаны. Кому 3D не положено - не платит за него
    ни байтом. */
 (function () {
+  /* Путь и метка версии берём из собственного тега: bump.php ставит
+     её всем ссылкам, и объёмный слой обязан подчиняться тому же
+     правилу, иначе браузер отдаст из кеша старую ракету к новой
+     странице. */
+  var ver = "";
   var base = (function () {
     var me = document.currentScript;
-    if (me && me.src) return me.src.replace(/[^/]+$/, "");
+    if (me && me.src) {
+      var q = me.src.indexOf("?");
+      if (q >= 0) { ver = me.src.slice(q); }
+      return me.src.replace(/[?#].*$/, "").replace(/[^/]+$/, "");
+    }
     return "assets/";
   })();
 
@@ -120,7 +129,7 @@ g.RC_GL = {
       return;
     }
     var sc = document.createElement("script");
-    sc.src = base + FILES[i];
+    sc.src = base + FILES[i] + ver;
     sc.async = false;
     sc.onload = function () { load(i + 1); };
     sc.onerror = function () {

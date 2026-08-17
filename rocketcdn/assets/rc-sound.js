@@ -116,11 +116,21 @@ Sound.prototype.chime = function () {
 Sound.prototype.start = function () {
   var self = this;
   if (!this.ready && !this.build()) return;
+  function up() {
+    self.fadeIn();
+    self.space();
+    /* Маяки сети идут сами по себе, раз в шесть-двадцать секунд */
+    if (!self._bTimer) {
+      self._bTimer = setInterval(function () {
+        if (self.on && !document.hidden && Math.random() < 0.5) self.beacon();
+      }, 7000);
+    }
+  }
   var r = this.ctx.resume();
   if (r && r.then) {
-    r.then(function () { self.fadeIn(); }).catch(function () { self.hint(); });
+    r.then(up).catch(function () { self.hint(); });
   } else {
-    this.fadeIn();
+    up();
   }
 };
 
@@ -208,6 +218,82 @@ Sound.prototype.energy = function () {
   var s = 0;
   for (var i = 0; i < 8; i++) s += this.bins[i];
   return Math.min(1, s / (8 * 190));
+};
+
+/* ── Космический слой ────────────────────────────────────────
+   Гул двигателя даёт движение, но один он звучит как пылесос.
+   Космос делают три вещи: медленный аккорд на низких синусах,
+   лёгкое биение между расстроенными голосами и длинный хвост
+   отражений. Импульс для реверберации синтезируем сами - это
+   двести миллисекунд затухающего шума, ни одного файла. */
+Sound.prototype.space = function () {
+  if (!this.ctx || this._space) return;
+  var ctx = this.ctx;
+  try {
+    var out = ctx.createGain();
+    out.gain.value = 0.0001;
+    out.connect(this.master);
+
+    /* Хвост отражений: без него аккорд звучит сухо и близко */
+    var len = Math.floor(ctx.sampleRate * 2.4);
+    var imp = ctx.createBuffer(2, len, ctx.sampleRate);
+    for (var ch = 0; ch < 2; ch++) {
+      var data = imp.getChannelData(ch);
+      for (var i = 0; i < len; i++) {
+        data[i] = (Math.random() * 2 - 1) * Math.pow(1 - i / len, 2.6);
+      }
+    }
+    var rev = ctx.createConvolver();
+    rev.buffer = imp;
+    var wet = ctx.createGain(); wet.gain.value = 0.55;
+    rev.connect(wet); wet.connect(out);
+
+    /* Аккорд: тоника, квинта и октава сверху. Голоса чуть
+       расстроены, поэтому между ними идёт медленное биение. */
+    var freqs = [55, 82.5, 110, 164.66];
+    var voices = [];
+    for (var k = 0; k < freqs.length; k++) {
+      var o = ctx.createOscillator();
+      o.type = k > 2 ? "triangle" : "sine";
+      o.frequency.value = freqs[k];
+      o.detune.value = (k - 1.5) * 6;
+      var vg = ctx.createGain();
+      vg.gain.value = k > 2 ? 0.05 : 0.12;
+      o.connect(vg); vg.connect(out); vg.connect(rev);
+      o.start();
+      voices.push({ o: o, g: vg });
+    }
+
+    /* Дыхание: громкость аккорда медленно ходит вверх-вниз */
+    var lfo = ctx.createOscillator(), lg = ctx.createGain();
+    lfo.frequency.value = 0.055;
+    lg.gain.value = 0.045;
+    lfo.connect(lg); lg.connect(out.gain);
+    lfo.start();
+
+    this._space = { out: out, voices: voices, rev: rev };
+    out.gain.setTargetAtTime(0.16, ctx.currentTime, 2.2);
+  } catch (e) {}
+};
+
+/* Далёкие сигналы сети: редкие, тихие, на грани слышимости.
+   Они и создают ощущение, что вокруг работает инфраструктура. */
+Sound.prototype.beacon = function () {
+  if (!this.on || !this.ctx) return;
+  var ctx = this.ctx, now = ctx.currentTime;
+  if (this._bAt && now - this._bAt < 6) return;
+  this._bAt = now;
+  try {
+    var o = ctx.createOscillator(), g2 = ctx.createGain();
+    o.type = "sine";
+    o.frequency.value = 880 + Math.random() * 660;
+    g2.gain.setValueAtTime(0, now);
+    g2.gain.linearRampToValueAtTime(0.035, now + 0.08);
+    g2.gain.exponentialRampToValueAtTime(0.0001, now + 1.6);
+    o.connect(g2);
+    g2.connect(this._space ? this._space.rev : this.master);
+    o.start(); o.stop(now + 1.7);
+  } catch (e) {}
 };
 
 /* ── Подключение ─────────────────────────────────────────── */

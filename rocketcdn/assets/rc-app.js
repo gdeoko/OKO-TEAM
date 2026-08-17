@@ -56,12 +56,19 @@ var state = {
 };
 if (state.lang !== "en") state.lang = "ru";
 
-function t(k) {
-  var d = window.RC_I18N[state.lang] || {};
+/* Перевод по ключу. Ключа нет - возвращаем null, и вызывающий
+   оставляет на экране то, что написано в разметке. Раньше сюда
+   возвращался сам ключ, и при устаревшем словаре в кеше браузера
+   человек видел в шапке служебное «ui.sound» вместо слова «Звук». */
+function t(k, fallback) {
+  var all = window.RC_I18N || {};
+  var d = all[state.lang] || {};
   if (state.content && state.content.i18n && state.content.i18n[state.lang] && state.content.i18n[state.lang][k]) {
     return state.content.i18n[state.lang][k];
   }
-  return d[k] != null ? d[k] : (window.RC_I18N.ru[k] || k);
+  if (d[k] != null) return d[k];
+  if (all.ru && all.ru[k] != null) return all.ru[k];
+  return fallback != null ? fallback : null;
 }
 function blocks() {
   if (state.content && state.content.blocks && state.content.blocks[state.lang]) return state.content.blocks[state.lang];
@@ -124,8 +131,14 @@ function applyLang(v, silent) {
   localStorage.setItem("rc_lang", v);
   document.documentElement.lang = v;
   $$("[data-i18n]").forEach(function (el) {
-    var k = el.getAttribute("data-i18n"), val = t(k);
-    if (el.hasAttribute("data-i18n-attr")) el.setAttribute(el.getAttribute("data-i18n-attr"), val);
+    var k = el.getAttribute("data-i18n");
+    var attr = el.getAttribute("data-i18n-attr");
+    /* Запоминаем то, что написано в разметке: это наш запасной текст
+       навсегда, даже если словарь придёт битым или устаревшим */
+    if (el._i18nOrig == null) el._i18nOrig = attr ? (el.getAttribute(attr) || "") : el.textContent;
+    var val = t(k, el._i18nOrig);
+    if (val == null || val === "") return;
+    if (attr) el.setAttribute(attr, val);
     else el.textContent = val;
   });
   $$(".lang button").forEach(function (b) {
