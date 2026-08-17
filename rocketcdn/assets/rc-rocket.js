@@ -589,6 +589,8 @@ function Rocket(canvas) {
   this._orbV = 0;     /* разгон от прокрутки, 0..1 */
   this._orbW = null;  /* текущая угловая скорость витка */
   this._orbHas = 0;   /* хоть раз посчитали точку витка */
+  this._fit = null;   /* сглаженный габарит витка */
+  this._orbShift = null;
   this._lastNode = -1;
   this.occl = 1;      /* 1 - видна, ниже - уходит за шар */
   this._orbP = new T.Vector3();
@@ -660,6 +662,7 @@ var ORB_R    = 1.36;                                  /* радиус витка
 var ORB_LIFT = 0.30;                                  /* смещение центра витка к камере */
 var ORB_BASE = 0.62;                                  /* сам по себе: радиан в секунду */
 var ORB_TAIL = 1.15;                                  /* длина следа, радиан */
+var ORB_HEAD = 0.09;                                  /* след начинается за соплом */
 var ORB_TAU  = Math.PI * 2;
 var ORB_TOP  = 0.11;                                  /* поле над витком, доля кадра */
 
@@ -738,7 +741,7 @@ Rocket.prototype.orbAt = function (a, cx, cy, Rs, z0, dz, out) {
    а потом поджимаем его к планете. Ракета, срезанная кромкой экрана,
    выглядит поломкой; низкая орбита - нет.
    Сверху оставляем поле под саму ракету, а не под её центр. */
-Rocket.prototype.orbFit = function (c) {
+Rocket.prototype.orbFit = function (c, dt) {
   var up = c.r * ORB_R * ORB_TILT;
   var room = c.cy - innerHeight * ORB_TOP;
   var shift = 0;
@@ -746,9 +749,16 @@ Rocket.prototype.orbFit = function (c) {
     shift = Math.min(c.r * 0.22, up - room);
     room += shift;
   }
-  this._orbShift = shift;
   var k = up > 1 && room > 0 ? room / up : 1;
-  return k > 1 ? 1 : k < 0.72 ? 0.72 : k;
+  k = k > 1 ? 1 : k < 0.72 ? 0.72 : k;
+
+  /* Габарит и снос ведём плавно: пока человек листает, планета едет по
+     кадру, и честный пересчёт на каждый кадр читался бы как дрожание
+     орбиты вокруг шара. */
+  var s = 1 - Math.exp(-(dt || 0.016) * 3);
+  this._fit = this._fit == null ? k : this._fit + (k - this._fit) * s;
+  this._orbShift = this._orbShift == null ? shift : this._orbShift + (shift - this._orbShift) * s;
+  return this._fit;
 };
 
 /* Украшения витка: след и вспышки узлов. На быстрой прокрутке и на
@@ -777,8 +787,10 @@ Rocket.prototype.orbLayer = function (on) {
 Rocket.prototype.orbit = function (dt) {
   var c = this.globeCircle();
   var want = capture(c);
-  /* Захват мягкий: рывков на границе быть не должно */
-  this.orbK += (want - this.orbK) * Math.min(1, dt * 2.6);
+  /* Захват мягкий: рывков на границе быть не должно. Сглаживание через
+     экспоненту, а не через dt*k: на просевших кадрах линейная форма
+     перепрыгивает половину пути за раз, и выход на виток дёргается. */
+  this.orbK += (want - this.orbK) * (1 - Math.exp(-dt * 1.8));
   /* Слой переключаем на подходе, пока ракета ещё далеко от шара:
      сделай это на середине витка - и она вспыхнет посреди планеты. */
   this.orbLayer(want > 0.02 || this.orbK > 0.02);
@@ -801,19 +813,18 @@ Rocket.prototype.orbit = function (dt) {
   /* Виток идёт своим ходом, прокрутка его подгоняет. Берём модуль
      скорости: разгон всегда вперёд, поэтому смена направления
      прокрутки виток не разворачивает и не дёргает. */
-  var boost = this._orbV || 0;
-  boost -= boost * Math.min(1, dt * 1.5);
+  var boost = (this._orbV || 0) * Math.exp(-dt * 1.5);
   this._orbV = boost < 0.002 ? 0 : boost;
   var wantW = ORB_BASE * (1 + this._orbV * 2.6);
   var w = this._orbW == null ? ORB_BASE : this._orbW;
-  this._orbW = w + (wantW - w) * Math.min(1, dt * 3.2);
+  this._orbW = w + (wantW - w) * (1 - Math.exp(-dt * 3.2));
   this.orbA += this._orbW * dt;
   if (this.orbA > ORB_TAU) this.orbA -= ORB_TAU;
 
   var planeZ = -1.6;                      /* планета «стоит» чуть в глубине */
   var m = this.toWorld(c.cx, c.cy, planeZ, this._tmpD);
   var Rw = (c.r / (m.h / 2)) * m.halfH;   /* радиус планеты в мире ракеты */
-  var fit = this.orbFit(c);
+  var fit = this.orbFit(c, dt);
   var Rs = c.r * ORB_R * fit;             /* большая полуось витка, пиксели */
   var dz = Rw * ORB_R * fit * ORB_COS;    /* размах витка по глубине */
   var z0 = planeZ + Rw * ORB_LIFT;
@@ -846,11 +857,11 @@ Rocket.prototype.tail = function (c, cy, Rs, z0, dz, planeZ, Rw) {
   var TR = this.otrail, N = TR.n, PS = TR.pos, CL = TR.col;
   var camz = this.cam.position.z;
   var t = this._oT, s = this._oS;
-  var wid = Rw * 0.06;                    /* ширина ленты у сопла, в мире */
+  var wid = Rw * 0.045;                   /* ширина ленты у сопла, в мире */
 
   for (var i = 0; i <= N; i++) {
     var u = i / N;                        /* 0 - у сопла, 1 - конец хвоста */
-    var a = this.orbA - ORB_TAIL * u;
+    var a = this.orbA - ORB_HEAD - ORB_TAIL * u;
     var A = this.orbAt(a, c.cx, cy, Rs, z0, dz, this._oA);
     var B = this.orbAt(a + 0.05, c.cx, cy, Rs, z0, dz, this._oB);
     var p = A.v;
@@ -860,13 +871,15 @@ Rocket.prototype.tail = function (c, cy, Rs, z0, dz, planeZ, Rw) {
     if (len < 1e-4) s.set(0, 1, 0); else s.multiplyScalar(1 / len);
 
     var half = wid * (1 - u);
-    var al = (1 - u) * (1 - u) * this.orbK * 0.95;
+    var al = (1 - u) * (1 - u) * this.orbK * 0.60;
     al *= 1 - hidden(A, c, planeZ, dz) * 0.85;
 
     var j = i * 6;
     PS[j]     = p.x + s.x * half; PS[j + 1] = p.y + s.y * half; PS[j + 2] = p.z + s.z * half;
     PS[j + 3] = p.x - s.x * half; PS[j + 4] = p.y - s.y * half; PS[j + 5] = p.z - s.z * half;
-    var cr = 0.42 * al, cg = 0.86 * al, cb = 1.00 * al;
+    /* Красного почти нет: при аддитивном смешении иначе выходит не
+       фирменный циан, а белёсый мазок поверх планеты */
+    var cr = 0.18 * al, cg = 0.68 * al, cb = 1.00 * al;
     CL[j] = cr; CL[j + 1] = cg; CL[j + 2] = cb;
     CL[j + 3] = cr; CL[j + 4] = cg; CL[j + 5] = cb;
   }
@@ -1059,10 +1072,26 @@ Rocket.prototype.veil = function (dt) {
   this.canvas.style.opacity = (this._veil * this.occl * (light ? 0.92 : 1)).toFixed(3);
 };
 
+/* Тяга по актам. Двигатель не может гудеть одинаково на старте и в
+   тот момент, когда человек уже сидит в рубке и читает справочник:
+   там ракета вообще не в кадре. Числа согласованы со звуком - там
+   тот же словарь, и картинка со звуком не расходятся. */
+var THRUST = {
+  pad: 0.45, ignite: 1.00, climb: 0.94, clouds: 0.82, corridor: 0.55,
+  advance: 0.60, orbit: 0.62, reentry: 0.90, route: 0.48, landing: 0.66,
+  walk: 0.38, cabin: 0.34, manual: 0.32, console: 0.34
+};
+var actThrust = 0.6;
+addEventListener("rc:act", function (e) {
+  var a = e && e.detail && e.detail.act;
+  if (a && THRUST[a] != null) actThrust = THRUST[a];
+});
+
 Rocket.prototype.setProgress = function (p, velocity) {
   this.progress = p;
   var a = Math.abs(velocity || 0);
-  this.power = Math.max(0.32, Math.min(1, 0.36 + a * 0.05));
+  /* Скорость прокрутки добавляет к тяге акта, но не заменяет её */
+  this.power = Math.max(0.28, Math.min(1, actThrust * 0.72 + 0.18 + a * 0.04));
   /* Листаешь - виток вокруг планеты ускоряется. Знак скорости не берём:
      разгон всегда по ходу витка, разворотов на орбите не бывает. */
   var boost = Math.min(1, a / 16);

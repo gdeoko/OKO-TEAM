@@ -1357,8 +1357,10 @@ body { background: var(--bg); }
 /* Карточки дата-центров под струёй */
 .dc {
   rotate: var(--jet-rot, 0deg);
-  translate: 0 calc(var(--jet, 0) * -7px);
-  transition: rotate .5s var(--ease), translate .5s var(--ease), box-shadow .5s var(--ease);
+  translate: 0 calc(var(--jet, 0) * -4px);
+  /* Длинный переход сглаживает даже редкие обновления: карточка
+     не дёргается вслед за ракетой, а мягко отзывается на неё. */
+  transition: rotate .9s var(--ease), translate .9s var(--ease), box-shadow .5s var(--ease);
 }
 .dc::before {
   content: ''; position: absolute; inset: 0; border-radius: inherit; pointer-events: none;
@@ -1370,7 +1372,7 @@ body { background: var(--bg); }
 .prod-card {
   rotate: var(--tilt, 0deg);
   translate: 0 calc(var(--lift, 0px) * -1);
-  transition: rotate .55s var(--ease), translate .55s var(--ease);
+  transition: rotate .95s var(--ease), translate .95s var(--ease);
 }
 
 /* Заголовок, подсвеченный снизу факелом */
@@ -1389,7 +1391,7 @@ body { background: var(--bg); }
 .step.rc-tick .step-line { opacity: 1; }
 
 /* Лента сценариев, которую ракета тянет за собой */
-.case:not(.step) { translate: var(--drag, 0px) 0; transition: translate .5s var(--ease); }
+.case:not(.step) { translate: var(--drag, 0px) 0; transition: translate .9s var(--ease); }
 
 /* Девять пунктов: галочка приезжает по световой дорожке */
 .inc-item svg { opacity: .25; transition: opacity .4s var(--ease), filter .4s var(--ease); }
@@ -1461,3 +1463,35 @@ html.rc-reduced .dc::after { transition: none; }
 [data-theme="light"] .sec-h .grad-tx {
   filter: drop-shadow(0 1px 4px rgba(243,247,251,.9));
 }
+
+/* ── Акты фильма в оформлении ─────────────────────────────────
+   Диспетчер сцены (rc-scene.js) ставит на документ data-act и
+   долю акта --act-k. Здесь по ним смешивается настроение: у земли
+   кадр теплее и плотнее, на орбите холоднее и разреженнее, внутри
+   корабля почти гаснет, у пульта собирается к центру. Это то, что
+   связывает фон, текст и сцену в одно целое. */
+:root { --act-warm: 0; --act-cold: 0; --act-inside: 0; }
+html[data-act="pad"],
+html[data-act="ignite"]   { --act-warm: 1; }
+html[data-act="orbit"],
+html[data-act="route"]    { --act-cold: 1; }
+html[data-act="cabin"],
+html[data-act="manual"],
+html[data-act="console"]  { --act-inside: 1; }
+
+/* Виньетка кадра: у земли мягкая, на орбите почти нет, внутри
+   корабля собирает внимание к центру */
+body::after {
+  content: ''; position: fixed; inset: 0; z-index: 2; pointer-events: none;
+  background: radial-gradient(ellipse 120% 90% at 50% 50%,
+              transparent 42%,
+              rgba(5,12,21, calc(.18 + var(--act-inside, 0) * .26)) 100%);
+  opacity: calc(.55 + var(--act-warm, 0) * .25 - var(--act-cold, 0) * .3);
+  transition: opacity 1.2s var(--ease), background 1.2s var(--ease);
+}
+[data-theme="light"] body::after {
+  background: radial-gradient(ellipse 120% 90% at 50% 50%,
+              transparent 46%, rgba(9,19,32,.10) 100%);
+  opacity: .4;
+}
+html.rc-reduced body::after { display: none; }

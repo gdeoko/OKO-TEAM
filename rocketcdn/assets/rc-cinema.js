@@ -76,12 +76,23 @@ function pass(rect) {
   return clamp((h - rect.top) / (h + rect.height), 0, 1);
 }
 
-/* Рубка, если она сейчас действительно на экране и имеет право
-   вести содержимое. Во всех остальных случаях null, и акты
-   переходят на запасного ведущего. */
+/* Рубка как источник расписания. Она отвечает на вопрос «на каком
+   углу стоит панель» даже до того, как поднимется сама сцена. */
 function iv() {
   var v = g.RC_INTERIOR;
-  return (v && v.live && v.live() && v.plan) ? v : null;
+  return (v && v.plan && v.yawAt) ? v : null;
+}
+
+/* Один поворот на всех. Пока рубка на экране, это её камера. Пока
+   она ещё не поднялась - то же расписание, посчитанное вперёд:
+   иначе в момент появления сцены содержимое дёрнулось бы с одного
+   угла на другой. Совсем без рубки ведёт проход секции. */
+function turnOf(V, act, n, step) {
+  if (V) {
+    if (V.live()) return V.yaw();
+    if (g.RC_MOTION) return V.yawAt(g.RC_MOTION.p);
+  }
+  return pass(act.rect) * (n * step);
 }
 
 /* ── 1. Салон корабля ────────────────────────────────────────
@@ -89,6 +100,29 @@ function iv() {
    место на экране - из проекции панели. Если объёмной рубки нет
    (нет WebGL, слабое устройство), поворот подменяется проходом
    секции через кадр: геометрия та же, ведущий другой. */
+/* Состояние кольца: до трека оно лежит в потоке, на треке держится
+   в середине кадра, после - остаётся внизу трека. Считаем от
+   обёртки блока: её высота задана в стилях и не зависит от того,
+   что делает само кольцо, поэтому обратной связи здесь нет. */
+function pin(act) {
+  var ring = act.ring;
+  var wrapR = act.wrap.getBoundingClientRect();
+  var h = act.ringH || ring.getBoundingClientRect().height;
+  var line = innerHeight * 0.5 - h / 2;
+  var top0 = wrapR.top + act.ringOff;
+  var tail = wrapR.bottom - h - 8;
+
+  var state = 0;
+  if (tail < line) state = 2;
+  else if (top0 <= line) state = 1;
+
+  if (state !== act.pinState) {
+    act.pinState = state;
+    ring.classList.toggle("cin-pin", state === 1);
+    ring.classList.toggle("cin-pin-end", state === 2);
+  }
+}
+
 function cabin(act) {
   var items = act.items, n = items.length;
   if (!n || !act.stage) return;
@@ -96,18 +130,11 @@ function cabin(act) {
   var V = iv();
   var plan = V ? V.plan() : null;
   var step = plan ? plan.step : TAU / 8;
-  var turn, slotOf;
-
-  if (V) {
-    turn = V.yaw();
-    slotOf = function (i) {
-      return (plan.rel && plan.rel[i] !== undefined) ? plan.rel[i] : (i + 0.5) * step;
-    };
-  } else {
-    /* Запасной ведущий: та же дуга, только от прохода секции */
-    turn = pass(act.rect) * (n * step);
-    slotOf = function (i) { return (i + 0.5) * step; };
-  }
+  var slotOf = function (i) {
+    return (plan && plan.rel && plan.rel[i] !== undefined) ? plan.rel[i] : (i + 0.5) * step;
+  };
+  var turn = turnOf(V, act, n, step);
+  var placed = !!(V && V.live());
 
   var cx = act.stage.left + act.stage.width / 2;
   var cy = act.stage.top + act.stage.height / 2;
@@ -135,11 +162,14 @@ function cabin(act) {
     /* Экранное место панели. У точки за спиной адреса нет, там
        берём геометрию кольца: карточку всё равно не видно. */
     var tx = R * Math.sin(rel), ty = 0;
-    if (V) {
+    if (placed) {
       var pr = V.project(slot);
       if (pr.d > 0.3 && pr.v > 0 && ax < 1.3) {
         tx = pr.x * innerWidth - cx;
-        ty = (pr.y * innerHeight - cy) * 0.45;
+        /* По вертикали слушаемся стены только наполовину и в
+           пределах полосы: строчку читают на своём месте, а не
+           там, куда её увела перспектива. */
+        ty = clamp((pr.y * innerHeight - cy) * 0.45, -innerHeight * 0.1, innerHeight * 0.1);
       }
     }
     tx = clamp(tx, -maxX, maxX);
@@ -178,11 +208,13 @@ function directory(act) {
   var rel = 0, dx = 0;
   if (V) {
     var plan = V.plan();
-    rel = wrap(plan.faq - V.yaw());
-    var pr = V.project(plan.faq);
-    if (pr.d > 0.3 && pr.v > 0 && act.hostRect) {
-      var hc = act.hostRect.left + act.hostRect.width / 2;
-      dx = clamp(pr.x * innerWidth - hc, -innerWidth * 0.07, innerWidth * 0.07);
+    rel = wrap(plan.faq - turnOf(V, act, 1, plan.step));
+    if (V.live() && act.hostRect) {
+      var pr = V.project(plan.faq);
+      if (pr.d > 0.3 && pr.v > 0) {
+        var hc = act.hostRect.left + act.hostRect.width / 2;
+        dx = clamp(pr.x * innerWidth - hc, -innerWidth * 0.07, innerWidth * 0.07);
+      }
     }
   } else {
     rel = (pass(act.rect) - 0.5) * (phone ? 0.5 : 0.9);
@@ -193,9 +225,19 @@ function directory(act) {
   /* Открытый вопрос читают целиком: экран встаёт фронтально */
   if (open) { rel = 0; dx = 0; }
 
-  host.style.setProperty("--cin-rot", (rel * DEG).toFixed(2) + "deg");
-  host.style.setProperty("--cin-x", dx.toFixed(1) + "px");
-  host.style.setProperty("--cin-z", (-(1 - Math.cos(rel)) * 340).toFixed(0) + "px");
+  /* Догоняем цель за несколько кадров. Переход в стилях тут не
+     годится: цель меняется каждый кадр, и браузер каждый раз
+     начинал бы переход заново - получилась бы резина. */
+  if (act.rotCur === undefined) { act.rotCur = rel; act.dxCur = dx; }
+  act.rotCur += (rel - act.rotCur) * 0.14;
+  act.dxCur += (dx - act.dxCur) * 0.14;
+  /* Пока экран не доехал, кадр не имеет права уснуть: иначе
+     справочник замрёт наполовину повёрнутым. */
+  if (Math.abs(rel - act.rotCur) > 0.002 || Math.abs(dx - act.dxCur) > 0.4) busy = 1;
+
+  host.style.setProperty("--cin-rot", (act.rotCur * DEG).toFixed(2) + "deg");
+  host.style.setProperty("--cin-x", act.dxCur.toFixed(1) + "px");
+  host.style.setProperty("--cin-z", (-(1 - Math.cos(act.rotCur)) * 340).toFixed(0) + "px");
 
   /* Строка, доехавшая до линии чтения, подсвечивается кромкой:
      видно, какой вопрос сейчас «под лучом» справочника. */
@@ -280,14 +322,26 @@ function collect() {
   if (rel && ring) {
     var cards = [].slice.call(ring.querySelectorAll(".card"));
     var on = cabinAllowed() && cards.length > 1;
-    rel.classList.toggle("cin-stage", on);
+    /* Класса cin-stage на секции тут нарочно нет: он даёт
+       perspective, а любой perspective на предке отменяет
+       position: fixed у потомка - кольцо перестало бы держаться в
+       кадре. Точка схода живёт на самом кольце. */
     rel.classList.toggle("cin-cabin", on);
     ring.classList.toggle("cin-ring", on);
-    ring.style.setProperty("--cab-n", String(cards.length));
+    /* Длина трека прокрутки считается из числа панелей, а правило
+       живёт на обёртке блока - переменную ставим на секцию, иначе
+       она до обёртки не дойдёт. */
+    rel.style.setProperty("--cab-n", String(cards.length));
     cards.forEach(function (el) { el.classList.toggle("cin-item", on); });
+    /* Меряем кольцо только в потоке: у закреплённого offsetTop
+       считается от окна и трек получился бы кривым. */
+    ring.classList.remove("cin-pin", "cin-pin-end");
     if (on) {
       acts.push({ sec: rel, kind: "cabin", items: cards, ring: ring,
-        rects: [], rect: null, stage: null });
+        wrap: ring.parentNode,
+        ringOff: ring.offsetTop,
+        ringH: ring.getBoundingClientRect().height,
+        pinState: -1, rects: [], rect: null, stage: null });
     }
   }
 
@@ -318,7 +372,13 @@ function collect() {
 }
 
 /* ── Кадр: сперва читаем, потом пишем ───────────────────────── */
-var lastY = -1, lastYaw = -99, idle = 0;
+var lastY = -1, lastYaw = -99, idle = 0, wake = 0, busy = 0;
+
+/* Раскрытие вопроса выпрямляет справочник, а страница при этом
+   стоит. Будим кадр руками, иначе экран замрёт на полпути. */
+doc.addEventListener("click", function (e) {
+  if (e.target.closest && e.target.closest(".cin-board")) wake = 48;
+}, { passive: true });
 
 function frame() {
   raf = requestAnimationFrame(frame);
@@ -336,11 +396,13 @@ function frame() {
   var y = g.pageYOffset || doc.documentElement.scrollTop || 0;
   var V = g.RC_INTERIOR;
   var yaw = (V && V.yaw) ? V.yaw() : 0;
-  if (Math.abs(y - lastY) < 0.5 && Math.abs(yaw - lastYaw) < 0.0004) {
+  if (wake > 0) { wake--; idle = 0; }
+  else if (!busy && Math.abs(y - lastY) < 0.5 && Math.abs(yaw - lastYaw) < 0.0004) {
     if (++idle > 2) return;
   } else { idle = 0; }
   lastY = y;
   lastYaw = yaw;
+  busy = 0;
 
   var i, a;
   /* Чтение */
@@ -348,6 +410,12 @@ function frame() {
     a = acts[i];
     a.rect = a.sec.getBoundingClientRect();
     a.live = a.rect.bottom > -200 && a.rect.top < innerHeight + 200;
+    /* Кольцо салона считаем всегда, даже когда блок далеко. Оно
+       единственное здесь держится в кадре само по себе, и если
+       перестать за ним следить на прыжке прокрутки - по якорю или
+       клавишей «в конец» - оно так и останется висеть посреди
+       чужого экрана. Одно измерение за кадр, это дёшево. */
+    if (a.kind === "cabin") pin(a);
     if (!a.live) continue;
     if (a.kind === "shelf") {
       a.rects = a.items.map(function (el) { return el.getBoundingClientRect(); });
@@ -404,8 +472,10 @@ addEventListener("resize", function () {
 }, { passive: true });
 
 doc.addEventListener("rc:lang", function () { setTimeout(collect, 120); });
-/* Устройство перестало тянуть: салон складывается обратно в сетку */
+/* Устройство перестало тянуть или человек попросил меньше движения:
+   салон складывается обратно в обычную сетку. */
 addEventListener("rc:degrade", function () { setTimeout(collect, 30); });
+addEventListener("rc:reduced", function () { setTimeout(collect, 30); });
 if (doc.readyState === "loading") doc.addEventListener("DOMContentLoaded", function () { setTimeout(boot, 150); });
 else setTimeout(boot, 150);
 

@@ -1,0 +1,200 @@
+/* ═══════════════════════════════════════════════════════════
+   Rocket CDN · пульт, оформление
+
+   Панель лежит фоном за формой и не участвует в потоке: форма
+   остаётся обычной вёрсткой, её поля нативные, клавиатура и
+   автозаполнение работают. Всё движение приходит переменными из
+   rc-console.js, здесь только то, как это выглядит.
+   ═══════════════════════════════════════════════════════════ */
+
+/* Панель занимает весь блок контактов, а не полосу над ним: только
+   так анкета оказывается не «на фоне пульта», а в самом пульте -
+   ровно то, о чём просил заказчик. Края растворяем маской, чтобы
+   сцена входила в страницу без видимой границы кадра.
+
+   Блок контактов обязан быть точкой отсчёта для слоя: без этого
+   панель меряет себя от страницы целиком и схлопывается в ноль. */
+#contact { position: relative; }
+.rc-console {
+  position: absolute; inset: -4vh 0 -2vh 0;
+  z-index: 0; pointer-events: none;
+  opacity: 0; transition: opacity .6s var(--ease);
+  overflow: hidden;
+  mask-image: linear-gradient(180deg, transparent 0%, #000 14%, #000 82%, transparent 100%);
+  -webkit-mask-image: linear-gradient(180deg, transparent 0%, #000 14%, #000 82%, transparent 100%);
+}
+/* Текст слева должен читаться поверх приборов: гасим панель именно
+   под ним, а не по всему кадру - иначе пропадёт и сама сцена. */
+.rc-console::after {
+  content: ''; position: absolute; inset: 0; pointer-events: none;
+  background:
+    radial-gradient(ellipse 46% 70% at 22% 52%, rgba(4,10,18,.86) 0%, rgba(4,10,18,.55) 46%, transparent 76%),
+    linear-gradient(180deg, rgba(4,10,18,.55), transparent 26%, transparent 70%, rgba(4,10,18,.6));
+}
+.rc-console.on { opacity: 1; }
+.rc-console img,
+.rc-console-vid,
+.rc-console-live {
+  position: absolute; left: 50%; top: 50%;
+  width: 100%; height: 100%;
+  object-fit: cover; object-position: 50% 42%;
+  transform: translate(-50%, calc(-50% + var(--con-y, 0px))) scale(var(--con-scale, 1.05));
+  transform-origin: 50% 46%;
+  transition: transform .25s linear;
+}
+.rc-console img {
+  filter: blur(var(--con-blur, 4px)) saturate(1.05);
+  opacity: var(--con-vis, .5);
+}
+.rc-console-live { mix-blend-mode: screen; opacity: var(--con-vis, .5); }
+
+/* Ролик подхода к пульту. Лежит ровно там же, где снимок, и с тем
+   же движением - значит подмена одного другим на глаз не читается.
+   Пока ролик не готов, виден снимок; как только готов, снимок
+   гаснет и дальше кадр ведёт прокрутка. */
+.rc-console-vid {
+  filter: saturate(1.05) blur(calc(var(--con-blur, 4px) * .35));
+  opacity: 0; transition: opacity .7s var(--ease), transform .25s linear;
+  object-fit: cover;
+}
+.rc-console.has-vid .rc-console-vid { opacity: var(--con-vis, .5); }
+.rc-console.has-vid img { opacity: 0; transition: opacity .7s var(--ease); }
+
+/* Форма и текст всегда поверх сцены */
+#contact > .wrap { position: relative; z-index: 1; }
+
+/* Пока человек печатает, сцена не двигается и не отвлекает */
+html.rc-form-active .rc-console { opacity: .35; }
+html.rc-form-active .rc-console img,
+html.rc-form-active .rc-console-live { transition: none; }
+
+html.rc-reduced .rc-console,
+html[data-degrade="3"] .rc-console { display: none; }
+
+@media (prefers-reduced-motion: reduce) {
+  .rc-console img, .rc-console-live { transition: none; }
+  .rc-console-live { display: none; }
+}
+@media (max-width: 760px) {
+  .rc-console { height: min(56vh, 420px); inset: -3vh 0 auto 0; }
+  .rc-console img { filter: blur(calc(var(--con-blur, 4px) * .6)); }
+  .rc-console-vid { filter: none; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .rc-console-vid { display: none; }
+  .rc-console.has-vid img { opacity: var(--con-vis, .5); }
+}
+
+
+/* ═══ ЭКРАН ПУЛЬТА ════════════════════════════════════════════
+   Анкета живёт не «на фоне пульта», а прямо в его экране: вокруг
+   неё фаска корпуса, стекло с бликом и подсветка по контуру.
+   Рамку рисуем стилями, а не привязываем к пикселям картинки -
+   тогда экран сходится с формой на любом размере окна.
+
+   Поля внутри остаются нативными: клавиатура, автозаполнение и
+   экранная читалка работают ровно так же, как на обычной форме. */
+#contact .form-card {
+  position: relative;
+  border-radius: 18px;
+  background:
+    linear-gradient(158deg, rgba(9,19,32,.86), rgba(5,12,21,.92));
+  border: 1px solid rgba(66,178,220,.28);
+  color: var(--tx);
+  box-shadow:
+    /* фаска корпуса вокруг экрана */
+    0 0 0 10px rgba(9,19,32,.92),
+    0 0 0 11px rgba(226,232,240,.06),
+    0 0 0 22px rgba(9,19,32,.78),
+    /* свечение самого экрана */
+    inset 0 1px 0 rgba(226,232,240,.14),
+    inset 0 0 60px -28px rgba(66,178,220,.75),
+    0 40px 80px -40px rgba(0,0,0,.95),
+    0 0 70px -30px rgba(66,178,220,.5);
+}
+/* Блик по стеклу экрана: идёт наискось и оживает при наведении */
+#contact .form-card::after {
+  content: ''; position: absolute; inset: 0; border-radius: inherit;
+  background: linear-gradient(112deg, transparent 38%,
+              rgba(207,233,245,.07) 48%, transparent 58%);
+  opacity: .8; pointer-events: none;
+  transform: translateX(calc(var(--screen-sheen, 0) * 12%));
+  transition: transform .8s var(--ease);
+}
+#contact .form-card:hover::after { --screen-sheen: 1; }
+
+/* Строка состояния экрана: три диода и подпись, как на приборе */
+#contact .form-card::before {
+  content: ''; position: absolute; left: 18px; top: -30px;
+  width: 46px; height: 6px; border-radius: 3px;
+  background:
+    radial-gradient(circle at 5px 3px, var(--cyan) 2.2px, transparent 2.6px),
+    radial-gradient(circle at 23px 3px, rgba(138,89,246,.9) 2.2px, transparent 2.6px),
+    radial-gradient(circle at 41px 3px, rgba(226,232,240,.75) 2.2px, transparent 2.6px);
+  opacity: .9; pointer-events: none;
+  animation: rcScreenBlink 4.5s ease-in-out infinite;
+}
+@keyframes rcScreenBlink {
+  0%, 100% { opacity: .55 }
+  40%      { opacity: 1 }
+}
+
+/* Экран включается по мере подхода: пока панель далеко, стекло
+   тёмное, вблизи разгорается. Значение приходит из rc-console.js. */
+#contact .form-card { --screen-on: 0; }
+html.rc-console-near #contact .form-card {
+  border-color: rgba(66,178,220,.45);
+}
+
+/* ── Светлая тема ────────────────────────────────────────────
+   Панель снята в тёмной рубке, и на белой странице она спорит со
+   всем сразу: тёмный текст на тёмных приборах не читается. Поэтому
+   в светлой теме пульт уходит в лёгкий отпечаток под белой вуалью,
+   а экран формы остаётся светлым - как и вся страница. */
+html[data-theme="light"] .rc-console { opacity: .34; }
+html[data-theme="light"] .rc-console::after {
+  background:
+    radial-gradient(ellipse 52% 74% at 24% 52%, rgba(255,255,255,.94) 0%, rgba(255,255,255,.72) 48%, rgba(255,255,255,.42) 78%),
+    linear-gradient(180deg, rgba(255,255,255,.8), rgba(255,255,255,.35) 30%, rgba(255,255,255,.35) 70%, rgba(255,255,255,.8));
+}
+html[data-theme="light"] #contact .form-card {
+  background: linear-gradient(158deg, rgba(255,255,255,.97), rgba(240,246,252,.99));
+  border-color: rgba(10,88,151,.28);
+  box-shadow:
+    0 0 0 10px rgba(255,255,255,.92),
+    0 0 0 11px rgba(10,88,151,.10),
+    0 0 0 22px rgba(233,241,248,.85),
+    inset 0 1px 0 rgba(255,255,255,.9),
+    inset 0 0 60px -30px rgba(10,88,151,.35),
+    0 40px 80px -46px rgba(9,19,32,.45);
+}
+html[data-theme="light"] #contact .form-card::after {
+  background: linear-gradient(112deg, transparent 38%, rgba(10,88,151,.05) 48%, transparent 58%);
+}
+html[data-theme="light"] #contact .form-card::before {
+  background:
+    radial-gradient(circle at 5px 3px, #0A5897 2.2px, transparent 2.6px),
+    radial-gradient(circle at 23px 3px, rgba(122,72,224,.9) 2.2px, transparent 2.6px),
+    radial-gradient(circle at 41px 3px, rgba(9,19,32,.55) 2.2px, transparent 2.6px);
+}
+
+/* Успех отправки читается как ответ прибора, а не как всплывашка */
+#contact .form-msg.ok {
+  box-shadow: 0 0 40px -14px rgba(52,211,153,.7);
+}
+
+@media (max-width: 760px) {
+  #contact .form-card {
+    box-shadow:
+      0 0 0 6px rgba(9,19,32,.92),
+      0 0 0 7px rgba(226,232,240,.05),
+      inset 0 1px 0 rgba(226,232,240,.12),
+      inset 0 0 40px -22px rgba(66,178,220,.7),
+      0 24px 50px -30px rgba(0,0,0,.95);
+  }
+  #contact .form-card::before { left: 12px; top: -22px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  #contact .form-card::before { animation: none; }
+  #contact .form-card::after { transition: none; }
+}

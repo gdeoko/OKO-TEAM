@@ -341,7 +341,7 @@ Globe3D.prototype.setTheme = function (v) {
     this.dcMarks[i].ring.material.color.fromArray(P.dc);
   }
   for (i = 0; this.pulses && i < this.pulses.length; i++) {
-    this.pulses[i].ring.material.color.fromArray(P.dc);
+    this.pulses[i].ring.material.color.set(P.arc);
     this.pulses[i].dot.material.color.fromArray(P.dc);
   }
   this.drawLabel();
@@ -455,9 +455,9 @@ Globe3D.prototype.frame = function (dt) {
         continue;
       }
       var e = 1 - Q.life;                       /* 0 - только зажгли, 1 - погасла */
-      Q.ring.scale.setScalar(1 + e * 7);
-      Q.ring.material.opacity = (1 - e) * 0.85;
-      Q.dot.scale.setScalar(0.10 + (1 - e) * 0.20);
+      Q.ring.scale.setScalar(1 + e * 4);
+      Q.ring.material.opacity = (1 - e) * 0.9;
+      Q.dot.scale.setScalar(0.10 + (1 - e) * 0.14);
       Q.dot.material.opacity = (1 - e) * 0.9;
     }
   }
@@ -493,13 +493,15 @@ Globe3D.prototype.focusOn = function (lat, lon) { this.focus = { lat: lat, lon: 
 Globe3D.prototype.buildPulses = function () {
   var P = this.palette();
   var n = this.mob ? 2 : 4;
-  var geo = new T.RingGeometry(0.035, 0.052, this.mob ? 18 : 30);
+  /* Кольцо тонкое: оно расходится вчетверо, и толстый ободок к концу
+     превращается в серый бублик поперёк половины материка */
+  var geo = new T.RingGeometry(0.040, 0.048, this.mob ? 18 : 30);
   var glow = this._glowTex || (this._glowTex = glowTexture());
   this.pulses = [];
   this._pulseAt = 0;
   for (var i = 0; i < n; i++) {
     var ring = new T.Mesh(geo, new T.MeshBasicMaterial({
-      color: new T.Color().fromArray(P.dc), transparent: true, opacity: 0,
+      color: P.arc, transparent: true, opacity: 0,
       side: T.DoubleSide, depthWrite: false
     }));
     var dot = new T.Sprite(new T.SpriteMaterial({

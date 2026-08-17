@@ -86,15 +86,16 @@ img,svg,canvas{max-width:100%}
 
 <link rel="preload" href="assets/fonts/golos-cyr.woff2" as="font" type="font/woff2" crossorigin>
 <link rel="stylesheet" href="assets/rc-fonts.css?v=1786650096">
-<link rel="stylesheet" href="assets/rc.css?v=1786966160">
+<link rel="stylesheet" href="assets/rc.css?v=1786968454">
 <link rel="stylesheet" href="assets/rc-compact.css?v=1786961511">
-<link rel="stylesheet" href="assets/rc-interior.css?v=1786953860">
+<link rel="stylesheet" href="assets/rc-interior.css?v=1786967611">
 <link rel="stylesheet" href="assets/rc-reduced.css?v=1786953497">
 <!-- Посадка на реальные устройства. Подключается последним: файл правит
      значения предыдущих, а своих цветов и шрифтов не вводит -->
 <link rel="stylesheet" href="assets/rc-adapt.css?v=1786961400">
 <link rel="stylesheet" href="assets/rc-depth.css?v=1786962839">
-<link rel="stylesheet" href="assets/rc-cinema.css?v=1786966027">
+<link rel="stylesheet" href="assets/rc-cinema.css?v=1786968256">
+<link rel="stylesheet" href="assets/rc-console.css?v=1786968343">
 <!-- Режим страницы решается до того, как поднимутся сцены: иначе они
      успеют занять контексты, которых на слабом устройстве и так мало -->
 <script src="assets/rc-fallback.js?v=1786953470"></script>
@@ -1267,6 +1268,7 @@ html[data-theme="light"] .rc-load{background:#070F1A}
 
 <script src="assets/rc-space.js?v=1786650096"></script>
 <script src="assets/rc-sound.js?v=1786957029"></script>
+<script src="assets/rc-music.js?v=1"></script>
 <script src="assets/rc-geo.js?v=1786957117"></script>
 <script src="assets/rc-i18n.js?v=1786964816"></script>
 <script src="assets/rc-globe.js?v=1786650096"></script>
@@ -1274,9 +1276,11 @@ html[data-theme="light"] .rc-load{background:#070F1A}
 <script src="assets/rc-fill.js?v=1786963530"></script>
 <script src="assets/rc-viz.js?v=1786960815"></script>
 <script src="assets/rc-motion.js?v=1786953586"></script>
-<script src="assets/rc-hooks.js?v=1786953764"></script>
+<script src="assets/rc-scene.js?v=1786968426"></script>
+<script src="assets/rc-hooks.js?v=1786967928"></script>
 <script src="assets/rc-depth.js?v=1786959953"></script>
-<script src="assets/rc-cinema.js?v=1786966581"></script>
+<script src="assets/rc-cinema.js?v=1786968271"></script>
+<script src="assets/rc-console.js?v=1786968373"></script>
 <!-- Объёмный слой (three.js и три сцены) подтягивает rc-gl.js
      после загрузки и только там, где он вообще будет показан -->
 <script src="assets/rc-gl.js?v=1786964844"></script>

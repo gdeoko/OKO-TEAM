@@ -15,12 +15,40 @@
 
 var REDUCE = matchMedia("(prefers-reduced-motion: reduce)").matches;
 
+/* Каким должен быть космос в каждом акте фильма:
+   [теплота, приглушение, скорость пакетов].
+   Теплота - зарево двигателя и атмосферы; приглушение - мы внутри
+   корабля и смотрим сквозь стекло; скорость - как быстро идёт мимо
+   поток данных. Ключи те же, что у диспетчера сцены. */
+var ACT = {
+  pad:      [0.60, 0.12, 0.55],
+  ignite:   [0.95, 0.00, 1.55],
+  climb:    [0.65, 0.00, 1.90],
+  clouds:   [0.38, 0.05, 1.60],
+  corridor: [0.12, 0.28, 1.20],
+  advance:  [0.10, 0.18, 1.10],
+  orbit:    [0.00, 0.00, 0.80],
+  reentry:  [1.00, 0.05, 2.10],
+  route:    [0.10, 0.22, 0.90],
+  landing:  [0.72, 0.10, 0.70],
+  walk:     [0.30, 0.46, 0.50],
+  cabin:    [0.12, 0.60, 0.35],
+  manual:   [0.10, 0.62, 0.30],
+  console:  [0.16, 0.50, 0.45],
+  _:        [0.20, 0.10, 1.00]
+};
+
 function Space(canvas) {
   this.cv = canvas;
   this.x = canvas.getContext("2d", { alpha: true });
   this.t = 0;
   this.p = 0;          /* положение на странице, 0..1 */
   this.pShown = 0;
+  /* Состояние акта: цель приходит событием, показанное догоняет её
+     плавно - иначе на границе секций фон дёргался бы ступенькой */
+  this.warm = 0.2; this.warmT = 0.2;
+  this.dim = 0.1;  this.dimT = 0.1;
+  this.rush = 1;   this.rushT = 1;
   this.running = false;
   this.theme = document.documentElement.getAttribute("data-theme") || "dark";
   this.build();
@@ -75,6 +103,16 @@ Space.prototype.bind = function () {
     var max = document.documentElement.scrollHeight - innerHeight;
     self.p = max > 0 ? Math.min(1, Math.max(0, (g.scrollY || 0) / max)) : 0;
   }, { passive: true });
+
+  /* Фон слушает тот же акт, что и всё остальное. До этого он жил
+     одной прокруткой и легко расходился со сценой: на странице шёл
+     вход в атмосферу, а космос за окном оставался ледяным. Теперь
+     источник один - диспетчер сцены. */
+  addEventListener("rc:act", function (e) {
+    var a = e && e.detail && e.detail.act;
+    var s = ACT[a] || ACT._;
+    self.warmT = s[0]; self.dimT = s[1]; self.rushT = s[2];
+  });
 };
 
 Space.prototype.setTheme = function (v) { this.theme = v; };
@@ -98,12 +136,20 @@ Space.prototype.frame = function (dt) {
   var p = this.pShown;
   var light = this.theme === "light";
 
+  /* Догоняем состояние акта. Медленнее, чем положение на странице:
+     смена времени суток в кадре должна быть незаметной. */
+  var k = Math.min(1, dt * 1.1);
+  this.warm += (this.warmT - this.warm) * k;
+  this.dim  += (this.dimT  - this.dim)  * k;
+  this.rush += (this.rushT - this.rush) * k;
+  var warm = this.warm, dim = 1 - this.dim * 0.62, rush = this.rush;
+
   x.clearRect(0, 0, w, h);
 
   /* Туманность: два мягких пятна, расходятся к середине пути */
   var g1 = x.createRadialGradient(w * (0.18 + p * 0.2), h * (0.18 + p * 0.1), 0,
                                   w * (0.18 + p * 0.2), h * (0.18 + p * 0.1), Math.max(w, h) * 0.62);
-  var a1 = light ? 0.10 : 0.20;
+  var a1 = (light ? 0.10 : 0.20) * dim;
   g1.addColorStop(0, "rgba(66,178,220," + (a1 * (1 - p * 0.35)).toFixed(3) + ")");
   g1.addColorStop(1, "rgba(66,178,220,0)");
   x.fillStyle = g1;
@@ -111,11 +157,23 @@ Space.prototype.frame = function (dt) {
 
   var g2 = x.createRadialGradient(w * (0.88 - p * 0.25), h * (0.72 - p * 0.3), 0,
                                   w * (0.88 - p * 0.25), h * (0.72 - p * 0.3), Math.max(w, h) * 0.55);
-  var a2 = light ? 0.07 : 0.16;
+  var a2 = (light ? 0.07 : 0.16) * dim;
   g2.addColorStop(0, "rgba(138,89,246," + (a2 * (0.5 + p * 0.5)).toFixed(3) + ")");
   g2.addColorStop(1, "rgba(138,89,246,0)");
   x.fillStyle = g2;
   x.fillRect(0, 0, w, h);
+
+  /* Зарево акта: на старте и на входе в атмосферу снизу поднимается
+     тёплый свет, в космосе его нет вовсе. Пятно одно и очень мягкое -
+     это отсвет на всём кадре, а не источник в кадре. */
+  if (warm > 0.02) {
+    var gw = x.createRadialGradient(w * 0.5, h * 1.02, 0, w * 0.5, h * 1.02, Math.max(w, h) * 0.85);
+    gw.addColorStop(0, "rgba(255,150,60," + (warm * (light ? 0.10 : 0.17) * dim).toFixed(3) + ")");
+    gw.addColorStop(0.45, "rgba(255,110,40," + (warm * 0.05 * dim).toFixed(3) + ")");
+    gw.addColorStop(1, "rgba(255,90,30,0)");
+    x.fillStyle = gw;
+    x.fillRect(0, 0, w, h);
+  }
 
   /* Звёзды. Ближние слои сдвигаются сильнее: это и есть параллакс */
   var base = light ? "9,19,32" : "226,232,240";
@@ -125,7 +183,7 @@ Space.prototype.frame = function (dt) {
     var sy = (s.y - p * shift) % 1;
     if (sy < 0) sy += 1;
     var tw = 0.55 + 0.45 * Math.sin(this.t * s.sp + s.tw);
-    var al = (light ? 0.22 : 0.55) * tw * (0.4 + s.l * 0.3);
+    var al = (light ? 0.22 : 0.55) * tw * (0.4 + s.l * 0.3) * dim;
     x.beginPath();
     x.arc(s.x * w, sy * h, s.r, 0, 6.283);
     x.fillStyle = "rgba(" + base + "," + al.toFixed(3) + ")";
@@ -135,14 +193,14 @@ Space.prototype.frame = function (dt) {
   /* Пакеты данных */
   for (i = 0; i < this.pk.length; i++) {
     var q = this.pk[i];
-    q.x += q.v * dt;
+    q.x += q.v * dt * rush;
     if (q.x > 1.1) this.pk[i] = q = this.seedPacket(false);
     var x1 = q.x * w, y1 = q.y * h;
     var x2 = (q.x - q.len) * w, y2 = y1 + q.len * h * 0.16;
     var col = q.hue === "v" ? "138,89,246" : "66,178,220";
     var lg = x.createLinearGradient(x2, y2, x1, y1);
     lg.addColorStop(0, "rgba(" + col + ",0)");
-    lg.addColorStop(1, "rgba(" + col + "," + (q.a * (light ? 0.5 : 1)).toFixed(2) + ")");
+    lg.addColorStop(1, "rgba(" + col + "," + (q.a * (light ? 0.5 : 1) * dim).toFixed(2) + ")");
     x.strokeStyle = lg;
     x.lineWidth = 1.4;
     x.beginPath();

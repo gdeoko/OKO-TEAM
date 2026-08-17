@@ -6,8 +6,16 @@
    rc-cinema.js и поведение при касании. Никаких значений в
    пикселях, посчитанных наугад: всё приходит из кадра.
 
-   Железное правило: карточка, оказавшаяся в центре, стоит к
-   зрителю лицом и не размыта. Текст важнее любого эффекта.
+   Железное правило: карточка, оказавшаяся перед зрителем, стоит
+   к нему лицом и не размыта. Текст важнее любого эффекта.
+
+   Про приоритеты. У карточек три хозяина трансформации: пружина
+   объёма (rc-depth.js, пишет --rcd-*), наклон от курсора
+   (rc-scroll.js, пишет inline) и салон (rc-cinema.js, пишет
+   --cin-*). Драться за последний кадр им нельзя, поэтому в
+   салоне трансформация собирается здесь одной строкой: сначала
+   место на стене, потом наклон карточки под рукой человека.
+   Отсюда и !important - он не от лени, а вместо гонки.
    ═══════════════════════════════════════════════════════════ */
 
 /* ── Общая сцена ─────────────────────────────────────────── */
@@ -27,24 +35,139 @@
   backface-visibility: hidden;
 }
 
-/* ── Барабан рубки ────────────────────────────────────────────
-   Карточки стоят по кругу салона. Центральная выпрямляется и
-   получает подсветку кромки: именно её сейчас читают. */
-.cin-drum {
-  perspective: 1100px;
+/* ═══ САЛОН КОРАБЛЯ ═══════════════════════════════════════════
+   Человек вошёл в ракету и стоит в центре рубки. Карточки
+   надёжности висят на стеновых панелях вокруг него, поворот
+   приходит из самой сцены. Раскладка нужна ровно одна: панели
+   стоят друг за другом по кругу, значит в потоке они занимают
+   одно и то же место, а разводит их поворот. */
+
+/* Салону нужна длина прокрутки. Без неё четыре панели проносятся
+   за один оборот колеса и прочитать их невозможно. Тридцать
+   экранных процентов на панель - примерно секунда спокойного
+   чтения на каждой. */
+html:not(.rc-reduced) .cin-cabin > .wrap {
+  min-height: calc(62vh + var(--cab-n, 4) * 30vh);
+}
+
+/* Кольцо стоит на месте, пока блок проезжает мимо: человек стоит
+   в центре рубки, а не едет вдоль неё. Прокрутку при этом никто
+   не перехватывает - страница едет как ехала, просто кольцо
+   какое-то время держится в середине кадра.
+
+   Почему не position: sticky, хотя он тут напрашивается. У body
+   стоит overflow-x: hidden, а это делает body контейнером
+   прокрутки: липкий элемент внутри начинает липнуть к body,
+   который не прокручивается, и просто уезжает вверх. Проверено
+   замером: у закреплённого кольца верх должен держаться на
+   245 пикселях, а держался на минус 894. Поэтому состояние
+   кольца назначает кадр (класс приходит из rc-cinema.js), а
+   высоту трека держит обёртка блока - она никуда не девается,
+   что бы ни делало кольцо. */
+html:not(.rc-reduced) .cin-ring {
+  --cab-h: clamp(150px, 21vh, 205px);
+  position: relative;
+  display: block;
+  height: calc(var(--cab-h) * 2);
+  perspective: 1150px;
   perspective-origin: 50% 50%;
+  transform-style: preserve-3d;
 }
-.cin-drum .cin-item {
-  transform-origin: 50% 50%;
-  transition: filter .35s var(--ease), opacity .35s var(--ease), box-shadow .4s var(--ease);
+/* Кольцо держится в середине кадра, пока блок идёт мимо */
+html:not(.rc-reduced) .cin-ring.cin-pin {
+  position: fixed;
+  left: 0; right: 0;
+  top: calc(50vh - var(--cab-h));
 }
-.cin-drum .cin-item.cin-front {
+/* Блок кончился: кольцо остаётся внизу своего трека и уезжает
+   вместе с ним, без прыжка обратно наверх. */
+html:not(.rc-reduced) .cin-ring.cin-pin-end {
+  position: absolute;
+  left: 0; right: 0; bottom: 0;
+}
+
+html:not(.rc-reduced) .cin-ring > .cin-item {
+  position: absolute;
+  left: 50%; top: 50%;
+  width: min(430px, 86vw);
+  height: auto;
+  margin: 0;
+  z-index: var(--cin-zi, 1);
+  transform:
+    translate(-50%, -50%)
+    translate3d(var(--cin-x, 0px), var(--cin-y, 0px), var(--cin-z, 0px))
+    rotateY(var(--cin-rot, 0deg))
+    translate3d(0, calc(var(--rcd-y, 0px) + var(--rcd-lift, 0px)), 0)
+    rotateX(var(--rcd-rx, 0deg))
+    rotateY(var(--rcd-ry, 0deg))
+    translateZ(var(--rcd-tz, 0px))
+    scale(var(--cin-s, 1)) !important;
+  opacity: var(--cin-vis, 1);
+  filter: blur(var(--cin-blur, 0px));
+  /* Трансформацию ведёт кадр, а не переход: любой transition на
+     ней превращает поворот салона в резину. */
+  transition: opacity .3s linear, filter .3s linear,
+              box-shadow .4s var(--ease), border-color .4s var(--ease) !important;
+  will-change: transform, opacity;
+}
+
+/* Панель перед зрителем: её читают. Ни размытия, ни поворота,
+   зато подсвеченная кромка - видно, что она сейчас главная. */
+html:not(.rc-reduced) .cin-ring > .cin-item.cin-front {
   --cin-blur: 0px;
   box-shadow:
     inset 0 1px 0 var(--gl-top),
-    0 30px 60px -34px rgba(0,0,0,.9),
-    0 0 46px -18px rgba(66,178,220,.7);
-  border-color: rgba(66,178,220,.4);
+    0 34px 70px -34px rgba(0,0,0,.92),
+    0 0 52px -18px rgba(66,178,220,.75);
+  border-color: rgba(66,178,220,.42);
+}
+
+/* Ушедшее за плечо не ловит курсор и палец: кликать по тому, что
+   человек уже не видит, нельзя. */
+.cin-ring > .cin-item.cin-far { pointer-events: none; }
+
+/* На телефоне раскладка проще: карточки идут одна за другой,
+   разворот мягче, тяжёлых фильтров нет вовсе. */
+@media (max-width: 760px) {
+  html:not(.rc-reduced) .cin-cabin > .wrap {
+    min-height: calc(54vh + var(--cab-n, 4) * 34vh);
+  }
+  html:not(.rc-reduced) .cin-ring {
+    --cab-h: clamp(160px, 24vh, 240px);
+    perspective: 860px;
+  }
+  html:not(.rc-reduced) .cin-ring > .cin-item {
+    width: min(92vw, 420px);
+    filter: none;
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
+  }
+}
+
+/* ═══ БОРТОВОЙ СПРАВОЧНИК ═════════════════════════════════════
+   Вопросы и ответы - экран на стене рубки. Он поворачивается со
+   стеной, но угол ограничен в скрипте: длинный текст читают, а
+   не разглядывают под наклоном. */
+html:not(.rc-reduced) .cin-desk { perspective: 1700px; perspective-origin: 50% 44%; }
+html:not(.rc-reduced) .cin-board {
+  transform:
+    translate3d(var(--cin-x, 0px), 0, var(--cin-z, 0px))
+    rotateY(var(--cin-rot, 0deg));
+  transform-origin: 50% 50%;
+  will-change: transform;
+}
+/* Строка, доехавшая до линии чтения, получает световую кромку:
+   видно, какой вопрос сейчас «под лучом» справочника. */
+html:not(.rc-reduced) .cin-board .faq-i { position: relative; }
+html:not(.rc-reduced) .cin-board .faq-i::before {
+  content: ''; position: absolute; left: 0; top: 0; bottom: 0; width: 2px;
+  background: linear-gradient(180deg, transparent, var(--cyan), transparent);
+  opacity: calc(var(--cin-lit, 0) * .85);
+  transition: opacity .25s linear;
+  pointer-events: none;
+}
+@media (max-width: 760px) {
+  html:not(.rc-reduced) .cin-desk { perspective: 1100px; }
 }
 
 /* ── Проезд вглубь ───────────────────────────────────────────
@@ -58,31 +181,50 @@
 
 /* ── Ответ на касание ────────────────────────────────────────
    На телефоне вместо наведения работает нажатие: карточка
-   проваливается на пару миллиметров и возвращается. */
+   проваливается на пару миллиметров и возвращается. В салоне
+   для этого есть своя переменная, чтобы не переписывать всю
+   собранную трансформацию. */
 .cin-press {
   transform:
     translate3d(0, var(--cin-y, 0px), calc(var(--cin-z, 0px) - 26px))
     rotateY(var(--cin-rot, 0deg)) scale(.985);
   transition: transform .18s var(--ease);
 }
+.cin-ring > .cin-item.cin-press { --cin-s: .972; }
 
 /* ── Когда всё это выключено ─────────────────────────────────
    Быстрая прокрутка, слабое устройство и просьба меньше
-   движения возвращают обычную страницу без единого поворота. */
-html.rc-fast .cin-item,
-html.rc-reduced .cin-item,
-html[data-degrade="3"] .cin-item {
+   движения возвращают обычную страницу без единого поворота.
+
+   Салон в этот список не входит намеренно: его карточки лежат
+   друг на друге, и снятая трансформация схлопнула бы их в кучу
+   прямо посреди прокрутки. Ему снимают только украшения. */
+html.rc-fast .cin-tunnel .cin-item,
+html.rc-reduced .cin-tunnel .cin-item,
+html[data-degrade="3"] .cin-tunnel .cin-item,
+html.rc-fast .cin-shelf .cin-item,
+html.rc-reduced .cin-shelf .cin-item,
+html[data-degrade="3"] .cin-shelf .cin-item {
   transform: none !important;
   filter: none !important;
   opacity: 1 !important;
 }
+html.rc-fast .cin-ring > .cin-item,
+html[data-degrade="2"] .cin-ring > .cin-item,
+html[data-degrade="3"] .cin-ring > .cin-item {
+  filter: none !important;
+  transition: none !important;
+}
 @media (prefers-reduced-motion: reduce) {
   .cin-item { transform: none !important; filter: none !important; opacity: 1 !important; }
+  .cin-board { transform: none !important; }
+  .cin-ring { position: static !important; height: auto !important; }
+  .cin-cabin > .wrap { min-height: 0 !important; }
 }
 
 /* На узком экране глубина мягче: там карточка занимает почти всю
    ширину, и сильный разворот съедает читаемость. */
 @media (max-width: 760px) {
   .cin-stage { perspective: 900px; }
-  .cin-item { filter: none; }
+  .cin-tunnel .cin-item, .cin-shelf .cin-item { filter: none; }
 }

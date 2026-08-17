@@ -56,7 +56,7 @@ reg({
   hit: function (el, p, dx, dy) {
     /* Отлетают от ракеты, а не в случайную сторону */
     var d = Math.sqrt(dx * dx + dy * dy) || 1;
-    var push = p * 26;
+    var push = p * 14;
     el.style.transform = "translate3d(" + (-dx / d * push) + "px," + (-dy / d * push * 0.6) + "px,0) rotate(" + (-dx / d * p * 4) + "deg)";
     el.style.borderColor = "rgba(66,178,220," + (0.16 + p * 0.5).toFixed(3) + ")";
   },
@@ -128,7 +128,7 @@ reg({
   hit: function (el, p, dx, dy) {
     var side = dx > 0 ? 1 : -1;
     el.style.setProperty("--jet", p.toFixed(3));
-    el.style.setProperty("--jet-rot", (side * p * 2.4).toFixed(2) + "deg");
+    el.style.setProperty("--jet-rot", (side * p * 1.1).toFixed(2) + "deg");
   },
   rest: function (el) {
     el.style.setProperty("--jet", "0");
@@ -143,8 +143,8 @@ reg({
   sel: ".prod-card",
   radius: 300,
   hit: function (el, p, dx, dy) {
-    el.style.setProperty("--tilt", (-(dx > 0 ? 1 : -1) * p * 5).toFixed(2) + "deg");
-    el.style.setProperty("--lift", (p * 8).toFixed(2) + "px");
+    el.style.setProperty("--tilt", (-(dx > 0 ? 1 : -1) * p * 2.2).toFixed(2) + "deg");
+    el.style.setProperty("--lift", (p * 4).toFixed(2) + "px");
   },
   rest: function (el) {
     el.style.setProperty("--tilt", "0deg");
@@ -184,7 +184,7 @@ reg({
   sel: ".case:not(.step)",
   radius: 260,
   hit: function (el, p, dx) {
-    el.style.setProperty("--drag", ((dx > 0 ? -1 : 1) * p * 7).toFixed(2) + "px");
+    el.style.setProperty("--drag", ((dx > 0 ? -1 : 1) * p * 3).toFixed(2) + "px");
   },
   rest: function (el) { el.style.setProperty("--drag", "0px"); },
   settle: function (el) { el.style.setProperty("--drag", "0px"); }
@@ -238,11 +238,18 @@ function collect() {
 }
 
 /* ── Кадр: сначала все чтения, потом все записи ───────────── */
-var raf = null, lastPos = null, idle = 0;
+var raf = null, lastPos = null, idle = 0, lastAt = 0;
 
-function frame() {
+function frame(ts) {
   raf = requestAnimationFrame(frame);
   if (doc.hidden) return;
+
+  /* Тридцати раз в секунду хватает: касание ракеты - это мягкое
+     покачивание, а не игра. Лишние кадры уходили на чтение
+     прямоугольников и подтормаживали прокрутку. */
+  var now = ts || (g.performance && performance.now()) || Date.now();
+  if (lastAt && now - lastAt < 33) return;
+  lastAt = now;
 
   var pos = g.RC_ROCKET_POS;
   if (!pos || root.classList.contains("rc-reduced")) return;

@@ -16,6 +16,15 @@ var KEY = "rcdn.sound";
 var HINT = "rcdn.soundHintSeen";
 var REDUCE = matchMedia("(prefers-reduced-motion: reduce)").matches;
 
+/* Сколько двигателя слышно в каждом акте фильма. Единица - ракета
+   идёт прямо перед человеком, ноль - её здесь просто нет. Ключи
+   совпадают с актами из rc-scene.js: одна сцена, один словарь. */
+var FLIGHT = {
+  pad: 0.14, ignite: 1.00, climb: 0.92, clouds: 0.78, corridor: 0.34,
+  advance: 0.46, orbit: 0.55, reentry: 0.88, route: 0.20, landing: 0.62,
+  walk: 0.10, cabin: 0.06, manual: 0.05, console: 0.05
+};
+
 function Sound() {
   this.on = false;
   this.ready = false;
@@ -23,6 +32,7 @@ function Sound() {
   this.want = 0;         /* к чему стремимся */
   this.vel = 0;          /* скорость прокрутки, сглаженная */
   this.p = 0;            /* положение на странице */
+  this.fly = 0;          /* насколько ракета сейчас в кадре */
   this.ctx = null;
 }
 
@@ -141,15 +151,25 @@ Sound.prototype.fadeIn = function () {
   var t = this.ctx.currentTime;
   this.master.gain.cancelScheduledValues(t);
   this.master.gain.setValueAtTime(this.master.gain.value, t);
-  this.master.gain.linearRampToValueAtTime(0.16, t + 1.8);
+  /* Под музыкой синтезированный слой уходит на второй план: две
+     полноценные фонограммы разом - это каша, а заказчик просил
+     фон, который не давит. */
+  this.master.gain.linearRampToValueAtTime(this.music() ? 0.085 : 0.16, t + 1.8);
   this.loop();
   try { localStorage.setItem(KEY, "on"); } catch (e) {}
+  if (g.RC_MUSIC) { try { g.RC_MUSIC.on(); } catch (e) {} }
   if (g.RC_track) g.RC_track("sound", "on");
+};
+
+/* Играет ли музыкальная тема: от этого зависит весь баланс ниже */
+Sound.prototype.music = function () {
+  return !!(g.RC_MUSIC && g.RC_MUSIC.playing && g.RC_MUSIC.playing());
 };
 
 Sound.prototype.stop = function () {
   this.on = false;
   document.documentElement.classList.remove("snd-on");
+  if (g.RC_MUSIC) { try { g.RC_MUSIC.off(); } catch (e) {} }
   if (!this.ready) return;
   var t = this.ctx.currentTime;
   this.master.gain.cancelScheduledValues(t);
@@ -192,15 +212,33 @@ Sound.prototype.loop = function () {
     self.p += (p - self.p) * 0.1;
 
     var ctx = self.ctx, t = ctx.currentTime;
+
+    /* ── Где вообще слышен двигатель ──────────────────────────
+       Заказчик сформулировал точно: «музыка фоном, а звук ракеты
+       только там, где она пролетает». Значит гул принадлежит не
+       прокрутке, а сцене: он есть на старте, в разгоне, на орбите
+       и при возвращении, и его нет на площадке, в салоне и у
+       пульта - там человек стоит, а не летит. Акт берём у общего
+       диспетчера сцены, чтобы звук не разошёлся с картинкой. */
+    var act = (g.RC_SCENE && g.RC_SCENE.act) || null;
+    var flying = act ? FLIGHT[act] || 0 : 0.7;
+    if (!act) flying = 0.7;              /* диспетчера нет - ведём по прокрутке */
+    self.fly += (flying - self.fly) * 0.06;
+    if (self.eg) {
+      var base = self.music() ? 0.30 : 0.55;
+      self.eg.gain.setTargetAtTime(0.004 + base * self.fly, t, 0.35);
+    }
+
     /* Разгон: чем быстрее листаешь, тем выше и злее гул */
     var f = 41 + self.vel * 26 + self.p * 8;
     self.o1.frequency.setTargetAtTime(f, t, 0.12);
     self.o2.frequency.setTargetAtTime(f * 2, t, 0.12);
     self.lp.frequency.setTargetAtTime(170 + self.vel * 520, t, 0.15);
 
-    /* Поток: в атмосфере шумно, в космосе тихо */
+    /* Поток: в атмосфере шумно, в космосе тихо, а на земле его нет
+       вовсе - набегающему воздуху взяться неоткуда. */
     var air = Math.max(0, 1 - self.p * 1.9);
-    self.ng.gain.setTargetAtTime(0.006 + self.vel * 0.05 * air, t, 0.2);
+    self.ng.gain.setTargetAtTime((0.006 + self.vel * 0.05 * air) * (0.15 + self.fly * 0.85), t, 0.2);
     self.bp.frequency.setTargetAtTime(500 + self.vel * 1400 + self.p * 300, t, 0.2);
 
     /* Редкие щелчки эфира в средней части полёта */
@@ -228,6 +266,9 @@ Sound.prototype.energy = function () {
    двести миллисекунд затухающего шума, ни одного файла. */
 Sound.prototype.space = function () {
   if (!this.ctx || this._space) return;
+  /* Под музыкальной темой свой аккорд не нужен: у неё уже есть и
+     гармония, и хвост зала. Два таких слоя дерутся друг с другом. */
+  if (this.music()) return;
   var ctx = this.ctx;
   try {
     var out = ctx.createGain();
@@ -326,6 +367,8 @@ Sound.prototype.boom = function () {
   var now = this.ctx.currentTime;
   if (this._boomAt && now - this._boomAt < 2) return;
   this._boomAt = now;
+  /* Удар опор перекрывает музыку: тема отступает на пару секунд */
+  if (g.RC_MUSIC && g.RC_MUSIC.duck) { try { g.RC_MUSIC.duck(2400); } catch (e) {} }
   try {
     var n = Math.floor(this.ctx.sampleRate * 0.6);
     var b = this.ctx.createBuffer(1, n, this.ctx.sampleRate), c = b.getChannelData(0);
@@ -356,12 +399,19 @@ function bind() {
   });
 
   function paint() {
+    /* Кнопка одна на весь звук сайта, поэтому «включено» - это либо
+       синтезированный слой, либо музыкальная тема: на устройстве без
+       Web Audio играет только вторая, и кнопка обязана это показать. */
+    var on = snd.on || (g.RC_MUSIC && g.RC_MUSIC.playing && g.RC_MUSIC.playing());
     btns.forEach(function (b) {
-      b.setAttribute("aria-pressed", snd.on ? "true" : "false");
-      b.closest(".pill") && b.closest(".pill").classList.toggle("at-2", snd.on);
+      b.setAttribute("aria-pressed", on ? "true" : "false");
+      b.closest(".pill") && b.closest(".pill").classList.toggle("at-2", !!on);
     });
   }
   paint();
+  addEventListener("rc:music", paint);
+  setTimeout(paint, 1200);
+  setTimeout(paint, 3000);
 
   /* Полоски дышат в такт гулу */
   setInterval(function () {
