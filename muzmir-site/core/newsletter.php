@@ -20,6 +20,13 @@ if (!function_exists('person_greeting_name') && is_file(BASE_PATH . '/core/perso
     require_once BASE_PATH . '/core/person_name.php';
 }
 
+// Репутация домена: кому сейчас не пишем и какой отказ считать доказательством
+// мёртвого адреса. Без этого один утренний зажим почтовика вычёркивал из базы
+// тысячу живых людей.
+if (!function_exists('mrep_domain_paused') && is_file(BASE_PATH . '/core/mail_reputation.php')) {
+    require_once BASE_PATH . '/core/mail_reputation.php';
+}
+
 /** Тихий лог рассылок в общий mail.log (функция из mailer.php). */
 function nl_log(string $msg): void {
     if (function_exists('mail_log')) mail_log('[nl] ' . $msg);
@@ -521,30 +528,37 @@ function nl_campaign_day(): int {
  *
  * Семнадцатого августа, в первый день, когда события доставки пошли
  * по-настоящему, из 3 932 адресов отбились намертво 1 472 — тридцать семь
- * процентов. База старая и ни разу не чищенная, так что цифра честная, а не
- * случайная. Механизм чистки сработал, все отказавшие ушли в стоп-лист, но
- * заплатили мы за это репутацией домена: каждый отказ почтовые службы
- * записывают на отправителя, и после определённой доли начинают складывать
- * письма в спам всем подряд.
+ * процентов, и общий стоп-кран остановил рассылку целиком. Разбор по часам
+ * показал, что остановился он зря: темп отправки не менялся, а отказы кончились
+ * сами (388 из 800 в восемь утра, 16 из 808 в одиннадцать). Это была не база,
+ * а mail.ru, который придерживал незнакомого отправителя.
  *
- * Отдельные предохранители уже были: подряд идущие отказы в одном прогоне и
- * остановка роста лестницы. Не было главного — взгляда на день целиком. Здесь
- * он и появляется: если доля отказов за сутки перевалила порог, массовая
- * отправка останавливается, и разбираться приходится человеку.
+ * Поэтому здесь считаются ТОЛЬКО ДОКАЗАННЫЕ отказы — те, где почтовик прямым
+ * текстом сказал, что ящика не существует (mrep_bounce_is_proof). Молчаливый
+ * отказ говорит о канале, и на него есть свой ответ: пауза конкретному домену
+ * на час (mrep_paused_domains). Останавливать всю рассылку из-за одного
+ * почтовика, который отойдёт через два часа, — значит терять день впустую.
  *
- * Порог в настройке nl_bounce_stop_pct (по умолчанию 15%); считается только
- * когда событий набралось достаточно, чтобы доля что-то значила.
+ * Порог в настройке nl_bounce_stop_pct; считается только когда событий
+ * набралось достаточно, чтобы доля что-то значила.
  */
 function nl_bounce_rate_today(): array {
+    $zero = ['bounced' => 0, 'delivered' => 0, 'total' => 0, 'pct' => 0.0, 'unproven' => 0];
     try {
-        $b = (int) (scalar("SELECT COUNT(DISTINCT email) FROM mail_events
-                             WHERE status='hard_bounced' AND date(created_at)=date('now','localtime')") ?? 0);
         $d = (int) (scalar("SELECT COUNT(DISTINCT email) FROM mail_events
                              WHERE status='delivered' AND date(created_at)=date('now','localtime')") ?? 0);
-    } catch (\Throwable $e) { return ['bounced' => 0, 'delivered' => 0, 'total' => 0, 'pct' => 0.0]; }
-    $t = $b + $d;
-    return ['bounced' => $b, 'delivered' => $d, 'total' => $t,
-            'pct' => $t > 0 ? round($b * 100 / $t, 1) : 0.0];
+        $rows = all("SELECT DISTINCT LOWER(email) e, COALESCE(comment,'') c FROM mail_events
+                      WHERE status='hard_bounced' AND date(created_at)=date('now','localtime')");
+    } catch (\Throwable $e) { return $zero; }
+
+    $proven = $unproven = 0;
+    foreach ($rows as $r) {
+        if (function_exists('mrep_bounce_is_proof') && !mrep_bounce_is_proof((string) $r['c'])) $unproven++;
+        else $proven++;
+    }
+    $t = $proven + $d;
+    return ['bounced' => $proven, 'delivered' => $d, 'total' => $t, 'unproven' => $unproven,
+            'pct' => $t > 0 ? round($proven * 100 / $t, 1) : 0.0];
 }
 
 /** Не пора ли остановиться. Возвращает true, если отправку пришлось выключить. */
@@ -561,13 +575,48 @@ function nl_bounce_guard(): bool {
     return true;
 }
 
+/**
+ * ЯЩИКИ МАССОВОЙ ОТПРАВКИ — ОБА, А НЕ ОДИН.
+ *
+ * Волны идут с разных обратных адресов: своей базе — с news@ (пул 'bulk'),
+ * учреждениям — с novosti@ (пул 'cold'). Раньше здесь брался только пул 'bulk',
+ * и это давало сразу две беды. Дневной потолок считался по одному ящику, то есть
+ * вдвое меньше настоящего. А холодная волна ехала на квоте чужого ящика: письма
+ * учреждениям уходили с news@, и жалобы на них прилетали на адрес, которым мы
+ * пишем своим участникам.
+ */
+function nl_bulk_boxes(): array {
+    if (!function_exists('mail_fallback_accounts')) return [];
+    $out = [];
+    foreach (['bulk', 'cold'] as $pool) {
+        foreach (mail_fallback_accounts([], $pool) as $a) {
+            $u = mb_strtolower((string) ($a['user'] ?? ''));
+            if ($u !== '' && !isset($out[$u])) $out[$u] = $a;
+        }
+    }
+    return array_values($out);
+}
+
+/**
+ * КАКОЙ ЯЩИК ВЕДЁТ ЭТОТ ТИП КАМПАНИИ.
+ *
+ * Учреждения — холодный охват, у него свой ящик и свои жалобы. Всё остальное
+ * (конкурсы, клуб, кабинет) — своя база с news@. Возвращает имя ящика в том же
+ * виде, в каком оно лежит в настройках почты, или '' если пул не настроен.
+ */
+function nl_box_for_type(string $ctype): string {
+    $pool = ($ctype === 'inst' || $ctype === 'cold') ? 'cold' : 'bulk';
+    $accs = function_exists('mail_fallback_accounts') ? mail_fallback_accounts([], $pool) : [];
+    return mb_strtolower((string) ($accs[0]['user'] ?? ''));
+}
+
 function nl_daily_cap(): int {
     // Дневной потолок = сумма норм ящиков пула. У сервиса рассылок норма своя и
     // растущая (nl_service_cap_today): полный темп с первого дня годится для наших
     // почтовых ящиков, но не для домена, который только начал слать помногу.
     // Ровность обеспечивает не урезанная квота, а пауза между письмами
     // (nl_box_gap_sec) — письма идут ниточкой, а не пачками.
-    $accs = function_exists('mail_fallback_accounts') ? mail_fallback_accounts([], 'bulk') : [];
+    $accs = nl_bulk_boxes();
     if (!$accs) return nl_per_box_cap();
     $sum = 0;
     foreach ($accs as $a) $sum += nl_per_box_cap((string) ($a['user'] ?? ''));
@@ -1291,6 +1340,25 @@ function newsletter_process_queue(int $limit): int {
         }
         if ($account) $opt['account'] = $account;
 
+        // ОБРАТНЫЙ АДРЕС ОПРЕДЕЛЯЕТ ТИП ПИСЬМА, А НЕ ТИП ОЧЕРЕДИ.
+        //
+        // Внутри mail_send_failover пул считался по двум полям — приоритету и теме.
+        // Тип кампании туда не доходил, поэтому ЛЮБОЕ массовое письмо получало пул
+        // 'bulk' и уходило с news@ — включая холодные письма учреждениям, для
+        // которых заведён отдельный ящик novosti@. Смысл разделения был именно в
+        // этом: жалобы на письмо незнакомой школе должны прилетать туда, где нечего
+        // терять, а не на ящик, которым мы пишем своим участникам.
+        //
+        // Тип берём из строки очереди: у выборки массовых он приезжает как ctype
+        // (COALESCE по письму и по рассылке), у остальных лежит в самой колонке.
+        if (function_exists('mail_pool_for')) {
+            $opt['pool'] = mail_pool_for([
+                'campaign_type' => (string) ($row['ctype'] ?? $row['campaign_type'] ?? ''),
+                'priority'      => (int) ($row['priority'] ?? 0),
+                'subject'       => (string) ($row['subject'] ?? ''),
+            ]);
+        }
+
         // ТЕЛО ПЕРСОНАЛЬНОГО ПИСЬМА СОБИРАЕТСЯ ЗДЕСЬ, В СЕКУНДУ ОТПРАВКИ.
         // Поэтому текст, поправленный в пульте, догоняет всех, кому ещё не ушло,
         // а временный пароль выдаётся ровно тому, кто письмо сейчас получит.
@@ -1464,7 +1532,9 @@ function newsletter_process_queue(int $limit): int {
         $allowed = array_keys(array_filter($typeLeft, fn($n) => $n > 0));
 
         // Ящики: у каждого свой дневной остаток и свой слот по времени.
-        $boxes   = function_exists('mail_fallback_accounts') ? mail_fallback_accounts([], 'bulk') : [];
+        // Их два — рассылочный для своей базы и холодный для учреждений, — и
+        // норма у каждого своя: 4 000 писем в день на ящик (правило владельца).
+        $boxes   = nl_bulk_boxes();
         $ready    = [];     // индексы ящиков, которым сейчас можно отправлять
         $quotaBox = [];     // сколько писем каждый из них может отправить в этот прогон
         foreach ($boxes as $bi => $b) {
@@ -1539,6 +1609,17 @@ function newsletter_process_queue(int $limit): int {
                     if (!isset($bulk[$k])) continue;
                     $ct = (string) ($row['ctype'] ?? 'konkurs');
                     if (($typeLeft[$ct] ?? 0) <= 0) continue;
+                    // КАЖДЫЙ ТИП — СО СВОЕГО ЯЩИКА. Письмо учреждению не должно
+                    // занимать слот рассылочного ящика: у него свой обратный адрес,
+                    // своя норма и своя репутация. Чужие письма пропускаем — их
+                    // возьмёт свой ящик в этом же прогоне.
+                    $want = nl_box_for_type($ct);
+                    if ($want !== '' && $want !== $boxUser) continue;
+                    // Домен, который сейчас отбивает пачкой, пропускаем — письмо
+                    // останется в очереди и уйдёт, когда почтовик отойдёт. Каждый
+                    // отказ пишется на нашу репутацию, и стучаться в закрытую
+                    // дверь дороже, чем подождать час.
+                    if (function_exists('mrep_domain_paused') && mrep_domain_paused((string) $row['to_email'])) continue;
                     unset($bulk[$k]);                       // письмо занято этим прогоном
                     if ($sendRow($row, $acc)) {
                         $sent++; $bulkSent++; $typeLeft[$ct]--;

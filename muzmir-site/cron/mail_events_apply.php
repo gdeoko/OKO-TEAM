@@ -19,6 +19,7 @@ define('BASE_PATH', dirname(__DIR__));
 $GLOBALS['CFG'] = require BASE_PATH . '/config.php';
 require_once BASE_PATH . '/core/db.php';
 require_once BASE_PATH . '/core/helpers.php';
+require_once BASE_PATH . '/core/mail_reputation.php';
 
 /** Лог в общий журнал кронов. */
 function mea_log(string $msg): void {
@@ -34,7 +35,7 @@ try {
 
 $rows = [];
 try {
-    $rows = all("SELECT id, email, status FROM mail_events
+    $rows = all("SELECT id, email, status, COALESCE(comment,'') AS comment FROM mail_events
                   WHERE COALESCE(handled_at,'')='' AND status IN ('hard_bounced','spam','unsubscribed')
                   ORDER BY id LIMIT 2000");
 } catch (\Throwable $e) { mea_log('таблицы событий ещё нет'); exit(0); }
@@ -42,11 +43,26 @@ try {
 if (!$rows) { mea_log('новых событий для разбора нет'); exit(0); }
 
 $n = ['учреждения' => 0, 'подписчики' => 0, 'очередь' => 0];
+$skipped = 0;
 $chg = static fn(): int => (int) db()->query("SELECT changes()")->fetchColumn();
 
 foreach ($rows as $r) {
     $e = mb_strtolower(trim((string) $r['email']));
     if ($e === '') { q("UPDATE mail_events SET handled_at=datetime('now','localtime') WHERE id=?", [(int) $r['id']]); continue; }
+
+    // ОТКАЗ БЕЗ ОБЪЯСНЕНИЯ АДРЕС НЕ УБИВАЕТ.
+    //
+    // Жалоба на спам и отписка — это решение человека, тут всё однозначно. А вот
+    // «жёсткий отказ» приходит и тогда, когда почтовая служба придерживает
+    // отправителя: 17 августа mail.ru так отбил 1 081 письмо за три часа и принял
+    // те же адреса в четвёртом. Вычёркиваем, только если почтовик прямым текстом
+    // сказал, что ящика нет; иначе письмо просто ждёт следующего захода.
+    if ((string) $r['status'] === 'hard_bounced' && !mrep_bounce_is_proof((string) $r['comment'])) {
+        q("UPDATE mail_events SET handled_at=datetime('now','localtime') WHERE id=?", [(int) $r['id']]);
+        $skipped++;
+        continue;
+    }
+
     foreach ([
         'учреждения' => ["UPDATE institutions SET status=?, updated_at=datetime('now','localtime')
                            WHERE status NOT IN ('bounced','unsubscribed','banned') AND LOWER(email)=?",
@@ -61,4 +77,12 @@ foreach ($rows as $r) {
 }
 
 mea_log('разобрано событий ' . count($rows) . ': снято учреждений ' . $n['учреждения']
-        . ', подписчиков ' . $n['подписчики'] . ', писем из очереди ' . $n['очередь']);
+        . ', подписчиков ' . $n['подписчики'] . ', писем из очереди ' . $n['очередь']
+        . ', отказов без объяснения (адрес оставлен) ' . $skipped);
+
+// Кто сейчас отбивает пачкой — в журнал, чтобы это было видно до того, как
+// доля отказов за сутки дорастёт до общего стоп-крана.
+if (function_exists('mrep_paused_note')) {
+    $note = mrep_paused_note();
+    if ($note !== '') mea_log('домены на паузе (час): ' . $note);
+}

@@ -103,6 +103,31 @@ try {
             continue;
         }
 
+        /* ── «Удалите мой адрес» — исполняем сразу, без вопросов и без ответа ──
+         *
+         * Отвечать на такую просьбу нельзя: ответ — это ещё одно письмо тому,
+         * кто попросил больше не писать. Молча закрываем адрес везде, где он
+         * может всплыть: подписка, учреждение, очередь, стоп-лист.
+         */
+        if ($kind === 'optout') {
+            if ($dry) { ia_log('ЗАКРЫЛ БЫ адрес по просьбе: ' . $from); $did['decline']++; continue; }
+            try {
+                q("INSERT OR IGNORE INTO mail_stop (email, reason) VALUES (?, 'отказался от рассылки')", [$from]);
+                q("UPDATE subscribers SET active=0 WHERE LOWER(email)=?", [$from]);
+                q("UPDATE institutions SET status='unsubscribed', updated_at=datetime('now','localtime')
+                    WHERE LOWER(email)=?", [$from]);
+                q("UPDATE mail_queue SET status='cancelled', error='человек попросил удалить адрес'
+                    WHERE status='queued' AND LOWER(to_email)=?", [$from]);
+                ia_log('адрес закрыт по просьбе человека: ' . $from);
+                $mark('auto_decline');
+                $did['decline']++;
+            } catch (\Throwable $e) {
+                ia_log('не удалось закрыть адрес ' . $from . ': ' . $e->getMessage());
+                $mark('human');
+            }
+            continue;
+        }
+
         /* ── Согласие учреждения на партнёрство ── */
         if ($kind === 'partner_accept') {
             $instId = (int) $r['inst_id'];

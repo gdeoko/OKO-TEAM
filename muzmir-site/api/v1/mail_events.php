@@ -73,7 +73,20 @@ function mev_collect($node, array &$out): void {
             'status'     => trim((string) $node['status']),
             'event_time' => trim((string) ($node['event_time'] ?? '')),
             'job_id'     => trim((string) ($node['job_id'] ?? '')),
-            'comment'    => mb_substr(trim((string) ($node['comment'] ?? ($node['delivery_info']['destination_response'] ?? ''))), 0, 300),
+            // ПРИЧИНА ОТКАЗА ЛЕЖИТ НЕ В ОДНОМ ПОЛЕ.
+            //
+            // Брали только destination_response — ответ сервера получателя. У
+            // 1 295 отказов из 1 472 он оказался пустым, и разобрать, почему
+            // письмо не дошло, было нечем: адреса нет? почтовик придержал? Без
+            // причины отказ приходится считать недоказанным, а это значит, что
+            // база не чистится вовсе. Поэтому собираем всё, что сервис прислал:
+            // свой вердикт (delivery_status вида err_user_not_found), ответ
+            // сервера и текстовое пояснение.
+            'comment'    => mb_substr(trim(implode(' | ', array_filter([
+                (string) ($node['comment'] ?? ''),
+                (string) ($node['delivery_info']['delivery_status'] ?? ''),
+                (string) ($node['delivery_info']['destination_response'] ?? ''),
+            ], static fn($s) => trim((string) $s) !== ''))), 0, 300),
         ];
     }
     foreach ($node as $v) if (is_array($v)) mev_collect($v, $out);
