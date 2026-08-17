@@ -38,7 +38,12 @@
 
 /* От широкого монитора и выше ничего не трогаем: там простор -
    часть впечатления, а не потеря. Значения совпадают с прежними
-   с точностью до пары пикселей. */
+   с точностью до пары пикселей.
+
+   Внимание: в конце файла есть более поздний блок «Плотность на
+   большом экране» от смежной задачи, он перебивает это правило
+   начиная с 1024. Оставляем оба: если тот блок когда-нибудь
+   уберут, широкий экран не свалится в телефонный ритм. */
 @media (min-width: 1280px) {
   :root { --sec: clamp(78px, 6.2vw, 96px); }
 }
@@ -105,7 +110,9 @@
    описание, если ужать внутренние отступы и кегль на пару
    пунктов. Ни одна карточка при этом не исчезает. */
 @media (max-width: 640px) {
-  .g-3, .g-4, .grid.tight { grid-template-columns: repeat(2, 1fr); }
+  /* minmax(0,...) обязателен: без него длинное слово внутри
+     карточки раздвигает свою колонку и ряд перестаёт быть ровным */
+  .g-3, .g-4, .grid.tight { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 
   .card { padding: 13px 12px; }
   .card-ico { width: 32px; height: 32px; border-radius: 10px; margin-bottom: 8px; }
@@ -121,12 +128,24 @@
 
   /* Порядковый номер сценария занимал четверть карточки */
   .case .num { font-size: 52px; right: 12px; }
+
+  /* Продуктов семь, то есть последний остаётся один в ряду и ряд
+     выглядит оборванным. Отдаём ему всю ширину: карточка на всю
+     строку не только смотрится законченной, но и ниже - текст
+     ложится в меньшее число строк. */
+  .grid.tight > .card:last-child:nth-child(odd) { grid-column: 1 / -1; }
+  .grid.tight > .card:last-child:nth-child(odd) .prod-card ul,
+  .grid.tight > .prod-card:last-child:nth-child(odd) ul { grid-template-columns: 1fr 1fr; }
 }
 
-/* Совсем узкие аппараты: две колонки станут нечитаемыми,
-   возвращаем одну, но уже с плотной типографикой выше */
-@media (max-width: 359px) {
-  .g-3, .g-4, .grid.tight { grid-template-columns: 1fr; }
+/* Совсем узкие аппараты (сложенный Fold и старые SE) - там на
+   колонку остаётся меньше 140 пикселей. Преимущества и надёжность
+   в две колонки выдерживают: у них короткий текст. А вот продукт
+   со списком из трёх пунктов начинает рассыпаться на обрывки
+   слов, поэтому ему возвращаем одну колонку. Типографика при
+   этом остаётся плотной - страница не отыгрывает назад целиком. */
+@media (max-width: 339px) {
+  .grid.tight { grid-template-columns: 1fr; }
 }
 
 /* Ноутбук и планшет: на 820-1080 сетка зря падала в две колонки.
@@ -231,15 +250,14 @@
    колонки, на планшете три: строка «HTTP/2 и HTTP/3» не
    становится понятнее от того, что вокруг неё полэкрана. */
 @media (max-width: 560px) {
-  .inc-grid { grid-template-columns: repeat(2, 1fr); gap: 8px; }
+  .inc-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
   .inc-item { padding: 10px 11px; font-size: 12.5px; gap: 9px; line-height: 1.35; }
   .inc-item svg { width: 15px; height: 15px; }
+  /* Пунктов девять - девятый так же занимает ряд целиком */
+  .inc-grid > .inc-item:last-child:nth-child(odd) { grid-column: 1 / -1; }
 }
 @media (min-width: 561px) and (max-width: 900px) {
   .inc-grid { grid-template-columns: repeat(3, 1fr); }
-}
-@media (max-width: 359px) {
-  .inc-grid { grid-template-columns: 1fr; }
 }
 
 
