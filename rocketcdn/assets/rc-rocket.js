@@ -1026,7 +1026,7 @@ Rocket.prototype.layout = function (p, dt) {
 
 /* Крупный читаемый текст: только он лежит на прозрачном фоне,
    у карточек своя подложка и ракета за ней и так не видна */
-var READ_SEL = ".hero h1,.hero-sub,.sec-h,.sec-p,.sec-tag,.kpi-n,.kpi-l,.hs-h,.legal";
+var READ_SEL = ".hero h1,.hero-sub,.sec-h,.sec-p,.sec-tag,.kpi-n,.kpi-l,.hs-h,.legal,.card,.prod-card,.case,.step,.faq-i,.chip";
 
 Rocket.prototype.readables = function () {
   if (!this._reads || this._readsAt !== document.body.childElementCount) {

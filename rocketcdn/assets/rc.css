@@ -1495,3 +1495,29 @@ body::after {
   opacity: .4;
 }
 html.rc-reduced body::after { display: none; }
+
+
+/* ── Посадочная площадка ─────────────────────────────────────
+   Ракета садится в нижнюю часть секции «Включено в подключение».
+   Пустой чёрный низ читался как дыра в вёрстке - теперь там
+   площадка: кольцо посадочных огней и мягкое свечение бетона.
+   Чистое оформление сцены, никакой логики. */
+#included { position: relative; }
+#included::after {
+  content: ''; position: absolute; left: 50%; bottom: 3%;
+  width: min(560px, 74vw); height: clamp(70px, 12vh, 130px);
+  transform: translateX(-50%);
+  background:
+    radial-gradient(ellipse 50% 42% at 50% 58%, rgba(66,178,220,.10), transparent 70%),
+    radial-gradient(ellipse 46% 30% at 50% 60%, transparent 62%, rgba(66,178,220,.22) 66%, transparent 71%),
+    radial-gradient(ellipse 30% 20% at 50% 62%, transparent 58%, rgba(207,233,245,.12) 64%, transparent 70%);
+  pointer-events: none;
+  animation: rcPad 3.6s ease-in-out infinite;
+}
+@keyframes rcPad {
+  0%, 100% { opacity: .55; }
+  50%      { opacity: 1; }
+}
+html.rc-reduced #included::after,
+html[data-theme="light"] #included::after { animation: none; opacity: .4; }
+@media (prefers-reduced-motion: reduce) { #included::after { animation: none; } }

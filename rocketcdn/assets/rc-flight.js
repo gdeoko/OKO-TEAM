@@ -251,6 +251,13 @@ function jumpUniverse() {
   }, 480);
 }
 
+var GOAL_NAMES = {
+  earth: RU ? "ЗЕМЛЯ" : "EARTH", moon: RU ? "ЛУНА" : "MOON",
+  mars: RU ? "МАРС" : "MARS", saturn: RU ? "САТУРН" : "SATURN",
+  hole: RU ? "ЧЁРНАЯ ДЫРА" : "BLACK HOLE",
+  galaxy: RU ? "ГАЛАКТИКА" : "GALAXY", home: RU ? "ДОМОЙ" : "HOME"
+};
+
 function goTo(id) {
   if (!W3 || !W3.at) return;
   if (id === "galaxy" && F.p > W3.at.jump0 && F.p < W3.at.jump1) {
@@ -266,6 +273,7 @@ function goTo(id) {
   F.auto = false;
   if (ui.auto) ui.auto.setAttribute("aria-pressed", "false");
   F.goal = p;
+  F.goalName = GOAL_NAMES[id] || null;
   hideHint();
 }
 
@@ -931,6 +939,10 @@ function frame(ts) {
   F.look.y += (F.look.ty - F.look.y) * Math.min(1, dt * 5);
   w3.cam.rotateY(-F.look.x);
   w3.cam.rotateX(-F.look.y);
+  /* Портрет: окно кокпита выше середины экрана, и цель, посаженная
+     в геометрический центр, пряталась под нижнюю раму. Лёгкий
+     наклон камеры вниз поднимает цель в стекло. */
+  if (innerHeight > innerWidth) w3.cam.rotateX(-0.042);
 
   /* Тряска на прыжке и у дыры */
   var nearHole = Math.max(0, 1 - w3.cam.position.distanceTo(w3.hole.position) / 500);
@@ -1062,6 +1074,10 @@ function frame(ts) {
   /* HUD */
   var cap = CAPTIONS[0];
   for (i = CAPTIONS.length - 1; i >= 0; i--) { if (F.p >= CAPTIONS[i].p) { cap = CAPTIONS[i]; break; } }
+  /* Пока идёт перелёт к цели, титул честно говорит, куда летим */
+  if (F.goal !== null && F.goal !== undefined && F.goalName) {
+    cap = { t: (RU ? "КУРС → " : "COURSE → ") + F.goalName };
+  }
   if (ui.cap._t !== cap.t && !(ui.cap._hold && ts < ui.cap._hold)) {
     ui.cap._t = cap.t;
     ui.cap.classList.remove("in");

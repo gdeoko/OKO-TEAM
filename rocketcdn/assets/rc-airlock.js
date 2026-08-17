@@ -53,10 +53,14 @@ function build() {
 function measure() {
   var r = sec.getBoundingClientRect();
   var h = innerHeight;
-  var start = h * 1.15, end = h * 0.42;
+  /* На телефоне секции сжаты втрое, и дверь, рассчитанная на
+     десктопную длину прохода, стояла на экране через две секции
+     контента. Окно двери должно быть коротким: появились - тут же
+     поехали - ушли. */
+  var start = Math.min(h * 1.15, h * 0.55 + 260), end = h * 0.42;
   var raw = (start - r.top) / (start - end);
   kGoal = raw < 0 ? 0 : (raw > 1 ? 1 : raw);
-  live = r.top < h * 1.6 && r.top > -h * 0.5;
+  live = r.top < start + h * 0.12 && r.top > -h * 0.5;
 }
 
 function frame() {
