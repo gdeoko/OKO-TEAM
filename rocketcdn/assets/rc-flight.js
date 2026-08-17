@@ -294,7 +294,7 @@ function buildWorld() {
   var T = g.THREE;
   var mob = innerWidth < 760;
   var r = new T.WebGLRenderer({ canvas: ui.cv, antialias: !mob, alpha: false, powerPreference: "high-performance" });
-  r.setPixelRatio(Math.min(g.devicePixelRatio || 1, mob ? 1.35 : 1.65));
+  r.setPixelRatio(Math.min(g.devicePixelRatio || 1, mob ? 1.6 : 2));
   r.setClearColor(0x02050c, 1);
 
   var scene = new T.Scene();
@@ -380,15 +380,23 @@ function buildWorld() {
   earth.add(eBody);
   /* Атмосфера: подсвеченный ободок изнутри наружу */
   var atm = new T.Mesh(
-    new T.SphereGeometry(62.6, 48, 36),
+    new T.SphereGeometry(61.9, 48, 36),
     new T.ShaderMaterial({
       transparent: true, side: T.BackSide, depthWrite: false,
       uniforms: {},
       vertexShader: "varying vec3 vN; void main(){ vN = normalize(normalMatrix * normal); gl_Position = projectionMatrix * modelViewMatrix * vec4(position,1.0); }",
-      fragmentShader: "varying vec3 vN; void main(){ float f = pow(0.72 - dot(vN, vec3(0.0,0.0,-1.0)), 3.2); gl_FragColor = vec4(0.30,0.62,0.95, f * 0.9); }"
+      fragmentShader: "varying vec3 vN; void main(){ float f = pow(0.66 - dot(vN, vec3(0.0,0.0,-1.0)), 4.0); gl_FragColor = vec4(0.32,0.62,0.95, f * 0.62); }"
     })
   );
   earth.add(atm);
+  var clouds = new T.Mesh(
+    new T.SphereGeometry(61.2, mob ? 48 : 64, mob ? 36 : 48),
+    new T.MeshLambertMaterial({
+      map: tex("assets/space/clouds.png"),
+      transparent: true, opacity: 0.55, depthWrite: false
+    })
+  );
+  earth.add(clouds);
   scene.add(earth);
 
   /* ── Луна ── */
@@ -441,7 +449,7 @@ function buildWorld() {
      и тёплое гало вокруг. */
   var hole = new T.Group();
   hole.add(new T.Mesh(new T.SphereGeometry(26, 40, 28), new T.MeshBasicMaterial({ color: 0x000000 })));
-  var diskGeo = new T.RingGeometry(30, 105, 110, 1);
+  var diskGeo = new T.RingGeometry(30, 105, mob ? 110 : 160, 1);
   (function () {
     var pos = diskGeo.attributes.position, uv = diskGeo.attributes.uv, v = new T.Vector3();
     for (var k = 0; k < pos.count; k++) {
@@ -576,13 +584,13 @@ function buildWorld() {
 
   /* Спутник на орбите Земли: корпус и две солнечные панели */
   var sat = new T.Group();
-  var satBody = new T.Mesh(new T.BoxGeometry(4, 4, 8),
-    new T.MeshPhongMaterial({ color: 0xd8e2ec, shininess: 60 }));
+  var satBody = new T.Mesh(new T.BoxGeometry(1.4, 1.4, 2.8),
+    new T.MeshPhongMaterial({ color: 0xd8e2ec, shininess: 60, emissive: 0x22303e }));
   satBody.userData.info = RU ? "СПУТНИК RC-SAT · ретранслятор Rocket CDN на низкой орбите" : "RC-SAT · Rocket CDN relay in low orbit";
   sat.add(satBody);
-  var panelMat = new T.MeshPhongMaterial({ color: 0x1d4d8f, shininess: 90, side: T.DoubleSide });
-  var p1 = new T.Mesh(new T.PlaneGeometry(16, 5), panelMat); p1.position.x = 11; sat.add(p1);
-  var p2 = new T.Mesh(new T.PlaneGeometry(16, 5), panelMat); p2.position.x = -11; sat.add(p2);
+  var panelMat = new T.MeshPhongMaterial({ color: 0x1d4d8f, shininess: 90, side: T.DoubleSide, emissive: 0x0d2038 });
+  var p1 = new T.Mesh(new T.PlaneGeometry(5.6, 1.8), panelMat); p1.position.x = 4; sat.add(p1);
+  var p2 = new T.Mesh(new T.PlaneGeometry(5.6, 1.8), panelMat); p2.position.x = -4; sat.add(p2);
   scene.add(sat);
   pickables.push(satBody);
 
@@ -685,7 +693,7 @@ function buildWorld() {
     r: r, scene: scene, cam: cam, path: path, looks: LOOKS, at: AT, fov0: FOV0,
     milky: milky, gal2: gal2, gal3: gal3,
     comet: comet, sat: sat, nebSprites: nebSprites, starMats: starMats, sunGlow: sunGlow, amb: amb,
-    earth: earth, moon: moon, mars: mars, saturn: saturn, hole: hole,
+    earth: earth, clouds: clouds, moon: moon, mars: mars, saturn: saturn, hole: hole,
     diskMat: diskMat, jump: jump, sky: sky, pickables: pickables,
     tmpA: new T.Vector3(), tmpB: new T.Vector3(), tmpQ: new T.Quaternion(), tmpM: new T.Matrix4()
   };
@@ -852,6 +860,7 @@ function frame(ts) {
 
   /* Живой мир */
   w3.earth.rotation.y += dt * 0.02;
+  if (w3.clouds) w3.clouds.rotation.y += dt * 0.009;
   w3.moon.rotation.y += dt * 0.012;
   w3.mars.rotation.y += dt * 0.022;
   w3.saturn.rotation.y += dt * 0.03;
@@ -871,7 +880,7 @@ function frame(ts) {
   /* Спутник: низкая орбита Земли с наклоном */
   if (w3.sat) {
     var sa = ts * 0.00011;
-    w3.sat.position.set(Math.cos(sa) * 86, Math.sin(sa * 2) * 20, Math.sin(sa) * 86);
+    w3.sat.position.set(Math.cos(sa) * 76, 18 + Math.sin(sa * 2) * 12, Math.sin(sa) * 76);
     w3.sat.rotation.y = sa + 1.2;
   }
 

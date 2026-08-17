@@ -1,0 +1,77 @@
+/* ═══════════════════════════════════════════════════════════
+   Rocket CDN · шлюз, оформление
+
+   Две корпусные створки поверх кадра. Всё движение задаёт одна
+   переменная --al-k из rc-airlock.js: ноль - дверь закрыта,
+   единица - створки ушли за края и мы в салоне. Оверлей не ловит
+   ни курсор, ни палец: страница под ним живёт как жила.
+   ═══════════════════════════════════════════════════════════ */
+
+.rc-airlock {
+  position: fixed; inset: 0; z-index: 58;
+  pointer-events: none;
+  opacity: 0; visibility: hidden;
+  transition: opacity .35s linear, visibility 0s linear .35s;
+}
+.rc-airlock.on {
+  opacity: 1; visibility: visible;
+  transition: opacity .35s linear;
+}
+
+/* Тёплый свет салона в проёме: ширится вместе с дверью */
+.rc-airlock .al-glow {
+  position: absolute; inset: 0;
+  background: radial-gradient(ellipse calc(14% + var(--al-k, 0) * 70%) 68% at 50% 52%,
+              rgba(255,214,160,calc(.28 * (1 - var(--al-k, 0)) + .04)) 0%,
+              rgba(66,178,220,calc(.14 * (1 - var(--al-k, 0)))) 45%,
+              transparent 75%);
+}
+
+/* Створки: корпусной металл с рёбрами жёсткости. Расходятся чуть
+   быстрее доли, чтобы на единице гарантированно уйти за края. */
+.rc-airlock .al-door {
+  position: absolute; top: -2%; bottom: -2%; width: 51%;
+  background:
+    linear-gradient(90deg, rgba(207,233,245,.05) 0 2px, transparent 2px 100%) 0 0/12.5% 100% repeat-x,
+    linear-gradient(168deg, #232f3d 0%, #141d28 38%, #0b121b 74%, #070d14 100%);
+  box-shadow: inset 0 0 60px rgba(0,0,0,.65);
+  will-change: transform;
+}
+.rc-airlock .al-l {
+  left: 0;
+  transform: translate3d(calc(var(--al-k, 0) * -108%), 0, 0);
+}
+.rc-airlock .al-r {
+  right: 0;
+  transform: translate3d(calc(var(--al-k, 0) * 108%), 0, 0);
+}
+
+/* Светящаяся кромка у стыка: сигнальная лента шлюза */
+.rc-airlock .al-door i {
+  position: absolute; top: 0; bottom: 0; width: 4px;
+  background: linear-gradient(180deg,
+    rgba(66,178,220,.2), #42B2DC 18%, #9FE0F6 50%, #42B2DC 82%, rgba(66,178,220,.2));
+  box-shadow: 0 0 22px rgba(66,178,220,.9), 0 0 60px rgba(66,178,220,.45);
+}
+.rc-airlock .al-l i { right: 0; }
+.rc-airlock .al-r i { left: 0; }
+
+/* Горизонтальные пояса на створках: дверь - не плоский лист */
+.rc-airlock .al-door::before {
+  content: ''; position: absolute; left: 0; right: 0;
+  top: 30%; height: 1px;
+  background: rgba(207,233,245,.10);
+  box-shadow: 0 1px 0 rgba(0,0,0,.7), 0 34vh 0 rgba(207,233,245,.10), 0 calc(34vh + 1px) 0 rgba(0,0,0,.7);
+}
+/* Табло над стыком: полоса состояния шлюза */
+.rc-airlock .al-l::after {
+  content: ''; position: absolute; right: 8px; top: 12%;
+  width: clamp(40px, 6vw, 90px); height: 8px; border-radius: 2px;
+  background: repeating-linear-gradient(90deg, rgba(66,178,220,.8) 0 6px, transparent 6px 10px);
+  opacity: calc(.9 - var(--al-k, 0) * .6);
+  box-shadow: 0 0 10px rgba(66,178,220,.5);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .rc-airlock { display: none !important; }
+}

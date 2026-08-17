@@ -933,10 +933,13 @@ Rocket.prototype.landing = function (p, dt, pos, tan) {
   this.landK = prev + (k - prev) * Math.min(1, (dt || 0.016) * 3.2);
   if (this.landK < 0.002) return 0;
 
-  /* Площадка: нижняя треть кадра, чуть правее центра, ближе к камере */
+  /* Площадка ровно по центру кадра: клиент просил посадку не сбоку,
+     а в середине сцены - камера смотрит прямо на неё. По вертикали
+     ставим опоры на нижнюю четверть, чтобы корпус целиком был в
+     кадре и на телефоне, и на широком экране. */
   var w = this.canvas.clientWidth || innerWidth;
   var h = this.canvas.clientHeight || innerHeight;
-  this.toWorld(w * 0.78, h * 0.86, -0.2, this._padP || (this._padP = new T.Vector3()));
+  this.toWorld(w * 0.5, h * 0.78, -0.2, this._padP || (this._padP = new T.Vector3()));
   pos.lerp(this._padP, this.landK);
 
   /* Нос разворачивается вверх: ракета встаёт на опоры */
