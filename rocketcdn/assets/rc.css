@@ -41,6 +41,11 @@
 
 /* ── Тёмная тема (по умолчанию) ───────────────────────────── */
 :root, [data-theme="dark"] {
+  --cyan-lit:  #42B2DC;
+  --tag-cloud-bg:  #1E1638;
+  --tag-cloud-tx:  #C9B8FF;
+  --tag-shield-bg: #0A2233;
+  --tag-shield-tx: #8AD4F0;
   --bg:        #050C15;
   --bg-2:      #091320;
   --bg-3:      #0D1B2C;
@@ -80,6 +85,15 @@
 
 /* ── Светлая тема ─────────────────────────────────────────── */
 [data-theme="light"] {
+  /* Циан хорош на чернилах и слеп на белом: как текст он давал 2,2:1
+     при норме 4,5. В светлой теме акцентом работает глубокий синий,
+     а сам циан остаётся для линий, свечений и заливок. */
+  --cyan:      #0A5897;
+  --cyan-lit:  #42B2DC;
+  --tag-cloud-bg:  #EDE7FF;
+  --tag-cloud-tx:  #4A27B0;
+  --tag-shield-bg: #E1F1F9;
+  --tag-shield-tx: #08558E;
   --bg:        #F3F7FB;
   --bg-2:      #FFFFFF;
   --bg-3:      #E9EFF6;
@@ -512,8 +526,11 @@ a.js-reg:not(.btn):hover { background-size: 100% 2px; }
   font-size: 10.5px; font-weight: 700; letter-spacing: .04em; text-transform: uppercase;
   padding: 3px 8px; border-radius: var(--r-full); flex: none;
 }
-.tag-cloud  { background: rgba(138,89,246,.16); color: var(--violet-tx); }
-.tag-shield { background: rgba(66,178,220,.16); color: var(--accent-tx); }
+/* Заливка меток непрозрачная: сквозь полупрозрачную подложку
+   считать контраст нечем, а на светлом фоне пара «фиолетовый по
+   фиолетовому» давала 3,5 при норме 4,5. */
+.tag-cloud  { background: var(--tag-cloud-bg);  color: var(--tag-cloud-tx); }
+.tag-shield { background: var(--tag-shield-bg); color: var(--tag-shield-tx); }
 .tag-soon   { background: var(--surface-2); color: var(--tx-3); border: 1px solid var(--line); }
 .node-empty { padding: 26px; text-align: center; color: var(--tx-3); font-size: 14px; }
 

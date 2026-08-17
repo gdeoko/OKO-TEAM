@@ -65,15 +65,27 @@ if (state.lang !== "en") state.lang = "ru";
    по дороге словаре человек видел в шапке «ui.sound» вместо слова
    «Звук». Потом ключ заменили на null - стало не лучше: null уходил
    в setAttribute и оседал в aria-label строкой «null». */
+/* Число точек присутствия живёт в одном месте - реестре сети. В
+   текстах оно пишется как {nodes} и подставляется здесь, иначе после
+   каждого нового узла пришлось бы править девять файлов. */
+function nodesCount() {
+  return (window.RC_GEO && window.RC_GEO.COUNT) || 218;
+}
+function subst(v) {
+  return typeof v === "string" && v.indexOf("{nodes}") >= 0
+    ? v.split("{nodes}").join(nodesCount())
+    : v;
+}
+
 function t(k, fallback) {
   var all = window.RC_I18N || {};
   var d = all[state.lang] || {};
   if (state.content && state.content.i18n && state.content.i18n[state.lang] && state.content.i18n[state.lang][k]) {
-    return state.content.i18n[state.lang][k];
+    return subst(state.content.i18n[state.lang][k]);
   }
-  if (d[k] != null) return d[k];
-  if (all.ru && all.ru[k] != null) return all.ru[k];
-  return fallback != null ? fallback : "";
+  if (d[k] != null) return subst(d[k]);
+  if (all.ru && all.ru[k] != null) return subst(all.ru[k]);
+  return fallback != null ? subst(fallback) : "";
 }
 
 /* Наборы карточек. Раньше здесь падало с ошибкой, если словарь не
@@ -140,6 +152,8 @@ function applyTheme(v, silent) {
 
 function applyLang(v, silent) {
   state.lang = v;
+  /* Разметка тоже пишет число через атрибут, а не цифрами */
+  $$("[data-nodes]").forEach(function (el) { el.textContent = nodesCount(); });
   localStorage.setItem("rc_lang", v);
   document.documentElement.lang = v;
   $$("[data-i18n]").forEach(function (el) {

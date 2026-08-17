@@ -86,7 +86,7 @@ img,svg,canvas{max-width:100%}
 
 <link rel="preload" href="assets/fonts/golos-cyr.woff2" as="font" type="font/woff2" crossorigin>
 <link rel="stylesheet" href="assets/rc-fonts.css?v=1786650096">
-<link rel="stylesheet" href="assets/rc.css?v=1786963495">
+<link rel="stylesheet" href="assets/rc.css?v=1786964970">
 <link rel="stylesheet" href="assets/rc-compact.css?v=1786961511">
 <link rel="stylesheet" href="assets/rc-interior.css?v=1786953860">
 <link rel="stylesheet" href="assets/rc-reduced.css?v=1786953497">
@@ -508,7 +508,7 @@ html[data-theme="light"] .rc-load{background:#070F1A}
   "@type": "Organization",
   "name": "Rocket CDN",
   "url": "https://rocketcdn.ru",
-  "logo": "https://rocketcdn.ru/assets/logo.png",
+  "logo": "https://rocketcdn.ru/assets/logo.webp",
   "slogan": "Fast. Reliable. Global.",
   "description": "Глобальная сеть доставки контента и медиа-инфраструктура для бизнеса.",
   "sameAs": ["https://lk.rocketcdn.ru"],
@@ -705,8 +705,10 @@ html[data-theme="light"] .rc-load{background:#070F1A}
 <header class="hdr" id="hdr">
   <div class="wrap hdr-in">
     <a href="#top" class="logo" aria-label="Rocket CDN">
-      <img class="lg-dark"  src="assets/logo-h.png"       alt="Rocket CDN" width="172" height="34">
-      <img class="lg-light" src="assets/logo-h-light.png" alt="Rocket CDN" width="172" height="34">
+      <!-- Обе темы лежали картинками и качались обе: 240 КБ, половина
+           всегда впустую. Теперь webp и загрузка по текущей теме -->
+      <img class="lg-dark"  src="assets/logo-h.webp"       alt="Rocket CDN" width="172" height="34" fetchpriority="high">
+      <img class="lg-light" src="assets/logo-h-light.webp" alt="Rocket CDN" width="172" height="34" loading="lazy" decoding="async">
     </a>
 
     <nav class="nav" aria-label="Основная навигация">
@@ -798,12 +800,12 @@ html[data-theme="light"] .rc-load{background:#070F1A}
   <div class="wrap">
     <div class="hero-in">
       <div class="hero-logo rv">
-        <img class="lg-dark"  src="assets/logo.png"       alt="Rocket CDN" width="300" height="204">
-        <img class="lg-light" src="assets/logo-light.png" alt="Rocket CDN" width="300" height="204">
+        <img class="lg-dark"  src="assets/logo.webp"       alt="Rocket CDN" width="300" height="204" fetchpriority="high">
+        <img class="lg-light" src="assets/logo-light.webp" alt="Rocket CDN" width="300" height="204" loading="lazy" decoding="async">
       </div>
       <div class="hero-chips">
         <span class="chip"><i class="dot-live"></i><span data-i18n="hero.chip1">сеть работает</span></span>
-        <span class="chip"><b>218</b> <span data-i18n="hero.chip2">точек присутствия</span></span>
+        <span class="chip"><b><span data-nodes>218</span></b> <span data-i18n="hero.chip2">точек присутствия</span></span>
         <span class="chip"><b>3</b> <span data-i18n="hero.chip3">собственных ЦОД</span></span>
       </div>
       <h1>
@@ -834,7 +836,7 @@ html[data-theme="light"] .rc-load{background:#070F1A}
         <div class="kpi-l" data-i18n="kpi.1l">Доступность по SLA</div>
       </div>
       <div>
-        <div class="kpi-n grad-tx"><span data-count="218">218</span></div>
+        <div class="kpi-n grad-tx"><span data-count="218"><span data-nodes>218</span></span></div>
         <div class="kpi-l" data-i18n="kpi.2l">Узлов CDN по всему миру</div>
       </div>
       <div>
@@ -1000,7 +1002,7 @@ html[data-theme="light"] .rc-load{background:#070F1A}
         </div>
         <div class="node-list" id="nodeList"></div>
         <p style="font-size:13px;color:var(--tx-3);margin-top:10px">
-          <span data-i18n="infra.found">Найдено точек</span>: <b id="nodeCount" style="color:var(--accent-tx)">218</b>
+          <span data-i18n="infra.found">Найдено точек</span>: <b id="nodeCount" style="color:var(--accent-tx)"><span data-nodes>218</span></b>
         </p>
       </div>
     </div>
@@ -1251,9 +1253,9 @@ html[data-theme="light"] .rc-load{background:#070F1A}
 <script src="assets/rc-space.js?v=1786650096"></script>
 <script src="assets/rc-sound.js?v=1786957029"></script>
 <script src="assets/rc-geo.js?v=1786957117"></script>
-<script src="assets/rc-i18n.js?v=1786962236"></script>
+<script src="assets/rc-i18n.js?v=1786964816"></script>
 <script src="assets/rc-globe.js?v=1786650096"></script>
-<script src="assets/rc-app.js?v=1786960922"></script>
+<script src="assets/rc-app.js?v=1786964827"></script>
 <script src="assets/rc-fill.js?v=1786963530"></script>
 <script src="assets/rc-viz.js?v=1786960815"></script>
 <script src="assets/rc-motion.js?v=1786953586"></script>
@@ -1261,7 +1263,7 @@ html[data-theme="light"] .rc-load{background:#070F1A}
 <script src="assets/rc-depth.js?v=1786959953"></script>
 <!-- Объёмный слой (three.js и три сцены) подтягивает rc-gl.js
      после загрузки и только там, где он вообще будет показан -->
-<script src="assets/rc-gl.js?v=1786957102"></script>
+<script src="assets/rc-gl.js?v=1786964844"></script>
 <script defer src="assets/rc-scroll.js?v=1786957602"></script>
 </body>
 </html>
