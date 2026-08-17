@@ -102,15 +102,31 @@ function vko_letter(array $inst, array $comps): array {
 }
 
 /**
+ * Причина, по которой бланк не поехал вместе с обращением.
+ *
+ * Обращение без документа уходит и без него, но молча: в журнале стояло только
+ * «бланка нет», и понять, потерялся он при сборке или при загрузке во
+ * ВКонтакте, было нельзя. Теперь причина записывается рядом с адресатом.
+ */
+function vko_doc_error(?string $set = null): string {
+    static $e = '';
+    if ($set !== null) $e = $set;
+    return $e;
+}
+
+/**
  * Загрузить файл в диалог как документ ВКонтакте.
  * Возвращает строку вложения doc<owner>_<id> или '' при неудаче.
  */
 function vko_upload_doc(int $peerId, string $path, string $title): string {
-    if ($path === '' || !is_file($path)) return '';
+    if ($path === '' || !is_file($path)) { vko_doc_error('бланк не собрался'); return ''; }
 
     $s = vk_api('docs.getMessagesUploadServer', ['type' => 'doc', 'peer_id' => $peerId]);
     $url = (string) ($s['response']['upload_url'] ?? '');
-    if ($url === '') return '';
+    if ($url === '') {
+        vko_doc_error('сервер загрузки: ' . (string) ($s['error']['error_msg'] ?? 'пусто'));
+        return '';
+    }
 
     $ch = curl_init($url);
     curl_setopt_array($ch, [
@@ -122,11 +138,18 @@ function vko_upload_doc(int $peerId, string $path, string $title): string {
     $raw = (string) curl_exec($ch);
     curl_close($ch);
     $up = json_decode($raw, true);
-    if (!is_array($up) || empty($up['file'])) return '';
+    if (!is_array($up) || empty($up['file'])) {
+        vko_doc_error('загрузка файла: ' . mb_substr(trim($raw), 0, 120));
+        return '';
+    }
 
     $save = vk_api('docs.save', ['file' => (string) $up['file'], 'title' => mb_substr($title, 0, 120)]);
     $doc = $save['response']['doc'] ?? ($save['response'][0] ?? []);
-    if (!$doc) return '';
+    if (!$doc) {
+        vko_doc_error('docs.save: ' . (string) ($save['error']['error_msg'] ?? 'пусто'));
+        return '';
+    }
+    vko_doc_error('');
     return 'doc' . (int) ($doc['owner_id'] ?? 0) . '_' . (int) ($doc['id'] ?? 0);
 }
 
@@ -230,9 +253,10 @@ function vko_send(array $inst, int $groupId, array $comps): array {
                 'number' => $L['number'], 'doc' => $doc !== ''];
     }
 
-    q("INSERT OR IGNORE INTO vk_outreach_log (institution_id, group_id, letter_no, outcome, has_doc)
-       VALUES (:i,:g,:n,'sent',:d)",
-      ['i' => $instId, 'g' => $groupId, 'n' => $L['number'], 'd' => $doc !== '' ? 1 : 0]);
+    q("INSERT OR IGNORE INTO vk_outreach_log (institution_id, group_id, letter_no, outcome, has_doc, error)
+       VALUES (:i,:g,:n,'sent',:d,:e)",
+      ['i' => $instId, 'g' => $groupId, 'n' => $L['number'], 'd' => $doc !== '' ? 1 : 0,
+       'e' => $doc !== '' ? '' : mb_substr(vko_doc_error(), 0, 200)]);
     // Отметка в истории партнёра: видно, что предложение ушло и каким каналом.
     partner_log_event($instId, 'vk_outreach', json_encode(
         ['no' => $L['number'], 'group' => $groupId, 'doc' => $doc !== ''], JSON_UNESCAPED_UNICODE));
