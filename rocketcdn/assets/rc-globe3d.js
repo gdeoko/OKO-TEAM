@@ -340,6 +340,10 @@ Globe3D.prototype.setTheme = function (v) {
     this.dcMarks[i].sprite.material.color.fromArray(P.dc);
     this.dcMarks[i].ring.material.color.fromArray(P.dc);
   }
+  for (i = 0; this.pulses && i < this.pulses.length; i++) {
+    this.pulses[i].ring.material.color.fromArray(P.dc);
+    this.pulses[i].dot.material.color.fromArray(P.dc);
+  }
   this.drawLabel();
 };
 
@@ -438,6 +442,26 @@ Globe3D.prototype.frame = function (dt) {
     M.sprite.scale.setScalar(0.14 + Math.sin(this._t * 2 + M.phase * 6) * 0.02);
   }
 
+  /* Вспышки от прохода ракеты: кольцо расходится, огонёк гаснет */
+  if (this.pulses) {
+    for (i = 0; i < this.pulses.length; i++) {
+      var Q = this.pulses[i];
+      if (Q.life <= 0) continue;
+      Q.life -= dt * 1.3;
+      if (Q.life <= 0) {
+        Q.life = 0;
+        Q.ring.visible = false;
+        Q.dot.visible = false;
+        continue;
+      }
+      var e = 1 - Q.life;                       /* 0 - только зажгли, 1 - погасла */
+      Q.ring.scale.setScalar(1 + e * 7);
+      Q.ring.material.opacity = (1 - e) * 0.85;
+      Q.dot.scale.setScalar(0.10 + (1 - e) * 0.20);
+      Q.dot.material.opacity = (1 - e) * 0.9;
+    }
+  }
+
   this.world.updateMatrixWorld();
   this.r.render(this.scene, this.cam);
   this.drawLabel();
@@ -461,9 +485,71 @@ Globe3D.prototype.stop = function () {
 };
 Globe3D.prototype.focusOn = function (lat, lon) { this.focus = { lat: lat, lon: lon }; };
 
+/* ── Вспышка узла под ракетой ────────────────────────────────
+   Ракета идёт по орбите поверх планеты, и когда она проходит над
+   точкой сети, точка отзывается: расходится кольцо и вспыхивает
+   огонёк. Кольца заведены пулом на всю жизнь сцены - создавать их
+   на каждый проход дороже, чем держать четыре штуки наготове. */
+Globe3D.prototype.buildPulses = function () {
+  var P = this.palette();
+  var n = this.mob ? 2 : 4;
+  var geo = new T.RingGeometry(0.035, 0.052, this.mob ? 18 : 30);
+  var glow = this._glowTex || (this._glowTex = glowTexture());
+  this.pulses = [];
+  this._pulseAt = 0;
+  for (var i = 0; i < n; i++) {
+    var ring = new T.Mesh(geo, new T.MeshBasicMaterial({
+      color: new T.Color().fromArray(P.dc), transparent: true, opacity: 0,
+      side: T.DoubleSide, depthWrite: false
+    }));
+    var dot = new T.Sprite(new T.SpriteMaterial({
+      map: glow, color: new T.Color().fromArray(P.dc), transparent: true,
+      blending: T.AdditiveBlending, depthWrite: false, opacity: 0
+    }));
+    ring.visible = false;
+    dot.visible = false;
+    this.world.add(ring);
+    this.world.add(dot);
+    this.pulses.push({ ring: ring, dot: dot, life: 0 });
+  }
+};
+
+/* Зажечь узел по его номеру в общем списке точек */
+Globe3D.prototype.pulse = function (i) {
+  var n = this.nodes[i];
+  if (!n) return;
+  if (!this.pulses) this.buildPulses();
+  var Q = this.pulses[this._pulseAt % this.pulses.length];
+  this._pulseAt++;
+
+  var v = vec3(n[1], n[2], 1.02);
+  Q.ring.position.copy(v);
+  /* Кольцо ложится на поверхность шара. Разворот считаем в своих
+     координатах: мир вращается, и lookAt по мировой точке врал бы. */
+  Q.ring.quaternion.setFromUnitVectors(new T.Vector3(0, 0, 1), v.clone().normalize());
+  Q.dot.position.copy(v);
+  Q.ring.visible = true;
+  Q.dot.visible = true;
+  Q.life = 1;
+  try {
+    dispatchEvent(new CustomEvent("rc:node-flash", { detail: { i: i, name: n[0] } }));
+  } catch (e) {}
+};
+
+/* Какой узел сейчас под этой точкой окна. Только ищет, ничего не жжёт:
+   решение «зажигать или нет» принимает тот, кто спрашивает, - иначе
+   один и тот же город вспыхивал бы каждый кадр, пока ракета над ним. */
+Globe3D.prototype.nearNode = function (sx, sy, rad) {
+  if (!this.nodeGeo) return -1;
+  var b = this.cv.getBoundingClientRect();
+  if (!b.width) return -1;
+  return this._nearest(sx - b.left, sy - b.top, rad || 40);
+};
+
 /* Ближайший узел к точке экрана: считаем проекцией, это дешевле луча */
-Globe3D.prototype._nearest = function (sx, sy) {
-  var best = -1, bd = 24 * 24;
+Globe3D.prototype._nearest = function (sx, sy, rad) {
+  var lim = rad || 24;
+  var best = -1, bd = lim * lim;
   var pos = this.nodeGeo.getAttribute("position");
   var v = new T.Vector3();
   for (var i = 0; i < pos.count; i++) {

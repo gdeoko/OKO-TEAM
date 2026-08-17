@@ -1,16 +1,29 @@
 /* ═══════════════════════════════════════════════════════════
    Rocket CDN · сцена D: тамбур и рубка корабля
 
-   Вторая половина фильма происходит внутри ракеты. На 72 процентах
-   прокрутки камера входит в люк: четыреста миллисекунд кадр
-   перекрыт геометрией тамбура, и ровно в этот момент наружная
-   сцена гасится, а внутренняя поднимается. Это единственное место
-   на сайте, где мы имеем право чуть притормозить человека.
+   Вторая половина фильма происходит внутри ракеты. Камера входит
+   в люк: створки тамбура перекрывают кадр, и ровно под ними
+   наружная сцена гасится, а внутренняя поднимается. Это
+   единственное место на сайте, где мы имеем право чуть
+   притормозить человека.
 
-   С 76 до 88 процентов прокрутка раскладывается в полный оборот по
-   рубке: четыре панели по девяносто градусов, на каждой свой блок
-   содержимого. С 88 до 96 - пульт с анкетой. Дальше камера уходит
-   через остекление наружу, и начинается подвал.
+   Дальше прокрутка раскладывается в полный оборот по рубке, а на
+   выходе камера возвращается к пульту, за которым лежит анкета.
+
+   Главное, ради чего файл переписан: раньше рубка вращалась сама
+   по себе, а карточки содержимого жили отдельной жизнью, и было
+   видно, что текст просто едет вниз поверх картинки. Теперь
+   поворот камеры - единственный источник правды. Он объявлен
+   наружу (yaw), расписан по остановкам (plan) и умеет считать
+   экранную точку любой панели (project). Кинематограф из
+   rc-cinema.js берёт эти же числа и ставит карточки ровно на те
+   панели, мимо которых едет камера. Стены и содержимое двигаются
+   одним движением, потому что движение одно.
+
+   Оборот разложен по остановкам, между остановками - синусная
+   кривая. У неё нулевая производная на концах, поэтому камера
+   сама замирает напротив каждой панели: это и есть полка чтения
+   из сценария, только без ручных полок в коде.
 
    Модели у нас нет и не будет: всё построено процедурно прямо
    здесь. Причина простая - готовый glb с текстурами это триста-
@@ -29,6 +42,18 @@ var T = null;                    /* three.js, появляется вместе 
 var reduced = false;
 try { reduced = matchMedia("(prefers-reduced-motion: reduce)").matches; } catch (e) {}
 
+var TAU = Math.PI * 2;
+
+/* Геометрия рубки. Восемь стеновых панелей по кругу: на первых
+   четырёх стоят карточки надёжности, на пятой - бортовой
+   справочник с вопросами, остальные держат стену, чтобы при
+   обороте в кадре не было глухого места. */
+var PANELS = 8;
+var STEP = TAU / PANELS;         /* сорок пять градусов на остановку */
+var R_WALL = 2.52;               /* радиус, на котором висят панели */
+var H_WALL = 1.75;               /* высота их центра над полом */
+var EYE = 1.6;                   /* глаза человека, он же центр круга */
+
 /* Пороги сцены. В сценарии они записаны процентами прокрутки, но
    проценты живут ровно до первой правки текста: добавили абзац -
    и рубка начинается посреди сценариев применения. Поэтому проценты
@@ -41,15 +66,28 @@ var P_IN   = 0.76;               /* мы внутри */
 var P_TURN = 0.88;               /* оборот закончен, дальше пульт */
 var P_OUT  = 0.965;              /* уходим наружу */
 
+/* Расписание оборота: узлы вида [доля прокрутки, поворот в радианах].
+   Между узлами идёт синусная кривая, в самих узлах камера стоит.
+   Узел - это панель, напротив которой человек читает. */
+var KNOT = [];
+var PLAN = { step: STEP, rel: [], faq: STEP * 4.5, con: TAU, n: 4 };
+
+function relCards() {
+  var n = doc.querySelectorAll("#reliability .card").length;
+  return n > 0 ? n : 4;
+}
+
 function measure() {
   var maxS = Math.max(1, doc.documentElement.scrollHeight - innerHeight);
   var rel = doc.getElementById("reliability");
   var con = doc.getElementById("contact");
   if (!rel || !con) return;
+  var faq = doc.getElementById("faq");
   var y = g.pageYOffset || doc.documentElement.scrollTop || 0;
-  var relTop = rel.getBoundingClientRect().top + y;
-  var conTop = con.getBoundingClientRect().top + y;
-  var conBot = con.getBoundingClientRect().bottom + y;
+  var relBox = rel.getBoundingClientRect();
+  var conBox = con.getBoundingClientRect();
+  var relTop = relBox.top + y, relBot = relBox.bottom + y;
+  var conTop = conBox.top + y, conBot = conBox.bottom + y;
 
   /* Люк начинает закрываться за половину экрана до блока надёжности */
   P_IN   = Math.max(0.05, Math.min(0.95, (relTop - innerHeight * 0.45) / maxS));
@@ -60,18 +98,80 @@ function measure() {
   /* Ракета обязана приземлиться до того, как мы войдём в люк:
      заходить внутрь корабля, который ещё летит, странно. */
   g.RC_LAND_AT = P_LOCK;
+
+  /* ── Узлы оборота ──────────────────────────────────────────
+     Карточки надёжности разложены по своему блоку, справочник
+     вопросов - по своему, остаток оборота уходит на подход к
+     пульту. Считаем от настоящих прямоугольников: правка текста
+     сдвигает узлы вместе с содержимым, а не ломает раскладку. */
+  var n = relCards();
+  PLAN.n = n;
+  PLAN.rel = [];
+  var relA = (relTop + innerHeight * 0.12) / maxS;
+  var relB = (relBot - innerHeight * 0.55) / maxS;
+  if (relB - relA < 0.004) relB = relA + 0.004;
+
+  KNOT = [[P_IN, 0]];
+  for (var i = 0; i < n; i++) {
+    var a = (i + 0.5) * STEP;
+    PLAN.rel.push(a);
+    KNOT.push([relA + ((i + 0.5) / n) * (relB - relA), a]);
+  }
+
+  PLAN.faq = (n + 0.5) * STEP;
+  if (faq) {
+    var fb = faq.getBoundingClientRect();
+    var fMid = ((fb.top + y) + (fb.bottom + y)) / 2 - innerHeight * 0.15;
+    KNOT.push([fMid / maxS, PLAN.faq]);
+  }
+
+  PLAN.con = TAU;
+  KNOT.push([P_TURN, TAU]);
+  KNOT.push([P_OUT, TAU + 0.14]);
+
+  /* Узлы обязаны идти строго по возрастанию: иначе на коротком
+     блоке камера дёрнется назад посреди сектора. */
+  for (i = 1; i < KNOT.length; i++) {
+    if (KNOT[i][0] <= KNOT[i - 1][0]) KNOT[i][0] = KNOT[i - 1][0] + 0.0008;
+  }
+}
+
+/* Поворот камеры для любой точки страницы. Одна функция на весь
+   сайт: и сцена, и карточки спрашивают именно её. */
+function yawAt(p) {
+  if (!KNOT.length) return 0;
+  if (p <= KNOT[0][0]) return KNOT[0][1];
+  var last = KNOT.length - 1;
+  if (p >= KNOT[last][0]) return KNOT[last][1];
+  for (var i = 1; i <= last; i++) {
+    if (p > KNOT[i][0]) continue;
+    var p0 = KNOT[i - 1][0], p1 = KNOT[i][0];
+    var t = (p - p0) / Math.max(1e-6, p1 - p0);
+    /* Синус: на концах отрезка скорость ноль, значит камера сама
+       останавливается напротив панели и текст успевают прочитать */
+    var e = 0.5 - 0.5 * Math.cos(Math.PI * t);
+    return KNOT[i - 1][1] + e * (KNOT[i][1] - KNOT[i - 1][1]);
+  }
+  return KNOT[last][1];
 }
 
 var st = {
   built: false, shown: false, slot: false, dead: false,
-  p: 0, yaw: 0, yawT: 0, pitch: 0, pitchT: 0, drift: 0
+  p: 0, yaw: 0, yawT: 0, yawOff: 0, pitch: 0, pitchT: 0, drift: 0,
+  dolly: 1.7, dollyT: 1.7, fov: 58, fovT: 58, stop: -1,
+  sLock: false, sIn: false
 };
 
 var cv = null, rend = null, scene = null, cam = null, grp = null;
-var lamp = null, planet = null, diodes = [], anchors = [], lock = null;
+var lamp = null, planet = null, halo = null, diodes = [], anchors = [], lock = null;
 var raf = null, lastTs = 0;
 
 var phone = innerWidth < 760;
+
+function snd() {
+  var s = g.RC_SOUND;
+  return (s && s.on) ? s : null;
+}
 
 /* ── Процедурные текстуры ────────────────────────────────────
    Рисуем обычным двумерным холстом. Панели с фасками, кабельные
@@ -169,7 +269,12 @@ function build() {
   doc.body.appendChild(cv);
 
   rend = new T.WebGLRenderer({ canvas: cv, antialias: !phone, alpha: true, powerPreference: "high-performance" });
-  rend.setPixelRatio(Math.min(phone ? 1.5 : 2, g.devicePixelRatio || 1));
+    /* Рубка - самая дорогая сцена на странице: цилиндр, панели,
+     иллюминаторы и планета за окном. Считать её в два пикселя на
+     точку незачем, разницы на глаз нет, а кадры она забирает
+     целиком. Полтора пикселя на мониторе, один с четвертью на
+     телефоне. */
+  rend.setPixelRatio(Math.min(phone ? 1.25 : 1.5, g.devicePixelRatio || 1));
   rend.setSize(innerWidth, innerHeight, false);
   if (rend.outputColorSpace !== undefined) rend.outputColorSpace = T.SRGBColorSpace;
   rend.toneMapping = T.ACESFilmicToneMapping;
@@ -177,8 +282,11 @@ function build() {
 
   scene = new T.Scene();
   scene.fog = new T.FogExp2(0x050c15, 0.055);
-  cam = new T.PerspectiveCamera(72, innerWidth / innerHeight, 0.1, 60);
-  cam.position.set(0, 1.6, 0);
+  /* Входим с узким углом: в тамбуре тесно. Внутри угол раскрывается
+     до семидесяти двух, и человек физически чувствует, что вышел
+     из щели в помещение. */
+  cam = new T.PerspectiveCamera(st.fov, innerWidth / innerHeight, 0.1, 60);
+  cam.position.set(0, EYE, st.dolly);
 
   grp = new T.Group();
   scene.add(grp);
@@ -188,7 +296,7 @@ function build() {
 
   /* Цилиндр рубки: диаметр 5,2 метра, смотрим изнутри */
   var shell = new T.Mesh(
-    new T.CylinderGeometry(2.6, 2.6, 3.4, phone ? 32 : 56, 1, true),
+    new T.CylinderGeometry(2.6, 2.6, 3.4, phone ? 24 : 40, 1, true),
     new T.MeshStandardMaterial({ map: wall, side: T.BackSide, roughness: 0.78, metalness: 0.4, color: 0xa9bdd2 })
   );
   shell.position.y = 1.7;
@@ -210,36 +318,46 @@ function build() {
   ceil.position.y = 3.4;
   grp.add(ceil);
 
-  /* Четыре панели по девяносто градусов: на каждой держится свой
-     блок содержимого. Их экранные точки уходят в CSS-переменные. */
+  /* Восемь панелей по кругу. Угол панели совпадает с поворотом
+     камеры, при котором человек стоит к ней лицом: панель номер i
+     живёт на (i + 0.5) * 45 градусов. Из-за этого карточке
+     достаточно знать свой номер, чтобы встать на своё место.
+
+     Три знака минус в rotation.y - не опечатка: камера смотрит
+     вдоль минус Z и вращается на минус yaw, поэтому стена, чтобы
+     оказаться напротив, обязана повернуться в другую сторону. */
   var panelMat = new T.MeshStandardMaterial({
     color: 0x14283d, roughness: 0.3, metalness: 0.7,
     emissive: 0x123c5c, emissiveIntensity: 0.9
   });
   var edgeMat = new T.MeshBasicMaterial({ color: 0x42b2dc, transparent: true, opacity: 0.55 });
+  var faceGeo = new T.PlaneGeometry(1.9, 1.42);
+  var edgeGeo = new T.PlaneGeometry(1.9, 0.02);
 
-  for (var i = 0; i < 4; i++) {
-    var a = (i / 4) * Math.PI * 2;
+  for (var i = 0; i < PANELS; i++) {
+    var th = (i + 0.5) * STEP;
     var pan = new T.Group();
-    var face = new T.Mesh(new T.PlaneGeometry(2.2, 1.3), panelMat);
-    face.position.set(0, 0, -2.52);
+    var face = new T.Mesh(faceGeo, panelMat);
+    face.position.set(0, 0, -R_WALL);
     pan.add(face);
     /* Светящаяся кромка сверху, где свет входит */
-    var edge = new T.Mesh(new T.PlaneGeometry(2.2, 0.02), edgeMat);
-    edge.position.set(0, 0.66, -2.5);
+    var edge = new T.Mesh(edgeGeo, edgeMat);
+    edge.position.set(0, 0.72, -R_WALL + 0.02);
     pan.add(edge);
-    pan.rotation.y = a;
-    pan.position.y = 1.75;
+    pan.rotation.y = -th;
+    pan.position.y = H_WALL;
     grp.add(pan);
-    anchors.push({ obj: face, world: new T.Vector3() });
+    anchors.push({ obj: face, th: th });
   }
 
-  /* Иллюминаторы между панелями. Нужны не для красоты: при полном
-     обороте в кадре не должно быть глухой стены, иначе четверть
-     пути человек смотрит в пустоту. За каждым - планета и звёзды. */
+  /* Иллюминаторы на швах между панелями. Нужны не для красоты: при
+     полном обороте в кадре не должно быть глухой стены, иначе
+     четверть пути человек смотрит в пустоту. За каждым - планета.
+     Шов на нуле занят пультом, поэтому окна начинаются с сорока
+     пяти градусов. */
   var portTex = planetTex();
   for (i = 0; i < 4; i++) {
-    var pa = (i / 4) * Math.PI * 2 + Math.PI / 4;
+    var pa = STEP + i * (STEP * 2);
     var port = new T.Group();
     var glass = new T.Mesh(
       new T.CircleGeometry(0.52, 28),
@@ -255,7 +373,7 @@ function build() {
     );
     ring2.position.set(0, 0, -2.5);
     port.add(ring2);
-    port.rotation.y = pa;
+    port.rotation.y = -pa;
     port.position.y = 1.95;
     grp.add(port);
   }
@@ -278,15 +396,15 @@ function build() {
   grp.add(win);
 
   planet = new T.Mesh(
-    new T.SphereGeometry(7.5, phone ? 24 : 40, phone ? 18 : 28),
+    new T.SphereGeometry(7.5, phone ? 18 : 28, phone ? 14 : 20),
     new T.MeshBasicMaterial({ map: planetTex() })
   );
   planet.position.set(0.6, -3.6, -13);
   grp.add(planet);
 
   /* Атмосферный ободок планеты */
-  var halo = new T.Mesh(
-    new T.SphereGeometry(7.85, 28, 20),
+  halo = new T.Mesh(
+    new T.SphereGeometry(7.85, 20, 14),
     new T.MeshBasicMaterial({ color: 0x42b2dc, transparent: true, opacity: 0.16, side: T.BackSide, blending: T.AdditiveBlending })
   );
   halo.position.copy(planet.position);
@@ -332,10 +450,15 @@ function build() {
 }
 
 /* ── Тамбур ──────────────────────────────────────────────────
-   Плоский слой поверх кадра. Он перекрывает переход ровно на
-   четыреста миллисекунд, и именно под ним меняются сцены. Если
-   интерьер почему-то не готов, тамбур держится дольше, живя
-   собственной анимацией уплотнителей: чёрного кадра не будет. */
+   Плоский слой поверх кадра. Он перекрывает переход, и именно под
+   ним меняются сцены. Если интерьер почему-то не готов, тамбур
+   держится дольше, живя собственной анимацией уплотнителей:
+   чёрного кадра не будет.
+
+   Створки - половина ощущения. Вторая половина в том, что камера
+   в это время реально едет вперёд (см. st.dolly) и угол объектива
+   раскрывается. Створки говорят «закрылось», движение говорит
+   «ты прошёл», и вместе они читаются как вход, а не как склейка. */
 function lockShow() {
   if (lock) return;
   lock = doc.createElement("div");
@@ -389,6 +512,7 @@ function show() {
   if (g.RC_ROCKET && !root.classList.contains("rc-rocket-parked")) {
     try { g.RC_ROCKET.stop(); root.classList.add("rc-rocket-parked"); } catch (e) {}
   }
+  lastTs = 0;
   if (!raf) raf = requestAnimationFrame(tick);
 }
 
@@ -397,6 +521,7 @@ function hide() {
   st.shown = false;
   root.classList.remove("rc-inside");
   if (cv) cv.classList.remove("on");
+  if (raf) { cancelAnimationFrame(raf); raf = null; }
   /* Возвращаем наружную сцену: человек листает назад, и ракета
      обязана снова оказаться на месте. */
   if (g.RC_ROCKET && root.classList.contains("rc-rocket-parked")) {
@@ -404,17 +529,7 @@ function hide() {
   }
 }
 
-/* ── Прогресс ───────────────────────────────────────────────
-   Внутри сектора вращение неравномерное: сначала доворот, потом
-   полка чтения с еле заметным дрейфом, потом разгон к следующей
-   панели. Так текст успевают прочитать, а движение не выглядит
-   механическим. */
-function sectorEase(k) {
-  if (k < 0.3) return (k / 0.3) * 0.39;                       /* доворот 70 градусов из 180 */
-  if (k < 0.7) return 0.39 + ((k - 0.3) / 0.4) * 0.045;       /* полка чтения */
-  return 0.435 + ((k - 0.7) / 0.3) * 0.565;                   /* разгон */
-}
-
+/* ── Прогресс ─────────────────────────────────────────────── */
 function setProgress(p) {
   st.p = p;
 
@@ -424,29 +539,60 @@ function setProgress(p) {
   if (p >= P_LOCK && p < P_IN) {
     lockShow();
     show();
+    /* Тяжёлый лязг замка: створки сомкнулись за спиной */
+    if (!st.sLock) {
+      st.sLock = true;
+      var s1 = snd();
+      if (s1 && s1.boom) { try { s1.boom(); } catch (e) {} }
+    }
   } else if (p >= P_IN && p < P_OUT) {
     show();
     lockHide();
+    /* Давление выровнялось, внутренний люк расходится: две ноты
+       вверх. Ровно один раз за вход, обратный ход их сбрасывает. */
+    if (!st.sIn) {
+      st.sIn = true;
+      var s2 = snd();
+      if (s2 && s2.blip) {
+        try {
+          s2.blip(392);
+          setTimeout(function () { var s3 = snd(); if (s3 && s3.blip) s3.blip(587); }, 190);
+        } catch (e) {}
+      }
+    }
   } else {
     lockHide();
     if (st.shown) hide();
+    if (p < P_LOCK) { st.sLock = false; st.sIn = false; st.stop = -1; }
   }
+
+  /* Вход: створки перекрывают кадр, а камера в это время едет
+     вперёд из тамбура в центр рубки и раскрывает объектив. */
+  var enter = Math.max(0, Math.min(1, (p - P_LOCK) / Math.max(1e-4, (P_IN - P_LOCK) * 1.75)));
+  var eIn = 0.5 - 0.5 * Math.cos(Math.PI * enter);
+  st.dollyT = 1.7 * (1 - eIn);
+  st.fovT = 58 + eIn * 14;
+  root.style.setProperty("--int-enter", eIn.toFixed(3));
 
   if (!st.shown) return;
 
-  /* Оборот: 76-88 процентов раскладываются в полные 360 градусов */
-  var k = Math.max(0, Math.min(1, (p - P_IN) / (P_TURN - P_IN)));
-  var sector = k * 4;                       /* четыре панели */
-  var whole = Math.floor(sector);
-  var frac = sector - whole;
-  st.yawT = (whole + sectorEase(frac)) * (Math.PI / 2);
+  st.yawT = yawAt(p);
 
-  /* После оборота камера доворачивается к пульту и замирает */
+  /* После оборота камера подступает к пульту и замирает */
   if (p > P_TURN) {
-    var kk = Math.min(1, (p - P_TURN) / (P_OUT - P_TURN));
-    st.yawT = Math.PI * 2 + kk * 0.12;
-    /* Уходим наружу: чуть поднимаем взгляд к остеклению */
+    var kk = Math.min(1, (p - P_TURN) / Math.max(1e-4, P_OUT - P_TURN));
+    st.dollyT = -0.42 * kk;
     st.pitchT = -kk * 0.12;
+  }
+
+  /* Щелчок фиксации: камера встала напротив очередной панели */
+  var stop = Math.floor(st.yawT / STEP);
+  if (stop !== st.stop) {
+    if (st.stop >= 0 && !root.classList.contains("rc-fast")) {
+      var s4 = snd();
+      if (s4 && s4.blip) { try { s4.blip(560 + (stop % 4) * 55); } catch (e) {} }
+    }
+    st.stop = stop;
   }
 }
 
@@ -461,19 +607,52 @@ if (!phone) {
   }, { passive: true });
 }
 
-/* ── Якоря: экранные точки панелей уходят в CSS ──────────── */
-var tmp = null;
+/* ── Проекция: где панель оказалась на экране ────────────────
+   Считаем вручную, а не через project(): у точки за спиной знак
+   однородной координаты меняется, и штатная проекция возвращает
+   зеркальный экранный адрес. Раньше на этом ловились якоря -
+   панель позади камеры отдавала координату панели впереди, и
+   карточка уезжала не туда.
+
+   Возвращаем доли экрана (0..1), расстояние в метрах, масштаб
+   относительно опорного и запас читаемости v: единица - панель в
+   середине кадра, ноль - ушла за край или за спину. */
+var vTmp = null;
+function project(th, h) {
+  var out = { x: 0.5, y: 0.5, d: 99, s: 0.5, v: 0 };
+  if (!st.built || !cam) return out;
+  if (!vTmp) vTmp = new T.Vector3();
+  cam.updateMatrixWorld();
+  vTmp.set(R_WALL * Math.sin(th), h === undefined ? H_WALL : h, -R_WALL * Math.cos(th));
+  vTmp.applyMatrix4(cam.matrixWorldInverse);
+  var d = -vTmp.z;
+  out.d = d;
+  if (d < 0.15) return out;                      /* за спиной: адреса нет */
+  var f = 1 / Math.tan(cam.fov * Math.PI / 360);
+  var ndcX = (vTmp.x / d) * f / cam.aspect;
+  var ndcY = (vTmp.y / d) * f;
+  out.x = ndcX * 0.5 + 0.5;
+  out.y = -ndcY * 0.5 + 0.5;
+  out.s = (R_WALL + EYE * 0.25) / d;
+  var edge = Math.abs(ndcX);
+  out.v = edge > 1.6 ? 0 : (edge < 0.55 ? 1 : (1.6 - edge) / 1.05);
+  return out;
+}
+
+/* ── Якоря: экранные точки панелей уходят в CSS ────────────
+   Переменные --int-anchor-N-x / -y / -v объявлены для всех
+   восьми панелей. Первые четыре - те, на которых стоят карточки
+   надёжности, ими же пользуется rc-interior.css. */
 function publish() {
-  if (!T) return;
-  if (!tmp) tmp = new T.Vector3();
+  if (!T || !st.built) return;
   var s = root.style;
   for (var i = 0; i < anchors.length; i++) {
-    anchors[i].obj.getWorldPosition(tmp);
-    tmp.project(cam);
-    s.setProperty("--int-anchor-" + i + "-x", ((tmp.x * 0.5 + 0.5) * 100).toFixed(2) + "%");
-    s.setProperty("--int-anchor-" + i + "-y", ((-tmp.y * 0.5 + 0.5) * 100).toFixed(2) + "%");
-    s.setProperty("--int-anchor-" + i + "-v", (tmp.z < 1 ? 1 : 0));
+    var pr = project(anchors[i].th, H_WALL);
+    s.setProperty("--int-anchor-" + i + "-x", (pr.x * 100).toFixed(2) + "%");
+    s.setProperty("--int-anchor-" + i + "-y", (pr.y * 100).toFixed(2) + "%");
+    s.setProperty("--int-anchor-" + i + "-v", pr.v.toFixed(3));
   }
+  s.setProperty("--int-yaw", (st.yaw * 57.2958).toFixed(1) + "deg");
 }
 
 /* ── Кадр ────────────────────────────────────────────────── */
@@ -487,25 +666,42 @@ function tick(ts) {
   var dt = lastTs ? Math.min(0.05, (ts - lastTs) / 1000) : 0.016;
   lastTs = ts;
 
-  /* Демпфер: резкая прокрутка не должна вертеть рубку рывками */
-  st.yaw += (st.yawT + (st.yawOff || 0) - st.yaw) * 0.08;
-  st.pitch += (st.pitchT - st.pitch) * 0.09;
+  var fast = root.classList.contains("rc-fast");
+
+  /* Демпфер: резкая прокрутка не должна вертеть рубку рывками.
+     На перемотке демпфер отпускаем, иначе камера отстаёт от
+     содержимого и карточки повисают на пустой стене. */
+  st.yaw += (st.yawT + (fast ? 0 : st.yawOff) - st.yaw) * (fast ? 0.24 : 0.08);
+  st.pitch += ((fast ? 0 : st.pitchT) - st.pitch) * 0.09;
+  st.dolly += (st.dollyT - st.dolly) * 0.09;
   st.drift += dt;
 
+  var drift = fast ? 0 : Math.sin(st.drift / 6) * 0.026;   /* дрейф 3 градуса, период 6 секунд */
   cam.rotation.order = "YXZ";
-  cam.rotation.y = -st.yaw + Math.sin(st.drift / 6) * 0.026;   /* дрейф 3 градуса, период 6 секунд */
+  cam.rotation.y = -st.yaw + drift;
   cam.rotation.x = st.pitch;
+  /* Камера едет по своей оси взгляда: в тамбуре она позади центра,
+     внутри встаёт ровно в центр круга, у пульта подступает ближе. */
+  cam.position.set(-Math.sin(st.yaw) * st.dolly, EYE, Math.cos(st.yaw) * st.dolly);
+
+  if (Math.abs(st.fov - st.fovT) > 0.05) {
+    st.fov += (st.fovT - st.fov) * 0.1;
+    cam.fov = st.fov;
+    cam.updateProjectionMatrix();
+  }
 
   /* Диоды дышат от одного таймера с фазовым сдвигом */
-  for (var i = 0; i < diodes.length; i++) {
-    var d = diodes[i];
-    var b = 0.55 + 0.45 * Math.sin(st.drift * 1.6 + d.userData.ph);
-    d.material.opacity = b;
-    d.material.transparent = true;
-    d.scale.setScalar(0.85 + b * 0.35);
+  if (!fast) {
+    for (var i = 0; i < diodes.length; i++) {
+      var d = diodes[i];
+      var b = 0.55 + 0.45 * Math.sin(st.drift * 1.6 + d.userData.ph);
+      d.material.opacity = b;
+      d.material.transparent = true;
+      d.scale.setScalar(0.85 + b * 0.35);
+    }
+    /* Планета медленно едет за окном */
+    if (planet) planet.rotation.y += dt * 0.02;
   }
-  /* Планета медленно едет за окном */
-  if (planet) planet.rotation.y += dt * 0.02;
 
   publish();
   rend.render(scene, cam);
@@ -557,6 +753,24 @@ function boot() {
   }, { passive: true });
 }
 
+/* Ступени качества. Общий сторож кадров в rc-motion.js считает
+   тяжёлые кадры и сообщает ступень: на первой мы считаем меньше
+   пикселей, на второй гасим планету за окном и её ободок, на
+   третьей рубка не поднимается вовсе - вместо кино человек
+   получает обычную страницу, но без рывков. */
+addEventListener("rc:degrade", function (e) {
+  var step = (e && e.detail && e.detail.step) || 0;
+  try {
+    if (step >= 1 && rend) rend.setPixelRatio(1);
+    if (step >= 2) {
+      if (planet) planet.visible = false;
+      if (halo) halo.visible = false;
+      if (scene && scene.fog) scene.fog.density = 0.02;
+    }
+    if (step >= 3) { hide(); st.dead = true; }
+  } catch (err) {}
+});
+
 addEventListener("rc:3d", boot);
 if (g.THREE) boot();
 
@@ -567,7 +781,36 @@ g.RC_INTERIOR = {
   setProgress: setProgress,
   dispose: dispose,
   ready: function () { return st.built; },
-  state: function () { return { построена: st.built, видна: st.shown, слот: st.slot, оборот: (st.yaw * 57.3).toFixed(0) }; }
+
+  /* Единственный источник правды о повороте. Кинематограф берёт
+     его же, поэтому стены и карточки не могут разъехаться. */
+  yaw: function () { return st.yaw; },
+  yawAt: yawAt,
+
+  /* Расписание панелей: на каком угле стоит какая карточка */
+  plan: function () { return PLAN; },
+
+  /* Экранная точка панели: доли ширины и высоты кадра */
+  project: project,
+
+  /* Можно ли сейчас вешать содержимое на стены */
+  live: function () {
+    return !!(st.built && st.shown && !root.classList.contains("rc-reduced") &&
+      root.getAttribute("data-degrade") !== "3");
+  },
+
+  /* Пересчитать пороги: кинематограф меняет высоту блока
+     надёжности и обязан сказать об этом сцене */
+  remeasure: measure,
+
+  state: function () {
+    return {
+      построена: st.built, видна: st.shown, слот: st.slot,
+      оборот: (st.yaw * 57.3).toFixed(0),
+      проход: st.dolly.toFixed(2),
+      узлов: KNOT.length
+    };
+  }
 };
 
 })(window);

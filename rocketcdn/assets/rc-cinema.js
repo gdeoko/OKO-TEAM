@@ -8,25 +8,34 @@
    Здесь связка. Прокрутка перестаёт быть только вертикальной:
    у каждого акта своя камера.
 
-   1. Барабан рубки. Мы внутри корабля, и блоки надёжности с
-      вопросами стоят по кругу салона. Прокрутка поворачивает
-      барабан: карточка выезжает из-за плеча, доворачивается к
-      зрителю, читается и уходит за другое плечо. Ровно то, что
-      в сценарии названо «оборот по рубке».
+   1. Салон корабля. Мы внутри ракеты, и карточки надёжности
+      стоят на стеновых панелях рубки. Поворот берётся не
+      «похожий», а тот самый: RC_INTERIOR.yaw(). Экранное место
+      карточки - проекция её панели, RC_INTERIOR.project(). Из-за
+      этого стена и текст не могут разъехаться: у них одно
+      движение на двоих. Панель, доехавшая до середины кадра,
+      выпрямляется и читается; ушедшая за плечо притухает и
+      уходит по глубине.
 
-   2. Проезд вглубь. Продукты подходят из глубины на зрителя:
+   2. Бортовой справочник. Вопросы и ответы - это экран на стене
+      рубки. Он поворачивается вместе со стеной, но поворот
+      ограничен: длинный текст читают, а не разглядывают под
+      углом. Открытый вопрос выпрямляет справочник полностью.
+
+   3. Проезд вглубь. Продукты подходят из глубины на зрителя:
       дальние мелкие и притушены, ближние крупные и резкие.
       Прокрутка работает как движение камеры вперёд, а не как
       прокрутка списка.
 
-   3. Полка с разворотом. Горизонтальные ленты перестают быть
+   4. Полка с разворотом. Горизонтальные ленты перестают быть
       плоским рядом: карточки по краям отвёрнуты от зрителя, в
       центре развёрнуты к нему.
 
    Три правила, которые здесь не нарушаются:
    вертикальную прокрутку не перехватываем ни в одном режиме;
-   текст, который человек читает, всегда стоит к нему лицом;
-   при просьбе меньше движения и на быстрой прокрутке всё это
+   текст, который человек читает, всегда стоит к нему лицом и
+   никогда не размыт;
+   при просьбе меньше движения и на слабом устройстве всё это
    выключается и остаётся обычная страница.
    ═══════════════════════════════════════════════════════════ */
 (function (g) {
@@ -39,9 +48,25 @@ try { reduced = matchMedia("(prefers-reduced-motion: reduce)").matches; } catch 
 var phone = innerWidth < 760;
 var acts = [];
 var raf = null;
+var TAU = Math.PI * 2;
+var DEG = 57.29578;
+
+/* Сколько радиан вокруг центра кадра считаем «человек читает».
+   Внутри этого угла карточка обязана стоять ровно, без размытия
+   и без поворота. Снаружи начинается уход по глубине. */
+var FRONT = 0.30;
 
 function clamp(v, a, b) { return v < a ? a : (v > b ? b : v); }
 function ease(t) { return t * t * (3 - 2 * t); }
+
+/* Угол в диапазон от минус пи до пи: без этого карточка на
+   трёхстах градусах считается дальней, хотя стоит рядом. */
+function wrap(a) {
+  a = a % TAU;
+  if (a > Math.PI) a -= TAU;
+  if (a < -Math.PI) a += TAU;
+  return a;
+}
 
 /* Доля прохода секции через кадр: 0 - только вошла снизу,
    1 - полностью ушла вверх. Считается от прямоугольника, поэтому
@@ -51,34 +76,140 @@ function pass(rect) {
   return clamp((h - rect.top) / (h + rect.height), 0, 1);
 }
 
-/* ── 1. Барабан рубки ────────────────────────────────────────
-   Карточки надёжности встают по кругу, как панели в салоне.
-   Активная развёрнута к зрителю и читается, соседние отвёрнуты
-   и притушены. Прокрутка вращает барабан. */
-function drum(act, p) {
-  var items = act.items, n = items.length;
-  if (!n) return;
-  /* Оборот на все карточки плюс небольшой доворот в конце */
-  var turn = p * n;
-  for (var i = 0; i < n; i++) {
-    var el = items[i];
-    var d = i - turn + 0.5;                 /* расстояние до центра барабана */
-    var ang = d * (phone ? 34 : 42);        /* градусов на карточку */
-    var depth = -Math.abs(d) * (phone ? 90 : 150);
-    var lift = d * (phone ? 26 : 40);
-    var vis = clamp(1 - Math.abs(d) * 0.55, 0, 1);
+/* Рубка, если она сейчас действительно на экране и имеет право
+   вести содержимое. Во всех остальных случаях null, и акты
+   переходят на запасного ведущего. */
+function iv() {
+  var v = g.RC_INTERIOR;
+  return (v && v.live && v.live() && v.plan) ? v : null;
+}
 
-    el.style.setProperty("--cin-rot", ang.toFixed(2) + "deg");
-    el.style.setProperty("--cin-z", depth.toFixed(0) + "px");
-    el.style.setProperty("--cin-y", lift.toFixed(0) + "px");
-    el.style.setProperty("--cin-vis", (0.28 + vis * 0.72).toFixed(3));
-    el.style.setProperty("--cin-blur", ((1 - vis) * (phone ? 1.2 : 2.4)).toFixed(2) + "px");
-    /* Карточка в центре обязана быть плоской: текст читают */
-    el.classList.toggle("cin-front", Math.abs(d) < 0.5);
+/* ── 1. Салон корабля ────────────────────────────────────────
+   Карточки стоят на панелях рубки. Поворот приходит из сцены,
+   место на экране - из проекции панели. Если объёмной рубки нет
+   (нет WebGL, слабое устройство), поворот подменяется проходом
+   секции через кадр: геометрия та же, ведущий другой. */
+function cabin(act) {
+  var items = act.items, n = items.length;
+  if (!n || !act.stage) return;
+
+  var V = iv();
+  var plan = V ? V.plan() : null;
+  var step = plan ? plan.step : TAU / 8;
+  var turn, slotOf;
+
+  if (V) {
+    turn = V.yaw();
+    slotOf = function (i) {
+      return (plan.rel && plan.rel[i] !== undefined) ? plan.rel[i] : (i + 0.5) * step;
+    };
+  } else {
+    /* Запасной ведущий: та же дуга, только от прохода секции */
+    turn = pass(act.rect) * (n * step);
+    slotOf = function (i) { return (i + 0.5) * step; };
+  }
+
+  var cx = act.stage.left + act.stage.width / 2;
+  var cy = act.stage.top + act.stage.height / 2;
+  var R = phone ? 460 : 780;
+  var maxX = innerWidth * (phone ? 0.66 : 0.78);
+  var front = phone ? 0.34 : FRONT;
+  var deg = root.getAttribute("data-degrade");
+  var soft = !phone && !root.classList.contains("rc-fast") && deg !== "2" && deg !== "3";
+
+  /* Ближайшая к центру карточка - та, которую сейчас читают.
+     Она никогда не мутнеет, чем бы ни занималась остальная сцена. */
+  var best = -1, bestA = 99;
+  var i, rel, ax;
+  for (i = 0; i < n; i++) {
+    ax = Math.abs(wrap(slotOf(i) - turn));
+    if (ax < bestA) { bestA = ax; best = i; }
+  }
+
+  for (i = 0; i < n; i++) {
+    var el = items[i];
+    var slot = slotOf(i);
+    rel = wrap(slot - turn);
+    ax = Math.abs(rel);
+
+    /* Экранное место панели. У точки за спиной адреса нет, там
+       берём геометрию кольца: карточку всё равно не видно. */
+    var tx = R * Math.sin(rel), ty = 0;
+    if (V) {
+      var pr = V.project(slot);
+      if (pr.d > 0.3 && pr.v > 0 && ax < 1.3) {
+        tx = pr.x * innerWidth - cx;
+        ty = (pr.y * innerHeight - cy) * 0.45;
+      }
+    }
+    tx = clamp(tx, -maxX, maxX);
+    var tz = R * (Math.cos(rel) - 1);
+
+    /* Ровно перед зрителем поворот сходит в ноль: читаемая
+       карточка не имеет права быть отвёрнутой. */
+    var rot = ax < front ? rel * (ax / front) : rel;
+
+    var vis = ax <= front ? 1 : clamp(1 - (ax - front) / (phone ? 0.62 : 0.98), 0, 1);
+    if (i === best) vis = Math.max(vis, 0.92);
+
+    var s = el.style;
+    s.setProperty("--cin-x", tx.toFixed(1) + "px");
+    s.setProperty("--cin-y", ty.toFixed(1) + "px");
+    s.setProperty("--cin-z", tz.toFixed(0) + "px");
+    s.setProperty("--cin-rot", (rot * DEG).toFixed(2) + "deg");
+    s.setProperty("--cin-vis", vis.toFixed(3));
+    s.setProperty("--cin-blur", (soft && i !== best ? (1 - vis) * 2.6 : 0).toFixed(2) + "px");
+    s.setProperty("--cin-zi", String(Math.round(600 - ax * 170)));
+    el.classList.toggle("cin-front", i === best);
+    /* Ушедшее за плечо не должно ловить курсор и палец */
+    el.classList.toggle("cin-far", vis < 0.34);
   }
 }
 
-/* ── 2. Проезд вглубь ────────────────────────────────────────
+/* ── 2. Бортовой справочник ──────────────────────────────────
+   Вопросы висят на стене рубки одним экраном. Он едет вместе со
+   стеной, но угол ограничен: правило «текст стоит к человеку
+   лицом» сильнее правила «всё честно по геометрии». */
+function directory(act) {
+  var V = iv();
+  var host = act.host;
+  var open = act.sec.querySelector(".faq-i.on");
+
+  var rel = 0, dx = 0;
+  if (V) {
+    var plan = V.plan();
+    rel = wrap(plan.faq - V.yaw());
+    var pr = V.project(plan.faq);
+    if (pr.d > 0.3 && pr.v > 0 && act.hostRect) {
+      var hc = act.hostRect.left + act.hostRect.width / 2;
+      dx = clamp(pr.x * innerWidth - hc, -innerWidth * 0.07, innerWidth * 0.07);
+    }
+  } else {
+    rel = (pass(act.rect) - 0.5) * (phone ? 0.5 : 0.9);
+  }
+
+  var maxR = phone ? 0.2 : 0.42;
+  rel = clamp(rel, -maxR, maxR);
+  /* Открытый вопрос читают целиком: экран встаёт фронтально */
+  if (open) { rel = 0; dx = 0; }
+
+  host.style.setProperty("--cin-rot", (rel * DEG).toFixed(2) + "deg");
+  host.style.setProperty("--cin-x", dx.toFixed(1) + "px");
+  host.style.setProperty("--cin-z", (-(1 - Math.cos(rel)) * 340).toFixed(0) + "px");
+
+  /* Строка, доехавшая до линии чтения, подсвечивается кромкой:
+     видно, какой вопрос сейчас «под лучом» справочника. */
+  var line = innerHeight * 0.44;
+  for (var i = 0; i < act.items.length; i++) {
+    var r = act.rects[i];
+    if (!r) continue;
+    var d = Math.abs(r.top + r.height / 2 - line);
+    act.items[i].style.setProperty("--cin-lit",
+      clamp(1 - d / (innerHeight * 0.3), 0, 1).toFixed(3));
+  }
+}
+
+/* ── 3. Проезд вглубь ────────────────────────────────────────
    Сетка продуктов превращается в коридор: карточки приходят из
    глубины, проходят через кадр и уходят за спину. */
 function tunnel(act, p) {
@@ -100,7 +231,7 @@ function tunnel(act, p) {
   }
 }
 
-/* ── 3. Полка с разворотом ───────────────────────────────────
+/* ── 4. Полка с разворотом ───────────────────────────────────
    Лента едет вбок от прокрутки (этим занимается rc-scroll), а
    здесь карточки разворачиваются: с краёв отвёрнуты, в центре
    лицом к зрителю. */
@@ -121,8 +252,18 @@ function shelf(act) {
 /* ── Сборка актов ────────────────────────────────────────────
    Роли раздаём по разметке, а не по номерам процентов: текст
    правят, блоки переставляют, а роль остаётся при своём блоке. */
+
+/* Салон разворачивать можно не всегда: при просьбе меньше движения
+   и на устройстве, которое уже не тянет, страница обязана остаться
+   обычной сеткой. Класс снимается вместе с раскладкой. */
+function cabinAllowed() {
+  return !reduced && !root.classList.contains("rc-reduced") &&
+    root.getAttribute("data-degrade") !== "3";
+}
+
 function collect() {
   acts.length = 0;
+
   var add = function (sel, kind, itemSel) {
     var sec = doc.querySelector(sel);
     if (!sec) return;
@@ -133,17 +274,73 @@ function collect() {
     acts.push({ sec: sec, kind: kind, items: items, rects: [], rect: null });
   };
 
-  add("#reliability", "drum", ".card");
+  /* Салон: карточки надёжности на панелях рубки */
+  var rel = doc.querySelector("#reliability");
+  var ring = doc.getElementById("relGrid");
+  if (rel && ring) {
+    var cards = [].slice.call(ring.querySelectorAll(".card"));
+    var on = cabinAllowed() && cards.length > 1;
+    rel.classList.toggle("cin-stage", on);
+    rel.classList.toggle("cin-cabin", on);
+    ring.classList.toggle("cin-ring", on);
+    ring.style.setProperty("--cab-n", String(cards.length));
+    cards.forEach(function (el) { el.classList.toggle("cin-item", on); });
+    if (on) {
+      acts.push({ sec: rel, kind: "cabin", items: cards, ring: ring,
+        rects: [], rect: null, stage: null });
+    }
+  }
+
+  /* Справочник: вопросы одним экраном на стене */
+  var faqSec = doc.querySelector("#faq");
+  var faqHost = faqSec ? faqSec.querySelector(".faq") : null;
+  if (faqSec && faqHost) {
+    var qs = [].slice.call(faqHost.querySelectorAll(".faq-i"));
+    var onF = cabinAllowed() && qs.length > 0;
+    faqSec.classList.toggle("cin-stage", onF);
+    faqSec.classList.toggle("cin-desk", onF);
+    faqHost.classList.toggle("cin-board", onF);
+    if (onF) {
+      acts.push({ sec: faqSec, kind: "directory", items: qs, host: faqHost,
+        rects: [], rect: null, hostRect: null });
+    }
+  }
+
   add("#products", "tunnel", ".prod-card");
   add("#cases", "shelf", ".case");
   add("#how", "shelf", ".step");
+
+  /* Салон меняет высоту блока надёжности: сцена обязана пересчитать
+     пороги, иначе люк закроется не там, где стоит содержимое. */
+  if (g.RC_INTERIOR && g.RC_INTERIOR.remeasure) {
+    setTimeout(function () { g.RC_INTERIOR.remeasure(); }, 60);
+  }
 }
 
 /* ── Кадр: сперва читаем, потом пишем ───────────────────────── */
+var lastY = -1, lastYaw = -99, idle = 0;
+
 function frame() {
   raf = requestAnimationFrame(frame);
   if (doc.hidden || !acts.length) return;
-  if (root.classList.contains("rc-reduced") || root.classList.contains("rc-fast")) return;
+  if (root.classList.contains("rc-reduced")) return;
+
+  /* Перемотка гасит мелкую анимацию, но не раскладку салона:
+     четыре карточки лежат друг на друге, и если перестать их
+     разводить, они схлопнутся в кучу посреди прокрутки. */
+  var fast = root.classList.contains("rc-fast");
+
+  /* Страница стоит - пересчитывать нечего. Но у рубки свой демпфер:
+     после остановки прокрутки камера ещё доезжает, и карточки
+     обязаны доехать вместе с ней, иначе текст замрёт на полпути. */
+  var y = g.pageYOffset || doc.documentElement.scrollTop || 0;
+  var V = g.RC_INTERIOR;
+  var yaw = (V && V.yaw) ? V.yaw() : 0;
+  if (Math.abs(y - lastY) < 0.5 && Math.abs(yaw - lastYaw) < 0.0004) {
+    if (++idle > 2) return;
+  } else { idle = 0; }
+  lastY = y;
+  lastYaw = yaw;
 
   var i, a;
   /* Чтение */
@@ -151,7 +348,13 @@ function frame() {
     a = acts[i];
     a.rect = a.sec.getBoundingClientRect();
     a.live = a.rect.bottom > -200 && a.rect.top < innerHeight + 200;
-    if (a.live && a.kind === "shelf") {
+    if (!a.live) continue;
+    if (a.kind === "shelf") {
+      a.rects = a.items.map(function (el) { return el.getBoundingClientRect(); });
+    } else if (a.kind === "cabin") {
+      a.stage = a.ring.getBoundingClientRect();
+    } else if (a.kind === "directory") {
+      a.hostRect = a.host.getBoundingClientRect();
       a.rects = a.items.map(function (el) { return el.getBoundingClientRect(); });
     }
   }
@@ -159,9 +362,11 @@ function frame() {
   for (i = 0; i < acts.length; i++) {
     a = acts[i];
     if (!a.live) continue;
+    if (a.kind === "cabin") { cabin(a); continue; }
+    if (a.kind === "directory") { directory(a); continue; }
+    if (fast) continue;
     var p = pass(a.rect);
-    if (a.kind === "drum") drum(a, p);
-    else if (a.kind === "tunnel") tunnel(a, p);
+    if (a.kind === "tunnel") tunnel(a, p);
     else shelf(a);
   }
 }
@@ -199,6 +404,8 @@ addEventListener("resize", function () {
 }, { passive: true });
 
 doc.addEventListener("rc:lang", function () { setTimeout(collect, 120); });
+/* Устройство перестало тянуть: салон складывается обратно в сетку */
+addEventListener("rc:degrade", function () { setTimeout(collect, 30); });
 if (doc.readyState === "loading") doc.addEventListener("DOMContentLoaded", function () { setTimeout(boot, 150); });
 else setTimeout(boot, 150);
 

@@ -461,6 +461,35 @@ function buildTrail(C) {
   };
 }
 
+/* ── След на витке ───────────────────────────────────────────
+   Пока ракета идёт вокруг планеты, за ней остаётся дуга. Линия
+   толщиной в пиксель на таком расстоянии не читается, а трубка
+   стоит лишней геометрии, поэтому след - лента из треугольников,
+   развёрнутая плашмя к камере. Хвост сужается и уходит в чёрный:
+   при аддитивном смешении чёрный не даёт ничего, то есть тает.
+   Буферы выделяются один раз, каждый кадр в них только пишем. */
+function buildOrbTrail(C) {
+  var N = C.weak ? 20 : 36;                       /* отрезков в ленте */
+  var pos = new Float32Array((N + 1) * 2 * 3);
+  var col = new Float32Array((N + 1) * 2 * 3);
+  var idx = [];
+  for (var i = 0; i < N; i++) {
+    var a = i * 2;
+    idx.push(a, a + 1, a + 2, a + 1, a + 3, a + 2);
+  }
+  var geo = new T.BufferGeometry();
+  geo.setAttribute("position", new T.BufferAttribute(pos, 3));
+  geo.setAttribute("color", new T.BufferAttribute(col, 3));
+  geo.setIndex(idx);
+  var mesh = new T.Mesh(geo, new T.MeshBasicMaterial({
+    vertexColors: true, transparent: true,
+    blending: T.AdditiveBlending, depthWrite: false, side: T.DoubleSide
+  }));
+  mesh.frustumCulled = false;                     /* лента живёт вне пивота */
+  mesh.visible = false;
+  return { mesh: mesh, geo: geo, pos: pos, col: col, n: N };
+}
+
 /* ── Путь: замкнутая кривая, чтобы цикл был бесшовным ────── */
 function buildPath() {
   var v = function (x, y, z) { return new T.Vector3(x, y, z); };
@@ -557,11 +586,26 @@ function Rocket(canvas) {
   /* Орбита вокруг планеты */
   this.orbK = 0;      /* 0 - летим по маршруту, 1 - полностью на витке */
   this.orbA = 0;      /* угол на витке */
-  this._spin = 0;     /* подкрутка от прокрутки */
+  this._orbV = 0;     /* разгон от прокрутки, 0..1 */
+  this._orbW = null;  /* текущая угловая скорость витка */
+  this._orbHas = 0;   /* хоть раз посчитали точку витка */
+  this._lastNode = -1;
   this.occl = 1;      /* 1 - видна, ниже - уходит за шар */
   this._orbP = new T.Vector3();
   this._orbT = new T.Vector3();
   this._tmpD = new T.Vector3();
+  /* Точка витка: экранные координаты, глубина и та же точка в мире.
+     Держим два готовых слепка и переписываем их, чтобы на каждый кадр
+     не рождать по сотне объектов. */
+  this._oA = { sx: 0, sy: 0, z: 0, v: new T.Vector3() };
+  this._oB = { sx: 0, sy: 0, z: 0, v: new T.Vector3() };
+  this._oT = new T.Vector3();
+  this._oS = new T.Vector3();
+
+  var otrail = buildOrbTrail(C);
+  this.otrail = otrail;
+  scene.add(otrail.mesh);
+
   canvas.classList.add("rk-soft");
 
   this.bind();
@@ -601,10 +645,23 @@ Rocket.prototype.resize = function () {
    а по экранному кругу: у обоих глобусов есть метод screenCircle. Круг
    переводится в мир камеры ракеты через размер кадра на нужной глубине. */
 
-/* Плоскость орбиты почти ребром к зрителю: так ракета честно уходит
-   за планету и выныривает с другой стороны. */
-var ORB_U = { x: 1, y: 0.06, z: 0 };
-var ORB_V = { x: 0, y: 0.30, z: 0.95 };
+/* Раньше плоскость витка стояла почти ребром к зрителю, и весь облёт
+   сводился к прямой черте, проходящей сбоку от шара. Теперь плоскость
+   наклонена: по горизонтали ракета уходит за края планеты, по вертикали
+   поднимается над ней. На экране путь читается эллипсом - видно, что
+   это виток, а не пролёт мимо.
+
+   Центр витка вынесен к зрителю (ORB_LIFT): благодаря этому ракета
+   почти всё время идёт поверх планеты, а за шар ныряет коротко, у
+   нижней кромки - ровно настолько, чтобы читалось «зашла за планету». */
+var ORB_TILT = 0.58;                                  /* подъём витка по экрану */
+var ORB_COS  = Math.sqrt(1 - ORB_TILT * ORB_TILT);    /* и его уход в глубину */
+var ORB_R    = 1.36;                                  /* радиус витка в радиусах планеты */
+var ORB_LIFT = 0.30;                                  /* смещение центра витка к камере */
+var ORB_BASE = 0.62;                                  /* сам по себе: радиан в секунду */
+var ORB_TAIL = 1.15;                                  /* длина следа, радиан */
+var ORB_TAU  = Math.PI * 2;
+var ORB_TOP  = 0.11;                                  /* поле над витком, доля кадра */
 
 Rocket.prototype.globeCircle = function () {
   var list = g.__globes || [];
@@ -613,10 +670,26 @@ Rocket.prototype.globeCircle = function () {
     if (!gl || typeof gl.screenCircle !== "function") continue;
     if (gl.cv && gl.cv.id !== "globeMap") continue;
     var c = gl.screenCircle();
-    if (c && c.r > 24) return c;
+    /* Запоминаем сам глобус: по нему потом зажигаем узлы под ракетой */
+    if (c && c.r > 24) { this._globe = gl; return c; }
   }
   return null;
 };
+
+/* Насколько точка витка закрыта планетой: 0 - видна, 1 - за шаром.
+   Условия два сразу: точка ушла глубже плоскости центра планеты и её
+   снос от центра на экране меньше радиуса диска. Оба края мягкие,
+   чтобы ракета не мигала на входе в тень. */
+function hidden(o, c, planeZ, dz) {
+  var d = (planeZ - o.z) / (dz * 0.22);
+  if (d <= 0) return 0;
+  if (d > 1) d = 1;
+  var dx = (o.sx - c.cx) / c.r, dy = (o.sy - c.cy) / c.r;
+  var ins = (1.02 - Math.sqrt(dx * dx + dy * dy)) / 0.20;
+  if (ins <= 0) return 0;
+  if (ins > 1) ins = 1;
+  return d * ins;
+}
 
 /* Экранная точка в мир камеры ракеты на заданной глубине */
 Rocket.prototype.toWorld = function (sx, sy, z, out) {
@@ -629,51 +702,201 @@ Rocket.prototype.toWorld = function (sx, sy, z, out) {
   return { halfH: halfH, h: h };
 };
 
-/* Насколько мы «в разделе планеты»: 0 - мимо, 1 - глобус по центру экрана */
+/* Насколько мы «в разделе планеты»: 0 - мимо, 1 - шар целиком в кадре.
+
+   Раньше мерили расстояние от центра шара до центра экрана - и в живой
+   вёрстке этот замер не набирал единицы никогда: глобус стоит в левой
+   колонке широкого раздела и до середины экрана не доходит. Ракета
+   зависала между маршрутом и витком, то есть шла сбоку от планеты.
+   Теперь считаем честнее: какая доля шара попала в кадр. */
 function capture(c) {
   if (!c) return 0;
-  var mid = c.cy;
-  var d = Math.abs(mid - innerHeight / 2) / (innerHeight * 0.62);
-  var v = 1 - d;
+  var H = innerHeight;
+  var vis = (Math.min(c.cy + c.r, H) - Math.max(c.cy - c.r, 0)) / (2 * c.r);
+  var v = (vis - 0.42) / 0.34;
   return v < 0 ? 0 : v > 1 ? 1 : v * v * (3 - 2 * v);
 }
+
+/* Точка витка по углу. Эллипс строим прямо в экранных координатах
+   вокруг круга планеты и только потом переводим в мир на своей глубине:
+   так путь на экране всегда тот, который задумали, а перспектива не
+   растягивает верх витка за кромку кадра.
+   Ноль - левый край шара, дальше ракета идёт вверх и на зрителя,
+   поверх планеты, к правому краю, и ныряет за шар снизу. */
+Rocket.prototype.orbAt = function (a, cx, cy, Rs, z0, dz, out) {
+  var ca = Math.cos(a), sa = Math.sin(a);
+  out.sx = cx - Rs * ca;
+  out.sy = cy - Rs * ORB_TILT * sa;
+  out.z  = z0 + dz * sa;
+  this.toWorld(out.sx, out.sy, out.z, out.v);
+  return out;
+};
+
+/* Габарит витка. Раздел высокий, и планета часто стоит у самой верхней
+   кромки: места на полный виток над ней нет. Тогда сначала опускаем
+   виток (смещение до четверти радиуса глаз читает как наклон орбиты),
+   а потом поджимаем его к планете. Ракета, срезанная кромкой экрана,
+   выглядит поломкой; низкая орбита - нет.
+   Сверху оставляем поле под саму ракету, а не под её центр. */
+Rocket.prototype.orbFit = function (c) {
+  var up = c.r * ORB_R * ORB_TILT;
+  var room = c.cy - innerHeight * ORB_TOP;
+  var shift = 0;
+  if (room < up) {
+    shift = Math.min(c.r * 0.22, up - room);
+    room += shift;
+  }
+  this._orbShift = shift;
+  var k = up > 1 && room > 0 ? room / up : 1;
+  return k > 1 ? 1 : k < 0.72 ? 0.72 : k;
+};
+
+/* Украшения витка: след и вспышки узлов. На быстрой прокрутке и на
+   упрощённом режиме их нет - там дороже ровные кадры. */
+Rocket.prototype.orbFX = function () {
+  var root = document.documentElement;
+  if (root.classList.contains("rc-fast")) return false;
+  if (root.classList.contains("rc-reduced")) return false;
+  return (parseInt(root.getAttribute("data-degrade") || "0", 10) || 0) < 3;
+};
+
+/* Планета лежит в общем потоке страницы, а поток по вёрстке идёт поверх
+   холста ракеты: у каждой обёртки раздела свой слой. Из-за этого облёт
+   «поверх планеты» и не читался - ракета честно шла по витку, но тонула
+   под шаром. Пока раздел сети в кадре, поднимаем холст над содержимым, а
+   на выходе возвращаем как было: в остальных сценах ракета обязана
+   лететь ЗА текстом, а не по нему. */
+Rocket.prototype.orbLayer = function (on) {
+  on = !!on;
+  if (on === this._orbTop) return;
+  this._orbTop = on;
+  this.canvas.style.zIndex = on ? "3" : "";
+  document.documentElement.classList.toggle("rc-orbiting", on);
+};
 
 Rocket.prototype.orbit = function (dt) {
   var c = this.globeCircle();
   var want = capture(c);
   /* Захват мягкий: рывков на границе быть не должно */
   this.orbK += (want - this.orbK) * Math.min(1, dt * 2.6);
-  if (this.orbK < 0.002 && want < 0.002) { this.orbK = 0; this.occl = 1; return null; }
+  /* Слой переключаем на подходе, пока ракета ещё далеко от шара:
+     сделай это на середине витка - и она вспыхнет посреди планеты. */
+  this.orbLayer(want > 0.02 || this.orbK > 0.02);
 
-  /* Виток идёт своим ходом, прокрутка его немного подкручивает */
-  this.orbA += dt * 0.78 + (this._spin || 0);
-  this._spin *= 0.9;
+  if (this.orbK < 0.002 && want < 0.002) {
+    this.orbK = 0;
+    this.occl = 1;
+    this._lastNode = -1;
+    if (this.otrail) this.otrail.mesh.visible = false;
+    return null;
+  }
+  /* Планета пропала из разметки посреди схода с витка: последняя
+     посчитанная точка остаётся якорем, и возврат на маршрут идёт
+     плавно, а не прыжком из ниоткуда. */
+  if (!c) {
+    if (this.otrail) this.otrail.mesh.visible = false;
+    return this._orbHas ? { stale: 1 } : null;
+  }
 
-  var depth = -1.6;                       /* планета «стоит» чуть в глубине */
-  var m = this.toWorld(c.cx, c.cy, depth, this._tmpD);
+  /* Виток идёт своим ходом, прокрутка его подгоняет. Берём модуль
+     скорости: разгон всегда вперёд, поэтому смена направления
+     прокрутки виток не разворачивает и не дёргает. */
+  var boost = this._orbV || 0;
+  boost -= boost * Math.min(1, dt * 1.5);
+  this._orbV = boost < 0.002 ? 0 : boost;
+  var wantW = ORB_BASE * (1 + this._orbV * 2.6);
+  var w = this._orbW == null ? ORB_BASE : this._orbW;
+  this._orbW = w + (wantW - w) * Math.min(1, dt * 3.2);
+  this.orbA += this._orbW * dt;
+  if (this.orbA > ORB_TAU) this.orbA -= ORB_TAU;
+
+  var planeZ = -1.6;                      /* планета «стоит» чуть в глубине */
+  var m = this.toWorld(c.cx, c.cy, planeZ, this._tmpD);
   var Rw = (c.r / (m.h / 2)) * m.halfH;   /* радиус планеты в мире ракеты */
-  var R = Rw * 1.28;
+  var fit = this.orbFit(c);
+  var Rs = c.r * ORB_R * fit;             /* большая полуось витка, пиксели */
+  var dz = Rw * ORB_R * fit * ORB_COS;    /* размах витка по глубине */
+  var z0 = planeZ + Rw * ORB_LIFT;
+  var cy = c.cy + this._orbShift;
 
-  var ca = Math.cos(this.orbA), sa = Math.sin(this.orbA);
-  this._orbP.set(
-    this._tmpD.x + R * (ca * ORB_U.x + sa * ORB_V.x),
-    this._tmpD.y + R * (ca * ORB_U.y + sa * ORB_V.y),
-    this._tmpD.z + R * (ca * ORB_U.z + sa * ORB_V.z)
-  );
-  this._orbT.set(
-    -sa * ORB_U.x + ca * ORB_V.x,
-    -sa * ORB_U.y + ca * ORB_V.y,
-    -sa * ORB_U.z + ca * ORB_V.z
-  ).normalize();
+  var A = this.orbAt(this.orbA, c.cx, cy, Rs, z0, dz, this._oA);
+  var B = this.orbAt(this.orbA + 0.05, c.cx, cy, Rs, z0, dz, this._oB);
+  this._orbP.copy(A.v);
+  this._orbT.copy(B.v).sub(A.v).normalize();
+  this._orbHas = 1;
 
   /* Ушла за шар - гаснет, как и положено: планета непрозрачная */
-  var behind = this._orbP.z < this._tmpD.z;
-  var dx = this._orbP.x - this._tmpD.x, dy = this._orbP.y - this._tmpD.y;
-  var flat = Math.sqrt(dx * dx + dy * dy) / Rw;
-  var hid = behind ? 1 - Math.min(1, Math.max(0, (flat - 0.82) / 0.3)) : 0;
-  this.occl = 1 - hid * 0.94 * this.orbK;
+  this.occl = 1 - hidden(A, c, planeZ, dz) * 0.92 * this.orbK;
 
-  return { R: R, Rw: Rw };
+  var fx = this.orbFX();
+  if (this.otrail) {
+    this.otrail.mesh.visible = fx && this.orbK > 0.06;
+    if (this.otrail.mesh.visible) this.tail(c, cy, Rs, z0, dz, planeZ, Rw);
+  }
+  if (fx) this.nodeFlash(dt, c);
+
+  return { Rs: Rs, Rw: Rw };
+};
+
+/* Лента следа: идём назад по витку от текущего угла и на каждом шаге
+   ставим пару точек поперёк движения. Поперечину берём как векторное
+   произведение хода и направления на камеру - тогда лента всегда
+   повёрнута к зрителю плашмя и не схлопывается в нитку. */
+Rocket.prototype.tail = function (c, cy, Rs, z0, dz, planeZ, Rw) {
+  var TR = this.otrail, N = TR.n, PS = TR.pos, CL = TR.col;
+  var camz = this.cam.position.z;
+  var t = this._oT, s = this._oS;
+  var wid = Rw * 0.06;                    /* ширина ленты у сопла, в мире */
+
+  for (var i = 0; i <= N; i++) {
+    var u = i / N;                        /* 0 - у сопла, 1 - конец хвоста */
+    var a = this.orbA - ORB_TAIL * u;
+    var A = this.orbAt(a, c.cx, cy, Rs, z0, dz, this._oA);
+    var B = this.orbAt(a + 0.05, c.cx, cy, Rs, z0, dz, this._oB);
+    var p = A.v;
+    t.copy(B.v).sub(p).normalize();
+    s.set(-p.x, -p.y, camz - p.z).normalize().cross(t);
+    var len = s.length();
+    if (len < 1e-4) s.set(0, 1, 0); else s.multiplyScalar(1 / len);
+
+    var half = wid * (1 - u);
+    var al = (1 - u) * (1 - u) * this.orbK * 0.95;
+    al *= 1 - hidden(A, c, planeZ, dz) * 0.85;
+
+    var j = i * 6;
+    PS[j]     = p.x + s.x * half; PS[j + 1] = p.y + s.y * half; PS[j + 2] = p.z + s.z * half;
+    PS[j + 3] = p.x - s.x * half; PS[j + 4] = p.y - s.y * half; PS[j + 5] = p.z - s.z * half;
+    var cr = 0.42 * al, cg = 0.86 * al, cb = 1.00 * al;
+    CL[j] = cr; CL[j + 1] = cg; CL[j + 2] = cb;
+    CL[j + 3] = cr; CL[j + 4] = cg; CL[j + 5] = cb;
+  }
+  TR.geo.attributes.position.needsUpdate = true;
+  TR.geo.attributes.color.needsUpdate = true;
+};
+
+/* Проход над узлом сети. Точная привязка к координатам тут не нужна:
+   важно, чтобы вспышка совпала с проходом, поэтому берём ближайший к
+   ракете узел на диске планеты и зажигаем его. Каждый узел за один
+   проход загорается один раз. */
+Rocket.prototype.nodeFlash = function (dt, c) {
+  this._flashT = (this._flashT || 0) + dt;
+  if (this._flashT < (this.C.mobile ? 0.62 : 0.38)) return;
+  if (this.orbK < 0.5 || this.occl < 0.6) return;
+
+  var gl = this._globe;
+  if (!gl || typeof gl.nearNode !== "function") return;
+  var pos = g.RC_ROCKET_POS;
+  if (!pos || !isFinite(pos.x)) return;
+
+  /* Светим только когда ракета идёт поверх диска планеты */
+  var dx = pos.x - c.cx, dy = pos.y - c.cy;
+  if (dx * dx + dy * dy > c.r * c.r) return;
+
+  var i = gl.nearNode(pos.x, pos.y, c.r * 0.34);
+  if (i < 0 || i === this._lastNode) return;
+  this._lastNode = i;
+  this._flashT = 0;
+  gl.pulse(i);
 };
 
 /* ── Посадка ─────────────────────────────────────────────────
@@ -779,9 +1002,10 @@ Rocket.prototype.layout = function (p, dt) {
   this.craft.rotation.y += 0.004;
 
   /* Дальние участки пути делаем мельче, ближние крупнее.
-     Вокруг планеты ракета идёт мельче: она «далеко». */
+     Вокруг планеты ракета идёт мельче: она «далеко», и только в таком
+     масштабе виток читается витком, а не пролётом корабля через кадр. */
   var s = this.C.mobile ? 0.66 : 1.12;
-  this.pivot.scale.setScalar(s * (1 - k * 0.62) * (1 + (this.landK || 0) * 0.12));
+  this.pivot.scale.setScalar(s * (1 - k * 0.70) * (1 + (this.landK || 0) * 0.12));
 };
 
 /* Крупный читаемый текст: только он лежит на прозрачном фоне,
@@ -837,9 +1061,12 @@ Rocket.prototype.veil = function (dt) {
 
 Rocket.prototype.setProgress = function (p, velocity) {
   this.progress = p;
-  this.power = Math.max(0.32, Math.min(1, 0.36 + Math.abs(velocity || 0) * 0.05));
-  /* Листаешь - виток вокруг планеты ускоряется в ту же сторону */
-  if (this.orbK > 0.01) this._spin += (velocity || 0) * 0.0012;
+  var a = Math.abs(velocity || 0);
+  this.power = Math.max(0.32, Math.min(1, 0.36 + a * 0.05));
+  /* Листаешь - виток вокруг планеты ускоряется. Знак скорости не берём:
+     разгон всегда по ходу витка, разворотов на орбите не бывает. */
+  var boost = Math.min(1, a / 16);
+  if (boost > (this._orbV || 0)) this._orbV = boost;
 };
 
 Rocket.prototype.frame = function (dt) {
