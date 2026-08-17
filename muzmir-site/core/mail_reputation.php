@@ -192,6 +192,40 @@ function mrep_domain_day_cap(string $domain): int {
     elseif ($pct >= 10) $new = $cap;                       // ни туда ни сюда — держим
     else                $new = (int) min($max, ceil($cap * $grow));
 
+    // ПИСЬМО МОЖЕТ ДОЙТИ И ЛЕЧЬ В «СПАМ» — ЭТО ХУЖЕ ОТКАЗА.
+    //
+    // Отказ хотя бы честен: мы его видим и снижаем темп. А «доставлено» с нулём
+    // открытий выглядит как успех, и норма при таком раскладе продолжала бы расти,
+    // пока служба не перестала бы принимать вовсе. 17 августа так выглядел
+    // yandex.ru: 1 181 доставленных писем и семь открытий за всё время, при том
+    // что gmail.com в тот же день открывали 23% получателей, а mail.ru — 11%.
+    //
+    // Сравнение только между службами и только за один день: доля открытий сама
+    // по себе ничего не значит (у разной аудитории она разная), а вот втрое
+    // меньшая, чем у соседней службы на ТОЙ ЖЕ рассылке, значит «Спам».
+    if ($dl >= 200) {
+        $rate = static function (string $dom, string $day): float {
+            $r = one("SELECT SUM(status='delivered') dl, SUM(status='opened') op
+                        FROM mail_events
+                       WHERE LOWER(SUBSTR(email, INSTR(email,'@') + 1)) = ?
+                         AND date(created_at) = date(?)", [$dom, $day]);
+            $d = (int) ($r['dl'] ?? 0);
+            return $d > 0 ? ((int) ($r['op'] ?? 0)) / $d : 0.0;
+        };
+        $mine = $rate($d, $when);
+        $best = 0.0;
+        foreach (mrep_managed_domains() as $other) {
+            if ($other === $d) continue;
+            $best = max($best, $rate($other, $when));
+        }
+        if ($best > 0.02 && $mine < $best * 0.4) {
+            $new = (int) max(200, min($new, $cap / 2));
+            q("UPDATE mail_domain_caps SET note=? WHERE domain=?",
+              [sprintf('доставляет, но не открывают: %.0f%% против %.0f%% у лучшей службы — похоже на «Спам»',
+                       $mine * 100, $best * 100), $d]);
+        }
+    }
+
     q("UPDATE mail_domain_caps SET day_cap=?, cap_date=?, note=? WHERE domain=?",
       [$new, $today, sprintf('вчера %d доставлено, %d отказов (%.0f%%)', $dl, $hb, $pct), $d]);
     return $cache[$d] = $new;
