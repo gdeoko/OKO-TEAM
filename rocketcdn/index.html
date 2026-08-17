@@ -14,15 +14,19 @@
 <meta property="og:site_name" content="Rocket CDN">
 <meta property="og:locale" content="ru_RU">
 <meta property="og:title" content="Rocket CDN - доставка контента на сверхскорости">
-<meta property="og:description" content="Глобальная сеть доставки контента: 218 точек присутствия, собственные ЦОД в Москве, Казахстане и Праге, SLA 99,9%.">
+<meta property="og:description" content="Глобальная сеть доставки контента: 218 точек присутствия, собственные ЦОД в Москве, Алматы и Праге, SLA 99,9%.">
 <meta property="og:url" content="https://rocketcdn.ru/">
-<meta property="og:image" content="https://rocketcdn.ru/assets/og.png">
+<meta property="og:image" content="https://rocketcdn.ru/assets/gen/og.webp">
+<meta property="og:image:type" content="image/webp">
+<meta property="og:image:type" content="image/png">
 <meta property="og:image:width" content="1200">
 <meta property="og:image:height" content="630">
+<meta property="og:image:alt" content="Rocket CDN - доставка контента на сверхскорости: 218 точек присутствия, 3 собственных ЦОД, SLA 99,9%">
 <meta name="twitter:card" content="summary_large_image">
 <meta name="twitter:title" content="Rocket CDN - доставка контента на сверхскорости">
 <meta name="twitter:description" content="Глобальная сеть доставки контента и медиа-инфраструктура для бизнеса.">
-<meta name="twitter:image" content="https://rocketcdn.ru/assets/og.png">
+<meta name="twitter:image" content="https://rocketcdn.ru/assets/gen/og.webp">
+<meta name="twitter:image:alt" content="Rocket CDN - доставка контента на сверхскорости: 218 точек присутствия, 3 собственных ЦОД, SLA 99,9%">
 
 <link rel="icon" type="image/png" href="assets/favicon.png">
 <link rel="apple-touch-icon" href="assets/apple-touch-icon.png">
@@ -30,12 +34,66 @@
 
 <script>/* Тема до первой отрисовки: без этого страница моргает и клон первого экрана строится не в той теме */
 try{var _t=localStorage.getItem("rc_theme");if(_t==="light"||_t==="dark")document.documentElement.setAttribute("data-theme",_t);}catch(e){}</script>
+<style>
+/* Скелет страницы до прихода rc.css. Пока стили едут по сети,
+   служебные подписи для скринридеров, подсказка звука, меню и
+   модалка обязаны быть скрыты, а слои-канвасы - лежать за
+   содержимым. Иначе человек видит в шапке «Светлая тема / Тёмная
+   тема / Звук» и крупную надпись «У этого сайта есть звук» первой
+   строкой документа - ровно то, на что жаловался заказчик.
+
+   Блок стоит ДО всех <link>: значения здесь повторяют исходные
+   состояния из rc.css, и приехавший rc.css перекрывает их по
+   порядку следования. Правится .vh или .snd-hint в rc.css -
+   этот блок надо править синхронно. */
+.vh{position:absolute;width:1px;height:1px;margin:-1px;padding:0;overflow:hidden;
+    clip:rect(0 0 0 0);white-space:nowrap;border:0}
+.snd-hint{position:fixed;top:76px;right:16px;max-width:260px;opacity:0;pointer-events:none}
+.drawer{position:fixed;inset:0;transform:translateX(100%);visibility:hidden}
+.modal{position:fixed;inset:0;opacity:0;visibility:hidden}
+.totop{position:fixed;right:18px;bottom:18px;opacity:0;visibility:hidden}
+.prog{position:fixed;top:0;left:0;height:2px;width:0}
+#spaceBg,#rocketCanvas{position:fixed;inset:0;width:100%;height:100%;pointer-events:none;opacity:0}
+.lg-light{display:none}
+[data-theme="light"] .lg-dark{display:none}
+[data-theme="light"] .lg-light{display:block}
+body{margin:0;background:#050C15;color:#E2E8F0;
+     font-family:'Golos Text',-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif}
+[data-theme="light"] body{background:#F3F7FB;color:#091320}
+img,svg,canvas{max-width:100%}
+</style>
+
+<noscript>
+<style>
+/* Без сценариев появление при прокрутке не отработает, и весь текст
+   так и остался бы прозрачным. Показываем сразу. */
+.rv{opacity:1 !important;transform:none !important}
+/* Заставка, слои и подсказки без сценариев бессмысленны */
+.rc-load,.snd-hint,.totop,.prog,#spaceBg,#rocketCanvas,#heroClone{display:none !important}
+/* Меню открывает сценарий, поэтому вместо бургера показываем саму
+   навигацию: шапка встаёт в две строки, зато по сайту можно ходить */
+.burger{display:none !important}
+.hdr-in{height:auto !important;flex-wrap:wrap;padding-top:8px;padding-bottom:8px}
+.nav{display:flex !important;flex-wrap:wrap;justify-content:center;width:100%;margin:0 !important}
+/* Контейнеры, которые заполняет сценарий, остались бы пустыми дырами
+   между заголовком и следующим блоком */
+#gridProducts:empty,#gridAdv:empty,#gridCases:empty,#faqList:empty,
+#relGrid:empty,#incGrid:empty,#dcGrid:empty,#howGrid:empty,
+#heroMarks:empty,#whatMarks:empty,#nodeList:empty,#regTabs:empty{display:none !important}
+.hs-view,.hs-bar{display:none !important}
+</style>
+</noscript>
+
 <link rel="preload" href="assets/fonts/golos-cyr.woff2" as="font" type="font/woff2" crossorigin>
 <link rel="stylesheet" href="assets/rc-fonts.css?v=1786650096">
-<link rel="stylesheet" href="assets/rc.css?v=1786957334">
-<link rel="stylesheet" href="assets/rc-compact.css?v=1786958099">
+<link rel="stylesheet" href="assets/rc.css?v=1786963495">
+<link rel="stylesheet" href="assets/rc-compact.css?v=1786961511">
 <link rel="stylesheet" href="assets/rc-interior.css?v=1786953860">
 <link rel="stylesheet" href="assets/rc-reduced.css?v=1786953497">
+<!-- Посадка на реальные устройства. Подключается последним: файл правит
+     значения предыдущих, а своих цветов и шрифтов не вводит -->
+<link rel="stylesheet" href="assets/rc-adapt.css?v=1786961400">
+<link rel="stylesheet" href="assets/rc-depth.css?v=1786962839">
 <!-- Режим страницы решается до того, как поднимутся сцены: иначе они
      успеют занять контексты, которых на слабом устройстве и так мало -->
 <script src="assets/rc-fallback.js?v=1786953470"></script>
@@ -614,7 +672,7 @@ html[data-theme="light"] .rc-load{background:#070F1A}
       "name": "Где находятся собственные дата-центры?",
       "acceptedAnswer": {
         "@type": "Answer",
-        "text": "В Москве, Казахстане и Праге. Остальные точки присутствия построены на партнёрских площадках и точках обмена трафиком."
+        "text": "В Москве, Алматы и Праге. Остальные точки присутствия построены на партнёрских площадках и точках обмена трафиком."
       }
     },
     {
@@ -629,7 +687,7 @@ html[data-theme="light"] .rc-load{background:#070F1A}
 }
 </script>
 </head>
-<body>
+<body class="has-mcta">
 
 <!-- Заставку строит RocketLoader из шапки документа: без JavaScript её нет
      вовсе и страница читается сразу -->
@@ -942,7 +1000,7 @@ html[data-theme="light"] .rc-load{background:#070F1A}
         </div>
         <div class="node-list" id="nodeList"></div>
         <p style="font-size:13px;color:var(--tx-3);margin-top:10px">
-          <span data-i18n="infra.found">Найдено точек</span>: <b id="nodeCount" style="color:var(--cyan)">218</b>
+          <span data-i18n="infra.found">Найдено точек</span>: <b id="nodeCount" style="color:var(--accent-tx)">218</b>
         </p>
       </div>
     </div>
@@ -1088,8 +1146,10 @@ html[data-theme="light"] .rc-load{background:#070F1A}
         </div>
       </div>
 
-      <form class="form-card rv rv-d1" id="leadForm" novalidate>
+      <form class="form-card rv rv-d1" id="leadForm" novalidate
+            action="api.php?action=lead" method="post" accept-charset="UTF-8">
         <div class="form-msg"></div>
+        <input type="text" name="website" tabindex="-1" autocomplete="off" aria-hidden="true" class="vh">
         <div class="form-2">
           <div class="field">
             <label for="lfName" data-i18n="ct.name">Как к вам обращаться</label>
@@ -1123,7 +1183,7 @@ html[data-theme="light"] .rc-load{background:#070F1A}
           <textarea id="lfTask" name="task" data-i18n="ct.taskp" data-i18n-attr="placeholder" placeholder="Что нужно раздавать, какой объём трафика"></textarea>
         </div>
         <label class="consent">
-          <input type="checkbox" name="consent" required checked>
+          <input type="checkbox" name="consent" value="1" required checked>
           <span>
             <span data-i18n="ct.consent">Соглашаюсь с обработкой персональных данных</span>
             <a href="privacy.html" target="_blank" data-i18n="ct.policy">Политика конфиденциальности</a>
@@ -1147,8 +1207,10 @@ html[data-theme="light"] .rc-load{background:#070F1A}
     </button>
     <h3 id="cbTitle" data-i18n="cb.h">Перезвоните мне</h3>
     <p class="sub" data-i18n="cb.p">Оставьте номер, инженер перезвонит и ответит на вопросы.</p>
-    <form id="cbForm" novalidate>
+    <form id="cbForm" novalidate
+          action="api.php?action=callback" method="post" accept-charset="UTF-8">
       <div class="form-msg"></div>
+      <input type="text" name="website" tabindex="-1" autocomplete="off" aria-hidden="true" class="vh">
       <div class="field">
         <label for="cbName" data-i18n="ct.name">Как к вам обращаться</label>
         <input id="cbName" name="name" required data-i18n="ct.namep" data-i18n-attr="placeholder" placeholder="Имя" autocomplete="name">
@@ -1160,7 +1222,7 @@ html[data-theme="light"] .rc-load{background:#070F1A}
         <span class="err" data-i18n="ct.badcontact">Укажите телефон</span>
       </div>
       <label class="consent">
-        <input type="checkbox" name="consent" required checked>
+        <input type="checkbox" name="consent" value="1" required checked>
         <span data-i18n="ct.consent">Соглашаюсь с обработкой персональных данных</span>
       </label>
       <button type="submit" class="btn btn-p" style="width:100%">
@@ -1170,6 +1232,18 @@ html[data-theme="light"] .rc-load{background:#070F1A}
   </div>
 </div>
 
+<!-- Заявка всегда под большим пальцем: панель приезжает после первого
+     экрана и уходит, когда открыто меню или окно звонка -->
+<div class="mcta" id="mcta">
+  <button type="button" class="btn btn-g js-callback" data-place="mcta">
+    <span data-i18n="cta.callback">Перезвоните мне</span>
+  </button>
+  <a class="btn btn-p js-reg" data-place="mcta" href="https://lk.rocketcdn.ru"
+     target="_blank" rel="noopener">
+    <span data-i18n="cta.register">Регистрация</span>
+  </a>
+</div>
+
 <button type="button" class="totop" id="toTop" aria-label="Наверх">
   <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M12 19V5M6 11l6-6 6 6"/></svg>
 </button>
@@ -1177,13 +1251,14 @@ html[data-theme="light"] .rc-load{background:#070F1A}
 <script src="assets/rc-space.js?v=1786650096"></script>
 <script src="assets/rc-sound.js?v=1786957029"></script>
 <script src="assets/rc-geo.js?v=1786957117"></script>
-<script src="assets/rc-i18n.js?v=1786650096"></script>
+<script src="assets/rc-i18n.js?v=1786962236"></script>
 <script src="assets/rc-globe.js?v=1786650096"></script>
-<script src="assets/rc-app.js?v=1786956726"></script>
-<script src="assets/rc-fill.js?v=1786650096"></script>
-<script src="assets/rc-viz.js?v=1786650096"></script>
+<script src="assets/rc-app.js?v=1786960922"></script>
+<script src="assets/rc-fill.js?v=1786963530"></script>
+<script src="assets/rc-viz.js?v=1786960815"></script>
 <script src="assets/rc-motion.js?v=1786953586"></script>
 <script src="assets/rc-hooks.js?v=1786953764"></script>
+<script src="assets/rc-depth.js?v=1786959953"></script>
 <!-- Объёмный слой (three.js и три сцены) подтягивает rc-gl.js
      после загрузки и только там, где он вообще будет показан -->
 <script src="assets/rc-gl.js?v=1786957102"></script>

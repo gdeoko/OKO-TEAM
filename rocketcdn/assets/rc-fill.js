@@ -35,9 +35,16 @@ function fill(t, blocks) {
   }).join("");
 
   /* Собственные дата-центры */
+  /* Снимки залов лежат рядом с реестром: первый ЦОД - Москва,
+     второй - Алматы, третий - Прага. Порядок совпадает с GEO.DC,
+     если он изменится, картинку подставит запасной вариант. */
+  var DC_SHOT = ["dc-moscow", "dc-almaty", "dc-prague"];
   var dc = $("#dcGrid");
   if (dc && GEO) dc.innerHTML = GEO.DC.map(function (d, i) {
-    return '<article class="dc float-3d rv rv-d' + (i + 1) + '">' +
+    /* Путь от корня сайта: переменную читает правило из rc.css, а
+       относительный адрес там считался бы от папки со стилями */
+    var shot = DC_SHOT[i] ? ' style="--shot:url(/assets/gen/' + DC_SHOT[i] + '.webp)"' : "";
+    return '<article class="dc float-3d rv rv-d' + (i + 1) + '"' + shot + '>' +
       '<div class="lbl">' + esc(t("infra.dc")) + "</div>" +
       "<h4>" + esc(d.name[lang] || d.name.ru) + "</h4>" +
       '<p style="color:var(--tx-3);font-size:12.5px;margin-bottom:10px">' + esc(d.cc[lang] || d.cc.ru) + "</p>" +
@@ -76,5 +83,11 @@ function fill(t, blocks) {
   if (y) y.textContent = new Date().getFullYear();
 }
 
-document.addEventListener("rc:lang", function (e) { fill(e.detail.t, e.detail.blocks); });
+document.addEventListener("rc:lang", function (e) {
+  /* Без словаря собирать блоки нельзя: заголовки и описания вышли бы
+     пустыми, и человек увидел бы ряд пустых карточек. Лучше подождать:
+     как только словарь доедет, rc-app позовёт нас ещё раз. */
+  if (!window.RC_I18N) return;
+  fill(e.detail.t, e.detail.blocks);
+});
 })();

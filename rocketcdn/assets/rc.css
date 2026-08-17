@@ -11,8 +11,16 @@
   --ink:      #091320;
   --cyan:     #42B2DC;
   --cyan-2:   #0A5897;
+  /* Акцент отдельно для ТЕКСТА и иконок. На светлом фоне циан даёт 2,3:1
+     и читаться перестаёт, поэтому там подставляется глубокий синий #0A5897.
+     Заливки, рамки, свечения и градиенты по-прежнему берут --cyan. */
+  --accent-tx: #42B2DC;
   --mist:     #E2E8F0;
   --violet:   #8A59F6;
+  /* Фиолетовый для ТЕКСТА: на своей же 16%-подложке чистый #8A59F6
+     даёт 3,5:1 в обеих темах. Здесь он осветлён под тёмный фон,
+     в светлой теме ниже подставляется затемнённый. Заливки — --violet. */
+  --violet-tx: #B49BFF;
   --grad:     linear-gradient(135deg, #42B2DC 0%, #0A5897 100%);
   --grad-soft:linear-gradient(135deg, rgba(66,178,220,.16) 0%, rgba(10,88,151,.16) 100%);
   --grad-txt: linear-gradient(120deg, #7FD8FA 0%, #42B2DC 45%, #8A59F6 100%);
@@ -75,6 +83,8 @@
   --bg:        #F3F7FB;
   --bg-2:      #FFFFFF;
   --bg-3:      #E9EFF6;
+  --accent-tx: #0A5897;
+  --violet-tx: #5B32C9;
   --surface:   rgba(255,255,255,.92);
   --surface-2: #FFFFFF;
   --line:      rgba(9,19,32,.10);
@@ -85,7 +95,9 @@
   --glow:      0 0 40px rgba(66,178,220,.20);
   --shadow:    0 20px 48px -20px rgba(9,19,32,.24);
   --head-bg:   rgba(243,247,251,.78);
-  --grad-txt:  linear-gradient(120deg, #0A5897 0%, #42B2DC 50%, #8A59F6 100%);
+  /* Середина градиента была на цианe и давала 2,26:1 — заголовок выцветал.
+     Стопы затемнены до 6,83 / 6,22 / 7,11 на фоне #F3F7FB, палитра та же. */
+  --grad-txt:  linear-gradient(120deg, #0A5897 0%, #15618F 50%, #5B32C9 100%);
   --hero-veil: radial-gradient(ellipse 90% 60% at 50% -10%, rgba(66,178,220,.20), transparent 62%),
                radial-gradient(ellipse 60% 50% at 88% 12%, rgba(138,89,246,.10), transparent 60%);
   /* В светлой теме пилюля тёмная: ровно так она нарисована в их макете */
@@ -150,7 +162,7 @@ section { position: relative; padding: var(--sec) 0; }
 .sec-tag {
   display: inline-flex; align-items: center; gap: 8px;
   font-size: 11px; font-weight: 700; letter-spacing: .18em; text-transform: uppercase;
-  color: var(--cyan); margin-bottom: 14px;
+  color: var(--accent-tx); margin-bottom: 14px;
 }
 .sec-tag::before { content: ''; width: 22px; height: 1px; background: var(--cyan); opacity: .7; }
 .sec-h {
@@ -262,7 +274,7 @@ a.js-reg:not(.btn):hover { background-size: 100% 2px; }
 .card-ico {
   width: 46px; height: 46px; border-radius: 13px; display: grid; place-items: center;
   background: var(--ico-bg); border: 1px solid var(--ico-line);
-  color: var(--violet); margin-bottom: 16px; flex: none;
+  color: var(--violet-tx); margin-bottom: 16px; flex: none;
   transition: background var(--fast), border-color var(--fast), color var(--fast);
 }
 .card:hover .card-ico { background: var(--ico-bg-2); border-color: var(--violet); }
@@ -309,7 +321,7 @@ a.js-reg:not(.btn):hover { background-size: 100% 2px; }
   background: var(--surface); border: 1px solid var(--line); border-radius: var(--r-sm);
   color: var(--tx-2); cursor: pointer; transition: all var(--fast);
 }
-.icon-btn:hover { color: var(--cyan); border-color: var(--cyan); }
+.icon-btn:hover { color: var(--accent-tx); border-color: var(--cyan); }
 .icon-btn svg { width: 18px; height: 18px; }
 /* ── Фирменная пилюля из дизайн-системы клиента ───────────── */
 /* Тёмная капсула, внутри ездит фиолетовый кругляш, подписи по краям. */
@@ -364,7 +376,7 @@ a.js-reg:not(.btn):hover { background-size: 100% 2px; }
   padding: 15px 4px; font-size: 19px; font-weight: 600; border-bottom: 1px solid var(--line);
   display: flex; justify-content: space-between; align-items: center; color: var(--tx-2);
 }
-.drawer a:active { color: var(--cyan); }
+.drawer a:active { color: var(--accent-tx); }
 .drawer .btn { margin-top: 22px; }
 
 /* ── Прогресс чтения ──────────────────────────────────────── */
@@ -414,7 +426,7 @@ a.js-reg:not(.btn):hover { background-size: 100% 2px; }
 .hero-chips { display: flex; flex-wrap: wrap; gap: 9px; margin-bottom: 26px; }
 .hero-marks { display: flex; flex-wrap: wrap; gap: 10px 26px; margin-top: 38px; }
 .hero-mark { display: flex; align-items: center; gap: 9px; font-size: 13px; color: var(--tx-3); }
-.hero-mark svg { width: 15px; height: 15px; color: var(--cyan); flex: none; }
+.hero-mark svg { width: 15px; height: 15px; color: var(--accent-tx); flex: none; }
 /* Подсказка стоит у правого края: по центру она наезжала на строку отметок */
 .scroll-hint {
   position: absolute; bottom: 26px; right: var(--pad); z-index: 3;
@@ -500,8 +512,8 @@ a.js-reg:not(.btn):hover { background-size: 100% 2px; }
   font-size: 10.5px; font-weight: 700; letter-spacing: .04em; text-transform: uppercase;
   padding: 3px 8px; border-radius: var(--r-full); flex: none;
 }
-.tag-cloud  { background: rgba(138,89,246,.16); color: var(--violet); }
-.tag-shield { background: rgba(66,178,220,.16); color: var(--cyan); }
+.tag-cloud  { background: rgba(138,89,246,.16); color: var(--violet-tx); }
+.tag-shield { background: rgba(66,178,220,.16); color: var(--accent-tx); }
 .tag-soon   { background: var(--surface-2); color: var(--tx-3); border: 1px solid var(--line); }
 .node-empty { padding: 26px; text-align: center; color: var(--tx-3); font-size: 14px; }
 
@@ -514,7 +526,7 @@ a.js-reg:not(.btn):hover { background-size: 100% 2px; }
   content: ''; position: absolute; right: -30px; top: -30px; width: 120px; height: 120px;
   border-radius: 50%; background: var(--grad-soft); filter: blur(20px);
 }
-.dc .lbl { font-size: 11px; letter-spacing: .16em; text-transform: uppercase; color: var(--cyan); font-weight: 700; }
+.dc .lbl { font-size: 11px; letter-spacing: .16em; text-transform: uppercase; color: var(--accent-tx); font-weight: 700; }
 .dc h4 { font-size: clamp(19px, 2.2vw, 25px); font-weight: 700; margin: 8px 0 4px; letter-spacing: -.02em; }
 .dc p { font-size: 13.5px; color: var(--tx-2); }
 
@@ -544,7 +556,7 @@ a.js-reg:not(.btn):hover { background-size: 100% 2px; }
   text-align: left; font-size: clamp(15px, 1.7vw, 17px); font-weight: 600; cursor: pointer;
   transition: color var(--fast);
 }
-.faq-q:hover { color: var(--cyan); }
+.faq-q:hover { color: var(--accent-tx); }
 .faq-q i {
   position: relative; width: 18px; height: 18px; flex: none;
 }
@@ -554,7 +566,7 @@ a.js-reg:not(.btn):hover { background-size: 100% 2px; }
 }
 .faq-q i::before { left: 0; top: 8px; width: 18px; height: 2px; }
 .faq-q i::after  { left: 8px; top: 0; width: 2px; height: 18px; }
-.faq-i.on .faq-q { color: var(--cyan) }
+.faq-i.on .faq-q { color: var(--accent-tx) }
 .faq-i.on .faq-q i::after { transform: rotate(90deg); opacity: 0 }
 .faq-a { max-height: 0; overflow: hidden; transition: max-height .42s var(--ease); }
 .faq-a p { padding: 0 clamp(16px, 2.4vw, 26px) clamp(18px, 2.4vw, 24px); font-size: 14.5px; color: var(--tx-2); max-width: 72ch; }
@@ -587,7 +599,7 @@ a.js-reg:not(.btn):hover { background-size: 100% 2px; }
 .form-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 0 14px; }
 .consent { display: flex; gap: 10px; align-items: flex-start; font-size: 12px; color: var(--tx-3); margin: 4px 0 16px; }
 .consent input { width: 17px; height: 17px; margin-top: 2px; flex: none; accent-color: var(--cyan); }
-.consent a { color: var(--cyan); text-decoration: underline; text-underline-offset: 2px; }
+.consent a { color: var(--accent-tx); text-decoration: underline; text-underline-offset: 2px; }
 .form-msg { display: none; padding: 13px 16px; border-radius: var(--r-sm); font-size: 14px; margin-bottom: 14px; }
 .form-msg.ok  { display: block; background: rgba(52,211,153,.12); border: 1px solid rgba(52,211,153,.34); color: var(--lk-ok); }
 .form-msg.bad { display: block; background: rgba(248,113,113,.12); border: 1px solid rgba(248,113,113,.34); color: var(--lk-err); }
@@ -598,8 +610,8 @@ a.js-reg:not(.btn):hover { background-size: 100% 2px; }
   display: flex; align-items: center; gap: 13px; font-size: 15px; color: var(--tx-2);
   transition: color var(--fast);
 }
-.contact-list a:hover { color: var(--cyan); }
-.contact-list svg { width: 19px; height: 19px; color: var(--cyan); flex: none; }
+.contact-list a:hover { color: var(--accent-tx); }
+.contact-list svg { width: 19px; height: 19px; color: var(--accent-tx); flex: none; }
 
 /* ── Подвал ───────────────────────────────────────────────── */
 .ftr { border-top: 1px solid var(--line); padding: clamp(44px, 6vw, 70px) 0 30px; background: var(--bg-2); }
@@ -607,7 +619,7 @@ a.js-reg:not(.btn):hover { background-size: 100% 2px; }
 .ftr h5 { font-size: 12px; letter-spacing: .14em; text-transform: uppercase; color: var(--tx-3); margin-bottom: 15px; font-weight: 700; }
 .ftr ul { list-style: none; display: grid; gap: 9px; }
 .ftr ul a { font-size: 14px; color: var(--tx-2); transition: color var(--fast); }
-.ftr ul a:hover { color: var(--cyan); }
+.ftr ul a:hover { color: var(--accent-tx); }
 .ftr-brand img { height: 46px; margin-bottom: 14px; }
 .ftr-brand p { font-size: 13.5px; color: var(--tx-3); max-width: 34ch; }
 .ftr-bot {
@@ -620,7 +632,7 @@ a.js-reg:not(.btn):hover { background-size: 100% 2px; }
   width: 36px; height: 36px; display: grid; place-items: center; border-radius: var(--r-sm);
   border: 1px solid var(--line); color: var(--tx-3); transition: all var(--fast);
 }
-.soc a:hover { color: var(--cyan); border-color: var(--cyan); transform: translateY(-2px); }
+.soc a:hover { color: var(--accent-tx); border-color: var(--cyan); transform: translateY(-2px); }
 .soc svg { width: 17px; height: 17px; }
 
 /* ── Всплывающее окно обратного звонка ────────────────────── */
@@ -755,7 +767,7 @@ a.js-reg:not(.btn):hover { background-size: 100% 2px; }
 .lat-row.bad  .lat-track i { background: linear-gradient(90deg, #64748B, #94A3B8); }
 .lat-row.bad  .lat-top b   { color: var(--tx-2); }
 .lat-row.good .lat-track i { background: var(--grad); box-shadow: 0 0 18px rgba(66,178,220,.5); }
-.lat-row.good .lat-top b   { color: var(--cyan); }
+.lat-row.good .lat-top b   { color: var(--accent-tx); }
 
 /* Кольцо и шкала */
 .dn-wrap, .ga-wrap { position: relative; display: grid; place-items: center; }
@@ -814,7 +826,7 @@ a.js-reg:not(.btn):hover { background-size: 100% 2px; }
 .rb-n { font-size: 13px; color: var(--tx-2); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .rb-t { height: 9px; border-radius: 5px; background: var(--bg-3); overflow: hidden; }
 .rb-t i { display: block; height: 100%; width: 0; border-radius: 5px; background: var(--grad); transition: width 1s var(--ease); }
-.rb-v { font-size: 13px; font-weight: 700; color: var(--cyan); font-variant-numeric: tabular-nums; min-width: 30px; text-align: right; }
+.rb-v { font-size: 13px; font-weight: 700; color: var(--accent-tx); font-variant-numeric: tabular-nums; min-width: 30px; text-align: right; }
 
 /* Живые счётчики */
 .tick { display: grid; gap: 3px; }
@@ -941,7 +953,7 @@ body::after {
 }
 .inc-item:hover { border-color: var(--line-2); background: var(--surface-2); transform: translateY(-2px); }
 .inc-item svg {
-  width: 18px; height: 18px; flex: none; color: var(--cyan);
+  width: 18px; height: 18px; flex: none; color: var(--accent-tx);
   padding: 3px; border-radius: 50%; background: var(--grad-soft); box-sizing: content-box;
 }
 @media (max-width: 900px) { .inc-grid { grid-template-columns: repeat(2, 1fr) } }
@@ -1016,7 +1028,7 @@ body::after {
   font-size: 12.5px; color: var(--tx-3);
 }
 .legal a { color: var(--tx-2); transition: color var(--fast); }
-.legal a:hover { color: var(--cyan); }
+.legal a:hover { color: var(--accent-tx); }
 
 @media (max-width: 900px) {
   /* На телефоне лента просто листается пальцем: закреплять экран неудобно */
@@ -1088,7 +1100,7 @@ body::after {
   display: inline-flex; align-items: baseline; gap: 5px; align-self: flex-start;
   margin-bottom: 12px; padding: 4px 11px; border-radius: var(--r-full);
   background: var(--grad-soft); border: 1px solid var(--line);
-  font-size: 11px; letter-spacing: .08em; text-transform: uppercase; color: var(--cyan);
+  font-size: 11px; letter-spacing: .08em; text-transform: uppercase; color: var(--accent-tx);
 }
 .step-ms b { font-size: 15px; font-weight: 700; letter-spacing: -.01em; }
 /* Нить, связывающая шаги в один маршрут */
@@ -1348,7 +1360,7 @@ body { background: var(--bg); }
 
 /* Отсечка маршрута, которую щёлкнула ракета */
 .step .step-ms { transition: color .4s var(--ease), text-shadow .4s var(--ease); }
-.step.rc-tick .step-ms { color: var(--cyan); text-shadow: 0 0 18px rgba(66,178,220,.55); }
+.step.rc-tick .step-ms { color: var(--accent-tx); text-shadow: 0 0 18px rgba(66,178,220,.55); }
 .step.rc-tick .step-line { opacity: 1; }
 
 /* Лента сценариев, которую ракета тянет за собой */
@@ -1392,3 +1404,22 @@ body { background: var(--bg); }
   100% { opacity: 0; transform: translate3d(var(--dx,60px), var(--dy,20px), 0) scale(var(--ds,1.2)) }
 }
 @media (prefers-reduced-motion: reduce) { .rc-dust { display: none } }
+
+/* ── Снимок зала на карточке дата-центра ──────────────────────
+   Картинка живёт в фоне и придавлена затемнением: карточка
+   остаётся читаемой, но перестаёт быть пустым прямоугольником.
+   Подставляет её rc-fill.js через переменную --shot. */
+.dc { isolation: isolate; }
+.dc::after {
+  content: ''; position: absolute; inset: 0; z-index: -1;
+  background-image: linear-gradient(180deg, rgba(5,12,21,.62), rgba(5,12,21,.93) 72%), var(--shot, none);
+  background-size: cover; background-position: center;
+  opacity: var(--shot-on, 1);
+  transition: transform .8s var(--ease), opacity .5s var(--ease);
+  border-radius: inherit;
+}
+.dc:hover::after { transform: scale(1.06); }
+[data-theme="light"] .dc::after {
+  background-image: linear-gradient(180deg, rgba(243,247,251,.78), rgba(243,247,251,.95) 72%), var(--shot, none);
+}
+html.rc-reduced .dc::after { transition: none; }

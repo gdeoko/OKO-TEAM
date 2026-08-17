@@ -168,28 +168,30 @@ body { min-height: 100vh; min-height: 100svh; }
 
   /* Общий приём: невидимая накладка ростом в 44 пикселя */
   .legal a,
-  .ftr ul a,
-  .contact-list a,
-  .soc a,
-  .logo { position: relative; }
+  .contact-list a { position: relative; }
 
   .legal a::after,
-  .ftr ul a::after,
-  .contact-list a::after,
-  .soc a::after,
-  .logo::after {
+  .contact-list a::after {
     content: '';
     position: absolute;
     left: -6px; right: -6px;
     top: 50%; height: 44px; transform: translateY(-50%);
   }
 
+  /* Логотипу накладка не годится: разделом выше ему поставлен
+     overflow: hidden, чтобы длинная подпись не распирала шапку, и
+     этот же overflow срезает накладку по краю картинки - палец
+     ловил 26 пикселей вместо 44. Проверено обстрелом точками:
+     настоящая высота цели совпадала с высотой картинки.
+     Поэтому здесь честная высота. Шапка от неё не растёт: строка
+     и так 58 пикселей на самом узком экране и 70 на настольном. */
+  .logo { min-height: 44px; }
+
   /* Накладки не должны перекрывать друг друга: в правовой
      строке ссылки идут в две-три строки через восемь пикселей,
      и соседние прямоугольники наезжали бы один на другой.
      Разводим строки ровно настолько, чтобы они не спорили. */
   .legal { gap: 22px 20px; }
-  .ftr ul { gap: 14px; }
   .contact-list { gap: 16px; }
 
   /* Бургер и круглые кнопки-иконки: у них нет подписи, промах
@@ -220,10 +222,21 @@ body { min-height: 100vh; min-height: 100svh; }
   .drawer .btn { min-height: 50px; }
   .pill.wide button { height: 46px; }
 
-  /* Флажок согласия. Подпись рядом - тоже цель нажатия, она
-     лежит внутри label, но по квадратику метятся чаще */
-  .consent input { width: 21px; height: 21px; }
-  .consent { padding: 4px 0; }
+  /* Флажок согласия. Квадратику 22 пикселя не дотянуть до 44 -
+     у поля ввода нет псевдоэлементов, накладку туда не поставить.
+     Зато вся подпись лежит внутри label и переключает флажок,
+     поэтому настоящая цель здесь - строка целиком, ей и даём
+     высоту. Ссылка на политику внутри той же строки - отдельная
+     цель, ей нужна своя накладка, иначе палец по ней всегда
+     будет попадать в согласие. */
+  .consent input { width: 22px; height: 22px; }
+  .consent { padding: 6px 0; min-height: 44px; }
+  .consent a { position: relative; }
+  .consent a::after {
+    content: '';
+    position: absolute; left: -6px; right: -6px;
+    top: 50%; height: 44px; transform: translateY(-50%);
+  }
 
   /* Кнопки форм и крупные кнопки-ссылки */
   .btn { min-height: 46px; }
@@ -263,16 +276,26 @@ body { min-height: 100vh; min-height: 100svh; }
   transition: transform .38s var(--ease);
 }
 .mcta.on { transform: none; }
+/* Кнопки делят ширину поровну. Подпись не режется и не уезжает
+   за край даже по-английски, где она длиннее: кегль плавает по
+   ширине экрана, а длинная подпись переносится на вторую строку
+   с плотным межстрочным - панель от этого растёт вверх, а не
+   наезжает на содержимое. */
 .mcta .btn {
   flex: 1 1 0; min-width: 0; min-height: 46px;
-  padding: 12px 16px; font-size: 15px; white-space: nowrap;
+  padding: 10px 12px; text-align: center;
+  font-size: clamp(13px, 3.4vw, 15px); line-height: 1.16;
+  white-space: normal;
 }
+.mcta .btn > span { display: block; min-width: 0; }
 
 @media (max-width: 900px) and (pointer: coarse) {
   .mcta { display: flex; }
   /* Ровно на высоту панели поднимается низ страницы, чтобы
-     правовая строка не оказалась под ней */
-  .has-mcta { --mcta-h: calc(68px + var(--safe-b, 0px)); }
+     правовая строка не оказалась под ней. Семьдесят два - это
+     десять отступа сверху, сорок шесть кнопки, десять снизу,
+     пиксель рамки и запас на округление кегля. */
+  .has-mcta { --mcta-h: calc(76px + var(--safe-b, 0px)); }
   .has-mcta main { padding-bottom: var(--mcta-h); }
 }
 
@@ -409,14 +432,24 @@ body { min-height: 100vh; min-height: 100svh; }
   .hs-track > * { width: 38vw; }
   .hs-bar { display: none; }
 
-  /* Меню: семь пунктов по пятьдесят пикселей в 390 не влезают.
-     Ужимаем строки, инструменты раскладываем в две колонки. */
-  .drawer { padding-top: calc(66px + var(--safe-t, 0px)); }
-  .drawer a:not(.btn) { min-height: 40px; padding: 7px 4px; font-size: 16px; }
-  .drawer .btn { margin-top: 12px; min-height: 44px; }
-  .drawer-tools { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+  /* Меню: семь пунктов по пятьдесят пикселей в 390 не влезают,
+     и кнопка «Зарегистрироваться» оказывалась ниже экрана - её
+     не видно, а именно она здесь главная. Разворачиваем пункты
+     в две колонки, кнопку и инструменты кладём во всю ширину:
+     меню собирается в один экран. */
+  .drawer {
+    display: grid; grid-template-columns: 1fr 1fr;
+    align-content: start; gap: 4px 16px;
+    padding-top: calc(62px + var(--safe-t, 0px));
+  }
+  .drawer a:not(.btn) { min-height: 38px; padding: 5px 4px; font-size: 15.5px; }
+  .drawer .btn { grid-column: 1 / -1; margin-top: 8px; min-height: 44px; }
+  .drawer-tools {
+    grid-column: 1 / -1;
+    display: grid; grid-template-columns: 1fr 1fr; gap: 6px;
+  }
   .drawer-tools .pill.snd { grid-column: 1 / -1; }
-  .pill.wide button { height: 40px; }
+  .pill.wide button { height: 38px; }
 
   /* Окно обратного звонка прокручивается внутри себя, а не
      уезжает за край экрана */
@@ -512,6 +545,15 @@ h1, h2, h3, h4, p, li,
 /* Внутренности виджетов считаются от ширины родителя, а не от
    ширины экрана */
 .viz-card, .form-card, .faq, .node-list { min-width: 0; }
+
+/* Имя и телефон стоят в анкете парой ради плотности. На 360
+   пикселях каждому полю достаётся 145, и набранный номер
+   «+7 900 000-00-00» перестаёт помещаться целиком: человек
+   набирает вслепую. Ниже 380 разводим пару в столбик - это
+   единственное место, где плотность проигрывает делу. */
+@media (max-width: 379px) {
+  .form-2 { grid-template-columns: 1fr; }
+}
 
 /* Всё, что нарисовано в canvas, обязано жить в своей коробке */
 canvas { max-width: 100%; }

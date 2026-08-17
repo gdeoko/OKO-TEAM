@@ -289,7 +289,7 @@ var BLOCKS_RU = {
     { q: "Подходит ли сеть для живых трансляций?",
       a: "Да, это один из основных сценариев. Сеть рассчитана на более чем полтора миллиона одновременных зрителей и свыше терабайта нагрузки." },
     { q: "Где находятся собственные дата-центры?",
-      a: "В Москве, Казахстане и Праге. Остальные точки присутствия построены на партнёрских площадках и точках обмена трафиком." },
+      a: "В Москве, Алматы и Праге. Остальные точки присутствия построены на партнёрских площадках и точках обмена трафиком." },
     { q: "Какая статистика доступна?",
       a: "Трафик, число запросов, коды ответов, доля попаданий в кэш и география аудитории. Данные обновляются в реальном времени в разделе «Статистика»." }
   ]
@@ -454,7 +454,7 @@ var BLOCKS_EN = {
     { q: "Does the network fit live streaming?",
       a: "Yes, that is one of the primary use cases. The network is built for more than one and a half million concurrent viewers and over a terabyte of load." },
     { q: "Where are your own data centers?",
-      a: "In Moscow, Kazakhstan and Prague. Other points of presence are built on partner sites and internet exchanges." },
+      a: "In Moscow, Almaty and Prague. Other points of presence are built on partner sites and internet exchanges." },
     { q: "What statistics do I get?",
       a: "Traffic, request counts, response codes, cache hit ratio and audience geography. Data updates in real time in the Statistics section." }
   ]
@@ -462,4 +462,12 @@ var BLOCKS_EN = {
 
 g.RC_I18N = { ru: RU, en: EN };
 g.RC_BLOCKS = { ru: BLOCKS_RU, en: BLOCKS_EN };
+
+/* Метка и сигнал «словарь доехал целиком». Во встроенном браузере
+   Телеграма файлы приходят не в том порядке, в каком стоят в
+   разметке, и rc-app.js может подняться раньше словаря. Тогда он
+   разложит язык по тому, что написано в разметке, а поймав это
+   событие - разложит заново, уже со словарём. */
+g.RC_I18N_READY = true;
+try { document.dispatchEvent(new CustomEvent("rc:i18n")); } catch (e) {}
 })(window);

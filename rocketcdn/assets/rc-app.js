@@ -56,10 +56,15 @@ var state = {
 };
 if (state.lang !== "en") state.lang = "ru";
 
-/* Перевод по ключу. Ключа нет - возвращаем null, и вызывающий
-   оставляет на экране то, что написано в разметке. Раньше сюда
-   возвращался сам ключ, и при устаревшем словаре в кеше браузера
-   человек видел в шапке служебное «ui.sound» вместо слова «Звук». */
+/* Перевод по ключу. Служебный ключ на экран не выходит никогда.
+   Порядок поиска: правка из админки, словарь текущего языка,
+   русский словарь, запасной текст из разметки. Не нашлось ничего -
+   пустая строка.
+
+   Раньше на последней ступени возвращался сам ключ, и при потерянном
+   по дороге словаре человек видел в шапке «ui.sound» вместо слова
+   «Звук». Потом ключ заменили на null - стало не лучше: null уходил
+   в setAttribute и оседал в aria-label строкой «null». */
 function t(k, fallback) {
   var all = window.RC_I18N || {};
   var d = all[state.lang] || {};
@@ -68,11 +73,18 @@ function t(k, fallback) {
   }
   if (d[k] != null) return d[k];
   if (all.ru && all.ru[k] != null) return all.ru[k];
-  return fallback != null ? fallback : null;
+  return fallback != null ? fallback : "";
 }
+
+/* Наборы карточек. Раньше здесь падало с ошибкой, если словарь не
+   доехал: к window.RC_BLOCKS обращались напрямую. Падение рвало
+   applyLang посередине, и вместе со словарём с экрана пропадали
+   продукты, преимущества, сценарии, вопросы и список узлов. */
 function blocks() {
   if (state.content && state.content.blocks && state.content.blocks[state.lang]) return state.content.blocks[state.lang];
-  return window.RC_BLOCKS[state.lang] || window.RC_BLOCKS.ru;
+  var B = window.RC_BLOCKS;
+  if (!B) return null;
+  return B[state.lang] || B.ru || null;
 }
 
 /* ═══ Аналитика ══════════════════════════════════════════ */
@@ -147,11 +159,24 @@ function applyLang(v, silent) {
     b.setAttribute("aria-pressed", on ? "true" : "false");
   });
   $$(".pill.lang").forEach(function (p) { p.classList.toggle("at-2", v === "en"); });
-  renderBlocks();
-  renderNodes();
+  /* Перерисовываем блоки только тогда, когда есть чем. Нет словаря -
+     на экране остаётся то, что написано в разметке, и мы ждём
+     словарь, а не выкладываем ряд пустых карточек. */
+  if (blocks()) {
+    try { renderBlocks(); } catch (e) {}
+    try { renderNodes(); } catch (e) {}
+  }
+  /* Событие уходит в любом случае: на него подписаны счётчики,
+     виджеты, стойка и лента - они от словаря не зависят */
   document.dispatchEvent(new CustomEvent("rc:lang", { detail: { lang: v, t: t, blocks: blocks } }));
   if (!silent) track("lang", v);
 }
+
+/* Словарь мог опоздать: во встроенном браузере Телеграма файлы
+   приезжают не в том порядке, в каком стоят в разметке, и rc-i18n.js
+   иногда встаёт после rc-app.js. Как только он доедет - раскладываем
+   язык заново, уже со словарём. */
+document.addEventListener("rc:i18n", function () { applyLang(state.lang, true); });
 
 /* ═══ Рендер повторяющихся блоков ════════════════════════ */
 function renderBlocks() {
@@ -217,24 +242,21 @@ function esc(s) {
 /* ═══ Сеть присутствия ═══════════════════════════════════ */
 var GEO = window.RC_GEO, globe = null;
 
-function nodeTags(flags) {
-  var out = "";
-  if (flags & 1) out += '<span class="tag tag-cloud">' + (state.lang === "en" ? "Cloud" : "Облако") + "</span>";
-  if (flags & 2) out += '<span class="tag tag-shield">' + (state.lang === "en" ? "Shield" : "Защита") + "</span>";
-  if (flags & 4) out += '<span class="tag tag-soon">' + (state.lang === "en" ? "Soon" : "Скоро") + "</span>";
-  return out;
+/* Метки узла берём из реестра: подписи на обоих языках лежат в RC_GEO.FLAGS,
+   здесь остаётся только обернуть их в разметку. */
+function nodeTags(n) {
+  return GEO.tags(n).map(function (f) {
+    return '<span class="tag tag-' + f.key + '">' + esc(f[state.lang] || f.ru) + "</span>";
+  }).join("");
 }
 
+/* Поиск отдаём реестру: он один знает и русское, и английское название узла,
+   иначе на английском запрос «Prague» не находил бы Прагу. */
 function filteredNodes() {
-  var q = state.query.trim().toLowerCase();
   return GEO.NODES.map(function (n, i) { return [n, i]; }).filter(function (pair) {
     var n = pair[0];
     if (state.region != null && n[3] !== state.region) return false;
-    if (!q) return true;
-    var reg = GEO.REGIONS[n[3]];
-    return n[0].toLowerCase().indexOf(q) >= 0 ||
-           reg.ru.toLowerCase().indexOf(q) >= 0 ||
-           reg.en.toLowerCase().indexOf(q) >= 0;
+    return GEO.match(n, state.query);
   });
 }
 
@@ -245,13 +267,13 @@ function renderNodes() {
   var cnt = $("#nodeCount");
   if (cnt) cnt.textContent = rows.length;
   if (!rows.length) {
-    list.innerHTML = '<div class="node-empty">' + esc(t("infra.none")) + "</div>";
+    list.innerHTML = '<div class="node-empty">' + esc(t("infra.none", "Ничего не найдено")) + "</div>";
     return;
   }
   list.innerHTML = rows.map(function (pair) {
     var n = pair[0], reg = GEO.REGIONS[n[3]];
     return '<div class="node-row" data-idx="' + pair[1] + '" role="button" tabindex="0">' +
-      '<span class="nm">' + esc(n[0]) + "</span>" + nodeTags(n[4]) +
+      '<span class="nm">' + esc(GEO.name(n, state.lang)) + "</span>" + nodeTags(n) +
       '<span class="rg">' + esc(reg[state.lang] || reg.ru) + "</span></div>";
   }).join("");
 
@@ -345,7 +367,7 @@ function buildMapGlobe(mapCv) {
 var rack = null;
 function rackLabels() {
   var out = [];
-  for (var i = 1; i <= 8; i++) out.push(t("what.r" + i));
+  for (var i = 1; i <= 8; i++) out.push(t("what.r" + i, "Узел " + i));
   return out;
 }
 function initRack() {
@@ -363,7 +385,9 @@ function initRack() {
   if (!rack) { if (cv.parentElement) cv.parentElement.remove(); return; }
   rack.start();
   window.__rack = rack;
-  addEventListener("rc:lang", function () { rack.setLabels(rackLabels()); });
+  /* Слушаем на document: событие rc:lang рассылается именно там и не всплывает
+     до window, поэтому подписка на window молча не срабатывала. */
+  document.addEventListener("rc:lang", function () { rack.setLabels(rackLabels()); });
 }
 
 /* ═══ Появление блоков и счётчики ════════════════════════ */
@@ -424,23 +448,23 @@ function wireForm(form, kind) {
     payload.sid = sessionStorage.getItem("rc_sid") || "";
 
     var label = btn ? btn.innerHTML : "";
-    if (btn) { btn.disabled = true; btn.innerHTML = esc(t("ct.sending")) + "..."; }
+    if (btn) { btn.disabled = true; btn.innerHTML = esc(t("ct.sending", "Отправляем")) + "..."; }
 
     fetch(API + "?action=lead", {
       method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(payload)
     }).then(function (r) { return r.json(); }).then(function (r) {
       if (btn) { btn.disabled = false; btn.innerHTML = label; }
       if (r && r.ok) {
-        if (msg) { msg.className = "form-msg ok"; msg.textContent = t(kind === "callback" ? "cb.ok" : "ct.ok"); }
+        if (msg) { msg.className = "form-msg ok"; msg.textContent = t(kind === "callback" ? "cb.ok" : "ct.ok", "Заявка принята, мы свяжемся с вами."); }
         form.reset();
         track("lead", kind);
         $$(".field", form).forEach(function (f) { f.classList.remove("bad"); });
       } else {
-        if (msg) { msg.className = "form-msg bad"; msg.textContent = t("ct.err"); }
+        if (msg) { msg.className = "form-msg bad"; msg.textContent = t("ct.err", "Не удалось отправить. Попробуйте ещё раз или напишите на info@rocketcdn.ru"); }
       }
     }).catch(function () {
       if (btn) { btn.disabled = false; btn.innerHTML = label; }
-      if (msg) { msg.className = "form-msg bad"; msg.textContent = t("ct.err"); }
+      if (msg) { msg.className = "form-msg bad"; msg.textContent = t("ct.err", "Не удалось отправить. Попробуйте ещё раз или напишите на info@rocketcdn.ru"); }
     });
   });
 
@@ -506,7 +530,7 @@ function boot() {
     document.body.style.overflow = on ? "hidden" : "";
     if (burger) {
       burger.innerHTML = svg(on ? "close" : "burger");
-      burger.setAttribute("aria-label", t(on ? "menu.close" : "menu.open"));
+      burger.setAttribute("aria-label", t(on ? "menu.close" : "menu.open", on ? "Закрыть меню" : "Открыть меню"));
       burger.setAttribute("aria-expanded", on ? "true" : "false");
     }
   }
@@ -516,6 +540,11 @@ function boot() {
 
   /* Шапка: тень, скрытие при скролле вниз, активный пункт */
   var hdr = $("#hdr"), prog = $("#prog"), toTop = $("#toTop"), lastY = 0, maxScroll = 0;
+  /* Липкая панель с заявкой: приезжает, когда первый экран прочитан.
+     Показывать её сразу нельзя - она перекрыла бы первый экран, ради
+     которого человек и пришёл. Видима панель только на телефоне, это
+     решает CSS; здесь мы лишь ставим класс. */
+  var mcta = $("#mcta");
   var secs = $$("section[id]");
   function onScroll() {
     var y = window.scrollY || 0;
@@ -527,6 +556,7 @@ function boot() {
       hdr.classList.toggle("hide", y > 320 && y > lastY && !drawer.classList.contains("on"));
     }
     if (toTop) toTop.classList.toggle("on", y > 700);
+    if (mcta) mcta.classList.toggle("on", y > innerHeight * 0.9);
     lastY = y;
 
     /* Глубина прочтения - в аналитику, по четвертям */
@@ -566,10 +596,23 @@ function boot() {
   /* Регионы и поиск */
   var tabs = $("#regTabs");
   if (tabs) {
-    tabs.innerHTML = '<button class="on" data-r="all">' + esc(t("infra.all")) + "</button>" +
-      GEO.REGIONS.map(function (r, i) {
-        return '<button data-r="' + i + '">' + esc(r[state.lang] || r.ru) + "</button>";
-      }).join("");
+    /* Пересобираем вкладки отдельной функцией: при смене языка подписи регионов
+       должны переехать вместе с остальной страницей, а выбранная вкладка -
+       остаться выбранной. Обработчик висит на контейнере, поэтому перерисовка
+       кнопок его не рвёт. */
+    function paintTabs() {
+      var cur = state.region;
+      tabs.innerHTML = '<button data-r="all">' + esc(t("infra.all", "Все регионы")) + "</button>" +
+        GEO.REGIONS.map(function (r, i) {
+          return '<button data-r="' + i + '">' + esc(r[state.lang] || r.ru) + "</button>";
+        }).join("");
+      $$("button", tabs).forEach(function (b) {
+        var mine = b.dataset.r === "all" ? cur == null : +b.dataset.r === cur;
+        b.classList.toggle("on", mine);
+      });
+    }
+    paintTabs();
+    document.addEventListener("rc:lang", paintTabs);
     tabs.addEventListener("click", function (e) {
       var b = e.target.closest("button");
       if (!b) return;

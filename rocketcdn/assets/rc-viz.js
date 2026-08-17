@@ -14,11 +14,15 @@ var REDUCE = matchMedia("(prefers-reduced-motion: reduce)").matches;
 /* Переводчик приходит из rc-app вместе с событием смены языка.
    До первого события берём русский словарь напрямую. */
 var TR = null;
+/* Ключ наружу не выходит: не нашлось перевода - отдаём запасную
+   подпись из места вызова, а на самый крайний случай пустую строку.
+   Раньше здесь возвращался сам ключ, и при потерянном словаре у
+   виджетов на экране стояло служебное «viz.ms» вместо «мс». */
 function t(key, fallback) {
-  if (TR) { var v = TR(key); if (v && v !== key) return v; }
+  if (TR) { var v = TR(key); if (v && v !== key && v !== "") return v; }
   var d = g.RC_I18N && g.RC_I18N[document.documentElement.lang === "en" ? "en" : "ru"];
   if (d && d[key]) return d[key];
-  return fallback != null ? fallback : key;
+  return fallback != null ? fallback : "";
 }
 function lang() { return document.documentElement.lang === "en" ? "en" : "ru"; }
 
@@ -69,7 +73,7 @@ function latency(box) {
   var max = 380;
   box.innerHTML = rows.map(function (r) {
     return '<div class="lat-row ' + r.cls + '">' +
-      '<div class="lat-top"><span>' + r.label + '</span><b data-ms="' + r.ms + '">0 ' + t("viz.ms") + '</b></div>' +
+      '<div class="lat-top"><span>' + r.label + '</span><b data-ms="' + r.ms + '">0 ' + t("viz.ms", "мс") + '</b></div>' +
       '<div class="lat-track"><i style="width:0"></i></div></div>';
   }).join("");
 
@@ -79,7 +83,7 @@ function latency(box) {
       var ms = +b.dataset.ms;
       setTimeout(function () {
         anim(1300, function (k) {
-          b.textContent = fmt(ms * k) + " " + t("viz.ms");
+          b.textContent = fmt(ms * k) + " " + t("viz.ms", "мс");
           bar.style.width = (ms / max * 100 * k).toFixed(2) + "%";
         });
       }, i * 260);
@@ -160,7 +164,7 @@ function wave(box) {
   box.appendChild(cv);
   var readout = document.createElement("div");
   readout.className = "wave-read";
-  readout.innerHTML = '<b>0</b><span>' + esc(t("viz.gbps")) + "</span>";
+  readout.innerHTML = '<b>0</b><span>' + esc(t("viz.gbps", "Гбит/с")) + "</span>";
   box.appendChild(readout);
 
   var x = cv.getContext("2d");
@@ -315,7 +319,7 @@ function ticker(box) {
   var dec  = +(box.dataset.dec || 0);
   var drift = +(box.dataset.drift || 0);
   var suffix = box.dataset.suffix || "";
-  if (suffix === " Тбит/с" || suffix === " Tbps") suffix = t("viz.tbps");
+  if (suffix === " Тбит/с" || suffix === " Tbps") suffix = t("viz.tbps", suffix);
   var out = document.createElement("b");
   out.textContent = fmt(from, dec) + suffix;
   box.insertBefore(out, box.firstChild);

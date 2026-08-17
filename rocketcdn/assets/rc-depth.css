@@ -1,0 +1,384 @@
+/* ═══════════════════════════════════════════════════════════
+   Rocket CDN · объём вёрстки
+
+   Клиент сказал прямо: «всё плоское». И был прав. Наклон под
+   курсором объёма не даёт: поворачивается картинка целиком, а
+   картинка как была плоской, так и осталась.
+
+   Объём появляется тогда, когда у предмета есть внутренняя
+   толщина. Поэтому здесь карточка перестаёт быть прямоугольником
+   и становится коробкой: значок висит в 48 пикселях над дном,
+   число в 34, заголовок в 24, текст в 10, фон на нуле. Точка
+   схода одна на всю сетку, она задана контейнеру, а не каждой
+   карточке по отдельности - только так соседние карточки
+   выглядят снятыми одним объективом, а не наклеенными порознь.
+
+   Ни одного нового контекста WebGL здесь нет и быть не может:
+   бюджет занят ракетой, глобусом, стойкой и рубкой. Всё, что
+   ниже, рисует композитор браузера, и стоит это ноль.
+
+   Файл подключается ПОСЛЕ rc.css и rc-compact.css: он спорит с
+   ними намеренно и должен побеждать.
+   ═══════════════════════════════════════════════════════════ */
+
+:root {
+  /* Плотность «запечённого» стекла. Живое размытие фона с объёмом
+     несовместимо (см. ниже), поэтому там, где размытие снимаем,
+     подкладываем плотность заливкой.
+
+     Величина не на глаз: размытие на 9 пикселей не только смазывало
+     фон, оно ещё и гасило его контраст. Снимаем размытие - под
+     карточками сразу проступает ракета во всю резкость, и текст на
+     «Стриминге», «Промахе кэша» и «Точках присутствия» читается
+     через силу. Проверено снимками: разборчиво начинается с .7,
+     ниже - серая каша поверх факела. Над ровным фоном страницы
+     заливка того же тона невидима, платим только там, где под
+     карточкой действительно что-то есть. */
+  --rcd-baked: rgba(6, 14, 25, .72);
+}
+[data-theme="light"] { --rcd-baked: rgba(255, 255, 255, .86); }
+
+/* ── Сцена: общая точка схода ────────────────────────────────
+   Перспектива живёт на контейнере сетки, а не на карточке. Если
+   дать перспективу каждой карточке, у каждой будет свой зритель
+   и сетка развалится на несвязанные плитки. */
+.rcd-stage {
+  perspective: 1200px;
+  perspective-origin: 50% 44%;
+}
+
+/* ── Карточка как объём ──────────────────────────────────────
+   Четыре свойства молча убивают preserve-3d: overflow не visible,
+   backdrop-filter, filter и isolation. Браузер в этих случаях
+   схлопывает потомков в плоскость, и никакие translateZ уже не
+   работают. Проверено замером в Chromium: у ребёнка с
+   translateZ(60px) под перспективой 1200px ширина обязана вырасти
+   с 40 до 42.1 пикселя; с любым из четырёх свойств она остаётся
+   ровно 40. Поэтому здесь мы их снимаем - осознанно и адресно.
+
+   transform помечен !important не из лени: карточкам пишет
+   transform ещё и rc-scroll.js (свой лёгкий наклон), а править
+   чужой файл в этой партии нельзя. Приоритет разводит двух
+   хозяев без гонки за последний кадр. */
+.rcd {
+  transform-style: preserve-3d;
+  overflow: visible;
+  isolation: auto;
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+  transform:
+    translate3d(0, calc(var(--rcd-y, 0px) + var(--rcd-lift, 0px)), 0)
+    rotateX(var(--rcd-rx, 0deg))
+    rotateY(var(--rcd-ry, 0deg))
+    translateZ(var(--rcd-tz, 0px)) !important;
+  /* transform в списке переходов нет намеренно: его ведёт пружина
+     в rc-depth.js, и любой CSS-переход поверх неё даёт резину. */
+  transition:
+    box-shadow .38s var(--ease),
+    border-color .3s var(--ease),
+    background-color .3s var(--ease) !important;
+}
+
+/* Слой композитора заводим только тем карточкам, которые сейчас
+   реально считаются. Промоутить всю страницу - верный способ
+   съесть память на телефоне. */
+.rcd-live { will-change: transform; }
+
+/* Парение из rc.css отдаём пружине: она умеет останавливаться при
+   быстрой прокрутке и в режимах деградации, а keyframes не умеет. */
+.rcd.float-3d { animation: none; }
+
+/* Компенсация снятого размытия там, где оно было включено */
+@media (min-width: 1024px) and (hover: hover) {
+  .rcd { background-color: var(--rcd-baked); }
+}
+
+/* ── Слои внутри карточки ────────────────────────────────────
+   Множитель --rcd-k разводит слои по мере входа карточки в кадр:
+   ноль на краю экрана, единица в рабочей зоне. Человек листает и
+   видит, как карточка раскрывается в глубину и складывается
+   обратно. */
+.rcd > * { transform: translateZ(calc(var(--rcd-k, 1) * 10px)); }
+.rcd p,
+.rcd ul,
+.rcd ol { transform: translateZ(calc(var(--rcd-k, 1) * 10px)); }
+.rcd h3,
+.rcd h4 { transform: translateZ(calc(var(--rcd-k, 1) * 24px)); }
+.rcd .num,
+.rcd .step-ms,
+.rcd .lbl,
+.rcd .tick { transform: translateZ(calc(var(--rcd-k, 1) * 34px)); }
+.rcd .card-ico { transform: translateZ(calc(var(--rcd-k, 1) * 48px)); }
+
+/* ── Значок отрывается от плитки ─────────────────────────────
+   Плитка на 48, стекло значка ещё на 12 выше, ореол на 10 ниже
+   плитки. Двенадцать пикселей разлёта - ровно та величина, на
+   которой значок читается как предмет, а не как картинка. */
+.rcd .card-ico {
+  position: relative;
+  transform-style: preserve-3d;
+  overflow: visible;
+}
+.rcd .card-ico > svg { transform: translateZ(calc(var(--rcd-k, 1) * 12px)); }
+.rcd .card-ico::after {
+  content: '';
+  position: absolute; inset: -26%;
+  border-radius: 50%;
+  background: radial-gradient(circle at 50% 46%,
+    rgba(138, 89, 246, .60) 0%,
+    rgba(66, 178, 220, .26) 46%,
+    rgba(66, 178, 220, 0) 72%);
+  filter: blur(11px);
+  opacity: calc(var(--rcd-k, 1) * .55);
+  transform: translateZ(calc(var(--rcd-k, 1) * -10px));
+  pointer-events: none;
+}
+.rcd:hover .card-ico::after { opacity: calc(var(--rcd-k, 1) * .9); }
+[data-theme="light"] .rcd .card-ico::after {
+  background: radial-gradient(circle at 50% 46%,
+    rgba(138, 89, 246, .40) 0%,
+    rgba(10, 88, 151, .18) 46%,
+    rgba(10, 88, 151, 0) 72%);
+}
+
+/* ── Перелив по стеклу ───────────────────────────────────────
+   Отдельный элемент, а не псевдоэлемент: у .card, .dc и
+   .viz-card псевдоэлементы уже заняты подсветкой курсора,
+   размытым пятном и струёй ракеты. Заодно перелив получает свою
+   высоту над поверхностью и при наклоне едет отдельно от текста -
+   как настоящий отблеск на стекле. */
+.rcd-sheen {
+  position: absolute; inset: 0;
+  border-radius: inherit;
+  overflow: hidden;
+  pointer-events: none;
+  transform: translateZ(calc(var(--rcd-k, 1) * 2px));
+  background: linear-gradient(var(--rcd-gl, 118deg),
+    rgba(255, 255, 255, .14) 0%,
+    rgba(255, 255, 255, .03) 32%,
+    rgba(255, 255, 255, 0) 58%);
+  opacity: 0;
+  transition: opacity .35s var(--ease);
+}
+.rcd:hover > .rcd-sheen { opacity: 1; }
+/* Блик проходит по стеклу сдвигом, а не свойством left: left это
+   раскладка, и полторы секунды подряд браузер пересчитывал бы её
+   каждый кадр - ровно то, от чего этот файл и уходит. Сдвиг стоит
+   ноль, его целиком делает композитор.
+   Порядок в списке важен: сдвиг записан перед поворотом, поэтому
+   блик едет строго по горизонтали, а не по своей наклонной оси.
+   525% - это те же 168% ширины карточки, что и раньше (ширина
+   блика 32%, проценты в сдвиге считаются от неё). */
+.rcd:hover > .rcd-sheen::before {
+  content: '';
+  position: absolute; top: -60%; bottom: -60%; left: -50%; width: 32%;
+  background: linear-gradient(96deg,
+    rgba(255, 255, 255, 0),
+    rgba(255, 255, 255, .20),
+    rgba(255, 255, 255, 0));
+  transform: translate3d(0, 0, 0) rotate(13deg);
+  animation: rcdSweep 1.05s var(--ease) 1 both;
+}
+@keyframes rcdSweep {
+  from { transform: translate3d(0, 0, 0) rotate(13deg); }
+  to   { transform: translate3d(525%, 0, 0) rotate(13deg); }
+}
+[data-theme="light"] .rcd-sheen {
+  background: linear-gradient(var(--rcd-gl, 118deg),
+    rgba(255, 255, 255, .82) 0%,
+    rgba(255, 255, 255, .22) 32%,
+    rgba(255, 255, 255, 0) 58%);
+}
+
+/* ── Тень как у предмета, а не как у наклейки ────────────────
+   Дальняя тень уезжает отдельным слоем на 60 пикселей вглубь и
+   при наклоне ползёт в противоположную сторону. Даём её только
+   тем карточкам, которые сейчас живые: на всю сетку это дорого. */
+.rcd-live {
+  box-shadow:
+    inset 0 1px 0 var(--gl-top),
+    0 4px 8px -6px rgba(4, 10, 18, .32),
+    0 18px 34px -14px rgba(4, 10, 18, .55),
+    0 46px 80px -28px rgba(4, 10, 18, .74),
+    0 0 52px -18px rgba(66, 178, 220, .30);
+}
+[data-theme="light"] .rcd-live {
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, .9),
+    0 4px 8px -6px rgba(9, 19, 32, .10),
+    0 18px 34px -14px rgba(9, 19, 32, .14),
+    0 46px 80px -28px rgba(9, 19, 32, .16),
+    0 0 52px -18px rgba(66, 178, 220, .18);
+}
+
+/* ── Параллакс глубины у заголовков ──────────────────────────
+   Титр и подзаголовок едут с разной скоростью, между ними
+   появляется воздух. Пишем в translate, а не в transform:
+   transform у этих блоков уже занят появлением .rv, а два
+   хозяина на одном свойстве - это дрожание. */
+.rcd-head { translate: 0 var(--rcd-y, 0px); }
+
+/* ── Луч под заголовком ──────────────────────────────────────
+   Подчёркивание не рисуется, а прочерчивается один раз при
+   появлении секции. ::after у .sec-h занят подсветкой от факела
+   ракеты, поэтому луч живёт в ::before. */
+.sec-h::before {
+  content: '';
+  position: absolute; left: 0; right: 12%; bottom: -8px;
+  height: 2px; border-radius: 2px;
+  background: linear-gradient(90deg,
+    rgba(66, 178, 220, 0) 0%,
+    var(--cyan) 22%,
+    #CFE9F5 48%,
+    var(--violet) 74%,
+    rgba(138, 89, 246, 0) 100%);
+  transform: scaleX(0);
+  transform-origin: 0 50%;
+  opacity: 0;
+  pointer-events: none;
+}
+.rv.on .sec-h::before { animation: rcdBeam 1.15s var(--ease) .18s 1 both; }
+@keyframes rcdBeam {
+  0%   { transform: scaleX(0);   opacity: 0; }
+  16%  { opacity: 1; }
+  64%  { transform: scaleX(1);   opacity: .95; }
+  100% { transform: scaleX(1);   opacity: 0; }
+}
+
+/* ── Появление секции строками ───────────────────────────────
+   Шаг 60 мс. Индекс проставляет rc-depth.js по месту элемента в
+   своей строке, поэтому лесенка честная, а не прибитая к
+   классам rv-d1..rv-d6. */
+.rcd-row { transition-delay: calc(var(--rcd-i, 0) * 60ms); }
+
+/* ── Живая рамка у главных кнопок ────────────────────────────
+   Рамка в rc.css уже есть, но она ровная и почти не видна.
+   Ускоряем пробег блика и добавляем дыхание яркости: кнопка
+   становится единственным движущимся предметом в спокойном
+   кадре, и глаз идёт к ней сам. */
+.btn-p::before {
+  background-size: 300% 100%;
+  opacity: .5;
+  animation: rcdBtnEdge 4.4s linear infinite;
+}
+.btn-p:hover::before { opacity: 1; animation-duration: 2.2s; }
+@keyframes rcdBtnEdge {
+  0%   { background-position: 0 0;     opacity: .45; }
+  50%  { opacity: .92; }
+  100% { background-position: 300% 0;  opacity: .45; }
+}
+
+/* ═══════════════════════════════════════════════════════════
+   Выключатели
+
+   Объём - украшение. Он уходит первым и целиком, как только
+   человек попросил меньше движения, устройство перестало
+   успевать или страницу листают на перемотке.
+   ═══════════════════════════════════════════════════════════ */
+
+/* Быстрая прокрутка: наклоны в ноль, переливы гасим. Слои по Z
+   оставляем - они статические и не стоят ничего. */
+html.rc-fast .rcd {
+  transform: translate3d(0, 0, 0) !important;
+}
+html.rc-fast .rcd-sheen,
+html.rc-fast .sec-h::before { opacity: 0 !important; animation: none !important; }
+html.rc-fast .rcd-head { translate: 0 !important; }
+/* Живая рамка кнопки гоняет background-position, а это перерисовка
+   каждый кадр. На перемотке её всё равно никто не разглядывает -
+   отдаём кадры прокрутке. */
+html.rc-fast .btn-p::before { animation: none !important; }
+
+/* Ступень 1: снимаем свечения */
+html[data-degrade="1"] .rcd .card-ico::after { display: none; }
+/* Ступень 2: снимаем переливы и лучи */
+html[data-degrade="2"] .rcd-sheen,
+html[data-degrade="2"] .sec-h::before { display: none; }
+html[data-degrade="2"] .btn-p::before { animation: none; }
+/* Ступень 3: объём выключен полностью */
+html[data-degrade="3"] .rcd-stage { perspective: none; }
+html[data-degrade="3"] .rcd,
+html[data-degrade="3"] .rcd > *,
+html[data-degrade="3"] .rcd h3,
+html[data-degrade="3"] .rcd h4,
+html[data-degrade="3"] .rcd p,
+html[data-degrade="3"] .rcd ul,
+html[data-degrade="3"] .rcd .num,
+html[data-degrade="3"] .rcd .card-ico,
+html[data-degrade="3"] .rcd .card-ico > svg { transform: none !important; }
+html[data-degrade="3"] .rcd-head { translate: 0 !important; }
+
+/* Запасной сценарий и просьба о покое: страница остаётся плоской
+   и полностью рабочей. */
+html.rc-reduced .rcd-stage,
+html.rc-still .rcd-stage { perspective: none; }
+html.rc-reduced .rcd,
+html.rc-reduced .rcd > *,
+html.rc-reduced .rcd h3,
+html.rc-reduced .rcd h4,
+html.rc-reduced .rcd p,
+html.rc-reduced .rcd ul,
+html.rc-reduced .rcd .num,
+html.rc-reduced .rcd .card-ico,
+html.rc-reduced .rcd .card-ico > svg,
+html.rc-still .rcd,
+html.rc-still .rcd > *,
+html.rc-still .rcd h3,
+html.rc-still .rcd h4,
+html.rc-still .rcd p,
+html.rc-still .rcd ul,
+html.rc-still .rcd .num,
+html.rc-still .rcd .card-ico,
+html.rc-still .rcd .card-ico > svg { transform: none !important; }
+html.rc-reduced .rcd-sheen,
+html.rc-reduced .rcd .card-ico::after,
+html.rc-reduced .sec-h::before,
+html.rc-still .rcd-sheen,
+html.rc-still .rcd .card-ico::after,
+html.rc-still .sec-h::before { display: none; }
+html.rc-reduced .rcd-head,
+html.rc-still .rcd-head { translate: 0 !important; }
+html.rc-reduced .btn-p::before,
+html.rc-still .btn-p::before { animation: none; opacity: .55; }
+html.rc-reduced .rcd-row,
+html.rc-still .rcd-row { transition-delay: 0s; }
+
+@media (prefers-reduced-motion: reduce) {
+  .rcd-stage { perspective: none; }
+  .rcd,
+  .rcd > *,
+  .rcd h3,
+  .rcd h4,
+  .rcd p,
+  .rcd ul,
+  .rcd .num,
+  .rcd .card-ico,
+  .rcd .card-ico > svg { transform: none !important; }
+  .rcd-head { translate: 0 !important; }
+  .rcd-sheen,
+  .rcd .card-ico::after,
+  .sec-h::before { display: none; }
+  .btn-p::before { animation: none; opacity: .55; }
+  .rcd-row { transition-delay: 0s; }
+}
+
+/* На телефоне наводить нечем: наклона под курсором нет, объём
+   держат разворот от положения в кадре и разлёт слоёв. Амплитуды
+   вдвое мягче - экран близко к глазу, и на нём перспектива
+   работает заметно сильнее. */
+@media (hover: none) {
+  .rcd-stage { perspective: 1500px; }
+  .rcd .card-ico { transform: translateZ(calc(var(--rcd-k, 1) * 30px)); }
+  .rcd .card-ico > svg { transform: translateZ(calc(var(--rcd-k, 1) * 8px)); }
+  .rcd h3,
+  .rcd h4 { transform: translateZ(calc(var(--rcd-k, 1) * 15px)); }
+  .rcd .num,
+  .rcd .step-ms,
+  .rcd .lbl,
+  .rcd .tick { transform: translateZ(calc(var(--rcd-k, 1) * 21px)); }
+  .rcd > *,
+  .rcd p,
+  .rcd ul,
+  .rcd ol { transform: translateZ(calc(var(--rcd-k, 1) * 6px)); }
+  .rcd-sheen { display: none; }
+}
