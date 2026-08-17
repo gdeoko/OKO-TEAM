@@ -1157,6 +1157,7 @@ Rocket.prototype.publish = function () {
 };
 
 Rocket.prototype.tick = function (ts) {
+  if (document.documentElement.classList.contains("rc-flying")) { this._last = 0; return; }
   if (!this.running) return;
   this._raf = requestAnimationFrame(this.tick.bind(this));
 

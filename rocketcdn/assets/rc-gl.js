@@ -114,12 +114,15 @@ g.RC_GL = {
   }
 
   if (!want) {
-    /* Ждём, пока подпишутся, и сообщаем: объёмного слоя не будет */
+    /* Ждём, пока подпишутся, и сообщаем: объёмного слоя не будет.
+       Класс на документе прячет всё, что без объёма не работает:
+       кнопки полёта не должны обещать то, чего не случится. */
+    document.documentElement.classList.add("rc-no3d");
     setTimeout(function () { fire("rc:no3d"); }, 0);
     return;
   }
 
-  var FILES = ["vendor/three.min.js", "rc-globe3d.js", "rc-rack.js", "rc-rocket.js", "rc-interior.js"];
+  var FILES = ["vendor/three.min.js", "rc-globe3d.js", "rc-rack.js", "rc-rocket.js", "rc-interior.js", "rc-flight.js"];
   var started = false;
 
   function load(i) {

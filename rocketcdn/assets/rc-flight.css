@@ -1,0 +1,259 @@
+/* ═══════════════════════════════════════════════════════════
+   Rocket CDN · демо-полёт, оформление
+
+   Полёт - отдельная сцена поверх сайта: чёрный кадр, холст на
+   весь экран, тонкий HUD в фирменной палитре и панель кабины
+   снизу. Всё движение холста считает rc-flight.js, здесь только
+   вид и переходы входа-выхода.
+   ═══════════════════════════════════════════════════════════ */
+
+.rc-flight {
+  position: fixed; inset: 0; z-index: 220;
+  background: #02050c;
+  opacity: 0; visibility: hidden;
+  transition: opacity .7s var(--ease), visibility 0s linear .7s;
+  overscroll-behavior: contain;
+  touch-action: none;
+  cursor: crosshair;
+}
+.rc-flight.on {
+  opacity: 1; visibility: visible;
+  transition: opacity .7s var(--ease);
+}
+.rcf-cv { position: absolute; inset: 0; width: 100%; height: 100%; display: block; }
+
+/* Пока сайт в полёте, страница под ним не прокручивается и не
+   тратит ни кадра на свои сцены */
+html.rc-flying { overflow: hidden; }
+html.rc-flying body { overflow: hidden; }
+
+/* ── Кабина ──────────────────────────────────────────────────
+   Присутствие корабля: тонкий силуэт панели снизу и лёгкое
+   затемнение углов, будто смотришь из рубки. Панель оседает на
+   разгоне на пару пикселей - перегрузка. */
+.rcf-cockpit {
+  position: absolute; inset: 0; pointer-events: none;
+  background:
+    radial-gradient(ellipse 140% 100% at 50% 42%, transparent 64%, rgba(1,3,8,.85) 100%);
+}
+.rcf-cockpit::after {
+  content: ''; position: absolute; left: 0; right: 0; bottom: 0;
+  height: clamp(70px, 13vh, 150px);
+  background-image: url("gen/console.webp");
+  background-size: 118% auto;
+  background-position: 50% 74%;
+  opacity: .62;
+  -webkit-mask-image: linear-gradient(180deg, transparent 0%, #000 55%);
+  mask-image: linear-gradient(180deg, transparent 0%, #000 55%);
+  filter: saturate(1.1) brightness(.8);
+  transform: translateY(calc(var(--rcf-g, 0) * 1px));
+  transition: transform .3s var(--ease);
+}
+/* Стойки кабины по краям: едва заметные тёмные рёбра */
+.rcf-cockpit::before {
+  content: ''; position: absolute; inset: 0;
+  background:
+    linear-gradient(100deg, rgba(2,5,12,.8) 0%, transparent 7%),
+    linear-gradient(260deg, rgba(2,5,12,.8) 0%, transparent 7%);
+}
+
+/* ── HUD ─────────────────────────────────────────────────────ы */
+.rcf-hud {
+  position: absolute; left: 0; right: 0; bottom: 0; top: 0;
+  pointer-events: none;
+  font-family: var(--f-body, "Golos Text", sans-serif);
+}
+.rcf-cap {
+  position: absolute; left: 50%; top: clamp(14px, 4vh, 40px);
+  transform: translateX(-50%);
+  color: #CFE9F5;
+  font-size: clamp(11px, 1.4vw, 14px);
+  letter-spacing: .18em;
+  white-space: nowrap;
+  padding: 10px 18px;
+  border: 1px solid rgba(66,178,220,.35);
+  border-radius: 999px;
+  background: rgba(4,10,18,.55);
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+  opacity: 0;
+}
+.rcf-cap.in { animation: rcfCap .6s var(--ease) forwards; }
+@keyframes rcfCap {
+  from { opacity: 0; transform: translateX(-50%) translateY(-8px); }
+  to   { opacity: 1; transform: translateX(-50%) translateY(0); }
+}
+
+.rcf-track {
+  position: absolute; left: 50%; bottom: clamp(12px, 3.2vh, 30px);
+  transform: translateX(-50%);
+  width: min(420px, 56vw); height: 2px;
+  background: rgba(207,233,245,.16);
+  border-radius: 2px;
+}
+.rcf-track i {
+  display: block; height: 100%; width: 0;
+  background: linear-gradient(90deg, var(--cyan, #42B2DC), var(--violet, #8A59F6));
+  border-radius: 2px;
+  box-shadow: 0 0 12px rgba(66,178,220,.8);
+}
+
+.rcf-hint {
+  position: absolute; left: 50%; bottom: clamp(28px, 6.5vh, 60px);
+  transform: translateX(-50%);
+  color: rgba(207,233,245,.75);
+  font-size: clamp(11px, 1.3vw, 13px);
+  letter-spacing: .06em;
+  white-space: nowrap;
+  animation: rcfPulse 2.4s ease-in-out infinite;
+  transition: opacity .6s var(--ease);
+}
+.rcf-hint.off { opacity: 0; }
+@keyframes rcfPulse { 0%,100% { opacity: .55 } 50% { opacity: 1 } }
+
+.rcf-speed {
+  position: absolute; right: clamp(14px, 3vw, 40px); bottom: clamp(12px, 3.2vh, 30px);
+  color: #CFE9F5; text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+.rcf-speed b {
+  display: block;
+  font-family: var(--f-head, "Unbounded", sans-serif);
+  font-size: clamp(18px, 2.6vw, 28px);
+  font-weight: 600;
+  text-shadow: 0 0 18px rgba(66,178,220,.6);
+}
+.rcf-speed span { font-size: 10px; letter-spacing: .22em; opacity: .6; }
+
+/* ── Кнопки ──────────────────────────────────────────────────ы */
+.rcf-close {
+  position: absolute; top: clamp(12px, 3vh, 28px); right: clamp(12px, 3vw, 28px);
+  width: 44px; height: 44px;
+  display: grid; place-items: center;
+  color: #CFE9F5;
+  background: rgba(4,10,18,.6);
+  border: 1px solid rgba(66,178,220,.35);
+  border-radius: 50%;
+  cursor: pointer;
+  transition: border-color .25s, box-shadow .25s;
+}
+.rcf-close:hover { border-color: rgba(66,178,220,.8); box-shadow: 0 0 24px -6px rgba(66,178,220,.7); }
+.rcf-close svg { width: 18px; height: 18px; }
+
+.rcf-return {
+  position: absolute; left: 50%; bottom: clamp(60px, 14vh, 130px);
+  transform: translateX(-50%) translateY(14px);
+  padding: 14px 30px;
+  font-family: var(--f-body, "Golos Text", sans-serif);
+  font-size: 14px; letter-spacing: .08em;
+  color: #061019;
+  background: linear-gradient(135deg, var(--cyan, #42B2DC), #7BD1EC);
+  border: 0; border-radius: 999px;
+  cursor: pointer;
+  opacity: 0; pointer-events: none;
+  transition: opacity .6s var(--ease), transform .6s var(--ease);
+  box-shadow: 0 0 40px -8px rgba(66,178,220,.9);
+}
+.rcf-return.on { opacity: 1; pointer-events: auto; transform: translateX(-50%) translateY(0); }
+
+.rcf-fade {
+  position: absolute; inset: 0; pointer-events: none;
+  background: #02050c;
+  opacity: 0; transition: opacity .6s;
+}
+
+/* ── Плавающая кнопка на сайте ───────────────────────────────
+   Живёт слева снизу, чтобы не спорить с кнопкой «наверх». В кадре
+   только после первого экрана: на площадке старт ещё не объявлен. */
+.rcf-fab {
+  position: fixed; left: clamp(12px, 2.6vw, 28px); bottom: clamp(12px, 3vh, 28px);
+  z-index: 90;
+  display: flex; align-items: center; gap: 9px;
+  padding: 12px 18px 12px 14px;
+  font-family: var(--f-body, "Golos Text", sans-serif);
+  font-size: 13px; font-weight: 600; letter-spacing: .1em;
+  color: #CFE9F5;
+  background: linear-gradient(158deg, rgba(9,19,32,.92), rgba(5,12,21,.96));
+  border: 1px solid rgba(66,178,220,.4);
+  border-radius: 999px;
+  cursor: pointer;
+  opacity: 0; pointer-events: none;
+  transform: translateY(14px);
+  transition: opacity .45s var(--ease), transform .45s var(--ease), box-shadow .3s;
+  box-shadow: 0 14px 34px -14px rgba(0,0,0,.9), 0 0 30px -12px rgba(66,178,220,.55);
+}
+.rcf-fab.on { opacity: 1; pointer-events: auto; transform: translateY(0); }
+.rcf-fab:hover { box-shadow: 0 14px 34px -12px rgba(0,0,0,.9), 0 0 42px -8px rgba(66,178,220,.85); }
+.rcf-fab svg { width: 19px; height: 19px; color: var(--cyan, #42B2DC); }
+html.rc-flying .rcf-fab { opacity: 0; pointer-events: none; }
+
+html[data-theme="light"] .rcf-fab {
+  color: #0A2A40;
+  background: linear-gradient(158deg, rgba(255,255,255,.95), rgba(238,246,252,.98));
+  border-color: rgba(10,88,151,.35);
+}
+html[data-theme="light"] .rcf-fab svg { color: #0A5897; }
+
+/* Большая кнопка в середине сайта: вход в полёт по сценарию */
+.rcf-cta {
+  position: relative; z-index: 1;
+  display: flex; flex-direction: column; align-items: center; gap: 14px;
+  text-align: center;
+  padding: clamp(30px, 6vh, 64px) 20px;
+}
+.rcf-cta .rcf-cta-btn {
+  display: inline-flex; align-items: center; gap: 12px;
+  padding: 18px 34px;
+  font-family: var(--f-head, "Unbounded", sans-serif);
+  font-size: clamp(14px, 1.8vw, 18px); font-weight: 600; letter-spacing: .1em;
+  color: #061019;
+  background: linear-gradient(135deg, var(--cyan, #42B2DC), #86D6F0);
+  border: 0; border-radius: 999px;
+  cursor: pointer;
+  box-shadow: 0 0 0 1px rgba(207,233,245,.25), 0 20px 50px -18px rgba(66,178,220,.8);
+  transition: transform .3s var(--ease), box-shadow .3s var(--ease);
+}
+.rcf-cta .rcf-cta-btn:hover { transform: translateY(-3px); box-shadow: 0 0 0 1px rgba(207,233,245,.4), 0 26px 60px -16px rgba(66,178,220,1); }
+.rcf-cta .rcf-cta-btn svg { width: 22px; height: 22px; }
+.rcf-cta .rcf-cta-note {
+  color: var(--tx-soft, rgba(207,233,245,.7));
+  font-size: 13px; letter-spacing: .04em;
+}
+
+/* Слабое устройство и просьба меньше движения: полёта нет, кнопки
+   не обещают того, чего не будет */
+html.rc-reduced .rcf-fab, html.rc-reduced .rcf-cta,
+html.rc-no3d .rcf-fab, html.rc-no3d .rcf-cta,
+html[data-degrade="3"] .rcf-fab {
+  display: none !important;
+}
+@media (prefers-reduced-motion: reduce) {
+  .rcf-fab, .rcf-cta, .rc-flight { display: none !important; }
+}
+
+@media (max-width: 760px) {
+  .rcf-fab { padding: 11px 15px 11px 12px; font-size: 12px; }
+  .rcf-cap { max-width: 92vw; white-space: normal; text-align: center; letter-spacing: .1em; }
+  .rcf-speed { display: none; }
+  .rcf-cockpit::after { background-size: 190% auto; }
+}
+
+/* ── Видеофоны секций ────────────────────────────────────────
+   Луп лежит под содержимым секции и растворяется к краям, чтобы
+   врастать в общий космос страницы, а не выглядеть телевизором. */
+section.has-vidbg { position: relative; }
+section.has-vidbg > .wrap { position: relative; z-index: 1; }
+.rc-vidbg {
+  position: absolute; inset: 0;
+  width: 100%; height: 100%;
+  object-fit: cover;
+  z-index: 0; pointer-events: none;
+  opacity: 0; transition: opacity 1.2s var(--ease);
+  mask-image: linear-gradient(180deg, transparent 0%, #000 16%, #000 84%, transparent 100%);
+  -webkit-mask-image: linear-gradient(180deg, transparent 0%, #000 16%, #000 84%, transparent 100%);
+}
+.rc-vidbg.on { opacity: .38; }
+html[data-theme="light"] .rc-vidbg.on { opacity: .16; }
+@media (max-width: 760px) {
+  .rc-vidbg.on { opacity: .3; }
+}

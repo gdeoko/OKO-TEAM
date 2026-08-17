@@ -40,7 +40,7 @@ var VOL_QUIET = 0.16;                 /* когда человек в форме
 var FADE = 6.0;                       /* секунд на проявление */
 
 var el = null, want = 0, cur = 0, raf = null, last = 0;
-var armed = false, started = false, killed = false, duckUntil = 0, heard = false;
+var armed = false, started = false, killed = false, duckUntil = 0, heard = false, boosted = false;
 
 function off() {
   try { return localStorage.getItem(KEY) === "off"; } catch (e) { return false; }
@@ -224,17 +224,17 @@ function boot() {
      возвращается, когда сцена снова становится полётом. */
   addEventListener("rc:act", function (e) {
     var a = e && e.detail && e.detail.act;
-    if (!want) return;
+    if (!want || boosted) return;
     want = (a === "console" || a === "manual") ? VOL_QUIET : VOL;
   });
   doc.addEventListener("focusin", function (e) {
-    if (!want) return;
+    if (!want || boosted) return;
     var n = e.target && e.target.tagName;
     if (n === "INPUT" || n === "TEXTAREA" || n === "SELECT") want = VOL_QUIET;
   });
   doc.addEventListener("focusout", function () {
     if (want) setTimeout(function () {
-      if (!want) return;
+      if (!want || boosted) return;
       var a = doc.activeElement && doc.activeElement.tagName;
       if (a !== "INPUT" && a !== "TEXTAREA" && a !== "SELECT") {
         var act = g.RC_SCENE && g.RC_SCENE.act;
@@ -260,6 +260,13 @@ g.RC_MUSIC = {
   on: on,
   off: silence,
   quiet: function (yes) { if (want) want = yes ? VOL_QUIET : VOL; },
+  /* Полёт: музыка встаёт в полный рост - клиент просил громче,
+     когда летим. Выход из полёта возвращает фоновый уровень. */
+  boost: function (yes) {
+    boosted = !!yes;
+    if (yes) { if (!want) on(); want = 0.55; }
+    else if (want) want = VOL;
+  },
   duck: function (ms) { duckUntil = performance.now() + (ms || 2200); },
   playing: function () { return !!(el && !el.paused && !el.muted && cur > 0.01); },
   level: function () { return cur; },

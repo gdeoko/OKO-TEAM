@@ -56,9 +56,9 @@ code{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:12.5px;
 
 <div class="top">
   <span class="badge">Для личного кабинета</span>
-  <h1>Три экрана загрузки Rocket CDN</h1>
+  <h1>Экраны загрузки Rocket CDN</h1>
   <p class="lead">
-    Объёмные, с настоящим движением и звуком. Ни одной внешней зависимости, ни одного
+    Четыре варианта, первый - солнечная система для страницы входа вместо пузырей. Объёмные, с настоящим движением и звуком. Ни одной внешней зависимости, ни одного
     запроса, ни одной картинки и ни одного звукового файла: вся графика считается в
     браузере, весь звук синтезируется на месте. Разработчику кабинета отдаётся одним
     куском кода с единым интерфейсом
@@ -396,6 +396,147 @@ return '<!-- Экран загрузки Rocket CDN. Вставить в <head>.
 }
 
 /* ══════════════════════════════════════════════════════════════
+   Вариант 4. Солнечная система
+
+   Замена зелёных пузырей на странице входа кабинета. Фон светлый,
+   как сама страница входа; в тёмной схеме сам темнеет. В центре
+   солнце в фирменном градиенте, вокруг крутятся планеты: у каждой
+   свой размер, цвет из палитры кабинета, скорость и наклон орбиты.
+   У газового гиганта кольцо, у голубой планеты спутник. Свет на
+   каждой планете ложится со стороны солнца, дальняя половина
+   орбиты уводит планету за солнце - настоящий объём без WebGL.
+   ══════════════════════════════════════════════════════════════ */
+var V4_CSS =
+'.rcl{background:#F5F8FC!important}\n' +
+'@media (prefers-color-scheme:dark){.rcl{background:#050B12!important}}\n' +
+'.rcl-4 .rcl-pc{position:absolute;left:0;right:0;bottom:9%;text-align:center;\n' +
+'  font-size:13px;font-weight:700;color:#0A5897;font-variant-numeric:tabular-nums}\n' +
+'@media (prefers-color-scheme:dark){.rcl-4 .rcl-pc{color:#42B2DC}}\n';
+
+var V4_HTML = '<div class="rcl-4"><canvas></canvas><div class="rcl-pc">0%</div></div>';
+
+var V4_AUDIO =
+'  var pad=null,padG=null;\n' +
+'  function setup(){\n' +
+'    if(!ac)return;\n' +
+'    /* Тихий аккорд: планеты идут по кругу под него */\n' +
+'    padG=ac.createGain();padG.gain.value=.0001;padG.connect(bus);\n' +
+'    pad=[220,277.2,329.6].map(function(f,i){\n' +
+'      var o=ac.createOscillator(),v=ac.createGain();\n' +
+'      o.type="sine";o.frequency.value=f/2;o.detune.value=(i-1)*5;\n' +
+'      v.gain.value=.05;o.connect(v);v.connect(padG);o.start();return o;\n' +
+'    });\n' +
+'    padG.gain.setTargetAtTime(.09,ac.currentTime,1.2);\n' +
+'  }\n' +
+'  function finale(){\n' +
+'    if(!ac)return;\n' +
+'    ping(660,.5,.08,"sine");ping(990,.7,.05,"sine");\n' +
+'    if(padG)padG.gain.setTargetAtTime(.0001,ac.currentTime,.3);\n' +
+'  }\n';
+
+var V4_DRAW = function (W, H, S, p, t, dt) {
+  var cx = W / 2, cy = H / 2;
+  var dark = matchMedia("(prefers-color-scheme:dark)").matches;
+  x.clearRect(0, 0, W, H);
+
+  /* Пыль на заднем плане: едва заметная, чтобы кадр не был голым */
+  var dustCol = dark ? "226,232,240" : "10,88,151";
+  for (var d = 0; d < 26; d++) {
+    var dx = (Math.sin(d * 12.9898) * 43758.5453) % 1; if (dx < 0) dx += 1;
+    var dy = (Math.sin(d * 78.233) * 12578.1459) % 1; if (dy < 0) dy += 1;
+    var tw = 0.5 + 0.5 * Math.sin(t * 0.8 + d * 1.7);
+    x.globalAlpha = (dark ? 0.16 : 0.10) * tw;
+    x.fillStyle = "rgb(" + dustCol + ")";
+    x.fillRect(dx * W, dy * H, 1.6, 1.6);
+  }
+  x.globalAlpha = 1;
+
+  /* Планеты: [орбита, размер, скорость, цвет, фаза, кольцо, спутник] */
+  var PL = [
+    [0.16, 0.016, 1.35, "#42B2DC", 0.0, 0, 0],
+    [0.24, 0.024, 0.95, "#8A59F6", 2.1, 0, 0],
+    [0.33, 0.030, 0.68, "#0A5897", 4.4, 0, 1],
+    [0.43, 0.040, 0.47, "#C9A15A", 1.2, 1, 0],
+    [0.52, 0.021, 0.36, "#5FBFA4", 3.3, 0, 0]
+  ];
+  var TILT = 0.42;                        /* наклон плоскости системы */
+
+  /* Орбиты: тонкие эллипсы */
+  x.strokeStyle = dark ? "rgba(207,233,245,.10)" : "rgba(10,88,151,.10)";
+  x.lineWidth = 1;
+  for (var i = 0; i < PL.length; i++) {
+    x.beginPath();
+    x.ellipse(cx, cy, PL[i][0] * S, PL[i][0] * S * TILT, 0, 0, 6.283);
+    x.stroke();
+  }
+
+  /* Считаем положения планет, делим на «за солнцем» и «перед» */
+  var back = [], front = [];
+  for (i = 0; i < PL.length; i++) {
+    var o = PL[i];
+    var a = t * o[2] + o[4] + p * 1.6;    /* прогресс подгоняет оборот */
+    var px = cx + Math.cos(a) * o[0] * S;
+    var py = cy + Math.sin(a) * o[0] * S * TILT;
+    var depth = Math.sin(a);              /* < 0 - дальняя половина */
+    var it = { o: o, x: px, y: py, k: 0.78 + 0.3 * (depth * 0.5 + 0.5), a: a };
+    (depth < 0 ? back : front).push(it);
+  }
+
+  function planet(it) {
+    var o = it.o, r = o[1] * S * it.k;
+    /* Свет со стороны солнца */
+    var la = Math.atan2(cy - it.y, cx - it.x);
+    var lx = it.x + Math.cos(la) * r * 0.45, ly = it.y + Math.sin(la) * r * 0.45;
+    if (o[5]) {                            /* кольцо, дальняя дуга */
+      x.strokeStyle = "rgba(201,161,90,.5)";
+      x.lineWidth = Math.max(1, r * 0.16);
+      x.beginPath(); x.ellipse(it.x, it.y, r * 1.9, r * 0.62, -0.35, Math.PI, 6.283); x.stroke();
+    }
+    var gr = x.createRadialGradient(lx, ly, r * 0.1, it.x, it.y, r);
+    gr.addColorStop(0, "#FFFFFF");
+    gr.addColorStop(0.28, o[3]);
+    gr.addColorStop(1, dark ? "#0A1420" : "#1E3A52");
+    x.fillStyle = gr;
+    x.beginPath(); x.arc(it.x, it.y, r, 0, 6.283); x.fill();
+    if (o[5]) {                            /* кольцо, ближняя дуга */
+      x.strokeStyle = "rgba(201,161,90,.75)";
+      x.lineWidth = Math.max(1, r * 0.16);
+      x.beginPath(); x.ellipse(it.x, it.y, r * 1.9, r * 0.62, -0.35, 0, Math.PI); x.stroke();
+    }
+    if (o[6]) {                            /* спутник */
+      var ma = t * 3.2 + it.a;
+      var mx = it.x + Math.cos(ma) * r * 2.1, my = it.y + Math.sin(ma) * r * 1.1;
+      x.fillStyle = dark ? "#B9C6D4" : "#8FA3B5";
+      x.beginPath(); x.arc(mx, my, Math.max(1.2, r * 0.26), 0, 6.283); x.fill();
+    }
+  }
+
+  back.forEach(planet);
+
+  /* Солнце: фирменный градиент и мягкая корона, дышит */
+  var sr = S * 0.072 * (1 + Math.sin(t * 1.6) * 0.03 + p * 0.12);
+  var halo = x.createRadialGradient(cx, cy, sr * 0.3, cx, cy, sr * 3.4);
+  halo.addColorStop(0, dark ? "rgba(66,178,220,.5)" : "rgba(66,178,220,.35)");
+  halo.addColorStop(0.55, "rgba(138,89,246,.14)");
+  halo.addColorStop(1, "rgba(138,89,246,0)");
+  x.fillStyle = halo;
+  x.beginPath(); x.arc(cx, cy, sr * 3.4, 0, 6.283); x.fill();
+
+  var core = x.createRadialGradient(cx - sr * 0.3, cy - sr * 0.3, 0, cx, cy, sr);
+  core.addColorStop(0, "#EAF7FF");
+  core.addColorStop(0.45, "#42B2DC");
+  core.addColorStop(1, "#8A59F6");
+  x.fillStyle = core;
+  x.beginPath(); x.arc(cx, cy, sr, 0, 6.283); x.fill();
+
+  front.forEach(planet);
+
+  /* Процент под системой */
+  var pc = el.querySelector(".rcl-pc");
+  if (pc) pc.textContent = Math.round(p * 100) + "%";
+};
+
+/* ══════════════════════════════════════════════════════════════
    Вариант 1. Гиперпрыжок
 
    Настоящий трёхмерный туннель: пакеты данных летят на зрителя с
@@ -713,6 +854,12 @@ var V3_DRAW = function (W, H, S, p, t, dt) {
 
 /* ── Сборка вариантов ───────────────────────────────────────── */
 var VARIANTS = [
+  {
+    id: "4", name: "Солнечная система",
+    desc: "Планеты крутятся вокруг солнца в фирменном градиенте: замена пузырей на странице входа",
+    note: "Светлый фон, как у самой страницы входа; в тёмной схеме темнеет сам. Свет на планетах ложится со стороны солнца, дальняя половина орбиты уводит планету за него. У гиганта кольцо, у голубой планеты спутник.",
+    css: V4_CSS, html: V4_HTML, audio: V4_AUDIO, draw: V4_DRAW, fn: "draw4"
+  },
   {
     id: "1", name: "Старт",
     desc: "Объёмная ракета в потоке данных: вращается, показывая форму, на финале уходит вверх",

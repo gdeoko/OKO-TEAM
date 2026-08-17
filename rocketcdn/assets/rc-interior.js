@@ -665,6 +665,8 @@ function publish() {
 function tick(ts) {
   raf = requestAnimationFrame(tick);
   if (!st.shown || doc.hidden) return;
+  /* В демо-полёте рубка спит: весь кадровый бюджет у космоса */
+  if (root.classList.contains("rc-flying")) { lastTs = 0; return; }
 
   /* Держим ту же частоту, что и весь сайт: в простое двадцать */
   var min = g.RC_MOTION ? g.RC_MOTION.minFrame() : 16;

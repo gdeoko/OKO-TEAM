@@ -76,9 +76,17 @@ html[data-degrade="3"] .rc-console { display: none; }
   .rc-console-live { display: none; }
 }
 @media (max-width: 760px) {
-  .rc-console { height: min(56vh, 420px); inset: -3vh 0 auto 0; }
+  /* На телефоне блок контактов высокий и узкий: растянутый на него
+     кадр 16:9 превращается в мыло. Сцена остаётся в верхней части,
+     где контакты и воздух, а форма ниже стоит на спокойном фоне. */
+  .rc-console { inset: -3vh 0 auto 0; height: min(60vh, 480px); }
   .rc-console img { filter: blur(calc(var(--con-blur, 4px) * .6)); }
   .rc-console-vid { filter: none; }
+  .rc-console::after {
+    background:
+      radial-gradient(ellipse 80% 46% at 50% 12%, rgba(4,10,18,.72) 0%, rgba(4,10,18,.3) 52%, transparent 80%),
+      linear-gradient(180deg, rgba(4,10,18,.5), transparent 30%, transparent 62%, rgba(4,10,18,.85));
+  }
 }
 @media (prefers-reduced-motion: reduce) {
   .rc-console-vid { display: none; }

@@ -202,6 +202,8 @@ Sound.prototype.loop = function () {
     self._raf = requestAnimationFrame(step);
     self._n = (self._n || 0) + 1;
     if (self._n % 4) return;              /* пятнадцать раз в секунду хватает */
+    /* В полёте партитуру ведёт сам корабль через flightLevel */
+    if (self._flight) return;
 
     var max = document.documentElement.scrollHeight - innerHeight;
     var y = g.scrollY || 0;
@@ -383,6 +385,35 @@ Sound.prototype.boom = function () {
     /* Гул двигателя уходит в ноль: ракета села */
     if (this.eg) this.eg.gain.setTargetAtTime(0.0001, now, 0.2);
   } catch (e) {}
+};
+
+/* ── Полёт ───────────────────────────────────────────────────
+   В демо-полёте звук ведёт себя иначе, чем на странице: гул
+   двигателя постоянный и слышный, свист потока идёт за тягой,
+   которую корабль сообщает через flightLevel. Прокрутка страницы
+   в полёте не участвует - там свой мир. */
+Sound.prototype.flight = function (on) {
+  this._flight = !!on;
+  if (on && !this.on) this.start();
+  if (!this.ready) return;
+  var t = this.ctx.currentTime;
+  if (on) {
+    if (this.eg) this.eg.gain.setTargetAtTime(this.music() ? 0.4 : 0.6, t, 0.6);
+    this.master.gain.setTargetAtTime(0.2, t, 0.8);
+  } else {
+    this.master.gain.setTargetAtTime(this.on ? 0.16 : 0, t, 0.6);
+  }
+};
+
+Sound.prototype.flightLevel = function (k) {
+  if (!this._flight || !this.ready) return;
+  var t = this.ctx.currentTime;
+  var f = 44 + k * 46;
+  this.o1.frequency.setTargetAtTime(f, t, 0.2);
+  this.o2.frequency.setTargetAtTime(f * 2, t, 0.2);
+  this.lp.frequency.setTargetAtTime(200 + k * 900, t, 0.25);
+  if (this.ng) this.ng.gain.setTargetAtTime(0.004 + k * 0.05, t, 0.3);
+  if (this.eg) this.eg.gain.setTargetAtTime((this.music() ? 0.3 : 0.5) * (0.5 + k * 0.8), t, 0.35);
 };
 
 g.RC_SOUND = snd;

@@ -395,6 +395,7 @@ Rack.prototype.frame = function (dt) {
 };
 
 Rack.prototype.tick = function (ts) {
+  if (document.documentElement.classList.contains("rc-flying")) { this._last = 0; return; }
   if (!this.running) return;
   this._raf = requestAnimationFrame(this.tick.bind(this));
   var dt = this._last ? Math.min(0.05, (ts - this._last) / 1000) : 0.016;
