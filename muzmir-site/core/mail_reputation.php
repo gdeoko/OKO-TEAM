@@ -187,9 +187,18 @@ function mrep_domain_day_cap(string $domain): int {
     $tot = $dl + $hb;
     $pct = $tot > 0 ? $hb * 100 / $tot : 0;
 
-    if ($tot < 50)      $new = $cap;                       // мало данных — стоим на месте
-    elseif ($pct >= 25) $new = (int) max(200, $cap / 2);   // отбивают — вдвое назад
-    elseif ($pct >= 10) $new = $cap;                       // ни туда ни сюда — держим
+    // НИЖНЯЯ ГРАНИЦА ОБЯЗАТЕЛЬНА.
+    //
+    // Без неё норма сползает вниз лавиной: плохой день ополовинил, на следующий
+    // день писем меньше, статистика хуже, ополовинил снова — и через неделю в
+    // mail.ru уходит двести писем в сутки, а база стоит. Пол не даёт превратить
+    // защиту темпа в остановку рассылки: даже в самый плохой день служба получает
+    // nl_domain_floor_cap писем, и по ним видно, отошла она или нет.
+    $floor = max(200, (int) setting('nl_domain_floor_cap', '800'));
+
+    if ($tot < 50)      $new = $cap;                          // мало данных — стоим на месте
+    elseif ($pct >= 25) $new = (int) max($floor, $cap / 2);   // отбивают — вдвое назад, но не ниже пола
+    elseif ($pct >= 10) $new = $cap;                          // ни туда ни сюда — держим
     else                $new = (int) min($max, ceil($cap * $grow));
 
     // ПИСЬМО МОЖЕТ ДОЙТИ И ЛЕЧЬ В «СПАМ» — ЭТО ХУЖЕ ОТКАЗА.
@@ -219,7 +228,7 @@ function mrep_domain_day_cap(string $domain): int {
             $best = max($best, $rate($other, $when));
         }
         if ($best > 0.02 && $mine < $best * 0.4) {
-            $new = (int) max(200, min($new, $cap / 2));
+            $new = (int) max($floor, min($new, $cap / 2));
             q("UPDATE mail_domain_caps SET note=? WHERE domain=?",
               [sprintf('доставляет, но не открывают: %.0f%% против %.0f%% у лучшей службы — похоже на «Спам»',
                        $mine * 100, $best * 100), $d]);

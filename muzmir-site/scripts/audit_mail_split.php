@@ -103,8 +103,6 @@ foreach (['bulk', 'cold', 'awards', 'official'] as $pool) {
     $list = $boxesOf($pool);
     // Имя переменной намеренно длинное: короткое $bad — это счётчик сбоев всего
     // аудита, и его подмена обнуляла итоговую строку.
-    // Имя переменной намеренно длинное: короткое $bad — это счётчик сбоев всего
-    // аудита, и его подмена обнуляла итоговую строку.
     $officialBoxes = array_filter($list, static fn($u) => str_starts_with($u, 'kc@') || str_starts_with($u, 'nagradi'));
     $isMass = in_array($pool, ['bulk', 'cold'], true);
     $say($isMass ? !$officialBoxes : true,
