@@ -26,6 +26,11 @@ try { reduced = matchMedia("(prefers-reduced-motion: reduce)").matches; } catch 
 var el = null, sec = null, raf = null;
 var k = 0, kGoal = 0, live = false, hissed = false;
 var kPrev = 0, unlockT = 0;
+/* Защёлка «мы у борта»: взводится, когда подход почти завершён, и
+   держит дверь живой, пока секция в кадре. Без неё на телефоне
+   (секции сжаты) створки успевали разъехаться раньше, чем подход
+   доходил до корабля, и вход выпадал вовсе. */
+var armed = false;
 
 function build() {
   if (el) return;
@@ -37,12 +42,14 @@ function build() {
      два слоя которого (янтарный и циановый) перетекают по --al-k. */
   el.innerHTML =
     '<div class="al-glow"></div>' +
-    '<div class="al-door al-l"><i></i>' +
-      '<span class="al-port"></span>' +
-      '<span class="al-stencil">ROCKET</span></div>' +
-    '<div class="al-door al-r"><i></i>' +
-      '<span class="al-stencil">CDN-01</span></div>' +
-    '<div class="al-board"><span class="al-amber"></span><span class="al-cyan"></span></div>';
+    '<div class="al-hull">' +
+      '<div class="al-door al-l"><i></i>' +
+        '<span class="al-port"></span>' +
+        '<span class="al-stencil">ROCKET</span></div>' +
+      '<div class="al-door al-r"><i></i>' +
+        '<span class="al-stencil">CDN-01</span></div>' +
+      '<div class="al-board"><span class="al-amber"></span><span class="al-cyan"></span></div>' +
+    '</div>';
   doc.body.appendChild(el);
 }
 
@@ -77,15 +84,32 @@ function frame() {
      Если ракеты на странице нет, подход равен единице - дверь
      живёт по прежним правилам. */
   var app = (typeof g.RC_APPROACH === "number") ? g.RC_APPROACH : 1;
-  var show = live && app > 0.55;
+  if (app > 0.9) armed = true;
+  if (!live) armed = false;
+  var show = live && (armed || app > 0.55);
   if (show !== el.classList.contains("on")) {
     el.classList.toggle("on", show);
-    root.classList.toggle("rc-doors", show);
+    /* Пока дверь борта в кадре, тамбур интерьера (rc-int-lock) молчит:
+       его тёмные створки лежали поверх шлюза, и человек видел чёрный
+       кадр вместо двери. Вход один - через борт. */
+    root.classList.toggle("rc-albay", show);
   }
-  if (!show) { k = kGoal; kPrev = k; hissed = kGoal >= 1; return; }
+  /* Дверь проявляется по мере подхода, а не по таймеру: на 0.55
+     подхода её ещё нет, к 0.88 борт встал плотно. Скролл назад так
+     же честно растворяет её обратно в ракету */
+  if (show) el.style.setProperty("--al-in", armed ? "1" : Math.max(0, Math.min(1, (app - 0.55) / 0.33)).toFixed(3));
+  /* Затвор подходом: створки не смеют разъехаться, пока мы не дошли
+     до борта. На телефоне окно двери и проход почти совпадают, и без
+     затвора дверь уезжала раньше, чем появлялась. */
+  var goal = kGoal * (armed ? 1 : Math.max(0, Math.min(1, (app - 0.5) / 0.4)));
+  /* Канвас ракеты гаснет не при появлении двери, а когда она уже
+     открывается: до этого борт и дверь стоят одним кораблём */
+  var inside = show && k > 0.22;
+  if (inside !== root.classList.contains("rc-doors")) root.classList.toggle("rc-doors", inside);
+  if (!show) { k = goal; kPrev = k; hissed = goal >= 1; return; }
 
-  k += (kGoal - k) * 0.16;
-  if (Math.abs(k - kGoal) < 0.001) k = kGoal;
+  k += (goal - k) * 0.16;
+  if (Math.abs(k - goal) < 0.001) k = goal;
   el.style.setProperty("--al-k", k.toFixed(4));
 
   /* «Отдача» замков: в момент, когда дверь только тронулась (доля
