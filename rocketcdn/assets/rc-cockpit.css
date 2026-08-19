@@ -198,6 +198,23 @@ html[data-act="console"] #rocketCanvas {
   pointer-events: none;
 }
 
+/* Последний кадр фильма должен быть кадром, а не страницей с
+   остатками разделов по краям. Поэтому в отлёте уходит вся секция
+   заявки целиком (её хвост просвечивал над остеклением), а шапка
+   теряет свою полосу и размытие: сверху обязан быть корпус корабля,
+   а не панель сайта. */
+html[data-act="egress"] #contact {
+  opacity: calc(1 - var(--int-out, 0) * 1.7);
+  pointer-events: none;
+  transition: opacity .5s linear;
+}
+html[data-act="egress"] .hdr {
+  background: transparent;
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+  border-bottom-color: transparent;
+}
+
 /* Анкета уходит вместе с отъездом: камера отступает от пульта, и
    форма растворяется голограммой, а не остаётся висеть в кадре.
    Долю отъезда публикует rc-interior (--int-out). */
