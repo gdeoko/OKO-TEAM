@@ -67,6 +67,27 @@ try {
         exit(0);
     }
 
+    /* ---------- 0) Письма, которые уже нельзя отправлять ----------
+     *
+     * Приглашения и напоминания зовут подать заявку и называют срок приёма. Пока
+     * очередь идёт неделями по дневной норме, часть таких писем доживает до дня,
+     * когда приём уже закрыт: человек получает призыв успеть до вчера и ссылку на
+     * форму, которая его не примет. Хуже репутации центра только потраченная на
+     * это дневная норма. Снимаем такие письма ровно тогда, когда приём кончился.
+     */
+    try {
+        $openLeft = (int) (scalar("SELECT COUNT(*) FROM competitions
+                                    WHERE status='open' AND (end_date IS NULL
+                                       OR date(end_date) >= date('now','localtime'))") ?? 0);
+        if ($openLeft === 0) {
+            q("UPDATE mail_queue SET status='cancelled', error='приём заявок закрыт: письмо потеряло смысл'
+                WHERE status IN ('queued','paused') AND COALESCE(priority,0) > 0
+                  AND campaign_type IN ('inst','konkurs')");
+            $dropped = (int) db()->query("SELECT changes()")->fetchColumn();
+            if ($dropped > 0) cron_log(JOB, "снято писем о приёме заявок: $dropped (приём закрыт)");
+        }
+    } catch (\Throwable $e) {}
+
     /* ---------- 1) Автозакрытие приёма заявок ---------- */
     $closed = 0;
     $toClose = all("SELECT * FROM competitions WHERE status='open' AND end_date IS NOT NULL AND date(end_date) < date('now','localtime')");
