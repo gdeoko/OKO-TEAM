@@ -166,23 +166,45 @@ function dops_diplomas_send_now(int $appId, bool $duplicate = false): array {
         try { $ok = (bool) mail_send($to, $subj, $html, $opt); } catch (\Throwable $e) { $ok = false; }
     }
     $switched = function_exists('mail_switched') ? mail_switched() : '';
-    // Не ушло сейчас — кладём в очередь приоритетным, чтобы не потерялось.
+    $why      = function_exists('mail_last_error') ? mail_last_error() : '';
+
+    // НЕ УШЛО — ЗНАЧИТ НЕ УШЛО.
+    //
+    // Раньше время отправки проставлялось независимо от результата: оргкомитет
+    // жал «Отправить сейчас», видел «Наградные документы отправлены», диплом
+    // помечался отправленным — а письма не было. Понять это можно было только со
+    // слов участника. Теперь при сбое письмо кладётся в очередь целиком (все
+    // вложения, а не первое), диплом остаётся неотправленным, и в ответе прямо
+    // сказано, что произошло.
+    $queued = false;
     if (!$ok && function_exists('mail_queue')) {
-        mail_queue($to, (string) ($a['full_name'] ?? ''), $subj, $html, $attachments[0] ?? '');
+        // Очередь понимает список вложений как JSON (core/newsletter.php), поэтому
+        // один файл кладём строкой, несколько — списком: иначе доедет только первый.
+        $qid = mail_queue($to, (string) ($a['full_name'] ?? ''), $subj, $html,
+                          count($attachments) > 1 ? json_encode(array_values($attachments)) : ($attachments[0] ?? ''));
+        $queued = $qid > 0;
     }
 
     $now = date('Y-m-d H:i:s');
-    if (!$duplicate) {
+    if (!$duplicate && ($ok || $queued)) {
         foreach ($send as $d) {
-            update('diplomas', ['sent_at' => $now, 'send_tries' => 0], 'id=:id', ['id' => (int) $d['id']]);
+            update('diplomas', ['sent_at' => $ok ? $now : '', 'send_tries' => 0], 'id=:id', ['id' => (int) $d['id']]);
         }
     }
     app_status_sync($appId);
-    audit($duplicate ? 'diplomas_duplicate' : 'diplomas_sendnow', 'application', $appId, ['ok' => $ok, 'count' => $cnt]);
+    audit($duplicate ? 'diplomas_duplicate' : 'diplomas_sendnow', 'application', $appId,
+          ['ok' => $ok, 'count' => $cnt, 'queued' => $queued, 'error' => mb_substr($why, 0, 200)]);
 
-    return ['ok' => true, 'msg' => ($duplicate ? 'Письмо с наградами отправлено повторно' : 'Наградные документы отправлены')
-        . ' (' . $cnt . ' шт., одним письмом на ' . $to . ')' . ($ok ? '.' : ' — через очередь.')
-        . ($switched !== '' ? ' Основная почта не ответила, отправлено с резервной: ' . $switched . '.' : '')];
+    if ($ok) {
+        return ['ok' => true, 'msg' => ($duplicate ? 'Письмо с наградами отправлено повторно' : 'Наградные документы отправлены')
+            . ' (' . $cnt . ' шт., одним письмом на ' . $to . ').'
+            . ($switched !== '' ? ' Основная почта не ответила, отправлено с резервной: ' . $switched . '.' : '')];
+    }
+    if ($queued) {
+        return ['ok' => true, 'msg' => 'Почта сейчас не приняла письмо, оно поставлено в очередь и уйдёт ближайшим заходом ('
+            . $cnt . ' шт. на ' . $to . '). Причина: ' . mb_substr($why, 0, 160)];
+    }
+    return ['ok' => false, 'msg' => 'Письмо не отправлено и в очередь не встало: ' . mb_substr($why, 0, 200)];
 }
 
 /** Перенести отправку всех неотправленных наградных документов заявки. */

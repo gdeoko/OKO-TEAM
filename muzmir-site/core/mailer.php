@@ -842,6 +842,35 @@ function mail_is_stopped(string $email): bool {
     return $cache[$e];
 }
 
+/**
+ * ПОЧЕМУ АДРЕС В СТОП-ЛИСТЕ: 'dead' (ящика нет), 'optout' (человек не хочет
+ * рассылку) или '' (адреса в списке нет).
+ *
+ * Разница решает судьбу наградного письма. Отказ от рассылки — это про рекламу
+ * конкурсов, а не про диплом, который человек оплатил и ждёт: 19 августа
+ * участница, оплатившая два конкурса, попала в стоп-лист по ошибке разбора
+ * почты, и вместе с рассылкой ей перестали уходить наградные материалы и
+ * результаты. Несуществующий ящик — другое дело: туда бессмысленно слать что
+ * угодно, почтовик всё равно отобьёт.
+ */
+function mail_stop_kind(string $email): string {
+    static $cache = [];
+    $e = mb_strtolower(trim($email));
+    if ($e === '' || !mail_is_stopped($e)) return '';
+    if (isset($cache[$e])) return $cache[$e];
+
+    $r = '';
+    try { $r = (string) (scalar("SELECT reason FROM mail_stop WHERE email=?", [$e]) ?? ''); }
+    catch (\Throwable $ex) { $r = ''; }
+    $r = mb_strtolower($r);
+
+    foreach (['отказался от рассылки', 'отписал', 'пожаловал', 'жалоба',
+              'unsubscrib', 'complain'] as $w) {
+        if (mb_strpos($r, $w) !== false) return $cache[$e] = 'optout';
+    }
+    return $cache[$e] = 'dead';
+}
+
 function mail_send_failover(string $to, string $subject, string $html, array $opt = []): bool {
     // На адреса зоны .test письма не отправляем НИКОГДА: она не маршрутизируется,
     // и каждая попытка вернулась бы отказом, а отказы бьют по репутации домена и
@@ -850,15 +879,31 @@ function mail_send_failover(string $to, string $subject, string $html, array $op
         mail_log('SKIP .test ' . $to . ' | ' . mb_substr($subject, 0, 60));
         return true;
     }
-    if (mail_is_stopped($to)) {
-        mail_log('SKIP стоп-лист ' . $to . ' | ' . mb_substr($subject, 0, 60));
-        mail_last_error('адрес в стоп-листе: ящика не существует, отказ или жалоба');
-        return false;
-    }
-
     // Пул определяется типом письма: массовые — только рассылочные ящики,
     // награды и личные письма — рабочие почты центра.
     $pool = (string) ($opt['pool'] ?? mail_pool_for(['priority' => $opt['priority'] ?? 0, 'subject' => $subject]));
+
+    // ОТКАЗ ОТ РАССЫЛКИ НЕ ОТМЕНЯЕТ ДИПЛОМ.
+    //
+    // Стоп-лист собран из двух разных вещей. «Ящика не существует» — стена: туда
+    // не уйдёт ничего и никогда. «Отписался», «пожаловался» — решение человека
+    // про РАССЫЛКУ, и оно не отменяет наградной материал, результат конкурса и
+    // код входа в кабинет: это письма, которых он сам ждёт и за которые заплатил.
+    // Пока разницы не было, одна ошибка разбора почты отрезала участницу от её
+    // собственных дипломов, и ни одна кнопка «отправить» не помогала.
+    $stop = mail_stop_kind($to);
+    $mass = (int) ($opt['priority'] ?? 0) > 0 || in_array($pool, ['bulk', 'cold', 'news'], true);
+    if ($stop === 'dead' || ($stop === 'optout' && $mass)) {
+        mail_log('SKIP стоп-лист (' . $stop . ') ' . $to . ' | ' . mb_substr($subject, 0, 60));
+        mail_last_error($stop === 'dead'
+            ? 'адрес в стоп-листе: ящика не существует'
+            : 'человек отказался от рассылки — массовые письма ему не отправляются');
+        return false;
+    }
+    if ($stop === 'optout') {
+        mail_log('стоп-лист: отказ от рассылки не мешает личному письму — ' . $to
+                 . ' | ' . mb_substr($subject, 0, 60));
+    }
     $accounts = mail_fallback_accounts(is_array($opt['account'] ?? null) ? $opt['account'] : [], $pool);
 
     // МАССОВОЕ ПИСЬМО НИКОГДА НЕ УХОДИТ С РАБОЧИХ ЯЩИКОВ ЦЕНТРА.
@@ -1235,7 +1280,9 @@ function mail_send(string $to, string $subject, string $html, array $opt = []): 
 function mail_queue(string $to, string $name, string $subject, string $html, string $attach = ''): int {
     // В очередь мёртвый адрес не кладём вовсе: иначе он копится там неделями и
     // портит и отчёты, и суточную квоту.
-    if (mail_is_stopped($to)) { mail_log('QUEUE SKIP стоп-лист ' . $to); return 0; }
+    // Отказ от рассылки сюда не относится: в очередь попадают личные письма —
+    // результат, наградной материал, код входа. Не кладём только мёртвый ящик.
+    if (mail_stop_kind($to) === 'dead') { mail_log('QUEUE SKIP стоп-лист (ящика нет) ' . $to); return 0; }
     try {
         $id = insert('mail_queue', [
             'to_email' => trim($to),

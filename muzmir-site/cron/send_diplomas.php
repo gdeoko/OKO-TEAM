@@ -267,13 +267,28 @@ foreach ($groups as $appId => $items) {
              . $first['comp_name'] . '» - заявка № ' . $first['app_number'];
     $html = _diploma_group_html($blocks, (string)$first['full_name'], (string)$first['comp_name']);
 
-    $opt = [];
+    // ОДИН ЯЩИК — ОДНА ТОЧКА ОТКАЗА, И ЭТО УЖЕ СТОИЛО ЛЮДЯМ ДИПЛОМОВ.
+    //
+    // Письмо уходило строго с nagradi.on@ через mail_send, без перебора. С 17
+    // августа Яндекс закрыл этому ящику отправку наружу (554 на любое письмо), и
+    // все наградные письма молча падали: пять попыток на каждый диплом, потом
+    // send_tries>=5 — и документ выпадал из выборки насовсем, без единой записи в
+    // очереди и без строки в «Отправках». Наградной ящик остаётся первым, но
+    // теперь за ним стоит весь пул: не принял один — уйдёт со следующего.
+    $opt = ['pool' => 'awards'];
     $nagradi = function_exists('mail_senders') ? (mail_senders()['nagradi'] ?? []) : [];
-    if ($nagradi) $opt['account'] = $nagradi;
+    if ($nagradi) { $opt['account'] = $nagradi; $opt['from_name'] = 'Наградный отдел «Музыкальный Мир»'; }
     if ($attachments) $opt['attachments'] = $attachments;   // все PDF во вложении
     $ok = false;
-    if (function_exists('mail_send')) {
+    if (function_exists('mail_send_failover')) {
+        try { $ok = (bool) mail_send_failover($to, $subject, $html, $opt); } catch (\Throwable $e) { $ok = false; }
+    } elseif (function_exists('mail_send')) {
         $ok = (bool) mail_send($to, $subject, $html, $opt);
+    }
+    if (!$ok) {
+        $why = function_exists('mail_last_error') ? mail_last_error() : '';
+        fwrite(STDERR, 'send_diplomas: заявка #' . $appId . ' не ушла (' . $to . '): '
+                     . mb_substr($why, 0, 160) . "\n");
     }
     if ($ok) {
         foreach ($items as $it) update('diplomas', ['sent_at' => $now->format('Y-m-d H:i:s')], 'id=:id', ['id' => (int)$it['id']]);
