@@ -53,7 +53,11 @@ var F = {
   open: false, built: false,
   p: 0, v: 0, look: { x: 0, y: 0, tx: 0, ty: 0 },
   last: 0, raf: null, shake: 0,
-  auto: true, goal: null
+  auto: true, goal: null,
+  /* away - мы в чужой вселенной: там нет режиссёрской дуги, движение
+     идёт облётами систем и планет, и маршрут родной системы не
+     должен утягивать камеру обратно */
+  away: false
 };
 
 var ui = {};      /* DOM оверлея */
@@ -83,16 +87,92 @@ function paintProgress() {
 /* Три вселенные: своя окраска неба, туманностей, звёзд и солнца.
    Мир один, но за гипер-вспышкой он оживает в другом свете - и его
    хочется исследовать заново. */
+/* ── Вселенные и их звёздные системы ─────────────────────────
+   Клиент попросил: «млечный путь, 3-4 вселенные, в каждой куча
+   систем планет, по которым можно путешествовать». Родная у нас
+   собрана вручную (Земля, Луна, Марс, Сатурн, дыра) - это фильм
+   про продукт, там каждая сцена на своём месте. Остальные вселенные
+   строятся из описаний ниже: у каждой системы своя звезда и свой
+   набор планет, а их вид генерируется по семени, поэтому мир
+   повторяется от захода к заходу и его можно узнавать.
+
+   sys[] у родной вселенной пуст: её тела уже есть в сцене. */
 var UNIVERSES = [
-  { name: RU ? "СОЛНЕЧНАЯ СИСТЕМА" : "SOLAR SYSTEM",
+  { name: RU ? "СОЛНЕЧНАЯ СИСТЕМА" : "SOLAR SYSTEM", tag: "SOL",
     sky: 0x9db4cc, amb: 0x3a4a68, neb: [0x42b2dc, 0x8a59f6], sun: 0xfff2dc,
-    stars: [0xcfe9f5, 0x8fb7ff, 0xffe9c9] },
-  { name: RU ? "ВСЕЛЕННАЯ RV-2" : "UNIVERSE RV-2",
+    stars: [0xcfe9f5, 0x8fb7ff, 0xffe9c9],
+    about: RU ? "наша система, 8 тел маршрута" : "our system, 8 waypoints",
+    sys: [] },
+
+  { name: RU ? "ВСЕЛЕННАЯ RV-2" : "UNIVERSE RV-2", tag: "RV-2",
     sky: 0xa08cd8, amb: 0x4a3468, neb: [0x8a59f6, 0xd06bff], sun: 0xe8d4ff,
-    stars: [0xe2d4ff, 0xb08cff, 0xffc9ec] },
-  { name: RU ? "ВСЕЛЕННАЯ RC-3" : "UNIVERSE RC-3",
+    stars: [0xe2d4ff, 0xb08cff, 0xffc9ec],
+    about: RU ? "фиолетовый рукав, три обитаемые системы" : "violet arm, three systems",
+    sys: [
+      { id: "vega", name: RU ? "ВЕГА-RV" : "VEGA-RV", star: 0xd6c4ff, seed: 1741,
+        at: [520, 120, -420],
+        planets: [
+          { kind: "terran", r: 54, dist: 210, tint: 0x7fb8e8, clouds: true,
+            name: RU ? "АУРА" : "AURA", info: RU ? "океан и один материк, узел сети" : "ocean world, network node" },
+          { kind: "gas", r: 86, dist: 420, rings: true, tint: 0xb79bff,
+            name: RU ? "ЛИЛОВЫЙ ГИГАНТ" : "VIOLET GIANT", info: RU ? "кольца из льда, 62 спутника" : "ice rings, 62 moons" },
+          { kind: "ice", r: 38, dist: 620, tint: 0xcfe4ff,
+            name: RU ? "СТУЖА" : "FROST", info: RU ? "минус 214, подлёдный океан" : "-214C, subglacial ocean" }
+        ] },
+      { id: "orion", name: RU ? "ОРИОН-RV" : "ORION-RV", star: 0xffd9f2, seed: 9032,
+        at: [-620, -80, -980],
+        planets: [
+          { kind: "toxic", r: 46, dist: 190, tint: 0xd8ff8f,
+            name: RU ? "ЯД" : "TOXIN", info: RU ? "плотная атмосфера, кислотные дожди" : "dense acid atmosphere" },
+          { kind: "rocky", r: 32, dist: 330, tint: 0x9c9186,
+            name: RU ? "ОСКОЛОК" : "SHARD", info: RU ? "разбита древним ударом" : "shattered by an ancient impact" },
+          { kind: "ocean", r: 58, dist: 520, tint: 0x4fa8d8,
+            name: RU ? "ГЛУБИНА" : "DEEP", info: RU ? "сплошной океан, глубина 90 км" : "all ocean, 90 km deep" }
+        ] },
+      { id: "lyra", name: RU ? "ЛИРА-RV" : "LYRA-RV", star: 0xffe8c9, seed: 4488,
+        at: [180, 260, -1520],
+        planets: [
+          { kind: "desert", r: 44, dist: 200, tint: 0xe0b978,
+            name: RU ? "ПЕСКИ" : "SANDS", info: RU ? "бури на полгода" : "storms last half a year" },
+          { kind: "terran", r: 50, dist: 380, tint: 0x8fd8a0, clouds: true,
+            name: RU ? "ЗЕЛЁНАЯ" : "GREEN", info: RU ? "леса на весь материк" : "forest continent" }
+        ] }
+    ] },
+
+  { name: RU ? "ВСЕЛЕННАЯ RC-3" : "UNIVERSE RC-3", tag: "RC-3",
     sky: 0xd8b48c, amb: 0x684a34, neb: [0xffb066, 0xff7a4d], sun: 0xffe0b0,
-    stars: [0xffe9cf, 0xffc98f, 0xc9e2ff] }
+    stars: [0xffe9cf, 0xffc98f, 0xc9e2ff],
+    about: RU ? "янтарный рукав, горячие миры" : "amber arm, hot worlds",
+    sys: [
+      { id: "forge", name: RU ? "ГОРН-RC" : "FORGE-RC", star: 0xffb066, seed: 7711,
+        at: [480, -160, -520],
+        planets: [
+          { kind: "lava", r: 48, dist: 180, tint: 0xff6a2a,
+            name: RU ? "КУЗНЯ" : "FORGE", info: RU ? "кора не остывает, разломы светятся" : "crust never cools" },
+          { kind: "rocky", r: 36, dist: 320, tint: 0xb08060,
+            name: RU ? "ШЛАК" : "SLAG", info: RU ? "выжжена звездой дотла" : "burnt bare by its star" },
+          { kind: "gas", r: 92, dist: 560, tint: 0xffc98f, rings: true,
+            name: RU ? "ЯНТАРЬ" : "AMBER", info: RU ? "шторм шириной в три Земли" : "storm three Earths wide" }
+        ] },
+      { id: "ember", name: RU ? "УГОЛЬ-RC" : "EMBER-RC", star: 0xff8f5a, seed: 2205,
+        at: [-540, 140, -1120],
+        planets: [
+          { kind: "desert", r: 52, dist: 220, tint: 0xd98f5a,
+            name: RU ? "ЖАРА" : "SCORCH", info: RU ? "день длиной в 40 суток" : "a 40-day long day" },
+          { kind: "ice", r: 40, dist: 430, tint: 0xa8d8ff,
+            name: RU ? "ТЕНЬ" : "SHADE", info: RU ? "вечная ночная сторона" : "the eternal night side" }
+        ] },
+      { id: "core", name: RU ? "ЯДРО-RC" : "CORE-RC", star: 0xfff0d0, seed: 6613,
+        at: [260, -280, -1680],
+        planets: [
+          { kind: "terran", r: 56, dist: 240, tint: 0xd8a86a, clouds: true,
+            name: RU ? "ОХРА" : "OCHRE", info: RU ? "красные степи, дата-центр на полюсе" : "red steppes, polar datacenter" },
+          { kind: "gas", r: 78, dist: 460, tint: 0xff9a5a,
+            name: RU ? "ПЛАМЯ" : "FLAME", info: RU ? "полосы кипят на глазах" : "bands boil visibly" },
+          { kind: "lava", r: 42, dist: 640, tint: 0xff4a2a,
+            name: RU ? "ГОРНИЛО" : "CRUCIBLE", info: RU ? "приливной разогрев от соседа" : "tidal heating from its neighbour" }
+        ] }
+    ] }
 ];
 var uniIdx = 0;
 
@@ -225,6 +305,18 @@ function buildUI() {
       if (!F.scan && ui.lock) ui.lock.classList.remove("on");
       return;
     }
+    /* Кнопки систем и планет чужой вселенной: у них своя навигация,
+       маршрутной кривой там нет */
+    var sy = e.target.closest("button[data-sys]");
+    if (sy) {
+      var pa = sy.getAttribute("data-pl");
+      goSystem(parseInt(sy.getAttribute("data-sys"), 10),
+               pa === null ? undefined : parseInt(pa, 10));
+      var all = ui.nav.querySelectorAll("button");
+      for (var q = 0; q < all.length; q++) all[q].classList.remove("cur");
+      sy.classList.add("cur");
+      return;
+    }
     var b = e.target.closest("button[data-goal]");
     if (!b) return;
     goTo(b.getAttribute("data-goal"));
@@ -263,9 +355,110 @@ function manual() {
   hideHint();
 }
 
+/* ── Звёздные системы чужих вселенных ────────────────────────
+   Родная система собрана вручную и всегда в сцене. Чужие строятся
+   по описанию при первом прыжке и дальше просто показываются и
+   прячутся: пересобирать десяток планет на каждый прыжок дорого,
+   а память на этом объёме не жмёт.
+
+   Планеты рисует rc-planets (процедурная генерация по семени). Если
+   модуля нет, ставим простые шары в цвет системы: игра обязана
+   работать и без него. */
+var built = {};                 /* uniIdx -> THREE.Group со всей вселенной */
+
+function makeBody(T, pl, seed) {
+  var P = g.RC_PLANETS;
+  if (P && P.make) {
+    try {
+      return P.make(pl.kind, {
+        radius: pl.r, seed: seed, tint: pl.tint, rings: !!pl.rings,
+        clouds: !!pl.clouds, atmosphere: true,
+        detail: innerWidth < 760 ? "low" : "high"
+      });
+    } catch (e) {}
+  }
+  /* Запасной вариант: шар в цвет с лёгким блеском */
+  var m = new T.Mesh(
+    new T.SphereGeometry(pl.r, 40, 28),
+    new T.MeshPhongMaterial({ color: pl.tint || 0x8899aa, shininess: 6 })
+  );
+  var gr = new T.Group(); gr.add(m);
+  return { group: gr, radius: pl.r, update: function () {} };
+}
+
+function buildUniverse(i) {
+  if (built[i]) return built[i];
+  var T = g.THREE, u = UNIVERSES[i];
+  var root = new T.Group();
+  root.visible = false;
+  var live = [];
+
+  for (var s = 0; s < (u.sys || []).length; s++) {
+    var sys = u.sys[s];
+    var sg = new T.Group();
+    sg.position.set(sys.at[0], sys.at[1], sys.at[2]);
+
+    /* Звезда системы: яркое ядро и мягкое гало. Свет от неё
+       настоящий - именно он лепит терминатор на планетах. */
+    var star = new T.PointLight(sys.star, 2.4, 2600, 1.6);
+    sg.add(star);
+    var core = new T.Sprite(new T.SpriteMaterial({
+      map: glowSprite(128, "rgba(255,255,255,1)", "rgba(255,220,160,0)"),
+      transparent: true, depthWrite: false, blending: T.AdditiveBlending,
+      color: new T.Color(sys.star)
+    }));
+    core.scale.setScalar(120);
+    sg.add(core);
+
+    for (var pi = 0; pi < sys.planets.length; pi++) {
+      var pl = sys.planets[pi];
+      var made = makeBody(T, pl, (sys.seed || 1) + pi * 977);
+      /* Планета стоит на своей орбите: угол разведён по индексу,
+         чтобы система не выстроилась в линию */
+      var ang = (pi / sys.planets.length) * 6.283 + (sys.seed % 10) * 0.31;
+      made.group.position.set(Math.cos(ang) * pl.dist, (pi % 2 ? 1 : -1) * pl.dist * 0.06, Math.sin(ang) * pl.dist);
+      made.group.userData.info = (RU ? pl.name : pl.name) + " · " + pl.info;
+      sg.add(made.group);
+      live.push(made);
+
+      /* Тонкая линия орбиты: система читается системой, а не
+         россыпью шаров в пустоте */
+      var oGeo = new T.BufferGeometry();
+      var opts = [], N = 96;
+      for (var k = 0; k <= N; k++) {
+        var a = (k / N) * 6.283;
+        opts.push(new T.Vector3(Math.cos(a) * pl.dist, 0, Math.sin(a) * pl.dist));
+      }
+      oGeo.setFromPoints(opts);
+      sg.add(new T.Line(oGeo, new T.LineBasicMaterial({
+        color: sys.star, transparent: true, opacity: 0.12, depthWrite: false, blending: T.AdditiveBlending
+      })));
+    }
+    sg.userData.sys = sys;
+    root.add(sg);
+  }
+
+  W3.scene.add(root);
+  built[i] = { root: root, live: live, uni: u };
+  return built[i];
+}
+
+/* Тела родной вселенной: прячем их, пока мы в чужой, иначе Земля
+   висит посреди фиолетового рукава */
+function showHome(on) {
+  if (!W3) return;
+  var list = [W3.earth, W3.moon, W3.mars, W3.saturn, W3.hole, W3.comet, W3.sat, W3.belt1, W3.belt2];
+  for (var i = 0; i < list.length; i++) if (list[i]) list[i].visible = on;
+}
+
 function applyUniverse(i) {
   if (!W3) return;
   var T = g.THREE, u = UNIVERSES[i % UNIVERSES.length];
+
+  /* Показываем ту вселенную, в которую прыгнули, и прячем прочие */
+  for (var b in built) if (built.hasOwnProperty(b)) built[b].root.visible = (+b === i);
+  if (i > 0) buildUniverse(i).root.visible = true;
+  showHome(i === 0);
   W3.sky.material.color.set(u.sky);
   W3.amb.color.set(u.amb);
   W3.sunGlow.material.color = new T.Color(u.sun);
@@ -275,6 +468,84 @@ function applyUniverse(i) {
   for (k = 0; k < W3.starMats.length; k++) {
     W3.starMats[k].color.set(u.stars[k]);
   }
+}
+
+/* ── Навигация в чужой вселенной ─────────────────────────────
+   В родной системе корабль идёт по срежиссированной дуге: там
+   каждая сцена стоит на своём месте. В чужих вселенных дуги нет -
+   там свобода: список систем, перелёт к выбранной и облёт её
+   планет. Панель навигации в этот момент показывает не Землю с
+   Луной, а системы текущей вселенной. */
+function systemNav() {
+  if (!ui.nav) return;
+  var u = UNIVERSES[uniIdx], html = "";
+  if (uniIdx === 0) {
+    var NAV = [["earth", RU ? "Земля" : "Earth"], ["moon", RU ? "Луна" : "Moon"],
+               ["mars", RU ? "Марс" : "Mars"], ["saturn", RU ? "Сатурн" : "Saturn"],
+               ["hole", RU ? "Дыра" : "Hole"], ["galaxy", RU ? "Галактика" : "Galaxy"],
+               ["home", RU ? "Домой" : "Home"]];
+    for (var i = 0; i < NAV.length; i++) {
+      html += '<button type="button" data-goal="' + NAV[i][0] + '">' + NAV[i][1] + "</button>";
+    }
+  } else {
+    for (var s = 0; s < u.sys.length; s++) {
+      html += '<button type="button" data-sys="' + s + '">' + u.sys[s].name + "</button>";
+      /* Планеты системы идут следом отдельными кнопками: клиент
+         просил «куча систем планет, по которым можно путешествовать» */
+      for (var p = 0; p < u.sys[s].planets.length; p++) {
+        html += '<button type="button" class="rcf-pl" data-sys="' + s + '" data-pl="' + p + '">' +
+                u.sys[s].planets[p].name + "</button>";
+      }
+    }
+    html += '<button type="button" data-goal="galaxy">' + (RU ? "Галактика" : "Galaxy") + "</button>";
+  }
+  html += '<button type="button" class="rcf-scan-key" data-scan aria-pressed="' +
+          (F.scan ? "true" : "false") + '">' + (RU ? "Сканер" : "Scanner") + "</button>";
+  html += '<button type="button" class="rcf-auto-key" data-autokey aria-pressed="' +
+          (F.auto ? "true" : "false") + '">' + (RU ? "Авто" : "Auto") + "</button>";
+  ui.nav.innerHTML = html;
+  ui.scanKey = ui.wrap.querySelector(".rcf-scan-key");
+  ui.autoKey = ui.wrap.querySelector(".rcf-auto-key");
+}
+
+/* Перелёт к системе или к её планете. Внутри чужой вселенной
+   маршрутной кривой нет, поэтому цель - это всегда облёт: центр,
+   радиус и высота над плоскостью. */
+function goSystem(si, pi) {
+  if (!W3 || uniIdx === 0) return;
+  var pack = built[uniIdx];
+  if (!pack) return;
+  var sysGroup = pack.root.children[si];
+  if (!sysGroup) return;
+  var sys = UNIVERSES[uniIdx].sys[si];
+
+  var T = g.THREE;
+  var c = new T.Vector3(), name, r, y;
+  if (pi === undefined || pi === null) {
+    c.copy(sysGroup.position);
+    name = sys.name;
+    /* Облёт всей системы: радиус чуть больше внешней орбиты, чтобы
+       в кадр попадали и звезда, и планеты */
+    var far = 0;
+    for (var k = 0; k < sys.planets.length; k++) far = Math.max(far, sys.planets[k].dist);
+    r = far * 1.25; y = far * 0.3;
+  } else {
+    var pl = sys.planets[pi];
+    var pg2 = sysGroup.children.filter(function (o) { return o.isGroup; })[pi];
+    if (!pg2) return;
+    c.copy(sysGroup.position).add(pg2.position);
+    name = pl.name;
+    /* Три с небольшим радиуса: планета заполняет кадр, но целиком
+       помещается в окно кокпита и её видно шаром, а не стеной */
+    r = pl.r * 3.4; y = pl.r * 0.8;
+  }
+  F.away = true;
+  F.auto = false;
+  F.goal = null;
+  F.orbit = { c: c, r: r, y: y, a: null, name: name };
+  noteExplored(name);
+  say((RU ? "КУРС · " : "COURSE · ") + name, 2200);
+  if (g.RC_SOUND) { try { (g.RC_SOUND.uiConfirm || g.RC_SOUND.blip).call(g.RC_SOUND); } catch (e) {} }
 }
 
 /* Прыжок между вселенными: белая вспышка, за ней мир уже другой */
@@ -295,6 +566,18 @@ function jumpUniverse(want) {
       ui.cap.textContent = UNIVERSES[uniIdx].name;
       ui.cap.classList.add("in");
     }
+    /* Панель навигации перестраивается под новую вселенную, и
+       корабль сразу оказывается у первой её системы: прыжок должен
+       заканчиваться видом на новый мир, а не на пустоту */
+    systemNav();
+    if (uniIdx > 0) {
+      goSystem(0);
+      F.away = true;
+    } else {
+      F.away = false;
+      F.orbit = null;
+      F.rejoin = 1;
+    }
     if (ui.fade) ui.fade.style.opacity = "0";
     setTimeout(function () { uniBusy = false; }, 700);
   }, 480);
@@ -308,9 +591,13 @@ var GOAL_NAMES = {
 };
 
 /* Радиус орбиты и высота для каждого тела: подобраны по размеру */
+/* Радиусы подобраны так, чтобы тело заполняло кадр, а не висело
+   точкой вдали: клиент просил «подлетали к планетам, облетали их».
+   Нижняя граница - зона обхода (1.8 радиуса плюс запас), иначе
+   собственный манёвр уклонения начнёт отталкивать от цели. */
 var ORBITS = {
-  earth: { r: 150, y: 40 }, moon: { r: 55, y: 14 }, mars: { r: 96, y: 24 },
-  saturn: { r: 220, y: 60 }, hole: { r: 260, y: 40 }
+  earth: { r: 128, y: 30 }, moon: { r: 42, y: 10 }, mars: { r: 68, y: 16 },
+  saturn: { r: 168, y: 48 }, hole: { r: 200, y: 32 }
 };
 
 function goTo(id) {
@@ -799,13 +1086,22 @@ function buildWorld() {
     new T.Vector3(-130, 22, 10),
     new T.Vector3(-40, 34, 170),
     new T.Vector3(180, 52, 60),          /* отход от Земли */
-    new T.Vector3(300, 46, -120),        /* мимо Луны */
-    new T.Vector3(420, -30, -400),
-    new T.Vector3(520, -110, -640),      /* к Марсу */
-    new T.Vector3(680, -190, -880),
+    new T.Vector3(312, 58, -110),        /* мимо Луны, с запасом над ней */
+    new T.Vector3(430, -10, -400),
+    /* К Марсу дуга шла напролом: замер показал сближение до 14
+       единиц при радиусе планеты 30, то есть корабль проходил
+       НАСКВОЗЬ. Клиент это и заметил. Теперь маршрут огибает Марс
+       сверху по дуге, планета крупно проходит под днищем. */
+    new T.Vector3(500, -60, -620),       /* заход на Марс сверху */
+    new T.Vector3(610, -55, -770),       /* проход над полюсом */
+    new T.Vector3(700, -90, -900),       /* сход с Марса */
     new T.Vector3(1000, 40, -960),
-    new T.Vector3(1420, 300, -940),      /* над кольцами Сатурна */
-    new T.Vector3(1700, 210, -1240),
+    new T.Vector3(1400, 320, -930),      /* заход на Сатурн сверху */
+    /* Здесь дуга проседала прямо в корпус Сатурна (13 единиц при
+       радиусе 46). Точка над планетой держит корабль выше колец:
+       кольца проходят под нами во всю ширину кадра, как и задумано */
+    new T.Vector3(1570, 430, -1020),     /* проход над кольцами */
+    new T.Vector3(1720, 290, -1250),     /* сход, кольца по борту */
     new T.Vector3(1900, -40, -1900),     /* подход к дыре */
     new T.Vector3(2260, -80, -2180),     /* дуга вокруг дыры */
     new T.Vector3(2300, -160, -2560),
@@ -893,8 +1189,24 @@ function buildWorld() {
     { o: gal3, name: "RC-3", key: "gal3" }
   ];
 
+  /* ── Твёрдые тела ────────────────────────────────────────────
+     Клиент прислал замечание: «чтобы ракета сквозь планеты не
+     летала». Здесь перечень того, во что можно упереться: центр,
+     радиус корпуса и радиус, с которого начинается манёвр обхода.
+     Кольца Сатурна тоже считаются препятствием - сквозь них
+     корабль пролетать не должен, он их огибает сверху.
+     Дыра особая: у неё не отбойник, а притяжение с точкой невозврата. */
+  var bodies = [
+    { o: earth,  r: 60, name: RU ? "ЗЕМЛЯ" : "EARTH" },
+    { o: moon,   r: 16, name: RU ? "ЛУНА" : "MOON" },
+    { o: mars,   r: 30, name: RU ? "МАРС" : "MARS" },
+    { o: saturn, r: 46, ring: 116, name: RU ? "САТУРН" : "SATURN" },
+    { o: hole,   r: 30, hole: true, name: RU ? "ЧЁРНАЯ ДЫРА" : "BLACK HOLE" }
+  ];
+
   return {
     r: r, scene: scene, cam: cam, path: path, looks: LOOKS, at: AT, fov0: FOV0, scanTargets: scanTargets,
+    bodies: bodies,
     milky: milky, gal2: gal2, gal3: gal3,
     comet: comet, sat: sat, belt1: belt1, belt2: belt2, dust: dust, nebSprites: nebSprites, starMats: starMats, sunGlow: sunGlow, amb: amb,
     earth: earth, clouds: clouds, moon: moon, mars: mars, saturn: saturn, hole: hole,
@@ -972,6 +1284,105 @@ function size() {
 }
 
 /* ── Кадр ────────────────────────────────────────────────────ы */
+/* ── Манёвр обхода ───────────────────────────────────────────
+   «Чтобы ракета сквозь планеты не летала» - дословная просьба
+   клиента. Маршрут проложен по дуге и местами проходит близко к
+   телам; при ручном отклонении в них можно и въехать.
+
+   Отбойник тут не годится: жёсткий упор в невидимую стену читается
+   поломкой. Поэтому корабль ОБХОДИТ: если он входит в опасный
+   радиус, набирается боковое смещение по нормали от центра тела, и
+   траектория выгибается дугой вокруг планеты. За опасной зоной
+   смещение само стекает, и корабль возвращается на курс.
+
+   Кольца Сатурна считаются отдельно: сквозь них проходить нельзя,
+   но и отбрасывать далеко не нужно - корабль поднимается над
+   плоскостью колец, как это делают настоящие зонды. */
+/* Короткое сообщение на табло поверх обычных титров. Держится
+   заданное время, потом титры сцены возвращаются сами. */
+function say(text, ms) {
+  if (!ui.cap) return;
+  ui.cap._t = text;
+  ui.cap._hold = performance.now() + (ms || 1400);
+  ui.cap.classList.remove("in"); void ui.cap.offsetWidth;
+  ui.cap.textContent = text;
+  ui.cap.classList.add("in");
+}
+
+var dodge = null, dodgeWarn = 0;
+function avoid(w3, dt) {
+  var T = g.THREE;
+  if (!dodge) dodge = new T.Vector3();
+  var bs = w3.bodies || [], cam = w3.cam, hit = null, worst = 0;
+
+  for (var i = 0; i < bs.length; i++) {
+    var b = bs[i];
+    var c = b.o.position;
+    var d = cam.position.distanceTo(c);
+    /* Зона обхода: корпус планеты плюс запас на габарит корабля и
+       на то, чтобы манёвр начинался заранее, а не в упор */
+    /* Зона обхода подобрана так, чтобы штатные близкие пролёты
+       остались красивыми: над Луной корабль проходит в двух с
+       половиной её радиусах, и никакой манёвр там не нужен. Обход
+       включается только когда дело идёт к настоящему столкновению. */
+    var safe = b.r * 1.8 + 10;
+    if (b.hole) safe = b.r * 2.2 + 40;      /* у дыры отходим дальше */
+    if (d >= safe || d < 0.001) continue;
+
+    var push = (safe - d) / safe;           /* 0 у края зоны, 1 в центре */
+    if (push > worst) { worst = push; hit = b; }
+
+    /* Направление обхода: от центра тела к кораблю. Если корабль
+       идёт точно в центр, нормаль вырождается - тогда уводим вбок
+       по вектору «вправо от курса», иначе манёвра не получится. */
+    w3.tmpB.copy(cam.position).sub(c);
+    if (w3.tmpB.lengthSq() < 1) w3.tmpB.set(1, 0.35, 0);
+    w3.tmpB.normalize();
+    /* Подъём над плоскостью: обход красивее выглядит по дуге вверх,
+       а у Сатурна это ещё и уход от колец */
+    w3.tmpB.y += b.ring ? 0.55 : 0.22;
+    w3.tmpB.normalize();
+
+    var want = (safe - d) * (b.ring ? 1.15 : 1.0);
+    dodge.addScaledVector(w3.tmpB, want * Math.min(1, dt * 4.5));
+    /* Скорость гасим тем сильнее, чем глубже зашли: манёвр требует
+       времени, а не пролёта насквозь */
+    F.v *= 1 - Math.min(0.6, push * 0.8) * Math.min(1, dt * 3);
+  }
+
+  /* Кольца Сатурна: тонкий диск, в который можно въехать сбоку,
+     даже не приблизившись к самой планете. Считаем по расстоянию
+     до плоскости и по радиусу в этой плоскости. */
+  for (i = 0; i < bs.length; i++) {
+    if (!bs[i].ring) continue;
+    var s = bs[i].o.position;
+    w3.tmpA.copy(cam.position).sub(s);
+    var above = Math.abs(w3.tmpA.y);
+    var flat = Math.sqrt(w3.tmpA.x * w3.tmpA.x + w3.tmpA.z * w3.tmpA.z);
+    if (flat < bs[i].ring + 20 && above < 22) {
+      var lift = (22 - above) * Math.min(1, dt * 5);
+      dodge.y += (w3.tmpA.y >= 0 ? lift : -lift);
+      if (!hit) { hit = bs[i]; worst = Math.max(worst, 0.4); }
+    }
+  }
+
+  /* Смещение стекает само: за пределами зоны корабль возвращается
+     на маршрут, и следующий заход по той же дуге снова честный */
+  dodge.multiplyScalar(1 - Math.min(1, dt * 1.1));
+  if (dodge.lengthSq() > 1e-4) cam.position.add(dodge);
+
+  /* Предупреждение на табло: манёвр видно, а не только чувствуется.
+     Один сигнал на заход - повторное пиканье каждый кадр раздражает. */
+  if (hit && worst > 0.12) {
+    if (!dodgeWarn) {
+      dodgeWarn = 1;
+      say(RU ? "МАНЁВР ОБХОДА · " + hit.name : "AVOIDANCE · " + hit.name, 1600);
+      if (g.RC_SOUND) { try { (g.RC_SOUND.uiConfirm || g.RC_SOUND.blip).call(g.RC_SOUND, 220); } catch (e) {} }
+    }
+    F.shake = Math.max(F.shake, worst * 0.5);
+  } else if (dodgeWarn && worst < 0.05) dodgeWarn = 0;
+}
+
 function frame(ts) {
   if (!F.open) return;
   F.raf = requestAnimationFrame(frame);
@@ -1046,8 +1457,25 @@ function frame(ts) {
     o.a += dt * 0.16;
     o.blend = Math.min(1, (o.blend || 0) + dt * 0.7);
     w3.tmpB.set(o.c.x + Math.cos(o.a) * o.r, o.c.y + o.y, o.c.z + Math.sin(o.a) * o.r);
-    w3.cam.position.lerp(w3.tmpB, o.blend * Math.min(1, dt * 3));
-  } else {
+
+    /* Подлёт и сам виток - разные движения. Раньше на оба работал
+       один лерп: от соседней системы он тянул камеру часами, и
+       корабль будто застревал на полпути. Теперь пока до точки
+       витка далеко, идём настоящим ходом с разгоном, и только у
+       цели переходим на плавное круговое движение. */
+    var far = w3.cam.position.distanceTo(w3.tmpB);
+    if (far > 60) {
+      w3.tmpA.copy(w3.tmpB).sub(w3.cam.position).normalize();
+      /* Скорость растёт с дистанцией: перелёт между системами не
+         должен занимать минуту, а подход к планете - быть рывком */
+      var step = Math.min(far - 20, (70 + far * 1.35) * dt);
+      w3.cam.position.addScaledVector(w3.tmpA, step);
+      F.warpV = step / Math.max(dt, 0.001);       /* для табло скорости */
+    } else {
+      w3.cam.position.lerp(w3.tmpB, o.blend * Math.min(1, dt * 3));
+      F.warpV = 0;
+    }
+  } else if (!F.away) {
     var pos = w3.path.getPointAt(F.p);
     if (F.rejoin > 0) {
       /* Сошли с орбиты: догоняем маршрут плавно, не телепортом */
@@ -1055,6 +1483,17 @@ function frame(ts) {
       w3.cam.position.lerp(pos, Math.min(1, dt * 2.2));
     } else {
       w3.cam.position.copy(pos);
+    }
+    avoid(w3, dt);
+  }
+
+  /* Планеты чужих вселенных живут своей жизнью: вращение, облака,
+     пульсация лавы. Обновляем только видимую вселенную - остальные
+     стоят на паузе и ничего не стоят. */
+  var pack = built[uniIdx];
+  if (pack && pack.root.visible) {
+    for (var pu = 0; pu < pack.live.length; pu++) {
+      if (pack.live[pu].update) pack.live[pu].update(dt, w3.cam.position);
     }
   }
 
@@ -1247,6 +1686,11 @@ function frame(ts) {
   /* HUD */
   var cap = CAPTIONS[0];
   for (i = CAPTIONS.length - 1; i >= 0; i--) { if (F.p >= CAPTIONS[i].p) { cap = CAPTIONS[i]; break; } }
+  /* В чужой вселенной титры родной системы не к месту: там свои
+     объекты, и подпись обязана говорить, где мы сейчас */
+  if (F.away) {
+    cap = { t: UNIVERSES[uniIdx].name + (F.orbit && F.orbit.name ? " · " + F.orbit.name : "") };
+  }
   /* Пока идёт перелёт к цели, титул честно говорит, куда летим */
   if (F.goal !== null && F.goal !== undefined && F.goalName) {
     cap = { t: (RU ? "КУРС → " : "COURSE → ") + F.goalName };
@@ -1262,7 +1706,9 @@ function frame(ts) {
     ui.cap.classList.add("in");
   }
   ui.bar.style.width = (F.p * 100).toFixed(1) + "%";
-  ui.speed.textContent = String(Math.round(7.9 + speed * 6200));
+  /* На перелёте между системами табло показывает настоящий ход:
+     иначе при варпе счётчик стоял на месте, хотя мимо летит космос */
+  ui.speed.textContent = String(Math.round(7.9 + speed * 6200 + (F.warpV || 0) * 0.9));
   ui.ret.classList.toggle("on", F.p > 0.965);
 
   /* Звук идёт за тягой */
@@ -1386,6 +1832,34 @@ g.RC_FLIGHT = {
   state: function () {
     return { открыт: F.open, собран: F.built, p: +F.p.toFixed(3), v: +F.v.toFixed(5),
              отметки: W3 && W3.at ? W3.at : null };
+  },
+  /* Проверки столкновений: прогоняем весь маршрут и смотрим, не
+     задевает ли он тела. Пригодилось при настройке манёвра обхода
+     и остаётся как быстрый способ проверить правку дуги. */
+  probe: function (steps) {
+    if (!W3) return null;
+    var n = steps || 400, out = [], bs = W3.bodies || [];
+    var v = new g.THREE.Vector3();
+    for (var i = 0; i <= n; i++) {
+      W3.path.getPointAt(i / n, v);
+      for (var j = 0; j < bs.length; j++) {
+        var d = v.distanceTo(bs[j].o.position);
+        var lim = bs[j].r * 1.5 + 26;
+        if (d < lim) out.push({ тело: bs[j].name, p: +(i / n).toFixed(3),
+                                дистанция: Math.round(d), предел: Math.round(lim) });
+      }
+    }
+    return { заходов_в_зону: out.length, точки: out.slice(0, 12) };
+  },
+  cam: function () {
+    if (!W3) return null;
+    var bs = W3.bodies || [], near = [];
+    for (var j = 0; j < bs.length; j++) {
+      near.push({ тело: bs[j].name, d: Math.round(W3.cam.position.distanceTo(bs[j].o.position)),
+                  корпус: bs[j].r });
+    }
+    return { позиция: W3.cam.position.toArray().map(Math.round), тела: near,
+             увод: dodge ? +dodge.length().toFixed(1) : 0 };
   }
 };
 

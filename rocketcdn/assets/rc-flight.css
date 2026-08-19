@@ -694,3 +694,18 @@ html[data-theme="light"] .rc-vidbg.on { opacity: .16; }
 
 /* Верхний чип автопилота уходит: управление живёт на пульте */
 .rcf-auto { display: none; }
+
+/* ── Кнопки планет в чужой вселенной ─────────────────────────
+   Система задаёт группу, планеты идут под ней. Чтобы лента не
+   превратилась в кашу одинаковых клавиш, планетные кнопки мельче
+   и приглушённее: взгляд сначала находит систему, потом её миры. */
+.rcf-nav button.rcf-pl {
+  font-size: 9.5px;
+  letter-spacing: .1em;
+  padding: 7px 10px 8px;
+  color: rgba(150,200,224,.78);
+  background: linear-gradient(180deg, #26313e 0%, #141c26 50%, #0b1119 100%);
+}
+.rcf-nav button.rcf-pl::after { left: 30%; right: 30%; background: rgba(138,89,246,.32); }
+.rcf-nav button.rcf-pl.cur { color: #EAF6FC; }
+.rcf-nav button.rcf-pl.cur::after { background: rgba(138,89,246,.9); box-shadow: 0 0 8px rgba(138,89,246,.7); }
