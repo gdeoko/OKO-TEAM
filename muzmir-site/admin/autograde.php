@@ -37,6 +37,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && input('do') === 'settings') {
     set_setting('grade_min_confidence', (string) max(0, min(1, (float) input('grade_min_confidence'))));
     set_setting('grade_batch',          (string) max(1, (int) input('grade_batch')));
     set_setting('grade_video_max_sec',  (string) max(60, (int) input('grade_video_max_sec')));
+    set_setting('grade_anchors',        input('grade_anchors') ? '1' : '0');
+    $src = (string) input('grade_title_source');
+    if (in_array($src, ['score', 'level', 'mix'], true)) set_setting('grade_title_source', $src);
     flash('Настройки аттестации сохранены.', 'success');
     admin_redirect('autograde');
 }
@@ -131,6 +134,60 @@ ob_start(); ?>
   </div>
 </div>
 
+<?php
+/* СВЕРКА С ЖЮРИ. Главная цифра всего экрана: пока она не набрана, включать
+   полный автомат нельзя, и владелец должен видеть это без запуска скриптов. */
+$rank = static function (string $t): int {
+    $t = mb_strtoupper(trim($t));
+    if (str_contains($t, 'ГРАН'))          return 7;
+    if (str_contains($t, 'ЛАУРЕАТ I СТ'))  return 6;
+    if (str_contains($t, 'ЛАУРЕАТ II С'))  return 5;
+    if (str_contains($t, 'ЛАУРЕАТ III'))   return 4;
+    if (str_contains($t, 'ДИПЛОМАНТ I С')) return 3;
+    if (str_contains($t, 'ДИПЛОМАНТ II ')) return 2;
+    if (str_contains($t, 'ДИПЛОМАНТ III')) return 1;
+    return 0;
+};
+$cmp = all("SELECT g.title, a.result
+              FROM grading_runs g JOIN applications a ON a.id = g.application_id
+             WHERE g.status='ok' AND COALESCE(a.result,'') <> '' AND g.applied = 0
+               AND g.id = (SELECT MAX(g2.id) FROM grading_runs g2
+                            WHERE g2.application_id = g.application_id AND g2.status='ok')");
+$cE = $cN = 0;
+foreach ($cmp as $c) {
+    $d = $rank((string) $c['title']) - $rank((string) $c['result']);
+    if ($d === 0) $cE++;
+    if (abs($d) <= 1) $cN++;
+}
+$cT = count($cmp);
+?>
+<div class="card">
+  <h3 style="margin:0 0 10px">Сверка с жюри</h3>
+  <?php if ($cT < 5): ?>
+    <p class="small" style="color:#777;margin:0">
+      Работ, оценённых и человеком, и машиной: <?= (int) $cT ?>. Для вывода о точности нужно хотя бы сорок.
+    </p>
+  <?php else: ?>
+    <div style="display:flex;gap:12px;flex-wrap:wrap">
+      <?php foreach ([
+        ['Сверено работ', (string) $cT],
+        ['Звание совпало', round($cE * 100 / $cT) . '%'],
+        ['Расхождение до ступени', round($cN * 100 / $cT) . '%'],
+        ['Шкала', (string) setting('grade_scale_mode', 'linear') === 'quantile' ? 'по долям жюри' : 'общая'],
+      ] as [$label, $val]): ?>
+        <div style="flex:1 1 150px;background:#faf8f3;border:1px solid #eee3cf;border-radius:10px;padding:12px 14px">
+          <div style="font:700 20px/1.2 Georgia,serif;color:#17307A"><?= h($val) ?></div>
+          <div class="small" style="color:#777"><?= h($label) ?></div>
+        </div>
+      <?php endforeach; ?>
+    </div>
+    <p class="small" style="color:#777;margin:10px 0 0">
+      «Расхождение до ступени» это соседнее звание. Живые члены жюри расходятся между собой примерно так же,
+      поэтому именно эта цифра показывает, можно ли доверять машине черновую оценку.
+    </p>
+  <?php endif; ?>
+</div>
+
 <div class="card">
   <h3 style="margin:0 0 10px">Настройки</h3>
   <form method="post" style="display:flex;gap:12px;flex-wrap:wrap;align-items:flex-end">
@@ -146,6 +203,18 @@ ob_start(); ?>
     </label>
     <label style="flex:1 1 160px">Смотреть секунд
       <input name="grade_video_max_sec" value="<?= h((string) setting('grade_video_max_sec', '900')) ?>" class="inp">
+    </label>
+    <label style="flex:1 1 200px">Звание определять
+      <select name="grade_title_source" class="inp">
+        <?php $src = (string) setting('grade_title_source', 'score'); ?>
+        <option value="score"<?= $src === 'score' ? ' selected' : '' ?>>по сумме баллов</option>
+        <option value="level"<?= $src === 'level' ? ' selected' : '' ?>>сравнением с работами конкурса</option>
+        <option value="mix"<?= $src === 'mix' ? ' selected' : '' ?>>по обоим, в пользу строгого</option>
+      </select>
+    </label>
+    <label style="flex:1 1 220px;display:flex;gap:8px;align-items:center">
+      <input type="checkbox" name="grade_anchors" value="1"<?= (string) setting('grade_anchors', '1') === '1' ? ' checked' : '' ?>>
+      <span>Показывать планку конкурса</span>
     </label>
     <button class="btn btn--primary">Сохранить</button>
   </form>
