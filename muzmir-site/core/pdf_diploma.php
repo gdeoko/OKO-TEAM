@@ -146,7 +146,12 @@ function diploma_make_number(string $base, string $type = 'main', int $extraInde
     }
     switch ($type) {
         case 'named':  return $base . '-N';
-        case 'thanks': return $base . '-T';
+        // У коллектива бывает два руководителя, и благодарность выписывается
+        // каждому своя. Пока номер был один на заявку, вторая благодарность
+        // просто не заводилась в реестре: номер занят, запись не создать, в
+        // кабинете и в админке её нет, проверка подлинности ведёт на коллегу.
+        // Первый педагог сохраняет прежний номер, второй и далее получают -T2, -T3.
+        case 'thanks': return $base . '-T' . ($extraIndex > 1 ? $extraIndex : '');
         case 'extra':  return $base . '-E' . ($extraIndex > 0 ? $extraIndex : 1);
         case 'main':   return $base;
         default:       return $base . '-S';

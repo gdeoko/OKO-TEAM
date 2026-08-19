@@ -434,7 +434,22 @@ if (preg_match('#^/diploma-render/(\d+)$#', $route, $m)) {
     if (!empty($_GET['clean'])) $opt['clean'] = true;
     // ЖЁСТКОЕ ПРАВИЛО: номер диплома всегда корректный (по типу), совпадает с реестром /verify.
     if (function_exists('diploma_make_number')) {
-        $opt['number'] = diploma_make_number((string)($app['number'] ?? ''), $rtype ?: 'main');
+        // Благодарность второму руководителю коллектива получает свой номер:
+        // на бланке и в реестре он должен совпадать, иначе проверка подлинности
+        // приведёт к бланку коллеги.
+        $tIdx = 0;
+        if ($rtype === 'thanks') {
+            $tIdx = (int) ($opt['person_idx'] ?? 0);
+            $person = trim((string) ($opt['person'] ?? ''));
+            if ($person !== '' && function_exists('_dh_teachers')) {
+                [, $joined] = _dh_teachers((string) ($app['teacher'] ?? ''));
+                $list = array_values(array_filter(array_map('trim', explode(',', $joined))));
+                foreach ($list as $i => $one) {
+                    if (mb_strtolower($one) === mb_strtolower($person)) { $tIdx = $i + 1; break; }
+                }
+            }
+        }
+        $opt['number'] = diploma_make_number((string)($app['number'] ?? ''), $rtype ?: 'main', $tIdx);
     }
     echo diploma_html($c ?: [], $app, $opt);
     exit;

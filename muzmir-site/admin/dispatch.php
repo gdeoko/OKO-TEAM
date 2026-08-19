@@ -436,6 +436,19 @@ $resultsRaw = all("SELECT a.id, a.number, a.full_name, a.group_name, a.is_group,
                      AND COALESCE(a.result_sent_at,'') = ''
                      AND COALESCE(c.results_mode,'') <> 'list'
                    ORDER BY a.result_send_at ASC LIMIT 400");
+/* ---- 4б) Оценённые работы конкурса с оглашением списком ----
+   У длинного конкурса результат уходит не по своему расписанию, а в дату
+   оглашения, и поля result_send_at у заявки нет. Из-за этого четыре оценённые
+   работы «Величия России» не показывались в «Отправках» вообще: со стороны
+   выглядело так, будто они потерялись, хотя они просто ждут 28-го числа.
+   Показываем их плановым временем оглашения — видно, что и когда уйдёт. */
+$listRaw = all("SELECT a.id, a.number, a.full_name, a.group_name, a.is_group, a.email, a.phone, a.user_id,
+                       a.result, c.name comp_name, c.results_date
+                FROM applications a LEFT JOIN competitions c ON c.id=a.competition_id
+                WHERE a.result <> '' AND COALESCE(a.result_sent_at,'') = ''
+                  AND COALESCE(c.results_mode,'') = 'list'
+                  AND COALESCE(c.results_published_at,'') = ''
+                ORDER BY c.results_date ASC, a.id ASC LIMIT 400");
 /* ---- Архив отправленных писем ---- */
 $sentRaw = all("SELECT * FROM mail_queue WHERE status='sent' ORDER BY sent_at DESC, id DESC LIMIT 300");
 /* ---- НЕ ОТПРАВЛЕННЫЕ (провалившиеся) ----
@@ -497,6 +510,22 @@ foreach ($resultsRaw as $r) {
         'title' => 'Результат: ' . (string) $r['result'],
         'when' => (string) ($r['result_send_at'] ?? ''),
         'search' => mb_strtolower(trim("$who {$r['email']} {$r['phone']} {$r['comp_name']} {$r['number']} {$r['result']} результат")),
+        'raw' => $r,
+    ];
+}
+foreach ($listRaw as $r) {
+    $who  = $r['is_group'] ? (string) $r['group_name'] : (string) $r['full_name'];
+    $day  = trim((string) ($r['results_date'] ?? ''));
+    $when = $day !== '' ? substr($day, 0, 10) . ' 10:00:00' : '';
+    $queue[] = [
+        'kind' => 'result', 'id' => (int) $r['id'], 'mtype' => '',
+        'type_label' => 'Результат · оглашение списком',
+        'who' => $who, 'email' => (string) $r['email'], 'phone' => (string) ($r['phone'] ?? ''),
+        'user_id' => (int) ($r['user_id'] ?? 0),
+        'comp' => (string) $r['comp_name'], 'number' => (string) $r['number'],
+        'title' => 'Оценено, ждёт оглашения' . ($day !== '' ? ' ' . disp_dt($when) : '') . ': ' . (string) $r['result'],
+        'when' => $when,
+        'search' => mb_strtolower(trim("$who {$r['email']} {$r['phone']} {$r['comp_name']} {$r['number']} {$r['result']} результат оглашение")),
         'raw' => $r,
     ];
 }

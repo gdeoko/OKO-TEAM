@@ -1180,7 +1180,8 @@ ob_start(); ?>
                   <div style="min-width:0">
                     <span class="cab-ttl"><?= h($d['result'] ?: $d['app_result'] ?: 'Диплом') ?></span>
                     <p class="cab-meta"><?= h($d['comp_name'] ?: 'Конкурс') ?> - <?= h($d['full_name']) ?></p>
-                    <p class="cab-meta">Диплом № <?= h($d['number']) ?> - <?= h(ru_date(substr((string)$d['created_at'],0,10))) ?></p>
+                    <?php // Благодарность педагогу — не диплом, и подписывать её надо своим словом. ?>
+                    <p class="cab-meta"><?= (string)($d['type'] ?? '') === 'thanks' ? 'Благодарность' : 'Диплом' ?> № <?= h($d['number']) ?> - <?= h(ru_date(substr((string)$d['created_at'],0,10))) ?></p>
                   </div>
                   <div><?= $badge('Готов','success') ?></div>
                 </div>
