@@ -4011,7 +4011,10 @@ g.RCRocket = {
       if (!ctx) return null;
     } catch (e) { return null; }
     if (matchMedia("(prefers-reduced-motion: reduce)").matches) return null;
-    if (g.RC_GL && !g.RC_GL.take()) return null;
+    /* Корабль - главный герой фильма, поэтому просит место как
+       главная сцена: если все контексты разобраны украшениями,
+       они уступят. Без корабля нет ни люка, ни входа внутрь. */
+    if (g.RC_GL && !g.RC_GL.take(true)) return null;
     try {
       var made = new Rocket(canvas);
       g.RC_ROCKET = made;

@@ -1219,7 +1219,7 @@ function lockHide() {
 function takeSlot() {
   if (st.slot) return true;
   if (g.RC_GL && g.RC_GL.take) {
-    if (g.RC_GL.take()) { st.slot = true; return true; }
+    if (g.RC_GL.take(true)) { st.slot = true; return true; }
     /* Свободного слота нет. Наружная сцена нам его отдаст: по
        сценарию в этот момент мы уже внутри ракеты и снаружи
        смотреть не на что. */
@@ -1229,7 +1229,7 @@ function takeSlot() {
         root.classList.add("rc-rocket-parked");
         g.RC_GL.give();
       } catch (e) {}
-      if (g.RC_GL.take()) { st.slot = true; return true; }
+      if (g.RC_GL.take(true)) { st.slot = true; return true; }
     }
     return false;
   }

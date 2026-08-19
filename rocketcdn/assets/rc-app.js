@@ -371,6 +371,21 @@ function buildMapGlobe(mapCv) {
        глобус) не тянутся, поэтому там остаётся плоская версия. */
     var weak = (navigator.deviceMemory || 4) <= 2 || (navigator.hardwareConcurrency || 4) <= 2;
     var room = !window.RC_GL || window.RC_GL.take();
+    /* Объёмный глобус - украшение раздела, а не сценарий. Если
+       кораблю или рубке не хватило контекста, отдаём свой и молча
+       возвращаемся к плоской карте: её человек и не отличит, а
+       фильм без корабля разваливается. */
+    addEventListener("rc:gl-free", function () {
+      if (!made || !window.RC_GL) return;
+      try { made.stop(); } catch (e) {}
+      var back = new RCGlobe(mapCv, opts);
+      var i = window.__globes.indexOf(made);
+      if (i >= 0) window.__globes[i] = back;
+      globe = back;
+      back.start();
+      made = null;
+      window.RC_GL.give();
+    });
     if (window.RCGlobe3D && window.THREE && !weak && room) {
       try { made = new window.RCGlobe3D(mapCv, opts); } catch (e) { made = null; }
       if (!made && window.RC_GL) window.RC_GL.give();
