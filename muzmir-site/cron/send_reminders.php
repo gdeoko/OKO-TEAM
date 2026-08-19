@@ -184,9 +184,26 @@ try {
     }
     cron_log(JOB, "напоминания о наградах: поставлено в очередь $awards");
 
-    /* ---------- 3) Напоминание о дедлайне приёма заявок (5 / 3 / 1 день) ---------- */
-    $subs = all("SELECT email, name, unsub_token FROM subscribers WHERE active=1 AND email <> ''");
-    foreach ([5, 3, 1] as $days) {
+    /* ---------- 3) Напоминание о дедлайне приёма заявок ----------
+     *
+     * ПИСЬМАМИ ЭТО НЕ РАССЫЛАЕТСЯ. Правило владельца (19.08.2026): за три дня и
+     * в последний день о закрытии приёма напоминают пост во ВКонтакте, рассылка
+     * в личку сообщества и уведомление в приложении — волны d3 и last в пульте
+     * запуска (core/launch_run.php, каналы vk_wall, vk_dm, inapp). Ещё одно
+     * письмо по всей базе поверх этого — лишний повод нажать «Спам»; за пять
+     * дней напоминания нет вовсе.
+     *
+     * Код оставлен на случай разовой кампании и включается настройкой
+     * reminder_deadline_mail=1. По умолчанию выключен.
+     */
+    $deadlineMail = (string) setting('reminder_deadline_mail', '0') === '1';
+    if (!$deadlineMail) {
+        cron_log(JOB, 'напоминание о дедлайне письмами выключено: об этом говорят ВК и приложение');
+    }
+    $subs = $deadlineMail
+        ? all("SELECT email, name, unsub_token FROM subscribers WHERE active=1 AND email <> ''")
+        : [];
+    foreach ($deadlineMail ? [5, 3, 1] : [] as $days) {
         $comps = all(
             "SELECT * FROM competitions WHERE status='open' AND end_date IS NOT NULL AND date(end_date)=date('now','localtime', ?)",
             ["+$days days"]
