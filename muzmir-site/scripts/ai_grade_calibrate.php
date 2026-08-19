@@ -35,7 +35,13 @@ require_once BASE_PATH . '/core/ai_grader.php';
 $limit  = 0;
 $report = in_array('--report', $argv, true);
 $apply  = in_array('--apply', $argv, true);
-foreach ($argv as $a) if (preg_match('~^--limit=(\d+)$~', $a, $m)) $limit = (int) $m[1];
+$redo   = -1;    // повторный прогон: брать работы, у которых нет удачного разбора новее этого номера
+$since  = 0;     // отчёт: считать только по разборам новее этого номера
+foreach ($argv as $a) {
+    if (preg_match('~^--limit=(\d+)$~', $a, $m)) $limit = (int) $m[1];
+    if (preg_match('~^--redo=(\d+)$~',  $a, $m)) $redo  = (int) $m[1];
+    if (preg_match('~^--since=(\d+)$~', $a, $m)) $since = (int) $m[1];
+}
 $line = str_repeat('=', 78);
 
 ag_migrate();
@@ -55,13 +61,17 @@ function cal_rank(string $title): int {
 
 /* ── Прогон ── */
 if (!$report) {
+    // Обычно берём работы, которых машина ещё не видела. Но когда движок
+    // меняется (появились эталоны, поменялись критерии), нужен второй прогон по
+    // тем же работам: иначе не увидеть, стало ли лучше. Для этого --redo=НОМЕР —
+    // «считать необработанной работу, у которой нет разбора новее этого номера».
     $rows = all("SELECT a.id, a.result, a.nomination
                    FROM applications a
                   WHERE COALESCE(a.result,'') <> ''
                     AND TRIM(COALESCE(a.video_url,'')) <> ''
                     AND NOT EXISTS (SELECT 1 FROM grading_runs g
-                                     WHERE g.application_id = a.id AND g.status = 'ok')
-               ORDER BY a.id DESC" . ($limit > 0 ? " LIMIT $limit" : ''));
+                                     WHERE g.application_id = a.id AND g.status = 'ok' AND g.id > ?)
+               ORDER BY a.id DESC" . ($limit > 0 ? " LIMIT $limit" : ''), [max(0, $redo)]);
 
     echo "СВЕРКА С ОЦЕНКАМИ ЖЮРИ\n$line\n  работ к прогону: " . count($rows) . "\n\n";
     $n = 0;
@@ -81,12 +91,17 @@ if (!$report) {
 }
 
 /* ── Отчёт ── */
+// По одной работе может быть несколько разборов (движок дорабатывался), берём
+// самый свежий. --since=НОМЕР отсекает старые: так видно, что дала доработка.
 $pairs = all("SELECT g.total, g.title AS ai_title, g.confidence, a.result AS jury_title, a.nomination
                 FROM grading_runs g
                 JOIN applications a ON a.id = g.application_id
-               WHERE g.status='ok' AND COALESCE(a.result,'') <> ''");
+               WHERE g.status='ok' AND COALESCE(a.result,'') <> '' AND g.id > ?
+                 AND g.id = (SELECT MAX(g2.id) FROM grading_runs g2
+                              WHERE g2.application_id = g.application_id AND g2.status='ok')", [$since]);
 
 echo "СОВПАДЕНИЕ С ЖЮРИ\n$line\n";
+if ($since > 0) echo "  считаем только разборы новее №$since\n";
 if (!$pairs) { echo "  сверять нечего: ни одной работы, оценённой и жюри, и машиной\n"; exit(0); }
 
 $exact = $near = 0;
