@@ -1526,6 +1526,14 @@ Rocket.prototype.landing = function (p, dt, pos, tan) {
   var aim = 0.855 - feet;
   if (aim < 0.30) aim = 0.30;
   this.toWorld(w * 0.5, h * aim, -0.2, this._padP || (this._padP = new T.Vector3()));
+
+  /* Зависание над площадкой. Без него корабль подходил к точке
+     касания по прямой из своей полётной позиции и последнюю треть
+     посадки просто стоял: снижения не было видно вовсе. Теперь
+     цель поднята над площадкой и опускается вместе с долей - глаз
+     читает вертикальный спуск, а не подъезд сбоку. */
+  var hov = 1 - this.landK;
+  this._padP.y += hov * hov * Math.sqrt(hov) * 4.2 * (this._sNow || 1);
   pos.lerp(this._padP, this.landK);
 
   /* Нос разворачивается вверх: ракета встаёт на опоры */
@@ -1733,6 +1741,19 @@ Rocket.prototype.ground = function () {
   blast.renderOrder = 4;
   grp.add(blast);
 
+  /* Ударная волна от касания */
+  var rgMat = new T.MeshBasicMaterial({
+    map: ringTexture(), transparent: true, depthWrite: false,
+    blending: T.AdditiveBlending, opacity: 0
+  });
+  var ring = new T.Mesh(new T.PlaneGeometry(PAD_SIZE, PAD_SIZE), rgMat);
+  ring.rotation.x = -Math.PI / 2;
+  ring.position.y = 0.02;
+  ring.renderOrder = 6;
+  ring.visible = false;
+  grp.add(ring);
+  this._padRing = ring;
+
   var dust = buildDust(C);
   dust.pts.visible = false;
   dust.pts.renderOrder = 5;
@@ -1796,6 +1817,20 @@ Rocket.prototype.groundStep = function (dt) {
   this._padBlast.material.opacity = Math.min(1, glow) * vis;
   var bs = 0.72 + burn * 0.62;
   this._padBlast.scale.set(bs, bs, 1);
+
+  /* Ударная волна: живёт свои три четверти секунды после касания и
+     гаснет. Ведём её тем же счётчиком, что и просадку стойки, -
+     удар один, и всё, что от него, обязано идти одним движением. */
+  var rt = this._touched ? this._shockT : 9;
+  if (rt < 0.75) {
+    var rk = rt / 0.75;
+    this._padRing.visible = true;
+    this._padRing.material.opacity = (1 - rk) * (1 - rk) * 0.95 * vis;
+    var rs = 0.16 + rk * 0.90;
+    this._padRing.scale.set(rs, rs, 1);
+  } else if (this._padRing.visible) {
+    this._padRing.visible = false;
+  }
 
   /* Сопло раздувает грунт ещё до касания: пока идёт тормозной
      импульс, из-под ракеты тянет пылью. Так удар не возникает из
@@ -2087,7 +2122,9 @@ Rocket.prototype.layout = function (p, dt) {
      ней подрастал, и вместе с опорами, тенью и площадкой попросту
      переставал помещаться в кадр: точку касания было не видно. Мера
      разная по устройствам - на телефоне корабль и так мелкий. */
-  var lndS = 1 - (this.landK || 0) * (this.C.mobile ? 0.05 : 0.20);
+  /* На телефоне корабль и так мелкий, там посадка наоборот
+     подрастает: иначе разметку площадки на ней не разглядеть */
+  var lndS = 1 + (this.landK || 0) * (this.C.mobile ? 0.12 : -0.20);
   var sNow = s * (1 - k * 0.70) * lndS * (1 + app * 2.6) * (1 + dk * dk * 1.25);
   this._sNow = sNow;
   this.pivot.scale.setScalar(sNow);
@@ -2199,11 +2236,16 @@ Rocket.prototype.frame = function (dt) {
 
   /* Севший корабль не может продолжать жечь грунт. Раньше факел и
      след жили своей жизнью, и выхлоп бил сквозь площадку - самая
-     заметная неправда во всей посадке. Теперь между 0.80 и 0.94
-     доли посадки факел втягивается в сопло, а искры со следом
-     выключаются совсем: остаётся только остывающий раструб. */
+     заметная неправда во всей посадке. Теперь длина факела идёт за
+     просветом до земли: чем ближе опоры, тем короче струя, и к
+     касанию от неё остаётся только остывающий раструб. Искры и
+     дымный след выключаются совсем.
+
+     Яркость при этом не падает - её ведёт тормозной импульс. Так
+     торможение читается короткой мощной вспышкой у самого сопла, а
+     не копьём, проходящим сквозь площадку. */
   var lk = this.landK || 0;
-  var fk = 1 - (lk - 0.80) / 0.14;
+  var fk = (1 - lk) / 0.30;
   fk = fk < 0 ? 0 : fk > 1 ? 1 : fk;
   fk = fk * fk * (3 - 2 * fk);
 
@@ -2216,7 +2258,7 @@ Rocket.prototype.frame = function (dt) {
   this.flame.halo.material.opacity = (0.55 + pw * 0.4) * (0.30 + fk * 0.70);
   this.engineLight.intensity = (2.2 + pw * 3.4 * flick + burn * 4.5) * (0.28 + fk * 0.72);
 
-  var tv = fk > 0.04;
+  var tv = fk > 0.22;
   if (tv !== this._trailOn) {
     this._trailOn = tv;
     this.trail.sparks.pts.visible = tv;
