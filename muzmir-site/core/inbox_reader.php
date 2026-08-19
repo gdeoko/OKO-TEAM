@@ -126,7 +126,13 @@ function inbox_is_auto(string $subject, string $body, string $raw = ''): bool {
 function inbox_is_service(string $from): bool {
     $f = mb_strtolower(trim($from));
     if ($f === '') return true;
-    return (bool) preg_match('~^(noreply|no-reply|postmaster|mailer-daemon|mailer_daemon|bounce|notify|notification|robot|support@unisender)~i', $f)
+    // Поддержка почтовых служб — тоже не адресат помощника: на обращение о
+    // блокировке домена нельзя отвечать рассказом о сроках приёма заявок.
+    foreach (['@corp.mail.ru', '@help.mail.ru', '@yandex-team.ru', '@support.yandex.ru',
+              '@unisender.com', '@go1.unisender.ru', '@team.unisender.com'] as $s) {
+        if (str_contains($f, $s)) return true;
+    }
+    return (bool) preg_match('~^(noreply|no-reply|postmaster|mailer-daemon|mailer_daemon|bounce|notify|notification|robot|support@|abuse@|feedback@)~i', $f)
         || str_contains($f, 'mailer-daemon');
 }
 
