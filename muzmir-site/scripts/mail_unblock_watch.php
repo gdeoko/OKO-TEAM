@@ -13,8 +13,11 @@
  * кроне: как только оба ящика снова отправляют, настройка возвращается на ноль
  * и почта центра работает со своего домена.
  *
- * Проверка идёт по SMTP до команды DATA включительно, письмо адресуется своему
- * же ящику — наружу ничего не уходит, правило рабочего окна не нарушается.
+ * Проверка идёт по SMTP до конца письма, получатель — почта самого центра в
+ * Gmail. На свой же ящик слать бесполезно: письмо внутри домена Яндекс принимает
+ * с кодом 250 даже при закрытой внешней отправке, и сторож рапортовал бы, что
+ * всё хорошо, пока участники не получают ничего. Чужим людям при этом ничего не
+ * уходит, правило рабочего окна не нарушается.
  *
  *   php scripts/mail_unblock_watch.php
  *   php scripts/mail_unblock_watch.php --dry
@@ -31,8 +34,8 @@ require_once BASE_PATH . '/core/mailer.php';
 $dry  = in_array('--dry', $argv, true);
 $line = str_repeat('=', 78);
 
-/** Ящик отправляет? Проба до конца письма, получатель — он сам. */
-function mub_can_send(array $acc): array {
+/** Ящик отправляет наружу? Проба до конца письма, получатель — почта центра. */
+function mub_can_send(array $acc, string $probeTo): array {
     $ctx = stream_context_create(['ssl' => ['verify_peer' => false, 'verify_peer_name' => false]]);
     $fp  = @stream_socket_client('ssl://' . ($acc['host'] ?? 'smtp.yandex.ru') . ':' . ((int) ($acc['port'] ?? 465)),
                                  $e, $es, 20, STREAM_CLIENT_CONNECT, $ctx);
@@ -54,9 +57,9 @@ function mub_can_send(array $acc): array {
     if (!str_starts_with($auth, '235')) { fclose($fp); return [false, 'вход не принят: ' . mb_substr($auth, 0, 60)]; }
 
     $wr('MAIL FROM:<' . $from . '>');
-    $wr('RCPT TO:<' . $from . '>');
+    $wr('RCPT TO:<' . $probeTo . '>');
     $wr('DATA');
-    $msg = "From: <$from>\r\nTo: <$from>\r\nSubject: proba\r\nDate: " . date('r')
+    $msg = "From: <$from>\r\nTo: <$probeTo>\r\nSubject: proba\r\nDate: " . date('r')
          . "\r\nMIME-Version: 1.0\r\nContent-Type: text/plain; charset=utf-8\r\n\r\nПроверка канала.\r\n";
     $res = $wr($msg . '.');
     $wr('QUIT');
@@ -64,13 +67,16 @@ function mub_can_send(array $acc): array {
     return [str_starts_with($res, '250'), $res];
 }
 
-echo "ПРОВЕРКА РАБОЧИХ ЯЩИКОВ ЦЕНТРА\n$line\n";
+// Получатель пробы — почта самого центра во внешней службе.
+$probeTo = mail_addr_ascii((string) (mail_account_by_name('main')['user'] ?? 'kulturniy.centr.mir@gmail.com'));
+
+echo "ПРОВЕРКА РАБОЧИХ ЯЩИКОВ ЦЕНТРА\n$line\n  проба уходит на $probeTo\n";
 
 $ok = [];
 foreach (['kc', 'nagradi'] as $name) {
     $acc = mail_account_by_name($name);
     if (!$acc) { printf("  %-8s ящик не настроен\n", $name); $ok[$name] = false; continue; }
-    [$can, $note] = mub_can_send($acc);
+    [$can, $note] = mub_can_send($acc, $probeTo);
     $ok[$name] = $can;
     printf("  %-8s %-10s %s\n", $name, $can ? 'работает' : 'закрыт', mb_substr($note, 0, 90));
 }
@@ -80,7 +86,7 @@ echo "\n  письма сайта сейчас: " . ($viaGmail ? 'через п�
 
 if ($ok['kc'] && $ok['nagradi'] && $viaGmail) {
     if (!$dry) {
-        setting_set('mail_tx_via_gmail', '0');
+        set_setting('mail_tx_via_gmail', '0');
         @file_put_contents(BASE_PATH . '/data/logs/cron.log',
             '[' . date('Y-m-d H:i:s') . "] [mail_unblock_watch] ограничение снято, письма сайта вернулись на kc@\n",
             FILE_APPEND);
