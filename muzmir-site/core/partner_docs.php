@@ -85,10 +85,21 @@ function partner_cert_pdf(int $instId, bool $regen = false): ?string {
     return partner_render_pdf($url, $out);
 }
 
-/** PDF-путь для благодарности. */
+/**
+ * PDF-путь для благодарности.
+ *
+ * Номер кириллический ('...-П1' у педагога, '...-Р1' у руководителя), и обе
+ * буквы в имени файла превращались в один и тот же дефис: документы писались в
+ * ОДИН файл, а второй по счёту отдавался из кэша с чужими ФИО и ролью.
+ * Модификатор /u этого не лечит (кириллица всё равно не [0-9a-zA-Z]), поэтому
+ * различие обеспечивает хэш полного номера, а читаемая часть остаётся для глаз.
+ */
 function partner_thanks_pdf_path(string $docNumber): string {
+    $slug = (string) preg_replace('~-{2,}~', '-', (string) preg_replace('~[^0-9a-zA-Z]~u', '-', $docNumber));
+    $slug = trim($slug, '-');
+    if ($slug === '') $slug = 'doc';
     return BASE_PATH . '/public/diplomas/partner_thanks_'
-         . preg_replace('~[^0-9a-zA-Z]~', '-', $docNumber) . '.pdf';
+         . $slug . '_' . substr(sha1($docNumber), 0, 12) . '.pdf';
 }
 
 /**
@@ -143,12 +154,28 @@ function partner_thanks_next_no(int $instId, string $role): string {
     if (!$inst) return 'БЛГ-ИП-0000-00000-X0';
     $base = 'БЛГ-' . (string) $inst['partner_no'];
     $letter = ($role === 'manager') ? 'Р' : 'П';
+    $prefix = $base . '-' . $letter;
+    // Хвост номера отсчитываем ПО ДЛИНЕ ПРЕФИКСА, а не поиском буквы: partner_no
+    // начинается с «ИП-», и INSTR находил «П» внутри него. У педагогов вместо П2
+    // выходило «П-2025», следующий вызов повторял тот же номер и падал на UNIQUE,
+    // а вызывающий код глотает исключение, и благодарность терялась молча.
+    $off = mb_strlen($prefix, 'UTF-8') + 1;
     try {
         $max = (int) (scalar(
-            "SELECT COALESCE(MAX(CAST(REPLACE(SUBSTR(doc_number, INSTR(doc_number, ?) + 1), ?, '') AS INTEGER)), 0)
+            "SELECT COALESCE(MAX(CAST(SUBSTR(doc_number, ?) AS INTEGER)), 0)
              FROM partner_thanks
              WHERE institution_id=? AND role=? AND doc_number LIKE ?",
-            [$letter, $letter, $instId, $role, $base . '-' . $letter . '%']) ?? 0);
+            [$off, $instId, $role, $prefix . '%']) ?? 0);
     } catch (\Throwable $e) { $max = 0; }
-    return $base . '-' . $letter . ($max + 1);
+    if ($max < 0) $max = 0;   // наследие сломанной нумерации («П-2025») не должно тянуть счётчик в минус
+    // Если номер всё-таки занят, берём следующий свободный: UNIQUE на doc_number
+    // иначе снова уронит INSERT, и педагог не попадёт в очередь.
+    $n = $max + 1;
+    for ($i = 0; $i < 100; $i++) {
+        try { $busy = one("SELECT id FROM partner_thanks WHERE doc_number=?", [$prefix . $n]); }
+        catch (\Throwable $e) { break; }
+        if (!$busy) break;
+        $n++;
+    }
+    return $prefix . $n;
 }

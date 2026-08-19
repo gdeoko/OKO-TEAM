@@ -20,6 +20,12 @@
  *   php scripts/unisender_suppression.php                   — что в списке
  *   php scripts/unisender_suppression.php --clear=2026-08-17 --dry
  *   php scripts/unisender_suppression.php --clear=2026-08-17   — эта дата И ПОЗЖЕ
+ *   php scripts/unisender_suppression.php --clear-days=10      — последние 10 дней
+ *
+ * В кроне дату не зашивают: --clear=2026-08-14 через месяц означает «снимать всё
+ * за месяц», а через год скрипт будет каждый день перебирать годовой список ради
+ * полусотни снятий. Скользящее окно --clear-days держит внимание на свежих
+ * записях, где ложных подавлений больше всего.
  *
  * У сервиса свой предел: около полусотни снятий в сутки, дальше он отвечает
  * «Exceeded the daily email reset limit». Поэтому скрипт стоит в кроне и
@@ -36,7 +42,10 @@ require_once BASE_PATH . '/core/mail_reputation.php';
 
 $dry   = in_array('--dry', $argv, true);
 $clear = '';
-foreach ($argv as $a) if (preg_match('~^--clear=(\d{4}-\d{2}-\d{2})$~', $a, $m)) $clear = $m[1];
+foreach ($argv as $a) {
+    if (preg_match('~^--clear=(\d{4}-\d{2}-\d{2})$~', $a, $m))  $clear = $m[1];
+    if (preg_match('~^--clear-days=(\d{1,3})$~', $a, $m))       $clear = date('Y-m-d', strtotime('-' . max(1, (int) $m[1]) . ' days'));
+}
 $line = str_repeat('=', 78);
 
 $key = trim((string) cfgv('unisender_api_key', ''));

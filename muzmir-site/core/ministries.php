@@ -465,12 +465,29 @@ function min_mark_sent(int $id, string $number): void {
     } catch (\Throwable $e) {}
 }
 
-function min_mark_replied(string $email, string $status = 'replied'): void {
+/**
+ * ВЕДОМСТВО ОТВЕТИЛО.
+ *
+ * Ключ — номер строки, а не адрес. Крупные органы отвечают с соседнего ящика:
+ * ЯНАО ответил с codify@yanao.ru на письмо для depcul@yanao.ru, Минобразования
+ * Ставрополья — с личного адреса сотрудницы. Разбор такое ведомство узнаёт (по
+ * домену), а вот апдейт по адресу ответа не задевал ни одной строки: поддержавшее
+ * ведомство навсегда оставалось в статусе «письмо отправлено», и отчёт по
+ * обращениям показывал молчание там, где была поддержка.
+ *
+ * $ministryId — если известен, обновляем по нему; иначе по адресу, как раньше.
+ */
+function min_mark_replied(string $email, string $status = 'replied', int $ministryId = 0): void {
     min_migrate();
     $ok = ['replied', 'supported', 'declined'];
     if (!in_array($status, $ok, true)) $status = 'replied';
     try {
-        q("UPDATE ministries SET status=?, replied_at=datetime('now','localtime') WHERE email=?",
+        if ($ministryId > 0) {
+            q("UPDATE ministries SET status=?, replied_at=datetime('now','localtime') WHERE id=?",
+              [$status, $ministryId]);
+            return;
+        }
+        q("UPDATE ministries SET status=?, replied_at=datetime('now','localtime') WHERE LOWER(email)=?",
           [$status, mb_strtolower(trim($email))]);
     } catch (\Throwable $e) {}
 }

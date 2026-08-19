@@ -99,13 +99,23 @@ try {
     if ($firstWave && $openPerDay > 0) {
         // Начало дня: набираем площадки на сегодня и сразу отдаём им первую запись.
         $recycle = max(7, (int) (scalar("SELECT value FROM settings WHERE key='vk_promo_recycle_days'") ?: 30));
+        /* КРУГ СЧИТАЕТСЯ НАЧАТЫМ ПО cycle_date, А НЕ ТОЛЬКО ПО last_cycle_at.
+         * Отметка last_cycle_at ставится лишь на шестой волне и лишь при успешной
+         * публикации. Площадку, которой ВК закрыл стену на середине круга, отметка
+         * не получала, на следующий день она снова проходила в набор, next_slot
+         * сбрасывался в 1 — и в то же сообщество уходил тот же самый текст слота 1
+         * второй раз. Именно это антиспам ВК ищет в первую очередь, да и суточная
+         * норма записей тратится впустую. Теперь площадка, у которой круг начинался
+         * в пределах окна перерыва, в набор не берётся: недоделанный круг лучше
+         * оборвать, чем начать заново. */
         $fresh = all("SELECT * FROM vk_targets
                        WHERE status='ready' AND can_post=1 AND score >= 12
-                         AND COALESCE(cycle_date,'') <> :today
+                         AND (COALESCE(cycle_date,'') = ''
+                              OR date(cycle_date) < date('now','localtime','-' || :rec || ' days'))
                          AND (COALESCE(last_cycle_at,'') = ''
                               OR last_cycle_at < datetime('now','localtime','-' || :rec || ' days'))
                        ORDER BY score DESC, members DESC
-                       LIMIT :l", ['today' => $today, 'rec' => $recycle, 'l' => min($openPerDay, $left)]);
+                       LIMIT :l", ['rec' => $recycle, 'l' => min($openPerDay, $left)]);
         foreach ($fresh as $t) {
             q("UPDATE vk_targets SET cycle_date=:d, next_slot=1 WHERE group_id=:g",
               ['d' => $today, 'g' => (int) $t['group_id']]);

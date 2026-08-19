@@ -96,8 +96,12 @@ mr_log('читаем ящик ' . $user . ' на ' . $imapHost);
 $acc = ['host' => $imapHost, 'port' => (int) (cfgv('imap_port', 0) ?: 993), 'user' => $user, 'pass' => $pass];
 
 /* ── Кого слушаем ───────────────────────────────────────────────────────── */
+// Строку берём целиком: из неё готовятся и благодарность на бланке (ФИО,
+// должность), и тема ответа со ссылкой на наш исходящий номер. С коротким
+// списком колонок last_number и person были всегда пустыми, и официальные ответы
+// уходили безымянными и без «(к исх. №...)».
 $known = [];
-foreach (all("SELECT id, email, org, region FROM ministries WHERE email<>''") as $r) {
+foreach (all("SELECT * FROM ministries WHERE email<>''") as $r) {
     $known[mb_strtolower((string) $r['email'])] = $r;
 }
 if (!$known) { mr_log('база ведомств пуста — слушать некого'); exit(0); }
@@ -285,10 +289,18 @@ foreach ($ids as $id) {
         continue;
     }
 
-    min_mark_replied($from, $isRefusal ? 'declined' : 'supported');
+    $minId = (int) ($known[$from]['id'] ?? 0);
+    min_mark_replied($from, $isRefusal ? 'declined' : 'supported', $minId);
     try {
-        q("UPDATE official_letters SET status=?, replied_at=datetime('now','localtime') WHERE email=? AND kind='support'",
-          [$isRefusal ? 'declined' : 'replied', $from]);
+        // Реестр обращений закрываем и по адресу ответа, и по тому, на который мы
+        // писали: ответ приходит с соседнего ящика ведомства, а запись обращения
+        // заведена на прежний адрес — по одному адресу она так и висела «отправлено».
+        $addrs = array_unique(array_filter([$from, mb_strtolower(trim((string) ($known[$from]['email'] ?? '')))]));
+        foreach ($addrs as $addr) {
+            q("UPDATE official_letters SET status=?, replied_at=datetime('now','localtime')
+                WHERE LOWER(email)=? AND kind='support' AND status IN ('sent','queued')",
+              [$isRefusal ? 'declined' : 'replied', $addr]);
+        }
     } catch (\Throwable $e) {}
     $replies++;
 
@@ -358,7 +370,12 @@ foreach ($ids as $id) {
      * удалась, письмо всё равно уходит — благодарность без вложения лучше, чем
      * молчание в ответ на поддержку.
      */
-    if (mrep_enabled()) {
+    // ОДНО ВЕДОМСТВО — ОДНА БЛАГОДАРНОСТЬ. Ведомство присылает два письма подряд
+    // или отвечает сразу на два наших ящика — до этой проверки крон благодарил
+    // столько же раз, сколько писем прочитал.
+    if (mrep_enabled() && mrep_already_thanked($from, $minId)) {
+        mr_log('благодарность уже уходила, второй раз не пишем: ' . $org);
+    } elseif (mrep_enabled()) {
         $files = [];
         try {
             $thanks = mrep_thanks_pdf($known[$from]);

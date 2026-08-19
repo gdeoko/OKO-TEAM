@@ -99,6 +99,27 @@ function order_fulfill_digital(int $orderId): int {
             : one("SELECT id FROM diplomas WHERE application_id=? AND type=?", [$appId, $type]);
         if ($dup) continue;
 
+        // НОМЕР В РЕЕСТРЕ = НОМЕР НА БЛАНКЕ. Здесь дописывался свой суффикс
+        // '-2', а печать считала номер заново по позиции педагога и давала '-T2':
+        // QR с оплаченного бланка вёл в «диплом не найден», а лишняя запись
+        // реестра не стояла ни на одном документе. Считаем тем же индексом.
+        $pIdx = ($type === 'thanks' && function_exists('diploma_person_index'))
+                  ? diploma_person_index((string) ($a['teacher'] ?? ''), $person)
+                  : 0;
+        $num = function_exists('diploma_make_number')
+                 ? diploma_make_number((string) $a['number'], $type, $pIdx)
+                 : ((string) $a['number'] . '-' . mb_strtoupper($type));
+        // Номер уже занят, значит такой бланк в реестре есть. Выдумывать второй
+        // номер нельзя: он не напечатан нигде, а UNIQUE на diplomas.number уронил
+        // бы всю выдачу заказа. Проверяем ДО рендера, чтобы не гонять бастион зря.
+        if (one("SELECT id FROM diplomas WHERE number=?", [$num])) {
+            if (function_exists('audit')) {
+                audit('order_digital_number_taken', 'awards_orders', $orderId,
+                      ['app' => $appId, 'type' => $type, 'number' => $num, 'fio' => $person]);
+            }
+            continue;
+        }
+
         $pdf = null;
         try {
             if (function_exists('diploma_pdf_html')) {
@@ -110,14 +131,6 @@ function order_fulfill_digital(int $orderId): int {
                 ]);
             }
         } catch (\Throwable $e) { $pdf = null; }
-
-        $num = function_exists('diploma_make_number')
-                 ? diploma_make_number((string) $a['number'], $type)
-                 : ((string) $a['number'] . '-' . mb_strtoupper($type));
-        // Второй и последующие экземпляры одного типа — свой номер, иначе QR-проверка
-        // вела бы два разных бланка на одну запись.
-        $n = (int) scalar("SELECT COUNT(*) FROM diplomas WHERE application_id=? AND type=?", [$appId, $type]);
-        if ($n > 0) $num .= '-' . ($n + 1);
 
         insert('diplomas', [
             'number'         => $num,

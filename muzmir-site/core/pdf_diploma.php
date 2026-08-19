@@ -158,6 +158,29 @@ function diploma_make_number(string $base, string $type = 'main', int $extraInde
     }
 }
 
+/**
+ * НОМЕР ПОЛУЧАТЕЛЯ БЛАГОДАРНОСТИ в списке педагогов заявки (1 это первый, 0 это не найден).
+ *
+ * Единая точка расчёта: этим же индексом печатается номер на бланке
+ * (/diploma-render) и заводится запись реестра (core/orders.php). Пока индекс
+ * считался в двух местах по-разному, на бланке стоял «-T2», а в diplomas.number
+ * лежал «-T-2», и QR с оплаченного бланка вёл в «диплом не найден».
+ */
+function diploma_person_index(string $teachers, string $person, int $fallback = 0): int {
+    $person = trim($person);
+    if ($person === '') return $fallback;
+    if (!function_exists('_dh_teachers') && is_file(BASE_PATH . '/core/diploma_html.php')) {
+        require_once BASE_PATH . '/core/diploma_html.php';
+    }
+    if (!function_exists('_dh_teachers')) return $fallback;
+    [, $joined] = _dh_teachers($teachers);
+    $list = array_values(array_filter(array_map('trim', explode(',', $joined)), static fn($x) => $x !== ''));
+    foreach ($list as $i => $one) {
+        if (mb_strtolower($one) === mb_strtolower($person)) return $i + 1;
+    }
+    return $fallback;
+}
+
 /** Арабские номера степеней → римские (ЛАУРЕАТ 1 степени → ЛАУРЕАТ I степени). */
 function _dip_roman(string $s): string {
     $map = [1 => 'I', 2 => 'II', 3 => 'III', 4 => 'IV', 5 => 'V'];

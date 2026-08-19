@@ -463,6 +463,14 @@ function partner_by_email(string $email): ?array {
     } catch (\Throwable $e) { return null; }
 }
 
+/** Скидка партнёрского промокода, %. Ровно столько обещано в письме и в кабинете. */
+const PARTNER_PROMO_PCT = 10;
+
+/** Партнёрский код в каноническом виде: только латиница и цифры, верхний регистр. */
+function partner_promo_norm(string $code): string {
+    return (string) preg_replace('/[^A-Z0-9]/', '', strtoupper(trim($code)));
+}
+
 /** Партнёр по промокоду (для применения скидки). */
 function partner_by_promo(string $code): ?array {
     partner_migrate();
@@ -473,6 +481,47 @@ function partner_by_promo(string $code): ?array {
                     AND partner_status='accepted' AND partner_promo_uses<partner_promo_max LIMIT 1", [$code])
             ?: null;
     } catch (\Throwable $e) { return null; }
+}
+
+/**
+ * ПРОВЕРКА ПАРТНЁРСКОГО ПРОМОКОДА БЕЗ СПИСАНИЯ.
+ *
+ * Партнёрский код вводится в то же поле «Промокод», что и реферальный, а
+ * реферальный поиск чистит строку от дефисов (referral_lookup). Из-за этого
+ * PART-2026-XXXX не находился никогда: письмо о десяти заявках и кабинет
+ * обещали скидку, а форма заявки её не давала. Сравниваем по нормализованному
+ * виду, чтобы код срабатывал и с дефисами, и без них, в любом регистре.
+ *
+ * Отдельно от partner_apply_promo, потому что решение «тратить код или нет»
+ * принимается по цене: участнику с клубной скидкой партнёрская не нужна, и
+ * сжигать ради неё одно из десяти использований учреждения нельзя.
+ *
+ * @return array{0:?array,1:string} учреждение (или null) и причина отказа
+ */
+function partner_promo_check(string $code): array {
+    partner_migrate();
+    $norm = partner_promo_norm($code);
+    if ($norm === '') return [null, ''];
+    try {
+        $p = one("SELECT * FROM institutions
+                   WHERE partner_promo_code<>''
+                     AND REPLACE(REPLACE(UPPER(partner_promo_code),'-',''),' ','')=?
+                   LIMIT 1", [$norm]);
+    } catch (\Throwable $e) { $p = null; }
+    // Код не партнёрский — молча отдаём его реферальной ветке.
+    if (!$p) return [null, ''];
+    if ((string) ($p['partner_status'] ?? '') !== 'accepted') {
+        return [null, 'Партнёрский промокод больше не действует.'];
+    }
+    // Код обещан «с 10 заявок». До активации он не работает, даже если утёк раньше.
+    if (trim((string) ($p['partner_promo_activated_at'] ?? '')) === ''
+        && (int) ($p['partner_apps_count'] ?? 0) < 10) {
+        return [null, 'Партнёрский промокод учреждения ещё не активирован.'];
+    }
+    if ((int) ($p['partner_promo_uses'] ?? 0) >= (int) ($p['partner_promo_max'] ?? 10)) {
+        return [null, 'Партнёрский промокод исчерпал лимит использований.'];
+    }
+    return [$p, ''];
 }
 
 /** Пересчёт счётчиков заявок партнёра (лёгкий, для крон-триггеров). */
@@ -536,7 +585,8 @@ function partner_apply_promo(string $code, ?int $applicationId = null): array|fa
         return false;
     }
     partner_log_event($instId, 'promo_used', json_encode(['app' => $applicationId, 'uses' => $uses + 1], JSON_UNESCAPED_UNICODE));
-    return ['institution_id' => $instId, 'discount_pct' => 10, 'promo_code' => $p['partner_promo_code'], 'uses_left' => $max - $uses - 1];
+    return ['institution_id' => $instId, 'discount_pct' => PARTNER_PROMO_PCT,
+            'promo_code' => $p['partner_promo_code'], 'uses_left' => $max - $uses - 1];
 }
 
 /* ─────────────────────── КАБИНЕТ (аутентификация) ─────────────────────── */

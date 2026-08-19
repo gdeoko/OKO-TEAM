@@ -775,6 +775,51 @@ function mrep_fix_person(string $email, string $fio, string $role = ''): bool {
 }
 
 /**
+ * ОДНО ВЕДОМСТВО — ОДНА БЛАГОДАРНОСТЬ.
+ *
+ * Ответ ведомства приходит по нескольким путям сразу: крон читает kc@ по IMAP, а
+ * разбор общей почты берёт то же письмо из ящика на mail.ru, и ведомство нередко
+ * присылает два письма подряд. Проверки не было ни в одном пути, кроме разбора
+ * общей почты, — за август шесть адресатов получили благодарность по два-три
+ * раза. Смотрим очередь писем, а не память прогона: пути разные, очередь одна.
+ *
+ * Адреса берём все, какие у ведомства известны: канцелярия отвечает то с общего
+ * ящика, то с личного адреса сотрудника, и по одному адресу дубль не виден.
+ */
+function mrep_already_thanked(string $email, int $ministryId = 0, int $days = 60): bool {
+    $mails = [];
+    $e = mb_strtolower(trim($email));
+    if ($e !== '') $mails[$e] = 1;
+    if ($ministryId > 0) {
+        try {
+            $r = one("SELECT email FROM ministries WHERE id=?", [$ministryId]);
+            $a = mb_strtolower(trim((string) ($r['email'] ?? '')));
+            if ($a !== '') $mails[$a] = 1;
+        } catch (\Throwable $ex) {}
+        try {
+            foreach (all("SELECT DISTINCT email FROM ministry_replies WHERE ministry_id=? AND email<>''",
+                         [$ministryId]) as $row) {
+                $a = mb_strtolower(trim((string) $row['email']));
+                if ($a !== '') $mails[$a] = 1;
+            }
+        } catch (\Throwable $ex) {}
+    }
+    if (!$mails) return false;
+
+    $in = implode(',', array_fill(0, count($mails), '?'));
+    try {
+        // Тема благодарности задана здесь же, в mrep_reply_support(): пока обе
+        // строки лежат рядом, проверка не разойдётся с письмом.
+        $n = (int) (scalar("SELECT COUNT(*) FROM mail_queue
+                             WHERE LOWER(to_email) IN ($in)
+                               AND subject LIKE 'Благодарим за поддержку%'
+                               AND created_at >= datetime('now','localtime','-" . max(1, $days) . " days')",
+                           array_keys($mails)) ?? 0);
+        return $n > 0;
+    } catch (\Throwable $ex) { return false; }
+}
+
+/**
  * ПОСТАВИТЬ ОТВЕТ ЦЕНТРА В ОЧЕРЕДЬ.
  *
  * Ответ ведомству — такое же официальное письмо, как и само обращение: уходит с

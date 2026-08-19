@@ -50,14 +50,50 @@ function inbox_boxes(): array {
  *
  * «Спам» называется по-разному: у Яндекса Spam, у Mail.ru Спам, у Gmail это
  * ярлык [Gmail]/Спам. Пока имя было одно на всех, спам читался только у Яндекса,
- * а именно там сейчас лежат ответы ведомств: почтовые службы охотно кладут туда
- * письма с вложением-бланком. Несуществующая папка просто вернёт пустой список.
+ * а туда почтовые службы охотно кладут письма с вложением-бланком. Настоящее имя
+ * спам-папки спрашиваем у сервера (inbox_spam_folders), а если папка всё-таки не
+ * открылась — это видно в логе, а не выглядит как «писем нет».
  */
 function inbox_folders(array $acc): array {
-    $h = mb_strtolower(inbox_imap_host($acc));
-    if (str_contains($h, 'gmail'))  return ['INBOX', '[Gmail]/Спам', '[Gmail]/Spam'];
-    if (str_contains($h, 'mail.ru')) return ['INBOX', 'Спам', 'Spam'];
-    return ['INBOX', 'Spam'];
+    return array_merge(['INBOX'], inbox_spam_folders($acc));
+}
+
+/**
+ * ИМЯ ПАПКИ СПАМА СПРАШИВАЕМ У САМОГО СЕРВЕРА.
+ *
+ * В IMAP имена папок живут в модифицированном UTF-7, а не в UTF-8: «Спам» на
+ * проводе выглядит как &BCEEPwQwBDw-, у Gmail это [Gmail]/&BCEEPwQwBDw-. Русские
+ * буквы в имени Gmail не понимал вовсе — SELECT падал, im_search отдавал пустой
+ * список, и 240 писем в спаме выглядели как «спам пуст». Поэтому имя берём из
+ * ответа LIST по флагу \Spam или \Junk: сервер сам называет свою папку так, как
+ * её надо открывать. Догадки остаются запасным путём и уже в правильном
+ * кодировании.
+ */
+function inbox_spam_folders(array $acc): array {
+    static $cache = [];
+    $ck = mb_strtolower((string) ($acc['user'] ?? '')) . '@' . mb_strtolower(inbox_imap_host($acc));
+    if (isset($cache[$ck])) return $cache[$ck];
+
+    $found = [];
+    [$ok, $body] = im_cmd($acc, '', 'LIST "" "*"');
+    if ($ok) {
+        foreach (preg_split('~\R~', (string) $body) ?: [] as $line) {
+            // * LIST (\HasNoChildren \Junk) "/" "[Gmail]/&BCEEPwQwBDw-"
+            if (!preg_match('~^\*\s+LIST\s+\(([^)]*)\)\s+(?:"[^"]*"|NIL)\s+(?:"(.*)"|(\S+))\s*$~i', trim($line), $m)) continue;
+            if (!preg_match('~\\\\(Spam|Junk)\b~i', $m[1])) continue;
+            $name = ($m[2] ?? '') !== '' ? $m[2] : (string) ($m[3] ?? '');
+            if ($name !== '') $found[$name] = 1;
+        }
+    }
+    if (!$found) {
+        // Догадка ровно одна на службу: лишние имена дают заведомо провальный
+        // SELECT, а он теперь пишется в лог и превращает его в шум.
+        $h = mb_strtolower(inbox_imap_host($acc));
+        $n = str_contains($h, 'gmail') ? '[Gmail]/Спам' : (str_contains($h, 'mail.ru') ? 'Спам' : 'Spam');
+        $enc = @mb_convert_encoding($n, 'UTF7-IMAP', 'UTF-8');
+        $found[is_string($enc) && $enc !== '' ? $enc : $n] = 1;
+    }
+    return $cache[$ck] = array_keys($found);
 }
 
 /**
@@ -452,7 +488,15 @@ function inbox_scan(string $alias, int $days = 14): array {
     // на письме от нашего же домена). Ответ учреждения оттуда не заберёт никто, а
     // для нас он ничем не хуже остальных — фильтруем мы сами, по содержанию.
     foreach (inbox_folders($acc) as $folder) {
-        $ids = im_search($acc, 'SINCE ' . $since, $folder);
+        $err = '';
+        $ids = im_search($acc, 'SINCE ' . $since, $folder, $err);
+        // Папка не открылась — это не «писем нет». Молчаливый ноль здесь и прятал
+        // непрочитанный спам; остальные папки при этом читаем дальше.
+        if ($err !== '') {
+            $res['errors']++;
+            error_log('inbox_scan: ' . $alias . ', папка «' . $folder . '» не открылась: ' . $err);
+            continue;
+        }
         foreach ($ids as $id) {
             $raw = im_fetch($acc, $id, $folder);
             if (trim($raw) === '') { $res['errors']++; continue; }

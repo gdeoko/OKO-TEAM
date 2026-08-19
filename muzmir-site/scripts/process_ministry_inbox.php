@@ -72,7 +72,15 @@ foreach ($rows as $m) {
             if (count($same) === 1) {
                 $min = $same[0];
                 echo "     адрес сменился: " . $min['email'] . " → " . $from . "\n";
-                if (!$dry) q("UPDATE ministries SET email=? WHERE id=?", [$from, (int) $min['id']]);
+                if (!$dry) {
+                    q("UPDATE ministries SET email=? WHERE id=?", [$from, (int) $min['id']]);
+                    // Реестр обращений ведётся по адресу: если его не перенести,
+                    // запись остаётся на прежнем ящике и навсегда висит «отправлено»,
+                    // а отбор следующей волны не видит, что письмо уже уходило, —
+                    // ведомство получит второе обращение с новым исходящим номером.
+                    q("UPDATE official_letters SET email=? WHERE LOWER(email)=? AND kind='support'",
+                      [$from, mb_strtolower(trim((string) $min['email']))]);
+                }
                 $min['email'] = $from;
             }
         }
@@ -115,7 +123,9 @@ foreach ($rows as $m) {
         continue;
     }
 
-    if ($min) min_mark_replied($from, $kind === 'ministry_decline' ? 'declined' : 'supported');
+    // Отмечаем по номеру строки: ответ приходит и с соседнего ящика ведомства,
+    // и тогда апдейт по адресу не находит ничего.
+    if ($min) min_mark_replied($from, $kind === 'ministry_decline' ? 'declined' : 'supported', (int) $min['id']);
 
     /* Реестр обращений тоже закрываем: пока обращение числится «отправлено»,
      * ведомство попадает в следующую волну и получает то же письмо второй раз. */
@@ -189,13 +199,10 @@ foreach ($rows as $m) {
     //
     // Минкультнац Мордовии прислал ответ и на kc@, и на почту центра на mail.ru.
     // Письма разные (разные ящики — разные ключи), ведомство одно, и 19 августа
-    // оно получило от нас две одинаковые благодарности подряд. Перед постановкой
-    // письма смотрим, не благодарили ли этот адрес недавно.
-    $thanked = (int) (scalar("SELECT COUNT(*) FROM mail_queue
-                               WHERE LOWER(to_email) = ?
-                                 AND subject LIKE 'Благодарим за поддержку%'
-                                 AND created_at >= datetime('now','localtime','-60 days')", [$from]) ?? 0);
-    if ($thanked > 0) {
+    // оно получило от нас две одинаковые благодарности подряд. Проверка общая с
+    // кроном ministry_replies: раньше она жила только здесь, и крон благодарил
+    // повторно то, что здесь уже было отправлено.
+    if (mrep_already_thanked($from, (int) ($min['id'] ?? 0))) {
         echo "     благодарность уже уходила, второй раз не пишем\n";
         q("UPDATE inbox_messages SET handled_by='auto_accept' WHERE id=?", [$id]);
         continue;

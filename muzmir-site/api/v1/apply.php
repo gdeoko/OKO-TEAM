@@ -378,7 +378,8 @@ if ($paidComps) {
             $clubPct = club_discount_percent((int) $uid);
         }
     }
-    $promoCode = strtoupper(preg_replace('/[^A-Z0-9]/', '', strtoupper(input('promo_code'))));
+    $promoRaw  = trim((string) input('promo_code'));
+    $promoCode = strtoupper(preg_replace('/[^A-Z0-9]/', '', strtoupper($promoRaw)));
     $ref = $promoCode !== '' ? referral_lookup($promoCode) : null;
     // Промокод — один раз на участника, максимум 5%. Свой собственный код не принимается.
     [$refPct, $promoDeny] = referral_discount_for($ref, $uid, $email);
@@ -393,6 +394,46 @@ if ($paidComps) {
     // Потолки: без клуба суммарно ≤10%; с клубом — клуб + до 5% реферальных.
     $disc = discount_breakdown($loyaltyPct, $effectiveRefPct, $clubPct);
     $totalPct = (int) $disc['total'];
+
+    // ПАРТНЁРСКИЙ ПРОМОКОД УЧРЕЖДЕНИЯ (PART-2026-XXXX) ПРИНИМАЕТСЯ ТЕМ ЖЕ ПОЛЕМ.
+    //
+    // Реферальный поиск вырезает из строки дефисы, поэтому партнёрский код в нём
+    // не находился никогда: письмо о десяти заявках и кабинет партнёра обещали
+    // скидку 10%, а форма заявки её не давала.
+    $partnerPct   = 0;
+    $partnerPromo = '';
+    // $basePriceSum=0 — мисконфиг платного конкурса, заявка станет бесплатной ниже:
+    // тратить на неё использование партнёра нельзя.
+    if (!$ref && $promoRaw !== '' && $basePriceSum > 0 && function_exists('partner_promo_check')) {
+        [$partnerInst, $partnerDeny] = partner_promo_check($promoRaw);
+        if ($partnerInst) {
+            // Партнёрская скидка идёт ВМЕСТО остальных, а не поверх них: она и так
+            // равна общему потолку. Если своя скидка не меньше, код не тратим —
+            // у учреждения их всего десять.
+            if ($totalPct >= PARTNER_PROMO_PCT) {
+                $partnerDeny = 'Ваша скидка уже не меньше партнёрской — промокод не потребовался.';
+            } else {
+                // Списываем сразу, вместе с расчётом счёта: так нельзя выдать больше
+                // обещанных учреждению использований даже при одновременных заявках.
+                $used = partner_apply_promo((string) $partnerInst['partner_promo_code'], (int) $appId);
+                if ($used) {
+                    $partnerPct   = (int) $used['discount_pct'];
+                    $partnerPromo = (string) $used['promo_code'];
+                    $totalPct     = $partnerPct;
+                    // Свою разовую скидку участник в этой заявке не тратит.
+                    $creditPct = 0;
+                    $disc = ['loyalty' => 0, 'referral' => 0, 'club' => 0,
+                             'total' => $partnerPct, 'cap' => max((int) $disc['cap'], $partnerPct)];
+                    audit('partner_promo_use', 'applications', $appId,
+                          ['code' => $partnerPromo, 'inst' => (int) $used['institution_id'], 'pct' => $partnerPct]);
+                } else {
+                    $partnerDeny = 'Партнёрский промокод исчерпал лимит использований.';
+                }
+            }
+        }
+        if ($promoDeny === '' && $partnerDeny !== '') $promoDeny = $partnerDeny;
+    }
+
     $amount = loyalty_apply($basePriceSum, $totalPct);
 
     // Платный конкурс с нулевым итогом (price=0 у платного — мисконфиг) НЕ должен
@@ -426,8 +467,9 @@ if ($paidComps) {
                 'loyalty_pct'    => (int) $disc['loyalty'],
                 'referral_pct'   => (int) $disc['referral'],
                 'club_pct'       => (int) $disc['club'],
+                'partner_pct'    => $partnerPct,
                 'total_pct'      => $totalPct,
-                'promo_code'     => (string) ($ref['code'] ?? ''),
+                'promo_code'     => $partnerPromo !== '' ? $partnerPromo : (string) ($ref['code'] ?? ''),
                 'credit_applied' => $refPct <= 0 && $creditPct > 0,
                 'batch'          => $__nPaid,
             ], JSON_UNESCAPED_UNICODE),
@@ -441,7 +483,8 @@ if ($paidComps) {
         'loyalty_pct'    => (int) $disc['loyalty'],
         'referral_pct'   => (int) $disc['referral'],
         'club_pct'       => (int) $disc['club'],
-        'promo_applied'  => (bool) $ref,
+        'partner_pct'    => $partnerPct,
+        'promo_applied'  => (bool) $ref || $partnerPct > 0,
         'credit_applied' => $refPct <= 0 && $creditPct > 0,
         'promo_denied'   => $promoDeny,          // причина, если код не сработал
         'discount_pct'   => $totalPct,
@@ -463,7 +506,7 @@ if ($paidComps) {
                 'numbers'         => implode(',', $numbers),
                 'number'          => $number,
                 'email'           => $email,
-                'promo'           => $ref['code'] ?? '',
+                'promo'           => $partnerPromo !== '' ? $partnerPromo : ($ref['code'] ?? ''),
             ]
         );
         if ($payment && !empty($payment['id']) && tbl_exists('payments')) {

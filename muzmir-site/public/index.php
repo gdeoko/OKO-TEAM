@@ -465,18 +465,14 @@ if (preg_match('#^/diploma-render/(\d+)$#', $route, $m)) {
         // Благодарность второму руководителю коллектива получает свой номер:
         // на бланке и в реестре он должен совпадать, иначе проверка подлинности
         // приведёт к бланку коллеги.
-        $tIdx = 0;
-        if ($rtype === 'thanks') {
-            $tIdx = (int) ($opt['person_idx'] ?? 0);
-            $person = trim((string) ($opt['person'] ?? ''));
-            if ($person !== '' && function_exists('_dh_teachers')) {
-                [, $joined] = _dh_teachers((string) ($app['teacher'] ?? ''));
-                $list = array_values(array_filter(array_map('trim', explode(',', $joined))));
-                foreach ($list as $i => $one) {
-                    if (mb_strtolower($one) === mb_strtolower($person)) { $tIdx = $i + 1; break; }
-                }
-            }
-        }
+        // Индекс получателя считается ОДНОЙ функцией на печать и на реестр
+        // (core/pdf_diploma.php): разъедься эти два расчёта, и QR снова поведёт
+        // в «диплом не найден».
+        $tIdx = $rtype === 'thanks'
+            ? diploma_person_index((string) ($app['teacher'] ?? ''),
+                                   (string) ($opt['person'] ?? ''),
+                                   (int) ($opt['person_idx'] ?? 0))
+            : 0;
         $opt['number'] = diploma_make_number((string)($app['number'] ?? ''), $rtype ?: 'main', $tIdx);
     }
     echo diploma_html($c ?: [], $app, $opt);

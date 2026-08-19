@@ -78,7 +78,9 @@ ob_start(); ?>
             <a href="<?= h($site . '/p/' . (string) $inst['partner_slug']) ?>"><?= h($site . '/p/' . (string) $inst['partner_slug']) ?></a>
           </div>
           <div><span class="muted small">Вход в кабинет партнёра</span><br>
-            <a href="<?= h($site . '/partner') ?>"><?= h($site . '/partner') ?></a>,
+            <?php /* Именно ?a=login: без него роутер отдаёт публичную страницу
+                     программы, а не форму входа, и партнёр упирается в тупик. */ ?>
+            <a href="<?= h($site . '/partner?a=login') ?>"><?= h($site . '/partner?a=login') ?></a>,
             логин — почта учреждения <b><?= h((string) $inst['email']) ?></b>
           </div>
           <?php if ($pass !== ''): ?>
@@ -94,7 +96,7 @@ ob_start(); ?>
           письма, после десяти открывается промокод со скидкой для ваших участников.
         </p>
 
-        <a class="btn" href="<?= h($site . '/partner') ?>">Открыть кабинет партнёра</a>
+        <a class="btn" href="<?= h($site . '/partner?a=login') ?>">Открыть кабинет партнёра</a>
       </div>
 
     <?php else: ?>
