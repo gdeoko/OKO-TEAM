@@ -118,7 +118,20 @@ function nl_resolve_recipients(string $audience): array {
               WHERE COALESCE(email,'') <> '' AND COALESCE(blocked,0) = 0 AND COALESCE(notify_email,1) = 1"
         );
     }
-    return all("SELECT email, name FROM subscribers WHERE active = 1");
+    // ОДИН АДРЕС — ОДНО ПИСЬМО ВОЛНЫ.
+    //
+    // 20 298 адресов есть и в подписчиках, и в базе учреждений: школа искусств
+    // подписана как участник и одновременно стоит в справочнике учреждений.
+    // Волны идут параллельно, и один и тот же ящик получал два письма подряд —
+    // одно как участник, второе как учреждение. Для получателя это спам от нас
+    // же. Своей базе не пишем тем, кому в этот же день пишет волна учреждений.
+    return all(
+        "SELECT s.email, s.name FROM subscribers s
+          WHERE s.active = 1
+            AND NOT EXISTS (SELECT 1 FROM institutions i
+                             WHERE LOWER(i.email) = LOWER(s.email)
+                               AND i.status NOT IN ('excluded','bounced','unsubscribed','banned'))"
+    );
 }
 
 /**

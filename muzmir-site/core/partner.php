@@ -258,6 +258,45 @@ function partner_accept(int $instId): array {
     return ['inst' => $inst, 'password_plain' => $passPlain];
 }
 
+/**
+ * ЗАРАНЕЕ ПОДГОТОВЛЕННЫЙ ПАРТНЁРСКИЙ АККАУНТ.
+ *
+ * Правило владельца: аккаунт учреждения существует ДО того, как ему уходит
+ * письмо. Тогда в самом письме уже есть постоянная ссылка учреждения, логин и
+ * пароль от кабинета, а согласие сводится к одному нажатию — не нужно ждать,
+ * пока оргкомитет что-то выдаст руками.
+ *
+ * От partner_accept отличается одним: статус НЕ становится «accepted».
+ * Учреждение ещё не согласилось, оно просто заведено. Согласие ставит
+ * partner_accept, и он же выдаёт сертификат в реестр.
+ *
+ * Идемпотентна: у кого аккаунт уже есть, ничего не трогает и пароль не меняет.
+ * Возвращает ['inst'=>row, 'password_plain'=>'…'|''].
+ */
+function partner_prepare(int $instId): array {
+    partner_migrate();
+    $inst = one("SELECT * FROM institutions WHERE id=?", [$instId]);
+    if (!$inst) throw new \RuntimeException('institution not found');
+
+    if (trim((string) ($inst['partner_slug'] ?? '')) !== '' && !empty($inst['partner_no'])) {
+        return ['inst' => $inst, 'password_plain' => ''];
+    }
+
+    $slug      = partner_unique_slug($instId, partner_slugify((string) ($inst['name'] ?? '')));
+    $no        = partner_next_no();
+    $promo     = partner_gen_promo((int) date('Y'));
+    $passPlain = partner_gen_password();
+
+    q("UPDATE institutions SET partner_slug=?, partner_no=?, partner_pass_hash=?,
+             partner_pass_shown=0, partner_promo_code=?, partner_promo_uses=0,
+             partner_promo_max=10, partner_priority_days=4
+         WHERE id=?",
+      [$slug, $no, password_hash($passPlain, PASSWORD_DEFAULT), $promo, $instId]);
+
+    return ['inst' => one("SELECT * FROM institutions WHERE id=?", [$instId]),
+            'password_plain' => $passPlain];
+}
+
 /** Отказ от партнёрства (админ-side). */
 function partner_decline(int $instId, string $reason = ''): void {
     partner_migrate();

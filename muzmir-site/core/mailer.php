@@ -900,15 +900,19 @@ function mail_send_failover(string $to, string $subject, string $html, array $op
     // собственных дипломов, и ни одна кнопка «отправить» не помогала.
     $stop = mail_stop_kind($to);
     $mass = (int) ($opt['priority'] ?? 0) > 0 || in_array($pool, ['bulk', 'cold', 'news'], true);
-    if ($stop === 'dead' || ($stop === 'optout' && $mass)) {
+    if ($stop !== '' && $mass) {
         mail_log('SKIP стоп-лист (' . $stop . ') ' . $to . ' | ' . mb_substr($subject, 0, 60));
         mail_last_error($stop === 'dead'
             ? 'адрес в стоп-листе: ящика не существует'
             : 'человек отказался от рассылки — массовые письма ему не отправляются');
         return false;
     }
-    if ($stop === 'optout') {
-        mail_log('стоп-лист: отказ от рассылки не мешает личному письму — ' . $to
+    if ($stop !== '') {
+        // Стоп-лист закрывает РАССЫЛКУ, а не переписку. Правило владельца:
+        // уведомления сайта, результаты, наградные материалы и дожимы уходят даже
+        // тому, кто отписался или чей ящик однажды отбил письмо. Отказ мог быть
+        // разовым, а диплом человек оплатил и ждёт; отправку рассудит почтовик.
+        mail_log('стоп-лист (' . $stop . ') не мешает личному письму — ' . $to
                  . ' | ' . mb_substr($subject, 0, 60));
     }
     $accounts = mail_fallback_accounts(is_array($opt['account'] ?? null) ? $opt['account'] : [], $pool);
@@ -1305,7 +1309,9 @@ function mail_queue(string $to, string $name, string $subject, string $html, str
     // портит и отчёты, и суточную квоту.
     // Отказ от рассылки сюда не относится: в очередь попадают личные письма —
     // результат, наградной материал, код входа. Не кладём только мёртвый ящик.
-    if (mail_stop_kind($to) === 'dead') { mail_log('QUEUE SKIP стоп-лист (ящика нет) ' . $to); return 0; }
+    // В очередь кладём и адреса из стоп-листа: через неё идут личные письма —
+    // результат, наградный материал, код входа. Массовое письмо отсеется в момент
+    // отправки (mail_send_failover), а мёртвый адрес отбракует почтовик.
     try {
         $id = insert('mail_queue', [
             'to_email' => trim($to),
