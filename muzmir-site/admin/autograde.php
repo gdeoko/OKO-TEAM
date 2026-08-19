@@ -184,6 +184,8 @@ $cT = count($cmp);
     <p class="small" style="color:#777;margin:10px 0 0">
       «Расхождение до ступени» это соседнее звание. Живые члены жюри расходятся между собой примерно так же,
       поэтому именно эта цифра показывает, можно ли доверять машине черновую оценку.
+      Оценка не подгоняется под эти цифры: машина судит по международным системам (ABRSM, INTERKULTUR, LAMDA,
+      YAGP, WDSF, CIOFF, FIG, FISM и другим по направлениям), а сверка нужна как контроль, а не как настройка.
     </p>
   <?php endif; ?>
 </div>
@@ -245,6 +247,11 @@ $cT = count($cmp);
           <span style="color:#b34">· не удалось</span>
         <?php else: ?>
           · <b><?= h((string) $r['title']) ?></b> <span class="small">(<?= number_format((float) $r['total'], 1) ?>)</span>
+          <?php // Второе мнение: звание, названное напрямую, без перевода балла.
+                $lg = mb_strtoupper(trim((string) ($r['level_guess'] ?? '')));
+                if ($lg !== '' && $lg !== mb_strtoupper(trim((string) $r['title']))): ?>
+            <span class="small" style="color:#8B6F1F">· по сравнению с уровнем: <?= h($lg) ?></span>
+          <?php endif; ?>
           <?php if ((int) $r['applied']): ?><span style="color:#1E7A46">· применено</span>
           <?php else: ?><span style="color:#8B6F1F">· ждёт решения</span><?php endif; ?>
         <?php endif; ?>
