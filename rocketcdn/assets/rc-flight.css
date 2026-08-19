@@ -333,8 +333,8 @@ html[data-theme="light"] .rc-vidbg.on { opacity: .16; }
    Отсюда состав фильтра:
    · saturate(2.1) - главный шаг, поднимает s с 0.50 до 0.82 и
      вычищает из корпуса серый (красный канал падает с 34 до 13);
-   · hue-rotate(8deg) - добирает недостающие шесть градусов,
-     тон садится на 211° при 209° у стены рубки;
+   · hue-rotate(5deg) - добирает недостающие градусы, вместе с
+     плёнкой стены тон садится на 210° при 209° у стены рубки;
    · brightness(.86) contrast(1.1) - выводит светлоту на v≈0.27,
      как у стены рубки: раньше кабина была ещё и темнее комнаты.
    Пересветов при этом меньше процента пикселей, а разброс светлоты
@@ -348,7 +348,7 @@ html[data-theme="light"] .rc-vidbg.on { opacity: .16; }
   object-fit: cover;
   pointer-events: none;
   opacity: 0;
-  filter: brightness(.86) contrast(1.1) saturate(2.1) hue-rotate(8deg);
+  filter: brightness(.86) contrast(1.1) saturate(2.1) hue-rotate(5deg);
   transform: translateY(calc(var(--rcf-g, 0) * 1px));
   transition: opacity .8s var(--ease), transform .3s var(--ease);
 }
@@ -383,8 +383,19 @@ html[data-theme="light"] .rc-vidbg.on { opacity: .16; }
   -webkit-mask-repeat: no-repeat; mask-repeat: no-repeat;
 }
 /* В портрете rc-flight.js подставляет вертикальный кадр - маска
-   обязана быть той же картинкой, иначе плёнка ляжет мимо корпуса */
+   обязана быть той же картинкой, иначе плёнка ляжет мимо корпуса.
+
+   Заодно вертикальному кадру нужен свой фильтр: он снят темнее и
+   почти обесцвеченным (средний цвет корпуса 18,24,26 против
+   34,55,68 у горизонтального), из-за чего на телефоне кабина
+   уходила в серо-зелёный - замер давал тон 189° и s≈0.28, а рубка
+   держит 209° и s≈0.80. Тот же состав, но с большим запасом по
+   насыщенности и яркости, сводит и его: 205° при s≈0.78, и снова
+   без единого пересвеченного пикселя. */
 @media (orientation: portrait) {
+  .rcf-cab {
+    filter: brightness(1.2) contrast(1.14) saturate(3.2) hue-rotate(10deg);
+  }
   .rc-flight.has-cab .rcf-hud::before {
     -webkit-mask-image: url("gen/cockpit-tall.webp");
     mask-image: url("gen/cockpit-tall.webp");
