@@ -197,7 +197,67 @@ if ($nomFix) {
     echo "\n  По номинациям поправку не считаем: нигде ещё не набралось " . $minPerNom . " работ.\n";
 }
 
+/* КВАНТИЛЬНАЯ КАЛИБРОВКА: ГЛАВНЫЙ СПОСОБ.
+ *
+ * Линейная поправка работает, когда балл машины и оценка жюри связаны прямой
+ * линией. Здесь связь умеренная, и растягивание шкалы почти ничего не даёт: на
+ * 27 работах точность выросла с 11 до 15 процентов. Но у нас есть кое-что
+ * надёжнее — РАСПРЕДЕЛЕНИЕ. Мы знаем, какую долю работ жюри признаёт лауреатами
+ * первой степени, какую второй и так далее. Значит можно отсортировать работы по
+ * баллу машины и раздать звания в тех же долях: столько же лауреатов, сколько у
+ * жюри, и в том же порядке силы.
+ *
+ * Это не подгонка результата. Порядок работ остаётся тем, который выстроила
+ * машина по критериям; меняются только границы, где проходит черта между
+ * званиями. Так работает нормирование в любом конкурсе с ограниченным числом
+ * призовых мест.
+ */
+$dist = [];
+foreach ($pairs as $p) { $t = (string) $p['jury_title']; $dist[$t] = ($dist[$t] ?? 0) + 1; }
+$order = ['ГРАН-ПРИ', 'ЛАУРЕАТ I СТЕПЕНИ', 'ЛАУРЕАТ II СТЕПЕНИ', 'ЛАУРЕАТ III СТЕПЕНИ',
+          'ДИПЛОМАНТ I СТЕПЕНИ', 'ДИПЛОМАНТ II СТЕПЕНИ', 'ДИПЛОМАНТ III СТЕПЕНИ', 'УЧАСТНИК КОНКУРСА'];
+$sorted = $xs;
+rsort($sorted);                       // баллы машины по убыванию
+$thresholds = [];
+$pos = 0;
+foreach ($order as $title) {
+    $k = (int) ($dist[$title] ?? 0);
+    if ($k <= 0) continue;
+    $pos += $k;
+    // Порог — балл последней работы, попавшей в это звание. Ниже него начинается
+    // следующее. Берём среднее с соседом, чтобы черта не проходила ровно по баллу.
+    $idx  = min($pos, count($sorted)) - 1;
+    $low  = (float) $sorted[$idx];
+    $next = isset($sorted[$idx + 1]) ? (float) $sorted[$idx + 1] : $low - 1;
+    $thresholds[$title] = round(($low + $next) / 2, 1);
+}
+
+$exact3 = $near3 = 0;
+$byThreshold = static function (float $score) use ($thresholds, $order): string {
+    foreach ($order as $t) {
+        if (!isset($thresholds[$t])) continue;
+        if ($score >= $thresholds[$t]) return $t;
+    }
+    return 'УЧАСТНИК КОНКУРСА';
+};
+for ($i = 0; $i < $n2; $i++) {
+    $d = cal_rank($byThreshold($xs[$i])) - cal_rank((string) $pairs[$i]['jury_title']);
+    if ($d === 0) $exact3++;
+    if (abs($d) <= 1) $near3++;
+}
+echo "\n  КВАНТИЛЬНАЯ КАЛИБРОВКА (звания раздаются в тех же долях, что у жюри):\n";
+foreach ($thresholds as $t => $v) printf("    от %5.1f балла — %s\n", $v, $t);
+printf("  на этих же работах: точно %d%%, в пределах ступени %d%%\n",
+    (int) round($exact3 * 100 / $n2), (int) round($near3 * 100 / $n2));
+
 if ($apply) {
+    // Берём тот способ, который на сверке дал лучший результат, и записываем это
+    // прямо: владелец должен видеть, почему выбран именно он.
+    $useQuantile = $exact3 >= $exact2;
+    set_setting('grade_scale_mode', $useQuantile ? 'quantile' : 'linear');
+    set_setting('grade_score_thresholds', json_encode($thresholds, JSON_UNESCAPED_UNICODE));
+    echo "\n  выбран способ: " . ($useQuantile ? 'квантильный' : 'линейный')
+       . ' (точность ' . (int) round(max($exact2, $exact3) * 100 / $n2) . "%)\n";
     set_setting('grade_scale_gain',  (string) $gain);
     set_setting('grade_scale_shift', (string) $shift);
     set_setting('grade_scale_by_nomination', json_encode($nomFix, JSON_UNESCAPED_UNICODE));

@@ -450,7 +450,27 @@ function ag_grade_application(int $appId, array $opt = []): array {
     foreach (gr_formal_checks() as $k => $_) {
         if (array_key_exists($k, $formal) && $formal[$k] === false) $formalFail[] = $k;
     }
-    $title = $formalFail ? 'ТРЕБУЕТ ПРОВЕРКИ' : gr_title_by_score($total);
+    // ЗВАНИЕ ПО ПОРОГАМ СВЕРКИ, ЕСЛИ ОНИ ЗАДАНЫ.
+    //
+    // Пороги считает scripts/ai_grade_calibrate.php: он раздаёт звания в тех же
+    // долях, в каких их даёт жюри центра, а порядок работ остаётся тем, который
+    // выстроила машина по критериям. Пока сверки не было, работает общая шкала.
+    $titleByScore = static function (float $sc): string {
+        $mode = (string) (function_exists('setting') ? setting('grade_scale_mode', 'linear') : 'linear');
+        if ($mode === 'quantile') {
+            $th = json_decode((string) setting('grade_score_thresholds', ''), true);
+            if (is_array($th) && $th) {
+                foreach (['ГРАН-ПРИ', 'ЛАУРЕАТ I СТЕПЕНИ', 'ЛАУРЕАТ II СТЕПЕНИ', 'ЛАУРЕАТ III СТЕПЕНИ',
+                          'ДИПЛОМАНТ I СТЕПЕНИ', 'ДИПЛОМАНТ II СТЕПЕНИ', 'ДИПЛОМАНТ III СТЕПЕНИ',
+                          'УЧАСТНИК КОНКУРСА'] as $t) {
+                    if (isset($th[$t]) && $sc >= (float) $th[$t]) return $t;
+                }
+                return 'УЧАСТНИК КОНКУРСА';
+            }
+        }
+        return gr_title_by_score($sc);
+    };
+    $title = $formalFail ? 'ТРЕБУЕТ ПРОВЕРКИ' : $titleByScore($total);
 
     $upd = [
         'status'        => 'ok',
