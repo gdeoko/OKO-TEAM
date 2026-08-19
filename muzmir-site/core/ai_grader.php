@@ -30,6 +30,7 @@ require_once BASE_PATH . '/core/grading_rubrics.php';
 require_once BASE_PATH . '/core/grading_knowledge.php';
 require_once BASE_PATH . '/core/grading_anchors.php';
 require_once BASE_PATH . '/core/grading_schools.php';
+require_once BASE_PATH . '/core/presets.php';   // формулировки дополнительных дипломов центра
 require_once BASE_PATH . '/core/video_fetch.php';
 
 /** Таблицы оценки заводятся лениво, как всё остальное в проекте. */
@@ -52,6 +53,8 @@ function ag_migrate(): void {
             confidence REAL DEFAULT 0,
             red_flags TEXT DEFAULT '',
             level_guess TEXT DEFAULT '',      -- звание прямым выбором модели, до перевода балла
+            extra_award TEXT DEFAULT '',      -- предложенный дополнительный диплом ('' — не предлагается)
+            extra_award_why TEXT DEFAULT '',  -- за что именно, с привязкой ко времени записи
             applied INTEGER DEFAULT 0,        -- решение перенесено в заявку
             applied_at TEXT DEFAULT '',
             error TEXT DEFAULT '',
@@ -59,6 +62,8 @@ function ag_migrate(): void {
             created_at TEXT DEFAULT (datetime('now','localtime')))");
         // Поле появилось после первых сверок: на уже созданной таблице его надо добавить.
         try { db()->exec("ALTER TABLE grading_runs ADD COLUMN level_guess TEXT DEFAULT ''"); } catch (\Throwable $e) {}
+        try { db()->exec("ALTER TABLE grading_runs ADD COLUMN extra_award TEXT DEFAULT ''"); } catch (\Throwable $e) {}
+        try { db()->exec("ALTER TABLE grading_runs ADD COLUMN extra_award_why TEXT DEFAULT ''"); } catch (\Throwable $e) {}
         db()->exec("CREATE INDEX IF NOT EXISTS idx_gr_app ON grading_runs(application_id)");
         db()->exec("CREATE INDEX IF NOT EXISTS idx_gr_status ON grading_runs(status)");
         db()->exec("CREATE TABLE IF NOT EXISTS grading_rubrics (
@@ -272,6 +277,18 @@ function ag_prompt(array $app, array $rubric): string {
     $L[] = '  • Артистизм и костюм не могут перевесить технику: у них меньший вес именно поэтому.';
     $L[] = '  • Если чего-то не слышно или не видно, так и напиши, а балл поставь по тому, что доступно.';
     $L[] = '';
+    // ДОПОЛНИТЕЛЬНЫЙ ДИПЛОМ. У центра он существует давно и выдаётся редко: это
+    // не утешение и не украшение результата, а отметка одного качества, которое
+    // выделяется само по себе. Если раздавать его всем, он обесценится, поэтому
+    // по умолчанию поле пустое, и заполнять его нужно с обоснованием.
+    $L[] = 'ДОПОЛНИТЕЛЬНЫЙ ДИПЛОМ (поле extra_award)';
+    $L[] = '  Кроме звания коллегия иногда отмечает работу отдельным дипломом за одно конкретное качество. Он выдаётся РЕДКО: примерно одной работе из десяти, и только когда это качество заметно выше остального в самой работе и выше того, что обычно встречается на этом уровне.';
+    $L[] = '  Готовые формулировки: ' . (function_exists('EXTRA_PRESETS') ? implode(', ', EXTRA_PRESETS()) : 'ЗА АРТИСТИЗМ, ЗА ПАТРИОТИЗМ, ЗА ОРИГИНАЛЬНОЕ ИСПОЛНЕНИЕ, ЗА ВЫРАЗИТЕЛЬНОСТЬ, ЗА ВИРТУОЗНОЕ ИСПОЛНЕНИЕ') . '.';
+    $L[] = '  Можно предложить свою формулировку в том же виде (заглавными, начиная с «ЗА»), если ни одна готовая не описывает то, что ты увидела: например ЗА СОХРАНЕНИЕ ТРАДИЦИИ, ЗА РЕЖИССЁРСКОЕ РЕШЕНИЕ, ЗА АНСАМБЛЕВУЮ КУЛЬТУРУ, ЗА ВЫБОР РЕПЕРТУАРА.';
+    $L[] = '  Когда дополнительный диплом уместен: работа выигрывает в одном ярко и это видно любому; либо звание не отражает того, что человек сделал лучше всего (техника средняя, а образ выдающийся). Когда НЕ уместен: работа ровная и сильная во всём (звания достаточно), качество просто «хорошее», диплом хочется дать из жалости к невысокому званию.';
+    $L[] = '  Если оснований нет, оставь поле пустым. Пустое поле это нормальный и самый частый ответ.';
+    $L[] = '  В поле extra_award_why в одной фразе объясни, за что именно, с привязкой ко времени записи. Без обоснования диплом не выдаётся.';
+    $L[] = '';
     $L[] = 'КОММЕНТАРИЙ ДЛЯ УЧАСТНИКА (поле jury_comment)';
     $L[] = '  От лица коллегии жюри, на «Вы», по-русски, 700-1200 знаков. Структура: что получилось хорошо (конкретно), над чем работать (конкретно, с называнием приёма или упражнения), общее пожелание.';
     $L[] = '  Пиши как профессор, разбирающий работу ученика: доброжелательно, но по существу, без общих слов вроде «молодцы» и «так держать». Не называй баллы и звание, не упоминай, что оценка автоматическая.';
@@ -279,7 +296,8 @@ function ag_prompt(array $app, array $rubric): string {
     $L[] = 'ОТВЕТ строго в JSON без markdown и пояснений:';
     $L[] = '{"formal":{"playable":true,"one_piece":true,"participant":true,"nomination":true,"formation":true,"integrity":true,"no_overdub":true,"duration":true,"issues":["..."]},';
     $L[] = ' "criteria":{"КЛЮЧ":{"score":0,"note":"..."}},';
-    $L[] = ' "level":"звание одной строкой","jury_comment":"...","internal_note":"для оргкомитета: сомнения, спорные места, что проверить человеку",';
+    $L[] = ' "level":"звание одной строкой","extra_award":"","extra_award_why":"",';
+    $L[] = ' "jury_comment":"...","internal_note":"для оргкомитета: сомнения, спорные места, что проверить человеку",';
     $L[] = ' "confidence":0.0,"red_flags":["..."]}';
     $L[] = 'level — звание, которое ты присудила бы этой работе, ровно одной строкой из списка: ГРАН-ПРИ, ЛАУРЕАТ I СТЕПЕНИ, ЛАУРЕАТ II СТЕПЕНИ, ЛАУРЕАТ III СТЕПЕНИ, ДИПЛОМАНТ I СТЕПЕНИ, ДИПЛОМАНТ II СТЕПЕНИ, ДИПЛОМАНТ III СТЕПЕНИ, УЧАСТНИК КОНКУРСА. Выбирай его по уровню работы на международной шкале, а не по сумме баллов: балл и звание считаются отдельно и потом сверяются между собой.';
     $L[] = 'confidence — насколько ты уверена в оценке от 0 до 1: 0.9 и выше только когда запись хорошо слышна и видна и случай однозначный.';
@@ -527,6 +545,17 @@ function ag_grade_application(int $appId, array $opt = []): array {
     }
     if ($formalFail) $title = 'ТРЕБУЕТ ПРОВЕРКИ';
 
+    $extraAward = mb_strtoupper(trim((string) ($out['extra_award'] ?? '')));
+    $extraWhy   = mb_substr(trim((string) ($out['extra_award_why'] ?? '')), 0, 500);
+    // Формулировка без обоснования, слишком длинная или не начинающаяся с «ЗА»
+    // отбрасывается: такой диплом человеку не защитить перед участником.
+    if ($extraAward !== '' && (!str_starts_with($extraAward, 'ЗА ') || mb_strlen($extraAward) > 60 || $extraWhy === '')) {
+        $extraAward = '';
+        $extraWhy   = '';
+    }
+    // Формальное нарушение снимает и дополнительный диплом: сначала решение человека.
+    if ($formalFail) { $extraAward = ''; $extraWhy = ''; }
+
     $upd = [
         'status'        => 'ok',
         'formal'        => json_encode($formal, JSON_UNESCAPED_UNICODE),
@@ -534,6 +563,11 @@ function ag_grade_application(int $appId, array $opt = []): array {
         'total'         => $total,
         'title'         => $title,
         'level_guess'   => $levelPick,
+        // Дополнительный диплом: формулировка приводится к виду, принятому в
+        // центре (заглавными, с «ЗА»), и не принимается без обоснования —
+        // иначе он превращается в украшение, раздаваемое каждому второму.
+        'extra_award'     => $extraAward,
+        'extra_award_why' => $extraWhy,
         'jury_comment'  => mb_substr(trim((string) ($out['jury_comment'] ?? '')), 0, 4000),
         'internal_note' => mb_substr(trim((string) ($out['internal_note'] ?? '')), 0, 2000),
         'confidence'    => max(0.0, min(1.0, (float) ($out['confidence'] ?? 0))),

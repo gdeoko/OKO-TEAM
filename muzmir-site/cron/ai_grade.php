@@ -116,6 +116,12 @@ foreach ($rows as $r) {
             'jury_comment' => (string) $run['jury_comment'],
             'status'       => 'graded',
         ];
+        // Дополнительный диплом переносится только если человек его ещё не
+        // ставил: ручное решение всегда старше машинного предложения.
+        $extra = trim((string) ($run['extra_award'] ?? ''));
+        if ($extra !== '' && trim((string) (scalar("SELECT extra_diploma FROM applications WHERE id=?", [$appId]) ?? '')) === '') {
+            $upd['extra_diploma'] = $extra;
+        }
         update('applications', $upd, 'id=:id', ['id' => $appId]);
         q("UPDATE applications SET graded_at=? WHERE id=? AND COALESCE(graded_at,'')=''",
           [date('Y-m-d H:i:s'), $appId]);
@@ -123,7 +129,8 @@ foreach ($rows as $r) {
         if (function_exists('audit')) {
             audit('ai_grade_applied', 'application', $appId,
                   ['total' => (float) $run['total'], 'title' => (string) $run['title'],
-                   'model' => (string) $run['model'], 'confidence' => (float) $run['confidence']]);
+                   'model' => (string) $run['model'], 'confidence' => (float) $run['confidence'],
+                   'extra' => (string) ($upd['extra_diploma'] ?? '')]);
         }
         $applied++;
     } catch (\Throwable $e) {

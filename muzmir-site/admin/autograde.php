@@ -247,6 +247,10 @@ $cT = count($cmp);
           <span style="color:#b34">· не удалось</span>
         <?php else: ?>
           · <b><?= h((string) $r['title']) ?></b> <span class="small">(<?= number_format((float) $r['total'], 1) ?>)</span>
+          <?php $ea = trim((string) ($r['extra_award'] ?? ''));
+                if ($ea !== ''): ?>
+            <span class="small" style="color:#1E7A46">· доп. диплом: <?= h($ea) ?></span>
+          <?php endif; ?>
           <?php // Второе мнение: звание, названное напрямую, без перевода балла.
                 $lg = mb_strtoupper(trim((string) ($r['level_guess'] ?? '')));
                 if ($lg !== '' && $lg !== mb_strtoupper(trim((string) $r['title']))): ?>

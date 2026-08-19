@@ -86,6 +86,14 @@ $bad = [];
 foreach (gr_formal_checks() as $k => $text) if (array_key_exists($k, $formal) && $formal[$k] === false) $bad[] = $text;
 if ($bad) echo "  НЕ СООТВЕТСТВУЕТ ПОЛОЖЕНИЮ: " . implode(' ', $bad) . "\n\n";
 
+$extra = trim((string) ($run['extra_award'] ?? ''));
+if ($extra !== '') {
+    printf("  ДОПОЛНИТЕЛЬНЫЙ ДИПЛОМ: %s\n      %s\n\n", $extra,
+        wordwrap((string) ($run['extra_award_why'] ?? ''), 92, "\n      ", false));
+} else {
+    echo "  дополнительный диплом не предлагается\n\n";
+}
+
 $flags = (array) json_decode((string) $run['red_flags'], true);
 if ($flags) echo "  ТРЕБУЕТ ВНИМАНИЯ: " . implode('; ', array_map('strval', $flags)) . "\n\n";
 
