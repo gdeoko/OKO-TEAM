@@ -124,6 +124,15 @@ html[data-degrade="3"] .rc-console { display: none; }
    краям кадра и тот же холодный свет из остекления. */
 html.rc-inside .rc-console { display: none; }
 
+/* Страховка: просьбу «меньше движения» человек может включить уже
+   на странице. Холст рубки в этом режиме скрывается, и если бы мы
+   заодно прятали снимок, под анкетой осталась бы пустота. Поэтому
+   здесь снимок возвращается на своё место. */
+@media (prefers-reduced-motion: reduce) {
+  html.rc-inside:not(.rc-reduced) .rc-console { display: block; }
+  html.rc-inside #contact::before { display: none; }
+}
+
 html.rc-inside #contact::before {
   content: ''; position: absolute; inset: -6vh 0 -3vh 0;
   z-index: 0; pointer-events: none;
