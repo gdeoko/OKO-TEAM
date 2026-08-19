@@ -157,6 +157,23 @@ function ml_region_canon(string $r): string {
     return mb_substr(trim($r), 0, 120);
 }
 
+/**
+ * ПОХОЖЕ ЛИ ЭТО НА СУБЪЕКТ РОССИЙСКОЙ ФЕДЕРАЦИИ.
+ *
+ * В поле региона иногда оказывается фамилия исполнителя из подписи письма
+ * («Ильина Галина Юрьевна») или служебная пометка «федеральный». На карточке это
+ * выглядит так, будто нас поддержала гражданка Ильина. Всё, что не похоже на
+ * субъект, заменяем названием ведомства из заголовка письма.
+ */
+function ml_looks_like_region(string $r): bool {
+    $r = mb_strtolower(trim($r));
+    if ($r === '' || $r === 'федеральный') return false;
+    foreach (['област', 'край', 'республик', 'округ', 'москв', 'петербург', 'севастопол'] as $w) {
+        if (mb_strpos($r, $w) !== false) return true;
+    }
+    return in_array($r, array_map('mb_strtolower', ML_REGIONS), true);
+}
+
 echo "ГАЛЕРЕЯ ПИСЕМ ПОДДЕРЖКИ\n$line\n";
 
 $rows = all("SELECT id, region, image_path, letter_date FROM ministry_letters");
@@ -174,6 +191,20 @@ foreach ($rows as $r) {
 }
 printf("\n  регион восстановлен: %d, не опознано: %d\n", $filled, $unknown);
 
+/* ── 1б. В поле региона не должно быть фамилий и служебных пометок ── */
+$named = 0;
+foreach (all("SELECT id, region, title FROM ministry_letters") as $r) {
+    $reg = trim((string) $r['region']);
+    if ($reg === '' || ml_looks_like_region($reg)) continue;
+    $title = trim((string) $r['title']);
+    $new   = $title !== '' && $title !== $reg ? $title : $reg;
+    if ($new === $reg) continue;
+    printf("  #%-4d %-28s → %s\n", (int) $r['id'], mb_substr($reg, 0, 28), mb_substr($new, 0, 44));
+    if (!$dry) q("UPDATE ministry_letters SET region = ? WHERE id = ?", [$new, (int) $r['id']]);
+    $named++;
+}
+printf("  подписей выправлено: %d\n\n", $named);
+
 /* ── 2. Одно написание субъекта на всю галерею ── */
 $canon = 0;
 foreach (all("SELECT id, region FROM ministry_letters WHERE TRIM(COALESCE(region,'')) <> ''") as $r) {
@@ -185,7 +216,30 @@ foreach (all("SELECT id, region FROM ministry_letters WHERE TRIM(COALESCE(region
 }
 printf("  написание выправлено: %d\n\n", $canon);
 
-/* ── 3. Единый порядок: новые сверху, внутри даты по алфавиту субъекта ── */
+/* ── 3. Одно письмо — одна карточка ──
+ *
+ * Один и тот же ответ ведомства приезжает дважды: разбор читает ящик kc@ сам, а
+ * общий разбор входящих видит копию в другом ящике центра. У Минобразования
+ * Ставропольского края так получилось пять карточек подряд. Оставляем ту, где
+ * есть скан, остальные убираем.
+ */
+$dupes = all("SELECT source_email, letter_date, COUNT(*) c FROM ministry_letters
+               WHERE TRIM(COALESCE(source_email,'')) <> ''
+               GROUP BY 1, 2 HAVING c > 1");
+$killed = 0;
+foreach ($dupes as $d) {
+    $same = all("SELECT id, image_path FROM ministry_letters
+                  WHERE source_email = ? AND COALESCE(letter_date,'') = COALESCE(?,'')
+                  ORDER BY (COALESCE(image_path,'') = '') ASC, id ASC",
+                [(string) $d['source_email'], (string) $d['letter_date']]);
+    foreach (array_slice($same, 1) as $x) {
+        if (!$dry) q("DELETE FROM ministry_letters WHERE id = ?", [(int) $x['id']]);
+        $killed++;
+    }
+}
+printf("  дублей убрано: %d\n", $killed);
+
+/* ── 4. Единый порядок: новые сверху, внутри даты по алфавиту субъекта ── */
 $all = all("SELECT id, region, letter_date FROM ministry_letters");
 usort($all, static function (array $a, array $b): int {
     $da = trim((string) $a['letter_date']);

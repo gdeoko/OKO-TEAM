@@ -32,7 +32,12 @@ require_once __DIR__ . '/imap_read.php';
 function inbox_boxes(): array {
     // novosti@ в конфиге исторически называется news2 — прямой поиск по имени
     // «novosti» возвращает пустоту, на этом уже спотыкались.
-    return ['news' => 'news', 'novosti' => 'news2', 'kc' => 'kc', 'nagradi' => 'nagradi'];
+    // mailru — исторический публичный адрес центра kulturniy.centr.mir@mail.ru.
+    // Он напечатан на старых бланках и разошёлся по справочникам, поэтому
+    // ведомства и учреждения отвечают именно туда. Читаем наравне с остальными:
+    // ответ, который никто не открыл, — это потерянная поддержка региона.
+    return ['news' => 'news', 'novosti' => 'news2', 'kc' => 'kc',
+            'nagradi' => 'nagradi', 'mailru' => 'mailru'];
 }
 
 /** Наши собственные адреса — сами себе не отвечаем и в разбор их не берём. */
@@ -83,6 +88,12 @@ function inbox_migrate(): void {
             received_at  TEXT NOT NULL,
             created_at   TEXT DEFAULT (datetime('now','localtime'))
         )");
+        // Текст из вложения хранится ОТДЕЛЬНО от тела письма. Смешивать нельзя:
+        // в теле лежит цитата нашего же обращения, и разбор по ней принимает
+        // наши собственные обороты за ответ ведомства. Во вложении такого не
+        // бывает — там бланк ведомства и только он.
+        try { db()->exec("ALTER TABLE inbox_messages ADD COLUMN attach_text TEXT DEFAULT ''"); }
+        catch (\Throwable $e) { /* колонка уже есть */ }
         db()->exec("CREATE UNIQUE INDEX IF NOT EXISTS idx_inbox_key ON inbox_messages(msg_key)");
         db()->exec("CREATE INDEX IF NOT EXISTS idx_inbox_box  ON inbox_messages(mailbox, received_at DESC)");
         db()->exec("CREATE INDEX IF NOT EXISTS idx_inbox_kind ON inbox_messages(kind, handled_by)");
@@ -127,9 +138,55 @@ function inbox_is_service(string $from): bool {
  * «подтверждаем согласие» значит. Всё, что не опознано, идёт вопросом к
  * оператору — лучше лишний раз спросить человека, чем удалить не того.
  */
+/**
+ * ОТРЕЗАТЬ ЦИТАТУ НАШЕГО ЖЕ ПИСЬМА.
+ *
+ * Ведомство отвечает поверх исходного обращения, и в теле письма наш текст
+ * занимает девять десятых объёма. Разбирать его вместе с ответом опасно вдвойне:
+ * собственные обороты («прошу оказать информационную поддержку», «направляем
+ * положение») читаются как ответ ведомства, а настоящий ответ — две строки
+ * сверху — теряется среди цитаты.
+ */
+function inbox_strip_quote(string $body): string {
+    // Якоря строк здесь не работают: тело письма хранится одной строкой, все
+    // переносы схлопнуты при разборе. Поэтому ищем сами обороты, где бы они ни
+    // стояли, — начало цитаты всё равно однозначно.
+    // «Перенаправленное сообщение» НЕ режем: ведомство часто пересылает свой же
+    // ответ целиком, и всё содержательное лежит именно там.
+    $marks = ['~(?:^|\s)От:\s~u', '~(?:^|\s)From:\s~u',
+              '~-{3,}\s*Original Message~ui', '~_{10,}~u', '~(?:^|\s)>\s~u',
+              '~писал[а]?\s+\d{4}-\d{2}-\d{2}~u',
+              '~\d{1,2}\s+\p{Cyrillic}+\s+\d{4}[^.]{0,60}(написал|пишет)~u',
+              '~(?:^|\s)Отправлено:\s~u', '~(?:^|\s)Sent:\s~u'];
+    $cut = mb_strlen($body);
+    foreach ($marks as $re) {
+        if (preg_match($re, $body, $m, PREG_OFFSET_CAPTURE)) {
+            $pos = mb_strlen(substr($body, 0, $m[0][1]));
+            if ($pos > 0 && $pos < $cut) $cut = $pos;
+        }
+    }
+    $head = trim(mb_substr($body, 0, $cut));
+    // Пусто сверху — значит своего текста в письме нет, только наша цитата.
+    // Разбирать её нельзя: собственные обороты обращения («прошу оказать
+    // информационную поддержку») читаются как согласие ведомства, и мы отправим
+    // благодарность тому, кто ничего не ответил. Возвращаем пустоту — такое
+    // письмо уходит человеку.
+    return mb_strlen($head) >= 40 ? $head : '';
+}
+
 function inbox_classify(string $mailbox, string $subject, string $body, bool $isAuto): string {
     if ($isAuto) return 'auto';
-    $t = mb_strtolower(preg_replace('~\s+~u', ' ', $subject . ' ' . mb_substr($body, 0, 900)) ?? '');
+    // Окно большое: у ведомств рабочая фраза стоит после длинной преамбулы —
+    // у Минобразования Ставропольского края «направлено письмо в адрес
+    // руководителей... с информацией о Конкурсе» начинается на 1 400-м знаке.
+    // $body сюда может прийти уже вместе с текстом вложения (так его собирает
+    // чтение почты) — для разбора это и нужно: бланк ведомства важнее письма.
+    $own = inbox_strip_quote($body);
+    if (trim($own) === '') {
+        // Своего текста нет: письмо переслано целиком или ответ пустой.
+        return $mailbox === 'kc' ? 'ministry_question' : 'question';
+    }
+    $t = mb_strtolower(preg_replace('~\s+~u', ' ', $subject . ' ' . mb_substr($own, 0, 2500)) ?? '');
 
     // Отчёт о недоставке приходит и по-русски, и по-английски, и слитно, и
     // раздельно. Не узнать его — значит попытаться ответить почтовому роботу.
@@ -181,10 +238,11 @@ function inbox_classify(string $mailbox, string $subject, string $body, bool $is
     // Департамент культуры Брянской области распознался по обороту «доведена до
     // сведения», а Минкультнац Мордовии тем же ответом — нет, потому что написал
     // «направлена в адрес» и «размещена на портале».
-    if (preg_match('~(информаци\w+|сведени\w+|письмо|материал\w*)[^.!?]{0,80}'
+    if (preg_match('~(информаци\w+|сведени\w+|письмо|материал\w*)[^.!?]{0,160}'
                  . '(доведен\w+|направлен\w+|разослан\w+|размещен\w+|опубликован\w+)'
-                 . '|(доведен\w+|направлен\w+|разослан\w+|размещен\w+|опубликован\w+)[^.!?]{0,80}'
-                 . '(учреждени|подведомствен|муниципальн|образовательн|портал|сайт|социальн)'
+                 . '|(доведен\w+|направлен\w+|разослан\w+|размещен\w+|опубликован\w+)[^.!?]{0,160}'
+                 . '(учреждени|подведомствен|муниципальн|образовательн|органов управлени|портал|сайт|социальн|информаци)'
+                 . '|размести\w+ информаци|информаци\w+ размещен'
                  . '|проинформирован\w+|информирован\w+ (учреждени|организаци)~ui', $t)) {
         return $mailbox === 'kc' ? 'ministry_approve' : 'partner_accept';
     }
@@ -274,8 +332,9 @@ function inbox_scan(string $alias, int $days = 14): array {
 
     $acc = function_exists('mail_account_by_name') ? mail_account_by_name($accName) : [];
     if (!$acc || empty($acc['user'])) return $res;
-    $acc['host'] = 'imap.yandex.ru';
-    $acc['port'] = 993;
+    // IMAP-хост берём у самого ящика: он не обязан быть яндексовым.
+    $acc['host'] = trim((string) ($acc['imap_host'] ?? '')) ?: 'imap.yandex.ru';
+    $acc['port'] = (int) ($acc['imap_port'] ?? 0) ?: 993;
 
     $own   = inbox_own_emails();
     $since = date('d-M-Y', time() - $days * 86400);
@@ -342,11 +401,13 @@ function inbox_scan(string $alias, int $days = 14): array {
                 $att[] = ['name' => $name, 'mime' => (string) ($a['mime'] ?? ''),
                           'size' => strlen($data), 'file' => $rel];
             }
-            // Текст из вложения участвует в разборе наравне с телом письма.
+            // Текст из вложения — ГЛАВНЫЙ источник для разбора: в нём бланк
+            // ведомства без нашей цитаты. Тело письма идёт вторым.
             if (trim($attText) !== '') {
+                $forClass = trim($attText . "\n" . inbox_strip_quote((string) $m['text']));
                 $m['text'] = trim((string) $m['text'] . "\n" . $attText);
                 $kind = inbox_is_service($from) ? 'service'
-                      : inbox_classify($alias, (string) $m['subject'], (string) $m['text'], $isAuto);
+                      : inbox_classify($alias, (string) $m['subject'], $forClass, $isAuto);
                 if ($who['ministry_id'] === 0 && $who['inst_id'] > 0) {
                     $kind = ['ministry_approve' => 'partner_accept', 'ministry_decline' => 'partner_decline',
                              'ministry_question' => 'question'][$kind] ?? $kind;
@@ -366,6 +427,7 @@ function inbox_scan(string $alias, int $days = 14): array {
                     'subject'     => mb_substr((string) $m['subject'], 0, 400),
                     'body_text'   => mb_substr(trim(preg_replace('~\s+~u', ' ', (string) $m['text']) ?? ''), 0, 4000),
                     'attachments' => $att ? json_encode($att, JSON_UNESCAPED_UNICODE) : '',
+                    'attach_text' => mb_substr(trim($attText), 0, 4000),
                     'is_auto'     => $isAuto ? 1 : 0,
                     'kind'        => $kind,
                     // Служебное и роботов сразу закрываем: отвечать некому и незачем.
