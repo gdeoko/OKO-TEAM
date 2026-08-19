@@ -175,17 +175,26 @@ Space.prototype.frame = function (dt) {
     x.fillRect(0, 0, w, h);
   }
 
-  /* Звёзды. Ближние слои сдвигаются сильнее: это и есть параллакс */
+  /* Звёзды. Ближние слои сдвигаются сильнее: это и есть параллакс.
+     Поворот общей камеры сайта (rc-world) сносит их вбок и по
+     вертикали - тогда фон живёт в том же пространстве, что и
+     разделы с ракетой, а не отдельной картинкой за ними. */
+  var W3 = g.RC_WORLD;
+  var wx = W3 ? W3.yaw * 0.0042 : 0;
+  var wy = W3 ? W3.pitch * 0.0030 : 0;
   var base = light ? "9,19,32" : "226,232,240";
   for (var i = 0; i < this.stars.length; i++) {
     var s = this.stars[i];
     var shift = (s.l + 1) * 0.16;
-    var sy = (s.y - p * shift) % 1;
+    var lay = (s.l + 1) * 0.6;                 /* ближний слой сносит сильнее */
+    var sy = (s.y - p * shift - wy * lay) % 1;
     if (sy < 0) sy += 1;
+    var sx = (s.x - wx * lay) % 1;
+    if (sx < 0) sx += 1;
     var tw = 0.55 + 0.45 * Math.sin(this.t * s.sp + s.tw);
     var al = (light ? 0.22 : 0.55) * tw * (0.4 + s.l * 0.3) * dim;
     x.beginPath();
-    x.arc(s.x * w, sy * h, s.r, 0, 6.283);
+    x.arc(sx * w, sy * h, s.r, 0, 6.283);
     x.fillStyle = "rgba(" + base + "," + al.toFixed(3) + ")";
     x.fill();
   }

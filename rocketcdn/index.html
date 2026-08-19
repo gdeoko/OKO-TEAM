@@ -86,7 +86,7 @@ img,svg,canvas{max-width:100%}
 
 <link rel="preload" href="assets/fonts/golos-cyr.woff2" as="font" type="font/woff2" crossorigin>
 <link rel="stylesheet" href="assets/rc-fonts.css?v=1786650096">
-<link rel="stylesheet" href="assets/rc.css?v=1786968454">
+<link rel="stylesheet" href="assets/rc.css?v=1787133657">
 <link rel="stylesheet" href="assets/rc-compact.css?v=1786961511">
 <link rel="stylesheet" href="assets/rc-interior.css?v=1786967611">
 <link rel="stylesheet" href="assets/rc-reduced.css?v=1786953497">
@@ -94,10 +94,11 @@ img,svg,canvas{max-width:100%}
      значения предыдущих, а своих цветов и шрифтов не вводит -->
 <link rel="stylesheet" href="assets/rc-adapt.css?v=1786961400">
 <link rel="stylesheet" href="assets/rc-depth.css?v=1786962839">
-<link rel="stylesheet" href="assets/rc-cinema.css?v=1786968256">
+<link rel="stylesheet" href="assets/rc-cinema.css?v=1787133657">
 <link rel="stylesheet" href="assets/rc-console.css?v=1786968343">
 <link rel="stylesheet" href="assets/rc-flight.css?v=1">
-<link rel="stylesheet" href="assets/rc-airlock.css?v=1">
+<link rel="stylesheet" href="assets/rc-airlock.css?v=1787133657">
+<link rel="stylesheet" href="assets/rc-world.css?v=1787133657">
 <!-- Режим страницы решается до того, как поднимутся сцены: иначе они
      успеют занять контексты, которых на слабом устройстве и так мало -->
 <script src="assets/rc-fallback.js?v=1786953470"></script>
@@ -1207,13 +1208,6 @@ html[data-theme="light"] .rc-load{background:#070F1A}
           </button>
         </div>
 
-        <div class="legal">
-          <a href="privacy.html" data-i18n="ftr.policy">Политика конфиденциальности</a>
-          <a href="offer.html" data-i18n="ftr.oferta">Публичная оферта</a>
-          <a href="#faq" data-i18n="ftr.sla">Условия SLA</a>
-          <span>&copy; <span id="year">2026</span> Rocket CDN</span>
-          <span data-i18n="ftr.made">Сделано в OKO TEAM</span>
-        </div>
       </div>
 
       <form class="form-card rv rv-d1" id="leadForm" novalidate
@@ -1263,6 +1257,32 @@ html[data-theme="light"] .rc-load{background:#070F1A}
           <span data-i18n="ct.send">Отправить заявку</span>
         </button>
       </form>
+    </div>
+  </div>
+</section>
+
+<!-- ═══ Эпилог: пульт отпускает, впереди космос ═══
+     Финальный кадр фильма. Камера мира отъезжает от пульта
+     (акт egress), рубка отдаёт сцену, снаружи снова звёзды и
+     корабль - и отсюда один шаг до демо-полёта. -->
+<section id="epilogue" class="epi" aria-label="Эпилог">
+  <div class="wrap epi-in">
+    <span class="sec-tag" data-i18n="epi.tag">Эпилог</span>
+    <h2 class="sec-h" data-i18n="epi.h">Дальше - открытый космос</h2>
+    <p class="sec-p" data-i18n="epi.p">Заявка на пульте, инженеры выходят на связь. А корабль уже ваш - шлюз открыт.</p>
+    <button type="button" class="epi-btn js-flight">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4.5 16.5c-1.5 1.26-2 5-2 5s3.74-.5 5-2c.71-.84.7-2.13-.09-2.91a2.18 2.18 0 0 0-2.91-.09z"/><path d="M12 15l-3-3a22 22 0 0 1 2-3.95A12.88 12.88 0 0 1 22 2c0 2.72-.78 7.5-6 11a22.35 22.35 0 0 1-4 2z"/><path d="M9 12H4s.55-3.03 2-4c1.62-1.08 5 0 5 0M12 15v5s3.03-.55 4-2c1.08-1.62 0-5 0-5"/></svg>
+      <span data-i18n="epi.btn">Начать полёт</span>
+    </button>
+    <!-- Подвал переехал из пульта сюда: правовые ссылки закрывают
+         страницу после финального кадра, а не разрывают сценарий
+         между формой и эпилогом -->
+    <div class="legal">
+      <a href="privacy.html" data-i18n="ftr.policy">Политика конфиденциальности</a>
+      <a href="offer.html" data-i18n="ftr.oferta">Публичная оферта</a>
+      <a href="#faq" data-i18n="ftr.sla">Условия SLA</a>
+      <span>&copy; <span id="year">2026</span> Rocket CDN</span>
+      <span data-i18n="ftr.made">Сделано в OKO TEAM</span>
     </div>
   </div>
 </section>
@@ -1318,26 +1338,27 @@ html[data-theme="light"] .rc-load{background:#070F1A}
   <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M12 19V5M6 11l6-6 6 6"/></svg>
 </button>
 
-<script src="assets/rc-space.js?v=1786650096"></script>
+<script src="assets/rc-space.js?v=1787133657"></script>
 <script src="assets/rc-sound.js?v=1786957029"></script>
 <script src="assets/rc-music.js?v=1"></script>
 <script src="assets/rc-geo.js?v=1786957117"></script>
-<script src="assets/rc-i18n.js?v=1786964816"></script>
+<script src="assets/rc-i18n.js?v=1787133657"></script>
 <script src="assets/rc-globe.js?v=1786650096"></script>
-<script src="assets/rc-app.js?v=1786964827"></script>
+<script src="assets/rc-app.js?v=1787133657"></script>
 <script src="assets/rc-fill.js?v=1786963530"></script>
 <script src="assets/rc-viz.js?v=1786960815"></script>
-<script src="assets/rc-motion.js?v=1786953586"></script>
-<script src="assets/rc-scene.js?v=1786968426"></script>
+<script src="assets/rc-motion.js?v=1787133657"></script>
+<script src="assets/rc-scene.js?v=1787133657"></script>
+<script src="assets/rc-world.js?v=1787133657"></script>
 <script src="assets/rc-vidbg.js?v=1"></script>
-<script src="assets/rc-airlock.js?v=1"></script>
+<script src="assets/rc-airlock.js?v=1787133657"></script>
 <script src="assets/rc-hooks.js?v=1786967928"></script>
 <script src="assets/rc-depth.js?v=1786959953"></script>
-<script src="assets/rc-cinema.js?v=1786968271"></script>
+<script src="assets/rc-cinema.js?v=1787133657"></script>
 <script src="assets/rc-console.js?v=1786968373"></script>
 <!-- Объёмный слой (three.js и три сцены) подтягивает rc-gl.js
      после загрузки и только там, где он вообще будет показан -->
-<script src="assets/rc-gl.js?v=1786964844"></script>
+<script src="assets/rc-gl.js?v=1787133657"></script>
 <script defer src="assets/rc-scroll.js?v=1786957602"></script>
 </body>
 </html>

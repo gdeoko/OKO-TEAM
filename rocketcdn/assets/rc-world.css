@@ -1,0 +1,107 @@
+/* ═══════════════════════════════════════════════════════════
+   Rocket CDN · единый 3D-мир, оформление
+
+   Камера двигает весь поток страницы одним трансформом (его пишет
+   rc-world.js прямо в style у main). Здесь только слои параллакса
+   внутри разделов и вспышка света на входе в корабль. Ничего не
+   деформируется: сетки, наклоны карточек и липкие сцены живут
+   своей жизнью, камера лишь везёт кадр.
+   ═══════════════════════════════════════════════════════════ */
+
+/* Кадр: браузеру заранее сказано, что он поедет */
+html.w3-on main.w3-stage {
+  will-change: transform;
+}
+
+/* Слои параллакса: ближние (заголовки) идут за камерой, дальние
+   (карточки, глобус) чуть отстают. Ход маленький и одинаковый у
+   соседей по ряду - сетка остаётся сеткой, но кадр дышит глубиной. */
+html.w3-on .w3-lay {
+  translate: calc(var(--w3-shift, 0px) * var(--w3-k, 0)) 0;
+}
+
+/* Пока человек в форме или в демо-полёте, мир замирает: ввод и
+   игра важнее кино */
+html.rc-form-active.w3-on main.w3-stage,
+html.rc-flying.w3-on main.w3-stage {
+  transition: transform .5s cubic-bezier(.22,.61,.36,1);
+}
+
+/* Вспышка света из люка на стыке «проём - салон»: тёплый свет
+   изнутри корабля на долю секунды заливает кадр - шаг через порог */
+.w3-flash {
+  position: fixed; inset: 0; z-index: 940;
+  pointer-events: none;
+  background:
+    radial-gradient(circle at 50% 50%, rgba(255,226,186,.92) 0%, rgba(255,206,150,.55) 26%,
+                    rgba(120,180,220,.22) 52%, transparent 76%);
+  animation: w3Flash .62s cubic-bezier(.2,.7,.3,1) forwards;
+}
+@keyframes w3Flash {
+  0%   { opacity: 0; transform: scale(.72); }
+  22%  { opacity: 1; transform: scale(1.02); }
+  100% { opacity: 0; transform: scale(1.3); }
+}
+
+/* ── Эпилог: финальный кадр фильма ──────────────────────────
+   Прозрачный фон - сквозь него живой космос и вернувшаяся ракета.
+   Один заголовок и одна большая кнопка: дальше начинается игра. */
+.epi {
+  min-height: 92svh;
+  display: grid; place-items: center;
+  text-align: center;
+  position: relative;
+}
+.epi-in { display: grid; justify-items: center; gap: 14px; }
+.epi .sec-p { max-width: 440px; }
+/* Подвал в эпилоге: мелко, в самом низу кадра, кино не перебивает */
+.epi .legal { margin-top: clamp(48px, 10vh, 96px); justify-content: center; }
+/* Пока финальная кнопка в кадре, плавающая «Полёт» не нужна: две
+   одинаковые кнопки рядом - это шум, а на телефоне они слипались */
+html[data-act="egress"] .rcf-fab { opacity: 0 !important; pointer-events: none !important; }
+.epi-btn {
+  margin-top: 18px;
+  display: inline-flex; align-items: center; gap: 12px;
+  padding: 18px 34px;
+  font-family: var(--f-body, "Golos Text", sans-serif);
+  font-size: 16px; font-weight: 700; letter-spacing: .08em;
+  color: #EAF6FC;
+  background: linear-gradient(158deg, rgba(10,26,44,.92), rgba(6,14,24,.96));
+  border: 1px solid rgba(66,178,220,.55);
+  border-radius: 999px;
+  cursor: pointer;
+  box-shadow: 0 18px 44px -16px rgba(0,0,0,.9), 0 0 44px -10px rgba(66,178,220,.7);
+  transition: transform .3s var(--ease, ease), box-shadow .3s;
+}
+.epi-btn:hover {
+  transform: translateY(-2px) scale(1.03);
+  box-shadow: 0 22px 52px -16px rgba(0,0,0,.95), 0 0 64px -8px rgba(66,178,220,.95);
+}
+.epi-btn svg { width: 22px; height: 22px; color: var(--cyan, #42B2DC); }
+/* Мягкое кольцо-пульс вокруг кнопки: финал зовёт в полёт */
+.epi-btn::after {
+  content: ''; position: absolute; inset: -3px;
+  border-radius: inherit;
+  border: 1px solid rgba(66,178,220,.4);
+  animation: epiPulse 2.6s ease-out infinite;
+  pointer-events: none;
+}
+.epi-btn { position: relative; }
+@keyframes epiPulse {
+  0%   { opacity: .8; transform: scale(1); }
+  70%  { opacity: 0;  transform: scale(1.18); }
+  100% { opacity: 0;  transform: scale(1.18); }
+}
+html[data-theme="light"] .epi-btn {
+  color: #0A2740;
+  background: linear-gradient(158deg, rgba(255,255,255,.95), rgba(234,244,252,.92));
+  border-color: rgba(10,88,151,.4);
+}
+html[data-theme="light"] .epi-btn svg { color: #0A5897; }
+
+/* Просьба меньше движения и третья ступень деградации: мира нет */
+@media (prefers-reduced-motion: reduce) {
+  html.w3-on main.w3-stage, html.w3-on .w3-lay { transform: none !important; translate: none !important; }
+}
+html[data-degrade="3"] main.w3-stage,
+html[data-degrade="3"] .w3-lay { transform: none !important; translate: none !important; }

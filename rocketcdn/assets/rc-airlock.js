@@ -135,14 +135,23 @@ function frame() {
 function boot() {
   if (reduced || root.classList.contains("rc-reduced")) return;
   if (root.getAttribute("data-degrade") === "3") return;
+  /* Если на странице живёт трёхмерный корабль, дверь рисует он сам:
+     люк - часть его борта (rc-rocket, buildDoor). Оверлей остаётся
+     только запасным входом для упрощённого режима и для устройств
+     без WebGL, где ракеты нет вовсе. Проверяем с задержкой: сцена
+     поднимается позже разметки. */
+  if (g.RC_ROCKET || document.documentElement.classList.contains("has-rocket")) return;
   sec = doc.getElementById("reliability");
   if (!sec) return;
   build();
   if (!raf) raf = requestAnimationFrame(frame);
 }
 
-if (doc.readyState === "loading") doc.addEventListener("DOMContentLoaded", boot);
-else boot();
+/* Ждём, пока сцена решит, поднялся ли корабль: rc-gl грузит цепочку
+   скриптов асинхронно, и на момент DOMContentLoaded RC_ROCKET ещё нет */
+function bootLater() { setTimeout(boot, 1200); }
+if (doc.readyState === "loading") doc.addEventListener("DOMContentLoaded", bootLater);
+else bootLater();
 
 g.RC_AIRLOCK = { state: function () { return { доля: +k.toFixed(3), в_кадре: live }; } };
 

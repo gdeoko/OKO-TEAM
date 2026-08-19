@@ -541,9 +541,39 @@ function setProgress(p) {
 
   if (p >= P_PREP && !st.built && T) build();
 
-  /* Тамбур и подмена сцен */
-  if (p >= P_LOCK && p < P_IN) {
-    lockShow();
+  /* Тамбур и подмена сцен.
+
+     Подмену наружной сцены на рубку теперь назначает сам корабль:
+     пока его люк не открыт и проём не накрыл кадр, снаружи есть что
+     показывать - ракета, к которой мы идём. Раньше порог считался
+     от процентов страницы и срабатывал раньше входа: ракета гасла
+     на полпути, а поверх кадра появлялись створки «ниоткуда».
+     Флаг rc-in-hatch ставит rc-rocket, когда мы уже в проёме. */
+  var hatch = root.classList.contains("rc-in-hatch");
+  var hasRocket = typeof g.RC_DOOR === "number";
+  /* Обратный ход: пока мы внутри, корабль остановлен и долю двери
+     сам не пересчитает. Поэтому наружные акты снимают флаг сами -
+     иначе из салона нельзя было бы выйти скроллом назад. */
+  var sc = g.RC_SCENE;
+  if (hatch && sc && (sc.act === "walk" || sc.act === "landing" || sc.act === "route")) {
+    root.classList.remove("rc-in-hatch");
+    hatch = false;
+  }
+  /* Внутренние акты сцены: салон, справочник, пульт. Пока мы в них,
+     рубка держится, даже если доля люка уже стекла - корабль в этот
+     момент остановлен и ничего не считает. Вход же честный: либо мы
+     прошли сквозь открытый люк (hatch), либо попали в салон прыжком
+     по якорю, и тогда запасной порог по прогрессу. */
+  var innerAct = sc && (sc.act === "cabin" || sc.act === "manual" || sc.act === "console");
+  var ready = hasRocket
+    ? (hatch || (st.shown && innerAct) || (innerAct && p >= P_IN))
+    : (p >= P_LOCK);
+
+  if (ready && p < P_IN) {
+    /* Полноэкранных створок больше нет: дверь у нас настоящая, в
+       борту. Тамбур остаётся только как затемнение стыка, если
+       корабля на странице нет (упрощённый режим, нет WebGL). */
+    if (!hasRocket) lockShow();
     show();
     /* Тяжёлый лязг замка: створки сомкнулись за спиной */
     if (!st.sLock) {
@@ -551,7 +581,11 @@ function setProgress(p) {
       var s1 = snd();
       if (s1 && s1.boom) { try { s1.boom(); } catch (e) {} }
     }
-  } else if (p >= P_IN && p < P_OUT) {
+  /* Запасной порог по прогрессу оставлен только для страниц без
+     корабля. С кораблём вход честный - через его люк: на телефоне
+     разделы сжаты, порог достигался ещё в проходе, и рубка
+     включалась до того, как дверь вообще тронулась. */
+  } else if ((ready || (!hasRocket && p >= P_IN)) && p < P_OUT) {
     show();
     lockHide();
     /* Давление выровнялось, внутренний люк расходится: две ноты
@@ -574,7 +608,11 @@ function setProgress(p) {
 
   /* Вход: створки перекрывают кадр, а камера в это время едет
      вперёд из тамбура в центр рубки и раскрывает объектив. */
-  var enter = Math.max(0, Math.min(1, (p - P_LOCK) / Math.max(1e-4, (P_IN - P_LOCK) * 1.75)));
+  /* Ход камеры вперёд синхронен с открытием люка: когда дверь
+     корабля разошлась наполовину, мы уже наполовину в тамбуре */
+  var enter = hasRocket
+    ? Math.max(0, Math.min(1, ((g.RC_DOOR || 0) - 0.45) / 0.5))
+    : Math.max(0, Math.min(1, (p - P_LOCK) / Math.max(1e-4, (P_IN - P_LOCK) * 1.75)));
   var eIn = 0.5 - 0.5 * Math.cos(Math.PI * enter);
   st.dollyT = 1.7 * (1 - eIn);
   st.fovT = 58 + eIn * 14;
@@ -758,6 +796,13 @@ function boot() {
   addEventListener("resize", function () { setTimeout(measure, 250); }, { passive: true });
   addEventListener("load", function () { setTimeout(measure, 400); });
 
+  /* Люк корабля открылся - подхватываем сцену тем же кадром, не
+     дожидаясь следующего тика прокрутки: окно перехода короткое, и
+     опоздание на кадр читается провалом в пустоту. */
+  addEventListener("rc:hatch", function (e) {
+    if (e && e.detail && e.detail.deep) setProgress(st.p);
+  });
+
   /* Слушаем общий прогресс страницы */
   if (g.RC_MOTION) g.RC_MOTION.on(function (p) { setProgress(p); });
   else addEventListener("scroll", function () {
@@ -780,7 +825,10 @@ addEventListener("rc:degrade", function (e) {
       if (halo) halo.visible = false;
       if (scene && scene.fog) scene.fog.density = 0.02;
     }
-    if (step >= 3) { hide(); st.dead = true; }
+    /* Третья ступень: рубки нет. Сообщаем об этом кораблю - он не
+       поведёт нас в проём, из которого нечему открыться, и вход
+       останется обычным переходом к разделу. */
+    if (step >= 3) { hide(); st.dead = true; g.RC_NO_CABIN = true; }
   } catch (err) {}
 });
 
@@ -821,7 +869,10 @@ g.RC_INTERIOR = {
       построена: st.built, видна: st.shown, слот: st.slot,
       оборот: (st.yaw * 57.3).toFixed(0),
       проход: st.dolly.toFixed(2),
-      узлов: KNOT.length
+      узлов: KNOT.length,
+      /* Пороги входа: по ним видно, почему салон показался или нет */
+      доля: +st.p.toFixed(3), порог_вход: +P_IN.toFixed(3),
+      порог_выход: +P_OUT.toFixed(3), мёртв: st.dead
     };
   }
 };

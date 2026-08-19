@@ -156,11 +156,22 @@ body {
   font-family: var(--font);
   font-size: 16px;
   line-height: 1.62;
-  overflow-x: hidden;
+  /* Здесь был hidden - и делал body контейнером прокрутки. Из-за
+     этого липкие сцены (.hs-stage в разделах «как работает» и
+     «сценарии») не прилипали вовсе: они держались за body, а
+     прокручивается документ. clip обрезает так же, но своего
+     контейнера прокрутки не создаёт, и прилипание работает. */
+  overflow-x: clip;
   min-height: 100svh;
   -webkit-font-smoothing: antialiased;
   transition: background .45s var(--ease), color .45s var(--ease);
 }
+
+/* Фолбэк: браузеры без overflow: clip обрезают по-старому */
+@supports not (overflow: clip) {
+  html, body { overflow-x: hidden; }
+}
+
 img, svg, canvas { display: block; max-width: 100%; }
 a { color: inherit; text-decoration: none; }
 button, input, textarea, select { font: inherit; color: inherit; }

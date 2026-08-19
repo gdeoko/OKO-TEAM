@@ -43,7 +43,8 @@ var ACTS = [
   { id: "walk",    sel: "#cases",       role: "проход к трапу" },
   { id: "cabin",   sel: "#reliability", role: "салон" },
   { id: "manual",  sel: "#faq",         role: "бортовой справочник" },
-  { id: "console", sel: "#contact",     role: "пульт" }
+  { id: "console", sel: "#contact",     role: "пульт" },
+  { id: "egress",  sel: "#epilogue",    role: "отлёт" }
 ];
 
 var live = [];

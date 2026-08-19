@@ -312,7 +312,225 @@ function buildRocket(C, env) {
     root.add(strip);
   });
 
-  return { root: root, body: body, glass: glass, glowMat: glowMat };
+  var door = buildDoor(C, env, hullMat);
+  root.add(door.group);
+
+  return { root: root, body: body, glass: glass, glowMat: glowMat, door: door };
+}
+
+/* ── Люк в борту ─────────────────────────────────────────────
+   Клиент повторил дважды: дверь должна быть у ТОЙ ракеты, что села
+   перед нами, а не полноэкранными воротами поверх кадра. Значит
+   люк - часть корпуса, здесь, в трёхмерной сцене: проём в обшивке,
+   за ним настоящий салон со светом, поверх две изогнутые створки,
+   вырезанные из того же цилиндра, что и борт.
+
+   Створки не двигают геометрию: они поворачиваются вокруг оси
+   корабля и уезжают по обшивке вбок - так ходят люки на цилиндре.
+   Перспектива, масштаб и наклон достаются даром, потому что всё
+   это живёт внутри ракеты и подчиняется ей. */
+function cabinTexture() {
+  var W = 512, H = 512;
+  var c = document.createElement("canvas");
+  c.width = W; c.height = H;
+  var x = c.getContext("2d");
+
+  /* Глубина салона: дальняя стена светлее пола и потолка */
+  var bg = x.createLinearGradient(0, 0, 0, H);
+  bg.addColorStop(0.00, "#050C15");
+  bg.addColorStop(0.30, "#0C1F33");
+  bg.addColorStop(0.58, "#14314C");
+  bg.addColorStop(1.00, "#040A12");
+  x.fillStyle = bg;
+  x.fillRect(0, 0, W, H);
+
+  /* Продольные панели дальней стены */
+  x.strokeStyle = "rgba(126,166,200,.16)";
+  x.lineWidth = 2;
+  for (var i = 1; i < 7; i++) {
+    x.beginPath(); x.moveTo((i / 7) * W, H * 0.16); x.lineTo((i / 7) * W, H * 0.86); x.stroke();
+  }
+  /* Пояс приборов: ряд ламп и экранов в глубине */
+  x.fillStyle = "rgba(66,178,220,.20)";
+  x.fillRect(0, H * 0.44, W, H * 0.10);
+  for (i = 0; i < 9; i++) {
+    x.fillStyle = i % 3 === 0 ? "rgba(155,232,255,.85)" : "rgba(66,178,220,.55)";
+    x.fillRect(W * (0.08 + i * 0.10), H * 0.465, W * 0.045, H * 0.028);
+  }
+  /* Тёплый свет потолочной панели, ради которого проём и светится */
+  var lamp = x.createRadialGradient(W / 2, H * 0.20, 0, W / 2, H * 0.20, W * 0.6);
+  lamp.addColorStop(0, "rgba(255,214,160,.42)");
+  lamp.addColorStop(0.45, "rgba(120,170,210,.14)");
+  lamp.addColorStop(1, "rgba(0,0,0,0)");
+  x.fillStyle = lamp;
+  x.fillRect(0, 0, W, H);
+  /* Решётка пола */
+  x.strokeStyle = "rgba(150,190,225,.13)";
+  x.lineWidth = 1;
+  for (i = 0; i < 10; i++) {
+    var yy = H * (0.86 + i * 0.016);
+    x.beginPath(); x.moveTo(0, yy); x.lineTo(W, yy); x.stroke();
+  }
+
+  var tex = new T.CanvasTexture(c);
+  tex.colorSpace = T.SRGBColorSpace || tex.colorSpace;
+  return tex;
+}
+
+/* Текстура створки: та же светлая обшивка, но со своей жизнью -
+   поперечные рёбра жёсткости, фирменная полоса, трафарет и жёлтая
+   предупредительная разметка по кромке. Атлас рассчитан на одну
+   створку, поэтому рисунок не растягивается и дверь читается
+   дверью с любого расстояния. */
+function doorTexture() {
+  var W = 256, H = 512;
+  var c = document.createElement("canvas");
+  c.width = W; c.height = H;
+  var x = c.getContext("2d");
+
+  var base = x.createLinearGradient(0, 0, W, 0);
+  base.addColorStop(0.00, "#AFC0D2");
+  base.addColorStop(0.30, "#EDF3F9");
+  base.addColorStop(0.62, "#D7E1EC");
+  base.addColorStop(1.00, "#9FB2C6");
+  x.fillStyle = base;
+  x.fillRect(0, 0, W, H);
+
+  /* Рёбра жёсткости поперёк створки */
+  for (var i = 1; i < 8; i++) {
+    var y = (i / 8) * H;
+    x.fillStyle = "rgba(110,134,160,.28)";
+    x.fillRect(0, y, W, 3);
+    x.fillStyle = "rgba(255,255,255,.55)";
+    x.fillRect(0, y + 3, W, 1);
+  }
+  /* Фирменная полоса поперёк корпуса продолжается на двери */
+  var st = x.createLinearGradient(0, H * 0.44, 0, H * 0.54);
+  st.addColorStop(0, "#5BC4EA");
+  st.addColorStop(1, "#0A5897");
+  x.fillStyle = st;
+  x.fillRect(0, H * 0.44, W, H * 0.10);
+
+  /* Предупредительная разметка по кромке стыка (правый край UV) */
+  for (i = 0; i < 26; i++) {
+    x.fillStyle = i % 2 ? "rgba(232,176,48,.55)" : "rgba(38,48,62,.55)";
+    x.save();
+    x.translate(W - 16, (i / 26) * H);
+    x.fillRect(0, 0, 16, H / 26 + 1);
+    x.restore();
+  }
+  /* Трафарет и ручка-паз */
+  x.fillStyle = "rgba(20,52,86,.30)";
+  x.font = "600 15px 'Golos Text', system-ui, sans-serif";
+  x.fillText("R-01", 26, H * 0.30);
+  x.fillStyle = "rgba(40,60,84,.45)";
+  x.fillRect(W * 0.18, H * 0.60, W * 0.40, 10);
+  x.fillStyle = "rgba(255,255,255,.5)";
+  x.fillRect(W * 0.18, H * 0.60 + 10, W * 0.40, 2);
+
+  var tex = new T.CanvasTexture(c);
+  tex.colorSpace = T.SRGBColorSpace || tex.colorSpace;
+  tex.anisotropy = 4;
+  return tex;
+}
+
+function buildDoor(C, env, hullMat) {
+  var group = new T.Group();
+
+  /* Геометрия проёма: середина борта, чуть выше фирменного кольца */
+  var R = 0.648;               /* радиус обшивки в этом месте */
+  var HH = 1.34;               /* высота люка */
+  var Y = 0.10;                /* центр люка по оси корабля */
+  var HALF = 0.62;             /* половина угла проёма, радиан */
+  var seg = Math.max(10, Math.round(C.radial / 4));
+
+  /* 1. Салон за проёмом: изогнутая стена внутри корпуса. Она видна
+     ещё до открытия сквозь щель, и это ровно то, что просили -
+     «салон внутри ракеты сразу издалека виден такой, какой будет,
+     когда мы зайдём». */
+  var cabTex = cabinTexture();
+  cabTex.wrapS = T.RepeatWrapping;
+  cabTex.repeat.x = 1.6;                 /* панели не растягиваются по дуге */
+  var cabin = new T.Mesh(
+    new T.CylinderGeometry(R * 0.46, R * 0.46, HH * 1.06, seg, 1, true, -HALF * 1.9, HALF * 3.8),
+    new T.MeshBasicMaterial({ map: cabTex, side: T.BackSide, toneMapped: false })
+  );
+  cabin.position.y = Y;
+  cabin.renderOrder = 1;
+  group.add(cabin);
+  /* Пол тамбура: без него в проёме видна только стена, и глубины
+     не читается. Тёмная решётка с бликом даёт понять, что там объём */
+  var floor = new T.Mesh(
+    new T.CircleGeometry(R * 0.46, seg),
+    new T.MeshBasicMaterial({ color: 0x0A1726, toneMapped: false })
+  );
+  floor.rotation.x = -Math.PI / 2;
+  floor.position.y = Y - HH * 0.5;
+  group.add(floor);
+
+  /* Тёплая лампа в проёме: свет ложится на кромки створок */
+  var lamp = new T.PointLight(0xFFD2A0, 0, 3.2, 2);
+  lamp.position.set(0, Y + 0.3, R * 0.1);
+  group.add(lamp);
+
+  /* 2. Рама проёма: тёмная обвязка, по которой ходят створки */
+  var frameMat = new T.MeshStandardMaterial({
+    color: 0x6E829A, metalness: 0.92, roughness: 0.28, envMap: env, envMapIntensity: 1.6, side: T.DoubleSide
+  });
+  var frame = new T.Mesh(
+    new T.CylinderGeometry(R * 0.995, R * 0.995, HH, seg, 1, true, -HALF * 1.07, HALF * 2.14),
+    frameMat
+  );
+  frame.position.y = Y;
+  group.add(frame);
+  /* Уплотнитель по контуру проёма: тонкая тёмная кромка между рамой
+     и створками. Без неё дверь сливается с бортом, с ней - читается
+     как настоящий люк с притвором. */
+  var sealMat = new T.MeshStandardMaterial({
+    color: 0x1B2B3E, metalness: 0.7, roughness: 0.5, envMap: env, side: T.DoubleSide
+  });
+  var seal = new T.Mesh(
+    new T.CylinderGeometry(R * 0.999, R * 0.999, HH * 0.995, seg, 1, true, -HALF * 1.03, HALF * 2.06),
+    sealMat
+  );
+  seal.position.y = Y;
+  group.add(seal);
+
+  /* 3. Створки: тот же цилиндр, что и борт, потому и читаются
+     обшивкой этого корабля, а не панелью поверх кадра. Материал
+     свой: обшивочная текстура на узком сегменте растянулась бы
+     всем атласом, и дверь выглядела бы окном с чужим рисунком. */
+  var doorMat = new T.MeshStandardMaterial({
+    map: doorTexture(), metalness: 0.62, roughness: 0.26,
+    envMap: env, envMapIntensity: 1.45, side: T.DoubleSide
+  });
+  function leaf(sign) {
+    var m = new T.Mesh(
+      new T.CylinderGeometry(R * 1.004, R * 1.004, HH * 0.985, seg, 1, true,
+        sign > 0 ? 0 : -HALF, HALF),
+      doorMat
+    );
+    m.position.y = Y;
+    return m;
+  }
+  var lTurn = new T.Group(), rTurn = new T.Group();
+  lTurn.add(leaf(-1)); rTurn.add(leaf(1));
+  group.add(lTurn, rTurn);
+
+  /* Светящаяся кромка по стыку: сигнальная лента шлюза */
+  var edgeMat = new T.MeshBasicMaterial({ color: 0x9FE0F6, transparent: true, opacity: 0.9, toneMapped: false });
+  function edge(sign) {
+    var m = new T.Mesh(new T.BoxGeometry(0.012, HH * 0.94, 0.02), edgeMat);
+    m.position.set(sign * 0.012, Y, R * 1.012);
+    return m;
+  }
+  var lEdge = edge(-1), rEdge = edge(1);
+  lTurn.add(lEdge); rTurn.add(rEdge);
+
+  return {
+    group: group, l: lTurn, r: rTurn, lamp: lamp, cabin: cabin,
+    edgeMat: edgeMat, y: Y, half: HALF
+  };
 }
 
 /* ── Факел ───────────────────────────────────────────────── */
@@ -923,12 +1141,31 @@ Rocket.prototype.nodeFlash = function (dt, c) {
    тамбур). Если её нет, посадки просто не происходит и ракета летит
    до конца страницы, как летела раньше. */
 Rocket.prototype.landing = function (p, dt, pos, tan) {
-  var at = g.RC_LAND_AT || 0;
-  if (!at) { this.landK = 0; return 0; }
-
-  var from = Math.max(0, at - 0.07);
-  var k = (p - from) / Math.max(0.001, at - from);
-  k = k < 0 ? 0 : k > 1 ? 1 : k;
+  /* Посадку ведёт акт сцены, а не доля всей страницы. Раньше порог
+     брался из прогресса и совпадал с моментом, когда интерьер
+     забирал сцену себе: корабль касался площадки и тут же гас -
+     клиент это и увидел как «села где-то сбоку и исчезла».
+     Теперь она садится в своём акте, до прохода, и стоит. */
+  var sc = g.RC_SCENE, k = 0, known = false;
+  if (sc && sc.act) {
+    known = true;
+    if (sc.act === "landing") {
+      /* За первую половину акта опоры уже на площадке */
+      var raw = (sc.k - 0.04) / 0.46;
+      k = raw < 0 ? 0 : raw > 1 ? 1 : raw;
+    } else if (sc.act === "walk" || sc.act === "cabin" || sc.act === "manual" || sc.act === "console") {
+      k = 1;                      /* стоит: дальше проход и вход */
+    } else {
+      k = 0;                      /* до посадки корабль в полёте */
+    }
+  }
+  if (!known) {
+    var at = g.RC_LAND_AT || 0;
+    if (!at) { this.landK = 0; return 0; }
+    var from = Math.max(0, at - 0.07);
+    k = (p - from) / Math.max(0.001, at - from);
+    k = k < 0 ? 0 : k > 1 ? 1 : k;
+  }
   k = k * k * (3 - 2 * k);
   /* Демпфер: рывок скроллом не должен ронять ракету камнем */
   /* Первый кадр: поля ещё нет, и без явного нуля сложение даёт NaN,
@@ -1044,6 +1281,57 @@ Rocket.prototype.approach = function (dt) {
   return this.appK;
 };
 
+/* ── Люк: открытие ───────────────────────────────────────────
+   Доля открытия живёт здесь же, у корабля, а не в отдельном
+   оверлее: дверь - его часть. Ведёт её тот же скролл, что и
+   подход. Створки успевают тронуться, только когда мы уже
+   вплотную: раньше открывать нечего, мы ещё идём. */
+Rocket.prototype.doorOpen = function (dt) {
+  var sc = g.RC_SCENE;
+  var goal = 0;
+  if (this.appK > 0.55 && sc) {
+    if (sc.act === "walk") {
+      /* Последняя четверть прохода: щель уже светится */
+      var raw = (sc.k - 0.72) / 0.26;
+      goal = raw < 0 ? 0 : raw > 1 ? 1 : raw;
+      goal *= 0.55;
+    } else if (sc.act === "cabin") {
+      goal = 1;
+    }
+  }
+  /* Рубки на этом устройстве не будет - вести в проём некуда:
+     дверь остаётся закрытой, проход просто переходит к разделу */
+  if (g.RC_NO_CABIN) goal = 0;
+  var prev = this.doorK || 0;
+  var s = 1 - Math.exp(-(dt || 0.016) * (3.4 + Math.abs(goal - prev) * 14));
+  this.doorK = prev + (goal - prev) * s;
+  if (this.doorK < 0.001) this.doorK = 0;
+  g.RC_DOOR = this.doorK;
+
+  var d = this.rocket.door;
+  if (d) {
+    /* Створки уходят по борту вбок: поворот вокруг оси корабля */
+    var open = this.doorK * d.half * 2.05;
+    d.l.rotation.y = open;
+    d.r.rotation.y = -open;
+    /* Свет салона разгорается в щели раньше самих створок:
+       сначала видно, что там свет, потом уже что там салон */
+    var lit = Math.min(1, this.doorK * 2.4);
+    d.lamp.intensity = lit * 2.6;
+    d.edgeMat.opacity = 0.35 + (1 - this.doorK) * 0.55;
+  }
+  /* Проход открыт и кадр закрыт корпусом - можно отдавать сцену
+     интерьеру. Флаг читает rc-interior: подмена случается под
+     закрытым кадром, поэтому её не видно. */
+  var deep = this.doorK > 0.88 && this.appK > 0.9;
+  if (deep !== this._deep) {
+    this._deep = deep;
+    document.documentElement.classList.toggle("rc-in-hatch", deep);
+    try { dispatchEvent(new CustomEvent("rc:hatch", { detail: { deep: deep } })); } catch (e) {}
+  }
+  return this.doorK;
+};
+
 Rocket.prototype.layout = function (p, dt) {
   p = ((p % 1) + 1) % 1;
   var pos = this.path.getPointAt(p, this._tmpA);
@@ -1065,17 +1353,37 @@ Rocket.prototype.layout = function (p, dt) {
      Подход сам дожимает корабль в вертикаль и в центр кадра -
      к двери он стоит как на стартовом столе. */
   var app = this.approach(dt);
+  var dk = this.doorOpen(dt);
   if (app > 0.001) {
     tan.lerp(this._upVec || (this._upVec = new T.Vector3(0, 1, 0)), Math.min(1, app * 2.2)).normalize();
     var cW = this.canvas.clientWidth || innerWidth;
     var cH = this.canvas.clientHeight || innerHeight;
-    this.toWorld(cW * 0.5, cH * 0.62, -0.2, this._appP || (this._appP = new T.Vector3()));
+    /* Целимся не в центр корпуса, а в люк: он обязан встать ровно
+       посреди кадра, потому что именно в него мы входим. Люк сидит
+       выше середины корабля, поэтому корпус смещаем вниз на его
+       высоту, пересчитанную в текущий масштаб сцены. */
+    this.toWorld(cW * 0.5, cH * 0.5, -0.2, this._appP || (this._appP = new T.Vector3()));
     pos.lerp(this._appP, Math.min(1, app * 1.6));
-    /* Взгляд поднимается с площадки на борт: центр корпуса тянем от
-       нижней четверти к середине кадра. Сдвиг считаем в долях кадра
-       на глубине площадки, чтобы на любом экране он был одинаковым. */
-    var lift = Math.tan((this.cam.fov * Math.PI / 180) / 2) * (this.cam.position.z + 0.2);
-    pos.y += app * lift * 0.46;
+    var dY = (this.rocket.door ? this.rocket.door.y : 0.1);
+    pos.y -= app * dY * (this._sNow || 1);
+  }
+
+  /* Общая камера сайта (rc-world) сносит и корабль: когда кадр
+     поворачивается, ракета уезжает вместе с разделами, а не висит
+     сама по себе поверх них. Гасим снос на витке, на посадке и на
+     подходе - там положение корабля привязано к точке экрана, и
+     любой лишний сдвиг ломает и виток, и вход в люк. */
+  var W3 = g.RC_WORLD;
+  if (W3) {
+    var free = 1 - Math.max(this.orbK || 0, Math.max(app, (this.landK || 0) * 0.9));
+    if (free > 0.01) {
+      pos.x += W3.yaw * 0.040 * free;
+      pos.y += -W3.pitch * 0.032 * free;
+      /* Наезд камеры на корабль не переносим: при подходе к пульту
+         и в коридоре продуктов он выносил корпус в середину кадра
+         поверх формы заявки и карточек. Ракета следует за поворотом
+         кадра, но своей глубиной распоряжается сама. */
+    }
   }
 
   this.pivot.position.copy(pos);
@@ -1089,17 +1397,33 @@ Rocket.prototype.layout = function (p, dt) {
 
   /* Крен по горизонтальной составляющей; у борта корабль ровный */
   this.craft.rotation.z = -tan.x * 0.55 * (1 - (this.appK || 0));
-  this.craft.rotation.y += 0.004;
+  /* Ракета всё время медленно вращается, но к двери она обязана
+     повернуться люком: доворачиваем к ближайшему полному обороту,
+     иначе проём уедет за корпус ровно тогда, когда мы к нему
+     подошли. Вне подхода вращение продолжается как жило. */
+  if (app > 0.02) {
+    var ry = this.craft.rotation.y;
+    var tau = Math.PI * 2;
+    var near = Math.round(ry / tau) * tau;             /* ближний «люк на нас» */
+    this.craft.rotation.y = ry + (near - ry) * Math.min(1, (dt || 0.016) * (1.2 + app * 6));
+  } else {
+    this.craft.rotation.y += 0.004;
+  }
 
   /* Дальние участки пути делаем мельче, ближние крупнее.
      Вокруг планеты ракета идёт мельче: она «далеко», и только в таком
      масштабе виток читается витком, а не пролётом корабля через кадр. */
   var s = this.C.mobile ? 0.66 : 1.12;
-  /* Подход растит корпус почти на всю высоту кадра: множитель
-     подобран так, чтобы на единице подхода середина борта с
-     фирменными кольцами заполняла экран - дальше по сценарию в
-     этом борту откроется дверь шлюза. */
-  this.pivot.scale.setScalar(s * (1 - k * 0.70) * (1 + (this.landK || 0) * 0.12) * (1 + app * 2.6));
+  /* Подход растит корпус: к единице подхода борт с люком занимает
+     кадр, а открытая дверь наезжает проёмом на зрителя - это и есть
+     вход внутрь, без склейки и без вторых ворот поверх сцены. */
+  /* Рост на открытии двери держим в узде: дальше определённого
+     масштаба камера проваливается внутрь обшивки и кадр становится
+     пустым. Последний шаг входа делает не масштаб, а сам проём -
+     его стена видна изнутри и закрывает кадр. */
+  var sNow = s * (1 - k * 0.70) * (1 + (this.landK || 0) * 0.12) * (1 + app * 2.6) * (1 + dk * dk * 1.25);
+  this._sNow = sNow;
+  this.pivot.scale.setScalar(sNow);
 };
 
 /* Крупный читаемый текст: только он лежит на прозрачном фоне,
@@ -1141,6 +1465,11 @@ Rocket.prototype.veil = function (dt) {
     /* На телефоне колонка одна и текста в кадре втрое больше, поэтому
        над словами ракета уступает заметно сильнее, чем на мониторе. */
     this._veilGoal = hit ? (this.C.mobile ? 0.34 : 0.62) : 1;
+    /* На посадке и на подходе корабль не уступает никому: он и есть
+       сцена, а не помеха тексту. Иначе ровно в тот момент, когда мы
+       к нему идём, он растворяется под карточками. */
+    var hold = Math.max(this.appK || 0, (this.landK || 0) * 0.9);
+    if (hold > 0.08) this._veilGoal = Math.max(this._veilGoal, Math.min(1, hold * 1.6));
   }
   var light = document.documentElement.getAttribute("data-theme") === "light";
   var d = this._veilGoal - this._veil;
@@ -1160,7 +1489,7 @@ Rocket.prototype.veil = function (dt) {
 var THRUST = {
   pad: 0.45, ignite: 1.00, climb: 0.94, clouds: 0.82, corridor: 0.55,
   advance: 0.60, orbit: 0.62, reentry: 0.90, route: 0.48, landing: 0.66,
-  walk: 0.38, cabin: 0.34, manual: 0.32, console: 0.34
+  walk: 0.38, cabin: 0.34, manual: 0.32, console: 0.34, egress: 0.72
 };
 var actThrust = 0.6;
 addEventListener("rc:act", function (e) {

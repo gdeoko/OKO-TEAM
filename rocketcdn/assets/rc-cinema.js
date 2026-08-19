@@ -139,7 +139,12 @@ function cabin(act) {
   var cx = act.stage.left + act.stage.width / 2;
   var cy = act.stage.top + act.stage.height / 2;
   var R = phone ? 460 : 780;
-  var maxX = innerWidth * (phone ? 0.66 : 0.78);
+  /* Разлёт по горизонтали. На телефоне карточка шириной почти во
+     весь экран, и прежний предел уводил её край далеко за кадр:
+     соседняя панель кольца наезжала на читаемую и обрезалась
+     краем экрана. Теперь уходит ровно настолько, чтобы читалось
+     кольцо, но текст не резался. */
+  var maxX = innerWidth * (phone ? 0.44 : 0.78);
   var front = phone ? 0.34 : FRONT;
   var deg = root.getAttribute("data-degrade");
   var soft = !phone && !root.classList.contains("rc-fast") && deg !== "2" && deg !== "3";

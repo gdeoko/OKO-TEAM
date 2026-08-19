@@ -413,7 +413,12 @@ function observeReveal() {
       ents.forEach(function (e) {
         if (e.isIntersecting) { e.target.classList.add("on"); io.unobserve(e.target); }
       });
-    }, { threshold: 0.12, rootMargin: "0px 0px -6% 0px" });
+      /* Запас по краям и низкий порог: разделы теперь живут в общей
+         3D-сцене (rc-world) и приходят в кадр под наклоном, слегка
+         из глубины. С прежним порогом в 12% блок успевал доехать до
+         середины экрана невидимым, а на широком мониторе оставался
+         пустым вовсе. */
+    }, { threshold: 0.04, rootMargin: "14% 0px 6% 0px" });
   }
   $$(".rv:not(.on)").forEach(function (e) { io.observe(e); });
 }
