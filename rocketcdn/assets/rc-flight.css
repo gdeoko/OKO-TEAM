@@ -701,7 +701,12 @@ html[data-theme="light"] .rc-vidbg.on { opacity: .16; }
   font-family: var(--f-body, "Golos Text", sans-serif);
   font-size: 10.5px; font-weight: 600; letter-spacing: .18em;
   text-transform: uppercase;
-  color: rgba(var(--int-lit-rgb, 207,233,245), .65);
+  /* Счётчик стоит поверх нижнего края кокпита, и на светлых
+     приборах прежняя полупрозрачность его съедала. Держим текст
+     светлым, а читаемость даёт короткая тень, а не подложка:
+     плашка в углу кабины смотрелась бы наклейкой поверх кино. */
+  color: rgba(var(--int-lit-rgb, 207,233,245), .92);
+  text-shadow: 0 1px 3px rgba(2,6,12,.95), 0 0 12px rgba(2,6,12,.75);
 }
 .rcf-prog.full { color: #35E08F; text-shadow: 0 0 10px rgba(53,224,143,.6); }
 @media (max-width: 760px) {
@@ -867,8 +872,10 @@ html[data-theme="light"] .rc-vidbg.on { opacity: .16; }
   font-family: var(--f-body, "Golos Text", sans-serif);
   font-size: 10.5px; font-weight: 700; letter-spacing: .18em;
   text-transform: uppercase;
-  color: rgba(var(--int-cyan-rgb, 66,178,220), .85);
-  text-shadow: 0 0 12px rgba(var(--int-cyan-rgb, 66,178,220), .35);
+  color: rgba(var(--int-cyan-rgb, 66,178,220), 1);
+  /* Тёмная тень под фирменным цианом: счётчик читается и на светлой
+     обшивке кокпита, и на чёрном космосе, без плашки под текстом */
+  text-shadow: 0 1px 3px rgba(2,6,12,.95), 0 0 14px rgba(var(--int-cyan-rgb, 66,178,220), .45);
 }
 .rcf-net.full { color: #35E08F; text-shadow: 0 0 12px rgba(53,224,143,.65); }
 
