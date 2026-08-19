@@ -69,11 +69,15 @@ function invite_queue_institutions(int $limit = 500): array {
         $email = trim((string) $r['email']);
         if ($email === '' || !filter_var($email, FILTER_VALIDATE_EMAIL)) { $skipped++; continue; }
 
-        // Отписка обязательна и обязана работать. Токен заводим через тот же
-        // механизм, что и для обычных подписчиков: тогда переход по ссылке
-        // отпишет адрес и в subscribers, и в базе учреждений.
-        [$token, $active] = nl_ensure_subscriber($email, (string) $r['name'], 'institution');
-        if (!$active) {                      // уже отписывались — не трогаем
+        // Отписка обязательна и обязана работать, но заводить учреждение в базу
+        // участников ради неё нельзя: списки разные. У учреждения свой токен
+        // (inst_unsub_token), переход по ссылке снимает именно его.
+        if (!function_exists('inst_unsub_token')) require_once BASE_PATH . '/core/institutions.php';
+        $token = inst_unsub_token((int) $r['id']);
+        if ($token === '') { $skipped++; continue; }
+        // Кто отписывался как участник — тому не пишем и как учреждению.
+        $wasSub = one("SELECT active FROM subscribers WHERE LOWER(email)=?", [mb_strtolower($email)]);
+        if ($wasSub && (int) $wasSub['active'] === 0) {
             try { update('institutions', ['status' => 'unsubscribed'], 'id=:id', ['id' => (int) $r['id']]); } catch (\Throwable $e) {}
             $skipped++;
             continue;
@@ -251,7 +255,9 @@ function invite_requeue_institutions(int $limit = 500, int $months = 3): array {
         $email = trim((string) $r['email']);
         if ($email === '' || !filter_var($email, FILTER_VALIDATE_EMAIL)) { $skipped++; continue; }
 
-        [$token, $active] = nl_ensure_subscriber($email, (string) $r['name'], 'institution');
+        if (!function_exists('inst_unsub_token')) require_once BASE_PATH . '/core/institutions.php';
+        $token = inst_unsub_token((int) $r['id']);   // свой токен учреждения, не запись в базе участников
+        $active = 1;
         if (!$active) {
             try { update('institutions', ['status' => 'unsubscribed'], 'id=:id', ['id' => (int) $r['id']]); } catch (\Throwable $e) {}
             $skipped++;

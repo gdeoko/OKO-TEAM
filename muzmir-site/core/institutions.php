@@ -488,6 +488,37 @@ function inst_reset_ghost_invites(bool $apply = true): int {
  * Учреждение отказалось от рассылки — больше не пишем НИКОГДА.
  * Зовётся из api/v1/unsubscribe.php по адресу.
  */
+/**
+ * ТОКЕН ОТПИСКИ УЧРЕЖДЕНИЯ — СВОЙ, НЕ ЧЕРЕЗ БАЗУ ПОДПИСЧИКОВ.
+ *
+ * Раньше ради ссылки «Отписаться» каждое учреждение заводилось в subscribers.
+ * Списки от этого слиплись: в базе участников оказалось двадцать тысяч школ и
+ * отделов культуры, и «своя база» из восьми тысяч человек превратилась в
+ * двадцать восемь. Участники и учреждения — разные списки: первые пришли сами,
+ * вторым мы пишем по официальному адресу. Токен теперь хранится у самого
+ * учреждения.
+ */
+function inst_unsub_token(int $instId): string {
+    inst_migrate();
+    try { db()->exec("ALTER TABLE institutions ADD COLUMN unsub_token TEXT DEFAULT ''"); } catch (\Throwable $e) {}
+    $row = one("SELECT unsub_token FROM institutions WHERE id=?", [$instId]);
+    if (!$row) return '';
+    $t = trim((string) ($row['unsub_token'] ?? ''));
+    if ($t !== '') return $t;
+    $t = 'i' . bin2hex(random_bytes(16));
+    try { q("UPDATE institutions SET unsub_token=? WHERE id=?", [$t, $instId]); }
+    catch (\Throwable $e) { return ''; }
+    return $t;
+}
+
+/** Учреждение по токену отписки ('' → null). */
+function inst_by_unsub_token(string $token): ?array {
+    $t = trim($token);
+    if ($t === '') return null;
+    try { return one("SELECT * FROM institutions WHERE unsub_token=?", [$t]) ?: null; }
+    catch (\Throwable $e) { return null; }
+}
+
 function inst_unsubscribe(string $email): bool {
     inst_migrate();
     $e = inst_email_norm($email);

@@ -132,7 +132,9 @@ foreach ($rows as $r) {
     $email = mb_strtolower(trim((string) $r['email']));
     if ($email === '' || !filter_var($email, FILTER_VALIDATE_EMAIL)) { $skipped++; continue; }
 
-    [$token, $active] = nl_ensure_subscriber($email, (string) $r['name'], 'institution');
+    if (!function_exists('inst_unsub_token')) require_once BASE_PATH . '/core/institutions.php';
+    $token  = inst_unsub_token((int) $r['id']);   // учреждение не заводим в базу участников
+    $active = 1;
     if (!$active) {                                  // отписан — не трогаем
         try { update('institutions', ['status' => 'unsubscribed'], 'id=:id', ['id' => (int) $r['id']]); }
         catch (\Throwable $e) {}

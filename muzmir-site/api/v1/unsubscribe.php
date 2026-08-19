@@ -13,6 +13,33 @@ header('Content-Type: text/html; charset=utf-8');
 $token = trim(input('token'));
 $state = 'invalid'; // invalid | done | already
 
+// ОТПИСКА УЧРЕЖДЕНИЯ — ПО СВОЕМУ ТОКЕНУ.
+//
+// Учреждения больше не заводятся в базу участников (списки разные), поэтому их
+// ссылка «Отписаться» несёт токен из таблицы institutions. Он начинается с «i»,
+// но проверяем по базе, а не по букве.
+if ($token !== '' && is_file(BASE_PATH . '/core/institutions.php')) {
+    require_once BASE_PATH . '/core/institutions.php';
+    $inst = function_exists('inst_by_unsub_token') ? inst_by_unsub_token($token) : null;
+    if ($inst) {
+        $email = mb_strtolower(trim((string) $inst['email']));
+        $state = (string) ($inst['status'] ?? '') === 'unsubscribed' ? 'already' : 'done';
+        if ($state === 'done') {
+            try { inst_unsubscribe($email); } catch (\Throwable $e) {}
+            try {
+                q("UPDATE mail_queue SET status='cancelled', error='снято: учреждение отписалось'
+                    WHERE LOWER(to_email) = ? AND status IN ('queued','paused') AND COALESCE(priority,0) > 0",
+                  [$email]);
+            } catch (\Throwable $e) {}
+            // Если этот же адрес есть и в базе участников — снимаем и там: человек
+            // просил не писать ему, а не «не писать с одного из списков».
+            try { q("UPDATE subscribers SET active=0 WHERE LOWER(email)=?", [$email]); } catch (\Throwable $e) {}
+            if (function_exists('audit')) audit('unsubscribe', 'institutions', (int) $inst['id'], ['email' => $email]);
+        }
+        $token = '';   // дальше по базе участников не ищем
+    }
+}
+
 if ($token !== '') {
     $sub = one("SELECT id, email, active FROM subscribers WHERE unsub_token = ?", [$token]);
     if ($sub) {

@@ -68,79 +68,57 @@ $say("месяц $tag, приём с $start по $end");
 
 /* ── 1. Конкурсы месяца ─────────────────────────────────────────────────── */
 
-// Уже продлевали в этом месяце?
-$fresh = all("SELECT id, name FROM competitions WHERE status='open' AND date(start_date) = ?", [$start]);
-if ($fresh) {
-    $say('конкурсы месяца уже открыты (' . count($fresh) . ') — продлевать не нужно');
-} else {
-    // ЛИНЕЙКУ БЕРЁМ ПО ПОСЛЕДНЕМУ МЕСЯЦУ, А НЕ ПО СТАТУСУ 'open'.
-    // К 1-му числу открытых конкурсов физически не остаётся: приём закрывается 25-го
-    // в 18:00 (волна 'closed'), а ночью на 26-е крон check_competitions_dates добивает
-    // всё, у чего end_date прошла. То есть этот крон, запускаясь 1-го в 09:00, всегда
-    // видел пустой список и выходил с ошибкой — новый месяц не открылся бы ни разу.
-    //
-    // Постоянная линейка центра — это конкурсы последнего месяца в любом статусе,
-    // у которых чистый slug (архивные получают суффикс «-ГГГГ-ММ» при переносе).
-    $lastStart = (string) (scalar(
-        "SELECT MAX(start_date) FROM competitions WHERE COALESCE(start_date,'') <> ''") ?? '');
-    $prev = $lastStart !== ''
-        ? all("SELECT * FROM competitions WHERE start_date = ? ORDER BY sort ASC, id ASC", [$lastStart])
-        : [];
-    // Подстраховка: если по дате ничего не нашлось — берём открытые, как раньше.
-    if (!$prev) $prev = all("SELECT * FROM competitions WHERE status='open' ORDER BY sort ASC, id ASC");
+// КОНКУРСЫ КАЖДЫЙ МЕСЯЦ НОВЫЕ, ИХ ЗАВОДИТ ВЛАДЕЛЕЦ.
+//
+// Правило владельца (19.08.2026): линейка не продлевается копированием. Каждый
+// месяц это другие конкурсы — своё название, афиша, положение, бланк диплома, —
+// и заводит их владелец в админке. Раньше этот крон клонировал прошлый месяц с
+// новыми датами: в сентябре по всем письмам и постам шли бы августовские
+// названия и августовские афиши.
+//
+// Здесь остаётся только то, что можно сделать без человека: закрыть прошлый
+// месяц и убедиться, что новый заведён. Если конкурсов на месяц нет — план не
+// ставится, а владельцу уходит сообщение: пустая рассылка хуже её отсутствия.
 
-    if (!$prev) {
-        $say('КОНКУРСОВ В БАЗЕ НЕТ — продлевать нечего, план не ставим');
-        // Молчать здесь нельзя: это значит, что месяц не откроется и заявок не будет.
-        if (!$DRY && function_exists('tg_notify_admin')) {
-            try { tg_notify_admin("Музыкальный Мир: месячный запуск $tag НЕ СОСТОЯЛСЯ — в базе нет ни одного конкурса для продления."); } catch (\Throwable $e) {}
-        }
-        exit(1);
+$openNow = all("SELECT id, name, slug, start_date, end_date FROM competitions
+                 WHERE status = 'open' AND date(start_date) >= ? AND date(start_date) <= ?
+                 ORDER BY sort ASC, id ASC", [$start, $end]);
+
+if (!$openNow) {
+    $say("КОНКУРСЫ НА $tag НЕ ЗАВЕДЕНЫ — план не ставим");
+    if (!$DRY && function_exists('tg_notify_admin')) {
+        try {
+            tg_notify_admin("Музыкальный Мир: запуск $tag не состоялся — на месяц не заведено ни одного "
+                . "конкурса. Добавьте конкурсы в админке (раздел «Конкурсы»): название, афиша, положение, "
+                . "бланк диплома, приём с $start по $end. После этого запуск можно повторить кнопкой в пульте.");
+        } catch (\Throwable $e) {}
     }
-    $say('линейка взята по последнему месяцу (' . ($lastStart ?: 'по статусу open') . '): ' . count($prev) . ' шт.');
-    $say('продлеваем конкурсы: ' . implode(', ', array_map(fn($c) => (string) $c['name'], $prev)));
+    exit(1);
+}
 
-    // Поля, которые переезжают в новый месяц как есть.
-    $carry = ['code', 'name', 'type', 'direction', 'is_paid', 'price', 'cover', 'description',
-              'results_mode', 'regulation_pdf', 'diploma_template', 'diploma_theme', 'diploma_bg',
-              'diploma_approved', 'region_logos', 'nominations', 'sort', 'duration'];
+$say('конкурсы месяца заведены (' . count($openNow) . '): '
+   . implode(', ', array_map(static fn($c) => (string) $c['name'], $openNow)));
 
-    foreach ($prev as $c) {
-        $oldId   = (int) $c['id'];
+// Прошлый месяц закрываем и уводим в архив: постоянный адрес освобождается для
+// нового конкурса, а старые ссылки продолжают открывать архивную запись.
+if (!$DRY) {
+    $closed = 0;
+    foreach (all("SELECT id, name, slug, start_date FROM competitions
+                   WHERE status = 'open' AND date(start_date) < ?", [$start]) as $c) {
         $slug    = (string) $c['slug'];
         $prevTag = substr((string) ($c['start_date'] ?? ''), 0, 7) ?: 'archive';
-        // Конкурс, уже уехавший в архив, второй метки не получает: иначе адрес
-        // превращается в «vozrozhdenie-2026-07-2026-07» и ломает старые ссылки.
-        if ($prevTag !== 'archive' && str_ends_with($slug, '-' . $prevTag)) {
-            $say("  #{$oldId} «{$c['name']}»: уже в архиве ($slug) — пропускаю");
-            continue;
-        }
-
-        if ($DRY) { $say("  #{$oldId} «{$c['name']}»: slug $slug → архив $slug-$prevTag, новый конкурс на $start-$end"); continue; }
-
+        $newSlug = str_ends_with($slug, '-' . $prevTag) ? $slug : $slug . '-' . $prevTag;
         try {
-            // Прошлый месяц уезжает в архив: закрыт, адрес с меткой месяца.
-            update('competitions', [
-                'status' => 'finished',
-                'slug'   => $slug . '-' . $prevTag,
-            ], 'id=:id', ['id' => $oldId]);
-
-            // Новый конкурс занимает постоянный адрес.
-            $row = [];
-            foreach ($carry as $f) if (array_key_exists($f, $c)) $row[$f] = $c[$f];
-            $row['slug']         = $slug;
-            $row['start_date']   = $start;
-            $row['end_date']     = $end;
-            $row['results_date'] = date('Y-m-28', $now);
-            $row['status']       = 'open';
-            $row['launched']     = 0;
-            $row['launched_at']  = null;
-            $newId = (int) insert('competitions', $row);
-            $say("  «{$c['name']}»: архив #$oldId ($slug-$prevTag) → новый #$newId ($slug)");
+            update('competitions', ['status' => 'finished', 'slug' => $newSlug], 'id=:id', ['id' => (int) $c['id']]);
+            $closed++;
         } catch (\Throwable $e) {
-            $say("  ОШИБКА по конкурсу #$oldId: " . $e->getMessage());
+            $say('  не удалось закрыть конкурс #' . (int) $c['id'] . ': ' . $e->getMessage());
         }
     }
+    if ($closed > 0) $say("конкурсов прошлого месяца закрыто: $closed");
+} else {
+    $old = (int) (scalar("SELECT COUNT(*) FROM competitions WHERE status='open' AND date(start_date) < ?", [$start]) ?? 0);
+    $say("закрыли бы конкурсов прошлого месяца: $old");
 }
 
 /* ── 2. Блок кабинета в письме — только в самый первый месяц ─────────────── */
