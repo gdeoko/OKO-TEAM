@@ -13,13 +13,30 @@
   position: fixed; inset: 0; z-index: 2;
   pointer-events: none;
   opacity: var(--cab-k, 0);
-  /* Кабина не проявляется плоско, она подходит: пока мы идём по
-     салону, она чуть крупнее кадра и «за спиной», к пульту встаёт
-     на место. Наезд тот же по смыслу, что у камеры рубки. */
-  transform: scale(calc(1.14 - var(--cab-k, 0) * 0.14));
+  /* Панель - предмет обстановки рубки, а не рамка поверх кадра.
+     Пока идёт оборот, она стоит в своём углу: сдвинута вбок,
+     повёрнута вполоборота и мельче. Числа считает rc-cockpit.js по
+     экранной проекции этого угла, поэтому панель не может уехать
+     от стен - у них одна геометрия на двоих. */
+  transform:
+    perspective(1500px)
+    translateX(var(--cab-tx, 0%))
+    rotateY(var(--cab-rot, 0deg))
+    scale(var(--cab-sc, 1));
+  transform-origin: 50% 78%;
   transition: opacity .3s linear;
   will-change: opacity, transform;
-  contain: strict;
+  contain: layout paint;
+}
+
+/* Обрезка сверху: в салоне от кабины видна только приборная часть,
+   остекление приходит на подъезде. Без неё в углу комнаты висела бы
+   пустая рамка окна, чего в рубке быть не может. */
+.rc-cockpit .cab-img,
+.rc-cockpit .cab-void,
+.rc-cockpit .cab-glass {
+  -webkit-clip-path: inset(var(--cab-top, 0%) 0 0 0);
+  clip-path: inset(var(--cab-top, 0%) 0 0 0);
 }
 
 .rc-cockpit .cab-img {

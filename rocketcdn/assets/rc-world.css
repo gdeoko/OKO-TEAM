@@ -157,8 +157,17 @@ html[data-act="walk"] #cases .hs-head {
   transition: transform .5s var(--ease, ease);
 }
 @media (min-width: 901px) {
-  /* Титр держится в левой половине: правую занимает корпус */
-  html[data-act="walk"] #cases .hs-head { max-width: 44%; }
+  /* Титр держится в левой половине: правую занимает корпус.
+     Одной ширины мало - обёртка раздела центрирована, и суженный
+     блок оставался ровно посередине, под носом корабля. Прижимаем
+     его к левому полю: корабль по оси кадра, текст рядом с ним. */
+  html[data-act="walk"] #cases .hs-head {
+    max-width: 44%;
+    margin-left: 0;
+    margin-right: auto;
+    padding-left: clamp(16px, 5vw, 96px);
+    transition: max-width .6s var(--ease, ease), padding-left .6s var(--ease, ease);
+  }
 }
 @media (max-width: 900px) {
   /* На телефоне корпус занимает кадр целиком, свободен только верх:
@@ -195,7 +204,12 @@ html[data-act="landing"] #cases .hs-head {
 /* Заголовок следующего раздела упирался в нос корабля: держим его
    в левой половине, пока площадка занимает центр кадра */
 @media (min-width: 901px) {
-  html[data-act="landing"] #cases .hs-head { max-width: 44%; }
+  html[data-act="landing"] #cases .hs-head {
+    max-width: 44%;
+    margin-left: 0;
+    margin-right: auto;
+    padding-left: clamp(16px, 5vw, 96px);
+  }
 }
 @media (max-width: 900px) {
   html[data-act="landing"] #cases .hs-view,

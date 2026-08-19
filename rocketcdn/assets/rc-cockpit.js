@@ -30,7 +30,7 @@ var reduced = false;
 try { reduced = matchMedia("(prefers-reduced-motion: reduce)").matches; } catch (e) {}
 
 var layer = null, img = null, raf = null;
-var k = 0, goal = 0, pub = -1, srcNow = "";
+var k = 0, goal = 0, pub = -1, conPub = -1, srcNow = "";
 
 /* Окно остекления в долях кадра. Числа сняты с самих файлов:
    у портретной кабины переплёт шире, у ландшафтной стойки уходят
@@ -92,12 +92,64 @@ function want() {
   if (root.classList.contains("rc-flying")) return 0;   /* в игре кабина своя */
   if (root.getAttribute("data-degrade") === "3") return 0;
   var sc = g.RC_SCENE;
-  var a = sc && sc.act, kk = sc ? (sc.k || 0) : 0;
-  if (a === "cabin")   return 0.30 + kk * 0.16;
-  if (a === "manual")  return 0.46 + kk * 0.22;
-  if (a === "console") return 0.68 + kk * 0.32;
-  if (a === "egress")  return 1;
+  var a = sc && sc.act;
+  if (a === "cabin" || a === "manual") return 1;        /* стоит в своём углу */
+  if (a === "console" || a === "egress") return 1;
   return 0;
+}
+
+/* Доля «мы за пультом»: её ведёт камера рубки (--int-con). До конца
+   оборота она ноль, дальше растёт вместе с подъездом камеры. */
+function conNow() {
+  var cs = getComputedStyle(root);
+  var v = parseFloat(cs.getPropertyValue("--int-con"));
+  if (isNaN(v)) v = 0;
+  var out = parseFloat(cs.getPropertyValue("--int-out"));
+  if (isNaN(out)) out = 0;
+  /* В отлёте камера отходит, но кадр остаётся кабиной: держим
+     единицу, иначе панель поехала бы обратно в угол на финале */
+  return out > 0 ? 1 : v;
+}
+
+/* Азимут пульта в рубке. Ноль - направление входа, поэтому панель
+   уводим вбок, в её собственный угол. Тем же числом довёрнут конец
+   оборота в rc-interior, так что к концу круга камера смотрит
+   ровно на панель, а не мимо неё. */
+var TH_CON = -0.62;
+function thCon() {
+  var I = g.RC_INTERIOR;
+  return (I && I.thCon) ? I.thCon() : TH_CON;
+}
+
+/* Кладём панель туда, где она стоит в комнате. Пока идёт оборот,
+   двигается камера, а не панель: экранную точку берём у самой
+   рубки (project), поэтому пульт не может «разъехаться» со стенами. */
+function place(conK) {
+  var stl = root.style;
+  var I = g.RC_INTERIOR;
+  var tx = 0, rot = 0, vis = 1;
+
+  if (I && I.project && I.ready && I.ready()) {
+    var pr = I.project(thCon());
+    var off = pr.x - 0.5;                        /* отклонение от середины */
+    tx = off * (1 - conK) * 120;                 /* в процентах ширины слоя */
+    rot = -off * (1 - conK) * 52;                /* стоит к нам вполоборота */
+    vis = pr.v;
+  } else {
+    /* Рубки нет (упрощённый режим): просто держим панель сбоку */
+    tx = (1 - conK) * 34;
+    rot = -(1 - conK) * 26;
+  }
+
+  stl.setProperty("--cab-tx", tx.toFixed(2) + "%");
+  stl.setProperty("--cab-rot", rot.toFixed(2) + "deg");
+  /* В салоне панель дальше и мельче, на подъезде вырастает в кадр */
+  stl.setProperty("--cab-sc", (0.52 + conK * 0.62).toFixed(3));
+  /* Обрезка сверху: в салоне видна только нижняя часть картинки -
+     сам пульт с экранами. Остекление и потолочные балки приходят,
+     когда мы уже сели за него; иначе в углу висела бы рамка. */
+  stl.setProperty("--cab-top", (62 - conK * 62).toFixed(1) + "%");
+  return vis;
 }
 
 function frame() {
@@ -109,15 +161,24 @@ function frame() {
     return;
   }
   build();
-  k += (goal - k) * 0.12;
-  if (Math.abs(goal - k) < 0.002) k = goal;
+  var conK = conNow();
+  var vis = place(conK);
+  /* Прозрачность складывается из двух вещей: видна ли панель в
+     кадре вообще (vis) и насколько мы к ней подъехали. В салоне она
+     приглушена - это дальний предмет обстановки, а не интерфейс
+     поверх сцены. */
+  var target = goal * (0.34 + conK * 0.66) * (vis * 0.85 + 0.15);
+  k += (target - k) * 0.12;
+  if (Math.abs(target - k) < 0.002) k = target;
   var r = Math.round(k * 100) / 100;
-  if (r === pub) return;
-  pub = r;
+  var cr = Math.round(conK * 100) / 100;
+  if (r === pub && cr === conPub) return;
+  pub = r; conPub = cr;
   root.style.setProperty("--cab-k", String(r));
-  /* Порог, после которого вёрстка считает себя «внутри кабины» и
-     садится в остекление: раньше половины кабина ещё далеко */
-  root.classList.toggle("rc-cab-on", r > 0.45);
+  /* Класс «мы за пультом» ставим по подъезду, а не по прозрачности:
+     содержимое садится в остекление только когда кабина уже стала
+     кадром, а не пока она стоит в углу комнаты */
+  root.classList.toggle("rc-cab-on", cr > 0.5);
 }
 
 function boot() {

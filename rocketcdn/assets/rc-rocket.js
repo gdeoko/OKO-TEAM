@@ -1778,6 +1778,12 @@ Rocket.prototype.touchdown = function (dt) {
     this._shockT = 0;
     this._shake = this.C.weak ? 0.55 : 1;
     this.dust();
+    /* Пар из-под опор в тот же миг, что и пыль. В акте посадки
+       площадка и тень в кадре целиком, и клиент просил, чтобы объём
+       падал именно от корабля: сухое касание читалось макетом. */
+    this._padSteam = this.C.weak ? 0.5 : 1;
+    this._padRest = 0;
+    this.steamEmit(this.C.weak ? 30 : 84, 3);
     document.documentElement.classList.add("rc-landed-craft");
     if (g.RC_SOUND && g.RC_SOUND.boom) { try { g.RC_SOUND.boom(); } catch (e) {} }
     try { dispatchEvent(new CustomEvent("rc:touchdown")); } catch (e) {}
@@ -1789,6 +1795,10 @@ Rocket.prototype.touchdown = function (dt) {
     this._shock = 0;
     this._shake = 0;
     this.dustClear();
+    /* Посадочный выброс тоже принадлежит стоянке: взлетели обратно -
+       газу из-под опор идти неоткуда */
+    this._padSteam = 0;
+    this._padRest = 0;
     document.documentElement.classList.remove("rc-landed-craft");
   }
 
@@ -1800,6 +1810,16 @@ Rocket.prototype.touchdown = function (dt) {
     var tt = this._shockT;
     var s = Math.exp(-tt * 5.0) * Math.cos(tt * 15.5);
     this._shock = s < -0.22 ? -0.22 : s;
+
+    /* Газ выходит из-под опор ещё почти секунду после касания:
+       одним хлопком клуб читается вспышкой, а не выбросом. Ставим
+       частицы порциями по времени кадра, а не по ходу колеса -
+       остановился на середине, выброс всё равно доиграет. */
+    if (this._padSteam > 0 && tt < 0.95) {
+      this._padRest = (this._padRest || 0) + dt * (this.C.weak ? 22 : 56) * this._padSteam;
+      var pn = Math.floor(this._padRest);
+      if (pn > 0) { this._padRest -= pn; this.steamEmit(pn, 3); }
+    }
   }
 
   this.legs();
@@ -2143,6 +2163,36 @@ Rocket.prototype.steamEmit = function (count, kind) {
     if (S.life[i] > 0) continue;             /* занятую частицу не трогаем */
     made++;
     var j = i * 3;
+    if (kind === 3) {
+      /* Посадочный выброс. Клиент описал этот кадр так: «тень и пар и
+         объём - всё падает от ракеты». В акте посадки площадка с
+         опорами и тенью как раз в кадре, поэтому здесь пар идёт не
+         из люка, а из-под корабля: кольцо расходится от оси наружу
+         во все стороны и стелется по грунту.
+
+         Отличие от слоя у люка (kind 2) в двух вещах: сектор полный,
+         а не со стороны двери, и стартовая скорость вдвое выше -
+         газ выбивает из-под сопла, а не выдыхается из щели. */
+      var pa = Math.random() * 6.283;
+      var pr = 0.16 + Math.random() * 0.42;
+      S.pos[j]     = Math.sin(pa) * pr;
+      S.pos[j + 1] = gy + Math.random() * 0.05;
+      S.pos[j + 2] = Math.cos(pa) * pr;
+      var ps = 1.15 + Math.random() * 1.5;
+      S.vel[j]     = Math.sin(pa) * ps;
+      S.vel[j + 1] = 0.05 + Math.random() * 0.12;   /* чуть вверх: клуб вспухает */
+      S.vel[j + 2] = Math.cos(pa) * ps;
+      S.siz[i]     = 0.15 + Math.random() * 0.20;
+      S.amp[i]     = 0.26 + Math.random() * 0.24;
+      S.max[i]     = 2.6 + Math.random() * 2.2;
+      S.curl[i]    = (Math.random() - 0.5) * 0.3;
+      S.life[i] = S.max[i];
+      S.alp[i]  = 0;
+      S.gnd[i]  = 1;
+      S.rot[i]  = Math.random() * 6.283;
+      S.spin[i] = (Math.random() - 0.5) * 0.6;
+      continue;
+    }
     if (kind === 2) {
       /* Слой у грунта. Струя из люка доходит до площадки за полторы
          секунды и к этому времени успевает выцвести, поэтому нижний

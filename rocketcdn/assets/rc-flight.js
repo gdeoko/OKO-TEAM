@@ -2501,6 +2501,34 @@ g.RC_FLIGHT = {
     return { открыт: F.open, собран: F.built, p: +F.p.toFixed(3), v: +F.v.toFixed(5),
              отметки: W3 && W3.at ? W3.at : null };
   },
+  /* Отладочные рычаги для автопроверок: поставить корабль в нужную
+     точку маршрута и прыгнуть в заданную вселенную. Через обычный
+     интерфейс на это уходят десятки секунд полёта, а снимать кадры
+     надо в конкретных местах. */
+  seek: function (p) {
+    if (!F.open) return null;
+    F.goal = null; F.orbit = null; F.away = false; F.auto = false;
+    F.p = Math.max(0, Math.min(1, p));
+    F.v = 0;
+    return F.p;
+  },
+  jump: function (i) { jumpUniverse(i); return uniIdx; },
+  /* Сколько всего рисуется: вершины, точки, вызовы отрисовки.
+     Нужно, чтобы новые эффекты не пролезли мимо бюджета. */
+  stats: function () {
+    if (!W3) return null;
+    var info = W3.r.info;
+    var pts = 0, obj = 0;
+    W3.scene.traverse(function (o) {
+      obj++;
+      if (o.isPoints && o.geometry && o.geometry.attributes.position) {
+        pts += o.geometry.attributes.position.count;
+      }
+    });
+    return { треугольники: info.render.triangles, вызовы: info.render.calls,
+             точки: pts, объектов: obj, текстур: info.memory.textures,
+             геометрий: info.memory.geometries };
+  },
   /* Проверки столкновений: прогоняем весь маршрут и смотрим, не
      задевает ли он тела. Пригодилось при настройке манёвра обхода
      и остаётся как быстрый способ проверить правку дуги. */
