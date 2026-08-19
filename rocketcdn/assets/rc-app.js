@@ -378,11 +378,27 @@ function buildMapGlobe(mapCv) {
     addEventListener("rc:gl-free", function () {
       if (!made || !window.RC_GL) return;
       try { made.stop(); } catch (e) {}
-      var back = new RCGlobe(mapCv, opts);
+      /* Холст меняем на новый, а не переиспользуем. Once a canvas
+         has handed out a WebGL context, двумерный на нём получить
+         уже нельзя: getContext вернёт null, и плоский глобус падал
+         на первом же обращении к рисовалке. Поэтому кладём на место
+         старого холста его свежую копию. */
+      var fresh = document.createElement("canvas");
+      fresh.id = mapCv.id;
+      fresh.className = mapCv.className;
+      fresh.setAttribute("aria-hidden", mapCv.getAttribute("aria-hidden") || "true");
+      if (mapCv.parentNode) mapCv.parentNode.replaceChild(fresh, mapCv);
+      mapCv = fresh;
+      var back = null;
+      try { back = new RCGlobe(mapCv, opts); } catch (e2) { back = null; }
       var i = window.__globes.indexOf(made);
-      if (i >= 0) window.__globes[i] = back;
-      globe = back;
-      back.start();
+      if (back) {
+        if (i >= 0) window.__globes[i] = back;
+        globe = back;
+        back.start();
+      } else if (i >= 0) {
+        window.__globes.splice(i, 1);
+      }
       made = null;
       window.RC_GL.give();
     });
