@@ -224,21 +224,26 @@ var GEAR_MID   = 0.58;       /* куда упирается подкос, дол
 /* Уровень площадки: низ тарелки при полностью раскрытой ноге.
    По нему ставим и грунт, и тень, и кольцо пыли - всё в одном
    месте, иначе ракета зависает над собственной тенью. */
-var PAD_Y = -(GEAR_UP + GEAR_LO) * Math.cos(GEAR_OPEN) + GEAR_HIP_Y - 0.04;
+var PAD_Y = -(GEAR_UP + GEAR_LO) * Math.cos(GEAR_OPEN) + GEAR_HIP_Y - 0.045;
+/* Радиус, на котором стоят тарелки, и размер площадки. Метки на
+   грунте считаются из них, а не подбираются на глаз. */
+var PAD_FEET = GEAR_HIP_Z + (GEAR_UP + GEAR_LO) * Math.sin(GEAR_OPEN);
+var PAD_SIZE = 6.4;                       /* сторона квадрата с разметкой */
+var PAD_FOOT = PAD_FEET / (PAD_SIZE * 0.46);   /* доля радиуса разметки */
 
 function buildGear(C, env) {
   var group = new T.Group();
   group.visible = false;
 
   var seg = C.weak ? 6 : 10;
-  var strutGeo = new T.CylinderGeometry(0.072, 0.056, 1, seg);
+  var strutGeo = new T.CylinderGeometry(0.098, 0.076, 1, seg);
   strutGeo.translate(0, -0.5, 0);          /* висит от начала координат вниз */
-  var rodGeo = new T.CylinderGeometry(0.042, 0.038, 1, seg);
+  var rodGeo = new T.CylinderGeometry(0.060, 0.054, 1, seg);
   rodGeo.translate(0, -0.5, 0);
-  var braceGeo = new T.CylinderGeometry(0.036, 0.029, 1, seg);
+  var braceGeo = new T.CylinderGeometry(0.048, 0.038, 1, seg);
   braceGeo.translate(0, 0.5, 0);           /* растёт от начала координат вверх */
-  var footGeo = new T.CylinderGeometry(0.215, 0.17, 0.075, C.weak ? 8 : 14);
-  var hipGeo = new T.BoxGeometry(0.22, 0.18, 0.15);
+  var footGeo = new T.CylinderGeometry(0.26, 0.20, 0.085, C.weak ? 8 : 14);
+  var hipGeo = new T.BoxGeometry(0.26, 0.20, 0.17);
 
   var strutMat = new T.MeshStandardMaterial({
     color: 0xC3D1DF, metalness: 0.86, roughness: 0.27, envMap: env, envMapIntensity: 1.5
@@ -298,11 +303,21 @@ function padTexture(weak) {
   var x = c.getContext("2d");
   var m = S / 2, R = S * 0.46;
 
+  /* Сначала сама поверхность: без залитого пятна круг читается
+     наклейкой поверх пустоты, а не площадкой на грунте */
+  var soil = x.createRadialGradient(m, m, 0, m, m, R);
+  soil.addColorStop(0.00, "rgba(24,42,60,.50)");
+  soil.addColorStop(0.62, "rgba(20,36,52,.40)");
+  soil.addColorStop(0.93, "rgba(18,32,48,.24)");
+  soil.addColorStop(1.00, "rgba(18,32,48,0)");
+  x.fillStyle = soil;
+  x.fillRect(0, 0, S, S);
+
   /* Прожжённое пятно под соплом: посадка оставляет след */
   var burn = x.createRadialGradient(m, m, 0, m, m, R * 0.62);
-  burn.addColorStop(0.00, "rgba(6,12,20,.55)");
-  burn.addColorStop(0.45, "rgba(10,22,34,.34)");
-  burn.addColorStop(1.00, "rgba(10,22,34,0)");
+  burn.addColorStop(0.00, "rgba(4,9,15,.62)");
+  burn.addColorStop(0.45, "rgba(8,18,28,.38)");
+  burn.addColorStop(1.00, "rgba(8,18,28,0)");
   x.fillStyle = burn;
   x.fillRect(0, 0, S, S);
 
@@ -326,7 +341,7 @@ function padTexture(weak) {
     a = (i / 24) * Math.PI * 2;
     x.save();
     x.translate(m, m); x.rotate(a);
-    x.fillStyle = i % 2 ? "rgba(232,176,48,.34)" : "rgba(30,44,60,.34)";
+    x.fillStyle = i % 2 ? "rgba(226,172,52,.26)" : "rgba(30,44,60,.30)";
     x.fillRect(R * 0.88, -R * 0.06, R * 0.10, R * 0.12);
     x.restore();
   }
@@ -350,10 +365,14 @@ function padTexture(weak) {
     x.fillRect(R * 0.27, -S * 0.006, R * 0.45, S * 0.012);
     x.restore();
   }
-  /* Метки под тарелки опор: они стоят там, где нога и встанет */
+  /* Метки под тарелки опор: они стоят там, где нога и встанет.
+     Радиус не назначаем на глаз, а берём из геометрии самой ноги -
+     иначе стоит поправить угол раскрытия, и опоры промахиваются
+     мимо собственных меток. */
+  var fr = R * PAD_FOOT;
   for (i = 0; i < 3; i++) {
     a = (i / 3) * Math.PI * 2 + Math.PI / 3 - Math.PI / 2;
-    var fx = m + Math.cos(a) * R * 0.375, fy = m + Math.sin(a) * R * 0.375;
+    var fx = m + Math.cos(a) * fr, fy = m + Math.sin(a) * fr;
     x.save();
     x.translate(fx, fy); x.rotate(a);
     x.strokeStyle = "rgba(232,176,48,.42)";
@@ -1597,8 +1616,6 @@ Rocket.prototype.legs = function () {
    раздувает грунт на подлёте, и разом на весь запас - в момент
    удара. Отдельного кода для этих двух случаев не нужно, разница
    только в числе частиц и в силе выброса. */
-var DUST_R = GEAR_HIP_Z + (GEAR_UP + GEAR_LO) * Math.sin(GEAR_OPEN);
-
 Rocket.prototype.dustEmit = function (count, force) {
   if (document.documentElement.classList.contains("rc-reduced")) return;
   var D = this.ground() && this._dust;
@@ -1609,7 +1626,7 @@ Rocket.prototype.dustEmit = function (count, force) {
     made++;
     var a = Math.random() * Math.PI * 2;
     /* Стартуем у самых тарелок, слегка вразнобой по радиусу */
-    var r = DUST_R * (0.62 + Math.random() * 0.55);
+    var r = PAD_FEET * (0.62 + Math.random() * 0.55);
     var sp = (1.3 + Math.random() * 2.9) * force;
     D.pos[i * 3]     = Math.cos(a) * r;
     D.pos[i * 3 + 1] = 0.04 + Math.random() * 0.14;
@@ -1662,7 +1679,7 @@ Rocket.prototype.ground = function () {
     map: padTexture(C.weak), transparent: true, depthWrite: false,
     toneMapped: false, opacity: 0
   });
-  var disc = new T.Mesh(new T.PlaneGeometry(7.4, 7.4), padMat);
+  var disc = new T.Mesh(new T.PlaneGeometry(PAD_SIZE, PAD_SIZE), padMat);
   disc.rotation.x = -Math.PI / 2;
   disc.renderOrder = 2;
   grp.add(disc);
@@ -2157,19 +2174,39 @@ Rocket.prototype.frame = function (dt) {
   var burn = this._burn || 0;
   var pw = Math.min(1, this.power + burn * 0.9);
   var flick = 0.86 + Math.sin(t * 27) * 0.07 + Math.sin(t * 41) * 0.05;
+
+  /* Севший корабль не может продолжать жечь грунт. Раньше факел и
+     след жили своей жизнью, и выхлоп бил сквозь площадку - самая
+     заметная неправда во всей посадке. Теперь между 0.80 и 0.94
+     доли посадки факел втягивается в сопло, а искры со следом
+     выключаются совсем: остаётся только остывающий раструб. */
+  var lk = this.landK || 0;
+  var fk = 1 - (lk - 0.80) / 0.14;
+  fk = fk < 0 ? 0 : fk > 1 ? 1 : fk;
+  fk = fk * fk * (3 - 2 * fk);
+
   this.flame.uniforms.uTime.value = t;
   this.flame.uniforms.uPower.value = pw * flick;
-  this.flame.core.scale.setScalar(0.9 + pw * 0.35 * flick + burn * 0.30);
-  var hs = 2.2 + pw * 1.9 * flick + burn * 1.5;
+  this.flame.cone.scale.set(0.55 + fk * 0.45, 0.10 + fk * 0.90, 0.55 + fk * 0.45);
+  this.flame.core.scale.setScalar((0.9 + pw * 0.35 * flick + burn * 0.30) * (0.18 + fk * 0.82));
+  var hs = (2.2 + pw * 1.9 * flick + burn * 1.5) * (0.42 + fk * 0.58);
   this.flame.halo.scale.set(hs, hs, 1);
-  this.flame.halo.material.opacity = 0.55 + pw * 0.4;
-  this.engineLight.intensity = 2.2 + pw * 3.4 * flick + burn * 4.5;
+  this.flame.halo.material.opacity = (0.55 + pw * 0.4) * (0.30 + fk * 0.70);
+  this.engineLight.intensity = (2.2 + pw * 3.4 * flick + burn * 4.5) * (0.28 + fk * 0.72);
+
+  var tv = fk > 0.04;
+  if (tv !== this._trailOn) {
+    this._trailOn = tv;
+    this.trail.sparks.pts.visible = tv;
+    this.trail.smoke.pts.visible = tv;
+  }
 
   /* Иллюминатор и полосы пульсируют */
   this.rocket.glass.material.emissiveIntensity = 0.6 + Math.sin(t * 2.1) * 0.22;
   this.rocket.glowMat.opacity = 0.5 + Math.sin(t * 1.7) * 0.18;
 
-  this.trail.step(dt, this.power);
+  /* Невидимый след считать незачем: на стоянке это чистая трата кадра */
+  if (tv) this.trail.step(dt, this.power);
 
   /* Плавное появление после загрузки */
   if (this.shown < 1) {
