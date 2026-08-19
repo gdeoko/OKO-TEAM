@@ -224,6 +224,19 @@ function ag_prompt(array $app, array $rubric): string {
         $L[] = 'ОСОБЕННОСТЬ НАПРАВЛЕНИЯ: ' . (string) $rubric['sub_note'];
     }
     $L[] = '';
+    $L[] = 'ЧТО ЗНАЧАТ БАЛЛЫ (это главное, читай внимательно)';
+    $L[] = '  95-100 — уровень победителя международного конкурса: профессиональная свобода, безупречная техника, самостоятельная художественная трактовка. В обычном потоке таких работ единицы на сотню.';
+    $L[] = '  90-94  — очень сильная работа: техника надёжна, замысел ясен, недочёты единичны и не мешают.';
+    $L[] = '  85-89  — сильная работа с заметными недочётами: есть техническая или интонационная нестабильность, но целое убедительно.';
+    $L[] = '  80-84  — крепкая работа: основа освоена, но недочёты видны на протяжении номера.';
+    $L[] = '  75-79  — добротная учебная работа: программа исполнена, свободы и художественного решения не хватает.';
+    $L[] = '  70-74  — работа с системными недочётами: техника не позволяет полностью справиться с задачей.';
+    $L[] = '  65-69  — начальный уровень: заметные ошибки в основах.';
+    $L[] = '  ниже 65 — задача исполнителю не по силам либо работа не готова к показу.';
+    $L[] = '';
+    $L[] = 'ОРИЕНТИР ПОТОКА. Большинство работ детских школ искусств и любительских коллективов попадает в диапазон 70-85. Диапазон 90 и выше означает, что работу можно показать на профессиональном прослушивании без скидок на возраст и любительский статус. Если рука тянется поставить всем 88-93, значит оценка потеряла смысл: перечитай, какие именно недочёты ты сама назвала в обосновании, и поставь балл, соответствующий им.';
+    $L[] = 'ПРОВЕРЬ СЕБЯ. Каждый названный тобой недочёт обязан отражаться в балле. Если в обосновании написано «теряется фиксация», «интонация плывёт», «рассинхроны», а балл выше 88, ты противоречишь сама себе.';
+    $L[] = '';
     $L[] = 'КАК ОЦЕНИВАТЬ ЧЕСТНО';
     $L[] = '  • Оценивай относительно возрастной категории: от ребёнка не требуют зрелости, но и завышать за возраст нельзя.';
     $L[] = '  • Качество съёмки и звука записи само по себе не оценивается. Оценивается исполнение. Но если запись мешает услышать интонацию или увидеть технику, скажи об этом прямо и снизь уверенность, а не выдумывай оценку.';
@@ -300,32 +313,37 @@ function ag_grade_application(int $appId, array $opt = []): array {
     if (!$media['ok']) { vf_cleanup($dl['path']); return $bad($media['why'], $runId); }
 
     // 3. Загружаем в сервис.
-    $key   = $keys[array_rand($keys)];
-    $parts = [];
-    $uploaded = [];
-    foreach ([[$media['video'], 'video/mp4'], [$media['audio'], 'audio/mpeg']] as [$f, $mime]) {
-        if ($f === '' || !is_file($f)) continue;
-        $up = ag_upload($f, $mime, $key);
-        if (!$up['ok']) continue;
-        $parts[] = ['file_data' => ['mime_type' => $mime, 'file_uri' => $up['uri']]];
-        $uploaded[] = $f;
-    }
-    if (!$parts) {
-        vf_cleanup($dl['path']); @unlink($media['video']); @unlink($media['audio']);
-        return $bad('запись не удалось передать на аттестацию', $runId);
-    }
+    //
+    // ФАЙЛ ПРИНАДЛЕЖИТ ТОМУ КЛЮЧУ, КОТОРЫМ ЗАГРУЖЕН. Это и есть причина, по
+    // которой нельзя загрузить один раз, а запросы слать любым ключом: чужой
+    // ключ на тот же файл отвечает «нет доступа». Поэтому загрузка вынесена в
+    // функцию и повторяется, когда мы переходим к следующему ключу.
+    $uploadAll = static function (string $key) use ($media): array {
+        $parts = [];
+        foreach ([[$media['video'], 'video/mp4'], [$media['audio'], 'audio/mpeg']] as [$f, $mime]) {
+            if ($f === '' || !is_file($f)) continue;
+            $up = ag_upload($f, $mime, $key);
+            if (!$up['ok']) continue;
+            $parts[] = ['file_data' => ['mime_type' => $mime, 'file_uri' => $up['uri']]];
+        }
+        return $parts;
+    };
+    $uploaded = array_values(array_filter([$media['video'], $media['audio']], 'is_file'));
 
     // 4. Спрашиваем.
     $rubric = gr_rubric_for((string) ($app['nomination'] ?? ''), (string) ($app['subgroup'] ?? ''));
-    $parts[] = ['text' => ag_prompt($app, $rubric)];
-    $body = [
-        'contents' => [['role' => 'user', 'parts' => $parts]],
-        'generationConfig' => [
-            'temperature'      => 0.25,          // оценка должна быть воспроизводимой
-            'maxOutputTokens'  => 4096,
-            'responseMimeType' => 'application/json',
-        ],
-    ];
+    $prompt = ag_prompt($app, $rubric);
+    $mkBody = static function (array $parts) use ($prompt): array {
+        $parts[] = ['text' => $prompt];
+        return [
+            'contents' => [['role' => 'user', 'parts' => $parts]],
+            'generationConfig' => [
+                'temperature'      => 0.25,      // оценка должна быть воспроизводимой
+                'maxOutputTokens'  => 4096,
+                'responseMimeType' => 'application/json',
+            ],
+        ];
+    };
     // ОДНОЙ ПОПЫТКИ МАЛО.
     //
     // Сервис отвечает 429 при исчерпанной квоте ключа и 503 при всплеске спроса,
@@ -338,9 +356,13 @@ function ag_grade_application(int $appId, array $opt = []): array {
             ? setting('grade_model_fallback', 'gemini-3.5-flash gemini-3.1-flash-lite gemini-3-flash-preview')
             : '')) ?: [],
     ])));
-    $raw = ''; $code = 0; $usedModel = '';
-    foreach ($models as $mi => $mdl) {
-        foreach ($keys as $ki => $k2) {
+    $raw = ''; $code = 0; $usedModel = ''; $gotFiles = false;
+    foreach ($keys as $k2) {
+        $parts = $uploadAll($k2);
+        if (!$parts) continue;
+        $gotFiles = true;
+        $body = $mkBody($parts);
+        foreach ($models as $mi => $mdl) {
             $ch = curl_init(ag_base() . '/v1beta/models/' . rawurlencode($mdl) . ':generateContent?key=' . rawurlencode($k2));
             curl_setopt_array($ch, [
                 CURLOPT_POST => 1, CURLOPT_RETURNTRANSFER => 1, CURLOPT_TIMEOUT => 900,
@@ -353,8 +375,13 @@ function ag_grade_application(int $appId, array $opt = []): array {
             if ($code === 200) { $usedModel = $mdl; break 2; }
             // 429 и 503 проходят сами, остальные коды пробовать повторно незачем.
             if (!in_array($code, [429, 500, 502, 503, 504], true)) break 2;
-            sleep(min(20, 3 + $ki * 3 + $mi * 4));
+            sleep(min(20, 3 + $mi * 4));
         }
+    }
+    if (!$gotFiles) {
+        vf_cleanup($dl['path']);
+        foreach ($uploaded as $f) @unlink($f);
+        return $bad('запись не удалось передать на аттестацию', $runId);
     }
     if ($usedModel !== '' && $usedModel !== ag_model()) {
         try { q("UPDATE grading_runs SET model=? WHERE id=?", [$usedModel, $runId]); } catch (\Throwable $e) {}
@@ -395,8 +422,18 @@ function ag_grade_application(int $appId, array $opt = []): array {
     // калибровки, и правится она одним числом: scripts/ai_grade_calibrate.php
     // считает средний сдвиг по уже оценённым работам и записывает поправку.
     // Ноль означает «сверка показала совпадение, поправка не нужна».
+    $gain  = (float) (function_exists('setting') ? setting('grade_scale_gain', '1') : 1);
     $shift = (float) (function_exists('setting') ? setting('grade_scale_shift', '0') : 0);
-    if ($shift !== 0.0) $total += $shift;
+    // Своя поправка номинации сильнее общей: сверка показала, что в разных
+    // номинациях машина ошибается в разные стороны, и одно число на всех
+    // исправляет одну ценой другой.
+    $nomFixAll = json_decode((string) (function_exists('setting') ? setting('grade_scale_by_nomination', '') : ''), true);
+    $nomKey = trim((string) ($app['nomination'] ?? ''));
+    if (is_array($nomFixAll) && $nomKey !== '' && isset($nomFixAll[$nomKey]['gain'])) {
+        $gain  = (float) $nomFixAll[$nomKey]['gain'];
+        $shift = (float) $nomFixAll[$nomKey]['shift'];
+    }
+    if ($gain > 0 && ($gain !== 1.0 || $shift !== 0.0)) $total = $gain * $total + $shift;
     $total = round(max(0.0, min(100.0, $total)), 1);
 
     // Формальное нарушение снимает вопрос о звании: это отказ, а не оценка.
