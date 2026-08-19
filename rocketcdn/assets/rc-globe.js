@@ -27,6 +27,12 @@ function Globe(canvas, opts) {
   opts = opts || {};
   this.cv = canvas;
   this.ctx = canvas.getContext("2d", { alpha: true });
+  /* Холст, уже отдавший контекст WebGL, двумерный не выдаёт: там
+     возвращается null. Раньше мы шли дальше и падали на первом же
+     обращении к рисовалке, роняя вместе с собой остальной скрипт
+     раздела. Плоский глобус - вещь необязательная, поэтому просто
+     тихо не поднимаемся. */
+  if (!this.ctx) { this.dead = true; return; }
   this.opts = opts;
   this.spin = opts.spin != null ? opts.spin : 0;      /* текущий поворот, градусы */
   this.speed = opts.speed != null ? opts.speed : 3.2; /* градусов в секунду */
@@ -77,6 +83,7 @@ Globe.prototype.palette = function () {
 Globe.prototype.setTheme = function (t) { this.theme = t; this.draw(0); };
 
 Globe.prototype.resize = function () {
+  if (this.dead) return;
   var r = this.cv.getBoundingClientRect(),
       w = Math.max(1, r.width), h = Math.max(1, r.height),
       dpr = clamp(window.devicePixelRatio || 1, 1, w < 760 ? 1.25 : 1.5);
@@ -132,6 +139,7 @@ Globe.prototype._project = function (v) {
 Globe.prototype._pt = function (lat, lon) { return this._project(vec(lat, lon + this.spin)); };
 
 Globe.prototype.draw = function (dt) {
+  if (this.dead) return;
   var c = this.ctx, P = this.palette(), i, p;
   c.clearRect(0, 0, this.w, this.h);
 
@@ -342,6 +350,7 @@ Globe.prototype.tick = function (ts) {
 };
 
 Globe.prototype.start = function () {
+  if (this.dead) return;
   if (this.running) return;
   this.running = true; this._last = 0;
   this._raf = requestAnimationFrame(this.tick.bind(this));

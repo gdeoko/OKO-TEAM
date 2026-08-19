@@ -409,6 +409,13 @@ function buildMapGlobe(mapCv) {
         /* Отобрали контекст - молча возвращаемся на плоский глобус */
         window.RC_GL.guard(mapCv, function () {
           try { made.stop(); } catch (e) {}
+          /* Тот же случай, что и при добровольной уступке слота:
+             старый холст двумерный контекст уже не отдаст */
+          var swap = document.createElement("canvas");
+          swap.id = mapCv.id;
+          swap.className = mapCv.className;
+          if (mapCv.parentNode) mapCv.parentNode.replaceChild(swap, mapCv);
+          mapCv = swap;
           var back = new RCGlobe(mapCv, opts);
           var i = window.__globes.indexOf(made);
           if (i >= 0) window.__globes[i] = back;
