@@ -489,12 +489,15 @@ function build() {
   grp.add(halo);
 
   /* Пульт под остеклением */
-  /* Столешница светлее обшивки и чуть светится сама: в акте пульта
-     она занимает низ кадра, и чёрная плита там читалась дырой в
-     кадре, а не прибором той же комнаты. */
+  /* Столешница остаётся тёмной, но с собственным слабым свечением и
+     почти без блеска. Светлить материал нельзя: ноль градусов
+     оборота - это нос, поэтому столешница попадает в кадр ещё в
+     салоне и на глянце ловит направленный свет из окна светлым
+     клином поперёк карточек. Разгорается она не материалом, а
+     светом пульта, который поднимается на подходе камеры. */
   var deskMat = new T.MeshStandardMaterial({
-    color: COL.panel, roughness: 0.45, metalness: 0.62,
-    emissive: COL.emis, emissiveIntensity: 0.2
+    color: COL.hull, roughness: 0.58, metalness: 0.34,
+    emissive: COL.emis, emissiveIntensity: 0.14
   });
   var desk = new T.Mesh(new T.BoxGeometry(2.6, 0.12, 0.75), deskMat);
   desk.position.set(0, 1.02, -2.05);
@@ -518,8 +521,8 @@ function build() {
      собственным свечением: чёрных провалов в кадре быть не должно,
      свет в рубке один и он холодный. */
   var riserMat = new T.MeshStandardMaterial({
-    color: COL.wall, roughness: 0.62, metalness: 0.42,
-    emissive: COL.emis, emissiveIntensity: 0.28
+    color: COL.wall, roughness: 0.72, metalness: 0.28,
+    emissive: COL.emis, emissiveIntensity: 0.22
   });
   var riser = new T.Mesh(new T.BoxGeometry(3.05, 0.84, 0.46), riserMat);
   riser.position.set(0, 0.44, -2.26);
