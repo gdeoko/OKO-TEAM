@@ -76,6 +76,10 @@ function admin_modules(): array {
         'competitions' => ['Конкурсы',     'moderator', 'competitions'],
         'applications' => ['Заявки',       'jury',      'applications'],
         'grading'      => ['Оценка коротких', 'jury',    'grading'],
+        // Автоматическая аттестация: рубильник, разборы работ и всё, что модель
+        // отдала человеку. Только владельцу и администратору: это переключатель,
+        // от которого зависят звания и наградные материалы участников.
+        'autograde'    => ['Аттестация',    'admin',     'chart'],
         'longcomp'     => ['Оценка длинных', 'jury',    'chart'],
         'dispatch'     => ['Отправки',     'moderator', 'send'],
         'chats'        => ['Чат-бот',      'moderator', 'chat'],
