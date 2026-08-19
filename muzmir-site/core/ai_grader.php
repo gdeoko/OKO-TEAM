@@ -27,6 +27,7 @@
 declare(strict_types=1);
 
 require_once BASE_PATH . '/core/grading_rubrics.php';
+require_once BASE_PATH . '/core/grading_knowledge.php';
 require_once BASE_PATH . '/core/video_fetch.php';
 
 /** Таблицы оценки заводятся лениво, как всё остальное в проекте. */
@@ -222,6 +223,13 @@ function ag_prompt(array $app, array $rubric): string {
     if (!empty($rubric['sub_note'])) {
         $L[] = '';
         $L[] = 'ОСОБЕННОСТЬ НАПРАВЛЕНИЯ: ' . (string) $rubric['sub_note'];
+    }
+    // ПАСПОРТ НАПРАВЛЕНИЯ. Рубрика говорит, за что ставить балл, а паспорт — что
+    // в этом направлении считается хорошо и что плохо. Без него академический и
+    // народный вокал разбираются одинаково, хотя правильный звук у них разный.
+    if (function_exists('gk_direction_prompt')) {
+        $gk = gk_direction_prompt((string) ($app['subgroup'] ?? ''));
+        if ($gk !== '') { $L[] = ''; $L[] = $gk; }
     }
     $L[] = '';
     $L[] = 'ЧТО ЗНАЧАТ БАЛЛЫ (это главное, читай внимательно)';
