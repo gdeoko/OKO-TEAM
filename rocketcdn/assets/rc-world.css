@@ -33,8 +33,24 @@ html.rc-inside.w3-on main.w3-stage {
 /* Слои параллакса: ближние (заголовки) идут за камерой, дальние
    (карточки, глобус) чуть отстают. Ход маленький и одинаковый у
    соседей по ряду - сетка остаётся сеткой, но кадр дышит глубиной. */
+/* Слой складывает два движения: параллакс от общей камеры и уход
+   в сторону от пролетающего корабля (переменные пишет rc-hooks).
+   Оба через translate, поэтому transform у элемента остаётся
+   свободным - его занимают собственные анимации появления. */
 html.w3-on .w3-lay {
-  translate: calc(var(--w3-shift, 0px) * var(--w3-k, 0)) 0;
+  translate: calc(var(--w3-shift, 0px) * var(--w3-k, 0) + var(--rc-fx, 0px)) var(--rc-fy, 0px);
+}
+/* Заголовки липких сцен и салона в слои мира не попадают (там своя
+   раскладка), но уступать дорогу кораблю обязаны и они - иначе в
+   этих разделах текст снова оказался бы поверх корпуса */
+html.w3-on .sec-h:not(.w3-lay),
+html.w3-on .sec-p:not(.w3-lay),
+html.w3-on .hs-h:not(.w3-lay),
+html.w3-on .sec-tag:not(.w3-lay) {
+  translate: var(--rc-fx, 0px) var(--rc-fy, 0px);
+}
+html.w3-on .sec-h, html.w3-on .sec-p, html.w3-on .hs-h, html.w3-on .sec-tag {
+  transition: opacity .3s linear;
 }
 
 /* Пока человек в форме или в демо-полёте, мир замирает: ввод и
@@ -99,6 +115,18 @@ html[data-act="walk"] #cases .hs-view {
 html[data-act="walk"] #cases .hs-head {
   transform: translateY(calc(var(--rc-app, 0) * -6vh));
   transition: transform .5s var(--ease, ease);
+}
+
+/* ── Коридор продуктов: корабль идёт по оси кадра ────────────
+   В этом акте камера делает полный наезд вглубь, и корабль проходит
+   ровно посередине. Карточки продуктов расходятся к краям, оставляя
+   ему полосу пролёта - получается коридор, по которому мы летим, а
+   не сетка, сквозь которую он продирается. */
+@media (min-width: 1100px) {
+  html[data-act="corridor"] #products .grid {
+    column-gap: clamp(60px, 8vw, 160px);
+    transition: column-gap .7s var(--ease, ease);
+  }
 }
 
 /* Посадка: следующий раздел подходит снизу ровно туда, где стоит
