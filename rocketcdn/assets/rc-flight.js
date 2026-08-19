@@ -74,12 +74,23 @@ function noteExplored(name) {
   explored[name] = 1;
   try { localStorage.setItem(LOG_KEY, JSON.stringify(explored)); } catch (e) {}
   paintProgress();
-  var total = 10, got = Object.keys(explored).length;
+  var total = TOTAL_MARKS(), got = Object.keys(explored).length;
   if (got >= total && g.RC_SOUND && g.RC_SOUND.uiConfirm) { try { g.RC_SOUND.uiConfirm(); } catch (e) {} }
 }
+/* Сколько всего объектов можно открыть. Считаем честно: родные тела
+   маршрута плюс все планеты чужих вселенных - иначе счётчик замирал
+   на «10/10», хотя миров стало втрое больше. */
+function TOTAL_MARKS() {
+  var n = 11;                       /* тела и объекты родной системы */
+  for (var u = 1; u < UNIVERSES.length; u++) {
+    for (var s = 0; s < UNIVERSES[u].sys.length; s++) n += UNIVERSES[u].sys[s].planets.length;
+  }
+  return n;
+}
+
 function paintProgress() {
   if (!ui.prog) return;
-  var got = Object.keys(explored).length, total = 10;
+  var got = Object.keys(explored).length, total = TOTAL_MARKS();
   ui.prog.textContent = (RU ? "Исследовано " : "Explored ") + Math.min(got, total) + "/" + total;
   ui.prog.classList.toggle("full", got >= total);
 }
@@ -417,9 +428,19 @@ function buildUniverse(i) {
          чтобы система не выстроилась в линию */
       var ang = (pi / sys.planets.length) * 6.283 + (sys.seed % 10) * 0.31;
       made.group.position.set(Math.cos(ang) * pl.dist, (pi % 2 ? 1 : -1) * pl.dist * 0.06, Math.sin(ang) * pl.dist);
-      made.group.userData.info = (RU ? pl.name : pl.name) + " · " + pl.info;
+      made.group.userData.info = pl.name + " · " + pl.info;
       sg.add(made.group);
       live.push(made);
+
+      /* Планеты чужих вселенных попадают и в сканер, и под наведение:
+         иначе прибор в чужом рукаве слепнет, а справочник молчит.
+         Ссылку держим на сам меш, чтобы луч по нему попадал. */
+      var solid = made.group.children[0];
+      if (solid) {
+        solid.userData.info = made.group.userData.info;
+        if (W3.pickables) W3.pickables.push(solid);
+        if (W3.scanTargets) W3.scanTargets.push({ o: made.group, name: pl.name, key: sys.id + "-" + pi, uni: i });
+      }
 
       /* Тонкая линия орбиты: система читается системой, а не
          россыпью шаров в пустоте */
@@ -1383,6 +1404,131 @@ function avoid(w3, dt) {
   } else if (dodgeWarn && worst < 0.05) dodgeWarn = 0;
 }
 
+/* ── Голограммы: связка сцены и слоя меток ───────────────────
+   Метка заводится один раз на объект и дальше только переставляется.
+   Что показываем: тела текущей вселенной, узлы сети и галактики.
+   Далёкое прячем - двадцать подписей на экране это уже не кино, а
+   таблица. */
+var holoReady = false, holoIds = {};
+function holoSetup() {
+  if (holoReady || !g.RC_HOLO || !ui.wrap) return;
+  holoReady = true;
+  try {
+    g.RC_HOLO.init(ui.wrap);
+    g.RC_HOLO.onPick(function (id) {
+      /* Клик по голограмме - это курс на объект. Ровно то, чего
+         ждёшь от метки в кабине: ткнул и полетел. */
+      var rec = holoIds[id];
+      if (!rec) return;
+      if (rec.sys !== undefined) goSystem(rec.sys, rec.pl);
+      else if (rec.goal) goTo(rec.goal);
+      if (g.RC_SOUND) { try { (g.RC_SOUND.uiConfirm || g.RC_SOUND.blip).call(g.RC_SOUND); } catch (e) {} }
+    });
+  } catch (e) { holoReady = false; }
+}
+
+function holoList(w3) {
+  /* Список меток пересобираем при смене вселенной: в чужом рукаве
+     свои планеты, и Земля там не при чём */
+  var out = [];
+  if (uniIdx === 0) {
+    out.push({ id: "h-earth", o: w3.earth, title: RU ? "ЗЕМЛЯ" : "EARTH",
+               sub: RU ? "ДОМ · 218 УЗЛОВ" : "HOME · 218 NODES", kind: "planet", goal: "earth",
+               info: RU ? "Единственная планета с Rocket CDN. Отсюда расходится вся сеть." : "The only planet with Rocket CDN." });
+    out.push({ id: "h-moon", o: w3.moon, title: RU ? "ЛУНА" : "MOON",
+               sub: RU ? "РЕЗЕРВ · 384 400 КМ" : "BACKUP", kind: "station", goal: "moon",
+               info: RU ? "Точка ретрансляции: сигнал доходит за 1,3 секунды." : "Relay point: 1.3 s of light travel." });
+    out.push({ id: "h-mars", o: w3.mars, title: RU ? "МАРС" : "MARS",
+               sub: RU ? "ХОЛОДНЫЙ КЭШ" : "COLD CACHE", kind: "planet", goal: "mars",
+               info: RU ? "Дальний рубеж сети. Задержка до Земли - 3 до 22 минут." : "Far edge of the network." });
+    out.push({ id: "h-saturn", o: w3.saturn, title: RU ? "САТУРН" : "SATURN",
+               sub: RU ? "КОЛЬЦА · 282 000 КМ" : "RINGS", kind: "planet", goal: "saturn",
+               info: RU ? "Кольца шириной в семь Земель, толщиной в десять метров." : "Rings seven Earths wide, ten metres thick." });
+    out.push({ id: "h-hole", o: w3.hole, title: RU ? "ЧЁРНАЯ ДЫРА" : "BLACK HOLE",
+               sub: RU ? "ГОРИЗОНТ СОБЫТИЙ" : "EVENT HORIZON", kind: "warn", goal: "hole",
+               info: RU ? "Дальше не возвращаются даже пакеты. Держим дистанцию." : "Not even packets come back." });
+  } else {
+    var pack = built[uniIdx];
+    if (!pack) return out;
+    var u = UNIVERSES[uniIdx];
+    for (var s = 0; s < u.sys.length; s++) {
+      var sg = pack.root.children[s];
+      if (!sg) continue;
+      out.push({ id: "h-s" + s, o: sg, title: u.sys[s].name,
+                 sub: RU ? "ЗВЁЗДНАЯ СИСТЕМА" : "STAR SYSTEM", kind: "gate", sys: s,
+                 info: (RU ? "Планет в системе: " : "Planets: ") + u.sys[s].planets.length });
+      var groups = [];
+      for (var c = 0; c < sg.children.length; c++) if (sg.children[c].isGroup) groups.push(sg.children[c]);
+      for (var p = 0; p < u.sys[s].planets.length; p++) {
+        if (!groups[p]) continue;
+        var pl = u.sys[s].planets[p];
+        out.push({ id: "h-p" + s + "-" + p, o: groups[p], title: pl.name,
+                   sub: u.sys[s].name, kind: "planet", sys: s, pl: p, info: pl.info });
+      }
+    }
+  }
+  return out;
+}
+
+var holoUni = -1;
+function holoFrame(w3, ts) {
+  holoSetup();
+  if (!holoReady) return;
+  if (holoUni !== uniIdx) {
+    holoUni = uniIdx;
+    try { g.RC_HOLO.clear(); } catch (e) {}
+    holoIds = {};
+    var list = holoList(w3);
+    for (var i = 0; i < list.length; i++) {
+      var it = list[i];
+      holoIds[it.id] = it;
+      try {
+        g.RC_HOLO.add(it.id, { title: it.title, subtitle: it.sub, info: it.info, kind: it.kind });
+      } catch (e2) {}
+    }
+  }
+
+  var cam = w3.cam;
+  /* На телефоне экран узкий: держим в кадре только ближайшие метки,
+     иначе подписи перекрывают и друг друга, и вид из окна */
+  var limit = innerWidth < 760 ? 3 : 8, shown = 0;
+  var order = [];
+  for (var oid in holoIds) {
+    if (!holoIds.hasOwnProperty(oid) || !holoIds[oid].o) continue;
+    w3.tmpA.setFromMatrixPosition(holoIds[oid].o.matrixWorld);
+    order.push([oid, cam.position.distanceTo(w3.tmpA)]);
+  }
+  order.sort(function (a, b) { return a[1] - b[1]; });
+
+  for (var oi = 0; oi < order.length; oi++) {
+    var id = order[oi][0];
+    var rec = holoIds[id];
+    if (!rec.o) continue;
+    w3.tmpA.setFromMatrixPosition(rec.o.matrixWorld);
+    var dist = cam.position.distanceTo(w3.tmpA);
+    w3.tmpA.project(cam);
+    /* Прячем то, что за спиной, за краем кадра или слишком далеко:
+       метка имеет смысл, пока объект в кадре и до него можно долететь */
+    var vis = w3.tmpA.z < 1 && dist < 2600 &&
+              w3.tmpA.x > -1.05 && w3.tmpA.x < 1.05 && w3.tmpA.y > -1.05 && w3.tmpA.y < 1.05;
+    var sx = (w3.tmpA.x * 0.5 + 0.5) * innerWidth;
+    var sy = (-w3.tmpA.y * 0.5 + 0.5) * innerHeight;
+    /* Крупное тело вплотную: его центр уходит за край кадра, а сама
+       планета занимает пол-экрана. Метку в этом случае не прячем, а
+       прижимаем к краю - иначе подпись у Земли пропадала именно
+       тогда, когда Земля перед носом. Поля берём с запасом под
+       рамку кокпита. */
+    var padX = Math.max(56, innerWidth * 0.12), padY = Math.max(90, innerHeight * 0.14);
+    sx = Math.max(padX, Math.min(innerWidth - padX, sx));
+    sy = Math.max(padY, Math.min(innerHeight - padY * 1.6, sy));
+    /* Глубина метки: ноль вплотную, единица у предела видимости */
+    var depth = Math.max(0, Math.min(1, (dist - 120) / 2000));
+    var on = vis && !F.brief && shown < limit;
+    if (on) shown++;
+    try { g.RC_HOLO.place(id, sx, sy, depth, on); } catch (e3) {}
+  }
+}
+
 function frame(ts) {
   if (!F.open) return;
   F.raf = requestAnimationFrame(frame);
@@ -1599,6 +1745,17 @@ function frame(ts) {
     w3.sat.rotation.y = sa + 1.2;
   }
 
+  /* ── Голограммы над объектами ──────────────────────────────
+     Клиент просил: «текст = голограммы, реагирующие на клики,
+     касания, наведение, красиво растворяются и появляются». Метки
+     рисует rc-holo, а игра каждый кадр говорит ему, где объект на
+     экране и насколько он далёк. Считаем не чаще двадцати раз в
+     секунду: чаще глазу не нужно, а проекций тут два десятка. */
+  if (g.RC_HOLO && ts - (frame._holoT || 0) > 48) {
+    frame._holoT = ts;
+    holoFrame(w3, ts);
+  }
+
   /* Сканер: находит цель ближе всех к центру кадра, ведёт её
      рамкой захвата и пишет дистанцию. Заодно пополняет журнал
      исследователя. Работает в своём темпе - двенадцать раз в
@@ -1608,6 +1765,10 @@ function frame(ts) {
     var bestT = null, bestD = 0.55, sx = 0, sy = 0, bd = 0;
     for (var si = 0; si < (w3.scanTargets || []).length; si++) {
       var tg = w3.scanTargets[si];
+      /* Цели чужих вселенных считаются только там, где они видны:
+         иначе прибор ведёт объект из другого рукава сквозь всё небо */
+      if (tg.uni !== undefined && tg.uni !== uniIdx) continue;
+      if (tg.uni === undefined && uniIdx !== 0) continue;
       w3.tmpA.setFromMatrixPosition(tg.o.matrixWorld).project(w3.cam);
       if (w3.tmpA.z > 1) continue;                  /* за спиной */
       var dxn = w3.tmpA.x, dyn = w3.tmpA.y;
