@@ -120,17 +120,23 @@ Space.prototype.budget = function () {
   var deg = parseInt(document.documentElement.getAttribute("data-degrade") || "0", 10) || 0;
   var weak = false;
   try {
-    weak = (navigator.deviceMemory || 4) <= 2 || (navigator.hardwareConcurrency || 4) <= 4;
+    /* Четырёхъядерный телефон - это не слабое устройство, а обычное.
+       С прежним порогом фон на нём терял и метеоры, и кресты
+       дифракции, и половину звёзд: небо на телефоне выглядело
+       беднее, чем на мониторе, чего владелец и не принял. */
+    weak = (navigator.deviceMemory || 4) <= 2 || (navigator.hardwareConcurrency || 4) <= 2;
   } catch (e) {}
   var mob = w < 760;
   return {
     mob: mob,
     /* deg>=2 - страница уже призналась, что не тянет: фон обязан
        отойти в сторону первым, он тут не главный герой */
-    lean: deg >= 2 || (weak && mob),
+    lean: deg >= 2 || weak,
     deep: deg < 2 && !REDUCE,           /* печь ли слой туманностей */
-    meteors: deg < 2 && !REDUCE && !(weak && mob),
-    spikes: !mob && deg < 1             /* кресты дифракции */
+    meteors: deg < 2 && !REDUCE && !weak,
+    /* Кресты дифракции у ярких звёзд рисуем и на телефоне: это
+       рисунок в запечённом слое, на кадр он не влияет вовсе */
+    spikes: !weak && deg < 1
   };
 };
 
@@ -139,7 +145,7 @@ Space.prototype.build = function () {
   this.B = B;
   var rnd = rngFrom(20260819);
   /* Плотность держим в разумных пределах: фон не должен есть кадры */
-  var n = B.lean ? 90 : (B.mob ? 150 : 320);
+  var n = B.lean ? 90 : 320;
   this.stars = [];
   for (var i = 0; i < n; i++) {
     var layer = i % 3;                      /* 0 дальний, 2 ближний */
@@ -163,7 +169,7 @@ Space.prototype.build = function () {
   }
   /* Пакеты данных: короткие росчерки, летят поперёк */
   this.pk = [];
-  var pn = B.lean ? 3 : (B.mob ? 5 : 11);
+  var pn = B.lean ? 3 : 11;
   for (i = 0; i < pn; i++) this.pk.push(this.seedPacket(true));
 
   /* Метеоры: один живой болид за раз, следующий через паузу */
@@ -209,7 +215,7 @@ Space.prototype.bakeDeep = function () {
 
   /* Дымка диска: широкие мягкие пятна вдоль полосы. Цвет к центру
      галактики теплее - там старые звёзды балджа. */
-  var nHaze = this.B.mob ? 90 : 170;
+  var nHaze = this.B.lean ? 90 : 170;
   for (i = 0; i < nHaze; i++) {
     var u = rnd() * 2 - 1;
     var sp = (rnd() - 0.5) * (0.7 + rnd() * 1.5);
@@ -237,7 +243,7 @@ Space.prototype.bakeDeep = function () {
   /* Звёздная пыль: точки в один пиксель. Отдельными звёздами они не
      читаются, но дают диску зернистость, без которой он выглядит
      нарисованным градиентом. */
-  var nDust = this.B.mob ? 900 : 2600;
+  var nDust = this.B.lean ? 900 : 2600;
   for (i = 0; i < nDust; i++) {
     var du = rnd() * 2 - 1;
     var inBand = rnd() < 0.62;
@@ -255,7 +261,7 @@ Space.prototype.bakeDeep = function () {
              [0.52, 0.14, "138,89,246", 0.6], [0.30, 0.82, "66,178,220", 0.7]];
   for (i = 0; i < NEB.length; i++) {
     var nx = NEB[i][0] * cw, ny = NEB[i][1] * ch, nr = cw * 0.16 * NEB[i][3];
-    var blobs = this.B.mob ? 26 : 46;
+    var blobs = this.B.lean ? 26 : 46;
     for (var q = 0; q < blobs; q++) {
       var ox = nx + (rnd() - 0.5) * nr * 2.2, oy = ny + (rnd() - 0.5) * nr * 1.6;
       var orr = nr * (0.16 + rnd() * 0.55);
@@ -273,7 +279,7 @@ Space.prototype.bakeDeep = function () {
      делают Млечный Путь узнаваемым - без них это светлая клякса.
      Рисуем вычитанием, поэтому режим смены на обычный. */
   x.globalCompositeOperation = "destination-out";
-  var nDark = this.B.mob ? 120 : 260;
+  var nDark = this.B.lean ? 120 : 260;
   for (i = 0; i < nDark; i++) {
     var lu = rnd() * 2 - 1;
     var lp = band(lu, (rnd() - 0.5) * 0.85);

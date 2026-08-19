@@ -87,20 +87,77 @@ function hint() {
 var noDeg = false;
 try { noDeg = location.search.indexOf("nodeg") > -1; } catch (e) {}
 
+/* Окно наблюдения: доля тяжёлых кадров за последние сто. Счётчик
+   «шестнадцать тяжёлых подряд» оказался слишком нервным: на телефоне
+   такую серию даёт один быстрый свайп или первая сборка новой сцены,
+   и качество падало навсегда - владелец видел вместо фильма голую
+   страницу. Доля за окно переживает короткий всплеск и реагирует
+   только на настоящую, длительную просадку. */
+var WIN = 100;
+var win = [], winSum = 0, winAt = 0;
+var stepAt = 0;               /* когда в последний раз меняли ступень */
+var goodSince = 0;            /* с какого времени кадры уверенно хорошие */
+
+/* Сцена, которая только что построилась, честно съедает несколько
+   кадров. Судить её за это нельзя: акт сменился - даём паузу. */
+var calmUntil = 0;
+addEventListener("rc:act", function () { calmUntil = ts0 + 1500; });
+addEventListener("rc:3d", function () { calmUntil = ts0 + 2500; });
+
 function watchFrame(dt) {
   if (noDeg) return;
   /* Первые секунды не судим: там грузятся шрифты, картинки и сцены,
      кадры честно тяжёлые, и это не повод снимать украшения. */
   if (!startedAt) startedAt = ts0;
-  if (ts0 - startedAt < 4000) return;
-  if (dt > 0.045) heavy++; else heavy = Math.max(0, heavy - 2);
-  if (heavy >= 16 && degrade < 3) {
+  if (ts0 - startedAt < 5000) return;
+  if (ts0 < calmUntil) return;
+
+  var bad = dt > 0.05 ? 1 : 0;         /* ниже двадцати кадров в секунду */
+  if (win.length < WIN) { win.push(bad); winSum += bad; }
+  else {
+    winSum += bad - win[winAt];
+    win[winAt] = bad;
+    winAt = (winAt + 1) % WIN;
+  }
+  if (win.length < WIN) return;        /* окно ещё не набралось */
+
+  var share = winSum / WIN;
+  if (!stepAt) stepAt = ts0;
+
+  /* Вниз идём только на настоящей просадке: больше половины кадров
+     тяжёлые, и это держится, а не мигнуло. */
+  if (share > 0.5 && degrade < 3 && ts0 - stepAt > 3000) {
     degrade++;
-    heavy = 0;
+    stepAt = ts0;
+    goodSince = 0;
+    winSum = 0; win.length = 0; winAt = 0;
     root.setAttribute("data-degrade", String(degrade));
     try {
       dispatchEvent(new CustomEvent("rc:degrade", { detail: { step: degrade } }));
     } catch (e) {}
+    return;
+  }
+
+  /* И обязательно возвращаемся вверх. Раньше деградация была
+     односторонней: одна тяжёлая секунда где-нибудь в середине - и до
+     конца визита человек смотрел упрощённый сайт, даже когда телефон
+     давно справлялся. Держим запас по времени, чтобы качество не
+     мигало туда-сюда. */
+  if (share < 0.12) {
+    if (!goodSince) goodSince = ts0;
+    if (degrade > 0 && ts0 - goodSince > 7000 && ts0 - stepAt > 7000) {
+      degrade--;
+      stepAt = ts0;
+      goodSince = 0;
+      winSum = 0; win.length = 0; winAt = 0;
+      if (degrade > 0) root.setAttribute("data-degrade", String(degrade));
+      else root.removeAttribute("data-degrade");
+      try {
+        dispatchEvent(new CustomEvent("rc:degrade", { detail: { step: degrade, up: true } }));
+      } catch (e2) {}
+    }
+  } else {
+    goodSince = 0;
   }
 }
 

@@ -152,9 +152,42 @@ function place(conK) {
   return vis;
 }
 
+/* ── Страховка сценария ──────────────────────────────────────
+   Худшее, что может случиться на телефоне: корабль подошёл вплотную,
+   занял собой весь кадр, а внутрь мы так и не вошли - рубка не
+   поднялась (не хватило слота, сработала защита от лагов, отказал
+   объёмный слой). Тогда огромный корпус просто висит поверх текста
+   и закрывает разделы, которые человек пытается читать. Владелец
+   увидел ровно это.
+
+   Поэтому здесь стоит сторож: если акт уже внутренний, а внутри мы
+   не оказались, корабль обязан уйти из кадра. Сценарий при этом не
+   ломается - он честно упрощается: человек листает обычную
+   страницу, а не воюет с картинкой поверх неё. */
+function watchdog() {
+  var sc = g.RC_SCENE;
+  var a = sc && sc.act;
+  var innerAct = (a === "cabin" || a === "manual" || a === "console" || a === "egress");
+  var inside = root.classList.contains("rc-inside");
+  var stuck = innerAct && !inside;
+  if (stuck !== root.classList.contains("rc-ship-off")) {
+    root.classList.toggle("rc-ship-off", stuck);
+    /* Корабль не только прячем, но и останавливаем: невидимая сцена,
+       которая продолжает считать кадры, - это ровно та нагрузка, из-за
+       которой защита от лагов и погасила рубку. */
+    if (stuck && g.RC_ROCKET && g.RC_ROCKET.stop) {
+      try { g.RC_ROCKET.stop(); } catch (e) {}
+    } else if (!stuck && g.RC_ROCKET && g.RC_ROCKET.start &&
+               !root.classList.contains("rc-rocket-parked")) {
+      try { g.RC_ROCKET.start(); } catch (e2) {}
+    }
+  }
+}
+
 function frame() {
   raf = requestAnimationFrame(frame);
   if (doc.hidden) return;
+  watchdog();
   goal = want();
   if (goal <= 0 && k < 0.002) {
     if (pub !== 0) { pub = 0; root.style.setProperty("--cab-k", "0"); root.classList.remove("rc-cab-on"); }

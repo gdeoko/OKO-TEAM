@@ -20,17 +20,31 @@ function caps() {
   var w = innerWidth, mob = w < 760;
   var reduce = matchMedia("(prefers-reduced-motion: reduce)").matches;
   var mem = navigator.deviceMemory || 4;
-  var weak = mob || mem <= 2 || (navigator.hardwareConcurrency || 4) <= 4;
+  var cores = navigator.hardwareConcurrency || 4;
+  /* Раньше «телефон» автоматически означал «слабое устройство»:
+     корабль на мобиле собирался вдвое грубее, искр было втрое
+     меньше, сглаживание выключалось. Владелец сравнил экраны и
+     сказал прямо - на ПК красиво, а на телефоне нет, так быть не
+     должно; отличаться могут только раскладка и размеры.
+
+     Поэтому слабым теперь считается только действительно слабое
+     железо, а телефонный бюджет добираем разрешением буфера. Это
+     честный рычаг: он не убирает из кадра ни одной детали, ни
+     одного блика, а на плотном экране разницу в чёткости глаз
+     почти не видит - в отличие от гранёного силуэта и пропавших
+     искр, которые видно сразу. */
+  var tiny = mem <= 2 || cores <= 2;
   return {
     mobile: mob,
     reduce: reduce,
-    weak: weak,
-    dpr: Math.min(g.devicePixelRatio || 1, weak ? 1.35 : 2),
-    aa: !weak,
-    sparks: weak ? 140 : 420,
-    smoke: weak ? 60 : 170,
-    radial: weak ? 28 : 64,
-    lathe: weak ? 40 : 96,
+    weak: tiny,
+    tiny: tiny,
+    dpr: Math.min(g.devicePixelRatio || 1, tiny ? 1.1 : (mob ? 1.45 : 2)),
+    aa: !tiny,
+    sparks: tiny ? 150 : 420,
+    smoke: tiny ? 70 : 170,
+    radial: tiny ? 28 : 64,
+    lathe: tiny ? 40 : 96,
     shadow: false
   };
 }
@@ -1229,9 +1243,12 @@ function buildRocket(C, env) {
      пиксели тут не видны, а проход Собеля стоит времени на старте.
      Отсекаем по МОБИЛЬНОСТИ, а не по «слабости»: четырёхъядерный
      ноутбук считается слабым, но лишний буфер видеопамяти ему не
-     страшен, а корпус без рельефа на большом экране сразу
-     превращается обратно в пластик. На телефоне рельефа нет. */
-  var bumpS = C.mobile ? 0 : (C.weak ? 384 : 512);
+     страшен, а корпус без рельефа сразу превращается обратно в
+     пластик. Раньше на телефоне рельефа не было вовсе - именно
+     поэтому корабль там выглядел игрушечным. Теперь он есть везде,
+     карта только меньше: её считают один раз при сборке, на кадр
+     это не влияет совсем. */
+  var bumpS = C.tiny ? 0 : (C.mobile ? 320 : 512);
   var hullMat = new T.MeshStandardMaterial({
     map: hullTexture(),
     roughnessMap: hullRough(C.weak ? 256 : 512),
@@ -1994,7 +2011,10 @@ Rocket.prototype.bind = function () {
 
 Rocket.prototype.resize = function () {
   var w = innerWidth, h = innerHeight;
-  this.r.setPixelRatio(Math.min(g.devicePixelRatio || 1, this.C.weak ? 1.35 : 2));
+  /* Разрешение буфера - единственное, чем телефон отличается от
+     монитора: сама картинка и все её детали те же */
+  this.r.setPixelRatio(Math.min(g.devicePixelRatio || 1,
+    this.C.weak ? 1.1 : (this.C.mobile ? 1.45 : 2)));
   this.r.setSize(w, h, false);
   this.cam.aspect = w / h;
   /* На узком экране отодвигаем камеру, чтобы ракета целиком влезала */
@@ -3937,6 +3957,23 @@ Rocket.prototype.tick = function (ts) {
     if (this._acc2 && ts - this._acc2 < min) return;
     this._acc2 = ts;
   }
+  /* Растворённый корабль не имеет права стоить целого кадра. Свою
+     прозрачность сцена считает сама (veil * occl) и пишет в стиль
+     холста, так что достаточно на неё посмотреть. Пока корабля в
+     кадре нет, обновляем его раз в несколько кадров: этого хватает,
+     чтобы он не залип в старой позе к моменту, когда снова
+     понадобится, а телефон в это время занимается страницей.
+
+     Это чистая экономия: ни одна деталь и ни один эффект от неё не
+     пропадают, потому что пропускаются кадры, которых не видно. */
+  var vis = parseFloat(this.canvas.style.opacity);
+  if (!isNaN(vis) && vis < 0.02) {
+    this._idleN = (this._idleN || 0) + 1;
+    if (this._idleN % 6) return;
+  } else {
+    this._idleN = 0;
+  }
+
   var dt = this._last ? Math.min(0.05, (ts - this._last) / 1000) : 0.016;
   this._last = ts;
   this.frame(dt);

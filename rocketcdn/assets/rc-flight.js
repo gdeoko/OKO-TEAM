@@ -819,7 +819,7 @@ function skyTexture(mob) {
      кадр попадает малая её доля - каждый нарисованный пиксель на
      экране растягивается в несколько. Крупная сетка тут не нужна,
      нужна мягкость. */
-  var W = mob ? 1024 : 2048, H = W / 2;
+  var W = tiny ? 1024 : 2048, H = W / 2;
   var c = doc.createElement("canvas");
   c.width = W; c.height = H;
   var x = c.getContext("2d");
@@ -843,7 +843,7 @@ function skyTexture(mob) {
   function bandY(u) { return midY + Math.sin(u * Math.PI * 2) * tilt; }
 
   var i, u, gr;
-  for (i = 0; i < (mob ? 900 : 1800); i++) {
+  for (i = 0; i < (tiny ? 900 : 1800); i++) {
     u = rnd();
     var px = u * W;
     var py = bandY(u) + (rnd() - 0.5) * H * (0.07 + rnd() * 0.10);
@@ -868,7 +868,7 @@ function skyTexture(mob) {
 
   /* Пылевые прожилки: тёмные рваные полосы вдоль диска. Без них
      Млечный Путь выглядит светлой кляксой, а не галактикой */
-  for (i = 0; i < (mob ? 400 : 800); i++) {
+  for (i = 0; i < (tiny ? 400 : 800); i++) {
     u = rnd();
     var dx = u * W;
     var dy = bandY(u) + (rnd() - 0.5) * H * 0.08;
@@ -883,7 +883,7 @@ function skyTexture(mob) {
   /* Мелкая звёздная пыль: точки в один пиксель. Они не читаются
      отдельными звёздами, но дают диску зернистость, без которой он
      выглядит нарисованным градиентом. */
-  var n = mob ? 6000 : 14000;
+  var n = tiny ? 6000 : 14000;
   for (i = 0; i < n; i++) {
     u = rnd();
     var sx2 = u * W;
@@ -930,8 +930,17 @@ function glowSprite(size, inner, outer) {
 function buildWorld() {
   var T = g.THREE;
   var mob = innerWidth < 760;
+  /* Узкий экран и слабое железо - разные вещи. Раньше по флагу mob
+     в игре резалось всё подряд: вдвое меньше звёзд, вдвое грубее
+     сферы планет, вполовину короче астероидные пояса. Владелец
+     сравнил телефон с монитором и потребовал одинаковой картины -
+     отличаться могут только раскладка и размеры. Поэтому количество
+     и детализацию режем только на действительно слабом железе, а
+     бюджет телефона добираем разрешением буфера. */
+  var tiny = (navigator.deviceMemory || 4) <= 2 ||
+             (navigator.hardwareConcurrency || 4) <= 2;
   var r = new T.WebGLRenderer({ canvas: ui.cv, antialias: !mob, alpha: false, powerPreference: "high-performance" });
-  r.setPixelRatio(Math.min(g.devicePixelRatio || 1, mob ? 1.6 : 2));
+  r.setPixelRatio(Math.min(g.devicePixelRatio || 1, tiny ? 1.1 : (mob ? 1.45 : 2)));
   r.setClearColor(0x02050c, 1);
 
   var scene = new T.Scene();
@@ -976,9 +985,9 @@ function buildWorld() {
     return pts;
   }
   var starMats = [
-    stars(mob ? 2400 : 5200, 2.4, 3000, 0xcfe9f5).material,
-    stars(mob ? 900 : 2200, 3.6, 2200, 0x8fb7ff).material,
-    stars(mob ? 400 : 900, 4.8, 1500, 0xffe9c9).material
+    stars(tiny ? 2400 : 5200, 2.4, 3000, 0xcfe9f5).material,
+    stars(tiny ? 900 : 2200, 3.6, 2200, 0x8fb7ff).material,
+    stars(tiny ? 400 : 900, 4.8, 1500, 0xffe9c9).material
   ];
 
   /* Солнце: далёкий слепящий блик, как на съёмке с орбиты */
@@ -1006,7 +1015,7 @@ function buildWorld() {
   /* ── Земля ── */
   var earth = new T.Group();
   var eBody = new T.Mesh(
-    new T.SphereGeometry(60, mob ? 48 : 64, mob ? 36 : 48),
+    new T.SphereGeometry(60, tiny ? 48 : 64, tiny ? 36 : 48),
     new T.MeshPhongMaterial({
       map: tex("assets/space/earth-day.jpg"),
       emissiveMap: tex("assets/space/earth-night.jpg"),
@@ -1027,7 +1036,7 @@ function buildWorld() {
   );
   earth.add(atm);
   var clouds = new T.Mesh(
-    new T.SphereGeometry(61.2, mob ? 48 : 64, mob ? 36 : 48),
+    new T.SphereGeometry(61.2, tiny ? 48 : 64, tiny ? 36 : 48),
     new T.MeshLambertMaterial({
       map: tex("assets/space/clouds.png"),
       transparent: true, opacity: 0.55, depthWrite: false
@@ -1112,7 +1121,7 @@ function buildWorld() {
      и тёплое гало вокруг. */
   var hole = new T.Group();
   hole.add(new T.Mesh(new T.SphereGeometry(26, 40, 28), new T.MeshBasicMaterial({ color: 0x000000 })));
-  var diskGeo = new T.RingGeometry(30, 105, mob ? 110 : 160, 1);
+  var diskGeo = new T.RingGeometry(30, 105, tiny ? 110 : 160, 1);
   (function () {
     var pos = diskGeo.attributes.position, uv = diskGeo.attributes.uv, v = new T.Vector3();
     for (var k = 0; k < pos.count; k++) {
@@ -1158,7 +1167,7 @@ function buildWorld() {
 
   /* ── Гиперпрыжок: пучок линий, вытянутых навстречу ── */
   var jump = (function () {
-    var nLines = mob ? 220 : 420;
+    var nLines = tiny ? 220 : 420;
     var geo = new T.BufferGeometry();
     var pos = new Float32Array(nLines * 6);
     for (var k = 0; k < nLines; k++) {
@@ -1180,7 +1189,7 @@ function buildWorld() {
      по логарифмической спирали с гауссовым разбросом; ядро теплее,
      рукава в цвет вселенной. */
   function spiralGalaxy(px, py, pz, scale, colA, colB, tiltX, tiltZ) {
-    var n = mob ? 1600 : 3200;
+    var n = tiny ? 1600 : 3200;
     var geo = new T.BufferGeometry();
     var pos = new Float32Array(n * 3);
     var col = new Float32Array(n * 3);
@@ -1285,7 +1294,7 @@ function buildWorld() {
      заворачиваются по модулю куба относительно камеры - облако
      бесконечно, а точек всего три сотни. */
   var dust = (function () {
-    var nD = mob ? 160 : 320, SIDE = 140;
+    var nD = tiny ? 160 : 320, SIDE = 140;
     var geo = new T.BufferGeometry();
     var pos = new Float32Array(nD * 3);
     for (var k = 0; k < nD * 3; k++) pos[k] = (Math.random() - 0.5) * SIDE;
@@ -1317,7 +1326,7 @@ function buildWorld() {
      Цвет раздаём вершинам: свежая искра почти белая, остывающая
      оранжевая, догорающая тёмно-красная. Один общий цвет превращает
      шлейф в конфетти. */
-  var washN = mob ? 90 : 220;
+  var washN = tiny ? 90 : 220;
   var wash = (function () {
     var geo = new T.BufferGeometry();
     var pos = new Float32Array(washN * 3);
@@ -1382,8 +1391,8 @@ function buildWorld() {
     scene.add(pts);
     return pts;
   }
-  var belt1 = beltLayer(mob ? 500 : 1100, 3.4, 230, 0x9a8f80);
-  var belt2 = beltLayer(mob ? 260 : 600, 6.5, 160, 0xb8a890);
+  var belt1 = beltLayer(tiny ? 500 : 1100, 3.4, 230, 0x9a8f80);
+  var belt2 = beltLayer(tiny ? 260 : 600, 6.5, 160, 0xb8a890);
 
   /* ── Маршрут ──
      Кривая проходит через все сцены и заворачивает домой. Взгляд

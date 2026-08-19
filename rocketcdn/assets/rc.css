@@ -1406,10 +1406,23 @@ body { background: var(--bg); }
    у кнопок, чтобы поведение сайта было одним на все элементы */
 .card:active, .viz-card:active, .dc:active { transform: translateY(-1px); }
 
-/* Размытие фона: только настольные и только там, где под карточкой
-   действительно есть что размывать */
+/* Размытие фона под карточкой. Раньше оно доставалось только
+   настольным, и на телефоне стекло становилось матовой плиткой -
+   владелец сравнил и сказал прямо, что так нельзя. Теперь размытие
+   есть везде, а разной остаётся только его величина: радиус - это
+   цена кадра, а не наличие эффекта, и на плотном экране телефона
+   шесть пикселей читаются так же, как девять на мониторе. */
 @media (min-width: 1024px) and (hover: hover) {
-  .card, .viz-card, .dc { backdrop-filter: blur(9px) saturate(1.25); }
+  .card, .viz-card, .dc {
+    backdrop-filter: blur(9px) saturate(1.25);
+    -webkit-backdrop-filter: blur(9px) saturate(1.25);
+  }
+}
+@media (max-width: 1023px) {
+  .card, .viz-card, .dc {
+    backdrop-filter: blur(6px) saturate(1.2);
+    -webkit-backdrop-filter: blur(6px) saturate(1.2);
+  }
 }
 
 /* Парящая карточка: отрывается от плоскости и получает свою тень.

@@ -142,11 +142,18 @@ html:not(.rc-reduced) .cin-ring > .cin-item.cin-front {
     --cab-h: clamp(160px, 24vh, 240px);
     perspective: 860px;
   }
+  /* Раньше здесь эффекты снимались начисто, и телефон получал
+     плоскую плитку вместо голограммы. Владелец сказал прямо: на ПК
+     карточки живые и глянцевые, а на телефоне «гавно» - так быть не
+     должно. Возвращаем и глубину, и стекло; дешевле их делает не
+     отключение, а радиус: размытие стоит пропорционально радиусу, а
+     на плотном экране телефона полтора пикселя читаются так же, как
+     три на мониторе. */
   html:not(.rc-reduced) .cin-ring > .cin-item {
     width: min(86vw, 400px);
-    filter: none;
-    backdrop-filter: none;
-    -webkit-backdrop-filter: none;
+    filter: blur(calc(var(--cin-blur, 0px) * 0.55));
+    backdrop-filter: blur(5px) saturate(1.15);
+    -webkit-backdrop-filter: blur(5px) saturate(1.15);
   }
 }
 
@@ -232,7 +239,12 @@ html[data-degrade="3"] .cin-ring > .cin-item {
    ширину, и сильный разворот съедает читаемость. */
 @media (max-width: 760px) {
   .cin-stage { perspective: 900px; }
-  .cin-tunnel .cin-item, .cin-shelf .cin-item { filter: none; }
+  /* Глубину на телефоне не снимаем, а смягчаем радиусом: дальняя
+     карточка обязана быть дальней и здесь, иначе проезд камеры
+     превращается в обычный список */
+  .cin-tunnel .cin-item, .cin-shelf .cin-item {
+    filter: blur(calc(var(--cin-blur, 0px) * 0.6));
+  }
 }
 
 /* ═══ ГОЛОГРАММНЫЕ ЭКРАНЫ РУБКИ ══════════════════════════════
@@ -665,8 +677,12 @@ html[data-theme="light"] #reliability .cin-ring > .cin-item.cin-holo > .card-ico
   html #reliability .cin-ring > .cin-item.cin-holo {
     --cin-up: -7vh;
     border-radius: 13px;
-    backdrop-filter: none !important;
-    -webkit-backdrop-filter: none !important;
+    /* Стекло голограммы остаётся и на телефоне - без него экран
+       перестаёт быть проекцией и снова читается плиткой. Радиус
+       меньше настольного: он и стоит меньше, и на плотном экране
+       даёт ровно тот же эффект матового стекла. */
+    backdrop-filter: blur(5px) saturate(1.2);
+    -webkit-backdrop-filter: blur(5px) saturate(1.2);
   }
   html #reliability .cin-ring > .cin-item.cin-holo > .cin-scr {
     -webkit-mask-image: repeating-linear-gradient(180deg,

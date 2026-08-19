@@ -264,6 +264,19 @@ var fine = [];
 var raf = null, lastTs = 0;
 
 var phone = innerWidth < 760;
+/* Узкий экран и слабое железо - разные вещи, а раньше в этом файле
+   они были одним и тем же: по флагу phone рубка собиралась грубее -
+   меньше сегментов у стен и иллюминаторов, шесть потолочных балок
+   вместо десяти, один жгут вместо двух. Владелец сравнил телефон с
+   монитором и сказал, что так быть не должно: отличаться могут
+   только раскладка и размеры под экран.
+
+   Поэтому детализацию режем только на действительно слабом железе,
+   а телефонный бюджет добираем разрешением буфера. Вершины дёшевы,
+   в отличие от пикселей: гранёная стена видна сразу, а чуть меньшая
+   чёткость на плотном экране - почти нет. */
+var tiny = (navigator.deviceMemory || 4) <= 2 ||
+           (navigator.hardwareConcurrency || 4) <= 2;
 
 /* ── Постановка камеры под устройство ────────────────────────
    На телефоне кадр вертикальный, а угол объектива у перспективной
@@ -629,7 +642,7 @@ function build() {
      точку незачем, разницы на глаз нет, а кадры она забирает
      целиком. Полтора пикселя на мониторе, один с четвертью на
      телефоне. */
-  rend.setPixelRatio(Math.min(phone ? 1.25 : 1.5, g.devicePixelRatio || 1));
+  rend.setPixelRatio(Math.min(tiny ? 1.0 : (phone ? 1.45 : 1.6), g.devicePixelRatio || 1));
   rend.setSize(innerWidth, innerHeight, false);
   if (rend.outputColorSpace !== undefined) rend.outputColorSpace = T.SRGBColorSpace;
   rend.toneMapping = T.ACESFilmicToneMapping;
@@ -642,7 +655,7 @@ function build() {
      Именно поэтому рубка читалась плоской картинкой: у неё не было
      воздушной перспективы. Теперь на дальней стене четверть тумана,
      на ближней десятая часть, и глубина появляется сама. */
-  scene.fog = new T.FogExp2(COL.deep, phone ? 0.1 : 0.135);
+  scene.fog = new T.FogExp2(COL.deep, phone ? 0.115 : 0.135);
 
   /* Входим с узким углом: в тамбуре тесно. Внутри угол раскрывается
      (на телефоне сильнее, см. fovIn), и человек физически чувствует,
@@ -712,7 +725,7 @@ function build() {
 
   /* ── Оболочка ─────────────────────────────────────────── */
   var shell = new T.Mesh(
-    new T.CylinderGeometry(2.6, 2.6, 3.4, phone ? 28 : 44, 1, true),
+    new T.CylinderGeometry(2.6, 2.6, 3.4, tiny ? 28 : 44, 1, true),
     shellMat
   );
   shell.position.y = 1.7;
@@ -723,7 +736,7 @@ function build() {
      держим низкой - мокрого блеска на техническом настиле не бывает,
      а вот сухой рассеянный отклик есть. */
   var floor = new T.Mesh(
-    new T.CircleGeometry(2.6, phone ? 36 : 52),
+    new T.CircleGeometry(2.6, tiny ? 36 : 52),
     new T.MeshStandardMaterial({
       map: deckTex(), roughness: 0.88, metalness: 0.34,
       color: 0x6d7f93, envMapIntensity: ENVI * 0.5
@@ -746,7 +759,7 @@ function build() {
   /* Световая полоса по периметру пола. Главная линия всей рубки:
      она обводит помещение по низу и тем самым объявляет его форму.
      Без неё пол и стена сходились в чёрный шов, и круг не читался. */
-  var rim = new T.Mesh(new T.RingGeometry(2.42, 2.52, phone ? 36 : 52), new T.MeshBasicMaterial({
+  var rim = new T.Mesh(new T.RingGeometry(2.42, 2.52, tiny ? 36 : 52), new T.MeshBasicMaterial({
     color: 0x9fd4ea, transparent: true, opacity: 0.42, fog: false
   }));
   rim.rotation.x = -Math.PI / 2;
@@ -754,7 +767,7 @@ function build() {
   grp.add(rim);
 
   /* Разлив от полосы на настил: свет обязан куда-то ложиться */
-  var spill = new T.Mesh(new T.RingGeometry(1.85, 2.5, phone ? 28 : 40), new T.MeshBasicMaterial({
+  var spill = new T.Mesh(new T.RingGeometry(1.85, 2.5, tiny ? 28 : 40), new T.MeshBasicMaterial({
     color: COL.cyan, transparent: true, opacity: 0.17,
     blending: T.AdditiveBlending, depthWrite: false, fog: false
   }));
@@ -769,7 +782,7 @@ function build() {
      по которым глаз мгновенно понимает, что стоит в круглой
      комнате, а не смотрит на изогнутую картинку. */
   var ceil = new T.Mesh(
-    new T.CircleGeometry(2.6, phone ? 28 : 44),
+    new T.CircleGeometry(2.6, tiny ? 28 : 44),
     new T.MeshStandardMaterial({
       color: 0x16273a, roughness: 0.9, metalness: 0.22, side: T.BackSide,
       envMapIntensity: ENVI * 0.3
@@ -779,7 +792,7 @@ function build() {
   ceil.position.y = 3.4;
   grp.add(ceil);
 
-  var beams = phone ? 6 : 10;
+  var beams = tiny ? 6 : 10;
   var beamGeo = new T.BoxGeometry(0.13, 0.17, 2.34);
   for (i = 0; i < beams; i++) {
     m = new T.Mesh(beamGeo, steelMat);
@@ -791,7 +804,7 @@ function build() {
   }
 
   /* Обод под потолком: балки обязаны на что-то опираться */
-  m = new T.Mesh(new T.TorusGeometry(2.46, 0.055, 4, phone ? 26 : 36), steelMat);
+  m = new T.Mesh(new T.TorusGeometry(2.46, 0.055, 4, tiny ? 26 : 36), steelMat);
   m.rotation.x = Math.PI / 2;
   m.position.y = 3.14;
   grp.add(m);
@@ -807,7 +820,7 @@ function build() {
   m.position.y = 3.36;
   grp.add(m);
 
-  m = new T.Mesh(new T.CircleGeometry(2.3, phone ? 20 : 30), new T.MeshBasicMaterial({
+  m = new T.Mesh(new T.CircleGeometry(2.3, tiny ? 20 : 30), new T.MeshBasicMaterial({
     map: poolTex(), color: 0x86b6d4, transparent: true, opacity: 0.3,
     blending: T.AdditiveBlending, depthWrite: false, fog: false
   }));
@@ -921,7 +934,7 @@ function build() {
     map: bezelTex(), roughness: 0.3, metalness: METAL * 0.85,
     envMapIntensity: ENVI * 1.1
   });
-  var tubeGeo = new T.CylinderGeometry(0.43, 0.43, 0.22, phone ? 16 : 22, 1, true);
+  var tubeGeo = new T.CylinderGeometry(0.43, 0.43, 0.22, tiny ? 16 : 22, 1, true);
   var portA = [STEP * 2, STEP * 4, STEP * 6];
   for (i = 0; i < portA.length; i++) {
     var port = new T.Group();
@@ -935,22 +948,22 @@ function build() {
     port.add(tube);
 
     /* Стекло сидит в глубине обечайки, а не заподлицо с её краем */
-    var glass = new T.Mesh(new T.CircleGeometry(0.43, phone ? 16 : 22), glassMat);
+    var glass = new T.Mesh(new T.CircleGeometry(0.43, tiny ? 16 : 22), glassMat);
     glass.position.set(0, 0, -2.555);
     port.add(glass);
 
     /* Рама с болтами по внутреннему краю обечайки */
-    var bez = new T.Mesh(new T.RingGeometry(0.43, 0.59, phone ? 18 : 24), bezelMat);
+    var bez = new T.Mesh(new T.RingGeometry(0.43, 0.59, tiny ? 18 : 24), bezelMat);
     bez.position.set(0, 0, -2.32);
     port.add(bez);
 
     /* Уплотнитель по стыку рамы с обечайкой */
-    var seal = new T.Mesh(new T.TorusGeometry(0.44, 0.032, 4, phone ? 14 : 18), rubberMat);
+    var seal = new T.Mesh(new T.TorusGeometry(0.44, 0.032, 4, tiny ? 14 : 18), rubberMat);
     seal.position.set(0, 0, -2.33);
     port.add(seal);
 
     /* Подсветка проёма изнутри: холодная кромка вокруг стекла */
-    var glow = new T.Mesh(new T.RingGeometry(0.38, 0.43, phone ? 16 : 22), litEdge);
+    var glow = new T.Mesh(new T.RingGeometry(0.38, 0.43, tiny ? 16 : 22), litEdge);
     glow.position.set(0, 0, -2.54);
     port.add(glow);
 
@@ -966,8 +979,8 @@ function build() {
   var cableMat = new T.MeshStandardMaterial({
     color: 0x101c2a, roughness: 0.95, metalness: 0.1, envMapIntensity: ENVI * 0.3
   });
-  for (i = 0; i < (phone ? 1 : 2); i++) {
-    m = new T.Mesh(new T.TorusGeometry(2.44, 0.055 + i * 0.016, 4, phone ? 24 : 34), cableMat);
+  for (i = 0; i < (tiny ? 1 : 2); i++) {
+    m = new T.Mesh(new T.TorusGeometry(2.44, 0.055 + i * 0.016, 4, tiny ? 24 : 34), cableMat);
     m.rotation.x = Math.PI / 2;
     m.position.y = 3.0 - i * 0.11;
     grp.add(m);
@@ -1006,7 +1019,7 @@ function build() {
     envMapIntensity: ENVI * 0.3
   });
   var ventGeo = new T.PlaneGeometry(0.8, 0.24);
-  for (i = 0; i < (phone ? 2 : 4); i++) {
+  for (i = 0; i < (tiny ? 2 : 4); i++) {
     var vt = new T.Group();
     m = new T.Mesh(ventGeo, ventMat);
     m.position.set(0, 0, -2.57);
@@ -1058,7 +1071,7 @@ function build() {
      воздух помещения, а планета снаружи. Раньше туман её съедал, и
      за окном оставалось мутное пятно. */
   planet = new T.Mesh(
-    new T.SphereGeometry(7.5, phone ? 18 : 28, phone ? 14 : 20),
+    new T.SphereGeometry(7.5, tiny ? 18 : 28, tiny ? 14 : 20),
     new T.MeshBasicMaterial({ map: planetTex(), fog: false })
   );
   planet.position.set(0.6, -3.6, -13);
@@ -1120,7 +1133,7 @@ function build() {
 
   /* Диоды на пульте: дышат от общего таймера с фазовым сдвигом */
   var dGeo = new T.SphereGeometry(0.022, 6, 4);
-  for (i = 0; i < (phone ? 10 : 18); i++) {
+  for (i = 0; i < (tiny ? 10 : 18); i++) {
     var warm = i % 3 === 0;
     var d = new T.Mesh(dGeo, new T.MeshBasicMaterial({ color: warm ? COL.vio : COL.cyan, fog: false }));
     d.position.set(-1.1 + (i % 9) * 0.26, 1.09 + (i > 8 ? 0.06 : 0), -2.16 + (i > 8 ? 0.16 : 0));
@@ -1149,7 +1162,7 @@ function build() {
   con.add(lamp.target);
   lamp.target.position.set(0, 1.2, 0);
 
-  var LB = phone ? 1.2 : 1;
+  var LB = tiny ? 1.2 : 1;
   scene.add(new T.HemisphereLight(0x27435c, 0x060d16, 0.82 * LB));
   scene.add(new T.AmbientLight(0x223247, 0.56 * LB));
 
@@ -1590,7 +1603,7 @@ addEventListener("resize", function () {
      и горизонтального кадра разные. Пересчитываем цели той же
      функцией, что и прокрутка, чтобы не заводить второй источник. */
   if (was !== phone) {
-    if (scene && scene.fog) scene.fog.density = phone ? 0.1 : 0.135;
+    if (scene && scene.fog) scene.fog.density = tiny ? 0.1 : 0.135;
     setProgress(st.p);
   }
 }, { passive: true });
@@ -1648,22 +1661,46 @@ function boot() {
 addEventListener("rc:degrade", function (e) {
   var step = (e && e.detail && e.detail.step) || 0;
   try {
+    /* Ступень теперь ходит в обе стороны, поэтому обработчик не
+       «снимает лишнее», а описывает состояние целиком: всё, что было
+       выключено на низком качестве, обязано вернуться, когда телефон
+       справился. Иначе один тяжёлый отрезок навсегда оставлял бы
+       комнату без планеты за окном. */
+    var full = step < 2;
+    for (var j = 0; j < fine.length; j++) fine[j].visible = full;
+    if (planet) planet.visible = step < 3;
+    if (halo) halo.visible = step < 3;
+    if (air) air.classList.toggle("flat", step >= 3);
+    if (scene && scene.fog) scene.fog.density = step >= 2 ? 0.09 : (phone ? 0.115 : 0.135);
+    if (rend && step === 0) {
+      rend.setPixelRatio(Math.min(tiny ? 1.0 : (phone ? 1.45 : 1.6), g.devicePixelRatio || 1));
+    }
+    /* Первая ступень трогает только число пикселей. Это честный
+       рычаг: он не убирает из кадра ни одной детали, ни одного
+       блика - картинка та же, просто считается в меньшем разрешении,
+       чего на плотном экране телефона глаз почти не различает. */
     if (step >= 1 && rend) rend.setPixelRatio(1);
-    /* Вторая ступень: снимаем то, что работает только на красоту.
-       Балки, поручень, спуски жгутов и световые пятна перечислены в
-       fine именно для этого - силовой набор и ниши остаются, комната
-       не разваливается, но кадр становится заметно дешевле. */
+    /* Вторая ступень снимает мелочь, которую в движении не видно:
+       спуски жгутов, отдельные световые пятна. Силовой набор, ниши,
+       иллюминаторы и планета за окном остаются - это и есть комната,
+       ради которой всё делалось. */
     if (step >= 2) {
+      for (var i = 0; i < fine.length; i++) fine[i].visible = false;
+      if (scene && scene.fog) scene.fog.density = 0.09;
+    }
+    /* Третья ступень раньше означала «рубки нет»: кино просто
+       выключалось, и владелец на своём телефоне видел вместо фильма
+       обычную страницу с кораблём поверх текста. Так нельзя. Сцена
+       остаётся всегда - на последней ступени она лишь считается в
+       половинном разрешении и без дальней планеты. Сценарий важнее
+       любых украшений: вход в корабль, оборот и пульт обязаны
+       доиграться на любом устройстве. */
+    if (step >= 3) {
+      if (rend) rend.setPixelRatio(Math.min(1, (g.devicePixelRatio || 1) * 0.75));
       if (planet) planet.visible = false;
       if (halo) halo.visible = false;
-      for (var i = 0; i < fine.length; i++) fine[i].visible = false;
       if (air) air.classList.add("flat");
-      if (scene && scene.fog) scene.fog.density = 0.06;
     }
-    /* Третья ступень: рубки нет. Сообщаем об этом кораблю - он не
-       поведёт нас в проём, из которого нечему открыться, и вход
-       останется обычным переходом к разделу. */
-    if (step >= 3) { hide(); st.dead = true; g.RC_NO_CABIN = true; }
   } catch (err) {}
 });
 
