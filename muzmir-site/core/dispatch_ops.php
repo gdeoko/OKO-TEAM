@@ -118,6 +118,19 @@ function dops_result_cancel(int $appId): array {
 
 /* ========================== НАГРАДНЫЕ ДОКУМЕНТЫ ========================== */
 
+/**
+ * Ленивая колонка diplomas.queue_id — номер письма в mail_queue, которым ушёл
+ * наградный материал. Нужна, чтобы отказ почты не терял диплом: письмо стоит в
+ * очереди, крон второе не шлёт, а по факту доставки очередь проставит sent_at
+ * (сверку делает cron/send_diplomas.php).
+ */
+function dops_ensure_queue_col(): void {
+    static $done = false;
+    if ($done) return;
+    $done = true;
+    try { db()->exec("ALTER TABLE diplomas ADD COLUMN queue_id INTEGER"); } catch (\Throwable $e) {}
+}
+
 /** Все дипломы заявки (осн./доп./именной/благодарность) в порядке показа. */
 function dops_diplomas(int $appId): array {
     return all("SELECT * FROM diplomas WHERE application_id=?
@@ -193,7 +206,7 @@ function dops_diplomas_send_now(int $appId, bool $duplicate = false): array {
     // слов участника. Теперь при сбое письмо кладётся в очередь целиком (все
     // вложения, а не первое), диплом остаётся неотправленным, и в ответе прямо
     // сказано, что произошло.
-    $queued = false;
+    $queued = false; $qid = 0;
     if (!$ok && function_exists('mail_queue')) {
         // Очередь понимает список вложений как JSON (core/newsletter.php), поэтому
         // один файл кладём строкой, несколько — списком: иначе доедет только первый.
@@ -204,8 +217,31 @@ function dops_diplomas_send_now(int $appId, bool $duplicate = false): array {
 
     $now = date('Y-m-d H:i:s');
     if (!$duplicate && ($ok || $queued)) {
+        dops_ensure_queue_col();
         foreach ($send as $d) {
-            update('diplomas', ['sent_at' => $ok ? $now : '', 'send_tries' => 0], 'id=:id', ['id' => (int) $d['id']]);
+            if ($ok) {
+                // Письмо с прошлой неудачной попытки могло остаться в очереди —
+                // гасим его, иначе участник получит награду двумя письмами.
+                $prevQ = (int) ($d['queue_id'] ?? 0);
+                if ($prevQ > 0) {
+                    try {
+                        q("UPDATE mail_queue SET status='cancelled', error='наградный материал отправлен вручную'
+                            WHERE id=? AND status='queued'", [$prevQ]);
+                    } catch (\Throwable $e) {}
+                }
+                update('diplomas', ['sent_at' => $now, 'send_tries' => 0, 'queue_id' => null], 'id=:id', ['id' => (int) $d['id']]);
+                continue;
+            }
+            // ПУСТАЯ СТРОКА В sent_at ТЕРЯЛА НАГРАДНЫЙ МАТЕРИАЛ НАВСЕГДА.
+            //
+            // При отказе почты сюда писалось sent_at='', а неотправленные всюду
+            // отбираются по sent_at IS NULL (крон, «Отправки»). Пустая строка не
+            // проходит ни туда, ни сюда: диплом исчезал и из автоотправки, и из
+            // живого пульта, оставаясь недоставленным. Теперь sent_at не трогаем
+            // вовсе, а факт постановки в очередь держим в queue_id: крон не пошлёт
+            // второе письмо, пока оно там стоит, и сам проставит время, когда
+            // очередь письмо отдаст (или вернёт материал в работу, если не отдаст).
+            update('diplomas', ['send_tries' => 0, 'queue_id' => $qid], 'id=:id', ['id' => (int) $d['id']]);
         }
     }
     app_status_sync($appId);
@@ -238,9 +274,29 @@ function dops_diplomas_resched(int $appId, string $dt): array {
 
 /** Отменить плановую отправку наградных документов (удаляет неотправленные). */
 function dops_diplomas_cancel(int $appId): array {
+    // ЧТО СНОСИМ — ЗНАТЬ НАДО ДО УДАЛЕНИЯ.
+    //
+    // Обещание «документы пересоберутся автоматически» было неправдой: центр сам
+    // изготавливает только основной и дополнительный дипломы и только короткого
+    // платного конкурса (cron/send_diplomas.php). Именной и благодарность — в том
+    // числе оплаченные заказом — не восстановит никто, поэтому говорим прямо, что
+    // именно исчезло и что придётся выпустить руками.
+    $doomed = all("SELECT type FROM diplomas WHERE application_id=? AND (sent_at IS NULL OR sent_at='')", [$appId]);
+    if (!$doomed) return ['ok' => false, 'msg' => 'Нет запланированных документов.'];
+    $manual = 0;
+    foreach ($doomed as $d) if (!in_array((string) ($d['type'] ?? ''), ['main', 'extra'], true)) $manual++;
+    $c = one("SELECT c.results_mode, c.is_paid FROM applications a
+                LEFT JOIN competitions c ON c.id=a.competition_id WHERE a.id=?", [$appId]);
+    $auto = $c && (string) ($c['results_mode'] ?? 'email') !== 'list' && (int) ($c['is_paid'] ?? 0) === 1;
+
     $n = q("DELETE FROM diplomas WHERE application_id=? AND (sent_at IS NULL OR sent_at='')", [$appId])->rowCount();
-    if ($n === 0) return ['ok' => false, 'msg' => 'Нет запланированных документов.'];
     app_status_sync($appId);
-    audit('diplomas_cancel', 'application', $appId, ['count' => $n]);
-    return ['ok' => true, 'msg' => 'Плановая отправка наград отменена (' . $n . ' шт.). Документы пересоберутся автоматически.'];
+    audit('diplomas_cancel', 'application', $appId, ['count' => $n, 'manual' => $manual]);
+    $msg = 'Плановая отправка наград отменена (' . $n . ' шт.).'
+         . ($auto ? ' Основной и дополнительный дипломы центр соберёт заново сам.'
+                  : ' Заново они НЕ соберутся: конкурс бесплатный либо с оглашением списком.');
+    if ($manual > 0) {
+        $msg .= ' Именной диплом и благодарность (' . $manual . ' шт.) автоматически не создаются — выпустите их в разделе «Дипломы».';
+    }
+    return ['ok' => true, 'msg' => $msg];
 }

@@ -7,10 +7,15 @@
 # и при восстановлении crontab после переустановки сервера кампания просто
 # не запускалась бы, причём молча.
 #
-# Установка целиком (ЗАМЕЩАЕТ текущий crontab):
-#   crontab /var/www/muzmir/scripts/crontab.txt
-# Проверка расхождений без замены:
-#   php /var/www/muzmir/scripts/check_crontab.php
+# ЗАМЕНА СТИРАЕТ ВСЁ, ЧЕГО В ЭТОМ ФАЙЛЕ НЕТ. Так уже расходилось: здесь стоял 31
+# задание, на сервере крутилось 49, и «восстановление по документации» молча
+# снесло бы постинг ВК, приглашения педагогам, партнёрские триггеры и всю
+# почтовую гигиену. Поэтому порядок действий именно такой, а не одна команда:
+#   crontab -l > /var/www/muzmir/data/backups/crontab-$(date +%F).txt   # копия живого
+#   php /var/www/muzmir/scripts/check_crontab.php                      # что разошлось
+#   crontab /var/www/muzmir/scripts/crontab.txt                        # только теперь замена
+# Появилось новое задание на сервере — дописать сюда в тот же день. Сторож
+# расхождений стоит ниже в самом расписании и пишет владельцу в Telegram.
 #
 # ЧАСОВОЙ ПОЯС. Все времена ниже — МОСКОВСКИЕ. CRON_TZ ниже фиксирует это на
 # уровне самого крона, чтобы часы не «поехали» при переустановке сервера с
@@ -43,6 +48,9 @@ MAILTO=""
 */10 * * * * php /var/www/muzmir/cron/vk_bot_close.php >/dev/null 2>&1
 # Разбор возвратов почты (bounce).
 */30 * * * * php /var/www/muzmir/cron/process_bounces.php >> /var/www/muzmir/data/logs/bounces.log 2>&1
+# Разбор событий доставки от сервиса рассылок: жёсткий отказ, жалоба, отписка
+# снимают адрес с рассылки. Приёмник только складывает события, снимает — это.
+*/5 * * * * php /var/www/muzmir/cron/mail_events_apply.php >> /var/www/muzmir/data/logs/cron.log 2>&1
 # Сбор базы учреждений (школы искусств, дома культуры, центры творчества) из
 # открытых источников. Только днём: ночью чужие сайты трогать незачем. Порциями,
 # с паузами — источники чужие, и валить их запросами нельзя.
@@ -68,16 +76,32 @@ MAILTO=""
 0 * * * * php /var/www/muzmir/cron/mailings.php >/dev/null 2>&1
 # Продление подписок ВИП-клуба по сохранённому способу оплаты.
 0 * * * * php /var/www/muzmir/cron/club_billing.php >/dev/null 2>&1
+# Партнёрские триггеры: благодарности педагогам от 5 заявок и выдача заказанных.
+15 * * * * php /var/www/muzmir/cron/partner_triggers.php >/dev/null 2>&1
+# Уборка диска: превью, временные файлы, старые вложения писем. Час, а не шесть:
+# в разгар кампании диск забивался за сутки и отправка вставала.
+0 * * * * php /var/www/muzmir/cron/disk_cleanup.php >> /var/www/muzmir/data/logs/disk_cleanup.log 2>&1
 
 # ── Раз в сутки ─────────────────────────────────────────────────────────────
 # Бэкап БД.
 0 3 * * * php /var/www/muzmir/cron/daily_backup.php >/dev/null 2>&1
+# Свободное место на диске: предупредить владельца до того, как встанет отправка.
+30 4 * * * php /var/www/muzmir/cron/disk_watch.php >/dev/null 2>&1
+# Расход дневной нормы сервиса рассылок — считаем ДО открытия окна отправки.
+0 8 * * * php /var/www/muzmir/cron/quota_watch.php >/dev/null 2>&1
+# Подтверждение доменов и адресов ведомств (проверка отправителя).
+20 8 * * * php /var/www/muzmir/cron/ministry_verify_watch.php >/dev/null 2>&1
 # Даты конкурсов: автозакрытие приёма и генерация афиш.
 0 9 * * * php /var/www/muzmir/cron/check_competitions_dates.php >/dev/null 2>&1
+# ЧАС ЗАПУСКА ОБЯЗАН БЫТЬ ВНУТРИ РАБОЧЕГО ОКНА (пн-сб 09:00-19:00 МСК).
+# Оба задания сами проверяют окно (core/outreach_window.php) и на 08:00 выходили
+# на первой строке, не сделав ничего: письма о заказе наград не уходили вовсе, а
+# окно заказа всего 60 дней. Вывод идёт в журнал, а не в /dev/null — иначе отказ
+# по окну не виден нигде.
 # Напоминания об оплате заказов наградных материалов.
-0 8 * * * php /var/www/muzmir/cron/award_order_reminders.php >/dev/null 2>&1
+0 11 * * 1-6 php /var/www/muzmir/cron/award_order_reminders.php >> /var/www/muzmir/data/logs/cron.log 2>&1
 # Напоминания о датах конкурсов подписчикам календаря.
-0 8 * * * php /var/www/muzmir/cron/calendar_reminders.php >/dev/null 2>&1
+30 9 * * 1-6 php /var/www/muzmir/cron/calendar_reminders.php >> /var/www/muzmir/data/logs/cron.log 2>&1
 # Напоминания участникам (оплата / награды / дедлайн).
 0 10 * * * php /var/www/muzmir/cron/send_reminders.php >/dev/null 2>&1
 # Цепочка касаний по базе (drip).
@@ -102,6 +126,39 @@ MAILTO=""
 0 10 28 * * php /var/www/muzmir/cron/publish_results_vk.php >/dev/null 2>&1
 # Годовой отчёт — 5 января.
 0 6 5 1 * php /var/www/muzmir/cron/annual_report.php >/dev/null 2>&1
+
+# ── Наружные каналы: только пн-сб и только в рабочее окно ───────────────────
+# Правило владельца: наружу ничего не уходит ночью и в воскресенье. Каждое из
+# трёх заданий проверяет окно и внутри себя (core/outreach_window.php), но час
+# в расписании должен совпадать с окном, иначе задание просто не делает ничего.
+# Промо-волны в чужие сообщества ВК.
+0 9,11,13,15,17,18 * * 1-6 php /var/www/muzmir/cron/vk_promo.php >/dev/null 2>&1
+# Личные сообщения администраторам сообществ.
+42 10-20 * * * php /var/www/muzmir/cron/vk_admin_dm.php >/dev/null 2>&1
+# Приглашения педагогам.
+0 11 * * 1-6 php /var/www/muzmir/cron/teacher_invite.php >/dev/null 2>&1
+
+# ── Почтовая гигиена и наблюдение (scripts/) ────────────────────────────────
+# Сторож самого расписания: сверяет живой crontab с этим файлом и пишет
+# владельцу в Telegram, если состав разошёлся в любую сторону.
+0 7 * * * php /var/www/muzmir/scripts/check_crontab.php >> /var/www/muzmir/data/logs/cron.log 2>&1
+# Домены с закрытым рассылочным каналом: список должен стареть сам.
+40 7 * * * php /var/www/muzmir/scripts/mail_domain_policy.php >> /var/www/muzmir/data/logs/cron.log 2>&1
+# Доля открытий по каждой почтовой службе — наш собственный постмастер.
+50 7 * * * php /var/www/muzmir/scripts/mail_health.php >> /var/www/muzmir/data/logs/mail_health.log 2>&1
+
+# ── Задания текущего почтового инцидента (17.08.2026) ───────────────────────
+# СТОЯТ НА СЕРВЕРЕ, НО НЕ ВКЛЮЧЕНЫ ЗДЕСЬ. Это разовые и привязанные к блокировке
+# Яндекса вещи: у них аргументы с конкретной датой, а часть отправляет письма.
+# Записаны, чтобы сторож расписания не считал их посторонними и чтобы человек,
+# восстанавливающий crontab, увидел их и решил осознанно, а не потерял молча.
+# Снимать блокировку и включать — только по решению владельца.
+#   */30 * * * * php /var/www/muzmir/scripts/mail_unblock_watch.php      — ждёт снятия 554 с kc@/nagradi.on@
+#   */10 * * * * php /var/www/muzmir/scripts/hold_suppressed.php --apply — убирает из головы очереди подавленные адреса
+#   0 9 * * *    php /var/www/muzmir/scripts/unisender_suppression.php --clear=ГГГГ-ММ-ДД
+#   0 10 * * *   php /var/www/muzmir/scripts/requeue_false_bounces.php   — один повтор ложным отказам
+#   30 * * * *   php /var/www/muzmir/scripts/process_ministry_inbox.php  — ответы ведомств с чужих ящиков
+#   php /var/www/muzmir/scripts/fix_ministry_letters.php                 — разовая уборка галереи писем
 
 # ── Запускаются вручную, в crontab не нужны ─────────────────────────────────
 #   cron/regen_regulations.php  — перегенерация положений-DOCX (all | <id>)

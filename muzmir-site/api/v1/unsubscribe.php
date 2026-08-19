@@ -13,6 +13,31 @@ header('Content-Type: text/html; charset=utf-8');
 $token = trim(input('token'));
 $state = 'invalid'; // invalid | done | already
 
+/**
+ * ОТКАЗ ЗАПИСЫВАЕМ В СТОП-ЛИСТ, А НЕ ТОЛЬКО В ФЛАЖОК.
+ *
+ * Раньше кнопка ставила subscribers.active=0 и на этом всё. Флажок легко
+ * перебивается (сборка учреждений, повторная заливка, вход в кабинет), а
+ * mail_stop проверяется в единственной точке отправки — mail_send_failover().
+ * Отказ письмом давно пишет туда же (cron/inbox_actions.php), кнопка на сайте
+ * должна вести себя так же. Причина «отписался» распознаётся mail_stop_kind()
+ * как optout, поэтому дипломы, результаты и коды входа продолжают уходить —
+ * закрывается только массовая рассылка.
+ */
+function unsub_mail_stop(string $email): void {
+    $email = mb_strtolower(trim($email));
+    if ($email === '' || !filter_var($email, FILTER_VALIDATE_EMAIL)) return;
+    try {
+        // Таблицу заводит scripts/purge_negative.php — на свежей базе её может не быть.
+        db()->exec("CREATE TABLE IF NOT EXISTS mail_stop (
+            email TEXT PRIMARY KEY,
+            reason TEXT NOT NULL DEFAULT '',
+            source TEXT NOT NULL DEFAULT '',
+            added_at TEXT DEFAULT (datetime('now','localtime')))");
+        q("INSERT OR IGNORE INTO mail_stop (email, reason, source) VALUES (?, 'отписался', 'кнопка отписки')", [$email]);
+    } catch (\Throwable $e) { /* стоп-лист недоступен — отписка всё равно засчитана */ }
+}
+
 // ОТПИСКА УЧРЕЖДЕНИЯ — ПО СВОЕМУ ТОКЕНУ.
 //
 // Учреждения больше не заводятся в базу участников (списки разные), поэтому их
@@ -34,6 +59,7 @@ if ($token !== '' && is_file(BASE_PATH . '/core/institutions.php')) {
             // Если этот же адрес есть и в базе участников — снимаем и там: человек
             // просил не писать ему, а не «не писать с одного из списков».
             try { q("UPDATE subscribers SET active=0 WHERE LOWER(email)=?", [$email]); } catch (\Throwable $e) {}
+            unsub_mail_stop($email);
             if (function_exists('audit')) audit('unsubscribe', 'institutions', (int) $inst['id'], ['email' => $email]);
         }
         $token = '';   // дальше по базе участников не ищем
@@ -64,6 +90,10 @@ if ($token !== '') {
 
             // И в профиль сайта: иначе адрес возвращается в базу рассылки через users.
             try { q("UPDATE users SET notify_email = 0 WHERE LOWER(email) = ?", [$email]); } catch (\Throwable $e) {}
+
+            // И в стоп-лист: флажок active переживает не всякую заливку и не всякий
+            // вход, а mail_stop проверяется прямо в точке отправки.
+            unsub_mail_stop($email);
 
             // И в базу учреждений: приглашения шлются оттуда отдельным списком, и
             // без этой строки учреждение, нажавшее «Отказаться», получило бы

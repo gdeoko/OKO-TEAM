@@ -142,7 +142,7 @@ function inbox_migrate(): void {
         db()->exec("CREATE TABLE IF NOT EXISTS inbox_messages (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             mailbox      TEXT NOT NULL,          -- news|novosti|kc|nagradi
-            folder       TEXT DEFAULT 'INBOX',   -- INBOX|Spam
+            folder       TEXT DEFAULT 'INBOX',   -- INBOX либо имя спам-папки, как её назвал сервер
             msg_key      TEXT NOT NULL,          -- отпечаток письма (от+тема+дата)
             from_email   TEXT NOT NULL,
             from_name    TEXT DEFAULT '',

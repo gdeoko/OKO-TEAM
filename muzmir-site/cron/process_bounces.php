@@ -20,6 +20,8 @@ require_once BASE_PATH . '/core/db.php';
 require_once BASE_PATH . '/core/helpers.php';
 require_once BASE_PATH . '/core/mailer.php';
 require_once BASE_PATH . '/core/newsletter.php';
+// Единый разбор причины отказа: голый код ничего не доказывает (см. шапку файла).
+if (!function_exists('mrep_bounce_is_proof')) require_once BASE_PATH . '/core/mail_reputation.php';
 
 /* --- 1) Всегда: прунинг окончательно провалившихся на SMTP (не требует IMAP). --- */
 $prunedFailed = nl_prune_failed();
@@ -61,6 +63,38 @@ function bounce_imap(string $host, int $port, string $user, string $pass, string
     return [true, (string) $out];
 }
 
+/**
+ * ПРИЧИНА ОТКАЗА ИМЕННО ПО ЭТОМУ АДРЕСУ.
+ *
+ * DSN на нескольких получателей описывает каждого своим блоком (Final-Recipient,
+ * Action, Status, Diagnostic-Code). Проверять письмо целиком нельзя: одна строка
+ * «user unknown» про одного получателя вычеркнула бы из базы всех остальных из
+ * того же письма. Берём текст ПОСЛЕ адреса (пояснение почтовика всегда идёт за
+ * ним) и обрываем на границе его блока: на «Final-Recipient» следующего или на
+ * первой пустой строке. Промахнуться лучше в сторону «не понял причину»: тогда
+ * адрес просто остаётся жить.
+ */
+function bounce_reason_near(string $msg, string $addr): string {
+    $parts = [];
+    $len = strlen($msg);
+    $pos = 0;
+    while (count($parts) < 5 && ($p = stripos($msg, $addr, $pos)) !== false) {
+        $start = $p + strlen($addr);
+        $end   = min($len, $start + 600);
+        $next  = stripos($msg, 'Final-Recipient', $start);
+        if ($next !== false && $next < $end) $end = $next;
+        $chunk = substr($msg, $start, max(0, $end - $start));
+        // Пустая строка разделяет блоки получателей и в машинной части DSN, и в
+        // человеческом тексте, а пояснение почтовика пустых строк внутри не имеет.
+        if (preg_match('/\R[ \t]*\R/', $chunk, $bm, PREG_OFFSET_CAPTURE)) {
+            $chunk = substr($chunk, 0, $bm[0][1]);
+        }
+        if ($chunk !== '') $parts[] = $chunk;
+        $pos = $start;
+    }
+    return implode("\n", $parts);
+}
+
 // Ищем недавние письма от почтовых демонов (за 14 дней).
 $since = date('d-M-Y', time() - 14 * 86400);
 [$ok, $body] = bounce_imap($imapHost, $imapPort, $user, $pass, 'INBOX',
@@ -94,16 +128,24 @@ foreach ($ids as $seq) {
     // «<addr>: ... does not exist / user unknown / 550 5.1.1»
     if (preg_match_all('/<([^\s<>]+@[^\s<>]+)>[^\n]{0,80}(?:5\.1\.1|does not exist|user unknown|no such user|mailbox unavailable|not found|заблокир|не существ)/iu', $msg, $mm)) $cands = array_merge($cands, $mm[1]);
 
-    $isHard = (bool) preg_match('/(5\.1\.1|5\.0\.0|550|does not exist|user unknown|no such user|mailbox (?:unavailable|not found)|account (?:disabled|unavailable)|не существ|заблокир)/iu', $msg);
-    if (!$isHard) continue;   // мягкие/временные ошибки не выводим из базы
-
+    // КОД БЕЗ ПОЯСНЕНИЯ НИЧЕГО НЕ ДОКАЗЫВАЕТ. Голые 550 и 5.0.0 стояли здесь в
+    // признаках «жёсткого отказа», хотя «550 Message rejected under suspicion of
+    // SPAM» — это про канал, а не про адрес: ровно на такой логике 10.08 из базы
+    // ушли 2 695 живых адресов. Решение принимает единый разбор
+    // mrep_bounce_is_proof() и только по тексту рядом с конкретным адресом.
     foreach (array_unique(array_map('mb_strtolower', $cands)) as $addr) {
         $addr = trim($addr);
         if ($addr === '' || !filter_var($addr, FILTER_VALIDATE_EMAIL)) continue;
         // Не трогаем собственные служебные адреса.
         if (stripos($addr, 'yandex') !== false && stripos($addr, 'daemon') !== false) continue;
+        $reason = bounce_reason_near($msg, $addr);
+        if (!mrep_bounce_is_proof($reason)) continue;   // молчаливый и мягкий отказ адрес не хоронят
         $sub = one("SELECT active FROM subscribers WHERE email=?", [$addr]);
-        if ($sub && (int) $sub['active'] === 1) { nl_mark_bounced($addr, 'imap-dsn'); $marked++; }
+        if ($sub && (int) $sub['active'] === 1) {
+            // Причину пишем в лог: без неё разобрать ошибочную чистку потом нечем.
+            nl_mark_bounced($addr, 'imap-dsn: ' . mb_substr(trim(preg_replace('/\s+/u', ' ', $reason)), 0, 120));
+            $marked++;
+        }
     }
 
     // Помечаем обработанное как прочитанное, чтобы не разбирать повторно.

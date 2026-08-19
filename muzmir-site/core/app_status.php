@@ -58,6 +58,11 @@ function app_state_sql(string $a = 'a', bool $forAdmin = true): string {
     // только когда письмо дошло. Это условие обязано совпадать с развилкой в
     // app_state(), иначе фильтр «Статус» снова начнёт расходиться с бейджем:
     // админ выберет «Оценена» и получит пустой список.
+    // ВНИМАНИЕ при $forAdmin=false: у длинного конкурса (results_mode='list')
+    // письма может не быть вовсе и result_sent_at не заполняется никогда, там
+    // результат раскрывает competitions.results_published_at. Такому запросу
+    // нужен join на competitions и условие app_result_public_sql(), иначе после
+    // оглашения участник снова увидит «На оценке». Сегодня таких вызовов нет.
     $judging = $forAdmin ? "1=0" : "COALESCE($a.result_sent_at,'')=''";
     return "CASE
         WHEN $a.status='rejected' THEN 'rejected'

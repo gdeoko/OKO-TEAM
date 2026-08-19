@@ -308,8 +308,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && input('do') === 'grade_result') {
         // Длинный конкурс (results_mode='list') оценивается той же карточкой, НО письмо-результат
         // НЕ уходит моментально (ниже, стр. с $firstGrade) — итоги копятся в список и публикуются пакетом.
         // После сохранения возвращаемся в раздел «Оценка длинных», а не в короткую очередь.
-        $curMode = one("SELECT results_mode FROM competitions WHERE id=?", [(int) $cur['competition_id']]);
+        $curMode = one("SELECT results_mode, is_paid FROM competitions WHERE id=?", [(int) $cur['competition_id']]);
         $isLongComp = (string) ($curMode['results_mode'] ?? '') === 'list';
+        // Наградные документы центр изготавливает сам только у короткого платного
+        // конкурса (cron/send_diplomas.php). У длинного и у бесплатного их
+        // заказывает участник — обещать их в ответе нельзя.
+        $compPaid = (int) ($curMode['is_paid'] ?? 0) === 1;
         // Балльная система убрана — итог задаётся только званием, без числового балла.
         $score = null;
         require_once BASE_PATH . '/core/send_timing.php';
@@ -335,8 +339,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && input('do') === 'grade_result') {
         $resultSendAt = $resultAt ? $resultAt->format('Y-m-d H:i:s') : '';
 
         $firstGrade = trim((string)($cur['result'] ?? '')) === '';
-        $changed = ((string)$cur['result'] !== $result)
-            || ((string)($cur['extra_diploma'] ?? '') !== $extra);
+        $resultChanged = ((string)$cur['result'] !== $result);
+        $extraChanged  = ((string)($cur['extra_diploma'] ?? '') !== $extra);
+        $changed = $resultChanged || $extraChanged;
 
         update('applications', [
             'result' => $result, 'score' => $score,
@@ -351,8 +356,25 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && input('do') === 'grade_result') {
           [date('Y-m-d H:i:s'), $appId]);
         q("UPDATE jury_assignments SET done=1 WHERE application_id=?", [$appId]);
 
-        // Итог изменился, а диплом ещё НЕ отправлен — сносим (cron пересоздаст по подаче + N раб.дней).
-        if ($changed) q("DELETE FROM diplomas WHERE application_id=? AND sent_at IS NULL", [$appId]);
+        // СНОСИМ ТОЛЬКО УСТАРЕВШЕЕ И ТОЛЬКО ТО, ЧТО ЦЕНТР СОБЕРЁТ ЗАНОВО САМ.
+        //
+        // Раньше правка итога удаляла ВСЕ неотправленные документы заявки. Но крон
+        // изготавливает лишь основной и дополнительный дипломы короткого платного
+        // конкурса: именной и благодарность — в том числе оплаченные заказом —
+        // не восстанавливал никто, и одна поправленная буква в звании молча
+        // уничтожала купленный документ. Теперь смена звания снимает основной
+        // диплом, смена спец-номинации — дополнительный, а про именной, где
+        // звание тоже напечатано на бланке, честно предупреждаем: перевыпустить.
+        $reissueNamed = 0;
+        if ($resultChanged) {
+            q("DELETE FROM diplomas WHERE application_id=? AND type='main' AND COALESCE(sent_at,'')=''", [$appId]);
+            $reissueNamed = (int) (scalar("SELECT COUNT(*) FROM diplomas
+                                            WHERE application_id=? AND type='named' AND COALESCE(sent_at,'')=''",
+                                          [$appId]) ?? 0);
+        }
+        if ($extraChanged) {
+            q("DELETE FROM diplomas WHERE application_id=? AND type='extra' AND COALESCE(sent_at,'')=''", [$appId]);
+        }
 
         // РЕЗУЛЬТАТ: если срок наступил (моментально/дата в прошлом) — шлём СЕЙЧАС;
         // иначе отправит cron/send_diplomas по result_send_at. Наградные дипломы уходят
@@ -377,11 +399,20 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && input('do') === 'grade_result') {
         require_once BASE_PATH . '/core/app_status.php';
         app_status_sync($appId);
 
-        audit('grade_result', 'application', $appId, ['result'=>$result,'extra'=>$extra,'result_at'=>$resultSendAt]);
+        audit('grade_result', 'application', $appId,
+              ['result'=>$result,'extra'=>$extra,'result_at'=>$resultSendAt,'named_reissue'=>$reissueNamed]);
         $flashWhen = $isLongComp ? 'публикуется пакетом'
             : ($dueNow ? 'результат отправлен сейчас' : ('результат ' . date('d.m.Y H:i', $resultAt->getTimestamp())));
+        // Обещаем наградные дипломы только там, где центр действительно выдаёт их
+        // сам: у длинного и бесплатного конкурса их заказывает участник.
+        $dipWhen = (!$isLongComp && $compPaid)
+            ? ' Наградные дипломы — через ' . $wdays . ' раб. дней от подачи.'
+            : ' Наградные материалы участник заказывает сам после оглашения итогов — центр их не рассылает.';
+        $warnNamed = $reissueNamed > 0
+            ? ' ВНИМАНИЕ: именной диплом (' . $reissueNamed . ' шт.) остался с прежним званием — перевыпустите его в разделе «Дипломы».'
+            : '';
         flash('Итог сохранён: ' . $result . ($extra !== '' ? ' · доп: ' . $extra : '')
-            . ' · ' . $flashWhen . '. Наградные дипломы — через ' . $wdays . ' раб. дней от подачи.', 'success');
+            . ' · ' . $flashWhen . '.' . $dipWhen . $warnNamed, $warnNamed !== '' ? 'warning' : 'success');
         // Правку итога можно начать из карточки заявки — тогда и возвращаемся туда,
         // а не в очередь оценки: администратор пришёл поправить одну заявку, а не
         // судить следующую.

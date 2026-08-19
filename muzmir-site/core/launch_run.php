@@ -507,24 +507,38 @@ function launch_fire(int $compId, string $wave, array $channels, string $when = 
  * ===================================================================== */
 
 /**
- * Дата/время волны запуска.
+ * Дата/время волны запуска. Воскресенье сдвигается, но В РАЗНЫЕ СТОРОНЫ.
  *
- * ВОСКРЕСЕНЬЕ ПЕРЕНОСИМ НА ПОНЕДЕЛЬНИК, ЦЕЛИКОМ. Наружу в выходной ничего не идёт
- * (core/outreach_window.php), поэтому воскресная волна всё равно не выполнится:
- * без переноса она молча простояла бы сутки и ушла бы в понедельник вперемешку со
- * следующей — «последний день приёма» и «приём закрыт» подряд за одно утро.
+ * Наружу в выходной ничего не идёт (core/outreach_window.php), поэтому воскресная
+ * волна просто простояла бы сутки и ушла бы в понедельник вперемешку со следующей.
+ * Сдвигать надо, а вот куда — зависит от того, что волна говорит участнику.
  *
- * Двигаем вперёд, а не назад на субботу: «приём закрыт» на день раньше отрезал бы
- * участникам целые сутки, а «последний день» звал бы поторопиться до срока. Сдвиг
- * общий для пары 25-е 09:00 / 25-е 18:00, поэтому порядок волн не ломается: приём
- * реально закрывается вечером того дня, утром которого о нём предупредили.
+ *   НАЗАД, В СУББОТУ ($shift='back') — предупреждения «осталось 3 дня» и
+ *   «последний день». Сказать раньше срока не страшно: приём ещё идёт, человек
+ *   успеет подать. Сказать позже — значит позвать в уже закрытый конкурс.
+ *
+ *   ВПЕРЁД, В ПОНЕДЕЛЬНИК ($shift='forward') — «приём закрыт» и «результаты».
+ *   Объявить закрытие до закрытия или итоги до подведения нельзя вовсе.
+ *
+ * СДВИГ НЕ ВЫХОДИТ ЗА ГРАНИЦУ МЕСЯЦА. 28 февраля 2027 года — воскресенье, и
+ * перенос вперёд поставил бы волну итогов на 1 марта. Оттуда её снял бы запуск
+ * следующего месяца (launch_schedule_all чистит задания месяца и позже), а
+ * страховочный cron/publish_results_vk.php перестал бы считать волну «своей»,
+ * потому что сверяет месяц run_at с текущим, и опубликовал бы итоги сам — как
+ * раз в воскресенье. Поэтому упёршись в границу месяца, двигаем в другую сторону.
  *
  * Рабочие дни остаются там, ради чего и написаны — сроки оценки и наградных
  * документов (st_is_workday / next_working_slot в core/send_timing.php).
  */
-function launch_workday_at(int $y, int $m, int $d, int $hh, int $mi): string {
+function launch_workday_at(int $y, int $m, int $d, int $hh, int $mi, string $shift = 'forward'): string {
     $t = new \DateTime(sprintf('%04d-%02d-%02d %02d:%02d:00', $y, $m, $d, $hh, $mi));
-    if ((int) $t->format('w') === 0) $t->modify('+1 day');   // воскресенье → понедельник
+    if ((int) $t->format('w') === 0) {
+        $step = $shift === 'back' ? '-1 day' : '+1 day';
+        $try  = (clone $t)->modify($step);
+        // Вышли из месяца кампании — двигаем в противоположную сторону.
+        if ((int) $try->format('n') !== $m) $try = (clone $t)->modify($shift === 'back' ? '+1 day' : '-1 day');
+        $t = $try;
+    }
     return $t->format('Y-m-d H:i:s');
 }
 
@@ -551,7 +565,14 @@ function launch_send_slot(\DateTime $from): \DateTime {
     $h = (int) $t->format('G');
     if ($h < 9)       { $t->setTime(9, (int) $t->format('i') % 10); }
     elseif ($h >= 18) { $t->modify('+1 day'); $t->setTime(9, 0); }
-    if ((int) $t->format('w') === 0) { $t->modify('+1 day'); $t->setTime(9, 0); }
+    // Перенос воскресенья на понедельник ЧАС НЕ МЕНЯЕТ: 10:00 для запуска месяца
+    // выбрано владельцем, в 09:00 пост уходил в пустоту. Раньше setTime(9,0) стоял
+    // безусловно и молча съедал выбранное время.
+    if ((int) $t->format('w') === 0) {
+        $hh = (int) $t->format('G'); $mi = (int) $t->format('i');
+        $t->modify('+1 day');
+        $t->setTime(max(9, $hh), $hh >= 9 ? $mi : 0);
+    }
     return $t;
 }
 
@@ -644,9 +665,11 @@ function launch_schedule_all(string $launchDate, string $launchTime, array $chan
     // 4) Общие посты месяца — стена+сторис + рассылка ВК в личку + in-app (БЕЗ e-mail).
     $ly = (int) date('Y', $lt); $lm = (int) date('n', $lt);
     $commonCh = $enabled(['vk_wall', 'vk_dm', 'inapp']) ?: ['vk_wall', 'inapp'];
-    $d3     = launch_workday_at($ly, $lm, 22, 9, 0);
-    $last   = launch_workday_at($ly, $lm, 25, 9, 0);
-    $closed = launch_workday_at($ly, $lm, 25, 18, 0);
+    // Предупреждения при попадании на воскресенье уходят в субботу (сказать раньше
+    // можно, позже нельзя), объявление о закрытии — в понедельник.
+    $d3     = launch_workday_at($ly, $lm, 22, 9, 0, 'back');
+    $last   = launch_workday_at($ly, $lm, 25, 9, 0, 'back');
+    $closed = launch_workday_at($ly, $lm, 25, 18, 0, 'forward');
     insert('launch_jobs', ['competition_id' => $rep, 'wave' => 'd3',     'channels' => implode(',', $commonCh), 'run_at' => $d3,     'status' => 'scheduled']);
     insert('launch_jobs', ['competition_id' => $rep, 'wave' => 'last',   'channels' => implode(',', $commonCh), 'run_at' => $last,   'status' => 'scheduled']);
     insert('launch_jobs', ['competition_id' => $rep, 'wave' => 'closed', 'channels' => implode(',', $commonCh), 'run_at' => $closed, 'status' => 'scheduled']);

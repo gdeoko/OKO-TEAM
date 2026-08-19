@@ -86,6 +86,7 @@ try { db()->exec("ALTER TABLE diplomas ADD COLUMN scheduled_at TEXT"); } catch (
 try { db()->exec("ALTER TABLE applications ADD COLUMN send_at_override TEXT"); } catch (\Throwable $e) {}
 try { db()->exec("ALTER TABLE competitions ADD COLUMN results_published_at TEXT"); } catch (\Throwable $e) {}
 try { db()->exec("ALTER TABLE diplomas ADD COLUMN send_tries INTEGER DEFAULT 0"); } catch (\Throwable $e) {}
+try { db()->exec("ALTER TABLE diplomas ADD COLUMN queue_id INTEGER"); } catch (\Throwable $e) {}
 try { db()->exec("ALTER TABLE applications ADD COLUMN result_send_at TEXT DEFAULT ''"); } catch (\Throwable $e) {}
 try { db()->exec("ALTER TABLE applications ADD COLUMN result_sent_at TEXT DEFAULT ''"); } catch (\Throwable $e) {}
 
@@ -144,6 +145,31 @@ if (function_exists('all')) {
     }
 }
 
+// 1б) ПИСЬМО ИЗ ОЧЕРЕДИ — ТОЖЕ ОТПРАВКА.
+//
+// Когда почта не приняла наградное письмо сразу, админка кладёт его в mail_queue
+// (кнопка «Отправить сейчас» и раздел «Дипломы») и запоминает номер письма в
+// diplomas.queue_id. Пока письмо там стоит, крон второе не шлёт. Ушло — время
+// отправки проставляем по факту доставки; не ушло совсем (failed/cancelled) или
+// письмо из очереди пропало — возвращаем наградный материал в работу крона.
+// Раньше вместо этого при отказе почты писалось sent_at='' — и диплом выпадал и
+// из автоотправки, и из «Отправок» навсегда.
+try {
+    foreach (all("SELECT d.id, d.application_id, q.status AS qstatus, q.sent_at AS qsent
+                    FROM diplomas d
+                    LEFT JOIN mail_queue q ON q.id = d.queue_id
+                   WHERE COALESCE(d.queue_id,0) > 0 AND COALESCE(d.sent_at,'') = ''") as $__r) {
+        $__st = (string) ($__r['qstatus'] ?? '');
+        if ($__st === 'sent') {
+            update('diplomas', ['sent_at' => ((string) ($__r['qsent'] ?? '')) ?: $now->format('Y-m-d H:i:s'),
+                                'queue_id' => null], 'id=:id', ['id' => (int) $__r['id']]);
+            if (function_exists('app_status_sync')) app_status_sync((int) $__r['application_id']);
+        } elseif ($__st === '' || $__st === 'failed' || $__st === 'cancelled') {
+            update('diplomas', ['queue_id' => null, 'send_tries' => 0], 'id=:id', ['id' => (int) $__r['id']]);
+        }
+    }
+} catch (\Throwable $e) {}
+
 // 2) Планируем отправку у новоаттестованных заявок (результат проставлен, но диплом ещё не спланирован).
 //    Отклонённые заявки не трогаем; повторное grade_result с изменённым итогом удаляет
 //    неотправленный диплом — здесь он будет пересоздан с новым результатом и свежим PDF.
@@ -163,6 +189,13 @@ if (function_exists('all')) {
 // после оценки и вставал в очередь на 28-е число. Бесплатный конкурс раздавал бы
 // платные документы сам, да ещё и раньше, чем участник увидит результат.
 //
+// НЕДОСТАЮЩИЙ ДОКУМЕНТ ИЩЕМ ПО ТИПУ, А НЕ «ХОТЬ ОДИН ДИПЛОМ ЕСТЬ».
+//
+// Условие NOT EXISTS по всей заявке отсекало её целиком, стоило появиться любому
+// диплому: после смены звания у заявки с отправленным основным спец-номинация не
+// изготавливалась никогда, а обещание «наградные дипломы — через N раб. дней»
+// оставалось невыполненным. Теперь берём заявку, если ей не хватает основного
+// либо (при назначенной спец-номинации) дополнительного.
 $fresh = all("SELECT a.*, c.results_mode, c.results_date, c.is_paid AS comp_is_paid
               FROM applications a
               JOIN competitions c ON c.id = a.competition_id
@@ -170,31 +203,41 @@ $fresh = all("SELECT a.*, c.results_mode, c.results_date, c.is_paid AS comp_is_p
                 AND a.status <> 'rejected'
                 AND COALESCE(c.results_mode,'email') <> 'list'
                 AND COALESCE(c.is_paid,0) = 1
-                AND NOT EXISTS (SELECT 1 FROM diplomas d WHERE d.application_id = a.id)");
+                AND (
+                      NOT EXISTS (SELECT 1 FROM diplomas d WHERE d.application_id = a.id AND d.type='main')
+                   OR (COALESCE(a.extra_diploma,'') <> ''
+                       AND NOT EXISTS (SELECT 1 FROM diplomas d WHERE d.application_id = a.id AND d.type='extra'))
+                )");
 foreach ($fresh as $a) {
     $comp = one("SELECT * FROM competitions WHERE id=?", [$a['competition_id']]);
     if (!$comp) continue;
 
-    // 2а. Генерируем PDF основного диплома: сначала HTML-шаблон (эталон, печать
-    //     Chromium'ом на бастионе), при недоступности — старый GD-генератор.
-    $pdfPath = null;
-    try { $pdfPath = diploma_pdf_html((array)$a); } catch (\Throwable $e) { $pdfPath = null; }
-    if (!$pdfPath && function_exists('pdf_diploma')) {
-        try { $pdfPath = pdf_diploma((array)$a, 'main'); } catch (\Throwable $e) { $pdfPath = null; }
-    }
+    $hasMain  = (int) (scalar("SELECT COUNT(*) FROM diplomas WHERE application_id=? AND type='main'",  [(int)$a['id']]) ?? 0);
+    $hasExtra = (int) (scalar("SELECT COUNT(*) FROM diplomas WHERE application_id=? AND type='extra'", [(int)$a['id']]) ?? 0);
+
     // 2б. Планируем отправку: ручной override администратора > режим конкурса > 3 раб.дня от даты подачи.
     $sched = _plan_send_at($now, (array)$a, (array)$comp);
-    insert('diplomas', [
-        'number'         => diploma_make_number((string)$a['number'], 'main'),
-        'application_id' => (int)$a['id'],
-        'type'           => 'main',
-        'result'         => (string)$a['result'],
-        'pdf_path'       => $pdfPath ?: '',
-        'lang'           => 'ru',
-        'scheduled_at'   => $sched->format('Y-m-d H:i:s'),
-    ]);
+
+    // 2а. Генерируем PDF основного диплома: сначала HTML-шаблон (эталон, печать
+    //     Chromium'ом на бастионе), при недоступности — старый GD-генератор.
+    if (!$hasMain) {
+        $pdfPath = null;
+        try { $pdfPath = diploma_pdf_html((array)$a); } catch (\Throwable $e) { $pdfPath = null; }
+        if (!$pdfPath && function_exists('pdf_diploma')) {
+            try { $pdfPath = pdf_diploma((array)$a, 'main'); } catch (\Throwable $e) { $pdfPath = null; }
+        }
+        insert('diplomas', [
+            'number'         => diploma_make_number((string)$a['number'], 'main'),
+            'application_id' => (int)$a['id'],
+            'type'           => 'main',
+            'result'         => (string)$a['result'],
+            'pdf_path'       => $pdfPath ?: '',
+            'lang'           => 'ru',
+            'scheduled_at'   => $sched->format('Y-m-d H:i:s'),
+        ]);
+    }
     // 2б-доп. Дополнительный диплом (спецноминация) — ОТДЕЛЬНЫМ документом, тем же расписанием.
-    if (trim((string)($a['extra_diploma'] ?? '')) !== '') {
+    if (!$hasExtra && trim((string)($a['extra_diploma'] ?? '')) !== '') {
         $pdfExtra = null;
         try { $pdfExtra = diploma_pdf_html((array)$a, ['extra' => true]); } catch (\Throwable $e) { $pdfExtra = null; }
         insert('diplomas', [
@@ -242,7 +285,12 @@ $dueList = all("SELECT d.*, a.email, a.full_name, a.number AS app_number, c.name
                 FROM diplomas d
                 JOIN applications a ON a.id = d.application_id
                 JOIN competitions c ON c.id = a.competition_id
-                WHERE d.sent_at IS NULL
+                -- Неотправленным считаем и NULL, и пустую строку: раньше при отказе
+                -- почты сюда писалось '', и такой диплом не проходил ни по одному
+                -- условию IS NULL — выпадал из очереди навсегда.
+                WHERE COALESCE(d.sent_at,'') = ''
+                  -- письмо уже стоит в очереди (queue_id) — второе не шлём
+                  AND COALESCE(d.queue_id,0) = 0
                   AND d.scheduled_at IS NOT NULL
                   AND d.scheduled_at <= ?
                   AND COALESCE(d.send_tries,0) < 5

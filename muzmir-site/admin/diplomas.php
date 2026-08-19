@@ -257,6 +257,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && input('do') === 'send') {
     // Разворачиваем путь тем же кодом, что и крон.
     if (!defined('MM_EMAIL_TEST_LIB')) define('MM_EMAIL_TEST_LIB', 1);
     require_once BASE_PATH . '/cron/send_diplomas.php';
+    // Связь письма очереди с дипломом: по ней крон проставит время отправки.
+    require_once BASE_PATH . '/core/dispatch_ops.php';
+    dops_ensure_queue_col();
 
     foreach ($ids as $did) {
         $d = one("SELECT d.*, a.email, a.full_name, a.group_name, a.is_group, c.name comp
@@ -283,9 +286,16 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && input('do') === 'send') {
             $noFile++;
             continue;
         }
-        insert('mail_queue', ['to_email'=>$d['email'],'to_name'=>$name,'subject'=>$subject,'body'=>$body,'attach'=>$pdfAbs]);
-        q("UPDATE diplomas SET sent_at=datetime('now','localtime') WHERE id=?", [$did]);
-        q("UPDATE applications SET status='sent' WHERE id=?", [$d['application_id']]);
+        $qid = insert('mail_queue', ['to_email'=>$d['email'],'to_name'=>$name,'subject'=>$subject,'body'=>$body,'attach'=>$pdfAbs]);
+        // ОТПРАВЛЕННЫМ ДИПЛОМ СТАНОВИТСЯ ПОСЛЕ ДОСТАВКИ, А НЕ ПОСЛЕ ПОСТАНОВКИ В ОЧЕРЕДЬ.
+        //
+        // Раньше здесь же проставлялось sent_at и статус заявки. Письмо могло
+        // окончательно провалиться (status='failed' после пяти попыток), а диплом
+        // навсегда числился отправленным: попадал в кабинет, подтверждался на
+        // /verify и выпадал из выборки крона — второй попытки не было ни у кого.
+        // Теперь запоминаем письмо, а время отправки и статус заявки проставит
+        // cron/send_diplomas.php по факту доставки.
+        q("UPDATE diplomas SET queue_id=? WHERE id=?", [$qid, $did]);
         $queued++;
     }
     audit('diplomas_send', 'diploma', null, ['queued'=>$queued, 'no_file'=>$noFile]);
@@ -317,14 +327,20 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && input('do') === 'resend') {
             : '<p>Здравствуйте, ' . h($name) . '.</p><p>Повторно направляем Ваш диплом № ' . h($d['number']) . ' по конкурсу «' . h($d['comp']) . '».</p>';
         if (!defined('MM_EMAIL_TEST_LIB')) define('MM_EMAIL_TEST_LIB', 1);
         require_once BASE_PATH . '/cron/send_diplomas.php';
+        require_once BASE_PATH . '/core/dispatch_ops.php';
+        dops_ensure_queue_col();
         $pdfAbs = '';
         if (function_exists('_diploma_files')) { [$pdfAbs] = _diploma_files($d); }
         if ($pdfAbs === '') {
             flash('У этого диплома нет готового PDF — письмо не отправлено. Сгенерируйте документ и повторите.', 'error');
             admin_redirect('diplomas', array_filter(['competition'=>$comp,'tab'=>'sent']));
         }
-        insert('mail_queue', ['to_email'=>$d['email'],'to_name'=>$name,'subject'=>'Ваш диплом (повторно) · '.$d['comp'],'body'=>$body,'attach'=>$pdfAbs]);
-        q("UPDATE diplomas SET sent_at=datetime('now','localtime') WHERE id=?", [$did]);
+        $qid = insert('mail_queue', ['to_email'=>$d['email'],'to_name'=>$name,'subject'=>'Ваш диплом (повторно) · '.$d['comp'],'body'=>$body,'attach'=>$pdfAbs]);
+        // Повтор не меняет факт первой отправки: у отправленного диплома время
+        // остаётся прежним. А если диплом ещё не отмечен отправленным, связываем
+        // его с письмом очереди — время проставит крон по факту доставки, и второе
+        // письмо тем же материалом уже не уйдёт.
+        q("UPDATE diplomas SET queue_id=? WHERE id=? AND COALESCE(sent_at,'')=''", [$qid, $did]);
         audit('diploma_resend', 'diploma', $did);
         flash('Диплом повторно поставлен в очередь.', 'success');
     }
@@ -554,7 +570,12 @@ ob_start(); ?>
               <td><?= h($d['is_group']?$d['group_name']:$d['full_name']) ?><?= vip_mark((int)($d['user_id'] ?? 0), '', (string)($d['email'] ?? '')) ?><br><span class="small muted"><?= h($d['email']) ?></span></td>
               <td><span class="badge badge--gold"><?= h($d['result']) ?></span></td>
               <td><?= $d['pdf_path'] ? '<a href="'.h(url($d['pdf_path'])).'" target="_blank">файл</a>' : '<span class="small muted">нет</span>' ?></td>
-              <td class="small"><?= $d['sent_at'] ? h(date('d.m.y H:i', strtotime($d['sent_at']))) : '<span class="badge badge--muted">нет</span>' ?></td>
+              <?php // «В очереди» — письмо поставлено, но почта его ещё не отдала: время появится после доставки. ?>
+              <td class="small"><?= $d['sent_at']
+                    ? h(date('d.m.y H:i', strtotime($d['sent_at'])))
+                    : ((int)($d['queue_id'] ?? 0) > 0
+                        ? '<span class="badge badge--muted">в очереди</span>'
+                        : '<span class="badge badge--muted">нет</span>') ?></td>
               <td><?php if ($d['sent_at']): ?>
                 <button form="resend<?= $d['id'] ?>" class="btn btn--ghost btn--sm" title="Повторить"><?= admin_icon('send') ?></button>
               <?php endif; ?></td>

@@ -211,6 +211,9 @@ function mrep_domain_day_cap(string $domain): int {
     $start = max(100, (int) setting('nl_domain_start_cap', '1200'));
     $max   = max($start, (int) setting('nl_domain_cap_max', '6000'));
     $grow  = max(1.1, (float) setting('nl_domain_grow', '1.5'));
+    // Пробная норма нужна уже здесь: ниже неё сохранённая норма не опускается,
+    // а выше её поднимать нельзя — иначе проба перестаёт быть пробой (см. ниже).
+    $probe = max(5, (int) setting('nl_domain_probe_cap', '30'));
     $today = date('Y-m-d');
 
     $row = one("SELECT day_cap, cap_date FROM mail_domain_caps WHERE domain=?", [$d]);
@@ -220,7 +223,14 @@ function mrep_domain_day_cap(string $domain): int {
         return $cache[$d] = $start;
     }
 
-    $cap  = max(100, (int) $row['day_cap']);
+    // ПОЛ ЧИТАЕМОЙ НОРМЫ — ПРОБНАЯ НОРМА, А НЕ СОТНЯ.
+    //
+    // Здесь стоял max(100, ...), и он отменял всё, что решала ветка полной
+    // блокировки: в mail_domain_caps лежало «mail.ru = 30, домен заблокирован,
+    // только проба», а отправщик получал 100. Опустить норму ниже сотни было
+    // нельзя в принципе, то есть каждый день мы дарили закрывшей дверь службе
+    // семьдесят лишних гарантированных отказов.
+    $cap  = max($probe, (int) $row['day_cap']);
     $when = (string) $row['cap_date'];
     if ($when === $today) return $cache[$d] = $cap;
 
@@ -266,12 +276,14 @@ function mrep_domain_day_cap(string $domain): int {
     // (nl_domain_probe_cap, по умолчанию 30). Этого хватает, чтобы каждый день
     // проверять, открылась ли дверь, и мало, чтобы навредить. Как только придёт
     // хоть одна доставка, домен выходит из пробы обычным ростом.
-    $probe = max(5, (int) setting('nl_domain_probe_cap', '30'));
     $fullyBlocked = $dl === 0 && $hb >= 50;
 
     if ($tot < 50)        $new = $cap;                          // мало данных — стоим на месте
     elseif ($fullyBlocked) $new = $probe;                       // дверь закрыта — только проба
-    elseif ($pct >= 25)   $new = (int) max($floor, $cap / 2);   // отбивают — вдвое назад, но не ниже пола
+    // Снижение не должно оборачиваться повышением: у службы в пробе норма ниже
+    // пола, и один max() поднял бы её с тридцати сразу до восьмисот — ровно в тот
+    // день, когда служба отбивает каждое четвёртое письмо.
+    elseif ($pct >= 25)   $new = (int) min($cap, max($floor, $cap / 2));
     elseif ($pct >= 10)   $new = $cap;                          // ни туда ни сюда — держим
     else                  $new = (int) min($max, ceil($cap * $grow));
 
@@ -304,7 +316,7 @@ function mrep_domain_day_cap(string $domain): int {
             $best = max($best, $rate($other, $when));
         }
         if ($best > 0.02 && $mine < $best * 0.4) {
-            $new = (int) max($floor, min($new, $cap / 2));
+            $new = (int) min($cap, max($floor, min($new, $cap / 2)));   // наказание не повышает норму
             q("UPDATE mail_domain_caps SET note=? WHERE domain=?",
               [sprintf('доставляет, но не открывают: %.0f%% против %.0f%% у лучшей службы — похоже на «Спам»',
                        $mine * 100, $best * 100), $d]);
@@ -327,23 +339,38 @@ function mrep_ensure_caps(): void {
         note     TEXT DEFAULT '')");
 }
 
-/** Сколько писем уже ушло сегодня в каждый домен. Один запрос на прогон. */
-function mrep_sent_today_by_domain(): array {
+/**
+ * Сколько писем уже ушло сегодня в каждую службу. Один запрос на прогон.
+ *
+ * $bump — служба, которой письмо ушло ПРЯМО СЕЙЧАС. Без этого счётчик за весь
+ * прогон оставался таким, каким его прочитали на входе, и норма перелетала на
+ * размер пачки: при пробной норме в 30 писем и пачке в 12 это уже не мелочь.
+ */
+function mrep_sent_today_by_domain(?string $bump = null): array {
     static $map = null;
-    if ($map !== null) return $map;
-    $map = [];
-    try {
-        foreach (all("SELECT LOWER(SUBSTR(to_email, INSTR(to_email,'@') + 1)) d, COUNT(*) c
-                        FROM mail_queue
-                       WHERE status='sent' AND date(sent_at)=date('now','localtime')
-                         AND INSTR(to_email,'@') > 0
-                       GROUP BY 1") as $r) {
-            // Ключ — служба: письмо на bk.ru тратит ту же норму, что и на mail.ru.
-            $b = mrep_bucket((string) $r['d']);
-            $map[$b] = ($map[$b] ?? 0) + (int) $r['c'];
-        }
-    } catch (\Throwable $e) {}
+    if ($map === null) {
+        $map = [];
+        try {
+            foreach (all("SELECT LOWER(SUBSTR(to_email, INSTR(to_email,'@') + 1)) d, COUNT(*) c
+                            FROM mail_queue
+                           WHERE status='sent' AND date(sent_at)=date('now','localtime')
+                             AND INSTR(to_email,'@') > 0
+                           GROUP BY 1") as $r) {
+                // Ключ — служба: письмо на bk.ru тратит ту же норму, что и на mail.ru.
+                $b = mrep_bucket((string) $r['d']);
+                $map[$b] = ($map[$b] ?? 0) + (int) $r['c'];
+            }
+        } catch (\Throwable $e) {}
+    }
+    if ($bump !== null && $bump !== '') $map[$bump] = ($map[$bump] ?? 0) + 1;
     return $map;
+}
+
+/** Письмо ушло: счётчик службы растёт сразу, не дожидаясь следующего прогона. */
+function mrep_note_sent(string $email): void {
+    $d = mrep_domain($email);
+    if ($d === '') return;
+    mrep_sent_today_by_domain(mrep_bucket($d));
 }
 
 /** Суточная норма этой службы уже выбрана? */

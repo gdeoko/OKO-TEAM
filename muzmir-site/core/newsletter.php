@@ -696,6 +696,61 @@ function nl_mark_bounced(string $email, string $reason = 'bounce'): void {
 }
 
 /**
+ * ОТКАЗ ПО АДРЕСУ УЧРЕЖДЕНИЯ ТОЖЕ НАДО ЗАПИСАТЬ.
+ *
+ * Разбор отказов знал только про подписчиков, а списка учреждений не касался
+ * вовсе: из 181 адреса, про который сервис прямым текстом сказал «ящик закрыт»,
+ * 170 — это учреждения в статусе «приглашено». Статус им до сих пор ставил один
+ * лишь разбор событий доставки (cron/mail_events_apply.php), а такого события
+ * не будет: письмо отбито ещё на приёме, доставлять было нечего. Без этой записи
+ * мёртвый адрес возвращается следующей волной и снова тратит вызовы API.
+ *
+ * Считаем отказы, а не выносим приговор с первого раза: правило двух отказов
+ * живёт в inst_bounce() и защищает живой адрес от разовой осечки сервиса.
+ */
+function nl_mark_inst_bounced(string $email, string $reason = ''): void {
+    $email = mb_strtolower(trim($email));
+    if ($email === '') return;
+    if (!function_exists('inst_bounce')) {
+        $f = __DIR__ . '/institutions.php';
+        if (!is_file($f)) return;
+        require_once $f;
+    }
+    if (!function_exists('inst_bounce')) return;
+    inst_bounce($email, mb_substr($reason, 0, 200));
+    // След в журнале обязателен: по нему видно, что мёртвые адреса действительно
+    // выходят из базы. Раньше на тысячу отказов в сутки не было ни одной строки.
+    try {
+        $r = one("SELECT status, COALESCE(bounce_count,0) bc FROM institutions WHERE LOWER(email)=?", [$email]);
+        if ($r) nl_log('bounce(учреждение): ' . $email . ' → ' . (string) $r['status']
+                     . ', отказов ' . (int) $r['bc'] . ' (' . mb_substr($reason, 0, 80) . ')');
+    } catch (\Throwable $e) {}
+}
+
+/**
+ * ВЕРДИКТ СЕРВИСА ПО САМОМУ АДРЕСУ ИЗ СЫРОГО ОТВЕТА.
+ *
+ * Ответ «письмо не принято» приходит двумя разными путями. Разобранный
+ * («Unisender отклонил адрес: permanent_unavailable») понимался и раньше, а вот
+ * отказ по HTTP 400 ложится в ошибку целым куском JSON:
+ *   Unisender: HTTP 400 {"status":"error",...,"failed_emails":{"a@b.ru":"permanent_unavailable"}}
+ * Под иглы ниже он не подходил ни одной буквой, считался НАШИМ сбоем — и мёртвый
+ * адрес возвращался в очередь снова и снова: 19 августа 160 таких адресов дали
+ * 1 047 холостых вызовов API, по 18 попыток на письмо, и ни один из базы не вышел.
+ *
+ * Получатель в письме ровно один, поэтому вердикт из failed_emails — про него.
+ * Ответ обрезан двумя сотнями символов, так что закрывающей кавычки может не быть.
+ *
+ * @return string слово сервиса ('' — сервис про адрес ничего не сказал)
+ */
+function nl_service_verdict(string $err): string {
+    $pos = mb_stripos($err, 'failed_emails');
+    if ($pos === false) return '';
+    if (!preg_match('~"\s*:\s*"([a-z_]+)~i', mb_substr($err, $pos), $m)) return '';
+    return mb_strtolower($m[1]);
+}
+
+/**
  * ОТКАЗ АДРЕСАТА ИЛИ НАШ СОБСТВЕННЫЙ СБОЙ?
  *
  * Отличать обязательно. «Ящика не существует» — вина адреса, его надо вывести из базы.
@@ -709,6 +764,17 @@ function nl_mark_bounced(string $email, string $reason = 'bounce'): void {
 function nl_failure_kind(string $err): string {
     $e = mb_strtolower($err);
     if (trim($e) === '') return 'soft';
+
+    // Слово сервиса про КОНКРЕТНЫЙ адрес весит больше всего остального в строке:
+    // это ответ про получателя, а не про наш канал. Сверяем по началу слова —
+    // обрезанный хвост ответа не должен превращать приговор в «наш сбой».
+    $verdict = nl_service_verdict($e);
+    if (mb_strlen($verdict) >= 6) {
+        foreach (['invalid', 'permanent_unavailable', 'blocked', 'unsubscribed', 'complained'] as $w) {
+            if (str_starts_with($w, $verdict) || str_starts_with($verdict, $w)) return 'hard';
+        }
+        return 'soft';                       // temporary_unavailable и прочее временное
+    }
 
     // ВЫВОДИМ АДРЕС ИЗ БАЗЫ ТОЛЬКО ПО ПРЯМОМУ ТЕКСТУ ПОЧТОВИКА О ПОЛУЧАТЕЛЕ.
     //
@@ -809,6 +875,9 @@ function nl_prune_failed(): int {
         if (nl_failure_kind((string) $r['error']) === 'hard') {
             $sub = one("SELECT active FROM subscribers WHERE email=?", [$e]);
             if ($sub && (int) $sub['active'] === 1) { nl_mark_bounced($e, 'отказ адресата'); $n++; }
+            // Тот же адрес может быть учреждением, а не подписчиком: чаще всего
+            // именно так и есть. Иначе следующая волна поставит письмо заново.
+            nl_mark_inst_bounced($e, 'отказ адресата: ' . mb_substr((string) $r['error'], 0, 120));
             continue;
         }
         // Наш сбой: возвращаем письмо в очередь, подписчика не трогаем.
@@ -1182,6 +1251,11 @@ function nl_purge_person(string $email, string $reason = 'недоставка')
         // 2. Неотправленные письма этому адресу — снять с очереди.
         q("UPDATE mail_queue SET status='cancelled', error=? WHERE LOWER(to_email)=? AND status IN ('queued','paused')",
           [mb_substr('снято: ' . $reason, 0, 300), $email]);
+
+        // 2а. Список учреждений живёт отдельно от подписчиков, и снять адрес из
+        // одного мало: холодная волна берёт получателей из institutions и вернёт
+        // мёртвый адрес в очередь на следующем же заходе.
+        nl_mark_inst_bounced($email, $reason);
 
         // 3. Учётная запись с кабинетом.
         $u = one("SELECT id, role FROM users WHERE LOWER(email)=?", [$email]);
@@ -1735,6 +1809,11 @@ function newsletter_process_queue(int $limit): int {
                     unset($bulk[$k]);                       // письмо занято этим прогоном
                     if ($sendRow($row, $acc)) {
                         $sent++; $bulkSent++; $typeLeft[$ct]--;
+                        // Норму службы уменьшаем сразу. Счётчик отправленного
+                        // читается из базы один раз за прогон, и без этой строки
+                        // вся пачка проходит по цифрам, снятым до её отправки: при
+                        // пробной норме в 30 писем перелёт получается в треть нормы.
+                        if (function_exists('mrep_note_sent')) mrep_note_sent((string) $row['to_email']);
                         // Слот ставим ТОМУ ящику, который реально отправил. Если выбранный
                         // отказал и сработала автозамена, паузу должен получить заменивший,
                         // иначе он отправит два письма подряд без выдержки.

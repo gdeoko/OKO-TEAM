@@ -325,15 +325,22 @@ $apps = all("SELECT a.*, c.name AS comp_name, c.slug AS comp_slug, c.is_paid AS 
                     c.results_published_at AS comp_results_pub
              FROM applications a LEFT JOIN competitions c ON c.id=a.competition_id
              WHERE a.user_id=? ORDER BY a.created_at DESC", [$uid]);
-// ГЛАВНОЕ ПРАВИЛО КАБИНЕТА: участник видит ровно то, что уже пришло к нему на почту.
-// Пока письмо с результатом не отправлено (result_sent_at пуст) — ни звания, ни
-// «Оценена» в кабинете нет, даже если жюри уже проставило оценку в админке.
+// ГЛАВНОЕ ПРАВИЛО КАБИНЕТА: участник видит ровно то, что ему уже оглашено.
+// У короткого конкурса оглашение это письмо (applications.result_sent_at), у длинного
+// (results_mode='list') публикация списка (competitions.results_published_at).
+// Раньше кабинет требовал И то, и другое, а волна длинного конкурса result_sent_at не
+// заполняет вообще. Поэтому после оглашения звание всё равно затиралось: участник
+// видел «Награды можно будет заказать после оглашения результата» и терял кнопку
+// заказа, хотя письмо уже получил, а /results и /awards результат раскрывали.
+// Условие обязано совпадать с app_result_public_sql() и app_state() слово в слово.
 foreach ($apps as &$_a) {
-    $_longHidden = ((string)($_a['comp_results_mode'] ?? '') === 'list')
-        && trim((string)($_a['comp_results_pub'] ?? '')) === '';
-    // Результат ещё не доставлен участнику — прячем так же, как длинный до публикации.
-    $_notDelivered = trim((string)($_a['result_sent_at'] ?? '')) === '';
-    $_hide = $_longHidden || $_notDelivered;
+    $_isList     = (string)($_a['comp_results_mode'] ?? '') === 'list';
+    $_listPub    = trim((string)($_a['comp_results_pub'] ?? '')) !== '';
+    $_longHidden = $_isList && !$_listPub;
+    // Отклонённой заявке звание не показываем никогда: то же исключение стоит в
+    // app_result_public_sql(), иначе под блоком отказа встанет титул и «Заказать награды».
+    $_hide = (string)($_a['status'] ?? '') === 'rejected'
+        || ($_isList ? !$_listPub : trim((string)($_a['result_sent_at'] ?? '')) === '');
 
     $_a['_state'] = app_state((array)$_a, false);        // состояние глазами участника
     $_a['_long_hidden'] = $_longHidden;

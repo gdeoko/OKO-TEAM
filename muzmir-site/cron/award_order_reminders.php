@@ -18,9 +18,13 @@
  * cron/process_newsletter_queue.php. Плюс in-app уведомление участнику
  * (core/notifications.php, notify_user).
  *
- * Рекомендуемая строка crontab (раз в день в 11:00 по Москве; час указывается
- * в системной зоне сервера — при TZ сервера UTC ставить 0 8 * * *):
- *   0 11 * * * php /path/to/muzmir-site/cron/award_order_reminders.php >> /dev/null 2>&1
+ * Строка crontab (см. scripts/crontab.txt). Час ОБЯЗАН лежать внутри рабочего
+ * окна владельца (пн-сб 09:00-19:00 МСК): задание само проверяет окно и вне его
+ * не делает ничего. На 08:00 оно молча выходило на первой строке, а окно заказа
+ * наград всего 60 дней — пропущенное напоминание не отыгрывается. Часовой пояс
+ * крона задан в самом расписании (CRON_TZ=Europe/Moscow), пересчитывать под
+ * системную зону не нужно:
+ *   0 11 * * 1-6 php /path/to/muzmir-site/cron/award_order_reminders.php >> data/logs/cron.log 2>&1
  *
  * Запуск вручную: php cron/award_order_reminders.php
  */
@@ -34,14 +38,10 @@ require_once BASE_PATH . '/core/helpers.php';
 require_once BASE_PATH . '/core/mailer.php';
 
 // РАБОЧЕЕ ОКНО ВЛАДЕЛЬЦА: наружу только пн-сб 09:00-19:00 МСК.
-// Расписание крона само по себе не защищает: оно ставит запуск на 08:00 или на
-// каждый день, включая воскресенье, и письмо от имени центра уходит человеку в
-// нерабочее время. Проверяем окно в самом задании, а не надеемся на крон.
+// Расписание крона само по себе не защищает: час можно поменять руками, и письмо
+// от имени центра уйдёт человеку в нерабочее время. Проверяем окно в самом
+// задании; сама проверка стоит ниже, после подключения cron/_lib.php.
 require_once BASE_PATH . '/core/outreach_window.php';
-if (!in_array('--force', $argv, true) && !outreach_window_ok()) {
-    echo "вне рабочего окна, письма не отправляются\n";
-    exit(0);
-}
 // Фирменные кирпичики письма (rm_mail_layout/rm_mail_btn/rm_award_hint)
 // + core/notifications.php подключается изнутри result_mail.php.
 require_once BASE_PATH . '/core/result_mail.php';
@@ -65,6 +65,14 @@ if (!function_exists('tbl_exists')) {
 // Библиотечный режим: при включённом MM_EMAIL_TEST_LIB подключающий скрипт
 // получает только функции (award_reminder_html и пр.), сам крон не запускается.
 if (defined('MM_EMAIL_TEST_LIB')) return;
+
+// Отказ по окну пишем в общий журнал кронов, а не только в stdout: вывод
+// заданий уходит в /dev/null, и молчаливо пропавшее задание не заметить.
+if (!in_array('--force', $argv, true) && !outreach_window_ok()) {
+    cron_log(JOB, 'вне рабочего окна (' . outreach_window_reason() . '), письма не отправляются');
+    echo "вне рабочего окна, письма не отправляются\n";
+    exit(0);
+}
 
 if (!cron_lock(JOB, 3600 * 6)) {
     cron_log(JOB, 'предыдущий запуск ещё выполняется, выход');

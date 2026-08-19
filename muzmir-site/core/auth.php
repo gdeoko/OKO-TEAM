@@ -160,24 +160,32 @@ function auth_upsert_social(string $provider, string $extId, string $name = '', 
 }
 
 /**
- * Добавляет адрес в subscribers (для рассылок). Идемпотентно, реактивирует отписанных.
- * В схеме subscribers статус хранится в столбце active (1 = confirmed). Пустой email — no-op.
+ * Добавляет адрес в subscribers (для рассылок). Идемпотентно. Пустой email — no-op.
+ * В схеме subscribers статус хранится в столбце active (1 = confirmed).
+ *
+ * ВХОД В КАБИНЕТ — НЕ СОГЛАСИЕ НА РАССЫЛКУ.
+ *
+ * Раньше здесь у существующей записи поднимался active, а функция зовётся не при
+ * регистрации, а при КАЖДОМ входе (пароль, код, телефон, VK, MAX). Человек нажимал
+ * «Отказаться», через месяц заходил за дипломом — и отказ молча отменялся, письма
+ * волны шли снова. Это прямой путь к жалобе на спам и к потере репутации домена.
+ * Поэтому статус существующей записи не трогаем ни в какую сторону: вернуть себя в
+ * рассылку можно только явным действием — api/v1/subscribe.php.
  */
 function auth_add_subscriber(string $email, string $name = '', string $source = 'site'): void {
     $email = mb_strtolower(trim($email));
     if ($email === '' || !filter_var($email, FILTER_VALIDATE_EMAIL)) return;
-    $row = one("SELECT id, active FROM subscribers WHERE email=?", [$email]);
-    if ($row) {
-        if (!(int)$row['active']) update('subscribers', ['active' => 1], 'id=:id', ['id' => (int)$row['id']]);
-        return;
-    }
+    if (one("SELECT id FROM subscribers WHERE email=?", [$email])) return;
+    // Адрес уже в стоп-листе (отказ, жалоба, мёртвый ящик) — новую запись заводим
+    // выключенной: иначе первый же вход вернул бы в волну того, кто просил не писать.
+    $active = (function_exists('mail_is_stopped') && mail_is_stopped($email)) ? 0 : 1;
     try {
         insert('subscribers', [
             'email'       => $email,
             'name'        => $name,
             'source'      => $source,
             'unsub_token' => bin2hex(random_bytes(16)),
-            'active'      => 1,
+            'active'      => $active,
         ]);
     } catch (\Throwable $e) { /* гонка по UNIQUE(email) — ок */ }
 }
