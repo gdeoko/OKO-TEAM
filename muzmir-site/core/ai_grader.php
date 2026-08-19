@@ -50,11 +50,14 @@ function ag_migrate(): void {
             internal_note TEXT DEFAULT '',    -- для оргкомитета
             confidence REAL DEFAULT 0,
             red_flags TEXT DEFAULT '',
+            level_guess TEXT DEFAULT '',      -- звание прямым выбором модели, до перевода балла
             applied INTEGER DEFAULT 0,        -- решение перенесено в заявку
             applied_at TEXT DEFAULT '',
             error TEXT DEFAULT '',
             seconds REAL DEFAULT 0,
             created_at TEXT DEFAULT (datetime('now','localtime')))");
+        // Поле появилось после первых сверок: на уже созданной таблице его надо добавить.
+        try { db()->exec("ALTER TABLE grading_runs ADD COLUMN level_guess TEXT DEFAULT ''"); } catch (\Throwable $e) {}
         db()->exec("CREATE INDEX IF NOT EXISTS idx_gr_app ON grading_runs(application_id)");
         db()->exec("CREATE INDEX IF NOT EXISTS idx_gr_status ON grading_runs(status)");
         db()->exec("CREATE TABLE IF NOT EXISTS grading_rubrics (
@@ -267,8 +270,9 @@ function ag_prompt(array $app, array $rubric): string {
     $L[] = 'ОТВЕТ строго в JSON без markdown и пояснений:';
     $L[] = '{"formal":{"playable":true,"one_piece":true,"participant":true,"nomination":true,"formation":true,"integrity":true,"no_overdub":true,"duration":true,"issues":["..."]},';
     $L[] = ' "criteria":{"КЛЮЧ":{"score":0,"note":"..."}},';
-    $L[] = ' "jury_comment":"...","internal_note":"для оргкомитета: сомнения, спорные места, что проверить человеку",';
+    $L[] = ' "level":"звание одной строкой","jury_comment":"...","internal_note":"для оргкомитета: сомнения, спорные места, что проверить человеку",';
     $L[] = ' "confidence":0.0,"red_flags":["..."]}';
+    $L[] = 'level — звание, которое ты присудила бы этой работе, ровно одной строкой из списка: ГРАН-ПРИ, ЛАУРЕАТ I СТЕПЕНИ, ЛАУРЕАТ II СТЕПЕНИ, ЛАУРЕАТ III СТЕПЕНИ, ДИПЛОМАНТ I СТЕПЕНИ, ДИПЛОМАНТ II СТЕПЕНИ, ДИПЛОМАНТ III СТЕПЕНИ, УЧАСТНИК КОНКУРСА. Выбирай его не по сумме баллов, а сравнением с эталонами и с обычным уровнем потока: балл и звание считаются отдельно и потом сверяются между собой.';
     $L[] = 'confidence — насколько ты уверена в оценке от 0 до 1: 0.9 и выше только когда запись хорошо слышна и видна и случай однозначный.';
     $L[] = 'red_flags — то, из-за чего работу обязан посмотреть человек: подозрение на фонограмму вместо живого исполнения, чужое исполнение, монтаж, несоответствие номинации, неприемлемое содержание.';
     return implode("\n", $L);
@@ -478,7 +482,34 @@ function ag_grade_application(int $appId, array $opt = []): array {
         }
         return gr_title_by_score($sc);
     };
-    $title = $formalFail ? 'ТРЕБУЕТ ПРОВЕРКИ' : $titleByScore($total);
+    // ЗВАНИЕ ПРЯМЫМ ВЫБОРОМ.
+    //
+    // По баллам машина различает работы плохо: почти всё ложится в 76-80, и
+    // черта между званиями проходит по разнице в полбалла, которая ничего не
+    // значит. Отдельным вопросом «какое звание ты присудила бы» она отвечает
+    // увереннее, потому что сравнивает работу с эталонами целиком, а не через
+    // сумму весов. Балл остаётся: он объясняет решение и держит порядок работ.
+    $lvlRaw   = mb_strtoupper(trim((string) ($out['level'] ?? '')));
+    $levels   = ['ГРАН-ПРИ', 'ЛАУРЕАТ I СТЕПЕНИ', 'ЛАУРЕАТ II СТЕПЕНИ', 'ЛАУРЕАТ III СТЕПЕНИ',
+                 'ДИПЛОМАНТ I СТЕПЕНИ', 'ДИПЛОМАНТ II СТЕПЕНИ', 'ДИПЛОМАНТ III СТЕПЕНИ', 'УЧАСТНИК КОНКУРСА'];
+    $levelPick = in_array($lvlRaw, $levels, true) ? $lvlRaw : '';
+    $byScore   = $titleByScore($total);
+    // Способ выбора звания задаётся настройкой, потому что решает его не спор о
+    // подходе, а сверка с жюри: что показало лучшее совпадение, то и стоит.
+    $src = (string) (function_exists('setting') ? setting('grade_title_source', 'score') : 'score');
+    $title = $byScore;
+    if ($levelPick !== '') {
+        if ($src === 'level') {
+            $title = $levelPick;
+        } elseif ($src === 'mix') {
+            // Середина между двумя решениями, при расхождении в пользу строгого:
+            // завышенное звание дороже заниженного, его придётся отзывать.
+            $ri = array_flip($levels);                 // 0 — высшее
+            $m  = (int) ceil((($ri[$byScore] ?? 4) + $ri[$levelPick]) / 2);
+            $title = $levels[max(0, min(count($levels) - 1, $m))];
+        }
+    }
+    if ($formalFail) $title = 'ТРЕБУЕТ ПРОВЕРКИ';
 
     $upd = [
         'status'        => 'ok',
@@ -486,6 +517,7 @@ function ag_grade_application(int $appId, array $opt = []): array {
         'scores'        => json_encode($scores, JSON_UNESCAPED_UNICODE),
         'total'         => $total,
         'title'         => $title,
+        'level_guess'   => $levelPick,
         'jury_comment'  => mb_substr(trim((string) ($out['jury_comment'] ?? '')), 0, 4000),
         'internal_note' => mb_substr(trim((string) ($out['internal_note'] ?? '')), 0, 2000),
         'confidence'    => max(0.0, min(1.0, (float) ($out['confidence'] ?? 0))),

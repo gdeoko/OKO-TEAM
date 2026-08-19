@@ -93,7 +93,7 @@ if (!$report) {
 /* ── Отчёт ── */
 // По одной работе может быть несколько разборов (движок дорабатывался), берём
 // самый свежий. --since=НОМЕР отсекает старые: так видно, что дала доработка.
-$pairs = all("SELECT g.total, g.title AS ai_title, g.confidence, a.result AS jury_title, a.nomination
+$pairs = all("SELECT g.total, g.title AS ai_title, g.level_guess, g.confidence, a.result AS jury_title, a.nomination
                 FROM grading_runs g
                 JOIN applications a ON a.id = g.application_id
                WHERE g.status='ok' AND COALESCE(a.result,'') <> '' AND g.id > ?
@@ -265,10 +265,61 @@ foreach ($thresholds as $t => $v) printf("    от %5.1f балла — %s\n", $
 printf("  на этих же работах: точно %d%%, в пределах ступени %d%%\n",
     (int) round($exact3 * 100 / $n2), (int) round($near3 * 100 / $n2));
 
+/* ЗВАНИЕ ПРЯМЫМ ВЫБОРОМ МОДЕЛИ.
+ *
+ * Третий способ: не переводить балл в звание, а взять звание, которое модель
+ * назвала сама. Баллы у неё жмутся к середине, и черта между званиями проходит
+ * по разнице в полбалла; названное звание опирается на сравнение с эталонами
+ * целиком. Что из этого ближе к жюри — вопрос не спора, а вот этих цифр.
+ */
+$withLevel = array_values(array_filter($pairs, static fn(array $p): bool => trim((string) ($p['level_guess'] ?? '')) !== ''));
+$exact4 = $near4 = $exact5 = $near5 = 0;
+$levels = ['ГРАН-ПРИ', 'ЛАУРЕАТ I СТЕПЕНИ', 'ЛАУРЕАТ II СТЕПЕНИ', 'ЛАУРЕАТ III СТЕПЕНИ',
+           'ДИПЛОМАНТ I СТЕПЕНИ', 'ДИПЛОМАНТ II СТЕПЕНИ', 'ДИПЛОМАНТ III СТЕПЕНИ', 'УЧАСТНИК КОНКУРСА'];
+foreach ($withLevel as $p) {
+    $j  = cal_rank((string) $p['jury_title']);
+    $d4 = cal_rank((string) $p['level_guess']) - $j;
+    if ($d4 === 0) $exact4++;
+    if (abs($d4) <= 1) $near4++;
+    // Смешанный способ: середина между званием по баллу и названным званием.
+    $ri  = array_flip($levels);
+    $bs  = $byThreshold((float) $p['total']);
+    $m   = (int) ceil((($ri[$bs] ?? 4) + ($ri[mb_strtoupper(trim((string) $p['level_guess']))] ?? 4)) / 2);
+    $d5  = cal_rank($levels[max(0, min(7, $m))]) - $j;
+    if ($d5 === 0) $exact5++;
+    if (abs($d5) <= 1) $near5++;
+}
+$nl = count($withLevel);
+if ($nl > 0) {
+    echo "\n  ЗВАНИЕ ПРЯМЫМ ВЫБОРОМ МОДЕЛИ (работ с таким полем: $nl):\n";
+    printf("    только выбор модели:  точно %d%%, в пределах ступени %d%%\n",
+        (int) round($exact4 * 100 / $nl), (int) round($near4 * 100 / $nl));
+    printf("    выбор вместе с баллом: точно %d%%, в пределах ступени %d%%\n",
+        (int) round($exact5 * 100 / $nl), (int) round($near5 * 100 / $nl));
+} else {
+    echo "\n  Звание прямым выбором ещё не считалось: в разборах нет поля level.\n";
+}
+
 if ($apply) {
     // Берём тот способ, который на сверке дал лучший результат, и записываем это
     // прямо: владелец должен видеть, почему выбран именно он.
     $useQuantile = $exact3 >= $exact2;
+    // Способ выбора звания: сравниваем на одной и той же выборке — на тех
+    // работах, где модель назвала звание, иначе сравнение нечестное.
+    if ($nl >= 15) {
+        $exact3s = 0;
+        foreach ($withLevel as $p) {
+            if (cal_rank($byThreshold((float) $p['total'])) === cal_rank((string) $p['jury_title'])) $exact3s++;
+        }
+        $best = max($exact3s, $exact4, $exact5);
+        $src  = $best === $exact4 ? 'level' : ($best === $exact5 ? 'mix' : 'score');
+        set_setting('grade_title_source', $src);
+        printf("  звание берём: %s (точность %d%% против %d%% у балла)\n",
+            ['score' => 'по баллу', 'level' => 'прямым выбором модели', 'mix' => 'середина балла и выбора'][$src],
+            (int) round($best * 100 / $nl), (int) round($exact3s * 100 / $nl));
+    } else {
+        echo "  способ выбора звания не меняем: работ с прямым выбором меньше 15\n";
+    }
     set_setting('grade_scale_mode', $useQuantile ? 'quantile' : 'linear');
     set_setting('grade_score_thresholds', json_encode($thresholds, JSON_UNESCAPED_UNICODE));
     echo "\n  выбран способ: " . ($useQuantile ? 'квантильный' : 'линейный')
