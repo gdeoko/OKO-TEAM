@@ -2414,7 +2414,7 @@ Rocket.prototype.touchdown = function (dt) {
        падал именно от корабля: сухое касание читалось макетом. */
     this._padSteam = this.C.weak ? 0.5 : 1;
     this._padRest = 0;
-    this.steamEmit(this.C.weak ? 30 : 84, 3);
+    this.steamEmit(this.C.weak ? 54 : 130, 3);
     document.documentElement.classList.add("rc-landed-craft");
     if (g.RC_SOUND && g.RC_SOUND.boom) { try { g.RC_SOUND.boom(); } catch (e) {} }
     try { dispatchEvent(new CustomEvent("rc:touchdown")); } catch (e) {}
@@ -2448,7 +2448,7 @@ Rocket.prototype.touchdown = function (dt) {
        частицы порциями по времени кадра, а не по ходу колеса -
        остановился на середине, выброс всё равно доиграет. */
     if (this._padSteam > 0 && tt < 0.95) {
-      this._padRest = (this._padRest || 0) + dt * (this.C.weak ? 22 : 56) * this._padSteam;
+      this._padRest = (this._padRest || 0) + dt * (this.C.weak ? 34 : 78) * this._padSteam;
       var pn = Math.floor(this._padRest);
       if (pn > 0) { this._padRest -= pn; this.steamEmit(pn, 3); }
     }
@@ -3045,16 +3045,23 @@ Rocket.prototype.steamEmit = function (count, kind) {
          а не со стороны двери, и стартовая скорость вдвое выше -
          газ выбивает из-под сопла, а не выдыхается из щели. */
       var pa = Math.random() * 6.283;
-      var pr = 0.16 + Math.random() * 0.42;
+      var pr = 0.20 + Math.random() * 0.55;
       S.pos[j]     = Math.sin(pa) * pr;
       S.pos[j + 1] = gy + Math.random() * 0.05;
       S.pos[j + 2] = Math.cos(pa) * pr;
-      var ps = 1.15 + Math.random() * 1.5;
+      /* Медленнее, чем казалось нужным: на первой сборке клубы
+         разлетались за габарит площадки быстрее, чем глаз успевал их
+         заметить, и касание снова читалось сухим. Газ должен ползти
+         по настилу, а не выстреливать. */
+      var ps = 0.85 + Math.random() * 1.05;
       S.vel[j]     = Math.sin(pa) * ps;
       S.vel[j + 1] = 0.05 + Math.random() * 0.12;   /* чуть вверх: клуб вспухает */
       S.vel[j + 2] = Math.cos(pa) * ps;
-      S.siz[i]     = 0.15 + Math.random() * 0.20;
-      S.amp[i]     = 0.26 + Math.random() * 0.24;
+      S.siz[i]     = 0.19 + Math.random() * 0.26;
+      /* Плотнее пыли: пыль землистая и притушена, чтобы не выбелить
+         площадку, а пар обязан читаться белым клубом - иначе его в
+         кадре попросту нет */
+      S.amp[i]     = 0.42 + Math.random() * 0.3;
       S.max[i]     = 2.6 + Math.random() * 2.2;
       S.curl[i]    = (Math.random() - 0.5) * 0.3;
       S.life[i] = S.max[i];

@@ -320,6 +320,18 @@ html.rc-flying body { overflow: hidden; }
 .rcf-fab svg { width: 19px; height: 19px; color: var(--int-cyan, #42B2DC); }
 html.rc-flying .rcf-fab { opacity: 0; pointer-events: none; }
 
+/* На широком экране кнопка переезжает вправо, к «наверх». Слева
+   внизу лежит подпись раздела, и круглая плашка садилась ровно на
+   строку - в кадре посадки она перечёркивала титр сцены. Справа же
+   вертикаль из двух кнопок читается как один блок управления. */
+@media (min-width: 901px) {
+  .rcf-fab {
+    left: auto;
+    right: clamp(12px, 2.6vw, 28px);
+    bottom: calc(clamp(12px, 3vh, 28px) + 58px);
+  }
+}
+
 html[data-theme="light"] .rcf-fab {
   color: #0A2A40;
   background: linear-gradient(158deg, rgba(var(--int-lit-rgb, 207,233,245), .95), rgba(238,246,252,.98));
