@@ -1245,9 +1245,14 @@ function buildWorld() {
       posA[k * 3 + 2] = (Math.random() - 0.5) * d * 26;
     }
     geo.setAttribute("position", new T.BufferAttribute(posA, 3));
+    /* Размер частицы хвоста был подобран под вид издалека, и на
+       близком пролёте каждая крупинка раздувалась в белый шар на
+       полкадра - хвост читался цепочкой мыльных пузырей. Мельче и
+       ярче: издали хвост тот же, вблизи это россыпь льда, как на
+       снимках Чурюмова-Герасименко. */
     return new T.Points(geo, new T.PointsMaterial({
-      color: 0xbfe4ff, size: 7, sizeAttenuation: true, map: starDot,
-      transparent: true, opacity: 0.55, depthWrite: false, blending: T.AdditiveBlending
+      color: 0xbfe4ff, size: 3.2, sizeAttenuation: true, map: starDot,
+      transparent: true, opacity: 0.72, depthWrite: false, blending: T.AdditiveBlending
     }));
   })();
   comet.add(cometTail);
@@ -1344,6 +1349,9 @@ function buildWorld() {
     }));
     pts.frustumCulled = false;
     pts.renderOrder = 6;
+    /* Пока двигатель молчит, шлейфа нет и в списке отрисовки: точки
+       с нулевой прозрачностью всё равно стоили бы вызова */
+    pts.visible = false;
     scene.add(pts);
     return pts;
   })();
@@ -1508,9 +1516,12 @@ function buildWorld() {
   ];
 
   /* Оптика и шлейф - украшение, а не механика. На просьбе меньше
-     движения и на самом упрощённом режиме страницы их просто нет:
-     игра обязана остаться играбельной, а не красивой любой ценой. */
-  var wantFx = !reduced && root.getAttribute("data-degrade") !== "3";
+     движения и на упрощённых режимах страницы их просто нет: игра
+     обязана остаться играбельной, а не красивой любой ценой.
+     Порог тот же, что у фонового космоса: со второй ступени
+     упрощения страница уже призналась, что не тянет. */
+  var wantFx = !reduced &&
+    (parseInt(root.getAttribute("data-degrade") || "0", 10) || 0) < 2;
 
   return {
     fx: wantFx,
@@ -2006,6 +2017,18 @@ function holoFrame(w3, ts) {
   /* На телефоне экран узкий: держим в кадре только ближайшие метки,
      иначе подписи перекрывают и друг друга, и вид из окна */
   var limit = innerWidth < 760 ? 3 : 8, shown = 0;
+  /* Куда уже поставлены метки. rc-holo умеет разводить карточки по
+     вертикали, но когда два мира проецируются в одну и ту же точку
+     (соседние планеты чужой системы с большой дистанции), разводить
+     нечего: подписи ложатся друг на друга. Такие метки честнее не
+     показывать вовсе - долететь всё равно можно по кнопке в пульте. */
+  if (!holoFrame._px) { holoFrame._px = []; holoFrame._py = []; }
+  var pxs = holoFrame._px, pys = holoFrame._py, pn = 0;
+  /* Порог не круглый, а по форме карточки: она вытянута вправо на
+     две сотни пикселей и высотой в три десятка. Круг радиусом в
+     полсотни пропускал пары, стоящие в строку, - их подписи и
+     наезжали друг на друга. */
+  var gapX = 190, gapY = 46;
   var order = [];
   for (var oid in holoIds) {
     if (!holoIds.hasOwnProperty(oid) || !holoIds[oid].o) continue;
@@ -2060,7 +2083,17 @@ function holoFrame(w3, ts) {
        дальняя метка будет просто чуть меньше ближней. */
     var depth = Math.max(0, Math.min(0.55, (dist - 120) / 2600));
     var on = vis && !F.brief && shown < limit;
-    if (on) shown++;
+    if (on) {
+      /* Ближние метки идут первыми (список отсортирован), поэтому
+         прячется всегда дальняя из пары - так и правильно */
+      for (var pj = 0; pj < pn; pj++) {
+        var gdx = pxs[pj] - sx, gdy = pys[pj] - sy;
+        if (gdx < 0) gdx = -gdx;
+        if (gdy < 0) gdy = -gdy;
+        if (gdx < gapX && gdy < gapY) { on = false; break; }
+      }
+    }
+    if (on) { pxs[pn] = sx; pys[pn] = sy; pn++; shown++; }
     try { g.RC_HOLO.place(id, sx, sy, depth, on); } catch (e3) {}
 
     /* Мир, откуда пришёл запрос трафика, подсвечиваем той же

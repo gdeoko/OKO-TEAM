@@ -54,6 +54,29 @@
 }
 
 
+/* ── 1а. Плотная ступень шкалы кегля ───────────────────────────
+   На телефоне сайт живёт по той же шкале, что и на мониторе,
+   только сдвинутой на ступень вниз. Раньше каждый блок ужимался
+   сам по себе: 14.2 у вопроса, 13.5 у города, 12.5 у вкладки,
+   11.5 у подписи - одиннадцать разных кеглей, и одинаковые по
+   смыслу подписи в соседних блоках отличались на полпикселя.
+   Так выглядит «неровно», даже когда всё выровнено по сетке.
+
+   Переопределяем сами ступени - и весь сайт ужимается разом, не
+   теряя ни одного соотношения. Ниже по файлу остаются только те
+   правила, где роль элемента на телефоне ДРУГАЯ, а не просто
+   мельче (заголовок карточки в колонке шириной 185 пикселей это
+   уже подпись, а не заголовок). */
+@media (max-width: 900px) {
+  :root {
+    --fs-1: 10.5px; --fs-2: 11px;   --fs-3: 12px;   --fs-4: 13px;
+    --fs-5: 14px;   --fs-6: 15px;   --fs-7: 15.5px; --fs-8: 17px;
+    /* Строка чуть плотнее: на узкой колонке она и так короткая */
+    --lh-body: 1.55;
+  }
+}
+
+
 /* ── 2. Шапка блока ────────────────────────────────────────────
    Заголовок с подзаголовком отделялся от содержимого сорока
    пикселями. Между заголовком и тем, что он называет, пауза
@@ -68,9 +91,9 @@
   .sec-tag::before { width: 16px; }
   /* Подзаголовок остаётся целиком, но перестаёт занимать
      столько же места, сколько сам заголовок */
-  .sec-p { font-size: 13px; line-height: 1.5; }
+  .sec-p { font-size: var(--fs-4); }
   /* Строки с галочками под заголовком */
-  .hero-mark { font-size: 12.5px; gap: 7px; }
+  .hero-mark { font-size: var(--fs-3); gap: 7px; }
   .hero-mark svg { width: 14px; height: 14px; }
 }
 
@@ -88,8 +111,11 @@
   .hero h1 { margin-bottom: 12px; }
   .hero-sub { margin-bottom: 16px; }
   .hero-marks { margin-top: 13px; gap: 6px 16px; }
-  /* Кнопки во всю ширину остаются, но перестают быть подушками */
-  .btn-lg { padding: 12px 24px; font-size: 15.5px; }
+  /* Кнопки во всю ширину остаются, но перестают быть подушками.
+     Высоту задаём одним min-height, а не суммой отступов: тогда
+     обе кнопки первого экрана совпадают до пикселя независимо от
+     того, есть у них рамка или нет. */
+  .btn-lg { padding: 8px 24px; min-height: 50px; font-size: var(--fs-5); }
   .btn-row { gap: 8px; }
 }
 
@@ -101,7 +127,7 @@
 @media (max-width: 640px) {
   .kpi > div { padding: 11px 11px; }
   .kpi-n { font-size: 23px; }
-  .kpi-l { font-size: 11.5px; margin-top: 2px; line-height: 1.32; }
+  .kpi-l { font-size: var(--fs-2); margin-top: 2px; line-height: var(--lh-cap); }
 }
 
 
@@ -132,17 +158,22 @@
   .card, .grid.tight .card { padding: 13px 12px; }
   .card-ico, .grid.tight .card-ico { width: 32px; height: 32px; border-radius: 10px; margin-bottom: 8px; }
   .card-ico svg, .grid.tight .card-ico svg { width: 17px; height: 17px; }
-  .card h3, .grid.tight .card h3 { font-size: 14px; line-height: 1.25; margin-bottom: 4px; }
-  .card p  { font-size: 12px; line-height: 1.45; }
+  /* В колонке шириной 185 пикселей заголовок карточки работает как
+     подпись, поэтому берёт ступень подписи, а не заголовка */
+  .card h3, .grid.tight .card h3 { font-size: var(--fs-5); line-height: var(--lh-title); margin-bottom: 4px; }
+  .card p  { font-size: var(--fs-3); line-height: var(--lh-tight); }
 
   /* Зазор у продуктов в rc.css задан отдельно (.grid.tight { gap: 14px })
      и тоже перебивал --gap: ряды продуктов стояли реже соседних сеток */
   .grid.tight { gap: var(--gap); }
 
   /* Список внутри продукта: точки ближе к тексту, строки плотнее */
-  .grid.tight .card p { font-size: 11.5px; line-height: 1.4; }
-  .grid.tight .prod-card ul { margin-top: 7px; gap: 3px; }
-  .grid.tight .prod-card li { font-size: 11px; line-height: 1.38; padding-left: 12px; }
+  .grid.tight .card p { font-size: var(--fs-2); line-height: var(--lh-tight); }
+    /* Отступ над списком даём padding'ом, а не margin'ом: margin-top
+     здесь перебил бы auto из rc.css, которым список прижимается к
+     низу карточки, и маркеры снова разъехались бы по высоте. */
+  .grid.tight .prod-card ul { margin-top: auto; padding-top: 7px; gap: 3px; }
+  .grid.tight .prod-card li { font-size: var(--fs-1); line-height: var(--lh-tight); padding-left: 12px; }
   .grid.tight .prod-card li::before { left: 2px; top: .5em; width: 5px; height: 5px; }
 
   /* Порядковый номер сценария занимал четверть карточки */
@@ -199,8 +230,8 @@
     text-align: left; padding: 12px 14px;
   }
   .flow-node .card-ico { margin: 0; grid-row: span 2; align-self: center; }
-  .flow-node h4 { font-size: 14.5px; margin-bottom: 2px; align-self: end; }
-  .flow-node p  { font-size: 12px; line-height: 1.4; align-self: start; }
+  .flow-node h4 { font-size: var(--fs-5); margin-bottom: 2px; align-self: end; }
+  .flow-node p  { font-size: var(--fs-3); line-height: var(--lh-tight); align-self: start; }
   .flow-link { height: 16px; margin: 4px auto; }
 }
 
@@ -214,17 +245,17 @@
    правка не развалится, если координатор переставит карточки. */
 @media (max-width: 700px) {
   .viz-card { padding: 14px 13px; gap: 9px; }
-  .viz-card > h3 { font-size: 14.5px; }
-  .viz-card > p  { font-size: 12px; line-height: 1.45; }
+  .viz-card > h3 { font-size: var(--fs-6); }
+  .viz-card > p  { font-size: var(--fs-3); line-height: var(--lh-tight); }
 
   .viz-grid:has(.dn-wrap):has(.ga-wrap) { grid-template-columns: 1fr 1fr; }
   .viz-grid:has(.dn-wrap):has(.ga-wrap) > .viz-card:has([data-viz="latency"]) { grid-column: 1 / -1; }
 
   .donut, .gauge { max-width: 140px; }
   .dn-mid b, .ga-mid b { font-size: 22px; }
-  .dn-mid span, .ga-mid span { font-size: 10.5px; }
+  .dn-mid span, .ga-mid span { font-size: var(--fs-1); }
   .lat-row { margin-bottom: 10px; }
-  .lat-top { margin-bottom: 6px; font-size: 12.5px; }
+  .lat-top { margin-bottom: 6px; font-size: var(--fs-3); }
   .wave-cv { height: 92px; }
   .rb-row { margin-bottom: 8px; gap: 10px; }
 
@@ -234,7 +265,7 @@
   .viz-card:has(> .tick) > h3,
   .viz-card:has(> .tick) > p { grid-column: 1 / -1; }
   .tick b { font-size: 21px; }
-  .tick span { font-size: 11.5px; line-height: 1.35; }
+  .tick span { font-size: var(--fs-2); line-height: var(--lh-cap); }
 }
 
 
@@ -247,27 +278,27 @@
 @media (max-width: 900px) {
   .map-wrap { max-width: 232px; }
   .map-legend { margin-top: 9px; gap: 5px 13px; }
-  .leg { font-size: 11.5px; }
+  .leg { font-size: var(--fs-2); }
 
   .reg-tabs { gap: 6px; margin-bottom: 10px; }
-  .reg-tabs button { padding: 6px 11px; font-size: 12.5px; }
+  .reg-tabs button { padding: 6px 11px; font-size: var(--fs-3); }
   .search { margin-bottom: 9px; }
   .search input { padding: 10px 14px 10px 38px; }
   /* Окно списка: 190 пикселей - это пять строк. Все 218 городов
      на месте, просто окно перестало быть в полэкрана */
   .node-list { max-height: 190px; }
-  .node-row { padding: 8px 13px; font-size: 13.5px; }
+  .node-row { padding: 8px 13px; font-size: var(--fs-4); }
 
   /* Три дата-центра встают в две колонки: третий занимает нижний
      ряд целиком, чтобы ряд не выглядел оборванным */
   .dc-grid { grid-template-columns: repeat(2, 1fr); margin-top: clamp(14px, 2.6vw, 28px); }
   .dc-grid > .dc:last-child:nth-child(3) { grid-column: 1 / -1; }
   .dc { padding: 13px 15px; }
-  .dc h4 { font-size: 16.5px; margin: 4px 0 2px; }
-  .dc p { font-size: 11.5px; line-height: 1.4; }
+  .dc h4 { font-size: var(--fs-8); margin: 4px 0 2px; }
+  .dc p { font-size: var(--fs-2); line-height: var(--lh-tight); }
 
   .mq { padding: 8px 0; }
-  .mq-set span { font-size: 12.5px; }
+  .mq-set span { font-size: var(--fs-3); }
 }
 
 
@@ -276,8 +307,10 @@
    колонки, на планшете три: строка «HTTP/2 и HTTP/3» не
    становится понятнее от того, что вокруг неё полэкрана. */
 @media (max-width: 560px) {
-  .inc-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
-  .inc-item { padding: 10px 11px; font-size: 12.5px; gap: 9px; line-height: 1.35; }
+  /* Зазор общий: своя восьмёрка ставила плитки плотнее соседних
+     сеток, и ряд читался как чужой блок */
+  .inc-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--gap); }
+  .inc-item { padding: 10px 11px; font-size: var(--fs-3); gap: 9px; line-height: var(--lh-cap); }
   .inc-item svg { width: 15px; height: 15px; }
   /* Пунктов девять - девятый так же занимает ряд целиком */
   .inc-grid > .inc-item:last-child:nth-child(odd) { grid-column: 1 / -1; }
@@ -304,11 +337,11 @@
    Восемь вопросов остаются все. Строка вопроса занимала высоту
    в две с лишним строки текста из-за отступов. */
 @media (max-width: 640px) {
-  .faq-q { padding: 11px 14px; font-size: 14.2px; line-height: 1.35; gap: 12px; }
+  .faq-q { padding: 11px 14px; font-size: var(--fs-5); line-height: var(--lh-title); gap: 12px; }
   .faq-q i { width: 16px; height: 16px; }
   .faq-q i::before { top: 7px; width: 16px; }
   .faq-q i::after  { left: 7px; height: 16px; }
-  .faq-a p { padding: 0 14px 13px; font-size: 13.5px; line-height: 1.55; }
+  .faq-a p { padding: 0 14px 13px; font-size: var(--fs-4); line-height: var(--lh-body); }
 }
 
 
@@ -319,7 +352,7 @@
 @media (max-width: 900px) {
   .contact { gap: 20px; }
   .contact-list { gap: 8px; margin-top: 14px; }
-  .contact-list a, .contact-list div { font-size: 13.5px; gap: 10px; }
+  .contact-list a, .contact-list div { font-size: var(--fs-4); gap: 10px; }
   .contact-list svg { width: 17px; height: 17px; }
 
   /* Имя и контакт - две короткие строки, на телефоне они спокойно
@@ -329,14 +362,14 @@
 
   .form-card { padding: 15px 14px; }
   .field { margin-bottom: 9px; }
-  .field label { margin-bottom: 4px; font-size: 12px; }
+  .field label { margin-bottom: 4px; font-size: var(--fs-2); }
   /* 16px у поля ввода трогать нельзя: на айфоне всё, что мельче,
      заставляет браузер приближать страницу при фокусе */
   .field input, .field textarea, .field select { padding: 10px 13px; font-size: 16px; }
   .field textarea { min-height: 62px; }
   .consent { margin: 2px 0 10px; line-height: 1.45; }
 
-  .legal { margin-top: 14px; padding-top: 12px; gap: 5px 16px; font-size: 12px; }
+  .legal { margin-top: 14px; padding-top: 12px; gap: 5px 16px; font-size: var(--fs-2); }
 }
 
 
@@ -363,7 +396,11 @@
   .sec-head { margin-bottom: clamp(22px, 2.4vw, 34px); }
   .hero { min-height: 92svh; padding: 104px 0 48px; }
   section > .wrap > .sec-head + * { margin-top: 0; }
-  .viz-grid, .grid { row-gap: clamp(14px, 1.6vw, 22px); }
+  /* Здесь ряд шёл через 22, а колонка через 24 - сетка получалась
+     чуть сплюснутой, и это видно, когда карточек больше четырёх.
+     Оставляем один зазор на обе оси: сетка обязана быть квадратной
+     по ритму, иначе ряды и колонки спорят друг с другом. */
+  .viz-grid, .grid, .dc-grid, .inc-grid { gap: var(--gap); }
 }
 @media (min-width: 1600px) {
   :root { --sec: clamp(54px, 3.6vw, 88px); }

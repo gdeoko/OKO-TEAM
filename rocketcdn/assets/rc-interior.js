@@ -313,11 +313,11 @@ function hullTex() {
   var c = cnv(W, H), x = c.getContext("2d");
 
   var gr = x.createLinearGradient(0, 0, 0, H);
-  gr.addColorStop(0.00, "#1a3048");   /* карниз: сюда бьёт потолочный свет */
-  gr.addColorStop(0.16, "#12253a");
-  gr.addColorStop(0.52, "#0c1c2d");
-  gr.addColorStop(0.86, "#07111d");
-  gr.addColorStop(1.00, "#040a12");   /* плинтус у самого настила */
+  gr.addColorStop(0.00, "#14283d");   /* карниз: сюда бьёт потолочный свет */
+  gr.addColorStop(0.16, "#0d1e30");
+  gr.addColorStop(0.52, "#081524");
+  gr.addColorStop(0.86, "#050d18");
+  gr.addColorStop(1.00, "#03080f");   /* плинтус у самого настила */
   x.fillStyle = gr; x.fillRect(0, 0, W, H);
 
   /* Вертикальные ребра жёсткости. Идут через всю высоту и держат
@@ -452,9 +452,10 @@ function poolTex() {
   if (texCache.pool) return texCache.pool;
   var S = 128;
   var c = cnv(S, S), x = c.getContext("2d");
-  var rg = x.createRadialGradient(S / 2, S * 0.18, 2, S / 2, S * 0.18, S * 0.9);
+  var rg = x.createRadialGradient(S / 2, S * 0.26, 2, S / 2, S * 0.26, S * 0.48);
   rg.addColorStop(0, "rgba(255,255,255,.95)");
-  rg.addColorStop(0.35, "rgba(255,255,255,.35)");
+  rg.addColorStop(0.30, "rgba(255,255,255,.42)");
+  rg.addColorStop(0.72, "rgba(255,255,255,.09)");
   rg.addColorStop(1, "rgba(255,255,255,0)");
   x.fillStyle = rg; x.fillRect(0, 0, S, S);
   texCache.pool = new T.CanvasTexture(c);
@@ -487,6 +488,36 @@ function bezelTex() {
   return new T.CanvasTexture(c);
 }
 
+function portTex() {
+  if (texCache.port) return texCache.port;
+  var S = 256;
+  var c = cnv(S, S), x = c.getContext("2d");
+  x.fillStyle = "#03060d"; x.fillRect(0, 0, S, S);
+  var i;
+  /* Звёзды за бортом */
+  x.fillStyle = "rgba(207,233,245,.9)";
+  for (i = 0; i < 120; i++) x.fillRect(Math.random() * S, Math.random() * S, 1.4, 1.4);
+  /* Лимб планеты снизу: светлый край и тень к горизонту */
+  var gr = x.createRadialGradient(S * 0.5, S * 1.02, S * 0.24, S * 0.5, S * 1.02, S * 0.78);
+  gr.addColorStop(0, "#2fa7e8");
+  gr.addColorStop(0.55, "#0d5c96");
+  gr.addColorStop(0.86, "#0a2b48");
+  gr.addColorStop(1, "rgba(6,18,32,0)");
+  x.fillStyle = gr;
+  x.beginPath(); x.arc(S * 0.5, S * 1.02, S * 0.78, 0, 6.283); x.fill();
+  /* Атмосферный ободок: узкая яркая полоса по краю планеты */
+  x.strokeStyle = "rgba(180,228,255,.55)"; x.lineWidth = 3;
+  x.beginPath(); x.arc(S * 0.5, S * 1.02, S * 0.77, 0, 6.283); x.stroke();
+  /* Огни городов на ночной стороне */
+  x.fillStyle = "rgba(255,214,160,.6)";
+  for (i = 0; i < 40; i++) {
+    var a = 3.34 + Math.random() * 2.6, r = S * (0.5 + Math.random() * 0.26);
+    x.fillRect(S * 0.5 + Math.cos(a) * r, S * 1.02 + Math.sin(a) * r, 1.6, 1.6);
+  }
+  texCache.port = new T.CanvasTexture(c);
+  return texCache.port;
+}
+
 /* Окружение для отражений. Металл без карты окружения выходит
    чёрным: отражать ему нечего. Поэтому рисуем крошечную панораму
    самой рубки - тёмный низ, светлый потолок, яркое пятно
@@ -495,7 +526,7 @@ function bezelTex() {
 function envTex() {
   var c = cnv(128, 64), x = c.getContext("2d");
   var gr = x.createLinearGradient(0, 0, 0, 64);
-  gr.addColorStop(0, "#22384f"); gr.addColorStop(0.45, "#0d1c2c"); gr.addColorStop(1, "#04090f");
+  gr.addColorStop(0, "#16283a"); gr.addColorStop(0.45, "#08131f"); gr.addColorStop(1, "#02060b");
   x.fillStyle = gr; x.fillRect(0, 0, 128, 64);
   var rg = x.createRadialGradient(96, 26, 1, 96, 26, 30);
   rg.addColorStop(0, "rgba(207,233,245,.95)");
@@ -575,7 +606,7 @@ function build() {
   rend.setSize(innerWidth, innerHeight, false);
   if (rend.outputColorSpace !== undefined) rend.outputColorSpace = T.SRGBColorSpace;
   rend.toneMapping = T.ACESFilmicToneMapping;
-  rend.toneMappingExposure = 1.06;
+  rend.toneMappingExposure = 0.94;
 
   scene = new T.Scene();
   /* Туман плотнее прежнего в два с половиной раза. Раньше он стоял
@@ -608,7 +639,7 @@ function build() {
     hasEnv = true;
   } catch (e) {}
   var METAL = hasEnv ? 0.9 : 0.42;
-  var ENVI = 0.85;
+  var ENVI = 0.5;
 
   /* ── Общие материалы ──────────────────────────────────────
      Материалов ровно столько, сколько в рубке настоящих веществ:
@@ -619,12 +650,12 @@ function build() {
   var hull = hullTex();
   hull.repeat.set(7, 1);
   var shellMat = new T.MeshStandardMaterial({
-    map: hull, side: T.BackSide, roughness: 0.72, metalness: 0.35,
-    color: 0xb6c9dc, envMapIntensity: ENVI * 0.7
+    map: hull, side: T.BackSide, roughness: 0.8, metalness: 0.3,
+    color: 0x8296ab, envMapIntensity: ENVI * 0.6
   });
   /* Полированный набор: стойки, балки, рамы. Ему и достаётся блик */
   var steelMat = new T.MeshStandardMaterial({
-    color: 0x7f93a8, roughness: 0.24, metalness: METAL, envMapIntensity: ENVI * 1.25
+    color: 0x475765, roughness: 0.3, metalness: METAL, envMapIntensity: ENVI * 1.05
   });
   /* Матовый корпусный пластик: козырьки ниш, короба */
   var caseMat = new T.MeshStandardMaterial({
@@ -638,16 +669,16 @@ function build() {
   });
   /* Чистый свет: лампы, кромки, полосы. Один материал на цвет */
   var litCyan = new T.MeshBasicMaterial({ color: COL.cyan, transparent: true, opacity: 0.62, fog: false });
-  var litWarm = new T.MeshBasicMaterial({ color: COL.vio, transparent: true, opacity: 0.5, fog: false });
+  var litWarm = new T.MeshBasicMaterial({ color: 0xffc79a, transparent: true, opacity: 0.32, fog: false });
   /* Пятна света: сложение, без записи в буфер глубины, иначе они
      срежут всё, что окажется за ними */
   var pool = poolTex();
   var poolWarm = new T.MeshBasicMaterial({
-    map: pool, color: 0xffb98a, transparent: true, opacity: 0.3,
+    map: pool, color: 0xffb07a, transparent: true, opacity: 0.44,
     blending: T.AdditiveBlending, depthWrite: false, fog: false
   });
   var poolCool = new T.MeshBasicMaterial({
-    map: pool, color: COL.lit, transparent: true, opacity: 0.26,
+    map: pool, color: COL.lit, transparent: true, opacity: 0.32,
     blending: T.AdditiveBlending, depthWrite: false, fog: false
   });
 
@@ -666,8 +697,8 @@ function build() {
   var floor = new T.Mesh(
     new T.CircleGeometry(2.6, phone ? 36 : 52),
     new T.MeshStandardMaterial({
-      map: deckTex(), roughness: 0.86, metalness: 0.38,
-      color: 0x93a6ba, envMapIntensity: ENVI * 0.5
+      map: deckTex(), roughness: 0.88, metalness: 0.34,
+      color: 0x6d7f93, envMapIntensity: ENVI * 0.5
     })
   );
   floor.rotation.x = -Math.PI / 2;
@@ -687,8 +718,8 @@ function build() {
   /* Световая полоса по периметру пола. Главная линия всей рубки:
      она обводит помещение по низу и тем самым объявляет его форму.
      Без неё пол и стена сходились в чёрный шов, и круг не читался. */
-  var rim = new T.Mesh(new T.RingGeometry(2.40, 2.52, phone ? 36 : 52), new T.MeshBasicMaterial({
-    color: COL.lit, transparent: true, opacity: 0.72, fog: false
+  var rim = new T.Mesh(new T.RingGeometry(2.42, 2.52, phone ? 36 : 52), new T.MeshBasicMaterial({
+    color: 0x9fd4ea, transparent: true, opacity: 0.42, fog: false
   }));
   rim.rotation.x = -Math.PI / 2;
   rim.position.y = 0.02;
@@ -696,7 +727,7 @@ function build() {
 
   /* Разлив от полосы на настил: свет обязан куда-то ложиться */
   var spill = new T.Mesh(new T.RingGeometry(1.85, 2.5, phone ? 28 : 40), new T.MeshBasicMaterial({
-    color: COL.cyan, transparent: true, opacity: 0.13,
+    color: COL.cyan, transparent: true, opacity: 0.17,
     blending: T.AdditiveBlending, depthWrite: false, fog: false
   }));
   spill.rotation.x = -Math.PI / 2;
@@ -712,7 +743,7 @@ function build() {
   var ceil = new T.Mesh(
     new T.CircleGeometry(2.6, phone ? 28 : 44),
     new T.MeshStandardMaterial({
-      color: 0x0a1421, roughness: 0.92, metalness: 0.2, side: T.BackSide,
+      color: 0x101d2c, roughness: 0.92, metalness: 0.2, side: T.BackSide,
       envMapIntensity: ENVI * 0.3
     })
   );
@@ -754,17 +785,17 @@ function build() {
      и едут заметно быстрее дальней стены. Такой параллакс глаз
      читает как «я нахожусь внутри», и никакая текстура его не
      заменит. */
-  var strutGeo = new T.BoxGeometry(0.17, 2.36, 0.3);
-  var strutLit = new T.PlaneGeometry(0.045, 1.9);
+  var strutGeo = new T.BoxGeometry(0.125, 2.36, 0.22);
+  var strutLit = new T.PlaneGeometry(0.03, 1.9);
   for (i = 0; i < PANELS; i++) {
     th = i * STEP;
     var col = new T.Group();
     m = new T.Mesh(strutGeo, steelMat);
-    m.position.set(0, 0, -2.45);
+    m.position.set(0, 0, -2.48);
     col.add(m);
     /* Световая нитка по внутреннему ребру стойки */
     var nl = new T.Mesh(strutLit, litCyan);
-    nl.position.set(0, 0, -2.29);
+    nl.position.set(0, 0, -2.365);
     col.add(nl);
     col.rotation.y = -th;
     col.position.y = 1.72;
@@ -787,16 +818,16 @@ function build() {
      оказаться напротив, обязана повернуться в другую сторону. */
   var panelMat = new T.MeshStandardMaterial({
     color: COL.panel, roughness: 0.42, metalness: 0.45,
-    emissive: COL.emis, emissiveIntensity: 0.62, envMapIntensity: ENVI * 0.6
+    emissive: COL.emis, emissiveIntensity: 0.95, envMapIntensity: ENVI * 0.6
   });
   /* Свободные панели круга закрыты приборными стойками: глухой
      стены при обороте быть не должно, а вешать туда нечего */
   var rackMat = new T.MeshStandardMaterial({
     map: rackTex(), roughness: 0.66, metalness: 0.3,
-    emissive: 0x0d2a40, emissiveIntensity: 0.55, envMapIntensity: ENVI * 0.5
+    emissive: 0x0d2a40, emissiveIntensity: 0.8, envMapIntensity: ENVI * 0.5
   });
   var faceGeo = new T.PlaneGeometry(1.9, 1.42);
-  var lampGeo = new T.PlaneGeometry(1.74, 0.035);
+  var lampGeo = new T.PlaneGeometry(1.62, 0.028);
   var hoodGeo = new T.BoxGeometry(2.0, 0.1, 0.24);
   var poolGeo = new T.PlaneGeometry(1.94, 1.5);
 
@@ -805,24 +836,32 @@ function build() {
     var pan = new T.Group();
     /* Плита утоплена глубже стены: у ниши появляется дно */
     var face = new T.Mesh(faceGeo, i < 5 ? panelMat : rackMat);
-    face.position.set(0, 0, -R_WALL - 0.1);
+    face.position.set(0, 0, -R_WALL);
     pan.add(face);
 
-    /* Козырёк ниши. Он же прячет лампу: источник виден только по
-       своему свету, как в настоящем интерьере */
+    /* Козырёк ниши. Он выступает в помещение на 12 сантиметров и
+       прячет лампу: источник виден только по своему свету, как в
+       настоящем интерьере. */
     var hood = new T.Mesh(hoodGeo, caseMat);
-    hood.position.set(0, 0.79, -R_WALL + 0.02);
+    hood.position.set(0, 0.79, -R_WALL + 0.16);
     pan.add(hood);
+
+    /* Порожек снизу. Пара «козырёк плюс порожек» и делает нишу
+       нишей: у плиты появляются верх и низ, и она перестаёт быть
+       наклейкой на стене. */
+    var sill = new T.Mesh(hoodGeo, caseMat);
+    sill.position.set(0, -0.79, -R_WALL + 0.13);
+    pan.add(sill);
 
     /* Тёплая лампа под козырьком. Тёплая нарочно: весь остальной
        свет в рубке холодный, и без этой ноты кадр синеет целиком */
     var lampStrip = new T.Mesh(lampGeo, litWarm);
-    lampStrip.position.set(0, 0.72, -R_WALL + 0.06);
+    lampStrip.position.set(0, 0.71, -R_WALL + 0.1);
     pan.add(lampStrip);
 
     /* Пятно от лампы на плите: свет обязан лечь на поверхность */
     var pl = new T.Mesh(poolGeo, i < 5 ? poolWarm : poolCool);
-    pl.position.set(0, 0.06, -R_WALL - 0.07);
+    pl.position.set(0, 0.06, -R_WALL + 0.012);
     pan.add(pl);
     fine.push(pl);
 
@@ -840,43 +879,42 @@ function build() {
      понимает, что стена не бумажная.
 
      Стоят на швах, где нет ни панели, ни пульта. */
-  var portTex = planetTex();
-  var glassMat = new T.MeshBasicMaterial({ map: portTex, color: 0x8fcfea });
+  var glassMat = new T.MeshBasicMaterial({ map: portTex(), color: 0xffffff, fog: false });
   var bezelMat = new T.MeshStandardMaterial({
     map: bezelTex(), roughness: 0.3, metalness: METAL * 0.85,
     envMapIntensity: ENVI * 1.1
   });
-  var tubeGeo = new T.CylinderGeometry(0.5, 0.5, 0.36, phone ? 16 : 22, 1, true);
+  var tubeGeo = new T.CylinderGeometry(0.5, 0.5, 0.24, phone ? 16 : 22, 1, true);
   var portA = [STEP * 2, STEP * 4, STEP * 6];
   for (i = 0; i < portA.length; i++) {
     var port = new T.Group();
     /* Труба проёма: смотрим в неё изнутри, значит нужна изнанка */
     var tube = new T.Mesh(tubeGeo, new T.MeshStandardMaterial({
-      color: 0x66798d, roughness: 0.45, metalness: METAL * 0.7,
-      side: T.BackSide, envMapIntensity: ENVI * 0.9
+      color: 0x46586b, roughness: 0.45, metalness: METAL * 0.7,
+      side: T.DoubleSide, envMapIntensity: ENVI * 0.9
     }));
     tube.rotation.x = Math.PI / 2;
-    tube.position.set(0, 0, -2.62);
+    tube.position.set(0, 0, -2.44);
     port.add(tube);
 
-    /* Стекло сидит в глубине трубы, а не заподлицо со стеной */
+    /* Стекло сидит в глубине обечайки, а не заподлицо с её краем */
     var glass = new T.Mesh(new T.CircleGeometry(0.5, phone ? 16 : 22), glassMat);
-    glass.position.set(0, 0, -2.79);
+    glass.position.set(0, 0, -2.555);
     port.add(glass);
 
-    /* Рама с болтами снаружи проёма */
+    /* Рама с болтами по внутреннему краю обечайки */
     var bez = new T.Mesh(new T.RingGeometry(0.5, 0.68, phone ? 18 : 24), bezelMat);
-    bez.position.set(0, 0, -2.43);
+    bez.position.set(0, 0, -2.32);
     port.add(bez);
 
-    /* Уплотнитель по стыку рамы со стеклом */
+    /* Уплотнитель по стыку рамы с обечайкой */
     var seal = new T.Mesh(new T.TorusGeometry(0.51, 0.035, 4, phone ? 14 : 18), rubberMat);
-    seal.position.set(0, 0, -2.45);
+    seal.position.set(0, 0, -2.33);
     port.add(seal);
 
     /* Подсветка проёма изнутри: холодная кромка вокруг стекла */
     var glow = new T.Mesh(new T.RingGeometry(0.44, 0.5, phone ? 16 : 22), litCyan);
-    glow.position.set(0, 0, -2.755);
+    glow.position.set(0, 0, -2.54);
     port.add(glow);
 
     port.rotation.y = -portA[i];
@@ -927,9 +965,10 @@ function build() {
      Решётки стоят в плинтусе, между стойками. Мелочь, но именно
      такие мелочи в нижнем поясе объясняют, что комната рабочая. */
   var ventMat = new T.MeshStandardMaterial({
-    map: ventTex(), roughness: 0.9, metalness: 0.25, envMapIntensity: ENVI * 0.3
+    map: ventTex(), roughness: 0.9, metalness: 0.25, color: 0x5c6d7e,
+    envMapIntensity: ENVI * 0.3
   });
-  var ventGeo = new T.PlaneGeometry(1.0, 0.28);
+  var ventGeo = new T.PlaneGeometry(0.8, 0.24);
   for (i = 0; i < (phone ? 2 : 4); i++) {
     var vt = new T.Group();
     m = new T.Mesh(ventGeo, ventMat);
@@ -1067,18 +1106,18 @@ function build() {
      tick). А лужи от ламп в нишах и полоса по полу - не лампы, а
      нарисованные пятна: света они не считают, но глаз видит именно
      их и достраивает освещение сам. */
-  lamp = new T.DirectionalLight(COL.lit, 3.2);
+  lamp = new T.DirectionalLight(COL.lit, 2.5);
   lamp.position.set(-0.8, 2.6, -4);
   con.add(lamp);
   con.add(lamp.target);
   lamp.target.position.set(0, 1.2, 0);
 
-  scene.add(new T.HemisphereLight(0x2f4f6d, 0x0a1420, 1.1));
-  scene.add(new T.AmbientLight(0x2b3d53, 0.85));
+  scene.add(new T.HemisphereLight(0x27435c, 0x060d16, 0.82));
+  scene.add(new T.AmbientLight(0x223247, 0.56));
 
   /* Контровой тёплый: стоит высоко за спиной входа и обводит
      кромки. Он же единственная тёплая лампа в холодной комнате. */
-  var warmL = new T.PointLight(COL.vio, 2.2, 8.5, 1.6);
+  var warmL = new T.PointLight(COL.vio, 1.7, 8.5, 1.6);
   warmL.position.set(1.5, 2.5, 1.7);
   scene.add(warmL);
 

@@ -127,9 +127,15 @@
   filter: blur(1px);
   transform: scaleY(calc(1 + var(--rcf-glow, 0) * 3));
 }
+/* Упрощённые режимы страницы и просьба меньше движения: слоя нет
+   вовсе, чтобы не платить за него ни одной заливкой. Порог тот же,
+   что у фонового космоса и у шлейфа в rc-flight.js. */
 @media (prefers-reduced-motion: reduce) {
   .rcf-fx { display: none; }
 }
+html[data-degrade="2"] .rcf-fx,
+html[data-degrade="3"] .rcf-fx,
+html.rc-reduced .rcf-fx { display: none; }
 
 /* Пока сайт в полёте, страница под ним не прокручивается и не
    тратит ни кадра на свои сцены */
@@ -222,8 +228,11 @@ html.rc-flying body { overflow: hidden; }
   box-shadow: 0 0 12px rgba(var(--int-cyan-rgb, 66,178,220), .8);
 }
 
+/* Подсказка управления стоит в остеклении, а не на приборной
+   панели: на 16% строка ложилась ровно на тумблеры кабины и
+   переставала читаться - тёмный текст на тёмных клавишах. */
 .rcf-hint {
-  position: absolute; left: 50%; bottom: 16%;
+  position: absolute; left: 50%; bottom: 23%;
   transform: translateX(-50%);
   color: rgba(var(--int-lit-rgb, 207,233,245), .75);
   font-size: clamp(11px, 1.3vw, 13px);

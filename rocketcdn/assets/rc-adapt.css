@@ -94,21 +94,35 @@ body { min-height: 100vh; min-height: 100svh; }
   .logo img { height: 26px; }
   /* Кнопка сжимается по содержимому, но подпись не переносится
      на вторую строку */
-  .hdr-act .btn-sm { padding: 0 13px; font-size: 13.5px; white-space: nowrap; }
+  .hdr-act .btn-sm { padding: 0 13px; font-size: var(--fs-3); white-space: nowrap; }
 }
 
 @media (max-width: 359px) {
   /* Совсем узкие аппараты и режим крупного системного шрифта:
      логотип отдаёт место кнопке, знак остаётся читаемым */
   .logo img { height: 23px; }
-  .hdr-act .btn-sm { padding: 0 11px; font-size: 13px; }
+  .hdr-act .btn-sm { padding: 0 11px; font-size: var(--fs-3); }
 }
 
 /* Якорная прокрутка: заголовок раздела не должен уезжать под
    шапку. На телефоне шапка ниже настольной, зато к ней
-   добавляется вырез. */
+   добавляется вырез.
+
+   Отступ считается от реальной высоты шапки на этой ширине плюс
+   18 пикселей воздуха - одна и та же добавка на всех размерах.
+   Раньше стояло одно число 74 на всё, и на самых узких экранах
+   заголовок отъезжал от шапки на 16 пикселей дальше, чем на
+   широких: переход по якорю выглядел каждый раз по-разному. */
 @media (max-width: 900px) {
-  html { scroll-padding-top: calc(74px + var(--safe-t, 0px)); }
+  /* шапка 70 */
+  html { scroll-padding-top: calc(88px + var(--safe-t, 0px)); }
+}
+@media (max-width: 640px) {
+  /* шапка 62 */
+  html { scroll-padding-top: calc(80px + var(--safe-t, 0px)); }
+}
+@media (max-width: 412px) {
+  html { scroll-padding-top: calc(76px + var(--safe-t, 0px)); }
 }
 
 
@@ -589,3 +603,46 @@ canvas { max-width: 100%; }
 @media (max-width: 1100px) {
   .hero .scroll-hint { display: none; }
 }
+
+
+/* ═══ 10. КОЛЬЦО ФОКУСА НЕ МЕНЯЕТ ФОРМУ ЭЛЕМЕНТА ════════════
+   В rc-reduced.css правило доступности объявлено как
+
+       :focus-visible { outline: ...; border-radius: 4px; }
+
+   и вторая строка тут лишняя: border-radius меняет форму САМОГО
+   элемента, а не обводки. В момент фокуса круглая пилюля
+   становилась прямоугольником со скруглением 4, кнопка теряла
+   свои 18, карточка - свои 24. Обстрел табом: из 46 элементов,
+   до которых можно дойти с клавиатуры, форму теряли 28.
+
+   Тот файл правится смежной задачей, поэтому не трогаем его, а
+   возвращаем радиус здесь - rc-adapt.css подключён последним.
+   Селектор с классом весит больше голого :focus-visible, значит
+   !important не нужен, и кино-сцена по-прежнему может перебить
+   нас своими правилами.
+
+   Элементам без собственного радиуса (логотип, строка города,
+   пункт меню) четвёрка не мешает - им ничего не возвращаем. */
+
+.btn:focus-visible, .icon-btn:focus-visible,
+.card:focus-visible, .viz-card:focus-visible, .dc:focus-visible,
+.inc-item:focus-visible, .flow-node:focus-visible {
+  border-radius: var(--r-md);
+}
+.btn-sm:focus-visible, .card-ico:focus-visible,
+.nav a:focus-visible, .soc a:focus-visible,
+.search input:focus-visible,
+.field input:focus-visible, .field textarea:focus-visible, .field select:focus-visible {
+  border-radius: var(--r-sm);
+}
+.faq:focus-visible, .form-card:focus-visible, .kpi:focus-visible,
+.node-list:focus-visible, .modal-box:focus-visible, .rack:focus-visible {
+  border-radius: var(--r-lg);
+}
+.chip:focus-visible, .tag:focus-visible,
+.pill:focus-visible, .pill button:focus-visible,
+.reg-tabs button:focus-visible {
+  border-radius: var(--r-full);
+}
+.totop:focus-visible { border-radius: 50%; }
