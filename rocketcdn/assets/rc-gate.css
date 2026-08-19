@@ -115,12 +115,20 @@
     width: min(46vw, 215px);
     padding: 10px 12px 12px;
     /* В узкой щели фон должен быть плотнее: за экраном не рубка, а
-       тёмный тамбур, и полупрозрачное стекло на нём почти не видно */
+       тёмный тамбур, и полупрозрачное стекло на нём почти не видно.
+       Плюс своя тень: на кадре с паром и бликами корпуса светлые
+       клубы подходили вплотную к тексту и съедали контраст. */
     background:
       linear-gradient(180deg,
-        rgba(var(--int-cyan-rgb, 66,178,220), .16),
-        rgba(var(--int-deep-rgb, 5,12,21), .74));
+        rgba(var(--int-cyan-rgb, 66,178,220), .18),
+        rgba(var(--int-deep-rgb, 5,12,21), .86));
+    box-shadow:
+      0 0 24px -6px rgba(var(--int-cyan-rgb, 66,178,220), .55),
+      0 10px 30px -10px rgba(0,0,0,.9),
+      inset 0 1px 0 rgba(var(--int-lit-rgb, 207,233,245), .18);
   }
+  .rc-gate-card b { text-shadow: 0 1px 3px rgba(0,0,0,.8), 0 0 12px rgba(var(--int-cyan-rgb, 66,178,220), .5); }
+  .rc-gate-card span { color: rgba(var(--int-lit-rgb, 207,233,245), .9); text-shadow: 0 1px 3px rgba(0,0,0,.85); }
   .rc-gate-card b { font-size: 12px; margin-bottom: 3px; }
   .rc-gate-card span { font-size: 10.5px; line-height: 1.35; }
 }

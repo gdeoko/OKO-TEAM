@@ -299,6 +299,22 @@ function renderNodes() {
     }
     row.addEventListener("click", go);
     row.addEventListener("keydown", function (e) { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); go(); } });
+
+    /* Список узлов - это бортовой реестр, а не таблица на фоне:
+       строка под курсором обязана зажигать свою точку на шаре.
+       Так текст и объёмная сцена перестают быть двумя разными
+       вещами - наводишь строку, отвечает мир. Глобус не крутим:
+       поворот по наведению сбивал бы чтение списка, разворот
+       остаётся за кликом. */
+    function lite(on) {
+      if (!globe) return;
+      globe.hover = on ? +row.dataset.idx : -1;
+      if (globe.drawLabel) { try { globe.drawLabel(); } catch (e) {} }
+    }
+    row.addEventListener("mouseenter", function () { lite(true); });
+    row.addEventListener("mouseleave", function () { lite(false); });
+    row.addEventListener("focus", function () { lite(true); });
+    row.addEventListener("blur", function () { lite(false); });
   });
 }
 

@@ -148,8 +148,25 @@ function boot() {
 }
 
 /* Ждём, пока сцена решит, поднялся ли корабль: rc-gl грузит цепочку
-   скриптов асинхронно, и на момент DOMContentLoaded RC_ROCKET ещё нет */
-function bootLater() { setTimeout(boot, 1200); }
+   скриптов асинхронно, и на момент DOMContentLoaded RC_ROCKET ещё нет.
+
+   Таймер здесь был гонкой: на медленной машине корабль поднимался
+   позже отведённых секунды с небольшим, и оверлей строился вдобавок
+   к настоящему люку - в кадре оказывались две двери сразу. Поэтому
+   ждём не время, а событие готовности объёмного слоя, и лишь если
+   его нет вовсе, включаем запасной вход. */
+function bootLater() {
+  var tries = 0;
+  function check() {
+    if (g.RC_ROCKET || root.classList.contains("has-rocket")) return;  /* дверь рисует корабль */
+    if (root.classList.contains("rc-no3d") || root.getAttribute("data-degrade") === "3") { boot(); return; }
+    if (++tries > 40) { boot(); return; }        /* двадцать секунд - сцены не будет */
+    setTimeout(check, 500);
+  }
+  addEventListener("rc:3d", function () { setTimeout(check, 600); });
+  addEventListener("rc:no3d", function () { boot(); });
+  setTimeout(check, 1200);
+}
 if (doc.readyState === "loading") doc.addEventListener("DOMContentLoaded", bootLater);
 else bootLater();
 

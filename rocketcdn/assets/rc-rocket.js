@@ -529,24 +529,35 @@ function buildDust(C) {
    ракеты» - не нарисованный поверх дым, а газ в том же
    пространстве, что и корабль. */
 function steamTexture() {
-  var S = 64;
+  /* Сто двадцать восемь, а не шестьдесят четыре: на подходе спрайт
+     растягивается до полутора сотен пикселей, и мелкая текстура
+     превращалась в расфокусированное пятно - клуб читался боке, а
+     не паром. */
+  var S = 128;
   var c = document.createElement("canvas");
   c.width = c.height = S;
   var x = c.getContext("2d");
-  /* Клуб собран из нескольких смещённых пятен: ровный круг читается
-     шариком, а пар обязан быть рваным по краю. Позиции фиксированные -
-     текстура одна на все частицы, случайность дала бы разное качество
-     от загрузки к загрузке при той же цене. */
+  /* Клуб собран из смещённых пятен: ровный круг читается шариком, а
+     пар обязан быть рваным по краю. Позиции фиксированные - текстура
+     одна на все частицы, случайность дала бы разное качество от
+     загрузки к загрузке при той же цене. */
   var b = [
-    [0.50, 0.50, 0.42, 1.00], [0.36, 0.42, 0.27, 0.72],
-    [0.63, 0.40, 0.26, 0.64], [0.44, 0.63, 0.29, 0.68],
-    [0.62, 0.61, 0.23, 0.52]
+    [0.47, 0.52, 0.30, 1.00], [0.33, 0.40, 0.25, 0.86],
+    [0.63, 0.37, 0.23, 0.78], [0.40, 0.66, 0.26, 0.80],
+    [0.66, 0.63, 0.21, 0.66], [0.52, 0.27, 0.16, 0.58],
+    [0.25, 0.58, 0.15, 0.52], [0.74, 0.50, 0.14, 0.50],
+    [0.58, 0.75, 0.12, 0.44], [0.30, 0.28, 0.12, 0.40]
   ];
   for (var i = 0; i < b.length; i++) {
     var cx = b[i][0] * S, cy = b[i][1] * S, r = b[i][2] * S, a = b[i][3];
     var gr = x.createRadialGradient(cx, cy, 0, cx, cy, r);
-    gr.addColorStop(0.00, "rgba(255,255,255," + (0.52 * a).toFixed(3) + ")");
-    gr.addColorStop(0.45, "rgba(255,255,255," + (0.24 * a).toFixed(3) + ")");
+    /* Ядро клуба почти непрозрачное и держится до двух третей радиуса.
+       Полупрозрачный пар над белой обшивкой не читается вовсе - она
+       сама белая; видно его становится только тогда, когда он
+       перекрывает её рисунок: панельные швы, полосу, трафарет. */
+    gr.addColorStop(0.00, "rgba(255,255,255," + (0.96 * a).toFixed(3) + ")");
+    gr.addColorStop(0.38, "rgba(255,255,255," + (0.78 * a).toFixed(3) + ")");
+    gr.addColorStop(0.72, "rgba(255,255,255," + (0.26 * a).toFixed(3) + ")");
     gr.addColorStop(1.00, "rgba(255,255,255,0)");
     x.fillStyle = gr;
     x.beginPath(); x.arc(cx, cy, r, 0, Math.PI * 2); x.fill();
@@ -557,19 +568,21 @@ function steamTexture() {
 var STEAM_VERT = [
   "attribute float aSize;",
   "attribute float aAlpha;",
+  "attribute float aRot;",
   "attribute vec3 aCol;",
   "uniform float uScale;",
   "uniform float uPx;",
   "varying vec3 vCol;",
   "varying float vA;",
+  "varying float vR;",
   "void main(){",
-  "  vCol = aCol; vA = aAlpha;",
+  "  vCol = aCol; vA = aAlpha; vR = aRot;",
   "  vec4 mv = modelViewMatrix * vec4(position,1.0);",
   /* Тот же перевод мирового размера в пиксели, что и у пыли. Потолок
      нужен на подходе: там корабль вырастает в двенадцать раз, и без
      ограничения одна частица закрыла бы пол-экрана - и по виду, и
      по цене заливки. */
-  "  gl_PointSize = min(aSize * uScale * uPx / max(0.4, -mv.z), 190.0);",
+  "  gl_PointSize = min(aSize * uScale * uPx / max(0.4, -mv.z), 260.0);",
   "  gl_Position = projectionMatrix * mv;",
   "}"
 ].join("\n");
@@ -578,8 +591,16 @@ var STEAM_FRAG = [
   "uniform sampler2D uMap;",
   "varying vec3 vCol;",
   "varying float vA;",
+  "varying float vR;",
   "void main(){",
-  "  float a = texture2D(uMap, gl_PointCoord).a * vA;",
+  /* Спрайт повёрнут на свой угол и медленно крутится. Без этого все
+     двести клубов - одна и та же картинка в одной и той же
+     ориентации, и выброс читается россыпью одинаковых шариков, а не
+     паром. Стоит синус с косинусом на пиксель. */
+  "  vec2 uv = gl_PointCoord - 0.5;",
+  "  float sr = sin(vR), cr = cos(vR);",
+  "  uv = vec2(uv.x * cr - uv.y * sr, uv.x * sr + uv.y * cr) + 0.5;",
+  "  float a = texture2D(uMap, uv).a * vA;",
   "  if (a < 0.004) discard;",
   "  gl_FragColor = vec4(vCol, a);",
   "}"
@@ -588,16 +609,18 @@ var STEAM_FRAG = [
 function buildSteam(C) {
   /* На слабом устройстве частиц вдвое меньше: заливка полупрозрачными
      спрайтами - самое дорогое, что есть в этой сцене */
-  var n = C.weak ? 90 : 190;
+  var n = C.weak ? 105 : 220;
   var pos = new Float32Array(n * 3);
   var col = new Float32Array(n * 3);
   var siz = new Float32Array(n);
   var alp = new Float32Array(n);
+  var rot = new Float32Array(n);
   var geo = new T.BufferGeometry();
   geo.setAttribute("position", new T.BufferAttribute(pos, 3));
   geo.setAttribute("aCol", new T.BufferAttribute(col, 3));
   geo.setAttribute("aSize", new T.BufferAttribute(siz, 1));
   geo.setAttribute("aAlpha", new T.BufferAttribute(alp, 1));
+  geo.setAttribute("aRot", new T.BufferAttribute(rot, 1));
   var uni = { uMap: { value: steamTexture() }, uScale: { value: 1 }, uPx: { value: 1000 } };
   var mat = new T.ShaderMaterial({
     vertexShader: STEAM_VERT, fragmentShader: STEAM_FRAG, uniforms: uni,
@@ -609,11 +632,13 @@ function buildSteam(C) {
   pts.visible = false;
   return {
     pts: pts, geo: geo, uni: uni, n: n,
-    pos: pos, col: col, siz: siz, alp: alp,
+    pos: pos, col: col, siz: siz, alp: alp, rot: rot,
+    spin: new Float32Array(n),
     vel: new Float32Array(n * 3),
     life: new Float32Array(n),
     max: new Float32Array(n),
     amp: new Float32Array(n),
+    curl: new Float32Array(n),
     gnd: new Uint8Array(n),
     live: 0
   };
@@ -813,11 +838,21 @@ function cabinTexture() {
    предупредительная разметка по кромке. Атлас рассчитан на одну
    створку, поэтому рисунок не растягивается и дверь читается
    дверью с любого расстояния. */
-function doorTexture() {
+/* Створка люка. Половинок две, и рисунок у них зеркальный: раньше
+   обе брали одну текстуру, и в кадре стояли два одинаковых трафарета
+   «R-01» рядом, а предупредительная лента шла по внешним краям
+   вместо стыка. Дверь от этого читалась наклейкой на борту. Теперь
+   левая и правая створки - это разные листы металла, как на
+   настоящем корабле: маркировка у каждой своя, лента идёт по
+   притвору, ручка-паз смотрит в сторону открывания. */
+function doorTexture(right) {
   var W = 256, H = 512;
   var c = document.createElement("canvas");
   c.width = W; c.height = H;
   var x = c.getContext("2d");
+  /* Зеркалим весь рисунок для правой створки одним преобразованием:
+     так обе половинки гарантированно совпадают по стыку */
+  if (right) { x.translate(W, 0); x.scale(-1, 1); }
 
   var base = x.createLinearGradient(0, 0, W, 0);
   base.addColorStop(0.00, "#AFC0D2");
@@ -850,14 +885,41 @@ function doorTexture() {
     x.fillRect(0, 0, 16, H / 26 + 1);
     x.restore();
   }
-  /* Трафарет и ручка-паз */
+  /* Маркировка. У каждой створки своя: на левой номер люка, на
+     правой предписание шлюза. Два одинаковых трафарета в кадре
+     сразу выдавали наклейку. */
   x.fillStyle = "rgba(20,52,86,.30)";
   x.font = "600 15px 'Golos Text', system-ui, sans-serif";
-  x.fillText("R-01", 26, H * 0.30);
+  if (right) {
+    /* Текст на зеркальном холсте пришлось бы читать наоборот -
+       возвращаем систему координат на время надписи */
+    x.save();
+    x.translate(W, 0); x.scale(-1, 1);
+    x.fillText("AIRLOCK", 24, H * 0.30);
+    x.font = "600 11px 'Golos Text', system-ui, sans-serif";
+    x.fillStyle = "rgba(20,52,86,.24)";
+    x.fillText("PRESS OK", 24, H * 0.34);
+    x.restore();
+  } else {
+    x.fillText("R-01", 26, H * 0.30);
+    x.font = "600 11px 'Golos Text', system-ui, sans-serif";
+    x.fillStyle = "rgba(20,52,86,.24)";
+    x.fillText("HATCH 1/2", 26, H * 0.34);
+  }
+  /* Ручка-паз: смотрит в сторону открывания, то есть к стыку */
   x.fillStyle = "rgba(40,60,84,.45)";
-  x.fillRect(W * 0.18, H * 0.60, W * 0.40, 10);
+  x.fillRect(W * 0.40, H * 0.60, W * 0.42, 10);
   x.fillStyle = "rgba(255,255,255,.5)";
-  x.fillRect(W * 0.18, H * 0.60 + 10, W * 0.40, 2);
+  x.fillRect(W * 0.40, H * 0.60 + 10, W * 0.42, 2);
+  /* Петли на внешнем краю: три коротких утолщения. Именно они и
+     объясняют глазу, что панель на шарнирах, а не приклеена. */
+  for (i = 0; i < 3; i++) {
+    var hy = H * (0.22 + i * 0.28);
+    x.fillStyle = "rgba(88,110,136,.55)";
+    x.fillRect(2, hy, 14, H * 0.06);
+    x.fillStyle = "rgba(255,255,255,.42)";
+    x.fillRect(2, hy, 14, 2);
+  }
 
   var tex = new T.CanvasTexture(c);
   tex.colorSpace = T.SRGBColorSpace || tex.colorSpace;
@@ -917,11 +979,15 @@ function buildDoor(C, env, hullMat) {
   /* Уплотнитель по контуру проёма: тонкая тёмная кромка между рамой
      и створками. Без неё дверь сливается с бортом, с ней - читается
      как настоящий люк с притвором. */
+  /* Цвет уплотнителя раньше был почти чёрным, и в кадре по контуру
+     двери шла жирная тёмная рамка - именно она и делала люк похожим
+     на приклеенный прямоугольник. Настоящий притвор темнее обшивки,
+     но не чёрный, и полоса его видна тонкой. */
   var sealMat = new T.MeshStandardMaterial({
-    color: 0x1B2B3E, metalness: 0.7, roughness: 0.5, envMap: env, side: T.DoubleSide
+    color: 0x3A4E67, metalness: 0.7, roughness: 0.5, envMap: env, side: T.DoubleSide
   });
   var seal = new T.Mesh(
-    new T.CylinderGeometry(R * 0.999, R * 0.999, HH * 0.995, seg, 1, true, -HALF * 1.03, HALF * 2.06),
+    new T.CylinderGeometry(R * 0.999, R * 0.999, HH * 0.978, seg, 1, true, -HALF * 1.014, HALF * 2.028),
     sealMat
   );
   seal.position.y = Y;
@@ -931,15 +997,21 @@ function buildDoor(C, env, hullMat) {
      обшивкой этого корабля, а не панелью поверх кадра. Материал
      свой: обшивочная текстура на узком сегменте растянулась бы
      всем атласом, и дверь выглядела бы окном с чужим рисунком. */
-  var doorMat = new T.MeshStandardMaterial({
-    map: doorTexture(), metalness: 0.62, roughness: 0.26,
-    envMap: env, envMapIntensity: 1.45, side: T.DoubleSide
-  });
+  /* Материала два - по листу на створку. Стоит их объединить, и
+     рисунок повторится дважды: один и тот же трафарет рядом сам с
+     собой это первое, что выдаёт наклейку вместо двери. */
+  function doorMatFor(right) {
+    return new T.MeshStandardMaterial({
+      map: doorTexture(right), metalness: 0.62, roughness: 0.26,
+      envMap: env, envMapIntensity: 1.45, side: T.DoubleSide
+    });
+  }
+  var doorMatL = doorMatFor(false), doorMatR = doorMatFor(true);
   function leaf(sign) {
     var m = new T.Mesh(
       new T.CylinderGeometry(R * 1.004, R * 1.004, HH * 0.985, seg, 1, true,
         sign > 0 ? 0 : -HALF, HALF),
-      doorMat
+      sign > 0 ? doorMatR : doorMatL
     );
     m.position.y = Y;
     return m;
@@ -2086,12 +2158,15 @@ Rocket.prototype.steamEmit = function (count, kind) {
       S.vel[j]     = Math.sin(ga) * gs;
       S.vel[j + 1] = 0;
       S.vel[j + 2] = Math.cos(ga) * gs;
-      S.siz[i]     = 0.30 + Math.random() * 0.24;
+      S.siz[i]     = 0.12 + Math.random() * 0.14;
       S.amp[i]     = 0.20 + Math.random() * 0.20;
       S.max[i]     = 3.0 + Math.random() * 2.0;
+      S.curl[i]    = 0;
       S.life[i] = S.max[i];
       S.alp[i]  = 0;
       S.gnd[i]  = 1;
+      S.rot[i]  = Math.random() * 6.283;
+      S.spin[i] = (Math.random() - 0.5) * 0.5;
       continue;
     }
     if (kind) {
@@ -2100,31 +2175,58 @@ Rocket.prototype.steamEmit = function (count, kind) {
          пар выглядит одним хлопком и сцена снова становится сухой. */
       S.pos[j]     = (Math.random() - 0.5) * R * 1.1;
       S.pos[j + 1] = Y + (Math.random() - 0.5) * HH * 0.8;
-      S.pos[j + 2] = R * (0.45 + Math.random() * 0.5);
-      S.vel[j]     = (Math.random() - 0.5) * 0.34;
-      S.vel[j + 1] = -0.05 + Math.random() * 0.2;
-      S.vel[j + 2] = 0.2 + Math.random() * 0.45;
-      S.siz[i]     = 0.20 + Math.random() * 0.22;
-      S.amp[i]     = 0.09 + Math.random() * 0.11;
+      S.pos[j + 2] = R * (0.55 + Math.random() * 0.55);
+      S.vel[j]     = (Math.random() - 0.5) * 0.28;
+      S.vel[j + 1] = -0.16 - Math.random() * 0.22;
+      S.vel[j + 2] = 0.06 + Math.random() * 0.16;
+      S.siz[i]     = 0.10 + Math.random() * 0.12;
+      S.amp[i]     = 0.12 + Math.random() * 0.14;
+      S.curl[i]    = 0;
       S.max[i]     = 2.4 + Math.random() * 1.6;
     } else {
-      /* Струя: стороны чередуем, иначе выброс сбивается в один бок.
-         Стартует ровно на стыке створок, по всей его высоте. */
+      /* Струя. Стороны чередуем, иначе выброс сбивается в один бок.
+         Бьёт по всей высоте стыка: пробовали два клапана, верхний и
+         нижний, - на стенде выброс распался на два отдельных облака с
+         пустотой между ними, и вместо занавеса из щели получились две
+         кляксы. Уплотнитель травит по всей длине притвора, так это и
+         выглядит. */
       var side = this._steamSide = -(this._steamSide || 1);
       S.pos[j]     = side * (0.012 + Math.random() * 0.05);
-      S.pos[j + 1] = Y + (Math.random() - 0.5) * HH * 0.88;
-      S.pos[j + 2] = R * (0.99 + Math.random() * 0.05);
-      var sp = 1.5 + Math.random() * 2.3;
+      S.pos[j + 1] = Y + (Math.random() - 0.5) * HH * 0.92;
+      /* Ставим клуб СНАРУЖИ створок: изнутри его съел бы тест глубины */
+      S.pos[j + 2] = R * (1.02 + Math.random() * 0.06);
+      /* Скорости считаны под кадр, в котором это видно, а не на глаз.
+         К открытию корабль вырос в шесть раз, и в кадр помещается
+         полоса борта шириной около трёх его радиусов. Сопротивление
+         гасит частицу на пути v/1.9, поэтому разброс 0.3-1.65 даёт
+         клубы от самой щели до кромки борта и чуть дальше - там, где
+         белый пар виден на тёмном небе. Одинаковая скорость собирала
+         выброс в одно кольцо: оно уходило от корабля единым фронтом
+         и оставляло стык голым (проверено стендом). */
+      var sp = 0.30 + Math.random() * 1.35;
       S.vel[j]     = side * sp;
-      S.vel[j + 1] = -(0.25 + Math.random() * 0.95);
-      S.vel[j + 2] = 0.55 + Math.random() * 1.15;
-      S.siz[i]     = 0.09 + Math.random() * 0.13;
-      S.amp[i]     = 0.42 + Math.random() * 0.30;
-      S.max[i]     = 2.0 + Math.random() * 1.2;
+      S.vel[j + 1] = -(0.12 + Math.random() * 0.5);
+      /* К зрителю выпускаем осторожно. Корабль в этот момент стоит в
+         четырнадцати единицах от камеры, а масштаб его - шестикратный:
+         полшага «на камеру» в его системе координат - это три единицы
+         мира, и частица раздувается вдвое, разъезжаясь по всему кадру.
+         Замерено дампом координат на стенде. */
+      S.vel[j + 2] = 0.08 + Math.random() * 0.22;
+      S.siz[i]     = 0.085 + Math.random() * 0.10;
+      S.amp[i]     = 0.50 + Math.random() * 0.34;
+      S.max[i]     = 1.3 + Math.random() * 0.8;
+      /* Завихрение: струя не летит по прямой, её сворачивает в валик.
+         Знак берём от стороны, поэтому оба клуба заворачиваются вверх
+         и наружу, как настоящий вихрь у сопла. Стоит четыре умножения
+         на частицу, а движение из «полетели точки» превращается в
+         «пар клубится». */
+      S.curl[i]    = side * (0.22 + Math.random() * 0.4);
     }
     S.life[i] = S.max[i];
     S.alp[i]  = 0;
     S.gnd[i]  = 0;
+    S.rot[i]  = Math.random() * 6.283;
+    S.spin[i] = (Math.random() - 0.5) * 1.3;
   }
   if (!made) return;
   S.live = 1;
@@ -2141,60 +2243,77 @@ Rocket.prototype.steamClear = function () {
   for (var i = 0; i < S.n; i++) { S.life[i] = 0; S.alp[i] = 0; S.gnd[i] = 0; }
   this._steamAlive = 0;
   this._steamGnd = 0;
-  this._steamT = null;
+  /* Часы выброса переводим за все его окна, а не в ноль: чистка
+     случается и на живой открытой двери, когда последняя частица
+     дожила своё, - с нулём выброс пошёл бы по второму кругу */
+  this._steamT = 99;
   this._gndRest = 0;
+  this._steamRest = 0;
 };
 
-/* Шаг пара. Выброс привязан не ко времени, а к самой доле открытия:
-   при рывке колеса дверь проскакивает окно 0.05-0.35 за один кадр, и
-   струя обязана выйти всё равно; при обратной прокрутке доля падает -
-   и не выходит ничего. Весь запас струи расходуется ровно один раз за
-   открытие, перезарядка - только на закрытой двери. */
+/* Шаг пара. Створки тронулись - и сброс давления пошёл СВОИМ временем,
+   а не временем колеса. Это принципиально: разгерметизация - событие, а
+   не анимация на прокрутке. Раньше выброс шёл долей открытия, и стоило
+   остановить палец на середине окна, как струя замирала в воздухе.
+   Теперь окно 0.05 только взводит выброс, дальше он отыгрывает сам;
+   обратная прокрутка при этом честно уводит пар вместе с дверью, а
+   закрытая дверь взводит его заново. */
 Rocket.prototype.steamStep = function (dt) {
   var dk = this.doorK || 0;
   var S = this._steam;
   if (!S && dk < 0.05) return;                  /* дверь не трогалась - и системы нет */
 
-  if (dk < 0.03) this._steamW = 0;              /* закрылась - взводим заново */
-  var w = (dk - 0.05) / 0.30;
-  w = w < 0 ? 0 : w > 1 ? 1 : w;
-  var was = this._steamW || 0;
-  if (w > was) {
-    var budget = this.C.weak ? 40 : 92;
-    /* Остаток копим: на медленной прокрутке за кадр набегает меньше
-       частицы, и без накопителя струя не вышла бы вовсе */
-    this._steamRest = (this._steamRest || 0) + (w - was) * budget;
-    var take = Math.floor(this._steamRest);
-    if (take > 0) {
-      this._steamRest -= take;
-      this.steamEmit(take, 0);
-    }
-    if (!was) {
-      this.hiss();                              /* шипение в момент срыва */
-      this._steamT = 0;                         /* и отсчёт для слоя у грунта */
-    }
-    this._steamW = w;
-    S = this._steam;
+  if (dk < 0.03) this._steamOn = 0;             /* закрылась - взводим заново */
+  if (dk >= 0.05 && !this._steamOn) {
+    this._steamOn = 1;
+    this._steamT = 0;
+    this._steamRest = 0;
+    this._gndRest = 0;
+    this.hiss();                                /* шипение в момент срыва */
   }
-  /* Слой у грунта выкладываем с задержкой: пар должен сперва дойти
-     до площадки. Полсекунды - ровно столько летит струя от люка до
-     опор, дальше он полторы секунды растекается. */
-  if (S && this._steamW > 0 && this._steamT != null && this._steamT < 2.1) {
-    var was2 = this._steamT;
-    this._steamT += dt;
-    if (this._steamT > 0.55) {
-      var st0 = Math.max(0.55, was2), st1 = Math.min(2.1, this._steamT);
-      var lay = this.C.weak ? 8 : 17;
-      this._gndRest = (this._gndRest || 0) + (st1 - st0) / 1.55 * lay;
-      var gtake = Math.floor(this._gndRest);
-      if (gtake > 0) { this._gndRest -= gtake; this.steamEmit(gtake, 2); }
+  if (this._steamOn) {
+    var t0 = this._steamT || 0;
+    this._steamT = t0 + dt;
+    /* Струя бьёт две с половиной секунды: столько и длится настоящий
+       сброс давления в притворе, дальше остаётся только дымка */
+    var jet = 2.4;
+    var j0 = t0 < jet ? t0 : jet, j1 = this._steamT < jet ? this._steamT : jet;
+    if (j1 > j0) {
+      /* Подача струи: резкий хлопок плюс ровный остаток. Отсек
+         стравливает давление не мгновенно - сперва выбивает пробку,
+         потом ещё пару секунд шипит на убывающем напоре, и клуб всё
+         это время подпитывается от щели. Одним хлопком выброс
+         отрывался от борта и улетал комом, оставляя стык голым -
+         это первое, что видно на стенде.
+
+         Считаем накопленным числом: N(t) = A(1-e^(-t/0.85)) + B*t,
+         за кадр берём приращение. Такой счёт не зависит ни от частоты
+         кадров, ни от скорости колеса - на просевшем кадре выйдет
+         ровно столько же частиц, сколько на быстром. */
+      var A = this.C.weak ? 40 : 85, B = this.C.weak ? 16 : 34;
+      this._steamRest = (this._steamRest || 0) +
+        A * (Math.exp(-j0 / 0.85) - Math.exp(-j1 / 0.85)) + B * (j1 - j0);
+      var take = Math.floor(this._steamRest);
+      if (take > 0) { this._steamRest -= take; this.steamEmit(take, 0); }
     }
+    /* Слой у грунта выкладываем с задержкой: пар должен сперва дойти
+       до площадки. Полсекунды - ровно столько летит струя от люка до
+       опор, дальше он полторы секунды растекается. */
+    if (this._steamT > 0.55 && t0 < 2.1) {
+      var g0 = t0 < 0.55 ? 0.55 : t0, g1 = this._steamT < 2.1 ? this._steamT : 2.1;
+      if (g1 > g0) {
+        this._gndRest = (this._gndRest || 0) + (g1 - g0) / 1.55 * (this.C.weak ? 8 : 17);
+        var gtake = Math.floor(this._gndRest);
+        if (gtake > 0) { this._gndRest -= gtake; this.steamEmit(gtake, 2); }
+      }
+    }
+    S = this._steam;
   }
   /* Дымка из проёма идёт, пока дверь открыта. На слабом устройстве её
      нет: там дорога каждая полупрозрачная точка. */
-  if (!this.C.weak && dk > 0.28 && S) {
+  if (!this.C.weak && dk > 0.12 && S) {
     this._hazeT = (this._hazeT || 0) + dt;
-    while (this._hazeT > 0.14) { this._hazeT -= 0.14; this.steamEmit(1, 1); }
+    while (this._hazeT > 0.11) { this._hazeT -= 0.11; this.steamEmit(1, 1); }
   } else this._hazeT = 0;
 
   if (!S || !S.live) return;
@@ -2208,24 +2327,39 @@ Rocket.prototype.steamStep = function (dt) {
   var dy = d ? d.y : 0.10, dz = d ? d.rad : 0.65;
   /* Уровень грунта в системе корабля: там же, где стоят тарелки опор */
   var gy = PAD_Y + 0.03;
-  /* Закрывающаяся дверь уводит пар за собой, а не гасит его рывком */
-  var vis = Math.min(1, dk * 5);
+  /* Закрывающаяся дверь уводит пар за собой, а не гасит его рывком.
+     Порог низкий: на открытии выброс обязан быть в полную силу с
+     первого кадра, гаснуть он будет только на обратной прокрутке */
+  var vis = Math.min(1, dk * 14);
   var alive = 0, onGnd = 0;
 
   for (var i = 0; i < S.n; i++) {
     if (S.life[i] <= 0) continue;
-    alive++;
     S.life[i] -= dt;
+    /* Дожившую частицу гасим явно: буфер прозрачностей общий, и
+       брошенное в нём значение продолжало бы рисовать застывший клуб */
+    if (S.life[i] <= 0) { S.life[i] = 0; S.alp[i] = 0; continue; }
+    alive++;
     var j = i * 3;
     var lo = S.gnd[i];
-    /* Струя резко вязнет в воздухе, слой у грунта - ещё сильнее */
-    var drag = Math.exp(-dt * (lo ? 3.4 : 2.2));
+    /* Струя вязнет в воздухе, слой у грунта - сильнее */
+    var drag = Math.exp(-dt * (lo ? 2.6 : 1.9));
     S.vel[j] *= drag;
     S.vel[j + 2] *= drag;
     /* Пар из отсека холоднее воздуха и потому оседает, а не всплывает.
        Сопротивление по вертикали слабее, чем вбок: струя гасится о
        воздух, а падение оно только замедляет */
-    S.vel[j + 1] = lo ? 0 : S.vel[j + 1] * Math.exp(-dt * 0.9) - dt * 0.9;
+    S.vel[j + 1] = lo ? 0 : S.vel[j + 1] * Math.exp(-dt * 0.9) - dt * 0.7;
+    /* Вихрь: поворачиваем вектор скорости в плоскости кадра. Пока
+       струя быстрая, она заворачивается вверх и наружу; когда
+       сопротивление её съело, поворачивать уже нечего, и клуб
+       спокойно оседает. */
+    if (S.curl[i]) {
+      var cw = S.curl[i] * dt;
+      var vx = S.vel[j], vy = S.vel[j + 1];
+      S.vel[j] = vx - vy * cw;
+      S.vel[j + 1] = vy + vx * cw;
+    }
     S.pos[j] += S.vel[j] * dt;
     S.pos[j + 1] += S.vel[j + 1] * dt;
     S.pos[j + 2] += S.vel[j + 2] * dt;
@@ -2245,8 +2379,11 @@ Rocket.prototype.steamStep = function (dt) {
     }
     if (lo) { S.pos[j + 1] = gy; onGnd++; }
 
+    /* Клуб медленно проворачивается: две сотни одинаковых спрайтов
+       в одной ориентации выдают себя мгновенно */
+    S.rot[i] += S.spin[i] * dt;
     /* Клуб всё время расходится; у грунта - вдвое быстрее, ему есть куда */
-    S.siz[i] += dt * (lo ? 0.42 : 0.22);
+    S.siz[i] += dt * (lo ? 0.09 : 0.05);
 
     var a = S.life[i] / S.max[i];
     if (a < 0) a = 0;
@@ -2259,10 +2396,15 @@ Rocket.prototype.steamStep = function (dt) {
     var wx = S.pos[j], wy = S.pos[j + 1] - dy, wz = S.pos[j + 2] - dz;
     var warm = lit * Math.exp(-(wx * wx + wy * wy + wz * wz) * 0.9);
     /* Слой у грунта лежит в тени корабля - он темнее и синее верхнего */
-    var sh = lo ? 0.80 : 1;
-    S.col[j]     = (0.74 + warm * 0.26) * sh;
-    S.col[j + 1] = (0.80 + warm * 0.06) * sh;
-    S.col[j + 2] = (0.90 - warm * 0.22) * sh;
+    /* База - не белая, а серо-голубая. Белый пар на белой обшивке не
+       виден вовсе: обшивка сама светлее его. Серо-голубой клуб на
+       борту читается тенью и объёмом, а на тёмном небе за бортом всё
+       равно остаётся ярко-белым - фон там втрое темнее. Тёплым его
+       делает только лампа проёма, и только вблизи неё. */
+    var sh = lo ? 0.78 : 1;
+    S.col[j]     = (0.70 + warm * 0.30) * sh;
+    S.col[j + 1] = (0.76 + warm * 0.12) * sh;
+    S.col[j + 2] = (0.88 - warm * 0.16) * sh;
   }
 
   if (!alive) { this.steamClear(); return; }
@@ -2276,6 +2418,7 @@ Rocket.prototype.steamStep = function (dt) {
   S.geo.attributes.aCol.needsUpdate = true;
   S.geo.attributes.aSize.needsUpdate = true;
   S.geo.attributes.aAlpha.needsUpdate = true;
+  S.geo.attributes.aRot.needsUpdate = true;
 };
 
 /* Шипение сброса давления. Отдельного звука на это в rc-sound нет, а
@@ -2404,10 +2547,17 @@ Rocket.prototype.doorOpen = function (dt) {
 
   var d = this.rocket.door;
   if (d) {
-    /* Створки уходят по борту вбок: поворот вокруг оси корабля */
+    /* Створки уходят по борту вбок: поворот вокруг оси корабля.
+       Знаки поворота были перепутаны, и створки разъезжались НАВСТРЕЧУ
+       друг другу: левая уходила на место правой, они лежали на одном
+       радиусе и мерцали z-конфликтом, а проём открывался не из
+       середины, а с краёв. На стенде это видно сразу - при доле 0.45
+       вместо чёрного проёма стоит полосатая каша из двух текстур.
+       Теперь левая идёт влево, правая вправо, щель раскрывается от
+       стыка - и паром из этой щели есть чему бить. */
     var open = this.doorK * d.half * 2.05;
-    d.l.rotation.y = open;
-    d.r.rotation.y = -open;
+    d.l.rotation.y = -open;
+    d.r.rotation.y = open;
     /* Свет салона разгорается в щели раньше самих створок:
        сначала видно, что там свет, потом уже что там салон */
     var lit = Math.min(1, this.doorK * 2.4);

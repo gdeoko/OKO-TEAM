@@ -178,28 +178,88 @@ html.rc-inside #contact::before {
   position: relative;
   border-radius: var(--r-lg);
   color: var(--tx);
-  /* Стекло экрана: тот же состав, что у приборных плит рубки */
+
+  /* ── Одно число на всю проекцию ────────────────────────────
+     Долю подхода камеры к пульту публикует rc-interior.js в
+     --int-con: ноль - камера ещё стоит в центре рубки, единица -
+     анкета уже ушла за верхнюю кромку кадра. Всё, что ниже,
+     считается только из этого числа, поэтому ход вперёд и ход
+     назад по прокрутке зеркальны сами собой: голограмма не
+     «проигрывается», а буквально следует за камерой.
+
+     Запасное значение НЕ ноль, и это принципиально. Объёмная рубка
+     поднимается не всегда: нет WebGL, включена просьба меньше
+     движения, сработала третья ступень упрощения - тогда --int-con
+     не публикует никто. С нулём в запасе анкета в этих случаях
+     осталась бы невидимой, то есть сайт потерял бы заявки. .45 -
+     середина полки: «показать как есть, без голограммы». */
+  --hc: var(--int-con, .45);
+
+  /* Луч проектора вспыхивает первым и гаснет последним: экран
+     собирается из него и втягивается обратно в него же. Отрезок
+     разворота растянут намеренно. В первой сборке луч добирал
+     полную высоту за восемь сотых доли - к этому моменту нижняя
+     кромка анкеты ещё не вошла в кадр, и разворот целиком
+     проходил за нижним обрезом экрана: зритель видел уже готовое
+     свечение вместо движения. */
+  --beam: min(clamp(0, calc(var(--hc) / .16), 1),
+              clamp(0, calc((1 - var(--hc)) / .12), 1));
+  /* Стекло экрана набирает плотность следом за лучом и уходит
+     заметно раньше него: сначала гаснут строки, следом само стекло,
+     и последним складывается луч. Обратный отрезок начинается сразу
+     за строками - иначе на месте разобранной анкеты какое-то время
+     висит пустая плотная плита. */
+  --glass: min(clamp(0, calc((var(--hc) - .06) / .22), 1),
+               clamp(0, calc((.94 - var(--hc)) / .22), 1));
+  /* Горбы: сильнее всего проекция «трещит» на середине хода, а в
+     покое и в пустоте не трещит вовсе. Отсюда живут и яркая кромка
+     разворачивающегося луча, и полосы распада по стеклу. Без горба
+     кромка светилась бы вечно, а полосы остались бы висеть тёмными
+     штрихами поверх готовой анкеты.
+
+     Множитель 3.2 взят по замеру кадра: при 2.3 клин луча набирал
+     над нижней кромкой всего десяток единиц синего - на глаз это
+     уже не свет, а шум. Яркое основание луча всё равно остаётся за
+     нижним обрезом экрана, видна ровно его верхняя половина. */
+  --beam-hot: calc(.12 + var(--beam) * (1 - var(--beam)) * 3.2);
+  --band: calc(var(--glass) * (1 - var(--glass)) * 3);
+
+  /* Стекло экрана: тот же состав, что у приборных плит рубки.
+     Плотность стекла умножена на долю проекции - пока луч только
+     разворачивается, за анкетой видно саму рубку. */
   background:
     linear-gradient(158deg,
-      rgba(var(--int-panel-rgb, 20,40,61), .90),
-      rgba(var(--int-hull-rgb, 10,21,36), .95));
-  border: 1px solid rgba(var(--int-cyan-rgb, 66,178,220), .32);
+      rgba(var(--int-panel-rgb, 20,40,61), calc(.9 * var(--glass))),
+      rgba(var(--int-hull-rgb, 10,21,36), calc(.95 * var(--glass))));
+  border: 1px solid rgba(var(--int-cyan-rgb, 66,178,220), calc(.32 * var(--glass)));
   /* Живого размытия здесь нет намеренно: за экраном не страница, а
      наша же сцена, свет которой мы задаём сами; backdrop-filter к
      тому же схлопывает слои внутри карточки в плоскость. */
   backdrop-filter: none; -webkit-backdrop-filter: none;
+  /* Прозрачности самой карточки здесь нет и быть не может: opacity
+     на форме делает её контекстом наложения, и корпус прибора
+     (::before с z-index -1) тут же выныривает поверх стекла, съедая
+     фаску. Поэтому проекция гасится альфой каждого слоя. */
   box-shadow:
     /* фаска: блик по срезу стекла, ступень корпуса, внешний паз */
-    0 0 0 1px rgba(var(--int-lit-rgb, 207,233,245), .08),
-    0 0 0 9px rgba(var(--int-hull-rgb, 10,21,36), .96),
-    0 0 0 10px rgba(var(--int-lit-rgb, 207,233,245), .07),
+    0 0 0 1px rgba(var(--int-lit-rgb, 207,233,245), calc(.08 * var(--glass))),
+    0 0 0 9px rgba(var(--int-hull-rgb, 10,21,36), calc(.96 * var(--glass))),
+    0 0 0 10px rgba(var(--int-lit-rgb, 207,233,245), calc(.07 * var(--glass))),
     /* свечение стекла: разгорается по мере подъезда камеры к панели,
        долю подъезда даёт rc-interior.js в --int-con */
-    inset 0 1px 0 rgba(var(--int-lit-rgb, 207,233,245), .16),
-    inset 0 -34px 50px -44px rgba(var(--int-cyan-rgb, 66,178,220), .95),
-    inset 0 0 78px -32px rgba(var(--int-cyan-rgb, 66,178,220), calc(.34 + var(--int-con, 0) * .46)),
-    0 34px 74px -40px rgba(0,0,0,.95);
+    inset 0 1px 0 rgba(var(--int-lit-rgb, 207,233,245), calc(.16 * var(--glass))),
+    inset 0 -34px 50px -44px rgba(var(--int-cyan-rgb, 66,178,220), calc(.95 * var(--glass))),
+    inset 0 0 78px -32px rgba(var(--int-cyan-rgb, 66,178,220),
+      calc((.34 + var(--int-con, 0) * .46) * var(--glass))),
+    0 34px 74px -40px rgba(0,0,0, calc(.95 * var(--glass)));
 }
+
+/* Пока человек в анкете, голограммы нет: проекция замирает в
+   собранном виде. Одна строка отменяет весь эффект разом, потому
+   что вся математика считается из --hc. То же самое делает
+   :focus-within - он работает даже если скрипты не поднялись. */
+html.rc-form-active #contact .form-card,
+#contact .form-card:focus-within { --hc: .45; }
 
 /* Корпус прибора вокруг экрана: плита, строка состояния сверху и
    подсветка снизу - тот самый свет, который в рубке идёт от
@@ -214,7 +274,32 @@ html.rc-inside #contact::before {
   inset: -30px -24px -38px -24px;
   border-radius: calc(var(--r-lg) + 15px);
   pointer-events: none;
+  /* Корпус живёт вместе с лучом: он вспыхивает раньше стекла и
+     гаснет позже него, поэтому анкета собирается «из прибора» и
+     втягивается обратно в прибор, а не появляется сама по себе. */
+  opacity: var(--beam);
   background:
+    /* Кромка разворачивающегося луча: яркая линия по его верхнему
+       срезу. Её видно только пока луч в движении - в покое горб
+       --beam-hot сходит в ноль, и линия исчезает сама.
+
+       Толщина кромки задана пикселями, а не долей высоты луча.
+       С процентами она росла вместе с лучом: на телефоне кромка
+       раздувалась до восьмидесяти пикселей и читалась не световой
+       линией, а серой плитой, выехавшей снизу. */
+    linear-gradient(0deg,
+      rgba(var(--int-lit-rgb, 207,233,245), 0) 0 calc(100% - 30px),
+      rgba(var(--int-lit-rgb, 207,233,245), calc(.5 * var(--beam-hot))) calc(100% - 6px),
+      rgba(var(--int-lit-rgb, 207,233,245), calc(.85 * var(--beam-hot))) calc(100% - 2px),
+      rgba(var(--int-lit-rgb, 207,233,245), 0) 100%),
+    /* Сам луч: снизу вверх разворачивается световой клин от нижней
+       кромки прибора. Растёт и по высоте, и по ширине - глаз читает
+       это как раскрывающийся конус проектора. */
+    linear-gradient(0deg,
+      rgba(var(--int-cyan-rgb, 66,178,220), calc(.9 * var(--beam-hot))) 0%,
+      rgba(var(--int-cyan-rgb, 66,178,220), calc(.55 * var(--beam-hot))) 36%,
+      rgba(var(--int-cyan-rgb, 66,178,220), calc(.22 * var(--beam-hot))) 72%,
+      rgba(var(--int-cyan-rgb, 66,178,220), 0) 100%),
     /* Три диода состояния на верхней кромке корпуса. Отступ слева
        не декоративный: ближе к углу их срезает скругление плиты. */
     radial-gradient(circle at 54px 9px,
@@ -229,14 +314,26 @@ html.rc-inside #contact::before {
     /* свет от панели снизу */
     radial-gradient(ellipse 66% 38% at 50% 100%,
       rgba(var(--int-cyan-rgb, 66,178,220), calc(.22 + var(--int-con, 0) * .34)) 0%, transparent 76%),
-    /* сама плита корпуса */
+    /* Сама плита корпуса. Её плотность идёт не за лучом, а за
+       стеклом. Иначе первым, что появляется в кадре, оказывается
+       тёмный прямоугольник во весь экран анкеты - это читается
+       «выехала панель», а не «включился проектор». */
     linear-gradient(180deg,
-      rgba(var(--int-hull-rgb, 10,21,36), .88),
-      rgba(var(--int-deep-rgb, 5,12,21), .95));
+      rgba(var(--int-hull-rgb, 10,21,36), calc(.88 * var(--glass))),
+      rgba(var(--int-deep-rgb, 5,12,21), calc(.95 * var(--glass))));
+  /* Луч меряется своим размером, остальные слои - как раньше */
+  background-repeat: no-repeat, no-repeat, repeat, repeat, repeat, repeat, repeat;
+  background-position: 50% 100%, 50% 100%, 0 0, 0 0, 0 0, 0 0, 0 0;
+  background-size:
+    calc(16% + var(--beam) * 70%) calc(3% + var(--beam) * 112%),
+    calc(16% + var(--beam) * 70%) calc(3% + var(--beam) * 112%),
+    auto, auto, auto, auto, auto;
+  /* Тени корпуса тоже идут за стеклом: тёмный ореол под пустым
+     кадром выдал бы прямоугольник раньше самой проекции. */
   box-shadow:
-    inset 0 1px 0 rgba(var(--int-lit-rgb, 207,233,245), .09),
-    inset 0 -1px 0 rgba(0,0,0,.75),
-    0 44px 84px -46px rgba(0,0,0,.92);
+    inset 0 1px 0 rgba(var(--int-lit-rgb, 207,233,245), calc(.09 * var(--glass))),
+    inset 0 -1px 0 rgba(0,0,0, calc(.75 * var(--glass))),
+    0 44px 84px -46px rgba(0,0,0, calc(.92 * var(--glass)));
   /* Едва заметная перспектива: плита отклонена, как приборная
      панель под наклоном. Полтора градуса - ровно столько, чтобы
      глаз прочитал наклон и при этом не увидел искажения текста
@@ -245,19 +342,105 @@ html.rc-inside #contact::before {
   transform-origin: 50% 100%;
 }
 
-/* Блик по стеклу экрана: идёт наискось и оживает при наведении */
+/* Стекло экрана: блик наискось плюс голографический материал -
+   скан-волна, сканлайны и полосы распада. Всё это лежит выше полей
+   и ничего не ловит: pointer-events снят, поля под ним нативные. */
 #contact .form-card::after {
   content: ''; position: absolute; inset: 0; border-radius: inherit;
   pointer-events: none;
   background:
+    /* Скан-волна. Её ход считается из --hc, а не из таймера: волна
+       идёт по стеклу ровно пока камера подходит к пульту, и идёт
+       назад, когда камера отступает. Полосу повторяем по вертикали,
+       поэтому за подход волна успевает пройти несколько раз. */
+    linear-gradient(180deg,
+      rgba(var(--int-cyan-rgb, 66,178,220), 0) 0 30%,
+      rgba(var(--int-cyan-rgb, 66,178,220), calc(.16 * var(--glass))) 45%,
+      rgba(var(--int-lit-rgb, 207,233,245), calc(.13 * var(--glass))) 50%,
+      rgba(var(--int-cyan-rgb, 66,178,220), calc(.16 * var(--glass))) 55%,
+      rgba(var(--int-cyan-rgb, 66,178,220), 0) 70%),
+    /* Полосы распада: на середине хода проекция разбирается на
+       строки и втягивается в проектор. Шаг полос раскрывается по
+       мере ухода стекла, а их плотность держит горб --band, чтобы
+       на собранной анкете полос не осталось совсем. */
+    repeating-linear-gradient(180deg,
+      rgba(var(--int-deep-rgb, 5,12,21), 0) 0 calc(2px + (1 - var(--glass)) * 7px),
+      rgba(var(--int-deep-rgb, 5,12,21), calc(.92 * var(--band)))
+        calc(2px + (1 - var(--glass)) * 7px) calc(4px + (1 - var(--glass)) * 15px)),
+    /* Постоянные сканлайны голограммы: тоньше волоса, читаемости
+       полей не мешают, но материал сразу читается проекцией. */
+    repeating-linear-gradient(180deg,
+      rgba(var(--int-lit-rgb, 207,233,245), .05) 0 1px,
+      rgba(var(--int-lit-rgb, 207,233,245), 0) 1px 3px),
     linear-gradient(112deg, transparent 36%,
       rgba(var(--int-lit-rgb, 207,233,245), .075) 47%, transparent 58%),
     linear-gradient(180deg, rgba(var(--int-lit-rgb, 207,233,245), .06), transparent 24%);
-  opacity: .9;
+  background-repeat: repeat, repeat, repeat, no-repeat, no-repeat;
+  background-size: 100% 62%, auto, auto, auto, auto;
+  background-position: 50% calc(var(--hc) * -880%), 0 0, 0 0, 0 0, 0 0;
+  opacity: calc(.9 * var(--glass));
   transform: translateX(calc(var(--screen-sheen, 0) * 8%));
   transition: transform .8s var(--ease);
+  /* Мерцание живёт только здесь, на псевдоэлементе, и только по
+     прозрачности. Двигать саму анкету вечной анимацией нельзя:
+     браузер считает такой элемент нестабильным и перестаёт
+     доводить нажатия до кнопки - это уже ловили. */
+  animation: rcHoloFlicker 6.4s ease-in-out infinite;
 }
 #contact .form-card:hover::after { --screen-sheen: 1; }
+
+@keyframes rcHoloFlicker {
+  0%, 100% { opacity: calc(.9 * var(--glass)); }
+  17%      { opacity: calc(.79 * var(--glass)); }
+  21%      { opacity: calc(.95 * var(--glass)); }
+  56%      { opacity: calc(.84 * var(--glass)); }
+  60%      { opacity: calc(.92 * var(--glass)); }
+}
+
+/* ── Печать полей построчно ──────────────────────────────────
+   Строки анкеты проявляются не разом, а одна за другой, пока луч
+   разворачивается: сверху вниз, как печатает строки настоящий
+   терминал. Гаснут они в обратном порядке - верхние первыми, и
+   анкета складывается вниз, в проектор.
+
+   Здесь только opacity: ни transform, ни pointer-events строки не
+   трогают. Поля остаются нативными и кликабельными на всём ходу -
+   именно поэтому порог «выключить ввод» тут не нужен вовсе: он и
+   был бы тем самым местом, где кнопка перестаёт нажиматься. */
+#contact .form-card > * {
+  --ri: 0;
+  /* Проявление: строка за строкой, шаг девятнадцать тысячных доли.
+     Последняя строка (кнопка) добирает полную силу к 0.344 - к
+     этому моменту анкета уже целиком стоит в кадре. */
+  --ru: clamp(0, calc((var(--hc) - (.12 + var(--ri) * .019)) / .11), 1);
+  /* Угасание начинается позже и идёт шире: первая строка снимается
+     только когда верх анкеты ушёл за кромку кадра, а кнопка держится
+     до последнего. Тесный отрезок первой сборки прятал весь распад в
+     полсотни пикселей у верхнего края - его просто не успевали
+     увидеть. */
+  --rd: clamp(0, calc(((.7 + var(--ri) * .03) - var(--hc)) / .13), 1);
+  opacity: min(var(--ru), var(--rd));
+}
+#contact .form-card > *:nth-child(3)  { --ri: 1; }
+#contact .form-card > *:nth-child(4)  { --ri: 2; }
+#contact .form-card > *:nth-child(5)  { --ri: 3; }
+#contact .form-card > *:nth-child(6)  { --ri: 4; }
+#contact .form-card > *:nth-child(7)  { --ri: 5; }
+#contact .form-card > *:nth-child(8)  { --ri: 6; }
+#contact .form-card > *:nth-child(n+9) { --ri: 7; }
+
+/* Заголовки полей - голографический текст: лёгкий хроматический
+   развод по краям и тонкое свечение цианом. Сами буквы при этом
+   стали ярче и плотнее прежних (--tx-2 давал 6.7:1, здесь около
+   8.7:1), то есть контраст вырос, а не упал. */
+#contact .form-card .field label {
+  color: rgba(var(--int-lit-rgb, 207,233,245), .78);
+  letter-spacing: .02em;
+  text-shadow:
+    -.5px 0 rgba(var(--int-cyan-rgb, 66,178,220), .42),
+    .5px 0 rgba(var(--int-vio-rgb, 138,89,246), .3),
+    0 0 10px rgba(var(--int-cyan-rgb, 66,178,220), .18);
+}
 
 /* Поля - утопленные пазы в плите, а не наклейки поверх неё */
 #contact .form-card .field input,
@@ -287,7 +470,7 @@ html.rc-inside #contact::before {
 /* Экран включается по мере подхода: пока панель далеко, стекло
    тёмное, вблизи разгорается. Класс ставит rc-console.js. */
 html.rc-console-near #contact .form-card {
-  border-color: rgba(var(--int-cyan-rgb, 66,178,220), .46);
+  border-color: rgba(var(--int-cyan-rgb, 66,178,220), calc(.46 * var(--glass)));
 }
 
 /* Пока человек печатает, стекло становится плотнее: читаемость
@@ -300,7 +483,11 @@ html.rc-form-active #contact .form-card {
       rgba(var(--int-panel-rgb, 20,40,61), .985),
       rgba(var(--int-hull-rgb, 10,21,36), .99));
 }
-html.rc-form-active #contact .form-card::after { opacity: .4; transition: none; }
+/* Мерцание и скан-волну на время ввода снимаем совсем: пока человек
+   печатает, по стеклу ничего не должно ходить. */
+html.rc-form-active #contact .form-card::after {
+  opacity: .4; transition: none; animation: none;
+}
 
 /* ── Светлая тема ────────────────────────────────────────────
    На белой странице тёмный пульт спорит со всем сразу. Экран и его
@@ -321,31 +508,86 @@ html[data-theme="light"].rc-inside #contact::before {
     linear-gradient(180deg, rgba(255,255,255,.86) 0%, rgba(255,255,255,.42) 18%, rgba(255,255,255,.42) 72%, rgba(255,255,255,.9) 100%);
 }
 html[data-theme="light"] #contact .form-card {
-  background: linear-gradient(158deg, rgba(255,255,255,.98), rgba(240,246,252,.99));
-  border-color: rgba(10,88,151,.3);
+  background:
+    linear-gradient(158deg,
+      rgba(255,255,255, calc(.98 * var(--glass))),
+      rgba(240,246,252, calc(.99 * var(--glass))));
+  border-color: rgba(10,88,151, calc(.3 * var(--glass)));
   box-shadow:
-    0 0 0 1px rgba(255,255,255,.9),
-    0 0 0 9px rgba(233,241,248,.96),
-    0 0 0 10px rgba(10,88,151,.12),
-    inset 0 1px 0 rgba(255,255,255,.95),
-    inset 0 -34px 50px -46px rgba(10,88,151,.5),
-    inset 0 0 70px -34px rgba(10,88,151, calc(.2 + var(--int-con, 0) * .26)),
-    0 34px 74px -44px rgba(9,19,32,.45);
+    0 0 0 1px rgba(255,255,255, calc(.9 * var(--glass))),
+    0 0 0 9px rgba(233,241,248, calc(.96 * var(--glass))),
+    0 0 0 10px rgba(10,88,151, calc(.12 * var(--glass))),
+    inset 0 1px 0 rgba(255,255,255, calc(.95 * var(--glass))),
+    inset 0 -34px 50px -46px rgba(10,88,151, calc(.5 * var(--glass))),
+    inset 0 0 70px -34px rgba(10,88,151, calc((.2 + var(--int-con, 0) * .26) * var(--glass))),
+    0 34px 74px -44px rgba(9,19,32, calc(.45 * var(--glass)));
 }
+html[data-theme="light"].rc-console-near #contact .form-card {
+  border-color: rgba(10,88,151, calc(.42 * var(--glass)));
+}
+/* Луч в светлой теме тот же, только в бумажных тонах: на белом
+   ярко-циановый клин выглядел бы дырой в странице. Сокращённая
+   запись background сбрасывает размеры слоёв, поэтому размеры луча
+   здесь повторяются - иначе он растянулся бы на всю плиту. */
 html[data-theme="light"] #contact .form-card::before {
   background:
+    linear-gradient(0deg,
+      rgba(255,255,255, 0) 0 calc(100% - 30px),
+      rgba(255,255,255, calc(.55 * var(--beam-hot))) calc(100% - 6px),
+      rgba(255,255,255, calc(.9 * var(--beam-hot))) calc(100% - 2px),
+      rgba(255,255,255, 0) 100%),
+    linear-gradient(0deg,
+      rgba(var(--int-cyan-rgb, 66,178,220), calc(.6 * var(--beam-hot))) 0%,
+      rgba(var(--int-cyan-rgb, 66,178,220), calc(.36 * var(--beam-hot))) 36%,
+      rgba(var(--int-cyan-rgb, 66,178,220), calc(.14 * var(--beam-hot))) 72%,
+      rgba(var(--int-cyan-rgb, 66,178,220), 0) 100%),
     radial-gradient(circle at 54px 9px, #0A5897 0 3px, rgba(10,88,151,.3) 3px 7px, transparent 7.5px),
     radial-gradient(circle at 76px 9px, rgba(122,72,224,.95) 0 3px, rgba(122,72,224,.28) 3px 7px, transparent 7.5px),
     radial-gradient(circle at 98px 9px, rgba(9,19,32,.55) 0 3px, rgba(9,19,32,.16) 3px 7px, transparent 7.5px),
     radial-gradient(ellipse 66% 38% at 50% 100%, rgba(10,88,151, calc(.12 + var(--int-con, 0) * .2)) 0%, transparent 76%),
-    linear-gradient(180deg, rgba(233,241,248,.96), rgba(214,228,242,.98));
+    linear-gradient(180deg,
+      rgba(233,241,248, calc(.96 * var(--glass))),
+      rgba(214,228,242, calc(.98 * var(--glass))));
+  background-repeat: no-repeat, no-repeat, repeat, repeat, repeat, repeat, repeat;
+  background-position: 50% 100%, 50% 100%, 0 0, 0 0, 0 0, 0 0, 0 0;
+  background-size:
+    calc(16% + var(--beam) * 70%) calc(3% + var(--beam) * 112%),
+    calc(16% + var(--beam) * 70%) calc(3% + var(--beam) * 112%),
+    auto, auto, auto, auto, auto;
   box-shadow:
-    inset 0 1px 0 rgba(255,255,255,.9),
-    inset 0 -1px 0 rgba(10,88,151,.14),
-    0 44px 84px -50px rgba(9,19,32,.4);
+    inset 0 1px 0 rgba(255,255,255, calc(.9 * var(--glass))),
+    inset 0 -1px 0 rgba(10,88,151, calc(.14 * var(--glass))),
+    0 44px 84px -50px rgba(9,19,32, calc(.4 * var(--glass)));
 }
+/* Полосы распада на белом обязаны быть светлыми: тёмные штрихи
+   поверх бумажной анкеты читались бы грязью, а не проекцией. */
 html[data-theme="light"] #contact .form-card::after {
-  background: linear-gradient(112deg, transparent 36%, rgba(10,88,151,.05) 47%, transparent 58%);
+  background:
+    linear-gradient(180deg,
+      rgba(10,88,151, 0) 0 30%,
+      rgba(10,88,151, calc(.1 * var(--glass))) 45%,
+      rgba(var(--int-cyan-rgb, 66,178,220), calc(.13 * var(--glass))) 50%,
+      rgba(10,88,151, calc(.1 * var(--glass))) 55%,
+      rgba(10,88,151, 0) 70%),
+    repeating-linear-gradient(180deg,
+      rgba(255,255,255, 0) 0 calc(2px + (1 - var(--glass)) * 7px),
+      rgba(255,255,255, calc(.95 * var(--band)))
+        calc(2px + (1 - var(--glass)) * 7px) calc(4px + (1 - var(--glass)) * 15px)),
+    repeating-linear-gradient(180deg,
+      rgba(10,88,151, .038) 0 1px,
+      rgba(10,88,151, 0) 1px 3px),
+    linear-gradient(112deg, transparent 36%, rgba(10,88,151,.05) 47%, transparent 58%);
+  background-repeat: repeat, repeat, repeat, no-repeat;
+  background-size: 100% 62%, auto, auto, auto;
+  background-position: 50% calc(var(--hc) * -880%), 0 0, 0 0, 0 0;
+}
+/* Заголовки полей на белом: тот же хроматический развод, но текст
+   тёмный. Плотность выше прежней (.66), контраст только вырос. */
+html[data-theme="light"] #contact .form-card .field label {
+  color: rgba(var(--int-deep-rgb, 5,12,21), .78);
+  text-shadow:
+    -.5px 0 rgba(var(--int-cyan-rgb, 66,178,220), .3),
+    .5px 0 rgba(var(--int-vio-rgb, 138,89,246), .22);
 }
 html[data-theme="light"] #contact .form-card .field input,
 html[data-theme="light"] #contact .form-card .field textarea,
@@ -367,13 +609,14 @@ html[data-theme="light"].rc-form-active #contact .form-card {
   /* Корпус ужимаем: на узком экране широкая плита съедает поля */
   #contact .form-card {
     box-shadow:
-      0 0 0 1px rgba(var(--int-lit-rgb, 207,233,245), .07),
-      0 0 0 6px rgba(var(--int-hull-rgb, 10,21,36), .96),
-      0 0 0 7px rgba(var(--int-lit-rgb, 207,233,245), .06),
-      inset 0 1px 0 rgba(var(--int-lit-rgb, 207,233,245), .14),
-      inset 0 -26px 40px -38px rgba(var(--int-cyan-rgb, 66,178,220), .9),
-      inset 0 0 54px -26px rgba(var(--int-cyan-rgb, 66,178,220), calc(.3 + var(--int-con, 0) * .4)),
-      0 24px 50px -32px rgba(0,0,0,.95);
+      0 0 0 1px rgba(var(--int-lit-rgb, 207,233,245), calc(.07 * var(--glass))),
+      0 0 0 6px rgba(var(--int-hull-rgb, 10,21,36), calc(.96 * var(--glass))),
+      0 0 0 7px rgba(var(--int-lit-rgb, 207,233,245), calc(.06 * var(--glass))),
+      inset 0 1px 0 rgba(var(--int-lit-rgb, 207,233,245), calc(.14 * var(--glass))),
+      inset 0 -26px 40px -38px rgba(var(--int-cyan-rgb, 66,178,220), calc(.9 * var(--glass))),
+      inset 0 0 54px -26px rgba(var(--int-cyan-rgb, 66,178,220),
+        calc((.3 + var(--int-con, 0) * .4) * var(--glass))),
+      0 24px 50px -32px rgba(0,0,0, calc(.95 * var(--glass)));
   }
   #contact .form-card::before {
     inset: -22px -15px -26px -15px;
@@ -381,15 +624,31 @@ html[data-theme="light"].rc-form-active #contact .form-card {
   }
   html[data-theme="light"] #contact .form-card {
     box-shadow:
-      0 0 0 1px rgba(255,255,255,.9),
-      0 0 0 6px rgba(233,241,248,.96),
-      0 0 0 7px rgba(10,88,151,.12),
-      inset 0 1px 0 rgba(255,255,255,.95),
-      inset 0 -26px 40px -40px rgba(10,88,151,.45),
-      0 24px 50px -34px rgba(9,19,32,.4);
+      0 0 0 1px rgba(255,255,255, calc(.9 * var(--glass))),
+      0 0 0 6px rgba(233,241,248, calc(.96 * var(--glass))),
+      0 0 0 7px rgba(10,88,151, calc(.12 * var(--glass))),
+      inset 0 1px 0 rgba(255,255,255, calc(.95 * var(--glass))),
+      inset 0 -26px 40px -40px rgba(10,88,151, calc(.45 * var(--glass))),
+      0 24px 50px -34px rgba(9,19,32, calc(.4 * var(--glass)));
   }
 }
+
+/* ── Когда голограммы быть не должно ─────────────────────────
+   Просьба меньше движения, упрощённый режим и третья ступень
+   деградации: рубка не поднимается, --int-con никто не считает.
+   Ставим долю руками в середину полки - анкета просто есть, во всю
+   силу, без луча и без распада. Одна строка на каждый случай,
+   потому что вся математика проекции считается из --hc. */
+html.rc-reduced #contact .form-card,
+html[data-degrade="3"] #contact .form-card { --hc: .45; }
+html.rc-reduced #contact .form-card::after,
+html[data-degrade="3"] #contact .form-card::after { animation: none; }
+
 @media (prefers-reduced-motion: reduce) {
-  #contact .form-card::after { transition: none; }
+  #contact .form-card { --hc: .45; }
+  #contact .form-card::after {
+    transition: none; animation: none;
+    background-position: 50% 0, 0 0, 0 0, 0 0, 0 0;
+  }
   #contact .form-card::before { transform: none; }
 }

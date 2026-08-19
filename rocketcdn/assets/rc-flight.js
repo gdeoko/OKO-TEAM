@@ -1878,11 +1878,49 @@ function holoList(w3) {
   return out;
 }
 
-var holoUni = -1;
+var holoUni = -1, holoFull = false;
+
+/* Сколько миров чужой вселенной уже родилось. Планеты досыпаются
+   порциями (buildLater), поэтому в момент прыжка их в группе ещё
+   нет: список меток, собранный тогда же, оказывался пустым и больше
+   не пересобирался - в чужом рукаве не было ни одной подписи.
+   Считаем, пока вселенная не соберётся целиком, потом перестаём. */
+function holoGrown() {
+  var pack = built[uniIdx], u = UNIVERSES[uniIdx];
+  if (!pack || !pack.root || !u) return -1;
+  var n = 0;
+  for (var s = 0; s < pack.root.children.length; s++) {
+    var sg = pack.root.children[s];
+    for (var c = 0; c < sg.children.length; c++) {
+      if (sg.children[c].userData && sg.children[c].userData.planet !== undefined) n++;
+    }
+  }
+  return n;
+}
+
+function holoTotal() {
+  var u = UNIVERSES[uniIdx], n = 0;
+  if (!u || !u.sys) return 0;
+  for (var s = 0; s < u.sys.length; s++) n += u.sys[s].planets.length;
+  return n;
+}
+
+var holoSeen = -1;
 function holoFrame(w3, ts) {
   holoSetup();
   if (!holoReady) return;
-  if (holoUni !== uniIdx) {
+
+  /* Пересобрать нужно и при смене вселенной, и когда в ней прибыло
+     миров: метка привязана к конкретной группе, а группы приходят
+     не разом */
+  var grew = false;
+  if (uniIdx !== 0 && !holoFull) {
+    var have = holoGrown();
+    if (have !== holoSeen) { holoSeen = have; grew = true; }
+    if (have >= holoTotal() && have > 0) holoFull = true;
+  }
+  if (holoUni !== uniIdx || grew) {
+    if (holoUni !== uniIdx) { holoFull = false; holoSeen = -1; }
     holoUni = uniIdx;
     try { g.RC_HOLO.clear(); } catch (e) {}
     holoIds = {};
@@ -1926,7 +1964,12 @@ function holoFrame(w3, ts) {
        прижимаем к краю - иначе подпись у Земли пропадала именно
        тогда, когда Земля перед носом. Поля берём с запасом под
        рамку кокпита. */
-    var padX = Math.max(56, innerWidth * 0.12), padY = Math.max(90, innerHeight * 0.14);
+    /* Поля берём под переплёт кабины: на телефоне рамка съедает по
+       седьмой части ширины с каждой стороны, и метка, прижатая к
+       краю кадра, уходила под стойку - подпись обрывалась */
+    var narrow = innerWidth < 760;
+    var padX = Math.max(56, innerWidth * (narrow ? 0.22 : 0.12));
+    var padY = Math.max(90, innerHeight * (narrow ? 0.18 : 0.14));
     sx = Math.max(padX, Math.min(innerWidth - padX, sx));
     sy = Math.max(padY, Math.min(innerHeight - padY * 1.6, sy));
     /* Глубина метки: ноль вплотную, единица у предела видимости */
@@ -2352,9 +2395,20 @@ function open() {
 
   F.open = true;
   F.p = 0; F.v = 0; F.last = 0;
-  F.brief = true;
+  /* Карта миссии нужна тому, кто нажал «Полёт» посреди страницы:
+     он ещё не в корабле, и ему надо объяснить, куда он попал.
+
+     А вот из финала стык обязан быть бесшовным. Клиент описал его
+     дословно: «отдалились, появилась надпись старта - и всё,
+     дальше врубается игра». Мы в этот момент уже сидим в той же
+     кабине, перед тем же остеклением: показывать поверх кадра
+     карточку с двумя кнопками значит рвать сцену ровно там, где
+     она должна склеиться. Поэтому в акте отлёта брифинга нет -
+     корабль просто трогается на автопилоте. */
+  var seamless = root.getAttribute("data-act") === "egress";
+  F.brief = !seamless;
   F.orbit = null;
-  if (ui.brief) ui.brief.classList.remove("off");
+  if (ui.brief) ui.brief.classList.toggle("off", seamless);
   F.scan = false;
   if (ui.scanKey) { ui.scanKey.classList.remove("cur"); ui.scanKey.setAttribute("aria-pressed", "false"); }
   if (ui.lock) ui.lock.classList.remove("on");

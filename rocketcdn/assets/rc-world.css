@@ -60,6 +60,15 @@ html.rc-flying.w3-on main.w3-stage {
   transition: transform .5s cubic-bezier(.22,.61,.36,1);
 }
 
+/* Переход по ссылке меню: кадр на секунду встаёт ровно, чтобы
+   браузер прыгнул точно в раздел, а не мимо на четверть экрана
+   (координаты цели он берёт с учётом наезда камеры). Плавно, чтобы
+   выравнивание читалось как доводка кадра, а не как рывок. */
+html.rc-anchor.w3-on main.w3-stage {
+  transform: none !important;
+  transition: transform .45s cubic-bezier(.22,.61,.36,1);
+}
+
 /* ── Режиссура кадра: контент расступается перед кораблём ─────
    Ошибка, которую здесь исправляем: сначала холст просто клали
    поверх страницы, и корабль закрывал собой карточки. Клиент
@@ -76,6 +85,10 @@ html.rc-approach #rocketCanvas {
   z-index: 6 !important;
   transition: opacity .4s linear;
 }
+/* Исключение: пока человек заполняет заявку, корабль не имеет права
+   стоять поверх полей. При мгновенном перескоке по ссылке меню доля
+   подхода не успевала обнулиться, и форма открывалась под корпусом. */
+html.rc-approach.rc-form-active #rocketCanvas { z-index: 0 !important; }
 
 /* ── Посадка: кадр очищается под корабль ─────────────────────
    Клиент описал этот момент кино дословно: «ракета приземлилась и
@@ -115,16 +128,48 @@ html[data-act="landing"] #included .inc-grid { pointer-events: auto; }
   }
 }
 
-/* Проход к трапу: корпус растёт до края кадра, и лента сценариев
-   уходит выше него. Текст остаётся читаемым, просто держится над
-   бортом, а не за ним. */
+/* Проход к трапу: корпус растёт до края кадра. Раньше ленту сценариев
+   просто приподнимали, и на телефоне она всё равно оставалась за
+   бортом - корабль закрывал экран целиком, а под ним висел невидимый
+   контент. Делаем как на посадке: лента уходит из кадра совсем, в
+   кадре остаётся один титр. Клиент просил ровно это - «приземлилась
+   и приблизилась, там только заголовок, карточек и текста нет».
+   Откат скролла назад тут же возвращает ленту на место. */
 html[data-act="walk"] #cases .hs-view {
-  transform: translateY(calc(var(--rc-app, 0) * -14vh));
+  opacity: calc(1 - var(--rc-app, 0) * 1.6);
+  transform:
+    translateY(calc(var(--rc-app, 0) * -12vh))
+    scale(calc(1 - var(--rc-app, 0) * 0.04));
+  filter: blur(calc(var(--rc-app, 0) * 4px));
+  transition: opacity .4s linear, transform .5s var(--ease, ease), filter .4s linear;
+}
+/* Полоса прокрутки ленты гаснет вместе с ней */
+html[data-act="walk"] #cases .hs-bar {
+  opacity: calc(1 - var(--rc-app, 0) * 2);
+  transition: opacity .35s linear;
+}
+/* Погасшая лента не должна ловить свайпы: горизонтальный скроллер
+   невидим, но палец по нему всё ещё ездил бы. Класс ставит корабль,
+   когда подход перевалил за треть - к этому мигу лента уже тает. */
+html[data-act="walk"].rc-approach #cases .hs-view { pointer-events: none; }
+html[data-act="walk"] #cases .hs-head {
+  transform: translateY(calc(var(--rc-app, 0) * -8vh));
   transition: transform .5s var(--ease, ease);
 }
-html[data-act="walk"] #cases .hs-head {
-  transform: translateY(calc(var(--rc-app, 0) * -6vh));
-  transition: transform .5s var(--ease, ease);
+@media (min-width: 901px) {
+  /* Титр держится в левой половине: правую занимает корпус */
+  html[data-act="walk"] #cases .hs-head { max-width: 44%; }
+}
+@media (max-width: 900px) {
+  /* На телефоне корпус занимает кадр целиком, свободен только верх:
+     титр уходит под самую шапку, подпись под ним уступает место */
+  html[data-act="walk"] #cases .hs-head {
+    transform: translateY(calc(var(--rc-app, 0) * -26vh));
+  }
+  html[data-act="walk"] #cases .hs-head .sec-p {
+    opacity: calc(1 - var(--rc-app, 0) * 1.6);
+    transition: opacity .4s linear;
+  }
 }
 
 /* ── Коридор продуктов: корабль идёт по оси кадра ────────────

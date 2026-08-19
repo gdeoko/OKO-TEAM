@@ -1333,11 +1333,21 @@ body { background: var(--bg); }
 @media (max-width: 900px) {
   .hdr-act .pill { display: none; }
 }
-/* Широкая капсула звука в меню: кругляш занимает половину,
-   рядом подпись, как у остальных */
+/* Широкая капсула звука в меню. У языка и темы по две кнопки, и
+   кругляш честно показывает, какая из них выбрана. У звука кнопка
+   одна на всю ширину: кругляш в половину капсулы разрезал её ровно
+   по эквалайзеру - половина иконки на фиолетовом, половина на тёмном.
+   Поэтому здесь кругляш - не указатель половины, а заливка всей
+   капсулы: звук включён - капсула горит, выключен - пустая. */
 .pill.snd.wide { width: 100%; }
 .pill.snd.wide button { width: 100%; gap: 9px; display: flex; align-items: center; justify-content: center; }
-.pill.snd.wide .pill-knob { width: calc(50% - 3px); }
+.pill.snd.wide .pill-knob {
+  width: calc(100% - 6px);
+  transform: none;
+  opacity: 0;
+  transition: opacity .28s var(--ease), background var(--fast);
+}
+.pill.snd.wide.at-2 .pill-knob { transform: none; opacity: 1; }
 
 /* ══ Точки касания ракеты ═════════════════════════════════════
    Стили для rc-hooks.js. Здесь важно одно: ракета трогает

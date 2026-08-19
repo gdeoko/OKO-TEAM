@@ -186,28 +186,53 @@ function frame() {
   cam.tilt += (goal.tilt * p - cam.tilt) * s;
   cam.dive += (goal.dive * p - cam.dive) * s;
 
-  /* Ход в пикселях. Сотые доли округляем до четверти пикселя:
-     форма и кнопки должны быть «стабильными» для браузера. */
-  var dx = Math.round(cam.pan * PAN_MAX * 4) / 4;
-  var dy = Math.round(cam.tilt * TILT_MAX * 4) / 4;
+  /* Ход в пикселях. Предел хода считаем от размера окна: 26 пикселей
+     панорамы на телефоне - это боковое поле раздела целиком, и край
+     строки уезжал за обрез (обрезались заголовок сети, чипы, поиск).
+     На большом экране упираемся в прежний потолок. Сотые доли
+     округляем до четверти пикселя: форма и кнопки должны быть
+     «стабильными» для браузера. */
+  var panMax = Math.min(PAN_MAX, innerWidth * 0.016);
+  var tiltMax = Math.min(TILT_MAX, innerHeight * 0.014);
+  var dx = Math.round(cam.pan * panMax * 4) / 4;
+  var dy = Math.round(cam.tilt * tiltMax * 4) / 4;
 
   /* Толчок от касания опор складываем с ходом камеры здесь: у кадра
      один transform, и второе правило на тот же элемент просто
      проиграло бы по специфичности. Значения публикует rc-rocket в
-     момент посадки и сам же гасит их за треть секунды. */
+     момент посадки и сам же гасит их за треть секунды. Держим его
+     отдельным слагаемым: толчок кадру разрешён сверх предела, а
+     панораме - нет. */
+  var sx = 0, sy = 0;
   if (root.classList.contains("rc-quake")) {
     var cs = root.style;
-    dx += parseFloat(cs.getPropertyValue("--rc-shake-x")) || 0;
-    dy += parseFloat(cs.getPropertyValue("--rc-shake-y")) || 0;
+    sx = parseFloat(cs.getPropertyValue("--rc-shake-x")) || 0;
+    sy = parseFloat(cs.getPropertyValue("--rc-shake-y")) || 0;
   }
 
   /* Наезд: базовый запас закрывает края при панораме (сдвинутый
      кадр не имеет права оголить фон), сверх него - глубина акта */
-  var need = 1 + Math.max(Math.abs(dx) * 2 / innerWidth, Math.abs(dy) * 2 / innerHeight);
+  var need = 1 + Math.max((Math.abs(dx) + Math.abs(sx)) * 2 / innerWidth,
+                          (Math.abs(dy) + Math.abs(sy)) * 2 / innerHeight);
   var zoom = need + Math.max(0, cam.dive) * DIVE_MAX;
   /* Отъезд (dive < 0) не опускается ниже запаса краёв */
   if (cam.dive < 0) zoom = need + Math.max(cam.dive * DIVE_MAX * 0.5, (1 - need) * 0.9);
+  /* Потолок наезда: масштаб съедает боковые поля, и на узком экране
+     лишние проценты режут текст по краям. Там потолок заметно ниже. */
+  var zMax = innerWidth < 760 ? 1.04 : 1.11;
+  if (zoom > zMax) zoom = zMax;
   zoom = Math.round(zoom * 2000) / 2000;
+
+  /* Кадр не выезжает дальше, чем его прикрывает наезд: за этой чертой
+     у края окна показалась бы пустота, а строки ушли бы за обрез. */
+  var room = (zoom - 1) * innerWidth / 2 - Math.abs(sx);
+  var roomY = (zoom - 1) * innerHeight / 2 - Math.abs(sy);
+  if (room < 0) room = 0;
+  if (roomY < 0) roomY = 0;
+  if (dx > room) dx = room; else if (dx < -room) dx = -room;
+  if (dy > roomY) dy = roomY; else if (dy < -roomY) dy = -roomY;
+  dx += sx;
+  dy += sy;
 
   /* Совместимые значения для ракеты и фона: они читают yaw/pitch
      как раньше и получают тот же самый ход камеры */
@@ -252,6 +277,53 @@ addEventListener("rc:hatch", function (e) {
     if (flash && flash.parentNode) flash.parentNode.removeChild(flash);
     flash = null;
   }, 620);
+});
+
+/* ── Якоря меню: кадр отпускает страницу на время перехода ────
+   Наезд камеры двигает весь поток одним трансформом, и раздел, до
+   которого ведёт ссылка, стоит на экране не там, где лежит по
+   вёрстке: смещение равно доле наезда, помноженной на расстояние
+   до середины кадра. Браузер считает цель прыжка один раз, по
+   текущим координатам, поэтому промах доходил до трёхсот пикселей
+   и «Вопросы» открывались серединой.
+
+   Лечим честно: на время перехода кадр плавно встаёт на место,
+   цель считаем уже по ровной странице, а камера подхватывает кадр
+   на новом экране. */
+var calmT = 0;
+function calm(ms) {
+  root.classList.add("rc-anchor");
+  clearTimeout(calmT);
+  calmT = setTimeout(function () { root.classList.remove("rc-anchor"); }, ms || 1000);
+}
+
+function anchorPad() {
+  var v = 0;
+  try { v = parseFloat(getComputedStyle(root).scrollPaddingTop) || 0; } catch (e) {}
+  return v || 88;
+}
+
+doc.addEventListener("click", function (e) {
+  if (e.defaultPrevented || e.button) return;
+  var a = e.target && e.target.closest ? e.target.closest('a[href^="#"]') : null;
+  if (!a || a.target === "_blank") return;
+  var id = a.getAttribute("href");
+  if (!id || id.length < 2) return;
+  var el = null;
+  try { el = doc.querySelector(id); } catch (err) { return; }
+  if (!el) return;
+  e.preventDefault();
+  calm(1100);
+  /* Сначала кадр становится ровно, и лишь на следующем кадре берём
+     координаты цели - иначе снова считали бы по смещённым */
+  requestAnimationFrame(function () {
+    requestAnimationFrame(function () {
+      var top = el.getBoundingClientRect().top + (g.pageYOffset || 0) - anchorPad();
+      try { g.scrollTo({ top: Math.max(0, top), behavior: "smooth" }); }
+      catch (err) { g.scrollTo(0, Math.max(0, top)); }
+      if (history.replaceState) history.replaceState(null, "", id);
+    });
+  });
 });
 
 function boot() {

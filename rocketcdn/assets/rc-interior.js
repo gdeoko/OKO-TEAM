@@ -107,7 +107,8 @@ var P_PREP = 0.58;               /* с этого места начинаем с
 var P_LOCK = 0.72;               /* тамбур */
 var P_IN   = 0.76;               /* мы внутри */
 var P_TURN = 0.88;               /* оборот закончен, дальше пульт */
-var P_OUT  = 0.965;              /* уходим наружу */
+var P_CON  = 0.965;              /* камера доехала до пульта, анкета в кадре */
+var P_OUT  = 0.999;              /* конец сцены: дальше игра */
 
 /* Расписание оборота: узлы вида [доля прокрутки, поворот в радианах].
    Между узлами идёт синусная кривая, в самих узлах камера стоит.
@@ -136,7 +137,22 @@ function measure() {
   P_IN   = Math.max(0.05, Math.min(0.95, (relTop - innerHeight * 0.45) / maxS));
   P_LOCK = Math.max(0.03, P_IN - (innerHeight * 0.4) / maxS);
   P_TURN = Math.max(P_IN + 0.02, Math.min(0.985, (conTop - innerHeight * 0.4) / maxS));
-  P_OUT  = Math.max(P_TURN + 0.01, Math.min(0.999, (conBot - innerHeight * 0.2) / maxS));
+  /* Подход к пульту заканчивается вместе с формой: дальше по
+     сценарию камера не едет вперёд, а отступает. */
+  P_CON  = Math.max(P_TURN + 0.01, Math.min(0.994, (conBot - innerHeight * 0.2) / maxS));
+  /* А наружу мы не выходим вовсе. Раньше сцена заканчивалась на
+     форме, и эпилог играл уже на улице: в кадре снова летела
+     ракета, а кнопка старта висела на фоне сайта. Клиент назвал
+     это нелогичным, и он прав - мы сидим внутри этой ракеты.
+     Поэтому рубка держится до конца эпилога, а сам эпилог мы
+     смотрим сквозь остекление кабины. */
+  var epi = doc.getElementById("epilogue");
+  var outBase = conBot;
+  if (epi) {
+    var eBox = epi.getBoundingClientRect();
+    outBase = eBox.bottom + y;
+  }
+  P_OUT  = Math.max(P_CON + 0.004, Math.min(0.9995, (outBase - innerHeight * 0.1) / maxS));
   P_PREP = Math.max(0.2, P_LOCK - 0.12);
   /* Ракета обязана приземлиться до того, как мы войдём в люк:
      заходить внутрь корабля, который ещё летит, странно. */
@@ -183,7 +199,7 @@ function measure() {
   /* В акте пульта камера уже никуда не поворачивается: она только
      подступает к панели (этим занимается dolly ниже) */
   KNOT.push([P_TURN, TAU]);
-  KNOT.push([P_OUT, TAU + 0.05]);
+  KNOT.push([P_CON, TAU + 0.05]);
 
   /* Узлы обязаны идти строго по возрастанию: иначе на коротком
      блоке камера дёрнется назад посреди сектора. */
@@ -215,6 +231,7 @@ var st = {
   built: false, shown: false, slot: false, dead: false,
   p: 0, yaw: 0, yawT: 0, yawOff: 0, pitch: 0, pitchT: 0, drift: 0,
   dolly: 1.7, dollyT: 1.7, fov: 58, fovT: 58, stop: -1, con: 0, conL: 0,
+  back: 0,                       /* доля отъезда от пульта в финале */
   sLock: false, sIn: false
 };
 
@@ -696,7 +713,12 @@ function setProgress(p) {
      момент остановлен и ничего не считает. Вход же честный: либо мы
      прошли сквозь открытый люк (hatch), либо попали в салон прыжком
      по якорю, и тогда запасной порог по прогрессу. */
-  var innerAct = sc && (sc.act === "cabin" || sc.act === "manual" || sc.act === "console");
+  /* Эпилог тоже внутренний акт: финал мы смотрим из кабины, а не с
+     улицы. Без него прыжок по якорю в конец страницы выбрасывал
+     наружу, и в кадре снова появлялась ракета, из которой мы по
+     сценарию ещё не выходили. */
+  var innerAct = sc && (sc.act === "cabin" || sc.act === "manual" ||
+                        sc.act === "console" || sc.act === "egress");
   var ready = hasRocket
     ? (hatch || (st.shown && innerAct) || (innerAct && p >= P_IN))
     : (p >= P_LOCK);
@@ -755,9 +777,18 @@ function setProgress(p) {
      живёт оформление секции контактов (--int-con в rc-console.css),
      поэтому экран анкеты разгорается ровно вместе с подъездом
      камеры: одно движение, а не два независимых. */
-  var con = p > P_TURN ? Math.min(1, (p - P_TURN) / Math.max(1e-4, P_OUT - P_TURN)) : 0;
+  var con = p > P_TURN ? Math.min(1, (p - P_TURN) / Math.max(1e-4, P_CON - P_TURN)) : 0;
   st.con = con;
   root.style.setProperty("--int-con", con.toFixed(3));
+
+  /* Отъезд от пульта. По сценарию клиента после анкеты камера идёт
+     назад, анкета растворяется голограммой, и в кадре остаётся
+     остекление кабины и космос за ним - тот самый ракурс, с
+     которого начинается игра. Долю публикуем: по ней гаснет анкета
+     и разгорается надпись старта. */
+  var back = p > P_CON ? Math.min(1, (p - P_CON) / Math.max(1e-4, P_OUT - P_CON)) : 0;
+  st.back = back;
+  root.style.setProperty("--int-out", back.toFixed(3));
 
   if (!st.shown) return;
 
@@ -778,6 +809,17 @@ function setProgress(p) {
     st.dollyT = -1.02 * ec;
     st.pitchT = -0.17 * ec;
     st.fovT = 72 + ec * 6;
+  }
+
+  /* Отъезд: камера уходит от пульта назад и поднимает взгляд к
+     остеклению. Кадр при этом не пустеет - стены рубки в эту
+     минуту гаснут (rc-cockpit.css), и вперёд выходит космос за
+     стеклом вместе с рамкой кабины. */
+  if (back > 0) {
+    var eb = 0.5 - 0.5 * Math.cos(Math.PI * back);
+    st.dollyT = -1.02 + eb * 3.1;
+    st.pitchT = -0.17 * (1 - eb);
+    st.fovT = 78 - eb * 14;
   }
 
   /* Щелчок фиксации: камера встала напротив очередной панели */

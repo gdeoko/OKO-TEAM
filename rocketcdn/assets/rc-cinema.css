@@ -280,8 +280,13 @@ html #reliability .cin-ring > .cin-item.cin-holo {
      ставят стили). Складываем, а не выбираем: наведение обязано
      работать и на дальнем экране тоже. */
   --hz-k: min(1, calc(var(--cin-lit, 0) + var(--cin-hov, 0)));
-  /* Экран висит выше линии глаз: в рубке смотрят чуть вверх */
-  --cin-up: -7vh;
+  /* Экран висит выше линии глаз: в рубке смотрят чуть вверх.
+     Число не на глаз: проекция стены тянет экран вниз (в скрипте
+     это ty, до десятой доли высоты кадра), и подъём обязан этот
+     снос перекрыть, иначе «чуть выше по кругу» превращается в
+     «чуть ниже». Замерено по кадру: при -7vh центр экрана стоял
+     на 525 из 850, теперь встаёт около 430. */
+  --cin-up: -11vh;
 }
 
 /* ── Материал экрана ─────────────────────────────────────────
@@ -294,8 +299,9 @@ html #reliability .cin-ring > .cin-item.cin-holo {
    уплотняется и уходит в самый тёмный тон палитры (--int-deep).
    Так надо: контраст текста к подложке обязан быть не ниже, чем
    был у обычной карточки, а любой светлый тон под буквами его
-   роняет. Проверено счётом: у прежней плиты rgba(16,33,52,.93)
-   контраст заголовка выходил 13.2, у этого профиля 13.4.
+   роняет. Проверено не счётом, а замером по готовым кадрам: у
+   прежней плиты rgba(16,33,52,.93) заголовок давал 13.4, абзац
+   5.8; на этом профиле заголовок 13.7-15.4, абзац 11.5-13.0.
 
    Ни одного непрозрачного стопа здесь нет: даже в самой плотной
    точке за экраном остаётся сорок процентов рубки, и панель за
@@ -304,43 +310,76 @@ html #reliability .cin-ring > .cin-item.cin-holo {
   background:
     linear-gradient(178deg,
       rgba(var(--hz-ergb), .20) 0%,
-      rgba(var(--hz-prgb), .40) 20%,
-      rgba(var(--hz-drgb), .60) 56%,
-      rgba(var(--hz-drgb), .56) 88%,
-      rgba(var(--hz-wrgb), .34) 100%),
+      rgba(var(--hz-prgb), .42) 20%,
+      rgba(var(--hz-drgb), .68) 56%,
+      rgba(var(--hz-drgb), .64) 88%,
+      rgba(var(--hz-wrgb), .36) 100%),
     linear-gradient(148deg,
-      rgba(var(--hz-crgb), .17) 0%,
-      rgba(var(--hz-crgb), .04) 46%,
-      rgba(var(--hz-vrgb), .07) 100%);
-  border: 1px solid rgba(var(--hz-crgb), calc(.26 + var(--hz-k, 0) * .40));
+      rgba(var(--hz-crgb), .20) 0%,
+      rgba(var(--hz-crgb), .07) 46%,
+      rgba(var(--hz-vrgb), .09) 100%);
+  /* Кромка нарочно слабее скобок: у проекции нет физической рамки,
+     поле обозначают углы, а не обводка по периметру. */
+  border: 1px solid rgba(var(--hz-crgb), calc(.18 + var(--hz-k, 0) * .30));
   border-radius: 14px;
   /* Никакого тяжёлого «ящика»: тени только светящиеся, тёмная
-     оставлена одна и слабая - иначе экран снова читается плитой. */
+     оставлена одна и слабая - иначе экран снова читается плитой.
+     Геометрия у них постоянная, меняется только сила света:
+     --hz-k шевелится на каждом кадре оборота, а радиус размытия
+     в тени - это пересчёт раскладки, слишком дорого для кадра. */
   box-shadow:
     inset 0 1px 0 rgba(var(--hz-lrgb), calc(.14 + var(--hz-k, 0) * .22)),
-    inset 0 0 40px -16px rgba(var(--hz-crgb), calc(.20 + var(--hz-k, 0) * .55)),
-    0 0 calc(38px + var(--hz-k, 0) * 46px) calc(-24px + var(--hz-k, 0) * 6px)
-      rgba(var(--hz-crgb), calc(.34 + var(--hz-k, 0) * .52)),
+    inset 0 0 44px -14px rgba(var(--hz-crgb), calc(.26 + var(--hz-k, 0) * .58)),
+    0 0 72px -18px rgba(var(--hz-crgb), calc(.44 + var(--hz-k, 0) * .52)),
     0 22px 44px -34px rgba(var(--hz-drgb), .85);
   backdrop-filter: none !important;
   -webkit-backdrop-filter: none !important;
   transition:
-    box-shadow .45s var(--ease, cubic-bezier(.22,.61,.36,1)),
-    border-color .45s var(--ease, cubic-bezier(.22,.61,.36,1)) !important;
+    box-shadow .22s linear,
+    border-color .22s linear !important;
 }
 
-/* Косой блик проекции. Он же перебивает рисованное стекло из
-   rc-interior.css: у голограммы блик не от лампы, а от самой
-   плоскости луча, поэтому он шире и холоднее. */
+/* Тёмная строчная сетка на всю высоту плюс косой блик проекции.
+   Слой перебивает рисованное стекло из rc-interior.css: у
+   голограммы блик не от лампы, а от плоскости луча, поэтому он
+   шире и холоднее.
+
+   Почему сетка тёмная, а не светлая. Светлые полосы держатся
+   только на тёмной стене: замер по кадру показал, что на светлой
+   панели рубки они полностью выцветают и экран снова читается
+   стеклянной карточкой. Тёмные видны на любом фоне и, в отличие
+   от светлых, контраст текста не роняют, а поднимают - подложка
+   под буквами становится темнее.
+
+   Шаг сетки совпадает с шагом маски на .cin-scr, а фаза сдвинута
+   на половину периода: тёмная полоса ложится ровно в промежуток
+   светлой. Разойдись они по шагу - пошли бы биения. */
 html #reliability .cin-ring > .cin-item.cin-holo::after {
   content: ''; position: absolute; inset: 0; border-radius: inherit;
   pointer-events: none; z-index: 1;
   background:
+    /* Излучающая рейка по верхней кромке: у прибора есть светящийся
+       край, по нему глаз и отличает экран от куска стекла. Рейка
+       живёт здесь, а не на .cin-scr, потому что на том слое стоит
+       маска развёртки и она бы порезала рейку на точки. */
+    linear-gradient(90deg,
+      transparent,
+      rgba(var(--hz-lrgb), calc(.40 + var(--hz-k, 0) * .48)) 20%,
+      rgba(var(--hz-crgb), calc(.70 + var(--hz-k, 0) * .30)) 50%,
+      rgba(var(--hz-lrgb), calc(.40 + var(--hz-k, 0) * .48)) 80%,
+      transparent) 0 0 / 100% 1.6px no-repeat,
+    repeating-linear-gradient(180deg,
+      transparent 0 1.6px,
+      rgba(var(--hz-drgb), .30) 1.6px 3.2px),
+    /* Блик держим в циане, а не в белом: белая полоса поперёк
+       экрана читается как молочное стекло, цветная - как плоскость
+       луча, которую видно под углом. */
     linear-gradient(106deg,
-      transparent 28%,
-      rgba(var(--hz-lrgb), calc(.06 + var(--hz-k, 0) * .07)) 47%,
-      rgba(var(--hz-crgb), calc(.05 + var(--hz-k, 0) * .06)) 53%,
-      transparent 68%);
+      transparent 26%,
+      rgba(var(--hz-crgb), calc(.07 + var(--hz-k, 0) * .09)) 46%,
+      rgba(var(--hz-lrgb), calc(.04 + var(--hz-k, 0) * .05)) 52%,
+      rgba(var(--hz-crgb), calc(.06 + var(--hz-k, 0) * .07)) 58%,
+      transparent 72%);
   opacity: var(--cin-vis, 1);
 }
 
@@ -401,9 +440,15 @@ html #reliability .cin-ring > .cin-item.cin-holo > .cin-scr::before {
    у проекции нет физической кромки, есть только метки поля. */
 html #reliability .cin-ring > .cin-item.cin-holo > .cin-br {
   z-index: 3;
-  --bb: 19px;
-  --bt: 1.5px;
-  --bc: rgba(var(--hz-crgb), calc(.46 + var(--hz-k, 0) * .48));
+  /* Скобки отодвинуты внутрь от кромки: иначе они сливаются с
+     обводкой и вместо меток поля читается просто рамка. */
+  inset: 7px;
+  --bb: 26px;
+  --bt: 2px;
+  /* Цвет скобок постоянный, сила света идёт прозрачностью слоя.
+     Так на каждом кадре оборота перерисовывается один слой, а не
+     восемь градиентов и тень под ними. */
+  --bc: rgb(var(--hz-crgb));
   background:
     linear-gradient(var(--bc), var(--bc))    0    0    / var(--bb) var(--bt) no-repeat,
     linear-gradient(var(--bc), var(--bc))    0    0    / var(--bt) var(--bb) no-repeat,
@@ -413,10 +458,10 @@ html #reliability .cin-ring > .cin-item.cin-holo > .cin-br {
     linear-gradient(var(--bc), var(--bc))    0 100%    / var(--bt) var(--bb) no-repeat,
     linear-gradient(var(--bc), var(--bc)) 100% 100%    / var(--bb) var(--bt) no-repeat,
     linear-gradient(var(--bc), var(--bc)) 100% 100%    / var(--bt) var(--bb) no-repeat;
-  filter: drop-shadow(0 0 calc(3px + var(--hz-k, 0) * 6px)
-    rgba(var(--hz-crgb), calc(.35 + var(--hz-k, 0) * .45)));
-  opacity: var(--cin-vis, 1);
+  filter: drop-shadow(0 0 6px rgba(var(--hz-crgb), .75));
+  opacity: calc((.60 + var(--hz-k, 0) * .40) * var(--cin-vis, 1));
 }
+
 
 /* Стойка-луч. Экран висит выше глаз, значит его кто-то держит:
    от панели вверх идёт конус проектора, узкий у излучателя и
@@ -489,7 +534,7 @@ html #reliability .cin-ring > .cin-item.cin-holo > h3 {
      терять на этом контраст нельзя. Подмешиваем белый: тон
      остаётся тем же, светимость возвращается. Строка стоит второй
      нарочно - там, где color-mix не поддержан, остаётся первая. */
-  color: color-mix(in srgb, rgb(var(--hz-lrgb)) 60%, #FFFFFF);
+  color: color-mix(in srgb, rgb(var(--hz-lrgb)) 48%, #FFFFFF);
   text-shadow:
     0 1px 3px rgba(var(--hz-drgb), .96),
     0 0 calc(10px + var(--hz-k, 0) * 10px)
@@ -618,7 +663,7 @@ html[data-theme="light"] #reliability .cin-ring > .cin-item.cin-holo > .card-ico
    ширину и высокий подвес уводит текст под самый верх кадра. */
 @media (max-width: 760px) {
   html #reliability .cin-ring > .cin-item.cin-holo {
-    --cin-up: -4.5vh;
+    --cin-up: -7vh;
     border-radius: 13px;
     backdrop-filter: none !important;
     -webkit-backdrop-filter: none !important;

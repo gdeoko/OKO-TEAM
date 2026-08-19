@@ -634,7 +634,10 @@ html[data-theme="light"] .rc-vidbg.on { opacity: .16; }
   .rcf-auto { padding: 8px 12px; font-size: 11px; }
   .rcf-holo { right: 8px; bottom: 12.5%; width: 44px; }
   .rcf-info { top: clamp(64px, 12vh, 110px); }
-  .rcf-hint { bottom: 17%; font-size: 10.5px; max-width: 90vw; white-space: normal; text-align: center; }
+  /* Подсказка стоит внутри остекления, а не на панели приборов:
+     на телефоне кабина занимает низ кадра, и на 17% строка ложилась
+     ровно на тумблеры - читать её было нечем */
+  .rcf-hint { bottom: 28%; font-size: 10.5px; max-width: 78vw; white-space: normal; text-align: center; }
   .rcf-speed { display: none; }
   .rcf-track { bottom: 1.2%; }
 }
@@ -727,7 +730,10 @@ html[data-theme="light"] .rc-vidbg.on { opacity: .16; }
   transition: opacity .6s var(--ease), visibility 0s;
   z-index: 4;
 }
-.rcf-brief.off { opacity: 0; visibility: hidden; transition: opacity .6s var(--ease), visibility 0s linear .6s; }
+/* Убранный брифинг перестаёт ловить касания сразу, а не через
+   полсекунды растворения: первый клик после старта должен уйти в
+   рубку, а не в исчезающую карточку */
+.rcf-brief.off { opacity: 0; visibility: hidden; pointer-events: none; transition: opacity .6s var(--ease), visibility 0s linear .6s; }
 .rcf-brief-card {
   max-width: min(480px, 88vw);
   text-align: center;
@@ -879,8 +885,12 @@ html[data-theme="light"] .rc-vidbg.on { opacity: .16; }
 }
 .rcf-net.full { color: #35E08F; text-shadow: 0 0 12px rgba(53,224,143,.65); }
 
+/* Кнопка развёртывания узла стоит выше подсказки управления: на
+   16,5% они приходились ровно друг на друга, и появившаяся кнопка
+   закрывала строку «колесо или свайп - тяга» - человек терял
+   единственное объяснение, как лететь. */
 .rcf-deploy {
-  position: absolute; left: 50%; bottom: 16.5%;
+  position: absolute; left: 50%; bottom: 24%;
   transform: translate(-50%, 8px);
   font-family: var(--f-body, "Golos Text", sans-serif);
   font-size: 11px; font-weight: 700; letter-spacing: .14em;

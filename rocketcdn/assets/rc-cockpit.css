@@ -1,0 +1,248 @@
+/* ═══════════════════════════════════════════════════════════
+   Rocket CDN · кабина, оформление
+
+   Слой лежит между объёмной сценой и содержимым страницы: космос
+   и рубка видны сквозь остекление, а текст, форма и финальный титр
+   стоят внутри окна кабины - на них переплёт не наезжает.
+
+   Файл кадра тот же, что берёт игра, и фильтр к нему тот же: при
+   переходе в полёт картинка не должна дрогнуть ни на тон.
+   ═══════════════════════════════════════════════════════════ */
+
+.rc-cockpit {
+  position: fixed; inset: 0; z-index: 2;
+  pointer-events: none;
+  opacity: var(--cab-k, 0);
+  /* Кабина не проявляется плоско, она подходит: пока мы идём по
+     салону, она чуть крупнее кадра и «за спиной», к пульту встаёт
+     на место. Наезд тот же по смыслу, что у камеры рубки. */
+  transform: scale(calc(1.14 - var(--cab-k, 0) * 0.14));
+  transition: opacity .3s linear;
+  will-change: opacity, transform;
+  contain: strict;
+}
+
+.rc-cockpit .cab-img {
+  position: absolute; inset: 0;
+  width: 100%; height: 100%;
+  object-fit: cover;
+  /* Ровно тот же фильтр, что у кабины в игре (rc-flight.css):
+     иначе на переходе «сайт - полёт» кадр менял температуру */
+  filter: brightness(.86) contrast(1.1) saturate(2.1) hue-rotate(5deg);
+}
+
+/* Даль за стеклом. Звёзды рисует холст космоса, но одних точек в
+   финальном кадре мало: без дымки окно читается чёрным вырезом, а
+   не видом наружу. Разгорается вместе с отъездом от пульта. */
+.rc-cockpit .cab-void {
+  position: absolute;
+  left: var(--cab-x0, 12%); top: var(--cab-y0, 12%);
+  width: var(--cab-win-w, 76%); height: var(--cab-win-h, 66%);
+  border-radius: clamp(10px, 2vw, 26px);
+  background:
+    radial-gradient(ellipse 60% 46% at 62% 34%,
+      rgba(var(--int-cyan-rgb, 66,178,220), .16) 0%, transparent 62%),
+    radial-gradient(ellipse 52% 40% at 28% 68%,
+      rgba(var(--int-vio-rgb, 138,89,246), .13) 0%, transparent 66%),
+    radial-gradient(ellipse 90% 70% at 50% 50%,
+      rgba(10,26,46,.55) 0%, rgba(3,8,16,.9) 78%);
+  opacity: calc(var(--int-out, 0) * .9);
+  transition: opacity .6s linear;
+}
+
+/* Остекление: блик по верхней кромке и мягкий обод внутрь кадра.
+   На самой картинке стекла нет, и без этих двух штрихов космос за
+   окном выглядел вырезанным по контуру, а не увиденным сквозь него. */
+.rc-cockpit .cab-glass {
+  position: absolute;
+  left: var(--cab-x0, 12%); top: var(--cab-y0, 12%);
+  width: var(--cab-win-w, 76%); height: var(--cab-win-h, 66%);
+  border-radius: clamp(10px, 2vw, 26px);
+  background:
+    linear-gradient(152deg,
+      rgba(var(--int-lit-rgb, 207,233,245), .09) 0%,
+      rgba(var(--int-lit-rgb, 207,233,245), .02) 34%,
+      transparent 58%);
+  box-shadow:
+    inset 0 0 clamp(40px, 9vw, 120px) calc(-1 * clamp(18px, 4vw, 46px))
+      rgba(var(--int-cyan-rgb, 66,178,220), .55);
+  opacity: calc(var(--cab-k, 0) * .9);
+}
+
+/* Луч проектора от экрана панели. Клиент просил, чтобы анкета была
+   именно НА панели управления, но экран на ней размером с ладонь -
+   заполнять в нём форму невозможно. Поэтому честный компромисс
+   рубки: анкету проецирует этот экран, и луч от него виден. Форма
+   при этом читается в полный рост, а происхождение её очевидно. */
+.rc-cockpit .cab-beam {
+  position: absolute;
+  left: var(--cab-scr-x, 50%);
+  top: calc(var(--cab-y0, 12%) + var(--cab-win-h, 66%) * .28);
+  width: min(62vw, 620px);
+  height: calc(var(--cab-scr-y, 84%) - var(--cab-y0, 12%) - var(--cab-win-h, 66%) * .28);
+  transform: translateX(-50%);
+  background: linear-gradient(180deg,
+    rgba(var(--int-cyan-rgb, 66,178,220), .16),
+    rgba(var(--int-cyan-rgb, 66,178,220), .05) 62%,
+    transparent);
+  /* Конус: узкий у излучателя внизу, широкий у проекции вверху */
+  clip-path: polygon(0 0, 100% 0, 56% 100%, 44% 100%);
+  opacity: calc(var(--int-con, 0) * (1 - var(--int-out, 0)) * .85);
+  filter: blur(6px);
+  transition: opacity .5s linear;
+}
+/* На широком экране анкета стоит справа от текста, а излучатель -
+   по центру панели: луч бил бы мимо. Там он не нужен - у формы и
+   так видно всю панель под ней. */
+@media (min-width: 901px) {
+  .rc-cockpit .cab-beam { display: none; }
+}
+
+/* Содержимое финала садится внутрь остекления. Пока кабина далеко,
+   вёрстка обычная - правила включает класс rc-cab-on. */
+html.rc-cab-on main.w3-stage {
+  /* Текст поверх переплёта: слой кабины стоит на z-index 2 */
+  z-index: 3;
+}
+html.rc-cab-on #contact .wrap,
+html.rc-cab-on #epilogue .wrap {
+  width: min(var(--cab-win-w, 76%), 1040px);
+  margin-inline: auto;
+}
+/* Окно кабины смещено вверх относительно середины экрана (снизу
+   панель с приборами), и центр содержимого обязан идти за ним -
+   иначе финальный титр ложится ровно на пульт */
+html.rc-cab-on #epilogue .epi-in {
+  transform: translateY(calc((var(--cab-y0, 12%) + var(--cab-y1, 78%)) / 2 - 50%));
+}
+
+/* Третья ступень деградации и просьба меньше движения: кабины нет */
+html[data-degrade="3"] .rc-cockpit { display: none; }
+@media (prefers-reduced-motion: reduce) {
+  .rc-cockpit { transform: none; }
+}
+
+/* ── Финал внутри кабины ─────────────────────────────────────
+   Клиент описал кадр так: «отдалились - и вот эта рамка из панели
+   и космос вдалеке, и уже здесь голографически появляется кнопка
+   старта игры». Значит в отлёте рубка отступает: стены гаснут,
+   остаётся остекление, звёзды за ним и надпись на стекле.
+
+   Наружу мы при этом не выходим: корабль остаётся припаркованным,
+   и никакой ракеты в кадре быть не может - мы внутри неё. */
+html[data-act="egress"] .rc-int-canvas {
+  opacity: 0 !important;
+  transition: opacity .8s var(--ease, ease);
+}
+html[data-act="egress"] #spaceBg {
+  opacity: 1 !important;
+  transition: opacity .8s var(--ease, ease);
+}
+/* Кольцо экранов рубки остаётся за спиной: в отлёте мы смотрим в
+   окно, и карточки надёжности не имеют права просвечивать сквозь
+   финальный титр */
+html[data-act="egress"] .cin-ring,
+html[data-act="egress"] #reliability .card {
+  opacity: 0 !important;
+  pointer-events: none;
+  transition: opacity .5s linear;
+}
+/* Ракеты в финале нет по сценарию: мы сидим в ней */
+html[data-act="egress"] #rocketCanvas,
+html[data-act="console"] #rocketCanvas {
+  opacity: 0 !important;
+  pointer-events: none;
+}
+
+/* Анкета уходит вместе с отъездом: камера отступает от пульта, и
+   форма растворяется голограммой, а не остаётся висеть в кадре.
+   Долю отъезда публикует rc-interior (--int-out). */
+html[data-act="egress"] #contact .form-card,
+html[data-act="egress"] #contact .sec-head {
+  opacity: calc(1 - var(--int-out, 0) * 1.9);
+  filter: blur(calc(var(--int-out, 0) * 7px));
+  transform: scale(calc(1 - var(--int-out, 0) * 0.07));
+  transition: opacity .4s linear, filter .4s linear, transform .5s var(--ease, ease);
+  pointer-events: none;
+}
+
+/* ── Титр старта: бортовая надпись на остеклении ─────────────
+   Не блок сайта на фоне, а проекция на стекле кабины: тот же
+   материал, что у экранов рубки и карточек в проёме люка, - чтобы
+   человек читал его как последний кадр фильма, а не как футер. */
+.epi-holo {
+  position: relative;
+  padding: clamp(20px, 4vh, 42px) clamp(18px, 4vw, 46px);
+  border-radius: 14px;
+  /* Проступает по мере отъезда: пока камера у пульта, надписи нет */
+  --epi-k: clamp(0, calc((var(--int-out, 0) - 0.28) / 0.42), 1);
+}
+html.rc-cab-on .epi-holo::before {
+  content: '';
+  position: absolute; inset: 0;
+  border-radius: inherit;
+  border: 1px solid rgba(var(--int-cyan-rgb, 66,178,220), .34);
+  background:
+    repeating-linear-gradient(180deg,
+      rgba(var(--int-cyan-rgb, 66,178,220), .055) 0 2px,
+      transparent 2px 4px),
+    linear-gradient(180deg,
+      rgba(var(--int-cyan-rgb, 66,178,220), .07),
+      rgba(var(--int-deep-rgb, 5,12,21), .34));
+  box-shadow:
+    0 0 60px -18px rgba(var(--int-cyan-rgb, 66,178,220), .7),
+    inset 0 1px 0 rgba(var(--int-lit-rgb, 207,233,245), .16);
+  opacity: var(--epi-k, 1);
+  pointer-events: none;
+  transition: opacity .5s linear;
+}
+/* Скобки прицела по углам - тот же приём, что у экранов рубки */
+html.rc-cab-on .epi-holo::after {
+  content: '';
+  position: absolute; inset: 6px;
+  border-radius: 10px;
+  border: 1px solid rgba(var(--int-cyan-rgb, 66,178,220), .5);
+  clip-path: polygon(
+    0 0, 22px 0, 22px 1px, 1px 1px, 1px 22px, 0 22px,
+    0 100%, 22px 100%, 22px calc(100% - 1px), 1px calc(100% - 1px), 1px calc(100% - 22px), 0 calc(100% - 22px),
+    100% 100%, calc(100% - 22px) 100%, calc(100% - 22px) calc(100% - 1px), calc(100% - 1px) calc(100% - 1px), calc(100% - 1px) calc(100% - 22px), 100% calc(100% - 22px),
+    100% 0, calc(100% - 22px) 0, calc(100% - 22px) 1px, calc(100% - 1px) 1px, calc(100% - 1px) 22px, 100% 22px);
+  opacity: calc(var(--epi-k, 1) * .9);
+  pointer-events: none;
+}
+html.rc-cab-on .epi-holo > * { position: relative; z-index: 1; }
+/* Сам текст финала разгорается вместе с рамкой */
+html.rc-cab-on .epi-holo .sec-tag,
+html.rc-cab-on .epi-holo .sec-h,
+html.rc-cab-on .epi-holo .sec-p,
+html.rc-cab-on .epi-holo .epi-btn {
+  opacity: var(--epi-k, 1);
+  transition: opacity .5s linear;
+}
+html.rc-cab-on .epi-holo .sec-h {
+  text-shadow: 0 0 26px rgba(var(--int-cyan-rgb, 66,178,220), .55);
+}
+/* В остеклении места меньше, чем на полной ширине страницы, и
+   надпись кнопки ломалась на две строки. Держим её в одну: это
+   тумблер старта, а не абзац. */
+html.rc-cab-on .epi-btn {
+  white-space: nowrap;
+  padding: 15px 26px;
+  gap: 10px;
+}
+/* Экраны рубки внутри кабины становятся уже: остекление съедает по
+   седьмой части кадра с каждой стороны, и панель прежней ширины
+   уезжала под переплёт - строка обрывалась на полуслове. */
+html.rc-cab-on .cin-ring > .cin-item { width: min(430px, 62vw); }
+@media (max-width: 900px) {
+  html.rc-cab-on .cin-ring > .cin-item { width: min(66vw, 300px); }
+}
+
+/* Подвал в кабине живёт отдельно от титра: он не часть кадра
+   фильма, поэтому стоит ниже, мельче и тише */
+html.rc-cab-on #epilogue .legal {
+  opacity: .5;
+  font-size: 11px;
+  margin-top: clamp(18px, 4vh, 42px);
+  gap: 8px 14px;
+}
