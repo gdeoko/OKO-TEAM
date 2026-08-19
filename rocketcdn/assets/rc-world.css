@@ -77,31 +77,41 @@ html.rc-approach #rocketCanvas {
   transition: opacity .4s linear;
 }
 
-/* Посадка: корабль в середине кадра, карточки раздела расходятся
-   по краям. Коридор считаем от ширины окна, чтобы на любом экране
-   между колонками помещался корпус с опорами и площадкой. */
+/* ── Посадка: кадр очищается под корабль ─────────────────────
+   Клиент описал этот момент кино дословно: «ракета приземлилась и
+   приблизилась, там только заголовок, карточек и текста нет».
+
+   Значит на посадке и проходе раздел отдаёт кадру всё, кроме
+   заголовка: карточки уходят вниз и растворяются, как будто их и
+   не было, а вернувшись назад по скроллу - так же собираются. Это
+   не «спрятать контент»: он возвращается сразу, как только корабль
+   уступает кадр, и до посадки читается целиком. */
+html[data-act="landing"] #included .inc-grid,
+html[data-act="walk"] #included .inc-grid {
+  opacity: calc(1 - var(--rc-app, 0) * 1.25);
+  transform: translateY(calc(var(--rc-app, 0) * 40px)) scale(calc(1 - var(--rc-app, 0) * 0.04));
+  filter: blur(calc(var(--rc-app, 0) * 3px));
+  transition: opacity .45s linear, transform .5s var(--ease, ease), filter .45s linear;
+  pointer-events: none;
+}
+html[data-act="landing"] #included .inc-grid { pointer-events: auto; }
+
+/* Заголовок остаётся - он и есть титр этой сцены. Уводим его в
+   сторону от корпуса и держим повыше, чтобы корабль встал в кадр
+   целиком, от носа до площадки. */
 @media (min-width: 901px) {
-  html[data-act="landing"] #included .inc-grid,
-  html[data-act="walk"] #included .inc-grid {
-    grid-template-columns: 1fr 1fr;
-    column-gap: clamp(240px, 34vw, 520px);
-    transition: grid-template-columns .6s var(--ease, ease), column-gap .6s var(--ease, ease);
-  }
-  /* Заголовок раздела уводим в левую половину: по центру он попал
-     бы точно на нос корабля */
   html[data-act="landing"] #included .sec-head,
   html[data-act="walk"] #included .sec-head {
     max-width: 46%;
-    transition: max-width .6s var(--ease, ease);
+    transition: max-width .6s var(--ease, ease), transform .6s var(--ease, ease);
+    transform: translateY(calc(var(--rc-app, 0) * -6vh));
   }
 }
-
-/* Телефон: колонки разводить некуда, поэтому контент поднимается
-   над площадкой, а корабль занимает нижнюю треть экрана */
 @media (max-width: 900px) {
-  html[data-act="landing"] #included .inc-grid {
-    padding-bottom: 42vh;
-    transition: padding-bottom .6s var(--ease, ease);
+  html[data-act="landing"] #included .sec-head,
+  html[data-act="walk"] #included .sec-head {
+    transform: translateY(calc(var(--rc-app, 0) * -4vh));
+    transition: transform .6s var(--ease, ease);
   }
 }
 
@@ -195,19 +205,42 @@ html.rc-inside .rc-hatch-glow { opacity: 0; }
 /* Пока финальная кнопка в кадре, плавающая «Полёт» не нужна: две
    одинаковые кнопки рядом - это шум, а на телефоне они слипались */
 html[data-act="egress"] .rcf-fab { opacity: 0 !important; pointer-events: none !important; }
+/* Кнопка старта - последняя голограмма фильма. Клиент описал этот
+   кадр так: «камера отдаляется, анкета исчезает голограммой, а у
+   нас появляется экран игры и надпись голограммой типа старта
+   игры». Значит и материал у неё голограммный: проекция на стекле
+   рубки со сканлайнами и скобками, а не обычная кнопка сайта. */
 .epi-btn {
   margin-top: 18px;
   display: inline-flex; align-items: center; gap: 12px;
   padding: 18px 34px;
   font-family: var(--f-body, "Golos Text", sans-serif);
   font-size: 16px; font-weight: 700; letter-spacing: .08em;
-  color: #EAF6FC;
-  background: linear-gradient(158deg, rgba(10,26,44,.92), rgba(6,14,24,.96));
-  border: 1px solid rgba(66,178,220,.55);
+  color: rgba(var(--int-lit-rgb, 234,246,252), 1);
+  background:
+    repeating-linear-gradient(180deg,
+      rgba(var(--int-cyan-rgb, 66,178,220), .09) 0 2px,
+      transparent 2px 4px),
+    linear-gradient(158deg,
+      rgba(var(--int-cyan-rgb, 66,178,220), .16),
+      rgba(var(--int-hull-rgb, 10,21,36), .92));
+  border: 1px solid rgba(var(--int-cyan-rgb, 66,178,220), .6);
   border-radius: 999px;
   cursor: pointer;
-  box-shadow: 0 18px 44px -16px rgba(0,0,0,.9), 0 0 44px -10px rgba(66,178,220,.7);
+  text-shadow: 0 0 14px rgba(var(--int-cyan-rgb, 66,178,220), .55);
+  box-shadow:
+    0 18px 44px -16px rgba(0,0,0,.9),
+    0 0 44px -10px rgba(var(--int-cyan-rgb, 66,178,220), .8),
+    inset 0 1px 0 rgba(var(--int-lit-rgb, 207,233,245), .2);
   transition: transform .3s var(--ease, ease), box-shadow .3s;
+}
+/* Луч проектора под кнопкой: надпись висит в воздухе рубки */
+.epi-btn::before {
+  content: ''; position: absolute; left: 50%; bottom: -26px;
+  width: 2px; height: 26px;
+  transform: translateX(-50%);
+  background: linear-gradient(180deg, rgba(var(--int-cyan-rgb, 66,178,220), .85), transparent);
+  pointer-events: none;
 }
 .epi-btn:hover {
   transform: translateY(-2px) scale(1.03);

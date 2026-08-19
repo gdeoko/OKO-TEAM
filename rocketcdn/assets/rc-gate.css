@@ -1,0 +1,131 @@
+/* ═══════════════════════════════════════════════════════════
+   Rocket CDN · карточки в проёме люка, оформление
+
+   Это первые голограммы фильма: то, что видно в открывшейся двери
+   ещё до того, как мы вошли. Материал у них тот же, что у экранов
+   в салоне - циан рубки, сканлайны, скобки по углам - чтобы внутри
+   человек узнал их и понял, что попал именно туда, куда смотрел.
+
+   Долю проявления ведёт rc-gate.js по доле открытия люка.
+   ═══════════════════════════════════════════════════════════ */
+
+.rc-gate {
+  position: fixed; inset: 0; z-index: 7;      /* над холстом корабля (6) */
+  pointer-events: none;
+  opacity: 0;
+  display: grid;
+  align-content: center;
+  justify-items: center;
+  gap: clamp(12px, 2.4vh, 26px);
+  transition: opacity .4s linear;
+}
+.rc-gate.on { opacity: 1; }
+
+.rc-gate-card {
+  position: relative;
+  width: min(74vw, 340px);
+  padding: 14px 18px 16px;
+  /* Проекция, а не карточка: стекло почти прозрачное, свет идёт
+     изнутри, поэтому фон рубки за ней виден */
+  background:
+    linear-gradient(180deg,
+      rgba(var(--int-cyan-rgb, 66,178,220), .10),
+      rgba(var(--int-panel-rgb, 20,40,61), .34));
+  border: 1px solid rgba(var(--int-cyan-rgb, 66,178,220), .42);
+  border-radius: 10px;
+  box-shadow:
+    0 0 24px -6px rgba(var(--int-cyan-rgb, 66,178,220), .55),
+    inset 0 1px 0 rgba(var(--int-lit-rgb, 207,233,245), .18);
+  color: rgba(var(--int-lit-rgb, 207,233,245), .96);
+  /* Сканлайны: проекция собрана из строк развёртки */
+  -webkit-mask-image: repeating-linear-gradient(180deg,
+    #000 0 2px, rgba(0,0,0,.72) 2px 4px);
+  mask-image: repeating-linear-gradient(180deg,
+    #000 0 2px, rgba(0,0,0,.72) 2px 4px);
+  /* Проявление и уход ведёт одна переменная от доли открытия люка */
+  opacity: var(--gate-k, 0);
+  transform:
+    perspective(900px)
+    translateZ(calc(var(--gate-z, 0) * 120px))
+    translateY(calc((1 - var(--gate-k, 0)) * 18px))
+    scale(calc(.94 + var(--gate-k, 0) * .06));
+  /* Растворение чуть медленнее проявления: экран должен успеть
+     «истаять в воздухе», а не мигнуть - клиент просил именно
+     голограммное исчезновение на входе */
+  transition: opacity .42s linear, transform .42s var(--ease, ease);
+}
+
+/* Луч проектора снизу: экран висит в воздухе, а не наклеен */
+.rc-gate-beam {
+  position: absolute; left: 50%; bottom: -18px;
+  width: 2px; height: 18px;
+  transform: translateX(-50%);
+  background: linear-gradient(180deg,
+    rgba(var(--int-cyan-rgb, 66,178,220), .8), transparent);
+  opacity: calc(var(--gate-k, 0) * .9);
+}
+
+/* Скобки по углам: узнаваемая рамка бортовой голограммы */
+.rc-gate-card::before,
+.rc-gate-card::after {
+  content: ''; position: absolute;
+  width: 14px; height: 14px;
+  border: 1px solid rgba(var(--int-cyan-rgb, 66,178,220), .85);
+  opacity: calc(var(--gate-k, 0));
+}
+.rc-gate-card::before { left: -1px; top: -1px; border-right: 0; border-bottom: 0; }
+.rc-gate-card::after { right: -1px; bottom: -1px; border-left: 0; border-top: 0; }
+
+.rc-gate-card b {
+  display: block;
+  font: 700 clamp(13px, 1.5vw, 15px)/1.25 var(--f-body, "Golos Text", sans-serif);
+  letter-spacing: .04em;
+  margin-bottom: 5px;
+  text-shadow: 0 0 12px rgba(var(--int-cyan-rgb, 66,178,220), .5);
+}
+.rc-gate-card span {
+  display: block;
+  font: 400 clamp(11.5px, 1.25vw, 13px)/1.45 var(--f-body, "Golos Text", sans-serif);
+  color: rgba(var(--int-lit-rgb, 207,233,245), .78);
+}
+
+/* ПК: места по бокам корпуса больше, чем в самом проёме, поэтому
+   экраны встают по сторонам ракеты - клиент так и просил */
+@media (min-width: 901px) {
+  .rc-gate {
+    grid-auto-flow: column;
+    justify-content: space-between;
+    align-content: center;
+    padding: 0 clamp(24px, 7vw, 130px);
+  }
+  .rc-gate-card { width: min(26vw, 330px); }
+  /* Разводим по высоте: два одинаковых прямоугольника на одной
+     линии читаются таблицей, а не голограммами в воздухе */
+  .rc-gate-card[data-i="0"] { transform-origin: left center; margin-bottom: 8vh; }
+  .rc-gate-card[data-i="1"] { transform-origin: right center; margin-top: 8vh; }
+}
+
+/* Телефон: корпус занимает почти весь кадр, экраны идут в проём
+   друг под другом - как две панели в открытой двери. Ширину берём
+   по самому проёму, а не по экрану: вылезая на светлую обшивку,
+   голограмма теряет контраст и читается хуже, чем в тёмной щели. */
+@media (max-width: 900px) {
+  .rc-gate { align-content: center; padding-bottom: 10vh; gap: 10px; }
+  .rc-gate-card {
+    width: min(46vw, 215px);
+    padding: 10px 12px 12px;
+    /* В узкой щели фон должен быть плотнее: за экраном не рубка, а
+       тёмный тамбур, и полупрозрачное стекло на нём почти не видно */
+    background:
+      linear-gradient(180deg,
+        rgba(var(--int-cyan-rgb, 66,178,220), .16),
+        rgba(var(--int-deep-rgb, 5,12,21), .74));
+  }
+  .rc-gate-card b { font-size: 12px; margin-bottom: 3px; }
+  .rc-gate-card span { font-size: 10.5px; line-height: 1.35; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .rc-gate-card { transform: none; transition: opacity .2s linear; }
+}
+html[data-degrade="3"] .rc-gate { display: none; }

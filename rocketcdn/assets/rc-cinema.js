@@ -59,6 +59,16 @@ var FRONT = 0.30;
 function clamp(v, a, b) { return v < a ? a : (v > b ? b : v); }
 function ease(t) { return t * t * (3 - 2 * t); }
 
+/* Звук рубки. Он есть не всегда: человек мог его не включить, а на
+   устройстве без Web Audio его нет вовсе. Поэтому обращение к нему
+   всегда через try - молчание не должно ронять кадр. */
+function snd(name) {
+  try {
+    var s = g.RC_SOUND;
+    if (s && typeof s[name] === "function") s[name]();
+  } catch (e) {}
+}
+
 /* Угол в диапазон от минус пи до пи: без этого карточка на
    трёхстах градусах считается дальней, хотя стоит рядом. */
 function wrap(a) {
@@ -104,6 +114,121 @@ function turnOf(V, act, n, step) {
    в середине кадра, после - остаётся внизу трека. Считаем от
    обёртки блока: её высота задана в стилях и не зависит от того,
    что делает само кольцо, поэтому обратной связи здесь нет. */
+/* ── Голограммные экраны рубки ───────────────────────────────
+   Владелец просил не карточки поверх фона, а экраны с
+   голограммами в салоне. Форму и свет рисуют стили, отсюда идёт
+   ровно то, что стили посчитать не могут: слои проекции, фаза
+   мерцания у каждого экрана своя, яркость по расстоянию до линии
+   чтения и распад развёртки на уходе.
+
+   Слои вставляем разметкой, а не псевдоэлементами: у карточки они
+   оба уже заняты (подсветка от курсора в rc.css и блик стекла в
+   rc-interior.css), и отбирать их у соседних файлов - значит
+   ломать вид карточки везде, где она стоит вне рубки. */
+var HOLO = ["cin-scr", "cin-br", "cin-beam", "cin-sweep"];
+
+function holoBuild(cards) {
+  for (var i = 0; i < cards.length; i++) {
+    var el = cards[i];
+    el.classList.add("cin-holo");
+    /* Фаза мерцания. Без неё четыре экрана мигают в такт, и вместо
+       живой рубки получается один моргающий блок. Числа неровные
+       нарочно: ровный шаг снова свёл бы их в общий ритм. */
+    el.style.setProperty("--cin-ph", (i * 1.37 % 4.3).toFixed(2));
+    if (el.getAttribute("data-holo") === "1") continue;
+    for (var k = 0; k < HOLO.length; k++) {
+      var lay = doc.createElement("i");
+      lay.className = HOLO[k];
+      lay.setAttribute("aria-hidden", "true");
+      el.appendChild(lay);
+    }
+    el.setAttribute("data-holo", "1");
+  }
+}
+
+function holoStrip(cards) {
+  for (var i = 0; i < cards.length; i++) {
+    var el = cards[i];
+    el.classList.remove("cin-holo", "cin-decay", "cin-ignite", "cin-flash");
+    if (el.getAttribute("data-holo") !== "1") continue;
+    for (var k = 0; k < HOLO.length; k++) {
+      var lay = el.querySelector("." + HOLO[k]);
+      if (lay && lay.parentNode === el) el.removeChild(lay);
+    }
+    el.removeAttribute("data-holo");
+    el.style.removeProperty("--cin-lit");
+    el.style.removeProperty("--cin-dec");
+    el.style.removeProperty("--cin-sy");
+    el.style.removeProperty("--cin-ph");
+  }
+}
+
+/* Розжиг: экран, доехавший до линии чтения, загорается разовой
+   полосой развёртки. Класс снимаем сами - анимация на классе,
+   который никто не убирает, второй раз уже не запустится. */
+function holoIgnite(el) {
+  if (el.__cinIg) clearTimeout(el.__cinIg);
+  el.classList.remove("cin-ignite");
+  /* Чтение размера перезапускает анимацию: без него браузер
+     считает, что класс и не снимался, и полоса не побежит. */
+  void el.offsetWidth;
+  el.classList.add("cin-ignite");
+  el.__cinIg = setTimeout(function () {
+    el.classList.remove("cin-ignite");
+    el.__cinIg = 0;
+  }, 700);
+}
+
+/* Вспышка выбора: человек ткнул в экран, экран мигнул. */
+function holoFlash(el) {
+  if (el.__cinFl) clearTimeout(el.__cinFl);
+  el.classList.remove("cin-flash");
+  void el.offsetWidth;
+  el.classList.add("cin-flash");
+  el.__cinFl = setTimeout(function () {
+    el.classList.remove("cin-flash");
+    el.__cinFl = 0;
+  }, 400);
+}
+
+/* Рука человека. Слушаем на документе: экраны пересобираются при
+   смене языка, и переподписываться на каждый заново - лишний повод
+   потерять обработчик. */
+var holoBound = 0, holoHov = null;
+
+function holoHand() {
+  if (holoBound) return;
+  holoBound = 1;
+
+  var find = function (e) {
+    var t = e.target;
+    if (!t || !t.closest) return null;
+    return t.closest(".cin-ring > .cin-item");
+  };
+
+  doc.addEventListener("pointerover", function (e) {
+    var el = find(e);
+    if (!el || el === holoHov) return;
+    holoHov = el;
+    snd("uiHover");
+  }, { passive: true });
+
+  doc.addEventListener("pointerout", function (e) {
+    var el = find(e);
+    if (!el || el !== holoHov) return;
+    /* Переход между буквами внутри того же экрана - не уход */
+    if (e.relatedTarget && el.contains(e.relatedTarget)) return;
+    holoHov = null;
+  }, { passive: true });
+
+  doc.addEventListener("click", function (e) {
+    var el = find(e);
+    if (!el || !el.classList.contains("cin-holo")) return;
+    holoFlash(el);
+    snd("uiClick");
+  }, { passive: true });
+}
+
 function pin(act) {
   var ring = act.ring;
   var wrapR = act.wrap.getBoundingClientRect();
@@ -148,6 +273,9 @@ function cabin(act) {
   var front = phone ? 0.34 : FRONT;
   var deg = root.getAttribute("data-degrade");
   var soft = !phone && !root.classList.contains("rc-fast") && deg !== "2" && deg !== "3";
+  /* Экраны собраны разметкой один раз, при сборке акта. Если слоёв
+     нет, писать переменные проектора некуда и незачем. */
+  var holo = !!act.holo;
 
   /* Ближайшая к центру карточка - та, которую сейчас читают.
      Она никогда не мутнеет, чем бы ни занималась остальная сцена. */
@@ -195,6 +323,32 @@ function cabin(act) {
     s.setProperty("--cin-vis", vis.toFixed(3));
     s.setProperty("--cin-blur", (soft && i !== best ? (1 - vis) * 2.6 : 0).toFixed(2) + "px");
     s.setProperty("--cin-zi", String(Math.round(600 - ax * 170)));
+
+    /* ── Голограмма: яркость проектора и распад развёртки ─────
+       Яркость считаем от угла, а не от прозрачности: экран
+       разгорается, пока подъезжает к линии чтения, и делает это
+       заметно раньше, чем перестаёт быть полупрозрачным. */
+    if (holo) {
+      var lit = clamp(1 - ax / (front * 1.7), 0, 1);
+      s.setProperty("--cin-lit", lit.toFixed(3));
+
+      /* Уход за плечо. Проектор не гаснет прозрачностью: у него
+         рвётся развёртка, полосы утоньшаются, и в самом хвосте
+         картинка схлопывается по вертикали. Схлоп начинаем только
+         в конце, иначе текст плющило бы ещё на читаемом экране. */
+      var dec = soft ? clamp(1 - vis / 0.72, 0, 1) : 0;
+      var sy = 1 - clamp((dec - 0.58) / 0.42, 0, 1) * 0.68;
+      s.setProperty("--cin-dec", dec.toFixed(3));
+      s.setProperty("--cin-sy", sy.toFixed(3));
+      el.classList.toggle("cin-decay", dec > 0.02);
+
+      /* Розжиг ровно один раз на приезд: пока экран стоит перед
+         человеком, полоса развёртки бежать не должна. */
+      var isFront = i === best && ax < front;
+      if (isFront && !el.__cinOn) holoIgnite(el);
+      el.__cinOn = isFront ? 1 : 0;
+    }
+
     el.classList.toggle("cin-front", i === best);
     /* Ушедшее за плечо не должно ловить курсор и палец */
     el.classList.toggle("cin-far", vis < 0.34);
@@ -338,14 +492,19 @@ function collect() {
        она до обёртки не дойдёт. */
     rel.style.setProperty("--cab-n", String(cards.length));
     cards.forEach(function (el) { el.classList.toggle("cin-item", on); });
+    /* Экраны рубки: слои проекции живут разметкой. Вне салона их
+       снимаем начисто - карточка обязана вернуться карточкой. */
+    if (on) holoBuild(cards); else holoStrip(cards);
     /* Меряем кольцо только в потоке: у закреплённого offsetTop
        считается от окна и трек получился бы кривым. */
     ring.classList.remove("cin-pin", "cin-pin-end");
     if (on) {
+      holoHand();
       acts.push({ sec: rel, kind: "cabin", items: cards, ring: ring,
         wrap: ring.parentNode,
         ringOff: ring.offsetTop,
         ringH: ring.getBoundingClientRect().height,
+        holo: true,
         pinState: -1, rects: [], rect: null, stage: null });
     }
   }
