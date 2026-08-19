@@ -1146,6 +1146,7 @@ function show() {
   st.shown = true;
   root.classList.add("rc-inside");
   if (cv) cv.classList.add("on");
+  if (air) air.classList.add("on");
   if (g.RC_ROCKET && !root.classList.contains("rc-rocket-parked")) {
     try { g.RC_ROCKET.stop(); root.classList.add("rc-rocket-parked"); } catch (e) {}
   }
@@ -1158,6 +1159,7 @@ function hide() {
   st.shown = false;
   root.classList.remove("rc-inside");
   if (cv) cv.classList.remove("on");
+  if (air) air.classList.remove("on");
   if (raf) { cancelAnimationFrame(raf); raf = null; }
   /* Возвращаем наружную сцену: человек листает назад, и ракета
      обязана снова оказаться на месте. */
@@ -1419,13 +1421,42 @@ function tick(ts) {
   st.dolly += (st.dollyT - st.dolly) * kY;
   if (!typing) st.drift += dt;
 
-  var drift = (fast || typing) ? 0 : Math.sin(st.drift / 6) * 0.026;   /* дрейф 3 градуса, период 6 секунд */
+  /* ── Дыхание камеры ────────────────────────────────────────
+     Человек не штатив: он дышит, переминается и заваливает голову
+     в сторону поворота. Три эти мелочи и отличают проезд в кино от
+     разворота модели в просмотрщике.
+
+     Периоды нарочно разные и несоизмеримые (6, 4.3 и 3.1 секунды):
+     совпадай они, движение сложилось бы в заметную качку. Амплитуды
+     мелкие: дыхание должно чувствоваться, а не читаться.
+
+     На перемотке и пока человек печатает всё это выключено - там
+     любое лишнее движение мешает. */
+  var calm = fast || typing;
+  var drift = calm ? 0 : Math.sin(st.drift / 6) * 0.026;   /* дрейф 3 градуса, период 6 секунд */
+  var sway  = calm ? 0 : Math.sin(st.drift / 4.3) * 0.035; /* шаг вбок: 3.5 см */
+  var bob   = calm ? 0 : Math.sin(st.drift / 3.1) * 0.016; /* вдох-выдох по высоте */
+
+  /* Крен на повороте. Считаем от настоящей угловой скорости камеры,
+     а не от прокрутки: камера отстаёт от прокрутки на демпфере, и
+     крен, снятый с прокрутки, приходил бы раньше самого поворота. */
+  var vYaw = dt > 0 ? (st.yaw - st.yawPrev) / dt : 0;
+  st.yawPrev = st.yaw;
+  var rollT = calm ? 0 : Math.max(-0.03, Math.min(0.03, vYaw * 0.045));
+  st.roll += (rollT - st.roll) * (1 - Math.exp(-dt / 0.28));
+
   cam.rotation.order = "YXZ";
   cam.rotation.y = -st.yaw + drift;
   cam.rotation.x = st.pitch;
-  /* Камера едет по своей оси взгляда: в тамбуре она позади центра,
-     внутри встаёт ровно в центр круга, у пульта подступает ближе. */
-  cam.position.set(-Math.sin(st.yaw) * st.dolly, EYE, Math.cos(st.yaw) * st.dolly);
+  cam.rotation.z = st.roll;
+
+  /* Камера едет по своей оси взгляда: в тамбуре она далеко позади
+     центра, внутри отходит на шаг от оси (см. restDolly - именно
+     этот шаг и даёт параллакс), у пульта подступает вплотную.
+     Боковое дыхание кладём поперёк взгляда, иначе оно просто
+     добавлялось бы к проезду и не читалось. */
+  var sx = -Math.sin(st.yaw), sz = Math.cos(st.yaw);
+  cam.position.set(sx * st.dolly + sz * sway, EYE + bob, sz * st.dolly - sx * sway);
 
   /* Свет пульта разгорается вместе с подходом камеры. Тем же числом
      (--int-con) разгорается экран анкеты в CSS: свет в кадре и свет
@@ -1462,11 +1493,20 @@ function tick(ts) {
 
 /* ── Размер и потеря контекста ───────────────────────────── */
 addEventListener("resize", function () {
+  var was = phone;
   phone = innerWidth < 760;
   if (!rend) return;
   cam.aspect = innerWidth / innerHeight;
   cam.updateProjectionMatrix();
   rend.setSize(innerWidth, innerHeight, false);
+  /* Поворот телефона меняет не только пропорции кадра, но и всю
+     постановку: угол объектива и расстояние до стены у вертикального
+     и горизонтального кадра разные. Пересчитываем цели той же
+     функцией, что и прокрутка, чтобы не заводить второй источник. */
+  if (was !== phone) {
+    if (scene && scene.fog) scene.fog.density = phone ? 0.115 : 0.135;
+    setProgress(st.p);
+  }
 }, { passive: true });
 
 function dispose() {
@@ -1476,6 +1516,7 @@ function dispose() {
   raf = null;
   if (rend) { try { rend.dispose(); } catch (e) {} }
   if (cv && cv.parentNode) cv.parentNode.removeChild(cv);
+  if (air && air.parentNode) air.parentNode.removeChild(air);
   if (st.slot && g.RC_GL) { g.RC_GL.give(); st.slot = false; }
   st.built = false;
 }
@@ -1522,10 +1563,16 @@ addEventListener("rc:degrade", function (e) {
   var step = (e && e.detail && e.detail.step) || 0;
   try {
     if (step >= 1 && rend) rend.setPixelRatio(1);
+    /* Вторая ступень: снимаем то, что работает только на красоту.
+       Балки, поручень, спуски жгутов и световые пятна перечислены в
+       fine именно для этого - силовой набор и ниши остаются, комната
+       не разваливается, но кадр становится заметно дешевле. */
     if (step >= 2) {
       if (planet) planet.visible = false;
       if (halo) halo.visible = false;
-      if (scene && scene.fog) scene.fog.density = 0.02;
+      for (var i = 0; i < fine.length; i++) fine[i].visible = false;
+      if (air) air.classList.add("flat");
+      if (scene && scene.fog) scene.fog.density = 0.06;
     }
     /* Третья ступень: рубки нет. Сообщаем об этом кораблю - он не
        поведёт нас в проём, из которого нечему открыться, и вход
@@ -1579,6 +1626,10 @@ g.RC_INTERIOR = {
          секции контактов, по нему видно, разошлись они или нет */
       пульт: +st.con.toFixed(3),
       узлов: KNOT.length,
+      /* Цена кадра: по этим двум числам видно, не разъелась ли рубка
+         сверх бюджета. Считает сам рендерер, гадать не нужно. */
+      треугольников: rend ? rend.info.render.triangles : 0,
+      вызовов: rend ? rend.info.render.calls : 0,
       /* Пороги входа: по ним видно, почему салон показался или нет */
       доля: +st.p.toFixed(3), порог_вход: +P_IN.toFixed(3),
       порог_выход: +P_OUT.toFixed(3), мёртв: st.dead

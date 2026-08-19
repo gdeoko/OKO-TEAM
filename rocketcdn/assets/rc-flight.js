@@ -1285,8 +1285,13 @@ function buildWorld() {
     var pos = new Float32Array(nD * 3);
     for (var k = 0; k < nD * 3; k++) pos[k] = (Math.random() - 0.5) * SIDE;
     geo.setAttribute("position", new T.BufferAttribute(pos, 3));
+    /* Размер в пикселях, а не в мире. Пыль висит вокруг камеры, и
+       частица, случайно оказавшаяся в паре единиц от стекла, при
+       честном размере раздувалась в мутный шар на четверть кадра -
+       в замерах такие пятна закрывали Сатурн целиком. Микрочастице
+       объём не нужен: её работа - нестись мимо и давать скорость. */
     var pts = new T.Points(geo, new T.PointsMaterial({
-      color: 0xaac6d8, size: 1.1, sizeAttenuation: true, map: starDot,
+      color: 0xaac6d8, size: 1.6, sizeAttenuation: false, map: starDot,
       transparent: true, opacity: 0.5, depthWrite: false
     }));
     pts.frustumCulled = false;
@@ -2460,7 +2465,7 @@ function frame(ts) {
     var wm = w3.wash.material;
     /* Порог по тяге: на дрейфе шлейфа быть не должно, двигатель
        выключен. Иначе корабль как будто вечно жжёт топливо. */
-    var wantW = Math.min(0.95, Math.max(0, speed - 0.008) * 6.5 + (jumpZone ? 0.5 : 0));
+    var wantW = Math.min(0.80, Math.max(0, speed - 0.008) * 6.5 + (jumpZone ? 0.5 : 0));
     wm.opacity += (wantW - wm.opacity) * Math.min(1, dt * 4);
     if (wm.opacity > 0.012) {
       w3.wash.visible = true;
@@ -2487,11 +2492,7 @@ function frame(ts) {
   if (w3.dust) {
     var dm = w3.dust.material;
     dm.opacity = 0.30 + Math.min(0.52, speed * 3.4 + (F.warpV || 0) * 0.0004);
-    /* Размер поднимаем скупо: у пыли размер честный, в мировых
-       единицах, и частица, случайно оказавшаяся у самого стекла,
-       раздувается обратно пропорционально расстоянию. Крупный
-       базовый размер превратил бы такую в пятно на весь кадр. */
-    dm.size = 1.0 + Math.min(2.2, speed * 7);
+    dm.size = 1.6 + Math.min(2.4, speed * 8);
   }
 
   /* ── Блик от светила ──
