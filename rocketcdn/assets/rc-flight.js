@@ -254,6 +254,13 @@ function buildUI() {
 
   w.innerHTML =
     '<canvas class="rcf-cv"></canvas>' +
+    /* Оптика остекления. Слой стоит МЕЖДУ космосом и кабиной: это
+       эффекты стекла и объектива, а не наклейка поверх корабля -
+       корпус кабины обязан остаться резким и без виньетки.
+       Всё внутри рисует CSS по трём переменным, которые кадр
+       обновляет: --rcf-warp (разгон), --rcf-glow и --rcf-gx/--rcf-gy
+       (блик от светила). Никакого постпроцессинга. */
+    '<div class="rcf-fx" aria-hidden="true"><i class="rcf-glare"></i></div>' +
     '<img class="rcf-cab" alt="" aria-hidden="true" decoding="async">' +
     '<div class="rcf-hud">' +
       '<div class="rcf-cap" aria-live="polite"></div>' +
@@ -312,6 +319,7 @@ function buildUI() {
   ui.lockCap = ui.lock.querySelector("span");
   ui.scanKey = w.querySelector(".rcf-scan-key");
   ui.fade = w.querySelector(".rcf-fade");
+  ui.fx = w.querySelector(".rcf-fx");
 
   /* Рамка кабины: своя для альбома и своя для портрета */
   cabSrc();
@@ -1287,6 +1295,54 @@ function buildWorld() {
     return pts;
   })();
 
+  /* ── Шлейф двигателя ──
+     Двигатель у нас за спиной, самого факела из кабины не видно -
+     зато видно, что он выбрасывает. Раскалённая крошка и искры
+     обгоняют корабль по бортам и уходят назад: именно это движение
+     мимо стекла и читается как «мы разгоняемся», а не цифра на
+     табло. Частицы живут в системе координат камеры и ползут к
+     зрителю по локальной оси Z, поэтому мировых координат считать
+     не нужно вовсе - только одно число на кадр.
+
+     Цвет раздаём вершинам: свежая искра почти белая, остывающая
+     оранжевая, догорающая тёмно-красная. Один общий цвет превращает
+     шлейф в конфетти. */
+  var washN = mob ? 90 : 220;
+  var wash = (function () {
+    var geo = new T.BufferGeometry();
+    var pos = new Float32Array(washN * 3);
+    var col = new Float32Array(washN * 3);
+    var hotC = new T.Color(0xfff0d2), midC = new T.Color(0xff9a44), lowC = new T.Color(0xc8422a);
+    for (var k = 0; k < washN; k++) {
+      var a = Math.random() * 6.283;
+      /* Кольцом вокруг оси взгляда: в самой середине кадра искр быть
+         не должно, там смотрят на цель */
+      var rr = 5 + Math.pow(Math.random(), 0.6) * 46;
+      pos[k * 3] = Math.cos(a) * rr;
+      pos[k * 3 + 1] = Math.sin(a) * rr * 0.72;
+      pos[k * 3 + 2] = -Math.random() * 120;
+      var h = Math.random();
+      var c = h > 0.78 ? hotC : (h > 0.34 ? midC : lowC);
+      col[k * 3] = c.r; col[k * 3 + 1] = c.g; col[k * 3 + 2] = c.b;
+    }
+    geo.setAttribute("position", new T.BufferAttribute(pos, 3));
+    geo.setAttribute("color", new T.BufferAttribute(col, 3));
+    /* Размер в пикселях, а не в мире. При sizeAttenuation искра,
+       проходящая в паре единиц от стекла, раздувается на пол-экрана
+       мутным пятном - на дистанции в пять единиц точка размером
+       полтора мира занимает под двести пикселей. Здесь важен не
+       честный размер, а росчерк у края кадра. */
+    var pts = new T.Points(geo, new T.PointsMaterial({
+      size: 2.2, sizeAttenuation: false, map: starDot, vertexColors: true,
+      transparent: true, opacity: 0, depthWrite: false, depthTest: false,
+      blending: T.AdditiveBlending
+    }));
+    pts.frustumCulled = false;
+    pts.renderOrder = 6;
+    scene.add(pts);
+    return pts;
+  })();
+
   /* ── Астероидный пояс ──
      Камни рассыпаны трубой вокруг отрезка будущего маршрута между
      Марсом и Сатурном: корабль проходит сквозь пояс, камни висят
@@ -1446,11 +1502,18 @@ function buildWorld() {
     { o: hole,   r: 30, hole: true, name: RU ? "ЧЁРНАЯ ДЫРА" : "BLACK HOLE" }
   ];
 
+  /* Оптика и шлейф - украшение, а не механика. На просьбе меньше
+     движения и на самом упрощённом режиме страницы их просто нет:
+     игра обязана остаться играбельной, а не красивой любой ценой. */
+  var wantFx = !reduced && root.getAttribute("data-degrade") !== "3";
+
   return {
+    fx: wantFx,
     r: r, scene: scene, cam: cam, path: path, looks: LOOKS, at: AT, fov0: FOV0, scanTargets: scanTargets,
     bodies: bodies,
     milky: milky, gal2: gal2, gal3: gal3,
-    comet: comet, sat: sat, belt1: belt1, belt2: belt2, dust: dust, nebSprites: nebSprites, starMats: starMats, sunGlow: sunGlow, amb: amb,
+    comet: comet, sat: sat, belt1: belt1, belt2: belt2, dust: dust, wash: wash, washN: washN,
+    nebSprites: nebSprites, starMats: starMats, sunGlow: sunGlow, amb: amb, mob: mob,
     earth: earth, clouds: clouds, moon: moon, mars: mars, saturn: saturn, hole: hole,
     diskMat: diskMat, jump: jump, sky: sky, pickables: pickables,
     tmpA: new T.Vector3(), tmpB: new T.Vector3(), tmpQ: new T.Quaternion(), tmpM: new T.Matrix4()
@@ -1955,7 +2018,12 @@ function holoFrame(w3, ts) {
     w3.tmpA.project(cam);
     /* Прячем то, что за спиной, за краем кадра или слишком далеко:
        метка имеет смысл, пока объект в кадре и до него можно долететь */
-    var vis = w3.tmpA.z < 1 && dist < 2600 &&
+    /* Предел видимости подобран по читаемости, а не по дальности.
+       Карточка ужимается пропорционально глубине, и на двух с
+       половиной тысячах единиц от неё оставалась полоска с
+       нечитаемым текстом - в кадре висел пустой прямоугольник.
+       Дальше этого рубежа метку честнее не показывать вовсе. */
+    var vis = w3.tmpA.z < 1 && dist < 1900 &&
               w3.tmpA.x > -1.05 && w3.tmpA.x < 1.05 && w3.tmpA.y > -1.05 && w3.tmpA.y < 1.05;
     var sx = (w3.tmpA.x * 0.5 + 0.5) * innerWidth;
     var sy = (-w3.tmpA.y * 0.5 + 0.5) * innerHeight;
@@ -1966,14 +2034,26 @@ function holoFrame(w3, ts) {
        рамку кокпита. */
     /* Поля берём под переплёт кабины: на телефоне рамка съедает по
        седьмой части ширины с каждой стороны, и метка, прижатая к
-       краю кадра, уходила под стойку - подпись обрывалась */
+       краю кадра, уходила под стойку - подпись обрывалась.
+
+       Справа поле особое. Карточка голограммы висит НА выноске
+       вправо от точки крепления и занимает свои 214 пикселей плюс
+       рычаг; на четырёхсотпиксельном экране метка, поставленная
+       по центру планеты, уезжала половиной текста за кадр -
+       «ЗЕМЛЯ» обрывалась ровно посередине. Считаем правое поле по
+       фактической ширине карточки, а не симметрично левому. */
     var narrow = innerWidth < 760;
-    var padX = Math.max(56, innerWidth * (narrow ? 0.22 : 0.12));
-    var padY = Math.max(90, innerHeight * (narrow ? 0.18 : 0.14));
-    sx = Math.max(padX, Math.min(innerWidth - padX, sx));
+    var padX = Math.max(56, innerWidth * (narrow ? 0.16 : 0.12));
+    var padY = Math.max(90, innerHeight * (narrow ? 0.16 : 0.14));
+    var padR = Math.min(innerWidth * 0.62, narrow ? 258 : 300);
+    if (padR < padX + 40) padR = padX + 40;
+    sx = Math.max(padX, Math.min(innerWidth - padR, sx));
     sy = Math.max(padY, Math.min(innerHeight - padY * 1.6, sy));
-    /* Глубина метки: ноль вплотную, единица у предела видимости */
-    var depth = Math.max(0, Math.min(1, (dist - 120) / 2000));
+    /* Глубина метки: ноль вплотную, дальше метка мельчает. Потолок
+       держим на 0.55 - при большей глубине rc-holo ужимает карточку
+       больше чем на треть, и подпись перестаёт читаться. Пусть
+       дальняя метка будет просто чуть меньше ближней. */
+    var depth = Math.max(0, Math.min(0.55, (dist - 120) / 2600));
     var on = vis && !F.brief && shown < limit;
     if (on) shown++;
     try { g.RC_HOLO.place(id, sx, sy, depth, on); } catch (e3) {}
@@ -2074,11 +2154,20 @@ function frame(ts) {
        витка далеко, идём настоящим ходом с разгоном, и только у
        цели переходим на плавное круговое движение. */
     var far = w3.cam.position.distanceTo(w3.tmpB);
+    o._far = far > 60;
     if (far > 60) {
       w3.tmpA.copy(w3.tmpB).sub(w3.cam.position).normalize();
       /* Скорость растёт с дистанцией: перелёт между системами не
          должен занимать минуту, а подход к планете - быть рывком */
       var step = Math.min(far - 20, (70 + far * 1.35) * dt);
+      /* Доводка у цели. Раньше ход обрывался ступенькой ровно на
+         шестидесяти единицах: корабль нёсся и вдруг вставал на
+         круговое движение. Последние двести единиц гасим плавной
+         кривой - подлёт заканчивается, а не прерывается. */
+      if (far < 260) {
+        var ease = far / 260;
+        step *= 0.22 + 0.78 * ease * ease * (3 - 2 * ease);
+      }
       w3.cam.position.addScaledVector(w3.tmpA, step);
       F.warpV = step / Math.max(dt, 0.001);       /* для табло скорости */
     } else {
@@ -2147,9 +2236,23 @@ function frame(ts) {
      наклон камеры вниз поднимает цель в стекло. */
   if (innerHeight > innerWidth) w3.cam.rotateX(-0.042);
 
-  /* Тряска на прыжке и у дыры */
+  var speed = Math.abs(F.v);
+
+  /* Крен в вираж. Настоящий пилот не поворачивает плашмя: он кладёт
+     корабль на борт и тянет. Раньше камера ходила строго по
+     горизонту, и любой доворот выглядел движением мыши, а не
+     манёвром. Крен берём от бокового взгляда и от кругового хода на
+     орбите, доводим лениво - резкий крен читается сбоем. */
+  var bankT = -F.look.x * 0.20 + (F.orbit && !F.orbit._far ? 0.055 : 0);
+  F.bank = (F.bank || 0) + (bankT - F.bank) * Math.min(1, dt * 1.6);
+  if (F.bank > 0.0004 || F.bank < -0.0004) w3.cam.rotateZ(F.bank);
+
+  /* Тряска: прыжок, близость дыры и собственная тяга. Тягу считаем
+     отдельно и мягче - на разгоне корабль должен дрожать, но не
+     мешать целиться. */
   var nearHole = Math.max(0, 1 - w3.cam.position.distanceTo(w3.hole.position) / 500);
-  F.shake += ((jumpZone ? 1 : 0) * 0.8 + nearHole * 0.7 - F.shake) * Math.min(1, dt * 3);
+  var thrust = Math.min(0.34, speed * 1.9);
+  F.shake += ((jumpZone ? 1 : 0) * 0.8 + nearHole * 0.7 + thrust - F.shake) * Math.min(1, dt * 3);
   if (F.shake > 0.02) {
     w3.cam.rotateZ(Math.sin(ts * 0.021) * 0.004 * F.shake);
     w3.cam.position.x += Math.sin(ts * 0.037) * 0.5 * F.shake;
@@ -2157,7 +2260,6 @@ function frame(ts) {
   }
 
   /* Поле зрения дышит от скорости */
-  var speed = Math.abs(F.v);
   var fovGoal = (W3.fov0 || 72) + speed * 46 + (jumpZone ? 14 : 0);
   w3.cam.fov += (fovGoal - w3.cam.fov) * Math.min(1, dt * 4);
   w3.cam.updateProjectionMatrix();
@@ -2200,7 +2302,14 @@ function frame(ts) {
     frame._deg = (frame._deg || 0) + 1;
     if (frame._deg === 1) w3.r.setPixelRatio(Math.max(1, (g.devicePixelRatio || 1) * 0.75));
     else if (frame._deg === 2) w3.r.setPixelRatio(1);
-    else if (frame._deg === 3 && w3.clouds) w3.clouds.visible = false;
+    /* Дальше снимаем украшения, а не механику: сначала шлейф и
+       оптика остекления, и только потом облака Земли */
+    else if (frame._deg === 3) {
+      w3.fx = false;
+      if (w3.wash) w3.wash.visible = false;
+      if (ui.wrap) { ui.wrap.style.setProperty("--rcf-warp", "0"); ui.wrap.style.setProperty("--rcf-glow", "0"); }
+    }
+    else if (frame._deg === 4 && w3.clouds) w3.clouds.visible = false;
   }
 
   /* Комета: эллипс между Марсом и Сатурном, хвост от солнца */
@@ -2318,23 +2427,123 @@ function frame(ts) {
     F.pick = false;
   }
 
-  /* Стримы прыжка едут за камерой и светятся только в прыжке */
+  /* Стримы прыжка едут за камерой и светятся только в прыжке.
+     Полосы ещё и НЕСУТСЯ: раньше пучок был приклеен к камере
+     намертво, и в гиперпрыжке звёздный туннель стоял на месте -
+     светилось, но не летело. Теперь он ползёт вдоль своей оси и
+     заворачивается по кругу, а к середине прыжка растягивается
+     вдвое: полоса тем длиннее, чем быстрее идёт свет мимо. */
   var jm = w3.jump.material;
   jm.opacity += ((jumpZone ? 0.85 : 0) - jm.opacity) * Math.min(1, dt * 3);
   if (jm.opacity > 0.01) {
+    var jk = 0;
+    if (w3.at) {
+      jk = (F.p - w3.at.jump0) / Math.max(0.001, w3.at.jump1 - w3.at.jump0);
+      jk = jk < 0 ? 0 : jk > 1 ? 1 : jk;
+      /* Фаза туннеля: к концу прыжка полосы уходят из циана в
+         фиолет - видно, что летим уже по другому рукаву */
+      jm.color.setRGB(0.62 - jk * 0.2, 0.85 - jk * 0.35, 0.94);
+    }
+    F.jz = ((F.jz || 0) + dt * (420 + jk * 900)) % 300;
+    var stretch = 1 + Math.sin(jk * Math.PI) * 1.5;
     w3.jump.position.copy(w3.cam.position);
     w3.jump.quaternion.copy(w3.cam.quaternion);
-    /* Фаза туннеля: к концу прыжка полосы уходят из циана в
-       фиолет - слышно, что летим уже по другому рукаву */
-    if (w3.at) {
-      var jk = (F.p - w3.at.jump0) / Math.max(0.001, w3.at.jump1 - w3.at.jump0);
-      jk = jk < 0 ? 0 : jk > 1 ? 1 : jk;
-      jm.color.setRGB(0.62 - jk * 0.2, 0.85 - jk * 0.35, 0.94);
+    w3.jump.scale.set(1, 1, stretch);
+    w3.jump.translateZ(F.jz);
+  }
+
+  /* ── Шлейф двигателя ──
+     Искры ползут к зрителю по локальной оси Z и заворачиваются в
+     начало трубы. Тяжёлого здесь нет: один проход по массиву
+     координат, и то только когда шлейф вообще виден. */
+  if (w3.wash && W3.fx) {
+    var wm = w3.wash.material;
+    /* Порог по тяге: на дрейфе шлейфа быть не должно, двигатель
+       выключен. Иначе корабль как будто вечно жжёт топливо. */
+    var wantW = Math.min(0.95, Math.max(0, speed - 0.008) * 6.5 + (jumpZone ? 0.5 : 0));
+    wm.opacity += (wantW - wm.opacity) * Math.min(1, dt * 4);
+    if (wm.opacity > 0.012) {
+      w3.wash.visible = true;
+      w3.wash.position.copy(w3.cam.position);
+      w3.wash.quaternion.copy(w3.cam.quaternion);
+      var wp = w3.wash.geometry.attributes.position;
+      var adv = (26 + speed * 900 + (F.warpV || 0) * 0.05) * dt;
+      var arr = wp.array;
+      for (var wi = 2; wi < arr.length; wi += 3) {
+        arr[wi] += adv;
+        if (arr[wi] > 14) arr[wi] -= 134;        /* заворот трубы */
+      }
+      wp.needsUpdate = true;
+      /* На разгоне искра крупнеет: точка одного размера при любой
+         скорости выдаёт, что это спрайт, а не след */
+      wm.size = 2 + Math.min(3.4, speed * 11);
+    } else if (w3.wash.visible) {
+      w3.wash.visible = false;
     }
   }
 
-  /* Панель кабины чуть оседает на разгоне: перегрузка */
-  if (ui.wrap) ui.wrap.style.setProperty("--rcf-g", (speed * 5).toFixed(3));
+  /* Пыль у стекла густеет и вытягивается с ходом: ощущение скорости
+     даёт не цифра, а то, что мимо начинает нестись вещество */
+  if (w3.dust) {
+    var dm = w3.dust.material;
+    dm.opacity = 0.30 + Math.min(0.52, speed * 3.4 + (F.warpV || 0) * 0.0004);
+    /* Размер поднимаем скупо: у пыли размер честный, в мировых
+       единицах, и частица, случайно оказавшаяся у самого стекла,
+       раздувается обратно пропорционально расстоянию. Крупный
+       базовый размер превратил бы такую в пятно на весь кадр. */
+    dm.size = 1.0 + Math.min(2.2, speed * 7);
+  }
+
+  /* ── Блик от светила ──
+     Пролёт мимо звезды. Когда она попадает в поле зрения, в
+     остеклении вспыхивает засветка - тем сильнее, чем ближе к
+     оптической оси. Считаем один скалярный продукт и отдаём CSS
+     три числа: ни одного лишнего прохода по кадру. */
+  if (ui.fx && W3.fx && ts - (frame._glareT || 0) > 60) {
+    frame._glareT = ts;
+    var src = w3.sunGlow.position;
+    if (uniIdx !== 0 && built[uniIdx]) {
+      /* В чужом рукаве светило своё: берём ближайшую систему */
+      var pk2 = built[uniIdx].root, bestSD = 1e18;
+      for (var gi = 0; gi < pk2.children.length; gi++) {
+        var sd = w3.cam.position.distanceToSquared(pk2.children[gi].position);
+        if (sd < bestSD) { bestSD = sd; src = pk2.children[gi].position; }
+      }
+    }
+    w3.tmpA.copy(src).sub(w3.cam.position).normalize();
+    w3.cam.getWorldDirection(w3.tmpB);
+    var axis = w3.tmpA.dot(w3.tmpB);
+    var glow = 0, gx = 50, gy = 50;
+    if (axis > 0.35) {
+      w3.tmpA.copy(src).project(w3.cam);
+      if (w3.tmpA.z < 1) {
+        gx = (w3.tmpA.x * 0.5 + 0.5) * 100;
+        gy = (-w3.tmpA.y * 0.5 + 0.5) * 100;
+        /* Восьмая степень: засветка вспыхивает только когда светило
+           почти в кадре, а не тлеет всё время */
+        glow = Math.pow((axis - 0.35) / 0.65, 2.2);
+        var dstar = w3.cam.position.distanceTo(src);
+        glow *= Math.min(1, 2600 / Math.max(200, dstar));
+      }
+    }
+    F.glow = (F.glow || 0) + (glow - (F.glow || 0)) * 0.35;
+    var st2 = ui.wrap.style;
+    st2.setProperty("--rcf-glow", F.glow.toFixed(3));
+    st2.setProperty("--rcf-gx", gx.toFixed(1) + "%");
+    st2.setProperty("--rcf-gy", gy.toFixed(1) + "%");
+  }
+
+  /* Панель кабины чуть оседает на разгоне: перегрузка.
+     Тем же числом живёт оптика остекления: виньетка поджимается, по
+     краям кадра расходится цвет. Это не постпроцессинг, а две
+     заливки в CSS - разгон читается, кадр не дорожает. */
+  if (ui.wrap) {
+    ui.wrap.style.setProperty("--rcf-g", (speed * 5).toFixed(3));
+    var warp = Math.min(1, speed * 4.2 + (jumpZone ? 0.55 : 0) + nearHole * 0.4 +
+                           Math.min(0.35, (F.warpV || 0) * 0.0006));
+    F.warp = (F.warp || 0) + (warp - (F.warp || 0)) * Math.min(1, dt * 4);
+    ui.wrap.style.setProperty("--rcf-warp", F.warp.toFixed(3));
+  }
 
   /* HUD */
   var cap = CAPTIONS[0];

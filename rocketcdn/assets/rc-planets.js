@@ -1139,6 +1139,54 @@ function ringMap(rnd, N, width) {
 }
 
 /* ═══════════════════════════════════════════════════════════
+   Спутники
+   ═══════════════════════════════════════════════════════════
+   Планета без спутника читается как одинокий шар в пустоте: не с
+   чем сравнить размер и нечему двигаться, кроме облаков. Луна даёт
+   и масштаб, и жизнь - она заметно перемещается за те секунды, что
+   тело в кадре.
+
+   Делаем их дёшево: карта в четверть от планетной, сфера в 24
+   сегмента, тот же кратерный рельеф, что у каменистых миров.
+   Спутник почти всегда мельче двадцатой доли кадра, и разглядывать
+   на нём нечего, кроме силуэта и светотени. */
+function moonSet(radius, seed, count, high, sunU, termU) {
+  var pivots = [], trash = [];
+  var rnd = rngFrom(seed ^ 0x27D4EB2F);
+  var W = high ? 256 : 128, H = W >> 1;
+  for (var i = 0; i < count; i++) {
+    var N = makeNoise(rngFrom((seed + i * 7919) >>> 0));
+    var mr = radius * (0.10 + rnd() * 0.14);
+    var maps = terrainMaps("rocky", W, H, rngFrom((seed + i * 104729) >>> 0), N,
+                           [0.96 + rnd() * 0.1, 0.95 + rnd() * 0.1, 0.92 + rnd() * 0.12],
+                           { detail: "low", cloudAmount: 0 });
+    var mTex = texFrom(maps.color, true);
+    var bTex = texFrom(maps.bump, false);
+    var mMat = new T.MeshPhongMaterial({
+      map: mTex, bumpMap: bTex, bumpScale: mr * 0.02, shininess: 2,
+      specular: new T.Color(0x0a0c0e)
+    });
+    /* Терминатор спутнику тоже нужен: без него ровно половина шара
+       проваливается в равномерную серость */
+    patchSurface(mMat, "rocky", { sun: sunU, time: { value: 0 }, termCol: termU.col, termStr: termU.str });
+    var geo = new T.SphereGeometry(mr, high ? 28 : 18, high ? 20 : 14);
+    var mesh = new T.Mesh(geo, mMat);
+    mesh.position.x = radius * (2.3 + i * 1.15 + rnd() * 0.5);
+    /* Пивот наклонён: спутники не ходят строго по экватору, и
+       наклонённая орбита сразу читается объёмом, а не кольцом */
+    var pv = new T.Group();
+    pv.rotation.x = (rnd() - 0.5) * 0.55;
+    pv.rotation.y = rnd() * TAU;
+    pv.add(mesh);
+    pv.userData.sp = (0.10 + rnd() * 0.16) * (rnd() < 0.5 ? 1 : -1);
+    pivots.push(pv);
+    trash.push(geo, mMat, mTex, bTex);
+    maps.h = null;
+  }
+  return { pivots: pivots, trash: trash };
+}
+
+/* ═══════════════════════════════════════════════════════════
    Шейдеры
    ═══════════════════════════════════════════════════════════ */
 
@@ -1276,8 +1324,8 @@ var CORONA_FS = [
 ].join("\n");
 
 /* ── Правка стандартного материала ────────────────────────
-   Три вещи, которых нет в готовом MeshPhongMaterial и ради которых
-   не стоит писать своё освещение с нуля:
+   Четыре вещи, которых нет в готовом MeshPhongMaterial и ради
+   которых не стоит писать своё освещение с нуля:
    1) ночные огни. emissiveMap в three светит всегда, и города
       горят поверх освещённой суши. Гасим эмиссию по скалярному
       произведению нормали и направления на светило.
@@ -1285,12 +1333,21 @@ var CORONA_FS = [
    3) тень колец на планете. Из точки поверхности идём к солнцу,
       ищем пересечение с плоскостью колец и берём их плотность в
       этом радиусе. Именно эта полоса тени поперёк диска делает
-      окольцованный гигант узнаваемым. */
+      окольцованный гигант узнаваемым.
+   4) мягкий терминатор. У Ламберта граница дня и ночи - резкий
+      обрыв по нулю косинуса, и планета выглядит разрезанной
+      ножом. В жизни там работают две вещи: свет уходит за
+      горизонт постепенно (диск светила имеет угловой размер) и
+      атмосфера у края подсвечивает поверхность красным. Обе даём
+      одной вставкой: узкая тёплая полоса вдоль терминатора плюс
+      затухание ночной стороны. */
 function patchSurface(mat, kind, u) {
   var wantNight = !!u.night, wantRing = !!u.ringTex;
   mat.onBeforeCompile = function (shader) {
     shader.uniforms.uSunDir = u.sun;
     shader.uniforms.uTime = u.time;
+    shader.uniforms.uTermCol = u.termCol;
+    shader.uniforms.uTermStr = u.termStr;
     if (wantRing) {
       shader.uniforms.uRingTex = u.ringTex;
       shader.uniforms.uRingN = u.ringN;
@@ -1307,7 +1364,8 @@ function patchSurface(mat, kind, u) {
     shader.vertexShader = "varying vec3 vRcWN;\nvarying vec3 vRcWP;\n" + vs;
 
     var fs = shader.fragmentShader;
-    var head = "varying vec3 vRcWN;\nvarying vec3 vRcWP;\nuniform vec3 uSunDir;\nuniform float uTime;\n";
+    var head = "varying vec3 vRcWN;\nvarying vec3 vRcWP;\nuniform vec3 uSunDir;\nuniform float uTime;\n" +
+               "uniform vec3 uTermCol;\nuniform float uTermStr;\n";
     if (wantRing) {
       head += "uniform sampler2D uRingTex;\nuniform vec3 uRingN;\nuniform vec3 uCenter;\n" +
               "uniform float uRingIn;\nuniform float uRingOut;\n";
@@ -1331,26 +1389,42 @@ function patchSurface(mat, kind, u) {
       fs = fs.replace("#include <emissivemap_fragment>", "#include <emissivemap_fragment>\n" + add);
     }
 
-    if (wantRing && fs.indexOf("#include <lights_fragment_end>") >= 0) {
-      var sh = [
-        "  float rcSh = 1.0;",
+    if (fs.indexOf("#include <lights_fragment_end>") >= 0) {
+      var sh = [];
+      if (wantRing) {
+        sh.push(
+          "  float rcSh = 1.0;",
+          "  {",
+          "    vec3 rp = vRcWP - uCenter;",
+          "    vec3 rl = normalize(uSunDir);",
+          "    float dn = dot(rl, uRingN);",
+          "    if (abs(dn) > 0.0015) {",
+          "      float tt = -dot(rp, uRingN) / dn;",
+          "      if (tt > 0.0) {",
+          "        float rr = length(rp + rl * tt);",
+          "        float uu = (rr - uRingIn) / max(0.001, uRingOut - uRingIn);",
+          "        if (uu > 0.0 && uu < 1.0) rcSh = 1.0 - texture2D(uRingTex, vec2(uu, 0.5)).a * 0.88;",
+          "      }",
+          "    }",
+          "  }",
+          "  reflectedLight.directDiffuse *= rcSh;",
+          "  reflectedLight.directSpecular *= rcSh;");
+      }
+      /* Мягкий терминатор. Полоса шириной примерно в десять градусов
+         вдоль нулевого косинуса получает тёплый подмес: свет там
+         прошёл всю толщу атмосферы по касательной и растерял синеву.
+         Ночную сторону наоборот приглушаем - иначе рассеянный свет
+         сцены делает её равномерно серой, и терминатора не видно
+         вовсе. Оба слагаемых идут в непрямую составляющую: прямую
+         трогать нельзя, там живут блик по воде и тень колец. */
+      sh.push(
         "  {",
-        "    vec3 rp = vRcWP - uCenter;",
-        "    vec3 rl = normalize(uSunDir);",
-        "    float dn = dot(rl, uRingN);",
-        "    if (abs(dn) > 0.0015) {",
-        "      float tt = -dot(rp, uRingN) / dn;",
-        "      if (tt > 0.0) {",
-        "        float rr = length(rp + rl * tt);",
-        "        float uu = (rr - uRingIn) / max(0.001, uRingOut - uRingIn);",
-        "        if (uu > 0.0 && uu < 1.0) rcSh = 1.0 - texture2D(uRingTex, vec2(uu, 0.5)).a * 0.88;",
-        "      }",
-        "    }",
-        "  }",
-        "  reflectedLight.directDiffuse *= rcSh;",
-        "  reflectedLight.directSpecular *= rcSh;"
-      ].join("\n");
-      fs = fs.replace("#include <lights_fragment_end>", "#include <lights_fragment_end>\n" + sh);
+        "    float rcTn = dot(normalize(vRcWN), normalize(uSunDir));",
+        "    float rcBand = exp(-rcTn * rcTn * 22.0);",
+        "    reflectedLight.indirectDiffuse += diffuseColor.rgb * uTermCol * (rcBand * uTermStr);",
+        "    reflectedLight.indirectDiffuse *= mix(0.40, 1.0, smoothstep(-0.42, 0.02, rcTn));",
+        "  }");
+      fs = fs.replace("#include <lights_fragment_end>", "#include <lights_fragment_end>\n" + sh.join("\n"));
     }
     shader.fragmentShader = head + fs;
   };
@@ -1446,12 +1520,20 @@ function make(kind, opts) {
   /* Общие униформы: направление на светило, время и параметры колец.
      Держим по одному объекту и раздаём ссылку - сменил направление,
      и сразу поехали кайма, тень на кольцах и ночная сторона. */
+  /* Цвет закатной полосы берём из настроек атмосферы этого типа:
+     у земного мира она оранжевая, у ледяного розовато-серая, у
+     лавового почти красная. Один общий оранжевый на всех сразу
+     выдаёт, что планеты сделаны по одному шаблону. */
+  var AT0 = ATMO[kind] || ATMO.rocky;
   var U = {
     sun: { value: opts.sun ? opts.sun.clone().normalize() : new T.Vector3(1, 0.28, 0.55).normalize() },
     time: { value: 0 },
     center: { value: new T.Vector3() },
     ringN: { value: new T.Vector3(0, 1, 0) },
     ringIn: { value: 1 }, ringOut: { value: 2 },
+    termCol: { value: new T.Vector3(AT0.set[0], AT0.set[1], AT0.set[2]) },
+    /* У безвоздушного камня рассеивать нечему: полоса почти нулевая */
+    termStr: { value: kind === "rocky" ? 0.07 : (isGas ? 0.20 : 0.30) },
     ringTex: null, night: false
   };
 
@@ -1485,8 +1567,12 @@ function make(kind, opts) {
     matOpt.specularMap = keep(texFrom(maps.spec, false));
     /* Узкий и не слишком яркий блик: широкий превращает океан в
        белое пятно и убивает всю картинку */
-    matOpt.specular = new T.Color(kind === "ice" ? 0x39434d : 0x2b3a48);
-    matOpt.shininess = kind === "ice" ? 90 : 400;
+    /* Лёд зеркальнее воды: гладкое поле отражает светило узким и
+       ярким бликом, а вода размывает его волной. Раньше у льда стоял
+       тот же тусклый серый, что у океана, и ледяные миры выходили
+       матовыми, как гипс. */
+    matOpt.specular = new T.Color(kind === "ice" ? 0x5a6a7a : 0x2b3a48);
+    matOpt.shininess = kind === "ice" ? 150 : 400;
   }
   var emisTex = null;
   if (maps.emis) {
@@ -1497,10 +1583,10 @@ function make(kind, opts) {
     U.night = true;
   }
   var mat = keep(new T.MeshPhongMaterial(matOpt));
-  if (U.night || wantRings) {
-    if (wantRings) U.ringTex = { value: null };
-    patchSurface(mat, kind, U);
-  }
+  /* Врезку ставим всегда: мягкий терминатор нужен каждому телу, а
+     ночные огни и тень колец - только тем, у кого они есть */
+  if (wantRings) U.ringTex = { value: null };
+  patchSurface(mat, kind, U);
   var body = new T.Mesh(geo, mat);
   spin.add(body);
 
@@ -1598,6 +1684,29 @@ function make(kind, opts) {
     tilt.add(rings);
   }
 
+  /* ── Спутники ────────────────────────────────────────
+     По умолчанию их получают те, у кого они уместны: гиганту без
+     семьи лун не бывает, у земного мира одна луна - и она задаёт
+     масштаб. Каменистой мелочи спутники не даём: они бы весили
+     столько же, сколько само тело. */
+  var moons = null, moonPivots = [];
+  var wantMoons = (typeof opts.moons === "number") ? (opts.moons | 0)
+    : (isGas ? (high ? 2 : 1) : ((kind === "terran" || kind === "ocean") && high ? 1 : 0));
+  if (wantMoons > 0) {
+    /* Бюджет отрисовки: каждый спутник - отдельный вызов. На слабом
+       железе больше одного не даём никому. */
+    if (!high && wantMoons > 1) wantMoons = 1;
+    if (wantMoons > 3) wantMoons = 3;
+    try {
+      moons = moonSet(radius, seed, wantMoons, high, U.sun, { col: U.termCol, str: { value: 0.07 } });
+      for (var mi = 0; mi < moons.pivots.length; mi++) {
+        moonPivots.push(moons.pivots[mi]);
+        tilt.add(moons.pivots[mi]);
+      }
+      for (mi = 0; mi < moons.trash.length; mi++) keep(moons.trash[mi]);
+    } catch (eM) { moons = null; moonPivots = []; }
+  }
+
   /* Скорости вращения: сутки за полторы-три минуты. Облака идут
      чуть быстрее тела - на снимках с орбиты именно так и есть,
      и этот сдвиг оживляет планету сильнее любой другой мелочи. */
@@ -1605,7 +1714,7 @@ function make(kind, opts) {
   var cloudSpeed = spinSpeed * 1.35 + 0.0032;
 
   var tmpV = new T.Vector3();
-  var visible = { clouds: true, atm: true };
+  var visible = { clouds: true, atm: true, moons: true };
   var st = { t: 0 };
 
   function setSun(x, y, z) {
@@ -1625,6 +1734,11 @@ function make(kind, opts) {
     U.time.value = st.t;
     spin.rotation.y += spinSpeed * dt;
     if (clouds) clouds.rotation.y += (cloudSpeed - spinSpeed) * dt;
+    /* Спутники обходят тело каждый со своим периодом: одинаковый
+       ход выдал бы, что это одна карусель */
+    for (var mq = 0; mq < moonPivots.length; mq++) {
+      moonPivots[mq].rotation.y += moonPivots[mq].userData.sp * dt;
+    }
 
     if (rings) {
       group.getWorldPosition(U.center.value);
@@ -1639,6 +1753,12 @@ function make(kind, opts) {
       var far = tmpV.distanceTo(camPos) > radius * 60;
       if (clouds && visible.clouds === far) { visible.clouds = !far; clouds.visible = !far; }
       if (atmInner && visible.atm === far) { visible.atm = !far; atmInner.visible = !far; }
+      /* Спутник с такой дистанции занимает меньше пикселя, но стоит
+         полного вызова отрисовки. Гасим вместе с облаками. */
+      if (moonPivots.length && visible.moons === far) {
+        visible.moons = !far;
+        for (var mv = 0; mv < moonPivots.length; mv++) moonPivots[mv].visible = !far;
+      }
     }
   }
 
@@ -1655,6 +1775,7 @@ function make(kind, opts) {
     group: group, update: update, radius: radius, dispose: dispose,
     kind: kind, seed: seed, detail: detail,
     body: body, clouds: clouds, atmosphere: atmOuter, haze: atmInner, rings: rings,
+    moons: moonPivots,
     tiltGroup: tilt, spinGroup: spin, material: mat, sun: U.sun,
     setSun: setSun, setSunPosition: setSunPosition
   };
@@ -1766,6 +1887,6 @@ function star(opts) {
 
 function kinds() { return KINDS.slice(); }
 
-g.RC_PLANETS = { make: make, kinds: kinds, star: star, version: "1.1" };
+g.RC_PLANETS = { make: make, kinds: kinds, star: star, version: "1.2" };
 
 })(window);

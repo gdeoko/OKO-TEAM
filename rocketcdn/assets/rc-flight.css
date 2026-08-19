@@ -57,6 +57,80 @@
 }
 .rcf-cv { position: absolute; inset: 0; width: 100%; height: 100%; display: block; }
 
+/* ── Оптика остекления ───────────────────────────────────────
+   Слой лежит между космосом и корпусом кабины: это поведение
+   стекла и объектива, а не украшение поверх корабля. Корпус выше
+   по стопке и остаётся резким.
+
+   Постпроцессинга здесь нет намеренно. Полноценный проход по кадру
+   (bloom, аберрация, зерно) на телефоне стоит трети бюджета, а весь
+   нужный эффект набирается двумя заливками и одним спрайтом,
+   которые браузер растрирует один раз и дальше только меняет
+   прозрачность. Управляют ими три переменные, которые кадр игры
+   обновляет: --rcf-warp (ход корабля), --rcf-glow и --rcf-gx/gy
+   (положение и сила блика от светила). */
+.rcf-fx {
+  position: absolute; inset: 0;
+  pointer-events: none;
+  overflow: hidden;
+  /* Слой перерисовывается каждый кадр по переменным: изолируем его
+     от остальной страницы, чтобы браузер не пересчитывал раскладку
+     соседей. Размер не изолируем - он берётся из inset. */
+  contain: layout paint;
+}
+/* Виньетка. На дрейфе она едва заметна - просто края объектива;
+   на разгоне поджимается и сужает кадр, отчего скорость читается
+   даже на неподвижной картинке. */
+.rcf-fx::before {
+  content: ''; position: absolute; inset: -2%;
+  background: radial-gradient(ellipse 86% 76% at 50% 50%,
+    transparent 40%, rgba(2, 6, 14, .55) 78%, rgba(2, 6, 14, .95) 100%);
+  /* Сглаживание делает игра (значение доводится лениво в кадре), а
+     не CSS-переход: перезапускать переход шестьдесят раз в секунду
+     значит держать браузер в вечном пересчёте анимации. */
+  opacity: calc(.16 + var(--rcf-warp, 0) * .74);
+}
+/* Расхождение цвета по краям кадра: у широкоугольной оптики
+   короткие волны уходят к одному краю, длинные к другому. Держим
+   очень слабым - заметная аберрация читается поломкой экрана, а не
+   скоростью. Режимов смешивания нет: на тёмном космосе обычная
+   заливка складывается визуально так же, а стоит вчетверо дешевле. */
+.rcf-fx::after {
+  content: ''; position: absolute; inset: 0;
+  background:
+    radial-gradient(ellipse 46% 108% at -6% 50%, rgba(96, 198, 255, .55), transparent 64%),
+    radial-gradient(ellipse 46% 108% at 106% 50%, rgba(255, 132, 96, .48), transparent 64%);
+  opacity: calc(var(--rcf-warp, 0) * .26);
+}
+/* Блик от светила: пролетая мимо звезды, ловим её в остекление.
+   Ядро засветки плюс анаморфный луч поперёк - так ведёт себя
+   реальный объектив, и именно по этому лучу глаз узнаёт «солнце
+   в кадре», а не просто светлое пятно. */
+.rcf-glare {
+  position: absolute;
+  left: var(--rcf-gx, 50%); top: var(--rcf-gy, 50%);
+  width: 54vmax; height: 54vmax; margin: -27vmax 0 0 -27vmax;
+  display: block;
+  background: radial-gradient(circle,
+    rgba(255, 246, 224, .55) 0%,
+    rgba(255, 214, 152, .20) 16%,
+    rgba(255, 172, 96, .06) 38%,
+    transparent 66%);
+  opacity: var(--rcf-glow, 0);
+}
+.rcf-glare::after {
+  content: ''; position: absolute; left: 4%; right: 4%; top: 50%;
+  height: 2px; margin-top: -1px;
+  background: linear-gradient(90deg, transparent,
+    rgba(180, 222, 255, .55) 26%, rgba(255, 255, 255, .9) 50%,
+    rgba(180, 222, 255, .55) 74%, transparent);
+  filter: blur(1px);
+  transform: scaleY(calc(1 + var(--rcf-glow, 0) * 3));
+}
+@media (prefers-reduced-motion: reduce) {
+  .rcf-fx { display: none; }
+}
+
 /* Пока сайт в полёте, страница под ним не прокручивается и не
    тратит ни кадра на свои сцены */
 html.rc-flying { overflow: hidden; }
@@ -713,10 +787,13 @@ html[data-theme="light"] .rc-vidbg.on { opacity: .16; }
 }
 .rcf-prog.full { color: #35E08F; text-shadow: 0 0 10px rgba(53,224,143,.6); }
 @media (max-width: 760px) {
-  /* Счётчик и титул в портрете не должны лежать на раме окна */
-  .rcf-prog { left: 12px; bottom: 1.3%; top: auto; font-size: 9.5px; }
+  /* В портрете низ кадра занят пультом во всю ширину, и оба
+     счётчика ложились прямо на клавиши: «СЕТЬ 0/32» читалось
+     поверх кнопки «ЗЕМЛЯ». Переносим их наверх, в свободный левый
+     угол над остеклением, и ставим строго друг под другом. */
+  .rcf-prog { left: 12px; top: 12px; bottom: auto; font-size: 9.5px; }
   .rcf-lock { width: 64px; height: 64px; }
-  .rcf-cap { top: 7.6%; font-size: 10.5px; max-width: 86vw; }
+  .rcf-cap { top: 9.4%; font-size: 10.5px; max-width: 78vw; }
 }
 
 /* ── Брифинг старта ──────────────────────────────────────────
@@ -919,7 +996,10 @@ html[data-theme="light"] .rc-vidbg.on { opacity: .16; }
   70%, 100% { opacity: 0; transform: scale(1.16); }
 }
 @media (max-width: 760px) {
-  .rcf-net { left: 12px; bottom: 4.2%; font-size: 9.5px; }
+  /* Второй строкой под журналом исследователя: две цифры в одном
+     столбце читаются как приборная строка, а не как две наклейки
+     в разных углах */
+  .rcf-net { left: 12px; top: 27px; bottom: auto; font-size: 9.5px; }
   .rcf-deploy { bottom: 21%; font-size: 10px; padding: 10px 16px; }
 }
 @media (prefers-reduced-motion: reduce) {

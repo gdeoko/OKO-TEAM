@@ -1,11 +1,33 @@
 /* ═══════════════════════════════════════════════════════════
    Rocket CDN · живой космос на фоне всей страницы
 
-   Один холст под всем содержимым: звёздное поле в три слоя с
-   параллаксом от прокрутки, редкие пролетающие пакеты данных и
-   мягкая туманность в фирменных цветах. Рисуется обычным
-   двумерным контекстом: контексты WebGL дороги и все четыре
-   заняты сценами, а фон должен работать даже на слабом телефоне.
+   Один холст под всем содержимым. Рисуется обычным двумерным
+   контекстом: контексты WebGL дороги и все четыре заняты сценами,
+   а фон должен работать даже на слабом телефоне.
+
+   Что здесь есть и почему именно так:
+   - звёзды разной величины и температуры. Настоящее ночное небо не
+     белое: голубые гиганты, белые, жёлтые как Солнце, оранжевые и
+     красные карлики. Один общий цвет сразу читается как «точки на
+     чёрном», а не как небо;
+   - мерцание честное: это атмосферная сцинтилляция, у неё нет
+     одного периода. Складываем две несоизмеримые частоты, и мелкие
+     звёзды дрожат заметно сильнее крупных - именно так и в жизни,
+     потому что маленький диск целиком попадает в одну ячейку
+     турбулентности;
+   - у самых ярких - тонкий крест дифракции. Его даёт не небо, а
+     оптика, но глаз без него не читает звезду как «яркую»;
+   - туманности, пылевые полосы Млечного Пути и звёздная пыль
+     запечены в отдельный слой один раз. Полторы сотни мягких пятен
+     в каждом кадре стоили бы дороже всего остального вместе, а так
+     это одна отрисовка картинки. Слой печём в половинном
+     разрешении: пятна мягкие, разницы не видно, а пикселей вчетверо
+     меньше;
+   - редкие метеоры со следом: кадр перестаёт быть статичной
+     заставкой, но не отвлекает - один болид раз в десяток секунд;
+   - параллакс в три слоя. Слои разъезжаются и от прокрутки, и от
+     поворота общей камеры сайта (RC_WORLD.pan/tilt), поэтому фон
+     живёт в том же пространстве, что и разделы с ракетой.
 
    Фон меняется по ходу страницы: у земли теплее и плотнее,
    в космосе холоднее и разреженнее.
@@ -38,6 +60,41 @@ var ACT = {
   _:        [0.20, 0.10, 1.00]
 };
 
+/* Спектральные классы. Доли взяты по смыслу, а не по каталогу: в
+   каталоге девять из десяти звёзд - тусклые красные карлики, но
+   глазом видны как раз горячие. Небо должно выглядеть так, как его
+   видит человек, а не так, как его считает статистика.
+   [r, g, b, доля, во сколько раз крупнее базового радиуса] */
+var SPECTRA = [
+  [170, 196, 255, 0.07, 1.30],   /* O-B: голубые гиганты, редки и крупны */
+  [222, 234, 255, 0.19, 1.10],   /* A: белые */
+  [255, 246, 222, 0.28, 1.00],   /* F-G: солнечные */
+  [255, 214, 162, 0.26, 0.92],   /* K: оранжевые */
+  [255, 176, 140, 0.20, 0.84]    /* M: красные карлики */
+];
+
+function pickSpectrum(u) {
+  var acc = 0;
+  for (var i = 0; i < SPECTRA.length; i++) {
+    acc += SPECTRA[i][3];
+    if (u <= acc) return SPECTRA[i];
+  }
+  return SPECTRA[2];
+}
+
+/* Детерминированный генератор: небо обязано быть одинаковым от
+   захода к заходу, иначе созвездия перемешиваются на каждом
+   изменении размера окна. */
+function rngFrom(seed) {
+  var a = seed >>> 0;
+  return function () {
+    a = (a + 0x6D2B79F5) | 0;
+    var t = Math.imul(a ^ (a >>> 15), 1 | a);
+    t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
+    return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+  };
+}
+
 function Space(canvas) {
   this.cv = canvas;
   this.x = canvas.getContext("2d", { alpha: true });
@@ -51,32 +108,186 @@ function Space(canvas) {
   this.rush = 1;   this.rushT = 1;
   this.running = false;
   this.theme = document.documentElement.getAttribute("data-theme") || "dark";
+  this.resize();
   this.build();
   this.bind();
-  this.resize();
 }
 
-Space.prototype.build = function () {
-  var w = innerWidth, h = innerHeight;
+/* Насколько скупо рисуем. Слабый телефон и принудительное упрощение
+   страницы снимают всё, что стоит дороже базового звёздного поля. */
+Space.prototype.budget = function () {
+  var w = innerWidth;
+  var deg = parseInt(document.documentElement.getAttribute("data-degrade") || "0", 10) || 0;
+  var weak = false;
+  try {
+    weak = (navigator.deviceMemory || 4) <= 2 || (navigator.hardwareConcurrency || 4) <= 4;
+  } catch (e) {}
   var mob = w < 760;
+  return {
+    mob: mob,
+    /* deg>=2 - страница уже призналась, что не тянет: фон обязан
+       отойти в сторону первым, он тут не главный герой */
+    lean: deg >= 2 || (weak && mob),
+    deep: deg < 2 && !REDUCE,           /* печь ли слой туманностей */
+    meteors: deg < 2 && !REDUCE && !(weak && mob),
+    spikes: !mob && deg < 1             /* кресты дифракции */
+  };
+};
+
+Space.prototype.build = function () {
+  var B = this.budget();
+  this.B = B;
+  var rnd = rngFrom(20260819);
   /* Плотность держим в разумных пределах: фон не должен есть кадры */
-  var n = mob ? 120 : 260;
+  var n = B.lean ? 90 : (B.mob ? 150 : 320);
   this.stars = [];
   for (var i = 0; i < n; i++) {
     var layer = i % 3;                      /* 0 дальний, 2 ближний */
+    var sp = pickSpectrum(rnd());
+    /* Размер по степенному закону: ярких звёзд единицы, мелких
+       россыпь. Линейное распределение даёт «манную крупу». */
+    var mag = Math.pow(rnd(), 2.2);
+    var r = (0.35 + layer * 0.30 + mag * 1.5) * sp[4];
     this.stars.push({
-      x: Math.random(),
-      y: Math.random(),
-      r: 0.4 + layer * 0.42 + Math.random() * 0.5,
-      l: layer,
-      tw: Math.random() * 6.28,             /* фаза мерцания */
-      sp: 0.3 + Math.random() * 0.8
+      x: rnd(), y: rnd(), r: r, l: layer,
+      c: sp[0] + "," + sp[1] + "," + sp[2],
+      /* Мерцание: две несоизмеримые частоты. Мелкая звезда дрожит
+         сильнее - её диск целиком укладывается в одну ячейку
+         турбулентности, у крупной дрожание усредняется. */
+      f1: 0.6 + rnd() * 1.5, p1: rnd() * 6.28,
+      f2: 1.7 + rnd() * 3.4, p2: rnd() * 6.28,
+      amp: Math.min(0.46, 0.16 + 0.30 / (0.5 + r)),
+      base: 0.42 + mag * 0.58,
+      spike: r > 1.55
     });
   }
   /* Пакеты данных: короткие росчерки, летят поперёк */
   this.pk = [];
-  var pn = mob ? 5 : 11;
+  var pn = B.lean ? 3 : (B.mob ? 5 : 11);
   for (i = 0; i < pn; i++) this.pk.push(this.seedPacket(true));
+
+  /* Метеоры: один живой болид за раз, следующий через паузу */
+  this.met = null;
+  this.metAt = 3 + rnd() * 6;
+
+  this.bakeDeep();
+};
+
+/* ── Дальний слой: туманности, Млечный Путь, звёздная пыль ──
+   Печём один раз в половинном разрешении и потом только
+   переставляем. Пятен здесь под две сотни; рисовать их в каждом
+   кадре нельзя, а без них небо - точки на пустоте. */
+Space.prototype.bakeDeep = function () {
+  this.deep = null;
+  if (!this.B.deep) return;
+  var w = this.w, h = this.h;
+  if (!(w > 0 && h > 0)) return;
+
+  /* Запас по краям: слой ездит от параллакса, и без поля по краю
+     показалась бы его граница */
+  var PAD = 0.10;
+  var cw = Math.max(64, Math.round(w * (1 + PAD * 2) * 0.5));
+  var ch = Math.max(64, Math.round(h * (1 + PAD * 2) * 0.5));
+  var c = document.createElement("canvas");
+  c.width = cw; c.height = ch;
+  var x = c.getContext("2d");
+  var rnd = rngFrom(0x5BF03635);
+  var light = this.theme === "light";
+  var i, gr;
+
+  /* Полоса Млечного Пути идёт наискось через кадр, как и в небе
+     Земли. Задаём её линией и вокруг неё сеем всё остальное. */
+  var ang = -0.42, ca = Math.cos(ang), sa = Math.sin(ang);
+  var mx = cw * 0.46, my = ch * 0.55;
+  function band(u, spread) {
+    /* u вдоль полосы (-1..1), spread поперёк */
+    var lx = (u * cw * 0.95), ly = spread * ch * 0.30;
+    return [mx + lx * ca - ly * sa, my + lx * sa + ly * ca];
+  }
+
+  x.globalCompositeOperation = "lighter";
+
+  /* Дымка диска: широкие мягкие пятна вдоль полосы. Цвет к центру
+     галактики теплее - там старые звёзды балджа. */
+  var nHaze = this.B.mob ? 90 : 170;
+  for (i = 0; i < nHaze; i++) {
+    var u = rnd() * 2 - 1;
+    var sp = (rnd() - 0.5) * (0.7 + rnd() * 1.5);
+    var pt = band(u, sp);
+    var rr = (0.05 + rnd() * 0.13) * cw;
+    var warm = 1 - Math.abs(u + 0.25);
+    var col = warm > 0.55 ? "255,232,196" : (rnd() > 0.45 ? "206,222,246" : "162,192,240");
+    var a = (0.020 + rnd() * 0.030) * (light ? 0.35 : 1) * (0.4 + warm * 0.9);
+    gr = x.createRadialGradient(pt[0], pt[1], 0, pt[0], pt[1], rr);
+    gr.addColorStop(0, "rgba(" + col + "," + a.toFixed(4) + ")");
+    gr.addColorStop(1, "rgba(" + col + ",0)");
+    x.fillStyle = gr;
+    x.fillRect(pt[0] - rr, pt[1] - rr, rr * 2, rr * 2);
+  }
+
+  /* Ядро галактики: сгущение на полосе */
+  var kp = band(-0.25, 0);
+  gr = x.createRadialGradient(kp[0], kp[1], 0, kp[0], kp[1], cw * 0.26);
+  gr.addColorStop(0, "rgba(255,236,200," + (light ? 0.05 : 0.11) + ")");
+  gr.addColorStop(0.4, "rgba(232,214,186," + (light ? 0.02 : 0.05) + ")");
+  gr.addColorStop(1, "rgba(200,190,180,0)");
+  x.fillStyle = gr;
+  x.fillRect(0, 0, cw, ch);
+
+  /* Звёздная пыль: точки в один пиксель. Отдельными звёздами они не
+     читаются, но дают диску зернистость, без которой он выглядит
+     нарисованным градиентом. */
+  var nDust = this.B.mob ? 900 : 2600;
+  for (i = 0; i < nDust; i++) {
+    var du = rnd() * 2 - 1;
+    var inBand = rnd() < 0.62;
+    var dp = inBand ? band(du, (rnd() - 0.5) * 1.5) : [rnd() * cw, rnd() * ch];
+    var dsp = pickSpectrum(rnd());
+    var da = (0.06 + Math.pow(rnd(), 2.4) * 0.40) * (light ? 0.25 : 1);
+    x.fillStyle = "rgba(" + dsp[0] + "," + dsp[1] + "," + dsp[2] + "," + da.toFixed(3) + ")";
+    x.fillRect(dp[0] | 0, dp[1] | 0, 1, 1);
+  }
+
+  /* Туманности в фирменных цветах: небо перекликается с сайтом.
+     Каждая - облако из десятков пятен разного размера, поэтому у
+     неё есть объём, а не ровная клякса. */
+  var NEB = [[0.16, 0.24, "66,178,220", 0.9], [0.78, 0.66, "138,89,246", 1.0],
+             [0.52, 0.14, "138,89,246", 0.6], [0.30, 0.82, "66,178,220", 0.7]];
+  for (i = 0; i < NEB.length; i++) {
+    var nx = NEB[i][0] * cw, ny = NEB[i][1] * ch, nr = cw * 0.16 * NEB[i][3];
+    var blobs = this.B.mob ? 26 : 46;
+    for (var q = 0; q < blobs; q++) {
+      var ox = nx + (rnd() - 0.5) * nr * 2.2, oy = ny + (rnd() - 0.5) * nr * 1.6;
+      var orr = nr * (0.16 + rnd() * 0.55);
+      var oa = (0.014 + rnd() * 0.026) * (light ? 0.3 : 1);
+      gr = x.createRadialGradient(ox, oy, 0, ox, oy, orr);
+      gr.addColorStop(0, "rgba(" + NEB[i][2] + "," + oa.toFixed(4) + ")");
+      gr.addColorStop(0.55, "rgba(" + NEB[i][2] + "," + (oa * 0.35).toFixed(4) + ")");
+      gr.addColorStop(1, "rgba(" + NEB[i][2] + ",0)");
+      x.fillStyle = gr;
+      x.fillRect(ox - orr, oy - orr, orr * 2, orr * 2);
+    }
+  }
+
+  /* Пылевые полосы: тёмные рваные прожилки вдоль диска. Именно они
+     делают Млечный Путь узнаваемым - без них это светлая клякса.
+     Рисуем вычитанием, поэтому режим смены на обычный. */
+  x.globalCompositeOperation = "destination-out";
+  var nDark = this.B.mob ? 120 : 260;
+  for (i = 0; i < nDark; i++) {
+    var lu = rnd() * 2 - 1;
+    var lp = band(lu, (rnd() - 0.5) * 0.85);
+    var lr = (0.02 + rnd() * 0.075) * cw;
+    gr = x.createRadialGradient(lp[0], lp[1], 0, lp[0], lp[1], lr);
+    gr.addColorStop(0, "rgba(0,0,0," + (0.22 + rnd() * 0.42).toFixed(3) + ")");
+    gr.addColorStop(1, "rgba(0,0,0,0)");
+    x.fillStyle = gr;
+    x.fillRect(lp[0] - lr, lp[1] - lr, lr * 2, lr * 2);
+  }
+  x.globalCompositeOperation = "source-over";
+
+  this.deep = c;
+  this.deepPad = PAD;
 };
 
 Space.prototype.seedPacket = function (anywhere) {
@@ -90,11 +301,30 @@ Space.prototype.seedPacket = function (anywhere) {
   };
 };
 
+/* Метеор: входит с края под пологим углом, живёт секунду с
+   небольшим. След тянется назад по курсу и гаснет к хвосту. */
+Space.prototype.seedMeteor = function () {
+  var fromTop = Math.random() < 0.7;
+  var a = (fromTop ? 0.25 : -0.15) + Math.random() * 0.5;   /* угол вниз-вправо */
+  var dir = Math.random() < 0.5 ? 1 : -1;
+  return {
+    x: dir > 0 ? -0.05 : 1.05,
+    y: fromTop ? Math.random() * 0.45 : 0.4 + Math.random() * 0.4,
+    vx: dir * (0.42 + Math.random() * 0.55),
+    vy: a * 0.55,
+    len: 0.09 + Math.random() * 0.16,
+    life: 0,
+    max: 1.1 + Math.random() * 0.9,
+    /* Цвет по составу: железо горит белым, натрий жёлто-оранжевым */
+    c: Math.random() < 0.62 ? "214,236,255" : "255,214,158"
+  };
+};
+
 Space.prototype.bind = function () {
   var self = this, rt;
   addEventListener("resize", function () {
     clearTimeout(rt);
-    rt = setTimeout(function () { self.build(); self.resize(); }, 200);
+    rt = setTimeout(function () { self.resize(); self.build(); }, 200);
   });
   document.addEventListener("visibilitychange", function () {
     if (document.hidden) self.stop(); else self.start();
@@ -115,7 +345,13 @@ Space.prototype.bind = function () {
   });
 };
 
-Space.prototype.setTheme = function (v) { this.theme = v; };
+Space.prototype.setTheme = function (v) {
+  if (this.theme === v) return;
+  this.theme = v;
+  /* Слой туманностей печётся с учётом темы: на светлом фоне те же
+     плотности превращают верх страницы в грязное пятно */
+  this.bakeDeep();
+};
 
 Space.prototype.resize = function () {
   var w = innerWidth, h = innerHeight;
@@ -146,10 +382,33 @@ Space.prototype.frame = function (dt) {
 
   x.clearRect(0, 0, w, h);
 
-  /* Туманность: два мягких пятна, расходятся к середине пути */
+  /* Поворот общей камеры сайта. Слои разъезжаются по нему с разной
+     силой - это и есть параллакс: ближние звёзды сносит заметно,
+     дальняя дымка почти стоит. */
+  var W3 = g.RC_WORLD;
+  var panx = W3 ? (W3.pan || 0) : 0;
+  var pany = W3 ? (W3.tilt || 0) : 0;
+
+  /* Дальний слой: туманности и Млечный Путь. Едет медленнее всего -
+     он самый далёкий. */
+  if (this.deep) {
+    var pad = this.deepPad;
+    var ox = -w * pad + (panx * 0.020 - p * 0.035) * w;
+    var oy = -h * pad + (pany * 0.016 - p * 0.10) * h;
+    /* Держим слой в пределах запаса, иначе покажется его край */
+    var lim = w * pad, limY = h * pad;
+    if (ox > 0) ox = 0; else if (ox < -lim * 2) ox = -lim * 2;
+    if (oy > 0) oy = 0; else if (oy < -limY * 2) oy = -limY * 2;
+    x.globalAlpha = dim * (light ? 0.55 : 1);
+    x.drawImage(this.deep, ox, oy, w * (1 + pad * 2), h * (1 + pad * 2));
+    x.globalAlpha = 1;
+  }
+
+  /* Ближняя дымка: два мягких пятна, расходятся к середине пути.
+     Она поверх запечённого слоя и живая - тянется за прокруткой. */
   var g1 = x.createRadialGradient(w * (0.18 + p * 0.2), h * (0.18 + p * 0.1), 0,
                                   w * (0.18 + p * 0.2), h * (0.18 + p * 0.1), Math.max(w, h) * 0.62);
-  var a1 = (light ? 0.10 : 0.20) * dim;
+  var a1 = (light ? 0.08 : 0.15) * dim;
   g1.addColorStop(0, "rgba(66,178,220," + (a1 * (1 - p * 0.35)).toFixed(3) + ")");
   g1.addColorStop(1, "rgba(66,178,220,0)");
   x.fillStyle = g1;
@@ -157,7 +416,7 @@ Space.prototype.frame = function (dt) {
 
   var g2 = x.createRadialGradient(w * (0.88 - p * 0.25), h * (0.72 - p * 0.3), 0,
                                   w * (0.88 - p * 0.25), h * (0.72 - p * 0.3), Math.max(w, h) * 0.55);
-  var a2 = (light ? 0.07 : 0.16) * dim;
+  var a2 = (light ? 0.055 : 0.12) * dim;
   g2.addColorStop(0, "rgba(138,89,246," + (a2 * (0.5 + p * 0.5)).toFixed(3) + ")");
   g2.addColorStop(1, "rgba(138,89,246,0)");
   x.fillStyle = g2;
@@ -175,28 +434,99 @@ Space.prototype.frame = function (dt) {
     x.fillRect(0, 0, w, h);
   }
 
-  /* Звёзды. Ближние слои сдвигаются сильнее: это и есть параллакс.
-     Поворот общей камеры сайта (rc-world) сносит их вбок и по
-     вертикали - тогда фон живёт в том же пространстве, что и
-     разделы с ракетой, а не отдельной картинкой за ними. */
-  var W3 = g.RC_WORLD;
-  var wx = W3 ? W3.yaw * 0.0042 : 0;
-  var wy = W3 ? W3.pitch * 0.0030 : 0;
-  var base = light ? "9,19,32" : "226,232,240";
+  /* ── Звёзды ──
+     Ближние слои сдвигаются сильнее: это и есть параллакс. */
+  var spikes = this.B.spikes;
   for (var i = 0; i < this.stars.length; i++) {
     var s = this.stars[i];
     var shift = (s.l + 1) * 0.16;
     var lay = (s.l + 1) * 0.6;                 /* ближний слой сносит сильнее */
-    var sy = (s.y - p * shift - wy * lay) % 1;
+    var sy = (s.y - p * shift - pany * 0.024 * lay) % 1;
     if (sy < 0) sy += 1;
-    var sx = (s.x - wx * lay) % 1;
+    var sx = (s.x - panx * 0.034 * lay) % 1;
     if (sx < 0) sx += 1;
-    var tw = 0.55 + 0.45 * Math.sin(this.t * s.sp + s.tw);
-    var al = (light ? 0.22 : 0.55) * tw * (0.4 + s.l * 0.3) * dim;
-    x.beginPath();
-    x.arc(sx * w, sy * h, s.r, 0, 6.283);
-    x.fillStyle = "rgba(" + base + "," + al.toFixed(3) + ")";
-    x.fill();
+    /* Сцинтилляция: произведение двух несоизмеримых волн. Одна
+       синусоида даёт ровное «дыхание», две - неровное живое дрожание */
+    var tw = 1 + s.amp * (Math.sin(this.t * s.f1 + s.p1) * 0.62 +
+                          Math.sin(this.t * s.f2 + s.p2) * 0.38);
+    var al = s.base * tw * (0.35 + s.l * 0.28) * dim * (light ? 0.42 : 1);
+    if (al <= 0.01) continue;
+    if (al > 1) al = 1;
+    var px = sx * w, py = sy * h;
+    var rr2 = s.r * tw;
+    x.fillStyle = light
+      ? "rgba(12,22,38," + (al * 0.9).toFixed(3) + ")"
+      : "rgba(" + s.c + "," + al.toFixed(3) + ")";
+    if (rr2 < 0.9) {
+      /* Мелкие рисуем прямоугольником: дуга на субпиксельном радиусе
+         стоит втрое дороже и выглядит так же */
+      x.fillRect(px, py, 1, 1);
+    } else {
+      x.beginPath();
+      x.arc(px, py, rr2, 0, 6.283);
+      x.fill();
+      /* Ореол вокруг ярких: у настоящей яркой звезды свет
+         рассеивается в оптике и в глазу, чистая точка выглядит
+         дешёвой засветкой пикселя */
+      if (rr2 > 1.4 && !light) {
+        var hg = x.createRadialGradient(px, py, 0, px, py, rr2 * 3.4);
+        hg.addColorStop(0, "rgba(" + s.c + "," + (al * 0.34).toFixed(3) + ")");
+        hg.addColorStop(1, "rgba(" + s.c + ",0)");
+        x.fillStyle = hg;
+        x.fillRect(px - rr2 * 3.4, py - rr2 * 3.4, rr2 * 6.8, rr2 * 6.8);
+      }
+    }
+    /* Крест дифракции у самых ярких */
+    if (spikes && s.spike && !light) {
+      var sl = rr2 * 5.5;
+      x.strokeStyle = "rgba(" + s.c + "," + (al * 0.22).toFixed(3) + ")";
+      x.lineWidth = 0.7;
+      x.beginPath();
+      x.moveTo(px - sl, py); x.lineTo(px + sl, py);
+      x.moveTo(px, py - sl); x.lineTo(px, py + sl);
+      x.stroke();
+    }
+  }
+
+  /* ── Метеор ── */
+  if (this.B.meteors) {
+    if (this.met) {
+      var m = this.met;
+      m.life += dt;
+      m.x += m.vx * dt; m.y += m.vy * dt;
+      if (m.life > m.max || m.x < -0.2 || m.x > 1.2 || m.y > 1.2) {
+        this.met = null;
+        this.metAt = this.t + 6 + Math.random() * 12;
+      } else {
+        /* Яркость всплывает и гаснет: болид вспыхивает при входе и
+           сгорает, ровная линия читается царапиной на экране */
+        var lf = m.life / m.max;
+        var fl = Math.sin(lf * Math.PI);
+        fl = fl * fl * (light ? 0.45 : 1) * dim;
+        var hx = m.x * w, hy = m.y * h;
+        var tx = (m.x - m.vx * m.len / 0.5) * w, ty2 = (m.y - m.vy * m.len / 0.5) * h;
+        var lg2 = x.createLinearGradient(tx, ty2, hx, hy);
+        lg2.addColorStop(0, "rgba(" + m.c + ",0)");
+        lg2.addColorStop(0.72, "rgba(" + m.c + "," + (fl * 0.32).toFixed(3) + ")");
+        lg2.addColorStop(1, "rgba(" + m.c + "," + (fl * 0.85).toFixed(3) + ")");
+        x.strokeStyle = lg2;
+        x.lineWidth = 1.6;
+        x.lineCap = "round";
+        x.beginPath();
+        x.moveTo(tx, ty2); x.lineTo(hx, hy);
+        x.stroke();
+        x.lineCap = "butt";
+        /* Голова ярче следа: там идёт само горение */
+        var hg2 = x.createRadialGradient(hx, hy, 0, hx, hy, 7);
+        hg2.addColorStop(0, "rgba(255,255,255," + (fl * 0.75).toFixed(3) + ")");
+        hg2.addColorStop(0.35, "rgba(" + m.c + "," + (fl * 0.35).toFixed(3) + ")");
+        hg2.addColorStop(1, "rgba(" + m.c + ",0)");
+        x.fillStyle = hg2;
+        x.fillRect(hx - 7, hy - 7, 14, 14);
+      }
+    } else if (this.t > this.metAt) {
+      this.met = this.seedMeteor();
+    }
   }
 
   /* Пакеты данных */

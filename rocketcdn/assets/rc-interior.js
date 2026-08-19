@@ -242,15 +242,35 @@ var st = {
   p: 0, yaw: 0, yawT: 0, yawOff: 0, pitch: 0, pitchT: 0, drift: 0,
   dolly: 1.7, dollyT: 1.7, fov: 58, fovT: 58, stop: -1, con: 0, conL: 0,
   back: 0,                       /* доля отъезда от пульта в финале */
+  roll: 0, yawPrev: 0,           /* крен камеры на повороте */
   sLock: false, sIn: false
 };
 
 var cv = null, rend = null, scene = null, cam = null, grp = null;
 var lamp = null, planet = null, halo = null, diodes = [], anchors = [], lock = null;
-var deskLight = null, winMesh = null;
+var deskLight = null, winMesh = null, air = null;
+/* Мелочь, которую снимают на слабых машинах: балки, поручень,
+   световые пятна. Собираем в один список, чтобы гасить одним махом. */
+var fine = [];
 var raf = null, lastTs = 0;
 
 var phone = innerWidth < 760;
+
+/* ── Постановка камеры под устройство ────────────────────────
+   На телефоне кадр вертикальный, а угол объектива у перспективной
+   камеры задан по вертикали: при том же числе по горизонтали видно
+   вдвое меньше, и стеновая панель шириной 1,9 метра просто не
+   влезает в кадр - экран «наезжает» на человека. Лечим двумя
+   числами сразу: раскрываем объектив и отодвигаем камеру от стены,
+   то есть ставим человека не в самый центр круга, а чуть позади.
+
+   Отход от центра нужен и на мониторе, но по другой причине: пока
+   камера стоит ровно в оси вращения, поворот не даёт параллакса -
+   ближние стойки и дальняя стена едут с одной скоростью, и рубка
+   читается нарисованной панорамой, а не помещением. */
+function restDolly() { return phone ? 0.86 : 0.34; }
+function fovIn()     { return phone ? 84 : 72; }
+function fovTamb()   { return phone ? 66 : 58; }
 
 function snd() {
   var s = g.RC_SOUND;
@@ -258,64 +278,225 @@ function snd() {
 }
 
 /* ── Процедурные текстуры ────────────────────────────────────
-   Рисуем обычным двумерным холстом. Панели с фасками, кабельные
-   жгуты, перфорация пола: всё это дешевле нарисовать, чем
-   привезти картинкой. */
-function panelTex(w, h, dark) {
+   Рисуем обычным двумерным холстом. Обшивка с поясами, решётчатый
+   настил, приборные стойки, вентиляция: всё это дешевле нарисовать,
+   чем привезти картинкой, и весит ноль байт в критическом пути.
+
+   Общее правило всех текстур здесь: свет в рубке идёт сверху, из
+   потолочной ниши. Значит верхние грани светлые, нижние тёмные, а
+   яркость падает к полу. Пока этот договор соблюдается на каждой
+   поверхности, глаз собирает из плоских картинок объём. */
+var texCache = {};
+
+function cnv(w, h) {
   var c = doc.createElement("canvas");
   c.width = w; c.height = h;
-  var x = c.getContext("2d");
-  x.fillStyle = dark ? hex6(COL.hull) : hex6(COL.wall);
-  x.fillRect(0, 0, w, h);
+  return c;
+}
 
-  /* Крупные панели с фаской: свет входит сверху, значит верхняя
-     кромка светлее, нижняя темнее. Один и тот же договор о свете,
-     что и на плоских карточках сайта. */
-  var step = 128;
-  for (var y = 0; y < h; y += step) {
-    for (var i = 0; i < w; i += step) {
-      var pad = 6;
-      x.fillStyle = "rgba(226,232,240,.045)";
-      x.fillRect(i + pad, y + pad, step - pad * 2, 1);
-      x.fillStyle = "rgba(4,12,22,.55)";
-      x.fillRect(i + pad, y + step - pad - 1, step - pad * 2, 1);
-      x.fillStyle = "rgba(226,232,240,.02)";
-      x.fillRect(i + pad, y + pad, 1, step - pad * 2);
+/* Обшивка рубки. Раньше это была ровная плитка с болтами, из-за
+   чего цилиндр читался трубой, обклеенной обоями: не было ни низа,
+   ни верха. Теперь у стены три пояса - тёмный плинтус, рабочий пояс
+   ниш и светлый карниз под потолком, - и сквозной вертикальный
+   градиент. Он и даёт стене верх и низ. */
+function hullTex() {
+  var W = 512, H = 512;
+  var c = cnv(W, H), x = c.getContext("2d");
+
+  var gr = x.createLinearGradient(0, 0, 0, H);
+  gr.addColorStop(0.00, "#1a3048");   /* карниз: сюда бьёт потолочный свет */
+  gr.addColorStop(0.16, "#12253a");
+  gr.addColorStop(0.52, "#0c1c2d");
+  gr.addColorStop(0.86, "#07111d");
+  gr.addColorStop(1.00, "#040a12");   /* плинтус у самого настила */
+  x.fillStyle = gr; x.fillRect(0, 0, W, H);
+
+  /* Вертикальные ребра жёсткости. Идут через всю высоту и держат
+     форму цилиндра: без них стена гнётся на глаз как бумага. */
+  var rib = 64, i, y;
+  for (i = 0; i < W; i += rib) {
+    x.fillStyle = "rgba(150,186,214,.055)";
+    x.fillRect(i, 0, 3, H);
+    x.fillStyle = "rgba(3,8,15,.55)";
+    x.fillRect(i + 3, 0, 4, H);
+  }
+
+  /* Горизонтальные пояса: карниз, рабочий пояс, плинтус. Каждый
+     отбит светлой верхней кромкой и тенью снизу - это и есть фаска. */
+  var belts = [[0, 74], [96, 300], [330, 452], [452, H]];
+  for (i = 0; i < belts.length; i++) {
+    y = belts[i][0];
+    x.fillStyle = "rgba(150,186,214,.10)";
+    x.fillRect(0, y, W, 2);
+    x.fillStyle = "rgba(2,6,12,.7)";
+    x.fillRect(0, belts[i][1] - 3, W, 3);
+  }
+
+  /* Технические надписи и трафареты. Мелкие, почти нечитаемые: они
+     работают масштабом, а не смыслом - по ним видно размер стены. */
+  x.fillStyle = "rgba(150,186,214,.16)";
+  for (i = 0; i < 26; i++) {
+    var tx = 18 + (i % 7) * 72, ty = 120 + Math.floor(i / 7) * 68;
+    x.fillRect(tx, ty, 4 + (i % 5) * 3, 3);
+    x.fillRect(tx, ty + 6, 12 + (i % 3) * 8, 2);
+  }
+
+  /* Крепёж по поясам, а не вразнобой: болты стоят рядами */
+  x.fillStyle = "rgba(190,214,232,.13)";
+  for (i = 20; i < W; i += 64) {
+    var rows = [40, 322, 470];
+    for (y = 0; y < rows.length; y++) {
+      x.beginPath(); x.arc(i, rows[y], 2.2, 0, 6.283); x.fill();
     }
   }
-  /* Хайрлайн-швы, подсвеченные цианом: фирменная деталь корпуса */
-  x.strokeStyle = "rgba(66,178,220,.5)";
-  x.lineWidth = 2;
-  for (y = step; y < h; y += step * 2) {
-    x.beginPath(); x.moveTo(0, y); x.lineTo(w, y); x.stroke();
-  }
-  /* Мелкий крепёж */
-  x.fillStyle = "rgba(226,232,240,.10)";
-  for (var k = 0; k < 160; k++) {
-    var px = Math.random() * w, py = Math.random() * h;
-    x.beginPath(); x.arc(px, py, 1.6, 0, 6.283); x.fill();
-  }
+
+  /* Фирменный шов: одна циановая нитка по низу карниза. Одна, а не
+     через каждый ряд - иначе стена становится полосатой тряпкой. */
+  x.fillStyle = "rgba(66,178,220,.42)";
+  x.fillRect(0, 88, W, 2);
+
   var tex = new T.CanvasTexture(c);
   tex.wrapS = tex.wrapT = T.RepeatWrapping;
   return tex;
 }
 
-function floorTex() {
-  var c = doc.createElement("canvas");
-  c.width = c.height = 256;
-  var x = c.getContext("2d");
-  x.fillStyle = hex6(COL.deep); x.fillRect(0, 0, 256, 256);
-  /* Перфорация технического настила */
-  x.fillStyle = "rgba(226,232,240,.06)";
-  for (var i = 8; i < 256; i += 16) {
-    for (var j = 8; j < 256; j += 16) {
-      x.beginPath(); x.arc(i, j, 3, 0, 6.283); x.fill();
-    }
+/* Решётчатый настил. Смысл решётки не в узоре: сквозь неё видно
+   тёмный провал подпола, и пол перестаёт быть заливкой - у него
+   появляется толщина. */
+function deckTex() {
+  var S = 256;
+  var c = cnv(S, S), x = c.getContext("2d");
+  x.fillStyle = "#03070d"; x.fillRect(0, 0, S, S);
+
+  var cell = 32, i;
+  for (i = 0; i < S; i += cell) {
+    /* Пруток: тёмное тело и светлая верхняя грань */
+    x.fillStyle = "#152431"; x.fillRect(i, 0, 9, S);
+    x.fillStyle = "#152431"; x.fillRect(0, i, S, 7);
+    x.fillStyle = "rgba(186,212,232,.20)"; x.fillRect(i, 0, 2.5, S);
+    x.fillStyle = "rgba(186,212,232,.14)"; x.fillRect(0, i, S, 2);
+    x.fillStyle = "rgba(0,0,0,.6)"; x.fillRect(i + 7, 0, 2, S);
   }
+  /* Противоскользящая насечка по пруткам */
+  x.fillStyle = "rgba(0,0,0,.35)";
+  for (i = 0; i < S; i += 6) x.fillRect(0, i, S, 1);
+
   var tex = new T.CanvasTexture(c);
   tex.wrapS = tex.wrapT = T.RepeatWrapping;
-  tex.repeat.set(6, 6);
+  tex.repeat.set(4, 4);
   return tex;
+}
+
+/* Лицевая плита приборной стойки. Ею закрываем те панели круга, на
+   которых не висит содержимое: при полном обороте в кадре не должно
+   быть глухой стены, а вешать туда ещё карточек некуда. */
+function rackTex() {
+  var W = 256, H = 192;
+  var c = cnv(W, H), x = c.getContext("2d");
+  var gr = x.createLinearGradient(0, 0, 0, H);
+  gr.addColorStop(0, "#132639"); gr.addColorStop(1, "#070f1a");
+  x.fillStyle = gr; x.fillRect(0, 0, W, H);
+
+  var i, j;
+  /* Ряды приборных модулей с фаской */
+  for (j = 0; j < 4; j++) {
+    for (i = 0; i < 3; i++) {
+      var px = 12 + i * 80, py = 14 + j * 44;
+      x.fillStyle = "rgba(8,18,30,.9)"; x.fillRect(px, py, 68, 32);
+      x.fillStyle = "rgba(150,186,214,.14)"; x.fillRect(px, py, 68, 1);
+      x.fillStyle = "rgba(0,0,0,.7)"; x.fillRect(px, py + 31, 68, 1);
+      /* Экранчик и шкала: холодный свет приборов */
+      x.fillStyle = "rgba(66,178,220,.30)"; x.fillRect(px + 6, py + 7, 30, 18);
+      x.fillStyle = "rgba(66,178,220,.55)";
+      for (var k = 0; k < 5; k++) x.fillRect(px + 44, py + 8 + k * 4, 4 + (k % 3) * 6, 2);
+    }
+  }
+  /* Пара тёплых диодов на стойку: холодный кадр обязан иметь
+     хотя бы одну тёплую точку, иначе он читается мёртвым */
+  x.fillStyle = "rgba(138,89,246,.75)";
+  x.fillRect(20, 176, 5, 5); x.fillRect(96, 176, 5, 5);
+
+  var tex = new T.CanvasTexture(c);
+  return tex;
+}
+
+/* Вентиляционная решётка: горизонтальные жалюзи с тенью в глубине */
+function ventTex() {
+  var W = 128, H = 64;
+  var c = cnv(W, H), x = c.getContext("2d");
+  x.fillStyle = "#050b13"; x.fillRect(0, 0, W, H);
+  for (var y = 3; y < H - 3; y += 7) {
+    x.fillStyle = "rgba(140,176,204,.22)"; x.fillRect(4, y, W - 8, 2);
+    x.fillStyle = "rgba(0,0,0,.85)"; x.fillRect(4, y + 2, W - 8, 4);
+  }
+  x.strokeStyle = "rgba(140,176,204,.3)"; x.lineWidth = 2;
+  x.strokeRect(2, 2, W - 4, H - 4);
+  return new T.CanvasTexture(c);
+}
+
+/* Пятно света. Один и тот же мягкий градиент работает и лужей от
+   светильника на стене, и разливом от напольной полосы. Настоящих
+   ламп в рубке пять штук и больше ставить нельзя - каждая лишняя
+   стоит целого прохода по всем материалам. Пятна же не стоят
+   ничего: это прозрачный прямоугольник в режиме сложения. */
+function poolTex() {
+  if (texCache.pool) return texCache.pool;
+  var S = 128;
+  var c = cnv(S, S), x = c.getContext("2d");
+  var rg = x.createRadialGradient(S / 2, S * 0.18, 2, S / 2, S * 0.18, S * 0.9);
+  rg.addColorStop(0, "rgba(255,255,255,.95)");
+  rg.addColorStop(0.35, "rgba(255,255,255,.35)");
+  rg.addColorStop(1, "rgba(255,255,255,0)");
+  x.fillStyle = rg; x.fillRect(0, 0, S, S);
+  texCache.pool = new T.CanvasTexture(c);
+  return texCache.pool;
+}
+
+/* Рама иллюминатора: кольцо с болтами по кругу. Рисуем в альфу,
+   поэтому одна текстура годится и на раму, и на её подсветку. */
+function bezelTex() {
+  var S = 256;
+  var c = cnv(S, S), x = c.getContext("2d");
+  var gr = x.createLinearGradient(0, 0, 0, S);
+  gr.addColorStop(0, "#2a4257"); gr.addColorStop(0.5, "#132638"); gr.addColorStop(1, "#080f1a");
+  x.fillStyle = gr; x.fillRect(0, 0, S, S);
+  /* Болты по окружности рамы */
+  x.fillStyle = "rgba(200,222,238,.35)";
+  for (var i = 0; i < 16; i++) {
+    var a = i / 16 * 6.283;
+    x.beginPath();
+    x.arc(S / 2 + Math.cos(a) * S * 0.40, S / 2 + Math.sin(a) * S * 0.40, 4.5, 0, 6.283);
+    x.fill();
+  }
+  x.fillStyle = "rgba(6,12,20,.8)";
+  for (i = 0; i < 16; i++) {
+    var b = i / 16 * 6.283;
+    x.beginPath();
+    x.arc(S / 2 + Math.cos(b) * S * 0.40, S / 2 + Math.sin(b) * S * 0.40 + 2, 3, 0, 6.283);
+    x.fill();
+  }
+  return new T.CanvasTexture(c);
+}
+
+/* Окружение для отражений. Металл без карты окружения выходит
+   чёрным: отражать ему нечего. Поэтому рисуем крошечную панораму
+   самой рубки - тёмный низ, светлый потолок, яркое пятно
+   остекления, - и металл получает настоящий продольный блик,
+   который едет по стойкам при повороте камеры. */
+function envTex() {
+  var c = cnv(128, 64), x = c.getContext("2d");
+  var gr = x.createLinearGradient(0, 0, 0, 64);
+  gr.addColorStop(0, "#22384f"); gr.addColorStop(0.45, "#0d1c2c"); gr.addColorStop(1, "#04090f");
+  x.fillStyle = gr; x.fillRect(0, 0, 128, 64);
+  var rg = x.createRadialGradient(96, 26, 1, 96, 26, 30);
+  rg.addColorStop(0, "rgba(207,233,245,.95)");
+  rg.addColorStop(1, "rgba(207,233,245,0)");
+  x.fillStyle = rg; x.fillRect(56, 0, 72, 64);
+  x.fillStyle = "rgba(66,178,220,.35)"; x.fillRect(0, 8, 128, 3);
+  x.fillStyle = "rgba(138,89,246,.22)"; x.fillRect(0, 40, 128, 2);
+  var t = new T.CanvasTexture(c);
+  t.mapping = T.EquirectangularReflectionMapping;
+  return t;
 }
 
 /* Планета за остеклением: тот же вид, что и в наружной сцене */
@@ -342,15 +523,38 @@ function planetTex() {
   return new T.CanvasTexture(c);
 }
 
-/* ── Сборка рубки ────────────────────────────────────────── */
+/* ── Сборка рубки ──────────────────────────────────────────
+   Порядок сборки повторяет порядок постройки настоящего отсека:
+   сначала оболочка и настил, потом силовой набор (стойки, балки),
+   потом обстановка (ниши, иллюминаторы, трассы, поручень) и только
+   в конце свет. Так проще держать договор о свете: каждый предмет
+   ставится уже понимая, откуда на него падает.
+
+   Вершинный бюджет считаем строго. Дорогие тела (торы иллюминаторов
+   и жгутов) заменены на кольца и трубки с малым числом сегментов,
+   поэтому набор деталей вырос, а вершин стало не больше: место
+   освободили, а не добавили. */
 function build() {
   if (st.built || !T) return;
+
+  var i, j, m, th;
 
   cv = doc.createElement("canvas");
   cv.id = "intCanvas";
   cv.className = "rc-int-canvas";
   cv.setAttribute("aria-hidden", "true");
   doc.body.appendChild(cv);
+
+  /* Воздух рубки: плоский слой поверх холста. Он делает то, чего
+     трёхмерная сцена дёшево не умеет - виньетку по углам кадра и
+     тёплый подмес в нижней трети, там где работает свет пульта.
+     Полноценно это считается только постобработкой, а она стоит
+     второго прохода по всем пикселям; здесь тот же результат берёт
+     один композитный слой браузера. */
+  air = doc.createElement("i");
+  air.className = "rc-int-air";
+  air.setAttribute("aria-hidden", "true");
+  doc.body.appendChild(air);
 
   rend = new T.WebGLRenderer({ canvas: cv, antialias: !phone, alpha: true, powerPreference: "high-performance" });
     /* Рубка - самая дорогая сцена на странице: цилиндр, панели,
@@ -362,174 +566,440 @@ function build() {
   rend.setSize(innerWidth, innerHeight, false);
   if (rend.outputColorSpace !== undefined) rend.outputColorSpace = T.SRGBColorSpace;
   rend.toneMapping = T.ACESFilmicToneMapping;
-  rend.toneMappingExposure = 1.02;
+  rend.toneMappingExposure = 1.06;
 
   scene = new T.Scene();
-  scene.fog = new T.FogExp2(COL.deep, 0.055);
+  /* Туман плотнее прежнего в два с половиной раза. Раньше он стоял
+     на 0.055 и на трёх метрах давал три процента - то есть не делал
+     ничего, и дальняя стена была ровно такой же яркой, как ближняя.
+     Именно поэтому рубка читалась плоской картинкой: у неё не было
+     воздушной перспективы. Теперь на дальней стене четверть тумана,
+     на ближней десятая часть, и глубина появляется сама. */
+  scene.fog = new T.FogExp2(COL.deep, phone ? 0.115 : 0.135);
+
   /* Входим с узким углом: в тамбуре тесно. Внутри угол раскрывается
-     до семидесяти двух, и человек физически чувствует, что вышел
-     из щели в помещение. */
+     (на телефоне сильнее, см. fovIn), и человек физически чувствует,
+     что вышел из щели в помещение. */
+  st.fov = st.fovT = fovTamb();
   cam = new T.PerspectiveCamera(st.fov, innerWidth / innerHeight, 0.1, 60);
   cam.position.set(0, EYE, st.dolly);
 
   grp = new T.Group();
   scene.add(grp);
 
-  var wall = panelTex(512, 512, false);
-  wall.repeat.set(6, 2);
+  /* Карта окружения для металла. Если её собрать не удалось (старый
+     драйвер, отказ PMREM), металл гасим до полуматового: чёрных
+     зеркал в кадре быть не должно. */
+  var hasEnv = false;
+  try {
+    var pm = new T.PMREMGenerator(rend);
+    var et = envTex();
+    scene.environment = pm.fromEquirectangular(et).texture;
+    pm.dispose(); et.dispose();
+    hasEnv = true;
+  } catch (e) {}
+  var METAL = hasEnv ? 0.9 : 0.42;
+  var ENVI = 0.85;
 
-  /* Цилиндр рубки: диаметр 5,2 метра, смотрим изнутри */
+  /* ── Общие материалы ──────────────────────────────────────
+     Материалов ровно столько, сколько в рубке настоящих веществ:
+     крашеный металл обшивки, полированный металл набора, матовый
+     пластик приборов, стекло, резина уплотнителей и чистый свет.
+     Каждый переиспользуется всеми деталями своего вещества - лишний
+     материал это лишняя компиляция шейдера на слабом телефоне. */
+  var hull = hullTex();
+  hull.repeat.set(7, 1);
+  var shellMat = new T.MeshStandardMaterial({
+    map: hull, side: T.BackSide, roughness: 0.72, metalness: 0.35,
+    color: 0xb6c9dc, envMapIntensity: ENVI * 0.7
+  });
+  /* Полированный набор: стойки, балки, рамы. Ему и достаётся блик */
+  var steelMat = new T.MeshStandardMaterial({
+    color: 0x7f93a8, roughness: 0.24, metalness: METAL, envMapIntensity: ENVI * 1.25
+  });
+  /* Матовый корпусный пластик: козырьки ниш, короба */
+  var caseMat = new T.MeshStandardMaterial({
+    color: COL.wall, roughness: 0.82, metalness: 0.12,
+    emissive: COL.emis, emissiveIntensity: 0.1, envMapIntensity: ENVI * 0.4
+  });
+  /* Резина уплотнителей: она не блестит вовсе, и именно поэтому
+     рядом с ней металл читается металлом */
+  var rubberMat = new T.MeshStandardMaterial({
+    color: 0x0a1119, roughness: 1, metalness: 0
+  });
+  /* Чистый свет: лампы, кромки, полосы. Один материал на цвет */
+  var litCyan = new T.MeshBasicMaterial({ color: COL.cyan, transparent: true, opacity: 0.62, fog: false });
+  var litWarm = new T.MeshBasicMaterial({ color: COL.vio, transparent: true, opacity: 0.5, fog: false });
+  /* Пятна света: сложение, без записи в буфер глубины, иначе они
+     срежут всё, что окажется за ними */
+  var pool = poolTex();
+  var poolWarm = new T.MeshBasicMaterial({
+    map: pool, color: 0xffb98a, transparent: true, opacity: 0.3,
+    blending: T.AdditiveBlending, depthWrite: false, fog: false
+  });
+  var poolCool = new T.MeshBasicMaterial({
+    map: pool, color: COL.lit, transparent: true, opacity: 0.26,
+    blending: T.AdditiveBlending, depthWrite: false, fog: false
+  });
+
+  /* ── Оболочка ─────────────────────────────────────────── */
   var shell = new T.Mesh(
-    new T.CylinderGeometry(2.6, 2.6, 3.4, phone ? 24 : 40, 1, true),
-    new T.MeshStandardMaterial({ map: wall, side: T.BackSide, roughness: 0.78, metalness: 0.4, color: 0xa9bdd2 })
+    new T.CylinderGeometry(2.6, 2.6, 3.4, phone ? 28 : 44, 1, true),
+    shellMat
   );
   shell.position.y = 1.7;
   grp.add(shell);
 
-  /* Пол и потолок */
+  /* ── Настил ───────────────────────────────────────────────
+     Решётка, а под ней провал: пол получает толщину. Металличность
+     держим низкой - мокрого блеска на техническом настиле не бывает,
+     а вот сухой рассеянный отклик есть. */
   var floor = new T.Mesh(
-    new T.CircleGeometry(2.6, phone ? 32 : 48),
-    new T.MeshStandardMaterial({ map: floorTex(), roughness: 0.92, metalness: 0.2, color: 0x8496a9 })
+    new T.CircleGeometry(2.6, phone ? 36 : 52),
+    new T.MeshStandardMaterial({
+      map: deckTex(), roughness: 0.86, metalness: 0.38,
+      color: 0x93a6ba, envMapIntensity: ENVI * 0.5
+    })
   );
   floor.rotation.x = -Math.PI / 2;
   grp.add(floor);
 
+  /* Технический люк в середине настила: у пола появляется центр, и
+     круг перестаёт быть бесконечным полем решётки */
+  var hatch = new T.Mesh(new T.CircleGeometry(0.66, 22), steelMat);
+  hatch.rotation.x = -Math.PI / 2;
+  hatch.position.y = 0.014;
+  grp.add(hatch);
+  m = new T.Mesh(new T.RingGeometry(0.66, 0.71, 22), litCyan);
+  m.rotation.x = -Math.PI / 2;
+  m.position.y = 0.016;
+  grp.add(m);
+
+  /* Световая полоса по периметру пола. Главная линия всей рубки:
+     она обводит помещение по низу и тем самым объявляет его форму.
+     Без неё пол и стена сходились в чёрный шов, и круг не читался. */
+  var rim = new T.Mesh(new T.RingGeometry(2.40, 2.52, phone ? 36 : 52), new T.MeshBasicMaterial({
+    color: COL.lit, transparent: true, opacity: 0.72, fog: false
+  }));
+  rim.rotation.x = -Math.PI / 2;
+  rim.position.y = 0.02;
+  grp.add(rim);
+
+  /* Разлив от полосы на настил: свет обязан куда-то ложиться */
+  var spill = new T.Mesh(new T.RingGeometry(1.85, 2.5, phone ? 28 : 40), new T.MeshBasicMaterial({
+    color: COL.cyan, transparent: true, opacity: 0.13,
+    blending: T.AdditiveBlending, depthWrite: false, fog: false
+  }));
+  spill.rotation.x = -Math.PI / 2;
+  spill.position.y = 0.024;
+  grp.add(spill);
+  fine.push(spill);
+
+  /* ── Потолок с рёбрами ────────────────────────────────────
+     Ребристый потолок нужен не ради ребёр. Он даёт кадру верхнюю
+     границу: балки сходятся к середине и работают линиями схода,
+     по которым глаз мгновенно понимает, что стоит в круглой
+     комнате, а не смотрит на изогнутую картинку. */
   var ceil = new T.Mesh(
-    new T.CircleGeometry(2.6, phone ? 24 : 40),
-    new T.MeshStandardMaterial({ color: COL.hull, roughness: 0.9, metalness: 0.3, side: T.BackSide })
+    new T.CircleGeometry(2.6, phone ? 28 : 44),
+    new T.MeshStandardMaterial({
+      color: 0x0a1421, roughness: 0.92, metalness: 0.2, side: T.BackSide,
+      envMapIntensity: ENVI * 0.3
+    })
   );
   ceil.rotation.x = -Math.PI / 2;
   ceil.position.y = 3.4;
   grp.add(ceil);
 
-  /* Восемь панелей по кругу. Угол панели совпадает с поворотом
-     камеры, при котором человек стоит к ней лицом: панель номер i
-     живёт на (i + 0.5) * 45 градусов. Из-за этого карточке
-     достаточно знать свой номер, чтобы встать на своё место.
+  var beams = phone ? 6 : 10;
+  var beamGeo = new T.BoxGeometry(0.13, 0.17, 2.34);
+  for (i = 0; i < beams; i++) {
+    m = new T.Mesh(beamGeo, steelMat);
+    m.position.set(0, 3.22, 0);
+    m.rotation.y = i / beams * TAU;
+    m.translateZ(-1.24);
+    grp.add(m);
+    fine.push(m);
+  }
+
+  /* Обод под потолком: балки обязаны на что-то опираться */
+  m = new T.Mesh(new T.TorusGeometry(2.46, 0.055, 4, phone ? 26 : 36), steelMat);
+  m.rotation.x = Math.PI / 2;
+  m.position.y = 3.14;
+  grp.add(m);
+
+  /* Потолочный плафон: единственный источник верхнего света в кадре.
+     Сам он не светит (настоящих ламп у нас пять), но глаз обязан
+     видеть, откуда идёт верхний свет, иначе градиент на стенах
+     выглядит покраской, а не освещением. */
+  m = new T.Mesh(new T.CircleGeometry(0.62, 20), new T.MeshBasicMaterial({
+    color: COL.lit, transparent: true, opacity: 0.5, fog: false
+  }));
+  m.rotation.x = Math.PI / 2;
+  m.position.y = 3.36;
+  grp.add(m);
+
+  /* ── Силовые стойки между панелями ────────────────────────
+     Стоят на швах круга и выступают внутрь. Это самая полезная
+     деталь всей рубки: при повороте они проходят у самого объектива
+     и едут заметно быстрее дальней стены. Такой параллакс глаз
+     читает как «я нахожусь внутри», и никакая текстура его не
+     заменит. */
+  var strutGeo = new T.BoxGeometry(0.17, 2.36, 0.3);
+  var strutLit = new T.PlaneGeometry(0.045, 1.9);
+  for (i = 0; i < PANELS; i++) {
+    th = i * STEP;
+    var col = new T.Group();
+    m = new T.Mesh(strutGeo, steelMat);
+    m.position.set(0, 0, -2.45);
+    col.add(m);
+    /* Световая нитка по внутреннему ребру стойки */
+    var nl = new T.Mesh(strutLit, litCyan);
+    nl.position.set(0, 0, -2.29);
+    col.add(nl);
+    col.rotation.y = -th;
+    col.position.y = 1.72;
+    grp.add(col);
+  }
+
+  /* ── Ниши со стеновыми панелями ───────────────────────────
+     Панель теперь не приклеена к стене, а утоплена в нишу: над ней
+     козырёк, под козырьком тёплая лампа, от лампы на плите пятно
+     света. Три предмета вместо одного, и панель получает глубину -
+     раньше это был просто светлый прямоугольник на светлой стене.
+
+     Угол панели совпадает с поворотом камеры, при котором человек
+     стоит к ней лицом: панель номер i живёт на (i + 0.5) * 45
+     градусов. Из-за этого карточке достаточно знать свой номер,
+     чтобы встать на своё место.
 
      Три знака минус в rotation.y - не опечатка: камера смотрит
      вдоль минус Z и вращается на минус yaw, поэтому стена, чтобы
      оказаться напротив, обязана повернуться в другую сторону. */
   var panelMat = new T.MeshStandardMaterial({
-    color: COL.panel, roughness: 0.3, metalness: 0.7,
-    emissive: COL.emis, emissiveIntensity: 0.9
+    color: COL.panel, roughness: 0.42, metalness: 0.45,
+    emissive: COL.emis, emissiveIntensity: 0.62, envMapIntensity: ENVI * 0.6
   });
-  var edgeMat = new T.MeshBasicMaterial({ color: COL.cyan, transparent: true, opacity: 0.55 });
+  /* Свободные панели круга закрыты приборными стойками: глухой
+     стены при обороте быть не должно, а вешать туда нечего */
+  var rackMat = new T.MeshStandardMaterial({
+    map: rackTex(), roughness: 0.66, metalness: 0.3,
+    emissive: 0x0d2a40, emissiveIntensity: 0.55, envMapIntensity: ENVI * 0.5
+  });
   var faceGeo = new T.PlaneGeometry(1.9, 1.42);
-  var edgeGeo = new T.PlaneGeometry(1.9, 0.02);
+  var lampGeo = new T.PlaneGeometry(1.74, 0.035);
+  var hoodGeo = new T.BoxGeometry(2.0, 0.1, 0.24);
+  var poolGeo = new T.PlaneGeometry(1.94, 1.5);
 
-  for (var i = 0; i < PANELS; i++) {
-    var th = (i + 0.5) * STEP;
+  for (i = 0; i < PANELS; i++) {
+    th = (i + 0.5) * STEP;
     var pan = new T.Group();
-    var face = new T.Mesh(faceGeo, panelMat);
-    face.position.set(0, 0, -R_WALL);
+    /* Плита утоплена глубже стены: у ниши появляется дно */
+    var face = new T.Mesh(faceGeo, i < 5 ? panelMat : rackMat);
+    face.position.set(0, 0, -R_WALL - 0.1);
     pan.add(face);
-    /* Светящаяся кромка сверху, где свет входит */
-    var edge = new T.Mesh(edgeGeo, edgeMat);
-    edge.position.set(0, 0.72, -R_WALL + 0.02);
-    pan.add(edge);
+
+    /* Козырёк ниши. Он же прячет лампу: источник виден только по
+       своему свету, как в настоящем интерьере */
+    var hood = new T.Mesh(hoodGeo, caseMat);
+    hood.position.set(0, 0.79, -R_WALL + 0.02);
+    pan.add(hood);
+
+    /* Тёплая лампа под козырьком. Тёплая нарочно: весь остальной
+       свет в рубке холодный, и без этой ноты кадр синеет целиком */
+    var lampStrip = new T.Mesh(lampGeo, litWarm);
+    lampStrip.position.set(0, 0.72, -R_WALL + 0.06);
+    pan.add(lampStrip);
+
+    /* Пятно от лампы на плите: свет обязан лечь на поверхность */
+    var pl = new T.Mesh(poolGeo, i < 5 ? poolWarm : poolCool);
+    pl.position.set(0, 0.06, -R_WALL - 0.07);
+    pan.add(pl);
+    fine.push(pl);
+
     pan.rotation.y = -th;
     pan.position.y = H_WALL;
     grp.add(pan);
     anchors.push({ obj: face, th: th });
   }
 
-  /* Иллюминаторы на швах между панелями. Нужны не для красоты: при
-     полном обороте в кадре не должно быть глухой стены, иначе
-     четверть пути человек смотрит в пустоту. За каждым - планета.
-     Шов на нуле занят пультом, поэтому окна начинаются с сорока
-     пяти градусов. */
+  /* ── Иллюминаторы ─────────────────────────────────────────
+     Раньше это была плоская картинка планеты и кольцо поверх неё:
+     дырка в стене, а не окно. Теперь у окна есть настоящая толщина -
+     труба в борту, стекло в её глубине, рама с болтами снаружи и
+     резиновый уплотнитель по стыку. Толщина и решает: по ней глаз
+     понимает, что стена не бумажная.
+
+     Стоят на швах, где нет ни панели, ни пульта. */
   var portTex = planetTex();
-  for (i = 0; i < 4; i++) {
-    var pa = STEP + i * (STEP * 2);
+  var glassMat = new T.MeshBasicMaterial({ map: portTex, color: 0x8fcfea });
+  var bezelMat = new T.MeshStandardMaterial({
+    map: bezelTex(), roughness: 0.3, metalness: METAL * 0.85,
+    envMapIntensity: ENVI * 1.1
+  });
+  var tubeGeo = new T.CylinderGeometry(0.5, 0.5, 0.36, phone ? 16 : 22, 1, true);
+  var portA = [STEP * 2, STEP * 4, STEP * 6];
+  for (i = 0; i < portA.length; i++) {
     var port = new T.Group();
-    var glass = new T.Mesh(
-      new T.CircleGeometry(0.52, 28),
-      new T.MeshBasicMaterial({ map: portTex, color: 0x9fd8f0 })
-    );
-    glass.position.set(0, 0, -2.53);
+    /* Труба проёма: смотрим в неё изнутри, значит нужна изнанка */
+    var tube = new T.Mesh(tubeGeo, new T.MeshStandardMaterial({
+      color: 0x66798d, roughness: 0.45, metalness: METAL * 0.7,
+      side: T.BackSide, envMapIntensity: ENVI * 0.9
+    }));
+    tube.rotation.x = Math.PI / 2;
+    tube.position.set(0, 0, -2.62);
+    port.add(tube);
+
+    /* Стекло сидит в глубине трубы, а не заподлицо со стеной */
+    var glass = new T.Mesh(new T.CircleGeometry(0.5, phone ? 16 : 22), glassMat);
+    glass.position.set(0, 0, -2.79);
     port.add(glass);
-    /* Обрамление: толстое кольцо с цианoвой подсветкой изнутри */
-    var ring2 = new T.Mesh(
-      new T.TorusGeometry(0.54, 0.07, 8, 28),
-      new T.MeshStandardMaterial({ color: COL.panel, roughness: 0.35, metalness: 0.85,
-        emissive: COL.emis, emissiveIntensity: 0.6 })
-    );
-    ring2.position.set(0, 0, -2.5);
-    port.add(ring2);
-    port.rotation.y = -pa;
+
+    /* Рама с болтами снаружи проёма */
+    var bez = new T.Mesh(new T.RingGeometry(0.5, 0.68, phone ? 18 : 24), bezelMat);
+    bez.position.set(0, 0, -2.43);
+    port.add(bez);
+
+    /* Уплотнитель по стыку рамы со стеклом */
+    var seal = new T.Mesh(new T.TorusGeometry(0.51, 0.035, 4, phone ? 14 : 18), rubberMat);
+    seal.position.set(0, 0, -2.45);
+    port.add(seal);
+
+    /* Подсветка проёма изнутри: холодная кромка вокруг стекла */
+    var glow = new T.Mesh(new T.RingGeometry(0.44, 0.5, phone ? 16 : 22), litCyan);
+    glow.position.set(0, 0, -2.755);
+    port.add(glow);
+
+    port.rotation.y = -portA[i];
     port.position.y = 1.95;
     grp.add(port);
   }
 
-  /* Кабельные трассы под потолком: жгуты идут вдоль стены */
-  var cableMat = new T.MeshStandardMaterial({ color: COL.hull, roughness: 0.95, metalness: 0.1 });
-  for (i = 0; i < (phone ? 2 : 4); i++) {
-    var ring = new T.Mesh(new T.TorusGeometry(2.45, 0.045 + i * 0.012, 6, phone ? 24 : 40), cableMat);
-    ring.rotation.x = Math.PI / 2;
-    ring.position.y = 3.05 - i * 0.09;
-    grp.add(ring);
+  /* ── Кабельные трассы ─────────────────────────────────────
+     Жгуты идут поясом под потолком и спускаются на стойки. Спуски
+     важнее самих жгутов: вертикаль связывает потолок со стеной, и
+     верх кадра перестаёт висеть отдельно. */
+  var cableMat = new T.MeshStandardMaterial({
+    color: 0x101c2a, roughness: 0.95, metalness: 0.1, envMapIntensity: ENVI * 0.3
+  });
+  for (i = 0; i < (phone ? 1 : 2); i++) {
+    m = new T.Mesh(new T.TorusGeometry(2.44, 0.055 + i * 0.016, 4, phone ? 24 : 34), cableMat);
+    m.rotation.x = Math.PI / 2;
+    m.position.y = 3.0 - i * 0.11;
+    grp.add(m);
+  }
+  if (!phone) {
+    var dropGeo = new T.BoxGeometry(0.07, 0.86, 0.07);
+    for (i = 0; i < 4; i++) {
+      var drop = new T.Group();
+      m = new T.Mesh(dropGeo, cableMat);
+      m.position.set(0.14, 0, -2.5);
+      drop.add(m);
+      drop.rotation.y = -(i * STEP * 2);
+      drop.position.y = 2.52;
+      grp.add(drop);
+      fine.push(drop);
+    }
   }
 
-  /* Остекление рубки: единственный настоящий источник света. Стекло
-     светится на просвет холодным, тем же тоном, что и направленный
-     свет из окна. Раньше это была тёмная плита, и нос корабля в
-     кадре превращался в чёрный прямоугольник - именно из-за него
-     секция контактов выглядела темнее салона, будто снята в другом
-     помещении. */
+  /* ── Поручень ─────────────────────────────────────────────
+     Идёт кольцом на высоте руки, в полуметре ниже панелей. Он тоже
+     работает на параллакс: ближняя его дуга проходит перед камерой
+     и режет кадр по низу, а дальняя видна далеко за спиной. */
+  if (!phone) {
+    var rail = new T.Mesh(new T.TorusGeometry(2.4, 0.035, 4, 42), steelMat);
+    rail.rotation.x = Math.PI / 2;
+    rail.position.y = 1.02;
+    grp.add(rail);
+    fine.push(rail);
+  }
+
+  /* ── Вентиляция ───────────────────────────────────────────
+     Решётки стоят в плинтусе, между стойками. Мелочь, но именно
+     такие мелочи в нижнем поясе объясняют, что комната рабочая. */
+  var ventMat = new T.MeshStandardMaterial({
+    map: ventTex(), roughness: 0.9, metalness: 0.25, envMapIntensity: ENVI * 0.3
+  });
+  var ventGeo = new T.PlaneGeometry(1.0, 0.28);
+  for (i = 0; i < (phone ? 2 : 4); i++) {
+    var vt = new T.Group();
+    m = new T.Mesh(ventGeo, ventMat);
+    m.position.set(0, 0, -2.57);
+    vt.add(m);
+    vt.rotation.y = -((i + 0.5) * STEP * 2);
+    vt.position.y = 0.44;
+    grp.add(vt);
+  }
+
+  /* ── Угол пульта ──────────────────────────────────────────
+     Вся обстановка поста управления живёт в одной группе, повёрнутой
+     на TH_CON. Раньше стойка, столешница и остекление стояли на
+     нуле, а слой кабины (rc-cockpit) считал своё место от TH_CON:
+     пульт в объёме и пульт на картинке стояли в разных углах одной
+     комнаты, и на подъезде камера смотрела мимо мебели. Теперь угол
+     объявлен один раз и им пользуются оба слоя. */
+  var con = new T.Group();
+  con.rotation.y = -TH_CON;
+  grp.add(con);
+
+  /* Остекление рубки: главный источник холодного света в кадре.
+     Стекло светится на просвет, тем же тоном, что и направленный
+     свет из окна. Тёмной плитой оно быть не имеет права - именно
+     из-за неё нос корабля превращался в чёрный прямоугольник. */
   var win = new T.Mesh(
     new T.PlaneGeometry(2.9, 1.35, 1, 1),
     new T.MeshBasicMaterial({ color: COL.lit, transparent: true, opacity: 0.1,
-      blending: T.AdditiveBlending, depthWrite: false })
+      blending: T.AdditiveBlending, depthWrite: false, fog: false })
   );
   win.position.set(0, 1.85, -2.45);
-  grp.add(win);
+  con.add(win);
   winMesh = win;
 
   /* Фаска остекления: тонкая циановая рамка по контуру. Тот же
      приём, что у экрана анкеты в секции контактов - когда камера
      доезжает до носа, рамка окна и рамка экрана стоят рядом и
      читаются одним прибором, а не двумя разными картинками. */
-  var fasciaMat = new T.MeshBasicMaterial({ color: COL.cyan, transparent: true, opacity: 0.42 });
+  var fasciaMat = new T.MeshBasicMaterial({ color: COL.cyan, transparent: true, opacity: 0.42, fog: false });
   var fh = new T.PlaneGeometry(3.02, 0.014);
   var fv = new T.PlaneGeometry(0.014, 1.44);
   var fPos = [[0, 2.53, fh], [0, 1.17, fh], [-1.51, 1.85, fv], [1.51, 1.85, fv]];
   for (i = 0; i < fPos.length; i++) {
     var fm = new T.Mesh(fPos[i][2], fasciaMat);
     fm.position.set(fPos[i][0], fPos[i][1], -2.43);
-    grp.add(fm);
+    con.add(fm);
   }
 
+  /* Планета за остеклением. Туман рубки на неё не действует: это
+     воздух помещения, а планета снаружи. Раньше туман её съедал, и
+     за окном оставалось мутное пятно. */
   planet = new T.Mesh(
     new T.SphereGeometry(7.5, phone ? 18 : 28, phone ? 14 : 20),
-    new T.MeshBasicMaterial({ map: planetTex() })
+    new T.MeshBasicMaterial({ map: planetTex(), fog: false })
   );
   planet.position.set(0.6, -3.6, -13);
-  grp.add(planet);
+  con.add(planet);
 
   /* Атмосферный ободок планеты */
   halo = new T.Mesh(
     new T.SphereGeometry(7.85, 20, 14),
-    new T.MeshBasicMaterial({ color: 0x42b2dc, transparent: true, opacity: 0.16, side: T.BackSide, blending: T.AdditiveBlending })
+    new T.MeshBasicMaterial({ color: 0x42b2dc, transparent: true, opacity: 0.16,
+      side: T.BackSide, blending: T.AdditiveBlending, fog: false })
   );
   halo.position.copy(planet.position);
-  grp.add(halo);
+  con.add(halo);
 
   /* Пульт под остеклением */
   /* Столешница остаётся тёмной, но с собственным слабым свечением и
-     почти без блеска. Светлить материал нельзя: ноль градусов
-     оборота - это нос, поэтому столешница попадает в кадр ещё в
-     салоне и на глянце ловит направленный свет из окна светлым
-     клином поперёк карточек. Разгорается она не материалом, а
-     светом пульта, который поднимается на подходе камеры. */
+     заметным глянцем: свет из окна обязан скользить по ней длинным
+     бликом, это и делает её столешницей, а не крашеной доской. */
   var deskMat = new T.MeshStandardMaterial({
-    color: COL.hull, roughness: 0.58, metalness: 0.34,
-    emissive: COL.emis, emissiveIntensity: 0.14
+    color: COL.hull, roughness: 0.32, metalness: 0.62,
+    emissive: COL.emis, emissiveIntensity: 0.14, envMapIntensity: ENVI * 1.1
   });
   var desk = new T.Mesh(new T.BoxGeometry(2.6, 0.12, 0.75), deskMat);
   desk.position.set(0, 1.02, -2.05);
   desk.rotation.x = -0.22;
-  grp.add(desk);
+  con.add(desk);
 
   /* ── Приборная стойка ──────────────────────────────────────
      Нужна ради стыка салона с секцией контактов. Раньше в акте
@@ -542,25 +1012,16 @@ function build() {
      центра рубки эти тумбы вставали чёрными глыбами поперёк
      салона. Правило простое - мебель обязана работать только в
      последней четверти оборота и не лезть в кадр, когда камера
-     стоит у карточек надёжности.
-
-     Красим её не в обшивку, а в цвет стеновой панели с лёгким
-     собственным свечением: чёрных провалов в кадре быть не должно,
-     свет в рубке один и он холодный. */
-  var riserMat = new T.MeshStandardMaterial({
-    color: COL.wall, roughness: 0.72, metalness: 0.28,
-    emissive: COL.emis, emissiveIntensity: 0.22
-  });
-  var riser = new T.Mesh(new T.BoxGeometry(3.05, 0.84, 0.46), riserMat);
+     стоит у карточек надёжности. */
+  var riser = new T.Mesh(new T.BoxGeometry(3.05, 0.84, 0.46), caseMat);
   riser.position.set(0, 0.44, -2.26);
-  grp.add(riser);
+  con.add(riser);
 
   /* Боковых тумб и крыльев здесь нарочно нет. Их пробовали дважды:
-     ноль градусов оборота - это как раз нос, поэтому всё, что
-     торчит вбок от пульта, попадает в кадр ещё в салоне, ловит
-     направленный свет из окна плашмя и превращается в светлые
+     всё, что торчит вбок от пульта, попадает в кадр ещё в салоне,
+     ловит направленный свет из окна плашмя и превращается в светлые
      клинья поперёк карточек надёжности. Борта кадра держат стены и
-     иллюминаторы рубки, им мебель для этого не нужна. */
+     стойки рубки, им мебель для этого не нужна. */
 
   /* Световая полоса по переднему ребру пульта. Это и есть тот
      нижний свет, который в секции контактов подсвечивает экран
@@ -568,47 +1029,58 @@ function build() {
      как свет от панели, а не как декоративное свечение карточки.
      Полоса одна: вторая, по низу стойки, давала в салоне две
      параллельные линии и читалась дорожной разметкой, а не пультом. */
-  var lip = new T.Mesh(
-    new T.BoxGeometry(2.62, 0.018, 0.022),
-    new T.MeshBasicMaterial({ color: COL.cyan, transparent: true, opacity: 0.55 })
-  );
+  var lip = new T.Mesh(new T.BoxGeometry(2.62, 0.018, 0.022), litCyan);
   lip.position.set(0, 1.05, -1.66);
-  grp.add(lip);
+  con.add(lip);
 
   /* Диоды на пульте: дышат от общего таймера с фазовым сдвигом */
-  var dGeo = new T.SphereGeometry(0.022, 6, 6);
+  var dGeo = new T.SphereGeometry(0.022, 6, 4);
   for (i = 0; i < (phone ? 10 : 18); i++) {
     var warm = i % 3 === 0;
-    var d = new T.Mesh(dGeo, new T.MeshBasicMaterial({ color: warm ? COL.vio : COL.cyan }));
+    var d = new T.Mesh(dGeo, new T.MeshBasicMaterial({ color: warm ? COL.vio : COL.cyan, fog: false }));
     d.position.set(-1.1 + (i % 9) * 0.26, 1.09 + (i > 8 ? 0.06 : 0), -2.16 + (i > 8 ? 0.16 : 0));
     d.userData.ph = i * 0.7;
-    grp.add(d);
+    con.add(d);
     diodes.push(d);
   }
 
-  /* Свет: один настоящий направленный из окна, остальное запечено
-     в цвет материалов и в мягкий ambient. Тени не считаем: под
-     всем, что должно их отбрасывать, нарисована фактура. */
-  lamp = new T.DirectionalLight(COL.lit, 3.4);
+  /* ── Свет ─────────────────────────────────────────────────
+     Ламп ровно пять и больше не будет: каждая лишняя это лишний
+     проход по всем материалам сцены на каждом кадре, а рубка живёт
+     в одном контексте на слабом телефоне. Поэтому постановочный
+     свет собран не из ламп, а из ролей.
+
+     Ключевой - холодный из остекления. Заполняющий - отражённый от
+     планеты, он держит дальнюю половину рубки, иначе за спиной
+     выходит чёрная дыра вместо помещения. Контровой тёплый стоит за
+     спиной и обводит стойки по кромке: без него полированный набор
+     сливается со стеной. Свет пульта разгорается на подходе (см.
+     tick). А лужи от ламп в нишах и полоса по полу - не лампы, а
+     нарисованные пятна: света они не считают, но глаз видит именно
+     их и достраивает освещение сам. */
+  lamp = new T.DirectionalLight(COL.lit, 3.2);
   lamp.position.set(-0.8, 2.6, -4);
-  scene.add(lamp);
-  /* Отражённый свет от планеты: он и держит дальнюю половину рубки,
-     иначе за спиной получается чёрная дыра вместо помещения */
-  scene.add(new T.HemisphereLight(0x2f4f6d, COL.hull, 1.35));
-  scene.add(new T.AmbientLight(0x33465e, 1.15));
-  var fill = new T.PointLight(COL.vio, 1.1, 9);
-  fill.position.set(1.4, 1.4, 1.6);
-  scene.add(fill);
+  con.add(lamp);
+  con.add(lamp.target);
+  lamp.target.position.set(0, 1.2, 0);
+
+  scene.add(new T.HemisphereLight(0x2f4f6d, 0x0a1420, 1.1));
+  scene.add(new T.AmbientLight(0x2b3d53, 0.85));
+
+  /* Контровой тёплый: стоит высоко за спиной входа и обводит
+     кромки. Он же единственная тёплая лампа в холодной комнате. */
+  var warmL = new T.PointLight(COL.vio, 2.2, 8.5, 1.6);
+  warmL.position.set(1.5, 2.5, 1.7);
+  scene.add(warmL);
+
   /* Свет пульта. Стоит низко, у самой стойки: это он ложится на
-     приборы снизу и тем же цветом подсвечивает экран анкеты. По
-     мере подхода камеры разгорается (см. tick) - иначе последний
-     акт выходил заметно темнее салона и читался другим кадром. */
-  /* Держим лампу на отлёте от столешницы: вплотную она выжигала
+     приборы снизу и тем же цветом подсвечивает экран анкеты.
+     Держим лампу на отлёте от столешницы: вплотную она выжигала
      переднее ребро пульта в белый клин, и в салоне этот клин
      перечёркивал кольцо карточек. */
   deskLight = new T.PointLight(COL.cyan, 0.85, 6.5);
   deskLight.position.set(0, 1.42, -1.95);
-  scene.add(deskLight);
+  con.add(deskLight);
 
   st.built = true;
   try { dispatchEvent(new CustomEvent("rc:interior-ready")); } catch (e) {}
@@ -778,8 +1250,16 @@ function setProgress(p) {
     ? Math.max(0, Math.min(1, ((g.RC_DOOR || 0) - 0.45) / 0.5))
     : Math.max(0, Math.min(1, (p - P_LOCK) / Math.max(1e-4, (P_IN - P_LOCK) * 1.75)));
   var eIn = 0.5 - 0.5 * Math.cos(Math.PI * enter);
-  st.dollyT = 1.7 * (1 - eIn);
-  st.fovT = 58 + eIn * 14;
+  /* Раньше камера доезжала ровно в центр круга (dolly ноль). В такой
+     точке поворот перестаёт быть проездом: ось вращения проходит
+     через объектив, ближнее и дальнее едут с одной скоростью, и
+     рубка читается панорамной картинкой. Теперь человек встаёт
+     чуть позади центра (restDolly) - и оборот сразу становится
+     проездом, а на телефоне ещё и отодвигает стену на читаемое
+     расстояние. */
+  var dRest = restDolly();
+  st.dollyT = dRest + (1.7 - dRest) * (1 - eIn);
+  st.fovT = fovTamb() + eIn * (fovIn() - fovTamb());
   root.style.setProperty("--int-enter", eIn.toFixed(3));
 
   /* Доля подхода к пульту: ноль - камера ещё стоит в центре рубки,
@@ -816,9 +1296,13 @@ function setProgress(p) {
      бы в отдельную картинку вместо угла комнаты. */
   if (con > 0) {
     var ec = 0.5 - 0.5 * Math.cos(Math.PI * con);
-    st.dollyT = -1.02 * ec;
+    /* Конечная точка та же, что и была (-1.02): подъезд к пульту
+       вымерен по кадру секции контактов, его не трогаем. Меняется
+       только начало пути - камера стартует не из центра, а из
+       позиции покоя. */
+    st.dollyT = dRest + (-1.02 - dRest) * ec;
     st.pitchT = -0.17 * ec;
-    st.fovT = 72 + ec * 6;
+    st.fovT = fovIn() + ec * 6;
   }
 
   /* Отъезд: камера уходит от пульта назад и поднимает взгляд к
@@ -829,7 +1313,7 @@ function setProgress(p) {
     var eb = 0.5 - 0.5 * Math.cos(Math.PI * back);
     st.dollyT = -1.02 + eb * 3.1;
     st.pitchT = -0.17 * (1 - eb);
-    st.fovT = 78 - eb * 14;
+    st.fovT = (fovIn() + 6) - eb * 14;
   }
 
   /* Щелчок фиксации: камера встала напротив очередной панели */
