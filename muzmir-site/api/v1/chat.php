@@ -265,9 +265,9 @@ $fmt     = chat_web_format($reply, $actions);
 $actions = $fmt['actions'];
 $image   = chat_sample_image($text);   // картинка-образец «по необходимости»
 
-if ($delay > 0) {
+$notice = $delay > 0 ? chat_wait_notice($delay, $greetName) : '';
+if ($delay > 0 && $notice !== '') {
     // Ответ придёт следующим опросом истории, когда настанет его время.
-    $notice = chat_wait_notice($delay, $greetName);
     try {
         insert('chat_messages', ['user_id' => $uid, 'session_key' => $sessionKey, 'role' => 'assistant',
                                  'text' => $notice, 'file' => '']);

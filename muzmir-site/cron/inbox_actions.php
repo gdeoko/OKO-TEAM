@@ -255,7 +255,27 @@ try {
         // называть результат раньше, чем он ушёл человеку на почту.
         $uid = (int) $r['user_id'] ?: null;
         $GLOBALS['chat_gates']    = [];
-        $GLOBALS['chat_user_ctx'] = $uid ? chat_user_context($uid) : '';
+        $ctxMail = $uid ? chat_user_context($uid) : '';
+        // ЧЕЛОВЕК БЕЗ КАБИНЕТА — ТОЖЕ НАШ УЧАСТНИК.
+        //
+        // Контекст брался только по учётной записи, а заявку можно подать и без
+        // регистрации: тогда помощник отвечал письмом вслепую, общими сроками, хотя
+        // заявка этого адреса лежит в базе. Личность здесь подтверждена самим
+        // фактом письма с того же адреса, что указан в заявке, — этого достаточно.
+        if ($ctxMail === '') {
+            try {
+                $apps = all("SELECT a.*, c.name AS comp_name, c.is_paid AS comp_paid, c.slug AS comp_slug,
+                                    c.results_mode AS comp_results_mode, c.results_date AS comp_results_date,
+                                    c.results_published_at AS comp_results_pub
+                               FROM applications a JOIN competitions c ON c.id=a.competition_id
+                              WHERE LOWER(a.email)=LOWER(?) ORDER BY a.id DESC LIMIT 8", [$from]);
+                if ($apps && function_exists('_chat_apps_lines')) {
+                    $ctxMail = "ЗАЯВКИ ЭТОГО УЧАСТНИКА (письмо пришло с адреса из заявки, личность подтверждена):\n"
+                             . _chat_apps_lines($apps);
+                }
+            } catch (\Throwable $e) {}
+        }
+        $GLOBALS['chat_user_ctx'] = $ctxMail;
         $ask = 'Письмо на ящик ' . $box . '@музыкальный-мир.рф. Тема: ' . (string) $r['subject']
              . "\nТекст письма:\n" . (string) $r['body_text'];
         $reply = chat_brain_reply($ask, 'inbox:' . md5($from), $uid, 'vk');
@@ -267,7 +287,12 @@ try {
         }
         if ($dry) { ia_log('ОТВЕТИЛ БЫ ' . $from . ': ' . mb_substr($reply, 0, 90)); $did['bot']++; continue; }
 
-        $ok = mail_send($from, 'Re: ' . ((string) $r['subject'] ?: 'Ваше обращение'), ia_wrap($reply),
+        // Ответ уходит с автозаменой ящика: 17 августа рабочая почта закрылась
+        // наружу, и прямой mail_send молча не доставил ни одного ответа.
+        $ok = function_exists('mail_send_failover')
+            ? mail_send_failover($from, 'Re: ' . ((string) $r['subject'] ?: 'Ваше обращение'), ia_wrap($reply),
+                                 ['account' => ia_account($box), 'pool' => 'tx'])
+            : mail_send($from, 'Re: ' . ((string) $r['subject'] ?: 'Ваше обращение'), ia_wrap($reply),
                         ['account' => ia_account($box)]);
         if ($ok) {
             ia_log('ответ отправлен: ' . $from);
