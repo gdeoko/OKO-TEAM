@@ -443,10 +443,16 @@ function build() {
     grp.add(ring);
   }
 
-  /* Остекление рубки: единственный настоящий источник света */
+  /* Остекление рубки: единственный настоящий источник света. Стекло
+     светится на просвет холодным, тем же тоном, что и направленный
+     свет из окна. Раньше это была тёмная плита, и нос корабля в
+     кадре превращался в чёрный прямоугольник - именно из-за него
+     секция контактов выглядела темнее салона, будто снята в другом
+     помещении. */
   var win = new T.Mesh(
     new T.PlaneGeometry(2.9, 1.35, 1, 1),
-    new T.MeshBasicMaterial({ color: COL.panel, transparent: true, opacity: 0.25 })
+    new T.MeshBasicMaterial({ color: COL.lit, transparent: true, opacity: 0.1,
+      blending: T.AdditiveBlending, depthWrite: false })
   );
   win.position.set(0, 1.85, -2.45);
   grp.add(win);
@@ -481,7 +487,13 @@ function build() {
   grp.add(halo);
 
   /* Пульт под остеклением */
-  var deskMat = new T.MeshStandardMaterial({ color: COL.hull, roughness: 0.4, metalness: 0.8 });
+  /* Столешница светлее обшивки и чуть светится сама: в акте пульта
+     она занимает низ кадра, и чёрная плита там читалась дырой в
+     кадре, а не прибором той же комнаты. */
+  var deskMat = new T.MeshStandardMaterial({
+    color: COL.panel, roughness: 0.45, metalness: 0.62,
+    emissive: COL.emis, emissiveIntensity: 0.2
+  });
   var desk = new T.Mesh(new T.BoxGeometry(2.6, 0.12, 0.75), deskMat);
   desk.position.set(0, 1.02, -2.05);
   desk.rotation.x = -0.22;
@@ -489,38 +501,51 @@ function build() {
 
   /* ── Приборная стойка ──────────────────────────────────────
      Нужна ради стыка салона с секцией контактов. Раньше в акте
-     пульта низ кадра занимал пол, и анкета висела над пустотой:
-     кадр не был похож на пульт, и раздел читался отдельной
-     картинкой. Стойка закрывает нижнюю треть кадра приборами, а
-     боковые крылья огибают нос, поэтому по краям остаются стены
-     рубки, а не обрыв. Всё это несколько коробок: дешевле любой
-     картинки и не тянет ни байта. */
-  var riserMat = new T.MeshStandardMaterial({ color: COL.hull, roughness: 0.55, metalness: 0.72 });
-  var riser = new T.Mesh(new T.BoxGeometry(3.35, 0.95, 0.55), riserMat);
-  riser.position.set(0, 0.5, -2.24);
+     пульта низ кадра занимал голый пол, и анкета висела над
+     пустотой: кадр не был похож на пульт, и раздел читался
+     отдельной картинкой.
+
+     Стойка нарочно неглубокая и прижата к носу. Первая попытка
+     была вдвое крупнее, с боковыми тумбами, и всё сломала: из
+     центра рубки эти тумбы вставали чёрными глыбами поперёк
+     салона. Правило простое - мебель обязана работать только в
+     последней четверти оборота и не лезть в кадр, когда камера
+     стоит у карточек надёжности.
+
+     Красим её не в обшивку, а в цвет стеновой панели с лёгким
+     собственным свечением: чёрных провалов в кадре быть не должно,
+     свет в рубке один и он холодный. */
+  var riserMat = new T.MeshStandardMaterial({
+    color: COL.wall, roughness: 0.62, metalness: 0.42,
+    emissive: COL.emis, emissiveIntensity: 0.28
+  });
+  var riser = new T.Mesh(new T.BoxGeometry(3.05, 0.84, 0.46), riserMat);
+  riser.position.set(0, 0.44, -2.26);
   grp.add(riser);
 
+  /* Крылья пульта: только тонкие столешницы, без тумб. Они
+     дотягивают панель до бортов, поэтому у краёв кадра приборы, а
+     не обрыв, и при этом ничего не загораживают. */
   for (i = -1; i <= 1; i += 2) {
-    var wing = new T.Mesh(new T.BoxGeometry(1.55, 0.12, 0.66), deskMat);
-    wing.position.set(i * 1.66, 1.04, -1.6);
-    wing.rotation.set(-0.2, i * 0.66, 0);
+    var wing = new T.Mesh(new T.BoxGeometry(1.25, 0.1, 0.56), deskMat);
+    wing.position.set(i * 1.62, 1.0, -1.94);
+    wing.rotation.set(-0.2, i * 0.58, 0);
     grp.add(wing);
-    var wbox = new T.Mesh(new T.BoxGeometry(1.55, 0.78, 0.5), riserMat);
-    wbox.position.set(i * 1.72, 0.6, -1.7);
-    wbox.rotation.y = i * 0.66;
-    grp.add(wbox);
   }
 
-  /* Световая полоса по переднему ребру пульта. Это и есть тот
-     нижний свет, который в секции контактов подсвечивает экран
-     анкеты снизу: источник один, поэтому подсветка формы читается
-     как свет от панели, а не как декоративное свечение карточки. */
-  var lip = new T.Mesh(
-    new T.BoxGeometry(2.62, 0.018, 0.022),
-    new T.MeshBasicMaterial({ color: COL.cyan, transparent: true, opacity: 0.7 })
-  );
+  /* Световые полосы по переднему ребру пульта и по низу стойки.
+     Это и есть тот нижний свет, который в секции контактов
+     подсвечивает экран анкеты снизу: источник один, поэтому
+     подсветка формы читается как свет от панели, а не как
+     декоративное свечение карточки. */
+  var lipMat = new T.MeshBasicMaterial({ color: COL.cyan, transparent: true, opacity: 0.7 });
+  var lip = new T.Mesh(new T.BoxGeometry(2.62, 0.018, 0.022), lipMat);
   lip.position.set(0, 1.05, -1.66);
   grp.add(lip);
+
+  var base = new T.Mesh(new T.PlaneGeometry(3.0, 0.02), lipMat);
+  base.position.set(0, 0.86, -2.02);
+  grp.add(base);
 
   /* Диоды на пульте: дышат от общего таймера с фазовым сдвигом */
   var dGeo = new T.SphereGeometry(0.022, 6, 6);

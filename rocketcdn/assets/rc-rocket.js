@@ -371,10 +371,13 @@ function padTexture(weak) {
      мимо собственных меток. */
   var fr = R * PAD_FOOT;
   for (i = 0; i < 3; i++) {
-    a = (i / 3) * Math.PI * 2 + Math.PI / 3 - Math.PI / 2;
-    var fx = m + Math.cos(a) * fr, fy = m + Math.sin(a) * fr;
+    /* Ноги смотрят вдоль локальной оси Z, повёрнутой на свой угол.
+       На холсте это (sin, cos): холст лежит плашмя, его x совпадает
+       с мировым x, а y - с мировым z. */
+    a = (i / 3) * Math.PI * 2 + Math.PI / 3;
+    var fx = m + Math.sin(a) * fr, fy = m + Math.cos(a) * fr;
     x.save();
-    x.translate(fx, fy); x.rotate(a);
+    x.translate(fx, fy); x.rotate(-a);
     x.strokeStyle = "rgba(232,176,48,.42)";
     x.lineWidth = S * 0.008;
     x.strokeRect(-R * 0.075, -R * 0.075, R * 0.15, R * 0.15);
@@ -394,6 +397,25 @@ function padTexture(weak) {
   tex.colorSpace = T.SRGBColorSpace || tex.colorSpace;
   tex.anisotropy = 8;
   return tex;
+}
+
+/* Ударная волна: светящееся кольцо, которое расходится от точки
+   касания. Оно и делает касание событием - глаз ловит расширение
+   быстрее, чем любую вспышку на месте. */
+function ringTexture() {
+  var S = 256;
+  var c = document.createElement("canvas");
+  c.width = c.height = S;
+  var x = c.getContext("2d");
+  var gr = x.createRadialGradient(S / 2, S / 2, 0, S / 2, S / 2, S / 2);
+  gr.addColorStop(0.00, "rgba(255,255,255,0)");
+  gr.addColorStop(0.62, "rgba(150,225,255,0)");
+  gr.addColorStop(0.80, "rgba(210,245,255,.85)");
+  gr.addColorStop(0.90, "rgba(120,205,245,.45)");
+  gr.addColorStop(1.00, "rgba(90,180,230,0)");
+  x.fillStyle = gr;
+  x.fillRect(0, 0, S, S);
+  return new T.CanvasTexture(c);
 }
 
 /* Мягкая тень: чёрное пятно с растушёвкой. Холст ракеты прозрачный
