@@ -260,6 +260,34 @@ function frame() {
   }
 }
 
+/* ── Монтажные склейки ───────────────────────────────────────
+   В кино смена плана не бывает нейтральной: у неё есть звук, свет и
+   толчок. На сайте переходы между актами были бесшумными, и три
+   самых драматических момента - зажигание, вход в атмосферу и
+   касание грунта - проходили незамеченными.
+
+   Здесь у каждого свой отклик кадра, короткий и без анимации
+   раскладки: вспышка на старте, багровый нагрев на входе в
+   атмосферу, толчок пыли на касании. Живёт меньше секунды и
+   снимает себя само. */
+var CUT = { ignite: "cut-fire", reentry: "cut-heat", landing: "cut-hit" };
+var cutNow = "", cutT = 0;
+
+addEventListener("rc:act", function (e) {
+  if (reduced || root.classList.contains("rc-reduced")) return;
+  var a = e && e.detail && e.detail.act;
+  var cls = CUT[a];
+  if (!cls || cls === cutNow) return;
+  if (cutNow) root.classList.remove(cutNow);
+  cutNow = cls;
+  root.classList.add(cls);
+  clearTimeout(cutT);
+  cutT = setTimeout(function () {
+    root.classList.remove(cls);
+    if (cutNow === cls) cutNow = "";
+  }, 1100);
+});
+
 /* ── Свет из проёма ──────────────────────────────────────────
    Момент, когда корабль отдаёт кадр рубке, прикрыт вспышкой света
    из люка: глаз читает её как шаг внутрь на свет, а не как смену
@@ -340,6 +368,20 @@ function boot() {
   glow.className = "rc-hatch-glow";
   glow.setAttribute("aria-hidden", "true");
   doc.body.appendChild(glow);
+
+  /* Свет корабля на странице. До сих пор объёмная сцена и плоский
+     контент делили один кадр, но не делили освещение: корабль летел
+     мимо карточек, как картинка мимо картинки. Здесь этому конец -
+     факел двигателя ложится отблеском на всё, над чем проходит.
+
+     Слой один и не считает ничего сам: положение корабля он берёт из
+     переменных, которые сцена и так публикует каждый второй кадр
+     (--rocket-x / --rocket-y / --rocket-near). Это ровно то, что
+     превращает страницу и сцену в один мир, а не в два слоя. */
+  var shine = doc.createElement("div");
+  shine.className = "rc-shine";
+  shine.setAttribute("aria-hidden", "true");
+  doc.body.appendChild(shine);
   if (!raf) raf = requestAnimationFrame(frame);
 }
 

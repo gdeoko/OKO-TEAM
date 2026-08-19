@@ -106,6 +106,50 @@ html.w3-on:not([data-theme="light"]) #kpi .kpi.on > div:nth-child(2) .kpi-n::aft
 html.w3-on:not([data-theme="light"]) #kpi .kpi.on > div:nth-child(3) .kpi-n::after { width: 71%; }
 html.w3-on:not([data-theme="light"]) #kpi .kpi.on > div:nth-child(4) .kpi-n::after { width: 55%; }
 
+/* ── 1б. Схема маршрута как навигационный экран ──────────────
+   Раздел, в котором корабль выравнивается над схемой сети, - это по
+   сценарию взгляд на бортовую карту. Значит и выглядеть он должен
+   картой на приборе: рамка прибора, строки развёртки, скобки
+   прицела по углам, тёплый отсвет от подсветки шкал.
+
+   Ничего не двигается и не пересчитывается: это статичная отделка
+   поверх уже готового блока. */
+html.w3-on:not([data-theme="light"]) #route .viz-card {
+  position: relative;
+  border-color: rgba(var(--int-cyan-rgb, 66,178,220), .3);
+  background:
+    repeating-linear-gradient(180deg,
+      rgba(var(--int-cyan-rgb, 66,178,220), .045) 0 2px,
+      transparent 2px 4px),
+    linear-gradient(180deg,
+      rgba(var(--int-cyan-rgb, 66,178,220), .07),
+      rgba(var(--int-deep-rgb, 5,12,21), .5));
+  box-shadow:
+    inset 0 1px 0 rgba(var(--int-lit-rgb, 207,233,245), .12),
+    0 0 50px -22px rgba(var(--int-cyan-rgb, 66,178,220), .85);
+}
+html.w3-on:not([data-theme="light"]) #route .viz-card::before,
+html.w3-on:not([data-theme="light"]) #route .viz-card::after {
+  content: '';
+  position: absolute;
+  width: 18px; height: 18px;
+  border: 1px solid rgba(var(--int-cyan-rgb, 66,178,220), .7);
+  pointer-events: none;
+}
+html.w3-on:not([data-theme="light"]) #route .viz-card::before {
+  left: 9px; top: 9px; border-right: 0; border-bottom: 0;
+}
+html.w3-on:not([data-theme="light"]) #route .viz-card::after {
+  right: 9px; bottom: 9px; border-left: 0; border-top: 0;
+}
+/* Заголовок карты - строка прибора, а не заголовок статьи */
+html.w3-on:not([data-theme="light"]) #route .viz-card h3 {
+  letter-spacing: .12em;
+  text-transform: uppercase;
+  font-size: clamp(13px, 1.5vw, 15px);
+  color: rgba(var(--int-lit-rgb, 207,233,245), .92);
+}
+
 /* ── 2. Створ преимуществ ────────────────────────────────────
    Ряд карточек стоит воротами: крайние отвёрнуты внутрь, средние
    фронтально. Разворот идёт только на широком экране - на телефоне
