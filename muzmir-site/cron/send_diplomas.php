@@ -92,6 +92,27 @@ try { db()->exec("ALTER TABLE applications ADD COLUMN result_sent_at TEXT DEFAUL
 date_default_timezone_set('Europe/Moscow');
 $now = new DateTime('now');
 
+// ПЯТЬ НЕУДАЧ — НЕ ПРИГОВОР НАГРАДНОМУ МАТЕРИАЛУ.
+//
+// Счётчик попыток защищает от бесконечного долбления в закрытую дверь, но
+// дверь открывается: 18 августа девять дипломов выпали из очереди из-за
+// блокировки наградного ящика и не ушли бы уже никогда — их отправили руками
+// через сутки. Раз в час счётчик обнуляется у всех, кто ждёт дольше часа:
+// канал за это время мог восстановиться, а если нет — будет ещё пять попыток
+// и запись в журнале.
+$__lastReset = (string) (function_exists('setting') ? setting('diplomas_tries_reset_at', '') : '');
+if ($__lastReset === '' || strtotime($__lastReset) < time() - 3600) {
+    try {
+        q("UPDATE diplomas SET send_tries = 0
+            WHERE COALESCE(sent_at,'') = '' AND COALESCE(send_tries,0) >= 5
+              AND COALESCE(scheduled_at,'') <> ''
+              AND datetime(scheduled_at) <= datetime('now','localtime','-1 hour')");
+        $__n = (int) db()->query("SELECT changes()")->fetchColumn();
+        if ($__n > 0) fwrite(STDERR, "send_diplomas: счётчик попыток обнулён у $__n наградных материалов\n");
+        if (function_exists('set_setting')) set_setting('diplomas_tries_reset_at', date('Y-m-d H:i:s'));
+    } catch (\Throwable $e) {}
+}
+
 // 1а) РЕЗУЛЬТАТЫ по расписанию: у коротких конкурсов результат уходит по result_send_at
 //     (моментально — уже отправлен в админке; дата/авто — отправляет этот cron), ОТДЕЛЬНО
 //     и РАНЬШЕ наградных дипломов. Наградной материал уходит позже (через N раб.дней от подачи).

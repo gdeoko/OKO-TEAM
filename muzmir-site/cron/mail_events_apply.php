@@ -63,6 +63,19 @@ foreach ($rows as $r) {
         continue;
     }
 
+    // ДОКАЗАННО МЁРТВЫЙ АДРЕС ЗАКРЫВАЕМ РАЗ И НАВСЕГДА.
+    //
+    // Статусы в трёх базах снимались, а стоп-лист оставался пустым: 177 адресов,
+    // про которые почтовик прямым текстом сказал «такого ящика нет», не были в
+    // нём ни разу. Любой новый сбор учреждений или ручная выгрузка возвращали их
+    // в очередь, и квота снова тратилась на стену.
+    if ((string) $r['status'] === 'hard_bounced') {
+        try {
+            q("INSERT OR IGNORE INTO mail_stop (email, reason, source) VALUES (?,?,?)",
+              [$e, 'ящика не существует', 'событие доставки']);
+        } catch (\Throwable $ex) {}
+    }
+
     foreach ([
         'учреждения' => ["UPDATE institutions SET status=?, updated_at=datetime('now','localtime')
                            WHERE status NOT IN ('bounced','unsubscribed','banned') AND LOWER(email)=?",

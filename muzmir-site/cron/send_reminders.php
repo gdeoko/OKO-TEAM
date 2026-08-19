@@ -48,11 +48,30 @@ if (!cron_lock(JOB, 3600 * 6)) {
     exit(0);
 }
 
-/** Единый способ поставить письмо в очередь (мягко, если mail_queue/mail_template доступны). */
-function reminder_enqueue(string $email, string $name, string $subject, string $html): bool {
+/**
+ * Единый способ поставить письмо в очередь.
+ *
+ * ПИСЬМО ВСЕЙ БАЗЕ — ЭТО РАССЫЛКА, А НЕ ЛИЧНОЕ ПИСЬМО.
+ *
+ * Напоминание о дедлайне обходит всех активных подписчиков (28 тысяч адресов), а
+ * ставилось оно без приоритета и типа кампании. Для почтового слоя это личное
+ * письмо: оно уходит мимо сервиса рассылок, с рабочего ящика центра, без учёта
+ * суточных норм. Ровно так 17 августа 161 письмо с kc@ стоило домену
+ * ограничения на отправку. Признак массовости теперь передаётся явно.
+ *
+ * $bulk=true — письмо волны (priority 5, кампания konkurs, канал news@).
+ */
+function reminder_enqueue(string $email, string $name, string $subject, string $html,
+                          bool $bulk = false): bool {
     if ($email === '' || !filter_var($email, FILTER_VALIDATE_EMAIL)) return false;
     if (!function_exists('mail_queue')) return false;
-    return mail_queue($email, $name, $subject, $html) > 0;
+    $id = mail_queue($email, $name, $subject, $html);
+    if ($id > 0 && $bulk) {
+        try {
+            q("UPDATE mail_queue SET priority=5, campaign_type='konkurs' WHERE id=?", [$id]);
+        } catch (\Throwable $e) {}
+    }
+    return $id > 0;
 }
 
 /** Настоящая ссылка отписки (/api/v1/unsubscribe.php?token=...), тот же механизм, что у рассылок. */
@@ -190,7 +209,8 @@ try {
                 ]) : '';
                 if ($html !== '' && reminder_enqueue(
                     (string) $s['email'], (string) ($s['name'] ?? ''),
-                    'Осталось ' . $days . ' дн. до конца приёма заявок - «' . $c['name'] . '»', $html
+                    'Осталось ' . $days . ' дн. до конца приёма заявок - «' . $c['name'] . '»', $html,
+                    true      // письмо всей базе: только через рассылочный ящик
                 )) {
                     $queued++;
                 }

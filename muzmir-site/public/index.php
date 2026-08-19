@@ -281,6 +281,16 @@ if (preg_match('#^/diploma/([A-Za-z0-9\-]+)\.pdf$#', $route, $m)) {
         echo 'Этот документ доступен только участнику. Войдите в личный кабинет — все Ваши дипломы там.';
         exit;
     }
+    // НАГРАДНЫЙ МАТЕРИАЛ ОТКРЫВАЕТСЯ НЕ РАНЬШЕ, ЧЕМ УХОДИТ НА ПОЧТУ.
+    //
+    // Номер диплома известен участнику с момента изготовления, а изготавливается
+    // он за несколько дней до отправки. По прямой ссылке звание можно было узнать
+    // заранее — в том числе по конкурсу, итоги которого ещё не объявлены.
+    if ($__mine && !$__staff && !$__sigOk && trim((string) ($d['sent_at'] ?? '')) === '') {
+        http_response_code(403);
+        echo 'Наградный материал ещё готовится. Он придёт на почту из заявки и появится в личном кабинете.';
+        exit;
+    }
     require_once BASE_PATH . '/core/diploma_render.php';
 
     $file = '';
@@ -327,9 +337,16 @@ if (preg_match('#^/diploma-view/([A-Za-z0-9\-]+)$#', $route, $m)) {
     $__mine  = $app && $__me && (int) ($app['user_id'] ?? 0) === (int) $__me['id'];
     $__staff = function_exists('user_can') && $__me && user_can('jury');
     $__sig   = (string) ($_GET['s'] ?? '');
-    if (!$__mine && !$__staff && !($__sig !== '' && diploma_sign_ok((string) $d['number'], $__sig))) {
+    $__sigOk2 = $__sig !== '' && diploma_sign_ok((string) $d['number'], $__sig);
+    if (!$__mine && !$__staff && !$__sigOk2) {
         http_response_code(403);
         echo 'Этот документ доступен только участнику. Проверить подлинность диплома по номеру можно на странице «Проверка документа».';
+        exit;
+    }
+    // До отправки бланк не показываем даже владельцу: см. соседний маршрут.
+    if ($__mine && !$__staff && !$__sigOk2 && trim((string) ($d['sent_at'] ?? '')) === '') {
+        http_response_code(403);
+        echo 'Наградный материал ещё готовится. Он придёт на почту из заявки и появится в личном кабинете.';
         exit;
     }
     $c   = $app ? one("SELECT * FROM competitions WHERE id=?", [(int) $app['competition_id']]) : null;

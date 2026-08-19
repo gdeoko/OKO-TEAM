@@ -48,6 +48,23 @@ function dops_result_send_now(int $appId, bool $duplicate = false): array {
         return ['ok' => false, 'msg' => 'Результат уже отправлен. Используйте «Продублировать».'];
     }
 
+    // РЕЗУЛЬТАТ КОНКУРСА С ОГЛАШЕНИЕМ СПИСКОМ НЕ УХОДИТ РАНЬШЕ ОГЛАШЕНИЯ.
+    //
+    // У длинного конкурса итоги объявляются в назначенный день сразу всем: пост
+    // в сообществе, список на сайте, письма участникам. Одна нажатая кнопка
+    // «Отправить сейчас» ломает это правило — один участник узнаёт звание раньше
+    // остальных, и оглашение перестаёт быть оглашением. Кнопка снова заработает,
+    // как только конкурс опубликует результаты.
+    $comp = one("SELECT name, results_mode, results_date, results_published_at
+                   FROM competitions WHERE id=?", [(int) ($a['competition_id'] ?? 0)]);
+    if ($comp && (string) ($comp['results_mode'] ?? '') === 'list'
+        && trim((string) ($comp['results_published_at'] ?? '')) === '') {
+        $day = trim((string) ($comp['results_date'] ?? ''));
+        return ['ok' => false, 'msg' => 'Итоги конкурса «' . (string) $comp['name'] . '» объявляются списком'
+            . ($day !== '' ? ' ' . (function_exists('ru_date') ? ru_date($day) : $day) : '')
+            . '. До оглашения результат участнику не отправляется — опубликуйте итоги конкурса.'];
+    }
+
     require_once BASE_PATH . '/core/result_mail.php';
     if (is_file(BASE_PATH . '/core/notifications.php')) require_once BASE_PATH . '/core/notifications.php';
 

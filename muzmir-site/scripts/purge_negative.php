@@ -108,12 +108,27 @@ printf("  стоп-лист сервиса рассылок:      %6d\n", $fromS
 /* 2. События доставки. */
 $n = 0;
 try {
-    foreach (all("SELECT DISTINCT email, status FROM mail_events
+    // ЖЁСТКИЙ ОТКАЗ САМ ПО СЕБЕ НЕ ДОКАЗЫВАЕТ, ЧТО ЯЩИКА НЕТ.
+    //
+    // Из 3 954 отказов в журнале почтовик прямым текстом назвал адрес мёртвым
+    // только в 174 случаях; остальные — «спам», «политика», молчаливое «550».
+    // Прежнее правило удалило бы три с половиной тысячи живых подписчиков за один
+    // прогон, ровно так, как это уже случилось 10 августа. Вычёркиваем только по
+    // доказательству, всё остальное оставляем в базе.
+    if (!function_exists('mrep_bounce_is_proof') && is_file(BASE_PATH . '/core/mail_reputation.php')) {
+        require_once BASE_PATH . '/core/mail_reputation.php';
+    }
+    $skipped = 0;
+    foreach (all("SELECT DISTINCT email, status, COALESCE(comment,'') c FROM mail_events
                    WHERE status IN ('hard_bounced','spam','unsubscribed')") as $r) {
+        if ((string) $r['status'] === 'hard_bounced'
+            && function_exists('mrep_bounce_is_proof')
+            && !mrep_bounce_is_proof((string) $r['c'])) { $skipped++; continue; }
         $add((string) $r['email'], ['hard_bounced' => 'ящика не существует', 'spam' => 'пожаловался на спам',
               'unsubscribed' => 'отписался'][(string) $r['status']] ?? 'отказ', 'события доставки');
         $n++;
     }
+    if ($skipped > 0) printf("  отказов без доказательства (адрес оставлен): %6d\n", $skipped);
 } catch (\Throwable $e) {}
 printf("  события доставки:                %6d\n", $n);
 
