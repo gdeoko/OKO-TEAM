@@ -137,3 +137,14 @@
   .rc-gate-card { transform: none; transition: opacity .2s linear; }
 }
 html[data-degrade="3"] .rc-gate { display: none; }
+
+/* Экраны проёма живут ровно один эпизод - пока мы входим в люк.
+   Внутри корабля и в финале у них нет права появляться: те же два
+   тезиса человек уже прочитал на стене рубки, и повтор в кадре
+   финального титра читается мусором. Правило страхует нас от любой
+   гонки состояний: акт сцены важнее внутренних долей слоя. */
+html[data-act="cabin"] .rc-gate,
+html[data-act="manual"] .rc-gate,
+html[data-act="console"] .rc-gate,
+html[data-act="egress"] .rc-gate,
+html.rc-inside .rc-gate { display: none !important; }

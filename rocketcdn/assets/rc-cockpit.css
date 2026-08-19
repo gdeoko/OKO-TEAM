@@ -35,8 +35,20 @@
 .rc-cockpit .cab-img,
 .rc-cockpit .cab-void,
 .rc-cockpit .cab-glass {
-  -webkit-clip-path: inset(var(--cab-top, 0%) 0 0 0);
-  clip-path: inset(var(--cab-top, 0%) 0 0 0);
+  /* Не резкий срез, а растворение: прямая линия поперёк картинки
+     сразу выдавала вырезку из фотографии. Полоса перехода узкая -
+     пять процентов кадра, - поэтому на подъезде, когда обрезка
+     уходит в ноль, верх кадра остаётся плотным. */
+  -webkit-mask-image: linear-gradient(180deg,
+    transparent 0,
+    transparent calc(var(--cab-top, 0%) - 5%),
+    #000 calc(var(--cab-top, 0%) + 3%),
+    #000 100%);
+  mask-image: linear-gradient(180deg,
+    transparent 0,
+    transparent calc(var(--cab-top, 0%) - 5%),
+    #000 calc(var(--cab-top, 0%) + 3%),
+    #000 100%);
 }
 
 .rc-cockpit .cab-img {
