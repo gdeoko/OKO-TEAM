@@ -246,6 +246,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $opt = [];
                 if (!empty($m['attach'])) $opt['attach'] = (string) $m['attach'];
                 if (function_exists('mail_route_account')) { $acc = mail_route_account($m); if ($acc) $opt['account'] = $acc; }
+                // РУЧНАЯ ОТПРАВКА НЕ ДЕЛАЕТ МАССОВОЕ ПИСЬМО ЛИЧНЫМ.
+                //
+                // Пул считается по приоритету и типу кампании. Кнопка их не передавала,
+                // и письмо волны уходило как личное, то есть с рабочего ящика центра
+                // (kc@ или nagradi.on@) — ровно то, из-за чего 17 августа домен и
+                // получил ограничение. Передаём признаки письма как есть.
+                $opt['priority'] = (int) ($m['priority'] ?? 0);
+                if (function_exists('mail_pool_for')) $opt['pool'] = mail_pool_for($m);
                 $ok = false;
                 try {
                     $ok = function_exists('mail_send_failover')
@@ -263,8 +271,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 // Не ушло: возвращаем в очередь приоритетным и ПОКАЗЫВАЕМ причину,
                 // иначе выглядит как «нажал — ничего не произошло».
                 $why = function_exists('mail_last_error') ? mail_last_error() : '';
+                // Приоритет не обнуляем: он определяет пул отправки, и сброс в ноль
+                // превращал массовое письмо в личное, то есть отправлял его с рабочего
+                // ящика центра при следующем заходе очереди.
                 update('mail_queue', [
-                    'status' => 'queued', 'scheduled_at' => null, 'priority' => 0, 'tries' => 0,
+                    'status' => 'queued', 'scheduled_at' => null, 'tries' => 0,
                     'error' => mb_substr($why !== '' ? $why : 'Отправка не удалась', 0, 300),
                 ], 'id=:id', ['id' => $id]);
                 audit('dispatch_sendnow', 'mail', $id, ['ok' => false, 'why' => $why]);
@@ -279,10 +290,17 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         } elseif ($do === 'duplicate') {
             $m = one("SELECT * FROM mail_queue WHERE id=?", [$id]);
             if (!$m) disp_done(false, 'Письмо не найдено.');
+            // Копия письма сохраняет его природу: массовое остаётся массовым и уходит
+            // с рассылочного ящика. С priority 0 копия волны уходила как личное письмо
+            // центра, минуя и сервис рассылок, и запрет на рабочие ящики.
             insert('mail_queue', [
                 'to_email' => (string) $m['to_email'], 'to_name' => (string) ($m['to_name'] ?? ''),
                 'subject' => (string) $m['subject'], 'body' => (string) $m['body'],
-                'attach' => (string) ($m['attach'] ?? ''), 'status' => 'queued', 'priority' => 0,
+                'attach' => (string) ($m['attach'] ?? ''), 'status' => 'queued',
+                'priority'      => (int) ($m['priority'] ?? 0),
+                'campaign_type' => (string) ($m['campaign_type'] ?? ''),
+                'newsletter_id' => (int) ($m['newsletter_id'] ?? 0),
+                'build'         => (string) ($m['build'] ?? ''),
             ]);
             audit('dispatch_duplicate', 'mail', $id, []);
             disp_done(true, 'Копия письма поставлена в очередь (уйдёт заново).');
@@ -296,10 +314,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             if (!filter_var($to, FILTER_VALIDATE_EMAIL)) disp_done(false, 'Укажите корректный email получателя.');
             if ($subj === '' || $body === '') disp_done(false, 'Тема и текст письма не должны быть пустыми.');
             $sched = $dt !== '' ? date('Y-m-d H:i:s', strtotime(str_replace('T', ' ', $dt)) ?: time()) : null;
+            $src = one("SELECT priority, campaign_type, newsletter_id FROM mail_queue WHERE id=?", [$id]);
             insert('mail_queue', [
                 'to_email' => $to, 'to_name' => trim(input('to_name')),
                 'subject' => $subj, 'body' => $body, 'attach' => $attach,
-                'status' => 'queued', 'priority' => 0, 'scheduled_at' => $sched,
+                'status' => 'queued', 'scheduled_at' => $sched,
+                // Правки текста не меняют природу письма: массовое остаётся массовым.
+                'priority'      => (int) ($src['priority'] ?? 0),
+                'campaign_type' => (string) ($src['campaign_type'] ?? ''),
+                'newsletter_id' => (int) ($src['newsletter_id'] ?? 0),
             ]);
             audit('dispatch_duplicate_edit', 'mail', $id, []);
             disp_done(true, 'Новое письмо с правками поставлено в очередь' . ($sched ? ' на ' . disp_dt($sched) : ' (уйдёт сразу)') . '.');

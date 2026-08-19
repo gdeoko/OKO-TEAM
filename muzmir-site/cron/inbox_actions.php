@@ -53,7 +53,19 @@ function ia_log(string $s): void { cron_log(JOB, $s); echo $s . "\n"; }
 function ia_account(string $mailbox): array {
     $name = inbox_boxes()[$mailbox] ?? 'news';
     $acc  = mail_account_by_name($name);
-    return is_array($acc) ? $acc : [];
+    if (!is_array($acc)) $acc = [];
+
+    // С ЯЩИКА, КОТОРЫЙ ТОЛЬКО ЧИТАЕМ, ОТВЕЧАТЬ НЕЛЬЗЯ.
+    //
+    // Исторический адрес центра на mail.ru подключён для чтения: туда ведомства
+    // пишут по старым бланкам. Отправка с него не наш канал, и ответ помощника
+    // уходил бы с адреса, которого нет ни на сайте, ни в подписи. Отвечаем с
+    // рабочей почты центра — как на письмо сайта.
+    if (!empty($acc['read_only'])) {
+        $work = mail_account_by_name('kc');
+        if (is_array($work) && !empty($work['user'])) return $work;
+    }
+    return $acc;
 }
 
 /** Простое письмо от центра: без рекламной обвязки и без кнопки отписки. */
@@ -194,6 +206,31 @@ try {
 
         /* ── Вопрос: отвечает помощник ── */
         if (!$autoReply) { $mark('human'); continue; }
+
+        // ПОМОЩНИК ОТВЕЧАЕТ ТОЛЬКО СВОИМ.
+        //
+        // На почту центра идёт поток служебных писем от сервисов: регистратор
+        // домена, оператор фискальных данных, сам сервис рассылок, рекламные
+        // письма площадок. Формально это «вопрос» с живого адреса, и помощник
+        // честно отвечал регистратору домена рассказом о сроках приёма заявок.
+        // Отвечаем, только если адрес есть в наших базах: участник, пользователь
+        // кабинета, учреждение, ведомство или подписчик. Остальное — оператору.
+        $known = false;
+        foreach ([
+            "SELECT 1 FROM applications WHERE LOWER(email)=? LIMIT 1",
+            "SELECT 1 FROM users        WHERE LOWER(email)=? LIMIT 1",
+            "SELECT 1 FROM institutions WHERE LOWER(email)=? LIMIT 1",
+            "SELECT 1 FROM ministries   WHERE LOWER(email)=? LIMIT 1",
+            "SELECT 1 FROM subscribers  WHERE LOWER(email)=? LIMIT 1",
+        ] as $sql) {
+            try { if (scalar($sql, [$from])) { $known = true; break; } } catch (\Throwable $e) {}
+        }
+        if (!$known) {
+            ia_log('адрес не из наших баз, помощник не отвечает: ' . $from);
+            $mark('human');
+            $did['skip']++;
+            continue;
+        }
 
         // Один ответ на адрес в полчаса: без этого переписка с чужим
         // автоответчиком превращается в бесконечную петлю, а домен — в спамера.

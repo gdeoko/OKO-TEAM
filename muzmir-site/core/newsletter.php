@@ -1340,6 +1340,29 @@ function newsletter_process_queue(int $limit): int {
             return false;
         }
 
+        // ОТПИСКА ДЕЙСТВУЕТ СРАЗУ, А НЕ СО СЛЕДУЮЩЕЙ ВОЛНЫ.
+        //
+        // Отписавшихся отсеивали при постановке в очередь, но очередь живёт
+        // несколько дней: человек нажал «отписаться» вчера, а его письмо уже
+        // стояло и уходило сегодня. На 19 августа таких писем в очереди было 82.
+        // Проверяем в момент отправки: массовое письмо отписавшемуся не уходит.
+        if ((int) ($row['priority'] ?? 0) > 0) {
+            $subActive = null;
+            try {
+                $s = one("SELECT active FROM subscribers WHERE LOWER(email)=?",
+                         [mb_strtolower(trim((string) $row['to_email']))]);
+                if ($s) $subActive = (int) $s['active'];
+            } catch (\Throwable $e) {}
+            if ($subActive === 0) {
+                update('mail_queue', [
+                    'status' => 'cancelled',
+                    'error'  => 'человек отписался от рассылки, письмо не отправлено',
+                ], 'id=:id', ['id' => $id]);
+                nl_log('process: #' . $id . ' отменено, адресат отписался');
+                return false;
+            }
+        }
+
         // ЧУЖУЮ ПРИЧИНУ ОТКАЗА СЮДА НЕ ПУСКАЕМ.
         // mail_last_error() — статик на весь процесс, и сбрасывается он только внутри
         // mail_send(). Если это письмо провалилось ДО отправки (не собралось тело,

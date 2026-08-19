@@ -323,6 +323,22 @@ foreach ($comps as $ci) {
     $appMap[$num] = $ci['name'];
     audit('apply', 'applications', $aid, ['number' => $num, 'competition' => $ci['slug']]);
 }
+// ЗАЯВИТЕЛЬ — ЭТО НАША БАЗА.
+//
+// Человек, подавший заявку, оставил адрес нам сам: он должен попасть в список
+// подписчиков, иначе не получит ни анонса конкурсов, ни напоминания о награде,
+// а рассылка живёт на старой выгрузке. Проверка 19 августа: из 128 адресов в
+// заявках 30 в подписчиках отсутствовали, и все свежие. Добавляем сразу после
+// приёма заявки. Кто отписался раньше, остаётся отписанным: nl_ensure_subscriber
+// существующую запись не трогает и active не поднимает.
+if (!function_exists('nl_ensure_subscriber') && is_file(BASE_PATH . '/core/newsletter.php')) {
+    require_once BASE_PATH . '/core/newsletter.php';
+}
+if ($email !== '' && function_exists('nl_ensure_subscriber')) {
+    try { nl_ensure_subscriber($email, (string) ($full_name ?: $group_name), 'apply'); }
+    catch (\Throwable $e) { /* подписка не должна ломать приём заявки */ }
+}
+
 // Совместимость: если одна заявка — сохраняем прежние переменные
 $number = $numbers[0];
 $appId  = $appIds[0];

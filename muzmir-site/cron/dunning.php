@@ -24,7 +24,24 @@ require_once BASE_PATH . '/core/helpers.php';
 require_once BASE_PATH . '/core/mailer.php';
 if (is_file(BASE_PATH . '/core/notifications.php')) require_once BASE_PATH . '/core/notifications.php';
 require_once BASE_PATH . '/core/paylink.php';   // прямые ссылки на оплату конкретного счёта
+require_once BASE_PATH . '/core/outreach_window.php';
 require_once __DIR__ . '/_lib.php';
+
+/**
+ * ДОЖИМ НЕ БУДИТ ЧЕЛОВЕКА НОЧЬЮ.
+ *
+ * Крон работает раз в минуту, и напоминания «оплатите» уходили в любое время
+ * суток, включая ночь и воскресенье, — а это письмо от имени центра, и правило
+ * рабочего окна на него распространяется. Исключение одно: самое первое
+ * напоминание через три минуты после подачи. Человек в этот момент на сайте,
+ * он только что оставил заявку и ждёт счёт; для него это продолжение действия,
+ * а не рассылка. Остальные этапы ждут ближайшего рабочего часа: reminder_log
+ * помнит, что письмо не отправлено, и следующий прогон в окне его отправит.
+ */
+function dun_may_send(string $stage): bool {
+    if ($stage === '3min') return true;
+    return outreach_window_ok();
+}
 
 const JOB = 'dunning';
 
@@ -102,6 +119,7 @@ try {
         foreach ($STAGES as [$stage, $secs, $subjPrefix]) {
             $kind = 'dun_app_' . $stage;
             if (dun_sent($id, $kind) || !dun_age_ok($created, $secs)) continue;
+            if (!dun_may_send($stage)) continue;
             $isFinal = $stage === '24h';
             $html = dun_app_mail_html($a, $baseCab, $isFinal);
             if ($html !== '' && mail_queue((string) $a['email'], $name, 'Оплатите участие — «' . $a['comp_name'] . '»', $html)) {
@@ -143,6 +161,7 @@ try {
         foreach ($STAGES as [$stage, $secs, $subjPrefix]) {
             $kind = 'dun_ord_' . $stage;
             if (dun_sent($id, $kind) || !dun_age_ok($created, $secs)) continue;
+            if (!dun_may_send($stage)) continue;
             $isFinal = $stage === '24h';
             $html = dun_ord_mail_html($o, $baseCab, $isFinal);
             if ($html !== '' && mail_queue((string) $o['email'], $name, 'Оплатите заказ наград №' . $id, $html)) {

@@ -263,7 +263,9 @@ foreach ($groups as $appId => $items) {
     }
 
     $cnt = count($items);
-    $subject = ($cnt > 1 ? 'Ваши наградные документы конкурса «' : 'Ваш диплом конкурса «')
+    // Правило владельца: наградную бумагу называем наградным материалом, а не
+    // документом. «Документ» участник читает как справку из канцелярии.
+    $subject = ($cnt > 1 ? 'Ваши наградные материалы конкурса «' : 'Ваш наградной материал конкурса «')
              . $first['comp_name'] . '» - заявка № ' . $first['app_number'];
     $html = _diploma_group_html($blocks, (string)$first['full_name'], (string)$first['comp_name']);
 
@@ -437,15 +439,15 @@ function _diploma_group_html(array $blocks, string $name, string $comp): string 
             . '<tr><td align="center">' . $img . '</td></tr></table>';
     }
 
-    $inner = '<h1 style="margin:0 0 14px;font-family:Georgia,serif;font-size:24px;color:' . MM_NAVY . ';font-weight:700;line-height:1.25;">Ваши наградные документы</h1>'
+    $inner = '<h1 style="margin:0 0 14px;font-family:Georgia,serif;font-size:24px;color:' . MM_NAVY . ';font-weight:700;line-height:1.25;">Ваши наградные материалы</h1>'
         . '<p style="margin:0 0 12px;">' . $hello . '</p>'
-        . '<p style="margin:0 0 20px;">По итогам аттестации компетентного жюри конкурса «' . h($comp) . '» подготовлены Ваши наградные документы. Каждый — с номером и QR-кодом проверки подлинности; официальные PDF-файлы прикреплены к письму.</p>'
+        . '<p style="margin:0 0 20px;">По итогам аттестации компетентного жюри конкурса «' . h($comp) . '» подготовлены Ваши наградные материалы. Каждый — с номером и QR-кодом проверки подлинности; официальные PDF-файлы прикреплены к письму.</p>'
         . $cards
         . '<p style="margin:6px 0 6px;font-weight:600;color:' . MM_NAVY . ';">Оригиналы наград — Почтой России:</p>'
         . '<p style="margin:0 0 8px;font-size:14px;color:' . MM_INK . ';line-height:1.6;">По Вашему результату доступны к заказу: <b>' . $award . '</b>, оригинал диплома на дизайнерской бумаге и благодарность педагогу — с голографическими логотипами, живыми подписями и печатями.</p>';
 
     return mm_email_tx($inner, [
-        'preheader' => 'Ваши наградные документы конкурса «' . $comp . '» готовы. Файлы во вложении.',
+        'preheader' => 'Ваши наградные материалы конкурса «' . $comp . '» готовы. Файлы во вложении.',
         'hero'      => mm_cta_primary($base . '/awards', 'Заказать наградной материал', 'По результату: ' . $award),
         'actions'   => [['Проверить подлинность', $base . '/verify'], ['Личный кабинет', $base . '/cabinet'], ['Оставить отзыв', $base . '/reviews']],
         'thanks'    => true,

@@ -182,7 +182,20 @@ function partner_join_url(int $instId): string {
 function partner_join_check(int $instId, string $sig): ?array {
     if ($instId <= 0 || $sig === '') return null;
     if (!hash_equals(partner_join_sign($instId), $sig)) return null;
-    return one("SELECT * FROM institutions WHERE id=?", [$instId]) ?: null;
+    $inst = one("SELECT * FROM institutions WHERE id=?", [$instId]) ?: null;
+    if (!$inst) return null;
+
+    // КТО ПРОСИЛ БОЛЬШЕ НЕ ПИСАТЬ, ТОГО НЕ ЗАПИСЫВАЕМ В ПАРТНЁРЫ ПО СТАРОЙ ССЫЛКЕ.
+    //
+    // Ссылка живёт в письме вечно, а учреждение за это время могло отписаться,
+    // попасть в исключённые или быть заблокированным. Приём партнёрства по такой
+    // ссылке возвращал бы адрес обратно в переписку и в рассылку — ровно против
+    // того, о чём человек попросил.
+    $st = mb_strtolower(trim((string) ($inst['status'] ?? '')));
+    if (in_array($st, ['unsubscribed', 'excluded', 'banned'], true)) return null;
+    if (mb_strtolower(trim((string) ($inst['partner_status'] ?? ''))) === 'blocked') return null;
+
+    return $inst;
 }
 
 /* ─────────────────────── ЖИЗНЕННЫЙ ЦИКЛ ─────────────────────── */

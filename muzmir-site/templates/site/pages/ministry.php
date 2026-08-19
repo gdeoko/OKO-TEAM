@@ -21,10 +21,16 @@
 // Запасные ключи оставлены на случай, если запись добавили только что и пересчёт
 // ещё не прошёл: такая строка встанет по дате, а не улетит в конец.
 try { db()->exec("ALTER TABLE ministry_letters ADD COLUMN letter_date TEXT"); } catch (\Throwable $e) {}
+// ПОРЯДОК ЗАДАЁТ ДАТА ПИСЬМА, А НЕ КОЛОНКА sort.
+// sort пересчитывается ночью (scripts/fix_ministry_letters.php), и у карточки,
+// появившейся днём, он равен нулю: свежее письмо поддержки уезжало в самый низ
+// галереи и стояло там до утра. Сортируем по дате, sort остаётся вторым ключом
+// для писем одного дня.
 $letters = all("SELECT * FROM ministry_letters
-                ORDER BY CASE WHEN COALESCE(sort,0) > 0 THEN 0 ELSE 1 END,
-                         sort,
-                         (letter_date IS NULL OR letter_date='') ASC, letter_date DESC, id DESC");
+                ORDER BY (letter_date IS NULL OR letter_date='') ASC,
+                         letter_date DESC,
+                         CASE WHEN COALESCE(sort,0) > 0 THEN sort ELSE 999999 END,
+                         id DESC");
 
 /* --- Справочник федеральных округов (короткое имя, полное имя) --- */
 $DISTRICTS = [

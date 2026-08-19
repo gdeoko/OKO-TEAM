@@ -32,6 +32,16 @@ $GLOBALS['CFG'] = require BASE_PATH . '/config.php';
 require_once BASE_PATH . '/core/db.php';
 require_once BASE_PATH . '/core/helpers.php';
 require_once BASE_PATH . '/core/mailer.php';
+
+// РАБОЧЕЕ ОКНО ВЛАДЕЛЬЦА: наружу только пн-сб 09:00-19:00 МСК.
+// Расписание крона само по себе не защищает: оно ставит запуск на 08:00 или на
+// каждый день, включая воскресенье, и письмо от имени центра уходит человеку в
+// нерабочее время. Проверяем окно в самом задании, а не надеемся на крон.
+require_once BASE_PATH . '/core/outreach_window.php';
+if (!in_array('--force', $argv, true) && !outreach_window_ok()) {
+    echo "вне рабочего окна, письма не отправляются\n";
+    exit(0);
+}
 // Фирменные кирпичики письма (rm_mail_layout/rm_mail_btn/rm_award_hint)
 // + core/notifications.php подключается изнутри result_mail.php.
 require_once BASE_PATH . '/core/result_mail.php';

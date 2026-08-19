@@ -117,6 +117,17 @@ foreach ($rows as $m) {
 
     if ($min) min_mark_replied($from, $kind === 'ministry_decline' ? 'declined' : 'supported');
 
+    /* Реестр обращений тоже закрываем: пока обращение числится «отправлено»,
+     * ведомство попадает в следующую волну и получает то же письмо второй раз. */
+    if (!$dry) {
+        try {
+            q("UPDATE official_letters
+                  SET status = ?, replied_at = datetime('now','localtime')
+                WHERE LOWER(email) = ? AND kind = 'support' AND status IN ('sent','queued')",
+              [$kind === 'ministry_decline' ? 'declined' : 'replied', $from]);
+        } catch (\Throwable $e) {}
+    }
+
     if ($kind === 'ministry_decline') {
         if (function_exists('mrep_mark_declined')) {
             try { mrep_mark_declined($from, 'отказ письмом'); } catch (\Throwable $e) {}

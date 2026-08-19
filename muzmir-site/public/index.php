@@ -158,8 +158,19 @@ if (preg_match('#^/letter/([0-9]{6,8})/([0-9]{1,6})$#', $route, $m)) {
 // выполненный вход) — показываем кабинет, иначе страницу программы.
 if ($route === '/partner' || $route === '/partner/') {
     require_once BASE_PATH . '/core/partner.php';
+    // ЗАЯВКА В ПАРТНЁРСКУЮ ПРОГРАММУ И ВХОД В КАБИНЕТ — РАЗНЫЕ ФОРМЫ НА ОДНОМ АДРЕСЕ.
+    //
+    // Любой POST уходил в кабинет партнёра, поэтому форма заявки со страницы
+    // /partner не срабатывала ни разу: человек заполнял её, видел страницу входа
+    // и уходил, а в partner_requests не появлялось ничего. Кабинет узнаём по его
+    // собственным полям, всё остальное отдаём странице с формой.
+    $isPost = ($_SERVER['REQUEST_METHOD'] ?? 'GET') === 'POST';
+    $cabinetPost = $isPost && (
+           isset($_POST['password']) || isset($_POST['auto']) || isset($_POST['teachers_manual'])
+        || isset($_POST['managers'])  || isset($_POST['act'])  || isset($_POST['logout'])
+    );
     $wantsCabinet = trim((string) ($_GET['a'] ?? '')) !== ''
-        || ($_SERVER['REQUEST_METHOD'] ?? 'GET') === 'POST'
+        || $cabinetPost
         || partner_current() !== null;
     if ($wantsCabinet) { require BASE_PATH . '/public/partner.php'; exit; }
 }

@@ -579,8 +579,15 @@ function mail_pool_names(string $pool): array {
         // формулировками «принимаем письма только с доменов .RU и .SU» и
         // «отправлено с зарубежного почтового сервиса».
         'official' => ['kc', 'unisender-kc'],
-        'news'     => ['unisender-kc'],                    // разовые новости и уведомления сайта
-        default    => $gmailFirst ? ['main', 'kc', 'unisender-kc'] : ['kc', 'nagradi', 'unisender-kc'],
+        // Разовая новость на широкий круг — это рассылка, и уходит она с
+        // рассылочного ящика своей базы. Раньше здесь стоял unisender-kc, то есть
+        // обратный адрес kc@: широкая рассылка от имени рабочего ящика центра,
+        // ровно то, что запрещено правилом владельца.
+        'news'     => ['unisender'],
+        // Личное письмо не уходит с наградного ящика: у наград свой пул и свой
+        // обратный адрес, а смешение адресов путает получателя и тратит
+        // репутацию наградной почты на переписку.
+        default    => $gmailFirst ? ['main', 'kc', 'unisender-kc'] : ['kc', 'unisender-kc'],
     };
 }
 
@@ -996,6 +1003,22 @@ function mail_send_failover(string $to, string $subject, string $html, array $op
         // в карантин, а рассылка вставала.
         $lastErr = mail_last_error();
         $recipientFault = function_exists('nl_failure_kind') && nl_failure_kind($lastErr) === 'hard';
+
+        // ОТКАЗ ПО КОНКРЕТНОМУ АДРЕСУ — НЕ ВИНА ЯЩИКА.
+        //
+        // Сервис рассылок отвечает «отклонил адрес: temporary_unavailable» на один
+        // адрес из тысячи. Три таких ответа подряд — и ящик уходил в часовой
+        // карантин, а массовая рассылка вставала посреди рабочего окна: 19 августа
+        // она встала в 13:11 при открытом окне до 18:00, с обоими ящиками в
+        // карантине и тридцатью тысячами писем в очереди. Пул тут ни при чём:
+        // следующий ящик получит от сервиса тот же ответ по тому же адресу.
+        if (!$recipientFault) {
+            foreach (['отклонил адрес', 'failed_emails', 'no valid recipients',
+                      'temporary_unavailable', 'permanent_unavailable', 'unreachable',
+                      'skip_dup', 'err_spam_skipped'] as $w) {
+                if (mb_stripos($lastErr, $w) !== false) { $recipientFault = true; break; }
+            }
+        }
         if ($recipientFault) {
             mail_log('RCPT REJECT ' . $to . ' - ' . $lastErr . ' (ящик не виноват, перебор прекращён)');
             return false;

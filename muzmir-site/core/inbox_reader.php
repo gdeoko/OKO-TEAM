@@ -36,8 +36,44 @@ function inbox_boxes(): array {
     // Он напечатан на старых бланках и разошёлся по справочникам, поэтому
     // ведомства и учреждения отвечают именно туда. Читаем наравне с остальными:
     // ответ, который никто не открыл, — это потерянная поддержка региона.
+    // gmail — почта центра kulturniy.centr.mir@gmail.com. С 19 августа, пока
+    // Яндекс держит kc@ и nagradi.on@ закрытыми, ВСЕ письма сайта уходят с неё,
+    // а значит и все ответы участников приходят туда. Без чтения этого ящика мы
+    // не видим ни одного ответа на собственные письма: 304 письма за неделю
+    // лежали непрочитанными.
     return ['news' => 'news', 'novosti' => 'news2', 'kc' => 'kc',
-            'nagradi' => 'nagradi', 'mailru' => 'mailru'];
+            'nagradi' => 'nagradi', 'mailru' => 'mailru', 'gmail' => 'main'];
+}
+
+/**
+ * ПАПКИ, КОТОРЫЕ ЧИТАЕМ У ЯЩИКА.
+ *
+ * «Спам» называется по-разному: у Яндекса Spam, у Mail.ru Спам, у Gmail это
+ * ярлык [Gmail]/Спам. Пока имя было одно на всех, спам читался только у Яндекса,
+ * а именно там сейчас лежат ответы ведомств: почтовые службы охотно кладут туда
+ * письма с вложением-бланком. Несуществующая папка просто вернёт пустой список.
+ */
+function inbox_folders(array $acc): array {
+    $h = mb_strtolower(inbox_imap_host($acc));
+    if (str_contains($h, 'gmail'))  return ['INBOX', '[Gmail]/Спам', '[Gmail]/Spam'];
+    if (str_contains($h, 'mail.ru')) return ['INBOX', 'Спам', 'Spam'];
+    return ['INBOX', 'Spam'];
+}
+
+/**
+ * IMAP-сервер ящика: из настройки, а если её нет — по домену адреса.
+ *
+ * Раньше сервер был жёстко один (imap.yandex.ru), и любой ящик вне домена центра
+ * читался бы с чужого сервера, то есть не читался вовсе.
+ */
+function inbox_imap_host(array $acc): string {
+    $h = trim((string) ($acc['imap_host'] ?? ''));
+    if ($h !== '') return $h;
+    $u = mb_strtolower((string) ($acc['user'] ?? ''));
+    if (str_contains($u, '@gmail.com'))                       return 'imap.gmail.com';
+    if (str_contains($u, '@mail.ru') || str_contains($u, '@bk.ru')
+        || str_contains($u, '@inbox.ru') || str_contains($u, '@list.ru')) return 'imap.mail.ru';
+    return 'imap.yandex.ru';
 }
 
 /** Наши собственные адреса — сами себе не отвечаем и в разбор их не берём. */
@@ -405,7 +441,7 @@ function inbox_scan(string $alias, int $days = 14): array {
     $acc = function_exists('mail_account_by_name') ? mail_account_by_name($accName) : [];
     if (!$acc || empty($acc['user'])) return $res;
     // IMAP-хост берём у самого ящика: он не обязан быть яндексовым.
-    $acc['host'] = trim((string) ($acc['imap_host'] ?? '')) ?: 'imap.yandex.ru';
+    $acc['host'] = inbox_imap_host($acc);
     $acc['port'] = (int) ($acc['imap_port'] ?? 0) ?: 993;
 
     $own   = inbox_own_emails();
@@ -415,7 +451,7 @@ function inbox_scan(string $alias, int $days = 14): array {
     // Яндекс кладёт в спам даже наши собственные письма (проверено: X-Yandex-Spam 4
     // на письме от нашего же домена). Ответ учреждения оттуда не заберёт никто, а
     // для нас он ничем не хуже остальных — фильтруем мы сами, по содержанию.
-    foreach (['INBOX', 'Spam'] as $folder) {
+    foreach (inbox_folders($acc) as $folder) {
         $ids = im_search($acc, 'SINCE ' . $since, $folder);
         foreach ($ids as $id) {
             $raw = im_fetch($acc, $id, $folder);
