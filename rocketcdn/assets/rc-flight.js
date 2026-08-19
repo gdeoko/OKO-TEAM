@@ -183,6 +183,36 @@ var UNIVERSES = [
           { kind: "lava", r: 42, dist: 640, tint: 0xff4a2a,
             name: RU ? "ГОРНИЛО" : "CRUCIBLE", info: RU ? "приливной разогрев от соседа" : "tidal heating from its neighbour" }
         ] }
+    ] },
+
+  /* Четвёртая вселенная закрыта, пока сеть не дотянется до шести
+     миров. Это и есть цель игры: не «полетать», а довести сеть
+     дальше, чем она доставала до вас. Награда честная - за ней
+     новый рукав с мирами, которых больше нигде нет. */
+  { name: RU ? "ВСЕЛЕННАЯ RX-4" : "UNIVERSE RX-4", tag: "RX-4",
+    sky: 0x8cd8c0, amb: 0x2a5a4c, neb: [0x35e08f, 0x42b2dc], sun: 0xd8fff0,
+    stars: [0xd6fff0, 0x8ff0c9, 0xc9e2ff],
+    about: RU ? "изумрудный рукав, открыт за шесть узлов сети" : "emerald arm, unlocked by six nodes",
+    need: 6,
+    sys: [
+      { id: "verd", name: RU ? "ВЕРДА-RX" : "VERDA-RX", star: 0x9ff0c9, seed: 3312,
+        at: [420, 180, -560],
+        planets: [
+          { kind: "ocean", r: 62, dist: 230, tint: 0x35c8a0,
+            name: RU ? "ИЗУМРУД" : "EMERALD", info: RU ? "цветущий океан, вода светится ночью" : "blooming ocean, glowing at night" },
+          { kind: "terran", r: 52, dist: 400, tint: 0x7fd8a8, clouds: true,
+            name: RU ? "ПОЛЯНА" : "GLADE", info: RU ? "материк-сад, узел стоит на орбите" : "garden continent, orbital node" },
+          { kind: "ice", r: 44, dist: 610, tint: 0xbff0ff,
+            name: RU ? "ЗЕРКАЛО" : "MIRROR", info: RU ? "ледяная кора отражает свою звезду" : "ice crust mirrors its star" }
+        ] },
+      { id: "helix", name: RU ? "СПИРАЛЬ-RX" : "HELIX-RX", star: 0xd8fff0, seed: 8844,
+        at: [-480, -120, -1260],
+        planets: [
+          { kind: "gas", r: 96, dist: 300, tint: 0x6fe0c0, rings: true,
+            name: RU ? "ВИХРЬ" : "VORTEX", info: RU ? "кольца из живого льда" : "rings of living ice" },
+          { kind: "rocky", r: 34, dist: 520, tint: 0x8fa89c,
+            name: RU ? "ЯКОРЬ" : "ANCHOR", info: RU ? "первый узел за пределами трёх рукавов" : "first node beyond three arms" }
+        ] }
     ] }
 ];
 var uniIdx = 0;
@@ -214,8 +244,12 @@ function buildUI() {
 
   var uniHtml = "";
   for (var ui2 = 0; ui2 < UNIVERSES.length; ui2++) {
-    uniHtml += '<button type="button" data-uni="' + ui2 + '"><b>' + UNIVERSES[ui2].name + '</b><span>' +
-      (RU ? ["наша система, 8 тел маршрута", "фиолетовая вселенная, холодные звёзды", "янтарная вселенная, тёплый спектр"][ui2] : "") + "</span></button>";
+    /* Закрытые вселенные показываем сразу: цель должна быть видна,
+       иначе её незачем достигать. Разница только в состоянии кнопки */
+    var uu = UNIVERSES[ui2];
+    var locked = uu.need && netCount() < uu.need;
+    uniHtml += '<button type="button" data-uni="' + ui2 + '"' + (locked ? ' class="locked"' : '') + '><b>' +
+      uu.name + '</b><span>' + (uu.about || "") + "</span></button>";
   }
 
   w.innerHTML =
@@ -301,8 +335,17 @@ function buildUI() {
   ui.uni.addEventListener("click", function (e) {
     var b = e.target.closest("button[data-uni]");
     if (!b) return;
-    ui.uni.classList.remove("on");
     var want = parseInt(b.getAttribute("data-uni"), 10);
+    var uw = UNIVERSES[want];
+    if (uw && uw.need && netCount() < uw.need) {
+      /* Ещё закрыто: говорим, сколько осталось, и не закрываем меню -
+         человек должен видеть, куда он собирался */
+      say((RU ? "ЗАКРЫТО · нужно узлов сети: " : "LOCKED · nodes needed: ") +
+          uw.need + " (" + (RU ? "есть " : "have ") + netCount() + ")", 2800);
+      if (g.RC_SOUND) { try { (g.RC_SOUND.uiClick || g.RC_SOUND.blip).call(g.RC_SOUND, 180); } catch (e3) {} }
+      return;
+    }
+    ui.uni.classList.remove("on");
     if (want !== uniIdx) jumpUniverse(want);
     if (g.RC_SOUND) { try { (g.RC_SOUND.uiClick || g.RC_SOUND.blip).call(g.RC_SOUND); } catch (err) {} }
   });
@@ -1685,6 +1728,27 @@ function deployNode() {
       say(RU ? "СЕТЬ РАЗВЁРНУТА ПОЛНОСТЬЮ · ВСЕ МИРЫ НА СВЯЗИ" : "NETWORK COMPLETE", 4200);
     }, 2800);
   }
+
+  /* Порог открытия новых рукавов: сообщаем ровно в тот момент,
+     когда очередная вселенная стала доступна, и обновляем меню */
+  for (var ui3 = 0; ui3 < UNIVERSES.length; ui3++) {
+    var uu2 = UNIVERSES[ui3];
+    if (uu2.need && netCount() === uu2.need) {
+      setTimeout(function (nm) {
+        return function () {
+          say((RU ? "ОТКРЫТ НОВЫЙ РУКАВ · " : "NEW ARM UNLOCKED · ") + nm, 4000);
+          if (g.RC_SOUND && g.RC_SOUND.hyper) { try { g.RC_SOUND.hyper(); } catch (e4) {} }
+        };
+      }(uu2.name), 2900);
+    }
+  }
+  if (ui.uni) {
+    var btns = ui.uni.querySelectorAll("button[data-uni]");
+    for (var bi2 = 0; bi2 < btns.length; bi2++) {
+      var uv = UNIVERSES[parseInt(btns[bi2].getAttribute("data-uni"), 10)];
+      btns[bi2].classList.toggle("locked", !!(uv && uv.need && netCount() < uv.need));
+    }
+  }
 }
 
 /* ── Голограммы: связка сцены и слоя меток ───────────────────
@@ -2165,17 +2229,19 @@ function frame(ts) {
   /* HUD */
   var cap = CAPTIONS[0];
   for (i = CAPTIONS.length - 1; i >= 0; i--) { if (F.p >= CAPTIONS[i].p) { cap = CAPTIONS[i]; break; } }
-  /* В чужой вселенной титры родной системы не к месту: там свои
-     объекты, и подпись обязана говорить, где мы сейчас */
-  if (F.away) {
-    cap = { t: UNIVERSES[uniIdx].name + (F.orbit && F.orbit.name ? " · " + F.orbit.name : "") };
-  }
   /* Пока идёт перелёт к цели, титул честно говорит, куда летим */
   if (F.goal !== null && F.goal !== undefined && F.goalName) {
     cap = { t: (RU ? "КУРС → " : "COURSE → ") + F.goalName };
   }
   if (F.orbit && F.goalName) {
     cap = { t: (RU ? "ОРБИТА · " : "ORBIT · ") + F.goalName + (RU ? " · листайте, чтобы продолжить путь" : "") };
+  }
+  /* В чужой вселенной титры родной системы не к месту: там свои
+     объекты, и подпись обязана говорить, где мы сейчас. Правило
+     идёт последним - иначе цель, оставшаяся от родной системы,
+     перебивала название рукава, в который мы только что прыгнули. */
+  if (F.away) {
+    cap = { t: UNIVERSES[uniIdx].name + (F.orbit && F.orbit.name ? " · " + F.orbit.name : "") };
   }
   if (ui.cap._t !== cap.t && !(ui.cap._hold && ts < ui.cap._hold)) {
     ui.cap._t = cap.t;
