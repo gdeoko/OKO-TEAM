@@ -331,14 +331,15 @@ html[data-theme="light"] .rc-vidbg.on { opacity: .16; }
    а кабина - серая, и глаз читал это как переезд на другой сайт.
 
    Отсюда состав фильтра:
-   · saturate(2.2) - главный шаг, поднимает s с 0.50 до 0.86 и
-     вычищает из корпуса серый (красный канал падает с 34 до 10);
+   · saturate(2.1) - главный шаг, поднимает s с 0.50 до 0.82 и
+     вычищает из корпуса серый (красный канал падает с 34 до 13);
    · hue-rotate(8deg) - добирает недостающие шесть градусов,
      тон садится на 211° при 209° у стены рубки;
-   · brightness(.78) contrast(1.1) - держит светлоту v≈0.26, ровно
-     как у стены, и не даёт корпусу спорить с космосом в окне.
-   Пересветов при этом 0.2% пикселей - приборы и диоды на панели
-   остаются читаемыми, кадр не превращается в мутное пятно.
+   · brightness(.86) contrast(1.1) - выводит светлоту на v≈0.27,
+     как у стены рубки: раньше кабина была ещё и темнее комнаты.
+   Пересветов при этом меньше процента пикселей, а разброс светлоты
+   внутри корпуса (0.122) остался ровно таким же, как до правки -
+   приборы и диоды на панели читаются, мутного пятна не вышло.
    Значения фильтра статичны: анимировать filter нельзя, это
    пересчёт всего кадра на каждом тике. */
 .rcf-cab {
@@ -347,7 +348,7 @@ html[data-theme="light"] .rc-vidbg.on { opacity: .16; }
   object-fit: cover;
   pointer-events: none;
   opacity: 0;
-  filter: brightness(.78) contrast(1.1) saturate(2.2) hue-rotate(8deg);
+  filter: brightness(.86) contrast(1.1) saturate(2.1) hue-rotate(8deg);
   transform: translateY(calc(var(--rcf-g, 0) * 1px));
   transition: opacity .8s var(--ease), transform .3s var(--ease);
 }
@@ -374,7 +375,7 @@ html[data-theme="light"] .rc-vidbg.on { opacity: .16; }
   content: ''; position: absolute; inset: 0;
   pointer-events: none;
   background: var(--int-wall, #0E1D2E);
-  opacity: .22;
+  opacity: .18;
   -webkit-mask-image: url("gen/cockpit-wide.webp");
   mask-image: url("gen/cockpit-wide.webp");
   -webkit-mask-size: cover; mask-size: cover;
@@ -413,14 +414,20 @@ html[data-theme="light"] .rc-vidbg.on { opacity: .16; }
     radial-gradient(circle at calc(100% - 8px) 8px, rgba(var(--int-lit-rgb, 207,233,245), .35) 1.6px, transparent 2.4px),
     radial-gradient(circle at 8px calc(100% - 8px), rgba(var(--int-lit-rgb, 207,233,245), .35) 1.6px, transparent 2.4px),
     radial-gradient(circle at calc(100% - 8px) calc(100% - 8px), rgba(var(--int-lit-rgb, 207,233,245), .35) 1.6px, transparent 2.4px),
+    /* Свет из-под плиты - тот же приём, что у приборной стойки рубки:
+       панель не просто тёмная, она подсвечена собственным свечением */
+    radial-gradient(ellipse 72% 100% at 50% 100%,
+      rgba(var(--int-cyan-rgb, 66,178,220), .13), transparent 74%),
     linear-gradient(180deg,
       var(--int-panel, #14283D) 0%,
-      var(--int-hull, #0A1524) 42%,
+      var(--int-hull, #0A1524) 52%,
       var(--int-deep, #050C15) 100%);
   border: 1px solid rgba(var(--int-deep-rgb, 5,12,21), .95);
   box-shadow:
     inset 0 1px 0 rgba(var(--int-lit-rgb, 207,233,245), .1),
-    inset 0 0 26px rgba(0,0,0,.6),
+    /* Внутренняя тень взята цветом дальнего воздуха, а не чёрным:
+       чистый чёрный вымывает синеву и плита опять становится серой */
+    inset 0 0 26px rgba(var(--int-deep-rgb, 5,12,21), .75),
     0 -1px 0 rgba(var(--int-lit-rgb, 207,233,245), .06),
     0 10px 26px -8px rgba(0,0,0,.95);
 }
@@ -443,10 +450,12 @@ html[data-theme="light"] .rc-vidbg.on { opacity: .16; }
      нижний повторяет стек плиты. Раньше здесь стоял серый #303c4b,
      из-за него пульт игры выпадал из синевы рубки. */
   background:
-    linear-gradient(180deg, rgba(var(--int-lit-rgb, 207,233,245), .13) 0%, transparent 48%),
+    linear-gradient(180deg, rgba(var(--int-lit-rgb, 207,233,245), .10) 0%, transparent 46%),
+    /* внутреннее свечение плиты - им же светятся приборы рубки */
+    linear-gradient(180deg, rgba(var(--int-emis-rgb, 18,60,92), .55), transparent 62%),
     linear-gradient(180deg,
       var(--int-panel, #14283D) 0%,
-      var(--int-hull, #0A1524) 45%,
+      var(--int-hull, #0A1524) 52%,
       var(--int-deep, #050C15) 100%);
   border: 1px solid rgba(var(--int-deep-rgb, 5,12,21), .95);
   border-radius: 6px;
@@ -455,7 +464,7 @@ html[data-theme="light"] .rc-vidbg.on { opacity: .16; }
   position: relative;
   box-shadow:
     inset 0 1px 0 rgba(var(--int-lit-rgb, 207,233,245), .18),
-    inset 0 -4px 7px rgba(0,0,0,.6),
+    inset 0 -4px 7px rgba(var(--int-deep-rgb, 5,12,21), .75),
     0 2px 0 var(--int-deep, #050C15),
     0 4px 7px -2px rgba(0,0,0,.9);
   text-shadow: 0 0 8px rgba(var(--int-cyan-rgb, 66,178,220), .6);
