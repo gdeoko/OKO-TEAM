@@ -193,6 +193,278 @@ function dotTexture(soft) {
   return new T.CanvasTexture(c);
 }
 
+/* ── Посадочные опоры ─────────────────────────────────────────
+   Почему они появились: аудит показал, что посадка не читается
+   событием. Событие делают детали, которые меняются во времени -
+   нога вышла, шток выехал, тарелка ударилась и просела. Стоящая
+   ракета без опор выглядит вставленной в кадр.
+
+   Механика честная, лендерская, и вся считается в плоскости одной
+   ноги. Поэтому хватает одного угла на ногу и одного atan2 на
+   подкос, без инверсной кинематики:
+     - нога висит на шарнире у юбки и отходит вбок по углу th;
+     - из неё телескопом выезжает шток - это и есть раскладывание;
+     - подкос-гидроцилиндр соединяет неподвижную точку борта с
+       серединой ноги, его длину и наклон пересчитываем каждый кадр;
+     - тарелка обязана оставаться горизонтальной, поэтому её
+       разворачиваем обратно на тот же угол th.
+
+   Геометрию делаем один раз и делим на все три ноги: общие буферы
+   стоят дешевле, чем лишние вызовы отрисовки, а материал берём в
+   стиле корпуса - тот же металл и та же среда отражений. */
+var GEAR_HIP_Y = -1.46;      /* шарнир на борту, по оси корабля */
+var GEAR_HIP_Z = 0.575;      /* и его вынос от оси */
+var GEAR_BR_Y  = -0.84;      /* верхняя точка подкоса */
+var GEAR_BR_Z  = 0.605;
+var GEAR_UP    = 0.62;       /* неподвижная часть ноги */
+var GEAR_LO    = 0.76;       /* полный ход штока */
+var GEAR_STOW  = 0.055;      /* сложена: прижата к юбке */
+var GEAR_OPEN  = 0.63;       /* раскрыта: примерно тридцать шесть градусов */
+var GEAR_MID   = 0.58;       /* куда упирается подкос, доля длины ноги */
+/* Уровень площадки: низ тарелки при полностью раскрытой ноге.
+   По нему ставим и грунт, и тень, и кольцо пыли - всё в одном
+   месте, иначе ракета зависает над собственной тенью. */
+var PAD_Y = -(GEAR_UP + GEAR_LO) * Math.cos(GEAR_OPEN) + GEAR_HIP_Y - 0.04;
+
+function buildGear(C, env) {
+  var group = new T.Group();
+  group.visible = false;
+
+  var seg = C.weak ? 6 : 10;
+  var strutGeo = new T.CylinderGeometry(0.072, 0.056, 1, seg);
+  strutGeo.translate(0, -0.5, 0);          /* висит от начала координат вниз */
+  var rodGeo = new T.CylinderGeometry(0.042, 0.038, 1, seg);
+  rodGeo.translate(0, -0.5, 0);
+  var braceGeo = new T.CylinderGeometry(0.036, 0.029, 1, seg);
+  braceGeo.translate(0, 0.5, 0);           /* растёт от начала координат вверх */
+  var footGeo = new T.CylinderGeometry(0.215, 0.17, 0.075, C.weak ? 8 : 14);
+  var hipGeo = new T.BoxGeometry(0.22, 0.18, 0.15);
+
+  var strutMat = new T.MeshStandardMaterial({
+    color: 0xC3D1DF, metalness: 0.86, roughness: 0.27, envMap: env, envMapIntensity: 1.5
+  });
+  var rodMat = new T.MeshStandardMaterial({
+    color: 0x93A8BD, metalness: 1.0, roughness: 0.11, envMap: env, envMapIntensity: 2.1
+  });
+  var footMat = new T.MeshStandardMaterial({
+    color: 0x24384E, metalness: 0.55, roughness: 0.58, envMap: env, envMapIntensity: 0.9
+  });
+
+  var legs = [];
+  for (var i = 0; i < 3; i++) {
+    var piv = new T.Group();
+    /* Ноги встают между стабилизаторами: те стоят на 0, 120 и 240 */
+    piv.rotation.y = (i / 3) * Math.PI * 2 + Math.PI / 3;
+
+    var hip = new T.Mesh(hipGeo, footMat);
+    hip.position.set(0, GEAR_HIP_Y, GEAR_HIP_Z - 0.03);
+    piv.add(hip);
+
+    var swing = new T.Group();
+    swing.position.set(0, GEAR_HIP_Y, GEAR_HIP_Z);
+    piv.add(swing);
+
+    var strut = new T.Mesh(strutGeo, strutMat);
+    strut.scale.y = GEAR_UP;
+    swing.add(strut);
+
+    var rod = new T.Mesh(rodGeo, rodMat);
+    rod.position.y = -GEAR_UP;
+    swing.add(rod);
+
+    var foot = new T.Mesh(footGeo, footMat);
+    swing.add(foot);
+
+    var brace = new T.Mesh(braceGeo, rodMat);
+    brace.position.set(0, GEAR_BR_Y, GEAR_BR_Z);
+    piv.add(brace);
+
+    legs.push({ swing: swing, rod: rod, foot: foot, brace: brace });
+    group.add(piv);
+  }
+  return { group: group, legs: legs };
+}
+
+/* ── Грунт: разметка площадки ─────────────────────────────────
+   Рисуем процедурно на холсте, как обшивку рядом: своя картинка
+   весит ноль килобайт и подстраивается под фирменные цвета.
+   Смотрим на площадку под очень острым углом (камера почти на
+   уровне корабля), поэтому все линии нарочно толстые - тонкие на
+   таком ракурсе схлопываются в ничто. */
+function padTexture(weak) {
+  var S = weak ? 512 : 1024;
+  var c = document.createElement("canvas");
+  c.width = c.height = S;
+  var x = c.getContext("2d");
+  var m = S / 2, R = S * 0.46;
+
+  /* Прожжённое пятно под соплом: посадка оставляет след */
+  var burn = x.createRadialGradient(m, m, 0, m, m, R * 0.62);
+  burn.addColorStop(0.00, "rgba(6,12,20,.55)");
+  burn.addColorStop(0.45, "rgba(10,22,34,.34)");
+  burn.addColorStop(1.00, "rgba(10,22,34,0)");
+  x.fillStyle = burn;
+  x.fillRect(0, 0, S, S);
+
+  function circle(r, w, col, dash) {
+    x.save();
+    x.strokeStyle = col;
+    x.lineWidth = w;
+    if (dash) x.setLineDash(dash);
+    x.beginPath(); x.arc(m, m, r, 0, Math.PI * 2); x.stroke();
+    x.restore();
+  }
+  /* Внешний обод и штриховая окружность внутри него */
+  circle(R, S * 0.011, "rgba(126,200,238,.46)");
+  circle(R * 0.965, S * 0.004, "rgba(200,236,255,.24)");
+  circle(R * 0.78, S * 0.008, "rgba(126,200,238,.30)", [S * 0.03, S * 0.022]);
+  circle(R * 0.23, S * 0.009, "rgba(160,222,252,.40)");
+
+  /* Предупредительная разметка по ободу: те же цвета, что на люке */
+  var i, a;
+  for (i = 0; i < 24; i++) {
+    a = (i / 24) * Math.PI * 2;
+    x.save();
+    x.translate(m, m); x.rotate(a);
+    x.fillStyle = i % 2 ? "rgba(232,176,48,.34)" : "rgba(30,44,60,.34)";
+    x.fillRect(R * 0.88, -R * 0.06, R * 0.10, R * 0.12);
+    x.restore();
+  }
+  /* Радиальные засечки: по ним глаз читает, что круг лежит на земле */
+  for (i = 0; i < 36; i++) {
+    a = (i / 36) * Math.PI * 2;
+    x.save();
+    x.translate(m, m); x.rotate(a);
+    x.fillStyle = i % 3 === 0 ? "rgba(180,228,255,.34)" : "rgba(120,180,214,.18)";
+    x.fillRect(R * 1.005, -S * 0.004, R * (i % 3 === 0 ? 0.06 : 0.032), S * 0.008);
+    x.restore();
+  }
+  /* Крест наведения от центра */
+  for (i = 0; i < 4; i++) {
+    x.save();
+    x.translate(m, m); x.rotate(i * Math.PI / 2);
+    var gr = x.createLinearGradient(R * 0.27, 0, R * 0.72, 0);
+    gr.addColorStop(0, "rgba(150,214,246,.40)");
+    gr.addColorStop(1, "rgba(150,214,246,0)");
+    x.fillStyle = gr;
+    x.fillRect(R * 0.27, -S * 0.006, R * 0.45, S * 0.012);
+    x.restore();
+  }
+  /* Метки под тарелки опор: они стоят там, где нога и встанет */
+  for (i = 0; i < 3; i++) {
+    a = (i / 3) * Math.PI * 2 + Math.PI / 3 - Math.PI / 2;
+    var fx = m + Math.cos(a) * R * 0.375, fy = m + Math.sin(a) * R * 0.375;
+    x.save();
+    x.translate(fx, fy); x.rotate(a);
+    x.strokeStyle = "rgba(232,176,48,.42)";
+    x.lineWidth = S * 0.008;
+    x.strokeRect(-R * 0.075, -R * 0.075, R * 0.15, R * 0.15);
+    x.restore();
+  }
+  /* Пыль и мелкая крошка: ровный круг выглядит наклейкой */
+  for (i = 0; i < (weak ? 260 : 900); i++) {
+    var rr = Math.sqrt(Math.random()) * R;
+    a = Math.random() * Math.PI * 2;
+    x.globalAlpha = 0.03 + Math.random() * 0.07;
+    x.fillStyle = Math.random() > 0.5 ? "#9FC4DC" : "#16283A";
+    x.fillRect(m + Math.cos(a) * rr, m + Math.sin(a) * rr, 1 + Math.random() * 3, 1 + Math.random() * 3);
+  }
+  x.globalAlpha = 1;
+
+  var tex = new T.CanvasTexture(c);
+  tex.colorSpace = T.SRGBColorSpace || tex.colorSpace;
+  tex.anisotropy = 8;
+  return tex;
+}
+
+/* Мягкая тень: чёрное пятно с растушёвкой. Холст ракеты прозрачный
+   и лежит поверх страницы, поэтому полупрозрачный чёрный честно
+   притемняет то, что под ним, - отдельного слоя не нужно. */
+function shadowTexture() {
+  var S = 256;
+  var c = document.createElement("canvas");
+  c.width = c.height = S;
+  var x = c.getContext("2d");
+  var gr = x.createRadialGradient(S / 2, S / 2, 0, S / 2, S / 2, S / 2);
+  gr.addColorStop(0.00, "rgba(0,0,0,.62)");
+  gr.addColorStop(0.42, "rgba(0,0,0,.40)");
+  gr.addColorStop(0.78, "rgba(0,0,0,.12)");
+  gr.addColorStop(1.00, "rgba(0,0,0,0)");
+  x.fillStyle = gr;
+  x.fillRect(0, 0, S, S);
+  return new T.CanvasTexture(c);
+}
+
+/* ── Пыль от посадки ──────────────────────────────────────────
+   Раньше пыль жила в вёрстке: тридцать кружков DOM поверх холста.
+   Дёшево, но неправдиво - плоские круги не знают ни глубины кадра,
+   ни масштаба корабля, ни того, где именно у него опоры. При
+   подходе ракета вырастала втрое, а пыль оставалась прежней.
+
+   Теперь пыль - точки в самой сцене, в системе координат площадки.
+   Она даром получает перспективу (кольцо раскрывается эллипсом,
+   как и должно на грунте), масштабируется вместе с кораблём и
+   правильно уходит за корпус. Это один вызов отрисовки, то есть
+   дешевле, чем тридцать композиторских слоёв браузера.
+
+   Материал свой, крошечный: PointsMaterial даёт один размер на всю
+   систему, а клуб пыли обязан расти по мере расхождения. Размер и
+   цвет держим в атрибутах - так каждая частица живёт своей жизнью,
+   а подсветка снизу делается цветом, без единого лишнего источника
+   света в сцене. */
+var DUST_VERT = [
+  "attribute float aSize;",
+  "attribute vec3 aCol;",
+  "uniform float uScale;",
+  "uniform float uPx;",
+  "varying vec3 vCol;",
+  "void main(){",
+  "  vCol = aCol;",
+  "  vec4 mv = modelViewMatrix * vec4(position,1.0);",
+  /* uPx переводит мировой размер в пиксели устройства на этой глубине.
+     Считаем его снаружи из высоты холста и угла обзора: константа тут
+     врала бы на каждом втором экране. */
+  "  gl_PointSize = aSize * uScale * uPx / max(0.4, -mv.z);",
+  "  gl_Position = projectionMatrix * mv;",
+  "}"
+].join("\n");
+
+var DUST_FRAG = [
+  "uniform sampler2D uMap;",
+  "varying vec3 vCol;",
+  "void main(){",
+  "  float a = texture2D(uMap, gl_PointCoord).a;",
+  "  if (a < 0.004) discard;",
+  "  gl_FragColor = vec4(vCol, a);",
+  "}"
+].join("\n");
+
+function buildDust(C) {
+  var n = C.weak ? 64 : 230;
+  var pos = new Float32Array(n * 3);
+  var col = new Float32Array(n * 3);
+  var siz = new Float32Array(n);
+  var geo = new T.BufferGeometry();
+  geo.setAttribute("position", new T.BufferAttribute(pos, 3));
+  geo.setAttribute("aCol", new T.BufferAttribute(col, 3));
+  geo.setAttribute("aSize", new T.BufferAttribute(siz, 1));
+  var uni = { uMap: { value: dotTexture(true) }, uScale: { value: 1 }, uPx: { value: 1000 } };
+  var mat = new T.ShaderMaterial({
+    vertexShader: DUST_VERT, fragmentShader: DUST_FRAG, uniforms: uni,
+    transparent: true, depthWrite: false, blending: T.AdditiveBlending
+  });
+  var pts = new T.Points(geo, mat);
+  pts.frustumCulled = false;
+  return {
+    pts: pts, geo: geo, uni: uni, n: n,
+    pos: pos, col: col, siz: siz,
+    vel: new Float32Array(n * 3),
+    life: new Float32Array(n),
+    max: new Float32Array(n),
+    live: 0
+  };
+}
+
 /* ── Сборка ракеты ───────────────────────────────────────── */
 function buildRocket(C, env) {
   var root = new T.Group();
@@ -315,7 +587,12 @@ function buildRocket(C, env) {
   var door = buildDoor(C, env, hullMat);
   root.add(door.group);
 
-  return { root: root, body: body, glass: glass, glowMat: glowMat, door: door };
+  /* Опоры кладём внутрь корпуса: наклон, поворот и масштаб корабля
+     они наследуют даром, а мы правим только углы */
+  var gear = buildGear(C, env);
+  root.add(gear.group);
+
+  return { root: root, body: body, glass: glass, glowMat: glowMat, door: door, gear: gear };
 }
 
 /* ── Люк в борту ─────────────────────────────────────────────
@@ -627,7 +904,7 @@ function buildFlame(C) {
   halo.position.y = -2.3;
   grp.add(halo);
 
-  return { group: grp, uniforms: uniforms, core: core, halo: halo };
+  return { group: grp, uniforms: uniforms, cone: cone, core: core, halo: halo };
 }
 
 /* ── Искры и дымный след ─────────────────────────────────── */
@@ -815,6 +1092,15 @@ function Rocket(canvas) {
      1 - упёрлись в корпус. Доля публикуется в RC_APPROACH, по ней
      шлюз решает, когда показывать створки. */
   this.appK = 0;
+  /* Посадка: доля раскрытия опор, тормозной импульс, просадка на
+     касании и дрожь кадра. Всё хранится здесь, чтобы обратная
+     прокрутка могла разом вернуть корабль в полётное состояние. */
+  this.landK = 0;
+  this.gearK = 0;
+  this._burn = 0;
+  this._shock = 0;
+  this._shockT = 0;
+  this._shake = 0;
   this._orbP = new T.Vector3();
   this._orbT = new T.Vector3();
   this._tmpD = new T.Vector3();
@@ -1174,15 +1460,31 @@ Rocket.prototype.landing = function (p, dt, pos, tan) {
   /* Скорость догона растёт с отставанием: при резком скролле ракета
      обязана успеть сесть до прохода, иначе подход и дверь срываются */
   this.landK = prev + (k - prev) * Math.min(1, (dt || 0.016) * (3.2 + Math.abs(k - prev) * 14));
+
+  /* Всё, что появилось у посадки - опоры, импульс, просадка - ведём
+     всегда, даже когда доля упала в ноль: иначе на обратной прокрутке
+     ноги останутся раскрытыми у летящего корабля. */
+  this.touchdown(dt);
+
   if (this.landK < 0.002) return 0;
 
   /* Площадка ровно по центру кадра: клиент просил посадку не сбоку,
-     а в середине сцены - камера смотрит прямо на неё. По вертикали
-     ставим опоры на нижнюю четверть, чтобы корпус целиком был в
-     кадре и на телефоне, и на широком экране. */
+     а в середине сцены - камера смотрит прямо на неё.
+
+     Высоту считаем, а не назначаем. Раньше центр корпуса ставили на
+     0.78 высоты кадра, и вся нижняя половина корабля - сопло, юбка,
+     то самое место, куда он садится - уезжала за нижнюю кромку.
+     Посадку было физически не видно, поэтому она и не читалась
+     событием. Теперь отталкиваемся от пят: они обязаны встать на
+     0.855 кадра, а центр корпуса выводим из текущего масштаба. Так
+     точка касания попадает в кадр на любом экране. */
   var w = this.canvas.clientWidth || innerWidth;
   var h = this.canvas.clientHeight || innerHeight;
-  this.toWorld(w * 0.5, h * 0.78, -0.2, this._padP || (this._padP = new T.Vector3()));
+  var half = Math.tan((this.cam.fov * Math.PI / 180) / 2) * (this.cam.position.z + 0.2);
+  var feet = Math.abs(PAD_Y) * (this._sNow || 1) / (2 * half);   /* доля кадра до пят */
+  var aim = 0.855 - feet;
+  if (aim < 0.30) aim = 0.30;
+  this.toWorld(w * 0.5, h * aim, -0.2, this._padP || (this._padP = new T.Vector3()));
   pos.lerp(this._padP, this.landK);
 
   /* Нос разворачивается вверх: ракета встаёт на опоры */
@@ -1190,47 +1492,332 @@ Rocket.prototype.landing = function (p, dt, pos, tan) {
 
   /* Тяга гаснет, но факел не исчезает совсем: сопло остывает */
   this.power = Math.max(0.14, this.power * (1 - this.landK * 0.82));
+  return this.landK;
+};
 
-  /* Касание: один удар, пыль из-под опор и тишина после него */
-  if (this.landK > 0.86 && !this._touched) {
+/* ── Тормозной импульс, касание и просадка ────────────────────
+   Импульс намеренно считается ОТ ДОЛИ ПОСАДКИ, а не по таймеру от
+   события. Причина простая: человек листает в обе стороны, и всё,
+   что заведено таймером, на обратной прокрутке остаётся висеть или
+   срабатывает второй раз. Функция от landK разворачивается назад
+   сама собой - отлистал вверх, и вспышка честно гаснет.
+
+   Просадка на касании - наоборот, чистое время: удар это событие, у
+   него есть затухающие колебания, и растянуть их по скроллу нельзя,
+   иначе амортизатор перестаёт быть амортизатором. Поэтому у неё
+   свой счётчик, который сбрасывается вместе с флагом касания. */
+Rocket.prototype.touchdown = function (dt) {
+  dt = dt || 0.016;
+  var lk = this.landK || 0;
+
+  /* Опоры раскрываются на заходе, от 0.35 до 0.75 доли посадки:
+     к касанию они обязаны стоять, а не доезжать */
+  var gk = (lk - 0.35) / 0.40;
+  gk = gk < 0 ? 0 : gk > 1 ? 1 : gk;
+  this.gearK = gk * gk * (3 - 2 * gk);
+
+  /* Импульс: горб вокруг 0.74 доли, то есть за миг до касания */
+  var b = 1 - Math.abs(lk - 0.74) / 0.19;
+  this._burn = b <= 0 ? 0 : b * b * (3 - 2 * b);
+
+  /* Касание: удар, пыль из-под опор, дрожь кадра и тишина после */
+  if (lk > 0.86 && !this._touched) {
     this._touched = 1;
+    this._shockT = 0;
+    this._shake = this.C.weak ? 0.55 : 1;
     this.dust();
     document.documentElement.classList.add("rc-landed-craft");
     if (g.RC_SOUND && g.RC_SOUND.boom) { try { g.RC_SOUND.boom(); } catch (e) {} }
     try { dispatchEvent(new CustomEvent("rc:touchdown")); } catch (e) {}
   }
-  if (this.landK < 0.4 && this._touched) {
+  if (lk < 0.72 && this._touched) {
+    /* Отлистали вверх - корабль снова в воздухе: снимаем всё, что
+       принадлежит стоянке, и пыль тоже */
     this._touched = 0;
+    this._shock = 0;
+    this._shake = 0;
+    this.dustClear();
     document.documentElement.classList.remove("rc-landed-craft");
   }
+
+  /* Затухающие колебания стойки: первый ход - сжатие, дальше два-три
+     всё более мелких отскока. Так опора читается пружиной, а не
+     подпоркой. */
+  if (this._touched) {
+    this._shockT += dt;
+    var tt = this._shockT;
+    var s = Math.exp(-tt * 5.0) * Math.cos(tt * 15.5);
+    this._shock = s < -0.22 ? -0.22 : s;
+  }
+
+  this.legs();
   return this.landK;
 };
 
-/* Пыль из-под опор. Живёт в обычной вёрстке, а не в сцене: тридцать
-   лёгких кружков поверх холста дешевле любой системы частиц и на
-   телефоне не стоит ничего. */
-Rocket.prototype.dust = function () {
-  if (document.documentElement.classList.contains("rc-reduced")) return;
-  var pos = g.RC_ROCKET_POS;
-  if (!pos || !isFinite(pos.x)) return;
-  var layer = document.createElement("div");
-  layer.className = "rc-dust";
-  layer.setAttribute("aria-hidden", "true");
-  layer.style.left = pos.x + "px";
-  layer.style.top = pos.y + "px";
-  var n = this.C.mobile ? 14 : 28;
-  for (var i = 0; i < n; i++) {
-    var d = document.createElement("i");
-    var a = (Math.random() - 0.5) * Math.PI;      /* в стороны, а не вверх */
-    var dist = 60 + Math.random() * 190;
-    d.style.setProperty("--dx", (Math.cos(a) * dist).toFixed(0) + "px");
-    d.style.setProperty("--dy", (Math.abs(Math.sin(a)) * dist * 0.32).toFixed(0) + "px");
-    d.style.setProperty("--ds", (0.5 + Math.random() * 1.5).toFixed(2));
-    d.style.animationDelay = (Math.random() * 0.18).toFixed(2) + "s";
-    layer.appendChild(d);
+/* Поза опор на этот кадр. Считаем в плоскости одной ноги: угол
+   выноса, длина выехавшего штока и один atan2 на подкос. Три ноги
+   отличаются только поворотом своей группы, поэтому цикл короткий
+   и одинаковый. */
+Rocket.prototype.legs = function () {
+  var G = this.rocket.gear;
+  if (!G) return;
+  var k = this.gearK || 0;
+  G.group.visible = k > 0.004;
+  if (!G.group.visible) return;
+
+  var shock = this._shock || 0;
+  /* Просадка не только укорачивает шток, но и слегка растопыривает
+     ноги: так удар передаётся всей стойкой, а не одним цилиндром */
+  var th = GEAR_STOW + (GEAR_OPEN - GEAR_STOW) * k + shock * 0.075;
+  var lo = GEAR_LO * k * (1 - shock * 0.46);
+  if (lo < 0.001) lo = 0.001;
+  var full = GEAR_UP + lo;
+  var ct = Math.cos(th), st = Math.sin(th);
+
+  for (var i = 0; i < G.legs.length; i++) {
+    var L = G.legs[i];
+    L.swing.rotation.x = -th;              /* -th уводит ногу наружу, к +Z */
+    L.rod.scale.y = lo;
+    L.foot.position.y = -full;
+    L.foot.rotation.x = th;                /* тарелка обязана лежать плашмя */
+
+    /* Подкос: отрезок от неподвижной точки борта до середины ноги.
+       Обе точки в одной плоскости, поэтому наклон - это atan2, а
+       длина - обычная гипотенуза. */
+    var dy = (GEAR_HIP_Y - full * GEAR_MID * ct) - GEAR_BR_Y;
+    var dz = (GEAR_HIP_Z + full * GEAR_MID * st) - GEAR_BR_Z;
+    L.brace.rotation.x = Math.atan2(dz, dy);
+    L.brace.scale.y = Math.sqrt(dy * dy + dz * dz);
   }
-  document.body.appendChild(layer);
-  setTimeout(function () { if (layer.parentNode) layer.parentNode.removeChild(layer); }, 2200);
+};
+
+/* ── Пыль из-под опор ─────────────────────────────────────────
+   Выпускаем частицы кольцом от точки касания. Один и тот же
+   излучатель работает дважды: слабой струйкой, пока сопло только
+   раздувает грунт на подлёте, и разом на весь запас - в момент
+   удара. Отдельного кода для этих двух случаев не нужно, разница
+   только в числе частиц и в силе выброса. */
+var DUST_R = GEAR_HIP_Z + (GEAR_UP + GEAR_LO) * Math.sin(GEAR_OPEN);
+
+Rocket.prototype.dustEmit = function (count, force) {
+  if (document.documentElement.classList.contains("rc-reduced")) return;
+  var D = this.ground() && this._dust;
+  if (!D) return;
+  var made = 0;
+  for (var i = 0; i < D.n && made < count; i++) {
+    if (D.life[i] > 0) continue;               /* занятую частицу не трогаем */
+    made++;
+    var a = Math.random() * Math.PI * 2;
+    /* Стартуем у самых тарелок, слегка вразнобой по радиусу */
+    var r = DUST_R * (0.62 + Math.random() * 0.55);
+    var sp = (1.3 + Math.random() * 2.9) * force;
+    D.pos[i * 3]     = Math.cos(a) * r;
+    D.pos[i * 3 + 1] = 0.04 + Math.random() * 0.14;
+    D.pos[i * 3 + 2] = Math.sin(a) * r;
+    D.vel[i * 3]     = Math.cos(a) * sp;
+    D.vel[i * 3 + 1] = (0.35 + Math.random() * 1.5) * force;
+    D.vel[i * 3 + 2] = Math.sin(a) * sp;
+    D.siz[i] = 0.10 + Math.random() * 0.17;
+    D.max[i] = 2.1 + Math.random() * 0.9;
+    D.life[i] = D.max[i];
+  }
+  if (!made) return;
+  D.live = 1;
+  D.pts.visible = true;
+  D.geo.attributes.aSize.needsUpdate = true;
+};
+
+/* Удар: разом весь запас частиц и на полной силе */
+Rocket.prototype.dust = function () {
+  this.dustEmit(this.C.weak ? 64 : 230, 1);
+};
+
+/* Обратная прокрутка: пыль обязана исчезнуть разом, а не дожить
+   свои три секунды у корабля, который снова в воздухе */
+Rocket.prototype.dustClear = function () {
+  var D = this._dust;
+  if (!D) return;
+  D.live = 0;
+  D.pts.visible = false;
+  for (var i = 0; i < D.n; i++) D.life[i] = 0;
+};
+
+/* ── Площадка: грунт, разметка, тень и пыль ───────────────────
+   Всё это одна группа, живущая прямо в сцене, а не внутри корабля.
+   Причина: корабль всё время медленно крутится вокруг своей оси, и
+   разметка грунта крутилась бы вместе с ним - земля поехала бы под
+   ногами. Группа лишь повторяет положение и масштаб корабля, а
+   поворот у неё свой, нулевой.
+
+   Собираем по требованию, на первом же заходе на посадку: холсты
+   разметки не нужны тем, кто до этого раздела не долистал. */
+Rocket.prototype.ground = function () {
+  if (this._padGrp) return this._padGrp;
+  var C = this.C;
+  var grp = new T.Group();
+  grp.visible = false;
+
+  /* Разметка площадки лежит в самом низу стопки: тень падает на неё */
+  var padMat = new T.MeshBasicMaterial({
+    map: padTexture(C.weak), transparent: true, depthWrite: false,
+    toneMapped: false, opacity: 0
+  });
+  var disc = new T.Mesh(new T.PlaneGeometry(7.4, 7.4), padMat);
+  disc.rotation.x = -Math.PI / 2;
+  disc.renderOrder = 2;
+  grp.add(disc);
+
+  /* Тень - роскошь: на слабом устройстве её нет, как и просили */
+  var shadow = null;
+  if (!C.weak) {
+    var shMat = new T.MeshBasicMaterial({
+      map: shadowTexture(), transparent: true, depthWrite: false,
+      toneMapped: false, opacity: 0
+    });
+    shadow = new T.Mesh(new T.PlaneGeometry(4.4, 4.4), shMat);
+    shadow.rotation.x = -Math.PI / 2;
+    shadow.position.y = 0.006;
+    shadow.renderOrder = 3;
+    grp.add(shadow);
+  }
+
+  /* Засвет под соплом: тот самый свет факела, который подсвечивает
+     пыль снизу. Аддитивное пятно дешевле любого источника света и
+     не трогает материалы всей сцены. */
+  var blMat = new T.MeshBasicMaterial({
+    map: dotTexture(false), color: 0x8FE0FF, transparent: true,
+    depthWrite: false, blending: T.AdditiveBlending, opacity: 0
+  });
+  var blast = new T.Mesh(new T.PlaneGeometry(5.6, 5.6), blMat);
+  blast.rotation.x = -Math.PI / 2;
+  blast.position.y = 0.014;
+  blast.renderOrder = 4;
+  grp.add(blast);
+
+  var dust = buildDust(C);
+  dust.pts.visible = false;
+  dust.pts.renderOrder = 5;
+  grp.add(dust.pts);
+  this._dust = dust;
+
+  this.scene.add(grp);
+  this._padGrp = grp;
+  this._padDisc = disc;
+  this._padShadow = shadow;
+  this._padBlast = blast;
+  return grp;
+};
+
+/* Кадр площадки: ставим её под корабль, ведём прозрачности и
+   двигаем пыль. Вызывается после layout, когда положение и масштаб
+   корабля на этот кадр уже посчитаны. */
+Rocket.prototype.groundStep = function (dt) {
+  var lk = this.landK || 0;
+  var app = this.appK || 0;
+  var dk = this.doorK || 0;
+
+  if (lk < 0.02 && !this._padGrp) return;
+  var grp = this.ground();
+
+  /* Площадка появляется на заходе и уходит вместе с посадкой.
+     На подходе к борту и на открытии люка она гаснет: мы уже
+     смотрим в проём, грунт под ногами кадру только мешает. */
+  var vis = (lk - 0.30) / 0.45;
+  vis = vis < 0 ? 0 : vis > 1 ? 1 : vis;
+  vis = vis * vis * (3 - 2 * vis);
+  vis *= 1 - Math.min(1, app * 1.25);
+  vis *= 1 - Math.min(1, dk * 1.6);
+
+  grp.visible = vis > 0.004;
+  if (!grp.visible) {
+    if (this._dust && this._dust.live) this.dustClear();
+    return;
+  }
+
+  var sc = this.pivot.scale.x || 1;
+  grp.position.set(
+    this.pivot.position.x + this.craft.position.x * sc,
+    this.pivot.position.y + PAD_Y * sc,
+    this.pivot.position.z
+  );
+  grp.scale.setScalar(sc);
+
+  var burn = this._burn || 0;
+  this._padDisc.material.opacity = vis * 0.92;
+  if (this._padShadow) {
+    /* Тень наливается по мере снижения: издалека она размытая и
+       слабая, у самого грунта - собранная и плотная */
+    this._padShadow.material.opacity = vis * (0.38 + lk * 0.52);
+    var sh = 1.75 - lk * 0.55 + burn * 0.10;
+    this._padShadow.scale.set(sh, sh, 1);
+  }
+  /* Засвет: пик на тормозном импульсе, потом короткое послесвечение
+     от остывающего сопла */
+  var glow = burn * 0.85 + Math.max(0, this._shock || 0) * 0.35 + lk * 0.10;
+  this._padBlast.material.opacity = Math.min(1, glow) * vis;
+  var bs = 0.72 + burn * 0.62;
+  this._padBlast.scale.set(bs, bs, 1);
+
+  /* Сопло раздувает грунт ещё до касания: пока идёт тормозной
+     импульс, из-под ракеты тянет пылью. Так удар не возникает из
+     ничего - площадка уже живёт к моменту, когда опоры её коснутся. */
+  if (burn > 0.22 && lk < 0.88) {
+    this._blowT = (this._blowT || 0) + dt;
+    var step = this.C.weak ? 0.10 : 0.045;
+    while (this._blowT > step) {
+      this._blowT -= step;
+      this.dustEmit(this.C.weak ? 1 : 2, 0.30 + burn * 0.45);
+    }
+  } else this._blowT = 0;
+
+  this.dustStep(dt, sc, glow);
+};
+
+/* Шаг пыли. Кольцо расходится, тормозится о воздух, оседает и
+   гаснет. Подсветка снизу - не источник света, а цвет: чем ниже
+   частица и чем ярче факел, тем она теплее и светлее. Так «пыль
+   подсвечена факелом» стоит ноль дополнительных вычислений. */
+Rocket.prototype.dustStep = function (dt, scale, glow) {
+  var D = this._dust;
+  if (!D || !D.live) return;
+  var alive = 0;
+  for (var i = 0; i < D.n; i++) {
+    if (D.life[i] <= 0) continue;
+    alive++;
+    D.life[i] -= dt;
+    var j = i * 3;
+    /* Сопротивление воздуха: кольцо резко стартует и вязко замирает */
+    var drag = Math.exp(-dt * 1.45);
+    D.vel[j] *= drag;
+    D.vel[j + 2] *= drag;
+    D.vel[j + 1] = D.vel[j + 1] * drag - dt * 0.85;   /* и оседает */
+    D.pos[j] += D.vel[j] * dt;
+    D.pos[j + 1] += D.vel[j + 1] * dt;
+    D.pos[j + 2] += D.vel[j + 2] * dt;
+    /* Ниже грунта пыли нет: она стелется по площадке */
+    if (D.pos[j + 1] < 0.02) { D.pos[j + 1] = 0.02; D.vel[j + 1] *= -0.18; }
+
+    var a = D.life[i] / D.max[i];
+    if (a < 0) a = 0;
+    a = a * a * (0.55 + a * 0.45);
+    /* Подсветка снизу: у грунта частица тёплая и яркая, выше -
+       холодная и тусклая, как и должен светить факел */
+    var low = Math.exp(-D.pos[j + 1] * 1.15);
+    var lum = a * (0.16 + low * 0.62) * (0.7 + glow * 1.4);
+    D.col[j]     = lum * (0.52 + low * 0.46);
+    D.col[j + 1] = lum * (0.70 + low * 0.26);
+    D.col[j + 2] = lum * (0.86 + low * 0.14);
+    D.siz[i] += dt * 0.16;                  /* клуб расходится и растёт */
+  }
+  if (!alive) { this.dustClear(); return; }
+  D.uni.uScale.value = scale;
+  /* Мировой размер в пиксели устройства: высота холста, делённая на
+     мировую высоту кадра на единичной глубине */
+  D.uni.uPx.value = (this.canvas.clientHeight || innerHeight) * this.C.dpr /
+    (2 * Math.tan((this.cam.fov * Math.PI / 180) / 2));
+  D.geo.attributes.position.needsUpdate = true;
+  D.geo.attributes.aCol.needsUpdate = true;
+  D.geo.attributes.aSize.needsUpdate = true;
 };
 
 /* ── Подход к ракете ──────────────────────────────────────────
@@ -1457,7 +2044,12 @@ Rocket.prototype.layout = function (p, dt) {
      масштаба камера проваливается внутрь обшивки и кадр становится
      пустым. Последний шаг входа делает не масштаб, а сам проём -
      его стена видна изнутри и закрывает кадр. */
-  var sNow = s * (1 - k * 0.70) * (1 + (this.landK || 0) * 0.12) * (1 + app * 2.6) * (1 + dk * dk * 1.25);
+  /* На посадке корабль слегка отъезжает, а не наезжает. Раньше он на
+     ней подрастал, и вместе с опорами, тенью и площадкой попросту
+     переставал помещаться в кадр: точку касания было не видно. Мера
+     разная по устройствам - на телефоне корабль и так мелкий. */
+  var lndS = 1 - (this.landK || 0) * (this.C.mobile ? 0.05 : 0.20);
+  var sNow = s * (1 - k * 0.70) * lndS * (1 + app * 2.6) * (1 + dk * dk * 1.25);
   this._sNow = sNow;
   this.pivot.scale.setScalar(sNow);
 };
@@ -1554,16 +2146,24 @@ Rocket.prototype.frame = function (dt) {
   var calmK = 1 - (this.landK || 0) * 0.92;      /* на опорах ракета стоит */
   this.craft.position.y = Math.sin(t * 1.35) * 0.16 * calmK;
   this.craft.position.x = Math.cos(t * 0.9) * 0.09 * calmK;
+  /* Корпус проседает на стойках вместе с ними: удар обязан пройти
+     через весь корабль, иначе амортизируют одни ноги, а ракета
+     висит над ними неподвижным столбом */
+  this.craft.position.y -= (this._shock || 0) * 0.34;
 
-  /* Факел дышит и реагирует на скорость прокрутки */
+  /* Факел дышит и реагирует на скорость прокрутки. Тормозной импульс
+     добавляется поверх тяги: сопло на миг вспыхивает ярче всего,
+     что было в полёте, и тут же гаснет. */
+  var burn = this._burn || 0;
+  var pw = Math.min(1, this.power + burn * 0.9);
   var flick = 0.86 + Math.sin(t * 27) * 0.07 + Math.sin(t * 41) * 0.05;
   this.flame.uniforms.uTime.value = t;
-  this.flame.uniforms.uPower.value = this.power * flick;
-  this.flame.core.scale.setScalar(0.9 + this.power * 0.35 * flick);
-  var hs = 2.2 + this.power * 1.9 * flick;
+  this.flame.uniforms.uPower.value = pw * flick;
+  this.flame.core.scale.setScalar(0.9 + pw * 0.35 * flick + burn * 0.30);
+  var hs = 2.2 + pw * 1.9 * flick + burn * 1.5;
   this.flame.halo.scale.set(hs, hs, 1);
-  this.flame.halo.material.opacity = 0.55 + this.power * 0.4;
-  this.engineLight.intensity = 2.2 + this.power * 3.4 * flick;
+  this.flame.halo.material.opacity = 0.55 + pw * 0.4;
+  this.engineLight.intensity = 2.2 + pw * 3.4 * flick + burn * 4.5;
 
   /* Иллюминатор и полосы пульсируют */
   this.rocket.glass.material.emissiveIntensity = 0.6 + Math.sin(t * 2.1) * 0.22;
@@ -1576,10 +2176,50 @@ Rocket.prototype.frame = function (dt) {
     this.shown = Math.min(1, this.shown + dt * 0.7);
     this.pivot.scale.multiplyScalar(0.4 + this.shown * 0.6);
   }
+  /* Грунт считаем после layout: положение и масштаб корабля на этот
+     кадр уже готовы, и площадка встаёт ровно под опоры */
+  this.groundStep(dt);
+  this.quake(dt);
   this.veil(dt);
 
   this.publish();
   this.r.render(this.scene, this.cam);
+};
+
+/* ── Дрожь кадра при касании ──────────────────────────────────
+   Трясём и сцену, и страницу. Камеру - потому что это честно и
+   работает независимо от вёрстки: трёхмерный мир на самом деле
+   вздрагивает. Плюс отдаём наружу три переменные на html, чтобы
+   плоский интерфейс мог вздрогнуть тем же движением и в тот же
+   миг - иначе 3D и вёрстка разъедутся.
+
+   Толчок короткий: две высокие частоты, затухание за треть секунды.
+   Долгая тряска читается поломкой, а не ударом. */
+Rocket.prototype.quake = function (dt) {
+  var s = this._shake || 0;
+  var root = document.documentElement;
+  if (s > 0.002) {
+    this._shake = s * Math.exp(-dt * 5.2);
+    var t = this.time;
+    var ox = (Math.sin(t * 63) * 0.65 + Math.sin(t * 29 + 1.1) * 0.35) * s;
+    var oy = (Math.sin(t * 47 + 1.7) * 0.65 + Math.sin(t * 22 + 0.4) * 0.35) * s;
+    this.cam.position.x = ox * 0.22;
+    this.cam.position.y = oy * 0.17;
+    root.style.setProperty("--rc-shake", s.toFixed(3));
+    root.style.setProperty("--rc-shake-x", (ox * 8).toFixed(2) + "px");
+    root.style.setProperty("--rc-shake-y", (oy * 6).toFixed(2) + "px");
+    if (!this._quakeOn) { this._quakeOn = 1; root.classList.add("rc-quake"); }
+    return;
+  }
+  if (!this._quakeOn) return;
+  this._quakeOn = 0;
+  this._shake = 0;
+  this.cam.position.x = 0;
+  this.cam.position.y = 0;
+  root.style.setProperty("--rc-shake", "0");
+  root.style.setProperty("--rc-shake-x", "0px");
+  root.style.setProperty("--rc-shake-y", "0px");
+  root.classList.remove("rc-quake");
 };
 
 /* Экранное положение ракеты уходит в CSS-переменные. По ним чипы

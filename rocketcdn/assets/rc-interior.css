@@ -103,22 +103,26 @@ html[data-theme="light"].rc-rocket-parked.has-rocket #rocketCanvas {
 /* ── Внутри рубки ────────────────────────────────────────────
    Содержимое второй половины страницы получает настоящее стекло
    панелей. Живой фильтр здесь оправдан: под ним действительно
-   движется сцена. */
+   движется сцена.
+
+   Анкеты здесь нет намеренно. Экран пульта целиком принадлежит
+   rc-console.css: раньше эти два файла красили .form-card
+   наперегонки, правило отсюда выигрывало по весу селектора и
+   стирало фаску экрана - анкета получалась стеклянной карточкой
+   поверх фона вместо врисованного в панель прибора. */
 html.rc-inside #reliability .card,
-html.rc-inside #faq .faq,
-html.rc-inside #contact .form-card {
+html.rc-inside #faq .faq {
   background: linear-gradient(158deg, rgba(12,26,42,.72), rgba(8,17,28,.62));
-  border-color: rgba(66,178,220,.22);
+  border-color: rgba(var(--int-cyan-rgb, 66,178,220), .22);
   backdrop-filter: blur(16px) saturate(150%);
   -webkit-backdrop-filter: blur(16px) saturate(150%);
   box-shadow:
-    inset 0 1px 0 rgba(226,232,240,.16),
+    inset 0 1px 0 rgba(var(--int-lit-rgb, 207,233,245), .16),
     0 30px 60px -34px rgba(0,0,0,.9),
-    0 0 50px -26px rgba(66,178,220,.55);
+    0 0 50px -26px rgba(var(--int-cyan-rgb, 66,178,220), .55);
 }
 html[data-theme="light"].rc-inside #reliability .card,
-html[data-theme="light"].rc-inside #faq .faq,
-html[data-theme="light"].rc-inside #contact .form-card {
+html[data-theme="light"].rc-inside #faq .faq {
   background: linear-gradient(158deg, rgba(255,255,255,.9), rgba(240,246,252,.82));
   border-color: rgba(10,88,151,.2);
 }
@@ -158,28 +162,21 @@ html.rc-inside #spaceBg { opacity: .25; transition: opacity .6s var(--ease); }
 html.rc-inside section { position: relative; z-index: 1; }
 
 /* ── Пульт: форма заявки в носу корабля ──────────────────────
-   Никакого трёхмерного рисования полей. Пазы, фаски и гравировка -
-   это рамка вокруг обычной формы, поля остаются нативными.
-   Правило железное: transform на предке и активная форма никогда
-   не встречаются, иначе ломается позиционирование при подъёме
-   клавиатуры на телефоне. */
-html.rc-inside #contact .form-card {
-  border-radius: var(--r-lg);
-  outline: 1px solid rgba(226,232,240,.06);
-  outline-offset: 6px;
-}
-html.rc-inside #contact .form-card::before {
-  content: ''; position: absolute; inset: -14px -14px auto -14px; height: 1px;
-  background: linear-gradient(90deg, transparent, rgba(66,178,220,.5), transparent);
-  pointer-events: none;
-}
-/* Как только человек встал в поле, сцена замирает и все украшения
-   вокруг формы снимаются: ввод важнее кино. */
-html.rc-form-active .rc-int-canvas { opacity: .35; }
-html.rc-form-active #contact .form-card {
-  backdrop-filter: none; -webkit-backdrop-filter: none;
-  background: var(--bg-2);
-}
+   Сам экран пульта нарисован в rc-console.css - там же, где живёт
+   вся секция контактов, чтобы у прибора был один хозяин. Здесь
+   остаётся только поведение рубки, пока человек печатает.
+
+   Раньше рубка в этот момент гасла до трети яркости, и это как раз
+   и давало «анкета стеклянной карточкой поверх фото»: комната
+   выцветала, и форма оставалась висеть в сером. Теперь комната
+   держится почти в полную силу, а замирает движение - дрейф камеры
+   и дыхание диодов останавливает rc-interior.js по этому же классу.
+
+   Правило железное: transform на предке активной формы не ставим
+   никогда, иначе ломается позиционирование при подъёме клавиатуры
+   на телефоне. Фаски и подсветка сделаны фоном, тенями и
+   псевдоэлементами. */
+html.rc-form-active .rc-int-canvas { opacity: .82; }
 
 @media (max-width: 860px) {
   /* На телефоне живой фильтр на длинных блоках слишком дорог */

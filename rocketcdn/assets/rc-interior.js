@@ -44,6 +44,49 @@ try { reduced = matchMedia("(prefers-reduced-motion: reduce)").matches; } catch 
 
 var TAU = Math.PI * 2;
 
+/* ── Палитра рубки: единственный источник цвета ───────────────
+   Раньше объёмная рубка, снимок пульта и стили формы красились
+   каждый своим набором чисел. Из-за этого три соседних кадра -
+   салон, пульт, кабина игры - читались как три разных сайта: у них
+   не совпадали ни цвет стен, ни цветовая температура света.
+
+   Теперь цвет объявлен ровно один раз здесь и тем же составом
+   уходит в CSS (--int-*), поэтому оформление пульта физически не
+   может разойтись с рубкой по тону: они берут одни и те же числа.
+   Для полупрозрачных заливок рядом публикуется тройка каналов
+   (--int-*-rgb), её удобно подставлять внутрь rgba(). */
+var COL = {
+  deep:  0x050C15,   /* дальний воздух и туман, самый тёмный тон */
+  hull:  0x0A1524,   /* обшивка, корпуса приборов */
+  wall:  0x0E1D2E,   /* стеновая панель рубки */
+  panel: 0x14283D,   /* лицевая плита прибора, фон экранов */
+  emis:  0x123C5C,   /* внутреннее свечение плиты */
+  cyan:  0x42B2DC,   /* фирменный циан: швы, кромки, диоды */
+  vio:   0x8A59F6,   /* фирменный фиолет: тёплая подсветка */
+  lit:   0xCFE9F5    /* свет из остекления, холодный */
+};
+
+function hex6(n) {
+  var s = n.toString(16);
+  while (s.length < 6) s = "0" + s;
+  return "#" + s;
+}
+
+/* Отдаём палитру в CSS сразу при загрузке файла, не дожидаясь
+   сборки сцены: оформление секции контактов обязано быть в тон даже
+   если объёмный слой ещё не поднялся или не поднимется вовсе. */
+function paintCSS() {
+  var s = root.style, k, v;
+  for (k in COL) {
+    if (!COL.hasOwnProperty(k)) continue;
+    v = COL[k];
+    s.setProperty("--int-" + k, hex6(v));
+    s.setProperty("--int-" + k + "-rgb",
+      ((v >> 16) & 255) + "," + ((v >> 8) & 255) + "," + (v & 255));
+  }
+}
+paintCSS();
+
 /* Геометрия рубки. Восемь стеновых панелей по кругу: на первых
    четырёх стоят карточки надёжности, на пятой - бортовой
    справочник с вопросами, остальные держат стену, чтобы при
@@ -194,7 +237,7 @@ function panelTex(w, h, dark) {
   var c = doc.createElement("canvas");
   c.width = w; c.height = h;
   var x = c.getContext("2d");
-  x.fillStyle = dark ? "#0A1524" : "#0E1D2E";
+  x.fillStyle = dark ? hex6(COL.hull) : hex6(COL.wall);
   x.fillRect(0, 0, w, h);
 
   /* Крупные панели с фаской: свет входит сверху, значит верхняя
@@ -233,7 +276,7 @@ function floorTex() {
   var c = doc.createElement("canvas");
   c.width = c.height = 256;
   var x = c.getContext("2d");
-  x.fillStyle = "#070F1A"; x.fillRect(0, 0, 256, 256);
+  x.fillStyle = hex6(COL.deep); x.fillRect(0, 0, 256, 256);
   /* Перфорация технического настила */
   x.fillStyle = "rgba(226,232,240,.06)";
   for (var i = 8; i < 256; i += 16) {
@@ -255,7 +298,7 @@ function planetTex() {
   var gr = x.createLinearGradient(0, 0, 0, 512);
   gr.addColorStop(0, "#0A5897");
   gr.addColorStop(0.55, "#0B2B4A");
-  gr.addColorStop(1, "#050C15");
+  gr.addColorStop(1, hex6(COL.deep));
   x.fillStyle = gr; x.fillRect(0, 0, 512, 512);
   /* Материки точками, как на глобусе сайта */
   x.fillStyle = "rgba(66,178,220,.55)";
@@ -294,7 +337,7 @@ function build() {
   rend.toneMappingExposure = 1.02;
 
   scene = new T.Scene();
-  scene.fog = new T.FogExp2(0x050c15, 0.055);
+  scene.fog = new T.FogExp2(COL.deep, 0.055);
   /* Входим с узким углом: в тамбуре тесно. Внутри угол раскрывается
      до семидесяти двух, и человек физически чувствует, что вышел
      из щели в помещение. */
@@ -325,7 +368,7 @@ function build() {
 
   var ceil = new T.Mesh(
     new T.CircleGeometry(2.6, phone ? 24 : 40),
-    new T.MeshStandardMaterial({ color: 0x0a1626, roughness: 0.9, metalness: 0.3, side: T.BackSide })
+    new T.MeshStandardMaterial({ color: COL.hull, roughness: 0.9, metalness: 0.3, side: T.BackSide })
   );
   ceil.rotation.x = -Math.PI / 2;
   ceil.position.y = 3.4;
@@ -340,10 +383,10 @@ function build() {
      вдоль минус Z и вращается на минус yaw, поэтому стена, чтобы
      оказаться напротив, обязана повернуться в другую сторону. */
   var panelMat = new T.MeshStandardMaterial({
-    color: 0x14283d, roughness: 0.3, metalness: 0.7,
-    emissive: 0x123c5c, emissiveIntensity: 0.9
+    color: COL.panel, roughness: 0.3, metalness: 0.7,
+    emissive: COL.emis, emissiveIntensity: 0.9
   });
-  var edgeMat = new T.MeshBasicMaterial({ color: 0x42b2dc, transparent: true, opacity: 0.55 });
+  var edgeMat = new T.MeshBasicMaterial({ color: COL.cyan, transparent: true, opacity: 0.55 });
   var faceGeo = new T.PlaneGeometry(1.9, 1.42);
   var edgeGeo = new T.PlaneGeometry(1.9, 0.02);
 
@@ -381,8 +424,8 @@ function build() {
     /* Обрамление: толстое кольцо с цианoвой подсветкой изнутри */
     var ring2 = new T.Mesh(
       new T.TorusGeometry(0.54, 0.07, 8, 28),
-      new T.MeshStandardMaterial({ color: 0x16283c, roughness: 0.35, metalness: 0.85,
-        emissive: 0x0d3350, emissiveIntensity: 0.6 })
+      new T.MeshStandardMaterial({ color: COL.panel, roughness: 0.35, metalness: 0.85,
+        emissive: COL.emis, emissiveIntensity: 0.6 })
     );
     ring2.position.set(0, 0, -2.5);
     port.add(ring2);
@@ -392,7 +435,7 @@ function build() {
   }
 
   /* Кабельные трассы под потолком: жгуты идут вдоль стены */
-  var cableMat = new T.MeshStandardMaterial({ color: 0x0b1420, roughness: 0.95, metalness: 0.1 });
+  var cableMat = new T.MeshStandardMaterial({ color: COL.hull, roughness: 0.95, metalness: 0.1 });
   for (i = 0; i < (phone ? 2 : 4); i++) {
     var ring = new T.Mesh(new T.TorusGeometry(2.45, 0.045 + i * 0.012, 6, phone ? 24 : 40), cableMat);
     ring.rotation.x = Math.PI / 2;
@@ -403,10 +446,24 @@ function build() {
   /* Остекление рубки: единственный настоящий источник света */
   var win = new T.Mesh(
     new T.PlaneGeometry(2.9, 1.35, 1, 1),
-    new T.MeshBasicMaterial({ color: 0x0b1a2c, transparent: true, opacity: 0.25 })
+    new T.MeshBasicMaterial({ color: COL.panel, transparent: true, opacity: 0.25 })
   );
   win.position.set(0, 1.85, -2.45);
   grp.add(win);
+
+  /* Фаска остекления: тонкая циановая рамка по контуру. Тот же
+     приём, что у экрана анкеты в секции контактов - когда камера
+     доезжает до носа, рамка окна и рамка экрана стоят рядом и
+     читаются одним прибором, а не двумя разными картинками. */
+  var fasciaMat = new T.MeshBasicMaterial({ color: COL.cyan, transparent: true, opacity: 0.42 });
+  var fh = new T.PlaneGeometry(3.02, 0.014);
+  var fv = new T.PlaneGeometry(0.014, 1.44);
+  var fPos = [[0, 2.53, fh], [0, 1.17, fh], [-1.51, 1.85, fv], [1.51, 1.85, fv]];
+  for (i = 0; i < fPos.length; i++) {
+    var fm = new T.Mesh(fPos[i][2], fasciaMat);
+    fm.position.set(fPos[i][0], fPos[i][1], -2.43);
+    grp.add(fm);
+  }
 
   planet = new T.Mesh(
     new T.SphereGeometry(7.5, phone ? 18 : 28, phone ? 14 : 20),
@@ -424,17 +481,52 @@ function build() {
   grp.add(halo);
 
   /* Пульт под остеклением */
-  var deskMat = new T.MeshStandardMaterial({ color: 0x0a1421, roughness: 0.4, metalness: 0.8 });
+  var deskMat = new T.MeshStandardMaterial({ color: COL.hull, roughness: 0.4, metalness: 0.8 });
   var desk = new T.Mesh(new T.BoxGeometry(2.6, 0.12, 0.75), deskMat);
   desk.position.set(0, 1.02, -2.05);
   desk.rotation.x = -0.22;
   grp.add(desk);
 
+  /* ── Приборная стойка ──────────────────────────────────────
+     Нужна ради стыка салона с секцией контактов. Раньше в акте
+     пульта низ кадра занимал пол, и анкета висела над пустотой:
+     кадр не был похож на пульт, и раздел читался отдельной
+     картинкой. Стойка закрывает нижнюю треть кадра приборами, а
+     боковые крылья огибают нос, поэтому по краям остаются стены
+     рубки, а не обрыв. Всё это несколько коробок: дешевле любой
+     картинки и не тянет ни байта. */
+  var riserMat = new T.MeshStandardMaterial({ color: COL.hull, roughness: 0.55, metalness: 0.72 });
+  var riser = new T.Mesh(new T.BoxGeometry(3.35, 0.95, 0.55), riserMat);
+  riser.position.set(0, 0.5, -2.24);
+  grp.add(riser);
+
+  for (i = -1; i <= 1; i += 2) {
+    var wing = new T.Mesh(new T.BoxGeometry(1.55, 0.12, 0.66), deskMat);
+    wing.position.set(i * 1.66, 1.04, -1.6);
+    wing.rotation.set(-0.2, i * 0.66, 0);
+    grp.add(wing);
+    var wbox = new T.Mesh(new T.BoxGeometry(1.55, 0.78, 0.5), riserMat);
+    wbox.position.set(i * 1.72, 0.6, -1.7);
+    wbox.rotation.y = i * 0.66;
+    grp.add(wbox);
+  }
+
+  /* Световая полоса по переднему ребру пульта. Это и есть тот
+     нижний свет, который в секции контактов подсвечивает экран
+     анкеты снизу: источник один, поэтому подсветка формы читается
+     как свет от панели, а не как декоративное свечение карточки. */
+  var lip = new T.Mesh(
+    new T.BoxGeometry(2.62, 0.018, 0.022),
+    new T.MeshBasicMaterial({ color: COL.cyan, transparent: true, opacity: 0.7 })
+  );
+  lip.position.set(0, 1.05, -1.66);
+  grp.add(lip);
+
   /* Диоды на пульте: дышат от общего таймера с фазовым сдвигом */
   var dGeo = new T.SphereGeometry(0.022, 6, 6);
   for (i = 0; i < (phone ? 10 : 18); i++) {
     var warm = i % 3 === 0;
-    var d = new T.Mesh(dGeo, new T.MeshBasicMaterial({ color: warm ? 0x8a59f6 : 0x42b2dc }));
+    var d = new T.Mesh(dGeo, new T.MeshBasicMaterial({ color: warm ? COL.vio : COL.cyan }));
     d.position.set(-1.1 + (i % 9) * 0.26, 1.09 + (i > 8 ? 0.06 : 0), -2.16 + (i > 8 ? 0.16 : 0));
     d.userData.ph = i * 0.7;
     grp.add(d);
@@ -444,18 +536,20 @@ function build() {
   /* Свет: один настоящий направленный из окна, остальное запечено
      в цвет материалов и в мягкий ambient. Тени не считаем: под
      всем, что должно их отбрасывать, нарисована фактура. */
-  lamp = new T.DirectionalLight(0xcfe9f5, 3.4);
+  lamp = new T.DirectionalLight(COL.lit, 3.4);
   lamp.position.set(-0.8, 2.6, -4);
   scene.add(lamp);
   /* Отражённый свет от планеты: он и держит дальнюю половину рубки,
      иначе за спиной получается чёрная дыра вместо помещения */
-  scene.add(new T.HemisphereLight(0x2f4f6d, 0x0a1420, 1.35));
+  scene.add(new T.HemisphereLight(0x2f4f6d, COL.hull, 1.35));
   scene.add(new T.AmbientLight(0x33465e, 1.15));
-  var fill = new T.PointLight(0x8a59f6, 1.1, 9);
+  var fill = new T.PointLight(COL.vio, 1.1, 9);
   fill.position.set(1.4, 1.4, 1.6);
   scene.add(fill);
-  var glow = new T.PointLight(0x42b2dc, 0.9, 7);
-  glow.position.set(0, 1.4, -1.9);
+  /* Свет пульта. Стоит низко, у самой стойки: это он ложится на
+     приборы снизу и тем же цветом подсвечивает экран анкеты. */
+  var glow = new T.PointLight(COL.cyan, 1.15, 6.5);
+  glow.position.set(0, 1.16, -1.75);
   scene.add(glow);
 
   st.built = true;
@@ -625,15 +719,33 @@ function setProgress(p) {
   st.fovT = 58 + eIn * 14;
   root.style.setProperty("--int-enter", eIn.toFixed(3));
 
+  /* Доля подхода к пульту: ноль - камера ещё стоит в центре рубки,
+     единица - доехала вплотную к приборной панели. Этим же числом
+     живёт оформление секции контактов (--int-con в rc-console.css),
+     поэтому экран анкеты разгорается ровно вместе с подъездом
+     камеры: одно движение, а не два независимых. */
+  var con = p > P_TURN ? Math.min(1, (p - P_TURN) / Math.max(1e-4, P_OUT - P_TURN)) : 0;
+  root.style.setProperty("--int-con", con.toFixed(3));
+
   if (!st.shown) return;
 
   st.yawT = yawAt(p);
 
-  /* После оборота камера подступает к пульту и замирает */
-  if (p > P_TURN) {
-    var kk = Math.min(1, (p - P_TURN) / Math.max(1e-4, P_OUT - P_TURN));
-    st.dollyT = -0.42 * kk;
-    st.pitchT = -kk * 0.12;
+  /* После оборота камера подступает к пульту и замирает.
+
+     Едем заметно ближе, чем раньше (было 0.42 метра): секция
+     контактов обязана читаться продолжением той же рубки, а для
+     этого приборная стойка должна занять низ кадра. Дальше метра с
+     небольшим не идём - за этой отметкой камера утыкается в стойку.
+
+     Угол объектива при этом чуть раскрываем, а не сужаем: сузить
+     значило бы выкинуть стены из кадра, и пульт снова превратился
+     бы в отдельную картинку вместо угла комнаты. */
+  if (con > 0) {
+    var ec = 0.5 - 0.5 * Math.cos(Math.PI * con);
+    st.dollyT = -1.02 * ec;
+    st.pitchT = -0.17 * ec;
+    st.fovT = 72 + ec * 6;
   }
 
   /* Щелчок фиксации: камера встала напротив очередной панели */
@@ -720,6 +832,11 @@ function tick(ts) {
   lastTs = ts;
 
   var fast = root.classList.contains("rc-fast");
+  /* Пока человек печатает, рубка стоит. Гасить её нельзя: экран
+     анкеты - часть этой же комнаты, и если комната выцветет, форма
+     снова станет карточкой поверх чужого фона. Поэтому не гасим, а
+     останавливаем: дрейф и дыхание диодов замирают, кадр держится. */
+  var typing = root.classList.contains("rc-form-active");
 
   /* Демпфер: резкая прокрутка не должна вертеть рубку рывками.
      Коэффициент считаем от времени кадра, а не от кадра как
@@ -732,9 +849,9 @@ function tick(ts) {
   st.yaw += (st.yawT + (fast ? 0 : st.yawOff) - st.yaw) * kY;
   st.pitch += ((fast ? 0 : st.pitchT) - st.pitch) * kY;
   st.dolly += (st.dollyT - st.dolly) * kY;
-  st.drift += dt;
+  if (!typing) st.drift += dt;
 
-  var drift = fast ? 0 : Math.sin(st.drift / 6) * 0.026;   /* дрейф 3 градуса, период 6 секунд */
+  var drift = (fast || typing) ? 0 : Math.sin(st.drift / 6) * 0.026;   /* дрейф 3 градуса, период 6 секунд */
   cam.rotation.order = "YXZ";
   cam.rotation.y = -st.yaw + drift;
   cam.rotation.x = st.pitch;
@@ -749,7 +866,7 @@ function tick(ts) {
   }
 
   /* Диоды дышат от одного таймера с фазовым сдвигом */
-  if (!fast) {
+  if (!fast && !typing) {
     for (var i = 0; i < diodes.length; i++) {
       var d = diodes[i];
       var b = 0.55 + 0.45 * Math.sin(st.drift * 1.6 + d.userData.ph);
