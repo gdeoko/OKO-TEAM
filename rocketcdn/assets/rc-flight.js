@@ -1715,7 +1715,13 @@ function deployNode() {
   netMark(F.orbit.c, name);
   netPaint();
   netButton();
-  say((RU ? "УЗЕЛ РАЗВЁРНУТ · " : "NODE DEPLOYED · ") + name + " · " +
+
+  /* Узел закрыл висящий запрос - это и есть победа в игре: трафик
+     пришёл туда, где его ждали */
+  var closed = req && req.name === name;
+  if (closed) req = null;
+  say((closed ? (RU ? "ЗАПРОС ЗАКРЫТ · " : "REQUEST SERVED · ")
+              : (RU ? "УЗЕЛ РАЗВЁРНУТ · " : "NODE DEPLOYED · ")) + name + " · " +
       (RU ? "в сети " : "in network ") + netCount(), 2600);
   if (g.RC_SOUND) {
     try {
@@ -1749,6 +1755,57 @@ function deployNode() {
       btns[bi2].classList.toggle("locked", !!(uv && uv.need && netCount() < uv.need));
     }
   }
+}
+
+/* ── Запросы на трафик ───────────────────────────────────────
+   Сеть без нагрузки - просто точки на карте. Чтобы игра говорила о
+   продукте, миру нужен спрос: время от времени на каком-нибудь теле
+   без узла случается всплеск трафика. Табло сообщает, откуда
+   запрос, метка этого мира начинает пульсировать, и у человека
+   появляется понятная задача - долететь и развернуть узел.
+
+   Наказания нет намеренно: это витрина, а не соревнование. Не
+   успел - запрос уходит, но ничего не отнимается. */
+var req = null;               /* {name, until, sys, pl} */
+var reqNext = 0;
+
+function reqPick() {
+  /* Ищем мир без узла: в родной системе это тела маршрута, в чужой -
+     планеты текущего рукава */
+  var list = [];
+  if (uniIdx === 0) {
+    var names = [GOAL_NAMES.earth, GOAL_NAMES.moon, GOAL_NAMES.mars, GOAL_NAMES.saturn];
+    for (var i = 0; i < names.length; i++) if (!net[names[i]]) list.push({ name: names[i] });
+  } else {
+    var u = UNIVERSES[uniIdx];
+    for (var s = 0; s < u.sys.length; s++) {
+      for (var p = 0; p < u.sys[s].planets.length; p++) {
+        var nm = u.sys[s].planets[p].name;
+        if (!net[nm]) list.push({ name: nm, sys: s, pl: p });
+      }
+    }
+  }
+  if (!list.length) return null;
+  /* Псевдослучайный выбор по времени: своего генератора здесь не
+     нужно, важно лишь чтобы цель менялась */
+  return list[Math.floor((performance.now() / 997) % list.length)];
+}
+
+function reqTick(ts) {
+  if (F.brief) return;
+  if (req && ts > req.until) {
+    say((RU ? "ЗАПРОС УШЁЛ · " : "REQUEST LOST · ") + req.name, 2200);
+    req = null;
+    reqNext = ts + 18000;
+    return;
+  }
+  if (req || ts < reqNext) return;
+  var pick = reqPick();
+  if (!pick) { reqNext = ts + 30000; return; }
+  req = { name: pick.name, sys: pick.sys, pl: pick.pl, until: ts + 62000 };
+  say((RU ? "ЗАПРОС ТРАФИКА · " : "TRAFFIC SURGE · ") + pick.name +
+      (RU ? " · нужен узел" : " · node needed"), 3400);
+  if (g.RC_SOUND) { try { (g.RC_SOUND.uiConfirm || g.RC_SOUND.blip).call(g.RC_SOUND, 660); } catch (e) {} }
 }
 
 /* ── Голограммы: связка сцены и слоя меток ───────────────────
@@ -1877,6 +1934,15 @@ function holoFrame(w3, ts) {
     var on = vis && !F.brief && shown < limit;
     if (on) shown++;
     try { g.RC_HOLO.place(id, sx, sy, depth, on); } catch (e3) {}
+
+    /* Мир, откуда пришёл запрос трафика, подсвечиваем той же
+       подсветкой, что и захват сканера: цель должна быть видна
+       глазом, а не только в титрах */
+    var wanted = !!(req && rec.title === req.name);
+    if (wanted !== rec.lit) {
+      rec.lit = wanted;
+      try { g.RC_HOLO.hover(id, wanted); } catch (e4) {}
+    }
   }
 }
 
@@ -2114,6 +2180,7 @@ function frame(ts) {
   if (ts - (frame._netT || 0) > 100) {
     frame._netT = ts;
     netButton();
+    reqTick(ts);
   }
   if (netBeamT > 0) {
     netBeamT -= dt;

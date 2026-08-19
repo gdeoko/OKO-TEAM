@@ -2049,6 +2049,15 @@ Rocket.prototype.doorOpen = function (dt) {
     this._over = over;
     document.documentElement.classList.toggle("rc-approach", over);
   }
+  /* Долю подхода отдаём в CSS: по ней содержимое раздела уходит из
+     кадра корабля, и делает это ровно с той же скоростью, с какой
+     корпус растёт. Округляем до сотой - чаще незачем, а лишние
+     записи в стиль дороже самой анимации. */
+  var appR = Math.round(this.appK * 100) / 100;
+  if (appR !== this._appPub) {
+    this._appPub = appR;
+    document.documentElement.style.setProperty("--rc-app", String(appR));
+  }
 
   var deep = this.doorK > 0.58 && this.appK > 0.8;
   if (deep !== this._deep) {

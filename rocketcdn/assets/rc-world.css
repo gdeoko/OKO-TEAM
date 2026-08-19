@@ -44,19 +44,79 @@ html.rc-flying.w3-on main.w3-stage {
   transition: transform .5s cubic-bezier(.22,.61,.36,1);
 }
 
-/* Подход к кораблю: холст поднимается над содержимым страницы.
-   Корпус перекрывает текст и карточки - именно так и выглядит
-   предмет, к которому подходишь. Шапка и оверлеи стоят выше и
-   остаются на месте. */
+/* ── Режиссура кадра: контент расступается перед кораблём ─────
+   Ошибка, которую здесь исправляем: сначала холст просто клали
+   поверх страницы, и корабль закрывал собой карточки. Клиент
+   сформулировал точно: контент не прячется под сцену, он ЖИВЁТ в
+   ней - у каждого элемента своё место в кадре.
+
+   Поэтому корабль остаётся на первом плане (иначе текст читался бы
+   сквозь металл), но в тех актах, где он крупный, содержимое
+   раздела уходит из-под него: на широком экране расступается в две
+   колонки, оставляя в середине коридор под корпус, на телефоне
+   поднимается над площадкой. Ничего не гаснет и не пропадает -
+   всё читается, просто стоит там, где корабля нет. */
 html.rc-approach #rocketCanvas {
   z-index: 6 !important;
   transition: opacity .4s linear;
 }
-/* Содержимое под корпусом притухает: читать сквозь борт всё равно
-   нечего, а вместе они давали кашу из букв и металла */
-html.rc-approach main.w3-stage {
-  opacity: calc(1 - var(--rc-app, 0) * .72);
-  transition: opacity .35s linear;
+
+/* Посадка: корабль в середине кадра, карточки раздела расходятся
+   по краям. Коридор считаем от ширины окна, чтобы на любом экране
+   между колонками помещался корпус с опорами и площадкой. */
+@media (min-width: 901px) {
+  html[data-act="landing"] #included .inc-grid,
+  html[data-act="walk"] #included .inc-grid {
+    grid-template-columns: 1fr 1fr;
+    column-gap: clamp(240px, 34vw, 520px);
+    transition: grid-template-columns .6s var(--ease, ease), column-gap .6s var(--ease, ease);
+  }
+  /* Заголовок раздела уводим в левую половину: по центру он попал
+     бы точно на нос корабля */
+  html[data-act="landing"] #included .sec-head,
+  html[data-act="walk"] #included .sec-head {
+    max-width: 46%;
+    transition: max-width .6s var(--ease, ease);
+  }
+}
+
+/* Телефон: колонки разводить некуда, поэтому контент поднимается
+   над площадкой, а корабль занимает нижнюю треть экрана */
+@media (max-width: 900px) {
+  html[data-act="landing"] #included .inc-grid {
+    padding-bottom: 42vh;
+    transition: padding-bottom .6s var(--ease, ease);
+  }
+}
+
+/* Проход к трапу: корпус растёт до края кадра, и лента сценариев
+   уходит выше него. Текст остаётся читаемым, просто держится над
+   бортом, а не за ним. */
+html[data-act="walk"] #cases .hs-view {
+  transform: translateY(calc(var(--rc-app, 0) * -14vh));
+  transition: transform .5s var(--ease, ease);
+}
+html[data-act="walk"] #cases .hs-head {
+  transform: translateY(calc(var(--rc-app, 0) * -6vh));
+  transition: transform .5s var(--ease, ease);
+}
+
+/* Посадка: следующий раздел подходит снизу ровно туда, где стоит
+   площадка с опорами. Отводим его ниже - карточки не наезжают на
+   грунт, а корабль садится на свободное место. */
+html[data-act="landing"] #cases .hs-view,
+html[data-act="landing"] #cases .hs-head {
+  transform: translateY(9vh);
+  transition: transform .6s var(--ease, ease);
+}
+/* Заголовок следующего раздела упирался в нос корабля: держим его
+   в левой половине, пока площадка занимает центр кадра */
+@media (min-width: 901px) {
+  html[data-act="landing"] #cases .hs-head { max-width: 44%; }
+}
+@media (max-width: 900px) {
+  html[data-act="landing"] #cases .hs-view,
+  html[data-act="landing"] #cases .hs-head { transform: translateY(4vh); }
 }
 
 /* Свет из открывающегося люка. Не заплатка на стыке, а честный

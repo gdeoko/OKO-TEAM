@@ -5,11 +5,46 @@
    весь экран, тонкий HUD в фирменной палитре и панель кабины
    снизу. Всё движение холста считает rc-flight.js, здесь только
    вид и переходы входа-выхода.
+
+   ── Одна комната на три сцены ────────────────────────────────
+   Аудит финальной сцены поймал главное: салон рубки, секция пульта
+   и кабина игры шли подряд и читались как три разных сайта. У них
+   не совпадали ни цвет стен, ни цветовая температура: рубка синяя
+   и насыщенная, кабина игры - серо-бирюзовая и вымытая.
+
+   Поэтому здесь больше нет собственных чисел цвета. Палитра рубки
+   объявлена ровно один раз в rc-interior.js (объект COL) и оттуда
+   публикуется в CSS: --int-deep / --int-hull / --int-wall /
+   --int-panel / --int-emis / --int-cyan / --int-vio / --int-lit,
+   плюс те же с суффиксом -rgb для rgba(). Кабина берёт те же числа,
+   значит физически не может разойтись с рубкой по тону. Запасное
+   значение через запятую оставлено на случай, если объёмный слой
+   не поднялся: rc-interior.js грузится перед rc-flight.js, но
+   оформление обязано быть в тон даже без него.
+
+   Своими остаются только сигнальные цвета - зелёный «готово» и
+   янтарный сканер. Это не отделка комнаты, а показания приборов:
+   они и должны выбиваться из стенового тона, иначе их не заметить.
    ═══════════════════════════════════════════════════════════ */
+
+/* Две ступени фирменного циана - блик и тень на выпуклых клавишах.
+   Считаются из --int-cyan, чтобы правка палитры доезжала и сюда.
+   Литералы объявлены первыми и остаются в старом браузере: если
+   color-mix не поддержан, @supports просто не сработает. */
+.rc-flight, .rcf-fab, .rcf-cta {
+  --rcf-cy-hi: #7BD1EC;   /* циан, подсвеченный светом остекления */
+  --rcf-cy-lo: #2C8FB8;   /* циан в тени, нижняя ступень клавиши */
+}
+@supports (color: color-mix(in srgb, red, blue)) {
+  .rc-flight, .rcf-fab, .rcf-cta {
+    --rcf-cy-hi: color-mix(in srgb, var(--int-cyan, #42B2DC) 58%, var(--int-lit, #CFE9F5));
+    --rcf-cy-lo: color-mix(in srgb, var(--int-cyan, #42B2DC) 74%, var(--int-deep, #050C15));
+  }
+}
 
 .rc-flight {
   position: fixed; inset: 0; z-index: 220;
-  background: #02050c;
+  background: var(--int-deep, #050C15);
   opacity: 0; visibility: hidden;
   transition: opacity .7s var(--ease), visibility 0s linear .7s;
   overscroll-behavior: contain;
@@ -34,7 +69,7 @@ html.rc-flying body { overflow: hidden; }
 .rcf-cockpit {
   position: absolute; inset: 0; pointer-events: none;
   background:
-    radial-gradient(ellipse 140% 100% at 50% 42%, transparent 64%, rgba(1,3,8,.85) 100%);
+    radial-gradient(ellipse 140% 100% at 50% 42%, transparent 64%, rgba(var(--int-deep-rgb, 5,12,21), .85) 100%);
 }
 .rcf-cockpit::after {
   content: ''; position: absolute; left: 0; right: 0; bottom: 0;
@@ -53,8 +88,8 @@ html.rc-flying body { overflow: hidden; }
 .rcf-cockpit::before {
   content: ''; position: absolute; inset: 0;
   background:
-    linear-gradient(100deg, rgba(2,5,12,.8) 0%, transparent 7%),
-    linear-gradient(260deg, rgba(2,5,12,.8) 0%, transparent 7%);
+    linear-gradient(100deg, rgba(var(--int-deep-rgb, 5,12,21), .8) 0%, transparent 7%),
+    linear-gradient(260deg, rgba(var(--int-deep-rgb, 5,12,21), .8) 0%, transparent 7%);
 }
 
 /* ── HUD ─────────────────────────────────────────────────────ы */
@@ -70,22 +105,22 @@ html.rc-flying body { overflow: hidden; }
 .rcf-cap {
   position: absolute; left: 50%; top: clamp(14px, 4vh, 40px);
   transform: translateX(-50%);
-  color: #AFE9FF;
+  color: var(--int-lit, #CFE9F5);
   font-size: clamp(11px, 1.4vw, 14px);
   letter-spacing: .18em;
   white-space: nowrap;
   padding: 10px 22px;
-  background: linear-gradient(180deg, rgba(66,178,220,.10), rgba(66,178,220,.03) 55%, rgba(66,178,220,.08));
-  border-top: 1px solid rgba(159,224,246,.5);
-  border-bottom: 1px solid rgba(66,178,220,.25);
-  text-shadow: 0 0 12px rgba(66,178,220,.9), 0 0 30px rgba(66,178,220,.4);
+  background: linear-gradient(180deg, rgba(var(--int-cyan-rgb, 66,178,220), .10), rgba(var(--int-cyan-rgb, 66,178,220), .03) 55%, rgba(var(--int-cyan-rgb, 66,178,220), .08));
+  border-top: 1px solid rgba(var(--int-lit-rgb, 207,233,245), .5);
+  border-bottom: 1px solid rgba(var(--int-cyan-rgb, 66,178,220), .25);
+  text-shadow: 0 0 12px rgba(var(--int-cyan-rgb, 66,178,220), .9), 0 0 30px rgba(var(--int-cyan-rgb, 66,178,220), .4);
   -webkit-mask-image: repeating-linear-gradient(180deg, #000 0 2px, rgba(0,0,0,.62) 2px 3px);
   mask-image: repeating-linear-gradient(180deg, #000 0 2px, rgba(0,0,0,.62) 2px 3px);
   opacity: 0;
 }
 .rcf-cap::before, .rcf-cap::after {
   content: ''; position: absolute; top: -1px; bottom: -1px; width: 8px;
-  border: 1px solid rgba(159,224,246,.7);
+  border: 1px solid rgba(var(--int-lit-rgb, 207,233,245), .7);
 }
 .rcf-cap::before { left: -9px; border-right: 0; }
 .rcf-cap::after { right: -9px; border-left: 0; }
@@ -103,20 +138,20 @@ html.rc-flying body { overflow: hidden; }
   position: absolute; left: 50%; bottom: 1.6%;
   transform: translateX(-50%);
   width: min(380px, 48vw); height: 2px;
-  background: rgba(207,233,245,.16);
+  background: rgba(var(--int-lit-rgb, 207,233,245), .16);
   border-radius: 2px;
 }
 .rcf-track i {
   display: block; height: 100%; width: 0;
-  background: linear-gradient(90deg, var(--cyan, #42B2DC), var(--violet, #8A59F6));
+  background: linear-gradient(90deg, var(--int-cyan, #42B2DC), var(--int-vio, #8A59F6));
   border-radius: 2px;
-  box-shadow: 0 0 12px rgba(66,178,220,.8);
+  box-shadow: 0 0 12px rgba(var(--int-cyan-rgb, 66,178,220), .8);
 }
 
 .rcf-hint {
   position: absolute; left: 50%; bottom: 16%;
   transform: translateX(-50%);
-  color: rgba(207,233,245,.75);
+  color: rgba(var(--int-lit-rgb, 207,233,245), .75);
   font-size: clamp(11px, 1.3vw, 13px);
   letter-spacing: .06em;
   white-space: nowrap;
@@ -128,7 +163,7 @@ html.rc-flying body { overflow: hidden; }
 
 .rcf-speed {
   position: absolute; right: clamp(14px, 4vw, 60px); bottom: 3.4%;
-  color: #CFE9F5; text-align: right;
+  color: var(--int-lit, #CFE9F5); text-align: right;
   font-variant-numeric: tabular-nums;
 }
 .rcf-speed b {
@@ -136,7 +171,7 @@ html.rc-flying body { overflow: hidden; }
   font-family: var(--f-head, "Unbounded", sans-serif);
   font-size: clamp(18px, 2.6vw, 28px);
   font-weight: 600;
-  text-shadow: 0 0 18px rgba(66,178,220,.6);
+  text-shadow: 0 0 18px rgba(var(--int-cyan-rgb, 66,178,220), .6);
 }
 .rcf-speed span { font-size: 10px; letter-spacing: .22em; opacity: .6; }
 
@@ -145,14 +180,14 @@ html.rc-flying body { overflow: hidden; }
   position: absolute; top: clamp(12px, 3vh, 28px); right: clamp(12px, 3vw, 28px);
   width: 44px; height: 44px;
   display: grid; place-items: center;
-  color: #CFE9F5;
-  background: rgba(4,10,18,.6);
-  border: 1px solid rgba(66,178,220,.35);
+  color: var(--int-lit, #CFE9F5);
+  background: rgba(var(--int-deep-rgb, 5,12,21), .6);
+  border: 1px solid rgba(var(--int-cyan-rgb, 66,178,220), .35);
   border-radius: 50%;
   cursor: pointer;
   transition: border-color .25s, box-shadow .25s;
 }
-.rcf-close:hover { border-color: rgba(66,178,220,.8); box-shadow: 0 0 24px -6px rgba(66,178,220,.7); }
+.rcf-close:hover { border-color: rgba(var(--int-cyan-rgb, 66,178,220), .8); box-shadow: 0 0 24px -6px rgba(var(--int-cyan-rgb, 66,178,220), .7); }
 .rcf-close svg { width: 18px; height: 18px; }
 
 .rcf-return {
@@ -161,19 +196,19 @@ html.rc-flying body { overflow: hidden; }
   padding: 14px 30px;
   font-family: var(--f-body, "Golos Text", sans-serif);
   font-size: 14px; letter-spacing: .08em;
-  color: #061019;
-  background: linear-gradient(135deg, var(--cyan, #42B2DC), #7BD1EC);
+  color: var(--int-deep, #050C15);
+  background: linear-gradient(135deg, var(--int-cyan, #42B2DC), var(--rcf-cy-hi, #7BD1EC));
   border: 0; border-radius: 999px;
   cursor: pointer;
   opacity: 0; pointer-events: none;
   transition: opacity .6s var(--ease), transform .6s var(--ease);
-  box-shadow: 0 0 40px -8px rgba(66,178,220,.9);
+  box-shadow: 0 0 40px -8px rgba(var(--int-cyan-rgb, 66,178,220), .9);
 }
 .rcf-return.on { opacity: 1; pointer-events: auto; transform: translateX(-50%) translateY(0); }
 
 .rcf-fade {
   position: absolute; inset: 0; pointer-events: none;
-  background: #02050c;
+  background: var(--int-deep, #050C15);
   opacity: 0; transition: opacity .6s;
 }
 
@@ -187,24 +222,24 @@ html.rc-flying body { overflow: hidden; }
   padding: 12px 18px 12px 14px;
   font-family: var(--f-body, "Golos Text", sans-serif);
   font-size: 13px; font-weight: 600; letter-spacing: .1em;
-  color: #CFE9F5;
-  background: linear-gradient(158deg, rgba(9,19,32,.92), rgba(5,12,21,.96));
-  border: 1px solid rgba(66,178,220,.4);
+  color: var(--int-lit, #CFE9F5);
+  background: linear-gradient(158deg, rgba(var(--int-hull-rgb, 10,21,36), .92), rgba(var(--int-deep-rgb, 5,12,21), .96));
+  border: 1px solid rgba(var(--int-cyan-rgb, 66,178,220), .4);
   border-radius: 999px;
   cursor: pointer;
   opacity: 0; pointer-events: none;
   transform: translateY(14px);
   transition: opacity .45s var(--ease), transform .45s var(--ease), box-shadow .3s;
-  box-shadow: 0 14px 34px -14px rgba(0,0,0,.9), 0 0 30px -12px rgba(66,178,220,.55);
+  box-shadow: 0 14px 34px -14px rgba(0,0,0,.9), 0 0 30px -12px rgba(var(--int-cyan-rgb, 66,178,220), .55);
 }
 .rcf-fab.on { opacity: 1; pointer-events: auto; transform: translateY(0); }
-.rcf-fab:hover { box-shadow: 0 14px 34px -12px rgba(0,0,0,.9), 0 0 42px -8px rgba(66,178,220,.85); }
-.rcf-fab svg { width: 19px; height: 19px; color: var(--cyan, #42B2DC); }
+.rcf-fab:hover { box-shadow: 0 14px 34px -12px rgba(0,0,0,.9), 0 0 42px -8px rgba(var(--int-cyan-rgb, 66,178,220), .85); }
+.rcf-fab svg { width: 19px; height: 19px; color: var(--int-cyan, #42B2DC); }
 html.rc-flying .rcf-fab { opacity: 0; pointer-events: none; }
 
 html[data-theme="light"] .rcf-fab {
   color: #0A2A40;
-  background: linear-gradient(158deg, rgba(255,255,255,.95), rgba(238,246,252,.98));
+  background: linear-gradient(158deg, rgba(var(--int-lit-rgb, 207,233,245), .95), rgba(238,246,252,.98));
   border-color: rgba(10,88,151,.35);
 }
 html[data-theme="light"] .rcf-fab svg { color: #0A5897; }
@@ -221,17 +256,17 @@ html[data-theme="light"] .rcf-fab svg { color: #0A5897; }
   padding: 18px 34px;
   font-family: var(--f-head, "Unbounded", sans-serif);
   font-size: clamp(14px, 1.8vw, 18px); font-weight: 600; letter-spacing: .1em;
-  color: #061019;
-  background: linear-gradient(135deg, var(--cyan, #42B2DC), #86D6F0);
+  color: var(--int-deep, #050C15);
+  background: linear-gradient(135deg, var(--int-cyan, #42B2DC), var(--rcf-cy-hi, #7BD1EC));
   border: 0; border-radius: 999px;
   cursor: pointer;
-  box-shadow: 0 0 0 1px rgba(207,233,245,.25), 0 20px 50px -18px rgba(66,178,220,.8);
+  box-shadow: 0 0 0 1px rgba(var(--int-lit-rgb, 207,233,245), .25), 0 20px 50px -18px rgba(var(--int-cyan-rgb, 66,178,220), .8);
   transition: transform .3s var(--ease), box-shadow .3s var(--ease);
 }
-.rcf-cta .rcf-cta-btn:hover { transform: translateY(-3px); box-shadow: 0 0 0 1px rgba(207,233,245,.4), 0 26px 60px -16px rgba(66,178,220,1); }
+.rcf-cta .rcf-cta-btn:hover { transform: translateY(-3px); box-shadow: 0 0 0 1px rgba(var(--int-lit-rgb, 207,233,245), .4), 0 26px 60px -16px rgba(var(--int-cyan-rgb, 66,178,220), 1); }
 .rcf-cta .rcf-cta-btn svg { width: 22px; height: 22px; }
 .rcf-cta .rcf-cta-note {
-  color: var(--tx-soft, rgba(207,233,245,.7));
+  color: var(--tx-soft, rgba(var(--int-lit-rgb, 207,233,245), .7));
   font-size: 13px; letter-spacing: .04em;
 }
 
@@ -286,25 +321,86 @@ html[data-theme="light"] .rc-vidbg.on { opacity: .16; }
 /* ── Рамка кабины ────────────────────────────────────────────
    Настоящая панель-окно корабля: сгенерированный кадр с чистыми
    краями, чёрное окно которого вырезано в прозрачность. Своя
-   картинка для альбома и для портрета. Слегка приглушаем, чтобы
-   светлый корпус не спорил с космосом. */
+   картинка для альбома и для портрета.
+
+   Это картинка, а не разметка, поэтому в палитру рубки её можно
+   свести только фильтром. Замеры показали, в чём была разница:
+   тон у кадра и у рубки почти совпадал (203° против 209°), а вот
+   насыщенность отличалась вдвое - стена рубки s≈0.94 при v≈0.26,
+   корпус кабины s≈0.50 при v≈0.27. То есть рубка - синяя комната,
+   а кабина - серая, и глаз читал это как переезд на другой сайт.
+
+   Отсюда состав фильтра:
+   · saturate(2.2) - главный шаг, поднимает s с 0.50 до 0.86 и
+     вычищает из корпуса серый (красный канал падает с 34 до 10);
+   · hue-rotate(8deg) - добирает недостающие шесть градусов,
+     тон садится на 211° при 209° у стены рубки;
+   · brightness(.78) contrast(1.1) - держит светлоту v≈0.26, ровно
+     как у стены, и не даёт корпусу спорить с космосом в окне.
+   Пересветов при этом 0.2% пикселей - приборы и диоды на панели
+   остаются читаемыми, кадр не превращается в мутное пятно.
+   Значения фильтра статичны: анимировать filter нельзя, это
+   пересчёт всего кадра на каждом тике. */
 .rcf-cab {
   position: absolute; inset: 0;
   width: 100%; height: 100%;
   object-fit: cover;
   pointer-events: none;
   opacity: 0;
-  filter: brightness(.72) contrast(1.06) saturate(1.05);
+  filter: brightness(.78) contrast(1.1) saturate(2.2) hue-rotate(8deg);
   transform: translateY(calc(var(--rcf-g, 0) * 1px));
   transition: opacity .8s var(--ease), transform .3s var(--ease);
 }
 .rc-flight.has-cab .rcf-cab { opacity: 1; }
 
+/* Стеновой тон поверх корпуса кабины.
+   Фильтр правит температуру, но числа палитры в него не подставить,
+   и глубокие тени корпуса остаются чуть холоднее стены рубки.
+   Поэтому сверху лежит тонкая заливка --int-wall - тем же цветом,
+   что стеновая панель рубки.
+
+   Слой вырезан по силуэту самой кабины: маска - та же картинка, у
+   неё окно уже прозрачное, значит на космос заливка не попадает и
+   звёзды не сереют. Живого размытия нет намеренно: backdrop-filter
+   на весь экран - это лишний проход по кадру каждый тик, а здесь
+   достаточно статичной плёнки, которую браузер растрирует один раз.
+
+   Слой висит на ::before у .rcf-hud - это единственный способ
+   положить что-то поверх <img> без правки разметки (разметку
+   строит rc-flight.js). Порядок сложения соблюдён: .rcf-hud идёт
+   после картинки, а собственные узлы HUD рисуются после своего
+   ::before, поэтому плёнка ложится строго между кабиной и HUD. */
+.rc-flight.has-cab .rcf-hud::before {
+  content: ''; position: absolute; inset: 0;
+  pointer-events: none;
+  background: var(--int-wall, #0E1D2E);
+  opacity: .22;
+  -webkit-mask-image: url("gen/cockpit-wide.webp");
+  mask-image: url("gen/cockpit-wide.webp");
+  -webkit-mask-size: cover; mask-size: cover;
+  -webkit-mask-position: 50% 50%; mask-position: 50% 50%;
+  -webkit-mask-repeat: no-repeat; mask-repeat: no-repeat;
+}
+/* В портрете rc-flight.js подставляет вертикальный кадр - маска
+   обязана быть той же картинкой, иначе плёнка ляжет мимо корпуса */
+@media (orientation: portrait) {
+  .rc-flight.has-cab .rcf-hud::before {
+    -webkit-mask-image: url("gen/cockpit-tall.webp");
+    mask-image: url("gen/cockpit-tall.webp");
+  }
+}
+
 /* ── Пульт навигации: блок клавиш ВНУТРИ консоли ─────────────
    Не кнопки поверх кадра, а физический блок панели: металлическая
    ниша с фаской и винтами по углам, лежащая в перспективе консоли
    (наклонена от зрителя, как и нарисованная), внутри - клавиши с
-   LED-полосой. Нажатие вдавливает клавишу в панель. */
+   LED-полосой. Нажатие вдавливает клавишу в панель.
+
+   Плита пульта была нейтрально-серой (#1c2632), и рядом с синими
+   приборами рубки это читалось как деталь из другого корабля.
+   Теперь ниша набрана тем же стеком, что и приборная стойка рубки:
+   лицевая плита --int-panel сверху, корпус --int-hull в середине,
+   дальний воздух --int-deep у нижней кромки. */
 .rcf-deck {
   position: absolute; left: 50%; bottom: 2.6%;
   transform: translateX(-50%) perspective(760px) rotateX(33deg);
@@ -313,22 +409,25 @@ html[data-theme="light"] .rc-vidbg.on { opacity: .16; }
   padding: 10px 14px 12px;
   border-radius: 12px;
   background:
-    radial-gradient(circle at 8px 8px, rgba(207,233,245,.35) 1.6px, transparent 2.4px),
-    radial-gradient(circle at calc(100% - 8px) 8px, rgba(207,233,245,.35) 1.6px, transparent 2.4px),
-    radial-gradient(circle at 8px calc(100% - 8px), rgba(207,233,245,.35) 1.6px, transparent 2.4px),
-    radial-gradient(circle at calc(100% - 8px) calc(100% - 8px), rgba(207,233,245,.35) 1.6px, transparent 2.4px),
-    linear-gradient(180deg, #1c2632 0%, #10171f 40%, #0a0f16 100%);
-  border: 1px solid rgba(4,8,14,.95);
+    radial-gradient(circle at 8px 8px, rgba(var(--int-lit-rgb, 207,233,245), .35) 1.6px, transparent 2.4px),
+    radial-gradient(circle at calc(100% - 8px) 8px, rgba(var(--int-lit-rgb, 207,233,245), .35) 1.6px, transparent 2.4px),
+    radial-gradient(circle at 8px calc(100% - 8px), rgba(var(--int-lit-rgb, 207,233,245), .35) 1.6px, transparent 2.4px),
+    radial-gradient(circle at calc(100% - 8px) calc(100% - 8px), rgba(var(--int-lit-rgb, 207,233,245), .35) 1.6px, transparent 2.4px),
+    linear-gradient(180deg,
+      var(--int-panel, #14283D) 0%,
+      var(--int-hull, #0A1524) 42%,
+      var(--int-deep, #050C15) 100%);
+  border: 1px solid rgba(var(--int-deep-rgb, 5,12,21), .95);
   box-shadow:
-    inset 0 1px 0 rgba(207,233,245,.1),
+    inset 0 1px 0 rgba(var(--int-lit-rgb, 207,233,245), .1),
     inset 0 0 26px rgba(0,0,0,.6),
-    0 -1px 0 rgba(207,233,245,.06),
+    0 -1px 0 rgba(var(--int-lit-rgb, 207,233,245), .06),
     0 10px 26px -8px rgba(0,0,0,.95);
 }
 /* Светящаяся щель по верхней кромке ниши: пульт встроен, не приклеен */
 .rcf-deck::before {
   content: ''; position: absolute; left: 6%; right: 6%; top: -2px; height: 1px;
-  background: linear-gradient(90deg, transparent, rgba(66,178,220,.55), transparent);
+  background: linear-gradient(90deg, transparent, rgba(var(--int-cyan-rgb, 66,178,220), .55), transparent);
 }
 .rcf-nav {
   display: flex; gap: 7px; flex-wrap: wrap; justify-content: center;
@@ -338,51 +437,66 @@ html[data-theme="light"] .rc-vidbg.on { opacity: .16; }
   font-family: var(--f-body, "Golos Text", sans-serif);
   font-size: 10.5px; font-weight: 700; letter-spacing: .14em;
   text-transform: uppercase;
-  color: rgba(180,226,244,.92);
-  background: linear-gradient(180deg, #303c4b 0%, #17212c 45%, #0d141d 100%);
-  border: 1px solid rgba(6,10,16,.95);
+  color: rgba(var(--int-lit-rgb, 207,233,245), .92);
+  /* Клавиша - тот же материал, что и ниша, только приподнята к свету:
+     верхний слой светом остекления (--int-lit) даёт выпуклое темя,
+     нижний повторяет стек плиты. Раньше здесь стоял серый #303c4b,
+     из-за него пульт игры выпадал из синевы рубки. */
+  background:
+    linear-gradient(180deg, rgba(var(--int-lit-rgb, 207,233,245), .13) 0%, transparent 48%),
+    linear-gradient(180deg,
+      var(--int-panel, #14283D) 0%,
+      var(--int-hull, #0A1524) 45%,
+      var(--int-deep, #050C15) 100%);
+  border: 1px solid rgba(var(--int-deep-rgb, 5,12,21), .95);
   border-radius: 6px;
   padding: 9px 13px 10px;
   cursor: pointer;
   position: relative;
   box-shadow:
-    inset 0 1px 0 rgba(207,233,245,.18),
+    inset 0 1px 0 rgba(var(--int-lit-rgb, 207,233,245), .18),
     inset 0 -4px 7px rgba(0,0,0,.6),
-    0 2px 0 #05090f,
+    0 2px 0 var(--int-deep, #050C15),
     0 4px 7px -2px rgba(0,0,0,.9);
-  text-shadow: 0 0 8px rgba(66,178,220,.6);
+  text-shadow: 0 0 8px rgba(var(--int-cyan-rgb, 66,178,220), .6);
   transition: color .16s, box-shadow .16s, transform .1s, background .16s;
 }
 /* LED-полоска клавиши */
 .rcf-nav button::after {
   content: ''; position: absolute; left: 22%; right: 22%; top: 3px; height: 2px;
   border-radius: 1px;
-  background: rgba(66,178,220,.35);
-  box-shadow: 0 0 6px rgba(66,178,220,.3);
+  background: rgba(var(--int-cyan-rgb, 66,178,220), .35);
+  box-shadow: 0 0 6px rgba(var(--int-cyan-rgb, 66,178,220), .3);
   transition: background .2s, box-shadow .2s;
 }
-.rcf-nav button:hover { color: #EAF7FF; }
-.rcf-nav button:hover::after { background: rgba(159,224,246,.85); box-shadow: 0 0 10px rgba(66,178,220,.8); }
+.rcf-nav button:hover { color: var(--int-lit, #CFE9F5); }
+.rcf-nav button:hover::after { background: rgba(var(--int-lit-rgb, 207,233,245), .85); box-shadow: 0 0 10px rgba(var(--int-cyan-rgb, 66,178,220), .8); }
 .rcf-nav button:active {
   transform: translateY(2px);
   box-shadow:
-    inset 0 1px 0 rgba(207,233,245,.1),
+    inset 0 1px 0 rgba(var(--int-lit-rgb, 207,233,245), .1),
     inset 0 3px 8px rgba(0,0,0,.7),
-    0 0 0 #05090f,
+    0 0 0 var(--int-deep, #050C15),
     0 1px 3px -1px rgba(0,0,0,.9);
 }
+/* Нажатая клавиша горит фирменным цианом - тем же, что кромки
+   приборов рубки. Три ступени гнутся из одного цвета: свет сверху,
+   сам циан в теле, его теневая ступень у основания. */
 .rcf-nav button.cur {
-  color: #06131d;
-  background: linear-gradient(180deg, #9FE0F6 0%, #42B2DC 60%, #2C8FB8 100%);
+  color: var(--int-deep, #050C15);
+  background: linear-gradient(180deg,
+    var(--rcf-cy-hi, #7BD1EC) 0%,
+    var(--int-cyan, #42B2DC) 60%,
+    var(--rcf-cy-lo, #2C8FB8) 100%);
   text-shadow: none;
   box-shadow:
-    inset 0 1px 0 rgba(255,255,255,.55),
-    inset 0 -3px 6px rgba(6,24,36,.35),
-    0 0 22px -3px rgba(66,178,220,.95),
-    0 2px 0 #0a3346,
+    inset 0 1px 0 rgba(var(--int-lit-rgb, 207,233,245), .55),
+    inset 0 -3px 6px rgba(var(--int-deep-rgb, 5,12,21), .5),
+    0 0 22px -3px rgba(var(--int-cyan-rgb, 66,178,220), .95),
+    0 2px 0 var(--int-emis, #123C5C),
     0 4px 7px -2px rgba(0,0,0,.9);
 }
-.rcf-nav button.cur::after { background: #063040; box-shadow: none; }
+.rcf-nav button.cur::after { background: var(--int-emis, #123C5C); box-shadow: none; }
 
 /* ── Автопилот ───────────────────────────────────────────────ы */
 .rcf-auto {
@@ -391,9 +505,9 @@ html[data-theme="light"] .rc-vidbg.on { opacity: .16; }
   padding: 10px 16px;
   font-family: var(--f-body, "Golos Text", sans-serif);
   font-size: 12px; font-weight: 600; letter-spacing: .12em;
-  color: rgba(207,233,245,.85);
-  background: rgba(4,10,18,.6);
-  border: 1px solid rgba(66,178,220,.35);
+  color: rgba(var(--int-lit-rgb, 207,233,245), .85);
+  background: rgba(var(--int-deep-rgb, 5,12,21), .6);
+  border: 1px solid rgba(var(--int-cyan-rgb, 66,178,220), .35);
   border-radius: 999px;
   cursor: pointer;
   backdrop-filter: blur(5px);
@@ -401,7 +515,7 @@ html[data-theme="light"] .rc-vidbg.on { opacity: .16; }
 }
 .rcf-auto i {
   width: 8px; height: 8px; border-radius: 50%;
-  background: rgba(207,233,245,.35);
+  background: rgba(var(--int-lit-rgb, 207,233,245), .35);
   transition: background .25s, box-shadow .25s;
 }
 .rcf-auto[aria-pressed="true"] i {
@@ -420,12 +534,12 @@ html[data-theme="light"] .rc-vidbg.on { opacity: .16; }
   text-align: center;
   font-size: clamp(11px, 1.3vw, 13px);
   letter-spacing: .1em;
-  color: #9FE3FF;
+  color: var(--int-lit, #CFE9F5);
   padding: 8px 18px;
-  background: linear-gradient(180deg, rgba(138,89,246,.09), rgba(66,178,220,.03) 55%, rgba(66,178,220,.07));
-  border-top: 1px solid rgba(159,224,246,.4);
-  border-bottom: 1px solid rgba(138,89,246,.3);
-  text-shadow: 0 0 10px rgba(66,178,220,.8);
+  background: linear-gradient(180deg, rgba(var(--int-vio-rgb, 138,89,246), .09), rgba(var(--int-cyan-rgb, 66,178,220), .03) 55%, rgba(var(--int-cyan-rgb, 66,178,220), .07));
+  border-top: 1px solid rgba(var(--int-lit-rgb, 207,233,245), .4);
+  border-bottom: 1px solid rgba(var(--int-vio-rgb, 138,89,246), .3);
+  text-shadow: 0 0 10px rgba(var(--int-cyan-rgb, 66,178,220), .8);
   -webkit-mask-image: repeating-linear-gradient(180deg, #000 0 2px, rgba(0,0,0,.62) 2px 3px);
   mask-image: repeating-linear-gradient(180deg, #000 0 2px, rgba(0,0,0,.62) 2px 3px);
   opacity: 0; pointer-events: none;
@@ -449,19 +563,19 @@ html[data-theme="light"] .rc-vidbg.on { opacity: .16; }
 .rcf-holo img {
   width: 100%; height: 100%;
   object-fit: contain;
-  filter: brightness(1.6) sepia(1) hue-rotate(160deg) saturate(3.4) drop-shadow(0 0 14px rgba(66,178,220,.8));
+  filter: brightness(1.6) sepia(1) hue-rotate(160deg) saturate(3.4) drop-shadow(0 0 14px rgba(var(--int-cyan-rgb, 66,178,220), .8));
   opacity: .8;
   -webkit-mask-image: repeating-linear-gradient(180deg, #000 0 2px, rgba(0,0,0,.55) 2px 4px);
   mask-image: repeating-linear-gradient(180deg, #000 0 2px, rgba(0,0,0,.55) 2px 4px);
 }
 .rcf-holo::after {
   content: ''; position: absolute; left: -8%; right: -8%; top: 0; height: 3px;
-  background: linear-gradient(90deg, transparent, rgba(160,230,255,.9), transparent);
+  background: linear-gradient(90deg, transparent, rgba(var(--int-lit-rgb, 207,233,245), .9), transparent);
   animation: rcfScan 2.6s linear infinite;
 }
 .rcf-holo i {
   position: absolute; left: 12%; right: 12%; bottom: -12px; height: 10px;
-  background: radial-gradient(ellipse 50% 100% at 50% 0%, rgba(66,178,220,.55), transparent 70%);
+  background: radial-gradient(ellipse 50% 100% at 50% 0%, rgba(var(--int-cyan-rgb, 66,178,220), .55), transparent 70%);
   filter: blur(1px);
 }
 @keyframes rcfHolo {
@@ -521,8 +635,8 @@ html[data-theme="light"] .rc-vidbg.on { opacity: .16; }
 }
 .rcf-lock b {
   position: absolute; width: 16px; height: 16px;
-  border: 2px solid #9FE0F6;
-  filter: drop-shadow(0 0 6px rgba(66,178,220,.9));
+  border: 2px solid var(--int-lit, #CFE9F5);
+  filter: drop-shadow(0 0 6px rgba(var(--int-cyan-rgb, 66,178,220), .9));
 }
 .rcf-lock b:nth-child(1) { left: 0; top: 0; border-right: 0; border-bottom: 0; }
 .rcf-lock b:nth-child(2) { right: 0; top: 0; border-left: 0; border-bottom: 0; }
@@ -534,22 +648,26 @@ html[data-theme="light"] .rc-vidbg.on { opacity: .16; }
   white-space: nowrap;
   font-family: var(--f-body, "Golos Text", sans-serif);
   font-size: 10.5px; font-weight: 600; letter-spacing: .16em;
-  color: #9FE3FF;
+  color: var(--int-lit, #CFE9F5);
   padding: 3px 8px;
-  background: linear-gradient(180deg, rgba(66,178,220,.12), rgba(66,178,220,.04));
-  border-top: 1px solid rgba(159,224,246,.45);
-  text-shadow: 0 0 8px rgba(66,178,220,.9);
+  background: linear-gradient(180deg, rgba(var(--int-cyan-rgb, 66,178,220), .12), rgba(var(--int-cyan-rgb, 66,178,220), .04));
+  border-top: 1px solid rgba(var(--int-lit-rgb, 207,233,245), .45);
+  text-shadow: 0 0 8px rgba(var(--int-cyan-rgb, 66,178,220), .9);
   -webkit-mask-image: repeating-linear-gradient(180deg, #000 0 2px, rgba(0,0,0,.66) 2px 3px);
   mask-image: repeating-linear-gradient(180deg, #000 0 2px, rgba(0,0,0,.66) 2px 3px);
 }
 
 /* Клавиша сканера в активном положении - янтарная: приборы
-   наведения на пультах всегда выделены другим цветом */
+   наведения на пультах всегда выделены другим цветом. Это показание
+   прибора, а не отделка комнаты, поэтому янтарь остаётся своим и в
+   палитру рубки его не сводим - иначе он перестанет отличаться.
+   Фаска при этом общая: блик берётся из --int-lit, как у всех
+   выпуклых клавиш пульта. */
 .rcf-nav button.rcf-scan-key.cur {
   background: linear-gradient(180deg, #FFD9A0 0%, #F0A85A 60%, #C9853E 100%);
   color: #241303;
   box-shadow:
-    inset 0 1px 0 rgba(255,255,255,.55),
+    inset 0 1px 0 rgba(var(--int-lit-rgb, 207,233,245), .55),
     inset 0 -3px 6px rgba(60,30,6,.35),
     0 0 22px -3px rgba(240,168,90,.95),
     0 2px 0 #4a3010,
@@ -563,7 +681,7 @@ html[data-theme="light"] .rc-vidbg.on { opacity: .16; }
   font-family: var(--f-body, "Golos Text", sans-serif);
   font-size: 10.5px; font-weight: 600; letter-spacing: .18em;
   text-transform: uppercase;
-  color: rgba(159,227,255,.65);
+  color: rgba(var(--int-lit-rgb, 207,233,245), .65);
 }
 .rcf-prog.full { color: #35E08F; text-shadow: 0 0 10px rgba(53,224,143,.6); }
 @media (max-width: 760px) {
@@ -579,7 +697,7 @@ html[data-theme="light"] .rc-vidbg.on { opacity: .16; }
 .rcf-brief {
   position: absolute; inset: 0;
   display: grid; place-items: center;
-  background: radial-gradient(ellipse 70% 60% at 50% 46%, rgba(2,5,12,.25), rgba(2,5,12,.78));
+  background: radial-gradient(ellipse 70% 60% at 50% 46%, rgba(var(--int-deep-rgb, 5,12,21), .25), rgba(var(--int-deep-rgb, 5,12,21), .78));
   opacity: 1; visibility: visible;
   transition: opacity .6s var(--ease), visibility 0s;
   z-index: 4;
@@ -590,20 +708,20 @@ html[data-theme="light"] .rc-vidbg.on { opacity: .16; }
   text-align: center;
   padding: 30px 30px 26px;
   border-radius: 16px;
-  border: 1px solid rgba(66,178,220,.35);
-  background: linear-gradient(165deg, rgba(9,19,32,.92), rgba(4,10,18,.96));
-  box-shadow: 0 30px 80px -30px rgba(0,0,0,.95), 0 0 60px -20px rgba(66,178,220,.4);
+  border: 1px solid rgba(var(--int-cyan-rgb, 66,178,220), .35);
+  background: linear-gradient(165deg, rgba(var(--int-hull-rgb, 10,21,36), .92), rgba(var(--int-deep-rgb, 5,12,21), .96));
+  box-shadow: 0 30px 80px -30px rgba(0,0,0,.95), 0 0 60px -20px rgba(var(--int-cyan-rgb, 66,178,220), .4);
 }
 .rcf-brief-card b {
   font-family: var(--f-head, "Unbounded", sans-serif);
   font-size: clamp(17px, 2.4vw, 24px); letter-spacing: .14em;
-  color: #EAF7FF;
-  text-shadow: 0 0 24px rgba(66,178,220,.7);
+  color: var(--int-lit, #CFE9F5);
+  text-shadow: 0 0 24px rgba(var(--int-cyan-rgb, 66,178,220), .7);
 }
 .rcf-brief-card p {
   margin: 12px 0 20px;
   font-size: 13px; line-height: 1.6;
-  color: rgba(207,233,245,.75);
+  color: rgba(var(--int-lit-rgb, 207,233,245), .75);
 }
 .rcf-brief-btns { display: flex; gap: 10px; justify-content: center; flex-wrap: wrap; }
 .rcf-brief-btns button {
@@ -611,21 +729,24 @@ html[data-theme="light"] .rc-vidbg.on { opacity: .16; }
   padding: 13px 16px;
   font-family: var(--f-body, "Golos Text", sans-serif);
   font-size: 13px; font-weight: 700; letter-spacing: .1em;
-  color: #061019;
-  background: linear-gradient(135deg, var(--cyan, #42B2DC), #7BD1EC);
+  color: var(--int-deep, #050C15);
+  background: linear-gradient(135deg, var(--int-cyan, #42B2DC), var(--rcf-cy-hi, #7BD1EC));
   border: 0; border-radius: 12px;
   cursor: pointer;
   transition: transform .2s var(--ease), box-shadow .2s;
-  box-shadow: 0 0 30px -10px rgba(66,178,220,.8);
+  box-shadow: 0 0 30px -10px rgba(var(--int-cyan-rgb, 66,178,220), .8);
 }
 .rcf-brief-btns button span {
   display: block; margin-top: 3px;
   font-size: 10px; font-weight: 500; letter-spacing: .06em; opacity: .75;
 }
+/* Вторая кнопка брифинга - не подсвеченная, а просто плита прибора:
+   тот же стек панель-корпус, что у ниши пульта, вместо прежнего
+   нейтрального серого */
 .rcf-brief-btns button:last-child {
-  color: rgba(207,233,245,.92);
-  background: linear-gradient(180deg, #2a3542, #131c26);
-  border: 1px solid rgba(66,178,220,.4);
+  color: rgba(var(--int-lit-rgb, 207,233,245), .92);
+  background: linear-gradient(180deg, var(--int-panel, #14283D), var(--int-hull, #0A1524));
+  border: 1px solid rgba(var(--int-cyan-rgb, 66,178,220), .4);
   box-shadow: none;
 }
 .rcf-brief-btns button:hover { transform: translateY(-2px); }
@@ -639,9 +760,9 @@ html[data-theme="light"] .rc-vidbg.on { opacity: .16; }
   min-width: min(340px, 86vw);
   padding: 12px;
   border-radius: 14px;
-  border: 1px solid rgba(66,178,220,.35);
-  background: linear-gradient(170deg, rgba(9,19,32,.95), rgba(4,10,18,.97));
-  box-shadow: 0 24px 60px -20px rgba(0,0,0,.95), 0 0 40px -16px rgba(66,178,220,.5);
+  border: 1px solid rgba(var(--int-cyan-rgb, 66,178,220), .35);
+  background: linear-gradient(170deg, rgba(var(--int-hull-rgb, 10,21,36), .95), rgba(var(--int-deep-rgb, 5,12,21), .97));
+  box-shadow: 0 24px 60px -20px rgba(0,0,0,.95), 0 0 40px -16px rgba(var(--int-cyan-rgb, 66,178,220), .5);
   opacity: 0; visibility: hidden; pointer-events: none;
   transition: opacity .3s var(--ease), transform .3s var(--ease), visibility 0s linear .3s;
   z-index: 5;
@@ -654,7 +775,7 @@ html[data-theme="light"] .rc-vidbg.on { opacity: .16; }
 .rcf-uni i {
   display: block; text-align: center;
   font-style: normal; font-size: 10px; font-weight: 700; letter-spacing: .3em;
-  color: rgba(159,227,255,.6);
+  color: rgba(var(--int-lit-rgb, 207,233,245), .6);
   margin-bottom: 9px;
 }
 .rcf-uni button {
@@ -663,28 +784,31 @@ html[data-theme="light"] .rc-vidbg.on { opacity: .16; }
   padding: 10px 13px;
   margin-top: 6px;
   border-radius: 9px;
-  border: 1px solid rgba(66,178,220,.2);
-  background: rgba(20,30,42,.6);
+  border: 1px solid rgba(var(--int-cyan-rgb, 66,178,220), .2);
+  background: rgba(var(--int-panel-rgb, 20,40,61), .6);
   cursor: pointer;
   transition: border-color .2s, background .2s;
 }
 .rcf-uni button:first-of-type { margin-top: 0; }
-.rcf-uni button:hover { border-color: rgba(66,178,220,.7); background: rgba(28,42,58,.8); }
+.rcf-uni button:hover { border-color: rgba(var(--int-cyan-rgb, 66,178,220), .7); background: rgba(var(--int-panel-rgb, 20,40,61), .8); }
 .rcf-uni button b {
   display: block;
   font-family: var(--f-body, "Golos Text", sans-serif);
   font-size: 12.5px; font-weight: 700; letter-spacing: .12em;
-  color: #CFE9F5;
+  color: var(--int-lit, #CFE9F5);
 }
-.rcf-uni button span { display: block; margin-top: 2px; font-size: 10.5px; color: rgba(207,233,245,.55); }
+.rcf-uni button span { display: block; margin-top: 2px; font-size: 10.5px; color: rgba(var(--int-lit-rgb, 207,233,245), .55); }
 
-/* Клавиша АВТО на пульте: горит зелёным в автополёте */
+/* Клавиша АВТО на пульте: горит зелёным в автополёте. Зелёный, как
+   и янтарь сканера, - показание прибора, а не цвет комнаты, поэтому
+   он свой. Общей остаётся фаска: блик из --int-lit, как у всех
+   клавиш пульта и у приборных плит рубки. */
 .rcf-nav button.rcf-auto-key.cur {
   background: linear-gradient(180deg, #7FEBB4 0%, #35E08F 60%, #23A868 100%);
   color: #05231a;
   text-shadow: none;
   box-shadow:
-    inset 0 1px 0 rgba(255,255,255,.55),
+    inset 0 1px 0 rgba(var(--int-lit-rgb, 207,233,245), .55),
     inset 0 -3px 6px rgba(4,40,26,.35),
     0 0 20px -3px rgba(53,224,143,.9),
     0 2px 0 #0c3a26,
@@ -703,12 +827,16 @@ html[data-theme="light"] .rc-vidbg.on { opacity: .16; }
   font-size: 9.5px;
   letter-spacing: .1em;
   padding: 7px 10px 8px;
-  color: rgba(150,200,224,.78);
-  background: linear-gradient(180deg, #26313e 0%, #141c26 50%, #0b1119 100%);
+  color: rgba(var(--int-lit-rgb, 207,233,245), .78);
+  /* Тот же материал клавиши, но без светового темени: планетная
+     кнопка утоплена в плиту, а не приподнята к свету */
+  background: linear-gradient(180deg,
+    var(--int-hull, #0A1524) 0%,
+    var(--int-deep, #050C15) 100%);
 }
-.rcf-nav button.rcf-pl::after { left: 30%; right: 30%; background: rgba(138,89,246,.32); }
-.rcf-nav button.rcf-pl.cur { color: #EAF6FC; }
-.rcf-nav button.rcf-pl.cur::after { background: rgba(138,89,246,.9); box-shadow: 0 0 8px rgba(138,89,246,.7); }
+.rcf-nav button.rcf-pl::after { left: 30%; right: 30%; background: rgba(var(--int-vio-rgb, 138,89,246), .32); }
+.rcf-nav button.rcf-pl.cur { color: var(--int-lit, #CFE9F5); }
+.rcf-nav button.rcf-pl.cur::after { background: rgba(var(--int-vio-rgb, 138,89,246), .9); box-shadow: 0 0 8px rgba(var(--int-vio-rgb, 138,89,246), .7); }
 
 /* ── Развёртывание сети ──────────────────────────────────────
    Игровая цель: довести сеть до каждого мира. Счётчик стоит рядом
@@ -719,8 +847,8 @@ html[data-theme="light"] .rc-vidbg.on { opacity: .16; }
   font-family: var(--f-body, "Golos Text", sans-serif);
   font-size: 10.5px; font-weight: 700; letter-spacing: .18em;
   text-transform: uppercase;
-  color: rgba(66,178,220,.85);
-  text-shadow: 0 0 12px rgba(66,178,220,.35);
+  color: rgba(var(--int-cyan-rgb, 66,178,220), .85);
+  text-shadow: 0 0 12px rgba(var(--int-cyan-rgb, 66,178,220), .35);
 }
 .rcf-net.full { color: #35E08F; text-shadow: 0 0 12px rgba(53,224,143,.65); }
 
@@ -730,22 +858,22 @@ html[data-theme="light"] .rc-vidbg.on { opacity: .16; }
   font-family: var(--f-body, "Golos Text", sans-serif);
   font-size: 11px; font-weight: 700; letter-spacing: .14em;
   text-transform: uppercase;
-  color: #EAF6FC;
+  color: var(--int-lit, #CFE9F5);
   padding: 12px 22px;
-  background: linear-gradient(180deg, rgba(20,52,80,.96), rgba(8,22,38,.98));
-  border: 1px solid rgba(66,178,220,.6);
+  background: linear-gradient(180deg, rgba(var(--int-panel-rgb, 20,40,61), .96), rgba(var(--int-hull-rgb, 10,21,36), .98));
+  border: 1px solid rgba(var(--int-cyan-rgb, 66,178,220), .6);
   border-radius: 999px;
   cursor: pointer;
   opacity: 0; pointer-events: none;
-  box-shadow: 0 12px 30px -12px rgba(0,0,0,.9), 0 0 34px -10px rgba(66,178,220,.8);
+  box-shadow: 0 12px 30px -12px rgba(0,0,0,.9), 0 0 34px -10px rgba(var(--int-cyan-rgb, 66,178,220), .8);
   transition: opacity .35s var(--ease, ease), transform .35s var(--ease, ease), box-shadow .25s;
 }
 .rcf-deploy.on { opacity: 1; pointer-events: auto; transform: translate(-50%, 0); }
-.rcf-deploy:hover { box-shadow: 0 14px 36px -12px rgba(0,0,0,.95), 0 0 52px -8px rgba(66,178,220,1); }
+.rcf-deploy:hover { box-shadow: 0 14px 36px -12px rgba(0,0,0,.95), 0 0 52px -8px rgba(var(--int-cyan-rgb, 66,178,220), 1); }
 /* Пульс приглашения: кнопка сама просит нажать, но не мигает в глаза */
 .rcf-deploy.on::after {
   content: ''; position: absolute; inset: -2px;
-  border-radius: inherit; border: 1px solid rgba(66,178,220,.45);
+  border-radius: inherit; border: 1px solid rgba(var(--int-cyan-rgb, 66,178,220), .45);
   animation: rcfDeployPulse 2.4s ease-out infinite;
   pointer-events: none;
 }

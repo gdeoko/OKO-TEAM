@@ -535,19 +535,18 @@ function build() {
      клинья поперёк карточек надёжности. Борта кадра держат стены и
      иллюминаторы рубки, им мебель для этого не нужна. */
 
-  /* Световые полосы по переднему ребру пульта и по низу стойки.
-     Это и есть тот нижний свет, который в секции контактов
-     подсвечивает экран анкеты снизу: источник один, поэтому
-     подсветка формы читается как свет от панели, а не как
-     декоративное свечение карточки. */
-  var lipMat = new T.MeshBasicMaterial({ color: COL.cyan, transparent: true, opacity: 0.7 });
-  var lip = new T.Mesh(new T.BoxGeometry(2.62, 0.018, 0.022), lipMat);
+  /* Световая полоса по переднему ребру пульта. Это и есть тот
+     нижний свет, который в секции контактов подсвечивает экран
+     анкеты снизу: источник один, поэтому подсветка формы читается
+     как свет от панели, а не как декоративное свечение карточки.
+     Полоса одна: вторая, по низу стойки, давала в салоне две
+     параллельные линии и читалась дорожной разметкой, а не пультом. */
+  var lip = new T.Mesh(
+    new T.BoxGeometry(2.62, 0.018, 0.022),
+    new T.MeshBasicMaterial({ color: COL.cyan, transparent: true, opacity: 0.55 })
+  );
   lip.position.set(0, 1.05, -1.66);
   grp.add(lip);
-
-  var base = new T.Mesh(new T.PlaneGeometry(3.0, 0.02), lipMat);
-  base.position.set(0, 0.86, -2.02);
-  grp.add(base);
 
   /* Диоды на пульте: дышат от общего таймера с фазовым сдвигом */
   var dGeo = new T.SphereGeometry(0.022, 6, 6);
@@ -577,8 +576,11 @@ function build() {
      приборы снизу и тем же цветом подсвечивает экран анкеты. По
      мере подхода камеры разгорается (см. tick) - иначе последний
      акт выходил заметно темнее салона и читался другим кадром. */
-  deskLight = new T.PointLight(COL.cyan, 1.15, 6.5);
-  deskLight.position.set(0, 1.16, -1.75);
+  /* Держим лампу на отлёте от столешницы: вплотную она выжигала
+     переднее ребро пульта в белый клин, и в салоне этот клин
+     перечёркивал кольцо карточек. */
+  deskLight = new T.PointLight(COL.cyan, 0.85, 6.5);
+  deskLight.position.set(0, 1.42, -1.95);
   scene.add(deskLight);
 
   st.built = true;
@@ -895,7 +897,7 @@ function tick(ts) {
      контактов не выпадает из рубки ни по яркости, ни по тону. */
   if (Math.abs(st.conL - st.con) > 0.002) {
     st.conL += (st.con - st.conL) * kY;
-    if (deskLight) deskLight.intensity = 1.15 + st.conL * 1.5;
+    if (deskLight) deskLight.intensity = 0.85 + st.conL * 1.7;
     if (winMesh) winMesh.material.opacity = 0.1 + st.conL * 0.1;
   }
 
