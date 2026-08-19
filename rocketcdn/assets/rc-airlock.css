@@ -15,8 +15,11 @@
 }
 .rc-airlock.on {
   opacity: 1; visibility: visible;
-  transition: opacity .35s linear;
+  transition: opacity .5s linear;
 }
+.rc-airlock .al-doors-wrap, .rc-airlock { transform: none; }
+.rc-airlock:not(.on) .al-door { scale: 1.05; }
+.rc-airlock.on .al-door { scale: 1; transition: scale .8s var(--ease, ease); }
 
 /* Тёплый свет салона в проёме: ширится вместе с дверью */
 .rc-airlock .al-glow {
@@ -31,10 +34,15 @@
    быстрее доли, чтобы на единице гарантированно уйти за края. */
 .rc-airlock .al-door {
   position: absolute; top: -2%; bottom: -2%; width: 51%;
+  /* Светлый металл корпуса ракеты - той самой, к которой мы только
+     что подошли: тот же градиент обшивки и синяя фирменная полоса,
+     что нарисованы на её текстуре. Дверь читается дверью ЭТОГО
+     корабля, а не воротами из ниоткуда. */
   background:
-    linear-gradient(90deg, rgba(207,233,245,.05) 0 2px, transparent 2px 100%) 0 0/12.5% 100% repeat-x,
-    linear-gradient(168deg, #232f3d 0%, #141d28 38%, #0b121b 74%, #070d14 100%);
-  box-shadow: inset 0 0 60px rgba(0,0,0,.65);
+    linear-gradient(90deg, rgba(120,142,168,.28) 0 2px, transparent 2px 100%) 0 0/12.5% 100% repeat-x,
+    linear-gradient(180deg, transparent 0 39%, #5BC4EA 39%, #0A5897 46%, transparent 46% 100%),
+    linear-gradient(168deg, #C9D6E4 0%, #F4F8FC 30%, #DDE6F0 58%, #B7C6D6 100%);
+  box-shadow: inset 0 0 70px rgba(30,58,86,.35), inset 0 -30px 60px rgba(70,96,122,.25);
   will-change: transform;
 }
 .rc-airlock .al-l {
@@ -60,8 +68,8 @@
 .rc-airlock .al-door::before {
   content: ''; position: absolute; left: 0; right: 0;
   top: 30%; height: 1px;
-  background: rgba(207,233,245,.10);
-  box-shadow: 0 1px 0 rgba(0,0,0,.7), 0 34vh 0 rgba(207,233,245,.10), 0 calc(34vh + 1px) 0 rgba(0,0,0,.7);
+  background: rgba(120,142,168,.35);
+  box-shadow: 0 1px 0 rgba(255,255,255,.5), 0 34vh 0 rgba(120,142,168,.35), 0 calc(34vh + 1px) 0 rgba(255,255,255,.5);
 }
 /* Предупредительная разметка вдоль стыка: короткие диагональные
    жёлто-чёрные полосы по краю каждой створки, приглушённые - краска
@@ -69,8 +77,8 @@
 .rc-airlock .al-door::after {
   content: ''; position: absolute; top: 5%; bottom: 5%; width: 13px;
   background: repeating-linear-gradient(45deg,
-    rgba(240,180,60,.18) 0 9px, rgba(8,12,18,.55) 9px 18px);
-  box-shadow: inset 0 0 6px rgba(0,0,0,.5);
+    rgba(180,120,20,.30) 0 9px, rgba(40,50,66,.5) 9px 18px);
+  box-shadow: inset 0 0 6px rgba(0,0,0,.25);
 }
 /* Отступ больше нахлёста створок (2%), чтобы при закрытой двери
    были видны обе ленты, а не одна поверх другой */
@@ -88,13 +96,13 @@
     radial-gradient(circle at 68% 80%, rgba(66,178,220,.12), transparent 45%),
     radial-gradient(circle at 50% 115%, rgba(255,214,160,.08), transparent 55%),
     radial-gradient(circle, #0e2033 0%, #0a1727 46%, #030810 78%, #02060c 100%);
-  border: 3px solid #334456;
+  border: 3px solid #8FA3B5;
   box-shadow:
     inset 0 4px 10px rgba(0,0,0,.9),
     inset 0 -2px 8px rgba(66,178,220,.08),
     inset 0 0 0 2px rgba(4,8,14,.9),
-    0 0 0 2px #0f1927,
-    0 0 0 6px #202e3e,
+    0 0 0 2px #6d8296,
+    0 0 0 6px #A9BACD,
     0 0 0 7px rgba(207,233,245,.08),
     0 1px 0 8px rgba(0,0,0,.35),
     0 4px 14px rgba(0,0,0,.65);
@@ -105,8 +113,8 @@
   position: absolute; top: 62%;
   font: 700 clamp(15px, 2vw, 26px)/1 'Golos Text', system-ui, sans-serif;
   letter-spacing: .58em; text-indent: .58em;
-  color: rgba(207,233,245,.14);
-  text-shadow: 0 1px 0 rgba(0,0,0,.4);
+  color: rgba(10,88,151,.25);
+  text-shadow: 0 1px 0 rgba(255,255,255,.5);
   white-space: nowrap;
 }
 .rc-airlock .al-l .al-stencil { right: 12%; }
@@ -153,4 +161,13 @@
 
 @media (prefers-reduced-motion: reduce) {
   .rc-airlock { display: none !important; }
+}
+
+
+/* Пока дверь в кадре, канвас 3D-ракеты плавно гаснет: крупный план
+   корпуса передаёт эстафету створкам - «мы упёрлись в борт». Без
+   этого сквозь дверь просвечивала вторая ракета. */
+html.rc-doors #rocketCanvas {
+  opacity: 0 !important;
+  transition: opacity .55s linear;
 }

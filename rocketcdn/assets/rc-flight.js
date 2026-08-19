@@ -119,6 +119,13 @@ function buildUI() {
     navHtml += '<button type="button" data-goal="' + NAV[ni].id + '">' + NAV[ni].t + "</button>";
   }
   navHtml += '<button type="button" class="rcf-scan-key" data-scan aria-pressed="false">' + (RU ? "Сканер" : "Scanner") + "</button>";
+  navHtml += '<button type="button" class="rcf-auto-key" data-autokey aria-pressed="true">' + (RU ? "Авто" : "Auto") + "</button>";
+
+  var uniHtml = "";
+  for (var ui2 = 0; ui2 < UNIVERSES.length; ui2++) {
+    uniHtml += '<button type="button" data-uni="' + ui2 + '"><b>' + UNIVERSES[ui2].name + '</b><span>' +
+      (RU ? ["наша система, 8 тел маршрута", "фиолетовая вселенная, холодные звёзды", "янтарная вселенная, тёплый спектр"][ui2] : "") + "</span></button>";
+  }
 
   w.innerHTML =
     '<canvas class="rcf-cv"></canvas>' +
@@ -126,6 +133,7 @@ function buildUI() {
     '<div class="rcf-hud">' +
       '<div class="rcf-cap" aria-live="polite"></div>' +
       '<div class="rcf-deck"><div class="rcf-nav" role="group" aria-label="' + (RU ? "Навигация" : "Navigation") + '">' + navHtml + '</div></div>' +
+      '<div class="rcf-uni" role="menu"><i>' + (RU ? "КУДА ПРЫГАЕМ" : "JUMP TO") + '</i>' + uniHtml + '</div>' +
       '<div class="rcf-track"><i></i></div>' +
       '<div class="rcf-hint">' + (matchMedia("(pointer: coarse)").matches
         ? (RU ? "Ведите пальцем вверх - тяга, в сторону - взгляд" : "Swipe up to thrust, sideways to look")
@@ -139,6 +147,16 @@ function buildUI() {
     '<button type="button" class="rcf-auto" aria-pressed="true">' +
       '<i></i><span>' + (RU ? "Автопилот" : "Autopilot") + '</span>' +
     '</button>' +
+    '<div class="rcf-brief">' +
+      '<div class="rcf-brief-card">' +
+        '<b>' + (RU ? "ГОТОВ К СТАРТУ" : "READY FOR LAUNCH") + '</b>' +
+        '<p>' + (RU ? "Маршрут: Земля - Луна - Марс - Сатурн - чёрная дыра - гиперпрыжок через Млечный Путь - домой. Панель внизу ведёт к любой цели, наведение рассказывает об объектах." : "Route: Earth - Moon - Mars - Saturn - black hole - hyperjump - home.") + '</p>' +
+        '<div class="rcf-brief-btns">' +
+          '<button type="button" data-mode="auto">' + (RU ? "Автополёт" : "Autopilot") + '<span>' + (RU ? "смотреть как кино" : "watch as a movie") + '</span></button>' +
+          '<button type="button" data-mode="manual">' + (RU ? "Ручное управление" : "Manual") + '<span>' + (RU ? "колесо и свайп - тяга" : "scroll to thrust") + '</span></button>' +
+        '</div>' +
+      '</div>' +
+    '</div>' +
     '<button type="button" class="rcf-close" aria-label="' + (RU ? "Выйти из полёта" : "Exit flight") + '">' +
       '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg>' +
     '</button>' +
@@ -156,6 +174,9 @@ function buildUI() {
   ui.auto = w.querySelector(".rcf-auto");
   ui.ret = w.querySelector(".rcf-return");
   ui.info = w.querySelector(".rcf-info");
+  ui.brief = w.querySelector(".rcf-brief");
+  ui.uni = w.querySelector(".rcf-uni");
+  ui.autoKey = w.querySelector(".rcf-auto-key");
   ui.prog = w.querySelector(".rcf-prog");
   ui.lock = w.querySelector(".rcf-lock");
   ui.lockCap = ui.lock.querySelector("span");
@@ -167,14 +188,35 @@ function buildUI() {
   ui.cab.addEventListener("load", function () { w.classList.add("has-cab"); });
   ui.cab.addEventListener("error", function () { w.classList.remove("has-cab"); });
 
+  ui.brief.addEventListener("click", function (e) {
+    var b = e.target.closest("button[data-mode]");
+    if (!b) return;
+    ui.brief.classList.add("off");
+    setAuto(b.getAttribute("data-mode") === "auto");
+    F.brief = false;
+    if (g.RC_SOUND) { try { (g.RC_SOUND.uiConfirm || g.RC_SOUND.blip).call(g.RC_SOUND); } catch (err) {} }
+  });
   w.querySelector(".rcf-close").addEventListener("click", close);
   ui.ret.addEventListener("click", close);
   ui.auto.addEventListener("click", function () {
     setAuto(!F.auto);
     if (g.RC_SOUND) { try { (g.RC_SOUND.uiConfirm || g.RC_SOUND.blip).call(g.RC_SOUND); } catch (e) {} }
   });
+  ui.uni.addEventListener("click", function (e) {
+    var b = e.target.closest("button[data-uni]");
+    if (!b) return;
+    ui.uni.classList.remove("on");
+    var want = parseInt(b.getAttribute("data-uni"), 10);
+    if (want !== uniIdx) jumpUniverse(want);
+    if (g.RC_SOUND) { try { (g.RC_SOUND.uiClick || g.RC_SOUND.blip).call(g.RC_SOUND); } catch (err) {} }
+  });
   ui.nav.addEventListener("click", function (e) {
     if (g.RC_SOUND) { try { (g.RC_SOUND.uiClick || g.RC_SOUND.blip).call(g.RC_SOUND); } catch (err) {} }
+    var ak = e.target.closest("button[data-autokey]");
+    if (ak) {
+      setAuto(!F.auto);
+      return;
+    }
     var sc = e.target.closest("button[data-scan]");
     if (sc) {
       F.scan = !F.scan;
@@ -204,13 +246,20 @@ function cabSrc() {
    у места назначения. */
 function setAuto(on) {
   F.auto = !!on;
-  if (on) F.goal = null;
+  if (on) { F.goal = null; if (F.orbit) { F.rejoin = 1; F.orbit = null; } }
   if (ui.auto) ui.auto.setAttribute("aria-pressed", F.auto ? "true" : "false");
+  if (ui.autoKey) {
+    ui.autoKey.setAttribute("aria-pressed", F.auto ? "true" : "false");
+    ui.autoKey.classList.toggle("cur", F.auto);
+  }
 }
 
 function manual() {
   if (F.auto) setAuto(false);
   F.goal = null;
+  if (F.orbit) F.rejoin = 1;
+  F.orbit = null;
+  if (F.brief) { F.brief = false; if (ui.brief) ui.brief.classList.add("off"); }
   hideHint();
 }
 
@@ -230,10 +279,10 @@ function applyUniverse(i) {
 
 /* Прыжок между вселенными: белая вспышка, за ней мир уже другой */
 var uniBusy = false;
-function jumpUniverse() {
+function jumpUniverse(want) {
   if (uniBusy || !W3) return;
   uniBusy = true;
-  uniIdx = (uniIdx + 1) % UNIVERSES.length;
+  uniIdx = (want === undefined) ? (uniIdx + 1) % UNIVERSES.length : want;
   if (ui.fade) { ui.fade.style.transition = "opacity .45s"; ui.fade.style.opacity = "1"; }
   if (g.RC_SOUND) { try { (g.RC_SOUND.hyper || g.RC_SOUND.chime).call(g.RC_SOUND); } catch (e) {} }
   F.shake = 1;
@@ -258,11 +307,18 @@ var GOAL_NAMES = {
   galaxy: RU ? "ГАЛАКТИКА" : "GALAXY", home: RU ? "ДОМОЙ" : "HOME"
 };
 
+/* Радиус орбиты и высота для каждого тела: подобраны по размеру */
+var ORBITS = {
+  earth: { r: 150, y: 40 }, moon: { r: 55, y: 14 }, mars: { r: 96, y: 24 },
+  saturn: { r: 220, y: 60 }, hole: { r: 260, y: 40 }
+};
+
 function goTo(id) {
   if (!W3 || !W3.at) return;
-  if (id === "galaxy" && F.p > W3.at.jump0 && F.p < W3.at.jump1) {
-    /* Уже в межгалактическом коридоре: прыгаем в другую вселенную */
-    jumpUniverse();
+  F.goalId = id;
+  if (id === "galaxy") {
+    /* Список вселенных: человек выбирает, куда прыгать */
+    if (ui.uni) ui.uni.classList.toggle("on");
     return;
   }
   var p = id === "earth" ? 0.02
@@ -932,15 +988,24 @@ function frame(ts) {
     /* Навигация к цели: тяга по расстоянию, у места сама тормозит.
        Работает в обе стороны - к Марсу можно и вернуться. */
     var dp = F.goal - F.p;
-    if (Math.abs(dp) < 0.006) { F.goal = null; F.v *= 0.3; }
+    if (Math.abs(dp) < 0.006) {
+      F.goal = null; F.v *= 0.3;
+      /* Прибыли к телу - выходим на орбиту вокруг него */
+      var ob = ORBITS[F.goalId];
+      var tgt = F.goalId && w3[F.goalId === "hole" ? "hole" : F.goalId];
+      if (ob && tgt) {
+        F.orbit = { c: tgt.position, r: ob.r, y: ob.y, a: null, name: F.goalId };
+        if (g.RC_SOUND) { try { (g.RC_SOUND.uiConfirm || g.RC_SOUND.blip).call(g.RC_SOUND); } catch (e2) {} }
+      }
+    }
     else {
       var wantV = Math.max(-0.14, Math.min(0.14, dp * 1.1 + (dp > 0 ? 0.02 : -0.02)));
       F.v += (wantV - F.v) * Math.min(1, dt * 3);
     }
-  } else if (F.auto && F.p < 0.999) {
+  } else if (F.auto && !F.brief && F.p < 0.999) {
     /* Автопилот: спокойная крейсерская, чтобы просто смотреть кино */
     var cruise = jumpZone ? 0.11 : 0.03;
-    F.v += (cruise - F.v) * Math.min(1, dt * 2.5);
+    F.v += (cruise - F.v) * Math.min(1, dt * 0.55);
   } else {
     /* Ручной режим: тяга набирается щелчками и сама затухает */
     F.v *= Math.pow(0.14, dt);
@@ -969,9 +1034,29 @@ function frame(ts) {
     }
   }
 
-  /* Камера по кривой */
-  var pos = w3.path.getPointAt(F.p);
-  w3.cam.position.copy(pos);
+  /* Камера по кривой - или по орбите вокруг выбранного тела */
+  if (F.orbit) {
+    var o = F.orbit;
+    if (o.a === null) {
+      /* Первый кадр орбиты: угол берём из фактического положения,
+         чтобы вход был без телепорта */
+      o.a = Math.atan2(w3.cam.position.z - o.c.z, w3.cam.position.x - o.c.x);
+      o.blend = 0;
+    }
+    o.a += dt * 0.16;
+    o.blend = Math.min(1, (o.blend || 0) + dt * 0.7);
+    w3.tmpB.set(o.c.x + Math.cos(o.a) * o.r, o.c.y + o.y, o.c.z + Math.sin(o.a) * o.r);
+    w3.cam.position.lerp(w3.tmpB, o.blend * Math.min(1, dt * 3));
+  } else {
+    var pos = w3.path.getPointAt(F.p);
+    if (F.rejoin > 0) {
+      /* Сошли с орбиты: догоняем маршрут плавно, не телепортом */
+      F.rejoin -= dt * 0.45;
+      w3.cam.position.lerp(pos, Math.min(1, dt * 2.2));
+    } else {
+      w3.cam.position.copy(pos);
+    }
+  }
 
   /* Цель взгляда: между точками интереса */
   var L = w3.looks, a = L[0], b = L[L.length - 1];
@@ -981,6 +1066,7 @@ function frame(ts) {
   var k = (F.p - a.p) / Math.max(0.0001, b.p - a.p);
   k = k * k * (3 - 2 * k);
   w3.tmpA.copy(a.at).lerp(b.at, k);
+  if (F.orbit) w3.tmpA.copy(F.orbit.c);
   w3.tmpM.lookAt(w3.cam.position, w3.tmpA, w3.cam.up);
   w3.tmpQ.setFromRotationMatrix(w3.tmpM);
   /* Ориентация автопилота живёт отдельно от взгляда человека.
@@ -1128,10 +1214,14 @@ function frame(ts) {
       if (info) {
         ui.info.textContent = info;
         ui.info.classList.add("on");
+        if (ui.cap && ui.cap.parentNode) ui.cap.parentNode.classList.add("has-info");
         noteExplored(info.split(" ")[0]);
         if (g.RC_SOUND) { try { (g.RC_SOUND.uiHover || g.RC_SOUND.blip).call(g.RC_SOUND); } catch (e) {} }
       }
-      else ui.info.classList.remove("on");
+      else {
+        ui.info.classList.remove("on");
+        if (ui.cap && ui.cap.parentNode) ui.cap.parentNode.classList.remove("has-info");
+      }
     }
     F.pick = false;
   }
@@ -1160,6 +1250,9 @@ function frame(ts) {
   /* Пока идёт перелёт к цели, титул честно говорит, куда летим */
   if (F.goal !== null && F.goal !== undefined && F.goalName) {
     cap = { t: (RU ? "КУРС → " : "COURSE → ") + F.goalName };
+  }
+  if (F.orbit && F.goalName) {
+    cap = { t: (RU ? "ОРБИТА · " : "ORBIT · ") + F.goalName + (RU ? " · листайте, чтобы продолжить путь" : "") };
   }
   if (ui.cap._t !== cap.t && !(ui.cap._hold && ts < ui.cap._hold)) {
     ui.cap._t = cap.t;
@@ -1201,6 +1294,9 @@ function open() {
 
   F.open = true;
   F.p = 0; F.v = 0; F.last = 0;
+  F.brief = true;
+  F.orbit = null;
+  if (ui.brief) ui.brief.classList.remove("off");
   F.scan = false;
   if (ui.scanKey) { ui.scanKey.classList.remove("cur"); ui.scanKey.setAttribute("aria-pressed", "false"); }
   if (ui.lock) ui.lock.classList.remove("on");

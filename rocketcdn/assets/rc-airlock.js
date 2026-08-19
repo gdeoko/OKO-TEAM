@@ -72,8 +72,17 @@ function frame() {
   }
   measure();
 
-  if (live !== el.classList.contains("on")) el.classList.toggle("on", live);
-  if (!live) { k = kGoal; kPrev = k; hissed = kGoal >= 1; return; }
+  /* Дверь - у корпуса ракеты: пока мы не подошли к нему вплотную
+     (RC_APPROACH из rc-rocket), створкам в кадре делать нечего.
+     Если ракеты на странице нет, подход равен единице - дверь
+     живёт по прежним правилам. */
+  var app = (typeof g.RC_APPROACH === "number") ? g.RC_APPROACH : 1;
+  var show = live && app > 0.55;
+  if (show !== el.classList.contains("on")) {
+    el.classList.toggle("on", show);
+    root.classList.toggle("rc-doors", show);
+  }
+  if (!show) { k = kGoal; kPrev = k; hissed = kGoal >= 1; return; }
 
   k += (kGoal - k) * 0.16;
   if (Math.abs(k - kGoal) < 0.001) k = kGoal;
