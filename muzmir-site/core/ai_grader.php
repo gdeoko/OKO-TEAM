@@ -442,14 +442,21 @@ function ag_grade_application(int $appId, array $opt = []): array {
     // калибровки, и правится она одним числом: scripts/ai_grade_calibrate.php
     // считает средний сдвиг по уже оценённым работам и записывает поправку.
     // Ноль означает «сверка показала совпадение, поправка не нужна».
-    $gain  = (float) (function_exists('setting') ? setting('grade_scale_gain', '1') : 1);
-    $shift = (float) (function_exists('setting') ? setting('grade_scale_shift', '0') : 0);
+    //
+    // Важно: при квантильной шкале поправка НЕ применяется. Пороги званий там
+    // считаются по сырым баллам разборов, и если сдвинуть балл до перевода в
+    // звание, черта окажется не там, где её проводила сверка. Два способа
+    // нормировать одно и то же, применённые подряд, дают не двойную точность,
+    // а мусор.
+    $scaleMode = (string) (function_exists('setting') ? setting('grade_scale_mode', 'linear') : 'linear');
+    $gain  = $scaleMode === 'quantile' ? 1.0 : (float) (function_exists('setting') ? setting('grade_scale_gain', '1') : 1);
+    $shift = $scaleMode === 'quantile' ? 0.0 : (float) (function_exists('setting') ? setting('grade_scale_shift', '0') : 0);
     // Своя поправка номинации сильнее общей: сверка показала, что в разных
     // номинациях машина ошибается в разные стороны, и одно число на всех
     // исправляет одну ценой другой.
     $nomFixAll = json_decode((string) (function_exists('setting') ? setting('grade_scale_by_nomination', '') : ''), true);
     $nomKey = trim((string) ($app['nomination'] ?? ''));
-    if (is_array($nomFixAll) && $nomKey !== '' && isset($nomFixAll[$nomKey]['gain'])) {
+    if ($scaleMode !== 'quantile' && is_array($nomFixAll) && $nomKey !== '' && isset($nomFixAll[$nomKey]['gain'])) {
         $gain  = (float) $nomFixAll[$nomKey]['gain'];
         $shift = (float) $nomFixAll[$nomKey]['shift'];
     }
