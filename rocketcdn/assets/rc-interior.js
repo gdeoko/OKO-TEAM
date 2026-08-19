@@ -429,6 +429,33 @@ function rackTex() {
   return tex;
 }
 
+function screenTex() {
+  if (texCache.screen) return texCache.screen;
+  var W = 256, H = 192;
+  var c = cnv(W, H), x = c.getContext("2d");
+  var gr = x.createLinearGradient(0, 0, 0, H);
+  gr.addColorStop(0, "#0e2237"); gr.addColorStop(0.55, "#0a1a2b"); gr.addColorStop(1, "#061220");
+  x.fillStyle = gr; x.fillRect(0, 0, W, H);
+  var i;
+  /* Развёртка: тонкие строки, как у выключенного монитора */
+  x.fillStyle = "rgba(120,170,205,.05)";
+  for (i = 0; i < H; i += 4) x.fillRect(0, i, W, 1);
+  /* Сетка координат: по ней видно размер плиты */
+  x.strokeStyle = "rgba(66,178,220,.09)"; x.lineWidth = 1;
+  for (i = 32; i < W; i += 32) { x.beginPath(); x.moveTo(i, 8); x.lineTo(i, H - 8); x.stroke(); }
+  for (i = 32; i < H; i += 32) { x.beginPath(); x.moveTo(8, i); x.lineTo(W - 8, i); x.stroke(); }
+  /* Рамка прибора с фаской */
+  x.strokeStyle = "rgba(66,178,220,.3)"; x.lineWidth = 3;
+  x.strokeRect(5, 5, W - 10, H - 10);
+  x.fillStyle = "rgba(150,186,214,.14)"; x.fillRect(5, 5, W - 10, 2);
+  /* Уголки крепления */
+  x.fillStyle = "rgba(66,178,220,.42)";
+  var cs = [[10, 10], [W - 26, 10], [10, H - 18], [W - 26, H - 18]];
+  for (i = 0; i < 4; i++) { x.fillRect(cs[i][0], cs[i][1], 16, 3); }
+  texCache.screen = new T.CanvasTexture(c);
+  return texCache.screen;
+}
+
 /* Вентиляционная решётка: горизонтальные жалюзи с тенью в глубине */
 function ventTex() {
   var W = 128, H = 64;
@@ -615,7 +642,7 @@ function build() {
      Именно поэтому рубка читалась плоской картинкой: у неё не было
      воздушной перспективы. Теперь на дальней стене четверть тумана,
      на ближней десятая часть, и глубина появляется сама. */
-  scene.fog = new T.FogExp2(COL.deep, phone ? 0.115 : 0.135);
+  scene.fog = new T.FogExp2(COL.deep, phone ? 0.1 : 0.135);
 
   /* Входим с узким углом: в тамбуре тесно. Внутри угол раскрывается
      (на телефоне сильнее, см. fovIn), и человек физически чувствует,
@@ -655,7 +682,7 @@ function build() {
   });
   /* Полированный набор: стойки, балки, рамы. Ему и достаётся блик */
   var steelMat = new T.MeshStandardMaterial({
-    color: 0x475765, roughness: 0.3, metalness: METAL, envMapIntensity: ENVI * 1.05
+    color: 0x475765, roughness: 0.4, metalness: METAL, envMapIntensity: ENVI * 1.0
   });
   /* Матовый корпусный пластик: козырьки ниш, короба */
   var caseMat = new T.MeshStandardMaterial({
@@ -669,7 +696,8 @@ function build() {
   });
   /* Чистый свет: лампы, кромки, полосы. Один материал на цвет */
   var litCyan = new T.MeshBasicMaterial({ color: COL.cyan, transparent: true, opacity: 0.62, fog: false });
-  var litWarm = new T.MeshBasicMaterial({ color: 0xffc79a, transparent: true, opacity: 0.32, fog: false });
+  var litWarm = new T.MeshBasicMaterial({ color: 0xffd9b8, transparent: true, opacity: 0.26, fog: false });
+  var litEdge = new T.MeshBasicMaterial({ color: COL.cyan, transparent: true, opacity: 0.3, fog: false });
   /* Пятна света: сложение, без записи в буфер глубины, иначе они
      срежут всё, что окажется за ними */
   var pool = poolTex();
@@ -743,7 +771,7 @@ function build() {
   var ceil = new T.Mesh(
     new T.CircleGeometry(2.6, phone ? 28 : 44),
     new T.MeshStandardMaterial({
-      color: 0x101d2c, roughness: 0.92, metalness: 0.2, side: T.BackSide,
+      color: 0x16273a, roughness: 0.9, metalness: 0.22, side: T.BackSide,
       envMapIntensity: ENVI * 0.3
     })
   );
@@ -772,12 +800,21 @@ function build() {
      Сам он не светит (настоящих ламп у нас пять), но глаз обязан
      видеть, откуда идёт верхний свет, иначе градиент на стенах
      выглядит покраской, а не освещением. */
-  m = new T.Mesh(new T.CircleGeometry(0.62, 20), new T.MeshBasicMaterial({
-    color: COL.lit, transparent: true, opacity: 0.5, fog: false
+  m = new T.Mesh(new T.CircleGeometry(0.82, 20), new T.MeshBasicMaterial({
+    color: COL.lit, transparent: true, opacity: 0.62, fog: false
   }));
   m.rotation.x = Math.PI / 2;
   m.position.y = 3.36;
   grp.add(m);
+
+  m = new T.Mesh(new T.CircleGeometry(2.3, phone ? 20 : 30), new T.MeshBasicMaterial({
+    map: poolTex(), color: 0x86b6d4, transparent: true, opacity: 0.3,
+    blending: T.AdditiveBlending, depthWrite: false, fog: false
+  }));
+  m.rotation.x = Math.PI / 2;
+  m.position.y = 3.33;
+  grp.add(m);
+  fine.push(m);
 
   /* ── Силовые стойки между панелями ────────────────────────
      Стоят на швах круга и выступают внутрь. Это самая полезная
@@ -794,7 +831,7 @@ function build() {
     m.position.set(0, 0, -2.48);
     col.add(m);
     /* Световая нитка по внутреннему ребру стойки */
-    var nl = new T.Mesh(strutLit, litCyan);
+    var nl = new T.Mesh(strutLit, litEdge);
     nl.position.set(0, 0, -2.365);
     col.add(nl);
     col.rotation.y = -th;
@@ -817,8 +854,8 @@ function build() {
      вдоль минус Z и вращается на минус yaw, поэтому стена, чтобы
      оказаться напротив, обязана повернуться в другую сторону. */
   var panelMat = new T.MeshStandardMaterial({
-    color: COL.panel, roughness: 0.42, metalness: 0.45,
-    emissive: COL.emis, emissiveIntensity: 0.95, envMapIntensity: ENVI * 0.6
+    map: screenTex(), color: 0xdfe9f2, roughness: 0.5, metalness: 0.32,
+    emissive: COL.emis, emissiveIntensity: 0.5, envMapIntensity: ENVI * 0.5
   });
   /* Свободные панели круга закрыты приборными стойками: глухой
      стены при обороте быть не должно, а вешать туда нечего */
@@ -879,12 +916,12 @@ function build() {
      понимает, что стена не бумажная.
 
      Стоят на швах, где нет ни панели, ни пульта. */
-  var glassMat = new T.MeshBasicMaterial({ map: portTex(), color: 0xffffff, fog: false });
+  var glassMat = new T.MeshBasicMaterial({ map: portTex(), color: 0xc6d8e4, fog: false });
   var bezelMat = new T.MeshStandardMaterial({
     map: bezelTex(), roughness: 0.3, metalness: METAL * 0.85,
     envMapIntensity: ENVI * 1.1
   });
-  var tubeGeo = new T.CylinderGeometry(0.5, 0.5, 0.24, phone ? 16 : 22, 1, true);
+  var tubeGeo = new T.CylinderGeometry(0.43, 0.43, 0.22, phone ? 16 : 22, 1, true);
   var portA = [STEP * 2, STEP * 4, STEP * 6];
   for (i = 0; i < portA.length; i++) {
     var port = new T.Group();
@@ -898,27 +935,27 @@ function build() {
     port.add(tube);
 
     /* Стекло сидит в глубине обечайки, а не заподлицо с её краем */
-    var glass = new T.Mesh(new T.CircleGeometry(0.5, phone ? 16 : 22), glassMat);
+    var glass = new T.Mesh(new T.CircleGeometry(0.43, phone ? 16 : 22), glassMat);
     glass.position.set(0, 0, -2.555);
     port.add(glass);
 
     /* Рама с болтами по внутреннему краю обечайки */
-    var bez = new T.Mesh(new T.RingGeometry(0.5, 0.68, phone ? 18 : 24), bezelMat);
+    var bez = new T.Mesh(new T.RingGeometry(0.43, 0.59, phone ? 18 : 24), bezelMat);
     bez.position.set(0, 0, -2.32);
     port.add(bez);
 
     /* Уплотнитель по стыку рамы с обечайкой */
-    var seal = new T.Mesh(new T.TorusGeometry(0.51, 0.035, 4, phone ? 14 : 18), rubberMat);
+    var seal = new T.Mesh(new T.TorusGeometry(0.44, 0.032, 4, phone ? 14 : 18), rubberMat);
     seal.position.set(0, 0, -2.33);
     port.add(seal);
 
     /* Подсветка проёма изнутри: холодная кромка вокруг стекла */
-    var glow = new T.Mesh(new T.RingGeometry(0.44, 0.5, phone ? 16 : 22), litCyan);
+    var glow = new T.Mesh(new T.RingGeometry(0.38, 0.43, phone ? 16 : 22), litEdge);
     glow.position.set(0, 0, -2.54);
     port.add(glow);
 
     port.rotation.y = -portA[i];
-    port.position.y = 1.95;
+    port.position.y = 2.02;
     grp.add(port);
   }
 
@@ -1112,8 +1149,9 @@ function build() {
   con.add(lamp.target);
   lamp.target.position.set(0, 1.2, 0);
 
-  scene.add(new T.HemisphereLight(0x27435c, 0x060d16, 0.82));
-  scene.add(new T.AmbientLight(0x223247, 0.56));
+  var LB = phone ? 1.2 : 1;
+  scene.add(new T.HemisphereLight(0x27435c, 0x060d16, 0.82 * LB));
+  scene.add(new T.AmbientLight(0x223247, 0.56 * LB));
 
   /* Контровой тёплый: стоит высоко за спиной входа и обводит
      кромки. Он же единственная тёплая лампа в холодной комнате. */
@@ -1552,7 +1590,7 @@ addEventListener("resize", function () {
      и горизонтального кадра разные. Пересчитываем цели той же
      функцией, что и прокрутка, чтобы не заводить второй источник. */
   if (was !== phone) {
-    if (scene && scene.fog) scene.fog.density = phone ? 0.115 : 0.135;
+    if (scene && scene.fog) scene.fog.density = phone ? 0.1 : 0.135;
     setProgress(st.p);
   }
 }, { passive: true });

@@ -37,7 +37,14 @@
 }
 
 /* Короткая засветка кадра от удара: не белая вспышка, а еле
-   заметное фирменное свечение снизу, оттуда, где ударили опоры */
+   заметное свечение снизу, оттуда, где ударили опоры.
+
+   Цвет тёплый, а не фирменный синий, и это не украшательство: в
+   сцене на посадке контровой свет корабля тоже подменяется тёплым
+   отсветом факела (rimLight в rc-rocket.js). Если вёрстка вспыхнет
+   синим в тот самый миг, когда трёхмерный мир вспыхивает рыжим,
+   удар распадётся на два разных события. Синий остаётся снаружи
+   пятна - там, куда свет от сопла уже не достаёт. */
 .rc-quake::after {
   content: "";
   position: fixed;
@@ -45,13 +52,48 @@
   z-index: 4;
   pointer-events: none;
   opacity: calc(var(--rc-shake) * 0.5);
-  background: radial-gradient(120% 60% at 50% 100%,
-    rgba(126, 200, 238, .20), rgba(126, 200, 238, .06) 45%, transparent 72%);
+  background:
+    radial-gradient(60% 34% at 50% 100%,
+      rgba(255, 176, 104, .26), rgba(255, 176, 104, .07) 52%, transparent 78%),
+    radial-gradient(120% 60% at 50% 100%,
+      rgba(126, 200, 238, .16), rgba(126, 200, 238, .05) 45%, transparent 72%);
+}
+
+/* Пыль, поднятая ударом, доходит и до плоского слоя: нижняя кромка
+   кадра на треть секунды слегка мутнеет. Это тот же приём, что и в
+   сцене, - объём падает ОТ корабля, а не рисуется поверх него.
+   Отдельного элемента не заводим: псевдоэлемент у того же класса
+   стоит ноль узлов разметки. */
+.rc-quake::before {
+  content: "";
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: 34vh;
+  z-index: 3;
+  pointer-events: none;
+  opacity: calc(var(--rc-shake) * 0.42);
+  background: linear-gradient(to top,
+    rgba(150, 168, 190, .17), rgba(150, 168, 190, .06) 46%, transparent);
 }
 
 /* Кому важнее покой, тот не трясётся: движение тут декоративное и
    выключается целиком, а посадка остаётся понятной и без него */
 @media (prefers-reduced-motion: reduce) {
   .rc-quake .rc-shakeable { transform: none; will-change: auto; }
-  .rc-quake::after { display: none; }
+  .rc-quake::after,
+  .rc-quake::before { display: none; }
 }
+
+/* Просевшие кадры: страница снимает украшения ступенями. Пыль у
+   нижней кромки - самое дорогое здесь (полноэкранный полупрозрачный
+   слой поверх всего), поэтому уходит первой, а вспышка от удара
+   остаётся: без неё касание перестаёт быть событием. */
+html[data-degrade="2"] .rc-quake::before,
+html[data-degrade="3"] .rc-quake::before { display: none; }
+html[data-degrade="3"] .rc-quake::after { display: none; }
+
+/* Режим покоя выключает всё: там и самой посадки в 3D не бывает */
+.rc-reduced .rc-quake::after,
+.rc-reduced .rc-quake::before { display: none; }

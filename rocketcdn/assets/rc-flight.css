@@ -348,8 +348,12 @@ html[data-theme="light"] .rcf-fab svg { color: #0A5897; }
 }
 .rcf-cta .rcf-cta-btn:hover { transform: translateY(-3px); box-shadow: 0 0 0 1px rgba(var(--int-lit-rgb, 207,233,245), .4), 0 26px 60px -16px rgba(var(--int-cyan-rgb, 66,178,220), 1); }
 .rcf-cta .rcf-cta-btn svg { width: 22px; height: 22px; }
+/* Подпись под кнопкой полёта стоит на СТРАНИЦЕ, а не в кабине,
+   поэтому и цвет обязана брать у страницы. Прежний светлый тон был
+   рассчитан на тёмный космос и на светлой теме давал контраст
+   ниже единицы к двум - строку было физически не прочитать. */
 .rcf-cta .rcf-cta-note {
-  color: var(--tx-soft, rgba(var(--int-lit-rgb, 207,233,245), .7));
+  color: var(--tx-2, rgba(var(--int-lit-rgb, 207,233,245), .7));
   font-size: 13px; letter-spacing: .04em;
 }
 

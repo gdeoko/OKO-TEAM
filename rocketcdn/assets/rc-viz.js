@@ -394,7 +394,19 @@ document.addEventListener("rc:lang", function (e) {
     $$('[data-viz="' + kind + '"]').forEach(function (el) {
       if (el._stop) { try { el._stop(); } catch (err) {} }
       el._viz = false;
-      el.innerHTML = "";
+      /* Счётчик - единственный вид, который не рисует свой блок
+         целиком: он вставляет одно число перед подписью, а сама
+         подпись живёт в разметке и переводится общим механизмом.
+         Полная очистка стирала её навсегда, и после первой же
+         смены языка под цифрами было пусто - «218» без пояснения,
+         что это точки присутствия. Поэтому здесь убираем только
+         то, что скрипт сам и добавил. */
+      if (kind === "ticker") {
+        var made = el.querySelector("b");
+        if (made && made.parentNode) made.parentNode.removeChild(made);
+      } else {
+        el.innerHTML = "";
+      }
     });
   });
   init();

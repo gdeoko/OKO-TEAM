@@ -1832,3 +1832,15 @@ html[data-theme="light"] #included::after { animation: none; opacity: .4; }
    линию поверх границы самой панели: получалась двойная рамка
    толщиной в два пикселя ровно в одном месте из восьми. */
 .faq-i:last-child, .node-row:last-child, .ftr ul li:last-child { border-bottom: 0; }
+
+/* ── Наведение, которое видно и на светлой теме ────────────────
+   Строка города и плитка состава подсвечивались через --surface-2.
+   В тёмной теме это заметное осветление, а в светлой --surface-2
+   это чистый белый поверх почти белого: наведение было, а увидеть
+   его было нельзя. На светлой подсвечиваем не белым, а третьим
+   уровнем фона - тем же, которым подсвечен показатель в полосе
+   KPI, чтобы отклик на наведение везде был одной природы. */
+[data-theme="light"] .node-row:hover,
+[data-theme="light"] .node-row:focus-visible,
+[data-theme="light"] .inc-item:hover,
+[data-theme="light"] .inc-item:focus-visible { background: var(--bg-3); }

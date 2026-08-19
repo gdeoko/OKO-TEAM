@@ -42,10 +42,10 @@ function envTexture(renderer) {
   var x = c.getContext("2d");
 
   var sky = x.createLinearGradient(0, 0, 0, 256);
-  sky.addColorStop(0.00, "#1E4F78");
-  sky.addColorStop(0.42, "#2A6E9E");
-  sky.addColorStop(0.52, "#10243A");
-  sky.addColorStop(1.00, "#060F1A");
+  sky.addColorStop(0.00, "#2B6494");
+  sky.addColorStop(0.42, "#3D86BA");
+  sky.addColorStop(0.52, "#17334F");
+  sky.addColorStop(1.00, "#0A1927");
   x.fillStyle = sky;
   x.fillRect(0, 0, 512, 256);
 
@@ -210,12 +210,12 @@ function hullTexture() {
 
   /* Нагар от факела: снизу вверх, языками. Он же прибивает белизну
      юбки, из-за которой низ корабля читался пустым пятном. */
-  var soot = x.createLinearGradient(0, H, 0, (1 - 0.30) * H);
-  soot.addColorStop(0.00, "rgba(14,20,28,.80)");
-  soot.addColorStop(0.35, "rgba(24,34,46,.42)");
+  var soot = x.createLinearGradient(0, H, 0, (1 - 0.24) * H);
+  soot.addColorStop(0.00, "rgba(14,20,28,.62)");
+  soot.addColorStop(0.40, "rgba(24,34,46,.26)");
   soot.addColorStop(1.00, "rgba(30,42,56,0)");
   x.fillStyle = soot;
-  x.fillRect(0, (1 - 0.30) * H, W, 0.30 * H);
+  x.fillRect(0, (1 - 0.24) * H, W, 0.24 * H);
   for (i = 0; i < 44; i++) {
     var tx = Math.random() * W, th = (0.05 + Math.random() * 0.16) * H;
     var tg = x.createLinearGradient(0, (1 - 0.10) * H, 0, (1 - 0.10) * H - th);
@@ -352,8 +352,8 @@ function hullRough(S) {
   var c = document.createElement("canvas");
   c.width = c.height = S;
   var x = c.getContext("2d");
-  /* База: G = 0.30 шероховатости, B = 0.78 металла */
-  x.fillStyle = "rgb(0,77,199)";
+  /* База: G = 0.30 шероховатости, B = 0.60 металла */
+  x.fillStyle = "rgb(0,77,153)";
   x.fillRect(0, 0, S, S);
 
   var i, k;
@@ -362,8 +362,8 @@ function hullRough(S) {
     x.fillStyle = "rgb(0," + Math.round(rough * 255) + "," + Math.round(metal * 255) + ")";
     x.fillRect(0, (1 - v - h) * S, S, h * S);
   }
-  band(0.74, 0.06, 0.16, 0.92);
-  band(0.13, 0.07, 0.16, 0.92);
+  band(0.74, 0.06, 0.16, 0.80);
+  band(0.13, 0.07, 0.16, 0.80);
 
   /* Швы матовее полотна: в канавке сидит грязь и герметик */
   x.lineWidth = 3;
@@ -460,7 +460,7 @@ var PAD_SIZE = 6.4;                       /* сторона квадрата с 
 /* Высота настила над окружающим грунтом. Ради неё вся площадка и
    переделана: пока у круга не было толщины, он читался наклейкой,
    а корабль - вырезанным и положенным сверху. */
-var PAD_LIFT = 0.50;
+var PAD_LIFT = 0.30;
 var PAD_FOOT = PAD_FEET / (PAD_SIZE * 0.46);   /* доля радиуса разметки */
 
 function buildGear(C, env) {
@@ -474,7 +474,15 @@ function buildGear(C, env) {
   rodGeo.translate(0, -0.5, 0);
   var braceGeo = new T.CylinderGeometry(0.048, 0.038, 1, seg);
   braceGeo.translate(0, 0.5, 0);           /* растёт от начала координат вверх */
-  var footGeo = new T.CylinderGeometry(0.26, 0.20, 0.085, C.weak ? 8 : 14);
+  var footPts = [];
+  footPts.push(new T.Vector2(0.001, 0.048));
+  footPts.push(new T.Vector2(0.26, 0.042));    /* верхняя площадка тарелки */
+  footPts.push(new T.Vector2(0.30, 0.010));    /* скос к ободу */
+  footPts.push(new T.Vector2(0.33, -0.014));
+  footPts.push(new T.Vector2(0.32, -0.048));   /* сам обод, которым стоит нога */
+  footPts.push(new T.Vector2(0.24, -0.058));
+  footPts.push(new T.Vector2(0.001, -0.058));
+  var footGeo = new T.LatheGeometry(footPts, C.weak ? 8 : 14);
   var hipGeo = new T.BoxGeometry(0.26, 0.20, 0.17);
   /* Гильза гидроцилиндра: в неё уходит полированный шток подкоса.
      Без неё подкос читается палкой; с ней у него появляется ход. */
@@ -485,10 +493,6 @@ function buildGear(C, env) {
   hoseGeo.translate(0, 0.5, 0);
   /* Амортизатор в пятке: короткий толстый цилиндр над тарелкой */
   var dampGeo = new T.CylinderGeometry(0.115, 0.135, 0.17, C.weak ? 6 : 10);
-  /* Обод тарелки: широкое кольцо, которым нога и стоит на настиле */
-  var rimGeo = new T.CylinderGeometry(0.33, 0.30, 0.035, C.weak ? 8 : 14);
-  /* Узел колена: там, где подкос упирается в ногу */
-  var kneeGeo = new T.BoxGeometry(0.16, 0.14, 0.14);
 
   var strutMat = new T.MeshStandardMaterial({
     color: 0xC3D1DF, metalness: 0.86, roughness: 0.27, envMap: env, envMapIntensity: 1.5
@@ -532,13 +536,7 @@ function buildGear(C, env) {
     swing.add(damp);
 
     var foot = new T.Mesh(footGeo, footMat);
-    var rim = new T.Mesh(rimGeo, footMat);
-    rim.position.y = -0.052;
-    foot.add(rim);
     swing.add(foot);
-
-    var knee = new T.Mesh(kneeGeo, footMat);
-    swing.add(knee);
 
     var brace = new T.Mesh(braceGeo, rodMat);
     brace.position.set(0, GEAR_BR_Y, GEAR_BR_Z);
@@ -551,13 +549,16 @@ function buildGear(C, env) {
     sleeve.position.set(0, GEAR_BR_Y, GEAR_BR_Z);
     piv.add(sleeve);
 
-    var hose = new T.Mesh(hoseGeo, hoseMat);
-    hose.position.set(0.085, GEAR_BR_Y + 0.04, GEAR_BR_Z - 0.03);
-    piv.add(hose);
+    var hose = null;
+    if (!C.weak) {
+      hose = new T.Mesh(hoseGeo, hoseMat);
+      hose.position.set(0.085, GEAR_BR_Y + 0.04, GEAR_BR_Z - 0.03);
+      piv.add(hose);
+    }
 
     legs.push({
       swing: swing, rod: rod, foot: foot, brace: brace,
-      sleeve: sleeve, hose: hose, damp: damp, knee: knee
+      sleeve: sleeve, hose: hose, damp: damp
     });
     group.add(piv);
   }
@@ -762,18 +763,18 @@ function terrainTexture(weak) {
   var m = S / 2;
 
   var base = x.createRadialGradient(m, m, 0, m, m, m);
-  base.addColorStop(0.00, "rgba(48,66,88,.92)");
-  base.addColorStop(0.52, "rgba(52,72,96,.92)");
-  base.addColorStop(0.72, "rgba(38,54,76,.72)");
-  base.addColorStop(0.90, "rgba(26,40,58,.32)");
-  base.addColorStop(1.00, "rgba(22,34,50,0)");
+  base.addColorStop(0.00, "rgba(56,76,100,.94)");
+  base.addColorStop(0.66, "rgba(50,70,94,.94)");
+  base.addColorStop(0.80, "rgba(56,78,104,.92)");
+  base.addColorStop(0.92, "rgba(36,54,78,.58)");
+  base.addColorStop(1.00, "rgba(26,40,58,0)");
 
   /* Тень примыкания: у самой кромки настила грунт темнее. Именно эта
      полоска и говорит глазу, что площадка ВОЗВЫШАЕТСЯ над землёй, а
      не нарисована на ней. Радиус совпадает с бортиком. */
-  var hug = x.createRadialGradient(m, m, m * 0.50, m, m, m * 0.70);
-  hug.addColorStop(0.00, "rgba(4,9,16,.72)");
-  hug.addColorStop(0.45, "rgba(6,12,20,.34)");
+  var hug = x.createRadialGradient(m, m, m * 0.62, m, m, m * 0.745);
+  hug.addColorStop(0.00, "rgba(4,9,16,.62)");
+  hug.addColorStop(0.40, "rgba(6,12,20,.22)");
   hug.addColorStop(1.00, "rgba(6,12,20,0)");
   x.fillStyle = hug;
   x.fillRect(0, 0, S, S);
@@ -787,27 +788,29 @@ function terrainTexture(weak) {
     var len = m * (0.16 + Math.random() * 0.36);
     x.save();
     x.translate(m, m); x.rotate(a);
-    gr = x.createLinearGradient(m * 0.54, 0, m * 0.54 + len, 0);
+    gr = x.createLinearGradient(m * 0.68, 0, m * 0.68 + len, 0);
     gr.addColorStop(0, "rgba(150,192,224,.20)");
     gr.addColorStop(1, "rgba(150,192,224,0)");
     x.fillStyle = gr;
-    x.fillRect(m * 0.54, -S * 0.004, len, S * 0.008);
+    x.fillRect(m * 0.68, -S * 0.004, len, S * 0.008);
     x.restore();
   }
 
   /* Кратеры и камни: у каждого светлая маковка и тень с
      противоположной стороны - тем и читается рельеф на плоскости */
-  for (i = 0; i < (weak ? 30 : 90); i++) {
-    r = m * (0.54 + Math.random() * 0.42);
+  for (i = 0; i < (weak ? 60 : 170); i++) {
+    r = m * (0.66 + Math.random() * 0.32);
     a = Math.random() * Math.PI * 2;
     px = m + Math.cos(a) * r; py = m + Math.sin(a) * r;
-    var rr = S * (0.007 + Math.random() * 0.026);
+    /* Мелкая россыпь, а не булыжник: крупные пятна на таком ракурсе
+       читались не рельефом, а брусчаткой из мультфильма */
+    var rr = S * (0.0035 + Math.random() * 0.0105);
     /* Свет в сцене идёт сверху и справа, значит тень камня - слева снизу */
-    x.fillStyle = "rgba(6,12,20,.34)";
+    x.fillStyle = "rgba(6,12,20,.22)";
     x.beginPath(); x.ellipse(px - rr * 0.5, py + rr * 0.4, rr * 1.15, rr * 0.7, 0, 0, Math.PI * 2); x.fill();
     gr = x.createRadialGradient(px + rr * 0.3, py - rr * 0.3, 0, px, py, rr);
-    gr.addColorStop(0.00, "rgba(150,180,206,.30)");
-    gr.addColorStop(0.70, "rgba(70,96,124,.16)");
+    gr.addColorStop(0.00, "rgba(158,188,214,.22)");
+    gr.addColorStop(0.70, "rgba(70,96,124,.11)");
     gr.addColorStop(1.00, "rgba(40,60,84,0)");
     x.fillStyle = gr;
     x.beginPath(); x.arc(px, py, rr, 0, Math.PI * 2); x.fill();
@@ -816,21 +819,21 @@ function terrainTexture(weak) {
   /* Отметины прежних посадок: три выцветших кольца по сторонам */
   for (i = 0; i < 3; i++) {
     a = 0.9 + i * 2.2;
-    r = m * (0.62 + i * 0.09);
+    r = m * (0.74 + i * 0.06);
     px = m + Math.cos(a) * r; py = m + Math.sin(a) * r;
     x.strokeStyle = "rgba(8,16,26,.24)";
     x.lineWidth = S * 0.012;
-    x.beginPath(); x.arc(px, py, m * (0.10 + i * 0.03), 0, Math.PI * 2); x.stroke();
-    gr = x.createRadialGradient(px, py, 0, px, py, m * (0.12 + i * 0.03));
+    x.beginPath(); x.arc(px, py, m * (0.07 + i * 0.02), 0, Math.PI * 2); x.stroke();
+    gr = x.createRadialGradient(px, py, 0, px, py, m * (0.09 + i * 0.02));
     gr.addColorStop(0, "rgba(6,12,20,.22)");
     gr.addColorStop(1, "rgba(6,12,20,0)");
     x.fillStyle = gr;
-    x.beginPath(); x.arc(px, py, m * (0.12 + i * 0.03), 0, Math.PI * 2); x.fill();
+    x.beginPath(); x.arc(px, py, m * (0.09 + i * 0.02), 0, Math.PI * 2); x.fill();
   }
 
   /* Мелкая крошка поверх всего */
   for (i = 0; i < (weak ? 300 : 1100); i++) {
-    r = m * (0.50 + Math.random() * 0.48);
+    r = m * (0.66 + Math.random() * 0.32);
     a = Math.random() * Math.PI * 2;
     x.globalAlpha = 0.04 + Math.random() * 0.10;
     x.fillStyle = Math.random() > 0.55 ? "#8FB4D0" : "#0E1B2A";
@@ -853,29 +856,45 @@ function kerbTexture(weak) {
   c.width = W; c.height = H;
   var x = c.getContext("2d");
   var gr = x.createLinearGradient(0, 0, 0, H);
-  gr.addColorStop(0.00, "#8CAAC6");
-  gr.addColorStop(0.14, "#5A768F");
-  gr.addColorStop(0.62, "#2C3F54");
-  gr.addColorStop(1.00, "#16222F");
+  gr.addColorStop(0.00, "#7B99B4");
+  gr.addColorStop(0.18, "#48627C");
+  gr.addColorStop(0.58, "#27394C");
+  gr.addColorStop(1.00, "#111C27");
   x.fillStyle = gr;
   x.fillRect(0, 0, W, H);
-  /* Косая разметка по бортику */
+
   var i;
-  for (i = -8; i < 48; i++) {
+  /* Вертикальные рёбра жёсткости: по ним глаз и считывает, что это
+     плита, а не полоска краски */
+  for (i = 0; i < 26; i++) {
+    var rx = (i + 0.5) * (W / 26);
+    x.fillStyle = "rgba(150,186,216,.16)";
+    x.fillRect(rx - 3, 0, 3, H);
+    x.fillStyle = "rgba(6,12,20,.30)";
+    x.fillRect(rx, 0, 3, H);
+  }
+
+  /* Косая разметка - узкой полосой посередине. Во всю высоту она
+     превращала площадку в полосатый торт. */
+  var y0 = H * 0.34, hh = H * 0.30;
+  x.fillStyle = "rgba(10,18,28,.55)";
+  x.fillRect(0, y0, W, hh);
+  for (i = -8; i < 40; i++) {
     x.save();
-    x.translate(i * (W / 40), 0);
-    x.fillStyle = i % 2 ? "rgba(226,172,52,.30)" : "rgba(14,24,36,.30)";
+    x.translate(i * (W / 32), 0);
+    x.fillStyle = i % 2 ? "rgba(178,138,52,.42)" : "rgba(24,38,54,.52)";
     x.beginPath();
-    x.moveTo(0, 0); x.lineTo(W / 40 * 0.62, 0);
-    x.lineTo(W / 40 * 0.62 - 22, H); x.lineTo(-22, H);
+    x.moveTo(0, y0); x.lineTo(W / 32 * 0.6, y0);
+    x.lineTo(W / 32 * 0.6 - hh * 0.7, y0 + hh); x.lineTo(-hh * 0.7, y0 + hh);
     x.closePath(); x.fill();
     x.restore();
   }
+
   /* Верхняя кромка: тонкая светлая линия - ребро панели */
-  x.fillStyle = "rgba(214,238,255,.80)";
-  x.fillRect(0, 0, W, 4);
-  x.fillStyle = "rgba(0,0,0,.42)";
-  x.fillRect(0, H - 5, W, 5);
+  x.fillStyle = "rgba(214,238,255,.72)";
+  x.fillRect(0, 0, W, 3);
+  x.fillStyle = "rgba(0,0,0,.50)";
+  x.fillRect(0, H - 6, W, 6);
   var tex = new T.CanvasTexture(c);
   tex.colorSpace = T.SRGBColorSpace || tex.colorSpace;
   tex.wrapS = T.RepeatWrapping;
@@ -1220,7 +1239,7 @@ function buildRocket(C, env) {
     metalness: 1.0,
     roughness: 1.0,
     envMap: env,
-    envMapIntensity: 1.5
+    envMapIntensity: 1.75
   });
   hullMat.metalnessMap = hullMat.roughnessMap;
   if (bumpS) {
@@ -1254,7 +1273,7 @@ function buildRocket(C, env) {
 
   /* Носовой конус потемнее, чтобы читался силуэт */
   var tipMat = new T.MeshStandardMaterial({
-    color: 0x24527C, metalness: 0.94, roughness: 0.18, envMap: env, envMapIntensity: 2.3
+    color: 0x2C6190, metalness: 0.80, roughness: 0.19, envMap: env, envMapIntensity: 2.0
   });
   var tipPts = [];
   tipPts.push(new T.Vector2(0.001, 1.95));
@@ -1303,7 +1322,7 @@ function buildRocket(C, env) {
      заметнее градиент от корня к кромке. Матовость поднимаем чуть выше
      зеркальной - лакированный металл, а не хром. */
   var finMat = new T.MeshStandardMaterial({
-    color: 0x25689C, metalness: 0.95, roughness: 0.28, envMap: env, envMapIntensity: 2.2
+    color: 0x2A72AA, metalness: 0.84, roughness: 0.28, envMap: env, envMapIntensity: 2.0
   });
   for (var f = 0; f < 3; f++) {
     var finPivot = new T.Group();
@@ -1850,7 +1869,7 @@ function Rocket(canvas) {
      - единственный источник, который меняется по сцене: в космосе
      он холодный, на посадке его подменяет отсвет факела, и он
      становится тёплым. Ссылки храним: цвет и сила ведутся в кадре. */
-  var hemi = new T.HemisphereLight(0xBFE2FF, 0x08131F, 0.72);
+  var hemi = new T.HemisphereLight(0xBFE2FF, 0x0A1826, 0.88);
   scene.add(hemi);
   this.hemi = hemi;
 
@@ -1868,7 +1887,7 @@ function Rocket(canvas) {
   this._rimCold = new T.Color(0x8A59F6);
   this._rimWarm = new T.Color(0xFFB068);
 
-  var fill = new T.DirectionalLight(0x62C6EA, 1.05);
+  var fill = new T.DirectionalLight(0x62C6EA, 1.45);
   fill.position.set(-3.4, 3.0, 5.0);
   scene.add(fill);
   this.fillLight = fill;
@@ -2468,7 +2487,6 @@ Rocket.prototype.legs = function () {
     /* Амортизатор сидит в пятке, чуть выше тарелки, и на просадке
        уходит в неё: удар гасит он, и это должно быть видно */
     L.damp.position.y = -full + 0.13 + shock * 0.05;
-    L.knee.position.y = -full * GEAR_MID;
 
     /* Подкос: отрезок от неподвижной точки борта до середины ноги.
        Обе точки в одной плоскости, поэтому наклон - это atan2, а
@@ -2486,8 +2504,10 @@ Rocket.prototype.legs = function () {
     L.sleeve.scale.y = len * 0.46;
     /* Шланг провисает: он длиннее прямой и потому чуть выгнут -
        наклоняем его сильнее подкоса и делаем длиннее на десятую */
-    L.hose.rotation.x = ang + 0.14;
-    L.hose.scale.y = len * 1.06;
+    if (L.hose) {
+      L.hose.rotation.x = ang + 0.14;
+      L.hose.scale.y = len * 1.06;
+    }
   }
 };
 
@@ -2516,7 +2536,7 @@ Rocket.prototype.dustEmit = function (count, force) {
     D.vel[i * 3 + 1] = (0.35 + Math.random() * 1.5) * force;
     D.vel[i * 3 + 2] = Math.sin(a) * sp;
     D.siz[i] = 0.10 + Math.random() * 0.17;
-    D.max[i] = 2.1 + Math.random() * 0.9;
+    D.max[i] = 2.6 + Math.random() * 1.6;
     D.life[i] = D.max[i];
   }
   if (!made) return;
@@ -2567,7 +2587,7 @@ Rocket.prototype.ground = function () {
     map: terrainTexture(C.weak), transparent: true, depthWrite: false,
     toneMapped: false, opacity: 0
   });
-  var soil = new T.Mesh(new T.PlaneGeometry(PAD_SIZE * 1.78, PAD_SIZE * 1.78), soilMat);
+  var soil = new T.Mesh(new T.PlaneGeometry(PAD_SIZE * 1.42, PAD_SIZE * 1.42), soilMat);
   soil.rotation.x = -Math.PI / 2;
   soil.position.y = -PAD_LIFT;
   soil.renderOrder = 1;
@@ -2729,7 +2749,12 @@ Rocket.prototype.groundStep = function (dt) {
 
   var burn = this._burn || 0;
   this._padDisc.material.opacity = vis * 0.92;
-  if (this._padSoil) this._padSoil.material.opacity = vis * 0.85;
+  /* Грунт вокруг уходит последним: без него площадка снова висит в
+     пустоте, поэтому снимаем его только на самой глубокой ступени */
+  if (this._padSoil) {
+    this._padSoil.visible = degradeStep < 3;
+    this._padSoil.material.opacity = vis * 0.85;
+  }
   if (this._padKerb) this._padKerb.material.opacity = vis * 0.95;
 
   /* Просвет от опор до настила, в единицах корабля. По нему теперь
@@ -2747,36 +2772,49 @@ Rocket.prototype.groundStep = function (dt) {
        и меньше. Пар, осевший на площадку, её разбавляет - сквозь
        белый слой тень читается слабее. Доля осевших частиц уже
        посчитана на шаге пара, здесь она стоит одного умножения. */
-    var so = vis * (0.30 + (1 - high) * 0.66);
+    var so = vis * (0.30 + (1 - high) * 0.72);
     var stg = this._steamGnd || 0;
     if (stg > 0) so *= 1 - Math.min(0.45, stg * 2.2);
     this._padShadow.material.opacity = so;
-    var sh = 1.06 + high * 1.15 + burn * 0.10;
-    this._padShadow.scale.set(sh, sh, 1);
+    /* Тень не лежит ровно под кораблём: ключевой свет стоит справа и
+       сверху, значит пятно обязано уйти влево и к зрителю, да ещё и
+       вытянуться вдоль луча. Симметричное пятно под осью читается
+       прожогом от сопла, а не тенью, - именно поэтому его и не было
+       видно. Смещение растёт с высотой: чем выше корабль, тем дальше
+       уезжает его тень. */
+    var sh = 1.02 + high * 1.20 + burn * 0.10;
+    this._padShadow.scale.set(sh * 1.22, sh * 0.96, 1);
+    this._padShadow.position.x = -(0.80 + high * 1.5);
+    this._padShadow.position.z = 0.12 + high * 0.8;
   }
 
   /* Тени опор: каждая стоит ровно там, где тарелка, и сжимается
      вместе с приближением ноги к настилу */
-  if (this._footSh) {
+  if (this._footSh && degradeStep < 2) {
+    this._footSh.visible = true;
     var fk = this.gearK || 0;
     var fr = (GEAR_HIP_Z + (GEAR_UP + GEAR_LO * fk) * Math.sin(GEAR_STOW + (GEAR_OPEN - GEAR_STOW) * fk));
     var fsz = (0.62 + high * 0.85) * (0.35 + fk * 0.65);
     var frot = this.craft ? this.craft.rotation.y : 0;
     for (var fi = 0; fi < 3; fi++) {
       var fa = (fi / 3) * Math.PI * 2 + Math.PI / 3 + frot;
-      this._footP.set(Math.sin(fa) * fr, 0.004, Math.cos(fa) * fr);
+      /* Тот же снос по лучу, что и у общей тени: иначе три пятна
+         сидят строго под тарелками и читаются нарисованными метками */
+      this._footP.set(Math.sin(fa) * fr - 0.20 - high * 0.5, 0.004,
+        Math.cos(fa) * fr + 0.14 + high * 0.3);
       this._footS.set(fsz, fsz, 1);
       this._footM.compose(this._footP, this._footQ, this._footS);
       this._footSh.setMatrixAt(fi, this._footM);
     }
     this._footSh.instanceMatrix.needsUpdate = true;
     this._footSh.material.opacity = vis * fk * (0.22 + (1 - high) * 0.55);
-  }
+  } else if (this._footSh) this._footSh.visible = false;
 
   /* Огни обода бегут по кругу. Пока корабль заходит, бегут быстро -
      площадка «принимает»; после касания успокаиваются до ровного
      дежурного мигания. */
-  if (this._lamps) {
+  if (this._lamps && degradeStep < 2) {
+    this._lamps.pts.visible = true;
     var L = this._lamps;
     var lt = this.time * (this._touched ? 1.7 : 3.4);
     for (var li = 0; li < L.n; li++) {
@@ -2793,7 +2831,7 @@ Rocket.prototype.groundStep = function (dt) {
       (2 * Math.tan((this.cam.fov * Math.PI / 180) / 2));
     L.geo.attributes.aCol.needsUpdate = true;
     L.geo.attributes.aSize.needsUpdate = true;
-  }
+  } else if (this._lamps) this._lamps.pts.visible = false;
   /* Засвет: пик на тормозном импульсе, потом короткое послесвечение
      от остывающего сопла */
   var glow = burn * 0.85 + Math.max(0, this._shock || 0) * 0.35 + lk * 0.10;
@@ -2838,6 +2876,7 @@ Rocket.prototype.groundStep = function (dt) {
    когда глаз ещё ищет подтверждение, что корабль ударился о твердь. */
 Rocket.prototype.debrisEmit = function () {
   if (document.documentElement.classList.contains("rc-reduced")) return;
+  if (degradeStep >= 2) return;            /* кадры не тянут - крошки нет */
   var D = this._deb;
   if (!D || !D.n) return;
   var th = GEAR_OPEN, fr = GEAR_HIP_Z + (GEAR_UP + GEAR_LO) * Math.sin(th);
@@ -2942,11 +2981,15 @@ Rocket.prototype.dustStep = function (dt, scale, glow) {
     /* Подсветка снизу: у грунта частица тёплая и яркая, выше -
        холодная и тусклая, как и должен светить факел */
     var low = Math.exp(-D.pos[j + 1] * 1.15);
-    var lum = a * (0.12 + low * 0.48) * (0.7 + glow * 1.4);
-    D.col[j]     = lum * (0.52 + low * 0.46);
-    D.col[j + 1] = lum * (0.70 + low * 0.26);
-    D.col[j + 2] = lum * (0.86 + low * 0.14);
-    D.siz[i] += dt * 0.16;                  /* клуб расходится и растёт */
+    /* Яркость сбавлена вдвое против прежней: две сотни аддитивных
+       спрайтов в одной точке выбеливали площадку в молоко, и вместо
+       пыли получался пар. Цвет у грунта тёплый и землистый - её
+       подсвечивает факел, а не лампа дневного света. */
+    var lum = a * (0.10 + low * 0.30) * (0.7 + glow * 1.1);
+    D.col[j]     = lum * (0.64 + low * 0.36);
+    D.col[j + 1] = lum * (0.62 + low * 0.20);
+    D.col[j + 2] = lum * (0.70 - low * 0.10);
+    D.siz[i] += dt * 0.13;                  /* клуб расходится и растёт */
   }
   if (!alive) { this.dustClear(); return; }
   D.uni.uScale.value = scale;
@@ -3670,6 +3713,23 @@ var THRUST = {
   walk: 0.38, cabin: 0.34, manual: 0.32, console: 0.34, egress: 0.72
 };
 var actThrust = 0.6;
+
+/* ── Ступень снижения качества ────────────────────────────────
+   Страница сама объявляет, что кадры не тянут (rc-motion ставит
+   data-degrade и шлёт событие). Всё, что добавлено ради красоты
+   площадки, обязано на это откликаться: сначала гаснут крошка и
+   бегущие огни, потом тени опор, потом грунт вокруг. Читаем
+   событием, а не атрибутом каждый кадр: чтение из DOM в цикле
+   отрисовки стоит дороже самого эффекта. */
+var degradeStep = 0;
+try {
+  degradeStep = parseInt(document.documentElement.getAttribute("data-degrade"), 10) || 0;
+} catch (e) {}
+addEventListener("rc:degrade", function (e) {
+  var st = e && e.detail && e.detail.step;
+  if (st) degradeStep = st;
+});
+
 addEventListener("rc:act", function (e) {
   var a = e && e.detail && e.detail.act;
   if (a && THRUST[a] != null) actThrust = THRUST[a];
@@ -3759,7 +3819,7 @@ Rocket.prototype.frame = function (dt) {
   this.bounceLight.intensity = lk * (0.85 + burn * 1.4 + Math.max(0, this._shock || 0) * 0.8);
   /* На стоянке рассеянного добавляем: корабль стоит на освещённой
      площадке, а не висит в пустоте */
-  this.hemi.intensity = 0.72 + lk * 0.30;
+  this.hemi.intensity = 0.88 + lk * 0.26;
 
   /* Искры и дым летят вниз на несколько единиц - у самой земли им
      тоже некуда лететь, поэтому гасим их не только по доле посадки,
