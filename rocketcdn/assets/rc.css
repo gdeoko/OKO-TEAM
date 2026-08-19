@@ -1104,11 +1104,13 @@ body::before {
 .btn-p:hover::before { opacity: .95; }
 @keyframes btnEdge { to { background-position: 260% 0 } }
 
-/* Кольцо прогресса вокруг кнопки «наверх» */
-.totop svg.ring { position: absolute; inset: -5px; width: 54px; height: 54px; transform: rotate(-90deg); }
-.totop svg.ring circle { fill: none; stroke-width: 2; }
-.totop svg.ring .bg { stroke: rgba(255,255,255,.22); }
-.totop svg.ring .fg { stroke: #fff; stroke-linecap: round; transition: stroke-dashoffset .12s linear; }
+/* Кольцо прогресса вокруг кнопки «наверх» снято по просьбе
+   владельца: белый ободок поверх фирменной кнопки выбивался из
+   кадра фильма и читался чужеродным кружком. Прогресс страницы и
+   так виден полосой вверху, дублировать его нечем. Разметку
+   оставляем на месте: она приходит из скрипта, и удалять её
+   значило бы держать правку в двух файлах сразу. */
+.totop svg.ring { display: none; }
 
 /* Страховка: заголовок не должен остаться невидимым, если блок
    почему-то не получил класс появления */
