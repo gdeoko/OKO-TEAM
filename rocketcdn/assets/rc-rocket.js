@@ -1525,9 +1525,18 @@ Rocket.prototype.landing = function (p, dt, pos, tan) {
   var h = this.canvas.clientHeight || innerHeight;
   var half = Math.tan((this.cam.fov * Math.PI / 180) / 2) * (this.cam.position.z + 0.2);
   var feet = Math.abs(PAD_Y) * (this._sNow || 1) / (2 * half);   /* доля кадра до пят */
-  var aim = 0.855 - feet;
+  /* На телефоне площадку ставим чуть выше: там под ней сразу идут
+     карточки следующего раздела, и разметка тонула бы в них */
+  var aim = (this.C.mobile ? 0.82 : 0.855) - feet;
   if (aim < 0.30) aim = 0.30;
   this.toWorld(w * 0.5, h * aim, -0.2, this._padP || (this._padP = new T.Vector3()));
+
+  /* Точку касания запоминаем ДО подъёма: это и есть уровень грунта,
+     по нему стоит площадка. Иначе земля едет вниз вместе с
+     садящимся кораблём, и снижения опять не видно - оно взаимно
+     сокращается. */
+  if (!this._padAt) this._padAt = new T.Vector3();
+  this._padAt.copy(this._padP);
 
   /* Зависание над площадкой. Без него корабль подходил к точке
      касания по прямой из своей полётной позиции и последнюю треть
@@ -1535,7 +1544,7 @@ Rocket.prototype.landing = function (p, dt, pos, tan) {
      цель поднята над площадкой и опускается вместе с долей - глаз
      читает вертикальный спуск, а не подъезд сбоку. */
   var hov = 1 - this.landK;
-  this._padP.y += hov * hov * Math.sqrt(hov) * 4.2 * (this._sNow || 1);
+  this._padP.y += hov * hov * Math.sqrt(hov) * 4.6 * (this._sNow || 1);
   pos.lerp(this._padP, this.landK);
 
   /* Нос разворачивается вверх: ракета встаёт на опоры. Выравнивание
@@ -1803,10 +1812,18 @@ Rocket.prototype.groundStep = function (dt) {
   }
 
   var sc = this.pivot.scale.x || 1;
+  var at = this._padAt;
+  if (!at) { grp.visible = false; return; }
+  /* По высоте площадка стоит там, где грунт, и никуда не движется -
+     корабль снижается НА неё. По горизонтали она подтягивается под
+     корабль тем же ходом посадки: так она гарантированно оказывается
+     под опорами на любой вёрстке, а к касанию совпадает с точкой
+     касания точь-в-точь. */
+  var lx = lk * lk;
   grp.position.set(
-    this.pivot.position.x + this.craft.position.x * sc,
-    this.pivot.position.y + PAD_Y * sc,
-    this.pivot.position.z
+    this.pivot.position.x + (at.x - this.pivot.position.x) * lx,
+    at.y + PAD_Y * sc,
+    this.pivot.position.z + (at.z - this.pivot.position.z) * lx
   );
   grp.scale.setScalar(sc);
 
@@ -1885,7 +1902,7 @@ Rocket.prototype.dustStep = function (dt, scale, glow) {
     /* Подсветка снизу: у грунта частица тёплая и яркая, выше -
        холодная и тусклая, как и должен светить факел */
     var low = Math.exp(-D.pos[j + 1] * 1.15);
-    var lum = a * (0.16 + low * 0.62) * (0.7 + glow * 1.4);
+    var lum = a * (0.12 + low * 0.48) * (0.7 + glow * 1.4);
     D.col[j]     = lum * (0.52 + low * 0.46);
     D.col[j + 1] = lum * (0.70 + low * 0.26);
     D.col[j + 2] = lum * (0.86 + low * 0.14);
@@ -2021,8 +2038,13 @@ Rocket.prototype.doorOpen = function (dt) {
   /* Подойдя к борту, корабль обязан ЗАКРЫВАТЬ собой страницу.
      Пока холст лежал под содержимым, заголовки и карточки
      просвечивали сквозь корпус, и он читался обоями, а не
-     предметом, к которому мы идём. */
-  var over = this.appK > 0.30;
+     предметом, к которому мы идём.
+
+     То же и на посадке: садящийся корабль с опорами, пылью и
+     площадкой - главное событие кадра, а сквозь него читались
+     заголовки соседнего раздела. На первый план он выходит уже
+     на снижении, а не только у самого борта. */
+  var over = this.appK > 0.30 || (this.landK || 0) > 0.45;
   if (over !== this._over) {
     this._over = over;
     document.documentElement.classList.toggle("rc-approach", over);
@@ -2131,9 +2153,21 @@ Rocket.prototype.layout = function (p, dt) {
      переставал помещаться в кадр: точку касания было не видно. Мера
      разная по устройствам - на телефоне корабль и так мелкий. */
   /* На телефоне корабль и так мелкий, там посадка наоборот
-     подрастает: иначе разметку площадки на ней не разглядеть */
-  var lndS = 1 + (this.landK || 0) * (this.C.mobile ? 0.12 : -0.20);
-  var sNow = s * (1 - k * 0.70) * lndS * (1 + app * 2.6) * (1 + dk * dk * 1.25);
+     подрастает: иначе разметку площадки на ней не разглядеть.
+
+     К подходу поправка сходит на прежние 0.12 - дальше кадр ведёт
+     не посадка, а сам проход к люку, и его выверенный масштаб
+     трогать нельзя: от него зависит, закроет ли корпус кадр к
+     моменту передачи сцены рубке. */
+  var near = Math.min(1, app * 1.6);
+  var lndS = 1 + (this.landK || 0) *
+    ((this.C.mobile ? 0.12 : -0.20) * (1 - near) + 0.12 * near);
+  /* Подход растит корпус сильнее прежнего: аудит показал, что при
+     полном подходе корабль занимал всего треть ширины кадра и был
+     виден целиком, от носа до стабилизаторов. Это читается «стоит
+     вдалеке», а не «мы подошли вплотную». К единице подхода борт с
+     люком обязан выходить за все четыре края. */
+  var sNow = s * (1 - k * 0.70) * lndS * (1 + app * 3.9) * (1 + dk * dk * 1.25);
   this._sNow = sNow;
   this.pivot.scale.setScalar(sNow);
 };
@@ -2257,16 +2291,35 @@ Rocket.prototype.frame = function (dt) {
   fk = fk < 0 ? 0 : fk > 1 ? 1 : fk;
   fk = fk * fk * (3 - 2 * fk);
 
+  /* И вторая половина той же правды: струя не может быть длиннее,
+     чем просвет до грунта. Меряем реальный просвет от оси корабля
+     до площадки и подрезаем факел по нему - на подлёте он упирается
+     в землю и расплющивается, а не протыкает её насквозь. Длина
+     конуса 2.5, сопло на 2.28 выше пят, отсюда и запас. */
+  var coneY = 0.10 + fk * 0.90;
+  var clear = 99;
+  if (this._padAt && lk > 0.02) {
+    clear = (this.pivot.position.y - this._padAt.y) / (this.pivot.scale.x || 1);
+    var lim = (clear + 0.30) / 2.5;
+    if (lim < 0.07) lim = 0.07;
+    if (lim < coneY) coneY = lim;
+  }
+  var cut = coneY / (0.10 + fk * 0.90 || 1);
+
   this.flame.uniforms.uTime.value = t;
   this.flame.uniforms.uPower.value = pw * flick;
-  this.flame.cone.scale.set(0.55 + fk * 0.45, 0.10 + fk * 0.90, 0.55 + fk * 0.45);
-  this.flame.core.scale.setScalar((0.9 + pw * 0.35 * flick + burn * 0.30) * (0.18 + fk * 0.82));
+  this.flame.cone.scale.set(0.55 + fk * 0.45, coneY, 0.55 + fk * 0.45);
+  var cs = (0.9 + pw * 0.35 * flick + burn * 0.30) * (0.18 + fk * 0.82);
+  this.flame.core.scale.set(cs, cs * cut, cs);
   var hs = (2.2 + pw * 1.9 * flick + burn * 1.5) * (0.42 + fk * 0.58);
   this.flame.halo.scale.set(hs, hs, 1);
   this.flame.halo.material.opacity = (0.55 + pw * 0.4) * (0.30 + fk * 0.70);
   this.engineLight.intensity = (2.2 + pw * 3.4 * flick + burn * 4.5) * (0.28 + fk * 0.72);
 
-  var tv = fk > 0.22;
+  /* Искры и дым летят вниз на несколько единиц - у самой земли им
+     тоже некуда лететь, поэтому гасим их не только по доле посадки,
+     но и по просвету */
+  var tv = fk > 0.22 && clear > 1.7;
   if (tv !== this._trailOn) {
     this._trailOn = tv;
     this.trail.sparks.pts.visible = tv;
