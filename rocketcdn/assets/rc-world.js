@@ -150,7 +150,9 @@ addEventListener("pointermove", function (e) {
 function power() {
   if (root.classList.contains("rc-flying")) return 0;
   if (root.classList.contains("rc-form-active")) return 0;
-  if (root.classList.contains("rc-inside")) return 0.3;
+  /* Внутри корабля кадр ведёт rc-interior: там своя камера, свой
+     оборот по салону и своё кольцо карточек на fixed. Мир молчит */
+  if (root.classList.contains("rc-inside")) return 0;
   var deg = parseInt(root.getAttribute("data-degrade") || "0", 10) || 0;
   if (deg >= 3) return 0;
   if (deg >= 2) return 0.45;
@@ -248,6 +250,12 @@ function boot() {
   seed();
   if (!stage) return;
   root.classList.add("w3-on");
+  /* Слой засвета из люка ставим один раз: долю в него пишет корабль
+     через переменную, поэтому сам слой ничего не считает */
+  var glow = doc.createElement("div");
+  glow.className = "rc-hatch-glow";
+  glow.setAttribute("aria-hidden", "true");
+  doc.body.appendChild(glow);
   if (!raf) raf = requestAnimationFrame(frame);
 }
 

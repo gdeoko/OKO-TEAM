@@ -122,7 +122,10 @@ g.RC_GL = {
     return;
   }
 
-  var FILES = ["vendor/three.min.js", "rc-globe3d.js", "rc-rack.js", "rc-rocket.js", "rc-interior.js", "rc-flight.js"];
+  /* rc-planets стоит перед игрой: она строит по нему миры чужих
+     вселенных. Библиотека процедурная, картинок не тянет. */
+  var FILES = ["vendor/three.min.js", "rc-globe3d.js", "rc-rack.js", "rc-rocket.js",
+               "rc-interior.js", "rc-planets.js", "rc-flight.js"];
   var started = false;
 
   function load(i) {

@@ -709,3 +709,54 @@ html[data-theme="light"] .rc-vidbg.on { opacity: .16; }
 .rcf-nav button.rcf-pl::after { left: 30%; right: 30%; background: rgba(138,89,246,.32); }
 .rcf-nav button.rcf-pl.cur { color: #EAF6FC; }
 .rcf-nav button.rcf-pl.cur::after { background: rgba(138,89,246,.9); box-shadow: 0 0 8px rgba(138,89,246,.7); }
+
+/* ── Развёртывание сети ──────────────────────────────────────
+   Игровая цель: довести сеть до каждого мира. Счётчик стоит рядом
+   с журналом исследователя, кнопка появляется только там, где есть
+   что развернуть - на орбите тела, которого ещё нет в сети. */
+.rcf-net {
+  position: absolute; left: clamp(14px, 3vw, 40px); bottom: 6.4%;
+  font-family: var(--f-body, "Golos Text", sans-serif);
+  font-size: 10.5px; font-weight: 700; letter-spacing: .18em;
+  text-transform: uppercase;
+  color: rgba(66,178,220,.85);
+  text-shadow: 0 0 12px rgba(66,178,220,.35);
+}
+.rcf-net.full { color: #35E08F; text-shadow: 0 0 12px rgba(53,224,143,.65); }
+
+.rcf-deploy {
+  position: absolute; left: 50%; bottom: 16.5%;
+  transform: translate(-50%, 8px);
+  font-family: var(--f-body, "Golos Text", sans-serif);
+  font-size: 11px; font-weight: 700; letter-spacing: .14em;
+  text-transform: uppercase;
+  color: #EAF6FC;
+  padding: 12px 22px;
+  background: linear-gradient(180deg, rgba(20,52,80,.96), rgba(8,22,38,.98));
+  border: 1px solid rgba(66,178,220,.6);
+  border-radius: 999px;
+  cursor: pointer;
+  opacity: 0; pointer-events: none;
+  box-shadow: 0 12px 30px -12px rgba(0,0,0,.9), 0 0 34px -10px rgba(66,178,220,.8);
+  transition: opacity .35s var(--ease, ease), transform .35s var(--ease, ease), box-shadow .25s;
+}
+.rcf-deploy.on { opacity: 1; pointer-events: auto; transform: translate(-50%, 0); }
+.rcf-deploy:hover { box-shadow: 0 14px 36px -12px rgba(0,0,0,.95), 0 0 52px -8px rgba(66,178,220,1); }
+/* Пульс приглашения: кнопка сама просит нажать, но не мигает в глаза */
+.rcf-deploy.on::after {
+  content: ''; position: absolute; inset: -2px;
+  border-radius: inherit; border: 1px solid rgba(66,178,220,.45);
+  animation: rcfDeployPulse 2.4s ease-out infinite;
+  pointer-events: none;
+}
+@keyframes rcfDeployPulse {
+  0% { opacity: .7; transform: scale(1); }
+  70%, 100% { opacity: 0; transform: scale(1.16); }
+}
+@media (max-width: 760px) {
+  .rcf-net { left: 12px; bottom: 4.2%; font-size: 9.5px; }
+  .rcf-deploy { bottom: 21%; font-size: 10px; padding: 10px 16px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .rcf-deploy.on::after { animation: none; }
+}

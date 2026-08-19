@@ -1289,12 +1289,15 @@ Rocket.prototype.approach = function (dt) {
 Rocket.prototype.doorOpen = function (dt) {
   var sc = g.RC_SCENE;
   var goal = 0;
-  if (this.appK > 0.55 && sc) {
+  if (this.appK > 0.45 && sc) {
     if (sc.act === "walk") {
-      /* Последняя четверть прохода: щель уже светится */
-      var raw = (sc.k - 0.72) / 0.26;
+      /* Створки идут почти весь проход, а не последнюю четверть:
+         вход должен быть движением, а не сменой кадра. Раньше дверь
+         трогалась в самом конце акта, и на один шаг колеса
+         приходился весь переход - зритель видел склейку. */
+      var raw = (sc.k - 0.42) / 0.5;
       goal = raw < 0 ? 0 : raw > 1 ? 1 : raw;
-      goal *= 0.55;
+      goal *= 0.82;
     } else if (sc.act === "cabin") {
       goal = 1;
     }
@@ -1319,11 +1322,33 @@ Rocket.prototype.doorOpen = function (dt) {
     var lit = Math.min(1, this.doorK * 2.4);
     d.lamp.intensity = lit * 2.6;
     d.edgeMat.opacity = 0.35 + (1 - this.doorK) * 0.55;
+    /* Засвет от лампы в проёме идёт наружу и растёт вместе с
+       дверью: к моменту передачи сцены рубке кадр уже залит тёплым
+       светом, и подмену физически не видно. Переменную читает
+       rc-world.css, слой лежит поверх страницы. */
+    document.documentElement.style.setProperty("--hatch-glow",
+      (Math.max(0, this.doorK - 0.30) / 0.7 * this.appK).toFixed(3));
   }
   /* Проход открыт и кадр закрыт корпусом - можно отдавать сцену
      интерьеру. Флаг читает rc-interior: подмена случается под
      закрытым кадром, поэтому её не видно. */
-  var deep = this.doorK > 0.88 && this.appK > 0.9;
+  /* Порог передачи сцены рубке. Был 0.88, и на телефоне он не
+     достигался никогда: как только рубка показывалась, корабль
+     останавливался и доля двери замирала на 0.63. Из-за этого не
+     летело событие rc:hatch, а вместе с ним не показывалась вспышка
+     света, которая и прикрывает стык. Теперь порог берём тот, что
+     реально достижим на всех экранах. */
+  /* Подойдя к борту, корабль обязан ЗАКРЫВАТЬ собой страницу.
+     Пока холст лежал под содержимым, заголовки и карточки
+     просвечивали сквозь корпус, и он читался обоями, а не
+     предметом, к которому мы идём. */
+  var over = this.appK > 0.30;
+  if (over !== this._over) {
+    this._over = over;
+    document.documentElement.classList.toggle("rc-approach", over);
+  }
+
+  var deep = this.doorK > 0.58 && this.appK > 0.8;
   if (deep !== this._deep) {
     this._deep = deep;
     document.documentElement.classList.toggle("rc-in-hatch", deep);

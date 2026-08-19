@@ -232,6 +232,8 @@ function buildUI() {
       '<div class="rcf-speed"><b>0</b><span>' + (RU ? "км/с" : "km/s") + '</span></div>' +
       '<div class="rcf-info" role="status"></div>' +
       '<div class="rcf-prog"></div>' +
+      '<div class="rcf-net"></div>' +
+      '<button type="button" class="rcf-deploy"></button>' +
       '<div class="rcf-lock" aria-hidden="true"><b></b><b></b><b></b><b></b><span></span></div>' +
     '</div>' +
     '<div class="rcf-holo" aria-hidden="true"><img src="assets/mark.webp" alt=""><i></i></div>' +
@@ -269,6 +271,9 @@ function buildUI() {
   ui.uni = w.querySelector(".rcf-uni");
   ui.autoKey = w.querySelector(".rcf-auto-key");
   ui.prog = w.querySelector(".rcf-prog");
+  ui.net = w.querySelector(".rcf-net");
+  ui.deploy = w.querySelector(".rcf-deploy");
+  ui.deploy.addEventListener("click", function () { deployNode(); });
   ui.lock = w.querySelector(".rcf-lock");
   ui.lockCap = ui.lock.querySelector("span");
   ui.scanKey = w.querySelector(".rcf-scan-key");
@@ -377,15 +382,26 @@ function manual() {
    работать и без него. */
 var built = {};                 /* uniIdx -> THREE.Group со всей вселенной */
 
-function makeBody(T, pl, seed) {
+function makeBody(T, pl, seed, starPos) {
   var P = g.RC_PLANETS;
   if (P && P.make) {
     try {
-      return P.make(pl.kind, {
+      var made = P.make(pl.kind, {
         radius: pl.r, seed: seed, tint: pl.tint, rings: !!pl.rings,
         clouds: !!pl.clouds, atmosphere: true,
-        detail: innerWidth < 760 ? "low" : "high"
+        /* Мельче сетка текстур везде, не только на телефоне: на
+           облёте разницы с полным разрешением глазом не видно, а
+           генерация втрое быстрее - вселенная собирается без пауз */
+        detail: "low"
       });
+      /* Светило системы задаёт терминатор, кайму атмосферы, ночные
+         огни и тень колец. Передаём именно НАПРАВЛЕНИЕ на звезду:
+         планета стоит на своей орбите, звезда в центре системы, а
+         значит направление - это обратный вектор её положения. */
+      if (made.setSun && starPos) {
+        try { made.setSun(-starPos.x, -starPos.y, -starPos.z); } catch (e0) {}
+      }
+      return made;
     } catch (e) {}
   }
   /* Запасной вариант: шар в цвет с лёгким блеском */
@@ -395,6 +411,27 @@ function makeBody(T, pl, seed) {
   );
   var gr = new T.Group(); gr.add(m);
   return { group: gr, radius: pl.r, update: function () {} };
+}
+
+/* Сборка вселенной идёт порциями. Каждая процедурная планета - это
+   доли секунды на генерацию текстур; десяток подряд вешал вкладку
+   почти на тринадцать секунд, и прыжок выглядел зависанием. Теперь
+   в первом заходе ставим звёзды и орбиты (это дёшево), а планеты
+   выходят по одной между кадрами - система на глазах наполняется
+   мирами, и это читается как прибытие, а не как фриз. */
+var buildQ = [], buildBusy = false;
+function buildStep() {
+  if (!buildQ.length) { buildBusy = false; return; }
+  buildBusy = true;
+  var job = buildQ.shift();
+  try { job(); } catch (e) {}
+  /* Между планетами отдаём кадр отрисовке: иначе порционность
+     ничего не даёт и мы снова считаем всё в одном кадре */
+  requestAnimationFrame(function () { setTimeout(buildStep, 0); });
+}
+function buildLater(fn) {
+  buildQ.push(fn);
+  if (!buildBusy) buildStep();
 }
 
 function buildUniverse(i) {
@@ -409,41 +446,38 @@ function buildUniverse(i) {
     var sg = new T.Group();
     sg.position.set(sys.at[0], sys.at[1], sys.at[2]);
 
-    /* Звезда системы: яркое ядро и мягкое гало. Свет от неё
-       настоящий - именно он лепит терминатор на планетах. */
+    /* Звезда системы: свет, диск и корона. Процедурную звезду даёт
+       rc-planets (грануляция, пятна, потемнение к краю); если её
+       нет, остаётся спрайт-гало, и система всё равно освещена. */
     var star = new T.PointLight(sys.star, 2.4, 2600, 1.6);
     sg.add(star);
-    var core = new T.Sprite(new T.SpriteMaterial({
-      map: glowSprite(128, "rgba(255,255,255,1)", "rgba(255,220,160,0)"),
-      transparent: true, depthWrite: false, blending: T.AdditiveBlending,
-      color: new T.Color(sys.star)
-    }));
-    core.scale.setScalar(120);
-    sg.add(core);
+    var madeStar = null;
+    if (g.RC_PLANETS && g.RC_PLANETS.star) {
+      try {
+        madeStar = g.RC_PLANETS.star({ radius: 78, seed: sys.seed, tint: sys.star, light: false, corona: 1.25 });
+        sg.add(madeStar.group);
+        live.push(madeStar);
+      } catch (e1) { madeStar = null; }
+    }
+    if (!madeStar) {
+      var core = new T.Sprite(new T.SpriteMaterial({
+        map: glowSprite(128, "rgba(255,255,255,1)", "rgba(255,220,160,0)"),
+        transparent: true, depthWrite: false, blending: T.AdditiveBlending,
+        color: new T.Color(sys.star)
+      }));
+      core.scale.setScalar(120);
+      sg.add(core);
+    }
 
     for (var pi = 0; pi < sys.planets.length; pi++) {
-      var pl = sys.planets[pi];
-      var made = makeBody(T, pl, (sys.seed || 1) + pi * 977);
       /* Планета стоит на своей орбите: угол разведён по индексу,
          чтобы система не выстроилась в линию */
       var ang = (pi / sys.planets.length) * 6.283 + (sys.seed % 10) * 0.31;
-      made.group.position.set(Math.cos(ang) * pl.dist, (pi % 2 ? 1 : -1) * pl.dist * 0.06, Math.sin(ang) * pl.dist);
-      made.group.userData.info = pl.name + " · " + pl.info;
-      sg.add(made.group);
-      live.push(made);
+      var pl = sys.planets[pi];
+      var px = Math.cos(ang) * pl.dist, py = (pi % 2 ? 1 : -1) * pl.dist * 0.06, pz = Math.sin(ang) * pl.dist;
 
-      /* Планеты чужих вселенных попадают и в сканер, и под наведение:
-         иначе прибор в чужом рукаве слепнет, а справочник молчит.
-         Ссылку держим на сам меш, чтобы луч по нему попадал. */
-      var solid = made.group.children[0];
-      if (solid) {
-        solid.userData.info = made.group.userData.info;
-        if (W3.pickables) W3.pickables.push(solid);
-        if (W3.scanTargets) W3.scanTargets.push({ o: made.group, name: pl.name, key: sys.id + "-" + pi, uni: i });
-      }
-
-      /* Тонкая линия орбиты: система читается системой, а не
-         россыпью шаров в пустоте */
+      /* Линия орбиты дешёвая - ставим сразу, чтобы система читалась
+         системой уже в момент прибытия */
       var oGeo = new T.BufferGeometry();
       var opts = [], N = 96;
       for (var k = 0; k <= N; k++) {
@@ -454,6 +488,34 @@ function buildUniverse(i) {
       sg.add(new T.Line(oGeo, new T.LineBasicMaterial({
         color: sys.star, transparent: true, opacity: 0.12, depthWrite: false, blending: T.AdditiveBlending
       })));
+
+      /* А сама планета рождается отдельным заходом: генерация её
+         текстур - это доли секунды, и десяток подряд вешал вкладку */
+      (function (pl, pi, px, py, pz, sg, sys) {
+        buildLater(function () {
+          var made = makeBody(T, pl, (sys.seed || 1) + pi * 977, new T.Vector3(px, py, pz));
+          made.group.position.set(px, py, pz);
+          /* Помечаем группу планеты: искать её по порядку среди детей
+             нельзя - там же лежит звезда и линии орбит, и индексы
+             разъезжались (курс на «Лиловый гигант» вёл к звезде). */
+          made.group.userData.planet = pi;
+          made.group.userData.info = pl.name + " · " + pl.info;
+          /* Мир проявляется, а не возникает: короткий рост от нуля */
+          made.group.scale.setScalar(0.01);
+          made.group.userData.grow = 0;
+          sg.add(made.group);
+          live.push(made);
+
+          /* Планеты чужих вселенных попадают и в сканер, и под
+             наведение: иначе прибор в чужом рукаве слепнет */
+          var solid = made.group.children[0];
+          if (solid) {
+            solid.userData.info = made.group.userData.info;
+            if (W3.pickables) W3.pickables.push(solid);
+            if (W3.scanTargets) W3.scanTargets.push({ o: made.group, name: pl.name, key: sys.id + "-" + pi, uni: i });
+          }
+        });
+      })(pl, pi, px, py, pz, sg, sys);
     }
     sg.userData.sys = sys;
     root.add(sg);
@@ -552,7 +614,12 @@ function goSystem(si, pi) {
     r = far * 1.25; y = far * 0.3;
   } else {
     var pl = sys.planets[pi];
-    var pg2 = sysGroup.children.filter(function (o) { return o.isGroup; })[pi];
+    var pg2 = null;
+    for (var q = 0; q < sysGroup.children.length; q++) {
+      if (sysGroup.children[q].userData && sysGroup.children[q].userData.planet === pi) {
+        pg2 = sysGroup.children[q]; break;
+      }
+    }
     if (!pg2) return;
     c.copy(sysGroup.position).add(pg2.position);
     name = pl.name;
@@ -1404,6 +1471,111 @@ function avoid(w3, dt) {
   } else if (dodgeWarn && worst < 0.05) dodgeWarn = 0;
 }
 
+/* ── Развёртывание сети ──────────────────────────────────────
+   Игра должна быть про продукт, а не просто про красивый космос.
+   Rocket CDN - это сеть узлов рядом с людьми, поэтому здесь у игры
+   появляется цель: долететь до мира и развернуть на нём узел.
+
+   Механика простая и честная: встал на орбиту тела - кнопка на
+   пульте оживает; нажал - с корабля уходит луч, на планете
+   загорается узел, между узлами протягиваются линии связи. Счётчик
+   на табло показывает, сколько миров уже в сети. Список хранится
+   между заходами, как и журнал исследователя. */
+var NET_KEY = "rcdn.net";
+var net = {};
+try { net = JSON.parse(localStorage.getItem(NET_KEY) || "{}") || {}; } catch (e) { net = {}; }
+
+var netNodes = [], netLine = null, netBeam = null, netBeamT = 0;
+
+function netCount() { return Object.keys(net).length; }
+
+function netPaint() {
+  if (!ui.net) return;
+  var n = netCount(), total = TOTAL_MARKS();
+  ui.net.textContent = (RU ? "Сеть " : "Network ") + n + "/" + total;
+  ui.net.classList.toggle("full", n >= total);
+}
+
+/* Кнопка развёртывания живёт на пульте и включается только там, где
+   есть что разворачивать: на орбите тела, которое ещё не в сети */
+function netButton() {
+  if (!ui.deploy) return;
+  var here = F.orbit && F.orbit.name;
+  var can = !!here && !net[here];
+  ui.deploy.classList.toggle("on", can);
+  if (can) ui.deploy.textContent = (RU ? "Развернуть узел · " : "Deploy node · ") + here;
+}
+
+function netMark(pos, name) {
+  var T = g.THREE;
+  if (!W3) return;
+  var s = new T.Sprite(new T.SpriteMaterial({
+    map: glowSprite(64, "rgba(159,224,246,1)", "rgba(66,178,220,0)"),
+    transparent: true, depthWrite: false, blending: T.AdditiveBlending
+  }));
+  s.position.copy(pos);
+  s.scale.setScalar(26);
+  s.userData.info = (RU ? "УЗЕЛ СЕТИ · " : "NETWORK NODE · ") + name;
+  W3.scene.add(s);
+  netNodes.push({ s: s, p: pos.clone(), name: name });
+
+  /* Линии связи между узлами: сеть должна выглядеть сетью */
+  if (netNodes.length > 1) {
+    if (netLine) W3.scene.remove(netLine);
+    var pts = [];
+    for (var i = 0; i < netNodes.length; i++) {
+      for (var j = i + 1; j < netNodes.length; j++) {
+        /* Соединяем только соседей: полный граф на десятке узлов
+           превращается в паутину поперёк всего неба */
+        if (netNodes[i].p.distanceTo(netNodes[j].p) > 1400) continue;
+        pts.push(netNodes[i].p, netNodes[j].p);
+      }
+    }
+    if (pts.length) {
+      var geo = new g.THREE.BufferGeometry().setFromPoints(pts);
+      netLine = new g.THREE.LineSegments(geo, new g.THREE.LineBasicMaterial({
+        color: 0x42b2dc, transparent: true, opacity: 0.34, depthWrite: false, blending: g.THREE.AdditiveBlending
+      }));
+      W3.scene.add(netLine);
+    }
+  }
+}
+
+function deployNode() {
+  if (!W3 || !F.orbit || !F.orbit.name) return;
+  var name = F.orbit.name;
+  if (net[name]) return;
+  net[name] = 1;
+  try { localStorage.setItem(NET_KEY, JSON.stringify(net)); } catch (e) {}
+
+  /* Луч развёртывания: от корабля к телу, живёт полсекунды */
+  var T = g.THREE;
+  if (netBeam) W3.scene.remove(netBeam);
+  var geo = new T.BufferGeometry().setFromPoints([W3.cam.position.clone(), F.orbit.c.clone()]);
+  netBeam = new T.Line(geo, new T.LineBasicMaterial({
+    color: 0x9fe0f6, transparent: true, opacity: 0.95, depthWrite: false, blending: T.AdditiveBlending
+  }));
+  W3.scene.add(netBeam);
+  netBeamT = 0.65;
+
+  netMark(F.orbit.c, name);
+  netPaint();
+  netButton();
+  say((RU ? "УЗЕЛ РАЗВЁРНУТ · " : "NODE DEPLOYED · ") + name + " · " +
+      (RU ? "в сети " : "in network ") + netCount(), 2600);
+  if (g.RC_SOUND) {
+    try {
+      (g.RC_SOUND.uiConfirm || g.RC_SOUND.blip).call(g.RC_SOUND);
+      setTimeout(function () { if (g.RC_SOUND.blip) g.RC_SOUND.blip(880); }, 180);
+    } catch (e2) {}
+  }
+  if (netCount() >= TOTAL_MARKS()) {
+    setTimeout(function () {
+      say(RU ? "СЕТЬ РАЗВЁРНУТА ПОЛНОСТЬЮ · ВСЕ МИРЫ НА СВЯЗИ" : "NETWORK COMPLETE", 4200);
+    }, 2800);
+  }
+}
+
 /* ── Голограммы: связка сцены и слоя меток ───────────────────
    Метка заводится один раз на объект и дальше только переставляется.
    Что показываем: тела текущей вселенной, узлы сети и галактики.
@@ -1458,7 +1630,11 @@ function holoList(w3) {
                  sub: RU ? "ЗВЁЗДНАЯ СИСТЕМА" : "STAR SYSTEM", kind: "gate", sys: s,
                  info: (RU ? "Планет в системе: " : "Planets: ") + u.sys[s].planets.length });
       var groups = [];
-      for (var c = 0; c < sg.children.length; c++) if (sg.children[c].isGroup) groups.push(sg.children[c]);
+      for (var c = 0; c < sg.children.length; c++) {
+        if (sg.children[c].userData && sg.children[c].userData.planet !== undefined) {
+          groups[sg.children[c].userData.planet] = sg.children[c];
+        }
+      }
       for (var p = 0; p < u.sys[s].planets.length; p++) {
         if (!groups[p]) continue;
         var pl = u.sys[s].planets[p];
@@ -1551,7 +1727,11 @@ function frame(ts) {
       var ob = ORBITS[F.goalId];
       var tgt = F.goalId && w3[F.goalId === "hole" ? "hole" : F.goalId];
       if (ob && tgt) {
-        F.orbit = { c: tgt.position, r: ob.r, y: ob.y, a: null, name: F.goalId };
+        /* Имя берём читаемое: оно уходит и в титры, и на кнопку
+           развёртывания узла, где «moon» вместо «ЛУНА» смотрелось
+           отладочным мусором */
+        F.orbit = { c: tgt.position, r: ob.r, y: ob.y, a: null,
+                    name: GOAL_NAMES[F.goalId] || F.goalId };
         if (g.RC_SOUND) { try { (g.RC_SOUND.uiConfirm || g.RC_SOUND.blip).call(g.RC_SOUND); } catch (e2) {} }
       }
     }
@@ -1639,7 +1819,16 @@ function frame(ts) {
   var pack = built[uniIdx];
   if (pack && pack.root.visible) {
     for (var pu = 0; pu < pack.live.length; pu++) {
-      if (pack.live[pu].update) pack.live[pu].update(dt, w3.cam.position);
+      var body = pack.live[pu];
+      if (body.update) body.update(dt, w3.cam.position);
+      /* Свежесобранный мир разворачивается из точки: планета не
+         должна возникать в кадре вспышкой, она проявляется */
+      var ud = body.group && body.group.userData;
+      if (ud && ud.grow !== undefined && ud.grow < 1) {
+        ud.grow = Math.min(1, ud.grow + dt * 1.6);
+        var e = 1 - Math.pow(1 - ud.grow, 3);
+        body.group.scale.setScalar(0.01 + e * 0.99);
+      }
     }
   }
 
@@ -1743,6 +1932,24 @@ function frame(ts) {
     var sa = ts * 0.00011;
     w3.sat.position.set(Math.cos(sa) * 76, 18 + Math.sin(sa * 2) * 12, Math.sin(sa) * 76);
     w3.sat.rotation.y = sa + 1.2;
+  }
+
+  /* Кнопка развёртывания и луч: состояние кнопки меняется редко,
+     поэтому проверяем её десять раз в секунду, а не в каждом кадре */
+  if (ts - (frame._netT || 0) > 100) {
+    frame._netT = ts;
+    netButton();
+  }
+  if (netBeamT > 0) {
+    netBeamT -= dt;
+    if (netBeam) {
+      netBeam.material.opacity = Math.max(0, netBeamT / 0.65) * 0.95;
+      if (netBeamT <= 0) { w3.scene.remove(netBeam); netBeam = null; }
+    }
+  }
+  /* Узлы дышат: сеть живая, по ней идёт трафик */
+  for (var nn = 0; nn < netNodes.length; nn++) {
+    netNodes[nn].s.scale.setScalar(24 + Math.sin(ts * 0.003 + nn) * 5);
   }
 
   /* ── Голограммы над объектами ──────────────────────────────
@@ -1908,6 +2115,8 @@ function open() {
   if (ui.scanKey) { ui.scanKey.classList.remove("cur"); ui.scanKey.setAttribute("aria-pressed", "false"); }
   if (ui.lock) ui.lock.classList.remove("on");
   paintProgress();
+  netPaint();
+  netButton();
   setAuto(true);
   F.look.x = F.look.y = F.look.tx = F.look.ty = 0;
   hintHidden = false;
