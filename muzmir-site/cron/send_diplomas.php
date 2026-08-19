@@ -409,6 +409,21 @@ function _plan_send_at(DateTimeInterface $now, array $a, array $comp): DateTime 
           : (trim((string)($a['graded_at'] ?? '')) !== '' ? (string)$a['graded_at'] : (string)($a['created_at'] ?? 'now'));
     $wDays = 5;
     if (!empty($a['user_id']) && function_exists('club_is_active') && club_is_active((int)$a['user_id'])) $wDays = 3;
+    // УЧАСТНИК ОТ УЧРЕЖДЕНИЯ-ПАРТНЁРА ЖДЁТ МЕНЬШЕ.
+    //
+    // Ускоренная выдача записана в условиях партнёрства и в поле
+    // institutions.partner_priority_days (по умолчанию 4 рабочих дня), но в самом
+    // расчёте срока её не было: обещание жило в письме и в базе, а дипломы шли
+    // общим сроком. Клубный срок при этом остаётся самым коротким: за него платят.
+    $instId = (int) ($a['institution_id'] ?? 0);
+    if ($instId > 0 && $wDays > 3) {
+        try {
+            $pd = one("SELECT COALESCE(partner_priority_days,0) d FROM institutions
+                        WHERE id=? AND partner_status='accepted'", [$instId]);
+            $pDays = (int) ($pd['d'] ?? 0);
+            if ($pDays > 0 && $pDays < $wDays) $wDays = $pDays;
+        } catch (\Throwable $e) {}
+    }
     $planned = working_days_add($base, $wDays);                                  // результат + N раб.дней, 09:0x
     $soonest = next_working_slot(new DateTime($now->format('Y-m-d H:i:s')));     // ближайшее рабочее окно
     return $planned > $soonest ? $planned : $soonest;

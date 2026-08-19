@@ -458,12 +458,26 @@ function partner_log_event(int $instId, string $kind, string $payload = ''): voi
 /* ─────────────────────── ПОИСК И СТАТИСТИКА ─────────────────────── */
 
 /** Партнёр по slug (для /p/<slug>). Только активные (accepted). */
+/**
+ * Учреждение по постоянной ссылке /p/<slug>.
+ *
+ * ССЫЛКА РАБОТАЕТ ДО ПОДТВЕРЖДЕНИЯ ПАРТНЁРСТВА. Раньше сюда пускало только
+ * учреждение со статусом accepted, а ссылка стоит в письме-приглашении рядом с
+ * кнопкой «Подать заявку»: педагог нажимал её и попадал на главную страницу
+ * вместо формы. То есть письмо звало участвовать и тут же теряло человека.
+ *
+ * Заявка, поданная до подтверждения, тоже засчитывается учреждению: именно
+ * растущий счётчик и есть лучший довод подтвердить партнёрство. Не пускаем
+ * только тех, кому центр больше не пишет: отписавшихся, исключённых, закрытых.
+ */
 function partner_by_slug(string $slug): ?array {
     partner_migrate();
     if ($slug === '') return null;
     try {
-        return one("SELECT * FROM institutions WHERE partner_slug=? AND partner_status='accepted' LIMIT 1", [$slug])
-            ?: null;
+        return one("SELECT * FROM institutions
+                     WHERE partner_slug=?
+                       AND COALESCE(status,'') NOT IN ('excluded','unsubscribed','banned')
+                     LIMIT 1", [$slug]) ?: null;
     } catch (\Throwable $e) { return null; }
 }
 

@@ -245,7 +245,7 @@ step('добавить 5-ю заявку', function() use ($TEST_INST_ID) {
 });
 step('крон-триггер запущен: apps_5 сработал', function() use ($TEST_INST_ID) {
     // Прогоняем крон-функции напрямую (без запуска процесса)
-    exec('php /var/www/muzmir/cron/partner_triggers.php >> /var/www/muzmir/data/logs/partner.log 2>&1', $out, $rc);
+    exec('php /var/www/muzmir/cron/partner_triggers.php --force >> /var/www/muzmir/data/logs/partner.log 2>&1', $out, $rc);
     $ev = one("SELECT COUNT(*) c FROM partner_events WHERE institution_id=? AND kind='apps_5'", [$TEST_INST_ID]);
     return (int) $ev['c'] >= 1;
 });
@@ -274,7 +274,7 @@ step('добавить ещё 5 заявок (итого 10)', function() use ($
     return (int) $p['partner_apps_count'] === 10;
 });
 step('крон: apps_10 сработал', function() use ($TEST_INST_ID) {
-    exec('php /var/www/muzmir/cron/partner_triggers.php >> /var/www/muzmir/data/logs/partner.log 2>&1', $out, $rc);
+    exec('php /var/www/muzmir/cron/partner_triggers.php --force >> /var/www/muzmir/data/logs/partner.log 2>&1', $out, $rc);
     $ev = one("SELECT COUNT(*) c FROM partner_events WHERE institution_id=? AND kind='apps_10'", [$TEST_INST_ID]);
     return (int) $ev['c'] >= 1;
 });
@@ -303,7 +303,7 @@ step('создать 3 записи в partner_thanks (руководство+2 
     return count($ids) === 3 ? '3 thanks' : false;
 });
 step('крон-триггер: генерация PDF + отправка группой', function() use ($TEST_INST_ID) {
-    exec('php /var/www/muzmir/cron/partner_triggers.php >> /var/www/muzmir/data/logs/partner.log 2>&1', $out, $rc);
+    exec('php /var/www/muzmir/cron/partner_triggers.php --force >> /var/www/muzmir/data/logs/partner.log 2>&1', $out, $rc);
     $sent = (int) scalar("SELECT COUNT(*) FROM partner_thanks WHERE institution_id=? AND status='sent'", [$TEST_INST_ID]);
     // "sent" может быть 0 если email тестовый и Unisender отклонил. Проверим что хотя бы PDF сгенерились.
     $gen = (int) scalar("SELECT COUNT(*) FROM partner_thanks WHERE institution_id=? AND doc_path<>''", [$TEST_INST_ID]);

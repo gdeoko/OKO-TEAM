@@ -119,13 +119,13 @@ for ($i = 1; $i <= 10; $i++) {
     ]);
 }
 step('крон запуск №1: apps_5 и apps_10 события созданы', function() use ($TEST_INST_ID) {
-    exec('php /var/www/muzmir/cron/partner_triggers.php 2>&1');
+    exec('php /var/www/muzmir/cron/partner_triggers.php --force 2>&1');
     $c5  = (int) scalar("SELECT COUNT(*) FROM partner_events WHERE institution_id=? AND kind='apps_5'",  [$TEST_INST_ID]);
     $c10 = (int) scalar("SELECT COUNT(*) FROM partner_events WHERE institution_id=? AND kind='apps_10'", [$TEST_INST_ID]);
     return $c5 === 1 && $c10 === 1 ? "apps_5=$c5 apps_10=$c10" : "expected 1/1, got $c5/$c10";
 });
 step('крон запуск №2: события НЕ дублируются', function() use ($TEST_INST_ID) {
-    exec('php /var/www/muzmir/cron/partner_triggers.php 2>&1');
+    exec('php /var/www/muzmir/cron/partner_triggers.php --force 2>&1');
     $c5  = (int) scalar("SELECT COUNT(*) FROM partner_events WHERE institution_id=? AND kind='apps_5'",  [$TEST_INST_ID]);
     $c10 = (int) scalar("SELECT COUNT(*) FROM partner_events WHERE institution_id=? AND kind='apps_10'", [$TEST_INST_ID]);
     return $c5 === 1 && $c10 === 1 ? "стабильно $c5/$c10 (не задублено)" : "ДУБЛИ: $c5/$c10";
@@ -145,7 +145,7 @@ for ($i = 1; $i <= 5; $i++) insert('applications', [
     'email'=>'x@example.test', 'institution_id'=>$INST2,
 ]);
 step('крон не крашится при партнёре без email', function() use ($INST2) {
-    exec('php /var/www/muzmir/cron/partner_triggers.php 2>&1', $out, $rc);
+    exec('php /var/www/muzmir/cron/partner_triggers.php --force 2>&1', $out, $rc);
     return $rc === 0;
 });
 step('счётчик всё равно обновлён (5 заявок)', function() use ($INST2) {
@@ -199,7 +199,7 @@ step('cron лог папка существует', function() {
     return is_dir('/var/www/muzmir/data/logs');
 });
 step('cron лог-файл создастся при первом запуске', function() {
-    exec('php /var/www/muzmir/cron/partner_triggers.php >> /var/www/muzmir/data/logs/partner.log 2>&1');
+    exec('php /var/www/muzmir/cron/partner_triggers.php --force >> /var/www/muzmir/data/logs/partner.log 2>&1');
     return is_file('/var/www/muzmir/data/logs/partner.log');
 });
 

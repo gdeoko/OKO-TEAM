@@ -311,10 +311,24 @@ function launch_combo_body(string $name, string $email, string $pass): string {
     $p = fn(string $t) => '<p style="margin:0 0 14px;font:16px/1.65 Arial,sans-serif;color:' . $ink . '">' . $t . '</p>';
 
     /* Приветствие — ровно одно на письмо. */
+    // Склонение живёт в core/chat_priority.php; письмо может собираться и без него.
+    if (!function_exists('plural_ru') && is_file(BASE_PATH . '/core/chat_priority.php')) {
+        require_once BASE_PATH . '/core/chat_priority.php';
+    }
+    // СКОЛЬКО ОСТАЛОСЬ — ЦИФРОЙ, А НЕ ДАТОЙ.
+    // «До 25 августа» человек откладывает и забывает, «осталось 5 дней» заставляет
+    // открыть форму сегодня. Дата рядом остаётся: она нужна, чтобы посчитать самому.
+    $daysLeft = $end !== '' ? (int) floor((strtotime($end . ' 23:59:59') - time()) / 86400) : -1;
+    $left = '';
+    if ($daysLeft > 1)       $left = 'осталось ' . $daysLeft . ' ' . plural_ru($daysLeft, 'день', 'дня', 'дней');
+    elseif ($daysLeft === 1) $left = 'остался последний день';
+    elseif ($daysLeft === 0) $left = 'сегодня последний день';
+
     $out = '<h1 style="margin:0 0 6px;font:700 24px/1.3 Georgia,\'Times New Roman\',serif;color:' . $navy . '">'
          . 'Здравствуйте, {{name}}!</h1>'
          . '<div style="font:15px/1.6 Arial,sans-serif;color:' . $muted . ';margin:0 0 18px">'
-         . 'Открыт приём заявок на конкурсы' . ($endRu !== '' ? ' - до ' . h($endRu) : '') . '</div>';
+         . 'Открыт приём заявок на конкурсы' . ($endRu !== '' ? ' - до ' . h($endRu) : '')
+         . ($left !== '' ? ', <b style="color:' . $navy . '">' . h($left) . '</b>' : '') . '</div>';
 
     $out .= $p('Международные и всероссийские творческие конкурсы с настоящими наградами, '
         . 'официальными и аттестационными дипломами. Участие дистанционное: работа принимается '
@@ -329,6 +343,12 @@ function launch_combo_body(string $name, string $email, string $pass): string {
              . 'Диплом с результатом аттестации жюри приходит на почту всем участникам.'
              . '</td></tr></table>';
     }
+
+    // КНОПКА ДО СПИСКА, А НЕ ТОЛЬКО ПОСЛЕ НЕГО.
+    // Единственная кнопка стояла под карточками всех четырёх конкурсов, то есть на
+    // втором-третьем экране. Кто решил участвовать сразу, должен иметь возможность
+    // нажать сразу, а не листать афиши до конца.
+    $out .= mm_email_btn($base . '/apply', 'Подать заявку', 'gold');
 
     /* Конкурсы карточками — по одной, без повторов вокруг. */
     foreach ($comps as $c) $out .= mmc_competition_card($c);
