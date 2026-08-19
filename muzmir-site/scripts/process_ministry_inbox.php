@@ -54,6 +54,29 @@ foreach ($rows as $m) {
     $id   = (int) $m['id'];
     $from = mb_strtolower(trim((string) $m['from_email']));
     $min  = one("SELECT * FROM ministries WHERE LOWER(email) = ?", [$from]);
+
+    /* ВЕДОМСТВО ОТВЕЧАЕТ НЕ С ТОГО АДРЕСА, НА КОТОРЫЙ МЫ ПИСАЛИ.
+     *
+     * Письмо ушло на depcult@depcult.gov35.ru, а ответ пришёл с mincult@gov35.ru:
+     * департамент культуры Вологодской области стал министерством и сменил ящик.
+     * По точному совпадению адреса такое письмо остаётся ничьим — без статуса,
+     * без благодарности. Поэтому вторым заходом ищем по домену ведомства: он у
+     * региона один и подделать его нельзя. Берём только однозначное совпадение. */
+    if (!$min) {
+        $dom = mb_strtolower((string) substr(strrchr($from, '@') ?: '', 1));
+        $parts = explode('.', $dom);
+        $base  = count($parts) >= 2 ? implode('.', array_slice($parts, -2)) : $dom;
+        if ($base !== '' && !in_array($base, ['mail.ru', 'yandex.ru', 'gmail.com', 'bk.ru',
+                                              'inbox.ru', 'list.ru', 'rambler.ru'], true)) {
+            $same = all("SELECT * FROM ministries WHERE LOWER(email) LIKE ?", ['%@%' . $base]);
+            if (count($same) === 1) {
+                $min = $same[0];
+                echo "     адрес сменился: " . $min['email'] . " → " . $from . "\n";
+                if (!$dry) q("UPDATE ministries SET email=? WHERE id=?", [$from, (int) $min['id']]);
+                $min['email'] = $from;
+            }
+        }
+    }
     $org  = (string) ($min['org'] ?? $m['from_name'] ?? $from);
 
     /* Разбираем по бланку ведомства, а не по нашей цитате.
@@ -150,6 +173,23 @@ foreach ($rows as $m) {
     }
 
     /* ── Благодарность ── */
+    //
+    // ОДНО ВЕДОМСТВО — ОДНА БЛАГОДАРНОСТЬ.
+    //
+    // Минкультнац Мордовии прислал ответ и на kc@, и на почту центра на mail.ru.
+    // Письма разные (разные ящики — разные ключи), ведомство одно, и 19 августа
+    // оно получило от нас две одинаковые благодарности подряд. Перед постановкой
+    // письма смотрим, не благодарили ли этот адрес недавно.
+    $thanked = (int) (scalar("SELECT COUNT(*) FROM mail_queue
+                               WHERE LOWER(to_email) = ?
+                                 AND subject LIKE 'Благодарим за поддержку%'
+                                 AND created_at >= datetime('now','localtime','-60 days')", [$from]) ?? 0);
+    if ($thanked > 0) {
+        echo "     благодарность уже уходила, второй раз не пишем\n";
+        q("UPDATE inbox_messages SET handled_by='auto_accept' WHERE id=?", [$id]);
+        continue;
+    }
+
     if ($min && function_exists('mrep_enabled') && mrep_enabled()) {
         $files = [];
         try { $t = mrep_thanks_pdf($min); if ($t) $files[] = $t; } catch (\Throwable $e) {}

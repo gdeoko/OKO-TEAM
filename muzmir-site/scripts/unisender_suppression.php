@@ -32,6 +32,7 @@ define('BASE_PATH', dirname(__DIR__));
 $GLOBALS['CFG'] = require BASE_PATH . '/config.php';
 require_once BASE_PATH . '/core/db.php';
 require_once BASE_PATH . '/core/helpers.php';
+require_once BASE_PATH . '/core/mail_reputation.php';
 
 $dry   = in_array('--dry', $argv, true);
 $clear = '';
@@ -103,11 +104,39 @@ if ($dry) {
     exit(0);
 }
 
-$done = $fail = 0;
+/* СНАЧАЛА ТЕ, КТО ТОЧНО ЖИВ.
+ *
+ * Снятий в сутки около полусотни, а в списке за тысячу — значит очередь снятия
+ * важнее самого снятия. Первыми идут адреса, которым мы когда-то уже доставили
+ * письмо или которые его открывали: у такого адреса подавление заведомо ложное,
+ * его поставила утренняя заминка почтовика. Остальные ждут своей очереди. */
+$alive = [];
+foreach (array_chunk($victims, 400) as $chunk) {
+    $in = implode(',', array_fill(0, count($chunk), '?'));
+    foreach (all("SELECT DISTINCT LOWER(email) e FROM mail_events
+                   WHERE status IN ('delivered','opened','clicked') AND LOWER(email) IN ($in)",
+                 array_map('mb_strtolower', $chunk)) as $r) {
+        $alive[(string) $r['e']] = true;
+    }
+}
+usort($victims, static fn($a, $b) =>
+    (int) isset($alive[mb_strtolower($b)]) <=> (int) isset($alive[mb_strtolower($a)]));
+printf("  из них с подтверждённой доставкой в прошлом: %s\n",
+    number_format(count($alive), 0, '.', ' '));
+
+$done = $fail = $back = 0;
 $streak = 0;                      // подряд идущие отказы = упёрлись в суточный предел
 foreach ($victims as $v) {
     $r = us_call('suppression/delete.json', ['email' => $v]);
-    if (($r['status'] ?? '') === 'success') { $done++; $streak = 0; continue; }
+    if (($r['status'] ?? '') === 'success') {
+        $done++; $streak = 0;
+        // Письмо, которое сервис отбросил, до человека не дошло: ставим заново.
+        // Раньше это делал общий повтор ложных отказов, но он бил в закрытую
+        // дверь — адрес всё ещё лежал в подавлении. Теперь повтор идёт ровно в
+        // тот момент, когда дверь открылась.
+        if (mrep_requeue_last($v, 'сервис рассылок держал адрес в списке подавления')) $back++;
+        continue;
+    }
     $fail++;
     if ((int) ($r['code'] ?? 0) === 906 && ++$streak >= 3) {
         echo "  суточный предел снятий у сервиса исчерпан, остальное — завтра\n";
@@ -115,5 +144,6 @@ foreach ($victims as $v) {
     }
     usleep(150000);
 }
-printf("\nСДЕЛАНО\n$line\n  снято: %s, не удалось: %s\n",
-    number_format($done, 0, '.', ' '), number_format($fail, 0, '.', ' '));
+printf("\nСДЕЛАНО\n$line\n  снято: %s, не удалось: %s, писем возвращено в очередь: %s\n",
+    number_format($done, 0, '.', ' '), number_format($fail, 0, '.', ' '),
+    number_format($back, 0, '.', ' '));

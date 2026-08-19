@@ -34,51 +34,36 @@ foreach ($argv as $a) if (preg_match('~^--days=(\d+)$~', $a, $m)) $days = (int) 
 
 echo "ПОВТОР ПИСЬМА ПОСЛЕ ЛОЖНОГО ОТКАЗА\n$line\n";
 
-/* Адреса с недоказанным отказом за период. */
-$false = [];
+/* Адреса с недоказанным отказом за период.
+ *
+ * Отдельно откладываем тех, кого отбил не почтовик, а сам сервис рассылок: они
+ * лежат в его списке подавления, и повтор для них — это круг на месте. Их
+ * письмо вернётся в очередь после снятия подавления. */
+$false = $held = [];
 foreach (all("SELECT DISTINCT LOWER(email) e, COALESCE(comment,'') c FROM mail_events
                WHERE status='hard_bounced' AND created_at >= datetime('now','localtime', ?)",
              ['-' . $days . ' days']) as $r) {
     $e = (string) $r['e'];
     if ($e === '') continue;
+    if (mrep_service_skipped((string) $r['c'])) { $held[$e] = true; unset($false[$e]); continue; }
+    if (isset($held[$e])) continue;
     if (mrep_bounce_is_proof((string) $r['c'])) unset($false[$e]);
     elseif (!array_key_exists($e, $false))      $false[$e] = true;
 }
 printf("  адресов с недоказанным отказом: %s\n", number_format(count($false), 0, '.', ' '));
+printf("  ждут снятия подавления у сервиса: %s\n", number_format(count($held), 0, '.', ' '));
 if (!$false) exit(0);
 
 $made = $skip = 0;
 foreach (array_keys($false) as $e) {
-    // Последнее массовое письмо этому адресу — его и повторяем.
-    $row = one("SELECT * FROM mail_queue
-                 WHERE LOWER(to_email)=? AND COALESCE(priority,0)>0 AND status='sent'
-                 ORDER BY id DESC LIMIT 1", [$e]);
-    if (!$row) { $skip++; continue; }
-
-    // Уже стоит новая строка в очереди — второй раз не заводим.
-    $has = (int) (scalar("SELECT COUNT(*) FROM mail_queue
-                           WHERE LOWER(to_email)=? AND status IN ('queued','paused')
-                             AND COALESCE(priority,0)>0", [$e]) ?? 0);
-    if ($has > 0) { $skip++; continue; }
-
-    if ($dry) { $made++; continue; }
-    try {
-        insert('mail_queue', [
-            'to_email'      => (string) $row['to_email'],
-            'to_name'       => (string) ($row['to_name'] ?? ''),
-            'subject'       => (string) $row['subject'],
-            'body'          => (string) $row['body'],
-            'build'         => (string) ($row['build'] ?? ''),
-            'attach'        => (string) ($row['attach'] ?? ''),
-            'newsletter_id' => (int) ($row['newsletter_id'] ?? 0),
-            'campaign_type' => (string) ($row['campaign_type'] ?? ''),
-            'priority'      => (int) $row['priority'],
-            'status'        => 'queued',
-            'tries'         => 0,
-            'error'         => 'повтор: первый заход отбит почтовиком без объяснения',
-        ]);
-        $made++;
-    } catch (\Throwable $ex) { $skip++; }
+    if ($dry) {
+        $row = one("SELECT id, error FROM mail_queue WHERE LOWER(to_email)=? AND COALESCE(priority,0)>0
+                     AND status='sent' ORDER BY id DESC LIMIT 1", [$e]);
+        if ($row && !str_starts_with((string) $row['error'], 'повтор')) $made++; else $skip++;
+        continue;
+    }
+    if (mrep_requeue_last($e, 'первый заход отбит почтовиком без объяснения')) $made++;
+    else $skip++;
 }
 
 printf("\n%s\n  %s писем: %s, пропущено: %s\n", $line,

@@ -87,10 +87,22 @@ echo "\nСВОЯ НОРМА НА КАЖДУЮ ПОЧТОВУЮ СЛУЖБУ\n$li
 $capMail = mrep_domain_day_cap('mail.ru');
 $say($capMail > 0 && $capMail < 100000, 'у mail.ru своя суточная норма', (string) $capMail);
 $say(mrep_domain_day_cap('dshi-example.gov74.ru') === PHP_INT_MAX, 'школьная почта нормой не ограничена');
+// Норма считается на службу целиком: иначе bk.ru, inbox.ru и list.ru получают
+// каждый по своей сотне, и «проба в тридцать писем» превращается в сто двадцать.
+$say(mrep_bucket('bk.ru') === 'mail.ru' && mrep_bucket('inbox.ru') === 'mail.ru',
+     'домены Mail.ru Group считаются одной службой');
+$say(mrep_domain_day_cap('bk.ru') === $capMail, 'у bk.ru та же норма, что у mail.ru');
+$say(mrep_bucket('dshi-example.gov74.ru') === 'dshi-example.gov74.ru',
+     'чужой домен живёт сам по себе');
 foreach (['mail.ru', 'yandex.ru', 'gmail.com'] as $d) {
     printf("  %-12s норма %5d, ушло сегодня %5d, осталось %5d\n", $d,
         mrep_domain_day_cap($d), mrep_sent_today_by_domain()[$d] ?? 0, mrep_domain_quota_left($d));
 }
+
+echo "\nОТБРОШЕННОЕ СЕРВИСОМ ПИСЬМО НЕ ХОДИТ ПО КРУГУ\n$line\n";
+$say(mrep_service_skipped('err_spam_skipped'),        'отбраковку сервиса узнаём по err_spam_skipped');
+$say(mrep_service_skipped('skip_dup_unreachable'),    'и по skip_dup_unreachable');
+$say(!mrep_service_skipped('550 spam message rejected'), 'отказ самого почтовика отбраковкой не считается');
 
 echo "\nРАБОЧИЕ ЯЩИКИ ЦЕНТРА В РАССЫЛКАХ НЕ УЧАСТВУЮТ\n$line\n";
 // Правило владельца: kc@ — заявки, результаты, сайт, ведомства; nagradi.on@ —

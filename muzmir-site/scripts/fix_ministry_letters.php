@@ -182,7 +182,11 @@ printf("  писем всего: %d\n", count($rows));
 /* ── 1. Регион из имени файла там, где поле пустое ── */
 $filled = $unknown = 0;
 foreach ($rows as $r) {
-    if (trim((string) $r['region']) !== '') continue;
+    // Пустое поле — не единственная беда: в двух карточках Северной Осетии в
+    // регионе стояла подпись «Письмо информационной поддержки», и обе висели в
+    // галерее безымянными. Имя файла знает субъект и в этом случае — берём его
+    // всегда, когда в поле стоит что угодно, кроме названия субъекта.
+    if (ml_looks_like_region((string) $r['region'])) continue;
     $reg = ml_region_from_path((string) $r['image_path']);
     if ($reg === '') { $unknown++; continue; }
     printf("  #%-4d %-46s → %s\n", (int) $r['id'], basename((string) $r['image_path']), $reg);
@@ -194,7 +198,10 @@ printf("\n  регион восстановлен: %d, не опознано: %d
 /* ── 1б. В поле региона не должно быть фамилий и служебных пометок ── */
 $named = 0;
 foreach (all("SELECT id, region, title FROM ministry_letters") as $r) {
-    $reg = trim((string) $r['region']);
+    // Сокращение — это тоже субъект: «Респ. Северная Осетия-Алания» не проходило
+    // проверку на регион, и карточка получала вместо субъекта название
+    // министерства. Приводим к полному написанию до проверки, а не после.
+    $reg = ml_region_canon(trim((string) $r['region']));
     if ($reg === '' || ml_looks_like_region($reg)) continue;
     $title = trim((string) $r['title']);
     $new   = $title !== '' && $title !== $reg ? $title : $reg;

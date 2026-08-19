@@ -87,7 +87,7 @@ function mrep_domain_stats(int $minutes = 60): array {
     } catch (\Throwable $e) { return []; }
 
     foreach ($rows as $r) {
-        $d = (string) $r['d'];
+        $d = mrep_bucket((string) $r['d']);
         if (!isset($out[$d])) $out[$d] = ['delivered' => 0, 'bounced' => 0, 'total' => 0, 'pct' => 0.0];
         $k = (string) $r['status'] === 'delivered' ? 'delivered' : 'bounced';
         $out[$d][$k] += (int) $r['c'];
@@ -127,7 +127,7 @@ function mrep_paused_domains(): array {
 /** Этому домену сейчас пишем? */
 function mrep_domain_paused(string $email): bool {
     $d = mrep_domain($email);
-    return $d !== '' && isset(mrep_paused_domains()[$d]);
+    return $d !== '' && isset(mrep_paused_domains()[mrep_bucket($d)]);
 }
 
 /**
@@ -148,17 +148,64 @@ function mrep_domain_paused(string $email): bool {
  * nl_domain_grow (во сколько раз растём за сутки).
  */
 function mrep_managed_domains(): array {
-    return ['mail.ru', 'bk.ru', 'list.ru', 'inbox.ru', 'internet.ru',
-            'yandex.ru', 'ya.ru', 'gmail.com', 'rambler.ru'];
+    $out = [];
+    foreach (mrep_services() as $domains) foreach ($domains as $d) $out[] = $d;
+    return $out;
+}
+
+/**
+ * ОДНА СЛУЖБА — ОДНА НОРМА, СКОЛЬКО БЫ ДОМЕНОВ У НЕЁ НИ БЫЛО.
+ *
+ * mail.ru, bk.ru, inbox.ru и list.ru — это один почтовик с одними серверами и
+ * одной репутацией отправителя. Пока норма считалась по домену, каждый из них
+ * получал свою сотню писем: служба видела четыреста, мы в отчёте — сто, и
+ * «пробный» режим после блокировки на деле означал 120 писем в сутки вместо
+ * тридцати. 19 августа так и вышло: норма mail.ru 100, ушло 168.
+ *
+ * Поэтому норма, пауза и статистика считаются по СЛУЖБЕ. Домен, которого в
+ * списке нет (школьная почта, ведомственный шлюз), остаётся сам по себе: там
+ * счёт идёт на единицы писем, и объединять нечего.
+ */
+function mrep_services(): array {
+    return [
+        'mail.ru'   => ['mail.ru', 'bk.ru', 'list.ru', 'inbox.ru', 'internet.ru',
+                        'mail.ua', 'xmail.ru'],
+        'yandex.ru' => ['yandex.ru', 'ya.ru', 'yandex.com', 'narod.ru', 'yandex.by',
+                        'yandex.kz', 'yandex.ua'],
+        'gmail.com' => ['gmail.com', 'googlemail.com'],
+        'rambler.ru' => ['rambler.ru', 'lenta.ru', 'autorambler.ru', 'myrambler.ru', 'ro.ru'],
+    ];
+}
+
+/**
+ * КОРЗИНА, В КОТОРУЮ ПОПАДАЕТ АДРЕС.
+ *
+ * Для домена известной службы — имя службы, для всех прочих — сам домен. Все
+ * счётчики репутации ведутся по этому ключу, поэтому bk.ru и mail.ru делят
+ * общий суточный лимит и общую паузу, а dshi-12.gov74.ru живёт отдельно.
+ */
+function mrep_bucket(string $domain): string {
+    static $map = null;
+    if ($map === null) {
+        $map = [];
+        foreach (mrep_services() as $service => $domains) {
+            foreach ($domains as $d) $map[$d] = $service;
+        }
+    }
+    $d = mb_strtolower(trim($domain));
+    return $map[$d] ?? $d;
 }
 
 /** Норма домена на сегодня. Пересчитывается раз в сутки по вчерашнему результату. */
 function mrep_domain_day_cap(string $domain): int {
     static $cache = [];
-    $d = mb_strtolower(trim($domain));
-    if ($d === '') return PHP_INT_MAX;
-    if (!in_array($d, mrep_managed_domains(), true)) return PHP_INT_MAX;
+    $raw = mb_strtolower(trim($domain));
+    if ($raw === '') return PHP_INT_MAX;
+    if (!in_array($raw, mrep_managed_domains(), true)) return PHP_INT_MAX;
+    $d = mrep_bucket($raw);                       // норма общая на всю службу
     if (isset($cache[$d])) return $cache[$d];
+    $family = mrep_services()[$d] ?? [$d];
+    $in     = implode(',', array_fill(0, count($family), '?'));
 
     mrep_ensure_caps();
     $start = max(100, (int) setting('nl_domain_start_cap', '1200'));
@@ -189,9 +236,9 @@ function mrep_domain_day_cap(string $domain): int {
     // домен ведёт себя, когда отправитель для него уже не новичок.
     $st = one("SELECT SUM(status='delivered') dl, SUM(status='hard_bounced') hb
                  FROM mail_events
-                WHERE LOWER(SUBSTR(email, INSTR(email,'@') + 1)) = ?
+                WHERE LOWER(SUBSTR(email, INSTR(email,'@') + 1)) IN ($in)
                   AND date(created_at) = date(?)
-                  AND time(created_at) >= '12:00:00'", [$d, $when]);
+                  AND time(created_at) >= '12:00:00'", array_merge($family, [$when]));
     $dl = (int) ($st['dl'] ?? 0);
     $hb = (int) ($st['hb'] ?? 0);
     $tot = $dl + $hb;
@@ -240,17 +287,19 @@ function mrep_domain_day_cap(string $domain): int {
     // по себе ничего не значит (у разной аудитории она разная), а вот втрое
     // меньшая, чем у соседней службы на ТОЙ ЖЕ рассылке, значит «Спам».
     if ($dl >= 200) {
-        $rate = static function (string $dom, string $day): float {
+        $rate = static function (string $service, string $day): float {
+            $fam = mrep_services()[$service] ?? [$service];
+            $ph  = implode(',', array_fill(0, count($fam), '?'));
             $r = one("SELECT SUM(status='delivered') dl, SUM(status='opened') op
                         FROM mail_events
-                       WHERE LOWER(SUBSTR(email, INSTR(email,'@') + 1)) = ?
-                         AND date(created_at) = date(?)", [$dom, $day]);
+                       WHERE LOWER(SUBSTR(email, INSTR(email,'@') + 1)) IN ($ph)
+                         AND date(created_at) = date(?)", array_merge($fam, [$day]));
             $d = (int) ($r['dl'] ?? 0);
             return $d > 0 ? ((int) ($r['op'] ?? 0)) / $d : 0.0;
         };
         $mine = $rate($d, $when);
         $best = 0.0;
-        foreach (mrep_managed_domains() as $other) {
+        foreach (array_keys(mrep_services()) as $other) {
             if ($other === $d) continue;
             $best = max($best, $rate($other, $when));
         }
@@ -289,7 +338,9 @@ function mrep_sent_today_by_domain(): array {
                        WHERE status='sent' AND date(sent_at)=date('now','localtime')
                          AND INSTR(to_email,'@') > 0
                        GROUP BY 1") as $r) {
-            $map[(string) $r['d']] = (int) $r['c'];
+            // Ключ — служба: письмо на bk.ru тратит ту же норму, что и на mail.ru.
+            $b = mrep_bucket((string) $r['d']);
+            $map[$b] = ($map[$b] ?? 0) + (int) $r['c'];
         }
     } catch (\Throwable $e) {}
     return $map;
@@ -301,14 +352,75 @@ function mrep_domain_quota_done(string $email): bool {
     if ($d === '') return false;
     $cap = mrep_domain_day_cap($d);
     if ($cap === PHP_INT_MAX) return false;
-    return (mrep_sent_today_by_domain()[$d] ?? 0) >= $cap;
+    return (mrep_sent_today_by_domain()[mrep_bucket($d)] ?? 0) >= $cap;
 }
 
 /** Сколько ещё можно сегодня в эту службу (для отчёта). */
 function mrep_domain_quota_left(string $domain): int {
     $cap = mrep_domain_day_cap($domain);
     if ($cap === PHP_INT_MAX) return PHP_INT_MAX;
-    return max(0, $cap - (mrep_sent_today_by_domain()[mb_strtolower($domain)] ?? 0));
+    return max(0, $cap - (mrep_sent_today_by_domain()[mrep_bucket($domain)] ?? 0));
+}
+
+/**
+ * АДРЕС ЗАКРЫТ САМИМ СЕРВИСОМ РАССЫЛОК?
+ *
+ * err_spam_skipped и skip_dup_unreachable значат, что письмо даже не пытались
+ * доставить: адрес лежит в списке подавления сервиса. Повторять такое письмо
+ * бессмысленно — оно снова будет отброшено, а мы получим ещё одно «событие
+ * отказа» и ещё раз испортим себе статистику. 19 августа так и вышло: 292
+ * письма за утро прошли круг «повторить → сервис отбросил → повторить».
+ * Такие адреса ждут снятия подавления (scripts/unisender_suppression.php),
+ * и письмо им ставится заново уже оттуда.
+ */
+function mrep_service_skipped(string $reason): bool {
+    $r = mb_strtolower($reason);
+    foreach (['err_spam_skipped', 'skip_dup_unreachable', 'skip_dup_temp_unreachable',
+              'skip_unsubscribed', 'skip_complained'] as $w) {
+        if (str_contains($r, $w)) return true;
+    }
+    return false;
+}
+
+/**
+ * ПОВТОРИТЬ ПОСЛЕДНЕЕ МАССОВОЕ ПИСЬМО АДРЕСУ.
+ *
+ * Копия прежней строки очереди с тем же рецептом сборки: тело собирается в
+ * момент отправки, поэтому человек получит актуальный текст. Повтор делается
+ * один раз — строка, которая сама была повтором, второй раз не копируется.
+ */
+function mrep_requeue_last(string $email, string $why): bool {
+    $e = mb_strtolower(trim($email));
+    if ($e === '') return false;
+
+    $row = one("SELECT * FROM mail_queue
+                 WHERE LOWER(to_email)=? AND COALESCE(priority,0)>0 AND status='sent'
+                 ORDER BY id DESC LIMIT 1", [$e]);
+    if (!$row) return false;
+    if (str_starts_with((string) ($row['error'] ?? ''), 'повтор')) return false;
+
+    $has = (int) (scalar("SELECT COUNT(*) FROM mail_queue
+                           WHERE LOWER(to_email)=? AND status IN ('queued','paused')
+                             AND COALESCE(priority,0)>0", [$e]) ?? 0);
+    if ($has > 0) return false;
+
+    try {
+        insert('mail_queue', [
+            'to_email'      => (string) $row['to_email'],
+            'to_name'       => (string) ($row['to_name'] ?? ''),
+            'subject'       => (string) $row['subject'],
+            'body'          => (string) $row['body'],
+            'build'         => (string) ($row['build'] ?? ''),
+            'attach'        => (string) ($row['attach'] ?? ''),
+            'newsletter_id' => (int) ($row['newsletter_id'] ?? 0),
+            'campaign_type' => (string) ($row['campaign_type'] ?? ''),
+            'priority'      => (int) $row['priority'],
+            'status'        => 'queued',
+            'tries'         => 0,
+            'error'         => 'повтор: ' . $why,
+        ]);
+        return true;
+    } catch (\Throwable $e2) { return false; }
 }
 
 /** Короткая строка для журнала и отчёта: кто на паузе и почему. */
