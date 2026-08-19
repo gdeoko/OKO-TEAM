@@ -142,12 +142,23 @@ if ($uid && !$isClubOrder) {
     if (is_file(BASE_PATH . '/core/club.php')) require_once BASE_PATH . '/core/club.php';
     if (function_exists('club_discount_percent')) $clubPctOrder = (int) club_discount_percent((int) $uid);
 }
-$amountBeforeDiscount = $amount;
-if ($clubPctOrder > 0 && $amount > 0) {
-    if (is_file(BASE_PATH . '/core/loyalty.php')) require_once BASE_PATH . '/core/loyalty.php';
-    $amount = function_exists('loyalty_apply')
-        ? loyalty_apply($amount, $clubPctOrder)
-        : (int) round($amount * (100 - $clubPctOrder) / 100);
+// СКИДКА УЧРЕЖДЕНИЯ-ПАРТНЁРА НА НАГРАДНЫЙ МАТЕРИАЛ.
+//
+// Письмо о десяти заявках и кабинет партнёра обещают: «скидка 10% применяется к
+// оргвзносу при подаче заявки ИЛИ к заказу наградного материала». Вторая
+// половина обещания не работала вовсе: поля промокода в заказе не было, и
+// partner_promo_check здесь никто не звал. Теперь скидка даётся, если заказ
+// делается по заявке, которую привело учреждение-партнёр, либо если введён его
+// действующий промокод. Использование при этом НЕ списывается: десять
+// использований учреждения тратятся на заявки, а не на заказы наград.
+$partnerPctOrder = 0;
+$partnerCodeOrder = trim((string) input('promo', input('promo_code', '')));
+if (!$isClubOrder && $amount > 0) {
+    if (is_file(BASE_PATH . '/core/partner.php')) require_once BASE_PATH . '/core/partner.php';
+    if (function_exists('partner_promo_check') && $partnerCodeOrder !== '') {
+        [$pInstOrder, ] = partner_promo_check($partnerCodeOrder);
+        if ($pInstOrder) $partnerPctOrder = PARTNER_PROMO_PCT;
+    }
 }
 
 // application_id: напрямую, либо резолвим по номеру заявки (для гостей).
@@ -205,6 +216,38 @@ if (!$isClubOrder) {
     }
 }
 
+// Заявку привело учреждение-партнёр — скидка положена и без промокода: обещание
+// в письме и в кабинете партнёра звучит как «скидка на заказ наградного
+// материала», а не «скидка тому, кто помнит код».
+if (!$isClubOrder && $applicationId && $partnerPctOrder === 0) {
+    // Файл партнёрки мог не подключиться выше (заказ на нулевую сумму), а без него
+    // нет и PARTNER_PROMO_PCT: обращение к неизвестной константе уронило бы заказ.
+    if (!defined('PARTNER_PROMO_PCT') && is_file(BASE_PATH . '/core/partner.php')) {
+        require_once BASE_PATH . '/core/partner.php';
+    }
+    try {
+        $__instId = (int) (scalar("SELECT COALESCE(institution_id,0) FROM applications WHERE id=?", [$applicationId]) ?? 0);
+        if ($__instId > 0) {
+            $__inst = one("SELECT partner_status FROM institutions WHERE id=?", [$__instId]);
+            if ($__inst && (string) ($__inst['partner_status'] ?? '') === 'accepted' && defined('PARTNER_PROMO_PCT')) {
+                $partnerPctOrder = PARTNER_PROMO_PCT;
+            }
+        }
+    } catch (\Throwable $e) {}
+}
+
+// Скидки не складываются: берём ту, что выгоднее человеку. Партнёрская и клубная
+// обе объявлены как «скидка на наградной материал», и сложить их значило бы
+// отдать документ за половину цены вопреки обоим обещаниям.
+$amountBeforeDiscount = $amount;
+$discPctOrder = max($clubPctOrder, $partnerPctOrder);
+if ($discPctOrder > 0 && $amount > 0) {
+    if (is_file(BASE_PATH . '/core/loyalty.php')) require_once BASE_PATH . '/core/loyalty.php';
+    $amount = function_exists('loyalty_apply')
+        ? loyalty_apply($amount, $discPctOrder)
+        : (int) round($amount * (100 - $discPctOrder) / 100);
+}
+
 // --- ПРАВИЛА СОСТАВА НАГРАД (сервер — источник истины) ---
 // Трофей строго по аттестационному результату ЗАЯВКИ (не по тому, что прислал клиент);
 // электронные основной/дополнительный в платном конкурсе не заказываются.
@@ -256,9 +299,10 @@ $orderId = insert('awards_orders', [
     'result'         => (string) ($appRow['result'] ?? input('result')),
     'items'          => json_encode($normItems, JSON_UNESCAPED_UNICODE),
     'amount'         => $amount,
-    // Полная цена до клубной скидки и её размер — для чека, админки и писем.
+    // Полная цена до скидки и её размер — для чека, админки и писем. Пишем ту
+    // скидку, которая реально применена: клубную или партнёрскую, что выгоднее.
     'amount_full'    => $amountBeforeDiscount,
-    'discount_pct'   => $clubPctOrder,
+    'discount_pct'   => $discPctOrder,
     'email'          => mb_strtolower(input('email')),
     'phone'          => input('phone'),
     'address'        => input('address'),

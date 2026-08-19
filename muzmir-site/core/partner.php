@@ -64,6 +64,21 @@ function partner_migrate(): void {
     try { db()->exec("CREATE INDEX IF NOT EXISTS idx_pth_status ON partner_thanks(status)"); } catch (\Throwable $e) {}
     try { db()->exec("CREATE INDEX IF NOT EXISTS idx_pth_inst   ON partner_thanks(institution_id)"); } catch (\Throwable $e) {}
 
+    // КТО И ПО КАКОЙ ЗАЯВКЕ ПОТРАТИЛ ПАРТНЁРСКОЕ ИСПОЛЬЗОВАНИЕ.
+    // Счётчик partner_promo_uses говорит «сколько», но не «кто», и по нему нельзя
+    // ни отличить повторное применение тем же человеком, ни вернуть использование
+    // отклонённой заявке. Десять использований на учреждение это мало, и терять их
+    // на один и тот же адрес нельзя.
+    try { db()->exec("CREATE TABLE IF NOT EXISTS partner_promo_log (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        institution_id INTEGER NOT NULL,
+        application_id INTEGER DEFAULT 0,
+        email TEXT DEFAULT '',
+        status TEXT DEFAULT 'used',          -- used | released
+        created_at TEXT DEFAULT (datetime('now','localtime')))"); } catch (\Throwable $e) {}
+    try { db()->exec("CREATE INDEX IF NOT EXISTS idx_ppl_inst_mail ON partner_promo_log(institution_id, email)"); } catch (\Throwable $e) {}
+    try { db()->exec("CREATE INDEX IF NOT EXISTS idx_ppl_app ON partner_promo_log(application_id)"); } catch (\Throwable $e) {}
+
     try { db()->exec("CREATE TABLE IF NOT EXISTS partner_docs (
         number TEXT PRIMARY KEY, kind TEXT NOT NULL, institution_id INTEGER NOT NULL,
         org TEXT DEFAULT '', region TEXT DEFAULT '', fio TEXT DEFAULT '',
@@ -567,7 +582,7 @@ function partner_stats(int $instId): array {
  * зафиксировать использование (транзакционно). Возвращает false, если код не
  * подходит или лимит исчерпан.
  */
-function partner_apply_promo(string $code, ?int $applicationId = null): array|false {
+function partner_apply_promo(string $code, ?int $applicationId = null, string $email = ''): array|false {
     partner_migrate();
     $p = partner_by_promo($code);
     if (!$p) return false;
@@ -575,18 +590,67 @@ function partner_apply_promo(string $code, ?int $applicationId = null): array|fa
     $uses   = (int) ($p['partner_promo_uses'] ?? 0);
     $max    = (int) ($p['partner_promo_max'] ?? 10);
     if ($uses >= $max) return false;
+    // ОДИН УЧАСТНИК — ОДНО ИСПОЛЬЗОВАНИЕ. Иначе десять скидок учреждения выбирает
+    // один человек, подав десять заявок подряд, а остальные педагоги школы уже
+    // ничего не получают. У реферального кода такая же защита (referral_already_used).
+    $email = mb_strtolower(trim($email));
+    if ($email !== '') {
+        try {
+            $usedBefore = (int) (scalar("SELECT COUNT(*) FROM partner_promo_log
+                                   WHERE institution_id=? AND email=? AND status='used'",
+                                 [$instId, $email]) ?? 0);
+            if ($usedBefore > 0) return false;
+        } catch (\Throwable $e) {}
+    }
     try {
         // Транзакционный инкремент: не даст «перескочить» лимит при гонке.
+        // РЕЗУЛЬТАТ ОБЯЗАТЕЛЬНО ПРОВЕРЯЕМ. Условие в UPDATE стояло и раньше, но
+        // никто не смотрел, сколько строк оно изменило: при одновременной подаче
+        // двух заявок обе читали «использований 9», обе шли дальше, и одиннадцатая
+        // скидка выдавалась как ни в чём не бывало.
         db()->beginTransaction();
-        q("UPDATE institutions SET partner_promo_uses=partner_promo_uses+1 WHERE id=? AND partner_promo_uses<partner_promo_max", [$instId]);
+        $st = q("UPDATE institutions SET partner_promo_uses=partner_promo_uses+1
+                  WHERE id=? AND partner_promo_uses<partner_promo_max", [$instId]);
+        $done = $st && $st->rowCount() > 0;
+        if (!$done) { db()->rollBack(); return false; }
         db()->commit();
     } catch (\Throwable $e) {
         try { db()->rollBack(); } catch (\Throwable $e2) {}
         return false;
     }
+    try {
+        insert('partner_promo_log', ['institution_id' => $instId, 'application_id' => (int) ($applicationId ?? 0),
+                                     'email' => $email, 'status' => 'used']);
+    } catch (\Throwable $e) {}
     partner_log_event($instId, 'promo_used', json_encode(['app' => $applicationId, 'uses' => $uses + 1], JSON_UNESCAPED_UNICODE));
     return ['institution_id' => $instId, 'discount_pct' => PARTNER_PROMO_PCT,
             'promo_code' => $p['partner_promo_code'], 'uses_left' => $max - $uses - 1];
+}
+
+/**
+ * ВЕРНУТЬ ИСПОЛЬЗОВАНИЕ ПРОМОКОДА ЗАЯВКЕ, КОТОРОЙ НЕ БУДЕТ.
+ *
+ * Заявку отклонили по положению, оргвзнос вернули — значит и партнёрское
+ * использование должно вернуться учреждению: их всего десять, и списывать их за
+ * несостоявшееся участие нечестно к остальным педагогам школы. Возврат
+ * идемпотентен: повторный вызов по той же заявке ничего не меняет.
+ *
+ * @return bool было ли что возвращать
+ */
+function partner_release_promo(int $applicationId): bool {
+    if ($applicationId <= 0) return false;
+    partner_migrate();
+    try {
+        $row = one("SELECT id, institution_id FROM partner_promo_log
+                     WHERE application_id=? AND status='used' ORDER BY id DESC LIMIT 1", [$applicationId]);
+        if (!$row) return false;
+        $instId = (int) $row['institution_id'];
+        q("UPDATE partner_promo_log SET status='released' WHERE id=?", [(int) $row['id']]);
+        q("UPDATE institutions SET partner_promo_uses=MAX(0, partner_promo_uses-1) WHERE id=?", [$instId]);
+        partner_log_event($instId, 'promo_released',
+            json_encode(['app' => $applicationId], JSON_UNESCAPED_UNICODE));
+        return true;
+    } catch (\Throwable $e) { return false; }
 }
 
 /* ─────────────────────── КАБИНЕТ (аутентификация) ─────────────────────── */

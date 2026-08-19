@@ -13,6 +13,11 @@
  *     pool='awards'). status='sent' + sent_at.
  *
  * Запуск: 15 * * * * php /var/www/muzmir/cron/partner_triggers.php
+ *
+ * Расписание почасовое, а письма уходят только в рабочее окно: задание пишет в
+ * учреждение от имени центра, и приглашение в час ночи читается как рассылка
+ * робота. Проверка стоит внутри скрипта, а не в расписании: расписание можно
+ * поменять, скрипт можно запустить руками, а правило владельца одно.
  */
 declare(strict_types=1);
 if (PHP_SAPI !== 'cli') { fwrite(STDERR, "CLI only\n"); exit(1); }
@@ -25,11 +30,20 @@ require_once BASE_PATH . '/core/helpers.php';
 require_once BASE_PATH . '/core/mailer.php';
 require_once BASE_PATH . '/core/partner.php';
 require_once BASE_PATH . '/core/partner_docs.php';
+require_once BASE_PATH . '/core/outreach_window.php';
 require_once __DIR__ . '/_lib.php';
 
 const JOB = 'partner_triggers';
 
 if (!cron_lock(JOB, 900)) { cron_log(JOB, 'блокировка — предыдущий ещё работает'); exit(0); }
+
+// Наружу ничего не уходит ночью и в воскресенье. Счётчики подождут до утра
+// вместе с письмами: перебирать партнёров каждый час ночью незачем.
+if (!outreach_window_ok()) {
+    cron_log(JOB, 'вне рабочего окна (' . outreach_window_reason() . ') — письма партнёрам ждут утра');
+    cron_unlock(JOB);
+    exit(0);
+}
 
 try {
     $stats = ['refreshed' => 0, 'notif_5' => 0, 'notif_10' => 0, 'thanks_sent' => 0, 'thanks_failed' => 0];

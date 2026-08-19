@@ -415,7 +415,9 @@ if ($paidComps) {
             } else {
                 // Списываем сразу, вместе с расчётом счёта: так нельзя выдать больше
                 // обещанных учреждению использований даже при одновременных заявках.
-                $used = partner_apply_promo((string) $partnerInst['partner_promo_code'], (int) $appId);
+                // Адрес участника передаём вместе с кодом: одно использование на
+                // человека, иначе десять скидок школы выбирает один педагог.
+                $used = partner_apply_promo((string) $partnerInst['partner_promo_code'], (int) $appId, (string) $email);
                 if ($used) {
                     $partnerPct   = (int) $used['discount_pct'];
                     $partnerPromo = (string) $used['promo_code'];
@@ -427,7 +429,11 @@ if ($paidComps) {
                     audit('partner_promo_use', 'applications', $appId,
                           ['code' => $partnerPromo, 'inst' => (int) $used['institution_id'], 'pct' => $partnerPct]);
                 } else {
-                    $partnerDeny = 'Партнёрский промокод исчерпал лимит использований.';
+                    // Причина одна из двух: у школы кончились десять использований
+                    // или этот участник уже применял её код. Обе для человека
+                    // означают одно: скидки по коду в этот раз не будет.
+                    $partnerDeny = 'Партнёрский промокод больше не действует: у учреждения '
+                                 . 'закончились использования либо Вы уже применяли этот код.';
                 }
             }
         }

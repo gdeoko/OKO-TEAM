@@ -810,11 +810,51 @@ function mrep_already_thanked(string $email, int $ministryId = 0, int $days = 60
     try {
         // Тема благодарности задана здесь же, в mrep_reply_support(): пока обе
         // строки лежат рядом, проверка не разойдётся с письмом.
+        // СЧИТАЕМ ТОЛЬКО ЖИВЫЕ ПИСЬМА. Упавшее (failed) и снятое (cancelled) до
+        // ведомства не дошло, и блокировать им повторную постановку значит навсегда
+        // оставить учреждение без ответа из-за одной осечки почты.
         $n = (int) (scalar("SELECT COUNT(*) FROM mail_queue
                              WHERE LOWER(to_email) IN ($in)
                                AND subject LIKE 'Благодарим за поддержку%'
+                               AND status IN ('queued','sent','paused')
                                AND created_at >= datetime('now','localtime','-" . max(1, $days) . " days')",
                            array_keys($mails)) ?? 0);
+        return $n > 0;
+    } catch (\Throwable $ex) { return false; }
+}
+
+/**
+ * ЭТОТ ОФИЦИАЛЬНЫЙ ОТВЕТ УЖЕ УХОДИЛ?
+ *
+ * Дедуп стоял только на благодарности за поддержку, а из того же разбора уходят
+ * ещё два письма: отказ и просьба переоформить. Ведомство, ответившее дважды (а
+ * это обычное дело: сначала секретарь, потом профильный отдел), получало и наш
+ * ответ дважды. Правило одно на все три: одно письмо одной темы одному адресату
+ * за окно в два месяца.
+ *
+ * @param string $subjectLike начало темы письма, как оно ставится в очередь
+ */
+function mrep_already_sent(string $email, int $ministryId, string $subjectLike, int $days = 60): bool {
+    $e = mb_strtolower(trim($email));
+    $mails = $e !== '' ? [$e => 1] : [];
+    if ($ministryId > 0) {
+        try {
+            $r = one("SELECT email FROM ministries WHERE id=?", [$ministryId]);
+            $a = mb_strtolower(trim((string) ($r['email'] ?? '')));
+            if ($a !== '') $mails[$a] = 1;
+        } catch (\Throwable $ex) {}
+    }
+    if (!$mails || trim($subjectLike) === '') return false;
+    $in = implode(',', array_fill(0, count($mails), '?'));
+    try {
+        $args = array_keys($mails);
+        $args[] = $subjectLike . '%';
+        $n = (int) (scalar("SELECT COUNT(*) FROM mail_queue
+                             WHERE LOWER(to_email) IN ($in)
+                               AND subject LIKE ?
+                               AND status IN ('queued','sent','paused')
+                               AND created_at >= datetime('now','localtime','-" . max(1, $days) . " days')",
+                           $args) ?? 0);
         return $n > 0;
     } catch (\Throwable $ex) { return false; }
 }

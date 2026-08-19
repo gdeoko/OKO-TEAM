@@ -106,16 +106,33 @@ function order_fulfill_digital(int $orderId): int {
         $pIdx = ($type === 'thanks' && function_exists('diploma_person_index'))
                   ? diploma_person_index((string) ($a['teacher'] ?? ''), $person)
                   : 0;
-        $num = function_exists('diploma_make_number')
-                 ? diploma_make_number((string) $a['number'], $type, $pIdx)
-                 : ((string) $a['number'] . '-' . mb_strtoupper($type));
-        // Номер уже занят, значит такой бланк в реестре есть. Выдумывать второй
-        // номер нельзя: он не напечатан нигде, а UNIQUE на diplomas.number уронил
-        // бы всю выдачу заказа. Проверяем ДО рендера, чтобы не гонять бастион зря.
-        if (one("SELECT id FROM diplomas WHERE number=?", [$num])) {
+        $mk = static fn(int $idx): string => function_exists('diploma_make_number')
+                 ? diploma_make_number((string) $a['number'], $type, $idx)
+                 : ((string) $a['number'] . '-' . mb_strtoupper($type) . ($idx > 1 ? $idx : ''));
+        $num = $mk($pIdx);
+
+        // ОПЛАЧЕННАЯ ПОЗИЦИЯ ВЫДАЁТСЯ ВСЕГДА. Номер бывает занят по-честному: заказ
+        // на второго руководителя коллектива, ФИО написано иначе, чем в заявке, и
+        // позиция получателя не нашлась. Раньше такая позиция молча пропускалась,
+        // записи в реестре не появлялось, и крон её никогда не отправлял: человек
+        // заплатил и не получал ничего. Берём следующий свободный номер и печатаем
+        // ИМЕННО ЕГО (person_idx уходит в бланк), поэтому реестр и бланк совпадают.
+        $tries = 0;
+        while (one("SELECT id FROM diplomas WHERE number=?", [$num]) && $tries < 50) {
+            $pIdx = max(1, $pIdx) + 1;
+            $num  = $mk($pIdx);
+            $tries++;
+        }
+        if ($tries >= 50) {
+            // Полсотни занятых номеров подряд означают не совпадение, а поломку:
+            // выдавать наугад нельзя, но и молчать нельзя - владелец должен узнать.
             if (function_exists('audit')) {
                 audit('order_digital_number_taken', 'awards_orders', $orderId,
                       ['app' => $appId, 'type' => $type, 'number' => $num, 'fio' => $person]);
+            }
+            if (function_exists('tg_notify_admin')) {
+                tg_notify_admin('Заказ №' . $orderId . ': не удалось подобрать номер для «' . $type
+                    . '» по заявке ' . (string) $a['number'] . '. Позиция оплачена, выдать вручную.');
             }
             continue;
         }
@@ -124,10 +141,11 @@ function order_fulfill_digital(int $orderId): int {
         try {
             if (function_exists('diploma_pdf_html')) {
                 $pdf = diploma_pdf_html((array) $a, [
-                    'extra'  => $type === 'extra',
-                    'thanks' => $type === 'thanks',
-                    'named'  => $type === 'named',
-                    'person' => $person,          // чьё имя печатать (благодарность/именной)
+                    'extra'      => $type === 'extra',
+                    'thanks'     => $type === 'thanks',
+                    'named'      => $type === 'named',
+                    'person'     => $person,      // чьё имя печатать (благодарность/именной)
+                    'person_idx' => $pIdx,        // и под каким номером: бланк = реестр
                 ]);
             }
         } catch (\Throwable $e) { $pdf = null; }

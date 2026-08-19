@@ -285,7 +285,10 @@ if (in_array((string) input('do'), ['ctl_mass','ctl_now','ctl_move','ctl_cancel'
             admin_redirect('launch');
         }
         q("UPDATE launch_jobs SET run_at=? WHERE wave=? AND status='scheduled'", [date('Y-m-d H:i:s'), $wave]);
-        $n = launch_run_due();
+        // Ручное «Выполнить сейчас» обходит рабочее окно: за кнопкой стоит человек,
+        // а не расписание. Без обхода волна в воскресенье молча не выполнялась бы,
+        // хотя время запуска ей уже переписали.
+        $n = launch_run_due(true);
         audit('launch_wave_now', 'competition', 0, ['wave' => $wave, 'fired' => $n]);
         flash($n ? ('Волна «' . launch_wave_title($wave) . '» выполнена (заданий: ' . $n . ').')
                  : 'Волна поставлена на ближайшее выполнение.', 'success');

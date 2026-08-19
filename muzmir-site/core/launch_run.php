@@ -1109,7 +1109,7 @@ function launch_panel_html(): string {
     return (string) ob_get_clean();
 }
 
-function launch_run_due(): int {
+function launch_run_due(bool $force = false): int {
     launch_migrate();
     $now = new \DateTime('now');
     $h = (int) $now->format('G');
@@ -1120,9 +1120,12 @@ function launch_run_due(): int {
     // видит воскресную запись на своей стене и читает её как рассылку робота.
     // Источник правды один на все каналы — core/outreach_window.php; условие
     // продублировано на случай, если файл окна почему-то не подключён.
-    $windowOk = function_exists('outreach_window_ok')
+    // $force — живой администратор нажал «Выполнить сейчас» в пульте. Человек за
+    // кнопкой знает, что делает, и правило про воскресенье писано против роботов;
+    // без обхода кнопка молча ничего не делала, а run_at при этом уже переписан.
+    $windowOk = $force || (function_exists('outreach_window_ok')
         ? outreach_window_ok()
-        : ((int) $now->format('w') !== 0 && $h >= 9 && $h <= 18);
+        : ((int) $now->format('w') !== 0 && $h >= 9 && $h <= 18));
     if (!$windowOk) return 0;   // вне рабочего окна ничего не публикуем
 
     // Зависшие задания: если процесс умер посреди волны, задание осталось в 'running'

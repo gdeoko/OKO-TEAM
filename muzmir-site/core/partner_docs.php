@@ -174,8 +174,17 @@ function partner_thanks_next_no(int $instId, string $role): string {
     for ($i = 0; $i < 100; $i++) {
         try { $busy = one("SELECT id FROM partner_thanks WHERE doc_number=?", [$prefix . $n]); }
         catch (\Throwable $e) { break; }
-        if (!$busy) break;
+        if (!$busy) return $prefix . $n;
         $n++;
     }
-    return $prefix . $n;
+    // Сотня занятых подряд - это не совпадение, а поломка нумерации. Вернуть
+    // заведомо занятый номер значит уронить INSERT в пустой catch и потерять
+    // благодарность молча, поэтому номер делаем гарантированно свободным: к
+    // префиксу добавляется отметка времени, а владелец видит это в журнале.
+    $fallback = $prefix . $n . '-' . date('dHis');
+    if (function_exists('audit')) {
+        audit('partner_thanks_number_overflow', 'institution', $instId,
+              ['role' => $role, 'prefix' => $prefix, 'number' => $fallback]);
+    }
+    return $fallback;
 }

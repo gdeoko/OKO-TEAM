@@ -523,7 +523,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && input('do') === 'reject') {
         admin_redirect('grading', array_filter(['id'=>$appId,'competition'=>$comp,'order'=>$order]));
     }
     update('applications', ['status' => 'rejected', 'reject_reason' => $reason], 'id=:wid', ['wid' => $appId]);
-    q("DELETE FROM diplomas WHERE application_id=? AND sent_at IS NULL", [$appId]);
+    q("DELETE FROM diplomas WHERE application_id=? AND COALESCE(sent_at,'')=''", [$appId]);
+    // Партнёрское использование возвращается учреждению: участия не будет, взнос
+    // возвращается, и списывать за это одну из десяти скидок школы неправильно.
+    if (is_file(BASE_PATH . '/core/partner.php')) require_once BASE_PATH . '/core/partner.php';
+    if (function_exists('partner_release_promo')) partner_release_promo($appId);
     audit('application_reject', 'application', $appId, ['reason' => $reason]);
 
     // --- Автовозврат оргвзноса при отклонении ПЛАТНОЙ заявки (ЮKassa) ---

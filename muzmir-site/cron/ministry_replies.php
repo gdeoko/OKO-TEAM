@@ -283,7 +283,11 @@ foreach ($ids as $id) {
         if ($newFio !== '') mrep_fix_person($from, $newFio);
         if (mrep_enabled()) {
             $ans = mrep_reply_fix($known[$from], $newFio, (string) ($known[$from]['last_number'] ?? ''));
-            mrep_queue_official($from, $org, $ans['subject'], $ans['html']);
+            // Тот же дедуп, что и у благодарности: ведомство часто отвечает дважды,
+            // и второй наш ответ на тот же вопрос выглядит как сбой автоматики.
+            if (!mrep_already_sent($from, (int) ($known[$from]['id'] ?? 0), $ans['subject'])) {
+                mrep_queue_official($from, $org, $ans['subject'], $ans['html']);
+            }
         }
         mr_log('просят переоформить: ' . $org . ($newFio !== '' ? ' → ' . $newFio : ' (ФИО не назвали)'));
         continue;
@@ -309,7 +313,9 @@ foreach ($ids as $id) {
         mrep_mark_declined($from, (string) $verdict['reason']);
         if (mrep_enabled()) {
             $ans = mrep_reply_refusal($known[$from], (string) ($known[$from]['last_number'] ?? ''));
-            mrep_queue_official($from, $org, $ans['subject'], $ans['html']);
+            if (!mrep_already_sent($from, (int) ($known[$from]['id'] ?? 0), $ans['subject'])) {
+                mrep_queue_official($from, $org, $ans['subject'], $ans['html']);
+            }
         }
         mr_log('отказ, ведомство больше не пишем: ' . $org);
         continue;

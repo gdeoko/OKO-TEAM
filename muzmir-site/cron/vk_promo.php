@@ -111,11 +111,23 @@ try {
         $fresh = all("SELECT * FROM vk_targets
                        WHERE status='ready' AND can_post=1 AND score >= 12
                          AND (COALESCE(cycle_date,'') = ''
-                              OR date(cycle_date) < date('now','localtime','-' || :rec || ' days'))
+                              OR date(cycle_date) < date('now','localtime','-' || :rec || ' days')
+                              -- Круг, в котором не вышло НИ ОДНОЙ записи, отдыхом не считается:
+                              -- иначе площадка, у которой все шесть волн упали (нет прав, закрытая
+                              -- стена, сбой сети), уходит на месяц, так и не увидев ни одного поста.
+                              OR NOT EXISTS (SELECT 1 FROM vk_promo_log l
+                                              WHERE l.group_id = vk_targets.group_id
+                                                AND l.outcome = 'sent'
+                                                AND date(l.created_at) >= date(vk_targets.cycle_date)))
                          AND (COALESCE(last_cycle_at,'') = ''
                               OR last_cycle_at < datetime('now','localtime','-' || :rec || ' days'))
                        ORDER BY score DESC, members DESC
                        LIMIT :l", ['rec' => $recycle, 'l' => min($openPerDay, $left)]);
+        // Отметку «круг начат» ставим ЗДЕСЬ, но она означает только «взяли в работу
+        // сегодня»: площадка обязана попасть в $inWork ниже, иначе первая же волна
+        // её не увидит. А вот отдых на весь перерыв даёт last_cycle_at, и он
+        // ставится по факту публикации: если все шесть волн упали, площадка не
+        // должна уходить на месяц, не получив ни одной записи.
         foreach ($fresh as $t) {
             q("UPDATE vk_targets SET cycle_date=:d, next_slot=1 WHERE group_id=:g",
               ['d' => $today, 'g' => (int) $t['group_id']]);

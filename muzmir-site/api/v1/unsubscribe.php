@@ -71,6 +71,10 @@ if ($token !== '') {
     if ($sub) {
         if ((int) $sub['active'] === 0) {
             $state = 'already';
+            // Повторное нажатие тоже должно оставлять след в стоп-листе: адреса,
+            // снятые до появления mail_stop, иначе так и остались бы держаться на
+            // одном флажке active, который переживает не всякую заливку базы.
+            unsub_mail_stop(mb_strtolower(trim((string) $sub['email'])));
         } else {
             update('subscribers', ['active' => 0], 'id=:id', ['id' => $sub['id']]);
 

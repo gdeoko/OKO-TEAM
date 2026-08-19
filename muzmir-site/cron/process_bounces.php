@@ -95,6 +95,28 @@ function bounce_reason_near(string $msg, string $addr): string {
     return implode("\n", $parts);
 }
 
+/**
+ * ПРИЧИНА ОТКАЗА В ВИДЕ, ПРИГОДНОМ ДЛЯ ЖУРНАЛА.
+ *
+ * Отчёт почтовика приходит в какой угодно кодировке: KOI8-R от старого шлюза,
+ * windows-1251 от ведомственной почты, обрезанный посреди символа UTF-8. Функции
+ * с модификатором /u на такой строке возвращают null, и дальше mb_substr(null)
+ * под strict_types роняет весь разбор отказов: крон умирает на первом же кривом
+ * письме, а мёртвые адреса остаются в базе и тратят отправку каждую волну.
+ *
+ * Поэтому склейка пробелов делается без /u, а всё, что не похоже на печатный
+ * текст, заменяется точкой: журналу нужна узнаваемая причина, а не точная копия.
+ */
+function bounce_clean_reason(string $reason, int $limit = 120): string {
+    $s = (string) preg_replace('/\s+/', ' ', trim($reason));
+    if (!mb_check_encoding($s, 'UTF-8')) {
+        $conv = @mb_convert_encoding($s, 'UTF-8', 'Windows-1251, KOI8-R, ISO-8859-5');
+        $s = is_string($conv) && mb_check_encoding($conv, 'UTF-8') ? $conv
+           : (string) preg_replace('/[^\x20-\x7E]/', '.', $s);
+    }
+    return mb_substr($s, 0, $limit);
+}
+
 // Ищем недавние письма от почтовых демонов (за 14 дней).
 $since = date('d-M-Y', time() - 14 * 86400);
 [$ok, $body] = bounce_imap($imapHost, $imapPort, $user, $pass, 'INBOX',
@@ -143,7 +165,11 @@ foreach ($ids as $seq) {
         $sub = one("SELECT active FROM subscribers WHERE email=?", [$addr]);
         if ($sub && (int) $sub['active'] === 1) {
             // Причину пишем в лог: без неё разобрать ошибочную чистку потом нечем.
-            nl_mark_bounced($addr, 'imap-dsn: ' . mb_substr(trim(preg_replace('/\s+/u', ' ', $reason)), 0, 120));
+            // Текст берём через bounce_clean_reason(): отчёт почтовика приходит в
+            // какой угодно кодировке, а preg_replace с /u на битом UTF-8 возвращает
+            // null, и под strict_types весь разбор отказов падал бы на первом же
+            // таком письме, оставляя мёртвые адреса в базе.
+            nl_mark_bounced($addr, 'imap-dsn: ' . bounce_clean_reason($reason));
             $marked++;
         }
     }

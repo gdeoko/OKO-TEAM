@@ -365,9 +365,26 @@ $orders = all("SELECT * FROM awards_orders WHERE user_id=? ORDER BY created_at D
 $students = [];
 $refCodes = []; $refUses = 0; $refReward = 0;
 if ($isTeacher && ($user['full_name'] ?? '') !== '') {
-    $students = all("SELECT a.*, c.name AS comp_name FROM applications a
-                     LEFT JOIN competitions c ON c.id=a.competition_id
-                     WHERE a.teacher=? ORDER BY a.created_at DESC", [$user['full_name']]);
+    $students = all("SELECT a.*, c.name AS comp_name,
+                            c.results_mode AS comp_results_mode,
+                            c.results_published_at AS comp_results_pub
+                       FROM applications a
+                       LEFT JOIN competitions c ON c.id=a.competition_id
+                      WHERE a.teacher=? ORDER BY a.created_at DESC", [$user['full_name']]);
+    // ПЕДАГОГ УЗНАЁТ РЕЗУЛЬТАТ НЕ РАНЬШЕ УЧЕНИКА.
+    // Здесь звание печаталось прямо из applications.result, без всякой проверки:
+    // жюри закончило работу, и педагог видел итог в кабинете за неделю до
+    // оглашения списком и до письма участнику. Правило то же, что выше для
+    // собственных заявок: у длинного конкурса ждём публикацию списка, у
+    // короткого письмо участнику.
+    foreach ($students as &$_s) {
+        $_sList = (string) ($_s['comp_results_mode'] ?? '') === 'list';
+        $_sPub  = trim((string) ($_s['comp_results_pub'] ?? '')) !== '';
+        $_sHide = (string) ($_s['status'] ?? '') === 'rejected'
+            || ($_sList ? !$_sPub : trim((string) ($_s['result_sent_at'] ?? '')) === '');
+        if ($_sHide) { $_s['result'] = ''; $_s['extra_diploma'] = ''; }
+    }
+    unset($_s);
 }
 if ($isTeacher) {
     if (is_file(BASE_PATH . '/core/loyalty.php')) require_once BASE_PATH . '/core/loyalty.php';
@@ -954,10 +971,19 @@ ob_start(); ?>
             if (trim((string)($a['phone'] ?? '')) !== '')        $info[] = ['Телефон', $a['phone']];
             if (trim((string)($a['address'] ?? '')) !== '')      $info[] = ['Адрес доставки', $a['address']];
             if (trim((string)($a['postal_index'] ?? '')) !== '') $info[] = ['Почтовый индекс', $a['postal_index']];
-            // Кнопка «Заказать награды»: результат есть и не прошло 60 дней от graded_at (если колонка есть).
+            // Кнопка «Заказать награды»: результат есть и не прошло 60 дней С ОГЛАШЕНИЯ.
+            // Считать от graded_at нельзя: у длинного конкурса жюри заканчивает работу
+            // задолго до публикации списка, и окно заказа таяло бы ещё до того, как
+            // участник узнал звание. Точка отсчёта — день, когда результат стал ему
+            // известен: публикация списка или письмо, а graded_at только запасной.
             $canOrder = !empty($a['result']);
-            if ($canOrder && $hasGradedAt && trim((string)($a['graded_at'] ?? '')) !== '') {
-                $gts = strtotime((string)$a['graded_at']);
+            if ($canOrder && $hasGradedAt) {
+                $since = trim((string) ($a['comp_results_pub'] ?? '')) !== ''
+                    ? (string) $a['comp_results_pub']
+                    : (trim((string) ($a['result_sent_at'] ?? '')) !== ''
+                        ? (string) $a['result_sent_at']
+                        : (string) ($a['graded_at'] ?? ''));
+                $gts = $since !== '' ? strtotime($since) : false;
                 if ($gts !== false && (time() - $gts) > 60 * 86400) $canOrder = false;
             } ?>
             <div class="cab-card reveal" style="--i:<?= $k ?>">
