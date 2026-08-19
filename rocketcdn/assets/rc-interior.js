@@ -682,7 +682,7 @@ function build() {
   });
   /* Полированный набор: стойки, балки, рамы. Ему и достаётся блик */
   var steelMat = new T.MeshStandardMaterial({
-    color: 0x475765, roughness: 0.4, metalness: METAL, envMapIntensity: ENVI * 1.0
+    color: 0x3c4956, roughness: 0.45, metalness: METAL, envMapIntensity: ENVI * 0.85
   });
   /* Матовый корпусный пластик: козырьки ниш, короба */
   var caseMat = new T.MeshStandardMaterial({
@@ -697,7 +697,7 @@ function build() {
   /* Чистый свет: лампы, кромки, полосы. Один материал на цвет */
   var litCyan = new T.MeshBasicMaterial({ color: COL.cyan, transparent: true, opacity: 0.62, fog: false });
   var litWarm = new T.MeshBasicMaterial({ color: 0xffd9b8, transparent: true, opacity: 0.26, fog: false });
-  var litEdge = new T.MeshBasicMaterial({ color: COL.cyan, transparent: true, opacity: 0.3, fog: false });
+  var litEdge = new T.MeshBasicMaterial({ color: COL.cyan, transparent: true, opacity: 0.24, fog: false });
   /* Пятна света: сложение, без записи в буфер глубины, иначе они
      срежут всё, что окажется за ними */
   var pool = poolTex();
