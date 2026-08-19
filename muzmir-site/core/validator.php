@@ -40,6 +40,33 @@ function v_email(string $e): array {
             ? ['ok' => true, 'reason' => '']
             : ['ok' => false, 'reason' => 'Проверьте написание адреса электронной почты'];
     }
+    // ОПЕЧАТКА В ИМЕНИ ПОЧТОВОЙ СЛУЖБЫ.
+    //
+    // 19 августа участница подала пять заявок на адрес demidovaolesia77@yndex.ru —
+    // «yndex» вместо «yandex». Домен-двойник существует и записи в DNS у него есть,
+    // поэтому проверка MX его пропускала: заявки приняты, деньги ждём, а пять писем
+    // с подтверждением и паролем от кабинета ушли в пустоту. Человек уверен, что
+    // подал заявку и его игнорируют.
+    //
+    // Подсказываем прямо в форме, пока участник ещё за клавиатурой.
+    $typos = [
+        'yndex.ru' => 'yandex.ru', 'yandx.ru' => 'yandex.ru', 'yadex.ru' => 'yandex.ru',
+        'ayndex.ru' => 'yandex.ru', 'yanex.ru' => 'yandex.ru', 'yandex.ry' => 'yandex.ru',
+        'yandex.ru.ru' => 'yandex.ru', 'yandes.ru' => 'yandex.ru', 'yandex.com.ru' => 'yandex.ru',
+        'mai.ru' => 'mail.ru', 'mial.ru' => 'mail.ru', 'maul.ru' => 'mail.ru',
+        'mail.ri' => 'mail.ru', 'mail.ru.ru' => 'mail.ru', 'nail.ru' => 'mail.ru',
+        'mali.ru' => 'mail.ru', 'vail.ru' => 'mail.ru', 'mail.tu' => 'mail.ru',
+        'gmial.com' => 'gmail.com', 'gmai.com' => 'gmail.com', 'gmail.ru' => 'gmail.com',
+        'gmail.con' => 'gmail.com', 'gmail.cm' => 'gmail.com', 'gmaill.com' => 'gmail.com',
+        'gamil.com' => 'gmail.com', 'gmail.co' => 'gmail.com',
+        'ramber.ru' => 'rambler.ru', 'rambler.ry' => 'rambler.ru',
+        'bk.ry' => 'bk.ru', 'list.ry' => 'list.ru', 'inbox.ry' => 'inbox.ru',
+        'yandex.tu' => 'yandex.ru', 'ya.ry' => 'ya.ru',
+    ];
+    if (isset($typos[$domain])) {
+        return ['ok' => false, 'reason' => 'Проверьте адрес: возможно, вы имели в виду @' . $typos[$domain]];
+    }
+
     // MX (с фолбэком на A) — если DNS недоступен, не блокируем строго.
     if (function_exists('checkdnsrr')) {
         $hasMx = @checkdnsrr($domain, 'MX') || @checkdnsrr($domain, 'A');
