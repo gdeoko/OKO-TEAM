@@ -112,16 +112,18 @@
 @media (max-width: 900px) {
   .rc-gate { align-content: center; padding-bottom: 10vh; gap: 10px; }
   .rc-gate-card {
-    width: min(46vw, 215px);
+    width: min(58vw, 250px);
     padding: 10px 12px 12px;
     /* В узкой щели фон должен быть плотнее: за экраном не рубка, а
        тёмный тамбур, и полупрозрачное стекло на нём почти не видно.
        Плюс своя тень: на кадре с паром и бликами корпуса светлые
        клубы подходили вплотную к тексту и съедали контраст. */
+    /* Фон почти глухой: за экраном светлая обшивка корабля и клубы
+       пара, на них полупрозрачное стекло теряет текст начисто */
     background:
       linear-gradient(180deg,
-        rgba(var(--int-cyan-rgb, 66,178,220), .18),
-        rgba(var(--int-deep-rgb, 5,12,21), .86));
+        rgba(var(--int-panel-rgb, 20,40,61), .93),
+        rgba(var(--int-deep-rgb, 5,12,21), .95));
     box-shadow:
       0 0 24px -6px rgba(var(--int-cyan-rgb, 66,178,220), .55),
       0 10px 30px -10px rgba(0,0,0,.9),

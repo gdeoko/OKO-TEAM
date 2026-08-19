@@ -356,6 +356,8 @@ html.rc-inside #faq .sec-head .sec-p {
    сцены - пол, пульт и приборы, - то есть ровно то, ради чего сцена
    и снята. Заявку человек оставит на пульте, к которому мы его и
    ведём. */
+html[data-act="landing"] .mcta,
+html[data-act="walk"] .mcta,
 html.rc-inside .mcta,
 html[data-act="egress"] .mcta {
   opacity: 0;
