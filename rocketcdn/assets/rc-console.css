@@ -1,20 +1,33 @@
 /* ═══════════════════════════════════════════════════════════
    Rocket CDN · пульт, оформление
 
+   Секция контактов - это не отдельная сцена, а нос той же рубки,
+   по которой мы только что ехали. Аудит финальной сборки поймал
+   ровно обратное: синяя объёмная рубка, следом тёмное фото чужой
+   консоли, следом серая кабина игры - три кадра подряд читались
+   как три разных сайта. Причина была простая: у каждой сцены был
+   свой набор цветов и своя цветовая температура света.
+
+   Поэтому здесь нет ни одного самостоятельного цвета. Палитра
+   приходит переменными --int-* из rc-interior.js: те же числа,
+   которыми покрашены стены, иллюминаторы и приборы объёмной рубки.
+   Запасные значения в var() повторяют их один в один - пульт
+   обязан быть в тон даже если объёмный слой не поднялся.
+
    Панель лежит фоном за формой и не участвует в потоке: форма
    остаётся обычной вёрсткой, её поля нативные, клавиатура и
-   автозаполнение работают. Всё движение приходит переменными из
-   rc-console.js, здесь только то, как это выглядит.
+   автозаполнение работают. Движение приходит переменными из
+   rc-console.js и rc-interior.js, здесь только то, как это выглядит.
    ═══════════════════════════════════════════════════════════ */
 
-/* Панель занимает весь блок контактов, а не полосу над ним: только
-   так анкета оказывается не «на фоне пульта», а в самом пульте -
-   ровно то, о чём просил заказчик. Края растворяем маской, чтобы
-   сцена входила в страницу без видимой границы кадра.
-
-   Блок контактов обязан быть точкой отсчёта для слоя: без этого
+/* Блок контактов обязан быть точкой отсчёта для слоёв: без этого
    панель меряет себя от страницы целиком и схлопывается в ноль. */
 #contact { position: relative; }
+
+/* ── Снимок пульта: запасной путь, когда рубки нет ────────────
+   Слой остаётся ради упрощённого режима (нет WebGL, слабое
+   устройство, просьба меньше движения). Пока объёмная рубка на
+   экране, снимок из кадра убирается совсем - см. ниже. */
 .rc-console {
   position: absolute; inset: -4vh 0 -2vh 0;
   z-index: 0; pointer-events: none;
@@ -28,8 +41,11 @@
 .rc-console::after {
   content: ''; position: absolute; inset: 0; pointer-events: none;
   background:
-    radial-gradient(ellipse 46% 70% at 22% 52%, rgba(4,10,18,.86) 0%, rgba(4,10,18,.55) 46%, transparent 76%),
-    linear-gradient(180deg, rgba(4,10,18,.55), transparent 26%, transparent 70%, rgba(4,10,18,.6));
+    radial-gradient(ellipse 46% 70% at 22% 52%,
+      rgba(var(--int-deep-rgb, 5,12,21), .86) 0%,
+      rgba(var(--int-deep-rgb, 5,12,21), .55) 46%, transparent 76%),
+    linear-gradient(180deg, rgba(var(--int-deep-rgb, 5,12,21), .55), transparent 26%,
+      transparent 70%, rgba(var(--int-deep-rgb, 5,12,21), .6));
 }
 .rc-console.on { opacity: 1; }
 .rc-console img,
@@ -42,18 +58,19 @@
   transform-origin: 50% 46%;
   transition: transform .25s linear;
 }
+/* Снимок снят в чужом свете: он теплее и зеленее рубки. Приводим
+   его к цветовой температуре сцены прямо фильтром, чтобы даже в
+   запасном режиме секция не выпадала из фильма. */
 .rc-console img {
-  filter: blur(var(--con-blur, 4px)) saturate(1.05);
+  filter: blur(var(--con-blur, 4px)) saturate(.72) hue-rotate(-8deg) brightness(.82) contrast(1.06);
   opacity: var(--con-vis, .5);
 }
 .rc-console-live { mix-blend-mode: screen; opacity: var(--con-vis, .5); }
 
 /* Ролик подхода к пульту. Лежит ровно там же, где снимок, и с тем
-   же движением - значит подмена одного другим на глаз не читается.
-   Пока ролик не готов, виден снимок; как только готов, снимок
-   гаснет и дальше кадр ведёт прокрутка. */
+   же движением - значит подмена одного другим на глаз не читается. */
 .rc-console-vid {
-  filter: saturate(1.05) blur(calc(var(--con-blur, 4px) * .35));
+  filter: saturate(.72) hue-rotate(-8deg) brightness(.84) blur(calc(var(--con-blur, 4px) * .35));
   opacity: 0; transition: opacity .7s var(--ease), transform .25s linear;
   object-fit: cover;
 }
@@ -80,12 +97,15 @@ html[data-degrade="3"] .rc-console { display: none; }
      кадр 16:9 превращается в мыло. Сцена остаётся в верхней части,
      где контакты и воздух, а форма ниже стоит на спокойном фоне. */
   .rc-console { inset: -3vh 0 auto 0; height: min(60vh, 480px); }
-  .rc-console img { filter: blur(calc(var(--con-blur, 4px) * .6)); }
-  .rc-console-vid { filter: none; }
+  .rc-console img { filter: blur(calc(var(--con-blur, 4px) * .6)) saturate(.72) hue-rotate(-8deg) brightness(.82); }
+  .rc-console-vid { filter: saturate(.72) hue-rotate(-8deg) brightness(.84); }
   .rc-console::after {
     background:
-      radial-gradient(ellipse 80% 46% at 50% 12%, rgba(4,10,18,.72) 0%, rgba(4,10,18,.3) 52%, transparent 80%),
-      linear-gradient(180deg, rgba(4,10,18,.5), transparent 30%, transparent 62%, rgba(4,10,18,.85));
+      radial-gradient(ellipse 80% 46% at 50% 12%,
+        rgba(var(--int-deep-rgb, 5,12,21), .72) 0%,
+        rgba(var(--int-deep-rgb, 5,12,21), .3) 52%, transparent 80%),
+      linear-gradient(180deg, rgba(var(--int-deep-rgb, 5,12,21), .5), transparent 30%,
+        transparent 62%, rgba(var(--int-deep-rgb, 5,12,21), .85));
   }
 }
 @media (prefers-reduced-motion: reduce) {
@@ -94,96 +114,225 @@ html[data-degrade="3"] .rc-console { display: none; }
 }
 
 
+/* ═══ КОГДА РУБКА НА ЭКРАНЕ ═══════════════════════════════════
+   Объёмная рубка сама по себе уже пульт: у неё есть приборная
+   стойка, диоды, остекление и иллюминаторы по бортам. Класть
+   поверх неё фотографию другого пульта значит показать две разные
+   консоли подряд - именно это и читалось как «другой сайт».
+   Снимок и ролик убираем целиком, а вместо них - прозрачная вуаль
+   в тон рубки: под ней видно ту самую комнату, те же стены по
+   краям кадра и тот же холодный свет из остекления. */
+html.rc-inside .rc-console { display: none; }
+
+html.rc-inside #contact::before {
+  content: ''; position: absolute; inset: -6vh 0 -3vh 0;
+  z-index: 0; pointer-events: none;
+  /* Гасим ровно под левой колонкой текста и по кромкам кадра.
+     Середина и борта остаются открытыми: там работает сцена. */
+  background:
+    radial-gradient(ellipse 44% 60% at 20% 46%,
+      rgba(var(--int-deep-rgb, 5,12,21), .88) 0%,
+      rgba(var(--int-deep-rgb, 5,12,21), .52) 50%, transparent 78%),
+    linear-gradient(180deg,
+      rgba(var(--int-deep-rgb, 5,12,21), .66) 0%,
+      rgba(var(--int-deep-rgb, 5,12,21), .08) 18%,
+      rgba(var(--int-deep-rgb, 5,12,21), .08) 72%,
+      rgba(var(--int-deep-rgb, 5,12,21), .76) 100%);
+}
+@media (max-width: 760px) {
+  html.rc-inside #contact::before {
+    background:
+      linear-gradient(180deg,
+        rgba(var(--int-deep-rgb, 5,12,21), .62) 0%,
+        rgba(var(--int-deep-rgb, 5,12,21), .3) 16%,
+        rgba(var(--int-deep-rgb, 5,12,21), .5) 52%,
+        rgba(var(--int-deep-rgb, 5,12,21), .82) 100%);
+  }
+}
+
+
 /* ═══ ЭКРАН ПУЛЬТА ════════════════════════════════════════════
    Анкета живёт не «на фоне пульта», а прямо в его экране: вокруг
-   неё фаска корпуса, стекло с бликом и подсветка по контуру.
-   Рамку рисуем стилями, а не привязываем к пикселям картинки -
-   тогда экран сходится с формой на любом размере окна.
+   неё корпус прибора с фаской, по стеклу идёт блик, снизу бьёт
+   свет от самой панели, а сама плита корпуса едва заметно
+   отклонена, как у настоящего пульта.
 
-   Поля внутри остаются нативными: клавиатура, автозаполнение и
-   экранная читалка работают ровно так же, как на обычной форме. */
+   Наклон живёт на псевдоэлементе, а не на форме. Это принципиально:
+   transform на предке полей ломает подъём клавиатуры на телефоне и
+   заставляет браузер считать элемент нестабильным, из-за чего
+   срываются нажатия. Поэтому весь объём здесь сделан фоном,
+   тенями, рамками и псевдоэлементами - поля остаются нативными.
+
+   У экрана один хозяин: rc-interior.css анкету больше не красит,
+   иначе два файла спорят и фаска пропадает. */
 #contact .form-card {
   position: relative;
-  border-radius: 18px;
-  background:
-    linear-gradient(158deg, rgba(9,19,32,.86), rgba(5,12,21,.92));
-  border: 1px solid rgba(66,178,220,.28);
+  border-radius: var(--r-lg);
   color: var(--tx);
+  /* Стекло экрана: тот же состав, что у приборных плит рубки */
+  background:
+    linear-gradient(158deg,
+      rgba(var(--int-panel-rgb, 20,40,61), .90),
+      rgba(var(--int-hull-rgb, 10,21,36), .95));
+  border: 1px solid rgba(var(--int-cyan-rgb, 66,178,220), .32);
+  /* Живого размытия здесь нет намеренно: за экраном не страница, а
+     наша же сцена, свет которой мы задаём сами; backdrop-filter к
+     тому же схлопывает слои внутри карточки в плоскость. */
+  backdrop-filter: none; -webkit-backdrop-filter: none;
   box-shadow:
-    /* фаска корпуса вокруг экрана */
-    0 0 0 10px rgba(9,19,32,.92),
-    0 0 0 11px rgba(226,232,240,.06),
-    0 0 0 22px rgba(9,19,32,.78),
-    /* свечение самого экрана */
-    inset 0 1px 0 rgba(226,232,240,.14),
-    inset 0 0 60px -28px rgba(66,178,220,.75),
-    0 40px 80px -40px rgba(0,0,0,.95),
-    0 0 70px -30px rgba(66,178,220,.5);
+    /* фаска: блик по срезу стекла, ступень корпуса, внешний паз */
+    0 0 0 1px rgba(var(--int-lit-rgb, 207,233,245), .08),
+    0 0 0 9px rgba(var(--int-hull-rgb, 10,21,36), .96),
+    0 0 0 10px rgba(var(--int-lit-rgb, 207,233,245), .07),
+    /* свечение стекла: разгорается по мере подъезда камеры к панели,
+       долю подъезда даёт rc-interior.js в --int-con */
+    inset 0 1px 0 rgba(var(--int-lit-rgb, 207,233,245), .16),
+    inset 0 -34px 50px -44px rgba(var(--int-cyan-rgb, 66,178,220), .95),
+    inset 0 0 78px -32px rgba(var(--int-cyan-rgb, 66,178,220), calc(.34 + var(--int-con, 0) * .46)),
+    0 34px 74px -40px rgba(0,0,0,.95);
 }
+
+/* Корпус прибора вокруг экрана: плита, строка состояния сверху и
+   подсветка снизу - тот самый свет, который в рубке идёт от
+   светового ребра приборной стойки. Плита лежит ЗА стеклом
+   (z-index -1), поэтому не закрывает ни поля, ни текст. */
+#contact .form-card::before {
+  content: ''; position: absolute; z-index: -1;
+  inset: -24px -24px -38px -24px;
+  border-radius: calc(var(--r-lg) + 15px);
+  pointer-events: none;
+  background:
+    /* три диода состояния на верхней кромке корпуса */
+    radial-gradient(circle at 30px 12px, rgba(var(--int-cyan-rgb, 66,178,220), .95) 2.2px, transparent 2.7px),
+    radial-gradient(circle at 48px 12px, rgba(var(--int-vio-rgb, 138,89,246), .9) 2.2px, transparent 2.7px),
+    radial-gradient(circle at 66px 12px, rgba(var(--int-lit-rgb, 207,233,245), .8) 2.2px, transparent 2.7px),
+    /* свет от панели снизу */
+    radial-gradient(ellipse 64% 30% at 50% 100%,
+      rgba(var(--int-cyan-rgb, 66,178,220), calc(.14 + var(--int-con, 0) * .28)) 0%, transparent 74%),
+    /* сама плита корпуса */
+    linear-gradient(180deg,
+      rgba(var(--int-hull-rgb, 10,21,36), .88),
+      rgba(var(--int-deep-rgb, 5,12,21), .95));
+  box-shadow:
+    inset 0 1px 0 rgba(var(--int-lit-rgb, 207,233,245), .09),
+    inset 0 -1px 0 rgba(0,0,0,.75),
+    0 44px 84px -46px rgba(0,0,0,.92);
+  /* Едва заметная перспектива: плита отклонена, как приборная
+     панель под наклоном. Полтора градуса - ровно столько, чтобы
+     глаз прочитал наклон и при этом не увидел искажения текста
+     (текста на плите и нет, она лежит за стеклом). */
+  transform: perspective(1200px) rotateX(1.5deg);
+  transform-origin: 50% 100%;
+}
+
 /* Блик по стеклу экрана: идёт наискось и оживает при наведении */
 #contact .form-card::after {
   content: ''; position: absolute; inset: 0; border-radius: inherit;
-  background: linear-gradient(112deg, transparent 38%,
-              rgba(207,233,245,.07) 48%, transparent 58%);
-  opacity: .8; pointer-events: none;
-  transform: translateX(calc(var(--screen-sheen, 0) * 12%));
+  pointer-events: none;
+  background:
+    linear-gradient(112deg, transparent 36%,
+      rgba(var(--int-lit-rgb, 207,233,245), .075) 47%, transparent 58%),
+    linear-gradient(180deg, rgba(var(--int-lit-rgb, 207,233,245), .06), transparent 24%);
+  opacity: .9;
+  transform: translateX(calc(var(--screen-sheen, 0) * 8%));
   transition: transform .8s var(--ease);
 }
 #contact .form-card:hover::after { --screen-sheen: 1; }
 
-/* Строка состояния экрана: три диода и подпись, как на приборе */
-#contact .form-card::before {
-  content: ''; position: absolute; left: 18px; top: -30px;
-  width: 46px; height: 6px; border-radius: 3px;
-  background:
-    radial-gradient(circle at 5px 3px, var(--cyan) 2.2px, transparent 2.6px),
-    radial-gradient(circle at 23px 3px, rgba(138,89,246,.9) 2.2px, transparent 2.6px),
-    radial-gradient(circle at 41px 3px, rgba(226,232,240,.75) 2.2px, transparent 2.6px);
-  opacity: .9; pointer-events: none;
-  animation: rcScreenBlink 4.5s ease-in-out infinite;
+/* Поля - утопленные пазы в плите, а не наклейки поверх неё */
+#contact .form-card .field input,
+#contact .form-card .field textarea,
+#contact .form-card .field select {
+  background: rgba(var(--int-deep-rgb, 5,12,21), .68);
+  border-color: rgba(var(--int-cyan-rgb, 66,178,220), .2);
+  box-shadow:
+    inset 0 1px 3px rgba(0,0,0,.55),
+    inset 0 -1px 0 rgba(var(--int-lit-rgb, 207,233,245), .05);
 }
-@keyframes rcScreenBlink {
-  0%, 100% { opacity: .55 }
-  40%      { opacity: 1 }
+#contact .form-card .field input:hover,
+#contact .form-card .field textarea:hover,
+#contact .form-card .field select:hover {
+  border-color: rgba(var(--int-cyan-rgb, 66,178,220), .5);
+}
+/* Фокус видно всегда: кольцо остаётся, оно же и по доступности */
+#contact .form-card .field input:focus,
+#contact .form-card .field textarea:focus,
+#contact .form-card .field select:focus {
+  border-color: rgba(var(--int-cyan-rgb, 66,178,220), .8);
+  box-shadow:
+    inset 0 1px 3px rgba(0,0,0,.5),
+    0 0 0 3px rgba(var(--int-cyan-rgb, 66,178,220), .2);
 }
 
 /* Экран включается по мере подхода: пока панель далеко, стекло
-   тёмное, вблизи разгорается. Значение приходит из rc-console.js. */
-#contact .form-card { --screen-on: 0; }
+   тёмное, вблизи разгорается. Класс ставит rc-console.js. */
 html.rc-console-near #contact .form-card {
-  border-color: rgba(66,178,220,.45);
+  border-color: rgba(var(--int-cyan-rgb, 66,178,220), .46);
 }
 
+/* Пока человек печатает, стекло становится плотнее: читаемость
+   важнее прозрачности. Корпус и фаска остаются на месте - прибор
+   не должен на глазах превращаться в обычную карточку, именно из-за
+   этого анкета и читалась «стеклянной карточкой поверх фото». */
+html.rc-form-active #contact .form-card {
+  background:
+    linear-gradient(158deg,
+      rgba(var(--int-panel-rgb, 20,40,61), .985),
+      rgba(var(--int-hull-rgb, 10,21,36), .99));
+}
+html.rc-form-active #contact .form-card::after { opacity: .4; transition: none; }
+
 /* ── Светлая тема ────────────────────────────────────────────
-   Панель снята в тёмной рубке, и на белой странице она спорит со
-   всем сразу: тёмный текст на тёмных приборах не читается. Поэтому
-   в светлой теме пульт уходит в лёгкий отпечаток под белой вуалью,
-   а экран формы остаётся светлым - как и вся страница. */
+   На белой странице тёмный пульт спорит со всем сразу. Экран и его
+   корпус светлеют, но остаются тем же прибором: та же фаска, тот же
+   наклон плиты, тот же нижний свет - только в бумажных тонах. */
 html[data-theme="light"] .rc-console { opacity: .34; }
 html[data-theme="light"] .rc-console::after {
   background:
     radial-gradient(ellipse 52% 74% at 24% 52%, rgba(255,255,255,.94) 0%, rgba(255,255,255,.72) 48%, rgba(255,255,255,.42) 78%),
     linear-gradient(180deg, rgba(255,255,255,.8), rgba(255,255,255,.35) 30%, rgba(255,255,255,.35) 70%, rgba(255,255,255,.8));
 }
-html[data-theme="light"] #contact .form-card {
-  background: linear-gradient(158deg, rgba(255,255,255,.97), rgba(240,246,252,.99));
-  border-color: rgba(10,88,151,.28);
-  box-shadow:
-    0 0 0 10px rgba(255,255,255,.92),
-    0 0 0 11px rgba(10,88,151,.10),
-    0 0 0 22px rgba(233,241,248,.85),
-    inset 0 1px 0 rgba(255,255,255,.9),
-    inset 0 0 60px -30px rgba(10,88,151,.35),
-    0 40px 80px -46px rgba(9,19,32,.45);
+html[data-theme="light"].rc-inside #contact::before {
+  background:
+    radial-gradient(ellipse 44% 60% at 20% 46%, rgba(255,255,255,.95) 0%, rgba(255,255,255,.74) 50%, rgba(255,255,255,.4) 78%),
+    linear-gradient(180deg, rgba(255,255,255,.86) 0%, rgba(255,255,255,.5) 18%, rgba(255,255,255,.5) 72%, rgba(255,255,255,.9) 100%);
 }
-html[data-theme="light"] #contact .form-card::after {
-  background: linear-gradient(112deg, transparent 38%, rgba(10,88,151,.05) 48%, transparent 58%);
+html[data-theme="light"] #contact .form-card {
+  background: linear-gradient(158deg, rgba(255,255,255,.98), rgba(240,246,252,.99));
+  border-color: rgba(10,88,151,.3);
+  box-shadow:
+    0 0 0 1px rgba(255,255,255,.9),
+    0 0 0 9px rgba(233,241,248,.96),
+    0 0 0 10px rgba(10,88,151,.12),
+    inset 0 1px 0 rgba(255,255,255,.95),
+    inset 0 -34px 50px -46px rgba(10,88,151,.5),
+    inset 0 0 70px -34px rgba(10,88,151, calc(.2 + var(--int-con, 0) * .26)),
+    0 34px 74px -44px rgba(9,19,32,.45);
 }
 html[data-theme="light"] #contact .form-card::before {
   background:
-    radial-gradient(circle at 5px 3px, #0A5897 2.2px, transparent 2.6px),
-    radial-gradient(circle at 23px 3px, rgba(122,72,224,.9) 2.2px, transparent 2.6px),
-    radial-gradient(circle at 41px 3px, rgba(9,19,32,.55) 2.2px, transparent 2.6px);
+    radial-gradient(circle at 30px 12px, #0A5897 2.2px, transparent 2.7px),
+    radial-gradient(circle at 48px 12px, rgba(122,72,224,.9) 2.2px, transparent 2.7px),
+    radial-gradient(circle at 66px 12px, rgba(9,19,32,.5) 2.2px, transparent 2.7px),
+    radial-gradient(ellipse 64% 30% at 50% 100%, rgba(10,88,151, calc(.1 + var(--int-con, 0) * .16)) 0%, transparent 74%),
+    linear-gradient(180deg, rgba(233,241,248,.96), rgba(214,228,242,.98));
+  box-shadow:
+    inset 0 1px 0 rgba(255,255,255,.9),
+    inset 0 -1px 0 rgba(10,88,151,.14),
+    0 44px 84px -50px rgba(9,19,32,.4);
+}
+html[data-theme="light"] #contact .form-card::after {
+  background: linear-gradient(112deg, transparent 36%, rgba(10,88,151,.05) 47%, transparent 58%);
+}
+html[data-theme="light"] #contact .form-card .field input,
+html[data-theme="light"] #contact .form-card .field textarea,
+html[data-theme="light"] #contact .form-card .field select {
+  background: #fff;
+  border-color: rgba(10,88,151,.2);
+  box-shadow: inset 0 1px 2px rgba(9,19,32,.09);
+}
+html[data-theme="light"].rc-form-active #contact .form-card {
+  background: linear-gradient(158deg, #FFFFFF, #F4F8FC);
 }
 
 /* Успех отправки читается как ответ прибора, а не как всплывашка */
@@ -192,17 +341,32 @@ html[data-theme="light"] #contact .form-card::before {
 }
 
 @media (max-width: 760px) {
+  /* Корпус ужимаем: на узком экране широкая плита съедает поля */
   #contact .form-card {
     box-shadow:
-      0 0 0 6px rgba(9,19,32,.92),
-      0 0 0 7px rgba(226,232,240,.05),
-      inset 0 1px 0 rgba(226,232,240,.12),
-      inset 0 0 40px -22px rgba(66,178,220,.7),
-      0 24px 50px -30px rgba(0,0,0,.95);
+      0 0 0 1px rgba(var(--int-lit-rgb, 207,233,245), .07),
+      0 0 0 6px rgba(var(--int-hull-rgb, 10,21,36), .96),
+      0 0 0 7px rgba(var(--int-lit-rgb, 207,233,245), .06),
+      inset 0 1px 0 rgba(var(--int-lit-rgb, 207,233,245), .14),
+      inset 0 -26px 40px -38px rgba(var(--int-cyan-rgb, 66,178,220), .9),
+      inset 0 0 54px -26px rgba(var(--int-cyan-rgb, 66,178,220), calc(.3 + var(--int-con, 0) * .4)),
+      0 24px 50px -32px rgba(0,0,0,.95);
   }
-  #contact .form-card::before { left: 12px; top: -22px; }
+  #contact .form-card::before {
+    inset: -15px -15px -26px -15px;
+    border-radius: calc(var(--r-lg) + 10px);
+  }
+  html[data-theme="light"] #contact .form-card {
+    box-shadow:
+      0 0 0 1px rgba(255,255,255,.9),
+      0 0 0 6px rgba(233,241,248,.96),
+      0 0 0 7px rgba(10,88,151,.12),
+      inset 0 1px 0 rgba(255,255,255,.95),
+      inset 0 -26px 40px -40px rgba(10,88,151,.45),
+      0 24px 50px -34px rgba(9,19,32,.4);
+  }
 }
 @media (prefers-reduced-motion: reduce) {
-  #contact .form-card::before { animation: none; }
   #contact .form-card::after { transition: none; }
+  #contact .form-card::before { transform: none; }
 }
