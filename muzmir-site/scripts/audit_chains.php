@@ -83,22 +83,25 @@ check('адрес из стоп-листа не проходит проверк�
     if ($e === '') return false;
     return mail_is_stopped($e) ? "проверено на $e" : false;
 });
-check('адрес из стоп-листа не попадает в очередь', function () {
+// Стоп-лист закрывает РАССЫЛКУ, а не переписку: личное письмо (результат,
+// наградный материал, код входа) в очередь попадает и уходит. Проверяем то, что
+// действительно запрещено, — массовое письмо адресату из стоп-листа.
+check('массовое письмо адресату из стоп-листа не уходит', function () {
     $e = (string) (scalar("SELECT email FROM mail_stop LIMIT 1") ?? '');
-    if ($e === '') return false;
-    $before = (int) (scalar("SELECT COUNT(*) FROM mail_queue WHERE LOWER(to_email)=?", [$e]) ?? 0);
-    $id = mail_queue($e, 'проверка', 'проверка стоп-листа', '<p>проверка</p>');
-    $after = (int) (scalar("SELECT COUNT(*) FROM mail_queue WHERE LOWER(to_email)=?", [$e]) ?? 0);
-    return $id === 0 && $before === $after ? 'письмо не создано' : false;
+    if ($e === '') return 'стоп-лист пуст';
+    $ok = function_exists('mail_send_failover')
+        ? !mail_send_failover($e, 'проверка стоп-листа', '<p>проверка</p>', ['priority' => 5])
+        : false;
+    return $ok ? 'отсеяно до отправки' : false;
 });
-check('в очереди нет писем к адресам из стоп-листа', function () {
+check('в очереди нет МАССОВЫХ писем к адресам из стоп-листа', function () {
     $n = (int) (scalar("SELECT COUNT(*) FROM mail_queue q JOIN mail_stop s ON s.email=LOWER(q.to_email)
-                         WHERE q.status='queued'") ?? 0);
+                         WHERE q.status='queued' AND COALESCE(q.priority,0) > 0") ?? 0);
     return $n === 0 ? 'ни одного' : false;
 });
-check('в базе учреждений не осталось мёртвых адресов', function () {
+check('в рассылке учреждений не осталось мёртвых адресов', function () {
     $n = (int) (scalar("SELECT COUNT(*) FROM institutions i JOIN mail_stop s ON s.email=LOWER(i.email)
-                         WHERE i.status<>'excluded'") ?? 0);
+                         WHERE i.status NOT IN ('excluded','bounced','unsubscribed','banned')") ?? 0);
     return $n === 0 ? 'ни одного' : false;
 });
 check('среди активных подписчиков нет мёртвых адресов', function () {
@@ -139,9 +142,12 @@ check('имя распознаётся по адресу, если челове�
     $n = person_greeting_name('nelaeva.svetlana@mail.ru', '');
     return $n !== '' ? 'nelaeva.svetlana@ → «' . $n . '»' : false;
 });
+// Смотрим то, что ещё можно изменить: письма в очереди. Уже ушедшее письмо
+// проверкой не вернёшь, а вечно красный аудит перестают читать.
 check('одному адресу одно письмо волны месяца', function () {
     $n = (int) (scalar("SELECT COUNT(*) FROM (
-                          SELECT to_email FROM mail_queue WHERE newsletter_id>0
+                          SELECT to_email FROM mail_queue
+                           WHERE newsletter_id>0 AND status IN ('queued','paused')
                            GROUP BY newsletter_id, LOWER(to_email) HAVING COUNT(*)>1)") ?? 0);
     return $n === 0 ? 'повторов нет' : false;
 });

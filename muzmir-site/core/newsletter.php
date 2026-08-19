@@ -519,6 +519,28 @@ function nl_daily_split(): array {
     // выборка идёт ТОЛЬКО по типам из nl_campaign_types().
     $out['teacher'] = max(0, (int) setting('nl_split_teacher', '300'));
 
+    // НЕВЫБРАННАЯ ДОЛЯ ПЕРЕХОДИТ СОСЕДНЕЙ ВОЛНЕ.
+    //
+    // Списки разного размера: участников восемь тысяч, учреждений почти сорок.
+    // Своя база проходится за два дня, и дальше её половина суточной нормы просто
+    // сгорала бы каждый день, пока волна учреждений идёт лишний месяц. Считаем по
+    // очереди: если писем волны меньше, чем её доля, остаток отдаём той волне,
+    // которой ещё есть что отправлять. Общий потолок не растёт.
+    try {
+        $left = [];
+        foreach (['konkurs', 'inst'] as $k) {
+            $left[$k] = (int) (scalar("SELECT COUNT(*) FROM mail_queue
+                                        WHERE status = 'queued' AND campaign_type = ?", [$k]) ?? 0);
+        }
+        foreach (['konkurs' => 'inst', 'inst' => 'konkurs'] as $from => $to) {
+            if ($left[$from] < $out[$from] && $left[$to] > $out[$to]) {
+                $give = $out[$from] - $left[$from];
+                $out[$from] -= $give;
+                $out[$to]   += $give;
+            }
+        }
+    } catch (\Throwable $e) { /* делим поровну, как задано долями */ }
+
     return $out;
 }
 
