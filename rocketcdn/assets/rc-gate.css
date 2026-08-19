@@ -136,7 +136,13 @@
 @media (prefers-reduced-motion: reduce) {
   .rc-gate-card { transform: none; transition: opacity .2s linear; }
 }
-html[data-degrade="3"] .rc-gate { display: none; }
+/* Экраны в проёме - часть сценария входа, а не украшение, поэтому
+   на ступенях деградации они остаются. Дешевле их делает не
+   исчезновение, а отсутствие анимаций. */
+html[data-degrade="3"] .rc-gate-card {
+  transition: none;
+  box-shadow: 0 0 18px -8px rgba(var(--int-cyan-rgb, 66,178,220), .5);
+}
 
 /* Экраны проёма живут ровно один эпизод - пока мы входим в люк.
    Внутри корабля и в финале у них нет права появляться: те же два

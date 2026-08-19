@@ -154,8 +154,8 @@ function power() {
      оборот по салону и своё кольцо карточек на fixed. Мир молчит */
   if (root.classList.contains("rc-inside")) return 0;
   var deg = parseInt(root.getAttribute("data-degrade") || "0", 10) || 0;
-  if (deg >= 3) return 0;
-  if (deg >= 2) return 0.45;
+  if (deg >= 3) return 0.3;
+  if (deg >= 2) return 0.55;
   if (root.classList.contains("rc-fast")) return 0.6;
   return 1;
 }
@@ -327,8 +327,10 @@ doc.addEventListener("click", function (e) {
 });
 
 function boot() {
+  /* Мир держится на любой ступени: его ход - это и есть сценарий, а
+     не эффект поверх страницы. Стоимость снимаем силой хода (см.
+     power), а не выключением камеры целиком. */
   if (reduced || root.classList.contains("rc-reduced")) return;
-  if (root.getAttribute("data-degrade") === "3") return;
   seed();
   if (!stage) return;
   root.classList.add("w3-on");

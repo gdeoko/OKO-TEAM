@@ -13,6 +13,16 @@
   position: fixed; inset: 0; z-index: 2;
   pointer-events: none;
   opacity: var(--cab-k, 0);
+  /* Кадр кабины крупнее экрана и обрезан по краям. Там, где картинка
+     не достаёт (высокий экран телефона), должен быть не чёрный
+     провал, а та же глубина корабля - иначе сверху и снизу видны
+     пустые полосы, будто кадр не догрузился. */
+  background:
+    linear-gradient(180deg,
+      rgba(var(--int-deep-rgb, 5,12,21), .96) 0%,
+      rgba(var(--int-hull-rgb, 10,21,36), .55) 22%,
+      rgba(var(--int-hull-rgb, 10,21,36), .55) 76%,
+      rgba(var(--int-deep-rgb, 5,12,21), .98) 100%);
   /* Панель - предмет обстановки рубки, а не рамка поверх кадра.
      Пока идёт оборот, она стоит в своём углу: сдвинута вбок,
      повёрнута вполоборота и мельче. Числа считает rc-cockpit.js по
@@ -145,8 +155,13 @@ html.rc-cab-on #epilogue .epi-in {
   transform: translateY(calc((var(--cab-y0, 12%) + var(--cab-y1, 78%)) / 2 - 50%));
 }
 
-/* Третья ступень деградации и просьба меньше движения: кабины нет */
-html[data-degrade="3"] .rc-cockpit { display: none; }
+/* Кабину не убираем ни на одной ступени деградации. Это правило
+   стоило владельцу целого финала: на его телефоне ступень доходила
+   до третьей, слой пропадал, и последний кадр фильма превращался в
+   чёрный экран. Сцена - это содержание, а не украшение; экономить
+   на ней нельзя, экономим на том, как она посчитана. */
+html[data-degrade="3"] .rc-cockpit .cab-void,
+html[data-degrade="3"] .rc-cockpit .cab-beam { display: none; }
 @media (prefers-reduced-motion: reduce) {
   .rc-cockpit { transform: none; }
 }
@@ -203,8 +218,12 @@ html[data-act="egress"] #contact .sec-head {
   position: relative;
   padding: clamp(20px, 4vh, 42px) clamp(18px, 4vw, 46px);
   border-radius: 14px;
-  /* Проступает по мере отъезда: пока камера у пульта, надписи нет */
-  --epi-k: clamp(0, calc((var(--int-out, 0) - 0.28) / 0.42), 1);
+  /* Проступает по мере отъезда: пока камера у пульта, надписи нет.
+     Разгорается быстро - к середине отъезда титр уже читается
+     целиком. Растянутое проявление выглядело не «голограммой», а
+     недогруженным текстом: половину кадра человек видел бледные
+     буквы и не понимал, дефект это или задумка. */
+  --epi-k: clamp(0, calc((var(--int-out, 0) - 0.22) / 0.24), 1);
 }
 html.rc-cab-on .epi-holo::before {
   content: '';
@@ -248,8 +267,32 @@ html.rc-cab-on .epi-holo .epi-btn {
   opacity: var(--epi-k, 1);
   transition: opacity .5s linear;
 }
+/* Титр стоит на звёздном небе, а звёзды - это рассыпанные светлые
+   точки прямо под буквами. Без плотной подложки и тени текст на них
+   рябит и читается тускло, особенно на телефоне, где кегль меньше. */
 html.rc-cab-on .epi-holo .sec-h {
-  text-shadow: 0 0 26px rgba(var(--int-cyan-rgb, 66,178,220), .55);
+  color: rgba(var(--int-lit-rgb, 234,246,252), 1);
+  text-shadow:
+    0 2px 10px rgba(0,0,0,.85),
+    0 0 26px rgba(var(--int-cyan-rgb, 66,178,220), .55);
+}
+html.rc-cab-on .epi-holo .sec-p {
+  color: rgba(var(--int-lit-rgb, 207,233,245), .92);
+  text-shadow: 0 1px 8px rgba(0,0,0,.8);
+}
+html.rc-cab-on .epi-holo .sec-tag {
+  text-shadow: 0 1px 8px rgba(0,0,0,.8);
+}
+/* Подложка титра плотнее: это экран на стекле, сквозь него не
+   должно просвечивать звёздное поле целиком */
+html.rc-cab-on .epi-holo::before {
+  background:
+    repeating-linear-gradient(180deg,
+      rgba(var(--int-cyan-rgb, 66,178,220), .06) 0 2px,
+      transparent 2px 4px),
+    linear-gradient(180deg,
+      rgba(var(--int-deep-rgb, 5,12,21), .72),
+      rgba(var(--int-deep-rgb, 5,12,21), .84));
 }
 /* В остеклении места меньше, чем на полной ширине страницы, и
    надпись кнопки ломалась на две строки. Держим её в одну: это
@@ -272,10 +315,31 @@ html.rc-cab-on .cin-ring > .cin-item { width: min(430px, 62vw); }
   html.rc-cab-on .cin-ring > .cin-item { width: min(66vw, 290px); }
 }
 
-/* Липкая панель заявки уходит из финального кадра. Она полезна всю
-   страницу, но в последнем кадре фильма перекрывает ровно то, ради
-   чего он снят - приборную панель корабля, - и спорит с кнопкой
-   старта. Заявку человек уже оставил экраном выше, на пульте. */
+/* Заголовок раздела внутри корабля - это надпись в рубке, а не
+   плашка над кадром. В самом верху экрана он ложился на тёмный
+   потолок и читался отдельной чёрной полосой поверх сцены; опускаем
+   его к линии экранов, где он становится частью помещения, и даём
+   ту же тень, что у голограмм, чтобы он не спорил с фоном. */
+html.rc-inside #reliability .sec-head,
+html.rc-inside #faq .sec-head {
+  transform: translateY(clamp(6vh, 12vh, 16vh));
+  transition: transform .6s var(--ease, ease);
+}
+html.rc-inside #reliability .sec-head .sec-h,
+html.rc-inside #faq .sec-head .sec-h {
+  text-shadow: 0 2px 12px rgba(0,0,0,.8), 0 0 30px rgba(var(--int-cyan-rgb, 66,178,220), .4);
+}
+html.rc-inside #reliability .sec-head .sec-p,
+html.rc-inside #faq .sec-head .sec-p {
+  text-shadow: 0 1px 8px rgba(0,0,0,.75);
+}
+
+/* Липкая панель заявки уходит из кадра на всё время внутри корабля.
+   Она полезна на странице, но в рубке перекрывает нижнюю треть
+   сцены - пол, пульт и приборы, - то есть ровно то, ради чего сцена
+   и снята. Заявку человек оставит на пульте, к которому мы его и
+   ведём. */
+html.rc-inside .mcta,
 html[data-act="egress"] .mcta {
   opacity: 0;
   pointer-events: none;

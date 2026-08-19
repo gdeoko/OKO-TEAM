@@ -90,7 +90,6 @@ function src() {
    рамку человек унесёт с собой в игру. */
 function want() {
   if (root.classList.contains("rc-flying")) return 0;   /* в игре кабина своя */
-  if (root.getAttribute("data-degrade") === "3") return 0;
   var sc = g.RC_SCENE;
   var a = sc && sc.act;
   if (a === "cabin" || a === "manual") return 1;        /* стоит в своём углу */
@@ -215,8 +214,11 @@ function frame() {
 }
 
 function boot() {
+  /* Просьба меньше движения - единственная причина не поднимать
+     кабину вовсе. Ступень деградации такой причиной больше не
+     является: на телефоне владельца она доходила до третьей, слой не
+     строился, и финал фильма превращался в пустой экран. */
   if (reduced || root.classList.contains("rc-reduced")) return;
-  if (root.getAttribute("data-degrade") === "3") return;
   src();
   if (!raf) raf = requestAnimationFrame(frame);
 }

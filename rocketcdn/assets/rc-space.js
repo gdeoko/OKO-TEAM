@@ -361,6 +361,8 @@ Space.prototype.setTheme = function (v) {
 
 Space.prototype.resize = function () {
   var w = innerWidth, h = innerHeight;
+  /* Размер кадра изменился - выпеченную дымку надо сложить заново */
+  this.haze = null;
   var dpr = Math.min(g.devicePixelRatio || 1, w < 760 ? 1.5 : 2);
   this.cv.width = Math.round(w * dpr);
   this.cv.height = Math.round(h * dpr);
@@ -368,6 +370,50 @@ Space.prototype.resize = function () {
   this.cv.style.height = h + "px";
   this.x.setTransform(dpr, 0, 0, dpr, 0, 0);
   this.w = w; this.h = h;
+};
+
+
+/* Выпечка ближней дымки. Слой вдвое меньше кадра: пятна мягкие, и
+   разницы на глаз нет, а пикселей вчетверо меньше. */
+Space.prototype.bakeHaze = function (p, warm, dim, light) {
+  var w = this.w, h = this.h;
+  var cw = Math.max(2, Math.round(w / 2)), ch = Math.max(2, Math.round(h / 2));
+  if (!this.haze) { this.haze = document.createElement("canvas"); }
+  if (this.haze.width !== cw || this.haze.height !== ch) {
+    this.haze.width = cw; this.haze.height = ch;
+  }
+  var c = this.haze.getContext("2d");
+  c.clearRect(0, 0, cw, ch);
+  var mx = Math.max(cw, ch);
+
+  var g1 = c.createRadialGradient(cw * (0.18 + p * 0.2), ch * (0.18 + p * 0.1), 0,
+                                  cw * (0.18 + p * 0.2), ch * (0.18 + p * 0.1), mx * 0.62);
+  var a1 = (light ? 0.08 : 0.15) * dim;
+  g1.addColorStop(0, "rgba(66,178,220," + (a1 * (1 - p * 0.35)).toFixed(3) + ")");
+  g1.addColorStop(1, "rgba(66,178,220,0)");
+  c.fillStyle = g1;
+  c.fillRect(0, 0, cw, ch);
+
+  var g2 = c.createRadialGradient(cw * (0.88 - p * 0.25), ch * (0.72 - p * 0.3), 0,
+                                  cw * (0.88 - p * 0.25), ch * (0.72 - p * 0.3), mx * 0.55);
+  var a2 = (light ? 0.055 : 0.12) * dim;
+  g2.addColorStop(0, "rgba(138,89,246," + (a2 * (0.5 + p * 0.5)).toFixed(3) + ")");
+  g2.addColorStop(1, "rgba(138,89,246,0)");
+  c.fillStyle = g2;
+  c.fillRect(0, 0, cw, ch);
+
+  /* Зарево акта: на старте и на входе в атмосферу снизу поднимается
+     тёплый свет, в космосе его нет вовсе. */
+  if (warm > 0.02) {
+    var gw = c.createRadialGradient(cw * 0.5, ch * 1.02, 0, cw * 0.5, ch * 1.02, mx * 0.85);
+    gw.addColorStop(0, "rgba(255,150,60," + (warm * (light ? 0.10 : 0.17) * dim).toFixed(3) + ")");
+    gw.addColorStop(0.45, "rgba(255,110,40," + (warm * 0.05 * dim).toFixed(3) + ")");
+    gw.addColorStop(1, "rgba(255,90,30,0)");
+    c.fillStyle = gw;
+    c.fillRect(0, 0, cw, ch);
+  }
+
+  this.hazeP = p; this.hazeW = warm; this.hazeD = dim; this.hazeLight = light;
 };
 
 Space.prototype.frame = function (dt) {
@@ -410,35 +456,26 @@ Space.prototype.frame = function (dt) {
     x.globalAlpha = 1;
   }
 
-  /* Ближняя дымка: два мягких пятна, расходятся к середине пути.
-     Она поверх запечённого слоя и живая - тянется за прокруткой. */
-  var g1 = x.createRadialGradient(w * (0.18 + p * 0.2), h * (0.18 + p * 0.1), 0,
-                                  w * (0.18 + p * 0.2), h * (0.18 + p * 0.1), Math.max(w, h) * 0.62);
-  var a1 = (light ? 0.08 : 0.15) * dim;
-  g1.addColorStop(0, "rgba(66,178,220," + (a1 * (1 - p * 0.35)).toFixed(3) + ")");
-  g1.addColorStop(1, "rgba(66,178,220,0)");
-  x.fillStyle = g1;
-  x.fillRect(0, 0, w, h);
+  /* Ближняя дымка, зарево акта и их движение по странице.
 
-  var g2 = x.createRadialGradient(w * (0.88 - p * 0.25), h * (0.72 - p * 0.3), 0,
-                                  w * (0.88 - p * 0.25), h * (0.72 - p * 0.3), Math.max(w, h) * 0.55);
-  var a2 = (light ? 0.055 : 0.12) * dim;
-  g2.addColorStop(0, "rgba(138,89,246," + (a2 * (0.5 + p * 0.5)).toFixed(3) + ")");
-  g2.addColorStop(1, "rgba(138,89,246,0)");
-  x.fillStyle = g2;
-  x.fillRect(0, 0, w, h);
+     Раньше всё это рисовалось прямо в кадр: три полноэкранные
+     заливки градиентом плюс создание самих градиентов - и так
+     шестьдесят раз в секунду. На телефоне это была едва ли не самая
+     дорогая строка всего фона.
 
-  /* Зарево акта: на старте и на входе в атмосферу снизу поднимается
-     тёплый свет, в космосе его нет вовсе. Пятно одно и очень мягкое -
-     это отсвет на всём кадре, а не источник в кадре. */
-  if (warm > 0.02) {
-    var gw = x.createRadialGradient(w * 0.5, h * 1.02, 0, w * 0.5, h * 1.02, Math.max(w, h) * 0.85);
-    gw.addColorStop(0, "rgba(255,150,60," + (warm * (light ? 0.10 : 0.17) * dim).toFixed(3) + ")");
-    gw.addColorStop(0.45, "rgba(255,110,40," + (warm * 0.05 * dim).toFixed(3) + ")");
-    gw.addColorStop(1, "rgba(255,90,30,0)");
-    x.fillStyle = gw;
-    x.fillRect(0, 0, w, h);
-  }
+     Вид остался ровно тот же, изменился способ: дымка живёт в своём
+     слое половинного разрешения и перерисовывается только когда
+     действительно поменялась - при заметном сдвиге по странице, при
+     смене зарева или темы. Мягкому пятну половинного разрешения и
+     редких обновлений хватает с запасом: у него нет ни одной резкой
+     границы, на которой это было бы заметно. */
+  var need = !this.haze ||
+             Math.abs(p - this.hazeP) > 0.008 ||
+             Math.abs(warm - this.hazeW) > 0.02 ||
+             Math.abs(dim - this.hazeD) > 0.02 ||
+             this.hazeLight !== light;
+  if (need) this.bakeHaze(p, warm, dim, light);
+  if (this.haze) x.drawImage(this.haze, 0, 0, w, h);
 
   /* ── Звёзды ──
      Ближние слои сдвигаются сильнее: это и есть параллакс. */
