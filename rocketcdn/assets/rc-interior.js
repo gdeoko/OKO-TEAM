@@ -214,12 +214,13 @@ function yawAt(p) {
 var st = {
   built: false, shown: false, slot: false, dead: false,
   p: 0, yaw: 0, yawT: 0, yawOff: 0, pitch: 0, pitchT: 0, drift: 0,
-  dolly: 1.7, dollyT: 1.7, fov: 58, fovT: 58, stop: -1,
+  dolly: 1.7, dollyT: 1.7, fov: 58, fovT: 58, stop: -1, con: 0, conL: 0,
   sLock: false, sIn: false
 };
 
 var cv = null, rend = null, scene = null, cam = null, grp = null;
 var lamp = null, planet = null, halo = null, diodes = [], anchors = [], lock = null;
+var deskLight = null, winMesh = null;
 var raf = null, lastTs = 0;
 
 var phone = innerWidth < 760;
@@ -456,6 +457,7 @@ function build() {
   );
   win.position.set(0, 1.85, -2.45);
   grp.add(win);
+  winMesh = win;
 
   /* Фаска остекления: тонкая циановая рамка по контуру. Тот же
      приём, что у экрана анкеты в секции контактов - когда камера
@@ -523,15 +525,12 @@ function build() {
   riser.position.set(0, 0.44, -2.26);
   grp.add(riser);
 
-  /* Крылья пульта: только тонкие столешницы, без тумб. Они
-     дотягивают панель до бортов, поэтому у краёв кадра приборы, а
-     не обрыв, и при этом ничего не загораживают. */
-  for (i = -1; i <= 1; i += 2) {
-    var wing = new T.Mesh(new T.BoxGeometry(1.25, 0.1, 0.56), deskMat);
-    wing.position.set(i * 1.62, 1.0, -1.94);
-    wing.rotation.set(-0.2, i * 0.58, 0);
-    grp.add(wing);
-  }
+  /* Боковых тумб и крыльев здесь нарочно нет. Их пробовали дважды:
+     ноль градусов оборота - это как раз нос, поэтому всё, что
+     торчит вбок от пульта, попадает в кадр ещё в салоне, ловит
+     направленный свет из окна плашмя и превращается в светлые
+     клинья поперёк карточек надёжности. Борта кадра держат стены и
+     иллюминаторы рубки, им мебель для этого не нужна. */
 
   /* Световые полосы по переднему ребру пульта и по низу стойки.
      Это и есть тот нижний свет, который в секции контактов
@@ -572,10 +571,12 @@ function build() {
   fill.position.set(1.4, 1.4, 1.6);
   scene.add(fill);
   /* Свет пульта. Стоит низко, у самой стойки: это он ложится на
-     приборы снизу и тем же цветом подсвечивает экран анкеты. */
-  var glow = new T.PointLight(COL.cyan, 1.15, 6.5);
-  glow.position.set(0, 1.16, -1.75);
-  scene.add(glow);
+     приборы снизу и тем же цветом подсвечивает экран анкеты. По
+     мере подхода камеры разгорается (см. tick) - иначе последний
+     акт выходил заметно темнее салона и читался другим кадром. */
+  deskLight = new T.PointLight(COL.cyan, 1.15, 6.5);
+  deskLight.position.set(0, 1.16, -1.75);
+  scene.add(deskLight);
 
   st.built = true;
   try { dispatchEvent(new CustomEvent("rc:interior-ready")); } catch (e) {}
@@ -750,6 +751,7 @@ function setProgress(p) {
      поэтому экран анкеты разгорается ровно вместе с подъездом
      камеры: одно движение, а не два независимых. */
   var con = p > P_TURN ? Math.min(1, (p - P_TURN) / Math.max(1e-4, P_OUT - P_TURN)) : 0;
+  st.con = con;
   root.style.setProperty("--int-con", con.toFixed(3));
 
   if (!st.shown) return;
@@ -883,6 +885,16 @@ function tick(ts) {
   /* Камера едет по своей оси взгляда: в тамбуре она позади центра,
      внутри встаёт ровно в центр круга, у пульта подступает ближе. */
   cam.position.set(-Math.sin(st.yaw) * st.dolly, EYE, Math.cos(st.yaw) * st.dolly);
+
+  /* Свет пульта разгорается вместе с подходом камеры. Тем же числом
+     (--int-con) разгорается экран анкеты в CSS: свет в кадре и свет
+     под формой - это буквально один источник, поэтому секция
+     контактов не выпадает из рубки ни по яркости, ни по тону. */
+  if (Math.abs(st.conL - st.con) > 0.002) {
+    st.conL += (st.con - st.conL) * kY;
+    if (deskLight) deskLight.intensity = 1.15 + st.conL * 1.5;
+    if (winMesh) winMesh.material.opacity = 0.1 + st.conL * 0.1;
+  }
 
   if (Math.abs(st.fov - st.fovT) > 0.05) {
     st.fov += (st.fovT - st.fov) * 0.1;

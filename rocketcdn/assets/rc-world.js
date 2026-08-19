@@ -191,6 +191,16 @@ function frame() {
   var dx = Math.round(cam.pan * PAN_MAX * 4) / 4;
   var dy = Math.round(cam.tilt * TILT_MAX * 4) / 4;
 
+  /* Толчок от касания опор складываем с ходом камеры здесь: у кадра
+     один transform, и второе правило на тот же элемент просто
+     проиграло бы по специфичности. Значения публикует rc-rocket в
+     момент посадки и сам же гасит их за треть секунды. */
+  if (root.classList.contains("rc-quake")) {
+    var cs = root.style;
+    dx += parseFloat(cs.getPropertyValue("--rc-shake-x")) || 0;
+    dy += parseFloat(cs.getPropertyValue("--rc-shake-y")) || 0;
+  }
+
   /* Наезд: базовый запас закрывает края при панораме (сдвинутый
      кадр не имеет права оголить фон), сверх него - глубина акта */
   var need = 1 + Math.max(Math.abs(dx) * 2 / innerWidth, Math.abs(dy) * 2 / innerHeight);

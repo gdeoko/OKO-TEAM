@@ -377,10 +377,12 @@ function padTexture(weak) {
     a = (i / 3) * Math.PI * 2 + Math.PI / 3;
     var fx = m + Math.sin(a) * fr, fy = m + Math.cos(a) * fr;
     x.save();
-    x.translate(fx, fy); x.rotate(-a);
+    x.translate(fx, fy);
     x.strokeStyle = "rgba(232,176,48,.42)";
     x.lineWidth = S * 0.008;
     x.strokeRect(-R * 0.075, -R * 0.075, R * 0.15, R * 0.15);
+    x.fillStyle = "rgba(232,176,48,.10)";
+    x.fillRect(-R * 0.075, -R * 0.075, R * 0.15, R * 0.15);
     x.restore();
   }
   /* Пыль и мелкая крошка: ровный круг выглядит наклейкой */
@@ -1536,8 +1538,12 @@ Rocket.prototype.landing = function (p, dt, pos, tan) {
   this._padP.y += hov * hov * Math.sqrt(hov) * 4.2 * (this._sNow || 1);
   pos.lerp(this._padP, this.landK);
 
-  /* Нос разворачивается вверх: ракета встаёт на опоры */
-  tan.lerp(this._upVec || (this._upVec = new T.Vector3(0, 1, 0)), this.landK).normalize();
+  /* Нос разворачивается вверх: ракета встаёт на опоры. Выравнивание
+     идёт с опережением - к тормозному импульсу корабль обязан уже
+     стоять вертикально, иначе он тормозит боком, а это читается
+     падением, а не посадкой. */
+  tan.lerp(this._upVec || (this._upVec = new T.Vector3(0, 1, 0)),
+    Math.min(1, this.landK * 1.4)).normalize();
 
   /* Тяга гаснет, но факел не исчезает совсем: сопло остывает */
   this.power = Math.max(0.14, this.power * (1 - this.landK * 0.82));
@@ -1565,8 +1571,10 @@ Rocket.prototype.touchdown = function (dt) {
   gk = gk < 0 ? 0 : gk > 1 ? 1 : gk;
   this.gearK = gk * gk * (3 - 2 * gk);
 
-  /* Импульс: горб вокруг 0.74 доли, то есть за миг до касания */
-  var b = 1 - Math.abs(lk - 0.74) / 0.19;
+  /* Импульс: горб вокруг 0.78 доли, то есть за миг до касания. Пик
+     сдвинут туда, где корабль уже выровнялся: тормозить он обязан
+     соплом в грунт, а не боком по касательной */
+  var b = 1 - Math.abs(lk - 0.78) / 0.18;
   this._burn = b <= 0 ? 0 : b * b * (3 - 2 * b);
 
   /* Касание: удар, пыль из-под опор, дрожь кадра и тишина после */
