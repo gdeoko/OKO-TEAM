@@ -127,13 +127,20 @@ function measure() {
   PLAN.faq = (n + 0.5) * STEP;
   if (faq) {
     var fb = faq.getBoundingClientRect();
-    var fMid = ((fb.top + y) + (fb.bottom + y)) / 2 - innerHeight * 0.15;
-    KNOT.push([fMid / maxS, PLAN.faq]);
+    var fTop = fb.top + y, fBot = fb.bottom + y;
+    KNOT.push([(fTop + (fBot - fTop) * 0.35 - innerHeight * 0.15) / maxS, PLAN.faq]);
+    /* Круг обязан замкнуться ДО подхода к пульту: раньше последняя
+       четверть оборота доигрывалась уже в акте пульта, и два
+       движения накладывались друг на друга - зритель не получал ни
+       законченного оборота, ни спокойного подхода к панели. */
+    KNOT.push([(fBot - innerHeight * 0.55) / maxS, TAU]);
   }
 
   PLAN.con = TAU;
+  /* В акте пульта камера уже никуда не поворачивается: она только
+     подступает к панели (этим занимается dolly ниже) */
   KNOT.push([P_TURN, TAU]);
-  KNOT.push([P_OUT, TAU + 0.14]);
+  KNOT.push([P_OUT, TAU + 0.05]);
 
   /* Узлы обязаны идти строго по возрастанию: иначе на коротком
      блоке камера дёрнется назад посреди сектора. */

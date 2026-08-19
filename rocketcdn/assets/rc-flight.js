@@ -753,6 +753,117 @@ function paintRing() {
   return t;
 }
 
+/* ── Небо ────────────────────────────────────────────────────
+   Клиент просил детализированный и реалистичный космос. Картинка
+   панорамы даёт общий тон, но она одна на все вселенные и в ней нет
+   ни пылевых прожилок Млечного Пути, ни разницы в цвете звёзд.
+
+   Рисуем небо сами: полоса Галактики с рукавами и тёмными полосами
+   пыли (именно они делают её узнаваемой), шумовые скопления,
+   несколько тысяч звёзд по спектральным классам и мягкие
+   туманности. Всё на холсте, без единого запроса к сети - и
+   перекрашивается под вселенную одним множителем цвета. */
+function skyTexture(mob) {
+  /* Размер скромный: текстура натянута на сферу радиусом 4200, и в
+     кадр попадает малая её доля - каждый нарисованный пиксель на
+     экране растягивается в несколько. Крупная сетка тут не нужна,
+     нужна мягкость. */
+  var W = mob ? 1024 : 2048, H = W / 2;
+  var c = doc.createElement("canvas");
+  c.width = W; c.height = H;
+  var x = c.getContext("2d");
+
+  /* Своё зерно: небо обязано быть одинаковым от захода к заходу,
+     иначе созвездия перемешиваются при каждом открытии игры */
+  var seed = 20260819;
+  function rnd() {
+    seed = (seed * 1664525 + 1013904223) & 0x7fffffff;
+    return seed / 0x7fffffff;
+  }
+
+  x.fillStyle = "#02040a";
+  x.fillRect(0, 0, W, H);
+
+  /* Полоса Млечного Пути идёт наискось, как и в небе Земли.
+     Рисуем только дымку диска и пыль: сами звёзды в игре живут
+     точками (Points), у них честный параллакс, и дублировать их
+     в текстуре значит получить мутные пятна на пол-экрана. */
+  var midY = H * 0.52, tilt = H * 0.10;
+  function bandY(u) { return midY + Math.sin(u * Math.PI * 2) * tilt; }
+
+  var i, u, gr;
+  for (i = 0; i < (mob ? 900 : 1800); i++) {
+    u = rnd();
+    var px = u * W;
+    var py = bandY(u) + (rnd() - 0.5) * H * (0.07 + rnd() * 0.10);
+    var rr = 6 + rnd() * 26;
+    gr = x.createRadialGradient(px, py, 0, px, py, rr);
+    var warm = rnd();
+    var col = warm > 0.7 ? "255,238,208" : warm > 0.35 ? "206,222,246" : "168,196,238";
+    gr.addColorStop(0, "rgba(" + col + "," + (0.030 + rnd() * 0.045).toFixed(3) + ")");
+    gr.addColorStop(1, "rgba(" + col + ",0)");
+    x.fillStyle = gr;
+    x.beginPath(); x.arc(px, py, rr, 0, 6.283); x.fill();
+  }
+
+  /* Ядро галактики: сгущение к центру полосы */
+  var cx = W * 0.32, cy = bandY(0.32);
+  var core = x.createRadialGradient(cx, cy, 0, cx, cy, W * 0.09);
+  core.addColorStop(0, "rgba(255,236,200,.16)");
+  core.addColorStop(0.45, "rgba(232,214,186,.07)");
+  core.addColorStop(1, "rgba(200,190,180,0)");
+  x.fillStyle = core;
+  x.fillRect(0, 0, W, H);
+
+  /* Пылевые прожилки: тёмные рваные полосы вдоль диска. Без них
+     Млечный Путь выглядит светлой кляксой, а не галактикой */
+  for (i = 0; i < (mob ? 400 : 800); i++) {
+    u = rnd();
+    var dx = u * W;
+    var dy = bandY(u) + (rnd() - 0.5) * H * 0.08;
+    var dr = 5 + rnd() * 22;
+    gr = x.createRadialGradient(dx, dy, 0, dx, dy, dr);
+    gr.addColorStop(0, "rgba(2,4,10," + (0.10 + rnd() * 0.20).toFixed(3) + ")");
+    gr.addColorStop(1, "rgba(2,4,10,0)");
+    x.fillStyle = gr;
+    x.beginPath(); x.arc(dx, dy, dr, 0, 6.283); x.fill();
+  }
+
+  /* Мелкая звёздная пыль: точки в один пиксель. Они не читаются
+     отдельными звёздами, но дают диску зернистость, без которой он
+     выглядит нарисованным градиентом. */
+  var n = mob ? 6000 : 14000;
+  for (i = 0; i < n; i++) {
+    u = rnd();
+    var sx2 = u * W;
+    var sy2 = rnd() < 0.6 ? bandY(u) + (rnd() - 0.5) * H * 0.20 : rnd() * H;
+    var a = 0.10 + Math.pow(rnd(), 2.6) * 0.55;
+    x.fillStyle = "rgba(226,236,255," + a.toFixed(3) + ")";
+    x.fillRect(sx2, sy2, 1, 1);
+  }
+
+  /* Туманности в фирменных цветах: небо перекликается с сайтом */
+  var NEB = [[0.13, 0.30, "66,178,220"], [0.62, 0.68, "138,89,246"],
+             [0.82, 0.26, "66,178,220"], [0.44, 0.78, "196,120,255"]];
+  for (i = 0; i < NEB.length; i++) {
+    var nx = NEB[i][0] * W, ny = NEB[i][1] * H, nr = W * 0.05;
+    for (var q = 0; q < 90; q++) {
+      var ox = nx + (rnd() - 0.5) * nr * 2.0, oy = ny + (rnd() - 0.5) * nr * 1.4;
+      var orr = nr * (0.10 + rnd() * 0.30);
+      gr = x.createRadialGradient(ox, oy, 0, ox, oy, orr);
+      gr.addColorStop(0, "rgba(" + NEB[i][2] + "," + (0.014 + rnd() * 0.020).toFixed(3) + ")");
+      gr.addColorStop(1, "rgba(" + NEB[i][2] + ",0)");
+      x.fillStyle = gr;
+      x.beginPath(); x.arc(ox, oy, orr, 0, 6.283); x.fill();
+    }
+  }
+
+  var tex = new g.THREE.CanvasTexture(c);
+  tex.colorSpace = g.THREE.SRGBColorSpace || tex.colorSpace;
+  tex.anisotropy = 4;
+  return tex;
+}
+
 function glowSprite(size, inner, outer) {
   var c = doc.createElement("canvas");
   c.width = c.height = size;
@@ -790,8 +901,8 @@ function buildWorld() {
      Панорама даёт глубину и «дорогое» небо, точки - искры и
      параллакс, которого у панорамы нет. */
   var sky = new T.Mesh(
-    new T.SphereGeometry(4200, 32, 20),
-    new T.MeshBasicMaterial({ map: tex("assets/space/night-sky.png"), side: T.BackSide, color: 0x9db4cc })
+    new T.SphereGeometry(4200, 48, 28),
+    new T.MeshBasicMaterial({ map: skyTexture(mob), side: T.BackSide, color: 0x9db4cc })
   );
   scene.add(sky);
 
