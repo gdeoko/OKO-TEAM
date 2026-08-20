@@ -524,13 +524,13 @@ html.rk-veil-1 .sec-h, html.rk-veil-1 .sec-p, html.rk-veil-1 .sec-tag,
 html.rk-veil-1 .hero h1, html.rk-veil-1 .hero .lead,
 html.rk-veil-1 .viz-card h3, html.rk-veil-1 .card h3, html.rk-veil-1 .card p,
 html.rk-veil-1 .dc h4, html.rk-veil-1 .step h3 {
-  text-shadow: 0 1px 10px rgba(3, 8, 14, .30), 0 0 26px rgba(3, 8, 14, .22);
+  text-shadow: 0 1px 10px rgba(3, 8, 14, .22), 0 0 26px rgba(3, 8, 14, .16);
 }
 html.rk-veil-2 .sec-h, html.rk-veil-2 .sec-p, html.rk-veil-2 .sec-tag,
 html.rk-veil-2 .hero h1, html.rk-veil-2 .hero .lead,
 html.rk-veil-2 .viz-card h3, html.rk-veil-2 .card h3, html.rk-veil-2 .card p,
 html.rk-veil-2 .dc h4, html.rk-veil-2 .step h3 {
-  text-shadow: 0 1px 10px rgba(3, 8, 14, .55), 0 0 26px rgba(3, 8, 14, .40);
+  text-shadow: 0 1px 10px rgba(3, 8, 14, .38), 0 0 26px rgba(3, 8, 14, .26);
 }
 html.rk-veil-1[data-theme="light"] .sec-h, html.rk-veil-1[data-theme="light"] .sec-p,
 html.rk-veil-1[data-theme="light"] .sec-tag, html.rk-veil-1[data-theme="light"] .hero h1,

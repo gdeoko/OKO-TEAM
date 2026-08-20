@@ -400,8 +400,10 @@ a.js-reg:not(.btn):hover { background-size: 100% 2px; }
   border-radius: inherit;
   transition: opacity .3s var(--ease);
 }
-.card:hover { transform: translateY(-4px); border-color: var(--line-2); box-shadow: var(--shadow); }
-.card:hover::before { opacity: 1; }
+@media (hover: hover) and (pointer: fine) {
+  .card:hover { transform: translateY(-4px); border-color: var(--line-2); box-shadow: var(--shadow); }
+  .card:hover::before { opacity: 1; }
+}
 /* Значок карточки: фиолетовая плашка, как в их дизайн-системе.
    Циан и градиент оставляем бренду, данным и кнопкам, иначе сайт
    становится одноцветным. */
@@ -411,7 +413,9 @@ a.js-reg:not(.btn):hover { background-size: 100% 2px; }
   color: var(--violet-tx); margin-bottom: var(--sp-4); flex: none;
   transition: background var(--fast), border-color var(--fast), color var(--fast);
 }
-.card:hover .card-ico { background: var(--ico-bg-2); border-color: var(--violet); }
+@media (hover: hover) and (pointer: fine) {
+  .card:hover .card-ico { background: var(--ico-bg-2); border-color: var(--violet); }
+}
 .card-ico svg { width: 24px; height: 24px; }
 .card h3 { font-size: var(--fs-7); font-weight: 650; letter-spacing: var(--tr-title);
   line-height: var(--lh-title); margin-bottom: 9px; }
@@ -1248,7 +1252,16 @@ body::before {
 .hs-stage { z-index: 2; position: sticky; top: 0; height: 100svh; display: flex; flex-direction: column; justify-content: center; gap: clamp(18px, 3vw, 34px); overflow: hidden; }
 .hs-head { flex: none; margin-bottom: 0; }
 /* Свой слой: иначе ракета проходит поверх карточек, а не за ними */
-.hs-view { position: relative; z-index: 2; width: 100%; overflow: hidden; }
+/* Лента этапов едет вбок, и её крайние карточки неизбежно
+   обрезаны кромкой кадра. Резаный край читался поломкой - владелец
+   назвал это «карточки разных размеров и формы, не красиво, как
+   баг». Карточки одного размера, обрывался только кадр: теперь края
+   ленты растворяются, и обрез читается движением, а не разрывом. */
+.hs-view {
+  position: relative; z-index: 2; width: 100%; overflow: hidden;
+  -webkit-mask-image: linear-gradient(90deg, transparent 0, #000 34px, #000 calc(100% - 34px), transparent 100%);
+  mask-image: linear-gradient(90deg, transparent 0, #000 34px, #000 calc(100% - 34px), transparent 100%);
+}
 .hs-track {
   display: flex; gap: var(--gap); padding: 4px var(--pad);
   width: max-content; will-change: transform;
@@ -1440,18 +1453,25 @@ body { background: var(--bg); }
 .card::after, .viz-card::after {
   border-radius: inherit;
 }
-.card:hover, .viz-card:hover, .dc:hover {
-  border-color: var(--gl-line-2);
-  box-shadow:
-    inset 0 1px 0 var(--gl-top-2),
-    inset 0 -1px 0 var(--gl-bot),
-    var(--sh-2),
-    0 0 0 1px var(--gl-ring);
+/* Наведение только там, где оно настоящее. На телефоне hover
+   «залипает» после тапа: карточка так и остаётся приподнятой, с
+   кольцом и тенью, а соседние - плоские. Владелец увидел ровно это -
+   «некоторые карточки при клике дают какой-то кривой фон тени».
+   Пальцу наводить нечем, значит и правила ему не адресованы. */
+@media (hover: hover) and (pointer: fine) {
+  .card:hover, .viz-card:hover, .dc:hover {
+    border-color: var(--gl-line-2);
+    box-shadow:
+      inset 0 1px 0 var(--gl-top-2),
+      inset 0 -1px 0 var(--gl-bot),
+      var(--sh-2),
+      0 0 0 1px var(--gl-ring);
+  }
 }
 /* Клавиатура должна видеть то же, что и мышь: наведение и фокус
    поднимают карточку одинаково. Раньше карточка с фокусом внутри
    не отличалась от соседних совсем. */
-.card:focus-within, .viz-card:focus-within, .dc:focus-within {
+.card:has(:focus-visible), .viz-card:has(:focus-visible), .dc:has(:focus-visible) {
   border-color: var(--gl-line-2);
   box-shadow:
     inset 0 1px 0 var(--gl-top-2),
