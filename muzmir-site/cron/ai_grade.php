@@ -61,12 +61,21 @@ if ($mode === 'off' && $only === 0) {
 $batch = $limit > 0 ? $limit : max(1, (int) setting('grade_batch', '10'));
 $pause = max(0, (int) setting('grade_pause_sec', '5'));
 
-/* Кого оцениваем: заявка принята, оплачена (если конкурс платный), результата
-   ещё нет, ссылка на работу есть, и по ней ещё не было удачной оценки. */
+/* КОГО ОЦЕНИВАЕМ.
+ *
+ * Только то, к чему человек ещё не притрагивался: нет звания И нет отметки о
+ * судействе. Одного пустого звания мало — заявку могли открыть, поправить
+ * данные и отложить решение; graded_at при этом уже стоит, и машина не должна
+ * лезть в чужую работу. Отклонённые, черновики и неоплаченные платные не берём,
+ * повторно оценённые — тоже: один удачный разбор на заявку.
+ *
+ * Свежие вперёд не лезут: очередь идёт по возрастанию номера, то есть в порядке
+ * подачи — тот же порядок, в каком судит жюри. */
 $sql = "SELECT a.id
           FROM applications a
           JOIN competitions c ON c.id = a.competition_id
          WHERE COALESCE(a.result,'') = ''
+           AND COALESCE(a.graded_at,'') = ''
            AND a.status NOT IN ('rejected','draft')
            AND TRIM(COALESCE(a.video_url,'')) <> ''
            AND (COALESCE(c.is_paid,0) = 0 OR COALESCE(a.is_paid,0) = 1)
@@ -106,33 +115,42 @@ foreach ($rows as $r) {
         continue;
     }
 
-    // ПЕРЕНОС РЕЗУЛЬТАТА В ЗАЯВКУ.
-    // Дальше включается обычный конвейер центра: срок отправки результата,
-    // письмо участнику, изготовление наградных материалов. Отдельной логики для
-    // автоматической оценки там нет и не нужно: заявка выглядит как оценённая.
+    /* ПЕРЕНОС РЕЗУЛЬТАТА В ЗАЯВКУ — ТЕМ ЖЕ ПУТЁМ, ЧТО И У ЖЮРИ.
+     *
+     * Здесь стояли три поля: звание, комментарий, статус. Всё остальное, что
+     * делает карточка жюри, не делалось вовсе — а именно там живёт конвейер
+     * центра: срок отправки результата по правилу «5 рабочих дней от подачи, ВИП
+     * — 3», письмо участнику, уведомление в кабинет, переделка наградных
+     * документов под новое звание, пересчёт статуса заявки и отдельный порядок
+     * для длинного конкурса, где письма нет вовсе.
+     *
+     * Без даты отправки письмо не уходило никогда: cron/send_diplomas ищет
+     * заявки по result_send_at, а он оставался пустым. Автомат складывал работы
+     * в тихую очередь и выглядел работающим.
+     *
+     * Теперь и жюри, и автомат зовут одну функцию (core/grade_apply.php).
+     * Разница только в источнике решения, который пишется в журнал. */
     try {
-        $upd = [
-            'result'       => (string) $run['title'],
-            'jury_comment' => (string) $run['jury_comment'],
-            'status'       => 'graded',
-        ];
-        // Дополнительный диплом переносится только если человек его ещё не
-        // ставил: ручное решение всегда старше машинного предложения.
-        $extra = trim((string) ($run['extra_award'] ?? ''));
-        if ($extra !== '' && trim((string) (scalar("SELECT extra_diploma FROM applications WHERE id=?", [$appId]) ?? '')) === '') {
-            $upd['extra_diploma'] = $extra;
+        require_once BASE_PATH . '/core/grade_apply.php';
+        // Спец-номинацию машина предлагает, но ручное решение всегда старше:
+        // если человек уже вписал свою, машинную не подставляем.
+        $extra = trim((string) (scalar("SELECT extra_diploma FROM applications WHERE id=?", [$appId]) ?? ''));
+        if ($extra === '') $extra = trim((string) ($run['extra_award'] ?? ''));
+
+        $ap = grade_apply_result($appId, (string) $run['title'], [
+            'extra_diploma' => $extra,
+            'jury_comment'  => (string) $run['jury_comment'],
+            'send_mode'     => 'auto',          // строго по срокам центра
+            'source'        => 'ai',
+            'run_id'        => (int) $run['id'],
+        ]);
+        if (!$ap['ok']) {
+            cron_log(JOB, "заявка $appId: оценка получена, но не применена — " . $ap['msg']);
+        } else {
+            q("UPDATE grading_runs SET applied=1, applied_at=? WHERE id=?", [date('Y-m-d H:i:s'), (int) $run['id']]);
+            cron_log(JOB, "заявка $appId: " . $ap['msg']);
+            $applied++;
         }
-        update('applications', $upd, 'id=:id', ['id' => $appId]);
-        q("UPDATE applications SET graded_at=? WHERE id=? AND COALESCE(graded_at,'')=''",
-          [date('Y-m-d H:i:s'), $appId]);
-        q("UPDATE grading_runs SET applied=1, applied_at=? WHERE id=?", [date('Y-m-d H:i:s'), (int) $run['id']]);
-        if (function_exists('audit')) {
-            audit('ai_grade_applied', 'application', $appId,
-                  ['total' => (float) $run['total'], 'title' => (string) $run['title'],
-                   'model' => (string) $run['model'], 'confidence' => (float) $run['confidence'],
-                   'extra' => (string) ($upd['extra_diploma'] ?? '')]);
-        }
-        $applied++;
     } catch (\Throwable $e) {
         cron_log(JOB, "заявка $appId: оценка получена, но не применена — " . $e->getMessage());
     }

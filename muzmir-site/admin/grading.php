@@ -324,105 +324,40 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && input('do') === 'grade_result') {
     if ($appId && in_array($result, RESULT_PRESETS(), true)) {
         $cur = one("SELECT * FROM applications WHERE id=?", [$appId]);
         if (!$cur) { flash('Заявка не найдена.', 'error'); admin_redirect('grading'); }
-        // Длинный конкурс (results_mode='list') оценивается той же карточкой, НО письмо-результат
-        // НЕ уходит моментально (ниже, стр. с $firstGrade) — итоги копятся в список и публикуются пакетом.
-        // После сохранения возвращаемся в раздел «Оценка длинных», а не в короткую очередь.
         $curMode = one("SELECT results_mode, is_paid FROM competitions WHERE id=?", [(int) $cur['competition_id']]);
         $isLongComp = (string) ($curMode['results_mode'] ?? '') === 'list';
-        // Наградные документы центр изготавливает сам только у короткого платного
-        // конкурса (cron/send_diplomas.php). У длинного и у бесплатного их
-        // заказывает участник — обещать их в ответе нельзя.
-        $compPaid = (int) ($curMode['is_paid'] ?? 0) === 1;
-        // Балльная система убрана — итог задаётся только званием, без числового балла.
-        $score = null;
-        require_once BASE_PATH . '/core/send_timing.php';
+        $compPaid   = (int) ($curMode['is_paid'] ?? 0) === 1;
         if (is_file(BASE_PATH . '/core/club.php')) require_once BASE_PATH . '/core/club.php';
-        // ВИП-клуб — 3 рабочих дня, иначе 5. Точка отсчёта — ДАТА ПОДАЧИ (created_at).
         $wdays = (!empty($cur['user_id']) && function_exists('club_is_active') && club_is_active((int) $cur['user_id'])) ? 3 : 5;
-        $sendNow   = input('send_now') === '1';   // кнопка «Отправить сейчас» — моментально
-        $autoSend  = input('auto_send') === '1';
-        $sendAtRaw = trim(input('send_at'));
-        $submitted = (string) ($cur['created_at'] ?? '');
 
-        // РЕЗУЛЬТАТ (аттестационный) — по управлению из карточки. Длинные (list) — молчим (пакет).
-        $resultAt = null;
-        if (!$isLongComp) {
-            if ($sendNow) {
-                $resultAt = new \DateTime('now');                              // моментально
-            } else {
-                $resultAt = $autoSend
-                    ? result_plan_at($submitted, true, '', $wdays)             // авто по сроку + рабочее окно
-                    : result_plan_at($submitted, false, $sendAtRaw, $wdays);   // ручная дата / моментально
-            }
+        /* СОХРАНЕНИЕ ИТОГА ЖИВЁТ В ОДНОМ МЕСТЕ — core/grade_apply.php.
+         *
+         * Тот же порядок выполняет автоматическая аттестация, и это единственный
+         * способ добиться, чтобы «полный автомат» работал ровно так же, как рука
+         * жюри: те же сроки, то же письмо, та же переделка наградных документов,
+         * тот же статус в кабинете. Пока код был написан дважды, автомат забывал
+         * половину шагов, и работы копились без единого письма участнику. */
+        require_once BASE_PATH . '/core/grade_apply.php';
+        $sendMode = input('send_now') === '1' ? 'now' : (input('auto_send') === '1' ? 'auto' : 'at');
+        $ap = grade_apply_result($appId, $result, [
+            'extra_diploma' => $extra,
+            'jury_comment'  => $jcomment,
+            'send_mode'     => $sendMode,
+            'send_at'       => trim(input('send_at')),
+            'source'        => 'jury',
+        ]);
+        if (!$ap['ok']) {
+            flash('Не удалось сохранить итог: ' . $ap['msg'], 'error');
+            admin_redirect('grading', array_filter(['id' => $appId, 'competition' => $comp, 'order' => $order]));
         }
-        $resultSendAt = $resultAt ? $resultAt->format('Y-m-d H:i:s') : '';
+        $result       = $ap['result'];           // могло снизиться из-за фонограммы
+        $resultSendAt = $ap['send_at'];
+        $dsyncMsg     = $ap['dsync'];
 
-        $firstGrade = trim((string)($cur['result'] ?? '')) === '';
-        $resultChanged = ((string)$cur['result'] !== $result);
-        $extraChanged  = ((string)($cur['extra_diploma'] ?? '') !== $extra);
-        $changed = $resultChanged || $extraChanged;
-
-        update('applications', [
-            'result' => $result, 'score' => $score,
-            'extra_diploma' => $extra, 'jury_comment' => $jcomment,
-            'status' => 'graded',
-            'result_send_at'  => $resultSendAt,
-            // если итог изменился и результат ещё не ушёл — переотправим по новому сроку
-            'result_sent_at'  => ($changed && !$firstGrade) ? '' : (string)($cur['result_sent_at'] ?? ''),
-            'send_at_override' => '', // НЕ используется для дипломов — они всегда по подаче + N раб.дней
-        ], 'id=:wid', ['wid' => $appId]);
-        q("UPDATE applications SET graded_at=? WHERE id=? AND (graded_at IS NULL OR graded_at='')",
-          [date('Y-m-d H:i:s'), $appId]);
-        q("UPDATE jury_assignments SET done=1 WHERE application_id=?", [$appId]);
-
-        // СНОСИМ ТОЛЬКО УСТАРЕВШЕЕ И ТОЛЬКО ТО, ЧТО ЦЕНТР СОБЕРЁТ ЗАНОВО САМ.
-        //
-        // Раньше правка итога удаляла ВСЕ неотправленные документы заявки. Но крон
-        // изготавливает лишь основной и дополнительный дипломы короткого платного
-        // конкурса: именной и благодарность — в том числе оплаченные заказом —
-        // не восстанавливал никто, и одна поправленная буква в звании молча
-        // уничтожала купленный документ. Теперь смена звания снимает основной
-        // диплом, смена спец-номинации — дополнительный, а про именной, где
-        // звание тоже напечатано на бланке, честно предупреждаем: перевыпустить.
-        // Бланки не удаляем, а переделываем под новые данные, сохраняя номер:
-        // он напечатан в реестре, назван в письме и проверяется через сервис
-        // подлинности. Удаление же теряло купленные именные документы, а
-        // отправленный диплом со старым званием так и оставался на руках.
-        $reissueNamed = 0;
-        $dsyncMsg = '';
-        if ($changed) {
-            require_once BASE_PATH . '/core/diploma_sync.php';
-            $dsyncMsg = dsync_apply($appId, (array) $cur,
-                ['result' => $result, 'extra_diploma' => $extra, 'status' => 'graded']);
-        }
-
-        // РЕЗУЛЬТАТ: если срок наступил (моментально/дата в прошлом) — шлём СЕЙЧАС;
-        // иначе отправит cron/send_diplomas по result_send_at. Наградные дипломы уходят
-        // ОТДЕЛЬНО и ПОЗЖЕ — через N рабочих дней от даты подачи (см. cron).
-        $now = new DateTime('now');
-        $dueNow = $resultAt && $resultAt <= $now;
-        if (!$isLongComp && ($firstGrade || $changed) && $dueNow) {
-            if (is_file(BASE_PATH.'/core/result_mail.php'))   require_once BASE_PATH.'/core/result_mail.php';
-            if (is_file(BASE_PATH.'/core/notifications.php')) require_once BASE_PATH.'/core/notifications.php';
-            $sent = false;
-            if (function_exists('result_mail_send')) { try { $sent = (bool) result_mail_send($appId); } catch (\Throwable $e) {} }
-            if ($sent) q("UPDATE applications SET result_sent_at=? WHERE id=?", [date('Y-m-d H:i:s'), $appId]);
-            if (!empty($cur['user_id']) && function_exists('notify_user')) {
-                notify_user((int)$cur['user_id'], 'Ваш результат готов',
-                    'Жюри подвело итоги: ' . $result . '. Наградные дипломы придут на почту из заявки в течение ' . $wdays . ' рабочих дней.',
-                    url('/cabinet'), 'award');
-            }
-        }
-        // Статус — строго по фактам: пока письмо с результатом не ушло, заявка «На оценке»,
-        // и участник в кабинете не видит ни звания, ни дипломов. «Оценена» появится только
-        // после реальной отправки (здесь либо в cron/send_diplomas.php по расписанию).
-        require_once BASE_PATH . '/core/app_status.php';
-        app_status_sync($appId);
-
-        audit('grade_result', 'application', $appId,
-              ['result'=>$result,'extra'=>$extra,'result_at'=>$resultSendAt,'diploma_sync'=>$dsyncMsg]);
+        // Журнал ведёт сама grade_apply_result — второй записи не нужно.
         $flashWhen = $isLongComp ? 'публикуется пакетом'
-            : ($dueNow ? 'результат отправлен сейчас' : ('результат ' . date('d.m.Y H:i', $resultAt->getTimestamp())));
+            : ($ap['sent'] ? 'результат отправлен сейчас'
+                           : ('результат ' . ($resultSendAt !== '' ? date('d.m.Y H:i', strtotime($resultSendAt)) : 'по расписанию')));
         // Обещаем наградные дипломы только там, где центр действительно выдаёт их
         // сам: у длинного и бесплатного конкурса их заказывает участник.
         $dipWhen = (!$isLongComp && $compPaid)
@@ -881,6 +816,67 @@ if ($id = (int) input('id')) {
       <div class="card" id="resultCard">
         <h3>Итоговый результат</h3>
         <?= admin_same_work_box(app_same_work_graded($a)) ?>
+        <?php
+        /* ПОДСКАЗКА АТТЕСТАЦИИ — ТАМ, ГДЕ СУДЯТ.
+         *
+         * Разбор лежал в отдельном разделе «Автооценка», и жюри его при
+         * судействе не видело: чтобы свериться, надо было уйти со страницы,
+         * найти заявку в другом списке и вернуться. Смысл подсказки от этого
+         * пропадал. Теперь предложенное звание и обоснование стоят прямо над
+         * выбором, а кнопка ставит его в форму — решение всё равно за человеком. */
+        $agRun = null;
+        try {
+            $agRun = one("SELECT * FROM grading_runs WHERE application_id=? AND status='ok'
+                           ORDER BY id DESC LIMIT 1", [$id]);
+        } catch (\Throwable $e) { $agRun = null; }
+        if ($agRun):
+            $agFlags = (array) json_decode((string) ($agRun['red_flags'] ?? '[]'), true);
+            $agConf  = (float) ($agRun['confidence'] ?? 0);
+        ?>
+          <div style="margin:0 0 14px;padding:13px 15px;border:1px solid #cfe0f5;background:#f4f8fd;border-radius:12px">
+            <div class="small" style="text-transform:uppercase;letter-spacing:.06em;color:#39618f;margin-bottom:6px">
+              Подсказка аттестации · разбор от <?= h(date('d.m.Y H:i', strtotime((string) $agRun['created_at']))) ?>
+              <?= (int) ($agRun['applied'] ?? 0) === 1 ? ' · применена автоматически' : '' ?>
+            </div>
+            <div style="font-size:17px;font-weight:700;color:#17307A">
+              <?= h((string) $agRun['title']) ?>
+              <span class="small muted" style="font-weight:400"> · <?= number_format((float) $agRun['total'], 1, ',', ' ') ?> балла ·
+                уверенность <?= number_format($agConf, 2, ',', ' ') ?></span>
+            </div>
+            <?php if (trim((string) ($agRun['extra_award'] ?? '')) !== ''): ?>
+              <div class="small" style="margin-top:4px">Предложен доп. диплом: <b><?= h((string) $agRun['extra_award']) ?></b>
+                <?= trim((string) ($agRun['extra_award_why'] ?? '')) !== '' ? ' — ' . h((string) $agRun['extra_award_why']) : '' ?></div>
+            <?php endif; ?>
+            <?php if ($agFlags): ?>
+              <div class="small" style="margin-top:6px;color:#8B2F2F">Требует внимания: <?= h(implode('; ', array_map('strval', $agFlags))) ?></div>
+            <?php endif; ?>
+            <?php if (trim((string) ($agRun['internal_note'] ?? '')) !== ''): ?>
+              <div class="small muted" style="margin-top:6px"><?= h(mb_substr((string) $agRun['internal_note'], 0, 400)) ?></div>
+            <?php endif; ?>
+            <?php if (trim((string) ($agRun['jury_comment'] ?? '')) !== ''): ?>
+              <details style="margin-top:8px"><summary class="small" style="cursor:pointer">Готовый комментарий участнику</summary>
+                <div class="small" style="margin-top:6px;white-space:pre-line"><?= h((string) $agRun['jury_comment']) ?></div></details>
+            <?php endif; ?>
+            <button type="button" class="btn btn--ghost btn--sm" style="margin-top:10px"
+                    data-ag-title="<?= h((string) $agRun['title']) ?>"
+                    data-ag-extra="<?= h((string) ($agRun['extra_award'] ?? '')) ?>"
+                    data-ag-comment="<?= h((string) ($agRun['jury_comment'] ?? '')) ?>"
+                    onclick="agTake(this)">Подставить в форму</button>
+          </div>
+          <script>
+          function agTake(b){
+            var t=b.getAttribute('data-ag-title');
+            document.querySelectorAll('#resultCard input[name=result]').forEach(function(r){
+              if(r.value===t){ r.checked=true; r.dispatchEvent(new Event('change',{bubbles:true}));
+                var l=r.closest('.rp-item'); if(l){ document.querySelectorAll('#resultCard .rp-item').forEach(function(x){x.classList.remove('on')}); l.classList.add('on'); } }
+            });
+            var e=b.getAttribute('data-ag-extra'), sel=document.getElementById('extraSel');
+            if(sel&&e){ for(var i=0;i<sel.options.length;i++){ if(sel.options[i].value===e){ sel.selectedIndex=i; break; } } }
+            var c=b.getAttribute('data-ag-comment'), ta=document.querySelector('#resultCard textarea[name=jury_comment]');
+            if(ta&&c&&!ta.value.trim()) ta.value=c;
+          }
+          </script>
+        <?php endif; ?>
         <p class="small muted">Выберите звание. Доп. диплом и комментарий — по желанию. До момента отправки результат можно менять — повторное сохранение перезапишет итог.</p>
         <form method="post" action="<?= url('/admin/?p=grading') ?>">
           <?= csrf_field() ?><input type="hidden" name="p" value="grading"><input type="hidden" name="do" value="grade_result">
@@ -1161,13 +1157,29 @@ ob_start(); ?>
 <div class="section-title" style="margin:18px 0 8px">
   <h3>На аттестации <span class="badge badge--muted"><?= $qTotal ?></span></h3>
 </div>
+<?php
+/* ПОДСКАЗКА АТТЕСТАЦИИ ВИДНА ПРЯМО В ОЧЕРЕДИ.
+   Иначе о том, что работа уже разобрана машиной, узнаёшь только открыв её. Один
+   запрос на весь список: разборы берём пачкой, а не по строке. */
+$agHints = [];
+if ($rows) {
+    $ids = implode(',', array_map(static fn($r) => (int) $r['id'], $rows));
+    try {
+        foreach (all("SELECT application_id, title, total, confidence FROM grading_runs
+                       WHERE status='ok' AND application_id IN ($ids)
+                    ORDER BY id ASC") as $g) {
+            $agHints[(int) $g['application_id']] = $g;      // последний разбор перекрывает ранний
+        }
+    } catch (\Throwable $e) { $agHints = []; }
+}
+?>
 <div class="table-wrap">
   <table class="tbl gq-tbl">
     <thead><tr>
-      <th>Участник</th><th>Конкурс</th><th>Конкурсный номер</th><th>Подана</th><th>Статус</th><th></th>
+      <th>Участник</th><th>Конкурс</th><th>Конкурсный номер</th><th>Подана</th><th>Подсказка</th><th>Статус</th><th></th>
     </tr></thead>
     <tbody>
-      <?php if (!$rows): ?><tr><td colspan="6" class="muted" style="text-align:center;padding:28px">Очередь пуста — все заявки разобраны</td></tr><?php endif; ?>
+      <?php if (!$rows): ?><tr><td colspan="7" class="muted" style="text-align:center;padding:28px">Очередь пуста — все заявки разобраны</td></tr><?php endif; ?>
       <?php foreach ($rows as $a): ?>
         <tr class="<?= (int)$a['grp_count'] > 1 ? 'gq-grp' : '' ?>">
           <td><b><?= h($a['is_group'] ? $a['group_name'] : $a['full_name']) ?></b><?= vip_mark((int)($a['user_id'] ?? 0), '', (string)($a['email'] ?? '')) ?>
@@ -1181,6 +1193,14 @@ ob_start(); ?>
           <td class="small"><?= h($a['comp']) ?></td>
           <td class="small"><?= h($a['work_title']) ?></td>
           <td class="small"><?= h(date('d.m.y H:i', strtotime((string)$a['created_at']))) ?></td>
+          <td class="small">
+            <?php $hint = $agHints[(int) $a['id']] ?? null; if ($hint): ?>
+              <span style="color:#39618f;font-weight:600"><?= h((string) $hint['title']) ?></span>
+              <span class="muted"> · <?= number_format((float) $hint['total'], 1, ',', ' ') ?></span>
+            <?php else: ?>
+              <span class="muted">—</span>
+            <?php endif; ?>
+          </td>
           <td><span class="badge badge--<?= h($a['status']) ?>"><?= h(app_status_ru($a['status'])) ?></span></td>
           <td><a class="btn btn--primary" href="<?= a_link('grading', array_filter(['id'=>$a['id'],'competition'=>$comp,'order'=>$order])) ?>"><?= admin_icon('grading') ?>ОЦЕНИТЬ</a></td>
         </tr>

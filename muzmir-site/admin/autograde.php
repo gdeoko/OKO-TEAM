@@ -26,7 +26,20 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && input('do') === 'mode') {
     if (in_array($mode, ['off', 'assist', 'auto'], true)) {
         set_setting('auto_grading_mode', $mode);
         audit('autograde_mode', 'setting', 0, ['mode' => $mode]);
-        flash('Режим аттестации: ' . ['off' => 'выключена', 'assist' => 'подсказка жюри', 'auto' => 'полный автомат'][$mode], 'success');
+        $note = '';
+        /* ВКЛЮЧИЛ — НАЧАЛОСЬ.
+         *
+         * Задание идёт раз в десять минут, и после щелчка рубильником в админке
+         * ничего не происходило до следующего запуска: человек смотрел на пустой
+         * список и решал, что не работает. Запускаем первый заход сразу, в фоне —
+         * страница не ждёт, а разбор первых работ начинается в ту же минуту. */
+        if ($mode !== 'off') {
+            $cmd = 'setsid nohup php ' . escapeshellarg(BASE_PATH . '/cron/ai_grade.php')
+                 . ' >> ' . escapeshellarg(BASE_PATH . '/data/logs/cron.log') . ' 2>&1 & disown';
+            @exec($cmd);
+            $note = ' Первые работы уже разбираются — оценка одной занимает около двух минут.';
+        }
+        flash('Режим аттестации: ' . ['off' => 'выключена', 'assist' => 'подсказка жюри', 'auto' => 'полный автомат'][$mode] . '.' . $note, 'success');
     }
     admin_redirect('autograde');
 }
