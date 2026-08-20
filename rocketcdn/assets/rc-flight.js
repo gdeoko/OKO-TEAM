@@ -1762,8 +1762,9 @@ function bindControls() {
   addEventListener("resize", function () { size(); cabSrc(); }, { passive: true });
 }
 
-var hintHidden = false;
+var hintHidden = false, hintT = 0;
 function hideHint() {
+  if (hintT) { clearTimeout(hintT); hintT = 0; }
   if (hintHidden || !ui.hint) return;
   hintHidden = true;
   ui.hint.classList.add("off");
@@ -2864,6 +2865,13 @@ function open() {
   F.look.x = F.look.y = F.look.tx = F.look.ty = 0;
   hintHidden = false;
   if (ui.hint) ui.hint.classList.remove("off");
+  /* Подсказка про управление своё говорит один раз. Раньше она
+     висела посреди окна, пока человек её не «отработает» - а если он
+     просто смотрел в космос, надпись оставалась поперёк кадра всю
+     дорогу и перекрывала планеты. Семи секунд хватает прочитать; тот,
+     кто взялся за управление раньше, гасит её сам. */
+  if (hintT) clearTimeout(hintT);
+  hintT = setTimeout(function () { hintT = 0; hideHint(); }, 7000);
 
   root.classList.add("rc-flying");
   ui.wrap.classList.add("on");

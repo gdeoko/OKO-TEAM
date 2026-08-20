@@ -781,6 +781,28 @@ function padTexture(weak) {
 
    Один холст, одна плоскость, один вызов отрисовки. Края уводим в
    прозрачность, иначе квадрат местности читается ковриком. */
+/* Дымка над равниной: у земли плотная, кверху сходит на нет. Ею и
+   склеивается стык «планета - космос», которого иначе не спрятать:
+   плоскость земли всегда кончается прямой линией. */
+function hazeTexture() {
+  var W = 8, H = 128;
+  var c = document.createElement("canvas");
+  c.width = W; c.height = H;
+  var x = c.getContext("2d");
+  var g1 = x.createLinearGradient(0, H, 0, 0);
+  g1.addColorStop(0.00, "rgba(46,66,92,.92)");
+  g1.addColorStop(0.10, "rgba(40,58,82,.78)");
+  g1.addColorStop(0.26, "rgba(32,48,70,.46)");
+  g1.addColorStop(0.48, "rgba(24,37,56,.20)");
+  g1.addColorStop(0.72, "rgba(18,28,44,.06)");
+  g1.addColorStop(1.00, "rgba(14,22,36,0)");
+  x.fillStyle = g1;
+  x.fillRect(0, 0, W, H);
+  var tex = new T.CanvasTexture(c);
+  tex.colorSpace = T.SRGBColorSpace || tex.colorSpace;
+  return tex;
+}
+
 /* Равнина до горизонта. Рисуем не «землю с деталями», а именно
    даль: у площадки грунт ещё читается, к краю он тонет в холодной
    дымке и без шва переходит в космос. Резкая кромка сразу выдавала
@@ -2922,6 +2944,25 @@ Rocket.prototype.ground = function () {
   grp.add(far);
   this._padFar = far;
 
+  /* Дымка на горизонте. Без неё равнина обрывается ровной чертой
+     поперёк кадра - земля будто отрезана ножницами, и вся глубина,
+     ради которой её и клали, пропадает. Это цилиндр без крышек,
+     камера стоит внутри и видит его изнанку со всех сторон: у самой
+     земли он плотный, кверху тает. Один вызов отрисовки. */
+  var hazeMat = new T.MeshBasicMaterial({
+    map: hazeTexture(), side: T.BackSide, transparent: true,
+    depthWrite: false, toneMapped: false, opacity: 0
+  });
+  var haze = new T.Mesh(
+    new T.CylinderGeometry(PAD_SIZE * 4.3, PAD_SIZE * 4.3, PAD_SIZE * 1.15,
+      C.weak ? 16 : 28, 1, true),
+    hazeMat
+  );
+  haze.position.y = -PAD_LIFT + PAD_SIZE * 0.5;
+  haze.renderOrder = 0;
+  grp.add(haze);
+  this._padHaze = haze;
+
   /* Бортик: цилиндр без крышек между уровнем грунта и настилом.
      Он и есть весь секрет объёма - у площадки становится видна
      ТОЛЩИНА, и она перестаёт быть наклейкой на пустоте. */
@@ -3086,6 +3127,10 @@ Rocket.prototype.groundStep = function (dt) {
   if (this._padFar) {
     this._padFar.visible = degradeStep < 3;
     this._padFar.material.opacity = vis * 0.92;
+  }
+  if (this._padHaze) {
+    this._padHaze.visible = degradeStep < 3;
+    this._padHaze.material.opacity = vis * 0.88;
   }
   if (this._padKerb) this._padKerb.material.opacity = vis * 0.95;
 
@@ -4215,7 +4260,13 @@ Rocket.prototype.layout = function (p, dt) {
   var full = Math.max(app, (this.landK || 0), dk || 0);
   var readS = this._readS + (1 - this._readS) * Math.min(1, full * 1.5);
 
-  var sNow = s * (1 - k * 0.70) * lndS * (1 + app * 3.9) * (1 + dk * dk * 1.25) * readS;
+  /* Последний шаг входа - это шаг ВНУТРЬ. На хвосте открытия
+     добавляем короткий доводочный наезд: проём в этот миг уже во
+     весь кадр, и лёгкое ускорение читается как «перешагнули порог»,
+     а не как «картинка доросла». Десять процентов - предел: дальше
+     камера уходит за плоскость обшивки. */
+  var stepIn = 1 + Math.max(0, dk - 0.88) / 0.12 * 0.10;
+  var sNow = s * (1 - k * 0.70) * lndS * (1 + app * 3.9) * (1 + dk * dk * 1.25) * readS * stepIn;
   this._sNow = sNow;
   this.pivot.scale.setScalar(sNow);
 };

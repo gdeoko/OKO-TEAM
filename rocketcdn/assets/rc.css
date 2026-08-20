@@ -1059,6 +1059,17 @@ a.js-reg:not(.btn):hover { background-size: 100% 2px; }
       rgba(3, 9, 17, .46) 56%,
       transparent 84%);
   }
+  /* В светлой теме подложка обязана быть светлой, иначе она сама
+     становится тёмным пятном под чёрными буквами и читаемость не
+     спасает, а губит. Планета там же держится тише: тёмный шар на
+     белом листе перетягивает кадр на себя сильнее, чем на чёрном. */
+  html[data-theme="light"] .hero .hero-in::before {
+    background: radial-gradient(ellipse 82% 64% at 42% 46%,
+      rgba(246, 249, 252, .90) 0%,
+      rgba(246, 249, 252, .62) 56%,
+      transparent 84%);
+  }
+  html[data-theme="light"] .hero-globe { opacity: .55; }
   .logo img { height: 26px; }
   .hdr-act { gap: 6px; }
   /* Кнопка шапки ужимается по кеглю, а высоту держит min-height -
