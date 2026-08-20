@@ -181,5 +181,12 @@ MAILTO=""
 #   cron/vk_send_delayed.php    — отложенный ответ бота, запускается из вебхука ВК
 
 # Входящая почта: читалка четырёх ящиков и разбор с автодействиями.
-*/5 * * * * php /var/www/muzmir/cron/inbox_read.php >> /var/www/muzmir/data/logs/cron.log 2>&1
+*/5 * * * * timeout 540 php /var/www/muzmir/cron/inbox_read.php >> /var/www/muzmir/data/logs/cron.log 2>&1
 */2 * * * * php /var/www/muzmir/cron/inbox_actions.php >> /var/www/muzmir/data/logs/cron.log 2>&1
+
+# Гигиена базы рассылки: домены, которых нет, и адреса с повторными отказами.
+# Раз в неделю: почтовые службы судят отправителя по тому, куда он пишет, и
+# каждое письмо в мёртвый ящик портит доставку всем остальным.
+0 6 * * 1 php /var/www/muzmir/scripts/mail_base_hygiene.php --apply >> /var/www/muzmir/data/logs/cron.log 2>&1
+# Просьба указать адрес доставки: оплаченный заказ оригиналов без адреса.
+0 12 * * 1-6 php /var/www/muzmir/cron/order_address_request.php --send >> /var/www/muzmir/data/logs/cron.log 2>&1
