@@ -460,8 +460,19 @@
     var ctrl = window.AbortController ? new AbortController() : null;
     var to = setTimeout(function () { if (ctrl) ctrl.abort(); }, 13000);
     var done = function () { clearTimeout(to); videoChecking = false; btns.forEach(function (b) { b.disabled = false; }); };
-    fetch(CFG.videoCheck + '?url=' + encodeURIComponent(v), { headers: { 'X-Requested-With': 'fetch' }, signal: ctrl ? ctrl.signal : undefined })
-      .then(function (r) { return r.json(); })
+    // Одна сорвавшаяся проверка не должна пропускать закрытую ссылку дальше:
+    // пробуем второй раз, и только потом отдаём решение серверу при отправке.
+    var attempt = 0;
+    var ask = function () {
+      attempt++;
+      return fetch(CFG.videoCheck + '?url=' + encodeURIComponent(v), { headers: { 'X-Requested-With': 'fetch' }, signal: ctrl ? ctrl.signal : undefined })
+        .then(function (r) { return r.json(); })
+        .catch(function (e) {
+          if (attempt < 2) return new Promise(function (res) { setTimeout(res, 700); }).then(ask);
+          throw e;
+        });
+    };
+    ask()
       .then(function (d) {
         done();
         if (d && d.ok === false) {

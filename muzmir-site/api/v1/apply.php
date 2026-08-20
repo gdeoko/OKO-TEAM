@@ -96,6 +96,7 @@ $phone = $pv['formatted'] ?? $phoneRaw;
 // Видео (конкурсная ссылка)
 $video = input('video_url');
 $platform = '';
+$linkCheck = '';
 if ($video !== '') {
     $vv = function_exists('v_video')
         ? v_video($video)
@@ -110,8 +111,25 @@ if ($video !== '') {
         if (is_file(BASE_PATH . '/core/link_check.php')) require_once BASE_PATH . '/core/link_check.php';
         if (function_exists('video_verify')) {
             $vr = video_verify($video);
+            // Площадка не ответила — пробуем ещё раз, прежде чем пропускать.
+            // Одна секундная заминка на стороне ВК или Диска не должна
+            // превращаться в непроверенную заявку, за которой потом кто-то
+            // ходит руками.
+            if ((string) ($vr['state'] ?? '') === 'unknown') {
+                usleep(400000);
+                $second = video_verify($video);
+                if ((string) ($second['state'] ?? '') !== 'unknown') $vr = $second;
+            }
             if (!($vr['ok'] ?? false)) $errors['video_url'] = (string)($vr['reason'] ?? 'Ссылка не прошла проверку.');
             if (!empty($vr['platform'])) $platform = (string) $vr['platform'];
+            // Итог проверки кладём в заявку: в админке видно, какие ссылки
+            // проверены площадкой, а какие приняты вслепую из-за молчания сети.
+            $linkCheck = json_encode([
+                'state'    => (string) ($vr['state'] ?? ''),
+                'platform' => (string) ($vr['platform'] ?? ''),
+                'ts'       => $vr['ts'] ?? null,
+                'at'       => date('Y-m-d H:i:s'),
+            ], JSON_UNESCAPED_UNICODE);
         }
     }
 }
@@ -306,6 +324,7 @@ foreach ($comps as $ci) {
         'phone'          => $phone,
         'video_url'      => $video,
         'video_platform' => $platform,
+        'link_check'     => $linkCheck ?? '',
         'address'        => input('address'),
         'postal_index'   => input('postal_index'),
         'is_paid'        => (int) $ci['is_paid'] ? 0 : 1,

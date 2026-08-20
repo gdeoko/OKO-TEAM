@@ -607,8 +607,21 @@ if ($id = (int) input('id')) {
       <div>
         <div class="card" style="margin-bottom:18px">
           <h3>Конкурсная работа</h3>
-          <?php if ($a['video_url']): ?>
-            <p><span class="tag"><?= h($a['video_platform'] ?: 'видео') ?></span></p>
+          <?php if ($a['video_url']):
+            // Итог проверки ссылки при подаче. Закрытые ссылки форма больше не
+            // пропускает, но когда площадка молчала, заявка принимается вслепую —
+            // такие видно сразу, чтобы не открывать каждую подряд.
+            $lc = json_decode((string) ($a['link_check'] ?? ''), true);
+            $lcState = is_array($lc) ? (string) ($lc['state'] ?? '') : '';
+          ?>
+            <p>
+              <span class="tag"><?= h($a['video_platform'] ?: 'видео') ?></span>
+              <?php if ($lcState === 'ok'): ?>
+                <span class="tag" style="background:#e8f5ec;color:#1E7A46">доступ проверен</span>
+              <?php elseif ($lcState === 'unknown'): ?>
+                <span class="tag" style="background:#fdf6e3;color:#8B6F1F">доступ не проверен — площадка не ответила</span>
+              <?php endif; ?>
+            </p>
             <a class="btn btn--navy btn--block" href="<?= h($a['video_url']) ?>" target="_blank" rel="noopener"><?= admin_icon('eye') ?>Открыть видео</a>
           <?php else: ?><p class="muted">Ссылка на видео не указана.</p><?php endif; ?>
         </div>

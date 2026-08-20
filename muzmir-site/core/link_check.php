@@ -85,7 +85,11 @@ if (!function_exists('_lc_result')) {
             return ['ok' => false, 'state' => 'bad', 'platform' => $platform, 'ts' => $ts, 'stale' => true,
                 'reason' => 'Материал старше 1 года — по положению (п. 8.11) к участию не принимается. Загрузите запись не старше года.'];
         }
-        return ['ok' => true, 'state' => 'ok', 'platform' => $platform, 'ts' => $ts, 'stale' => $stale, 'reason' => $okReason];
+        // state = 'unknown' означает «площадка нам не ответила»: ссылку мы
+        // пропускаем (сеть врёт чаще, чем участники), но заявка помечается, и
+        // человек проверяет её глазами — таких единицы, а не весь поток.
+        $state = ($ts === null && $okReason === 'Ссылка принята, доступ проверить не удалось') ? 'unknown' : 'ok';
+        return ['ok' => true, 'state' => $state, 'platform' => $platform, 'ts' => $ts, 'stale' => $stale, 'reason' => $okReason];
     }
     function _lc_bad(string $platform, string $reason): array {
         return ['ok' => false, 'state' => 'bad', 'platform' => $platform, 'ts' => null, 'stale' => null, 'reason' => $reason];
@@ -141,25 +145,70 @@ if (!function_exists('video_verify')) {
 
         /* ---- VK Видео ---- */
         if ($hostIs('vk.com') || $hostIs('vkvideo.ru')) {
-            if (!preg_match('#video(-?\d+_\d+)#', $url, $m)) {
+            // Ключ доступа в конце (video-1_2_abc123) — это ссылка на видео,
+            // открытое только по ссылке. Терять его нельзя: без ключа API
+            // ответит «недоступно» на совершенно нормальную запись.
+            if (!preg_match('#video(-?\d+_\d+(?:_[a-z0-9]+)?)#i', $url, $m)) {
                 return _lc_bad('VK Видео', 'Дайте ссылку на видео VK вида …/video-123_456.');
+            }
+            $vid = $m[1];
+            // Ключ доступа может стоять и параметром list= — тогда он в адресе отдельно.
+            if (!str_contains(substr($vid, 4), '_') && preg_match('#[?&]list=([a-z0-9]+)#i', $url, $lm)) {
+                $vid .= '_' . $lm[1];
             }
             $tok = function_exists('cfgv') ? (string) cfgv('vk_token', '') : '';
             if ($tok !== '') {
-                $j = _lc_http_json('https://api.vk.com/method/video.get?videos=' . $m[1]
+                $j = _lc_http_json('https://api.vk.com/method/video.get?videos=' . $vid
                     . '&access_token=' . rawurlencode($tok) . '&v=5.199');
-                // Ответ есть, но item нет → приватное/удалённое/несуществующее.
                 if (is_array($j) && isset($j['response'])) {
                     $item = $j['response']['items'][0] ?? null;
                     if (!$item) return _lc_bad('VK Видео', 'Видео VK не найдено или закрыто (приватный доступ). Откройте доступ по ссылке.');
+
+                    // ВК ОТВЕЧАЕТ КАРТОЧКОЙ ДАЖЕ НА ЗАКРЫТОЕ ВИДЕО.
+                    //
+                    // На удалённую или недоступную запись приходит не пустой
+                    // список, а карточка с пометкой content_restricted и
+                    // объяснением внутри. Проверка смотрела только на наличие
+                    // карточки — и пропускала заявки со ссылками, которые жюри
+                    // потом не могло открыть. Проверяем именно возможность
+                    // воспроизведения.
+                    if (!empty($item['content_restricted'])) {
+                        $why = trim((string) ($item['content_restricted_message'] ?? ''));
+                        return _lc_bad('VK Видео', 'Это видео ВКонтакте недоступно'
+                            . ($why !== '' ? ' (' . $why . ')' : '')
+                            . '. Загрузите запись заново и откройте доступ всем по ссылке.');
+                    }
+                    if (isset($item['restriction']) && empty($item['restriction']['can_play'])) {
+                        return _lc_bad('VK Видео', 'Видео ВКонтакте закрыто ограничением и не воспроизводится. '
+                            . 'Проверьте настройки приватности: доступ должен быть открыт всем.');
+                    }
+                    // Ни длительности, ни даты — записи по этой ссылке фактически нет.
+                    if ((int) ($item['duration'] ?? 0) === 0 && (int) ($item['date'] ?? 0) === 0) {
+                        return _lc_bad('VK Видео', 'По этой ссылке видео ВКонтакте не открывается. '
+                            . 'Проверьте адрес и настройки доступа.');
+                    }
+                    // Нет ни плеера, ни файлов — значит смотреть нечего.
+                    if (empty($item['player']) && empty($item['files'])) {
+                        return _lc_bad('VK Видео', 'Видео ВКонтакте не отдаёт запись для просмотра. '
+                            . 'Скорее всего доступ ограничен настройками приватности.');
+                    }
                     $ts = !empty($item['date']) ? (int) $item['date'] : null;
                     return _lc_result('VK Видео', $ts);
+                }
+                // API ответил ошибкой: чаще всего это «доступ запрещён» по
+                // приватной записи. Так и говорим, а не пропускаем молча.
+                if (is_array($j) && isset($j['error'])) {
+                    $code = (int) ($j['error']['error_code'] ?? 0);
+                    if (in_array($code, [15, 200, 201, 204], true)) {
+                        return _lc_bad('VK Видео', 'Доступ к видео ВКонтакте закрыт настройками приватности. '
+                            . 'Откройте доступ всем по ссылке и пришлите её заново.');
+                    }
                 }
             }
             // Токена нет / API не ответил — проверим хотя бы доступность страницы.
             [$code] = _lc_http_get($url, 7, true);
             if ($code === 404) return _lc_bad('VK Видео', 'Видео VK не найдено (404).');
-            return _lc_result('VK Видео', null);
+            return _lc_result('VK Видео', null, 'Ссылка принята, доступ проверить не удалось');
         }
 
         /* ---- Яндекс.Диск ---- */
@@ -189,7 +238,7 @@ if (!function_exists('video_verify')) {
             }
             [$code, $body] = _lc_http_get('https://drive.google.com/file/d/' . $m[1] . '/view', 8);
             if ($code === 404 || $code === 410) return _lc_bad('Google Диск', 'Файл Google Диска не найден или удалён.');
-            if ($code === 0) return _lc_result('Google Диск', null); // сеть — не блокируем
+            if ($code === 0) return _lc_result('Google Диск', null, 'Ссылка принята, доступ проверить не удалось'); // сеть — не блокируем
             $needAccess = (stripos($body, 'ServiceLogin') !== false || stripos($body, 'accounts.google.com/AccountChooser') !== false
                 || stripos($body, 'Запросить доступ') !== false || stripos($body, 'Request access') !== false
                 || stripos($body, 'Нужен доступ') !== false || stripos($body, 'You need access') !== false);
@@ -208,7 +257,7 @@ if (!function_exists('video_verify')) {
             }
             [$code, $body] = _lc_http_get($url, 9);
             if ($code === 404 || $code === 410) return _lc_bad('Облако Mail.ru', 'Файл в Облаке Mail.ru не найден или удалён.');
-            if ($code === 0) return _lc_result('Облако Mail.ru', null);   // сеть — не караем
+            if ($code === 0) return _lc_result('Облако Mail.ru', null, 'Ссылка принята, доступ проверить не удалось');   // сеть — не караем
             if (stripos($body, 'Файл не найден') !== false || stripos($body, 'ссылка недействительна') !== false) {
                 return _lc_bad('Облако Mail.ru', 'Ссылка на Облако Mail.ru недействительна. Создайте публичную ссылку заново.');
             }
@@ -225,7 +274,7 @@ if (!function_exists('video_verify')) {
             }
             [$code, $body] = _lc_http_get('https://ok.ru/video/' . $m[1], 9);
             if ($code === 404) return _lc_bad('ОК Видео', 'Видео в ОК не найдено (404).');
-            if ($code === 0) return _lc_result('ОК Видео', null);
+            if ($code === 0) return _lc_result('ОК Видео', null, 'Ссылка принята, доступ проверить не удалось');
             if (stripos($body, 'видео удалено') !== false || stripos($body, 'видео недоступно') !== false
                 || stripos($body, 'больше не доступно') !== false) {
                 return _lc_bad('ОК Видео', 'Видео в ОК удалено или недоступно. Проверьте открытый доступ.');
@@ -237,7 +286,7 @@ if (!function_exists('video_verify')) {
         if ($hostIs('dzen.ru') || $hostIs('zen.yandex.ru')) {
             [$code, $body] = _lc_http_get($url, 9);
             if ($code === 404) return _lc_bad('Дзен Видео', 'Видео в Дзене не найдено (404).');
-            if ($code === 0) return _lc_result('Дзен Видео', null);
+            if ($code === 0) return _lc_result('Дзен Видео', null, 'Ссылка принята, доступ проверить не удалось');
             if (stripos($body, 'публикация удалена') !== false || stripos($body, 'страница не найдена') !== false) {
                 return _lc_bad('Дзен Видео', 'Публикация в Дзене удалена или недоступна.');
             }
