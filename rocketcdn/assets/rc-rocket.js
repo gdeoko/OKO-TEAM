@@ -3611,7 +3611,12 @@ Rocket.prototype.layout = function (p, dt) {
      отпускает, и корабль уходит на свою траекторию. */
   var scAct = g.RC_SCENE;
   if (scAct && scAct.act === "pad" && app < 0.01 && (this.landK || 0) < 0.01) {
-    var padK = 1 - Math.min(1, (scAct.k || 0) * 1.35);
+    /* Хватка держится почти весь акт и отпускает только на его
+       исходе. Прежняя формула слабела линейно с самого начала, а на
+       телефоне доля акта уже при нетронутой странице равна 0.58:
+       герой оказывался притянут лишь на пятую часть пути и всё
+       равно висел за краем кадра. */
+    var padK = 1 - Math.max(0, Math.min(1, ((scAct.k || 0) - 0.72) / 0.28));
     if (padK > 0.01) {
       var pw = this.canvas.clientWidth || innerWidth;
       var ph = this.canvas.clientHeight || innerHeight;
