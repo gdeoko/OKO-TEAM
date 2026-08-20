@@ -8,6 +8,7 @@ $nav = [
 $partners = [
   ['emblem_minkultury_rf','Минкультуры РФ','https://culture.gov.ru'],
   ['emblem_minobrazovaniya','Минобрнауки РФ','https://minobrnauki.gov.ru'],
+  ['emblem_rosmolodezh','Росмолодежь','https://fadm.gov.ru'],
   ['emblem_roskomnadzor','Роскомнадзор','https://rkn.gov.ru'],
   ['prokultura_full_horizontal','Про.Культура.РФ','https://pro.culture.ru'],
   ['natsproekty_kultura','Нацпроекты «Культура»','https://национальныепроекты.рф'],
