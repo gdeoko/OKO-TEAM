@@ -254,10 +254,19 @@ function wave(box) {
 function topology(box) {
   var W = 640, H = 300;
   var origin = { x: 60, y: 150 };
+  /* Названия ЦОД берём из реестра сети и на языке страницы: в
+     разметке они были вписаны по-русски и в английской версии
+     схема оставалась «Москва - Алматы - Прага» */
+  var lang = document.documentElement.lang === "en" ? "en" : "ru";
+  var G = g.RC_GEO;
+  var dcName = function (i, def) {
+    var d = G && G.DC && G.DC[i];
+    return (d && d.name && d.name[lang]) || def;
+  };
   var dcs = [
-    { x: 250, y: 62,  name: box.dataset.dc1 || "Москва" },
-    { x: 250, y: 150, name: box.dataset.dc2 || "Алматы" },
-    { x: 250, y: 238, name: box.dataset.dc3 || "Прага" }
+    { x: 250, y: 62,  name: dcName(0, "Москва") },
+    { x: 250, y: 150, name: dcName(1, "Алматы") },
+    { x: 250, y: 238, name: dcName(2, "Прага") }
   ];
   var edges = [];
   for (var i = 0; i < 9; i++) {
@@ -288,11 +297,11 @@ function topology(box) {
   });
 
   var nodes = '<g class="tp-origin"><rect x="' + (origin.x - 30) + '" y="' + (origin.y - 26) + '" width="60" height="52" rx="12"/>' +
-    '<text x="' + origin.x + '" y="' + (origin.y + 46) + '">' + esc(t("viz.origin", box.dataset.origin)) + "</text></g>";
+    '<text x="' + origin.x + '" y="' + (origin.y + 46) + '">' + esc(t("viz.origin", lang === "en" ? "Your origin" : "Ваш origin")) + "</text></g>";
   dcs.forEach(function (d) {
     nodes += '<g class="tp-dc"><circle cx="' + d.x + '" cy="' + d.y + '" r="17"/>' +
       '<circle class="tp-ring" cx="' + d.x + '" cy="' + d.y + '" r="17"/>' +
-      '<text x="' + d.x + '" y="' + (d.y + 36) + '">' + d.name + "</text></g>";
+      '<text x="' + d.x + '" y="' + (d.y + 36) + '">' + esc(d.name) + "</text></g>";
   });
   edges.forEach(function (e) {
     nodes += '<circle class="tp-edge" cx="' + e.x + '" cy="' + e.y + '" r="6"/>';
@@ -305,7 +314,13 @@ function topology(box) {
 function marquee(box) {
   var G = g.RC_GEO;
   if (!G) return;
-  var names = G.NODES.map(function (n) { return n[0]; });
+  /* Имя города берём на языке страницы: раньше в английской версии
+     по строке ехали «Атланта, Ашхабад, Бангкок» - реестр отдавал
+     только русское написание */
+  var lang = document.documentElement.lang === "en" ? "en" : "ru";
+  var names = G.NODES.map(function (n) {
+    return G.name ? G.name(n, lang) : n[0];
+  });
   /* Перемешиваем, но детерминированно, чтобы порядок не прыгал при перерисовке */
   names = names.slice().sort(function (a, b) { return (a.length % 7) - (b.length % 7) || a.localeCompare(b); });
   var line = names.map(function (n) { return '<span>' + n + "</span>"; }).join('<i class="mq-dot"></i>');

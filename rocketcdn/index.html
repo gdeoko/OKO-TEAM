@@ -83,10 +83,17 @@ img,svg,canvas{max-width:100%}
 .nav{display:flex !important;flex-wrap:wrap;justify-content:center;width:100%;margin:0 !important}
 /* Контейнеры, которые заполняет сценарий, остались бы пустыми дырами
    между заголовком и следующим блоком */
+/* :empty срабатывает только на тех, куда контент кладёт JS. Продукты,
+   преимущества, сценарии и вопросы засеяны в разметку и видны без JS */
 #gridProducts:empty,#gridAdv:empty,#gridCases:empty,#faqList:empty,
 #relGrid:empty,#incGrid:empty,#dcGrid:empty,#howGrid:empty,
 #heroMarks:empty,#whatMarks:empty,#nodeList:empty,#regTabs:empty{display:none !important}
-.hs-view,.hs-bar{display:none !important}
+/* Без JS ленты не едут вбок - показываем их обычной сеткой */
+.hs-view{display:block !important;overflow:visible !important}
+.hs-track{display:grid !important;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:18px;width:auto !important;transform:none !important}
+.hs-track>*{width:auto !important}
+.hs-stage{position:static !important;height:auto !important}
+.hs-bar{display:none !important}
 </style>
 </noscript>
 
@@ -1049,7 +1056,7 @@ html[data-theme="light"] .rc-load{background:#070F1A}
       <h2 class="sec-h" data-i18n="prod.h">Инфраструктура под любую задачу</h2>
       <p class="sec-p" data-i18n="prod.p">Всё, что нужно для доставки контента и работы медиа-сервисов, в одном личном кабинете.</p>
     </div>
-    <div class="grid g-4 tight" id="gridProducts"></div>
+    <div class="grid g-4 tight" id="gridProducts"><div class="card"><h3>CDN</h3><p>Кэширование и раздача статики, видео и больших файлов с ближайшего к пользователю узла.</p><ul><li>Статика и большие файлы</li><li>Гибкие правила кэша</li><li>Своя SSL и свой домен</li></ul></div><div class="card"><h3>Стриминг</h3><p>Живые трансляции и видео по запросу на аудиторию любого размера, на все известные устройства.</p><ul><li>Live и VOD</li><li>Транскодирование</li><li>Низкая задержка</li></ul></div><div class="card"><h3>Медиа-хранилище</h3><p>Объектное хранилище для видео и файлов с прямой отдачей в сеть доставки.</p><ul><li>S3-совместимый доступ</li><li>Хранение без лимитов</li><li>Отдача сразу через CDN</li></ul></div><div class="card"><h3>Плеер</h3><p>Готовый плеер с адаптивным качеством, вашим брендом и аналитикой просмотров.</p><ul><li>Адаптивный битрейт</li><li>Оформление под бренд</li><li>Статистика просмотров</li></ul></div><div class="card"><h3>Облако</h3><p>Виртуальные машины на процессорах нового поколения AMD и Intel, а для Big Data и AI - ARM и GPU.</p><ul><li>AMD, Intel, ARM</li><li>Графические ускорители</li><li>Масштабирование за минуты</li></ul></div><div class="card"><h3>Безопасность</h3><p>Фильтрация атак на уровне сети и приложения, доступ по правилам и защита origin.</p><ul><li>Защита L3-L7</li><li>Правила доступа</li><li>Origin закрыт от прямых запросов</li></ul></div><div class="card"><h3>Виртуальный диктор</h3><p>Синтез речи для озвучки роликов, объявлений и медиа-контента.</p><ul><li>Естественные голоса</li><li>Пакетная обработка</li><li>Готовый файл в хранилище</li></ul></div></div>
   </div>
 </section>
 
@@ -1061,7 +1068,7 @@ html[data-theme="light"] .rc-load{background:#070F1A}
       <h2 class="sec-h" data-i18n="adv.h">Почему выбирают Rocket CDN</h2>
       <p class="sec-p" data-i18n="adv.p">Собственное железо, собственные каналы и инженеры на связи круглосуточно.</p>
     </div>
-    <div class="grid g-3" id="gridAdv"></div>
+    <div class="grid g-3" id="gridAdv"><div class="card"><h3>Процессоры нового поколения</h3><p>Виртуальные машины на базе AMD и Intel последних поколений. Ресурсы выделяются честно, без переподписки.</p></div><div class="card"><h3>ARM и GPU для Big Data и AI</h3><p>Для расчётов, обучения моделей и обработки медиа доступны ARM-процессоры и графические ускорители.</p></div><div class="card"><h3>Трансляции любого масштаба</h3><p>Качественные трансляции на аудиторию любого размера, на все известные устройства, в короткие сроки и по доступным ценам.</p></div><div class="card"><h3>Поддержка круглосуточно</h3><p>Инженеры на связи 24/7. Отвечает человек, который разбирается в сети, а не робот с шаблоном.</p></div><div class="card"><h3>1 500 000 зрителей и 1 Тб</h3><p>Сеть держит более полутора миллионов зрителей одновременно и свыше терабайта нагрузки.</p></div><div class="card"><h3>3 Тбит/с по России</h3><p>Пропускная способность сети внутри России превышает 3 Тбит/с и растёт вместе с вашим трафиком.</p></div></div>
   </div>
 </section>
 
@@ -1159,7 +1166,7 @@ html[data-theme="light"] .rc-load{background:#070F1A}
   <div class="wrap">
     <div class="viz-card rv">
       <h3 data-i18n="topo.h">Маршрут от origin до пользователя</h3>
-      <div data-viz="topology" data-origin="Ваш origin" data-dc1="Москва" data-dc2="Алматы" data-dc3="Прага"></div>
+      <div data-viz="topology"></div>
       <p data-i18n="topo.p">Слева ваш сервер, в центре собственные дата-центры, справа edge-узлы рядом с аудиторией.</p>
     </div>
   </div>
@@ -1188,7 +1195,7 @@ html[data-theme="light"] .rc-load{background:#070F1A}
       <p class="sec-p" data-i18n="case.p">От разовой трансляции до постоянной раздачи терабайтов.</p>
     </div>
     <div class="hs-view">
-      <div class="hs-track" id="gridCases"></div>
+      <div class="hs-track" id="gridCases"><div class="case-card"><h3>Видеосервисы и OTT</h3><p>Раздача VOD-библиотек и живых каналов без буферизации в часы пик.</p></div><div class="case-card"><h3>Телеканалы</h3><p>Круглосуточное вещание с резервированием потока и записью эфира.</p></div><div class="case-card"><h3>Медиа и новости</h3><p>Мгновенная отдача фото, видео и страниц при всплесках посещаемости.</p></div><div class="case-card"><h3>E-commerce</h3><p>Быстрые карточки товаров и каталоги. Скорость страницы напрямую влияет на конверсию.</p></div><div class="case-card"><h3>Игры и приложения</h3><p>Раздача обновлений и патчей на миллионы устройств без просадки канала.</p></div><div class="case-card"><h3>Концерты и конференции</h3><p>Разовые трансляции на десятки тысяч зрителей, без подготовки своей инфраструктуры.</p></div><div class="case-card"><h3>Образование и вебинары</h3><p>Трансляции на большие аудитории с записью и хранением материалов.</p></div><div class="case-card"><h3>SaaS и B2B-платформы</h3><p>Стабильная работа интерфейса для клиентов в разных странах и часовых поясах.</p></div><div class="case-card"><h3>Недвижимость</h3><p>Тяжёлые планировки, туры и видео объектов открываются без ожидания.</p></div><div class="case-card"><h3>Туризм</h3><p>Каталоги и галереи грузятся одинаково быстро из любой страны.</p></div><div class="case-card"><h3>Госсектор</h3><p>Порталы и трансляции мероприятий, устойчивые к нагрузке и атакам.</p></div><div class="case-card"><h3>Сайты под нагрузкой</h3><p>Любой проект, где всплеск посещаемости не должен ронять сервер.</p></div></div>
     </div>
     <div class="wrap hs-bar"><i></i></div>
   </div>
@@ -1215,7 +1222,7 @@ html[data-theme="light"] .rc-load{background:#070F1A}
       <div class="sec-tag" data-i18n="faq.tag">Вопросы и ответы</div>
       <h2 class="sec-h" data-i18n="faq.h">Коротко о главном</h2>
     </div>
-    <div class="faq rv rv-d1" id="faqList"></div>
+    <div class="faq rv rv-d1" id="faqList"><div class="faq-i"><button class="faq-q" aria-expanded="false" aria-controls="faqA0" id="faqQ0" data-faq="0"><span>Сколько времени занимает подключение?</span><i></i></button><div class="faq-a" id="faqA0" role="region" aria-labelledby="faqQ0" inert><p>Технически ресурс создаётся в личном кабинете за несколько минут. С учётом согласования домена, выпуска сертификата и проверки настроек боевой трафик обычно переключают в течение одного рабочего дня.</p></div></div><div class="faq-i"><button class="faq-q" aria-expanded="false" aria-controls="faqA1" id="faqQ1" data-faq="1"><span>Можно ли использовать свой домен и сертификат?</span><i></i></button><div class="faq-a" id="faqA1" role="region" aria-labelledby="faqQ1" inert><p>Да. Вы указываете свой домен, а сертификат либо выпускается автоматически, либо загружается ваш собственный. Раздел SSL-сертификатов есть в личном кабинете.</p></div></div><div class="faq-i"><button class="faq-q" aria-expanded="false" aria-controls="faqA2" id="faqQ2" data-faq="2"><span>Как считается стоимость?</span><i></i></button><div class="faq-a" id="faqA2" role="region" aria-labelledby="faqQ2" inert><p>По фактически отданному трафику и используемым ресурсам. Чем больше объём, тем ниже цена за единицу. Точный расчёт под ваш профиль нагрузки подготовим после короткого разговора.</p></div></div><div class="faq-i"><button class="faq-q" aria-expanded="false" aria-controls="faqA3" id="faqQ3" data-faq="3"><span>Что происходит, если узел недоступен?</span><i></i></button><div class="faq-a" id="faqA3" role="region" aria-labelledby="faqQ3" inert><p>Маршрутизация автоматически уводит запросы на соседний работающий узел. Пользователь этого не замечает, а мы видим событие в мониторинге и разбираемся с причиной.</p></div></div><div class="faq-i"><button class="faq-q" aria-expanded="false" aria-controls="faqA4" id="faqQ4" data-faq="4"><span>Есть ли защита от атак?</span><i></i></button><div class="faq-a" id="faqA4" role="region" aria-labelledby="faqQ4" inert><p>На узлах с меткой «Защита» работает фильтрация на уровнях L3-L7. Origin при этом закрывается от прямых обращений, снаружи видна только сеть доставки.</p></div></div><div class="faq-i"><button class="faq-q" aria-expanded="false" aria-controls="faqA5" id="faqQ5" data-faq="5"><span>Подходит ли сеть для живых трансляций?</span><i></i></button><div class="faq-a" id="faqA5" role="region" aria-labelledby="faqQ5" inert><p>Да, это один из основных сценариев. Сеть рассчитана на более чем полтора миллиона одновременных зрителей и свыше терабайта нагрузки.</p></div></div><div class="faq-i"><button class="faq-q" aria-expanded="false" aria-controls="faqA6" id="faqQ6" data-faq="6"><span>Где находятся собственные дата-центры?</span><i></i></button><div class="faq-a" id="faqA6" role="region" aria-labelledby="faqQ6" inert><p>В Москве, Алматы и Праге. Остальные точки присутствия построены на партнёрских площадках и точках обмена трафиком.</p></div></div><div class="faq-i"><button class="faq-q" aria-expanded="false" aria-controls="faqA7" id="faqQ7" data-faq="7"><span>Какая статистика доступна?</span><i></i></button><div class="faq-a" id="faqA7" role="region" aria-labelledby="faqQ7" inert><p>Трафик, число запросов, коды ответов, доля попаданий в кэш и география аудитории. Данные обновляются в реальном времени в разделе «Статистика».</p></div></div></div>
   </div>
 </section>
 
@@ -1266,13 +1273,13 @@ html[data-theme="light"] .rc-load{background:#070F1A}
         <div class="field">
           <label for="lfTopic" data-i18n="ct.topic">Направление</label>
           <select id="lfTopic" name="topic">
-            <option>CDN</option>
-            <option>Стриминг</option>
-            <option>Медиа-хранилище</option>
-            <option>Плеер</option>
-            <option>Облако</option>
-            <option>Безопасность</option>
-            <option>Виртуальный диктор</option>
+            <option data-i18n="prod.1h">CDN</option>
+            <option data-i18n="prod.2h">Стриминг</option>
+            <option data-i18n="prod.3h">Медиа-хранилище</option>
+            <option data-i18n="prod.4h">Плеер</option>
+            <option data-i18n="prod.5h">Облако</option>
+            <option data-i18n="prod.6h">Безопасность</option>
+            <option data-i18n="prod.7h">Виртуальный диктор</option>
           </select>
         </div>
         <div class="field">

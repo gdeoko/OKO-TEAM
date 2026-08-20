@@ -44,10 +44,10 @@
 /* Переменные оформления пишем через общий кэш: даже на локальном
    элементе запись помечает устаревшим его поддерево, а зовём мы её
    из каждого кадра по всем карточкам. Пишем только изменившееся. */
-var V = (g.RC_VAR && g.RC_VAR.set) || function (el, n, v) {
+var CSSVAR = (g.RC_VAR && g.RC_VAR.set) || function (el, n, v) {
   if (el && el.style) el.style.setProperty(n, v);
 };
-var D = (g.RC_VAR && g.RC_VAR.del) || function (el, n) {
+var CSSDEL = (g.RC_VAR && g.RC_VAR.del) || function (el, n) {
   if (el && el.style) el.style.removeProperty(n);
 };
 
@@ -140,7 +140,7 @@ function holoBuild(cards) {
     /* Фаза мерцания. Без неё четыре экрана мигают в такт, и вместо
        живой рубки получается один моргающий блок. Числа неровные
        нарочно: ровный шаг снова свёл бы их в общий ритм. */
-    V(el, "--cin-ph", (i * 1.37 % 4.3).toFixed(2));
+    CSSVAR(el, "--cin-ph", (i * 1.37 % 4.3).toFixed(2));
     if (el.getAttribute("data-holo") === "1") continue;
     for (var k = 0; k < HOLO.length; k++) {
       var lay = doc.createElement("i");
@@ -162,10 +162,10 @@ function holoStrip(cards) {
       if (lay && lay.parentNode === el) el.removeChild(lay);
     }
     el.removeAttribute("data-holo");
-    D(el, "--cin-lit");
-    D(el, "--cin-dec");
-    D(el, "--cin-sy");
-    D(el, "--cin-ph");
+    CSSDEL(el, "--cin-lit");
+    CSSDEL(el, "--cin-dec");
+    CSSDEL(el, "--cin-sy");
+    CSSDEL(el, "--cin-ph");
   }
 }
 
@@ -329,13 +329,13 @@ function cabin(act) {
     var vis = ax <= front ? 1 : clamp(1 - (ax - front) / (phone ? 0.62 : 0.98), 0, 1);
     if (i === best) vis = Math.max(vis, 0.92);
 
-    V(el, "--cin-x", tx.toFixed(1) + "px");
-    V(el, "--cin-y", ty.toFixed(1) + "px");
-    V(el, "--cin-z", tz.toFixed(0) + "px");
-    V(el, "--cin-rot", (rot * DEG).toFixed(2) + "deg");
-    V(el, "--cin-vis", vis.toFixed(3));
-    V(el, "--cin-blur", (soft && i !== best ? (1 - vis) * 2.6 : 0).toFixed(2) + "px");
-    V(el, "--cin-zi", String(Math.round(600 - ax * 170)));
+    CSSVAR(el, "--cin-x", tx.toFixed(1) + "px");
+    CSSVAR(el, "--cin-y", ty.toFixed(1) + "px");
+    CSSVAR(el, "--cin-z", tz.toFixed(0) + "px");
+    CSSVAR(el, "--cin-rot", (rot * DEG).toFixed(2) + "deg");
+    CSSVAR(el, "--cin-vis", vis.toFixed(3));
+    CSSVAR(el, "--cin-blur", (soft && i !== best ? (1 - vis) * 2.6 : 0).toFixed(2) + "px");
+    CSSVAR(el, "--cin-zi", String(Math.round(600 - ax * 170)));
 
     /* ── Голограмма: яркость проектора и распад развёртки ─────
        Яркость считаем от угла, а не от прозрачности: экран
@@ -343,7 +343,7 @@ function cabin(act) {
        заметно раньше, чем перестаёт быть полупрозрачным. */
     if (holo) {
       var lit = clamp(1 - ax / (front * 1.7), 0, 1);
-      V(el, "--cin-lit", lit.toFixed(3));
+      CSSVAR(el, "--cin-lit", lit.toFixed(3));
 
       /* Уход за плечо. Проектор не гаснет прозрачностью: у него
          рвётся развёртка, полосы утоньшаются, и в самом хвосте
@@ -354,8 +354,8 @@ function cabin(act) {
          где эффекты не урезаны: плющить текст, который ещё читают,
          нельзя ни на каком устройстве. */
       var sy = soft ? 1 - clamp((dec - 0.58) / 0.42, 0, 1) * 0.68 : 1;
-      V(el, "--cin-dec", dec.toFixed(3));
-      V(el, "--cin-sy", sy.toFixed(3));
+      CSSVAR(el, "--cin-dec", dec.toFixed(3));
+      CSSVAR(el, "--cin-sy", sy.toFixed(3));
       el.classList.toggle("cin-decay", dec > 0.02);
 
       /* Розжиг ровно один раз на приезд: пока экран стоит перед
@@ -410,9 +410,9 @@ function directory(act) {
      справочник замрёт наполовину повёрнутым. */
   if (Math.abs(rel - act.rotCur) > 0.002 || Math.abs(dx - act.dxCur) > 0.4) busy = 1;
 
-  V(host, "--cin-rot", (act.rotCur * DEG).toFixed(2) + "deg");
-  V(host, "--cin-x", act.dxCur.toFixed(1) + "px");
-  V(host, "--cin-z", (-(1 - Math.cos(act.rotCur)) * 340).toFixed(0) + "px");
+  CSSVAR(host, "--cin-rot", (act.rotCur * DEG).toFixed(2) + "deg");
+  CSSVAR(host, "--cin-x", act.dxCur.toFixed(1) + "px");
+  CSSVAR(host, "--cin-z", (-(1 - Math.cos(act.rotCur)) * 340).toFixed(0) + "px");
 
   /* Строка, доехавшая до линии чтения, подсвечивается кромкой:
      видно, какой вопрос сейчас «под лучом» справочника. */
@@ -421,7 +421,7 @@ function directory(act) {
     var r = act.rects[i];
     if (!r) continue;
     var d = Math.abs(r.top + r.height / 2 - line);
-    V(act.items[i], "--cin-lit",
+    CSSVAR(act.items[i], "--cin-lit",
       clamp(1 - d / (innerHeight * 0.3), 0, 1).toFixed(3));
   }
 }
@@ -447,12 +447,12 @@ function tunnel(act, p) {
     var z = far + k * (100 - far);           /* издалека на зрителя */
     var rot = (1 - k) * (i % 2 ? 9 : -9);
     var vis = clamp(k * 2.6, 0, 1) * clamp((1.2 - k) * 4, 0, 1);
-    V(el, "--cin-z", z.toFixed(0) + "px");
-    V(el, "--cin-rot", rot.toFixed(2) + "deg");
-    V(el, "--cin-vis", (0.3 + vis * 0.7).toFixed(3));
+    CSSVAR(el, "--cin-z", z.toFixed(0) + "px");
+    CSSVAR(el, "--cin-rot", rot.toFixed(2) + "deg");
+    CSSVAR(el, "--cin-vis", (0.3 + vis * 0.7).toFixed(3));
     /* Размытие только у дальнего края и слабое: карточку, до которой
        человек долистал, он должен читать, а не угадывать. */
-    V(el, "--cin-blur", ((1 - clamp(k * 2.4, 0, 1)) * 1.4).toFixed(2) + "px");
+    CSSVAR(el, "--cin-blur", ((1 - clamp(k * 2.4, 0, 1)) * 1.4).toFixed(2) + "px");
   }
 }
 
@@ -468,9 +468,9 @@ function shelf(act) {
     if (!r || r.width < 4) continue;
     var c = r.left + r.width / 2;
     var d = clamp((c - mid) / (innerWidth * 0.6), -1.4, 1.4);
-    V(el, "--cin-rot", (-d * (phone ? 12 : 22)).toFixed(2) + "deg");
-    V(el, "--cin-z", (-Math.abs(d) * (phone ? 60 : 140)).toFixed(0) + "px");
-    V(el, "--cin-vis", (1 - Math.abs(d) * 0.4).toFixed(3));
+    CSSVAR(el, "--cin-rot", (-d * (phone ? 12 : 22)).toFixed(2) + "deg");
+    CSSVAR(el, "--cin-z", (-Math.abs(d) * (phone ? 60 : 140)).toFixed(0) + "px");
+    CSSVAR(el, "--cin-vis", (1 - Math.abs(d) * 0.4).toFixed(3));
   }
 }
 
@@ -514,7 +514,7 @@ function collect() {
     /* Длина трека прокрутки считается из числа панелей, а правило
        живёт на обёртке блока - переменную ставим на секцию, иначе
        она до обёртки не дойдёт. */
-    V(rel, "--cab-n", String(cards.length));
+    CSSVAR(rel, "--cab-n", String(cards.length));
     cards.forEach(function (el) { el.classList.toggle("cin-item", on); });
     /* Экраны рубки: слои проекции живут разметкой. Вне салона их
        снимаем начисто - карточка обязана вернуться карточкой. */

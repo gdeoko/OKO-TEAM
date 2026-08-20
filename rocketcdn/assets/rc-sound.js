@@ -113,7 +113,10 @@ Sound.prototype.blip = function (freq, dur, type, vol) {
   var o = ctx.createOscillator();
   var gn = ctx.createGain();
   o.type = type || "triangle";
-  o.frequency.setValueAtTime(freq, t);
+  /* Зовут и без частоты - запасным путём вместо uiClick. Без
+     значения по умолчанию сюда приходило undefined и осциллятор
+     падал прямо в обработчике нажатия. */
+  o.frequency.setValueAtTime(freq || 660, t);
   gn.gain.setValueAtTime(0, t);
   gn.gain.linearRampToValueAtTime(vol == null ? 0.05 : vol, t + 0.008);
   gn.gain.exponentialRampToValueAtTime(0.0001, t + (dur || 0.12));
@@ -351,7 +354,14 @@ var snd = new Sound();
 /* ── Короткие события: отсечки маршрута и посадка ─────────────
    Звучат только если человек включил звук. Не чаще шести раз в
    секунду: иначе на быстрой прокрутке получается треск, а не кино. */
-Sound.prototype.blip = function (freq) {
+/* Частый щелчок прокрутки: не чаще шести раз в секунду, иначе на
+   быстром пальце получается треск, а не кино.
+
+   Раньше это объявление называлось blip и перекрывало настоящий
+   blip выше - вместе с его громкостью, длительностью и формой
+   волны. Двухнотные сигналы от этого звучали одной нотой: вторая
+   нота приходила через 120 мс и глушилась этой самой защёлкой. */
+Sound.prototype.tick = function (freq) {
   if (!this.on || !this.ctx) return;
   var now = this.ctx.currentTime;
   if (this._blipAt && now - this._blipAt < 0.16) return;
@@ -528,16 +538,11 @@ function bind() {
   try { off = localStorage.getItem(KEY) === "off"; } catch (e) {}
   if (off || REDUCE) return;
 
-  function first() {
-    ["pointerup", "touchend", "keydown", "wheel", "scroll"].forEach(function (n) {
-      removeEventListener(n, first);
-    });
-    snd.start();
-    setTimeout(paint, 400);
-  }
-  ["pointerup", "touchend", "keydown", "wheel", "scroll"].forEach(function (n) {
-    addEventListener(n, first, { once: true, passive: true });
-  });
+  /* Звук ждёт нажатия на свою кнопку и ничего больше. Раньше он
+     заводился на первой же прокрутке, хотя тумблер в шапке стоял в
+     положении «выключено»: человек листал страницу и получал гул,
+     которого не просил. Подсказка о том, что звук здесь есть,
+     осталась - она сообщает, а не включает. */
 }
 
 if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", bind);

@@ -215,7 +215,9 @@ reg({
     if (p < 0.3 || el._tick) return;
     el._tick = 1;
     el.classList.add("rc-tick");
-    if (g.RC_SOUND && g.RC_SOUND.blip) { try { g.RC_SOUND.blip(); } catch (e) {} }
+    /* Частый щелчок под пальцем - через tick: у него своя защёлка
+       от треска на быстрой прокрутке */
+    if (g.RC_SOUND && g.RC_SOUND.tick) { try { g.RC_SOUND.tick(); } catch (e) {} }
   },
   settle: function (el) { el._tick = 1; el.classList.add("rc-tick"); }
 });

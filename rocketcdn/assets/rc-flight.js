@@ -37,6 +37,46 @@ try { reduced = matchMedia("(prefers-reduced-motion: reduce)").matches; } catch 
 
 var RU = doc.documentElement.lang !== "en";
 
+/* Язык игры раньше решался один раз, при загрузке файла: человек
+   переключал сайт на английский, а кабина, названия целей и
+   подсказки оставались русскими до перезагрузки. Теперь на смену
+   языка мы пересобираем оверлей - при закрытой игре это незаметно,
+   а в полёте ждём выхода, чтобы не рвать кадр. */
+var langDirty = false;
+
+function relang() {
+  RU = doc.documentElement.lang !== "en";
+  if (F.open) { langDirty = true; return; }
+  langDirty = false;
+  if (!ui.wrap) return;
+
+  /* Мир нарисован в холст внутри оверлея: снося оверлей, обязаны
+     забыть и мир, иначе следующий заход будет рисовать в холст,
+     которого больше нет, - чёрный кадр без единой ошибки. */
+  if (F.built) {
+    F.built = false;
+    if (W3 && W3.r) {
+      try { W3.r.dispose(); } catch (e) {}
+      try {
+        var lose = W3.r.getContext().getExtension("WEBGL_lose_context");
+        if (lose) lose.loseContext();
+      } catch (e2) {}
+    }
+    W3 = null;
+    if (F.glSlot && g.RC_GL) { F.glSlot = false; g.RC_GL.give(); }
+  }
+  if (ui.wrap.parentNode) ui.wrap.parentNode.removeChild(ui.wrap);
+  ui = {};
+  var fab = doc.querySelector(".rcf-fab");
+  if (fab) {
+    var lbl = fab.querySelector("span");
+    if (lbl) lbl.textContent = RU ? "Полёт" : "Flight";
+  }
+}
+
+doc.addEventListener("rc:lang", relang);
+addEventListener("rc:lang", relang);
+
 /* Подписи по маршруту: где мы и почему это про CDN */
 var CAPTIONS = [
   { p: 0.00, t: RU ? "ЗЕМЛЯ · 218 точек присутствия Rocket CDN" : "EARTH · 218 Rocket CDN points of presence" },
@@ -2788,6 +2828,8 @@ function close() {
   if (g.RC_MUSIC && g.RC_MUSIC.boost) { try { g.RC_MUSIC.boost(false); } catch (e) {} }
   if (g.RC_SOUND && g.RC_SOUND.flight) { try { g.RC_SOUND.flight(false); } catch (e) {} }
   if (g.RC_track) g.RC_track("flight", "close p=" + F.p.toFixed(2));
+  /* Язык переключили в полёте - пересобираем кабину теперь */
+  if (langDirty) setTimeout(relang, 420);
 }
 
 /* Приглашение в полёт после успешной заявки. Не окно и не

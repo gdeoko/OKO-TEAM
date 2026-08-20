@@ -55,9 +55,12 @@
      список пересобираем, а не запоминаем один раз навсегда */
   function sync(r) {
     var cards = $$(":scope > *", r.track).filter(function (el) {
-      return el.nodeType === 1 && el.offsetWidth > 0;
+      return el.nodeType === 1;
     });
-    if (cards.length === r.cards.length) { r.cards = cards; return; }
+    if (cards.length === r.cards.length && r.dots.children.length === cards.length) {
+      r.cards = cards;
+      return;
+    }
     r.cards = cards;
 
     var html = "";
@@ -106,10 +109,15 @@
     raf = 0;
     for (var i = 0; i < rails.length; i++) {
       var r = rails[i];
+      /* Список карточек сверяем всегда, даже когда лента за кадром:
+         содержимое приходит из словаря уже после загрузки, и если
+         пропустить этот момент, счётчик так и останется на единице.
+         А вот отмечать активную точку есть смысл только в кадре. */
+      sync(r);
+      if (!r.cards.length) continue;
       var box = r.sec.getBoundingClientRect();
       if (box.bottom < -80 || box.top > g.innerHeight + 80) continue;
-      sync(r);
-      if (r.cards.length) paint(r);
+      paint(r);
     }
   }
 
@@ -130,9 +138,9 @@
     }
     var span = Math.max(0, r.track.scrollWidth - g.innerWidth);
     if (!span) return;
-    var к = Math.min(1, Math.max(0, (card.offsetLeft - (g.innerWidth - card.offsetWidth) / 2) / span));
+    var part = Math.min(1, Math.max(0, (card.offsetLeft - (g.innerWidth - card.offsetWidth) / 2) / span));
     var total = r.sec.offsetHeight - g.innerHeight;
-    var top = r.sec.offsetTop + total * к;
+    var top = r.sec.offsetTop + total * part;
     try { g.scrollTo({ top: top, behavior: "smooth" }); }
     catch (e2) { g.scrollTo(0, top); }
   }
@@ -163,6 +171,16 @@
     /* Карточки в ленты досыпаются из словаря и из админки:
        пока это происходит, держим счётчик в курсе */
     g.addEventListener("rc:content", schedule);
+    d.addEventListener("rc:lang", schedule);
+    /* Ленты наполняются и переписываются из словаря, из админки и при
+       смене языка. Следим за самим содержимым, а не за моментами,
+       когда его меняют: иначе счётчик рано или поздно отстанет. */
+    if (g.MutationObserver) {
+      try {
+        var mo = new g.MutationObserver(schedule);
+        rails.forEach(function (r) { mo.observe(r.track, { childList: true }); });
+      } catch (e) {}
+    }
     schedule();
     g.setTimeout(schedule, 400);
     g.setTimeout(schedule, 1600);

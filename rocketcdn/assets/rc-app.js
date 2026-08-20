@@ -330,7 +330,7 @@ function renderNodes() {
      не едет. Теперь список показывает первые строки целиком, а
      остальные разворачиваются по кнопке. */
   var full = nodesAll || !!state.query || state.region != null;
-  var shown = full ? rows.slice(0, 40) : rows.slice(0, NODES_HEAD);
+  var shown = full ? rows : rows.slice(0, NODES_HEAD);
   var hidden = rows.length - shown.length;
   if (!rows.length) {
     list.innerHTML = '<div class="node-empty">' + esc(t("infra.none", "Ничего не найдено")) + "</div>";
@@ -338,7 +338,11 @@ function renderNodes() {
   }
   list.innerHTML = shown.map(function (pair) {
     var n = pair[0], reg = GEO.REGIONS[n[3]];
-    return '<div class="node-row" data-idx="' + pair[1] + '" role="button" tabindex="0">' +
+    /* Табом в список входим один раз: двести восемнадцать строк
+       подряд - непроходимая стена, до заявки и подвала клавиатурой
+       было не добраться. Внутри списка ходим стрелками. */
+    return '<div class="node-row" data-idx="' + pair[1] + '" role="button" tabindex="' +
+      (pair === shown[0] ? "0" : "-1") + '">' +
       '<span class="nm">' + esc(GEO.name(n, state.lang)) + "</span>" + nodeTags(n) +
       '<span class="rg">' + esc(reg[state.lang] || reg.ru) + "</span></div>";
   }).join("") +
@@ -363,7 +367,28 @@ function renderNodes() {
       track("node", n[0]);
     }
     row.addEventListener("click", go);
-    row.addEventListener("keydown", function (e) { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); go(); } });
+    row.addEventListener("keydown", function (e) {
+      if (e.key === "Enter" || e.key === " ") { e.preventDefault(); go(); return; }
+
+      /* Стрелки водят по списку, Home и End - к краям. Место входа
+         переезжает вместе с фокусом, поэтому вернувшись табом,
+         человек попадает туда, где остановился. */
+      var step = 0;
+      if (e.key === "ArrowDown") step = 1;
+      else if (e.key === "ArrowUp") step = -1;
+      else if (e.key !== "Home" && e.key !== "End") return;
+
+      var all = $$(".node-row", list);
+      var at = all.indexOf(row);
+      var to = e.key === "Home" ? 0
+             : e.key === "End" ? all.length - 1
+             : at + step;
+      if (to < 0 || to >= all.length) return;
+      e.preventDefault();
+      all.forEach(function (x) { x.tabIndex = -1; });
+      all[to].tabIndex = 0;
+      all[to].focus();
+    });
 
     /* Список узлов - это бортовой реестр, а не таблица на фоне:
        строка под курсором обязана зажигать свою точку на шаре.
@@ -599,7 +624,15 @@ function wireForm(form, kind) {
     e.preventDefault();
     var msg = $(".form-msg", form), btn = $('button[type="submit"]', form);
     if (msg) msg.className = "form-msg";
-    if (!validate(form)) return;
+    if (!validate(form)) {
+      /* Молчаливый отказ - худшее, что тут может быть: человек жмёт
+         кнопку, ничего не происходит, и он уходит. Говорим прямо. */
+      if (msg) {
+        msg.className = "form-msg bad";
+        msg.textContent = t("ct.check", "Проверьте отмеченные поля.");
+      }
+      return;
+    }
 
     var payload = { kind: kind, lang: state.lang, page: location.pathname + location.search };
     $$("input, textarea, select", form).forEach(function (f) {
@@ -727,6 +760,18 @@ function boot() {
      Теперь всё чтение живёт в одном кадре, высота документа
      обновляется по изменению размеров, а не покадрово. */
   var navLinks = $$(".nav a");
+  /* До какого момента шапка не имеет права уехать: ставится при
+     переходе по якорю, снимается сама по времени */
+  var holdHdr = 0;
+  function keepHeader() {
+    holdHdr = performance.now() + 1400;
+    if (hdr) hdr.classList.remove("hide");
+  }
+  document.addEventListener("click", function (e) {
+    var a = e.target.closest ? e.target.closest('a[href^="#"]') : null;
+    if (a && a.getAttribute("href").length > 1) keepHeader();
+  }, true);
+  addEventListener("hashchange", keepHeader);
   var docH = 0, curSec = "", schedH = 0;
   function measure() {
     docH = document.documentElement.scrollHeight - innerHeight;
@@ -764,7 +809,12 @@ function boot() {
     if (prog) prog.style.width = (ratio * 100).toFixed(2) + "%";
     if (hdr) {
       hdr.classList.toggle("stuck", y > 8);
-      hdr.classList.toggle("hide", y > 320 && y > lastY && !drawer.classList.contains("on"));
+      /* Прыжок по якорю - формально «прокрутка вниз», и шапка от него
+         пряталась. На телефоне это отрезало навигацию совсем: бургер
+         уезжал за кромку, а другого входа в меню нет. Пока идёт
+         переход по ссылке меню, шапку держим. */
+      var jump = performance.now() < holdHdr;
+      hdr.classList.toggle("hide", !jump && y > 320 && y > lastY && !drawer.classList.contains("on"));
     }
     if (toTop) toTop.classList.toggle("on", y > 700);
     if (mcta) mcta.classList.toggle("on", y > innerHeight * 0.9);
@@ -888,10 +938,19 @@ function boot() {
     if (on) {
       modalBack = document.activeElement;
       track("open", "callback");
-      setTimeout(function () {
-        var f = focusables(modal);
-        if (f.length) f[0].focus();
-      }, 260);
+      /* Фокус ставим не по таймеру, а когда окно действительно
+         проявилось: пока идёт переход, оно ещё visibility:hidden, и
+         focus() молча ничего не делает. На занятой странице кадры
+         редкие, поэтому фиксированная задержка не спасала - раньше
+         фокус так и оставался снаружи. */
+      var tries = 0;
+      (function aim() {
+        if (!modal.classList.contains("on")) return;
+        var vis = getComputedStyle(modal).visibility !== "hidden";
+        var f = vis ? focusables(modal) : [];
+        if (f.length) { f[0].focus(); return; }
+        if (++tries < 120) requestAnimationFrame(aim);
+      })();
     } else if (modalBack && modalBack.focus) {
       try { modalBack.focus(); } catch (e) {}
       modalBack = null;
@@ -982,6 +1041,12 @@ function boot() {
   applyContent();
 }
 
-if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", boot);
-else boot();
+/* Ждём именно DOMContentLoaded, а не «страница уже разобрана».
+   Скрипты идут с defer, и на момент их выполнения readyState уже
+   «interactive» - при прежней проверке boot начинал работу сразу,
+   рассылал rc:lang, и модули, стоящие ниже по списку (rc-fill,
+   rc-viz), не успевали подписаться. Разделы «как работает»,
+   «надёжность» и «что входит» оставались пустыми. */
+if (document.readyState === "complete") boot();
+else document.addEventListener("DOMContentLoaded", boot);
 })();

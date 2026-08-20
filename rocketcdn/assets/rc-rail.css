@@ -203,3 +203,18 @@ html.rc-inside .rail-nav { opacity: 0; }
   transform: translate(-50%, 0); outline: none;
   box-shadow: var(--shadow), 0 0 0 3px var(--accent-tx);
 }
+
+/* ═══ Незаполненное согласие ════════════════════════════════
+   Класс на строке согласия ставился, а правила под него не было:
+   человек жал «Отправить заявку» и не видел вообще ничего.
+   Теперь строка краснеет, а флажок обведён. */
+/* Внутри рубки палитра формы своя (rc-cockpit.css красит подписи
+   бортовым светом) и перебивает обычный цвет ошибки. Здесь важнее
+   ошибка: без неё человек не понимает, почему кнопка молчит. */
+html .consent.bad,
+html[data-act="console"] .consent.bad,
+html.rc-inside .consent.bad { color: #F87171 !important; }
+.consent.bad input {
+  outline: 2px solid #F87171; outline-offset: 2px; border-radius: 3px;
+}
+.consent.bad a { color: inherit; }
