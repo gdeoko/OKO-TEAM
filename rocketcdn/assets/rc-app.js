@@ -565,6 +565,31 @@ function observeReveal() {
     }, { threshold: 0.04, rootMargin: "14% 0px 6% 0px" });
   }
   $$(".rv:not(.on)").forEach(function (e) { io.observe(e); });
+  guardReveal();
+}
+
+/* Сторож появления. Наблюдатель за видимостью на занятом устройстве
+   голодает: приёмка ловила разделы, которые оставались прозрачными
+   и через двенадцать секунд после того, как встали в кадр. Пустой
+   раздел вместо текста - худший исход, поэтому раз в семьсот
+   миллисекунд проверяем сами и показываем то, что уже видно.
+   Сторож замолкает, как только показывать больше нечего. */
+var revealT = 0;
+function guardReveal() {
+  if (revealT) return;
+  revealT = setInterval(function () {
+    var rest = $$(".rv:not(.on)");
+    if (!rest.length) { clearInterval(revealT); revealT = 0; return; }
+    if (document.hidden) return;
+    var h = innerHeight;
+    rest.forEach(function (e) {
+      var b = e.getBoundingClientRect();
+      if (b.bottom > -40 && b.top < h + 40 && b.width > 0) {
+        e.classList.add("on");
+        if (io) io.unobserve(e);
+      }
+    });
+  }, 700);
 }
 
 function countUp(el) {

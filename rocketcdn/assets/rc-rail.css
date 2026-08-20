@@ -277,3 +277,79 @@ html[data-theme="light"] .search input::placeholder {
   color: rgba(9, 19, 32, .58);
 }
 html[data-theme="light"] .field select { color: var(--tx); }
+
+/* ═══ Мелочи оформления по приёмке ══════════════════════════ */
+
+/* Кнопка «наверх» единственная на сайте не отвечала на наведение */
+.totop:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 16px 34px -8px rgba(10, 88, 151, .95);
+}
+.totop:active { transform: translateY(0) scale(.94); }
+
+/* Активный сегмент пилюли тоже живой: правило .on стоит после
+   :hover и перебивало его - наведение на выбранный язык, тему или
+   звук не давало никакого отклика */
+.pill button.on:hover, .pill button.on:focus-visible { color: #fff; filter: brightness(1.12); }
+.pill button:hover svg, .pill button:focus-visible svg { transform: scale(1.08); }
+.pill button svg { transition: transform .18s var(--ease); }
+
+/* Кольцо фокуса везде одного цвета: у переключателя темы оно было
+   тёмно-синим и в тёмной теме не читалось вовсе */
+.js-theme:focus-visible, .pill button:focus-visible {
+  outline: 2px solid var(--cyan, #42B2DC); outline-offset: 3px;
+}
+
+/* Фокус не должен вставать под шапкой */
+:where(a, button, input, textarea, select, [tabindex]) { scroll-margin-top: 96px; }
+
+/* Длинные слова в узких колонках переносятся, а не разрываются */
+html[lang="ru"] .card p, html[lang="ru"] .sec-p, html[lang="ru"] .faq-a p {
+  hyphens: auto; -webkit-hyphens: auto;
+}
+
+/* ═══ Индикатор звука ═══════════════════════════════════════
+   Три ровные полоски в выключенном состоянии читались как
+   многоточие - кнопка «ещё», а не звук. Добавляем к ним динамик:
+   он и говорит, о чём кнопка, и показывает состояние. */
+.pill.snd .js-sound { gap: 7px; }
+.pill.snd .js-sound::before {
+  content: ''; width: 15px; height: 15px; flex: none;
+  background: currentColor;
+  -webkit-mask: var(--snd-off-ico) center / contain no-repeat;
+  mask: var(--snd-off-ico) center / contain no-repeat;
+  transition: opacity .2s var(--ease);
+  opacity: .7;
+}
+html.snd-on .pill.snd .js-sound::before {
+  -webkit-mask-image: var(--snd-on-ico);
+  mask-image: var(--snd-on-ico);
+  opacity: 1;
+}
+/* Полоски равномерными остаются только пока звука нет: тогда они
+   читаются как ровная черта у динамика, а не как «ещё» */
+html:not(.snd-on) .pill.snd .eq { opacity: .5; }
+
+:root {
+  --snd-on-ico: url("data:image/svg+xml;charset=utf8,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23000' stroke-width='1.9' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M4 9v6h4l5 4V5L8 9H4Z'/%3E%3Cpath d='M16.5 8.5a5 5 0 0 1 0 7'/%3E%3C/svg%3E");
+  --snd-off-ico: url("data:image/svg+xml;charset=utf8,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23000' stroke-width='1.9' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M4 9v6h4l5 4V5L8 9H4Z'/%3E%3Cpath d='m17 10 4 4M21 10l-4 4'/%3E%3C/svg%3E");
+}
+
+/* ═══ Ширина кадра на больших экранах ═══════════════════════
+   На 1920 макет в 1200 пикселей плавает в окне: заголовок героя
+   уходит в три строки, между текстом и глобусом остаётся четверть
+   экрана пустоты. Даём кадру дышать - раскладка та же, меняются
+   только величины, как и требует приёмка. */
+@media (min-width: 1600px) {
+  :root { --maxw: 1400px; }
+}
+@media (min-width: 1900px) {
+  :root { --maxw: 1520px; }
+}
+
+/* Четыре колонки продуктов на 1440 дают строки по два-три слова -
+   вдвое ниже собственного норматива читаемости. Колонка появляется
+   только тогда, когда ей есть куда встать. */
+@media (min-width: 1100px) and (max-width: 1599px) {
+  #products .g-4 { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+}
