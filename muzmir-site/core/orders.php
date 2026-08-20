@@ -401,7 +401,11 @@ function order_items_parse(array $order): array {
         // «Благодарность × 5» с потерянными ФИО: в производство уходил один бланк,
         // пустой. Такие позиции держим по строке на экземпляр, различая по ФИО.
         $fio   = trim((string)($it['fio'] ?? ''));
-        $dtype = $kind === 'original' ? order_item_diploma_type($name) : '';
+        // Тип бланка определяется названием, а не видом заказа: электронная
+        // благодарность — та же благодарность, её тоже надо уметь показать,
+        // открыть и скачать. Трофеи (кубок, статуэтка, медаль) бланка не имеют
+        // и вернут пустую строку сами.
+        $dtype = order_item_diploma_type($name);
         $named = in_array($dtype, ['named', 'thanks'], true);
         $key = $kind . '|' . $name . ($named ? '|' . mb_strtolower($fio) . '|' . count($agg) : '');
         if (!isset($agg[$key])) {
@@ -448,13 +452,21 @@ function order_generate_clean_pdfs(array $order): array {
     // Здесь стояло $types[$p['dtype']] = $p['item'] — карта «тип → название», которая
     // схлопывала N заказанных именных документов в один. Заказ пяти благодарностей на
     // пятерых педагогов давал ОДИН бланк без ФИО, и в типографию уезжал именно он.
+    // БЛАНК ДЕЛАЕТСЯ ДЛЯ ЛЮБОЙ ЗАКАЗАННОЙ БУМАГИ, А НЕ ТОЛЬКО ДЛЯ ОРИГИНАЛА.
+    //
+    // Здесь стояло условие «только original»: электронная благодарность бланка
+    // не получала вовсе, и в админке её нечего было ни открыть, ни скачать —
+    // кнопка печати выдавала производственный лист с номером заказа. Между тем
+    // документ одинаковый; разница лишь в том, что оригинал печатают и
+    // подписывают живьём, а электронный уходит файлом.
     $jobs = [];
     foreach (order_items_parse($order) as $p) {
-        if ($p['kind'] !== 'original' || $p['dtype'] === '') continue;
+        if ($p['dtype'] === '') continue;
         $named = in_array($p['dtype'], ['named', 'thanks'], true);
         $n = $named ? max(1, (int) $p['count']) : 1;   // неименные печатаются одним образцом
         for ($i = 0; $i < $n; $i++) {
-            $jobs[] = ['type' => $p['dtype'], 'item' => $p['item'], 'fio' => (string) ($p['fio'] ?? '')];
+            $jobs[] = ['type' => $p['dtype'], 'item' => $p['item'], 'fio' => (string) ($p['fio'] ?? ''),
+                       'kind' => (string) $p['kind']];
         }
     }
     // Если оригиналы (кубок/статуэтка/медаль) без явного диплома — всё равно кладём основной.
@@ -479,7 +491,7 @@ function order_generate_clean_pdfs(array $order): array {
             $label = $labels[$t] ?? $j['item'];
             if ($j['fio'] !== '') $label .= ' — ' . $j['fio'];
             $out[] = ['label' => $label, 'path' => $pdf, 'url' => $base . '/diplomas/' . basename($pdf),
-                      'type' => $t, 'fio' => $j['fio']];
+                      'type' => $t, 'fio' => $j['fio'], 'kind' => (string) ($j['kind'] ?? 'original')];
         }
     }
     return $out;

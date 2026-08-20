@@ -1287,6 +1287,32 @@ ob_start(); ?>
                     <button type="button" class="btn btn--ghost btn--sm" data-order-del="<?= (int)$o['id'] ?>" style="color:var(--error,#c0392b)">Удалить заказ</button>
                   </div>
                 <?php endif; ?>
+                <?php
+                /* ЗАКАЗ ОПЛАЧЕН, А АДРЕСА НЕТ.
+                   Отправить такую посылку некуда, и до сих пор человек ничего не мог
+                   с этим сделать сам: адрес вносили руками по переписке. Показываем
+                   заметное поле прямо в заказе — введённый адрес уходит и в остальные
+                   заказы этой посылки. */
+                $__needAddr = in_array((string)$o['status'], ['paid','made'], true)
+                    && strpos((string)($o['items'] ?? ''), '"kind":"original"') !== false
+                    && trim((string)($o['address'] ?? '')) === '';
+                if ($__needAddr): $oid_ = (int)$o['id']; ?>
+                  <div style="margin-top:14px;padding:14px 16px;border:1px solid #f0dfae;background:#fff8e6;border-radius:12px">
+                    <b style="color:#8B6F1F">Нужен адрес доставки</b>
+                    <p class="cab-meta" style="margin:6px 0 10px">Заказ оплачен и принят в работу, но мы не знаем, куда его отправить.
+                      Укажите полный адрес: индекс, город, улицу и номер дома.</p>
+                    <div style="display:grid;gap:8px">
+                      <input type="text" id="oaf<?= $oid_ ?>" value="<?= h((string)($o['full_name'] ?? '')) ?>" placeholder="ФИО получателя полностью"
+                             style="padding:10px 12px;border:1px solid var(--line);border-radius:9px">
+                      <textarea id="oaa<?= $oid_ ?>" rows="2" placeholder="Индекс, город, улица, дом, квартира"
+                             style="padding:10px 12px;border:1px solid var(--line);border-radius:9px"></textarea>
+                      <input type="text" id="oap<?= $oid_ ?>" value="<?= h((string)($o['phone'] ?? '')) ?>" placeholder="Телефон для извещения"
+                             style="padding:10px 12px;border:1px solid var(--line);border-radius:9px">
+                      <div><button type="button" class="btn btn--primary btn--sm" data-order-addr="<?= $oid_ ?>">Сохранить адрес</button></div>
+                      <p class="cab-meta" id="oam<?= $oid_ ?>" style="margin:0"></p>
+                    </div>
+                  </div>
+                <?php endif; ?>
               <?php endif; ?>
             </div>
           <?php endforeach; endif; ?>
@@ -1774,6 +1800,28 @@ ob_start(); ?>
                 if(d&&d.ok&&d.confirmation_url){location.href=d.confirmation_url;}
                 else{pay.disabled=false;pay.textContent='Оплатить заказ';alert((d&&d.error)||'Не удалось создать оплату.');}
               });return;}
+            // Адрес доставки к оплаченному заказу: уходит и в остальные заказы посылки.
+            var addr=e.target.closest('[data-order-addr]');
+            if(addr){e.preventDefault();
+              var id=addr.getAttribute('data-order-addr');
+              var msg=document.getElementById('oam'+id);
+              var fd=new FormData();
+              fd.append('action','set_address');fd.append('order_id',id);fd.append('_csrf',csrf());
+              fd.append('full_name',(document.getElementById('oaf'+id)||{}).value||'');
+              fd.append('address',(document.getElementById('oaa'+id)||{}).value||'');
+              fd.append('phone',(document.getElementById('oap'+id)||{}).value||'');
+              addr.disabled=true;addr.textContent='Сохраняем…';
+              fetch('<?= url('/api/v1/order_manage') ?>',{method:'POST',body:fd,headers:{'X-Requested-With':'fetch'}})
+                .then(function(r){return r.json().catch(function(){return{};});})
+                .then(function(d){
+                  addr.disabled=false;addr.textContent='Сохранить адрес';
+                  if(d&&d.ok){
+                    if(msg){msg.style.color='#1E7A46';
+                      msg.textContent='Адрес сохранён'+(d.also?(' — он же проставлен ещё в '+d.also+' заказ(ах) этой посылки'):'')+'. Спасибо!';}
+                    setTimeout(function(){location.reload();},1500);
+                  } else if(msg){msg.style.color='#c0392b';msg.textContent=(d&&d.error)||'Не удалось сохранить адрес.';}
+                });
+              return;}
             var del=e.target.closest('[data-order-del]');
             if(del){e.preventDefault();if(!confirm('Удалить неоплаченный заказ?'))return;var id=del.getAttribute('data-order-del');del.disabled=true;
               post('delete',id).then(function(d){

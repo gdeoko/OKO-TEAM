@@ -15,26 +15,42 @@ orders_migrate();
 if (input('do') === 'print' && (int) input('id') > 0) {
     $o = one("SELECT * FROM awards_orders WHERE id=?", [(int) input('id')]);
     if ($o) {
-        $items = json_decode((string) ($o['items'] ?? '[]'), true);
+        // Лист печатается на всю посылку: в коробку кладётся один вкладыш, а не
+        // по листу на каждый оплаченный заказ.
+        $pids = array_values(array_unique(array_filter(
+            array_map('intval', preg_split('~[^0-9]+~', (string) input('orders')) ?: []),
+            static fn(int $x): bool => $x > 0
+        )));
+        if (!$pids) $pids = [(int) $o['id']];
         $rows = '';
-        foreach ((is_array($items) ? $items : []) as $it) {
-            $nm = is_array($it) ? (string) ($it['item'] ?? '') : (string) $it;
-            $kd = is_array($it) ? (string) ($it['kind'] ?? '') : '';
-            if ($nm === '') continue;
-            $rows .= '<tr><td>' . h($nm) . '</td><td>' . h($kd === 'digital' ? 'электронный' : ($kd === 'original' ? 'оригинал' : $kd)) . '</td></tr>';
+        $sum  = 0;
+        foreach ($pids as $pid) {
+            $po = $pid === (int) $o['id'] ? $o : one("SELECT * FROM awards_orders WHERE id=?", [$pid]);
+            if (!$po) continue;
+            $sum += (int) ($po['amount'] ?? 0);
+            foreach ((array) json_decode((string) ($po['items'] ?? '[]'), true) as $it) {
+                $nm = is_array($it) ? (string) ($it['item'] ?? '') : (string) $it;
+                $kd = is_array($it) ? (string) ($it['kind'] ?? '') : '';
+                if ($nm === '') continue;
+                $fio = is_array($it) ? trim((string) ($it['fio'] ?? '')) : '';
+                $rows .= '<tr><td>' . h($nm) . ($fio !== '' ? '<br><small>' . h($fio) . '</small>' : '') . '</td>'
+                       . '<td>' . h($kd === 'digital' ? 'электронный' : ($kd === 'original' ? 'оригинал' : $kd)) . '</td>'
+                       . '<td>№' . $pid . '</td></tr>';
+            }
         }
+        $o['amount'] = $sum;
         header('Content-Type: text/html; charset=utf-8');
         echo '<!doctype html><html lang="ru"><head><meta charset="utf-8"><title>Заказ №' . (int) $o['id'] . '</title>'
             . '<style>body{font-family:Arial,sans-serif;font-size:13px;color:#111;max-width:760px;margin:20px auto;padding:0 16px}'
             . 'h1{font-size:20px}table{border-collapse:collapse;width:100%;margin:10px 0}td,th{border:1px solid #999;padding:6px 9px;text-align:left}'
             . '.kv{margin:3px 0}@media print{.noprint{display:none}}</style></head><body onload="window.print()">'
-            . '<h1>Производственный лист · Заказ №' . (int) $o['id'] . '</h1>'
+            . '<h1>Производственный лист · ' . (count($pids) > 1 ? 'посылка, заказы №' . implode(', №', $pids) : 'заказ №' . (int) $o['id']) . '</h1>'
             . '<div class="kv"><b>Получатель:</b> ' . h((string) ($o['full_name'] ?? '')) . '</div>'
             . '<div class="kv"><b>Email:</b> ' . h((string) ($o['email'] ?? '')) . ' · <b>Телефон:</b> ' . h((string) ($o['phone'] ?? '')) . '</div>'
             . '<div class="kv"><b>Индекс:</b> ' . h((string) ($o['postal_index'] ?? '')) . '</div>'
             . '<div class="kv"><b>Адрес:</b> ' . h((string) ($o['address'] ?? '')) . '</div>'
             . '<div class="kv"><b>Сумма:</b> ' . (int) ($o['amount'] ?? 0) . ' ₽ · <b>Статус:</b> ' . h((string) ($o['status'] ?? '')) . '</div>'
-            . '<table><thead><tr><th>Наградной материал</th><th>Вид</th></tr></thead><tbody>' . $rows . '</tbody></table>'
+            . '<table><thead><tr><th>Наградной материал</th><th>Вид</th><th>Заказ</th></tr></thead><tbody>' . $rows . '</tbody></table>'
             . '<p class="noprint"><button onclick="window.print()">Печать</button></p>'
             . '</body></html>';
         exit;
@@ -47,33 +63,56 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $do  = input('do');
     $oid = (int) input('order');
 
-    if ($do === 'edit_addr' && $oid) {
-        update('awards_orders', [
+    // ЗАКАЗЫ ОДНОГО ПОЛУЧАТЕЛЯ ОБРАБАТЫВАЮТСЯ ВМЕСТЕ.
+    //
+    // Человек заказывает награды по каждой заявке отдельно, а едут они одной
+    // посылкой. Кнопка «Отправить» поэтому одна на всю группу: иначе на три
+    // благодарности и медаль пришлось бы четыре раза вводить один и тот же
+    // трек-номер, а участник получил бы четыре письма об отправке.
+    $ids = array_values(array_unique(array_filter(
+        array_map('intval', preg_split('~[^0-9]+~', (string) input('orders')) ?: []),
+        static fn(int $x): bool => $x > 0
+    )));
+    if (!$ids && $oid) $ids = [$oid];
+    if (!$oid && $ids) $oid = $ids[0];
+    /** Сколько заказов затронуто — для сообщения человеку. */
+    $manyNote = static fn(array $x): string => count($x) > 1 ? (' (заказов в посылке: ' . count($x) . ')') : '';
+
+    if ($do === 'edit_addr' && $ids) {
+        // Адрес правится сразу у всей посылки: он у неё один по определению.
+        foreach ($ids as $i) update('awards_orders', [
             'full_name'    => mb_substr(trim(input('full_name')), 0, 200),
             'address'      => mb_substr(trim(input('address')), 0, 500),
             'postal_index' => mb_substr(trim(input('postal_index')), 0, 20),
             'phone'        => mb_substr(trim(input('phone')), 0, 40),
-        ], 'id=:id', ['id' => $oid]);
-        audit('order_edit_addr', 'awards_orders', $oid, []);
-        flash('Данные заказа №' . $oid . ' обновлены.', 'success');
+        ], 'id=:id', ['id' => $i]);
+        audit('order_edit_addr', 'awards_orders', $oid, ['orders' => $ids]);
+        flash('Данные получателя обновлены' . $manyNote($ids) . '.', 'success');
         admin_redirect('orders');
     }
 
-    if ($do === 'made' && $oid) {
-        update('awards_orders', ['status' => 'made', 'made_at' => date('Y-m-d H:i:s')], 'id=:id', ['id' => $oid]);
-        flash('Заказ №' . $oid . ' отмечен как изготовленный.', 'success');
+    if ($do === 'made' && $ids) {
+        foreach ($ids as $i) update('awards_orders', ['status' => 'made', 'made_at' => date('Y-m-d H:i:s')], 'id=:id', ['id' => $i]);
+        flash('Отмечено как изготовленное' . $manyNote($ids) . '.', 'success');
         admin_redirect('orders');
     }
-    if ($do === 'ship' && $oid) {
+    if ($do === 'ship' && $ids) {
         $track = trim(input('tracking'));
         if ($track === '') { flash('Введите трек-номер для отправки.', 'error'); admin_redirect('orders'); }
-        $ok = order_mark_shipped($oid, $track);
-        flash($ok ? ('Заказ №' . $oid . ' отправлен, участнику ушло письмо с трек-номером.') : ('Статус обновлён, но письмо участнику не ушло (проверьте e-mail заказа).'), $ok ? 'success' : 'error');
+        // Письмо участнику — одно на посылку, по первому заказу: трек общий, и
+        // четыре одинаковых письма подряд выглядят как сбой рассылки.
+        $ok = order_mark_shipped($ids[0], $track);
+        foreach (array_slice($ids, 1) as $i) {
+            update('awards_orders', ['status' => 'shipped', 'tracking' => $track,
+                                     'shipped_at' => date('Y-m-d H:i:s')], 'id=:id', ['id' => $i]);
+        }
+        flash($ok ? ('Отправлено, участнику ушло письмо с трек-номером' . $manyNote($ids) . '.')
+                  : ('Статус обновлён, но письмо участнику не ушло (проверьте почту заказа).'), $ok ? 'success' : 'error');
         admin_redirect('orders');
     }
-    if ($do === 'delivered' && $oid) {
-        update('awards_orders', ['status' => 'delivered', 'delivered_at' => date('Y-m-d H:i:s')], 'id=:id', ['id' => $oid]);
-        flash('Заказ №' . $oid . ' отмечен как доставленный.', 'success');
+    if ($do === 'delivered' && $ids) {
+        foreach ($ids as $i) update('awards_orders', ['status' => 'delivered', 'delivered_at' => date('Y-m-d H:i:s')], 'id=:id', ['id' => $i]);
+        flash('Отмечено как доставленное' . $manyNote($ids) . '.', 'success');
         admin_redirect('orders');
     }
     if ($do === 'redispatch' && $oid) {
@@ -83,10 +122,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         flash($ok ? ('Пакет заказа №' . $oid . ' переотправлен в производство (Telegram).') : ('Не удалось отправить в Telegram — проверьте настройку канала заказов.'), $ok ? 'success' : 'error');
         admin_redirect('orders');
     }
-    if ($do === 'regen' && $oid) {
-        $order = one("SELECT * FROM awards_orders WHERE id=?", [$oid]);
-        if ($order) order_clean_pdfs($order, true);
-        flash('Чистые дипломы заказа №' . $oid . ' перегенерированы.', 'success');
+    if ($do === 'regen' && $ids) {
+        foreach ($ids as $i) {
+            $order = one("SELECT * FROM awards_orders WHERE id=?", [$i]);
+            if ($order) order_clean_pdfs($order, true);
+        }
+        flash('Наградные материалы подготовлены заново' . $manyNote($ids) . '.', 'success');
         admin_redirect('orders');
     }
 
@@ -215,22 +256,45 @@ ob_start(); ?>
   <?php endforeach; ?>
 </div>
 
-<?php if (!$orders): ?>
-  <p class="muted">Заказов оригиналов пока нет.</p>
-<?php else: foreach ($orders as $o):
-    $oid = (int)$o['id'];
-    $st  = (string)$o['status'];
+<?php
+/* ЗАКАЗЫ ОДНОГО ПОЛУЧАТЕЛЯ — ОДНОЙ КАРТОЧКОЙ.
+   Человек заказывает по каждой заявке отдельно, а посылка одна. Раньше три
+   благодарности и медаль шли четырьмя карточками: четыре печати, четыре ввода
+   одного трек-номера и четыре письма участнику об отправке. Группируем по
+   получателю: оригиналы по адресу, электронные по почте (core/order_group.php). */
+require_once BASE_PATH . '/core/order_group.php';
+$groups = og_groups($orders);
+?>
+<?php if (!$groups): ?>
+  <p class="muted">Заказов пока нет.</p>
+<?php else: foreach ($groups as $gr):
+    $o    = $gr['orders'][0];                 // «главный» заказ: по нему шапка
+    $oid  = (int)$o['id'];
+    $ids  = $gr['ids'];
+    $idsS = implode(',', $ids);
+    $st   = og_group_status($gr);
     $step = $STEPS[$st] ?? ($st === 'new' ? 0 : 1);
-    $items = order_items_parse($o);
-    $cleans = order_clean_pdfs($o);
+    $gkind = $gr['kind'];
+    $needAddr = in_array($gkind, ['original','mixed'], true);
+    // Состав и бланки собираем по всем заказам посылки.
+    $items = []; $cleans = [];
+    foreach ($gr['orders'] as $go) {
+        foreach (order_items_parse($go) as $p) $items[] = $p;
+        foreach (order_clean_pdfs($go) as $c) { $c['order_id'] = (int)$go['id']; $cleans[] = $c; }
+    }
     $trackUrl = order_pochta_url((string)($o['tracking'] ?? ''));
 ?>
   <div class="card" style="margin-bottom:16px;border:1px solid var(--a-line);border-radius:14px;overflow:hidden;">
     <div style="display:flex;flex-wrap:wrap;gap:12px;justify-content:space-between;align-items:center;padding:14px 18px;background:var(--a-card,#F4F6FC);border-bottom:1px solid var(--a-line);">
       <div>
-        <b style="font-size:16px;color:var(--a-navy);">Заказ №<?= $oid ?></b>
+        <b style="font-size:16px;color:var(--a-navy);">
+          <?= count($ids) > 1 ? 'Посылка · заказы №' . h(implode(', №', $ids)) : 'Заказ №' . $oid ?>
+        </b>
         <span class="muted small"> · <?= h((string)$o['created_at']) ?></span>
-        <div class="small"><?= h((string)$o['competition']) ?> · <b><?= h((string)$o['result']) ?></b></div>
+        <div class="small">
+          <?= h((string)$o['competition']) ?> · <b><?= h((string)$o['result']) ?></b>
+          · <span style="color:<?= $needAddr ? '#8B6F1F' : '#1E7A46' ?>"><?= h(og_kind_ru($gkind)) ?></span>
+        </div>
       </div>
       <div>
         <?php $badge = ['paid'=>'#C79322','made'=>'#2C7BE5','shipped'=>'#17307A','delivered'=>'#1E9E5A','new'=>'#8892B0','canceled'=>'#8B2F2F'][$st] ?? '#8892B0'; ?>
@@ -254,7 +318,13 @@ ob_start(); ?>
         <div>
           <div class="small muted" style="text-transform:uppercase;letter-spacing:.06em;margin-bottom:6px;">Получатель</div>
           <div><b><?= h((string)$o['full_name']) ?></b><?= vip_mark((int)($o['user_id'] ?? 0)) ?></div>
-          <div class="small">📍 <?= h((string)($o['address'] ?: '(адрес не указан — уточнить)')) ?></div>
+          <?php if ($needAddr): ?>
+            <div class="small">📍 <?= $gr['address'] !== ''
+              ? h($gr['address'])
+              : '<b style="color:#8B2F2F">адрес не указан — отправить некуда</b>' ?></div>
+          <?php else: ?>
+            <div class="small" style="color:#1E7A46">Электронные материалы — уходят письмом, адрес не нужен</div>
+          <?php endif; ?>
           <div class="small">📞 <?= h((string)$o['phone']) ?> · ✉ <?= h((string)$o['email']) ?></div>
           <div class="small muted" style="margin-top:4px;">Сумма: <?= h(function_exists('money') ? money((int)$o['amount']) : (int)$o['amount'].' ₽') ?><?php
             // Заказ мог быть оформлен со скидкой участника Клуба — показываем, с какой
@@ -264,11 +334,11 @@ ob_start(); ?>
               if ($opct > 0): ?>, скидка <?= $opct ?>%<?= vip_kind((int)($o['user_id'] ?? 0)) === 'club' ? ' — участник ВИП-клуба' : '' ?><?php endif;
             endif; ?></div>
           <div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:8px">
-            <a class="btn btn--ghost btn--sm" href="<?= a_link('orders', ['do'=>'print','id'=>(int)$o['id']]) ?>" target="_blank" rel="noopener"><?= admin_icon('diplomas') ?? '' ?>Печать листа</a>
+            <a class="btn btn--ghost btn--sm" href="<?= a_link('orders', ['do'=>'print','id'=>(int)$o['id'],'orders'=>$idsS]) ?>" target="_blank" rel="noopener"><?= admin_icon('diplomas') ?? '' ?>Лист для посылки</a>
             <button type="button" class="btn btn--ghost btn--sm" onclick="var f=document.getElementById('oe<?= (int)$o['id'] ?>');f.style.display=f.style.display==='none'?'grid':'none'">Редактировать адрес</button>
           </div>
           <form method="post" action="<?= url('/admin/') ?>" id="oe<?= (int)$o['id'] ?>" style="display:none;gap:6px;margin-top:8px"><?= csrf_field() ?>
-            <input type="hidden" name="do" value="edit_addr"><input type="hidden" name="order" value="<?= (int)$o['id'] ?>">
+            <input type="hidden" name="do" value="edit_addr"><input type="hidden" name="orders" value="<?= h($idsS) ?>">
             <input type="text" name="full_name" value="<?= h((string)$o['full_name']) ?>" placeholder="Получатель" style="padding:6px 9px;border:1px solid var(--a-line);border-radius:8px">
             <input type="text" name="postal_index" value="<?= h((string)($o['postal_index'] ?? '')) ?>" placeholder="Индекс" style="padding:6px 9px;border:1px solid var(--a-line);border-radius:8px">
             <input type="text" name="phone" value="<?= h((string)$o['phone']) ?>" placeholder="Телефон" style="padding:6px 9px;border:1px solid var(--a-line);border-radius:8px">
@@ -301,18 +371,31 @@ ob_start(); ?>
                было нечем — а список пуст ровно тогда, когда генерация не удалась.
                Сама генерация в отрисовке больше не запускается (см. order_clean_pdfs):
                она вешала раздел на две минуты на каждый заказ. */ ?>
-      <?php if ($cleans || order_has_originals($o)): ?>
+      <?php /* НАГРАДНЫЕ МАТЕРИАЛЫ ПОСЫЛКИ.
+               У каждого документа две кнопки: «Печать» открывает сам бланк в
+               окне печати браузера, «Скачать» сохраняет файл. Раньше кнопка
+               печати вела на производственный лист — белую страницу с номером
+               заказа, а самой благодарности взять было негде. */ ?>
+      <?php if ($cleans || $needAddr): ?>
         <div style="margin-top:14px;padding-top:12px;border-top:1px dashed var(--a-line);">
-          <div class="small muted" style="text-transform:uppercase;letter-spacing:.06em;margin-bottom:8px;">Дипломы для печати (чистые, с номером+QR)</div>
-          <div style="display:flex;flex-wrap:wrap;gap:8px;align-items:center">
-            <?php foreach ($cleans as $c): ?>
-              <a class="btn btn--ghost btn--sm" href="<?= h($c['url']) ?>" target="_blank"><?= admin_icon('download') ?><span><?= h($c['label']) ?></span></a>
+          <div class="small muted" style="text-transform:uppercase;letter-spacing:.06em;margin-bottom:8px;">
+            Наградные материалы (чистые бланки, с номером и QR)
+          </div>
+          <div style="display:flex;flex-wrap:wrap;gap:10px;align-items:stretch">
+            <?php foreach ($cleans as $c): $u = (string) $c['url']; ?>
+              <div style="border:1px solid var(--a-line);border-radius:11px;padding:9px 12px;min-width:230px;background:#fff">
+                <div class="small" style="font-weight:600;line-height:1.3;margin-bottom:6px"><?= h((string)$c['label']) ?></div>
+                <div style="display:flex;gap:6px;flex-wrap:wrap">
+                  <a class="btn btn--navy btn--sm" href="<?= h($u) ?>#toolbar=1" target="_blank" rel="noopener"><?= admin_icon('diplomas') ?? '' ?>Печать</a>
+                  <a class="btn btn--ghost btn--sm" href="<?= h($u) ?>" download><?= admin_icon('download') ?? '' ?>Скачать</a>
+                </div>
+              </div>
             <?php endforeach; ?>
             <?php if (!$cleans): ?>
               <span class="small muted">Ещё не подготовлены — нажмите «Подготовить».</span>
             <?php endif; ?>
             <form method="post" action="<?= url('/admin/') ?>" style="display:inline;"><?= csrf_field() ?>
-              <input type="hidden" name="do" value="regen"><input type="hidden" name="order" value="<?= $oid ?>">
+              <input type="hidden" name="do" value="regen"><input type="hidden" name="orders" value="<?= h($idsS) ?>">
               <button class="btn btn--ghost btn--sm" type="submit"><?= $cleans ? 'Перегенерировать' : 'Подготовить' ?></button>
             </form>
           </div>
@@ -323,13 +406,13 @@ ob_start(); ?>
       <div style="margin-top:14px;padding-top:12px;border-top:1px solid var(--a-line);display:flex;flex-wrap:wrap;gap:8px;align-items:center;">
         <?php if ($st === 'paid'): ?>
           <form method="post" action="<?= url('/admin/') ?>" style="display:inline;"><?= csrf_field() ?>
-            <input type="hidden" name="do" value="made"><input type="hidden" name="order" value="<?= $oid ?>">
+            <input type="hidden" name="do" value="made"><input type="hidden" name="orders" value="<?= h($idsS) ?>">
             <button class="btn btn--navy btn--sm" type="submit"><?= admin_icon('check') ?>Отметить «Изготовлено»</button>
           </form>
         <?php endif; ?>
         <?php if (in_array($st, ['paid','made'], true)): ?>
           <form method="post" action="<?= url('/admin/') ?>" style="display:inline-flex;gap:6px;align-items:center;"><?= csrf_field() ?>
-            <input type="hidden" name="do" value="ship"><input type="hidden" name="order" value="<?= $oid ?>">
+            <input type="hidden" name="do" value="ship"><input type="hidden" name="orders" value="<?= h($idsS) ?>">
             <input type="text" name="tracking" placeholder="Трек-номер Почты России" required
                    style="padding:8px 12px;border:1px solid var(--a-line);border-radius:9px;min-width:220px;">
             <button class="btn btn--primary btn--sm" type="submit"><?= admin_icon('truck') ?>Отправить (письмо участнику)</button>
@@ -339,7 +422,7 @@ ob_start(); ?>
           <span class="small">Трек: <b><?= h((string)$o['tracking']) ?></b></span>
           <?php if ($trackUrl): ?><a class="btn btn--ghost btn--sm" href="<?= h($trackUrl) ?>" target="_blank">Отследить</a><?php endif; ?>
           <form method="post" action="<?= url('/admin/') ?>" style="display:inline;"><?= csrf_field() ?>
-            <input type="hidden" name="do" value="delivered"><input type="hidden" name="order" value="<?= $oid ?>">
+            <input type="hidden" name="do" value="delivered"><input type="hidden" name="orders" value="<?= h($idsS) ?>">
             <button class="btn btn--navy btn--sm" type="submit"><?= admin_icon('check') ?>Доставлено</button>
           </form>
         <?php endif; ?>
