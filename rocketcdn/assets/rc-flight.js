@@ -398,6 +398,12 @@ function buildUI() {
 
   /* Рамка кабины: своя для альбома и своя для портрета */
   cabSrc();
+  /* Картинка кабины та же, что на сайте, и к моменту старта она уже
+     в кэше браузера: событие load по кэшированной картинке может и
+     не прийти, а даже если придёт - позже первого кадра игры.
+     Приёмка это и поймала: полторы десятых секунды кадр был без
+     рамки, вместо неё пустой космос. Проверяем готовность сразу. */
+  if (ui.cab.complete && ui.cab.naturalWidth) w.classList.add("has-cab");
   ui.cab.addEventListener("load", function () { w.classList.add("has-cab"); });
   ui.cab.addEventListener("error", function () { w.classList.remove("has-cab"); });
 
@@ -2817,6 +2823,12 @@ function open() {
      она должна склеиться. Поэтому в акте отлёта брифинга нет -
      корабль просто трогается на автопилоте. */
   var seamless = root.getAttribute("data-act") === "egress";
+  /* Бесшовный старт из финала: сайтовая кабина стоит на своём
+     масштабе, и игра обязана принять кадр в том же виде. Готовность
+     рамки проверяем ещё раз - между сборкой интерфейса и открытием
+     могла смениться ориентация, а с ней и картинка. */
+  if (ui.cab && ui.cab.complete && ui.cab.naturalWidth) ui.wrap.classList.add("has-cab");
+  ui.wrap.classList.toggle("rcf-seam", seamless);
   F.brief = !seamless;
   F.orbit = null;
   if (ui.brief) ui.brief.classList.toggle("off", seamless);
