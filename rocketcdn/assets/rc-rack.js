@@ -415,6 +415,37 @@ Rack.prototype.stop = function () {
   if (this._raf) cancelAnimationFrame(this._raf);
 };
 
+/* Уступка места главной сцене. Раньше стойка отдавала только счётчик
+   в общем бюджете, а сам контекст WebGL продолжал жить: бюджет начинал
+   врать в другую сторону, и корабль всё равно не получал места.
+   Теперь контекст закрывается по-настоящему, а на месте стойки
+   остаётся её последний кадр - снимок с холста, снятый до закрытия. */
+Rack.prototype.release = function () {
+  if (this.released) return;
+  this.released = true;
+  this.stop();
+
+  var cv = this.r && this.r.domElement;
+  var shot = "";
+  try { if (cv) shot = cv.toDataURL("image/webp", 0.86); } catch (e) {}
+
+  try { this.r.dispose(); } catch (e2) {}
+  try {
+    var ext = this.r.getContext().getExtension("WEBGL_lose_context");
+    if (ext) ext.loseContext();
+  } catch (e3) {}
+  if (g.RC_GL) g.RC_GL.give();
+
+  if (cv && shot) {
+    var img = document.createElement("img");
+    img.src = shot;
+    img.alt = cv.getAttribute("aria-label") || "";
+    img.className = "rack-still";
+    if (cv.parentElement) cv.parentElement.insertBefore(img, cv);
+    cv.style.display = "none";
+  }
+};
+
 g.RCRack = {
   create: function (canvas, opts) {
     if (!canvas) return null;
@@ -427,6 +458,9 @@ g.RCRack = {
     if (g.RC_GL && !g.RC_GL.take()) return null;
     try {
       var made = new Rack(canvas, opts);
+      /* Главная сцена сценария просит места - отдаём его сразу:
+         корабль в кадре важнее стойки в разделе «что это такое» */
+      addEventListener("rc:gl-free", function () { made.release(); });
       if (g.RC_GL) g.RC_GL.guard(canvas, function () {
         made.stop();
         var box = canvas.parentElement;

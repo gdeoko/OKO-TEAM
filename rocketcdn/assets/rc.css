@@ -596,7 +596,7 @@ a.js-reg:not(.btn):hover { background-size: 100% 2px; }
 }
 .flow-node.hot { border-color: rgba(66,178,220,.5); box-shadow: var(--glow); }
 .flow-node .card-ico { margin: 0 auto 14px; }
-.flow-node h4 { font-size: var(--fs-6); font-weight: 650; line-height: var(--lh-title); margin-bottom: 6px; }
+.flow-node h3 { font-size: var(--fs-6); font-weight: 650; line-height: var(--lh-title); margin-bottom: 6px; }
 .flow-node p { font-size: var(--fs-3); line-height: var(--lh-tight); color: var(--tx-2); }
 .flow-link { position: relative; height: 2px; background: var(--line); border-radius: 2px; min-width: 40px; overflow: hidden; }
 .flow-link i {
@@ -1838,8 +1838,10 @@ html[data-theme="light"] #included::after { animation: none; opacity: .4; }
    ошибка красит границу и кольцо в красный, недоступность гасит.
    Одинаково у анкеты и у поиска по городам. */
 .search input:focus, .search input:focus-visible {
+  /* Кольцо было прозрачным на восемнадцать процентов - клавиатурой
+     не видно, куда попал фокус. Плотность подняли до читаемой */
   outline: none; border-color: var(--tx);
-  box-shadow: 0 0 0 3px rgba(66,178,220,.18);
+  box-shadow: 0 0 0 3px rgba(66, 178, 220, .55);
 }
 .field.bad input:focus, .field.bad textarea:focus {
   border-color: #F87171; box-shadow: 0 0 0 3px rgba(248,113,113,.20);

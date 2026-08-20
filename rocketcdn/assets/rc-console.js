@@ -134,6 +134,9 @@ function vidBuild() {
   vid.preload = "auto";
   vid.disablePictureInPicture = true;
   vid.controls = false;
+  /* mp4 отдаём везде, где он играет: для этого ролика h264 плотнее
+     vp9 - тот же кадр в webm выходил на 61% тяжелее. webm остаётся
+     запасным путём для браузеров без h264. */
   vid.src = mp4 ? (small ? "assets/gen/console-640.mp4" : "assets/gen/console-960.mp4")
                 : "assets/gen/console-640.webm";
 

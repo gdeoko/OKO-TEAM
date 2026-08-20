@@ -779,6 +779,8 @@ html[data-theme="light"] .rc-load{background:#070F1A}
 </script>
 </head>
 <body class="has-mcta">
+<!-- Первый табстоп: обход шапки и списка узлов прямо к тексту -->
+<a class="skip" href="#top" data-i18n="ui.skip">К содержимому</a>
 
 <!-- Заставку строит RocketLoader из шапки документа: без JavaScript её нет
      вовсе и страница читается сразу -->
@@ -1017,19 +1019,19 @@ html[data-theme="light"] .rc-load{background:#070F1A}
     <div class="flow rv rv-d1">
       <div class="flow-node">
         <div class="card-ico" data-ico="storage"></div>
-        <h4 data-i18n="what.n1h">Ваш origin</h4>
+        <h3 data-i18n="what.n1h">Ваш origin</h3>
         <p data-i18n="what.n1p">Сайт, видеоплатформа или хранилище.</p>
       </div>
       <div class="flow-link"><i></i></div>
       <div class="flow-node hot">
         <div class="card-ico" data-ico="globe"></div>
-        <h4 data-i18n="what.n2h">Edge-узлы Rocket CDN</h4>
+        <h3 data-i18n="what.n2h">Edge-узлы Rocket CDN</h3>
         <p data-i18n="what.n2p">218 точек присутствия кэшируют контент.</p>
       </div>
       <div class="flow-link"><i></i></div>
       <div class="flow-node">
         <div class="card-ico" data-ico="user"></div>
-        <h4 data-i18n="what.n3h">Пользователь</h4>
+        <h3 data-i18n="what.n3h">Пользователь</h3>
         <p data-i18n="what.n3p">Получает данные с ближайшего узла.</p>
       </div>
     </div>
@@ -1076,7 +1078,7 @@ html[data-theme="light"] .rc-load{background:#070F1A}
 
     <div class="infra">
       <div class="rv">
-        <div class="map-wrap"><canvas id="globeMap"></canvas></div>
+        <div class="map-wrap"><canvas id="globeMap" aria-label="Карта сети Rocket CDN: точки присутствия на глобусе"></canvas></div>
         <div class="map-legend">
           <span class="leg"><i style="background:#42B2DC"></i><span data-i18n="infra.leg1">Узел CDN</span></span>
           <span class="leg"><i style="background:#8A59F6"></i><span data-i18n="infra.leg2">Облако и защита</span></span>

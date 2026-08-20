@@ -250,22 +250,30 @@ function renderBlocks() {
   var f = $("#faqList");
   if (f) {
     f.innerHTML = B.faq.map(function (x, i) {
-      return '<div class="faq-i"><button class="faq-q" aria-expanded="false" data-faq="' + i + '">' +
+      /* Свёрнутый ответ прячется высотой, но для чтения с экрана
+         остаётся на месте: связываем кнопку с ответом и убираем
+         скрытый текст из дерева доступности через inert. */
+      return '<div class="faq-i"><button class="faq-q" aria-expanded="false" ' +
+        'aria-controls="faqA' + i + '" id="faqQ' + i + '" data-faq="' + i + '">' +
         "<span>" + esc(x.q) + "</span><i></i></button>" +
-        '<div class="faq-a"><p>' + esc(x.a) + "</p></div></div>";
+        '<div class="faq-a" id="faqA' + i + '" role="region" aria-labelledby="faqQ' + i +
+        '" inert><p>' + esc(x.a) + "</p></div></div>";
     }).join("");
     $$(".faq-q", f).forEach(function (btn) {
       btn.addEventListener("click", function () {
         var item = btn.parentNode, open = item.classList.contains("on");
         $$(".faq-i", f).forEach(function (it) {
           it.classList.remove("on");
-          $(".faq-a", it).style.maxHeight = "";
+          var box = $(".faq-a", it);
+          box.style.maxHeight = "";
+          box.setAttribute("inert", "");
           $(".faq-q", it).setAttribute("aria-expanded", "false");
         });
         if (!open) {
           item.classList.add("on");
           var a = $(".faq-a", item);
           a.style.maxHeight = a.scrollHeight + "px";
+          a.removeAttribute("inert");
           btn.setAttribute("aria-expanded", "true");
           track("faq", B.faq[btn.dataset.faq].q.slice(0, 60));
         }
@@ -601,22 +609,31 @@ function wireForm(form, kind) {
     payload.sid = sessionStorage.getItem("rc_sid") || "";
 
     var label = btn ? btn.innerHTML : "";
-    if (btn) { btn.disabled = true; btn.innerHTML = esc(t("ct.sending", "Отправляем")) + "..."; }
+    /* Отправка идёт: кнопка занята, в ней крутится точка. Без
+       зримого признака человек жмёт повторно, и заявка уходит
+       дважды - на приёмке это отдельная жалоба. */
+    if (btn) {
+      btn.disabled = true;
+      btn.classList.add("is-sending");
+      btn.innerHTML = '<i class="btn-spin" aria-hidden="true"></i>' +
+        esc(t("ct.sending", "Отправляем"));
+    }
 
     fetch(API + "?action=lead", {
       method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(payload)
     }).then(function (r) { return r.json(); }).then(function (r) {
-      if (btn) { btn.disabled = false; btn.innerHTML = label; }
+      if (btn) { btn.disabled = false; btn.classList.remove("is-sending"); btn.innerHTML = label; }
       if (r && r.ok) {
         if (msg) { msg.className = "form-msg ok"; msg.textContent = t(kind === "callback" ? "cb.ok" : "ct.ok", "Заявка принята, мы свяжемся с вами."); }
         form.reset();
+        try { if (navigator.vibrate) navigator.vibrate([14, 60, 14]); } catch (e3) {}
         track("lead", kind);
         $$(".field", form).forEach(function (f) { f.classList.remove("bad"); });
       } else {
         if (msg) { msg.className = "form-msg bad"; msg.textContent = t("ct.err", "Не удалось отправить. Попробуйте ещё раз или напишите на info@rocketcdn.ru"); }
       }
     }).catch(function () {
-      if (btn) { btn.disabled = false; btn.innerHTML = label; }
+      if (btn) { btn.disabled = false; btn.classList.remove("is-sending"); btn.innerHTML = label; }
       if (msg) { msg.className = "form-msg bad"; msg.textContent = t("ct.err", "Не удалось отправить. Попробуйте ещё раз или напишите на info@rocketcdn.ru"); }
     });
   });
@@ -901,6 +918,57 @@ function boot() {
     setModal(false);
     if (drawer && drawer.classList.contains("on")) setDrawer(false);
   });
+
+  /* Почту и телеграм чаще переписывают, чем нажимают: на настольной
+     машине mailto открывает не тот почтовик, а на телефоне человек
+     хочет отправить адрес коллеге. Даём кнопку «скопировать» рядом
+     со строкой - сама ссылка при этом работает как работала. */
+  (function copyContacts() {
+    var list = $(".contact-list");
+    if (!list || !navigator.clipboard) return;
+
+    var toast = null, toastT = 0;
+    function say(text) {
+      if (!toast) {
+        toast = document.createElement("div");
+        toast.className = "rc-toast";
+        toast.setAttribute("role", "status");
+        toast.setAttribute("aria-live", "polite");
+        document.body.appendChild(toast);
+      }
+      toast.textContent = text;
+      toast.classList.add("on");
+      clearTimeout(toastT);
+      toastT = setTimeout(function () { toast.classList.remove("on"); }, 2200);
+    }
+
+    $$('a[href^="mailto:"], a[href*="t.me/"]', list).forEach(function (a) {
+      var val = a.getAttribute("href").indexOf("mailto:") === 0
+        ? a.getAttribute("href").slice(7)
+        : (a.textContent || "").trim();
+      var b = document.createElement("button");
+      b.type = "button";
+      b.className = "copy-btn";
+      b.setAttribute("aria-label", t("ct.copy", "Скопировать") + ": " + val);
+      b.innerHTML = svg("check");
+      b.addEventListener("click", function (e) {
+        e.preventDefault();
+        e.stopPropagation();
+        navigator.clipboard.writeText(val).then(function () {
+          say(t("ct.copied", "Скопировано") + ": " + val);
+          b.classList.add("done");
+          setTimeout(function () { b.classList.remove("done"); }, 1400);
+          /* Короткий толчок там, где он есть: палец должен
+             почувствовать, что нажатие сработало */
+          try { if (navigator.vibrate) navigator.vibrate(10); } catch (e2) {}
+          track("copy", val);
+        }).catch(function () {
+          say(t("ct.copyerr", "Не удалось скопировать"));
+        });
+      });
+      a.appendChild(b);
+    });
+  })();
 
   /* Клики по регистрации и внешним ссылкам */
   $$('a[href*="lk.rocketcdn"], .js-reg').forEach(function (a) {

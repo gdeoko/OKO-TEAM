@@ -489,7 +489,9 @@ function boot() {
   });
   /* Карточки берём в объём по мере появления: пока блок выезжает,
      transform занят выездом, и перехватывать его нельзя. */
-  setInterval(function () { if (!off) collect(); }, 900);
+  /* Сторож карточек: на скрытой вкладке искать нечего, а обход всего
+     документа каждые девять десятых секунды - работа впустую */
+  setInterval(function () { if (!off && !doc.hidden) collect(); }, 900);
 }
 
 if (doc.readyState === "loading") doc.addEventListener("DOMContentLoaded", boot);
