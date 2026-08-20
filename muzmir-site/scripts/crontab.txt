@@ -190,3 +190,5 @@ MAILTO=""
 0 6 * * 1 php /var/www/muzmir/scripts/mail_base_hygiene.php --apply >> /var/www/muzmir/data/logs/cron.log 2>&1
 # Просьба указать адрес доставки: оплаченный заказ оригиналов без адреса.
 0 12 * * 1-6 php /var/www/muzmir/cron/order_address_request.php --send >> /var/www/muzmir/data/logs/cron.log 2>&1
+# Разбор расхождений с жюри: пересмотр записи и урок на будущее.
+*/15 * * * * php /var/www/muzmir/cron/grade_learn.php >> /var/www/muzmir/data/logs/cron.log 2>&1

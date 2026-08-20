@@ -61,6 +61,58 @@ if ($mode === 'off' && $only === 0) {
 $batch = $limit > 0 ? $limit : max(1, (int) setting('grade_batch', '10'));
 $pause = max(0, (int) setting('grade_pause_sec', '5'));
 
+/* ────────────────────────────────────────────────────────────────────────────
+ * ГОТОВЫЕ ПОДСКАЗКИ ПРИМЕНЯЮТСЯ ПРИ ВКЛЮЧЕНИИ АВТОМАТА.
+ *
+ * В режиме подсказки центр заранее разбирает всю очередь: у каждой работы есть
+ * предложенное звание, обоснование и комментарий. Но выборка ниже намеренно
+ * пропускает заявки, у которых разбор уже есть, — иначе одна и та же работа
+ * оценивалась бы заново каждый заход.
+ *
+ * Из-за этого переключение в «полный автомат» не давало ничего: новых работ нет,
+ * старые пропускаются, и вся заготовленная работа осталась бы лежать. Владелец
+ * ждёт обратного: один щелчок — и всё готовое уходит в дело.
+ *
+ * Поэтому в режиме auto сначала разбираем накопленное: берём разборы, которые
+ * ещё не применены, и применяем их обычным путём — с теми же проверками, что и
+ * свежие. Что не проходит проверку (Гран-при, тревожные признаки, низкая
+ * уверенность), по-прежнему остаётся человеку.
+ * ──────────────────────────────────────────────────────────────────────────── */
+$fromStock = 0;
+if ($mode === 'auto' && !$dry && $only === 0) {
+    require_once BASE_PATH . '/core/grade_apply.php';
+    $stock = all("SELECT g.* FROM grading_runs g
+                    JOIN applications a ON a.id = g.application_id
+                   WHERE g.status='ok' AND COALESCE(g.applied,0)=0
+                     AND COALESCE(a.result,'')='' AND COALESCE(a.graded_at,'')=''
+                     AND a.status NOT IN ('rejected','draft')
+                ORDER BY g.id ASC
+                   LIMIT " . (int) max($batch, 50));
+    foreach ($stock as $run) {
+        $appId = (int) $run['application_id'];
+        [$can, $why] = ag_can_apply((array) $run);
+        if (!$can) { cron_log(JOB, "заявка $appId: готовая подсказка оставлена человеку — $why"); continue; }
+        try {
+            $extra = trim((string) (scalar("SELECT extra_diploma FROM applications WHERE id=?", [$appId]) ?? ''));
+            if ($extra === '') $extra = trim((string) ($run['extra_award'] ?? ''));
+            $ap = grade_apply_result($appId, (string) $run['title'], [
+                'extra_diploma' => $extra,
+                'jury_comment'  => (string) $run['jury_comment'],
+                'send_mode'     => 'auto',
+                'source'        => 'ai',
+                'run_id'        => (int) $run['id'],
+            ]);
+            if ($ap['ok']) {
+                q("UPDATE grading_runs SET applied=1, applied_at=? WHERE id=?", [date('Y-m-d H:i:s'), (int) $run['id']]);
+                $fromStock++;
+            }
+        } catch (\Throwable $e) {
+            cron_log(JOB, "заявка $appId: готовая подсказка не применена — " . $e->getMessage());
+        }
+    }
+    if ($fromStock > 0) cron_log(JOB, "применено готовых подсказок: $fromStock");
+}
+
 /* КОГО ОЦЕНИВАЕМ.
  *
  * Только то, к чему человек ещё не притрагивался: нет звания И нет отметки о
@@ -81,6 +133,19 @@ $sql = "SELECT a.id
            AND (COALESCE(c.is_paid,0) = 0 OR COALESCE(a.is_paid,0) = 1)
            AND NOT EXISTS (SELECT 1 FROM grading_runs g
                             WHERE g.application_id = a.id AND g.status = 'ok')
+           /* НЕУДАЧУ НЕ ПОВТОРЯЕМ КАЖДЫЕ ДЕСЯТЬ МИНУТ.
+              Половина сбоев — закрытая или удалённая запись ВКонтакте: она не
+              откроется от того, что мы попробуем ещё раз через десять минут.
+              Такие заявки забивали каждый заход и не давали дойти до работ,
+              которые оценить можно. Ждём шесть часов: за это время участник
+              успевает открыть доступ по нашему письму. */
+           AND NOT EXISTS (SELECT 1 FROM grading_runs f
+                            WHERE f.application_id = a.id AND f.status = 'failed'
+                              AND f.created_at >= datetime('now','localtime','-6 hours'))
+           /* Три неудачи подряд — вопрос к ссылке, а не к очереди: дальше это
+              работа человека, он напишет участнику или отклонит заявку. */
+           AND (SELECT COUNT(*) FROM grading_runs f2
+                 WHERE f2.application_id = a.id AND f2.status = 'failed') < 3
          ORDER BY a.id ASC
          LIMIT " . (int) $batch;
 $rows = $only > 0 ? [['id' => $only]] : all($sql);

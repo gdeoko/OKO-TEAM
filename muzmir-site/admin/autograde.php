@@ -179,6 +179,50 @@ foreach ($cmp as $c) {
 }
 $cT = count($cmp);
 ?>
+<?php
+/* ЧЕМУ СИСТЕМА НАУЧИЛАСЬ НА ВАШИХ ПРАВКАХ.
+   Поправка считается по решениям жюри: каждое сохранение итога человеком
+   сравнивается с тем, что предлагала подсказка. Показываем это отдельно от
+   сверки, потому что сверка отвечает на вопрос «насколько точна машина», а
+   здесь — «что мы ей уже объяснили». */
+require_once BASE_PATH . '/core/grade_feedback.php';
+$gfb = gfb_stats();
+?>
+<div class="card">
+  <h3 style="margin:0 0 10px">Обучение на решениях жюри</h3>
+  <?php if ((int) $gfb['n'] === 0): ?>
+    <p class="small" style="color:#777;margin:0">
+      Правок пока нет. Как только Вы поставите своё звание там, где была подсказка, система запомнит расхождение
+      и начнёт учитывать его в следующих оценках: по номинации — с пяти правок, общая поправка — с пятнадцати.
+    </p>
+  <?php else: ?>
+    <div style="display:flex;gap:12px;flex-wrap:wrap">
+      <?php
+      $b = $gfb['bias'];
+      $biasTxt = (int) $b['steps'] === 0
+          ? ((int) $b['n'] > 0 ? 'не требуется' : 'ещё копится')
+          : ((int) $b['steps'] > 0 ? 'строже на ' . abs((int) $b['steps']) . ' ступ.' : 'мягче на ' . abs((int) $b['steps']) . ' ступ.');
+      foreach ([
+        ['Решений учтено', (string) (int) $gfb['n']],
+        ['Подсказка совпала', (int) $gfb['n'] > 0 ? round($gfb['same'] * 100 / $gfb['n']) . '%' : '—'],
+        ['Вы понижали', (string) (int) $gfb['down']],
+        ['Вы повышали', (string) (int) $gfb['up']],
+        ['Поправка сейчас', $biasTxt],
+      ] as [$label, $val]): ?>
+        <div style="flex:1 1 130px;background:#f4f8fd;border:1px solid #cfe0f5;border-radius:10px;padding:12px 14px">
+          <div style="font:700 20px/1.2 Georgia,serif;color:#17307A"><?= h($val) ?></div>
+          <div class="small" style="color:#777"><?= h($label) ?></div>
+        </div>
+      <?php endforeach; ?>
+    </div>
+    <p class="small" style="color:#777;margin:10px 0 0">
+      Поправка <?= (int) $b['n'] > 0 ? h((string) $b['scope']) : 'ещё не действует' ?>. Сдвиг ограничен двумя ступенями,
+      считается по медиане — один спорный случай не меняет оценку всем остальным. Последние расхождения уходят
+      в задание модели примерами, поэтому меняется и сам разбор, а не только итоговое звание.
+    </p>
+  <?php endif; ?>
+</div>
+
 <div class="card">
   <h3 style="margin:0 0 10px">Сверка с жюри</h3>
   <?php if ($cT < 5): ?>
