@@ -637,10 +637,29 @@ a.js-reg:not(.btn):hover { background-size: 100% 2px; }
 .search input:focus { outline: none; border-color: var(--cyan); }
 .search input::placeholder { color: var(--tx-3); }
 .search svg { position: absolute; left: 14px; top: 50%; transform: translateY(-50%); width: 17px; height: 17px; color: var(--tx-3); }
+/* Реестр узлов больше не окно с собственной прокруткой. Внутренняя
+   полоса на треть экрана воровала ход колеса и палец: человек
+   листал двести восемнадцать городов вместо страницы и застревал
+   посреди фильма. Теперь высота свободная, а длину списка держит
+   разметка - первые строки и кнопка «показать все». */
 .node-list {
-  max-height: 340px; overflow-y: auto; border: 1px solid var(--line); border-radius: var(--r-lg);
-  background: var(--surface); scrollbar-width: thin;
+  border: 1px solid var(--line); border-radius: var(--r-lg);
+  background: var(--surface);
+  overflow: hidden;
 }
+.node-more {
+  display: block; width: 100%;
+  padding: 13px 15px;
+  background: none; border: 0;
+  border-top: 1px solid var(--line);
+  color: var(--accent-tx, #42B2DC);
+  font: 600 var(--fs-3)/1.2 var(--f-body, "Golos Text", sans-serif);
+  letter-spacing: .04em;
+  cursor: pointer;
+  transition: background var(--fast), color var(--fast);
+}
+.node-more:hover { background: var(--surface-2); }
+.node-more:focus-visible { outline: 2px solid var(--cyan); outline-offset: -2px; }
 .node-list::-webkit-scrollbar { width: 6px }
 .node-list::-webkit-scrollbar-thumb { background: var(--line-2); border-radius: 3px }
 .node-row {

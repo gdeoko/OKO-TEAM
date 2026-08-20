@@ -274,22 +274,51 @@ function filteredNodes() {
   });
 }
 
+/* Сколько строк реестра показываем сразу. Больше не нужно: список
+   перестал быть окном с внутренней прокруткой (см. ниже), а листать
+   двести восемнадцать строк подряд человеку незачем - для поиска
+   есть поиск. */
+var NODES_HEAD = 8;
+var nodesAll = false;
+
 function renderNodes() {
   var list = $("#nodeList");
   if (!list) return;
   var rows = filteredNodes();
   var cnt = $("#nodeCount");
   if (cnt) cnt.textContent = rows.length;
+  /* Реестр больше не крадёт прокрутку страницы. Раньше он был окном
+     с собственной полосой прокрутки на треть экрана, и колесо (а на
+     телефоне - палец) над этой зоной листало города вместо сайта:
+     человек застревал посреди фильма и не понимал, почему страница
+     не едет. Теперь список показывает первые строки целиком, а
+     остальные разворачиваются по кнопке. */
+  var full = nodesAll || !!state.query || state.region != null;
+  var shown = full ? rows.slice(0, 40) : rows.slice(0, NODES_HEAD);
+  var hidden = rows.length - shown.length;
   if (!rows.length) {
     list.innerHTML = '<div class="node-empty">' + esc(t("infra.none", "Ничего не найдено")) + "</div>";
     return;
   }
-  list.innerHTML = rows.map(function (pair) {
+  list.innerHTML = shown.map(function (pair) {
     var n = pair[0], reg = GEO.REGIONS[n[3]];
     return '<div class="node-row" data-idx="' + pair[1] + '" role="button" tabindex="0">' +
       '<span class="nm">' + esc(GEO.name(n, state.lang)) + "</span>" + nodeTags(n) +
       '<span class="rg">' + esc(reg[state.lang] || reg.ru) + "</span></div>";
-  }).join("");
+  }).join("") +
+  (hidden > 0
+    ? '<button type="button" class="node-more">' +
+      esc(t("infra.more", "Показать все")) + " " + rows.length + "</button>"
+    : "");
+
+  var more = list.querySelector(".node-more");
+  if (more) {
+    more.addEventListener("click", function () {
+      nodesAll = true;
+      renderNodes();
+      track("nodes", "expand");
+    });
+  }
 
   $$(".node-row", list).forEach(function (row) {
     function go() {
