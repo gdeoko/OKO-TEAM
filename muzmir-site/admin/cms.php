@@ -58,8 +58,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     if ($do === 'save_ministry') {
         try { db()->exec("ALTER TABLE ministry_letters ADD COLUMN doc_path TEXT DEFAULT ''"); } catch (\Throwable $e) {}
         $id = (int) input('id');
+        // Дату письма сохраняем наравне с остальным: по ней строится порядок
+        // и на сайте, и в списке админки, а поле «Порядок» осталось служебным
+        // и пересчитывается скриптом ministry_letters_fix.php.
+        $ld = trim((string) input('letter_date'));
         $data = ['region'=>trim(input('region')),'title'=>trim(input('title')),
-                 'image_path'=>trim(input('image_path')),'sort'=>(int)input('sort')];
+                 'image_path'=>trim(input('image_path')),'sort'=>(int)input('sort'),
+                 'letter_date'=>preg_match('~^\d{4}-\d{2}-\d{2}$~', $ld) ? $ld : ''];
         // Загрузка файла-изображения письма (jpg/png/webp) — необязательно.
         if (!empty($_FILES['image_file']['tmp_name']) && is_uploaded_file($_FILES['image_file']['tmp_name'])) {
             $ext = strtolower(pathinfo((string)$_FILES['image_file']['name'], PATHINFO_EXTENSION));
@@ -350,7 +355,8 @@ elseif ($tab === 'concerts'):
 
 <?php /* ===== ПИСЬМА МИНИСТЕРСТВ ===== */
 else:
-  $m = $edit ? one("SELECT * FROM ministry_letters WHERE id=?", [$edit]) : ['id'=>0,'region'=>'','title'=>'','image_path'=>'','sort'=>0]; ?>
+  $m = $edit ? one("SELECT * FROM ministry_letters WHERE id=?", [$edit])
+             : ['id'=>0,'region'=>'','title'=>'','image_path'=>'','sort'=>0,'letter_date'=>date('Y-m-d')]; ?>
   <div class="grid grid-2">
     <div class="card">
       <div class="section-title"><h3 style="margin:0"><?= $edit?'Редактирование письма':'Новое письмо' ?></h3><?php if($edit): ?><span class="badge badge--muted">#<?= (int)$m['id'] ?></span><?php endif; ?></div>
@@ -360,7 +366,11 @@ else:
         <div class="field"><label>Заголовок</label><input name="title" value="<?= h($m['title']) ?>"></div>
         <div class="form-row">
           <div class="field"><label>Путь к изображению письма</label><input name="image_path" value="<?= h($m['image_path']) ?>"></div>
-          <div class="field"><label>Порядок</label><input type="number" name="sort" value="<?= (int)$m['sort'] ?>"></div>
+          <div class="field">
+            <label>Дата письма</label>
+            <input type="date" name="letter_date" value="<?= h((string)($m['letter_date'] ?? '')) ?>">
+            <span class="muted small">По ней письма выстраиваются и на сайте, и здесь. Без даты письмо уходит в конец списка.</span>
+          </div>
         </div>
         <div class="form-row">
           <div class="field"><label>Загрузить изображение письма <span class="muted small">(jpg/png/webp)</span></label><input type="file" name="image_file" accept=".jpg,.jpeg,.png,.webp"></div>
@@ -378,10 +388,17 @@ else:
     </div>
     <div class="card card--pad0">
       <div style="padding:18px"><div class="section-title" style="margin:0"><h3 style="margin:0">Письма</h3><span class="badge badge--gold"><?= $cMinistry ?></span></div></div>
-      <div class="table-wrap" style="border:none"><table class="tbl"><thead><tr><th></th><th>Регион</th><th>Заголовок</th><th></th></tr></thead><tbody>
-        <?php $mins = all("SELECT * FROM ministry_letters ORDER BY sort, id DESC"); if(!$mins): ?><tr><td colspan="4" class="muted" style="text-align:center;padding:22px">Писем пока нет</td></tr><?php endif; ?>
+      <div class="table-wrap" style="border:none"><table class="tbl"><thead><tr><th></th><th>Дата</th><th>Регион</th><th>Заголовок</th><th></th></tr></thead><tbody>
+        <?php // Порядок тот же, что на сайте: свежие письма сверху, без даты — в конец.
+              // Раньше админка сортировала по служебному полю, и два списка
+              // расходились: письмо, стоящее на сайте первым, здесь пряталось в середине.
+              $mins = all("SELECT * FROM ministry_letters
+                            ORDER BY (letter_date IS NULL OR letter_date='') ASC,
+                                     letter_date DESC, sort, id DESC"); if(!$mins): ?><tr><td colspan="5" class="muted" style="text-align:center;padding:22px">Писем пока нет</td></tr><?php endif; ?>
         <?php foreach ($mins as $x): ?>
           <tr><td><?php if(trim((string)$x['image_path'])!==''): ?><img class="cms-thumb cms-thumb--doc" src="<?= h($x['image_path']) ?>" alt="" loading="lazy" onerror="this.style.display='none';this.nextElementSibling.style.display='flex'"><span class="cms-thumb cms-thumb--doc cms-thumb-ph" style="display:none"><?= admin_icon('diplomas') ?></span><?php else: ?><span class="cms-thumb cms-thumb--doc cms-thumb-ph"><?= admin_icon('diplomas') ?></span><?php endif; ?></td>
+            <td class="small" style="white-space:nowrap"><?php $ld = trim((string)($x['letter_date'] ?? ''));
+              echo $ld !== '' ? h(date('d.m.Y', strtotime($ld))) : '<span class="muted">без даты</span>'; ?></td>
             <td><b><?= h($x['region']) ?></b></td><td class="small"><?= h($x['title'] ?: '—') ?></td>
             <td style="white-space:nowrap"><a class="btn btn--ghost btn--sm" href="<?= a_link('cms',['tab'=>'ministry','edit'=>$x['id']]) ?>"><?= admin_icon('edit') ?></a>
             <form method="post" action="<?= url('/admin/') ?>" style="display:inline"><?= csrf_field() ?><input type="hidden" name="do" value="del_ministry"><input type="hidden" name="id" value="<?= $x['id'] ?>">
