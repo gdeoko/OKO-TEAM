@@ -104,32 +104,100 @@ function og_key(array $order): string {
  *                            full_name:string,amount:int,items:array,statuses:array,ids:array}>
  */
 function og_groups(array $orders): array {
+    /* ГРУППИРУЕТСЯ ТОЛЬКО ТО, ЧТО ЕДЕТ ПОЧТОЙ.
+     *
+     * Смысл группы один: одна посылка на один живой адрес. Поэтому вместе
+     * собираются оригиналы одного человека на один адрес — их кладут в одну
+     * коробку, клеят один ярлык и вводят один трек-номер.
+     *
+     * Электронные заказы в группы НЕ ВХОДЯТ. Их никуда не везут: файлы уходят
+     * письмом в течение пяти рабочих дней со дня заказа, и делает это раздел
+     * «Заказы электронных наград». Была попытка показывать их вместе с посылкой
+     * того же человека — вышло хуже: медаль и три электронные благодарности
+     * выглядели одним отправлением, у электронных появлялся чужой почтовый
+     * адрес, а сумма посылки включала то, что почтой не поедет. Каждый
+     * электронный заказ остаётся сам по себе.
+     */
     $g = [];
+    $withAddr = [];    // оригиналы с адресом: они и образуют посылки
+    $noAddr    = [];   // оригиналы без адреса и электронные заказы
+
     foreach ($orders as $o) {
-        $k = og_key($o);
+        $addr = og_norm_address((string) ($o['address'] ?? ''));
+        if ($addr !== '' && og_needs_address($o)) $withAddr[] = $o; else $noAddr[] = $o;
+    }
+
+    $put = static function (array &$g, string $k, array $o): void {
         if (!isset($g[$k])) {
-            $g[$k] = ['key' => $k, 'orders' => [], 'kind' => og_kind($o),
-                      'address' => (string) ($o['address'] ?? ''), 'email' => (string) ($o['email'] ?? ''),
+            $g[$k] = ['key' => $k, 'orders' => [], 'kind' => 'digital',
+                      'address' => '', 'email' => (string) ($o['email'] ?? ''),
                       'full_name' => (string) ($o['full_name'] ?? ''), 'amount' => 0,
                       'items' => [], 'statuses' => [], 'ids' => []];
         }
-        $g[$k]['orders'][] = $o;
-        $g[$k]['ids'][]    = (int) ($o['id'] ?? 0);
-        $g[$k]['amount']  += (int) ($o['amount'] ?? 0);
+        $g[$k]['orders'][]  = $o;
+        $g[$k]['ids'][]     = (int) ($o['id'] ?? 0);
+        $g[$k]['amount']   += (int) ($o['amount'] ?? 0);
         $g[$k]['statuses'][(string) ($o['status'] ?? '')] = true;
-        // Вид группы — самый «тяжёлый» из встреченных: если хоть что-то едет
-        // почтой, вся группа требует адреса и отправки.
-        $kk = og_kind($o);
-        if ($kk === 'mixed' || ($kk === 'original' && $g[$k]['kind'] === 'digital')
-            || ($kk === 'digital' && $g[$k]['kind'] === 'original')) {
-            $g[$k]['kind'] = ($kk === $g[$k]['kind']) ? $kk : 'mixed';
+        if (trim((string) ($o['address'] ?? '')) !== '' && $g[$k]['address'] === '') {
+            $g[$k]['address'] = (string) $o['address'];
         }
-        if (($o['address'] ?? '') !== '' && $g[$k]['address'] === '') $g[$k]['address'] = (string) $o['address'];
+        // Вид группы: хоть один оригинал — вся посылка едет почтой.
+        $kk = og_kind($o);
+        if ($kk === 'original' || $kk === 'mixed') {
+            $g[$k]['kind'] = ($g[$k]['kind'] === 'digital' && count($g[$k]['orders']) > 1) ? 'mixed' : $kk;
+        }
         foreach ((array) json_decode((string) ($o['items'] ?? '[]'), true) as $it) {
             if (!is_array($it)) continue;
             $g[$k]['items'][] = $it + ['order_id' => (int) ($o['id'] ?? 0),
                                        'application_id' => (int) ($o['application_id'] ?? 0)];
         }
+    };
+
+    /* 1. ПОСЫЛКИ: ОДИН ПОЛУЧАТЕЛЬ, ОДИН АДРЕС, ОДНО ОКНО ВРЕМЕНИ.
+     *
+     * Адреса мало: человек заказывает награды и в августе, и в ноябре, и это
+     * разные посылки — первую давно отправили. Поэтому внутри адреса заказы
+     * разбиваются на окна: всё, что заказано в течение пяти дней от первого
+     * заказа окна, едет вместе; заказ позже открывает новое окно. Пять дней —
+     * тот же срок, за который центр обещает изготовить наградные материалы,
+     * так что ждать дольше уже нельзя.
+     */
+    usort($withAddr, static fn(array $a, array $b): int
+        => strcmp((string) ($a['created_at'] ?? ''), (string) ($b['created_at'] ?? '')));
+
+    $windowStart = [];    // ключ адреса → время первого заказа текущего окна
+    $windowNo    = [];    // ключ адреса → номер окна
+    foreach ($withAddr as $o) {
+        $who  = (int) ($o['user_id'] ?? 0) ?: mb_strtolower(trim((string) ($o['email'] ?? '')));
+        $base = 'post:' . $who . ':' . og_norm_address((string) ($o['address'] ?? ''));
+        $ts   = strtotime((string) ($o['created_at'] ?? '')) ?: 0;
+
+        if (!isset($windowStart[$base]) || $ts <= 0) {
+            $windowStart[$base] = $ts; $windowNo[$base] = 1;
+        } elseif ($ts - $windowStart[$base] > 5 * 86400) {
+            $windowStart[$base] = $ts; $windowNo[$base]++;
+        }
+        $put($g, $base . ':w' . $windowNo[$base], $o);
+    }
+
+    // 2. Всё остальное — своей карточкой: электронные заказы и оригиналы без
+    //    адреса. Электронные едут не почтой, а письмом (раздел «Заказы
+    //    электронных наград»); оригинал без адреса объединять не с чем, пока
+    //    получатель не скажет, куда его везти.
+    foreach ($noAddr as $o) {
+        $put($g, 'solo:' . (int) ($o['id'] ?? 0), $o);
+    }
+
+    // Вид группы уточняем по фактическому составу: так «оригиналы и электронные»
+    // не появляется там, где всё электронное, и наоборот.
+    foreach ($g as $k => $grp) {
+        $orig = $digi = false;
+        foreach ($grp['items'] as $it) {
+            $kk = (string) ($it['kind'] ?? '');
+            if ($kk === 'original') $orig = true;
+            elseif ($kk === 'digital') $digi = true;
+        }
+        $g[$k]['kind'] = $orig && $digi ? 'mixed' : ($orig ? 'original' : 'digital');
     }
     return $g;
 }

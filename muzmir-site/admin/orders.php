@@ -10,6 +10,35 @@ declare(strict_types=1);
 require_once BASE_PATH . '/core/orders.php';
 orders_migrate();
 
+/* --------- Выдача чистого бланка (GET) ---------
+ *
+ * Бланк без подписи и печати лежит вне веб-корня и отдаётся ТОЛЬКО отсюда: этот
+ * файл открывается после входа в админку, а прямой ссылки на него не существует.
+ * Раньше бланк писался в public/diplomas/ рядом с готовыми дипломами, и имя у
+ * него складывалось из номера диплома, который участник знает. Подставив к
+ * своему номеру «-clean», человек скачивал пустой бланк и печатал его сам,
+ * вместо того чтобы заказать оригинал. Теперь такой ссылки нет.
+ */
+if (($__blank = trim((string) input('blank'))) !== '') {
+    $name = basename($__blank);
+    // Имя проверяем строго: любые пути и точки — отказ, каталог закрытый.
+    if (!preg_match('~^[A-Za-z0-9._-]+\.pdf$~', $name) || str_contains($name, '..')) {
+        http_response_code(400); echo 'Некорректное имя файла'; exit;
+    }
+    $abs = order_clean_dir() . $name;
+    // Часть бланков осталась в старом каталоге до переноса — их тоже отдаём,
+    // но по этому же закрытому маршруту.
+    if (!is_file($abs)) $abs = BASE_PATH . '/public/diplomas/' . $name;
+    if (!is_file($abs)) { http_response_code(404); echo 'Бланк не найден'; exit; }
+    header('Content-Type: application/pdf');
+    header('Content-Length: ' . (string) filesize($abs));
+    header('Content-Disposition: ' . (input('dl') !== '' ? 'attachment' : 'inline') . '; filename="' . $name . '"');
+    header('X-Robots-Tag: noindex, nofollow');
+    header('Cache-Control: private, no-store');
+    readfile($abs);
+    exit;
+}
+
 /* ---------------------------- POST-обработчики ---------------------------- */
 /* --------- Печатный производственный лист заказа (GET) --------- */
 if (input('do') === 'print' && (int) input('id') > 0) {
@@ -192,7 +221,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
 /* ------------------------------- Данные --------------------------------- */
 $filter = input('status');   // '', paid, made, shipped, delivered, new
-$where  = "items NOT LIKE '%\"kind\":\"club\"%'";  // клубные членства сюда не относятся
+/* ЗДЕСЬ ТОЛЬКО ТО, ЧТО ПЕЧАТАЮТ И ВЕЗУТ ПОЧТОЙ.
+ *
+ * Раздел называется «Заказы оригиналов», но брал все заказы подряд. Электронная
+ * благодарность за 300 ₽ попадала в производство наравне с медалью: её печатали
+ * глазами по списку, считали в сумму посылки и ждали от участника почтовый
+ * адрес, которого для файла не нужно вовсе. Электронные заказы живут в разделе
+ * «Заказы электронных наград» — там их выдача и срок в пять рабочих дней. */
+$where  = "items NOT LIKE '%\"kind\":\"club\"%' AND items LIKE '%\"kind\":\"original\"%'";
 $params = [];
 if ($filter === 'archive') {
     // АРХИВ: заказ, по которому введён трек-номер, уходит из работы сюда.
@@ -221,7 +257,9 @@ $orders = all("SELECT * FROM awards_orders WHERE $where ORDER BY (status='paid')
 
 // Счётчики по статусам (только оригинальные заказы).
 $counts = [];
-foreach (all("SELECT status, COUNT(*) c FROM awards_orders WHERE items NOT LIKE '%\"kind\":\"club\"%' GROUP BY status") as $r) {
+foreach (all("SELECT status, COUNT(*) c FROM awards_orders
+               WHERE items NOT LIKE '%\"kind\":\"club\"%' AND items LIKE '%\"kind\":\"original\"%'
+            GROUP BY status") as $r) {
     $counts[(string)$r['status']] = (int)$r['c'];
 }
 $STAT = ['paid'=>'К изготовлению','made'=>'Изготовлено','shipped'=>'Отправлено','delivered'=>'Доставлено','new'=>'Ожидает оплаты','canceled'=>'Отменён'];
@@ -276,12 +314,25 @@ $groups = og_groups($orders);
     $step = $STEPS[$st] ?? ($st === 'new' ? 0 : 1);
     $gkind = $gr['kind'];
     $needAddr = in_array($gkind, ['original','mixed'], true);
-    // Состав и бланки собираем по всем заказам посылки.
-    $items = []; $cleans = [];
+    /* Состав и бланки собираем по всем заказам посылки — но ТОЛЬКО ОРИГИНАЛЫ.
+       Если человек одним заказом взял и медаль, и электронную благодарность,
+       в коробку едет медаль; файл уходит письмом из раздела электронных, и
+       путать эти две работы нельзя. */
+    $items = []; $cleans = []; $postSum = 0; $digiCnt = 0;
     foreach ($gr['orders'] as $go) {
-        foreach (order_items_parse($go) as $p) $items[] = $p;
-        foreach (order_clean_pdfs($go) as $c) { $c['order_id'] = (int)$go['id']; $cleans[] = $c; }
+        foreach (order_items_parse($go) as $p) {
+            if ((string) ($p['kind'] ?? '') !== 'original') { $digiCnt += max(1, (int) $p['count']); continue; }
+            $items[] = $p;
+            $postSum += (int) ($p['price'] ?? 0) * max(1, (int) $p['count']);
+        }
+        foreach (order_clean_pdfs($go) as $c) {
+            if ((string) ($c['kind'] ?? 'original') !== 'original') continue;
+            $c['order_id'] = (int)$go['id']; $cleans[] = $c;
+        }
     }
+    // Сумма посылки — по оригинальным позициям. Оплата заказа может включать и
+    // электронные материалы, которые почтой не поедут.
+    if ($postSum <= 0) $postSum = (int) $gr['amount'];
     $trackUrl = order_pochta_url((string)($o['tracking'] ?? ''));
 ?>
   <div class="card" style="margin-bottom:16px;border:1px solid var(--a-line);border-radius:14px;overflow:hidden;">
@@ -293,7 +344,10 @@ $groups = og_groups($orders);
         <span class="muted small"> · <?= h((string)$o['created_at']) ?></span>
         <div class="small">
           <?= h((string)$o['competition']) ?> · <b><?= h((string)$o['result']) ?></b>
-          · <span style="color:<?= $needAddr ? '#8B6F1F' : '#1E7A46' ?>"><?= h(og_kind_ru($gkind)) ?></span>
+          <?php /* В разделе оригиналов вид всегда один — почтовая посылка. Писать
+                   тут «оригиналы и электронные» было незачем: электронную часть
+                   заказа здесь не изготавливают и не везут. */ ?>
+          · <span style="color:#8B6F1F">оригиналы почтой</span>
         </div>
       </div>
       <div>
@@ -323,10 +377,10 @@ $groups = og_groups($orders);
               ? h($gr['address'])
               : '<b style="color:#8B2F2F">адрес не указан — отправить некуда</b>' ?></div>
           <?php else: ?>
-            <div class="small" style="color:#1E7A46">Электронные материалы — уходят письмом, адрес не нужен</div>
+            <div class="small" style="color:#1E7A46">Только электронные материалы — уходят письмом на почту</div>
           <?php endif; ?>
           <div class="small">📞 <?= h((string)$o['phone']) ?> · ✉ <?= h((string)$o['email']) ?></div>
-          <div class="small muted" style="margin-top:4px;">Сумма: <?= h(function_exists('money') ? money((int)$o['amount']) : (int)$o['amount'].' ₽') ?><?php
+          <div class="small muted" style="margin-top:4px;">Сумма посылки: <b><?= number_format($postSum, 0, '.', ' ') ?> ₽</b><?php
             // Заказ мог быть оформлен со скидкой участника Клуба — показываем, с какой
             // суммы и на сколько, иначе непонятно, почему в кассе меньше прайса.
             $ofull = (int)($o['amount_full'] ?? 0); $opct = (int)($o['discount_pct'] ?? 0);
@@ -348,17 +402,38 @@ $groups = og_groups($orders);
         </div>
         <!-- Состав с фото -->
         <div>
-          <div class="small muted" style="text-transform:uppercase;letter-spacing:.06em;margin-bottom:6px;">Состав (что изготовить)</div>
+          <div class="small muted" style="text-transform:uppercase;letter-spacing:.06em;margin-bottom:6px;">
+            Состав посылки (что изготовить) · оплачено
+            <b style="color:var(--a-navy);font-size:13px"><?= number_format($postSum, 0, '.', ' ') ?> ₽</b>
+          </div>
+          <?php if ($digiCnt > 0): ?>
+            <div class="small" style="color:#1E7A46;margin:-2px 0 6px">
+              В этом же заказе <?= (int)$digiCnt ?> электронн<?= $digiCnt === 1 ? 'ый материал' : 'ых материала' ?> —
+              они уходят письмом из раздела «Заказы электронных наград», в посылку не кладутся.
+            </div>
+          <?php endif; ?>
           <div style="display:flex;flex-wrap:wrap;gap:8px;">
-            <?php foreach ($items as $p): ?>
-              <div style="width:88px;text-align:center;">
+            <?php foreach ($items as $p):
+                $pk    = (string) ($p['kind'] ?? '');
+                $pcnt  = max(1, (int) $p['count']);
+                $pone  = (int) ($p['price'] ?? 0);
+                $psum  = $pone * $pcnt;
+            ?>
+              <div style="width:104px;text-align:center;">
                 <?php if ($p['photo']): ?>
-                  <img src="<?= h($p['photo']) ?>" alt="" style="width:88px;height:88px;object-fit:cover;border-radius:10px;border:1px solid var(--a-line);">
+                  <img src="<?= h($p['photo']) ?>" alt="" style="width:104px;height:104px;object-fit:cover;border-radius:10px;border:1px solid var(--a-line);">
                 <?php else: ?>
-                  <div style="width:88px;height:88px;border-radius:10px;border:1px dashed var(--a-line);display:flex;align-items:center;justify-content:center;color:#9AA;font-size:11px;">нет фото</div>
+                  <div style="width:104px;height:104px;border-radius:10px;border:1px dashed var(--a-line);display:flex;align-items:center;justify-content:center;color:#9AA;font-size:11px;">нет фото</div>
                 <?php endif; ?>
                 <div class="small" style="margin-top:4px;line-height:1.2;"><?= h($p['item']) ?></div>
-                <div class="small" style="font-weight:700;color:var(--a-navy);">× <?= (int)$p['count'] ?></div>
+                <?php /* Вид позиции подписан у самой награды, а не одной строкой на
+                         весь заказ: в одной посылке едут и оригиналы, и электронные. */ ?>
+                <div class="small" style="color:<?= $pk === 'original' ? '#8B6F1F' : '#1E7A46' ?>;">
+                  <?= $pk === 'original' ? 'оригинал' : ($pk === 'digital' ? 'электронный' : h($pk)) ?>
+                </div>
+                <div class="small" style="font-weight:700;color:var(--a-navy);">
+                  <?= $pcnt > 1 ? '× ' . $pcnt . ' · ' : '' ?><?= $psum > 0 ? number_format($psum, 0, '.', ' ') . ' ₽' : '—' ?>
+                </div>
               </div>
             <?php endforeach; ?>
           </div>
@@ -387,7 +462,7 @@ $groups = og_groups($orders);
                 <div class="small" style="font-weight:600;line-height:1.3;margin-bottom:6px"><?= h((string)$c['label']) ?></div>
                 <div style="display:flex;gap:6px;flex-wrap:wrap">
                   <a class="btn btn--navy btn--sm" href="<?= h($u) ?>#toolbar=1" target="_blank" rel="noopener"><?= admin_icon('diplomas') ?? '' ?>Печать</a>
-                  <a class="btn btn--ghost btn--sm" href="<?= h($u) ?>" download><?= admin_icon('download') ?? '' ?>Скачать</a>
+                  <a class="btn btn--ghost btn--sm" href="<?= h($u) ?>&amp;dl=1"><?= admin_icon('download') ?? '' ?>Скачать</a>
                 </div>
               </div>
             <?php endforeach; ?>

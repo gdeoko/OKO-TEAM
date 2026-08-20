@@ -1277,6 +1277,21 @@ ob_start(); ?>
                   <?php endforeach; ?>
                 </div>
                 <div class="cab-bar"><i data-w="<?= (int)round((($ocur+1)/count($orderPipe))*100) ?>"></i></div>
+                <?php
+                /* ОРИГИНАЛЫ НЕ СКАЧИВАЮТСЯ.
+                   Заказавший оригинал платит за напечатанный, подписанный и
+                   заверенный печатью документ — его везёт почта. Файла для
+                   скачивания здесь нет и не будет: скачать можно было бы только
+                   пустой бланк без подписи и печати, а он не имеет силы. Пишем
+                   это прямо, чтобы человек не искал кнопку и не решил, что
+                   кабинет сломался. */
+                $__hasOrig = strpos((string)($o['items'] ?? ''), '"kind":"original"') !== false;
+                if ($__hasOrig): ?>
+                  <p class="cab-meta" style="margin-top:10px">
+                    Оригиналы с живой подписью и печатью едут Почтой России<?= $track !== '' ? '' : ' — трек-номер появится здесь и придёт письмом' ?>.
+                    Скачивание для них не предусмотрено: силу имеет только напечатанный документ.
+                  </p>
+                <?php endif; ?>
                 <?php if ($trackUrl !== ''): ?>
                   <a class="btn btn--primary btn--sm" href="<?= h($trackUrl) ?>" target="_blank" rel="noopener" style="margin-top:12px">
                     <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" style="vertical-align:-3px;margin-right:5px"><path d="M1 3h15v13H1zM16 8h4l3 3v5h-7M5.5 21a2 2 0 1 0 0-4 2 2 0 0 0 0 4zM18.5 21a2 2 0 1 0 0-4 2 2 0 0 0 0 4z"/></svg>Отследить посылку</a>

@@ -318,6 +318,35 @@ function award_filter_prices(array $rows, string $result, bool $compIsPaid): arr
  * а генерация запускается только явно — кнопкой «Перегенерировать» ($regen) или при
  * отправке заказа в производство.
  */
+/** Каталог чистых бланков — вне веб-корня, наружу не отдаётся. */
+function order_clean_dir(): string { return BASE_PATH . '/data/clean_blanks/'; }
+
+/**
+ * Абсолютный путь бланка по сохранённому адресу.
+ *
+ * В кэше заказов лежат адреса двух поколений: старые прямые ссылки на
+ * /diplomas/... и новые на закрытый маршрут админки. И там и там нас интересует
+ * только имя файла, поэтому берём его и ищем сначала в закрытом каталоге.
+ */
+function order_clean_path(string $url): string {
+    $name = basename(parse_url($url, PHP_URL_PATH) ?: $url);
+    if ($name === '' || !preg_match('~^[A-Za-z0-9._-]+\.pdf$~', $name)) {
+        // Новый адрес несёт имя параметром: /admin/?p=orders&blank=...
+        parse_str((string) parse_url($url, PHP_URL_QUERY), $q);
+        $name = basename((string) ($q['blank'] ?? ''));
+    }
+    if ($name === '' || !preg_match('~^[A-Za-z0-9._-]+\.pdf$~', $name)) return '';
+    $priv = order_clean_dir() . $name;
+    if (is_file($priv)) return $priv;
+    $pub = BASE_PATH . '/public/diplomas/' . $name;
+    return is_file($pub) ? $pub : '';
+}
+
+/** Адрес бланка для админки: закрытый маршрут, а не публичный файл. */
+function order_clean_url(string $file): string {
+    return '/admin/?p=orders&blank=' . rawurlencode(basename($file));
+}
+
 function order_clean_pdfs(array $order, bool $regen = false): array {
     $oid = (int)($order['id'] ?? 0);
     $raw = trim((string)($order['clean_pdfs'] ?? ''));
@@ -329,8 +358,12 @@ function order_clean_pdfs(array $order, bool $regen = false): array {
         foreach ($cached as $c) {
             $url = (string) ($c['url'] ?? '');
             if ($url === '') continue;
-            $abs = BASE_PATH . '/public/diplomas/' . basename(parse_url($url, PHP_URL_PATH) ?: $url);
-            if (is_file($abs)) $live[] = $c;
+            $abs = order_clean_path($url);
+            if ($abs === '') continue;
+            // Старые записи вели прямо в веб-корень: подменяем адрес на закрытый,
+            // иначе кнопка «Скачать» так и осталась бы публичной ссылкой.
+            $c['url'] = order_clean_url(basename($abs));
+            $live[] = $c;
         }
         // Кэш посчитан (строка непустая) — возвращаем результат, даже если он пуст.
         if ($raw !== '') return $live;
@@ -490,7 +523,7 @@ function order_generate_clean_pdfs(array $order): array {
         if ($pdf && is_file($pdf)) {
             $label = $labels[$t] ?? $j['item'];
             if ($j['fio'] !== '') $label .= ' — ' . $j['fio'];
-            $out[] = ['label' => $label, 'path' => $pdf, 'url' => $base . '/diplomas/' . basename($pdf),
+            $out[] = ['label' => $label, 'path' => $pdf, 'url' => order_clean_url(basename($pdf)),
                       'type' => $t, 'fio' => $j['fio'], 'kind' => (string) ($j['kind'] ?? 'original')];
         }
     }
