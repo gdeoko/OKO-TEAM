@@ -3602,6 +3602,28 @@ Rocket.prototype.layout = function (p, dt) {
     pos.y -= app * dY * (this._sNow || 1);
   }
 
+  /* Пролог фильма: корабль на стартовом столе. Раньше он стоял там,
+     куда его выносила кривая маршрута, и на узком экране в кадр
+     просто не попадал - фильм начинался без героя, приёмка это и
+     поймала. Притягиваем его к точке первого кадра: на телефоне по
+     центру чуть ниже середины, на широком экране справа от
+     заголовка, чтобы текст остался слева. К концу акта хватка
+     отпускает, и корабль уходит на свою траекторию. */
+  var scAct = g.RC_SCENE;
+  if (scAct && scAct.act === "pad" && app < 0.01 && (this.landK || 0) < 0.01) {
+    var padK = 1 - Math.min(1, (scAct.k || 0) * 1.35);
+    if (padK > 0.01) {
+      var pw = this.canvas.clientWidth || innerWidth;
+      var ph = this.canvas.clientHeight || innerHeight;
+      var pxA = this.C.mobile ? pw * 0.5 : pw * 0.74;
+      var pyA = this.C.mobile ? ph * 0.64 : ph * 0.58;
+      this.toWorld(pxA, pyA, -0.2, this._padP || (this._padP = new T.Vector3()));
+      pos.lerp(this._padP, padK * 0.92);
+      tan.lerp(this._upVec || (this._upVec = new T.Vector3(0, 1, 0)),
+               Math.min(1, padK * 0.85)).normalize();
+    }
+  }
+
   /* Общая камера сайта (rc-world) сносит и корабль: когда кадр
      поворачивается, ракета уезжает вместе с разделами, а не висит
      сама по себе поверх них. Гасим снос на витке, на посадке и на
@@ -3722,7 +3744,11 @@ Rocket.prototype.veil = function (dt) {
     /* На посадке и на подходе корабль не уступает никому: он и есть
        сцена, а не помеха тексту. Иначе ровно в тот момент, когда мы
        к нему идём, он растворяется под карточками. */
-    var hold = Math.max(this.appK || 0, (this.landK || 0) * 0.9);
+    /* В прологе корабль тоже не уступает: он герой первого кадра, а
+       не помеха заголовку. Заголовок и без того стоит слева. */
+    var scV = g.RC_SCENE;
+    var padHold = (scV && scV.act === "pad") ? 0.85 : 0;
+    var hold = Math.max(this.appK || 0, (this.landK || 0) * 0.9, padHold);
     if (hold > 0.08) this._veilGoal = Math.max(this._veilGoal, Math.min(1, hold * 1.6));
   }
   var light = document.documentElement.getAttribute("data-theme") === "light";
