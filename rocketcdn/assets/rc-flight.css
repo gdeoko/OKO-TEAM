@@ -420,9 +420,10 @@ html[data-theme="light"] .rc-vidbg.on { opacity: .16; }
 @media (max-width: 760px) {
   .rc-vidbg.on { opacity: .3; }
 }
-/* Лёгкий кен-бёрнс: луп медленно дышит масштабом, чтобы фон не
-   казался статичной телекартинкой. Только когда видео включено. */
-.rc-vidbg.on { animation: rcVbKen 40s ease-in-out infinite; }
+/* Кен-бёрнс убран: масштаб растягивал и без того небольшой луп, от
+   чего он мылился ещё сильнее, а браузер пересобирал слой видео в
+   каждом кадре. Живость фону даёт само видео. */
+.rc-vidbg.on { animation: none; }
 @keyframes rcVbKen {
   0%, 100% { transform: scale(1); }
   50%      { transform: scale(1.06); }

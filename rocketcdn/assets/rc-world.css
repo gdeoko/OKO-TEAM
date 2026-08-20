@@ -508,24 +508,48 @@ html[data-theme="light"]:not(.rc-cab-on) .epi-alt { color: var(--tx-2); border-c
    контраст: приёмка замерила 2,3:1 на подсказках и 4,0:1 на теле
    карточек там, где под ними проходит ракета.
 
-   Доля перекрытия приходит из сцены (--rk-veil). По ней сам корабль
-   приглушается, а текст в это же время получает мягкую подложку -
-   ровно настолько, насколько она нужна. Ни на телефоне, ни на
-   мониторе ничего не выключается: меняется только плотность. */
+   Доля перекрытия приходит из сцены. По ней сам корабль приглушается,
+   а текст в это же время получает мягкую подложку - ровно настолько,
+   насколько она нужна. Ни на телефоне, ни на мониторе ничего не
+   выключается: меняется только плотность.
+
+   Плотность держим двумя ступенями-классами, а не переменной, которую
+   корабль писал бы каждый кадр. Причина в цене: эти правила висят на
+   сотнях узлов, и любая запись переменной на корне документа помечает
+   устаревшим стиль всего дерева - на телефоне это давало пересчёт
+   стиля в каждом кадре прокрутки. Ступени переключаются считанные
+   разы за проход, а глазом переход между ними не отличить от
+   плавного: подложка мягкая и уходит в размытие. */
+html.rk-veil-1 .sec-h, html.rk-veil-1 .sec-p, html.rk-veil-1 .sec-tag,
+html.rk-veil-1 .hero h1, html.rk-veil-1 .hero .lead,
+html.rk-veil-1 .viz-card h3, html.rk-veil-1 .card h3, html.rk-veil-1 .card p,
+html.rk-veil-1 .dc h4, html.rk-veil-1 .step h3 {
+  text-shadow: 0 1px 10px rgba(3, 8, 14, .30), 0 0 26px rgba(3, 8, 14, .22);
+}
+html.rk-veil-2 .sec-h, html.rk-veil-2 .sec-p, html.rk-veil-2 .sec-tag,
+html.rk-veil-2 .hero h1, html.rk-veil-2 .hero .lead,
+html.rk-veil-2 .viz-card h3, html.rk-veil-2 .card h3, html.rk-veil-2 .card p,
+html.rk-veil-2 .dc h4, html.rk-veil-2 .step h3 {
+  text-shadow: 0 1px 10px rgba(3, 8, 14, .55), 0 0 26px rgba(3, 8, 14, .40);
+}
+html.rk-veil-1[data-theme="light"] .sec-h, html.rk-veil-1[data-theme="light"] .sec-p,
+html.rk-veil-1[data-theme="light"] .sec-tag, html.rk-veil-1[data-theme="light"] .hero h1,
+html.rk-veil-1[data-theme="light"] .hero .lead, html.rk-veil-1[data-theme="light"] .viz-card h3,
+html.rk-veil-1[data-theme="light"] .card h3, html.rk-veil-1[data-theme="light"] .card p,
+html.rk-veil-1[data-theme="light"] .dc h4, html.rk-veil-1[data-theme="light"] .step h3 {
+  text-shadow: 0 1px 10px rgba(243, 247, 251, .40), 0 0 26px rgba(243, 247, 251, .30);
+}
+html.rk-veil-2[data-theme="light"] .sec-h, html.rk-veil-2[data-theme="light"] .sec-p,
+html.rk-veil-2[data-theme="light"] .sec-tag, html.rk-veil-2[data-theme="light"] .hero h1,
+html.rk-veil-2[data-theme="light"] .hero .lead, html.rk-veil-2[data-theme="light"] .viz-card h3,
+html.rk-veil-2[data-theme="light"] .card h3, html.rk-veil-2[data-theme="light"] .card p,
+html.rk-veil-2[data-theme="light"] .dc h4, html.rk-veil-2[data-theme="light"] .step h3 {
+  text-shadow: 0 1px 10px rgba(243, 247, 251, .70), 0 0 26px rgba(243, 247, 251, .55);
+}
+/* Смена ступени не должна щёлкать: тень переливается за треть секунды */
 .sec-h, .sec-p, .sec-tag, .hero h1, .hero .lead,
 .viz-card h3, .card h3, .card p, .dc h4, .step h3 {
-  text-shadow:
-    0 1px 10px rgba(3, 8, 14, calc(var(--rk-veil, 0) * .55)),
-    0 0 26px rgba(3, 8, 14, calc(var(--rk-veil, 0) * .40));
-}
-html[data-theme="light"] .sec-h, html[data-theme="light"] .sec-p,
-html[data-theme="light"] .sec-tag, html[data-theme="light"] .hero h1,
-html[data-theme="light"] .hero .lead, html[data-theme="light"] .viz-card h3,
-html[data-theme="light"] .card h3, html[data-theme="light"] .card p,
-html[data-theme="light"] .dc h4, html[data-theme="light"] .step h3 {
-  text-shadow:
-    0 1px 10px rgba(243, 247, 251, calc(var(--rk-veil, 0) * .70)),
-    0 0 26px rgba(243, 247, 251, calc(var(--rk-veil, 0) * .55));
+  transition: text-shadow .34s linear;
 }
 
 /* Подсказки поверх сцены - самое слабое место по контрасту:
@@ -627,3 +651,75 @@ html[data-theme="light"].rc-hull:not(.rc-approach) #faq .faq-i {
     0 18px 46px rgba(9, 19, 32, .16),
     inset 0 1px 0 rgba(66, 178, 220, .22);
 }
+
+/* ═══ Посадка на пустую площадку ════════════════════════════
+   Владелец описал этот кадр дословно: «текст, заголовки и контент
+   сайта на каком-то моменте кончаются, и ракета садится на пустом
+   пространстве». Раньше кадр очищали по одной секции, и в него всё
+   равно попадали соседние - под опорами читались карточки, а снизу
+   просвечивало, что там ещё что-то есть.
+
+   Теперь по доле посадки уходит вся страница разом. Это не «спрятать
+   контент»: доля обратима, и стоит откатить прокрутку - страница
+   собирается на своих местах. Заголовки уступают кадр сцене ровно
+   на те секунды, пока корабль касается грунта. */
+/* Долю очистки пишет корабль каждому разделу отдельно (rc-rocket):
+   одна запись на сцену помечала бы устаревшим стиль всего документа,
+   потому что main - родитель всей страницы. Раздел читает своё
+   значение сам, наследовать его некому. */
+@property --rc-clear { syntax: "<number>"; inherits: false; initial-value: 0; }
+html[data-act="landing"] main.w3-stage > *,
+html[data-act="walk"] main.w3-stage > * {
+  opacity: calc(1 - var(--rc-clear, 0));
+  transition: opacity .45s linear;
+}
+/* Ниже площадки не должно быть видно «продолжения»: подвал и
+   правовая строка уходят вместе со всем остальным */
+html[data-act="landing"] .legal,
+html[data-act="walk"] .legal { opacity: calc(1 - var(--rc-clear, 0)); }
+
+/* Пока кадр чистится, по нему нельзя попасть пальцем в невидимое */
+html[data-act="landing"] main.w3-stage > *,
+html[data-act="walk"] main.w3-stage > * {
+  pointer-events: auto;
+}
+html[data-act="landing"][data-clear="1"] main.w3-stage > *,
+html[data-act="walk"][data-clear="1"] main.w3-stage > * {
+  pointer-events: none;
+}
+
+/* ═══ Анимации за кромкой окна ═══════════════════════════════
+   Раздел ушёл из кадра - его бесконечные анимации встают на паузу
+   (класс ставит rc-motion по наблюдателю видимости). Показать они
+   всё равно ничего не могут, а браузер пересчитывал из-за них стиль
+   в каждом кадре. Возвращаются с того же места: на глаз разницы нет,
+   счётчик анимации просто не двигался, пока её не было видно. */
+.rc-off, .rc-off *, .rc-off *::before, .rc-off *::after {
+  animation-play-state: paused !important;
+}
+
+/* ═══ Покадровые переменные объявлены не наследуемыми ════════
+   Объём карточек и уход текста от корабля живут на переменных,
+   которые сцены переписывают в каждом кадре. По умолчанию любая
+   такая запись помечает устаревшим стиль всего поддерева элемента:
+   у карточки это десяток вложенных узлов, у трёх десятков карточек -
+   под триста узлов на кадр. Трассировка на телефоне показала, что
+   именно эти пересчёты и съедали кадр.
+
+   Каждая из перечисленных переменных читается только тем самым
+   элементом, на котором её пишут (проверено по всем файлам
+   оформления), поэтому наследование ей не нужно. Объявляем это
+   явно - и запись перестаёт задевать вложенные узлы. Внешне не
+   меняется ничего: значения и начальные величины те же. */
+@property --rcd-rx   { syntax: "<angle>";  inherits: false; initial-value: 0deg; }
+@property --rcd-ry   { syntax: "<angle>";  inherits: false; initial-value: 0deg; }
+@property --rcd-tz   { syntax: "<length>"; inherits: false; initial-value: 0px; }
+@property --rcd-y    { syntax: "<length>"; inherits: false; initial-value: 0px; }
+@property --rcd-lift { syntax: "<length>"; inherits: false; initial-value: 0px; }
+@property --tilt     { syntax: "<angle>";  inherits: false; initial-value: 0deg; }
+@property --lift     { syntax: "<length>"; inherits: false; initial-value: 0px; }
+@property --rc-fx    { syntax: "<length>"; inherits: false; initial-value: 0px; }
+@property --rc-fy    { syntax: "<length>"; inherits: false; initial-value: 0px; }
+/* Ход камеры мира: пишется адресно каждому слою в кадре (rc-world),
+   поэтому наследование ему тоже не нужно */
+@property --w3-shift { syntax: "<length>"; inherits: false; initial-value: 0px; }

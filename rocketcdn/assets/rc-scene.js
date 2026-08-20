@@ -25,6 +25,11 @@
 (function (g) {
 "use strict";
 
+/* Границы секций берём из общего кэша: спрашивать браузер о них в
+   каждом кадре - значит заставлять его пересчитывать вёрстку прямо
+   внутри кадра. При прокрутке секции не двигаются. */
+var BOX = (g.RC_BOX && g.RC_BOX.box) || function (el) { return el.getBoundingClientRect(); };
+
 /* Переменные оформления публикуем через общий кэш: запись на корне
    документа инвалидирует стиль всему дереву. Пишем изменившееся. */
 var V = (g.RC_VAR && g.RC_VAR.set) || function (el, n, v) {
@@ -70,7 +75,7 @@ function collect() {
 function pick() {
   var mid = innerHeight / 2, best = null, bestD = 1e9, bestK = 0;
   for (var i = 0; i < live.length; i++) {
-    var r = live[i].el.getBoundingClientRect();
+    var r = BOX(live[i].el);
     if (r.bottom < -80 || r.top > innerHeight + 80) continue;
     var c = r.top + r.height / 2;
     var d = Math.abs(c - mid);
@@ -115,7 +120,11 @@ function frame() {
     } catch (e) {}
   }
   /* Долю акта отдаём переменной: по ней CSS смешивает состояния */
-  V(root, "--act-k", curK.toFixed(2));
+  /* Долю акта в вёрстке не читает ни одно правило - проверено
+     поиском по всем файлам оформления. Значит и писать её на корень
+     документа каждый кадр незачем: каждая такая запись помечает
+     устаревшим стиль всего дерева. Число остаётся доступным через
+     RC_SCENE.k для скриптов. */
 }
 
 var api = {

@@ -75,7 +75,25 @@ function build() {
 /* Плавность ведём сами: у элемента нет своих переходов громкости,
    а резкое включение как раз и есть то, что бьёт по нервам. */
 function frame(ts) {
-  raf = requestAnimationFrame(frame);
+  /* Кадровый цикл нужен только пока громкость едет. Когда она
+     доехала до своего значения, а трек уже играет или уже молчит,
+     смотреть каждый кадр не на что: дальше за темой следит редкий
+     сторож немого прогона на таймере. */
+  var moving = Math.abs(cur - want) > 0.002 || duckUntil > ts || (want > 0 && !started);
+  raf = moving ? requestAnimationFrame(frame) : 0;
+  if (!raf) {
+    if (!frame._nap) {
+      frame._nap = setInterval(function () {
+        if (doc.hidden) return;
+        if (Math.abs(cur - want) > 0.002 || duckUntil > performance.now() ||
+            (!want && !killed && el && el.muted && el.paused)) {
+          clearInterval(frame._nap); frame._nap = 0;
+          if (!raf) raf = requestAnimationFrame(frame);
+        }
+      }, 400);
+    }
+  } else if (frame._nap) { clearInterval(frame._nap); frame._nap = 0; }
+
   var dt = last ? Math.min(0.1, (ts - last) / 1000) : 0.016;
   last = ts;
   if (!el) return;

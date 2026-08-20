@@ -22,6 +22,12 @@
 (function (g) {
 "use strict";
 
+/* Высоту документа берём из общего кэша: прямой вопрос заставляет
+   браузер досчитать вёрстку, а спрашиваем мы её в каждом кадре. */
+var DOCH = (window.RC_BOX && window.RC_BOX.docH) || function () {
+  return document.documentElement.scrollHeight || 1;
+};
+
 var doc = document, root = doc.documentElement;
 var reduced = false;
 try { reduced = matchMedia("(prefers-reduced-motion: reduce)").matches; } catch (e) {}
@@ -42,7 +48,7 @@ var degrade = 0, heavy = 0, startedAt = 0, ts0 = 0;
 var hintShown = 0, hintEl = null;
 
 function maxScroll() {
-  return Math.max(1, (doc.documentElement.scrollHeight || doc.body.scrollHeight) - innerHeight);
+  return Math.max(1, DOCH() - innerHeight);
 }
 
 function readScroll() {
@@ -255,6 +261,42 @@ var api = {
   minFrame: function () { return 1000 / fps; }
 };
 g.RC_MOTION = api;
+
+/* ── Анимации за кромкой окна ────────────────────────────────
+   На странице больше тридцати бесконечных анимаций: свечения кнопок,
+   бегущая строка, дыхание голограмм, пульс колец. Пока раздел за
+   кромкой окна, показать они ничего не могут, но браузер честно
+   считает их каждый кадр - трассировка на телефоне насчитала по
+   двести таких пересчётов стиля за один проход прокрутки.
+
+   Ставим их на паузу, когда раздел ушёл из кадра, и снимаем с паузы
+   заранее, за пол-экрана до возвращения. Анимации бесконечные и
+   продолжаются с того же места, поэтому на глаз ничего не меняется:
+   человек видит ровно ту же картинку, только кадры дешевле. */
+(function () {
+  if (!g.IntersectionObserver) return;
+  var seen = null;
+  function watch() {
+    var list = doc.querySelectorAll("main > section, main > div, .epi, footer, header");
+    if (!list.length) return;
+    if (!seen) {
+      seen = new IntersectionObserver(function (recs) {
+        for (var i = 0; i < recs.length; i++) {
+          recs[i].target.classList.toggle("rc-off", !recs[i].isIntersecting);
+        }
+      }, { rootMargin: "50% 0px 50% 0px" });
+    }
+    for (var i = 0; i < list.length; i++) {
+      if (list[i].__rcOff) continue;
+      list[i].__rcOff = 1;
+      seen.observe(list[i]);
+    }
+  }
+  if (doc.readyState === "loading") doc.addEventListener("DOMContentLoaded", watch);
+  else watch();
+  addEventListener("rc:content", watch);
+  doc.addEventListener("rc:lang", function () { setTimeout(watch, 150); });
+})();
 
 addEventListener("visibilitychange", function () {
   if (doc.hidden) { last = 0; return; }

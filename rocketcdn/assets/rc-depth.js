@@ -31,6 +31,12 @@
 (function (g) {
 "use strict";
 
+/* Место карточки в кадре берём из общего кэша: чтение геометрии
+   после записи стиля заставляет браузер пересчитать вёрстку прямо
+   в нашем колбэке, и на телефоне это оказалось самой дорогой
+   строкой всего кадра. */
+var BOX = (g.RC_BOX && g.RC_BOX.box) || function (el) { return el.getBoundingClientRect(); };
+
 /* Переменные оформления пишем через общий кэш: даже на локальном
    элементе запись помечает устаревшим его поддерево, а зовём мы её
    из каждого кадра по всем карточкам. Пишем только изменившееся. */
@@ -235,7 +241,7 @@ function frame(dt) {
   readBuf.length = 0;
   for (i = 0; i < visible.length; i++) {
     rec = visible[i];
-    r = rec.el.getBoundingClientRect();
+    r = BOX(rec.el);
     if (!r.height) continue;
     /* Положение центра карточки относительно центра экрана,
        в долях высоты окна: -0.5 наверху, 0 в центре, +0.5 внизу. */
@@ -260,7 +266,7 @@ function frame(dt) {
 
   var headRead = [];
   for (i = 0; i < headsVis.length; i++) {
-    r = headsVis[i].el.getBoundingClientRect();
+    r = BOX(headsVis[i].el);
     headsVis[i].p = clamp(((r.top + r.height / 2) - half) / vh, -0.7, 0.7);
     headRead.push(headsVis[i]);
   }
@@ -342,10 +348,10 @@ function frame(dt) {
       }
     } else {
       rec.wrote = 1;
-      V(rec.el, "--rcd-rx", rec.rx.toFixed(2) + "deg");
-      V(rec.el, "--rcd-ry", rec.ry.toFixed(2) + "deg");
-      V(rec.el, "--rcd-tz", rec.tz.toFixed(1) + "px");
-      V(rec.el, "--rcd-lift", rec.lift.toFixed(1) + "px");
+      V(rec.el, "--rcd-rx", rec.rx.toFixed(1) + "deg");
+      V(rec.el, "--rcd-ry", rec.ry.toFixed(1) + "deg");
+      V(rec.el, "--rcd-tz", Math.round(rec.tz) + "px");
+      V(rec.el, "--rcd-lift", Math.round(rec.lift) + "px");
     }
 
     /* Разлёт слоёв и параллакс. Пишем через порог, а не каждый
@@ -353,12 +359,12 @@ function frame(dt) {
     var kT = rec.kT;
     if (Math.abs(kT - rec.kw) > 0.01) {
       rec.kw = kT;
-      V(rec.el, "--rcd-k", kT.toFixed(2));
+      V(rec.el, "--rcd-k", kT.toFixed(1));
     }
     var yT = fast ? 0 : -rec.p * PAR;
     if (Math.abs(yT - rec.yw) > 0.25) {
       rec.yw = yT;
-      V(rec.el, "--rcd-y", yT.toFixed(1) + "px");
+      V(rec.el, "--rcd-y", Math.round(yT) + "px");
     }
   }
 
@@ -368,7 +374,7 @@ function frame(dt) {
     var hy = fast ? 0 : -rec.p * PAR * 0.55 * rec.k;
     if (Math.abs(hy - rec.yw) > 0.25) {
       rec.yw = hy;
-      V(rec.el, "--rcd-y", hy.toFixed(1) + "px");
+      V(rec.el, "--rcd-y", Math.round(hy) + "px");
     }
   }
 }

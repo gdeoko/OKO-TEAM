@@ -733,3 +733,57 @@ html[data-degrade="3"] #reliability .cin-ring > .cin-item.cin-holo {
     mask-image: none !important;
   }
 }
+
+/* ═══ Заголовок салона - такой же экран на стене ════════════
+   Внутри корабля не бывает «заголовка страницы»: там есть экраны,
+   привязанные к точкам салона. Заголовок раздела на время салона
+   переезжает в кольцо первой панелью и выглядит как остальные -
+   тот же размер, та же рамка, тот же проектор. */
+html:not(.rc-reduced) .cin-ring > .cab-head {
+  display: grid;
+  justify-items: center;
+  text-align: center;
+  gap: 8px;
+  padding: clamp(18px, 3.4vw, 28px) clamp(16px, 3vw, 26px);
+  max-width: none;
+}
+html:not(.rc-reduced) .cin-ring > .cab-head .sec-h {
+  font-size: clamp(21px, 4.6vw, 30px);
+  line-height: 1.12;
+  margin: 0;
+}
+html:not(.rc-reduced) .cin-ring > .cab-head .sec-p {
+  font-size: var(--fs-3);
+  line-height: var(--lh-cap);
+  margin: 0;
+  max-width: 34ch;
+}
+html:not(.rc-reduced) .cin-ring > .cab-head .sec-tag { margin: 0; }
+/* Разделительная черта под тегом раздела в кольце не нужна: рамку
+   экрана рисует сама панель */
+html:not(.rc-reduced) .cin-ring > .cab-head .sec-h::after { display: none; }
+
+/* ═══ Переменные кольца не наследуются ═══════════════════════
+   Место, поворот и глубину каждой карточки кино переписывает в
+   каждом кадре. По умолчанию такая запись помечает устаревшим стиль
+   всего поддерева карточки, а внутри у неё заголовок, абзац, список
+   и иконки: на посадке трассировка насчитала из-за этого больше
+   тринадцати секунд пересчёта за один проход прокрутки.
+
+   Все девять переменных читает только сама карточка - проверено по
+   всем файлам оформления. Наследование ей не нужно, и объявленное
+   явно оно перестаёт задевать вложенные узлы. Видимых изменений
+   нет: значения и начальные величины те же.
+
+   Прозрачность (--cin-vis), подсветку строки (--cin-lit) и шаг
+   развёртки (--cin-dec) здесь намеренно нет: их читают псевдоэлементы
+   карточки, а те получают значения именно по наследованию. */
+@property --cin-rot  { syntax: "<angle>";   inherits: false; initial-value: 0deg; }
+@property --cin-x    { syntax: "<length>";  inherits: false; initial-value: 0px; }
+@property --cin-y    { syntax: "<length>";  inherits: false; initial-value: 0px; }
+@property --cin-z    { syntax: "<length>";  inherits: false; initial-value: 0px; }
+@property --cin-up   { syntax: "<length>";  inherits: false; initial-value: 0px; }
+@property --cin-blur { syntax: "<length>";  inherits: false; initial-value: 0px; }
+@property --cin-zi   { syntax: "<integer>"; inherits: false; initial-value: 1; }
+@property --cin-s    { syntax: "<number>";  inherits: false; initial-value: 1; }
+@property --cin-sy   { syntax: "<number>";  inherits: false; initial-value: 1; }

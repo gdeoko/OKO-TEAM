@@ -35,6 +35,12 @@
 (function (g) {
 "use strict";
 
+/* Высоту документа берём из общего кэша: прямой вопрос заставляет
+   браузер досчитать вёрстку, а спрашиваем мы её в каждом кадре. */
+var DOCH = (window.RC_BOX && window.RC_BOX.docH) || function () {
+  return document.documentElement.scrollHeight || 1;
+};
+
 var REDUCE = matchMedia("(prefers-reduced-motion: reduce)").matches;
 
 /* Каким должен быть космос в каждом акте фильма:
@@ -192,8 +198,17 @@ Space.prototype.bakeDeep = function () {
   /* Запас по краям: слой ездит от параллакса, и без поля по краю
      показалась бы его граница */
   var PAD = 0.10;
-  var cw = Math.max(64, Math.round(w * (1 + PAD * 2) * 0.5));
-  var ch = Math.max(64, Math.round(h * (1 + PAD * 2) * 0.5));
+  /* Разрешение слоя. Раньше он пёкся вполовину и растягивался на весь
+     экран - отсюда и «мутняк»: звёздная пыль расплывалась в кашу, а
+     полосы Млечного Пути превращались в мыло. Владелец сказал прямо:
+     лучше чёткий космос, чем мягкие пятна.
+
+     Печём в разрешении экрана (с оглядкой на плотность точек). Это
+     разовая работа при сборке и смене размера окна, в кадре она не
+     стоит ничего - слой просто переставляется. */
+  var dpr = Math.min(g.devicePixelRatio || 1, this.B.lean ? 1 : 2);
+  var cw = Math.max(64, Math.round(w * (1 + PAD * 2) * dpr));
+  var ch = Math.max(64, Math.round(h * (1 + PAD * 2) * dpr));
   var c = document.createElement("canvas");
   c.width = cw; c.height = ch;
   var x = c.getContext("2d");
@@ -215,7 +230,10 @@ Space.prototype.bakeDeep = function () {
 
   /* Дымка диска: широкие мягкие пятна вдоль полосы. Цвет к центру
      галактики теплее - там старые звёзды балджа. */
-  var nHaze = this.B.lean ? 90 : 170;
+  /* Широких мягких пятен стало меньше: именно они давали молочную
+     пелену. Звёздам и пыли от этого просторнее, небо читается
+     глубоким, а не запотевшим. */
+  var nHaze = this.B.lean ? 46 : 88;
   for (i = 0; i < nHaze; i++) {
     var u = rnd() * 2 - 1;
     var sp = (rnd() - 0.5) * (0.7 + rnd() * 1.5);
@@ -243,7 +261,10 @@ Space.prototype.bakeDeep = function () {
   /* Звёздная пыль: точки в один пиксель. Отдельными звёздами они не
      читаются, но дают диску зернистость, без которой он выглядит
      нарисованным градиентом. */
-  var nDust = this.B.lean ? 900 : 2600;
+  /* Пыли вдвое больше: в полном разрешении каждая точка - настоящий
+     пиксель, а не размазанное пятно, и именно она читается как
+     звёздное поле. */
+  var nDust = this.B.lean ? 2200 : 6400;
   for (i = 0; i < nDust; i++) {
     var du = rnd() * 2 - 1;
     var inBand = rnd() < 0.62;
@@ -251,7 +272,10 @@ Space.prototype.bakeDeep = function () {
     var dsp = pickSpectrum(rnd());
     var da = (0.06 + Math.pow(rnd(), 2.4) * 0.40) * (light ? 0.25 : 1);
     x.fillStyle = "rgba(" + dsp[0] + "," + dsp[1] + "," + dsp[2] + "," + da.toFixed(3) + ")";
-    x.fillRect(dp[0] | 0, dp[1] | 0, 1, 1);
+    /* На плотном экране одна точка холста меньше пикселя вёрстки:
+       рисуем квадратик в размер точки, иначе пыль исчезает совсем */
+    var dsz = dpr > 1.4 ? 2 : 1;
+    x.fillRect(dp[0] | 0, dp[1] | 0, dsz, dsz);
   }
 
   /* Туманности в фирменных цветах: небо перекликается с сайтом.
@@ -336,7 +360,7 @@ Space.prototype.bind = function () {
     if (document.hidden) self.stop(); else self.start();
   });
   addEventListener("scroll", function () {
-    var max = document.documentElement.scrollHeight - innerHeight;
+    var max = DOCH() - innerHeight;
     self.p = max > 0 ? Math.min(1, Math.max(0, (g.scrollY || 0) / max)) : 0;
   }, { passive: true });
 

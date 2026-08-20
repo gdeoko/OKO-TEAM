@@ -111,7 +111,41 @@ function seed() {
     if (!k) continue;
     kids[j].classList.add("w3-lay");
     kids[j].style.setProperty("--w3-k", k.toFixed(2));
+    watchLay(kids[j]);
   }
+}
+
+/* ── Кому раздавать ход камеры ───────────────────────────────
+   Долю бокового хода раньше писали один раз - на корень документа,
+   и это выглядело экономно. На деле наоборот: переменная наследуемая,
+   её читают слои, и каждая такая запись помечала устаревшим стиль
+   всего дерева - под две тысячи узлов в каждом кадре прокрутки.
+   Трассировка на телефоне показала, что это и была главная статья
+   расхода кадра.
+
+   Пишем адресно и только тем слоям, что сейчас в кадре: их редко
+   больше десятка, а за кромкой окна ход камеры всё равно не виден.
+   Слой получает своё значение заранее, за четверть экрана до
+   появления, поэтому в кадр он входит уже на своём месте. */
+var layVis = [];
+var layIO = null;
+function watchLay(el) {
+  if (!g.IntersectionObserver) { if (layVis.indexOf(el) < 0) layVis.push(el); return; }
+  if (!layIO) {
+    layIO = new IntersectionObserver(function (recs) {
+      for (var i = 0; i < recs.length; i++) {
+        var t = recs[i].target, at = layVis.indexOf(t);
+        if (recs[i].isIntersecting) { if (at < 0) layVis.push(t); }
+        else if (at >= 0) {
+          layVis.splice(at, 1);
+          /* Ушёл из кадра - снимаем сдвиг, чтобы он не застыл на
+             половине хода до следующего появления */
+          if (g.RC_VAR && g.RC_VAR.del) g.RC_VAR.del(t, "--w3-shift");
+        }
+      }
+    }, { rootMargin: "25% 0px 25% 0px" });
+  }
+  layIO.observe(el);
 }
 
 /* Кадр камеры для текущего акта: текущий ключ смешивается со
@@ -254,7 +288,8 @@ function frame() {
   cam.z = cam.dive * 60;
   g.RC_WORLD = cam;
 
-  V(root, "--w3-shift", (dx * 0.55).toFixed(2) + "px");
+  var shift = (dx * 0.55).toFixed(2) + "px";
+  for (var li = 0; li < layVis.length; li++) V(layVis[li], "--w3-shift", shift);
 
   /* Один трансформ на весь кадр. Точка масштабирования - центр
      видимого окна, чтобы наезд шёл «в глубину кадра», а не от

@@ -28,11 +28,40 @@
 (function (g) {
 "use strict";
 
+/* Дозор вместо кадра: пока делать нечего, цикл спит и просыпается
+   четыре раза в секунду или сразу от прокрутки. На телефоне таких
+   спящих циклов набирался десяток, и каждый стоил браузеру входа
+   в JS на каждом кадре. */
+function idler(step, awake) {
+  var raf = 0, timer = 0, empty = 0, live = true;
+  function frame(ts) {
+    raf = 0;
+    var busy = step(ts) !== false;
+    empty = busy ? 0 : empty + 1;
+    if (empty > 8) { live = false; nap(); return; }
+    raf = requestAnimationFrame(frame);
+  }
+  function nap() {
+    if (timer) return;
+    timer = setInterval(function () {
+      if (doc.hidden) return;
+      if (!awake || awake()) { clearInterval(timer); timer = 0; empty = 0; live = true; start(); }
+    }, 250);
+  }
+  function start() { if (!raf && live) raf = requestAnimationFrame(frame); }
+  /* Будить цикл на каждое движение колеса нельзя: именно во время
+     прокрутки эти модули чаще всего и не нужны, а просыпались они
+     ровно тогда. Пробуждение решает только собственная проверка -
+     она идёт четыре раза в секунду и опоздать не может: и шлюз, и
+     пульт въезжают в кадр постепенно. */
+  start();
+}
+
 var doc = document, root = doc.documentElement;
 var reduced = false;
 try { reduced = matchMedia("(prefers-reduced-motion: reduce)").matches; } catch (e) {}
 
-var wrap = null, cards = [], raf = null, shown = false, lastK = -1;
+var wrap = null, cards = [], shown = false, lastK = -1;
 
 /* Берём первые карточки раздела надёжности: в проёме показываем
    ровно то, что человек прочитает внутри, только раньше и мельче */
@@ -83,8 +112,7 @@ function fade(d) {
 }
 
 function frame() {
-  raf = requestAnimationFrame(frame);
-  if (doc.hidden) return;
+  if (doc.hidden) return false;
 
   var d = (typeof g.RC_DOOR === "number") ? g.RC_DOOR : 0;
   var app = (typeof g.RC_APPROACH === "number") ? g.RC_APPROACH : 0;
@@ -97,7 +125,7 @@ function frame() {
     if (want) build();
     if (wrap) wrap.classList.toggle("on", want);
   }
-  if (!wrap || !want) return;
+  if (!wrap || !want) return false;
 
   var k = fade(d);
   /* Проём накрыл кадр (rc-in-hatch ставит корабль) - значит мы уже
@@ -105,7 +133,7 @@ function frame() {
      висеть до самого салона. Иначе они дублируют те же карточки,
      которые через миг встретят нас на стене рубки. */
   if (root.classList.contains("rc-in-hatch")) k = 0;
-  if (Math.abs(k - lastK) < 0.01) return;
+  if (Math.abs(k - lastK) < 0.01) return false;
   lastK = k;
   wrap.style.setProperty("--gate-k", k.toFixed(3));
   /* Наезд: при растворении экраны уходят на зрителя вместе с
@@ -117,7 +145,12 @@ function frame() {
 function boot() {
   if (reduced || root.classList.contains("rc-reduced")) return;
   if (root.getAttribute("data-degrade") === "3") return;
-  if (!raf) raf = requestAnimationFrame(frame);
+  /* Шлюз нужен только у самого люка: в остальное время цикл спит */
+  idler(frame, function () {
+    var d = (typeof g.RC_DOOR === "number") ? g.RC_DOOR : 0;
+    var app = (typeof g.RC_APPROACH === "number") ? g.RC_APPROACH : 0;
+    return app > 0.4 && d > 0.05;
+  });
 }
 
 doc.addEventListener("rc:lang", function () {

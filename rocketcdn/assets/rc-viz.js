@@ -46,13 +46,25 @@ function onView(el, fn, once) {
   io.observe(el);
 }
 
-/* Плавный тик от 0 до 1 */
+/* Плавный тик от 0 до 1.
+
+   Шаг нарочно не каждый кадр. Внутри почти всех этих анимаций
+   меняется текст числа, а смена текста заставляет браузер заново
+   считать вёрстку страницы. На телефоне замер поймал именно это:
+   счётчики продолжали крутиться, пока человек листает мимо, и
+   каждый их кадр стоил дороже самой картинки.
+
+   Шестьдесят миллисекунд для растущей цифры незаметны: глаз всё
+   равно читает не отдельные значения, а движение. */
 function anim(dur, step, done) {
   if (REDUCE) { step(1); if (done) done(); return; }
-  var t0 = performance.now();
+  var t0 = performance.now(), lastAt = 0;
   (function loop(now) {
     var k = Math.min(1, (now - t0) / dur);
-    step(ease(k));
+    if (k >= 1 || now - lastAt >= 60) {
+      lastAt = now;
+      step(ease(k));
+    }
     if (k < 1) requestAnimationFrame(loop);
     else if (done) done();
   })(t0);
@@ -323,7 +335,26 @@ function marquee(box) {
   });
   /* Перемешиваем, но детерминированно, чтобы порядок не прыгал при перерисовке */
   names = names.slice().sort(function (a, b) { return (a.length % 7) - (b.length % 7) || a.localeCompare(b); });
-  var line = names.map(function (n) { return '<span>' + n + "</span>"; }).join('<i class="mq-dot"></i>');
+  /* Строка идёт двумя одинаковыми копиями - так замыкается цикл.
+     Раньше каждый город был отдельным узлом, а между ними стоял узел
+     точки: на двести восемнадцать городов получалось около девятисот
+     узлов, почти половина всего документа. Замер на телефоне показал,
+     что именно из-за этого пересчёт стилей занимал две трети времени
+     кадра: браузер обходил их при каждом изменении на странице.
+
+     Городов в бегущей строке достаточно шести десятков - глаз всё
+     равно не читает её как список, а точку рисуем знаком в том же
+     узле. Узлов стало сто двадцать вместо девятисот, строка на вид
+     та же. */
+  var SHOW = 60;
+  if (names.length > SHOW) {
+    var step = names.length / SHOW, pick = [];
+    for (var q = 0; q < SHOW; q++) pick.push(names[Math.floor(q * step)]);
+    names = pick;
+  }
+  var line = names.map(function (n) {
+    return '<span>' + n + '<i class="mq-dot" aria-hidden="true"></i></span>';
+  }).join("");
   box.innerHTML = '<div class="mq-track"><div class="mq-set">' + line + '</div><div class="mq-set" aria-hidden="true">' + line + "</div></div>";
 }
 

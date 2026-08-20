@@ -22,6 +22,11 @@ var V = (g.RC_VAR && g.RC_VAR.set) || function (el, n, v) {
   if (el && el.style) el.style.setProperty(n, v);
 };
 
+/* Мерки блоков берём из общего кэша: спросить браузер о месте блока
+   после записи в стиль - значит заставить его досчитать вёрстку
+   прямо посреди кадра. При прокрутке блоки стоят, двигается окно. */
+var BOX = (g.RC_BOX && g.RC_BOX.box) || function (el) { return el.getBoundingClientRect(); };
+
 /* ── Возможности устройства ──────────────────────────────── */
 function caps() {
   var w = innerWidth, mob = w < 760;
@@ -2016,8 +2021,19 @@ Rocket.prototype.bind = function () {
   });
 };
 
+/* Размеры холста: из памяти, а не у браузера */
+Rocket.prototype.cw = function () { return this._cw || innerWidth; };
+Rocket.prototype.ch = function () { return this._ch || innerHeight; };
+
 Rocket.prototype.resize = function () {
   var w = innerWidth, h = innerHeight;
+  /* Размеры холста запоминаем здесь. Раньше их спрашивали у браузера
+     по десятку раз за кадр (clientWidth/clientHeight), и каждый такой
+     вопрос после записи в стиль заставлял пересчитать вёрстку прямо
+     внутри кадра. Холст растянут на всё окно и меняется только
+     вместе с ним. */
+  this._cw = w;
+  this._ch = h;
   /* Разрешение буфера - единственное, чем телефон отличается от
      монитора: сама картинка и все её детали те же */
   this.r.setPixelRatio(Math.min(g.devicePixelRatio || 1,
@@ -2089,8 +2105,8 @@ function hidden(o, c, planeZ, dz) {
 
 /* Экранная точка в мир камеры ракеты на заданной глубине */
 Rocket.prototype.toWorld = function (sx, sy, z, out) {
-  var w = this.canvas.clientWidth || innerWidth;
-  var h = this.canvas.clientHeight || innerHeight;
+  var w = this.cw();
+  var h = this.ch();
   var dist = this.cam.position.z - z;
   var halfH = Math.tan((this.cam.fov * Math.PI / 180) / 2) * dist;
   var halfW = halfH * (w / h);
@@ -2345,6 +2361,44 @@ Rocket.prototype.landing = function (p, dt, pos, tan) {
   /* Скорость догона растёт с отставанием: при резком скролле ракета
      обязана успеть сесть до прохода, иначе подход и дверь срываются */
   this.landK = prev + (k - prev) * Math.min(1, (dt || 0.016) * (3.2 + Math.abs(k - prev) * 14));
+  /* Долю посадки отдаём вёрстке. Владелец сказал прямо: когда
+     корабль садится, под ним не должно быть ни текста, ни карточек,
+     и снизу не должно просвечивать, что там ещё что-то есть -
+     страница к этому моменту кончилась, корабль опускается на
+     пустую площадку. По этой доле кадр и очищается. */
+  var landR = (Math.round(this.landK * 50) / 50).toFixed(2);
+  if (landR !== this._landPub) {
+    this._landPub = landR;
+    /* Долю очистки раздаём каждому разделу отдельно, а не одной
+       записью на сцену. Одна запись выглядела экономнее, но сцена -
+       это main, родитель всей страницы: переменная наследуемая, и
+       каждый такой кадр помечал устаревшим стиль всего документа.
+       На посадке это стоило тринадцати секунд пересчёта за проход.
+       Разделов полтора десятка, значение у всех одно, и читает его
+       сам раздел - наследовать нечего. */
+    if (!this._clearEls) {
+      var stage = document.querySelector("main.w3-stage");
+      this._clearEls = stage ? [].slice.call(stage.children) : [];
+      /* Правовая строка живёт в подвале, а уходить обязана вместе со
+         всем остальным: иначе снизу просвечивает продолжение */
+      var lg = document.querySelectorAll(".legal");
+      for (var lj = 0; lj < lg.length; lj++) this._clearEls.push(lg[lj]);
+    }
+    var cl = Math.max(0, Math.min(1, this.landK * 1.35 - 0.10)).toFixed(2);
+    if (cl !== this._clearVal) {
+      this._clearVal = cl;
+      for (var ci = 0; ci < this._clearEls.length; ci++) {
+        V(this._clearEls[ci], "--rc-clear", cl);
+      }
+    }
+  }
+  /* Когда кадр очищен полностью, снимаем с него и нажатия: попасть
+     пальцем в невидимую карточку человек не должен */
+  var clear = this.landK > 0.82 ? "1" : "0";
+  if (clear !== this._clearPub) {
+    this._clearPub = clear;
+    document.documentElement.setAttribute("data-clear", clear);
+  }
 
   /* Всё, что появилось у посадки - опоры, импульс, просадка - ведём
      всегда, даже когда доля упала в ноль: иначе на обратной прокрутке
@@ -2363,8 +2417,8 @@ Rocket.prototype.landing = function (p, dt, pos, tan) {
      событием. Теперь отталкиваемся от пят: они обязаны встать на
      0.855 кадра, а центр корпуса выводим из текущего масштаба. Так
      точка касания попадает в кадр на любом экране. */
-  var w = this.canvas.clientWidth || innerWidth;
-  var h = this.canvas.clientHeight || innerHeight;
+  var w = this.cw();
+  var h = this.ch();
   var half = Math.tan((this.cam.fov * Math.PI / 180) / 2) * (this.cam.position.z + 0.2);
   var feet = Math.abs(PAD_Y) * (this._sNow || 1) / (2 * half);   /* доля кадра до пят */
   /* На телефоне площадку ставим чуть выше: там под ней сразу идут
@@ -2854,7 +2908,7 @@ Rocket.prototype.groundStep = function (dt) {
       L.siz[li] = 0.30 + pulse * 0.34;
     }
     L.uni.uScale.value = sc;
-    L.uni.uPx.value = (this.canvas.clientHeight || innerHeight) * this.C.dpr /
+    L.uni.uPx.value = (this.ch()) * this.C.dpr /
       (2 * Math.tan((this.cam.fov * Math.PI / 180) / 2));
     L.geo.attributes.aCol.needsUpdate = true;
     L.geo.attributes.aSize.needsUpdate = true;
@@ -2972,7 +3026,7 @@ Rocket.prototype.debrisStep = function (dt, scale, glow) {
   }
   if (!alive) { this.debrisClear(); return; }
   D.uni.uScale.value = scale;
-  D.uni.uPx.value = (this.canvas.clientHeight || innerHeight) * this.C.dpr /
+  D.uni.uPx.value = (this.ch()) * this.C.dpr /
     (2 * Math.tan((this.cam.fov * Math.PI / 180) / 2));
   D.geo.attributes.position.needsUpdate = true;
   D.geo.attributes.aCol.needsUpdate = true;
@@ -3022,7 +3076,7 @@ Rocket.prototype.dustStep = function (dt, scale, glow) {
   D.uni.uScale.value = scale;
   /* Мировой размер в пиксели устройства: высота холста, делённая на
      мировую высоту кадра на единичной глубине */
-  D.uni.uPx.value = (this.canvas.clientHeight || innerHeight) * this.C.dpr /
+  D.uni.uPx.value = (this.ch()) * this.C.dpr /
     (2 * Math.tan((this.cam.fov * Math.PI / 180) / 2));
   D.geo.attributes.position.needsUpdate = true;
   D.geo.attributes.aCol.needsUpdate = true;
@@ -3373,7 +3427,7 @@ Rocket.prototype.steamStep = function (dt) {
   /* Доля осевшего пара: по ней на шаге площадки гаснет тень */
   this._steamGnd = onGnd / S.n;
   S.uni.uScale.value = this.pivot.scale.x || 1;
-  S.uni.uPx.value = (this.canvas.clientHeight || innerHeight) * this.C.dpr /
+  S.uni.uPx.value = (this.ch()) * this.C.dpr /
     (2 * Math.tan((this.cam.fov * Math.PI / 180) / 2));
   S.geo.attributes.position.needsUpdate = true;
   S.geo.attributes.aCol.needsUpdate = true;
@@ -3533,7 +3587,12 @@ Rocket.prototype.doorOpen = function (dt) {
        дверью: к моменту передачи сцены рубке кадр уже залит тёплым
        светом, и подмену физически не видно. Переменную читает
        rc-world.css, слой лежит поверх страницы. */
-    V(document.documentElement, "--hatch-glow",
+    /* Долю засвета читает только сам слой засвета: пишем ему, а не
+       корню документа - запись на корне помечает устаревшим стиль
+       всего дерева, а зовём мы её каждый кадр створок. */
+    var gEl = this._glowEl;
+    if (!gEl || !gEl.isConnected) gEl = this._glowEl = document.querySelector(".rc-hatch-glow");
+    if (gEl) V(gEl, "--hatch-glow",
       (Math.max(0, this.doorK - 0.30) / 0.7 * this.appK).toFixed(2));
   }
   /* Проход открыт и кадр закрыт корпусом - можно отдавать сцену
@@ -3566,7 +3625,24 @@ Rocket.prototype.doorOpen = function (dt) {
   var appR = Math.round(this.appK * 100) / 100;
   if (appR !== this._appPub) {
     this._appPub = appR;
-    V(document.documentElement, "--rc-app", String(appR));
+    /* Долю подхода читают правила ровно двух разделов - «Что входит»
+       и «Сценарии». Раньше она писалась на корень документа, и
+       браузер на каждое её изменение помечал устаревшим стиль всего
+       дерева: замер на телефоне показал, что две трети времени кадра
+       уходило именно на такие пересчёты. Пишем адресно. */
+    if (!this._appEls) {
+      this._appEls = [];
+      var ids = ["included", "cases"], q;
+      for (q = 0; q < ids.length; q++) {
+        var el = document.getElementById(ids[q]);
+        if (el) this._appEls.push(el);
+      }
+      /* Запасной путь: если разметка другая, ведём как раньше */
+      if (!this._appEls.length) this._appEls.push(document.documentElement);
+    }
+    for (var w = 0; w < this._appEls.length; w++) {
+      V(this._appEls[w], "--rc-app", String(appR));
+    }
   }
 
   var deep = this.doorK > 0.58 && this.appK > 0.8;
@@ -3602,8 +3678,8 @@ Rocket.prototype.layout = function (p, dt) {
   var dk = this.doorOpen(dt);
   if (app > 0.001) {
     tan.lerp(this._upVec || (this._upVec = new T.Vector3(0, 1, 0)), Math.min(1, app * 2.2)).normalize();
-    var cW = this.canvas.clientWidth || innerWidth;
-    var cH = this.canvas.clientHeight || innerHeight;
+    var cW = this.cw();
+    var cH = this.ch();
     /* Целимся не в центр корпуса, а в люк: он обязан встать ровно
        посреди кадра, потому что именно в него мы входим. Люк сидит
        выше середины корабля, поэтому корпус смещаем вниз на его
@@ -3630,8 +3706,8 @@ Rocket.prototype.layout = function (p, dt) {
        равно висел за краем кадра. */
     var padK = 1 - Math.max(0, Math.min(1, ((scAct.k || 0) - 0.72) / 0.28));
     if (padK > 0.01) {
-      var pw = this.canvas.clientWidth || innerWidth;
-      var ph = this.canvas.clientHeight || innerHeight;
+      var pw = this.cw();
+      var ph = this.ch();
       /* Место героя в первом кадре. На телефоне это низ экрана:
          выше идут заголовок, кнопки и список - корабль, поставленный
          посередине, просвечивал сквозь стеклянные кнопки и мешал их
@@ -3687,7 +3763,7 @@ Rocket.prototype.layout = function (p, dt) {
      ломает то, к чему мы идём. */
   var lock = Math.max(this.orbK || 0, app, (this.landK || 0), dk || 0);
   if (lock < 0.2 && !(scAct && scAct.act === "pad")) {
-    var vw = this.canvas.clientWidth || innerWidth;
+    var vw = this.cw();
     /* Полуширина читаемой колонки в пикселях: та же, что у вёрстки */
     var colHalf = Math.min(vw * 0.5, 600) * 0.92;
     var edge = Math.max(0, vw * 0.5 - colHalf);   /* свободное поле */
@@ -3825,8 +3901,8 @@ Rocket.prototype.veil = function (dt) {
   if (this._veilT >= 0.1) {
     this._veilT = 0;
     var v = this._tmpC.copy(this.pivot.position).project(this.cam);
-    var w = this.canvas.clientWidth || innerWidth;
-    var h = this.canvas.clientHeight || innerHeight;
+    var w = this.cw();
+    var h = this.ch();
     var cx = (v.x * 0.5 + 0.5) * w;
     var cy = (-v.y * 0.5 + 0.5) * h;
     /* Радиус проверки раньше был долей экрана - и это была ошибка:
@@ -3861,9 +3937,9 @@ Rocket.prototype.veil = function (dt) {
     var list = this.readables();
     var hit = false;
     for (var i = 0; i < list.length; i++) {
-      var b = list[i].getBoundingClientRect();
+      var b = BOX(list[i]);
       if (b.width < 6 || b.bottom < -40 || b.top > h + 40) continue;
-      var dx = Math.max(b.left - cx, 0, cx - b.right);
+      var dx = Math.max(b.left - cx, 0, cx - b.left - b.width);
       var dy = Math.max(b.top - cy, 0, cy - b.bottom);
       if (dx * dx + dy * dy < rr) { hit = true; break; }
     }
@@ -3894,9 +3970,21 @@ Rocket.prototype.veil = function (dt) {
   this._wasLight = light;
   this.canvas.style.opacity = (this._veil * this.occl * (light ? 0.92 : 1)).toFixed(3);
   /* Насколько корабль сейчас уступил тексту - по этой доле вёрстка
-     подкладывает под буквы мягкую тень. Одно число на оба средства,
-     считает его тот, кто честно смотрит на пересечение со строками. */
-  V(document.documentElement, "--rk-veil", (1 - this._veil).toFixed(2));
+     подкладывает под буквы мягкую тень. Считает её тот, кто честно
+     смотрит на пересечение со строками.
+
+     Отдаём не число, а ступень. Правило тени висит на сотнях узлов, и
+     покадровая запись переменной на корне заставляла браузер каждый
+     кадр пересчитывать стиль всего дерева. Ступеней две, переход
+     сглаживает сама вёрстка. */
+  var vv = 1 - this._veil;
+  var stepV = vv > 0.42 ? 2 : (vv > 0.14 ? 1 : 0);
+  if (stepV !== this._veilStep) {
+    this._veilStep = stepV;
+    var cl = document.documentElement.classList;
+    cl.toggle("rk-veil-1", stepV === 1);
+    cl.toggle("rk-veil-2", stepV === 2);
+  }
 };
 
 /* Тяга по актам. Двигатель не может гудеть одинаково на старте и в
@@ -4061,6 +4149,23 @@ Rocket.prototype.frame = function (dt) {
 
    Толчок короткий: две высокие частоты, затухание за треть секунды.
    Долгая тряска читается поломкой, а не ударом. */
+/* Слой удара: вспышка от факела и пыль у нижней кромки. Отдельный
+   элемент нужен не для красоты - на нём живёт доля толчка, которую
+   сцена переписывает каждый кадр. Держать её на корне документа
+   значило пересчитывать стиль всей страницы в момент касания. */
+var quakeEl = null;
+function quakeFx() {
+  if (quakeEl && quakeEl.isConnected) return quakeEl;
+  quakeEl = document.querySelector(".rc-quake-fx");
+  if (!quakeEl) {
+    quakeEl = document.createElement("div");
+    quakeEl.className = "rc-quake-fx";
+    quakeEl.setAttribute("aria-hidden", "true");
+    document.body.appendChild(quakeEl);
+  }
+  return quakeEl;
+}
+
 Rocket.prototype.quake = function (dt) {
   var s = this._shake || 0;
   var root = document.documentElement;
@@ -4071,9 +4176,15 @@ Rocket.prototype.quake = function (dt) {
     var oy = (Math.sin(t * 47 + 1.7) * 0.65 + Math.sin(t * 22 + 0.4) * 0.35) * s;
     this.cam.position.x = ox * 0.22;
     this.cam.position.y = oy * 0.17;
-    V(root, "--rc-shake", s.toFixed(2));
-    V(root, "--rc-shake-x", (ox * 8).toFixed(1) + "px");
-    V(root, "--rc-shake-y", (oy * 6).toFixed(1) + "px");
+    /* Силу толчка читает только слой удара - вспышка и пыль у нижней
+       кромки. Раньше её писали на корень документа, и каждый кадр
+       тряски помечал устаревшим стиль всей страницы: две тысячи
+       узлов ради двух градиентов. Пишем самому слою.
+
+       Переменных было три: кроме силы ещё смещение по осям для
+       класса rc-shakeable. Такого класса в разметке нет ни в одном
+       файле - обе записи каждый кадр уходили в никуда. Убраны. */
+    V(quakeFx(), "--rc-shake", s.toFixed(2));
     if (!this._quakeOn) { this._quakeOn = 1; root.classList.add("rc-quake"); }
     return;
   }
@@ -4082,9 +4193,7 @@ Rocket.prototype.quake = function (dt) {
   this._shake = 0;
   this.cam.position.x = 0;
   this.cam.position.y = 0;
-  V(root, "--rc-shake", "0");
-  V(root, "--rc-shake-x", "0px");
-  V(root, "--rc-shake-y", "0px");
+  V(quakeFx(), "--rc-shake", "0");
   root.classList.remove("rc-quake");
 };
 
@@ -4111,8 +4220,8 @@ Rocket.prototype.publish = function () {
   this._pubT = (this._pubT || 0) + 1;
   if (this._pubT % 2) return;
   var v = this._tmpC.copy(this.pivot.position).project(this.cam);
-  var w = this.canvas.clientWidth || innerWidth;
-  var h = this.canvas.clientHeight || innerHeight;
+  var w = this.cw();
+  var h = this.ch();
   var x = (v.x * 0.5 + 0.5) * w;
   var y = (-v.y * 0.5 + 0.5) * h;
   /* Близость корабля к зрителю. Раньше её брали из глубины в

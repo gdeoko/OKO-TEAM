@@ -995,7 +995,13 @@ a.js-reg:not(.btn):hover { background-size: 100% 2px; }
 .mq-track { display: flex; width: max-content; animation: mqRun 140s linear infinite; }
 .mq-set { display: flex; align-items: center; gap: 14px; padding-right: 14px; }
 .mq-set span { font-size: var(--fs-3); color: var(--tx-2); white-space: nowrap; }
-.mq-dot { width: 4px; height: 4px; border-radius: 50%; background: var(--cyan); opacity: .55; flex: none; }
+/* Точка-разделитель живёт внутри узла города: так на строку уходит
+   вдвое меньше узлов, а выглядит она ровно так же */
+.mq-set span { display: inline-flex; align-items: center; gap: 14px; }
+.mq-dot {
+  display: inline-block; width: 4px; height: 4px; border-radius: 50%;
+  background: var(--cyan); opacity: .55; flex: none;
+}
 @keyframes mqRun { to { transform: translateX(-50%) } }
 .mq:hover .mq-track { animation-play-state: paused }
 

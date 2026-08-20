@@ -3,10 +3,21 @@
 (function () {
 "use strict";
 
+/* Высоту документа берём из общего кэша: прямой вопрос заставляет
+   браузер досчитать вёрстку, а спрашиваем мы её в каждом кадре. */
+var DOCH = (window.RC_BOX && window.RC_BOX.docH) || function () {
+  return document.documentElement.scrollHeight || 1;
+};
+
 var $  = function (s, r) { return (r || document).querySelector(s); };
 var $$ = function (s, r) { return Array.prototype.slice.call((r || document).querySelectorAll(s)); };
 var API = "api.php";
 var LK  = "https://lk.rocketcdn.ru";
+
+/* Мерки блоков - через общий кэш. Прямой вопрос браузеру о месте
+   блока заставляет его досчитать вёрстку немедленно, а спрашиваем мы
+   по списку секций в каждом кадре прокрутки. */
+var BOX = (window.RC_BOX && window.RC_BOX.box) || function (el) { return el.getBoundingClientRect(); };
 
 /* ═══ Иконки ═════════════════════════════════════════════ */
 var ICO = {
@@ -583,7 +594,7 @@ function guardReveal() {
     if (document.hidden) return;
     var h = innerHeight;
     rest.forEach(function (e) {
-      var b = e.getBoundingClientRect();
+      var b = BOX(e);
       if (b.bottom > -40 && b.top < h + 40 && b.width > 0) {
         e.classList.add("on");
         if (io) io.unobserve(e);
@@ -851,7 +862,7 @@ function boot() {
   });
   var docH = 0, curSec = "", schedH = 0;
   function measure() {
-    docH = document.documentElement.scrollHeight - innerHeight;
+    docH = DOCH() - innerHeight;
   }
   measure();
   addEventListener("resize", measure, { passive: true });
@@ -879,7 +890,7 @@ function boot() {
     /* Сначала читаем всё, что нужно прочитать */
     var cur = "";
     for (var i = 0; i < secs.length; i++) {
-      if (secs[i].getBoundingClientRect().top <= 120) cur = secs[i].id;
+      if (BOX(secs[i]).top <= 120) cur = secs[i].id;
     }
 
     /* И только потом пишем */

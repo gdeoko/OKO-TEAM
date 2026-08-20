@@ -41,6 +41,12 @@
 (function (g) {
 "use strict";
 
+/* Место блока в кадре берём из общего кэша: спрашивать браузер в
+   каждом кадре значит заставлять его пересчитывать вёрстку прямо
+   внутри нашего колбэка. При прокрутке блоки не двигаются, меняется
+   только положение окна - этого достаточно. */
+var BOX = (g.RC_BOX && g.RC_BOX.box) || function (el) { return el.getBoundingClientRect(); };
+
 /* Переменные оформления пишем через общий кэш: даже на локальном
    элементе запись помечает устаревшим его поддерево, а зовём мы её
    из каждого кадра по всем карточкам. Пишем только изменившееся. */
@@ -241,7 +247,7 @@ function holoHand() {
    что делает само кольцо, поэтому обратной связи здесь нет. */
 function pin(act) {
   var ring = act.ring;
-  var wrapR = act.wrap.getBoundingClientRect();
+  var wrapR = BOX(act.wrap);
   var h = act.ringH || ring.getBoundingClientRect().height;
   var line = innerHeight * 0.5 - h / 2;
   var top0 = wrapR.top + act.ringOff;
@@ -253,6 +259,9 @@ function pin(act) {
 
   if (state !== act.pinState) {
     act.pinState = state;
+    /* Кольцо переехало между потоком и закреплением: места блоков
+       ниже него изменились, кэш координат больше не годится */
+    if (g.RC_BOX && g.RC_BOX.drop) g.RC_BOX.drop();
     ring.classList.toggle("cin-pin", state === 1);
     ring.classList.toggle("cin-pin-end", state === 2);
   }
@@ -337,12 +346,12 @@ function cabin(act) {
        оказалась вплотную к читаемой, она уходит совсем */
     if (phone && i !== best && Math.abs(tx) < innerWidth * 0.55) vis = Math.min(vis, 0.08);
 
-    CSSVAR(el, "--cin-x", tx.toFixed(1) + "px");
-    CSSVAR(el, "--cin-y", ty.toFixed(1) + "px");
+    CSSVAR(el, "--cin-x", Math.round(tx) + "px");
+    CSSVAR(el, "--cin-y", Math.round(ty) + "px");
     CSSVAR(el, "--cin-z", tz.toFixed(0) + "px");
-    CSSVAR(el, "--cin-rot", (rot * DEG).toFixed(2) + "deg");
-    CSSVAR(el, "--cin-vis", vis.toFixed(3));
-    CSSVAR(el, "--cin-blur", (soft && i !== best ? (1 - vis) * 2.6 : 0).toFixed(2) + "px");
+    CSSVAR(el, "--cin-rot", (rot * DEG).toFixed(1) + "deg");
+    CSSVAR(el, "--cin-vis", vis.toFixed(2));
+    CSSVAR(el, "--cin-blur", (soft && i !== best ? (1 - vis) * 2.6 : 0).toFixed(1) + "px");
     CSSVAR(el, "--cin-zi", String(Math.round(600 - ax * 170)));
 
     /* ── Голограмма: яркость проектора и распад развёртки ─────
@@ -351,7 +360,7 @@ function cabin(act) {
        заметно раньше, чем перестаёт быть полупрозрачным. */
     if (holo) {
       var lit = clamp(1 - ax / (front * 1.7), 0, 1);
-      CSSVAR(el, "--cin-lit", lit.toFixed(3));
+      CSSVAR(el, "--cin-lit", lit.toFixed(2));
 
       /* Уход за плечо. Проектор не гаснет прозрачностью: у него
          рвётся развёртка, полосы утоньшаются, и в самом хвосте
@@ -362,8 +371,8 @@ function cabin(act) {
          где эффекты не урезаны: плющить текст, который ещё читают,
          нельзя ни на каком устройстве. */
       var sy = soft ? 1 - clamp((dec - 0.58) / 0.42, 0, 1) * 0.68 : 1;
-      CSSVAR(el, "--cin-dec", dec.toFixed(3));
-      CSSVAR(el, "--cin-sy", sy.toFixed(3));
+      CSSVAR(el, "--cin-dec", dec.toFixed(2));
+      CSSVAR(el, "--cin-sy", sy.toFixed(2));
       el.classList.toggle("cin-decay", dec > 0.02);
 
       /* Розжиг ровно один раз на приезд: пока экран стоит перед
@@ -511,8 +520,32 @@ function collect() {
   var rel = doc.querySelector("#reliability");
   var ring = doc.getElementById("relGrid");
   if (rel && ring) {
+    /* Заголовок раздела - такой же экран на стене, как карточки.
+       Владелец описал это дословно: внутри салона всё - заголовки,
+       карточки, текст - привязано к точкам мира, мимо них едет
+       камера. Раньше заголовок оставался в потоке страницы и уезжал
+       вверх, пока панели поворачивались вправо: два разных движения
+       в одном кадре, из-за чего сцена и разваливалась.
+
+       Поэтому на время салона переносим заголовок в само кольцо
+       первой панелью, а на выходе возвращаем ровно туда, где он был
+       в разметке. */
+    var head = rel.querySelector(".sec-head");
+    if (head && !head._cabHome) {
+      head._cabHome = { parent: head.parentNode, next: head.nextSibling };
+    }
     var cards = [].slice.call(ring.querySelectorAll(".card"));
     var on = cabinAllowed() && cards.length > 1;
+    if (head) {
+      if (on) {
+        if (head.parentNode !== ring) ring.insertBefore(head, ring.firstChild);
+        head.classList.add("card", "cab-head");
+      } else if (head._cabHome && head.parentNode === ring) {
+        head.classList.remove("card", "cab-head");
+        head._cabHome.parent.insertBefore(head, head._cabHome.next);
+      }
+      if (on) cards = [head].concat(cards);
+    }
     /* Класса cin-stage на секции тут нарочно нет: он даёт
        perspective, а любой perspective на предке отменяет
        position: fixed у потомка - кольцо перестало бы держаться в
@@ -604,7 +637,7 @@ function frame() {
   /* Чтение */
   for (i = 0; i < acts.length; i++) {
     a = acts[i];
-    a.rect = a.sec.getBoundingClientRect();
+    a.rect = BOX(a.sec);
     a.live = a.rect.bottom > -200 && a.rect.top < innerHeight + 200;
     /* Кольцо салона считаем всегда, даже когда блок далеко. Оно
        единственное здесь держится в кадре само по себе, и если
@@ -614,12 +647,16 @@ function frame() {
     if (a.kind === "cabin") pin(a);
     if (!a.live) continue;
     if (a.kind === "shelf") {
-      a.rects = a.items.map(function (el) { return el.getBoundingClientRect(); });
+      a.rects = a.items.map(BOX);
     } else if (a.kind === "cabin") {
+      /* Кольцо держится в кадре само (fixed), поэтому его место
+         кэшу не поддаётся - спрашиваем браузер. Это одно чтение
+         на кадр и оно идёт до всех записей, поэтому вёрстку не
+         пересчитывает. */
       a.stage = a.ring.getBoundingClientRect();
     } else if (a.kind === "directory") {
-      a.hostRect = a.host.getBoundingClientRect();
-      a.rects = a.items.map(function (el) { return el.getBoundingClientRect(); });
+      a.hostRect = BOX(a.host);
+      a.rects = a.items.map(BOX);
     }
   }
   /* Запись */

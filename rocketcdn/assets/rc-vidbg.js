@@ -29,6 +29,12 @@ var MAP = {
 function ok() {
   if (reduced || root.classList.contains("rc-reduced")) return false;
   if (root.getAttribute("data-degrade") === "3") return false;
+  /* Лупы сняты горизонтальными, 960 на 540. На телефоне их пришлось
+     бы растягивать по высоте втрое - именно это владелец и назвал
+     «мутняком»: вместо космоса получалось мыло поверх чёткого
+     рисованного неба. На узком экране фон остаётся рисованным, он
+     резкий в любом разрешении. */
+  if (innerWidth < 901) return false;
   var mem = navigator.deviceMemory || 4;
   if (mem <= 2) return false;
   /* Экономия трафика: уважим просьбу системы */

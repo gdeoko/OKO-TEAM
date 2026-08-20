@@ -106,11 +106,21 @@ function want() {
 /* Доля «мы за пультом»: её ведёт камера рубки (--int-con). До конца
    оборота она ноль, дальше растёт вместе с подъездом камеры. */
 function conNow() {
-  var cs = getComputedStyle(root);
-  var v = parseFloat(cs.getPropertyValue("--int-con"));
-  if (isNaN(v)) v = 0;
-  var out = parseFloat(cs.getPropertyValue("--int-out"));
-  if (isNaN(out)) out = 0;
+  /* Числа берём у самой рубки. Раньше их читали через вычисленный
+     стиль корня - в каждом кадре, а это заставляет браузер пересчитать
+     стиль всего документа прямо в нашем колбэке. */
+  var I = g.RC_INTERIOR;
+  var v = 0, out = 0;
+  if (I && I.con) {
+    v = I.con() || 0;
+    out = (I.back && I.back()) || 0;
+  } else {
+    var cs = getComputedStyle(root);
+    v = parseFloat(cs.getPropertyValue("--int-con"));
+    if (isNaN(v)) v = 0;
+    out = parseFloat(cs.getPropertyValue("--int-out"));
+    if (isNaN(out)) out = 0;
+  }
   /* В отлёте камера отходит, но кадр остаётся кабиной: держим
      единицу, иначе панель поехала бы обратно в угол на финале */
   return out > 0 ? 1 : v;
@@ -156,7 +166,9 @@ function place(conK) {
      значит и рамка в обоих кадрах должна стоять одинаково. */
   var outK = 0;
   try {
-    var o = parseFloat(getComputedStyle(root).getPropertyValue("--int-out"));
+    var II = g.RC_INTERIOR;
+    var o = II && II.back ? II.back() : NaN;
+    if (isNaN(o)) o = parseFloat(getComputedStyle(root).getPropertyValue("--int-out"));
     if (!isNaN(o)) outK = Math.max(0, Math.min(1, o));
   } catch (e) {}
   var sc = 0.52 + conK * 0.62;

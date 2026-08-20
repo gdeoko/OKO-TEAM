@@ -37,6 +37,12 @@
 (function (g) {
 "use strict";
 
+/* Высоту документа берём из общего кэша: прямой вопрос заставляет
+   браузер досчитать вёрстку, а спрашиваем мы её в каждом кадре. */
+var DOCH = (window.RC_BOX && window.RC_BOX.docH) || function () {
+  return document.documentElement.scrollHeight || 1;
+};
+
 var doc = document, root = doc.documentElement;
 
 /* Переменные оформления публикуем через общий кэш: запись на корне
@@ -86,6 +92,34 @@ function hex6(n) {
 /* Отдаём палитру в CSS сразу при загрузке файла, не дожидаясь
    сборки сцены: оформление секции контактов обязано быть в тон даже
    если объёмный слой ещё не поднялся или не поднимется вовсе. */
+/* ── Кому отдавать доли рубки ────────────────────────────────
+   Три числа - вход в тамбур, подъезд к пульту и отъезд от него -
+   раньше писались на корень документа. Одна запись вместо пяти
+   выглядела экономно, но переменная наследуемая: каждая такая
+   запись помечала устаревшим стиль всего документа, а зовём мы их
+   в каждом кадре. Трассировка на телефоне показала полный пересчёт
+   дерева на кадр - две тысячи узлов ради пяти читателей.
+
+   Читателей ровно пять, и все они известны поимённо: тамбур, его
+   обшивка, слой кабины, секция контактов и голограмма эпилога.
+   Пишем адресно им - и остальная страница о смене чисел даже не
+   узнаёт. Список пересобираем, пока не соберётся весь: слои кабины
+   и тамбура появляются в разметке позже первого кадра. */
+var PUB_SEL = ".rc-int-air, .rc-int-lock, .rc-cockpit, #contact, .epi-holo";
+var pubList = null, pubAt = 0, pubWant = 5;
+function pubEls() {
+  var now = Date.now();
+  if (!pubList || (pubList.length < pubWant && now - pubAt > 400)) {
+    pubAt = now;
+    pubList = [].slice.call(doc.querySelectorAll(PUB_SEL));
+  }
+  return pubList;
+}
+function pub(name, val) {
+  var list = pubEls();
+  for (var i = 0; i < list.length; i++) V(list[i], name, val);
+}
+
 function paintCSS() {
   var k, v;
   for (k in COL) {
@@ -133,7 +167,7 @@ function relCards() {
 }
 
 function measure() {
-  var maxS = Math.max(1, doc.documentElement.scrollHeight - innerHeight);
+  var maxS = Math.max(1, DOCH() - innerHeight);
   var rel = doc.getElementById("reliability");
   var con = doc.getElementById("contact");
   if (!rel || !con) return;
@@ -1368,7 +1402,7 @@ function setProgress(p) {
   var dRest = restDolly();
   st.dollyT = dRest + (1.7 - dRest) * (1 - eIn);
   st.fovT = fovTamb() + eIn * (fovIn() - fovTamb());
-  V(root, "--int-enter", eIn.toFixed(2));
+  pub("--int-enter", eIn.toFixed(2));
 
   /* Доля подхода к пульту: ноль - камера ещё стоит в центре рубки,
      единица - доехала вплотную к приборной панели. Этим же числом
@@ -1377,7 +1411,7 @@ function setProgress(p) {
      камеры: одно движение, а не два независимых. */
   var con = p > P_TURN ? Math.min(1, (p - P_TURN) / Math.max(1e-4, P_CON - P_TURN)) : 0;
   st.con = con;
-  V(root, "--int-con", con.toFixed(2));
+  pub("--int-con", con.toFixed(2));
 
   /* Отъезд от пульта. По сценарию клиента после анкеты камера идёт
      назад, анкета растворяется голограммой, и в кадре остаётся
@@ -1386,7 +1420,7 @@ function setProgress(p) {
      и разгорается надпись старта. */
   var back = p > P_CON ? Math.min(1, (p - P_CON) / Math.max(1e-4, P_OUT - P_CON)) : 0;
   st.back = back;
-  V(root, "--int-out", back.toFixed(2));
+  pub("--int-out", back.toFixed(2));
 
   if (!st.shown) return;
 
@@ -1655,7 +1689,7 @@ function boot() {
   /* Слушаем общий прогресс страницы */
   if (g.RC_MOTION) g.RC_MOTION.on(function (p) { setProgress(p); });
   else addEventListener("scroll", function () {
-    var max = Math.max(1, doc.documentElement.scrollHeight - innerHeight);
+    var max = Math.max(1, DOCH() - innerHeight);
     setProgress((g.pageYOffset || 0) / max);
   }, { passive: true });
 }
@@ -1733,6 +1767,14 @@ g.RC_INTERIOR = {
 
   /* Расписание панелей: на каком угле стоит какая карточка */
   plan: function () { return PLAN; },
+
+  /* Доли подъезда к пульту и отъезда от него - числами, а не через
+     вычисленный стиль. Слой панели спрашивал их у браузера в каждом
+     кадре, а любой такой вопрос после чужой записи в стиль означает
+     немедленный пересчёт стиля всего документа: на телефоне это
+     оказалось самой дорогой строкой кадра. */
+  con: function () { return st.con || 0; },
+  back: function () { return st.back || 0; },
 
   /* Экранная точка панели: доли ширины и высоты кадра */
   project: project,

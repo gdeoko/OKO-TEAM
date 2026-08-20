@@ -8,6 +8,12 @@
 (function (g) {
 "use strict";
 
+/* Высоту документа берём из общего кэша: прямой вопрос заставляет
+   браузер досчитать вёрстку, а спрашиваем мы её в каждом кадре. */
+var DOCH = (window.RC_BOX && window.RC_BOX.docH) || function () {
+  return document.documentElement.scrollHeight || 1;
+};
+
 var $  = function (s, r) { return (r || document).querySelector(s); };
 var $$ = function (s, r) { return Array.prototype.slice.call((r || document).querySelectorAll(s)); };
 
@@ -101,7 +107,7 @@ function loopUp(delta) {
 /* ── Прогресс для ракеты ─────────────────────────────────── */
 function progress() {
   var y = pos();
-  var span = (LOOP && loopTop) || (document.documentElement.scrollHeight - innerHeight) || 1;
+  var span = (LOOP && loopTop) || (DOCH() - innerHeight) || 1;
   return (y / span) % 1;
 }
 
@@ -117,15 +123,27 @@ function collectParallax() {
     return { el: el, k: parseFloat(el.dataset.par) || 0.12 };
   });
 }
-function applyParallax() {
+/* Параллакс разведён на чтение и запись. Причина не в красоте: пока
+   чтение места и запись трансформа шли вперемешку, каждый следующий
+   вопрос о месте заставлял браузер пересчитать стиль посреди кадра.
+   Сначала спрашиваем обо всём, потом двигаем всё. */
+var parRead = [];
+function readParallax() {
+  parRead.length = 0;
   if (REDUCE) return;
   var vh = innerHeight;
   for (var i = 0; i < parItems.length; i++) {
     var it = parItems[i];
     var r = it.el.getBoundingClientRect();
     if (r.bottom < -200 || r.top > vh + 200) continue;
-    var mid = r.top + r.height / 2 - vh / 2;
-    it.el.style.transform = "translate3d(0," + (-mid * it.k).toFixed(2) + "px,0)";
+    it._mid = r.top + r.height / 2 - vh / 2;
+    parRead.push(it);
+  }
+}
+function writeParallax() {
+  for (var i = 0; i < parRead.length; i++) {
+    var it = parRead[i];
+    it.el.style.transform = "translate3d(0," + (-it._mid * it.k).toFixed(2) + "px,0)";
   }
 }
 
@@ -205,7 +223,9 @@ function sizeHS() {
     h.sec.style.height = Math.round(innerHeight * 0.72 + over * 0.42) + "px";
   });
 }
-function applyHS() {
+var hsRead = [];
+function readHS() {
+  hsRead.length = 0;
   if (innerWidth <= 900) return;
   for (var i = 0; i < hsList.length; i++) {
     var h = hsList[i];
@@ -213,9 +233,15 @@ function applyHS() {
     var r = h.sec.getBoundingClientRect();
     if (r.bottom < 0 || r.top > innerHeight) continue;
     var total = h.sec.offsetHeight - innerHeight;
-    var p = total > 0 ? Math.min(1, Math.max(0, -r.top / total)) : 0;
-    h.track.style.transform = "translate3d(" + (-p * h.span).toFixed(1) + "px,0,0)";
-    if (h.bar) h.bar.style.setProperty("--p", (8 + p * 92).toFixed(1) + "%");
+    h._p = total > 0 ? Math.min(1, Math.max(0, -r.top / total)) : 0;
+    hsRead.push(h);
+  }
+}
+function writeHS() {
+  for (var i = 0; i < hsRead.length; i++) {
+    var h = hsRead[i];
+    h.track.style.transform = "translate3d(" + (-h._p * h.span).toFixed(1) + "px,0,0)";
+    if (h.bar) h.bar.style.setProperty("--p", (8 + h._p * 92).toFixed(1) + "%");
   }
 }
 
@@ -273,7 +299,9 @@ function collect3D() {
   });
 }
 
-function apply3D() {
+var d3read = [];
+function read3D() {
+  d3read.length = 0;
   if (REDUCE) return;
   var vh = innerHeight, half = vh / 2;
   for (var i = 0; i < d3list.length; i++) {
@@ -282,7 +310,14 @@ function apply3D() {
     var r = el.getBoundingClientRect();
     var p = ((r.top + r.height / 2) - half) / vh;
     if (p < -0.9) p = -0.9; else if (p > 0.9) p = 0.9;
-    el.style.transform = "perspective(1100px) rotateX(" + (-p * 4.6).toFixed(2) + "deg)";
+    el._p3 = p;
+    d3read.push(el);
+  }
+}
+function write3D() {
+  for (var i = 0; i < d3read.length; i++) {
+    var el = d3read[i];
+    el.style.transform = "perspective(1100px) rotateX(" + (-el._p3 * 4.6).toFixed(2) + "deg)";
   }
 }
 
@@ -338,10 +373,14 @@ function onScroll() {
   requestAnimationFrame(function () {
     ticking = false;
     loopCheck();
+    /* Сначала весь кадр читается, потом весь кадр пишется */
+    readParallax();
+    readHS();
+    read3D();
     pushProgress();
-    applyParallax();
-    applyHS();
-    apply3D();
+    writeParallax();
+    writeHS();
+    write3D();
     updateRing(progress());
   });
 }

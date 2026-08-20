@@ -25,12 +25,51 @@
 (function (g) {
 "use strict";
 
+/* ── Дозор вместо кадра ──────────────────────────────────────
+   Модуль, которому сейчас нечего делать, не должен занимать место
+   в очереди кадров: на телефоне таких «спящих» циклов набиралось
+   больше десятка, и каждый стоил браузеру входа в JS.
+
+   Пока работа есть - обычный кадровый цикл. Как только её нет
+   тридцать кадров подряд, переходим на редкий дозор: проверяем
+   четыре раза в секунду и просыпаемся мгновенно, едва появится
+   повод. Глазу разницы нет, а очередь кадров разгружается. */
+function idler(step, awake) {
+  var raf = 0, timer = 0, empty = 0, live = true;
+
+  function frame(ts) {
+    raf = 0;
+    var busy = step(ts) !== false;
+    empty = busy ? 0 : empty + 1;
+    if (empty > 8) { live = false; nap(); return; }
+    raf = requestAnimationFrame(frame);
+  }
+  function nap() {
+    if (timer) return;
+    timer = setInterval(function () {
+      if (doc.hidden) return;
+      if (!awake || awake()) { clearInterval(timer); timer = 0; empty = 0; live = true; start(); }
+    }, 250);
+  }
+  function start() {
+    if (raf || !live) return;
+    raf = requestAnimationFrame(frame);
+  }
+  /* Будить цикл на каждое движение колеса нельзя: именно во время
+     прокрутки эти модули чаще всего и не нужны, а просыпались они
+     ровно тогда. Пробуждение решает только собственная проверка -
+     она идёт четыре раза в секунду и опоздать не может: и шлюз, и
+     пульт въезжают в кадр постепенно. */
+  start();
+  return { wake: function () { empty = 0; if (!live) { live = true; if (timer) { clearInterval(timer); timer = 0; } start(); } } };
+}
+
 var doc = document, root = doc.documentElement;
 var reduced = false;
 try { reduced = matchMedia("(prefers-reduced-motion: reduce)").matches; } catch (e) {}
 
 var sec = null, layer = null, img = null, cv = null, x = null;
-var raf = null, t = 0, last = 0, ready = false, shown = false;
+var t = 0, last = 0, ready = false, shown = false;
 var p = 0, pShow = 0;
 
 /* Индикаторы панели: доли от размера картинки. Координаты сняты с
@@ -305,13 +344,12 @@ function place() {
 }
 
 function loop(ts) {
-  raf = requestAnimationFrame(loop);
-  if (doc.hidden) { last = 0; return; }
+  if (doc.hidden) { last = 0; return false; }
   var dt = last ? Math.min(0.05, (ts - last) / 1000) : 0.016;
   last = ts;
 
   place();
-  if (!shown) return;
+  if (!shown) return false;
   vidSeek(ts);
   /* На стоящей странице хватает пятнадцати кадров: пульт только
      дышит, гнать шестьдесят ради этого незачем. */
@@ -358,7 +396,10 @@ function boot() {
   if (!sec) return;
   build();
   watch();
-  if (!raf) raf = requestAnimationFrame(loop);
+  /* Пульт живёт только в своём разделе. Вне его цикл уходит в
+     дозор: просыпается от прокрутки и от собственной проверки
+     четыре раза в секунду. */
+  idler(loop, function () { return shown; });
 }
 
 addEventListener("resize", function () { setTimeout(size, 200); }, { passive: true });

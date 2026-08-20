@@ -15,6 +15,10 @@
 (function (g, d) {
   "use strict";
 
+/* Мерки разделов - из общего кэша: прямой вопрос браузеру о месте
+   блока посреди кадра заставляет его пересчитать вёрстку заново. */
+var BOX = (window.RC_BOX && window.RC_BOX.box) || function (el) { return el.getBoundingClientRect(); };
+
   var rails = [];
   var raf = 0;
 
@@ -115,7 +119,7 @@
          А вот отмечать активную точку есть смысл только в кадре. */
       sync(r);
       if (!r.cards.length) continue;
-      var box = r.sec.getBoundingClientRect();
+      var box = BOX(r.sec);
       if (box.bottom < -80 || box.top > g.innerHeight + 80) continue;
       paint(r);
     }

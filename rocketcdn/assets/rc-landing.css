@@ -31,9 +31,19 @@
    элемент просто проиграло бы по специфичности. Толчок сложен с
    ходом камеры прямо там, а сюда остаётся всё, что живёт отдельно
    от общего кадра. */
-.rc-quake .rc-shakeable {
-  will-change: transform;
-  transform: translate3d(var(--rc-shake-x), var(--rc-shake-y), 0);
+/* Слой удара: сам по себе он ничего не рисует, всю картинку дают
+   его псевдоэлементы. Здесь же живёт доля толчка (--rc-shake),
+   которую пишет сцена. Раньше и доля, и псевдоэлементы висели на
+   корне документа - от этого каждый кадр касания пересчитывал стиль
+   всей страницы. Отдельный слой стоит один узел разметки.
+
+   Заодно убрано правило для класса rc-shakeable: такого класса в
+   разметке нет ни в одном файле, оно не совпадало ни с чем. */
+.rc-quake-fx {
+  position: fixed;
+  inset: 0;
+  z-index: 3;
+  pointer-events: none;
 }
 
 /* Короткая засветка кадра от удара: не белая вспышка, а еле
@@ -45,7 +55,7 @@
    синим в тот самый миг, когда трёхмерный мир вспыхивает рыжим,
    удар распадётся на два разных события. Синий остаётся снаружи
    пятна - там, куда свет от сопла уже не достаёт. */
-.rc-quake::after {
+html.rc-quake .rc-quake-fx::after {
   content: "";
   position: fixed;
   inset: 0;
@@ -64,7 +74,7 @@
    сцене, - объём падает ОТ корабля, а не рисуется поверх него.
    Отдельного элемента не заводим: псевдоэлемент у того же класса
    стоит ноль узлов разметки. */
-.rc-quake::before {
+html.rc-quake .rc-quake-fx::before {
   content: "";
   position: fixed;
   left: 0;
@@ -81,19 +91,18 @@
 /* Кому важнее покой, тот не трясётся: движение тут декоративное и
    выключается целиком, а посадка остаётся понятной и без него */
 @media (prefers-reduced-motion: reduce) {
-  .rc-quake .rc-shakeable { transform: none; will-change: auto; }
-  .rc-quake::after,
-  .rc-quake::before { display: none; }
+  html.rc-quake .rc-quake-fx::after,
+  html.rc-quake .rc-quake-fx::before { display: none; }
 }
 
 /* Просевшие кадры: страница снимает украшения ступенями. Пыль у
    нижней кромки - самое дорогое здесь (полноэкранный полупрозрачный
    слой поверх всего), поэтому уходит первой, а вспышка от удара
    остаётся: без неё касание перестаёт быть событием. */
-html[data-degrade="2"] .rc-quake::before,
-html[data-degrade="3"] .rc-quake::before { display: none; }
-html[data-degrade="3"] .rc-quake::after { display: none; }
+html[data-degrade="2"].rc-quake .rc-quake-fx::before,
+html[data-degrade="3"].rc-quake .rc-quake-fx::before { display: none; }
+html[data-degrade="3"].rc-quake .rc-quake-fx::after { display: none; }
 
 /* Режим покоя выключает всё: там и самой посадки в 3D не бывает */
-.rc-reduced .rc-quake::after,
-.rc-reduced .rc-quake::before { display: none; }
+html.rc-reduced .rc-quake-fx::after,
+html.rc-reduced .rc-quake-fx::before { display: none; }

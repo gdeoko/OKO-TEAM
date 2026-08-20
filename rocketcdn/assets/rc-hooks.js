@@ -22,12 +22,25 @@
 (function (g) {
 "use strict";
 
+/* Высоту документа берём из общего кэша: прямой вопрос заставляет
+   браузер досчитать вёрстку, а спрашиваем мы её в каждом кадре. */
+var DOCH = (window.RC_BOX && window.RC_BOX.docH) || function () {
+  return document.documentElement.scrollHeight || 1;
+};
+
 /* Переменные оформления пишем через общий кэш: даже на локальном
    элементе запись помечает устаревшим его поддерево, а зовём мы её
    из каждого кадра по всем карточкам. Пишем только изменившееся. */
 var V = (g.RC_VAR && g.RC_VAR.set) || function (el, n, v) {
   if (el && el.style) el.style.setProperty(n, v);
 };
+
+/* Мерки карточек - из общего кэша. Мы читаем их по всему видимому
+   списку в каждом кадре, а сами карточки в этот же кадр двигаем: без
+   кэша каждый такой вопрос заставляет браузер пересчитать вёрстку.
+   Заодно мерка становится честнее - это место карточки на странице,
+   а не то, куда её только что отвёл сам эффект. */
+var BOX = (g.RC_BOX && g.RC_BOX.box) || function (el) { return el.getBoundingClientRect(); };
 
 var doc = document, root = doc.documentElement;
 var reduced = false;
@@ -150,8 +163,8 @@ reg({
     /* Пишем переменные, а не transform: те же заголовки участвуют в
        параллаксе слоёв единого мира (rc-world), и инлайновый
        transform стёр бы их глубину. Мир складывает оба сдвига сам. */
-    V(el, "--rc-fx", (-dx / d * push).toFixed(2) + "px");
-    V(el, "--rc-fy", (-dy / d * push * 0.45).toFixed(2) + "px");
+    V(el, "--rc-fx", Math.round(-dx / d * push) + "px");
+    V(el, "--rc-fy", Math.round(-dy / d * push * 0.45) + "px");
     el.style.opacity = (1 - p * 0.18).toFixed(3);
   },
   rest: function (el) {
@@ -169,8 +182,8 @@ reg({
   radius: 380,
   hit: function (el, p, dx, dy) {
     var side = dx > 0 ? 1 : -1;
-    V(el, "--jet", p.toFixed(3));
-    V(el, "--jet-rot", (side * p * 1.8).toFixed(2) + "deg");
+    V(el, "--jet", p.toFixed(2));
+    V(el, "--jet-rot", (side * p * 1.8).toFixed(1) + "deg");
   },
   rest: function (el) {
     V(el, "--jet", "0");
@@ -185,8 +198,8 @@ reg({
   sel: ".prod-card",
   radius: 300,
   hit: function (el, p, dx, dy) {
-    V(el, "--tilt", (-(dx > 0 ? 1 : -1) * p * 3.6).toFixed(2) + "deg");
-    V(el, "--lift", (p * 4).toFixed(2) + "px");
+    V(el, "--tilt", (-(dx > 0 ? 1 : -1) * p * 3.6).toFixed(1) + "deg");
+    V(el, "--lift", (p * 4).toFixed(1) + "px");
   },
   rest: function (el) {
     V(el, "--tilt", "0deg");
@@ -200,7 +213,7 @@ reg({
   key: "head",
   sel: ".sec-h",
   radius: 330,
-  hit: function (el, p) { V(el, "--under", p.toFixed(3)); },
+  hit: function (el, p) { V(el, "--under", p.toFixed(2)); },
   rest: function (el) { V(el, "--under", "0"); },
   settle: function (el) { V(el, "--under", "0"); }
 });
@@ -228,7 +241,7 @@ reg({
   sel: ".case:not(.step)",
   radius: 260,
   hit: function (el, p, dx) {
-    V(el, "--drag", ((dx > 0 ? -1 : 1) * p * 5).toFixed(2) + "px");
+    V(el, "--drag", Math.round((dx > 0 ? -1 : 1) * p * 5) + "px");
   },
   rest: function (el) { V(el, "--drag", "0px"); },
   settle: function (el) { V(el, "--drag", "0px"); }
@@ -313,7 +326,7 @@ function frame(ts) {
   /* Чтение */
   for (i = 0; i < n; i++) {
     it = visible[i];
-    it.r = it.el.getBoundingClientRect();
+    it.r = BOX(it.el);
   }
 
   /* Запись */
@@ -382,7 +395,7 @@ else setTimeout(start, 120);
 
 /* Посадка идёт от прогресса страницы, а не от близости ракеты */
 addEventListener("scroll", function () {
-  var max = doc.body.scrollHeight - innerHeight;
+  var max = DOCH() - innerHeight;
   landing(max > 0 ? (g.pageYOffset || doc.documentElement.scrollTop) / max : 0);
 }, { passive: true });
 

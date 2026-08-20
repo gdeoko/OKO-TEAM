@@ -12,6 +12,14 @@
 (function (g) {
 "use strict";
 
+var eqEls = null;
+
+/* Высоту документа берём из общего кэша: прямой вопрос заставляет
+   браузер досчитать вёрстку, а спрашиваем мы её в каждом кадре. */
+var DOCH = (window.RC_BOX && window.RC_BOX.docH) || function () {
+  return document.documentElement.scrollHeight || 1;
+};
+
 /* Переменные оформления публикуем через общий кэш: запись на корне
    документа инвалидирует стиль всему дереву. Пишем изменившееся. */
 var V = (g.RC_VAR && g.RC_VAR.set) || function (el, n, v) {
@@ -214,7 +222,7 @@ Sound.prototype.loop = function () {
     /* В полёте партитуру ведёт сам корабль через flightLevel */
     if (self._flight) return;
 
-    var max = document.documentElement.scrollHeight - innerHeight;
+    var max = DOCH() - innerHeight;
     var y = g.scrollY || 0;
     var p = max > 0 ? Math.min(1, Math.max(0, y / max)) : 0;
     var dv = Math.abs(y - (self._lastY || 0));
@@ -529,7 +537,11 @@ function bind() {
   setInterval(function () {
     if (!snd.on) return;
     var e = snd.energy();
-    V(document.documentElement, "--snd-e", e.toFixed(2));
+    /* Уровень читает только столбик эквалайзера: пишем ему, а не
+       корню документа - иначе каждый кадр помечается устаревшим
+       стиль всего дерева ради трёх полосок в шапке. */
+    if (!eqEls || !eqEls.length) eqEls = [].slice.call(document.querySelectorAll(".eq"));
+    for (var ei = 0; ei < eqEls.length; ei++) V(eqEls[ei], "--snd-e", e.toFixed(2));
   }, 110);
 
   /* Первый жест человека. Прокрутка на айфоне разрешением не считается,
