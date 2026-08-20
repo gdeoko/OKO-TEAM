@@ -3620,8 +3620,18 @@ Rocket.prototype.layout = function (p, dt) {
     if (padK > 0.01) {
       var pw = this.canvas.clientWidth || innerWidth;
       var ph = this.canvas.clientHeight || innerHeight;
-      var pxA = this.C.mobile ? pw * 0.5 : pw * 0.74;
-      var pyA = this.C.mobile ? ph * 0.64 : ph * 0.58;
+      /* Место героя в первом кадре. На телефоне это низ экрана:
+         выше идут заголовок, кнопки и список - корабль, поставленный
+         посередине, просвечивал сквозь стеклянные кнопки и мешал их
+         читать. На широком экране уводим правее центра глобуса,
+         иначе корпус тонет в сетке шара и читается призраком. */
+      /* Место героя в первом кадре. Единственная свободная зона на
+         телефоне - правый верх, у логотипа и глобуса: ниже идут
+         заголовок, кнопки, список и приборы, и корабль, поставленный
+         там, просвечивал сквозь стекло карточек. На широком экране
+         уводим правее центра шара, иначе корпус тонет в его сетке. */
+      var pxA = this.C.mobile ? pw * 0.76 : pw * 0.84;
+      var pyA = this.C.mobile ? ph * 0.23 : ph * 0.66;
       this.toWorld(pxA, pyA, -0.2, this._padP || (this._padP = new T.Vector3()));
       pos.lerp(this._padP, padK * 0.92);
       tan.lerp(this._upVec || (this._upVec = new T.Vector3(0, 1, 0)),
