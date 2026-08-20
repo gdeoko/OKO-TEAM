@@ -760,18 +760,70 @@ function boot() {
      Теперь всё чтение живёт в одном кадре, высота документа
      обновляется по изменению размеров, а не покадрово. */
   var navLinks = $$(".nav a");
-  /* До какого момента шапка не имеет права уехать: ставится при
-     переходе по якорю, снимается сама по времени */
-  var holdHdr = 0;
+  /* Переход по якорю: пока он идёт, шапка стоит на месте, а когда
+     прокрутка успокоилась - досылаем к цели и обновляем подсветку.
+
+     Оба хвоста нужны из-за того, что страница меняет высоту прямо
+     во время перехода: липкие ленты пересчитывают свои сцены,
+     блоки выезжают. Без удержания шапка пряталась (прыжок для неё
+     - обычная прокрутка вниз, а на телефоне это уносит и бургер,
+     единственный вход в меню). Без досылки раздел «Вопросы»
+     промахивался на полсотни пикселей и терял свой заголовок. */
+  var holdHdr = 0, aimId = "", aimTimer = 0, aimY = -1, aimStill = 0;
+
   function keepHeader() {
-    holdHdr = performance.now() + 1400;
+    holdHdr = performance.now() + 600;
     if (hdr) hdr.classList.remove("hide");
   }
+
+  function chase() {
+    var y = Math.round(scrollY);
+    /* Ждём, пока прокрутка остановится: вмешиваться в идущую
+       плавную прокрутку нельзя - две сразу гасят друг друга */
+    if (y !== aimY) { aimY = y; aimStill = 0; keepHeader(); return; }
+    if (++aimStill < 2) { keepHeader(); return; }
+
+    clearInterval(aimTimer);
+    aimTimer = 0;
+    var box = aimId && document.getElementById(aimId);
+    if (box) {
+      var top = box.getBoundingClientRect().top;
+      var pad = parseFloat(getComputedStyle(document.documentElement).scrollPaddingTop) || 88;
+      if (Math.abs(top - pad) > 14) {
+        try { window.scrollTo({ top: scrollY + top - pad, behavior: "smooth" }); }
+        catch (e) { window.scrollTo(0, scrollY + top - pad); }
+      }
+    }
+    /* Прыжок закончился: для шапки это не «человек листает вниз»,
+       поэтому точку отсчёта переносим сюда. Иначе первый же
+       пересчёт после перехода прятал шапку. */
+    lastY = Math.round(scrollY);
+    read();
+    setTimeout(function () { lastY = Math.round(scrollY); read(); }, 500);
+  }
+
+  function goAnchor(id) {
+    aimId = id || "";
+    aimY = -1;
+    aimStill = 0;
+    keepHeader();
+    if (aimTimer) clearInterval(aimTimer);
+    aimTimer = setInterval(chase, 140);
+    /* Страховка: сколько бы ни длилась прокрутка, через шесть
+       секунд наблюдение прекращается */
+    setTimeout(function () {
+      if (aimTimer) { clearInterval(aimTimer); aimTimer = 0; read(); }
+    }, 6000);
+  }
+
   document.addEventListener("click", function (e) {
     var a = e.target.closest ? e.target.closest('a[href^="#"]') : null;
-    if (a && a.getAttribute("href").length > 1) keepHeader();
+    if (!a || a.getAttribute("href").length < 2) return;
+    goAnchor(a.getAttribute("href").slice(1));
   }, true);
-  addEventListener("hashchange", keepHeader);
+  addEventListener("hashchange", function () {
+    goAnchor((location.hash || "").slice(1));
+  });
   var docH = 0, curSec = "", schedH = 0;
   function measure() {
     docH = document.documentElement.scrollHeight - innerHeight;
