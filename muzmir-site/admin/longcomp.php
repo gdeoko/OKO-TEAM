@@ -48,6 +48,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     if ($do === 'reject' && $aid) {
         $reason = trim(input('reject_reason')) ?: 'Нарушение правил положения.';
         update('applications', ['status' => 'rejected', 'reject_reason' => $reason], 'id=:id', ['id' => $aid]);
+        // Отклонённой работе наградные материалы не полагаются: снимаем бланки,
+        // файлы и неотправленное письмо.
+        require_once BASE_PATH . '/core/diploma_sync.php';
+        dsync_drop($aid, 'заявка отклонена: ' . mb_substr($reason, 0, 80));
         audit('longcomp_reject', 'application', $aid, ['competition' => $cid, 'reason' => $reason]);
         flash('Заявка отклонена.', 'success');
         admin_redirect('longcomp', ['competition' => $cid]);

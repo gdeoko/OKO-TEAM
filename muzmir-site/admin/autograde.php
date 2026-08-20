@@ -56,12 +56,17 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && in_array((string) input('do'), ['ap
         // Человек может поправить звание перед утверждением: модель предлагает,
         // решение остаётся за жюри, и в журнале видно, что именно утвердили.
         $title = trim((string) input('title')) ?: (string) $run['title'];
+        // Состояние ДО записи: по нему потом видно, менялось ли напечатанное.
+        $appBefore = one("SELECT * FROM applications WHERE id=?", [$appId]) ?: [];
         update('applications', ['result' => $title, 'jury_comment' => (string) $run['jury_comment'],
                                 'status' => 'graded'], 'id=:id', ['id' => $appId]);
         q("UPDATE applications SET graded_at=? WHERE id=? AND COALESCE(graded_at,'')=''", [date('Y-m-d H:i:s'), $appId]);
         q("UPDATE grading_runs SET applied=1, applied_at=?, title=? WHERE id=?", [date('Y-m-d H:i:s'), $title, $runId]);
+        // Если по заявке уже есть бланк с прежним званием — переделываем.
+        require_once BASE_PATH . '/core/diploma_sync.php';
+        $dmsg = dsync_apply($appId, $appBefore, ['result' => $title, 'status' => 'graded']);
         audit('autograde_approved', 'application', $appId, ['run' => $runId, 'title' => $title]);
-        flash('Результат утверждён: ' . $title, 'success');
+        flash('Результат утверждён: ' . $title . ($dmsg !== '' ? ' ' . $dmsg : ''), 'success');
     } else {
         q("UPDATE grading_runs SET status='skipped', error='отклонено человеком' WHERE id=?", [$runId]);
         audit('autograde_rejected', 'application', $appId, ['run' => $runId]);

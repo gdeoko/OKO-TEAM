@@ -45,6 +45,7 @@ require_once BASE_PATH . '/core/outreach_window.php';
 // Фирменные кирпичики письма (rm_mail_layout/rm_mail_btn/rm_award_hint)
 // + core/notifications.php подключается изнутри result_mail.php.
 require_once BASE_PATH . '/core/result_mail.php';
+require_once BASE_PATH . '/core/award_offer.php';
 require_once __DIR__ . '/_lib.php';
 
 const JOB = 'award_order_reminders';
@@ -99,6 +100,17 @@ function award_reminder_mark(int $appId, string $kind): void {
  * datetime('now','localtime') — UTC, см. соглашение в cron/_lib.php).
  */
 function award_graded_ts(array $a): int {
+    // Отсчёт идёт от того дня, когда участник УЗНАЛ результат, а не когда жюри
+    // его выставило: у конкурса с публикацией списком между этими событиями
+    // проходит неделя, и напоминание «осталось 55 дней» пришло бы раньше самих
+    // итогов.
+    foreach (['result_sent_at', 'results_published_at'] as $k) {
+        $v = trim((string) ($a[$k] ?? ''));
+        if ($v !== '') {
+            $ts = strtotime($v);
+            if ($ts !== false) return $ts;
+        }
+    }
     $g = trim((string) ($a['graded_at'] ?? ''));
     if ($g !== '') {
         $ts = strtotime($g);
@@ -148,8 +160,9 @@ function award_reminder_html(array $a, int $daysLeft, string $awardsUrl): string
         . '<b style="color:' . $navy . ';">' . AWARD_ORDER_WINDOW_DAYS . ' дней</b> после публикации результата — '
         . 'осталось <b style="color:' . $navy . ';">' . h(award_ru_days($daysLeft)) . '</b>, до ' . h($deadline) . '.</div>'
         . '</td></tr></table>'
-        . '<p style="margin:6px 0 0;font-weight:600;color:' . $navy . ';">Оригиналы наград — Почтой России:</p>'
-        . '<p style="margin:6px 0 0;font-size:14px;color:' . RM_INK . ';line-height:1.6;">На плотной дизайнерской бумаге, с голографическими логотипами, живыми подписями и печатями. Доступна и благодарность педагогу за подготовку.</p>'
+        // Награду покупают глазами: показываем настоящие снимки того, что придёт
+        // по почте, и ровно то, что положено по этому званию.
+        . ao_block((int) $a['competition_id'], $result, $awardsUrl)
         . '<p style="margin:14px 0 0;font-size:13px;color:' . $muted . ';">Если наградная продукция Вам не нужна, просто оставьте это письмо без ответа.</p>';
 
     return mm_email_tx($inner, [
@@ -188,15 +201,28 @@ try {
     )");
 
     /* ---------- Кандидаты: результат есть, оплаченного заказа наград нет ---------- */
+    // УЧАСТНИК ДОЛЖЕН ЗНАТЬ СВОЙ РЕЗУЛЬТАТ — но узнаёт он его двумя способами.
+    //
+    // Раньше здесь стояло единственное условие: письмо с результатом отправлено.
+    // Для платных конкурсов это верно, а у конкурсов с публикацией списком
+    // (results_mode = list) такого письма не бывает вовсе: итоги выходят на
+    // странице результатов. В итоге сто с лишним участников бесплатного
+    // конкурса не получали ни одного напоминания о заказе наград — а именно там
+    // заказ и есть единственный способ получить награду на руки.
+    //
+    // Теперь годится любой из двух способов, и от него же считается срок.
     $rows = all(
         "SELECT a.id, a.number, a.competition_id, a.user_id, a.full_name, a.email,
-                a.result, a.graded_at, a.created_at, c.name AS comp_name
+                a.result, a.graded_at, a.created_at, a.result_sent_at,
+                c.name AS comp_name, c.results_mode, c.results_published_at
            FROM applications a
            JOIN competitions c ON c.id = a.competition_id
           WHERE a.status <> 'rejected'
             AND a.result IS NOT NULL AND a.result <> ''
-            -- напоминаем о заказе наград только тем, кто уже получил результат на почту
-            AND COALESCE(a.result_sent_at,'') <> ''"
+            AND (
+                  COALESCE(a.result_sent_at,'') <> ''
+               OR (COALESCE(c.results_mode,'email') = 'list' AND COALESCE(c.results_published_at,'') <> '')
+            )"
     );
 
     $queued = 0; $expired = 0;

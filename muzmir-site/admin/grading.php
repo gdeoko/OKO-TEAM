@@ -365,15 +365,16 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && input('do') === 'grade_result') {
         // уничтожала купленный документ. Теперь смена звания снимает основной
         // диплом, смена спец-номинации — дополнительный, а про именной, где
         // звание тоже напечатано на бланке, честно предупреждаем: перевыпустить.
+        // Бланки не удаляем, а переделываем под новые данные, сохраняя номер:
+        // он напечатан в реестре, назван в письме и проверяется через сервис
+        // подлинности. Удаление же теряло купленные именные документы, а
+        // отправленный диплом со старым званием так и оставался на руках.
         $reissueNamed = 0;
-        if ($resultChanged) {
-            q("DELETE FROM diplomas WHERE application_id=? AND type='main' AND COALESCE(sent_at,'')=''", [$appId]);
-            $reissueNamed = (int) (scalar("SELECT COUNT(*) FROM diplomas
-                                            WHERE application_id=? AND type='named' AND COALESCE(sent_at,'')=''",
-                                          [$appId]) ?? 0);
-        }
-        if ($extraChanged) {
-            q("DELETE FROM diplomas WHERE application_id=? AND type='extra' AND COALESCE(sent_at,'')=''", [$appId]);
+        $dsyncMsg = '';
+        if ($changed) {
+            require_once BASE_PATH . '/core/diploma_sync.php';
+            $dsyncMsg = dsync_apply($appId, (array) $cur,
+                ['result' => $result, 'extra_diploma' => $extra, 'status' => 'graded']);
         }
 
         // РЕЗУЛЬТАТ: если срок наступил (моментально/дата в прошлом) — шлём СЕЙЧАС;
@@ -400,7 +401,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && input('do') === 'grade_result') {
         app_status_sync($appId);
 
         audit('grade_result', 'application', $appId,
-              ['result'=>$result,'extra'=>$extra,'result_at'=>$resultSendAt,'named_reissue'=>$reissueNamed]);
+              ['result'=>$result,'extra'=>$extra,'result_at'=>$resultSendAt,'diploma_sync'=>$dsyncMsg]);
         $flashWhen = $isLongComp ? 'публикуется пакетом'
             : ($dueNow ? 'результат отправлен сейчас' : ('результат ' . date('d.m.Y H:i', $resultAt->getTimestamp())));
         // Обещаем наградные дипломы только там, где центр действительно выдаёт их
@@ -408,11 +409,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && input('do') === 'grade_result') {
         $dipWhen = (!$isLongComp && $compPaid)
             ? ' Наградные дипломы — через ' . $wdays . ' раб. дней от подачи.'
             : ' Наградные материалы участник заказывает сам после оглашения итогов — центр их не рассылает.';
-        $warnNamed = $reissueNamed > 0
-            ? ' ВНИМАНИЕ: именной диплом (' . $reissueNamed . ' шт.) остался с прежним званием — перевыпустите его в разделе «Дипломы».'
-            : '';
+        // Именной диплом теперь переделывается вместе с остальными, вручную
+        // перевыпускать его не надо: об этом говорит сообщение синхронизации.
+        $warnNamed = '';
         flash('Итог сохранён: ' . $result . ($extra !== '' ? ' · доп: ' . $extra : '')
-            . ' · ' . $flashWhen . '.' . $dipWhen . $warnNamed, $warnNamed !== '' ? 'warning' : 'success');
+            . ' · ' . $flashWhen . '.' . $dipWhen . ($dsyncMsg !== '' ? ' ' . $dsyncMsg : ''), 'success');
         // Правку итога можно начать из карточки заявки — тогда и возвращаемся туда,
         // а не в очередь оценки: администратор пришёл поправить одну заявку, а не
         // судить следующую.
@@ -523,7 +524,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && input('do') === 'reject') {
         admin_redirect('grading', array_filter(['id'=>$appId,'competition'=>$comp,'order'=>$order]));
     }
     update('applications', ['status' => 'rejected', 'reject_reason' => $reason], 'id=:wid', ['wid' => $appId]);
-    q("DELETE FROM diplomas WHERE application_id=? AND COALESCE(sent_at,'')=''", [$appId]);
+    // Наградные материалы отклонённой работы снимаются целиком: файлы с диска,
+    // записи из реестра и письмо из очереди, если оно ещё не ушло. Раньше
+    // удалялась только запись, а бланк оставался на диске и письмо уходило.
+    require_once BASE_PATH . '/core/diploma_sync.php';
+    $dropped = dsync_drop($appId, 'заявка отклонена: ' . mb_substr($reason, 0, 80));
     // Партнёрское использование возвращается учреждению: участия не будет, взнос
     // возвращается, и списывать за это одну из десяти скидок школы неправильно.
     if (is_file(BASE_PATH . '/core/partner.php')) require_once BASE_PATH . '/core/partner.php';
@@ -637,7 +642,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && input('do') === 'edit_app') {
     $changed = [];
     foreach ($data as $k => $v) if ((string)($cur[$k] ?? '') !== (string)$v) $changed[$k] = $v;
     audit('application_edit', 'application', $appId, ['from' => 'grading', 'changed' => array_keys($changed)]);
-    flash($changed ? 'Данные заявки обновлены (' . count($changed) . ' пол.).' : 'Изменений нет.', $changed ? 'success' : 'info');
+    // Правка ФИО, номера, номинации или педагога меняет то, что напечатано в
+    // бланке: диплом переделывается под новые данные.
+    require_once BASE_PATH . '/core/diploma_sync.php';
+    $dmsg = dsync_apply($appId, (array) $cur, $data);
+    flash(($changed ? 'Данные заявки обновлены (' . count($changed) . ' пол.).' : 'Изменений нет.')
+          . ($dmsg !== '' ? ' ' . $dmsg : ''), $changed ? 'success' : 'info');
     admin_redirect('grading', $back);
 }
 

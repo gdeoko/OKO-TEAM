@@ -204,11 +204,16 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && input('do') === 'edit_app') {
     if (!$data) { flash('Изменений нет.', 'info'); admin_redirect('applications', ['id' => $id]); }
 
     update('applications', $data, 'id=:id', ['id' => $id]);
+    // Диплом печатается по данным заявки: поправили фамилию, номинацию или
+    // название номера — бланк переделывается под них, номер сохраняется.
+    require_once BASE_PATH . '/core/diploma_sync.php';
+    $dmsg = dsync_apply($id, (array) $cur, $data);
     // Аудит только реально изменившихся полей.
     $changed = [];
     foreach ($data as $k => $v) if ((string)($cur[$k] ?? '') !== (string)$v) $changed[$k] = $v;
     audit('application_edit', 'application', $id, ['changed' => array_keys($changed)]);
-    flash($changed ? 'Данные заявки обновлены (' . count($changed) . ').' : 'Изменений нет.', $changed ? 'success' : 'info');
+    flash(($changed ? 'Данные заявки обновлены (' . count($changed) . ').' : 'Изменений нет.')
+          . ($dmsg !== '' ? ' ' . $dmsg : ''), $changed ? 'success' : 'info');
     admin_redirect('applications', ['id' => $id]);
 }
 
@@ -660,12 +665,38 @@ if ($id = (int) input('id')) {
               <input name="institution" value="<?= h((string)$a['institution']) ?>"></div>
             <div class="field"><label>Город</label>
               <input name="city" value="<?= h((string)$a['city']) ?>"></div>
+            <?php
+            /* Форма выступления и направление берутся из справочника положения
+               (core/data.php), а не из своего списка. Раньше здесь стояли
+               латинские ключи solo|duet|ensemble|choir: выбираешь «Хор», уходит
+               «choir», и проверка честно отвечала, что такой формы в положении
+               нет — заявка не сохранялась. Списки зависят от номинации: у
+               вокала это хор, у инструментов оркестр, у театра коллектив. */
+            $nomNow  = (string) ($a['nomination'] ?? '');
+            $formsOk = FORMATIONS_FOR($nomNow);
+            $subsOk  = (array) (NOMINATIONS()[$nomNow] ?? []);
+            ?>
+            <?php if ($subsOk): ?>
+            <div class="field"><label>Направление</label>
+              <select name="subgroup">
+                <option value="">— не указано —</option>
+                <?php foreach ($subsOk as $sg): ?>
+                  <option value="<?= h($sg) ?>" <?= (string)($a['subgroup'] ?? '')===$sg?'selected':'' ?>><?= h($sg) ?></option>
+                <?php endforeach; ?>
+              </select></div>
+            <?php endif; ?>
             <div class="field"><label>Форма выступления</label>
               <select name="formation">
                 <option value="">— не указана —</option>
-                <?php foreach (['solo'=>'Соло','duet'=>'Дуэт','ensemble'=>'Ансамбль','choir'=>'Хор'] as $fk => $fl): ?>
-                  <option value="<?= h($fk) ?>" <?= (string)($a['formation'] ?? '')===$fk?'selected':'' ?>><?= h($fl) ?></option>
+                <?php foreach ($formsOk as $fl): ?>
+                  <option value="<?= h($fl) ?>" <?= (string)($a['formation'] ?? '')===$fl?'selected':'' ?>><?= h($fl) ?></option>
                 <?php endforeach; ?>
+                <?php // Значение из старых заявок, которого больше нет в положении: показываем,
+                      // чтобы редактирование не затирало его молча.
+                      $curF = (string) ($a['formation'] ?? '');
+                      if ($curF !== '' && !in_array($curF, $formsOk, true)): ?>
+                  <option value="<?= h($curF) ?>" selected><?= h($curF) ?> (нет в положении)</option>
+                <?php endif; ?>
               </select></div>
             <div class="field"><label>Ссылка на выступление</label>
               <input name="video_url" value="<?= h((string)($a['video_url'] ?? '')) ?>"></div>

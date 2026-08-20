@@ -155,6 +155,8 @@ function rm_award_name(string $result): string {
 }
 
 /** Подсказка по наградам в зависимости от результата (для платных конкурсов). */
+require_once BASE_PATH . '/core/award_offer.php';   // снимки и цены наград по званию
+
 function rm_award_hint(string $result): string {
     $r = mb_strtoupper($result);
     if (str_contains($r, 'ГРАН-ПРИ'))  return 'Обладателям Гран-при - наградной кубок в честь высшей награды конкурса.';
@@ -243,10 +245,11 @@ function result_mail_send(int $appId): bool {
         $awardsUrl = url('/awards') . '?comp=' . (int) $a['competition_id'] . '&app=' . $appId;
         $inner .= '<p style="margin:0 0 14px;">Наградные дипломы придут на эту почту в течение '
             . '<b style="color:' . $navy . ';">5 рабочих дней</b> и появятся в личном кабинете.</p>'
-            . '<p style="margin:0 0 6px;font-weight:600;color:' . $navy . ';">Оригиналы наград - Почтой России:</p>'
             . '<p style="margin:0 0 8px;font-size:14px;color:' . RM_INK . ';line-height:1.65;">' . h(rm_award_hint($result))
-            . ' Также доступна благодарность педагогу за подготовку. Оригиналы - на плотной дизайнерской бумаге, '
-            . 'с голографическими логотипами, живыми подписями и печатями. Награда с Вашим именем - памятное подтверждение успеха для дома, сцены и портфолио.</p>';
+            . ' Награда с Вашим именем - памятное подтверждение успеха для дома, сцены и портфолио.</p>'
+            // Дальше не описание словами, а сами награды: снимки того, что придёт
+            // по почте, и цены по этому званию.
+            . ao_block((int) $a['competition_id'], $result, $awardsUrl);
         $hero = mm_cta_primary($awardsUrl, 'Заказать награды', 'По результату: ' . rm_award_name($result));
         // Кнопки как в ручном письме центра: Образцы наград ЭТОГО конкурса / Сроки / Отзыв.
         $awardsSamplesUrl = url('/awards') . '?comp=' . (int) $a['competition_id'];
