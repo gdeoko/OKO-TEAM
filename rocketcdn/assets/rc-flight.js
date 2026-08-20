@@ -1107,7 +1107,11 @@ function buildWorld() {
     if (WEBP) src = p.replace(/\.(jpg|png)$/, ".webp");
     /* Промахнулись мимо webp - молча возвращаемся к исходнику,
        игра не имеет права остаться без карты планеты */
-    var t = L.load(src, null, null, src === p ? null : function () {
+    /* Загрузчику текстур нельзя передавать null вместо колбэка: он
+       зовёт его напрямую, без проверки, и падает с «e is not a
+       function» прямо на входе в игру. Пустая функция вместо null. */
+    var noop = function () {};
+    var t = L.load(src, noop, noop, src === p ? noop : function () {
       var f = L.load(p);
       f.anisotropy = 4;
       t.image = f.image;
